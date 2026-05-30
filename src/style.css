@@ -227,6 +227,7 @@ body.brain-open .bd-inner { transform: translateY(0) scale(1); }
 .bd-stats div { display: flex; flex-direction: column; }
 .bd-stats b { font-family: var(--fd); font-weight: 900; font-size: 30px; color: var(--red-bright); }
 .bd-stats span { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; }
+.bd-exit { margin-top: 28px; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.4); }
 #brain-back {
   position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 1210;
   background: rgba(8,8,8,.6); backdrop-filter: blur(10px);
@@ -236,20 +237,30 @@ body.brain-open .bd-inner { transform: translateY(0) scale(1); }
 }
 #brain-back:hover { border-color: var(--red-primary); background: rgba(204,0,0,.15); }
 
-/* Loader */
+/* Прелоадер — лого DUCK'S + кольца + полоса */
 #loader {
   position: fixed; inset: 0; z-index: 1500;
-  background: var(--bg-deepest);
+  background: radial-gradient(ellipse 70% 70% at 50% 45%, #160708 0%, var(--bg-deepest) 72%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; transition: opacity .6s, visibility .6s;
+  gap: 26px; transition: opacity .8s, visibility .8s;
 }
 #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-.loader-spin {
-  width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.1);
-  border-top-color: var(--ice-blue); border-radius: 50%; animation: spin 1s linear infinite;
+.ld-core { position: relative; width: 180px; height: 180px; display: flex; align-items: center; justify-content: center; }
+.ld-ring { position: absolute; border-radius: 50%; }
+.ld-ring1 { inset: 0; border: 2px solid transparent; border-top-color: var(--red-bright); border-right-color: rgba(204,0,0,.3); filter: drop-shadow(0 0 8px var(--red-primary)); animation: ldspin 1.3s linear infinite; }
+.ld-ring2 { inset: 22px; border: 1px solid transparent; border-bottom-color: var(--ice-blue); border-left-color: rgba(136,221,255,.25); animation: ldspin 2.4s linear infinite reverse; }
+@keyframes ldspin { to { transform: rotate(360deg); } }
+.ld-logo {
+  font-family: var(--fd); font-weight: 900; font-size: 34px; letter-spacing: 2px; color: #fff;
+  padding: 8px 16px; border: 2px solid var(--red-primary); border-radius: 12px;
+  background: rgba(204,0,0,.08); box-shadow: 0 0 24px rgba(204,0,0,.45), inset 0 0 16px rgba(204,0,0,.18);
+  animation: ldpulse 1.8s ease-in-out infinite;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader-txt { color: rgba(255,255,255,.5); font-size: 14px; letter-spacing: .05em; }
+.ld-logo span { color: var(--red-bright); }
+@keyframes ldpulse { 0%,100% { transform: scale(1); box-shadow: 0 0 24px rgba(204,0,0,.45), inset 0 0 16px rgba(204,0,0,.18); } 50% { transform: scale(1.05); box-shadow: 0 0 42px rgba(204,0,0,.7), inset 0 0 22px rgba(204,0,0,.3); } }
+.ld-tag { font-family: var(--fd); font-weight: 400; font-size: 11px; letter-spacing: .4em; text-transform: lowercase; color: rgba(255,255,255,.4); }
+.ld-bar { width: 180px; height: 2px; background: rgba(255,255,255,.1); border-radius: 2px; overflow: hidden; }
+.ld-bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--red-primary), var(--red-bright)); box-shadow: 0 0 8px var(--red-primary); transition: width .3s ease; }
 
 @media (max-width: 768px) {
   /* Фигура (3D) занимает верх экрана, контент — нижнюю зону. Без тёмных подложек:

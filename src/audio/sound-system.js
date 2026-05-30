@@ -194,6 +194,46 @@ export class SoundSystem {
     }
   }
 
+  // Глухой удар (кубик о стол / финальный стук)
+  playThump() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(120, now); o.frequency.exponentialRampToValueAtTime(50, now + 0.18);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.18, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.22);
+  }
+
+  // Бросок кубиков — серия деревянно-костяных стуков по столу
+  playDiceRoll() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const hits = 5 + (Math.random() * 3 | 0);
+    for (let i = 0; i < hits; i++) {
+      const t = now + 0.06 + i * (0.09 + Math.random() * 0.07);
+      // короткий шумовой «клак» через bandpass + тон
+      const dur = 0.06;
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+      const out = buf.getChannelData(0);
+      for (let j = 0; j < out.length; j++) out[j] = (Math.random() * 2 - 1) * (1 - j / out.length);
+      const src = this.ctx.createBufferSource(); src.buffer = buf;
+      const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800 + Math.random() * 900; bp.Q.value = 1.5;
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      const vol = 0.12 * (1 - i / hits) + 0.03;
+      g.gain.linearRampToValueAtTime(vol, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(bp).connect(g).connect(this.master); src.start(t); src.stop(t + dur + 0.02);
+      // низкий «тук» дерева
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 140 + Math.random() * 60;
+      const og = this.ctx.createGain(); og.gain.value = 0;
+      og.gain.linearRampToValueAtTime(vol * 0.7, t + 0.004);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      o.connect(og).connect(this.master); o.start(t); o.stop(t + 0.12);
+    }
+  }
+
   // Whoosh открытия/закрытия попапа мозга — мягкий объёмный свуш + аккорд
   playWhoosh(open = true) {
     if (!this.ctx || this.muted) return;

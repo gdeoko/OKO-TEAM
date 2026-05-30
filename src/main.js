@@ -108,6 +108,21 @@ function makeDie() {
 const dice = [makeDie(), makeDie()];
 dice.forEach((d) => { d.scale.setScalar(0.9); d.visible = false; scene.add(d); });
 
+// мягкая тень-пятно под каждым кубиком (реализм «летят по столу»)
+function shadowTexture() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const x = c.getContext('2d'); const g = x.createRadialGradient(64, 64, 2, 64, 64, 64);
+  g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+const shadowTex = shadowTexture();
+const diceShadows = dice.map(() => {
+  const s = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0 }));
+  s.rotation.x = -Math.PI / 2; s.position.y = -2.6; s.visible = false; scene.add(s); return s;
+});
+const FLOOR_Y = -2.6;   // «стол»
+
 // ============================================================
 // Утка + частицы
 // ============================================================
@@ -119,9 +134,10 @@ const duckKey = new THREE.PointLight(0xffffff, 16, 14); duckKey.position.set(2, 
 const duckRim = new THREE.PointLight(0x88ddff, 9, 14); duckRim.position.set(-3, 1, -2); subject.add(duckRim);
 
 let duckMesh = null, particles = null;
-let duckPos = null, brainPos = null, explodePos = null, vel = null, delays = null;
+let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let ready = false, introDone = false, brainOpen = false;
+let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-10, -10);
@@ -133,6 +149,7 @@ const HOVER_RADIUS = 0.95, HOVER_FORCE = 0.045, RETURN = 0.018, DAMP = 0.9;
 function buildParticles() {
   const N = PCOUNT;
   vel = new Float32Array(N * 3); delays = new Float32Array(N); explodePos = new Float32Array(N * 3);
+  tunnelPos = new Float32Array(N * 3);
   const cur = new Float32Array(N * 3), colors = new Float32Array(N * 3), sizes = new Float32Array(N);
   const palette = [new THREE.Color(0xffffff), new THREE.Color(0xc8e6ff), new THREE.Color(0x88ddff), new THREE.Color(0xffd700), new THREE.Color(0xcc0000)];
   const dir = new THREE.Vector3();
@@ -147,6 +164,13 @@ function buildParticles() {
     explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 1.5;
     explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 1.5;
     explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 1.5;
+    // ТУННЕЛЬ: кольца из частиц уходящие в глубину (для входа в мозг)
+    const ang = Math.random() * Math.PI * 2;
+    const tr = 2.6 + Math.random() * 0.7;          // радиус кольца
+    const tz = -2 - Math.random() * 22;            // глубина
+    tunnelPos[i*3] = Math.cos(ang) * tr;
+    tunnelPos[i*3+1] = Math.sin(ang) * tr;
+    tunnelPos[i*3+2] = tz;
     const hf = (duckPos[i*3+1] + 1.3) / 2.6, r = Math.random();
     let ci; if (hf > 0.85) ci = r > 0.6 ? 3 : 0; else if (r < 0.06) ci = 4; else if (r < 0.5) ci = 0; else if (r < 0.85) ci = 1; else ci = 2;
     const col = palette[ci]; colors[i*3]=col.r; colors[i*3+1]=col.g; colors[i*3+2]=col.b;
@@ -172,9 +196,12 @@ function buildParticles() {
 }
 
 // ============================================================
-// Загрузка
+// Загрузка с прогрессом
 // ============================================================
-const loader = new GLTFLoader();
+const ldBar = document.querySelector('.ld-bar i');
+const mgr = new THREE.LoadingManager();
+mgr.onProgress = (url, loaded, total) => { if (ldBar) ldBar.style.width = Math.round((loaded / total) * 100) + '%'; };
+const loader = new GLTFLoader(mgr);
 const load = (url) => new Promise((res, rej) => loader.load(url, (g) => res(g.scene), null, rej));
 Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
   .then(([duck, brain]) => {
@@ -183,67 +210,118 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 1.3; } });
     duckMesh = duck;
-    duckMesh.rotation.y = 0;     // лицо утки = +Z = к камере (НЕ поворачиваем)
+    duckMesh.rotation.y = 0;
     duckMesh.visible = false; subject.add(duckMesh);
     buildParticles();
-    document.getElementById('loader').classList.add('hidden');
+    if (ldBar) ldBar.style.width = '100%';
+    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 350);
     startIntro();
   })
-  .catch((e) => { console.error(e); document.querySelector('.loader-txt').textContent = 'Не удалось загрузить модели. Обнови страницу.'; });
+  .catch((e) => { console.error(e); const tg = document.querySelector('.ld-tag'); if (tg) tg.textContent = 'ошибка загрузки, обнови страницу'; });
 
 // ============================================================
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
 // ============================================================
 function startIntro() {
   const tl = gsap.timeline();
-  dice.forEach((d, i) => { d.position.set(i === 0 ? -0.9 : 0.9, 7, 0.5); d.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3); d.visible = true; });
-  tl.fromTo(dice[0].position, { y: 7 }, { y: -8, duration: 1.7, ease: 'power1.in' }, 0.1);
-  tl.fromTo(dice[1].position, { y: 7.6 }, { y: -8, duration: 1.7, ease: 'power1.in' }, 0.28);
-  tl.to(dice[0].rotation, { x: '+=7', z: '+=5', duration: 1.7 }, 0.1);
-  tl.to(dice[1].rotation, { x: '+=6', y: '+=7', duration: 1.7 }, 0.28);
-  tl.add(() => dice.forEach((d) => (d.visible = false)), 1.85);
-  tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.7);
+  // тени включаем, кубики стартуют сверху и летят с отскоками по «столу»
+  dice.forEach((d, i) => {
+    d.position.set(i === 0 ? -1.4 : 1.2, 6, 0.6);
+    d.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+    d.visible = true; diceShadows[i].visible = true;
+  });
+  sound.playDiceRoll();   // звук броска по столу
+
+  dice.forEach((d, i) => {
+    const startX = d.position.x;
+    const endX = startX + (i === 0 ? -2.2 : 2.4);   // укатываются в стороны
+    // падение + 2 отскока (имитация физики), затем уход за край
+    tl.to(d.position, { keyframes: [
+      { y: FLOOR_Y, duration: 0.55, ease: 'power2.in' },
+      { y: FLOOR_Y + 1.0, duration: 0.3, ease: 'power2.out' },
+      { y: FLOOR_Y, duration: 0.25, ease: 'power2.in' },
+      { y: FLOOR_Y + 0.4, duration: 0.18, ease: 'power2.out' },
+      { y: FLOOR_Y, duration: 0.15, ease: 'power2.in' },
+      { y: -9, duration: 0.7, ease: 'power1.in' },
+    ] }, 0.05 + i * 0.12);
+    tl.to(d.position, { x: endX, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
+    tl.to(d.rotation, { x: `+=${6 + Math.random()*3}`, z: `+=${4 + Math.random()*3}`, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
+  });
+  tl.add(() => { sound.playThump?.(); }, 0.6);
+  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 2.2);
+
+  // утка выходит справа боком, доворачивается клювом к зрителю
+  tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.9);
   if (duckMesh) {
-    duckMesh.position.x = isMobile ? 4 : 6; duckMesh.rotation.y = 0.8;  // выходит справа, вполоборота
-    tl.to(duckMesh.position, { x: 0, duration: 1.7, ease: 'power2.out' }, 1.7);
-    tl.to(duckMesh.rotation, { y: 0, duration: 1.4, ease: 'power2.out' }, 2.5); // поворот клювом ровно к зрителю
+    duckMesh.position.x = isMobile ? 4.5 : 6.5; duckMesh.rotation.y = 1.1;   // вышла боком (профиль)
+    tl.to(duckMesh.position, { x: 0, duration: 1.9, ease: 'power2.out' }, 1.9);
+    tl.to(duckMesh.rotation, { y: 0, duration: 1.2, ease: 'back.out(1.4)' }, 3.0);  // доворот ~45°+ клювом в камеру
   }
-  tl.add(() => document.body.classList.add('hero-in'), 2.4);
-  tl.add(() => { introDone = true; }, 4.0);
+  tl.add(() => document.body.classList.add('hero-in'), 2.6);
+  tl.add(() => { introDone = true; }, 4.4);
+}
+
+// тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
+function updateDiceShadows() {
+  dice.forEach((d, i) => {
+    const s = diceShadows[i];
+    if (!d.visible) { s.visible = false; return; }
+    s.visible = true; s.position.x = d.position.x; s.position.z = d.position.z;
+    const h = THREE.MathUtils.clamp((d.position.y - FLOOR_Y) / 6, 0, 1);
+    const sc = 0.8 + h * 1.6; s.scale.setScalar(sc);
+    s.material.opacity = (1 - h) * 0.6;
+  });
 }
 
 // ============================================================
 // Указатель
 // ============================================================
+const _hitWorld = new THREE.Vector3();
 function updatePointer(x, y) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
   pointerNX = pointer.x; pointerNY = pointer.y; pointerActive = true;
   raycaster.setFromCamera(pointer, camera);
-  raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), pointer3D);
-  pointer3D.sub(subject.position).divideScalar(subject.scale.x);
+  // точка на плоскости, проходящей через центр subject и обращённой к камере —
+  // это убирает смещение по глубине, любая часть фигуры реагирует точно
+  const planeNormal = camera.getWorldDirection(new THREE.Vector3()).negate();
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeNormal, subject.getWorldPosition(new THREE.Vector3()));
+  raycaster.ray.intersectPlane(plane, _hitWorld);
+  // переводим МИРОВУЮ точку в ЛОКАЛЬНУЮ систему particles (учитывает вращение и масштаб)
+  if (particles) { particles.worldToLocal(pointer3D.copy(_hitWorld)); }
+  else { pointer3D.copy(_hitWorld).sub(subject.position).divideScalar(subject.scale.x); }
 }
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 addEventListener('mouseleave', () => { pointerActive = false; });
 
-function hitSubject(x, y) {
+function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
-  const c = subject.position.clone().project(camera);
+  const c = subject.getWorldPosition(new THREE.Vector3()).project(camera);
   const dx = pointer.x - c.x, dy = pointer.y - c.y;
-  return Math.sqrt(dx * dx + dy * dy) < 0.32;
+  return Math.sqrt(dx * dx + dy * dy) < r;
 }
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }
-  else if (tp > 0.75 && hitSubject(e.clientX, e.clientY)) openBrain();
+  else if (tp > 0.7 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона
 });
 
 // ============================================================
 // Вход внутрь мозга (попап с затемнением)
 // ============================================================
-function openBrain() { brainOpen = true; document.body.classList.add('brain-open'); sound.playWhoosh(true); }
-function closeBrain() { brainOpen = false; document.body.classList.remove('brain-open'); sound.playWhoosh(false); }
+function openBrain() {
+  if (brainOpen) return;
+  brainOpen = true; document.body.classList.add('brain-open');
+  sound.playWhoosh(true); lenis.stop();   // блокируем скролл пока внутри
+}
+function closeBrain() {
+  if (!brainOpen) return;
+  brainOpen = false; document.body.classList.remove('brain-open');
+  sound.playWhoosh(false); lenis.start();
+}
 document.getElementById('brain-detail').addEventListener('click', (e) => { if (e.target.id === 'brain-detail' || e.target.id === 'brain-back') closeBrain(); });
+document.getElementById('brain-back').addEventListener('click', closeBrain);
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBrain(); });
 
 // ============================================================
 // Автостарт звука
@@ -297,6 +375,7 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
   env.update(t, camera, tp, dt);
+  updateDiceShadows();
 
   // (фон — 3D-клуб, цвет неона задаётся в environment)
 
@@ -355,6 +434,12 @@ function animate() {
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
       }
+      // когда вошли в мозг — частицы перестраиваются в космический туннель
+      if (tunnelBlend > 0.001) {
+        tx += (tunnelPos[i3] - tx) * tunnelBlend;
+        ty += (tunnelPos[i3+1] - ty) * tunnelBlend;
+        tz += (tunnelPos[i3+2] - tz) * tunnelBlend;
+      }
       // взаимодействие с курсором (дальше уезжают, плавно возвращаются)
       if (pointerActive && (tp < 0.05 || onBrain)) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
@@ -370,9 +455,14 @@ function animate() {
     }
     particles.geometry.attributes.position.needsUpdate = true;
     if (pushed > 40 && frame % 5 === 0) sound.playRustle(Math.min(pushed / 350, 1));
-    particles.rotation.y += brainOpen ? 0.0003 : (onBrain ? 0.0011 : 0.0006);
+    // туннель медленно вращается когда внутри мозга
+    particles.rotation.z += brainOpen ? 0.004 : 0;
+    particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0011 : 0.0006);
     particles.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
   }
+  // плавный переход мозг↔туннель
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.06;
+  if (!brainOpen && tunnelBlend < 0.01) particles && (particles.rotation.z *= 0.95);
 
   renderer.render(scene, camera);
 }
