@@ -194,6 +194,35 @@ export class SoundSystem {
     }
   }
 
+  // Whoosh открытия/закрытия попапа мозга — мягкий объёмный свуш + аккорд
+  playWhoosh(open = true) {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const dur = 0.8;
+    // фильтрованный шум-свуш
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.0;
+    const f0 = open ? 400 : 2600, f1 = open ? 2600 : 400;
+    bp.frequency.setValueAtTime(f0, now); bp.frequency.exponentialRampToValueAtTime(f1, now + 0.6);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.07, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+    // мягкий аккорд (открытие — вверх, закрытие — вниз)
+    const chord = open ? [392.0, 523.25, 659.25] : [659.25, 523.25, 392.0];
+    chord.forEach((f, i) => {
+      const t = now + i * 0.06;
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const og = this.ctx.createGain(); og.gain.value = 0;
+      og.gain.linearRampToValueAtTime(0.05, t + 0.04);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      o.connect(og).connect(this.master); o.start(t); o.stop(t + 0.8);
+    });
+  }
+
   // Мягкий UI-отклик при наведении
   playHover() {
     if (!this.ctx || this.muted) return;

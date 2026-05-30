@@ -105,20 +105,24 @@ export class ClubEnvironment {
     this.colBtarget.set(bHex);
   }
 
-  update(t, camera) {
+  update(t, camera, tp = 0) {
     this.mat.uniforms.uTime.value = t;
     // плавный переход цветов
     this.colA.lerp(this.colAtarget, 0.03); this.colB.lerp(this.colBtarget, 0.03);
     this.mat.uniforms.uColA.value.copy(this.colA);
     this.mat.uniforms.uColB.value.copy(this.colB);
     this.mat.uniforms.uFade.value = 0.4 + this._fade * 0.6;
-    if (camera) this.sphere.position.copy(camera.position);
-
+    if (camera) {
+      this.sphere.position.copy(camera.position);
+      // фон медленно вращается + реагирует на фазу скролла (живёт по сценарию)
+      this.sphere.rotation.y = t * 0.012 + tp * 0.5;
+      this.sphere.rotation.x = Math.sin(t * 0.05) * 0.05 + tp * 0.2;
+    }
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
       for (let i = 0; i < this.dustSeed.length; i++) p.array[i * 3 + 1] += Math.sin(t * 0.3 + this.dustSeed[i]) * 0.0015;
       p.needsUpdate = true;
-      this.dust.rotation.y = t * 0.005;
+      this.dust.rotation.y = t * 0.01;
       this.dust.material.opacity = 0.45 * this._fade;
     }
     if (this.red) this.red.intensity = (18 + Math.sin(t * 1.2) * 5) * this._fade;
