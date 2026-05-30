@@ -17,8 +17,10 @@ const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 const HERO_X = 0;
 const HERO_Y = isMobile ? 0.5 : 0.1;
 const SUBJ_SCALE = isMobile ? 0.72 : 1.6;   // крупнее
-// Утка смотрит вправо при 0 → доворот на +90° (PI/2) ставит клюв в камеру.
-const DUCK_FACE = Math.PI / 2;
+// Угол поворота утки (клювом в камеру). Подбор: добавь ?duck=ГРАДУСЫ к адресу
+// (например ducks.games/?duck=90), покрути, найди фронтальный — скажи число, зафиксирую.
+const _duckDeg = new URLSearchParams(location.search).get('duck');
+const DUCK_FACE = _duckDeg !== null ? (parseFloat(_duckDeg) * Math.PI / 180) : (Math.PI / 2);
 
 const sound = new SoundSystem();
 
@@ -410,7 +412,8 @@ function animate() {
     const solid = THREE.MathUtils.clamp(1 - tp / 0.1, 0, 1);
     if (solid > 0.001) {
       if (!duckMesh.visible && introDone) duckMesh.visible = true;
-      const look = DUCK_FACE + (pointerActive && tp < 0.05 ? pointerNX * 0.22 : Math.sin(t * 0.4) * 0.07);
+      // утка СРАЗУ ровно в камеру; лишь чуть-чуть провожает курсор, без рысканья
+      const look = DUCK_FACE + (pointerActive && tp < 0.05 ? pointerNX * 0.12 : 0);
       duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.05;
       duckMesh.rotation.z = Math.sin(t * 0.6) * 0.015;
       let py = HERO_Y + Math.sin(t * 0.5) * 0.04;
