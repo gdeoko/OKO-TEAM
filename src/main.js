@@ -82,7 +82,8 @@ function normalize(obj, target) {
 // ============================================================
 const canvas = document.getElementById('webgl');
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x070410, 16, 50);
+// фон задаётся HDR-панорамой в ClubEnvironment; фог лёгкий для глубины пыли
+scene.fog = new THREE.FogExp2(0x05030a, 0.012);
 
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 120);
 camera.position.set(0, 0.4, 9);
@@ -94,7 +95,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.95;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-const env = new ClubEnvironment(scene, isMobile);
+const env = new ClubEnvironment(scene, isMobile, renderer);
 env.setVisibility();
 
 // ============================================================
