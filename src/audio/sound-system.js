@@ -74,20 +74,26 @@ export class SoundSystem {
     return this.muted;
   }
 
-  // Колокольчик при касании частиц
+  // Мягкий шиммер при касании частиц — тёплый, без звонкости.
+  // Низкая октава, медленная атака, фильтр сверху, чтобы не «дзинькало».
   playBell(intensity = 1) {
     if (!this.ctx || this.muted) return;
     const now = this.ctx.currentTime;
-    if (now - this.lastBell < 0.04) return;
+    if (now - this.lastBell < 0.07) return;
     this.lastBell = now;
-    const freq = this.bellNotes[(Math.random() * this.bellNotes.length) | 0];
-    const parts = [[1, 0.15, 1.5], [2.76, 0.06, 0.8], [5.4, 0.025, 0.4]];
-    parts.forEach(([mul, g, dec]) => {
+    // ноты на октаву ниже и мягче
+    const soft = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25];
+    const freq = soft[(Math.random() * soft.length) | 0];
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 1400; lp.Q.value = 0.3;
+    lp.connect(this.master);
+    // основной мягкий тон + лёгкая квинта, оба синус, плавная атака
+    [[1, 0.09, 1.4], [1.5, 0.035, 1.1]].forEach(([mul, g, dec]) => {
       const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq * mul;
       const gn = this.ctx.createGain(); gn.gain.value = 0;
-      gn.gain.linearRampToValueAtTime(g * intensity, now + 0.005);
+      gn.gain.linearRampToValueAtTime(g * intensity, now + 0.08);
       gn.gain.exponentialRampToValueAtTime(0.0001, now + dec);
-      o.connect(gn).connect(this.master); o.start(now); o.stop(now + dec + 0.1);
+      o.connect(gn).connect(lp); o.start(now); o.stop(now + dec + 0.1);
     });
   }
 
