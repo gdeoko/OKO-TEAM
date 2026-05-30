@@ -109,7 +109,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  padding: 84px 24px 8vh;     /* нижний отступ крупнее — кнопки не у самого края */
+  padding: 84px 24px 14vh;    /* кнопки заметно выше нижнего края */
 }
 
 /* Hero — заголовок сверху, утка по центру (3D), кнопки снизу */
@@ -252,8 +252,8 @@ body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
 /* текст рождается из точки вдалеке: стартует крошечным и далёким, наезжает */
 .bd-inner {
   max-width: 560px; text-align: center;
-  transform: scale(.2); opacity: 0; filter: blur(6px);
-  transition: transform 1.1s cubic-bezier(.16,1,.3,1), opacity .9s ease, filter .9s ease;
+  transform: scale(.08); opacity: 0; filter: blur(10px);
+  transition: transform 2.6s cubic-bezier(.16,1,.3,1), opacity 1.8s ease, filter 1.8s ease;
 }
 body.brain-open .bd-inner { transform: scale(1); opacity: 1; filter: blur(0); }
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }

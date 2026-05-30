@@ -50,9 +50,16 @@ export class ClubEnvironment {
     this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xaabbff, size: 0.03, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // очень слабый общий свет — зал тёмный, доминирует неон (как на референсе)
-    this.scene.add(new THREE.AmbientLight(0x3344aa, 0.25));
-    const key = new THREE.DirectionalLight(0x8899ff, 0.3); key.position.set(2, 6, 4); this.scene.add(key);
+    // слабый общий свет + цветные источники-«отблески» неона на полу/стенах
+    this.scene.add(new THREE.AmbientLight(0x4455bb, 0.35));
+    const key = new THREE.DirectionalLight(0x99aaff, 0.45); key.position.set(2, 6, 4); this.scene.add(key);
+    // неоновые отблески в пространстве (взаимодействие неона с залом, как на референсе)
+    this.glowLights = [
+      Object.assign(new THREE.PointLight(0xff2aff, 6, 20), { position: new THREE.Vector3(-6, 1, -6) }),
+      Object.assign(new THREE.PointLight(0x3aa0ff, 6, 22), { position: new THREE.Vector3(5, 1.5, -10) }),
+      Object.assign(new THREE.PointLight(0xff1466, 4, 16), { position: new THREE.Vector3(0, 0.5, -3) }),
+    ];
+    this.glowLights.forEach((l) => this.scene.add(l));
     this.red = null;
   }
 
@@ -81,7 +88,7 @@ export class ClubEnvironment {
           const isNeon = eLum > 0.02 || (m.emissiveIntensity ?? 0) > 1;
           if (isNeon) {
             // неон родного цвета, ярче (как на фото). emissive уже верного оттенка.
-            m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 4);
+            m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 6);
             m.userData._baseEmissive = m.emissiveIntensity;
             this.neonMats.push(m);
           } else {
@@ -113,9 +120,11 @@ export class ClubEnvironment {
     if (this.mixer) this.mixer.update(dt);
     // неон мягко пульсирует относительно своей яркой базовой силы
     this.neonMats.forEach((m, i) => {
-      const base = m.userData._baseEmissive || 4;
+      const base = m.userData._baseEmissive || 6;
       m.emissiveIntensity = base * (0.9 + Math.sin(t * 1.6 + i * 0.5) * 0.1) * this._fade;
     });
+    // отблески неона мягко дышат
+    if (this.glowLights) this.glowLights.forEach((l, i) => { l.intensity = (5 + Math.sin(t * 1.4 + i) * 1.5) * this._fade; });
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
       for (let i = 0; i < this.dustSeed.length; i++) p.array[i * 3 + 1] += Math.sin(t * 0.3 + this.dustSeed[i]) * 0.0015;

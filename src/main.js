@@ -16,9 +16,9 @@ const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
 const HERO_Y = isMobile ? 0.5 : 0.1;
-const SUBJ_SCALE = isMobile ? 0.62 : 1.35;  // крупнее на ПК
-// Без поворота камеры фронт модели = +Z. Утку ставим клювом ровно в камеру.
-const DUCK_FACE = 0;
+const SUBJ_SCALE = isMobile ? 0.72 : 1.6;   // крупнее
+// Утка смотрит вправо при 0 → доворот на +90° (PI/2) ставит клюв в камеру.
+const DUCK_FACE = Math.PI / 2;
 
 const sound = new SoundSystem();
 
@@ -178,7 +178,7 @@ function buildParticles() {
     const hf = (duckPos[i*3+1] + 1.3) / 2.6, r = Math.random();
     let ci; if (hf > 0.85) ci = r > 0.6 ? 3 : 0; else if (r < 0.06) ci = 4; else if (r < 0.5) ci = 0; else if (r < 0.85) ci = 1; else ci = 2;
     const col = palette[ci]; colors[i*3]=col.r; colors[i*3+1]=col.g; colors[i*3+2]=col.b;
-    sizes[i] = 0.09 + Math.random() * 0.16;
+    sizes[i] = 0.05 + Math.random() * 0.09;   // мельче точки → структура мозга читается
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(cur, 3));
@@ -397,11 +397,12 @@ function animate() {
   camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
   camera.position.x += ((pointerNX * 0.2 * par) - camera.position.x) * 0.03;
-  camera.position.y += ((0.25 + (-pointerNY * 0.12 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
+  // камера чуть приподнята, но смотрит ВНИЗ в зал (виден бар, пол), не в потолок
+  camera.position.y += ((1.4 + (-pointerNY * 0.12 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
   // утка/мозг строго по центру; камера смотрит прямо в них (без yaw)
   subject.position.x += (HERO_X - subject.position.x) * 0.08;
   subject.position.y += (HERO_Y - subject.position.y) * 0.08;
-  camera.lookAt(subject.position.x, subject.position.y, 0);
+  camera.lookAt(subject.position.x, subject.position.y - 0.6, 0);
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
@@ -479,9 +480,9 @@ function animate() {
     particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0011 : 0.0006);
     particles.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
   }
-  // непрерывный поток туннеля + плавный переход мозг↔туннель
-  if (brainOpen) flowZ += dt * 9;   // скорость полёта сквозь туннель
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.05;
+  // непрерывный поток туннеля + ПЛАВНЫЙ медленный переход мозг↔туннель
+  if (brainOpen) flowZ += dt * 4.5;   // медленнее — спокойный полёт сквозь туннель
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.025;  // плавнее формирование туннеля (~2-3с)
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);
