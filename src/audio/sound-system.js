@@ -131,23 +131,31 @@ export class SoundSystem {
     });
   }
 
-  // Шелест частиц — громкость от объёма движения, тон (pitch) от направления
+  // Шелест частиц — ГЛУБОКИЙ, плавный (igloo-стиль). Громкость от объёма движения,
+  // тон мягко от направления. Длинная атака/спад, низкий фильтр, без «дзинька».
   playRustle(intensity = 1, pitch = 1) {
     if (!this.ctx || this.muted) return;
     const now = this.ctx.currentTime;
-    if (now - (this._lastRustle || 0) < 0.04) return;
+    if (now - (this._lastRustle || 0) < 0.12) return;   // реже, не трещит
     this._lastRustle = now;
-    const dur = 0.22;
+    const dur = 0.9;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
     const out = buf.getChannelData(0);
-    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
     const src = this.ctx.createBufferSource(); src.buffer = buf;
-    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass';
-    bp.frequency.value = (2200 + 2600 * pitch); bp.Q.value = 0.9;   // выше pitch → выше тон
+    const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass';
+    lp.frequency.value = 700 + 500 * pitch; lp.Q.value = 0.4;   // глубокий, мягкий
     const g = this.ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(Math.min(0.12, 0.04 + intensity * 0.08), now + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+    const vol = Math.min(0.09, 0.02 + intensity * 0.06);
+    g.gain.linearRampToValueAtTime(vol, now + 0.15);             // плавная атака
+    g.gain.linearRampToValueAtTime(0.0001, now + dur);
+    src.connect(lp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+    // лёгкий воздушный шиммер сверху для «магии»
+    const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = 320 + 180 * pitch;
+    const og = this.ctx.createGain(); og.gain.value = 0;
+    og.gain.linearRampToValueAtTime(vol * 0.25, now + 0.2);
+    og.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(og).connect(this.master); o.start(now); o.stop(now + dur);
   }
 
   // Растворение + «вдох» — при влёте внутрь утки на скролле

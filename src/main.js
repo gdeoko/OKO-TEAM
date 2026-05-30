@@ -15,10 +15,10 @@ const PCOUNT = isMobile ? 26000 : 42000;   // плотнее (тот же раз
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
-const HERO_Y = isMobile ? 0.4 : 0.1;
-const SUBJ_SCALE = isMobile ? 0.6 : 1.15;   // не перекрывать текст
-// Утка стояла боком вправо при -PI/2. Доворот на +45° (PI/4) ставит клюв ровно в камеру.
-const DUCK_FACE = -Math.PI / 2 + Math.PI / 4;   // = -PI/4, лицо ровно к зрителю
+const HERO_Y = isMobile ? 0.5 : 0.1;
+const SUBJ_SCALE = isMobile ? 0.62 : 1.35;  // крупнее на ПК
+// Без поворота камеры фронт модели = +Z. Утку ставим клювом ровно в камеру.
+const DUCK_FACE = 0;
 
 const sound = new SoundSystem();
 
@@ -86,7 +86,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 0.78;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const env = new ClubEnvironment(scene, isMobile);
@@ -301,6 +301,9 @@ function updatePointer(x, y) {
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 addEventListener('mouseleave', () => { pointerActive = false; });
+// КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
+addEventListener('touchend', () => { pointerActive = false; });
+addEventListener('touchcancel', () => { pointerActive = false; });
 
 function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
@@ -327,8 +330,11 @@ function closeBrain() {
   brainOpen = false; document.body.classList.remove('brain-open');
   sound.playWhoosh(false); lenis.start();
 }
-document.getElementById('brain-detail').addEventListener('click', (e) => { if (e.target.id === 'brain-detail' || e.target.id === 'brain-back') closeBrain(); });
-document.getElementById('brain-back').addEventListener('click', closeBrain);
+// клик по фону попапа закрывает; клик по кнопке — тоже (с остановкой всплытия)
+document.getElementById('brain-detail').addEventListener('click', (e) => { if (e.target.id === 'brain-detail') closeBrain(); });
+const brainBackBtn = document.getElementById('brain-back');
+brainBackBtn.addEventListener('click', (e) => { e.stopPropagation(); closeBrain(); });
+brainBackBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); closeBrain(); }, { passive: false });
 addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBrain(); });
 
 // ============================================================
@@ -384,19 +390,18 @@ function animate() {
 
   // КАМЕРА: старт ровно в комнате → ВПЕРЁД вглубь + поворот ВПРАВО к бару.
   // При входе в мозг — летим внутрь (z мал). Без «отдаления».
-  let targetZ, targetYaw;
-  if (brainOpen) { targetZ = 0.5; targetYaw = 0; }       // внутрь туннеля
-  else { targetZ = 9 - easeIO(tp) * 4.2; targetYaw = easeIO(tp) * 0.4; }  // 9→4.8: вперёд, но мозг виден целиком
+  // КАМЕРА ТОЛЬКО ПРЯМО ВПЕРЁД В ГЛУБИНУ (без поворота к бару)
+  let targetZ;
+  if (brainOpen) targetZ = 0.5;                          // внутрь туннеля
+  else targetZ = 9 - easeIO(tp) * 4.2;                   // 9→4.8: вперёд, мозг виден целиком
   camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
-  camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
-  camera.position.y += ((0.25 + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
-  // subject (утка/мозг) всегда по центру; камера смотрит на него, доворачиваясь вправо к бару
+  camera.position.x += ((pointerNX * 0.2 * par) - camera.position.x) * 0.03;
+  camera.position.y += ((0.25 + (-pointerNY * 0.12 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
+  // утка/мозг строго по центру; камера смотрит прямо в них (без yaw)
   subject.position.x += (HERO_X - subject.position.x) * 0.08;
   subject.position.y += (HERO_Y - subject.position.y) * 0.08;
-  camYaw += (targetYaw - camYaw) * 0.05;
-  const lookX = subject.position.x + Math.sin(camYaw) * 4;
-  camera.lookAt(lookX, subject.position.y * 0.6, subject.position.z - Math.cos(camYaw) * 2);
+  camera.lookAt(subject.position.x, subject.position.y, 0);
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)

@@ -50,9 +50,9 @@ export class ClubEnvironment {
     this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xaabbff, size: 0.03, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // мягкий нейтральный свет, чтобы тёмные материалы читались, неон светит сам
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 6, 7); this.scene.add(key);
+    // очень слабый общий свет — зал тёмный, доминирует неон (как на референсе)
+    this.scene.add(new THREE.AmbientLight(0x3344aa, 0.25));
+    const key = new THREE.DirectionalLight(0x8899ff, 0.3); key.position.set(2, 6, 4); this.scene.add(key);
     this.red = null;
   }
 
@@ -69,8 +69,8 @@ export class ClubEnvironment {
       club.position.y -= 3.0;        // пол ниже утки
       club.position.z -= 8;          // зал уходит вглубь перед камерой (видно весь интерьер)
 
-      // НЕ трогаем материалы — модель красивая сама по себе (оригинальный неон).
-      // Только собираем светящиеся материалы для лёгкой пульсации и запоминаем opacity.
+      // Тёмный зал + ЯРКИЙ неон (как на референсе): не-неон затемняем,
+      // неон оставляем родным цветом (синий/фиолет) и усиливаем свечение.
       club.traverse((o) => {
         if (!o.isMesh || !o.material) return;
         const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -78,9 +78,16 @@ export class ClubEnvironment {
           m.transparent = true;
           if (m.userData._baseOpacity === undefined) m.userData._baseOpacity = (m.opacity ?? 1);
           const eLum = m.emissive ? (m.emissive.r + m.emissive.g + m.emissive.b) / 3 : 0;
-          if (eLum > 0.02 || (m.emissiveIntensity ?? 0) > 1) {
-            m.userData._baseEmissive = m.emissiveIntensity ?? 1;
+          const isNeon = eLum > 0.02 || (m.emissiveIntensity ?? 0) > 1;
+          if (isNeon) {
+            // неон родного цвета, ярче (как на фото). emissive уже верного оттенка.
+            m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 4);
+            m.userData._baseEmissive = m.emissiveIntensity;
             this.neonMats.push(m);
+          } else {
+            // зал в глубокую тень (свет даёт только неон)
+            if (m.color) { const h = {}; m.color.getHSL(h); m.color.setHSL(h.h, h.s * 0.5, Math.min(h.l * 0.3, 0.1)); }
+            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
           }
         });
       });
@@ -104,10 +111,10 @@ export class ClubEnvironment {
 
   update(t, camera, tp = 0, dt = 0.016) {
     if (this.mixer) this.mixer.update(dt);
-    // неон мягко пульсирует относительно ОРИГИНАЛЬНОЙ силы (не перекрашиваем)
+    // неон мягко пульсирует относительно своей яркой базовой силы
     this.neonMats.forEach((m, i) => {
-      const base = m.userData._baseEmissive || 1;
-      m.emissiveIntensity = base * (0.85 + Math.sin(t * 1.6 + i * 0.5) * 0.15) * this._fade;
+      const base = m.userData._baseEmissive || 4;
+      m.emissiveIntensity = base * (0.9 + Math.sin(t * 1.6 + i * 0.5) * 0.1) * this._fade;
     });
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
