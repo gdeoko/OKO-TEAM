@@ -188,15 +188,18 @@ function buildParticles() {
   geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
   const mat = new THREE.ShaderMaterial({
     uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 } },
-    vertexShader: `attribute float size; varying vec3 vColor; varying float vAlpha; uniform float uPixelRatio; uniform float uTime;
-      void main(){ vColor=color; float tw=0.72+0.28*sin(uTime*2.2+position.x*7.0+position.y*5.0); vAlpha=tw;
-      vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=size*uPixelRatio*(200.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
-    fragmentShader: `varying vec3 vColor; varying float vAlpha; uniform float uOpacity;
+    vertexShader: `attribute float size; varying vec3 vColor; varying float vTw; uniform float uPixelRatio; uniform float uTime;
+      void main(){ vColor=color; vTw=0.82+0.18*sin(uTime*1.6+position.x*5.0+position.y*4.0);
+      vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=size*uPixelRatio*(230.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `varying vec3 vColor; varying float vTw; uniform float uOpacity;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv); if(d>0.5)discard;
-      float a=pow(1.0-smoothstep(0.0,0.5,d),1.8); gl_FragColor=vec4(vColor,a*vAlpha*uOpacity); }`,
-    vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+      // мягкая матовая пылинка (как igloo): плотное ядро + лёгкое гало, без пересвета
+      float core=smoothstep(0.5,0.12,d);
+      gl_FragColor=vec4(vColor*vTw, core*uOpacity); }`,
+    vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: false, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
+  particles.renderOrder = 2;
   subject.add(particles);
   ready = true;
 }
@@ -387,6 +390,13 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
   env.update(t, camera, tp, dt);
   updateDiceShadows();
+
+  // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo
+  if (audioStarted && frame % 12 === 0) {
+    sound.setLayer('metel', THREE.MathUtils.clamp(1 - tp * 3, 0, 1));        // воздух/метель в Hero
+    sound.setLayer('rustle', THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1)); // шелест при распаде
+    sound.setLayer('hum', brainOpen ? 1 : THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1)); // гул у мозга/в туннеле
+  }
 
   // (фон — 3D-клуб)
 

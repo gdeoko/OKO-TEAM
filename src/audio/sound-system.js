@@ -56,6 +56,47 @@ export class SoundSystem {
 
     this.padGain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 4);
     this._breathe();
+    this._buildLayers();
+  }
+
+  // Постоянные звуковые слои-атмосферы, громкость каждого меняется по сцене.
+  // metel — «метель/воздух» (Hero/клуб), rustle — шелест (частицы), hum — гул (туннель/мозг).
+  _buildLayers() {
+    const ctx = this.ctx;
+    const makeNoise = () => {
+      const buf = ctx.createBuffer(1, 4 * ctx.sampleRate, ctx.sampleRate);
+      const o = buf.getChannelData(0);
+      for (let i = 0; i < o.length; i++) o[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; return src;
+    };
+    this.layers = {};
+    // metel — высокий воздушный шум (ветер/метель)
+    {
+      const src = makeNoise(); const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(g).connect(this.master); src.start();
+      this.layers.metel = g;
+    }
+    // rustle — средний шелест (мягкое шуршание частиц)
+    {
+      const src = makeNoise(); const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1200; f.Q.value = 0.6;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(g).connect(this.master); src.start();
+      this.layers.rustle = g;
+    }
+    // hum — низкий гул (полёт в туннеле / нутро мозга)
+    {
+      const src = makeNoise(); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 320; f.Q.value = 0.7;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(g).connect(this.master); src.start();
+      this.layers.hum = g;
+    }
+  }
+
+  // Плавно выставить громкость слоя (0..1 относительно его потолка)
+  setLayer(name, level) {
+    if (!this.ctx || !this.layers || !this.layers[name]) return;
+    const caps = { metel: 0.05, rustle: 0.06, hum: 0.09 };
+    const g = this.layers[name];
+    g.gain.cancelScheduledValues(this.ctx.currentTime);
+    g.gain.linearRampToValueAtTime((caps[name] || 0.05) * level, this.ctx.currentTime + 0.8);
   }
 
   _breathe() {
