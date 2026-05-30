@@ -47,13 +47,13 @@ export class ClubEnvironment {
       this.dustSeed[i] = Math.random() * Math.PI * 2;
     }
     dgeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
-    this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xff9988, size: 0.035, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xaabbff, size: 0.03, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // свет — приглушённый, БЕЗ заливающего красного (красный даёт только неон самой модели)
-    this.scene.add(new THREE.AmbientLight(0x303038, 0.5));
-    const key = new THREE.DirectionalLight(0xfff2ea, 0.7); key.position.set(3, 6, 7); this.scene.add(key);
-    this.red = new THREE.PointLight(0xff3322, 6, 22); this.red.position.set(0, 2, 2); this.scene.add(this.red);
+    // мягкий нейтральный свет, чтобы тёмные материалы читались, неон светит сам
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(3, 6, 7); this.scene.add(key);
+    this.red = null;
   }
 
   _loadClub() {
@@ -63,14 +63,14 @@ export class ClubEnvironment {
       const box = new THREE.Box3().setFromObject(club);
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
-      const scale = 26 / Math.max(size.x, size.y, size.z);
+      const scale = 30 / Math.max(size.x, size.y, size.z);
       club.scale.setScalar(scale);
       club.position.sub(center.multiplyScalar(scale));
-      club.position.y -= 2.5;        // опустить пол под утку
-      club.position.z -= 4;          // комната вокруг камеры (камера внутри, без чёрной дыры)
+      club.position.y -= 3.0;        // пол ниже утки
+      club.position.z -= 8;          // зал уходит вглубь перед камерой (видно весь интерьер)
 
-      // Делаем бар ТЁМНЫМ премиум-неоном: глушим базовые цвета (стены/стулья),
-      // неон (emissive) перекрашиваем в красный и усиливаем.
+      // НЕ трогаем материалы — модель красивая сама по себе (оригинальный неон).
+      // Только собираем светящиеся материалы для лёгкой пульсации и запоминаем opacity.
       club.traverse((o) => {
         if (!o.isMesh || !o.material) return;
         const mats = Array.isArray(o.material) ? o.material : [o.material];
@@ -78,22 +78,9 @@ export class ClubEnvironment {
           m.transparent = true;
           if (m.userData._baseOpacity === undefined) m.userData._baseOpacity = (m.opacity ?? 1);
           const eLum = m.emissive ? (m.emissive.r + m.emissive.g + m.emissive.b) / 3 : 0;
-          const isNeon = eLum > 0.04 || (m.emissiveIntensity ?? 0) > 0.01;
-          if (isNeon) {
-            // неон → красный бренд, яркий
-            m.emissive.setHSL(0.0, 1.0, 0.5);
-            m.emissiveIntensity = 2.2;
+          if (eLum > 0.02 || (m.emissiveIntensity ?? 0) > 1) {
+            m.userData._baseEmissive = m.emissiveIntensity ?? 1;
             this.neonMats.push(m);
-            if (m.color) m.color.setHSL(0.0, 0.7, 0.25);
-          } else {
-            // не неон → нейтральный ТЁМНО-СЕРЫЙ (без красного оттенка!), приглушаем
-            if (m.color) {
-              const hsl = {}; m.color.getHSL(hsl);
-              m.color.setHSL(hsl.h, hsl.s * 0.12, Math.min(hsl.l * 0.4, 0.16));
-            }
-            if (m.metalness !== undefined) m.metalness = Math.min(m.metalness ?? 0, 0.3);
-            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
-            if (m.emissive) m.emissive.setRGB(0, 0, 0);
           }
         });
       });
@@ -117,9 +104,10 @@ export class ClubEnvironment {
 
   update(t, camera, tp = 0, dt = 0.016) {
     if (this.mixer) this.mixer.update(dt);
-    // неон мягко пульсирует
+    // неон мягко пульсирует относительно ОРИГИНАЛЬНОЙ силы (не перекрашиваем)
     this.neonMats.forEach((m, i) => {
-      m.emissiveIntensity = (1.4 + Math.sin(t * 2 + i * 0.5) * 0.4) * this._fade;
+      const base = m.userData._baseEmissive || 1;
+      m.emissiveIntensity = base * (0.85 + Math.sin(t * 1.6 + i * 0.5) * 0.15) * this._fade;
     });
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
@@ -128,7 +116,6 @@ export class ClubEnvironment {
       this.dust.rotation.y = t * 0.01;
       this.dust.material.opacity = 0.35 * this._fade;
     }
-    if (this.red) this.red.intensity = (5 + Math.sin(t * 1.2) * 2) * this._fade;
   }
 
   setVisibility() {}
