@@ -291,16 +291,14 @@ function updateUIByScroll() {
 // Цикл
 // ============================================================
 const clock = new THREE.Clock();
-let frame = 0;
+let frame = 0, elapsed = 0;
 const easeIO = (a) => a * a * (3 - 2 * a);
 function animate() {
   requestAnimationFrame(animate);
-  const t = clock.getElapsedTime(); frame++;
-  env.update(t, camera, tp);
+  const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
+  env.update(t, camera, tp, dt);
 
-  // цвет фона по фазе
-  if (tp > 0.55) env.setColors(0x140626, 0x05030f);
-  else env.setColors(0x2a0608, 0x0a0414);
+  // (фон — 3D-клуб, цвет неона задаётся в environment)
 
   // КАМЕРА СТРОГО ВПЕРЁД: влетаем внутрь облака (z↓), затем выходим к мозгу (z↑)
   let targetZ;

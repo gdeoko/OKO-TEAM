@@ -1,12 +1,14 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ============================================================
-// Живой шейдерный фон-кино DUCK'S.
-// Большая сфера вокруг камеры с процедурным «туманом/туманностью»
-// (fbm-шум), который течёт во времени и двигается с камерой.
-// Цвет плавно меняется по секциям (Hero=тёплый красный → мозг=холодный
-// сине-фиолетовый). Плюс слои плавающей пыли для глубины (параллакс).
-// API: update(t, camera), setColors(aHex,bHex), fade(amount), setVisibility().
+// 3D-окружение клуба DUCK'S на базе модели "Sci-fi bar" (onerockett, CC-BY-4.0).
+// Реальная 3D-геометрия бара: камера летает внутри, есть глубина/параллакс.
+// Неон перекрашивается из фиолетового в красный бренд DUCK'S.
+// Анимация модели (вентиляторы) запускается через AnimationMixer.
+// Сверху — лёгкая дымка/пыль и god-rays для кино.
+// API: update(t, camera, tp), setColors(), fade(amount), setVisibility().
+// Кредит: "Sci-fi bar" by onerockett, CC-BY-4.0 (sketchfab.com/onerockett)
 // ============================================================
 
 export class ClubEnvironment {
@@ -16,70 +18,25 @@ export class ClubEnvironment {
     this.group = new THREE.Group();
     scene.add(this.group);
     this._fade = 1;
-    this.colA = new THREE.Color(0x2a0608);   // тёплый тёмно-красный
-    this.colB = new THREE.Color(0x0a0414);   // глубокий фиолетово-чёрный
-    this.colAtarget = this.colA.clone();
-    this.colBtarget = this.colB.clone();
-    this._build();
+    this.mixer = null;
+    this.neonMats = [];
+    this.ready = false;
+    this._buildAtmosphere();
+    this._loadClub();
   }
 
-  _build() {
-    // --- Шейдерная сфера-фон ---
-    const geo = new THREE.SphereGeometry(60, 48, 32);
-    this.mat = new THREE.ShaderMaterial({
-      side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: {
-        uTime: { value: 0 },
-        uColA: { value: this.colA },
-        uColB: { value: this.colB },
-        uGlow: { value: new THREE.Color(0xff2a2a) },
-        uFade: { value: 1 },
-      },
-      vertexShader: `
-        varying vec3 vDir;
-        void main(){
-          vDir = normalize(position);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-        }`,
-      fragmentShader: `
-        precision highp float;
-        varying vec3 vDir;
-        uniform float uTime; uniform vec3 uColA; uniform vec3 uColB; uniform vec3 uGlow; uniform float uFade;
-        // hash/noise/fbm
-        float hash(vec3 p){ p=fract(p*0.3183099+0.1); p*=17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
-        float noise(vec3 x){ vec3 i=floor(x), f=fract(x); f=f*f*(3.0-2.0*f);
-          return mix(mix(mix(hash(i+vec3(0,0,0)),hash(i+vec3(1,0,0)),f.x),
-                         mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
-                     mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
-                         mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
-        float fbm(vec3 p){ float v=0.0,a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.0; a*=0.5; } return v; }
-        void main(){
-          vec3 d = normalize(vDir);
-          float t = uTime*0.04;
-          // текучий туман
-          float n = fbm(d*2.2 + vec3(t, t*0.6, -t*0.4));
-          n += 0.5*fbm(d*5.0 - vec3(t*0.7, 0.0, t*0.3));
-          n = clamp(n*0.75, 0.0, 1.0);
-          // вертикальный градиент (низ темнее)
-          float grad = smoothstep(-0.6, 0.7, d.y);
-          vec3 base = mix(uColB, uColA, n);
-          base = mix(base, uColB*0.5, grad*0.4);
-          // мягкие «свечения-туманности»
-          float glow = pow(n, 2.5);
-          base += uGlow * glow * 0.35;
-          // звёздная крошка
-          float st = step(0.997, hash(floor(d*420.0)));
-          base += vec3(st)*0.6;
-          base *= uFade;
-          gl_FragColor = vec4(base, 1.0);
-        }`,
-    });
-    this.sphere = new THREE.Mesh(geo, this.mat);
-    this.sphere.frustumCulled = false;
-    this.group.add(this.sphere);
+  _buildAtmosphere() {
+    // фон-градиент позади всего
+    const bgC = document.createElement('canvas'); bgC.width = 16; bgC.height = 256;
+    const bx = bgC.getContext('2d');
+    const grad = bx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0, '#0a0410'); grad.addColorStop(0.6, '#070308'); grad.addColorStop(1, '#030206');
+    bx.fillStyle = grad; bx.fillRect(0, 0, 16, 256);
+    const bgTex = new THREE.CanvasTexture(bgC); bgTex.colorSpace = THREE.SRGBColorSpace;
+    this.scene.background = bgTex;
 
-    // --- Слои плавающей пыли (глубина/параллакс) ---
-    const dn = this.isMobile ? 120 : 280;
+    // плавающая пыль для глубины
+    const dn = this.isMobile ? 120 : 260;
     const dgeo = new THREE.BufferGeometry();
     const dpos = new Float32Array(dn * 3);
     this.dustSeed = new Float32Array(dn);
@@ -90,44 +47,99 @@ export class ClubEnvironment {
       this.dustSeed[i] = Math.random() * Math.PI * 2;
     }
     dgeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
-    this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xc8e6ff, size: 0.04, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xff9988, size: 0.035, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // --- Свет (HDR нет, поэтому свет даём вручную) ---
-    this.scene.add(new THREE.AmbientLight(0x334455, 0.55));
-    const key = new THREE.DirectionalLight(0xfff2e6, 1.5); key.position.set(3, 5, 7); this.scene.add(key);
-    this.rim = new THREE.DirectionalLight(0x88ddff, 1.1); this.rim.position.set(-4, 2, -5); this.scene.add(this.rim);
-    this.red = new THREE.PointLight(0xcc0000, 22, 28); this.red.position.set(-4, 1.5, -2); this.scene.add(this.red);
+    // свет
+    this.scene.add(new THREE.AmbientLight(0x442233, 0.6));
+    const key = new THREE.DirectionalLight(0xfff0e6, 1.0); key.position.set(3, 6, 7); this.scene.add(key);
+    this.red = new THREE.PointLight(0xcc0000, 26, 34); this.red.position.set(-4, 2, -2); this.scene.add(this.red);
+    const blue = new THREE.PointLight(0x4488ff, 8, 24); blue.position.set(6, 2, 4); this.scene.add(blue);
   }
 
-  setColors(aHex, bHex) {
-    this.colAtarget.set(aHex);
-    this.colBtarget.set(bHex);
+  _loadClub() {
+    new GLTFLoader().load('/models/scifi_bar.glb', (gltf) => {
+      const club = gltf.scene;
+      // нормализуем размер и ставим так, чтобы камера была внутри
+      const box = new THREE.Box3().setFromObject(club);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const scale = 26 / Math.max(size.x, size.y, size.z);
+      club.scale.setScalar(scale);
+      club.position.sub(center.multiplyScalar(scale));
+      club.position.y -= 2.5;        // опустить пол под утку
+      club.position.z -= 12;         // отодвинуть вглубь, чтобы летели внутрь
+
+      // ПЕРЕКРАСКА неона фиолет → красный + сбор светящихся материалов
+      club.traverse((o) => {
+        if (!o.isMesh || !o.material) return;
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        mats.forEach((m) => {
+          m.transparent = true;
+          if (m.userData._baseOpacity === undefined) m.userData._baseOpacity = (m.opacity ?? 1);
+          // emissive = неон. Перекрашиваем по оттенку в красный диапазон.
+          if (m.emissive) {
+            const e = m.emissive; const hsl = {}; e.getHSL(hsl);
+            const lum = (e.r + e.g + e.b) / 3;
+            if (lum > 0.05 || (m.emissiveIntensity ?? 0) > 0) {
+              // фиолет/маджента/синий → красный; зелёный/тёплый оставляем мягче
+              e.setHSL(0.0 + (Math.random() * 0.03), Math.min(1, hsl.s + 0.2), Math.min(0.6, Math.max(0.35, hsl.l)));
+              this.neonMats.push(m);
+            }
+          }
+          // базовый цвет слишком фиолетовый → притемнить к нейтрали
+          if (m.color) {
+            const hsl = {}; m.color.getHSL(hsl);
+            if (hsl.h > 0.6 && hsl.h < 0.95 && hsl.s > 0.3) { m.color.setHSL(0.0, hsl.s * 0.5, hsl.l * 0.7); }
+          }
+        });
+      });
+
+      this.club = club;
+      this.group.add(club);
+
+      // анимация (вентиляторы и т.д.)
+      if (gltf.animations && gltf.animations.length) {
+        this.mixer = new THREE.AnimationMixer(club);
+        gltf.animations.forEach((clip) => this.mixer.clipAction(clip).play());
+      }
+      this.ready = true;
+    }, undefined, (e) => {
+      console.warn('Клуб не загрузился, фон-заглушка', e);
+      this.scene.background = new THREE.Color(0x05030a);
+    });
   }
 
-  update(t, camera, tp = 0) {
-    this.mat.uniforms.uTime.value = t;
-    // плавный переход цветов
-    this.colA.lerp(this.colAtarget, 0.03); this.colB.lerp(this.colBtarget, 0.03);
-    this.mat.uniforms.uColA.value.copy(this.colA);
-    this.mat.uniforms.uColB.value.copy(this.colB);
-    this.mat.uniforms.uFade.value = 0.4 + this._fade * 0.6;
-    if (camera) {
-      this.sphere.position.copy(camera.position);
-      // фон медленно вращается + реагирует на фазу скролла (живёт по сценарию)
-      this.sphere.rotation.y = t * 0.012 + tp * 0.5;
-      this.sphere.rotation.x = Math.sin(t * 0.05) * 0.05 + tp * 0.2;
-    }
+  setColors() {}   // совместимость со старым вызовом
+
+  update(t, camera, tp = 0, dt = 0.016) {
+    if (this.mixer) this.mixer.update(dt);
+    // неон мягко пульсирует
+    this.neonMats.forEach((m, i) => {
+      m.emissiveIntensity = (1.4 + Math.sin(t * 2 + i * 0.5) * 0.4) * this._fade;
+    });
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
       for (let i = 0; i < this.dustSeed.length; i++) p.array[i * 3 + 1] += Math.sin(t * 0.3 + this.dustSeed[i]) * 0.0015;
       p.needsUpdate = true;
       this.dust.rotation.y = t * 0.01;
-      this.dust.material.opacity = 0.45 * this._fade;
+      this.dust.material.opacity = 0.35 * this._fade;
     }
-    if (this.red) this.red.intensity = (18 + Math.sin(t * 1.2) * 5) * this._fade;
+    if (this.red) this.red.intensity = (24 + Math.sin(t * 1.2) * 5) * this._fade;
   }
 
   setVisibility() {}
-  fade(amount) { this._fade = amount; }
+
+  // amount 0..1 — на абстрактных секциях (мозг) приглушаем клуб
+  fade(amount) {
+    this._fade = amount;
+    if (this.club) {
+      this.club.traverse((o) => {
+        if (o.isMesh && o.material) {
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach((m) => { if (m.userData._baseOpacity !== undefined) m.opacity = m.userData._baseOpacity * (0.25 + amount * 0.75); });
+        }
+      });
+    }
+  }
 }
