@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DUCK'S GAME SPACE — Игровой клуб в Москве</title>
+  <meta name="description" content="Покер. Дартс. Бильярд. Бар. Клуб для своих." />
+  <meta property="og:title" content="DUCK'S GAME SPACE — Игровой клуб в Москве" />
+  <meta property="og:description" content="Покер. Дартс. Бильярд. Бар. Клуб для своих." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- Прогресс скролла -->
+  <div id="scroll-progress"></div>
+
+  <!-- 3D-сцена -->
+  <canvas id="webgl"></canvas>
+
+  <!-- Шапка -->
+  <header id="nav">
+    <div class="nav-logo">DUCK<span>'</span>S</div>
+    <a class="nav-cta" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
+  </header>
+
+  <!-- Счётчик секций -->
+  <div id="section-counter">01&nbsp;/&nbsp;08</div>
+
+  <!-- Кнопка mute -->
+  <button id="mute-btn" aria-label="Звук">
+    <svg id="ic-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    <svg id="ic-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m23 9-6 6M17 9l6 6"/></svg>
+  </button>
+
+  <!-- Контент-слой (HTML поверх 3D) -->
+  <main id="content">
+    <!-- Секция 1 — Hero -->
+    <section class="sec" id="hero">
+      <div class="hero-inner">
+        <div class="hero-eyebrow"><span class="dot"></span>Игровой клуб в Москве</div>
+        <h1 class="hero-title">DUCK'S CLUB</h1>
+        <div class="hero-sub">game space</div>
+        <p class="hero-desc">Покер. Дартс. Бильярд. Бар. Клуб для своих.</p>
+        <div class="hero-btns">
+          <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
+          <a class="btn btn-line" href="#about">Узнать больше</a>
+        </div>
+      </div>
+      <div class="scroll-hint">
+        <span>Листай вниз</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+      </div>
+    </section>
+
+    <!-- Секция 2 — О клубе (мозг из частиц) -->
+    <section class="sec" id="about">
+      <div class="about-inner">
+        <div class="about-label">О клубе</div>
+        <h2 class="about-title">Здесь играют <em>головой</em></h2>
+        <div class="thesis-grid">
+          <div class="thesis" data-t><b>Соревновательный дух</b><span>получает выход</span></div>
+          <div class="thesis" data-t><b>Здоровый дофамин</b><span>в мегаполисе</span></div>
+          <div class="thesis" data-t><b>Разгрузка мозгов</b><span>отдых телом</span></div>
+          <div class="thesis" data-t><b>Репутация среди своих</b><span>рейтинг клуба</span></div>
+        </div>
+        <div class="about-note">Без кальянов. Чистый воздух, живое общение.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Стартовый оверлей -->
+  <div id="start-overlay">
+    <div class="start-card">
+      <div class="start-ring"></div>
+      <h2>DUCK'S</h2>
+      <p>тап чтобы войти со звуком</p>
+      <button id="skip-sound">войти без звука</button>
+    </div>
+  </div>
+
+  <!-- Загрузка -->
+  <div id="loader"><div class="loader-spin"></div><div class="loader-txt">собираем пространство из звёздной пыли…</div></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
