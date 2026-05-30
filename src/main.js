@@ -15,8 +15,9 @@ const PCOUNT = isMobile ? 26000 : 42000;   // плотнее (тот же раз
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
-const HERO_Y = isMobile ? 0.6 : 0.15;
-const SUBJ_SCALE = isMobile ? 0.78 : 1.5;   // крупнее на ПК
+const HERO_Y = isMobile ? 0.4 : 0.1;
+const SUBJ_SCALE = isMobile ? 0.6 : 1.15;   // не перекрывать текст
+const DUCK_FACE = -Math.PI / 2;             // лицо утки (+X) → в камеру
 
 const sound = new SoundSystem();
 
@@ -162,10 +163,10 @@ function buildParticles() {
     dir.set(duckPos[i*3], duckPos[i*3+1], duckPos[i*3+2]);
     if (dir.lengthSq() < 0.01) dir.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5);
     dir.normalize();
-    const spread = 3.5 + Math.random() * 3.0;
-    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 1.5;
-    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 1.5;
-    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 1.5;
+    const spread = 2.2 + Math.random() * 2.2;
+    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 1.2;
+    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 1.2;
+    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 1.2;
     // ТУННЕЛЬ: кольца из частиц уходящие в глубину (для входа в мозг)
     const ang = Math.random() * Math.PI * 2;
     const tr = 2.6 + Math.random() * 0.7;          // радиус кольца
@@ -258,7 +259,7 @@ function startIntro() {
   tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.9);
   if (duckMesh) {
     duckMesh.position.set(0, HERO_Y - 0.3, -16);   // далеко в глубине
-    duckMesh.rotation.y = 0;                         // сразу лицом к камере
+    duckMesh.rotation.y = DUCK_FACE;                 // лицом к камере
     duckMesh.scale.setScalar(0.15);
     tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
     tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
@@ -383,8 +384,8 @@ function animate() {
   // КАМЕРА: старт ровно в комнате → ВПЕРЁД вглубь + поворот ВПРАВО к бару.
   // При входе в мозг — летим внутрь (z мал). Без «отдаления».
   let targetZ, targetYaw;
-  if (brainOpen) { targetZ = 1.5; targetYaw = 0; }
-  else { targetZ = 9 - easeIO(tp) * 8.0; targetYaw = easeIO(tp) * 0.5; }  // 9→1, поворот вправо до ~0.5 рад
+  if (brainOpen) { targetZ = 0.5; targetYaw = 0; }       // внутрь туннеля
+  else { targetZ = 9 - easeIO(tp) * 4.2; targetYaw = easeIO(tp) * 0.4; }  // 9→4.8: вперёд, но мозг виден целиком
   camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
   camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
@@ -402,7 +403,7 @@ function animate() {
     const solid = THREE.MathUtils.clamp(1 - tp / 0.1, 0, 1);
     if (solid > 0.001) {
       if (!duckMesh.visible && introDone) duckMesh.visible = true;
-      const look = pointerActive && tp < 0.05 ? pointerNX * 0.25 : Math.sin(t * 0.4) * 0.08;
+      const look = DUCK_FACE + (pointerActive && tp < 0.05 ? pointerNX * 0.22 : Math.sin(t * 0.4) * 0.07);
       duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.05;
       duckMesh.rotation.z = Math.sin(t * 0.6) * 0.015;
       let py = HERO_Y + Math.sin(t * 0.5) * 0.04;

@@ -50,10 +50,10 @@ export class ClubEnvironment {
     this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xff9988, size: 0.035, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // свет — приглушённый (бар тёмный, светит в основном неон)
-    this.scene.add(new THREE.AmbientLight(0x221018, 0.35));
-    const key = new THREE.DirectionalLight(0xffd9d0, 0.5); key.position.set(3, 6, 7); this.scene.add(key);
-    this.red = new THREE.PointLight(0xff1a1a, 20, 30); this.red.position.set(0, 2, 0); this.scene.add(this.red);
+    // свет — приглушённый, БЕЗ заливающего красного (красный даёт только неон самой модели)
+    this.scene.add(new THREE.AmbientLight(0x303038, 0.5));
+    const key = new THREE.DirectionalLight(0xfff2ea, 0.7); key.position.set(3, 6, 7); this.scene.add(key);
+    this.red = new THREE.PointLight(0xff3322, 6, 22); this.red.position.set(0, 2, 2); this.scene.add(this.red);
   }
 
   _loadClub() {
@@ -86,13 +86,13 @@ export class ClubEnvironment {
             this.neonMats.push(m);
             if (m.color) m.color.setHSL(0.0, 0.7, 0.25);
           } else {
-            // не неон → сильно затемняем (тёмные стены/мебель), убираем оранж/фиолет
+            // не неон → нейтральный ТЁМНО-СЕРЫЙ (без красного оттенка!), приглушаем
             if (m.color) {
               const hsl = {}; m.color.getHSL(hsl);
-              m.color.setHSL(0.0, hsl.s * 0.25, Math.min(hsl.l * 0.35, 0.18));
+              m.color.setHSL(hsl.h, hsl.s * 0.12, Math.min(hsl.l * 0.4, 0.16));
             }
             if (m.metalness !== undefined) m.metalness = Math.min(m.metalness ?? 0, 0.3);
-            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.6);
+            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
             if (m.emissive) m.emissive.setRGB(0, 0, 0);
           }
         });
@@ -128,7 +128,7 @@ export class ClubEnvironment {
       this.dust.rotation.y = t * 0.01;
       this.dust.material.opacity = 0.35 * this._fade;
     }
-    if (this.red) this.red.intensity = (18 + Math.sin(t * 1.2) * 4) * this._fade;
+    if (this.red) this.red.intensity = (5 + Math.sin(t * 1.2) * 2) * this._fade;
   }
 
   setVisibility() {}
