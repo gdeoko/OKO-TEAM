@@ -13,13 +13,15 @@ import { ClubEnvironment } from './three/environment.js';
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
 const PCOUNT = isMobile ? 12000 : 25000;
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
-const SUBJECT_X = isMobile ? 0 : 2.4;   // утка/мозг: справа на ПК, по центру на телефоне
-const SUBJECT_Y = isMobile ? 1.4 : 0.2; // выше на телефоне, чтобы текст снизу не перекрывался
+// утка/мозг: на ПК справа (текст слева), на телефоне сверху по центру
+const SUBJECT_X = isMobile ? 0 : 2.6;
+const SUBJECT_Y = isMobile ? 2.0 : 0.2;
+const SUBJECT_SCALE = isMobile ? 0.62 : 1;
 
 const sound = new SoundSystem();
 
 // ============================================================
-// Сэмплирование GLB → точки (быстрое: плоские массивы + бинарный поиск)
+// Сэмплирование GLB → точки (быстрое)
 // ============================================================
 function sampleModel(scene, count) {
   const ax = [], ay = [], az = [], bx = [], by = [], bz = [], cx = [], cy = [], cz = [];
@@ -68,9 +70,6 @@ function sampleModel(scene, count) {
   return arr;
 }
 
-// ============================================================
-// Нормализация GLB-меша (центр + масштаб)
-// ============================================================
 function normalize(obj, target) {
   const b = new THREE.Box3().setFromObject(obj);
   const s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
@@ -83,8 +82,7 @@ function normalize(obj, target) {
 // ============================================================
 const canvas = document.getElementById('webgl');
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050308);
-scene.fog = new THREE.Fog(0x050308, 14, 48);
+scene.fog = new THREE.Fog(0x070410, 16, 50);
 
 const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 120);
 camera.position.set(0, 0.4, 9);
@@ -100,7 +98,7 @@ const env = new ClubEnvironment(scene, isMobile);
 env.setVisibility();
 
 // ============================================================
-// Кубики (RoundedBox, красные глянцевые) для входа-занавеса
+// Кубики-занавес (красные глянцевые)
 // ============================================================
 function pipTexture(n) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 256;
@@ -109,37 +107,35 @@ function pipTexture(n) {
   x.fillStyle = '#ffffff';
   const dot = (px, py) => { x.beginPath(); x.arc(px, py, 26, 0, Math.PI * 2); x.fill(); };
   const L = 64, M = 128, R = 192;
-  const layouts = {
-    1: [[M, M]], 2: [[L, L], [R, R]], 3: [[L, L], [M, M], [R, R]],
-    4: [[L, L], [R, L], [L, R], [R, R]], 5: [[L, L], [R, L], [M, M], [L, R], [R, R]],
-    6: [[L, L], [R, L], [L, M], [R, M], [L, R], [R, R]],
-  };
+  const layouts = { 1: [[M, M]], 2: [[L, L], [R, R]], 3: [[L, L], [M, M], [R, R]], 4: [[L, L], [R, L], [L, R], [R, R]], 5: [[L, L], [R, L], [M, M], [L, R], [R, R]], 6: [[L, L], [R, L], [L, M], [R, M], [L, R], [R, R]] };
   layouts[n].forEach(([px, py]) => dot(px, py));
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function makeDie() {
   const geo = new RoundedBoxGeometry(1, 1, 1, 4, 0.12);
-  // порядок граней BoxGeometry: +X,-X,+Y,-Y,+Z,-Z ; сумма противоположных = 7
-  const faces = [2, 5, 3, 4, 1, 6];
-  const mats = faces.map((n) => new THREE.MeshPhysicalMaterial({
-    map: pipTexture(n), color: 0xffffff, roughness: 0.25, clearcoat: 1.0, clearcoatRoughness: 0.05, metalness: 0.0,
-  }));
+  const faces = [2, 5, 3, 4, 1, 6]; // +X,-X,+Y,-Y,+Z,-Z, суммы противоположных = 7
+  const mats = faces.map((n) => new THREE.MeshPhysicalMaterial({ map: pipTexture(n), color: 0xffffff, roughness: 0.25, clearcoat: 1.0, clearcoatRoughness: 0.05 }));
   return new THREE.Mesh(geo, mats);
 }
 const dice = [makeDie(), makeDie()];
-dice.forEach((d, i) => { d.position.set(i === 0 ? -0.8 : 0.8, 11, SUBJECT_X * 0.3); d.scale.setScalar(0.7); d.visible = false; scene.add(d); });
+dice.forEach((d) => { d.scale.setScalar(0.85); d.visible = false; scene.add(d); });
 
 // ============================================================
-// Утка (твёрдая) + система частиц (утка → мозг)
+// Утка + частицы
 // ============================================================
 const subject = new THREE.Group();
 subject.position.set(SUBJECT_X, SUBJECT_Y, 0);
+subject.scale.setScalar(SUBJECT_SCALE);
 scene.add(subject);
 
-let duckMesh = null;
-let particles = null;
+let duckMesh = null, particles = null;
 let duckPos = null, brainPos = null, ctrlPos = null, curPos = null, vel = null, delays = null;
 let morph = 0, ready = false, introDone = false;
+let headTarget = new THREE.Vector3();
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2(-10, -10);
+const pointer3D = new THREE.Vector3();
+let pointerActive = false, pointerNX = 0, pointerNY = 0;
 
 const INTERACT_RADIUS = 0.5, PUSH_FORCE = 0.022, RETURN_SPEED = 0.022, DAMPING = 0.93;
 
@@ -150,7 +146,6 @@ function buildParticles() {
   const colors = new Float32Array(N * 3); const sizes = new Float32Array(N);
   const palette = [new THREE.Color(0xffffff), new THREE.Color(0xc8e6ff), new THREE.Color(0x88ddff), new THREE.Color(0xffd700), new THREE.Color(0xcc0000)];
   for (let i = 0; i < N; i++) {
-    // старт точек = форма утки (бесшовная передача от твёрдой утки)
     curPos[i * 3] = duckPos[i * 3]; curPos[i * 3 + 1] = duckPos[i * 3 + 1]; curPos[i * 3 + 2] = duckPos[i * 3 + 2];
     delays[i] = Math.random() * 0.4;
     const mx = (duckPos[i * 3] + brainPos[i * 3]) / 2, my = (duckPos[i * 3 + 1] + brainPos[i * 3 + 1]) / 2, mz = (duckPos[i * 3 + 2] + brainPos[i * 3 + 2]) / 2;
@@ -189,10 +184,12 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
   .then(([duck, brain]) => {
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);
-    // твёрдая утка
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; } });
-    duckMesh = duck; duckMesh.visible = false; subject.add(duckMesh);
+    duckMesh = duck;
+    duckMesh.rotation.y = Math.PI; // развернуть лицом к зрителю (камера в +Z)
+    duckMesh.visible = false;
+    subject.add(duckMesh);
     buildParticles();
     document.getElementById('loader').classList.add('hidden');
     startIntro();
@@ -200,54 +197,71 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
   .catch((e) => { console.error(e); document.querySelector('.loader-txt').textContent = 'Не удалось загрузить модели. Обнови страницу.'; });
 
 // ============================================================
-// Вход-занавес: кубики падают → утка появляется → текст
+// Вход-занавес: кубики падают чётко → утка выходит справа → текст
 // ============================================================
+const DUCK_BASE_ROT = Math.PI; // baseline «лицом к зрителю»
 function startIntro() {
   const tl = gsap.timeline();
-  // кубики
-  dice.forEach((d) => { d.visible = true; });
-  tl.to(dice[0].position, { y: -11, duration: 2.0, ease: 'power1.in' }, 0.0);
-  tl.to(dice[1].position, { y: -11, duration: 2.0, ease: 'power1.in' }, 0.2);
-  tl.to(dice[0].rotation, { x: 6, z: 4, duration: 2.0, ease: 'none' }, 0.0);
-  tl.to(dice[1].rotation, { x: 5, y: 6, duration: 2.0, ease: 'none' }, 0.2);
-  tl.add(() => { dice.forEach((d) => (d.visible = false)); }, 2.0);
+  // кубики: появляются вверху над центром, падают с проворотом, уходят вниз
+  dice.forEach((d, i) => {
+    d.position.set(i === 0 ? -0.9 : 0.9, 7, 0.5);
+    d.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    d.visible = true;
+  });
+  tl.fromTo(dice[0].position, { y: 7 }, { y: -8, duration: 1.7, ease: 'power1.in' }, 0.1);
+  tl.fromTo(dice[1].position, { y: 7.6 }, { y: -8, duration: 1.7, ease: 'power1.in' }, 0.28);
+  tl.to(dice[0].rotation, { x: '+=7', z: '+=5', duration: 1.7, ease: 'none' }, 0.1);
+  tl.to(dice[1].rotation, { x: '+=6', y: '+=7', duration: 1.7, ease: 'none' }, 0.28);
+  tl.add(() => dice.forEach((d) => (d.visible = false)), 1.85);
 
-  // утка выходит сбоку с покачиванием
-  tl.add(() => { if (duckMesh) duckMesh.visible = true; sound.playFormation(); }, 1.9);
+  // утка выходит СПРАВА, идёт к своей позиции, поворачивается лицом
+  tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.7);
   if (duckMesh) {
-    duckMesh.position.x = isMobile ? -4 : -6;
-    duckMesh.rotation.y = -0.6;
-    tl.to(duckMesh.position, { x: 0, duration: 1.8, ease: 'power2.out' }, 1.9);
-    tl.to(duckMesh.rotation, { y: 0, duration: 1.4, ease: 'power2.out' }, 2.6);
+    duckMesh.position.x = isMobile ? 4 : 6;
+    duckMesh.rotation.y = DUCK_BASE_ROT + 0.7;
+    tl.to(duckMesh.position, { x: 0, duration: 1.7, ease: 'power2.out' }, 1.7);
+    tl.to(duckMesh.rotation, { y: DUCK_BASE_ROT, duration: 1.5, ease: 'power2.out' }, 2.4);
   }
-  // текст (HTML) появляется
-  tl.add(() => document.body.classList.add('hero-in'), 2.3);
-  tl.add(() => { introDone = true; }, 4.0);
+  tl.add(() => document.body.classList.add('hero-in'), 2.2);
+  tl.add(() => { introDone = true; }, 3.8);
 }
 
 // ============================================================
-// Указатель / взаимодействие
+// Указатель
 // ============================================================
-const pointer = new THREE.Vector2(-10, -10);
-const raycaster = new THREE.Raycaster();
-const pointer3D = new THREE.Vector3();
-let pointerActive = false, pointerNX = 0, pointerNY = 0;
 function updatePointer(x, y) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
   pointerNX = pointer.x; pointerNY = pointer.y; pointerActive = true;
   raycaster.setFromCamera(pointer, camera);
-  raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.0), pointer3D);
-  pointer3D.sub(subject.position); // в локальные координаты subject
+  raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), pointer3D);
+  headTarget.copy(pointer3D);
+  pointer3D.sub(subject.position).divideScalar(SUBJECT_SCALE);
 }
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 addEventListener('mouseleave', () => { pointerActive = false; });
 
-// клик/тап по утке — кряк
-addEventListener('click', () => { if (introDone && morph < 0.3) sound.playQuack(); });
+// клик ТОЛЬКО по утке → кряк
+function tryQuack(x, y) {
+  if (!introDone || morph > 0.3 || !duckMesh || !duckMesh.visible) return;
+  pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  if (raycaster.intersectObject(duckMesh, true).length > 0) { sound.playQuack(); duckMesh.userData.poke = 0.3; }
+}
+addEventListener('click', (e) => tryQuack(e.clientX, e.clientY));
 
 // ============================================================
-// Скролл (Lenis)
+// Автостарт звука при первом действии (без оверлея)
+// ============================================================
+let audioStarted = false;
+function startAudioOnce() {
+  if (audioStarted) return; audioStarted = true;
+  sound.init(); sound.ctx.resume(); sound.startMusic();
+}
+['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach((ev) => addEventListener(ev, startAudioOnce, { once: true, passive: true }));
+
+// ============================================================
+// Скролл
 // ============================================================
 const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
 let scrollProgress = 0;
@@ -282,37 +296,39 @@ let frame = 0;
 function animate() {
   requestAnimationFrame(animate);
   const t = clock.getElapsedTime(); frame++;
-  env.update(t, scrollProgress);
+  env.update(t);
 
-  // распад утки 0..0.45, морфинг в мозг 0.45..0.95
-  const dissolve = THREE.MathUtils.clamp(scrollProgress / 0.45, 0, 1);
-  const targetMorph = THREE.MathUtils.smoothstep(scrollProgress, 0.45, 0.95);
+  // распад утки 0..0.4, морфинг в мозг 0.4..0.95
+  const dissolve = THREE.MathUtils.clamp(scrollProgress / 0.4, 0, 1);
+  const targetMorph = THREE.MathUtils.smoothstep(scrollProgress, 0.4, 0.95);
   morph += (targetMorph - morph) * 0.06;
 
-  // камера летит сквозь облако и притухание среды на абстракции
   const fly = Math.sin(Math.min(scrollProgress, 1) * Math.PI);
   camera.position.z = 9 - fly * 6.5;
-  camera.position.x += ((pointerNX * 0.4) - camera.position.x) * 0.02;
-  camera.position.y += (0.4 + (-pointerNY * 0.25) + Math.sin(t * 0.3) * 0.05 - camera.position.y) * 0.02;
-  camera.lookAt(subject.position.x * 0.4, subject.position.y * 0.5, 0);
-  env.fade(1 - morph * 0.75);
+  camera.position.x += ((pointerNX * 0.35) - camera.position.x) * 0.02;
+  camera.position.y += (0.4 + (-pointerNY * 0.22) + Math.sin(t * 0.3) * 0.05 - camera.position.y) * 0.02;
+  camera.lookAt(subject.position.x * 0.35, subject.position.y * 0.5, 0);
+  env.fade(1 - morph * 0.8);
 
-  // твёрдая утка: idle + распад
+  // твёрдая утка: idle, взгляд за курсором, чистый распад (гаснет к 0.5 dissolve)
   if (duckMesh && duckMesh.visible) {
-    duckMesh.rotation.y = Math.sin(t * 0.4) * 0.12 + pointerNX * 0.2;
+    const look = pointerActive ? pointerNX * 0.35 : Math.sin(t * 0.4) * 0.12;
+    duckMesh.rotation.y += (DUCK_BASE_ROT + look - duckMesh.rotation.y) * 0.06;
     duckMesh.rotation.z = Math.sin(t * 0.6) * 0.02;
-    duckMesh.position.y = Math.sin(t * 0.5) * 0.04;
-    const op = 1 - dissolve;
+    let py = Math.sin(t * 0.5) * 0.04;
+    if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.85; py += (Math.random() - 0.5) * duckMesh.userData.poke; }
+    duckMesh.position.y = py;
+    const op = THREE.MathUtils.clamp(1 - dissolve * 2.2, 0, 1); // полностью исчез к dissolve~0.45
     duckMesh.traverse((c) => { if (c.material) c.material.opacity = op; });
-    if (dissolve >= 1) duckMesh.visible = false;
-  } else if (duckMesh && !duckMesh.visible && dissolve < 1 && introDone) {
+    if (op <= 0.001) duckMesh.visible = false;
+  } else if (duckMesh && !duckMesh.visible && introDone && dissolve < 0.4) {
     duckMesh.visible = true;
   }
 
-  // частицы
+  // частицы: появляются по мере распада (кроссфейд с твёрдой уткой)
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    particles.material.uniforms.uOpacity.value = Math.min(1, dissolve * 1.4);
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(dissolve, 0.08, 0.55);
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     let pushed = 0;
     for (let i = 0; i < N; i++) {
@@ -350,33 +366,16 @@ addEventListener('resize', () => {
 });
 
 // ============================================================
-// Оверлей / mute / курсор / hover
+// Mute / hover-звуки
 // ============================================================
-const overlay = document.getElementById('start-overlay');
-function enter(withSound) { if (withSound) { sound.init(); sound.ctx.resume(); sound.startMusic(); } overlay.classList.add('hidden'); }
-overlay.addEventListener('click', (e) => { if (e.target.id !== 'skip-sound') enter(true); });
-document.getElementById('skip-sound').addEventListener('click', (e) => { e.stopPropagation(); enter(false); });
-
 const muteBtn = document.getElementById('mute-btn');
 muteBtn.addEventListener('click', () => {
   const m = sound.toggleMute();
   document.getElementById('ic-sound-on').style.display = m ? 'none' : 'block';
   document.getElementById('ic-sound-off').style.display = m ? 'block' : 'none';
 });
-
 document.querySelectorAll('a, button, [data-t]').forEach((el) => {
-  el.addEventListener('mouseenter', () => { sound.playHover(); document.body.classList.add('cursor-hover'); });
-  el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  el.addEventListener('mouseenter', () => sound.playHover());
   el.addEventListener('click', () => sound.playClick());
 });
-
-if (window.matchMedia('(hover: hover)').matches) {
-  const dot = document.createElement('div'); dot.id = 'cursor-dot';
-  const ring = document.createElement('div'); ring.id = 'cursor-ring';
-  document.body.append(dot, ring);
-  let rx = 0, ry = 0, dx = 0, dy = 0;
-  addEventListener('mousemove', (e) => { dx = e.clientX; dy = e.clientY; dot.style.left = dx + 'px'; dot.style.top = dy + 'px'; });
-  (function loop() { rx += (dx - rx) * 0.18; ry += (dy - ry) * 0.18; ring.style.left = rx + 'px'; ring.style.top = ry + 'px'; requestAnimationFrame(loop); })();
-}
-
 document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); lenis.scrollTo('#about', { duration: 1.6 }); });

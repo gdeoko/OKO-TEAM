@@ -18,9 +18,7 @@ body {
   color: var(--white);
   font-family: var(--fb);
   overflow-x: hidden;
-  cursor: none;
 }
-@media (hover: none) { body { cursor: auto; } }
 ::selection { background: var(--red-primary); color: #fff; }
 a { color: inherit; text-decoration: none; }
 
@@ -191,35 +189,7 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .about-note { margin-top: 22px; font-size: 14px; color: rgba(255,255,255,.4); }
 
 /* Start overlay */
-#start-overlay {
-  position: fixed; inset: 0; z-index: 2000;
-  background: rgba(3, 3, 8, .94);
-  backdrop-filter: blur(20px);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: opacity .6s;
-}
-#start-overlay.hidden { opacity: 0; pointer-events: none; }
-.start-card { text-align: center; }
-.start-ring {
-  width: 80px; height: 80px; margin: 0 auto 22px;
-  border: 2px solid var(--ice-blue); border-radius: 50%;
-  position: relative; animation: ring 2s infinite;
-  box-shadow: 0 0 40px rgba(136, 221, 255, .4);
-}
-.start-ring::after {
-  content: ''; position: absolute; top: 50%; left: 54%; transform: translate(-50%, -50%);
-  width: 0; height: 0; border-left: 18px solid var(--ice-blue);
-  border-top: 12px solid transparent; border-bottom: 12px solid transparent;
-}
-@keyframes ring { 0%,100%{box-shadow:0 0 40px rgba(136,221,255,.4)} 50%{box-shadow:0 0 70px rgba(136,221,255,.85)} }
-.start-card h2 { font-family: var(--fd); font-weight: 900; letter-spacing: .2em; font-size: 26px; margin-bottom: 10px; }
-.start-card p { color: rgba(255,255,255,.5); font-size: 14px; letter-spacing: .05em; }
-#skip-sound {
-  margin-top: 20px; background: none; border: 1px solid rgba(255,255,255,.18);
-  color: rgba(255,255,255,.5); font-family: var(--fb); font-size: 12px;
-  padding: 9px 20px; border-radius: 30px; cursor: pointer; transition: all .3s;
-}
-#skip-sound:hover { border-color: var(--red-primary); color: #fff; }
+/* (стартовый оверлей и кастомный курсор удалены) */
 
 /* Loader */
 #loader {
@@ -235,19 +205,6 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loader-txt { color: rgba(255,255,255,.5); font-size: 14px; letter-spacing: .05em; }
-
-/* Кастомный курсор */
-#cursor-dot, #cursor-ring {
-  position: fixed; top: 0; left: 0; z-index: 3000;
-  pointer-events: none; border-radius: 50%;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: screen;
-}
-#cursor-dot { width: 8px; height: 8px; background: var(--red-primary); transition: width .2s, height .2s, background .2s; }
-#cursor-ring { width: 34px; height: 34px; border: 1px solid rgba(204,0,0,.5); transition: width .25s, height .25s, border-color .25s, opacity .25s; }
-body.cursor-hover #cursor-dot { width: 0; height: 0; }
-body.cursor-hover #cursor-ring { width: 50px; height: 50px; border-color: var(--ice-blue); }
-@media (hover: none) { #cursor-dot, #cursor-ring { display: none; } }
 
 @media (max-width: 768px) {
   /* На телефоне: фигура сверху (управляется 3D), текст в нижней зоне с подложкой.
