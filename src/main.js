@@ -17,7 +17,8 @@ const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 const HERO_X = 0;
 const HERO_Y = isMobile ? 0.4 : 0.1;
 const SUBJ_SCALE = isMobile ? 0.6 : 1.15;   // не перекрывать текст
-const DUCK_FACE = -Math.PI / 2;             // лицо утки (+X) → в камеру
+// Утка стояла боком вправо при -PI/2. Доворот на +45° (PI/4) ставит клюв ровно в камеру.
+const DUCK_FACE = -Math.PI / 2 + Math.PI / 4;   // = -PI/4, лицо ровно к зрителю
 
 const sound = new SoundSystem();
 
@@ -215,7 +216,7 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
     duckMesh = new THREE.Group();
     duckMesh.add(duck);
-    duckMesh.rotation.y = 0;
+    duckMesh.rotation.y = DUCK_FACE;   // единый угол везде, без рассинхрона
     duckMesh.visible = false; subject.add(duckMesh);
     buildParticles();
     if (ldBar) ldBar.style.width = '100%';
