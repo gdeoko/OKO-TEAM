@@ -113,19 +113,85 @@ export class SoundSystem {
     }
   }
 
-  // Кряк утки
+  // Кряк утки — один чистый, с защитой от наложения (не дёргается)
   playQuack() {
     if (!this.ctx || this.muted) return;
     const now = this.ctx.currentTime;
-    [[400, 600], [600, 500]].forEach(([a, b], i) => {
-      const t = now + i * 0.18;
-      const o = this.ctx.createOscillator(); o.type = 'triangle';
-      o.frequency.setValueAtTime(a, t); o.frequency.linearRampToValueAtTime(b, t + 0.12);
+    if (now - (this._lastQuack || 0) < 0.5) return;
+    this._lastQuack = now;
+    const lp = this.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1600; lp.connect(this.master);
+    [[420, 560], [560, 470]].forEach(([a, b], i) => {
+      const t = now + i * 0.16;
+      const o = this.ctx.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(a, t); o.frequency.linearRampToValueAtTime(b, t + 0.13);
       const g = this.ctx.createGain(); g.gain.value = 0;
-      g.gain.linearRampToValueAtTime(0.18, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-      o.connect(g).connect(this.master); o.start(t); o.stop(t + 0.2);
+      g.gain.linearRampToValueAtTime(0.14, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      o.connect(g).connect(lp); o.start(t); o.stop(t + 0.2);
     });
+  }
+
+  // Шелест — мягкий фильтрованный шум при касании частиц мозга
+  playRustle(intensity = 1) {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    if (now - (this._lastRustle || 0) < 0.05) return;
+    this._lastRustle = now;
+    const dur = 0.25;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = 3500 + Math.random() * 1500; bp.Q.value = 0.8;
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.06 * intensity, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Растворение + «вдох» — при влёте внутрь утки на скролле
+  playDissolve() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    if (now - (this._lastDissolve || 0) < 1.2) return;
+    this._lastDissolve = now;
+    // нисходящий тон (растворение)
+    const o = this.ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(700, now); o.frequency.exponentialRampToValueAtTime(120, now + 1.4);
+    const og = this.ctx.createGain(); og.gain.value = 0;
+    og.gain.linearRampToValueAtTime(0.08, now + 0.2);
+    og.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    o.connect(og).connect(this.master); o.start(now); o.stop(now + 1.6);
+    // «вдох» — нарастающий фильтрованный шум (погружение)
+    const dur = 1.6;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(300, now); bp.frequency.exponentialRampToValueAtTime(3000, now + 1.2);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.05, now + 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Глич — для текста (наведение/клик): короткие цифровые щелчки
+  playGlitch() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    if (now - (this._lastGlitch || 0) < 0.08) return;
+    this._lastGlitch = now;
+    for (let i = 0; i < 3; i++) {
+      const t = now + i * 0.03;
+      const o = this.ctx.createOscillator(); o.type = 'square';
+      o.frequency.value = 600 + Math.random() * 1800;
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(0.04, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t + 0.05);
+    }
   }
 
   // Мягкий UI-отклик при наведении

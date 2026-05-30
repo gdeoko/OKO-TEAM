@@ -113,9 +113,10 @@ a { color: inherit; text-decoration: none; }
 /* Hero */
 #hero { justify-content: flex-start; }
 .hero-inner {
-  max-width: 620px;
-  opacity: 0; transform: translateY(24px);
+  max-width: 600px;
+  opacity: 0; transform: translateY(20px);
   transition: opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1);
+  will-change: opacity, filter;
 }
 body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .hero-eyebrow {
@@ -145,11 +146,13 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
   color: var(--ice-white);
 }
 .hero-desc { font-size: clamp(15px, 2vw, 18px); color: rgba(255,255,255,.6); margin: 28px 0 34px; line-height: 1.6; }
-.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; align-items: stretch; }
 .btn {
+  display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--fd); font-weight: 700; font-size: 13px;
-  letter-spacing: 2px; text-transform: uppercase;
-  padding: 15px 34px; border-radius: 44px; transition: transform .25s, box-shadow .25s, border-color .25s, background .25s, letter-spacing .25s;
+  letter-spacing: 2px; text-transform: uppercase; line-height: 1;
+  height: 52px; padding: 0 34px; border-radius: 26px;
+  transition: transform .25s, box-shadow .25s, border-color .25s, background .25s, letter-spacing .25s;
 }
 .btn:hover { letter-spacing: 3px; }
 .btn-fill { background: linear-gradient(135deg, var(--red-primary), var(--red-bright)); box-shadow: 0 6px 28px rgba(204,0,0,.45); }
@@ -165,9 +168,11 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .scroll-hint svg { animation: bob 2s infinite; }
 @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(7px)} }
 
-/* About */
+/* About — текст проявляется по скроллу через JS (opacity/scale) */
 #about { justify-content: flex-start; }
-.about-inner { max-width: 560px; text-align: left; }
+.about-inner { max-width: 540px; text-align: left; opacity: 0; transform: scale(.94); transform-origin: left center; will-change: opacity, transform; }
+.about-hint { margin-top: 18px; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(136,221,255,.6); }
+body.brain-open .about-hint { opacity: 0; }
 .about-label {
   font-family: var(--fd); font-size: 10px; font-weight: 500;
   letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 14px;
@@ -179,10 +184,8 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
   background: rgba(255,255,255,.025);
   border: 1px solid rgba(204,0,0,.12); border-radius: 12px;
   padding: 18px 16px; text-align: left;
-  opacity: 0; transform: translateY(24px);
-  transition: opacity .6s, transform .6s, border-color .3s, background .3s;
+  transition: border-color .3s, background .3s, transform .3s, box-shadow .3s;
 }
-.thesis.vis { opacity: 1; transform: translateY(0); }
 .thesis:hover { border-color: rgba(204,0,0,.4); background: rgba(204,0,0,.05); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(204,0,0,.15); }
 .thesis b { display: block; font-size: 15px; margin-bottom: 4px; }
 .thesis span { font-size: 13px; color: rgba(255,255,255,.55); }
@@ -190,6 +193,41 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 
 /* Start overlay */
 /* (стартовый оверлей и кастомный курсор удалены) */
+
+/* Глич текста при наведении */
+.glitching { animation: glitch .35s steps(2) 1; }
+@keyframes glitch {
+  0% { text-shadow: 2px 0 var(--red-bright), -2px 0 var(--ice-blue); transform: translate(0); }
+  25% { text-shadow: -2px 0 var(--red-bright), 2px 0 var(--ice-blue); transform: translate(1px,-1px); }
+  50% { text-shadow: 2px 0 var(--ice-blue), -2px 0 var(--red-bright); transform: translate(-1px,1px); }
+  100% { text-shadow: none; transform: translate(0); }
+}
+
+/* Подробности «внутри мозга» */
+#brain-detail {
+  position: fixed; inset: 0; z-index: 800;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .6s ease;
+  padding: 80px 24px;
+}
+body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
+.bd-inner { max-width: 600px; text-align: center; }
+.bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
+#brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(24px,4vw,40px); line-height: 1.15; margin-bottom: 22px; }
+#brain-detail p { color: rgba(255,255,255,.7); font-size: clamp(14px,2vw,17px); line-height: 1.7; margin-bottom: 14px; }
+.bd-stats { display: flex; gap: 28px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+.bd-stats div { display: flex; flex-direction: column; }
+.bd-stats b { font-family: var(--fd); font-weight: 900; font-size: 30px; color: var(--red-bright); }
+.bd-stats span { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; }
+#brain-back {
+  position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 810;
+  background: rgba(8,8,8,.5); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.18); color: #fff;
+  font-family: var(--fd); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 12px 24px; border-radius: 30px; cursor: pointer; transition: border-color .3s;
+}
+#brain-back:hover { border-color: var(--red-primary); }
 
 /* Loader */
 #loader {
@@ -207,25 +245,32 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .loader-txt { color: rgba(255,255,255,.5); font-size: 14px; letter-spacing: .05em; }
 
 @media (max-width: 768px) {
-  /* На телефоне: фигура сверху (управляется 3D), текст в нижней зоне с подложкой.
-     Контент прижат вниз, поверх лёгкого градиента, чтобы не перекрывался с 3D. */
-  .sec { padding: 0 18px; align-items: flex-end; min-height: 100vh; }
+  /* Фигура (3D) занимает верх экрана, контент — нижнюю зону. Без тёмных подложек:
+     читаемость даём лёгкой тенью текста, а не плашкой. */
+  .sec { padding: 0 20px; align-items: flex-end; min-height: 100svh; }
   #hero, #about { justify-content: center; }
   .hero-inner, .about-inner {
     max-width: 100%; width: 100%; text-align: center;
-    padding: 26px 18px calc(120px + env(safe-area-inset-bottom));
-    background: linear-gradient(to top, rgba(5,3,8,.92) 60%, rgba(5,3,8,0));
+    padding: 20px 14px calc(132px + env(safe-area-inset-bottom));
+    text-shadow: 0 2px 18px rgba(0,0,0,.85);
   }
-  .about-inner { text-align: center; }
-  .hero-title { font-size: clamp(42px, 13vw, 64px); }
+  .about-inner { text-align: center; transform-origin: center center; }
+  .hero-title { font-size: clamp(40px, 12vw, 60px); }
+  .hero-sub { font-size: clamp(14px, 4vw, 20px); }
+  .hero-desc { margin: 18px 0 24px; }
   .hero-btns { justify-content: center; }
-  .btn { flex: 1; text-align: center; min-width: 0; }
-  .thesis-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .thesis { padding: 14px 12px; }
-  .thesis b { font-size: 13px; }
-  .thesis span { font-size: 11px; }
-  .scroll-hint { bottom: 14px; }
+  .btn { flex: 1; min-width: 0; padding: 0 18px; height: 50px; }
+  /* тезисы компактные, в 2 колонки, не налезают на мозг */
+  .thesis-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .thesis { padding: 10px 10px; background: rgba(255,255,255,.04); }
+  .thesis b { font-size: 12px; margin-bottom: 2px; }
+  .thesis span { font-size: 10px; }
+  .about-title { font-size: clamp(24px, 7vw, 34px); margin-bottom: 16px; }
+  .about-note { font-size: 12px; margin-top: 14px; }
+  .scroll-hint { bottom: 12px; }
   #nav { padding: 14px 18px; }
   #section-counter { bottom: 16px; right: 16px; }
   #mute-btn { bottom: 14px; left: 14px; }
+  .bd-stats { gap: 18px; }
+  .bd-stats b { font-size: 24px; }
 }
