@@ -106,22 +106,23 @@ a { color: inherit; text-decoration: none; }
   position: relative;
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 100px 32px;
+  justify-content: space-between;
+  text-align: center;
+  padding: 88px 24px 64px;
 }
 
-/* Hero */
-#hero { justify-content: flex-start; }
-.hero-inner {
-  max-width: 600px;
+/* Hero — заголовок сверху, утка по центру (3D), кнопки снизу */
+.hero-top, .hero-bottom {
   opacity: 0; transform: translateY(20px);
-  transition: opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1);
+  transition: opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1), filter .4s;
   will-change: opacity, filter;
 }
-body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
+body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; transform: translateY(0); }
 .hero-eyebrow {
   display: inline-flex; align-items: center; gap: 9px;
-  padding: 8px 18px; margin-bottom: 26px;
+  padding: 8px 18px; margin-bottom: 20px;
   border: 1px solid rgba(204, 0, 0, .3); border-radius: 40px;
   background: rgba(204, 0, 0, .06);
   font-family: var(--fd); font-size: 10px; font-weight: 500;
@@ -135,18 +136,17 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.6)} }
 .hero-title {
   font-family: var(--fd); font-weight: 900;
-  font-size: clamp(48px, 8vw, 96px); line-height: .98; letter-spacing: -1px;
-  transform: perspective(1000px) rotateX(3deg);
+  font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -1px;
   transition: letter-spacing .4s ease, text-shadow .4s ease;
 }
 .hero-title:hover { letter-spacing: .04em; text-shadow: 0 0 30px rgba(136,221,255,.5); }
 .hero-sub {
-  font-family: var(--fd); font-weight: 400; font-size: clamp(16px, 3vw, 30px);
+  font-family: var(--fd); font-weight: 400; font-size: clamp(15px, 2.4vw, 26px);
   letter-spacing: .3em; text-transform: lowercase; margin-top: 8px;
   color: var(--ice-white);
 }
-.hero-desc { font-size: clamp(15px, 2vw, 18px); color: rgba(255,255,255,.6); margin: 28px 0 34px; line-height: 1.6; }
-.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; align-items: stretch; }
+.hero-desc { font-size: clamp(14px, 1.7vw, 17px); color: rgba(255,255,255,.65); margin: 16px auto 0; line-height: 1.6; max-width: 460px; }
+.hero-btns { display: flex; gap: 14px; justify-content: center; align-items: stretch; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--fd); font-weight: 700; font-size: 13px;
@@ -157,10 +157,10 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .btn:hover { letter-spacing: 3px; }
 .btn-fill { background: linear-gradient(135deg, var(--red-primary), var(--red-bright)); box-shadow: 0 6px 28px rgba(204,0,0,.45); }
 .btn-fill:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(204,0,0,.65); }
-.btn-line { border: 1px solid rgba(255,255,255,.2); }
-.btn-line:hover { border-color: var(--red-primary); background: rgba(204,0,0,.08); }
+.btn-line { border: 1px solid rgba(255,255,255,.2); background: rgba(8,8,8,.25); backdrop-filter: blur(4px); }
+.btn-line:hover { border-color: var(--red-primary); background: rgba(204,0,0,.12); }
 .scroll-hint {
-  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   font-family: var(--fd); font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
   color: rgba(255,255,255,.4);
@@ -168,28 +168,64 @@ body.hero-in .hero-inner { opacity: 1; transform: translateY(0); }
 .scroll-hint svg { animation: bob 2s infinite; }
 @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(7px)} }
 
-/* About — текст проявляется по скроллу через JS (opacity/scale) */
+/* About — заголовок сверху, мозг центр, карточки слева/справа (через JS opacity) */
 #about { justify-content: flex-start; }
-.about-inner { max-width: 540px; text-align: left; opacity: 0; transform: scale(.94); transform-origin: left center; will-change: opacity, transform; }
-.about-hint { margin-top: 18px; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(136,221,255,.6); }
-body.brain-open .about-hint { opacity: 0; }
+.about-top { opacity: 0; transition: opacity .8s; will-change: opacity; margin-bottom: 8px; }
 .about-label {
   font-family: var(--fd); font-size: 10px; font-weight: 500;
-  letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 14px;
+  letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 12px;
 }
-.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(28px, 5vw, 52px); line-height: 1.05; margin-bottom: 32px; }
+.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(26px, 4.5vw, 50px); line-height: 1.05; }
 .about-title em { font-style: normal; color: var(--red-bright); }
-.thesis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+/* колонки тезисов по бокам мозга */
+.thesis-col {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 16px; width: 230px;
+  opacity: 0; transition: opacity .7s, transform .7s; will-change: opacity, transform;
+}
+.thesis-left { left: 5%; transform: translateY(-50%) translateX(-20px); text-align: left; }
+.thesis-right { right: 5%; transform: translateY(-50%) translateX(20px); text-align: right; }
+body.about-in .thesis-left { opacity: 1; transform: translateY(-50%) translateX(0); }
+body.about-in .thesis-right { opacity: 1; transform: translateY(-50%) translateX(0); }
+body.about-in .about-top { opacity: 1; }
+body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-bottom { opacity: 0 !important; pointer-events: none; }
 .thesis {
-  background: rgba(255,255,255,.025);
-  border: 1px solid rgba(204,0,0,.12); border-radius: 12px;
-  padding: 18px 16px; text-align: left;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(204,0,0,.14); border-radius: 12px;
+  padding: 16px 16px; backdrop-filter: blur(6px);
   transition: border-color .3s, background .3s, transform .3s, box-shadow .3s;
 }
-.thesis:hover { border-color: rgba(204,0,0,.4); background: rgba(204,0,0,.05); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(204,0,0,.15); }
-.thesis b { display: block; font-size: 15px; margin-bottom: 4px; }
-.thesis span { font-size: 13px; color: rgba(255,255,255,.55); }
-.about-note { margin-top: 22px; font-size: 14px; color: rgba(255,255,255,.4); }
+.thesis:hover { border-color: rgba(204,0,0,.45); background: rgba(204,0,0,.06); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(204,0,0,.2); }
+.thesis b { display: block; font-size: 14px; margin-bottom: 4px; }
+.thesis span { font-size: 12px; color: rgba(255,255,255,.55); }
+.about-bottom { opacity: 0; transition: opacity .8s; will-change: opacity; }
+body.about-in .about-bottom { opacity: 1; }
+.about-note { font-size: 13px; color: rgba(255,255,255,.45); }
+
+/* Красивая пометка «нажми» у мозга */
+#brain-hint {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0; transition: opacity .6s; pointer-events: none;
+}
+body.about-in #brain-hint { opacity: 1; }
+body.brain-open #brain-hint { opacity: 0; }
+.bh-ring {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--ice-blue);
+  position: relative;
+}
+.bh-ring::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid var(--ice-blue); animation: bhpulse 1.8s ease-out infinite;
+}
+.bh-ring::after {
+  content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
+  background: var(--ice-blue); border-radius: 50%; transform: translate(-50%,-50%);
+  box-shadow: 0 0 10px var(--ice-blue);
+}
+@keyframes bhpulse { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(2.6); opacity: 0; } }
+.bh-label { font-family: var(--fd); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--ice-blue); }
 
 /* Start overlay */
 /* (стартовый оверлей и кастомный курсор удалены) */
@@ -203,23 +239,24 @@ body.brain-open .about-hint { opacity: 0; }
   100% { text-shadow: none; transform: translate(0); }
 }
 
-/* Подробности «внутри мозга» — затемнённый попап */
+/* «Внутри мозга» — текст в центре туннеля. Затемнение ТОЛЬКО в центре (даль туннеля),
+   без сплошной плашки: по краям виден летящий туннель из частиц. */
 #brain-detail {
   position: fixed; inset: 0; z-index: 1200;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse 80% 80% at 50% 50%, rgba(10,4,20,.72), rgba(3,2,8,.94));
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: radial-gradient(ellipse 46% 52% at 50% 50%, rgba(2,1,6,.92) 0%, rgba(2,1,6,.7) 40%, rgba(2,1,6,0) 78%);
   opacity: 0; pointer-events: none;
-  transition: opacity .5s ease;
+  transition: opacity .6s ease;
   padding: 90px 24px 60px;
 }
 body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
+/* текст рождается из точки вдалеке: стартует крошечным и далёким, наезжает */
 .bd-inner {
-  max-width: 600px; text-align: center;
-  transform: translateY(20px) scale(.96);
-  transition: transform .55s cubic-bezier(.22,1,.36,1);
+  max-width: 560px; text-align: center;
+  transform: scale(.2); opacity: 0; filter: blur(6px);
+  transition: transform 1.1s cubic-bezier(.16,1,.3,1), opacity .9s ease, filter .9s ease;
 }
-body.brain-open .bd-inner { transform: translateY(0) scale(1); }
+body.brain-open .bd-inner { transform: scale(1); opacity: 1; filter: blur(0); }
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(22px,4vw,38px); line-height: 1.15; margin-bottom: 22px; }
 #brain-detail p { color: rgba(255,255,255,.72); font-size: clamp(14px,2vw,17px); line-height: 1.7; margin-bottom: 14px; }
@@ -263,33 +300,35 @@ body.brain-open .bd-inner { transform: translateY(0) scale(1); }
 .ld-bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--red-primary), var(--red-bright)); box-shadow: 0 0 8px var(--red-primary); transition: width .3s ease; }
 
 @media (max-width: 768px) {
-  /* Фигура (3D) занимает верх экрана, контент — нижнюю зону. Без тёмных подложек:
-     читаемость даём лёгкой тенью текста, а не плашкой. */
-  .sec { padding: 0 20px; align-items: flex-end; min-height: 100svh; }
-  #hero, #about { justify-content: center; }
-  .hero-inner, .about-inner {
-    max-width: 100%; width: 100%; text-align: center;
-    padding: 20px 14px calc(132px + env(safe-area-inset-bottom));
-    text-shadow: 0 2px 18px rgba(0,0,0,.85);
+  /* Hero: заголовок сверху → утка (3D) в центре → кнопки снизу. Ничего не налезает. */
+  .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); min-height: 100svh; justify-content: space-between; }
+  .hero-top, .about-top { text-shadow: 0 2px 16px rgba(0,0,0,.9); }
+  .hero-title { font-size: clamp(34px, 11vw, 52px); }
+  .hero-sub { font-size: clamp(13px, 4vw, 18px); }
+  .hero-desc { margin: 12px auto 0; font-size: 13px; max-width: 320px; }
+  .hero-btns { justify-content: center; width: 100%; }
+  .btn { flex: 1; min-width: 0; padding: 0 14px; height: 48px; font-size: 12px; }
+
+  /* About: заголовок сверху → мозг центр → 4 карточки СНИЗУ рядами, не налезают */
+  #about { justify-content: flex-start; }
+  .about-title { font-size: clamp(22px, 7vw, 32px); }
+  .thesis-col {
+    position: static; transform: none; width: 100%; flex-direction: row; gap: 8px;
+    opacity: 0; transition: opacity .6s;
   }
-  .about-inner { text-align: center; transform-origin: center center; }
-  .hero-title { font-size: clamp(40px, 12vw, 60px); }
-  .hero-sub { font-size: clamp(14px, 4vw, 20px); }
-  .hero-desc { margin: 18px 0 24px; }
-  .hero-btns { justify-content: center; }
-  .btn { flex: 1; min-width: 0; padding: 0 18px; height: 50px; }
-  /* тезисы компактные, в 2 колонки, не налезают на мозг */
-  .thesis-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-  .thesis { padding: 10px 10px; background: rgba(255,255,255,.04); }
+  .thesis-left { margin-top: auto; }   /* прижимаем группу карточек к низу, мозг сверху виден */
+  body.about-in .thesis-left, body.about-in .thesis-right { opacity: 1; transform: none; }
+  .about-bottom { width: 100%; margin-top: 8px; }
+  .thesis { padding: 10px 12px; flex: 1; text-shadow: none; background: rgba(255,255,255,.05); }
   .thesis b { font-size: 12px; margin-bottom: 2px; }
   .thesis span { font-size: 10px; }
-  .about-title { font-size: clamp(24px, 7vw, 34px); margin-bottom: 16px; }
-  .about-note { font-size: 12px; margin-top: 14px; }
-  .scroll-hint { bottom: 12px; }
+  .about-note { font-size: 11px; }
+
+  .scroll-hint { bottom: 10px; }
   #nav { padding: 14px 18px; }
   #section-counter { bottom: 16px; right: 16px; }
   #mute-btn { bottom: 14px; left: 14px; }
-  /* попап мозга на телефоне — прокручиваемый, не наложение */
+  #brain-hint { top: auto; bottom: 175px; }
   #brain-detail { padding: 80px 18px 40px; align-items: flex-start; overflow-y: auto; }
   .bd-inner { margin: auto 0; }
   .bd-stats { gap: 16px; }

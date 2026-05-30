@@ -50,11 +50,10 @@ export class ClubEnvironment {
     this.dust = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xff9988, size: 0.035, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.group.add(this.dust);
 
-    // свет
-    this.scene.add(new THREE.AmbientLight(0x442233, 0.6));
-    const key = new THREE.DirectionalLight(0xfff0e6, 1.0); key.position.set(3, 6, 7); this.scene.add(key);
-    this.red = new THREE.PointLight(0xcc0000, 26, 34); this.red.position.set(-4, 2, -2); this.scene.add(this.red);
-    const blue = new THREE.PointLight(0x4488ff, 8, 24); blue.position.set(6, 2, 4); this.scene.add(blue);
+    // свет — приглушённый (бар тёмный, светит в основном неон)
+    this.scene.add(new THREE.AmbientLight(0x221018, 0.35));
+    const key = new THREE.DirectionalLight(0xffd9d0, 0.5); key.position.set(3, 6, 7); this.scene.add(key);
+    this.red = new THREE.PointLight(0xff1a1a, 20, 30); this.red.position.set(0, 2, 0); this.scene.add(this.red);
   }
 
   _loadClub() {
@@ -68,29 +67,33 @@ export class ClubEnvironment {
       club.scale.setScalar(scale);
       club.position.sub(center.multiplyScalar(scale));
       club.position.y -= 2.5;        // опустить пол под утку
-      club.position.z -= 12;         // отодвинуть вглубь, чтобы летели внутрь
+      club.position.z -= 4;          // комната вокруг камеры (камера внутри, без чёрной дыры)
 
-      // ПЕРЕКРАСКА неона фиолет → красный + сбор светящихся материалов
+      // Делаем бар ТЁМНЫМ премиум-неоном: глушим базовые цвета (стены/стулья),
+      // неон (emissive) перекрашиваем в красный и усиливаем.
       club.traverse((o) => {
         if (!o.isMesh || !o.material) return;
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         mats.forEach((m) => {
           m.transparent = true;
           if (m.userData._baseOpacity === undefined) m.userData._baseOpacity = (m.opacity ?? 1);
-          // emissive = неон. Перекрашиваем по оттенку в красный диапазон.
-          if (m.emissive) {
-            const e = m.emissive; const hsl = {}; e.getHSL(hsl);
-            const lum = (e.r + e.g + e.b) / 3;
-            if (lum > 0.05 || (m.emissiveIntensity ?? 0) > 0) {
-              // фиолет/маджента/синий → красный; зелёный/тёплый оставляем мягче
-              e.setHSL(0.0 + (Math.random() * 0.03), Math.min(1, hsl.s + 0.2), Math.min(0.6, Math.max(0.35, hsl.l)));
-              this.neonMats.push(m);
+          const eLum = m.emissive ? (m.emissive.r + m.emissive.g + m.emissive.b) / 3 : 0;
+          const isNeon = eLum > 0.04 || (m.emissiveIntensity ?? 0) > 0.01;
+          if (isNeon) {
+            // неон → красный бренд, яркий
+            m.emissive.setHSL(0.0, 1.0, 0.5);
+            m.emissiveIntensity = 2.2;
+            this.neonMats.push(m);
+            if (m.color) m.color.setHSL(0.0, 0.7, 0.25);
+          } else {
+            // не неон → сильно затемняем (тёмные стены/мебель), убираем оранж/фиолет
+            if (m.color) {
+              const hsl = {}; m.color.getHSL(hsl);
+              m.color.setHSL(0.0, hsl.s * 0.25, Math.min(hsl.l * 0.35, 0.18));
             }
-          }
-          // базовый цвет слишком фиолетовый → притемнить к нейтрали
-          if (m.color) {
-            const hsl = {}; m.color.getHSL(hsl);
-            if (hsl.h > 0.6 && hsl.h < 0.95 && hsl.s > 0.3) { m.color.setHSL(0.0, hsl.s * 0.5, hsl.l * 0.7); }
+            if (m.metalness !== undefined) m.metalness = Math.min(m.metalness ?? 0, 0.3);
+            if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.6);
+            if (m.emissive) m.emissive.setRGB(0, 0, 0);
           }
         });
       });
@@ -125,7 +128,7 @@ export class ClubEnvironment {
       this.dust.rotation.y = t * 0.01;
       this.dust.material.opacity = 0.35 * this._fade;
     }
-    if (this.red) this.red.intensity = (24 + Math.sin(t * 1.2) * 5) * this._fade;
+    if (this.red) this.red.intensity = (18 + Math.sin(t * 1.2) * 4) * this._fade;
   }
 
   setVisibility() {}

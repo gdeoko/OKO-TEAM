@@ -11,12 +11,12 @@ import { ClubEnvironment } from './three/environment.js';
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 16000 : 30000;
+const PCOUNT = isMobile ? 26000 : 42000;   // плотнее (тот же размер точек, больше количество)
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
-// Hero idle: на ПК утка справа от текста; на телефоне сверху по центру.
-const HERO_X = isMobile ? 0 : 2.3;
-const HERO_Y = isMobile ? 2.2 : 0.1;
-const SUBJ_SCALE = isMobile ? 0.7 : 1.25;   // крупнее, чтобы убрать пустоту
+// Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
+const HERO_X = 0;
+const HERO_Y = isMobile ? 0.6 : 0.15;
+const SUBJ_SCALE = isMobile ? 0.78 : 1.5;   // крупнее на ПК
 
 const sound = new SoundSystem();
 
@@ -84,7 +84,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 0.85;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const env = new ClubEnvironment(scene, isMobile);
@@ -138,6 +138,8 @@ let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = 
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
+let camYaw = 0;        // поворот камеры вправо к бару
+let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-10, -10);
@@ -209,7 +211,9 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
     brainPos = sampleModel(brain, PCOUNT);
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 1.3; } });
-    duckMesh = duck;
+    // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
+    duckMesh = new THREE.Group();
+    duckMesh.add(duck);
     duckMesh.rotation.y = 0;
     duckMesh.visible = false; subject.add(duckMesh);
     buildParticles();
@@ -250,15 +254,17 @@ function startIntro() {
   tl.add(() => { sound.playThump?.(); }, 0.6);
   tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 2.2);
 
-  // утка выходит справа боком, доворачивается клювом к зрителю
+  // утка ПРИХОДИТ ИЗ ГЛУБИНЫ по центру: маленькая вдали → растёт → встаёт на позицию, смотрит в камеру
   tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.9);
   if (duckMesh) {
-    duckMesh.position.x = isMobile ? 4.5 : 6.5; duckMesh.rotation.y = 1.1;   // вышла боком (профиль)
-    tl.to(duckMesh.position, { x: 0, duration: 1.9, ease: 'power2.out' }, 1.9);
-    tl.to(duckMesh.rotation, { y: 0, duration: 1.2, ease: 'back.out(1.4)' }, 3.0);  // доворот ~45°+ клювом в камеру
+    duckMesh.position.set(0, HERO_Y - 0.3, -16);   // далеко в глубине
+    duckMesh.rotation.y = 0;                         // сразу лицом к камере
+    duckMesh.scale.setScalar(0.15);
+    tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
+    tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
   }
-  tl.add(() => document.body.classList.add('hero-in'), 2.6);
-  tl.add(() => { introDone = true; }, 4.4);
+  tl.add(() => document.body.classList.add('hero-in'), 2.4);
+  tl.add(() => { introDone = true; }, 4.2);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -344,24 +350,19 @@ lenis.on('scroll', ({ scroll, limit }) => {
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
 
-const heroInner = document.querySelector('.hero-inner');
-const aboutInner = document.querySelector('.about-inner');
+const heroTop = document.querySelector('.hero-top');
+const heroBottom = document.querySelector('.hero-bottom');
+const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
 const counter = document.getElementById('section-counter');
 function updateUIByScroll() {
-  // tp — равномерный прогресс перехода на весь скролл (0..1)
   tp = THREE.MathUtils.clamp(scrollProgress / 0.95, 0, 1);
-  // Hero-текст растворяется НА МЕСТЕ в самом начале
+  // Hero-текст растворяется НА МЕСТЕ в начале (fade + blur)
   const hf = THREE.MathUtils.clamp(tp / 0.14, 0, 1);
-  heroInner.style.opacity = String(1 - hf);
-  heroInner.style.filter = `blur(${hf * 7}px)`;
-  heroInner.style.pointerEvents = hf > 0.5 ? 'none' : 'auto';
+  heroEls.forEach((el) => { if (el) { el.style.opacity = String(1 - hf); el.style.filter = `blur(${hf * 7}px)`; el.style.pointerEvents = hf > 0.5 ? 'none' : 'auto'; } });
   scrollHint.style.opacity = String(Math.max(0, 1 - tp * 6));
-  // About-текст проявляется в самом конце (мозг собран)
-  const af = THREE.MathUtils.clamp((tp - 0.8) / 0.2, 0, 1);
-  aboutInner.style.opacity = String(af);
-  aboutInner.style.transform = `scale(${0.95 + af * 0.05})`;
-  aboutInner.style.pointerEvents = af > 0.5 ? 'auto' : 'none';
+  // About проявляется в самом конце (мозг собран) — класс включает все элементы About
+  document.body.classList.toggle('about-in', tp > 0.82);
   counter.textContent = (tp > 0.5 ? '02' : '01') + ' / 08';
 }
 
@@ -377,35 +378,36 @@ function animate() {
   env.update(t, camera, tp, dt);
   updateDiceShadows();
 
-  // (фон — 3D-клуб, цвет неона задаётся в environment)
+  // (фон — 3D-клуб)
 
-  // КАМЕРА СТРОГО ВПЕРЁД: влетаем внутрь облака (z↓), затем выходим к мозгу (z↑)
-  let targetZ;
-  if (brainOpen) targetZ = 2.0;
-  else if (tp < 0.5) targetZ = 9 - easeIO(tp / 0.5) * 8.2;     // 9 → 0.8 (внутрь)
-  else targetZ = 0.8 + easeIO((tp - 0.5) / 0.5) * 5.7;          // 0.8 → 6.5 (к мозгу)
-  camera.position.z += (targetZ - camera.position.z) * 0.07;
-  // параллакс мыши только в Hero (когда не в переходе)
+  // КАМЕРА: старт ровно в комнате → ВПЕРЁД вглубь + поворот ВПРАВО к бару.
+  // При входе в мозг — летим внутрь (z мал). Без «отдаления».
+  let targetZ, targetYaw;
+  if (brainOpen) { targetZ = 1.5; targetYaw = 0; }
+  else { targetZ = 9 - easeIO(tp) * 8.0; targetYaw = easeIO(tp) * 0.5; }  // 9→1, поворот вправо до ~0.5 рад
+  camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
-  camera.position.x += ((pointerNX * 0.3 * par) - camera.position.x) * 0.03;
-  camera.position.y += ((0.3 + (-pointerNY * 0.18 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
-  // subject уезжает в центр в самом начале распада → камера летит прямо в него
-  const toCenter = THREE.MathUtils.clamp(tp / 0.12, 0, 1);
-  subject.position.x += ((HERO_X * (1 - toCenter)) - subject.position.x) * 0.08;
-  subject.position.y += ((HERO_Y * (1 - toCenter) + 0.1 * toCenter) - subject.position.y) * 0.08;
-  camera.lookAt(subject.position.x, subject.position.y * 0.6, 0);
-  env.fade(1 - tp * 0.55);
+  camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
+  camera.position.y += ((0.25 + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
+  // subject (утка/мозг) всегда по центру; камера смотрит на него, доворачиваясь вправо к бару
+  subject.position.x += (HERO_X - subject.position.x) * 0.08;
+  subject.position.y += (HERO_Y - subject.position.y) * 0.08;
+  camYaw += (targetYaw - camYaw) * 0.05;
+  const lookX = subject.position.x + Math.sin(camYaw) * 4;
+  camera.lookAt(lookX, subject.position.y * 0.6, subject.position.z - Math.cos(camYaw) * 2);
+  env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
   if (duckMesh) {
     const solid = THREE.MathUtils.clamp(1 - tp / 0.1, 0, 1);
     if (solid > 0.001) {
       if (!duckMesh.visible && introDone) duckMesh.visible = true;
-      const look = pointerActive && tp < 0.05 ? pointerNX * 0.3 : Math.sin(t * 0.4) * 0.1;
-      duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.06;
-      duckMesh.rotation.z = Math.sin(t * 0.6) * 0.02;
-      let py = Math.sin(t * 0.5) * 0.04;
-      if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.85; py += (Math.random() - 0.5) * duckMesh.userData.poke; }
+      const look = pointerActive && tp < 0.05 ? pointerNX * 0.25 : Math.sin(t * 0.4) * 0.08;
+      duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.05;
+      duckMesh.rotation.z = Math.sin(t * 0.6) * 0.015;
+      let py = HERO_Y + Math.sin(t * 0.5) * 0.04;
+      // мягкая реакция на клик (без резкого прыжка)
+      if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.9; py += duckMesh.userData.poke * 0.15; }
       duckMesh.position.y = py;
       duckMesh.traverse((c) => { if (c.material) c.material.opacity = solid; });
     } else if (duckMesh.visible) duckMesh.visible = false;
@@ -419,7 +421,7 @@ function animate() {
     const onBrain = tp > 0.75;
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
-    let pushed = 0;
+    let pushed = 0, moveSum = 0, moveDir = 0;
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
       // равномерный путь: duck →(0..0.5)→ explode →(0.5..1)→ brain, с лёгкой задержкой
@@ -434,19 +436,24 @@ function animate() {
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
       }
-      // когда вошли в мозг — частицы перестраиваются в космический туннель
+      // ТУННЕЛЬ: частицы летят НАВСТРЕЧУ камере по кругу (непрерывный полёт вперёд)
       if (tunnelBlend > 0.001) {
+        // z двигается от дали (-24) к камере (+3) циклично, добавляя ощущение пролёта
+        const flow = ((tunnelPos[i3+2] + flowZ) % 27 + 27) % 27 - 24; // -24..+3
         tx += (tunnelPos[i3] - tx) * tunnelBlend;
         ty += (tunnelPos[i3+1] - ty) * tunnelBlend;
-        tz += (tunnelPos[i3+2] - tz) * tunnelBlend;
+        tz += (flow - tz) * tunnelBlend;
       }
       // взаимодействие с курсором (дальше уезжают, плавно возвращаются)
-      if (pointerActive && (tp < 0.05 || onBrain)) {
+      if (pointerActive && (tp < 0.05 || onBrain) && !brainOpen) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, f = 1 - dist / radius, s = f * f * force;
-          vel[i3] += (dx/dist)*s; vel[i3+1] += (dy/dist)*s; vel[i3+2] += (dz/dist)*s; pushed++;
+          const ax = (dx/dist)*s, ay = (dy/dist)*s, az = (dz/dist)*s;
+          vel[i3] += ax; vel[i3+1] += ay; vel[i3+2] += az; pushed++;
+          moveSum += Math.abs(ax) + Math.abs(ay) + Math.abs(az);
+          moveDir += ay; // вертикальная составляющая → тон звука
         }
       }
       vel[i3] += (tx - arr[i3]) * RETURN; vel[i3+1] += (ty - arr[i3+1]) * RETURN; vel[i3+2] += (tz - arr[i3+2]) * RETURN;
@@ -454,15 +461,21 @@ function animate() {
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
     }
     particles.geometry.attributes.position.needsUpdate = true;
-    if (pushed > 40 && frame % 5 === 0) sound.playRustle(Math.min(pushed / 350, 1));
-    // туннель медленно вращается когда внутри мозга
-    particles.rotation.z += brainOpen ? 0.004 : 0;
+    // ЗВУК ОТ ДВИЖЕНИЯ ЧАСТИЦ: громкость = объём смещения, тон = направление
+    if (pushed > 30 && frame % 4 === 0) {
+      const vol = Math.min(moveSum * 0.4, 1);
+      const pitch = THREE.MathUtils.clamp(0.5 + moveDir * 6, 0.3, 1.8);
+      sound.playRustle(vol, pitch);
+    }
+    // туннель вращается когда внутри мозга
+    particles.rotation.z += brainOpen ? 0.003 : 0;
     particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0011 : 0.0006);
     particles.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
   }
-  // плавный переход мозг↔туннель
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.06;
-  if (!brainOpen && tunnelBlend < 0.01) particles && (particles.rotation.z *= 0.95);
+  // непрерывный поток туннеля + плавный переход мозг↔туннель
+  if (brainOpen) flowZ += dt * 9;   // скорость полёта сквозь туннель
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.05;
+  if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);
 }

@@ -131,21 +131,21 @@ export class SoundSystem {
     });
   }
 
-  // Шелест — мягкий фильтрованный шум при касании частиц мозга
-  playRustle(intensity = 1) {
+  // Шелест частиц — громкость от объёма движения, тон (pitch) от направления
+  playRustle(intensity = 1, pitch = 1) {
     if (!this.ctx || this.muted) return;
     const now = this.ctx.currentTime;
-    if (now - (this._lastRustle || 0) < 0.05) return;
+    if (now - (this._lastRustle || 0) < 0.04) return;
     this._lastRustle = now;
-    const dur = 0.25;
+    const dur = 0.22;
     const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
     const out = buf.getChannelData(0);
     for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
     const src = this.ctx.createBufferSource(); src.buffer = buf;
     const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass';
-    bp.frequency.value = 3500 + Math.random() * 1500; bp.Q.value = 0.8;
+    bp.frequency.value = (2200 + 2600 * pitch); bp.Q.value = 0.9;   // выше pitch → выше тон
     const g = this.ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(0.06 * intensity, now + 0.02);
+    g.gain.linearRampToValueAtTime(Math.min(0.12, 0.04 + intensity * 0.08), now + 0.02);
     g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
   }
