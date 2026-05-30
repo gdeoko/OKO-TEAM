@@ -15,56 +15,80 @@ const sound = new SoundSystem();
 
 // ============================================================
 // Сэмплирование GLB → точки (взвешенно по площади треугольников)
+// Быстрая версия: плоские типизированные массивы + накопленные площади
+// + бинарный поиск (вместо линейного перебора по треугольникам).
 // ============================================================
 function sampleModel(scene, count) {
-  const tris = [];
+  // 1) Собираем все треугольники в плоские массивы координат (мировые координаты)
+  const ax = [], ay = [], az = [];
+  const bx = [], by = [], bz = [];
+  const cx = [], cy = [], cz = [];
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  const e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
+  const cum = [];           // накопленная площадь
+  let total = 0;
+
   scene.traverse((c) => {
-    if (c.isMesh && c.geometry) {
-      const pos = c.geometry.attributes.position;
-      const idx = c.geometry.index;
-      c.updateMatrixWorld(true);
-      const m = c.matrixWorld;
-      const get = (i) => new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(m);
-      if (idx) {
-        for (let i = 0; i < idx.count; i += 3) {
-          const a = get(idx.getX(i)), b = get(idx.getX(i + 1)), cc = get(idx.getX(i + 2));
-          const area = b.clone().sub(a).cross(cc.clone().sub(a)).length() * 0.5;
-          tris.push({ a, b, c: cc, area });
-        }
-      } else {
-        for (let i = 0; i < pos.count; i += 3) {
-          const a = get(i), b = get(i + 1), cc = get(i + 2);
-          const area = b.clone().sub(a).cross(cc.clone().sub(a)).length() * 0.5;
-          tris.push({ a, b, c: cc, area });
-        }
-      }
+    if (!(c.isMesh && c.geometry)) return;
+    const pos = c.geometry.attributes.position;
+    const idx = c.geometry.index;
+    c.updateMatrixWorld(true);
+    const m = c.matrixWorld;
+    const triCount = idx ? idx.count : pos.count;
+    for (let i = 0; i < triCount; i += 3) {
+      const i0 = idx ? idx.getX(i) : i;
+      const i1 = idx ? idx.getX(i + 1) : i + 1;
+      const i2 = idx ? idx.getX(i + 2) : i + 2;
+      va.fromBufferAttribute(pos, i0).applyMatrix4(m);
+      vb.fromBufferAttribute(pos, i1).applyMatrix4(m);
+      vc.fromBufferAttribute(pos, i2).applyMatrix4(m);
+      e1.subVectors(vb, va); e2.subVectors(vc, va);
+      const area = e1.cross(e2).length() * 0.5;
+      total += area;
+      cum.push(total);
+      ax.push(va.x); ay.push(va.y); az.push(va.z);
+      bx.push(vb.x); by.push(vb.y); bz.push(vb.z);
+      cx.push(vc.x); cy.push(vc.y); cz.push(vc.z);
     }
   });
-  const total = tris.reduce((s, t) => s + t.area, 0);
-  const raw = [];
+
+  const nTris = cum.length;
+  const arr = new Float32Array(count * 3);
+
+  // бинарный поиск треугольника по накопленной площади
+  const pick = (target) => {
+    let lo = 0, hi = nTris - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cum[mid] < target) lo = mid + 1; else hi = mid;
+    }
+    return lo;
+  };
+
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+
   for (let i = 0; i < count; i++) {
-    let r = Math.random() * total, chosen = tris[0];
-    for (const t of tris) { r -= t.area; if (r <= 0) { chosen = t; break; } }
+    const t = pick(Math.random() * total);
     let r1 = Math.random(), r2 = Math.random();
     if (r1 + r2 > 1) { r1 = 1 - r1; r2 = 1 - r2; }
     const r3 = 1 - r1 - r2;
-    raw.push(new THREE.Vector3(
-      chosen.a.x * r1 + chosen.b.x * r2 + chosen.c.x * r3,
-      chosen.a.y * r1 + chosen.b.y * r2 + chosen.c.y * r3,
-      chosen.a.z * r1 + chosen.b.z * r2 + chosen.c.z * r3,
-    ));
+    const x = ax[t] * r3 + bx[t] * r1 + cx[t] * r2;
+    const y = ay[t] * r3 + by[t] * r1 + cy[t] * r2;
+    const z = az[t] * r3 + bz[t] * r1 + cz[t] * r2;
+    arr[i * 3] = x; arr[i * 3 + 1] = y; arr[i * 3 + 2] = z;
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
   }
+
   // нормализация: центр в 0, размер к целевому
-  const bbox = new THREE.Box3();
-  raw.forEach((p) => bbox.expandByPoint(p));
-  const center = bbox.getCenter(new THREE.Vector3());
-  const size = bbox.getSize(new THREE.Vector3());
-  const scale = 2.6 / Math.max(size.x, size.y, size.z);
-  const arr = new Float32Array(count * 3);
+  const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
+  const scale = 2.6 / Math.max(maxX - minX, maxY - minY, maxZ - minZ);
   for (let i = 0; i < count; i++) {
-    arr[i * 3] = (raw[i].x - center.x) * scale;
-    arr[i * 3 + 1] = (raw[i].y - center.y) * scale;
-    arr[i * 3 + 2] = (raw[i].z - center.z) * scale;
+    arr[i * 3] = (arr[i * 3] - cX) * scale;
+    arr[i * 3 + 1] = (arr[i * 3 + 1] - cY) * scale;
+    arr[i * 3 + 2] = (arr[i * 3 + 2] - cZ) * scale;
   }
   return arr;
 }
