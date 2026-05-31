@@ -58,10 +58,11 @@ export class ClubEnvironment {
     this.scene.add(new THREE.AmbientLight(0x4455bb, 0.35));
     const key = new THREE.DirectionalLight(0x99aaff, 0.45); key.position.set(2, 6, 4); this.scene.add(key);
     // неоновые отблески в пространстве (взаимодействие неона с залом, как на референсе)
+    const mkLight = (color, intensity, dist, x, y, z) => { const l = new THREE.PointLight(color, intensity, dist); l.position.set(x, y, z); return l; };
     this.glowLights = [
-      Object.assign(new THREE.PointLight(0xff2aff, 6, 20), { position: new THREE.Vector3(-6, 1, -6) }),
-      Object.assign(new THREE.PointLight(0x3aa0ff, 6, 22), { position: new THREE.Vector3(5, 1.5, -10) }),
-      Object.assign(new THREE.PointLight(0xff1466, 4, 16), { position: new THREE.Vector3(0, 0.5, -3) }),
+      mkLight(0xff2aff, 6, 20, -6, 1, -6),
+      mkLight(0x3aa0ff, 6, 22, 5, 1.5, -10),
+      mkLight(0xff1466, 4, 16, 0, 0.5, -3),
     ];
     this.glowLights.forEach((l) => this.scene.add(l));
     this.red = null;

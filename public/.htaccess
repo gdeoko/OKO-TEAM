@@ -1,0 +1,21 @@
+# Правильные MIME-типы для 3D-моделей, WASM и WebP (нужно для Draco и текстур)
+AddType application/wasm .wasm
+AddType model/gltf-binary .glb
+AddType image/webp .webp
+AddType application/javascript .js
+
+# Кеш статики
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType application/wasm "access plus 1 month"
+  ExpiresByType model/gltf-binary "access plus 1 month"
+</IfModule>
+
+# SPA: всё на index.html (если файла нет)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
