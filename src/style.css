@@ -284,8 +284,10 @@ body.brain-open .bd-inner {
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(19px,3.3vw,30px); line-height: 1.2; margin-bottom: 18px; }
 #brain-detail p { color: rgba(255,255,255,.8); font-size: clamp(13px,1.7vw,15px); line-height: 1.6; margin-bottom: 12px; }
-.bd-stats { display: flex; gap: 28px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+.bd-stats { display: flex; gap: 28px 28px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
 .bd-stats div { display: flex; flex-direction: column; }
+/* «1000₽ вход за вечер» — отдельной строкой СНИЗУ (на всю ширину, по центру), а не справа */
+.bd-stats .bd-wide { flex-basis: 100%; align-items: center; margin-top: 6px; }
 .bd-stats b { font-family: var(--fd); font-weight: 900; font-size: 30px; color: var(--red-bright); }
 .bd-stats span { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; }
 .bd-exit { margin-top: 28px; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.4); }

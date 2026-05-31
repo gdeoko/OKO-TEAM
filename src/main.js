@@ -448,11 +448,18 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
-  // ГАРАНТИРОВАННАЯ ПЕРЕСБОРКА: мгновенно гасим туннель и импульс распада, включаем окно сильного
-  // притяжения к форме (reform) — иначе частицы зависали трубой/кольцом и оставалась «дырка».
+  // ГАРАНТИРОВАННАЯ ПЕРЕСБОРКА БЕЗ «ДЫРКИ»: выход происходит внутри тёмного туннеля, поэтому
+  // мгновенно ставим КАЖДУЮ частицу на её место в собранном мозге (brainPos) — никакой полости.
   tunnelBlend = 0; brainBurst = 0; reform = 1;
-  // сбрасываем остаточные скорости/свечение/«разворошённость» — иначе на месте входа остаётся светящийся след
-  if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] = 0; } }
+  const arr0 = particles && particles.geometry.attributes.position.array;
+  if (arr0 && brainPos && vel && disturb && glow) {
+    for (let i = 0; i < PCOUNT; i++) {
+      const i3 = i * 3;
+      arr0[i3] = brainPos[i3]; arr0[i3+1] = brainPos[i3+1]; arr0[i3+2] = brainPos[i3+2];
+      vel[i3] = vel[i3+1] = vel[i3+2] = 0; disturb[i] = 0; glow[i] = 0;
+    }
+    particles.geometry.attributes.position.needsUpdate = true;
+  }
   pointerMove.set(0, 0, 0); _pHas = false;
   // ЗВУК ВЫХОДА ИЗ ТУННЕЛЯ: нисходящий вихрь + сборка
   sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
