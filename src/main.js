@@ -280,10 +280,8 @@ mgr.onProgress = (url, loaded, total) => { if (ldBar) ldBar.style.width = Math.r
 const loader = new GLTFLoader(mgr);
 loader.setDRACOLoader(dracoLoader);
 const load = (url) => new Promise((res, rej) => loader.load(url, (g) => res(g.scene), null, rej));
-// Страховка: прелоадер не висит вечно — максимум 12 сек, потом скрываем в любом случае
-const loaderFailSafe = setTimeout(() => {
-  const l = document.getElementById('loader'); if (l) l.classList.add('hidden');
-}, 12000);
+// Страховка: если модели не подгрузились за 12с — считаем готовым (бар добежит, шоу стартует по кнопке)
+const loaderFailSafe = setTimeout(() => { modelsLoaded = true; maybeStartShow(); }, 12000);
 // относительные пути (без ведущего слеша) — надёжнее на любом хостинге
 Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
@@ -485,18 +483,20 @@ let modelsLoaded = false, entered = false, showStarted = false;
 function maybeStartShow() {
   if (showStarted || !modelsLoaded || !entered) return;
   showStarted = true;
-  const loader = document.getElementById('loader');
-  if (loader) loader.classList.add('hidden');
-  setTimeout(startIntro, _qp.has('fast') ? 0 : 700);   // короткая пауза → кубики видны
+  const es = document.getElementById('enter-screen');
+  if (_qp.has('fast')) { if (es) es.classList.add('hidden'); startIntro(); return; }
+  // даём прогресс-бару добежать (CSS .9s), затем прячем стартовый экран и запускаем интро
+  setTimeout(() => { if (es) es.classList.add('hidden'); startIntro(); }, 1100);
 }
 function enterSite() {
   if (entered) return; entered = true;
   startAudioOnce();
-  sound.playWhoosh(true);      // звук ЗАПУСКА сайта (вход)
-  sound.playFormation?.();     // мягкий «бум» включения
+  sound.playWhoosh(true);                 // звук запуска сайта
   const es = document.getElementById('enter-screen');
-  if (es) es.classList.add('hidden');
-  maybeStartShow();
+  if (es) es.classList.add('loading');     // прячем кнопку/подсказку, показываем прогресс-бар
+  // прогресс-бар БЕЖИТ при нажатии (0→100% за .9с) — визуальный «запуск»
+  if (ldBar) { ldBar.style.width = '0%'; requestAnimationFrame(() => requestAnimationFrame(() => { ldBar.style.width = '100%'; })); }
+  maybeStartShow();                        // модели обычно уже готовы → стартуем после добега бара
 }
 {
   const eb = document.getElementById('enter-btn');
