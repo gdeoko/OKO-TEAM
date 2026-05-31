@@ -20,12 +20,12 @@ const PCOUNT = isMobile ? 26000 : 42000;   // плотнее (тот же раз
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
-const HERO_Y = isMobile ? 0.5 : 0.1;
-const SUBJ_SCALE = isMobile ? 0.72 : 1.6;   // крупнее
+const HERO_Y = isMobile ? 0.6 : 0.4;
+const SUBJ_SCALE = isMobile ? 0.85 : 1.7;   // крупнее
 // Угол поворота утки (клювом в камеру). Подбор: добавь ?duck=ГРАДУСЫ к адресу
 // (например ducks.games/?duck=90), покрути, найди фронтальный — скажи число, зафиксирую.
 const _duckDeg = new URLSearchParams(location.search).get('duck');
-const DUCK_FACE = _duckDeg !== null ? (parseFloat(_duckDeg) * Math.PI / 180) : (Math.PI / 2);
+const DUCK_FACE = _duckDeg !== null ? (parseFloat(_duckDeg) * Math.PI / 180) : (270 * Math.PI / 180);
 
 const sound = new SoundSystem();
 
@@ -427,12 +427,12 @@ function animate() {
   camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
   camera.position.x += ((pointerNX * 0.2 * par) - camera.position.x) * 0.03;
-  // камера чуть приподнята, но смотрит ВНИЗ в зал (виден бар, пол), не в потолок
-  camera.position.y += ((1.4 + (-pointerNY * 0.12 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
-  // утка/мозг строго по центру; камера смотрит прямо в них (без yaw)
+  // камера на уровне фигуры (не в потолок): высота близко к субъекту
+  camera.position.y += ((0.6 + (-pointerNY * 0.1 * par) + Math.sin(t * 0.3) * 0.03) - camera.position.y) * 0.03;
+  // утка/мозг строго по центру; камера смотрит ПРЯМО в фигуру
   subject.position.x += (HERO_X - subject.position.x) * 0.08;
   subject.position.y += (HERO_Y - subject.position.y) * 0.08;
-  camera.lookAt(subject.position.x, subject.position.y - 0.6, 0);
+  camera.lookAt(subject.position.x, subject.position.y + 0.3, 0);
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
