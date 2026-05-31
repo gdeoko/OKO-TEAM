@@ -1,9 +1,14 @@
 import './style.css';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import Lenis from 'lenis';
 import gsap from 'gsap';
+
+// Декодер Draco для сжатых моделей (общий, переиспользуем)
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
 import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 
@@ -211,6 +216,7 @@ const ldBar = document.querySelector('.ld-bar i');
 const mgr = new THREE.LoadingManager();
 mgr.onProgress = (url, loaded, total) => { if (ldBar) ldBar.style.width = Math.round((loaded / total) * 100) + '%'; };
 const loader = new GLTFLoader(mgr);
+loader.setDRACOLoader(dracoLoader);
 const load = (url) => new Promise((res, rej) => loader.load(url, (g) => res(g.scene), null, rej));
 // относительные пути (без ведущего слеша) — надёжнее на любом хостинге
 Promise.all([load('models/duck.glb'), load('models/brain.glb')])

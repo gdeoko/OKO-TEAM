@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+const _draco = new DRACOLoader();
+_draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
 
 // ============================================================
 // 3D-окружение клуба DUCK'S на базе модели "Sci-fi bar" (onerockett, CC-BY-4.0).
@@ -64,7 +68,8 @@ export class ClubEnvironment {
   }
 
   _loadClub() {
-    new GLTFLoader().load('models/scifi_bar.glb', (gltf) => {
+    const _gl = new GLTFLoader(); _gl.setDRACOLoader(_draco);
+    _gl.load('models/scifi_bar.glb', (gltf) => {
       const club = gltf.scene;
       // нормализуем размер и ставим так, чтобы камера была внутри
       const box = new THREE.Box3().setFromObject(club);
