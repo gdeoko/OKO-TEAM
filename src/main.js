@@ -531,7 +531,10 @@ function animate() {
   // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo
   if (audioStarted && frame % 12 === 0) {
     sound.setLayer('metel', THREE.MathUtils.clamp(1 - tp * 3, 0, 1));        // воздух/метель в Hero
-    sound.setLayer('rustle', THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1)); // шелест при распаде
+    // ПОСТОЯННЫЙ шелест частиц: всплеск на распаде (tp~0.5) И ровный фон на мозге (даже без касания) — как у igloo
+    const rustleBurst = THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1);
+    const rustleBrain = THREE.MathUtils.clamp((tp - 0.6) / 0.25, 0, 1) * 0.5;   // тихий ровный фон у мозга
+    sound.setLayer('rustle', Math.max(rustleBurst, rustleBrain));
     sound.setLayer('hum', brainOpen ? 1 : THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1)); // гул у мозга/в туннеле
   }
 
@@ -606,6 +609,11 @@ function animate() {
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
     const touchOn = pointerActive && (tp < 0.05 || onBrain) && !brainOpen;
+    // НАСТОЯЩАЯ МИГРАЦИЯ (как igloo): на собранном мозге частицы ТЕКУТ по полю течения,
+    // вычисленному от ТЕКУЩЕЙ позиции (а не от «дома») → каждая реально путешествует по всей фигуре,
+    // а слабое притяжение к форме лишь удерживает облако (не даёт рассыпаться). Это убирает «дрожь на месте».
+    const flowOn = onBrain && !brainOpen && tunnelBlend < 0.01;
+    const ft1 = t * 0.5, ft2 = t * 0.35;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -672,8 +680,19 @@ function animate() {
       // ПЛАВНО (экспоненциально, без отскока) стягивается к форме — «затягивает как песок».
       vel[i3] *= TOUCH_DAMP; vel[i3+1] *= TOUCH_DAMP; vel[i3+2] *= TOUCH_DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
-      const ease = RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i];   // тронутые оседают медленнее и плавнее
-      arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
+      if (flowOn) {
+        // поле течения от ТЕКУЩЕЙ позиции → частица скользит по линиям тока и путешествует по всей фигуре
+        const ax = arr[i3], ay = arr[i3+1], az = arr[i3+2];
+        arr[i3]   += (Math.sin(ay*1.6 + ft1) + Math.cos(az*1.3 - ft2)) * 0.012;
+        arr[i3+1] += (Math.sin(az*1.6 + ft1*1.1) + Math.cos(ax*1.3 - ft2*0.9)) * 0.012;
+        arr[i3+2] += (Math.sin(ax*1.6 + ft1*0.9) + Math.cos(ay*1.3 - ft2*1.2)) * 0.012;
+        // слабое удержание в форме (облако не рассыпается, но частицы свободно бродят)
+        const ease = 0.02 + 0.05 * disturb[i];
+        arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
+      } else {
+        const ease = RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i];   // морф/туннель: уверенно держим форму
+        arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
+      }
       disturb[i] *= 0.972;   // «разворошённость» плавно гаснет ~1.2с
       // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);

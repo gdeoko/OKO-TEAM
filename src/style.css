@@ -255,7 +255,8 @@ body.brain-open #brain-hint { opacity: 0; }
 #brain-detail {
   position: fixed; inset: 0; z-index: 1200;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse 52% 56% at 50% 50%, rgba(2,1,6,.96) 0%, rgba(2,1,6,.82) 46%, rgba(2,1,6,0) 80%);
+  /* мягкое затемнение центра туннеля, плавно уходящее в ноль ПО ВСЕМ краям (без видимых границ) */
+  background: radial-gradient(ellipse 75% 80% at 50% 50%, rgba(2,1,6,.94) 0%, rgba(2,1,6,.78) 38%, rgba(2,1,6,.4) 62%, rgba(2,1,6,0) 100%);
   opacity: 0; pointer-events: none;
   transition: opacity 1.2s ease;        /* затемнение нарастает плавно */
   padding: 90px 24px 60px;
@@ -266,9 +267,9 @@ body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
   max-width: 520px; text-align: center;
   transform: scale(.015); opacity: 0; filter: blur(14px); transform-origin: center center;
   transition: transform 0s, opacity 0s, filter 0s;
-  /* мягкая тёмная подложка под текстом → читается поверх летящих частиц */
-  padding: 26px 22px; border-radius: 28px;
-  background: radial-gradient(ellipse 70% 70% at 50% 50%, rgba(2,1,6,.78) 0%, rgba(2,1,6,.5) 55%, rgba(2,1,6,0) 100%);
+  /* мягкая подложка под текстом — растворяется во все стороны (краёв не видно) */
+  padding: 30px 30px;
+  background: radial-gradient(ellipse 78% 76% at 50% 50%, rgba(2,1,6,.72) 0%, rgba(2,1,6,.55) 42%, rgba(2,1,6,.25) 68%, rgba(2,1,6,0) 100%);
 }
 #brain-detail h3, #brain-detail p { text-shadow: 0 2px 14px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.9); }
 body.brain-open .bd-inner {
