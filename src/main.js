@@ -185,10 +185,10 @@ let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
 // светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
-// касание как у igloo: частицы МЯГКО ПРИТЯГИВАЮТСЯ к пальцу (магнитики), без разлёта и вспышки,
-// затем плавно оседают (RETURN_TOUCH — мягкий «песочный» возврат, не пружина).
-const HOVER_RADIUS = 1.15, HOVER_FORCE = 0.05;   // FORCE = мягкая сила притяжения к точке касания
-const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.014, DAMP = 0.91;
+// касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
+// потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
+const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания
+const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -232,18 +232,21 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВОЕ движение как у igloo: КАЖДАЯ частица постоянно бежит по всей фигуре (ни одна не стоит),
-        // быстрый турбулентный бег (живой, но плотность держится) + у части частиц ВЫЛАЗКИ за контур.
+        // ЖИВОЕ ДВИЖЕНИЕ как у igloo: ПОТОК завихрений гоняет частицы ПО ВСЕЙ фигуре —
+        // они реально перемещаются (а не дрожат на месте), соседи текут согласованно → плотность держится.
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
-        float rnd = fract(sin(ph*1.7)*43758.5453);   // свой случайный «характер» у частицы
-        // быстрый постоянный бег (высокая частота → видно, что бегает; умеренная амплитуда → не редеет)
-        p.x += sin(uTime*3.3 + ph)*0.016 + sin(uTime*6.2 + ph*2.7)*0.010;
-        p.y += cos(uTime*3.7 + ph*1.3)*0.016 + cos(uTime*6.8 + ph*2.1)*0.010;
-        p.z += sin(uTime*2.9 + ph*0.8)*0.016 + sin(uTime*5.7 + ph*3.1)*0.010;
-        // ВЫЛАЗКИ за пределы фигуры: ~25% частиц периодически уходят наружу/внутрь и возвращаются
-        float ex = smoothstep(0.74, 1.0, rnd) * 0.095;
-        p += normalize(position + vec3(0.0001)) * sin(uTime*1.5 + ph*2.0) * ex;
+        float rnd = fract(sin(ph*1.7)*43758.5453);
+        vec3 fl;
+        fl.x = sin(position.y*3.0 + uTime*0.7) + cos(position.z*2.4 + uTime*0.5);
+        fl.y = sin(position.z*3.0 + uTime*0.8) + cos(position.x*2.4 + uTime*0.6);
+        fl.z = sin(position.x*3.0 + uTime*0.6) + cos(position.y*2.4 + uTime*0.9);
+        p += fl * 0.05;                              // путешествие по всей фигуре (завихрения)
+        // мелкая быстрая «жизнь» поверх потока
+        p.x += sin(uTime*4.1 + ph)*0.006; p.y += cos(uTime*4.4 + ph*1.3)*0.006; p.z += sin(uTime*3.8 + ph*0.8)*0.006;
+        // ВЫЛАЗКИ за контур: ~25% частиц периодически выходят наружу и возвращаются (как магнитики)
+        float ex = smoothstep(0.74, 1.0, rnd) * 0.08;
+        p += normalize(position + vec3(0.0001)) * sin(uTime*1.2 + ph*2.0) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
@@ -444,8 +447,8 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
-  // сбрасываем остаточные скорости/«разворошённость» — иначе часть частиц зависает кольцом/«шишкой»
-  if (vel && disturb) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; } }
+  // сбрасываем остаточные скорости/свечение/«разворошённость» — иначе на месте входа остаётся светящийся след
+  if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] = 0; } }
   pointerMove.set(0, 0, 0); _pHas = false;
   sound.playWhoosh(false); lenis.start();
 }
@@ -562,7 +565,7 @@ function animate() {
       // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
       const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
       const bcorrX = -0.16 * brainPhase;
-      const bcorrY = -0.42 * brainPhase;   // мозг НИЖЕ — гарантированно не задевает заголовок
+      const bcorrY = -0.26 * brainPhase;   // мозг чуть выше (но не на заголовке) — ровно по центру
       // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
       const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
       const sf = window.__teleport ? 1 : 0.1;
@@ -643,18 +646,18 @@ function animate() {
           continue;
         }
       }
-      // КАСАНИЕ как у igloo: частицы рядом с пальцем ПРИТЯГИВАЮТСЯ к нему как магнитики —
-      // мягко тянутся к точке касания (не разлетаются, без вспышки), затем плавно оседают обратно.
+      // КАСАНИЕ «палец в песке»: мягко РАЗДВИГАЕМ частицы в стороны от пальца (шире, плавно),
+      // они подсвечиваются изнутри; затем без пружины стекаются обратно.
       if (touchOn) {
-        const dx = pointer3D.x - arr[i3], dy = pointer3D.y - arr[i3+1], dz = pointer3D.z - arr[i3+2];
+        const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-          const pull = fall * fall * force;            // мягкое притяжение к пальцу
-          vel[i3] += (dx/dist) * pull; vel[i3+1] += (dy/dist) * pull; vel[i3+2] += (dz/dist) * pull;
-          if (fall > disturb[i]) disturb[i] = fall;     // → мягкий возврат как песок
+          const push = fall * force;                   // мягко, шире (не взрыв)
+          vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
+          if (fall > disturb[i]) disturb[i] = fall;     // помечаем → свет внутри + долгий мягкий возврат
           pushed++;
-          moveSum += pull; moveDir += (dy/dist) * pull;
+          moveSum += push; moveDir += (dy/dist) * push;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
@@ -665,16 +668,17 @@ function animate() {
         vel[i3] += (bx/bl) * k; vel[i3+1] += (by/bl) * k; vel[i3+2] += (bz/bl) * k;
       }
       if (TELE) { arr[i3] = tx; arr[i3+1] = ty; arr[i3+2] = tz; vel[i3]=vel[i3+1]=vel[i3+2]=0; glow[i]=0; disturb[i]=0; continue; }
-      // возврат: разворошённые касанием тянутся ОЧЕНЬ мягко (песок), остальные держат форму
-      const rk = RETURN_SHAPE + (RETURN_TOUCH - RETURN_SHAPE) * disturb[i];
-      disturb[i] *= 0.986;   // «разворошённость» затухает ~3с → частицы долго гуляют и медленно оседают
-      vel[i3] += (tx - arr[i3]) * rk; vel[i3+1] += (ty - arr[i3+1]) * rk; vel[i3+2] += (tz - arr[i3+2]) * rk;
-      vel[i3] *= DAMP; vel[i3+1] *= DAMP; vel[i3+2] *= DAMP;
+      // БЕЗ ПРУЖИНЫ: импульс касания/распада несёт инерцию и гаснет трением, затем позиция
+      // ПЛАВНО (экспоненциально, без отскока) стягивается к форме — «затягивает как песок».
+      vel[i3] *= TOUCH_DAMP; vel[i3+1] *= TOUCH_DAMP; vel[i3+2] *= TOUCH_DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
-      // ВНУТРЕННЕЕ СВЕЧЕНИЕ от скорости: движется → разгорается, замирает → гаснет
+      const ease = RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i];   // тронутые оседают медленнее и плавнее
+      arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
+      disturb[i] *= 0.972;   // «разворошённость» плавно гаснет ~1.2с
+      // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
-      const g = Math.min(sp * 8, 0.7);   // мягкое свечение, без яркой вспышки на морфе/касании
-      if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.08;
+      const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
+      if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.1;
     }
     particles.geometry.attributes.position.needsUpdate = true;
     particles.geometry.attributes.aglow.needsUpdate = true;
