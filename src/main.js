@@ -299,7 +299,9 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     buildParticles();
     if (ldBar) ldBar.style.width = '100%';
     modelsLoaded = true;
-    maybeStartShow();   // стартуем шоу, когда И модели загружены, И нажата кнопка «войти»
+    // прячем прелоадер сразу как модели готовы → открывается экран «войти» (иначе он его перекрывает)
+    setTimeout(() => { const l = document.getElementById('loader'); if (l) l.classList.add('hidden'); }, 300);
+    maybeStartShow();   // шоу стартует, когда И модели готовы, И нажата кнопка «войти»
   })
   .catch((e) => {
     console.error('Ошибка загрузки моделей:', e);
