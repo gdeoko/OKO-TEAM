@@ -178,6 +178,7 @@ let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
 let reform = 0;        // окно сильной пересборки мозга сразу после выхода из туннеля (чинит «дырку»)
+let tpLatch = 0;       // ЗАФИКСИРОВАННЫЙ tp на время туннеля → мозг возвращается в ТОТ ЖЕ размер/место
 let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
 
 const raycaster = new THREE.Raycaster();
@@ -441,6 +442,7 @@ addEventListener('click', (e) => {
 function openBrain() {
   if (brainOpen) return;
   brainOpen = true; document.body.classList.add('brain-open');
+  tpLatch = tp;    // ФИКСИРУЕМ позу мозга (размер/место/угол на этом tp) → выход вернёт ТОЧНО её
   brainBurst = 0;  // вход ведётся прямой интерполяцией дом↔труба (без импульса) — плавно и обратимо
   // ЗВУК ВХОДА В ТУННЕЛЬ: всасывающий вихрь + рассыпание частиц (нарастающий)
   sound.playWhoosh(true); sound.playDissolve?.(); lenis.stop();   // блокируем скролл пока внутри
@@ -448,6 +450,7 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
+  document.body.classList.add('tunnel-exit');   // текст улетает вдаль + затемнение гаснет ПЛАВНО (CSS 3с)
   // ВЫХОД = ИНВЕРСИЯ ВХОДА: НЕ трогаем позиции и НЕ обнуляем tunnelBlend мгновенно.
   // tunnelBlend сам плавно поедет 1→0, и частицы по той же траектории перетекут труба→мозг,
   // камера отдалится назад. reform добавляет плотности уже в самом конце сборки (без «дырки»).
@@ -586,15 +589,18 @@ function animate() {
     // смотрит вглубь -Z, фигура в центре). На выходе tb плавно 1→0 → камера/фигура/частицы
     // возвращаются по ТОМУ ЖЕ пути назад (приближение ↔ отдаление).
     const tb = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));   // сглаженная кривая туннеля (вход/выход симметрично)
-    // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → почти мгновенная установка (snap→1),
-    // иначе собранный мозг «въезжает» сбоку; плавный скролл — мягко (как было).
+    // ЭФФЕКТИВНЫЙ tp: пока туннель активен — ЗАФИКСИРОВАННЫЙ (tpLatch), иначе живой скролл.
+    // Так поза мозга (размер/место/ракурс) при входе и выходе ОДНА И ТА ЖЕ → выход возвращает
+    // мозг ТОЧНО таким, каким он был до входа (никакой разницы в масштабе → нет «дырки»-вида).
+    const tpEff = tunnelBlend > 0.001 ? tpLatch : tp;
+    // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → почти мгновенная установка (snap→1).
     const scrollSpeed = Math.abs(tp - prevTpCam); prevTpCam = tp;
     const snap = THREE.MathUtils.clamp(scrollSpeed * 14, 0, 1);
-    const par = Math.max(0, 1 - tp * 6);
+    const par = Math.max(0, 1 - tpEff * 6);
     // целевая поза камеры при скролле
     const sCamX = CAM0.x + pointerNX * 0.4 * par;
     const sCamY = CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05;
-    const sCamZ = CAM0.z - easeIO(tp) * 14;
+    const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
     camera.position.x += ((sCamX + (0 - sCamX) * tb) - camera.position.x) * camEase;
@@ -604,11 +610,11 @@ function animate() {
     camera.lookAt(LOOK.x + (0 - LOOK.x) * tb, LOOK.y + (0 - LOOK.y) * tb, LOOK.z + (-10 - LOOK.z) * tb);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
-    const dist = DUCK_DIST - easeIO(tp) * 2.5;
-    const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
+    const dist = DUCK_DIST - easeIO(tpEff) * 2.5;
+    const brainPhase = THREE.MathUtils.clamp((tpEff - 0.5) / 0.35, 0, 1);
     const bcorrX = -0.16 * brainPhase;
     const bcorrY = -0.12 * brainPhase;   // мозг чуть выше — ровно по центру между заголовком и карточками
-    const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
+    const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tpEff / 0.22, 0, 1));
     const sSubX = sCamX + _camDir.x * dist + DUCK_PX + bcorrX;
     const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
     const sSubZ = sCamZ + _camDir.z * dist;
@@ -752,13 +758,13 @@ function animate() {
     if (onBrain) brainYaw += 0.010;   // мозг непрерывно крутится; труба строится с учётом этого угла
     particles.rotation.z = 0;
     particles.rotation.y = brainYaw;  // НИКАКОГО рывка/доворота на входе-выходе: труба заранее повёрнута на -brainYaw
-    // мозг меньше утки; в туннеле масштаб 1 (труба в мировом масштабе)
-    if (tunnelBlend > 0.5) {
-      particles.scale.setScalar(1);
-    } else {
-      const brainShrink = 1 - 0.52 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);  // мозг компактнее → влезает между заголовком и карточками
-      particles.scale.setScalar(brainShrink + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
-    }
+    // МАСШТАБ: поза мозга по ЗАФИКСИРОВАННОМУ tp (tpEffS), плавно → масштаб трубы (1) по tb.
+    // Значит на выходе (tb→0) масштаб возвращается ТОЧНО к доходному размеру мозга — без «уехал крупнее».
+    const tpEffS = tunnelBlend > 0.001 ? tpLatch : tp;
+    const tbS = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
+    const brainShrink = 1 - 0.52 * THREE.MathUtils.clamp((tpEffS - 0.5) / 0.45, 0, 1);  // мозг компактнее → влезает между заголовком и карточками
+    const brainScale = brainShrink + Math.sin(t * 1.5) * 0.012 * (tpEffS > 0.75 ? 1 : 0);
+    particles.scale.setScalar(brainScale + (1 - brainScale) * tbS);   // мозг ↔ труба (масштаб 1) плавно по tb
   }
   // непрерывный поток туннеля (фаза 0..1) + плавный переход мозг↔туннель
   if (tunnelBlend > 0.001) flowZ = (flowZ + dt * 0.16) % 1;   // поток трубы — и на входе, и на выходе
@@ -770,6 +776,8 @@ function animate() {
   const TUNNEL_DUR = 3.0;
   tunnelBlend = THREE.MathUtils.clamp(tunnelBlend + (brainOpen ? 1 : -1) * (dt / TUNNEL_DUR), 0, 1);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
+  // снимаем класс выхода, когда туннель полностью схлопнулся (текст уже улетел, темнота ушла)
+  if (!brainOpen && tunnelBlend < 0.001 && document.body.classList.contains('tunnel-exit')) document.body.classList.remove('tunnel-exit');
 
   renderer.render(scene, camera);
 }

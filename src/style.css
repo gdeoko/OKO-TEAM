@@ -264,7 +264,9 @@ body.brain-open #brain-hint { opacity: 0; }
   padding: 90px 24px 60px;
 }
 body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
-body:not(.brain-open) #brain-detail { transition: opacity .6s ease; }   /* при выходе гаснет быстро */
+/* ВЫХОД: затемнение уходит ПЛАВНО (3с) вместе с улетающим текстом — симметрично входу, не резко */
+body.tunnel-exit #brain-detail { opacity: 0; pointer-events: none; transition: opacity 3s ease; }
+body:not(.brain-open):not(.tunnel-exit) #brain-detail { transition: opacity .6s ease; }
 /* текст ПРИЛЕТАЕТ ИЗ ТОЧКИ ВДАЛЕКЕ: стартует крошечным, с ЗАДЕРЖКОЙ (после формирования туннеля) */
 .bd-inner {
   max-width: 520px; text-align: center;
@@ -280,6 +282,11 @@ body.brain-open .bd-inner {
   transform: scale(1); opacity: 1; filter: blur(0);
   /* ПРИБЛИЖЕНИЕ ИЗ ТОЧКИ ВДАЛЕКЕ: долго маленький (далеко в трубе) → ускоряясь налетает (ease-in) */
   transition: transform 2.8s cubic-bezier(.55,0,.85,1) 1.2s, opacity 1.4s ease-out 1.2s, filter 1.8s ease-out 1.2s;
+}
+/* ВЫХОД = ИНВЕРСИЯ: текст УЛЕТАЕТ обратно вдаль (scale→.015, размывается, гаснет) за ~3с, симметрично */
+body.tunnel-exit .bd-inner {
+  transform: scale(.015); opacity: 0; filter: blur(14px);
+  transition: transform 2.8s cubic-bezier(.4,0,.6,1), opacity 2.2s ease-in, filter 2.4s ease-in;
 }
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(19px,3.3vw,30px); line-height: 1.2; margin-bottom: 18px; }
