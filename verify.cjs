@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
   page.on('pageerror', e => console.log('PAGEERR:', e.message));
 
   await page.goto('http://localhost:8099/?fast', { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await new Promise(r => setTimeout(r, 6500));
+  await new Promise(r => setTimeout(r, 8500));
 
   const shoot = async (name) => { await page.screenshot({ path: `/home/user/duck/_v_${name}.png` }); console.log('shot', name); };
 

@@ -27,7 +27,7 @@ a { color: inherit; text-decoration: none; }
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: var(--app-h, 100vh);   /* всегда = видимой высоте (без чёрной полосы при скрытии адресной строки) */
   z-index: 1;
   pointer-events: none;
 }
@@ -100,7 +100,7 @@ body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events:
 #content { position: relative; z-index: 10; }
 .sec {
   position: relative;
-  height: 100svh;
+  height: var(--app-h, 100svh);   /* стабильная высота = видимой области (синхронно с JS) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -321,7 +321,7 @@ body.brain-open .bd-inner {
 
 @media (max-width: 768px) {
   /* Hero: заголовок сверху → утка (3D) в центре → кнопки снизу. Ничего не налезает. */
-  .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); min-height: 100svh; justify-content: space-between; }
+  .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); height: var(--app-h, 100svh); min-height: 0; justify-content: space-between; }
   .hero-top, .about-top { text-shadow: 0 2px 16px rgba(0,0,0,.9); }
   .hero-top { top: 13vh; }
   .hero-bottom { bottom: 9vh; }

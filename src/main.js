@@ -22,7 +22,7 @@ let orbit = null;   // OrbitControls в режиме настройки (?tune);
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 55000 : 90000;   // высокая плотность — поверхность без дыр (igloo)
+const PCOUNT = isMobile ? 60000 : 100000;   // плотный объём — «миллион» частиц, мозг забит целиком
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
@@ -75,10 +75,11 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // ПЛОТНОЕ ОБЪЁМНОЕ ЗАПОЛНЕНИЕ (как igloo): ~45% частиц остаются на оболочке —
-    // чёткий силуэт; ~55% заполняют ВНЕШНЮЮ ПОЛОВИНУ объёма (f 0.5..1) — фигура
-    // непрозрачная (не просвечивает), но не схлопывается в шар, силуэт читается
-    if (Math.random() < 0.55) { const f = 0.5 + 0.5 * Math.cbrt(Math.random()); x *= f; y *= f; z *= f; }
+    // ПОЛНОЕ ОБЪЁМНОЕ ЗАПОЛНЕНИЕ: КАЖДАЯ частица уезжает внутрь на свою глубину
+    // (cbrt = равномерно по всему объёму). Мозг забит частицами ЦЕЛИКОМ, внутри не пустой,
+    // не просвечивает — сплошная живая масса, а не оболочка.
+    const f = 0.10 + 0.90 * Math.cbrt(Math.random());
+    x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
   return arr;
@@ -185,8 +186,8 @@ let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
 // светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
-const HOVER_RADIUS = 1.5, HOVER_FORCE = 0.10;
-const RETURN_SHAPE = 0.06, RETURN_TOUCH = 0.018, DAMP = 0.93;
+const HOVER_RADIUS = 0.9, HOVER_FORCE = 0.17;
+const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.006, DAMP = 0.90;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -229,13 +230,15 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВОЕ самодвижение «как мураши»: частицы постоянно и БЫСТРО перебирают положение
-        // по всей фигуре (внутри и снаружи) — три октавы шума по своей фазе у каждой частицы
+        // ЖИВОЕ движение «как мураши»: каждая частица постоянно бегает по всему мозгу
+        // в своём направлении — быстрый бег (две октавы) + медленная МИГРАЦИЯ по фигуре.
+        // Из-за этого весь мозг шевелится целиком, выглядит живым.
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
-        p.x += sin(uTime*1.7 + ph) * 0.030 + sin(uTime*3.3 + ph*2.3) * 0.016 + sin(uTime*5.1 + ph*3.7)*0.008;
-        p.y += sin(uTime*1.9 + ph*1.3) * 0.030 + cos(uTime*3.6 + ph*1.7) * 0.016 + cos(uTime*5.4 + ph*3.1)*0.008;
-        p.z += cos(uTime*1.5 + ph*0.8) * 0.030 + sin(uTime*3.1 + ph*2.1) * 0.016 + sin(uTime*4.8 + ph*3.3)*0.008;
+        // быстрый «муравьиный» бег небольшой амплитудой (живёт, но НЕ разлетается — масса плотная)
+        p.x += sin(uTime*2.2 + ph)*0.015 + sin(uTime*4.5 + ph*2.3)*0.009 + sin(uTime*0.7 + ph*0.7)*0.007;
+        p.y += sin(uTime*2.5 + ph*1.3)*0.015 + cos(uTime*4.8 + ph*1.7)*0.009 + cos(uTime*0.8 + ph*0.9)*0.007;
+        p.z += cos(uTime*2.0 + ph*0.8)*0.015 + sin(uTime*4.2 + ph*2.1)*0.009 + sin(uTime*0.6 + ph*1.1)*0.007;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
@@ -362,15 +365,25 @@ function updateDiceShadows() {
 // Указатель
 // ============================================================
 const _hitWorld = new THREE.Vector3();
+const _sphere = new THREE.Sphere();
+const _ctr = new THREE.Vector3();
+const _pn = new THREE.Vector3();
 function updatePointer(x, y) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
   pointerNX = pointer.x; pointerNY = pointer.y; pointerActive = true;
   raycaster.setFromCamera(pointer, camera);
-  // точка на плоскости, проходящей через центр subject и обращённой к камере —
-  // это убирает смещение по глубине, любая часть фигуры реагирует точно
-  const planeNormal = camera.getWorldDirection(new THREE.Vector3()).negate();
-  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(planeNormal, subject.getWorldPosition(new THREE.Vector3()));
-  raycaster.ray.intersectPlane(plane, _hitWorld);
+  subject.getWorldPosition(_ctr);
+  // радиус фигуры в мире (учитывает масштаб subject и particles)
+  const r = subject.scale.x * (particles ? particles.scale.x : 1) * 1.25;
+  // КАСАНИЕ СПЕРЕДИ: пересекаем луч со СФЕРОЙ вокруг фигуры и берём БЛИЖНЮЮ точку (со стороны
+  // зрителя) — тогда разлетается ПЕРЕДНЯЯ часть, к тебе, а не задняя.
+  _sphere.set(_ctr, r);
+  if (!raycaster.ray.intersectSphere(_sphere, _hitWorld)) {
+    // мимо фигуры — берём ближайшую к лучу точку на передней полусфере
+    raycaster.ray.closestPointToPoint(_ctr, _hitWorld);
+    _pn.copy(camera.position).sub(_ctr).normalize().multiplyScalar(r * 0.7);
+    _hitWorld.add(_pn);
+  }
   // переводим МИРОВУЮ точку в ЛОКАЛЬНУЮ систему particles (учитывает вращение и масштаб)
   if (particles) { particles.worldToLocal(pointer3D.copy(_hitWorld)); }
   else { pointer3D.copy(_hitWorld).sub(subject.position).divideScalar(subject.scale.x); }
@@ -418,6 +431,8 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
+  // на выходе мозг собирается ЛИЦОМ к зрителю (из центра, «как вышли изнутри»), затем крутится дальше
+  brainYaw = straightYaw;
   sound.playWhoosh(false); lenis.start();
 }
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
@@ -444,11 +459,28 @@ function startAudioOnce() { if (audioStarted) return; audioStarted = true; sound
 const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
-lenis.on('scroll', ({ scroll, limit }) => {
+let lastDir = 1, lenisLimit = 0, snapTimer = null;
+lenis.on('scroll', ({ scroll, limit, velocity }) => {
   scrollProgress = limit > 0 ? scroll / limit : 0;
+  lenisLimit = limit;
+  if (Math.abs(velocity) > 0.04) lastDir = velocity > 0 ? 1 : -1;
   document.getElementById('scroll-progress').style.width = scrollProgress * 100 + '%';
   document.getElementById('nav').classList.toggle('scrolled', scroll > 50);
   updateUIByScroll();
+  // МАГНИТ: как только палец отпущен и скролл замер на «полпути» (зона взрыва) —
+  // сайт сам ПЛАВНО доводит до собранного мозга (если листал вниз) или к утке (если вверх),
+  // чтобы не застревать на середине и не листать по 2-3 раза.
+  if (!brainOpen) {
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => {
+      if (brainOpen || lenisLimit <= 0) return;
+      const p = scrollProgress;
+      if (p > 0.04 && p < 0.96) {
+        const target = lastDir >= 0 ? lenisLimit : 0;   // вниз → мозг, вверх → утка
+        lenis.scrollTo(target, { duration: 1.1 });
+      }
+    }, 150);
+  }
 });
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
@@ -502,10 +534,11 @@ function animate() {
     const CAM0 = { x: 0.39, y: 0.10, z: 20.69 };
     const LOOK = { x: -0.49, y: -5.52, z: -8.27 };
     if (brainOpen) {
-      // ВНУТРИ ТУННЕЛЯ: subject в начало координат, камера у входа трубы смотрит вглубь (-Z),
-      // труба летит на камеру (см. логику частиц). Ровный полёт вперёд, без перекосов.
-      const bf = window.__teleport ? 1 : 0.08;
-      subject.position.lerp(_zero, window.__teleport ? 1 : 0.1);
+      // ВНУТРИ ТУННЕЛЯ: камера БЫСТРО встаёт строго на ось (под прикрытием взрыва), смотрит прямо
+      // вглубь (-Z), subject в центр. Из-за быстрой постановки труба сразу летит РОВНО НА ЗРИТЕЛЯ,
+      // без «уезжания вбок» (раньше камера доезжала медленно из наклонного ракурса — это и был сдвиг).
+      const bf = window.__teleport ? 1 : 0.3;
+      subject.position.lerp(_zero, window.__teleport ? 1 : 0.3);
       camera.position.x += (0 - camera.position.x) * bf;
       camera.position.y += (0 - camera.position.y) * bf;
       camera.position.z += (6 - camera.position.z) * bf;
@@ -524,17 +557,19 @@ function animate() {
       // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
       const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
       const bcorrX = -0.16 * brainPhase;
-      const bcorrY = -0.3 * brainPhase;   // мозг по центру между заголовком и карточками
+      const bcorrY = 0.15 * brainPhase;   // мозг ВЫШЕ — ровно по центру между заголовком и карточками
+      // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
+      const heroDrop = -0.18 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
       const sf = window.__teleport ? 1 : 0.1;
       subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
-      subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY) - subject.position.y) * sf;
+      subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop) - subject.position.y) * sf;
       subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * sf;
     }
   } else if (orbit) {
     orbit.update();
     updateTuneHUD();
   }
-  env.fade(brainOpen ? 0.1 : (1 - tp * 0.72));   // у мозга/в туннеле клуб гаснет — частицы не просвечивают, поток виден
+  env.fade(brainOpen ? 0.08 : (1 - tp * 0.9));   // у мозга клуб почти гаснет → мозг читается плотным, неон не просвечивает сквозь него
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
   if (duckMesh) {
@@ -603,7 +638,12 @@ function animate() {
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, f = 1 - dist / radius, s = f * f * force;
-          const ax = (dx/dist)*s, ay = (dy/dist)*s, az = (dz/dist)*s;
+          // РОССЫПЬ ШИРЕ: радиальный толчок наружу + боковой «веер» у каждой частицы свой —
+          // частицы разлетаются широко и рассыпно (не лучами, не пружиной)
+          const sway = s * 0.7;
+          const ax = (dx/dist)*s + Math.sin(i*0.7)*sway;
+          const ay = (dy/dist)*s + Math.cos(i*1.3)*sway;
+          const az = (dz/dist)*s + Math.sin(i*2.1)*sway;
           vel[i3] += ax; vel[i3+1] += ay; vel[i3+2] += az; pushed++;
           disturb[i] = 1.0;   // помечаем «разворошённой» → мягкий длинный возврат + гуляет
           moveSum += Math.abs(ax) + Math.abs(ay) + Math.abs(az);
@@ -620,7 +660,7 @@ function animate() {
       if (TELE) { arr[i3] = tx; arr[i3+1] = ty; arr[i3+2] = tz; vel[i3]=vel[i3+1]=vel[i3+2]=0; glow[i]=0; disturb[i]=0; continue; }
       // возврат: разворошённые касанием тянутся ОЧЕНЬ мягко (песок), остальные держат форму
       const rk = RETURN_SHAPE + (RETURN_TOUCH - RETURN_SHAPE) * disturb[i];
-      disturb[i] *= 0.98;   // «разворошённость» плавно затухает ~2с → частица не спеша затягивается
+      disturb[i] *= 0.986;   // «разворошённость» затухает ~3с → частицы долго гуляют и медленно оседают
       vel[i3] += (tx - arr[i3]) * rk; vel[i3+1] += (ty - arr[i3+1]) * rk; vel[i3+2] += (tz - arr[i3+2]) * rk;
       vel[i3] *= DAMP; vel[i3+1] *= DAMP; vel[i3+2] *= DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
@@ -661,7 +701,19 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+// Единый ресайз: холст, камера, высота секций и Lenis всегда = ТЕКУЩЕЙ видимой высоте.
+// Это убирает чёрную полосу снизу и застревание скролла, когда у браузера прячется адресная строка.
+function onResize() {
+  const w = window.innerWidth;
+  const h = (window.visualViewport && window.visualViewport.height) ? Math.round(window.visualViewport.height) : window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', h + 'px');
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  if (lenis && typeof lenis.resize === 'function') lenis.resize();
+}
+addEventListener('resize', onResize);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', onResize);
+onResize();
 
 // ============================================================
 // Mute / hover / глич текста
