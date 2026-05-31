@@ -185,6 +185,7 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-10, -10);
 const pointer3D = new THREE.Vector3();
 let pointerActive = false, pointerNX = 0, pointerNY = 0;
+let pointerStamp = 0;   // время последнего РЕАЛЬНОГО движения указателя → касание само «отпускается» в покое
 // взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
 // светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
@@ -385,6 +386,7 @@ let _pHas = false;
 function updatePointer(x, y) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
   pointerNX = pointer.x; pointerNY = pointer.y; pointerActive = true;
+  pointerStamp = performance.now();   // отметка «палец только что двигался»
   raycaster.setFromCamera(pointer, camera);
   subject.getWorldPosition(_ctr);
   // радиус фигуры в мире (учитывает масштаб subject и particles)
@@ -412,6 +414,11 @@ function updatePointer(x, y) {
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 addEventListener('mouseleave', () => { pointerActive = false; _pHas = false; });
+// мышь/указатель ОТПУЩЕН → касание выключаем сразу (без этого pointerActive «залипал» в true,
+// и частицы в последней точке раздвигались каждый кадр = «висящая дырка» до повторного касания)
+addEventListener('mouseup', () => { pointerActive = false; _pHas = false; });
+addEventListener('pointerup', () => { pointerActive = false; _pHas = false; });
+addEventListener('pointercancel', () => { pointerActive = false; _pHas = false; });
 // РЕАКЦИЯ НА НАКЛОН ТЕЛЕФОНА: параллакс камеры следует за наклоном (не трогает частицы)
 if (isMobile) {
   addEventListener('deviceorientation', (ev) => {
@@ -464,6 +471,7 @@ function closeBrain() {
   // гасим остаточные скорости/свечение/«разворошённость» (но позиции оставляем — они анимируются назад)
   if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] *= 0.5; } }
   pointerMove.set(0, 0, 0); _pHas = false;
+  pointerActive = false; pointerStamp = 0;   // «отпускаем палец» на выходе → никакого залипшего касания в точке выхода
   // ЗВУК ВЫХОДА ИЗ ТУННЕЛЯ: нисходящий вихрь + сборка
   sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
 }
@@ -670,7 +678,11 @@ function animate() {
     }
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
-    const touchOn = pointerActive && (tp < 0.05 || onBrain) && !brainOpen;
+    // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
+    // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
+    // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
+    const pointerFresh = (performance.now() - pointerStamp) < 140;
+    const touchOn = pointerActive && pointerFresh && (tp < 0.05 || onBrain) && !brainOpen;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -748,7 +760,9 @@ function animate() {
       // собирается целиком, без «дырки»; в обычном состоянии — мягкое удержание формы.
       const ease = reform > 0.01 ? 0.38 : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
       arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      disturb[i] *= 0.972;   // «разворошённость» плавно гаснет ~1.2с
+      // палец активно водит → гаснет мягко (×0.972); отпущен/замер → гаснет БЫСТРО (×0.82),
+      // чтобы вмятина от касания НЕ «висела» секундами (исток «залипшей дырки»).
+      disturb[i] *= touchOn ? 0.972 : 0.82;
       // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
       const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
