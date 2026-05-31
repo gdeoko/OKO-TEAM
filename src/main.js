@@ -171,7 +171,6 @@ const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0
 let duckMesh = null, particles = null;
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
-let prevTpCam = 0;     // tp прошлого кадра — для определения скорости скролла (анти-«вылет сбоку»)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
 let camYaw = 0;        // поворот камеры вправо к бару
@@ -358,7 +357,7 @@ function startIntro() {
     tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
     tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
   }
-  tl.add(() => { introDone = true; }, 4.4);
+  tl.add(() => { introDone = true; }, 4.2);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)

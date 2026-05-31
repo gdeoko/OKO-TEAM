@@ -392,8 +392,3 @@ body.brain-open .bd-inner {
 .es-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 42px rgba(204,0,0,.7); }
 @keyframes esPulse { 0%,100% { box-shadow: 0 8px 32px rgba(204,0,0,.5); } 50% { box-shadow: 0 8px 44px rgba(204,0,0,.8); } }
 .es-hint { font-family: var(--fd); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.35); }
-/* прогресс-бар скрыт до нажатия; при нажатии прячем кнопку+подсказку и показываем бегущий бар */
-#enter-screen .ld-bar { opacity: 0; transition: opacity .3s ease; }
-#enter-screen.loading .es-btn, #enter-screen.loading .es-hint { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
-#enter-screen.loading .ld-bar { opacity: 1; }
-#enter-screen .ld-bar i { transition: width .9s cubic-bezier(.4,0,.2,1); }
