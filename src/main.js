@@ -186,8 +186,10 @@ let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
 // светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
-const HOVER_RADIUS = 0.9, HOVER_FORCE = 0.17;
-const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.006, DAMP = 0.90;
+// касание как у igloo: НЕ отталкивание от точки (это давало дырку-шар), а ТЕКУЧЕЕ
+// смещение частиц ПО НАПРАВЛЕНИЮ движения пальца (волна/расчёсывание), мягко оседает.
+const HOVER_RADIUS = 1.05, HOVER_FORCE = 1.5;   // FORCE = сила увлечения за движением
+const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.016, DAMP = 0.90;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -211,7 +213,7 @@ function buildParticles() {
     // ТУННЕЛЬ: каждая частица на кольце (угол + радиус) и со своей фазой глубины.
     // В цикле глубина едет К КАМЕРЕ → ощущение полёта сквозь трубу.
     tunnelPos[i*3] = Math.random() * Math.PI * 2;            // угол на кольце
-    tunnelPos[i*3+1] = 2.0 + Math.random() * 0.9;           // радиус трубы (плотная стенка)
+    tunnelPos[i*3+1] = 2.4 + Math.random() * 1.0;           // радиус трубы чуть шире (виднее текст в центре)
     tunnelPos[i*3+2] = Math.random();                        // фаза глубины 0..1
     // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
     const shade = 0.82 + Math.random() * 0.18;
@@ -242,16 +244,16 @@ function buildParticles() {
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
-        gl_PointSize=size*(1.0+vGlow*1.1)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+        gl_PointSize=size*(1.0+vGlow*0.35)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
     fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade; uniform float uOpacity;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
         // ПЛОТНЫЙ НЕПРОЗРАЧНЫЙ диск с мягким краем: зёрна перекрываются и образуют
         // СПЛОШНУЮ матовую поверхность (как песок у igloo) — фон не просвечивает
         float a = smoothstep(0.5, 0.28, d);
-        // объёмная подсветка сверху + ЯРКОЕ ледяное свечение когда частицу толкнули (виден свет)
+        // объёмная подсветка сверху + лёгкое ледяное свечение в движении (мягко, без вспышки)
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
-        vec3 col = vColor * vSh * shade + vec3(0.45,0.7,1.0) * vGlow * 1.8;
-        gl_FragColor = vec4(col, clamp(a * uOpacity * (0.35 + 0.65*vFade) + vGlow*0.3, 0.0, 1.0)); }`,
+        vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;
+        gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
@@ -368,6 +370,10 @@ const _hitWorld = new THREE.Vector3();
 const _sphere = new THREE.Sphere();
 const _ctr = new THREE.Vector3();
 const _pn = new THREE.Vector3();
+const pointerMove = new THREE.Vector3();   // накопленное движение пальца (локально), затухает в кадре
+const _prevP3 = new THREE.Vector3();
+const _pMove = new THREE.Vector3();
+let _pHas = false;
 function updatePointer(x, y) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
   pointerNX = pointer.x; pointerNY = pointer.y; pointerActive = true;
@@ -387,10 +393,17 @@ function updatePointer(x, y) {
   // переводим МИРОВУЮ точку в ЛОКАЛЬНУЮ систему particles (учитывает вращение и масштаб)
   if (particles) { particles.worldToLocal(pointer3D.copy(_hitWorld)); }
   else { pointer3D.copy(_hitWorld).sub(subject.position).divideScalar(subject.scale.x); }
+  // ДВИЖЕНИЕ пальца в локальных координатах → за ним «течёт» масса частиц (как igloo)
+  if (_pHas) {
+    _pMove.copy(pointer3D).sub(_prevP3);
+    if (_pMove.length() > 0.5) _pMove.setLength(0.5);   // ограничиваем рывок
+    pointerMove.add(_pMove);
+  }
+  _prevP3.copy(pointer3D); _pHas = true;
 }
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-addEventListener('mouseleave', () => { pointerActive = false; });
+addEventListener('mouseleave', () => { pointerActive = false; _pHas = false; });
 // РЕАКЦИЯ НА НАКЛОН ТЕЛЕФОНА: параллакс камеры следует за наклоном (не трогает частицы)
 if (isMobile) {
   addEventListener('deviceorientation', (ev) => {
@@ -400,8 +413,8 @@ if (isMobile) {
   }, { passive: true });
 }
 // КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
-addEventListener('touchend', () => { pointerActive = false; });
-addEventListener('touchcancel', () => { pointerActive = false; });
+addEventListener('touchend', () => { pointerActive = false; _pHas = false; });
+addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; });
 
 function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
@@ -433,6 +446,9 @@ function closeBrain() {
   brainOpen = false; document.body.classList.remove('brain-open');
   // на выходе мозг собирается ЛИЦОМ к зрителю (из центра, «как вышли изнутри»), затем крутится дальше
   brainYaw = straightYaw;
+  // сбрасываем остаточные скорости/«разворошённость» — иначе часть частиц зависает кольцом/«шишкой»
+  if (vel && disturb) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; } }
+  pointerMove.set(0, 0, 0); _pHas = false;
   sound.playWhoosh(false); lenis.start();
 }
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
@@ -459,28 +475,11 @@ function startAudioOnce() { if (audioStarted) return; audioStarted = true; sound
 const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
-let lastDir = 1, lenisLimit = 0, snapTimer = null;
-lenis.on('scroll', ({ scroll, limit, velocity }) => {
+lenis.on('scroll', ({ scroll, limit }) => {
   scrollProgress = limit > 0 ? scroll / limit : 0;
-  lenisLimit = limit;
-  if (Math.abs(velocity) > 0.04) lastDir = velocity > 0 ? 1 : -1;
   document.getElementById('scroll-progress').style.width = scrollProgress * 100 + '%';
   document.getElementById('nav').classList.toggle('scrolled', scroll > 50);
   updateUIByScroll();
-  // МАГНИТ: как только палец отпущен и скролл замер на «полпути» (зона взрыва) —
-  // сайт сам ПЛАВНО доводит до собранного мозга (если листал вниз) или к утке (если вверх),
-  // чтобы не застревать на середине и не листать по 2-3 раза.
-  if (!brainOpen) {
-    clearTimeout(snapTimer);
-    snapTimer = setTimeout(() => {
-      if (brainOpen || lenisLimit <= 0) return;
-      const p = scrollProgress;
-      if (p > 0.04 && p < 0.96) {
-        const target = lastDir >= 0 ? lenisLimit : 0;   // вниз → мозг, вверх → утка
-        lenis.scrollTo(target, { duration: 1.1 });
-      }
-    }, 150);
-  }
 });
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
@@ -557,7 +556,7 @@ function animate() {
       // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
       const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
       const bcorrX = -0.16 * brainPhase;
-      const bcorrY = 0.15 * brainPhase;   // мозг ВЫШЕ — ровно по центру между заголовком и карточками
+      const bcorrY = -0.18 * brainPhase;   // мозг чуть НИЖЕ — не задевает заголовок, по центру до карточек
       // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
       const heroDrop = -0.18 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
       const sf = window.__teleport ? 1 : 0.1;
@@ -625,29 +624,26 @@ function animate() {
         tx = tx + (tubeX - tx) * tunnelBlend;
         ty = ty + (tubeY - ty) * tunnelBlend;
         tz = tz + (depth - tz) * tunnelBlend;
-        // в полном туннеле ставим жёстко (без инерции — частицы не разлетаются/не пропадают)
-        if (tunnelBlend > 0.9) {
+        // на выходе из туннеля (brainOpen=false) НЕ держим жёстко — частицы сразу собираются в мозг
+        if (brainOpen && tunnelBlend > 0.9) {
           arr[i3] = tubeX; arr[i3+1] = tubeY; arr[i3+2] = depth;
           vel[i3] = vel[i3+1] = vel[i3+2] = 0;
           continue;
         }
       }
-      // взаимодействие с курсором (дальше уезжают, плавно возвращаются)
-      if (pointerActive && (tp < 0.05 || onBrain) && !brainOpen) {
+      // КАСАНИЕ как у igloo: частицы рядом с пальцем ТЕКУТ за его движением (не отталкиваются
+      // от точки — поэтому нет дырки-шара и вспышки). Затем мягко оседают обратно.
+      if (pointerActive && _pHas && (tp < 0.05 || onBrain) && !brainOpen) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
-          const dist = Math.sqrt(dsq) + 0.001, f = 1 - dist / radius, s = f * f * force;
-          // РОССЫПЬ ШИРЕ: радиальный толчок наружу + боковой «веер» у каждой частицы свой —
-          // частицы разлетаются широко и рассыпно (не лучами, не пружиной)
-          const sway = s * 0.7;
-          const ax = (dx/dist)*s + Math.sin(i*0.7)*sway;
-          const ay = (dy/dist)*s + Math.cos(i*1.3)*sway;
-          const az = (dz/dist)*s + Math.sin(i*2.1)*sway;
-          vel[i3] += ax; vel[i3+1] += ay; vel[i3+2] += az; pushed++;
-          disturb[i] = 1.0;   // помечаем «разворошённой» → мягкий длинный возврат + гуляет
-          moveSum += Math.abs(ax) + Math.abs(ay) + Math.abs(az);
-          moveDir += ay; // вертикальная составляющая → тон звука
+          const fall = 1 - Math.sqrt(dsq) / radius;     // мягкий спад от центра касания
+          const w = fall * fall * force;
+          vel[i3] += pointerMove.x * w; vel[i3+1] += pointerMove.y * w; vel[i3+2] += pointerMove.z * w;
+          if (fall > disturb[i]) disturb[i] = fall;     // → мягкий возврат как песок
+          pushed++;
+          moveSum += (Math.abs(pointerMove.x) + Math.abs(pointerMove.y)) * w;
+          moveDir += pointerMove.y * w;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
@@ -671,6 +667,7 @@ function animate() {
     }
     particles.geometry.attributes.position.needsUpdate = true;
     particles.geometry.attributes.aglow.needsUpdate = true;
+    pointerMove.multiplyScalar(0.80);   // волна за пальцем плавно затухает, когда движение прекращается
     // ЗВУК ОТ ДВИЖЕНИЯ ЧАСТИЦ: громкость = объём смещения, тон = направление
     if (pushed > 30 && frame % 4 === 0) {
       const vol = Math.min(moveSum * 0.4, 1);
@@ -681,9 +678,11 @@ function animate() {
     // труба всегда строго НА камеру по Z, как бы мозг ни был повёрнут в момент клика.
     // brainYaw заморожен, пока открыт туннель → на выходе мозг собирается в УГОЛ ВХОДА и крутится дальше.
     // Связка с tunnelBlend делает переход плавным (нет резкого скачка положения).
-    if (!brainOpen && onBrain) brainYaw += 0.010;   // крутим только мозг (утка-частицы не должны вращаться)
+    if (!brainOpen && onBrain && tunnelBlend < 0.02) brainYaw += 0.010;   // крутим только пока это мозг
     particles.rotation.z = 0;
-    particles.rotation.y = brainYaw * (1 - tunnelBlend) + straightYaw * tunnelBlend;
+    // В ТУННЕЛЕ угол ФИКСИРОВАН (straightYaw) — мозг не доворачивается, сразу рассыпается в прямую трубу.
+    // На выходе brainYaw уже = straightYaw (см. closeBrain) → нет ни поворота, ни рывка, мозг крутится дальше.
+    particles.rotation.y = (brainOpen || tunnelBlend > 0.02) ? straightYaw : brainYaw;
     // мозг меньше утки; в туннеле масштаб 1 (труба в мировом масштабе)
     if (tunnelBlend > 0.5) {
       particles.scale.setScalar(1);
