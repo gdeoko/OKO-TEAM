@@ -441,7 +441,7 @@ addEventListener('click', (e) => {
 function openBrain() {
   if (brainOpen) return;
   brainOpen = true; document.body.classList.add('brain-open');
-  brainBurst = 0.35;  // лёгкий толчок (не взрыв): частицы ПЛАВНО расходятся и собираются в трубу
+  brainBurst = 0;  // вход ведётся прямой интерполяцией дом↔труба (без импульса) — плавно и обратимо
   // ЗВУК ВХОДА В ТУННЕЛЬ: всасывающий вихрь + рассыпание частиц (нарастающий)
   sound.playWhoosh(true); sound.playDissolve?.(); lenis.stop();   // блокируем скролл пока внутри
 }
@@ -585,7 +585,7 @@ function animate() {
     // tb=0 — обычная сцена (герой/мозг по скроллу), tb=1 — внутри туннеля (камера придвинута,
     // смотрит вглубь -Z, фигура в центре). На выходе tb плавно 1→0 → камера/фигура/частицы
     // возвращаются по ТОМУ ЖЕ пути назад (приближение ↔ отдаление).
-    const tb = THREE.MathUtils.clamp(tunnelBlend, 0, 1);
+    const tb = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));   // сглаженная кривая туннеля (вход/выход симметрично)
     // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → почти мгновенная установка (snap→1),
     // иначе собранный мозг «въезжает» сбоку; плавный скролл — мягко (как было).
     const scrollSpeed = Math.abs(tp - prevTpCam); prevTpCam = tp;
@@ -620,7 +620,11 @@ function animate() {
     orbit.update();
     updateTuneHUD();
   }
-  env.fade(brainOpen ? 0.08 : (1 - tp * 0.9));   // у мозга клуб почти гаснет → мозг читается плотным, неон не просвечивает сквозь него
+  // затемнение завязано на ПРОГРЕСС туннеля (tunnelBlend): на входе темнеет, на выходе светлеет
+  // ВМЕСТЕ с откатом туннеля (темнота уходит синхронно с возвратом мозга) — симметрично.
+  const tdark = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
+  const sceneFade = 1 - tp * 0.9;
+  env.fade(sceneFade + (0.08 - sceneFade) * tdark);   // у мозга/в туннеле клуб почти гаснет; на выходе плавно возвращается
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
   if (duckMesh) {
@@ -667,9 +671,12 @@ function animate() {
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
       }
-      // ТУННЕЛЬ: притяжение к трубе ведётся tunnelBlend (НЕ флагом brainOpen). На выходе tb плавно
-      // 1→0, поэтому частицы перетекают труба→мозг ПО ТОЙ ЖЕ траектории (инверсия входа), без рывка.
-      if (tunnelBlend > 0.001) {
+      // ТУННЕЛЬ — ПРЯМАЯ ИНТЕРПОЛЯЦИЯ дом(мозг)↔труба по сглаженному прогрессу tbCurve.
+      // КАЖДАЯ частица позиционируется ЯВНО как lerp(домашняя точка формы, точка в трубе) — без
+      // пружин и инерции. Поэтому на выходе (tbCurve→0) частица математически ТОЧНО в своём «доме» в
+      // мозге → дырка/вмятина невозможна в принципе. Вход и выход — одна траектория (инверсия).
+      if (tunnelBlend > 0.0005) {
+        const tbCurve = easeIO(tunnelBlend);
         const ang = tunnelPos[i3];                  // угол на кольце
         const rad = tunnelPos[i3+1];                // радиус трубы
         const ph = (tunnelPos[i3+2] + flowZ) % 1;
@@ -679,15 +686,16 @@ function animate() {
         const tubeX = dX * _cy - dZ * _sy;
         const tubeY = dY;
         const tubeZ = dX * _sy + dZ * _cy;
-        tx = tx + (tubeX - tx) * tunnelBlend;
-        ty = ty + (tubeY - ty) * tunnelBlend;
-        tz = tz + (tubeZ - tz) * tunnelBlend;
-        // в полном туннеле ставим жёстко (только пока открыт; на выходе сразу собираем мозг)
-        if (brainOpen && tunnelBlend > 0.9) {
-          arr[i3] = tubeX; arr[i3+1] = tubeY; arr[i3+2] = tubeZ;
-          vel[i3] = vel[i3+1] = vel[i3+2] = 0;
-          continue;
-        }
+        // tx/ty/tz — «домашняя» точка (мозг/форма по скроллу). Жёстко ставим интерполяцию дом↔труба.
+        arr[i3]   = tx + (tubeX - tx) * tbCurve;
+        arr[i3+1] = ty + (tubeY - ty) * tbCurve;
+        arr[i3+2] = tz + (tubeZ - tz) * tbCurve;
+        vel[i3] = vel[i3+1] = vel[i3+2] = 0;
+        disturb[i] = 0;
+        // свечение в туннеле — мягкое, по скорости потока
+        const gg = 0.25 * tbCurve;
+        glow[i] += (gg - glow[i]) * 0.1;
+        continue;   // в туннеле НЕ применяем пружину/касание — позиция уже задана явно
       }
       // КАСАНИЕ «палец в песке»: мягко РАЗДВИГАЕМ частицы в стороны от пальца (шире, плавно),
       // они подсвечиваются изнутри; затем без пружины стекаются обратно.
@@ -753,11 +761,14 @@ function animate() {
     }
   }
   // непрерывный поток туннеля (фаза 0..1) + плавный переход мозг↔туннель
-  if (brainOpen) flowZ = (flowZ + dt * 0.16) % 1;   // спокойный непрерывный полёт сквозь трубу
+  if (tunnelBlend > 0.001) flowZ = (flowZ + dt * 0.16) % 1;   // поток трубы — и на входе, и на выходе
   if (brainBurst > 0.001) brainBurst *= 0.90;       // импульс распада быстро затухает (~0.5с)
   if (reform > 0.001) reform *= 0.95;               // окно сильной пересборки мозга после выхода (~1.3с, чинит дырку)
   // СИММЕТРИЧНО: вход и выход с ОДНОЙ скоростью (выход = инверсия входа), чуть быстрее (~на 1с)
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.06;
+  // ЕДИНЫЙ ТАЙМЛАЙН ТУННЕЛЯ: линейный прогресс 0→1 (вход) / 1→0 (выход) за 3 сек, симметрично.
+  // tunnelBlend — линейный 0..1; сглаженную кривую (tb) берём как easeIO(tunnelBlend) ниже.
+  const TUNNEL_DUR = 3.0;
+  tunnelBlend = THREE.MathUtils.clamp(tunnelBlend + (brainOpen ? 1 : -1) * (dt / TUNNEL_DUR), 0, 1);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);
