@@ -232,20 +232,22 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВОЕ ДВИЖЕНИЕ как у igloo: ПОТОК завихрений гоняет частицы ПО ВСЕЙ фигуре —
-        // они реально перемещаются (а не дрожат на месте), соседи текут согласованно → плотность держится.
+        // ЖИВАЯ МАССА: каждая частица БЫСТРО и ПЛАВНО движется В ПРЕДЕЛАХ формы (смещение привязано
+        // к её точке формы → силуэт мозга сохраняется), соседи текут согласованно (поле течения).
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
         float rnd = fract(sin(ph*1.7)*43758.5453);
+        // согласованное поле течения (вихри), скорость ~×2; амплитуда умеренная → форма держится
         vec3 fl;
-        fl.x = sin(position.y*3.0 + uTime*0.7) + cos(position.z*2.4 + uTime*0.5);
-        fl.y = sin(position.z*3.0 + uTime*0.8) + cos(position.x*2.4 + uTime*0.6);
-        fl.z = sin(position.x*3.0 + uTime*0.6) + cos(position.y*2.4 + uTime*0.9);
-        p += fl * 0.015;                            // лёгкая «живость» поверх JS-потока (путешествие считает JS)
-        p.x += sin(uTime*4.1 + ph)*0.004; p.y += cos(uTime*4.4 + ph*1.3)*0.004; p.z += sin(uTime*3.8 + ph*0.8)*0.004;
-        // ВЫЛАЗКИ за контур: ~25% частиц периодически выходят наружу и возвращаются (как магнитики)
-        float ex = smoothstep(0.74, 1.0, rnd) * 0.05;
-        p += normalize(position + vec3(0.0001)) * sin(uTime*1.2 + ph*2.0) * ex;
+        fl.x = sin(position.y*2.6 + uTime*1.5) + cos(position.z*2.1 + uTime*1.1);
+        fl.y = sin(position.z*2.6 + uTime*1.7) + cos(position.x*2.1 + uTime*1.3);
+        fl.z = sin(position.x*2.6 + uTime*1.3) + cos(position.y*2.1 + uTime*1.9);
+        p += fl * 0.05;
+        // быстрая мелкая «жизнь» у каждой частицы (бегает, но плавно)
+        p.x += sin(uTime*3.0 + ph)*0.012; p.y += cos(uTime*3.3 + ph*1.3)*0.012; p.z += sin(uTime*2.7 + ph*0.8)*0.012;
+        // ВЫЛАЗКИ за контур: ~22% частиц плавно выходят наружу и возвращаются (масса «дышит»)
+        float ex = smoothstep(0.78, 1.0, rnd) * 0.09;
+        p += normalize(position + vec3(0.0001)) * sin(uTime*1.6 + ph*2.0) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
@@ -608,11 +610,6 @@ function animate() {
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
     const touchOn = pointerActive && (tp < 0.05 || onBrain) && !brainOpen;
-    // НАСТОЯЩАЯ МИГРАЦИЯ (как igloo): на собранном мозге частицы ТЕКУТ по полю течения,
-    // вычисленному от ТЕКУЩЕЙ позиции (а не от «дома») → каждая реально путешествует по всей фигуре,
-    // а слабое притяжение к форме лишь удерживает облако (не даёт рассыпаться). Это убирает «дрожь на месте».
-    const flowOn = onBrain && !brainOpen && tunnelBlend < 0.01;
-    const ft1 = t * 0.5, ft2 = t * 0.35;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -679,19 +676,11 @@ function animate() {
       // ПЛАВНО (экспоненциально, без отскока) стягивается к форме — «затягивает как песок».
       vel[i3] *= TOUCH_DAMP; vel[i3+1] *= TOUCH_DAMP; vel[i3+2] *= TOUCH_DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
-      if (flowOn) {
-        // поле течения от ТЕКУЩЕЙ позиции → частица скользит по линиям тока и путешествует по всей фигуре
-        const ax = arr[i3], ay = arr[i3+1], az = arr[i3+2];
-        arr[i3]   += (Math.sin(ay*1.6 + ft1) + Math.cos(az*1.3 - ft2)) * 0.012;
-        arr[i3+1] += (Math.sin(az*1.6 + ft1*1.1) + Math.cos(ax*1.3 - ft2*0.9)) * 0.012;
-        arr[i3+2] += (Math.sin(ax*1.6 + ft1*0.9) + Math.cos(ay*1.3 - ft2*1.2)) * 0.012;
-        // слабое удержание в форме (облако не рассыпается, но частицы свободно бродят)
-        const ease = 0.02 + 0.05 * disturb[i];
-        arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      } else {
-        const ease = RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i];   // морф/туннель: уверенно держим форму
-        arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      }
+      // УВЕРЕННО ДЕРЖИМ ФОРМУ (масса остаётся мозгом, не расплывается). Быстрое «живое» движение
+      // частиц В ПРЕДЕЛАХ формы и редкие вылазки за контур делает шейдер (смещение привязано к
+      // базовой точке формы → каждая частица бегает, но облако сохраняет силуэт мозга).
+      const ease = RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i];
+      arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
       disturb[i] *= 0.972;   // «разворошённость» плавно гаснет ~1.2с
       // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
