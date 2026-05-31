@@ -298,9 +298,8 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     duckMesh.visible = false; subject.add(duckMesh);
     buildParticles();
     if (ldBar) ldBar.style.width = '100%';
-    setTimeout(() => document.getElementById('loader').classList.add('hidden'), 350);
-    // интро (кубики→утка) запускаем ПОСЛЕ исчезновения прелоадера, чтобы кубики были видны
-    setTimeout(startIntro, 1200);
+    modelsLoaded = true;
+    maybeStartShow();   // стартуем шоу, когда И модели загружены, И нажата кнопка «войти»
   })
   .catch((e) => {
     console.error('Ошибка загрузки моделей:', e);
@@ -319,8 +318,7 @@ function startIntro() {
     if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, HERO_Y, 0); duckMesh.scale.set(1, 1, 1); }
     document.body.classList.add('hero-in'); introDone = true; return;
   }
-  // ТЕКСТ 1 экрана виден СРАЗУ (до броска кубиков), как просили
-  document.body.classList.add('hero-in');
+  // ТЕКСТ 1 экрана появляется ПОСЛЕ кубиков (вместе с выходом утки), не сразу
   const tl = gsap.timeline();
   // тени включаем, кубики стартуют сверху и летят с отскоками по «столу»
   dice.forEach((d, i) => {
@@ -444,7 +442,8 @@ function openBrain() {
   if (brainOpen) return;
   brainOpen = true; document.body.classList.add('brain-open');
   brainBurst = 0.35;  // лёгкий толчок (не взрыв): частицы ПЛАВНО расходятся и собираются в трубу
-  sound.playWhoosh(true); lenis.stop();   // блокируем скролл пока внутри
+  // ЗВУК ВХОДА В ТУННЕЛЬ: всасывающий вихрь + рассыпание частиц (нарастающий)
+  sound.playWhoosh(true); sound.playDissolve?.(); lenis.stop();   // блокируем скролл пока внутри
 }
 function closeBrain() {
   if (!brainOpen) return;
@@ -455,7 +454,8 @@ function closeBrain() {
   // сбрасываем остаточные скорости/свечение/«разворошённость» — иначе на месте входа остаётся светящийся след
   if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] = 0; } }
   pointerMove.set(0, 0, 0); _pHas = false;
-  sound.playWhoosh(false); lenis.start();
+  // ЗВУК ВЫХОДА ИЗ ТУННЕЛЯ: нисходящий вихрь + сборка
+  sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
 }
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
 // тест-хук: мгновенно выставить прогресс скролла + (опц.) телепорт частиц/камеры в цель,
@@ -476,6 +476,34 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBrain(); });
 let audioStarted = false;
 function startAudioOnce() { if (audioStarted) return; audioStarted = true; sound.init(); sound.ctx.resume(); sound.startMusic(); }
 ['pointerdown', 'touchstart', 'wheel', 'keydown', 'click'].forEach((ev) => addEventListener(ev, startAudioOnce, { once: true, passive: true }));
+
+// ВХОД НА САЙТ: кнопка под лого. Первое касание включает звук (требование браузеров) и запускает шоу,
+// поэтому слышны ВСЕ звуки с самого начала — загрузка, кубики, выход утки, запуск, туннель.
+let modelsLoaded = false, entered = false, showStarted = false;
+function maybeStartShow() {
+  if (showStarted || !modelsLoaded || !entered) return;
+  showStarted = true;
+  const loader = document.getElementById('loader');
+  if (loader) loader.classList.add('hidden');
+  setTimeout(startIntro, _qp.has('fast') ? 0 : 700);   // короткая пауза → кубики видны
+}
+function enterSite() {
+  if (entered) return; entered = true;
+  startAudioOnce();
+  sound.playWhoosh(true);      // звук ЗАПУСКА сайта (вход)
+  sound.playFormation?.();     // мягкий «бум» включения
+  const es = document.getElementById('enter-screen');
+  if (es) es.classList.add('hidden');
+  maybeStartShow();
+}
+{
+  const eb = document.getElementById('enter-btn');
+  const es = document.getElementById('enter-screen');
+  if (eb) eb.addEventListener('click', enterSite);
+  if (es) es.addEventListener('click', enterSite);
+  // в режиме ?fast пропускаем заставку
+  if (_qp.has('fast')) { entered = true; if (es) es.classList.add('hidden'); }
+}
 // Уход со вкладки → музыка плавно гаснет; возврат → плавно возвращается (как у igloo)
 document.addEventListener('visibilitychange', () => {
   if (!audioStarted) return;
@@ -685,7 +713,7 @@ function animate() {
       // базовой точке формы → каждая частица бегает, но облако сохраняет силуэт мозга).
       // в окне reform (сразу после выхода из туннеля) тянем к форме СИЛЬНО → мозг гарантированно
       // собирается целиком, без «дырки»; в обычном состоянии — мягкое удержание формы.
-      const ease = reform > 0.01 ? Math.max(0.22, RETURN_SHAPE) : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
+      const ease = reform > 0.01 ? 0.38 : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
       arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
       disturb[i] *= 0.972;   // «разворошённость» плавно гаснет ~1.2с
       // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
@@ -720,8 +748,9 @@ function animate() {
   // непрерывный поток туннеля (фаза 0..1) + плавный переход мозг↔туннель
   if (brainOpen) flowZ = (flowZ + dt * 0.16) % 1;   // спокойный непрерывный полёт сквозь трубу
   if (brainBurst > 0.001) brainBurst *= 0.90;       // импульс распада быстро затухает (~0.5с)
-  if (reform > 0.001) reform *= 0.92;               // окно сильной пересборки мозга после выхода (~0.7с)
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.026;  // формирование туннеля ~2.5с
+  if (reform > 0.001) reform *= 0.95;               // окно сильной пересборки мозга после выхода (~1.3с, чинит дырку)
+  // вход в туннель чуть быстрее (~на 0.5с), выход остаётся быстрым
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * (brainOpen ? 0.04 : 0.12);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);
