@@ -94,13 +94,14 @@ export class ClubEnvironment {
           const eLum = m.emissive ? (m.emissive.r + m.emissive.g + m.emissive.b) / 3 : 0;
           const isNeon = eLum > 0.02 || (m.emissiveIntensity ?? 0) > 1;
           if (isNeon) {
-            // неон родного цвета, ярче (как на фото). emissive уже верного оттенка.
-            m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 6);
+            // неон ЯРЧЕ и насыщеннее (как на фото)
+            const h = {}; m.emissive.getHSL(h); m.emissive.setHSL(h.h, Math.min(1, h.s + 0.25), Math.min(0.62, h.l + 0.1));
+            m.emissiveIntensity = Math.max(m.emissiveIntensity ?? 1, 9);
             m.userData._baseEmissive = m.emissiveIntensity;
             this.neonMats.push(m);
           } else {
-            // зал в глубокую тень (свет даёт только неон)
-            if (m.color) { const h = {}; m.color.getHSL(h); m.color.setHSL(h.h, h.s * 0.5, Math.min(h.l * 0.3, 0.1)); }
+            // зал ТЕМНЕЕ (свет даёт только неон)
+            if (m.color) { const h = {}; m.color.getHSL(h); m.color.setHSL(h.h, h.s * 0.55, Math.min(h.l * 0.22, 0.07)); }
             if (m.roughness !== undefined) m.roughness = Math.max(m.roughness ?? 0.5, 0.7);
           }
         });
