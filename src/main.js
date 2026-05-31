@@ -6,9 +6,9 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import Lenis from 'lenis';
 import gsap from 'gsap';
 
-// Декодер Draco для сжатых моделей (общий, переиспользуем)
+// Декодер Draco — ЛОКАЛЬНЫЙ (в папке draco/ на хостинге), не зависит от внешних CDN/VPN
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+dracoLoader.setDecoderPath('draco/');
 import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 
@@ -218,9 +218,14 @@ mgr.onProgress = (url, loaded, total) => { if (ldBar) ldBar.style.width = Math.r
 const loader = new GLTFLoader(mgr);
 loader.setDRACOLoader(dracoLoader);
 const load = (url) => new Promise((res, rej) => loader.load(url, (g) => res(g.scene), null, rej));
+// Страховка: прелоадер не висит вечно — максимум 12 сек, потом скрываем в любом случае
+const loaderFailSafe = setTimeout(() => {
+  const l = document.getElementById('loader'); if (l) l.classList.add('hidden');
+}, 12000);
 // относительные пути (без ведущего слеша) — надёжнее на любом хостинге
 Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
+    clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);
     normalize(duck, 2.6);

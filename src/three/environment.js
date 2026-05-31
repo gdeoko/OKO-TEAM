@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 const _draco = new DRACOLoader();
-_draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+_draco.setDecoderPath('draco/');
 
 // ============================================================
 // 3D-окружение клуба DUCK'S на базе модели "Sci-fi bar" (onerockett, CC-BY-4.0).
