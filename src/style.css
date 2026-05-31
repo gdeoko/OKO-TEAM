@@ -258,10 +258,13 @@ body.brain-open #brain-hint { opacity: 0; }
   /* мягкое затемнение центра туннеля, плавно уходящее в ноль ПО ВСЕМ краям (без видимых границ) */
   background: radial-gradient(ellipse 90% 95% at 50% 48%, rgba(2,1,6,.95) 0%, rgba(2,1,6,.86) 30%, rgba(2,1,6,.6) 52%, rgba(2,1,6,.28) 72%, rgba(2,1,6,0) 100%);
   opacity: 0; pointer-events: none;
-  transition: opacity 1.2s ease;        /* затемнение нарастает плавно */
+  /* затемнение приходит НЕ сразу: сначала частицы плавно собираются в туннель (виден клуб),
+     затем — ВМЕСТЕ с приближающимся текстом — медленно нарастает темнота (без резкого появления) */
+  transition: opacity 2.6s ease 1.2s;
   padding: 90px 24px 60px;
 }
 body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
+body:not(.brain-open) #brain-detail { transition: opacity .6s ease; }   /* при выходе гаснет быстро */
 /* текст ПРИЛЕТАЕТ ИЗ ТОЧКИ ВДАЛЕКЕ: стартует крошечным, с ЗАДЕРЖКОЙ (после формирования туннеля) */
 .bd-inner {
   max-width: 520px; text-align: center;
