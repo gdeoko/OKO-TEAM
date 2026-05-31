@@ -3,14 +3,20 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import Lenis from 'lenis';
 import gsap from 'gsap';
+import { SoundSystem } from './audio/sound-system.js';
+import { ClubEnvironment } from './three/environment.js';
+
+// Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
+const TUNE = new URLSearchParams(location.search).has('tune');
 
 // Декодер Draco — ЛОКАЛЬНЫЙ (в папке draco/ на хостинге), не зависит от внешних CDN/VPN
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('draco/');
-import { SoundSystem } from './audio/sound-system.js';
-import { ClubEnvironment } from './three/environment.js';
+
+let orbit = null;   // OrbitControls в режиме настройки (?tune); объявлен до animate()
 
 // ============================================================
 // Устройство / конфиг
@@ -434,23 +440,23 @@ function animate() {
 
   // (фон — 3D-клуб)
 
-  // КАМЕРА: ракурс как на эталоне Sketchfab — стоим в комнате (z≈4.5), на средней
-  // высоте, смотрим ГОРИЗОНТАЛЬНО в глубину зала (на дальнюю стень с неоном).
-  // Комната: X[-14..14] Y[-9.2 пол..6.5 потолок] Z[-23 дальняя стена..7].
-  // Скролл едет вперёд (z↓), при мозге — глубже.
-  let targetZ;
-  if (brainOpen) targetZ = -2;                           // внутрь туннеля
-  else targetZ = CAM_Z - easeIO(tp) * 4.5;               // едем вперёд вглубь
-  camera.position.z += (targetZ - camera.position.z) * 0.05;
-  const par = Math.max(0, 1 - tp * 6);
-  camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
-  camera.position.y += ((CAM_Y + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
-  // смотрим горизонтально вперёд в глубину (на уровень середины зала), не на потолок
-  camera.lookAt(0, LOOK_Y, -23);
-  // фигуры держим по центру кадра, на линии взгляда, чуть ближе камеры
-  subject.position.x += (HERO_X - subject.position.x) * 0.08;
-  subject.position.y += ((HERO_Y - 0.8) - subject.position.y) * 0.08;
-  subject.position.z = camera.position.z - 4.5;          // утка всегда перед камерой
+  if (!TUNE) {
+    // КАМЕРА едет вперёд вглубь зала по скроллу
+    let targetZ;
+    if (brainOpen) targetZ = -2;
+    else targetZ = CAM_Z - easeIO(tp) * 4.5;
+    camera.position.z += (targetZ - camera.position.z) * 0.05;
+    const par = Math.max(0, 1 - tp * 6);
+    camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
+    camera.position.y += ((CAM_Y + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
+    camera.lookAt(0, LOOK_Y, -23);
+    subject.position.x += (HERO_X - subject.position.x) * 0.08;
+    subject.position.y += ((HERO_Y - 0.8) - subject.position.y) * 0.08;
+    subject.position.z = camera.position.z - 4.5;
+  } else if (orbit) {
+    orbit.update();
+    updateTuneHUD();
+  }
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
@@ -554,3 +560,43 @@ document.querySelectorAll('.hero-title, .about-title, .btn, .nav-cta, [data-t]')
 });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
 document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); lenis.scrollTo('#about', { duration: 1.8 }); });
+
+// ============================================================
+// РЕЖИМ НАСТРОЙКИ КАМЕРЫ (?tune): двигаешь сцену пальцем + окошко с цифрами
+// ============================================================
+
+function updateTuneHUD() {
+  const hud = document.getElementById('tune-hud'); if (!hud) return;
+  const c = camera.position, t = orbit.target;
+  hud.querySelector('.tv').textContent =
+    `камера: ${c.x.toFixed(2)}, ${c.y.toFixed(2)}, ${c.z.toFixed(2)}\nсмотрит: ${t.x.toFixed(2)}, ${t.y.toFixed(2)}, ${t.z.toFixed(2)}\nfov: ${camera.fov}`;
+}
+if (TUNE) {
+  // отключаем смуз-скролл, включаем управление мышью/пальцем
+  try { lenis.destroy(); } catch (e) {}
+  canvas.style.pointerEvents = 'auto';
+  canvas.style.zIndex = '50';                 // canvas поверх контента в режиме настройки
+  const _c = document.getElementById('content'); if (_c) _c.style.pointerEvents = 'none';
+  document.body.classList.add('hero-in');     // скрываем интро-задержку при настройке
+  orbit = new OrbitControls(camera, canvas);
+  orbit.enableDamping = true; orbit.dampingFactor = 0.1;
+  orbit.target.set(0, 0, -10);
+  camera.position.set(0, 0, 6);
+  orbit.update();
+  // окошко
+  const hud = document.createElement('div'); hud.id = 'tune-hud';
+  hud.innerHTML = `<div class="tv" style="white-space:pre;font:12px monospace;color:#fff"></div>
+    <button id="tune-copy" style="margin-top:8px;width:100%;padding:8px;border:0;border-radius:8px;background:#cc0000;color:#fff;font:600 12px sans-serif">Копировать</button>
+    <div id="tune-msg" style="font:11px sans-serif;color:#8f8;margin-top:6px;min-height:14px"></div>`;
+  Object.assign(hud.style, { position: 'fixed', top: '70px', left: '12px', zIndex: 4000, background: 'rgba(8,8,12,.85)', padding: '12px', borderRadius: '12px', border: '1px solid #cc0000', backdropFilter: 'blur(8px)', width: '210px' });
+  document.body.appendChild(hud);
+  document.getElementById('tune-copy').addEventListener('click', () => {
+    const c = camera.position, t = orbit.target;
+    const txt = `КАМЕРА ${c.x.toFixed(2)} ${c.y.toFixed(2)} ${c.z.toFixed(2)} | ВЗГЛЯД ${t.x.toFixed(2)} ${t.y.toFixed(2)} ${t.z.toFixed(2)}`;
+    navigator.clipboard?.writeText(txt).then(() => {
+      document.getElementById('tune-msg').textContent = 'Скопировано! Пришли мне.';
+    }).catch(() => {
+      document.getElementById('tune-msg').textContent = txt;
+    });
+  });
+}
