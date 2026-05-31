@@ -171,6 +171,7 @@ const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0
 let duckMesh = null, particles = null;
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
+let prevTpCam = 0;     // tp прошлого кадра — скорость скролла (анти-«вылет мозга сбоку» при резком скролле)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
 let camYaw = 0;        // поворот камеры вправо к бару
@@ -297,11 +298,8 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     duckMesh.rotation.y = DUCK_FACE;   // единый угол везде, без рассинхрона
     duckMesh.visible = false; subject.add(duckMesh);
     buildParticles();
-    if (ldBar) ldBar.style.width = '100%';
     modelsLoaded = true;
-    // прячем прелоадер сразу как модели готовы → открывается экран «войти» (иначе он его перекрывает)
-    setTimeout(() => { const l = document.getElementById('loader'); if (l) l.classList.add('hidden'); }, 300);
-    maybeStartShow();   // шоу стартует, когда И модели готовы, И нажата кнопка «войти»
+    maybeStartShow();   // если кнопка уже нажата — бар добежит и стартуем
   })
   .catch((e) => {
     console.error('Ошибка загрузки моделей:', e);
@@ -357,7 +355,9 @@ function startIntro() {
     tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
     tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
   }
-  tl.add(() => { introDone = true; }, 4.2);
+  // ТЕКСТ появляется ТОЛЬКО ПОСЛЕ выхода утки (утка приходит к ~3.9с) — не до кубиков
+  tl.add(() => document.body.classList.add('hero-in'), 3.9);
+  tl.add(() => { introDone = true; }, 4.4);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -590,11 +590,17 @@ function animate() {
       camera.position.z += (6 - camera.position.z) * bf;
       camera.lookAt(0, 0, -10);
     } else {
+      // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → камера/фигура встают в цель почти
+      // МГНОВЕННО (snap→1), иначе уже собранный мозг «въезжает» сбоку. Плавный скролл = мягко (как было).
+      const scrollSpeed = Math.abs(tp - prevTpCam); prevTpCam = tp;
+      const snap = THREE.MathUtils.clamp(scrollSpeed * 14, 0, 1);
+      const camXY = window.__teleport ? 1 : THREE.MathUtils.lerp(0.04, 1, snap);
+      const cf = window.__teleport ? 1 : THREE.MathUtils.lerp(0.05, 1, snap);
+      const sf = window.__teleport ? 1 : THREE.MathUtils.lerp(0.1, 1, snap);
       const zPos = CAM0.z - easeIO(tp) * 14;
       const par = Math.max(0, 1 - tp * 6);
-      const cf = window.__teleport ? 1 : 0.05;
-      camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * (window.__teleport ? 1 : 0.04);
-      camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * (window.__teleport ? 1 : 0.04);
+      camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * camXY;
+      camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * camXY;
       camera.position.z += (zPos - camera.position.z) * cf;
       camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
       // ФИГУРА на луче взгляда камеры, фикс. расстояние → ровно по центру кадра
@@ -606,7 +612,6 @@ function animate() {
       const bcorrY = -0.12 * brainPhase;   // мозг ещё чуть выше — ровно по центру между заголовком и карточками
       // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
       const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
-      const sf = window.__teleport ? 1 : 0.1;
       subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
       subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop) - subject.position.y) * sf;
       subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * sf;
