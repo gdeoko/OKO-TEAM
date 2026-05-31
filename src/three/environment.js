@@ -64,7 +64,7 @@ export class ClubEnvironment {
   }
 
   _loadClub() {
-    new GLTFLoader().load('/models/scifi_bar.glb', (gltf) => {
+    new GLTFLoader().load('models/scifi_bar.glb', (gltf) => {
       const club = gltf.scene;
       // нормализуем размер и ставим так, чтобы камера была внутри
       const box = new THREE.Box3().setFromObject(club);

@@ -212,7 +212,8 @@ const mgr = new THREE.LoadingManager();
 mgr.onProgress = (url, loaded, total) => { if (ldBar) ldBar.style.width = Math.round((loaded / total) * 100) + '%'; };
 const loader = new GLTFLoader(mgr);
 const load = (url) => new Promise((res, rej) => loader.load(url, (g) => res(g.scene), null, rej));
-Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
+// относительные пути (без ведущего слеша) — надёжнее на любом хостинге
+Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);
@@ -228,7 +229,13 @@ Promise.all([load('/models/duck.glb'), load('/models/brain.glb')])
     setTimeout(() => document.getElementById('loader').classList.add('hidden'), 350);
     startIntro();
   })
-  .catch((e) => { console.error(e); const tg = document.querySelector('.ld-tag'); if (tg) tg.textContent = 'ошибка загрузки, обнови страницу'; });
+  .catch((e) => {
+    console.error('Ошибка загрузки моделей:', e);
+    const tg = document.querySelector('.ld-tag');
+    // показываем КАКОЙ файл не нашёлся — диагностика прямо на экране
+    const url = (e && (e.target && e.target.responseURL || e.message)) || 'models/*.glb';
+    if (tg) { tg.textContent = 'не найдены модели: ' + url; tg.style.color = '#ff5555'; tg.style.maxWidth = '90%'; tg.style.textAlign = 'center'; }
+  });
 
 // ============================================================
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
