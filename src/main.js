@@ -22,7 +22,7 @@ let orbit = null;   // OrbitControls в режиме настройки (?tune);
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 24000 : 42000;   // плотно, но без подвисаний при сэмплинге
+const PCOUNT = isMobile ? 30000 : 55000;   // мельче зёрна + больше количество (igloo)
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
@@ -106,7 +106,7 @@ const CAM_Z = _qp.has('camz') ? parseFloat(_qp.get('camz')) : 4.5;
 const ROT_Y = _qp.has('roty') ? parseFloat(_qp.get('roty')) * Math.PI / 180 : 0;  // поворот зала (найти стену с окном)
 // тонкая подстройка фигуры на луче взгляда: ?dx ?dy сдвиг, ?dist расстояние от камеры
 const DUCK_PX = _qp.has('dx') ? parseFloat(_qp.get('dx')) : 0;
-const DUCK_PY = _qp.has('dy') ? parseFloat(_qp.get('dy')) : 0;
+const DUCK_PY = _qp.has('dy') ? parseFloat(_qp.get('dy')) : -0.5;  // утка чуть ниже
 const DUCK_DIST = _qp.has('dist') ? parseFloat(_qp.get('dist')) : (isMobile ? 6.5 : 4.6);  // на ПК ближе=крупнее
 const _camDir = new THREE.Vector3();
 const _zero = new THREE.Vector3(0, 0, 0);
@@ -186,7 +186,6 @@ function buildParticles() {
   vel = new Float32Array(N * 3); delays = new Float32Array(N); explodePos = new Float32Array(N * 3);
   tunnelPos = new Float32Array(N * 3);
   const cur = new Float32Array(N * 3), colors = new Float32Array(N * 3), sizes = new Float32Array(N);
-  const palette = [new THREE.Color(0xffffff), new THREE.Color(0xc8e6ff), new THREE.Color(0x88ddff), new THREE.Color(0xffd700), new THREE.Color(0xcc0000)];
   const dir = new THREE.Vector3();
   for (let i = 0; i < N; i++) {
     cur[i*3] = duckPos[i*3]; cur[i*3+1] = duckPos[i*3+1]; cur[i*3+2] = duckPos[i*3+2];
@@ -204,10 +203,10 @@ function buildParticles() {
     tunnelPos[i*3] = Math.random() * Math.PI * 2;            // угол на кольце
     tunnelPos[i*3+1] = 2.3 + Math.random() * 1.1;           // радиус трубы (полые, видна стенка)
     tunnelPos[i*3+2] = Math.random();                        // фаза глубины 0..1
-    const hf = (duckPos[i*3+1] + 1.3) / 2.6, r = Math.random();
-    let ci; if (hf > 0.85) ci = r > 0.6 ? 3 : 0; else if (r < 0.06) ci = 4; else if (r < 0.5) ci = 0; else if (r < 0.85) ci = 1; else ci = 2;
-    const col = palette[ci]; colors[i*3]=col.r; colors[i*3+1]=col.g; colors[i*3+2]=col.b;
-    sizes[i] = 0.035 + Math.random() * 0.05;  // мелкие плотные зёрна (igloo)
+    // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
+    const shade = 0.78 + Math.random() * 0.22;
+    colors[i*3] = shade; colors[i*3+1] = shade; colors[i*3+2] = shade * 1.02; // чуть холоднее
+    sizes[i] = 0.022 + Math.random() * 0.028;  // ОЧЕНЬ мелкие зёрна (igloo)
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(cur, 3));
@@ -217,15 +216,19 @@ function buildParticles() {
     uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 } },
     vertexShader: `attribute float size; varying vec3 vColor; varying float vSh; uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color;
-        // лёгкая разница яркости по позиции — объём как у песчинок igloo
-        vSh=0.78+0.22*sin(position.y*9.0+position.x*7.0);
-        vec4 mv=modelViewMatrix*vec4(position,1.0);
+        vSh=0.80+0.20*sin(position.y*9.0+position.x*7.0);
+        // ЖИВОЕ самодвижение: каждая частица колышется по своей фазе (как у igloo)
+        vec3 p = position;
+        float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
+        p.x += sin(uTime*0.8 + ph) * 0.018;
+        p.y += sin(uTime*0.9 + ph*1.3) * 0.018;
+        p.z += cos(uTime*0.7 + ph*0.8) * 0.018;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
         gl_PointSize=size*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
     fragmentShader: `varying vec3 vColor; varying float vSh; uniform float uOpacity;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv); if(d>0.5)discard;
-        // плотное зерно: яркая верхушка (свет сверху), тёмный низ — объём, не плоская точка
-        float shade=0.55+0.45*(-uv.y+0.5);
-        float core=smoothstep(0.5,0.30,d);
+        float shade=0.6+0.4*(-uv.y+0.5);
+        float core=smoothstep(0.5,0.28,d);
         gl_FragColor=vec4(vColor*vSh*shade, core*uOpacity); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
@@ -578,8 +581,8 @@ function animate() {
     }
   }
   // непрерывный поток туннеля (фаза 0..1) + плавный переход мозг↔туннель
-  if (brainOpen) flowZ = (flowZ + dt * 0.18) % 1;   // спокойный полёт сквозь трубу
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.03;
+  if (brainOpen) flowZ = (flowZ + dt * 0.16) % 1;   // спокойный непрерывный полёт сквозь трубу
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.018;  // плавное формирование туннеля ~3с
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);

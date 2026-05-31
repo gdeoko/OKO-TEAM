@@ -51,16 +51,13 @@ a { color: inherit; text-decoration: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
-  transition: background .5s, padding .5s, border-color .5s;
-  border-bottom: 1px solid transparent;
+  padding: 18px 28px;
+  background: transparent;             /* без чёрной полосы */
+  transition: opacity .6s, transform .6s, padding .5s;
 }
-#nav.scrolled {
-  /* мягкий градиент сверху вместо плотной тёмной панели */
-  background: linear-gradient(to bottom, rgba(5,3,8,.55), rgba(5,3,8,0));
-  padding: 14px 32px;
-  border-bottom-color: transparent;
-}
+#nav.scrolled { padding: 12px 28px; }  /* только компактнее, без фона */
+/* при входе в туннель шапка уезжает вверх за рамку */
+body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events: none; }
 .nav-logo { font-family: var(--fd); font-weight: 900; font-size: 22px; letter-spacing: 1px; }
 .nav-logo span { color: var(--red-bright); }
 .nav-cta {
@@ -249,17 +246,20 @@ body.brain-open #brain-hint { opacity: 0; }
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(ellipse 46% 52% at 50% 50%, rgba(2,1,6,.92) 0%, rgba(2,1,6,.7) 40%, rgba(2,1,6,0) 78%);
   opacity: 0; pointer-events: none;
-  transition: opacity .6s ease;
+  transition: opacity 1.2s ease;        /* затемнение нарастает плавно */
   padding: 90px 24px 60px;
 }
 body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
-/* текст рождается из точки вдалеке: стартует крошечным и далёким, наезжает */
+/* текст ПРИЛЕТАЕТ ИЗ ТОЧКИ ВДАЛЕКЕ: стартует крошечным, с ЗАДЕРЖКОЙ (после формирования туннеля) */
 .bd-inner {
   max-width: 560px; text-align: center;
-  transform: scale(.08); opacity: 0; filter: blur(10px);
-  transition: transform 2.6s cubic-bezier(.16,1,.3,1), opacity 1.8s ease, filter 1.8s ease;
+  transform: scale(.03); opacity: 0; filter: blur(12px);
+  transition: transform 0s, opacity 0s, filter 0s;
 }
-body.brain-open .bd-inner { transform: scale(1); opacity: 1; filter: blur(0); }
+body.brain-open .bd-inner {
+  transform: scale(1); opacity: 1; filter: blur(0);
+  transition: transform 2.2s cubic-bezier(.16,1,.3,1) 1.4s, opacity 1.6s ease 1.4s, filter 1.6s ease 1.4s;
+}
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(22px,4vw,38px); line-height: 1.15; margin-bottom: 22px; }
 #brain-detail p { color: rgba(255,255,255,.72); font-size: clamp(14px,2vw,17px); line-height: 1.7; margin-bottom: 14px; }
@@ -269,7 +269,7 @@ body.brain-open .bd-inner { transform: scale(1); opacity: 1; filter: blur(0); }
 .bd-stats span { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; }
 .bd-exit { margin-top: 28px; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.4); }
 #brain-back {
-  position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 1210;
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); z-index: 1210;
   background: rgba(8,8,8,.6); backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,.2); color: #fff;
   font-family: var(--fd); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
