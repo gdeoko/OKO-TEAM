@@ -23,7 +23,13 @@ const server = http.createServer((req, res) => {
     args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--window-size=1440,900'],
   });
   const page = await browser.newPage();
-  await page.setViewport({ width: 1440, height: 900 });
+  const MOBILE = process.argv.includes('mobile');
+  if (MOBILE) {
+    await page.setViewport({ width: 412, height: 915, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await page.setUserAgent('Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Mobile Safari/537.36');
+  } else {
+    await page.setViewport({ width: 1440, height: 900 });
+  }
   page.on('console', m => { const t = m.text(); if (/error|Error|fail|Ошибка/.test(t)) console.log('PAGE:', t); });
   page.on('pageerror', e => console.log('PAGEERR:', e.message));
 
@@ -35,24 +41,30 @@ const server = http.createServer((req, res) => {
   await shoot('hero');
 
   // scroll positions
-  const scrollTo = async (frac) => {
-    await page.evaluate((f) => {
-      const max = document.body.scrollHeight - window.innerHeight;
-      if (window.__lenis) window.__lenis.scrollTo(max * f, { immediate: true });
-      else window.scrollTo(0, max * f);
-    }, frac);
-    await new Promise(r => setTimeout(r, 1600));
+  // settled frame at given scroll progress (sync DOM scroll + teleport particles/camera to target)
+  const settle = async (v) => {
+    await page.evaluate((vv) => {
+      if (window.__lenis) window.__lenis.scrollTo(99999 * vv, { immediate: true });
+      window.__teleport = true; window.__setScroll(vv);
+    }, v);
+    await new Promise(r => setTimeout(r, 500));
+    await page.evaluate((vv) => { window.__setScroll(vv); }, v);
+    await new Promise(r => setTimeout(r, 500));
+    await page.evaluate(() => { window.__teleport = false; });
   };
 
-  await scrollTo(0.08); await shoot('hero_dissolve');
-  await scrollTo(0.45); await shoot('explode');
-  await scrollTo(0.92); await shoot('brain');
+  await settle(0.08); await shoot('hero_dissolve');
+  await settle(0.45); await shoot('explode');
+  await settle(0.99); await shoot('brain');
 
-  // open brain tunnel
+  // open brain tunnel (let physics run a little; tunnel uses continuous flow so motion is fine)
   await page.evaluate(() => window.__openBrain && window.__openBrain());
-  await new Promise(r => setTimeout(r, 700));  await shoot('tunnel_burst');
-  await new Promise(r => setTimeout(r, 1800)); await shoot('tunnel_form');
-  await new Promise(r => setTimeout(r, 1600)); await shoot('tunnel_text');
+  await new Promise(r => setTimeout(r, 1500)); await shoot('tunnel_burst');
+  await page.evaluate(() => { window.__teleport = true; });
+  await new Promise(r => setTimeout(r, 1200));
+  await page.evaluate(() => { window.__teleport = false; });
+  await shoot('tunnel_form');
+  await new Promise(r => setTimeout(r, 2500)); await shoot('tunnel_text');
 
   await browser.close();
   server.close();

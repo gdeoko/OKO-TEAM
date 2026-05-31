@@ -22,7 +22,7 @@ let orbit = null;   // OrbitControls в режиме настройки (?tune);
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 30000 : 55000;   // мельче зёрна + больше количество (igloo)
+const PCOUNT = isMobile ? 55000 : 90000;   // высокая плотность — поверхность без дыр (igloo)
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
@@ -181,7 +181,9 @@ const pointer = new THREE.Vector2(-10, -10);
 const pointer3D = new THREE.Vector3();
 let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц: больше радиус, дальше уезжают, плавный возврат
-const HOVER_RADIUS = 0.8, HOVER_FORCE = 0.05, RETURN = 0.045, DAMP = 0.86;
+// дорогая физика: морф уверенно отслеживает форму, но возврат после касания —
+// мягкий, инерционный, «текучий» (песок/жидкость, не резкая пружина)
+const HOVER_RADIUS = 0.95, HOVER_FORCE = 0.045, RETURN = 0.05, DAMP = 0.90;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -197,19 +199,19 @@ function buildParticles() {
     dir.set(duckPos[i*3], duckPos[i*3+1], duckPos[i*3+2]);
     if (dir.lengthSq() < 0.01) dir.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5);
     dir.normalize();
-    const spread = 2.2 + Math.random() * 2.2;
-    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 1.2;
-    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 1.2;
-    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 1.2;
+    const spread = 1.3 + Math.random() * 1.5;
+    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 0.8;
+    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 0.8;
+    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 0.8;
     // ТУННЕЛЬ: каждая частица на кольце (угол + радиус) и со своей фазой глубины.
     // В цикле глубина едет К КАМЕРЕ → ощущение полёта сквозь трубу.
     tunnelPos[i*3] = Math.random() * Math.PI * 2;            // угол на кольце
     tunnelPos[i*3+1] = 2.0 + Math.random() * 0.9;           // радиус трубы (плотная стенка)
     tunnelPos[i*3+2] = Math.random();                        // фаза глубины 0..1
     // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
-    const shade = 0.80 + Math.random() * 0.20;
-    colors[i*3] = shade; colors[i*3+1] = shade; colors[i*3+2] = shade * 1.04; // чуть холоднее
-    sizes[i] = 0.030 + Math.random() * 0.034;  // мелкие, но плотные зёрна (не просвечивают)
+    const shade = 0.82 + Math.random() * 0.18;
+    colors[i*3] = shade; colors[i*3+1] = shade * 1.02; colors[i*3+2] = shade * 1.06; // чуть холоднее
+    sizes[i] = 0.032 + Math.random() * 0.034;  // зёрна перекрываются → сплошная поверхность
     glow[i] = 0;
   }
   const geo = new THREE.BufferGeometry();
@@ -219,30 +221,29 @@ function buildParticles() {
   geo.setAttribute('aglow', new THREE.BufferAttribute(glow, 1));
   const mat = new THREE.ShaderMaterial({
     uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 } },
-    vertexShader: `attribute float size; attribute float aglow; varying vec3 vColor; varying float vSh; varying float vGlow;
+    vertexShader: `attribute float size; attribute float aglow; varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade;
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
         // ЖИВОЕ самодвижение «как песок/Веном»: две октавы шума по своей фазе у каждой частицы
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
-        p.x += sin(uTime*0.7 + ph) * 0.014 + sin(uTime*1.7 + ph*2.3) * 0.006;
-        p.y += sin(uTime*0.8 + ph*1.3) * 0.014 + cos(uTime*1.9 + ph*1.7) * 0.006;
-        p.z += cos(uTime*0.6 + ph*0.8) * 0.014 + sin(uTime*1.5 + ph*2.1) * 0.006;
+        p.x += sin(uTime*0.7 + ph) * 0.012 + sin(uTime*1.7 + ph*2.3) * 0.005;
+        p.y += sin(uTime*0.8 + ph*1.3) * 0.012 + cos(uTime*1.9 + ph*1.7) * 0.005;
+        p.z += cos(uTime*0.6 + ph*0.8) * 0.012 + sin(uTime*1.5 + ph*2.1) * 0.005;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
-        // частицы со свечением чуть крупнее (живая «искра»)
-        gl_PointSize=size*(1.0+vGlow*0.8)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
-    fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; uniform float uOpacity;
-      void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv); if(d>0.5)discard;
-        float shade=0.62+0.38*(-uv.y+0.5);
-        float core=smoothstep(0.5,0.20,d);
-        float halo=smoothstep(0.5,0.0,d);
-        // ВНУТРЕННЕЕ СВЕЧЕНИЕ: тёплое ледяно-голубое ядро, ярче когда частица движется
-        vec3 base = vColor*vSh*shade;
-        vec3 glowCol = mix(vec3(0.55,0.78,1.0), vec3(1.0,0.45,0.45), 0.25); // ледяной с тёплой искрой
-        vec3 col = base + glowCol*halo*(0.18 + vGlow*1.6);
-        float a = max(core, halo*(0.10 + vGlow*0.55)) * uOpacity;
-        gl_FragColor=vec4(col, a); }`,
+        // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
+        vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
+        gl_PointSize=size*(1.0+vGlow*0.7)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade; uniform float uOpacity;
+      void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
+        // ПЛОТНЫЙ НЕПРОЗРАЧНЫЙ диск с мягким краем: зёрна перекрываются и образуют
+        // СПЛОШНУЮ матовую поверхность (как песок у igloo) — фон не просвечивает
+        float a = smoothstep(0.5, 0.28, d);
+        // объёмная подсветка сверху + ледяное свечение при движении
+        float shade = 0.58 + 0.42 * (-uv.y + 0.5);
+        vec3 col = vColor * vSh * shade + vec3(0.30,0.52,1.0) * vGlow * 0.9;
+        gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
@@ -411,6 +412,9 @@ function closeBrain() {
   sound.playWhoosh(false); lenis.start();
 }
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
+// тест-хук: мгновенно выставить прогресс скролла + (опц.) телепорт частиц/камеры в цель,
+// чтобы делать скриншоты УСТОЯВШЕГОСЯ кадра в headless (низкий FPS не успевает сойтись)
+window.__setScroll = (v) => { scrollProgress = v; updateUIByScroll(); };
 // клик по фону попапа закрывает; клик по кнопке — тоже (с остановкой всплытия)
 document.getElementById('brain-detail').addEventListener('click', (e) => { if (e.target.id === 'brain-detail') closeBrain(); });
 const brainBackBtn = document.getElementById('brain-back');
@@ -491,32 +495,37 @@ function animate() {
     if (brainOpen) {
       // ВНУТРИ ТУННЕЛЯ: subject в начало координат, камера у входа трубы смотрит вглубь (-Z),
       // труба летит на камеру (см. логику частиц). Ровный полёт вперёд, без перекосов.
-      subject.position.lerp(_zero, 0.1);
-      camera.position.x += (0 - camera.position.x) * 0.08;
-      camera.position.y += (0 - camera.position.y) * 0.08;
-      camera.position.z += (6 - camera.position.z) * 0.08;
+      const bf = window.__teleport ? 1 : 0.08;
+      subject.position.lerp(_zero, window.__teleport ? 1 : 0.1);
+      camera.position.x += (0 - camera.position.x) * bf;
+      camera.position.y += (0 - camera.position.y) * bf;
+      camera.position.z += (6 - camera.position.z) * bf;
       camera.lookAt(0, 0, -10);
     } else {
       const zPos = CAM0.z - easeIO(tp) * 14;
       const par = Math.max(0, 1 - tp * 6);
-      camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * 0.04;
-      camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * 0.04;
-      camera.position.z += (zPos - camera.position.z) * 0.05;
+      const cf = window.__teleport ? 1 : 0.05;
+      camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * (window.__teleport ? 1 : 0.04);
+      camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * (window.__teleport ? 1 : 0.04);
+      camera.position.z += (zPos - camera.position.z) * cf;
       camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
       // ФИГУРА на луче взгляда камеры, фикс. расстояние → ровно по центру кадра
       _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
       const dist = DUCK_DIST - easeIO(tp) * 2.5;
-      // мозг визуально уезжал правее — корректируем по центру кадра по мере сборки мозга
-      const bcorr = -0.16 * THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
-      subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorr) - subject.position.x) * 0.1;
-      subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY) - subject.position.y) * 0.1;
-      subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * 0.1;
+      // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
+      const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
+      const bcorrX = -0.16 * brainPhase;
+      const bcorrY = -0.6 * brainPhase;   // мозг ниже центра, между текстом и карточками
+      const sf = window.__teleport ? 1 : 0.1;
+      subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
+      subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY) - subject.position.y) * sf;
+      subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * sf;
     }
   } else if (orbit) {
     orbit.update();
     updateTuneHUD();
   }
-  env.fade(brainOpen ? 0.12 : (1 - tp * 0.5));   // в туннеле клуб гаснет — виден летящий поток
+  env.fade(brainOpen ? 0.1 : (1 - tp * 0.72));   // у мозга/в туннеле клуб гаснет — частицы не просвечивают, поток виден
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
   if (duckMesh) {
@@ -541,6 +550,7 @@ function animate() {
     particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12);
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
+    const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
     let pushed = 0, moveSum = 0, moveDir = 0;
@@ -565,7 +575,7 @@ function animate() {
         const rad = tunnelPos[i3+1];                // радиус трубы
         // фаза 0..1 → глубина: дальняя -26, у камеры +6, циклично; flowZ гонит поток
         const ph = (tunnelPos[i3+2] + flowZ) % 1;
-        const depth = -20 + ph * 26;                // -20 (вдали) → +6 (мимо камеры): труба короче и плотнее
+        const depth = -44 + ph * 52;                // -44 (вдали, точка схода) → +8 (мимо камеры): длинная труба, летит НА зрителя
         const tubeX = Math.cos(ang) * rad;
         const tubeY = Math.sin(ang) * rad;
         tx = tx + (tubeX - tx) * tunnelBlend;
@@ -597,6 +607,7 @@ function animate() {
         const k = brainBurst * 0.06;
         vel[i3] += (bx/bl) * k; vel[i3+1] += (by/bl) * k; vel[i3+2] += (bz/bl) * k;
       }
+      if (TELE) { arr[i3] = tx; arr[i3+1] = ty; arr[i3+2] = tz; vel[i3]=vel[i3+1]=vel[i3+2]=0; glow[i]=0; continue; }
       vel[i3] += (tx - arr[i3]) * RETURN; vel[i3+1] += (ty - arr[i3+1]) * RETURN; vel[i3+2] += (tz - arr[i3+2]) * RETURN;
       vel[i3] *= DAMP; vel[i3+1] *= DAMP; vel[i3+2] *= DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
@@ -613,14 +624,15 @@ function animate() {
       const pitch = THREE.MathUtils.clamp(0.5 + moveDir * 6, 0.3, 1.8);
       sound.playRustle(vol, pitch);
     }
-    // лёгкое вращение трубы для динамики; обычное вращение мозга когда не в туннеле
-    particles.rotation.z = brainOpen ? particles.rotation.z + 0.002 : 0;
-    particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0011 : 0.0006);
+    // В ТУННЕЛЕ — НИКАКОГО вращения: частицы летят строго НА камеру, вглубь по Z
+    // (вращение давало эффект «вправо-влево» — убрано). Мозг чуть крутится, пока не туннель.
+    particles.rotation.z = 0;
+    particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0009 : 0.0005);
     // мозг меньше утки; в туннеле масштаб 1 (труба в мировом масштабе)
     if (tunnelBlend > 0.5) {
       particles.scale.setScalar(1);
     } else {
-      const brainShrink = 1 - 0.58 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);  // мозг заметно меньше утки
+      const brainShrink = 1 - 0.44 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);  // мозг — компактный объект
       particles.scale.setScalar(brainShrink + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
     }
   }

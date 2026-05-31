@@ -122,7 +122,7 @@ body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events:
   will-change: opacity, filter, transform;
 }
 .hero-top { top: 12vh; }
-.hero-bottom { bottom: 21vh; }   /* кнопки приподняты, не на «листай вниз» */
+.hero-bottom { bottom: 13vh; }   /* кнопки прямо под лапками утки */
 /* читаемость текста поверх 3D — мягкая тень, без плашки */
 .hero-top, .about-top, .about-bottom { text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.8); }
 body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
@@ -200,12 +200,13 @@ body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-
   border-radius: 3px; background: linear-gradient(180deg, var(--red-bright), var(--red-primary));
   box-shadow: 0 0 10px rgba(204,0,0,.7);
 }
-/* номер карточки */
+/* номер карточки — в правом верхнем углу, текст под него не залезает */
 .thesis::after {
-  content: attr(data-n); position: absolute; top: 12px; right: 14px;
-  font-family: var(--fd); font-weight: 900; font-size: 13px; line-height: 1;
-  color: rgba(204,0,0,.5);
+  content: attr(data-n); position: absolute; top: 14px; right: 14px;
+  font-family: var(--fd); font-weight: 900; font-size: 12px; line-height: 1;
+  color: rgba(204,0,0,.55); pointer-events: none;
 }
+.thesis b { padding-right: 30px; }   /* резерв места под номер — заголовок не перекрывается */
 .thesis:hover {
   border-color: rgba(204,0,0,.6);
   background: linear-gradient(150deg, rgba(204,0,0,.18), rgba(255,255,255,.04));
@@ -323,7 +324,7 @@ body.brain-open .bd-inner {
   .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); min-height: 100svh; justify-content: space-between; }
   .hero-top, .about-top { text-shadow: 0 2px 16px rgba(0,0,0,.9); }
   .hero-top { top: 13vh; }
-  .hero-bottom { bottom: 16vh; }
+  .hero-bottom { bottom: 9vh; }
   .hero-title { font-size: clamp(34px, 11vw, 52px); }
   .hero-sub { font-size: clamp(13px, 4vw, 18px); }
   .hero-desc { margin: 12px auto 0; font-size: 13px; max-width: 320px; }
