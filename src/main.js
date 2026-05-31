@@ -241,11 +241,10 @@ function buildParticles() {
         fl.x = sin(position.y*3.0 + uTime*0.7) + cos(position.z*2.4 + uTime*0.5);
         fl.y = sin(position.z*3.0 + uTime*0.8) + cos(position.x*2.4 + uTime*0.6);
         fl.z = sin(position.x*3.0 + uTime*0.6) + cos(position.y*2.4 + uTime*0.9);
-        p += fl * 0.05;                              // путешествие по всей фигуре (завихрения)
-        // мелкая быстрая «жизнь» поверх потока
-        p.x += sin(uTime*4.1 + ph)*0.006; p.y += cos(uTime*4.4 + ph*1.3)*0.006; p.z += sin(uTime*3.8 + ph*0.8)*0.006;
+        p += fl * 0.015;                            // лёгкая «живость» поверх JS-потока (путешествие считает JS)
+        p.x += sin(uTime*4.1 + ph)*0.004; p.y += cos(uTime*4.4 + ph*1.3)*0.004; p.z += sin(uTime*3.8 + ph*0.8)*0.004;
         // ВЫЛАЗКИ за контур: ~25% частиц периодически выходят наружу и возвращаются (как магнитики)
-        float ex = smoothstep(0.74, 1.0, rnd) * 0.08;
+        float ex = smoothstep(0.74, 1.0, rnd) * 0.05;
         p += normalize(position + vec3(0.0001)) * sin(uTime*1.2 + ph*2.0) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
@@ -632,9 +631,9 @@ function animate() {
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
       }
-      // ТУННЕЛЬ: труба из колец, ЛЕТЯЩАЯ на камеру (полёт сквозь). Частицы по кругу,
-      // глубина из фазы непрерывно едет к зрителю и зацикливается.
-      if (tunnelBlend > 0.001) {
+      // ТУННЕЛЬ: притягиваем к трубе ТОЛЬКО пока вход открыт. На выходе (brainOpen=false)
+      // к трубе НЕ тянем → частицы сразу собираются в мозг, без зависшей «дырки»-остатка трубы.
+      if (brainOpen && tunnelBlend > 0.001) {
         const ang = tunnelPos[i3];                  // угол на кольце
         const rad = tunnelPos[i3+1];                // радиус трубы
         const ph = (tunnelPos[i3+2] + flowZ) % 1;
