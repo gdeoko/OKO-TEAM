@@ -89,6 +89,14 @@ const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x05030a, 0.01);
 const camera = new THREE.PerspectiveCamera(44, innerWidth / innerHeight, 0.1, 120);
 camera.position.set(0, 0.3, 9);
+// отладка камеры/сцены из консоли и для проверки в браузере
+window.__scene = scene; window.__camera = camera;
+// подбор высоты взгляда камеры через ?look=Y и высоты камеры ?camy=Y
+const _qp = new URLSearchParams(location.search);
+const LOOK_Y = _qp.has('look') ? parseFloat(_qp.get('look')) : 1.5;
+const CAM_Y = _qp.has('camy') ? parseFloat(_qp.get('camy')) : 0.5;
+const CAM_Z = _qp.has('camz') ? parseFloat(_qp.get('camz')) : 4.5;
+const ROT_Y = _qp.has('roty') ? parseFloat(_qp.get('roty')) * Math.PI / 180 : 0;  // поворот зала (найти стену с окном)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
@@ -97,6 +105,7 @@ renderer.toneMappingExposure = 0.78;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const env = new ClubEnvironment(scene, isMobile, renderer);
+if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для подбора ракурса
 
 // ============================================================
 // Кубики-занавес
@@ -425,19 +434,23 @@ function animate() {
 
   // (фон — 3D-клуб)
 
-  // КАМЕРА: старт ровно в комнате → ВПЕРЁД вглубь + поворот ВПРАВО к бару.
-  // При входе в мозг — летим внутрь (z мал). Без «отдаления».
-  // КАМЕРА ТОЛЬКО ПРЯМО ВПЕРЁД В ГЛУБИНУ (без поворота к бару)
+  // КАМЕРА: ракурс как на эталоне Sketchfab — стоим в комнате (z≈4.5), на средней
+  // высоте, смотрим ГОРИЗОНТАЛЬНО в глубину зала (на дальнюю стень с неоном).
+  // Комната: X[-14..14] Y[-9.2 пол..6.5 потолок] Z[-23 дальняя стена..7].
+  // Скролл едет вперёд (z↓), при мозге — глубже.
   let targetZ;
-  if (brainOpen) targetZ = 0.5;                          // внутрь туннеля
-  else targetZ = 6 - easeIO(tp) * 2.5;                   // 6→3.5: ближе, утка крупная по центру
-  camera.position.z += (targetZ - camera.position.z) * 0.06;
+  if (brainOpen) targetZ = -2;                           // внутрь туннеля
+  else targetZ = CAM_Z - easeIO(tp) * 4.5;               // едем вперёд вглубь
+  camera.position.z += (targetZ - camera.position.z) * 0.05;
   const par = Math.max(0, 1 - tp * 6);
-  camera.position.x += ((pointerNX * 0.2 * par) - camera.position.x) * 0.03;
-  camera.position.y += ((0.4 + (-pointerNY * 0.1 * par) + Math.sin(t * 0.3) * 0.03) - camera.position.y) * 0.03;
+  camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
+  camera.position.y += ((CAM_Y + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
+  // смотрим горизонтально вперёд в глубину (на уровень середины зала), не на потолок
+  camera.lookAt(0, LOOK_Y, -23);
+  // фигуры держим по центру кадра, на линии взгляда, чуть ближе камеры
   subject.position.x += (HERO_X - subject.position.x) * 0.08;
-  subject.position.y += (HERO_Y - subject.position.y) * 0.08;
-  camera.lookAt(subject.position.x, subject.position.y + 0.1, 0);
+  subject.position.y += ((HERO_Y - 0.8) - subject.position.y) * 0.08;
+  subject.position.z = camera.position.z - 4.5;          // утка всегда перед камерой
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
