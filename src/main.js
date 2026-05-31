@@ -96,7 +96,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.78;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-const env = new ClubEnvironment(scene, isMobile);
+const env = new ClubEnvironment(scene, isMobile, renderer);
 
 // ============================================================
 // Кубики-занавес
@@ -139,8 +139,10 @@ const subject = new THREE.Group();
 subject.position.set(HERO_X, HERO_Y, 0);
 subject.scale.setScalar(SUBJ_SCALE);
 scene.add(subject);
-const duckKey = new THREE.PointLight(0xffffff, 16, 14); duckKey.position.set(2, 3, 4); subject.add(duckKey);
-const duckRim = new THREE.PointLight(0x88ddff, 9, 14); duckRim.position.set(-3, 1, -2); subject.add(duckRim);
+// свет на утку: тёплый ключевой спереди + неоновый контровой, чтобы не была тёмной
+const duckKey = new THREE.PointLight(0xfff0e6, 26, 16); duckKey.position.set(2, 2.5, 4); subject.add(duckKey);
+const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3, 1.5, -1); subject.add(duckRim);
+const duckFill = new THREE.PointLight(0x66bbff, 10, 16); duckFill.position.set(0, 0.5, 5); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null;
@@ -233,7 +235,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);
     normalize(duck, 2.6);
-    duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 1.3; } });
+    duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
     duckMesh = new THREE.Group();
     duckMesh.add(duck);

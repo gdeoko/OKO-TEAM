@@ -16,9 +16,10 @@ _draco.setDecoderPath('draco/');
 // ============================================================
 
 export class ClubEnvironment {
-  constructor(scene, isMobile) {
+  constructor(scene, isMobile, renderer) {
     this.scene = scene;
     this.isMobile = isMobile;
+    this.renderer = renderer;
     this.group = new THREE.Group();
     scene.add(this.group);
     this._fade = 1;
@@ -107,6 +108,18 @@ export class ClubEnvironment {
 
       this.club = club;
       this.group.add(club);
+
+      // ENVIRONMENT MAP из сцены клуба → неон отражается/подсвечивает утку и объекты
+      if (this.renderer) {
+        try {
+          const pmrem = new THREE.PMREMGenerator(this.renderer);
+          const envRT = pmrem.fromScene(this.scene, 0.04);
+          this.scene.environment = envRT.texture;
+          this.scene.environmentIntensity = 1.2;
+          if (this.onEnvReady) this.onEnvReady(envRT.texture);
+          pmrem.dispose();
+        } catch (e) { console.warn('PMREM env fail', e); }
+      }
 
       // анимация (вентиляторы и т.д.)
       if (gltf.animations && gltf.animations.length) {
