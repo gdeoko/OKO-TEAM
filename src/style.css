@@ -109,31 +109,26 @@ body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events:
   padding: 76px 24px 18vh;    /* кнопки чуть ниже центра, но выше края */
 }
 
-/* Hero — заголовок сверху, утка по центру (3D), кнопки снизу */
+/* Hero — заголовок сверху, утка по центру (3D), кнопки снизу.
+   Текст ЗАФИКСИРОВАН в кадре: при скролле он НЕ уезжает вверх, а растворяется
+   на месте и налетает на зрителя (увеличивается+размытие — драйвится из JS). */
 .hero-top, .hero-bottom {
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 1s cubic-bezier(.22,1,.36,1), transform 1s cubic-bezier(.22,1,.36,1), filter .4s;
-  will-change: opacity, filter;
+  position: fixed; left: 50%;
+  transform: translateX(-50%) scale(1);
+  width: 100%; max-width: 720px; padding: 0 24px;
+  display: flex; flex-direction: column; align-items: center;
+  opacity: 0; z-index: 11;
+  transition: opacity 1s cubic-bezier(.22,1,.36,1), filter .4s ease, transform .35s ease;
+  will-change: opacity, filter, transform;
 }
-.hero-top { padding-top: 8px; }
+.hero-top { top: 12vh; }
+.hero-bottom { bottom: 21vh; }   /* кнопки приподняты, не на «листай вниз» */
 /* читаемость текста поверх 3D — мягкая тень, без плашки */
 .hero-top, .about-top, .about-bottom { text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.8); }
-body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; transform: translateY(0); }
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 9px;
-  padding: 7px 16px; margin-bottom: 12px;
-  border: 1px solid rgba(204, 0, 0, .35); border-radius: 40px;
-  background: rgba(8, 4, 10, .45); backdrop-filter: blur(6px);
-  font-family: var(--fd); font-size: 10px; font-weight: 500;
-  letter-spacing: 3px; text-transform: uppercase; color: var(--red-bright);
-  text-shadow: none;
-}
-.hero-eyebrow .dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--red-primary); box-shadow: 0 0 8px var(--red-primary);
-  animation: blink 2s infinite;
-}
-@keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.6)} }
+body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
+/* надпись «Игровой клуб в Москве» убрана, но её место сохранено, чтобы заголовок не прыгал */
+.hero-eyebrow { visibility: hidden; height: 31px; margin-bottom: 12px; }
+.hero-eyebrow .dot { display: none; }
 .hero-title {
   font-family: var(--fd); font-weight: 900;
   font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -1px;
@@ -160,7 +155,8 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; transform: trans
 .btn-line { border: 1px solid rgba(255,255,255,.2); background: rgba(8,8,8,.25); backdrop-filter: blur(4px); }
 .btn-line:hover { border-color: var(--red-primary); background: rgba(204,0,0,.12); }
 .scroll-hint {
-  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  z-index: 11;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   font-family: var(--fd); font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
   color: rgba(255,255,255,.3);
@@ -180,24 +176,44 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; transform: trans
 /* колонки тезисов по бокам мозга */
 .thesis-col {
   position: absolute; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 16px; width: 230px;
+  display: flex; flex-direction: column; gap: 18px; width: 250px;
   opacity: 0; transition: opacity .7s, transform .7s; will-change: opacity, transform;
 }
-.thesis-left { left: 5%; transform: translateY(-50%) translateX(-20px); text-align: left; }
-.thesis-right { right: 5%; transform: translateY(-50%) translateX(20px); text-align: right; }
+.thesis-left { left: 4%; transform: translateY(-50%) translateX(-24px); }
+.thesis-right { right: 4%; transform: translateY(-50%) translateX(24px); }
 body.about-in .thesis-left { opacity: 1; transform: translateY(-50%) translateX(0); }
 body.about-in .thesis-right { opacity: 1; transform: translateY(-50%) translateX(0); }
 body.about-in .about-top { opacity: 1; }
 body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-bottom { opacity: 0 !important; pointer-events: none; }
+/* карточки — ровные, аккуратные, со свечением и нумерацией, текст всегда слева */
 .thesis {
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(204,0,0,.14); border-radius: 12px;
-  padding: 16px 16px; backdrop-filter: blur(6px);
-  transition: border-color .3s, background .3s, transform .3s, box-shadow .3s;
+  position: relative; text-align: left;
+  background: linear-gradient(150deg, rgba(204,0,0,.10), rgba(255,255,255,.025));
+  border: 1px solid rgba(204,0,0,.22); border-radius: 16px;
+  padding: 18px 18px 18px 22px; backdrop-filter: blur(12px);
+  box-shadow: 0 6px 26px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+  transition: border-color .35s, background .35s, transform .35s, box-shadow .35s;
 }
-.thesis:hover { border-color: rgba(204,0,0,.45); background: rgba(204,0,0,.06); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(204,0,0,.2); }
-.thesis b { display: block; font-size: 14px; margin-bottom: 4px; }
-.thesis span { font-size: 12px; color: rgba(255,255,255,.55); }
+/* красная светящаяся «жила» слева */
+.thesis::before {
+  content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px;
+  border-radius: 3px; background: linear-gradient(180deg, var(--red-bright), var(--red-primary));
+  box-shadow: 0 0 10px rgba(204,0,0,.7);
+}
+/* номер карточки */
+.thesis::after {
+  content: attr(data-n); position: absolute; top: 12px; right: 14px;
+  font-family: var(--fd); font-weight: 900; font-size: 13px; line-height: 1;
+  color: rgba(204,0,0,.5);
+}
+.thesis:hover {
+  border-color: rgba(204,0,0,.6);
+  background: linear-gradient(150deg, rgba(204,0,0,.18), rgba(255,255,255,.04));
+  transform: translateY(-4px);
+  box-shadow: 0 14px 38px rgba(204,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.thesis b { display: block; font-size: 14px; font-weight: 700; margin-bottom: 5px; letter-spacing: .2px; }
+.thesis span { font-size: 12px; color: rgba(255,255,255,.6); line-height: 1.35; }
 .about-bottom { opacity: 0; transition: opacity .8s; will-change: opacity; }
 body.about-in .about-bottom { opacity: 1; }
 .about-note { font-size: 13px; color: rgba(255,255,255,.45); }
@@ -306,6 +322,8 @@ body.brain-open .bd-inner {
   /* Hero: заголовок сверху → утка (3D) в центре → кнопки снизу. Ничего не налезает. */
   .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); min-height: 100svh; justify-content: space-between; }
   .hero-top, .about-top { text-shadow: 0 2px 16px rgba(0,0,0,.9); }
+  .hero-top { top: 13vh; }
+  .hero-bottom { bottom: 16vh; }
   .hero-title { font-size: clamp(34px, 11vw, 52px); }
   .hero-sub { font-size: clamp(13px, 4vw, 18px); }
   .hero-desc { margin: 12px auto 0; font-size: 13px; max-width: 320px; }
