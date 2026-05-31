@@ -22,7 +22,7 @@ let orbit = null;   // OrbitControls в режиме настройки (?tune);
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 60000 : 100000;   // плотный объём — «миллион» частиц, мозг забит целиком
+const PCOUNT = isMobile ? 65000 : 115000;   // плотный объём — мозг забит частицами целиком
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
@@ -176,8 +176,7 @@ let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
 let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
-let brainYaw = 0;      // накопленный угол вращения мозга (замораживается на входе в туннель)
-let entryYaw = 0, straightYaw = 0;  // угол мозга в момент клика и ближайший «прямой» угол (для трубы по Z)
+let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-10, -10);
@@ -186,10 +185,10 @@ let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
 // светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
-// касание как у igloo: НЕ отталкивание от точки (это давало дырку-шар), а ТЕКУЧЕЕ
-// смещение частиц ПО НАПРАВЛЕНИЮ движения пальца (волна/расчёсывание), мягко оседает.
-const HOVER_RADIUS = 1.05, HOVER_FORCE = 1.5;   // FORCE = сила увлечения за движением
-const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.016, DAMP = 0.90;
+// касание как у igloo: частицы МЯГКО ПРИТЯГИВАЮТСЯ к пальцу (магнитики), без разлёта и вспышки,
+// затем плавно оседают (RETURN_TOUCH — мягкий «песочный» возврат, не пружина).
+const HOVER_RADIUS = 1.15, HOVER_FORCE = 0.05;   // FORCE = мягкая сила притяжения к точке касания
+const RETURN_SHAPE = 0.055, RETURN_TOUCH = 0.014, DAMP = 0.91;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -206,10 +205,11 @@ function buildParticles() {
     dir.set(duckPos[i*3], duckPos[i*3+1], duckPos[i*3+2]);
     if (dir.lengthSq() < 0.01) dir.set(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5);
     dir.normalize();
-    const spread = 1.3 + Math.random() * 1.5;
-    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 0.8;
-    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 0.8;
-    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 0.8;
+    // мягкое «облако» промежуточной формы (не резкий взрыв): уже и плотнее
+    const spread = 0.8 + Math.random() * 1.0;
+    explodePos[i*3] = duckPos[i*3] + dir.x * spread + (Math.random()-0.5) * 0.6;
+    explodePos[i*3+1] = duckPos[i*3+1] + dir.y * spread + (Math.random()-0.5) * 0.6;
+    explodePos[i*3+2] = duckPos[i*3+2] + dir.z * spread + (Math.random()-0.5) * 0.6;
     // ТУННЕЛЬ: каждая частица на кольце (угол + радиус) и со своей фазой глубины.
     // В цикле глубина едет К КАМЕРЕ → ощущение полёта сквозь трубу.
     tunnelPos[i*3] = Math.random() * Math.PI * 2;            // угол на кольце
@@ -232,15 +232,18 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВОЕ движение «как мураши»: каждая частица постоянно бегает по всему мозгу
-        // в своём направлении — быстрый бег (две октавы) + медленная МИГРАЦИЯ по фигуре.
-        // Из-за этого весь мозг шевелится целиком, выглядит живым.
+        // ЖИВОЕ движение как у igloo: КАЖДАЯ частица постоянно бежит по всей фигуре (ни одна не стоит),
+        // быстрый турбулентный бег (живой, но плотность держится) + у части частиц ВЫЛАЗКИ за контур.
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
-        // быстрый «муравьиный» бег небольшой амплитудой (живёт, но НЕ разлетается — масса плотная)
-        p.x += sin(uTime*2.2 + ph)*0.015 + sin(uTime*4.5 + ph*2.3)*0.009 + sin(uTime*0.7 + ph*0.7)*0.007;
-        p.y += sin(uTime*2.5 + ph*1.3)*0.015 + cos(uTime*4.8 + ph*1.7)*0.009 + cos(uTime*0.8 + ph*0.9)*0.007;
-        p.z += cos(uTime*2.0 + ph*0.8)*0.015 + sin(uTime*4.2 + ph*2.1)*0.009 + sin(uTime*0.6 + ph*1.1)*0.007;
+        float rnd = fract(sin(ph*1.7)*43758.5453);   // свой случайный «характер» у частицы
+        // быстрый постоянный бег (высокая частота → видно, что бегает; умеренная амплитуда → не редеет)
+        p.x += sin(uTime*3.3 + ph)*0.016 + sin(uTime*6.2 + ph*2.7)*0.010;
+        p.y += cos(uTime*3.7 + ph*1.3)*0.016 + cos(uTime*6.8 + ph*2.1)*0.010;
+        p.z += sin(uTime*2.9 + ph*0.8)*0.016 + sin(uTime*5.7 + ph*3.1)*0.010;
+        // ВЫЛАЗКИ за пределы фигуры: ~25% частиц периодически уходят наружу/внутрь и возвращаются
+        float ex = smoothstep(0.74, 1.0, rnd) * 0.095;
+        p += normalize(position + vec3(0.0001)) * sin(uTime*1.5 + ph*2.0) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
@@ -311,6 +314,8 @@ function startIntro() {
     if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, HERO_Y, 0); duckMesh.scale.set(1, 1, 1); }
     document.body.classList.add('hero-in'); introDone = true; return;
   }
+  // ТЕКСТ 1 экрана виден СРАЗУ (до броска кубиков), как просили
+  document.body.classList.add('hero-in');
   const tl = gsap.timeline();
   // тени включаем, кубики стартуют сверху и летят с отскоками по «столу»
   dice.forEach((d, i) => {
@@ -347,7 +352,6 @@ function startIntro() {
     tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
     tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
   }
-  tl.add(() => document.body.classList.add('hero-in'), 2.4);
   tl.add(() => { introDone = true; }, 4.2);
 }
 
@@ -434,18 +438,12 @@ addEventListener('click', (e) => {
 function openBrain() {
   if (brainOpen) return;
   brainOpen = true; document.body.classList.add('brain-open');
-  brainBurst = 1.0;   // мозг сначала РАССЫПАЕТСЯ наружу, затем частицы собираются в летящий туннель
-  // запоминаем угол мозга при клике; «прямой» угол = ближайший полный оборот (труба строго по Z,
-  // поворот максимум на пол-оборота → без вихря; на выходе вернёмся ровно в угол входа)
-  entryYaw = brainYaw;
-  straightYaw = Math.round(brainYaw / (Math.PI * 2)) * (Math.PI * 2);
+  brainBurst = 1.0;   // мозг сразу рассыпается и собирается в летящую трубу (труба строится прямой — см. предв. поворот)
   sound.playWhoosh(true); lenis.stop();   // блокируем скролл пока внутри
 }
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
-  // на выходе мозг собирается ЛИЦОМ к зрителю (из центра, «как вышли изнутри»), затем крутится дальше
-  brainYaw = straightYaw;
   // сбрасываем остаточные скорости/«разворошённость» — иначе часть частиц зависает кольцом/«шишкой»
   if (vel && disturb) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; } }
   pointerMove.set(0, 0, 0); _pHas = false;
@@ -465,9 +463,17 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBrain(); });
 // ============================================================
 // Автостарт звука
 // ============================================================
+// Звук включён по умолчанию (кнопки нет). Браузер не даёт запустить аудио до первого касания —
+// поэтому стартуем автоматически на ПЕРВОМ же действии пользователя (касание/скролл/клик).
 let audioStarted = false;
 function startAudioOnce() { if (audioStarted) return; audioStarted = true; sound.init(); sound.ctx.resume(); sound.startMusic(); }
-['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach((ev) => addEventListener(ev, startAudioOnce, { once: true, passive: true }));
+['pointerdown', 'touchstart', 'wheel', 'keydown', 'click'].forEach((ev) => addEventListener(ev, startAudioOnce, { once: true, passive: true }));
+// Уход со вкладки → музыка плавно гаснет; возврат → плавно возвращается (как у igloo)
+document.addEventListener('visibilitychange', () => {
+  if (!audioStarted) return;
+  if (document.hidden) sound.fade(0, 0.8);
+  else { sound.ctx.resume(); sound.fade(0.4, 0.8); }
+});
 
 // ============================================================
 // Скролл
@@ -556,9 +562,9 @@ function animate() {
       // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
       const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
       const bcorrX = -0.16 * brainPhase;
-      const bcorrY = -0.18 * brainPhase;   // мозг чуть НИЖЕ — не задевает заголовок, по центру до карточек
+      const bcorrY = -0.42 * brainPhase;   // мозг НИЖЕ — гарантированно не задевает заголовок
       // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
-      const heroDrop = -0.18 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
+      const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
       const sf = window.__teleport ? 1 : 0.1;
       subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
       subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop) - subject.position.y) * sf;
@@ -596,6 +602,10 @@ function animate() {
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
+    const touchOn = pointerActive && (tp < 0.05 || onBrain) && !brainOpen;
+    // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
+    // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
+    const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
     let pushed = 0, moveSum = 0, moveDir = 0;
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
@@ -616,34 +626,35 @@ function animate() {
       if (tunnelBlend > 0.001) {
         const ang = tunnelPos[i3];                  // угол на кольце
         const rad = tunnelPos[i3+1];                // радиус трубы
-        // фаза 0..1 → глубина: дальняя -26, у камеры +6, циклично; flowZ гонит поток
         const ph = (tunnelPos[i3+2] + flowZ) % 1;
-        const depth = -44 + ph * 52;                // -44 (вдали, точка схода) → +8 (мимо камеры): длинная труба, летит НА зрителя
-        const tubeX = Math.cos(ang) * rad;
-        const tubeY = Math.sin(ang) * rad;
+        const depth = -44 + ph * 52;                // вдали (точка схода) → мимо камеры: труба летит НА зрителя
+        // желаемая (осевая) труба, затем поворот на -brainYaw, чтобы после rotation.y вышло ровно по Z
+        const dX = Math.cos(ang) * rad, dY = Math.sin(ang) * rad, dZ = depth;
+        const tubeX = dX * _cy - dZ * _sy;
+        const tubeY = dY;
+        const tubeZ = dX * _sy + dZ * _cy;
         tx = tx + (tubeX - tx) * tunnelBlend;
         ty = ty + (tubeY - ty) * tunnelBlend;
-        tz = tz + (depth - tz) * tunnelBlend;
-        // на выходе из туннеля (brainOpen=false) НЕ держим жёстко — частицы сразу собираются в мозг
+        tz = tz + (tubeZ - tz) * tunnelBlend;
+        // в полном туннеле ставим жёстко (только пока открыт; на выходе сразу собираем мозг)
         if (brainOpen && tunnelBlend > 0.9) {
-          arr[i3] = tubeX; arr[i3+1] = tubeY; arr[i3+2] = depth;
+          arr[i3] = tubeX; arr[i3+1] = tubeY; arr[i3+2] = tubeZ;
           vel[i3] = vel[i3+1] = vel[i3+2] = 0;
           continue;
         }
       }
-      // КАСАНИЕ как у igloo: частицы рядом с пальцем ТЕКУТ за его движением (не отталкиваются
-      // от точки — поэтому нет дырки-шара и вспышки). Затем мягко оседают обратно.
-      if (pointerActive && _pHas && (tp < 0.05 || onBrain) && !brainOpen) {
-        const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
+      // КАСАНИЕ как у igloo: частицы рядом с пальцем ПРИТЯГИВАЮТСЯ к нему как магнитики —
+      // мягко тянутся к точке касания (не разлетаются, без вспышки), затем плавно оседают обратно.
+      if (touchOn) {
+        const dx = pointer3D.x - arr[i3], dy = pointer3D.y - arr[i3+1], dz = pointer3D.z - arr[i3+2];
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
-          const fall = 1 - Math.sqrt(dsq) / radius;     // мягкий спад от центра касания
-          const w = fall * fall * force;
-          vel[i3] += pointerMove.x * w; vel[i3+1] += pointerMove.y * w; vel[i3+2] += pointerMove.z * w;
+          const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
+          const pull = fall * fall * force;            // мягкое притяжение к пальцу
+          vel[i3] += (dx/dist) * pull; vel[i3+1] += (dy/dist) * pull; vel[i3+2] += (dz/dist) * pull;
           if (fall > disturb[i]) disturb[i] = fall;     // → мягкий возврат как песок
           pushed++;
-          moveSum += (Math.abs(pointerMove.x) + Math.abs(pointerMove.y)) * w;
-          moveDir += pointerMove.y * w;
+          moveSum += pull; moveDir += (dy/dist) * pull;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
@@ -662,7 +673,7 @@ function animate() {
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
       // ВНУТРЕННЕЕ СВЕЧЕНИЕ от скорости: движется → разгорается, замирает → гаснет
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
-      const g = Math.min(sp * 18, 1);
+      const g = Math.min(sp * 8, 0.7);   // мягкое свечение, без яркой вспышки на морфе/касании
       if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.08;
     }
     particles.geometry.attributes.position.needsUpdate = true;
@@ -678,16 +689,14 @@ function animate() {
     // труба всегда строго НА камеру по Z, как бы мозг ни был повёрнут в момент клика.
     // brainYaw заморожен, пока открыт туннель → на выходе мозг собирается в УГОЛ ВХОДА и крутится дальше.
     // Связка с tunnelBlend делает переход плавным (нет резкого скачка положения).
-    if (!brainOpen && onBrain && tunnelBlend < 0.02) brainYaw += 0.010;   // крутим только пока это мозг
+    if (onBrain) brainYaw += 0.010;   // мозг непрерывно крутится; труба строится с учётом этого угла
     particles.rotation.z = 0;
-    // В ТУННЕЛЕ угол ФИКСИРОВАН (straightYaw) — мозг не доворачивается, сразу рассыпается в прямую трубу.
-    // На выходе brainYaw уже = straightYaw (см. closeBrain) → нет ни поворота, ни рывка, мозг крутится дальше.
-    particles.rotation.y = (brainOpen || tunnelBlend > 0.02) ? straightYaw : brainYaw;
+    particles.rotation.y = brainYaw;  // НИКАКОГО рывка/доворота на входе-выходе: труба заранее повёрнута на -brainYaw
     // мозг меньше утки; в туннеле масштаб 1 (труба в мировом масштабе)
     if (tunnelBlend > 0.5) {
       particles.scale.setScalar(1);
     } else {
-      const brainShrink = 1 - 0.44 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);  // мозг — компактный объект
+      const brainShrink = 1 - 0.52 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);  // мозг компактнее → влезает между заголовком и карточками
       particles.scale.setScalar(brainShrink + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
     }
   }
@@ -717,11 +726,6 @@ onResize();
 // ============================================================
 // Mute / hover / глич текста
 // ============================================================
-document.getElementById('mute-btn').addEventListener('click', () => {
-  const m = sound.toggleMute();
-  document.getElementById('ic-sound-on').style.display = m ? 'none' : 'block';
-  document.getElementById('ic-sound-off').style.display = m ? 'block' : 'none';
-});
 document.querySelectorAll('.hero-title, .about-title, .btn, .nav-cta, [data-t]').forEach((el) => {
   el.addEventListener('mouseenter', () => { sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 400); });
 });

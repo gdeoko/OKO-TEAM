@@ -117,6 +117,15 @@ export class SoundSystem {
     return this.muted;
   }
 
+  // Плавное затухание/возврат громкости (уход со вкладки / возврат) — как у igloo.
+  fade(target, time = 0.6) {
+    if (!this.ctx || !this.master) return;
+    const now = this.ctx.currentTime;
+    this.master.gain.cancelScheduledValues(now);
+    this.master.gain.setValueAtTime(this.master.gain.value, now);
+    this.master.gain.linearRampToValueAtTime(target, now + time);
+  }
+
   // Мягкий шиммер при касании частиц — тёплый, без звонкости.
   // Низкая октава, медленная атака, фильтр сверху, чтобы не «дзинькало».
   playBell(intensity = 1) {

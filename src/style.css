@@ -79,22 +79,17 @@ body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events:
   color: rgba(255, 255, 255, .3);
 }
 
-/* Mute */
-#mute-btn {
+/* Индикатор звука (как у igloo: текст + иконка, без кнопки) */
+#sound-ind {
   position: fixed;
-  bottom: 22px; left: 22px;
+  bottom: 20px; left: 20px;
   z-index: 900;
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  background: rgba(8, 8, 8, .5);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, .15);
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color .3s, transform .3s;
+  display: flex; align-items: center; gap: 8px;
+  color: rgba(255, 255, 255, .55);
+  font-family: var(--fd); font-size: 10px; letter-spacing: 2px;
+  pointer-events: none; user-select: none;
 }
-#mute-btn:hover { border-color: var(--red-primary); transform: scale(1.06); }
-#mute-btn svg { width: 20px; height: 20px; }
+#sound-ind svg { width: 15px; height: 15px; opacity: .8; }
 
 /* Контент-слой */
 #content { position: relative; z-index: 10; }
@@ -219,30 +214,29 @@ body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-
 body.about-in .about-bottom { opacity: 1; }
 .about-note { font-size: 13px; color: rgba(255,255,255,.45); }
 
-/* Красивая пометка «нажми» у мозга */
+/* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
   opacity: 0; transition: opacity .6s; pointer-events: none;
 }
 body.about-in #brain-hint { opacity: 1; }
 body.brain-open #brain-hint { opacity: 0; }
-.bh-ring {
-  width: 26px; height: 26px; border-radius: 50%;
-  border: 1px solid var(--ice-blue);
-  position: relative;
+.bh-cross {
+  position: relative; width: 16px; height: 16px;
+  animation: bhblink 1.9s ease-in-out infinite;
 }
-.bh-ring::before {
-  content: ''; position: absolute; inset: 0; border-radius: 50%;
-  border: 1px solid var(--ice-blue); animation: bhpulse 1.8s ease-out infinite;
+.bh-cross::before, .bh-cross::after {
+  content: ''; position: absolute; background: var(--ice-blue);
+  box-shadow: 0 0 8px var(--ice-blue);
 }
-.bh-ring::after {
-  content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
-  background: var(--ice-blue); border-radius: 50%; transform: translate(-50%,-50%);
-  box-shadow: 0 0 10px var(--ice-blue);
+.bh-cross::before { left: 50%; top: 0; width: 1px; height: 100%; transform: translateX(-50%); }
+.bh-cross::after { top: 50%; left: 0; height: 1px; width: 100%; transform: translateY(-50%); }
+@keyframes bhblink { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+.bh-label {
+  font-family: var(--fd); font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--ice-blue); padding-top: 6px; border-top: 1px solid rgba(136,221,255,.35);
 }
-@keyframes bhpulse { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(2.6); opacity: 0; } }
-.bh-label { font-family: var(--fd); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--ice-blue); }
 
 /* Start overlay */
 /* (стартовый оверлей и кастомный курсор удалены) */
@@ -270,7 +264,7 @@ body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
 /* текст ПРИЛЕТАЕТ ИЗ ТОЧКИ ВДАЛЕКЕ: стартует крошечным, с ЗАДЕРЖКОЙ (после формирования туннеля) */
 .bd-inner {
   max-width: 520px; text-align: center;
-  transform: scale(.03); opacity: 0; filter: blur(12px);
+  transform: scale(.015); opacity: 0; filter: blur(14px); transform-origin: center center;
   transition: transform 0s, opacity 0s, filter 0s;
   /* мягкая тёмная подложка под текстом → читается поверх летящих частиц */
   padding: 26px 22px; border-radius: 28px;
@@ -279,7 +273,8 @@ body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
 #brain-detail h3, #brain-detail p { text-shadow: 0 2px 14px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.9); }
 body.brain-open .bd-inner {
   transform: scale(1); opacity: 1; filter: blur(0);
-  transition: transform 2.2s cubic-bezier(.16,1,.3,1) 1.4s, opacity 1.6s ease 1.4s, filter 1.6s ease 1.4s;
+  /* ПРИБЛИЖЕНИЕ ИЗ ТОЧКИ ВДАЛЕКЕ: долго маленький (далеко в трубе) → ускоряясь налетает (ease-in) */
+  transition: transform 2.8s cubic-bezier(.55,0,.85,1) 1.2s, opacity 1.4s ease-out 1.2s, filter 1.8s ease-out 1.2s;
 }
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(19px,3.3vw,30px); line-height: 1.2; margin-bottom: 18px; }
@@ -344,21 +339,28 @@ body.brain-open .bd-inner {
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     opacity: 0; transition: opacity .6s;
   }
-  .thesis-left { margin-top: auto; }   /* группа карточек прижата к низу, мозг выше */
+  .thesis-left { margin-top: auto; margin-bottom: 8px; }   /* две ровные строки 2×2, прижаты к низу */
   .thesis-right { margin-top: 0; }
   body.about-in .thesis-left, body.about-in .thesis-right { opacity: 1; transform: none; }
   .about-bottom { width: 100%; margin-top: 10px; }
-  .thesis { padding: 11px 12px; text-shadow: none; background: rgba(255,255,255,.05); border-radius: 10px; }
-  .thesis b { font-size: 12px; margin-bottom: 2px; }
-  .thesis span { font-size: 10px; }
+  /* РОВНЫЕ карточки: одинаковая высота, контент по центру, номер не налезает */
+  .thesis {
+    min-height: 62px; padding: 12px 30px 12px 14px; text-shadow: none; border-radius: 12px;
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(150deg, rgba(204,0,0,.10), rgba(255,255,255,.03));
+    border: 1px solid rgba(204,0,0,.2);
+  }
+  .thesis::after { top: 10px; right: 12px; font-size: 11px; }
+  .thesis b { font-size: 12.5px; margin-bottom: 2px; padding-right: 0; }
+  .thesis span { font-size: 10.5px; }
   .about-note { font-size: 11px; }
 
   .scroll-hint { bottom: 10px; }
   #nav { padding: 14px 18px; }
   #section-counter { bottom: 16px; right: 16px; }
-  #mute-btn { bottom: 14px; left: 14px; }
+  #sound-ind { bottom: 14px; left: 14px; }
   /* пометка «нажми» — над карточками, не налезает */
-  #brain-hint { top: auto; bottom: 235px; }
+  #brain-hint { top: auto; bottom: 245px; }
   #brain-detail { padding: 80px 18px 40px; align-items: flex-start; overflow-y: auto; }
   .bd-inner { margin: auto 0; }
   .bd-stats { gap: 16px; }
