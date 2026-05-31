@@ -168,22 +168,25 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
-let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null;
+let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
 let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
+let brainYaw = 0;      // накопленный угол вращения мозга (замораживается на входе в туннель)
+let entryYaw = 0, straightYaw = 0;  // угол мозга в момент клика и ближайший «прямой» угол (для трубы по Z)
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-10, -10);
 const pointer3D = new THREE.Vector3();
 let pointerActive = false, pointerNX = 0, pointerNY = 0;
-// взаимодействие частиц: больше радиус, дальше уезжают, плавный возврат
-// дорогая физика: морф уверенно отслеживает форму, но возврат после касания —
-// мягкий, инерционный, «текучий» (песок/жидкость, не резкая пружина)
-const HOVER_RADIUS = 0.95, HOVER_FORCE = 0.045, RETURN = 0.05, DAMP = 0.90;
+// взаимодействие частиц как у igloo: касание раскидывает ШИРОКО и ДАЛЕКО, частицы
+// светятся и ещё гуляют, потом МЯГКО «затягиваются» обратно (растекание песка, не пружина).
+// RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
+const HOVER_RADIUS = 1.5, HOVER_FORCE = 0.10;
+const RETURN_SHAPE = 0.06, RETURN_TOUCH = 0.018, DAMP = 0.93;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -191,6 +194,7 @@ function buildParticles() {
   tunnelPos = new Float32Array(N * 3);
   const cur = new Float32Array(N * 3), colors = new Float32Array(N * 3), sizes = new Float32Array(N);
   glow = new Float32Array(N);   // внутреннее свечение частицы (растёт от движения)
+  disturb = new Float32Array(N);   // «разворошённость» касанием: 1 = только что толкнули, мягко затухает
   const dir = new THREE.Vector3();
   for (let i = 0; i < N; i++) {
     cur[i*3] = duckPos[i*3]; cur[i*3+1] = duckPos[i*3+1]; cur[i*3+2] = duckPos[i*3+2];
@@ -225,25 +229,26 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВОЕ самодвижение «как песок/Веном»: две октавы шума по своей фазе у каждой частицы
+        // ЖИВОЕ самодвижение «как мураши»: частицы постоянно и БЫСТРО перебирают положение
+        // по всей фигуре (внутри и снаружи) — три октавы шума по своей фазе у каждой частицы
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
-        p.x += sin(uTime*0.7 + ph) * 0.012 + sin(uTime*1.7 + ph*2.3) * 0.005;
-        p.y += sin(uTime*0.8 + ph*1.3) * 0.012 + cos(uTime*1.9 + ph*1.7) * 0.005;
-        p.z += cos(uTime*0.6 + ph*0.8) * 0.012 + sin(uTime*1.5 + ph*2.1) * 0.005;
+        p.x += sin(uTime*1.7 + ph) * 0.030 + sin(uTime*3.3 + ph*2.3) * 0.016 + sin(uTime*5.1 + ph*3.7)*0.008;
+        p.y += sin(uTime*1.9 + ph*1.3) * 0.030 + cos(uTime*3.6 + ph*1.7) * 0.016 + cos(uTime*5.4 + ph*3.1)*0.008;
+        p.z += cos(uTime*1.5 + ph*0.8) * 0.030 + sin(uTime*3.1 + ph*2.1) * 0.016 + sin(uTime*4.8 + ph*3.3)*0.008;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
-        gl_PointSize=size*(1.0+vGlow*0.7)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+        gl_PointSize=size*(1.0+vGlow*1.1)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
     fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade; uniform float uOpacity;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
         // ПЛОТНЫЙ НЕПРОЗРАЧНЫЙ диск с мягким краем: зёрна перекрываются и образуют
         // СПЛОШНУЮ матовую поверхность (как песок у igloo) — фон не просвечивает
         float a = smoothstep(0.5, 0.28, d);
-        // объёмная подсветка сверху + ледяное свечение при движении
+        // объёмная подсветка сверху + ЯРКОЕ ледяное свечение когда частицу толкнули (виден свет)
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
-        vec3 col = vColor * vSh * shade + vec3(0.30,0.52,1.0) * vGlow * 0.9;
-        gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
+        vec3 col = vColor * vSh * shade + vec3(0.45,0.7,1.0) * vGlow * 1.8;
+        gl_FragColor = vec4(col, clamp(a * uOpacity * (0.35 + 0.65*vFade) + vGlow*0.3, 0.0, 1.0)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
@@ -404,6 +409,10 @@ function openBrain() {
   if (brainOpen) return;
   brainOpen = true; document.body.classList.add('brain-open');
   brainBurst = 1.0;   // мозг сначала РАССЫПАЕТСЯ наружу, затем частицы собираются в летящий туннель
+  // запоминаем угол мозга при клике; «прямой» угол = ближайший полный оборот (труба строго по Z,
+  // поворот максимум на пол-оборота → без вихря; на выходе вернёмся ровно в угол входа)
+  entryYaw = brainYaw;
+  straightYaw = Math.round(brainYaw / (Math.PI * 2)) * (Math.PI * 2);
   sound.playWhoosh(true); lenis.stop();   // блокируем скролл пока внутри
 }
 function closeBrain() {
@@ -515,7 +524,7 @@ function animate() {
       // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
       const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
       const bcorrX = -0.16 * brainPhase;
-      const bcorrY = -0.6 * brainPhase;   // мозг ниже центра, между текстом и карточками
+      const bcorrY = -0.3 * brainPhase;   // мозг по центру между заголовком и карточками
       const sf = window.__teleport ? 1 : 0.1;
       subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
       subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY) - subject.position.y) * sf;
@@ -596,6 +605,7 @@ function animate() {
           const dist = Math.sqrt(dsq) + 0.001, f = 1 - dist / radius, s = f * f * force;
           const ax = (dx/dist)*s, ay = (dy/dist)*s, az = (dz/dist)*s;
           vel[i3] += ax; vel[i3+1] += ay; vel[i3+2] += az; pushed++;
+          disturb[i] = 1.0;   // помечаем «разворошённой» → мягкий длинный возврат + гуляет
           moveSum += Math.abs(ax) + Math.abs(ay) + Math.abs(az);
           moveDir += ay; // вертикальная составляющая → тон звука
         }
@@ -604,11 +614,14 @@ function animate() {
       if (brainBurst > 0.01) {
         const bx = arr[i3], by = arr[i3+1], bz = arr[i3+2];
         const bl = Math.sqrt(bx*bx + by*by + bz*bz) + 0.001;
-        const k = brainBurst * 0.06;
+        const k = brainBurst * 0.10;
         vel[i3] += (bx/bl) * k; vel[i3+1] += (by/bl) * k; vel[i3+2] += (bz/bl) * k;
       }
-      if (TELE) { arr[i3] = tx; arr[i3+1] = ty; arr[i3+2] = tz; vel[i3]=vel[i3+1]=vel[i3+2]=0; glow[i]=0; continue; }
-      vel[i3] += (tx - arr[i3]) * RETURN; vel[i3+1] += (ty - arr[i3+1]) * RETURN; vel[i3+2] += (tz - arr[i3+2]) * RETURN;
+      if (TELE) { arr[i3] = tx; arr[i3+1] = ty; arr[i3+2] = tz; vel[i3]=vel[i3+1]=vel[i3+2]=0; glow[i]=0; disturb[i]=0; continue; }
+      // возврат: разворошённые касанием тянутся ОЧЕНЬ мягко (песок), остальные держат форму
+      const rk = RETURN_SHAPE + (RETURN_TOUCH - RETURN_SHAPE) * disturb[i];
+      disturb[i] *= 0.98;   // «разворошённость» плавно затухает ~2с → частица не спеша затягивается
+      vel[i3] += (tx - arr[i3]) * rk; vel[i3+1] += (ty - arr[i3+1]) * rk; vel[i3+2] += (tz - arr[i3+2]) * rk;
       vel[i3] *= DAMP; vel[i3+1] *= DAMP; vel[i3+2] *= DAMP;
       arr[i3] += vel[i3]; arr[i3+1] += vel[i3+1]; arr[i3+2] += vel[i3+2];
       // ВНУТРЕННЕЕ СВЕЧЕНИЕ от скорости: движется → разгорается, замирает → гаснет
@@ -624,10 +637,13 @@ function animate() {
       const pitch = THREE.MathUtils.clamp(0.5 + moveDir * 6, 0.3, 1.8);
       sound.playRustle(vol, pitch);
     }
-    // В ТУННЕЛЕ — НИКАКОГО вращения: частицы летят строго НА камеру, вглубь по Z
-    // (вращение давало эффект «вправо-влево» — убрано). Мозг чуть крутится, пока не туннель.
+    // ВРАЩЕНИЕ: мозг крутится на 360 (быстро). В туннеле вращение СНИМАЕТСЯ через tunnelBlend —
+    // труба всегда строго НА камеру по Z, как бы мозг ни был повёрнут в момент клика.
+    // brainYaw заморожен, пока открыт туннель → на выходе мозг собирается в УГОЛ ВХОДА и крутится дальше.
+    // Связка с tunnelBlend делает переход плавным (нет резкого скачка положения).
+    if (!brainOpen && onBrain) brainYaw += 0.010;   // крутим только мозг (утка-частицы не должны вращаться)
     particles.rotation.z = 0;
-    particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0009 : 0.0005);
+    particles.rotation.y = brainYaw * (1 - tunnelBlend) + straightYaw * tunnelBlend;
     // мозг меньше утки; в туннеле масштаб 1 (труба в мировом масштабе)
     if (tunnelBlend > 0.5) {
       particles.scale.setScalar(1);
