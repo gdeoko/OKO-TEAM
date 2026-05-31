@@ -449,6 +449,9 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
+  // ГАРАНТИРОВАННАЯ ПЕРЕСБОРКА: мгновенно гасим туннель и импульс распада, включаем окно сильного
+  // притяжения к форме (reform) — иначе частицы зависали трубой/кольцом и оставалась «дырка».
+  tunnelBlend = 0; brainBurst = 0; reform = 1;
   // сбрасываем остаточные скорости/свечение/«разворошённость» — иначе на месте входа остаётся светящийся след
   if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] = 0; } }
   pointerMove.set(0, 0, 0); _pHas = false;
@@ -717,6 +720,7 @@ function animate() {
   // непрерывный поток туннеля (фаза 0..1) + плавный переход мозг↔туннель
   if (brainOpen) flowZ = (flowZ + dt * 0.16) % 1;   // спокойный непрерывный полёт сквозь трубу
   if (brainBurst > 0.001) brainBurst *= 0.90;       // импульс распада быстро затухает (~0.5с)
+  if (reform > 0.001) reform *= 0.92;               // окно сильной пересборки мозга после выхода (~0.7с)
   tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.026;  // формирование туннеля ~2.5с
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
