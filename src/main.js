@@ -444,6 +444,12 @@ function openBrain() {
   brainOpen = true; document.body.classList.add('brain-open');
   tpLatch = tp;    // ФИКСИРУЕМ позу мозга (размер/место/угол на этом tp) → выход вернёт ТОЧНО её
   brainBurst = 0;  // вход ведётся прямой интерполяцией дом↔труба (без импульса) — плавно и обратимо
+  // КРИТИЧНО: «ОТПУСКАЕМ ПАЛЕЦ» при входе. Клик, открывающий туннель, ОДНОВРЕМЕННО раздвигал частицы
+  // и ставил метку disturb в точке клика. Эта метка едет вместе с вращением мозга через туннель и на
+  // выходе остаётся разреженной зоной = «дырка с разных сторон». Стираем ЛЮБОЙ след касания у ВСЕХ
+  // частиц прямо сейчас → переживать туннель нечему, мозг собирается ровно везде.
+  pointerActive = false; _pHas = false; pointerMove.set(0, 0, 0);
+  if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] = 0; } }
   // ЗВУК ВХОДА В ТУННЕЛЬ: всасывающий вихрь + рассыпание частиц (нарастающий)
   sound.playWhoosh(true); sound.playDissolve?.(); lenis.stop();   // блокируем скролл пока внутри
 }
@@ -656,6 +662,12 @@ function animate() {
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
+    // ПОКА ТУННЕЛЬ АКТИВЕН — НЕТ НИКАКОГО СЛЕДА КАСАНИЯ. Каждый кадр держим disturb/vel/glow в нуле,
+    // чтобы «залипший клик входа» (метка в точке нажатия) не пережил туннель и не дал «дырку» на выходе.
+    if ((brainOpen || tunnelBlend > 0.001) && disturb && vel && glow) {
+      for (let i = 0; i < N; i++) { disturb[i] = 0; glow[i] = 0; vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; }
+      pointerActive = false; _pHas = false;
+    }
     const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
     const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
     const touchOn = pointerActive && (tp < 0.05 || onBrain) && !brainOpen;
