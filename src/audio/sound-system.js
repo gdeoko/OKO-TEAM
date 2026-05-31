@@ -70,10 +70,12 @@ export class SoundSystem {
       const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; return src;
     };
     this.layers = {};
-    // metel — высокий воздушный шум (ветер/метель)
+    // metel — мягкий воздушный слой (не шипение): узкий bandpass, тихо
     {
-      const src = makeNoise(); const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
-      const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(g).connect(this.master); src.start();
+      const src = makeNoise();
+      const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 0.5;
+      const f2 = ctx.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 1400;
+      const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(f2).connect(g).connect(this.master); src.start();
       this.layers.metel = g;
     }
     // rustle — средний шелест (мягкое шуршание частиц)
@@ -93,7 +95,7 @@ export class SoundSystem {
   // Плавно выставить громкость слоя (0..1 относительно его потолка)
   setLayer(name, level) {
     if (!this.ctx || !this.layers || !this.layers[name]) return;
-    const caps = { metel: 0.05, rustle: 0.06, hum: 0.09 };
+    const caps = { metel: 0.022, rustle: 0.05, hum: 0.08 };
     const g = this.layers[name];
     g.gain.cancelScheduledValues(this.ctx.currentTime);
     g.gain.linearRampToValueAtTime((caps[name] || 0.05) * level, this.ctx.currentTime + 0.8);

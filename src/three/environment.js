@@ -79,8 +79,8 @@ export class ClubEnvironment {
       const scale = 30 / Math.max(size.x, size.y, size.z);
       club.scale.setScalar(scale);
       club.position.sub(center.multiplyScalar(scale));
-      club.position.y -= 3.0;        // пол ниже утки
-      club.position.z -= 8;          // зал уходит вглубь перед камерой (видно весь интерьер)
+      club.position.y -= 3.0;        // как было
+      club.position.z -= 8;
 
       // Тёмный зал + ЯРКИЙ неон (как на референсе): не-неон затемняем,
       // неон оставляем родным цветом (синий/фиолет) и усиливаем свечение.

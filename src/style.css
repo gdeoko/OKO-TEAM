@@ -109,7 +109,7 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  padding: 84px 24px 14vh;    /* кнопки заметно выше нижнего края */
+  padding: 84px 24px 24vh;    /* кнопки выше — ближе под фигуру */
 }
 
 /* Hero — заголовок сверху, утка по центру (3D), кнопки снизу */

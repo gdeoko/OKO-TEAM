@@ -16,12 +16,12 @@ import { ClubEnvironment } from './three/environment.js';
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 26000 : 42000;   // плотнее (тот же размер точек, больше количество)
+const PCOUNT = isMobile ? 40000 : 70000;   // очень плотно, мелкие зёрна как у igloo
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
-const HERO_Y = isMobile ? 0.6 : 0.4;
-const SUBJ_SCALE = isMobile ? 0.85 : 1.7;   // крупнее
+const HERO_Y = isMobile ? 0.35 : 0.25;
+const SUBJ_SCALE = isMobile ? 1.15 : 2.1;   // крупнее
 // Угол поворота утки (клювом в камеру). Подбор: добавь ?duck=ГРАДУСЫ к адресу
 // (например ducks.games/?duck=90), покрути, найди фронтальный — скажи число, зафиксирую.
 const _duckDeg = new URLSearchParams(location.search).get('duck');
@@ -155,7 +155,7 @@ const pointer = new THREE.Vector2(-10, -10);
 const pointer3D = new THREE.Vector3();
 let pointerActive = false, pointerNX = 0, pointerNY = 0;
 // взаимодействие частиц: больше радиус, дальше уезжают, плавный возврат
-const HOVER_RADIUS = 0.95, HOVER_FORCE = 0.045, RETURN = 0.018, DAMP = 0.9;
+const HOVER_RADIUS = 0.8, HOVER_FORCE = 0.05, RETURN = 0.045, DAMP = 0.86;
 
 function buildParticles() {
   const N = PCOUNT;
@@ -185,7 +185,7 @@ function buildParticles() {
     const hf = (duckPos[i*3+1] + 1.3) / 2.6, r = Math.random();
     let ci; if (hf > 0.85) ci = r > 0.6 ? 3 : 0; else if (r < 0.06) ci = 4; else if (r < 0.5) ci = 0; else if (r < 0.85) ci = 1; else ci = 2;
     const col = palette[ci]; colors[i*3]=col.r; colors[i*3+1]=col.g; colors[i*3+2]=col.b;
-    sizes[i] = 0.05 + Math.random() * 0.09;   // мельче точки → структура мозга читается
+    sizes[i] = 0.035 + Math.random() * 0.05;  // мелкие плотные зёрна (igloo)
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(cur, 3));
@@ -193,15 +193,19 @@ function buildParticles() {
   geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
   const mat = new THREE.ShaderMaterial({
     uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 } },
-    vertexShader: `attribute float size; varying vec3 vColor; varying float vTw; uniform float uPixelRatio; uniform float uTime;
-      void main(){ vColor=color; vTw=0.82+0.18*sin(uTime*1.6+position.x*5.0+position.y*4.0);
-      vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=size*uPixelRatio*(230.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
-    fragmentShader: `varying vec3 vColor; varying float vTw; uniform float uOpacity;
+    vertexShader: `attribute float size; varying vec3 vColor; varying float vSh; uniform float uPixelRatio; uniform float uTime;
+      void main(){ vColor=color;
+        // лёгкая разница яркости по позиции — объём как у песчинок igloo
+        vSh=0.78+0.22*sin(position.y*9.0+position.x*7.0);
+        vec4 mv=modelViewMatrix*vec4(position,1.0);
+        gl_PointSize=size*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader: `varying vec3 vColor; varying float vSh; uniform float uOpacity;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv); if(d>0.5)discard;
-      // мягкая матовая пылинка (как igloo): плотное ядро + лёгкое гало, без пересвета
-      float core=smoothstep(0.5,0.12,d);
-      gl_FragColor=vec4(vColor*vTw, core*uOpacity); }`,
-    vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: false, depthTest: true,
+        // плотное зерно: яркая верхушка (свет сверху), тёмный низ — объём, не плоская точка
+        float shade=0.55+0.45*(-uv.y+0.5);
+        float core=smoothstep(0.5,0.30,d);
+        gl_FragColor=vec4(vColor*vSh*shade, core*uOpacity); }`,
+    vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
   particles.renderOrder = 2;
@@ -238,7 +242,8 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     buildParticles();
     if (ldBar) ldBar.style.width = '100%';
     setTimeout(() => document.getElementById('loader').classList.add('hidden'), 350);
-    startIntro();
+    // интро (кубики→утка) запускаем ПОСЛЕ исчезновения прелоадера, чтобы кубики были видны
+    setTimeout(startIntro, 1200);
   })
   .catch((e) => {
     console.error('Ошибка загрузки моделей:', e);
@@ -423,16 +428,14 @@ function animate() {
   // КАМЕРА ТОЛЬКО ПРЯМО ВПЕРЁД В ГЛУБИНУ (без поворота к бару)
   let targetZ;
   if (brainOpen) targetZ = 0.5;                          // внутрь туннеля
-  else targetZ = 9 - easeIO(tp) * 4.2;                   // 9→4.8: вперёд, мозг виден целиком
+  else targetZ = 6 - easeIO(tp) * 2.5;                   // 6→3.5: ближе, утка крупная по центру
   camera.position.z += (targetZ - camera.position.z) * 0.06;
   const par = Math.max(0, 1 - tp * 6);
   camera.position.x += ((pointerNX * 0.2 * par) - camera.position.x) * 0.03;
-  // камера на уровне фигуры (не в потолок): высота близко к субъекту
-  camera.position.y += ((0.6 + (-pointerNY * 0.1 * par) + Math.sin(t * 0.3) * 0.03) - camera.position.y) * 0.03;
-  // утка/мозг строго по центру; камера смотрит ПРЯМО в фигуру
+  camera.position.y += ((0.4 + (-pointerNY * 0.1 * par) + Math.sin(t * 0.3) * 0.03) - camera.position.y) * 0.03;
   subject.position.x += (HERO_X - subject.position.x) * 0.08;
   subject.position.y += (HERO_Y - subject.position.y) * 0.08;
-  camera.lookAt(subject.position.x, subject.position.y + 0.3, 0);
+  camera.lookAt(subject.position.x, subject.position.y + 0.1, 0);
   env.fade(1 - tp * 0.5);
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
@@ -509,7 +512,9 @@ function animate() {
     // туннель вращается когда внутри мозга
     particles.rotation.z += brainOpen ? 0.003 : 0;
     particles.rotation.y += brainOpen ? 0 : (onBrain ? 0.0011 : 0.0006);
-    particles.scale.setScalar(1 + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
+    // мозг меньше утки: облако ужимается к фазе мозга
+    const brainShrink = 1 - 0.32 * THREE.MathUtils.clamp((tp - 0.5) / 0.45, 0, 1);
+    particles.scale.setScalar(brainShrink + Math.sin(t * 1.5) * 0.012 * (tp > 0.75 ? 1 : 0));
   }
   // непрерывный поток туннеля + ПЛАВНЫЙ медленный переход мозг↔туннель
   if (brainOpen) flowZ += dt * 4.5;   // медленнее — спокойный полёт сквозь туннель
