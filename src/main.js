@@ -22,7 +22,7 @@ let orbit = null;   // OrbitControls в режиме настройки (?tune);
 // Устройство / конфиг
 // ============================================================
 const isMobile = window.matchMedia('(max-width: 768px)').matches || !window.matchMedia('(hover: hover)').matches;
-const PCOUNT = isMobile ? 40000 : 70000;   // очень плотно, мелкие зёрна как у igloo
+const PCOUNT = isMobile ? 24000 : 42000;   // плотно, но без подвисаний при сэмплинге
 const PIXEL_RATIO = Math.min(window.devicePixelRatio, 1.5);
 // Утка/мозг ВСЕГДА по центру по X. На телефоне чуть выше (текст сверху+снизу).
 const HERO_X = 0;
@@ -103,6 +103,11 @@ const LOOK_Y = _qp.has('look') ? parseFloat(_qp.get('look')) : 1.5;
 const CAM_Y = _qp.has('camy') ? parseFloat(_qp.get('camy')) : 0.5;
 const CAM_Z = _qp.has('camz') ? parseFloat(_qp.get('camz')) : 4.5;
 const ROT_Y = _qp.has('roty') ? parseFloat(_qp.get('roty')) * Math.PI / 180 : 0;  // поворот зала (найти стену с окном)
+// тонкая подстройка фигуры на луче взгляда: ?dx ?dy сдвиг, ?dist расстояние от камеры
+const DUCK_PX = _qp.has('dx') ? parseFloat(_qp.get('dx')) : 0;
+const DUCK_PY = _qp.has('dy') ? parseFloat(_qp.get('dy')) : 0;
+const DUCK_DIST = _qp.has('dist') ? parseFloat(_qp.get('dist')) : (isMobile ? 6.5 : 4.6);  // на ПК ближе=крупнее
+const _camDir = new THREE.Vector3();
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
@@ -155,9 +160,9 @@ subject.position.set(HERO_X, HERO_Y, 0);
 subject.scale.setScalar(SUBJ_SCALE);
 scene.add(subject);
 // свет на утку: тёплый ключевой спереди + неоновый контровой, чтобы не была тёмной
-const duckKey = new THREE.PointLight(0xfff0e6, 26, 16); duckKey.position.set(2, 2.5, 4); subject.add(duckKey);
+const duckKey = new THREE.PointLight(0xfff2e8, 40, 18); duckKey.position.set(2.5, 3, 5); subject.add(duckKey);
 const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3, 1.5, -1); subject.add(duckRim);
-const duckFill = new THREE.PointLight(0x66bbff, 10, 16); duckFill.position.set(0, 0.5, 5); subject.add(duckFill);
+const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null;
@@ -274,6 +279,11 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
 // ============================================================
 function startIntro() {
+  // быстрый путь (?fast) — для проверки финальной композиции без ожидания интро
+  if (_qp.has('fast')) {
+    if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, HERO_Y, 0); duckMesh.scale.set(1, 1, 1); }
+    document.body.classList.add('hero-in'); introDone = true; return;
+  }
   const tl = gsap.timeline();
   // тени включаем, кубики стартуют сверху и летят с отскоками по «столу»
   dice.forEach((d, i) => {
@@ -441,18 +451,24 @@ function animate() {
   // (фон — 3D-клуб)
 
   if (!TUNE) {
-    // КАМЕРА едет вперёд вглубь зала по скроллу
-    let targetZ;
-    if (brainOpen) targetZ = -2;
-    else targetZ = CAM_Z - easeIO(tp) * 4.5;
-    camera.position.z += (targetZ - camera.position.z) * 0.05;
+    // КАМЕРА: зафиксированный ракурс (подобран клиентом). Едет ВПЕРЁД вглубь по скроллу.
+    const CAM0 = { x: 0.39, y: 0.10, z: 20.69 };
+    const LOOK = { x: -0.49, y: -5.52, z: -8.27 };
+    let zPos;
+    if (brainOpen) zPos = CAM0.z - 18;
+    else zPos = CAM0.z - easeIO(tp) * 14;
     const par = Math.max(0, 1 - tp * 6);
-    camera.position.x += ((pointerNX * 0.25 * par) - camera.position.x) * 0.03;
-    camera.position.y += ((CAM_Y + (-pointerNY * 0.15 * par) + Math.sin(t * 0.3) * 0.04) - camera.position.y) * 0.03;
-    camera.lookAt(0, LOOK_Y, -23);
-    subject.position.x += (HERO_X - subject.position.x) * 0.08;
-    subject.position.y += ((HERO_Y - 0.8) - subject.position.y) * 0.08;
-    subject.position.z = camera.position.z - 4.5;
+    camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * 0.04;
+    camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * 0.04;
+    camera.position.z += (zPos - camera.position.z) * 0.05;
+    camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
+    // ФИГУРА всегда на луче взгляда камеры, на фикс. расстоянии → ровно по центру кадра,
+    // стабильный размер. На скролле чуть приближается (драматичнее распад).
+    _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
+    const dist = DUCK_DIST - easeIO(tp) * 2.5;
+    subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX) - subject.position.x) * 0.1;
+    subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY) - subject.position.y) * 0.1;
+    subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * 0.1;
   } else if (orbit) {
     orbit.update();
     updateTuneHUD();
