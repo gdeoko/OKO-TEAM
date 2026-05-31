@@ -448,18 +448,12 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
-  // ГАРАНТИРОВАННАЯ ПЕРЕСБОРКА БЕЗ «ДЫРКИ»: выход происходит внутри тёмного туннеля, поэтому
-  // мгновенно ставим КАЖДУЮ частицу на её место в собранном мозге (brainPos) — никакой полости.
-  tunnelBlend = 0; brainBurst = 0; reform = 1;
-  const arr0 = particles && particles.geometry.attributes.position.array;
-  if (arr0 && brainPos && vel && disturb && glow) {
-    for (let i = 0; i < PCOUNT; i++) {
-      const i3 = i * 3;
-      arr0[i3] = brainPos[i3]; arr0[i3+1] = brainPos[i3+1]; arr0[i3+2] = brainPos[i3+2];
-      vel[i3] = vel[i3+1] = vel[i3+2] = 0; disturb[i] = 0; glow[i] = 0;
-    }
-    particles.geometry.attributes.position.needsUpdate = true;
-  }
+  // ВЫХОД = ИНВЕРСИЯ ВХОДА: НЕ трогаем позиции и НЕ обнуляем tunnelBlend мгновенно.
+  // tunnelBlend сам плавно поедет 1→0, и частицы по той же траектории перетекут труба→мозг,
+  // камера отдалится назад. reform добавляет плотности уже в самом конце сборки (без «дырки»).
+  brainBurst = 0; reform = 0.9;
+  // гасим остаточные скорости/свечение/«разворошённость» (но позиции оставляем — они анимируются назад)
+  if (vel && disturb && glow) { for (let i = 0; i < PCOUNT; i++) { vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; disturb[i] = 0; glow[i] *= 0.5; } }
   pointerMove.set(0, 0, 0); _pHas = false;
   // ЗВУК ВЫХОДА ИЗ ТУННЕЛЯ: нисходящий вихрь + сборка
   sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
@@ -468,6 +462,7 @@ window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для п
 // тест-хук: мгновенно выставить прогресс скролла + (опц.) телепорт частиц/камеры в цель,
 // чтобы делать скриншоты УСТОЯВШЕГОСЯ кадра в headless (низкий FPS не успевает сойтись)
 window.__setScroll = (v) => { scrollProgress = v; updateUIByScroll(); };
+Object.defineProperty(window, '__tbDbg', { get: () => tunnelBlend });   // для headless-замера прогресса туннеля
 // клик по фону попапа закрывает; клик по кнопке — тоже (с остановкой всплытия)
 document.getElementById('brain-detail').addEventListener('click', (e) => { if (e.target.id === 'brain-detail') closeBrain(); });
 const brainBackBtn = document.getElementById('brain-back');
@@ -586,43 +581,41 @@ function animate() {
     // КАМЕРА: зафиксированный ракурс (подобран клиентом). Едет ВПЕРЁД вглубь по скроллу.
     const CAM0 = { x: 0.39, y: 0.10, z: 20.69 };
     const LOOK = { x: -0.49, y: -5.52, z: -8.27 };
-    if (brainOpen) {
-      // ВНУТРИ ТУННЕЛЯ: камера БЫСТРО встаёт строго на ось (под прикрытием взрыва), смотрит прямо
-      // вглубь (-Z), subject в центр. Из-за быстрой постановки труба сразу летит РОВНО НА ЗРИТЕЛЯ,
-      // без «уезжания вбок» (раньше камера доезжала медленно из наклонного ракурса — это и был сдвиг).
-      const bf = window.__teleport ? 1 : 0.3;
-      subject.position.lerp(_zero, window.__teleport ? 1 : 0.3);
-      camera.position.x += (0 - camera.position.x) * bf;
-      camera.position.y += (0 - camera.position.y) * bf;
-      camera.position.z += (6 - camera.position.z) * bf;
-      camera.lookAt(0, 0, -10);
-    } else {
-      // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → камера/фигура встают в цель почти
-      // МГНОВЕННО (snap→1), иначе уже собранный мозг «въезжает» сбоку. Плавный скролл = мягко (как было).
-      const scrollSpeed = Math.abs(tp - prevTpCam); prevTpCam = tp;
-      const snap = THREE.MathUtils.clamp(scrollSpeed * 14, 0, 1);
-      const camXY = window.__teleport ? 1 : THREE.MathUtils.lerp(0.04, 1, snap);
-      const cf = window.__teleport ? 1 : THREE.MathUtils.lerp(0.05, 1, snap);
-      const sf = window.__teleport ? 1 : THREE.MathUtils.lerp(0.1, 1, snap);
-      const zPos = CAM0.z - easeIO(tp) * 14;
-      const par = Math.max(0, 1 - tp * 6);
-      camera.position.x += ((CAM0.x + pointerNX * 0.4 * par) - camera.position.x) * camXY;
-      camera.position.y += ((CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05) - camera.position.y) * camXY;
-      camera.position.z += (zPos - camera.position.z) * cf;
-      camera.lookAt(LOOK.x, LOOK.y, LOOK.z);
-      // ФИГУРА на луче взгляда камеры, фикс. расстояние → ровно по центру кадра
-      _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
-      const dist = DUCK_DIST - easeIO(tp) * 2.5;
-      // по мере сборки мозга: центрируем по X и ОПУСКАЕМ ниже (мозг между заголовком и карточками)
-      const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
-      const bcorrX = -0.16 * brainPhase;
-      const bcorrY = -0.12 * brainPhase;   // мозг ещё чуть выше — ровно по центру между заголовком и карточками
-      // утка чуть ниже ТОЛЬКО в герое (голова не задевает строку «Покер…»); к мозгу сходит на нет
-      const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
-      subject.position.x += ((camera.position.x + _camDir.x * dist + DUCK_PX + bcorrX) - subject.position.x) * sf;
-      subject.position.y += ((camera.position.y + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop) - subject.position.y) * sf;
-      subject.position.z += ((camera.position.z + _camDir.z * dist) - subject.position.z) * sf;
-    }
+    // ВХОД И ВЫХОД ИЗ ТУННЕЛЯ — ОДНА ТРАЕКТОРИЯ (инверсия), всё ведётся tunnelBlend (tb):
+    // tb=0 — обычная сцена (герой/мозг по скроллу), tb=1 — внутри туннеля (камера придвинута,
+    // смотрит вглубь -Z, фигура в центре). На выходе tb плавно 1→0 → камера/фигура/частицы
+    // возвращаются по ТОМУ ЖЕ пути назад (приближение ↔ отдаление).
+    const tb = THREE.MathUtils.clamp(tunnelBlend, 0, 1);
+    // СКОРОСТЬ СКРОЛЛА: при резком скролле tp прыгает → почти мгновенная установка (snap→1),
+    // иначе собранный мозг «въезжает» сбоку; плавный скролл — мягко (как было).
+    const scrollSpeed = Math.abs(tp - prevTpCam); prevTpCam = tp;
+    const snap = THREE.MathUtils.clamp(scrollSpeed * 14, 0, 1);
+    const par = Math.max(0, 1 - tp * 6);
+    // целевая поза камеры при скролле
+    const sCamX = CAM0.x + pointerNX * 0.4 * par;
+    const sCamY = CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05;
+    const sCamZ = CAM0.z - easeIO(tp) * 14;
+    // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
+    const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
+    camera.position.x += ((sCamX + (0 - sCamX) * tb) - camera.position.x) * camEase;
+    camera.position.y += ((sCamY + (0 - sCamY) * tb) - camera.position.y) * camEase;
+    camera.position.z += ((sCamZ + (6 - sCamZ) * tb) - camera.position.z) * camEase;
+    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель)
+    camera.lookAt(LOOK.x + (0 - LOOK.x) * tb, LOOK.y + (0 - LOOK.y) * tb, LOOK.z + (-10 - LOOK.z) * tb);
+    // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
+    _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
+    const dist = DUCK_DIST - easeIO(tp) * 2.5;
+    const brainPhase = THREE.MathUtils.clamp((tp - 0.5) / 0.35, 0, 1);
+    const bcorrX = -0.16 * brainPhase;
+    const bcorrY = -0.12 * brainPhase;   // мозг чуть выше — ровно по центру между заголовком и карточками
+    const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tp / 0.22, 0, 1));
+    const sSubX = sCamX + _camDir.x * dist + DUCK_PX + bcorrX;
+    const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
+    const sSubZ = sCamZ + _camDir.z * dist;
+    const subEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.1, 1, snap), 0.3, tb);
+    subject.position.x += (sSubX * (1 - tb) - subject.position.x) * subEase;
+    subject.position.y += (sSubY * (1 - tb) - subject.position.y) * subEase;
+    subject.position.z += (sSubZ * (1 - tb) - subject.position.z) * subEase;
   } else if (orbit) {
     orbit.update();
     updateTuneHUD();
@@ -674,9 +667,9 @@ function animate() {
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
       }
-      // ТУННЕЛЬ: притягиваем к трубе ТОЛЬКО пока вход открыт. На выходе (brainOpen=false)
-      // к трубе НЕ тянем → частицы сразу собираются в мозг, без зависшей «дырки»-остатка трубы.
-      if (brainOpen && tunnelBlend > 0.001) {
+      // ТУННЕЛЬ: притяжение к трубе ведётся tunnelBlend (НЕ флагом brainOpen). На выходе tb плавно
+      // 1→0, поэтому частицы перетекают труба→мозг ПО ТОЙ ЖЕ траектории (инверсия входа), без рывка.
+      if (tunnelBlend > 0.001) {
         const ang = tunnelPos[i3];                  // угол на кольце
         const rad = tunnelPos[i3+1];                // радиус трубы
         const ph = (tunnelPos[i3+2] + flowZ) % 1;
@@ -763,8 +756,8 @@ function animate() {
   if (brainOpen) flowZ = (flowZ + dt * 0.16) % 1;   // спокойный непрерывный полёт сквозь трубу
   if (brainBurst > 0.001) brainBurst *= 0.90;       // импульс распада быстро затухает (~0.5с)
   if (reform > 0.001) reform *= 0.95;               // окно сильной пересборки мозга после выхода (~1.3с, чинит дырку)
-  // вход в туннель чуть быстрее (~на 0.5с), выход остаётся быстрым
-  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * (brainOpen ? 0.04 : 0.12);
+  // СИММЕТРИЧНО: вход и выход с ОДНОЙ скоростью (выход = инверсия входа), чуть быстрее (~на 1с)
+  tunnelBlend += ((brainOpen ? 1 : 0) - tunnelBlend) * 0.06;
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
 
   renderer.render(scene, camera);
