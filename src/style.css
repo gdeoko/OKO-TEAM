@@ -229,10 +229,9 @@ body.about-in .about-bottom { opacity: 1; }
 /* Порядок: заголовок ПОКЕР → подзаголовок «турниры для своих» → кнопка → ниже стол с картами */
 #poker { pointer-events: none; }
 .poker-top, .poker-hint {
-  position: fixed; left: 50%; transform: translateX(-50%) translateY(16px);
+  position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
   width: 100%; max-width: 760px; padding: 0 24px;
-  opacity: 0; z-index: 11; pointer-events: none;
-  transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
+  opacity: 0; z-index: 11; pointer-events: none; transition: none;
   text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
 }
 .poker-top { top: 9vh; display: flex; flex-direction: column; align-items: center; }

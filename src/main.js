@@ -113,6 +113,11 @@ const DUCK_PY = _qp.has('dy') ? parseFloat(_qp.get('dy')) : -0.25;  // утка 
 const DUCK_DIST = _qp.has('dist') ? parseFloat(_qp.get('dist')) : (isMobile ? 6.5 : 4.6);  // на ПК ближе=крупнее
 const _camDir = new THREE.Vector3();
 const _zero = new THREE.Vector3(0, 0, 0);
+// туннель-переход 2→3: тубус строится ВОКРУГ ОСИ ВЗГЛЯДА КАМЕРЫ (летит на зрителя даже при повороте)
+const _invP = new THREE.Matrix4();
+const _camRight = new THREE.Vector3(), _camUp2 = new THREE.Vector3(), _camFwd = new THREE.Vector3();
+const _camP = new THREE.Vector3(), _wp = new THREE.Vector3();
+let transFlow = 0;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
@@ -559,9 +564,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ============================================================
-// Скролл
+// Скролл — СНЭП ПО СТАНЦИЯМ (кино): один жест = один слайд.
+// Lenis оставляем как движок плавной доводки (scrollTo), а ВВОД берём под контроль:
+// колесо/свайп/клавиши не скроллят свободно, а переключают станцию на ±1 с авто-доводкой.
+// Никакой сильный «фланг» не перепрыгивает через станцию и не улетает в конец.
 // ============================================================
-const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+const lenis = new Lenis({ duration: 1.15, smoothWheel: false, syncTouch: false, wheelMultiplier: 0, touchMultiplier: 0 });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 lenis.on('scroll', ({ scroll, limit }) => {
@@ -573,10 +581,60 @@ lenis.on('scroll', ({ scroll, limit }) => {
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
 
+// Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
+const STATIONS = [0, 0.5, 1.0];
+let curStation = 0;
+let navLock = false;
+let _navTO = 0;
+function goToStation(idx, dur = 1.5) {
+  idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
+  curStation = idx;
+  navLock = true;
+  const target = STATIONS[idx] * (lenis.limit || (document.body.scrollHeight - innerHeight) || 1);
+  lenis.scrollTo(target, { duration: dur, easing: (x) => 1 - Math.pow(1 - x, 3), lock: true });
+  clearTimeout(_navTO); _navTO = setTimeout(() => { navLock = false; }, dur * 1000 + 120);
+}
+function navStep(dir) {
+  if (navLock || !introDone || brainOpen || document.body.classList.contains('signup-open')) return;
+  const next = curStation + dir;
+  if (next < 0 || next > STATIONS.length - 1) return;
+  goToStation(next);
+}
+window.__goToStation = goToStation;   // для проверки в браузере
+// — колесо мыши / трекпад
+addEventListener('wheel', (e) => {
+  if (document.body.classList.contains('signup-open')) return;   // даём прокрутку анкете
+  e.preventDefault();
+  if (brainOpen || navLock) return;
+  if (Math.abs(e.deltaY) < 6) return;
+  navStep(e.deltaY > 0 ? 1 : -1);
+}, { passive: false });
+// — свайп пальцем
+let _touchY = null, _touchT = 0;
+addEventListener('touchstart', (e) => { if (e.touches[0]) { _touchY = e.touches[0].clientY; _touchT = performance.now(); } }, { passive: true });
+addEventListener('touchmove', (e) => { if (!document.body.classList.contains('signup-open')) e.preventDefault(); }, { passive: false });
+addEventListener('touchend', (e) => {
+  if (document.body.classList.contains('signup-open') || _touchY == null) { _touchY = null; return; }
+  const y = (e.changedTouches[0] || {}).clientY ?? _touchY;
+  const dy = _touchY - y, dt = performance.now() - _touchT;
+  _touchY = null;
+  if (Math.abs(dy) > 36 || (Math.abs(dy) > 14 && dt < 250)) navStep(dy > 0 ? 1 : -1);
+}, { passive: true });
+// — клавиатура
+addEventListener('keydown', (e) => {
+  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); navStep(1); }
+  else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); navStep(-1); }
+  else if (e.key === 'Home') { e.preventDefault(); if (!navLock) goToStation(0); }
+  else if (e.key === 'End') { e.preventDefault(); if (!navLock) goToStation(STATIONS.length - 1); }
+});
+
 const heroTop = document.querySelector('.hero-top');
 const heroBottom = document.querySelector('.hero-bottom');
 const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
+const pokerTop = document.querySelector('.poker-top');
+const pokerHint = document.querySelector('.poker-hint');
 function updateUIByScroll() {
   // ХОЛЛ занимает первый сегмент скролла; дальше — станция Покер
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
@@ -595,6 +653,15 @@ function updateUIByScroll() {
   scrollHint.style.opacity = String(Math.max(0, 1 - tp * 8));
   // About проявляется к концу (мозг собран). Плавно, без рывка.
   document.body.classList.toggle('about-in', tp > 0.8 && pk < 0.1);
+  // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц)
+  const pe = THREE.MathUtils.clamp((pk - 0.5) / 0.4, 0, 1);
+  const pez = pe * pe * (3 - 2 * pe);
+  [pokerTop, pokerHint].forEach((el) => { if (!el) return;
+    el.style.opacity = String(pez);
+    el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * pez})`;
+    el.style.filter = `blur(${(1 - pez) * 7}px)`;
+    el.style.pointerEvents = pez > 0.7 ? 'auto' : 'none';
+  });
 }
 
 // ============================================================
@@ -671,10 +738,9 @@ function animate() {
     const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
     const sSubZ = sCamZ + _camDir.z * dist;
     const subEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.1, 1, snap), 0.3, tb);
-    // ПОКЕР: мозг сворачивается и улетает вправо-вниз («закатывается под стол»)
-    const pkOffX = pkc * 5.5, pkOffY = -pkc * 3.0;
-    subject.position.x += ((sSubX + pkOffX) * (1 - tb) - subject.position.x) * subEase;
-    subject.position.y += ((sSubY + pkOffY) * (1 - tb) - subject.position.y) * subEase;
+    // ПОКЕР: мозг остаётся по центру и превращается в туннель частиц (см. цикл частиц ниже)
+    subject.position.x += (sSubX * (1 - tb) - subject.position.x) * subEase;
+    subject.position.y += (sSubY * (1 - tb) - subject.position.y) * subEase;
     subject.position.z += (sSubZ * (1 - tb) - subject.position.z) * subEase;
   } else if (orbit) {
     orbit.update();
@@ -706,8 +772,8 @@ function animate() {
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    // частицы появляются в Холле и ГАСНУТ при уходе в Покер (мозг улетает)
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.05, 0.45));
+    // частицы появляются в Холле; в переходе летят туннелем НА зрителя и ГАСНУТ во второй половине
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.45, 0.8));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
@@ -727,6 +793,22 @@ function animate() {
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
+    // ТУННЕЛЬ-ПЕРЕХОД 2→3 (без темноты): частицы мозга превращаются в трубу, летящую НА зрителя,
+    // труба строится вокруг ОСИ ВЗГЛЯДА камеры (поэтому летит ровно на тебя, даже когда камера
+    // поворачивается к бару), затем частицы гаснут, а стол с текстом «прилетают» из точки.
+    const inTrans = !brainOpen && tunnelBlend < 0.001 && pk > 0.02 && pk < 0.9;
+    let transShape = 0;
+    if (inTrans) {
+      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.35, 0, 1));
+      transFlow = (transFlow + dt * 0.16) % 1;
+      camera.updateMatrixWorld();
+      particles.updateWorldMatrix(true, false);
+      _invP.copy(particles.matrixWorld).invert();
+      _camRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+      _camUp2.setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+      _camFwd.setFromMatrixColumn(camera.matrixWorld, 2).normalize().multiplyScalar(-1);   // -Z = вперёд
+      _camP.setFromMatrixPosition(camera.matrixWorld);
+    }
     let pushed = 0, moveSum = 0, moveDir = 0;
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
@@ -767,6 +849,22 @@ function animate() {
         const gg = 0.25 * tbCurve;
         glow[i] += (gg - glow[i]) * 0.1;
         continue;   // в туннеле НЕ применяем пружину/касание — позиция уже задана явно
+      }
+      // ТУННЕЛЬ-ПЕРЕХОД 2→3: труба вокруг оси взгляда камеры, летит НА зрителя; смешиваем мозг↔труба
+      if (inTrans) {
+        const ang = tunnelPos[i3], rad = tunnelPos[i3 + 1];
+        const ph = (tunnelPos[i3 + 2] + transFlow) % 1;
+        const depth = 22 - ph * 30;                  // далеко (точка схода) → мимо камеры (полёт на зрителя)
+        _wp.copy(_camP).addScaledVector(_camFwd, depth)
+          .addScaledVector(_camRight, Math.cos(ang) * rad)
+          .addScaledVector(_camUp2, Math.sin(ang) * rad);
+        _wp.applyMatrix4(_invP);                     // мир → локальные координаты частиц
+        arr[i3]     = tx + (_wp.x - tx) * transShape;
+        arr[i3 + 1] = ty + (_wp.y - ty) * transShape;
+        arr[i3 + 2] = tz + (_wp.z - tz) * transShape;
+        vel[i3] = vel[i3 + 1] = vel[i3 + 2] = 0; disturb[i] = 0;
+        glow[i] += (0.22 * transShape - glow[i]) * 0.1;
+        continue;
       }
       // КАСАНИЕ «палец в песке»: мягко РАЗДВИГАЕМ частицы в стороны от пальца (шире, плавно),
       // они подсвечиваются изнутри; затем без пружины стекаются обратно.
@@ -873,7 +971,7 @@ document.querySelectorAll('.hero-title, .about-title, .poker-title, .btn, .nav-c
   el.addEventListener('mouseenter', () => { sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 400); });
 });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
-document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); lenis.scrollTo('#about', { duration: 1.8 }); });
+document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); if (!navLock) goToStation(1); });
 
 // ============================================================
 // Анкета «Записаться за стол» — модалка, валидация, маска телефона, отправка

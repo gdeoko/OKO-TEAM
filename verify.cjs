@@ -40,6 +40,22 @@ const server = http.createServer((req, res) => {
 
   await shoot('hero');
 
+  // проба снэпа: один wheel вниз должен перевести на станцию 1 (мозг, scrollProgress≈0.5), не дальше
+  const nav1 = await page.evaluate(async () => {
+    const L = window.__lenis; const before = L.scroll;
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 600, cancelable: true }));
+    await new Promise(r => setTimeout(r, 1800));
+    return { before, after: L.scroll, frac: +(L.scroll / (L.limit || 1)).toFixed(3) };
+  });
+  console.log('NAV step1:', JSON.stringify(nav1));
+  const nav2 = await page.evaluate(async () => {
+    const L = window.__lenis;
+    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 9000, cancelable: true }));  // сильный фланг
+    await new Promise(r => setTimeout(r, 1800));
+    return { frac: +(L.scroll / (L.limit || 1)).toFixed(3) };
+  });
+  console.log('NAV step2 (strong fling):', JSON.stringify(nav2));
+
   // scroll positions
   // settled frame at given scroll progress (sync DOM scroll + teleport particles/camera to target)
   const settle = async (v) => {
@@ -57,8 +73,8 @@ const server = http.createServer((req, res) => {
   await settle(0.04); await shoot('hero_dissolve');
   await settle(0.22); await shoot('explode');
   await settle(0.50); await shoot('brain');
-  await settle(0.62); await shoot('poker_enter');
-  await settle(0.85); await shoot('poker');
+  await settle(0.62); await shoot('poker_transition');   // туннель частиц летит на зрителя
+  await settle(0.99); await shoot('poker');              // стол прилетел, частицы погасли
   // клик по карте → выезжает в центр лицом
   await page.evaluate(() => window.__pokerLift && window.__pokerLift(1));
   await new Promise(r => setTimeout(r, 1400)); await shoot('poker_card');

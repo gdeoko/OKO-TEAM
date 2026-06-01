@@ -175,7 +175,10 @@ export class PokerStation {
   setReveal(pk) {
     this._reveal = pk;
     this.group.visible = pk > 0.001;
-    const e = THREE.MathUtils.clamp((pk - 0.15) / 0.5, 0, 1);
+    // стол «прилетает из точки вдалеке»: масштаб 0.4 → 1 во второй половине перехода
+    const s = 0.4 + 0.6 * THREE.MathUtils.smoothstep(pk, 0.35, 1);
+    this.group.scale.setScalar(s);
+    const e = THREE.MathUtils.clamp((pk - 0.35) / 0.45, 0, 1);
     this.spot.intensity = 26 * e;
     this.fill.intensity = 8 * e;
     this.group.traverse((o) => {
