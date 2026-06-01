@@ -174,17 +174,20 @@ export class PokerStation {
   // pk 0..1 — насколько станция «проявлена» (по скроллу)
   setReveal(pk) {
     this._reveal = pk;
-    // скрыт пока камера не довернулась (нет «очертания стола сбоку»); потом прилетает издалека
-    this.group.visible = pk > 0.25;
-    const s = 0.3 + 0.7 * THREE.MathUtils.smoothstep(pk, 0.3, 1);
+    this.group.visible = pk > 0.2;
+    const s = 0.32 + 0.68 * THREE.MathUtils.smoothstep(pk, 0.3, 1);   // стол растёт/приближается
     this.group.scale.setScalar(s);
-    const e = THREE.MathUtils.clamp((pk - 0.3) / 0.45, 0, 1);
-    this.spot.intensity = 26 * e;
-    this.fill.intensity = 8 * e;
+    // СТОЛ/свет проявляются раньше (на него «садятся» частицы), а КАРТЫ — позже: принимают
+    // эстафету у частиц-карт, поэтому нет двойных карт во время морфа.
+    const eTable = THREE.MathUtils.clamp((pk - 0.3) / 0.4, 0, 1);
+    const eCards = THREE.MathUtils.clamp((pk - 0.5) / 0.35, 0, 1);
+    this.spot.intensity = 26 * eTable;
+    this.fill.intensity = 8 * eTable;
     this.group.traverse((o) => {
       if (o.isMesh && o.material) {
+        const op = o.userData && o.userData.fmt ? eCards : eTable;   // карты vs остальное
         const mm = Array.isArray(o.material) ? o.material : [o.material];
-        mm.forEach((m) => { if (m.transparent === false) { m.transparent = true; } m.opacity = e; });
+        mm.forEach((m) => { m.transparent = true; m.opacity = op; });
       }
     });
   }

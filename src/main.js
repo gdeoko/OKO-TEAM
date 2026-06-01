@@ -115,9 +115,10 @@ const _camDir = new THREE.Vector3();
 const _zero = new THREE.Vector3(0, 0, 0);
 // туннель-переход 2→3: тубус строится ВОКРУГ ОСИ ВЗГЛЯДА КАМЕРЫ (летит на зрителя даже при повороте)
 const _invP = new THREE.Matrix4();
-const _camRight = new THREE.Vector3(), _camUp2 = new THREE.Vector3(), _camFwd = new THREE.Vector3();
-const _camP = new THREE.Vector3(), _wp = new THREE.Vector3();
-let transFlow = 0;
+const _wp = new THREE.Vector3(), _off = new THREE.Vector3();
+// переход 2→3 «мозг становится игрой»: частицы мозга пересобираются в 4 карты на столе
+const _cardMats = [new THREE.Matrix4(), new THREE.Matrix4(), new THREE.Matrix4(), new THREE.Matrix4()];
+const CARD_W = 0.62, CARD_H = 0.87;   // должно совпадать с poker.js
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(PIXEL_RATIO);
@@ -137,12 +138,12 @@ const HOLL_END = 0.5;
 let pk = 0;                       // прогресс станции «Покер» 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
-poker.group.position.set(1.4, -1.55, 2.6);
-poker.group.rotation.y = -0.1;
+poker.group.position.set(0.4, -1.7, 1.8);
+poker.group.rotation.y = 0;   // стол смотрит на камеру (карты формируются перед зрителем, не сбоку)
 scene.add(poker.group);
 // Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
-const POKER_CAM = { x: 0.5, y: isMobile ? 1.05 : 0.9, z: isMobile ? 8.8 : 7.4 };
-const POKER_LOOK = { x: 1.35, y: -1.2, z: 2.6 };
+const POKER_CAM = { x: 0.4, y: isMobile ? 1.25 : 1.05, z: isMobile ? 7.8 : 6.6 };
+const POKER_LOOK = { x: 0.4, y: -1.35, z: 1.8 };
 window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]);   // для проверки в браузере
 
 // ============================================================
@@ -192,7 +193,7 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
-let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null;
+let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let prevTpCam = 0;     // tp прошлого кадра — скорость скролла (анти-«вылет мозга сбоку» при резком скролле)
 let ready = false, introDone = false, brainOpen = false;
@@ -221,6 +222,7 @@ function buildParticles() {
   const N = PCOUNT;
   vel = new Float32Array(N * 3); delays = new Float32Array(N); explodePos = new Float32Array(N * 3);
   tunnelPos = new Float32Array(N * 3);
+  cardSlot = new Float32Array(N * 3);   // [u вдоль карты, v вдоль карты, индекс карты 0..3]
   const cur = new Float32Array(N * 3), colors = new Float32Array(N * 3), sizes = new Float32Array(N);
   glow = new Float32Array(N);   // внутреннее свечение частицы (растёт от движения)
   disturb = new Float32Array(N);   // «разворошённость» касанием: 1 = только что толкнули, мягко затухает
@@ -242,6 +244,10 @@ function buildParticles() {
     tunnelPos[i*3] = Math.random() * Math.PI * 2;            // угол на кольце
     tunnelPos[i*3+1] = 2.4 + Math.random() * 1.0;           // радиус трубы чуть шире (виднее текст в центре)
     tunnelPos[i*3+2] = Math.random();                        // фаза глубины 0..1
+    // СЛОТ КАРТЫ: точка внутри прямоугольника одной из 4 карт (для морфа мозг→карты)
+    cardSlot[i*3] = (Math.random() - 0.5) * CARD_W * 0.92;
+    cardSlot[i*3+1] = (Math.random() - 0.5) * CARD_H * 0.92;
+    cardSlot[i*3+2] = i % 4;
     // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
     const shade = 0.82 + Math.random() * 0.18;
     colors[i*3] = shade; colors[i*3+1] = shade * 1.02; colors[i*3+2] = shade * 1.06; // чуть холоднее
@@ -599,13 +605,13 @@ function glideTo(idx) {
   const frac = STATIONS[idx];
   const dist = Math.abs(scrollProgress - frac);
   if (dist < 0.004) return;
-  const dur = THREE.MathUtils.clamp(dist * 1.7 + 0.28, 0.42, 1.05);
+  const dur = THREE.MathUtils.clamp(dist * 2.4 + 1.0, 1.0, 2.1);   // +1с к докатке: медленнее, кинематографичнее
   lenis.scrollTo(frac * (lenis.limit || 1), { duration: dur, easing: _easeOut });
 }
 function goToStation(idx) {
   idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
   settledStation = idx;
-  lenis.scrollTo(STATIONS[idx] * (lenis.limit || 1), { duration: 1.0, easing: _easeIO });
+  lenis.scrollTo(STATIONS[idx] * (lenis.limit || 1), { duration: 2.0, easing: _easeIO });
 }
 // докатка по НАПРАВЛЕНИЮ от станции, с которой начали жест
 function settleFrom(fromStation) {
@@ -745,7 +751,7 @@ function animate() {
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
     // ПОКЕР: всё ОДНОВРЕМЕННО и плавно — пока летим сквозь туннель, камера плавно
     // доворачивается к столу, а стол приближается издалека (поворот незаметен за приближением).
-    const pkc = easeIO(THREE.MathUtils.clamp(pk, 0, 1));
+    const pkc = easeIO(THREE.MathUtils.clamp(pk / 0.5, 0, 1));   // камера доворачивается чуть раньше — карты формируются перед зрителем
     const tCamX = THREE.MathUtils.lerp(sCamX + (0 - sCamX) * tb, POKER_CAM.x, pkc);
     const tCamY = THREE.MathUtils.lerp(sCamY + (0 - sCamY) * tb, POKER_CAM.y, pkc);
     const tCamZ = THREE.MathUtils.lerp(sCamZ + (6 - sCamZ) * tb, POKER_CAM.z, pkc);
@@ -804,7 +810,7 @@ function animate() {
     particles.material.uniforms.uTime.value = t;
     // частицы появляются в Холле; в переходе летят туннелем НА зрителя и ГАСНУТ только во второй
     // половине (мы «прошли сквозь» — частицы уходят за экран и растворяются)
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.52, 0.9));
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
@@ -824,21 +830,17 @@ function animate() {
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
-    // ТУННЕЛЬ-ПЕРЕХОД 2→3 (без темноты): частицы мозга превращаются в трубу, летящую НА зрителя,
-    // труба строится вокруг ОСИ ВЗГЛЯДА камеры (поэтому летит ровно на тебя, даже когда камера
-    // поворачивается к бару), затем частицы гаснут, а стол с текстом «прилетают» из точки.
+    // ПЕРЕХОД 2→3 «МОЗГ СТАНОВИТСЯ ИГРОЙ»: частицы мозга плавно пересобираются в 4 карты на столе.
+    // Глаз следит за превращением → доворот камеры незаметен. Затем частицы гаснут, а настоящие
+    // карты/стол проявляются (poker.setReveal) — бесшовная передача.
     const inTrans = !brainOpen && tunnelBlend < 0.001 && pk > 0.02 && pk < 0.93;
     let transShape = 0;
     if (inTrans) {
-      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.5, 0, 1));   // мозг ПОСТЕПЕННО собирается в туннель (не резко)
-      transFlow = (transFlow + dt * 0.16) % 1;
-      camera.updateMatrixWorld();
+      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.55, 0, 1));   // мозг ПОСТЕПЕННО собирается в карты
       particles.updateWorldMatrix(true, false);
       _invP.copy(particles.matrixWorld).invert();
-      _camRight.setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-      _camUp2.setFromMatrixColumn(camera.matrixWorld, 1).normalize();
-      _camFwd.setFromMatrixColumn(camera.matrixWorld, 2).normalize().multiplyScalar(-1);   // -Z = вперёд
-      _camP.setFromMatrixPosition(camera.matrixWorld);
+      poker.group.updateWorldMatrix(true, true);                    // актуальные матрицы карт (стол растёт)
+      for (let c = 0; c < 4; c++) _cardMats[c].copy(poker.cards[c].matrixWorld);
     }
     let pushed = 0, moveSum = 0, moveDir = 0;
     for (let i = 0; i < N; i++) {
@@ -881,20 +883,16 @@ function animate() {
         glow[i] += (gg - glow[i]) * 0.1;
         continue;   // в туннеле НЕ применяем пружину/касание — позиция уже задана явно
       }
-      // ТУННЕЛЬ-ПЕРЕХОД 2→3: труба вокруг оси взгляда камеры, летит НА зрителя; смешиваем мозг↔труба
+      // ПЕРЕХОД 2→3: частица летит в свой слот на одной из 4 карт (мозг → карты)
       if (inTrans) {
-        const ang = tunnelPos[i3], rad = tunnelPos[i3 + 1];
-        const ph = (tunnelPos[i3 + 2] + transFlow) % 1;
-        const depth = 26 - ph * 40;                  // далеко (точка схода) → далеко ЗА камеру (улетают за экран)
-        _wp.copy(_camP).addScaledVector(_camFwd, depth)
-          .addScaledVector(_camRight, Math.cos(ang) * rad)
-          .addScaledVector(_camUp2, Math.sin(ang) * rad);
-        _wp.applyMatrix4(_invP);                     // мир → локальные координаты частиц
-        arr[i3]     = tx + (_wp.x - tx) * transShape;
-        arr[i3 + 1] = ty + (_wp.y - ty) * transShape;
-        arr[i3 + 2] = tz + (_wp.z - tz) * transShape;
+        // локальная точка карты: X = u (ширина), Z = v (высота), Y чуть над лицом
+        _off.set(cardSlot[i3], 0.015, cardSlot[i3 + 1]);
+        _off.applyMatrix4(_cardMats[cardSlot[i3 + 2] | 0]).applyMatrix4(_invP);   // карта→мир→локаль частиц
+        arr[i3]     = tx + (_off.x - tx) * transShape;
+        arr[i3 + 1] = ty + (_off.y - ty) * transShape;
+        arr[i3 + 2] = tz + (_off.z - tz) * transShape;
         vel[i3] = vel[i3 + 1] = vel[i3 + 2] = 0; disturb[i] = 0;
-        glow[i] += (0.22 * transShape - glow[i]) * 0.1;
+        glow[i] += (0.18 * transShape - glow[i]) * 0.1;
         continue;
       }
       // КАСАНИЕ «палец в песке»: мягко РАЗДВИГАЕМ частицы в стороны от пальца (шире, плавно),
@@ -972,7 +970,7 @@ function animate() {
   // СИММЕТРИЧНО: вход и выход с ОДНОЙ скоростью (выход = инверсия входа), чуть быстрее (~на 1с)
   // ЕДИНЫЙ ТАЙМЛАЙН ТУННЕЛЯ: линейный прогресс 0→1 (вход) / 1→0 (выход) за 3 сек, симметрично.
   // tunnelBlend — линейный 0..1; сглаженную кривую (tb) берём как easeIO(tunnelBlend) ниже.
-  const TUNNEL_DUR = 3.0;
+  const TUNNEL_DUR = 2.0;   // дайв-туннель при клике на мозг быстрее (было 3.0)
   tunnelBlend = THREE.MathUtils.clamp(tunnelBlend + (brainOpen ? 1 : -1) * (dt / TUNNEL_DUR), 0, 1);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
   // снимаем класс выхода, когда туннель полностью схлопнулся (текст уже улетел, темнота ушла)
