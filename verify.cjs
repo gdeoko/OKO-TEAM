@@ -59,6 +59,11 @@ const server = http.createServer((req, res) => {
   await settle(0.50); await shoot('brain');
   await settle(0.62); await shoot('poker_enter');
   await settle(0.85); await shoot('poker');
+  // клик по карте → выезжает в центр лицом
+  await page.evaluate(() => window.__pokerLift && window.__pokerLift(1));
+  await new Promise(r => setTimeout(r, 1400)); await shoot('poker_card');
+  await page.evaluate(() => window.__pokerLift && window.__pokerLift(1));
+  await new Promise(r => setTimeout(r, 800));
   // анкета «Записаться за стол»
   await page.evaluate(() => window.__openSignup && window.__openSignup());
   await new Promise(r => setTimeout(r, 600)); await shoot('signup');

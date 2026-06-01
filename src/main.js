@@ -133,11 +133,12 @@ let pk = 0;                       // прогресс станции «Поке�
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
 poker.group.position.set(1.4, -1.55, 2.6);
-poker.group.rotation.y = -0.28;
+poker.group.rotation.y = -0.1;
 scene.add(poker.group);
 // Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
 const POKER_CAM = { x: 0.5, y: isMobile ? 1.05 : 0.9, z: isMobile ? 8.8 : 7.4 };
 const POKER_LOOK = { x: 1.35, y: -1.2, z: 2.6 };
+window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]);   // для проверки в браузере
 
 // ============================================================
 // Кубики-занавес
@@ -607,7 +608,7 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
   env.update(t, camera, tp, dt);
   poker.setReveal(pk);
-  poker.update(t, dt);
+  poker.update(t, dt, camera);
   updateDiceShadows();
 
   // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo

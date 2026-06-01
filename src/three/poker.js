@@ -11,7 +11,7 @@ import * as THREE from 'three';
 
 const FORMATS = [
   { key: 'bounty', name: 'BOUNTY SNIPER', suit: '♠', accent: '#E50000', sub: 'выбиваешь игрока, забираешь его очки' },
-  { key: 'joker',  name: 'JOKER',         suit: '🃏', accent: '#8B00FF', sub: 'особые механики меняют ход игры' },
+  { key: 'joker',  name: 'JOKER',         suit: '♣', accent: '#8B00FF', sub: 'особые механики меняют ход игры' },
   { key: 'ladies', name: 'LADIES NIGHT',  suit: '♥', accent: '#FF1744', sub: 'вечер, где правят девушки' },
   { key: 'strange',name: 'STRANGE',       suit: '★', accent: '#FFD600', sub: 'нестандартные правила' },
 ];
@@ -50,23 +50,50 @@ function cardFaceTexture(fmt) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
+// рисуем утку-маскота в очках (силуэт) — для рубашки карты
+function drawDuck(x, cx, cy, s) {
+  x.save(); x.translate(cx, cy); x.scale(s, s);
+  // тело (худи)
+  x.fillStyle = '#0b0b0d';
+  x.beginPath(); x.ellipse(0, 60, 86, 96, 0, 0, Math.PI * 2); x.fill();
+  // капюшон/голова
+  x.beginPath(); x.ellipse(0, -54, 78, 70, 0, 0, Math.PI * 2); x.fill();
+  // лицо (жёлто-белое)
+  x.fillStyle = '#f2ead4';
+  x.beginPath(); x.ellipse(6, -40, 52, 50, 0, 0, Math.PI * 2); x.fill();
+  // клюв
+  x.fillStyle = '#e9a13b';
+  x.beginPath(); x.moveTo(40, -36); x.quadraticCurveTo(96, -28, 96, -10); x.quadraticCurveTo(60, -8, 40, -18); x.closePath(); x.fill();
+  // очки
+  x.fillStyle = '#08080a';
+  roundRect(0, x, -34, -58, 78, 30, 8); x.fill();
+  x.fillStyle = '#1a1a1f'; roundRect(0, x, -30, -54, 30, 22, 6); x.fill(); roundRect(0, x, 6, -54, 30, 22, 6); x.fill();
+  // блик на очках
+  x.strokeStyle = 'rgba(255,255,255,0.5)'; x.lineWidth = 3; x.beginPath(); x.moveTo(-24, -50); x.lineTo(-14, -50); x.stroke();
+  x.restore();
+}
 let _backTex = null;
 function cardBackTexture() {
   if (_backTex) return _backTex;
   const c = document.createElement('canvas'); c.width = 512; c.height = 716;
   const x = c.getContext('2d');
-  x.fillStyle = '#9e0008'; x.fillRect(0, 0, 512, 716);                      // фирменный красный
   const g = x.createLinearGradient(0, 0, 512, 716);
   g.addColorStop(0, '#cc0000'); g.addColorStop(0.5, '#7a0006'); g.addColorStop(1, '#cc0000');
   x.fillStyle = g; x.fillRect(0, 0, 512, 716);
   // ромбовидный паттерн
-  x.strokeStyle = 'rgba(255,255,255,0.12)'; x.lineWidth = 2;
+  x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2;
   for (let i = -10; i < 20; i++) { x.beginPath(); x.moveTo(i * 48, 0); x.lineTo(i * 48 + 716, 716); x.stroke(); x.beginPath(); x.moveTo(i * 48, 716); x.lineTo(i * 48 + 716, 0); x.stroke(); }
-  // белая рамка-овал + DUCK'S
-  x.fillStyle = 'rgba(8,8,8,0.55)'; x.strokeStyle = '#fff'; x.lineWidth = 6;
-  roundRect(0, x, 70, 150, 372, 416, 30); x.fill(); x.stroke();
+  // тёмный овал-медальон + белая рамка
+  x.fillStyle = 'rgba(8,8,8,0.6)'; x.strokeStyle = '#fff'; x.lineWidth = 6;
+  roundRect(0, x, 64, 120, 384, 476, 36); x.fill(); x.stroke();
+  // утка по центру
+  drawDuck(x, 256, 320, 1.15);
+  // надпись DUCK'S
   x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.font = '900 70px Orbitron, sans-serif'; x.fillText("DUCK'S", 256, 358);
+  x.font = '900 56px Orbitron, sans-serif'; x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 6;
+  x.fillText("DUCK'S", 256, 532); x.shadowBlur = 0;
+  // внешняя бренд-рамка
+  x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 8; roundRect(0, x, 22, 22, 468, 672, 30); x.stroke();
   _backTex = new THREE.CanvasTexture(c); _backTex.colorSpace = THREE.SRGBColorSpace; _backTex.anisotropy = 8;
   return _backTex;
 }
@@ -128,17 +155,17 @@ export class PokerStation {
     );
     rail.rotation.x = Math.PI / 2; rail.position.y = 0.02; this.group.add(rail);
 
-    // 4 карты дугой к зрителю
+    // 4 карты ровным веером на столе, рубашкой вверх
     this.cards = [];
-    const spread = 1.45;
+    const N = FORMATS.length;
     FORMATS.forEach((fmt, i) => {
       const card = buildCard(fmt);
-      const fx = (i - 1.5) * (spread / 1.5) * 0.62;
-      card.position.set(fx, 0.02, 0.5);
-      card.rotation.y = (i - 1.5) * 0.06;                 // лёгкий веер
-      card.userData.baseY = 0.02;
+      const f = i - (N - 1) / 2;                 // -1.5 .. 1.5
+      card.position.set(f * 0.6, 0.02 + (1.5 - Math.abs(f)) * 0.006, 0.4 - Math.abs(f) * 0.04);
+      card.rotation.set(0, -f * 0.13, 0);        // веер вокруг вертикали; лежат ровно (рубашка вверх)
       card.userData.home = card.position.clone();
-      card.userData.homeRotY = card.rotation.y;
+      card.userData.homeQuat = card.quaternion.clone();
+      card.userData.baseY = card.position.y;
       this.group.add(card);
       this.cards.push(card);
     });
@@ -174,33 +201,41 @@ export class PokerStation {
     return card.userData.lifted;   // true = подняли, false = вернули
   }
 
-  update(t, dt) {
+  update(t, dt, camera) {
     if (!this.group.visible) return;
+    const k = Math.min(1, dt * 6);
     this.cards.forEach((card) => {
       const u = card.userData;
-      if (u.lifted) {
-        // поднята к зрителю: взлетает над столом, разворачивается лицом, чуть качается («держишь в руке»)
-        u.flipTarget = Math.PI; u.nextFlip = 6;
-        u.flip += (u.flipTarget - u.flip) * Math.min(1, dt * 7);
-        card.position.y += (u.baseY + 1.35 - card.position.y) * Math.min(1, dt * 6);
-        card.rotation.x = u.flip;
-        card.rotation.z = Math.sin(t * 1.6) * 0.05;        // лёгкое «парусит» в руке
-        u.faceMat.emissiveIntensity = 0.4;
+      if (u.lifted && camera) {
+        // выезжает в ЦЕНТР экрана ЛИЦОМ к зрителю (переворачивается по пути), чуть ниже центра
+        camera.getWorldPosition(_camPos);
+        camera.getWorldDirection(_n);                       // forward камеры (куда смотрит)
+        camera.matrixWorld.extractBasis(_right, _camUp, _tmp); // _camUp = up камеры (мир)
+        _v.copy(_camPos).addScaledVector(_n, 2.15).addScaledVector(_camUp, -0.08);
+        this.group.worldToLocal(_targetLocal.copy(_v));
+        card.position.lerp(_targetLocal, k);
+        // ориентация: лицо карты (-Y лок.) смотрит на камеру, высота карты вертикальна
+        card.getWorldPosition(_v); _n.copy(_camPos).sub(_v).normalize();   // от карты к камере
+        _yAxis.copy(_n).multiplyScalar(-1);                 // локальный +Y → от камеры (значит -Y/лицо → к камере)
+        _right.crossVectors(_yAxis, _camUp).normalize();
+        _zAxis.crossVectors(_right, _yAxis).normalize();
+        _m.makeBasis(_right, _yAxis, _zAxis);
+        _q.setFromRotationMatrix(_m);
+        this.group.getWorldQuaternion(_qg); _q.premultiply(_qg.invert());
+        card.quaternion.slerp(_q, k);
+        u.faceMat.emissiveIntensity += (0.45 - u.faceMat.emissiveIntensity) * k;
         return;
       }
-      // авто-переворот: иногда случайная карта приподнимается, показывает лицо, ложится обратно
-      u.nextFlip -= dt;
-      if (u.nextFlip <= 0 && Math.abs(u.flipTarget - u.flip) < 0.01) {
-        u.flipTarget = u.flipTarget > 1 ? 0 : Math.PI;   // показать лицо / вернуть рубашку
-        u.nextFlip = 4 + Math.random() * 7;
-      }
-      u.flip += (u.flipTarget - u.flip) * Math.min(1, dt * 4);
-      // подъём во время переворота (карта чуть взлетает над столом) + плавный возврат на место
-      const lift = Math.sin(THREE.MathUtils.clamp(u.flip / Math.PI, 0, 1) * Math.PI) * 0.22;
-      card.position.y += (u.baseY + lift - card.position.y) * Math.min(1, dt * 6);
-      card.rotation.x = u.flip;
-      card.rotation.z += (0 - card.rotation.z) * Math.min(1, dt * 6);
-      u.faceMat.emissiveIntensity = (u.flip > 1.2 ? 0.35 : 0.0);
+      // не поднята → плавно возвращается на своё место в веере (рубашкой вверх)
+      card.position.lerp(u.home, k);
+      card.quaternion.slerp(u.homeQuat, k);
+      u.faceMat.emissiveIntensity += (0 - u.faceMat.emissiveIntensity) * k;
     });
   }
 }
+
+// временные объекты (без аллокаций в кадре)
+const _v = new THREE.Vector3(), _camPos = new THREE.Vector3(), _n = new THREE.Vector3();
+const _camUp = new THREE.Vector3(), _right = new THREE.Vector3(), _tmp = new THREE.Vector3();
+const _yAxis = new THREE.Vector3(), _zAxis = new THREE.Vector3(), _targetLocal = new THREE.Vector3();
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _qg = new THREE.Quaternion();
