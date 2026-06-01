@@ -71,6 +71,8 @@ const server = http.createServer((req, res) => {
   await settle(0.58); await shoot('poker_t1');           // туннель образовался, летим сквозь (камера ещё прямо)
   await settle(0.72); await shoot('poker_t2');           // камера доворачивается, стол приближается издалека
   await settle(0.99); await shoot('poker');              // стол прилетел, частицы погасли, текст на месте
+  const btn = await page.evaluate(() => { const b = document.getElementById('poker-signup').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height), vw: window.innerWidth }; });
+  console.log('BUTTON poker-signup:', JSON.stringify(btn));   // пилюля ~280×56, НЕ полоса во всю ширину
   // клик по карте → выезжает в центр лицом
   await page.evaluate(() => window.__pokerLift && window.__pokerLift(1));
   await new Promise(r => setTimeout(r, 1400)); await shoot('poker_card');

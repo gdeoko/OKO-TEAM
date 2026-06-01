@@ -251,7 +251,11 @@ body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-
 .poker-label { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-bottom: 8px; }
 .poker-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .poker-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
-#poker-signup { pointer-events: auto; margin-top: 26px; height: 56px; padding: 0 46px; font-size: 14px; font-weight: 700; letter-spacing: 2px; border-radius: 28px; }
+#poker-signup {
+  pointer-events: auto; margin-top: 26px;
+  flex: 0 0 auto; align-self: center; width: auto;   /* НЕ растягиваться (перебиваем .btn flex:1) — аккуратная пилюля */
+  height: 56px; padding: 0 50px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; border-radius: 28px;
+}
 .poker-hint { top: auto; bottom: 13vh; font-family: var(--fd); font-size: 10px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.4); }
 body.poker-in .poker-top, body.poker-in .poker-hint { opacity: 1; transform: translateX(-50%) translateY(0); }
 body.poker-in .poker-top { pointer-events: none; }
@@ -390,8 +394,8 @@ body.tunnel-exit .bd-inner {
   /* About: заголовок сверху → мозг центр → 4 карточки СНИЗУ сеткой 2×2, ровно */
   #about { justify-content: flex-start; }
   .about-title { font-size: clamp(20px, 6.4vw, 42px); }
-  /* Покер: кнопка-пилюля по размеру текста (как hero), не на всю ширину */
-  #poker-signup { height: 54px; padding: 0 36px; font-size: 14px; }
+  /* Покер: кнопка-пилюля по размеру текста (как hero), НЕ на всю ширину */
+  #poker-signup { flex: 0 0 auto; align-self: center; width: auto; height: 54px; padding: 0 40px; font-size: 13.5px; }
   .poker-title { font-size: clamp(40px, 13vw, 60px); }
   /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
   .about-foot {
