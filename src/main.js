@@ -564,71 +564,61 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ============================================================
-// Скролл — СНЭП ПО СТАНЦИЯМ (кино): один жест = один слайд.
-// Lenis оставляем как движок плавной доводки (scrollTo), а ВВОД берём под контроль:
-// колесо/свайп/клавиши не скроллят свободно, а переключают станцию на ±1 с авто-доводкой.
-// Никакой сильный «фланг» не перепрыгивает через станцию и не улетает в конец.
+// Скролл — РУЧНАЯ ФИЗИКА + МАГНИТНЫЙ СНЭП ПРИ ОСТАНОВКЕ (кино, но живое).
+// Страница скроллится пальцем/колесом СРАЗУ (Lenis smooth). Когда отпустил и скролл затих —
+// доводим к ближайшей станции ПО СООТНОШЕНИЮ: <50% сегмента → назад, >50% → вперёд.
+// За одну остановку — не больше ±1 станции (не перепрыгивает и не застревает посередине).
 // ============================================================
-const lenis = new Lenis({ duration: 1.15, smoothWheel: false, syncTouch: false, wheelMultiplier: 0, touchMultiplier: 0 });
+const lenis = new Lenis({ duration: 1.1, smoothWheel: true, syncTouch: true, touchInertiaMultiplier: 16, wheelMultiplier: 1 });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
+// Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
+const STATIONS = [0, 0.5, 1.0];
+let settledStation = 0;
+let snapTimer = 0;
+const _easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const _easeIO = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 lenis.on('scroll', ({ scroll, limit }) => {
   scrollProgress = limit > 0 ? scroll / limit : 0;
   document.getElementById('scroll-progress').style.width = scrollProgress * 100 + '%';
   document.getElementById('nav').classList.toggle('scrolled', scroll > 50);
   updateUIByScroll();
+  scheduleSnap();
 });
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
 
-// Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
-const STATIONS = [0, 0.5, 1.0];
-let curStation = 0;
-let navLock = false;
-let _navTO = 0;
-function goToStation(idx, dur = 2.8) {
-  idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
-  curStation = idx;
-  navLock = true;
-  const target = STATIONS[idx] * (lenis.limit || (document.body.scrollHeight - innerHeight) || 1);
-  // ease-in-out: плавный старт и плавная остановка — видно всю «магию» перехода
-  const easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-  lenis.scrollTo(target, { duration: dur, easing: easeInOut, lock: true });
-  clearTimeout(_navTO); _navTO = setTimeout(() => { navLock = false; }, dur * 1000 + 150);
+// ближайшая станция по соотношению (середина сегмента = 50%), но не дальше ±1 от текущей
+function nearestStation() {
+  let idx = 0;
+  for (let i = 0; i < STATIONS.length - 1; i++) {
+    if (scrollProgress >= (STATIONS[i] + STATIONS[i + 1]) / 2) idx = i + 1;
+  }
+  return THREE.MathUtils.clamp(idx, settledStation - 1, settledStation + 1);
 }
-function navStep(dir) {
-  if (navLock || !introDone || brainOpen || document.body.classList.contains('signup-open')) return;
-  const next = curStation + dir;
-  if (next < 0 || next > STATIONS.length - 1) return;
-  goToStation(next);
+function scheduleSnap() { if (window.__teleport) return; clearTimeout(snapTimer); snapTimer = setTimeout(doSnap, 150); }
+function doSnap() {
+  if (window.__teleport) return;   // во время headless-замеров не дёргаем
+  if (brainOpen || document.body.classList.contains('signup-open') || !introDone) return;
+  const target = nearestStation();
+  settledStation = target;
+  const frac = STATIONS[target];
+  if (Math.abs(scrollProgress - frac) < 0.004) return;   // уже на станции — не дёргаем
+  lenis.scrollTo(frac * (lenis.limit || 1), { duration: 0.8, easing: _easeOut });
+}
+function goToStation(idx) {
+  idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
+  settledStation = idx;
+  lenis.scrollTo(STATIONS[idx] * (lenis.limit || 1), { duration: 1.2, easing: _easeIO });
 }
 window.__goToStation = goToStation;   // для проверки в браузере
-// — колесо мыши / трекпад
-addEventListener('wheel', (e) => {
-  if (document.body.classList.contains('signup-open')) return;   // даём прокрутку анкете
-  e.preventDefault();
-  if (brainOpen || navLock) return;
-  if (Math.abs(e.deltaY) < 6) return;
-  navStep(e.deltaY > 0 ? 1 : -1);
-}, { passive: false });
-// — свайп пальцем
-let _touchY = null, _touchT = 0;
-addEventListener('touchstart', (e) => { if (e.touches[0]) { _touchY = e.touches[0].clientY; _touchT = performance.now(); } }, { passive: true });
-addEventListener('touchmove', (e) => { if (!document.body.classList.contains('signup-open')) e.preventDefault(); }, { passive: false });
-addEventListener('touchend', (e) => {
-  if (document.body.classList.contains('signup-open') || _touchY == null) { _touchY = null; return; }
-  const y = (e.changedTouches[0] || {}).clientY ?? _touchY;
-  const dy = _touchY - y, dt = performance.now() - _touchT;
-  _touchY = null;
-  if (Math.abs(dy) > 36 || (Math.abs(dy) > 14 && dt < 250)) navStep(dy > 0 ? 1 : -1);
-}, { passive: true });
-// — клавиатура
+// клавиатура: стрелки/пробел = соседняя станция (для десктопа)
 addEventListener('keydown', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
-  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); navStep(1); }
-  else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); navStep(-1); }
-  else if (e.key === 'Home') { e.preventDefault(); if (!navLock) goToStation(0); }
-  else if (e.key === 'End') { e.preventDefault(); if (!navLock) goToStation(STATIONS.length - 1); }
+  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); goToStation(settledStation + 1); }
+  else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); goToStation(settledStation - 1); }
+  else if (e.key === 'Home') { e.preventDefault(); goToStation(0); }
+  else if (e.key === 'End') { e.preventDefault(); goToStation(STATIONS.length - 1); }
 });
 
 const heroTop = document.querySelector('.hero-top');
@@ -715,10 +705,9 @@ function animate() {
     const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
-    // ПОКЕР: камера поворачивается вправо к столу, но ТОЛЬКО ПОСЛЕ образования туннеля
-    // (pk>0.3): сначала летим сквозь туннель прямо, потом плавно доворот к столу во время
-    // приближения стола — поворот почти незаметен. Во время Покера tb=0.
-    const pkc = easeIO(THREE.MathUtils.clamp((pk - 0.3) / 0.55, 0, 1));
+    // ПОКЕР: всё ОДНОВРЕМЕННО и плавно — пока летим сквозь туннель, камера плавно
+    // доворачивается к столу, а стол приближается издалека (поворот незаметен за приближением).
+    const pkc = easeIO(THREE.MathUtils.clamp(pk, 0, 1));
     const tCamX = THREE.MathUtils.lerp(sCamX + (0 - sCamX) * tb, POKER_CAM.x, pkc);
     const tCamY = THREE.MathUtils.lerp(sCamY + (0 - sCamY) * tb, POKER_CAM.y, pkc);
     const tCamZ = THREE.MathUtils.lerp(sCamZ + (6 - sCamZ) * tb, POKER_CAM.z, pkc);
@@ -803,7 +792,7 @@ function animate() {
     const inTrans = !brainOpen && tunnelBlend < 0.001 && pk > 0.02 && pk < 0.93;
     let transShape = 0;
     if (inTrans) {
-      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.22, 0, 1));   // туннель образуется в начале (быстро), потом течение
+      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.5, 0, 1));   // мозг ПОСТЕПЕННО собирается в туннель (не резко)
       transFlow = (transFlow + dt * 0.16) % 1;
       camera.updateMatrixWorld();
       particles.updateWorldMatrix(true, false);
