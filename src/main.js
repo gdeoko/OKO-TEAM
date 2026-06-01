@@ -586,13 +586,15 @@ const STATIONS = [0, 0.5, 1.0];
 let curStation = 0;
 let navLock = false;
 let _navTO = 0;
-function goToStation(idx, dur = 1.5) {
+function goToStation(idx, dur = 2.8) {
   idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
   curStation = idx;
   navLock = true;
   const target = STATIONS[idx] * (lenis.limit || (document.body.scrollHeight - innerHeight) || 1);
-  lenis.scrollTo(target, { duration: dur, easing: (x) => 1 - Math.pow(1 - x, 3), lock: true });
-  clearTimeout(_navTO); _navTO = setTimeout(() => { navLock = false; }, dur * 1000 + 120);
+  // ease-in-out: плавный старт и плавная остановка — видно всю «магию» перехода
+  const easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  lenis.scrollTo(target, { duration: dur, easing: easeInOut, lock: true });
+  clearTimeout(_navTO); _navTO = setTimeout(() => { navLock = false; }, dur * 1000 + 150);
 }
 function navStep(dir) {
   if (navLock || !introDone || brainOpen || document.body.classList.contains('signup-open')) return;
@@ -654,7 +656,7 @@ function updateUIByScroll() {
   // About проявляется к концу (мозг собран). Плавно, без рывка.
   document.body.classList.toggle('about-in', tp > 0.8 && pk < 0.1);
   // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц)
-  const pe = THREE.MathUtils.clamp((pk - 0.5) / 0.4, 0, 1);
+  const pe = THREE.MathUtils.clamp((pk - 0.55) / 0.4, 0, 1);
   const pez = pe * pe * (3 - 2 * pe);
   [pokerTop, pokerHint].forEach((el) => { if (!el) return;
     el.style.opacity = String(pez);
@@ -713,9 +715,10 @@ function animate() {
     const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
-    // ПОКЕР: камера поворачивается вправо к столу (плавно по pk). Во время Покера tb=0,
-    // поэтому туннельные слагаемые обнуляются, и поза честно смешивается Холл↔Стол.
-    const pkc = easeIO(THREE.MathUtils.clamp(pk, 0, 1));
+    // ПОКЕР: камера поворачивается вправо к столу, но ТОЛЬКО ПОСЛЕ образования туннеля
+    // (pk>0.3): сначала летим сквозь туннель прямо, потом плавно доворот к столу во время
+    // приближения стола — поворот почти незаметен. Во время Покера tb=0.
+    const pkc = easeIO(THREE.MathUtils.clamp((pk - 0.3) / 0.55, 0, 1));
     const tCamX = THREE.MathUtils.lerp(sCamX + (0 - sCamX) * tb, POKER_CAM.x, pkc);
     const tCamY = THREE.MathUtils.lerp(sCamY + (0 - sCamY) * tb, POKER_CAM.y, pkc);
     const tCamZ = THREE.MathUtils.lerp(sCamZ + (6 - sCamZ) * tb, POKER_CAM.z, pkc);
@@ -772,8 +775,9 @@ function animate() {
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    // частицы появляются в Холле; в переходе летят туннелем НА зрителя и ГАСНУТ во второй половине
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.45, 0.8));
+    // частицы появляются в Холле; в переходе летят туннелем НА зрителя и ГАСНУТ только во второй
+    // половине (мы «прошли сквозь» — частицы уходят за экран и растворяются)
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.52, 0.9));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
@@ -796,10 +800,10 @@ function animate() {
     // ТУННЕЛЬ-ПЕРЕХОД 2→3 (без темноты): частицы мозга превращаются в трубу, летящую НА зрителя,
     // труба строится вокруг ОСИ ВЗГЛЯДА камеры (поэтому летит ровно на тебя, даже когда камера
     // поворачивается к бару), затем частицы гаснут, а стол с текстом «прилетают» из точки.
-    const inTrans = !brainOpen && tunnelBlend < 0.001 && pk > 0.02 && pk < 0.9;
+    const inTrans = !brainOpen && tunnelBlend < 0.001 && pk > 0.02 && pk < 0.93;
     let transShape = 0;
     if (inTrans) {
-      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.35, 0, 1));
+      transShape = easeIO(THREE.MathUtils.clamp(pk / 0.22, 0, 1));   // туннель образуется в начале (быстро), потом течение
       transFlow = (transFlow + dt * 0.16) % 1;
       camera.updateMatrixWorld();
       particles.updateWorldMatrix(true, false);
@@ -854,7 +858,7 @@ function animate() {
       if (inTrans) {
         const ang = tunnelPos[i3], rad = tunnelPos[i3 + 1];
         const ph = (tunnelPos[i3 + 2] + transFlow) % 1;
-        const depth = 22 - ph * 30;                  // далеко (точка схода) → мимо камеры (полёт на зрителя)
+        const depth = 26 - ph * 40;                  // далеко (точка схода) → далеко ЗА камеру (улетают за экран)
         _wp.copy(_camP).addScaledVector(_camFwd, depth)
           .addScaledVector(_camRight, Math.cos(ang) * rad)
           .addScaledVector(_camUp2, Math.sin(ang) * rad);
