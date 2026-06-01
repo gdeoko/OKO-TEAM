@@ -62,7 +62,9 @@ const server = http.createServer((req, res) => {
   // анкета «Записаться за стол»
   await page.evaluate(() => window.__openSignup && window.__openSignup());
   await new Promise(r => setTimeout(r, 600)); await shoot('signup');
-  await page.evaluate(() => document.body.classList.remove('signup-open'));
+  await page.evaluate(() => document.querySelector('.su-card').classList.add('done'));
+  await new Promise(r => setTimeout(r, 700)); await shoot('signup_thanks');
+  await page.evaluate(() => { document.querySelector('.su-card').classList.remove('done'); document.body.classList.remove('signup-open'); });
 
   // open brain tunnel из позы мозга (pk=0)
   await settle(0.50);

@@ -467,11 +467,33 @@ body.signup-open .su-card { transform: translateY(0) scale(1); }
 .su-chip[data-a="strange"].on { background: linear-gradient(135deg, #b89500, #ffd600); color: #1a1400; }
 .su-submit { width: 100%; height: 52px; margin-top: 8px; cursor: pointer; }
 .su-submit:disabled { opacity: .5; cursor: default; transform: none; }
-.su-done { display: none; text-align: center; padding: 14px; margin-top: 12px; border-radius: 12px; background: rgba(61, 220, 132, .1); border: 1px solid rgba(61, 220, 132, .35); color: #8effc0; font-size: 14px; }
-body.signup-sent .su-form, body.signup-sent #su-form { }
-.su-form.sent .su-field, .su-form.sent .su-submit { display: none; }
-#su-form.sent #su-done { display: block; }
-@media (max-width: 768px) { .su-card { padding: 26px 18px 20px; } .su-head h3 { font-size: 22px; } }
+/* поля не белеют от автозаполнения браузера — держим тёмный стиль */
+.su-field input:-webkit-autofill,
+.su-field input:-webkit-autofill:hover,
+.su-field input:-webkit-autofill:focus,
+.su-field input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff; caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #160a0c inset;
+  transition: background-color 9999s ease-out 0s;
+}
+/* экран «спасибо» — заменяет форму */
+.su-thanks { display: none; text-align: center; padding: 14px 6px 8px; }
+.su-card.done .su-body { display: none; }
+.su-card.done .su-thanks { display: block; animation: suThanksIn .6s cubic-bezier(.22,1,.36,1) both; }
+@keyframes suThanksIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+.su-thanks-badge {
+  width: 84px; height: 84px; margin: 6px auto 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+  background: radial-gradient(circle at 50% 40%, rgba(204,0,0,.35), rgba(204,0,0,.08));
+  border: 1px solid rgba(204,0,0,.5); box-shadow: 0 0 40px rgba(204,0,0,.35), inset 0 0 24px rgba(204,0,0,.2);
+  animation: suBadge 2.4s ease-in-out infinite;
+}
+@keyframes suBadge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.su-thanks h3 { font-family: var(--fd); font-weight: 900; font-size: 26px; margin: 8px 0 10px; }
+.su-thanks p { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.55; max-width: 360px; margin: 0 auto 22px; }
+.su-thanks-logo { font-family: var(--fd); font-weight: 900; font-size: 20px; letter-spacing: 2px; color: rgba(255,255,255,.55); }
+.su-thanks-logo span { color: var(--red-bright); }
+@media (max-width: 768px) { .su-card { padding: 26px 18px 20px; } .su-head h3 { font-size: 22px; } .su-thanks h3 { font-size: 22px; } }
 
 /* Заставка входа (звук стартует с первого тапа) — единственный корректный блок */
 #enter-screen { position: fixed; inset: 0; z-index: 1600; background: var(--bg-deepest);

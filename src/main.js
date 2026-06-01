@@ -884,24 +884,30 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
   const emailI = document.getElementById('su-email');
   const phoneI = document.getElementById('su-phone');
   const submitB = document.getElementById('su-submit');
+  const card = document.querySelector('.su-card');
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   let pickedGame = '', pickedFormat = '';
+  let submitted = false;     // флаг сессии: уже записался (сбрасывается только перезагрузкой страницы)
+  let savedScroll = 0;       // позиция скролла на момент открытия — вернёмся ровно сюда (остаёмся в Покере)
 
   const openSignup = (presetFormat) => {
+    savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
     document.body.classList.add('signup-open');
     try { lenis.stop(); } catch (e) {}
     sound.playWhoosh?.(true);
+    // уже записан в этой сессии → сразу показываем «спасибо», форму не показываем
+    card.classList.toggle('done', submitted);
     if (presetFormat) {
       document.querySelectorAll('#su-format .su-chip').forEach((c) => {
         const on = c.dataset.v.toLowerCase().includes(presetFormat);
         c.classList.toggle('on', on); if (on) pickedFormat = c.dataset.v;
       });
     }
-    setTimeout(() => nameI && nameI.focus(), 350);
+    if (!submitted) setTimeout(() => nameI && nameI.focus({ preventScroll: true }), 350);
   };
   const closeSignup = () => {
     document.body.classList.remove('signup-open');
-    try { lenis.start(); } catch (e) {}
+    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
   };
   window.__openSignup = openSignup;   // для проверки в браузере
 
@@ -963,9 +969,10 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
     // Этап 1: отправка письма через mail.php (на хостинге). Если бэкенд ещё не залит —
     // всё равно показываем успех (заявка не теряется визуально), на этапе 2 добавим БД + ТГ-бот.
     try { await fetch('mail.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
-    form.classList.add('sent');
-    sound.playSuccess?.();
-    setTimeout(closeSignup, 2200);
+    submitted = true;
+    card.classList.add('done');                 // показываем красивое окно «спасибо»
+    sound.playSuccess?.(); sound.playQuack?.();
+    setTimeout(closeSignup, 3400);               // само закрывается, остаёмся в Покере
   });
 }
 

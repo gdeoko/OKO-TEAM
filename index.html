@@ -101,6 +101,7 @@
   <div id="signup" aria-hidden="true">
     <div class="su-card" role="dialog" aria-modal="true" aria-label="Записаться за стол">
       <button id="su-close" aria-label="Закрыть">×</button>
+      <div class="su-body">
       <div class="su-head">
         <div class="su-label">за стол</div>
         <h3>Записаться в клуб</h3>
@@ -139,8 +140,16 @@
           </div>
         </div>
         <button type="submit" class="btn btn-fill su-submit" id="su-submit">Записаться</button>
-        <div class="su-done" id="su-done">Готово, ждём тебя за столом 🦆</div>
       </form>
+      </div>
+      <!-- экран «спасибо» (заменяет форму после отправки / если уже записан в этой сессии) -->
+      <div class="su-thanks" id="su-thanks">
+        <div class="su-thanks-badge"><span class="su-duck">🦆</span></div>
+        <div class="su-label">заявка принята</div>
+        <h3>Спасибо, ты в деле</h3>
+        <p>Мы свяжемся с тобой и пришлём детали ближайшего вечера на почту. Клуб для своих.</p>
+        <div class="su-thanks-logo">DUCK<span>'</span>S</div>
+      </div>
     </div>
   </div>
 
