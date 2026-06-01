@@ -40,21 +40,16 @@ const server = http.createServer((req, res) => {
 
   await shoot('hero');
 
-  // проба снэпа: один wheel вниз должен перевести на станцию 1 (мозг, scrollProgress≈0.5), не дальше
-  const nav1 = await page.evaluate(async () => {
-    const L = window.__lenis; const before = L.scroll;
-    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 600, cancelable: true }));
-    await new Promise(r => setTimeout(r, 3200));
-    return { before, after: L.scroll, frac: +(L.scroll / (L.limit || 1)).toFixed(3) };
-  });
-  console.log('NAV step1:', JSON.stringify(nav1));
-  const nav2 = await page.evaluate(async () => {
-    const L = window.__lenis;
-    window.dispatchEvent(new WheelEvent('wheel', { deltaY: 9000, cancelable: true }));  // сильный фланг
-    await new Promise(r => setTimeout(r, 3200));
-    return { frac: +(L.scroll / (L.limit || 1)).toFixed(3) };
-  });
-  console.log('NAV step2 (strong fling):', JSON.stringify(nav2));
+  // проба: один жест (всплеск wheel) должен докатить ровно на соседнюю станцию и не застрять
+  const burst = async () => {
+    await page.evaluate(async () => {
+      for (let i = 0; i < 6; i++) { window.dispatchEvent(new WheelEvent('wheel', { deltaY: 400, cancelable: true })); await new Promise(r => setTimeout(r, 25)); }
+      await new Promise(r => setTimeout(r, 2600));
+    });
+    return page.evaluate(() => +(window.__lenis.scroll / (window.__lenis.limit || 1)).toFixed(3));
+  };
+  console.log('NAV step1 (one gesture):', await burst());
+  console.log('NAV step2 (one gesture):', await burst());
 
   // scroll positions
   // settled frame at given scroll progress (sync DOM scroll + teleport particles/camera to target)

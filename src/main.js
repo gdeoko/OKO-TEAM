@@ -564,18 +564,23 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ============================================================
-// Скролл — РУЧНАЯ ФИЗИКА + МАГНИТНЫЙ СНЭП ПРИ ОСТАНОВКЕ (кино, но живое).
-// Страница скроллится пальцем/колесом СРАЗУ (Lenis smooth). Когда отпустил и скролл затих —
-// доводим к ближайшей станции ПО СООТНОШЕНИЮ: <50% сегмента → назад, >50% → вперёд.
-// За одну остановку — не больше ±1 станции (не перепрыгивает и не застревает посередине).
+// Скролл — ЖИВОЙ РУЧНОЙ + ПЛАВНАЯ ДОКАТКА ПО НАПРАВЛЕНИЮ (без паузы, без рывка).
+// Страница идёт за пальцем/колесом СРАЗУ. Отпустил — БЕЗ остановки докатывается к станции в ту
+// сторону, куда ты тянул: протянул > порога (≈30% сегмента) → вперёд, меньше → назад.
+// Реагирует ТОЛЬКО на вертикальный жест (горизонталь игнор). Инерции после отпускания нет —
+// докаткой управляем мы, поэтому не «висит» и не дёргается.
 // ============================================================
-const lenis = new Lenis({ duration: 1.1, smoothWheel: true, syncTouch: true, touchInertiaMultiplier: 16, wheelMultiplier: 1 });
+const lenis = new Lenis({
+  duration: 0.9, smoothWheel: true, syncTouch: true, syncTouchLerp: 0.085,
+  touchInertiaMultiplier: 0,            // без «дрейфа» после отпускания — докатываем сами
+  wheelMultiplier: 0.9, orientation: 'vertical', gestureOrientation: 'vertical',
+});
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 // Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
 const STATIONS = [0, 0.5, 1.0];
 let settledStation = 0;
-let snapTimer = 0;
+const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
 const _easeOut = (x) => 1 - Math.pow(1 - x, 3);
 const _easeIO = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 lenis.on('scroll', ({ scroll, limit }) => {
@@ -583,35 +588,68 @@ lenis.on('scroll', ({ scroll, limit }) => {
   document.getElementById('scroll-progress').style.width = scrollProgress * 100 + '%';
   document.getElementById('nav').classList.toggle('scrolled', scroll > 50);
   updateUIByScroll();
-  scheduleSnap();
 });
 function raf(t) { lenis.raf(t); requestAnimationFrame(raf); }
 requestAnimationFrame(raf);
 
-// ближайшая станция по соотношению (середина сегмента = 50%), но не дальше ±1 от текущей
-function nearestStation() {
-  let idx = 0;
-  for (let i = 0; i < STATIONS.length - 1; i++) {
-    if (scrollProgress >= (STATIONS[i] + STATIONS[i + 1]) / 2) idx = i + 1;
-  }
-  return THREE.MathUtils.clamp(idx, settledStation - 1, settledStation + 1);
-}
-function scheduleSnap() { if (window.__teleport) return; clearTimeout(snapTimer); snapTimer = setTimeout(doSnap, 150); }
-function doSnap() {
-  if (window.__teleport) return;   // во время headless-замеров не дёргаем
-  if (brainOpen || document.body.classList.contains('signup-open') || !introDone) return;
-  const target = nearestStation();
-  settledStation = target;
-  const frac = STATIONS[target];
-  if (Math.abs(scrollProgress - frac) < 0.004) return;   // уже на станции — не дёргаем
-  lenis.scrollTo(frac * (lenis.limit || 1), { duration: 0.8, easing: _easeOut });
+// плавная докатка к станции idx — длительность зависит от остатка пути (без резкого прыжка)
+function glideTo(idx) {
+  idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
+  settledStation = idx;
+  const frac = STATIONS[idx];
+  const dist = Math.abs(scrollProgress - frac);
+  if (dist < 0.004) return;
+  const dur = THREE.MathUtils.clamp(dist * 1.7 + 0.28, 0.42, 1.05);
+  lenis.scrollTo(frac * (lenis.limit || 1), { duration: dur, easing: _easeOut });
 }
 function goToStation(idx) {
   idx = THREE.MathUtils.clamp(idx, 0, STATIONS.length - 1);
   settledStation = idx;
-  lenis.scrollTo(STATIONS[idx] * (lenis.limit || 1), { duration: 1.2, easing: _easeIO });
+  lenis.scrollTo(STATIONS[idx] * (lenis.limit || 1), { duration: 1.0, easing: _easeIO });
+}
+// докатка по НАПРАВЛЕНИЮ от станции, с которой начали жест
+function settleFrom(fromStation) {
+  if (window.__teleport || brainOpen || document.body.classList.contains('signup-open') || !introDone) return;
+  const startFrac = STATIONS[fromStation];
+  let target = fromStation;
+  if (fromStation < STATIONS.length - 1 && scrollProgress > startFrac) {
+    const seg = STATIONS[fromStation + 1] - startFrac;
+    if ((scrollProgress - startFrac) / seg > SNAP_THRESHOLD) target = fromStation + 1;
+  } else if (fromStation > 0 && scrollProgress < startFrac) {
+    const seg = startFrac - STATIONS[fromStation - 1];
+    if ((startFrac - scrollProgress) / seg > SNAP_THRESHOLD) target = fromStation - 1;
+  }
+  glideTo(target);
 }
 window.__goToStation = goToStation;   // для проверки в браузере
+
+// --- жест: палец ---
+let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = false;
+addEventListener('touchstart', (e) => {
+  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  const t = e.touches[0]; if (!t) return;
+  gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false;
+  navFrom = settledStation; gestureActive = true;
+}, { passive: true });
+addEventListener('touchmove', (e) => {
+  if (!gestureActive) return;
+  const t = e.touches[0]; if (!t) return;
+  const dx = Math.abs(t.clientX - gTouchX), dy = Math.abs(t.clientY - gTouchY);
+  if (!gHorizontal && dx > dy && dx > 14) gHorizontal = true;   // горизонтальный жест — не наша история
+}, { passive: true });
+addEventListener('touchend', () => {
+  if (!gestureActive) return; gestureActive = false;
+  if (gHorizontal) return;
+  settleFrom(navFrom);
+}, { passive: true });
+// --- жест: колесо/трекпад (нет «отпускания» — ловим затихание) ---
+let wheelActive = false, wheelTimer = 0;
+addEventListener('wheel', () => {
+  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  if (!wheelActive) { wheelActive = true; navFrom = settledStation; }
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => { wheelActive = false; settleFrom(navFrom); }, 90);
+}, { passive: true });
 // клавиатура: стрелки/пробел = соседняя станция (для десктопа)
 addEventListener('keydown', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
