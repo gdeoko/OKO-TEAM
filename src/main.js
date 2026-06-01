@@ -687,8 +687,12 @@ function updateUIByScroll() {
     el.style.pointerEvents = e > 0.4 ? 'none' : 'auto';
   } });
   scrollHint.style.opacity = String(Math.max(0, 1 - tp * 8));
-  // About проявляется к концу (мозг собран). Плавно, без рывка.
+  // About: текст ПОЯВЛЯЕТСЯ НА МЕСТЕ с лёгким приближением (зум из глубины), а при уходе назад —
+  // отдаляется. Никакого «выезжает снизу». Ведём opacity+scale через CSS-переменные.
   document.body.classList.toggle('about-in', tp > 0.8 && pk < 0.1);
+  const av = THREE.MathUtils.smoothstep(tp, 0.82, 1.0) * (1 - THREE.MathUtils.smoothstep(pk, 0.04, 0.3));
+  document.body.style.setProperty('--av', av.toFixed(3));
+  document.body.style.setProperty('--avs', (0.85 + 0.15 * av).toFixed(3));
   // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц)
   const pe = THREE.MathUtils.clamp((pk - 0.55) / 0.4, 0, 1);
   const pez = pe * pe * (3 - 2 * pe);

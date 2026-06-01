@@ -174,7 +174,13 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
 
 /* About — заголовок сверху, мозг центр, карточки слева/справа (через JS opacity) */
 #about { justify-content: flex-start; }
-.about-top { opacity: 0; transition: opacity .8s; will-change: opacity; margin-bottom: 8px; }
+/* About-текст ФИКСИРОВАН в кадре и появляется НА МЕСТЕ с приближением (--av opacity, --avs scale) */
+.about-top {
+  position: fixed; top: 11vh; left: 50%;
+  transform: translateX(-50%) scale(var(--avs, 1));
+  width: 100%; max-width: 720px; padding: 0 24px;
+  opacity: var(--av, 0); z-index: 11; pointer-events: none;
+}
 .about-label {
   font-family: var(--fd); font-weight: 400;
   font-size: clamp(13px, 2vw, 18px); letter-spacing: .3em; text-transform: lowercase;
@@ -182,18 +188,16 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
 }
 .about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(20px, 6vw, 60px); line-height: 1.02; letter-spacing: -0.5px; white-space: nowrap; }
 .about-title em { font-style: normal; color: var(--red-bright); }
-/* колонки тезисов по бокам мозга */
+/* колонки тезисов по бокам мозга — фиксированы, проявляются на месте с приближением */
 .thesis-col {
-  position: absolute; top: 50%; transform: translateY(-50%);
+  position: fixed; top: 50%; z-index: 11;
   display: flex; flex-direction: column; gap: 18px; width: 250px;
-  opacity: 0; transition: opacity .7s, transform .7s; will-change: opacity, transform;
+  opacity: var(--av, 0); pointer-events: none;
 }
-.thesis-left { left: 4%; transform: translateY(-50%) translateX(-24px); }
-.thesis-right { right: 4%; transform: translateY(-50%) translateX(24px); }
-body.about-in .thesis-left { opacity: 1; transform: translateY(-50%) translateX(0); }
-body.about-in .thesis-right { opacity: 1; transform: translateY(-50%) translateX(0); }
-body.about-in .about-top { opacity: 1; }
-body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-bottom { opacity: 0 !important; pointer-events: none; }
+.thesis-left { left: 4%; transform: translateY(-50%) scale(var(--avs, 1)); }
+.thesis-right { right: 4%; transform: translateY(-50%) scale(var(--avs, 1)); }
+body.about-in .thesis-col { pointer-events: auto; }   /* на станции мозга карточки кликабельны (hover) */
+body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-bottom, body.brain-open #brain-hint { opacity: 0 !important; pointer-events: none; }
 /* карточки — ровные, аккуратные, со свечением и нумерацией, текст всегда слева */
 .thesis {
   position: relative; text-align: left;
@@ -224,9 +228,15 @@ body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-
 }
 .thesis b { display: block; font-size: 14px; font-weight: 700; margin-bottom: 5px; letter-spacing: .2px; }
 .thesis span { font-size: 12px; color: rgba(255,255,255,.6); line-height: 1.35; }
-.about-bottom { opacity: 0; transition: opacity .8s; will-change: opacity; }
-body.about-in .about-bottom { opacity: 1; }
+.about-bottom {
+  position: fixed; bottom: 5vh; left: 50%;
+  transform: translateX(-50%) scale(var(--avs, 1));
+  width: 100%; max-width: 720px; padding: 0 24px; text-align: center;
+  opacity: var(--av, 0); z-index: 11; pointer-events: none;
+}
 .about-note { font-size: 13px; color: rgba(255,255,255,.45); }
+/* на десктопе обёртка прозрачна — карточки/ноут позиционируются сами (фикс по краям/снизу) */
+.about-foot { display: contents; }
 
 /* ===== Секция 3 — Покер (текст фиксирован в кадре, проявляется по скроллу) ===== */
 /* Порядок: заголовок ПОКЕР → подзаголовок «турниры для своих» → кнопка → ниже стол с картами */
@@ -249,12 +259,11 @@ body.poker-in #poker-signup { pointer-events: auto; }
 
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
-  position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%);
+  position: fixed; top: 62%; left: 50%; transform: translate(-50%, -50%) scale(var(--avs, 1));
   display: flex; flex-direction: column; align-items: center; gap: 7px;
-  opacity: 0; transition: opacity .6s; pointer-events: none;
+  opacity: var(--av, 0); pointer-events: none; z-index: 11;
 }
-body.about-in #brain-hint { opacity: 1; }
-body.brain-open #brain-hint { opacity: 0; }
+body.brain-open #brain-hint { opacity: 0 !important; }
 .bh-cross {
   position: relative; width: 16px; height: 16px;
   animation: bhblink 1.9s ease-in-out infinite;
@@ -384,16 +393,17 @@ body.tunnel-exit .bd-inner {
   /* Покер: кнопка-пилюля по размеру текста (как hero), не на всю ширину */
   #poker-signup { height: 54px; padding: 0 36px; font-size: 14px; }
   .poker-title { font-size: clamp(40px, 13vw, 60px); }
-  /* обе колонки превращаем в общую сетку 2×2 через flex-wrap контейнера about */
-  .thesis-col {
-    position: static; transform: none; width: 100%;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    opacity: 0; transition: opacity .6s;
+  /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
+  .about-foot {
+    display: flex; flex-direction: column; gap: 10px;
+    position: fixed; left: 0; right: 0; bottom: 7vh; padding: 0 16px;
+    opacity: var(--av, 0); transform: scale(var(--avs, 1)); transform-origin: center bottom; z-index: 11;
   }
-  .thesis-left { margin-top: auto; margin-bottom: 8px; }   /* две ровные строки 2×2, прижаты к низу */
-  .thesis-right { margin-top: 0; }
-  body.about-in .thesis-left, body.about-in .thesis-right { opacity: 1; transform: none; }
-  .about-bottom { width: 100%; margin-top: 10px; }
+  .about-foot .thesis-col {
+    position: static; width: 100%; opacity: 1; transform: none;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .about-foot .about-bottom { position: static; opacity: 1; transform: none; width: 100%; text-align: center; margin-top: 2px; }
   /* РОВНЫЕ карточки: одинаковая высота, контент по центру, номер не налезает */
   .thesis {
     min-height: 62px; padding: 12px 30px 12px 14px; text-shadow: none; border-radius: 12px;
