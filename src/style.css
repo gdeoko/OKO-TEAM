@@ -174,10 +174,11 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
 #about { justify-content: flex-start; }
 .about-top { opacity: 0; transition: opacity .8s; will-change: opacity; margin-bottom: 8px; }
 .about-label {
-  font-family: var(--fd); font-size: 10px; font-weight: 500;
-  letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 12px;
+  font-family: var(--fd); font-weight: 400;
+  font-size: clamp(13px, 2vw, 18px); letter-spacing: .3em; text-transform: lowercase;
+  color: var(--ice-white); margin-bottom: 10px;
 }
-.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(26px, 4.5vw, 50px); line-height: 1.05; }
+.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(34px, 6vw, 64px); line-height: 1.02; letter-spacing: -1px; }
 .about-title em { font-style: normal; color: var(--red-bright); }
 /* колонки тезисов по бокам мозга */
 .thesis-col {
@@ -237,8 +238,8 @@ body.about-in .about-bottom { opacity: 1; }
 .poker-top { top: 9vh; display: flex; flex-direction: column; align-items: center; }
 .poker-label { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-bottom: 8px; }
 .poker-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
-.poker-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,1.8vw,17px); letter-spacing: .18em; text-transform: lowercase; color: rgba(255,255,255,.62); margin-top: 6px; }
-#poker-signup { pointer-events: auto; margin-top: 22px; }
+.poker-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+#poker-signup { pointer-events: auto; margin-top: 26px; height: 58px; padding: 0 50px; min-width: 280px; font-size: 14px; letter-spacing: 2.5px; }
 .poker-hint { top: auto; bottom: 13vh; font-family: var(--fd); font-size: 10px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.4); }
 body.poker-in .poker-top, body.poker-in .poker-hint { opacity: 1; transform: translateX(-50%) translateY(0); }
 body.poker-in .poker-top { pointer-events: none; }
@@ -272,12 +273,13 @@ body.brain-open #brain-hint { opacity: 0; }
 /* (стартовый оверлей и кастомный курсор удалены) */
 
 /* Глич текста при наведении */
-.glitching { animation: glitch .35s steps(2) 1; }
+.glitching { animation: glitch .42s steps(2) 1; }
 @keyframes glitch {
   0% { text-shadow: 2px 0 var(--red-bright), -2px 0 var(--ice-blue); transform: translate(0); }
-  25% { text-shadow: -2px 0 var(--red-bright), 2px 0 var(--ice-blue); transform: translate(1px,-1px); }
-  50% { text-shadow: 2px 0 var(--ice-blue), -2px 0 var(--red-bright); transform: translate(-1px,1px); }
-  100% { text-shadow: none; transform: translate(0); }
+  25% { text-shadow: -3px 0 var(--red-bright), 3px 0 var(--ice-blue), 0 0 18px rgba(136,221,255,.6); transform: translate(2px,-1px); }
+  50% { text-shadow: 3px 0 var(--ice-blue), -3px 0 var(--red-bright), 0 0 22px rgba(229,0,0,.55); transform: translate(-2px,1px); }
+  75% { text-shadow: -1px 0 var(--red-bright), 1px 0 var(--ice-blue), 0 0 14px rgba(136,221,255,.5); transform: translate(1px,0); }
+  100% { text-shadow: 0 0 16px rgba(136,221,255,.35); transform: translate(0); }
 }
 
 /* «Внутри мозга» — текст в центре туннеля. Затемнение ТОЛЬКО в центре (даль туннеля),
@@ -376,7 +378,10 @@ body.tunnel-exit .bd-inner {
 
   /* About: заголовок сверху → мозг центр → 4 карточки СНИЗУ сеткой 2×2, ровно */
   #about { justify-content: flex-start; }
-  .about-title { font-size: clamp(22px, 7vw, 32px); }
+  .about-title { font-size: clamp(28px, 9vw, 44px); }
+  /* Покер: кнопка широкая и заметная, как hero-кнопки */
+  #poker-signup { min-width: 80vw; height: 54px; padding: 0 24px; }
+  .poker-title { font-size: clamp(40px, 13vw, 60px); }
   /* обе колонки превращаем в общую сетку 2×2 через flex-wrap контейнера about */
   .thesis-col {
     position: static; transform: none; width: 100%;

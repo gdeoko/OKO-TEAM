@@ -60,7 +60,7 @@ const server = http.createServer((req, res) => {
   // settled frame at given scroll progress (sync DOM scroll + teleport particles/camera to target)
   const settle = async (v) => {
     await page.evaluate((vv) => {
-      if (window.__lenis) window.__lenis.scrollTo(99999 * vv, { immediate: true });
+      if (window.__lenis) window.__lenis.scrollTo((window.__lenis.limit || 0) * vv, { immediate: true });
       window.__teleport = true; window.__setScroll(vv);
     }, v);
     await new Promise(r => setTimeout(r, 500));

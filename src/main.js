@@ -971,8 +971,15 @@ onResize();
 // ============================================================
 // Mute / hover / глич текста
 // ============================================================
-document.querySelectorAll('.hero-title, .about-title, .poker-title, .btn, .nav-cta, [data-t]').forEach((el) => {
-  el.addEventListener('mouseenter', () => { sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 400); });
+function glitchFx(el) { if (!el) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
+// заголовки и подзаголовки реагируют на наведение И на касание (тап работает на мобильном)
+document.querySelectorAll('.hero-title, .hero-sub, .about-title, .about-label, .poker-title, .poker-label, .poker-sub').forEach((el) => {
+  el.style.cursor = 'pointer';
+  el.addEventListener('mouseenter', () => glitchFx(el));
+  el.addEventListener('click', () => glitchFx(el));
+});
+document.querySelectorAll('.btn, .nav-cta, [data-t]').forEach((el) => {
+  el.addEventListener('mouseenter', () => glitchFx(el));
 });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
 document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); if (!navLock) goToStation(1); });
