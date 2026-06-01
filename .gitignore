@@ -6,3 +6,4 @@ dist/
 
 _v_*.png
 dbg.cjs
+convert_assets.cjs

@@ -142,7 +142,7 @@ poker.group.position.set(0.4, -1.7, 1.8);
 poker.group.rotation.y = 0;   // стол смотрит на камеру (карты формируются перед зрителем, не сбоку)
 scene.add(poker.group);
 // Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
-const POKER_CAM = { x: 0.4, y: isMobile ? 1.25 : 1.05, z: isMobile ? 7.8 : 6.6 };
+const POKER_CAM = { x: 0.4, y: isMobile ? 1.7 : 1.15, z: isMobile ? 9.8 : 7.0 };
 const POKER_LOOK = { x: 0.4, y: -1.35, z: 1.8 };
 window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]);   // для проверки в браузере
 

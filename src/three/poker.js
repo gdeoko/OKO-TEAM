@@ -1,210 +1,206 @@
 import * as THREE from 'three';
 
 // ============================================================
-// СТАНЦИЯ «ПОКЕР» — процедурный стол + 4 карты-формата турниров.
-// Единая сцена/кино: камера поворачивается вправо к тёмному углу клуба, на столе лежат
-// 4 карты (Bounty Sniper / Joker / Ladies Night / Strange). Карты иногда сами приподнимаются
-// и переворачиваются; клик поднимает карту к зрителю (физика «лист» — добавится в инкременте B).
-// БЕЗ зелёного сукна (казино-вид запрещён): тёмный фетр + красный кант DUCK'S.
-// API: group (THREE.Group), update(t, dt, pk, pointer), setReveal(pk), cards[].
+// СТАНЦИЯ «ПОКЕР» — овальный стол DUCK'S + 4 карты-формата турниров.
+// Сукно нарисовано под реальный стол клуба (бордо, узор мастей, золотой кант, лого DUCK'S,
+// 4 окошка под карты, подпись «наши турниры»). Лица карт — бренд-арты с вписанным названием
+// турнира; рубашка — арт «утка DUCK'S». Камера смотрит фронтально, карты лежат рядом над окошками.
+// API: group, update(t,dt,camera), setReveal(pk), raycast(ray), toggleLift(card), cards[].
 // ============================================================
 
 const FORMATS = [
-  { key: 'bounty', name: 'BOUNTY SNIPER', suit: '♠', accent: '#E50000', sub: 'выбиваешь игрока, забираешь его очки' },
-  { key: 'joker',  name: 'JOKER',         suit: '♣', accent: '#8B00FF', sub: 'особые механики меняют ход игры' },
-  { key: 'ladies', name: 'LADIES NIGHT',  suit: '♥', accent: '#FF1744', sub: 'вечер, где правят девушки' },
-  { key: 'strange',name: 'STRANGE',       suit: '★', accent: '#FFD600', sub: 'нестандартные правила' },
+  { key: 'bounty',  name: 'BOUNTY SNIPER', img: 'cards/bounty.webp',  accent: '#E50000' },
+  { key: 'joker',   name: 'JOKER',         img: 'cards/joker.webp',   accent: '#8B00FF' },
+  { key: 'ladies',  name: 'LADIES NIGHT',  img: 'cards/ladies.webp',  accent: '#FF1744' },
+  { key: 'strange', name: 'STRANGE',       img: 'cards/strange.webp', accent: '#FFD600' },
 ];
 
-// --- текстуры (canvas) ---------------------------------------------------
-function roundRect(x, ctx, X, Y, W, H, R) { ctx.beginPath(); ctx.moveTo(X + R, Y); ctx.arcTo(X + W, Y, X + W, Y + H, R); ctx.arcTo(X + W, Y + H, X, Y + H, R); ctx.arcTo(X, Y + H, X, Y, R); ctx.arcTo(X, Y, X + W, Y, R); ctx.closePath(); }
+const CARD_W = 0.62, CARD_H = 0.87, CARD_T = 0.016;   // должно совпадать с main.js
 
+function roundRect(ctx, X, Y, W, H, R) { ctx.beginPath(); ctx.moveTo(X + R, Y); ctx.arcTo(X + W, Y, X + W, Y + H, R); ctx.arcTo(X + W, Y + H, X, Y + H, R); ctx.arcTo(X, Y + H, X, Y, R); ctx.arcTo(X, Y, X + W, Y, R); ctx.closePath(); }
+
+// текстура из картинки с дорисовкой поверх (картинка грузится асинхронно)
+function imageTexture(url, draw, W = 512, H = 716) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'); x.fillStyle = '#0a0a0c'; x.fillRect(0, 0, W, H);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  const img = new Image();
+  img.onload = () => { try { draw(x, img, W, H); } catch (e) {} t.needsUpdate = true; };
+  img.src = url;
+  return t;
+}
+// вписать картинку «по заполнению» (cover) с лёгким зумом (срезает белые поля по краям арта)
+function coverDraw(x, img, W, H, zoom = 1.06) {
+  const s = Math.max(W / img.width, H / img.height) * zoom;
+  const w = img.width * s, h = img.height * s;
+  x.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+}
+
+// ЛИЦО карты: бренд-арт + название турнира снизу (часть карты)
 function cardFaceTexture(fmt) {
-  const c = document.createElement('canvas'); c.width = 512; c.height = 716;
-  const x = c.getContext('2d');
-  // фон карты — глубокий чёрный с лёгким виньетом
-  x.fillStyle = '#0a0a0c'; x.fillRect(0, 0, 512, 716);
-  const vg = x.createRadialGradient(256, 358, 60, 256, 358, 420);
-  vg.addColorStop(0, 'rgba(255,255,255,0.05)'); vg.addColorStop(1, 'rgba(0,0,0,0.6)');
-  x.fillStyle = vg; x.fillRect(0, 0, 512, 716);
-  // рамка акцентного цвета формата
-  x.strokeStyle = fmt.accent; x.lineWidth = 10; x.shadowColor = fmt.accent; x.shadowBlur = 28;
-  roundRect(0, x, 26, 26, 460, 664, 34); x.stroke();
-  x.shadowBlur = 0;
-  // крупный символ масти по центру
-  x.fillStyle = fmt.accent; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.shadowColor = fmt.accent; x.shadowBlur = 40;
-  x.font = '260px Georgia, serif';
-  x.fillText(fmt.suit, 256, 320);
-  x.shadowBlur = 0;
-  // угловые символы
-  x.font = 'bold 64px Georgia, serif';
-  x.textAlign = 'left';  x.fillText(fmt.suit, 56, 92);
-  x.textAlign = 'right'; x.save(); x.translate(456, 624); x.rotate(Math.PI); x.fillText(fmt.suit, 0, 0); x.restore();
-  // название формата
-  x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.font = '900 44px Orbitron, sans-serif';
-  x.shadowColor = 'rgba(0,0,0,0.8)'; x.shadowBlur = 8;
-  x.fillText(fmt.name.split(' ')[0], 256, 470);
-  if (fmt.name.split(' ')[1]) x.fillText(fmt.name.split(' ')[1], 256, 522);
-  x.shadowBlur = 0;
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+  return imageTexture(fmt.img, (x, img, W, H) => {
+    coverDraw(x, img, W, H, 1.1);
+    // затемнение снизу под текст
+    const g = x.createLinearGradient(0, H, 0, H - 250); g.addColorStop(0, 'rgba(0,0,0,.92)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(0, H - 250, W, 250);
+    // акцентная черта
+    x.strokeStyle = fmt.accent; x.lineWidth = 4; x.shadowColor = fmt.accent; x.shadowBlur = 14;
+    x.beginPath(); x.moveTo(W / 2 - 78, H - 168); x.lineTo(W / 2 + 78, H - 168); x.stroke();
+    // название
+    x.shadowColor = fmt.accent; x.shadowBlur = 22; x.fillStyle = '#fff';
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 50px Orbitron, "Exo 2", sans-serif';
+    const parts = fmt.name.split(' ');
+    if (parts.length > 1) { x.fillText(parts[0], W / 2, H - 116); x.fillText(parts.slice(1).join(' '), W / 2, H - 62); }
+    else x.fillText(parts[0], W / 2, H - 90);
+    x.shadowBlur = 0;
+  });
 }
 
-// рисуем утку-маскота в очках (силуэт) — для рубашки карты
-function drawDuck(x, cx, cy, s) {
-  x.save(); x.translate(cx, cy); x.scale(s, s);
-  // тело (худи)
-  x.fillStyle = '#0b0b0d';
-  x.beginPath(); x.ellipse(0, 60, 86, 96, 0, 0, Math.PI * 2); x.fill();
-  // капюшон/голова
-  x.beginPath(); x.ellipse(0, -54, 78, 70, 0, 0, Math.PI * 2); x.fill();
-  // лицо (жёлто-белое)
-  x.fillStyle = '#f2ead4';
-  x.beginPath(); x.ellipse(6, -40, 52, 50, 0, 0, Math.PI * 2); x.fill();
-  // клюв
-  x.fillStyle = '#e9a13b';
-  x.beginPath(); x.moveTo(40, -36); x.quadraticCurveTo(96, -28, 96, -10); x.quadraticCurveTo(60, -8, 40, -18); x.closePath(); x.fill();
-  // очки
-  x.fillStyle = '#08080a';
-  roundRect(0, x, -34, -58, 78, 30, 8); x.fill();
-  x.fillStyle = '#1a1a1f'; roundRect(0, x, -30, -54, 30, 22, 6); x.fill(); roundRect(0, x, 6, -54, 30, 22, 6); x.fill();
-  // блик на очках
-  x.strokeStyle = 'rgba(255,255,255,0.5)'; x.lineWidth = 3; x.beginPath(); x.moveTo(-24, -50); x.lineTo(-14, -50); x.stroke();
-  x.restore();
-}
 let _backTex = null;
 function cardBackTexture() {
   if (_backTex) return _backTex;
-  const c = document.createElement('canvas'); c.width = 512; c.height = 716;
-  const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 512, 716);
-  g.addColorStop(0, '#cc0000'); g.addColorStop(0.5, '#7a0006'); g.addColorStop(1, '#cc0000');
-  x.fillStyle = g; x.fillRect(0, 0, 512, 716);
-  // ромбовидный паттерн
-  x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2;
-  for (let i = -10; i < 20; i++) { x.beginPath(); x.moveTo(i * 48, 0); x.lineTo(i * 48 + 716, 716); x.stroke(); x.beginPath(); x.moveTo(i * 48, 716); x.lineTo(i * 48 + 716, 0); x.stroke(); }
-  // тёмный овал-медальон + белая рамка
-  x.fillStyle = 'rgba(8,8,8,0.6)'; x.strokeStyle = '#fff'; x.lineWidth = 6;
-  roundRect(0, x, 64, 120, 384, 476, 36); x.fill(); x.stroke();
-  // утка по центру
-  drawDuck(x, 256, 320, 1.15);
-  // надпись DUCK'S
-  x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  x.font = '900 56px Orbitron, sans-serif'; x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 6;
-  x.fillText("DUCK'S", 256, 532); x.shadowBlur = 0;
-  // внешняя бренд-рамка
-  x.strokeStyle = 'rgba(255,255,255,.85)'; x.lineWidth = 8; roundRect(0, x, 22, 22, 468, 672, 30); x.stroke();
-  _backTex = new THREE.CanvasTexture(c); _backTex.colorSpace = THREE.SRGBColorSpace; _backTex.anisotropy = 8;
+  _backTex = imageTexture('cards/back.webp', (x, img, W, H) => {
+    coverDraw(x, img, W, H, 1.02);
+    x.strokeStyle = 'rgba(229,0,0,.95)'; x.lineWidth = 11; roundRect(x, 16, 16, W - 32, H - 32, 30); x.stroke();
+    x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 3; roundRect(x, 27, 27, W - 54, H - 54, 24); x.stroke();
+  });
   return _backTex;
 }
 
-function feltTexture() {
-  const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+// СУКНО овального стола DUCK'S (вид сверху)
+function feltTexture(cardXs) {
+  const W = 1024, H = 560;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
-  // тёмный фетр (НЕ зелёный — казино-вид запрещён): угольно-чёрный с лёгким красным тоном
-  x.fillStyle = '#100a0c'; x.fillRect(0, 0, 512, 512);
-  const g = x.createRadialGradient(256, 256, 40, 256, 256, 300);
-  g.addColorStop(0, '#1c1214'); g.addColorStop(1, '#0a0608');
-  x.fillStyle = g; x.fillRect(0, 0, 512, 512);
-  // зерно фетра
-  const img = x.getImageData(0, 0, 512, 512), d = img.data;
-  for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 14; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
-  x.putImageData(img, 0, 0);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  // бордовое поле
+  const g = x.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, W * 0.62);
+  g.addColorStop(0, '#7c1422'); g.addColorStop(1, '#470a12');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  // узор мастей
+  x.fillStyle = 'rgba(0,0,0,0.14)'; x.font = '24px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  const suits = ['♠', '♥', '♦', '♣'];
+  let row = 0;
+  for (let yy = 36; yy < H; yy += 44, row++) for (let xx = 36, i = 0; xx < W; xx += 44, i++) x.fillText(suits[(i + row) % 4], xx, yy);
+  // золотой кант (внешний стадион)
+  x.strokeStyle = 'rgba(212,175,55,0.85)'; x.lineWidth = 6; roundRect(x, 44, 44, W - 88, H - 88, (H - 88) / 2); x.stroke();
+  // золотая беговая линия (внутренняя)
+  x.strokeStyle = 'rgba(212,175,55,0.5)'; x.lineWidth = 3; roundRect(x, 150, 116, W - 300, H - 232, (H - 232) / 2); x.stroke();
+  // 4 окошка под карты (там, где лежат карты) — золотой контур
+  const bw = (CARD_W / 5.2) * W * 1.12, bh = (CARD_H / 2.8) * H * 1.12;
+  x.strokeStyle = 'rgba(212,175,55,0.85)'; x.lineWidth = 3;
+  cardXs.forEach((wx) => { const cx = (wx / 5.2 + 0.5) * W; roundRect(x, cx - bw / 2, H / 2 - bh / 2, bw, bh, 10); x.stroke(); });
+  // лого DUCK'S (красная плашка) — дальний конец
+  const lw = 200, lh = 70, lx = W / 2 - lw / 2, ly = 60;
+  x.fillStyle = '#cc0000'; x.shadowColor = 'rgba(204,0,0,.6)'; x.shadowBlur = 18; roundRect(x, lx, ly, lw, lh, 8); x.fill(); x.shadowBlur = 0;
+  x.fillStyle = '#fff'; x.font = '900 44px Orbitron, "Exo 2", sans-serif'; x.fillText("DUCK'S", W / 2, ly + lh / 2 + 2);
+  // подпись «наши турниры · нажми на карту» — ближний край (часть стола)
+  x.fillStyle = 'rgba(245,225,160,0.75)'; x.font = '600 22px Orbitron, "Exo 2", sans-serif';
+  x.save(); x.translate(W / 2, H - 64);
+  // разрядка букв
+  const txt = 'Н А Ш И   Т У Р Н И Р Ы   ·   Н А Ж М И   Н А   К А Р Т У';
+  x.fillText(txt, 0, 0); x.restore();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
-// --- одна карта ----------------------------------------------------------
-const CARD_W = 0.62, CARD_H = 0.87, CARD_T = 0.016;
+// одна карта
 function buildCard(fmt) {
   const geo = new THREE.BoxGeometry(CARD_W, CARD_T, CARD_H);   // лежит плашмя (толщина по Y)
   const edge = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.6 });
-  const faceMat = new THREE.MeshStandardMaterial({ map: cardFaceTexture(fmt), roughness: 0.45, metalness: 0.0, emissive: new THREE.Color(fmt.accent), emissiveIntensity: 0.0 });
+  const faceMat = new THREE.MeshStandardMaterial({ map: cardFaceTexture(fmt), roughness: 0.42, metalness: 0.0, emissive: new THREE.Color(fmt.accent), emissiveIntensity: 0.0 });
   const backMat = new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.5, metalness: 0.0 });
-  // BoxGeometry группы: 0 +x,1 -x,2 +y(верх),3 -y(низ),4 +z,5 -z
-  // лицо смотрит ВНИЗ когда лежит рубашкой вверх → верх (+y)=рубашка, низ(-y)=лицо
-  const face = faceMat.clone();
-  const mats = [edge, edge, backMat, face, edge, edge];
+  // группы BoxGeometry: 0 +x,1 -x,2 +y(верх),3 -y(низ),4 +z,5 -z. Лежит рубашкой вверх: верх=рубашка, низ=лицо
+  const mats = [edge, edge, backMat, faceMat, edge, edge];
   const card = new THREE.Mesh(geo, mats);
-  card.castShadow = true;
-  card.userData = { fmt, faceMat: face, baseY: 0, flip: 0, flipTarget: 0, nextFlip: 2 + Math.random() * 5, lift: 0 };
+  card.userData = { fmt, faceMat, lifted: false };
   return card;
+}
+
+// стадион-овал (скруглённый прямоугольник, торцы — полукруги)
+function stadiumShape(halfL, halfW) {
+  const s = new THREE.Shape(); const r = halfW;
+  s.moveTo(-halfL + r, -halfW);
+  s.lineTo(halfL - r, -halfW);
+  s.absarc(halfL - r, 0, r, -Math.PI / 2, Math.PI / 2, false);
+  s.lineTo(-halfL + r, halfW);
+  s.absarc(-halfL + r, 0, r, Math.PI / 2, Math.PI * 1.5, false);
+  return s;
 }
 
 export class PokerStation {
   constructor() {
     this.group = new THREE.Group();
     this.group.visible = false;
-    this._reveal = 0;
 
-    // тёплое пятно света над столом
-    this.spot = new THREE.SpotLight(0xffd9b0, 0, 14, Math.PI / 5, 0.5, 1.2);
-    this.spot.position.set(0, 6, 1.5);
-    this.spot.target.position.set(0, 0, 0.4);
+    // свет над столом
+    this.spot = new THREE.SpotLight(0xffd9b0, 0, 16, Math.PI / 5, 0.5, 1.2);
+    this.spot.position.set(0, 6, 1.5); this.spot.target.position.set(0, 0, 0.2);
     this.group.add(this.spot, this.spot.target);
-    this.fill = new THREE.PointLight(0xcc2222, 0, 10); this.fill.position.set(-2, 1.5, 3); this.group.add(this.fill);
+    this.fill = new THREE.PointLight(0xcc2222, 0, 12); this.fill.position.set(-2, 1.6, 3); this.group.add(this.fill);
 
-    // СТОЛ: тёмный фетр (диск) + красный кант
-    const felt = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.6, 2.6, 0.18, 64),
-      new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0 })
-    );
-    felt.receiveShadow = true; felt.position.y = -0.09; this.group.add(felt);
-    const rail = new THREE.Mesh(
-      new THREE.TorusGeometry(2.6, 0.16, 16, 80),
-      new THREE.MeshStandardMaterial({ color: 0x2a0a0c, roughness: 0.35, metalness: 0.3, emissive: 0x330000, emissiveIntensity: 0.5 })
-    );
-    rail.rotation.x = Math.PI / 2; rail.position.y = 0.02; this.group.add(rail);
-
-    // 4 карты ровным веером на столе, рубашкой вверх
-    this.cards = [];
+    // позиции 4 карт в ряд (над окошками)
     const N = FORMATS.length;
+    const cardXs = FORMATS.map((_, i) => (i - (N - 1) / 2) * 0.78);
+
+    // СУКНО — овальная плоскость (стадион), текстура сверху
+    const HALF_L = 2.6, HALF_W = 1.4;
+    const shape = stadiumShape(HALF_L, HALF_W);
+    const felt = new THREE.ShapeGeometry(shape, 48);
+    // нормализуем UV по габаритам (в плоскости XY), затем кладём плашмя
+    felt.computeBoundingBox(); const bb = felt.boundingBox; const sx = bb.max.x - bb.min.x, sy = bb.max.y - bb.min.y;
+    const pos = felt.attributes.position, uv = [];
+    for (let i = 0; i < pos.count; i++) uv.push((pos.getX(i) - bb.min.x) / sx, (pos.getY(i) - bb.min.y) / sy);
+    felt.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    felt.rotateX(-Math.PI / 2);
+    const feltMesh = new THREE.Mesh(felt, new THREE.MeshStandardMaterial({ map: feltTexture(cardXs), roughness: 0.95, metalness: 0.0 }));
+    feltMesh.position.y = 0; this.group.add(feltMesh);
+
+    // РАЙ (борт) — труба по контуру стадиона (чуть больше сукна)
+    const railPts2d = stadiumShape(HALF_L + 0.06, HALF_W + 0.06).getPoints(80);
+    const railPts = railPts2d.map((p) => new THREE.Vector3(p.x, 0.04, -p.y));
+    const railCurve = new THREE.CatmullRomCurve3(railPts, true);
+    const rail = new THREE.Mesh(
+      new THREE.TubeGeometry(railCurve, 160, 0.16, 14, true),
+      new THREE.MeshStandardMaterial({ color: 0x1c0a0c, roughness: 0.35, metalness: 0.3, emissive: 0x2a0000, emissiveIntensity: 0.5 })
+    );
+    this.group.add(rail);
+
+    // 4 карты в ряд, рубашкой вверх
+    this.cards = [];
     FORMATS.forEach((fmt, i) => {
       const card = buildCard(fmt);
-      const f = i - (N - 1) / 2;                 // -1.5 .. 1.5
-      card.position.set(f * 0.6, 0.02 + (1.5 - Math.abs(f)) * 0.006, 0.4 - Math.abs(f) * 0.04);
-      card.rotation.set(0, -f * 0.13, 0);        // веер вокруг вертикали; лежат ровно (рубашка вверх)
+      card.position.set(cardXs[i], 0.03, 0.05);
+      card.rotation.set(0, 0, 0);
       card.userData.home = card.position.clone();
       card.userData.homeQuat = card.quaternion.clone();
-      card.userData.baseY = card.position.y;
       this.group.add(card);
       this.cards.push(card);
     });
   }
 
-  // pk 0..1 — насколько станция «проявлена» (по скроллу)
   setReveal(pk) {
-    this._reveal = pk;
     this.group.visible = pk > 0.2;
     const s = 0.32 + 0.68 * THREE.MathUtils.smoothstep(pk, 0.3, 1);   // стол растёт/приближается
     this.group.scale.setScalar(s);
-    // СТОЛ/свет проявляются раньше (на него «садятся» частицы), а КАРТЫ — позже: принимают
-    // эстафету у частиц-карт, поэтому нет двойных карт во время морфа.
     const eTable = THREE.MathUtils.clamp((pk - 0.3) / 0.4, 0, 1);
-    const eCards = THREE.MathUtils.clamp((pk - 0.5) / 0.35, 0, 1);
-    this.spot.intensity = 26 * eTable;
-    this.fill.intensity = 8 * eTable;
+    const eCards = THREE.MathUtils.clamp((pk - 0.5) / 0.35, 0, 1);   // карты позже — эстафета у частиц
+    this.spot.intensity = 28 * eTable;
+    this.fill.intensity = 9 * eTable;
     this.group.traverse((o) => {
       if (o.isMesh && o.material) {
-        const op = o.userData && o.userData.fmt ? eCards : eTable;   // карты vs остальное
+        const op = o.userData && o.userData.fmt ? eCards : eTable;
         const mm = Array.isArray(o.material) ? o.material : [o.material];
         mm.forEach((m) => { m.transparent = true; m.opacity = op; });
       }
     });
   }
 
-  // raycast по картам (луч из камеры) → возвращает задетую карту или null
-  raycast(raycaster) {
-    const hits = raycaster.intersectObjects(this.cards, false);
-    return hits.length ? hits[0].object : null;
-  }
+  raycast(raycaster) { const h = raycaster.intersectObjects(this.cards, false); return h.length ? h[0].object : null; }
 
-  // клик по карте: поднять к зрителю и перевернуть лицом; повторный клик — вернуть на стол
   toggleLift(card) {
-    const wasLifted = card.userData.lifted;
-    // одновременно поднята только одна карта
+    const was = card.userData.lifted;
     this.cards.forEach((c) => { c.userData.lifted = false; });
-    card.userData.lifted = !wasLifted;
-    return card.userData.lifted;   // true = подняли, false = вернули
+    card.userData.lifted = !was;
+    return card.userData.lifted;
   }
 
   update(t, dt, camera) {
@@ -213,26 +209,21 @@ export class PokerStation {
     this.cards.forEach((card) => {
       const u = card.userData;
       if (u.lifted && camera) {
-        // выезжает в ЦЕНТР экрана ЛИЦОМ к зрителю (переворачивается по пути), чуть ниже центра
-        camera.getWorldPosition(_camPos);
-        camera.getWorldDirection(_n);                       // forward камеры (куда смотрит)
-        camera.matrixWorld.extractBasis(_right, _camUp, _tmp); // _camUp = up камеры (мир)
+        camera.getWorldPosition(_camPos); camera.matrixWorld.extractBasis(_right, _camUp, _tmp);
+        camera.getWorldDirection(_n);
         _v.copy(_camPos).addScaledVector(_n, 2.15).addScaledVector(_camUp, -0.08);
         this.group.worldToLocal(_targetLocal.copy(_v));
         card.position.lerp(_targetLocal, k);
-        // ориентация: лицо карты (-Y лок.) смотрит на камеру, высота карты вертикальна
-        card.getWorldPosition(_v); _n.copy(_camPos).sub(_v).normalize();   // от карты к камере
-        _yAxis.copy(_n).multiplyScalar(-1);                 // локальный +Y → от камеры (значит -Y/лицо → к камере)
+        card.getWorldPosition(_v); _n.copy(_camPos).sub(_v).normalize();
+        _yAxis.copy(_n).multiplyScalar(-1);
         _right.crossVectors(_yAxis, _camUp).normalize();
         _zAxis.crossVectors(_right, _yAxis).normalize();
-        _m.makeBasis(_right, _yAxis, _zAxis);
-        _q.setFromRotationMatrix(_m);
+        _m.makeBasis(_right, _yAxis, _zAxis); _q.setFromRotationMatrix(_m);
         this.group.getWorldQuaternion(_qg); _q.premultiply(_qg.invert());
         card.quaternion.slerp(_q, k);
-        u.faceMat.emissiveIntensity += (0.45 - u.faceMat.emissiveIntensity) * k;
+        u.faceMat.emissiveIntensity += (0.4 - u.faceMat.emissiveIntensity) * k;
         return;
       }
-      // не поднята → плавно возвращается на своё место в веере (рубашкой вверх)
       card.position.lerp(u.home, k);
       card.quaternion.slerp(u.homeQuat, k);
       u.faceMat.emissiveIntensity += (0 - u.faceMat.emissiveIntensity) * k;
@@ -240,7 +231,7 @@ export class PokerStation {
   }
 }
 
-// временные объекты (без аллокаций в кадре)
+// временные объекты
 const _v = new THREE.Vector3(), _camPos = new THREE.Vector3(), _n = new THREE.Vector3();
 const _camUp = new THREE.Vector3(), _right = new THREE.Vector3(), _tmp = new THREE.Vector3();
 const _yAxis = new THREE.Vector3(), _zAxis = new THREE.Vector3(), _targetLocal = new THREE.Vector3();
