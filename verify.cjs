@@ -53,11 +53,15 @@ const server = http.createServer((req, res) => {
     await page.evaluate(() => { window.__teleport = false; });
   };
 
-  await settle(0.08); await shoot('hero_dissolve');
-  await settle(0.45); await shoot('explode');
-  await settle(0.99); await shoot('brain');
+  // НОВАЯ РЕЛЬСА: Холл занимает 0..0.5 (мозг собран к 0.5), Покер 0.5..1.0
+  await settle(0.04); await shoot('hero_dissolve');
+  await settle(0.22); await shoot('explode');
+  await settle(0.50); await shoot('brain');
+  await settle(0.62); await shoot('poker_enter');
+  await settle(0.85); await shoot('poker');
 
-  // open brain tunnel (let physics run a little; tunnel uses continuous flow so motion is fine)
+  // open brain tunnel из позы мозга (pk=0)
+  await settle(0.50);
   await page.evaluate(() => window.__openBrain && window.__openBrain());
   await new Promise(r => setTimeout(r, 1500)); await shoot('tunnel_burst');
   await page.evaluate(() => { window.__teleport = true; });

@@ -8,6 +8,7 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
+import { PokerStation } from './three/poker.js';
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -121,6 +122,22 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const env = new ClubEnvironment(scene, isMobile, renderer);
 if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для подбора ракурса
+
+// ============================================================
+// РЕЛЬСА СТАНЦИЙ (кино, единая сцена). scrollProgress 0..1 делится на сегменты:
+//   0 .. HOLL_END   — ХОЛЛ (утка→мозг), tp = scrollProgress/HOLL_END (Холл выглядит как раньше)
+//   HOLL_END .. 1   — ПОКЕР, pk = доля прогресса внутри сегмента
+// ============================================================
+const HOLL_END = 0.5;
+let pk = 0;                       // прогресс станции «Покер» 0..1
+// Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
+const poker = new PokerStation();
+poker.group.position.set(1.4, -1.55, 2.6);
+poker.group.rotation.y = -0.28;
+scene.add(poker.group);
+// Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
+const POKER_CAM = { x: 0.5, y: isMobile ? 1.05 : 0.9, z: isMobile ? 8.8 : 7.4 };
+const POKER_LOOK = { x: 1.35, y: -1.2, z: 2.6 };
 
 // ============================================================
 // Кубики-занавес
@@ -440,7 +457,7 @@ function hitSubject(x, y, r = 0.32) {
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }
-  else if (tp > 0.7 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона
+  else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
 });
 
 // ============================================================
@@ -553,7 +570,10 @@ const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
 const counter = document.getElementById('section-counter');
 function updateUIByScroll() {
-  tp = THREE.MathUtils.clamp(scrollProgress, 0, 1);
+  // ХОЛЛ занимает первый сегмент скролла; дальше — станция Покер
+  tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
+  pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (1 - HOLL_END), 0, 1);
+  document.body.classList.toggle('poker-in', pk > 0.12);
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
@@ -566,8 +586,9 @@ function updateUIByScroll() {
   } });
   scrollHint.style.opacity = String(Math.max(0, 1 - tp * 8));
   // About проявляется к концу (мозг собран). Плавно, без рывка.
-  document.body.classList.toggle('about-in', tp > 0.8);
-  counter.textContent = (tp > 0.5 ? '02' : '01') + ' / 08';
+  document.body.classList.toggle('about-in', tp > 0.8 && pk < 0.1);
+  const secNo = pk > 0.12 ? '03' : (tp > 0.5 ? '02' : '01');
+  counter.textContent = secNo + ' / 08';
 }
 
 // ============================================================
@@ -580,6 +601,8 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
   env.update(t, camera, tp, dt);
+  poker.setReveal(pk);
+  poker.update(t, dt);
   updateDiceShadows();
 
   // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo
@@ -617,11 +640,20 @@ function animate() {
     const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
-    camera.position.x += ((sCamX + (0 - sCamX) * tb) - camera.position.x) * camEase;
-    camera.position.y += ((sCamY + (0 - sCamY) * tb) - camera.position.y) * camEase;
-    camera.position.z += ((sCamZ + (6 - sCamZ) * tb) - camera.position.z) * camEase;
-    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель)
-    camera.lookAt(LOOK.x + (0 - LOOK.x) * tb, LOOK.y + (0 - LOOK.y) * tb, LOOK.z + (-10 - LOOK.z) * tb);
+    // ПОКЕР: камера поворачивается вправо к столу (плавно по pk). Во время Покера tb=0,
+    // поэтому туннельные слагаемые обнуляются, и поза честно смешивается Холл↔Стол.
+    const pkc = easeIO(THREE.MathUtils.clamp(pk, 0, 1));
+    const tCamX = THREE.MathUtils.lerp(sCamX + (0 - sCamX) * tb, POKER_CAM.x, pkc);
+    const tCamY = THREE.MathUtils.lerp(sCamY + (0 - sCamY) * tb, POKER_CAM.y, pkc);
+    const tCamZ = THREE.MathUtils.lerp(sCamZ + (6 - sCamZ) * tb, POKER_CAM.z, pkc);
+    camera.position.x += (tCamX - camera.position.x) * camEase;
+    camera.position.y += (tCamY - camera.position.y) * camEase;
+    camera.position.z += (tCamZ - camera.position.z) * camEase;
+    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель) ↔ стол (покер)
+    const lookX = THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc);
+    const lookY = THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc);
+    const lookZ = THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc);
+    camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
     const dist = DUCK_DIST - easeIO(tpEff) * 2.5;
@@ -633,8 +665,10 @@ function animate() {
     const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
     const sSubZ = sCamZ + _camDir.z * dist;
     const subEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.1, 1, snap), 0.3, tb);
-    subject.position.x += (sSubX * (1 - tb) - subject.position.x) * subEase;
-    subject.position.y += (sSubY * (1 - tb) - subject.position.y) * subEase;
+    // ПОКЕР: мозг сворачивается и улетает вправо-вниз («закатывается под стол»)
+    const pkOffX = pkc * 5.5, pkOffY = -pkc * 3.0;
+    subject.position.x += ((sSubX + pkOffX) * (1 - tb) - subject.position.x) * subEase;
+    subject.position.y += ((sSubY + pkOffY) * (1 - tb) - subject.position.y) * subEase;
     subject.position.z += (sSubZ * (1 - tb) - subject.position.z) * subEase;
   } else if (orbit) {
     orbit.update();
@@ -666,7 +700,8 @@ function animate() {
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12);
+    // частицы появляются в Холле и ГАСНУТ при уходе в Покер (мозг улетает)
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.05, 0.45));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
