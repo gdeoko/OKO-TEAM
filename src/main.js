@@ -576,7 +576,6 @@ const heroTop = document.querySelector('.hero-top');
 const heroBottom = document.querySelector('.hero-bottom');
 const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
-const counter = document.getElementById('section-counter');
 function updateUIByScroll() {
   // ХОЛЛ занимает первый сегмент скролла; дальше — станция Покер
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
@@ -595,8 +594,6 @@ function updateUIByScroll() {
   scrollHint.style.opacity = String(Math.max(0, 1 - tp * 8));
   // About проявляется к концу (мозг собран). Плавно, без рывка.
   document.body.classList.toggle('about-in', tp > 0.8 && pk < 0.1);
-  const secNo = pk > 0.12 ? '03' : (tp > 0.5 ? '02' : '01');
-  counter.textContent = secNo + ' / 08';
 }
 
 // ============================================================
@@ -871,7 +868,7 @@ onResize();
 // ============================================================
 // Mute / hover / глич текста
 // ============================================================
-document.querySelectorAll('.hero-title, .about-title, .btn, .nav-cta, [data-t]').forEach((el) => {
+document.querySelectorAll('.hero-title, .about-title, .poker-title, .btn, .nav-cta, [data-t]').forEach((el) => {
   el.addEventListener('mouseenter', () => { sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 400); });
 });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));

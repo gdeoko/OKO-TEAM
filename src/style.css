@@ -129,7 +129,7 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
   font-size: clamp(44px, 7vw, 88px); line-height: .98; letter-spacing: -1px;
   transition: letter-spacing .4s ease, text-shadow .4s ease;
 }
-.hero-title:hover { text-shadow: 0 0 30px rgba(136,221,255,.5); }
+.hero-title:hover, .about-title:hover, .poker-title:hover { text-shadow: 0 0 30px rgba(136,221,255,.5); }
 .hero-sub {
   font-family: var(--fd); font-weight: 400; font-size: clamp(15px, 2.4vw, 26px);
   letter-spacing: .3em; text-transform: lowercase; margin-top: 4px;
@@ -142,11 +142,22 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
   font-family: var(--fd); font-weight: 700; font-size: 13px;
   letter-spacing: 2px; text-transform: uppercase; line-height: 1;
   height: 52px; padding: 0 34px; border-radius: 26px;
-  transition: transform .25s, box-shadow .25s, border-color .25s, background .25s, letter-spacing .25s;
+  color: #fff; border: none; cursor: pointer;
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, border-color .25s, background .25s, letter-spacing .25s;
 }
 .btn:hover { transform: translateY(-2px); }
-.btn-fill { background: linear-gradient(135deg, var(--red-primary), var(--red-bright)); box-shadow: 0 6px 28px rgba(204,0,0,.45); }
+.btn:active { transform: translateY(0) scale(.96); }
+.btn-fill { background: linear-gradient(135deg, var(--red-primary), var(--red-bright)); box-shadow: 0 6px 28px rgba(204,0,0,.45); color: #fff; }
 .btn-fill:hover { transform: translateY(-3px); box-shadow: 0 10px 40px rgba(204,0,0,.65); }
+.btn-fill:active { box-shadow: 0 2px 14px rgba(204,0,0,.5), 0 0 0 3px rgba(255,255,255,.12) inset; }
+/* вспышка при клике */
+.btn-fill::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(circle at center, rgba(255,255,255,.5), transparent 70%);
+  opacity: 0; pointer-events: none; transition: opacity .4s;
+}
+.btn-fill { position: relative; overflow: hidden; }
+.btn-fill:active::after { opacity: 1; transition: opacity 0s; }
 .btn-line { border: 1px solid rgba(255,255,255,.2); background: rgba(8,8,8,.25); backdrop-filter: blur(4px); }
 .btn-line:hover { border-color: var(--red-primary); background: rgba(204,0,0,.12); }
 .scroll-hint {
@@ -215,34 +226,24 @@ body.about-in .about-bottom { opacity: 1; }
 .about-note { font-size: 13px; color: rgba(255,255,255,.45); }
 
 /* ===== Секция 3 — Покер (текст фиксирован в кадре, проявляется по скроллу) ===== */
+/* Порядок: заголовок ПОКЕР → подзаголовок «турниры для своих» → кнопка → ниже стол с картами */
 #poker { pointer-events: none; }
-.poker-top, .poker-bottom, .poker-formats {
-  position: fixed; left: 50%; transform: translateX(-50%) translateY(14px);
+.poker-top, .poker-hint {
+  position: fixed; left: 50%; transform: translateX(-50%) translateY(16px);
   width: 100%; max-width: 760px; padding: 0 24px;
   opacity: 0; z-index: 11; pointer-events: none;
   transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
   text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
 }
-.poker-top { top: 11vh; text-align: center; }
-.poker-label { font-family: var(--fd); font-size: 10px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 10px; }
-.poker-title { font-family: var(--fd); font-weight: 900; font-size: clamp(34px, 6vw, 64px); letter-spacing: 1px; }
-.poker-sub { font-size: clamp(13px, 1.7vw, 16px); color: rgba(255,255,255,.72); margin: 12px auto 0; line-height: 1.5; max-width: 480px; }
-.poker-formats { top: auto; bottom: 21vh; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.pf {
-  font-family: var(--fd); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 8px 14px; border-radius: 30px; color: rgba(255,255,255,.85);
-  border: 1px solid rgba(204,0,0,.4); background: rgba(204,0,0,.08); backdrop-filter: blur(6px);
-}
-.pf[data-a="joker"]  { border-color: rgba(139,0,255,.5); background: rgba(139,0,255,.1); }
-.pf[data-a="ladies"] { border-color: rgba(255,23,68,.5); background: rgba(255,23,68,.1); }
-.pf[data-a="strange"]{ border-color: rgba(255,214,0,.5); background: rgba(255,214,0,.1); }
-.poker-bottom { top: auto; bottom: 12vh; display: flex; justify-content: center; }
-#poker-signup { pointer-events: auto; cursor: pointer; border: none; }
-body.poker-in .poker-top, body.poker-in .poker-bottom, body.poker-in .poker-formats {
-  opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto;
-}
+.poker-top { top: 9vh; display: flex; flex-direction: column; align-items: center; }
+.poker-label { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-bottom: 8px; }
+.poker-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
+.poker-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,1.8vw,17px); letter-spacing: .18em; text-transform: lowercase; color: rgba(255,255,255,.62); margin-top: 6px; }
+#poker-signup { pointer-events: auto; margin-top: 22px; }
+.poker-hint { top: auto; bottom: 13vh; font-family: var(--fd); font-size: 10px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,.4); }
+body.poker-in .poker-top, body.poker-in .poker-hint { opacity: 1; transform: translateX(-50%) translateY(0); }
 body.poker-in .poker-top { pointer-events: none; }
-body.poker-in .poker-formats { pointer-events: none; }
+body.poker-in #poker-signup { pointer-events: auto; }
 
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {

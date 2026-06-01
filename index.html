@@ -25,15 +25,6 @@
     <a class="nav-cta" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
   </header>
 
-  <!-- Счётчик секций -->
-  <div id="section-counter">01&nbsp;/&nbsp;08</div>
-
-  <!-- Индикатор звука (звук включён автоматически, как у igloo) -->
-  <div id="sound-ind" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-    <span>SOUND: ON</span>
-  </div>
-
   <!-- Контент-слой (HTML поверх 3D) -->
   <main id="content">
     <!-- Секция 1 — Hero (отцентровано: заголовок сверху, утка в центре, кнопки снизу) -->
@@ -82,17 +73,10 @@
       <div class="poker-top">
         <div class="poker-label">за столом</div>
         <h2 class="poker-title">ПОКЕР</h2>
-        <p class="poker-sub">Texas Hold'em и турниры для своих. Садись за стол, собирай очки в рейтинг клуба.</p>
+        <p class="poker-sub">турниры для своих</p>
+        <button class="btn btn-fill" id="poker-signup">Записаться в клуб</button>
       </div>
-      <div class="poker-formats" aria-hidden="true">
-        <span class="pf" data-a="bounty">Bounty Sniper</span>
-        <span class="pf" data-a="joker">Joker</span>
-        <span class="pf" data-a="ladies">Ladies Night</span>
-        <span class="pf" data-a="strange">Strange</span>
-      </div>
-      <div class="poker-bottom">
-        <button class="btn btn-fill" id="poker-signup">Записаться за стол</button>
-      </div>
+      <div class="poker-hint" aria-hidden="true">наши турниры · нажми на карту</div>
     </section>
   </main>
 
