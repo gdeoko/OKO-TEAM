@@ -159,22 +159,47 @@ export class PokerStation {
     });
   }
 
+  // raycast по картам (луч из камеры) → возвращает задетую карту или null
+  raycast(raycaster) {
+    const hits = raycaster.intersectObjects(this.cards, false);
+    return hits.length ? hits[0].object : null;
+  }
+
+  // клик по карте: поднять к зрителю и перевернуть лицом; повторный клик — вернуть на стол
+  toggleLift(card) {
+    const wasLifted = card.userData.lifted;
+    // одновременно поднята только одна карта
+    this.cards.forEach((c) => { c.userData.lifted = false; });
+    card.userData.lifted = !wasLifted;
+    return card.userData.lifted;   // true = подняли, false = вернули
+  }
+
   update(t, dt) {
     if (!this.group.visible) return;
-    // авто-переворот: иногда случайная карта приподнимается, показывает лицо, ложится обратно
     this.cards.forEach((card) => {
       const u = card.userData;
+      if (u.lifted) {
+        // поднята к зрителю: взлетает над столом, разворачивается лицом, чуть качается («держишь в руке»)
+        u.flipTarget = Math.PI; u.nextFlip = 6;
+        u.flip += (u.flipTarget - u.flip) * Math.min(1, dt * 7);
+        card.position.y += (u.baseY + 1.35 - card.position.y) * Math.min(1, dt * 6);
+        card.rotation.x = u.flip;
+        card.rotation.z = Math.sin(t * 1.6) * 0.05;        // лёгкое «парусит» в руке
+        u.faceMat.emissiveIntensity = 0.4;
+        return;
+      }
+      // авто-переворот: иногда случайная карта приподнимается, показывает лицо, ложится обратно
       u.nextFlip -= dt;
       if (u.nextFlip <= 0 && Math.abs(u.flipTarget - u.flip) < 0.01) {
         u.flipTarget = u.flipTarget > 1 ? 0 : Math.PI;   // показать лицо / вернуть рубашку
         u.nextFlip = 4 + Math.random() * 7;
       }
       u.flip += (u.flipTarget - u.flip) * Math.min(1, dt * 4);
-      // подъём во время переворота (карта чуть взлетает над столом)
+      // подъём во время переворота (карта чуть взлетает над столом) + плавный возврат на место
       const lift = Math.sin(THREE.MathUtils.clamp(u.flip / Math.PI, 0, 1) * Math.PI) * 0.22;
-      card.position.y = u.baseY + lift;
-      card.rotation.x = u.flip;                            // переворот вокруг длинной оси
-      // подсветка лица при показе
+      card.position.y += (u.baseY + lift - card.position.y) * Math.min(1, dt * 6);
+      card.rotation.x = u.flip;
+      card.rotation.z += (0 - card.rotation.z) * Math.min(1, dt * 6);
       u.faceMat.emissiveIntensity = (u.flip > 1.2 ? 0.35 : 0.0);
     });
   }

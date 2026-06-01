@@ -411,6 +411,67 @@ body.tunnel-exit .bd-inner {
   .bd-stats b { font-size: 22px; }
 }
 
+/* ===== Анкета «Записаться за стол» (модалка-карта) ===== */
+#signup {
+  position: fixed; inset: 0; z-index: 1400;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(3, 2, 6, .72); backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity .4s ease;
+  padding: 24px 16px; overflow-y: auto;
+}
+body.signup-open #signup { opacity: 1; pointer-events: auto; }
+.su-card {
+  position: relative; width: 100%; max-width: 440px; margin: auto;
+  background: linear-gradient(160deg, #14080a, #0a0608);
+  border: 1px solid rgba(204, 0, 0, .35); border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 50px rgba(204, 0, 0, .15), inset 0 1px 0 rgba(255, 255, 255, .05);
+  padding: 30px 26px 26px;
+  transform: translateY(24px) scale(.96); transition: transform .45s cubic-bezier(.22, 1, .36, 1);
+}
+body.signup-open .su-card { transform: translateY(0) scale(1); }
+#su-close {
+  position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); color: #fff;
+  font-size: 20px; line-height: 1; cursor: pointer; transition: background .25s, border-color .25s;
+}
+#su-close:hover { background: rgba(204, 0, 0, .2); border-color: var(--red-primary); }
+.su-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--red-primary); margin-bottom: 8px; }
+.su-head h3 { font-family: var(--fd); font-weight: 900; font-size: 26px; margin-bottom: 8px; }
+.su-head p { font-size: 13px; color: rgba(255, 255, 255, .6); line-height: 1.5; margin-bottom: 18px; }
+.su-field { display: block; margin-bottom: 14px; }
+.su-field > span { display: block; font-family: var(--fd); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255, 255, 255, .5); margin-bottom: 7px; }
+.su-field > span i { font-style: normal; color: rgba(255, 255, 255, .3); letter-spacing: 1px; }
+.su-field input {
+  width: 100%; height: 48px; padding: 0 16px; border-radius: 12px;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .12);
+  color: #fff; font-family: var(--fb); font-size: 15px; transition: border-color .25s, background .25s;
+}
+.su-field input::placeholder { color: rgba(255, 255, 255, .3); }
+.su-field input:focus { outline: none; border-color: var(--red-primary); background: rgba(204, 0, 0, .06); }
+.su-field input.invalid { border-color: #ff4444; }
+.su-field input.valid { border-color: #3ddc84; }
+.su-err { display: none; font-style: normal; font-size: 11px; color: #ff6b6b; margin-top: 6px; }
+.su-field input.invalid ~ .su-err { display: block; }
+.su-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.su-chip {
+  font-family: var(--fd); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  padding: 9px 14px; border-radius: 30px; cursor: pointer; color: rgba(255, 255, 255, .75);
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .14);
+  transition: border-color .2s, background .2s, color .2s, transform .15s;
+}
+.su-chip:hover { transform: translateY(-1px); border-color: rgba(204, 0, 0, .5); }
+.su-chip.on { background: linear-gradient(135deg, var(--red-primary), var(--red-bright)); border-color: transparent; color: #fff; }
+.su-chip[data-a="joker"].on { background: linear-gradient(135deg, #6a00c0, #8b00ff); }
+.su-chip[data-a="ladies"].on { background: linear-gradient(135deg, #c1003a, #ff1744); }
+.su-chip[data-a="strange"].on { background: linear-gradient(135deg, #b89500, #ffd600); color: #1a1400; }
+.su-submit { width: 100%; height: 52px; margin-top: 8px; cursor: pointer; }
+.su-submit:disabled { opacity: .5; cursor: default; transform: none; }
+.su-done { display: none; text-align: center; padding: 14px; margin-top: 12px; border-radius: 12px; background: rgba(61, 220, 132, .1); border: 1px solid rgba(61, 220, 132, .35); color: #8effc0; font-size: 14px; }
+body.signup-sent .su-form, body.signup-sent #su-form { }
+.su-form.sent .su-field, .su-form.sent .su-submit { display: none; }
+#su-form.sent #su-done { display: block; }
+@media (max-width: 768px) { .su-card { padding: 26px 18px 20px; } .su-head h3 { font-size: 22px; } }
+
 /* Заставка входа (звук стартует с первого тапа) — единственный корректный блок */
 #enter-screen { position: fixed; inset: 0; z-index: 1600; background: var(--bg-deepest);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px;

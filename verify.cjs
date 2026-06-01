@@ -59,6 +59,10 @@ const server = http.createServer((req, res) => {
   await settle(0.50); await shoot('brain');
   await settle(0.62); await shoot('poker_enter');
   await settle(0.85); await shoot('poker');
+  // анкета «Записаться за стол»
+  await page.evaluate(() => window.__openSignup && window.__openSignup());
+  await new Promise(r => setTimeout(r, 600)); await shoot('signup');
+  await page.evaluate(() => document.body.classList.remove('signup-open'));
 
   // open brain tunnel из позы мозга (pk=0)
   await settle(0.50);

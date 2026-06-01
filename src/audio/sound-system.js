@@ -335,6 +335,65 @@ export class SoundSystem {
     o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.15);
   }
 
+  // Карта: скольжение по сукну (короткий фильтрованный шум-«шшш»)
+  playCardSlide() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const dur = 0.22;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.7;
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.06, now + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Карта: переворот «фрр» (быстрый щелчок воздуха)
+  playCardFlip() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const dur = 0.12;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(1200, now); bp.frequency.exponentialRampToValueAtTime(3200, now + dur);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.07, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Карта: приземление на стол «тук» (короткий мягкий низ)
+  playCardPlace() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(200, now); o.frequency.exponentialRampToValueAtTime(90, now + 0.1);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.1, now + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.15);
+  }
+
+  // Успех отправки анкеты — короткий восходящий мажорный арпеджио
+  playSuccess() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const t = now + i * 0.09;
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(0.08, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t + 0.55);
+    });
+  }
+
   // Клик — короткий мажорный аккорд
   playClick() {
     if (!this.ctx || this.muted) return;

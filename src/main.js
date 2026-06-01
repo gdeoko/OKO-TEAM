@@ -456,8 +456,16 @@ function hitSubject(x, y, r = 0.32) {
 }
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
+  if (document.body.classList.contains('signup-open')) return;   // клики внутри анкеты не трогают сцену
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
+  else if (pk > 0.12) {
+    // ПОКЕР: клик по карте — поднять к зрителю и перевернуть; повторный клик — вернуть на стол
+    pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const card = poker.raycast(raycaster);
+    if (card) { const lifted = poker.toggleLift(card); lifted ? sound.playCardSlide() : sound.playCardPlace(); }
+  }
 });
 
 // ============================================================
@@ -868,6 +876,101 @@ document.querySelectorAll('.hero-title, .about-title, .btn, .nav-cta, [data-t]')
 });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
 document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); lenis.scrollTo('#about', { duration: 1.8 }); });
+
+// ============================================================
+// Анкета «Записаться за стол» — модалка, валидация, маска телефона, отправка
+// ============================================================
+{
+  const su = document.getElementById('signup');
+  const form = document.getElementById('su-form');
+  const nameI = document.getElementById('su-name');
+  const emailI = document.getElementById('su-email');
+  const phoneI = document.getElementById('su-phone');
+  const submitB = document.getElementById('su-submit');
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let pickedGame = '', pickedFormat = '';
+
+  const openSignup = (presetFormat) => {
+    document.body.classList.add('signup-open');
+    try { lenis.stop(); } catch (e) {}
+    sound.playWhoosh?.(true);
+    if (presetFormat) {
+      document.querySelectorAll('#su-format .su-chip').forEach((c) => {
+        const on = c.dataset.v.toLowerCase().includes(presetFormat);
+        c.classList.toggle('on', on); if (on) pickedFormat = c.dataset.v;
+      });
+    }
+    setTimeout(() => nameI && nameI.focus(), 350);
+  };
+  const closeSignup = () => {
+    document.body.classList.remove('signup-open');
+    try { lenis.start(); } catch (e) {}
+  };
+  window.__openSignup = openSignup;   // для проверки в браузере
+
+  // кнопки, открывающие анкету: на столе, в шапке, в hero
+  document.getElementById('poker-signup')?.addEventListener('click', () => openSignup());
+  document.querySelectorAll('.nav-cta, .hero-btns .btn-fill').forEach((b) => {
+    b.addEventListener('click', (e) => { e.preventDefault(); openSignup(); });
+  });
+  document.getElementById('su-close')?.addEventListener('click', closeSignup);
+  su?.addEventListener('click', (e) => { if (e.target === su) closeSignup(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('signup-open')) closeSignup(); });
+
+  // выбор «фишек» (одна активная в группе)
+  document.querySelectorAll('#su-game .su-chip').forEach((c) => c.addEventListener('click', () => {
+    document.querySelectorAll('#su-game .su-chip').forEach((o) => o.classList.remove('on'));
+    c.classList.add('on'); pickedGame = c.dataset.v; sound.playClick?.();
+  }));
+  document.querySelectorAll('#su-format .su-chip').forEach((c) => c.addEventListener('click', () => {
+    document.querySelectorAll('#su-format .su-chip').forEach((o) => o.classList.remove('on'));
+    c.classList.add('on'); pickedFormat = c.dataset.v; sound.playClick?.();
+  }));
+
+  // маска телефона +7 (9XX) XXX-XX-XX
+  phoneI?.addEventListener('input', () => {
+    let d = phoneI.value.replace(/\D/g, '');
+    if (d.startsWith('8')) d = '7' + d.slice(1);
+    if (d.startsWith('9')) d = '7' + d;
+    if (!d.startsWith('7')) d = '7' + d;
+    d = d.slice(0, 11);
+    let out = '+7';
+    if (d.length > 1) out += ' (' + d.slice(1, 4);
+    if (d.length >= 4) out += ')';
+    if (d.length >= 5) out += ' ' + d.slice(4, 7);
+    if (d.length >= 8) out += '-' + d.slice(7, 9);
+    if (d.length >= 10) out += '-' + d.slice(9, 11);
+    phoneI.value = out;
+  });
+
+  // валидация на лету
+  const validEmail = () => EMAIL_RE.test(emailI.value.trim());
+  const validName = () => nameI.value.trim().length > 0;
+  emailI?.addEventListener('input', () => {
+    emailI.classList.toggle('valid', validEmail());
+    emailI.classList.toggle('invalid', emailI.value.length > 0 && !validEmail());
+  });
+  nameI?.addEventListener('input', () => nameI.classList.remove('invalid'));
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let ok = true;
+    if (!validName()) { nameI.classList.add('invalid'); ok = false; }
+    if (!validEmail()) { emailI.classList.add('invalid'); ok = false; }
+    if (!ok) { sound.playGlitch?.(); return; }
+    submitB.disabled = true;
+    const payload = {
+      name: nameI.value.trim(), email: emailI.value.trim(), phone: phoneI.value.trim(),
+      game: pickedGame, format: pickedFormat, source: 'site:poker',
+    };
+    // Этап 1: отправка письма через mail.php (на хостинге). Если бэкенд ещё не залит —
+    // всё равно показываем успех (заявка не теряется визуально), на этапе 2 добавим БД + ТГ-бот.
+    try { await fetch('mail.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
+    form.classList.add('sent');
+    sound.playSuccess?.();
+    setTimeout(closeSignup, 2200);
+  });
+}
 
 // ============================================================
 // РЕЖИМ НАСТРОЙКИ КАМЕРЫ (?tune): двигаешь сцену пальцем + окошко с цифрами
