@@ -193,8 +193,9 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
-let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null;
+let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null, formStart = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
+let formProgress = 0;  // формирование утки из частиц на старте (0 → 1): частицы слетаются с россыпи сверху
 let prevTpCam = 0;     // tp прошлого кадра — скорость скролла (анти-«вылет мозга сбоку» при резком скролле)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
@@ -223,6 +224,7 @@ function buildParticles() {
   vel = new Float32Array(N * 3); delays = new Float32Array(N); explodePos = new Float32Array(N * 3);
   tunnelPos = new Float32Array(N * 3);
   cardSlot = new Float32Array(N * 3);   // [u вдоль карты, v вдоль карты, индекс карты 0..3]
+  formStart = new Float32Array(N * 3);  // старт формирования: россыпь сверху (как от рассыпавшихся кубиков)
   const cur = new Float32Array(N * 3), colors = new Float32Array(N * 3), sizes = new Float32Array(N);
   glow = new Float32Array(N);   // внутреннее свечение частицы (растёт от движения)
   disturb = new Float32Array(N);   // «разворошённость» касанием: 1 = только что толкнули, мягко затухает
@@ -248,6 +250,10 @@ function buildParticles() {
     cardSlot[i*3] = (Math.random() - 0.5) * CARD_W * 0.92;
     cardSlot[i*3+1] = (Math.random() - 0.5) * CARD_H * 0.92;
     cardSlot[i*3+2] = i % 4;
+    // старт формирования: широкая россыпь СВЕРХУ → частицы падают/слетаются и собираются в утку
+    formStart[i*3] = duckPos[i*3] + (Math.random() - 0.5) * 3.4;
+    formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
+    formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
     // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
     const shade = 0.82 + Math.random() * 0.18;
     colors[i*3] = shade; colors[i*3+1] = shade * 1.02; colors[i*3+2] = shade * 1.06; // чуть холоднее
@@ -265,22 +271,21 @@ function buildParticles() {
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
         vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
-        // ЖИВАЯ МАССА: каждая частица БЫСТРО и ПЛАВНО движется В ПРЕДЕЛАХ формы (смещение привязано
-        // к её точке формы → силуэт мозга сохраняется), соседи текут согласованно (поле течения).
+        // ЖИВАЯ МАССА как у igloo: частицы ГЛАДКО ТЕКУТ потоками по всей фигуре (снаружи и внутри),
+        // в разных направлениях, БЕЗ дёрганья/джиттера и без жёсткой привязки к точке — но силуэт держится.
         vec3 p = position;
         float ph = position.x*5.3 + position.y*4.1 + position.z*6.7;
         float rnd = fract(sin(ph*1.7)*43758.5453);
-        // согласованное поле течения (вихри), скорость ~×2; амплитуда умеренная → форма держится
+        // поле течения: НИЗКИЕ частоты + домен-варп → длинные плавные струи, соседи текут согласованно
+        float t1 = uTime*0.85, t2 = uTime*0.6;
         vec3 fl;
-        fl.x = sin(position.y*2.6 + uTime*1.5) + cos(position.z*2.1 + uTime*1.1);
-        fl.y = sin(position.z*2.6 + uTime*1.7) + cos(position.x*2.1 + uTime*1.3);
-        fl.z = sin(position.x*2.6 + uTime*1.3) + cos(position.y*2.1 + uTime*1.9);
-        p += fl * 0.05;
-        // быстрая мелкая «жизнь» у каждой частицы (бегает, но плавно)
-        p.x += sin(uTime*3.0 + ph)*0.012; p.y += cos(uTime*3.3 + ph*1.3)*0.012; p.z += sin(uTime*2.7 + ph*0.8)*0.012;
-        // ВЫЛАЗКИ за контур: ~22% частиц плавно выходят наружу и возвращаются (масса «дышит»)
-        float ex = smoothstep(0.78, 1.0, rnd) * 0.09;
-        p += normalize(position + vec3(0.0001)) * sin(uTime*1.6 + ph*2.0) * ex;
+        fl.x = sin(position.y*1.6 + t1) + cos(position.z*1.2 - t2) + 0.6*sin(position.z*2.4 + position.y*1.0 + t1*1.3);
+        fl.y = sin(position.z*1.6 + t1*1.1) + cos(position.x*1.2 - t2*0.9) + 0.6*sin(position.x*2.4 + position.z*1.0 + t1*1.1);
+        fl.z = sin(position.x*1.6 + t1*0.9) + cos(position.y*1.2 - t2*1.1) + 0.6*sin(position.y*2.4 + position.x*1.0 + t1*1.2);
+        p += fl * 0.06;                          // плавное течение по фигуре (без рывков), силуэт держится
+        // мягкие вылазки наружу/внутрь — масса «дышит», но форма читается
+        float ex = 0.028 + smoothstep(0.62, 1.0, rnd) * 0.045;
+        p += normalize(position + vec3(0.0001)) * sin(uTime*0.8 + ph*1.2) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
@@ -343,50 +348,36 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 // ============================================================
 function startIntro() {
   // быстрый путь (?fast) — для проверки финальной композиции без ожидания интро
-  if (_qp.has('fast')) {
-    if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, HERO_Y, 0); duckMesh.scale.set(1, 1, 1); }
-    document.body.classList.add('hero-in'); introDone = true; return;
-  }
-  // ТЕКСТ 1 экрана появляется ПОСЛЕ кубиков (вместе с выходом утки), не сразу
+  if (_qp.has('fast')) { formProgress = 1; document.body.classList.add('hero-in'); introDone = true; return; }
+  // ВСЁ ОДНОВРЕМЕННО: кубики падают сверху и РАСТВОРЯЮТСЯ → частицы собираются в утку →
+  // текст/кнопки появляются после ~половины формирования (не сразу).
   const tl = gsap.timeline();
-  // тени включаем, кубики стартуют сверху и летят с отскоками по «столу»
   dice.forEach((d, i) => {
-    d.position.set(i === 0 ? -1.4 : 1.2, 6, 0.6);
+    d.position.set(i === 0 ? -0.9 : 0.85, 6.0, 0.4);
     d.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
     d.visible = true; diceShadows[i].visible = true;
+    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => { m.transparent = true; m.opacity = 1; });
   });
-  sound.playDiceRoll();   // звук броска по столу
-
+  sound.playDiceRoll();
   dice.forEach((d, i) => {
-    const startX = d.position.x;
-    const endX = startX + (i === 0 ? -2.2 : 2.4);   // укатываются в стороны
-    // падение + 2 отскока (имитация физики), затем уход за край
+    const t0 = 0.05 + i * 0.1;
+    // падают к центру (где собирается утка), лёгкий отскок, и РАСТВОРЯЮТСЯ
     tl.to(d.position, { keyframes: [
-      { y: FLOOR_Y, duration: 0.55, ease: 'power2.in' },
-      { y: FLOOR_Y + 1.0, duration: 0.3, ease: 'power2.out' },
-      { y: FLOOR_Y, duration: 0.25, ease: 'power2.in' },
-      { y: FLOOR_Y + 0.4, duration: 0.18, ease: 'power2.out' },
-      { y: FLOOR_Y, duration: 0.15, ease: 'power2.in' },
-      { y: -9, duration: 0.7, ease: 'power1.in' },
-    ] }, 0.05 + i * 0.12);
-    tl.to(d.position, { x: endX, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
-    tl.to(d.rotation, { x: `+=${6 + Math.random()*3}`, z: `+=${4 + Math.random()*3}`, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
+      { y: 0.5, duration: 0.6, ease: 'power2.in' },
+      { y: 1.0, duration: 0.24, ease: 'power2.out' },
+      { y: 0.2, duration: 0.34, ease: 'power2.in' },
+    ] }, t0);
+    tl.to(d.rotation, { x: `+=${4 + Math.random()*2}`, z: `+=${3 + Math.random()*2}`, duration: 1.4, ease: 'power1.out' }, t0);
+    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => tl.to(m, { opacity: 0, duration: 0.6, ease: 'power1.in' }, 0.9 + i * 0.1));
   });
-  tl.add(() => { sound.playThump?.(); }, 0.6);
-  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 2.2);
-
-  // утка ПРИХОДИТ ИЗ ГЛУБИНЫ по центру: маленькая вдали → растёт → встаёт на позицию, смотрит в камеру
-  tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation(); } }, 1.9);
-  if (duckMesh) {
-    duckMesh.position.set(0, HERO_Y - 0.3, -16);   // далеко в глубине
-    duckMesh.rotation.y = DUCK_FACE;                 // лицом к камере
-    duckMesh.scale.setScalar(0.15);
-    tl.to(duckMesh.position, { z: 0, y: HERO_Y, duration: 2.0, ease: 'power2.out' }, 1.9);
-    tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
-  }
-  // ТЕКСТ появляется ТОЛЬКО ПОСЛЕ выхода утки (утка приходит к ~3.9с) — не до кубиков
-  tl.add(() => document.body.classList.add('hero-in'), 3.9);
-  tl.add(() => { introDone = true; }, 4.4);
+  tl.add(() => { sound.playThump?.(); }, 0.55);
+  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.7);
+  // ФОРМИРОВАНИЕ утки из частиц — синхронно с падением/растворением кубиков
+  tl.add(() => sound.playFormation?.(), 0.85);
+  tl.to({ v: 0 }, { v: 1, duration: 2.2, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 0.85);
+  // текст/кнопки — после ~половины формирования
+  tl.add(() => document.body.classList.add('hero-in'), 1.95);
+  tl.add(() => { introDone = true; }, 3.15);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -448,14 +439,7 @@ addEventListener('mouseleave', () => { pointerActive = false; _pHas = false; });
 addEventListener('mouseup', () => { pointerActive = false; _pHas = false; });
 addEventListener('pointerup', () => { pointerActive = false; _pHas = false; });
 addEventListener('pointercancel', () => { pointerActive = false; _pHas = false; });
-// РЕАКЦИЯ НА НАКЛОН ТЕЛЕФОНА: параллакс камеры следует за наклоном (не трогает частицы)
-if (isMobile) {
-  addEventListener('deviceorientation', (ev) => {
-    if (ev.gamma == null || ev.beta == null) return;
-    pointerNX = THREE.MathUtils.clamp(ev.gamma / 28, -1, 1);
-    pointerNY = THREE.MathUtils.clamp((ev.beta - 40) / 28, -1, 1);
-  }, { passive: true });
-}
+// Наклон телефона ОТКЛЮЧЁН — утка/мозг не должны двигаться от поворотов экрана.
 // КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
 addEventListener('touchend', () => { pointerActive = false; _pHas = false; });
 addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; });
@@ -469,8 +453,8 @@ function hitSubject(x, y, r = 0.32) {
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
   if (document.body.classList.contains('signup-open')) return;   // клики внутри анкеты не трогают сцену
-  if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }
-  else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
+  // утка больше НЕ крякает (касание утки делает только физику растекания — через указатель)
+  if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
   else if (pk > 0.12) {
     // ПОКЕР: клик по карте — поднять к зрителю и перевернуть; повторный клик — вернуть на стол
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
@@ -748,8 +732,8 @@ function animate() {
     const snap = THREE.MathUtils.clamp(scrollSpeed * 14, 0, 1);
     const par = Math.max(0, 1 - tpEff * 6);
     // целевая поза камеры при скролле
-    const sCamX = CAM0.x + pointerNX * 0.4 * par;
-    const sCamY = CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05;
+    const sCamX = CAM0.x;                                    // без параллакса от указателя — фигура стоит ровно
+    const sCamY = CAM0.y + Math.sin(t * 0.3) * 0.05;
     const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
     const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
@@ -793,28 +777,14 @@ function animate() {
   env.fade(sceneFade + (0.08 - sceneFade) * tdark);   // у мозга/в туннеле клуб почти гаснет; на выходе плавно возвращается
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
-  if (duckMesh) {
-    const solid = THREE.MathUtils.clamp(1 - tp / 0.1, 0, 1);
-    if (solid > 0.001) {
-      if (!duckMesh.visible && introDone) duckMesh.visible = true;
-      // утка СТРОГО ровно в камеру; чуть провожает курсор, без наклона и рысканья
-      const look = DUCK_FACE + (pointerActive && tp < 0.05 ? pointerNX * 0.1 : 0);
-      duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.05;
-      duckMesh.rotation.z = 0;            // никакого наклона — стоит ровно
-      // лёгкое покачивание (локально внутри subject, от нуля)
-      let py = Math.sin(t * 0.5) * 0.03;
-      if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.9; py += duckMesh.userData.poke * 0.12; }
-      duckMesh.position.y = py;
-      duckMesh.traverse((c) => { if (c.material) c.material.opacity = solid; });
-    } else if (duckMesh.visible) duckMesh.visible = false;
-  }
+  // Твёрдая утка ОТКЛЮЧЕНА — утка теперь сразу из частиц (форма «утка» по duckPos).
+  if (duckMesh && duckMesh.visible) duckMesh.visible = false;
 
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    // частицы появляются в Холле; в переходе летят туннелем НА зрителя и ГАСНУТ только во второй
-    // половине (мы «прошли сквозь» — частицы уходят за экран и растворяются)
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
+    // видимость: формирование утки на старте (formProgress) → дальше всегда видны → гаснут в переходе к Покеру
+    particles.material.uniforms.uOpacity.value = THREE.MathUtils.clamp(formProgress, 0, 1) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
@@ -829,8 +799,9 @@ function animate() {
     // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
     // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
     // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
-    const pointerFresh = (performance.now() - pointerStamp) < 140;
-    const touchOn = pointerActive && pointerFresh && (tp < 0.05 || onBrain) && !brainOpen;
+    const pointerFresh = (performance.now() - pointerStamp) < 200;
+    // ОДИНАКОВОЕ касание на утке (tp<0.15) и мозге (tp>0.6); не во время туннеля/Покера/дайва
+    const touchOn = pointerActive && pointerFresh && formProgress > 0.6 && (tp < 0.15 || tp > 0.6) && tunnelBlend < 0.001 && pk < 0.05 && !brainOpen;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -860,6 +831,15 @@ function animate() {
         tx = explodePos[i3] + (brainPos[i3] - explodePos[i3]) * a;
         ty = explodePos[i3+1] + (brainPos[i3+1] - explodePos[i3+1]) * a;
         tz = explodePos[i3+2] + (brainPos[i3+2] - explodePos[i3+2]) * a;
+      }
+      // СТАРТ: формирование утки — частицы слетаются с россыпи СВЕРХУ в форму утки (formProgress 0→1)
+      if (formProgress < 0.999) {
+        const fp = easeIO(formProgress);
+        arr[i3]   = formStart[i3]   + (tx - formStart[i3])   * fp;
+        arr[i3+1] = formStart[i3+1] + (ty - formStart[i3+1]) * fp;
+        arr[i3+2] = formStart[i3+2] + (tz - formStart[i3+2]) * fp;
+        vel[i3] = vel[i3+1] = vel[i3+2] = 0; disturb[i] = 0;
+        continue;
       }
       // ТУННЕЛЬ — ПРЯМАЯ ИНТЕРПОЛЯЦИЯ дом(мозг)↔труба по сглаженному прогрессу tbCurve.
       // КАЖДАЯ частица позиционируется ЯВНО как lerp(домашняя точка формы, точка в трубе) — без
@@ -1110,7 +1090,7 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
     try { await fetch('mail.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
     submitted = true;
     card.classList.add('done');                 // показываем красивое окно «спасибо»
-    sound.playSuccess?.(); sound.playQuack?.();
+    sound.playSuccess?.();   // без кряка
     setTimeout(closeSignup, 3400);               // само закрывается, остаёмся в Покере
   });
 }
