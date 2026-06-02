@@ -122,7 +122,7 @@ body.brain-open #nav { opacity: 0; transform: translateY(-100%); pointer-events:
 .hero-top { top: 12vh; }
 .hero-bottom { bottom: 13vh; }   /* кнопки прямо под лапками утки */
 /* читаемость текста поверх 3D — мягкая тень, без плашки */
-.hero-top, .about-top, .about-bottom { text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.8); }
+.hero-top, .about-top, .about-bottom { text-shadow: 0 1px 10px rgba(3,2,8,.9), 0 0 4px rgba(3,2,8,.85); }
 body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
 /* надпись «Игровой клуб в Москве» убрана, но её место сохранено, чтобы заголовок не прыгал */
 .hero-eyebrow { visibility: hidden; height: 31px; margin-bottom: 12px; }
@@ -382,7 +382,7 @@ body.tunnel-exit .bd-inner {
 @media (max-width: 768px) {
   /* Hero: заголовок сверху → утка (3D) в центре → кнопки снизу. Ничего не налезает. */
   .sec { padding: 76px 16px calc(40px + env(safe-area-inset-bottom)); height: var(--app-h, 100svh); min-height: 0; justify-content: space-between; }
-  .hero-top, .about-top { text-shadow: 0 2px 16px rgba(0,0,0,.9); }
+  .hero-top, .about-top { text-shadow: 0 1px 8px rgba(0,0,0,.85); }   /* тень плотнее к тексту, без тёмной полосы-ореола */
   .hero-top { top: 13vh; }
   .hero-bottom { bottom: 9vh; }
   .hero-title { font-size: clamp(34px, 11vw, 52px); }

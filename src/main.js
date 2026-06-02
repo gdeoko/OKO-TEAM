@@ -11,7 +11,7 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v42 — касание мягкое (откат) + частицы мельче + мозг чётче ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v43 — касание-вихрь (без дыры) + плавный возврат ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -273,7 +273,7 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
 const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания (как было — не трогаем)
-const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;   // ПРЕЖНЯЯ физика касания (как было — мягкая, не «пузырь»)
+const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.01, TOUCH_DAMP = 0.90;   // тронутые частицы дольше «текут» и МЕДЛЕННО, плавно возвращаются в форму
 
 function buildParticles() {
   const N = PCOUNT;
@@ -1040,10 +1040,13 @@ function animate() {
           const dsq = dx*dx + dy*dy + dz*dz;
           if (dsq < radius * radius) {
             const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-            const push = fall * force;   // ПРЕЖНЕЕ мягкое радиальное раздвигание (не взрыв)
-            vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
+            const sw = fall * fall * force * 1.0;   // вихрь + поток за пальцем (как на мозге), без дыры
+            const rx = dx / dist, ry = dy / dist;
+            vel[i3]   += (-ry) * sw + pointerMove.x * fall * 0.38;
+            vel[i3+1] += ( rx) * sw + pointerMove.y * fall * 0.38;
+            vel[i3+2] += pointerMove.z * fall * 0.38;
             if (fall > disturb[i]) disturb[i] = fall;
-            pushed++; moveSum += push;
+            pushed++; moveSum += sw;
           }
         }
         vel[i3] *= TOUCH_DAMP; vel[i3+1] *= TOUCH_DAMP; vel[i3+2] *= TOUCH_DAMP;   // затухание смещения (как в обычном касании)
@@ -1054,17 +1057,21 @@ function animate() {
         if (glow[i] > _glowMax) _glowMax = glow[i];
         continue;
       }
-      // КАСАНИЕ «палец в песке» (ПРЕЖНЕЕ, мягкое): мягко РАЗДВИГАЕМ частицы РАДИАЛЬНО от пальца,
-      // они подсвечиваются изнутри; затем без пружины стекаются обратно. Без «взрыва/пузыря».
+      // КАСАНИЕ как у igloo: частицы у пальца ЗАКРУЧИВАЮТСЯ вокруг него (вихрь) и ТЕКУТ ЗА движением пальца.
+      // БЕЗ радиального выброса → НЕТ дыры/круга/пузыря. Светятся и ПЛАВНО, медленно возвращаются.
       if (touchOn) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-          const push = fall * force;
-          vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
+          const sw = fall * fall * force * 1.0;     // сила вихря (мягко, без выброса наружу)
+          const rx = dx / dist, ry = dy / dist;     // радиаль в плоскости экрана
+          // тангенциальная закрутка (перпендикуляр радиали) + поток за пальцем (pointerMove)
+          vel[i3]   += (-ry) * sw + pointerMove.x * fall * 0.38;
+          vel[i3+1] += ( rx) * sw + pointerMove.y * fall * 0.38;
+          vel[i3+2] += pointerMove.z * fall * 0.38;
           if (fall > disturb[i]) disturb[i] = fall;
-          pushed++; moveSum += push; moveDir += (dy/dist) * push;
+          pushed++; moveSum += sw; moveDir += rx * sw;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
@@ -1086,8 +1093,8 @@ function animate() {
       // собирается целиком, без «дырки»; в обычном состоянии — мягкое удержание формы.
       const ease = reform > 0.01 ? 0.38 : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
       arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      // палец водит → гаснет мягко (×0.972); отпущен → гаснет быстро (×0.82) — ПРЕЖНЕЕ поведение.
-      disturb[i] *= touchOn ? 0.972 : 0.82;
+      // палец водит → держим (×0.975); отпущен → гаснет ПЛАВНО и небыстро (×0.95) → спокойный возврат.
+      disturb[i] *= touchOn ? 0.975 : 0.95;
       // СВЕТ ВНУТРИ частиц: тронутые ЯРКО светятся (заметный эффект касания), пока стекаются обратно
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
       const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
