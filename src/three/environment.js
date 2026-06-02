@@ -109,6 +109,8 @@ export class ClubEnvironment {
 
       this.club = club;
       this.group.add(club);
+      // убираем ОДИН дальний вентилятор (узел «Fan», z меньше → у задней стены/окна); ближний «Fan3» оставляем
+      club.traverse((o) => { if (o.name === 'Fan') o.visible = false; });
 
       // ENVIRONMENT MAP из сцены клуба → неон отражается/подсвечивает утку и объекты
       if (this.renderer) {

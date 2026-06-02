@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
   } else {
     await page.setViewport({ width: 1440, height: 900 });
   }
-  page.on('console', m => { const t = m.text(); if (/error|Error|fail|Ошибка/.test(t)) console.log('PAGE:', t); });
+  page.on('console', m => { const t = m.text(); if (/error|Error|fail|Ошибка|FAN NODES|BRAIN dim/.test(t)) console.log('PAGE:', t); });
   page.on('pageerror', e => console.log('PAGEERR:', e.message));
 
   await page.goto('http://localhost:8099/?fast', { waitUntil: 'domcontentloaded', timeout: 30000 });
