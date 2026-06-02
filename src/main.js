@@ -11,7 +11,7 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v39 — касание во все стороны + выход из туннеля ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v40 — касание всегда + idle-оптимизация ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -256,6 +256,8 @@ let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
 let reform = 0;        // окно сильной пересборки мозга сразу после выхода из туннеля (чинит «дырку»)
+let brainGrab = false; // ЗАЩЁЛКА: палец коснулся мозга → анимация касания ВКЛ на весь жест (любой свайп/сторона), скролл НЕ трогаем
+let _glowMax = 0, _prevTpP = -1, _prevPkP = -1;   // для idle-оптимизации (в покое не грузим частицы в GPU)
 let tpLatch = 0;       // ЗАФИКСИРОВАННЫЙ tp на время туннеля → мозг возвращается в ТОТ ЖЕ размер/место
 let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
 
@@ -321,7 +323,9 @@ function buildParticles() {
     const nDotR = (brainNrm[i*3]*bx + brainNrm[i*3+1]*by + brainNrm[i*3+2]*bz) / pl;   // 1 гребень … низкое борозда
     const fold = THREE.MathUtils.smoothstep(nDotR, 0.02, 0.7);
     const depth = THREE.MathUtils.smoothstep(pl / brainMaxR, 0.5, 0.97);              // нутро тёмное → силуэт
-    const fs = (0.06 + 0.94 * fold * fold) * (0.34 + 0.66 * depth);                   // глубже борозды (тёмные) + чётче очертания
+    // ПРОДОЛЬНАЯ БОРОЗДА (главный признак мозга): тёмный жёлоб по центру (|x|≈0) на верхней половине
+    const fissure = Math.exp(-(bx*bx) / 0.03) * THREE.MathUtils.smoothstep(by, -0.3, 0.7);
+    const fs = (0.06 + 0.94 * fold * fold) * (0.34 + 0.66 * depth) * (1 - fissure * 0.6);   // борозды/щель тёмные, очертания чёткие
     const s = (0.74 + Math.random() * 0.26) * fs, w = Math.random();
     if (w < 0.05 && fold > 0.65) { colors[i*3]=s*1.25; colors[i*3+1]=s*1.12; colors[i*3+2]=s*1.0; }   // искры на гребнях
     else { colors[i*3]=s*0.48; colors[i*3+1]=s*0.79; colors[i*3+2]=s*1.14; }                          // голубой/циан (фото 2)
@@ -350,7 +354,7 @@ function buildParticles() {
         fl.x = sin(position.y*1.6 + t1) + cos(position.z*1.2 - t2) + 0.6*sin(position.z*2.4 + position.y*1.0 + t1*1.3);
         fl.y = sin(position.z*1.6 + t1*1.1) + cos(position.x*1.2 - t2*0.9) + 0.6*sin(position.x*2.4 + position.z*1.0 + t1*1.1);
         fl.z = sin(position.x*1.6 + t1*0.9) + cos(position.y*1.2 - t2*1.1) + 0.6*sin(position.y*2.4 + position.x*1.0 + t1*1.2);
-        p += fl * 0.018;                         // ОЧЕНЬ лёгкое течение ВНУТРИ формы — силуэт держится чётко,
+        p += fl * 0.006;                         // МИНИМАЛЬНОЕ течение — частицы НЕ выходят за форму мозга,
                                                  // частицы НЕ выходят за рамки фигуры (без вылазок наружу).
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
@@ -398,7 +402,10 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
         const nDotR = (nr[i*3]*px + nr[i*3+1]*py + nr[i*3+2]*pz) / pl;
         const disp = (nDotR - 0.4) * 0.1;     // (+) гребни наружу, (−) борозды внутрь (умеренно, без «колючести»)
         brainPos[i*3] += nr[i*3]*disp; brainPos[i*3+1] += nr[i*3+1]*disp; brainPos[i*3+2] += nr[i*3+2]*disp;
-      } }
+      }
+      // мозг чуть МЕНЬШЕ (на 2%), строго вокруг центра — не сдвигая вверх/вниз
+      for (let i = 0; i < PCOUNT * 3; i++) brainPos[i] *= 0.98;
+    }
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) {
       c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2;
@@ -540,8 +547,8 @@ if (isMobile) {
   }, { passive: true });
 }
 // КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
-addEventListener('touchend', () => { pointerActive = false; _pHas = false; });
-addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; });
+addEventListener('touchend', () => { pointerActive = false; _pHas = false; brainGrab = false; });
+addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; brainGrab = false; });
 
 function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
@@ -584,7 +591,10 @@ function openBrain() {
 function closeBrain() {
   if (!brainOpen) return;
   brainOpen = false; document.body.classList.remove('brain-open');
-  document.body.classList.add('tunnel-exit');   // текст улетает вдаль + затемнение гаснет ПЛАВНО (CSS 3с)
+  document.body.classList.add('tunnel-exit');         // текст ТУННЕЛЯ улетает вдаль (CSS ~3с)
+  document.body.classList.add('exit-textwait');       // текст 2 страницы держим скрытым ТОЛЬКО до начала сборки мозга
+  clearTimeout(_textWaitTimer);
+  _textWaitTimer = setTimeout(() => document.body.classList.remove('exit-textwait'), 700);   // → текст 2 стр. появляется ВО ВРЕМЯ сборки мозга
   // ВЫХОД = ИНВЕРСИЯ ВХОДА: НЕ трогаем позиции и НЕ обнуляем tunnelBlend мгновенно.
   // tunnelBlend сам плавно поедет 1→0, и частицы по той же траектории перетекут труба→мозг,
   // камера отдалится назад. reform добавляет плотности уже в самом конце сборки (без «дырки»).
@@ -599,7 +609,7 @@ function closeBrain() {
   // иначе текст обрывается. Текст 2 страницы появится ТОЛЬКО после снятия класса (когда туннель закрылся).
   clearTimeout(_exitTimer); _exitTimer = setTimeout(() => document.body.classList.remove('tunnel-exit'), 3200);
 }
-let _exitTimer = 0;
+let _exitTimer = 0, _textWaitTimer = 0;
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
 // тест-хук: мгновенно выставить прогресс скролла + (опц.) телепорт частиц/камеры в цель,
 // чтобы делать скриншоты УСТОЯВШЕГОСЯ кадра в headless (низкий FPS не успевает сойтись)
@@ -723,8 +733,8 @@ let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = 
 addEventListener('touchstart', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
   const t = e.touches[0]; if (!t) return;
-  // касание по мозгу сразу регистрируем как точку растекания (анимация); скролл при этом НЕ блокируем
-  if (tp > 0.5 && pk < 0.5 && hitSubject(t.clientX, t.clientY, 0.62)) updatePointer(t.clientX, t.clientY);
+  // КАСАНИЕ ПО МОЗГУ → ЗАЩЁЛКА анимации на весь жест (любой свайп/сторона). Скролл НЕ блокируем.
+  if (tp > 0.4 && pk < 0.55 && hitSubject(t.clientX, t.clientY, 0.7)) { brainGrab = true; updatePointer(t.clientX, t.clientY); }
   gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false; _dragged = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
@@ -933,9 +943,10 @@ function animate() {
     // чтобы растекание НЕ пропадало, когда при скролле tp немного меняется). Скролл Lenis НЕ блокируем —
     // вертикальный жест по мозгу даёт И листание страницы, И анимацию растекания (оба одновременно).
     const pointerFresh = (performance.now() - pointerStamp) < 140;
-    // Касание работает СИММЕТРИЧНО в обе стороны: вверх (tp>0.5) и вниз к Покеру (pk<0.45) — и при скролле
-    // в любую сторону, и горизонтально. Растекание поверх раннего морфа применяется в блоке inTrans ниже.
-    const touchOn = !brainOpen && tunnelBlend < 0.001 && pointerActive && pointerFresh && (tp < 0.05 || tp > 0.5) && pk < 0.45;
+    // АНИМАЦИЯ КАСАНИЯ ВСЕГДА: пока палец на мозге (brainGrab) — растекание ВКЛ на весь жест в ЛЮБУЮ сторону,
+    // независимо от tp/pk/свежести. Плюс обычный путь (движение пальца) на утке/мозге. Скролл не блокируется.
+    const touchOn = !brainOpen && tunnelBlend < 0.001 &&
+      ((brainGrab && pk < 0.6) || (pointerActive && pointerFresh && (tp < 0.05 || tp > 0.5) && pk < 0.45));
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -951,7 +962,17 @@ function animate() {
       poker.group.updateWorldMatrix(true, true);                    // актуальные матрицы карт (стол растёт)
       for (let c = 0; c < 4; c++) _cardMats[c].copy(poker.cards[c].matrixWorld);
     }
+    // ОПТИМИЗАЦИЯ (легче, без изменения картинки): когда фигура в ПОКОЕ (станция устоялась, не трогают,
+    // нет морфа/туннеля/интро, свечение угасло) — позиции частиц = домашним и постоянны. НЕ пересчитываем
+    // и НЕ грузим 65k точек в GPU каждый кадр. Шейдер сам «течёт» (uTime) и объект крутится (transform) —
+    // визуально идентично, но CPU/шина разгружены → меньше лагов.
+    const scrollStill = Math.abs(tp - _prevTpP) < 0.0004 && Math.abs(pk - _prevPkP) < 0.0004;
+    _prevTpP = tp; _prevPkP = pk;
+    const idle = introDone && !introPlaying && tunnelBlend < 0.001 && !brainOpen && !inTrans && !TELE
+      && !pointerActive && !brainGrab && scrollStill && _glowMax < 0.012;
     let pushed = 0, moveSum = 0, moveDir = 0;
+    if (!idle) {
+    _glowMax = 0;
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
       // равномерный путь: duck →(0..0.5)→ explode →(0.5..1)→ brain, с лёгкой задержкой
@@ -1073,9 +1094,11 @@ function animate() {
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
       const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
       if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.1;
+      if (glow[i] > _glowMax) _glowMax = glow[i];   // макс свечение → для idle-оптимизации
     }
     particles.geometry.attributes.position.needsUpdate = true;
     particles.geometry.attributes.aglow.needsUpdate = true;
+    }   // конец if(!idle) — в покое цикл и загрузка в GPU пропущены (легче)
     pointerMove.multiplyScalar(0.80);   // волна за пальцем плавно затухает, когда движение прекращается
     // ЗВУК ОТ ДВИЖЕНИЯ ЧАСТИЦ: громкость = объём смещения, тон = направление
     if (pushed > 30 && frame % 4 === 0) {

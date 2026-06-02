@@ -199,9 +199,9 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
 .thesis-right { right: 4%; transform: translateY(-50%) scale(var(--avs, 1)); }
 body.about-in .thesis-col { pointer-events: auto; }   /* на станции мозга карточки кликабельны (hover) */
 body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-bottom, body.brain-open #brain-hint,
-body.tunnel-exit .thesis-col, body.tunnel-exit .about-top, body.tunnel-exit .about-bottom, body.tunnel-exit #brain-hint { opacity: 0 !important; pointer-events: none; }
-/* текст 2 страницы ПОЯВЛЯЕТСЯ ПЛАВНО только после закрытия туннеля (когда снят tunnel-exit) */
-.thesis-col, .about-top, .about-bottom, #brain-hint { transition: opacity .6s ease; }
+body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwait .about-bottom, body.exit-textwait #brain-hint { opacity: 0 !important; pointer-events: none; }
+/* текст 2 страницы проявляется ПЛАВНО ВО ВРЕМЯ сборки мозга (exit-textwait снимается рано, ~0.7с) */
+.thesis-col, .about-top, .about-bottom, #brain-hint { transition: opacity .9s ease; }
 /* карточки — ровные, аккуратные, со свечением и нумерацией, текст всегда слева */
 .thesis {
   position: relative; text-align: left;
