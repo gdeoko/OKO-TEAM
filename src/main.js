@@ -76,9 +76,9 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // УПОР К ПОВЕРХНОСТИ: частицы в оболочке (борозды/доли мозга читаются как на референсе),
-    // немного объёма для плотности. На тёмном фоне форма видна чётко.
-    const f = 0.6 + 0.4 * Math.cbrt(Math.random());
+    // ОБОЛОЧКА ПО ПОВЕРХНОСТИ (как в 1-2 сессии): частицы в тонком слое у поверхности → видна
+    // НАСТОЯЩАЯ форма мозга (две доли + борозда посередине), а не залитый шар.
+    const f = 0.8 + 0.2 * Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
@@ -255,13 +255,11 @@ function buildParticles() {
     formStart[i*3] = duckPos[i*3] + (Math.random() - 0.5) * 3.4;
     formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
-    // ТРЁХЦВЕТНЫЕ ледяные частицы (как на референсе): в основном бело-голубые + редкие тёплые и
-    // ярко-голубые искры → форма мозга «играет» на тёмном фоне.
-    const r3 = Math.random();
-    if (r3 < 0.09) { const s = 0.85 + Math.random()*0.15; colors[i*3]=s*1.12; colors[i*3+1]=s*0.78; colors[i*3+2]=s*0.6; }       // тёплая искра
-    else if (r3 < 0.2) { const s = 0.9 + Math.random()*0.1; colors[i*3]=s*0.68; colors[i*3+1]=s*0.9; colors[i*3+2]=s*1.18; }      // ярко-голубая искра
-    else { const s = 0.78 + Math.random()*0.2; colors[i*3]=s; colors[i*3+1]=s*1.02; colors[i*3+2]=s*1.09; }                        // основная ледяная
-    sizes[i] = 0.036 + Math.random() * 0.032;  // плотное зерно → фигура читается
+    // ЛЕДЯНЫЕ голубовато-белые частицы (как в 1-2 сессии) + редкие тёплые искры
+    const s = 0.8 + Math.random() * 0.2, w = Math.random();
+    if (w < 0.08) { colors[i*3]=s*1.08; colors[i*3+1]=s*0.95; colors[i*3+2]=s*0.82; }   // редкая тёплая искра
+    else { colors[i*3]=s*0.86; colors[i*3+1]=s*0.98; colors[i*3+2]=s*1.14; }            // основной ледяной голубовато-белый
+    sizes[i] = 0.036 + Math.random() * 0.032;  // зерно
     glow[i] = 0;
   }
   const geo = new THREE.BufferGeometry();
@@ -274,7 +272,7 @@ function buildParticles() {
     vertexShader: `attribute float size; attribute float aglow; varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade;
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
-        vSh=0.82+0.18*sin(position.y*9.0+position.x*7.0);
+        vSh=0.85+0.15*fract(sin(position.x*12.9+position.y*78.2+position.z*37.7)*43758.5453);  // искра per-particle, БЕЗ полос
         // ЖИВАЯ МАССА как у igloo: частицы ГЛАДКО ТЕКУТ потоками по всей фигуре (снаружи и внутри),
         // в разных направлениях, БЕЗ дёрганья/джиттера и без жёсткой привязки к точке — но силуэт держится.
         vec3 p = position;
@@ -790,7 +788,7 @@ function animate() {
   // затемнение завязано на ПРОГРЕСС туннеля (tunnelBlend): на входе темнеет, на выходе светлеет
   // ВМЕСТЕ с откатом туннеля (темнота уходит синхронно с возвратом мозга) — симметрично.
   const tdark = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
-  const sceneFade = 1 - tp * 0.97;   // у мозга фон почти чёрный → форма частиц читается
+  const sceneFade = 1 - tp * 0.9;
   env.fade(sceneFade + (0.08 - sceneFade) * tdark);   // у мозга/в туннеле клуб почти гаснет; на выходе плавно возвращается
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
