@@ -76,9 +76,9 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // 100% ОБЪЁМНОЕ ЗАПОЛНЕНИЕ: мозг забит частицами целиком (не оболочка) → касание ощущается как
-    // ПЕСОК, а не надувающийся пузырь с пустотой внутри. Форму держат пинч-борозда + извилины + тени.
-    const f = Math.cbrt(Math.random());
+    // ПОВЕРХНОСТНАЯ оболочка: частицы у самой поверхности → проявляются НАСТОЯЩИЕ извилины и борозды
+    // модели (форма 1:1 как реальный мозг). Тонкий слой + затенение впадин (ниже) выявляют рельеф.
+    const f = 0.86 + 0.14 * Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
@@ -285,18 +285,11 @@ function buildParticles() {
     formStart[i*3] = duckPos[i*3] + (Math.random() - 0.5) * 3.4;
     formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
-    // ЛЕДЯНЫЕ голубовато-белые частицы (как в 1-2 сессии) + редкие тёплые искры
-    const s = 0.8 + Math.random() * 0.22, w = Math.random();
-    const Ma = brainPos.__M ?? 0, wMa = brainPos.__wM || 1;
-    const mc = brainPos[i*3 + Ma];
-    const gv = gyriN(brainPos[i*3], brainPos[i*3+1], brainPos[i*3+2]);
-    const ridge = THREE.MathUtils.smoothstep(gv, -0.3, 1.0);        // 0 — в борозде, 1 — на гребне извилины
-    const fis = Math.exp(-(mc*mc) / (wMa*wMa));                     // продольная борозда между полушариями
-    const dk = (1 - fis * 0.55) * (0.58 + 0.42 * ridge);           // борозды (продольная + извилины) ТЕМНЕЕ
-    const gt = 0.14 * ridge * (1 - fis);                           // гребни слегка СВЕТЯТСЯ (контур формы)
-    if (w < 0.07) { colors[i*3]=s*1.08*dk; colors[i*3+1]=s*0.95*dk; colors[i*3+2]=s*0.82*dk; }   // редкая тёплая искра
-    else { colors[i*3]=s*0.86*dk + gt*0.5; colors[i*3+1]=s*0.98*dk + gt*0.8; colors[i*3+2]=s*1.14*dk + gt; }  // ледяной + подсветка гребней
-    sizes[i] = 0.036 + Math.random() * 0.032;  // зерно
+    // ГОЛУБЫЕ СВЕТЯЩИЕСЯ частицы (как фото 2): голубовато-циановые с мерцанием яркости + редкие тёплые искры
+    const s = 0.74 + Math.random() * 0.26, w = Math.random();
+    if (w < 0.06) { colors[i*3]=s*1.05; colors[i*3+1]=s*0.92; colors[i*3+2]=s*0.82; }   // редкая тёплая искра
+    else { colors[i*3]=s*0.56; colors[i*3+1]=s*0.82; colors[i*3+2]=s*1.08; }            // голубой/циан (фото 2)
+    sizes[i] = 0.034 + Math.random() * 0.03;  // зерно
     glow[i] = 0;
   }
   const geo = new THREE.BufferGeometry();
@@ -331,9 +324,9 @@ function buildParticles() {
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
         float a = smoothstep(0.5, 0.28, d);
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
-        vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;   // прежнее мягкое свечение касания
-        col += vec3(0.16,0.30,0.50) * 0.11;                                    // постоянное лёгкое ледяное свечение (как в 1 сессии)
-        gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
+        vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;   // мягкое свечение касания
+        col += vec3(0.22,0.42,0.72) * 0.17;                                    // ПОСТОЯННОЕ голубое свечение (как фото 2)
+        gl_FragColor = vec4(col, a * uOpacity * (0.4 + 0.6*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
@@ -358,8 +351,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
     clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
-    brainPos = sampleModel(brain, PCOUNT);
-    sculptBrain(brainPos);   // углубляем продольную борозду → форма мозга (две доли) читается
+    brainPos = sampleModel(brain, PCOUNT);   // brain.glb детальный (413k tri) — форму НЕ деформируем, берём как есть
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
