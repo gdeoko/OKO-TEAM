@@ -228,9 +228,10 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
-let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null, formStart = null;
+let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null, formStart = null, scatterDir = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
-let formProgress = 1;  // (формирование утки из частиц отключено — утка снова твёрдая GLB на старте)
+let formProgress = 1;  // формирование утки из частиц на старте (0→1): частицы слетаются и собираются в утку
+let introDuckReveal = 0, introPlaying = false;   // кроссфейд частицы→твёрдая утка в конце интро
 let prevTpCam = 0;     // tp прошлого кадра — скорость скролла (анти-«вылет мозга сбоку» при резком скролле)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
@@ -266,6 +267,10 @@ function buildParticles() {
   disturb = new Float32Array(N);   // «разворошённость» касанием: 1 = только что толкнули, мягко затухает
   const dir = new THREE.Vector3();
   const brainNrm = brainPos.__nrm;   // нормали граней мозга — для затенения борозд/извилин
+  let brainMaxR = 1e-3;
+  for (let i = 0; i < N; i++) { const r = Math.hypot(brainPos[i*3], brainPos[i*3+1], brainPos[i*3+2]); if (r > brainMaxR) brainMaxR = r; }
+  scatterDir = new Float32Array(N * 3);   // собственное направление «рассыпания» частицы при касании (как песок, без кольца)
+  for (let i = 0; i < N; i++) { let vx = Math.random()*2-1, vy = Math.random()*2-1, vz = Math.random()*2-1; const l = Math.hypot(vx,vy,vz)||1; scatterDir[i*3]=vx/l; scatterDir[i*3+1]=vy/l; scatterDir[i*3+2]=vz/l; }
   for (let i = 0; i < N; i++) {
     cur[i*3] = duckPos[i*3]; cur[i*3+1] = duckPos[i*3+1]; cur[i*3+2] = duckPos[i*3+2];
     delays[i] = Math.random() * 0.12;  // маленькая задержка — распад почти синхронный, но органичный
@@ -291,16 +296,17 @@ function buildParticles() {
     formStart[i*3] = duckPos[i*3] + (Math.random() - 0.5) * 3.4;
     formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
-    // РЕЛЬЕФ по НОРМАЛИ грани: гребень извилины — нормаль смотрит наружу (радиально) → ЯРКО; стенка
-    // борозды/щель — нормаль отклонена → ТЕМНО. Так проявляются настоящие извилины модели.
+    // РЕЛЬЕФ по НОРМАЛИ грани: гребень извилины (нормаль наружу) → ЯРКО; стенка борозды/щель → ТЕМНО.
+    // + ГЛУБИНА по радиусу: нутро темнее, поверхность ярче → ОЧЕРТАНИЯ/силуэт мозга чётче.
     const bx = brainPos[i*3], by = brainPos[i*3+1], bz = brainPos[i*3+2];
     const pl = Math.sqrt(bx*bx + by*by + bz*bz) + 1e-4;
     const nDotR = (brainNrm[i*3]*bx + brainNrm[i*3+1]*by + brainNrm[i*3+2]*bz) / pl;   // 1 гребень … низкое борозда
-    const fold = THREE.MathUtils.smoothstep(nDotR, -0.05, 0.82);
-    const fs = 0.16 + 0.84 * fold;                              // сильный контраст рельефа
+    const fold = THREE.MathUtils.smoothstep(nDotR, 0.02, 0.7);
+    const depth = THREE.MathUtils.smoothstep(pl / brainMaxR, 0.5, 0.97);              // нутро тёмное → силуэт
+    const fs = (0.1 + 0.9 * fold * fold) * (0.4 + 0.6 * depth);                       // РЕЗЧЕ извилины + очертания
     const s = (0.74 + Math.random() * 0.26) * fs, w = Math.random();
-    if (w < 0.05 && fold > 0.6) { colors[i*3]=s*1.2; colors[i*3+1]=s*1.08; colors[i*3+2]=s*0.98; }   // искры на гребнях
-    else { colors[i*3]=s*0.5; colors[i*3+1]=s*0.8; colors[i*3+2]=s*1.12; }                           // голубой/циан (фото 2)
+    if (w < 0.05 && fold > 0.65) { colors[i*3]=s*1.25; colors[i*3+1]=s*1.12; colors[i*3+2]=s*1.0; }   // искры на гребнях
+    else { colors[i*3]=s*0.48; colors[i*3+1]=s*0.79; colors[i*3+2]=s*1.14; }                          // голубой/циан (фото 2)
     sizes[i] = 0.034 + Math.random() * 0.03;  // зерно
     glow[i] = 0;
   }
@@ -364,13 +370,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
     clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
-    brainPos = sampleModel(brain, PCOUNT);   // brain.glb детальный (413k tri) — форму НЕ деформируем, берём как есть
-    // лёгкий наклон вперёд: видно «макушку» мозга — две доли и продольная борозда читаются (как фото 3)
-    { const TT = 0.34, ct = Math.cos(TT), st = Math.sin(TT), nr = brainPos.__nrm;
-      for (let i = 0; i < PCOUNT; i++) {
-        const y = brainPos[i*3+1], z = brainPos[i*3+2]; brainPos[i*3+1] = y*ct - z*st; brainPos[i*3+2] = y*st + z*ct;
-        const ny = nr[i*3+1], nz = nr[i*3+2]; nr[i*3+1] = ny*ct - nz*st; nr[i*3+2] = ny*st + nz*ct;
-      } }
+    brainPos = sampleModel(brain, PCOUNT);   // brain.glb детальный (413k tri) — форму НЕ деформируем, берём как есть. Стоит РОВНО (без наклона).
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
@@ -396,37 +396,40 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 function startIntro() {
   // быстрый путь (?fast)
   if (_qp.has('fast')) {
+    formProgress = 1; introDuckReveal = 1; introPlaying = false;
     if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); }
     document.body.classList.add('hero-in'); introDone = true; return;
   }
-  // кубики падают с отскоками и укатываются → твёрдая ЦВЕТНАЯ утка приходит из глубины → текст
+  // КУБИКИ падают к центру и РАСТВОРЯЮТСЯ → ЧАСТИЦЫ собираются в утку → КРОССФЕЙД в твёрдую цветную утку.
+  // Текст появляется ПЛАВНО во время формирования (не сразу).
+  formProgress = 0; introDuckReveal = 0; introPlaying = true;
   const tl = gsap.timeline();
   dice.forEach((d, i) => {
-    d.position.set(i === 0 ? -1.4 : 1.2, 6, 0.6);
+    d.position.set(i === 0 ? -0.9 : 0.85, 6, 0.4);
     d.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
     d.visible = true; diceShadows[i].visible = true;
+    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => { m.transparent = true; m.opacity = 1; });
   });
   sound.playDiceRoll();
   dice.forEach((d, i) => {
-    const startX = d.position.x, endX = startX + (i === 0 ? -2.2 : 2.4);
+    const t0 = 0.05 + i * 0.1;
     tl.to(d.position, { keyframes: [
-      { y: FLOOR_Y, duration: 0.55, ease: 'power2.in' }, { y: FLOOR_Y + 1.0, duration: 0.3, ease: 'power2.out' },
-      { y: FLOOR_Y, duration: 0.25, ease: 'power2.in' }, { y: FLOOR_Y + 0.4, duration: 0.18, ease: 'power2.out' },
-      { y: FLOOR_Y, duration: 0.15, ease: 'power2.in' }, { y: -9, duration: 0.7, ease: 'power1.in' },
-    ] }, 0.05 + i * 0.12);
-    tl.to(d.position, { x: endX, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
-    tl.to(d.rotation, { x: `+=${6 + Math.random()*3}`, z: `+=${4 + Math.random()*3}`, duration: 2.1, ease: 'power1.out' }, 0.05 + i * 0.12);
+      { y: 0.6, duration: 0.55, ease: 'power2.in' }, { y: 1.0, duration: 0.22, ease: 'power2.out' }, { y: 0.2, duration: 0.32, ease: 'power2.in' },
+    ] }, t0);
+    tl.to(d.rotation, { x: `+=${4 + Math.random()*2}`, z: `+=${3 + Math.random()*2}`, duration: 1.3, ease: 'power1.out' }, t0);
+    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => tl.to(m, { opacity: 0, duration: 0.55, ease: 'power1.in' }, 0.85 + i * 0.1));
   });
-  tl.add(() => { sound.playThump?.(); }, 0.6);
-  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 2.2);
-  tl.add(() => { if (duckMesh) { duckMesh.visible = true; sound.playFormation?.(); } }, 1.9);
-  if (duckMesh) {
-    duckMesh.position.set(0, -0.3, -16); duckMesh.rotation.y = DUCK_FACE; duckMesh.scale.setScalar(0.15);
-    tl.to(duckMesh.position, { z: 0, y: 0, duration: 2.0, ease: 'power2.out' }, 1.9);
-    tl.to(duckMesh.scale, { x: 1, y: 1, z: 1, duration: 2.0, ease: 'power2.out' }, 1.9);
-  }
-  tl.add(() => document.body.classList.add('hero-in'), 3.9);
-  tl.add(() => { introDone = true; }, 4.4);
+  tl.add(() => { sound.playThump?.(); }, 0.5);
+  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.6);
+  // частицы собираются в утку
+  tl.add(() => sound.playFormation?.(), 0.85);
+  tl.to({ v: 0 }, { v: 1, duration: 1.7, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 0.85);
+  // текст/кнопки — плавно во время формирования
+  tl.add(() => document.body.classList.add('hero-in'), 1.7);
+  // кроссфейд: частицы-утка → твёрдая цветная утка
+  tl.add(() => { if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); } }, 2.45);
+  tl.to({ v: 0 }, { v: 1, duration: 0.7, ease: 'power1.inOut', onUpdate: function () { introDuckReveal = this.targets()[0].v; } }, 2.45);
+  tl.add(() => { introDone = true; introPlaying = false; formProgress = 1; introDuckReveal = 1; }, 3.3);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -844,7 +847,7 @@ function animate() {
   if (duckMesh) {
     const solid = THREE.MathUtils.clamp(1 - tp / 0.1, 0, 1);
     if (solid > 0.001) {
-      if (!duckMesh.visible && introDone) duckMesh.visible = true;
+      if (!duckMesh.visible && (introDone || introPlaying)) duckMesh.visible = true;
       const look = DUCK_FACE + (pointerActive && tp < 0.06 ? pointerNX * 0.2 : 0);   // следит за пальцем
       duckMesh.rotation.y += (look - duckMesh.rotation.y) * 0.06;
       duckMesh.rotation.z = 0;
@@ -852,17 +855,20 @@ function animate() {
       let py = Math.sin(t * 0.5) * 0.03;
       if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.9; py += duckMesh.userData.poke * 0.12; }
       duckMesh.position.y = py;
-      duckMesh.traverse((c) => { if (c.material) c.material.opacity = solid; });
+      // в интро утка ПРОЯВЛЯЕТСЯ по introDuckReveal (кроссфейд из частиц); дальше — обычная непрозрачность
+      const op = solid * (introPlaying ? introDuckReveal : 1);
+      duckMesh.traverse((c) => { if (c.material) c.material.opacity = op; });
     } else if (duckMesh.visible) duckMesh.visible = false;
   }
 
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
-    // видимость ВСЕЙ массы частиц: скрыты на твёрдой утке (tp≈0) → проявляются при распаде утки по
-    // скроллу (tp 0→0.12) → мозг → гаснут в переходе к Покеру. Локальный распад утки от касания
-    // показывается отдельно (vGlow в шейдере), даже когда uOpacity=0.
-    particles.material.uniforms.uOpacity.value = THREE.MathUtils.smoothstep(tp, 0.02, 0.12) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
+    // видимость частиц: на старте — ФОРМИРОВАНИЕ утки (formProgress), затем кроссфейд в твёрдую утку
+    // (гаснут по introDuckReveal); далее по скроллу распад утки (tp) → мозг → гаснут к Покеру.
+    const baseOp = THREE.MathUtils.smoothstep(tp, 0.02, 0.12);
+    const introOp = introPlaying ? formProgress * (1 - introDuckReveal) : 0;
+    particles.material.uniforms.uOpacity.value = Math.max(baseOp, introOp) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
     const onBrain = tp > 0.75;
     const TELE = window.__teleport === true;   // тест-флаг кешируем ОДИН раз за кадр (не в цикле)
@@ -958,18 +964,20 @@ function animate() {
         glow[i] += (0.18 * transShape - glow[i]) * 0.1;
         continue;
       }
-      // КАСАНИЕ «палец в песке»: мягко РАЗДВИГАЕМ частицы в стороны от пальца (шире, плавно),
-      // они подсвечиваются изнутри; затем без пружины стекаются обратно.
+      // КАСАНИЕ «ПАЛЕЦ В ПЕСКЕ» (как igloo): частицы у пальца РАССЫПАЮТСЯ каждая в свою сторону
+      // (scatterDir доминирует) + лёгкий выброс ОТ пальца; мягкий спад fall² → НЕТ кольца/пузыря,
+      // а магическое осыпание. Подсвечиваются и плавно стекаются обратно.
       if (touchOn) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-          const push = fall * force;                   // мягко, шире (не взрыв)
-          vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
-          if (fall > disturb[i]) disturb[i] = fall;     // помечаем → свет внутри + долгий мягкий возврат
-          pushed++;
-          moveSum += push; moveDir += (dy/dist) * push;
+          const k = fall * fall * force * 1.6;          // мягкий спад к краю → без жёсткого кольца
+          vel[i3]   += (scatterDir[i3]   * 0.9 + (dx/dist) * 0.32) * k;
+          vel[i3+1] += (scatterDir[i3+1] * 0.9 + (dy/dist) * 0.32) * k;
+          vel[i3+2] += (scatterDir[i3+2] * 0.9 + (dz/dist) * 0.32) * k;
+          if (fall > disturb[i]) disturb[i] = fall;     // свет внутри + долгий мягкий возврат
+          pushed++; moveSum += k;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
