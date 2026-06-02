@@ -7,3 +7,7 @@ dist/
 _v_*.png
 dbg.cjs
 convert_assets.cjs
+
+vintro.cjs
+vscroll.cjs
+_vi_*.png

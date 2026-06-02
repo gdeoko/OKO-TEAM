@@ -139,6 +139,16 @@ camera.position.set(0, 0.3, 9);
 // отладка камеры/сцены из консоли и для проверки в браузере
 window.__scene = scene; window.__camera = camera;
 window.__glowArr = () => glow;   // для headless-замера свечения от касания
+// хуки проверки интро/скролла (headless): реальные значения состояния
+window.__introState = () => ({
+  fp: +formProgress.toFixed(3), dr: +introDuckReveal.toFixed(3), playing: introPlaying,
+  heroIn: document.body.classList.contains('hero-in'),
+  textOp: +parseFloat(getComputedStyle(document.querySelector('.hero-top') || document.body).opacity).toFixed(2),
+  duckVis: !!(duckMesh && duckMesh.visible), uReveal: +uDuckReveal.value.toFixed(2),
+  diceVis: (typeof dice !== 'undefined' && dice[0]) ? dice[0].visible : false, introDone,
+  ml: (typeof modelsLoaded !== 'undefined') ? modelsLoaded : false,
+});
+window.__scrollState = () => ({ sp: +scrollProgress.toFixed(3), brainOpen, settled: settledStation, tp: +tp.toFixed(3), pk: +pk.toFixed(3) });
 // подбор высоты взгляда камеры через ?look=Y и высоты камеры ?camy=Y
 const _qp = new URLSearchParams(location.search);
 const LOOK_Y = _qp.has('look') ? parseFloat(_qp.get('look')) : 1.5;
@@ -238,6 +248,7 @@ let tp = 0;            // transition progress 0..1 (равномерный ра�
 let formProgress = 1;  // формирование утки из частиц на старте (0→1): частицы слетаются и собираются в утку
 let introDuckReveal = 0, introPlaying = false;   // кроссфейд частицы→твёрдая утка в конце интро
 let duckYmin = -1.3, duckYmax = 1.3;             // границы утки по высоте — для сборки СНИЗУ ВВЕРХ
+let heroReveal = 0;                              // проявление hero-текста (0 в начале → 1 во время интро); гасит inline-opacity
 let prevTpCam = 0;     // tp прошлого кадра — скорость скролла (анти-«вылет мозга сбоку» при резком скролле)
 let ready = false, introDone = false, brainOpen = false;
 let tunnelBlend = 0;   // 0 = мозг, 1 = туннель (плавно)
@@ -422,40 +433,43 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 function startIntro() {
   // быстрый путь (?fast)
   if (_qp.has('fast')) {
-    formProgress = 1; introDuckReveal = 1; introPlaying = false; uDuckReveal.value = 5;
+    formProgress = 1; introDuckReveal = 1; introPlaying = false; uDuckReveal.value = 999; heroReveal = 1;
     if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); }
     document.body.classList.add('hero-in'); introDone = true; return;
   }
-  // КУБИКИ падают к центру и РАСТВОРЯЮТСЯ → ЧАСТИЦЫ собираются в утку → КРОССФЕЙД в твёрдую цветную утку.
-  // Текст появляется ПЛАВНО во время формирования (не сразу).
-  formProgress = 0; introDuckReveal = 0; introPlaying = true;
+  // СЦЕНАРИЙ: только фон → кубики падают СВЕРХУ ДО НИЗА, по пути растворяются → когда упали и стали
+  // частицами, частицы собираются в утку СНИЗУ ВВЕРХ → цветные очертания проявляются снизу вверх.
+  // Текст (заголовок/кнопки) скрыт в начале, проявляется ПЛАВНО только когда кубики уже стали частицами.
+  formProgress = 0; introDuckReveal = 0; introPlaying = true; heroReveal = 0; uDuckReveal.value = -999;
   const tl = gsap.timeline();
   dice.forEach((d, i) => {
-    d.position.set(i === 0 ? -0.9 : 0.85, 6, 0.4);
+    d.position.set(i === 0 ? -0.8 : 0.75, 6, 0.4);
     d.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
     d.visible = true; diceShadows[i].visible = true;
     (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => { m.transparent = true; m.opacity = 1; });
   });
   sound.playDiceRoll();
+  // КУБИКИ падают до самого низа (к лапкам утки), отскок, и РАСТВОРЯЮТСЯ по пути
   dice.forEach((d, i) => {
     const t0 = 0.05 + i * 0.1;
     tl.to(d.position, { keyframes: [
-      { y: 0.6, duration: 0.55, ease: 'power2.in' }, { y: 1.0, duration: 0.22, ease: 'power2.out' }, { y: 0.2, duration: 0.32, ease: 'power2.in' },
+      { y: -0.9, duration: 0.7, ease: 'power2.in' }, { y: -0.4, duration: 0.24, ease: 'power2.out' }, { y: -1.0, duration: 0.34, ease: 'power2.in' },
     ] }, t0);
     tl.to(d.rotation, { x: `+=${4 + Math.random()*2}`, z: `+=${3 + Math.random()*2}`, duration: 1.3, ease: 'power1.out' }, t0);
-    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => tl.to(m, { opacity: 0, duration: 0.55, ease: 'power1.in' }, 0.85 + i * 0.1));
+    (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => tl.to(m, { opacity: 0, duration: 0.55, ease: 'power1.in' }, 0.9 + i * 0.1));
   });
-  tl.add(() => { sound.playThump?.(); }, 0.55);
-  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.5);
-  // частицы (из растворившихся кубиков) собираются в утку СНИЗУ ВВЕРХ — после растворения кубиков
-  tl.add(() => sound.playFormation?.(), 1.2);
-  tl.to({ v: 0 }, { v: 1, duration: 1.7, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 1.2);
-  // текст/кнопки — проявляются ПЛАВНО из растворения ТОЛЬКО когда кубики уже упали и стали частицами
-  tl.add(() => document.body.classList.add('hero-in'), 2.0);
-  // ПРОЯВЛЕНИЕ цветной утки СНИЗУ ВВЕРХ (Y-обрезка по uDuckReveal) — из частиц собирается от лап к голове
+  tl.add(() => { sound.playThump?.(); }, 0.75);
+  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.6);   // кубиков больше нет
+  // ТОЛЬКО ТЕПЕРЬ (кубики стали частицами) — частицы собираются в утку СНИЗУ ВВЕРХ
+  tl.add(() => sound.playFormation?.(), 1.7);
+  tl.to({ v: 0 }, { v: 1, duration: 1.4, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 1.7);
+  // текст/кнопки — проявляются ПЛАВНО (1с) ровно когда частицы начали собираться
+  tl.add(() => document.body.classList.add('hero-in'), 1.7);
+  tl.to({ v: 0 }, { v: 1, duration: 1.0, ease: 'power1.inOut', onUpdate: function () { heroReveal = this.targets()[0].v; } }, 1.7);
+  // ЦВЕТНЫЕ ОЧЕРТАНИЯ утки проявляются СНИЗУ ВВЕРХ (Y-обрезка по uDuckReveal) — после сборки частиц
   tl.add(() => { if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); } }, 2.9);
   tl.to({ v: 0 }, { v: 1, duration: 1.0, ease: 'power1.inOut', onUpdate: function () { introDuckReveal = this.targets()[0].v; } }, 2.9);
-  tl.add(() => { introDone = true; introPlaying = false; formProgress = 1; introDuckReveal = 1; uDuckReveal.value = 999; }, 4.0);
+  tl.add(() => { introDone = true; introPlaying = false; formProgress = 1; introDuckReveal = 1; uDuckReveal.value = 999; heroReveal = 1; }, 4.0);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -656,6 +670,7 @@ let scrollProgress = 0;
 // Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
 const STATIONS = [0, 0.5, 1.0];
 let settledStation = 0;
+window.__setStation = (i) => { settledStation = i; };   // для headless-теста скролла
 const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
 const _easeOut = (x) => 1 - Math.pow(1 - x, 3);
 const _easeIO = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -754,7 +769,7 @@ function updateUIByScroll() {
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
   const e = hf * hf * (3 - 2 * hf);                 // плавная кривая
   heroEls.forEach((el) => { if (el) {
-    el.style.opacity = String(1 - e);
+    el.style.opacity = String((1 - e) * heroReveal);   // heroReveal=0 в начале → текст СКРЫТ, пока интро не проявит его
     el.style.filter = `blur(${e * 9}px)`;
     el.style.transform = `translateX(-50%) scale(${1 + e * 0.55})`;
     el.style.pointerEvents = e > 0.4 ? 'none' : 'auto';
@@ -864,6 +879,9 @@ function animate() {
   const tdark = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
   const sceneFade = 1 - tp * 0.9;
   env.fade(sceneFade + (0.08 - sceneFade) * tdark);   // у мозга/в туннеле клуб почти гаснет; на выходе плавно возвращается
+  // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
+  // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
+  { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
 
   // твёрдая утка: видна только в самом начале (быстрый кроссфейд в частицы)
   // ТВЁРДАЯ цветная утка на старте: видна при tp≈0, плавно растворяется в частицы при скролле 1→2.
