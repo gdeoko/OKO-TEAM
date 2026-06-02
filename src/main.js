@@ -11,7 +11,7 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v41 — касание двигает частицы 2-3 + мозг-оболочка ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v42 — касание мягкое (откат) + частицы мельче + мозг чётче ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -273,7 +273,7 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
 const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания (как было — не трогаем)
-const RETURN_SHAPE = 0.045, RETURN_TOUCH = 0.007, TOUCH_DAMP = 0.91;   // возврат МЕДЛЕННЫЙ и ПЛАВНЫЙ, частицы дольше «текут»
+const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;   // ПРЕЖНЯЯ физика касания (как было — мягкая, не «пузырь»)
 
 function buildParticles() {
   const N = PCOUNT;
@@ -330,7 +330,7 @@ function buildParticles() {
     const s = (0.74 + Math.random() * 0.26) * fs, w = Math.random();
     if (w < 0.05 && fold > 0.65) { colors[i*3]=s*1.25; colors[i*3+1]=s*1.12; colors[i*3+2]=s*1.0; }   // искры на гребнях
     else { colors[i*3]=s*0.48; colors[i*3+1]=s*0.79; colors[i*3+2]=s*1.14; }                          // голубой/циан (фото 2)
-    sizes[i] = 0.034 + Math.random() * 0.03;  // зерно
+    sizes[i] = 0.017 + Math.random() * 0.015;  // зерно В 2 РАЗА МЕЛЬЧЕ → чёткая форма, частицы не торчат
     glow[i] = 0;
   }
   const geo = new THREE.BufferGeometry();
@@ -401,7 +401,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
         const px = brainPos[i*3], py = brainPos[i*3+1], pz = brainPos[i*3+2];
         const pl = Math.hypot(px, py, pz) || 1;
         const nDotR = (nr[i*3]*px + nr[i*3+1]*py + nr[i*3+2]*pz) / pl;
-        const disp = (nDotR - 0.4) * 0.1;     // (+) гребни наружу, (−) борозды внутрь (умеренно, без «колючести»)
+        const disp = Math.min(0, (nDotR - 0.5) * 0.14);   // ТОЛЬКО ВНУТРЬ: борозды углубляем, гребни НЕ торчат наружу
         brainPos[i*3] += nr[i*3]*disp; brainPos[i*3+1] += nr[i*3+1]*disp; brainPos[i*3+2] += nr[i*3+2]*disp;
       }
       // мозг чуть МЕНЬШЕ (на 2%), строго вокруг центра — не сдвигая вверх/вниз
@@ -608,7 +608,7 @@ function closeBrain() {
   sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
   // класс tunnel-exit держим ПОКА текст улетает вдаль (≈3.2с) — НЕ снимаем при закрытии туннеля (2с),
   // иначе текст обрывается. Текст 2 страницы появится ТОЛЬКО после снятия класса (когда туннель закрылся).
-  clearTimeout(_exitTimer); _exitTimer = setTimeout(() => document.body.classList.remove('tunnel-exit'), 3200);
+  clearTimeout(_exitTimer); _exitTimer = setTimeout(() => document.body.classList.remove('tunnel-exit'), 2200);
 }
 let _exitTimer = 0, _textWaitTimer = 0;
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
@@ -1040,15 +1040,13 @@ function animate() {
           const dsq = dx*dx + dy*dy + dz*dz;
           if (dsq < radius * radius) {
             const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-            const k = fall * fall * force * 1.7;
-            vel[i3]   += ((dx/dist) * 0.7 + scatterDir[i3]   * 0.5) * k;
-            vel[i3+1] += ((dy/dist) * 0.7 + scatterDir[i3+1] * 0.5) * k;
-            vel[i3+2] += ((dz/dist) * 0.7 + scatterDir[i3+2] * 0.5) * k;
+            const push = fall * force;   // ПРЕЖНЕЕ мягкое радиальное раздвигание (не взрыв)
+            vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
             if (fall > disturb[i]) disturb[i] = fall;
-            pushed++; moveSum += k;
+            pushed++; moveSum += push;
           }
         }
-        vel[i3] *= 0.94; vel[i3+1] *= 0.94; vel[i3+2] *= 0.94;   // плавный медленный возврат смещения
+        vel[i3] *= TOUCH_DAMP; vel[i3+1] *= TOUCH_DAMP; vel[i3+2] *= TOUCH_DAMP;   // затухание смещения (как в обычном касании)
         arr[i3] = mx + vel[i3]; arr[i3+1] = my + vel[i3+1]; arr[i3+2] = mz + vel[i3+2];
         disturb[i] *= 0.95;
         const gB = Math.max(0.18 * transShape, disturb[i] * 0.75);
@@ -1056,19 +1054,17 @@ function animate() {
         if (glow[i] > _glowMax) _glowMax = glow[i];
         continue;
       }
-      // КАСАНИЕ «ПАЛЕЦ В ВОДЕ/ПЕСКЕ»: частицы у пальца ПЛАВНО ТЕКУТ от него (радиальный поток) + лёгкий
-      // разброс; копят скорость (vel) → реально ДВИГАЮТСЯ и МЕДЛЕННО возвращаются (без жёсткого кольца).
+      // КАСАНИЕ «палец в песке» (ПРЕЖНЕЕ, мягкое): мягко РАЗДВИГАЕМ частицы РАДИАЛЬНО от пальца,
+      // они подсвечиваются изнутри; затем без пружины стекаются обратно. Без «взрыва/пузыря».
       if (touchOn) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-          const k = fall * fall * force * 2.0;          // больше движения, мягкий спад к краю
-          vel[i3]   += ((dx/dist) * 0.7 + scatterDir[i3]   * 0.45) * k;
-          vel[i3+1] += ((dy/dist) * 0.7 + scatterDir[i3+1] * 0.45) * k;
-          vel[i3+2] += ((dz/dist) * 0.7 + scatterDir[i3+2] * 0.45) * k;
-          if (fall > disturb[i]) disturb[i] = fall;     // свет внутри + долгий мягкий возврат
-          pushed++; moveSum += k;
+          const push = fall * force;
+          vel[i3] += (dx/dist) * push; vel[i3+1] += (dy/dist) * push; vel[i3+2] += (dz/dist) * push;
+          if (fall > disturb[i]) disturb[i] = fall;
+          pushed++; moveSum += push; moveDir += (dy/dist) * push;
         }
       }
       // ИМПУЛЬС РАСПАДА: в первый момент входа в туннель мозг разлетается наружу
@@ -1090,9 +1086,8 @@ function animate() {
       // собирается целиком, без «дырки»; в обычном состоянии — мягкое удержание формы.
       const ease = reform > 0.01 ? 0.38 : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
       arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      // палец водит → держим (×0.978); отпущен → гаснет ПЛАВНО (×0.91) → след стекается как песок,
-      // мягко и небыстро (не резкий «схлоп» формы).
-      disturb[i] *= touchOn ? 0.978 : 0.91;
+      // палец водит → гаснет мягко (×0.972); отпущен → гаснет быстро (×0.82) — ПРЕЖНЕЕ поведение.
+      disturb[i] *= touchOn ? 0.972 : 0.82;
       // СВЕТ ВНУТРИ частиц: тронутые ЯРКО светятся (заметный эффект касания), пока стекаются обратно
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
       const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
@@ -1137,7 +1132,7 @@ function animate() {
   // СИММЕТРИЧНО: вход и выход с ОДНОЙ скоростью (выход = инверсия входа), чуть быстрее (~на 1с)
   // ЕДИНЫЙ ТАЙМЛАЙН ТУННЕЛЯ: линейный прогресс 0→1 (вход) / 1→0 (выход) за 3 сек, симметрично.
   // tunnelBlend — линейный 0..1; сглаженную кривую (tb) берём как easeIO(tunnelBlend) ниже.
-  const TUNNEL_DUR = 2.0;   // дайв-туннель при клике на мозг быстрее (было 3.0)
+  const TUNNEL_DUR = 1.3;   // дайв-туннель ЕЩЁ быстрее (−~1с от общей сцены)
   tunnelBlend = THREE.MathUtils.clamp(tunnelBlend + (brainOpen ? 1 : -1) * (dt / TUNNEL_DUR), 0, 1);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
   // класс tunnel-exit снимается ТОЛЬКО по таймеру в closeBrain (когда текст улетел), а не при tunnelBlend≈0,

@@ -307,12 +307,12 @@ body.brain-open #brain-hint { opacity: 0 !important; }
   opacity: 0; pointer-events: none;
   /* затемнение приходит НЕ сразу: сначала частицы плавно собираются в туннель (виден клуб),
      затем — ВМЕСТЕ с приближающимся текстом — медленно нарастает темнота (без резкого появления) */
-  transition: opacity 2.6s ease 1.2s;
+  transition: opacity 1.8s ease 0.5s;   /* затемнение приходит быстрее (−1с) */
   padding: 90px 24px 60px;
 }
 body.brain-open #brain-detail { opacity: 1; pointer-events: auto; }
 /* ВЫХОД: затемнение уходит ПЛАВНО (3с) вместе с улетающим текстом — симметрично входу, не резко */
-body.tunnel-exit #brain-detail { opacity: 0; pointer-events: none; transition: opacity 3s ease; }
+body.tunnel-exit #brain-detail { opacity: 0; pointer-events: none; transition: opacity 2s ease; }
 body:not(.brain-open):not(.tunnel-exit) #brain-detail { transition: opacity .6s ease; }
 /* текст ПРИЛЕТАЕТ ИЗ ТОЧКИ ВДАЛЕКЕ: стартует крошечным, с ЗАДЕРЖКОЙ (после формирования туннеля) */
 .bd-inner {
@@ -328,12 +328,12 @@ body:not(.brain-open):not(.tunnel-exit) #brain-detail { transition: opacity .6s 
 body.brain-open .bd-inner {
   transform: scale(1); opacity: 1; filter: blur(0);
   /* ПРИБЛИЖЕНИЕ ИЗ ТОЧКИ ВДАЛЕКЕ: долго маленький (далеко в трубе) → ускоряясь налетает (ease-in) */
-  transition: transform 2.8s cubic-bezier(.55,0,.85,1) 1.2s, opacity 1.4s ease-out 1.2s, filter 1.8s ease-out 1.2s;
+  transition: transform 1.9s cubic-bezier(.55,0,.85,1) 0.5s, opacity 1.0s ease-out 0.5s, filter 1.3s ease-out 0.5s;   /* текст налетает быстрее (−1с) */
 }
 /* ВЫХОД = ИНВЕРСИЯ: текст УЛЕТАЕТ обратно вдаль (scale→.015, размывается, гаснет) за ~3с, симметрично */
 body.tunnel-exit .bd-inner {
   transform: scale(.015); opacity: 0; filter: blur(14px);
-  transition: transform 2.8s cubic-bezier(.4,0,.6,1), opacity 2.2s ease-in, filter 2.4s ease-in;
+  transition: transform 1.9s cubic-bezier(.4,0,.6,1), opacity 1.5s ease-in, filter 1.6s ease-in;   /* текст улетает быстрее (−1с) */
 }
 .bd-label { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--ice-blue); margin-bottom: 16px; }
 #brain-detail h3 { font-family: var(--fd); font-weight: 900; font-size: clamp(19px,3.3vw,30px); line-height: 1.2; margin-bottom: 18px; }
