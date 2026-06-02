@@ -138,7 +138,7 @@ const HOLL_END = 0.5;
 let pk = 0;                       // прогресс станции «Покер» 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
-poker.group.position.set(0.4, -1.7, 1.8);
+poker.group.position.set(0.4, -1.4, 1.8);   // стол выше — меньше пустоты под заголовком
 poker.group.rotation.y = 0;   // стол смотрит на камеру (карты формируются перед зрителем, не сбоку)
 scene.add(poker.group);
 // Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
@@ -772,7 +772,7 @@ function animate() {
     const dist = DUCK_DIST - easeIO(tpEff) * 2.5;
     const brainPhase = THREE.MathUtils.clamp((tpEff - 0.5) / 0.35, 0, 1);
     const bcorrX = -0.16 * brainPhase;
-    const bcorrY = -0.34 * brainPhase;   // мозг НИЖЕ — под двухстрочный заголовок «ТУТ ИГРАЮТ МОЗГОМ / И ОТДЫХАЮТ ТЕЛОМ»
+    const bcorrY = -0.18 * brainPhase;   // мозг ближе к заголовку (меньше пустоты)
     const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tpEff / 0.22, 0, 1));
     const sSubX = sCamX + _camDir.x * dist + DUCK_PX + bcorrX;
     const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
@@ -963,7 +963,7 @@ function animate() {
     // Значит на выходе (tb→0) масштаб возвращается ТОЧНО к доходному размеру мозга — без «уехал крупнее».
     const tpEffS = tunnelBlend > 0.001 ? tpLatch : tp;
     const tbS = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
-    const brainShrink = 1 - 0.62 * THREE.MathUtils.clamp((tpEffS - 0.5) / 0.45, 0, 1);  // мозг МЕНЬШЕ → ровно под 2-строчным заголовком
+    const brainShrink = 1 - 0.5 * THREE.MathUtils.clamp((tpEffS - 0.5) / 0.45, 0, 1);  // мозг чуть крупнее
     const brainScale = brainShrink + Math.sin(t * 1.5) * 0.012 * (tpEffS > 0.75 ? 1 : 0);
     particles.scale.setScalar(brainScale + (1 - brainScale) * tbS);   // мозг ↔ труба (масштаб 1) плавно по tb
   }

@@ -39,7 +39,7 @@ function coverDraw(x, img, W, H, zoom = 1.06) {
 // ЛИЦО карты: бренд-арт + название турнира снизу (часть карты)
 function cardFaceTexture(fmt) {
   return imageTexture(fmt.img, (x, img, W, H) => {
-    coverDraw(x, img, W, H, 1.1);
+    coverDraw(x, img, W, H, 1.26);   // сильнее зум — срезает белые поля исходного арта
     // затемнение снизу под текст
     const g = x.createLinearGradient(0, H, 0, H - 250); g.addColorStop(0, 'rgba(0,0,0,.92)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     x.fillStyle = g; x.fillRect(0, H - 250, W, 250);
@@ -105,7 +105,7 @@ function feltTexture(cardXs, fullL, fullW) {
 // одна карта
 function buildCard(fmt) {
   const geo = new THREE.BoxGeometry(CARD_W, CARD_T, CARD_H);   // лежит плашмя (толщина по Y)
-  const edge = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.6 });
+  const edge = new THREE.MeshStandardMaterial({ color: 0x140a0e, roughness: 0.7 });   // тёмный торец карты (не белый)
   const faceMat = new THREE.MeshStandardMaterial({ map: cardFaceTexture(fmt), roughness: 0.42, metalness: 0.0, emissive: new THREE.Color(fmt.accent), emissiveIntensity: 0.0 });
   const backMat = new THREE.MeshStandardMaterial({ map: cardBackTexture(), roughness: 0.5, metalness: 0.0 });
   // группы BoxGeometry: 0 +x,1 -x,2 +y(верх),3 -y(низ),4 +z,5 -z. Лежит рубашкой вверх: верх=рубашка, низ=лицо
