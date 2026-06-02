@@ -68,6 +68,16 @@ const server = http.createServer((req, res) => {
   await settle(0.04); await shoot('hero_dissolve');
   await settle(0.22); await shoot('explode');
   await settle(0.50); await shoot('brain');
+  // ТЕСТ КАСАНИЯ: перетаскиваем «палец» по мозгу — должно дать яркое свечение + сдвиг частиц
+  const touchGlow = await page.evaluate(async () => {
+    const cx = window.innerWidth / 2, cy = window.innerHeight * 0.45;
+    window.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, bubbles: true }));
+    for (let i = 0; i < 10; i++) { window.dispatchEvent(new MouseEvent('mousemove', { clientX: cx + Math.cos(i) * 70, clientY: cy + Math.sin(i) * 70, bubbles: true })); await new Promise(r => setTimeout(r, 35)); }
+    let m = 0; const a = window.__scene && window.__glowArr && window.__glowArr(); if (a) for (let i = 0; i < a.length; i++) if (a[i] > m) m = a[i];
+    return +m.toFixed(3);
+  });
+  console.log('TOUCH max glow on brain:', touchGlow);   // >0 = касание работает (есть свечение)
+  await new Promise(r => setTimeout(r, 150)); await shoot('brain_touch');
   await settle(0.58); await shoot('poker_t1');           // туннель образовался, летим сквозь (камера ещё прямо)
   await settle(0.72); await shoot('poker_t2');           // камера доворачивается, стол приближается издалека
   await settle(0.99); await shoot('poker');              // стол прилетел, частицы погасли, текст на месте

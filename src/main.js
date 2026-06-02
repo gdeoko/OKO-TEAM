@@ -76,10 +76,8 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // ПОЛНОЕ ОБЪЁМНОЕ ЗАПОЛНЕНИЕ: КАЖДАЯ частица уезжает внутрь на свою глубину
-    // (cbrt = равномерно по всему объёму). Мозг забит частицами ЦЕЛИКОМ, внутри не пустой,
-    // не просвечивает — сплошная живая масса, а не оболочка.
-    const f = 0.10 + 0.90 * Math.cbrt(Math.random());
+    // ПЛОТНОЕ заполнение с упором к поверхности: фигура сплошная (не просвечивает) и силуэт чёткий.
+    const f = 0.34 + 0.66 * Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
@@ -101,6 +99,7 @@ const camera = new THREE.PerspectiveCamera(44, innerWidth / innerHeight, 0.1, 12
 camera.position.set(0, 0.3, 9);
 // отладка камеры/сцены из консоли и для проверки в браузере
 window.__scene = scene; window.__camera = camera;
+window.__glowArr = () => glow;   // для headless-замера свечения от касания
 // подбор высоты взгляда камеры через ?look=Y и высоты камеры ?camy=Y
 const _qp = new URLSearchParams(location.search);
 const LOOK_Y = _qp.has('look') ? parseFloat(_qp.get('look')) : 1.5;
@@ -216,7 +215,8 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
-const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания
+const HOVER_RADIUS = 1.4, HOVER_FORCE = 0.07;   // сильнее раздвигание (заметная физика касания)
+let touchPulse = 0;   // импульс касания: тап даёт «вспышку» даже без движения пальца
 const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;
 
 function buildParticles() {
@@ -257,7 +257,7 @@ function buildParticles() {
     // ОДИН ЦВЕТ как igloo — ледяной белый с лёгким разбросом яркости (монохром)
     const shade = 0.82 + Math.random() * 0.18;
     colors[i*3] = shade; colors[i*3+1] = shade * 1.02; colors[i*3+2] = shade * 1.06; // чуть холоднее
-    sizes[i] = 0.032 + Math.random() * 0.034;  // зёрна перекрываются → сплошная поверхность
+    sizes[i] = 0.038 + Math.random() * 0.034;  // плотное зерно → фигура сплошная, силуэт читается
     glow[i] = 0;
   }
   const geo = new THREE.BufferGeometry();
@@ -266,7 +266,7 @@ function buildParticles() {
   geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
   geo.setAttribute('aglow', new THREE.BufferAttribute(glow, 1));
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 } },
+    uniforms: { uPixelRatio: { value: PIXEL_RATIO }, uTime: { value: 0 }, uOpacity: { value: 0 }, uMorph: { value: 0 } },
     vertexShader: `attribute float size; attribute float aglow; varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade;
       uniform float uPixelRatio; uniform float uTime;
       void main(){ vColor=color; vGlow=aglow;
@@ -282,23 +282,30 @@ function buildParticles() {
         fl.x = sin(position.y*1.6 + t1) + cos(position.z*1.2 - t2) + 0.6*sin(position.z*2.4 + position.y*1.0 + t1*1.3);
         fl.y = sin(position.z*1.6 + t1*1.1) + cos(position.x*1.2 - t2*0.9) + 0.6*sin(position.x*2.4 + position.z*1.0 + t1*1.1);
         fl.z = sin(position.x*1.6 + t1*0.9) + cos(position.y*1.2 - t2*1.1) + 0.6*sin(position.y*2.4 + position.x*1.0 + t1*1.2);
-        p += fl * 0.06;                          // плавное течение по фигуре (без рывков), силуэт держится
-        // мягкие вылазки наружу/внутрь — масса «дышит», но форма читается
-        float ex = 0.028 + smoothstep(0.62, 1.0, rnd) * 0.045;
+        p += fl * 0.03;                          // ЛЁГКОЕ течение — форма фигуры ДЕРЖИТСЯ чётко
+        // совсем мягкие вылазки — масса чуть «дышит», но силуэт не разваливается
+        float ex = 0.012 + smoothstep(0.7, 1.0, rnd) * 0.022;
         p += normalize(position + vec3(0.0001)) * sin(uTime*0.8 + ph*1.2) * ex;
         vec4 mv=modelViewMatrix*vec4(p,1.0);
         // ГЛУБИНА: дальние частицы тускнеют → в туннеле читается уходящая вглубь труба
         vFade = clamp(1.0 - (-mv.z - 3.0)/34.0, 0.06, 1.0);
         gl_PointSize=size*(1.0+vGlow*0.35)*uPixelRatio*(300.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
-    fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade; uniform float uOpacity;
+    fragmentShader: `varying vec3 vColor; varying float vSh; varying float vGlow; varying float vFade;
+      uniform float uOpacity; uniform float uMorph;
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
-        // ПЛОТНЫЙ НЕПРОЗРАЧНЫЙ диск с мягким краем: зёрна перекрываются и образуют
-        // СПЛОШНУЮ матовую поверхность (как песок у igloo) — фон не просвечивает
+        // плотное непрозрачное зерно с мягким краем
         float a = smoothstep(0.5, 0.28, d);
-        // объёмная подсветка сверху + лёгкое ледяное свечение в движении (мягко, без вспышки)
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
-        vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;
-        gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
+        // ЦВЕТ: утка ледяная бело-голубая → МОЗГ КРАСНЫЙ (как референс), плавно по морфу
+        float toRed = smoothstep(0.55, 0.95, uMorph);
+        vec3 duckCol = vColor * vSh * shade;                       // ледяной
+        vec3 brainCol = vec3(1.0, 0.09, 0.06) * (0.5 + 0.6*shade);  // насыщенный красный мозг
+        vec3 col = mix(duckCol, brainCol, toRed);
+        // лёгкое самосвечение фигуры (светящиеся частицы), без пересвета
+        col += mix(vec3(0.08,0.12,0.2), vec3(0.34,0.015,0.0), toRed) * 0.28;
+        // ЯРКОЕ свечение в точке касания (бело-голубая вспышка-рябь)
+        col += vec3(0.55,0.8,1.0) * vGlow * 1.1;
+        gl_FragColor = vec4(col, a * uOpacity * (0.4 + 0.6*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
   particles = new THREE.Points(geo, mat);
@@ -433,6 +440,14 @@ function updatePointer(x, y) {
 }
 addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY));
 addEventListener('touchmove', (e) => { if (e.touches[0]) updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+// НАЖАТИЕ (тап/клик): регистрируем точку касания СРАЗУ (раньше updatePointer был только на move —
+// оттого тап не работал) + импульс-вспышка touchPulse + звук касания (только когда видна фигура).
+function pointerDownFx(x, y) {
+  updatePointer(x, y); touchPulse = 1;
+  if (formProgress > 0.6 && (tp < 0.15 || tp > 0.6) && tunnelBlend < 0.001 && pk < 0.05 && !brainOpen) sound.playRustle?.(1.0, tp > 0.6 ? 1.2 : 0.8);
+}
+addEventListener('mousedown', (e) => pointerDownFx(e.clientX, e.clientY));
+addEventListener('touchstart', (e) => { if (e.touches[0]) pointerDownFx(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 addEventListener('mouseleave', () => { pointerActive = false; _pHas = false; });
 // мышь/указатель ОТПУЩЕН → касание выключаем сразу (без этого pointerActive «залипал» в true,
 // и частицы в последней точке раздвигались каждый кадр = «висящая дырка» до повторного касания)
@@ -783,6 +798,7 @@ function animate() {
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
   if (particles && ready) {
     particles.material.uniforms.uTime.value = t;
+    particles.material.uniforms.uMorph.value = tp;   // цвет: утка(ледяной) → мозг(красный)
     // видимость: формирование утки на старте (formProgress) → дальше всегда видны → гаснут в переходе к Покеру
     particles.material.uniforms.uOpacity.value = THREE.MathUtils.clamp(formProgress, 0, 1) * (1 - THREE.MathUtils.smoothstep(pk, 0.55, 0.92));
     const N = PCOUNT, arr = particles.geometry.attributes.position.array;
@@ -794,14 +810,17 @@ function animate() {
       for (let i = 0; i < N; i++) { disturb[i] = 0; glow[i] = 0; vel[i*3] = vel[i*3+1] = vel[i*3+2] = 0; }
       pointerActive = false; _pHas = false;
     }
-    const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.6;
-    const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.5;
+    const radius = onBrain ? HOVER_RADIUS : HOVER_RADIUS * 0.85;
+    const force = onBrain ? HOVER_FORCE : HOVER_FORCE * 0.85;   // сильное касание и на утке тоже
     // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
     // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
     // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
-    const pointerFresh = (performance.now() - pointerStamp) < 200;
-    // ОДИНАКОВОЕ касание на утке (tp<0.15) и мозге (tp>0.6); не во время туннеля/Покера/дайва
-    const touchOn = pointerActive && pointerFresh && formProgress > 0.6 && (tp < 0.15 || tp > 0.6) && tunnelBlend < 0.001 && pk < 0.05 && !brainOpen;
+    const pointerFresh = (performance.now() - pointerStamp) < 220;
+    // фигура доступна для касания: утка (tp<0.15) и мозг (tp>0.6); не в туннеле/Покере/дайве
+    const figureTouchable = formProgress > 0.6 && (tp < 0.15 || tp > 0.6) && tunnelBlend < 0.001 && pk < 0.05 && !brainOpen;
+    // касание срабатывает на ДВИЖЕНИЕ пальца И на ТАП (touchPulse) — поэтому реагирует на любое касание
+    const touchOn = figureTouchable && ((pointerActive && pointerFresh) || touchPulse > 0.02);
+    touchPulse *= 0.9;   // импульс тапа плавно гаснет (~0.5с)
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -915,10 +934,10 @@ function animate() {
       // палец активно водит → гаснет мягко (×0.972); отпущен/замер → гаснет БЫСТРО (×0.82),
       // чтобы вмятина от касания НЕ «висела» секундами (исток «залипшей дырки»).
       disturb[i] *= touchOn ? 0.972 : 0.82;
-      // СВЕТ ВНУТРИ частиц: от скорости И от касания (тронутые светятся, пока стекаются)
+      // СВЕТ ВНУТРИ частиц: тронутые ЯРКО светятся (заметный эффект касания), пока стекаются обратно
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
-      const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
-      if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.1;
+      const g = Math.max(Math.min(sp * 9, 0.9), disturb[i] * 1.1);
+      if (g > glow[i]) glow[i] = g; else glow[i] += (g - glow[i]) * 0.12;
     }
     particles.geometry.attributes.position.needsUpdate = true;
     particles.geometry.attributes.aglow.needsUpdate = true;
