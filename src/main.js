@@ -59,7 +59,7 @@ function sampleModel(scene, count) {
       ax.push(va.x); ay.push(va.y); az.push(va.z); bx.push(vb.x); by.push(vb.y); bz.push(vb.z); cx.push(vc.x); cy.push(vc.y); cz.push(vc.z);
     }
   });
-  const nTris = cum.length, arr = new Float32Array(count * 3);
+  const nTris = cum.length, arr = new Float32Array(count * 3), nrm = new Float32Array(count * 3);
   const pick = (target) => { let lo = 0, hi = nTris - 1; while (lo < hi) { const mid = (lo + hi) >> 1; if (cum[mid] < target) lo = mid + 1; else hi = mid; } return lo; };
   let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
   for (let i = 0; i < count; i++) {
@@ -69,6 +69,10 @@ function sampleModel(scene, count) {
     arr[i * 3] = ax[t] * r3 + bx[t] * r1 + cx[t] * r2;
     arr[i * 3 + 1] = ay[t] * r3 + by[t] * r1 + cy[t] * r2;
     arr[i * 3 + 2] = az[t] * r3 + bz[t] * r1 + cz[t] * r2;
+    // нормаль грани (для затенения борозд: в впадинах нормаль отклоняется от радиали → темнее)
+    const e1x = bx[t]-ax[t], e1y = by[t]-ay[t], e1z = bz[t]-az[t], e2x = cx[t]-ax[t], e2y = cy[t]-ay[t], e2z = cz[t]-az[t];
+    let nx = e1y*e2z - e1z*e2y, ny = e1z*e2x - e1x*e2z, nz = e1x*e2y - e1y*e2x;
+    const nl = Math.hypot(nx, ny, nz) || 1; nrm[i*3] = nx/nl; nrm[i*3+1] = ny/nl; nrm[i*3+2] = nz/nl;
   }
   // нормализация (центр в 0, целевой размер)
   for (let i = 0; i < count; i++) { const x = arr[i*3], y = arr[i*3+1], z = arr[i*3+2]; if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;if(z<minZ)minZ=z;if(z>maxZ)maxZ=z; }
@@ -76,12 +80,13 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // ПОВЕРХНОСТНАЯ оболочка: частицы у самой поверхности → проявляются НАСТОЯЩИЕ извилины и борозды
-    // модели (форма 1:1 как реальный мозг). Тонкий слой + затенение впадин (ниже) выявляют рельеф.
-    const f = 0.86 + 0.14 * Math.cbrt(Math.random());
+    // ПОЛНОЕ заполнение — касание как песок; а РЕЛЬЕФ (извилины/борозды) проявит затенение впадин
+    // по эллипсоидальному радиусу в buildParticles (гребни ярче, борозды темнее).
+    const f = Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
+  arr.__nrm = nrm;   // нормали граней — для затенения борозд/извилин
   return arr;
 }
 // Подчёркиваем форму мозга: пинч срединной плоскости → продольная борозда (две доли).
@@ -260,6 +265,7 @@ function buildParticles() {
   glow = new Float32Array(N);   // внутреннее свечение частицы (растёт от движения)
   disturb = new Float32Array(N);   // «разворошённость» касанием: 1 = только что толкнули, мягко затухает
   const dir = new THREE.Vector3();
+  const brainNrm = brainPos.__nrm;   // нормали граней мозга — для затенения борозд/извилин
   for (let i = 0; i < N; i++) {
     cur[i*3] = duckPos[i*3]; cur[i*3+1] = duckPos[i*3+1]; cur[i*3+2] = duckPos[i*3+2];
     delays[i] = Math.random() * 0.12;  // маленькая задержка — распад почти синхронный, но органичный
@@ -285,10 +291,16 @@ function buildParticles() {
     formStart[i*3] = duckPos[i*3] + (Math.random() - 0.5) * 3.4;
     formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
-    // ГОЛУБЫЕ СВЕТЯЩИЕСЯ частицы (как фото 2): голубовато-циановые с мерцанием яркости + редкие тёплые искры
-    const s = 0.74 + Math.random() * 0.26, w = Math.random();
-    if (w < 0.06) { colors[i*3]=s*1.05; colors[i*3+1]=s*0.92; colors[i*3+2]=s*0.82; }   // редкая тёплая искра
-    else { colors[i*3]=s*0.56; colors[i*3+1]=s*0.82; colors[i*3+2]=s*1.08; }            // голубой/циан (фото 2)
+    // РЕЛЬЕФ по НОРМАЛИ грани: гребень извилины — нормаль смотрит наружу (радиально) → ЯРКО; стенка
+    // борозды/щель — нормаль отклонена → ТЕМНО. Так проявляются настоящие извилины модели.
+    const bx = brainPos[i*3], by = brainPos[i*3+1], bz = brainPos[i*3+2];
+    const pl = Math.sqrt(bx*bx + by*by + bz*bz) + 1e-4;
+    const nDotR = (brainNrm[i*3]*bx + brainNrm[i*3+1]*by + brainNrm[i*3+2]*bz) / pl;   // 1 гребень … низкое борозда
+    const fold = THREE.MathUtils.smoothstep(nDotR, -0.05, 0.82);
+    const fs = 0.16 + 0.84 * fold;                              // сильный контраст рельефа
+    const s = (0.74 + Math.random() * 0.26) * fs, w = Math.random();
+    if (w < 0.05 && fold > 0.6) { colors[i*3]=s*1.2; colors[i*3+1]=s*1.08; colors[i*3+2]=s*0.98; }   // искры на гребнях
+    else { colors[i*3]=s*0.5; colors[i*3+1]=s*0.8; colors[i*3+2]=s*1.12; }                           // голубой/циан (фото 2)
     sizes[i] = 0.034 + Math.random() * 0.03;  // зерно
     glow[i] = 0;
   }
@@ -324,8 +336,9 @@ function buildParticles() {
       void main(){ vec2 uv=gl_PointCoord-vec2(0.5); float d=length(uv);
         float a = smoothstep(0.5, 0.28, d);
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
-        vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;   // мягкое свечение касания
-        col += vec3(0.22,0.42,0.72) * 0.17;                                    // ПОСТОЯННОЕ голубое свечение (как фото 2)
+        vec3 col = vColor * vSh * shade * 1.3;                  // ярче, контраст рельефа сохранён
+        col += vColor * 0.34;                                   // голубое свечение ПРОПОРЦ. яркости (гребни светятся, борозды — нет)
+        col += vec3(0.45,0.68,1.05) * vGlow * 0.8;              // ЯРКОЕ свечение касания (не тёмный шар)
         gl_FragColor = vec4(col, a * uOpacity * (0.4 + 0.6*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
@@ -352,6 +365,12 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);   // brain.glb детальный (413k tri) — форму НЕ деформируем, берём как есть
+    // лёгкий наклон вперёд: видно «макушку» мозга — две доли и продольная борозда читаются (как фото 3)
+    { const TT = 0.34, ct = Math.cos(TT), st = Math.sin(TT), nr = brainPos.__nrm;
+      for (let i = 0; i < PCOUNT; i++) {
+        const y = brainPos[i*3+1], z = brainPos[i*3+2]; brainPos[i*3+1] = y*ct - z*st; brainPos[i*3+2] = y*st + z*ct;
+        const ny = nr[i*3+1], nz = nr[i*3+2]; nr[i*3+1] = ny*ct - nz*st; nr[i*3+2] = ny*st + nz*ct;
+      } }
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
