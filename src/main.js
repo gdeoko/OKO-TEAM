@@ -11,7 +11,7 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v38 — интро снизу-вверх + скролл-фикс ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v39 — касание во все стороны + выход из туннеля ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -321,7 +321,7 @@ function buildParticles() {
     const nDotR = (brainNrm[i*3]*bx + brainNrm[i*3+1]*by + brainNrm[i*3+2]*bz) / pl;   // 1 гребень … низкое борозда
     const fold = THREE.MathUtils.smoothstep(nDotR, 0.02, 0.7);
     const depth = THREE.MathUtils.smoothstep(pl / brainMaxR, 0.5, 0.97);              // нутро тёмное → силуэт
-    const fs = (0.1 + 0.9 * fold * fold) * (0.4 + 0.6 * depth);                       // РЕЗЧЕ извилины + очертания
+    const fs = (0.06 + 0.94 * fold * fold) * (0.34 + 0.66 * depth);                   // глубже борозды (тёмные) + чётче очертания
     const s = (0.74 + Math.random() * 0.26) * fs, w = Math.random();
     if (w < 0.05 && fold > 0.65) { colors[i*3]=s*1.25; colors[i*3+1]=s*1.12; colors[i*3+2]=s*1.0; }   // искры на гребнях
     else { colors[i*3]=s*0.48; colors[i*3+1]=s*0.79; colors[i*3+2]=s*1.14; }                          // голубой/циан (фото 2)
@@ -396,7 +396,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
         const px = brainPos[i*3], py = brainPos[i*3+1], pz = brainPos[i*3+2];
         const pl = Math.hypot(px, py, pz) || 1;
         const nDotR = (nr[i*3]*px + nr[i*3+1]*py + nr[i*3+2]*pz) / pl;
-        const disp = (nDotR - 0.45) * 0.16;   // (+) гребни наружу, (−) борозды внутрь
+        const disp = (nDotR - 0.4) * 0.1;     // (+) гребни наружу, (−) борозды внутрь (умеренно, без «колючести»)
         brainPos[i*3] += nr[i*3]*disp; brainPos[i*3+1] += nr[i*3+1]*disp; brainPos[i*3+2] += nr[i*3+2]*disp;
       } }
     normalize(duck, 2.6);
@@ -595,7 +595,11 @@ function closeBrain() {
   pointerActive = false; pointerStamp = 0;   // «отпускаем палец» на выходе → никакого залипшего касания в точке выхода
   // ЗВУК ВЫХОДА ИЗ ТУННЕЛЯ: нисходящий вихрь + сборка
   sound.playWhoosh(false); sound.playFormation?.(); lenis.start();
+  // класс tunnel-exit держим ПОКА текст улетает вдаль (≈3.2с) — НЕ снимаем при закрытии туннеля (2с),
+  // иначе текст обрывается. Текст 2 страницы появится ТОЛЬКО после снятия класса (когда туннель закрылся).
+  clearTimeout(_exitTimer); _exitTimer = setTimeout(() => document.body.classList.remove('tunnel-exit'), 3200);
 }
+let _exitTimer = 0;
 window.__openBrain = openBrain; window.__closeBrain = closeBrain;   // для проверки в браузере
 // тест-хук: мгновенно выставить прогресс скролла + (опц.) телепорт частиц/камеры в цель,
 // чтобы делать скриншоты УСТОЯВШЕГОСЯ кадра в headless (низкий FPS не успевает сойтись)
@@ -929,7 +933,9 @@ function animate() {
     // чтобы растекание НЕ пропадало, когда при скролле tp немного меняется). Скролл Lenis НЕ блокируем —
     // вертикальный жест по мозгу даёт И листание страницы, И анимацию растекания (оба одновременно).
     const pointerFresh = (performance.now() - pointerStamp) < 140;
-    const touchOn = !brainOpen && pointerActive && pointerFresh && (tp < 0.05 || tp > 0.55) && pk < 0.06;
+    // Касание работает СИММЕТРИЧНО в обе стороны: вверх (tp>0.5) и вниз к Покеру (pk<0.45) — и при скролле
+    // в любую сторону, и горизонтально. Растекание поверх раннего морфа применяется в блоке inTrans ниже.
+    const touchOn = !brainOpen && tunnelBlend < 0.001 && pointerActive && pointerFresh && (tp < 0.05 || tp > 0.5) && pk < 0.45;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -1007,6 +1013,22 @@ function animate() {
         arr[i3 + 2] = tz + (_off.z - tz) * transShape;
         vel[i3] = vel[i3 + 1] = vel[i3 + 2] = 0; disturb[i] = 0;
         glow[i] += (0.18 * transShape - glow[i]) * 0.1;
+        // РАСТЕКАНИЕ ВНИЗ К ПОКЕРУ: пока мозг ещё узнаваем (ранний морф) — палец РАССЫПАЕТ частицы поверх,
+        // чтобы анимация касания работала и при скролле вниз (а не пропадала). Слабеет по мере сборки в карты.
+        if (touchOn && transShape < 0.6) {
+          const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
+          const dsq = dx*dx + dy*dy + dz*dz;
+          if (dsq < radius * radius) {
+            const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
+            const k = fall * fall * force * 1.4 * (1 - transShape / 0.6);
+            arr[i3]   += (scatterDir[i3]   * 0.9 + (dx/dist) * 0.32) * k;
+            arr[i3+1] += (scatterDir[i3+1] * 0.9 + (dy/dist) * 0.32) * k;
+            arr[i3+2] += (scatterDir[i3+2] * 0.9 + (dz/dist) * 0.32) * k;
+            const g = fall * 0.7 * (1 - transShape / 0.6);
+            if (g > glow[i]) glow[i] = g;
+            pushed++; moveSum += k;
+          }
+        }
         continue;
       }
       // КАСАНИЕ «ПАЛЕЦ В ПЕСКЕ» (как igloo): частицы у пальца РАССЫПАЮТСЯ каждая в свою сторону
@@ -1092,8 +1114,8 @@ function animate() {
   const TUNNEL_DUR = 2.0;   // дайв-туннель при клике на мозг быстрее (было 3.0)
   tunnelBlend = THREE.MathUtils.clamp(tunnelBlend + (brainOpen ? 1 : -1) * (dt / TUNNEL_DUR), 0, 1);
   if (!brainOpen && tunnelBlend < 0.01 && particles) particles.rotation.z *= 0.95;
-  // снимаем класс выхода, когда туннель полностью схлопнулся (текст уже улетел, темнота ушла)
-  if (!brainOpen && tunnelBlend < 0.001 && document.body.classList.contains('tunnel-exit')) document.body.classList.remove('tunnel-exit');
+  // класс tunnel-exit снимается ТОЛЬКО по таймеру в closeBrain (когда текст улетел), а не при tunnelBlend≈0,
+  // — иначе текст обрывался (туннель закрывается за 2с, а текст улетает 3.2с).
 
   renderer.render(scene, camera);
 }
