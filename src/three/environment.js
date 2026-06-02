@@ -163,7 +163,7 @@ export class ClubEnvironment {
       this.club.traverse((o) => {
         if (o.isMesh && o.material) {
           const mats = Array.isArray(o.material) ? o.material : [o.material];
-          mats.forEach((m) => { if (m.userData._baseOpacity !== undefined) m.opacity = m.userData._baseOpacity * (0.25 + amount * 0.75); });
+          mats.forEach((m) => { if (m.userData._baseOpacity !== undefined) m.opacity = m.userData._baseOpacity * (0.06 + amount * 0.94); });
         }
       });
     }

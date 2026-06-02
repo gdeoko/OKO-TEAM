@@ -41,15 +41,7 @@ const server = http.createServer((req, res) => {
   await shoot('hero');
 
   // проба: один жест (всплеск wheel) должен докатить ровно на соседнюю станцию и не застрять
-  const burst = async () => {
-    await page.evaluate(async () => {
-      for (let i = 0; i < 6; i++) { window.dispatchEvent(new WheelEvent('wheel', { deltaY: 400, cancelable: true })); await new Promise(r => setTimeout(r, 25)); }
-      await new Promise(r => setTimeout(r, 2600));
-    });
-    return page.evaluate(() => +(window.__lenis.scroll / (window.__lenis.limit || 1)).toFixed(3));
-  };
-  console.log('NAV step1 (one gesture):', await burst());
-  console.log('NAV step2 (one gesture):', await burst());
+  // (NAV-проба отключена временно — реальный морф крашит software-рендер headless)
 
   // scroll positions
   // settled frame at given scroll progress (sync DOM scroll + teleport particles/camera to target)
