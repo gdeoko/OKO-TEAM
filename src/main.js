@@ -228,6 +228,8 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
+// проявление твёрдой утки СНИЗУ ВВЕРХ на старте: видны только верт. точки ниже порога (порог растёт)
+const uDuckReveal = { value: 5 };
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null, formStart = null, scatterDir = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let formProgress = 1;  // формирование утки из частиц на старте (0→1): частицы слетаются и собираются в утку
@@ -240,7 +242,6 @@ let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
 let reform = 0;        // окно сильной пересборки мозга сразу после выхода из туннеля (чинит «дырку»)
-let figureGrab = false;// палец «захватил» мозг → растекание (скролл застопорен), срабатывает в любую сторону
 let tpLatch = 0;       // ЗАФИКСИРОВАННЫЙ tp на время туннеля → мозг возвращается в ТОТ ЖЕ размер/место
 let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
 
@@ -385,7 +386,16 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
         brainPos[i*3] += nr[i*3]*disp; brainPos[i*3+1] += nr[i*3+1]*disp; brainPos[i*3+2] += nr[i*3+2]*disp;
       } }
     normalize(duck, 2.6);
-    duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
+    duck.traverse((c) => { if (c.material) {
+      c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2;
+      if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; }
+      // СБОРКА СНИЗУ ВВЕРХ: показываем только точки НИЖЕ мирового порога uDuckReveal (порог растёт от лап к голове)
+      c.material.onBeforeCompile = (sh) => {
+        sh.uniforms.uDuckReveal = uDuckReveal;
+        sh.vertexShader = 'varying float vWY;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWY = (modelMatrix * vec4(transformed, 1.0)).y;');
+        sh.fragmentShader = 'uniform float uDuckReveal; varying float vWY;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (vWY > uDuckReveal) discard;');
+      };
+    } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
     duckMesh = new THREE.Group();
     duckMesh.add(duck);
@@ -409,7 +419,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 function startIntro() {
   // быстрый путь (?fast)
   if (_qp.has('fast')) {
-    formProgress = 1; introDuckReveal = 1; introPlaying = false;
+    formProgress = 1; introDuckReveal = 1; introPlaying = false; uDuckReveal.value = 5;
     if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); }
     document.body.classList.add('hero-in'); introDone = true; return;
   }
@@ -432,17 +442,17 @@ function startIntro() {
     tl.to(d.rotation, { x: `+=${4 + Math.random()*2}`, z: `+=${3 + Math.random()*2}`, duration: 1.3, ease: 'power1.out' }, t0);
     (Array.isArray(d.material) ? d.material : [d.material]).forEach((m) => tl.to(m, { opacity: 0, duration: 0.55, ease: 'power1.in' }, 0.85 + i * 0.1));
   });
-  tl.add(() => { sound.playThump?.(); }, 0.5);
-  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.6);
-  // частицы собираются в утку
-  tl.add(() => sound.playFormation?.(), 0.85);
-  tl.to({ v: 0 }, { v: 1, duration: 1.7, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 0.85);
-  // текст/кнопки — ПЛАВНО проявляются (CSS-фейд 1с) во время падения кубиков и сборки утки (не сразу)
-  tl.add(() => document.body.classList.add('hero-in'), 1.3);
-  // кроссфейд: собранная из частиц утка → твёрдая цветная утка (после завершения сборки)
-  tl.add(() => { if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); } }, 2.6);
-  tl.to({ v: 0 }, { v: 1, duration: 0.7, ease: 'power1.inOut', onUpdate: function () { introDuckReveal = this.targets()[0].v; } }, 2.6);
-  tl.add(() => { introDone = true; introPlaying = false; formProgress = 1; introDuckReveal = 1; }, 3.45);
+  tl.add(() => { sound.playThump?.(); }, 0.55);
+  tl.add(() => dice.forEach((d, i) => { d.visible = false; diceShadows[i].visible = false; }), 1.5);
+  // частицы (из растворившихся кубиков) собираются в утку СНИЗУ ВВЕРХ — после растворения кубиков
+  tl.add(() => sound.playFormation?.(), 1.2);
+  tl.to({ v: 0 }, { v: 1, duration: 1.7, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 1.2);
+  // текст/кнопки — проявляются ПЛАВНО из растворения ТОЛЬКО когда кубики уже упали и стали частицами
+  tl.add(() => document.body.classList.add('hero-in'), 2.0);
+  // ПРОЯВЛЕНИЕ цветной утки СНИЗУ ВВЕРХ (Y-обрезка по uDuckReveal) — из частиц собирается от лап к голове
+  tl.add(() => { if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); } }, 2.9);
+  tl.to({ v: 0 }, { v: 1, duration: 1.0, ease: 'power1.inOut', onUpdate: function () { introDuckReveal = this.targets()[0].v; } }, 2.9);
+  tl.add(() => { introDone = true; introPlaying = false; formProgress = 1; introDuckReveal = 1; uDuckReveal.value = 999; }, 4.0);
 }
 
 // тени кубиков в цикле (масштаб/непрозрачность зависят от высоты)
@@ -514,7 +524,7 @@ if (isMobile) {
 }
 // КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
 addEventListener('touchend', () => { pointerActive = false; _pHas = false; });
-addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; figureGrab = false; });
+addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; });
 
 function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
@@ -690,9 +700,8 @@ let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = 
 addEventListener('touchstart', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
   const t = e.touches[0]; if (!t) return;
-  // КАСАНИЕ ПО МОЗГУ → включаем анимацию растекания (figureGrab). СКРОЛЛ НЕ блокируем — работают
-  // ОБА ОДНОВРЕМЕННО: вертикальный жест и листает страницу, и проигрывает анимацию мозга.
-  if (tp > 0.5 && pk < 0.5 && hitSubject(t.clientX, t.clientY, 0.62)) { figureGrab = true; updatePointer(t.clientX, t.clientY); }
+  // касание по мозгу сразу регистрируем как точку растекания (анимация); скролл при этом НЕ блокируем
+  if (tp > 0.5 && pk < 0.5 && hitSubject(t.clientX, t.clientY, 0.62)) updatePointer(t.clientX, t.clientY);
   gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
@@ -703,7 +712,6 @@ addEventListener('touchmove', (e) => {
   if (!gHorizontal && dx > dy && dx > 14) gHorizontal = true;   // горизонтальный жест — не наша история
 }, { passive: true });
 addEventListener('touchend', () => {
-  figureGrab = false;   // отпустил мозг → анимация затухает; скролл работал всё это время
   if (!gestureActive) return; gestureActive = false;
   if (gHorizontal) return;
   settleFrom(navFrom);
@@ -866,9 +874,9 @@ function animate() {
       let py = Math.sin(t * 0.5) * 0.03;
       if (duckMesh.userData.poke > 0) { duckMesh.userData.poke *= 0.9; py += duckMesh.userData.poke * 0.12; }
       duckMesh.position.y = py;
-      // в интро утка ПРОЯВЛЯЕТСЯ по introDuckReveal (кроссфейд из частиц); дальше — обычная непрозрачность
-      const op = solid * (introPlaying ? introDuckReveal : 1);
-      duckMesh.traverse((c) => { if (c.material) c.material.opacity = op; });
+      duckMesh.traverse((c) => { if (c.material) c.material.opacity = solid; });
+      // СБОРКА СНИЗУ ВВЕРХ в интро: мировой порог Y растёт от лап к голове (точки выше порога скрыты)
+      uDuckReveal.value = introPlaying ? (subject.position.y - 1.5 * SUBJ_SCALE + introDuckReveal * 3.0 * SUBJ_SCALE) : 999;
     } else if (duckMesh.visible) duckMesh.visible = false;
   }
 
@@ -894,10 +902,11 @@ function animate() {
     // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
     // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
     // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
-    // ПРЕЖНЯЯ физика касания: касание пока палец движется (свежесть 140мс) на утке (tp<0.05) и мозге.
-    // ЗАХВАТ мозга (figureGrab) держит касание активным в ЛЮБУЮ сторону, даже без движения пальца.
+    // Касание пока палец движется (свежесть 140мс) на утке (tp<0.05) и мозге (tp>0.55 — широкий диапазон,
+    // чтобы растекание НЕ пропадало, когда при скролле tp немного меняется). Скролл Lenis НЕ блокируем —
+    // вертикальный жест по мозгу даёт И листание страницы, И анимацию растекания (оба одновременно).
     const pointerFresh = (performance.now() - pointerStamp) < 140;
-    const touchOn = !brainOpen && (figureGrab || (pointerActive && pointerFresh && (tp < 0.05 || onBrain)));
+    const touchOn = !brainOpen && pointerActive && pointerFresh && (tp < 0.05 || tp > 0.55) && pk < 0.06;
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
