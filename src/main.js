@@ -10,6 +10,9 @@ import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
+// Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
+console.log('%c DUCK\'S build v38 — интро снизу-вверх + скролл-фикс ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
 
@@ -535,6 +538,7 @@ function hitSubject(x, y, r = 0.32) {
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
   if (document.body.classList.contains('signup-open')) return;   // клики внутри анкеты не трогают сцену
+  if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
   else if (pk > 0.12) {
@@ -696,13 +700,13 @@ function settleFrom(fromStation) {
 window.__goToStation = goToStation;   // для проверки в браузере
 
 // --- жест: палец ---
-let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = false;
+let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = false, _dragged = false;
 addEventListener('touchstart', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
   const t = e.touches[0]; if (!t) return;
   // касание по мозгу сразу регистрируем как точку растекания (анимация); скролл при этом НЕ блокируем
   if (tp > 0.5 && pk < 0.5 && hitSubject(t.clientX, t.clientY, 0.62)) updatePointer(t.clientX, t.clientY);
-  gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false;
+  gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false; _dragged = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
 addEventListener('touchmove', (e) => {
@@ -710,6 +714,7 @@ addEventListener('touchmove', (e) => {
   const t = e.touches[0]; if (!t) return;
   const dx = Math.abs(t.clientX - gTouchX), dy = Math.abs(t.clientY - gTouchY);
   if (!gHorizontal && dx > dy && dx > 14) gHorizontal = true;   // горизонтальный жест — не наша история
+  if (dx > 8 || dy > 8) _dragged = true;                        // палец двигался (скролл/драг) → это НЕ клик
 }, { passive: true });
 addEventListener('touchend', () => {
   if (!gestureActive) return; gestureActive = false;
