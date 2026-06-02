@@ -213,6 +213,8 @@ const duckRim = new THREE.PointLight(0xff44aa, 14, 16); duckRim.position.set(-3,
 const duckFill = new THREE.PointLight(0x88ccff, 16, 18); duckFill.position.set(0, 0.5, 6); subject.add(duckFill);
 
 let duckMesh = null, particles = null;
+// «дыра» в твёрдой утке в точке касания (мировые координаты) → там проступают частицы (локальный распад)
+const uDuckTouchP = { value: new THREE.Vector3(0, -999, 0) }, uDuckTouchR = { value: 0 };
 let duckPos = null, brainPos = null, explodePos = null, tunnelPos = null, vel = null, delays = null, glow = null, disturb = null, cardSlot = null, formStart = null;
 let tp = 0;            // transition progress 0..1 (равномерный распад)
 let formProgress = 1;  // (формирование утки из частиц отключено — утка снова твёрдая GLB на старте)
@@ -236,7 +238,7 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // RETURN_SHAPE — как держится форма (для морфа), RETURN_TOUCH — мягкий возврат после касания.
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
-const HOVER_RADIUS = 1.4, HOVER_FORCE = 0.07;   // сильнее раздвигание (заметная физика касания)
+const HOVER_RADIUS = 1.7, HOVER_FORCE = 0.11;   // сильное, ЗАМЕТНОЕ раздвигание частиц от пальца
 let touchPulse = 0;   // импульс касания: тап даёт «вспышку» даже без движения пальца
 const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;
 
@@ -322,7 +324,7 @@ function buildParticles() {
         // ледяные трёхцветные частицы
         vec3 col = vColor * vSh * shade;
         col += vec3(0.08,0.12,0.20) * 0.22;                  // лёгкое ледяное самосвечение
-        col += vec3(0.55,0.8,1.0) * vGlow * 1.15;            // ЯРКОЕ свечение касания
+        col += vec3(0.6,0.85,1.1) * vGlow * 1.7;             // ОЧЕНЬ яркое свечение касания (заметный эффект)
         // прозрачность: фигура целиком (uOpacity) ИЛИ ЛОКАЛЬНО тронутые частицы (vGlow) — для
         // распада утки в месте касания, когда сама фигура ещё скрыта (твёрдая утка сверху).
         float aBase = a * uOpacity * (0.4 + 0.6*vFade);
@@ -355,7 +357,16 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     brainPos = sampleModel(brain, PCOUNT);
     sculptBrain(brainPos);   // углубляем продольную борозду → форма мозга (две доли) читается
     normalize(duck, 2.6);
-    duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
+    duck.traverse((c) => { if (c.material) {
+      c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2;
+      if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; }
+      // ЛОКАЛЬНЫЙ РАСПАД: «продавливаем дыру» в меше у точки касания → сквозь неё видны частицы
+      c.material.onBeforeCompile = (sh) => {
+        sh.uniforms.uTouchP = uDuckTouchP; sh.uniforms.uTouchR = uDuckTouchR;
+        sh.vertexShader = 'varying vec3 vWP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+        sh.fragmentShader = 'uniform vec3 uTouchP; uniform float uTouchR; varying vec3 vWP;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (uTouchR > 0.001 && distance(vWP, uTouchP) < uTouchR) discard;');
+      };
+    } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
     duckMesh = new THREE.Group();
     duckMesh.add(duck);
@@ -828,7 +839,11 @@ function animate() {
       duckMesh.rotation.z = 0;
       duckMesh.position.y = Math.sin(t * 0.5) * 0.03;
       duckMesh.traverse((c) => { if (c.material) c.material.opacity = solid; });
-    } else if (duckMesh.visible) duckMesh.visible = false;
+      // ДЫРА РАСПАДА: пока трогаешь утку — продавливаем меш у точки касания (там видны частицы)
+      const duckTouching = (pointerActive && (performance.now() - pointerStamp) < 260 || touchPulse > 0.02) && tp < 0.12 && !brainOpen;
+      if (duckTouching) { uDuckTouchP.value.copy(_hitWorld); uDuckTouchR.value += (0.5 * SUBJ_SCALE - uDuckTouchR.value) * 0.45; }
+      else { uDuckTouchR.value *= 0.86; }   // отпустил → дыра «зарастает», утка снова целая
+    } else if (duckMesh.visible) { duckMesh.visible = false; uDuckTouchR.value = 0; }
   }
 
   // ЧАСТИЦЫ: непрерывный РАВНОМЕРНЫЙ распад утка→взрыв→мозг по tp
@@ -852,13 +867,13 @@ function animate() {
     // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
     // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
     // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
-    const pointerFresh = (performance.now() - pointerStamp) < 220;
     // фигура доступна для касания: утка (tp<0.15) и мозг (tp>0.6), в любую сторону (горизонталь тоже);
     // не в дайв-туннеле/Покере. Окно по pk шире — касание ловится и в начале перехода 2→3.
     const figureTouchable = (tp < 0.15 || tp > 0.6) && tunnelBlend < 0.001 && pk < 0.12 && !brainOpen;
-    // касание срабатывает на ДВИЖЕНИЕ пальца И на ТАП (touchPulse) — поэтому реагирует на любое касание
-    const touchOn = figureTouchable && ((pointerActive && pointerFresh) || touchPulse > 0.02);
-    touchPulse *= 0.9;   // импульс тапа плавно гаснет (~0.5с)
+    // касание активно ПОКА ПАЛЕЦ ПРИЖАТ (pointerActive сбрасывается на touchend/up) ИЛИ короткий тап
+    // (touchPulse). Без требования «свежести» — держишь палец = частицы реагируют (не гаснет за 0.2с).
+    const touchOn = figureTouchable && (pointerActive || touchPulse > 0.02);
+    touchPulse *= 0.92;   // импульс тапа плавно гаснет (~0.6с)
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -995,7 +1010,10 @@ function animate() {
     // тот же край) — иначе «повёрнут иначе» читается как рыхлость/дырка.
     if (onBrain && tunnelBlend < 0.001) brainYaw += 0.010;
     particles.rotation.z = 0;
-    particles.rotation.y = brainYaw;  // НИКАКОГО рывка/доворота на входе-выходе: труба заранее повёрнута на -brainYaw
+    // на стадии утки (tp≈0) поворачиваем облако ПОД твёрдую утку (DUCK_FACE) → частицы совпадают с
+    // уткой, локальный распад точно в месте касания; к мозгу плавно раскручиваем к brainYaw.
+    const _da = ((DUCK_FACE + Math.PI) % (Math.PI * 2)) - Math.PI;   // DUCK_FACE в диапазоне [-π,π] (короткий доворот)
+    particles.rotation.y = brainYaw + _da * (1 - THREE.MathUtils.clamp(tp / 0.18, 0, 1));
     // МАСШТАБ: поза мозга по ЗАФИКСИРОВАННОМУ tp (tpEffS), плавно → масштаб трубы (1) по tb.
     // Значит на выходе (tb→0) масштаб возвращается ТОЧНО к доходному размеру мозга — без «уехал крупнее».
     const tpEffS = tunnelBlend > 0.001 ? tpLatch : tp;

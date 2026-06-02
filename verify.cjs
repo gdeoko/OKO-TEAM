@@ -64,8 +64,8 @@ const server = http.createServer((req, res) => {
   const touchGlow = await page.evaluate(async () => {
     const cx = window.innerWidth / 2, cy = window.innerHeight * 0.45;
     window.dispatchEvent(new MouseEvent('mousedown', { clientX: cx, clientY: cy, bubbles: true }));
-    for (let i = 0; i < 10; i++) { window.dispatchEvent(new MouseEvent('mousemove', { clientX: cx + Math.cos(i) * 70, clientY: cy + Math.sin(i) * 70, bubbles: true })); await new Promise(r => setTimeout(r, 35)); }
-    let m = 0; const a = window.__scene && window.__glowArr && window.__glowArr(); if (a) for (let i = 0; i < a.length; i++) if (a[i] > m) m = a[i];
+    for (let i = 0; i < 3; i++) { window.dispatchEvent(new MouseEvent('mousemove', { clientX: cx + i * 18, clientY: cy + i * 12, bubbles: true })); await new Promise(r => setTimeout(r, 20)); }
+    let m = 0; const a = window.__glowArr && window.__glowArr(); if (a) for (let i = 0; i < a.length; i++) if (a[i] > m) m = a[i];
     return +m.toFixed(3);
   });
   console.log('TOUCH max glow on brain:', touchGlow);   // >0 = касание работает (есть свечение)
