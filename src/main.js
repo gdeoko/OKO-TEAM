@@ -76,9 +76,9 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // ОБОЛОЧКА ПО ПОВЕРХНОСТИ (как в 1-2 сессии): частицы в тонком слое у поверхности → видна
-    // НАСТОЯЩАЯ форма мозга (две доли + борозда посередине), а не залитый шар.
-    const f = 0.8 + 0.2 * Math.cbrt(Math.random());
+    // 100% ОБЪЁМНОЕ ЗАПОЛНЕНИЕ: мозг забит частицами целиком (не оболочка) → касание ощущается как
+    // ПЕСОК, а не надувающийся пузырь с пустотой внутри. Форму держат пинч-борозда + извилины + тени.
+    const f = Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
@@ -103,7 +103,7 @@ function sculptBrain(P) {
     x *= s; y *= s; z *= s;
     // ИЗВИЛИНЫ (гиры/борозды): смещение по радиали органическим 3D-шумом → морщинистая поверхность мозга
     const len = Math.sqrt(x*x + y*y + z*z) + 1e-4;
-    const bump = gyriN(x, y, z) * 0.07;
+    const bump = gyriN(x, y, z) * 0.12;   // более выраженные извилины (гиры/борозды)
     P[i*3] = x + (x/len)*bump; P[i*3+1] = y + (y/len)*bump; P[i*3+2] = z + (z/len)*bump;
   }
   P.__M = M; P.__wM = wM;   // сохраняем для окраски борозды
@@ -233,6 +233,7 @@ let camYaw = 0;        // поворот камеры вправо к бару
 let flowZ = 0;         // фаза непрерывного потока частиц в туннеле
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
 let reform = 0;        // окно сильной пересборки мозга сразу после выхода из туннеля (чинит «дырку»)
+let figureGrab = false;// палец «захватил» мозг → растекание (скролл застопорен), срабатывает в любую сторону
 let tpLatch = 0;       // ЗАФИКСИРОВАННЫЙ tp на время туннеля → мозг возвращается в ТОТ ЖЕ размер/место
 let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
 
@@ -247,7 +248,7 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
 const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания (как было — не трогаем)
-const RETURN_SHAPE = 0.075, RETURN_TOUCH = 0.02, TOUCH_DAMP = 0.80;
+const RETURN_SHAPE = 0.06, RETURN_TOUCH = 0.012, TOUCH_DAMP = 0.86;   // возврат МЕДЛЕННЕЕ и ПЛАВНЕЕ (песок, не пузырь)
 
 function buildParticles() {
   const N = PCOUNT;
@@ -285,16 +286,16 @@ function buildParticles() {
     formStart[i*3+1] = duckPos[i*3+1] + 3.2 + Math.random() * 3.5;
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
     // ЛЕДЯНЫЕ голубовато-белые частицы (как в 1-2 сессии) + редкие тёплые искры
-    const s = 0.8 + Math.random() * 0.2, w = Math.random();
-    // ТЕНЬ в продольной борозде: частицы у срединной плоскости темнее → видна щель между полушариями
+    const s = 0.8 + Math.random() * 0.22, w = Math.random();
     const Ma = brainPos.__M ?? 0, wMa = brainPos.__wM || 1;
     const mc = brainPos[i*3 + Ma];
-    // тень в продольной борозде + тени в бороздах извилин (валли темнее гребней) → форма мозга читается
     const gv = gyriN(brainPos[i*3], brainPos[i*3+1], brainPos[i*3+2]);
-    const fold = 0.66 + 0.34 * THREE.MathUtils.smoothstep(gv, -1.1, 0.7);
-    const dk = (1 - Math.exp(-(mc*mc) / (wMa*wMa)) * 0.5) * fold;   // борозды (продольная + извилины) темнее
-    if (w < 0.08) { colors[i*3]=s*1.08*dk; colors[i*3+1]=s*0.95*dk; colors[i*3+2]=s*0.82*dk; }   // редкая тёплая искра
-    else { colors[i*3]=s*0.86*dk; colors[i*3+1]=s*0.98*dk; colors[i*3+2]=s*1.14*dk; }            // основной ледяной голубовато-белый
+    const ridge = THREE.MathUtils.smoothstep(gv, -0.3, 1.0);        // 0 — в борозде, 1 — на гребне извилины
+    const fis = Math.exp(-(mc*mc) / (wMa*wMa));                     // продольная борозда между полушариями
+    const dk = (1 - fis * 0.55) * (0.58 + 0.42 * ridge);           // борозды (продольная + извилины) ТЕМНЕЕ
+    const gt = 0.14 * ridge * (1 - fis);                           // гребни слегка СВЕТЯТСЯ (контур формы)
+    if (w < 0.07) { colors[i*3]=s*1.08*dk; colors[i*3+1]=s*0.95*dk; colors[i*3+2]=s*0.82*dk; }   // редкая тёплая искра
+    else { colors[i*3]=s*0.86*dk + gt*0.5; colors[i*3+1]=s*0.98*dk + gt*0.8; colors[i*3+2]=s*1.14*dk + gt; }  // ледяной + подсветка гребней
     sizes[i] = 0.036 + Math.random() * 0.032;  // зерно
     glow[i] = 0;
   }
@@ -331,6 +332,7 @@ function buildParticles() {
         float a = smoothstep(0.5, 0.28, d);
         float shade = 0.58 + 0.42 * (-uv.y + 0.5);
         vec3 col = vColor * vSh * shade + vec3(0.40,0.6,1.0) * vGlow * 0.55;   // прежнее мягкое свечение касания
+        col += vec3(0.16,0.30,0.50) * 0.11;                                    // постоянное лёгкое ледяное свечение (как в 1 сессии)
         gl_FragColor = vec4(col, a * uOpacity * (0.35 + 0.65*vFade)); }`,
     vertexColors: true, transparent: true, blending: THREE.NormalBlending, depthWrite: true, depthTest: true,
   });
@@ -485,7 +487,7 @@ if (isMobile) {
 }
 // КРИТИЧНО: на телефоне сбрасываем указатель после касания, иначе звук частиц звучит постоянно
 addEventListener('touchend', () => { pointerActive = false; _pHas = false; });
-addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; });
+addEventListener('touchcancel', () => { pointerActive = false; _pHas = false; if (figureGrab) { figureGrab = false; lenis.start(); } });
 
 function hitSubject(x, y, r = 0.32) {
   pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
@@ -661,6 +663,11 @@ let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = 
 addEventListener('touchstart', (e) => {
   if (document.body.classList.contains('signup-open') || brainOpen) return;
   const t = e.touches[0]; if (!t) return;
+  // КАСАНИЕ ПО МОЗГУ → ЗАХВАТ для растекания: стопим скролл (Lenis), жест = касание (в ЛЮБУЮ сторону),
+  // а не прокрутка. Поэтому растекание мозга срабатывает всегда, когда палец на мозге.
+  if (tp > 0.5 && pk < 0.5 && hitSubject(t.clientX, t.clientY, 0.62)) {
+    figureGrab = true; lenis.stop(); updatePointer(t.clientX, t.clientY); return;
+  }
   gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
@@ -671,6 +678,7 @@ addEventListener('touchmove', (e) => {
   if (!gHorizontal && dx > dy && dx > 14) gHorizontal = true;   // горизонтальный жест — не наша история
 }, { passive: true });
 addEventListener('touchend', () => {
+  if (figureGrab) { figureGrab = false; lenis.start(); pointerActive = false; _pHas = false; return; }   // отпустил мозг → скролл снова доступен
   if (!gestureActive) return; gestureActive = false;
   if (gHorizontal) return;
   settleFrom(navFrom);
@@ -858,10 +866,10 @@ function animate() {
     // касание действует ТОЛЬКО пока палец реально движется (последние 140мс). Если указатель замер
     // (или событие touchend/mouseleave не пришло — частая причина «залипшего клика»), касание само
     // отпускается → частицы в той точке НЕ раздвигаются вечно, дырка не «висит» до повторного касания.
-    // ПРЕЖНЯЯ физика касания (как было — отлично работала): касание пока палец движется (свежесть 140мс),
-    // на утке (tp<0.05) и мозге (onBrain). На выходе из тоннеля/в Покере — выключено.
+    // ПРЕЖНЯЯ физика касания: касание пока палец движется (свежесть 140мс) на утке (tp<0.05) и мозге.
+    // ЗАХВАТ мозга (figureGrab) держит касание активным в ЛЮБУЮ сторону, даже без движения пальца.
     const pointerFresh = (performance.now() - pointerStamp) < 140;
-    const touchOn = pointerActive && pointerFresh && (tp < 0.05 || onBrain) && !brainOpen;
+    const touchOn = !brainOpen && (figureGrab || (pointerActive && pointerFresh && (tp < 0.05 || onBrain)));
     // труба заранее повёрнута на -brainYaw: после вращения объекта (rotation.y=brainYaw) она
     // выходит РОВНО по оси Z (прямо на зрителя) при ЛЮБОМ угле мозга → без рывка/доворота
     const _cy = Math.cos(brainYaw), _sy = Math.sin(brainYaw);
@@ -972,9 +980,9 @@ function animate() {
       // собирается целиком, без «дырки»; в обычном состоянии — мягкое удержание формы.
       const ease = reform > 0.01 ? 0.38 : (RETURN_SHAPE - (RETURN_SHAPE - RETURN_TOUCH) * disturb[i]);
       arr[i3] += (tx - arr[i3]) * ease; arr[i3+1] += (ty - arr[i3+1]) * ease; arr[i3+2] += (tz - arr[i3+2]) * ease;
-      // палец активно водит → гаснет мягко (×0.972); отпущен/замер → гаснет БЫСТРО (×0.82),
-      // чтобы вмятина от касания НЕ «висела» секундами (исток «залипшей дырки»).
-      disturb[i] *= touchOn ? 0.972 : 0.82;
+      // палец водит → держим (×0.978); отпущен → гаснет ПЛАВНО (×0.91) → след стекается как песок,
+      // мягко и небыстро (не резкий «схлоп» формы).
+      disturb[i] *= touchOn ? 0.978 : 0.91;
       // СВЕТ ВНУТРИ частиц: тронутые ЯРКО светятся (заметный эффект касания), пока стекаются обратно
       const sp = Math.abs(vel[i3]) + Math.abs(vel[i3+1]) + Math.abs(vel[i3+2]);
       const g = Math.max(Math.min(sp * 7, 0.6), disturb[i] * 0.75);
@@ -998,7 +1006,10 @@ function animate() {
     // тот же край) — иначе «повёрнут иначе» читается как рыхлость/дырка.
     if (onBrain && tunnelBlend < 0.001) brainYaw += 0.010;
     particles.rotation.z = 0;
-    particles.rotation.y = brainYaw;
+    // на стадии утки частицы повёрнуты ПОД твёрдую утку (DUCK_FACE) → при распаде по скроллу облако
+    // совпадает с уткой по форме/размеру; к мозгу плавно раскручиваем к brainYaw.
+    const _da = ((DUCK_FACE + Math.PI) % (Math.PI * 2)) - Math.PI;   // DUCK_FACE в [-π,π] (короткий доворот)
+    particles.rotation.y = brainYaw + _da * (1 - THREE.MathUtils.clamp(tp / 0.32, 0, 1));
     // МАСШТАБ: поза мозга по ЗАФИКСИРОВАННОМУ tp (tpEffS), плавно → масштаб трубы (1) по tb.
     // Значит на выходе (tb→0) масштаб возвращается ТОЧНО к доходному размеру мозга — без «уехал крупнее».
     const tpEffS = tunnelBlend > 0.001 ? tpLatch : tp;
