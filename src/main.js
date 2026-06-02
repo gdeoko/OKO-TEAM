@@ -11,7 +11,7 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v40 — касание всегда + idle-оптимизация ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v41 — касание двигает частицы 2-3 + мозг-оболочка ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -42,7 +42,7 @@ const sound = new SoundSystem();
 // ============================================================
 // Сэмплирование GLB → точки + заполнение ОБЪЁМА
 // ============================================================
-function sampleModel(scene, count) {
+function sampleModel(scene, count, shellMin = 0) {
   const ax = [], ay = [], az = [], bx = [], by = [], bz = [], cx = [], cy = [], cz = [];
   const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
   const e1 = new THREE.Vector3(), e2 = new THREE.Vector3();
@@ -83,9 +83,9 @@ function sampleModel(scene, count) {
   const scale = 2.6 / Math.max(maxX-minX, maxY-minY, maxZ-minZ);
   for (let i = 0; i < count; i++) {
     let x = (arr[i*3]-cX)*scale, y = (arr[i*3+1]-cY)*scale, z = (arr[i*3+2]-cZ)*scale;
-    // ПОЛНОЕ заполнение — касание как песок; а РЕЛЬЕФ (извилины/борозды) проявит затенение впадин
-    // по эллипсоидальному радиусу в buildParticles (гребни ярче, борозды темнее).
-    const f = Math.cbrt(Math.random());
+    // shellMin=0 → полное заполнение (утка); shellMin≈0.9 → ТОЛЬКО ПОВЕРХНОСТЬ (мозг — оболочка по
+    // форме, без заливки, видны извилины/борозды/силуэт как на референсе).
+    const f = shellMin + (1 - shellMin) * Math.cbrt(Math.random());
     x *= f; y *= f; z *= f;
     arr[i*3] = x; arr[i*3+1] = y; arr[i*3+2] = z;
   }
@@ -139,6 +139,7 @@ camera.position.set(0, 0.3, 9);
 // отладка камеры/сцены из консоли и для проверки в браузере
 window.__scene = scene; window.__camera = camera;
 window.__glowArr = () => glow;   // для headless-замера свечения от касания
+window.__velMax = () => { let m = 0; if (vel) for (let i = 0; i < vel.length; i++) { const v = Math.abs(vel[i]); if (v > m) m = v; } return +m.toFixed(4); };   // макс смещение/скорость = ДВИЖЕНИЕ частиц
 // хуки проверки интро/скролла (headless): реальные значения состояния
 window.__introState = () => ({
   fp: +formProgress.toFixed(3), dr: +introDuckReveal.toFixed(3), playing: introPlaying,
@@ -272,7 +273,7 @@ let pointerStamp = 0;   // время последнего РЕАЛЬНОГО д
 // касание как «палец в песке»: мягко РАЗДВИГАЕТ частицы вокруг пальца (шире), они светятся внутри,
 // потом БЕЗ ПРУЖИНЫ плавно стягиваются обратно (экспоненциальное оседание, не отскок).
 const HOVER_RADIUS = 1.25, HOVER_FORCE = 0.035;   // мягкая сила раздвигания (как было — не трогаем)
-const RETURN_SHAPE = 0.06, RETURN_TOUCH = 0.012, TOUCH_DAMP = 0.86;   // возврат МЕДЛЕННЕЕ и ПЛАВНЕЕ (песок, не пузырь)
+const RETURN_SHAPE = 0.045, RETURN_TOUCH = 0.007, TOUCH_DAMP = 0.91;   // возврат МЕДЛЕННЫЙ и ПЛАВНЫЙ, частицы дольше «текут»
 
 function buildParticles() {
   const N = PCOUNT;
@@ -392,7 +393,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
   .then(([duck, brain]) => {
     clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
-    brainPos = sampleModel(brain, PCOUNT);   // brain.glb детальный (413k tri). Стоит РОВНО (без наклона).
+    brainPos = sampleModel(brain, PCOUNT, 0.9);   // МОЗГ — только ПОВЕРХНОСТЬ (оболочка по форме, без заливки).
     // УСИЛИВАЕМ РЕЛЬЕФ: гребни извилин выдвигаем наружу по нормали, борозды/стенки утапливаем внутрь →
     // бугристый силуэт, форма мозга читается с ЛЮБОГО угла (а не только спереди).
     { const nr = brainPos.__nrm;
@@ -1029,41 +1030,43 @@ function animate() {
         // локальная точка карты: X = u (ширина), Z = v (высота), Y чуть над лицом
         _off.set(cardSlot[i3], 0.015, cardSlot[i3 + 1]);
         _off.applyMatrix4(_cardMats[cardSlot[i3 + 2] | 0]).applyMatrix4(_invP);   // карта→мир→локаль частиц
-        arr[i3]     = tx + (_off.x - tx) * transShape;
-        arr[i3 + 1] = ty + (_off.y - ty) * transShape;
-        arr[i3 + 2] = tz + (_off.z - tz) * transShape;
-        vel[i3] = vel[i3 + 1] = vel[i3 + 2] = 0; disturb[i] = 0;
-        glow[i] += (0.18 * transShape - glow[i]) * 0.1;
-        // РАСТЕКАНИЕ ВНИЗ К ПОКЕРУ: пока мозг ещё узнаваем (ранний морф) — палец РАССЫПАЕТ частицы поверх,
-        // чтобы анимация касания работала и при скролле вниз (а не пропадала). Слабеет по мере сборки в карты.
-        if (touchOn && transShape < 0.6) {
-          const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
+        const mx = tx + (_off.x - tx) * transShape;   // БАЗОВАЯ позиция морфа (мозг→карта)
+        const my = ty + (_off.y - ty) * transShape;
+        const mz = tz + (_off.z - tz) * transShape;
+        // ПЕРСИСТЕНТНОЕ РАСТЕКАНИЕ ВНИЗ К ПОКЕРУ: vel хранит СМЕЩЕНИЕ касания (копится от пальца, ПЛАВНО
+        // затухает) → частицы РЕАЛЬНО ДВИГАЮТСЯ поверх морфа и медленно возвращаются (а не сброс каждый кадр).
+        if (touchOn && transShape < 0.75) {
+          const dx = mx - pointer3D.x, dy = my - pointer3D.y, dz = mz - pointer3D.z;
           const dsq = dx*dx + dy*dy + dz*dz;
           if (dsq < radius * radius) {
             const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-            const k = fall * fall * force * 1.4 * (1 - transShape / 0.6);
-            arr[i3]   += (scatterDir[i3]   * 0.9 + (dx/dist) * 0.32) * k;
-            arr[i3+1] += (scatterDir[i3+1] * 0.9 + (dy/dist) * 0.32) * k;
-            arr[i3+2] += (scatterDir[i3+2] * 0.9 + (dz/dist) * 0.32) * k;
-            const g = fall * 0.7 * (1 - transShape / 0.6);
-            if (g > glow[i]) glow[i] = g;
+            const k = fall * fall * force * 1.7;
+            vel[i3]   += ((dx/dist) * 0.7 + scatterDir[i3]   * 0.5) * k;
+            vel[i3+1] += ((dy/dist) * 0.7 + scatterDir[i3+1] * 0.5) * k;
+            vel[i3+2] += ((dz/dist) * 0.7 + scatterDir[i3+2] * 0.5) * k;
+            if (fall > disturb[i]) disturb[i] = fall;
             pushed++; moveSum += k;
           }
         }
+        vel[i3] *= 0.94; vel[i3+1] *= 0.94; vel[i3+2] *= 0.94;   // плавный медленный возврат смещения
+        arr[i3] = mx + vel[i3]; arr[i3+1] = my + vel[i3+1]; arr[i3+2] = mz + vel[i3+2];
+        disturb[i] *= 0.95;
+        const gB = Math.max(0.18 * transShape, disturb[i] * 0.75);
+        glow[i] += (gB - glow[i]) * 0.2;
+        if (glow[i] > _glowMax) _glowMax = glow[i];
         continue;
       }
-      // КАСАНИЕ «ПАЛЕЦ В ПЕСКЕ» (как igloo): частицы у пальца РАССЫПАЮТСЯ каждая в свою сторону
-      // (scatterDir доминирует) + лёгкий выброс ОТ пальца; мягкий спад fall² → НЕТ кольца/пузыря,
-      // а магическое осыпание. Подсвечиваются и плавно стекаются обратно.
+      // КАСАНИЕ «ПАЛЕЦ В ВОДЕ/ПЕСКЕ»: частицы у пальца ПЛАВНО ТЕКУТ от него (радиальный поток) + лёгкий
+      // разброс; копят скорость (vel) → реально ДВИГАЮТСЯ и МЕДЛЕННО возвращаются (без жёсткого кольца).
       if (touchOn) {
         const dx = arr[i3] - pointer3D.x, dy = arr[i3+1] - pointer3D.y, dz = arr[i3+2] - pointer3D.z;
         const dsq = dx*dx + dy*dy + dz*dz;
         if (dsq < radius * radius) {
           const dist = Math.sqrt(dsq) + 0.001, fall = 1 - dist / radius;
-          const k = fall * fall * force * 1.6;          // мягкий спад к краю → без жёсткого кольца
-          vel[i3]   += (scatterDir[i3]   * 0.9 + (dx/dist) * 0.32) * k;
-          vel[i3+1] += (scatterDir[i3+1] * 0.9 + (dy/dist) * 0.32) * k;
-          vel[i3+2] += (scatterDir[i3+2] * 0.9 + (dz/dist) * 0.32) * k;
+          const k = fall * fall * force * 2.0;          // больше движения, мягкий спад к краю
+          vel[i3]   += ((dx/dist) * 0.7 + scatterDir[i3]   * 0.45) * k;
+          vel[i3+1] += ((dy/dist) * 0.7 + scatterDir[i3+1] * 0.45) * k;
+          vel[i3+2] += ((dz/dist) * 0.7 + scatterDir[i3+2] * 0.45) * k;
           if (fall > disturb[i]) disturb[i] = fall;     // свет внутри + долгий мягкий возврат
           pushed++; moveSum += k;
         }
