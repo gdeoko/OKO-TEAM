@@ -84,6 +84,26 @@ function sampleModel(scene, count) {
   }
   return arr;
 }
+// Подчёркиваем форму мозга: пинч срединной плоскости → продольная борозда (две доли).
+// Ось «лево-право» = СРЕДНЯЯ по габаритам (у мозга длина>ширина>высота), борозда в плоскости этой оси.
+function sculptBrain(P) {
+  const n = P.length / 3;
+  const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+  for (let i = 0; i < n; i++) for (let a = 0; a < 3; a++) { const v = P[i*3+a]; if (v < mn[a]) mn[a] = v; if (v > mx[a]) mx[a] = v; }
+  const dim = [mx[0]-mn[0], mx[1]-mn[1], mx[2]-mn[2]];
+  const order = [0, 1, 2].sort((a, b) => dim[b] - dim[a]);  // order[0]=длинная … order[2]=короткая
+  const M = order[1];                                       // средняя ось = лево-право
+  console.log('BRAIN dim', dim.map((d) => +d.toFixed(2)), 'M-axis', M);
+  const wM = dim[M] * 0.16;
+  for (let i = 0; i < n; i++) {
+    const m = P[i*3+M];
+    const d = Math.exp(-(m*m) / (wM*wM));    // близость к срединной плоскости
+    const s = 1 - d * 0.34;                  // пинч внутрь → продольная борозда между полушариями
+    P[i*3] *= s; P[i*3+1] *= s; P[i*3+2] *= s;
+    // помечаем глубину борозды в w-слот не можем — даём знак через лёгкое затемнение в buildParticles
+  }
+  P.__M = M; P.__wM = wM;   // сохраняем для окраски борозды
+}
 function normalize(obj, target) {
   const b = new THREE.Box3().setFromObject(obj);
   const s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
@@ -257,8 +277,12 @@ function buildParticles() {
     formStart[i*3+2] = duckPos[i*3+2] + (Math.random() - 0.5) * 3.4;
     // ЛЕДЯНЫЕ голубовато-белые частицы (как в 1-2 сессии) + редкие тёплые искры
     const s = 0.8 + Math.random() * 0.2, w = Math.random();
-    if (w < 0.08) { colors[i*3]=s*1.08; colors[i*3+1]=s*0.95; colors[i*3+2]=s*0.82; }   // редкая тёплая искра
-    else { colors[i*3]=s*0.86; colors[i*3+1]=s*0.98; colors[i*3+2]=s*1.14; }            // основной ледяной голубовато-белый
+    // ТЕНЬ в продольной борозде: частицы у срединной плоскости темнее → видна щель между полушариями
+    const Ma = brainPos.__M ?? 0, wMa = brainPos.__wM || 1;
+    const mc = brainPos[i*3 + Ma];
+    const dk = 1 - Math.exp(-(mc*mc) / (wMa*wMa)) * 0.5;   // в борозде до −50% яркости
+    if (w < 0.08) { colors[i*3]=s*1.08*dk; colors[i*3+1]=s*0.95*dk; colors[i*3+2]=s*0.82*dk; }   // редкая тёплая искра
+    else { colors[i*3]=s*0.86*dk; colors[i*3+1]=s*0.98*dk; colors[i*3+2]=s*1.14*dk; }            // основной ледяной голубовато-белый
     sizes[i] = 0.036 + Math.random() * 0.032;  // зерно
     glow[i] = 0;
   }
@@ -329,6 +353,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     clearTimeout(loaderFailSafe);
     duckPos = sampleModel(duck, PCOUNT);
     brainPos = sampleModel(brain, PCOUNT);
+    sculptBrain(brainPos);   // углубляем продольную борозду → форма мозга (две доли) читается
     normalize(duck, 2.6);
     duck.traverse((c) => { if (c.material) { c.material = c.material.clone(); c.material.transparent = true; c.material.envMapIntensity = 2.2; if (c.material.emissive) { c.material.emissive.setHex(0x1a1420); c.material.emissiveIntensity = 0.35; } } });
     // оборачиваем в группу, чтобы свободно масштабировать (нормализация уже внутри)
