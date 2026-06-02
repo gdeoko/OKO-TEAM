@@ -186,7 +186,7 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
   font-size: clamp(13px, 2vw, 18px); letter-spacing: .3em; text-transform: lowercase;
   color: var(--ice-white); margin-bottom: 10px;
 }
-.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(20px, 6vw, 60px); line-height: 1.02; letter-spacing: -0.5px; white-space: nowrap; }
+.about-title { font-family: var(--fd); font-weight: 900; font-size: clamp(19px, 5.4vw, 52px); line-height: 1.08; letter-spacing: -0.5px; white-space: nowrap; }
 .about-title em { font-style: normal; color: var(--red-bright); }
 /* колонки тезисов по бокам мозга — фиксированы, проявляются на месте с приближением */
 .thesis-col {
@@ -241,23 +241,21 @@ body.brain-open .thesis-col, body.brain-open .about-top, body.brain-open .about-
 /* ===== Секция 3 — Покер (текст фиксирован в кадре, проявляется по скроллу) ===== */
 /* Порядок: заголовок ПОКЕР → подзаголовок «турниры для своих» → кнопка → ниже стол с картами */
 #poker { pointer-events: none; }
-.poker-top, .poker-hint {
+.poker-top, .poker-bottom {
   position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
   width: 100%; max-width: 760px; padding: 0 24px;
   opacity: 0; z-index: 11; pointer-events: none; transition: none;
   text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
 }
-.poker-top { top: 5vh; display: flex; flex-direction: column; align-items: center; }
+.poker-top { top: 13vh; display: flex; flex-direction: column; align-items: center; }   /* ниже шапки */
+.poker-bottom { top: auto; bottom: 5vh; display: flex; justify-content: center; }        /* кнопка под столом */
 .poker-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .poker-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
 #poker-signup {
-  pointer-events: auto; margin-top: 20px;
+  margin-top: 0; pointer-events: inherit;   /* кликабельность наследуется от .poker-bottom (драйв из JS) */
   flex: 0 0 auto; align-self: center; width: auto;   /* НЕ растягиваться (перебиваем .btn flex:1) — аккуратная пилюля */
   height: 50px; padding: 0 42px; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; border-radius: 25px;
 }
-body.poker-in .poker-top { opacity: 1; transform: translateX(-50%) translateY(0); }
-body.poker-in .poker-top { pointer-events: none; }
-body.poker-in #poker-signup { pointer-events: auto; }
 
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {

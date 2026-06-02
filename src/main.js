@@ -142,8 +142,8 @@ poker.group.position.set(0.4, -1.7, 1.8);
 poker.group.rotation.y = 0;   // стол смотрит на камеру (карты формируются перед зрителем, не сбоку)
 scene.add(poker.group);
 // Поза камеры на станции Покер (подобрана под рамку стола; тонко тюнится скриншотами).
-const POKER_CAM = { x: 0.4, y: isMobile ? 1.7 : 1.15, z: isMobile ? 9.8 : 7.0 };
-const POKER_LOOK = { x: 0.4, y: -1.35, z: 1.8 };
+const POKER_CAM = { x: 0.4, y: isMobile ? 1.55 : 1.05, z: isMobile ? 8.2 : 5.8 };
+const POKER_LOOK = { x: 0.4, y: -1.3, z: 1.7 };
 window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]);   // для проверки в браузере
 
 // ============================================================
@@ -670,7 +670,7 @@ const heroBottom = document.querySelector('.hero-bottom');
 const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
 const pokerTop = document.querySelector('.poker-top');
-const pokerHint = document.querySelector('.poker-hint');
+const pokerBottom = document.querySelector('.poker-bottom');
 function updateUIByScroll() {
   // ХОЛЛ занимает первый сегмент скролла; дальше — станция Покер
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
@@ -696,11 +696,11 @@ function updateUIByScroll() {
   // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц)
   const pe = THREE.MathUtils.clamp((pk - 0.55) / 0.4, 0, 1);
   const pez = pe * pe * (3 - 2 * pe);
-  [pokerTop, pokerHint].forEach((el) => { if (!el) return;
+  [pokerTop, pokerBottom].forEach((el) => { if (!el) return;
     el.style.opacity = String(pez);
     el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * pez})`;
     el.style.filter = `blur(${(1 - pez) * 7}px)`;
-    el.style.pointerEvents = pez > 0.7 ? 'auto' : 'none';
+    el.style.pointerEvents = pez > 0.7 ? 'auto' : 'none';   // кнопка кликабельна ТОЛЬКО когда Покер проявлен
   });
 }
 
@@ -772,7 +772,7 @@ function animate() {
     const dist = DUCK_DIST - easeIO(tpEff) * 2.5;
     const brainPhase = THREE.MathUtils.clamp((tpEff - 0.5) / 0.35, 0, 1);
     const bcorrX = -0.16 * brainPhase;
-    const bcorrY = -0.12 * brainPhase;   // мозг чуть выше — ровно по центру между заголовком и карточками
+    const bcorrY = -0.34 * brainPhase;   // мозг НИЖЕ — под двухстрочный заголовок «ТУТ ИГРАЮТ МОЗГОМ / И ОТДЫХАЮТ ТЕЛОМ»
     const heroDrop = -0.08 * (1 - THREE.MathUtils.clamp(tpEff / 0.22, 0, 1));
     const sSubX = sCamX + _camDir.x * dist + DUCK_PX + bcorrX;
     const sSubY = sCamY + _camDir.y * dist + DUCK_PY + bcorrY + heroDrop;
@@ -963,7 +963,7 @@ function animate() {
     // Значит на выходе (tb→0) масштаб возвращается ТОЧНО к доходному размеру мозга — без «уехал крупнее».
     const tpEffS = tunnelBlend > 0.001 ? tpLatch : tp;
     const tbS = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
-    const brainShrink = 1 - 0.52 * THREE.MathUtils.clamp((tpEffS - 0.5) / 0.45, 0, 1);  // мозг компактнее → влезает между заголовком и карточками
+    const brainShrink = 1 - 0.62 * THREE.MathUtils.clamp((tpEffS - 0.5) / 0.45, 0, 1);  // мозг МЕНЬШЕ → ровно под 2-строчным заголовком
     const brainScale = brainShrink + Math.sin(t * 1.5) * 0.012 * (tpEffS > 0.75 ? 1 : 0);
     particles.scale.setScalar(brainScale + (1 - brainScale) * tbS);   // мозг ↔ труба (масштаб 1) плавно по tb
   }

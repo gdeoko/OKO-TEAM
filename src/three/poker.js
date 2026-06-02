@@ -67,38 +67,38 @@ function cardBackTexture() {
   return _backTex;
 }
 
-// СУКНО овального стола DUCK'S (вид сверху)
-function feltTexture(cardXs) {
-  const W = 1024, H = 560;
+// СУКНО овального стола DUCK'S (вид сверху). fullL/fullW — полные размеры стола (для раскладки окошек)
+function feltTexture(cardXs, fullL, fullW) {
+  const W = 1024, H = Math.round(W * fullW / fullL);
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   // бордовое поле
-  const g = x.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, W * 0.62);
+  const g = x.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, W * 0.6);
   g.addColorStop(0, '#7c1422'); g.addColorStop(1, '#470a12');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // узор мастей
-  x.fillStyle = 'rgba(0,0,0,0.14)'; x.font = '24px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = 'rgba(0,0,0,0.14)'; x.font = '26px Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
   const suits = ['♠', '♥', '♦', '♣'];
   let row = 0;
-  for (let yy = 36; yy < H; yy += 44, row++) for (let xx = 36, i = 0; xx < W; xx += 44, i++) x.fillText(suits[(i + row) % 4], xx, yy);
-  // золотой кант (внешний стадион)
+  for (let yy = 36; yy < H; yy += 46, row++) for (let xx = 36, i = 0; xx < W; xx += 46, i++) x.fillText(suits[(i + row) % 4], xx, yy);
+  // золотой кант (внешний стадион) + беговая линия
   x.strokeStyle = 'rgba(212,175,55,0.85)'; x.lineWidth = 6; roundRect(x, 44, 44, W - 88, H - 88, (H - 88) / 2); x.stroke();
-  // золотая беговая линия (внутренняя)
-  x.strokeStyle = 'rgba(212,175,55,0.5)'; x.lineWidth = 3; roundRect(x, 150, 116, W - 300, H - 232, (H - 232) / 2); x.stroke();
-  // 4 окошка под карты (там, где лежат карты) — золотой контур
-  const bw = (CARD_W / 5.2) * W * 1.12, bh = (CARD_H / 2.8) * H * 1.12;
-  x.strokeStyle = 'rgba(212,175,55,0.85)'; x.lineWidth = 3;
-  cardXs.forEach((wx) => { const cx = (wx / 5.2 + 0.5) * W; roundRect(x, cx - bw / 2, H / 2 - bh / 2, bw, bh, 10); x.stroke(); });
-  // лого DUCK'S (красная плашка) — дальний конец
-  const lw = 200, lh = 70, lx = W / 2 - lw / 2, ly = 60;
+  x.strokeStyle = 'rgba(212,175,55,0.5)'; x.lineWidth = 3; roundRect(x, 150, 96, W - 300, H - 192, (H - 192) / 2); x.stroke();
+  // 4 окошка под карты (ровно под картами) — золотой контур
+  const bw = (CARD_W / fullL) * W * 1.1, bh = (CARD_H / fullW) * H * 1.1;
+  x.strokeStyle = 'rgba(212,175,55,0.9)'; x.lineWidth = 3;
+  cardXs.forEach((wx) => { const cx = (wx / fullL + 0.5) * W; roundRect(x, cx - bw / 2, H / 2 - bh / 2, bw, bh, 10); x.stroke(); });
+  // лого DUCK'S (красная плашка) — дальний край
+  const lw = 210, lh = 66, lx = W / 2 - lw / 2, ly = 46;
   x.fillStyle = '#cc0000'; x.shadowColor = 'rgba(204,0,0,.6)'; x.shadowBlur = 18; roundRect(x, lx, ly, lw, lh, 8); x.fill(); x.shadowBlur = 0;
-  x.fillStyle = '#fff'; x.font = '900 44px Orbitron, "Exo 2", sans-serif'; x.fillText("DUCK'S", W / 2, ly + lh / 2 + 2);
-  // подпись «наши турниры · нажми на карту» — ближний край (часть стола)
-  x.fillStyle = 'rgba(245,225,160,0.75)'; x.font = '600 22px Orbitron, "Exo 2", sans-serif';
-  x.save(); x.translate(W / 2, H - 64);
-  // разрядка букв
-  const txt = 'Н А Ш И   Т У Р Н И Р Ы   ·   Н А Ж М И   Н А   К А Р Т У';
-  x.fillText(txt, 0, 0); x.restore();
+  x.fillStyle = '#fff'; x.font = '900 42px Orbitron, "Exo 2", sans-serif'; x.textBaseline = 'middle'; x.fillText("DUCK'S", W / 2, ly + lh / 2 + 2);
+  // подпись «наши турниры · нажми на карту» — ПОД картами, ближе к зрителю, ярко и крупно
+  x.fillStyle = 'rgba(252,232,170,0.96)'; x.font = '700 26px Orbitron, "Exo 2", sans-serif';
+  x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 6;
+  const phrase = 'Н А Ш И   Т У Р Н И Р Ы   ·   Н А Ж М И   Н А   К А Р Т У';
+  const maxW = W * 0.46, pm = x.measureText(phrase).width;
+  x.save(); x.translate(W / 2, H * 0.7); if (pm > maxW) x.scale(maxW / pm, 1);
+  x.fillText(phrase, 0, 0); x.restore(); x.shadowBlur = 0;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
@@ -139,10 +139,10 @@ export class PokerStation {
 
     // позиции 4 карт в ряд (над окошками)
     const N = FORMATS.length;
-    const cardXs = FORMATS.map((_, i) => (i - (N - 1) / 2) * 0.78);
+    const cardXs = FORMATS.map((_, i) => (i - (N - 1) / 2) * 0.82);
 
-    // СУКНО — овальная плоскость (стадион), текстура сверху
-    const HALF_L = 2.6, HALF_W = 1.4;
+    // СУКНО — овальная плоскость (стадион), текстура сверху. Овал шире/менее вытянут.
+    const HALF_L = 2.4, HALF_W = 1.7;
     const shape = stadiumShape(HALF_L, HALF_W);
     const felt = new THREE.ShapeGeometry(shape, 48);
     // нормализуем UV по габаритам (в плоскости XY), затем кладём плашмя
@@ -151,7 +151,7 @@ export class PokerStation {
     for (let i = 0; i < pos.count; i++) uv.push((pos.getX(i) - bb.min.x) / sx, (pos.getY(i) - bb.min.y) / sy);
     felt.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     felt.rotateX(-Math.PI / 2);
-    const feltMesh = new THREE.Mesh(felt, new THREE.MeshStandardMaterial({ map: feltTexture(cardXs), roughness: 0.95, metalness: 0.0 }));
+    const feltMesh = new THREE.Mesh(felt, new THREE.MeshStandardMaterial({ map: feltTexture(cardXs, HALF_L * 2, HALF_W * 2), roughness: 0.95, metalness: 0.0 }));
     feltMesh.position.y = 0; this.group.add(feltMesh);
 
     // РАЙ (борт) — труба по контуру стадиона (чуть больше сукна)
@@ -168,7 +168,7 @@ export class PokerStation {
     this.cards = [];
     FORMATS.forEach((fmt, i) => {
       const card = buildCard(fmt);
-      card.position.set(cardXs[i], 0.03, 0.05);
+      card.position.set(cardXs[i], 0.03, 0.0);   // ровно над окошками (z=0), идеальный ряд
       card.rotation.set(0, 0, 0);
       card.userData.home = card.position.clone();
       card.userData.homeQuat = card.quaternion.clone();
