@@ -9,6 +9,7 @@ import gsap from 'gsap';
 import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
+import { DartsStation } from './three/darts.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
 console.log('%c DUCK\'S build v43 — касание-вихрь (без дыры) + плавный возврат ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
@@ -180,11 +181,14 @@ if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для п�
 
 // ============================================================
 // РЕЛЬСА СТАНЦИЙ (кино, единая сцена). scrollProgress 0..1 делится на сегменты:
-//   0 .. HOLL_END   — ХОЛЛ (утка→мозг), tp = scrollProgress/HOLL_END (Холл выглядит как раньше)
-//   HOLL_END .. 1   — ПОКЕР, pk = доля прогресса внутри сегмента
+//   0 .. HOLL_END     — ХОЛЛ (утка→мозг), tp = scrollProgress/HOLL_END
+//   HOLL_END..POKER_END — ПОКЕР, pk = доля прогресса внутри сегмента
+//   POKER_END .. 1    — ДАРТС, dk = доля прогресса внутри сегмента
 // ============================================================
-const HOLL_END = 0.5;
+const HOLL_END = 0.34;
+const POKER_END = 0.67;
 let pk = 0;                       // прогресс станции «Покер» 0..1
+let dk = 0;                       // прогресс станции «Дартс» 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
 poker.group.position.set(0.4, -1.4, 1.8);   // стол выше — меньше пустоты под заголовком
@@ -194,6 +198,28 @@ scene.add(poker.group);
 const POKER_CAM = { x: 0.4, y: isMobile ? 1.55 : 1.05, z: isMobile ? 8.2 : 5.8 };
 const POKER_LOOK = { x: 0.4, y: -1.3, z: 1.7 };
 window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]);   // для проверки в браузере
+
+// ДАРТС: процедурная мишень в пустоте впереди-вглубь. Камера «наезжает вперёд» сквозь темноту.
+const darts = new DartsStation({
+  onThrow: () => sound.playDartThrow(),
+  onHit: (pts, label) => {
+    const zone = label.indexOf('ЯБЛОЧКО') === 0 ? 'bull'
+      : (label.indexOf('ТРИПЛ') === 0 || label.indexOf('ДАБЛ') === 0 || label === 'БУЛЛ') ? 'wire' : 'wood';
+    sound.playDartHit(zone);
+    showDartScore(pts, label, darts.seriesTotal, darts.dartsLeft);
+  },
+  onMiss: () => { sound.playDartHit('wood'); showDartScore(0, 'мимо', darts.seriesTotal, darts.dartsLeft); },
+});
+darts.group.position.set(0.4, 0.2, -5.0);   // мишень по центру кадра, глубоко впереди
+scene.add(darts.group);
+const DARTS_CAM = { x: 0.4, y: 0.35, z: isMobile ? 1.6 : 0.4 };
+const DARTS_LOOK = { x: 0.4, y: 0.15, z: -5.0 };
+window.__darts = darts;
+window.__setTipsy = (v) => { darts.tipsy = THREE.MathUtils.clamp(+v || 0, 0, 1); };   // связь с баром (позже)
+window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
+  pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);
+};
 
 // ============================================================
 // Кубики-занавес
@@ -563,6 +589,12 @@ addEventListener('click', (e) => {
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
+  else if (dk > 0.4) {
+    // ДАРТС: тап по мишени → бросок дротика в эту точку
+    pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    darts.tap(raycaster, camera);
+  }
   else if (pk > 0.12) {
     // ПОКЕР: клик по карте — поднять к зрителю и перевернуть; повторный клик — вернуть на стол
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
@@ -570,6 +602,12 @@ addEventListener('click', (e) => {
     const card = poker.raycast(raycaster);
     if (card) { const lifted = poker.toggleLift(card); lifted ? sound.playCardSlide() : sound.playCardPlace(); }
   }
+});
+// ДАРТС: на ПК прицел следует за курсором (наведение без броска)
+addEventListener('mousemove', (e) => {
+  if (dk < 0.5 || isMobile) return;
+  pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera); darts.aim(raycaster);
 });
 
 // ============================================================
@@ -682,8 +720,8 @@ const lenis = new Lenis({
 });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
-// Станции (доли scrollProgress): 0 — Холл/утка, 0.5 — мозг, 1.0 — Покер.
-const STATIONS = [0, 0.5, 1.0];
+// Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
+const STATIONS = [0, HOLL_END, POKER_END, 1.0];
 let settledStation = 0;
 window.__setStation = (i) => { settledStation = i; };   // для headless-теста скролла
 const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
@@ -774,11 +812,27 @@ const heroEls = [heroTop, heroBottom];
 const scrollHint = document.querySelector('.scroll-hint');
 const pokerTop = document.querySelector('.poker-top');
 const pokerBottom = document.querySelector('.poker-bottom');
+const dartsTop = document.querySelector('.darts-top');
+const dartsBottom = document.querySelector('.darts-bottom');
+// HUD счёта Дартса: всплывает при попадании, гаснет через ~1.4с
+const dartsScoreEl = document.getElementById('darts-score');
+let _dsHideT = 0;
+function showDartScore(pts, label, total, left) {
+  if (!dartsScoreEl) return;
+  dartsScoreEl.querySelector('.ds-pts').textContent = pts > 0 ? '+' + pts : '—';
+  dartsScoreEl.querySelector('.ds-zone').textContent = label;
+  dartsScoreEl.querySelector('.ds-total').textContent = left > 0 ? ('серия ' + total + ' · осталось ' + left) : ('итог серии ' + total);
+  dartsScoreEl.classList.remove('flash'); void dartsScoreEl.offsetWidth; dartsScoreEl.classList.add('flash');
+  dartsScoreEl.style.opacity = '1';
+  _dsHideT = performance.now() + 1400;
+}
 function updateUIByScroll() {
-  // ХОЛЛ занимает первый сегмент скролла; дальше — станция Покер
+  // ХОЛЛ занимает первый сегмент скролла; дальше — Покер, затем Дартс
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
-  pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (1 - HOLL_END), 0, 1);
-  document.body.classList.toggle('poker-in', pk > 0.12);
+  pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (POKER_END - HOLL_END), 0, 1);
+  dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (1 - POKER_END), 0, 1);
+  document.body.classList.toggle('poker-in', pk > 0.12 && dk < 0.1);
+  document.body.classList.toggle('darts-in', dk > 0.12);
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
@@ -796,14 +850,24 @@ function updateUIByScroll() {
   const av = THREE.MathUtils.smoothstep(tp, 0.82, 1.0) * (1 - THREE.MathUtils.smoothstep(pk, 0.04, 0.3));
   document.body.style.setProperty('--av', av.toFixed(3));
   document.body.style.setProperty('--avs', (0.85 + 0.15 * av).toFixed(3));
-  // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц)
+  // Покер-текст «прилетает из точки» во второй половине перехода (после туннеля частиц).
+  // При уходе в Дартс (dk↑) — гаснет, чтобы не висеть поверх мишени.
   const pe = THREE.MathUtils.clamp((pk - 0.55) / 0.4, 0, 1);
-  const pez = pe * pe * (3 - 2 * pe);
+  const pez = pe * pe * (3 - 2 * pe) * (1 - THREE.MathUtils.smoothstep(dk, 0.02, 0.22));
   [pokerTop, pokerBottom].forEach((el) => { if (!el) return;
     el.style.opacity = String(pez);
     el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * pez})`;
     el.style.filter = `blur(${(1 - pez) * 7}px)`;
     el.style.pointerEvents = pez > 0.7 ? 'auto' : 'none';   // кнопка кликабельна ТОЛЬКО когда Покер проявлен
+  });
+  // Дартс-текст «прилетает из точки» во второй половине перехода Покер→Дартс
+  const de = THREE.MathUtils.clamp((dk - 0.45) / 0.4, 0, 1);
+  const dez = de * de * (3 - 2 * de);
+  [dartsTop, dartsBottom].forEach((el) => { if (!el) return;
+    el.style.opacity = String(dez);
+    el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * dez})`;
+    el.style.filter = `blur(${(1 - dez) * 7}px)`;
+    el.style.pointerEvents = 'none';
   });
 }
 
@@ -817,8 +881,12 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
   env.update(t, camera, tp, dt);
-  poker.setReveal(pk);
+  // Покер виден на своём сегменте; при уходе в Дартс — плавно убирается (не маячит за мишенью)
+  poker.setReveal(pk * (1 - THREE.MathUtils.smoothstep(dk, 0.02, 0.3)));
   poker.update(t, dt, camera);
+  darts.setReveal(dk);
+  darts.update(t, dt, camera);
+  if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
   // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo
@@ -862,13 +930,18 @@ function animate() {
     const tCamX = THREE.MathUtils.lerp(sCamX + (0 - sCamX) * tb, POKER_CAM.x, pkc);
     const tCamY = THREE.MathUtils.lerp(sCamY + (0 - sCamY) * tb, POKER_CAM.y, pkc);
     const tCamZ = THREE.MathUtils.lerp(sCamZ + (6 - sCamZ) * tb, POKER_CAM.z, pkc);
-    camera.position.x += (tCamX - camera.position.x) * camEase;
-    camera.position.y += (tCamY - camera.position.y) * camEase;
-    camera.position.z += (tCamZ - camera.position.z) * camEase;
-    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель) ↔ стол (покер)
-    const lookX = THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc);
-    const lookY = THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc);
-    const lookZ = THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc);
+    // ДАРТС: от позы Покера камера «наезжает вперёд» сквозь темноту к мишени в глубине
+    const dkc = easeIO(THREE.MathUtils.clamp(dk / 0.6, 0, 1));
+    const fCamX = THREE.MathUtils.lerp(tCamX, DARTS_CAM.x, dkc);
+    const fCamY = THREE.MathUtils.lerp(tCamY, DARTS_CAM.y, dkc);
+    const fCamZ = THREE.MathUtils.lerp(tCamZ, DARTS_CAM.z, dkc);
+    camera.position.x += (fCamX - camera.position.x) * camEase;
+    camera.position.y += (fCamY - camera.position.y) * camEase;
+    camera.position.z += (fCamZ - camera.position.z) * camEase;
+    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель) ↔ стол (покер) ↔ мишень (дартс)
+    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc);
+    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc);
+    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc);
     camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
@@ -893,7 +966,9 @@ function animate() {
   // ВМЕСТЕ с откатом туннеля (темнота уходит синхронно с возвратом мозга) — симметрично.
   const tdark = easeIO(THREE.MathUtils.clamp(tunnelBlend, 0, 1));
   const sceneFade = 1 - tp * 0.9;
-  env.fade(sceneFade + (0.08 - sceneFade) * tdark);   // у мозга/в туннеле клуб почти гаснет; на выходе плавно возвращается
+  // у мозга/в туннеле клуб почти гаснет; на Дартсе уходим в «пустоту» (ещё темнее), скрывая бар-геометрию
+  const envBase = sceneFade + (0.08 - sceneFade) * tdark;
+  env.fade(envBase * (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))));
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }

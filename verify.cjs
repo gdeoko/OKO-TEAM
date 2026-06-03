@@ -56,10 +56,10 @@ const server = http.createServer((req, res) => {
     await page.evaluate(() => { window.__teleport = false; });
   };
 
-  // НОВАЯ РЕЛЬСА: Холл занимает 0..0.5 (мозг собран к 0.5), Покер 0.5..1.0
+  // РЕЛЬСА: Холл 0..0.34 (мозг к 0.34), Покер 0.34..0.67, Дартс 0.67..1.0
   await settle(0.04); await shoot('hero_dissolve');
-  await settle(0.22); await shoot('explode');
-  await settle(0.50); await shoot('brain');
+  await settle(0.15); await shoot('explode');
+  await settle(0.34); await shoot('brain');
   // ТЕСТ КАСАНИЯ: перетаскиваем «палец» по мозгу — должно дать яркое свечение + сдвиг частиц
   const touchGlow = await page.evaluate(async () => {
     const cx = window.innerWidth / 2, cy = window.innerHeight * 0.45;
@@ -70,9 +70,9 @@ const server = http.createServer((req, res) => {
   });
   console.log('TOUCH max glow on brain:', touchGlow);   // >0 = касание работает (есть свечение)
   await new Promise(r => setTimeout(r, 150)); await shoot('brain_touch');
-  await settle(0.58); await shoot('poker_t1');           // туннель образовался, летим сквозь (камера ещё прямо)
-  await settle(0.72); await shoot('poker_t2');           // камера доворачивается, стол приближается издалека
-  await settle(0.99); await shoot('poker');              // стол прилетел, частицы погасли, текст на месте
+  await settle(0.45); await shoot('poker_t1');           // туннель образовался, летим сквозь (камера ещё прямо)
+  await settle(0.56); await shoot('poker_t2');           // камера доворачивается, стол приближается издалека
+  await settle(0.67); await shoot('poker');              // стол прилетел, частицы погасли, текст на месте
   const btn = await page.evaluate(() => { const b = document.getElementById('poker-signup').getBoundingClientRect(); return { w: Math.round(b.width), h: Math.round(b.height), vw: window.innerWidth }; });
   console.log('BUTTON poker-signup:', JSON.stringify(btn));   // пилюля ~280×56, НЕ полоса во всю ширину
   // клик по карте → выезжает в центр лицом
@@ -87,8 +87,25 @@ const server = http.createServer((req, res) => {
   await new Promise(r => setTimeout(r, 700)); await shoot('signup_thanks');
   await page.evaluate(() => { document.querySelector('.su-card').classList.remove('done'); document.body.classList.remove('signup-open'); });
 
+  // ===== ДАРТС =====
+  // в headless ~3 FPS полёт дротика идёт несколько секунд — ждём приземления (flying=false) между бросками
+  const waitLand = async () => { for (let i = 0; i < 40; i++) { if (!(await page.evaluate(() => !!window.__darts.flying))) return; await new Promise(r => setTimeout(r, 300)); } };
+  await settle(0.84); await shoot('darts_in');           // мишень проявляется, камера наезжает
+  await settle(1.0);  await shoot('darts');              // мишень крупно по центру, текст «ДАРТС»
+  // бросок около центра (булл-зона) — проверяем счёт + втык
+  const h1 = await page.evaluate(() => window.__dartTap(window.innerWidth * 0.5, window.innerHeight * 0.49));
+  console.log('DART hit1:', JSON.stringify(h1));
+  await waitLand(); await shoot('darts_throw1');
+  // второй и третий — в секторы
+  const h2 = await page.evaluate(() => window.__dartTap(window.innerWidth * 0.58, window.innerHeight * 0.40)); await waitLand();
+  const h3 = await page.evaluate(() => window.__dartTap(window.innerWidth * 0.44, window.innerHeight * 0.58)); await waitLand();
+  console.log('DART hit2/3:', JSON.stringify(h2 && h2.score), JSON.stringify(h3 && h3.score));
+  const dstate = await page.evaluate(() => ({ stuck: window.__darts.darts.length, left: window.__darts.dartsLeft, total: window.__darts.seriesTotal }));
+  console.log('DART state:', JSON.stringify(dstate));      // ожидаем stuck=3, left=0
+  await shoot('darts_throw2');
+
   // open brain tunnel из позы мозга (pk=0)
-  await settle(0.50);
+  await settle(0.34);
   await page.evaluate(() => window.__openBrain && window.__openBrain());
   await new Promise(r => setTimeout(r, 1500)); await shoot('tunnel_burst');
   await page.evaluate(() => { window.__teleport = true; });

@@ -261,6 +261,32 @@ body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwai
   height: 50px; padding: 0 42px; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; border-radius: 25px;
 }
 
+/* ===== Секция 4 — Дартс (текст фиксирован в кадре, проявляется по скроллу; драйв из JS) ===== */
+#darts { pointer-events: none; }
+.darts-top, .darts-bottom {
+  position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
+  width: 100%; max-width: 760px; padding: 0 24px;
+  opacity: 0; z-index: 11; pointer-events: none; transition: none;
+  text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
+}
+.darts-top { top: 13vh; display: flex; flex-direction: column; align-items: center; }
+.darts-bottom { top: auto; bottom: 9vh; display: flex; justify-content: center; }
+.darts-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
+.darts-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+.darts-hint { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+/* счётчик попадания — всплывает по центру при втыке дротика (драйв из JS) */
+.darts-score {
+  position: fixed; top: 42%; left: 50%; transform: translate(-50%, -50%) scale(.8);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  opacity: 0; z-index: 12; pointer-events: none; text-align: center;
+  text-shadow: 0 2px 20px rgba(0,0,0,.9);
+}
+.ds-pts { font-family: var(--fd); font-weight: 900; font-size: clamp(44px, 9vw, 92px); line-height: .9; color: #fff; }
+.ds-zone { font-family: var(--fd); font-weight: 700; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: uppercase; color: var(--brand, #cc0000); }
+.ds-total { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.6); margin-top: 6px; }
+.darts-score.flash { animation: dsPop .5s ease-out; }
+@keyframes dsPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.5); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } 100% { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
   position: fixed; top: 62%; left: 50%; transform: translate(-50%, -50%) scale(var(--avs, 1));
@@ -397,6 +423,7 @@ body.tunnel-exit .bd-inner {
   /* Покер: кнопка-пилюля по размеру текста (как hero), НЕ на всю ширину */
   #poker-signup { flex: 0 0 auto; align-self: center; width: auto; height: 48px; padding: 0 34px; font-size: 12.5px; }
   .poker-title { font-size: clamp(40px, 13vw, 60px); }
+  .darts-title { font-size: clamp(40px, 13vw, 60px); }
   /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
   .about-foot {
     display: flex; flex-direction: column; gap: 10px;

@@ -394,6 +394,55 @@ export class SoundSystem {
     });
   }
 
+  // Дартс: свист броска (короткий нисходящий фильтр-шум)
+  playDartThrow() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime, dur = 0.35;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4;
+    bp.frequency.setValueAtTime(3200, now); bp.frequency.exponentialRampToValueAtTime(900, now + dur);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.05, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Дартс: втык. zone: 'wood' (тук), 'wire' (дзынь в проволоку), 'bull' (фанфара в яблочко)
+  playDartHit(zone = 'wood') {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    // «тук» — короткий низ (есть всегда)
+    const o = this.ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(zone === 'wire' ? 320 : 170, now);
+    o.frequency.exponentialRampToValueAtTime(zone === 'wire' ? 180 : 70, now + 0.12);
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.11, now + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.18);
+    if (zone === 'wire') {
+      // металлический дзынь проволоки
+      const m = this.ctx.createOscillator(); m.type = 'triangle'; m.frequency.value = 2300;
+      const mg = this.ctx.createGain(); mg.gain.value = 0;
+      mg.gain.linearRampToValueAtTime(0.05, now + 0.005);
+      mg.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      m.connect(mg).connect(this.master); m.start(now); m.stop(now + 0.42);
+    }
+    if (zone === 'bull') {
+      // фанфарный аккорд в яблочко
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+        const tt = now + i * 0.07;
+        const oo = this.ctx.createOscillator(); oo.type = 'sine'; oo.frequency.value = f;
+        const og = this.ctx.createGain(); og.gain.value = 0;
+        og.gain.linearRampToValueAtTime(0.07, tt + 0.02);
+        og.gain.exponentialRampToValueAtTime(0.0001, tt + 0.55);
+        oo.connect(og).connect(this.master); oo.start(tt); oo.stop(tt + 0.6);
+      });
+    }
+  }
+
   // Клик — короткий мажорный аккорд
   playClick() {
     if (!this.ctx || this.muted) return;
