@@ -23,7 +23,8 @@ const COL_RED = '#d11a1a', COL_GREEN = '#1c8a4e';
 const COL_BULL = '#1c8a4e', COL_BULLSEYE = '#d11a1a';
 const COL_WIRE = 'rgba(196,176,120,0.55)';
 
-const BR = 1.6;                 // игровой радиус мишени в мировых единицах
+const BR = 1.05;                // игровой радиус мишени (меньше прежнего: заголовок не налезает, попасть интереснее)
+const DART_LEN = 0.92;          // длина GLB-дротика в мировых единицах (под уменьшенную мишень)
 
 // точка экрана→полярные координаты сектора (математический угол, +X=0, против часовой)
 function numberAtAngle(deg) {
@@ -90,8 +91,8 @@ function boardTexture() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 
-// процедурный дротик: остриё + ствол + хвостовик + оперение. Длинная ось = локальная +Z (остриё в +Z).
-function buildDart() {
+// ЗАПАСНОЙ процедурный дротик (если GLB не загрузился). Длинная ось = локальная +Z (остриё в +Z).
+function buildFallbackDart() {
   const g = new THREE.Group();
   const steel = new THREE.MeshStandardMaterial({ color: 0xcdd2d8, roughness: 0.3, metalness: 0.85 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, roughness: 0.5, metalness: 0.4 });
@@ -174,6 +175,53 @@ export class DartsStation {
     this.tipsy = 0;             // 0..1, ставит main (связь с баром)
     this._rev = 0;
     this._tphase = Math.random() * 10;
+    this._dartProto = null;     // подготовленный GLB-дротик (клонируется на каждый бросок)
+    this.DART_FLIP = false;     // развернуть на 180° по Y, если остриё модели смотрит в -Z
+  }
+
+  // принять загруженный GLB-дротик: центрируем, ориентируем остриём в +Z, масштабируем под мишень
+  setDartModel(scene) {
+    const inner = scene.clone(true);
+    const box = new THREE.Box3().setFromObject(inner);
+    const c = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    inner.position.sub(c);                       // центр модели в начало координат
+    // АВТО-ОРИЕНТАЦИЯ: остриё (тонкий конец) должно смотреть в +Z (направление полёта).
+    // Сравниваем макс. радиальную толщину у переднего (+Z) и заднего (−Z) концов: оперение толще острия.
+    inner.updateMatrixWorld(true);
+    const hz = size.z / 2, edge = hz * 0.45, v = new THREE.Vector3();
+    let frontR = 0, backR = 0;
+    inner.traverse((o) => {
+      if (!(o.isMesh && o.geometry && o.geometry.attributes.position)) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).sub(c);
+        const r = Math.hypot(v.x, v.y);
+        if (v.z > edge) { if (r > frontR) frontR = r; }
+        else if (v.z < -edge) { if (r > backR) backR = r; }
+      }
+    });
+    const flip = frontR > backR;                 // если толстый конец (оперение) у +Z — развернуть остриём вперёд
+    const wrap = new THREE.Group();              // обёртка для разворота остриём вперёд
+    wrap.add(inner);
+    if (flip !== this.DART_FLIP) wrap.rotation.y = Math.PI;
+    const proto = new THREE.Group();
+    proto.add(wrap);
+    const len = Math.max(size.x, size.y, size.z) || 1;
+    proto.scale.setScalar(DART_LEN / len);       // длинная ось (Z) ≈ DART_LEN
+    proto.traverse((o) => { if (o.isMesh && o.material) {
+      o.material = o.material.clone();
+      o.material.transparent = true;
+      if ('envMapIntensity' in o.material) o.material.envMapIntensity = 1.5;
+      if ('metalness' in o.material) o.material.metalness = Math.min(o.material.metalness ?? 0.5, 0.85);
+      o.castShadow = false; o.receiveShadow = false;
+    } });
+    this._dartProto = proto;
+  }
+
+  // создать дротик для броска: клон GLB-прототипа либо процедурный запасной
+  _makeDart() {
+    return this._dartProto ? this._dartProto.clone(true) : buildFallbackDart();
   }
 
   // dk — прогресс станции 0..1
@@ -232,7 +280,7 @@ export class DartsStation {
     // конечная точка — на плоскости мишени, в координатах group (через boardGroup→group)
     const endWorld = this.boardGroup.localToWorld(hit.local.clone());
     const end = this.group.worldToLocal(endWorld.clone());
-    const dart = buildDart();
+    const dart = this._makeDart();
     this.group.add(dart);
     this.flying = { mesh: dart, t: 0, dur: 0.42, p0: start.clone(), p1: end.clone(),
       peak: 0.5 + Math.random() * 0.3, spin: (Math.random() - 0.5) * 0.4, hit };

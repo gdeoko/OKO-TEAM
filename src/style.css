@@ -262,6 +262,7 @@ body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwai
 }
 
 /* ===== Секция 4 — Дартс (текст фиксирован в кадре, проявляется по скроллу; драйв из JS) ===== */
+/* Порядок в кадре: заголовок → подзаголовок → мишень (центр) → неоновое табло → подсказка */
 #darts { pointer-events: none; }
 .darts-top, .darts-bottom {
   position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
@@ -269,23 +270,73 @@ body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwai
   opacity: 0; z-index: 11; pointer-events: none; transition: none;
   text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
 }
-.darts-top { top: 13vh; display: flex; flex-direction: column; align-items: center; }
-.darts-bottom { top: auto; bottom: 9vh; display: flex; justify-content: center; }
+.darts-top { top: 6vh; display: flex; flex-direction: column; align-items: center; }   /* выше — не налезает на мишень */
+.darts-bottom { top: auto; bottom: 5vh; display: flex; justify-content: center; }       /* подсказка — ПОД табло */
 .darts-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .darts-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
 .darts-hint { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.55); }
-/* счётчик попадания — всплывает по центру при втыке дротика (драйв из JS) */
+/* всплывающие очки за один бросок — у верхней части мишени (не перекрывают табло снизу) */
 .darts-score {
-  position: fixed; top: 42%; left: 50%; transform: translate(-50%, -50%) scale(.8);
+  position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%) scale(.8);
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  opacity: 0; z-index: 12; pointer-events: none; text-align: center;
+  opacity: 0; z-index: 13; pointer-events: none; text-align: center;
   text-shadow: 0 2px 20px rgba(0,0,0,.9);
 }
-.ds-pts { font-family: var(--fd); font-weight: 900; font-size: clamp(44px, 9vw, 92px); line-height: .9; color: #fff; }
-.ds-zone { font-family: var(--fd); font-weight: 700; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: uppercase; color: var(--brand, #cc0000); }
-.ds-total { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.6); margin-top: 6px; }
+.ds-pts { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 8vw, 80px); line-height: .9; color: #fff; text-shadow: 0 0 22px rgba(255,80,80,.6), 0 2px 20px rgba(0,0,0,.9); }
+.ds-zone { font-family: var(--fd); font-weight: 700; font-size: clamp(13px,2vw,18px); letter-spacing: .3em; text-transform: uppercase; color: #ff2d2d; }
 .darts-score.flash { animation: dsPop .5s ease-out; }
 @keyframes dsPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.5); } 25% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } 100% { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+
+/* ===== Неоновое табло Дартса (очки серии · дротики · личный рекорд) ===== */
+.darts-hud {
+  position: fixed; left: 50%; bottom: 13vh; transform: translateX(-50%) translateY(16px);
+  display: flex; align-items: stretch; gap: 0;
+  padding: 12px 6px; border-radius: 18px;
+  background: linear-gradient(180deg, rgba(22,4,6,.82), rgba(8,2,3,.9));
+  border: 1px solid rgba(204,0,0,.55);
+  box-shadow: 0 0 24px rgba(204,0,0,.34), inset 0 0 18px rgba(204,0,0,.12), 0 12px 34px rgba(0,0,0,.6);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  opacity: 0; z-index: 12; pointer-events: none;
+  transition: opacity .45s ease, transform .45s ease;
+}
+body.darts-hud-on .darts-hud { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dh-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 84px; padding: 2px 14px; }
+.dh-key { font-family: var(--fd); font-size: 9px; font-weight: 500; letter-spacing: .28em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+.dh-val { font-family: var(--fd); font-weight: 900; font-size: clamp(22px, 5.4vw, 34px); line-height: 1; color: #fff; text-shadow: 0 0 12px rgba(255,80,80,.55); }
+.dh-best { color: #ffd36b; text-shadow: 0 0 12px rgba(255,190,80,.6); }
+.dh-val.bump { animation: dhBump .42s cubic-bezier(.2,1.3,.4,1); }
+@keyframes dhBump { 0% { transform: scale(1); } 35% { transform: scale(1.3); color: #ff6a6a; } 100% { transform: scale(1); } }
+.dh-best.bump { animation: dhBumpBest .5s cubic-bezier(.2,1.3,.4,1); }
+@keyframes dhBumpBest { 0% { transform: scale(1); } 35% { transform: scale(1.34); } 100% { transform: scale(1); } }
+.dh-sep { width: 1px; align-self: stretch; margin: 5px 0; background: linear-gradient(180deg, transparent, rgba(204,0,0,.55), transparent); }
+.dh-pips { display: flex; gap: 7px; align-items: center; height: 30px; }
+.dh-pips i { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); transition: background .25s, box-shadow .25s, border-color .25s; }
+.dh-pips i.live { background: #ff2d2d; border-color: #ff6a6a; box-shadow: 0 0 10px rgba(255,45,45,.9); }
+.dh-pips i.used { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); box-shadow: none; }
+
+/* ===== Анимация рекорда на весь экран ===== */
+#darts-win {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; visibility: hidden;
+  background: radial-gradient(circle at 50% 45%, rgba(120,0,0,.5), rgba(3,1,2,.93) 70%);
+}
+#darts-win.show { visibility: visible; animation: dwFade 2.8s ease forwards; }
+@keyframes dwFade { 0% { opacity: 0; } 9% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.dw-burst { position: absolute; left: 50%; top: 45%; width: 40px; height: 40px; transform: translate(-50%,-50%);
+  border-radius: 50%; background: radial-gradient(circle, #fff, #ff3b3b 42%, rgba(204,0,0,0) 70%);
+  animation: dwBurst 1s ease-out forwards; }
+@keyframes dwBurst { 0% { transform: translate(-50%,-50%) scale(.2); opacity: .95; } 100% { transform: translate(-50%,-50%) scale(28); opacity: 0; } }
+.dw-rays { position: absolute; left: 50%; top: 45%; width: 150vmax; height: 150vmax; transform: translate(-50%,-50%);
+  background: repeating-conic-gradient(from 0deg, rgba(255,60,60,.12) 0deg 6deg, transparent 6deg 12deg);
+  animation: dwSpin 3s linear; opacity: .5; }
+@keyframes dwSpin { to { transform: translate(-50%,-50%) rotate(60deg); } }
+.dw-inner { position: relative; text-align: center; animation: dwPop .7s cubic-bezier(.2,1.4,.4,1); }
+@keyframes dwPop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+.dw-label { font-family: var(--fd); font-weight: 700; font-size: clamp(14px,3vw,20px); letter-spacing: .4em; text-transform: uppercase; color: #ff3b3b; text-shadow: 0 0 18px rgba(255,40,40,.85); }
+.dw-score { margin: 12px 0 6px; }
+.dw-score b { display: block; font-family: var(--fd); font-weight: 900; font-size: clamp(72px,20vw,168px); line-height: .9; color: #fff; text-shadow: 0 0 30px rgba(255,90,90,.85), 0 0 64px rgba(204,0,0,.6); }
+.dw-score span { font-family: var(--fd); font-size: clamp(11px,2.4vw,15px); letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.72); }
+.dw-sub { font-family: var(--fd); font-size: clamp(11px,2.4vw,14px); letter-spacing: .2em; color: var(--ice-white); margin-top: 10px; }
 
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
@@ -424,6 +475,13 @@ body.tunnel-exit .bd-inner {
   #poker-signup { flex: 0 0 auto; align-self: center; width: auto; height: 48px; padding: 0 34px; font-size: 12.5px; }
   .poker-title { font-size: clamp(40px, 13vw, 60px); }
   .darts-title { font-size: clamp(40px, 13vw, 60px); }
+  /* Дартс на мобиле: табло компактнее, чуть выше подсказки; заголовок ниже шапки */
+  .darts-top { top: 9vh; }
+  .darts-hud { bottom: 12vh; padding: 11px 4px; border-radius: 16px; }
+  .dh-cell { min-width: 0; padding: 2px 11px; gap: 4px; }
+  .dh-val { font-size: clamp(20px, 7vw, 30px); }
+  .dh-pips i { width: 10px; height: 10px; }
+  .darts-bottom { bottom: 4vh; }
   /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
   .about-foot {
     display: flex; flex-direction: column; gap: 10px;

@@ -81,16 +81,33 @@
       </div>
     </section>
 
-    <!-- Секция 4 — Дартс (процедурная мишень в 3D + мини-игра броска) -->
+    <!-- Секция 4 — Дартс (мишень в 3D + GLB-дротик + мини-игра броска + неоновое табло) -->
     <section class="sec" id="darts">
       <div class="darts-top">
         <h2 class="darts-title">ДАРТС</h2>
-        <p class="darts-sub">каждый бросок — твой</p>
+        <p class="darts-sub">целься в рейтинг</p>
       </div>
+      <!-- всплывающие очки за один бросок (рядом с мишенью) -->
       <div class="darts-score" id="darts-score" aria-hidden="true">
         <span class="ds-pts"></span>
         <span class="ds-zone"></span>
-        <span class="ds-total"></span>
+      </div>
+      <!-- неоновое табло: очки серии · дротики · личный рекорд -->
+      <div class="darts-hud" id="darts-hud" aria-hidden="true">
+        <div class="dh-cell">
+          <span class="dh-key">очки</span>
+          <span class="dh-val" id="dh-score">0</span>
+        </div>
+        <div class="dh-sep"></div>
+        <div class="dh-cell">
+          <span class="dh-key">дротики</span>
+          <span class="dh-pips" id="dh-pips"><i></i><i></i><i></i></span>
+        </div>
+        <div class="dh-sep"></div>
+        <div class="dh-cell">
+          <span class="dh-key">рекорд</span>
+          <span class="dh-val dh-best" id="dh-best">0</span>
+        </div>
       </div>
       <div class="darts-bottom">
         <div class="darts-hint">коснись мишени · 3 дротика</div>
@@ -112,6 +129,17 @@
         <div class="bd-wide"><b>1000₽</b><span>вход за вечер</span></div>
       </div>
       <div class="bd-exit">нажми «назад» или коснись фона, чтобы выйти</div>
+    </div>
+  </div>
+
+  <!-- Анимация рекорда Дартса на весь экран (новый личный рекорд серии) -->
+  <div id="darts-win" aria-hidden="true">
+    <div class="dw-burst"></div>
+    <div class="dw-rays"></div>
+    <div class="dw-inner">
+      <div class="dw-label">новый рекорд</div>
+      <div class="dw-score"><b id="dw-score">0</b><span>очков за серию</span></div>
+      <div class="dw-sub">так держать, целься в рейтинг</div>
     </div>
   </div>
 

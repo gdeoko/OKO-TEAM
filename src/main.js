@@ -12,7 +12,7 @@ import { PokerStation } from './three/poker.js';
 import { DartsStation } from './three/darts.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v43 — касание-вихрь (без дыры) + плавный возврат ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v44 — Дартс: GLB-дротик + мишень меньше/дальше + неоновое табло + рекорд ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -201,19 +201,20 @@ window.__pokerLift = (i) => poker.cards[i] && poker.toggleLift(poker.cards[i]); 
 
 // ДАРТС: процедурная мишень в пустоте впереди-вглубь. Камера «наезжает вперёд» сквозь темноту.
 const darts = new DartsStation({
-  onThrow: () => sound.playDartThrow(),
+  onThrow: () => { sound.playDartThrow(); updateDartsHud(); },   // обновляем пипсы/счёт сразу при броске (виден сброс новой серии)
   onHit: (pts, label) => {
     const zone = label.indexOf('ЯБЛОЧКО') === 0 ? 'bull'
       : (label.indexOf('ТРИПЛ') === 0 || label.indexOf('ДАБЛ') === 0 || label === 'БУЛЛ') ? 'wire' : 'wood';
     sound.playDartHit(zone);
-    showDartScore(pts, label, darts.seriesTotal, darts.dartsLeft);
+    dartResult(pts, label);
   },
-  onMiss: () => { sound.playDartHit('wood'); showDartScore(0, 'мимо', darts.seriesTotal, darts.dartsLeft); },
+  onMiss: () => { sound.playDartHit('wood'); dartResult(0, 'мимо'); },
 });
-darts.group.position.set(0.4, 0.2, -5.0);   // мишень по центру кадра, глубоко впереди
+darts.group.position.set(0.4, 0.0, -5.4);   // мишень по центру кадра, глубже (заголовок не налезает)
 scene.add(darts.group);
-const DARTS_CAM = { x: 0.4, y: 0.35, z: isMobile ? 1.6 : 0.4 };
-const DARTS_LOOK = { x: 0.4, y: 0.15, z: -5.0 };
+// камера отодвинута → мишень меньше в кадре, сверху место под заголовок, снизу под табло
+const DARTS_CAM = { x: 0.4, y: 0.3, z: isMobile ? 2.3 : 0.9 };
+const DARTS_LOOK = { x: 0.4, y: 0.0, z: -5.4 };
 window.__darts = darts;
 window.__setTipsy = (v) => { darts.tipsy = THREE.MathUtils.clamp(+v || 0, 0, 1); };   // связь с баром (позже)
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
@@ -460,6 +461,12 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
     const url = (e && (e.target && e.target.responseURL || e.message)) || 'models/*.glb';
     if (tg) { tg.textContent = 'не найдены модели: ' + url; tg.style.color = '#ff5555'; tg.style.maxWidth = '90%'; tg.style.textAlign = 'center'; }
   });
+
+// GLB-дротик (бренд) — грузим отдельно, НЕ блокируя интро. Сжат Draco+WebP (~0.45 МБ).
+// Пока не загрузился — станция использует запасной процедурный дротик.
+load('models/dart.glb')
+  .then((s) => { darts.setDartModel(s); })
+  .catch((e) => console.warn('Дротик GLB не загрузился, останется процедурный:', e));
 
 // ============================================================
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
@@ -814,18 +821,58 @@ const pokerTop = document.querySelector('.poker-top');
 const pokerBottom = document.querySelector('.poker-bottom');
 const dartsTop = document.querySelector('.darts-top');
 const dartsBottom = document.querySelector('.darts-bottom');
-// HUD счёта Дартса: всплывает при попадании, гаснет через ~1.4с
+// Всплывающие очки за один бросок: «+60 / ТРИПЛ 20», гаснет через ~1.4с
 const dartsScoreEl = document.getElementById('darts-score');
 let _dsHideT = 0;
-function showDartScore(pts, label, total, left) {
+function showDartScore(pts, label) {
   if (!dartsScoreEl) return;
   dartsScoreEl.querySelector('.ds-pts').textContent = pts > 0 ? '+' + pts : '—';
   dartsScoreEl.querySelector('.ds-zone').textContent = label;
-  dartsScoreEl.querySelector('.ds-total').textContent = left > 0 ? ('серия ' + total + ' · осталось ' + left) : ('итог серии ' + total);
   dartsScoreEl.classList.remove('flash'); void dartsScoreEl.offsetWidth; dartsScoreEl.classList.add('flash');
   dartsScoreEl.style.opacity = '1';
   _dsHideT = performance.now() + 1400;
 }
+// ===== Неоновое табло Дартса: очки серии · дротики · личный рекорд (localStorage) =====
+const DARTS_BEST_KEY = 'ducks_darts_best';
+let dartsBest = 0;
+try { dartsBest = parseInt(localStorage.getItem(DARTS_BEST_KEY) || '0', 10) || 0; } catch (e) {}
+const dhScoreEl = document.getElementById('dh-score');
+const dhBestEl = document.getElementById('dh-best');
+const dhPipsEl = document.getElementById('dh-pips');
+const dartsWinEl = document.getElementById('darts-win');
+const dwScoreEl = document.getElementById('dw-score');
+let _winHideT = 0;
+function _bump(el) { if (!el) return; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+function renderDartsPips(left) {
+  if (!dhPipsEl) return;
+  dhPipsEl.querySelectorAll('i').forEach((p, i) => { p.classList.toggle('live', i < left); p.classList.toggle('used', i >= left); });
+}
+function updateDartsHud() {
+  if (dhScoreEl) dhScoreEl.textContent = String(darts.seriesTotal);
+  if (dhBestEl) dhBestEl.textContent = String(dartsBest);
+  renderDartsPips(darts.dartsLeft);
+}
+function playDartsWin(score) {
+  if (!dartsWinEl) return;
+  if (dwScoreEl) dwScoreEl.textContent = String(score);
+  dartsWinEl.classList.remove('show'); void dartsWinEl.offsetWidth; dartsWinEl.classList.add('show');
+  sound.playSuccess?.();
+  clearTimeout(_winHideT); _winHideT = setTimeout(() => dartsWinEl.classList.remove('show'), 2900);
+}
+// результат броска: всплывающие очки + табло + (на последнем дротике) проверка личного рекорда серии
+function dartResult(pts, label) {
+  showDartScore(pts, label);
+  updateDartsHud();
+  _bump(dhScoreEl);
+  if (darts.dartsLeft === 0 && darts.seriesTotal > dartsBest) {   // серия завершена и побит рекорд
+    dartsBest = darts.seriesTotal;
+    try { localStorage.setItem(DARTS_BEST_KEY, String(dartsBest)); } catch (e) {}
+    if (dhBestEl) { dhBestEl.textContent = String(dartsBest); _bump(dhBestEl); }
+    playDartsWin(darts.seriesTotal);
+  }
+}
+window.__dartsWin = () => playDartsWin(darts.seriesTotal || 123);   // для проверки анимации в браузере
+updateDartsHud();   // стартовое состояние табло (0 · 3 дротика · рекорд)
 function updateUIByScroll() {
   // ХОЛЛ занимает первый сегмент скролла; дальше — Покер, затем Дартс
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
@@ -833,6 +880,7 @@ function updateUIByScroll() {
   dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (1 - POKER_END), 0, 1);
   document.body.classList.toggle('poker-in', pk > 0.12 && dk < 0.1);
   document.body.classList.toggle('darts-in', dk > 0.12);
+  document.body.classList.toggle('darts-hud-on', dk > 0.35);   // неоновое табло проявляется на станции Дартс
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
