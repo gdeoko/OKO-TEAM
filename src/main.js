@@ -10,9 +10,10 @@ import { SoundSystem } from './audio/sound-system.js';
 import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 import { DartsStation } from './three/darts.js';
+import { BilliardStation } from './three/billiard.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v44 — Дартс: GLB-дротик + мишень меньше/дальше + неоновое табло + рекорд ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v45 — Бильярд: GLB-шар-8 + сукно/неон + закрутка касанием + крен камеры ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -180,15 +181,19 @@ const env = new ClubEnvironment(scene, isMobile, renderer);
 if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для подбора ракурса
 
 // ============================================================
-// РЕЛЬСА СТАНЦИЙ (кино, единая сцена). scrollProgress 0..1 делится на сегменты:
-//   0 .. HOLL_END     — ХОЛЛ (утка→мозг), tp = scrollProgress/HOLL_END
-//   HOLL_END..POKER_END — ПОКЕР, pk = доля прогресса внутри сегмента
-//   POKER_END .. 1    — ДАРТС, dk = доля прогресса внутри сегмента
+// РЕЛЬСА СТАНЦИЙ (кино, единая сцена). scrollProgress 0..1 делится на сегменты (5 секций контента):
+//   0 .. HOLL_END      — ХОЛЛ (утка→мозг), tp = scrollProgress/HOLL_END
+//   HOLL_END..POKER_END  — ПОКЕР, pk = доля прогресса внутри сегмента
+//   POKER_END..DARTS_END — ДАРТС, dk = доля прогресса внутри сегмента
+//   DARTS_END .. 1     — БИЛЬЯРД, bk = доля прогресса внутри сегмента
+// границы = верх соответствующей секции (5 секций по 100vh → k/(N-1)); пейсинг каждой станции = 1 секция.
 // ============================================================
-const HOLL_END = 0.34;
-const POKER_END = 0.67;
+const HOLL_END = 0.25;
+const POKER_END = 0.5;
+const DARTS_END = 0.75;
 let pk = 0;                       // прогресс станции «Покер» 0..1
 let dk = 0;                       // прогресс станции «Дартс» 0..1
+let bk = 0;                       // прогресс станции «Бильярд» 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
 poker.group.position.set(0.4, -1.4, 1.8);   // стол выше — меньше пустоты под заголовком
@@ -217,6 +222,17 @@ const DARTS_CAM = { x: 0.4, y: 0.3, z: isMobile ? 2.3 : 0.9 };
 const DARTS_LOOK = { x: 0.4, y: 0.0, z: -5.4 };
 window.__darts = darts;
 window.__setTipsy = (v) => { darts.tipsy = THREE.MathUtils.clamp(+v || 0, 0, 1); };   // связь с баром (позже)
+
+// БИЛЬЯРД: тёмное сукно + красный неон-борт, по центру вращается шар-8 (GLB). Камера низко
+// проезжает над сукном с лёгким креном. Интерактив — закрутка шара касанием (без счёта).
+const billiard = new BilliardStation({ onCue: () => sound.playDartHit && sound.playDartHit('wood') });
+billiard.group.position.set(0.4, -0.8, -7.8);   // стол впереди-вглубь, чуть ниже линии взгляда
+scene.add(billiard.group);
+// поза камеры: низко у ближнего борта, взгляд вдоль сукна на шар (низкий «проезд»)
+const BILLIARD_CAM = { x: 0.4, y: isMobile ? 0.1 : -0.15, z: isMobile ? -3.4 : -4.6 };
+const BILLIARD_LOOK = { x: 0.4, y: -0.85, z: -7.8 };
+const BILLIARD_ROLL = -0.16;   // крен камеры (банк) на входе в станцию
+window.__billiard = billiard;
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);
@@ -285,6 +301,7 @@ let flowZ = 0;         // фаза непрерывного потока час�
 let brainBurst = 0;    // импульс «мозг рассыпается» в начале входа в туннель
 let reform = 0;        // окно сильной пересборки мозга сразу после выхода из туннеля (чинит «дырку»)
 let brainGrab = false; // ЗАЩЁЛКА: палец коснулся мозга → анимация касания ВКЛ на весь жест (любой свайп/сторона), скролл НЕ трогаем
+let billiardGrab = false, _bLastX = 0, _bLastY = 0;   // ЗАЩЁЛКА закрутки шара-8 (свайп по шару)
 let _glowMax = 0, _prevTpP = -1, _prevPkP = -1;   // для idle-оптимизации (в покое не грузим частицы в GPU)
 let tpLatch = 0;       // ЗАФИКСИРОВАННЫЙ tp на время туннеля → мозг возвращается в ТОТ ЖЕ размер/место
 let brainYaw = 0;      // непрерывный угол вращения мозга (труба строится с учётом него → всегда прямая)
@@ -467,6 +484,10 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 load('models/dart.glb')
   .then((s) => { darts.setDartModel(s); })
   .catch((e) => console.warn('Дротик GLB не загрузился, останется процедурный:', e));
+// GLB-шар-8 (бренд) — отдельно, НЕ блокируя интро. Сжат Draco+WebP (~0.09 МБ). Запасная сфера, если не загрузится.
+load('models/ball8.glb')
+  .then((s) => { billiard.setBallModel(s); })
+  .catch((e) => console.warn('Шар-8 GLB не загрузился, останется запасная сфера:', e));
 
 // ============================================================
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
@@ -596,8 +617,8 @@ addEventListener('click', (e) => {
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
-  else if (dk > 0.4) {
-    // ДАРТС: тап по мишени → бросок дротика в эту точку
+  else if (dk > 0.4 && bk < 0.15) {
+    // ДАРТС: тап по мишени → бросок дротика в эту точку (только пока не ушли в Бильярд)
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     darts.tap(raycaster, camera);
@@ -612,10 +633,37 @@ addEventListener('click', (e) => {
 });
 // ДАРТС: на ПК прицел следует за курсором (наведение без броска)
 addEventListener('mousemove', (e) => {
-  if (dk < 0.5 || isMobile) return;
+  if (dk < 0.5 || isMobile || bk > 0.15) return;
   pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); darts.aim(raycaster);
 });
+
+// ============================================================
+// БИЛЬЯРД: закрутка шара-8 касанием/мышью. Свайп по шару → вращение в сторону пальца,
+// потом плавно замедляется до лёгкого авто-вращения. Скролл не блокируем (как у мозга).
+// ============================================================
+function raycastBilliard(x, y) {
+  pointer.x = (x / innerWidth) * 2 - 1; pointer.y = -(y / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera); return billiard.hit(raycaster);
+}
+function billiardStart(x, y) {
+  if (bk < 0.35 || brainOpen || document.body.classList.contains('signup-open')) return;
+  if (!raycastBilliard(x, y)) return;
+  billiardGrab = true; _bLastX = x; _bLastY = y;
+  if (billiard.hooks.onCue) billiard.hooks.onCue();   // щелчок кия по шару
+}
+function billiardMove(x, y) {
+  if (!billiardGrab) return;
+  billiard.addSpin(x - _bLastX, y - _bLastY, innerWidth); _bLastX = x; _bLastY = y;
+}
+function billiardEnd() { billiardGrab = false; }
+addEventListener('touchstart', (e) => { if (e.touches[0]) billiardStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+addEventListener('touchmove', (e) => { if (e.touches[0]) billiardMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+addEventListener('touchend', billiardEnd); addEventListener('touchcancel', billiardEnd);
+addEventListener('mousedown', (e) => billiardStart(e.clientX, e.clientY));
+addEventListener('mousemove', (e) => billiardMove(e.clientX, e.clientY));
+addEventListener('mouseup', billiardEnd);
+window.__billiardSpin = (dx, dy) => billiard.addSpin(dx || 80, dy || 0, innerWidth);   // для проверки в браузере
 
 // ============================================================
 // Вход внутрь мозга (попап с затемнением)
@@ -728,7 +776,7 @@ const lenis = new Lenis({
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
-const STATIONS = [0, HOLL_END, POKER_END, 1.0];
+const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, 1.0];
 let settledStation = 0;
 window.__setStation = (i) => { settledStation = i; };   // для headless-теста скролла
 const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
@@ -821,6 +869,8 @@ const pokerTop = document.querySelector('.poker-top');
 const pokerBottom = document.querySelector('.poker-bottom');
 const dartsTop = document.querySelector('.darts-top');
 const dartsBottom = document.querySelector('.darts-bottom');
+const billiardTop = document.querySelector('.billiard-top');
+const billiardBottom = document.querySelector('.billiard-bottom');
 // Всплывающие очки за один бросок: «+60 / ТРИПЛ 20», гаснет через ~1.4с
 const dartsScoreEl = document.getElementById('darts-score');
 let _dsHideT = 0;
@@ -877,10 +927,12 @@ function updateUIByScroll() {
   // ХОЛЛ занимает первый сегмент скролла; дальше — Покер, затем Дартс
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
   pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (POKER_END - HOLL_END), 0, 1);
-  dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (1 - POKER_END), 0, 1);
+  dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (DARTS_END - POKER_END), 0, 1);
+  bk = THREE.MathUtils.clamp((scrollProgress - DARTS_END) / (1 - DARTS_END), 0, 1);
   document.body.classList.toggle('poker-in', pk > 0.12 && dk < 0.1);
-  document.body.classList.toggle('darts-in', dk > 0.12);
-  document.body.classList.toggle('darts-hud-on', dk > 0.35);   // неоновое табло проявляется на станции Дартс
+  document.body.classList.toggle('darts-in', dk > 0.12 && bk < 0.1);
+  document.body.classList.toggle('darts-hud-on', dk > 0.35 && bk < 0.2);   // неоновое табло — только на Дартсе
+  document.body.classList.toggle('billiard-in', bk > 0.12);
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
@@ -908,13 +960,22 @@ function updateUIByScroll() {
     el.style.filter = `blur(${(1 - pez) * 7}px)`;
     el.style.pointerEvents = pez > 0.7 ? 'auto' : 'none';   // кнопка кликабельна ТОЛЬКО когда Покер проявлен
   });
-  // Дартс-текст «прилетает из точки» во второй половине перехода Покер→Дартс
+  // Дартс-текст «прилетает из точки» во второй половине перехода Покер→Дартс; гаснет при уходе в Бильярд
   const de = THREE.MathUtils.clamp((dk - 0.45) / 0.4, 0, 1);
-  const dez = de * de * (3 - 2 * de);
+  const dez = de * de * (3 - 2 * de) * (1 - THREE.MathUtils.smoothstep(bk, 0.02, 0.22));
   [dartsTop, dartsBottom].forEach((el) => { if (!el) return;
     el.style.opacity = String(dez);
     el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * dez})`;
     el.style.filter = `blur(${(1 - dez) * 7}px)`;
+    el.style.pointerEvents = 'none';
+  });
+  // Бильярд-текст «прилетает из точки» во второй половине перехода Дартс→Бильярд
+  const be = THREE.MathUtils.clamp((bk - 0.45) / 0.4, 0, 1);
+  const bez = be * be * (3 - 2 * be);
+  [billiardTop, billiardBottom].forEach((el) => { if (!el) return;
+    el.style.opacity = String(bez);
+    el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * bez})`;
+    el.style.filter = `blur(${(1 - bez) * 7}px)`;
     el.style.pointerEvents = 'none';
   });
 }
@@ -932,8 +993,10 @@ function animate() {
   // Покер виден на своём сегменте; при уходе в Дартс — плавно убирается (не маячит за мишенью)
   poker.setReveal(pk * (1 - THREE.MathUtils.smoothstep(dk, 0.02, 0.3)));
   poker.update(t, dt, camera);
-  darts.setReveal(dk);
+  darts.setReveal(dk * (1 - THREE.MathUtils.smoothstep(bk, 0.02, 0.3)));   // Дартс гаснет при уходе в Бильярд
   darts.update(t, dt, camera);
+  billiard.setReveal(bk);
+  billiard.update(t, dt, camera);
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
@@ -983,13 +1046,21 @@ function animate() {
     const fCamX = THREE.MathUtils.lerp(tCamX, DARTS_CAM.x, dkc);
     const fCamY = THREE.MathUtils.lerp(tCamY, DARTS_CAM.y, dkc);
     const fCamZ = THREE.MathUtils.lerp(tCamZ, DARTS_CAM.z, dkc);
-    camera.position.x += (fCamX - camera.position.x) * camEase;
-    camera.position.y += (fCamY - camera.position.y) * camEase;
-    camera.position.z += (fCamZ - camera.position.z) * camEase;
-    // точка прицела: LOOK (скролл) ↔ вглубь -Z (туннель) ↔ стол (покер) ↔ мишень (дартс)
-    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc);
-    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc);
-    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc);
+    // БИЛЬЯРД: от позы Дартса камера опускается к сукну и низко проезжает к шару (с лёгким креном)
+    const bkc = easeIO(THREE.MathUtils.clamp(bk / 0.6, 0, 1));
+    const gCamX = THREE.MathUtils.lerp(fCamX, BILLIARD_CAM.x, bkc);
+    const gCamY = THREE.MathUtils.lerp(fCamY, BILLIARD_CAM.y, bkc);
+    const gCamZ = THREE.MathUtils.lerp(fCamZ, BILLIARD_CAM.z, bkc);
+    camera.position.x += (gCamX - camera.position.x) * camEase;
+    camera.position.y += (gCamY - camera.position.y) * camEase;
+    camera.position.z += (gCamZ - camera.position.z) * camEase;
+    // КРЕН (банк) камеры на входе в Бильярд: наклоняем «верх» камеры (ДО lookAt). На других станциях roll=0.
+    const roll = BILLIARD_ROLL * bkc;
+    camera.up.set(Math.sin(roll), Math.cos(roll), 0);
+    // точка прицела: LOOK (скролл) ↔ туннель ↔ стол (покер) ↔ мишень (дартс) ↔ шар (бильярд)
+    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc);
+    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc);
+    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc);
     camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
@@ -1290,7 +1361,7 @@ onResize();
 // ============================================================
 function glitchFx(el) { if (!el) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
 // заголовки и подзаголовки реагируют на наведение И на касание (тап работает на мобильном)
-document.querySelectorAll('.hero-title, .hero-sub, .about-title, .about-label, .poker-title, .poker-label, .poker-sub').forEach((el) => {
+document.querySelectorAll('.hero-title, .hero-sub, .about-title, .about-label, .poker-title, .poker-label, .poker-sub, .darts-title, .billiard-title').forEach((el) => {
   el.style.cursor = 'pointer';
   el.addEventListener('mouseenter', () => glitchFx(el));
   el.addEventListener('click', () => glitchFx(el));

@@ -338,6 +338,20 @@ body.darts-hud-on .darts-hud { opacity: 1; transform: translateX(-50%) translate
 .dw-score span { font-family: var(--fd); font-size: clamp(11px,2.4vw,15px); letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.72); }
 .dw-sub { font-family: var(--fd); font-size: clamp(11px,2.4vw,14px); letter-spacing: .2em; color: var(--ice-white); margin-top: 10px; }
 
+/* ===== Секция 5 — Бильярд (заголовок сверху, шар центр, подсказка снизу; драйв из JS) ===== */
+#billiard { pointer-events: none; }
+.billiard-top, .billiard-bottom {
+  position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
+  width: 100%; max-width: 760px; padding: 0 24px;
+  opacity: 0; z-index: 11; pointer-events: none; transition: none;
+  text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
+}
+.billiard-top { top: 6vh; display: flex; flex-direction: column; align-items: center; }
+.billiard-bottom { top: auto; bottom: 7vh; display: flex; justify-content: center; }
+.billiard-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
+.billiard-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+.billiard-hint { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
   position: fixed; top: 62%; left: 50%; transform: translate(-50%, -50%) scale(var(--avs, 1));
@@ -482,6 +496,9 @@ body.tunnel-exit .bd-inner {
   .dh-val { font-size: clamp(20px, 7vw, 30px); }
   .dh-pips i { width: 10px; height: 10px; }
   .darts-bottom { bottom: 4vh; }
+  .billiard-title { font-size: clamp(40px, 13vw, 60px); }
+  .billiard-top { top: 9vh; }
+  .billiard-bottom { bottom: 6vh; }
   /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
   .about-foot {
     display: flex; flex-direction: column; gap: 10px;
