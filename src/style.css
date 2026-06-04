@@ -270,7 +270,7 @@ body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwai
   opacity: 0; z-index: 11; pointer-events: none; transition: none;
   text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
 }
-.darts-top { top: 6vh; display: flex; flex-direction: column; align-items: center; }   /* выше — не налезает на мишень */
+.darts-top { top: 9vh; display: flex; flex-direction: column; align-items: center; }   /* чуть ниже (по просьбе клиента), но не на мишени */
 .darts-bottom { top: auto; bottom: 5vh; display: flex; justify-content: center; }       /* подсказка — ПОД табло */
 .darts-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .darts-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
@@ -351,6 +351,12 @@ body.darts-hud-on .darts-hud { opacity: 1; transform: translateX(-50%) translate
 .billiard-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .billiard-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
 .billiard-hint { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.55); }
+/* 4 карточки Бильярда — тот же визуал, что тезисы на стр.2 (десктоп: по бокам шара) */
+.bil-foot { display: contents; }
+.bil-col { position: fixed; top: 50%; z-index: 11; display: flex; flex-direction: column; gap: 18px; width: 250px; opacity: var(--bv, 0); pointer-events: none; transition: opacity .6s ease; }
+.bil-left { left: 4%; transform: translateY(-50%) scale(var(--bvs, 1)); }
+.bil-right { right: 4%; transform: translateY(-50%) scale(var(--bvs, 1)); }
+body.billiard-in .bil-col { pointer-events: auto; }
 
 /* Пометка «нажми» в стиле igloo: тех-аннотация — крестик + тонкая линия + моноширинный лейбл */
 #brain-hint {
@@ -490,7 +496,7 @@ body.tunnel-exit .bd-inner {
   .poker-title { font-size: clamp(40px, 13vw, 60px); }
   .darts-title { font-size: clamp(40px, 13vw, 60px); }
   /* Дартс на мобиле: табло компактнее, чуть выше подсказки; заголовок ниже шапки */
-  .darts-top { top: 9vh; }
+  .darts-top { top: 11vh; }
   .darts-hud { bottom: 12vh; padding: 11px 4px; border-radius: 16px; }
   .dh-cell { min-width: 0; padding: 2px 11px; gap: 4px; }
   .dh-val { font-size: clamp(20px, 7vw, 30px); }
@@ -499,6 +505,9 @@ body.tunnel-exit .bd-inner {
   .billiard-title { font-size: clamp(40px, 13vw, 60px); }
   .billiard-top { top: 9vh; }
   .billiard-bottom { bottom: 6vh; }
+  /* Карточки Бильярда на мобиле — 2×2 внизу (как тезисы на стр.2) */
+  .bil-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 7vh; padding: 0 16px; opacity: var(--bv, 0); transform: scale(var(--bvs, 1)); transform-origin: center bottom; z-index: 11; }
+  .bil-col { position: static; width: 100%; opacity: 1; transform: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   /* На мобиле обёртка — фикс-контейнер внизу: 2 ряда карточек 2×2 + ноут, появляются на месте с приближением */
   .about-foot {
     display: flex; flex-direction: column; gap: 10px;

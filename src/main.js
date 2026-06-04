@@ -11,9 +11,10 @@ import { ClubEnvironment } from './three/environment.js';
 import { PokerStation } from './three/poker.js';
 import { DartsStation } from './three/darts.js';
 import { BilliardStation } from './three/billiard.js';
+import { SpaceField } from './three/space.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v46 — переименование турниров (BOUNTY/FREEZEOUT/DEEP STACK/PHOENIX) + «ОТДЫХАЙ ТЕЛОМ» ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v47 — космо-фон + переход назад, ровный стол, процедурный шар-8, текст-глитч всюду ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -226,13 +227,20 @@ window.__setTipsy = (v) => { darts.tipsy = THREE.MathUtils.clamp(+v || 0, 0, 1);
 // БИЛЬЯРД: тёмное сукно + красный неон-борт, по центру вращается шар-8 (GLB). Камера низко
 // проезжает над сукном с лёгким креном. Интерактив — закрутка шара касанием (без счёта).
 const billiard = new BilliardStation({ onCue: () => sound.playDartHit && sound.playDartHit('wood') });
-billiard.group.position.set(0.4, -0.8, -7.8);   // стол впереди-вглубь, чуть ниже линии взгляда
+billiard.group.position.set(0.4, -1.0, -3.2);   // шар по центру кадра, стол ровно перед зрителем
 scene.add(billiard.group);
-// поза камеры: низко у ближнего борта, взгляд вдоль сукна на шар (низкий «проезд»)
-const BILLIARD_CAM = { x: 0.4, y: isMobile ? 0.1 : -0.15, z: isMobile ? -3.4 : -4.6 };
-const BILLIARD_LOOK = { x: 0.4, y: -0.85, z: -7.8 };
-const BILLIARD_ROLL = -0.16;   // крен камеры (банк) на входе в станцию
+// поза камеры: ПРЯМО перед столом, чуть выше; взгляд строго вперёд (-Z), БЕЗ поворотов и крена.
+// Переход 4→5 = камера едет РОВНО НАЗАД (z растёт) от Дартса к этой позе.
+const BILLIARD_CAM = { x: 0.4, y: 0.45, z: isMobile ? 5.2 : 4.2 };
+const BILLIARD_LOOK = { x: 0.4, y: -0.15, z: -3.2 };
+const BILLIARD_ROLL = 0;       // крена нет — стол ровный
 window.__billiard = billiard;
+
+// КОСМИЧЕСКИЙ ФОН: звёзды + туманности. Включается на переходе Дартс→Бильярд (по bk),
+// заменяет фон клуба «перезагруженным» миром. Камера летит внутри полой зоны поля.
+const space = new SpaceField();
+space.group.position.set(0.4, 0, 0);
+scene.add(space.group);
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);
@@ -484,10 +492,7 @@ Promise.all([load('models/duck.glb'), load('models/brain.glb')])
 load('models/dart.glb')
   .then((s) => { darts.setDartModel(s); })
   .catch((e) => console.warn('Дротик GLB не загрузился, останется процедурный:', e));
-// GLB-шар-8 (бренд) — отдельно, НЕ блокируя интро. Сжат Draco+WebP (~0.09 МБ). Запасная сфера, если не загрузится.
-load('models/ball8.glb')
-  .then((s) => { billiard.setBallModel(s); })
-  .catch((e) => console.warn('Шар-8 GLB не загрузился, останется запасная сфера:', e));
+// (шар-8 теперь рисуется процедурно в billiard.js — GLB больше не грузим)
 
 // ============================================================
 // Вход-занавес: кубики → утка выходит справа → поворот клювом → текст
@@ -978,6 +983,9 @@ function updateUIByScroll() {
     el.style.filter = `blur(${(1 - bez) * 7}px)`;
     el.style.pointerEvents = 'none';
   });
+  // 4 карточки Бильярда — проявляются на месте с приближением (как тезисы на стр.2)
+  document.body.style.setProperty('--bv', bez.toFixed(3));
+  document.body.style.setProperty('--bvs', (0.85 + 0.15 * bez).toFixed(3));
 }
 
 // ============================================================
@@ -996,7 +1004,10 @@ function animate() {
   darts.setReveal(dk * (1 - THREE.MathUtils.smoothstep(bk, 0.02, 0.3)));   // Дартс гаснет при уходе в Бильярд
   darts.update(t, dt, camera);
   billiard.setReveal(bk);
-  billiard.update(t, dt, camera);
+  billiard.update(t, dt);
+  // космо-фон проявляется на переходе 4→5 (одновременно с затемнением клуба)
+  space.setReveal(THREE.MathUtils.smoothstep(bk, 0.04, 0.6));
+  space.update(t, dt);
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
@@ -1087,7 +1098,8 @@ function animate() {
   const sceneFade = 1 - tp * 0.9;
   // у мозга/в туннеле клуб почти гаснет; на Дартсе уходим в «пустоту» (ещё темнее), скрывая бар-геометрию
   const envBase = sceneFade + (0.08 - sceneFade) * tdark;
-  env.fade(envBase * (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))));
+  // клуб гаснет на Дартсе (≈×0.25), а на переходе в Бильярд гаснет ПОЛНОСТЬЮ (космос вместо клуба)
+  env.fade(envBase * (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1))));
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
@@ -1359,16 +1371,27 @@ onResize();
 // ============================================================
 // Mute / hover / глич текста
 // ============================================================
-function glitchFx(el) { if (!el) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
-// заголовки и подзаголовки реагируют на наведение И на касание (тап работает на мобильном)
-document.querySelectorAll('.hero-title, .hero-sub, .about-title, .about-label, .poker-title, .poker-label, .poker-sub, .darts-title, .billiard-title').forEach((el) => {
-  el.style.cursor = 'pointer';
-  el.addEventListener('mouseenter', () => glitchFx(el));
-  el.addEventListener('click', () => glitchFx(el));
-});
-document.querySelectorAll('.btn, .nav-cta, [data-t]').forEach((el) => {
-  el.addEventListener('mouseenter', () => glitchFx(el));
-});
+function glitchFx(el) { if (!el || el.classList.contains('glitching')) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
+// ПРАВИЛО: ВЕСЬ текст на страницах реагирует на наведение И касание визуальной + звуковой глитч-анимацией.
+const TEXT_SEL = '.hero-title,.hero-sub,.hero-desc,.about-label,.about-title,.about-note,.thesis,.poker-title,.poker-sub,.darts-title,.darts-sub,.darts-hint,.billiard-title,.billiard-sub,.dh-key,.ds-zone,.nav-logo,.nav-cta,.bh-label,.bd-label,#brain-detail h3,#brain-detail p,.su-head h3,.su-head p';
+document.querySelectorAll(TEXT_SEL).forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
+// КАСАНИЕ: текст-оверлеи имеют pointer-events:none, поэтому ловим тап ГЛОБАЛЬНО и бьём по тексту под
+// пальцем по геометрии bounding-box (не мешает 3D-взаимодействию и скроллу). Учитываем видимость предков.
+function _vis(el) { let n = el; while (n && n !== document.body) { const cs = getComputedStyle(n); if (parseFloat(cs.opacity) < 0.06 || cs.visibility === 'hidden' || cs.display === 'none') return false; n = n.parentElement; } return true; }
+let _lastGlitch = 0;
+function glitchAtPoint(x, y) {
+  const now = performance.now(); if (now - _lastGlitch < 110) return;
+  let pick = null, area = Infinity;
+  document.querySelectorAll(TEXT_SEL).forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || x < r.left || x > r.right || y < r.top || y > r.bottom) return;
+    if (!_vis(el)) return;
+    const a = r.width * r.height; if (a < area) { area = a; pick = el; }
+  });
+  if (pick) { _lastGlitch = now; glitchFx(pick); }
+}
+addEventListener('pointerdown', (e) => glitchAtPoint(e.clientX, e.clientY), { passive: true });
+document.querySelectorAll('.btn, [data-t]').forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
 document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); if (!navLock) goToStation(1); });
 
