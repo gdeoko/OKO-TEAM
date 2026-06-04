@@ -8,11 +8,13 @@ import * as THREE from 'three';
 // API: group, update(t,dt,camera), setReveal(pk), raycast(ray), toggleLift(card), cards[].
 // ============================================================
 
+// Названия турниров (обновлены клиентом, июнь 2026). Порядок = ряд карт слева→направо.
+// Привязка по смыслу арта: BOUNTY на тузе-пик (охота), PHOENIX на золотисто-огненной карте.
 const FORMATS = [
-  { key: 'bounty',  name: 'BOUNTY SNIPER', img: 'cards/bounty.webp',  accent: '#E50000' },
-  { key: 'joker',   name: 'JOKER',         img: 'cards/joker.webp',   accent: '#8B00FF' },
-  { key: 'ladies',  name: 'LADIES NIGHT',  img: 'cards/ladies.webp',  accent: '#FF1744' },
-  { key: 'strange', name: 'STRANGE',       img: 'cards/strange.webp', accent: '#FFD600' },
+  { key: 'bounty',  name: 'BOUNTY',     img: 'cards/bounty.webp',  accent: '#E50000' },
+  { key: 'joker',   name: 'FREEZEOUT',  img: 'cards/joker.webp',   accent: '#8B00FF' },
+  { key: 'ladies',  name: 'DEEP STACK', img: 'cards/ladies.webp',  accent: '#FF1744' },
+  { key: 'strange', name: 'PHOENIX',    img: 'cards/strange.webp', accent: '#FFD600' },
 ];
 
 const CARD_W = 0.62, CARD_H = 0.87, CARD_T = 0.016;   // должно совпадать с main.js
@@ -46,12 +48,19 @@ function cardFaceTexture(fmt) {
     // акцентная черта
     x.strokeStyle = fmt.accent; x.lineWidth = 4; x.shadowColor = fmt.accent; x.shadowBlur = 14;
     x.beginPath(); x.moveTo(W / 2 - 78, H - 168); x.lineTo(W / 2 + 78, H - 168); x.stroke();
-    // название
+    // название (авто-вписывание по ширине карты, чтобы длинные слова не вылезали)
     x.shadowColor = fmt.accent; x.shadowBlur = 22; x.fillStyle = '#fff';
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '900 50px Orbitron, "Exo 2", sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    const maxW = W * 0.84;
+    const fit = (txt, y, base = 50) => {
+      let fs = base; x.font = `900 ${fs}px Orbitron, "Exo 2", sans-serif`;
+      const w = x.measureText(txt).width;
+      if (w > maxW) { fs = Math.max(26, Math.floor(fs * maxW / w)); x.font = `900 ${fs}px Orbitron, "Exo 2", sans-serif`; }
+      x.fillText(txt, W / 2, y);
+    };
     const parts = fmt.name.split(' ');
-    if (parts.length > 1) { x.fillText(parts[0], W / 2, H - 116); x.fillText(parts.slice(1).join(' '), W / 2, H - 62); }
-    else x.fillText(parts[0], W / 2, H - 90);
+    if (parts.length > 1) { fit(parts[0], H - 116); fit(parts.slice(1).join(' '), H - 62); }
+    else fit(parts[0], H - 90);
     x.shadowBlur = 0;
   });
 }

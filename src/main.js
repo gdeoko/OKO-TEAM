@@ -13,7 +13,7 @@ import { DartsStation } from './three/darts.js';
 import { BilliardStation } from './three/billiard.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v45 — Бильярд: GLB-шар-8 + сукно/неон + закрутка касанием + крен камеры ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v46 — переименование турниров (BOUNTY/FREEZEOUT/DEEP STACK/PHOENIX) + «ОТДЫХАЙ ТЕЛОМ» ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
