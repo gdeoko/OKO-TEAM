@@ -90,12 +90,29 @@ export class SoundSystem {
       const g = ctx.createGain(); g.gain.value = 0; src.connect(f).connect(g).connect(this.master); src.start();
       this.layers.hum = g;
     }
+    // space — космо-мерцание (воздушный высокий шум) для станции Бильярд (космос)
+    {
+      const src = makeNoise();
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.6;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1100;
+      const g = ctx.createGain(); g.gain.value = 0;
+      src.connect(bp).connect(hp).connect(g).connect(this.master); src.start();
+      this.layers.space = g;
+    }
+    // bar — тёплый приглушённый гомон зала (низкочастотный шум) для станции Бар
+    {
+      const src = makeNoise();
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 0.5;
+      const g = ctx.createGain(); g.gain.value = 0;
+      src.connect(lp).connect(g).connect(this.master); src.start();
+      this.layers.bar = g;
+    }
   }
 
   // Плавно выставить громкость слоя (0..1 относительно его потолка)
   setLayer(name, level) {
     if (!this.ctx || !this.layers || !this.layers[name]) return;
-    const caps = { metel: 0.022, rustle: 0.05, hum: 0.08 };
+    const caps = { metel: 0.022, rustle: 0.05, hum: 0.08, space: 0.05, bar: 0.06 };
     const g = this.layers[name];
     g.gain.cancelScheduledValues(this.ctx.currentTime);
     g.gain.linearRampToValueAtTime((caps[name] || 0.05) * level, this.ctx.currentTime + 0.8);
@@ -538,6 +555,33 @@ export class SoundSystem {
       og.gain.linearRampToValueAtTime(0.035, t + 0.01);
       og.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
       o.connect(og).connect(this.master); o.start(t); o.stop(t + 0.12);
+    }
+  }
+
+  // Кинематографический звук СМЕНЫ станции. idx — индекс целевой станции (0..5),
+  // forward — вперёд (приближение, восходящий) или назад (отдаление, нисходящий).
+  // Базовый свуш + акцент под тему станции (космос — воздушный аккорд, бар — тёплый аккорд + стекло).
+  playStationCue(idx, forward) {
+    if (!this.ctx || this.muted) return;
+    this.playWhoosh(!!forward);
+    const now = this.ctx.currentTime;
+    const chord = (freqs, vol, dur, t0 = 0) => freqs.forEach((f, i) => {
+      const t = now + t0 + i * 0.06;
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(vol, t + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+    });
+    if (idx === 5) {            // ВОШЛИ В БАР — тёплый мажорный аккорд + звон стекла
+      chord([392.0, 523.25, 659.25], 0.05, 1.0);
+      this.playGlassClink();
+    } else if (idx === 4) {     // КОСМОС / Бильярд — высокий воздушный аккорд
+      chord([784.0, 1046.5, 1318.5], 0.03, 1.3);
+    } else if (idx === 3) {     // ДАРТС — короткий сфокусированный «дзынь»
+      chord([659.25, 988.0], 0.035, 0.7);
+    } else if (idx === 2) {     // ПОКЕР — мягкий аккорд
+      chord([440.0, 587.33], 0.035, 0.8);
     }
   }
 

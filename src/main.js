@@ -15,7 +15,7 @@ import { SpaceField } from './three/space.js';
 import { BarStation } from './three/bar.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v52 — БАР: бокал ПЛОТНО на стойке клуба (тень-контакт), бутылка слева наливает, лёд остаётся; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v53 — БАР: бокал на стойке (выверено), глоток К ЗРИТЕЛЮ, налив без задевания заголовка, ледяные карточки; звук по станциям + переходы ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -256,11 +256,11 @@ const bar = new BarStation(isMobile, {
   onFizz:  () => sound.playFizz?.(1.4),
 });
 // Бар стоит на РЕАЛЬНОЙ барной стойке клуба (ракурс подобран клиентом через ?tune).
-bar.group.position.set(2.35, -4.92, -12.35);   // бокал ПЛОТНО на реальной стойке клуба (высота подобрана по геометрии: база + тень на столешнице)
-bar.baseScale = isMobile ? 0.58 : 0.9;         // на узком экране бокал мельче, чтобы не занимал весь кадр
+bar.group.position.set(2.35, -5.7, -12.3);     // бокал ПЛОТНО на розовой барной стойке клуба (высота выверена по рендеру)
+bar.baseScale = isMobile ? 0.62 : 0.92;
 scene.add(bar.group);
-// Поза камеры Бара = ракурс клиента (камера доворачивает к барной стойке клуба при переходе с Бильярда).
-const BAR_CAM = { x: -0.32, y: -4.37, z: -12.38 };
+// Поза камеры Бара (отодвинута/чуть ниже: бокал не огромный, бутылка при наливе не задевает заголовок).
+const BAR_CAM = { x: -2.78, y: -4.32, z: -12.40 };
 const BAR_LOOK = { x: 3.30, y: -5.03, z: -12.35 };
 window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
@@ -766,6 +766,7 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') closeBrain(); });
 // Звук включён по умолчанию (кнопки нет). Браузер не даёт запустить аудио до первого касания —
 // поэтому стартуем автоматически на ПЕРВОМ же действии пользователя (касание/скролл/клик).
 let audioStarted = false;
+let _lastStIdx = 0;   // индекс станции для звука перехода
 function startAudioOnce() { if (audioStarted) return; audioStarted = true; sound.init(); sound.ctx.resume(); sound.startMusic(); }
 ['pointerdown', 'touchstart', 'wheel', 'keydown', 'click'].forEach((ev) => addEventListener(ev, startAudioOnce, { once: true, passive: true }));
 
@@ -1080,14 +1081,31 @@ function animate() {
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
-  // ЗВУКОВЫЕ СЛОИ по сцене (поверх фонового пэда), как у igloo
+  // ЗВУКОВЫЕ СЛОИ — ПО СТАНЦИЯМ (каждая тема своя атмосфера; не тянем шум частиц на все страницы)
   if (audioStarted && frame % 12 === 0) {
-    sound.setLayer('metel', THREE.MathUtils.clamp(1 - tp * 3, 0, 1));        // воздух/метель в Hero
-    // ПОСТОЯННЫЙ шелест частиц: всплеск на распаде (tp~0.5) И ровный фон на мозге (даже без касания) — как у igloo
+    const sm = THREE.MathUtils.smoothstep;
+    const zHall = 1 - sm(pk, 0.0, 0.25);                                   // Холл (утка→мозг→туннель)
+    const zPoker = sm(pk, 0.15, 0.5) * (1 - sm(dk, 0.15, 0.5));            // Покер
+    const zDarts = sm(dk, 0.15, 0.5) * (1 - sm(bk, 0.15, 0.5));            // Дартс
+    const zBilliard = sm(bk, 0.15, 0.5) * (1 - sm(ak, 0.15, 0.5));         // Бильярд (космос)
+    const zBar = sm(ak, 0.15, 0.5);                                        // Бар
+    // воздух: Hero + тихий «живой зал» в Покере/Дартсе
+    sound.setLayer('metel', Math.max(zHall * THREE.MathUtils.clamp(1 - tp * 2, 0, 1), (zPoker + zDarts) * 0.4));
+    // шелест ЧАСТИЦ — ТОЛЬКО в Холле (распад утки→мозг) и в туннеле; на других станциях его НЕТ
     const rustleBurst = THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1);
-    const rustleBrain = THREE.MathUtils.clamp((tp - 0.6) / 0.25, 0, 1) * 0.5;   // тихий ровный фон у мозга
-    sound.setLayer('rustle', Math.max(rustleBurst, rustleBrain));
-    sound.setLayer('hum', brainOpen ? 1 : THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1)); // гул у мозга/в туннеле
+    const rustleBrain = THREE.MathUtils.clamp((tp - 0.6) / 0.25, 0, 1) * 0.5;
+    sound.setLayer('rustle', zHall * Math.max(rustleBurst, rustleBrain));
+    // гул — нутро мозга/туннель (Холл) и низ космоса (Бильярд)
+    sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.6));
+    sound.setLayer('space', zBilliard);                                    // космо-мерцание на Бильярде
+    sound.setLayer('bar', zBar);                                           // тёплый гомон зала в Баре
+  }
+  // КИНЕМАТОГРАФИЧЕСКИЙ звук СМЕНЫ станции (приближение/отдаление + акцент под тему)
+  if (audioStarted) {
+    const stIdx = Math.round(THREE.MathUtils.clamp(scrollProgress, 0, 1) * (STATIONS.length - 1));
+    if (stIdx !== _lastStIdx) { sound.playStationCue?.(stIdx, stIdx > _lastStIdx); _lastStIdx = stIdx; }
+    // в Баре изредка позвякивает стекло (живая атмосфера)
+    if (ak > 0.6 && Math.random() < 0.0035) sound.playGlassClink?.();
   }
 
   // (фон — 3D-клуб)
@@ -1114,7 +1132,10 @@ function animate() {
     const sCamY = CAM0.y + (-pointerNY * 0.25 * par) + Math.sin(t * 0.3) * 0.05;
     const sCamZ = CAM0.z - easeIO(tpEff) * 14;
     // смешиваем со «втянутой» позой туннеля (0,0,6) по tb
-    const camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
+    let camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
+    // БАР↔БИЛЬЯРД: камера должна ТОЧНО следовать траектории (без лага) → переход обратимый,
+    // назад идёт ровно «задним ходом» по той же дуге (а не срезает угол из-за инерции сглаживания).
+    camEase = Math.max(camEase, THREE.MathUtils.smoothstep(ak, 0.0, 0.35) * 0.5);
     // ПОКЕР: всё ОДНОВРЕМЕННО и плавно — пока летим сквозь туннель, камера плавно
     // доворачивается к столу, а стол приближается издалека (поворот незаметен за приближением).
     const pkc = easeIO(THREE.MathUtils.clamp(pk / 0.5, 0, 1));   // камера доворачивается чуть раньше — карты формируются перед зрителем

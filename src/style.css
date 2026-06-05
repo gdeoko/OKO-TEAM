@@ -693,6 +693,13 @@ body.bar-tasted .bar-hint { opacity: 0 !important; }
 .bar-left { left: 4%; transform: translateY(-50%) translateX(calc(var(--ax2, 1) * -150px)) scale(var(--av2s, 1)); }
 .bar-right { right: 4%; transform: translateY(-50%) translateX(calc(var(--ax2, 1) * 150px)) scale(var(--av2s, 1)); }
 body.bar-in .bar-col { pointer-events: auto; }
+/* Карточки Бара — ТЁМНЫЕ с ЛЕДЯНЫМ акцентом: не сливаются с тёплым неоном фона клуба */
+#bar .thesis { background: linear-gradient(150deg, rgba(8,12,18,.92), rgba(6,8,12,.85)); border-color: rgba(136,221,255,.42); box-shadow: 0 8px 28px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05); }
+#bar .thesis::before { background: linear-gradient(180deg, var(--ice-blue), #3aa0ff); box-shadow: 0 0 12px rgba(136,221,255,.75); }
+#bar .thesis::after { color: rgba(136,221,255,.62); }
+#bar .thesis b { color: #eaf6ff; }
+#bar .thesis span { color: rgba(220,238,255,.62); }
+#bar .thesis:hover { border-color: rgba(136,221,255,.78); background: linear-gradient(150deg, rgba(12,18,26,.95), rgba(8,12,16,.9)); transform: translateY(-4px); box-shadow: 0 14px 40px rgba(30,90,130,.42), inset 0 1px 0 rgba(255,255,255,.08); }
 
 /* ===== Купон Дартса (модалка-карта; купон приходит на почту) ===== */
 #coupon {

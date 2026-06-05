@@ -310,8 +310,9 @@ export class BarStation {
 
     if (this._state === 'lift') {
       const k = Math.min(1, this._t / 0.72), e = k * k * (3 - 2 * k);
-      rig.position.set(0, 0.5 * e, 0.78 * e);
-      rig.rotation.x = 0.5 * e;
+      // К ЗРИТЕЛЮ: камера смотрит вдоль +X → «на меня» = −X. Бокал едет к камере и наклоняется ко рту.
+      rig.position.set(-0.55 * e, 0.36 * e, 0);
+      rig.rotation.z = 0.55 * e;                   // верх кренится к зрителю (−X)
       if (k > 0.42) {
         if (!this._gulped) { this._gulped = true; if (this.hooks.onGulp) this.hooks.onGulp(); }
         const sip = THREE.MathUtils.smoothstep((k - 0.42) / 0.5, 0, 1);
@@ -325,10 +326,10 @@ export class BarStation {
     } else if (this._state === 'place') {
       const k = Math.min(1, this._t / 0.55), e = k * k * (3 - 2 * k);
       const settle = k > 0.85 ? Math.sin((k - 0.85) / 0.15 * Math.PI) * 0.025 : 0;
-      rig.position.set(0, 0.5 * (1 - e) + settle, 0.78 * (1 - e));
-      rig.rotation.x = 0.5 * (1 - e);
+      rig.position.set(-0.55 * (1 - e), 0.36 * (1 - e) + settle, 0);
+      rig.rotation.z = 0.55 * (1 - e);
       if (k >= 1) {
-        rig.position.set(0, 0, 0); rig.rotation.x = 0;
+        rig.position.set(0, 0, 0); rig.rotation.set(0, 0, 0);
         if (this.level < 0.5 && this.bottleLevel > 0.06) { this._state = 'pour'; this._t = 0; this._fizzed = false; if (this.hooks.onPour) this.hooks.onPour(); }
         else this._state = 'idle';
       }
