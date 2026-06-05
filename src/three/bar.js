@@ -14,13 +14,22 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 
 const _sphere = new THREE.Sphere();
 const _wp = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _mid = new THREE.Vector3();
-const BASE_Y = -0.5;             // высота столешницы (на ней стоят бокал и бутылка)
+const BASE_Y = 0.0;              // дно бокала = низ группы (группа ставится прямо на реальную стойку клуба)
 const GLASS_H = 0.92;            // высота бокала (крупный)
 const Y_LIQ_BOT = BASE_Y + 0.12; // дно внутреннего объёма напитка
 const H_LIQ = 0.60;              // макс высота столбика напитка
 const R_LIQ = 0.40;              // радиус напитка
-const BOTTLE_X = 1.25;           // место бутылки на стойке (справа)
+const BOTTLE_Z = -1.15;          // место наливающей бутылки СЛЕВА по кадру (камера смотрит вдоль +X → экран-влево = −Z)
 const DRINK_COL = 0xe0a52e;      // цвет напитка (тёплый янтарь)
+
+// мягкая контактная тень-пятно под бокалом (как будто стоит на стойке)
+function shadowTexture() {
+  const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+  const x = c.getContext('2d'); const g = x.createRadialGradient(S / 2, S / 2, 2, S / 2, S / 2, S / 2);
+  g.addColorStop(0, 'rgba(0,0,0,0.6)'); g.addColorStop(0.55, 'rgba(0,0,0,0.26)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  const t = new THREE.CanvasTexture(c); return t;
+}
 
 function labelTexture() {
   const W = 256, H = 320, c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -49,6 +58,7 @@ export class BarStation {
     this.group.visible = false;
 
     this._rev = 0;
+    this.baseScale = 1;          // базовый масштаб (ставит main под фон клуба)
     this.tipsy = 0;
     this.level = 0.62;           // уровень в бокале 0..1
     this.bottleLevel = 0.82;     // уровень напитка В БУТЫЛКЕ 0..1
@@ -60,26 +70,16 @@ export class BarStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // --- СТОЙКА ---
-    const top = new THREE.Mesh(
-      new THREE.BoxGeometry(8.0, 0.4, 5.4),
-      reg(new THREE.MeshPhysicalMaterial({ color: 0x18120d, roughness: 0.3, metalness: 0.12,
-        clearcoat: 0.85, clearcoatRoughness: 0.22 }))
+    // Стойку/стену НЕ рисуем — фоном служит реальный клуб (scifi_bar.glb). Бокал/бутылка ставятся
+    // прямо на реальную барную стойку. Под бокалом — мягкая контактная тень.
+    this.shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 1.2),
+      new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0, depthWrite: false })
     );
-    top.position.set(0, BASE_Y - 0.2, 1.4);
-    this.group.add(top);
-    const edge = new THREE.Mesh(
-      new THREE.BoxGeometry(8.04, 0.035, 0.05),
-      reg(new THREE.MeshStandardMaterial({ color: 0x180605, emissive: 0x7a1c0c, emissiveIntensity: 0.4 }), 0.8)
-    );
-    edge.position.set(0, BASE_Y - 0.005, 4.08);
-    this.group.add(edge);
-    const back = new THREE.Mesh(
-      new THREE.PlaneGeometry(8.0, 5.0),
-      reg(new THREE.MeshStandardMaterial({ color: 0x0a0708, roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 0.92)
-    );
-    back.position.set(0, 0.9, -2.8);
-    this.group.add(back);
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.position.set(0, BASE_Y + 0.005, 0);
+    this.shadow.renderOrder = 2;
+    this.group.add(this.shadow);
 
     // --- БОКАЛ (риг: поднимаем/наклоняем целиком), строго по центру X=0 ---
     this.glassRig = new THREE.Group();
@@ -158,7 +158,7 @@ export class BarStation {
 
     // --- БУТЫЛКА на стойке СПРАВА (реально виден напиток внутри) ---
     this.bottlePivot = new THREE.Group();          // вращаем/двигаем от ОСНОВАНИЯ
-    this.bottlePivot.position.set(BOTTLE_X, BASE_Y, 0.2);
+    this.bottlePivot.position.set(0, BASE_Y, BOTTLE_Z);
     this.group.add(this.bottlePivot);
     // прозрачноватое стекло — чтобы был виден столбик напитка
     const bottleGlass = reg(new THREE.MeshPhysicalMaterial({ color: 0x16352a, roughness: 0.08, metalness: 0.0,
@@ -223,9 +223,9 @@ export class BarStation {
     this.liquid.position.set(0, Y_LIQ_BOT + h / 2, 0);
     this.surface.position.set(0, Y_LIQ_BOT + h, 0);
     this.surface.visible = this.level > 0.02;
+    // лёд ОСТАЁТСЯ в бокале даже когда пусто — оседает на дно (не исчезает)
     if (this.ice) for (const cube of this.ice) {
-      cube.visible = this.level > 0.12;
-      cube.position.set(cube.userData.ox, Y_LIQ_BOT + Math.max(h - 0.08, 0.1), cube.userData.oz);
+      cube.position.set(cube.userData.ox, Y_LIQ_BOT + Math.max(h - 0.08, 0.13), cube.userData.oz);
     }
     if (this.splashRing) this.splashRing.position.y = Y_LIQ_BOT + h + 0.002;
   }
@@ -243,11 +243,13 @@ export class BarStation {
     if (!this.group.visible) return;
     const e = THREE.MathUtils.clamp((ak - 0.06) / 0.55, 0, 1);
     const es = e * e * (3 - 2 * e);
-    this.group.scale.setScalar(0.95 + 0.05 * es);
+    this.group.scale.setScalar(this.baseScale * (0.96 + 0.04 * es));
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
     this.bubbleMat.uniforms.uOpacity.value = 0.85 * es;
-    this.spot.intensity = 34 * es; this.fill.intensity = 8 * es;
-    this.rim.intensity = 11 * es; this.warm.intensity = 7 * es; this.spark.intensity = 4 * es;
+    this._shadowFull = 0.55 * es;
+    if (this.shadow) this.shadow.material.opacity = this._shadowFull;
+    this.spot.intensity = 44 * es; this.fill.intensity = 5 * es;
+    this.rim.intensity = 11 * es; this.warm.intensity = 13 * es; this.spark.intensity = 4 * es;
   }
 
   hitGlass(raycaster) {
@@ -273,11 +275,11 @@ export class BarStation {
     const down = 1 - THREE.MathUtils.smoothstep(k, 0.72, 1.0);
     const env = Math.min(up, down);                       // трапеция 0→1→1→0
     const e = env * env * (3 - 2 * env);
-    // основание уходит вправо-вверх, горлышко (длинное плечо) наклоняется НАД центром бокала
-    this.bottlePivot.position.x = THREE.MathUtils.lerp(BOTTLE_X, 1.5, e);
+    // бутылка слева (−Z): приподнимается и наклоняется горлышком НАД центром бокала (к +Z)
+    this.bottlePivot.position.x = 0.18 * e;            // чуть к камере (+X) для читаемости
     this.bottlePivot.position.y = BASE_Y + 0.85 * e;
-    this.bottlePivot.position.z = THREE.MathUtils.lerp(0.2, 0.0, e);
-    this.bottlePivot.rotation.z = 1.15 * e;                                  // наклон горлышком к бокалу (влево-вниз)
+    this.bottlePivot.position.z = THREE.MathUtils.lerp(BOTTLE_Z, -1.45, e);
+    this.bottlePivot.rotation.x = 1.15 * e;                                  // горлышко наклоняется над бокалом (к +Z)
     return env > 0.92 && k > 0.34 && k < 0.74;
   }
 
@@ -350,8 +352,7 @@ export class BarStation {
         this.stream.material.opacity = 0.9;
       } else { this.stream.material.opacity = 0; }
       if (k >= 1) {
-        this._pourPose(1);   // вернуть бутылку на стойку справа (env=0 на k=1)
-        this.bottlePivot.rotation.z = 0; this.bottlePivot.position.set(BOTTLE_X, BASE_Y, 0.2);
+        this.bottlePivot.rotation.set(0, 0, 0); this.bottlePivot.position.set(0, BASE_Y, BOTTLE_Z);
         this.stream.visible = false; this._state = 'idle';
       }
     }
@@ -380,5 +381,7 @@ export class BarStation {
       const s = 1 + (1 - this._splash) * 1.6; this.splashRing.scale.set(s, s, s);
     }
     if (this.ice) for (const cube of this.ice) { cube.rotation.y += dt * cube.userData.spin; cube.rotation.x += dt * cube.userData.spin * 0.4; }
+    // контактная тень слабеет, когда бокал приподнят над стойкой
+    if (this.shadow) this.shadow.material.opacity = (this._shadowFull || 0) * (1 - THREE.MathUtils.clamp(rig.position.y / 0.5, 0, 1));
   }
 }

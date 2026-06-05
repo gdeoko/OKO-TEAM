@@ -15,7 +15,7 @@ import { SpaceField } from './three/space.js';
 import { BarStation } from './three/bar.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v50 — БАР: реалистичный бокал, пузырьки, 2 кубика льда, налив по дуге + звуки; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v51 — БАР на РЕАЛЬНОЙ стойке клуба: бокал по центру+тень, бутылка слева наливает, лёд остаётся; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -255,11 +255,13 @@ const bar = new BarStation(isMobile, {
   onPour:  () => sound.playPour?.(1.15),
   onFizz:  () => sound.playFizz?.(1.4),
 });
-bar.group.position.set(0.4, 0.2, -2.3);   // ближе к камере (бокал крупнее), стойка возникает на месте шара
+// Бар стоит на РЕАЛЬНОЙ барной стойке клуба (ракурс подобран клиентом через ?tune).
+bar.group.position.set(2.62, -5.0, -12.34);   // бокал на реальной стойке: ниже-крупнее (−X ближе к камере), по центру (Z=look)
+bar.baseScale = isMobile ? 0.6 : 0.92;        // на узком экране бокал мельче, чтобы не занимал весь кадр
 scene.add(bar.group);
-// Поза камеры Бара = поза Бильярда (ОДНА И ТА ЖЕ) → камера остаётся неподвижной, меняется только сцена.
-const BAR_CAM = { x: 0.4, y: 0.2, z: isMobile ? 5.4 : 4.6 };
-const BAR_LOOK = { x: 0.4, y: 0.2, z: -2.3 };
+// Поза камеры Бара = ракурс клиента (камера доворачивает к барной стойке клуба при переходе с Бильярда).
+const BAR_CAM = { x: -0.32, y: -4.37, z: -12.38 };
+const BAR_LOOK = { x: 3.30, y: -5.03, z: -12.35 };
 window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
 window.__barPose = (k = 0.5) => bar.debugPour(k);   // статичная поза налива для скриншота
@@ -1120,9 +1122,14 @@ function animate() {
     const gCamX = THREE.MathUtils.lerp(fCamX, BILLIARD_CAM.x, bkc);
     const gCamY = THREE.MathUtils.lerp(fCamY, BILLIARD_CAM.y, bkc);
     const gCamZ = THREE.MathUtils.lerp(fCamZ, BILLIARD_CAM.z, bkc);
-    camera.position.x += (gCamX - camera.position.x) * camEase;
-    camera.position.y += (gCamY - camera.position.y) * camEase;
-    camera.position.z += (gCamZ - camera.position.z) * camEase;
+    // БАР: камера доворачивается из космоса к РЕАЛЬНОЙ барной стойке клуба (ракурс задан клиентом через ?tune)
+    const akc = easeIO(THREE.MathUtils.clamp(ak / 0.75, 0, 1));
+    const hCamX = THREE.MathUtils.lerp(gCamX, BAR_CAM.x, akc);
+    const hCamY = THREE.MathUtils.lerp(gCamY, BAR_CAM.y, akc);
+    const hCamZ = THREE.MathUtils.lerp(gCamZ, BAR_CAM.z, akc);
+    camera.position.x += (hCamX - camera.position.x) * camEase;
+    camera.position.y += (hCamY - camera.position.y) * camEase;
+    camera.position.z += (hCamZ - camera.position.z) * camEase;
     // EASTER EGG «перебрал»: в Баре камера слегка ПЛЫВЁТ (tipsy), не двигаясь по рельсе. Затухает с tipsy.
     const woo = bar.tipsy * THREE.MathUtils.clamp(ak, 0, 1);
     if (woo > 0.001) {
@@ -1133,9 +1140,9 @@ function animate() {
     const roll = BILLIARD_ROLL * bkc;
     camera.up.set(Math.sin(roll), Math.cos(roll), 0);
     // точка прицела: LOOK (скролл) ↔ туннель ↔ стол (покер) ↔ мишень (дартс) ↔ шар (бильярд)
-    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc);
-    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc);
-    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc);
+    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc), BAR_LOOK.x, akc);
+    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc), BAR_LOOK.y, akc);
+    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc), BAR_LOOK.z, akc);
     camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
@@ -1162,9 +1169,12 @@ function animate() {
   const sceneFade = 1 - tp * 0.9;
   // у мозга/в туннеле клуб почти гаснет; на Дартсе уходим в «пустоту» (ещё темнее), скрывая бар-геометрию
   const envBase = sceneFade + (0.08 - sceneFade) * tdark;
-  // клуб гаснет на Дартсе (≈×0.25), а на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос вместо клуба)
-  env.fade(envBase * (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1))));
-  env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7));   // снимает «пол» 0.25 → клуб виден на 0% к середине перехода
+  // клуб гаснет на Дартсе (≈×0.25), на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос), а на БАРЕ
+  // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
+  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6);   // клуб возвращается на Баре
+  const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
+  env.fade(Math.max(envBase * billiardDark, barBack * 0.95));
+  env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - barBack));   // на Баре «пол» восстановлен → клуб виден
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
