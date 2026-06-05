@@ -13,9 +13,10 @@ import { DartsStation } from './three/darts.js';
 import { BilliardStation } from './three/billiard.js';
 import { SpaceField } from './three/space.js';
 import { BarStation } from './three/bar.js';
+import { FaqStation } from './three/faq.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v53 — БАР: бокал на стойке (выверено), глоток К ЗРИТЕЛЮ, налив без задевания заголовка, ледяные карточки; звук по станциям + переходы ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v54 — FAQ (станция 7): стол с фишками-вопросами в фирменном стиле, клик→фишка крутится в центр+ответ, золотая фишка→ТГ-бот, бесшовная ПЕТЛЯ FAQ→Холл ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -190,15 +191,18 @@ if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для п�
 //   DARTS_END .. 1     — БИЛЬЯРД, bk = доля прогресса внутри сегмента
 // границы = верх соответствующей секции (5 секций по 100vh → k/(N-1)); пейсинг каждой станции = 1 секция.
 // ============================================================
-// 6 секций (Холл, Покер, Дартс, Бильярд, Бар): равные пятые доли скролла.
-const HOLL_END = 0.2;
-const POKER_END = 0.4;
-const DARTS_END = 0.6;
-const BILLIARD_END = 0.8;
+// 7 секций (Холл, Покер, Дартс, Бильярд, Бар, FAQ): равные шестые доли скролла.
+// Границы = верх соответствующей секции (7 секций по 100vh → k/6).
+const HOLL_END = 1 / 6;
+const POKER_END = 2 / 6;
+const DARTS_END = 3 / 6;
+const BILLIARD_END = 4 / 6;
+const BAR_END = 5 / 6;
 let pk = 0;                       // прогресс станции «Покер» 0..1
 let dk = 0;                       // прогресс станции «Дартс» 0..1
 let bk = 0;                       // прогресс станции «Бильярд» 0..1
 let ak = 0;                       // прогресс станции «Бар» 0..1
+let fk = 0;                       // прогресс станции «FAQ» (фишки) 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
 poker.group.position.set(0.4, -1.4, 1.8);   // стол выше — меньше пустоты под заголовком
@@ -268,6 +272,20 @@ window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
 window.__barPose = (k = 0.5) => bar.debugPour(k);   // статичная поза налива для скриншота
 window.__setBarLookY = (v) => { BAR_LOOK.y = v; };  // живой подбор наклона камеры Бара
+
+// FAQ (станция 7): стол с покерными фишками-вопросами. Камера из Бара отъезжает/доворачивается
+// сверху-спереди к сукну. Фишки лежат лицом вверх; клик → фишка крутится, вылетает в центр,
+// встаёт к зрителю, main показывает ОТВЕТ. Золотая фишка «ЗАПИСАТЬСЯ» → ТГ-бот. Дальше — петля.
+const faq = new FaqStation(isMobile, { onSelect: () => sound.playCardSlide?.(), onCta: () => sound.playQuack?.() });
+faq.group.position.set(0.4, -0.4, -3.2);
+faq.baseScale = isMobile ? 0.78 : 1.0;
+faq.group.rotation.y = 0;
+scene.add(faq.group);
+// Поза камеры FAQ: сверху-спереди, 3/4-вид на сукно (тюнится скриншотами через ?tune).
+const FAQ_CAM = { x: 0.4, y: isMobile ? 3.4 : 2.85, z: isMobile ? 2.0 : 1.35 };
+const FAQ_LOOK = { x: 0.4, y: -0.45, z: -3.5 };
+window.__faq = faq;
+window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
 window.__probeBar = (x, z) => {
   const vis = bar.group.visible; bar.group.visible = false;
@@ -655,6 +673,7 @@ function hitSubject(x, y, r = 0.32) {
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
   if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;   // клики внутри модалок не трогают сцену
+  if (e.target.closest && e.target.closest('#faq-answer')) return;   // клик по панели ответа/кнопке бота — не трогаем 3D
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
@@ -664,7 +683,16 @@ addEventListener('click', (e) => {
     raycaster.setFromCamera(pointer, camera);
     darts.tap(raycaster, camera);
   }
-  else if (ak > 0.25) {
+  else if (fk > 0.2) {
+    // FAQ: тап по фишке-вопросу → она крутится, выезжает в центр, показываем ответ.
+    // Золотая фишка «ЗАПИСАТЬСЯ» → переход в ТГ-бота. Тап мимо фишек → закрыть ответ.
+    pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const idx = faq.raycast(raycaster);
+    if (idx != null) onFaqPick(idx);
+    else closeFaqAnswer();
+  }
+  else if (ak > 0.25 && fk < 0.1) {
     // БАР: тап по бокалу → мини-игра «глоток»
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
@@ -824,7 +852,7 @@ const lenis = new Lenis({
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
-const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, BILLIARD_END, 1.0];
+const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, BILLIARD_END, BAR_END, 1.0];
 let settledStation = 0;
 window.__setStation = (i) => { settledStation = i; };   // для headless-теста скролла
 const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
@@ -880,9 +908,11 @@ addEventListener('touchstart', (e) => {
   gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false; _dragged = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
+let gLastY = 0;
 addEventListener('touchmove', (e) => {
   if (!gestureActive) return;
   const t = e.touches[0]; if (!t) return;
+  gLastY = t.clientY;
   const dx = Math.abs(t.clientX - gTouchX), dy = Math.abs(t.clientY - gTouchY);
   if (!gHorizontal && dx > dy && dx > 14) gHorizontal = true;   // горизонтальный жест — не наша история
   if (dx > 8 || dy > 8) _dragged = true;                        // палец двигался (скролл/драг) → это НЕ клик
@@ -890,6 +920,8 @@ addEventListener('touchmove', (e) => {
 addEventListener('touchend', () => {
   if (!gestureActive) return; gestureActive = false;
   if (gHorizontal) return;
+  // свайп ВВЕРХ пальцем (контент листается вниз) у конца FAQ → петля в начало
+  if (gLastY && (gTouchY - gLastY) > 30) maybeLoop(true);
   settleFrom(navFrom);
 }, { passive: true });
 // --- жест: колесо/трекпад (нет «отпускания» — ловим затихание) ---
@@ -903,7 +935,7 @@ addEventListener('wheel', () => {
 // клавиатура: стрелки/пробел = соседняя станция (для десктопа)
 addEventListener('keydown', (e) => {
   if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || brainOpen) return;
-  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); goToStation(settledStation + 1); }
+  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); if (settledStation >= STATIONS.length - 1 && fk > 0.6) triggerLoop(); else goToStation(settledStation + 1); }
   else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); goToStation(settledStation - 1); }
   else if (e.key === 'Home') { e.preventDefault(); goToStation(0); }
   else if (e.key === 'End') { e.preventDefault(); goToStation(STATIONS.length - 1); }
@@ -920,6 +952,7 @@ const dartsBottom = document.querySelector('.darts-bottom');
 const billiardTop = document.querySelector('.billiard-top');
 const billiardBottom = document.querySelector('.billiard-bottom');
 const barTop = document.querySelector('.bar-top');
+const faqTop = document.querySelector('.faq-top');
 // Всплывающие очки за один бросок: «+60 / ТРИПЛ 20», гаснет через ~1.4с
 const dartsScoreEl = document.getElementById('darts-score');
 let _dsHideT = 0;
@@ -989,12 +1022,14 @@ function updateUIByScroll() {
   pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (POKER_END - HOLL_END), 0, 1);
   dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (DARTS_END - POKER_END), 0, 1);
   bk = THREE.MathUtils.clamp((scrollProgress - DARTS_END) / (BILLIARD_END - DARTS_END), 0, 1);
-  ak = THREE.MathUtils.clamp((scrollProgress - BILLIARD_END) / (1 - BILLIARD_END), 0, 1);
+  ak = THREE.MathUtils.clamp((scrollProgress - BILLIARD_END) / (BAR_END - BILLIARD_END), 0, 1);
+  fk = THREE.MathUtils.clamp((scrollProgress - BAR_END) / (1 - BAR_END), 0, 1);
   document.body.classList.toggle('poker-in', pk > 0.12 && dk < 0.1);
   document.body.classList.toggle('darts-in', dk > 0.12 && bk < 0.1);
   document.body.classList.toggle('darts-hud-on', dk > 0.35 && bk < 0.2);   // неоновое табло — только на Дартсе
   document.body.classList.toggle('billiard-in', bk > 0.12 && ak < 0.1);
-  document.body.classList.toggle('bar-in', ak > 0.12);
+  document.body.classList.toggle('bar-in', ak > 0.12 && fk < 0.1);
+  document.body.classList.toggle('faq-in', fk > 0.12);
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
@@ -1044,8 +1079,9 @@ function updateUIByScroll() {
   document.body.style.setProperty('--bvs', (0.9 + 0.1 * bez).toFixed(3));
   document.body.style.setProperty('--bx', (1 - bez).toFixed(3));         // боковой вылет: 1=за экраном, 0=на месте
   // БАР: заголовок «БАР» прилетает сверху, 3 карточки — с боков (как Бильярд). Порядок: БАР → подзаголовок → бокал → карточки.
+  // Гаснет при уходе в FAQ (fk↑), чтобы не висеть поверх стола с фишками.
   const ae = THREE.MathUtils.clamp((ak - 0.35) / 0.45, 0, 1);
-  const aez = ae * ae * (3 - 2 * ae);
+  const aez = ae * ae * (3 - 2 * ae) * (1 - THREE.MathUtils.smoothstep(fk, 0.02, 0.3));
   if (barTop) {
     barTop.style.opacity = String(aez);
     barTop.style.transform = `translateX(-50%) translateY(${(aez - 1) * 70}px) scale(${0.9 + 0.1 * aez})`;
@@ -1055,6 +1091,16 @@ function updateUIByScroll() {
   document.body.style.setProperty('--av2', aez.toFixed(3));              // прозрачность карточек бара
   document.body.style.setProperty('--av2s', (0.9 + 0.1 * aez).toFixed(3));
   document.body.style.setProperty('--ax2', (1 - aez).toFixed(3));        // боковой вылет карточек бара
+  // FAQ: заголовок «СПРОСИ У СВОИХ» прилетает сверху, подсказка снизу. CTA-фишка — в 3D.
+  const fe = THREE.MathUtils.clamp((fk - 0.3) / 0.45, 0, 1);
+  const fez = fe * fe * (3 - 2 * fe);
+  if (faqTop) {
+    faqTop.style.opacity = String(fez);
+    faqTop.style.transform = `translateX(-50%) translateY(${(fez - 1) * 70}px) scale(${0.9 + 0.1 * fez})`;
+    faqTop.style.filter = `blur(${(1 - fez) * 6}px)`;
+    faqTop.style.pointerEvents = 'none';
+  }
+  document.body.style.setProperty('--fv', fez.toFixed(3));               // прозрачность подсказки/CTA FAQ
 }
 
 // ============================================================
@@ -1078,9 +1124,13 @@ function animate() {
   space.setReveal(THREE.MathUtils.smoothstep(bk, 0.04, 0.6) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)));
   space.update(t, dt);
   // БАР: стойка проявляется из темноты, мини-игра «глоток». tipsy связан с Дартсом (easter egg).
-  bar.setReveal(ak);
+  // Гаснет при уходе в FAQ (fk↑) — стол с фишками занимает кадр.
+  bar.setReveal(ak * (1 - THREE.MathUtils.smoothstep(fk, 0.04, 0.45)));
   bar.update(t, dt, camera);
   darts.tipsy = bar.tipsy;
+  // FAQ: стол с фишками-вопросами. Проявляется по fk; фишки крутятся/выезжают по клику.
+  faq.setReveal(fk);
+  faq.update(t, dt, camera);
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
@@ -1138,7 +1188,7 @@ function animate() {
     let camEase = window.__teleport ? 1 : THREE.MathUtils.lerp(THREE.MathUtils.lerp(0.05, 1, snap), 0.18, tb);
     // БАР↔БИЛЬЯРД: камера должна ТОЧНО следовать траектории (без лага) → переход обратимый,
     // назад идёт ровно «задним ходом» по той же дуге (а не срезает угол из-за инерции сглаживания).
-    camEase = Math.max(camEase, THREE.MathUtils.smoothstep(ak, 0.0, 0.35) * 0.5);
+    camEase = Math.max(camEase, THREE.MathUtils.smoothstep(ak, 0.0, 0.35) * 0.5, THREE.MathUtils.smoothstep(fk, 0.0, 0.35) * 0.5);
     // ПОКЕР: всё ОДНОВРЕМЕННО и плавно — пока летим сквозь туннель, камера плавно
     // доворачивается к столу, а стол приближается издалека (поворот незаметен за приближением).
     const pkc = easeIO(THREE.MathUtils.clamp(pk / 0.5, 0, 1));   // камера доворачивается чуть раньше — карты формируются перед зрителем
@@ -1160,9 +1210,14 @@ function animate() {
     const hCamX = THREE.MathUtils.lerp(gCamX, BAR_CAM.x, akc);
     const hCamY = THREE.MathUtils.lerp(gCamY, BAR_CAM.y, akc);
     const hCamZ = THREE.MathUtils.lerp(gCamZ, BAR_CAM.z, akc);
-    camera.position.x += (hCamX - camera.position.x) * camEase;
-    camera.position.y += (hCamY - camera.position.y) * camEase;
-    camera.position.z += (hCamZ - camera.position.z) * camEase;
+    // FAQ: камера отъезжает от стойки и доворачивается сверху-спереди к столу с фишками
+    const fkc = easeIO(THREE.MathUtils.clamp(fk / 0.7, 0, 1));
+    const iCamX = THREE.MathUtils.lerp(hCamX, FAQ_CAM.x, fkc);
+    const iCamY = THREE.MathUtils.lerp(hCamY, FAQ_CAM.y, fkc);
+    const iCamZ = THREE.MathUtils.lerp(hCamZ, FAQ_CAM.z, fkc);
+    camera.position.x += (iCamX - camera.position.x) * camEase;
+    camera.position.y += (iCamY - camera.position.y) * camEase;
+    camera.position.z += (iCamZ - camera.position.z) * camEase;
     // EASTER EGG «перебрал»: в Баре камера слегка ПЛЫВЁТ (tipsy), не двигаясь по рельсе. Затухает с tipsy.
     const woo = bar.tipsy * THREE.MathUtils.clamp(ak, 0, 1);
     if (woo > 0.001) {
@@ -1173,9 +1228,9 @@ function animate() {
     const roll = BILLIARD_ROLL * bkc;
     camera.up.set(Math.sin(roll), Math.cos(roll), 0);
     // точка прицела: LOOK (скролл) ↔ туннель ↔ стол (покер) ↔ мишень (дартс) ↔ шар (бильярд)
-    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc), BAR_LOOK.x, akc);
-    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc), BAR_LOOK.y, akc);
-    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc), BAR_LOOK.z, akc);
+    const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc), BAR_LOOK.x, akc), FAQ_LOOK.x, fkc);
+    const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc), BAR_LOOK.y, akc), FAQ_LOOK.y, fkc);
+    const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc), BAR_LOOK.z, akc), FAQ_LOOK.z, fkc);
     camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
@@ -1204,10 +1259,13 @@ function animate() {
   const envBase = sceneFade + (0.08 - sceneFade) * tdark;
   // клуб гаснет на Дартсе (≈×0.25), на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос), а на БАРЕ
   // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
-  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6);   // клуб возвращается на Баре
+  // на БАРЕ клуб ВОЗВРАЩАЕТСЯ; на FAQ снова УХОДИМ в тёмный войд (стол с фишками в прожекторе,
+  // без перекрытия геометрией клуба) — faqDark 0→1 при входе в FAQ.
+  const faqDark = THREE.MathUtils.smoothstep(fk, 0.08, 0.55);
+  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6) * (1 - faqDark);   // клуб возвращается на Баре, гаснет на FAQ
   const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
-  env.fade(Math.max(envBase * billiardDark, barBack * 0.95));
-  env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - barBack));   // на Баре «пол» восстановлен → клуб виден
+  env.fade(Math.max(envBase * billiardDark, barBack * 0.95) * (1 - faqDark));
+  env.hideExtra(Math.max(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)), faqDark));   // клуб скрыт на Дартсе/Бильярде и на FAQ
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
@@ -1695,6 +1753,75 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
     sound.playSuccess?.();
   });
 }
+
+// ============================================================
+// FAQ (станция 7): выбор фишки-вопроса → ответ на HTML-панели; золотая фишка → ТГ-бот.
+// ============================================================
+const TG_BOT = 'https://t.me/ducks_gameclub_bot';
+const faqAnswerEl = document.getElementById('faq-answer');
+const faqQEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-q') : null;
+const faqAEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-a') : null;
+const faqBotEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-bot') : null;
+function onFaqPick(idx) {
+  const item = faq.data[idx];
+  if (!item) return;
+  faq.select(idx);
+  if (item.cta) {
+    sound.playQuack?.();
+    window.open(TG_BOT, '_blank', 'noopener');
+    setTimeout(() => faq.deselect(), 600);
+    return;
+  }
+  sound.playCardSlide?.();
+  if (faqQEl) faqQEl.textContent = item.q.replace(/\n/g, ' ');
+  if (faqAEl) faqAEl.textContent = item.a;
+  if (faqBotEl) faqBotEl.style.display = item.bot ? 'inline-flex' : 'none';
+  document.body.classList.add('faq-answer-on');
+}
+function closeFaqAnswer() {
+  faq.deselect();
+  document.body.classList.remove('faq-answer-on');
+}
+faqBotEl?.addEventListener('click', (e) => { e.stopPropagation(); sound.playClick?.(); });
+window.__onFaqPick = onFaqPick; window.__closeFaqAnswer = closeFaqAnswer;   // для проверки в браузере
+
+// ============================================================
+// ПЕТЛЯ FAQ→ХОЛЛ: у низа FAQ фишки рассыпаются, кадр гаснет в чёрное, скролл сбрасывается в 0,
+// сцена возвращается к утке Холла. Бесшовно и бесконечно (на стыке РАЗНЫЕ объекты: фишки ↔ утка).
+// ============================================================
+let looping = false;
+const loopFadeEl = document.getElementById('loop-fade');
+function triggerLoop() {
+  if (looping || !introDone) return;
+  looping = true;
+  document.body.classList.add('looping');     // чёрный оверлей наплывает (CSS ~0.5с)
+  faq.burst();                                 // фишки взлетают и рассыпаются
+  closeFaqAnswer();
+  sound.playWhoosh?.(true); sound.playQuack?.();
+  try { lenis.stop(); } catch (e) {}
+  // когда кадр почернел — мгновенно прыгаем в начало и пересобираем Холл
+  setTimeout(() => {
+    try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) {}
+    scrollProgress = 0; settledStation = 0; _lastStIdx = 0;
+    faq.reset();
+    updateUIByScroll();
+    document.getElementById('scroll-progress').style.width = '0%';
+    try { lenis.start(); } catch (e) {}
+    sound.playWhoosh?.(false);
+    // даём кадру устояться на Холле, затем снимаем черноту (проявляется утка)
+    setTimeout(() => {
+      document.body.classList.remove('looping');
+      setTimeout(() => { looping = false; }, 700);
+    }, 240);
+  }, 520);
+}
+window.__triggerLoop = triggerLoop;   // для проверки в браузере
+// «доскролл вниз у конца FAQ = петля»: ловим попытку прокрутки за нижний край
+function maybeLoop(downward) {
+  if (looping || !downward) return;
+  if (scrollProgress > 0.965 && fk > 0.6) triggerLoop();
+}
+addEventListener('wheel', (e) => { if (e.deltaY > 0) maybeLoop(true); }, { passive: true });
 
 // ============================================================
 // РЕЖИМ НАСТРОЙКИ КАМЕРЫ (?tune): двигаешь сцену пальцем + окошко с цифрами

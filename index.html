@@ -156,7 +156,31 @@
         </div>
       </div>
     </section>
+
+    <!-- Секция 7 — FAQ (стол с покерными фишками-вопросами; золотая фишка → ТГ-бот; дальше петля) -->
+    <section class="sec" id="faq">
+      <div class="faq-top">
+        <h2 class="faq-title">СПРОСИ У СВОИХ</h2>
+        <p class="faq-sub">тапни фишку — узнаешь</p>
+      </div>
+      <!-- подсказка снизу: гаснет при выборе ответа -->
+      <div class="faq-hint" aria-hidden="true">
+        <span class="faq-hint-label">золотая фишка — записаться в бота</span>
+      </div>
+    </section>
   </main>
+
+  <!-- Ответ на вопрос FAQ (всплывает при выборе фишки) -->
+  <div id="faq-answer" aria-hidden="true">
+    <div class="fa-card">
+      <div class="fa-q"></div>
+      <div class="fa-a"></div>
+      <a class="btn btn-fill fa-bot" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Открыть бота</a>
+    </div>
+  </div>
+
+  <!-- Чёрный оверлей петли FAQ→Холл (бесшовный сброс в начало) -->
+  <div id="loop-fade" aria-hidden="true"></div>
 
   <!-- Подробности «внутри мозга» -->
   <div id="brain-detail">

@@ -701,6 +701,56 @@ body.bar-in .bar-col { pointer-events: auto; }
 #bar .thesis span { color: rgba(220,238,255,.62); }
 #bar .thesis:hover { border-color: rgba(136,221,255,.78); background: linear-gradient(150deg, rgba(12,18,26,.95), rgba(8,12,16,.9)); transform: translateY(-4px); box-shadow: 0 14px 40px rgba(30,90,130,.42), inset 0 1px 0 rgba(255,255,255,.08); }
 
+/* ===== Секция 7 — FAQ (стол с фишками; заголовок сверху, ответ всплывает, CTA-фишка в 3D) ===== */
+#faq { pointer-events: none; }
+.faq-top {
+  position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
+  width: 100%; max-width: 760px; padding: 0 24px;
+  opacity: 0; z-index: 11; pointer-events: none; transition: none;
+  text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
+  top: 6vh; display: flex; flex-direction: column; align-items: center;
+}
+.faq-title { font-family: var(--fd); font-weight: 900; font-size: clamp(34px, 6.4vw, 70px); letter-spacing: -1px; line-height: .98; }
+.faq-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(13px,1.8vw,18px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+.faq-hint {
+  position: fixed; left: 50%; bottom: 5vh; transform: translateX(-50%);
+  opacity: var(--fv, 0); z-index: 12; pointer-events: none; transition: opacity .5s ease;
+}
+.faq-hint-label { font-family: var(--fd); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 10px rgba(0,0,0,.9); }
+body.faq-answer-on .faq-hint { opacity: 0 !important; }
+
+/* Панель ответа на вопрос (всплывает над столом) */
+#faq-answer {
+  position: fixed; left: 50%; bottom: 8vh; transform: translateX(-50%) translateY(20px);
+  width: calc(100% - 36px); max-width: 460px; z-index: 40;
+  opacity: 0; pointer-events: none; transition: opacity .4s ease, transform .4s cubic-bezier(.22,1,.36,1);
+}
+body.faq-answer-on #faq-answer { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.fa-card {
+  text-align: center; padding: 22px 24px 24px; border-radius: 20px;
+  background: linear-gradient(160deg, rgba(20,8,10,.96), rgba(8,4,8,.94));
+  border: 1px solid rgba(204,0,0,.4);
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 50px rgba(204,0,0,.16), inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.fa-q { font-family: var(--fd); font-weight: 900; font-size: clamp(16px,2.4vw,22px); color: #fff; margin-bottom: 10px; }
+.fa-a { font-family: var(--fb); font-size: clamp(14px,1.9vw,16px); color: rgba(255,255,255,.82); line-height: 1.5; }
+.fa-bot { display: none; margin: 18px auto 0; height: 46px; padding: 0 30px; }
+
+/* Чёрный оверлей петли (мгновенный сброс скрыт за чернотой) */
+#loop-fade {
+  position: fixed; inset: 0; z-index: 1300; background: #000;
+  opacity: 0; pointer-events: none; transition: opacity .5s ease;
+}
+body.looping #loop-fade { opacity: 1; pointer-events: auto; transition: opacity .45s ease; }
+
+@media (max-width: 768px) {
+  .faq-title { font-size: clamp(28px, 9.5vw, 48px); }
+  .faq-top { top: 8vh; }
+  #faq-answer { bottom: 6vh; }
+  .fa-card { padding: 18px 18px 20px; }
+}
+
 /* ===== Купон Дартса (модалка-карта; купон приходит на почту) ===== */
 #coupon {
   position: fixed; inset: 0; z-index: 1450;
