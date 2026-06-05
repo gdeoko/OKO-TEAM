@@ -260,11 +260,14 @@ bar.group.position.set(2.35, -5.7, -12.3);     // бокал ПЛОТНО на �
 bar.baseScale = isMobile ? 0.62 : 0.92;
 scene.add(bar.group);
 // Поза камеры Бара (отодвинута/чуть ниже: бокал не огромный, бутылка при наливе не задевает заголовок).
+// На мобиле камера чуть больше наклонена вниз → композиция выше в кадре, бутылка/бокал НЕ перекрываются
+// нижними карточками (на десктопе карточки по бокам — наклон не нужен).
 const BAR_CAM = { x: -2.78, y: -4.32, z: -12.40 };
-const BAR_LOOK = { x: 3.30, y: -5.03, z: -12.35 };
+const BAR_LOOK = { x: 3.30, y: isMobile ? -5.5 : -5.03, z: -12.35 };
 window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
 window.__barPose = (k = 0.5) => bar.debugPour(k);   // статичная поза налива для скриншота
+window.__setBarLookY = (v) => { BAR_LOOK.y = v; };  // живой подбор наклона камеры Бара
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
 window.__probeBar = (x, z) => {
   const vis = bar.group.visible; bar.group.visible = false;
