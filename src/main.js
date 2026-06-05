@@ -255,13 +255,14 @@ const bar = new BarStation(isMobile, {
   onPour:  () => sound.playPour?.(1.15),
   onFizz:  () => sound.playFizz?.(1.4),
 });
-bar.group.position.set(0.4, 0.2, -3.0);   // = позиция шара Бильярда → стойка возникает на месте, без долёта
+bar.group.position.set(0.4, 0.2, -2.3);   // ближе к камере (бокал крупнее), стойка возникает на месте шара
 scene.add(bar.group);
 // Поза камеры Бара = поза Бильярда (ОДНА И ТА ЖЕ) → камера остаётся неподвижной, меняется только сцена.
 const BAR_CAM = { x: 0.4, y: 0.2, z: isMobile ? 5.4 : 4.6 };
-const BAR_LOOK = { x: 0.4, y: 0.2, z: -3.0 };
+const BAR_LOOK = { x: 0.4, y: 0.2, z: -2.3 };
 window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
+window.__barPose = (k = 0.5) => bar.debugPour(k);   // статичная поза налива для скриншота
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);
