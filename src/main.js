@@ -16,7 +16,7 @@ import { BarStation } from './three/bar.js';
 import { FaqStation } from './three/faq.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v54 — FAQ (станция 7): стол с фишками-вопросами в фирменном стиле, клик→фишка крутится в центр+ответ, золотая фишка→ТГ-бот, бесшовная ПЕТЛЯ FAQ→Холл ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v55 — FAQ: ЧЁРНЫЕ глянцевые фишки (вопрос/ответ на гранях), тап→переворот в центре с ответом на фишке, золотая фишка=CTA→бот; БЕСКОНЕЧНАЯ петля в ОБЕ стороны (камера-дайв в темноту, утка из частиц) ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -166,6 +166,7 @@ const DUCK_PX = _qp.has('dx') ? parseFloat(_qp.get('dx')) : 0;
 const DUCK_PY = _qp.has('dy') ? parseFloat(_qp.get('dy')) : -0.25;  // утка чуть ниже центра (приподнята)
 const DUCK_DIST = _qp.has('dist') ? parseFloat(_qp.get('dist')) : (isMobile ? 6.5 : 4.6);  // на ПК ближе=крупнее
 const _camDir = new THREE.Vector3();
+const _loopDir = new THREE.Vector3();   // дайв-вектор петли (камера летит вперёд в темноту)
 const _zero = new THREE.Vector3(0, 0, 0);
 // туннель-переход 2→3: тубус строится ВОКРУГ ОСИ ВЗГЛЯДА КАМЕРЫ (летит на зрителя даже при повороте)
 const _invP = new THREE.Matrix4();
@@ -281,9 +282,9 @@ faq.group.position.set(0.4, -0.4, -3.2);
 faq.baseScale = isMobile ? 0.78 : 1.0;
 faq.group.rotation.y = 0;
 scene.add(faq.group);
-// Поза камеры FAQ: сверху-спереди, 3/4-вид на сукно (тюнится скриншотами через ?tune).
-const FAQ_CAM = { x: 0.4, y: isMobile ? 3.4 : 2.85, z: isMobile ? 2.0 : 1.35 };
-const FAQ_LOOK = { x: 0.4, y: -0.45, z: -3.5 };
+// Поза камеры FAQ: ВЫШЕ над столом, крутой 3/4-вид сверху — вопросы на фишках хорошо читаются.
+const FAQ_CAM = { x: 0.4, y: isMobile ? 5.0 : 4.1, z: isMobile ? 1.4 : 0.7 };
+const FAQ_LOOK = { x: 0.4, y: -0.5, z: -3.7 };
 window.__faq = faq;
 window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
@@ -671,7 +672,7 @@ function hitSubject(x, y, r = 0.32) {
   return Math.sqrt(dx * dx + dy * dy) < r;
 }
 addEventListener('click', (e) => {
-  if (!introDone || brainOpen) return;
+  if (!introDone || brainOpen || looping) return;
   if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;   // клики внутри модалок не трогают сцену
   if (e.target.closest && e.target.closest('#faq-answer')) return;   // клик по панели ответа/кнопке бота — не трогаем 3D
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
@@ -851,6 +852,11 @@ const lenis = new Lenis({
 });
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
+// СОСТОЯНИЕ ПЕТЛИ (объявлено рано — animate()/updateLoop читают его уже в первом кадре)
+let looping = 0;             // 0 | +1 (FAQ→Холл) | -1 (Холл→FAQ)
+let loopT = 0, loopSwapped = false;
+const LOOP_DUR = 1.7;
+const loopFadeEl = document.getElementById('loop-fade');
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
 const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, BILLIARD_END, BAR_END, 1.0];
 let settledStation = 0;
@@ -884,7 +890,7 @@ function goToStation(idx) {
 }
 // докатка по НАПРАВЛЕНИЮ от станции, с которой начали жест
 function settleFrom(fromStation) {
-  if (window.__teleport || brainOpen || document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || !introDone) return;
+  if (window.__teleport || brainOpen || looping || document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || !introDone) return;
   const startFrac = STATIONS[fromStation];
   let target = fromStation;
   if (fromStation < STATIONS.length - 1 && scrollProgress > startFrac) {
@@ -905,7 +911,7 @@ addEventListener('touchstart', (e) => {
   const t = e.touches[0]; if (!t) return;
   // КАСАНИЕ ПО МОЗГУ → ЗАЩЁЛКА анимации на весь жест (любой свайп/сторона). Скролл НЕ блокируем.
   if (tp > 0.4 && pk < 0.55 && hitSubject(t.clientX, t.clientY, 0.7)) { brainGrab = true; updatePointer(t.clientX, t.clientY); }
-  gTouchX = t.clientX; gTouchY = t.clientY; gHorizontal = false; _dragged = false;
+  gTouchX = t.clientX; gTouchY = t.clientY; gLastY = t.clientY; gHorizontal = false; _dragged = false;
   navFrom = settledStation; gestureActive = true;
 }, { passive: true });
 let gLastY = 0;
@@ -920,8 +926,12 @@ addEventListener('touchmove', (e) => {
 addEventListener('touchend', () => {
   if (!gestureActive) return; gestureActive = false;
   if (gHorizontal) return;
-  // свайп ВВЕРХ пальцем (контент листается вниз) у конца FAQ → петля в начало
-  if (gLastY && (gTouchY - gLastY) > 30) maybeLoop(true);
+  // ПЕТЛЯ только при РЕАЛЬНОМ свайпе у самого края (тап НЕ срабатывает → нет бага «на 1 страницу»):
+  if (_dragged && !looping) {
+    const dy = gTouchY - gLastY;        // >0 палец вверх (листаем вниз), <0 палец вниз (листаем вверх)
+    if (dy > 44 && scrollProgress > 0.985 && fk > 0.85) { startLoop(1); return; }
+    if (dy < -44 && scrollProgress < 0.015 && tp < 0.05) { startLoop(-1); return; }
+  }
   settleFrom(navFrom);
 }, { passive: true });
 // --- жест: колесо/трекпад (нет «отпускания» — ловим затихание) ---
@@ -935,8 +945,8 @@ addEventListener('wheel', () => {
 // клавиатура: стрелки/пробел = соседняя станция (для десктопа)
 addEventListener('keydown', (e) => {
   if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || brainOpen) return;
-  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); if (settledStation >= STATIONS.length - 1 && fk > 0.6) triggerLoop(); else goToStation(settledStation + 1); }
-  else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); goToStation(settledStation - 1); }
+  if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); if (settledStation >= STATIONS.length - 1 && fk > 0.6) startLoop(1); else goToStation(settledStation + 1); }
+  else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); if (settledStation <= 0 && tp < 0.05) startLoop(-1); else goToStation(settledStation - 1); }
   else if (e.key === 'Home') { e.preventDefault(); goToStation(0); }
   else if (e.key === 'End') { e.preventDefault(); goToStation(STATIONS.length - 1); }
 });
@@ -1112,6 +1122,7 @@ const easeIO = (a) => a * a * (3 - 2 * a);
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; const t = elapsed; frame++;
+  updateLoop(dt);   // бесконечная петля (свап координат в темноте) — до обновления станций/камеры
   env.update(t, camera, tp, dt);
   // Покер виден на своём сегменте; при уходе в Дартс — плавно убирается (не маячит за мишенью)
   poker.setReveal(pk * (1 - THREE.MathUtils.smoothstep(dk, 0.02, 0.3)));
@@ -1231,6 +1242,13 @@ function animate() {
     const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc), BAR_LOOK.x, akc), FAQ_LOOK.x, fkc);
     const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc), BAR_LOOK.y, akc), FAQ_LOOK.y, fkc);
     const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc), BAR_LOOK.z, akc), FAQ_LOOK.z, fkc);
+    // ПЕТЛЯ: камера летит ВПЕРЁД вдоль взгляда в темноту (макс к середине), затем возвращается —
+    // ощущение «вышли за край сцены в даль и приехали на другую страницу». Свап координат скрыт темнотой.
+    if (looping) {
+      const push = Math.sin(THREE.MathUtils.clamp(loopT, 0, 1) * Math.PI) * 5.5;
+      _loopDir.set(lookX - camera.position.x, lookY - camera.position.y, lookZ - camera.position.z).normalize();
+      camera.position.addScaledVector(_loopDir, push);
+    }
     camera.lookAt(lookX, lookY, lookZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
@@ -1539,7 +1557,7 @@ onResize();
 // ============================================================
 function glitchFx(el) { if (!el || el.classList.contains('glitching')) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
 // ПРАВИЛО: ВЕСЬ текст на страницах реагирует на наведение И касание визуальной + звуковой глитч-анимацией.
-const TEXT_SEL = '.hero-title,.hero-sub,.hero-desc,.about-label,.about-title,.about-note,.thesis,.poker-title,.poker-sub,.darts-title,.darts-sub,.darts-promo,.billiard-title,.billiard-sub,.bar-title,.bar-sub,.dh-key,.ds-zone,.nav-logo,.nav-cta,.bh-label,.bd-label,#brain-detail h3,#brain-detail p,.su-head h3,.su-head p,.cp-head h3,.cp-head p';
+const TEXT_SEL = '.hero-title,.hero-sub,.hero-desc,.about-label,.about-title,.about-note,.thesis,.poker-title,.poker-sub,.darts-title,.darts-sub,.darts-promo,.billiard-title,.billiard-sub,.bar-title,.bar-sub,.faq-title,.faq-sub,.faq-hint-label,.dh-key,.ds-zone,.nav-logo,.nav-cta,.bh-label,.bd-label,#brain-detail h3,#brain-detail p,.su-head h3,.su-head p,.cp-head h3,.cp-head p';
 document.querySelectorAll(TEXT_SEL).forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
 // КАСАНИЕ: текст-оверлеи имеют pointer-events:none, поэтому ловим тап ГЛОБАЛЬНО и бьём по тексту под
 // пальцем по геометрии bounding-box (не мешает 3D-взаимодействию и скроллу). Учитываем видимость предков.
@@ -1755,73 +1773,95 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
 }
 
 // ============================================================
-// FAQ (станция 7): выбор фишки-вопроса → ответ на HTML-панели; золотая фишка → ТГ-бот.
+// FAQ (станция 7): тап по фишке → она крутится, взлетает и ПЕРЕВОРАЧИВАЕТСЯ в центре, показывая
+// ОТВЕТ прямо на фишке (без всплывающих окон). Золотая фишка = CTA → ТГ-бот.
 // ============================================================
 const TG_BOT = 'https://t.me/ducks_gameclub_bot';
-const faqAnswerEl = document.getElementById('faq-answer');
-const faqQEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-q') : null;
-const faqAEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-a') : null;
-const faqBotEl = faqAnswerEl ? faqAnswerEl.querySelector('.fa-bot') : null;
 function onFaqPick(idx) {
   const item = faq.data[idx];
   if (!item) return;
-  faq.select(idx);
   if (item.cta) {
+    faq.select(idx);
     sound.playQuack?.();
     window.open(TG_BOT, '_blank', 'noopener');
-    setTimeout(() => faq.deselect(), 600);
+    setTimeout(() => faq.deselect(), 700);
     return;
   }
+  const wasSel = faq.selected === idx;
+  faq.select(idx);                       // toggle: тот же → вернуть на стол
   sound.playCardSlide?.();
-  if (faqQEl) faqQEl.textContent = item.q.replace(/\n/g, ' ');
-  if (faqAEl) faqAEl.textContent = item.a;
-  if (faqBotEl) faqBotEl.style.display = item.bot ? 'inline-flex' : 'none';
-  document.body.classList.add('faq-answer-on');
+  if (!wasSel) sound.playQuack?.();
 }
-function closeFaqAnswer() {
-  faq.deselect();
-  document.body.classList.remove('faq-answer-on');
-}
-faqBotEl?.addEventListener('click', (e) => { e.stopPropagation(); sound.playClick?.(); });
+function closeFaqAnswer() { faq.deselect(); }
 window.__onFaqPick = onFaqPick; window.__closeFaqAnswer = closeFaqAnswer;   // для проверки в браузере
 
 // ============================================================
-// ПЕТЛЯ FAQ→ХОЛЛ: у низа FAQ фишки рассыпаются, кадр гаснет в чёрное, скролл сбрасывается в 0,
-// сцена возвращается к утке Холла. Бесшовно и бесконечно (на стыке РАЗНЫЕ объекты: фишки ↔ утка).
+// БЕСКОНЕЧНАЯ ПЕТЛЯ (обе стороны), плавный переход КАМЕРОЙ в темноту вдали стола:
+//   • с последней (FAQ) доскролл вниз → камера улетает вперёд в темноту → возвращаемся к Холлу,
+//     где утка собирается ЧАСТИЦАМИ (без кубиков);
+//   • с первой (Холл) скролл вверх → так же уходим в темноту → попадаем на FAQ.
+// Свап координат — в самой темноте (середина), поэтому стык незаметен: ощущение бесконечности.
 // ============================================================
-let looping = false;
-const loopFadeEl = document.getElementById('loop-fade');
-function triggerLoop() {
-  if (looping || !introDone) return;
-  looping = true;
-  document.body.classList.add('looping');     // чёрный оверлей наплывает (CSS ~0.5с)
-  faq.burst();                                 // фишки взлетают и рассыпаются
+function startLoop(dir) {
+  if (looping || !introDone || brainOpen) return;
+  if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;
+  looping = dir; loopT = 0; loopSwapped = false;
   closeFaqAnswer();
-  sound.playWhoosh?.(true); sound.playQuack?.();
+  if (dir > 0) faq.burst();              // фишки рассыпаются, улетая в темноту
+  sound.playWhoosh?.(true);
   try { lenis.stop(); } catch (e) {}
-  // когда кадр почернел — мгновенно прыгаем в начало и пересобираем Холл
-  setTimeout(() => {
-    try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) {}
-    scrollProgress = 0; settledStation = 0; _lastStIdx = 0;
-    faq.reset();
-    updateUIByScroll();
-    document.getElementById('scroll-progress').style.width = '0%';
-    try { lenis.start(); } catch (e) {}
+}
+window.__startLoop = startLoop; window.__triggerLoop = () => startLoop(1);   // для проверки в браузере
+
+// утка собирается ИЗ ЧАСТИЦ (хвост интро, БЕЗ падающих кубиков) — для прихода на Холл в петле
+function formHeroFromParticles() {
+  formProgress = 0; introDuckReveal = 0; introPlaying = true; heroReveal = 0; uDuckReveal.value = -999;
+  if (duckMesh) duckMesh.visible = false;
+  document.body.classList.add('hero-in');
+  const tl = gsap.timeline();
+  tl.add(() => sound.playFormation?.(), 0);
+  tl.to({ v: 0 }, { v: 1, duration: 1.3, ease: 'power2.out', onUpdate: function () { formProgress = this.targets()[0].v; } }, 0);
+  tl.to({ v: 0 }, { v: 1, duration: 0.9, ease: 'power1.inOut', onUpdate: function () { heroReveal = this.targets()[0].v; } }, 0.1);
+  tl.add(() => { if (duckMesh) { duckMesh.visible = true; duckMesh.rotation.y = DUCK_FACE; duckMesh.position.set(0, 0, 0); duckMesh.scale.set(1, 1, 1); } }, 0.9);
+  tl.to({ v: 0 }, { v: 1, duration: 0.9, ease: 'power1.inOut', onUpdate: function () { introDuckReveal = this.targets()[0].v; } }, 0.9);
+  tl.add(() => { introPlaying = false; formProgress = 1; introDuckReveal = 1; uDuckReveal.value = 999; heroReveal = 1; }, 1.9);
+}
+
+// прогресс петли (вызывается каждый кадр из animate)
+function updateLoop(dt) {
+  if (!looping) return;
+  loopT = Math.min(1, loopT + dt / LOOP_DUR);
+  // темнота вдали: наплывает к середине и уходит (мягко, как полёт в тёмный тоннель)
+  const dark = Math.sin(THREE.MathUtils.clamp(loopT, 0, 1) * Math.PI);
+  if (loopFadeEl) loopFadeEl.style.opacity = String(THREE.MathUtils.clamp(dark * 1.35, 0, 1));
+  // СВАП координат — в самой темноте
+  if (!loopSwapped && loopT >= 0.5) {
+    loopSwapped = true;
+    if (looping > 0) {                   // FAQ → Холл
+      scrollProgress = 0; settledStation = 0; _lastStIdx = 0;
+      faq.reset();
+      try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) {}
+      updateUIByScroll();
+      formHeroFromParticles();           // утка из частиц (без кубиков)
+    } else {                             // Холл → FAQ
+      scrollProgress = 1; settledStation = STATIONS.length - 1; _lastStIdx = STATIONS.length - 1;
+      faq.reset();
+      try { lenis.scrollTo(lenis.limit || 0, { immediate: true, force: true }); } catch (e) {}
+      updateUIByScroll();
+      sound.playFormation?.();
+    }
+    document.getElementById('scroll-progress').style.width = (scrollProgress * 100) + '%';
     sound.playWhoosh?.(false);
-    // даём кадру устояться на Холле, затем снимаем черноту (проявляется утка)
-    setTimeout(() => {
-      document.body.classList.remove('looping');
-      setTimeout(() => { looping = false; }, 700);
-    }, 240);
-  }, 520);
+  }
+  if (loopT >= 1) { looping = 0; if (loopFadeEl) loopFadeEl.style.opacity = '0'; try { lenis.start(); } catch (e) {} }
 }
-window.__triggerLoop = triggerLoop;   // для проверки в браузере
-// «доскролл вниз у конца FAQ = петля»: ловим попытку прокрутки за нижний край
-function maybeLoop(downward) {
-  if (looping || !downward) return;
-  if (scrollProgress > 0.965 && fk > 0.6) triggerLoop();
-}
-addEventListener('wheel', (e) => { if (e.deltaY > 0) maybeLoop(true); }, { passive: true });
+
+// триггеры петли: на самом краю + явный жест (тап НЕ срабатывает — нужен реальный скролл/свайп)
+addEventListener('wheel', (e) => {
+  if (looping) return;
+  if (e.deltaY > 6 && scrollProgress > 0.985 && fk > 0.85) startLoop(1);
+  else if (e.deltaY < -6 && scrollProgress < 0.015 && tp < 0.05) startLoop(-1);
+}, { passive: true });
 
 // ============================================================
 // РЕЖИМ НАСТРОЙКИ КАМЕРЫ (?tune): двигаешь сцену пальцем + окошко с цифрами

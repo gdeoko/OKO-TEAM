@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 
 // ============================================================
-// СТАНЦИЯ «FAQ» (станция 7, финал + петля). Сукно стола с покерными ФИШКАМИ-вопросами.
-// На каждой фишке — короткий вопрос + штамп-силуэт утки DUCKS (бренд живёт как лого, БЕЗ 3D-утки,
-// чтобы стык петли FAQ→Холл не дублировал утку). Клик по фишке → она ЗАКРУЧИВАЕТСЯ, вылетает в
-// центр и встаёт лицом к зрителю → main показывает ОТВЕТ (HTML-панель). Золотая фишка «ЗАПИСАТЬСЯ»
-// → переход в ТГ-бота. burst() рассыпает фишки в петле (FAQ→начало).
+// СТАНЦИЯ «FAQ» (станция 7, финал + петля). Стол с покерными ФИШКАМИ-вопросами в фирменном
+// стиле DUCK'S. ЧЁРНЫЕ ГЛЯНЦЕВЫЕ фишки: на ВЕРХНЕЙ грани (лежит на столе) — ВОПРОС, на НИЖНЕЙ —
+// ОТВЕТ. Тап → фишка взлетает КРУТЯСЬ, ПЕРЕВОРАЧИВАЕТСЯ в центре экрана лицом-ответом к зрителю
+// (ответ прямо на фишке, без всплывающих окон). Золотая фишка «ЗАПИСАТЬСЯ» = CTA → ТГ-бот.
+// burst() рассыпает фишки в петле (FAQ↔Холл).
 // API: group, baseScale, setReveal(fk), update(t,dt,camera), raycast(ray)→idx|null,
 //      select(idx), deselect(), reset(), burst(), chips[], data[]
 // ============================================================
@@ -13,102 +13,123 @@ import * as THREE from 'three';
 const _wp = new THREE.Vector3();
 const _camLocal = new THREE.Vector3();
 const _v = new THREE.Vector3();
-const _n = new THREE.Vector3(), _right = new THREE.Vector3(), _up2 = new THREE.Vector3(), _negUp = new THREE.Vector3();
+const _camRight = new THREE.Vector3(), _camUp = new THREE.Vector3(), _camFwd = new THREE.Vector3();
 const _mat4 = new THREE.Matrix4();
-const _qHome = new THREE.Quaternion(), _qShow = new THREE.Quaternion(), _qSpin = new THREE.Quaternion();
+const _qHome = new THREE.Quaternion(), _qShow = new THREE.Quaternion(), _qSpin = new THREE.Quaternion(), _qGroup = new THREE.Quaternion(), _qWorld = new THREE.Quaternion();
 const _eHome = new THREE.Euler();
+const _Y = new THREE.Vector3(0, 1, 0);
 const TWO_PI = Math.PI * 2;
 
 // ---- данные вопросов (голос бренда, без стоп-слов) ----
 const QA = [
-  { q: 'Как попасть\nв клуб?', a: 'Оставь заявку в нашем боте — позовём на ближайший вечер.', bot: true, short: 'ПОПАСТЬ' },
-  { q: 'Сколько\nстоит вечер?', a: 'От 1000 ₽ за участие в турнире.', short: 'ЦЕНА' },
-  { q: 'На что\nиграем?', a: 'На интерес и место в рейтинге клуба. Без денежного риска.', short: 'СТАВКИ' },
-  { q: 'Бар?\nКальяны?', a: 'Бар есть. Кальянов нет — чистый воздух, живое общение.', short: 'БАР' },
-  { q: 'Какие\nигры?', a: 'Покер, дартс, бильярд, бар. Скоро — мафия и квиз.', short: 'ИГРЫ' },
-  { q: 'Новичок\nили один?', a: 'Конечно. Тебя примут и научат.', short: 'НОВИЧОК' },
+  { q: 'Как попасть\nв клуб?', a: 'Оставь заявку в нашем боте — позовём на ближайший вечер.' },
+  { q: 'Сколько\nстоит вечер?', a: 'От 1000 ₽ за участие в турнире.' },
+  { q: 'На что\nиграем?', a: 'На интерес и место в рейтинге клуба. Без денежного риска.' },
+  { q: 'Бар?\nКальяны?', a: 'Бар есть. Кальянов нет — чистый воздух, живое общение.' },
+  { q: 'Какие\nигры?', a: 'Покер, дартс, бильярд, бар. Скоро — мафия и квиз.' },
+  { q: 'Новичок\nили один?', a: 'Конечно. Тебя примут и научат.' },
 ];
-const CTA = { q: 'ЗАПИСАТЬСЯ', a: '', cta: true, bot: true, short: 'CTA' };
+const CTA = { q: 'ЗАПИСАТЬСЯ', a: '', cta: true, bot: true };
 
-const R = 0.66;          // радиус фишки
-const TH = 0.14;         // толщина фишки
+const R = 0.7;           // радиус фишки
+const TH = 0.16;         // толщина фишки
 
 // раскладка фишек на сукне (локальные коорд: x — вправо, z — К зрителю = +z)
 // десктоп — широкая сетка 3×2; мобайл (портрет) — узкая 2×3, чтобы фишки не обрезались по краям.
 const LAYOUT_D = [
-  [-1.62, -1.30], [0, -1.30], [1.62, -1.30],
-  [-1.62,  0.18], [0,  0.18], [1.62,  0.18],
+  [-1.7, -1.35], [0, -1.35], [1.7, -1.35],
+  [-1.7,  0.25], [0,  0.25], [1.7,  0.25],
 ];
 const LAYOUT_M = [
-  [-1.02, -1.85], [1.02, -1.85],
-  [-1.02, -0.30], [1.02, -0.30],
-  [-1.02,  1.25], [1.02,  1.25],
+  [-1.05, -1.95], [1.05, -1.95],
+  [-1.05, -0.35], [1.05, -0.35],
+  [-1.05,  1.25], [1.05,  1.25],
 ];
-const CTA_POS_D = [0, 1.75];
-const CTA_POS_M = [0, 2.75];
+const CTA_POS_D = [0, 1.9];
+const CTA_POS_M = [0, 2.8];
 
-// ---- текстура лица фишки (фирменный стиль DUCK'S, по референсу) ----
-function chipFace(item, gold) {
+// перенос длинного текста по словам (для лица-ответа)
+function wrapLines(ctx, text, maxW) {
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// ---- текстура лица фишки. kind: 'q' вопрос | 'a' ответ | 'cta' ----
+function chipFace(item, kind) {
+  const gold = kind === 'cta';
   const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d');
   const cx = S / 2, cy = S / 2, Rp = S / 2 - 6;
-  // 1) тело фишки — радиальный градиент
-  const base = gold ? ['#ffe07a', '#e6ad28', '#9c6f12'] : ['#ef4646', '#c91f1f', '#8a0f0f'];
-  const g = x.createRadialGradient(cx, cy - 50, 30, cx, cy, Rp);
-  g.addColorStop(0, base[0]); g.addColorStop(0.55, base[1]); g.addColorStop(1, base[2]);
+  // 1) тело фишки — ЧЁРНОЕ (или золотое для CTA), радиальный градиент с бликом
+  const base = gold ? ['#ffe9a0', '#e6ad28', '#8a5f0e'] : ['#3a3a44', '#17171d', '#070709'];
+  const g = x.createRadialGradient(cx, cy - 60, 24, cx, cy, Rp);
+  g.addColorStop(0, base[0]); g.addColorStop(0.5, base[1]); g.addColorStop(1, base[2]);
   x.beginPath(); x.arc(cx, cy, Rp, 0, TWO_PI); x.fillStyle = g; x.fill();
-  // 2) концентрические бороздки тела
+  // 2) концентрические бороздки
   x.lineWidth = 2;
-  for (let r = Rp - 8; r > Rp - 70; r -= 7) {
+  for (let r = Rp - 8; r > Rp - 78; r -= 7) {
     x.beginPath(); x.arc(cx, cy, r, 0, TWO_PI);
-    x.strokeStyle = 'rgba(0,0,0,0.12)'; x.stroke();
+    x.strokeStyle = gold ? 'rgba(120,80,0,0.18)' : 'rgba(255,255,255,0.05)'; x.stroke();
   }
-  // 3) «споты» по ободу — чёрные сегменты с белой окантовкой (классика, как на референсе)
-  const NSPOT = 6, spotW = 0.42;   // ширина сегмента в радианах
+  // 3) «споты» по ободу — чередуем КРАСНЫЙ и БЕЛЫЙ (как на референсе чёрной фишки)
+  const NSPOT = 8, spotW = 0.30;
   for (let i = 0; i < NSPOT; i++) {
     const a0 = (i / NSPOT) * TWO_PI - spotW / 2, a1 = a0 + spotW;
-    // белая подложка
-    x.beginPath(); x.arc(cx, cy, Rp - 2, a0 - 0.04, a1 + 0.04); x.arc(cx, cy, Rp - 76, a1 + 0.04, a0 - 0.04, true); x.closePath();
-    x.fillStyle = '#f4f0ea'; x.fill();
-    // чёрный сегмент
-    x.beginPath(); x.arc(cx, cy, Rp - 8, a0, a1); x.arc(cx, cy, Rp - 70, a1, a0, true); x.closePath();
-    x.fillStyle = gold ? '#2a1c02' : '#161013'; x.fill();
+    const col = gold ? '#fff4d0' : (i % 2 === 0 ? '#d11f1f' : '#f2efe9');
+    // белая/светлая окантовка
+    x.beginPath(); x.arc(cx, cy, Rp - 2, a0 - 0.045, a1 + 0.045); x.arc(cx, cy, Rp - 84, a1 + 0.045, a0 - 0.045, true); x.closePath();
+    x.fillStyle = gold ? '#7a560c' : '#0c0c0f'; x.fill();
+    x.beginPath(); x.arc(cx, cy, Rp - 7, a0, a1); x.arc(cx, cy, Rp - 79, a1, a0, true); x.closePath();
+    x.fillStyle = col; x.fill();
   }
   // 4) обводки обода
-  x.lineWidth = 6; x.strokeStyle = gold ? '#7a560c' : '#5e0808';
+  x.lineWidth = 5; x.strokeStyle = gold ? '#5a3f06' : '#000';
   x.beginPath(); x.arc(cx, cy, Rp - 3, 0, TWO_PI); x.stroke();
-  // 5) центральный белый диск
-  const Ri = S * 0.34;
-  const inner = x.createRadialGradient(cx, cy - 24, 16, cx, cy, Ri);
-  if (gold) { inner.addColorStop(0, '#fffaf0'); inner.addColorStop(1, '#f3e6c2'); }
-  else { inner.addColorStop(0, '#fff6f6'); inner.addColorStop(1, '#ffe7e7'); }
+  // 5) центральный диск
+  const Ri = S * 0.355;
+  const inner = x.createRadialGradient(cx, cy - 24, 14, cx, cy, Ri);
+  if (gold) { inner.addColorStop(0, '#fff6da'); inner.addColorStop(1, '#e7c86c'); }
+  else { inner.addColorStop(0, '#22222a'); inner.addColorStop(1, '#0c0c10'); }
   x.beginPath(); x.arc(cx, cy, Ri, 0, TWO_PI); x.fillStyle = inner; x.fill();
-  x.lineWidth = 7; x.strokeStyle = gold ? '#caa233' : '#c91f1f';
+  // двойное кольцо: красное + светлое
+  x.lineWidth = 6; x.strokeStyle = gold ? '#b8902a' : '#d11f1f';
   x.beginPath(); x.arc(cx, cy, Ri, 0, TWO_PI); x.stroke();
-  x.lineWidth = 2; x.strokeStyle = gold ? 'rgba(180,140,30,.5)' : 'rgba(180,20,20,.5)';
-  x.beginPath(); x.arc(cx, cy, Ri - 12, 0, TWO_PI); x.stroke();
-  // фоновый «сакральный» ромб (как на референсе) — едва заметный
-  x.save(); x.translate(cx, cy); x.strokeStyle = gold ? 'rgba(180,140,30,.22)' : 'rgba(180,20,20,.22)'; x.lineWidth = 2;
-  for (const rot of [0, Math.PI / 4]) { x.save(); x.rotate(rot); x.strokeRect(-Ri * 0.5, -Ri * 0.5, Ri, Ri); x.restore(); }
-  x.beginPath(); x.arc(0, 0, Ri * 0.62, 0, TWO_PI); x.stroke(); x.restore();
+  x.lineWidth = 2; x.strokeStyle = gold ? 'rgba(255,240,200,.7)' : 'rgba(255,255,255,.45)';
+  x.beginPath(); x.arc(cx, cy, Ri - 11, 0, TWO_PI); x.stroke();
 
-  const ink = gold ? '#6a4a06' : '#a51616';
   x.textAlign = 'center';
-  if (item.cta) {
-    // золотая фишка-CTA
-    x.fillStyle = ink; x.font = '900 40px Orbitron, "Exo 2", sans-serif';
-    x.fillText("DUCK'S", cx, cy - 52);
-    x.font = '900 46px Orbitron, "Exo 2", sans-serif'; x.fillStyle = '#7a1010';
-    x.fillText('ЗАПИСАТЬСЯ', cx, cy + 14);
-    x.font = '700 26px Orbitron, "Exo 2", sans-serif'; x.fillStyle = '#9c6f12';
-    x.fillText('→ ТЕЛЕГРАМ', cx, cy + 64);
-  } else {
-    // вордмарк-штамп сверху + вопрос
-    x.fillStyle = ink; x.font = '900 34px Orbitron, "Exo 2", sans-serif';
-    x.fillText("DUCK'S", cx, cy - 74);
-    x.fillStyle = '#7a1010'; x.font = '900 48px Orbitron, "Exo 2", sans-serif';
+  if (kind === 'cta') {
+    x.fillStyle = '#5a3f06'; x.font = '900 38px Orbitron, "Exo 2", sans-serif';
+    x.fillText("DUCK'S", cx, cy - 50);
+    x.fillStyle = '#7a1010'; x.font = '900 46px Orbitron, "Exo 2", sans-serif';
+    x.fillText('ЗАПИСАТЬСЯ', cx, cy + 12);
+    x.fillStyle = '#8a5f0e'; x.font = '700 24px Orbitron, "Exo 2", sans-serif';
+    x.fillText('→ ТЕЛЕГРАМ', cx, cy + 60);
+  } else if (kind === 'q') {
+    // ВЕРХНЯЯ грань: вордмарк + вопрос (белый текст на чёрном)
+    x.fillStyle = '#d11f1f'; x.font = '900 30px Orbitron, "Exo 2", sans-serif';
+    x.fillText("DUCK'S", cx, cy - 78);
+    x.fillStyle = '#ffffff'; x.font = '900 46px Orbitron, "Exo 2", sans-serif';
     const lines = item.q.split('\n');
-    const ly = cy - 8, lh = 56;
+    const ly = cy - 8, lh = 54;
+    lines.forEach((ln, i) => x.fillText(ln, cx, ly + i * lh));
+    // маленькая подсказка «переверни»
+    x.fillStyle = 'rgba(255,255,255,.4)'; x.font = '600 18px "Exo 2", sans-serif';
+    x.fillText('тапни →', cx, cy + 96);
+  } else {
+    // НИЖНЯЯ грань: ОТВЕТ (белый текст с переносом)
+    x.fillStyle = '#d11f1f'; x.font = '700 22px Orbitron, "Exo 2", sans-serif';
+    x.fillText('ОТВЕТ', cx, cy - 92);
+    x.fillStyle = '#ffffff'; x.font = '700 34px "Exo 2", Inter, sans-serif';
+    const lines = wrapLines(x, item.a, Ri * 1.72);
+    const lh = 42, ly = cy - (lines.length - 1) * lh / 2 + 6;
     lines.forEach((ln, i) => x.fillText(ln, cx, ly + i * lh));
   }
   const t = new THREE.CanvasTexture(c);
@@ -119,9 +140,30 @@ function chipFace(item, gold) {
 function shadowTexture() {
   const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d'); const g = x.createRadialGradient(S / 2, S / 2, 2, S / 2, S / 2, S / 2);
-  g.addColorStop(0, 'rgba(0,0,0,0.6)'); g.addColorStop(0.55, 'rgba(0,0,0,0.32)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  g.addColorStop(0, 'rgba(0,0,0,0.66)'); g.addColorStop(0.55, 'rgba(0,0,0,0.34)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   x.fillStyle = g; x.fillRect(0, 0, S, S);
   return new THREE.CanvasTexture(c);
+}
+
+function feltTexture() {
+  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(S / 2, S / 2, 30, S / 2, S / 2, S / 2);
+  g.addColorStop(0, '#1f0c12'); g.addColorStop(0.62, '#140509'); g.addColorStop(1, '#0a0306');
+  x.fillStyle = g; x.fillRect(0, 0, S, S);
+  // тонкое сукно-зерно
+  for (let i = 0; i < 2600; i++) {
+    x.fillStyle = `rgba(255,${40 + Math.random() * 30 | 0},${60 + Math.random() * 30 | 0},${Math.random() * 0.03})`;
+    x.fillRect(Math.random() * S, Math.random() * S, 1, 1);
+  }
+  // двойной круг разметки + лого
+  x.strokeStyle = 'rgba(210,40,40,.18)'; x.lineWidth = 4;
+  x.beginPath(); x.arc(S / 2, S / 2, S * 0.42, 0, TWO_PI); x.stroke();
+  x.lineWidth = 2; x.beginPath(); x.arc(S / 2, S / 2, S * 0.40, 0, TWO_PI); x.stroke();
+  x.globalAlpha = 0.05; x.fillStyle = '#ff7a7a'; x.textAlign = 'center';
+  x.font = '900 110px Orbitron, sans-serif'; x.fillText("DUCK'S", S / 2, S / 2 + 34);
+  x.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
 export class FaqStation {
@@ -140,36 +182,32 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- сукно стола (тёмное, с красным свечением по краю) -----
-    const feltTex = (() => {
-      const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
-      const x = c.getContext('2d');
-      const g = x.createRadialGradient(S / 2, S / 2, 30, S / 2, S / 2, S / 2);
-      g.addColorStop(0, '#1c0a10'); g.addColorStop(0.7, '#120308'); g.addColorStop(1, '#070205');
-      x.fillStyle = g; x.fillRect(0, 0, S, S);
-      // лёгкое лого по центру
-      x.globalAlpha = 0.06; x.fillStyle = '#ff6a6a'; x.textAlign = 'center';
-      x.font = '900 120px Orbitron, sans-serif'; x.fillText("DUCK'S", S / 2, S / 2 + 36);
-      x.globalAlpha = 1;
-      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-    })();
+    // ----- СТОЛ: сукно + глянцевый борт (рейл) -----
     this.felt = new THREE.Mesh(
-      new THREE.CircleGeometry(4.6, 64),
-      reg(new THREE.MeshStandardMaterial({ map: feltTex, roughness: 0.95, metalness: 0.0, side: THREE.DoubleSide }), 1)
+      new THREE.CircleGeometry(4.4, 72),
+      reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
     );
     this.felt.rotation.x = -Math.PI / 2; this.felt.position.y = -0.02; this.felt.renderOrder = 0;
     this.group.add(this.felt);
-    // светящийся обод сукна
-    this.feltRing = new THREE.Mesh(
-      new THREE.RingGeometry(4.0, 4.5, 80),
-      reg(new THREE.MeshBasicMaterial({ color: 0xcc0000, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }), 0.5)
+    // глянцевый борт-рейл вокруг сукна (тёмное дерево с красным лаком)
+    this.rail = new THREE.Mesh(
+      new THREE.TorusGeometry(4.5, 0.34, 24, 96),
+      reg(new THREE.MeshPhysicalMaterial({ color: 0x2a0a0c, roughness: 0.25, metalness: 0.2,
+        clearcoat: 1.0, clearcoatRoughness: 0.12, emissive: 0x3a0608, emissiveIntensity: 0.5 }), 1)
     );
-    this.feltRing.rotation.x = -Math.PI / 2; this.feltRing.position.y = 0.0; this.feltRing.renderOrder = 1;
+    this.rail.rotation.x = -Math.PI / 2; this.rail.position.y = 0.06; this.rail.renderOrder = 2;
+    this.group.add(this.rail);
+    // светящийся обод-неон под рейлом
+    this.feltRing = new THREE.Mesh(
+      new THREE.RingGeometry(4.15, 4.32, 96),
+      reg(new THREE.MeshBasicMaterial({ color: 0xff1a1a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }), 0.55)
+    );
+    this.feltRing.rotation.x = -Math.PI / 2; this.feltRing.position.y = 0.005; this.feltRing.renderOrder = 1;
     this.group.add(this.feltRing);
 
     const shTex = shadowTexture();
-    const chipBodyGeo = new THREE.CylinderGeometry(R, R, TH, 48);
-    const faceGeo = new THREE.CircleGeometry(R - 0.015, 48);
+    const chipBodyGeo = new THREE.CylinderGeometry(R, R, TH, 56);
+    const faceGeo = new THREE.CircleGeometry(R - 0.02, 56);
 
     this.data.forEach((item, i) => {
       const gold = !!item.cta;
@@ -180,34 +218,44 @@ export class FaqStation {
       pivot.userData = {
         home: new THREE.Vector3(pos[0], 0, pos[1]),
         homeRotY: (Math.random() - 0.5) * 0.4,
-        sel: 0,            // 0 дом … 1 в центре
-        spin: 0,           // накопленный угол закрутки
-        idx: i, gold,
-        bvx: 0, bvy: 0, bvz: 0, brot: 0,   // для burst
+        sel: 0, spin: 0, idx: i, gold,
+        bvx: 0, bvy: 0, bvz: 0, brot: 0,
       };
       pivot.rotation.y = pivot.userData.homeRotY;
 
-      // тело фишки
-      const bodyMat = reg(new THREE.MeshStandardMaterial({
-        color: gold ? 0xdda23a : 0xc11f1f, roughness: 0.5, metalness: 0.15,
-        emissive: gold ? 0x3a2600 : 0x300000, emissiveIntensity: 0.4,
+      // ТЕЛО — глянцевое (чёрное/золотое), clearcoat для реалистичного блеска
+      const bodyMat = reg(new THREE.MeshPhysicalMaterial({
+        color: gold ? 0xdda23a : 0x141418, roughness: 0.3, metalness: 0.1,
+        clearcoat: 1.0, clearcoatRoughness: 0.08,
+        emissive: gold ? 0x3a2600 : 0x0a0a0c, emissiveIntensity: 0.3,
       }), 1);
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
-      // лицо (текстура с вопросом)
-      const faceMat = reg(new THREE.MeshStandardMaterial({
-        map: chipFace(item, gold), roughness: 0.45, metalness: 0.05,
-        emissive: 0xffffff, emissiveMap: chipFace(item, gold), emissiveIntensity: 0.25,
+
+      // ВЕРХНЯЯ грань — ВОПРОС (или CTA)
+      const qMat = reg(new THREE.MeshPhysicalMaterial({
+        map: chipFace(item, gold ? 'cta' : 'q'), roughness: 0.32, metalness: 0.0,
+        clearcoat: 0.9, clearcoatRoughness: 0.1,
       }), 1);
-      const face = new THREE.Mesh(faceGeo, faceMat);
-      face.rotation.x = -Math.PI / 2; face.position.y = TH / 2 + 0.002; face.renderOrder = 4;
-      pivot.add(face);
+      const qFace = new THREE.Mesh(faceGeo, qMat);
+      qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
+      pivot.add(qFace);
+
+      // НИЖНЯЯ грань — ОТВЕТ (для CTA дублируем CTA-лицо)
+      const aMat = reg(new THREE.MeshPhysicalMaterial({
+        map: chipFace(item, gold ? 'cta' : 'a'), roughness: 0.32, metalness: 0.0,
+        clearcoat: 0.9, clearcoatRoughness: 0.1,
+      }), 1);
+      const aFace = new THREE.Mesh(faceGeo, aMat);
+      aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;
+      pivot.add(aFace);
+
       // контактная тень
       const shadow = new THREE.Mesh(
-        new THREE.PlaneGeometry(R * 2.5, R * 2.5),
-        reg(new THREE.MeshBasicMaterial({ map: shTex, transparent: true, opacity: 0, depthWrite: false }), 0.6)
+        new THREE.PlaneGeometry(R * 2.6, R * 2.6),
+        reg(new THREE.MeshBasicMaterial({ map: shTex, transparent: true, opacity: 0, depthWrite: false }), 0.65)
       );
-      shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.001; shadow.renderOrder = 1;
+      shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.002; shadow.renderOrder = 1;
       pivot.add(shadow);
       pivot.userData.shadow = shadow;
       pivot.userData.body = body;
@@ -216,15 +264,15 @@ export class FaqStation {
       this.chips.push(pivot);
     });
 
-    // ----- свет -----
-    this.spot = new THREE.SpotLight(0xffe6c0, 0, 26, Math.PI / 4, 0.5, 1.0);
-    this.spot.position.set(0.4, 5.2, 1.5); this.spot.target.position.set(0, 0, 0);
+    // ----- свет (тёплый прожектор сверху + блики) -----
+    this.spot = new THREE.SpotLight(0xffe6c0, 0, 30, Math.PI / 4.2, 0.5, 1.0);
+    this.spot.position.set(0.2, 6.0, 1.0); this.spot.target.position.set(0, 0, 0);
     this.group.add(this.spot, this.spot.target);
-    this.warm = new THREE.PointLight(0xff7040, 0, 14); this.warm.position.set(-1.5, 1.6, 2.2);
+    this.warm = new THREE.PointLight(0xff7040, 0, 16); this.warm.position.set(-1.8, 2.2, 2.4);
     this.group.add(this.warm);
-    this.rim = new THREE.PointLight(0x88ddff, 0, 12); this.rim.position.set(2.2, 1.4, -1.5);
+    this.rim = new THREE.PointLight(0xff3050, 0, 14); this.rim.position.set(2.4, 1.6, -1.6);
     this.group.add(this.rim);
-    this.key = new THREE.PointLight(0xffffff, 0, 10); this.key.position.set(0.4, 3.0, 2.6);
+    this.key = new THREE.PointLight(0xffffff, 0, 14); this.key.position.set(0.2, 4.0, 3.0);
     this.group.add(this.key);
   }
 
@@ -236,11 +284,9 @@ export class FaqStation {
     const es = e * e * (3 - 2 * e);
     this.group.scale.setScalar(this.baseScale);
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
-    this.feltRing.material.opacity = 0.5 * es * (0.6 + 0.4 * Math.sin(performance.now() * 0.002));
-    this.spot.intensity = 40 * es; this.warm.intensity = 12 * es;
-    this.rim.intensity = 10 * es; this.key.intensity = 8 * es;
-    // входная «раскрутка»: пока станция проявляется — фишки чуть приподняты и докручиваются
-    this._enter = es;
+    this.feltRing.material.opacity = 0.55 * es * (0.6 + 0.4 * Math.sin(performance.now() * 0.002));
+    this.spot.intensity = 55 * es; this.warm.intensity = 14 * es;
+    this.rim.intensity = 12 * es; this.key.intensity = 12 * es;
   }
 
   // луч → индекс фишки (ближайшая) или null
@@ -249,7 +295,7 @@ export class FaqStation {
     let best = null, bestD = Infinity;
     for (const pivot of this.chips) {
       pivot.getWorldPosition(_wp);
-      const rad = (pivot.userData.gold ? R * 1.1 : R) * this.group.scale.x * (1 + pivot.userData.sel * 0.6);
+      const rad = (pivot.userData.gold ? R * 1.15 : R) * this.group.scale.x * (1 + pivot.userData.sel * 0.6);
       _v.copy(_wp).sub(raycaster.ray.origin);
       const proj = _v.dot(raycaster.ray.direction);
       if (proj < 0) continue;
@@ -262,7 +308,7 @@ export class FaqStation {
 
   select(idx) {
     if (idx == null || idx < 0 || idx >= this.chips.length) return null;
-    this.selected = idx;
+    this.selected = (this.selected === idx) ? -1 : idx;   // повторный тап — вернуть на стол
     return this.data[idx];
   }
   deselect() { this.selected = -1; }
@@ -271,7 +317,7 @@ export class FaqStation {
     for (const p of this.chips) {
       const u = p.userData;
       u.sel = 0; u.spin = 0; u.bvx = u.bvy = u.bvz = u.brot = 0;
-      p.position.copy(u.home); p.rotation.set(0, u.homeRotY, 0);
+      p.position.copy(u.home); p.quaternion.setFromEuler(_eHome.set(0, u.homeRotY, 0));
       p.scale.setScalar(1);
     }
   }
@@ -290,8 +336,6 @@ export class FaqStation {
 
   update(t, dt, camera) {
     if (!this.group.visible) return;
-
-    // позиция камеры в локальной системе группы (для разворота фишки лицом к зрителю)
     this.group.updateWorldMatrix(true, false);
     _camLocal.copy(camera.position);
     this.group.worldToLocal(_camLocal);
@@ -300,61 +344,58 @@ export class FaqStation {
       const u = pivot.userData;
 
       if (this.bursting > 0) {
-        // разлёт в петле
         u.bvy -= 9.0 * dt;
         pivot.position.x += u.bvx * dt;
         pivot.position.y += u.bvy * dt;
         pivot.position.z += u.bvz * dt;
         pivot.rotation.x += u.brot * dt;
         pivot.rotation.y += u.brot * 0.7 * dt;
-        const s = THREE.MathUtils.clamp(pivot.scale.x - dt * 1.4, 0.0, 1);
-        pivot.scale.setScalar(s);
+        pivot.scale.setScalar(THREE.MathUtils.clamp(pivot.scale.x - dt * 1.4, 0, 1));
         continue;
       }
 
-      const target = (this.selected === pivot.userData.idx) ? 1 : 0;
-      u.sel += (target - u.sel) * Math.min(1, dt * 7);
+      const target = (this.selected === u.idx) ? 1 : 0;
+      u.sel += (target - u.sel) * Math.min(1, dt * 6.5);
       const sel = u.sel;
 
-      // закрутка при выезде в центр (несколько оборотов)
-      if (sel > 0.001 && sel < 0.999 && target === 1) u.spin += dt * 9;
+      // закрутка при выезде в центр
+      if (sel > 0.001 && sel < 0.985 && target === 1) u.spin += dt * 10;
 
-      // целевая поза: дом ↔ «витрина» (центр, приподнята, лицом к зрителю)
-      const showY = this.isMobile ? 1.5 : 1.35;
-      const showZ = 0.55;
+      // поза: дом ↔ витрина (центр, приподнята). showZ ближе к зрителю — крупнее и читаемее.
+      const showY = this.isMobile ? 1.35 : 1.15;
+      const showZ = this.isMobile ? 0.9 : 1.0;
       pivot.position.x = u.home.x * (1 - sel);
       pivot.position.y = u.home.y + (showY - u.home.y) * sel + Math.sin(t * 1.6 + u.idx) * 0.02 * (1 - sel);
       pivot.position.z = u.home.z + (showZ - u.home.z) * sel;
-      pivot.scale.setScalar(1 + sel * (this.isMobile ? 0.55 : 0.75));
+      pivot.scale.setScalar(1 + sel * (this.isMobile ? 0.85 : 1.05));
 
-      // ОРИЕНТАЦИЯ: в доме фишка лежит плашмя (face +Y вверх, текст читается сверху). В витрине —
-      // встаёт ЛИЦОМ к камере с верхом текста ВВЕРХ (билборд через базис), + закрутка вокруг лица.
+      // ОРИЕНТАЦИЯ: дом — плашмя (ВОПРОС +Y вверх). Витрина — ПЕРЕВОРОТ: фишка встаёт ПАРАЛЛЕЛЬНО
+      // экрану нижней гранью (ОТВЕТ) к зрителю, текст ровно по экрану. Берём оси КАМЕРЫ напрямую
+      // (не worldUp), поэтому разворот не «косит» в зависимости от позиции фишки. Слёрп = переворот.
       if (sel < 0.002) {
         pivot.quaternion.setFromEuler(_eHome.set(0, u.homeRotY, 0));
       } else {
-        _n.copy(_camLocal).sub(pivot.position).normalize();        // куда смотрит лицо (+Y)
-        _right.set(0, 1, 0).cross(_n);
-        if (_right.lengthSq() < 1e-4) _right.set(1, 0, 0);
-        _right.normalize();
-        _up2.copy(_n).cross(_right).normalize();                   // экранный «верх» текста
-        _negUp.copy(_up2).negate();                                // local +Z → -up2 (текст-верх = -Z)
-        _mat4.makeBasis(_right, _n, _negUp);
-        _qShow.setFromRotationMatrix(_mat4);
-        const spinAng = u.spin * (1 - THREE.MathUtils.smoothstep(sel, 0.8, 1));
-        _qSpin.setFromAxisAngle(_n, spinAng);
-        _qShow.premultiply(_qSpin);
+        _camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+        _camUp.setFromMatrixColumn(camera.matrixWorld, 1);
+        _camFwd.setFromMatrixColumn(camera.matrixWorld, 2).negate();   // -Z камеры = взгляд В сцену
+        // хотим (world): local +Y → ВГЛУБЬ (от зрителя) ⇒ нижняя грань (ОТВЕТ, -Y) К зрителю;
+        // local +X → camRight, local +Z (текст-верх) → camUp.
+        _mat4.makeBasis(_camRight, _camFwd, _camUp);
+        _qWorld.setFromRotationMatrix(_mat4);
+        this.group.getWorldQuaternion(_qGroup);
+        _qShow.copy(_qGroup).invert().multiply(_qWorld);          // мир → локаль группы
+        const spinAng = u.spin * (1 - THREE.MathUtils.smoothstep(sel, 0.82, 1));
+        _qSpin.setFromAxisAngle(_Y, spinAng - Math.PI / 2);       // закрутка + калибровка верха текста ответа
+        _qShow.multiply(_qSpin);
         _qHome.setFromEuler(_eHome.set(0, u.homeRotY, 0));
         pivot.quaternion.slerpQuaternions(_qHome, _qShow, THREE.MathUtils.smoothstep(sel, 0, 1));
       }
-      // лёгкое «дыхание» свечения выбранной фишки
-      if (u.body) u.body.material.emissiveIntensity = 0.4 + sel * 0.5;
-      // тень прячется когда фишка в воздухе
-      if (u.shadow) u.shadow.material.opacity = (u.shadow.material.userData._b || 0.6) * this._mats_op() * (1 - sel);
+      if (u.body) u.body.material.emissiveIntensity = (u.gold ? 0.3 : 0.1) + sel * 0.5;
+      if (u.shadow) u.shadow.material.opacity = (u.shadow.material.userData._b || 0.65) * this._mats_op() * (1 - sel);
     }
   }
 
   _mats_op() {
-    // текущая общая прозрачность (по reveal) — для тени
     const e = THREE.MathUtils.clamp((this._rev - 0.05) / 0.5, 0, 1);
     return e * e * (3 - 2 * e);
   }
