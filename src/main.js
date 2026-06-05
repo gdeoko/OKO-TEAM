@@ -12,9 +12,10 @@ import { PokerStation } from './three/poker.js';
 import { DartsStation } from './three/darts.js';
 import { BilliardStation } from './three/billiard.js';
 import { SpaceField } from './three/space.js';
+import { BarStation } from './three/bar.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v48 — космо-сеть MindOS, клуб исчезает 100%, узорный шар-8 по центру, прилёт элементов ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v49 — БАР (станция 6): стойка из темноты, мини-игра «глоток», tipsy↔Дартс; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -189,12 +190,15 @@ if (ROT_Y) env.group.rotation.y = ROT_Y;   // поворот зала для п�
 //   DARTS_END .. 1     — БИЛЬЯРД, bk = доля прогресса внутри сегмента
 // границы = верх соответствующей секции (5 секций по 100vh → k/(N-1)); пейсинг каждой станции = 1 секция.
 // ============================================================
-const HOLL_END = 0.25;
-const POKER_END = 0.5;
-const DARTS_END = 0.75;
+// 6 секций (Холл, Покер, Дартс, Бильярд, Бар): равные пятые доли скролла.
+const HOLL_END = 0.2;
+const POKER_END = 0.4;
+const DARTS_END = 0.6;
+const BILLIARD_END = 0.8;
 let pk = 0;                       // прогресс станции «Покер» 0..1
 let dk = 0;                       // прогресс станции «Дартс» 0..1
 let bk = 0;                       // прогресс станции «Бильярд» 0..1
+let ak = 0;                       // прогресс станции «Бар» 0..1
 // Покерный стол стоит в тёмном углу клуба (вправо-вниз от камеры конца Холла).
 const poker = new PokerStation();
 poker.group.position.set(0.4, -1.4, 1.8);   // стол выше — меньше пустоты под заголовком
@@ -241,6 +245,22 @@ window.__billiard = billiard;
 const space = new SpaceField(isMobile);
 space.group.position.set(0.4, 0.2, -16);
 scene.add(space.group);
+
+// БАР (станция 6): барная стойка проявляется из темноты космоса ПРЯМО в кадре — камера НЕ движется.
+// Стоит там же, где был шар Бильярда (перед статичной камерой). Клик по бокалу → мини-игра «глоток».
+const bar = new BarStation({
+  onClink: () => sound.playBell?.(0.5),
+  onLift:  () => sound.playWhoosh?.(true),
+  onSip:   () => sound.playSuccess?.(),
+  onPour:  () => sound.playRustle?.(0.7, 0.7),
+});
+bar.group.position.set(0.4, 0.2, -3.0);   // = позиция шара Бильярда → стойка возникает на месте, без долёта
+scene.add(bar.group);
+// Поза камеры Бара = поза Бильярда (ОДНА И ТА ЖЕ) → камера остаётся неподвижной, меняется только сцена.
+const BAR_CAM = { x: 0.4, y: 0.2, z: isMobile ? 5.4 : 4.6 };
+const BAR_LOOK = { x: 0.4, y: 0.2, z: -3.0 };
+window.__bar = bar;
+window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);
@@ -618,7 +638,7 @@ function hitSubject(x, y, r = 0.32) {
 }
 addEventListener('click', (e) => {
   if (!introDone || brainOpen) return;
-  if (document.body.classList.contains('signup-open')) return;   // клики внутри анкеты не трогают сцену
+  if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;   // клики внутри модалок не трогают сцену
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
@@ -628,7 +648,13 @@ addEventListener('click', (e) => {
     raycaster.setFromCamera(pointer, camera);
     darts.tap(raycaster, camera);
   }
-  else if (pk > 0.12) {
+  else if (ak > 0.25) {
+    // БАР: тап по бокалу → мини-игра «глоток»
+    pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    if (bar.tapGlass(raycaster, camera)) document.body.classList.add('bar-tasted');   // подсказка гаснет после первого глотка
+  }
+  else if (pk > 0.12 && ak < 0.05) {
     // ПОКЕР: клик по карте — поднять к зрителю и перевернуть; повторный клик — вернуть на стол
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
@@ -652,7 +678,7 @@ function raycastBilliard(x, y) {
   raycaster.setFromCamera(pointer, camera); return billiard.hit(raycaster);
 }
 function billiardStart(x, y) {
-  if (bk < 0.35 || brainOpen || document.body.classList.contains('signup-open')) return;
+  if (bk < 0.35 || ak > 0.2 || brainOpen || document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;
   if (!raycastBilliard(x, y)) return;
   billiardGrab = true; _bLastX = x; _bLastY = y;
   if (billiard.hooks.onCue) billiard.hooks.onCue();   // щелчок кия по шару
@@ -781,7 +807,7 @@ const lenis = new Lenis({
 window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
-const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, 1.0];
+const STATIONS = [0, HOLL_END, POKER_END, DARTS_END, BILLIARD_END, 1.0];
 let settledStation = 0;
 window.__setStation = (i) => { settledStation = i; };   // для headless-теста скролла
 const SNAP_THRESHOLD = 0.3;   // протянул больше 30% сегмента → докатываемся вперёд
@@ -813,7 +839,7 @@ function goToStation(idx) {
 }
 // докатка по НАПРАВЛЕНИЮ от станции, с которой начали жест
 function settleFrom(fromStation) {
-  if (window.__teleport || brainOpen || document.body.classList.contains('signup-open') || !introDone) return;
+  if (window.__teleport || brainOpen || document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || !introDone) return;
   const startFrac = STATIONS[fromStation];
   let target = fromStation;
   if (fromStation < STATIONS.length - 1 && scrollProgress > startFrac) {
@@ -830,7 +856,7 @@ window.__goToStation = goToStation;   // для проверки в браузе
 // --- жест: палец ---
 let navFrom = 0, gestureActive = false, gTouchX = 0, gTouchY = 0, gHorizontal = false, _dragged = false;
 addEventListener('touchstart', (e) => {
-  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || brainOpen) return;
   const t = e.touches[0]; if (!t) return;
   // КАСАНИЕ ПО МОЗГУ → ЗАЩЁЛКА анимации на весь жест (любой свайп/сторона). Скролл НЕ блокируем.
   if (tp > 0.4 && pk < 0.55 && hitSubject(t.clientX, t.clientY, 0.7)) { brainGrab = true; updatePointer(t.clientX, t.clientY); }
@@ -852,14 +878,14 @@ addEventListener('touchend', () => {
 // --- жест: колесо/трекпад (нет «отпускания» — ловим затихание) ---
 let wheelActive = false, wheelTimer = 0;
 addEventListener('wheel', () => {
-  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || brainOpen) return;
   if (!wheelActive) { wheelActive = true; navFrom = settledStation; }
   clearTimeout(wheelTimer);
   wheelTimer = setTimeout(() => { wheelActive = false; settleFrom(navFrom); }, 90);
 }, { passive: true });
 // клавиатура: стрелки/пробел = соседняя станция (для десктопа)
 addEventListener('keydown', (e) => {
-  if (document.body.classList.contains('signup-open') || brainOpen) return;
+  if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open') || brainOpen) return;
   if (['ArrowDown', 'PageDown', ' ', 'Spacebar'].includes(e.key)) { e.preventDefault(); goToStation(settledStation + 1); }
   else if (['ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); goToStation(settledStation - 1); }
   else if (e.key === 'Home') { e.preventDefault(); goToStation(0); }
@@ -876,6 +902,7 @@ const dartsTop = document.querySelector('.darts-top');
 const dartsBottom = document.querySelector('.darts-bottom');
 const billiardTop = document.querySelector('.billiard-top');
 const billiardBottom = document.querySelector('.billiard-bottom');
+const barTop = document.querySelector('.bar-top');
 // Всплывающие очки за один бросок: «+60 / ТРИПЛ 20», гаснет через ~1.4с
 const dartsScoreEl = document.getElementById('darts-score');
 let _dsHideT = 0;
@@ -914,15 +941,26 @@ function playDartsWin(score) {
   sound.playSuccess?.();
   clearTimeout(_winHideT); _winHideT = setTimeout(() => dartsWinEl.classList.remove('show'), 2900);
 }
-// результат броска: всплывающие очки + табло + (на последнем дротике) проверка личного рекорда серии
+// порог скидочного купона: набрал столько очков за серию → анкета купона (клиент: 150, позже можно 180)
+const COUPON_GOAL = 150;
+let couponShown = false;
+// результат броска: всплывающие очки + табло + личный рекорд серии + (150+) купон-анкета
 function dartResult(pts, label) {
   showDartScore(pts, label);
   updateDartsHud();
   _bump(dhScoreEl);
-  if (darts.dartsLeft === 0 && darts.seriesTotal > dartsBest) {   // серия завершена и побит рекорд
+  const newBest = darts.dartsLeft === 0 && darts.seriesTotal > dartsBest;   // серия завершена и побит рекорд
+  if (newBest) {
     dartsBest = darts.seriesTotal;
     try { localStorage.setItem(DARTS_BEST_KEY, String(dartsBest)); } catch (e) {}
     if (dhBestEl) { dhBestEl.textContent = String(dartsBest); _bump(dhBestEl); }
+  }
+  // КУПОН: набрал 150+ за серию → плавно открывается анкета купона (один раз за сессию).
+  // Имеет приоритет над полноэкранным окном рекорда (чтобы не было двух оверлеев разом).
+  if (darts.seriesTotal >= COUPON_GOAL && !couponShown) {
+    couponShown = true;
+    window.__openCoupon?.(darts.seriesTotal);
+  } else if (newBest) {
     playDartsWin(darts.seriesTotal);
   }
 }
@@ -933,11 +971,13 @@ function updateUIByScroll() {
   tp = THREE.MathUtils.clamp(scrollProgress / HOLL_END, 0, 1);
   pk = THREE.MathUtils.clamp((scrollProgress - HOLL_END) / (POKER_END - HOLL_END), 0, 1);
   dk = THREE.MathUtils.clamp((scrollProgress - POKER_END) / (DARTS_END - POKER_END), 0, 1);
-  bk = THREE.MathUtils.clamp((scrollProgress - DARTS_END) / (1 - DARTS_END), 0, 1);
+  bk = THREE.MathUtils.clamp((scrollProgress - DARTS_END) / (BILLIARD_END - DARTS_END), 0, 1);
+  ak = THREE.MathUtils.clamp((scrollProgress - BILLIARD_END) / (1 - BILLIARD_END), 0, 1);
   document.body.classList.toggle('poker-in', pk > 0.12 && dk < 0.1);
   document.body.classList.toggle('darts-in', dk > 0.12 && bk < 0.1);
   document.body.classList.toggle('darts-hud-on', dk > 0.35 && bk < 0.2);   // неоновое табло — только на Дартсе
-  document.body.classList.toggle('billiard-in', bk > 0.12);
+  document.body.classList.toggle('billiard-in', bk > 0.12 && ak < 0.1);
+  document.body.classList.toggle('bar-in', ak > 0.12);
   // Hero-текст НЕ уезжает вверх: он РАСТВОРЯЕТСЯ НА МЕСТЕ и НАЛЕТАЕТ на зрителя
   // (увеличивается + размывается + гаснет) — как будто камера входит внутрь утки
   const hf = THREE.MathUtils.clamp(tp / 0.16, 0, 1);
@@ -976,7 +1016,7 @@ function updateUIByScroll() {
   });
   // БИЛЬЯРД: элементы ПРИЛЕТАЮТ по скроллу — заголовок сверху, карточки с боков (слева/справа)
   const be = THREE.MathUtils.clamp((bk - 0.4) / 0.45, 0, 1);
-  const bez = be * be * (3 - 2 * be);
+  const bez = be * be * (3 - 2 * be) * (1 - THREE.MathUtils.smoothstep(ak, 0.02, 0.32));   // гаснет при уходе в Бар
   if (billiardTop) {
     billiardTop.style.opacity = String(bez);
     billiardTop.style.transform = `translateX(-50%) translateY(${(bez - 1) * 70}px) scale(${0.9 + 0.1 * bez})`;
@@ -986,6 +1026,18 @@ function updateUIByScroll() {
   document.body.style.setProperty('--bv', bez.toFixed(3));               // прозрачность карточек
   document.body.style.setProperty('--bvs', (0.9 + 0.1 * bez).toFixed(3));
   document.body.style.setProperty('--bx', (1 - bez).toFixed(3));         // боковой вылет: 1=за экраном, 0=на месте
+  // БАР: заголовок «БАР» прилетает сверху, 3 карточки — с боков (как Бильярд). Порядок: БАР → подзаголовок → бокал → карточки.
+  const ae = THREE.MathUtils.clamp((ak - 0.35) / 0.45, 0, 1);
+  const aez = ae * ae * (3 - 2 * ae);
+  if (barTop) {
+    barTop.style.opacity = String(aez);
+    barTop.style.transform = `translateX(-50%) translateY(${(aez - 1) * 70}px) scale(${0.9 + 0.1 * aez})`;
+    barTop.style.filter = `blur(${(1 - aez) * 6}px)`;
+    barTop.style.pointerEvents = 'none';
+  }
+  document.body.style.setProperty('--av2', aez.toFixed(3));              // прозрачность карточек бара
+  document.body.style.setProperty('--av2s', (0.9 + 0.1 * aez).toFixed(3));
+  document.body.style.setProperty('--ax2', (1 - aez).toFixed(3));        // боковой вылет карточек бара
 }
 
 // ============================================================
@@ -1003,11 +1055,15 @@ function animate() {
   poker.update(t, dt, camera);
   darts.setReveal(dk * (1 - THREE.MathUtils.smoothstep(bk, 0.02, 0.3)));   // Дартс гаснет при уходе в Бильярд
   darts.update(t, dt, camera);
-  billiard.setReveal(bk);
+  billiard.setReveal(bk * (1 - THREE.MathUtils.smoothstep(ak, 0.02, 0.4)));   // Бильярд гаснет при уходе в Бар
   billiard.update(t, dt);
-  // космо-фон проявляется на переходе 4→5 (одновременно с затемнением клуба)
-  space.setReveal(THREE.MathUtils.smoothstep(bk, 0.04, 0.6));
+  // космо-фон проявляется на переходе 4→5; на переходе 5→6 РАСТВОРЯЕТСЯ (стойка проступает из темноты)
+  space.setReveal(THREE.MathUtils.smoothstep(bk, 0.04, 0.6) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)));
   space.update(t, dt);
+  // БАР: стойка проявляется из темноты, мини-игра «глоток». tipsy связан с Дартсом (easter egg).
+  bar.setReveal(ak);
+  bar.update(t, dt, camera);
+  darts.tipsy = bar.tipsy;
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
@@ -1065,6 +1121,12 @@ function animate() {
     camera.position.x += (gCamX - camera.position.x) * camEase;
     camera.position.y += (gCamY - camera.position.y) * camEase;
     camera.position.z += (gCamZ - camera.position.z) * camEase;
+    // EASTER EGG «перебрал»: в Баре камера слегка ПЛЫВЁТ (tipsy), не двигаясь по рельсе. Затухает с tipsy.
+    const woo = bar.tipsy * THREE.MathUtils.clamp(ak, 0, 1);
+    if (woo > 0.001) {
+      camera.position.x += Math.sin(t * 1.3) * 0.05 * woo;
+      camera.position.y += Math.sin(t * 0.9 + 1.7) * 0.035 * woo;
+    }
     // КРЕН (банк) камеры на входе в Бильярд: наклоняем «верх» камеры (ДО lookAt). На других станциях roll=0.
     const roll = BILLIARD_ROLL * bkc;
     camera.up.set(Math.sin(roll), Math.cos(roll), 0);
@@ -1374,7 +1436,7 @@ onResize();
 // ============================================================
 function glitchFx(el) { if (!el || el.classList.contains('glitching')) return; sound.playGlitch(); el.classList.add('glitching'); setTimeout(() => el.classList.remove('glitching'), 420); }
 // ПРАВИЛО: ВЕСЬ текст на страницах реагирует на наведение И касание визуальной + звуковой глитч-анимацией.
-const TEXT_SEL = '.hero-title,.hero-sub,.hero-desc,.about-label,.about-title,.about-note,.thesis,.poker-title,.poker-sub,.darts-title,.darts-sub,.darts-hint,.billiard-title,.billiard-sub,.dh-key,.ds-zone,.nav-logo,.nav-cta,.bh-label,.bd-label,#brain-detail h3,#brain-detail p,.su-head h3,.su-head p';
+const TEXT_SEL = '.hero-title,.hero-sub,.hero-desc,.about-label,.about-title,.about-note,.thesis,.poker-title,.poker-sub,.darts-title,.darts-sub,.darts-promo,.billiard-title,.billiard-sub,.bar-title,.bar-sub,.dh-key,.ds-zone,.nav-logo,.nav-cta,.bh-label,.bd-label,#brain-detail h3,#brain-detail p,.su-head h3,.su-head p,.cp-head h3,.cp-head p';
 document.querySelectorAll(TEXT_SEL).forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
 // КАСАНИЕ: текст-оверлеи имеют pointer-events:none, поэтому ловим тап ГЛОБАЛЬНО и бьём по тексту под
 // пальцем по геометрии bounding-box (не мешает 3D-взаимодействию и скроллу). Учитываем видимость предков.
@@ -1495,6 +1557,97 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
     card.classList.add('done');                 // показываем красивое окно «спасибо»
     sound.playSuccess?.();   // без кряка
     setTimeout(closeSignup, 3400);               // само закрывается, остаёмся в Покере
+  });
+}
+
+// ============================================================
+// КУПОН ДАРТСА — модалка «скидка 15% за 150 очков». ВИЗУАЛ/ФРОНТ (этап 1).
+// Купон приходит ТОЛЬКО на почту после заполнения анкеты (фарм базы подписчиков) — на экране
+// купон НЕ показываем и НЕ даём скачать. Бэкенд (PHP/SQLite/PHPMailer, уникальный именной номер,
+// письмо игроку + организаторам ducks.game.space@gmail.com, админка, статус «использован»,
+// антифрод 1-купон-на-почту, cron) подключается ПОЗЖЕ — здесь только отправка-заглушка на coupon.php.
+// ============================================================
+{
+  const cp = document.getElementById('coupon');
+  const form = document.getElementById('cp-form');
+  const nameI = document.getElementById('cp-name');
+  const emailI = document.getElementById('cp-email');
+  const phoneI = document.getElementById('cp-phone');
+  const consentI = document.getElementById('cp-consent');
+  const submitB = document.getElementById('cp-submit');
+  const card = document.querySelector('.cp-card');
+  const scoreEl = document.getElementById('cp-score');
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let submitted = false, savedScroll = 0;
+
+  const openCoupon = (score) => {
+    if (scoreEl && score) scoreEl.textContent = String(score);
+    savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
+    document.body.classList.add('coupon-open');
+    try { lenis.stop(); } catch (e) {}
+    sound.playSuccess?.();
+    card.classList.toggle('done', submitted);
+    if (!submitted) setTimeout(() => nameI && nameI.focus({ preventScroll: true }), 420);
+  };
+  const closeCoupon = () => {
+    document.body.classList.remove('coupon-open');
+    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
+  };
+  window.__openCoupon = openCoupon;
+
+  document.getElementById('cp-close')?.addEventListener('click', closeCoupon);
+  document.getElementById('cp-done')?.addEventListener('click', closeCoupon);
+  cp?.addEventListener('click', (e) => { if (e.target === cp) closeCoupon(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('coupon-open')) closeCoupon(); });
+
+  // маска телефона +7 (9XX) XXX-XX-XX (как в анкете)
+  phoneI?.addEventListener('input', () => {
+    let d = phoneI.value.replace(/\D/g, '');
+    if (d.startsWith('8')) d = '7' + d.slice(1);
+    if (d.startsWith('9')) d = '7' + d;
+    if (!d.startsWith('7')) d = '7' + d;
+    d = d.slice(0, 11);
+    let out = '+7';
+    if (d.length > 1) out += ' (' + d.slice(1, 4);
+    if (d.length >= 4) out += ')';
+    if (d.length >= 5) out += ' ' + d.slice(4, 7);
+    if (d.length >= 8) out += '-' + d.slice(7, 9);
+    if (d.length >= 10) out += '-' + d.slice(9, 11);
+    phoneI.value = out;
+    phoneI.classList.remove('invalid');
+  });
+
+  const validEmail = () => EMAIL_RE.test(emailI.value.trim());
+  const validName = () => nameI.value.trim().length > 0;
+  const validPhone = () => phoneI.value.replace(/\D/g, '').length >= 11;
+  emailI?.addEventListener('input', () => {
+    emailI.classList.toggle('valid', validEmail());
+    emailI.classList.toggle('invalid', emailI.value.length > 0 && !validEmail());
+  });
+  nameI?.addEventListener('input', () => nameI.classList.remove('invalid'));
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let ok = true;
+    if (!validName()) { nameI.classList.add('invalid'); ok = false; }
+    if (!validEmail()) { emailI.classList.add('invalid'); ok = false; }
+    if (!validPhone()) { phoneI.classList.add('invalid'); ok = false; }
+    if (consentI && !consentI.checked) {
+      const wrap = consentI.closest('.cp-consent');
+      if (wrap) { wrap.classList.add('shake'); setTimeout(() => wrap.classList.remove('shake'), 500); }
+      ok = false;
+    }
+    if (!ok) { sound.playGlitch?.(); return; }
+    submitB.disabled = true;
+    const payload = {
+      name: nameI.value.trim(), email: emailI.value.trim(), phone: phoneI.value.trim(),
+      score: scoreEl ? scoreEl.textContent : '', discount: 15, source: 'site:darts-coupon',
+    };
+    // Этап 1 (визуал): шлём на coupon.php. Если бэкенда ещё нет — всё равно показываем успех.
+    try { await fetch('coupon.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
+    submitted = true;
+    card.classList.add('done');
+    sound.playSuccess?.();
   });
 }
 

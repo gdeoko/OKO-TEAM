@@ -86,6 +86,7 @@
       <div class="darts-top">
         <h2 class="darts-title">ДАРТС</h2>
         <p class="darts-sub">целься в рейтинг</p>
+        <p class="darts-promo"><b>Набери 150 очков</b> — скидка <span>15%</span> на весь вечер</p>
       </div>
       <!-- всплывающие очки за один бросок (рядом с мишенью) -->
       <div class="darts-score" id="darts-score" aria-hidden="true">
@@ -129,6 +130,29 @@
         <div class="bil-col bil-right">
           <div class="thesis" data-n="03"><b>Кий и шар</b><span>ничего лишнего</span></div>
           <div class="thesis" data-n="04"><b>За одним столом</b><span>становишься своим</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Секция 6 — Бар (стойка проявляется из темноты, бокал + бутылка в 3D, мини-игра «глоток») -->
+    <section class="sec" id="bar">
+      <div class="bar-top">
+        <h2 class="bar-title">БАР</h2>
+        <p class="bar-sub">живое общение, без суеты</p>
+      </div>
+      <!-- подсказка у бокала: гаснет после первого «глотка» -->
+      <div class="bar-hint" id="bar-hint" aria-hidden="true">
+        <span class="bar-hint-ring"></span>
+        <span class="bar-hint-label">коснись бокала</span>
+      </div>
+      <!-- 3 карточки-тезиса (как «О клубе»), прилетают с боков -->
+      <div class="bar-foot">
+        <div class="bar-col bar-left">
+          <div class="thesis" data-n="01"><b>Без кальянов</b><span>чистый воздух, живое общение</span></div>
+          <div class="thesis" data-n="02"><b>Перекус под рукой</b><span>вечер не обрывается</span></div>
+        </div>
+        <div class="bar-col bar-right">
+          <div class="thesis" data-n="03"><b>За общим столом</b><span>становишься своим</span></div>
         </div>
       </div>
     </section>
@@ -213,6 +237,52 @@
         <div class="su-label">заявка принята</div>
         <h3>Спасибо, ты в деле</h3>
         <p>Мы свяжемся с тобой и пришлём детали ближайшего вечера на почту. Клуб для своих.</p>
+        <div class="su-thanks-logo">DUCK<span>'</span>S</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Купон Дартса: всплывает при 150+ очках. Купон приходит ТОЛЬКО на почту (фарм базы). -->
+  <div id="coupon" aria-hidden="true">
+    <div class="cp-card" role="dialog" aria-modal="true" aria-label="Скидочный купон 15%">
+      <button id="cp-close" aria-label="Закрыть">×</button>
+      <div class="cp-body">
+        <div class="cp-head">
+          <div class="cp-spark">15<small>%</small></div>
+          <div class="su-label">скидка на весь вечер</div>
+          <h3>Поздравляем — скидка 15% твоя!</h3>
+          <p>Ты набрал <b id="cp-score">150</b> очков. Заполни — и <b>именной купон придёт на почту</b>. Покажешь его на входе в клуб.</p>
+        </div>
+        <form id="cp-form" novalidate>
+          <label class="su-field">
+            <span>Имя</span>
+            <input type="text" name="name" id="cp-name" autocomplete="name" placeholder="Как тебя зовут" required />
+            <em class="su-err" data-for="name">Напиши имя</em>
+          </label>
+          <label class="su-field">
+            <span>Email <i>(сюда придёт купон)</i></span>
+            <input type="email" name="email" id="cp-email" autocomplete="email" placeholder="you@mail.ru" required />
+            <em class="su-err" data-for="email">Проверь адрес почты</em>
+          </label>
+          <label class="su-field">
+            <span>Телефон</span>
+            <input type="tel" name="phone" id="cp-phone" inputmode="tel" placeholder="+7 (9__) ___-__-__" required />
+            <em class="su-err" data-for="phone">Проверь номер телефона</em>
+          </label>
+          <label class="cp-consent">
+            <input type="checkbox" id="cp-consent" />
+            <span>Согласен на обработку персональных данных и получение писем клуба</span>
+          </label>
+          <button type="submit" class="btn btn-fill cp-submit" id="cp-submit">Получить купон на почту</button>
+        </form>
+      </div>
+      <!-- экран «купон отправлен» -->
+      <div class="cp-thanks">
+        <div class="cp-thanks-badge"><span>✉️</span></div>
+        <div class="su-label">купон отправлен</div>
+        <h3>Лови купон на почте</h3>
+        <p>Именной купон на <b>15%</b> уже летит на твою почту. Проверь входящие и папку «Спам». Покажешь его на входе — и вечер дешевле.</p>
+        <button type="button" class="btn btn-line cp-done" id="cp-done">Понятно</button>
         <div class="su-thanks-logo">DUCK<span>'</span>S</div>
       </div>
     </div>

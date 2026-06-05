@@ -274,6 +274,17 @@ body.exit-textwait .thesis-col, body.exit-textwait .about-top, body.exit-textwai
 .darts-bottom { top: auto; bottom: 5vh; display: flex; justify-content: center; }       /* подсказка — ПОД табло */
 .darts-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
 .darts-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+/* Промо-строка купона под подзаголовком Дартса: «Набери 150 очков — скидка 15%» */
+.darts-promo {
+  display: inline-block; margin-top: 12px; padding: 8px 18px; border-radius: 30px;
+  font-family: var(--fb); font-size: clamp(12px, 1.7vw, 15px); color: rgba(255,255,255,.85); letter-spacing: .01em;
+  background: linear-gradient(135deg, rgba(204,0,0,.20), rgba(255,255,255,.04));
+  border: 1px solid rgba(204,0,0,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: promoGlow 2.6s ease-in-out infinite;
+}
+.darts-promo b { color: #fff; font-weight: 700; }
+.darts-promo span { color: var(--red-bright); font-weight: 800; }
+@keyframes promoGlow { 0%,100% { box-shadow: 0 0 14px rgba(204,0,0,.22); } 50% { box-shadow: 0 0 28px rgba(204,0,0,.5); } }
 .darts-hint { font-family: var(--fd); font-size: 12px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.55); }
 /* всплывающие очки за один бросок — у верхней части мишени (не перекрывают табло снизу) */
 .darts-score {
@@ -653,3 +664,102 @@ body.signup-open .su-card { transform: translateY(0) scale(1); }
 #enter-screen .ld-bar i { transition: width .9s cubic-bezier(.4,0,.2,1); }
 #enter-screen.loading .es-btn, #enter-screen.loading .es-hint { opacity: 0; pointer-events: none; transition: opacity .3s ease; }
 #enter-screen.loading .ld-bar { opacity: 1; }
+
+/* ===== Секция 6 — Бар (заголовок сверху, бокал центр, подсказка у бокала, 3 карточки с боков) ===== */
+#bar { pointer-events: none; }
+.bar-top {
+  position: fixed; left: 50%; transform: translateX(-50%) scale(.7);
+  width: 100%; max-width: 760px; padding: 0 24px;
+  opacity: 0; z-index: 11; pointer-events: none; transition: none;
+  text-shadow: 0 2px 24px rgba(3,2,8,.95), 0 0 8px rgba(3,2,8,.85);
+  top: 7vh; display: flex; flex-direction: column; align-items: center;
+}
+.bar-title { font-family: var(--fd); font-weight: 900; font-size: clamp(40px, 7vw, 78px); letter-spacing: -1px; line-height: .98; }
+.bar-sub { font-family: var(--fd); font-weight: 400; font-size: clamp(14px,1.9vw,19px); letter-spacing: .3em; text-transform: lowercase; color: var(--ice-white); margin-top: 6px; }
+/* подсказка у бокала — гаснет после первого глотка (body.bar-tasted) или при уходе со станции */
+.bar-hint {
+  position: fixed; left: 50%; top: 58%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0; z-index: 12; pointer-events: none; transition: opacity .6s ease;
+}
+body.bar-in .bar-hint { opacity: 1; }
+body.bar-tasted .bar-hint { opacity: 0 !important; }
+.bar-hint-ring { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ice-blue); box-shadow: 0 0 14px var(--ice-blue); animation: barRing 1.8s ease-in-out infinite; }
+@keyframes barRing { 0%,100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.28); opacity: .35; } }
+.bar-hint-label { font-family: var(--fd); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--ice-blue); text-shadow: 0 1px 8px rgba(0,0,0,.85); }
+/* 3 карточки бара — как тезисы «О клубе» (десктоп: 2 слева, 1 справа), прилетают с боков */
+.bar-foot { display: contents; }
+.bar-col { position: fixed; top: 50%; z-index: 11; display: flex; flex-direction: column; gap: 18px; width: 250px; opacity: var(--av2, 0); pointer-events: none; transition: opacity .6s ease; }
+.bar-left { left: 4%; transform: translateY(-50%) translateX(calc(var(--ax2, 1) * -150px)) scale(var(--av2s, 1)); }
+.bar-right { right: 4%; transform: translateY(-50%) translateX(calc(var(--ax2, 1) * 150px)) scale(var(--av2s, 1)); }
+body.bar-in .bar-col { pointer-events: auto; }
+
+/* ===== Купон Дартса (модалка-карта; купон приходит на почту) ===== */
+#coupon {
+  position: fixed; inset: 0; z-index: 1450;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(3, 2, 6, .74); backdrop-filter: blur(7px);
+  opacity: 0; pointer-events: none; transition: opacity .4s ease;
+  padding: 24px 16px; overflow-y: auto;
+}
+body.coupon-open #coupon { opacity: 1; pointer-events: auto; }
+.cp-card {
+  position: relative; width: 100%; max-width: 440px; margin: auto;
+  background: linear-gradient(160deg, #160a0b, #0a0608);
+  border: 1px solid rgba(204, 0, 0, .45); border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 60px rgba(204, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .05);
+  padding: 32px 26px 26px;
+  transform: translateY(24px) scale(.96); transition: transform .5s cubic-bezier(.22, 1, .36, 1);
+}
+body.coupon-open .cp-card { transform: translateY(0) scale(1); }
+#cp-close {
+  position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); color: #fff;
+  font-size: 20px; line-height: 1; cursor: pointer; transition: background .25s, border-color .25s; z-index: 2;
+}
+#cp-close:hover { background: rgba(204, 0, 0, .2); border-color: var(--red-primary); }
+.cp-head { text-align: center; }
+.cp-spark {
+  font-family: var(--fd); font-weight: 900; font-size: 48px; line-height: 1; color: #fff;
+  display: inline-block; margin-bottom: 8px; text-shadow: 0 0 26px rgba(255, 90, 90, .75), 0 0 60px rgba(204,0,0,.5);
+  animation: cpSpark 2.2s ease-in-out infinite;
+}
+.cp-spark small { font-size: 22px; color: var(--red-bright); }
+@keyframes cpSpark { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+.cp-head h3 { font-family: var(--fd); font-weight: 900; font-size: 24px; margin: 4px 0 8px; line-height: 1.15; }
+.cp-head p { font-size: 13px; color: rgba(255, 255, 255, .66); line-height: 1.55; margin-bottom: 18px; }
+.cp-head p b { color: #fff; }
+.cp-consent { display: flex; gap: 10px; align-items: flex-start; margin: 2px 0 14px; cursor: pointer; }
+.cp-consent input { margin-top: 2px; width: 18px; height: 18px; accent-color: var(--red-primary); flex: 0 0 auto; cursor: pointer; }
+.cp-consent span { font-size: 11.5px; color: rgba(255, 255, 255, .58); line-height: 1.45; }
+.cp-consent.shake { animation: cpShake .45s; }
+@keyframes cpShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.cp-submit { width: 100%; height: 52px; margin-top: 4px; cursor: pointer; }
+.cp-submit:disabled { opacity: .5; cursor: default; transform: none; }
+.cp-thanks { display: none; text-align: center; padding: 12px 6px 6px; }
+.cp-card.done .cp-body { display: none; }
+.cp-card.done .cp-thanks { display: block; animation: suThanksIn .6s cubic-bezier(.22,1,.36,1) both; }
+.cp-thanks-badge {
+  width: 84px; height: 84px; margin: 6px auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 38px;
+  background: radial-gradient(circle at 50% 40%, rgba(204,0,0,.35), rgba(204,0,0,.08));
+  border: 1px solid rgba(204,0,0,.5); box-shadow: 0 0 40px rgba(204,0,0,.35), inset 0 0 24px rgba(204,0,0,.2);
+  animation: suBadge 2.4s ease-in-out infinite;
+}
+.cp-thanks h3 { font-family: var(--fd); font-weight: 900; font-size: 24px; margin: 6px 0 10px; }
+.cp-thanks p { font-size: 13.5px; color: rgba(255,255,255,.66); line-height: 1.55; max-width: 360px; margin: 0 auto 18px; }
+.cp-thanks p b { color: #fff; }
+.cp-done { margin: 0 auto 16px; height: 46px; padding: 0 30px; }
+
+@media (max-width: 768px) {
+  .bar-title { font-size: clamp(40px, 13vw, 60px); }
+  .bar-top { top: 9vh; }
+  .bar-hint { top: 54%; }
+  /* карточки бара на мобиле — снизу, прилетают с боков (как Бильярд) */
+  .bar-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 6vh; padding: 0 16px; opacity: var(--av2, 0); z-index: 11; }
+  .bar-col { position: static; width: 100%; opacity: 1; display: flex; flex-direction: column; gap: 8px; }
+  .bar-col.bar-left { transform: translateX(calc(var(--ax2, 1) * -62vw)); }
+  .bar-col.bar-right { transform: translateX(calc(var(--ax2, 1) * 62vw)); }
+  .darts-promo { font-size: 12px; padding: 6px 13px; margin-top: 10px; }
+  .cp-card { padding: 28px 18px 20px; } .cp-head h3 { font-size: 21px; } .cp-thanks h3 { font-size: 21px; } .cp-spark { font-size: 42px; }
+}
