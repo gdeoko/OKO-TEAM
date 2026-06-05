@@ -158,16 +158,27 @@ export class ClubEnvironment {
 
   setVisibility() {}
 
-  // amount 0..1 — на абстрактных секциях (мозг) приглушаем клуб
+  // amount 0..1 — на абстрактных секциях (мозг) приглушаем клуб. «Пол» видимости = this._floor
+  // (обычно 0.25; для перехода в космос hideExtra опускает его до 0 → клуб исчезает на 100%).
   fade(amount) {
     this._fade = amount;
+    const f0 = this._floor !== undefined ? this._floor : 0.25;
     if (this.club) {
       this.club.traverse((o) => {
         if (o.isMesh && o.material) {
           const mats = Array.isArray(o.material) ? o.material : [o.material];
-          mats.forEach((m) => { if (m.userData._baseOpacity !== undefined) m.opacity = m.userData._baseOpacity * (0.25 + amount * 0.75); });
+          mats.forEach((m) => { if (m.userData._baseOpacity !== undefined) { m.transparent = true; m.opacity = m.userData._baseOpacity * (f0 + amount * (1 - f0)); } });
         }
       });
     }
+  }
+
+  // k 0..1 — снимает «пол» видимости клуба к нулю (полное исчезновение для перехода в космос) и
+  // гасит группу целиком на пике. Обратимо: значения пересчитываются из базы каждый кадр в fade().
+  hideExtra(k) {
+    k = Math.max(0, Math.min(1, k));
+    this._floor = 0.25 * (1 - k);
+    if (this.group) this.group.visible = k < 0.992;
+    this._fade *= (1 - k);   // неон/отблески тоже гаснут полностью (emissiveIntensity в update домножен на _fade)
   }
 }

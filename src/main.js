@@ -14,7 +14,7 @@ import { BilliardStation } from './three/billiard.js';
 import { SpaceField } from './three/space.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v47 — космо-фон + переход назад, ровный стол, процедурный шар-8, текст-глитч всюду ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v48 — космо-сеть MindOS, клуб исчезает 100%, узорный шар-8 по центру, прилёт элементов ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -227,19 +227,19 @@ window.__setTipsy = (v) => { darts.tipsy = THREE.MathUtils.clamp(+v || 0, 0, 1);
 // БИЛЬЯРД: тёмное сукно + красный неон-борт, по центру вращается шар-8 (GLB). Камера низко
 // проезжает над сукном с лёгким креном. Интерактив — закрутка шара касанием (без счёта).
 const billiard = new BilliardStation({ onCue: () => sound.playDartHit && sound.playDartHit('wood') });
-billiard.group.position.set(0.4, -1.0, -3.2);   // шар по центру кадра, стол ровно перед зрителем
+billiard.group.position.set(0.4, 0.2, -3.0);   // ШАР по центру кадра (стол убран)
 scene.add(billiard.group);
-// поза камеры: ПРЯМО перед столом, чуть выше; взгляд строго вперёд (-Z), БЕЗ поворотов и крена.
+// поза камеры: ПРЯМО перед шаром; взгляд строго вперёд (-Z), БЕЗ поворотов и крена.
 // Переход 4→5 = камера едет РОВНО НАЗАД (z растёт) от Дартса к этой позе.
-const BILLIARD_CAM = { x: 0.4, y: 0.45, z: isMobile ? 5.2 : 4.2 };
-const BILLIARD_LOOK = { x: 0.4, y: -0.15, z: -3.2 };
-const BILLIARD_ROLL = 0;       // крена нет — стол ровный
+const BILLIARD_CAM = { x: 0.4, y: 0.2, z: isMobile ? 5.4 : 4.6 };
+const BILLIARD_LOOK = { x: 0.4, y: 0.2, z: -3.0 };
+const BILLIARD_ROLL = 0;       // крена нет
 window.__billiard = billiard;
 
-// КОСМИЧЕСКИЙ ФОН: звёзды + туманности. Включается на переходе Дартс→Бильярд (по bk),
-// заменяет фон клуба «перезагруженным» миром. Камера летит внутри полой зоны поля.
-const space = new SpaceField();
-space.group.position.set(0.4, 0, 0);
+// КОСМИЧЕСКИЙ ФОН (сеть-плексус как у MindOS). Включается на переходе Дартс→Бильярд (по bk),
+// полностью заменяет фон клуба. Стоит ЗА шаром (renderOrder<0 → шар поверх).
+const space = new SpaceField(isMobile);
+space.group.position.set(0.4, 0.2, -16);
 scene.add(space.group);
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
@@ -974,18 +974,18 @@ function updateUIByScroll() {
     el.style.filter = `blur(${(1 - dez) * 7}px)`;
     el.style.pointerEvents = 'none';
   });
-  // Бильярд-текст «прилетает из точки» во второй половине перехода Дартс→Бильярд
-  const be = THREE.MathUtils.clamp((bk - 0.45) / 0.4, 0, 1);
+  // БИЛЬЯРД: элементы ПРИЛЕТАЮТ по скроллу — заголовок сверху, карточки с боков (слева/справа)
+  const be = THREE.MathUtils.clamp((bk - 0.4) / 0.45, 0, 1);
   const bez = be * be * (3 - 2 * be);
-  [billiardTop, billiardBottom].forEach((el) => { if (!el) return;
-    el.style.opacity = String(bez);
-    el.style.transform = `translateX(-50%) scale(${0.7 + 0.3 * bez})`;
-    el.style.filter = `blur(${(1 - bez) * 7}px)`;
-    el.style.pointerEvents = 'none';
-  });
-  // 4 карточки Бильярда — проявляются на месте с приближением (как тезисы на стр.2)
-  document.body.style.setProperty('--bv', bez.toFixed(3));
-  document.body.style.setProperty('--bvs', (0.85 + 0.15 * bez).toFixed(3));
+  if (billiardTop) {
+    billiardTop.style.opacity = String(bez);
+    billiardTop.style.transform = `translateX(-50%) translateY(${(bez - 1) * 70}px) scale(${0.9 + 0.1 * bez})`;
+    billiardTop.style.filter = `blur(${(1 - bez) * 6}px)`;
+    billiardTop.style.pointerEvents = 'none';
+  }
+  document.body.style.setProperty('--bv', bez.toFixed(3));               // прозрачность карточек
+  document.body.style.setProperty('--bvs', (0.9 + 0.1 * bez).toFixed(3));
+  document.body.style.setProperty('--bx', (1 - bez).toFixed(3));         // боковой вылет: 1=за экраном, 0=на месте
 }
 
 // ============================================================
@@ -1098,8 +1098,9 @@ function animate() {
   const sceneFade = 1 - tp * 0.9;
   // у мозга/в туннеле клуб почти гаснет; на Дартсе уходим в «пустоту» (ещё темнее), скрывая бар-геометрию
   const envBase = sceneFade + (0.08 - sceneFade) * tdark;
-  // клуб гаснет на Дартсе (≈×0.25), а на переходе в Бильярд гаснет ПОЛНОСТЬЮ (космос вместо клуба)
+  // клуб гаснет на Дартсе (≈×0.25), а на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос вместо клуба)
   env.fade(envBase * (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1))));
+  env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7));   // снимает «пол» 0.25 → клуб виден на 0% к середине перехода
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
