@@ -15,7 +15,7 @@ import { SpaceField } from './three/space.js';
 import { BarStation } from './three/bar.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v51 — БАР на РЕАЛЬНОЙ стойке клуба: бокал по центру+тень, бутылка слева наливает, лёд остаётся; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v52 — БАР: бокал ПЛОТНО на стойке клуба (тень-контакт), бутылка слева наливает, лёд остаётся; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -256,8 +256,8 @@ const bar = new BarStation(isMobile, {
   onFizz:  () => sound.playFizz?.(1.4),
 });
 // Бар стоит на РЕАЛЬНОЙ барной стойке клуба (ракурс подобран клиентом через ?tune).
-bar.group.position.set(2.62, -5.0, -12.34);   // бокал на реальной стойке: ниже-крупнее (−X ближе к камере), по центру (Z=look)
-bar.baseScale = isMobile ? 0.6 : 0.92;        // на узком экране бокал мельче, чтобы не занимал весь кадр
+bar.group.position.set(2.35, -4.92, -12.35);   // бокал ПЛОТНО на реальной стойке клуба (высота подобрана по геометрии: база + тень на столешнице)
+bar.baseScale = isMobile ? 0.58 : 0.9;         // на узком экране бокал мельче, чтобы не занимал весь кадр
 scene.add(bar.group);
 // Поза камеры Бара = ракурс клиента (камера доворачивает к барной стойке клуба при переходе с Бильярда).
 const BAR_CAM = { x: -0.32, y: -4.37, z: -12.38 };
@@ -265,6 +265,15 @@ const BAR_LOOK = { x: 3.30, y: -5.03, z: -12.35 };
 window.__bar = bar;
 window.__barSip = () => bar.tapGlass({ ray: { intersectsSphere: () => true } });   // тест в браузере
 window.__barPose = (k = 0.5) => bar.debugPour(k);   // статичная поза налива для скриншота
+// диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
+window.__probeBar = (x, z) => {
+  const vis = bar.group.visible; bar.group.visible = false;
+  x = (x === undefined) ? bar.group.position.x : x;
+  z = (z === undefined) ? bar.group.position.z : z;
+  raycaster.set(new THREE.Vector3(x, 0, z), new THREE.Vector3(0, -1, 0));
+  const down = raycaster.intersectObjects(scene.children, true).map((h) => +h.point.y.toFixed(3));
+  bar.group.visible = vis; return { x, z, down };
+};
 window.__dartTap = (sx, sy) => {   // headless: бросок в экранные координаты
   pointer.x = (sx / innerWidth) * 2 - 1; pointer.y = -(sy / innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera); return darts.tap(raycaster, camera);

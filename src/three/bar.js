@@ -26,7 +26,7 @@ const DRINK_COL = 0xe0a52e;      // цвет напитка (тёплый янт
 function shadowTexture() {
   const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d'); const g = x.createRadialGradient(S / 2, S / 2, 2, S / 2, S / 2, S / 2);
-  g.addColorStop(0, 'rgba(0,0,0,0.6)'); g.addColorStop(0.55, 'rgba(0,0,0,0.26)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  g.addColorStop(0, 'rgba(0,0,0,0.74)'); g.addColorStop(0.5, 'rgba(0,0,0,0.42)'); g.addColorStop(0.8, 'rgba(0,0,0,0.16)'); g.addColorStop(1, 'rgba(0,0,0,0)');
   x.fillStyle = g; x.fillRect(0, 0, S, S);
   const t = new THREE.CanvasTexture(c); return t;
 }
@@ -73,11 +73,12 @@ export class BarStation {
     // Стойку/стену НЕ рисуем — фоном служит реальный клуб (scifi_bar.glb). Бокал/бутылка ставятся
     // прямо на реальную барную стойку. Под бокалом — мягкая контактная тень.
     this.shadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.2, 1.2),
+      new THREE.PlaneGeometry(1.7, 1.7),
       new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, opacity: 0, depthWrite: false })
     );
     this.shadow.rotation.x = -Math.PI / 2;
-    this.shadow.position.set(0, BASE_Y + 0.005, 0);
+    this.shadow.scale.set(1.0, 1.35, 1);          // чуть вытянута от зрителя — реалистичнее
+    this.shadow.position.set(0, BASE_Y + 0.006, 0.1);
     this.shadow.renderOrder = 2;
     this.group.add(this.shadow);
 
@@ -246,7 +247,7 @@ export class BarStation {
     this.group.scale.setScalar(this.baseScale * (0.96 + 0.04 * es));
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
     this.bubbleMat.uniforms.uOpacity.value = 0.85 * es;
-    this._shadowFull = 0.55 * es;
+    this._shadowFull = 0.72 * es;
     if (this.shadow) this.shadow.material.opacity = this._shadowFull;
     this.spot.intensity = 44 * es; this.fill.intensity = 5 * es;
     this.rim.intensity = 11 * es; this.warm.intensity = 13 * es; this.spark.intensity = 4 * es;
