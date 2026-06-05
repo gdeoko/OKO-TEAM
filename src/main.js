@@ -15,7 +15,7 @@ import { SpaceField } from './three/space.js';
 import { BarStation } from './three/bar.js';
 
 // Метка сборки — проверить в консоли, что загрузилась НОВАЯ версия (а не старая из кэша)
-console.log('%c DUCK\'S build v49 — БАР (станция 6): стойка из темноты, мини-игра «глоток», tipsy↔Дартс; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
+console.log('%c DUCK\'S build v50 — БАР: реалистичный бокал, пузырьки, 2 кубика льда, налив по дуге + звуки; купон Дартса 150→15% ', 'background:#cc0000;color:#fff;padding:3px;border-radius:3px');
 
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
@@ -248,11 +248,12 @@ scene.add(space.group);
 
 // БАР (станция 6): барная стойка проявляется из темноты космоса ПРЯМО в кадре — камера НЕ движется.
 // Стоит там же, где был шар Бильярда (перед статичной камерой). Клик по бокалу → мини-игра «глоток».
-const bar = new BarStation({
-  onClink: () => sound.playBell?.(0.5),
-  onLift:  () => sound.playWhoosh?.(true),
-  onSip:   () => sound.playSuccess?.(),
-  onPour:  () => sound.playRustle?.(0.7, 0.7),
+const bar = new BarStation(isMobile, {
+  onClink: () => sound.playGlassClink?.(),
+  onGulp:  () => sound.playGulp?.(),
+  onSip:   () => sound.playSip?.(),
+  onPour:  () => sound.playPour?.(1.15),
+  onFizz:  () => sound.playFizz?.(1.4),
 });
 bar.group.position.set(0.4, 0.2, -3.0);   // = позиция шара Бильярда → стойка возникает на месте, без долёта
 scene.add(bar.group);

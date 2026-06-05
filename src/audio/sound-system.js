@@ -455,4 +455,105 @@ export class SoundSystem {
       o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.25);
     });
   }
+
+  // ===== БАР =====
+  // Стеклянный «дзынь» по бокалу — яркие высокие партиалы + крошечный тик
+  playGlassClink() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    [2540, 3760, 5200].forEach((f, i) => {
+      const o = this.ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * (1 + (Math.random() - 0.5) * 0.01);
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      const peak = [0.06, 0.035, 0.02][i];
+      g.gain.linearRampToValueAtTime(peak, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.5 - i * 0.1);
+      o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.55);
+    });
+    // короткий тик-«касание стекла»
+    const dur = 0.04, buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0); for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+    const g = this.ctx.createGain(); g.gain.value = 0.05;
+    src.connect(hp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
+
+  // Глоток-«глюк»: пара низких булькающих импульсов (проглатывание)
+  playGulp() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    [0, 0.13].forEach((dt, i) => {
+      const t = now + dt;
+      const o = this.ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(160 - i * 24, t); o.frequency.exponentialRampToValueAtTime(85 - i * 12, t + 0.12);
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(0.09, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      o.connect(g).connect(this.master); o.start(t); o.stop(t + 0.2);
+    });
+  }
+
+  // Довольный «ах»/выдох после глотка — шум через формантные полосы с нисходящим тоном
+  playSip() {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime, dur = 0.5;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0); for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    // две форманты «а» (~720 и ~1100 Гц), мягко падают → выдох
+    const mk = (f0, f1, q, gain) => {
+      const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = q;
+      bp.frequency.setValueAtTime(f0, now); bp.frequency.exponentialRampToValueAtTime(f1, now + dur);
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(gain, now + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      src.connect(bp).connect(g).connect(this.master);
+    };
+    mk(760, 540, 4, 0.05); mk(1150, 820, 6, 0.03);
+    src.start(now); src.stop(now + dur);
+  }
+
+  // Налив в бокал — отфильтрованный шум с поднимающимся фильтром (бокал наполняется) + бульканье
+  playPour(dur = 1.1) {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0); for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(900, now); bp.frequency.exponentialRampToValueAtTime(2400, now + dur);   // тон растёт по мере наполнения
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.06, now + 0.12);
+    g.gain.setValueAtTime(0.06, now + dur - 0.2);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+    // бульки-«глюки» наливающейся жидкости
+    const n = Math.floor(dur / 0.13);
+    for (let i = 0; i < n; i++) {
+      const t = now + 0.1 + i * 0.12;
+      const o = this.ctx.createOscillator(); o.type = 'sine';
+      const f = 220 + Math.random() * 180 + i * 18;
+      o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.6, t + 0.08);
+      const og = this.ctx.createGain(); og.gain.value = 0;
+      og.gain.linearRampToValueAtTime(0.035, t + 0.01);
+      og.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      o.connect(og).connect(this.master); o.start(t); o.stop(t + 0.12);
+    }
+  }
+
+  // Игристая «шипучка» — мягкий высокочастотный шум (пузырьки шампанского)
+  playFizz(dur = 1.4) {
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const out = buf.getChannelData(0);
+    for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (Math.random() < 0.5 ? 1 : 0);   // прерывистые щелчки-пузырьки
+    const src = this.ctx.createBufferSource(); src.buffer = buf;
+    const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5200;
+    const g = this.ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(0.03, now + 0.15);
+    g.gain.linearRampToValueAtTime(0.018, now + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    src.connect(hp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
+  }
 }
