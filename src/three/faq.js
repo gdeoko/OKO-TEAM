@@ -169,8 +169,8 @@ function feltTexture() {
   x.strokeStyle = 'rgba(210,40,40,.18)'; x.lineWidth = 4;
   x.beginPath(); x.arc(S / 2, S / 2, S * 0.42, 0, TWO_PI); x.stroke();
   x.lineWidth = 2; x.beginPath(); x.arc(S / 2, S / 2, S * 0.40, 0, TWO_PI); x.stroke();
-  x.globalAlpha = 0.05; x.fillStyle = '#ff7a7a'; x.textAlign = 'center';
-  x.font = '900 110px Orbitron, sans-serif'; x.fillText("DUCK'S", S / 2, S / 2 + 34);
+  x.globalAlpha = 0.028; x.fillStyle = '#ff7a7a'; x.textAlign = 'center';
+  x.font = '900 96px Orbitron, sans-serif'; x.fillText("DUCK'S", S / 2, S / 2 + 30);
   x.globalAlpha = 1;
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
@@ -191,8 +191,8 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- СТОЛ: компактное сукно + глянцевый борт (вокруг видно зал клуба) -----
-    const FELT_R = 2.7;
+    // ----- СТОЛ: сукно + глянцевый борт (вокруг видно зал клуба) -----
+    const FELT_R = 3.3;
     this.felt = new THREE.Mesh(
       new THREE.CircleGeometry(FELT_R, 64),
       reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
@@ -242,12 +242,12 @@ export class FaqStation {
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
 
-      // ВЕРХНЯЯ грань — ВОПРОС. Лицо МАТОВОЕ + текст самосветящийся (emissiveMap) → блик не «съедает»
-      // надпись, она всегда читается. Глянец оставляем телу фишки.
+      // ВЕРХНЯЯ грань — ВОПРОС. Лицо ГЛЯНЦЕВОЕ (сочное), но блик МЯГКИЙ (широкий clearcoat) → не
+      // даёт резкого пятна на тексте; текст слегка самосветится (emissiveMap) для читаемости.
       const qTex = chipFace(item, 'q');
-      const qMat = reg(new THREE.MeshStandardMaterial({
-        map: qTex, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: 0.5,
-        roughness: 0.62, metalness: 0.0, envMapIntensity: 0.35,
+      const qMat = reg(new THREE.MeshPhysicalMaterial({
+        map: qTex, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: 0.32,
+        roughness: 0.42, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, envMapIntensity: 0.45,
       }), 1);
       const qFace = new THREE.Mesh(faceGeo, qMat);
       qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
@@ -255,9 +255,9 @@ export class FaqStation {
 
       // НИЖНЯЯ грань — ОТВЕТ
       const aTex = chipFace(item, 'a');
-      const aMat = reg(new THREE.MeshStandardMaterial({
-        map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 0.5,
-        roughness: 0.62, metalness: 0.0, envMapIntensity: 0.35,
+      const aMat = reg(new THREE.MeshPhysicalMaterial({
+        map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 0.32,
+        roughness: 0.42, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, envMapIntensity: 0.45,
       }), 1);
       const aFace = new THREE.Mesh(faceGeo, aMat);
       aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;
@@ -277,15 +277,16 @@ export class FaqStation {
       this.chips.push(pivot);
     });
 
-    // ----- свет (тёплый прожектор сверху + блики) -----
-    this.spot = new THREE.SpotLight(0xffe6c0, 0, 30, Math.PI / 4.2, 0.5, 1.0);
-    this.spot.position.set(0.2, 6.0, 1.0); this.spot.target.position.set(0, 0, 0);
+    // ----- свет: СИЛЬНЫЙ тёплый прожектор (фишки сочные, не «вымытые» клубным ambient) -----
+    // (свет в локальных коорд группы; группа повёрнута лицом к камере → светит на лица фишек)
+    this.spot = new THREE.SpotLight(0xfff0d8, 0, 30, Math.PI / 3.6, 0.6, 1.0);
+    this.spot.position.set(0.0, 6.5, 0.5); this.spot.target.position.set(0, 0, 0);
     this.group.add(this.spot, this.spot.target);
-    this.warm = new THREE.PointLight(0xff7040, 0, 16); this.warm.position.set(-1.8, 2.2, 2.4);
+    this.warm = new THREE.PointLight(0xff8a4a, 0, 22); this.warm.position.set(-1.6, 1.4, 3.0);
     this.group.add(this.warm);
-    this.rim = new THREE.PointLight(0xff3050, 0, 14); this.rim.position.set(2.4, 1.6, -1.6);
+    this.rim = new THREE.PointLight(0xff2848, 0, 18); this.rim.position.set(2.2, 1.2, -1.4);
     this.group.add(this.rim);
-    this.key = new THREE.PointLight(0xffffff, 0, 14); this.key.position.set(0.2, 4.0, 3.0);
+    this.key = new THREE.PointLight(0xffffff, 0, 20); this.key.position.set(0.0, 1.0, 4.0);
     this.group.add(this.key);
   }
 
@@ -298,8 +299,8 @@ export class FaqStation {
     this.group.scale.setScalar(this.baseScale);
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
     this.feltRing.material.opacity = 0.55 * es * (0.6 + 0.4 * Math.sin(performance.now() * 0.002));
-    this.spot.intensity = 55 * es; this.warm.intensity = 14 * es;
-    this.rim.intensity = 12 * es; this.key.intensity = 12 * es;
+    this.spot.intensity = 95 * es; this.warm.intensity = 24 * es;
+    this.rim.intensity = 18 * es; this.key.intensity = 20 * es;
   }
 
   // луч → индекс фишки (ближайшая) или null

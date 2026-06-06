@@ -70,7 +70,74 @@ export class SoundSystem {
     this.padGain.gain.linearRampToValueAtTime(0.7, ctx.currentTime + 4);
     this._breathe();
     this._buildLayers();
+    this._startMusicScheduler();
   }
+
+  // ===== ЖИВАЯ МУЗЫКА (мелодии планируются по аудио-часам) =====
+  // Космос — мягкая флейта (пентатоника, высокий регистр); Бар — тёплое фортепиано (арпеджио).
+  // Громкость каждой мелодии задаётся из main: this._zoneCosmic / this._zoneBar (0..1).
+  _startMusicScheduler() {
+    this._zoneCosmic = 0; this._zoneBar = 0;
+    this._fluteSeq = [523.25, 587.33, 659.25, 783.99, 880.0, 783.99, 659.25, 587.33,
+                      659.25, 783.99, 1046.5, 880.0, 783.99, 659.25, 587.33, 523.25];
+    this._fluteI = 0; this._nextFlute = this.ctx.currentTime + 0.8;
+    // фортепиано: арпеджио по аккордам Am–F–C–G (тёплая классика)
+    this._pianoChords = [[220.0, 261.63, 329.63], [174.61, 220.0, 261.63], [261.63, 329.63, 392.0], [196.0, 246.94, 293.66]];
+    this._pianoCI = 0; this._pianoNI = 0; this._nextPiano = this.ctx.currentTime + 0.8;
+    this._musicTick();
+  }
+  _musicTick() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime, ahead = now + 0.5;
+    while (this._nextFlute < ahead) {
+      const lvl = this._zoneCosmic || 0;
+      if (lvl > 0.03 && !this.muted) this._fluteNote(this._nextFlute, this._fluteSeq[this._fluteI], lvl);
+      this._fluteI = (this._fluteI + 1) % this._fluteSeq.length;
+      this._nextFlute += 1.5 + (this._fluteI % 3 === 0 ? 0.9 : 0);   // неспешно, с «дыханием»
+    }
+    while (this._nextPiano < ahead) {
+      const lvl = this._zoneBar || 0;
+      const chord = this._pianoChords[this._pianoCI];
+      if (lvl > 0.03 && !this.muted) this._pianoNote(this._nextPiano, chord[this._pianoNI], lvl);
+      this._pianoNI++;
+      if (this._pianoNI >= chord.length) { this._pianoNI = 0; this._pianoCI = (this._pianoCI + 1) % this._pianoChords.length; this._nextPiano += 0.6; }
+      this._nextPiano += 0.5;
+    }
+    setTimeout(() => this._musicTick(), 120);
+  }
+  // мягкая флейта: треугольник с вибрато, плавная атака/спад, дыхание сверху
+  _fluteNote(t, freq, lvl) {
+    const ctx = this.ctx, dur = 1.8, v = 0.07 * lvl;
+    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = freq;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5;
+    const lg = ctx.createGain(); lg.gain.value = freq * 0.006; lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const g = ctx.createGain(); g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(v, t + 0.35);
+    g.gain.linearRampToValueAtTime(v * 0.8, t + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(lp).connect(g).connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+    // лёгкое «дыхание» (тихий шум)
+    const nb = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate); const od = nb.getChannelData(0);
+    for (let i = 0; i < od.length; i++) od[i] = (Math.random() * 2 - 1) * 0.4;
+    const ns = ctx.createBufferSource(); ns.buffer = nb;
+    const hp = ctx.createBiquadFilter(); hp.type = 'bandpass'; hp.frequency.value = freq * 2; hp.Q.value = 0.8;
+    const ng = ctx.createGain(); ng.gain.value = 0; ng.gain.linearRampToValueAtTime(v * 0.15, t + 0.2); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    ns.connect(hp).connect(ng).connect(this.master); ns.start(t); ns.stop(t + 0.6);
+  }
+  // тёплое фортепиано: несколько партиалов, быстрая атака, экспоненциальный спад
+  _pianoNote(t, freq, lvl) {
+    const ctx = this.ctx, v = 0.09 * lvl;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.connect(this.master);
+    [[1, 1.0, 1.6], [2, 0.35, 1.2], [3, 0.16, 0.9], [4, 0.07, 0.6]].forEach(([mul, ga, dec]) => {
+      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq * mul;
+      const g = ctx.createGain(); g.gain.value = 0;
+      g.gain.linearRampToValueAtTime(v * ga, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+      o.connect(g).connect(lp); o.start(t); o.stop(t + dec + 0.05);
+    });
+  }
+  setMusicZones(cosmic, bar) { this._zoneCosmic = cosmic; this._zoneBar = bar; }
 
   // Постоянные звуковые слои-атмосферы, громкость каждого меняется по сцене.
   // metel — «метель/воздух» (Hero/клуб), rustle — шелест (частицы), hum — гул (туннель/мозг).

@@ -283,17 +283,16 @@ scene.add(faq.group);
 // ЛИЦОМ к камере (фон клуба за ним виден), а камера FAQ — это «приближённая» поза Холла на той же
 // оси взгляда. Петля = ЧИСТЫЙ ЗУМ камеры назад к позе Холла (без поворотов, без черноты) →
 // фишки растворяются в частицы, из них собирается утка.
-const HERO_CAM0V = new THREE.Vector3(0.39, 0.10, 20.69);
-const HERO_DIRV = new THREE.Vector3(-0.49 - 0.39, -5.52 - 0.10, -8.27 - 20.69).normalize();
-const TABLE_DIST = 3.6;                              // стол — перед уткой (утка на ~4.6 по той же оси)
-const FAQCAM_PUSH = isMobile ? 0.8 : 0.5;           // насколько камера FAQ «придвинута» к столу
-faq.group.position.copy(HERO_CAM0V).addScaledVector(HERO_DIRV, TABLE_DIST);
-faq.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), HERO_DIRV.clone().negate());  // сукно ЛИЦОМ к камере
-faq.baseScale = isMobile ? 0.34 : 0.42;
-const _faqCamV = HERO_CAM0V.clone().addScaledVector(HERO_DIRV, FAQCAM_PUSH);
-const _faqLookV = _faqCamV.clone().addScaledVector(HERO_DIRV, 5);
-const FAQ_CAM = { x: _faqCamV.x, y: _faqCamV.y, z: _faqCamV.z };
-const FAQ_LOOK = { x: _faqLookV.x, y: _faqLookV.y, z: _faqLookV.z };
+// КАМЕРА FAQ — выверена клиентом через ?tune (виден фон клуба у барной зоны). Стол с фишками
+// ставим в этот вид, ПОВЁРНУТЫМ лицом к камере (фишки читаются), фон клуба за ним.
+const FAQ_CAM = { x: 2.31, y: -1.49, z: 1.10 };
+const FAQ_LOOK = { x: 1.55, y: -3.22, z: -12.11 };
+const _faqCamV = new THREE.Vector3(FAQ_CAM.x, FAQ_CAM.y, FAQ_CAM.z);
+const _faqDirV = new THREE.Vector3(FAQ_LOOK.x - FAQ_CAM.x, FAQ_LOOK.y - FAQ_CAM.y, FAQ_LOOK.z - FAQ_CAM.z).normalize();
+const FAQ_TABLE_DIST = isMobile ? 5.6 : 3.9;        // стол на этом расстоянии перед камерой FAQ
+faq.group.position.copy(_faqCamV).addScaledVector(_faqDirV, FAQ_TABLE_DIST);
+faq.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _faqDirV.clone().negate());  // сукно ЛИЦОМ к камере
+faq.baseScale = isMobile ? 0.6 : 1.0;
 window.__faq = faq;
 window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
@@ -1178,19 +1177,20 @@ function animate() {
     sound.setLayer('rustle', zHall * Math.max(rustleBurst, rustleBrain));
     sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.4));
     sound.setLayer('classical', zPoker);                                   // классика на Покере
-    sound.setLayer('space', zBilliard);                                    // космо-мерцание на Бильярде
-    sound.setLayer('cosmic', zBilliard);                                   // космо-дрон на Бильярде
-    sound.setLayer('bar', zBar);                                           // тёплый низкий гомон зала (бар)
-    sound.setLayer('lounge', Math.max(zBar, zFaq * 0.55));                 // лаунж в баре, тихо на FAQ
+    sound.setLayer('space', 0);                                            // БЕЗ шумового «радио» в космосе
+    sound.setLayer('cosmic', zBilliard * 0.7);                             // мягкий космо-пэд (бед под флейту)
+    sound.setLayer('bar', zBar * 0.6);                                     // тихий гомон зала (бед под фортепиано)
+    sound.setLayer('lounge', Math.max(zBar * 0.45, zFaq * 0.4));           // тёплый бед, тихо
+    // ЖИВЫЕ МЕЛОДИИ: космическая флейта на Бильярде, фортепиано в Баре
+    sound.setMusicZones?.(zBilliard, zBar);
     // ОСНОВНОЙ пэд держим на Холле/Мозге/Дартсе; уводим там, где играет своя музыка
-    sound.setPadDuck?.(THREE.MathUtils.clamp(1 - 0.85 * zPoker - 0.5 * zBilliard - 0.85 * zBar - 0.55 * zFaq, 0, 1));
+    sound.setPadDuck?.(THREE.MathUtils.clamp(1 - 0.85 * zPoker - 0.92 * zBilliard - 0.9 * zBar - 0.55 * zFaq, 0, 1));
   }
   // КИНЕМАТОГРАФИЧЕСКИЙ звук СМЕНЫ станции (приближение/отдаление + акцент под тему)
   if (audioStarted) {
     const stIdx = Math.round(THREE.MathUtils.clamp(scrollProgress, 0, 1) * (STATIONS.length - 1));
     if (stIdx !== _lastStIdx) { sound.playStationCue?.(stIdx, stIdx > _lastStIdx); _lastStIdx = stIdx; }
-    // в Баре изредка позвякивает стекло (живая атмосфера) — ТОЛЬКО в баре, НЕ на FAQ (фишки)
-    if (ak > 0.6 && fk < 0.1 && Math.random() < 0.0035) sound.playGlassClink?.();
+    // звон стекла — ТОЛЬКО при клике по бокалу (амбиентный звон убран: раздражал)
   }
 
   // (фон — 3D-клуб)
