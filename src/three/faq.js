@@ -127,18 +127,18 @@ function chipFace(item, kind) {
     x.fillStyle = 'rgba(255,255,255,.4)'; x.font = '600 18px "Exo 2", sans-serif';
     x.fillText('тапни →', cx, cy + 96);
   } else {
-    // НИЖНЯЯ грань: ОТВЕТ — крупный белый текст по центру, БЕЗ ярлыка (чтобы ничего не налазило).
-    // подбираем размер под длину ответа, чтобы умещался ровно в центральном диске
-    let fs = 38;
-    let lines;
+    // НИЖНЯЯ грань: ОТВЕТ — белый текст по центру. Жёстко умещаем В КРУГ (узкая ширина + лимит высоты),
+    // чтобы НЕ выходил за рамки даже на длинных ответах («Как попасть в клуб»).
+    const maxW = Ri * 1.28, maxH = Ri * 1.5;
+    let fs = 34, lines;
     do {
       x.font = `700 ${fs}px "Exo 2", Inter, sans-serif`;
-      lines = wrapLines(x, item.a, Ri * 1.66);
-      if (lines.length * (fs + 8) <= Ri * 1.9) break;
+      lines = wrapLines(x, item.a, maxW);
+      if (lines.length * (fs + 6) <= maxH) break;
       fs -= 2;
-    } while (fs > 24);
+    } while (fs > 18);
     x.fillStyle = '#ffffff';
-    const lh = fs + 8, ly = cy - (lines.length - 1) * lh / 2;
+    const lh = fs + 6, ly = cy - (lines.length - 1) * lh / 2;
     lines.forEach((ln, i) => x.fillText(ln, cx, ly + i * lh));
     // маленький вордмарк снизу
     x.fillStyle = 'rgba(209,31,31,.75)'; x.font = '700 18px Orbitron, "Exo 2", sans-serif';
@@ -246,12 +246,11 @@ export class FaqStation {
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
 
-      // ВЕРХНЯЯ грань — ВОПРОС. Лицо ГЛЯНЦЕВОЕ (сочное), но блик МЯГКИЙ (широкий clearcoat) → не
-      // даёт резкого пятна на тексте; текст слегка самосветится (emissiveMap) для читаемости.
+      // ВЕРХНЯЯ грань — ВОПРОС. Лицо МАТОВОЕ (БЕЗ блика и самосвечения) → текст чёткий, без «мутной
+      // белой плёнки». Глянец остаётся телу/борту фишки. Текстура 2× → резкие буквы.
       const qTex = chipFace(item, 'q');
-      const qMat = reg(new THREE.MeshPhysicalMaterial({
-        map: qTex, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: 0.32,
-        roughness: 0.5, metalness: 0.0, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.18,
+      const qMat = reg(new THREE.MeshStandardMaterial({
+        map: qTex, roughness: 0.92, metalness: 0.0, envMapIntensity: 0.06,
       }), 1);
       const qFace = new THREE.Mesh(faceGeo, qMat);
       qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
@@ -259,9 +258,8 @@ export class FaqStation {
 
       // НИЖНЯЯ грань — ОТВЕТ
       const aTex = chipFace(item, 'a');
-      const aMat = reg(new THREE.MeshPhysicalMaterial({
-        map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 0.32,
-        roughness: 0.5, metalness: 0.0, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.18,
+      const aMat = reg(new THREE.MeshStandardMaterial({
+        map: aTex, roughness: 0.92, metalness: 0.0, envMapIntensity: 0.06,
       }), 1);
       const aFace = new THREE.Mesh(faceGeo, aMat);
       aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;
@@ -289,7 +287,7 @@ export class FaqStation {
     this.group.add(this.warm);
     this.rim = new THREE.PointLight(0xff2848, 0, 18); this.rim.position.set(2.6, 2.2, -1.6);
     this.group.add(this.rim);
-    this.key = new THREE.PointLight(0xffffff, 0, 18); this.key.position.set(0.2, 4.2, 3.2);
+    this.key = new THREE.PointLight(0xffd9b0, 0, 18); this.key.position.set(0.2, 4.2, 3.2);   // ТЁПЛЫЙ (не белый)
     this.group.add(this.key);
   }
 
@@ -302,8 +300,9 @@ export class FaqStation {
     this.group.scale.setScalar(this.baseScale);
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
     this.feltRing.material.opacity = 0.55 * es * (0.6 + 0.4 * Math.sin(performance.now() * 0.002));
-    this.spot.intensity = 120 * es; this.warm.intensity = 32 * es;
-    this.rim.intensity = 22 * es; this.key.intensity = 26 * es;
+    // умеренный ТЁПЛЫЙ свет (без белой засветки): фишки остаются чёрными, текст читается чётко
+    this.spot.intensity = 52 * es; this.warm.intensity = 20 * es;
+    this.rim.intensity = 14 * es; this.key.intensity = 9 * es;
   }
 
   // луч → индекс фишки (ближайшая) или null
