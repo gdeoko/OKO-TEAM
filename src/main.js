@@ -278,13 +278,19 @@ window.__setBarLookY = (v) => { BAR_LOOK.y = v; };  // живой подбор �
 // сверху-спереди к сукну. Фишки лежат лицом вверх; клик → фишка крутится, вылетает в центр,
 // встаёт к зрителю, main показывает ОТВЕТ. Золотая фишка «ЗАПИСАТЬСЯ» → ТГ-бот. Дальше — петля.
 const faq = new FaqStation(isMobile, { onSelect: () => sound.playCardSlide?.(), onCta: () => sound.playQuack?.() });
-faq.group.position.set(0.4, -0.4, -3.2);
-faq.baseScale = isMobile ? 0.78 : 1.0;
 scene.add(faq.group);
-// Камера FAQ: вид СВЕРХУ-СПЕРЕДИ на стол (утверждённая версия — фишки лежат плашмя, читаются).
-// Это поза, ОТ которой петля плавно отъезжает к Холлу (клуб проявляется при отъезде).
-const FAQ_CAM = { x: 0.4, y: isMobile ? 4.9 : 4.0, z: isMobile ? 1.5 : 0.8 };
-const FAQ_LOOK = { x: 0.4, y: -0.5, z: -3.6 };
+// КАМЕРА FAQ — выверена клиентом через ?tune: показывает ФОН КЛУБА (барная зона). Стол с фишками
+// ставим в этот вид, повёрнутым лицом к камере (фишки читаются), фон клуба за ним. Это поза, ОТ
+// которой петля плавно отъезжает к Холлу.
+const FAQ_CAM = { x: 2.31, y: -1.49, z: 1.10 };
+const FAQ_LOOK = { x: 1.55, y: -3.22, z: -12.11 };
+const _faqCamV = new THREE.Vector3(FAQ_CAM.x, FAQ_CAM.y, FAQ_CAM.z);
+const _faqDirV = new THREE.Vector3(FAQ_LOOK.x - FAQ_CAM.x, FAQ_LOOK.y - FAQ_CAM.y, FAQ_LOOK.z - FAQ_CAM.z).normalize();
+const FAQ_TABLE_DIST = isMobile ? 6.7 : 5.2;        // стол подальше (не залезает на заголовок), вокруг виден клуб
+faq.group.position.copy(_faqCamV).addScaledVector(_faqDirV, FAQ_TABLE_DIST);
+faq.group.position.y -= isMobile ? 0.7 : 0.4;       // чуть ниже, чтобы верхний ряд не лез на заголовок
+faq.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _faqDirV.clone().negate());  // сукно ЛИЦОМ к камере
+faq.baseScale = isMobile ? 0.74 : 0.92;
 window.__faq = faq;
 window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
@@ -1304,13 +1310,15 @@ function animate() {
   // клуб гаснет на Дартсе (≈×0.25), на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос), а на БАРЕ
   // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
   // на БАРЕ клуб ВОЗВРАЩАЕТСЯ; на FAQ снова УХОДИМ в тёмный войд (стол с фишками в прожекторе,
-  // FAQ — стол с фишками в тёмном «прожекторном» войде (фишки сочные, как в утверждённой версии).
-  // Во время ПЕТЛИ клуб ПЛАВНО проявляется по heroness (loopClub) → отъезжаем из тёмного стола в зал.
-  const faqDark = looping ? (1 - loopClub) : THREE.MathUtils.smoothstep(fk, 0.08, 0.55);
-  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6) * (1 - faqDark);   // клуб на Баре, гаснет на FAQ
+  // FAQ — фон КЛУБА виден (как просили), но ПРИГЛУШЁН, чтобы стол-прожектор/фишки выделялись и
+  // были сочными. Во время ПЕТЛИ клуб полностью проявляется к стороне Холла.
+  const faqDimBase = THREE.MathUtils.smoothstep(fk, 0.08, 0.55) * 0.45;   // лёгкое затемнение клуба на FAQ
+  const faqDark = looping ? (1 - loopClub) * 0.45 : faqDimBase;
+  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6);   // клуб виден на Баре И на FAQ (ak=1)
   const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
   env.fade(Math.max(envBase * billiardDark, barBack * 0.95) * (1 - faqDark));
-  env.hideExtra(Math.max(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)), faqDark));
+  // на FAQ клуб НЕ скрываем геометрически (только приглушаем через fade) — фон зала виден
+  env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)));
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   if (!looping) { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }

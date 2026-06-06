@@ -64,9 +64,13 @@ function wrapLines(ctx, text, maxW) {
 // ---- текстура лица фишки. kind: 'q' вопрос | 'a' ответ | 'cta' ----
 function chipFace(item, kind) {
   const gold = kind === 'cta';
-  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+  // РЕНДЕР В 2× (1024) для резкости текста (full-HD/«8k» ощущение), логические координаты = 512
+  const SL = 512, K = 2, S = SL * K;
+  const c = document.createElement('canvas'); c.width = c.height = S;
   const x = c.getContext('2d');
-  const cx = S / 2, cy = S / 2, Rp = S / 2 - 6;
+  x.scale(K, K);
+  x.textAlign = 'center';
+  const cx = SL / 2, cy = SL / 2, Rp = SL / 2 - 6;
   // 1) тело фишки — ЧЁРНОЕ (или золотое для CTA), радиальный градиент с бликом
   const base = gold ? ['#ffe9a0', '#e6ad28', '#8a5f0e'] : ['#3a3a44', '#17171d', '#070709'];
   const g = x.createRadialGradient(cx, cy - 60, 24, cx, cy, Rp);
@@ -142,7 +146,8 @@ function chipFace(item, kind) {
     x.fillText("DUCK'S", cx, cy + Ri * 0.78);
   }
   const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; t.generateMipmaps = true;
+  t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter;
   return t;
 }
 
@@ -191,8 +196,8 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- СТОЛ: сукно + глянцевый борт (как в утверждённой версии — вид сверху) -----
-    const FELT_R = 4.4;
+    // ----- СТОЛ: сукно + глянцевый борт (компактнее — вокруг виден зал клуба) -----
+    const FELT_R = 2.75;
     this.felt = new THREE.Mesh(
       new THREE.CircleGeometry(FELT_R, 72),
       reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
@@ -298,8 +303,8 @@ export class FaqStation {
     this.group.scale.setScalar(this.baseScale);
     for (const m of this._mats) m.opacity = (m.userData._b || 1) * es;
     this.feltRing.material.opacity = 0.55 * es * (0.6 + 0.4 * Math.sin(performance.now() * 0.002));
-    this.spot.intensity = 95 * es; this.warm.intensity = 24 * es;
-    this.rim.intensity = 18 * es; this.key.intensity = 20 * es;
+    this.spot.intensity = 120 * es; this.warm.intensity = 32 * es;
+    this.rim.intensity = 22 * es; this.key.intensity = 26 * es;
   }
 
   // луч → индекс фишки (ближайшая) или null

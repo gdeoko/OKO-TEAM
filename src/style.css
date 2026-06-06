@@ -517,7 +517,8 @@ body.tunnel-exit .bd-inner {
   .billiard-top { top: 9vh; }
   .billiard-bottom { bottom: 6vh; }
   /* Карточки Бильярда на мобиле — 2×2 внизу; прилетают с боков (верхний ряд слева, нижний справа) */
-  .bil-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 6vh; padding: 0 16px; opacity: var(--bv, 0); z-index: 11; }
+  .bil-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 6vh; padding: 0 16px; opacity: var(--bv, 0); z-index: 11; pointer-events: none; }
+  body.billiard-in .bil-foot { pointer-events: auto; }
   .bil-col { position: static; width: 100%; opacity: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .bil-col.bil-left { transform: translateX(calc(var(--bx, 1) * -62vw)); }
   .bil-col.bil-right { transform: translateX(calc(var(--bx, 1) * 62vw)); }
@@ -526,7 +527,9 @@ body.tunnel-exit .bd-inner {
     display: flex; flex-direction: column; gap: 10px;
     position: fixed; left: 0; right: 0; bottom: 7vh; padding: 0 16px;
     opacity: var(--av, 0); transform: scale(var(--avs, 1)); transform-origin: center bottom; z-index: 11;
+    pointer-events: none;   /* невидимый фикс-контейнер НЕ перехватывает клики (иначе ел кнопки героя) */
   }
+  body.about-in .about-foot { pointer-events: auto; }
   .about-foot .thesis-col {
     position: static; width: 100%; opacity: 1; transform: none;
     display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
@@ -795,7 +798,8 @@ body.coupon-open .cp-card { transform: translateY(0) scale(1); }
   .bar-top { top: 9vh; }
   .bar-hint { top: 54%; }
   /* карточки бара на мобиле — снизу, прилетают с боков (как Бильярд) */
-  .bar-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 6vh; padding: 0 16px; opacity: var(--av2, 0); z-index: 11; }
+  .bar-foot { display: flex; flex-direction: column; gap: 8px; position: fixed; left: 0; right: 0; bottom: 6vh; padding: 0 16px; opacity: var(--av2, 0); z-index: 11; pointer-events: none; }
+  body.bar-in .bar-foot { pointer-events: auto; }
   .bar-col { position: static; width: 100%; opacity: 1; display: flex; flex-direction: column; gap: 8px; }
   .bar-col.bar-left { transform: translateX(calc(var(--ax2, 1) * -62vw)); }
   .bar-col.bar-right { transform: translateX(calc(var(--ax2, 1) * 62vw)); }
