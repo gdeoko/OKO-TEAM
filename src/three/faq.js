@@ -71,8 +71,8 @@ function chipFace(item, kind) {
   x.scale(K, K);
   x.textAlign = 'center';
   const cx = SL / 2, cy = SL / 2, Rp = SL / 2 - 6;
-  // 1) тело фишки — ЧЁРНОЕ (или золотое для CTA), радиальный градиент с бликом
-  const base = gold ? ['#ffe9a0', '#e6ad28', '#8a5f0e'] : ['#3a3a44', '#17171d', '#070709'];
+  // 1) тело фишки — ГЛУБОКО-ЧЁРНОЕ (или золотое для CTA), радиальный градиент
+  const base = gold ? ['#ffe9a0', '#e6ad28', '#8a5f0e'] : ['#202024', '#0a0a0c', '#030304'];
   const g = x.createRadialGradient(cx, cy - 60, 24, cx, cy, Rp);
   g.addColorStop(0, base[0]); g.addColorStop(0.5, base[1]); g.addColorStop(1, base[2]);
   x.beginPath(); x.arc(cx, cy, Rp, 0, TWO_PI); x.fillStyle = g; x.fill();
@@ -82,25 +82,24 @@ function chipFace(item, kind) {
     x.beginPath(); x.arc(cx, cy, r, 0, TWO_PI);
     x.strokeStyle = gold ? 'rgba(120,80,0,0.18)' : 'rgba(255,255,255,0.05)'; x.stroke();
   }
-  // 3) «споты» по ободу — чередуем КРАСНЫЙ и БЕЛЫЙ (как на референсе чёрной фишки)
+  // 3) «споты» по ободу — чередуем ОРАНЖЕВЫЙ и БЕЛЫЙ (как на фото)
   const NSPOT = 8, spotW = 0.30;
   for (let i = 0; i < NSPOT; i++) {
     const a0 = (i / NSPOT) * TWO_PI - spotW / 2, a1 = a0 + spotW;
-    const col = gold ? '#fff4d0' : (i % 2 === 0 ? '#d11f1f' : '#f2efe9');
-    // белая/светлая окантовка
+    const col = gold ? '#fff4d0' : (i % 2 === 0 ? '#ee6a1e' : '#f2efe9');
     x.beginPath(); x.arc(cx, cy, Rp - 2, a0 - 0.045, a1 + 0.045); x.arc(cx, cy, Rp - 84, a1 + 0.045, a0 - 0.045, true); x.closePath();
-    x.fillStyle = gold ? '#7a560c' : '#0c0c0f'; x.fill();
+    x.fillStyle = gold ? '#7a560c' : '#060607'; x.fill();
     x.beginPath(); x.arc(cx, cy, Rp - 7, a0, a1); x.arc(cx, cy, Rp - 79, a1, a0, true); x.closePath();
     x.fillStyle = col; x.fill();
   }
   // 4) обводки обода
   x.lineWidth = 5; x.strokeStyle = gold ? '#5a3f06' : '#000';
   x.beginPath(); x.arc(cx, cy, Rp - 3, 0, TWO_PI); x.stroke();
-  // 5) центральный диск
-  const Ri = S * 0.355;
+  // 5) центральный диск (Ri — в ЛОГИЧЕСКИХ координатах SL, не S!)
+  const Ri = SL * 0.355;
   const inner = x.createRadialGradient(cx, cy - 24, 14, cx, cy, Ri);
   if (gold) { inner.addColorStop(0, '#fff6da'); inner.addColorStop(1, '#e7c86c'); }
-  else { inner.addColorStop(0, '#22222a'); inner.addColorStop(1, '#0c0c10'); }
+  else { inner.addColorStop(0, '#121214'); inner.addColorStop(1, '#040405'); }
   x.beginPath(); x.arc(cx, cy, Ri, 0, TWO_PI); x.fillStyle = inner; x.fill();
   // двойное кольцо: красное + светлое
   x.lineWidth = 6; x.strokeStyle = gold ? '#b8902a' : '#d11f1f';
@@ -238,11 +237,11 @@ export class FaqStation {
       };
       pivot.rotation.y = pivot.userData.homeRotY;
 
-      // ТЕЛО — глянцевое чёрное, сильный clearcoat + отражения окружения (реалистичная фишка)
+      // ТЕЛО — ГЛУБОКО-ЧЁРНОЕ глянцевое (минимум отражений среды, чтобы клубный свет не «вымывал»)
       const bodyMat = reg(new THREE.MeshPhysicalMaterial({
-        color: 0x121216, roughness: 0.26, metalness: 0.15,
-        clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 1.6,
-        emissive: 0x090909, emissiveIntensity: 0.25,
+        color: 0x070708, roughness: 0.3, metalness: 0.1,
+        clearcoat: 1.0, clearcoatRoughness: 0.08, envMapIntensity: 0.35,
+        emissive: 0x000000, emissiveIntensity: 0,
       }), 1);
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
@@ -252,7 +251,7 @@ export class FaqStation {
       const qTex = chipFace(item, 'q');
       const qMat = reg(new THREE.MeshPhysicalMaterial({
         map: qTex, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: 0.32,
-        roughness: 0.42, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, envMapIntensity: 0.45,
+        roughness: 0.5, metalness: 0.0, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.18,
       }), 1);
       const qFace = new THREE.Mesh(faceGeo, qMat);
       qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
@@ -262,7 +261,7 @@ export class FaqStation {
       const aTex = chipFace(item, 'a');
       const aMat = reg(new THREE.MeshPhysicalMaterial({
         map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 0.32,
-        roughness: 0.42, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, envMapIntensity: 0.45,
+        roughness: 0.5, metalness: 0.0, clearcoat: 0.3, clearcoatRoughness: 0.4, envMapIntensity: 0.18,
       }), 1);
       const aFace = new THREE.Mesh(faceGeo, aMat);
       aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;

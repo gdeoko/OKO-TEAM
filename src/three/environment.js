@@ -56,8 +56,9 @@ export class ClubEnvironment {
     this.group.add(this.dust);
 
     // слабый общий свет + цветные источники-«отблески» неона на полу/стенах
-    this.scene.add(new THREE.AmbientLight(0x4455bb, 0.35));
-    const key = new THREE.DirectionalLight(0x99aaff, 0.45); key.position.set(2, 6, 4); this.scene.add(key);
+    this.ambient = new THREE.AmbientLight(0x4455bb, 0.35); this.scene.add(this.ambient);
+    this.key = new THREE.DirectionalLight(0x99aaff, 0.45); this.key.position.set(2, 6, 4); this.scene.add(this.key);
+    this._ambientBase = 0.35; this._keyBase = 0.45;
     // неоновые отблески в пространстве (взаимодействие неона с залом, как на референсе)
     const mkLight = (color, intensity, dist, x, y, z) => { const l = new THREE.PointLight(color, intensity, dist); l.position.set(x, y, z); return l; };
     this.glowLights = [
@@ -147,6 +148,11 @@ export class ClubEnvironment {
     });
     // отблески неона мягко дышат
     if (this.glowLights) this.glowLights.forEach((l, i) => { l.intensity = (5 + Math.sin(t * 1.4 + i) * 1.5) * this._fade; });
+    // общий свет зала: множитель ambientMul задаётся из main (на FAQ сильно тише → фишки чёрные,
+    // при этом стены/неон зала остаются видимыми) — иначе по _fade.
+    const am = this.ambientMul !== undefined ? this.ambientMul : 1;
+    if (this.ambient) this.ambient.intensity = this._ambientBase * am;
+    if (this.key) this.key.intensity = this._keyBase * am;
     if (this.dust) {
       const p = this.dust.geometry.attributes.position;
       for (let i = 0; i < this.dustSeed.length; i++) p.array[i * 3 + 1] += Math.sin(t * 0.3 + this.dustSeed[i]) * 0.0015;
