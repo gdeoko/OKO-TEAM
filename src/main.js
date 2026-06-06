@@ -854,7 +854,7 @@ window.__lenis = lenis;   // для проверки в браузере
 let scrollProgress = 0;
 // СОСТОЯНИЕ ПЕТЛИ (объявлено рано — animate()/updateLoop читают его уже в первом кадре)
 let looping = 0;             // 0 | +1 (FAQ→Холл) | -1 (Холл→FAQ)
-let loopT = 0, loopSwapped = false;
+let loopT = 0, loopSwapped = false, loopClub = 0;   // loopClub — проявление клуба при въезде из тёмного стола в зал
 const LOOP_DUR = 1.7;
 const loopFadeEl = document.getElementById('loop-fade');
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
@@ -1284,12 +1284,13 @@ function animate() {
   // клуб гаснет на Дартсе (≈×0.25), на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос), а на БАРЕ
   // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
   // на БАРЕ клуб ВОЗВРАЩАЕТСЯ; на FAQ снова УХОДИМ в тёмный войд (стол с фишками в прожекторе,
-  // без перекрытия геометрией клуба) — faqDark 0→1 при входе в FAQ.
-  const faqDark = THREE.MathUtils.smoothstep(fk, 0.08, 0.55);
+  // FAQ — стол с фишками в «прожекторном» войде (клуб его геометрией перекрывал бы фишки),
+  // КЛУБ ПЛАВНО ПРОЯВЛЯЕТСЯ во время ПЕТЛИ (loopClub 0→1) → выезжаем из тёмного стола в зал к утке.
+  const faqDark = THREE.MathUtils.smoothstep(fk, 0.08, 0.55) * (1 - loopClub);
   const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6) * (1 - faqDark);   // клуб возвращается на Баре, гаснет на FAQ
   const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
   env.fade(Math.max(envBase * billiardDark, barBack * 0.95) * (1 - faqDark));
-  env.hideExtra(Math.max(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)), faqDark));   // клуб скрыт на Дартсе/Бильярде и на FAQ
+  env.hideExtra(Math.max(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)), faqDark));
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
@@ -1837,9 +1838,13 @@ function formHeroFromParticles() {
 function updateLoop(dt) {
   if (!looping) return;
   loopT = Math.min(1, loopT + dt / LOOP_DUR);
-  // темнота вдали: наплывает к середине и уходит (мягко, как полёт в тёмный тоннель)
-  const dark = Math.sin(THREE.MathUtils.clamp(loopT, 0, 1) * Math.PI);
-  if (loopFadeEl) loopFadeEl.style.opacity = String(THREE.MathUtils.clamp(dark * 1.35, 0, 1));
+  // КЛУБ проявляется по ходу петли: вперёд (FAQ→Холл) — въезжаем из тёмного стола в зал к утке
+  // (клуб 0→1); назад (Холл→FAQ) — уезжаем из зала в тёмный стол (клуб 1→0).
+  loopClub = (looping > 0) ? THREE.MathUtils.smoothstep(loopT, 0.45, 0.96)
+                           : 1 - THREE.MathUtils.smoothstep(loopT, 0.06, 0.52);
+  // лёгкая «тень дали» только у самого свапа (минимум черноты — основное скрывает тёмный войд стола)
+  const dark = Math.exp(-Math.pow((loopT - 0.5) / 0.16, 2));   // узкий пик в середине
+  if (loopFadeEl) loopFadeEl.style.opacity = String(THREE.MathUtils.clamp(dark * 0.9, 0, 1));
   // СВАП координат — в самой темноте
   if (!loopSwapped && loopT >= 0.5) {
     loopSwapped = true;
@@ -1859,7 +1864,7 @@ function updateLoop(dt) {
     document.getElementById('scroll-progress').style.width = (scrollProgress * 100) + '%';
     sound.playWhoosh?.(false);
   }
-  if (loopT >= 1) { looping = 0; if (loopFadeEl) loopFadeEl.style.opacity = '0'; try { lenis.start(); } catch (e) {} }
+  if (loopT >= 1) { looping = 0; loopClub = 0; if (loopFadeEl) loopFadeEl.style.opacity = '0'; try { lenis.start(); } catch (e) {} }
 }
 
 // триггеры петли: на самом краю + явный жест (тап НЕ срабатывает — нужен реальный скролл/свайп)
