@@ -68,6 +68,7 @@ function initSchema($pdo) {
 
   // Значения по умолчанию (редактируются в админке → settings)
   $defaults = [
+    'admin_pin'      => ADMIN_PIN,       // цифровой PIN входа (меняется в админке)
     'club_address'   => 'Москва, БП «ПАРК МИРА», DUCK\'S GAME SPACE',
     'club_address_map' => 'https://yandex.ru/maps/?text=Москва%20Парк%20Мира',
     'invite_text'    => 'Ты в списке! Ждём тебя в DUCK\'S GAME SPACE. Адрес и детали — ниже. До встречи за столом 🦆',
@@ -79,6 +80,12 @@ function initSchema($pdo) {
   ];
   $ins = $pdo->prepare("INSERT OR IGNORE INTO settings (k,v) VALUES (?,?)");
   foreach ($defaults as $k => $v) $ins->execute([$k, $v]);
+}
+
+/* Действующий PIN админки (из БД, иначе константа из config) */
+function currentPin() {
+  $p = setting('admin_pin', ADMIN_PIN);
+  return ($p === '' || $p === null) ? ADMIN_PIN : $p;
 }
 
 function setting($k, $def = '') {

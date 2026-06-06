@@ -31,7 +31,7 @@ function fail($m, $code = 400) { http_response_code($code); out(['ok' => false, 
 
 function requireAdmin() {
   $pin = $_SERVER['HTTP_X_ADMIN_PIN'] ?? inp('pin', '');
-  if (!hash_equals(ADMIN_PIN, (string)$pin)) fail('unauthorized', 401);
+  if (!hash_equals(currentPin(), (string)$pin)) fail('unauthorized', 401);
 }
 
 $action = $_GET['action'] ?? inp('action', '');
@@ -115,8 +115,16 @@ switch ($action) {
 
   case 'auth': {
     $pin = inp('pin', '');
-    if (!hash_equals(ADMIN_PIN, (string)$pin)) fail('bad pin', 401);
+    if (!hash_equals(currentPin(), (string)$pin)) fail('bad pin', 401);
     out(['ok' => true]);
+  }
+
+  case 'setPin': {
+    requireAdmin();
+    $new = preg_replace('/\D/', '', (string)inp('newPin', ''));
+    if (strlen($new) < 4 || strlen($new) > 6) fail('PIN должен быть 4–6 цифр');
+    setSetting('admin_pin', $new);
+    out(['ok' => true, 'pin' => $new]);
   }
 
   case 'getStats': {

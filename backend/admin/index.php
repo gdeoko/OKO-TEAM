@@ -231,6 +231,13 @@ canvas{display:block;width:100%;}
   <!-- НАСТРОЙКИ -->
   <div class="page" id="page-settings">
     <div class="card">
+      <h3>🔒 PIN-код входа</h3>
+      <div class="h-sub">Цифровой пароль для входа в админку. Только цифры, 4–6 знаков.</div>
+      <div class="field"><label>Новый PIN</label><input id="pin-new" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="например 2026"></div>
+      <div class="field"><label>Повтори новый PIN</label><input id="pin-new2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="ещё раз"></div>
+      <button class="btn" id="pin-save">Сменить PIN</button>
+    </div>
+    <div class="card">
       <h3>📍 Клуб и приглашение</h3>
       <div class="field"><label>Адрес клуба (в письмах-приглашениях)</label><input id="set-club_address"></div>
       <div class="field"><label>Ссылка на карту</label><input id="set-club_address_map"></div>
@@ -531,7 +538,17 @@ async function loadSettings(){
 }
 $('#set-save').onclick=async()=>{
   const o={};['club_address','club_address_map','welcome_text','invite_text','magnet_title','magnet_url'].forEach(k=>o[k]=$('#set-'+k).value);
-  await api('saveSettings',{pin:PIN,settings:o});toast('Настройки сохранены');
+  await api('saveSettings',{pin:PIN,settings:o});toast('Настройки сохранены ✓');
+};
+// смена PIN — только цифры, обновляем сессию на лету
+['pin-new','pin-new2'].forEach(id=>$('#'+id).addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'');}));
+$('#pin-save').onclick=async()=>{
+  const a=$('#pin-new').value,b=$('#pin-new2').value;
+  if(a.length<4||a.length>6)return toast('PIN: 4–6 цифр');
+  if(a!==b)return toast('PIN не совпадает');
+  const r=await api('setPin',{pin:PIN,newPin:a});
+  if(r.ok){PIN=r.pin;sessionStorage.setItem(PIN_KEY,PIN);$('#pin-new').value='';$('#pin-new2').value='';toast('PIN изменён ✓');}
+  else toast(r.error||'Ошибка');
 };
 
 /* ---------- modal/utils ---------- */
