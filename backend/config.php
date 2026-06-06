@@ -14,14 +14,10 @@ define('MAIL_FROM_NAME', "DUCK'S GAME SPACE");
 define('SMTP_HOST', 'smtps://smtp.gmail.com:465');  // SSL-порт для CURL
 
 // --- Письма руководителям (новые заявки/купоны) ---
-// Можно несколько через запятую.
+// Можно несколько через запятую. Вся механика — ТОЛЬКО почта (без ТГ-бота).
 define('ADMIN_EMAILS', 'ducks.game.space@gmail.com, okoteam.top@gmail.com');
 
-// --- Telegram-бот (уведомления + бот клиентам) ---
-// !!! ЗАПОЛНИ: токен бота @ducks_gameclub_bot из @BotFather
-define('TG_BOT_TOKEN', '');                         // напр. 1234567:AAAA...
-// !!! ЗАПОЛНИ: chat_id руководителей (узнать у @userinfobot). Несколько через запятую.
-define('TG_ADMIN_CHATS', '');                       // напр. 123456789,987654321
+// --- Ссылки клуба (используются как КНОПКИ в письмах; это просто ссылки, не бот-API) ---
 define('TG_CHANNEL', 'https://t.me/duckspokerspace');
 define('TG_BOT_LINK', 'https://t.me/ducks_gameclub_bot');
 

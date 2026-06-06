@@ -1,7 +1,21 @@
-# DUCK'S — деплой бэкенда (webhost1 / любой PHP-хостинг)
+# DUCK'S — деплой (webhost1 / любой PHP-хостинг)
 
-Технология: **PHP + SQLite (PDO) + Gmail App Password (CURL SMTP) + cron**.
+Технология: **PHP + SQLite (PDO) + Gmail App Password (CURL SMTP) + cron + JSON**.
+Всё работает **только на почте** (без Telegram-бота).
 Фронтенд (Vite) и бэкенд (PHP) живут вместе в корне сайта.
+
+## Красивые ссылки (всё без .html, кроме главной)
+
+| Раздел | Ссылка |
+|---|---|
+| Сайт | `https://ducks.games/` |
+| Система роста | `https://ducks.games/system` |
+| Лид-магнит · Правила покера | `https://ducks.games/poker-pravila` |
+| Лид-магнит · Читать людей | `https://ducks.games/chitat-lyudey` |
+| Лид-магнит · Игры для мозга | `https://ducks.games/igry-dlya-mozga` |
+| Лид-магнит · 10 шагов | `https://ducks.games/10-shagov` |
+| Админ-панель | `https://ducks.games/admin` |
+| API (служебный) | `https://ducks.games/api` |
 
 ## 1. Что куда кладётся (всё в корень `public_html/`)
 
@@ -25,14 +39,19 @@ public_html/
 
 | Параметр | Что вписать |
 |---|---|
-| `MAIL_PASS` | App Password Gmail (уже стоит `axcswwobaplhprjh`) — проверь актуальность |
-| `ADMIN_EMAILS` | почты руководителей (новые заявки/купоны) |
-| `TG_BOT_TOKEN` | **токен @ducks_gameclub_bot из @BotFather** (пока пусто → ТГ-уведомления выключены) |
-| `TG_ADMIN_CHATS` | **chat_id руководителей** (узнать у @userinfobot) |
+| `MAIL_USER` / `MAIL_FROM` | ящик-отправитель (стоит `ducks.game.space@gmail.com`) |
+| `MAIL_PASS` | **App Password Google** (стоит `axcswwobaplhprjh`) — проверь актуальность |
+| `ADMIN_EMAILS` | почты руководителей (куда дублируются заявки/купоны), через запятую |
 | `ADMIN_PIN` | **PIN для входа в /admin** (по умолчанию `2002` — поменяй) |
 | `INVITE_DELAY_MIN` | задержка авто-приглашения (по умолчанию 15 мин) |
 
 Адрес клуба, тексты писем, лид-магнит — правятся прямо в **админке → Настройки** (без кода).
+Все заголовки сайта, карточки, FAQ-фишки и поля форм — в **админке → Тексты**.
+
+### Как получить App Password Google
+1. Включи 2FA на ящике `ducks.game.space@gmail.com`.
+2. Google Account → Security → **App passwords** → создай пароль для «Mail».
+3. 16 символов вставь в `MAIL_PASS` **без пробелов**.
 
 ## 3. Cron (авто-приглашения и досыл писем)
 

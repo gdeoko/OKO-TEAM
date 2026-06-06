@@ -51,6 +51,13 @@ function applyContent(c) {
     const v = get(el.getAttribute('data-edit-html'));
     if (typeof v === 'string' && v.length) el.innerHTML = v;
   });
+  // опции-«фишки» форм: массив строк ["Покер","Дартс",...] → пересобираем кнопки
+  document.querySelectorAll('[data-chips]').forEach((box) => {
+    const arr = get(box.getAttribute('data-chips'));
+    if (Array.isArray(arr) && arr.length) {
+      box.innerHTML = arr.map((v) => `<button type="button" class="su-chip" data-v="${String(v).replace(/"/g, '&quot;')}">${String(v)}</button>`).join('');
+    }
+  });
 }
 try {
   fetch('api.php?action=getContent').then((r) => r.json()).then((res) => {
@@ -1747,15 +1754,18 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
   su?.addEventListener('click', (e) => { if (e.target === su) closeSignup(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('signup-open')) closeSignup(); });
 
-  // выбор «фишек» (одна активная в группе)
-  document.querySelectorAll('#su-game .su-chip').forEach((c) => c.addEventListener('click', () => {
+  // выбор «фишек» (одна активная в группе). Делегирование на контейнер — чтобы работало даже
+  // если опции пересобраны из админ-контента (content.form.signup.games / .formats).
+  document.getElementById('su-game')?.addEventListener('click', (e) => {
+    const c = e.target.closest('.su-chip'); if (!c) return;
     document.querySelectorAll('#su-game .su-chip').forEach((o) => o.classList.remove('on'));
     c.classList.add('on'); pickedGame = c.dataset.v; sound.playClick?.();
-  }));
-  document.querySelectorAll('#su-format .su-chip').forEach((c) => c.addEventListener('click', () => {
+  });
+  document.getElementById('su-format')?.addEventListener('click', (e) => {
+    const c = e.target.closest('.su-chip'); if (!c) return;
     document.querySelectorAll('#su-format .su-chip').forEach((o) => o.classList.remove('on'));
     c.classList.add('on'); pickedFormat = c.dataset.v; sound.playClick?.();
-  }));
+  });
 
   // маска телефона +7 (9XX) XXX-XX-XX
   phoneI?.addEventListener('input', () => {

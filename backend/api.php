@@ -56,10 +56,6 @@ switch ($action) {
     db()->prepare("UPDATE subscribers SET welcomed=1, magnet_sent=1 WHERE id=?")->execute([$id]);
     foreach (array_filter(array_map('trim', explode(',', ADMIN_EMAILS))) as $ae)
       @sendEmail($ae, '🦆 Новая заявка с сайта', adminLeadHtml($d, 'Заявка'));
-    sendTelegram("🦆 <b>Новая заявка</b>\nИмя: " . htmlspecialchars($d['name'])
-      . "\nПочта: " . htmlspecialchars($d['email']) . "\nТел: " . htmlspecialchars($d['phone'])
-      . "\nИгра: " . htmlspecialchars($d['game'] . ' ' . $d['format']),
-      [['Написать клиенту', TG_BOT_LINK]]);
     out(['ok' => true, 'id' => $id]);
   }
 
@@ -91,8 +87,6 @@ switch ($action) {
       @sendEmail($ae, '🎯 Купон выдан с сайта',
         adminLeadHtml(['name'=>$name,'email'=>$email,'phone'=>$phone,'score'=>$score,
           'number'=>$number,'source'=>'darts'], 'Купон'));
-    sendTelegram("🎯 <b>Купон −$discount%</b>\nИмя: " . htmlspecialchars($name)
-      . "\nПочта: " . htmlspecialchars($email) . "\n№ " . htmlspecialchars($number));
     out(['ok' => true, 'number' => $number, 'download' => $dlUrl]);
   }
 

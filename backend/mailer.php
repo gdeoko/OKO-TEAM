@@ -131,25 +131,3 @@ function sendEmail($to, $subject, $html, $attachments = []) {
   // fallback
   return @mail($to, $subjEnc, $body, $head);
 }
-
-/* Telegram уведомление руководителям (+опц. кнопки) */
-function sendTelegram($text, $buttons = []) {
-  if (!TG_BOT_TOKEN || !TG_ADMIN_CHATS) return false;
-  $chats = array_filter(array_map('trim', explode(',', TG_ADMIN_CHATS)));
-  $payload = ['text' => $text, 'parse_mode' => 'HTML', 'disable_web_page_preview' => true];
-  if ($buttons) {
-    $kb = [];
-    foreach ($buttons as $b) $kb[] = [['text' => $b[0], 'url' => $b[1]]];
-    $payload['reply_markup'] = json_encode(['inline_keyboard' => $kb]);
-  }
-  $okAll = true;
-  foreach ($chats as $cid) {
-    $p = array_merge($payload, ['chat_id' => $cid]);
-    $ch = curl_init("https://api.telegram.org/bot" . TG_BOT_TOKEN . "/sendMessage");
-    curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $p,
-      CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15]);
-    $r = curl_exec($ch); curl_close($ch);
-    if ($r === false) $okAll = false;
-  }
-  return $okAll;
-}

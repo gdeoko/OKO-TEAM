@@ -55,12 +55,12 @@
       </div>
       <div class="about-foot">
         <div class="thesis-col thesis-left">
-          <div class="thesis" data-t data-n="01"><b>Соревновательный дух</b><span>получает выход</span></div>
-          <div class="thesis" data-t data-n="02"><b>Здоровый дофамин</b><span>в мегаполисе</span></div>
+          <div class="thesis" data-t data-n="01"><b data-edit="about.c1.t">Соревновательный дух</b><span data-edit="about.c1.s">получает выход</span></div>
+          <div class="thesis" data-t data-n="02"><b data-edit="about.c2.t">Здоровый дофамин</b><span data-edit="about.c2.s">в мегаполисе</span></div>
         </div>
         <div class="thesis-col thesis-right">
-          <div class="thesis" data-t data-n="03"><b>Разгрузка мозгов</b><span>отдых телом</span></div>
-          <div class="thesis" data-t data-n="04"><b>Репутация среди своих</b><span>рейтинг клуба</span></div>
+          <div class="thesis" data-t data-n="03"><b data-edit="about.c3.t">Разгрузка мозгов</b><span data-edit="about.c3.s">отдых телом</span></div>
+          <div class="thesis" data-t data-n="04"><b data-edit="about.c4.t">Репутация среди своих</b><span data-edit="about.c4.s">рейтинг клуба</span></div>
         </div>
         <div class="about-bottom">
           <div class="about-note" data-edit="about.note">Без кальянов. Чистый воздух, живое общение.</div>
@@ -124,12 +124,12 @@
       <!-- 4 карточки-тезиса (как на стр. «О клубе») -->
       <div class="bil-foot">
         <div class="bil-col bil-left">
-          <div class="thesis" data-n="01"><b>Замедлись</b><span>и поймай удар</span></div>
-          <div class="thesis" data-n="02"><b>Геометрия</b><span>чистый расчёт на борт</span></div>
+          <div class="thesis" data-n="01"><b data-edit="billiard.c1.t">Замедлись</b><span data-edit="billiard.c1.s">и поймай удар</span></div>
+          <div class="thesis" data-n="02"><b data-edit="billiard.c2.t">Геометрия</b><span data-edit="billiard.c2.s">чистый расчёт на борт</span></div>
         </div>
         <div class="bil-col bil-right">
-          <div class="thesis" data-n="03"><b>Кий и шар</b><span>ничего лишнего</span></div>
-          <div class="thesis" data-n="04"><b>За одним столом</b><span>становишься своим</span></div>
+          <div class="thesis" data-n="03"><b data-edit="billiard.c3.t">Кий и шар</b><span data-edit="billiard.c3.s">ничего лишнего</span></div>
+          <div class="thesis" data-n="04"><b data-edit="billiard.c4.t">За одним столом</b><span data-edit="billiard.c4.s">становишься своим</span></div>
         </div>
       </div>
     </section>
@@ -148,11 +148,11 @@
       <!-- 3 карточки-тезиса (как «О клубе»), прилетают с боков -->
       <div class="bar-foot">
         <div class="bar-col bar-left">
-          <div class="thesis" data-n="01"><b>Без кальянов</b><span>чистый воздух, живое общение</span></div>
-          <div class="thesis" data-n="02"><b>Перекус под рукой</b><span>вечер не обрывается</span></div>
+          <div class="thesis" data-n="01"><b data-edit="bar.c1.t">Без кальянов</b><span data-edit="bar.c1.s">чистый воздух, живое общение</span></div>
+          <div class="thesis" data-n="02"><b data-edit="bar.c2.t">Перекус под рукой</b><span data-edit="bar.c2.s">вечер не обрывается</span></div>
         </div>
         <div class="bar-col bar-right">
-          <div class="thesis" data-n="03"><b>За общим столом</b><span>становишься своим</span></div>
+          <div class="thesis" data-n="03"><b data-edit="bar.c3.t">За общим столом</b><span data-edit="bar.c3.s">становишься своим</span></div>
         </div>
       </div>
     </section>
@@ -210,43 +210,43 @@
       <button id="su-close" aria-label="Закрыть">×</button>
       <div class="su-body">
       <div class="su-head">
-        <div class="su-label">за стол</div>
-        <h3>Записаться в клуб</h3>
-        <p>Оставь контакты, и мы позовём тебя на ближайший вечер. Клуб для своих.</p>
+        <div class="su-label" data-edit="form.signup.kicker">за стол</div>
+        <h3 data-edit="form.signup.title">Записаться в клуб</h3>
+        <p data-edit="form.signup.desc">Оставь контакты, и мы позовём тебя на ближайший вечер. Клуб для своих.</p>
       </div>
       <form id="su-form" novalidate>
         <label class="su-field">
-          <span>Имя</span>
+          <span data-edit="form.signup.labelName">Имя</span>
           <input type="text" name="name" id="su-name" autocomplete="name" placeholder="Как тебя зовут" required />
           <em class="su-err" data-for="name">Напиши имя</em>
         </label>
         <label class="su-field">
-          <span>Email</span>
+          <span data-edit="form.signup.labelEmail">Email</span>
           <input type="email" name="email" id="su-email" autocomplete="email" placeholder="you@mail.ru" required />
           <em class="su-err" data-for="email">Проверь адрес почты</em>
         </label>
         <label class="su-field">
-          <span>Телефон <i>(необязательно)</i></span>
+          <span data-edit-html="form.signup.labelPhone">Телефон <i>(необязательно)</i></span>
           <input type="tel" name="phone" id="su-phone" inputmode="tel" placeholder="+7 (9__) ___-__-__" />
         </label>
         <div class="su-field">
-          <span>Любимая игра</span>
-          <div class="su-chips" id="su-game" role="radiogroup">
+          <span data-edit="form.signup.labelGame">Любимая игра</span>
+          <div class="su-chips" id="su-game" role="radiogroup" data-chips="form.signup.games">
             <button type="button" class="su-chip" data-v="Покер">Покер</button>
             <button type="button" class="su-chip" data-v="Дартс">Дартс</button>
             <button type="button" class="su-chip" data-v="Бильярд">Бильярд</button>
           </div>
         </div>
         <div class="su-field">
-          <span>Формат турнира</span>
-          <div class="su-chips" id="su-format" role="radiogroup">
+          <span data-edit="form.signup.labelFormat">Формат турнира</span>
+          <div class="su-chips" id="su-format" role="radiogroup" data-chips="form.signup.formats">
             <button type="button" class="su-chip" data-a="bounty" data-v="BOUNTY">BOUNTY</button>
             <button type="button" class="su-chip" data-a="joker" data-v="FREEZEOUT">FREEZEOUT</button>
             <button type="button" class="su-chip" data-a="ladies" data-v="DEEP STACK">DEEP STACK</button>
             <button type="button" class="su-chip" data-a="strange" data-v="PHOENIX">PHOENIX</button>
           </div>
         </div>
-        <button type="submit" class="btn btn-fill su-submit" id="su-submit">Записаться</button>
+        <button type="submit" class="btn btn-fill su-submit" id="su-submit" data-edit="form.signup.submit">Записаться</button>
       </form>
       </div>
       <!-- экран «спасибо» (заменяет форму после отправки / если уже записан в этой сессии) -->

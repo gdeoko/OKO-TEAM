@@ -84,6 +84,13 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red);}
 .row .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
 .empty{text-align:center;color:var(--mut);padding:30px;font-size:14px;}
 /* content editor */
+.acc{border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden;background:var(--card2);}
+.acc summary{padding:14px 16px;cursor:pointer;font-weight:700;font-size:14px;list-style:none;user-select:none;}
+.acc summary::-webkit-details-marker{display:none;}
+.acc summary::after{content:'＋';float:right;color:var(--mut);}
+.acc[open] summary::after{content:'－';}
+.acc[open] summary{border-bottom:1px solid var(--line);}
+.acc-b{padding:14px 16px;}
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px;letter-spacing:.5px;}
 textarea{min-height:70px;resize:vertical;}
@@ -236,9 +243,10 @@ canvas{display:block;width:100%;}
     <div class="card">
       <h3>ℹ️ Подсказка</h3>
       <div class="h-sub" style="line-height:1.7">
-        • Письма уходят с <b>ducks.game.space@gmail.com</b> (Gmail App Password).<br>
+        • Письма уходят с <b>ducks.game.space@gmail.com</b> (Gmail App Password, CURL SMTP).<br>
+        • Новые заявки и купоны дублируются на почты руководителей.<br>
         • Авто-приглашение — через <b><?php echo INVITE_DELAY_MIN; ?> мин</b> после заявки (cron каждые ~10 сек).<br>
-        • Telegram-уведомления включатся, когда заполнишь токен бота в <b>config.php</b>.
+        • Всё работает только на почте — без Telegram-бота.
       </div>
     </div>
   </div>
@@ -423,31 +431,55 @@ window.issueCoupon=()=>{
   };
 };
 
-/* ---------- ТЕКСТЫ ---------- */
-const CONTENT_LABELS={'hero.title':'Hero — заголовок','hero.sub':'Hero — подзаголовок','hero.desc':'Hero — описание',
-  'about.label':'О клубе — метка','about.title':'О клубе — заголовок (HTML)','about.note':'О клубе — приписка',
-  'poker.title':'Покер — заголовок','poker.sub':'Покер — подзаголовок','poker.btn':'Покер — кнопка',
-  'darts.title':'Дартс — заголовок','darts.sub':'Дартс — подзаголовок','darts.promo':'Дартс — промо (HTML)',
-  'billiard.title':'Бильярд — заголовок','billiard.sub':'Бильярд — подзаголовок',
-  'bar.title':'Бар — заголовок','bar.sub':'Бар — подзаголовок','faq.title':'FAQ — заголовок','faq.sub':'FAQ — подзаголовок'};
+/* ---------- ТЕКСТЫ (схема по разделам) ---------- */
+const CONTENT_SCHEMA=[
+  {g:'🏠 Главная (Hero)',f:[['hero.title','Заголовок'],['hero.sub','Подзаголовок'],['hero.desc','Описание',1]]},
+  {g:'ℹ️ О клубе',f:[['about.label','Метка'],['about.title','Заголовок (можно <em>)',1],['about.note','Приписка'],
+    ['about.c1.t','Карточка 1 · заголовок'],['about.c1.s','Карточка 1 · текст'],
+    ['about.c2.t','Карточка 2 · заголовок'],['about.c2.s','Карточка 2 · текст'],
+    ['about.c3.t','Карточка 3 · заголовок'],['about.c3.s','Карточка 3 · текст'],
+    ['about.c4.t','Карточка 4 · заголовок'],['about.c4.s','Карточка 4 · текст']]},
+  {g:'♠️ Покер',f:[['poker.title','Заголовок'],['poker.sub','Подзаголовок'],['poker.btn','Текст кнопки']]},
+  {g:'🎯 Дартс',f:[['darts.title','Заголовок'],['darts.sub','Подзаголовок'],['darts.promo','Промо (можно <b>,<span>)',1]]},
+  {g:'🎱 Бильярд',f:[['billiard.title','Заголовок'],['billiard.sub','Подзаголовок'],
+    ['billiard.c1.t','Карточка 1 · заголовок'],['billiard.c1.s','Карточка 1 · текст'],
+    ['billiard.c2.t','Карточка 2 · заголовок'],['billiard.c2.s','Карточка 2 · текст'],
+    ['billiard.c3.t','Карточка 3 · заголовок'],['billiard.c3.s','Карточка 3 · текст'],
+    ['billiard.c4.t','Карточка 4 · заголовок'],['billiard.c4.s','Карточка 4 · текст']]},
+  {g:'🍸 Бар',f:[['bar.title','Заголовок'],['bar.sub','Подзаголовок'],
+    ['bar.c1.t','Карточка 1 · заголовок'],['bar.c1.s','Карточка 1 · текст'],
+    ['bar.c2.t','Карточка 2 · заголовок'],['bar.c2.s','Карточка 2 · текст'],
+    ['bar.c3.t','Карточка 3 · заголовок'],['bar.c3.s','Карточка 3 · текст']]},
+  {g:'❓ FAQ — заголовок секции',f:[['faq.title','Заголовок'],['faq.sub','Подзаголовок']]},
+  {g:'📝 Форма «Записаться»',f:[['form.signup.kicker','Метка'],['form.signup.title','Заголовок'],['form.signup.desc','Описание',1],
+    ['form.signup.labelName','Поле · Имя'],['form.signup.labelEmail','Поле · Email'],['form.signup.labelPhone','Поле · Телефон',1],
+    ['form.signup.labelGame','Поле · Любимая игра'],['form.signup.labelFormat','Поле · Формат'],['form.signup.submit','Кнопка отправки'],
+    ['form.signup.games','Варианты игр (через запятую)',0,1],['form.signup.formats','Варианты форматов (через запятую)',0,1]]},
+];
 let contentData={};
+function cGet(k){return k.split('.').reduce((o,p)=>o&&o[p]!=null?o[p]:'',contentData);}
 async function loadContent(){
   const j=await api('getContent',{},{get:true});
   contentData=j.content&&typeof j.content==='object'?j.content:{};
-  const get=(k)=>k.split('.').reduce((o,p)=>o&&o[p]!=null?o[p]:'',contentData);
-  $('#content-fields').innerHTML=Object.keys(CONTENT_LABELS).map(k=>{
-    const v=get(k),ml=k.includes('desc')||k.includes('note')||k.includes('promo')||k.includes('title');
-    return `<div class="field"><label>${CONTENT_LABELS[k]}</label>${ml?`<textarea data-ck="${k}">${esc(v)}</textarea>`:`<input data-ck="${k}" value="${esc(v)}">`}</div>`;
-  }).join('');
+  $('#content-fields').innerHTML=CONTENT_SCHEMA.map(sec=>`
+    <details class="acc"${sec.g.includes('Главная')?' open':''}><summary>${sec.g}</summary><div class="acc-b">${
+      sec.f.map(([k,l,ml,list])=>{
+        let v=cGet(k); if(list&&Array.isArray(v))v=v.join(', ');
+        return `<div class="field"><label>${l}</label>${ml?`<textarea data-ck="${k}"${list?' data-list="1"':''}>${esc(v)}</textarea>`:`<input data-ck="${k}"${list?' data-list="1"':''} value="${esc(v)}">`}</div>`;
+      }).join('')
+    }</div></details>`).join('');
   const items=(contentData.faq&&contentData.faq.items)||[];
   $('#faq-fields').innerHTML=items.map((it,i)=>`<div class="field" style="border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px">
-    <label>Фишка ${i+1} — вопрос</label><textarea data-fq="${i}">${esc(it.q||'')}</textarea>
+    <label>Фишка ${i+1} — вопрос (\\n = новая строка)</label><textarea data-fq="${i}">${esc(it.q||'')}</textarea>
     <label style="margin-top:8px">Ответ</label><textarea data-fa="${i}">${esc(it.a||'')}</textarea></div>`).join('');
 }
 function setDeep(obj,path,val){const ks=path.split('.');let o=obj;for(let i=0;i<ks.length-1;i++){o[ks[i]]=o[ks[i]]||{};o=o[ks[i]];}o[ks[ks.length-1]]=val;}
 $('#content-save').onclick=async()=>{
-  $$('#content-fields [data-ck]').forEach(el=>setDeep(contentData,el.dataset.ck,el.value));
-  await api('saveContent',{pin:PIN,content:contentData});toast('Тексты сохранены');
+  $$('#content-fields [data-ck]').forEach(el=>{
+    let v=el.value; if(el.dataset.list)v=v.split(',').map(s=>s.trim()).filter(Boolean);
+    setDeep(contentData,el.dataset.ck,v);
+  });
+  await api('saveContent',{pin:PIN,content:contentData});toast('Тексты сохранены ✓');
 };
 $('#faq-save').onclick=async()=>{
   contentData.faq=contentData.faq||{};contentData.faq.items=contentData.faq.items||[];
