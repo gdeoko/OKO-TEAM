@@ -279,22 +279,27 @@ window.__setBarLookY = (v) => { BAR_LOOK.y = v; };  // живой подбор �
 // сверху-спереди к сукну. Фишки лежат лицом вверх; клик → фишка крутится, вылетает в центр,
 // встаёт к зрителю, main показывает ОТВЕТ. Золотая фишка «ЗАПИСАТЬСЯ» → ТГ-бот. Дальше — петля.
 const faq = new FaqStation(isMobile, { onSelect: () => sound.playCardSlide?.(), onCta: () => sound.playQuack?.() });
+faq.group.position.set(0.4, -0.4, -3.2);            // стол ПЛАШМЯ (вид сверху, как на фото 2)
+faq.baseScale = isMobile ? 0.78 : 1.0;
 scene.add(faq.group);
-// КАМЕРА FAQ — ТОЧНО как указал клиент (?tune): показывает РЕАЛЬНЫЙ зал клуба. Стол с фишками
-// ставим в этот вид, повёрнутым к камере (фишки читаются), фон — настоящий зал (приглушён).
-const FAQ_CAM = { x: 2.31, y: -1.49, z: 1.10 };
+// ДВУХПРОХОДНЫЙ РЕНДЕР FAQ:
+//  • ФОН — зал клуба с КАМЕРЫ КЛИЕНТА (main rail доводит камеру в эту позу: бар→FAQ→петля плавно);
+//  • СТОЛ — сверху, с ОТДЕЛЬНОЙ камеры faqTableCam (ровно как фото 2), поверх фона.
+const FAQ_CAM = { x: 2.31, y: -1.49, z: 1.10 };     // камера ФОНА (зал клуба) — как указал клиент
 const FAQ_LOOK = { x: 1.55, y: -3.22, z: -12.11 };
-const _faqCamV = new THREE.Vector3(FAQ_CAM.x, FAQ_CAM.y, FAQ_CAM.z);
-const _faqDirV = new THREE.Vector3(FAQ_LOOK.x - FAQ_CAM.x, FAQ_LOOK.y - FAQ_CAM.y, FAQ_LOOK.z - FAQ_CAM.z).normalize();
-const FAQ_TABLE_DIST = isMobile ? 5.4 : 4.4;        // расстояние стола перед камерой
-faq.group.position.copy(_faqCamV).addScaledVector(_faqDirV, FAQ_TABLE_DIST);
-faq.group.position.y -= isMobile ? 0.55 : 0.25;     // чуть ниже — верхний ряд не лезет на заголовок
-faq.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), _faqDirV.clone().negate());  // сукно ЛИЦОМ к камере
-faq.baseScale = isMobile ? 0.66 : 0.82;
+// отдельная камера для СТОЛА — строго сверху-спереди (3/4, лёгкий наклон), как фото 2
+const faqTableCam = new THREE.PerspectiveCamera(44, innerWidth / innerHeight, 0.1, 60);
+const FAQ_TCAM = { x: 0.4, y: isMobile ? 4.7 : 3.9, z: isMobile ? 1.6 : 1.0 };
+const FAQ_TLOOK = { x: 0.4, y: -0.5, z: -3.5 };
+function updateFaqTableCam() {
+  faqTableCam.aspect = camera.aspect; faqTableCam.fov = camera.fov; faqTableCam.updateProjectionMatrix();
+  faqTableCam.position.set(FAQ_TCAM.x, FAQ_TCAM.y, FAQ_TCAM.z); faqTableCam.up.set(0, 1, 0);
+  faqTableCam.lookAt(FAQ_TLOOK.x, FAQ_TLOOK.y, FAQ_TLOOK.z);
+}
 window.__faq = faq;
 window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 
-let faqBg = 0;   // степень «FAQ-затемнения» зала (зал приглушён на FAQ, чтобы стол-прожектор/фишки были сочными)
+let faqBg = 0;   // степень «FAQ-режима» (двухпроходный рендер активен)
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
 window.__probeBar = (x, z) => {
   const vis = bar.group.visible; bar.group.visible = false;
@@ -696,7 +701,7 @@ addEventListener('click', (e) => {
     // FAQ: тап по фишке-вопросу → она крутится, выезжает в центр, показываем ответ.
     // Золотая фишка «ЗАПИСАТЬСЯ» → переход в ТГ-бота. Тап мимо фишек → закрыть ответ.
     pointer.x = (e.clientX / innerWidth) * 2 - 1; pointer.y = -(e.clientY / innerHeight) * 2 + 1;
-    raycaster.setFromCamera(pointer, camera);
+    updateFaqTableCam(); raycaster.setFromCamera(pointer, faqTableCam);   // фишки рисуются камерой стола
     const idx = faq.raycast(raycaster);
     if (idx != null) onFaqPick(idx);
     else closeFaqAnswer();
@@ -1155,7 +1160,8 @@ function animate() {
   darts.tipsy = bar.tipsy;
   // FAQ: стол с фишками-вопросами. Во время ПЕТЛИ держим фишки оверлеем (loopFaqRev), иначе по fk.
   faq.setReveal(loopFaqRev >= 0 ? loopFaqRev : fk);
-  faq.update(t, dt, camera);
+  // фишки видны/наводятся с ОТДЕЛЬНОЙ камеры стола (вид сверху), когда активен FAQ-режим
+  if (faqBg > 0.02) { updateFaqTableCam(); faq.update(t, dt, faqTableCam); } else faq.update(t, dt, camera);
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
 
@@ -1313,16 +1319,14 @@ function animate() {
   // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
   // на БАРЕ клуб ВОЗВРАЩАЕТСЯ; на FAQ зал ВИДЕН (камера клиента), но ПРИГЛУШЁН, чтобы стол-прожектор
   // и фишки были СОЧНЫМИ (глубоко-чёрные, как на фото). В ПЕТЛЕ к стороне Холла зал → полная яркость.
+  // faqBg — активность FAQ-режима (двухпроходный рендер). На FAQ зал ЯРКИЙ (проход 1 = фон зала),
+  // затемнение для глубоко-чёрных фишек применяется ОТДЕЛЬНО в проходе 2 (стол).
   faqBg = looping ? (1 - THREE.MathUtils.smoothstep(loopHeroness, 0.55, 1.0)) : THREE.MathUtils.smoothstep(fk, 0.06, 0.5);
-  const faqDark = faqBg * 0.32;   // стены зала на FAQ видны (приглушены умеренно)
   const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6);
   const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
-  env.fade(Math.max(envBase * billiardDark, barBack * 0.95) * (1 - faqDark));
+  env.fade(Math.max(envBase * billiardDark, barBack * 0.95));
   env.hideExtra(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)));
-  // ОТВЯЗАНО: на FAQ сильно глушим ОБЩИЙ свет и env-map (фишки глубоко-чёрные), а СТЕНЫ/НЕОН зала
-  // остаются видимыми (env.fade выше их почти не трогает) → реальный зал на фоне + сочные фишки.
-  env.ambientMul = 1 - faqBg * 0.82;
-  scene.environmentIntensity = THREE.MathUtils.lerp(1.2, 0.2, faqBg);
+  env.ambientMul = 1;   // по умолчанию полный (в проходе 2 для стола временно глушим)
   // hero-текст: каждый кадр держим opacity = (1-e)*heroReveal → в начале СКРЫТ (heroReveal=0), плавно
   // проявляется в интро, растворяется при скролле в утку. (без этого inline-opacity показывал текст сразу)
   if (!looping) { const he = THREE.MathUtils.clamp(tp / 0.16, 0, 1), ee = he * he * (3 - 2 * he); for (const el of heroEls) if (el) el.style.opacity = String((1 - ee) * heroReveal); }
@@ -1574,7 +1578,32 @@ function animate() {
   // класс tunnel-exit снимается ТОЛЬКО по таймеру в closeBrain (когда текст улетел), а не при tunnelBlend≈0,
   // — иначе текст обрывался (туннель закрывается за 2с, а текст улетает 3.2с).
 
-  renderer.render(scene, camera);
+  // ====== РЕНДЕР ======
+  if (faqBg > 0.02 && env.ready) {
+    updateFaqTableCam();
+    // ПРОХОД 1 — ФОН: зал клуба с КАМЕРЫ КЛИЕНТА (main). Стол скрыт (он отдельным проходом).
+    const tableVis = faq.group.visible; faq.group.visible = false;
+    renderer.render(scene, camera);
+    // ПРОХОД 2 — СТОЛ сверху (как фото 2), ПОВЕРХ фона. Прячем всё кроме стола; глушим общий свет/
+    // env-map (фишки глубоко-чёрные); фон/фог off; очищаем глубину (зал не перекрывает стол).
+    const hides = [poker.group, darts.group, billiard.group, bar.group, space.group, subject, env.group];
+    const hv = hides.map((g) => g && g.visible); hides.forEach((g) => { if (g) g.visible = false; });
+    const dv = dice.map((d) => d.visible); dice.forEach((d) => d.visible = false);
+    faq.group.visible = true;
+    const aInt = env.ambient ? env.ambient.intensity : 0, kInt = env.key ? env.key.intensity : 0;
+    if (env.ambient) env.ambient.intensity = 0.06; if (env.key) env.key.intensity = 0.05;
+    const eInt = scene.environmentIntensity; scene.environmentIntensity = 0.12;
+    const pf = scene.fog, pbg = scene.background; scene.fog = null; scene.background = null;
+    renderer.autoClear = false; renderer.clearDepth();
+    renderer.render(scene, faqTableCam);
+    renderer.autoClear = true;
+    if (env.ambient) env.ambient.intensity = aInt; if (env.key) env.key.intensity = kInt;
+    scene.environmentIntensity = eInt; scene.fog = pf; scene.background = pbg;
+    hides.forEach((g, i) => { if (g) g.visible = hv[i]; }); dice.forEach((d, i) => d.visible = dv[i]);
+    faq.group.visible = tableVis;
+  } else {
+    renderer.render(scene, camera);
+  }
 }
 animate();
 // Единый ресайз: холст, камера, высота секций и Lenis всегда = ТЕКУЩЕЙ видимой высоте.
