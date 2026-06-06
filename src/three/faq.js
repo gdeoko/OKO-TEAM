@@ -29,7 +29,7 @@ const QA = [
   { q: 'Какие\nигры?', a: 'Покер, дартс, бильярд, бар. Скоро — мафия и квиз.' },
   { q: 'Новичок\nили один?', a: 'Конечно. Тебя примут и научат.' },
 ];
-const CTA = { q: 'ЗАПИСАТЬСЯ', a: '', cta: true, bot: true };
+const CTA = { q: 'ЗАПИСАТЬСЯ', a: '', cta: true, bot: true };   // (больше не выводится фишкой — CTA вынесен в HTML-кнопки)
 
 const R = 0.7;           // радиус фишки
 const TH = 0.16;         // толщина фишки
@@ -124,13 +124,22 @@ function chipFace(item, kind) {
     x.fillStyle = 'rgba(255,255,255,.4)'; x.font = '600 18px "Exo 2", sans-serif';
     x.fillText('тапни →', cx, cy + 96);
   } else {
-    // НИЖНЯЯ грань: ОТВЕТ (белый текст с переносом)
-    x.fillStyle = '#d11f1f'; x.font = '700 22px Orbitron, "Exo 2", sans-serif';
-    x.fillText('ОТВЕТ', cx, cy - 92);
-    x.fillStyle = '#ffffff'; x.font = '700 34px "Exo 2", Inter, sans-serif';
-    const lines = wrapLines(x, item.a, Ri * 1.72);
-    const lh = 42, ly = cy - (lines.length - 1) * lh / 2 + 6;
+    // НИЖНЯЯ грань: ОТВЕТ — крупный белый текст по центру, БЕЗ ярлыка (чтобы ничего не налазило).
+    // подбираем размер под длину ответа, чтобы умещался ровно в центральном диске
+    let fs = 38;
+    let lines;
+    do {
+      x.font = `700 ${fs}px "Exo 2", Inter, sans-serif`;
+      lines = wrapLines(x, item.a, Ri * 1.66);
+      if (lines.length * (fs + 8) <= Ri * 1.9) break;
+      fs -= 2;
+    } while (fs > 24);
+    x.fillStyle = '#ffffff';
+    const lh = fs + 8, ly = cy - (lines.length - 1) * lh / 2;
     lines.forEach((ln, i) => x.fillText(ln, cx, ly + i * lh));
+    // маленький вордмарк снизу
+    x.fillStyle = 'rgba(209,31,31,.75)'; x.font = '700 18px Orbitron, "Exo 2", sans-serif';
+    x.fillText("DUCK'S", cx, cy + Ri * 0.78);
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
@@ -177,7 +186,7 @@ export class FaqStation {
     this.selected = -1;
     this.bursting = 0;
     this._mats = [];
-    this.data = QA.concat([CTA]);
+    this.data = QA.slice();   // 6 фишек-вопросов (CTA вынесен в HTML-кнопки «ЗАПИСАТЬСЯ/ПОДРОБНЕЕ»)
     this.chips = [];
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
@@ -223,19 +232,19 @@ export class FaqStation {
       };
       pivot.rotation.y = pivot.userData.homeRotY;
 
-      // ТЕЛО — глянцевое (чёрное/золотое), clearcoat для реалистичного блеска
+      // ТЕЛО — глянцевое чёрное, сильный clearcoat + отражения окружения (реалистичная фишка)
       const bodyMat = reg(new THREE.MeshPhysicalMaterial({
-        color: gold ? 0xdda23a : 0x141418, roughness: 0.3, metalness: 0.1,
-        clearcoat: 1.0, clearcoatRoughness: 0.08,
-        emissive: gold ? 0x3a2600 : 0x0a0a0c, emissiveIntensity: 0.3,
+        color: 0x121216, roughness: 0.26, metalness: 0.15,
+        clearcoat: 1.0, clearcoatRoughness: 0.06, envMapIntensity: 1.6,
+        emissive: 0x090909, emissiveIntensity: 0.25,
       }), 1);
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
 
       // ВЕРХНЯЯ грань — ВОПРОС (или CTA)
       const qMat = reg(new THREE.MeshPhysicalMaterial({
-        map: chipFace(item, gold ? 'cta' : 'q'), roughness: 0.32, metalness: 0.0,
-        clearcoat: 0.9, clearcoatRoughness: 0.1,
+        map: chipFace(item, 'q'), roughness: 0.28, metalness: 0.0,
+        clearcoat: 1.0, clearcoatRoughness: 0.07, envMapIntensity: 1.2,
       }), 1);
       const qFace = new THREE.Mesh(faceGeo, qMat);
       qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
@@ -243,8 +252,8 @@ export class FaqStation {
 
       // НИЖНЯЯ грань — ОТВЕТ (для CTA дублируем CTA-лицо)
       const aMat = reg(new THREE.MeshPhysicalMaterial({
-        map: chipFace(item, gold ? 'cta' : 'a'), roughness: 0.32, metalness: 0.0,
-        clearcoat: 0.9, clearcoatRoughness: 0.1,
+        map: chipFace(item, 'a'), roughness: 0.28, metalness: 0.0,
+        clearcoat: 1.0, clearcoatRoughness: 0.07, envMapIntensity: 1.2,
       }), 1);
       const aFace = new THREE.Mesh(faceGeo, aMat);
       aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;
@@ -358,8 +367,10 @@ export class FaqStation {
       u.sel += (target - u.sel) * Math.min(1, dt * 6.5);
       const sel = u.sel;
 
-      // закрутка при выезде в центр
-      if (sel > 0.001 && sel < 0.985 && target === 1) u.spin += dt * 10;
+      // ЗАКРУТКА: набираем угол в начале выезда, затем ВСЕГДА гасим к нулю → в покое остаточного
+      // поворота НЕТ (иначе ответ «косит» по-разному на разных fps/устройствах).
+      if (target === 1 && sel < 0.55) u.spin += dt * 11;
+      u.spin *= (1 - Math.min(1, dt * 4.5));
 
       // поза: дом ↔ витрина (центр, приподнята). showZ ближе к зрителю — крупнее и читаемее.
       const showY = this.isMobile ? 1.35 : 1.15;
@@ -384,8 +395,7 @@ export class FaqStation {
         _qWorld.setFromRotationMatrix(_mat4);
         this.group.getWorldQuaternion(_qGroup);
         _qShow.copy(_qGroup).invert().multiply(_qWorld);          // мир → локаль группы
-        const spinAng = u.spin * (1 - THREE.MathUtils.smoothstep(sel, 0.82, 1));
-        _qSpin.setFromAxisAngle(_Y, spinAng - Math.PI / 2);       // закрутка + калибровка верха текста ответа
+        _qSpin.setFromAxisAngle(_Y, u.spin);                      // закрутка (в покое = 0 → текст ровный)
         _qShow.multiply(_qSpin);
         _qHome.setFromEuler(_eHome.set(0, u.homeRotY, 0));
         pivot.quaternion.slerpQuaternions(_qHome, _qShow, THREE.MathUtils.smoothstep(sel, 0, 1));

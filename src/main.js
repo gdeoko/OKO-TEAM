@@ -674,7 +674,7 @@ function hitSubject(x, y, r = 0.32) {
 addEventListener('click', (e) => {
   if (!introDone || brainOpen || looping) return;
   if (document.body.classList.contains('signup-open') || document.body.classList.contains('coupon-open')) return;   // клики внутри модалок не трогают сцену
-  if (e.target.closest && e.target.closest('#faq-answer')) return;   // клик по панели ответа/кнопке бота — не трогаем 3D
+  if (e.target.closest && e.target.closest('a, button, .btn')) return;   // клик по кнопке/ссылке — НЕ трогаем 3D (утка не дёргается, кнопка срабатывает)
   if (_dragged) return;   // это был СКРОЛЛ/драг, а не тап → НЕ открываем мозг/не крякаем (иначе скролл «не работал»)
   if (tp < 0.2 && duckMesh && duckMesh.visible && hitSubject(e.clientX, e.clientY)) { sound.playQuack(); duckMesh.userData.poke = 0.3; }   // тап по утке — кряк
   else if (tp > 0.7 && pk < 0.05 && hitSubject(e.clientX, e.clientY, 0.55)) openBrain();   // мозг крупный — больше зона (не в Покере)
@@ -1152,17 +1152,23 @@ function animate() {
     const zPoker = sm(pk, 0.15, 0.5) * (1 - sm(dk, 0.15, 0.5));            // Покер
     const zDarts = sm(dk, 0.15, 0.5) * (1 - sm(bk, 0.15, 0.5));            // Дартс
     const zBilliard = sm(bk, 0.15, 0.5) * (1 - sm(ak, 0.15, 0.5));         // Бильярд (космос)
-    const zBar = sm(ak, 0.15, 0.5);                                        // Бар
-    // воздух: Hero + тихий «живой зал» в Покере/Дартсе
-    sound.setLayer('metel', Math.max(zHall * THREE.MathUtils.clamp(1 - tp * 2, 0, 1), (zPoker + zDarts) * 0.4));
-    // шелест ЧАСТИЦ — ТОЛЬКО в Холле (распад утки→мозг) и в туннеле; на других станциях его НЕТ
+    const zBar = sm(ak, 0.15, 0.5) * (1 - sm(fk, 0.1, 0.5));               // Бар (гаснет к FAQ)
+    const zFaq = sm(fk, 0.15, 0.5);                                        // FAQ (стол с фишками)
+    // воздух: Hero + тихий «живой зал» в Покере/Дартсе/FAQ
+    sound.setLayer('metel', Math.max(zHall * THREE.MathUtils.clamp(1 - tp * 2, 0, 1), (zPoker + zDarts) * 0.4, zFaq * 0.3));
+    // шелест ЧАСТИЦ — ТОЛЬКО в Холле (распад утки→мозг) и в туннеле; в Баре/FAQ его НЕТ (не повторяем 2 стр.)
     const rustleBurst = THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1);
     const rustleBrain = THREE.MathUtils.clamp((tp - 0.6) / 0.25, 0, 1) * 0.5;
     sound.setLayer('rustle', zHall * Math.max(rustleBurst, rustleBrain));
     // гул — нутро мозга/туннель (Холл) и низ космоса (Бильярд)
-    sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.6));
+    sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.55));
     sound.setLayer('space', zBilliard);                                    // космо-мерцание на Бильярде
-    sound.setLayer('bar', zBar);                                           // тёплый гомон зала в Баре
+    sound.setLayer('cosmic', zBilliard);                                   // инопланетный дрон на Бильярде/космосе
+    sound.setLayer('bar', zBar);                                           // тёплый низкий гомон зала
+    // в БАРЕ играет тёплый ЛАУНЖ (другая музыка), на FAQ — он же тихо (стол в клубе)
+    sound.setLayer('lounge', Math.max(zBar, zFaq * 0.55));
+    // ОСНОВНОЙ магический пэд УВОДИМ в баре (звучит лаунж) и частично в космосе (звучит дрон)
+    sound.setPadDuck?.(1 - 0.8 * zBar - 0.45 * zBilliard - 0.25 * zFaq);
   }
   // КИНЕМАТОГРАФИЧЕСКИЙ звук СМЕНЫ станции (приближение/отдаление + акцент под тему)
   if (audioStarted) {
@@ -1577,7 +1583,8 @@ function glitchAtPoint(x, y) {
 addEventListener('pointerdown', (e) => glitchAtPoint(e.clientX, e.clientY), { passive: true });
 document.querySelectorAll('.btn, [data-t]').forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
-document.querySelector('.btn-line').addEventListener('click', (e) => { e.preventDefault(); if (!navLock) goToStation(1); });
+// «Узнать больше / Подробнее» → плавно к станции «О клубе» (была ошибка: navLock не определён → клик падал)
+document.querySelectorAll('.btn-line[data-go="about"]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); goToStation(1); }));
 
 // ============================================================
 // Анкета «Записаться за стол» — модалка, валидация, маска телефона, отправка
@@ -1617,10 +1624,9 @@ document.querySelector('.btn-line').addEventListener('click', (e) => { e.prevent
   window.__openSignup = openSignup;   // для проверки в браузере
 
   // кнопки, открывающие анкету: на столе, в шапке, в hero
+  // Кнопка у покерного стола открывает анкету. Кнопки «Записаться» в шапке/герое/FAQ — это
+  // <a href="…ТГ-бот"> и ведут В БОТА (не перехватываем их клик).
   document.getElementById('poker-signup')?.addEventListener('click', () => openSignup());
-  document.querySelectorAll('.nav-cta, .hero-btns .btn-fill').forEach((b) => {
-    b.addEventListener('click', (e) => { e.preventDefault(); openSignup(); });
-  });
   document.getElementById('su-close')?.addEventListener('click', closeSignup);
   su?.addEventListener('click', (e) => { if (e.target === su) closeSignup(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('signup-open')) closeSignup(); });
@@ -1780,19 +1786,19 @@ const TG_BOT = 'https://t.me/ducks_gameclub_bot';
 function onFaqPick(idx) {
   const item = faq.data[idx];
   if (!item) return;
-  if (item.cta) {
-    faq.select(idx);
-    sound.playQuack?.();
-    window.open(TG_BOT, '_blank', 'noopener');
-    setTimeout(() => faq.deselect(), 700);
-    return;
-  }
   const wasSel = faq.selected === idx;
   faq.select(idx);                       // toggle: тот же → вернуть на стол
-  sound.playCardSlide?.();
-  if (!wasSel) sound.playQuack?.();
+  if (wasSel) {
+    sound.playChipPlace?.();             // фишка ложится обратно на сукно
+  } else {
+    sound.playChipLift?.();              // поднимаем фишку
+    setTimeout(() => sound.playChipFlip?.(), 220);   // и переворот в полёте
+  }
 }
-function closeFaqAnswer() { faq.deselect(); }
+function closeFaqAnswer() {
+  if (faq.selected >= 0) sound.playChipPlace?.();
+  faq.deselect();
+}
 window.__onFaqPick = onFaqPick; window.__closeFaqAnswer = closeFaqAnswer;   // для проверки в браузере
 
 // ============================================================
