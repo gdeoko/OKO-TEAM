@@ -191,24 +191,25 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- СТОЛ: сукно + глянцевый борт (рейл) -----
+    // ----- СТОЛ: компактное сукно + глянцевый борт (вокруг видно зал клуба) -----
+    const FELT_R = 2.7;
     this.felt = new THREE.Mesh(
-      new THREE.CircleGeometry(4.4, 72),
+      new THREE.CircleGeometry(FELT_R, 64),
       reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
     );
     this.felt.rotation.x = -Math.PI / 2; this.felt.position.y = -0.02; this.felt.renderOrder = 0;
     this.group.add(this.felt);
     // глянцевый борт-рейл вокруг сукна (тёмное дерево с красным лаком)
     this.rail = new THREE.Mesh(
-      new THREE.TorusGeometry(4.5, 0.34, 24, 96),
+      new THREE.TorusGeometry(FELT_R + 0.12, 0.2, 20, 80),
       reg(new THREE.MeshPhysicalMaterial({ color: 0x2a0a0c, roughness: 0.25, metalness: 0.2,
         clearcoat: 1.0, clearcoatRoughness: 0.12, emissive: 0x3a0608, emissiveIntensity: 0.5 }), 1)
     );
-    this.rail.rotation.x = -Math.PI / 2; this.rail.position.y = 0.06; this.rail.renderOrder = 2;
+    this.rail.rotation.x = -Math.PI / 2; this.rail.position.y = 0.05; this.rail.renderOrder = 2;
     this.group.add(this.rail);
     // светящийся обод-неон под рейлом
     this.feltRing = new THREE.Mesh(
-      new THREE.RingGeometry(4.15, 4.32, 96),
+      new THREE.RingGeometry(FELT_R - 0.18, FELT_R - 0.04, 80),
       reg(new THREE.MeshBasicMaterial({ color: 0xff1a1a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }), 0.55)
     );
     this.feltRing.rotation.x = -Math.PI / 2; this.feltRing.position.y = 0.005; this.feltRing.renderOrder = 1;

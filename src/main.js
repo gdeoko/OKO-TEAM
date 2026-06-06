@@ -278,13 +278,22 @@ window.__setBarLookY = (v) => { BAR_LOOK.y = v; };  // живой подбор �
 // сверху-спереди к сукну. Фишки лежат лицом вверх; клик → фишка крутится, вылетает в центр,
 // встаёт к зрителю, main показывает ОТВЕТ. Золотая фишка «ЗАПИСАТЬСЯ» → ТГ-бот. Дальше — петля.
 const faq = new FaqStation(isMobile, { onSelect: () => sound.playCardSlide?.(), onCta: () => sound.playQuack?.() });
-faq.group.position.set(0.4, -0.4, -3.2);
-faq.baseScale = isMobile ? 0.78 : 1.0;
-faq.group.rotation.y = 0;
 scene.add(faq.group);
-// Поза камеры FAQ: ВЫШЕ над столом, крутой 3/4-вид сверху — вопросы на фишках хорошо читаются.
-const FAQ_CAM = { x: 0.4, y: isMobile ? 5.0 : 4.1, z: isMobile ? 1.4 : 0.7 };
-const FAQ_LOOK = { x: 0.4, y: -0.5, z: -3.7 };
+// ПОЗА ХОЛЛА (1 стр) — отсюда строим бесшовную ПЕТЛЮ: стол с фишками стоит В ЗОНЕ УТКИ, повёрнут
+// ЛИЦОМ к камере (фон клуба за ним виден), а камера FAQ — это «приближённая» поза Холла на той же
+// оси взгляда. Петля = ЧИСТЫЙ ЗУМ камеры назад к позе Холла (без поворотов, без черноты) →
+// фишки растворяются в частицы, из них собирается утка.
+const HERO_CAM0V = new THREE.Vector3(0.39, 0.10, 20.69);
+const HERO_DIRV = new THREE.Vector3(-0.49 - 0.39, -5.52 - 0.10, -8.27 - 20.69).normalize();
+const TABLE_DIST = 3.6;                              // стол — перед уткой (утка на ~4.6 по той же оси)
+const FAQCAM_PUSH = isMobile ? 0.8 : 0.5;           // насколько камера FAQ «придвинута» к столу
+faq.group.position.copy(HERO_CAM0V).addScaledVector(HERO_DIRV, TABLE_DIST);
+faq.group.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), HERO_DIRV.clone().negate());  // сукно ЛИЦОМ к камере
+faq.baseScale = isMobile ? 0.34 : 0.42;
+const _faqCamV = HERO_CAM0V.clone().addScaledVector(HERO_DIRV, FAQCAM_PUSH);
+const _faqLookV = _faqCamV.clone().addScaledVector(HERO_DIRV, 5);
+const FAQ_CAM = { x: _faqCamV.x, y: _faqCamV.y, z: _faqCamV.z };
+const FAQ_LOOK = { x: _faqLookV.x, y: _faqLookV.y, z: _faqLookV.z };
 window.__faq = faq;
 window.__faqPick = (i) => faq.select(i);   // тест выбора фишки в браузере
 // диагностика: высота реальной барной стойки клуба под бокалом и по лучу взгляда
@@ -855,6 +864,7 @@ let scrollProgress = 0;
 // СОСТОЯНИЕ ПЕТЛИ (объявлено рано — animate()/updateLoop читают его уже в первом кадре)
 let looping = 0;             // 0 | +1 (FAQ→Холл) | -1 (Холл→FAQ)
 let loopT = 0, loopSwapped = false, loopClub = 0;   // loopClub — проявление клуба при въезде из тёмного стола в зал
+let loopFaqRev = -1;        // -1 = вне петли (брать fk); ≥0 = ручная видимость фишек-оверлея во время петли
 const LOOP_DUR = 1.7;
 const loopFadeEl = document.getElementById('loop-fade');
 // Станции (доли scrollProgress): 0 — Холл/утка, мозг, Покер, Дартс.
@@ -1139,8 +1149,8 @@ function animate() {
   bar.setReveal(ak * (1 - THREE.MathUtils.smoothstep(fk, 0.04, 0.45)));
   bar.update(t, dt, camera);
   darts.tipsy = bar.tipsy;
-  // FAQ: стол с фишками-вопросами. Проявляется по fk; фишки крутятся/выезжают по клику.
-  faq.setReveal(fk);
+  // FAQ: стол с фишками-вопросами. Во время ПЕТЛИ держим фишки оверлеем (loopFaqRev), иначе по fk.
+  faq.setReveal(loopFaqRev >= 0 ? loopFaqRev : fk);
   faq.update(t, dt, camera);
   if (_dsHideT && performance.now() > _dsHideT) { dartsScoreEl.style.opacity = '0'; _dsHideT = 0; }
   updateDiceShadows();
@@ -1253,14 +1263,23 @@ function animate() {
     const lookX = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.x + (0 - LOOK.x) * tb, POKER_LOOK.x, pkc), DARTS_LOOK.x, dkc), BILLIARD_LOOK.x, bkc), BAR_LOOK.x, akc), FAQ_LOOK.x, fkc);
     const lookY = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.y + (0 - LOOK.y) * tb, POKER_LOOK.y, pkc), DARTS_LOOK.y, dkc), BILLIARD_LOOK.y, bkc), BAR_LOOK.y, akc), FAQ_LOOK.y, fkc);
     const lookZ = THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(THREE.MathUtils.lerp(LOOK.z + (-10 - LOOK.z) * tb, POKER_LOOK.z, pkc), DARTS_LOOK.z, dkc), BILLIARD_LOOK.z, bkc), BAR_LOOK.z, akc), FAQ_LOOK.z, fkc);
-    // ПЕТЛЯ: камера летит ВПЕРЁД вдоль взгляда в темноту (макс к середине), затем возвращается —
-    // ощущение «вышли за край сцены в даль и приехали на другую страницу». Свап координат скрыт темнотой.
+    // ПЕТЛЯ: камера НЕПРЕРЫВНО зумит между позой FAQ и позой Холла (один ракурс, без поворотов,
+    // без черноты). f: 0 = поза FAQ (близко к столу), 1 = поза Холла (CAM0). Свап координат уже
+    // случился в начале петли, departing-контент растворяется оверлеем → стык не виден.
+    let loopLX = lookX, loopLY = lookY, loopLZ = lookZ;
     if (looping) {
-      const push = Math.sin(THREE.MathUtils.clamp(loopT, 0, 1) * Math.PI) * 5.5;
-      _loopDir.set(lookX - camera.position.x, lookY - camera.position.y, lookZ - camera.position.z).normalize();
-      camera.position.addScaledVector(_loopDir, push);
+      const eL = easeIO(THREE.MathUtils.clamp(loopT, 0, 1));
+      const f = looping > 0 ? eL : (1 - eL);     // вперёд: FAQ→Холл; назад: Холл→FAQ
+      camera.position.set(
+        THREE.MathUtils.lerp(FAQ_CAM.x, CAM0.x, f),
+        THREE.MathUtils.lerp(FAQ_CAM.y, CAM0.y, f),
+        THREE.MathUtils.lerp(FAQ_CAM.z, CAM0.z, f));
+      loopLX = THREE.MathUtils.lerp(FAQ_LOOK.x, LOOK.x, f);
+      loopLY = THREE.MathUtils.lerp(FAQ_LOOK.y, LOOK.y, f);
+      loopLZ = THREE.MathUtils.lerp(FAQ_LOOK.z, LOOK.z, f);
+      camera.up.set(0, 1, 0);
     }
-    camera.lookAt(lookX, lookY, lookZ);
+    camera.lookAt(loopLX, loopLY, loopLZ);
     // ФИГУРА: на луче взгляда (скролл) ↔ центр сцены (туннель), смешиваем по tb
     _camDir.set(LOOK.x - CAM0.x, LOOK.y - CAM0.y, LOOK.z - CAM0.z).normalize();
     const dist = DUCK_DIST - easeIO(tpEff) * 2.5;
@@ -1289,10 +1308,9 @@ function animate() {
   // клуб гаснет на Дартсе (≈×0.25), на переходе в Бильярд исчезает ПОЛНОСТЬЮ (космос), а на БАРЕ
   // ВОЗВРАЩАЕТСЯ (реальная барная стойка клуба — фон станции Бар).
   // на БАРЕ клуб ВОЗВРАЩАЕТСЯ; на FAQ снова УХОДИМ в тёмный войд (стол с фишками в прожекторе,
-  // FAQ — стол с фишками в «прожекторном» войде (клуб его геометрией перекрывал бы фишки),
-  // КЛУБ ПЛАВНО ПРОЯВЛЯЕТСЯ во время ПЕТЛИ (loopClub 0→1) → выезжаем из тёмного стола в зал к утке.
-  const faqDark = THREE.MathUtils.smoothstep(fk, 0.08, 0.55) * (1 - loopClub);
-  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6) * (1 - faqDark);   // клуб возвращается на Баре, гаснет на FAQ
+  // FAQ — стол с фишками стоит В ЗОНЕ УТКИ, фон КЛУБА за ним ВИДЕН (как 1 стр) → бесшовная петля.
+  const faqDark = 0;
+  const barBack = THREE.MathUtils.smoothstep(ak, 0.08, 0.6);   // клуб виден на Баре И на FAQ (ak=1)
   const billiardDark = (1 - 0.75 * easeIO(THREE.MathUtils.clamp(dk / 0.5, 0, 1))) * (1 - easeIO(THREE.MathUtils.clamp(bk / 0.5, 0, 1)));
   env.fade(Math.max(envBase * billiardDark, barBack * 0.95) * (1 - faqDark));
   env.hideExtra(Math.max(THREE.MathUtils.smoothstep(bk, 0.05, 0.7) * (1 - THREE.MathUtils.smoothstep(ak, 0.08, 0.6)), faqDark));
@@ -1845,37 +1863,38 @@ function formHeroFromParticles() {
   tl.add(() => { introPlaying = false; formProgress = 1; introDuckReveal = 1; uDuckReveal.value = 999; heroReveal = 1; }, 1.9);
 }
 
-// прогресс петли (вызывается каждый кадр из animate)
+// прогресс петли (вызывается каждый кадр из animate). БЕСШОВНО, БЕЗ ЧЕРНОТЫ:
+//  • departing-контент (фишки вперёд / утка назад) остаётся ОВЕРЛЕЕМ и растворяется,
+//    а destination-сцена строится под ним → свап координат происходит СРАЗУ и НЕЗАМЕТНО;
+//  • камера непрерывно ЗУМИТ между позой FAQ и позой Холла (один ракурс, без поворотов).
 function updateLoop(dt) {
   if (!looping) return;
   loopT = Math.min(1, loopT + dt / LOOP_DUR);
-  // КЛУБ проявляется по ходу петли: вперёд (FAQ→Холл) — въезжаем из тёмного стола в зал к утке
-  // (клуб 0→1); назад (Холл→FAQ) — уезжаем из зала в тёмный стол (клуб 1→0).
-  loopClub = (looping > 0) ? THREE.MathUtils.smoothstep(loopT, 0.45, 0.96)
-                           : 1 - THREE.MathUtils.smoothstep(loopT, 0.06, 0.52);
-  // лёгкая «тень дали» только у самого свапа (минимум черноты — основное скрывает тёмный войд стола)
-  const dark = Math.exp(-Math.pow((loopT - 0.5) / 0.16, 2));   // узкий пик в середине
-  if (loopFadeEl) loopFadeEl.style.opacity = String(THREE.MathUtils.clamp(dark * 0.9, 0, 1));
-  // СВАП координат — в самой темноте
-  if (!loopSwapped && loopT >= 0.5) {
+  if (loopFadeEl) loopFadeEl.style.opacity = '0';   // НИКАКОЙ черноты
+  // фишки FAQ как оверлей: вперёд — растворяются (1→0), назад — собираются (0→1)
+  loopFaqRev = (looping > 0) ? (1 - THREE.MathUtils.smoothstep(loopT, 0.0, 0.55))
+                             : THREE.MathUtils.smoothstep(loopT, 0.1, 0.7);
+  // СВАП — В САМОМ НАЧАЛЕ (контент departing держим оверлеем сами)
+  if (!loopSwapped) {
     loopSwapped = true;
-    if (looping > 0) {                   // FAQ → Холл
+    if (looping > 0) {                   // FAQ → Холл: сразу активируем Холл, утка собирается из частиц
       scrollProgress = 0; settledStation = 0; _lastStIdx = 0;
-      faq.reset();
       try { lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) {}
       updateUIByScroll();
-      formHeroFromParticles();           // утка из частиц (без кубиков)
-    } else {                             // Холл → FAQ
+      faq.burst();                       // фишки рассыпаются в частицы
+      formHeroFromParticles();           // утка собирается из частиц (без кубиков)
+    } else {                             // Холл → FAQ: сразу активируем FAQ (фишки собираются), утку гасим
       scrollProgress = 1; settledStation = STATIONS.length - 1; _lastStIdx = STATIONS.length - 1;
-      faq.reset();
       try { lenis.scrollTo(lenis.limit || 0, { immediate: true, force: true }); } catch (e) {}
       updateUIByScroll();
+      faq.reset();
+      if (duckMesh) duckMesh.visible = false;
       sound.playFormation?.();
     }
     document.getElementById('scroll-progress').style.width = (scrollProgress * 100) + '%';
-    sound.playWhoosh?.(false);
+    sound.playWhoosh?.(looping > 0);
   }
-  if (loopT >= 1) { looping = 0; loopClub = 0; if (loopFadeEl) loopFadeEl.style.opacity = '0'; try { lenis.start(); } catch (e) {} }
+  if (loopT >= 1) { looping = 0; loopClub = 0; loopFaqRev = -1; faq.reset(); if (loopFadeEl) loopFadeEl.style.opacity = '0'; try { lenis.start(); } catch (e) {} }
 }
 
 // триггеры петли: на самом краю + явный жест (тап НЕ срабатывает — нужен реальный скролл/свайп)
