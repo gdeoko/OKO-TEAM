@@ -27,6 +27,28 @@ export class SoundSystem {
     this.padGain = this.ctx.createGain();
     this.padGain.gain.value = 0;
     this.padGain.connect(this.padDuck);
+
+    // РЕВЕРБ (зал/пространство) — делает синтез «живым», тёплым, не сухим/техническим.
+    // Музыка (пэд, флейта, фортепиано, бэды) идёт через musicBus → реверб + сухой сигнал.
+    this.reverb = this.ctx.createConvolver();
+    this.reverb.buffer = this._makeImpulse(3.2, 2.6);
+    this.reverbGain = this.ctx.createGain(); this.reverbGain.gain.value = 0.55;
+    this.reverb.connect(this.reverbGain).connect(this.master);
+    this.musicBus = this.ctx.createGain(); this.musicBus.gain.value = 1;
+    this.musicBus.connect(this.master);          // сухой
+    this.musicBus.connect(this.reverb);          // влажный (реверб)
+    this.padDuck.disconnect(); this.padDuck.connect(this.musicBus);   // пэд — через реверб
+  }
+
+  // импульсный отклик для реверба (экспоненциально затухающий шум, стерео-разброс)
+  _makeImpulse(dur, decay) {
+    const ctx = this.ctx, n = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+    }
+    return buf;
   }
 
   // Приглушить основной пэд (level 0..1, 1 = полный). Плавно.
@@ -93,30 +115,33 @@ export class SoundSystem {
       const lvl = this._zoneCosmic || 0;
       if (lvl > 0.03 && !this.muted) this._fluteNote(this._nextFlute, this._fluteSeq[this._fluteI], lvl);
       this._fluteI = (this._fluteI + 1) % this._fluteSeq.length;
-      this._nextFlute += 1.5 + (this._fluteI % 3 === 0 ? 0.9 : 0);   // неспешно, с «дыханием»
+      this._nextFlute += 2.2 + (this._fluteI % 4 === 0 ? 1.6 : 0);   // медленно, тягуче, с «дыханием»
     }
     while (this._nextPiano < ahead) {
       const lvl = this._zoneBar || 0;
       const chord = this._pianoChords[this._pianoCI];
       if (lvl > 0.03 && !this.muted) this._pianoNote(this._nextPiano, chord[this._pianoNI], lvl);
       this._pianoNI++;
-      if (this._pianoNI >= chord.length) { this._pianoNI = 0; this._pianoCI = (this._pianoCI + 1) % this._pianoChords.length; this._nextPiano += 0.6; }
-      this._nextPiano += 0.5;
+      if (this._pianoNI >= chord.length) { this._pianoNI = 0; this._pianoCI = (this._pianoCI + 1) % this._pianoChords.length; this._nextPiano += 1.1; }
+      this._nextPiano += 0.7;   // спокойнее, выразительнее
     }
     setTimeout(() => this._musicTick(), 120);
   }
-  // мягкая флейта: треугольник с вибрато, плавная атака/спад, дыхание сверху
+  // мягкая флейта: треугольник+синус с лёгким вибрато, ОЧЕНЬ плавная атака/спад (тягуче, легато)
   _fluteNote(t, freq, lvl) {
-    const ctx = this.ctx, dur = 1.8, v = 0.07 * lvl;
+    const ctx = this.ctx, dur = 2.8, v = 0.06 * lvl;
     const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = freq;
-    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 5;
-    const lg = ctx.createGain(); lg.gain.value = freq * 0.006; lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + dur);
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq * 2.0;   // мягкий обертон
+    const o2g = ctx.createGain(); o2g.gain.value = 0.18;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 4.2;
+    const lg = ctx.createGain(); lg.gain.value = freq * 0.004; lfo.connect(lg).connect(o.frequency); lfo.start(t); lfo.stop(t + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2300;
     const g = ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(v, t + 0.35);
-    g.gain.linearRampToValueAtTime(v * 0.8, t + dur * 0.6);
+    g.gain.linearRampToValueAtTime(v, t + 0.6);          // долгая мягкая атака
+    g.gain.linearRampToValueAtTime(v * 0.85, t + dur * 0.7);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(lp).connect(g).connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+    o.connect(lp); o2.connect(o2g).connect(lp); lp.connect(g).connect(this.musicBus);
+    o.start(t); o.stop(t + dur + 0.05); o2.start(t); o2.stop(t + dur + 0.05);
     // лёгкое «дыхание» (тихий шум)
     const nb = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate); const od = nb.getChannelData(0);
     for (let i = 0; i < od.length; i++) od[i] = (Math.random() * 2 - 1) * 0.4;
@@ -128,7 +153,7 @@ export class SoundSystem {
   // тёплое фортепиано: несколько партиалов, быстрая атака, экспоненциальный спад
   _pianoNote(t, freq, lvl) {
     const ctx = this.ctx, v = 0.09 * lvl;
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.connect(this.master);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.connect(this.musicBus);
     [[1, 1.0, 1.6], [2, 0.35, 1.2], [3, 0.16, 0.9], [4, 0.07, 0.6]].forEach(([mul, ga, dec]) => {
       const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq * mul;
       const g = ctx.createGain(); g.gain.value = 0;
@@ -193,7 +218,7 @@ export class SoundSystem {
     {
       const g = ctx.createGain(); g.gain.value = 0;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; lp.Q.value = 0.4;
-      lp.connect(g).connect(this.master);
+      lp.connect(g).connect(this.musicBus);
       // Am9-ish тёплый аккорд: A2 C4 E4 G4 B4
       [110.0, 261.63, 329.63, 392.0, 493.88].forEach((f, i) => {
         const o = ctx.createOscillator(); o.type = i === 0 ? 'triangle' : 'sine'; o.frequency.value = f;
@@ -208,7 +233,7 @@ export class SoundSystem {
     {
       const g = ctx.createGain(); g.gain.value = 0;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.6;
-      lp.connect(g).connect(this.master);
+      lp.connect(g).connect(this.musicBus);
       const fl = ctx.createOscillator(); fl.type = 'sine'; fl.frequency.value = 0.05;
       const flg = ctx.createGain(); flg.gain.value = 260; fl.connect(flg).connect(lp.frequency); fl.start();
       // мягкие сины (без пилы): суб + квинта + высокая «парящая» нота с биениями
@@ -225,7 +250,7 @@ export class SoundSystem {
     {
       const g = ctx.createGain(); g.gain.value = 0;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1700; lp.Q.value = 0.4;
-      lp.connect(g).connect(this.master);
+      lp.connect(g).connect(this.musicBus);
       // Am — Fmaj7 «дыхание» аккорда: A2 E3 A3 C4 E4 (+ медленная смена через LFO на громкости верхов)
       [{ f: 110.0, g: 0.4 }, { f: 164.81, g: 0.2 }, { f: 220.0, g: 0.16 }, { f: 261.63, g: 0.14 }, { f: 329.63, g: 0.12 }]
         .forEach((n, i) => {
@@ -604,55 +629,41 @@ export class SoundSystem {
     });
   }
 
-  // ===== ФИШКИ (реалистичный «клэй»-чип: короткий клик/клак с телом и ноготковым тиком) =====
-  _chipClack(now, { body = 260, bright = 2400, vol = 0.12, tick = 0.05 } = {}) {
-    // глухое «тело» чипа
+  // ===== ФИШКИ (мягкий «клэй/композит»-клац: НЕ стекло — глухой низ + короткий матовый шум) =====
+  _chipClack(now, { body = 240, vol = 0.12, click = 0.06 } = {}) {
+    // глухое «тело» чипа (низкий короткий тук)
     const o = this.ctx.createOscillator(); o.type = 'sine';
-    o.frequency.setValueAtTime(body, now); o.frequency.exponentialRampToValueAtTime(body * 0.55, now + 0.06);
+    o.frequency.setValueAtTime(body, now); o.frequency.exponentialRampToValueAtTime(body * 0.5, now + 0.07);
     const g = this.ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(vol, now + 0.003);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.11);
-    // короткий «тик» удара (шум через highpass)
-    const dur = 0.03, buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    g.gain.linearRampToValueAtTime(vol, now + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.12);
+    // матовый «клац» — короткий шум через ПОЛОСОВОЙ (не highpass → не стеклянно), средние частоты
+    const dur = 0.035, buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
     const out = buf.getChannelData(0); for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * (1 - i / out.length);
     const src = this.ctx.createBufferSource(); src.buffer = buf;
-    const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = bright;
-    const tg = this.ctx.createGain(); tg.gain.value = tick;
-    src.connect(hp).connect(tg).connect(this.master); src.start(now); src.stop(now + dur);
+    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.7;
+    const tg = this.ctx.createGain(); tg.gain.value = click;
+    src.connect(bp).connect(tg).connect(this.master); src.start(now); src.stop(now + dur);
   }
-  // Поднятие фишки со стола — тихий клик + лёгкий «дзинь» пластика
+  // Поднятие фишки со стола — короткий мягкий «тук» (фишка отрывается от стопки)
   playChipLift() {
     if (!this.ctx || this.muted) return;
-    const now = this.ctx.currentTime;
-    this._chipClack(now, { body: 300, bright: 2600, vol: 0.08, tick: 0.04 });
-    const o = this.ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 1750;
-    const g = this.ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(0.03, now + 0.006);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
-    o.connect(g).connect(this.master); o.start(now); o.stop(now + 0.2);
+    this._chipClack(this.ctx.currentTime, { body: 300, vol: 0.09, click: 0.05 });
   }
-  // Переворот фишки в воздухе — короткий воздушный «фрр» + клик
+  // Переворот фишки в воздухе — лёгкий двойной матовый клац (фишка крутится)
   playChipFlip() {
     if (!this.ctx || this.muted) return;
-    const now = this.ctx.currentTime, dur = 0.14;
-    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
-    const out = buf.getChannelData(0); for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1);
-    const src = this.ctx.createBufferSource(); src.buffer = buf;
-    const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.9;
-    bp.frequency.setValueAtTime(1100, now); bp.frequency.exponentialRampToValueAtTime(2800, now + dur);
-    const g = this.ctx.createGain(); g.gain.value = 0;
-    g.gain.linearRampToValueAtTime(0.05, now + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    src.connect(bp).connect(g).connect(this.master); src.start(now); src.stop(now + dur);
-    this._chipClack(now + dur * 0.7, { body: 320, bright: 3000, vol: 0.06, tick: 0.035 });
+    const now = this.ctx.currentTime;
+    this._chipClack(now, { body: 330, vol: 0.06, click: 0.045 });
+    this._chipClack(now + 0.08, { body: 280, vol: 0.05, click: 0.04 });
   }
-  // Опускание фишки обратно на сукно — мягкий «клак» по фетру (с парой призвуков стопки)
+  // Опускание фишки обратно на сукно — мягкий «клак» по фетру + призвук стопки
   playChipPlace() {
     if (!this.ctx || this.muted) return;
     const now = this.ctx.currentTime;
-    this._chipClack(now, { body: 220, bright: 2200, vol: 0.13, tick: 0.05 });
-    this._chipClack(now + 0.035, { body: 300, bright: 2600, vol: 0.05, tick: 0.03 });   // призвук стопки
+    this._chipClack(now, { body: 210, vol: 0.13, click: 0.06 });
+    this._chipClack(now + 0.04, { body: 280, vol: 0.05, click: 0.035 });   // призвук стопки
   }
 
   // ===== БАР =====

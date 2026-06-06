@@ -191,25 +191,25 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- СТОЛ: сукно + глянцевый борт (вокруг видно зал клуба) -----
-    const FELT_R = 3.3;
+    // ----- СТОЛ: сукно + глянцевый борт (как в утверждённой версии — вид сверху) -----
+    const FELT_R = 4.4;
     this.felt = new THREE.Mesh(
-      new THREE.CircleGeometry(FELT_R, 64),
+      new THREE.CircleGeometry(FELT_R, 72),
       reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
     );
     this.felt.rotation.x = -Math.PI / 2; this.felt.position.y = -0.02; this.felt.renderOrder = 0;
     this.group.add(this.felt);
     // глянцевый борт-рейл вокруг сукна (тёмное дерево с красным лаком)
     this.rail = new THREE.Mesh(
-      new THREE.TorusGeometry(FELT_R + 0.12, 0.2, 20, 80),
+      new THREE.TorusGeometry(FELT_R + 0.1, 0.32, 24, 96),
       reg(new THREE.MeshPhysicalMaterial({ color: 0x2a0a0c, roughness: 0.25, metalness: 0.2,
         clearcoat: 1.0, clearcoatRoughness: 0.12, emissive: 0x3a0608, emissiveIntensity: 0.5 }), 1)
     );
-    this.rail.rotation.x = -Math.PI / 2; this.rail.position.y = 0.05; this.rail.renderOrder = 2;
+    this.rail.rotation.x = -Math.PI / 2; this.rail.position.y = 0.06; this.rail.renderOrder = 2;
     this.group.add(this.rail);
     // светящийся обод-неон под рейлом
     this.feltRing = new THREE.Mesh(
-      new THREE.RingGeometry(FELT_R - 0.18, FELT_R - 0.04, 80),
+      new THREE.RingGeometry(FELT_R - 0.25, FELT_R - 0.08, 96),
       reg(new THREE.MeshBasicMaterial({ color: 0xff1a1a, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }), 0.55)
     );
     this.feltRing.rotation.x = -Math.PI / 2; this.feltRing.position.y = 0.005; this.feltRing.renderOrder = 1;
@@ -277,16 +277,15 @@ export class FaqStation {
       this.chips.push(pivot);
     });
 
-    // ----- свет: СИЛЬНЫЙ тёплый прожектор (фишки сочные, не «вымытые» клубным ambient) -----
-    // (свет в локальных коорд группы; группа повёрнута лицом к камере → светит на лица фишек)
-    this.spot = new THREE.SpotLight(0xfff0d8, 0, 30, Math.PI / 3.6, 0.6, 1.0);
-    this.spot.position.set(0.0, 6.5, 0.5); this.spot.target.position.set(0, 0, 0);
+    // ----- свет: тёплый прожектор СВЕРХУ (вид сверху), фишки сочные, не «вымытые» -----
+    this.spot = new THREE.SpotLight(0xfff0d8, 0, 30, Math.PI / 3.8, 0.6, 1.0);
+    this.spot.position.set(0.2, 6.2, 1.2); this.spot.target.position.set(0, 0, 0);
     this.group.add(this.spot, this.spot.target);
-    this.warm = new THREE.PointLight(0xff8a4a, 0, 22); this.warm.position.set(-1.6, 1.4, 3.0);
+    this.warm = new THREE.PointLight(0xff8a4a, 0, 22); this.warm.position.set(-2.0, 3.0, 2.6);
     this.group.add(this.warm);
-    this.rim = new THREE.PointLight(0xff2848, 0, 18); this.rim.position.set(2.2, 1.2, -1.4);
+    this.rim = new THREE.PointLight(0xff2848, 0, 18); this.rim.position.set(2.6, 2.2, -1.6);
     this.group.add(this.rim);
-    this.key = new THREE.PointLight(0xffffff, 0, 20); this.key.position.set(0.0, 1.0, 4.0);
+    this.key = new THREE.PointLight(0xffffff, 0, 18); this.key.position.set(0.2, 4.2, 3.2);
     this.group.add(this.key);
   }
 
