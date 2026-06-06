@@ -4,6 +4,12 @@ dist/
 .DS_Store
 *.log
 
+# Runtime данные бэкенда (БД/загрузки/локи) — создаются на хостинге, не коммитим
+backend/data/ducks.sqlite
+backend/data/ducks.sqlite-*
+backend/data/cron.lock
+backend/data/uploads/
+
 _v_*.png
 dbg.cjs
 convert_assets.cjs

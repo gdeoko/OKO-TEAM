@@ -22,10 +22,22 @@ AddType application/javascript .js
   </FilesMatch>
 </IfModule>
 
-# SPA: всё на index.html (если файла нет)
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # --- Красивые ссылки на лид-магниты и систему (без .html) ---
+  RewriteRule ^system/?$            system.html                  [L]
+  RewriteRule ^poker-pravila/?$     magnets/poker-pravila.html   [L]
+  RewriteRule ^chitat-lyudey/?$     magnets/chitat-lyudey.html   [L]
+  RewriteRule ^igry-dlya-mozga/?$   magnets/igry-dlya-mozga.html [L]
+  RewriteRule ^10-shagov/?$         magnets/10-shagov.html       [L]
+
+  # --- Бэкенд: api и админка обслуживаются напрямую (НЕ как SPA) ---
+  RewriteRule ^api/?$               api.php                      [L]
+  RewriteRule ^admin/?$             admin/index.php              [L]
+
+  # SPA: всё остальное, если файла/папки нет → index.html
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]

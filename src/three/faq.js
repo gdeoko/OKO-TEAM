@@ -190,7 +190,9 @@ export class FaqStation {
     this.selected = -1;
     this.bursting = 0;
     this._mats = [];
-    this.data = QA.slice();   // 6 фишек-вопросов (CTA вынесен в HTML-кнопки «ЗАПИСАТЬСЯ/ПОДРОБНЕЕ»)
+    // 6 фишек-вопросов. Тексты можно переопределить из админки: content.faq.items = [{q,a},...]
+    const ov = (typeof window !== 'undefined' && window.__ducksContent && window.__ducksContent.faq && Array.isArray(window.__ducksContent.faq.items)) ? window.__ducksContent.faq.items : null;
+    this.data = ov && ov.length ? QA.map((d, i) => ov[i] ? { q: ov[i].q || d.q, a: ov[i].a || d.a } : d) : QA.slice();
     this.chips = [];
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };

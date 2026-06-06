@@ -21,6 +21,54 @@ console.log('%c DUCK\'S build v55 — FAQ: ЧЁРНЫЕ глянцевые фи�
 // Режим настройки камеры: ducks.games/?tune — двигаешь сцену пальцем, в углу цифры + копировать
 const TUNE = new URLSearchParams(location.search).has('tune');
 
+// ============================================================
+// Аналитика: лёгкий трекер визитов/кликов/конверсий → api.php (admin-панель строит графики).
+// Не падает, если бэкенда нет (sendBeacon/fetch в try). Глобально: window.__ducksTrack(type,label).
+// ============================================================
+window.__ducksTrack = (type, label, meta) => {
+  try {
+    const body = JSON.stringify({ type, label: label || '', meta: meta || '' });
+    if (navigator.sendBeacon) navigator.sendBeacon('api.php?action=track', new Blob([body], { type: 'application/json' }));
+    else fetch('api.php?action=track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true });
+  } catch (e) {}
+};
+// визит — один раз за загрузку
+window.__ducksTrack('visit', location.pathname);
+
+// ============================================================
+// Контент из админки: api.php?action=getContent → применяем к [data-edit]/[data-edit-html].
+// Ключи вида "hero.title". Если бэкенда/значения нет — остаётся текст по умолчанию из HTML.
+// FAQ-фишки и станции тоже читают window.__ducksContent (если заданы).
+// ============================================================
+window.__ducksContent = {};
+function applyContent(c) {
+  const get = (k) => k.split('.').reduce((o, p) => (o && o[p] != null ? o[p] : undefined), c);
+  document.querySelectorAll('[data-edit]').forEach((el) => {
+    const v = get(el.getAttribute('data-edit'));
+    if (typeof v === 'string' && v.length) el.textContent = v;
+  });
+  document.querySelectorAll('[data-edit-html]').forEach((el) => {
+    const v = get(el.getAttribute('data-edit-html'));
+    if (typeof v === 'string' && v.length) el.innerHTML = v;
+  });
+}
+try {
+  fetch('api.php?action=getContent').then((r) => r.json()).then((res) => {
+    if (res && res.content && typeof res.content === 'object') {
+      window.__ducksContent = res.content;
+      applyContent(res.content);
+      window.dispatchEvent(new CustomEvent('ducks:content', { detail: res.content }));
+    }
+  }).catch(() => {});
+} catch (e) {}
+// клики по любым кнопкам/CTA с data-track или классом .btn — для воронки в админке
+addEventListener('click', (e) => {
+  const el = e.target.closest('[data-track], .btn, a.btn-fill, a.btn-line');
+  if (!el) return;
+  const label = el.dataset.track || el.id || (el.textContent || '').trim().slice(0, 40);
+  if (label) window.__ducksTrack('click', label);
+}, { capture: true, passive: true });
+
 // Декодер Draco — ЛОКАЛЬНЫЙ (в папке draco/ на хостинге), не зависит от внешних CDN/VPN
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('draco/');
@@ -1745,9 +1793,10 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
       name: nameI.value.trim(), email: emailI.value.trim(), phone: phoneI.value.trim(),
       game: pickedGame, format: pickedFormat, source: 'site:poker',
     };
-    // Этап 1: отправка письма через mail.php (на хостинге). Если бэкенд ещё не залит —
-    // всё равно показываем успех (заявка не теряется визуально), на этапе 2 добавим БД + ТГ-бот.
-    try { await fetch('mail.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
+    // Бэкенд: api.php?action=saveLead → БД + welcome-письмо + лид-магнит + ТГ/почта руководителям,
+    // авто-приглашение через 15 мин (cron). Экран успеха показываем СРАЗУ, не дожидаясь ответа.
+    try { fetch('api.php?action=saveLead', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
+    try { window.__ducksTrack?.('conversion', 'lead'); } catch (e) {}
     submitted = true;
     card.classList.add('done');                 // показываем красивое окно «спасибо»
     sound.playSuccess?.();   // без кряка
@@ -1838,8 +1887,19 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
       name: nameI.value.trim(), email: emailI.value.trim(), phone: phoneI.value.trim(),
       score: scoreEl ? scoreEl.textContent : '', discount: 15, source: 'site:darts-coupon',
     };
-    // Этап 1 (визуал): шлём на coupon.php. Если бэкенда ещё нет — всё равно показываем успех.
-    try { await fetch('coupon.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); } catch (err) {}
+    // Бэкенд: api.php?action=saveCoupon → именной купон в БД, письмо игроку с купоном-вложением,
+    // уведомление руководителям. Экран успеха показываем СРАЗУ. Если вернётся ссылка на скачивание —
+    // добавляем кнопку «Скачать купон» в окно благодарности.
+    try {
+      fetch('api.php?action=saveCoupon', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then((r) => r.json()).then((res) => {
+          if (res && res.download) {
+            const dl = document.getElementById('cp-download');
+            if (dl) { dl.href = res.download; dl.style.display = ''; }
+          }
+        }).catch(() => {});
+    } catch (err) {}
+    try { window.__ducksTrack?.('conversion', 'coupon'); } catch (e) {}
     submitted = true;
     card.classList.add('done');
     sound.playSuccess?.();

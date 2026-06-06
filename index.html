@@ -31,9 +31,9 @@
     <section class="sec" id="hero">
       <div class="hero-top">
         <div class="hero-eyebrow" aria-hidden="true"></div>
-        <h1 class="hero-title">DUCK'S CLUB</h1>
-        <div class="hero-sub">game space</div>
-        <p class="hero-desc">Покер. Дартс. Бильярд. Бар. Клуб для своих.</p>
+        <h1 class="hero-title" data-edit="hero.title">DUCK'S CLUB</h1>
+        <div class="hero-sub" data-edit="hero.sub">game space</div>
+        <p class="hero-desc" data-edit="hero.desc">Покер. Дартс. Бильярд. Бар. Клуб для своих.</p>
       </div>
       <div class="hero-bottom">
         <div class="hero-btns">
@@ -50,8 +50,8 @@
     <!-- Секция 2 — О клубе (заголовок сверху, мозг центр, 4 карточки слева/справа) -->
     <section class="sec" id="about">
       <div class="about-top">
-        <div class="about-label">О клубе</div>
-        <h2 class="about-title">ИГРАЙ <em>УМОМ</em><br>ОТДЫХАЙ <em>ТЕЛОМ</em></h2>
+        <div class="about-label" data-edit="about.label">О клубе</div>
+        <h2 class="about-title" data-edit-html="about.title">ИГРАЙ <em>УМОМ</em><br>ОТДЫХАЙ <em>ТЕЛОМ</em></h2>
       </div>
       <div class="about-foot">
         <div class="thesis-col thesis-left">
@@ -63,7 +63,7 @@
           <div class="thesis" data-t data-n="04"><b>Репутация среди своих</b><span>рейтинг клуба</span></div>
         </div>
         <div class="about-bottom">
-          <div class="about-note">Без кальянов. Чистый воздух, живое общение.</div>
+          <div class="about-note" data-edit="about.note">Без кальянов. Чистый воздух, живое общение.</div>
         </div>
       </div>
       <!-- красивая пометка «нажми на мозг» -->
@@ -73,20 +73,20 @@
     <!-- Секция 3 — Покер (стол + 4 карты-формата в 3D, кнопка анкеты) -->
     <section class="sec" id="poker">
       <div class="poker-top">
-        <h2 class="poker-title">ПОКЕР</h2>
-        <p class="poker-sub">турниры для своих</p>
+        <h2 class="poker-title" data-edit="poker.title">ПОКЕР</h2>
+        <p class="poker-sub" data-edit="poker.sub">турниры для своих</p>
       </div>
       <div class="poker-bottom">
-        <button class="btn btn-fill" id="poker-signup">Записаться в клуб</button>
+        <button class="btn btn-fill" id="poker-signup" data-edit="poker.btn">Записаться в клуб</button>
       </div>
     </section>
 
     <!-- Секция 4 — Дартс (мишень в 3D + GLB-дротик + мини-игра броска + неоновое табло) -->
     <section class="sec" id="darts">
       <div class="darts-top">
-        <h2 class="darts-title">ДАРТС</h2>
-        <p class="darts-sub">целься в рейтинг</p>
-        <p class="darts-promo"><b>Набери 150 очков</b> — скидка <span>15%</span> на весь вечер</p>
+        <h2 class="darts-title" data-edit="darts.title">ДАРТС</h2>
+        <p class="darts-sub" data-edit="darts.sub">целься в рейтинг</p>
+        <p class="darts-promo" data-edit-html="darts.promo"><b>Набери 150 очков</b> — скидка <span>15%</span> на весь вечер</p>
       </div>
       <!-- всплывающие очки за один бросок (рядом с мишенью) -->
       <div class="darts-score" id="darts-score" aria-hidden="true">
@@ -118,8 +118,8 @@
     <!-- Секция 5 — Бильярд (ровный стол + процедурный шар-8, закрутка касанием; космо-фон) -->
     <section class="sec" id="billiard">
       <div class="billiard-top">
-        <h2 class="billiard-title">БИЛЬЯРД</h2>
-        <p class="billiard-sub">точный удар, ясная голова</p>
+        <h2 class="billiard-title" data-edit="billiard.title">БИЛЬЯРД</h2>
+        <p class="billiard-sub" data-edit="billiard.sub">точный удар, ясная голова</p>
       </div>
       <!-- 4 карточки-тезиса (как на стр. «О клубе») -->
       <div class="bil-foot">
@@ -137,8 +137,8 @@
     <!-- Секция 6 — Бар (стойка проявляется из темноты, бокал + бутылка в 3D, мини-игра «глоток») -->
     <section class="sec" id="bar">
       <div class="bar-top">
-        <h2 class="bar-title">БАР</h2>
-        <p class="bar-sub">живое общение, без суеты</p>
+        <h2 class="bar-title" data-edit="bar.title">БАР</h2>
+        <p class="bar-sub" data-edit="bar.sub">живое общение, без суеты</p>
       </div>
       <!-- подсказка у бокала: гаснет после первого «глотка» -->
       <div class="bar-hint" id="bar-hint" aria-hidden="true">
@@ -160,8 +160,8 @@
     <!-- Секция 7 — FAQ (стол с покерными фишками-вопросами; золотая фишка → ТГ-бот; дальше петля) -->
     <section class="sec" id="faq">
       <div class="faq-top">
-        <h2 class="faq-title">СПРОСИ У СВОИХ</h2>
-        <p class="faq-sub">тапни фишку — узнаешь</p>
+        <h2 class="faq-title" data-edit="faq.title">СПРОСИ У СВОИХ</h2>
+        <p class="faq-sub" data-edit="faq.sub">тапни фишку — узнаешь</p>
       </div>
       <!-- те же кнопки, что на 1 странице (статичны при петле → бесшовный стык) -->
       <div class="faq-bottom">
@@ -300,6 +300,7 @@
         <div class="su-label">купон отправлен</div>
         <h3>Лови купон на почте</h3>
         <p>Именной купон на <b>15%</b> уже летит на твою почту. Проверь входящие и папку «Спам». Покажешь его на входе — и вечер дешевле.</p>
+        <a class="btn btn-fill cp-dl" id="cp-download" href="#" target="_blank" rel="noopener" style="display:none">Скачать купон</a>
         <button type="button" class="btn btn-line cp-done" id="cp-done">Понятно</button>
         <div class="su-thanks-logo">DUCK<span>'</span>S</div>
       </div>
