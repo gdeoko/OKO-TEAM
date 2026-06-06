@@ -241,19 +241,22 @@ export class FaqStation {
       const body = new THREE.Mesh(chipBodyGeo, bodyMat);
       body.renderOrder = 3; pivot.add(body);
 
-      // ВЕРХНЯЯ грань — ВОПРОС (или CTA)
-      const qMat = reg(new THREE.MeshPhysicalMaterial({
-        map: chipFace(item, 'q'), roughness: 0.28, metalness: 0.0,
-        clearcoat: 1.0, clearcoatRoughness: 0.07, envMapIntensity: 1.2,
+      // ВЕРХНЯЯ грань — ВОПРОС. Лицо МАТОВОЕ + текст самосветящийся (emissiveMap) → блик не «съедает»
+      // надпись, она всегда читается. Глянец оставляем телу фишки.
+      const qTex = chipFace(item, 'q');
+      const qMat = reg(new THREE.MeshStandardMaterial({
+        map: qTex, emissive: 0xffffff, emissiveMap: qTex, emissiveIntensity: 0.5,
+        roughness: 0.62, metalness: 0.0, envMapIntensity: 0.35,
       }), 1);
       const qFace = new THREE.Mesh(faceGeo, qMat);
       qFace.rotation.x = -Math.PI / 2; qFace.position.y = TH / 2 + 0.003; qFace.renderOrder = 4;
       pivot.add(qFace);
 
-      // НИЖНЯЯ грань — ОТВЕТ (для CTA дублируем CTA-лицо)
-      const aMat = reg(new THREE.MeshPhysicalMaterial({
-        map: chipFace(item, 'a'), roughness: 0.28, metalness: 0.0,
-        clearcoat: 1.0, clearcoatRoughness: 0.07, envMapIntensity: 1.2,
+      // НИЖНЯЯ грань — ОТВЕТ
+      const aTex = chipFace(item, 'a');
+      const aMat = reg(new THREE.MeshStandardMaterial({
+        map: aTex, emissive: 0xffffff, emissiveMap: aTex, emissiveIntensity: 0.5,
+        roughness: 0.62, metalness: 0.0, envMapIntensity: 0.35,
       }), 1);
       const aFace = new THREE.Mesh(faceGeo, aMat);
       aFace.rotation.x = Math.PI / 2; aFace.position.y = -TH / 2 - 0.003; aFace.renderOrder = 4;

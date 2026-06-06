@@ -137,26 +137,46 @@ export class SoundSystem {
       });
       this.layers.lounge = g;
     }
-    // cosmic — инопланетный дрон для БИЛЬЯРДА/космоса (детюн-сэвы + медленная фильтр-волна)
+    // cosmic — КОСМИЧЕСКИЙ эмбиент для БИЛЬЯРДА (глубокий мягкий дрон + парящие квинты, БЕЗ «жужжания»)
     {
       const g = ctx.createGain(); g.gain.value = 0;
-      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600; lp.Q.value = 3;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.6;
       lp.connect(g).connect(this.master);
-      const fl = ctx.createOscillator(); fl.type = 'sine'; fl.frequency.value = 0.07;
-      const flg = ctx.createGain(); flg.gain.value = 380; fl.connect(flg).connect(lp.frequency); fl.start();
-      [55.0, 55.0 * 1.005, 82.41, 110.0 * 1.5].forEach((f, i) => {
-        const o = ctx.createOscillator(); o.type = i < 2 ? 'sawtooth' : 'sine'; o.frequency.value = f;
-        const og = ctx.createGain(); og.gain.value = i < 2 ? 0.22 : 0.12;
-        o.connect(og).connect(lp); o.start();
+      const fl = ctx.createOscillator(); fl.type = 'sine'; fl.frequency.value = 0.05;
+      const flg = ctx.createGain(); flg.gain.value = 260; fl.connect(flg).connect(lp.frequency); fl.start();
+      // мягкие сины (без пилы): суб + квинта + высокая «парящая» нота с биениями
+      [{ f: 55, t: 'sine', g: 0.5 }, { f: 82.41, t: 'sine', g: 0.22 }, { f: 164.81, t: 'sine', g: 0.12 },
+       { f: 246.94, t: 'triangle', g: 0.07 }].forEach((n) => {
+        const o = ctx.createOscillator(); o.type = n.t; o.frequency.value = n.f;
+        const o2 = ctx.createOscillator(); o2.type = n.t; o2.frequency.value = n.f * 1.004;   // лёгкие биения = «космос»
+        const og = ctx.createGain(); og.gain.value = n.g;
+        o.connect(og); o2.connect(og); og.connect(lp); o.start(); o2.start();
       });
       this.layers.cosmic = g;
+    }
+    // classical — тёплый «струнно-фортепианный» бэд для ПОКЕРА (мягкое благородное звучание)
+    {
+      const g = ctx.createGain(); g.gain.value = 0;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1700; lp.Q.value = 0.4;
+      lp.connect(g).connect(this.master);
+      // Am — Fmaj7 «дыхание» аккорда: A2 E3 A3 C4 E4 (+ медленная смена через LFO на громкости верхов)
+      [{ f: 110.0, g: 0.4 }, { f: 164.81, g: 0.2 }, { f: 220.0, g: 0.16 }, { f: 261.63, g: 0.14 }, { f: 329.63, g: 0.12 }]
+        .forEach((n, i) => {
+          const o = ctx.createOscillator(); o.type = i === 0 ? 'triangle' : 'sine'; o.frequency.value = n.f;
+          const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = n.f * 1.002;
+          const og = ctx.createGain(); og.gain.value = n.g;
+          const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.06 + i * 0.02;
+          const lg = ctx.createGain(); lg.gain.value = n.g * 0.35; lfo.connect(lg).connect(og.gain); lfo.start();
+          o.connect(og); o2.connect(og); og.connect(lp); o.start(); o2.start();
+        });
+      this.layers.classical = g;
     }
   }
 
   // Плавно выставить громкость слоя (0..1 относительно его потолка)
   setLayer(name, level) {
     if (!this.ctx || !this.layers || !this.layers[name]) return;
-    const caps = { metel: 0.022, rustle: 0.05, hum: 0.08, space: 0.05, bar: 0.035, lounge: 0.16, cosmic: 0.13 };
+    const caps = { metel: 0.022, rustle: 0.05, hum: 0.08, space: 0.045, bar: 0.03, lounge: 0.16, cosmic: 0.16, classical: 0.15 };
     const g = this.layers[name];
     g.gain.cancelScheduledValues(this.ctx.currentTime);
     g.gain.linearRampToValueAtTime((caps[name] || 0.05) * level, this.ctx.currentTime + 0.8);

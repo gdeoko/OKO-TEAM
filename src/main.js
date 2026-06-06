@@ -1154,28 +1154,33 @@ function animate() {
     const zBilliard = sm(bk, 0.15, 0.5) * (1 - sm(ak, 0.15, 0.5));         // Бильярд (космос)
     const zBar = sm(ak, 0.15, 0.5) * (1 - sm(fk, 0.1, 0.5));               // Бар (гаснет к FAQ)
     const zFaq = sm(fk, 0.15, 0.5);                                        // FAQ (стол с фишками)
-    // воздух: Hero + тихий «живой зал» в Покере/Дартсе/FAQ
-    sound.setLayer('metel', Math.max(zHall * THREE.MathUtils.clamp(1 - tp * 2, 0, 1), (zPoker + zDarts) * 0.4, zFaq * 0.3));
-    // шелест ЧАСТИЦ — ТОЛЬКО в Холле (распад утки→мозг) и в туннеле; в Баре/FAQ его НЕТ (не повторяем 2 стр.)
+    // ФОНОВАЯ МУЗЫКА ПО СТРАНИЦАМ (кроссфейд один в другой):
+    //  Холл(1) и Мозг(2) — оригинальный магический ПЭД (+частицы на 2);
+    //  Покер(3) — КЛАССИКА (струнно-фортепианный бэд);
+    //  Дартс(4) — снова ПЭД (как 1 стр);
+    //  Бильярд(5) — КОСМОС (дрон + мерцание);
+    //  Бар(6) — тёплый ЛАУНЖ + гомон зала; FAQ(7) — лаунж тихо.
+    // воздух (metel): Hero + чуть на Дартсе/FAQ
+    sound.setLayer('metel', Math.max(zHall * THREE.MathUtils.clamp(1 - tp * 2, 0, 1), zDarts * 0.45, zFaq * 0.25));
+    // шелест ЧАСТИЦ — ТОЛЬКО в Холле (распад утки→мозг) и в туннеле; в Покере/Баре/FAQ его НЕТ
     const rustleBurst = THREE.MathUtils.clamp(1 - Math.abs(tp - 0.5) * 3, 0, 1);
     const rustleBrain = THREE.MathUtils.clamp((tp - 0.6) / 0.25, 0, 1) * 0.5;
     sound.setLayer('rustle', zHall * Math.max(rustleBurst, rustleBrain));
-    // гул — нутро мозга/туннель (Холл) и низ космоса (Бильярд)
-    sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.55));
+    sound.setLayer('hum', Math.max(brainOpen ? 1 : zHall * THREE.MathUtils.clamp((tp - 0.6) / 0.4, 0, 1), zBilliard * 0.4));
+    sound.setLayer('classical', zPoker);                                   // классика на Покере
     sound.setLayer('space', zBilliard);                                    // космо-мерцание на Бильярде
-    sound.setLayer('cosmic', zBilliard);                                   // инопланетный дрон на Бильярде/космосе
-    sound.setLayer('bar', zBar);                                           // тёплый низкий гомон зала
-    // в БАРЕ играет тёплый ЛАУНЖ (другая музыка), на FAQ — он же тихо (стол в клубе)
-    sound.setLayer('lounge', Math.max(zBar, zFaq * 0.55));
-    // ОСНОВНОЙ магический пэд УВОДИМ в баре (звучит лаунж) и частично в космосе (звучит дрон)
-    sound.setPadDuck?.(1 - 0.8 * zBar - 0.45 * zBilliard - 0.25 * zFaq);
+    sound.setLayer('cosmic', zBilliard);                                   // космо-дрон на Бильярде
+    sound.setLayer('bar', zBar);                                           // тёплый низкий гомон зала (бар)
+    sound.setLayer('lounge', Math.max(zBar, zFaq * 0.55));                 // лаунж в баре, тихо на FAQ
+    // ОСНОВНОЙ пэд держим на Холле/Мозге/Дартсе; уводим там, где играет своя музыка
+    sound.setPadDuck?.(THREE.MathUtils.clamp(1 - 0.85 * zPoker - 0.5 * zBilliard - 0.85 * zBar - 0.55 * zFaq, 0, 1));
   }
   // КИНЕМАТОГРАФИЧЕСКИЙ звук СМЕНЫ станции (приближение/отдаление + акцент под тему)
   if (audioStarted) {
     const stIdx = Math.round(THREE.MathUtils.clamp(scrollProgress, 0, 1) * (STATIONS.length - 1));
     if (stIdx !== _lastStIdx) { sound.playStationCue?.(stIdx, stIdx > _lastStIdx); _lastStIdx = stIdx; }
-    // в Баре изредка позвякивает стекло (живая атмосфера)
-    if (ak > 0.6 && Math.random() < 0.0035) sound.playGlassClink?.();
+    // в Баре изредка позвякивает стекло (живая атмосфера) — ТОЛЬКО в баре, НЕ на FAQ (фишки)
+    if (ak > 0.6 && fk < 0.1 && Math.random() < 0.0035) sound.playGlassClink?.();
   }
 
   // (фон — 3D-клуб)
@@ -1584,8 +1589,14 @@ function glitchAtPoint(x, y) {
 addEventListener('pointerdown', (e) => glitchAtPoint(e.clientX, e.clientY), { passive: true });
 document.querySelectorAll('.btn, [data-t]').forEach((el) => { el.addEventListener('mouseenter', () => glitchFx(el)); });
 document.querySelectorAll('a, button').forEach((el) => el.addEventListener('click', () => sound.playClick()));
-// «Узнать больше / Подробнее» → плавно к станции «О клубе» (была ошибка: navLock не определён → клик падал)
-document.querySelectorAll('.btn-line[data-go="about"]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); goToStation(1); }));
+// Кнопки-ссылки в Telegram (бот/канал) на 1 стр и FAQ — НАДЁЖНЫЙ клик: открываем ссылку сами,
+// чтобы тап не перехватывался сценой/жестами (раньше клик уходил в 3D → утка дёргалась, кнопка молчала).
+document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEach((a) => {
+  const href = a.getAttribute('href');
+  const go = (e) => { e.preventDefault(); e.stopPropagation(); sound.playClick?.(); window.open(href, '_blank', 'noopener'); };
+  a.addEventListener('click', go);
+  a.addEventListener('touchend', (e) => { e.stopPropagation(); }, { passive: true });
+});
 
 // ============================================================
 // Анкета «Записаться за стол» — модалка, валидация, маска телефона, отправка
