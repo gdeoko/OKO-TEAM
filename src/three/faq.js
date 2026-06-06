@@ -196,8 +196,8 @@ export class FaqStation {
 
     const reg = (m, base = 1) => { m.transparent = true; m.userData._b = base; m.opacity = 0; this._mats.push(m); return m; };
 
-    // ----- СТОЛ: сукно + глянцевый борт (компактнее — вокруг виден зал клуба) -----
-    const FELT_R = 2.75;
+    // ----- СТОЛ: сукно + глянцевый борт (вид сверху; компактнее, чтобы вокруг был виден зал клуба) -----
+    const FELT_R = 3.05;
     this.felt = new THREE.Mesh(
       new THREE.CircleGeometry(FELT_R, 72),
       reg(new THREE.MeshStandardMaterial({ map: feltTexture(), roughness: 0.92, metalness: 0.0, side: THREE.DoubleSide }), 1)
