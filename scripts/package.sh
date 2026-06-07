@@ -28,10 +28,12 @@ cp backend/data/content.json dist/data/content.json
 # .gitkeep чтобы папка data/ создалась с правами на запись
 touch dist/data/.gitkeep
 
-echo "▶ 3/4  Проверка красивых ссылок (.htaccess, magnets, system)…"
+echo "▶ 3/4  Проверка красивых ссылок (.htaccess, лид-магниты, система)…"
 test -f dist/.htaccess           && echo "  ✓ .htaccess"
 test -f dist/system.html         && echo "  ✓ system.html  (→ /system)"
-test -d dist/magnets             && echo "  ✓ magnets/     (→ /poker-pravila, /chitat-lyudey, /igry-dlya-mozga, /10-shagov)"
+for s in pravila lyudi mozg shagi; do
+  test -f "dist/$s.html" && echo "  ✓ $s.html      (→ /$s)"
+done
 
 echo "▶ 4/4  Упаковка в ducks-deploy.zip…"
 cd dist

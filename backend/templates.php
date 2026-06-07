@@ -10,13 +10,13 @@ require_once __DIR__ . '/db.php';
 /* 4 лид-магнита (файлы лежат в корне, красивые ссылки) */
 function magnets() {
   return [
-    'magnet1' => ['title' => 'Правила Texas Hold\'em за 5 минут', 'url' => SITE_URL . '/poker-pravila',
+    'magnet1' => ['title' => 'Правила Texas Hold\'em за 5 минут', 'url' => SITE_URL . '/pravila',
                   'tag' => 'Покер с нуля', 'desc' => 'Короткий разбор: садишься за стол и всё понимаешь.'],
-    'magnet2' => ['title' => 'Как читать людей', 'url' => SITE_URL . '/chitat-lyudey',
+    'magnet2' => ['title' => 'Как читать людей', 'url' => SITE_URL . '/lyudi',
                   'tag' => 'Психология за столом', 'desc' => 'Считывай соперника по жестам, темпу и дыханию.'],
-    'magnet3' => ['title' => '5 игр для мозга', 'url' => SITE_URL . '/igry-dlya-mozga',
+    'magnet3' => ['title' => '5 игр для мозга', 'url' => SITE_URL . '/mozg',
                   'tag' => 'Прокачка ума', 'desc' => 'Здоровый дофамин и тренировка вместо ленты.'],
-    'magnet4' => ['title' => '10 шагов, чтобы всегда быть в игре', 'url' => SITE_URL . '/10-shagov',
+    'magnet4' => ['title' => '10 шагов, чтобы всегда быть в игре', 'url' => SITE_URL . '/shagi',
                   'tag' => 'Система игрока', 'desc' => 'Дисциплина и голова, которые работают везде.'],
   ];
 }

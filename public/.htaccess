@@ -26,12 +26,12 @@ AddType application/javascript .js
   RewriteEngine On
   RewriteBase /
 
-  # --- Красивые ссылки на лид-магниты и систему (без .html) ---
-  RewriteRule ^system/?$            system.html                  [L]
-  RewriteRule ^poker-pravila/?$     magnets/poker-pravila.html   [L]
-  RewriteRule ^chitat-lyudey/?$     magnets/chitat-lyudey.html   [L]
-  RewriteRule ^igry-dlya-mozga/?$   magnets/igry-dlya-mozga.html [L]
-  RewriteRule ^10-shagov/?$         magnets/10-shagov.html       [L]
+  # --- Красивые ссылки (одно слово, без .html) — файлы лежат в корне ---
+  RewriteRule ^system/?$   system.html   [L]
+  RewriteRule ^pravila/?$  pravila.html  [L]
+  RewriteRule ^lyudi/?$    lyudi.html    [L]
+  RewriteRule ^mozg/?$     mozg.html     [L]
+  RewriteRule ^shagi/?$    shagi.html    [L]
 
   # --- Бэкенд: api и админка обслуживаются напрямую (НЕ как SPA) ---
   RewriteRule ^api/?$               api.php                      [L]

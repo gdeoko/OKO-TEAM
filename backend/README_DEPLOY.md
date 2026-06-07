@@ -9,11 +9,11 @@
 | Раздел | Ссылка |
 |---|---|
 | Сайт | `https://ducks.games/` |
-| Система роста | `https://ducks.games/system` |
-| Лид-магнит · Правила покера | `https://ducks.games/poker-pravila` |
-| Лид-магнит · Читать людей | `https://ducks.games/chitat-lyudey` |
-| Лид-магнит · Игры для мозга | `https://ducks.games/igry-dlya-mozga` |
-| Лид-магнит · 10 шагов | `https://ducks.games/10-shagov` |
+| Система (для руководителей) | `https://ducks.games/system` |
+| Лид-магнит · Правила покера | `https://ducks.games/pravila` |
+| Лид-магнит · Читать людей | `https://ducks.games/lyudi` |
+| Лид-магнит · Игры для мозга | `https://ducks.games/mozg` |
+| Лид-магнит · 10 шагов | `https://ducks.games/shagi` |
 | Админ-панель | `https://ducks.games/admin` |
 | API (служебный) | `https://ducks.games/api` |
 
@@ -24,8 +24,11 @@ public_html/
 ├── index.html              ← фронт (из dist/)
 ├── assets/ cards/ draco/ models/   ← фронт
 ├── .htaccess               ← красивые ссылки + SPA
-├── system.html             ← /system
-├── magnets/                ← /poker-pravila, /chitat-lyudey, /igry-dlya-mozga, /10-shagov
+├── system.html             ← /system  (готовый файл, для руководителей)
+├── pravila.html            ← /pravila  (лид-магнит, готовый файл)
+├── lyudi.html              ← /lyudi    (лид-магнит, готовый файл)
+├── mozg.html               ← /mozg     (лид-магнит, готовый файл)
+├── shagi.html              ← /shagi    (лид-магнит, готовый файл)
 ├── config.php  db.php  mailer.php  templates.php  api.php  cron.php
 ├── admin/index.php         ← /admin (PIN-вход)
 └── data/                   ← БД и контент (нужны права на ЗАПИСЬ 0775)
@@ -90,13 +93,12 @@ public_html/
 2. Дартс 150 очков → форма купона → письмо с купоном (QR + «Скачать как фото»).
 3. Купон на входе: гость показывает QR → админка → **Купоны → Сканер QR** → купон становится «использован».
 4. `/admin` (PIN `2026`) → Сводка / База / Купоны / Тексты / Рассылки / Настройки.
-5. `/system`, `/poker-pravila` и др. — открываются без `.html`.
+5. `/system`, `/pravila`, `/lyudi`, `/mozg`, `/shagi` — открываются без `.html`.
 
 > Картинки `duck-mascot.png` и `duck-logo.png` лежат в корне — они используются в письмах. Не удаляй их.
+> Лид-магниты и `system.html` — это твои готовые файлы, лежат в корне как есть. Менять их не нужно.
 
-## 6. Заменить лид-магниты / систему на свои
+## 7. (если когда-нибудь) заменить лид-магниты / систему
 
-Если есть готовые файлы — положи их вместо плейсхолдеров:
-`system.html` в корень, файлы магнитов в `magnets/` под теми же именами
-(`poker-pravila.html`, `chitat-lyudey.html`, `igry-dlya-mozga.html`, `10-shagov.html`) —
+Положи новый файл в корень под тем же именем (`pravila.html`, `lyudi.html`, `mozg.html`, `shagi.html`, `system.html`) —
 красивые ссылки продолжат работать.
