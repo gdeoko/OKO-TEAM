@@ -36,10 +36,12 @@
         <p class="hero-desc" data-edit="hero.desc">Покер. Дартс. Бильярд. Бар. Клуб для своих.</p>
       </div>
       <div class="hero-bottom">
-        <div class="hero-btns">
+        <div class="hero-cta">
           <button type="button" class="btn btn-line btn-howto" data-howto>Как добраться?</button>
-          <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
-          <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          <div class="hero-btns">
+            <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
+            <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          </div>
         </div>
       </div>
       <div class="scroll-hint">
@@ -166,10 +168,12 @@
       </div>
       <!-- те же кнопки, что на 1 странице (статичны при петле → бесшовный стык) -->
       <div class="faq-bottom">
-        <div class="hero-btns">
+        <div class="hero-cta">
           <button type="button" class="btn btn-line btn-howto" data-howto>Как добраться?</button>
-          <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
-          <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          <div class="hero-btns">
+            <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
+            <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          </div>
         </div>
       </div>
     </section>
@@ -207,7 +211,7 @@
   </div>
 
   <!-- Анкета «Записаться за стол» (модалка-карта) -->
-  <div id="signup" aria-hidden="true">
+  <div id="signup" aria-hidden="true" data-lenis-prevent>
     <div class="su-card" role="dialog" aria-modal="true" aria-label="Записаться за стол">
       <button id="su-close" aria-label="Закрыть">×</button>
       <div class="su-body">
@@ -263,7 +267,7 @@
   </div>
 
   <!-- Купон Дартса: всплывает при 150+ очках. Купон приходит ТОЛЬКО на почту (фарм базы). -->
-  <div id="coupon" aria-hidden="true">
+  <div id="coupon" aria-hidden="true" data-lenis-prevent>
     <div class="cp-card" role="dialog" aria-modal="true" aria-label="Скидочный купон 15%">
       <button id="cp-close" aria-label="Закрыть">×</button>
       <div class="cp-body">
@@ -310,7 +314,7 @@
   </div>
 
   <!-- «Как добраться» — модалка: ролик от метро (location.mp4 9:16), живая карта, маршрут -->
-  <div id="howto" aria-hidden="true">
+  <div id="howto" aria-hidden="true" data-lenis-prevent>
     <div class="ht-card" role="dialog" aria-modal="true" aria-label="Как добраться до клуба">
       <button id="ht-close" aria-label="Закрыть">×</button>
       <div class="ht-head">
@@ -320,8 +324,8 @@
       </div>
       <div class="ht-media">
         <div class="ht-map">
-          <iframe title="Карта DUCK'S" loading="lazy" allowfullscreen
-            src="https://yandex.ru/map-widget/v1/?ll=37.638275%2C55.800886&z=17&pt=37.638261%2C55.800888%2Cpm2rdm"></iframe>
+          <iframe title="Карта DUCK'S — Проспект Мира, 102с25" loading="lazy"
+            src="https://www.openstreetmap.org/export/embed.html?bbox=37.6323%2C55.7979%2C37.6443%2C55.8039&layer=mapnik&marker=55.80088837875868%2C37.63826056104428"></iframe>
         </div>
         <div class="ht-video">
           <video id="ht-vid" src="location.mp4#t=0.5" controls playsinline preload="metadata"></video>
