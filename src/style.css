@@ -16,6 +16,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 html, body { overscroll-behavior: none; }   /* запрет браузерного свайпа-назад/вперёд (глюк горизонтали на мозге) */
+/* Блокировка скролла ФОНА, когда открыта любая модалка (карта/анкета/купон).
+   На тач Lenis не держит нативный скролл → фон листался под окном. */
+html.modal-lock, body.modal-lock { overflow: hidden !important; touch-action: none; }
+#signup, #coupon, #howto { overscroll-behavior: contain; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
 body {
   background: var(--bg-deepest);
   color: var(--white);
@@ -139,7 +143,9 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
   color: var(--ice-white);
 }
 .hero-desc { font-size: clamp(14px, 1.7vw, 17px); color: rgba(255,255,255,.7); margin: 10px auto 0; line-height: 1.5; max-width: 460px; }
-.hero-btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: stretch; }
+.hero-btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: stretch; width: fit-content; max-width: 100%; margin: 0 auto; }
+/* «Как добраться» — длинная кнопка сверху, во всю ширину двух нижних кнопок */
+.btn-howto { flex: 0 0 100%; width: 100%; white-space: nowrap; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--fd); font-weight: 700; font-size: 13px;
@@ -838,23 +844,19 @@ body.howto-open .ht-card { transform: translateY(0) scale(1); }
 .ht-head h3 { font-family: var(--fd); font-weight: 900; font-size: 24px; margin: 6px 0 6px; letter-spacing: 1px; }
 .ht-head h3 span { color: var(--red-bright); }
 .ht-addr { color: rgba(255, 255, 255, .72); font-size: 15px; margin: 0; }
-.ht-media { display: flex; gap: 14px; }
-.ht-video { position: relative; flex: 0 0 auto; width: 196px; }
+/* Порядок: сначала карта, потом ролик, потом кнопка — всё стопкой по центру */
+.ht-media { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.ht-map { width: 100%; }
+.ht-map iframe { width: 100%; height: 250px; border: 0; border-radius: 14px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1); }
+.ht-video { position: relative; width: min(230px, 62vw); }
 .ht-video video {
-  width: 196px; aspect-ratio: 9 / 16; object-fit: cover; display: block;
+  width: 100%; aspect-ratio: 9 / 16; object-fit: cover; display: block;
   border-radius: 14px; background: #000; border: 1px solid rgba(255, 255, 255, .1);
 }
 .ht-cap { display: block; text-align: center; color: rgba(255, 255, 255, .45); font-size: 11px; margin-top: 6px; letter-spacing: .5px; }
-.ht-map { flex: 1; min-width: 0; }
-.ht-map iframe { width: 100%; height: 100%; min-height: 260px; border: 0; border-radius: 14px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1); filter: grayscale(.15) contrast(1.05); }
 .ht-route { display: block; width: 100%; margin-top: 18px; text-align: center; }
-.btn-howto { white-space: nowrap; }
 @media (max-width: 600px) {
   .ht-card { padding: 26px 16px 18px; }
   .ht-head h3 { font-size: 21px; }
-  .ht-media { flex-direction: column; align-items: center; }
-  .ht-video { width: min(64vw, 230px); }
-  .ht-video video { width: 100%; }
-  .ht-map { width: 100%; }
-  .ht-map iframe { height: 220px; min-height: 220px; }
+  .ht-map iframe { height: 220px; }
 }

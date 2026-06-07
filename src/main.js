@@ -1710,6 +1710,22 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
 });
 
 // ============================================================
+// Жёсткая блокировка скролла фона на время любой модалки. На тач-устройствах Lenis НЕ держит
+// нативный скролл (smoothTouch off) → фон листался под окном. modal-lock = overflow:hidden +
+// touch-action:none на html/body. Внутренний скролл окна сохраняется (overscroll-behavior:contain).
+// ============================================================
+function lockScroll() {
+  document.documentElement.classList.add('modal-lock');
+  document.body.classList.add('modal-lock');
+  try { lenis.stop(); } catch (e) {}
+}
+function unlockScroll() {
+  document.documentElement.classList.remove('modal-lock');
+  document.body.classList.remove('modal-lock');
+  try { lenis.start(); } catch (e) {}
+}
+
+// ============================================================
 // Анкета «Записаться за стол» — модалка, валидация, маска телефона, отправка
 // ============================================================
 {
@@ -1728,7 +1744,7 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
   const openSignup = (presetFormat) => {
     savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
     document.body.classList.add('signup-open');
-    try { lenis.stop(); } catch (e) {}
+    lockScroll();
     sound.playWhoosh?.(true);
     // уже записан в этой сессии → сразу показываем «спасибо», форму не показываем
     card.classList.toggle('done', submitted);
@@ -1742,7 +1758,8 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
   };
   const closeSignup = () => {
     document.body.classList.remove('signup-open');
-    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
+    unlockScroll();
+    try { lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
   };
   window.__openSignup = openSignup;   // для проверки в браузере
 
@@ -1838,14 +1855,15 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
     if (scoreEl && score) scoreEl.textContent = String(score);
     savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
     document.body.classList.add('coupon-open');
-    try { lenis.stop(); } catch (e) {}
+    lockScroll();
     sound.playSuccess?.();
     card.classList.toggle('done', submitted);
     if (!submitted) setTimeout(() => nameI && nameI.focus({ preventScroll: true }), 420);
   };
   const closeCoupon = () => {
     document.body.classList.remove('coupon-open');
-    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
+    unlockScroll();
+    try { lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
   };
   window.__openCoupon = openCoupon;
 
@@ -1927,13 +1945,14 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
   const openHowto = () => {
     savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
     document.body.classList.add('howto-open');
-    try { lenis.stop(); } catch (e) {}
+    lockScroll();
     sound.playWhoosh?.(true);
   };
   const closeHowto = () => {
     document.body.classList.remove('howto-open');
     try { vid && vid.pause(); } catch (e) {}
-    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
+    unlockScroll();
+    try { lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
   };
   document.querySelectorAll('[data-howto]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); openHowto(); }));
   document.getElementById('ht-close')?.addEventListener('click', closeHowto);
