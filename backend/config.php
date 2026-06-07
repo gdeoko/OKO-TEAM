@@ -13,13 +13,22 @@ define('MAIL_FROM', 'ducks.game.space@gmail.com');
 define('MAIL_FROM_NAME', "DUCK'S GAME SPACE");
 define('SMTP_HOST', 'smtps://smtp.gmail.com:465');  // SSL-порт для CURL
 
-// --- Письма руководителям (новые заявки/купоны) ---
-// Можно несколько через запятую. Вся механика — ТОЛЬКО почта (без ТГ-бота).
-define('ADMIN_EMAILS', 'ducks.game.space@gmail.com, okoteam.top@gmail.com');
+// --- Письма руководителям (ТОЛЬКО технические уведомления: новые заявки/купоны) ---
+// Приходят ИСКЛЮЧИТЕЛЬНО на ящик клуба. Клиентам эти письма НЕ уходят.
+define('ADMIN_EMAILS', 'ducks.game.space@gmail.com');
 
-// --- Ссылки клуба (используются как КНОПКИ в письмах; это просто ссылки, не бот-API) ---
+// --- Сайт ---
+define('SITE_URL', 'https://ducks.games');
+define('BRAND_RED', '#CC0000');
+define('BRAND_BG', '#080808');
+
+// --- Ссылки клуба (КНОПКИ в письмах; просто ссылки, не бот-API) ---
 define('TG_CHANNEL', 'https://t.me/duckspokerspace');
-define('TG_BOT_LINK', 'https://t.me/ducks_gameclub_bot');
+define('TG_BOT_LINK', 'https://t.me/ducks_gameclub_bot');   // кнопка «Записаться» ведёт сюда
+
+// --- Брендовые изображения для писем (хостятся в корне сайта) ---
+define('DUCK_MASCOT_URL', SITE_URL . '/duck-mascot.png');
+define('DUCK_LOGO_URL', SITE_URL . '/duck-logo.png');
 
 // --- Админ-панель ---
 // PIN для входа в админку (цифровой). По умолчанию 2026.
@@ -30,11 +39,6 @@ define('ADMIN_PIN', '2026');
 // --- Авто-приглашение ---
 // Через сколько минут после заявки клиенту авто-уходит приглашение в клуб.
 define('INVITE_DELAY_MIN', 15);
-
-// --- Сайт ---
-define('SITE_URL', 'https://ducks.games');
-define('BRAND_RED', '#CC0000');
-define('BRAND_BG', '#080808');
 
 // --- Файлы данных (в той же папке) ---
 define('DB_FILE', __DIR__ . '/data/ducks.sqlite');

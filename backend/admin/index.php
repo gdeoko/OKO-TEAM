@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>DUCK'S — Админ-панель</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
 :root{--red:#cc0000;--bg:#080808;--card:#101012;--card2:#15151a;--line:#222;--txt:#eaeaea;--mut:#8a8a92;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -22,7 +23,11 @@ body{min-height:100vh;overflow-x:hidden;}
 .scan{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 3px,#0000000d 3px 4px);opacity:.4;}
 /* логин */
 #login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(120% 100% at 50% 0%,#1a0000,#050505);}
-#login .duck{font-size:54px;}
+#login img.duck{width:96px;height:auto;filter:drop-shadow(0 8px 24px rgba(204,0,0,.5));}
+h3[data-ico]{display:flex;align-items:center;gap:8px;}
+h3[data-ico] .ico{color:var(--red);flex:0 0 auto;}
+.nav button .ico{margin-right:5px;color:inherit;}
+.nav button{display:inline-flex;align-items:center;justify-content:center;}
 #login .brand{font-family:Orbitron;font-weight:900;font-size:30px;letter-spacing:4px;margin:6px 0 2px;}
 #login .brand span{color:var(--red);}
 #login .sub{color:var(--mut);letter-spacing:5px;font-size:11px;margin-bottom:30px;}
@@ -92,6 +97,22 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red);}
 .acc[open] summary{border-bottom:1px solid var(--line);}
 .acc-b{padding:14px 16px;}
 .field{margin-bottom:14px;}
+/* rich-text редактор */
+.rt-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.rt-tools button,.rt-tools select{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:7px 11px;font-size:13px;font-weight:700;cursor:pointer;width:auto;min-width:0;}
+.rt-tools button:active{background:var(--red);}
+.rt-ed{background:#0d0d10;border:1px solid var(--line);border-radius:12px;padding:12px 13px;min-height:64px;
+  font-size:14px;line-height:1.5;color:var(--txt);outline:none;}
+.rt-ed:focus{border-color:var(--red);}
+.rt-ed:empty:before{content:attr(data-ph);color:#555;}
+/* строки кнопок письма */
+.btn-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;}
+.btn-row input{flex:1;}
+.btn-row .del{background:#2a0a0a;border:1px solid #4a1a1a;color:#ff7a7a;border-radius:9px;padding:9px 12px;cursor:pointer;width:auto;flex:0 0 auto;}
+/* QR-сканер */
+#qr-video{width:100%;max-width:320px;border-radius:14px;background:#000;display:block;margin:0 auto;}
+.qr-result{text-align:center;padding:16px;border-radius:14px;margin-top:12px;font-weight:700;}
 .field label{display:block;font-size:12px;color:var(--mut);margin-bottom:6px;letter-spacing:.5px;}
 textarea{min-height:70px;resize:vertical;}
 /* modal */
@@ -117,7 +138,7 @@ canvas{display:block;width:100%;}
 
 <!-- ЛОГИН -->
 <div id="login">
-  <div class="duck">🦆</div>
+  <img class="duck" src="../duck-mascot.png" alt="DUCK'S">
   <div class="brand">DUCK<span>'</span>S</div>
   <div class="sub">ADMIN PANEL</div>
   <div class="dots"><i></i><i></i><i></i><i></i></div>
@@ -147,10 +168,10 @@ canvas{display:block;width:100%;}
 
   <!-- СВОДКА -->
   <div class="page on" id="page-dash">
-    <div class="card"><h3>📊 Показатели</h3><div class="stats" id="stat-grid"></div></div>
-    <div class="card"><h3>🎯 Конверсии</h3><div class="rings" id="ring-grid"></div></div>
-    <div class="card"><h3>📈 Заявки и купоны · 14 дней</h3><canvas id="chart-days" height="180"></canvas></div>
-    <div class="card"><h3>👆 Топ кликов по кнопкам</h3><div id="top-clicks" class="list"></div></div>
+    <div class="card"><h3 data-ico="dash">Показатели</h3><div class="stats" id="stat-grid"></div></div>
+    <div class="card"><h3 data-ico="check">Конверсии</h3><div class="rings" id="ring-grid"></div></div>
+    <div class="card"><h3 data-ico="dash">Заявки и купоны · 14 дней</h3><canvas id="chart-days" height="180"></canvas></div>
+    <div class="card"><h3 data-ico="check">Топ кликов по кнопкам</h3><div id="top-clicks" class="list"></div></div>
   </div>
 
   <!-- БАЗА ПОДПИСЧИКОВ -->
@@ -171,7 +192,20 @@ canvas{display:block;width:100%;}
   <!-- КУПОНЫ -->
   <div class="page" id="page-coupons">
     <div class="card">
-      <h3>🎟 Параметры скидки</h3>
+      <h3 data-ico="qr">Проверка купона · сканер QR</h3>
+      <div class="h-sub">Наведи камеру на QR из купона гостя — купон станет «использован».</div>
+      <video id="qr-video" playsinline style="display:none"></video>
+      <div class="toolbar" style="justify-content:center;margin-top:12px">
+        <button class="btn" id="qr-start">Включить камеру</button>
+        <button class="btn ghost" id="qr-stop" style="display:none">Стоп</button>
+      </div>
+      <div class="field" style="margin-top:6px"><label>или вручную по номеру</label>
+        <div class="toolbar"><input class="search" id="qr-manual" placeholder="D15-XXXXXX">
+        <button class="btn sm" id="qr-check">Проверить</button></div></div>
+      <div id="qr-out"></div>
+    </div>
+    <div class="card">
+      <h3 data-ico="ticket">Параметры скидки</h3>
       <div class="field"><label>Размер скидки, %</label><input id="cp-discount" type="number"></div>
       <div class="field"><label>Порог очков в дартсе (для купона)</label><input id="cp-points" type="number"></div>
       <button class="btn sm" id="cp-save-params">Сохранить параметры</button>
@@ -192,13 +226,13 @@ canvas{display:block;width:100%;}
   <!-- ТЕКСТЫ САЙТА -->
   <div class="page" id="page-content">
     <div class="card">
-      <h3>✏️ Тексты сайта</h3>
+      <h3 data-ico="text">Тексты сайта</h3>
       <div class="h-sub">Меняй заголовки, подзаголовки и тексты — сайт подхватит сразу.</div>
       <div id="content-fields"></div>
       <button class="btn" id="content-save">Сохранить тексты</button>
     </div>
     <div class="card">
-      <h3>🃏 Вопросы-фишки (FAQ)</h3>
+      <h3 data-ico="text">Вопросы-фишки (FAQ)</h3>
       <div class="h-sub">Вопрос (\n — перенос строки) и ответ на фишке.</div>
       <div id="faq-fields"></div>
       <button class="btn" id="faq-save">Сохранить FAQ</button>
@@ -208,16 +242,22 @@ canvas{display:block;width:100%;}
   <!-- РАССЫЛКИ -->
   <div class="page" id="page-news">
     <div class="card">
-      <h3>📨 Шаблоны</h3>
+      <h3 data-ico="mail">Шаблоны</h3>
       <div class="tpl-grid" id="tpl-grid"></div>
     </div>
     <div class="card">
-      <h3>✉️ Конструктор письма</h3>
+      <h3 data-ico="edit">Конструктор письма</h3>
       <div class="field"><label>Кому</label>
         <select id="nl-audience"><option value="all">Все подписчики</option><option value="form">Только форма</option><option value="darts">Только дартс −15%</option></select></div>
       <div class="field"><label>Тема письма</label><input id="nl-subject" placeholder="Тема"></div>
-      <div class="field"><label>Текст (можно HTML, {name} = имя)</label><textarea id="nl-body" style="min-height:140px"></textarea></div>
-      <div class="field"><label>Кнопки (по строке: Текст | https://ссылка)</label><textarea id="nl-buttons" placeholder="Записаться | https://t.me/ducks_gameclub_bot"></textarea></div>
+      <div class="field"><label>Текст письма ({name} подставит имя)</label>
+        <div class="rt-tools" data-rt="nl-body"></div>
+        <div class="rt-ed" id="nl-body" contenteditable="true" data-ph="Пиши текст, выделяй и форматируй…"></div>
+      </div>
+      <div class="field"><label>Кнопки письма (отдельно текст и ссылка)</label>
+        <div id="nl-btn-rows"></div>
+        <button class="btn ghost sm" id="nl-add-btn" type="button">+ добавить кнопку</button>
+      </div>
       <div class="field"><label>Вложения (фото / видео / файлы / голос)</label><input id="nl-files" type="file" multiple></div>
       <div class="toolbar">
         <input class="search" id="nl-test" placeholder="Тестовое письмо на почту…">
@@ -225,30 +265,29 @@ canvas{display:block;width:100%;}
         <button class="btn" id="nl-send">Отправить всем</button>
       </div>
     </div>
-    <div class="card"><h3>🗂 История рассылок</h3><div class="list" id="nl-log"></div></div>
+    <div class="card"><h3 data-ico="mail">История рассылок</h3><div class="list" id="nl-log"></div></div>
   </div>
 
   <!-- НАСТРОЙКИ -->
   <div class="page" id="page-settings">
     <div class="card">
-      <h3>🔒 PIN-код входа</h3>
+      <h3 data-ico="lock">PIN-код входа</h3>
       <div class="h-sub">Цифровой пароль для входа в админку. Только цифры, 4–6 знаков.</div>
       <div class="field"><label>Новый PIN</label><input id="pin-new" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="например 2026"></div>
       <div class="field"><label>Повтори новый PIN</label><input id="pin-new2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="ещё раз"></div>
       <button class="btn" id="pin-save">Сменить PIN</button>
     </div>
     <div class="card">
-      <h3>📍 Клуб и приглашение</h3>
+      <h3 data-ico="pin">Клуб и приглашение</h3>
       <div class="field"><label>Адрес клуба (в письмах-приглашениях)</label><input id="set-club_address"></div>
       <div class="field"><label>Ссылка на карту</label><input id="set-club_address_map"></div>
       <div class="field"><label>Текст «получили заявку»</label><textarea id="set-welcome_text"></textarea></div>
       <div class="field"><label>Текст приглашения (через 15 мин)</label><textarea id="set-invite_text"></textarea></div>
-      <div class="field"><label>Лид-магнит — заголовок</label><input id="set-magnet_title"></div>
-      <div class="field"><label>Лид-магнит — ссылка</label><input id="set-magnet_url"></div>
+      <div class="h-sub" style="margin-top:4px">Цепочка из 4 лид-магнитов уходит автоматически: +15 мин, +1 ч, +6 ч, +24 ч после любой формы.</div>
       <button class="btn" id="set-save">Сохранить настройки</button>
     </div>
     <div class="card">
-      <h3>ℹ️ Подсказка</h3>
+      <h3 data-ico="info">Подсказка</h3>
       <div class="h-sub" style="line-height:1.7">
         • Письма уходят с <b>ducks.game.space@gmail.com</b> (Gmail App Password, CURL SMTP).<br>
         • Новые заявки и купоны дублируются на почты руководителей.<br>
@@ -268,6 +307,29 @@ let PIN=sessionStorage.getItem(PIN_KEY)||'';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* Профессиональные SVG-иконки (stroke=currentColor) вместо эмодзи */
+const _s=(p,o='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ${o}>${p}</svg>`;
+const ICO={
+  dash:_s('<path d="M3 13h8V3H3zM13 21h8V8h-8zM13 3v3h8V3zM3 21h8v-5H3z"/>'),
+  users:_s('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'),
+  ticket:_s('<path d="M3 9a3 3 0 0 0 0 6v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/><path d="M13 5v14" stroke-dasharray="2 2"/>'),
+  text:_s('<path d="M4 7V5h16v2M9 5v14M7 19h4"/><path d="M14 13h6M17 10v6"/>'),
+  mail:_s('<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/>'),
+  gear:_s('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 11 4.6V4a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 2.82-1.17l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 2z"/>'),
+  trash:_s('<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>'),
+  qr:_s('<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM20 14v7M17 20h4"/>'),
+  send:_s('<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>'),
+  download:_s('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>'),
+  check:_s('<path d="M20 6 9 17l-5-5"/>'),
+  edit:_s('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/>'),
+  invite:_s('<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>'),
+  resend:_s('<path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/>'),
+  plus:_s('<path d="M12 5v14M5 12h14"/>'),
+  info:_s('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>'),
+  lock:_s('<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'),
+  pin:_s('<path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>'),
+};
+const I=(n,sz=18)=>`<span class="ico" style="display:inline-flex;width:${sz}px;height:${sz}px;vertical-align:-3px">${ICO[n]||''}</span>`;
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2200);}
 async function api(action,data={},opts={}){
   const url='../api.php?action='+action+(opts.query?'&'+opts.query:'');
@@ -369,7 +431,7 @@ async function loadSubs(){
     const dt=new Date(s.created*1000).toLocaleDateString('ru-RU');
     const src=s.source==='darts'?'<span class="tag darts">дартс −15%</span>':'<span class="tag form">форма</span>';
     return `<div class="row"><div class="rh"><div><div class="nm">${esc(s.name||'Без имени')}</div>
-      <div class="meta">📧 ${esc(s.email)}<br>📱 ${esc(s.phone||'—')}${s.game?'<br>🎲 '+esc(s.game+' '+(s.format||'')):''}<br>🕒 ${dt} · ${esc(s.status)}</div></div>${src}</div>
+      <div class="meta"> ${esc(s.email)}<br> ${esc(s.phone||'—')}${s.game?'<br> '+esc(s.game+' '+(s.format||'')):''}<br> ${dt} · ${esc(s.status)}</div></div>${src}</div>
       <div class="acts">
         <button class="btn sm" onclick="manualInvite(${s.id})">Пригласить</button>
         <button class="btn ghost sm" onclick='editSub(${JSON.stringify(s)})'>Изменить</button>
@@ -412,7 +474,7 @@ async function loadCoupons(){
   el.innerHTML=j.items.map(c=>{
     const dt=new Date(c.created*1000).toLocaleDateString('ru-RU');
     return `<div class="row"><div class="rh"><div><div class="nm">№ ${esc(c.number)} · −${c.discount}%</div>
-      <div class="meta">${esc(c.name||'—')}<br>📧 ${esc(c.email||'—')}<br>📱 ${esc(c.phone||'—')} · 🎯 ${c.score} очк · ${dt}</div></div>
+      <div class="meta">${esc(c.name||'—')}<br> ${esc(c.email||'—')}<br> ${esc(c.phone||'—')} ·  ${c.score} очк · ${dt}</div></div>
       <span class="tag ${c.status}">${c.status==='active'?'активен':c.status==='used'?'использован':'аннулирован'}</span></div>
       <div class="acts">
         ${c.status!=='used'?`<button class="btn sm" onclick="cpAct(${c.id},'use')">Использован</button>`:''}
@@ -438,27 +500,57 @@ window.issueCoupon=()=>{
   };
 };
 
+/* ---------- СКАНЕР QR КУПОНА ---------- */
+let qrStream=null,qrLoop=null;
+function qrShow(res){
+  const el=$('#qr-out');let bg='#15151a',col='#fff',txt='';
+  if(!res||res.status==='notfound'){bg='#241010';col='#ff9d9d';txt='Купон не найден';}
+  else if(res.status==='used'&&res.already){bg='#241a10';col='#ffcf8a';txt='Уже использован · '+(res.name||'')+' · №'+res.number;}
+  else if(res.status==='void'){bg='#241010';col='#ff9d9d';txt='Аннулирован · №'+res.number;}
+  else if(res.status==='ok'){bg='#0e2417';col='#7ef0a8';txt='Действителен −'+res.discount+'% · '+(res.name||'')+' · отмечен использованным';}
+  el.innerHTML=`<div class="qr-result" style="background:${bg};color:${col}">${I('check',18)} ${esc(txt)}</div>`;
+}
+async function qrSubmit(data){ if(!data)return; const r=await api('scanCoupon',{pin:PIN,data}); qrShow(r); loadCoupons(); }
+$('#qr-check').onclick=()=>qrSubmit($('#qr-manual').value.trim());
+$('#qr-start').onclick=async()=>{
+  try{
+    qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const v=$('#qr-video');v.srcObject=qrStream;v.style.display='block';await v.play();
+    $('#qr-start').style.display='none';$('#qr-stop').style.display='';
+    const cv=document.createElement('canvas');const cx=cv.getContext('2d');let last=0;
+    qrLoop=setInterval(()=>{
+      if(v.readyState!==v.HAVE_ENOUGH_DATA||!window.jsQR)return;
+      cv.width=v.videoWidth;cv.height=v.videoHeight;cx.drawImage(v,0,0,cv.width,cv.height);
+      const img=cx.getImageData(0,0,cv.width,cv.height);
+      const code=jsQR(img.data,img.width,img.height);
+      if(code&&code.data&&Date.now()-last>2500){last=Date.now();qrSubmit(code.data);}
+    },400);
+  }catch(e){toast('Нет доступа к камере');}
+};
+$('#qr-stop').onclick=()=>{ if(qrLoop)clearInterval(qrLoop); if(qrStream)qrStream.getTracks().forEach(t=>t.stop());
+  $('#qr-video').style.display='none';$('#qr-start').style.display='';$('#qr-stop').style.display='none'; };
+
 /* ---------- ТЕКСТЫ (схема по разделам) ---------- */
 const CONTENT_SCHEMA=[
-  {g:'🏠 Главная (Hero)',f:[['hero.title','Заголовок'],['hero.sub','Подзаголовок'],['hero.desc','Описание',1]]},
-  {g:'ℹ️ О клубе',f:[['about.label','Метка'],['about.title','Заголовок (можно <em>)',1],['about.note','Приписка'],
+  {g:'Главная (Hero)',f:[['hero.title','Заголовок'],['hero.sub','Подзаголовок'],['hero.desc','Описание',1]]},
+  {g:'О клубе',f:[['about.label','Метка'],['about.title','Заголовок (формат: жирность/курсив/размер)',1,0,1],['about.note','Приписка'],
     ['about.c1.t','Карточка 1 · заголовок'],['about.c1.s','Карточка 1 · текст'],
     ['about.c2.t','Карточка 2 · заголовок'],['about.c2.s','Карточка 2 · текст'],
     ['about.c3.t','Карточка 3 · заголовок'],['about.c3.s','Карточка 3 · текст'],
     ['about.c4.t','Карточка 4 · заголовок'],['about.c4.s','Карточка 4 · текст']]},
-  {g:'♠️ Покер',f:[['poker.title','Заголовок'],['poker.sub','Подзаголовок'],['poker.btn','Текст кнопки']]},
-  {g:'🎯 Дартс',f:[['darts.title','Заголовок'],['darts.sub','Подзаголовок'],['darts.promo','Промо (можно <b>,<span>)',1]]},
-  {g:'🎱 Бильярд',f:[['billiard.title','Заголовок'],['billiard.sub','Подзаголовок'],
+  {g:'Покер',f:[['poker.title','Заголовок'],['poker.sub','Подзаголовок'],['poker.btn','Текст кнопки']]},
+  {g:'Дартс',f:[['darts.title','Заголовок'],['darts.sub','Подзаголовок'],['darts.promo','Промо-строка (формат)',1,0,1]]},
+  {g:'Бильярд',f:[['billiard.title','Заголовок'],['billiard.sub','Подзаголовок'],
     ['billiard.c1.t','Карточка 1 · заголовок'],['billiard.c1.s','Карточка 1 · текст'],
     ['billiard.c2.t','Карточка 2 · заголовок'],['billiard.c2.s','Карточка 2 · текст'],
     ['billiard.c3.t','Карточка 3 · заголовок'],['billiard.c3.s','Карточка 3 · текст'],
     ['billiard.c4.t','Карточка 4 · заголовок'],['billiard.c4.s','Карточка 4 · текст']]},
-  {g:'🍸 Бар',f:[['bar.title','Заголовок'],['bar.sub','Подзаголовок'],
+  {g:' Бар',f:[['bar.title','Заголовок'],['bar.sub','Подзаголовок'],
     ['bar.c1.t','Карточка 1 · заголовок'],['bar.c1.s','Карточка 1 · текст'],
     ['bar.c2.t','Карточка 2 · заголовок'],['bar.c2.s','Карточка 2 · текст'],
     ['bar.c3.t','Карточка 3 · заголовок'],['bar.c3.s','Карточка 3 · текст']]},
-  {g:'❓ FAQ — заголовок секции',f:[['faq.title','Заголовок'],['faq.sub','Подзаголовок']]},
-  {g:'📝 Форма «Записаться»',f:[['form.signup.kicker','Метка'],['form.signup.title','Заголовок'],['form.signup.desc','Описание',1],
+  {g:'FAQ — заголовок секции',f:[['faq.title','Заголовок'],['faq.sub','Подзаголовок']]},
+  {g:'Форма «Записаться»',f:[['form.signup.kicker','Метка'],['form.signup.title','Заголовок'],['form.signup.desc','Описание',1],
     ['form.signup.labelName','Поле · Имя'],['form.signup.labelEmail','Поле · Email'],['form.signup.labelPhone','Поле · Телефон',1],
     ['form.signup.labelGame','Поле · Любимая игра'],['form.signup.labelFormat','Поле · Формат'],['form.signup.submit','Кнопка отправки'],
     ['form.signup.games','Варианты игр (через запятую)',0,1],['form.signup.formats','Варианты форматов (через запятую)',0,1]]},
@@ -470,11 +562,16 @@ async function loadContent(){
   contentData=j.content&&typeof j.content==='object'?j.content:{};
   $('#content-fields').innerHTML=CONTENT_SCHEMA.map(sec=>`
     <details class="acc"${sec.g.includes('Главная')?' open':''}><summary>${sec.g}</summary><div class="acc-b">${
-      sec.f.map(([k,l,ml,list])=>{
+      sec.f.map(([k,l,ml,list,html])=>{
         let v=cGet(k); if(list&&Array.isArray(v))v=v.join(', ');
+        const id='ed_'+k.replace(/\W/g,'_');
+        if(html) return `<div class="field"><label>${l}</label>`
+          + `<div class="rt-tools" data-rt="${id}"></div>`
+          + `<div class="rt-ed" id="${id}" contenteditable="true" data-ckh="${k}">${v}</div></div>`;
         return `<div class="field"><label>${l}</label>${ml?`<textarea data-ck="${k}"${list?' data-list="1"':''}>${esc(v)}</textarea>`:`<input data-ck="${k}"${list?' data-list="1"':''} value="${esc(v)}">`}</div>`;
       }).join('')
     }</div></details>`).join('');
+  $$('#content-fields .rt-tools').forEach(t=>mountRT('[data-rt="'+t.dataset.rt+'"]'));
   const items=(contentData.faq&&contentData.faq.items)||[];
   $('#faq-fields').innerHTML=items.map((it,i)=>`<div class="field" style="border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px">
     <label>Фишка ${i+1} — вопрос (\\n = новая строка)</label><textarea data-fq="${i}">${esc(it.q||'')}</textarea>
@@ -486,7 +583,8 @@ $('#content-save').onclick=async()=>{
     let v=el.value; if(el.dataset.list)v=v.split(',').map(s=>s.trim()).filter(Boolean);
     setDeep(contentData,el.dataset.ck,v);
   });
-  await api('saveContent',{pin:PIN,content:contentData});toast('Тексты сохранены ✓');
+  $$('#content-fields [data-ckh]').forEach(el=>setDeep(contentData,el.dataset.ckh,el.innerHTML.trim()));
+  await api('saveContent',{pin:PIN,content:contentData});toast('Тексты сохранены');
 };
 $('#faq-save').onclick=async()=>{
   contentData.faq=contentData.faq||{};contentData.faq.items=contentData.faq.items||[];
@@ -496,13 +594,24 @@ $('#faq-save').onclick=async()=>{
 };
 
 /* ---------- РАССЫЛКИ ---------- */
+const BOT='https://t.me/ducks_gameclub_bot', CHAN='https://t.me/duckspokerspace';
 const TEMPLATES=[
-  {name:'Приглашение на вечер',sub:'зовём за стол',subject:'Ждём тебя на ближайшем вечере в DUCK\'S 🦆',body:'Привет, {name}!<br>В эту субботу собираемся за столом. Покер, дартс, бильярд и бар для своих.<br>Бронируй место — мест немного.',buttons:'Забронировать | https://t.me/ducks_gameclub_bot'},
-  {name:'Турнир по покеру',sub:'анонс турнира',subject:'Покерный турнир в DUCK\'S — успей записаться ♠️',body:'{name}, открыта запись на турнир. Формат BOUNTY, призовой рейтинг клуба.<br>Старт в 19:00.',buttons:'Записаться | https://t.me/ducks_gameclub_bot'},
-  {name:'Возвращаем гостя',sub:'давно не виделись',subject:'Соскучились по тебе в DUCK\'S 🦆',body:'{name}, давно тебя не было за столом. Возвращайся — для своих всегда место найдётся.',buttons:'Вернуться | https://t.me/ducks_gameclub_bot'},
-  {name:'Скидка −15%',sub:'напоминание о купоне',subject:'Твоя скидка −15% ещё ждёт 🎯',body:'{name}, напоминаем: у тебя есть скидка 15% на вечер. Покажи купон на входе.',buttons:'В Telegram | https://t.me/duckspokerspace'},
+  {name:'Приглашение на вечер',sub:'зовём за стол',subject:'Ждём тебя на ближайшем вечере в DUCK\'S',
+   body:'Привет, {name}!<br><br>В эту субботу собираемся за столом. Покер, дартс, бильярд и бар для своих.<br>Бронируй место — мест немного.',
+   buttons:[{label:'Записаться',url:BOT},{label:'Мы в Telegram',url:CHAN}]},
+  {name:'Турнир по покеру',sub:'анонс турнира',subject:'Покерный турнир в DUCK\'S — успей записаться',
+   body:'{name}, открыта запись на турнир. Формат BOUNTY, призовой рейтинг клуба.<br>Старт в 19:00.',
+   buttons:[{label:'Записаться',url:BOT},{label:'Подпишись на анонсы',url:CHAN}]},
+  {name:'Возвращаем гостя',sub:'давно не виделись',subject:'Соскучились по тебе в DUCK\'S',
+   body:'{name}, давно тебя не было за столом. Возвращайся — для своих всегда место найдётся.',
+   buttons:[{label:'Записаться',url:BOT}]},
+  {name:'Скидка −15%',sub:'напоминание о купоне',subject:'Твоя скидка −15% ещё ждёт',
+   body:'{name}, напоминаем: у тебя есть скидка 15% на вечер. Покажи купон на входе.',
+   buttons:[{label:'Забрать бонус',url:CHAN},{label:'Записаться',url:BOT}]},
 ];
+let nlReady=false;
 function loadNews(){
+  if(!nlReady){ mountRT('[data-rt="nl-body"]'); $('#nl-add-btn').onclick=()=>addBtnRow(); nlReady=true; }
   $('#tpl-grid').innerHTML=TEMPLATES.map((t,i)=>`<div class="tpl" onclick="useTpl(${i})"><b>${esc(t.name)}</b><span>${esc(t.sub)}</span></div>`).join('');
   api('getNewsletters',{},{get:true,query:'pin='+PIN}).then(j=>{
     $('#nl-log').innerHTML=(j.items&&j.items.length)?j.items.map(n=>{
@@ -511,21 +620,28 @@ function loadNews(){
     }).join(''):'<div class="empty">Рассылок ещё не было</div>';
   });
 }
-window.useTpl=(i)=>{const t=TEMPLATES[i];$('#nl-subject').value=t.subject;$('#nl-body').value=t.body;$('#nl-buttons').value=t.buttons;toast('Шаблон загружен');};
-function parseButtons(){return $('#nl-buttons').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const[label,url]=l.split('|').map(s=>s.trim());return label&&url?{label,url}:null;}).filter(Boolean);}
+window.useTpl=(i)=>{const t=TEMPLATES[i];$('#nl-subject').value=t.subject;$('#nl-body').innerHTML=t.body;
+  $('#nl-btn-rows').innerHTML='';(t.buttons||[]).forEach(b=>addBtnRow(b.label,b.url));toast('Шаблон загружен');};
+function addBtnRow(text='',url=''){
+  const wrap=$('#nl-btn-rows');const row=document.createElement('div');row.className='btn-row';
+  row.innerHTML=`<input placeholder="Текст кнопки" value="${esc(text)}"><input placeholder="https://ссылка" value="${esc(url)}"><button type="button" class="del" title="Удалить">${ICO.trash}</button>`;
+  row.querySelector('.del').onclick=()=>row.remove();wrap.append(row);
+}
+function getBtnRows(){return $$('#nl-btn-rows .btn-row').map(r=>{const i=r.querySelectorAll('input');return{label:i[0].value.trim(),url:i[1].value.trim()};}).filter(x=>x.label&&x.url);}
+function nlBody(){return $('#nl-body').innerHTML.trim();}
 function readFiles(){return Promise.all([...$('#nl-files').files].map(f=>new Promise(res=>{const r=new FileReader();r.onload=()=>res({name:f.name,type:f.type,data:r.result});r.readAsDataURL(f);})));}
 $('#nl-test-btn').onclick=async()=>{
   const test=$('#nl-test').value.trim();if(!test)return toast('Укажи почту для теста');
   const atts=await readFiles();
-  const r=await api('sendNewsletter',{pin:PIN,subject:$('#nl-subject').value,html:$('#nl-body').value,buttons:parseButtons(),attachments:atts,test});
+  const r=await api('sendNewsletter',{pin:PIN,subject:$('#nl-subject').value,html:nlBody(),buttons:getBtnRows(),attachments:atts,test});
   toast(r.ok?'Тест отправлен':'Ошибка');
 };
 $('#nl-send').onclick=async()=>{
-  if(!$('#nl-subject').value||!$('#nl-body').value)return toast('Заполни тему и текст');
+  if(!$('#nl-subject').value||!nlBody())return toast('Заполни тему и текст');
   if(!confirm('Отправить рассылку выбранной аудитории?'))return;
   const atts=await readFiles();
   $('#nl-send').textContent='Отправка…';$('#nl-send').disabled=true;
-  const r=await api('sendNewsletter',{pin:PIN,subject:$('#nl-subject').value,html:$('#nl-body').value,buttons:parseButtons(),attachments:atts,audience:$('#nl-audience').value});
+  const r=await api('sendNewsletter',{pin:PIN,subject:$('#nl-subject').value,html:nlBody(),buttons:getBtnRows(),attachments:atts,audience:$('#nl-audience').value});
   $('#nl-send').textContent='Отправить всем';$('#nl-send').disabled=false;
   toast(r.ok?`Отправлено: ${r.sent}/${r.total}`:'Ошибка');loadNews();
 };
@@ -534,11 +650,11 @@ $('#nl-send').onclick=async()=>{
 async function loadSettings(){
   const j=await api('getSettings',{},{get:true,query:'pin='+PIN});
   if(!j.ok)return;const s=j.settings;
-  ['club_address','club_address_map','welcome_text','invite_text','magnet_title','magnet_url'].forEach(k=>{const el=$('#set-'+k);if(el)el.value=s[k]||'';});
+  ['club_address','club_address_map','welcome_text','invite_text'].forEach(k=>{const el=$('#set-'+k);if(el)el.value=s[k]||'';});
 }
 $('#set-save').onclick=async()=>{
-  const o={};['club_address','club_address_map','welcome_text','invite_text','magnet_title','magnet_url'].forEach(k=>o[k]=$('#set-'+k).value);
-  await api('saveSettings',{pin:PIN,settings:o});toast('Настройки сохранены ✓');
+  const o={};['club_address','club_address_map','welcome_text','invite_text'].forEach(k=>o[k]=$('#set-'+k).value);
+  await api('saveSettings',{pin:PIN,settings:o});toast('Настройки сохранены');
 };
 // смена PIN — только цифры, обновляем сессию на лету
 ['pin-new','pin-new2'].forEach(id=>$('#'+id).addEventListener('input',e=>{e.target.value=e.target.value.replace(/\D/g,'');}));
@@ -547,9 +663,36 @@ $('#pin-save').onclick=async()=>{
   if(a.length<4||a.length>6)return toast('PIN: 4–6 цифр');
   if(a!==b)return toast('PIN не совпадает');
   const r=await api('setPin',{pin:PIN,newPin:a});
-  if(r.ok){PIN=r.pin;sessionStorage.setItem(PIN_KEY,PIN);$('#pin-new').value='';$('#pin-new2').value='';toast('PIN изменён ✓');}
+  if(r.ok){PIN=r.pin;sessionStorage.setItem(PIN_KEY,PIN);$('#pin-new').value='';$('#pin-new2').value='';toast('PIN изменён');}
   else toast(r.error||'Ошибка');
 };
+
+/* ---------- rich-text редактор (Ж/К/П, размер, цвет) ---------- */
+function mountRT(sel){
+  const tools=$(sel); if(!tools||tools.dataset.mounted) return; tools.dataset.mounted='1';
+  const target=$('#'+tools.dataset.rt);
+  const cmd=(c,v)=>{target.focus();document.execCommand(c,false,v);};
+  const mk=(html,fn,title)=>{const b=document.createElement('button');b.type='button';b.title=title||'';b.innerHTML=html;
+    b.onmousedown=(e)=>{e.preventDefault();fn();};return b;};
+  tools.append(
+    mk('<b>Ж</b>',()=>cmd('bold'),'Жирный'),
+    mk('<i>К</i>',()=>cmd('italic'),'Курсив'),
+    mk('<u>П</u>',()=>cmd('underline'),'Подчёркнутый'),
+  );
+  const sz=document.createElement('select');
+  [['Размер',''],['Мелкий','2'],['Обычный','3'],['Крупный','5'],['Заголовок','6']].forEach(([t,v])=>{
+    const o=document.createElement('option');o.textContent=t;o.value=v;sz.append(o);});
+  sz.onchange=()=>{if(sz.value)cmd('fontSize',sz.value);sz.selectedIndex=0;};
+  tools.append(sz, mk('<span style="color:#cc0000">Цвет</span>',()=>cmd('foreColor','#cc0000'),'Красный'),
+    mk('Очистить',()=>cmd('removeFormat'),'Убрать формат'));
+}
+
+/* ---------- иконки в заголовках и навигации ---------- */
+(function renderIcons(){
+  $$('h3[data-ico]').forEach(h=>{ if(!h.querySelector('.ico')) h.insertAdjacentHTML('afterbegin', I(h.dataset.ico,18)+' '); });
+  const navIco={dash:'dash',subs:'users',coupons:'ticket',content:'text',news:'mail',settings:'gear'};
+  $$('.nav button').forEach(b=>{ const ic=navIco[b.dataset.p]; if(ic&&!b.querySelector('.ico')) b.insertAdjacentHTML('afterbegin', I(ic,16)); });
+})();
 
 /* ---------- modal/utils ---------- */
 function openSheet(html){$('#sheet').innerHTML=html;$('#modal').classList.add('on');}

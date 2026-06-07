@@ -1,7 +1,7 @@
 <?php
 /* ============================================================
-   DUCK'S — фоновый воркер. Шлёт отложенные авто-приглашения (через 15 мин),
-   досылает welcome/лид-магнит если не ушли синхронно.
+   DUCK'S — фоновый воркер. Шлёт авто-цепочку из очереди drips:
+     +15м приглашение, +15м магнит1, +1ч магнит2, +6ч магнит3, +24ч магнит4.
    Запуск по cron РАЗ В МИНУТУ — внутри цикл 6×sleep(10) ≈ каждые 10 сек:
      * * * * * php /home/USER/public_html/cron.php >/dev/null 2>&1
    Защита от параллельного запуска — lock-файл.
@@ -13,36 +13,38 @@ require_once __DIR__ . '/templates.php';
 @ignore_user_abort(true);
 @set_time_limit(70);
 
+if (!is_dir(__DIR__ . '/data')) @mkdir(__DIR__ . '/data', 0775, true);
 $lock = fopen(__DIR__ . '/data/cron.lock', 'c');
 if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) exit;  // уже работает
 
 function tick() {
   $pdo = db(); $now = time();
-
-  // 1) Авто-приглашения, которым пришло время
-  $st = $pdo->prepare("SELECT * FROM subscribers WHERE invited=0 AND invite_at>0 AND invite_at<=? LIMIT 20");
+  // выбираем созревшие задачи
+  $st = $pdo->prepare("SELECT d.*, s.name, s.email FROM drips d
+                       JOIN subscribers s ON s.id = d.subscriber_id
+                       WHERE d.sent=0 AND d.send_at<=? ORDER BY d.send_at ASC LIMIT 30");
   $st->execute([$now]);
-  foreach ($st->fetchAll() as $s) {
-    if (@sendEmail($s['email'], "Твоё приглашение в DUCK'S 🦆", inviteEmail($s['name']))) {
-      $pdo->prepare("UPDATE subscribers SET invited=1, status='invited', invite_at=0, updated=? WHERE id=?")
-          ->execute([time(), $s['id']]);
-    }
+  foreach ($st->fetchAll() as $d) {
+    $email = $d['email']; $name = $d['name']; $kind = $d['kind']; $ok = false;
+    if (!$email) { $pdo->prepare("UPDATE drips SET sent=1 WHERE id=?")->execute([$d['id']]); continue; }
+    if ($kind === 'invite') {
+      $ok = @sendEmail($email, "Твоё приглашение в DUCK'S", inviteEmail($name));
+      if ($ok) $pdo->prepare("UPDATE subscribers SET invited=1, status='invited', updated=? WHERE id=?")
+                   ->execute([time(), $d['subscriber_id']]);
+    } elseif (strpos($kind, 'magnet') === 0) {
+      $m = magnets()[$kind] ?? null;
+      $subj = $m ? $m['title'] . ' — DUCK\'S' : 'Материал от DUCK\'S';
+      $ok = @sendEmail($email, $subj, magnetEmail($name, $kind));
+    } else { $ok = true; }
+    if ($ok) $pdo->prepare("UPDATE drips SET sent=1 WHERE id=?")->execute([$d['id']]);
   }
 
-  // 2) Досыл welcome (если sync-отправка не сработала)
-  $st = $pdo->prepare("SELECT * FROM subscribers WHERE welcomed=0 AND source='form' LIMIT 20");
+  // подстраховка: досыл welcome, если sync-отправка не прошла
+  $st = $pdo->prepare("SELECT * FROM subscribers WHERE welcomed=0 AND is_form=1 LIMIT 20");
   $st->execute();
   foreach ($st->fetchAll() as $s) {
-    @sendEmail($s['email'], 'Заявка принята — DUCK\'S GAME SPACE 🦆', welcomeEmail($s['name']));
+    @sendEmail($s['email'], 'Заявка принята — DUCK\'S GAME SPACE', welcomeEmail($s['name']));
     $pdo->prepare("UPDATE subscribers SET welcomed=1, updated=? WHERE id=?")->execute([time(), $s['id']]);
-  }
-
-  // 3) Досыл лид-магнита
-  $st = $pdo->prepare("SELECT * FROM subscribers WHERE magnet_sent=0 AND source='form' LIMIT 20");
-  $st->execute();
-  foreach ($st->fetchAll() as $s) {
-    @sendEmail($s['email'], setting('magnet_title') . ' — подарок DUCK\'S 🎁', magnetEmail($s['name']));
-    $pdo->prepare("UPDATE subscribers SET magnet_sent=1, updated=? WHERE id=?")->execute([time(), $s['id']]);
   }
 }
 

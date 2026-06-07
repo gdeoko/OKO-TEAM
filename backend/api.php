@@ -50,12 +50,13 @@ switch ($action) {
     $id = upsertSubscriber($d);
     logEvent('form', 'signup', ['id' => $id, 'game' => $d['game']]);
     logEvent('conversion', 'lead');
-    // мгновенно: welcome игроку, лид-магнит, письмо+ТГ руководителям
-    @sendEmail($d['email'], 'Заявка принята — DUCK\'S GAME SPACE 🦆', welcomeEmail($d['name']));
-    @sendEmail($d['email'], setting('magnet_title') . ' — подарок DUCK\'S 🎁', magnetEmail($d['name']));
-    db()->prepare("UPDATE subscribers SET welcomed=1, magnet_sent=1 WHERE id=?")->execute([$id]);
+    // КЛИЕНТУ: только «заявка принята». Приглашение и 4 материала — авто-цепочкой (cron).
+    @sendEmail($d['email'], 'Заявка принята — DUCK\'S GAME SPACE', welcomeEmail($d['name']));
+    db()->prepare("UPDATE subscribers SET welcomed=1 WHERE id=?")->execute([$id]);
+    enqueueDrips($id);
+    // РУКОВОДИТЕЛЯМ (только ящик клуба): технический отчёт. Клиенту это письмо НЕ уходит.
     foreach (array_filter(array_map('trim', explode(',', ADMIN_EMAILS))) as $ae)
-      @sendEmail($ae, '🦆 Новая заявка с сайта', adminLeadHtml($d, 'Заявка'));
+      @sendEmail($ae, 'Новая заявка с сайта', adminLeadHtml($d, 'Заявка'));
     out(['ok' => true, 'id' => $id]);
   }
 
@@ -67,27 +68,26 @@ switch ($action) {
     // один активный купон на почту
     $st = db()->prepare("SELECT number,discount FROM coupons WHERE email=? AND status='active' LIMIT 1");
     $st->execute([$email]); $exist = $st->fetch();
+    $sid = upsertSubscriber(['name'=>$name,'email'=>$email,'phone'=>$phone,'source'=>'darts']);
     if ($exist) { $number = $exist['number']; $discount = (int)$exist['discount']; }
     else {
       $number = genCouponNumber();
-      $sid = upsertSubscriber(['name'=>$name,'email'=>$email,'phone'=>$phone,'source'=>'darts']);
       db()->prepare("INSERT INTO coupons (number,name,email,phone,discount,score,status,subscriber_id,created,updated)
                      VALUES (?,?,?,?,?,?, 'active', ?, ?, ?)")
           ->execute([$number,$name,$email,$phone,$discount,$score,$sid,time(),time()]);
     }
     logEvent('coupon', 'issued', ['number'=>$number,'score'=>$score]);
     logEvent('conversion', 'coupon');
-    $dlUrl = SITE_URL . '/api.php?action=downloadCoupon&number=' . urlencode($number);
-    $html = couponEmail($name, $number, $discount);
-    @sendEmail($email, "Твой купон −$discount% — DUCK'S 🎯", $html, [
-      ['name' => "kupon-$number.html", 'type' => 'text/html',
-       'data' => couponCardHtml($name, $number, $discount)],
-    ]);
+    $cardUrl = SITE_URL . '/api.php?action=couponCard&number=' . urlencode($number);
+    // КЛИЕНТУ: красивый купон (QR + скачать). Приглашение и материалы — авто-цепочкой.
+    @sendEmail($email, "Твой купон −$discount% — DUCK'S", couponEmail($name, $number, $discount));
+    enqueueDrips($sid);
+    // РУКОВОДИТЕЛЯМ (только ящик клуба):
     foreach (array_filter(array_map('trim', explode(',', ADMIN_EMAILS))) as $ae)
-      @sendEmail($ae, '🎯 Купон выдан с сайта',
+      @sendEmail($ae, 'Купон выдан с сайта',
         adminLeadHtml(['name'=>$name,'email'=>$email,'phone'=>$phone,'score'=>$score,
           'number'=>$number,'source'=>'darts'], 'Купон'));
-    out(['ok' => true, 'number' => $number, 'download' => $dlUrl]);
+    out(['ok' => true, 'number' => $number, 'download' => $cardUrl]);
   }
 
   case 'track': {
@@ -97,13 +97,40 @@ switch ($action) {
     out(['ok' => true]);
   }
 
-  case 'downloadCoupon': {
+  case 'couponCard':
+  case 'downloadCoupon': {  // красивая страница купона (QR + скачать как фото)
     header_remove('Content-Type'); header('Content-Type: text/html; charset=utf-8');
     $number = trim(inp('number'));
     $st = db()->prepare("SELECT * FROM coupons WHERE number=?"); $st->execute([$number]);
     $c = $st->fetch();
     if (!$c) { echo '<h1 style="color:#fff;background:#000;font-family:sans-serif;padding:40px;">Купон не найден</h1>'; exit; }
     echo couponCardHtml($c['name'], $c['number'], $c['discount']); exit;
+  }
+
+  case 'verifyCoupon': {  // открывается при скане QR на входе: показывает статус и гасит купон
+    header_remove('Content-Type'); header('Content-Type: text/html; charset=utf-8');
+    $number = trim(inp('number'));
+    $st = db()->prepare("SELECT * FROM coupons WHERE number=?"); $st->execute([$number]);
+    $c = $st->fetch();
+    $msg = $color = $sub = '';
+    if (!$c) { $msg = 'Купон не найден'; $color = '#888'; $sub = htmlspecialchars($number); }
+    elseif ($c['status'] === 'used') { $msg = 'Уже использован'; $color = '#ff7a7a';
+      $sub = 'Купон №' . htmlspecialchars($c['number']) . ' · ' . htmlspecialchars($c['name']); }
+    elseif ($c['status'] === 'void') { $msg = 'Аннулирован'; $color = '#ff7a7a';
+      $sub = 'Купон №' . htmlspecialchars($c['number']); }
+    else {
+      db()->prepare("UPDATE coupons SET status='used', updated=? WHERE id=?")->execute([time(), $c['id']]);
+      logEvent('coupon', 'used', ['number'=>$c['number']]);
+      $msg = 'Купон действителен · −' . (int)$c['discount'] . '%'; $color = '#5ee08a';
+      $sub = htmlspecialchars($c['name']) . ' · №' . htmlspecialchars($c['number']) . '<br>Отмечен как использованный';
+    }
+    echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+      . '<body style="margin:0;background:#070707;color:#fff;font-family:Arial,sans-serif;min-height:100vh;display:flex;'
+      . 'align-items:center;justify-content:center;text-align:center;padding:24px;"><div>'
+      . '<img src="' . DUCK_MASCOT_URL . '" width="80"><div style="font-weight:900;letter-spacing:3px;margin:8px 0 22px;">DUCK<span style="color:' . BRAND_RED . '">\'</span>S</div>'
+      . '<div style="font-size:24px;font-weight:800;color:' . $color . ';">' . $msg . '</div>'
+      . '<div style="color:#aaa;margin-top:10px;font-size:14px;line-height:1.6;">' . $sub . '</div></div></body>';
+    exit;
   }
 
   case 'getContent': {  // публично: тексты сайта
@@ -133,8 +160,8 @@ switch ($action) {
     $cnt = fn($q,$p=[]) => (function() use ($pdo,$q,$p){ $s=$pdo->prepare($q); $s->execute($p); return (int)$s->fetchColumn(); })();
     $stats = [
       'subscribers' => $cnt("SELECT COUNT(*) FROM subscribers"),
-      'fromForm'    => $cnt("SELECT COUNT(*) FROM subscribers WHERE source='form'"),
-      'fromDarts'   => $cnt("SELECT COUNT(*) FROM subscribers WHERE source='darts'"),
+      'fromForm'    => $cnt("SELECT COUNT(*) FROM subscribers WHERE is_form=1"),
+      'fromDarts'   => $cnt("SELECT COUNT(*) FROM subscribers WHERE is_darts=1"),
       'invited'     => $cnt("SELECT COUNT(*) FROM subscribers WHERE invited=1"),
       'coupons'     => $cnt("SELECT COUNT(*) FROM coupons"),
       'couponsActive' => $cnt("SELECT COUNT(*) FROM coupons WHERE status='active'"),
@@ -165,7 +192,9 @@ switch ($action) {
     requireAdmin();
     $src = inp('filter', 'all'); $q = trim(inp('q', ''));
     $sql = "SELECT * FROM subscribers WHERE 1=1"; $p = [];
-    if (in_array($src, ['form','darts'])) { $sql .= " AND source=?"; $p[] = $src; }
+    // фильтр по флагам: человек, заполнивший обе формы, виден в ОБОИХ списках
+    if ($src === 'form')  $sql .= " AND is_form=1";
+    if ($src === 'darts') $sql .= " AND is_darts=1";
     if ($q !== '') { $sql .= " AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)";
       $like = "%$q%"; array_push($p, $like, $like, $like); }
     $sql .= " ORDER BY created DESC LIMIT 500";
@@ -179,12 +208,14 @@ switch ($action) {
     $f = ['name'=>trim(inp('name')),'email'=>strtolower(trim(inp('email'))),
           'phone'=>trim(inp('phone')),'game'=>trim(inp('game')),'format'=>trim(inp('format')),
           'source'=>inp('source','form'),'status'=>inp('status','new'),'note'=>trim(inp('note'))];
+    $isForm = $f['source'] === 'form' ? 1 : 0; $isDarts = $f['source'] === 'darts' ? 1 : 0;
     if ($id) {
-      db()->prepare("UPDATE subscribers SET name=?,email=?,phone=?,game=?,format=?,source=?,status=?,note=?,updated=? WHERE id=?")
-        ->execute([$f['name'],$f['email'],$f['phone'],$f['game'],$f['format'],$f['source'],$f['status'],$f['note'],$now,$id]);
+      db()->prepare("UPDATE subscribers SET name=?,email=?,phone=?,game=?,format=?,source=?,
+                     is_form=MAX(is_form,CAST(? AS INTEGER)),is_darts=MAX(is_darts,CAST(? AS INTEGER)),status=?,note=?,updated=? WHERE id=?")
+        ->execute([$f['name'],$f['email'],$f['phone'],$f['game'],$f['format'],$f['source'],$isForm,$isDarts,$f['status'],$f['note'],$now,$id]);
     } else {
-      db()->prepare("INSERT INTO subscribers (name,email,phone,game,format,source,status,note,created,updated) VALUES (?,?,?,?,?,?,?,?,?,?)")
-        ->execute([$f['name'],$f['email'],$f['phone'],$f['game'],$f['format'],$f['source'],$f['status'],$f['note'],$now,$now]);
+      db()->prepare("INSERT INTO subscribers (name,email,phone,game,format,source,is_form,is_darts,status,note,created,updated) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+        ->execute([$f['name'],$f['email'],$f['phone'],$f['game'],$f['format'],$f['source'],$isForm,$isDarts,$f['status'],$f['note'],$now,$now]);
       $id = db()->lastInsertId();
     }
     out(['ok' => true, 'id' => $id]);
@@ -220,8 +251,7 @@ switch ($action) {
                    $disc, (int)inp('score',0), time(), time()]);
       $cid = db()->lastInsertId();
       if (filter_var(inp('email'), FILTER_VALIDATE_EMAIL) && inp('send'))
-        @sendEmail(inp('email'), "Твой купон −$disc% — DUCK'S 🎯", couponEmail(inp('name'),$number,$disc),
-          [['name'=>"kupon-$number.html",'type'=>'text/html','data'=>couponCardHtml(inp('name'),$number,$disc)]]);
+        @sendEmail(inp('email'), "Твой купон −$disc% — DUCK'S", couponEmail(inp('name'),$number,$disc));
       out(['ok'=>true,'number'=>$number,'id'=>$cid]);
     }
     if (in_array($op, ['use','void','active'])) {
@@ -231,12 +261,26 @@ switch ($action) {
     if ($op === 'delete') { db()->prepare("DELETE FROM coupons WHERE id=?")->execute([$id]); out(['ok'=>true]); }
     if ($op === 'resend') {
       $st=db()->prepare("SELECT * FROM coupons WHERE id=?"); $st->execute([$id]); $c=$st->fetch();
-      if ($c) @sendEmail($c['email'], "Твой купон −{$c['discount']}% — DUCK'S 🎯",
-        couponEmail($c['name'],$c['number'],$c['discount']),
-        [['name'=>"kupon-{$c['number']}.html",'type'=>'text/html','data'=>couponCardHtml($c['name'],$c['number'],$c['discount'])]]);
+      if ($c) @sendEmail($c['email'], "Твой купон −{$c['discount']}% — DUCK'S",
+        couponEmail($c['name'],$c['number'],$c['discount']));
       out(['ok'=>true]);
     }
     fail('bad op');
+  }
+
+  case 'scanCoupon': {  // админ отсканировал QR → гасим купон, отдаём статус JSON
+    requireAdmin();
+    $raw = trim(inp('data'));   // может прийти номер или полный verify-URL
+    if (preg_match('/number=([A-Za-z0-9\-]+)/', $raw, $m)) $number = $m[1];
+    else $number = preg_replace('/[^A-Za-z0-9\-]/', '', $raw);
+    $st = db()->prepare("SELECT * FROM coupons WHERE number=?"); $st->execute([$number]);
+    $c = $st->fetch();
+    if (!$c) out(['ok'=>false,'status'=>'notfound','number'=>$number]);
+    if ($c['status'] === 'used')  out(['ok'=>true,'status'=>'used','already'=>true,'name'=>$c['name'],'number'=>$c['number'],'discount'=>(int)$c['discount']]);
+    if ($c['status'] === 'void')  out(['ok'=>true,'status'=>'void','name'=>$c['name'],'number'=>$c['number']]);
+    db()->prepare("UPDATE coupons SET status='used', updated=? WHERE id=?")->execute([time(), $c['id']]);
+    logEvent('coupon', 'used', ['number'=>$c['number']]);
+    out(['ok'=>true,'status'=>'ok','name'=>$c['name'],'number'=>$c['number'],'discount'=>(int)$c['discount']]);
   }
 
   case 'saveContent': {
@@ -280,7 +324,8 @@ switch ($action) {
       out(['ok'=>true,'sent'=>0,'test'=>true]);
     }
     $sql = "SELECT DISTINCT email,name FROM subscribers WHERE email!=''";
-    if (in_array($audience,['form','darts'])) $sql .= " AND source='" . $audience . "'";
+    if ($audience === 'form')  $sql .= " AND is_form=1";
+    if ($audience === 'darts') $sql .= " AND is_darts=1";
     $rows = db()->query($sql)->fetchAll();
     $sent = 0;
     foreach ($rows as $r) {
@@ -302,9 +347,10 @@ switch ($action) {
     $id = (int)inp('id');
     $st = db()->prepare("SELECT * FROM subscribers WHERE id=?"); $st->execute([$id]); $s = $st->fetch();
     if (!$s) fail('not found');
-    @sendEmail($s['email'], "Твоё приглашение в DUCK'S 🦆", inviteEmail($s['name']));
-    db()->prepare("UPDATE subscribers SET invited=1, status='invited', invite_at=0, updated=? WHERE id=?")
+    @sendEmail($s['email'], "Твоё приглашение в DUCK'S", inviteEmail($s['name']));
+    db()->prepare("UPDATE subscribers SET invited=1, status='invited', updated=? WHERE id=?")
         ->execute([time(), $id]);
+    db()->prepare("UPDATE drips SET sent=1 WHERE subscriber_id=? AND kind='invite'")->execute([$id]);
     out(['ok' => true]);
   }
 

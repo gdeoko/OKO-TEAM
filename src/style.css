@@ -636,6 +636,7 @@ body.signup-open .su-card { transform: translateY(0) scale(1); }
   animation: suBadge 2.4s ease-in-out infinite;
 }
 @keyframes suBadge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.su-thanks-badge img.su-duck { width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(204,0,0,.5)); }
 .su-thanks h3 { font-family: var(--fd); font-weight: 900; font-size: 26px; margin: 8px 0 10px; }
 .su-thanks p { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.55; max-width: 360px; margin: 0 auto 22px; }
 .su-thanks-logo { font-family: var(--fd); font-weight: 900; font-size: 20px; letter-spacing: 2px; color: rgba(255,255,255,.55); }
