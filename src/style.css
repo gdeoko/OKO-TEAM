@@ -139,7 +139,7 @@ body.hero-in .hero-top, body.hero-in .hero-bottom { opacity: 1; }
   color: var(--ice-white);
 }
 .hero-desc { font-size: clamp(14px, 1.7vw, 17px); color: rgba(255,255,255,.7); margin: 10px auto 0; line-height: 1.5; max-width: 460px; }
-.hero-btns { display: flex; gap: 14px; justify-content: center; align-items: stretch; }
+.hero-btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: stretch; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   font-family: var(--fd); font-weight: 700; font-size: 13px;
@@ -806,4 +806,55 @@ body.coupon-open .cp-card { transform: translateY(0) scale(1); }
   .bar-col.bar-right { transform: translateX(calc(var(--ax2, 1) * 62vw)); }
   .darts-promo { font-size: 12px; padding: 6px 13px; margin-top: 10px; }
   .cp-card { padding: 28px 18px 20px; } .cp-head h3 { font-size: 21px; } .cp-thanks h3 { font-size: 21px; } .cp-spark { font-size: 42px; }
+}
+
+/* ============================================================
+   «КАК ДОБРАТЬСЯ» — модалка: ролик от метро (location.mp4 9:16), живая карта, маршрут
+   ============================================================ */
+#howto {
+  position: fixed; inset: 0; z-index: 1400;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(3, 2, 6, .72); backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none; transition: opacity .4s ease;
+  padding: 24px 16px; overflow-y: auto;
+}
+body.howto-open #howto { opacity: 1; pointer-events: auto; }
+.ht-card {
+  position: relative; width: 100%; max-width: 580px; margin: auto;
+  background: linear-gradient(160deg, #14080a, #0a0608);
+  border: 1px solid rgba(204, 0, 0, .35); border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 50px rgba(204, 0, 0, .15), inset 0 1px 0 rgba(255, 255, 255, .05);
+  padding: 28px 24px 24px;
+  transform: translateY(24px) scale(.96); transition: transform .45s cubic-bezier(.22, 1, .36, 1);
+}
+body.howto-open .ht-card { transform: translateY(0) scale(1); }
+#ht-close {
+  position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); color: #fff;
+  font-size: 20px; line-height: 1; cursor: pointer; transition: background .25s, border-color .25s; z-index: 2;
+}
+#ht-close:hover { background: rgba(204, 0, 0, .35); border-color: rgba(204, 0, 0, .6); }
+.ht-head { text-align: center; margin-bottom: 16px; }
+.ht-head h3 { font-family: var(--fd); font-weight: 900; font-size: 24px; margin: 6px 0 6px; letter-spacing: 1px; }
+.ht-head h3 span { color: var(--red-bright); }
+.ht-addr { color: rgba(255, 255, 255, .72); font-size: 15px; margin: 0; }
+.ht-media { display: flex; gap: 14px; }
+.ht-video { position: relative; flex: 0 0 auto; width: 196px; }
+.ht-video video {
+  width: 196px; aspect-ratio: 9 / 16; object-fit: cover; display: block;
+  border-radius: 14px; background: #000; border: 1px solid rgba(255, 255, 255, .1);
+}
+.ht-cap { display: block; text-align: center; color: rgba(255, 255, 255, .45); font-size: 11px; margin-top: 6px; letter-spacing: .5px; }
+.ht-map { flex: 1; min-width: 0; }
+.ht-map iframe { width: 100%; height: 100%; min-height: 260px; border: 0; border-radius: 14px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .1); filter: grayscale(.15) contrast(1.05); }
+.ht-route { display: block; width: 100%; margin-top: 18px; text-align: center; }
+.btn-howto { white-space: nowrap; }
+@media (max-width: 600px) {
+  .ht-card { padding: 26px 16px 18px; }
+  .ht-head h3 { font-size: 21px; }
+  .ht-media { flex-direction: column; align-items: center; }
+  .ht-video { width: min(64vw, 230px); }
+  .ht-video video { width: 100%; }
+  .ht-map { width: 100%; }
+  .ht-map iframe { height: 220px; min-height: 220px; }
 }

@@ -39,6 +39,7 @@
         <div class="hero-btns">
           <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
           <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          <button type="button" class="btn btn-line btn-howto" data-howto>Как добраться?</button>
         </div>
       </div>
       <div class="scroll-hint">
@@ -168,6 +169,7 @@
         <div class="hero-btns">
           <a class="btn btn-fill" href="https://t.me/ducks_gameclub_bot" target="_blank" rel="noopener">Записаться</a>
           <a class="btn btn-line" href="https://t.me/DUCKS_POKER" target="_blank" rel="noopener">Узнать больше</a>
+          <button type="button" class="btn btn-line btn-howto" data-howto>Как добраться?</button>
         </div>
       </div>
     </section>
@@ -304,6 +306,30 @@
         <button type="button" class="btn btn-line cp-done" id="cp-done">Понятно</button>
         <div class="su-thanks-logo">DUCK<span>'</span>S</div>
       </div>
+    </div>
+  </div>
+
+  <!-- «Как добраться» — модалка: ролик от метро (location.mp4 9:16), живая карта, маршрут -->
+  <div id="howto" aria-hidden="true">
+    <div class="ht-card" role="dialog" aria-modal="true" aria-label="Как добраться до клуба">
+      <button id="ht-close" aria-label="Закрыть">×</button>
+      <div class="ht-head">
+        <div class="su-label">как добраться</div>
+        <h3>DUCK<span>'</span>S GAME SPACE</h3>
+        <p class="ht-addr">Москва, Проспект&nbsp;Мира, дом&nbsp;102с25</p>
+      </div>
+      <div class="ht-media">
+        <div class="ht-video">
+          <video id="ht-vid" src="location.mp4" controls playsinline preload="metadata" poster="duck-mascot.png"></video>
+          <span class="ht-cap">Путь от метро до клуба</span>
+        </div>
+        <div class="ht-map">
+          <iframe title="Карта DUCK'S" loading="lazy" allowfullscreen
+            src="https://yandex.ru/map-widget/v1/?mode=search&text=Москва%2C%20Проспект%20Мира%2C%20дом%20102с25&z=17"></iframe>
+        </div>
+      </div>
+      <a class="btn btn-fill ht-route" id="ht-route" target="_blank" rel="noopener"
+         href="https://yandex.ru/maps/?rtext=~Москва%2C%20Проспект%20Мира%2C%20дом%20102с25&rtt=auto">Проложить маршрут</a>
     </div>
   </div>
 

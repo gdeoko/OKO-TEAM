@@ -80,8 +80,8 @@ function initSchema($pdo) {
   // Значения по умолчанию (редактируются в админке → settings)
   $defaults = [
     'admin_pin'      => ADMIN_PIN,       // цифровой PIN входа (меняется в админке)
-    'club_address'   => 'Москва, БП «ПАРК МИРА», DUCK\'S GAME SPACE',
-    'club_address_map' => 'https://yandex.ru/maps/?text=Москва%20Парк%20Мира',
+    'club_address'   => 'Москва, Проспект Мира, дом 102с25',
+    'club_address_map' => 'https://yandex.ru/maps/?rtext=~Москва, Проспект Мира, дом 102с25&rtt=auto',
     'invite_text'    => 'Ты в списке! Ждём тебя в DUCK\'S GAME SPACE. Адрес и детали — ниже. До встречи за столом.',
     'welcome_text'   => 'Заявка принята! Мы уже готовим тебе персональное приглашение — оно придёт совсем скоро. А пока загляни в наш канал.',
     'coupon_points'  => '150',           // порог очков в дартсе для купона

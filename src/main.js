@@ -1917,6 +1917,31 @@ document.querySelectorAll('a.btn[href*="t.me"], a.nav-cta[href*="t.me"]').forEac
 }
 
 // ============================================================
+// «Как добраться» — модалка с роликом от метро (location.mp4 9:16), живой картой и маршрутом.
+// Открывается кнопкой «Как добраться?» (в герое и в FAQ). Закрытие — крестик/фон/Esc; видео на паузу.
+// ============================================================
+{
+  const ht = document.getElementById('howto');
+  const vid = document.getElementById('ht-vid');
+  let savedScroll = 0;
+  const openHowto = () => {
+    savedScroll = (lenis && typeof lenis.scroll === 'number') ? lenis.scroll : window.scrollY;
+    document.body.classList.add('howto-open');
+    try { lenis.stop(); } catch (e) {}
+    sound.playWhoosh?.(true);
+  };
+  const closeHowto = () => {
+    document.body.classList.remove('howto-open');
+    try { vid && vid.pause(); } catch (e) {}
+    try { lenis.start(); lenis.scrollTo(savedScroll, { immediate: true, force: true }); } catch (e) {}
+  };
+  document.querySelectorAll('[data-howto]').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); openHowto(); }));
+  document.getElementById('ht-close')?.addEventListener('click', closeHowto);
+  ht?.addEventListener('click', (e) => { if (e.target === ht) closeHowto(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('howto-open')) closeHowto(); });
+}
+
+// ============================================================
 // FAQ (станция 7): тап по фишке → она крутится, взлетает и ПЕРЕВОРАЧИВАЕТСЯ в центре, показывая
 // ОТВЕТ прямо на фишке (без всплывающих окон). Золотая фишка = CTA → ТГ-бот.
 // ============================================================
