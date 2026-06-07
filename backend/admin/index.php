@@ -257,6 +257,8 @@ canvas{display:block;width:100%;}
       <div class="field"><label>Кнопки письма (отдельно текст и ссылка)</label>
         <div id="nl-btn-rows"></div>
         <button class="btn ghost sm" id="nl-add-btn" type="button">+ добавить кнопку</button>
+        <div class="h-sub" style="margin:10px 0 4px">Быстрая вставка кнопки с правильной ссылкой:</div>
+        <div class="toolbar" id="nl-quick" style="margin-bottom:0"></div>
       </div>
       <div class="field"><label>Вложения (фото / видео / файлы / голос)</label><input id="nl-files" type="file" multiple></div>
       <div class="toolbar">
@@ -609,9 +611,21 @@ const TEMPLATES=[
    body:'{name}, напоминаем: у тебя есть скидка 15% на вечер. Покажи купон на входе.',
    buttons:[{label:'Забрать бонус',url:CHAN},{label:'Записаться',url:BOT}]},
 ];
+// Правильные ссылки клуба и лид-магнитов (одно слово, без .html) для быстрой вставки
+const SITE='https://ducks.games';
+const QUICK=[
+  ['Записаться',BOT],['Мы в Telegram',CHAN],
+  ['Правила покера',SITE+'/pravila'],['Как читать людей',SITE+'/lyudi'],
+  ['Игры для мозга',SITE+'/mozg'],['10 шагов',SITE+'/shagi'],['Система',SITE+'/system'],
+];
 let nlReady=false;
 function loadNews(){
-  if(!nlReady){ mountRT('[data-rt="nl-body"]'); $('#nl-add-btn').onclick=()=>addBtnRow(); nlReady=true; }
+  if(!nlReady){
+    mountRT('[data-rt="nl-body"]'); $('#nl-add-btn').onclick=()=>addBtnRow();
+    $('#nl-quick').innerHTML=QUICK.map((q,i)=>`<button class="btn ghost sm" type="button" data-qi="${i}">+ ${esc(q[0])}</button>`).join('');
+    $$('#nl-quick [data-qi]').forEach(b=>b.onclick=()=>{const q=QUICK[+b.dataset.qi];addBtnRow(q[0],q[1]);toast('Кнопка добавлена');});
+    nlReady=true;
+  }
   $('#tpl-grid').innerHTML=TEMPLATES.map((t,i)=>`<div class="tpl" onclick="useTpl(${i})"><b>${esc(t.name)}</b><span>${esc(t.sub)}</span></div>`).join('');
   api('getNewsletters',{},{get:true,query:'pin='+PIN}).then(j=>{
     $('#nl-log').innerHTML=(j.items&&j.items.length)?j.items.map(n=>{
