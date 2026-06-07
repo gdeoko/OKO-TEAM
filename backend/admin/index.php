@@ -596,7 +596,7 @@ $('#faq-save').onclick=async()=>{
 };
 
 /* ---------- РАССЫЛКИ ---------- */
-const BOT='https://t.me/ducks_gameclub_bot', CHAN='https://t.me/duckspokerspace';
+const BOT='https://t.me/ducks_gameclub_bot', CHAN='https://t.me/DUCKS_POKER';
 const TEMPLATES=[
   {name:'Приглашение на вечер',sub:'зовём за стол',subject:'Ждём тебя на ближайшем вечере в DUCK\'S',
    body:'Привет, {name}!<br><br>В эту субботу собираемся за столом. Покер, дартс, бильярд и бар для своих.<br>Бронируй место — мест немного.',

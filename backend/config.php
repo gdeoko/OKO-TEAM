@@ -23,7 +23,7 @@ define('BRAND_RED', '#CC0000');
 define('BRAND_BG', '#080808');
 
 // --- Ссылки клуба (КНОПКИ в письмах; просто ссылки, не бот-API) ---
-define('TG_CHANNEL', 'https://t.me/duckspokerspace');
+define('TG_CHANNEL', 'https://t.me/DUCKS_POKER');
 define('TG_BOT_LINK', 'https://t.me/ducks_gameclub_bot');   // кнопка «Записаться» ведёт сюда
 
 // --- Брендовые изображения для писем (хостятся в корне сайта) ---
