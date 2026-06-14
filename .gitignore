@@ -28,3 +28,6 @@ orig/
 oko-bundle-*.txt
 mortis-test/
 test_*.png
+scene-test/
+scene_*.png
+probe.png
