@@ -15,3 +15,7 @@ vtouch.cjs
 _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
+
+# Mortis build/work artifacts (unzipped third-party project, extracted task archives)
+build_mortis/
+new_archive/
