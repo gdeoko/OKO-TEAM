@@ -19,3 +19,4 @@ PROJECT_CONTEXT.txt
 # Mortis build/work artifacts (unzipped third-party project, extracted task archives)
 build_mortis/
 new_archive/
+mortis_mice/
