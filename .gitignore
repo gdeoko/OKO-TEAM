@@ -17,6 +17,7 @@ _v_*.png
 PROJECT_CONTEXT.txt
 
 # Mortis build/work artifacts (unzipped third-party project, extracted task archives)
+tools/
 build_mortis/
 new_archive/
 mortis_mice/
