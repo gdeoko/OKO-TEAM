@@ -169,22 +169,39 @@ fileIn.addEventListener('change',()=>{if(fileIn.files.length)handleFiles(fileIn.
    Однопоточное ядро — без COOP/COEP, работает с локального файла.
    ============================================================ */
 let ffmpeg=null, ffmpegLoading=null;
-const FF_BASE='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+// Несколько зеркал CDN: если одно заблокировано VPN/регионом — пробуем следующее.
+const CDN=[
+  'https://cdn.jsdelivr.net/npm',
+  'https://fastly.jsdelivr.net/npm',
+  'https://gcore.jsdelivr.net/npm',
+  'https://unpkg.com',
+  'https://esm.sh',
+];
 async function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('script '+src));document.head.appendChild(s);});}
+async function loadScriptAny(path){
+  let last;
+  for(const base of CDN){ try{ await loadScript(base+path); return; }catch(e){ last=e; } }
+  throw last||new Error('cdn');
+}
+async function fetchAny(toBlobURL,path,mime){
+  let last;
+  for(const base of CDN){ try{ return await toBlobURL(base+path,mime); }catch(e){ last=e; } }
+  throw last||new Error('cdn');
+}
 async function getFFmpeg(){
   if(ffmpeg)return ffmpeg;
   if(ffmpegLoading)return ffmpegLoading;
   ffmpegLoading=(async()=>{
     setEngine('load','Загружаю видеодвижок (ffmpeg.wasm, один раз ~30 МБ)…');
-    await loadScript('https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js');
-    await loadScript('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/index.js');
+    await loadScriptAny('/@ffmpeg/util@0.12.1/dist/umd/index.js');
+    await loadScriptAny('/@ffmpeg/ffmpeg@0.12.10/dist/umd/index.js');
     const {FFmpeg}=window.FFmpegWASM, {toBlobURL}=window.FFmpegUtil;
     const ff=new FFmpeg();
     ff.on('log',({message})=>{if(message)logLine(message);});
     ff.on('progress',({progress})=>{if(progress>=0&&progress<=1)setBar(progress*100);});
     await ff.load({
-      coreURL:await toBlobURL(`${FF_BASE}/ffmpeg-core.js`,'text/javascript'),
-      wasmURL:await toBlobURL(`${FF_BASE}/ffmpeg-core.wasm`,'application/wasm'),
+      coreURL:await fetchAny(toBlobURL,'/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js','text/javascript'),
+      wasmURL:await fetchAny(toBlobURL,'/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm','application/wasm'),
     });
     ffmpeg=ff;setEngine('ok','Видеодвижок готов · декодит любой формат, включая ProRes');
     return ff;
@@ -226,7 +243,7 @@ async function processVideo(f){
   setStage('1/3 · загрузка движка');
   let ff;
   try{ ff=await getFFmpeg(); }
-  catch(e){ throw new Error('Не удалось загрузить видеодвижок. Проверь интернет (нужен доступ к unpkg.com) и попробуй ещё раз.'); }
+  catch(e){ throw new Error('Видеодвижок (ffmpeg.wasm) не загрузился — похоже, VPN/провайдер режет CDN (jsdelivr/unpkg). Выключи VPN на минуту и обнови, либо пришли .mov мне — сконвертирую на сервере без ограничений.'); }
 
   const {fetchFile}=window.FFmpegUtil;
   setStage('2/3 · разбор видео на кадры');setBar(0);
