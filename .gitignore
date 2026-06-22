@@ -35,3 +35,8 @@ probe.png
 atk_*.png
 frame_*.png
 КАК-ЗАЛИТЬ-ВЕТКУ.txt
+
+# Generated delivery artifacts (Mort quality test, sent to user directly)
+mort-quality-test.html
+mort_new.webp
+mort_compare.png
