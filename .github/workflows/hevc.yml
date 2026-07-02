@@ -1,0 +1,47 @@
+name: hevc-bake
+on:
+  push:
+    branches: [hevc-bake]
+    paths: ['hevc/**', '.github/workflows/hevc.yml']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  encode:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: |
+          which ffmpeg || brew install ffmpeg
+          ffmpeg -hide_banner -encoders 2>/dev/null | grep -i videotoolbox || true
+      - name: Encode HEVC with alpha
+        run: |
+          set -x
+          mkdir -p hevc/out
+          encode() {
+            name="$1"; fps="$2"
+            ffmpeg -y -framerate "$fps" -i "hevc/frames/$name/f%03d.png" \
+              -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.75 -q:v 55 \
+              -pix_fmt bgra -tag:v hvc1 -movflags +faststart \
+              "hevc/out/mort_$name.mov" 2> "hevc/out/$name.log" \
+              || { echo "== $name failed, log:"; tail -20 "hevc/out/$name.log"; }
+          }
+          encode jump 30
+          encode atack 30
+          encode fail 24
+          encode idle 12
+          ls -la hevc/out
+      - name: Probe results
+        run: |
+          for f in hevc/out/*.mov; do
+            echo "== $f"
+            ffprobe -hide_banner -show_streams -select_streams v "$f" 2>/dev/null | grep -E 'codec_name|pix_fmt|width|height|nb_frames|alpha' || true
+          done
+      - name: Commit results
+        run: |
+          git config user.name "oko-team"
+          git config user.email "okoteam.top@gmail.com"
+          git add hevc/out
+          git commit -m "hevc encode results" || echo "nothing to commit"
+          git push origin HEAD:hevc-bake
