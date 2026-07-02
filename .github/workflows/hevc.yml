@@ -39,11 +39,7 @@ jobs:
               "hevc/out/mort_$name.mov" 2> "hevc/out/$name.log" \
               || { echo "== $name failed:"; tail -20 "hevc/out/$name.log"; }
           }
-          if [ -d hevc/frames/zwinHQ1 ]; then
-            encode_hq zwinHQ1 30; encode_hq zwinHQ2 30; encode_hq zwinHQ3 30; encode_hq zwinHQ4 30
-          else
-            encode zwin1 30; encode zwin2 30; encode zwin3 30; encode zwin4 30
-          fi
+          encode_hq zwin2_1 30; encode_hq zwin2_2 30; encode_hq zwin2_3 30; encode_hq zwin2_4 30
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -72,11 +68,7 @@ jobs:
               -auto-alt-ref 0 "hevc/out/mort_$name.webm" 2> "hevc/out/${name}_vp9.txt" \
               || { echo "== $name vp9 failed:"; tail -20 "hevc/out/${name}_vp9.txt"; }
           }
-          if [ -d hevc/frames/zwinHQ1 ]; then
-            encode_vp9_hq zwinHQ1 30; encode_vp9_hq zwinHQ2 30; encode_vp9_hq zwinHQ3 30; encode_vp9_hq zwinHQ4 30
-          else
-            encode_vp9 zwin1 30; encode_vp9 zwin2 30; encode_vp9 zwin3 30; encode_vp9 zwin4 30
-          fi
+          encode_vp9_hq zwin2_1 30; encode_vp9_hq zwin2_2 30; encode_vp9_hq zwin2_3 30; encode_vp9_hq zwin2_4 30
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
