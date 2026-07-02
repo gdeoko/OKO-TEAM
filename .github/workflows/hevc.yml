@@ -45,7 +45,7 @@ jobs:
             encode_hq mice_bat-animation 30; encode_hq mice_bat_tester 30; encode_hq mice_black_bat 30
           fi
           if [ -d hevc/frames/micehd_bat-animation ]; then
-            encode_hq micehd_bat-animation 30; encode_hq micehd_black_bat 30
+            encode_hq micehd_bat-animation 30; encode_hq micehd_black_bat 30; encode_hq micehd_bat_tester 30
           fi
           ls -la hevc/out
       - name: Probe results
@@ -81,7 +81,7 @@ jobs:
             encode_vp9_hq mice_bat-animation 30; encode_vp9_hq mice_bat_tester 30; encode_vp9_hq mice_black_bat 30
           fi
           if [ -d hevc/frames/micehd_bat-animation ]; then
-            encode_vp9_hq micehd_bat-animation 30; encode_vp9_hq micehd_black_bat 30
+            encode_vp9_hq micehd_bat-animation 30; encode_vp9_hq micehd_black_bat 30; encode_vp9_hq micehd_bat_tester 30
           fi
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
