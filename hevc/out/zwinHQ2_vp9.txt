@@ -1,0 +1,27 @@
+ffmpeg version 8.1.1 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.101 / 60. 26.101
+  libavcodec     62. 28.101 / 62. 28.101
+  libavformat    62. 12.101 / 62. 12.101
+  libavdevice    62.  3.101 / 62.  3.101
+  libavfilter    11. 14.101 / 11. 14.101
+  libswscale      9.  5.101 /  9.  5.101
+  libswresample   6.  3.101 /  6.  3.101
+Input #0, image2, from 'hevc/frames/zwinHQ2/f%03d.png':
+  Duration: 00:00:02.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 1409x1409 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x150606ec0] v1.16.0
+Output #0, webm, to 'hevc/out/mort_zwinHQ2.webm':
+  Metadata:
+    encoder         : Lavf62.12.101
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 1409x1409 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.101 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=    4 fps=0.0 q=20.0 size=       0KiB time=00:00:00.13 bitrate=  28.9kbits/s speed=0.249x elapsed=0:00:00.53    frame=   12 fps= 11 q=20.0 size=       0KiB time=00:00:00.40 bitrate=   9.6kbits/s speed=0.364x elapsed=0:00:01.09    frame=   18 fps= 11 q=20.0 size=       0KiB time=00:00:00.60 bitrate=   6.4kbits/s speed=0.366x elapsed=0:00:01.63    frame=   24 fps= 11 q=20.0 size=       0KiB time=00:00:00.80 bitrate=   4.8kbits/s speed=0.363x elapsed=0:00:02.20    frame=   32 fps= 12 q=20.0 size=       0KiB time=00:00:01.06 bitrate=   3.6kbits/s speed=0.389x elapsed=0:00:02.74    frame=   36 fps= 11 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.365x elapsed=0:00:03.28    frame=   36 fps=9.3 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.311x elapsed=0:00:03.86    frame=   36 fps=8.2 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.275x elapsed=0:00:04.36    [out#0/webm @ 0x600001c543c0] video:1780KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 22.806877%
+frame=   60 fps= 13 q=20.0 Lsize=    2186KiB time=00:00:02.00 bitrate=8952.8kbits/s speed=0.449x elapsed=0:00:04.45    

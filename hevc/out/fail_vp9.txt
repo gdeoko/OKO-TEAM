@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/fail/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x13c005150] v1.16.0
+[libvpx-vp9 @ 0x13c8050c0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_fail.webm':
   Metadata:
     encoder         : Lavf62.12.101
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_fail.webm':
       encoder         : Lavc62.28.101 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    8 fps=0.0 q=34.0 size=       0KiB time=00:00:00.33 bitrate=  11.5kbits/s speed=0.638x elapsed=0:00:00.52    frame=   17 fps= 16 q=24.0 size=       0KiB time=00:00:00.70 bitrate=   5.4kbits/s speed=0.663x elapsed=0:00:01.06    frame=   30 fps= 19 q=34.0 size=       0KiB time=00:00:01.25 bitrate=   3.1kbits/s speed=0.778x elapsed=0:00:01.60    frame=   40 fps= 19 q=34.0 size=       0KiB time=00:00:01.66 bitrate=   2.3kbits/s speed=0.784x elapsed=0:00:02.12    [out#0/webm @ 0x6000006740c0] video:214KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.959161%
-frame=   64 fps= 27 q=34.0 Lsize=     334KiB time=00:00:02.66 bitrate=1027.0kbits/s speed=1.14x elapsed=0:00:02.33    
+frame=    7 fps=0.0 q=32.0 size=       0KiB time=00:00:00.29 bitrate=  13.2kbits/s speed=0.561x elapsed=0:00:00.51    frame=   16 fps= 15 q=34.0 size=       0KiB time=00:00:00.66 bitrate=   5.8kbits/s speed=0.625x elapsed=0:00:01.06    frame=   25 fps= 15 q=24.0 size=       0KiB time=00:00:01.04 bitrate=   3.7kbits/s speed=0.643x elapsed=0:00:01.62    frame=   38 fps= 17 q=34.0 size=       0KiB time=00:00:01.58 bitrate=   2.4kbits/s speed=0.726x elapsed=0:00:02.18    frame=   40 fps= 15 q=34.0 size=       0KiB time=00:00:01.66 bitrate=   2.3kbits/s speed=0.613x elapsed=0:00:02.71    [out#0/webm @ 0x6000022600c0] video:214KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.959161%
+frame=   64 fps= 22 q=34.0 Lsize=     334KiB time=00:00:02.66 bitrate=1027.0kbits/s speed=0.934x elapsed=0:00:02.85    

@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/jump/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x12b606ec0] v1.16.0
+[libvpx-vp9 @ 0x128606670] v1.16.0
 Output #0, webm, to 'hevc/out/mort_jump.webm':
   Metadata:
     encoder         : Lavf62.12.101
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_jump.webm':
       encoder         : Lavc62.28.101 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.55    [out#0/webm @ 0x6000036643c0] video:136KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.509794%
-frame=   20 fps= 19 q=34.0 Lsize=     212KiB time=00:00:00.66 bitrate=2600.8kbits/s speed=0.647x elapsed=0:00:01.03    
+frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:00.56    frame=    0 fps=0.0 q=0.0 size=       0KiB time=N/A bitrate=N/A speed=N/A elapsed=0:00:01.13    [out#0/webm @ 0x600001ac8300] video:136KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.509794%
+frame=   20 fps= 17 q=34.0 Lsize=     212KiB time=00:00:00.66 bitrate=2600.8kbits/s speed=0.563x elapsed=0:00:01.18    
