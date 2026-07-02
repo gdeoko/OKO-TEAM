@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_bat_tester/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
 Press [q] to stop, [?] for help
-[hevc_videotoolbox @ 0x11f7056a0] Error setting alpha quality: -12902
+[hevc_videotoolbox @ 0x154e07290] Error setting alpha quality: -12902
 IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
     Last message repeated 1 times
 Output #0, mov, to 'hevc/out/mort_mice_bat_tester.mov':
@@ -23,6 +23,6 @@ Output #0, mov, to 'hevc/out/mort_mice_bat_tester.mov':
   Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 256x256 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 15360 tbn
     Metadata:
       encoder         : Lavc62.28.102 hevc_videotoolbox
-frame=   10 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.30 bitrate=   1.0kbits/s speed=0.462x elapsed=0:00:00.64    frame=   20 fps= 17 q=-0.0 size=       0KiB time=00:00:00.63 bitrate=   0.5kbits/s speed=0.524x elapsed=0:00:01.20    frame=   28 fps= 16 q=-0.0 size=       0KiB time=00:00:00.90 bitrate=   0.3kbits/s speed=0.517x elapsed=0:00:01.74    frame=   36 fps= 15 q=-0.0 size=     256KiB time=00:00:01.16 bitrate=1797.8kbits/s speed=0.502x elapsed=0:00:02.32    frame=   46 fps= 16 q=-0.0 size=     256KiB time=00:00:01.50 bitrate=1398.3kbits/s speed=0.528x elapsed=0:00:02.84    frame=   55 fps= 16 q=-0.0 size=     256KiB time=00:00:01.80 bitrate=1165.2kbits/s speed=0.53x elapsed=0:00:03.39    frame=   63 fps= 16 q=-0.0 size=     512KiB time=00:00:02.06 bitrate=2029.6kbits/s speed=0.514x elapsed=0:00:04.02    frame=   71 fps= 15 q=-0.0 size=     512KiB time=00:00:02.33 bitrate=1797.7kbits/s speed=0.509x elapsed=0:00:04.58    frame=   83 fps= 16 q=-0.0 size=     512KiB time=00:00:02.73 bitrate=1534.6kbits/s speed=0.525x elapsed=0:00:05.20    [mov @ 0x11f704680] Starting second pass: moving the moov atom to the beginning of the file
-[out#0/mov @ 0x6000018c00c0] video:770KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.170303%
-frame=   90 fps= 17 q=-0.0 Lsize=     771KiB time=00:00:02.96 bitrate=2130.2kbits/s speed=0.547x elapsed=0:00:05.41    
+frame=    9 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.26 bitrate=   1.1kbits/s speed=0.523x elapsed=0:00:00.51    frame=   18 fps= 18 q=-0.0 size=       0KiB time=00:00:00.56 bitrate=   0.5kbits/s speed=0.557x elapsed=0:00:01.01    frame=   27 fps= 17 q=-0.0 size=       0KiB time=00:00:00.86 bitrate=   0.3kbits/s speed=0.558x elapsed=0:00:01.55    frame=   36 fps= 17 q=-0.0 size=     256KiB time=00:00:01.16 bitrate=1797.8kbits/s speed=0.545x elapsed=0:00:02.13    frame=   46 fps= 17 q=-0.0 size=     256KiB time=00:00:01.50 bitrate=1398.3kbits/s speed=0.562x elapsed=0:00:02.66    frame=   57 fps= 17 q=-0.0 size=     256KiB time=00:00:01.86 bitrate=1123.6kbits/s speed=0.569x elapsed=0:00:03.28    frame=   66 fps= 17 q=-0.0 size=     512KiB time=00:00:02.16 bitrate=1936.0kbits/s speed=0.562x elapsed=0:00:03.85    frame=   75 fps= 17 q=-0.0 size=     512KiB time=00:00:02.46 bitrate=1700.5kbits/s speed=0.558x elapsed=0:00:04.42    [mov @ 0x154e06610] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x60000362c3c0] video:770KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.170303%
+frame=   90 fps= 18 q=-0.0 Lsize=     771KiB time=00:00:02.96 bitrate=2130.2kbits/s speed=0.593x elapsed=0:00:04.99    

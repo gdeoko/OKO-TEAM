@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_glitch_bat/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x1327056a0] v1.16.0
+[libvpx-vp9 @ 0x12c606680] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_glitch_bat.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_glitch_bat.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   36 fps=0.0 q=20.0 size=       0KiB time=00:00:00.60 bitrate=   6.4kbits/s speed=0.926x elapsed=0:00:00.64    frame=   68 fps= 54 q=20.0 size=       0KiB time=00:00:01.13 bitrate=   3.4kbits/s speed=0.895x elapsed=0:00:01.26    frame=  119 fps= 63 q=17.0 size=       0KiB time=00:00:01.98 bitrate=   1.9kbits/s speed=1.05x elapsed=0:00:01.88    frame=  156 fps= 61 q=20.0 size=     512KiB time=00:00:02.60 bitrate=1613.2kbits/s speed=1.02x elapsed=0:00:02.53    [out#0/webm @ 0x600000b400c0] video:855KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 19.716592%
-frame=  180 fps= 64 q=20.0 Lsize=    1024KiB time=00:00:03.00 bitrate=2795.2kbits/s speed=1.07x elapsed=0:00:02.80    
+frame=   42 fps=0.0 q=20.0 size=       0KiB time=00:00:00.70 bitrate=   5.5kbits/s speed=1.26x elapsed=0:00:00.55    frame=   84 fps= 79 q=20.0 size=       0KiB time=00:00:01.40 bitrate=   2.7kbits/s speed=1.31x elapsed=0:00:01.06    frame=  127 fps= 81 q=17.0 size=       0KiB time=00:00:02.11 bitrate=   1.8kbits/s speed=1.35x elapsed=0:00:01.56    frame=  156 fps= 71 q=20.0 size=     512KiB time=00:00:02.60 bitrate=1613.2kbits/s speed=1.19x elapsed=0:00:02.18    [out#0/webm @ 0x6000021b4300] video:855KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 19.716592%
+frame=  180 fps= 81 q=20.0 Lsize=    1024KiB time=00:00:03.00 bitrate=2795.2kbits/s speed=1.35x elapsed=0:00:02.21    

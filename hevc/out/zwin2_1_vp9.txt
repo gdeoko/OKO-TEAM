@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/zwin2_1/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x138607290] v1.16.0
+[libvpx-vp9 @ 0x13af05fe0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_zwin2_1.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_zwin2_1.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    8 fps=0.0 q=20.0 size=       0KiB time=00:00:00.26 bitrate=  14.4kbits/s speed=0.513x elapsed=0:00:00.51    frame=   17 fps= 15 q=10.0 size=       0KiB time=00:00:00.56 bitrate=   6.8kbits/s speed= 0.5x elapsed=0:00:01.13    frame=   25 fps= 15 q=10.0 size=       0KiB time=00:00:00.83 bitrate=   4.6kbits/s speed=0.508x elapsed=0:00:01.64    frame=   31 fps= 14 q=10.0 size=       0KiB time=00:00:01.03 bitrate=   3.7kbits/s speed=0.477x elapsed=0:00:02.16    frame=   36 fps= 13 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.443x elapsed=0:00:02.70    frame=   36 fps= 11 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.361x elapsed=0:00:03.32    [out#0/webm @ 0x60000001c3c0] video:546KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 49.561318%
-frame=   60 fps= 16 q=20.0 Lsize=     817KiB time=00:00:02.00 bitrate=3344.6kbits/s speed=0.536x elapsed=0:00:03.73    
+frame=   13 fps=0.0 q=14.0 size=       0KiB time=00:00:00.43 bitrate=   8.9kbits/s speed=0.666x elapsed=0:00:00.65    frame=   27 fps= 21 q=17.0 size=       0KiB time=00:00:00.90 bitrate=   4.3kbits/s speed=0.701x elapsed=0:00:01.28    frame=   36 fps= 20 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.666x elapsed=0:00:01.80    [out#0/webm @ 0x600003a04180] video:546KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 49.561318%
+frame=   60 fps= 26 q=20.0 Lsize=     817KiB time=00:00:02.00 bitrate=3344.6kbits/s speed=0.853x elapsed=0:00:02.34    

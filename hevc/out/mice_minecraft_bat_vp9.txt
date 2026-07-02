@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_minecraft_bat/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x139705fe0] v1.16.0
+[libvpx-vp9 @ 0x1300050d0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_minecraft_bat.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_minecraft_bat.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   51 fps=0.0 q=10.0 size=       0KiB time=00:00:00.85 bitrate=   4.5kbits/s speed=1.41x elapsed=0:00:00.60    frame=   86 fps= 78 q=20.0 size=       0KiB time=00:00:01.43 bitrate=   2.7kbits/s speed=1.29x elapsed=0:00:01.10    frame=  118 fps= 71 q=20.0 size=       0KiB time=00:00:01.96 bitrate=   2.0kbits/s speed=1.18x elapsed=0:00:01.66    frame=  156 fps= 69 q=20.0 size=     512KiB time=00:00:02.60 bitrate=1613.2kbits/s speed=1.15x elapsed=0:00:02.26    [out#0/webm @ 0x600000d28180] video:563KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 45.718455%
-frame=  180 fps= 78 q=20.0 Lsize=     821KiB time=00:00:03.00 bitrate=2242.2kbits/s speed= 1.3x elapsed=0:00:02.30    
+frame=   56 fps=0.0 q=20.0 size=       0KiB time=00:00:00.93 bitrate=   4.1kbits/s speed=1.57x elapsed=0:00:00.59    frame=   96 fps= 87 q=20.0 size=       0KiB time=00:00:01.60 bitrate=   2.4kbits/s speed=1.45x elapsed=0:00:01.10    frame=  125 fps= 78 q=14.0 size=       0KiB time=00:00:02.08 bitrate=   1.8kbits/s speed=1.29x elapsed=0:00:01.60    [out#0/webm @ 0x6000033700c0] video:563KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 45.718455%
+frame=  180 fps= 89 q=20.0 Lsize=     821KiB time=00:00:03.00 bitrate=2242.2kbits/s speed=1.48x elapsed=0:00:02.02    
