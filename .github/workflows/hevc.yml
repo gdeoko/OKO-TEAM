@@ -40,6 +40,10 @@ jobs:
               || { echo "== $name failed:"; tail -20 "hevc/out/$name.log"; }
           }
           encode_hq zwin2_1 30; encode_hq zwin2_2 30; encode_hq zwin2_3 30; encode_hq zwin2_4 30
+          if [ -d hevc/frames/mice_fire_bat ]; then
+            encode_hq mice_fire_bat 60; encode_hq mice_demon_bat 60; encode_hq mice_glitch_bat 60; encode_hq mice_minecraft_bat 60
+            encode_hq mice_bat-animation 30; encode_hq mice_bat_tester 30; encode_hq mice_black_bat 30
+          fi
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -69,6 +73,10 @@ jobs:
               || { echo "== $name vp9 failed:"; tail -20 "hevc/out/${name}_vp9.txt"; }
           }
           encode_vp9_hq zwin2_1 30; encode_vp9_hq zwin2_2 30; encode_vp9_hq zwin2_3 30; encode_vp9_hq zwin2_4 30
+          if [ -d hevc/frames/mice_fire_bat ]; then
+            encode_vp9_hq mice_fire_bat 60; encode_vp9_hq mice_demon_bat 60; encode_vp9_hq mice_glitch_bat 60; encode_vp9_hq mice_minecraft_bat 60
+            encode_vp9_hq mice_bat-animation 30; encode_vp9_hq mice_bat_tester 30; encode_vp9_hq mice_black_bat 30
+          fi
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
