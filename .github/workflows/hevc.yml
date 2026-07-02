@@ -38,10 +38,17 @@ jobs:
             echo "== $f"
             ffprobe -hide_banner -show_streams -select_streams v "$f" 2>/dev/null | grep -E 'codec_name|pix_fmt|width|height|nb_frames|alpha' || true
           done
+      - name: Verify alpha via AVFoundation
+        run: |
+          for f in hevc/out/mort_*.mov; do
+            swift hevc/verify.swift "$f" || echo "verify failed for $f"
+          done
+          ls -la hevc/out/
       - name: Commit results
         run: |
           git config user.name "oko-team"
           git config user.email "okoteam.top@gmail.com"
-          git add hevc/out
+          git pull --rebase origin hevc-bake || true
+          git add -f hevc/out
           git commit -m "hevc encode results" || echo "nothing to commit"
           git push origin HEAD:hevc-bake
