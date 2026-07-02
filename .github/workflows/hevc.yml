@@ -44,6 +44,9 @@ jobs:
             encode_hq mice_fire_bat 60; encode_hq mice_demon_bat 60; encode_hq mice_glitch_bat 60; encode_hq mice_minecraft_bat 60
             encode_hq mice_bat-animation 30; encode_hq mice_bat_tester 30; encode_hq mice_black_bat 30
           fi
+          if [ -d hevc/frames/micehd_bat-animation ]; then
+            encode_hq micehd_bat-animation 30; encode_hq micehd_black_bat 30
+          fi
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -76,6 +79,9 @@ jobs:
           if [ -d hevc/frames/mice_fire_bat ]; then
             encode_vp9_hq mice_fire_bat 60; encode_vp9_hq mice_demon_bat 60; encode_vp9_hq mice_glitch_bat 60; encode_vp9_hq mice_minecraft_bat 60
             encode_vp9_hq mice_bat-animation 30; encode_vp9_hq mice_bat_tester 30; encode_vp9_hq mice_black_bat 30
+          fi
+          if [ -d hevc/frames/micehd_bat-animation ]; then
+            encode_vp9_hq micehd_bat-animation 30; encode_vp9_hq micehd_black_bat 30
           fi
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
