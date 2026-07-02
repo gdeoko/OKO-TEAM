@@ -47,6 +47,16 @@ jobs:
           if [ -d hevc/frames/micehd_bat-animation ]; then
             encode_hq micehd_bat-animation 30; encode_hq micehd_black_bat 30; encode_hq micehd_bat_tester 30
           fi
+          # экономичный профиль-комплект: векторные 60->30fps, качество q52/alpha0.8
+          eco_hevc() {
+            name="$1"; infps="$2"; outfps="$3"
+            ffmpeg -y -framerate "$infps" -i "hevc/frames/$name/f%03d.png" -r "$outfps" \
+              -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.8 -q:v 52 \
+              -pix_fmt bgra -tag:v hvc1 -movflags +faststart \
+              "hevc/out/eco_$name.mov" 2>> "hevc/out/eco.log" || echo "eco $name fail"
+          }
+          eco_hevc mice_fire_bat 60 30; eco_hevc mice_demon_bat 60 30; eco_hevc mice_glitch_bat 60 30; eco_hevc mice_minecraft_bat 60 30
+          eco_hevc micehd_bat-animation 30 30; eco_hevc micehd_black_bat 30 30; eco_hevc micehd_bat_tester 30 30
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -83,6 +93,14 @@ jobs:
           if [ -d hevc/frames/micehd_bat-animation ]; then
             encode_vp9_hq micehd_bat-animation 30; encode_vp9_hq micehd_black_bat 30; encode_vp9_hq micehd_bat_tester 30
           fi
+          eco_vp9() {
+            name="$1"; infps="$2"; outfps="$3"
+            ffmpeg -y -framerate "$infps" -i "hevc/frames/$name/f%03d.png" -r "$outfps" \
+              -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 0 -crf 28 -row-mt 1 -deadline good -cpu-used 2 \
+              -auto-alt-ref 0 "hevc/out/eco_$name.webm" 2>> "hevc/out/eco_vp9.log" || echo "eco vp9 $name fail"
+          }
+          eco_vp9 mice_fire_bat 60 30; eco_vp9 mice_demon_bat 60 30; eco_vp9 mice_glitch_bat 60 30; eco_vp9 mice_minecraft_bat 60 30
+          eco_vp9 micehd_bat-animation 30 30; eco_vp9 micehd_black_bat 30 30; eco_vp9 micehd_bat_tester 30 30
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
