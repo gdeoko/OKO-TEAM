@@ -76,6 +76,12 @@ jobs:
             swift hevc/verify.swift "$f" || echo "verify failed for $f"
           done
           ls -la hevc/out/
+      - name: WebKit (Safari engine) playback test
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i playwright@1.49.1 >/dev/null 2>&1
+          npx playwright install webkit >/dev/null 2>&1
+          node hevc/webkit_test.cjs || echo "webkit test problem"
       - name: Commit results
         run: |
           git config user.name "oko-team"
