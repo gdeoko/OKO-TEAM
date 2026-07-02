@@ -1,0 +1,56 @@
+[
+ {
+  "src": "mort_idle.mov",
+  "videoWidth": 460,
+  "videoHeight": 710,
+  "currentTime": 3.33,
+  "ended": true,
+  "paused": true,
+  "error": null
+ },
+ {
+  "src": "mort_jump.mov",
+  "videoWidth": 771,
+  "videoHeight": 1333,
+  "currentTime": 0.67,
+  "ended": true,
+  "paused": true,
+  "error": null
+ },
+ {
+  "src": "mort_atack.mov",
+  "videoWidth": 1094,
+  "videoHeight": 1197,
+  "currentTime": 1.07,
+  "ended": true,
+  "paused": true,
+  "error": null
+ },
+ {
+  "src": "mort_fail.mov",
+  "videoWidth": 962,
+  "videoHeight": 1161,
+  "currentTime": 2.67,
+  "ended": true,
+  "paused": true,
+  "error": null
+ },
+ {
+  "src": "mort_zwin2_1.mov",
+  "videoWidth": 1084,
+  "videoHeight": 1084,
+  "currentTime": 2,
+  "ended": true,
+  "paused": true,
+  "error": null
+ },
+ {
+  "src": "mort_zwin2_3.mov",
+  "videoWidth": 1084,
+  "videoHeight": 1084,
+  "currentTime": 2,
+  "ended": true,
+  "paused": true,
+  "error": null
+ }
+]

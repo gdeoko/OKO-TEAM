@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/zwin2_1/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x127705fe0] v1.16.0
+[libvpx-vp9 @ 0x12e7056a0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_zwin2_1.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_zwin2_1.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    8 fps=0.0 q=20.0 size=       0KiB time=00:00:00.26 bitrate=  14.4kbits/s speed=0.526x elapsed=0:00:00.50    frame=   18 fps= 18 q=20.0 size=       0KiB time=00:00:00.60 bitrate=   6.4kbits/s speed=0.59x elapsed=0:00:01.01    frame=   29 fps= 18 q=14.0 size=       0KiB time=00:00:00.96 bitrate=   4.0kbits/s speed=0.614x elapsed=0:00:01.57    frame=   36 fps= 17 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.563x elapsed=0:00:02.13    [out#0/webm @ 0x600002c58180] video:546KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 49.561318%
-frame=   60 fps= 23 q=20.0 Lsize=     817KiB time=00:00:02.00 bitrate=3344.6kbits/s speed=0.762x elapsed=0:00:02.62    
+frame=   11 fps=0.0 q=10.0 size=       0KiB time=00:00:00.36 bitrate=  10.5kbits/s speed=0.648x elapsed=0:00:00.56    frame=   23 fps= 20 q=17.0 size=       0KiB time=00:00:00.76 bitrate=   5.0kbits/s speed=0.672x elapsed=0:00:01.14    frame=   36 fps= 21 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.717x elapsed=0:00:01.67    frame=   36 fps= 16 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.541x elapsed=0:00:02.21    [out#0/webm @ 0x6000029b40c0] video:546KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 49.561318%
+frame=   60 fps= 25 q=20.0 Lsize=     817KiB time=00:00:02.00 bitrate=3344.6kbits/s speed=0.829x elapsed=0:00:02.41    
