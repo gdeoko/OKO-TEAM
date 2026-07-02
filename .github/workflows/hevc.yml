@@ -31,10 +31,19 @@ jobs:
           encode atack 30
           encode fail 24
           encode idle 12
-          encode zwin1 30
-          encode zwin2 30
-          encode zwin3 30
-          encode zwin4 30
+          encode_hq() {
+            name="$1"; fps="$2"
+            ffmpeg -y -framerate "$fps" -i "hevc/frames/$name/f%03d.png" \
+              -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.9 -q:v 62 \
+              -pix_fmt bgra -tag:v hvc1 -movflags +faststart \
+              "hevc/out/mort_$name.mov" 2> "hevc/out/$name.log" \
+              || { echo "== $name failed:"; tail -20 "hevc/out/$name.log"; }
+          }
+          if [ -d hevc/frames/zwinHQ1 ]; then
+            encode_hq zwinHQ1 30; encode_hq zwinHQ2 30; encode_hq zwinHQ3 30; encode_hq zwinHQ4 30
+          else
+            encode zwin1 30; encode zwin2 30; encode zwin3 30; encode zwin4 30
+          fi
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -56,10 +65,18 @@ jobs:
           encode_vp9 atack 30
           encode_vp9 fail 24
           encode_vp9 idle 12
-          encode_vp9 zwin1 30
-          encode_vp9 zwin2 30
-          encode_vp9 zwin3 30
-          encode_vp9 zwin4 30
+          encode_vp9_hq() {
+            name="$1"; fps="$2"
+            ffmpeg -y -framerate "$fps" -i "hevc/frames/$name/f%03d.png" \
+              -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 0 -crf 20 -row-mt 1 -deadline good -cpu-used 2 \
+              -auto-alt-ref 0 "hevc/out/mort_$name.webm" 2> "hevc/out/${name}_vp9.txt" \
+              || { echo "== $name vp9 failed:"; tail -20 "hevc/out/${name}_vp9.txt"; }
+          }
+          if [ -d hevc/frames/zwinHQ1 ]; then
+            encode_vp9_hq zwinHQ1 30; encode_vp9_hq zwinHQ2 30; encode_vp9_hq zwinHQ3 30; encode_vp9_hq zwinHQ4 30
+          else
+            encode_vp9 zwin1 30; encode_vp9 zwin2 30; encode_vp9 zwin3 30; encode_vp9 zwin4 30
+          fi
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
