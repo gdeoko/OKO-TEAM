@@ -38,6 +38,21 @@ jobs:
             echo "== $f"
             ffprobe -hide_banner -show_streams -select_streams v "$f" 2>/dev/null | grep -E 'codec_name|pix_fmt|width|height|nb_frames|alpha' || true
           done
+      - name: Encode VP9 WebM with alpha
+        run: |
+          set -x
+          encode_vp9() {
+            name="$1"; fps="$2"
+            ffmpeg -y -framerate "$fps" -i "hevc/frames/$name/f%03d.png" \
+              -c:v libvpx-vp9 -pix_fmt yuva420p -b:v 0 -crf 34 -row-mt 1 -deadline good -cpu-used 2 \
+              -auto-alt-ref 0 "hevc/out/mort_$name.webm" 2> "hevc/out/${name}_vp9.txt" \
+              || { echo "== $name vp9 failed:"; tail -20 "hevc/out/${name}_vp9.txt"; }
+          }
+          encode_vp9 jump 30
+          encode_vp9 atack 30
+          encode_vp9 fail 24
+          encode_vp9 idle 12
+          ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
           for f in hevc/out/mort_*.mov; do
