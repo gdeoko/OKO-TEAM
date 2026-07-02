@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_demon_bat/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x125e07290] v1.16.0
+[libvpx-vp9 @ 0x123e07290] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_demon_bat.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_demon_bat.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   24 fps=0.0 q=20.0 size=       0KiB time=00:00:00.40 bitrate=   9.6kbits/s speed=0.706x elapsed=0:00:00.56    frame=   47 fps= 43 q=17.0 size=       0KiB time=00:00:00.78 bitrate=   4.9kbits/s speed=0.724x elapsed=0:00:01.08    frame=   71 fps= 44 q=10.0 size=       0KiB time=00:00:01.18 bitrate=   3.2kbits/s speed=0.728x elapsed=0:00:01.62    frame=   96 fps= 44 q=20.0 size=       0KiB time=00:00:01.60 bitrate=   2.4kbits/s speed=0.728x elapsed=0:00:02.19    frame=  120 fps= 43 q=20.0 size=       0KiB time=00:00:02.00 bitrate=   1.9kbits/s speed=0.722x elapsed=0:00:02.76    frame=  143 fps= 44 q=17.0 size=    1280KiB time=00:00:02.38 bitrate=4399.6kbits/s speed=0.729x elapsed=0:00:03.27    frame=  156 fps= 41 q=20.0 size=    1280KiB time=00:00:02.60 bitrate=4033.0kbits/s speed=0.689x elapsed=0:00:03.77    [out#0/webm @ 0x600003f143c0] video:788KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 155.789153%
-frame=  180 fps= 44 q=20.0 Lsize=    2017KiB time=00:00:03.00 bitrate=5507.1kbits/s speed=0.733x elapsed=0:00:04.09    
+frame=   24 fps=0.0 q=20.0 size=       0KiB time=00:00:00.40 bitrate=   9.6kbits/s speed=0.669x elapsed=0:00:00.59    frame=   45 fps= 39 q=14.0 size=       0KiB time=00:00:00.75 bitrate=   5.1kbits/s speed=0.652x elapsed=0:00:01.15    frame=   70 fps= 40 q=20.0 size=       0KiB time=00:00:01.16 bitrate=   3.3kbits/s speed=0.659x elapsed=0:00:01.77    frame=   92 fps= 39 q=20.0 size=       0KiB time=00:00:01.53 bitrate=   2.5kbits/s speed=0.656x elapsed=0:00:02.33    frame=  111 fps= 39 q=10.0 size=       0KiB time=00:00:01.85 bitrate=   2.1kbits/s speed=0.648x elapsed=0:00:02.85    frame=  134 fps= 39 q=20.0 size=    1280KiB time=00:00:02.23 bitrate=4695.1kbits/s speed=0.653x elapsed=0:00:03.41    frame=  155 fps= 39 q=17.0 size=    1280KiB time=00:00:02.58 bitrate=4059.0kbits/s speed=0.658x elapsed=0:00:03.92    frame=  156 fps= 35 q=20.0 size=    1280KiB time=00:00:02.60 bitrate=4033.0kbits/s speed=0.583x elapsed=0:00:04.45    [out#0/webm @ 0x60000390c3c0] video:788KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 155.789153%
+frame=  180 fps= 39 q=20.0 Lsize=    2017KiB time=00:00:03.00 bitrate=5507.1kbits/s speed=0.649x elapsed=0:00:04.61    

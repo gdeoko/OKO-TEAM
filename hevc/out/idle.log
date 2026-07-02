@@ -21,6 +21,6 @@ Output #0, mov, to 'hevc/out/mort_idle.mov':
   Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 460x710 [SAR 1:1 DAR 46:71], q=2-31, 12 fps, 12288 tbn
     Metadata:
       encoder         : Lavc62.28.102 hevc_videotoolbox
-frame=    6 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.41 bitrate=   0.7kbits/s speed=0.733x elapsed=0:00:00.56    frame=   16 fps= 15 q=-0.0 size=       0KiB time=00:00:01.25 bitrate=   0.2kbits/s speed=1.15x elapsed=0:00:01.08    frame=   26 fps= 16 q=-0.0 size=       0KiB time=00:00:02.08 bitrate=   0.1kbits/s speed=1.29x elapsed=0:00:01.61    frame=   35 fps= 16 q=-0.0 size=       0KiB time=00:00:02.83 bitrate=   0.1kbits/s speed=1.33x elapsed=0:00:02.12    [mov @ 0x123e06610] Starting second pass: moving the moov atom to the beginning of the file
-[out#0/mov @ 0x600001d083c0] video:275KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.400888%
-frame=   40 fps= 18 q=-0.0 Lsize=     276KiB time=00:00:03.25 bitrate= 696.0kbits/s speed=1.49x elapsed=0:00:02.18    
+frame=    1 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.50    frame=   11 fps= 10 q=-0.0 size=       0KiB time=00:00:00.83 bitrate=   0.3kbits/s speed=0.773x elapsed=0:00:01.07    frame=   22 fps= 13 q=-0.0 size=       0KiB time=00:00:01.75 bitrate=   0.2kbits/s speed=1.03x elapsed=0:00:01.69    frame=   31 fps= 14 q=-0.0 size=       0KiB time=00:00:02.50 bitrate=   0.1kbits/s speed= 1.1x elapsed=0:00:02.27    [mov @ 0x12d605200] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x6000020e4300] video:275KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.400888%
+frame=   40 fps= 14 q=-0.0 Lsize=     276KiB time=00:00:03.25 bitrate= 696.0kbits/s speed=1.17x elapsed=0:00:02.76    

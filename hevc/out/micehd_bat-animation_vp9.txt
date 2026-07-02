@@ -8,20 +8,20 @@ ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
   libavfilter    11. 14.102 / 11. 14.102
   libswscale      9.  5.102 /  9.  5.102
   libswresample   6.  3.102 /  6.  3.102
-Input #0, image2, from 'hevc/frames/mice_fire_bat/f%03d.png':
+Input #0, image2, from 'hevc/frames/micehd_bat-animation/f%03d.png':
   Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
-  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x13d606230] v1.16.0
-Output #0, webm, to 'hevc/out/mort_mice_fire_bat.webm':
+[libvpx-vp9 @ 0x128e06680] v1.16.0
+Output #0, webm, to 'hevc/out/mort_micehd_bat-animation.webm':
   Metadata:
     encoder         : Lavf62.12.102
-  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320, q=2-31, 60 fps, 1k tbn
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 1k tbn
     Metadata:
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   36 fps=0.0 q=20.0 size=       0KiB time=00:00:00.60 bitrate=   6.4kbits/s speed=0.983x elapsed=0:00:00.61    frame=   73 fps= 59 q=10.0 size=       0KiB time=00:00:01.21 bitrate=   3.2kbits/s speed=0.984x elapsed=0:00:01.23    frame=  112 fps= 60 q=20.0 size=       0KiB time=00:00:01.86 bitrate=   2.1kbits/s speed=   1x elapsed=0:00:01.86    frame=  146 fps= 60 q=20.0 size=     768KiB time=00:00:02.43 bitrate=2585.5kbits/s speed=   1x elapsed=0:00:02.43    [out#0/webm @ 0x60000085c300] video:1013KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 39.561385%
-frame=  180 fps= 61 q=20.0 Lsize=    1413KiB time=00:00:03.00 bitrate=3859.0kbits/s speed=1.01x elapsed=0:00:02.96    
+frame=   28 fps=0.0 q=20.0 size=       0KiB time=00:00:00.93 bitrate=   4.1kbits/s speed=1.87x elapsed=0:00:00.50    frame=   55 fps= 52 q=17.0 size=       0KiB time=00:00:01.83 bitrate=   2.1kbits/s speed=1.72x elapsed=0:00:01.06    frame=   66 fps= 40 q=20.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.32x elapsed=0:00:01.66    [out#0/webm @ 0x6000029f4300] video:375KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 58.945122%
+frame=   90 fps= 53 q=20.0 Lsize=     596KiB time=00:00:03.00 bitrate=1628.5kbits/s speed=1.77x elapsed=0:00:01.69    

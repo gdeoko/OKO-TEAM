@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/idle/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x152705fe0] v1.16.0
+[libvpx-vp9 @ 0x13b705690] v1.16.0
 Output #0, webm, to 'hevc/out/mort_idle.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_idle.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   16 fps=0.0 q=34.0 size=       0KiB time=00:00:01.33 bitrate=   2.9kbits/s speed=2.62x elapsed=0:00:00.50    [out#0/webm @ 0x600002aec180] video:105KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 47.941848%
-frame=   40 fps=0.0 q=34.0 Lsize=     156KiB time=00:00:03.33 bitrate= 382.5kbits/s speed=3.82x elapsed=0:00:00.87    
+frame=   16 fps=0.0 q=34.0 size=       0KiB time=00:00:01.33 bitrate=   2.9kbits/s speed=2.28x elapsed=0:00:00.58    [out#0/webm @ 0x600003af00c0] video:105KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 47.941848%
+frame=   40 fps= 39 q=34.0 Lsize=     156KiB time=00:00:03.33 bitrate= 382.5kbits/s speed=3.25x elapsed=0:00:01.02    
