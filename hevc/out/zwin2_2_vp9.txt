@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/zwin2_2/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x148606680] v1.16.0
+[libvpx-vp9 @ 0x120606680] v1.16.0
 Output #0, webm, to 'hevc/out/mort_zwin2_2.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_zwin2_2.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=    8 fps=0.0 q=20.0 size=       0KiB time=00:00:00.26 bitrate=  14.4kbits/s speed=0.481x elapsed=0:00:00.55    frame=   17 fps= 16 q=10.0 size=       0KiB time=00:00:00.56 bitrate=   6.8kbits/s speed=0.517x elapsed=0:00:01.09    frame=   28 fps= 17 q=20.0 size=       0KiB time=00:00:00.93 bitrate=   4.1kbits/s speed=0.579x elapsed=0:00:01.61    frame=   36 fps= 17 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.562x elapsed=0:00:02.13    frame=   36 fps= 14 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.453x elapsed=0:00:02.64    [out#0/webm @ 0x600002288300] video:600KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 47.857974%
-frame=   60 fps= 22 q=20.0 Lsize=     887KiB time=00:00:02.00 bitrate=3634.6kbits/s speed=0.717x elapsed=0:00:02.78    
+frame=   10 fps=0.0 q=20.0 size=       0KiB time=00:00:00.33 bitrate=  11.5kbits/s speed=0.611x elapsed=0:00:00.54    frame=   18 fps= 17 q=20.0 size=       0KiB time=00:00:00.60 bitrate=   6.4kbits/s speed=0.569x elapsed=0:00:01.05    frame=   30 fps= 19 q=20.0 size=       0KiB time=00:00:01.00 bitrate=   3.8kbits/s speed=0.619x elapsed=0:00:01.61    frame=   36 fps= 17 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.553x elapsed=0:00:02.17    frame=   36 fps= 13 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.447x elapsed=0:00:02.68    [out#0/webm @ 0x6000005ac300] video:600KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 47.857974%
+frame=   60 fps= 22 q=20.0 Lsize=     887KiB time=00:00:02.00 bitrate=3634.6kbits/s speed=0.741x elapsed=0:00:02.69    
