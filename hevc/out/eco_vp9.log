@@ -1,0 +1,189 @@
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_fire_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x11d706330] v1.16.0
+Output #0, webm, to 'hevc/out/eco_mice_fire_bat.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320, q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   33 fps=0.0 q=16.0 size=       0KiB time=00:00:01.10 bitrate=   3.5kbits/s dup=0 drop=57 speed= 1.7x elapsed=0:00:00.64    frame=   64 fps= 56 q=28.0 size=       0KiB time=00:00:02.13 bitrate=   1.8kbits/s dup=0 drop=88 speed=1.86x elapsed=0:00:01.14    [out#0/webm @ 0x6000028d8180] video:430KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 42.925549%
+frame=   92 fps= 58 q=28.0 Lsize=     614KiB time=00:00:03.06 bitrate=1641.4kbits/s dup=0 drop=88 speed=1.94x elapsed=0:00:01.57    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_demon_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x12d706330] v1.16.0
+Output #0, webm, to 'hevc/out/eco_mice_demon_bat.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320, q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   22 fps=0.0 q=28.0 size=       0KiB time=00:00:00.73 bitrate=   5.2kbits/s dup=0 drop=46 speed=1.38x elapsed=0:00:00.53    frame=   44 fps= 41 q=28.0 size=       0KiB time=00:00:01.46 bitrate=   2.6kbits/s dup=0 drop=68 speed=1.36x elapsed=0:00:01.07    frame=   61 fps= 37 q=16.0 size=       0KiB time=00:00:02.03 bitrate=   1.9kbits/s dup=0 drop=85 speed=1.22x elapsed=0:00:01.66    frame=   68 fps= 30 q=28.0 size=       0KiB time=00:00:02.26 bitrate=   1.7kbits/s dup=0 drop=88 speed=0.984x elapsed=0:00:02.30    [out#0/webm @ 0x600003b7c180] video:325KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 168.435422%
+frame=   92 fps= 38 q=28.0 Lsize=     874KiB time=00:00:03.06 bitrate=2334.0kbits/s dup=0 drop=88 speed=1.26x elapsed=0:00:02.43    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_glitch_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x13a706330] v1.16.0
+Output #0, webm, to 'hevc/out/eco_mice_glitch_bat.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320, q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   38 fps=0.0 q=28.0 size=       0KiB time=00:00:01.26 bitrate=   3.0kbits/s dup=0 drop=62 speed=2.13x elapsed=0:00:00.59    frame=   68 fps= 57 q=28.0 size=       0KiB time=00:00:02.26 bitrate=   1.7kbits/s dup=0 drop=88 speed=1.88x elapsed=0:00:01.20    [out#0/webm @ 0x600000280180] video:349KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 20.544324%
+frame=   92 fps= 69 q=28.0 Lsize=     420KiB time=00:00:03.06 bitrate=1122.8kbits/s dup=0 drop=88 speed=2.29x elapsed=0:00:01.33    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_minecraft_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x11cf06330] v1.16.0
+Output #0, webm, to 'hevc/out/eco_mice_minecraft_bat.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320, q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   44 fps=0.0 q=28.0 size=       0KiB time=00:00:01.46 bitrate=   2.6kbits/s dup=0 drop=68 speed=2.61x elapsed=0:00:00.56    [out#0/webm @ 0x600001c58180] video:231KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 44.636371%
+frame=   92 fps= 81 q=28.0 Lsize=     334KiB time=00:00:03.06 bitrate= 892.3kbits/s dup=0 drop=88 speed=2.71x elapsed=0:00:01.13    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_bat-animation/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x132f06330] v1.16.0
+Output #0, webm, to 'hevc/out/eco_micehd_bat-animation.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   33 fps=0.0 q=16.0 size=       0KiB time=00:00:01.10 bitrate=   3.5kbits/s speed=2.15x elapsed=0:00:00.51    frame=   66 fps= 57 q=28.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.89x elapsed=0:00:01.16    [out#0/webm @ 0x60000282c180] video:248KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 68.415948%
+frame=   90 fps= 66 q=28.0 Lsize=     417KiB time=00:00:03.00 bitrate=1139.1kbits/s speed=2.19x elapsed=0:00:01.36    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_black_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x134606ec0] v1.16.0
+Output #0, webm, to 'hevc/out/eco_micehd_black_bat.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   33 fps=0.0 q=16.0 size=       0KiB time=00:00:01.10 bitrate=   3.5kbits/s speed= 2.2x elapsed=0:00:00.50    frame=   66 fps= 59 q=28.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.97x elapsed=0:00:01.11    [out#0/webm @ 0x6000026883c0] video:280KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 58.368524%
+frame=   90 fps= 69 q=28.0 Lsize=     443KiB time=00:00:03.00 bitrate=1210.1kbits/s speed= 2.3x elapsed=0:00:01.30    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_bat_tester/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
+Press [q] to stop, [?] for help
+[libvpx-vp9 @ 0x130705fe0] v1.16.0
+Output #0, webm, to 'hevc/out/eco_micehd_bat_tester.webm':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: vp9, yuva420p(tv, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 1k tbn
+    Metadata:
+      encoder         : Lavc62.28.102 libvpx-vp9
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+frame=   50 fps=0.0 q=28.0 size=       0KiB time=00:00:01.66 bitrate=   2.3kbits/s speed=2.56x elapsed=0:00:00.64    [out#0/webm @ 0x600001d48180] video:195KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 37.293537%
+frame=   90 fps= 83 q=28.0 Lsize=     267KiB time=00:00:03.00 bitrate= 729.5kbits/s speed=2.75x elapsed=0:00:01.08    

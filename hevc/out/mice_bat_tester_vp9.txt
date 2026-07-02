@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_bat_tester/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x149f050d0] v1.16.0
+[libvpx-vp9 @ 0x121f056a0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_bat_tester.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_bat_tester.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   44 fps=0.0 q=20.0 size=       0KiB time=00:00:01.46 bitrate=   2.6kbits/s speed=2.42x elapsed=0:00:00.60    frame=   66 fps= 59 q=20.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.98x elapsed=0:00:01.11    [out#0/webm @ 0x6000032fc0c0] video:573KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 21.434789%
-frame=   90 fps= 72 q=20.0 Lsize=     696KiB time=00:00:03.00 bitrate=1900.9kbits/s speed=2.41x elapsed=0:00:01.24    
+frame=   45 fps=0.0 q=14.0 size=       0KiB time=00:00:01.50 bitrate=   2.6kbits/s speed=2.35x elapsed=0:00:00.63    frame=   66 fps= 56 q=20.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.88x elapsed=0:00:01.17    [out#0/webm @ 0x6000013640c0] video:573KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 21.434789%
+frame=   90 fps= 71 q=20.0 Lsize=     696KiB time=00:00:03.00 bitrate=1900.9kbits/s speed=2.38x elapsed=0:00:01.25    

@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/fail/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x129706330] v1.16.0
+[libvpx-vp9 @ 0x143f056a0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_fail.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_fail.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   15 fps=0.0 q=32.0 size=       0KiB time=00:00:00.62 bitrate=   6.2kbits/s speed=1.01x elapsed=0:00:00.62    frame=   40 fps= 32 q=34.0 size=       0KiB time=00:00:01.66 bitrate=   2.3kbits/s speed=1.32x elapsed=0:00:01.26    [out#0/webm @ 0x600003eec180] video:214KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.959161%
-frame=   64 fps= 40 q=34.0 Lsize=     334KiB time=00:00:02.66 bitrate=1027.0kbits/s speed=1.66x elapsed=0:00:01.60    
+frame=   12 fps=0.0 q=34.0 size=       0KiB time=00:00:00.50 bitrate=   7.7kbits/s speed=0.896x elapsed=0:00:00.55    frame=   28 fps= 26 q=34.0 size=       0KiB time=00:00:01.16 bitrate=   3.3kbits/s speed= 1.1x elapsed=0:00:01.06    frame=   40 fps= 25 q=34.0 size=       0KiB time=00:00:01.66 bitrate=   2.3kbits/s speed=1.06x elapsed=0:00:01.57    [out#0/webm @ 0x6000023180c0] video:214KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 55.959161%
+frame=   64 fps= 37 q=34.0 Lsize=     334KiB time=00:00:02.66 bitrate=1027.0kbits/s speed=1.53x elapsed=0:00:01.74    
