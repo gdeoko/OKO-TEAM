@@ -1,0 +1,26 @@
+ffmpeg version 8.1.1 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.1 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.101 / 60. 26.101
+  libavcodec     62. 28.101 / 62. 28.101
+  libavformat    62. 12.101 / 62. 12.101
+  libavdevice    62.  3.101 / 62.  3.101
+  libavfilter    11. 14.101 / 11. 14.101
+  libswscale      9.  5.101 /  9.  5.101
+  libswresample   6.  3.101 /  6.  3.101
+Input #0, image2, from 'hevc/frames/zwin2/f%03d.png':
+  Duration: 00:00:02.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 759x759, 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+Output #0, mov, to 'hevc/out/mort_zwin2.mov':
+  Metadata:
+    encoder         : Lavf62.12.101
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 759x759, q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.101 hevc_videotoolbox
+frame=    1 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.00 bitrate=N/A speed=   0x elapsed=0:00:00.51    frame=    7 fps=6.5 q=-0.0 size=       0KiB time=00:00:00.20 bitrate=   1.4kbits/s speed=0.186x elapsed=0:00:01.07    frame=   11 fps=6.9 q=-0.0 size=       0KiB time=00:00:00.33 bitrate=   0.9kbits/s speed=0.21x elapsed=0:00:01.58    frame=   15 fps=7.1 q=-0.0 size=       0KiB time=00:00:00.46 bitrate=   0.6kbits/s speed=0.222x elapsed=0:00:02.10    frame=   19 fps=7.2 q=-0.0 size=       0KiB time=00:00:00.60 bitrate=   0.5kbits/s speed=0.228x elapsed=0:00:02.62    frame=   23 fps=7.2 q=-0.0 size=     256KiB time=00:00:00.73 bitrate=2860.1kbits/s speed=0.23x elapsed=0:00:03.18    frame=   28 fps=7.6 q=-0.0 size=     256KiB time=00:00:00.90 bitrate=2330.5kbits/s speed=0.243x elapsed=0:00:03.70    frame=   35 fps=8.2 q=-0.0 size=     256KiB time=00:00:01.13 bitrate=1850.7kbits/s speed=0.266x elapsed=0:00:04.26    frame=   39 fps=8.1 q=-0.0 size=     256KiB time=00:00:01.26 bitrate=1655.9kbits/s speed=0.263x elapsed=0:00:04.80    frame=   45 fps=8.4 q=-0.0 size=     512KiB time=00:00:01.46 bitrate=2859.9kbits/s speed=0.273x elapsed=0:00:05.37    frame=   51 fps=8.7 q=-0.0 size=     512KiB time=00:00:01.66 bitrate=2516.8kbits/s speed=0.283x elapsed=0:00:05.88    [mov @ 0x14be06240] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x6000002903c0] video:701KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.165212%
+frame=   60 fps=9.4 q=-0.0 Lsize=     702KiB time=00:00:01.96 bitrate=2924.9kbits/s speed=0.307x elapsed=0:00:06.41    
