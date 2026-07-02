@@ -31,6 +31,10 @@ jobs:
           encode atack 30
           encode fail 24
           encode idle 12
+          encode zwin1 30
+          encode zwin2 30
+          encode zwin3 30
+          encode zwin4 30
           ls -la hevc/out
       - name: Probe results
         run: |
@@ -52,6 +56,10 @@ jobs:
           encode_vp9 atack 30
           encode_vp9 fail 24
           encode_vp9 idle 12
+          encode_vp9 zwin1 30
+          encode_vp9 zwin2 30
+          encode_vp9 zwin3 30
+          encode_vp9 zwin4 30
           ls -la hevc/out/*.webm
       - name: Verify alpha via AVFoundation
         run: |
