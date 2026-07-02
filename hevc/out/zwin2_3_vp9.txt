@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/zwin2_3/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x13b606ba0] v1.16.0
+[libvpx-vp9 @ 0x148e07290] v1.16.0
 Output #0, webm, to 'hevc/out/mort_zwin2_3.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_zwin2_3.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   10 fps=0.0 q=20.0 size=       0KiB time=00:00:00.33 bitrate=  11.5kbits/s speed=0.53x elapsed=0:00:00.62    frame=   20 fps= 17 q=20.0 size=       0KiB time=00:00:00.66 bitrate=   5.8kbits/s speed=0.577x elapsed=0:00:01.15    frame=   31 fps= 19 q=10.0 size=       0KiB time=00:00:01.03 bitrate=   3.7kbits/s speed=0.619x elapsed=0:00:01.67    frame=   36 fps= 16 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.526x elapsed=0:00:02.28    [out#0/webm @ 0x600000a503c0] video:533KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 53.626141%
-frame=   60 fps= 22 q=20.0 Lsize=     820KiB time=00:00:02.00 bitrate=3357.0kbits/s speed=0.732x elapsed=0:00:02.73    
+frame=    7 fps=0.0 q=17.0 size=       0KiB time=00:00:00.23 bitrate=  16.5kbits/s speed=0.371x elapsed=0:00:00.62    frame=   14 fps= 11 q=20.0 size=       0KiB time=00:00:00.46 bitrate=   8.2kbits/s speed=0.375x elapsed=0:00:01.24    frame=   20 fps= 11 q=20.0 size=       0KiB time=00:00:00.66 bitrate=   5.8kbits/s speed=0.374x elapsed=0:00:01.78    frame=   28 fps= 12 q=20.0 size=       0KiB time=00:00:00.93 bitrate=   4.1kbits/s speed=0.385x elapsed=0:00:02.42    frame=   36 fps= 12 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.396x elapsed=0:00:03.03    frame=   36 fps= 10 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.339x elapsed=0:00:03.54    frame=   36 fps=8.7 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.289x elapsed=0:00:04.15    [out#0/webm @ 0x600002ad43c0] video:533KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 53.626141%
+frame=   60 fps= 14 q=20.0 Lsize=     820KiB time=00:00:02.00 bitrate=3357.0kbits/s speed=0.452x elapsed=0:00:04.42    

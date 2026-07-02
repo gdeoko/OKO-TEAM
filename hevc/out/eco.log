@@ -194,3 +194,199 @@ Output #0, mov, to 'hevc/out/eco_micehd_bat_tester.mov':
 frame=   11 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.33 bitrate=   0.9kbits/s speed=0.518x elapsed=0:00:00.64    frame=   23 fps= 19 q=-0.0 size=       0KiB time=00:00:00.73 bitrate=   0.4kbits/s speed=0.597x elapsed=0:00:01.22    frame=   35 fps= 19 q=-0.0 size=       0KiB time=00:00:01.13 bitrate=   0.3kbits/s speed=0.631x elapsed=0:00:01.79    frame=   47 fps= 20 q=-0.0 size=       0KiB time=00:00:01.53 bitrate=   0.2kbits/s speed=0.663x elapsed=0:00:02.31    frame=   59 fps= 20 q=-0.0 size=       0KiB time=00:00:01.93 bitrate=   0.1kbits/s speed=0.672x elapsed=0:00:02.87    frame=   71 fps= 20 q=-0.0 size=     256KiB time=00:00:02.33 bitrate= 898.9kbits/s speed=0.663x elapsed=0:00:03.52    frame=   84 fps= 21 q=-0.0 size=     256KiB time=00:00:02.76 bitrate= 758.1kbits/s speed=0.685x elapsed=0:00:04.04    [mov @ 0x144f056b0] Starting second pass: moving the moov atom to the beginning of the file
 [out#0/mov @ 0x600003064180] video:385KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.340724%
 frame=   90 fps= 22 q=-0.0 Lsize=     386KiB time=00:00:02.96 bitrate=1066.5kbits/s speed=0.711x elapsed=0:00:04.16    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_fire_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x126f05700] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_mice_fire_bat.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320, q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=    8 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.23 bitrate=   1.2kbits/s dup=0 drop=13 speed=0.41x elapsed=0:00:00.56    frame=   22 fps= 19 q=-0.0 size=       0KiB time=00:00:00.70 bitrate=   0.4kbits/s dup=0 drop=27 speed=0.594x elapsed=0:00:01.17    frame=   34 fps= 19 q=-0.0 size=       0KiB time=00:00:01.10 bitrate=   0.3kbits/s dup=0 drop=39 speed=0.604x elapsed=0:00:01.82    frame=   45 fps= 19 q=-0.0 size=     256KiB time=00:00:01.46 bitrate=1430.1kbits/s dup=0 drop=50 speed=0.62x elapsed=0:00:02.36    frame=   57 fps= 19 q=-0.0 size=     256KiB time=00:00:01.86 bitrate=1123.6kbits/s dup=0 drop=62 speed=0.627x elapsed=0:00:02.97    frame=   68 fps= 19 q=-0.0 size=     256KiB time=00:00:02.23 bitrate= 939.2kbits/s dup=0 drop=73 speed=0.625x elapsed=0:00:03.57    frame=   79 fps= 19 q=-0.0 size=     512KiB time=00:00:02.60 bitrate=1613.3kbits/s dup=0 drop=84 speed=0.625x elapsed=0:00:04.15    [mov @ 0x126f04c40] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x60000099c0c0] video:620KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.208690%
+frame=   92 fps= 19 q=-0.0 Lsize=     621KiB time=00:00:03.03 bitrate=1676.7kbits/s dup=0 drop=88 speed=0.64x elapsed=0:00:04.73    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_demon_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x15b606ec0] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_mice_demon_bat.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320, q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=    3 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.06 bitrate=   4.3kbits/s dup=0 drop=8 speed=0.124x elapsed=0:00:00.53    frame=   11 fps=9.8 q=-0.0 size=       0KiB time=00:00:00.33 bitrate=   0.9kbits/s dup=0 drop=16 speed=0.296x elapsed=0:00:01.12    frame=   21 fps= 12 q=-0.0 size=     256KiB time=00:00:00.66 bitrate=3146.2kbits/s dup=0 drop=26 speed=0.387x elapsed=0:00:01.72    frame=   30 fps= 13 q=-0.0 size=     256KiB time=00:00:00.96 bitrate=2169.8kbits/s dup=0 drop=35 speed=0.423x elapsed=0:00:02.28    frame=   37 fps= 13 q=-0.0 size=     256KiB time=00:00:01.20 bitrate=1747.9kbits/s dup=0 drop=42 speed=0.43x elapsed=0:00:02.79    frame=   46 fps= 13 q=-0.0 size=     512KiB time=00:00:01.50 bitrate=2796.4kbits/s dup=0 drop=51 speed=0.44x elapsed=0:00:03.41    frame=   52 fps= 13 q=-0.0 size=     512KiB time=00:00:01.70 bitrate=2467.4kbits/s dup=0 drop=57 speed=0.429x elapsed=0:00:03.96    frame=   59 fps= 13 q=-0.0 size=     768KiB time=00:00:01.93 bitrate=3254.4kbits/s dup=0 drop=64 speed=0.431x elapsed=0:00:04.48    frame=   67 fps= 13 q=-0.0 size=     768KiB time=00:00:02.20 bitrate=2859.9kbits/s dup=0 drop=72 speed=0.44x elapsed=0:00:04.99    frame=   74 fps= 13 q=-0.0 size=     768KiB time=00:00:02.43 bitrate=2585.6kbits/s dup=0 drop=79 speed=0.442x elapsed=0:00:05.50    frame=   81 fps= 13 q=-0.0 size=    1024KiB time=00:00:02.66 bitrate=3145.8kbits/s dup=0 drop=86 speed=0.443x elapsed=0:00:06.01    frame=   87 fps= 13 q=-0.0 size=    1024KiB time=00:00:02.86 bitrate=2926.4kbits/s dup=0 drop=88 speed=0.43x elapsed=0:00:06.66    [mov @ 0x15b606240] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x6000017903c0] video:1224KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.106918%
+frame=   92 fps= 14 q=-0.0 Lsize=    1225KiB time=00:00:03.03 bitrate=3308.9kbits/s dup=0 drop=88 speed=0.453x elapsed=0:00:06.69    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_glitch_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x159f05fe0] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_mice_glitch_bat.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320, q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=    8 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.23 bitrate=   1.2kbits/s dup=0 drop=13 speed=0.397x elapsed=0:00:00.58    frame=   18 fps= 16 q=-0.0 size=       0KiB time=00:00:00.56 bitrate=   0.5kbits/s dup=0 drop=23 speed=0.496x elapsed=0:00:01.14    frame=   28 fps= 17 q=-0.0 size=       0KiB time=00:00:00.90 bitrate=   0.3kbits/s dup=0 drop=33 speed=0.533x elapsed=0:00:01.68    frame=   35 fps= 16 q=-0.0 size=       0KiB time=00:00:01.13 bitrate=   0.3kbits/s dup=0 drop=40 speed=0.517x elapsed=0:00:02.19    frame=   52 fps= 18 q=-0.0 size=       0KiB time=00:00:01.70 bitrate=   0.2kbits/s dup=0 drop=57 speed=0.604x elapsed=0:00:02.81    frame=   62 fps= 18 q=-0.0 size=     256KiB time=00:00:02.03 bitrate=1031.5kbits/s dup=0 drop=67 speed=0.591x elapsed=0:00:03.44    frame=   72 fps= 18 q=-0.0 size=     256KiB time=00:00:02.36 bitrate= 886.2kbits/s dup=0 drop=77 speed=0.584x elapsed=0:00:04.04    frame=   82 fps= 18 q=-0.0 size=     256KiB time=00:00:02.70 bitrate= 776.8kbits/s dup=0 drop=87 speed=0.592x elapsed=0:00:04.55    [mov @ 0x159f05360] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x600001e90180] video:426KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.303575%
+frame=   92 fps= 19 q=-0.0 Lsize=     427KiB time=00:00:03.03 bitrate=1153.7kbits/s dup=0 drop=88 speed=0.613x elapsed=0:00:04.95    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/mice_minecraft_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320, 60 fps, 60 tbr, 60 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x148005fe0] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_mice_minecraft_bat.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320, q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=   10 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.30 bitrate=   1.0kbits/s dup=0 drop=15 speed=0.543x elapsed=0:00:00.55    frame=   23 fps= 22 q=-0.0 size=       0KiB time=00:00:00.73 bitrate=   0.4kbits/s dup=0 drop=28 speed=0.692x elapsed=0:00:01.05    frame=   34 fps= 22 q=-0.0 size=       0KiB time=00:00:01.10 bitrate=   0.3kbits/s dup=0 drop=39 speed=0.696x elapsed=0:00:01.58    frame=   43 fps= 21 q=-0.0 size=       0KiB time=00:00:01.40 bitrate=   0.2kbits/s dup=0 drop=48 speed=0.672x elapsed=0:00:02.08    frame=   54 fps= 20 q=-0.0 size=       0KiB time=00:00:01.76 bitrate=   0.2kbits/s dup=0 drop=59 speed=0.652x elapsed=0:00:02.70    frame=   62 fps= 19 q=-0.0 size=       0KiB time=00:00:02.03 bitrate=   0.1kbits/s dup=0 drop=67 speed=0.611x elapsed=0:00:03.32    frame=   70 fps= 18 q=-0.0 size=     256KiB time=00:00:02.30 bitrate= 911.9kbits/s dup=0 drop=75 speed=0.579x elapsed=0:00:03.97    frame=   87 fps= 19 q=-0.0 size=     256KiB time=00:00:02.86 bitrate= 731.7kbits/s dup=0 drop=88 speed=0.622x elapsed=0:00:04.60    [mov @ 0x148005360] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x600000d30180] video:332KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.389277%
+frame=   92 fps= 20 q=-0.0 Lsize=     333KiB time=00:00:03.03 bitrate= 900.5kbits/s dup=0 drop=88 speed=0.645x elapsed=0:00:04.70    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_bat-animation/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x124607290] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_micehd_bat-animation.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=    5 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.13 bitrate=   2.2kbits/s speed=0.226x elapsed=0:00:00.58    frame=   16 fps= 13 q=-0.0 size=       0KiB time=00:00:00.50 bitrate=   0.6kbits/s speed=0.406x elapsed=0:00:01.23    frame=   27 fps= 15 q=-0.0 size=       0KiB time=00:00:00.86 bitrate=   0.3kbits/s speed=0.474x elapsed=0:00:01.82    frame=   35 fps= 15 q=-0.0 size=       0KiB time=00:00:01.13 bitrate=   0.3kbits/s speed=0.486x elapsed=0:00:02.33    frame=   44 fps= 15 q=-0.0 size=       0KiB time=00:00:01.43 bitrate=   0.2kbits/s speed=0.499x elapsed=0:00:02.87    frame=   52 fps= 15 q=-0.0 size=     256KiB time=00:00:01.70 bitrate=1233.8kbits/s speed= 0.5x elapsed=0:00:03.39    frame=   60 fps= 15 q=-0.0 size=     256KiB time=00:00:01.96 bitrate=1066.5kbits/s speed=0.502x elapsed=0:00:03.91    frame=   72 fps= 16 q=-0.0 size=     256KiB time=00:00:02.36 bitrate= 886.2kbits/s speed=0.521x elapsed=0:00:04.54    frame=   83 fps= 16 q=-0.0 size=     256KiB time=00:00:02.73 bitrate= 767.4kbits/s speed=0.536x elapsed=0:00:05.09    [mov @ 0x124606610] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x6000007003c0] video:461KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.284737%
+frame=   90 fps= 17 q=-0.0 Lsize=     462KiB time=00:00:02.96 bitrate=1275.5kbits/s speed=0.557x elapsed=0:00:05.32    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_black_bat/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x15af05fe0] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_micehd_black_bat.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=    6 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.16 bitrate=   1.7kbits/s speed=0.314x elapsed=0:00:00.53    frame=   17 fps= 16 q=-0.0 size=       0KiB time=00:00:00.53 bitrate=   0.5kbits/s speed=0.507x elapsed=0:00:01.05    frame=   27 fps= 17 q=-0.0 size=       0KiB time=00:00:00.86 bitrate=   0.3kbits/s speed=0.557x elapsed=0:00:01.55    frame=   38 fps= 18 q=-0.0 size=       0KiB time=00:00:01.23 bitrate=   0.2kbits/s speed=0.589x elapsed=0:00:02.09    frame=   51 fps= 19 q=-0.0 size=       0KiB time=00:00:01.66 bitrate=   0.2kbits/s speed=0.611x elapsed=0:00:02.72    frame=   63 fps= 19 q=-0.0 size=     256KiB time=00:00:02.06 bitrate=1014.9kbits/s speed=0.618x elapsed=0:00:03.34    frame=   79 fps= 20 q=-0.0 size=     256KiB time=00:00:02.60 bitrate= 806.7kbits/s speed=0.651x elapsed=0:00:03.99    [mov @ 0x15af05360] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x600002f74180] video:432KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.303783%
+frame=   90 fps= 21 q=-0.0 Lsize=     433KiB time=00:00:02.96 bitrate=1195.8kbits/s speed=0.685x elapsed=0:00:04.33    
+ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 16.0.0 (clang-1600.0.26.6)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/8.1.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      60. 26.102 / 60. 26.102
+  libavcodec     62. 28.102 / 62. 28.102
+  libavformat    62. 12.102 / 62. 12.102
+  libavdevice    62.  3.102 / 62.  3.102
+  libavfilter    11. 14.102 / 11. 14.102
+  libswscale      9.  5.102 /  9.  5.102
+  libswresample   6.  3.102 /  6.  3.102
+Input #0, image2, from 'hevc/frames/micehd_bat_tester/f%03d.png':
+  Duration: 00:00:03.00, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: png, rgba(pc, gbr/unknown/unknown), 320x320 [SAR 1000:1000 DAR 1:1], 30 fps, 30 tbr, 30 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (png (native) -> hevc (hevc_videotoolbox))
+Press [q] to stop, [?] for help
+[hevc_videotoolbox @ 0x11de06ec0] Error setting alpha quality: -12902
+IOServiceMatchingfailed for: AppleM2ScalerCSCDriver
+    Last message repeated 1 times
+Output #0, mov, to 'hevc/out/eco_micehd_bat_tester.mov':
+  Metadata:
+    encoder         : Lavf62.12.102
+  Stream #0:0: Video: hevc (hvc1 / 0x31637668), bgra(pc, gbr/unknown/unknown, progressive), 320x320 [SAR 1:1 DAR 1:1], q=2-31, 30 fps, 15360 tbn
+    Metadata:
+      encoder         : Lavc62.28.102 hevc_videotoolbox
+frame=   10 fps=0.0 q=-0.0 size=       0KiB time=00:00:00.30 bitrate=   1.0kbits/s speed=0.48x elapsed=0:00:00.62    frame=   22 fps= 18 q=-0.0 size=       0KiB time=00:00:00.70 bitrate=   0.4kbits/s speed=0.562x elapsed=0:00:01.24    frame=   32 fps= 17 q=-0.0 size=       0KiB time=00:00:01.03 bitrate=   0.3kbits/s speed=0.557x elapsed=0:00:01.85    frame=   42 fps= 18 q=-0.0 size=       0KiB time=00:00:01.36 bitrate=   0.2kbits/s speed=0.573x elapsed=0:00:02.38    frame=   53 fps= 18 q=-0.0 size=     256KiB time=00:00:01.73 bitrate=1210.1kbits/s speed=0.59x elapsed=0:00:02.93    frame=   62 fps= 18 q=-0.0 size=     256KiB time=00:00:02.03 bitrate=1031.5kbits/s speed=0.577x elapsed=0:00:03.52    frame=   73 fps= 17 q=-0.0 size=     256KiB time=00:00:02.40 bitrate= 873.9kbits/s speed=0.575x elapsed=0:00:04.17    frame=   85 fps= 18 q=-0.0 size=     256KiB time=00:00:02.80 bitrate= 749.1kbits/s speed=0.596x elapsed=0:00:04.69    [mov @ 0x11de06240] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mov @ 0x600000d603c0] video:494KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.265702%
+frame=   90 fps= 19 q=-0.0 Lsize=     495KiB time=00:00:02.96 bitrate=1366.6kbits/s speed=0.614x elapsed=0:00:04.83    

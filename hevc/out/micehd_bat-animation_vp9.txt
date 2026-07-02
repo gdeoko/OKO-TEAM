@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/micehd_bat-animation/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x13e706330] v1.16.0
+[libvpx-vp9 @ 0x13c005fe0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_micehd_bat-animation.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_micehd_bat-animation.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   38 fps=0.0 q=20.0 size=       0KiB time=00:00:01.26 bitrate=   3.0kbits/s speed=1.96x elapsed=0:00:00.64    frame=   66 fps= 53 q=20.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=1.76x elapsed=0:00:01.25    [out#0/webm @ 0x600003824180] video:375KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 58.945122%
-frame=   90 fps= 61 q=20.0 Lsize=     596KiB time=00:00:03.00 bitrate=1628.5kbits/s speed=2.02x elapsed=0:00:01.48    
+frame=   21 fps=0.0 q=10.0 size=       0KiB time=00:00:00.70 bitrate=   5.5kbits/s speed=1.25x elapsed=0:00:00.56    frame=   45 fps= 38 q=14.0 size=       0KiB time=00:00:01.50 bitrate=   2.6kbits/s speed=1.28x elapsed=0:00:01.17    frame=   65 fps= 39 q=10.0 size=       0KiB time=00:00:02.16 bitrate=   1.8kbits/s speed=1.28x elapsed=0:00:01.68    frame=   66 fps= 30 q=20.0 size=       0KiB time=00:00:02.20 bitrate=   1.7kbits/s speed=0.992x elapsed=0:00:02.21    [out#0/webm @ 0x600003030180] video:375KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 58.945122%
+frame=   90 fps= 39 q=20.0 Lsize=     596KiB time=00:00:03.00 bitrate=1628.5kbits/s speed=1.31x elapsed=0:00:02.29    
