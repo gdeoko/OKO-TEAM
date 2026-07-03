@@ -1,0 +1,55 @@
+name: alpha-audit
+on:
+  push:
+    branches: [hevc-bake]
+    paths: ['.github/workflows/alpha.yml']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: which ffmpeg || brew install ffmpeg
+      - name: Alpha audit of shipped mice videos
+        run: |
+          mkdir -p hevc/out/alpha
+          : > hevc/out/alpha/report.txt
+          # в public/mice-video лежат eco_* (mov+webm) — аудитим ровно их + hq-моты для сравнения
+          for f in hevc/out/eco_mice_*.mov hevc/out/eco_micehd_*.mov hevc/out/eco_mice_*.webm hevc/out/eco_micehd_*.webm hevc/out/mort_mice_glitch_bat.mov; do
+            [ -e "$f" ] || continue
+            n=$(basename "$f")
+            echo "== $n" | tee -a hevc/out/alpha/report.txt
+            ffprobe -hide_banner -show_streams -select_streams v "$f" 2>/dev/null | grep -E 'codec_name|pix_fmt|width|height|nb_frames|alpha_mode' | tee -a hevc/out/alpha/report.txt
+            if ffmpeg -y -loglevel error -i "$f" -vf "select=eq(n\,9),alphaextract,scale=160:-1" -frames:v 1 "hevc/out/alpha/${n}.alpha.png" 2>>hevc/out/alpha/report.txt; then
+              echo "alphaextract OK" | tee -a hevc/out/alpha/report.txt
+            else
+              echo "NO ALPHA PLANE in $n" | tee -a hevc/out/alpha/report.txt
+            fi
+            ffmpeg -y -loglevel error -i "$f" -filter_complex "color=white:s=320x320[bg];[0:v]select=eq(n\,9),scale=300:-1[v];[bg][v]overlay=(W-w)/2:(H-h)/2:format=auto" -frames:v 1 "hevc/out/alpha/${n}.onwhite.png" || true
+          done
+          for f in hevc/out/eco_mice_*.mov hevc/out/eco_micehd_*.mov; do
+            [ -e "$f" ] || continue
+            swift hevc/verify.swift "$f" 2>&1 | tee -a hevc/out/alpha/report.txt || true
+          done
+      - name: Re-encode glitch HQ from frames
+        run: |
+          if [ -d hevc/frames/mice_glitch_bat ]; then
+            ffmpeg -y -loglevel error -framerate 60 -i hevc/frames/mice_glitch_bat/f%03d.png -r 30 \
+              -c:v hevc_videotoolbox -allow_sw 1 -alpha_quality 0.95 -q:v 60 \
+              -pix_fmt bgra -tag:v hvc1 -movflags +faststart hevc/out/alpha/glitch_bat_fix.mov
+            ffprobe -hide_banner -show_streams -select_streams v hevc/out/alpha/glitch_bat_fix.mov 2>/dev/null | grep -E 'codec_name|pix_fmt|nb_frames' | tee -a hevc/out/alpha/report.txt || true
+            ffmpeg -y -loglevel error -i hevc/out/alpha/glitch_bat_fix.mov -vf "select=eq(n\,9),alphaextract,scale=160:-1" -frames:v 1 hevc/out/alpha/glitch_bat_fix.alpha.png || echo "fix has NO ALPHA" | tee -a hevc/out/alpha/report.txt
+            ffmpeg -y -loglevel error -i hevc/out/alpha/glitch_bat_fix.mov -filter_complex "color=white:s=320x320[bg];[0:v]select=eq(n\,9),scale=300:-1[v];[bg][v]overlay=(W-w)/2:(H-h)/2:format=auto" -frames:v 1 hevc/out/alpha/glitch_bat_fix.onwhite.png || true
+            swift hevc/verify.swift hevc/out/alpha/glitch_bat_fix.mov | tee -a hevc/out/alpha/report.txt || true
+          fi
+      - name: Commit results
+        run: |
+          git config user.name "oko-team"
+          git config user.email "okoteam.top@gmail.com"
+          git pull --rebase origin hevc-bake || true
+          git add -f hevc/out/alpha
+          git commit -m "alpha audit results" || echo "nothing to commit"
+          git push origin HEAD:hevc-bake
