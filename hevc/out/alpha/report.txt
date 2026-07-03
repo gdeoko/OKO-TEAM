@@ -1,0 +1,1322 @@
+== eco_mice_demon_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=92
+[hevc @ 0x121f05430] Unexpected extra rep formats
+[hevc @ 0x121f05430] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x121f05430] SPS 0 does not exist.
+[hevc @ 0x121f05430] SPS 1 does not exist.
+[hevc @ 0x121f05430] PPS id out of range: 0
+    Last message repeated 91 times
+[hevc @ 0x121f07a60] Unexpected extra rep formats
+[hevc @ 0x121f07a60] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x121f07a60] SPS 0 does not exist.
+[hevc @ 0x121f07a60] SPS 1 does not exist.
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[hevc @ 0x121f07a60] PPS id out of range: 0
+[hevc @ 0x121f0f050] PPS id out of range: 0
+[hevc @ 0x121f15e00] PPS id out of range: 0
+[hevc @ 0x121f1cd60] PPS id out of range: 0
+[vf#0:0 @ 0x122810000] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x122810000] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x122810000] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x121f05eb0] [enc:png @ 0x6000012181c0] Could not open encoder before EOF
+[vost#0:0/png @ 0x121f05eb0] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x121f05eb0] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600000c18180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_demon_bat.mov
+== eco_mice_fire_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=92
+[hevc @ 0x14fe05fc0] Unexpected extra rep formats
+[hevc @ 0x14fe05fc0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x14fe05fc0] SPS 0 does not exist.
+[hevc @ 0x14fe05fc0] SPS 1 does not exist.
+[hevc @ 0x14fe05fc0] PPS id out of range: 0
+    Last message repeated 91 times
+[hevc @ 0x14fe085f0] Unexpected extra rep formats
+[hevc @ 0x14fe085f0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x14fe085f0] SPS 0 does not exist.
+[hevc @ 0x14fe085f0] SPS 1 does not exist.
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[hevc @ 0x14fe085f0] PPS id out of range: 0
+[hevc @ 0x14fe0fbe0] PPS id out of range: 0
+[hevc @ 0x14fe16990] PPS id out of range: 0
+[hevc @ 0x14fe1d8f0] PPS id out of range: 0
+[vf#0:0 @ 0x15000dc00] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x15000dc00] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x15000dc00] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x14fe06a40] [enc:png @ 0x600001f38310] Could not open encoder before EOF
+[vost#0:0/png @ 0x14fe06a40] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x14fe06a40] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x6000001303c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_fire_bat.mov
+== eco_mice_glitch_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=92
+[hevc @ 0x13be06390] Unexpected extra rep formats
+[hevc @ 0x13be06390] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x13be06390] SPS 0 does not exist.
+[hevc @ 0x13be06390] SPS 1 does not exist.
+[hevc @ 0x13be06390] PPS id out of range: 0
+    Last message repeated 91 times
+[hevc @ 0x13be08910] Unexpected extra rep formats
+[hevc @ 0x13be08910] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x13be08910] SPS 0 does not exist.
+[hevc @ 0x13be08910] SPS 1 does not exist.
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[hevc @ 0x13be08910] PPS id out of range: 0
+[hevc @ 0x13be10ec0] PPS id out of range: 0
+[hevc @ 0x13be17c70] PPS id out of range: 0
+[hevc @ 0x13be1ebd0] PPS id out of range: 0
+[vf#0:0 @ 0x13c03e400] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x13c03e400] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x13c03e400] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x13be06bb0] [enc:png @ 0x6000039f8380] Could not open encoder before EOF
+[vost#0:0/png @ 0x13be06bb0] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x13be06bb0] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x6000027fc3c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_glitch_bat.mov
+== eco_mice_minecraft_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=92
+[hevc @ 0x14b605300] Unexpected extra rep formats
+[hevc @ 0x14b605300] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x14b605300] SPS 0 does not exist.
+[hevc @ 0x14b605300] SPS 1 does not exist.
+[hevc @ 0x14b605300] PPS id out of range: 0
+    Last message repeated 91 times
+[hevc @ 0x14b607740] Unexpected extra rep formats
+[hevc @ 0x14b607740] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x14b607740] SPS 0 does not exist.
+[hevc @ 0x14b607740] SPS 1 does not exist.
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[hevc @ 0x14b607740] PPS id out of range: 0
+[hevc @ 0x14b60f430] PPS id out of range: 0
+[hevc @ 0x14b6161e0] PPS id out of range: 0
+[hevc @ 0x14b61d140] PPS id out of range: 0
+[vf#0:0 @ 0x14c80e800] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x14c80e800] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x14c80e800] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x14b605b20] [enc:png @ 0x600001898fc0] Could not open encoder before EOF
+[vost#0:0/png @ 0x14b605b20] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x14b605b20] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x6000006983c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_minecraft_bat.mov
+== eco_micehd_bat-animation.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=90
+[hevc @ 0x131605fc0] Unexpected extra rep formats
+[hevc @ 0x131605fc0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x131605fc0] SPS 0 does not exist.
+[hevc @ 0x131605fc0] SPS 1 does not exist.
+[hevc @ 0x131605fc0] PPS id out of range: 0
+    Last message repeated 89 times
+[hevc @ 0x1316085f0] Unexpected extra rep formats
+[hevc @ 0x1316085f0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x1316085f0] SPS 0 does not exist.
+[hevc @ 0x1316085f0] SPS 1 does not exist.
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[hevc @ 0x131616990] PPS id out of range: 0
+[hevc @ 0x13161d8f0] PPS id out of range: 0
+[hevc @ 0x1316085f0] PPS id out of range: 0
+[hevc @ 0x13160fbe0] PPS id out of range: 0
+[vf#0:0 @ 0x131842c00] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x131842c00] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x131842c00] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x131606a40] [enc:png @ 0x600003438230] Could not open encoder before EOF
+[vost#0:0/png @ 0x131606a40] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x131606a40] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600002a303c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_bat-animation.mov
+== eco_micehd_bat_tester.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=90
+[hevc @ 0x1558050e0] Unexpected extra rep formats
+[hevc @ 0x1558050e0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x1558050e0] SPS 0 does not exist.
+[hevc @ 0x1558050e0] SPS 1 does not exist.
+[hevc @ 0x1558050e0] PPS id out of range: 0
+    Last message repeated 89 times
+[hevc @ 0x155807710] Unexpected extra rep formats
+[hevc @ 0x155807710] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x155807710] SPS 0 does not exist.
+[hevc @ 0x155807710] SPS 1 does not exist.
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[hevc @ 0x155815ab0] PPS id out of range: 0
+[hevc @ 0x15581ca10] PPS id out of range: 0
+[hevc @ 0x155807710] PPS id out of range: 0
+[hevc @ 0x15580ed00] PPS id out of range: 0
+[vf#0:0 @ 0x15602ba00] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x15602ba00] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x15602ba00] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x155805b60] [enc:png @ 0x60000146c1c0] Could not open encoder before EOF
+[vost#0:0/png @ 0x155805b60] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x155805b60] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600000a6c180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_bat_tester.mov
+== eco_micehd_black_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=90
+[hevc @ 0x1518050e0] Unexpected extra rep formats
+[hevc @ 0x1518050e0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x1518050e0] SPS 0 does not exist.
+[hevc @ 0x1518050e0] SPS 1 does not exist.
+[hevc @ 0x1518050e0] PPS id out of range: 0
+    Last message repeated 89 times
+[hevc @ 0x151807710] Unexpected extra rep formats
+[hevc @ 0x151807710] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x151807710] SPS 0 does not exist.
+[hevc @ 0x151807710] SPS 1 does not exist.
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[hevc @ 0x151815ab0] PPS id out of range: 0
+[hevc @ 0x15181ca10] PPS id out of range: 0
+[hevc @ 0x151807710] PPS id out of range: 0
+[hevc @ 0x15180ed00] PPS id out of range: 0
+[vf#0:0 @ 0x152010000] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x152010000] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x152010000] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x151805b60] [enc:png @ 0x6000018401c0] Could not open encoder before EOF
+[vost#0:0/png @ 0x151805b60] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x151805b60] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x60000064c180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_black_bat.mov
+== eco_mice_demon_bat.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x60000022c0c0] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x60000022c0c0] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x11d00ec00] Error reinitializing filters!
+[vf#0:0 @ 0x11d00ec00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x11d00ec00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x11ce06c00] [enc:png @ 0x600001c29810] Could not open encoder before EOF
+[vost#0:0/png @ 0x11ce06c00] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x11ce06c00] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x6000002283c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_demon_bat.webm
+== eco_mice_fire_bat.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x600003bdc840] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x600003bdc840] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x13380ec00] Error reinitializing filters!
+[vf#0:0 @ 0x13380ec00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x13380ec00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x133606c00] [enc:png @ 0x6000025dd7a0] Could not open encoder before EOF
+[vost#0:0/png @ 0x133606c00] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x133606c00] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600003bdc3c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_fire_bat.webm
+== eco_mice_glitch_bat.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x600000df80c0] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x600000df80c0] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x15200ec00] Error reinitializing filters!
+[vf#0:0 @ 0x15200ec00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x15200ec00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x151e06c00] [enc:png @ 0x6000013fd7a0] Could not open encoder before EOF
+[vost#0:0/png @ 0x151e06c00] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x151e06c00] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600000dfc3c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_glitch_bat.webm
+== eco_mice_minecraft_bat.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x600003c640c0] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x600003c640c0] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x140808c00] Error reinitializing filters!
+[vf#0:0 @ 0x140808c00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x140808c00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x13ff06070] [enc:png @ 0x600002268310] Could not open encoder before EOF
+[vost#0:0/png @ 0x13ff06070] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x13ff06070] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600003c68180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_mice_minecraft_bat.webm
+== eco_micehd_bat-animation.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x6000035b4300] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x6000035b4300] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x122808c00] Error reinitializing filters!
+[vf#0:0 @ 0x122808c00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x122808c00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x121f05d20] [enc:png @ 0x600002bbc2a0] Could not open encoder before EOF
+[vost#0:0/png @ 0x121f05d20] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x121f05d20] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x6000035b0180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_bat-animation.webm
+== eco_micehd_bat_tester.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x600003bcc0c0] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x600003bcc0c0] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x12a80ec00] Error reinitializing filters!
+[vf#0:0 @ 0x12a80ec00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x12a80ec00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x12a606c00] [enc:png @ 0x6000025c97a0] Could not open encoder before EOF
+[vost#0:0/png @ 0x12a606c00] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x12a606c00] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x600003bc83c0] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_bat_tester.webm
+== eco_micehd_black_bat.webm
+codec_name=vp9
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=yuv420p
+nb_frames=N/A
+TAG:alpha_mode=1
+[Parsed_alphaextract_1 @ 0x60000125c600] Requested planes not available.
+[Parsed_alphaextract_1 @ 0x60000125c600] Failed to configure input pad on Parsed_alphaextract_1
+[vf#0:0 @ 0x125808c00] Error reinitializing filters!
+[vf#0:0 @ 0x125808c00] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x125808c00] Terminating thread with return code -22 (Invalid argument)
+[vost#0:0/png @ 0x124f06070] [enc:png @ 0x600000c5c2a0] Could not open encoder before EOF
+[vost#0:0/png @ 0x124f06070] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x124f06070] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x60000125c180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in eco_micehd_black_bat.webm
+== mort_mice_glitch_bat.mov
+codec_name=hevc
+width=320
+height=320
+coded_width=320
+coded_height=320
+pix_fmt=unknown
+nb_frames=180
+[hevc @ 0x136f050e0] Unexpected extra rep formats
+[hevc @ 0x136f050e0] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x136f050e0] SPS 0 does not exist.
+[hevc @ 0x136f050e0] SPS 1 does not exist.
+[hevc @ 0x136f050e0] PPS id out of range: 0
+    Last message repeated 179 times
+[hevc @ 0x136f07660] Unexpected extra rep formats
+[hevc @ 0x136f07660] VPS 0 does not exist
+    Last message repeated 1 times
+[hevc @ 0x136f07660] SPS 0 does not exist.
+[hevc @ 0x136f07660] SPS 1 does not exist.
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[hevc @ 0x136f07660] PPS id out of range: 0
+[hevc @ 0x136f10900] PPS id out of range: 0
+[hevc @ 0x136f176b0] PPS id out of range: 0
+[hevc @ 0x136f1e610] PPS id out of range: 0
+[vf#0:0 @ 0x13782ce00] Cannot determine format of input 0:0 after EOF
+[vf#0:0 @ 0x13782ce00] Task finished with error code: -1094995529 (Invalid data found when processing input)
+[vf#0:0 @ 0x13782ce00] Terminating thread with return code -1094995529 (Invalid data found when processing input)
+[vost#0:0/png @ 0x136f05900] [enc:png @ 0x600002835490] Could not open encoder before EOF
+[vost#0:0/png @ 0x136f05900] Task finished with error code: -22 (Invalid argument)
+[vost#0:0/png @ 0x136f05900] Terminating thread with return code -22 (Invalid argument)
+[out#0/image2 @ 0x60000363c180] Nothing was written into output file, because at least one of its streams received no packets.
+NO ALPHA PLANE in mort_mice_glitch_bat.mov
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_mice_demon_bat: containsAlphaChannel ext = Optional(1)
+eco_mice_demon_bat f0 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f1 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f10 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f20 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f30 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f40 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f50 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f60 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f70 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f80 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat f90 320x320: transparent 42% opaque 38% partial 19%
+eco_mice_demon_bat: decoded 92 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_mice_fire_bat: containsAlphaChannel ext = Optional(1)
+eco_mice_fire_bat f0 320x320: transparent 58% opaque 31% partial 10%
+eco_mice_fire_bat f1 320x320: transparent 58% opaque 31% partial 10%
+eco_mice_fire_bat f10 320x320: transparent 60% opaque 30% partial 8%
+eco_mice_fire_bat f20 320x320: transparent 59% opaque 30% partial 9%
+eco_mice_fire_bat f30 320x320: transparent 61% opaque 31% partial 7%
+eco_mice_fire_bat f40 320x320: transparent 60% opaque 30% partial 9%
+eco_mice_fire_bat f50 320x320: transparent 57% opaque 31% partial 11%
+eco_mice_fire_bat f60 320x320: transparent 58% opaque 30% partial 10%
+eco_mice_fire_bat f70 320x320: transparent 59% opaque 32% partial 8%
+eco_mice_fire_bat f80 320x320: transparent 60% opaque 30% partial 9%
+eco_mice_fire_bat f90 320x320: transparent 58% opaque 30% partial 10%
+eco_mice_fire_bat: decoded 92 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_mice_glitch_bat: containsAlphaChannel ext = Optional(1)
+eco_mice_glitch_bat f0 320x320: transparent 62% opaque 27% partial 10%
+eco_mice_glitch_bat f1 320x320: transparent 62% opaque 27% partial 10%
+eco_mice_glitch_bat f10 320x320: transparent 58% opaque 27% partial 14%
+eco_mice_glitch_bat f20 320x320: transparent 50% opaque 27% partial 22%
+eco_mice_glitch_bat f30 320x320: transparent 52% opaque 27% partial 20%
+eco_mice_glitch_bat f40 320x320: transparent 54% opaque 29% partial 16%
+eco_mice_glitch_bat f50 320x320: transparent 59% opaque 27% partial 12%
+eco_mice_glitch_bat f60 320x320: transparent 54% opaque 31% partial 14%
+eco_mice_glitch_bat f70 320x320: transparent 47% opaque 32% partial 20%
+eco_mice_glitch_bat f80 320x320: transparent 55% opaque 27% partial 17%
+eco_mice_glitch_bat f90 320x320: transparent 62% opaque 27% partial 10%
+eco_mice_glitch_bat: decoded 92 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_mice_minecraft_bat: containsAlphaChannel ext = Optional(1)
+eco_mice_minecraft_bat f0 320x320: transparent 71% opaque 27% partial 0%
+eco_mice_minecraft_bat f1 320x320: transparent 71% opaque 27% partial 0%
+eco_mice_minecraft_bat f10 320x320: transparent 71% opaque 27% partial 0%
+eco_mice_minecraft_bat f20 320x320: transparent 63% opaque 27% partial 9%
+eco_mice_minecraft_bat f30 320x320: transparent 48% opaque 27% partial 23%
+eco_mice_minecraft_bat f40 320x320: transparent 60% opaque 27% partial 12%
+eco_mice_minecraft_bat f50 320x320: transparent 61% opaque 27% partial 11%
+eco_mice_minecraft_bat f60 320x320: transparent 29% opaque 56% partial 14%
+eco_mice_minecraft_bat f70 320x320: transparent 92% opaque 0% partial 7%
+eco_mice_minecraft_bat f80 320x320: transparent 100% opaque 0% partial 0%
+eco_mice_minecraft_bat f90 320x320: transparent 100% opaque 0% partial 0%
+eco_mice_minecraft_bat: decoded 92 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_micehd_bat-animation: containsAlphaChannel ext = Optional(1)
+eco_micehd_bat-animation f0 320x320: transparent 63% opaque 32% partial 4%
+eco_micehd_bat-animation f1 320x320: transparent 62% opaque 32% partial 4%
+eco_micehd_bat-animation f10 320x320: transparent 60% opaque 32% partial 6%
+eco_micehd_bat-animation f20 320x320: transparent 56% opaque 35% partial 7%
+eco_micehd_bat-animation f30 320x320: transparent 58% opaque 33% partial 7%
+eco_micehd_bat-animation f40 320x320: transparent 60% opaque 33% partial 5%
+eco_micehd_bat-animation f50 320x320: transparent 61% opaque 33% partial 5%
+eco_micehd_bat-animation f60 320x320: transparent 59% opaque 34% partial 5%
+eco_micehd_bat-animation f70 320x320: transparent 57% opaque 33% partial 8%
+eco_micehd_bat-animation f80 320x320: transparent 58% opaque 34% partial 6%
+eco_micehd_bat-animation: decoded 90 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_micehd_bat_tester: containsAlphaChannel ext = Optional(1)
+eco_micehd_bat_tester f0 320x320: transparent 71% opaque 27% partial 1%
+eco_micehd_bat_tester f1 320x320: transparent 71% opaque 27% partial 1%
+eco_micehd_bat_tester f10 320x320: transparent 64% opaque 29% partial 5%
+eco_micehd_bat_tester f20 320x320: transparent 57% opaque 33% partial 8%
+eco_micehd_bat_tester f30 320x320: transparent 53% opaque 37% partial 9%
+eco_micehd_bat_tester f40 320x320: transparent 52% opaque 35% partial 12%
+eco_micehd_bat_tester f50 320x320: transparent 52% opaque 28% partial 19%
+eco_micehd_bat_tester f60 320x320: transparent 51% opaque 33% partial 15%
+eco_micehd_bat_tester f70 320x320: transparent 51% opaque 37% partial 11%
+eco_micehd_bat_tester f80 320x320: transparent 50% opaque 37% partial 11%
+eco_micehd_bat_tester: decoded 90 frames, reader status 2
+hevc/verify.swift:13:25: warning: 'tracks(withMediaType:)' was deprecated in macOS 13.0: Use loadTracks(withMediaType:) instead
+guard let track = asset.tracks(withMediaType: .video).first else {
+                        ^
+hevc/verify.swift:16:21: warning: 'formatDescriptions' was deprecated in macOS 13.0: Use load(.formatDescriptions) instead
+if let desc = track.formatDescriptions.first {
+                    ^
+eco_micehd_black_bat: containsAlphaChannel ext = Optional(1)
+eco_micehd_black_bat f0 320x320: transparent 63% opaque 31% partial 4%
+eco_micehd_black_bat f1 320x320: transparent 63% opaque 32% partial 4%
+eco_micehd_black_bat f10 320x320: transparent 62% opaque 32% partial 5%
+eco_micehd_black_bat f20 320x320: transparent 60% opaque 35% partial 4%
+eco_micehd_black_bat f30 320x320: transparent 61% opaque 33% partial 5%
+eco_micehd_black_bat f40 320x320: transparent 62% opaque 33% partial 4%
+eco_micehd_black_bat f50 320x320: transparent 61% opaque 32% partial 6%
+eco_micehd_black_bat f60 320x320: transparent 61% opaque 33% partial 4%
+eco_micehd_black_bat f70 320x320: transparent 60% opaque 33% partial 5%
+eco_micehd_black_bat f80 320x320: transparent 60% opaque 33% partial 5%
+eco_micehd_black_bat: decoded 90 frames, reader status 2
+codec_name=hevc
+pix_fmt=unknown
+nb_frames=92
+fix has NO ALPHA
+glitch_bat_fix: containsAlphaChannel ext = Optional(1)
+glitch_bat_fix f0 320x320: transparent 62% opaque 27% partial 10%
+glitch_bat_fix f1 320x320: transparent 62% opaque 27% partial 10%
+glitch_bat_fix f10 320x320: transparent 58% opaque 27% partial 14%
+glitch_bat_fix f20 320x320: transparent 50% opaque 27% partial 22%
+glitch_bat_fix f30 320x320: transparent 52% opaque 27% partial 20%
+glitch_bat_fix f40 320x320: transparent 54% opaque 29% partial 16%
+glitch_bat_fix f50 320x320: transparent 59% opaque 27% partial 12%
+glitch_bat_fix f60 320x320: transparent 54% opaque 31% partial 14%
+glitch_bat_fix f70 320x320: transparent 47% opaque 32% partial 20%
+glitch_bat_fix f80 320x320: transparent 55% opaque 27% partial 17%
+glitch_bat_fix f90 320x320: transparent 62% opaque 27% partial 10%
+glitch_bat_fix: decoded 92 frames, reader status 2
