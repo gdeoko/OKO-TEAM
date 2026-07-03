@@ -114,6 +114,16 @@ jobs:
           npm i playwright@1.49.1 >/dev/null 2>&1
           npx playwright install webkit >/dev/null 2>&1
           node hevc/webkit_test.cjs || echo "webkit test problem"
+      - name: Extract report frames
+        run: |
+          if ls hevc/vid/*.mp4 >/dev/null 2>&1; then
+            mkdir -p hevc/out/vidframes
+            for f in hevc/vid/*.mp4; do
+              n=$(basename "$f" .mp4)
+              ffmpeg -y -i "$f" -vf "fps=3,scale=240:-1" "hevc/out/vidframes/${n}_%03d.png" 2>/dev/null || true
+            done
+            ls hevc/out/vidframes | head
+          fi
       - name: Commit results
         run: |
           git config user.name "oko-team"
