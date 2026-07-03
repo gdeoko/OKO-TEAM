@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_minecraft_bat/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x12a705fe0] v1.16.0
+[libvpx-vp9 @ 0x145f05fe0] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_minecraft_bat.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_minecraft_bat.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   40 fps=0.0 q=20.0 size=       0KiB time=00:00:00.66 bitrate=   5.8kbits/s speed= 1.1x elapsed=0:00:00.60    frame=   72 fps= 58 q=20.0 size=       0KiB time=00:00:01.20 bitrate=   3.2kbits/s speed=0.961x elapsed=0:00:01.24    frame=   99 fps= 54 q=17.0 size=       0KiB time=00:00:01.65 bitrate=   2.3kbits/s speed=0.896x elapsed=0:00:01.84    frame=  122 fps= 51 q=20.0 size=       0KiB time=00:00:02.03 bitrate=   1.9kbits/s speed=0.844x elapsed=0:00:02.41    frame=  152 fps= 51 q=20.0 size=     512KiB time=00:00:02.53 bitrate=1655.6kbits/s speed=0.857x elapsed=0:00:02.95    [out#0/webm @ 0x6000026b4180] video:563KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 45.718455%
-frame=  180 fps= 56 q=20.0 Lsize=     821KiB time=00:00:03.00 bitrate=2242.2kbits/s speed=0.926x elapsed=0:00:03.23    
+frame=   48 fps=0.0 q=20.0 size=       0KiB time=00:00:00.80 bitrate=   4.8kbits/s speed=1.59x elapsed=0:00:00.50    frame=   92 fps= 84 q=20.0 size=       0KiB time=00:00:01.53 bitrate=   2.5kbits/s speed= 1.4x elapsed=0:00:01.09    frame=  124 fps= 75 q=20.0 size=       0KiB time=00:00:02.06 bitrate=   1.9kbits/s speed=1.25x elapsed=0:00:01.65    [out#0/webm @ 0x6000035cc180] video:563KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 45.718455%
+frame=  180 fps= 86 q=20.0 Lsize=     821KiB time=00:00:03.00 bitrate=2242.2kbits/s speed=1.43x elapsed=0:00:02.09    

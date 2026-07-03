@@ -14,7 +14,7 @@ Input #0, image2, from 'hevc/frames/mice_glitch_bat/f%03d.png':
 Stream mapping:
   Stream #0:0 -> #0:0 (png (native) -> vp9 (libvpx-vp9))
 Press [q] to stop, [?] for help
-[libvpx-vp9 @ 0x12c705fe0] v1.16.0
+[libvpx-vp9 @ 0x143e07290] v1.16.0
 Output #0, webm, to 'hevc/out/mort_mice_glitch_bat.webm':
   Metadata:
     encoder         : Lavf62.12.102
@@ -23,5 +23,5 @@ Output #0, webm, to 'hevc/out/mort_mice_glitch_bat.webm':
       encoder         : Lavc62.28.102 libvpx-vp9
     Side data:
       CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
-frame=   30 fps=0.0 q=20.0 size=       0KiB time=00:00:00.50 bitrate=   7.7kbits/s speed=0.801x elapsed=0:00:00.62    frame=   47 fps= 42 q=17.0 size=       0KiB time=00:00:00.78 bitrate=   4.9kbits/s speed=0.695x elapsed=0:00:01.12    frame=   68 fps= 41 q=20.0 size=       0KiB time=00:00:01.13 bitrate=   3.4kbits/s speed=0.68x elapsed=0:00:01.66    frame=  108 fps= 47 q=20.0 size=       0KiB time=00:00:01.80 bitrate=   2.1kbits/s speed=0.786x elapsed=0:00:02.29    frame=  138 fps= 47 q=20.0 size=     512KiB time=00:00:02.30 bitrate=1823.6kbits/s speed=0.789x elapsed=0:00:02.91    frame=  156 fps= 44 q=20.0 size=     512KiB time=00:00:02.60 bitrate=1613.2kbits/s speed=0.734x elapsed=0:00:03.54    [out#0/webm @ 0x600002df8180] video:855KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 19.716592%
-frame=  180 fps= 48 q=20.0 Lsize=    1024KiB time=00:00:03.00 bitrate=2795.2kbits/s speed=0.799x elapsed=0:00:03.75    
+frame=   41 fps=0.0 q=10.0 size=       0KiB time=00:00:00.68 bitrate=   5.6kbits/s speed=1.23x elapsed=0:00:00.55    frame=   93 fps= 79 q=14.0 size=       0KiB time=00:00:01.55 bitrate=   2.5kbits/s speed=1.31x elapsed=0:00:01.18    frame=  141 fps= 78 q=14.0 size=     512KiB time=00:00:02.35 bitrate=1784.8kbits/s speed= 1.3x elapsed=0:00:01.80    [out#0/webm @ 0x600000fec3c0] video:855KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 19.716592%
+frame=  180 fps= 79 q=20.0 Lsize=    1024KiB time=00:00:03.00 bitrate=2795.2kbits/s speed=1.32x elapsed=0:00:02.27    
