@@ -42,7 +42,24 @@
       "mcp__Higgsfield__get_website_creation_bundle_file",
       "mcp__Higgsfield__job_display",
       "mcp__Higgsfield__show_generations",
-      "mcp__Higgsfield__show_medias"
-    ]
+      "mcp__Higgsfield__show_medias",
+      "mcp__Higgsfield__deploy_website",
+      "mcp__Higgsfield__create_website",
+      "mcp__Higgsfield__website_repo_access",
+      "mcp__Higgsfield__publish_website",
+      "mcp__Higgsfield__select_workspace",
+      "mcp__Higgsfield__delete_website",
+      "mcp__Higgsfield__generate_image",
+      "mcp__Higgsfield__generate_video",
+      "mcp__Higgsfield__generate_audio",
+      "mcp__Higgsfield__generate_3d",
+      "mcp__github__create_pull_request",
+      "mcp__github__push_files",
+      "mcp__github__update_pull_request",
+      "mcp__github__create_branch",
+      "mcp__github__add_issue_comment",
+      "mcp__github__subscribe_pr_activity"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }
