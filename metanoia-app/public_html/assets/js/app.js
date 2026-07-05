@@ -10,7 +10,7 @@
 
 const DEMO = {
   stories: [
-    { icon: 'dove',    name: 'Екатерина', badge: 'Педагог', seen: false },
+    { img: 'assets/img/avatars/ekaterina.jpg', name: 'Екатерина', badge: 'Педагог', seen: false },
     { icon: 'video',   name: 'Анонс урока', seen: false },
     { icon: 'sparkle', name: 'Мотивация', seen: false },
     { icon: 'trophy',  name: 'Успехи', seen: true },
@@ -47,7 +47,7 @@ const DEMO = {
   ],
 
   chats: [
-    { icon: 'dove', name: 'Екатерина Павленко', peda: true, pinned: true, last: 'Добро пожаловать в нашу школу!', time: '12:34', unread: 3 },
+    { img: 'assets/img/avatars/ekaterina.jpg', name: 'Екатерина Павленко', peda: true, pinned: true, last: 'Добро пожаловать в нашу школу!', time: '12:34', unread: 3 },
     { icon: 'comment', name: 'Общий чат школы', last: 'Иван: Спасибо большое!', time: '11:20', unread: 2 },
     { icon: 'users', name: 'Чат родителей', last: 'Мария: Кто идёт на созвон завтра?', time: '10:05', unread: 0 },
     { icon: 'gamepad', name: 'Чат учеников', last: 'Миша: Я собрал стих за 20 секунд!', time: '09:41', unread: 0 },
@@ -128,7 +128,7 @@ function renderStories() {
   $('#stories').innerHTML = DEMO.stories.map((s) => `
     <button class="story" data-story="${s.name}">
       <div class="story__ring ${s.seen ? 'story__ring--seen' : ''}">
-        <div class="story__avatar">${ICON(s.icon, 26)}</div>
+        <div class="story__avatar">${s.img ? `<img src="${s.img}" alt="">` : ICON(s.icon, 26)}</div>
       </div>
       <div class="story__name">${s.name}</div>
       ${s.badge ? `<div class="story__badge">${ICON('dove', 9)} ${s.badge}</div>` : ''}
@@ -182,7 +182,7 @@ function renderFeed() {
 function renderChats() {
   $('#chatList').innerHTML = DEMO.chats.map((c) => `
     <button class="chat-item ${c.pinned ? 'chat-item--pinned' : ''}">
-      <div class="chat-item__avatar">${ICON(c.icon, 24)}</div>
+      <div class="chat-item__avatar">${c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 24)}</div>
       <div class="chat-item__body">
         <div class="chat-item__name">${c.name} ${c.peda ? `<span class="chat-item__peda">${ICON('dove', 10)} Педагог</span>` : ''}</div>
         <div class="chat-item__last">${c.last}</div>
@@ -409,5 +409,5 @@ document.addEventListener('DOMContentLoaded', () => {
       $('#auth').hidden = false;
       hydrateIcons();
     }
-  }, 1400);
+  }, 2400);
 });

@@ -594,3 +594,21 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 }
 
 .auth__form[hidden] { display: none; }
+
+
+/* ══════════ РЕАЛЬНЫЙ БРЕНД ══════════ */
+.splash__video {
+  width: 210px; height: 210px;
+  border-radius: 28px;
+  object-fit: cover;
+  background: var(--cream);
+}
+.header__logo { object-fit: contain; }
+.story__avatar img {
+  width: 100%; height: 100%;
+  border-radius: 50%; object-fit: cover;
+}
+.chat-item__avatar img {
+  width: 48px; height: 48px;
+  border-radius: 50%; object-fit: cover; display: block;
+}

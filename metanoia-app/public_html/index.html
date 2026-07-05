@@ -8,7 +8,8 @@
   <title>Метанойя</title>
 
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/img/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png">
 
   <!-- Шрифты бренда: Playfair Display (заголовки) + Montserrat (текст) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,17 +23,9 @@
   <!-- ═══════════ SPLASH SCREEN ═══════════ -->
   <div id="splash" class="splash">
     <div class="splash__logo">
-      <svg viewBox="0 0 120 120" width="96" height="96" aria-label="Логотип Метанойя">
-        <!-- золотые крылья -->
-        <g class="splash__wings" fill="none" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
-          <path d="M22 38 Q34 20 52 26"/>
-          <path d="M14 50 Q28 32 48 36"/>
-          <path d="M98 38 Q86 20 68 26"/>
-          <path d="M106 50 Q92 32 72 36"/>
-        </g>
-        <!-- буква М -->
-        <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <video class="splash__video" autoplay muted playsinline preload="auto"
+        src="assets/video/logo-intro.mp4" poster="assets/img/logo.png"
+        aria-label="Логотип Метанойя"></video>
     </div>
     <div class="splash__title">МЕТАНОЙЯ</div>
     <div class="splash__subtitle">Онлайн-школа духовно-нравственного воспитания</div>
@@ -45,13 +38,7 @@
     <button class="onb__skip" id="onbSkip">Пропустить</button>
     <div class="onb__track" id="onbTrack">
       <section class="onb__slide">
-        <svg viewBox="0 0 120 120" width="130" height="130" aria-hidden="true">
-          <g fill="none" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
-            <path d="M22 38 Q34 20 52 26"/><path d="M14 50 Q28 32 48 36"/>
-            <path d="M98 38 Q86 20 68 26"/><path d="M106 50 Q92 32 72 36"/>
-          </g>
-          <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img src="assets/img/logo.png" width="150" height="150" alt="">
         <h2>Добро пожаловать!</h2>
         <p>Онлайн-школа духовно-нравственного воспитания детей</p>
       </section>
@@ -79,11 +66,7 @@
   <div id="auth" class="auth" hidden>
     <div class="auth__box">
       <div class="auth__logo">
-        <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
-          <g fill="none" stroke="#D4A574" stroke-width="5" stroke-linecap="round">
-            <path d="M22 38 Q34 20 52 26"/><path d="M98 38 Q86 20 68 26"/></g>
-          <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img src="assets/img/logo.png" width="64" height="64" alt="">
         <div class="auth__title">МЕТАНОЙЯ</div>
       </div>
 
@@ -150,12 +133,7 @@
 \n  <!-- ═══════════ ШАПКА ═══════════ -->
   <header class="header" id="header">
     <div class="header__left">
-      <svg class="header__logo" viewBox="0 0 120 120" width="36" height="36" aria-label="Метанойя">
-        <g fill="none" stroke="#D4A574" stroke-width="5" stroke-linecap="round">
-          <path d="M22 38 Q34 20 52 26"/><path d="M98 38 Q86 20 68 26"/>
-        </g>
-        <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img class="header__logo" src="assets/img/logo.png" width="36" height="36" alt="Метанойя">
       <span class="header__name">МЕТАНОЙЯ</span>
     </div>
     <div class="header__right">
