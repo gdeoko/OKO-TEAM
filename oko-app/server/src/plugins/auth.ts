@@ -1,8 +1,11 @@
 import fp from 'fastify-plugin';
-import jwt from 'jsonwebtoken';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { config } from '../config.js';
 import type { Tier } from '../tiers.js';
+
+// Проверка JWT Supabase Auth по JWKS (асимметричные ключи, новый формат).
+const jwks = createRemoteJWKSet(new URL(config.supabase.jwksUrl));
 
 export interface AuthUser {
   id: string;
@@ -26,20 +29,19 @@ export const authPlugin = fp(async (app) => {
     const header = req.headers.authorization;
     if (!header?.startsWith('Bearer ')) return;
     try {
-      const payload = jwt.verify(header.slice(7), config.supabase.jwtSecret) as {
-        sub: string;
-      };
+      const { payload } = await jwtVerify(header.slice(7), jwks);
+      if (!payload.sub) return;
       // Тариф и роль подтягиваются одним запросом; активная подписка с макс. тарифом
       const { data } = await app.db
         .from('profiles')
         .select('role, subscriptions(tier, status, expires_at)')
-        .eq('id', payload.sub)
+        .eq('id', payload.sub as string)
         .single();
       const active = (data?.subscriptions as any[] | null)?.find(
         (s) => s.status === 'active' && new Date(s.expires_at) > new Date(),
       );
       req.user = {
-        id: payload.sub,
+        id: payload.sub as string,
         role: (data?.role as AuthUser['role']) ?? 'user',
         tier: (active?.tier as Tier) ?? 'free',
       };

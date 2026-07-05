@@ -9,7 +9,7 @@ declare module 'fastify' {
 }
 
 export const supabasePlugin = fp(async (app) => {
-  const db = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
+  const db = createClient(config.supabase.url, config.supabase.secretKey, {
     auth: { persistSession: false },
   });
   app.decorate('db', db);

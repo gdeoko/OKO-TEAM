@@ -9,10 +9,14 @@ const req = (name: string): string => {
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   supabase: {
+    // Новый формат ключей Supabase (2025+): sb_publishable_* / sb_secret_* + JWKS.
+    // Старые имена переменных оставлены как fallback для совместимости.
     url: req('SUPABASE_URL'),
-    anonKey: req('SUPABASE_ANON_KEY'),
-    serviceRoleKey: req('SUPABASE_SERVICE_ROLE_KEY'),
-    jwtSecret: req('SUPABASE_JWT_SECRET'),
+    publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? '',
+    secretKey: process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
+    jwksUrl:
+      process.env.SUPABASE_JWKS_URL ??
+      `${process.env.SUPABASE_URL ?? ''}/auth/v1/.well-known/jwks.json`,
   },
   s3: {
     endpoint: req('S3_ENDPOINT'),
