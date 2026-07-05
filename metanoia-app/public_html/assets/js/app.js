@@ -235,7 +235,7 @@ function renderLessons() {
         const prev = Number(el.dataset.n) - 1;
         toast(`Пройди урок ${prev} — тест и ДЗ, чтобы открыть`);
       } else {
-        toast('Экран урока — этап 4');
+        openLesson();
       }
     });
   });
@@ -578,12 +578,13 @@ const CHAT_MSGS = {
 let cvChatId = null;
 let myMsgs = JSON.parse(localStorage.getItem('mt_msgs') || '{}');
 
-function msgHtml(m, mine) {
-  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}">
+function msgHtml(m, mine, key) {
+  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
     ${m.sticker
       ? `<img class="msg__sticker" src="${m.sticker}" alt="стикер">`
-      : `<div class="msg__bubble">${m.text}</div>`}
+      : `<div class="msg__bubble">${m.quote ? `<div class="msg__quote">${m.quote}</div>` : ''}${m.text}</div>`}
+    ${reactsHtml(cvChatId, key)}
     <div class="msg__meta">${m.time}${mine ? ICON('check', 11) : ''}</div>
   </div>`;
 }
@@ -599,8 +600,9 @@ function renderChatMsgs() {
   const data = CHAT_MSGS[cvChatId] || { msgs: [] };
   const mine = myMsgs[cvChatId] || [];
   $('#cvMsgs').innerHTML =
-    data.msgs.map((m) => msgHtml(m, false)).join('') +
-    mine.map((m) => msgHtml(m, true)).join('');
+    data.msgs.map((m, i) => msgHtml(m, false, 'd' + i)).join('') +
+    mine.map((m, i) => msgHtml(m, true, 'm' + i)).join('');
+  bindLongPress();
   $('#cvMsgs').scrollTop = $('#cvMsgs').scrollHeight;
 }
 
@@ -627,7 +629,9 @@ function openChatView(i) {
 function cvSendText() {
   const val = $('#cvField').value.trim();
   if (!val) return;
-  (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ text: val, time: 'только что' });
+  const msg = { text: val, time: 'только что' };
+  if (replyTo) { msg.quote = replyTo.text; replyTo = null; $('#cvReplyBar')?.remove(); }
+  (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
   localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
   $('#cvField').value = '';
   renderChatMsgs();
@@ -745,6 +749,162 @@ function initPTR() {
       pulling = false;
     }
     startY = null;
+  });
+}
+
+
+/* ───────── РЕАКЦИИ И ДЕЙСТВИЯ С СООБЩЕНИЯМИ ───────── */
+
+const REACTIONS = ['winged-heart', 'faith-flame', 'smiling-sun', 'sparkles', 'burning-candle', 'bell-ring'];
+let reactions = JSON.parse(localStorage.getItem('mt_reactions') || '{}'); // {chatId: {msgKey: [keys]}}
+let maTarget = null;   // { key, mine, text }
+let replyTo = null;    // { who, text }
+
+function reactsHtml(chatId, msgKey) {
+  const r = (reactions[chatId] || {})[msgKey] || [];
+  if (!r.length) return '';
+  const counts = {};
+  r.forEach((k) => { counts[k] = (counts[k] || 0) + 1; });
+  return `<div class="msg__reacts">${Object.entries(counts).map(([k, n]) =>
+    `<span class="msg__react msg__react--mine"><img src="assets/svg/stickers/${k}.svg" alt="">${n}</span>`).join('')}</div>`;
+}
+
+function openMsgActions(key, mine, text) {
+  maTarget = { key, mine, text };
+  $('#maReactions').innerHTML = REACTIONS.map((k) =>
+    `<button data-react="${k}"><img src="assets/svg/stickers/${k}.svg" alt="${k}"></button>`).join('');
+  $$('#maReactions [data-react]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const store = (reactions[cvChatId] = reactions[cvChatId] || {});
+      const list = (store[maTarget.key] = store[maTarget.key] || []);
+      const at = list.indexOf(b.dataset.react);
+      if (at >= 0) list.splice(at, 1); else list.push(b.dataset.react);
+      localStorage.setItem('mt_reactions', JSON.stringify(reactions));
+      $('#msgActions').hidden = true;
+      renderChatMsgs();
+    }));
+  $('#maDelete').hidden = !mine;
+  $('#msgActions').hidden = false;
+}
+
+function initMsgActions() {
+  $('#maBackdrop').addEventListener('click', () => { $('#msgActions').hidden = true; });
+  $('#maReply').addEventListener('click', () => {
+    replyTo = { text: maTarget.text.slice(0, 80) };
+    $('#msgActions').hidden = true;
+    showReplyBar();
+    $('#cvField').focus();
+  });
+  $('#maCopy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(maTarget.text); } catch {}
+    $('#msgActions').hidden = true;
+    toast('Скопировано');
+  });
+  $('#maDelete').addEventListener('click', () => {
+    const idx = Number(maTarget.key.slice(1));
+    (myMsgs[cvChatId] || []).splice(idx, 1);
+    localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+    $('#msgActions').hidden = true;
+    renderChatMsgs();
+    toast('Сообщение удалено');
+  });
+}
+
+function showReplyBar() {
+  let bar = $('#cvReplyBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'cvReplyBar';
+    bar.className = 'cv-reply';
+    $('#cvInputRow').before(bar);
+  }
+  bar.innerHTML = `<span data-icon-inline></span><span><b>Ответ:</b> ${replyTo.text}</span>
+    <button id="cvReplyCancel">${ICON('close', 16)}</button>`;
+  $('#cvReplyCancel').addEventListener('click', () => { replyTo = null; bar.remove(); });
+}
+
+/* долгий тап на сообщении */
+function bindLongPress() {
+  $$('#cvMsgs .msg').forEach((el) => {
+    let timer = null;
+    const start = () => {
+      timer = setTimeout(() => {
+        openMsgActions(el.dataset.key, el.dataset.mine === '1', el.dataset.text || '');
+      }, 450);
+    };
+    const cancel = () => clearTimeout(timer);
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+}
+
+/* ───────── ЭКРАН УРОКА (этап 4, начало) ───────── */
+
+const TEST_ANSWERS = { q0: '1', q1: '0', q2: '0' };
+let lessonState = JSON.parse(localStorage.getItem('mt_lesson1') || '{"watch":false,"test":false,"hw":false,"done":false}');
+
+function lessonSync() {
+  $$('#lessonSteps .lstep').forEach((el) =>
+    el.classList.toggle('done', !!lessonState[el.dataset.step]));
+  $('#lessonDone').disabled = !(lessonState.watch && lessonState.test) || lessonState.done;
+  $('#lessonDone').textContent = lessonState.done ? 'Урок пройден — урок 2 открыт!' : 'Отметить урок пройденным';
+}
+
+function openLesson() {
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'lesson'));
+  $('#nav').style.display = 'none';
+  lessonSync();
+  window.scrollTo({ top: 0 });
+}
+
+function lessonSave() { localStorage.setItem('mt_lesson1', JSON.stringify(lessonState)); }
+
+function initLesson() {
+  $('#lessonBack').addEventListener('click', () => {
+    $('#nav').style.display = '';
+    switchTab('lessons');
+  });
+  $('#videoStub').addEventListener('click', () => {
+    if (!lessonState.watch) {
+      lessonState.watch = true; lessonSave(); lessonSync();
+      toast('+20 XP за просмотр (видео появится в июле)');
+    } else toast('Видео появится после записи уроков');
+  });
+  $('#testCheck').addEventListener('click', () => {
+    let correct = 0, answered = 0;
+    Object.keys(TEST_ANSWERS).forEach((q) => {
+      const sel = document.querySelector(`input[name="${q}"]:checked`);
+      if (!sel) return;
+      answered++;
+      const label = sel.closest('.q__opt');
+      $$(`input[name="${q}"]`).forEach((i) => i.closest('.q__opt').classList.remove('right', 'wrong'));
+      if (sel.value === TEST_ANSWERS[q]) { correct++; label.classList.add('right'); }
+      else label.classList.add('wrong');
+    });
+    if (answered < 3) return toast('Ответь на все вопросы');
+    const res = $('#testResult');
+    res.hidden = false;
+    const pct = Math.round(correct / 3 * 100);
+    if (pct >= 70) {
+      res.className = 'test-result pass';
+      res.textContent = `Отлично! ${correct} из 3 (${pct}%) — тест пройден, +15 XP${pct === 100 ? ' и +30 XP за 100%!' : ''}`;
+      if (!lessonState.test) { lessonState.test = true; lessonSave(); lessonSync(); }
+    } else {
+      res.className = 'test-result fail';
+      res.textContent = `${correct} из 3 — нужно 70%. Перечитай пересказ и попробуй ещё раз (осталось 2 попытки сегодня)`;
+    }
+  });
+  $('#hwUpload').addEventListener('click', () => {
+    lessonState.hw = true; lessonSave(); lessonSync();
+    toast('Загрузка файлов включится на хостинге — шаг засчитан для демо');
+  });
+  $('#lessonDone').addEventListener('click', () => {
+    lessonState.done = true; lessonSave(); lessonSync();
+    DEMO.blocks[0].lessons[1].state = 'open';
+    renderLessons();
+    toast('+20 XP! Урок 2 «Создание мира» открыт');
   });
 }
 
@@ -899,6 +1059,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initComments();
   initPin();
   initChatView();
+  initMsgActions();
+  initLesson();
   initNotifs();
   initInfiniteFeed();
   initPTR();
