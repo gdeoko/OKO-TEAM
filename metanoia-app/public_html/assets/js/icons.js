@@ -48,6 +48,12 @@ const ICON_PATHS = {
   back:    '<path d="m15 18-6-6 6-6"/>',
   close:   '<path d="M18 6 6 18M6 6l12 12"/>',
   send:    '<path d="m3 3 18 9-18 9 4-9Z"/><path d="M7 12h8"/>',
+  mic:     '<rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/>',
+  circle:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/>',
+  image:   '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/>',
+  file:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
+  poll:    '<path d="M6 20V10M12 20V4M18 20v-6"/>',
+  attach:  '<path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
 };
 
 /**

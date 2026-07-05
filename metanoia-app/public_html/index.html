@@ -194,6 +194,40 @@
     </div>
   </div>
 
+
+  <!-- ═══════════ ВЛОЖЕНИЯ (скрепка) ═══════════ -->
+  <div id="attachSheet" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" data-close-attach></div>
+    <div class="sheet asheet">
+      <div class="sheet__grip"></div>
+      <button class="asheet__item" data-attach="photo"><span data-icon="image" data-size="20"></span> Фото или видео из галереи</button>
+      <button class="asheet__item" data-attach="file"><span data-icon="file" data-size="20"></span> Файл (PDF, DOC — до 20 МБ)</button>
+      <button class="asheet__item asheet__item--dim" data-attach="poll"><span data-icon="poll" data-size="20"></span> Опрос <small>только Екатерина</small></button>
+    </div>
+  </div>
+
+  <!-- ═══════════ НОВОЕ ЛИЧНОЕ СООБЩЕНИЕ ═══════════ -->
+  <div id="dmSheet" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" data-close-dm></div>
+    <div class="sheet asheet">
+      <div class="sheet__grip"></div>
+      <div class="sheet__title">Написать родителю</div>
+      <div id="dmList"></div>
+      <div class="asheet__note">Личные сообщения доступны только между родителями. Дети общаются в чате учеников под присмотром педагога.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ПРОФИЛЬ УЧАСТНИКА ═══════════ -->
+  <div id="userCard" class="pinm" hidden>
+    <div class="pinm__box ucard">
+      <div class="ucard__avatar" id="ucAvatar"></div>
+      <div class="ucard__name" id="ucName"></div>
+      <div class="ucard__meta" id="ucMeta"></div>
+      <button class="btn btn--primary" id="ucWrite" style="width:100%">Написать сообщение</button>
+      <button class="pinm__cancel" id="ucClose">Закрыть</button>
+    </div>
+  </div>
+
   <!-- ═══════════ ШАПКА ═══════════ -->
   <header class="header" id="header">
     <div class="header__left">
@@ -271,7 +305,10 @@
 
     <!-- ── 💬 ЧАТЫ ── -->
     <section class="screen" data-screen="chats">
-      <h1 class="screen-title">Чаты</h1>
+      <div class="chats-head">
+        <h1 class="screen-title">Чаты</h1>
+        <button id="newChatBtn" aria-label="Новое сообщение"><span data-icon="comment" data-size="22"></span><span data-icon="plus" data-size="13" class="chats-head__plus"></span></button>
+      </div>
       <div class="chat-list" id="chatList"><!-- JS --></div>
     </section>
 
@@ -364,11 +401,21 @@
       <div class="cv-pinned" id="cvPinned" hidden><span data-icon="pin" data-size="13"></span><span id="cvPinnedText"></span></div>
       <div class="cv-msgs" id="cvMsgs"></div>
       <div class="cv-stickers" id="cvStickers" hidden></div>
+      <div class="cv-record" id="cvRecord" hidden>
+        <span class="cv-record__dot"></span>
+        <span id="cvRecTime">0:00</span>
+        <span class="cv-record__hint" id="cvRecHint">отпусти, чтобы отправить</span>
+        <button id="cvRecCancel">Отмена</button>
+      </div>
       <div class="cv-input" id="cvInputRow">
         <button class="cv-input__btn" id="cvStickerBtn" aria-label="Стикеры"><span data-icon="sparkle" data-size="22"></span></button>
+        <button class="cv-input__btn" id="cvAttachBtn" aria-label="Вложения"><span data-icon="attach" data-size="21"></span></button>
         <input type="text" id="cvField" placeholder="Сообщение..." maxlength="4096">
-        <button class="cv-input__send" id="cvSend" aria-label="Отправить"><span data-icon="send" data-size="20"></span></button>
+        <button class="cv-input__send" id="cvSend" aria-label="Отправить" hidden><span data-icon="send" data-size="20"></span></button>
+        <button class="cv-input__send cv-input__voice" id="cvVoice" aria-label="Голосовое"><span id="cvVoiceIcon" data-icon="mic" data-size="20"></span></button>
       </div>
+      <input type="file" id="cvPhotoInput" accept="image/*" hidden>
+      <input type="file" id="cvFileInput" hidden>
       <div class="cv-readonly" id="cvReadonly" hidden>Это канал педагога: писать может только Екатерина, отвечать можно в комментариях</div>
     </section>
 

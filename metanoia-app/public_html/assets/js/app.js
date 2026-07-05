@@ -555,6 +555,7 @@ const CHAT_MSGS = {
   0: { readonly: true, pinned: 'Правила школы: доброта, уважение, поддержка. Пишем с любовью!',
     msgs: [
       { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Мир вашему дому, дорогие семьи! Здесь я буду делиться новостями школы и отвечать на вопросы.', time: '10:02' },
+      { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', voice: { dur: 23 }, time: '11:15' },
       { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Добро пожаловать в нашу школу!', time: '12:34' },
     ] },
   1: { pinned: 'Знакомимся: напишите, из какого вы города!',
@@ -581,8 +582,19 @@ let myMsgs = JSON.parse(localStorage.getItem('mt_msgs') || '{}');
 function msgHtml(m, mine, key) {
   return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
-    ${m.sticker
-      ? `<img class="msg__sticker" src="${m.sticker}" alt="стикер">`
+    ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="стикер">`
+      : m.voice ? `<div class="msg__voice" data-voice="${m.voice.url || ''}">
+          <button class="msg__voice-play">${ICON('play', 15)}</button>
+          <div class="msg__wave">${waveBars(m.voice.dur + 7)}</div>
+          <span class="msg__voice-dur">${fmtDur(m.voice.dur)}</span></div>`
+      : m.circle ? `<div class="msg__voice" data-voice="${m.circle.url || ''}">
+          <button class="msg__voice-play">${ICON('circle', 15)}</button>
+          <div class="msg__wave">${waveBars(m.circle.dur + 3)}</div>
+          <span class="msg__voice-dur">видео ${fmtDur(m.circle.dur)}</span></div>`
+      : m.photo ? `<img class="msg__photo" src="${m.photo}" alt="фото">`
+      : m.file ? `<div class="msg__file"><div class="msg__file-icon">${ICON('file', 18)}</div>
+          <div><div class="msg__file-name">${m.file.name}</div>
+          <div class="msg__file-size">${m.file.size}</div></div></div>`
       : `<div class="msg__bubble">${m.quote ? `<div class="msg__quote">${m.quote}</div>` : ''}${m.text}</div>`}
     ${reactsHtml(cvChatId, key)}
     <div class="msg__meta">${m.time}${mine ? ICON('check', 11) : ''}</div>
@@ -603,6 +615,12 @@ function renderChatMsgs() {
     data.msgs.map((m, i) => msgHtml(m, false, 'd' + i)).join('') +
     mine.map((m, i) => msgHtml(m, true, 'm' + i)).join('');
   bindLongPress();
+  $$('#cvMsgs .msg__voice-play').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const url = b.closest('.msg__voice').dataset.voice;
+    if (url) new Audio(url).play().catch(() => toast('Не удалось воспроизвести'));
+    else toast('Демо-запись: реальный звук — на телефоне (нужен доступ к микрофону)');
+  }));
   $('#cvMsgs').scrollTop = $('#cvMsgs').scrollHeight;
 }
 
@@ -612,7 +630,7 @@ function openChatView(i) {
   const data = CHAT_MSGS[i] || {};
   $('#cvAvatar').innerHTML = c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 20);
   $('#cvName').textContent = c.name;
-  $('#cvStatus').textContent = c.peda ? 'онлайн' : '234 участника, 12 онлайн';
+  $('#cvStatus').textContent = c.peda ? 'онлайн' : c.dm ? 'родитель · был(а) недавно' : '234 участника, 12 онлайн';
   $('#cvPinned').hidden = !data.pinned;
   if (data.pinned) $('#cvPinnedText').textContent = data.pinned;
   $('#cvReadonly').hidden = !data.readonly;
@@ -908,6 +926,186 @@ function initLesson() {
   });
 }
 
+
+/* ───────── TELEGRAM-ФУНКЦИИ: ГОЛОСОВЫЕ, КРУЖОЧКИ, ВЛОЖЕНИЯ, ЛИЧКИ ───────── */
+
+const PARENTS = [
+  { name: 'Мария', city: 'Гатчина', kids: 'дочь Соня, 7 лет' },
+  { name: 'Иван', city: 'Самара', kids: 'Тимофей 7 и Вера 10' },
+  { name: 'Ольга', city: 'Минск', kids: 'сын Марк, 9 лет' },
+];
+
+let voiceMode = 'audio';           // 'audio' | 'circle'
+let rec = { active: false, timer: null, sec: 0, media: null, chunks: [] };
+
+function waveBars(seed) {
+  let bars = '';
+  for (let k = 0; k < 24; k++) {
+    const hgt = 5 + ((seed * (k + 3) * 7919) % 17);
+    bars += `<i style="height:${hgt}px"></i>`;
+  }
+  return bars;
+}
+
+function fmtDur(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+
+/* запись: зажать — голосовое/кружочек; короткий тап — переключение режима */
+function initVoice() {
+  const btn = $('#cvVoice');
+  let pressAt = 0, holdTimer = null;
+
+  const beginRecord = async () => {
+    rec.active = true; rec.sec = 0; rec.chunks = []; rec.media = null;
+    $('#cvRecord').hidden = false;
+    $('#cvRecHint').textContent = voiceMode === 'audio' ? 'отпусти, чтобы отправить' : 'кружочек: отпусти, чтобы отправить';
+    $('#cvRecTime').textContent = '0:00';
+    rec.timer = setInterval(() => { rec.sec++; $('#cvRecTime').textContent = fmtDur(rec.sec); }, 1000);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(
+        voiceMode === 'audio' ? { audio: true } : { audio: true, video: { facingMode: 'user' } });
+      rec.media = new MediaRecorder(stream);
+      rec.media.ondataavailable = (e) => rec.chunks.push(e.data);
+      rec.media.start();
+    } catch { /* нет доступа (file:// или отказ) — демо-режим без реальной записи */ }
+  };
+
+  const finishRecord = (send) => {
+    if (!rec.active) return;
+    rec.active = false;
+    clearInterval(rec.timer);
+    $('#cvRecord').hidden = true;
+    const dur = Math.max(1, rec.sec);
+    let done = (url) => {
+      if (!send) return;
+      const msg = voiceMode === 'audio'
+        ? { voice: { dur, url } }
+        : { circle: { dur, url } };
+      msg.time = 'только что';
+      (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
+      localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+      renderChatMsgs();
+    };
+    if (rec.media && rec.media.state !== 'inactive') {
+      rec.media.onstop = () => {
+        rec.media.stream.getTracks().forEach((t) => t.stop());
+        done(URL.createObjectURL(new Blob(rec.chunks)));
+      };
+      rec.media.stop();
+    } else done(null);
+  };
+
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    pressAt = Date.now();
+    holdTimer = setTimeout(beginRecord, 220);   // зажал → запись
+  });
+  btn.addEventListener('pointerup', () => {
+    clearTimeout(holdTimer);
+    if (Date.now() - pressAt < 220) {
+      // короткий тап → переключение микрофон ↔ кружочек (как в TG)
+      voiceMode = voiceMode === 'audio' ? 'circle' : 'audio';
+      $('#cvVoiceIcon').innerHTML = ICON(voiceMode === 'audio' ? 'mic' : 'circle', 20);
+      toast(voiceMode === 'audio' ? 'Режим: голосовое сообщение' : 'Режим: видеокружочек');
+    } else finishRecord(true);
+  });
+  btn.addEventListener('pointerleave', () => { if (rec.active) finishRecord(true); });
+  $('#cvRecCancel').addEventListener('click', () => finishRecord(false));
+
+  // поле ввода: есть текст → стрелка отправки, пусто → микрофон
+  $('#cvField').addEventListener('input', () => {
+    const has = $('#cvField').value.trim().length > 0;
+    $('#cvSend').hidden = !has;
+    $('#cvVoice').hidden = has;
+  });
+}
+
+/* вложения через скрепку */
+function initAttach() {
+  $('#cvAttachBtn').addEventListener('click', () => { $('#attachSheet').hidden = false; });
+  $('[data-close-attach]').addEventListener('click', () => { $('#attachSheet').hidden = true; });
+  $$('#attachSheet [data-attach]').forEach((b) => b.addEventListener('click', () => {
+    $('#attachSheet').hidden = true;
+    if (b.dataset.attach === 'photo') $('#cvPhotoInput').click();
+    if (b.dataset.attach === 'file') $('#cvFileInput').click();
+    if (b.dataset.attach === 'poll') toast('Опросы создаёт Екатерина из админ-панели');
+  }));
+  $('#cvPhotoInput').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ photo: reader.result, time: 'только что' });
+      renderChatMsgs();
+    };
+    reader.readAsDataURL(f);
+    e.target.value = '';
+  });
+  $('#cvFileInput').addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) return toast('Файл больше 20 МБ');
+    (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({
+      file: { name: f.name, size: (f.size / 1024 / 1024).toFixed(1) + ' МБ' }, time: 'только что' });
+    localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+    renderChatMsgs();
+    e.target.value = '';
+  });
+}
+
+/* личные сообщения между родителями */
+function initDm() {
+  $('#newChatBtn').addEventListener('click', () => {
+    $('#dmList').innerHTML = PARENTS.map((p, i) => `
+      <button class="dm-item" data-dm="${i}">
+        <div class="dm-item__avatar">${p.name[0]}</div>
+        <div><div class="dm-item__name">${p.name}</div>
+        <div class="dm-item__meta">${p.city} · ${p.kids}</div></div>
+      </button>`).join('');
+    $('#dmSheet').hidden = false;
+    $$('#dmList [data-dm]').forEach((b) => b.addEventListener('click', () => {
+      $('#dmSheet').hidden = true;
+      openDm(PARENTS[Number(b.dataset.dm)]);
+    }));
+  });
+  $('[data-close-dm]').addEventListener('click', () => { $('#dmSheet').hidden = true; });
+}
+
+function openDm(parent) {
+  let idx = DEMO.chats.findIndex((c) => c.name === parent.name);
+  if (idx === -1) {
+    DEMO.chats.push({ icon: 'users', name: parent.name, last: 'Личная переписка', time: 'сейчас', unread: 0, dm: true });
+    idx = DEMO.chats.length - 1;
+    CHAT_MSGS[idx] = { msgs: [] };
+    renderChats();
+  }
+  openChatView(idx);
+}
+
+/* карточка профиля участника (тап по имени в чате) */
+function showUserCard(name) {
+  const p = PARENTS.find((x) => x.name === name);
+  const isPeda = name.includes('Екатерина');
+  $('#ucAvatar').innerHTML = isPeda ? '<img src="assets/img/avatars/ekaterina.jpg" alt="">' : name[0];
+  $('#ucName').textContent = isPeda ? 'Екатерина Павленко' : name;
+  $('#ucMeta').textContent = isPeda ? 'Педагог школы · онлайн'
+    : p ? `Родитель · ${p.city} · ${p.kids}` : 'Ученик · личные сообщения детям недоступны';
+  $('#ucWrite').style.display = (isPeda || p) ? '' : 'none';
+  $('#userCard').hidden = false;
+  $('#ucWrite').onclick = () => {
+    $('#userCard').hidden = true;
+    if (isPeda) openChatView(0);
+    else if (p) openDm(p);
+  };
+}
+
+function initUserCard() {
+  $('#ucClose').addEventListener('click', () => { $('#userCard').hidden = true; });
+  document.addEventListener('click', (e) => {
+    const nameEl = e.target.closest('.msg__name');
+    if (nameEl) showUserCard(nameEl.textContent.trim());
+  });
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -1059,6 +1257,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initComments();
   initPin();
   initChatView();
+  initVoice();
+  initAttach();
+  initDm();
+  initUserCard();
   initMsgActions();
   initLesson();
   initNotifs();
