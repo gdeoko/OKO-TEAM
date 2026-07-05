@@ -3224,7 +3224,22 @@ Code с GitHub (superpowers, официальные anthropics/skills и др.) 
    Екатерины из seed работает (роль superadmin).
 4. Иконки PWA 72–512px сгенерированы из логотипа (rsvg),
    manifest.json обновлён (192/512 maskable).
-5. Инструменты медиа для сборки (скиллы в .claude/skills):
+5. Иконки и иллюстрации (правка Даниэля 05.07: «реальные свг
+   иконки крутые в стиле вместо эмодзи и смайликов (их нельзя)»):
+   - assets/js/icons.js — фирменная библиотека из 24 line-icons
+     (stroke 1.8, скруглённые концы, по разделу 4.6): heart,
+     comment, share, flame, clock, book, dove, users, gamepad,
+     headset, lock, star, trophy, cross, video, gear, bell,
+     shield, logout, play, plus, sparkle, search, check.
+   - Эмодзи убраны из ВСЕГО интерфейса: stories, лента, чаты,
+     уроки, профиль, меню, тосты. Функция ICON(name, size),
+     гидрация статичной разметки через data-icon.
+   - Сгенерированы иллюстрации (Flux, бесплатно, палитра бренда):
+     covers/lesson-1.jpg (обложка «Кто такой Бог?»),
+     avatars/lion.jpg и avatars/star.jpg (аватары детей).
+   - Правило дальше: НИКАКИХ эмодзи в UI, только icons.js;
+     новые иконки дорисовываются туда же.
+6. Инструменты медиа для сборки (скиллы в .claude/skills):
    gemini-media (Gemini API текст; картинки после включения
    биллинга; БЕСПЛАТНЫЕ картинки Pollinations/Flux — рабочий
    дефолт), web-fx (3D/анимации/конвертация). Промо-видео 17с
