@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#FAF8F5">
+  <meta name="description" content="Метанойя — онлайн-школа духовно-нравственного воспитания детей 5–14 лет">
+  <title>Метанойя</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml">
+
+  <!-- Шрифты бренда: Playfair Display (заголовки) + Montserrat (текст) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+  <!-- ═══════════ SPLASH SCREEN ═══════════ -->
+  <div id="splash" class="splash">
+    <div class="splash__logo">
+      <svg viewBox="0 0 120 120" width="96" height="96" aria-label="Логотип Метанойя">
+        <!-- золотые крылья -->
+        <g class="splash__wings" fill="none" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
+          <path d="M22 38 Q34 20 52 26"/>
+          <path d="M14 50 Q28 32 48 36"/>
+          <path d="M98 38 Q86 20 68 26"/>
+          <path d="M106 50 Q92 32 72 36"/>
+        </g>
+        <!-- буква М -->
+        <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="splash__title">МЕТАНОЙЯ</div>
+    <div class="splash__subtitle">Онлайн-школа духовно-нравственного воспитания</div>
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+  <!-- ═══════════ ШАПКА ═══════════ -->
+  <header class="header" id="header">
+    <div class="header__left">
+      <svg class="header__logo" viewBox="0 0 120 120" width="36" height="36" aria-label="Метанойя">
+        <g fill="none" stroke="#D4A574" stroke-width="5" stroke-linecap="round">
+          <path d="M22 38 Q34 20 52 26"/><path d="M98 38 Q86 20 68 26"/>
+        </g>
+        <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="header__name">МЕТАНОЙЯ</span>
+    </div>
+    <div class="header__right">
+      <button class="header__bell" id="bellBtn" aria-label="Уведомления">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+        </svg>
+        <span class="badge badge--bell" id="bellBadge">3</span>
+      </button>
+      <button class="header__avatar" id="avatarBtn" aria-label="Профиль">Д</button>
+    </div>
+  </header>
+
+  <!-- ═══════════ ЭКРАНЫ (5 ТАБОВ) ═══════════ -->
+  <main class="screens" id="screens">
+
+    <!-- ── 🏠 ГЛАВНАЯ ── -->
+    <section class="screen screen--active" data-screen="home">
+      <!-- Stories -->
+      <div class="stories" id="stories"><!-- JS --></div>
+
+      <!-- Виджет «Сегодня» -->
+      <div class="today card card--gold">
+        <div class="today__row">
+          <span class="today__streak">🔥 <b id="streakDays">12</b> дней подряд</span>
+          <span class="today__xp">+<b id="xpToday">45</b> XP сегодня</span>
+        </div>
+        <div class="today__call">
+          <div class="today__call-label">Ближайший созвон:</div>
+          <div class="today__call-title">«Притча о блудном сыне»</div>
+          <div class="today__call-timer">⏱ через <span id="callCountdown">2ч 15мин</span></div>
+        </div>
+        <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn">📖 Ежедневный стих</button>
+      </div>
+
+      <!-- Лента -->
+      <div class="feed" id="feed"><!-- JS --></div>
+    </section>
+
+    <!-- ── 🔍 ПОИСК ── -->
+    <section class="screen" data-screen="search">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Поиск уроков, игр, материалов..." autocomplete="off">
+      </div>
+      <div class="tabs-row">
+        <button class="tab-chip tab-chip--active">Рекомендуем</button>
+        <button class="tab-chip">Популярное</button>
+        <button class="tab-chip">Новое</button>
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip">5–7</button>
+        <button class="filter-chip">7–10</button>
+        <button class="filter-chip">10–14</button>
+        <button class="filter-chip">Видео</button>
+        <button class="filter-chip">Игра</button>
+        <button class="filter-chip">Тест</button>
+        <button class="filter-chip">Ветхий Завет</button>
+        <button class="filter-chip">Новый Завет</button>
+        <button class="filter-chip">Молитва</button>
+        <button class="filter-chip">Притчи</button>
+      </div>
+      <div class="empty-state" id="searchEmpty">
+        <div class="empty-state__icon">🔍</div>
+        <p>Начни вводить запрос — найдём уроки, игры и материалы.</p>
+      </div>
+      <div class="feed" id="searchResults"></div>
+    </section>
+
+    <!-- ── 💬 ЧАТЫ ── -->
+    <section class="screen" data-screen="chats">
+      <h1 class="screen-title">Чаты</h1>
+      <div class="chat-list" id="chatList"><!-- JS --></div>
+    </section>
+
+    <!-- ── 📚 УРОКИ ── -->
+    <section class="screen" data-screen="lessons">
+      <h1 class="screen-title">Уроки</h1>
+      <div class="lessons" id="lessons"><!-- JS --></div>
+    </section>
+
+    <!-- ── 👤 ПРОФИЛЬ ── -->
+    <section class="screen" data-screen="profile">
+      <div class="profile-head">
+        <div class="profile-head__avatar">Д</div>
+        <div>
+          <div class="profile-head__name">Даниэль</div>
+          <div class="profile-head__meta">Родитель · Москва, Россия</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Мои дети</h2>
+      <div class="children" id="children"><!-- JS --></div>
+      <button class="btn btn--outline" id="addChildBtn">+ Добавить ребёнка</button>
+
+      <h2 class="section-title">Настройки</h2>
+      <div class="menu-list">
+        <button class="menu-item">⚙️ Настройки аккаунта</button>
+        <button class="menu-item">⭐ Подписка Метанойя+</button>
+        <button class="menu-item">🔔 Уведомления</button>
+        <button class="menu-item">🛡 Родительский контроль</button>
+        <button class="menu-item">💬 Поддержка</button>
+        <button class="menu-item menu-item--muted">Выйти</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════ НИЖНЯЯ НАВИГАЦИЯ (5 ТАБОВ) ═══════════ -->
+  <nav class="nav" id="nav">
+    <button class="nav__tab nav__tab--active" data-tab="home" aria-label="Главная">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="nav__tab" data-tab="search" aria-label="Поиск">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Поиск</span>
+    </button>
+    <button class="nav__tab" data-tab="chats" aria-label="Чаты">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Чаты</span>
+      <span class="badge badge--nav" id="chatsBadge">5</span>
+    </button>
+    <button class="nav__tab" data-tab="lessons" aria-label="Уроки">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <span>Уроки</span>
+    </button>
+    <button class="nav__tab" data-tab="profile" aria-label="Профиль">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+  <!-- Тост для заглушек -->
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

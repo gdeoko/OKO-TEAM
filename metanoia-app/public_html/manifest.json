@@ -1,0 +1,13 @@
+{
+  "name": "Метанойя — онлайн-школа",
+  "short_name": "Метанойя",
+  "description": "Онлайн-школа духовно-нравственного воспитания детей 5–14 лет",
+  "lang": "ru",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FAF8F5",
+  "theme_color": "#FAF8F5",
+  "icons": [
+    { "src": "assets/img/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
