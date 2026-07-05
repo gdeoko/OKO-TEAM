@@ -1,32 +1,22 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(git fetch *)",
-      "Bash(git pull *)",
-      "Bash(git checkout *)",
-      "Bash(git clone *)",
-      "Bash(git restore *)",
-      "Bash(mkdir *)",
-      "Bash(cp *)",
-      "Bash(npm install *)",
-      "Bash(npm i *)",
-      "Bash(npm ci)",
-      "Bash(npm ls *)",
+      "Bash",
       "WebSearch",
       "WebFetch",
       "mcp__github",
       "mcp__Claude_Code_Remote",
       "mcp__Magic_Patterns",
-      "mcp__Higgsfield__get_website_creation_instructions",
-      "mcp__Higgsfield__get_website_creation_bundle_file",
-      "mcp__Higgsfield__create_website",
-      "mcp__Higgsfield__deploy_website",
-      "mcp__Higgsfield__website_status",
-      "mcp__Higgsfield__website_repo_access",
-      "mcp__Higgsfield__list_websites"
+      "mcp__Higgsfield",
+      "mcp__Canva",
+      "mcp__Adobe_for_creativity",
+      "mcp__Adobe_Marketing_Agent",
+      "mcp__Figma",
+      "mcp__Zapier",
+      "mcp__Hugging_Face",
+      "mcp__Zoom_for_Claude",
+      "mcp__Gmail"
     ]
   }
 }
