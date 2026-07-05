@@ -248,6 +248,95 @@ function renderChildren() {
     el.addEventListener('click', () => toast('Детский профиль — этап 2')));
 }
 
+
+/* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
+
+function showApp(name) {
+  $('#onboarding').hidden = true;
+  $('#auth').hidden = true;
+  if (name) {
+    localStorage.setItem('mt_name', name);
+  }
+  const stored = localStorage.getItem('mt_name') || 'Даниэль';
+  $('#avatarBtn').textContent = stored[0].toUpperCase();
+  $('.profile-head__avatar').textContent = stored[0].toUpperCase();
+  $('.profile-head__name').textContent = stored;
+}
+
+function initOnboarding() {
+  const onb = $('#onboarding');
+  const track = $('#onbTrack');
+  const dots = $$('#onbDots .onb__dot');
+
+  track.addEventListener('scroll', () => {
+    const idx = Math.round(track.scrollLeft / track.clientWidth);
+    dots.forEach((d, i) => d.classList.toggle('onb__dot--on', i === idx));
+  }, { passive: true });
+
+  const finish = () => {
+    localStorage.setItem('mt_onb', '1');
+    onb.hidden = true;
+    if (!localStorage.getItem('mt_auth')) $('#auth').hidden = false;
+  };
+  $('#onbSkip').addEventListener('click', finish);
+  $('#onbStart').addEventListener('click', finish);
+}
+
+function markInvalid(input, bad) {
+  input.classList.toggle('field--error', bad);
+  return bad;
+}
+
+function initAuth() {
+  // переключение вкладок Вход / Регистрация
+  $$('[data-authtab]').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      $$('[data-authtab]').forEach((t) => t.classList.toggle('auth__tab--on', t === tab));
+      $('#loginForm').hidden = tab.dataset.authtab !== 'login';
+      $('#registerForm').hidden = tab.dataset.authtab !== 'register';
+    });
+  });
+
+  // роль «Ученик 12+» скрывает блок ребёнка
+  $('#registerForm [name="role"]').addEventListener('change', (e) => {
+    $('[data-childblock]').style.display = e.target.value === 'parent' ? '' : 'none';
+  });
+
+  $('#loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const bad = markInvalid(f.email, !f.email.value.includes('@'))
+              | markInvalid(f.password, f.password.value.length < 1);
+    if (bad) return toast('Проверьте email и пароль');
+    localStorage.setItem('mt_auth', '1');
+    showApp(f.email.value.split('@')[0]);
+    toast('С возвращением!');
+  });
+
+  $('#registerForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const passOk = f.password.value.length >= 8
+      && /\d/.test(f.password.value) && /[a-zA-Zа-яА-Я]/.test(f.password.value);
+    const bad = markInvalid(f.name, f.name.value.trim().length < 2)
+              | markInvalid(f.email, !f.email.value.includes('@'))
+              | markInvalid(f.password, !passOk);
+    if (bad) return toast('Проверьте выделенные поля');
+    localStorage.setItem('mt_auth', '1');
+    showApp(f.name.value.trim());
+    toast('Добро пожаловать в Метанойю!');
+  });
+
+  $('#guestBtn').addEventListener('click', () => {
+    localStorage.setItem('mt_auth', '1');
+    showApp(null);
+    toast('Демо-режим: все данные тестовые');
+  });
+  $('#forgotBtn').addEventListener('click', () => toast('Восстановление пароля — после подключения почты'));
+  $$('.auth__oauth').forEach((b) =>
+    b.addEventListener('click', () => toast('Вход через ' + (b.dataset.oauth === 'google' ? 'Google' : 'Telegram') + ' — подключается на этапе 1-бэк')));
+}
+
 /* ───────── ОБРАТНЫЙ ОТСЧЁТ ДО СОЗВОНА (демо) ───────── */
 
 let callMinutes = 135; // 2ч 15мин
@@ -306,6 +395,19 @@ document.addEventListener('DOMContentLoaded', () => {
       el.classList.add('tab-chip--active');
     }));
 
-  // Splash → приложение
-  setTimeout(() => $('#splash').classList.add('splash--hide'), 1400);
+  initOnboarding();
+  initAuth();
+  showApp(null);
+
+  // Splash → онбординг (первый запуск) → вход → приложение
+  setTimeout(() => {
+    $('#splash').classList.add('splash--hide');
+    if (!localStorage.getItem('mt_onb')) {
+      $('#onboarding').hidden = false;
+      hydrateIcons();
+    } else if (!localStorage.getItem('mt_auth')) {
+      $('#auth').hidden = false;
+      hydrateIcons();
+    }
+  }, 1400);
 });

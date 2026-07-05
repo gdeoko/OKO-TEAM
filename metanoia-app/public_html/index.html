@@ -39,7 +39,115 @@
     <div class="spinner" aria-hidden="true"></div>
   </div>
 
-  <!-- ═══════════ ШАПКА ═══════════ -->
+
+  <!-- ═══════════ ОНБОРДИНГ (первый запуск) ═══════════ -->
+  <div id="onboarding" class="onb" hidden>
+    <button class="onb__skip" id="onbSkip">Пропустить</button>
+    <div class="onb__track" id="onbTrack">
+      <section class="onb__slide">
+        <svg viewBox="0 0 120 120" width="130" height="130" aria-hidden="true">
+          <g fill="none" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
+            <path d="M22 38 Q34 20 52 26"/><path d="M14 50 Q28 32 48 36"/>
+            <path d="M98 38 Q86 20 68 26"/><path d="M106 50 Q92 32 72 36"/>
+          </g>
+          <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h2>Добро пожаловать!</h2>
+        <p>Онлайн-школа духовно-нравственного воспитания детей</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="book" data-size="52"></span></div>
+        <h2>Бесплатные уроки</h2>
+        <p>Живые занятия с педагогом. Уроки веры — как служение. Бесплатно для всех.</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="trophy" data-size="52"></span></div>
+        <h2>Игры, награды, рейтинг</h2>
+        <p>Учись играя! 20 мини-игр, значки, серии, рейтинги.</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="comment" data-size="52"></span></div>
+        <h2>Общайся с педагогом и семьями</h2>
+        <p>Задавай вопросы, делись успехами, находи единомышленников.</p>
+        <button class="btn btn--primary onb__start" id="onbStart">Начать</button>
+      </section>
+    </div>
+    <div class="onb__dots" id="onbDots"><i class="onb__dot onb__dot--on"></i><i class="onb__dot"></i><i class="onb__dot"></i><i class="onb__dot"></i></div>
+  </div>
+
+  <!-- ═══════════ ВХОД / РЕГИСТРАЦИЯ ═══════════ -->
+  <div id="auth" class="auth" hidden>
+    <div class="auth__box">
+      <div class="auth__logo">
+        <svg viewBox="0 0 120 120" width="56" height="56" aria-hidden="true">
+          <g fill="none" stroke="#D4A574" stroke-width="5" stroke-linecap="round">
+            <path d="M22 38 Q34 20 52 26"/><path d="M98 38 Q86 20 68 26"/></g>
+          <path d="M30 96 V52 L60 78 L90 52 V96" fill="none" stroke="#1A3A52" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="auth__title">МЕТАНОЙЯ</div>
+      </div>
+
+      <div class="auth__tabs">
+        <button class="auth__tab auth__tab--on" data-authtab="login">Вход</button>
+        <button class="auth__tab" data-authtab="register">Регистрация</button>
+      </div>
+
+      <form class="auth__form" id="loginForm" novalidate>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" placeholder="mama@example.ru" required></label>
+        <label class="field"><span>Пароль</span>
+          <input type="password" name="password" placeholder="••••••••" required></label>
+        <button class="btn btn--primary auth__submit" type="submit">Войти</button>
+        <button class="auth__forgot" type="button" id="forgotBtn">Забыли пароль?</button>
+        <div class="auth__divider"><i></i><em>или</em><i></i></div>
+        <button class="btn btn--outline auth__oauth" type="button" data-oauth="google">Войти через Google</button>
+        <button class="btn btn--outline auth__oauth" type="button" data-oauth="telegram">Войти через Telegram</button>
+      </form>
+
+      <form class="auth__form" id="registerForm" hidden novalidate>
+        <label class="field"><span>Ваше имя</span>
+          <input type="text" name="name" placeholder="Мария" required></label>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" placeholder="mama@example.ru" required></label>
+        <label class="field"><span>Пароль <small>минимум 8 символов, буква и цифра</small></span>
+          <input type="password" name="password" required></label>
+        <div class="field-row">
+          <label class="field"><span>Роль</span>
+            <select name="role">
+              <option value="parent">Родитель</option>
+              <option value="student12">Ученик 12+</option>
+            </select></label>
+          <label class="field"><span>Конфессия</span>
+            <select name="confession">
+              <option value="orthodox">Православие</option>
+              <option value="protestant">Протестантизм</option>
+              <option value="catholic">Католицизм</option>
+              <option value="other">Другое</option>
+              <option value="undecided" selected>Не определился</option>
+            </select></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>Страна</span>
+            <input type="text" name="country" placeholder="Россия"></label>
+          <label class="field"><span>Город</span>
+            <input type="text" name="city" placeholder="Москва"></label>
+        </div>
+        <div class="auth__child" data-childblock>
+          <div class="auth__child-title"><span data-icon="star" data-size="14"></span> Первый ребёнок</div>
+          <div class="field-row">
+            <label class="field"><span>Имя</span>
+              <input type="text" name="child_name" placeholder="Миша"></label>
+            <label class="field field--narrow"><span>Возраст</span>
+              <input type="number" name="child_age" min="5" max="14" placeholder="8"></label>
+          </div>
+        </div>
+        <button class="btn btn--primary auth__submit" type="submit">Создать аккаунт</button>
+      </form>
+
+      <button class="auth__guest" id="guestBtn">Посмотреть демо без регистрации</button>
+    </div>
+  </div>
+\n  <!-- ═══════════ ШАПКА ═══════════ -->
   <header class="header" id="header">
     <div class="header__left">
       <svg class="header__logo" viewBox="0 0 120 120" width="36" height="36" aria-label="Метанойя">

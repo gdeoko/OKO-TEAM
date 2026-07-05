@@ -476,3 +476,121 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 
 .btn .ic { margin-right: 2px; }
 .empty-state__icon { color: rgba(90, 101, 119, .5); }
+
+/* ══════════ ОНБОРДИНГ ══════════ */
+.onb {
+  position: fixed; inset: 0; z-index: 90;
+  background: var(--cream);
+  display: flex; flex-direction: column;
+}
+.onb[hidden], .auth[hidden] { display: none; }
+.onb__skip {
+  position: absolute; top: 18px; right: 18px; z-index: 2;
+  font-size: 13px; color: var(--gray); font-weight: 500;
+}
+.onb__track {
+  flex: 1; display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.onb__track::-webkit-scrollbar { display: none; }
+.onb__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 32px;
+  gap: 16px;
+}
+.onb__slide h2 {
+  font-family: var(--font-head); font-size: 26px; font-weight: 700;
+  max-width: 300px;
+}
+.onb__slide p { color: var(--gray); font-size: 15px; line-height: 1.6; max-width: 300px; }
+.onb__icon {
+  width: 110px; height: 110px; border-radius: 50%;
+  background: linear-gradient(160deg, rgba(212,165,116,.18), rgba(201,112,100,.12));
+  border: 1.5px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--navy);
+}
+.onb__start { margin-top: 10px; padding: 14px 44px; }
+.onb__dots { display: flex; justify-content: center; gap: 8px; padding: 26px 0 40px; }
+.onb__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(26, 58, 82, .18);
+  transition: all 220ms var(--ease);
+}
+.onb__dot--on { background: var(--terracotta); width: 22px; border-radius: 4px; }
+
+/* ══════════ ВХОД / РЕГИСТРАЦИЯ ══════════ */
+.auth {
+  position: fixed; inset: 0; z-index: 85;
+  background: var(--cream);
+  overflow-y: auto;
+  display: flex; justify-content: center;
+}
+.auth__box { width: 100%; max-width: 400px; padding: 44px 24px 40px; }
+.auth__logo { text-align: center; margin-bottom: 22px; }
+.auth__title {
+  font-family: var(--font-head); font-weight: 900;
+  font-size: 22px; letter-spacing: 4px; margin-top: 6px;
+}
+.auth__tabs {
+  display: flex; background: rgba(26, 58, 82, .07);
+  border-radius: var(--radius-card); padding: 4px; margin-bottom: 20px;
+}
+.auth__tab {
+  flex: 1; padding: 10px; border-radius: 9px;
+  font-size: 14px; font-weight: 600; color: var(--gray);
+  transition: all 200ms var(--ease);
+}
+.auth__tab--on { background: #fff; color: var(--navy); box-shadow: 0 1px 4px rgba(26,58,82,.1); }
+
+.auth__form { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.field span { font-size: 12px; font-weight: 600; color: var(--navy); }
+.field span small { font-weight: 400; color: var(--gray); }
+.field input, .field select {
+  font-family: inherit; font-size: 14px; color: var(--navy);
+  background: #fff;
+  border: 1.5px solid rgba(26, 58, 82, .18);
+  border-radius: 10px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 150ms;
+  width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+.field input:focus, .field select:focus { border-color: var(--terracotta); }
+.field input.field--error { border-color: var(--error); }
+.field-row { display: flex; gap: 12px; }
+.field--narrow { flex: 0 0 96px; }
+
+.auth__submit { width: 100%; padding: 14px; margin-top: 4px; }
+.auth__forgot { font-size: 13px; color: var(--gray); align-self: center; }
+.auth__divider {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--gray); font-size: 12px;
+}
+.auth__divider i { flex: 1; height: 1px; background: rgba(90, 101, 119, .2); }
+.auth__divider em { font-style: normal; }
+.auth__oauth { width: 100%; border-color: rgba(26, 58, 82, .25); color: var(--navy); }
+.auth__child {
+  border: 1.5px dashed var(--gold);
+  border-radius: var(--radius-card);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.auth__child-title {
+  font-size: 12px; font-weight: 700; color: var(--navy);
+  display: flex; align-items: center; gap: 6px;
+}
+.auth__child-title .ic { color: var(--gold); }
+.auth__guest {
+  display: block; margin: 22px auto 0;
+  font-size: 13px; color: var(--terracotta); font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+.auth__form[hidden] { display: none; }
