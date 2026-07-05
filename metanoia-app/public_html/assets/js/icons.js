@@ -43,6 +43,11 @@ const ICON_PATHS = {
   bell:    '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
   shield:  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
   logout:  '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  church:  '<path d="M12 2v5"/><path d="M9.5 4.5h5"/><path d="M6 21v-8l6-4 6 4v8"/><path d="M2 21h20"/><path d="M10 21v-4a2 2 0 0 1 4 0v4"/>',
+  map:     '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
+  back:    '<path d="m15 18-6-6 6-6"/>',
+  close:   '<path d="M18 6 6 18M6 6l12 12"/>',
+  send:    '<path d="m3 3 18 9-18 9 4-9Z"/><path d="M7 12h8"/>',
 };
 
 /**

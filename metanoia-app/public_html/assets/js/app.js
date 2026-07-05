@@ -134,17 +134,17 @@ function renderStories() {
       ${s.badge ? `<div class="story__badge">${ICON('dove', 9)} ${s.badge}</div>` : ''}
     </button>
   `).join('');
-  $$('#stories .story').forEach((el) =>
-    el.addEventListener('click', () => toast('Просмотр Stories — этап 2')));
+  $$('#stories .story').forEach((el, i) =>
+    el.addEventListener('click', () => svOpen(i)));
 }
 
 /* ───────── РЕНДЕР: ЛЕНТА ───────── */
 
-function feedCard(item) {
+function feedCard(item, idx) {
   const actions = `
     <div class="feed-card__actions">
-      <button data-act="like">${ICON('heart', 16)} ${item.likes}</button>
-      <button data-act="comment">${ICON('comment', 16)} ${item.comments}</button>
+      <button data-act="like" data-post="${idx}">${ICON('heart', 16)} ${item.likes}</button>
+      <button data-act="comment" data-post="${idx}">${ICON('comment', 16)} ${item.comments}</button>
       <button data-act="share">${ICON('share', 16)} Поделиться</button>
     </div>`;
 
@@ -172,9 +172,19 @@ function feedCard(item) {
 }
 
 function renderFeed() {
-  $('#feed').innerHTML = DEMO.feed.map(feedCard).join('');
-  $$('#feed [data-act]').forEach((el) =>
-    el.addEventListener('click', () => toast('Функция подключается на следующих этапах')));
+  $('#feed').innerHTML = DEMO.feed.map((item, i) => feedCard(item, i)).join('');
+  $$('#feed [data-act="like"]').forEach((el) => {
+    const id = Number(el.dataset.post);
+    const base = DEMO.feed[id].likes;
+    if (likes[id]) { el.classList.add('liked'); el.innerHTML = `${ICON('heart', 16)} ${base + 1}`; }
+    el.addEventListener('click', () => toggleLike(id, el, base));
+  });
+  $$('#feed [data-act="comment"]').forEach((el) =>
+    el.addEventListener('click', () => openComments(Number(el.dataset.post))));
+  $$('#feed [data-act="share"]').forEach((el) =>
+    el.addEventListener('click', () => toast('Поделиться — после публикации приложения')));
+  $$('#feed [data-act="watch"], #feed [data-act="join"]').forEach((el) =>
+    el.addEventListener('click', () => toast('Экран урока и запись на созвон — этап 4')));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -244,10 +254,290 @@ function renderChildren() {
       <div class="child-card__xp">${ICON('flame', 14)} ${c.streak} дн.</div>
     </button>
   `).join('');
-  $$('#children .child-card').forEach((el) =>
-    el.addEventListener('click', () => toast('Детский профиль — этап 2')));
+  $$('#children .child-card').forEach((el, i) =>
+    el.addEventListener('click', () => openChild(DEMO.children[i])));
 }
 
+
+
+/* ═════════════════ ЭТАП 2 ═════════════════ */
+
+/* ───────── STORIES: КОНТЕНТ И ПЛЕЕР ───────── */
+
+const STORIES_CONTENT = [
+  { // Екатерина
+    slides: [
+      { img: 'assets/img/ekaterina-story.jpg', overlay: true,
+        title: 'Добро пожаловать в Метанойю!',
+        sub: 'Я Екатерина — педагог школы. Рада каждой семье. Начинаем путь вместе — с Богом.' },
+      { bg: 'cream', title: 'Первый созвон — завтра в 18:00',
+        sub: '«Притча о блудном сыне». Записаться можно на Главной.' },
+    ],
+  },
+  { // Анонс урока
+    slides: [
+      { img: 'assets/img/covers/lesson-1.jpg', overlay: true,
+        title: 'Урок 1 уже открыт', sub: '«Кто такой Бог?» — начни путешествие с первого шага.' },
+    ],
+  },
+  { // Мотивация
+    slides: [
+      { bg: 'navy', title: '«Человеку возможно всё»',
+        sub: 'Не говори: не могу, не знаю, не понимаю. Сегодня — лучший день, чтобы начать.' },
+    ],
+  },
+  { // Успехи
+    slides: [
+      { bg: 'cream', title: 'Миша получил значок «Молниеносный»',
+        sub: '10 из 10 в викторине на скорость. Так держать!' },
+    ],
+  },
+  { // Цитата дня
+    slides: [
+      { bg: 'navy', title: '«Так да светит свет ваш пред людьми»', ref: 'Мф. 5:16' },
+    ],
+  },
+];
+
+const SV = { idx: 0, slide: 0, timer: null, DUR: 7000 };
+
+function svRender() {
+  const story = DEMO.stories[SV.idx];
+  const content = STORIES_CONTENT[SV.idx];
+  const s = content.slides[SV.slide];
+
+  $('#svWho').innerHTML = `
+    ${story.img ? `<img src="${story.img}" alt="">` : ICON(story.icon, 24)}
+    <div><div>${story.name}</div>${story.badge ? `<small>${story.badge}</small>` : ''}</div>`;
+
+  $('#svBars').innerHTML = content.slides.map((_, i) =>
+    `<div class="sv__bar"><i style="${i < SV.slide ? 'width:100%' : ''}"></i></div>`).join('');
+
+  const viewer = $('#storyViewer');
+  viewer.classList.toggle('sv--cream', s.bg === 'cream');
+
+  $('#svContent').innerHTML = `
+    ${s.img ? `<img src="${s.img}" alt="">` : `<div class="sv__bg-${s.bg}"></div>`}
+    <div class="sv-text ${s.img && s.overlay ? 'sv-text--overlay' : ''}">
+      <div class="sv-text__title">${s.title}</div>
+      ${s.sub ? `<div class="sv-text__sub">${s.sub}</div>` : ''}
+      ${s.ref ? `<div class="sv-text__ref">${s.ref}</div>` : ''}
+    </div>`;
+
+  // анимация текущего бара
+  const bar = $$('#svBars .sv__bar i')[SV.slide];
+  requestAnimationFrame(() => {
+    bar.style.transition = `width ${SV.DUR}ms linear`;
+    bar.style.width = '100%';
+  });
+
+  clearTimeout(SV.timer);
+  SV.timer = setTimeout(svNext, SV.DUR);
+}
+
+function svOpen(idx) {
+  SV.idx = idx; SV.slide = 0;
+  $('#storyViewer').hidden = false;
+  document.body.style.overflow = 'hidden';
+  svRender();
+}
+
+function svClose() {
+  clearTimeout(SV.timer);
+  $('#storyViewer').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function svNext() {
+  const content = STORIES_CONTENT[SV.idx];
+  if (SV.slide + 1 < content.slides.length) { SV.slide++; svRender(); }
+  else if (SV.idx + 1 < STORIES_CONTENT.length) { SV.idx++; SV.slide = 0; svRender(); }
+  else svClose();
+}
+
+function svPrev() {
+  if (SV.slide > 0) { SV.slide--; svRender(); }
+  else if (SV.idx > 0) { SV.idx--; SV.slide = 0; svRender(); }
+  else svRender();
+}
+
+function initStoryViewer() {
+  $('#svClose').addEventListener('click', svClose);
+  $('#svNext').addEventListener('click', svNext);
+  $('#svPrev').addEventListener('click', svPrev);
+}
+
+/* ───────── ЛАЙКИ (локально) ───────── */
+
+const likes = JSON.parse(localStorage.getItem('mt_likes') || '{}');
+
+function toggleLike(postId, btn, base) {
+  likes[postId] = !likes[postId];
+  localStorage.setItem('mt_likes', JSON.stringify(likes));
+  btn.classList.toggle('liked', likes[postId]);
+  btn.innerHTML = `${ICON('heart', 16)} ${base + (likes[postId] ? 1 : 0)}`;
+}
+
+/* ───────── КОММЕНТАРИИ (шторка) ───────── */
+
+const DEMO_COMMENTS = {
+  0: [
+    { name: 'Екатерина Павленко', peda: true, img: 'assets/img/avatars/ekaterina.jpg', text: 'Смотрите вместе с детьми — в конце урока есть вопрос для семейного разговора.', time: '2 ч назад' },
+    { name: 'Мария', text: 'Дочка посмотрела на одном дыхании, спасибо!', time: '1 ч назад' },
+  ],
+  1: [
+    { name: 'Иван', text: 'Очень ждали запуска. Помощи Божией вашей школе!', time: '3 ч назад' },
+    { name: 'Ольга', text: 'Записались всей семьёй.', time: '2 ч назад' },
+  ],
+  2: [ { name: 'Анна', text: 'Наш любимый стих.', time: 'вчера' } ],
+  3: [ { name: 'Мария', text: 'Записались! Миша очень ждёт.', time: '30 мин назад' } ],
+};
+let userComments = JSON.parse(localStorage.getItem('mt_comments') || '{}');
+let sheetPostId = null;
+
+function openComments(postId) {
+  sheetPostId = postId;
+  renderComments();
+  $('#sheetWrap').hidden = false;
+}
+
+function renderComments() {
+  const list = [...(DEMO_COMMENTS[sheetPostId] || []), ...(userComments[sheetPostId] || [])];
+  $('#sheetCount').textContent = `· ${list.length}`;
+  $('#sheetList').innerHTML = list.length ? list.map((c) => `
+    <div class="cmt">
+      <div class="cmt__avatar">${c.img ? `<img src="${c.img}" alt="">` : c.name[0]}</div>
+      <div>
+        <div class="cmt__name">${c.name} ${c.peda ? ICON('dove', 11) : ''}</div>
+        <div class="cmt__text">${c.text}</div>
+        <div class="cmt__time">${c.time}</div>
+      </div>
+    </div>`).join('') : '<div class="empty-state">Пока нет комментариев — будь первым!</div>';
+  $('#sheetList').scrollTop = $('#sheetList').scrollHeight;
+}
+
+function initComments() {
+  $('#sheetBackdrop').addEventListener('click', () => { $('#sheetWrap').hidden = true; });
+  const send = () => {
+    const val = $('#sheetField').value.trim();
+    if (!val) return;
+    const name = localStorage.getItem('mt_name') || 'Вы';
+    (userComments[sheetPostId] = userComments[sheetPostId] || []).push({ name, text: val, time: 'только что' });
+    localStorage.setItem('mt_comments', JSON.stringify(userComments));
+    $('#sheetField').value = '';
+    renderComments();
+  };
+  $('#sheetSend').addEventListener('click', send);
+  $('#sheetField').addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+}
+
+/* ───────── ПОИСК ───────── */
+
+const SEARCH_INDEX = [
+  { t: 'lesson', title: 'Кто такой Бог?', meta: 'Урок 1 · Блок 1 · видео 32 мин', age: '5-7 7-10 10-14', theme: 'ВЗ' },
+  { t: 'lesson', title: 'Создание мира', meta: 'Урок 2 · Блок 1 · скоро', age: '5-7 7-10', theme: 'ВЗ', locked: true },
+  { t: 'lesson', title: 'Адам и Ева', meta: 'Урок 3 · Блок 1 · скоро', age: '5-7 7-10', theme: 'ВЗ', locked: true },
+  { t: 'lesson', title: 'Ноев ковчег', meta: 'Урок 4 · Блок 1 · скоро', age: '5-7', theme: 'ВЗ', locked: true },
+  { t: 'game', title: 'Собери стих', meta: 'Игра · пазл-слова · бесплатно', age: '5-7 7-10 10-14', theme: 'Молитва' },
+  { t: 'game', title: 'Библейское мемори', meta: 'Игра · память · бесплатно', age: '5-7 7-10', theme: 'ВЗ' },
+  { t: 'game', title: 'Викторина на скорость', meta: 'Игра · квиз · бесплатно', age: '7-10 10-14', theme: 'ВЗ НЗ' },
+  { t: 'game', title: 'Кто это?', meta: 'Игра · угадайка · бесплатно', age: '7-10 10-14', theme: 'ВЗ НЗ' },
+  { t: 'game', title: 'Хронология', meta: 'Игра · сортировка · бесплатно', age: '7-10 10-14', theme: 'ВЗ' },
+  { t: 'game', title: 'Три в ряд: Дары Духа', meta: 'Игра · Метанойя+', age: '5-7 7-10 10-14', theme: 'НЗ', locked: true },
+  { t: 'game', title: 'Давид и Голиаф', meta: 'Игра · Метанойя+', age: '7-10 10-14', theme: 'ВЗ', locked: true },
+  { t: 'game', title: 'Ноев Ковчег', meta: 'Игра · Метанойя+', age: '5-7 7-10', theme: 'ВЗ', locked: true },
+  { t: 'material', title: 'Раскраска «Сотворение мира»', meta: 'Материал · PDF · Метанойя+', age: '5-7', theme: 'ВЗ', locked: true },
+  { t: 'material', title: 'Молитвы для самых маленьких', meta: 'Материал · карточки', age: '5-7', theme: 'Молитва' },
+  { t: 'test', title: 'Тест к уроку 1', meta: 'Тест · 7 вопросов', age: '5-7 7-10 10-14', theme: 'ВЗ' },
+];
+
+const SR_ICON = { lesson: 'video', game: 'gamepad', material: 'book', test: 'check' };
+
+function runSearch() {
+  const q = $('#searchInput').value.trim().toLowerCase();
+  const box = $('#searchResults');
+  const empty = $('#searchEmpty');
+  if (q.length < 2) {
+    box.innerHTML = '';
+    empty.style.display = '';
+    empty.querySelector('p').textContent = 'Начни вводить запрос — найдём уроки, игры и материалы.';
+    return;
+  }
+  const found = SEARCH_INDEX.filter((it) => it.title.toLowerCase().includes(q));
+  empty.style.display = found.length ? 'none' : '';
+  if (!found.length) empty.querySelector('p').textContent = `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`;
+  box.innerHTML = found.map((it) => `
+    <button class="sr">
+      <div class="sr__icon sr__icon--${it.t}">${ICON(SR_ICON[it.t], 20)}</div>
+      <div>
+        <div class="sr__title">${it.title}</div>
+        <div class="sr__meta">${it.meta}</div>
+      </div>
+      ${it.locked ? `<div class="sr__lock">${ICON('lock', 16)}</div>` : ''}
+    </button>`).join('');
+  $$('#searchResults .sr').forEach((el) =>
+    el.addEventListener('click', () => toast('Переход к контенту — по мере готовности разделов')));
+}
+
+/* ───────── ДЕТСКИЙ ПРОФИЛЬ И PIN ───────── */
+
+const CHILD_BADGES = [
+  { icon: 'trophy',  name: 'Первооткрыватель', earned: true },
+  { icon: 'flame',   name: 'Верный ученик · 7 дней', earned: true },
+  { icon: 'star',    name: 'Молниеносный', earned: true },
+  { icon: 'comment', name: 'Общительный', earned: true },
+  { icon: 'book',    name: 'Книжный червь', earned: false },
+  { icon: 'gamepad', name: 'Игроман', earned: false },
+  { icon: 'check',   name: 'Снайпер', earned: false },
+  { icon: 'church',  name: 'Архитектор веры', earned: false },
+  { icon: 'cross',   name: 'Ученик Христа', earned: false },
+];
+
+function openChild(c) {
+  $('#childAvatar').src = c.img;
+  $('#childName').textContent = `${c.name}, ${c.age} лет`;
+  $('#childRank').textContent = c.rank;
+  $('#childStreak').textContent = c.streak;
+  $('#childBadges').innerHTML = CHILD_BADGES.map((b) => `
+    <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}">
+      <div class="badge-card__icon">${b.earned ? ICON(b.icon, 22) : ICON('lock', 18)}</div>
+      <div class="badge-card__name">${b.name}</div>
+    </div>`).join('');
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'child'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+let pinBuf = '';
+function initPin() {
+  const pad = $('#pinPad');
+  pad.innerHTML = [1,2,3,4,5,6,7,8,9,'',0,'⌫'].map((k) =>
+    k === '' ? '<span></span>' : `<button data-key="${k}">${k}</button>`).join('');
+  pad.addEventListener('click', (e) => {
+    const key = e.target.dataset?.key;
+    if (key === undefined) return;
+    if (key === '⌫') pinBuf = pinBuf.slice(0, -1);
+    else if (pinBuf.length < 4) pinBuf += key;
+    $$('#pinDots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length));
+    if (pinBuf.length === 4) {
+      if (pinBuf === '1234') {
+        $('#pinModal').hidden = true;
+        pinBuf = '';
+        $$('#pinDots i').forEach((d) => d.classList.remove('on'));
+        $('#nav').style.display = '';
+        switchTab('profile');
+        toast('Вы в профиле родителя');
+      } else {
+        const dots = $('#pinDots');
+        dots.classList.add('shake');
+        setTimeout(() => { dots.classList.remove('shake'); pinBuf = '';
+          $$('#pinDots i').forEach((d) => d.classList.remove('on')); }, 350);
+      }
+    }
+  });
+  $('#pinCancel').addEventListener('click', () => { $('#pinModal').hidden = true; pinBuf = ''; $$('#pinDots i').forEach((d) => d.classList.remove('on')); });
+  $('#childBack').addEventListener('click', () => { $('#pinModal').hidden = false; });
+}
 
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
@@ -382,10 +672,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
   $$('.menu-item').forEach((el) =>
     el.addEventListener('click', () => toast('Раздел в разработке')));
-  $('#searchInput').addEventListener('input', (e) => {
-    $('#searchEmpty').querySelector('p').textContent = e.target.value.length >= 2
-      ? `Ничего не найдено по запросу «${e.target.value}». Поиск заработает на этапе 2.`
-      : 'Начни вводить запрос — найдём уроки, игры и материалы.';
+  let searchTimer = null;
+  $('#searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 300); // debounce по ТЗ
   });
   $$('.filter-chip').forEach((el) =>
     el.addEventListener('click', () => el.classList.toggle('filter-chip--active')));
@@ -397,6 +687,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initOnboarding();
   initAuth();
+  initStoryViewer();
+  initComments();
+  initPin();
   showApp(null);
 
   // Splash → онбординг (первый запуск) → вход → приложение

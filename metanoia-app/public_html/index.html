@@ -130,7 +130,46 @@
       <button class="auth__guest" id="guestBtn">Посмотреть демо без регистрации</button>
     </div>
   </div>
-\n  <!-- ═══════════ ШАПКА ═══════════ -->
+
+
+  <!-- ═══════════ ПРОСМОТР STORIES ═══════════ -->
+  <div id="storyViewer" class="sv" hidden>
+    <div class="sv__bars" id="svBars"></div>
+    <div class="sv__head">
+      <div class="sv__who" id="svWho"></div>
+      <button class="sv__close" id="svClose" aria-label="Закрыть"><span data-icon="close" data-size="22"></span></button>
+    </div>
+    <div class="sv__content" id="svContent"></div>
+    <button class="sv__zone sv__zone--prev" id="svPrev" aria-label="Назад"></button>
+    <button class="sv__zone sv__zone--next" id="svNext" aria-label="Вперёд"></button>
+  </div>
+
+  <!-- ═══════════ ШТОРКА КОММЕНТАРИЕВ ═══════════ -->
+  <div id="sheetWrap" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet">
+      <div class="sheet__grip"></div>
+      <div class="sheet__title">Комментарии <span id="sheetCount"></span></div>
+      <div class="sheet__list" id="sheetList"></div>
+      <div class="sheet__input">
+        <input type="text" id="sheetField" placeholder="Написать комментарий..." maxlength="500">
+        <button id="sheetSend" aria-label="Отправить"><span data-icon="send" data-size="20"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PIN РОДИТЕЛЯ ═══════════ -->
+  <div id="pinModal" class="pinm" hidden>
+    <div class="pinm__box">
+      <div class="pinm__title">PIN родителя</div>
+      <div class="pinm__hint">Чтобы вернуться в профиль родителя, введи PIN (в демо: 1234)</div>
+      <div class="pinm__dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+      <div class="pinm__pad" id="pinPad"></div>
+      <button class="pinm__cancel" id="pinCancel">Отмена</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ ШАПКА ═══════════ -->
   <header class="header" id="header">
     <div class="header__left">
       <img class="header__logo" src="assets/img/logo.png" width="36" height="36" alt="Метанойя">
@@ -239,6 +278,51 @@
         <button class="menu-item menu-item--muted"><span data-icon="logout" data-size="18"></span>Выйти</button>
       </div>
     </section>
+
+    <!-- ── ДЕТСКИЙ ПРОФИЛЬ (переключение из родителя) ── -->
+    <section class="screen" data-screen="child">
+      <button class="child-back" id="childBack"><span data-icon="back" data-size="18"></span> Профиль родителя</button>
+      <div class="child-head">
+        <img class="child-head__avatar" id="childAvatar" src="assets/img/avatars/lion.jpg" alt="">
+        <div class="child-head__name" id="childName">Миша, 8 лет</div>
+        <div class="child-head__rank" id="childRank">Росточек · уровень 2</div>
+        <div class="xpbar">
+          <div class="xpbar__fill" id="childXpFill"></div>
+        </div>
+        <div class="xpbar__label" id="childXpLabel">220 / 300 XP до «Цветочка»</div>
+        <div class="child-streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="childStreak">12</b> дней подряд</div>
+      </div>
+
+      <h2 class="section-title">Мои значки</h2>
+      <div class="badges" id="childBadges"></div>
+
+      <h2 class="section-title">Мой храм</h2>
+      <div class="card temple">
+        <div class="temple__icon"><span data-icon="church" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Этап 3 из 10 · «Стены»</div>
+          <div class="progress"><div class="progress__fill" style="width:34%"></div></div>
+          <div class="temple__note">34 кирпичика из 100 — каждый урок, тест и игра достраивают храм</div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Прогресс по блокам</h2>
+      <div class="card">
+        <div class="blockp"><span>Блок 1 · Знакомство с Богом</span><div class="progress"><div class="progress__fill" style="width:66%"></div></div><em>8 / 12</em></div>
+        <div class="blockp"><span>Блок 2 · Герои веры</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 12</em></div>
+        <div class="blockp"><span>Блок 3 · Жизнь Иисуса</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 12</em></div>
+      </div>
+
+      <h2 class="section-title">Путешествие веры</h2>
+      <div class="card temple">
+        <div class="temple__icon"><span data-icon="map" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Остановка 3 · «Египет»</div>
+          <div class="temple__note">Карта пути откроется на этапе мини-игр</div>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- ═══════════ НИЖНЯЯ НАВИГАЦИЯ (5 ТАБОВ) ═══════════ -->
