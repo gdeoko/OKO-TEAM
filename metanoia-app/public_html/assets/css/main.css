@@ -1112,3 +1112,58 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .ucard__avatar img { width: 100%; height: 100%; object-fit: cover; }
 .ucard__name { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
 .ucard__meta { font-size: 13px; color: var(--gray); margin: 4px 0 16px; }
+
+/* ══════════ АДАПТАЦИЯ И ПОЛИРОВКА (все устройства) ══════════ */
+img, video { max-width: 100%; }
+
+/* шапка с учётом чёлки iPhone */
+.header { padding-top: env(safe-area-inset-top); height: calc(var(--header-h) + env(safe-area-inset-top)); }
+.screens { padding-top: calc(var(--header-h) + env(safe-area-inset-top) + 12px); }
+
+/* ЧАТ: фиксированная раскладка — поле ввода всегда у низа, ровно над клавиатурой */
+body.in-chat .header { display: none; }
+[data-screen="chatview"].screen--active {
+  position: fixed; inset: 0 auto 0 50%; z-index: 40;
+  width: 100%; max-width: var(--max-w);
+  transform: translateX(-50%);
+  height: var(--vvh, 100dvh);
+  min-height: 0;
+  background: var(--cream);
+  padding: calc(8px + env(safe-area-inset-top)) 14px calc(8px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column;
+}
+.cv-msgs { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.cv-head, .cv-input, .cv-record, .cv-readonly, .cv-pinned { flex: 0 0 auto; }
+
+/* стикеры: компактно, как в Telegram */
+.msg__sticker { width: 96px; height: 96px; }
+.cv-stickers {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px; padding: 10px;
+  max-height: 224px; overflow-y: auto;
+  margin-bottom: 8px;
+}
+.cv-stickers button { padding: 2px; }
+
+/* переносы и обрезания */
+.msg__bubble, .feed-card__title, .feed-card__text, .chat-item__name { overflow-wrap: break-word; word-break: break-word; }
+.chat-item__body { min-width: 0; }
+.sr > div { min-width: 0; }
+.sr__title, .sr__meta { overflow-wrap: break-word; }
+
+/* маленькие экраны (iPhone SE, узкие Android) */
+@media (max-width: 379px) {
+  :root { --pad: 12px; }
+  .today__row { flex-wrap: wrap; gap: 6px; }
+  .field-row { flex-direction: column; gap: 14px; }
+  .field--narrow { flex: 1; }
+  .card { padding: 18px; }
+}
+
+/* планшет и десктоп: рамка приложения по центру */
+@media (min-width: 520px) {
+  .header, .nav { left: 50%; transform: translateX(-50%); }
+  .screens { box-shadow: 0 0 60px rgba(16, 34, 47, .25); }
+}
+
+.sheet__list, .notif__list { overscroll-behavior: contain; }

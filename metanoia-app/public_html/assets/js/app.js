@@ -577,12 +577,12 @@ const CHAT_MSGS = {
     ] },
 };
 let cvChatId = null;
-let myMsgs = JSON.parse(localStorage.getItem('mt_msgs') || '{}');
+let myMsgs = JSON.parse(localStorage.getItem('mt_msgs2') || '{}');
 
 function msgHtml(m, mine, key) {
   return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}" data-key="${key}" data-mine="${mine ? 1 : 0}" data-text="${(m.text || 'стикер').replace(/"/g, '&quot;')}">
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
-    ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="стикер">`
+    ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="" onerror="this.closest(&quot;.msg&quot;).style.display=&quot;none&quot;">`
       : m.voice ? `<div class="msg__voice" data-voice="${m.voice.url || ''}">
           <button class="msg__voice-play">${ICON('play', 15)}</button>
           <div class="msg__wave">${waveBars(m.voice.dur + 7)}</div>
@@ -640,6 +640,7 @@ function openChatView(i) {
   // прочитано
   if (c.unread) { c.unread = 0; renderChats(); }
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'chatview'));
+  document.body.classList.add('in-chat');
   $('#nav').style.display = 'none';
   window.scrollTo({ top: 0 });
 }
@@ -650,13 +651,14 @@ function cvSendText() {
   const msg = { text: val, time: 'только что' };
   if (replyTo) { msg.quote = replyTo.text; replyTo = null; $('#cvReplyBar')?.remove(); }
   (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
-  localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+  localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
   $('#cvField').value = '';
   renderChatMsgs();
 }
 
 function initChatView() {
   $('#cvBack').addEventListener('click', () => {
+    document.body.classList.remove('in-chat');
     $('#nav').style.display = '';
     switchTab('chats');
   });
@@ -671,7 +673,7 @@ function initChatView() {
       $$('#cvStickers [data-sticker]').forEach((b) =>
         b.addEventListener('click', () => {
           (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ sticker: b.dataset.sticker, time: 'только что' });
-          localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+          localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
           panel.hidden = true;
           renderChatMsgs();
         }));
@@ -774,7 +776,7 @@ function initPTR() {
 /* ───────── РЕАКЦИИ И ДЕЙСТВИЯ С СООБЩЕНИЯМИ ───────── */
 
 const REACTIONS = ['winged-heart', 'faith-flame', 'smiling-sun', 'sparkles', 'burning-candle', 'bell-ring'];
-let reactions = JSON.parse(localStorage.getItem('mt_reactions') || '{}'); // {chatId: {msgKey: [keys]}}
+let reactions = JSON.parse(localStorage.getItem('mt_react2') || '{}'); // {chatId: {msgKey: [keys]}}
 let maTarget = null;   // { key, mine, text }
 let replyTo = null;    // { who, text }
 
@@ -797,7 +799,7 @@ function openMsgActions(key, mine, text) {
       const list = (store[maTarget.key] = store[maTarget.key] || []);
       const at = list.indexOf(b.dataset.react);
       if (at >= 0) list.splice(at, 1); else list.push(b.dataset.react);
-      localStorage.setItem('mt_reactions', JSON.stringify(reactions));
+      localStorage.setItem('mt_react2', JSON.stringify(reactions));
       $('#msgActions').hidden = true;
       renderChatMsgs();
     }));
@@ -821,7 +823,7 @@ function initMsgActions() {
   $('#maDelete').addEventListener('click', () => {
     const idx = Number(maTarget.key.slice(1));
     (myMsgs[cvChatId] || []).splice(idx, 1);
-    localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+    localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
     $('#msgActions').hidden = true;
     renderChatMsgs();
     toast('Сообщение удалено');
@@ -982,7 +984,7 @@ function initVoice() {
         : { circle: { dur, url } };
       msg.time = 'только что';
       (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push(msg);
-      localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+      localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
       renderChatMsgs();
     };
     if (rec.media && rec.media.state !== 'inactive') {
@@ -1046,7 +1048,7 @@ function initAttach() {
     if (f.size > 20 * 1024 * 1024) return toast('Файл больше 20 МБ');
     (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({
       file: { name: f.name, size: (f.size / 1024 / 1024).toFixed(1) + ' МБ' }, time: 'только что' });
-    localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+    localStorage.setItem('mt_msgs2', JSON.stringify(myMsgs));
     renderChatMsgs();
     e.target.value = '';
   });
@@ -1257,6 +1259,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initComments();
   initPin();
   initChatView();
+  if (window.visualViewport) {
+    const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
+    window.visualViewport.addEventListener('resize', vvSync);
+    vvSync();
+  }
   initVoice();
   initAttach();
   initDm();
