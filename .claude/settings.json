@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push -u origin *)",
+      "Bash(git checkout *)",
+      "Bash(mkdir -p *)",
+      "Bash(npm view *)",
+      "Bash(npm ls *)",
+      "Bash(node -v)",
+      "Bash(node --version)",
+      "Bash(curl -sS $HTTPS_PROXY/__agentproxy/status)",
+      "WebSearch",
+      "WebFetch",
+      "mcp__github__get_me",
+      "mcp__github__get_file_contents",
+      "mcp__github__search_repositories",
+      "mcp__github__search_code",
+      "mcp__github__list_branches",
+      "mcp__github__list_commits",
+      "mcp__github__list_pull_requests",
+      "mcp__github__list_issues",
+      "mcp__github__pull_request_read",
+      "mcp__github__issue_read",
+      "mcp__github__get_commit",
+      "mcp__github__actions_list",
+      "mcp__github__get_job_logs",
+      "mcp__Higgsfield__list_workspaces",
+      "mcp__Higgsfield__list_websites",
+      "mcp__Higgsfield__website_status",
+      "mcp__Higgsfield__balance",
+      "mcp__Higgsfield__get_website_creation_instructions",
+      "mcp__Higgsfield__get_website_creation_bundle_file",
+      "mcp__Higgsfield__job_display",
+      "mcp__Higgsfield__show_generations",
+      "mcp__Higgsfield__show_medias"
+    ]
+  }
+}
