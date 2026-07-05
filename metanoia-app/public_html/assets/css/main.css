@@ -433,3 +433,46 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
   max-width: 90%; text-align: center;
 }
 .toast--show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+
+/* ══════════ SVG-ИКОНКИ (без эмодзи) ══════════ */
+.ic { vertical-align: -4px; flex: 0 0 auto; }
+.ic-terra { color: var(--terracotta); }
+.ic-gold { color: var(--gold); }
+
+.story__avatar { color: var(--navy); }
+.story__badge { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.story__badge .ic { vertical-align: -1px; }
+
+.today__streak, .today__call-timer { display: inline-flex; align-items: center; gap: 5px; }
+
+.feed-card__cover--img { position: relative; padding: 0; background: none; overflow: hidden; }
+.feed-card__cover--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.feed-card__play {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--cream);
+  background: rgba(26, 58, 82, .45);
+  border-radius: 50%; padding: 10px;
+  backdrop-filter: blur(2px);
+}
+.feed-card__actions button { align-items: center; }
+
+.chat-item__avatar { color: var(--cream); }
+
+.lesson-item__lock { color: var(--gray); display: flex; }
+
+.child-card__avatar { width: 46px; height: 46px; }
+.child-card__avatar img {
+  width: 46px; height: 46px; border-radius: 50%;
+  object-fit: cover; display: block;
+  border: 2px solid rgba(212, 165, 116, .5);
+}
+.child-card__xp { display: inline-flex; align-items: center; gap: 4px; color: var(--terracotta); }
+
+.menu-item { display: flex; align-items: center; gap: 12px; }
+.menu-item .ic { color: var(--navy); opacity: .75; }
+.menu-item--muted .ic { color: var(--gray); }
+
+.btn .ic { margin-right: 2px; }
+.empty-state__icon { color: rgba(90, 101, 119, .5); }

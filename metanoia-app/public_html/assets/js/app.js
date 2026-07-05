@@ -10,23 +10,24 @@
 
 const DEMO = {
   stories: [
-    { emoji: '🕊', name: 'Екатерина', badge: '🕊 Педагог', seen: false },
-    { emoji: '📖', name: 'Анонс урока', seen: false },
-    { emoji: '⭐', name: 'Мотивация', seen: false },
-    { emoji: '🏆', name: 'Успехи', seen: true },
-    { emoji: '✝️', name: 'Цитата дня', seen: true },
+    { icon: 'dove',    name: 'Екатерина', badge: 'Педагог', seen: false },
+    { icon: 'video',   name: 'Анонс урока', seen: false },
+    { icon: 'sparkle', name: 'Мотивация', seen: false },
+    { icon: 'trophy',  name: 'Успехи', seen: true },
+    { icon: 'cross',   name: 'Цитата дня', seen: true },
   ],
 
   feed: [
     {
-      type: 'lesson', label: 'Новый урок', cover: '🎥',
+      type: 'lesson', label: 'Новый урок',
+      coverImg: 'assets/img/covers/lesson-1.jpg',
       title: 'Урок 1. Кто такой Бог?',
       meta: 'Блок 1 «Знакомство с Богом» · 32 мин',
       progress: 40, likes: 24, comments: 7,
     },
     {
       type: 'announce', label: 'Объявление · Екатерина Павленко',
-      title: 'Добро пожаловать в Метанойю! 🙏',
+      title: 'Добро пожаловать в Метанойю!',
       text: 'Дорогие родители и дети! Я очень рада видеть каждого из вас в нашей школе. Начинаем наш путь вместе — с Богом!',
       likes: 56, comments: 12,
     },
@@ -46,16 +47,16 @@ const DEMO = {
   ],
 
   chats: [
-    { emoji: '🕊', name: 'Екатерина Павленко', peda: true, pinned: true, last: 'Добро пожаловать в нашу школу! 🙏', time: '12:34', unread: 3 },
-    { emoji: '💬', name: 'Общий чат школы', last: 'Иван: Спасибо большое!', time: '11:20', unread: 2 },
-    { emoji: '👨‍👩‍👧', name: 'Чат родителей', last: 'Мария: Кто идёт на созвон завтра?', time: '10:05', unread: 0 },
-    { emoji: '🎮', name: 'Чат учеников', last: 'Миша: Я собрал стих за 20 секунд!', time: '09:41', unread: 0 },
-    { emoji: '🛠', name: 'Поддержка', last: 'Чем можем помочь?', time: 'Вчера', unread: 0 },
+    { icon: 'dove', name: 'Екатерина Павленко', peda: true, pinned: true, last: 'Добро пожаловать в нашу школу!', time: '12:34', unread: 3 },
+    { icon: 'comment', name: 'Общий чат школы', last: 'Иван: Спасибо большое!', time: '11:20', unread: 2 },
+    { icon: 'users', name: 'Чат родителей', last: 'Мария: Кто идёт на созвон завтра?', time: '10:05', unread: 0 },
+    { icon: 'gamepad', name: 'Чат учеников', last: 'Миша: Я собрал стих за 20 секунд!', time: '09:41', unread: 0 },
+    { icon: 'headset', name: 'Поддержка', last: 'Чем можем помочь?', time: 'Вчера', unread: 0 },
   ],
 
   blocks: [
     {
-      title: 'Блок 1 · «Знакомство с Богом»', range: 'уроки 1–12', award: '🏅 Первооткрыватель',
+      title: 'Блок 1 · «Знакомство с Богом»', range: 'уроки 1–12', award: '«Первооткрыватель»',
       lessons: [
         { n: 1, title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ' },
         { n: 2, title: 'Создание мира', state: 'locked' },
@@ -64,14 +65,14 @@ const DEMO = {
       ],
     },
     {
-      title: 'Блок 2 · «Герои веры»', range: 'уроки 13–24', award: '🎖 Знаток героев',
+      title: 'Блок 2 · «Герои веры»', range: 'уроки 13–24', award: '«Знаток героев»',
       lessons: [
         { n: 13, title: 'Авраам', state: 'locked' },
         { n: 14, title: 'Моисей', state: 'locked' },
       ],
     },
     {
-      title: 'Блок 3 · «Жизнь Иисуса»', range: 'уроки 25–36', award: '✝️ Ученик Христа',
+      title: 'Блок 3 · «Жизнь Иисуса»', range: 'уроки 25–36', award: '«Ученик Христа»',
       lessons: [
         { n: 25, title: 'Рождество', state: 'locked' },
         { n: 26, title: 'Крещение', state: 'locked' },
@@ -80,8 +81,8 @@ const DEMO = {
   ],
 
   children: [
-    { emoji: '🦁', name: 'Миша', age: 8, rank: '🌿 Росточек · 220 XP', streak: 12 },
-    { emoji: '🌟', name: 'Аня', age: 6, rank: '🌱 Зёрнышко · 75 XP', streak: 4 },
+    { img: 'assets/img/avatars/lion.jpg', name: 'Миша', age: 8, rank: 'Росточек · 220 XP', streak: 12 },
+    { img: 'assets/img/avatars/star.jpg', name: 'Аня', age: 6, rank: 'Зёрнышко · 75 XP', streak: 4 },
   ],
 };
 
@@ -127,14 +128,14 @@ function renderStories() {
   $('#stories').innerHTML = DEMO.stories.map((s) => `
     <button class="story" data-story="${s.name}">
       <div class="story__ring ${s.seen ? 'story__ring--seen' : ''}">
-        <div class="story__avatar">${s.emoji}</div>
+        <div class="story__avatar">${ICON(s.icon, 26)}</div>
       </div>
       <div class="story__name">${s.name}</div>
-      ${s.badge ? `<div class="story__badge">${s.badge}</div>` : ''}
+      ${s.badge ? `<div class="story__badge">${ICON('dove', 9)} ${s.badge}</div>` : ''}
     </button>
   `).join('');
   $$('#stories .story').forEach((el) =>
-    el.addEventListener('click', () => toast('Просмотр Stories — этап 2 📱')));
+    el.addEventListener('click', () => toast('Просмотр Stories — этап 2')));
 }
 
 /* ───────── РЕНДЕР: ЛЕНТА ───────── */
@@ -142,9 +143,9 @@ function renderStories() {
 function feedCard(item) {
   const actions = `
     <div class="feed-card__actions">
-      <button data-act="like">❤️ ${item.likes}</button>
-      <button data-act="comment">💬 ${item.comments}</button>
-      <button data-act="share">📤 Поделиться</button>
+      <button data-act="like">${ICON('heart', 16)} ${item.likes}</button>
+      <button data-act="comment">${ICON('comment', 16)} ${item.comments}</button>
+      <button data-act="share">${ICON('share', 16)} Поделиться</button>
     </div>`;
 
   if (item.type === 'quote') {
@@ -158,7 +159,7 @@ function feedCard(item) {
 
   return `<article class="card feed-card">
     <div class="feed-card__type">${item.label}</div>
-    ${item.cover ? `<div class="feed-card__cover">${item.cover}</div>` : ''}
+    ${item.coverImg ? `<div class="feed-card__cover feed-card__cover--img"><img src="${item.coverImg}" alt="" loading="lazy">${ICON('play', 44, 'feed-card__play')}</div>` : ''}
     <div class="feed-card__title">${item.title}</div>
     ${item.text ? `<p class="feed-card__text">${item.text}</p>` : ''}
     ${item.meta ? `<div class="feed-card__meta">${item.meta}</div>` : ''}
@@ -173,7 +174,7 @@ function feedCard(item) {
 function renderFeed() {
   $('#feed').innerHTML = DEMO.feed.map(feedCard).join('');
   $$('#feed [data-act]').forEach((el) =>
-    el.addEventListener('click', () => toast('Функция подключается на следующих этапах 🙏')));
+    el.addEventListener('click', () => toast('Функция подключается на следующих этапах')));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -181,9 +182,9 @@ function renderFeed() {
 function renderChats() {
   $('#chatList').innerHTML = DEMO.chats.map((c) => `
     <button class="chat-item ${c.pinned ? 'chat-item--pinned' : ''}">
-      <div class="chat-item__avatar">${c.emoji}</div>
+      <div class="chat-item__avatar">${ICON(c.icon, 24)}</div>
       <div class="chat-item__body">
-        <div class="chat-item__name">${c.name} ${c.peda ? '<span class="chat-item__peda">🕊 Педагог</span>' : ''}</div>
+        <div class="chat-item__name">${c.name} ${c.peda ? `<span class="chat-item__peda">${ICON('dove', 10)} Педагог</span>` : ''}</div>
         <div class="chat-item__last">${c.last}</div>
       </div>
       <div class="chat-item__side">
@@ -193,7 +194,7 @@ function renderChats() {
     </button>
   `).join('');
   $$('#chatList .chat-item').forEach((el) =>
-    el.addEventListener('click', () => toast('Мессенджер — этап 3 💬')));
+    el.addEventListener('click', () => toast('Мессенджер — этап 3')));
 
   const unreadTotal = DEMO.chats.reduce((s, c) => s + c.unread, 0);
   const badge = $('#chatsBadge');
@@ -213,7 +214,7 @@ function renderLessons() {
           <div class="lesson-item__title">${l.title}</div>
           ${l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : ''}
         </div>
-        ${l.state === 'locked' ? '<div class="lesson-item__lock">🔒</div>' : ''}
+        ${l.state === 'locked' ? `<div class="lesson-item__lock">${ICON('lock', 18)}</div>` : ''}
       </button>
     `).join('')}
   `).join('');
@@ -222,9 +223,9 @@ function renderLessons() {
     el.addEventListener('click', () => {
       if (el.dataset.state === 'locked') {
         const prev = Number(el.dataset.n) - 1;
-        toast(`Пройди урок ${prev} — тест и ДЗ, чтобы открыть 🔒`);
+        toast(`Пройди урок ${prev} — тест и ДЗ, чтобы открыть`);
       } else {
-        toast('Экран урока — этап 4 🎥');
+        toast('Экран урока — этап 4');
       }
     });
   });
@@ -235,16 +236,16 @@ function renderLessons() {
 function renderChildren() {
   $('#children').innerHTML = DEMO.children.map((c) => `
     <button class="child-card">
-      <div class="child-card__avatar">${c.emoji}</div>
+      <div class="child-card__avatar"><img src="${c.img}" alt=""></div>
       <div>
         <div class="child-card__name">${c.name}, ${c.age} лет</div>
         <div class="child-card__rank">${c.rank}</div>
       </div>
-      <div class="child-card__xp">🔥 ${c.streak} дн.</div>
+      <div class="child-card__xp">${ICON('flame', 14)} ${c.streak} дн.</div>
     </button>
   `).join('');
   $$('#children .child-card').forEach((el) =>
-    el.addEventListener('click', () => toast('Детский профиль — этап 2 👶')));
+    el.addEventListener('click', () => toast('Детский профиль — этап 2')));
 }
 
 /* ───────── ОБРАТНЫЙ ОТСЧЁТ ДО СОЗВОНА (демо) ───────── */
@@ -267,7 +268,14 @@ function initSW() {
 
 /* ───────── СТАРТ ───────── */
 
+function hydrateIcons() {
+  $$('[data-icon]').forEach((el) => {
+    el.innerHTML = ICON(el.dataset.icon, Number(el.dataset.size || 20));
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  hydrateIcons();
   renderStories();
   renderFeed();
   renderChats();
@@ -279,12 +287,12 @@ document.addEventListener('DOMContentLoaded', () => {
   tickCountdown();
   setInterval(tickCountdown, 60_000);
 
-  $('#dailyVerseBtn').addEventListener('click', () => toast('Ежедневный стих — этап 5 📖'));
-  $('#bellBtn').addEventListener('click', () => toast('Уведомления — этап 7 🔔'));
+  $('#dailyVerseBtn').addEventListener('click', () => toast('Ежедневный стих — этап 5'));
+  $('#bellBtn').addEventListener('click', () => toast('Уведомления — этап 7'));
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
-  $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2 👨‍👩‍👧'));
+  $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
   $$('.menu-item').forEach((el) =>
-    el.addEventListener('click', () => toast('Раздел в разработке 🛠')));
+    el.addEventListener('click', () => toast('Раздел в разработке')));
   $('#searchInput').addEventListener('input', (e) => {
     $('#searchEmpty').querySelector('p').textContent = e.target.value.length >= 2
       ? `Ничего не найдено по запросу «${e.target.value}». Поиск заработает на этапе 2.`

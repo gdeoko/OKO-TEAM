@@ -72,15 +72,15 @@
       <!-- Виджет «Сегодня» -->
       <div class="today card card--gold">
         <div class="today__row">
-          <span class="today__streak">🔥 <b id="streakDays">12</b> дней подряд</span>
+          <span class="today__streak"><span data-icon="flame" data-size="17" class="ic-terra"></span> <b id="streakDays">12</b> дней подряд</span>
           <span class="today__xp">+<b id="xpToday">45</b> XP сегодня</span>
         </div>
         <div class="today__call">
           <div class="today__call-label">Ближайший созвон:</div>
           <div class="today__call-title">«Притча о блудном сыне»</div>
-          <div class="today__call-timer">⏱ через <span id="callCountdown">2ч 15мин</span></div>
+          <div class="today__call-timer"><span data-icon="clock" data-size="14"></span> через <span id="callCountdown">2ч 15мин</span></div>
         </div>
-        <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn">📖 Ежедневный стих</button>
+        <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn"><span data-icon="book" data-size="18" class="ic-gold"></span> Ежедневный стих</button>
       </div>
 
       <!-- Лента -->
@@ -111,7 +111,7 @@
         <button class="filter-chip">Притчи</button>
       </div>
       <div class="empty-state" id="searchEmpty">
-        <div class="empty-state__icon">🔍</div>
+        <div class="empty-state__icon"><span data-icon="search" data-size="40"></span></div>
         <p>Начни вводить запрос — найдём уроки, игры и материалы.</p>
       </div>
       <div class="feed" id="searchResults"></div>
@@ -141,16 +141,16 @@
 
       <h2 class="section-title">Мои дети</h2>
       <div class="children" id="children"><!-- JS --></div>
-      <button class="btn btn--outline" id="addChildBtn">+ Добавить ребёнка</button>
+      <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
 
       <h2 class="section-title">Настройки</h2>
       <div class="menu-list">
-        <button class="menu-item">⚙️ Настройки аккаунта</button>
-        <button class="menu-item">⭐ Подписка Метанойя+</button>
-        <button class="menu-item">🔔 Уведомления</button>
-        <button class="menu-item">🛡 Родительский контроль</button>
-        <button class="menu-item">💬 Поддержка</button>
-        <button class="menu-item menu-item--muted">Выйти</button>
+        <button class="menu-item"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
+        <button class="menu-item"><span data-icon="star" data-size="18"></span>Подписка Метанойя+</button>
+        <button class="menu-item"><span data-icon="bell" data-size="18"></span>Уведомления</button>
+        <button class="menu-item"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
+        <button class="menu-item"><span data-icon="headset" data-size="18"></span>Поддержка</button>
+        <button class="menu-item menu-item--muted"><span data-icon="logout" data-size="18"></span>Выйти</button>
       </div>
     </section>
   </main>
@@ -183,6 +183,7 @@
   <!-- Тост для заглушек -->
   <div class="toast" id="toast"></div>
 
+  <script src="assets/js/icons.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
