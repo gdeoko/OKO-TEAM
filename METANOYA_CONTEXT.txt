@@ -3188,10 +3188,48 @@ Code с GitHub (superpowers, официальные anthropics/skills и др.) 
 доступны во всех будущих сессиях Claude по этому репозиторию.
 
 НЕ СДЕЛАНО ПО ЭТАПУ 1 (следующие шаги):
-  - PHP API: роутер, JWT, регистрация/вход/refresh.
-  - Схема БД ~30 таблиц + seed с superadmin Екатерины.
-  - Иконки PWA всех размеров (72–512) из логотипа.
-  - Экраны авторизации и онбординг (стык с этапом 2).
+  - Google OAuth и Telegram Login (нужны ключи — раздел 19.1).
+  - Верификация email и восстановление пароля (нужен SMTP хостинга).
+  - Экраны авторизации и онбординг во фронтенде (стык с этапом 2).
+
+── 05.07.2026 ── ЭТАП 1: БЭКЕНД-ЯДРО ГОТОВО И ПРОТЕСТИРОВАНО ────
+1. db/schema.sql — 30+ таблиц (все группы раздела 18): users,
+   children, user_settings, sessions; blocks, lessons (с полями
+   под Claude-материалы), lesson_progress, tests (6 типов вопросов
+   через ENUM kind + JSON payload), test_questions/answers/results,
+   homework; games, game_scores, game_data; xp_log, achievements,
+   user_achievements, streaks (+ заморозки Метанойя+); chats,
+   chat_members (мут/бан/роли), messages (все типы, отложенные,
+   FULLTEXT-поиск), message_reactions, read_status, stickers;
+   posts, post_likes, post_comments, stories; subscriptions,
+   payments, donations; events, event_registrations; materials,
+   material_downloads; notifications, push_tokens; moderation_log,
+   audit_log, system_settings. utf8mb4, InnoDB, FK и индексы.
+2. db/seed.sql — Екатерина superadmin (bcrypt cost 12), 3 блока,
+   каталог 20 игр, 19 значков, 30 стикеров, 5 системных чатов,
+   XP-тарифы в system_settings (по разделу 11.1).
+   ПРОВЕРЕНО на реальной MariaDB: обе SQL выполняются чисто.
+3. PHP API (public_html/api/v1) — нативный, без фреймворков:
+   роутер index.php (+.htaccess), core/: config (.env вне
+   public_html), db (PDO, параметризация), jwt (HS256 своя),
+   response (единый JSON-формат), auth (Bearer middleware,
+   requireSuperadmin), ratelimit (100 rpm на IP, файловый).
+   routes/auth.php: register (валидация, конфессия/страна/город,
+   первый ребёнок, audit_log), login, refresh (РОТАЦИЯ refresh-
+   токенов, hash в sessions), me (с детьми и streak), logout.
+   routes/users.php: добавление ребёнка (лимит 3 без подписки).
+   ПРОТЕСТИРОВАНО end-to-end на PHP 8.4 + MariaDB: health,
+   регистрация с ребёнком, вход, me, ротация refresh, повторный
+   refresh отклоняется, неверный пароль отклоняется, вход
+   Екатерины из seed работает (роль superadmin).
+4. Иконки PWA 72–512px сгенерированы из логотипа (rsvg),
+   manifest.json обновлён (192/512 maskable).
+5. Инструменты медиа для сборки (скиллы в .claude/skills):
+   gemini-media (Gemini API текст; картинки после включения
+   биллинга; БЕСПЛАТНЫЕ картинки Pollinations/Flux — рабочий
+   дефолт), web-fx (3D/анимации/конвертация). Промо-видео 17с
+   1080х1920 с русской озвучкой (edge-tts) собрано кодом —
+   пайплайн: GSAP-таймлайн → покадровый Playwright → ffmpeg.
 
 ── 05.07.2026 ── Страница прогресса для Екатерины (публичная) ───
 Даниэль попросил публичную страницу хода работ БЕЗ упоминаний
@@ -3208,13 +3246,14 @@ Claude (правило 7). Сделано:
      slug nimble-bean-709, type website. Клонирование его репо
      было заблокировано сетевой политикой окружения (Trusted);
      Даниэль переключает Network access на Full.
-  ЗАДАЧА ДЛЯ СЛЕДУЮЩЕЙ СЕССИИ (когда сеть = Full):
-     а) website_repo_access → клонировать репо сайта;
-     б) положить страницу прогресса (собрать из
-        metanoia-app/public_html: index.html + main.css + app.js
-        + шрифты, по образцу артефакта) как статичную страницу;
-     в) deploy_website env=production → отдать Даниэлю URL;
-     г) на странице и в URL — НИКАКИХ упоминаний Claude/AI.
+  ВЫПОЛНЕНО 05.07.2026 (после включения сети Full):
+     ✅ Страница прогресса ОПУБЛИКОВАНА:
+        https://nimble-bean-709.higgsfield.app
+        (нейтральный домен, ноль упоминаний Claude — проверено;
+        эту ссылку МОЖНО отправлять Екатерине).
+     Обновление страницы: править файл app/src/progress-page.html
+     в репо сайта (website_id выше) → git push → deploy_website
+     env=production. Обновлять после каждого этапа.
   ⚠ Репозиторий gdeoko/OKO-TEAM на 05.07 ПУБЛИЧНЫЙ — Даниэлю
      рекомендовано срочно сделать приватным (в контексте пароль
      Екатерины и условия договора).
