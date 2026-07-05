@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git checkout *)",
+      "Bash(git clone *)",
+      "Bash(git restore *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Bash(npm ci)",
+      "Bash(npm ls *)",
+      "WebSearch",
+      "WebFetch",
+      "mcp__github",
+      "mcp__Claude_Code_Remote",
+      "mcp__Magic_Patterns",
+      "mcp__Higgsfield__get_website_creation_instructions",
+      "mcp__Higgsfield__get_website_creation_bundle_file",
+      "mcp__Higgsfield__create_website",
+      "mcp__Higgsfield__deploy_website",
+      "mcp__Higgsfield__website_status",
+      "mcp__Higgsfield__website_repo_access",
+      "mcp__Higgsfield__list_websites"
+    ]
+  }
+}
