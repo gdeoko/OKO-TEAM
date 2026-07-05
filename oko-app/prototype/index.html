@@ -171,6 +171,8 @@ nav#tabs .nav-logo{display:none}
 .composer .send svg.i{width:20px;height:20px}
 .composer .send.rec{background:var(--danger);color:#fff;animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,77,.5)}50%{box-shadow:0 0 0 9px rgba(255,77,77,0)}}
+.composer .send.pop svg.i{animation:modepop .25s ease}
+@keyframes modepop{from{transform:scale(.5)}to{transform:scale(1)}}
 .rec-timer{font-size:13px;color:var(--danger);font-weight:600;display:none;align-items:center;gap:7px}
 .rec-timer .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);animation:pulse 1.2s infinite}
 .empty-hint{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:100%;color:var(--dim)}
@@ -257,6 +259,65 @@ nav#tabs .nav-logo{display:none}
 .plan li::before{content:'';position:absolute;left:2px;top:12px;width:10px;height:2px;background:var(--accent);border-radius:1px}
 .disc-row{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
 @media(min-width:900px){.plans-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}.plan{margin-bottom:0}}
+
+/* ============ ПАПКИ ЧАТОВ ============ */
+.folders{display:flex;gap:8px;padding:10px 16px 2px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.folders::-webkit-scrollbar{display:none}
+.folders button{font-size:12.5px;font-weight:600;color:var(--dim);padding:7px 14px;border-radius:99px;border:1px solid var(--border);white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .15s}
+.folders button.on{color:#000;background:var(--lime);border-color:var(--lime)}
+.folders button svg.i{width:14px;height:14px}
+.folders button .cnt{font-size:10.5px;opacity:.65}
+
+/* ============ ВЛОЖЕНИЯ: ГАЛЕРЕЯ / ОПРОС / ДЕНЬГИ ============ */
+.gal-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:12px;margin-bottom:4px;scrollbar-width:none}
+.gal-row::-webkit-scrollbar{display:none}
+.gal-thumb{width:74px;height:74px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--accent);border:1px solid var(--border);cursor:pointer}
+.gal-thumb svg.i{width:22px;height:22px;opacity:.8}
+.pollmsg{min-width:230px}
+.pollmsg .pq{font-weight:600;margin-bottom:9px}
+.pollmsg .popt{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;border:1px solid rgba(0,0,0,.25);border-radius:10px;margin-bottom:6px;font-size:13.5px;text-align:left;position:relative;overflow:hidden}
+.msg.in .pollmsg .popt{border-color:var(--border)}
+.pollmsg .popt .bar{position:absolute;inset:0;width:0;background:rgba(0,0,0,.14);transition:width .5s ease}
+.msg.in .pollmsg .popt .bar{background:var(--lime-dim)}
+.pollmsg .popt b{margin-left:auto;font-size:12px;position:relative}
+.pollmsg .popt span{position:relative}
+.pollmsg .pmeta{font-size:11px;opacity:.6;margin-top:3px}
+.moneymsg{min-width:210px;text-align:center;padding:6px 4px}
+.moneymsg .mlabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.65}
+.moneymsg .msum{font-family:var(--font-display);font-size:44px;line-height:1.1}
+.moneymsg .mst{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;opacity:.75;margin-top:2px}
+.moneymsg .mst svg.i{width:13px;height:13px}
+
+/* ============ ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ / КАНАЛА ============ */
+.pv-top{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0 14px}
+.pv-top .ava{width:86px;height:86px;font-size:30px;margin-bottom:10px}
+.pv-top h3{font-size:26px}
+.pv-top .sub{color:var(--dim);font-size:13px;margin-top:3px}
+.pv-stats{display:flex;gap:8px;justify-content:center;margin:4px 0 10px}
+.pv-stats .chip{font-size:10px}
+.status-pick{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.status-pick button{width:44px;height:44px;border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.status-pick button.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.status-pick button svg.i{width:20px;height:20px}
+.name-status{display:inline-flex;align-items:center;gap:6px}
+.name-status svg.i{width:17px;height:17px;color:var(--accent)}
+
+/* ============ БИРЖА УСЛУГ ============ */
+.market-note{display:flex;gap:9px;align-items:center;background:var(--lime-dim);border-radius:var(--r-md);padding:11px 13px;font-size:12.5px;color:var(--accent);margin-bottom:12px}
+.market-note svg.i{width:17px;height:17px;flex-shrink:0}
+.mk-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
+.mk-chips::-webkit-scrollbar{display:none}
+.mk-chips button{font-size:12.5px;font-weight:600;color:var(--dim);padding:7px 14px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
+.mk-chips button.on{color:#000;background:var(--lime);border-color:var(--lime)}
+.listing{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.listing:hover{border-color:var(--dim)}
+.listing .meta{flex:1;min-width:0}
+.listing b{font-size:14.5px;display:block}
+.listing .price{color:var(--accent);font-weight:700;font-size:14px;margin-top:2px}
+.listing .seller{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);margin-top:7px}
+.listing .seller svg.i{width:13px;height:13px;color:var(--accent)}
+.listing .ava{width:44px;height:44px;font-size:16px}
+.listing .tag{align-self:flex-start}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -387,6 +448,11 @@ main>.screen{position:relative;z-index:1}
     <symbol id="i-apple" viewBox="0 0 100 100"><path d="M63 26c-6 0-9 4-13 4s-8-4-13-4C27 26 18 36 18 51c0 16 11 33 19 33 4 0 7-3 12-3s8 3 12 3c8 0 19-16 19-24-8-3-13-9-13-17 0-6 3-11 8-14-3-2-7-3-12-3z" fill="currentColor" stroke="none"/><path d="M58 20c3-4 3-9 2-12-4 1-8 4-10 8-2 3-3 8-2 11 4 0 8-3 10-7z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-phone" viewBox="0 0 100 100"><path d="M30 14h40a6 6 0 0 1 6 6v60a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"/><path d="M42 74h16"/></symbol>
     <symbol id="i-logout" viewBox="0 0 100 100"><path d="M40 20H22a6 6 0 0 0-6 6v48a6 6 0 0 0 6 6h18M62 32l20 18-20 18M82 50H38"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 100 100"><path d="M18 72V36l16 14 16-24 16 24 16-14v36a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z"/></symbol>
+    <symbol id="i-poll" viewBox="0 0 100 100"><path d="M26 82V50M50 82V22M74 82V60"/><path d="M14 88h72"/></symbol>
+    <symbol id="i-money" viewBox="0 0 100 100"><rect x="10" y="28" width="80" height="46" rx="8"/><circle cx="50" cy="51" r="12"/><path d="M22 40h2M76 62h2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 100 100"><path d="M10 50c10-18 24-27 40-27s30 9 40 27c-10 18-24 27-40 27S20 68 10 50z"/><circle cx="50" cy="50" r="11" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 100 100"><rect x="14" y="34" width="72" height="46" rx="9"/><path d="M38 34v-8a8 8 0 0 1 8-8h8a8 8 0 0 1 8 8v8M14 54h72"/></symbol>
     <symbol id="i-fire" viewBox="0 0 100 100"><path d="M50 88c-16 0-28-11-28-26 0-12 8-20 14-28 2 8 6 12 10 14-2-12 2-26 14-34-2 12 4 18 10 24 6 7 8 13 8 22 0 15-12 28-28 28z"/></symbol>
   </defs>
 </svg>
@@ -416,7 +482,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.4</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.5</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -425,6 +491,7 @@ main>.screen{position:relative;z-index:1}
     <section class="screen" id="screen-chats">
       <div class="chat-col">
         <div class="searchbar"><svg class="i"><use href="#i-search"/></svg><input id="chatSearch" placeholder="Поиск" oninput="renderChatList(this.value)"></div>
+        <div class="folders" id="folders"></div>
         <div class="chat-list" id="chatList"></div>
         <button class="fab" onclick="openSheet('new-chat')" title="Новый чат"><svg class="i"><use href="#i-plus"/></svg></button>
       </div>
@@ -436,10 +503,12 @@ main>.screen{position:relative;z-index:1}
         <div style="display:none;flex-direction:column;height:100%" id="convBody">
           <div class="conv-head">
             <button class="back" onclick="closeConv()"><svg class="i"><use href="#i-back"/></svg></button>
-            <div class="ava lime" id="convAva"></div>
-            <div>
-              <div class="who" id="convName"></div>
-              <div class="status" id="convStatus">онлайн</div>
+            <div style="display:flex;align-items:center;gap:11px;cursor:pointer;flex:1" onclick="openProfile()">
+              <div class="ava lime" id="convAva"></div>
+              <div>
+                <div class="who" id="convName"></div>
+                <div class="status" id="convStatus">онлайн</div>
+              </div>
             </div>
           </div>
           <div class="msgs" id="msgs"></div>
@@ -447,7 +516,7 @@ main>.screen{position:relative;z-index:1}
             <button class="tool" onclick="openSheet('attach')" title="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <input id="msgInput" placeholder="Сообщение" autocomplete="off">
             <div class="rec-timer" id="recTimer"><span class="dot"></span><span id="recTime">0:00</span></div>
-            <button class="send" id="sendBtn" onclick="sendOrRecord()"><svg class="i" id="sendIco"><use href="#i-mic"/></svg></button>
+            <button class="send" id="sendBtn"><svg class="i" id="sendIco"><use href="#i-mic"/></svg></button>
           </div>
         </div>
       </div>
@@ -479,6 +548,12 @@ main>.screen{position:relative;z-index:1}
             <h3>Система роста</h3>
             <p>Анкета из 8 секций — на выходе персональная HTML-система продвижения уровня ручной работы.</p>
             <div class="foot"><span class="chip">Pro и выше</span><svg class="i"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="ma-card" onclick="openMa('market')">
+            <div class="ico"><svg class="i"><use href="#i-briefcase"/></svg></div>
+            <h3>Биржа услуг</h3>
+            <p>Монтаж, дизайн, реклама, сайты — исполнители и заказчики в одном месте. Смотреть бесплатно.</p>
+            <div class="foot"><span class="chip">Размещение — от Start</span><svg class="i"><use href="#i-chev"/></svg></div>
           </div>
           <div class="ma-card" onclick="showTab('partner')">
             <div class="ico"><svg class="i"><use href="#i-users"/></svg></div>
@@ -517,6 +592,14 @@ main>.screen{position:relative;z-index:1}
           </div>
         </div>
 
+        <div class="ma-view" id="ma-market">
+          <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
+          <h2 class="section-h" style="margin-top:16px">Биржа услуг</h2>
+          <div class="market-note"><svg class="i"><use href="#i-eye"/></svg> Просмотр — бесплатно всем. Размещение услуг — с тарифа Start.</div>
+          <div class="mk-chips" id="mkChips"></div>
+          <div id="marketList"></div>
+          <button class="btn" onclick="openSheet('listing')"><svg class="i"><use href="#i-plus"/></svg> Разместить услугу</button>
+        </div>
         <div class="ma-view" id="ma-system">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
           <h2 class="section-h" style="margin-top:16px">Система роста по анкете</h2>
@@ -567,8 +650,8 @@ main>.screen{position:relative;z-index:1}
         <div class="profile-top">
           <div class="ava lime">Д</div>
           <div>
-            <h2>Даниэль</h2>
-            <div class="u">@ktodaniel · <span class="chip" style="font-size:9.5px">PRO до 15.08</span></div>
+            <h2 class="name-status" id="profName">Даниэль</h2>
+            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px">PRO до 15.08</span></div>
           </div>
         </div>
         <div class="card" style="padding:4px 14px">
@@ -576,7 +659,7 @@ main>.screen{position:relative;z-index:1}
             <svg class="i" id="themeIcoP"><use href="#i-sun"/></svg> Светлая тема
             <span class="switch" id="themeSwitch"><i></i></span>
           </button>
-          <button class="prow" onclick="alert('Мок: настройки профиля')"><svg class="i"><use href="#i-user"/></svg> Профиль <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" onclick="openEdit()"><svg class="i"><use href="#i-user"/></svg> Профиль <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="alert('Мок: уведомления')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="alert('Мок: конфиденциальность')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="openSheet('progress')"><svg class="i"><use href="#i-flag"/></svg> Прогресс сборки <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
@@ -637,9 +720,40 @@ main>.screen{position:relative;z-index:1}
 </div>
 <div class="sheet" id="sheet-attach">
   <h3>Прикрепить</h3>
-  <button class="sheet-item" onclick="attach('photo')"><svg class="i"><use href="#i-photo"/></svg><span>Фото или видео</span></button>
+  <div class="gal-row" id="galRow"></div>
   <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Start/Pro до 2 ГБ</small></span></button>
-  <button class="sheet-item" onclick="attach('vnote')"><svg class="i"><use href="#i-circle-play"/></svg><span>Видео-кружочек</span></button>
+  <button class="sheet-item" onclick="closeSheet();openSheet('poll')"><svg class="i"><use href="#i-poll"/></svg><span>Опрос<small>Голосование в чате</small></span></button>
+  <button class="sheet-item" onclick="closeSheet();openSheet('money')"><svg class="i"><use href="#i-money"/></svg><span>Перевести деньги<small>Мгновенно, без комиссии</small></span></button>
+</div>
+<div class="sheet" id="sheet-poll">
+  <h3>Новый опрос</h3>
+  <input id="pollQ" placeholder="Вопрос">
+  <input id="pollO1" placeholder="Вариант 1" style="margin-top:0">
+  <input id="pollO2" placeholder="Вариант 2" style="margin-top:0">
+  <input id="pollO3" placeholder="Вариант 3 (необязательно)" style="margin-top:0">
+  <button class="btn" onclick="createPoll()">Создать опрос</button>
+</div>
+<div class="sheet" id="sheet-money">
+  <h3>Перевод</h3>
+  <input id="moneySum" type="number" placeholder="Сумма, ₽">
+  <button class="btn" onclick="sendMoney()">Отправить</button>
+  <p class="dim" style="font-size:11.5px;margin-top:10px;text-align:center">Мок: в проде — кошелёк OKO, вывод на карту</p>
+</div>
+<div class="sheet" id="sheet-profile"><div id="profileView"></div></div>
+<div class="sheet" id="sheet-edit">
+  <h3>Мой профиль</h3>
+  <input id="editName" placeholder="Имя">
+  <input id="editNick" placeholder="Никнейм" style="margin-top:0">
+  <p style="font-weight:600;font-size:13.5px;margin:6px 0 2px">Статус <span class="chip" style="font-size:9px">PRO</span></p>
+  <div class="status-pick" id="statusPick"></div>
+  <button class="btn" onclick="saveProfile()">Сохранить</button>
+</div>
+<div class="sheet" id="sheet-listing">
+  <h3>Новая услуга</h3>
+  <input id="lsTitle" placeholder="Что предлагаешь? Например: монтаж Reels">
+  <input id="lsPrice" placeholder="Цена, например: от 500 ₽" style="margin-top:0">
+  <button class="btn" onclick="createListing()">Опубликовать</button>
+  <p class="dim" style="font-size:11.5px;margin-top:10px;text-align:center">Размещение доступно с тарифа Start</p>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
   <h3>Прогресс сборки OKO</h3>
@@ -670,36 +784,41 @@ const WAVE = seed => { // детерминированная волна голо
 /* ================= МОК-ДАННЫЕ ================= */
 /* kind: text | voice | vnote | file | photo */
 const CHATS = [
-  {id:1, avaIcon:'logo', name:'Поддержка OKO', kindIcon:null, preview:'Подписка активна до 15.08', time:'12:40', unread:0, online:true,
+  {id:1, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null, preview:'Подписка активна до 15.08', time:'12:40', unread:0, online:true,
    msgs:[
      {in:1, t:'12:38', kind:'text', body:'Привет! Я ИИ-поддержка OKO. Отвечаю из базы знаний, деньги и возвраты — сразу к человеку. Кнопка «позвать человека» всегда рядом.'},
      {in:0, t:'12:39', kind:'text', body:'До какого числа у меня подписка?'},
      {in:1, t:'12:40', kind:'text', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
    ]},
-  {id:2, ava:'К', name:'Клуб OKO · Рост', kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
+  {id:2, ava:'К', name:'Клуб OKO · Рост', kind:'channel', managed:true, subs:'12.4к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
    msgs:[
      {in:1, t:'10:58', kind:'text', body:'Сегодня разбор: как ролик на 40к просмотров принёс 12 заявок.'},
      {in:1, t:'11:02', kind:'voice', dur:'0:47', seed:7},
      {in:1, t:'11:05', kind:'vnote', dur:'0:31'},
    ]},
-  {id:3, ava:'З', name:'Мой контент-завод', kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
+  {id:3, ava:'З', name:'Мой контент-завод', kind:'group', managed:true, members:8, kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
    msgs:[
      {in:1, t:'08:00', kind:'text', body:'План на неделю: 5 роликов. Сценарии готовы, рендер в очереди.'},
      {in:1, t:'09:10', kind:'photo'},
      {in:1, t:'09:12', kind:'file', fname:'отчёт-июль.pdf', fsize:'2.4 МБ'},
    ]},
-  {id:4, ava:'КМ', name:'Команда', kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
+  {id:4, ava:'КМ', name:'Команда', kind:'group', managed:true, members:5, kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
    msgs:[{in:1, t:'вчера', kind:'text', body:'Макеты обложек в фигме, глянь когда будет минута.'}]},
+  {id:5, ava:'А', name:'Аня', kind:'direct', nick:'anya_des', kindIcon:null, preview:'Опрос', time:'вчера', unread:0, online:true,
+   msgs:[
+     {in:1, t:'вчера', kind:'text', body:'Какую обложку берём для клуба?'},
+     {in:1, t:'вчера', kind:'poll', q:'Обложка для клуба', opts:['Тёмная с глазом','Лаймовая с сеткой','Минимализм'], votes:[7,4,2], voted:0},
+   ]},
 ];
 
 const POSTS = {
   sub:[
-    {ava:'O', name:'OKO · Официальный', sub:'канал · 12.4к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'0:32', likes:214},
-    {ava:'Д', name:'Даниэль / рост', sub:'канал · 8.1к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389},
+    {ava:'O', name:'OKO · Официальный', sub:'канал · 12.4к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'0:32', likes:214, views:15200},
+    {ava:'Д', name:'Даниэль / рост', sub:'канал · 8.1к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389, views:8400},
   ],
   rec:[
-    {ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'1/5', likes:97},
-    {ava:'П', name:'OKO Партнёрам', sub:'рекомендация', body:'Топ-партнёр июля заработал $1 240 на 15%/5%. Реф-ссылка + сторис раз в день. Всё.', media:null, likes:152},
+    {ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'1/5', likes:97, views:21400},
+    {ava:'П', name:'OKO Партнёрам', sub:'рекомендация', body:'Топ-партнёр июля заработал $1 240 на 15%/5%. Реф-ссылка + сторис раз в день. Всё.', media:null, likes:152, views:9800},
   ]
 };
 
@@ -716,9 +835,9 @@ function showTab(t){
 let currentChat = null;
 const kindPreview = m => ({
   text: m.body||'', voice:'Голосовое сообщение', vnote:'Видео-кружочек',
-  file: m.fname||'Файл', photo:'Фото'
+  file: m.fname||'Файл', photo:'Фото', poll:'Опрос', money:'Перевод'
 })[m.kind];
-const kindIco = k => ({voice:'mic', vnote:'circle-play', file:'file', photo:'photo'})[k];
+const kindIco = k => ({voice:'mic', vnote:'circle-play', file:'file', photo:'photo', poll:'poll', money:'money'})[k];
 
 function avaHtml(c){
   return c.avaIcon ? `<div class="ava lime">${I(c.avaIcon)}</div>` : `<div class="ava">${c.ava}</div>`;
@@ -726,6 +845,7 @@ function avaHtml(c){
 function renderChatList(filter=''){
   const q = filter.trim().toLowerCase();
   document.getElementById('chatList').innerHTML = CHATS
+    .filter(c => curFolder==='all' ? true : curFolder==='managed' ? c.managed : c.kind===curFolder)
     .filter(c=>!q || c.name.toLowerCase().includes(q))
     .map(c=>{
       const last = c.msgs[c.msgs.length-1];
@@ -779,8 +899,36 @@ function msgHtml(m, idx){
       <div class="fico">${I('file')}</div><div><b>${m.fname}</b><small>${m.fsize}</small></div></div>${time}${rx}</div>`;
   if(m.kind==='photo') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
       <div class="photomsg">${I('photo')}</div>${rx}</div>`;
+  if(m.kind==='poll'){
+    const total = m.votes.reduce((a,b)=>a+b,0) + (m.voted?1:0);
+    const opts = m.opts.map((o,oi)=>{
+      if(m.voted){
+        const v = m.votes[oi] + (m.voted-1===oi?1:0);
+        const pct = Math.round(v*100/total);
+        return `<div class="popt"><i class="bar" style="width:${pct}%"></i><span>${o}${m.voted-1===oi?' '+I('check'):''}</span><b>${pct}%</b></div>`;
+      }
+      return `<button class="popt" onclick="event.stopPropagation();votePoll(${idx},${oi})"><span>${o}</span></button>`;
+    }).join('');
+    return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="pollmsg"><div class="pq">${m.q}</div>${opts}<div class="pmeta">${m.voted?total+' голосов · анонимный':'Опрос · выбери вариант'}</div></div>${time}${rx}</div>`;
+  }
+  if(m.kind==='money') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="moneymsg"><div class="mlabel">Перевод</div><div class="msum">${m.amount} ₽</div><div class="mst">${I('check2')} Доставлен</div></div>${time}${rx}</div>`;
   if(m.kind==='sys') return `<div class="msg sys">${m.body}</div>`;
   return `<div class="msg ${m.in?'in':'out'}" ${tap}>${m.body}${time}${rx}</div>`;
+}
+function votePoll(mi, oi){ const m = currentChat.msgs[mi]; if(m.voted) return; m.voted = oi+1; renderMsgs(); }
+function createPoll(){
+  const q = document.getElementById('pollQ').value.trim();
+  const opts = ['pollO1','pollO2','pollO3'].map(id=>document.getElementById(id).value.trim()).filter(Boolean);
+  if(!q || opts.length < 2 || !currentChat) return;
+  pushMsg({in:0, t:nowT(), kind:'poll', q, opts, votes:opts.map((_,i)=>[5,3,1][i]||1), voted:0});
+  ['pollQ','pollO1','pollO2','pollO3'].forEach(id=>document.getElementById(id).value='');
+  closeSheet();
+}
+function sendMoney(){
+  const sum = Number(document.getElementById('moneySum').value);
+  if(!sum || !currentChat) return;
+  pushMsg({in:0, t:nowT(), kind:'money', amount:sum.toLocaleString('ru-RU')});
+  document.getElementById('moneySum').value=''; closeSheet();
 }
 function renderMsgs(){
   const el = document.getElementById('msgs');
@@ -833,23 +981,18 @@ function pushMsg(m){
   renderMsgs(); renderChatList(document.getElementById('chatSearch').value);
 }
 
-/* отправка / запись голосового */
-let recStart = null, recInt = null;
-function sendOrRecord(){
+/* отправка / запись: удержание = запись, тап = смена голосовое/кружочек */
+let recMode = 'voice', holdTimer = null, holdStarted = false;
+function sendText(){
   const inp = document.getElementById('msgInput');
-  if(recStart){ stopRec(); return; }
   const text = inp.value.trim();
-  if(text){
-    pushMsg({in:0, t:nowT(), kind:'text', body:text});
-    inp.value=''; syncSendIcon();
-    if(currentChat.id===1){
-      setTimeout(showTyping, 500);
-      setTimeout(()=>{
-        hideTyping();
-        pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'});
-      }, 2100);
-    }
-  } else startRec();
+  if(!text || !currentChat) return;
+  pushMsg({in:0, t:nowT(), kind:'text', body:text});
+  inp.value=''; syncSendIcon();
+  if(currentChat.id===1){
+    setTimeout(showTyping, 500);
+    setTimeout(()=>{ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'}); }, 2100);
+  }
 }
 function startRec(){
   if(!currentChat) return;
@@ -857,27 +1000,51 @@ function startRec(){
   document.getElementById('msgInput').style.display='none';
   document.getElementById('recTimer').style.display='flex';
   document.getElementById('sendBtn').classList.add('rec');
-  document.getElementById('sendIco').querySelector('use').setAttribute('href','#i-send');
   recInt = setInterval(()=>{
-    const s = Math.floor((Date.now()-recStart)/1000);
-    document.getElementById('recTime').textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    const sec = Math.floor((Date.now()-recStart)/1000);
+    document.getElementById('recTime').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
   }, 250);
 }
 function stopRec(){
-  const s = Math.max(1, Math.floor((Date.now()-recStart)/1000));
+  const sec = Math.max(1, Math.floor((Date.now()-recStart)/1000));
   clearInterval(recInt); recStart = null;
   document.getElementById('msgInput').style.display='';
   document.getElementById('recTimer').style.display='none';
   document.getElementById('sendBtn').classList.remove('rec');
-  pushMsg({in:0, t:nowT(), kind:'voice', dur:`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`, seed:s});
+  const dur = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  if(recMode==='voice') pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec});
+  else pushMsg({in:0, t:nowT(), kind:'vnote', dur});
   syncSendIcon();
 }
-function syncSendIcon(){
-  const has = document.getElementById('msgInput').value.trim().length>0;
-  document.getElementById('sendIco').querySelector('use').setAttribute('href', has ? '#i-send' : '#i-mic');
+function toggleRecMode(){
+  recMode = recMode==='voice' ? 'vnote' : 'voice';
+  syncSendIcon();
+  const b = document.getElementById('sendBtn');
+  b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
 }
+function syncSendIcon(){
+  const has = document.getElementById('msgInput').value.trim().length > 0;
+  const href = recStart ? '#i-send' : has ? '#i-send' : recMode==='voice' ? '#i-mic' : '#i-circle-play';
+  document.getElementById('sendIco').querySelector('use').setAttribute('href', href);
+}
+{
+  const sb = document.getElementById('sendBtn');
+  sb.addEventListener('pointerdown', () => {
+    if(document.getElementById('msgInput').value.trim() || recStart) return;
+    holdStarted = false;
+    holdTimer = setTimeout(()=>{ holdStarted = true; startRec(); syncSendIcon(); }, 230);
+  });
+  sb.addEventListener('pointerup', () => {
+    clearTimeout(holdTimer);
+    if(document.getElementById('msgInput').value.trim()){ sendText(); return; }
+    if(recStart){ stopRec(); }
+    else if(!holdStarted){ toggleRecMode(); }
+  });
+  sb.addEventListener('pointerleave', () => clearTimeout(holdTimer));
+}
+let recStart = null, recInt = null;
 document.getElementById('msgInput').addEventListener('input', syncSendIcon);
-document.getElementById('msgInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendOrRecord(); });
+document.getElementById('msgInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendText(); });
 
 /* ================= BOTTOM SHEETS ================= */
 let newChatKind = null;
@@ -901,6 +1068,7 @@ function createChat(){
   const title = document.getElementById('newChatTitle').value.trim();
   if(!title) return;
   const chat = {id:Date.now(), ava:title[0].toUpperCase(), name:title,
+    kind:newChatKind, managed:true, writeAll:true, members:1, subs:'0',
     kindIcon: newChatKind==='direct' ? null : KIND_ICON[newChatKind],
     preview:`${KIND_LABEL[newChatKind]} создан`, time:nowT(), unread:0, online:false,
     msgs:[{kind:'sys', body:`${KIND_LABEL[newChatKind]} «${title}» создан`}]};
@@ -917,18 +1085,24 @@ function attach(kind){
 }
 
 /* ================= ЛЕНТА ================= */
+const fmtN = n => n >= 1000 ? (n/1000).toFixed(1).replace('.0','') + 'к' : n;
+function feedScore(p){ return p.likes*2 + 12*3 + (p.views||0)*0.005; }
 function renderFeed(kind){
-  document.getElementById('feedList').innerHTML = POSTS[kind].map(p=>`
+  let arr = POSTS[kind].slice();
+  if(kind==='rec') arr.sort((a,b)=>feedScore(b)-feedScore(a));
+  const note = kind==='rec' ? `<div style="padding:10px 18px 0"><span class="dim" style="font-size:11.5px">${'Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram'}</span></div>` : '';
+  document.getElementById('feedList').innerHTML = note + arr.map((p,pi)=>`
     <article class="post fade-in">
       <div class="head"><div class="ava">${p.ava}</div>
-        <div><div class="name">${p.name}</div><div class="sub">${p.sub}</div></div></div>
+        <div><div class="name">${p.name}${kind==='rec'&&pi===0?' <span class="chip" style="font-size:9px">В тренде</span>':''}</div><div class="sub">${p.sub}</div></div></div>
       <div class="body">${p.body}</div>
       ${p.media?`<div class="media">${I('circle-play')}<span>${p.media}</span></div>`:''}
       <div class="acts">
         <button onclick="likePost(this,${p.likes})">${I('heart')}<i style="font-style:normal">${p.likes}</i></button>
         <button>${I('comment')}12</button>
         <button>${I('share')}Репост</button>
-        <button style="margin-left:auto">${I('bookmark')}</button>
+        <span style="margin-left:auto;display:inline-flex;gap:5px;align-items:center">${I('eye')}${fmtN(p.views||0)}</span>
+        <button>${I('bookmark')}</button>
       </div>
     </article>`).join('');
 }
@@ -1064,6 +1238,122 @@ function closeStory(){
   document.getElementById('storyViewer').classList.remove('open');
 }
 
+/* ================= МОЙ ПРОФИЛЬ ================= */
+const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'PRO', status:null, role:'owner'};
+const STATUS_ICONS = ['fire','star','bolt','heart','thumb','crown'];
+let editStatus = null;
+function renderMyProfile(){
+  document.getElementById('profName').innerHTML = PROFILE.name + (PROFILE.status ? ' ' + I(PROFILE.status) : '');
+  document.getElementById('profNick').textContent = '@' + PROFILE.nick;
+}
+function openEdit(){
+  document.getElementById('editName').value = PROFILE.name;
+  document.getElementById('editNick').value = PROFILE.nick;
+  editStatus = PROFILE.status;
+  renderStatusPick();
+  openSheet('edit');
+}
+function renderStatusPick(){
+  document.getElementById('statusPick').innerHTML = STATUS_ICONS.map(ic =>
+    `<button class="${editStatus===ic?'on':''}" onclick="editStatus = editStatus==='${ic}' ? null : '${ic}'; renderStatusPick()">${I(ic)}</button>`).join('');
+}
+function saveProfile(){
+  PROFILE.name = document.getElementById('editName').value.trim() || PROFILE.name;
+  PROFILE.nick = document.getElementById('editNick').value.trim().replace('@','') || PROFILE.nick;
+  PROFILE.status = editStatus;
+  renderMyProfile(); closeSheet();
+}
+
+/* ================= ПРОФИЛЬ СОБЕСЕДНИКА / КАНАЛА ================= */
+function openProfile(){
+  if(!currentChat) return;
+  const c = currentChat;
+  let sub = '', extra = '';
+  if(c.kind==='channel'){
+    sub = (c.subs||'0') + ' подписчиков · канал';
+    extra = `<div class="pv-stats"><span class="chip">Посты в ленте</span><span class="chip">Алгоритмы OKO</span></div>`;
+    if(c.managed) extra += `
+      <button class="prow" onclick="toggleWrite()">${I('chat')} Кто может писать
+        <span class="switch ${c.writeAll?'on':''}" id="writeSwitch"><i></i></span></button>
+      <div class="dim" style="font-size:11.5px;padding:2px 4px 10px" id="writeHint">${c.writeAll?'Пишут все участники':'Публикуют только владелец и админы'}</div>
+      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} oko.app/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
+  } else if(c.kind==='group'){
+    sub = (c.members||2) + ' участников · группа';
+    if(c.managed) extra = `<button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} Ссылка-приглашение <span class="chev">${I('copy')}</span></button>`;
+  } else {
+    sub = '@' + (c.nick||'user') + ' · ' + (c.online ? 'в сети' : 'недавно');
+    extra = `<div class="pv-stats"><span class="chip">Медиа 24</span><span class="chip">Файлы 8</span><span class="chip">Ссылки 12</span></div>`;
+  }
+  document.getElementById('profileView').innerHTML = `
+    <div class="pv-top">${avaHtml(c)}<h3>${c.name}</h3><div class="sub">${sub}</div></div>
+    ${extra}
+    <button class="btn" style="margin-top:10px" onclick="closeSheet()">Написать</button>`;
+  const bigAva = document.querySelector('#profileView .pv-top .ava');
+  if(bigAva){ bigAva.style.width='86px'; bigAva.style.height='86px'; bigAva.style.fontSize='30px'; }
+  openSheet('profile');
+}
+function toggleWrite(){
+  currentChat.writeAll = !currentChat.writeAll;
+  document.getElementById('writeSwitch').classList.toggle('on', currentChat.writeAll);
+  document.getElementById('writeHint').textContent = currentChat.writeAll ? 'Пишут все участники' : 'Публикуют только владелец и админы';
+}
+function copyInvite(){
+  const link = 'oko.app/c/' + (currentChat.nick || 'invite');
+  try{ navigator.clipboard.writeText('https://'+link); }catch(e){}
+  alert('Ссылка скопирована: ' + link);
+}
+
+/* ================= ПАПКИ ================= */
+let curFolder = 'all';
+function renderFolders(){
+  const managedCnt = CHATS.filter(c=>c.managed).length;
+  const items = [
+    ['all','Все',''], ['direct','Личные',''], ['group','Группы',''], ['channel','Каналы',''],
+  ];
+  if(PROFILE.role==='owner') items.push(['managed','Управление','crown']);
+  document.getElementById('folders').innerHTML = items.map(([f,label,ic]) =>
+    `<button class="${curFolder===f?'on':''}" onclick="setFolder('${f}')">${ic?I(ic):''}${label}${f==='managed'?`<span class="cnt">${managedCnt}</span>`:''}</button>`).join('');
+}
+function setFolder(f){ curFolder = f; renderFolders(); renderChatList(document.getElementById('chatSearch').value); }
+
+/* ================= ГАЛЕРЕЯ В СКРЕПКЕ ================= */
+function renderGallery(){
+  const hues = ['#16240a','#0d1f14','#1d2408','#0a1c20','#201a08','#12240f'];
+  document.getElementById('galRow').innerHTML = hues.map(h =>
+    `<div class="gal-thumb" style="background:linear-gradient(135deg,${h},#0a0a0a)" onclick="attach('photo')">${I('photo')}</div>`).join('');
+}
+
+/* ================= БИРЖА УСЛУГ ================= */
+const MK_CATS = ['Все','Монтаж','Дизайн','Реклама','Сайты','Тексты'];
+let mkCat = 'Все';
+let LISTINGS = [
+  {t:'Монтаж Reels и Shorts под ключ', p:'от 500 ₽', a:'М', n:'Марк', r:'4.9', d:127, tag:'Монтаж'},
+  {t:'Дизайн обложек и карточек', p:'от 300 ₽', a:'Л', n:'Лиза', r:'5.0', d:89, tag:'Дизайн'},
+  {t:'Настройка таргета VK и TG Ads', p:'от 5 000 ₽', a:'С', n:'Сергей', r:'4.8', d:64, tag:'Реклама'},
+  {t:'Сайт-визитка за 3 дня', p:'от 15 000 ₽', a:'И', n:'Ирина', r:'4.9', d:41, tag:'Сайты'},
+  {t:'Продающие тексты и прогревы', p:'от 1 000 ₽', a:'А', n:'Артём', r:'4.7', d:112, tag:'Тексты'},
+];
+function renderMarket(){
+  document.getElementById('mkChips').innerHTML = MK_CATS.map(c =>
+    `<button class="${mkCat===c?'on':''}" onclick="mkCat='${c}';renderMarket()">${c}</button>`).join('');
+  document.getElementById('marketList').innerHTML = LISTINGS
+    .filter(l => mkCat==='Все' || l.tag===mkCat)
+    .map(l => `<div class="listing" onclick="alert('Мок: страница услуги, чат с исполнителем, сделка через OKO')">
+      <div class="ava">${l.a}</div>
+      <div class="meta"><b>${l.t}</b><div class="price">${l.p}</div>
+        <div class="seller">${l.n} · ${I('star')}${l.r} · ${l.d} сделок</div></div>
+      <span class="chip tag">${l.tag}</span>
+    </div>`).join('');
+}
+function createListing(){
+  const t = document.getElementById('lsTitle').value.trim();
+  const pr = document.getElementById('lsPrice').value.trim();
+  if(!t) return;
+  LISTINGS.unshift({t, p: pr||'договорная', a:PROFILE.name[0], n:PROFILE.name, r:'—', d:0, tag:mkCat==='Все'?'Тексты':mkCat});
+  document.getElementById('lsTitle').value=''; document.getElementById('lsPrice').value='';
+  closeSheet(); renderMarket();
+}
+
 /* ================= ПРОГРЕСС СБОРКИ ================= */
 const PROGRESS = [
   {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, партнёрка, тарифы. SVG-иконки, две темы, публичная ссылка.'},
@@ -1093,6 +1383,10 @@ document.addEventListener('click', ()=>document.querySelectorAll('.react-bar').f
 
 renderProgress();
 renderStories();
+renderFolders();
+renderGallery();
+renderMarket();
+renderMyProfile();
 renderChatList();
 renderFeed('sub');
 </script>
