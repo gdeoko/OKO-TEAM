@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "OKO",
+    "slug": "oko",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "oko",
+    "backgroundColor": "#000000",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "ios": { "supportsTablet": true },
+    "android": { "package": "top.okoteam.app" }
+  }
+}

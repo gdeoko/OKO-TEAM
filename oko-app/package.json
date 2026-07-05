@@ -1,0 +1,17 @@
+{
+  "name": "oko-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/mobile",
+    "apps/tg-adapter",
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w server",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

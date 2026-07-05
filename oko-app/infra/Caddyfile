@@ -1,0 +1,7 @@
+api.okoteam.top {
+    reverse_proxy api:3000
+}
+
+n8n.okoteam.top {
+    reverse_proxy n8n:5678
+}

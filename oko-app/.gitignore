@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.expo/
+web-build/
+*.log
+.DS_Store
+
+.env
+.env.*
+!.env.example
+
+# секреты и клиентские креды — никогда в git
+*CONTEXT.txt.secret
+credentials*

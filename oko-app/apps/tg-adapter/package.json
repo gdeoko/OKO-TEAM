@@ -1,0 +1,12 @@
+{
+  "name": "@oko/tg-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'Оборачивает web-сборку ядра (expo export -p web) в TG Mini App'"
+  },
+  "dependencies": {
+    "@telegram-apps/sdk": "^2.0.0"
+  }
+}

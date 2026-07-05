@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OKO — прототип приложения</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ OKO DESIGN SYSTEM ============ */
+:root{
+  --bg:#000; --surface:#0d0d0d; --raised:#161616; --border:#222;
+  --lime:#9AFF00; --lime-dim:rgba(154,255,0,.12);
+  --text:#fff; --dim:#9b9b9b; --danger:#ff4d4d;
+  --r-sm:8px; --r-md:14px; --r-lg:22px;
+  --font-display:'Bebas Neue', Impact, sans-serif;
+  --font-body:'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;overflow:hidden}
+h1,h2,h3,.display{font-family:var(--font-display);font-weight:400;letter-spacing:.04em}
+button{font-family:var(--font-body);cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+
+/* ============ APP SHELL ============ */
+#app{display:flex;flex-direction:column;height:100%;max-width:1280px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+header .logo{font-family:var(--font-display);font-size:30px;color:var(--lime);letter-spacing:.18em;line-height:1}
+header .screen-title{font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.14em;margin-left:auto}
+main{flex:1;overflow-y:auto;overscroll-behavior:contain}
+nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
+nav#tabs button{flex:1;padding:11px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--dim);font-size:10.5px;letter-spacing:.02em;transition:color .18s}
+nav#tabs button.active{color:var(--lime)}
+nav#tabs .ico{font-size:19px;line-height:1}
+
+/* desktop */
+@media(min-width:900px){
+  #app{flex-direction:row}
+  header{display:none}
+  nav#tabs{order:-1;flex-direction:column;border-top:none;border-right:1px solid var(--border);width:92px;justify-content:flex-start;padding-top:18px;gap:6px}
+  nav#tabs::before{content:'OKO';font-family:var(--font-display);color:var(--lime);font-size:26px;letter-spacing:.15em;text-align:center;margin-bottom:22px}
+  nav#tabs button{flex:0 0 auto;padding:13px 4px}
+  main{height:100%}
+}
+
+/* ============ SHARED ============ */
+.pad{padding:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:#000;font-weight:700;font-size:14px;padding:13px 22px;border-radius:var(--r-md);transition:transform .12s,opacity .12s;width:100%}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--lime);border:1px solid var(--lime)}
+.btn.sm{width:auto;padding:8px 16px;font-size:12.5px;border-radius:var(--r-sm)}
+.chip{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--lime);background:var(--lime-dim);border-radius:99px;padding:4px 10px}
+.section-h{font-size:24px;color:#fff;margin-bottom:14px}
+.dim{color:var(--dim)}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.screen{display:none;height:100%}
+.screen.active{display:block}
+.fade-in{animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ CHATS ============ */
+#screen-chats.active{display:flex}
+.chat-list{width:100%;overflow-y:auto}
+.chat-item{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #131313;cursor:pointer;transition:background .15s}
+.chat-item:hover{background:#0a0a0a}
+.ava{width:48px;height:48px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid var(--border)}
+.ava.lime{background:var(--lime-dim);border-color:transparent}
+.chat-item .meta{flex:1;min-width:0}
+.chat-item .row1{display:flex;justify-content:space-between;gap:8px}
+.chat-item .name{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-item .time{font-size:11.5px;color:var(--dim);flex-shrink:0}
+.chat-item .preview{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.badge{background:var(--lime);color:#000;font-size:11px;font-weight:700;min-width:19px;height:19px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+
+.conv{display:none;flex-direction:column;height:100%;width:100%}
+.conv-head{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.conv-head .back{font-size:22px;color:var(--lime);padding:4px 8px 4px 0}
+.conv-head .who{font-weight:600;font-size:15px}
+.conv-head .status{font-size:11.5px;color:var(--lime)}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45;animation:fade .2s ease}
+.msg.in{background:var(--raised);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.out{background:var(--lime);color:#000;border-bottom-right-radius:4px;align-self:flex-end;font-weight:500}
+.msg .t{display:block;font-size:10px;opacity:.55;margin-top:3px;text-align:right}
+.composer{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.composer input{flex:1;background:var(--raised);border:1px solid var(--border);border-radius:22px;padding:11px 16px;color:#fff;font-size:14px;font-family:var(--font-body);outline:none}
+.composer input:focus{border-color:#3a3a3a}
+.composer .send{width:44px;height:44px;border-radius:50%;background:var(--lime);color:#000;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+
+@media(min-width:900px){
+  .chat-list{width:360px;border-right:1px solid var(--border);flex-shrink:0}
+  .conv{display:flex}
+  .conv-head .back{display:none}
+  .conv .empty-hint{display:flex}
+}
+
+/* ============ FEED ============ */
+.feed-tabs{display:flex;gap:8px;padding:14px 18px 4px}
+.feed-tabs button{font-size:13px;font-weight:600;color:var(--dim);padding:8px 16px;border-radius:99px;border:1px solid var(--border);transition:all .15s}
+.feed-tabs button.on{color:#000;background:var(--lime);border-color:var(--lime)}
+.post{border-bottom:1px solid #131313;padding:16px 18px}
+.post .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.post .head .name{font-weight:600;font-size:14px}
+.post .head .sub{font-size:11.5px;color:var(--dim)}
+.post .body{font-size:14px;line-height:1.55;color:#e8e8e8}
+.post .media{margin-top:11px;border-radius:var(--r-md);background:linear-gradient(135deg,#101c00,#0a0a0a 60%);border:1px solid var(--border);aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:var(--lime);font-family:var(--font-display);font-size:26px;letter-spacing:.1em}
+.post .acts{display:flex;gap:22px;margin-top:12px;color:var(--dim);font-size:13px}
+.post .acts button{color:var(--dim);display:flex;gap:6px;align-items:center;transition:color .15s}
+.post .acts button.liked{color:var(--lime)}
+
+/* ============ MINIAPPS ============ */
+.ma-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:640px){.ma-grid{grid-template-columns:1fr 1fr}}
+.ma-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;cursor:pointer;transition:border-color .2s,transform .12s}
+.ma-card:hover{border-color:#3a3a3a}
+.ma-card:active{transform:scale(.98)}
+.ma-card .ico{font-size:30px;margin-bottom:10px}
+.ma-card h3{font-size:21px;margin-bottom:6px}
+.ma-card p{font-size:13px;color:var(--dim);line-height:1.5}
+.ma-card .foot{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+.ma-view{display:none}
+.progress{height:6px;background:var(--raised);border-radius:3px;overflow:hidden;margin:14px 0}
+.progress i{display:block;height:100%;background:var(--lime);width:0;transition:width .3s;border-radius:3px}
+.score-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #171717;font-size:14px}
+.score-row b{color:var(--lime);font-size:16px}
+.risk{color:var(--danger)}
+.big-score{font-family:var(--font-display);font-size:72px;color:var(--lime);text-align:center;line-height:1}
+.big-score small{display:block;font-family:var(--font-body);font-size:12px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+
+/* ============ PARTNER ============ */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:15px}
+.stat .v{font-family:var(--font-display);font-size:34px;color:var(--lime);line-height:1}
+.stat .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-top:5px}
+.reflink{display:flex;gap:8px;margin-top:12px}
+.reflink input{flex:1;background:var(--raised);border:1px dashed #333;border-radius:var(--r-sm);color:var(--lime);padding:11px 12px;font-size:13px;font-family:monospace;outline:none}
+
+/* ============ PRICING ============ */
+.plan{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:14px;position:relative}
+.plan.hot{border-color:var(--lime)}
+.plan .flag{position:absolute;top:-11px;right:18px}
+.plan h3{font-size:26px}
+.plan .price{margin:8px 0 2px}
+.plan .price b{font-family:var(--font-display);font-size:42px;color:var(--lime)}
+.plan .price span{color:var(--dim);font-size:13px}
+.plan ul{list-style:none;margin:14px 0}
+.plan li{font-size:13.5px;color:#d5d5d5;padding:5px 0 5px 22px;position:relative}
+.plan li::before{content:'—';position:absolute;left:0;color:var(--lime)}
+.disc-row{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
+@media(min-width:900px){.plans-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}.plan{margin-bottom:0}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">OKO</div>
+    <div class="screen-title" id="screenTitle">Чаты</div>
+  </header>
+
+  <main>
+    <!-- ЧАТЫ -->
+    <section class="screen active" id="screen-chats">
+      <div class="chat-list" id="chatList"></div>
+      <div class="conv" id="conv">
+        <div class="conv-head">
+          <button class="back" onclick="closeConv()">‹</button>
+          <div class="ava lime" id="convAva">🟢</div>
+          <div>
+            <div class="who" id="convName"></div>
+            <div class="status" id="convStatus">онлайн</div>
+          </div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+        <div class="composer">
+          <input id="msgInput" placeholder="Сообщение…" autocomplete="off">
+          <button class="send" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ЛЕНТА -->
+    <section class="screen" id="screen-feed">
+      <div class="feed-tabs">
+        <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
+        <button onclick="feedTab(this,'rec')">Рекомендации</button>
+      </div>
+      <div id="feedList"></div>
+    </section>
+
+    <!-- МИНИ-АППЫ -->
+    <section class="screen" id="screen-mini">
+      <div class="pad">
+        <h2 class="section-h">Мини-аппы</h2>
+        <div class="ma-grid" id="maGrid">
+          <div class="ma-card" onclick="openMa('video')">
+            <div class="ico">🎬</div>
+            <h3>Видео-премодератор</h3>
+            <p>Загрузи ролик — получи оценку готовности, вероятность рекомендаций, силу хука и риски. Исправление одним кликом.</p>
+            <div class="foot"><span class="chip">Free: 1/мес</span><span class="dim" style="font-size:12px">→</span></div>
+          </div>
+          <div class="ma-card" onclick="openMa('system')">
+            <div class="ico">🧭</div>
+            <h3>Система роста</h3>
+            <p>Анкета из 8 секций — на выходе персональная HTML-система продвижения уровня ручной работы.</p>
+            <div class="foot"><span class="chip">Pro и выше</span><span class="dim" style="font-size:12px">→</span></div>
+          </div>
+          <div class="ma-card" onclick="showTab('partner')">
+            <div class="ico">🤝</div>
+            <h3>Партнёрский кабинет</h3>
+            <p>Реф-ссылка, статистика в реальном времени, начисления 15% / 5%, выплаты.</p>
+            <div class="foot"><span class="chip">Двигатель роста</span><span class="dim" style="font-size:12px">→</span></div>
+          </div>
+        </div>
+
+        <!-- Видео-премодератор: мок-флоу -->
+        <div class="ma-view" id="ma-video">
+          <button class="btn ghost sm" onclick="closeMa()">‹ Назад</button>
+          <h2 class="section-h" style="margin-top:16px">Видео-премодератор</h2>
+          <div class="card" id="vcUpload">
+            <p class="dim" style="font-size:13.5px;line-height:1.5">Ролик до 10 ГБ. Исходник автоудаляется через 24 часа после анализа.</p>
+            <div style="height:12px"></div>
+            <button class="btn" onclick="vcStart()">Загрузить ролик</button>
+          </div>
+          <div class="card" id="vcProgress" style="display:none">
+            <p style="font-size:14px" id="vcStage">Загрузка…</p>
+            <div class="progress"><i id="vcBar"></i></div>
+            <p class="dim" style="font-size:12.5px">Gemini анализирует хук, динамику, риски и технические параметры</p>
+          </div>
+          <div id="vcResult" style="display:none">
+            <div class="card">
+              <div class="big-score">78%<small>готовность к публикации</small></div>
+              <div class="divider"></div>
+              <div class="score-row"><span>Вероятность рекомендаций</span><b>62%</b></div>
+              <div class="score-row"><span>Сила хука (первые 3 сек)</span><b>8.1/10</b></div>
+              <div class="score-row"><span>Риски: авторская музыка</span><b class="risk">обнаружен</b></div>
+              <div class="score-row" style="border:none"><span>Субтитры</span><b class="risk">нет</b></div>
+            </div>
+            <div style="height:12px"></div>
+            <button class="btn" onclick="alert('Мок: перегенерация обложки + субтитры + пересборка ffmpeg')">⚡ Исправить одним кликом</button>
+            <div style="height:10px"></div>
+            <button class="btn ghost" onclick="alert('Мок: постинг в VK и Telegram')">Опубликовать во все сети</button>
+          </div>
+        </div>
+
+        <!-- Система: мок-анкета -->
+        <div class="ma-view" id="ma-system">
+          <button class="btn ghost sm" onclick="closeMa()">‹ Назад</button>
+          <h2 class="section-h" style="margin-top:16px">Система роста по анкете</h2>
+          <div class="card">
+            <span class="chip">Секция 1 из 8</span>
+            <div style="height:14px"></div>
+            <p style="font-weight:600;margin-bottom:10px">Кто ты и чем занимаешься?</p>
+            <p class="dim" style="font-size:13px;line-height:1.55">Ниша, продукт, текущие площадки, что уже пробовал. Дальше — цели, аудитория, ресурсы, стиль… Полная анкета подключается из структуры ANKETA.</p>
+            <div style="height:16px"></div>
+            <button class="btn" onclick="alert('Мок: анкета → очередь → Claude API (MASTER-TZ) → HTML-система в кабинете')">Продолжить</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ПАРТНЁРКА -->
+    <section class="screen" id="screen-partner">
+      <div class="pad">
+        <h2 class="section-h">Партнёрский кабинет</h2>
+        <div class="stat-grid">
+          <div class="stat"><div class="v">1 284</div><div class="l">клики</div></div>
+          <div class="stat"><div class="v">167</div><div class="l">регистрации</div></div>
+          <div class="stat"><div class="v">31</div><div class="l">оплаты</div></div>
+          <div class="stat"><div class="v">$412</div><div class="l">к выплате</div></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <p style="font-weight:600;font-size:14px">Твоя реф-ссылка</p>
+          <p class="dim" style="font-size:12.5px;margin-top:4px">15% с оплат твоих клиентов (первые 6 мес, далее 5%) + 5% со второго уровня</p>
+          <div class="reflink">
+            <input value="oko.app/r/daniel7x" readonly id="refInput">
+            <button class="btn sm" onclick="copyRef()">Копировать</button>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <p style="font-weight:600;font-size:14px;margin-bottom:8px">Последние начисления</p>
+          <div class="score-row"><span>PRO · год · L1</span><b>+$70.35</b></div>
+          <div class="score-row"><span>START · мес · L1</span><b>+$2.25</b></div>
+          <div class="score-row" style="border:none"><span>BUSINESS · 6м · L2</span><b>+$49.95</b></div>
+        </div>
+        <div style="height:12px"></div>
+        <button class="btn ghost" onclick="alert('Мок: заявка на выплату — реквизиты, история')">Заявка на выплату</button>
+      </div>
+    </section>
+
+    <!-- ТАРИФЫ / ПРОФИЛЬ -->
+    <section class="screen" id="screen-profile">
+      <div class="pad">
+        <h2 class="section-h">Тарифы</h2>
+        <div class="disc-row">
+          <span class="chip">3 мес −10%</span><span class="chip">6 мес −15%</span><span class="chip">Год −20%</span>
+        </div>
+        <div class="plans-wrap">
+          <div class="plan">
+            <h3>START</h3>
+            <div class="price"><b>$12</b><span> /мес при оплате за год · ~1190₽</span></div>
+            <ul><li>Все чаты и сообщества</li><li>10 проверок видео/мес</li><li>Обучение нейронкам</li><li>Активация партнёрки</li></ul>
+            <button class="btn ghost" onclick="alert('Мок: Lava.top / крипта / карта РФ → вебхук → активация')">Выбрать</button>
+          </div>
+          <div class="plan hot">
+            <span class="chip flag">Флагман</span>
+            <h3>PRO</h3>
+            <div class="price"><b>$39</b><span> /мес при оплате за год · ~3890₽</span></div>
+            <ul><li>Система роста по анкете</li><li>Автопостинг в 3 соцсети</li><li>30 проверок видео/мес</li><li>CRM-лайт</li></ul>
+            <button class="btn" onclick="alert('Мок: оплата PRO')">Выбрать</button>
+          </div>
+          <div class="plan">
+            <h3>BUSINESS</h3>
+            <div class="price"><b>$158</b><span> /мес при оплате за год · ~15900₽</span></div>
+            <ul><li>Полная Система + сайт по клику</li><li>Контент-завод: 30 роликов/мес</li><li>Автопостинг во все сети</li><li>Приоритетная поддержка</li></ul>
+            <button class="btn ghost" onclick="alert('Мок: оплата BUSINESS')">Выбрать</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="tabs">
+    <button class="active" data-t="chats" onclick="showTab('chats')"><span class="ico">💬</span>Чаты</button>
+    <button data-t="feed" onclick="showTab('feed')"><span class="ico">📰</span>Лента</button>
+    <button data-t="mini" onclick="showTab('mini')"><span class="ico">⚡</span>Мини-аппы</button>
+    <button data-t="partner" onclick="showTab('partner')"><span class="ico">🤝</span>Партнёрка</button>
+    <button data-t="profile" onclick="showTab('profile')"><span class="ico">👤</span>Тарифы</button>
+  </nav>
+</div>
+
+<script>
+/* ================= МОК-ДАННЫЕ ================= */
+const CHATS = [
+  {id:1, ava:'🦾', name:'Поддержка OKO', preview:'Агент: подписка активна до 15.08. Чем ещё помочь?', time:'12:40', unread:0, online:true,
+   msgs:[
+     {in:1, t:'12:38', body:'Привет! Я ИИ-поддержка OKO. Отвечаю из базы знаний, деньги и возвраты — сразу к человеку. Кнопка «позвать человека» всегда внизу.'},
+     {in:0, t:'12:39', body:'До какого числа у меня подписка?'},
+     {in:1, t:'12:40', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
+   ]},
+  {id:2, ava:'🚀', name:'Клуб OKO · Рост', preview:'Даниэль: разбор воронок в 19:00 по МСК', time:'11:05', unread:3, online:false,
+   msgs:[
+     {in:1, t:'10:58', body:'Сегодня разбор: как ролик на 40к просмотров принёс 12 заявок.'},
+     {in:1, t:'11:05', body:'Созвон в 19:00 по МСК, запись будет в этом чате.'},
+   ]},
+  {id:3, ava:'🎬', name:'Мой контент-завод', preview:'Бот: ролик №14 опубликован в VK и TG ✅', time:'09:12', unread:1, online:true,
+   msgs:[
+     {in:1, t:'08:00', body:'План на неделю: 5 роликов. Сценарии готовы, рендер в очереди.'},
+     {in:1, t:'09:12', body:'Ролик №14 опубликован в VK и TG ✅ Метрики сниму через 24 часа.'},
+   ]},
+  {id:4, ava:'👥', name:'Команда', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
+   msgs:[{in:1, t:'вчера', body:'Макеты обложек в фигме, глянь когда будет минута.'}]},
+];
+
+const POSTS = {
+  sub:[
+    {ava:'🟢', name:'OKO · Официальный', sub:'канал · 12.4к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'ВИДЕО 0:32', likes:214},
+    {ava:'🧠', name:'Даниэль / рост', sub:'канал · 8.1к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389},
+  ],
+  rec:[
+    {ava:'📈', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'КАРУСЕЛЬ 1/5', likes:97},
+    {ava:'🎯', name:'OKO Партнёрам', sub:'рекомендация', body:'Топ-партнёр июля заработал $1 240 на 15%/5%. Реф-ссылка + сторис раз в день. Всё.', media:null, likes:152},
+  ]
+};
+
+/* ================= НАВИГАЦИЯ ================= */
+const TITLES = {chats:'Чаты', feed:'Лента', mini:'Мини-аппы', partner:'Партнёрка', profile:'Тарифы'};
+function showTab(t){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+t).classList.add('active');
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  document.getElementById('screenTitle').textContent = TITLES[t];
+}
+
+/* ================= ЧАТЫ ================= */
+let currentChat = null;
+function renderChatList(){
+  document.getElementById('chatList').innerHTML = CHATS.map(c=>`
+    <div class="chat-item" onclick="openConv(${c.id})">
+      <div class="ava">${c.ava}</div>
+      <div class="meta">
+        <div class="row1"><span class="name">${c.name}</span><span class="time">${c.time}</span></div>
+        <div class="row1"><span class="preview">${c.preview}</span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
+      </div>
+    </div>`).join('');
+}
+function openConv(id){
+  currentChat = CHATS.find(c=>c.id===id);
+  currentChat.unread = 0;
+  document.getElementById('convName').textContent = currentChat.name;
+  document.getElementById('convAva').textContent = currentChat.ava;
+  document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+  renderMsgs();
+  if(matchMedia('(max-width:899px)').matches){
+    document.getElementById('chatList').style.display='none';
+    document.getElementById('conv').style.display='flex';
+  }
+  renderChatList();
+}
+function closeConv(){
+  document.getElementById('chatList').style.display='';
+  document.getElementById('conv').style.display='';
+}
+function renderMsgs(){
+  const el = document.getElementById('msgs');
+  el.innerHTML = currentChat.msgs.map(m=>`
+    <div class="msg ${m.in?'in':'out'}">${m.body}<span class="t">${m.t}${m.in?'':' ✓✓'}</span></div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+function sendMsg(){
+  const inp = document.getElementById('msgInput');
+  const text = inp.value.trim();
+  if(!text || !currentChat) return;
+  const t = new Date().toTimeString().slice(0,5);
+  currentChat.msgs.push({in:0, t, body:text});
+  currentChat.preview = 'Ты: ' + text; currentChat.time = t;
+  inp.value=''; renderMsgs(); renderChatList();
+  if(currentChat.id===1){ // мок-ответ агента поддержки
+    setTimeout(()=>{
+      currentChat.msgs.push({in:1, t:new Date().toTimeString().slice(0,5),
+        body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'});
+      renderMsgs();
+    }, 900);
+  }
+}
+document.getElementById('msgInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMsg(); });
+
+/* ================= ЛЕНТА ================= */
+function renderFeed(kind){
+  document.getElementById('feedList').innerHTML = POSTS[kind].map((p,i)=>`
+    <article class="post fade-in">
+      <div class="head"><div class="ava" style="width:40px;height:40px;font-size:17px">${p.ava}</div>
+        <div><div class="name">${p.name}</div><div class="sub">${p.sub}</div></div></div>
+      <div class="body">${p.body}</div>
+      ${p.media?`<div class="media">${p.media}</div>`:''}
+      <div class="acts">
+        <button onclick="this.classList.toggle('liked');this.querySelector('i').textContent=this.classList.contains('liked')?${'`'}${p.likes+1}${'`'}:${'`'}${p.likes}${'`'}">♥ <i>${p.likes}</i></button>
+        <button>💬 12</button><button>↗ Репост</button><button style="margin-left:auto">🔖</button>
+      </div>
+    </article>`).join('');
+}
+function feedTab(btn, kind){
+  document.querySelectorAll('.feed-tabs button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); renderFeed(kind);
+}
+
+/* ================= МИНИ-АППЫ ================= */
+function openMa(id){
+  document.getElementById('maGrid').style.display='none';
+  document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
+  document.getElementById('ma-'+id).style.display='block';
+}
+function closeMa(){
+  document.getElementById('maGrid').style.display='';
+  document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
+  document.getElementById('vcUpload').style.display='';
+  document.getElementById('vcProgress').style.display='none';
+  document.getElementById('vcResult').style.display='none';
+}
+function vcStart(){
+  document.getElementById('vcUpload').style.display='none';
+  document.getElementById('vcProgress').style.display='';
+  const bar = document.getElementById('vcBar'), stage = document.getElementById('vcStage');
+  const steps = [[15,'Загрузка в S3 (presigned, multipart)…'],[45,'Gemini: анализ хука и динамики…'],[75,'Проверка рисков: политика / коммерция / авторские…'],[100,'Формируем отчёт…']];
+  let i=0;
+  const tick = setInterval(()=>{
+    if(i>=steps.length){ clearInterval(tick);
+      document.getElementById('vcProgress').style.display='none';
+      document.getElementById('vcResult').style.display='block'; return; }
+    bar.style.width = steps[i][0]+'%'; stage.textContent = steps[i][1]; i++;
+  }, 800);
+}
+
+/* ================= ПАРТНЁРКА ================= */
+function copyRef(){
+  const inp = document.getElementById('refInput');
+  inp.select(); try{ navigator.clipboard.writeText(inp.value); }catch(e){ document.execCommand('copy'); }
+  alert('Ссылка скопирована: ' + inp.value);
+}
+
+/* init */
+renderChatList();
+renderFeed('sub');
+</script>
+</body>
+</html>

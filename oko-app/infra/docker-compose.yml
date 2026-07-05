@@ -1,0 +1,35 @@
+# OKO — продакшен-стек на VPS Timeweb Cloud.
+# Supabase и LiveKit — облачные, здесь только API + n8n + reverse proxy.
+services:
+  api:
+    build: ../server
+    restart: unless-stopped
+    env_file: ../.env
+    expose:
+      - "3000"
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=n8n.okoteam.top
+      - N8N_PROTOCOL=https
+      - GENERIC_TIMEZONE=Europe/Moscow
+    volumes:
+      - n8n_data:/home/node/.n8n
+    expose:
+      - "5678"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+
+volumes:
+  n8n_data:
+  caddy_data:
