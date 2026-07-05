@@ -105,7 +105,7 @@ function handle_public_message(int $chatId, int $userId, array $from, string $te
         return;
     }
 
-    /* по умолчанию - переадресация на менеджера */
+    /* по умолчанию: переадресация на менеджера */
     tg_send($chatId,
         "Напишите менеджеру: t.me/".PUBLIC_TG_USERNAME."\n".
         "Или оставьте заявку на сайте: ".SITE_URL
