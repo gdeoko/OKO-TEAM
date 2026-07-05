@@ -58,24 +58,55 @@ const DEMO = {
     {
       title: 'Блок 1 · «Знакомство с Богом»', range: 'уроки 1–12', award: '«Первооткрыватель»',
       lessons: [
-        { n: 1, title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ' },
-        { n: 2, title: 'Создание мира', state: 'locked' },
-        { n: 3, title: 'Адам и Ева', state: 'locked' },
-        { n: 4, title: 'Ноев ковчег', state: 'locked' },
+        { n: 1,  title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ' },
+        { n: 2,  title: 'Создание мира', state: 'locked' },
+        { n: 3,  title: 'Адам и Ева', state: 'locked' },
+        { n: 4,  title: 'Ноев ковчег', state: 'locked' },
+        { n: 5,  title: 'Вавилонская башня', state: 'locked' },
+        { n: 6,  title: 'Молитва — разговор с Богом', state: 'locked' },
+        { n: 7,  title: 'Ангелы — посланники Божьи', state: 'locked' },
+        { n: 8,  title: 'Что такое Библия', state: 'locked' },
+        { n: 9,  title: 'Заповеди — правила любви', state: 'locked' },
+        { n: 10, title: 'Совесть и прощение', state: 'locked' },
+        { n: 11, title: 'Благодарность Богу', state: 'locked' },
+        { n: 12, title: 'Большое повторение блока', state: 'locked' },
+        { n: 'I', title: 'Проверка знаний · Блок 1', state: 'locked', exam: true },
       ],
     },
     {
       title: 'Блок 2 · «Герои веры»', range: 'уроки 13–24', award: '«Знаток героев»',
       lessons: [
-        { n: 13, title: 'Авраам', state: 'locked' },
-        { n: 14, title: 'Моисей', state: 'locked' },
+        { n: 13, title: 'Авраам — друг Божий', state: 'locked' },
+        { n: 14, title: 'Исаак и Иаков', state: 'locked' },
+        { n: 15, title: 'Иосиф и его братья', state: 'locked' },
+        { n: 16, title: 'Моисей: рождение и призвание', state: 'locked' },
+        { n: 17, title: 'Исход из Египта', state: 'locked' },
+        { n: 18, title: 'Десять заповедей', state: 'locked' },
+        { n: 19, title: 'Иисус Навин и стены Иерихона', state: 'locked' },
+        { n: 20, title: 'Давид и Голиаф', state: 'locked' },
+        { n: 21, title: 'Мудрость царя Соломона', state: 'locked' },
+        { n: 22, title: 'Пророк Илия', state: 'locked' },
+        { n: 23, title: 'Даниил во рву львином', state: 'locked' },
+        { n: 24, title: 'Иона и большая рыба', state: 'locked' },
+        { n: 'II', title: 'Проверка знаний · Блок 2', state: 'locked', exam: true },
       ],
     },
     {
-      title: 'Блок 3 · «Жизнь Иисуса»', range: 'уроки 25–36', award: '«Ученик Христа»',
+      title: 'Блок 3 · «Жизнь Иисуса»', range: 'уроки 25–36', award: '«Ученик Христа» + сертификат года',
       lessons: [
         { n: 25, title: 'Рождество', state: 'locked' },
-        { n: 26, title: 'Крещение', state: 'locked' },
+        { n: 26, title: 'Детство Иисуса', state: 'locked' },
+        { n: 27, title: 'Крещение в Иордане', state: 'locked' },
+        { n: 28, title: 'Двенадцать учеников', state: 'locked' },
+        { n: 29, title: 'Чудеса Иисуса', state: 'locked' },
+        { n: 30, title: 'Притча о добром самарянине', state: 'locked' },
+        { n: 31, title: 'Притча о блудном сыне', state: 'locked' },
+        { n: 32, title: 'Нагорная проповедь', state: 'locked' },
+        { n: 33, title: 'Вход в Иерусалим', state: 'locked' },
+        { n: 34, title: 'Тайная вечеря', state: 'locked' },
+        { n: 35, title: 'Пасха: Крест и Воскресение', state: 'locked' },
+        { n: 36, title: 'Вознесение и рождение Церкви', state: 'locked' },
+        { n: 'Ф', title: 'Финальная проверка + сертификат', state: 'locked', exam: true },
       ],
     },
   ],
@@ -218,7 +249,7 @@ function renderLessons() {
   $('#lessons').innerHTML = DEMO.blocks.map((block) => `
     <div class="block-title">${block.title} <small>${block.range} · награда: ${block.award}</small></div>
     ${block.lessons.map((l) => `
-      <button class="lesson-item lesson-item--${l.state}" data-state="${l.state}" data-n="${l.n}">
+      <button class="lesson-item lesson-item--${l.state} ${l.exam ? 'lesson-item--exam' : ''}" data-state="${l.state}" data-n="${l.n}">
         <div class="lesson-item__num">${l.n}</div>
         <div class="lesson-item__body">
           <div class="lesson-item__title">${l.title}</div>
@@ -232,8 +263,10 @@ function renderLessons() {
   $$('#lessons .lesson-item').forEach((el) => {
     el.addEventListener('click', () => {
       if (el.dataset.state === 'locked') {
-        const prev = Number(el.dataset.n) - 1;
-        toast(`Пройди урок ${prev} — тест и ДЗ, чтобы открыть`);
+        const n = Number(el.dataset.n);
+        toast(Number.isNaN(n)
+          ? 'Проверка знаний откроется после всех уроков блока'
+          : `Пройди урок ${n - 1} — тест и ДЗ, чтобы открыть`);
       } else {
         openLesson();
       }
@@ -1108,6 +1141,61 @@ function initUserCard() {
   });
 }
 
+
+/* ───────── РАСПИСАНИЕ СОЗВОНОВ ───────── */
+
+const EVENTS = [
+  { title: 'Притча о блудном сыне', when: 'Завтра · 18:00 (МСК)', seats: 8, total: 50 },
+  { title: 'Знакомство со школой для новых семей', when: 'Суббота · 12:00 (МСК)', seats: 23, total: 50 },
+];
+let myEvents = JSON.parse(localStorage.getItem('mt_events') || '[]');
+
+function renderSchedule() {
+  const box = $('#schedule');
+  if (!box) return;
+  box.innerHTML = EVENTS.map((ev, i) => {
+    const joined = myEvents.includes(i);
+    return `<div class="ev card">
+      <div class="ev__icon">${ICON('video', 22)}</div>
+      <div class="ev__body">
+        <div class="ev__title">${ev.title}</div>
+        <div class="ev__meta">${ICON('clock', 12)} ${ev.when} · мест: ${ev.seats - (joined ? 1 : 0)}/${ev.total}</div>
+      </div>
+      <button class="btn ${joined ? 'btn--outline' : 'btn--primary'} ev__btn" data-ev="${i}">
+        ${joined ? 'Вы записаны' : 'Записаться'}</button>
+    </div>`;
+  }).join('');
+  $$('#schedule [data-ev]').forEach((b) => b.addEventListener('click', () => {
+    const i = Number(b.dataset.ev);
+    if (myEvents.includes(i)) { myEvents = myEvents.filter((x) => x !== i); toast('Запись отменена'); }
+    else { myEvents.push(i); toast('Вы записаны! Напомним за 15 минут до начала'); }
+    localStorage.setItem('mt_events', JSON.stringify(myEvents));
+    renderSchedule();
+  }));
+}
+
+/* ───────── ПОИСК ПО СООБЩЕНИЯМ В ЧАТЕ ───────── */
+
+function initChatSearch() {
+  $('#cvSearchBtn').addEventListener('click', () => {
+    const bar = $('#cvSearchBar');
+    bar.hidden = !bar.hidden;
+    if (!bar.hidden) $('#cvSearchField').focus();
+    else { $('#cvSearchField').value = ''; filterMsgs(''); }
+  });
+  $('#cvSearchField').addEventListener('input', (e) => filterMsgs(e.target.value.trim().toLowerCase()));
+}
+
+function filterMsgs(q) {
+  let found = 0;
+  $$('#cvMsgs .msg').forEach((el) => {
+    const hit = !q || (el.dataset.text || '').toLowerCase().includes(q);
+    el.style.display = hit ? '' : 'none';
+    if (hit && q) found++;
+  });
+  $('#cvSearchCount').textContent = q ? (found ? `найдено: ${found}` : 'не найдено') : '';
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -1259,6 +1347,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initComments();
   initPin();
   initChatView();
+  initChatSearch();
+  renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
     window.visualViewport.addEventListener('resize', vvSync);

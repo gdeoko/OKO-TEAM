@@ -315,6 +315,9 @@
     <!-- ── 📚 УРОКИ ── -->
     <section class="screen" data-screen="lessons">
       <h1 class="screen-title">Уроки</h1>
+      <h2 class="section-title" style="margin-top:0">Ближайшие созвоны</h2>
+      <div id="schedule"></div>
+      <h2 class="section-title">Программа года · 36 уроков</h2>
       <div class="lessons" id="lessons"><!-- JS --></div>
     </section>
 
@@ -397,6 +400,11 @@
           <div class="cv-head__name" id="cvName"></div>
           <div class="cv-head__status" id="cvStatus"></div>
         </div>
+        <button class="cv-head__search" id="cvSearchBtn" aria-label="Поиск по сообщениям"><span data-icon="search" data-size="19"></span></button>
+      </div>
+      <div class="cv-search" id="cvSearchBar" hidden>
+        <input type="search" id="cvSearchField" placeholder="Поиск по сообщениям...">
+        <span id="cvSearchCount"></span>
       </div>
       <div class="cv-pinned" id="cvPinned" hidden><span data-icon="pin" data-size="13"></span><span id="cvPinnedText"></span></div>
       <div class="cv-msgs" id="cvMsgs"></div>
