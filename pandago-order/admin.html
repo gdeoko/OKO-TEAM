@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PandaGo · Админ-панель</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f5f5; --white:#fff;
+  --green:#1db954; --green-light:#e8f8ee; --green-dark:#17a34a;
+  --red:#dc2626; --red-light:#fee2e2;
+  --orange:#e8842a; --orange-light:#fff3e0;
+  --blue:#2a7ae8; --blue-light:#e6efff;
+  --text:#111; --text2:#666; --text3:#999;
+  --border:#e5e5e5; --border2:#d0d0d0;
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 30px rgba(0,0,0,.08);
+  --radius:12px;
+}
+body{
+  font-family:'Golos Text',-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;line-height:1.5;
+  min-height:100vh;
+}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:14px}
+
+/* ─── Login ─── */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.login-card{
+  background:var(--white);border-radius:20px;
+  padding:36px 32px;max-width:400px;width:100%;
+  box-shadow:var(--shadow-lg);text-align:center;
+}
+.login-card img{width:72px;height:72px;margin:0 auto 20px;border-radius:16px}
+.login-card h1{font-family:'Unbounded',sans-serif;font-size:22px;margin-bottom:8px}
+.login-card p{color:var(--text2);font-size:14px;margin-bottom:24px}
+.login-card input{
+  width:100%;padding:14px 16px;border:1px solid var(--border);
+  border-radius:12px;font-size:15px;margin-bottom:12px;background:var(--bg);
+}
+.login-card input:focus{outline:none;border-color:var(--green);background:var(--white)}
+.login-card button{
+  width:100%;padding:14px;background:var(--green);color:var(--white);
+  border-radius:12px;font-weight:600;font-size:15px;
+  transition:background .15s;
+}
+.login-card button:hover{background:var(--green-dark)}
+.login-err{color:var(--red);font-size:13px;margin-top:12px;min-height:18px}
+
+/* ─── Shell ─── */
+.shell{display:none}
+.shell.on{display:block}
+.topbar{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:12px 20px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:10;
+}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-brand img{width:36px;height:36px;border-radius:8px}
+.topbar-brand-t{font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px}
+.topbar-brand-s{font-size:11px;color:var(--text3);letter-spacing:.05em;text-transform:uppercase}
+.topbar-tabs{
+  display:flex;gap:4px;flex:1;justify-content:center;
+  overflow-x:auto;scrollbar-width:none;
+}
+.topbar-tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:8px 14px;border-radius:8px;font-size:14px;font-weight:500;
+  color:var(--text2);white-space:nowrap;transition:all .15s;
+}
+.tab:hover{background:var(--bg);color:var(--text)}
+.tab.on{background:var(--green-light);color:var(--green-dark);font-weight:600}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.topbar-rate{
+  font-size:13px;color:var(--text2);padding:6px 10px;
+  background:var(--bg);border-radius:8px;
+}
+.topbar-rate b{color:var(--text);font-weight:600}
+.logout-btn{
+  padding:8px 12px;font-size:13px;color:var(--text2);
+  border-radius:8px;transition:all .15s;
+}
+.logout-btn:hover{background:var(--bg);color:var(--red)}
+
+/* ─── Layout ─── */
+.container{max-width:1280px;margin:0 auto;padding:24px 20px}
+.stats-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;margin-bottom:24px;
+}
+.stat{
+  background:var(--white);border-radius:12px;padding:16px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.stat-label{
+  font-size:11px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;
+}
+.stat-val{
+  font-family:'Unbounded',sans-serif;font-weight:700;font-size:28px;
+  line-height:1;letter-spacing:-.02em;
+}
+.stat.green .stat-val{color:var(--green-dark)}
+.stat.orange .stat-val{color:var(--orange)}
+.stat.blue .stat-val{color:var(--blue)}
+.stat.red .stat-val{color:var(--red)}
+
+.panel{
+  background:var(--white);border-radius:16px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  overflow:hidden;margin-bottom:24px;
+}
+.panel-head{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;
+}
+.panel-title{
+  font-family:'Unbounded',sans-serif;font-weight:700;
+  font-size:16px;letter-spacing:-.01em;
+}
+.panel-body{padding:20px}
+.panel-body.pad0{padding:0}
+
+/* ─── Filter bar ─── */
+.filter-bar{
+  display:flex;gap:8px;flex-wrap:wrap;
+  padding:14px 20px;background:var(--bg);border-bottom:1px solid var(--border);
+}
+.filter-bar input{
+  flex:1;min-width:200px;padding:9px 12px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--white);
+}
+.filter-bar input:focus{outline:none;border-color:var(--green)}
+.chip{
+  padding:8px 12px;border-radius:8px;font-size:13px;font-weight:500;
+  color:var(--text2);background:var(--white);border:1px solid var(--border);
+  transition:all .15s;
+}
+.chip:hover{border-color:var(--border2)}
+.chip.on{background:var(--green);color:var(--white);border-color:var(--green)}
+
+/* ─── Leads table ─── */
+.leads{display:flex;flex-direction:column}
+.lead{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:120px 1fr auto;gap:16px;align-items:center;
+  transition:background .1s;
+}
+.lead:hover{background:var(--bg)}
+.lead:last-child{border-bottom:none}
+.lead-id{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:600;color:var(--text3)}
+.lead-time{font-size:11px;color:var(--text3);margin-top:2px}
+.lead-main{min-width:0}
+.lead-name{font-weight:600;margin-bottom:2px;font-size:15px}
+.lead-contact{font-size:13px;color:var(--text2);margin-bottom:4px}
+.lead-contact a{color:var(--blue);border-bottom:1px dashed var(--blue-light)}
+.lead-service{font-size:13px;color:var(--text3)}
+.lead-actions{display:flex;gap:6px;flex-wrap:wrap}
+.status{
+  padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.status.new{background:var(--blue-light);color:var(--blue)}
+.status.in_progress{background:var(--orange-light);color:var(--orange)}
+.status.done{background:var(--green-light);color:var(--green-dark)}
+.status.trash{background:var(--bg);color:var(--text3)}
+.mini-btn{
+  padding:6px 10px;border-radius:6px;font-size:12px;font-weight:500;
+  background:var(--bg);color:var(--text2);transition:all .15s;
+}
+.mini-btn:hover{background:var(--border);color:var(--text)}
+.mini-btn.danger:hover{background:var(--red-light);color:var(--red)}
+
+/* ─── Empty state ─── */
+.empty{
+  padding:60px 20px;text-align:center;color:var(--text3);
+}
+.empty svg{width:56px;height:56px;stroke:var(--text3);stroke-width:1.5;fill:none;margin-bottom:12px}
+.empty p{font-size:14px}
+
+/* ─── Forms ─── */
+.form-grid{display:grid;gap:12px;grid-template-columns:1fr}
+.form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.form-row label{
+  font-size:12px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.05em;min-width:120px;
+}
+.form-row input,.form-row textarea,.form-row select{
+  flex:1;padding:10px 12px;border:1px solid var(--border);
+  border-radius:8px;background:var(--white);min-width:120px;
+}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{
+  outline:none;border-color:var(--green);
+}
+.form-row textarea{min-height:120px;resize:vertical;font-family:inherit}
+.btn{
+  padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;
+  display:inline-flex;align-items:center;gap:8px;transition:all .15s;
+}
+.btn-primary{background:var(--green);color:var(--white)}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-ghost{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:var(--white)}
+
+/* ─── Modal ─── */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+}
+.modal-backdrop.on{display:flex}
+.modal{
+  background:var(--white);border-radius:16px;
+  max-width:600px;width:100%;max-height:85vh;overflow:auto;
+  box-shadow:var(--shadow-lg);
+}
+.modal-head{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px}
+.modal-close{
+  padding:6px;border-radius:6px;color:var(--text3);
+}
+.modal-close:hover{background:var(--bg);color:var(--text)}
+.modal-body{padding:20px}
+
+/* ─── Toast ─── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:var(--white);
+  padding:12px 20px;border-radius:10px;font-size:14px;
+  box-shadow:var(--shadow-lg);z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-8px)}
+.toast.err{background:var(--red)}
+
+/* ─── Promo/Newsletter/Events cards ─── */
+.promo-item,.event-item{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+}
+.promo-item:last-child,.event-item:last-child{border-bottom:none}
+.promo-code{font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px}
+.promo-meta{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* ─── Notes ─── */
+.note{
+  background:var(--bg);padding:10px 12px;border-radius:8px;
+  margin-bottom:8px;font-size:13px;
+}
+.note-meta{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* ─── Mobile ─── */
+@media(max-width:720px){
+  .topbar{padding:10px 12px;gap:8px}
+  .topbar-brand-t{font-size:14px}
+  .topbar-brand-s{display:none}
+  .topbar-rate{display:none}
+  .container{padding:16px 12px}
+  .lead{grid-template-columns:1fr;gap:8px}
+  .form-row{flex-direction:column;align-items:stretch}
+  .form-row label{min-width:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap" class="login-wrap">
+  <div class="login-card">
+    <img src="assets/logo-square.png" alt="PandaGo">
+    <h1>Админ-панель</h1>
+    <p>Введите admin-токен для входа</p>
+    <input id="loginInput" type="password" placeholder="Токен" autocomplete="off">
+    <button id="loginBtn">Войти</button>
+    <div id="loginErr" class="login-err"></div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div id="shell" class="shell">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <img src="assets/logo-square.png" alt="">
+      <div>
+        <div class="topbar-brand-t">PandaGo</div>
+        <div class="topbar-brand-s">Админ-панель</div>
+      </div>
+    </div>
+    <div class="topbar-tabs">
+      <button class="tab on" data-tab="leads">Заявки</button>
+      <button class="tab" data-tab="promos">Промокоды</button>
+      <button class="tab" data-tab="rate">Курс USD</button>
+      <button class="tab" data-tab="newsletter">Рассылка</button>
+      <button class="tab" data-tab="events">События</button>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-rate">USD/RUB <b id="rateBadge">-</b></div>
+      <button class="logout-btn" id="logoutBtn">Выйти</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- LEADS TAB -->
+    <div class="tab-panel" data-panel="leads">
+      <div class="stats-grid">
+        <div class="stat blue"><div class="stat-label">Сегодня</div><div class="stat-val" id="cntToday">0</div></div>
+        <div class="stat green"><div class="stat-label">Неделя</div><div class="stat-val" id="cntWeek">0</div></div>
+        <div class="stat"><div class="stat-label">Месяц</div><div class="stat-val" id="cntMonth">0</div></div>
+        <div class="stat orange"><div class="stat-label">Новые</div><div class="stat-val" id="cntNew">0</div></div>
+        <div class="stat"><div class="stat-label">В работе</div><div class="stat-val" id="cntProgress">0</div></div>
+        <div class="stat green"><div class="stat-label">Закрытые</div><div class="stat-val" id="cntDone">0</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Заявки</div>
+          <button class="mini-btn" id="refreshBtn">Обновить</button>
+        </div>
+        <div class="filter-bar">
+          <input id="searchInput" placeholder="Поиск по имени, телефону, TG, ID">
+          <button class="chip on" data-flt="all">Все</button>
+          <button class="chip" data-flt="new">Новые</button>
+          <button class="chip" data-flt="in_progress">В работе</button>
+          <button class="chip" data-flt="done">Закрытые</button>
+          <button class="chip" data-flt="trash">Корзина</button>
+        </div>
+        <div class="panel-body pad0">
+          <div class="leads" id="leadsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOS TAB -->
+    <div class="tab-panel" data-panel="promos" style="display:none">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Промокоды</div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid" style="margin-bottom:16px">
+            <div class="form-row">
+              <label>Код</label>
+              <input id="promoCode" placeholder="PANDA10">
+            </div>
+            <div class="form-row">
+              <label>Скидка (%)</label>
+              <input id="promoDisc" type="number" min="1" max="50" value="5">
+            </div>
+            <div class="form-row">
+              <label>Метка</label>
+              <input id="promoLabel" placeholder="Первый заказ">
+            </div>
+            <div class="form-row">
+              <label>Действует до</label>
+              <input id="promoExpires" type="date">
+            </div>
+            <div class="form-row">
+              <label></label>
+              <button class="btn btn-primary" id="promoAddBtn">Добавить</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body pad0" id="promosList"></div>
+      </div>
+    </div>
+
+    <!-- RATE TAB -->
+    <div class="tab-panel" data-panel="rate" style="display:none">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Курс USD/RUB</div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Текущий курс</label>
+              <input id="rateInput" type="number" step="0.01" min="30" max="500">
+            </div>
+            <div class="form-row">
+              <label>Обновлён</label>
+              <input id="rateUpdated" disabled>
+            </div>
+            <div class="form-row">
+              <label></label>
+              <button class="btn btn-primary" id="rateSaveBtn">Сохранить</button>
+            </div>
+          </div>
+          <p style="margin-top:16px;font-size:13px;color:var(--text2);line-height:1.6">
+            Курс используется в расчётах сайта и калькулятора. Формула: (USD цена + USD доставка) × курс, округление вверх до тысяч рублей.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEWSLETTER TAB -->
+    <div class="tab-panel" data-panel="newsletter" style="display:none">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Рассылка в Telegram</div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Аудитория</label>
+              <select id="nlTarget">
+                <option value="all">Все, кто оставлял заявку</option>
+                <option value="new">Только новые заявки</option>
+                <option value="done">Только закрытые</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Лимит</label>
+              <input id="nlLimit" type="number" value="500" min="1" max="5000">
+            </div>
+            <div class="form-row">
+              <label>Текст</label>
+              <textarea id="nlText" placeholder="Здравствуйте. У PandaGo Cargo новое поступление..."></textarea>
+            </div>
+            <div class="form-row">
+              <label></label>
+              <button class="btn btn-primary" id="nlSendBtn">Отправить</button>
+            </div>
+          </div>
+          <p style="margin-top:16px;font-size:13px;color:var(--text2);line-height:1.6">
+            Рассылка работает только по получателям, которые писали боту <b>@pandago_order_bot</b> хотя бы раз. Правило Telegram.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVENTS TAB -->
+    <div class="tab-panel" data-panel="events" style="display:none">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">События с сайта</div>
+        </div>
+        <div class="panel-body pad0" id="eventsList"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lead detail modal -->
+<div class="modal-backdrop" id="leadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="leadModalTitle">Заявка</div>
+      <button class="modal-close" id="leadModalClose">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="leadModalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>

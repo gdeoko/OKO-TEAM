@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Заявка принята - PandaGo</title>
+<meta name="description" content="Ваша заявка принята. Менеджер PandaGo свяжется в ближайший час.">
+<meta name="theme-color" content="#ffffff">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f5f5; --white:#fff;
+  --green:#1db954; --green-light:#e8f8ee; --green-dark:#17a34a;
+  --text:#111; --text2:#666; --text3:#999;
+  --border:#e5e5e5; --shadow:0 2px 12px rgba(0,0,0,.06);
+}
+body{
+  font-family:'Golos Text',-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;line-height:1.5;
+}
+.wrap{
+  flex:1;max-width:640px;width:100%;margin:0 auto;
+  padding:40px 24px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+}
+.logo{
+  width:96px;height:96px;margin-bottom:32px;
+  border-radius:20px;background:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);
+}
+.logo img{width:72px;height:72px}
+.check{
+  width:88px;height:88px;margin:0 auto 28px;
+  border-radius:50%;background:var(--green-light);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop .6s cubic-bezier(.34,1.56,.64,1);
+}
+.check svg{width:44px;height:44px;stroke:var(--green);stroke-width:3;fill:none}
+@keyframes pop{
+  0%{transform:scale(0);opacity:0}
+  60%{transform:scale(1.15)}
+  100%{transform:scale(1);opacity:1}
+}
+h1{
+  font-family:'Unbounded',sans-serif;
+  font-size:36px;font-weight:700;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:16px;
+}
+.lead{
+  font-size:18px;color:var(--text2);
+  margin-bottom:36px;max-width:480px;
+}
+.card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:16px;padding:28px;margin-bottom:24px;
+  width:100%;max-width:520px;text-align:left;
+  box-shadow:var(--shadow);
+}
+.card-title{
+  font-family:'Unbounded',sans-serif;
+  font-size:14px;font-weight:600;
+  color:var(--text3);text-transform:uppercase;
+  letter-spacing:.08em;margin-bottom:16px;
+}
+.step{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none;padding-bottom:0}
+.step:first-child{padding-top:0}
+.step-num{
+  flex-shrink:0;width:28px;height:28px;border-radius:50%;
+  background:var(--green-light);color:var(--green-dark);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Unbounded',sans-serif;font-weight:700;font-size:13px;
+}
+.step-body{flex:1}
+.step-title{font-weight:600;margin-bottom:2px;font-size:15px}
+.step-desc{font-size:14px;color:var(--text2);line-height:1.5}
+.actions{
+  display:flex;gap:12px;flex-wrap:wrap;
+  justify-content:center;margin-top:8px;width:100%;
+}
+.btn{
+  padding:14px 24px;border-radius:12px;font-weight:600;
+  font-size:15px;transition:transform .15s,background .15s;
+  display:inline-flex;align-items:center;gap:8px;
+  text-decoration:none;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--green);color:var(--white)}
+.btn-primary:hover{background:var(--green-hover,var(--green-dark))}
+.btn-ghost{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+.btn svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none}
+footer{
+  padding:24px;text-align:center;
+  font-size:13px;color:var(--text3);
+}
+footer a{color:var(--text2)}
+footer a:hover{color:var(--green-dark)}
+@media(max-width:560px){
+  h1{font-size:28px}
+  .lead{font-size:16px}
+  .card{padding:22px}
+  .btn{padding:12px 20px;font-size:14px;width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="check" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><polyline points="5 12.5 10 17.5 19 7.5"/></svg>
+  </div>
+
+  <h1>Заявка принята</h1>
+  <p class="lead">Менеджер свяжется с вами в ближайший час в рабочее время. Спасибо за доверие.</p>
+
+  <div class="card">
+    <div class="card-title">Что дальше</div>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Расчёт под ключ</div>
+        <div class="step-desc">Считаем финальную стоимость с доставкой и таможней. Присылаем в течение часа.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Подбор модели</div>
+        <div class="step-desc">Если модель не выбрана, менеджер подберёт варианты под задачу и бюджет.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Договор и оплата</div>
+        <div class="step-desc">Фиксируем цену и сроки в договоре. Оплата после согласования всех деталей.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Доставка 30 дней</div>
+        <div class="step-desc">Гуанчжоу и Москва через Монголию. Средний срок 30 дней от оплаты до двери.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btn btn-primary" href="https://t.me/pandaGO_media">
+      <svg viewBox="0 0 24 24"><path d="M21 3 3 10.5l6 2 2 6L21 3z"/><path d="m9 12.5 12-9.5"/></svg>
+      Написать в Telegram
+    </a>
+    <a class="btn btn-ghost" href="/order/">
+      <svg viewBox="0 0 24 24"><path d="m19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      На главную
+    </a>
+  </div>
+</div>
+
+<footer>
+  PandaGo Cargo · cargo-pandago.online<br>
+  <a href="https://t.me/pandaGO_media">@pandaGO_media</a>
+</footer>
+
+<script>
+/* Автоскролл к каталогу через 8с если пользователь ничего не нажал */
+setTimeout(function(){
+  var link = document.createElement('a');
+  link.href = 'https://cargo-pandago.online/catalog/';
+  link.rel = 'noopener';
+  /* не редиректим автоматически, пусть остаётся страница */
+}, 8000);
+
+/* Трекинг конверсии */
+try{
+  fetch('api.php?action=trackEvent', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'thanks_view', data:document.referrer||''})
+  });
+}catch(e){}
+</script>
+</body>
+</html>

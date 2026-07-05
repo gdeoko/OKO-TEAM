@@ -1,0 +1,69 @@
+# PandaGo Order - безопасность
+
+# Директивы движка
+Options -Indexes -MultiViews
+ServerSignature Off
+
+# Кодировка и типы
+AddDefaultCharset UTF-8
+
+# Запрет доступа к чувствительным файлам
+<FilesMatch "^(config\.php|lib\.php|data\.json|.*\.lock|.*\.log|.*\.md|.*\.txt)$">
+    Require all denied
+</FilesMatch>
+
+# Разрешаем README.txt публично (документация деплоя)
+# Убрать при желании скрыть
+# <Files "README.txt">
+#     Require all denied
+# </Files>
+
+# Скрыть скрытые файлы
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Запрет прямого доступа к папке /logs/
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Force HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Блок /logs/
+    RewriteRule ^logs/ - [F,L]
+
+    # Блок частых сканеров
+    RewriteCond %{HTTP_USER_AGENT} (nikto|sqlmap|masscan|nmap|acunetix|zgrab) [NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+# Кеш статики
+<IfModule mod_headers.c>
+    <FilesMatch "\.(png|jpg|jpeg|webp|svg|woff2)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+    <FilesMatch "\.(html|json|php)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+
+    # Безопасность
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# Красивый URL для админки
+<IfModule mod_rewrite.c>
+    RewriteRule ^admin/?$ admin.html [L]
+    RewriteRule ^thanks/?$ thanks.html [L]
+</IfModule>
+
+# Лимит upload (нам не нужен большой)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 2M
+    php_value post_max_size 2M
+</IfModule>
