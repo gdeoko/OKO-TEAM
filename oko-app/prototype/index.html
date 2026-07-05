@@ -337,7 +337,7 @@ nav#tabs .nav-logo{display:none}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Чаты</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.2</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.3</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -899,8 +899,8 @@ function copyRef(){
 const PROGRESS = [
   {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, партнёрка, тарифы. SVG-иконки, две темы, публичная ссылка.'},
   {s:'done', t:'Каркас сервера и БД', d:'API-модули, схема Postgres, тарифные лимиты, партнёрские начисления 15%/5% — код готов к подключению.'},
-  {s:'wip',  t:'Инфраструктура', d:'Supabase (БД + realtime), S3-хранилище, VPS. Ждём доступы.'},
-  {s:'todo', t:'Авторизация и живые чаты', d:'Вход через Telegram, реальная доставка сообщений, статусы, медиа в S3.'},
+  {s:'done', t:'Инфраструктура', d:'Supabase: база из 28 таблиц развёрнута. S3: два бакета, загрузка по подписанным ссылкам, автоудаление временных видео через 24 часа. Telegram-бот и Gemini подключены и проверены.'},
+  {s:'wip',  t:'Авторизация и живые чаты', d:'Вход через Telegram, реальная доставка сообщений, статусы, медиа в S3.'},
   {s:'todo', t:'Каналы, лента, посты', d:'Публикации, комментарии, рекомендации.'},
   {s:'todo', t:'Мини-аппы на живых данных', d:'Система по анкете (Claude), видео-премодератор (Gemini), партнёрский кабинет.'},
   {s:'todo', t:'Оплата и тарифы', d:'Lava.top + крипта + карты РФ, моментальная активация лимитов.'},
