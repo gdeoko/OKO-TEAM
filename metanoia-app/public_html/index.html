@@ -169,6 +169,17 @@
     </div>
   </div>
 
+
+  <!-- ═══════════ УВЕДОМЛЕНИЯ ═══════════ -->
+  <div id="notifPanel" class="notif" hidden>
+    <div class="notif__head">
+      <button id="notifBack"><span data-icon="back" data-size="20"></span></button>
+      <b>Уведомления</b>
+      <button id="notifReadAll">Прочитать все</button>
+    </div>
+    <div class="notif__list" id="notifList"></div>
+  </div>
+
   <!-- ═══════════ ШАПКА ═══════════ -->
   <header class="header" id="header">
     <div class="header__left">
@@ -191,6 +202,7 @@
 
     <!-- ── 🏠 ГЛАВНАЯ ── -->
     <section class="screen screen--active" data-screen="home">
+      <div class="ptr" id="ptr"><div class="spinner"></div></div>
       <!-- Stories -->
       <div class="stories" id="stories"><!-- JS --></div>
 
@@ -210,6 +222,7 @@
 
       <!-- Лента -->
       <div class="feed" id="feed"><!-- JS --></div>
+      <div class="feed-end" id="feedMore"></div>
     </section>
 
     <!-- ── 🔍 ПОИСК ── -->
@@ -321,6 +334,28 @@
           <div class="temple__note">Карта пути откроется на этапе мини-игр</div>
         </div>
       </div>
+    </section>
+
+
+    <!-- ── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ── -->
+    <section class="screen" data-screen="chatview">
+      <div class="cv-head">
+        <button class="cv-head__back" id="cvBack"><span data-icon="back" data-size="20"></span></button>
+        <div class="cv-head__avatar" id="cvAvatar"></div>
+        <div class="cv-head__info">
+          <div class="cv-head__name" id="cvName"></div>
+          <div class="cv-head__status" id="cvStatus"></div>
+        </div>
+      </div>
+      <div class="cv-pinned" id="cvPinned" hidden><span data-icon="pin" data-size="13"></span><span id="cvPinnedText"></span></div>
+      <div class="cv-msgs" id="cvMsgs"></div>
+      <div class="cv-stickers" id="cvStickers" hidden></div>
+      <div class="cv-input" id="cvInputRow">
+        <button class="cv-input__btn" id="cvStickerBtn" aria-label="Стикеры"><span data-icon="sparkle" data-size="22"></span></button>
+        <input type="text" id="cvField" placeholder="Сообщение..." maxlength="4096">
+        <button class="cv-input__send" id="cvSend" aria-label="Отправить"><span data-icon="send" data-size="20"></span></button>
+      </div>
+      <div class="cv-readonly" id="cvReadonly" hidden>Это канал педагога: писать может только Екатерина, отвечать можно в комментариях</div>
     </section>
 
   </main>

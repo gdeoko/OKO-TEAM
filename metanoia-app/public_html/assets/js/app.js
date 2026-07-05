@@ -203,8 +203,8 @@ function renderChats() {
       </div>
     </button>
   `).join('');
-  $$('#chatList .chat-item').forEach((el) =>
-    el.addEventListener('click', () => toast('Мессенджер — этап 3')));
+  $$('#chatList .chat-item').forEach((el, i) =>
+    el.addEventListener('click', () => openChatView(i)));
 
   const unreadTotal = DEMO.chats.reduce((s, c) => s + c.unread, 0);
   const badge = $('#chatsBadge');
@@ -539,6 +539,215 @@ function initPin() {
   $('#childBack').addEventListener('click', () => { $('#pinModal').hidden = false; });
 }
 
+
+/* ───────── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ───────── */
+
+const STICKERS = [
+  'pray:assets/svg/stickers/burning-candle.svg',
+  'heart:assets/svg/stickers/winged-heart.svg',
+  'sun:assets/svg/stickers/smiling-sun.svg',
+  'bell:assets/svg/stickers/bell-ring.svg',
+  'sparkles:assets/svg/stickers/sparkles.svg',
+  'flame:assets/svg/stickers/faith-flame.svg',
+].map((s) => { const [key, url] = s.split(':'); return { key, url }; });
+
+const CHAT_MSGS = {
+  0: { readonly: true, pinned: 'Правила школы: доброта, уважение, поддержка. Пишем с любовью!',
+    msgs: [
+      { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Мир вашему дому, дорогие семьи! Здесь я буду делиться новостями школы и отвечать на вопросы.', time: '10:02' },
+      { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Добро пожаловать в нашу школу!', time: '12:34' },
+    ] },
+  1: { pinned: 'Знакомимся: напишите, из какого вы города!',
+    msgs: [
+      { who: 'Иван', text: 'Здравствуйте! Мы из Самары, двое детей — 7 и 10 лет.', time: '11:02' },
+      { who: 'Мария', text: 'А мы из Гатчины! Очень рады школе.', time: '11:10' },
+      { who: 'Иван', text: 'Спасибо большое!', time: '11:20' },
+    ] },
+  2: { msgs: [
+      { who: 'Мария', text: 'Кто идёт на созвон завтра?', time: '10:05' },
+      { who: 'Ольга', text: 'Мы записались, дочка ждёт очень.', time: '10:12' },
+    ] },
+  3: { msgs: [
+      { who: 'Миша', text: 'Я собрал стих за 20 секунд!', time: '09:41' },
+      { who: 'Аня', sticker: 'assets/svg/stickers/sparkles.svg', time: '09:43' },
+    ] },
+  4: { msgs: [
+      { who: 'Поддержка', text: 'Здравствуйте! Чем можем помочь? Отвечаем в течение дня, подписчикам Метанойя+ — в течение часа.', time: 'вчера' },
+    ] },
+};
+let cvChatId = null;
+let myMsgs = JSON.parse(localStorage.getItem('mt_msgs') || '{}');
+
+function msgHtml(m, mine) {
+  return `<div class="msg ${mine ? 'msg--mine' : 'msg--their'}">
+    ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
+    ${m.sticker
+      ? `<img class="msg__sticker" src="${m.sticker}" alt="стикер">`
+      : `<div class="msg__bubble">${m.text}</div>`}
+    <div class="msg__meta">${m.time}${mine ? ICON('check', 11) : ''}</div>
+  </div>`;
+}
+
+function nameColor(name) {
+  const palette = ['#C97064', '#7AAED4', '#7BC67A', '#D4974A', '#9B7AD4'];
+  let hsum = 0;
+  for (const ch of name) hsum += ch.charCodeAt(0);
+  return palette[hsum % palette.length];
+}
+
+function renderChatMsgs() {
+  const data = CHAT_MSGS[cvChatId] || { msgs: [] };
+  const mine = myMsgs[cvChatId] || [];
+  $('#cvMsgs').innerHTML =
+    data.msgs.map((m) => msgHtml(m, false)).join('') +
+    mine.map((m) => msgHtml(m, true)).join('');
+  $('#cvMsgs').scrollTop = $('#cvMsgs').scrollHeight;
+}
+
+function openChatView(i) {
+  cvChatId = i;
+  const c = DEMO.chats[i];
+  const data = CHAT_MSGS[i] || {};
+  $('#cvAvatar').innerHTML = c.img ? `<img src="${c.img}" alt="">` : ICON(c.icon, 20);
+  $('#cvName').textContent = c.name;
+  $('#cvStatus').textContent = c.peda ? 'онлайн' : '234 участника, 12 онлайн';
+  $('#cvPinned').hidden = !data.pinned;
+  if (data.pinned) $('#cvPinnedText').textContent = data.pinned;
+  $('#cvReadonly').hidden = !data.readonly;
+  $('#cvInputRow').style.display = data.readonly ? 'none' : '';
+  $('#cvStickers').hidden = true;
+  renderChatMsgs();
+  // прочитано
+  if (c.unread) { c.unread = 0; renderChats(); }
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'chatview'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function cvSendText() {
+  const val = $('#cvField').value.trim();
+  if (!val) return;
+  (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ text: val, time: 'только что' });
+  localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+  $('#cvField').value = '';
+  renderChatMsgs();
+}
+
+function initChatView() {
+  $('#cvBack').addEventListener('click', () => {
+    $('#nav').style.display = '';
+    switchTab('chats');
+  });
+  $('#cvSend').addEventListener('click', cvSendText);
+  $('#cvField').addEventListener('keydown', (e) => { if (e.key === 'Enter') cvSendText(); });
+  $('#cvStickerBtn').addEventListener('click', () => {
+    const panel = $('#cvStickers');
+    if (panel.hidden) {
+      panel.innerHTML = STICKERS.map((s) =>
+        `<button data-sticker="${s.url}"><img src="${s.url}" alt="${s.key}"></button>`).join('');
+      panel.hidden = false;
+      $$('#cvStickers [data-sticker]').forEach((b) =>
+        b.addEventListener('click', () => {
+          (myMsgs[cvChatId] = myMsgs[cvChatId] || []).push({ sticker: b.dataset.sticker, time: 'только что' });
+          localStorage.setItem('mt_msgs', JSON.stringify(myMsgs));
+          panel.hidden = true;
+          renderChatMsgs();
+        }));
+    } else panel.hidden = true;
+  });
+}
+
+/* ───────── УВЕДОМЛЕНИЯ ───────── */
+
+const NOTIFS = [
+  { icon: 'video',  title: 'Новый урок доступен', text: '«Кто такой Бог?» — начни первым', time: '2 ч назад' },
+  { icon: 'trophy', title: 'Миша получил значок «Молниеносный»', text: '10 из 10 в викторине на скорость', time: '5 ч назад' },
+  { icon: 'dove',   title: 'Сообщение от Екатерины', text: 'Добро пожаловать в нашу школу!', time: 'вчера' },
+  { icon: 'clock',  title: 'Созвон завтра в 18:00', text: '«Притча о блудном сыне» — вы записаны', time: 'вчера' },
+];
+
+function initNotifs() {
+  const read = localStorage.getItem('mt_notif_read') === '1';
+  if (read) { $('#bellBadge').style.display = 'none'; }
+  $('#bellBtn').addEventListener('click', () => {
+    $('#notifList').innerHTML = NOTIFS.map((n, i) => `
+      <div class="nf ${!read && i < 3 ? 'nf--new' : ''}">
+        <div class="nf__icon">${ICON(n.icon, 18)}</div>
+        <div>
+          <div class="nf__title">${n.title}</div>
+          <div class="nf__text">${n.text}</div>
+          <div class="nf__time">${n.time}</div>
+        </div>
+      </div>`).join('');
+    $('#notifPanel').hidden = false;
+  });
+  $('#notifBack').addEventListener('click', () => { $('#notifPanel').hidden = true; });
+  $('#notifReadAll').addEventListener('click', () => {
+    localStorage.setItem('mt_notif_read', '1');
+    $('#bellBadge').style.display = 'none';
+    $$('#notifList .nf').forEach((el) => el.classList.remove('nf--new'));
+    toast('Все уведомления прочитаны');
+  });
+}
+
+/* ───────── PULL-TO-REFRESH И БЕСКОНЕЧНАЯ ЛЕНТА ───────── */
+
+const EXTRA_FEED = [
+  { type: 'chapter', label: 'Новая глава книги «Метанойя»', title: 'Глава 1. Начало пути',
+    text: 'Литературная версия первого урока — читайте всей семьёй.', likes: 12, comments: 2 },
+  { type: 'achievement', label: 'Достижение', title: 'Аня получила значок «Первооткрыватель»',
+    text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
+  { type: 'quote', label: 'Цитата дня · вчера',
+    title: '«Начало мудрости — страх Господень»', ref: 'Притч. 1:7', likes: 27, comments: 1 },
+  { type: 'lesson', label: 'Скоро', coverImg: 'assets/img/covers/lesson-4.jpg',
+    title: 'Урок 4. Ноев ковчег', meta: 'Блок 1 · откроется после урока 3', likes: 9, comments: 0 },
+];
+let feedPage = 0;
+
+function initInfiniteFeed() {
+  const more = $('#feedMore');
+  const io = new IntersectionObserver((entries) => {
+    if (!entries[0].isIntersecting) return;
+    if (feedPage >= 1) {
+      more.textContent = 'Вы посмотрели всю ленту. Возвращайтесь за новым!';
+      io.disconnect();
+      return;
+    }
+    feedPage++;
+    const start = DEMO.feed.length;
+    DEMO.feed.push(...EXTRA_FEED);
+    renderFeed();
+  }, { rootMargin: '200px' });
+  io.observe(more);
+}
+
+function initPTR() {
+  let startY = null, pulling = false;
+  const screens = document.body;
+  screens.addEventListener('touchstart', (e) => {
+    if (window.scrollY === 0 && $('[data-screen="home"]').classList.contains('screen--active')) {
+      startY = e.touches[0].clientY;
+    } else startY = null;
+  }, { passive: true });
+  screens.addEventListener('touchmove', (e) => {
+    if (startY === null) return;
+    if (e.touches[0].clientY - startY > 80 && !pulling) {
+      pulling = true;
+      $('#ptr').classList.add('ptr--show');
+    }
+  }, { passive: true });
+  screens.addEventListener('touchend', () => {
+    if (pulling) {
+      setTimeout(() => {
+        $('#ptr').classList.remove('ptr--show');
+        toast('Лента обновлена');
+      }, 900);
+      pulling = false;
+    }
+    startY = null;
+  });
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -667,7 +876,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(tickCountdown, 60_000);
 
   $('#dailyVerseBtn').addEventListener('click', () => toast('Ежедневный стих — этап 5'));
-  $('#bellBtn').addEventListener('click', () => toast('Уведомления — этап 7'));
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
   $$('.menu-item').forEach((el) =>
@@ -690,6 +898,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initStoryViewer();
   initComments();
   initPin();
+  initChatView();
+  initNotifs();
+  initInfiniteFeed();
+  initPTR();
   showApp(null);
 
   // Splash → онбординг (первый запуск) → вход → приложение
