@@ -257,6 +257,30 @@ nav#tabs .nav-logo{display:none}
 .plan li::before{content:'';position:absolute;left:2px;top:12px;width:10px;height:2px;background:var(--accent);border-radius:1px}
 .disc-row{display:flex;gap:8px;margin:4px 0 18px;flex-wrap:wrap}
 @media(min-width:900px){.plans-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}.plan{margin-bottom:0}}
+
+/* ============ РЕАКЦИИ / ПЕЧАТАЕТ / ПРОГРЕСС ============ */
+.msg{position:relative;cursor:pointer}
+.react-bar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:5px 8px;margin-top:8px;width:max-content;animation:fade .15s ease}
+.react-bar button{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.react-bar button:hover{background:var(--lime-dim)}
+.react-bar svg.i{width:17px;height:17px}
+.reacts{display:flex;gap:5px;margin-top:5px}
+.react-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:rgba(0,0,0,.16);border-radius:99px;padding:2px 8px}
+.msg.in .react-chip{background:var(--lime-dim);color:var(--accent)}
+.msg.typing{display:flex;gap:5px;align-items:center;padding:13px 15px}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--dim);animation:tblink 1s infinite}
+.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
+@keyframes tblink{0%,100%{opacity:.25}50%{opacity:1}}
+.step{display:flex;gap:13px;padding:11px 2px;border-bottom:1px solid var(--border);align-items:flex-start}
+.step:last-child{border-bottom:none}
+.step .sico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step.done .sico{background:var(--lime);color:#000}
+.step.wip .sico{background:var(--lime-dim);color:var(--accent)}
+.step.todo .sico{background:var(--raised);color:var(--dim)}
+.step .sico svg.i{width:15px;height:15px}
+.step b{font-size:14px;display:block}
+.step small{color:var(--dim);font-size:12px;line-height:1.45;display:block;margin-top:2px}
+.step .tag{margin-left:auto;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -301,6 +325,11 @@ nav#tabs .nav-logo{display:none}
     <symbol id="i-globe" viewBox="0 0 100 100"><circle cx="50" cy="50" r="36"/><path d="M14 50h72M50 14c-11 10-16 22-16 36s5 26 16 36c11-10 16-22 16-36S61 24 50 14z"/></symbol>
     <symbol id="i-star" viewBox="0 0 100 100"><path d="M50 14l11 23 25 4-18 18 4 25-22-12-22 12 4-25-18-18 25-4z"/></symbol>
     <symbol id="i-card" viewBox="0 0 100 100"><rect x="12" y="24" width="76" height="52" rx="9"/><path d="M12 40h76M24 60h20"/></symbol>
+    <symbol id="i-check" viewBox="0 0 100 100"><path d="M18 54l22 22 42-50"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="36"/><path d="M50 30v22l16 10"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 100 100"><path d="M26 88V14m0 4h44l-10 14 10 14H26"/></symbol>
+    <symbol id="i-thumb" viewBox="0 0 100 100"><path d="M34 46v38H18V46zM34 50l14-30c6 0 10 4 10 10l-2 14h20c6 0 10 5 8 11l-8 24c-2 5-6 7-11 7H34"/></symbol>
+    <symbol id="i-fire" viewBox="0 0 100 100"><path d="M50 88c-16 0-28-11-28-26 0-12 8-20 14-28 2 8 6 12 10 14-2-12 2-26 14-34-2 12 4 18 10 24 6 7 8 13 8 22 0 15-12 28-28 28z"/></symbol>
   </defs>
 </svg>
 
@@ -308,6 +337,7 @@ nav#tabs .nav-logo{display:none}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Чаты</div>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.2</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -468,7 +498,8 @@ nav#tabs .nav-logo{display:none}
           </button>
           <button class="prow" onclick="alert('Мок: настройки профиля')"><svg class="i"><use href="#i-user"/></svg> Профиль <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="alert('Мок: уведомления')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
-          <button class="prow" style="border-bottom:none" onclick="alert('Мок: конфиденциальность')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" onclick="alert('Мок: конфиденциальность')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" style="border-bottom:none" onclick="openSheet('progress')"><svg class="i"><use href="#i-flag"/></svg> Прогресс сборки <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
         </div>
 
         <h2 class="section-h" style="margin-top:26px">Тарифы</h2>
@@ -528,6 +559,11 @@ nav#tabs .nav-logo{display:none}
   <button class="sheet-item" onclick="attach('photo')"><svg class="i"><use href="#i-photo"/></svg><span>Фото или видео</span></button>
   <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Start/Pro до 2 ГБ</small></span></button>
   <button class="sheet-item" onclick="attach('vnote')"><svg class="i"><use href="#i-circle-play"/></svg><span>Видео-кружочек</span></button>
+</div>
+<div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
+  <h3>Прогресс сборки OKO</h3>
+  <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
+  <div id="progressList"></div>
 </div>
 
 <script>
@@ -642,25 +678,66 @@ function closeConv(){
   document.querySelector('.chat-col').style.display='';
   document.getElementById('conv').style.display='';
 }
-function msgHtml(m){
+function reactHtml(m, idx){
+  if(!m.reacts) return '';
+  const parts = Object.entries(m.reacts).filter(([,n])=>n>0)
+    .map(([r,n])=>`<span class="react-chip">${I(r)}${n}</span>`).join('');
+  return parts ? `<div class="reacts">${parts}</div>` : '';
+}
+function msgHtml(m, idx){
   const checks = m.in ? '' : I('check2');
   const time = `<span class="t">${m.t}${checks}</span>`;
-  if(m.kind==='voice') return `<div class="msg ${m.in?'in':'out'}"><div class="voice">
-      <button class="pp" onclick="togglePlay(this)">${I('play')}</button>
-      <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span></div>${time}</div>`;
-  if(m.kind==='vnote') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}">
-      <div class="vnote">${I('play')}<span class="dur">${m.dur}</span></div></div>`;
-  if(m.kind==='file') return `<div class="msg ${m.in?'in':'out'}"><div class="filemsg">
-      <div class="fico">${I('file')}</div><div><b>${m.fname}</b><small>${m.fsize}</small></div></div>${time}</div>`;
-  if(m.kind==='photo') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}">
-      <div class="photomsg">${I('photo')}</div></div>`;
+  const rx = reactHtml(m, idx);
+  const tap = `onclick="reactBar(event,${idx})"`;
+  if(m.kind==='voice') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="voice">
+      <button class="pp" onclick="event.stopPropagation();togglePlay(this)">${I('play')}</button>
+      <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span></div>${time}${rx}</div>`;
+  if(m.kind==='vnote') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
+      <div class="vnote">${I('play')}<span class="dur">${m.dur}</span></div>${rx}</div>`;
+  if(m.kind==='file') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="filemsg">
+      <div class="fico">${I('file')}</div><div><b>${m.fname}</b><small>${m.fsize}</small></div></div>${time}${rx}</div>`;
+  if(m.kind==='photo') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
+      <div class="photomsg">${I('photo')}</div>${rx}</div>`;
   if(m.kind==='sys') return `<div class="msg sys">${m.body}</div>`;
-  return `<div class="msg ${m.in?'in':'out'}">${m.body}${time}</div>`;
+  return `<div class="msg ${m.in?'in':'out'}" ${tap}>${m.body}${time}${rx}</div>`;
 }
 function renderMsgs(){
   const el = document.getElementById('msgs');
   el.innerHTML = currentChat.msgs.map(msgHtml).join('');
   el.scrollTop = el.scrollHeight;
+}
+/* реакции: тап по сообщению -> панель из трёх SVG-реакций */
+function reactBar(ev, idx){
+  document.querySelectorAll('.react-bar').forEach(b=>b.remove());
+  const bar = document.createElement('div');
+  bar.className = 'react-bar';
+  ['heart','thumb','fire'].forEach(r=>{
+    const b = document.createElement('button');
+    b.innerHTML = I(r);
+    b.onclick = e => { e.stopPropagation(); addReact(idx, r); };
+    bar.appendChild(b);
+  });
+  ev.currentTarget.appendChild(bar);
+  ev.stopPropagation();
+}
+function addReact(idx, r){
+  const m = currentChat.msgs[idx];
+  m.reacts = m.reacts || {};
+  m.reacts[r] = (m.reacts[r]||0) === 0 ? 1 : 0; // повторный тап снимает
+  renderMsgs();
+}
+/* индикатор «печатает…» */
+function showTyping(){
+  const el = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg in typing'; d.id = 'typingMsg';
+  d.innerHTML = '<span class="tdot"></span><span class="tdot"></span><span class="tdot"></span>';
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
+  document.getElementById('convStatus').textContent = 'печатает…';
+}
+function hideTyping(){
+  document.getElementById('typingMsg')?.remove();
+  document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
 }
 function togglePlay(btn){
   const u = btn.querySelector('use');
@@ -684,9 +761,13 @@ function sendOrRecord(){
   if(text){
     pushMsg({in:0, t:nowT(), kind:'text', body:text});
     inp.value=''; syncSendIcon();
-    if(currentChat.id===1) setTimeout(()=>{
-      pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'});
-    }, 900);
+    if(currentChat.id===1){
+      setTimeout(showTyping, 500);
+      setTimeout(()=>{
+        hideTyping();
+        pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'});
+      }, 2100);
+    }
   } else startRec();
 }
 function startRec(){
@@ -814,6 +895,34 @@ function copyRef(){
 }
 
 /* init */
+/* ================= ПРОГРЕСС СБОРКИ ================= */
+const PROGRESS = [
+  {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, партнёрка, тарифы. SVG-иконки, две темы, публичная ссылка.'},
+  {s:'done', t:'Каркас сервера и БД', d:'API-модули, схема Postgres, тарифные лимиты, партнёрские начисления 15%/5% — код готов к подключению.'},
+  {s:'wip',  t:'Инфраструктура', d:'Supabase (БД + realtime), S3-хранилище, VPS. Ждём доступы.'},
+  {s:'todo', t:'Авторизация и живые чаты', d:'Вход через Telegram, реальная доставка сообщений, статусы, медиа в S3.'},
+  {s:'todo', t:'Каналы, лента, посты', d:'Публикации, комментарии, рекомендации.'},
+  {s:'todo', t:'Мини-аппы на живых данных', d:'Система по анкете (Claude), видео-премодератор (Gemini), партнёрский кабинет.'},
+  {s:'todo', t:'Оплата и тарифы', d:'Lava.top + крипта + карты РФ, моментальная активация лимитов.'},
+  {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
+  {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
+  {s:'todo', t:'Запуск 15.07', d:'Прогон сценариев, лимиты, антиспам, админка, деплой продакшена.'},
+];
+function renderProgress(){
+  const ico = {done:'check', wip:'clock', todo:'clock'};
+  const tag = {done:'готово', wip:'в работе', todo:'в плане'};
+  document.getElementById('progressList').innerHTML = PROGRESS.map(p=>`
+    <div class="step ${p.s}">
+      <span class="sico">${I(ico[p.s])}</span>
+      <span style="flex:1"><b>${p.t}</b><small>${p.d}</small></span>
+      <span class="chip tag" style="${p.s==='todo'?'opacity:.45':''}">${tag[p.s]}</span>
+    </div>`).join('');
+}
+
+/* закрытие react-bar по клику мимо */
+document.addEventListener('click', ()=>document.querySelectorAll('.react-bar').forEach(b=>b.remove()));
+
+renderProgress();
 renderChatList();
 renderFeed('sub');
 </script>
