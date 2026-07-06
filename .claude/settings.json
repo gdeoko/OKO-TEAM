@@ -44,5 +44,20 @@
       "SearchPlugins",
       "ListConnectors"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm i -g agent-browser >/dev/null 2>&1 || true",
+            "async": true,
+            "timeout": 300,
+            "statusMessage": "Установка agent-browser"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -44,3 +44,9 @@ https://true-journey-418.higgsfield.app
 ## Стиль ответов
 Кратко, по делу, mobile-first (Даниэль читает с телефона). Скриншоты — только
 когда есть что показать визуально нового.
+
+## agent-browser (инструмент браузерной автоматизации)
+- Ставится автоматически хуком SessionStart (`npm i -g agent-browser`, см. `.claude/settings.json`).
+- Запуск в облачной сессии: первый раз `agent-browser open <url> --executable-path /opt/pw-browsers/chromium`.
+- В облаке работает ТОЛЬКО с localhost/локальными dev-серверами: внешние сайты браузеру
+  режет egress-прокси (ERR_CONNECTION_RESET) — это не баг agent-browser.
