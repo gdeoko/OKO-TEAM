@@ -49,27 +49,31 @@ export function initScramble() {
   els.forEach((el, idx) => {
     const finalText = el.textContent;
     const chars = [...finalText];
-    let frame = 0;
-    const settle = chars.map((c, i) => (c === ' ' ? 0 : 6 + i * 1.4 + idx * 6));
-    const run = () => {
+    /* время осадки каждого символа, в мс: детерминировано и не зависит от fps,
+       поэтому на слабых телефонах декодинг не «залипает» */
+    const settleMs = chars.map((c, i) => (c === ' ' ? 0 : 150 + i * 34));
+    let start = 0;
+    let flip = 0;
+    const run = (now) => {
+      if (!start) start = now;
+      const el_t = now - start;
+      if (now - flip > 45) flip++;   // скорость перебора глифов
       let out = '';
       let done = true;
       for (let i = 0; i < chars.length; i++) {
         if (chars[i] === ' ') { out += ' '; continue; }
-        if (frame >= settle[i]) {
+        if (el_t >= settleMs[i]) {
           out += chars[i];
         } else {
           done = false;
-          out += glyphs[Math.floor((frame * 7 + i * 13) % glyphs.length)];
+          out += glyphs[Math.floor((flip * 7 + i * 13) % glyphs.length)];
         }
       }
       el.textContent = out;
-      frame++;
       if (!done) requestAnimationFrame(run);
       else el.textContent = finalText;
     };
-    /* стартуем чуть позже, после появления */
-    setTimeout(run, 260 + idx * 90);
+    setTimeout(() => requestAnimationFrame(run), 220 + idx * 80);
   });
 }
 
