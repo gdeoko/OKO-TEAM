@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "21st": {
-      "type": "http",
-      "url": "https://21st.dev/api/mcp",
-      "headers": {
-        "x-api-key": "${API_KEY_21ST}"
+    "magic": {
+      "command": "npx",
+      "args": ["-y", "@21st-dev/magic@latest"],
+      "env": {
+        "API_KEY": "${API_KEY_21ST}"
       }
     }
   }
