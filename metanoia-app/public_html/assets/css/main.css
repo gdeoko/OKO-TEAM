@@ -1338,3 +1338,28 @@ body.in-chat .header { display: none; }
   border: 1.5px solid rgba(26,58,82,.16); color: var(--navy); background: #fff;
 }
 .verse-level--on { background: var(--navy); color: var(--cream); border-color: var(--navy); }
+
+
+/* ══════════ МОЙ ХРАМ (растущий SVG) ══════════ */
+.temple-stage-wrap {
+  background: linear-gradient(180deg, #EAF1F6 0%, #FBF6EE 100%);
+  border-radius: var(--radius-modal);
+  padding: 16px; margin-bottom: 18px;
+  overflow: hidden;
+}
+.temple-svg { width: 100%; height: auto; display: block; }
+.temple-svg .t-part {
+  opacity: 0; transform: translateY(14px) scale(.96);
+  transform-origin: center bottom;
+  transition: opacity 500ms var(--ease), transform 600ms cubic-bezier(.34,1.4,.6,1);
+}
+.temple-svg .t-part--on { opacity: 1; transform: none; }
+.temple-svg.t-complete .t-radiance { opacity: 1; transition: opacity 900ms; animation: radiate 3s var(--ease) infinite; }
+@keyframes radiate { 50% { opacity: .55; transform: scale(1.06); transform-origin: 160px 140px; } }
+.t-gild.t-part--on { animation: gildShine 2.4s var(--ease) infinite; }
+@keyframes gildShine { 50% { stroke: #FFF2D8; stroke-width: 3; } }
+.temple-progress__label { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  .temple-svg .t-part { transition: opacity 300ms; transform: none; }
+  .temple-svg.t-complete .t-radiance, .t-gild.t-part--on { animation: none; }
+}

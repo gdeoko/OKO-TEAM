@@ -375,14 +375,14 @@
       <div class="badges" id="childBadges"></div>
 
       <h2 class="section-title">Мой храм</h2>
-      <div class="card temple">
+      <button class="card temple" id="openTemple" style="width:100%;text-align:left">
         <div class="temple__icon"><span data-icon="church" data-size="44"></span></div>
         <div class="temple__body">
-          <div class="temple__stage">Этап 3 из 10 · «Стены»</div>
+          <div class="temple__stage">Этап 3 из 10 · «Стены» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="progress"><div class="progress__fill" style="width:34%"></div></div>
-          <div class="temple__note">34 кирпичика из 100 — каждый урок, тест и игра достраивают храм</div>
+          <div class="temple__note">34 кирпичика из 100 — нажми, чтобы посмотреть свой храм</div>
         </div>
-      </div>
+      </button>
 
       <h2 class="section-title">Прогресс по блокам</h2>
       <div class="card">
@@ -519,6 +519,68 @@
         <button class="btn btn--primary" id="verseCheck" style="width:auto">Проверить</button>
       </div>
       <div class="verse-levels" id="verseLevels"></div>
+    </section>
+
+
+    <!-- ── МОЙ ХРАМ: растущий SVG (этап 5 / геймификация) ── -->
+    <section class="screen" data-screen="temple">
+      <button class="child-back" id="templeBack"><span data-icon="back" data-size="18"></span> Профиль ребёнка</button>
+      <h1 class="screen-title" style="margin-bottom:6px">Мой храм</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">Каждый урок, тест и игра добавляют кирпичик. Построй храм целиком — получи значок «Архитектор веры».</p>
+
+      <div class="temple-stage-wrap">
+        <svg id="templeSvg" viewBox="0 0 320 300" class="temple-svg" aria-label="Мой храм">
+          <defs>
+            <radialGradient id="tGlow" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="rgba(212,165,116,.55)"/>
+              <stop offset="100%" stop-color="rgba(212,165,116,0)"/>
+            </radialGradient>
+          </defs>
+          <circle class="t-radiance" cx="160" cy="140" r="150" fill="url(#tGlow)" opacity="0"/>
+          <!-- 0 участок -->
+          <ellipse class="t-part" data-stage="1" cx="160" cy="278" rx="120" ry="16" fill="#E8E0D2"/>
+          <!-- 1 фундамент -->
+          <rect class="t-part" data-stage="2" x="82" y="250" width="156" height="26" rx="3" fill="#5A6577"/>
+          <!-- 2 стены -->
+          <rect class="t-part" data-stage="3" x="96" y="150" width="128" height="102" fill="#26506E"/>
+          <!-- 3 окна -->
+          <g class="t-part" data-stage="4" fill="#FAF8F5">
+            <rect x="112" y="176" width="20" height="34" rx="10"/>
+            <rect x="188" y="176" width="20" height="34" rx="10"/>
+          </g>
+          <!-- 4 крыша/барабан -->
+          <path class="t-part" data-stage="5" d="M96 150 L160 104 L224 150 Z" fill="#1A3A52"/>
+          <rect class="t-part" data-stage="5" x="146" y="86" width="28" height="30" fill="#26506E"/>
+          <!-- 5 купол (золото) -->
+          <path class="t-part" data-stage="6" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="#D4A574"/>
+          <!-- 6 крест -->
+          <g class="t-part" data-stage="7" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
+            <path d="M160 60 V34"/><path d="M150 44 H170"/>
+          </g>
+          <!-- 7 золочение (свечение куполу) -->
+          <path class="t-part t-gild" data-stage="8" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="none" stroke="#F0D9B0" stroke-width="2"/>
+          <!-- 8 колокольня -->
+          <g class="t-part" data-stage="9" fill="#26506E">
+            <rect x="52" y="196" width="34" height="56"/>
+            <path d="M52 196 L69 172 L86 196 Z" fill="#1A3A52"/>
+            <circle cx="69" cy="214" r="7" fill="#D4A574"/>
+          </g>
+          <!-- 9 двери -->
+          <path class="t-part" data-stage="10" d="M144 252 v-40 a16 16 0 0 1 32 0 v40 Z" fill="#8A5A3C"/>
+          <!-- 10 роспись/детали -->
+          <g class="t-part" data-stage="11" stroke="#D4A574" stroke-width="2" fill="none">
+            <path d="M96 150 h128"/><circle cx="160" cy="230" r="6"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="temple-progress">
+        <div class="temple-progress__label"><span id="templeStageName">Этап 3 из 10 · «Стены»</span></div>
+        <div class="progress"><div class="progress__fill" id="templeBar" style="width:34%"></div></div>
+        <div class="feed-card__meta" id="templeBricks" style="margin-top:6px">34 кирпичика из 100</div>
+      </div>
+
+      <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик (демо)</button>
     </section>
 
   </main>
