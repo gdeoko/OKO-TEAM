@@ -1,19 +1,6 @@
 {
     "leads": [],
-    "events": [
-        {
-            "ts": 1783374722,
-            "type": "page_view",
-            "data": "",
-            "ip": "127.0.0.1"
-        },
-        {
-            "ts": 1783374708,
-            "type": "page_view",
-            "data": "",
-            "ip": "127.0.0.1"
-        }
-    ],
+    "events": [],
     "promos": [
         {
             "code": "PANDA5",
@@ -26,43 +13,21 @@
         }
     ],
     "admins": [
-        {
-            "id": 1966985736,
-            "label": "Даниэль Ильясов",
-            "tg": "@ktodaniel"
-        },
-        {
-            "id": 8637446193,
-            "label": "Работник",
-            "tg": "work"
-        },
-        {
-            "id": 8748082826,
-            "label": "Konstantin Panda GO",
-            "tg": "@pandaGO_media"
-        },
-        {
-            "id": 1238533009,
-            "label": "Виктория Кынтикова",
-            "tg": "@kyntikova"
-        }
+        {"id": 1966985736, "label": "Даниэль Ильясов",  "tg": "@ktodaniel"},
+        {"id": 8637446193, "label": "Работник",          "tg": "work"},
+        {"id": 8748082826, "label": "Konstantin Panda GO","tg": "@pandaGO_media"},
+        {"id": 1238533009, "label": "Виктория Кынтикова","tg": "@kyntikova"}
     ],
-    "content": [],
+    "content": {},
     "settings": {
         "rate": 95,
         "rateUpdate": 0,
         "adminEmail": ""
     },
     "stats": {
-        "leadsTotal": 0,
-        "e_page_view": 2
+        "leadsTotal": 0
     },
-    "rate_limits": {
-        "event:127.0.0.1": {
-            "cnt": 2,
-            "exp": 1783374768
-        }
-    },
+    "rate_limits": {},
     "nudge_last": 0,
     "digest_last": 0
 }

@@ -15,3 +15,7 @@ vtouch.cjs
 _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
+
+# PandaGo runtime state (генерится бэкендом, не версионим)
+pandago-order/data.lock
+pandago-order/logs/*.log
