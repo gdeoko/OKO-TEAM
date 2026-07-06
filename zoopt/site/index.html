@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ЗоОпт · Склад · Маркет — зоотовары оптом и в розницу</title>
+<meta name="description" content="ЗоОпт — оптово-розничная зоо-компания. Корма, игрушки, аксессуары, ветаптека. Опт для магазинов и вет.клиник, розница для владельцев питомцев." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1B8A3A; --green-dark:#0F5C24; --green-light:#E6F4EA;
+  --yellow:#FFD500; --black:#0A0A0A; --ivory:#F5F1E8; --gray:#6B7280; --white:#fff;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --r-lg:24px; --r-md:16px; --r-pill:999px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Onest',system-ui,sans-serif; color:var(--black); background:var(--ivory);
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.dm{font-family:'Unbounded',sans-serif;font-weight:800;line-height:.98;letter-spacing:-.01em}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+section{position:relative}
+
+/* grain */
+.grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* preloader */
+#pre{position:fixed;inset:0;z-index:100;background:#05140b;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:26px;transition:opacity .8s var(--ease),visibility .8s}
+#pre.done{opacity:0;visibility:hidden}
+.pre-moon{width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 38% 34%,#FFE45C,var(--yellow) 55%,#e0b400);box-shadow:0 0 70px 12px rgba(255,213,0,.5);animation:breath 2.4s var(--ease) infinite}
+@keyframes breath{0%,100%{transform:scale(.86);opacity:.75}50%{transform:scale(1.05);opacity:1}}
+.pre-bar{width:180px;height:3px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+.pre-bar i{display:block;height:100%;width:0;background:var(--green);border-radius:3px;box-shadow:0 0 12px var(--green)}
+.pre-t{font-family:'Unbounded';font-weight:700;letter-spacing:.35em;font-size:12px;color:#cfe8d5;text-transform:uppercase}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
+  padding:16px clamp(16px,4vw,48px);transition:.4s var(--ease)}
+nav.solid{background:rgba(245,241,232,.72);backdrop-filter:blur(16px) saturate(1.3);box-shadow:0 1px 0 rgba(15,92,36,.08)}
+.brand{display:flex;align-items:center;gap:12px;font-family:'Unbounded';font-weight:900;font-size:20px;letter-spacing:-.02em;color:#fff;transition:color .4s}
+nav.solid .brand{color:var(--black)}
+.brand .zoo{color:var(--yellow)} nav.solid .brand .zoo{color:var(--green)}
+.brand-badge{width:34px;height:34px;border-radius:50%;background:var(--black);display:grid;place-items:center;flex:0 0 auto}
+.brand-badge span{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFE45C,var(--yellow));box-shadow:0 0 8px rgba(255,213,0,.7)}
+.nav-links{display:flex;gap:30px;font-size:15px;font-weight:500;color:rgba(255,255,255,.85)}
+nav.solid .nav-links{color:var(--black)}
+.nav-links a{position:relative;padding:4px 0;opacity:.9;transition:.25s}
+.nav-links a:after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--green);transition:width .3s var(--ease)}
+.nav-links a:hover:after{width:100%}
+.nav-right{display:flex;align-items:center;gap:14px}
+.chip{font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--r-pill);border:1px solid rgba(255,255,255,.28);color:#fff;transition:.3s}
+nav.solid .chip{border-color:rgba(10,10,10,.18);color:var(--black)}
+.chip.solid{background:var(--green);border-color:var(--green);color:#fff}
+.chip.solid:hover{background:var(--green-dark);border-color:var(--green-dark)}
+@media(max-width:860px){.nav-links{display:none}}
+
+/* hero */
+#hero{height:100svh;min-height:640px;position:relative;overflow:hidden;background:radial-gradient(120% 95% at 50% 12%,#124a26 0%,#0b2c17 42%,#051910 72%,#03100a 100%)}
+#gl{position:absolute;inset:0;z-index:1;display:block}
+.hero-wrap{position:relative;z-index:3;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#bfe9c9;
+  border:1px solid rgba(191,233,201,.3);padding:8px 16px;border-radius:var(--r-pill);background:rgba(6,26,14,.35);backdrop-filter:blur(6px)}
+.hero-eyebrow b{color:var(--yellow);font-weight:700}
+h1.hero-title{margin:24px 0 0;font-size:clamp(3.4rem,13vw,11rem);font-weight:900;color:#fff;letter-spacing:-.03em;text-shadow:0 8px 60px rgba(0,0,0,.35)}
+h1.hero-title .zoo{color:var(--yellow)}
+.hero-tag{margin-top:6px;font-family:'Unbounded';font-weight:700;letter-spacing:.42em;font-size:clamp(.7rem,2.4vw,1.1rem);color:#dff3e4;text-transform:uppercase;padding-left:.42em}
+.hero-sub{max-width:540px;margin:26px auto 0;font-size:clamp(1rem,2.4vw,1.18rem);line-height:1.55;color:rgba(233,245,236,.82)}
+.hero-cta{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap;justify-content:center}
+.btn{font-family:'Onest';font-weight:600;font-size:16px;padding:16px 30px;border-radius:var(--r-pill);cursor:pointer;border:0;transition:.3s var(--ease);display:inline-flex;align-items:center;gap:10px}
+.btn-yellow{background:var(--yellow);color:var(--black);box-shadow:0 14px 40px -10px rgba(255,213,0,.5)}
+.btn-yellow:hover{transform:translateY(-3px);box-shadow:0 20px 50px -10px rgba(255,213,0,.65)}
+.btn-ghost{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
+.btn-ghost:hover{background:rgba(255,255,255,.14);transform:translateY(-3px)}
+.scroll-ind{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(223,243,228,.6);font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+.mouse{width:24px;height:38px;border:2px solid rgba(223,243,228,.45);border-radius:14px;position:relative}
+.mouse:before{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:4px;height:7px;background:var(--yellow);border-radius:3px;animation:sc 1.7s var(--ease) infinite}
+@keyframes sc{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+
+/* generic section shell */
+.pad{padding:clamp(70px,11vw,150px) clamp(16px,5vw,80px)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green)}
+.eyebrow:before{content:"";width:26px;height:2px;background:var(--green);border-radius:2px}
+.sec-title{font-size:clamp(2rem,5.5vw,4rem);margin:18px 0 0;color:var(--black)}
+.sec-title em{font-style:normal;color:var(--green)}
+.lead{max-width:520px;color:var(--gray);font-size:clamp(1rem,2vw,1.15rem);line-height:1.6;margin-top:16px}
+
+/* categories */
+#cats{background:var(--ivory)}
+.cats-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px}
+.cat-grid{margin-top:56px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+@media(max-width:960px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.cat-grid{grid-template-columns:1fr}}
+.cat{position:relative;border-radius:var(--r-lg);padding:26px;min-height:360px;overflow:hidden;background:var(--white);
+  box-shadow:0 20px 60px -30px rgba(15,92,36,.28);cursor:pointer;transition:.5s var(--ease);display:flex;flex-direction:column;justify-content:flex-end}
+.cat:hover{transform:translateY(-8px);box-shadow:0 34px 70px -28px rgba(15,92,36,.42)}
+.cat .moon{position:absolute;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFE45C,var(--yellow));right:50%;transform:translateX(50%);top:18px;filter:saturate(1.05);transition:.6s var(--ease)}
+.cat:hover .moon{transform:translateX(50%) scale(1.06)}
+.cat .an{position:absolute;left:50%;transform:translateX(-50%);top:26px;width:158px;height:158px;object-fit:contain;transition:.6s var(--ease);filter:drop-shadow(0 12px 22px rgba(0,0,0,.22))}
+.cat:hover .an{transform:translateX(-50%) translateY(-4px) scale(1.05)}
+.cat h3{position:relative;font-size:1.55rem;margin-top:0;color:var(--black)}
+.cat p{position:relative;color:var(--gray);font-size:.95rem;margin-top:8px}
+.cat .go{position:relative;margin-top:18px;display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--green)}
+.cat .go svg{transition:.3s}.cat:hover .go svg{transform:translateX(5px)}
+
+/* characters */
+#chars{background:linear-gradient(180deg,var(--ivory),var(--green-light))}
+.chars-grid{margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+@media(max-width:820px){.chars-grid{grid-template-columns:1fr}}
+.char{position:relative;border-radius:var(--r-lg);overflow:hidden;min-height:440px;padding:36px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;isolation:isolate}
+.char.dog{background:linear-gradient(150deg,#0F5C24,#1B8A3A)}
+.char.cat{background:linear-gradient(150deg,#12331d,#0A0A0A)}
+.char .cmoon{position:absolute;z-index:0;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFE45C,var(--yellow));right:-40px;top:-46px;opacity:.95}
+.char .cimg{position:absolute;z-index:1;right:-6px;top:-6px;width:min(50%,290px);filter:drop-shadow(0 20px 40px rgba(0,0,0,.4))}
+.char:after{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(105deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 45%,transparent 66%)}
+.char>*{position:relative;z-index:3}
+.char .tag{font-family:'JetBrains Mono';font-size:13px;letter-spacing:.1em;color:var(--yellow);text-transform:uppercase}
+.char h3{font-size:2.6rem;margin:10px 0 6px;text-shadow:0 2px 20px rgba(0,0,0,.4)}
+.char p{max-width:56%;color:rgba(255,255,255,.85);line-height:1.5}
+@media(max-width:520px){.char p{max-width:100%}}
+
+/* wholesale */
+#opt{background:#04120a;color:#fff;overflow:hidden}
+.opt-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+@media(max-width:900px){.opt-grid{grid-template-columns:1fr}}
+#opt .sec-title{color:#fff}#opt .sec-title em{color:var(--yellow)}
+#opt .lead{color:rgba(223,243,228,.7)}
+.opt-list{margin-top:30px;display:grid;gap:14px}
+.opt-item{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:var(--r-md);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.opt-item .ic{width:40px;height:40px;flex:0 0 auto;border-radius:12px;background:rgba(255,213,0,.14);display:grid;place-items:center;color:var(--yellow)}
+.opt-item b{font-family:'Unbounded';font-weight:700;font-size:1rem}
+.opt-item span{display:block;color:rgba(223,243,228,.6);font-size:.9rem;margin-top:3px}
+.opt-card{background:linear-gradient(160deg,rgba(27,138,58,.22),rgba(255,213,0,.08));border:1px solid rgba(255,213,0,.25);border-radius:var(--r-lg);padding:34px}
+.opt-card .big{font-family:'Unbounded';font-weight:900;font-size:clamp(2.4rem,6vw,3.6rem);color:var(--yellow)}
+.opt-card .cap{color:rgba(223,243,228,.7);margin-top:6px}
+.opt-stats{display:flex;gap:26px;margin-top:26px;flex-wrap:wrap}
+.opt-stats div b{font-family:'Unbounded';font-size:1.6rem;color:#fff;display:block}
+.opt-stats div span{color:rgba(223,243,228,.6);font-size:.85rem}
+
+/* stats strip */
+#strip{background:var(--yellow);color:var(--black)}
+.strip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+@media(max-width:720px){.strip-grid{grid-template-columns:repeat(2,1fr)}}
+.strip-grid .n{font-family:'Unbounded';font-weight:900;font-size:clamp(2.4rem,6vw,4rem);line-height:1}
+.strip-grid .l{font-weight:600;margin-top:8px;opacity:.7}
+
+/* footer */
+footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16px,5vw,80px) 40px}
+.foot-top{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+@media(max-width:820px){.foot-top{grid-template-columns:1fr}}
+.foot-top h2{font-size:clamp(2rem,5vw,3.2rem);color:#fff}
+.foot-top h2 .zoo{color:var(--yellow)}
+.foot-col h4{font-family:'Unbounded';font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin-bottom:16px}
+.foot-col a{display:block;color:rgba(255,255,255,.7);padding:6px 0;transition:.25s}.foot-col a:hover{color:#fff;padding-left:5px}
+.foot-bottom{margin-top:60px;padding-top:24px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:rgba(255,255,255,.5);font-size:.85rem}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(38px)}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<div id="pre">
+  <div class="pre-moon"></div>
+  <div class="pre-bar"><i></i></div>
+  <div class="pre-t">ЗоОпт · загрузка</div>
+</div>
+
+<nav id="nav">
+  <a class="brand" href="#top"><span class="brand-badge"><span></span></span><span><span class="zoo">Зоо</span>Опт</span></a>
+  <div class="nav-links">
+    <a href="#cats">Каталог</a>
+    <a href="#chars">Питомцам</a>
+    <a href="#opt">Опт</a>
+    <a href="#strip">О нас</a>
+    <a href="#footer">Контакты</a>
+  </div>
+  <div class="nav-right">
+    <span class="chip">RU</span>
+    <a class="chip solid" href="#opt">Войти в опт</a>
+  </div>
+</nav>
+
+<section id="hero"><a id="top"></a>
+  <canvas id="gl"></canvas>
+  <div class="hero-wrap">
+    <div class="hero-eyebrow rv">Опт <b>·</b> Розница <b>·</b> Зоотовары по всей России</div>
+    <h1 class="hero-title rv"><span class="zoo">ЗОО</span>ОПТ</h1>
+    <div class="hero-tag rv">Склад · Маркет</div>
+    <p class="hero-sub rv">Корма, игрушки, аксессуары и ветаптека — для магазинов, вет.клиник и любимых питомцев. Один склад, две цены: опт и розница.</p>
+    <div class="hero-cta rv">
+      <button class="btn btn-yellow" data-scroll="#cats">Купить в розницу
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="btn btn-ghost" data-scroll="#opt">Опт для бизнеса</button>
+    </div>
+  </div>
+  <div class="scroll-ind"><span>Листай</span><div class="mouse"></div></div>
+</section>
+
+<section id="cats" class="pad">
+  <div class="cats-head">
+    <div>
+      <span class="eyebrow rv">Кому подбираем</span>
+      <h2 class="sec-title rv">Всё для <em>каждого</em> питомца</h2>
+    </div>
+    <p class="lead rv">5 категорий, 10+ брендов, 300+ товаров. Корма, наполнители, игрушки, аксессуары и ветаптека — со склада, с оптовыми ценами по ИНН.</p>
+  </div>
+  <div class="cat-grid">
+    <article class="cat rv"><div class="moon"></div><img class="an" src="assets/sil_dog.png" alt="">
+      <h3>Собакам</h3><p>Корма · Игрушки · Аксессуары</p>
+      <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+    <article class="cat rv"><div class="moon"></div><img class="an" src="assets/sil_cat.png" alt="">
+      <h3>Кошкам</h3><p>Корма · Наполнители · Игрушки</p>
+      <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+    <article class="cat rv"><div class="moon"></div><img class="an" src="assets/sil_rodent.png" alt="">
+      <h3>Грызунам<br>и птицам</h3><p>Клетки · Корма · Витамины</p>
+      <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+    <article class="cat rv"><div class="moon"></div><img class="an" src="assets/sil_aqua.png" alt="">
+      <h3>Аквариум</h3><p>Аквариумы · Корма · Фильтры</p>
+      <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
+  </div>
+</section>
+
+<section id="chars" class="pad">
+  <span class="eyebrow rv">Персонажи бренда</span>
+  <h2 class="sec-title rv">Знакомьтесь — <em>Барон и Мурзик</em></h2>
+  <div class="chars-grid">
+    <article class="char dog rv"><div class="cmoon"></div><img class="cimg" src="assets/sil_dog.png" alt="">
+      <span class="tag">// Пёс Барон</span><h3>Надёжный опт</h3>
+      <p>Возит прайс, стережёт остатки и минимальный заказ. С Бароном бизнес спокоен.</p></article>
+    <article class="char cat rv"><div class="cmoon"></div><img class="cimg" src="assets/sil_cat.png" alt="">
+      <span class="tag">// Кот Мурзик</span><h3>Уютная розница</h3>
+      <p>Знает, что любит ваш питомец. Мягкие лапки, быстрая доставка, приятные цены.</p></article>
+  </div>
+</section>
+
+<section id="opt" class="pad">
+  <div class="opt-grid">
+    <div>
+      <span class="eyebrow rv" style="color:var(--yellow)">B2B · Оптовикам</span>
+      <h2 class="sec-title rv">Опт для магазинов<br>и <em>вет.клиник</em></h2>
+      <p class="lead rv">Регистрируетесь по ИНН — открываются оптовые цены, остатки в реальном времени, выгрузка прайса в PDF и оплата по счёту. Никакого «зайчика-побегайчика».</p>
+      <div class="opt-list">
+        <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div><b>Прайс в PDF за секунду</b><span>Актуальные оптовые цены и остатки — выгрузка в один клик.</span></div></div>
+        <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg></div><div><b>Оплата по счёту</b><span>Для ИП и ООО — счёт, закрывающие документы, отсрочка.</span></div></div>
+        <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v14H3zM8 21h8M12 17v4"/></svg></div><div><b>Личный кабинет</b><span>История заказов, регулярные закупки, статусы отгрузок.</span></div></div>
+      </div>
+      <button class="btn btn-yellow rv" style="margin-top:30px" data-scroll="#footer">Оставить заявку на опт
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="opt-card rv">
+      <div class="big">от 15 000 ₽</div>
+      <div class="cap">минимальный оптовый заказ (MOQ)</div>
+      <div class="opt-stats">
+        <div><b>−30%</b><span>к рознице</span></div>
+        <div><b>24 ч</b><span>сборка заказа</span></div>
+        <div><b>ИНН</b><span>верификация</span></div>
+      </div>
+      <img src="assets/cut_dogtoys.png" alt="" style="margin-top:26px;width:75%;margin-left:auto;filter:drop-shadow(0 20px 30px rgba(0,0,0,.4))">
+    </div>
+  </div>
+</section>
+
+<section id="strip" class="pad">
+  <div class="strip-grid">
+    <div class="rv"><div class="n" data-count="300">0</div><div class="l">товаров на складе</div></div>
+    <div class="rv"><div class="n" data-count="15">0</div><div class="l">брендов-партнёров</div></div>
+    <div class="rv"><div class="n" data-count="5">0</div><div class="l">категорий</div></div>
+    <div class="rv"><div class="n" data-count="98">0</div><div class="l">% заказов вовремя</div></div>
+  </div>
+</section>
+
+<footer id="footer">
+  <div class="foot-top">
+    <div>
+      <h2><span class="zoo">Зоо</span>Опт · Склад · Маркет</h2>
+      <p style="color:rgba(255,255,255,.6);max-width:420px;margin-top:16px;line-height:1.6">Оптово-розничная зоо-компания. Работаем с магазинами, вет.клиниками и владельцами питомцев по всей России.</p>
+      <div style="display:flex;gap:12px;margin-top:24px">
+        <a class="btn btn-yellow" href="tel:+79779955566">+7 (977) 99-555-66</a>
+      </div>
+    </div>
+    <div class="foot-col"><h4>Каталог</h4>
+      <a href="#cats">Собакам</a><a href="#cats">Кошкам</a><a href="#cats">Грызунам и птицам</a><a href="#cats">Аквариумистика</a><a href="#cats">Ветаптека</a></div>
+    <div class="foot-col"><h4>Компания</h4>
+      <a href="#opt">Опт и условия</a><a href="#">Доставка и оплата</a><a href="#">Документы</a><a href="#footer">Контакты</a>
+      <div style="margin-top:16px;color:rgba(255,255,255,.5);font-size:.85rem">okoteam.top@gmail.com<br>zoopt.ru</div></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 ЗоОпт · Склад · Маркет</span><span>Сделано OKO TEAM · okoteam.top</span></div>
+</footer>
+
+<script src="js/vendor/gsap.min.js"></script>
+<script src="js/vendor/ScrollTrigger.min.js"></script>
+<script src="js/vendor/lenis.min.js"></script>
+<script type="importmap">
+{ "imports": { "three":"./js/vendor/three.module.js" }}
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
