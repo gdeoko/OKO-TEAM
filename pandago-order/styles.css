@@ -129,6 +129,53 @@ h3 { font-size: var(--fs-h3); }
 
 section { position: relative; padding: clamp(72px, 10vw, 140px) 0; }
 
+/* ── Премиум-зерно поверх всей страницы ── */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Кастомный курсор ── */
+.has-cursor, .has-cursor a, .has-cursor button, .has-cursor [data-magnetic] { cursor: none; }
+.cursor-dot, .cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 500;
+  pointer-events: none;
+  border-radius: 50%;
+  margin-left: -4px;
+  margin-top: -4px;
+  will-change: transform;
+}
+.cursor-dot {
+  width: 8px; height: 8px;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+  transition: width var(--e-fast), height var(--e-fast), background var(--e-fast);
+}
+.cursor-ring {
+  width: 34px; height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  border: 1px solid rgba(59, 158, 255, 0.6);
+  transition: width var(--e-medium), height var(--e-medium), border-color var(--e-medium), background var(--e-medium);
+}
+.cursor-hover .cursor-ring {
+  width: 54px; height: 54px;
+  margin-left: -27px;
+  margin-top: -27px;
+  background: rgba(59, 158, 255, 0.08);
+  border-color: var(--cyan);
+}
+.cursor-hover .cursor-dot { width: 5px; height: 5px; }
+
+[data-magnetic] { transition: transform var(--e-medium); will-change: transform; }
+
 /* ── Прогресс скролла ── */
 .scroll-progress {
   position: fixed;
@@ -369,8 +416,8 @@ section { position: relative; padding: clamp(72px, 10vw, 140px) 0; }
 }
 
 .hero h1 { max-width: 12ch; }
-.hero h1 .line { display: block; overflow: hidden; }
-.hero h1 .ch { display: inline-block; will-change: transform; }
+.hero h1 .line { display: block; white-space: nowrap; }
+.hero h1 .line [data-scramble] { display: inline-block; }
 
 .hero-sub {
   margin-top: clamp(20px, 3vw, 32px);

@@ -33,39 +33,8 @@ export async function initAnimations() {
     });
   }
 
-  /* ── Hero: заголовок посимвольно ── */
-  const title = document.getElementById('heroTitle');
-  if (title) {
-    const chars = [];
-    title.querySelectorAll('.line').forEach((line) => {
-      const walk = (node) => {
-        [...node.childNodes].forEach((child) => {
-          if (child.nodeType === Node.TEXT_NODE) {
-            const frag = document.createDocumentFragment();
-            for (const ch of child.textContent) {
-              if (ch === ' ') { frag.appendChild(document.createTextNode(' ')); continue; }
-              const s = document.createElement('span');
-              s.className = 'ch';
-              s.textContent = ch;
-              frag.appendChild(s);
-              chars.push(s);
-            }
-            child.replaceWith(frag);
-          } else if (child.nodeType === Node.ELEMENT_NODE) {
-            walk(child);
-          }
-        });
-      };
-      walk(line);
-    });
-    gsap.from(chars, {
-      yPercent: 108,
-      duration: 0.8,
-      ease: 'power4.out',
-      stagger: 0.028,
-      delay: 0.15,
-    });
-  }
+  /* Заголовок hero оживляет модуль fx.js (декодинг-скрэмблинг),
+     поэтому здесь его не трогаем, чтобы эффекты не конфликтовали. */
 
   /* ── Ступенчатое появление hero-блоков ── */
   gsap.from('.hero [data-reveal]', {

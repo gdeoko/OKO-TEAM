@@ -14,6 +14,7 @@
 import { REVIEWS, FAQ_ITEMS } from './catalog-data.js';
 import { Calc } from './calculator.js';
 import { Chat } from './chatbot.js';
+import { initFx } from './fx.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -348,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   initHeroScene();
+  initFx();
   import('./animations.js')
     .then((mod) => mod.initAnimations())
     .catch(() => {});
