@@ -281,8 +281,7 @@ class Panel:
         t = c.beginText(x0, y_pt)
         t.setFont(font, pt)
         t.setFillColor(color)
-        if track_pt:
-            t.setCharSpace(track_pt)
+        t.setCharSpace(track_pt or 0)   # всегда явно — иначе трекинг «протекает» на следующий текст
         t.textOut(s)
         c.drawText(t)
 

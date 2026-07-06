@@ -14,7 +14,7 @@ SITE = "zoopt.ru"
 
 
 def _dots(items):
-    return "   ·   ".join(items)
+    return "  ·  ".join(items)
 
 
 def _shell(name, w, h, logo_corner=True):
@@ -41,8 +41,8 @@ def _category_top(name, w, h, ai_name, heading, items, circle_d, head_cm=8.0):
     else:
         p.text_fit(y_head, heading, F_HEAD, head_cm, GREEN_DARK,
                    max_w_cm=w - 16, tracking=0.1)
-    p.text_fit(y_head + head_cm + 4.5, _dots(items), F_SUB, 2.6, BLACK,
-               max_w_cm=w - 17)
+    p.text_fit(y_head + head_cm + 5.0, _dots(items), F_SUB_B, 3.4, BLACK,
+               max_w_cm=w - 13)
     p.corner_leaves(size_cm=4.5)
     return p.finish()
 
