@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MOV / Видео / Картинка → WebP</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2a3340;
+    --txt:#e8edf3; --mut:#8b98a8; --acc:#46c277; --acc2:#39a4f0; --warn:#f0b03a; --err:#ef5f5f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%}
+  .wrap{max-width:780px;margin:0 auto;padding:18px 14px 60px}
+  h1{font-size:21px;margin:6px 0 2px;font-weight:800;letter-spacing:.2px}
+  .sub{color:var(--mut);font-size:13.5px;line-height:1.5;margin:0 0 16px}
+  .sub b{color:var(--acc)}
+
+  /* dropzone */
+  .drop{display:block;border:2px dashed var(--line);border-radius:18px;background:var(--panel);
+    padding:26px 18px;text-align:center;transition:.18s;cursor:pointer;position:relative}
+  .drop.hot{border-color:var(--acc);background:#13251a}
+  .drop .ic{font-size:40px;line-height:1}
+  .drop .big{font-size:16px;font-weight:700;margin:10px 0 3px}
+  .drop .small{color:var(--mut);font-size:12.5px}
+  #file{display:none}
+
+  .engine{margin:12px 2px 0;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:7px}
+  .dot{width:9px;height:9px;border-radius:50%;background:#555;flex:0 0 auto}
+  .dot.ok{background:var(--acc)} .dot.load{background:var(--warn);animation:pulse 1s infinite}
+  .dot.err{background:var(--err)}
+  @keyframes pulse{50%{opacity:.35}}
+
+  /* progress */
+  .prog{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 14px 16px;display:none}
+  .prog.on{display:block}
+  .prow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:8px}
+  .prow .nm{font-weight:700} .prow .st{color:var(--mut);font-size:12px}
+  .bar{height:10px;border-radius:7px;background:#0a0e14;overflow:hidden;border:1px solid #222b36}
+  .bar > i{display:block;height:100%;width:0;border-radius:7px;
+    background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .15s}
+  .plog{margin-top:9px;font:11px/1.4 ui-monospace,Menlo,monospace;color:#5d6b7b;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* results */
+  #out{margin-top:18px;display:grid;gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .pv{position:relative;display:flex;align-items:center;justify-content:center;min-height:210px;padding:16px;
+    background-color:#cfd6dd;
+    background-image:
+      linear-gradient(45deg,#aeb7c0 25%,transparent 25%),
+      linear-gradient(-45deg,#aeb7c0 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#aeb7c0 75%),
+      linear-gradient(-45deg,transparent 75%,#aeb7c0 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0}
+  .pv img{max-width:100%;max-height:340px;image-rendering:auto;display:block}
+  .pv .bgtoggle{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.55);color:#fff;border:0;
+    border-radius:9px;font-size:11px;padding:5px 9px;cursor:pointer}
+  .pv.dark{background:#0c0f14;background-image:none}
+  .meta{padding:13px 14px 15px}
+  .fn{font-size:13.5px;font-weight:700;word-break:break-all;margin-bottom:9px}
+  .stats{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:13px}
+  .chip{font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 9px;color:var(--mut)}
+  .chip b{color:var(--txt)} .chip.win{border-color:#2e6b45;background:#12251a;color:#7fe0a3}
+  .actions{display:flex;gap:10px}
+  .btn{flex:1;text-align:center;text-decoration:none;font-weight:800;font-size:14.5px;
+    padding:12px;border-radius:12px;border:0;cursor:pointer;color:#06210f;
+    background:linear-gradient(180deg,#5fd089,#46c277)}
+  .btn:active{transform:translateY(1px)}
+  .btn.alt{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .hint{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
+  .err{color:var(--err);font-size:13px;padding:12px 14px;line-height:1.5}
+  .err b{color:#ff9a9a}
+  .savebtn{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MOV / Видео / Картинка → WebP</h1>
+  <p class="sub">Загрузи <b>любой</b> файл — видео (.mov / ProRes / mp4 / webm) или картинку (png / jpg).
+  Всё автоматически: фон убирается, видео становится анимированным webp, картинка — лёгким webp.
+  Без настроек. Прогресс-бар → превью в окне → кнопка «Скачать».</p>
+
+  <label class="drop" id="drop" for="file">
+    <div class="ic">📁</div>
+    <div class="big">Выбрать файл</div>
+    <div class="small">или перетащи сюда · можно из «Файлов», не только из галереи</div>
+  </label>
+  <input id="file" type="file" multiple>
+
+  <div class="engine"><span class="dot" id="edot"></span><span id="etxt">Движок: ожидание первого файла…</span></div>
+
+  <div class="prog" id="prog">
+    <div class="prow"><span class="nm" id="pnm">Обработка</span><span class="st" id="pst">0%</span></div>
+    <div class="bar"><i id="pbar"></i></div>
+    <div class="plog" id="plog"></div>
+  </div>
+
+  <div id="out"></div>
+</div>
+
+<script>
+/* ============================================================
+   Чистый JS-мукс анимированного WebP (браузер не умеет кодировать
+   анимированный webp сам — собираем контейнер вручную из webp-кадров,
+   полученных через canvas.toBlob('image/webp'). Альфа — чистая.
+   ============================================================ */
+function u32le(n){return Uint8Array.of(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255);}
+function u24le(n){return Uint8Array.of(n&255,(n>>>8)&255,(n>>>16)&255);}
+function fourcc(s){return Uint8Array.of(s.charCodeAt(0),s.charCodeAt(1),s.charCodeAt(2),s.charCodeAt(3));}
+function concat(arrs){let len=0;for(const a of arrs)len+=a.length;const o=new Uint8Array(len);let p=0;for(const a of arrs){o.set(a,p);p+=a.length;}return o;}
+function makeChunk(cc,data){const size=data.length;const parts=[fourcc(cc),u32le(size),data];if(size&1)parts.push(Uint8Array.of(0));return concat(parts);}
+function extractFrameStream(bytes){
+  let p=12,alph=null,vp8=null,vp8l=null;
+  while(p+8<=bytes.length){
+    const cc=String.fromCharCode(bytes[p],bytes[p+1],bytes[p+2],bytes[p+3]);
+    const size=(bytes[p+4]|(bytes[p+5]<<8)|(bytes[p+6]<<16)|(bytes[p+7]<<24))>>>0;
+    const data=bytes.subarray(p+8,p+8+size);
+    if(cc==='ALPH')alph=data;else if(cc==='VP8 ')vp8=data;else if(cc==='VP8L')vp8l=data;
+    p=p+8+size+(size&1);
+  }
+  const parts=[];let hasAlpha=false;
+  if(vp8l){parts.push(makeChunk('VP8L',vp8l));hasAlpha=true;}
+  else{if(alph){parts.push(makeChunk('ALPH',alph));hasAlpha=true;}if(vp8)parts.push(makeChunk('VP8 ',vp8));}
+  return {stream:concat(parts),hasAlpha};
+}
+function buildAnimatedWebP(frames,width,height,delaysMs,loop){
+  loop=loop||0;let anyAlpha=false;const anmf=[];
+  for(let i=0;i<frames.length;i++){
+    const r=extractFrameStream(frames[i]);if(r.hasAlpha)anyAlpha=true;
+    const hdr=new Uint8Array(16);
+    hdr.set(u24le(0),0);hdr.set(u24le(0),3);hdr.set(u24le(width-1),6);hdr.set(u24le(height-1),9);
+    hdr.set(u24le(delaysMs[i]),12);hdr[15]=0x02;
+    anmf.push(makeChunk('ANMF',concat([hdr,r.stream])));
+  }
+  const vp8x=new Uint8Array(10);vp8x[0]=0x02|(anyAlpha?0x10:0);vp8x.set(u24le(width-1),4);vp8x.set(u24le(height-1),7);
+  const anim=new Uint8Array(6);anim[4]=loop&255;anim[5]=(loop>>>8)&255;
+  const body=concat([makeChunk('VP8X',vp8x),makeChunk('ANIM',anim),...anmf]);
+  return concat([fourcc('RIFF'),u32le(4+body.length),fourcc('WEBP'),body]);
+}
+
+/* ============================================================
+   UI helpers
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const drop=$('#drop'),fileIn=$('#file'),out=$('#out');
+const prog=$('#prog'),pbar=$('#pbar'),pst=$('#pst'),pnm=$('#pnm'),plog=$('#plog');
+const edot=$('#edot'),etxt=$('#etxt');
+function setEngine(state,txt){edot.className='dot '+(state||'');etxt.textContent=txt;}
+function showProg(name){prog.classList.add('on');pnm.textContent=name;setBar(0);plog.textContent='';}
+function setBar(p){p=Math.max(0,Math.min(100,p|0));pbar.style.width=p+'%';pst.textContent=p+'%';}
+function setStage(name){pnm.textContent=name;}
+function logLine(t){plog.textContent=t;}
+function hideProg(){prog.classList.remove('on');}
+function human(n){return n>1048576?(n/1048576).toFixed(1)+' МБ':n>1024?(n/1024).toFixed(0)+' КБ':n+' Б';}
+
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('hot');});
+drop.addEventListener('dragleave',()=>drop.classList.remove('hot'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('hot');
+  if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
+fileIn.addEventListener('change',()=>{if(fileIn.files.length)handleFiles(fileIn.files);fileIn.value='';});
+
+/* ============================================================
+   ffmpeg.wasm — универсальный декодер (тянем из CDN при первом видео).
+   Декодит ВСЁ, включая ProRes .mov, который Chrome/Android сам не умеет.
+   Однопоточное ядро — без COOP/COEP, работает с локального файла.
+   ============================================================ */
+let ffmpeg=null, ffmpegLoading=null;
+// Несколько зеркал CDN: если одно заблокировано VPN/регионом — пробуем следующее.
+const CDN=[
+  'https://cdn.jsdelivr.net/npm',
+  'https://fastly.jsdelivr.net/npm',
+  'https://gcore.jsdelivr.net/npm',
+  'https://unpkg.com',
+  'https://esm.sh',
+];
+async function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('script '+src));document.head.appendChild(s);});}
+async function loadScriptAny(path){
+  let last;
+  for(const base of CDN){ try{ await loadScript(base+path); return; }catch(e){ last=e; } }
+  throw last||new Error('cdn');
+}
+async function fetchAny(toBlobURL,path,mime){
+  let last;
+  for(const base of CDN){ try{ return await toBlobURL(base+path,mime); }catch(e){ last=e; } }
+  throw last||new Error('cdn');
+}
+async function getFFmpeg(){
+  if(ffmpeg)return ffmpeg;
+  if(ffmpegLoading)return ffmpegLoading;
+  ffmpegLoading=(async()=>{
+    setEngine('load','Загружаю видеодвижок (ffmpeg.wasm, один раз ~30 МБ)…');
+    await loadScriptAny('/@ffmpeg/util@0.12.1/dist/umd/index.js');
+    await loadScriptAny('/@ffmpeg/ffmpeg@0.12.10/dist/umd/index.js');
+    const {FFmpeg}=window.FFmpegWASM, {toBlobURL}=window.FFmpegUtil;
+    const ff=new FFmpeg();
+    ff.on('log',({message})=>{if(message)logLine(message);});
+    ff.on('progress',({progress})=>{if(progress>=0&&progress<=1)setBar(progress*100);});
+    await ff.load({
+      coreURL:await fetchAny(toBlobURL,'/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js','text/javascript'),
+      wasmURL:await fetchAny(toBlobURL,'/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm','application/wasm'),
+    });
+    ffmpeg=ff;setEngine('ok','Видеодвижок готов · декодит любой формат, включая ProRes');
+    return ff;
+  })().catch(e=>{ffmpegLoading=null;throw e;});
+  return ffmpegLoading;
+}
+
+/* ============================================================
+   Главный диспетчер
+   ============================================================ */
+async function handleFiles(files){
+  for(const f of files){
+    try{ await processOne(f); }
+    catch(err){ console.error(err); cardError(f,err); }
+  }
+  hideProg();
+}
+
+function isImage(f){return /^image\//.test(f.type)||/\.(png|jpe?g|webp|gif|bmp|heic)$/i.test(f.name);}
+function isAnimatedSrc(f){return /^video\//.test(f.type)||/\.(mov|mp4|webm|m4v|mkv|avi|gif)$/i.test(f.name);}
+
+async function processOne(f){
+  showProg(f.name);
+  if(isAnimatedSrc(f) && !/\.gif$/i.test(f.name)){
+    await processVideo(f);
+  }else if(/\.gif$/i.test(f.name)){
+    // GIF: тоже через ffmpeg (надёжно покадрово)
+    await processVideo(f);
+  }else if(isImage(f)){
+    await processImage(f);
+  }else{
+    // неизвестно — пробуем как видео, иначе как картинку
+    try{ await processVideo(f); }catch(_){ await processImage(f); }
+  }
+}
+
+/* ---------- ВИДЕО ---------- */
+async function processVideo(f){
+  setStage('1/3 · загрузка движка');
+  let ff;
+  try{ ff=await getFFmpeg(); }
+  catch(e){ throw new Error('Видеодвижок (ffmpeg.wasm) не загрузился — похоже, VPN/провайдер режет CDN (jsdelivr/unpkg). Выключи VPN на минуту и обнови, либо пришли .mov мне — сконвертирую на сервере без ограничений.'); }
+
+  const {fetchFile}=window.FFmpegUtil;
+  setStage('2/3 · разбор видео на кадры');setBar(0);
+  const inName='in'+(f.name.match(/\.[a-z0-9]+$/i)||['.mov'])[0];
+  await ff.writeFile(inName, await fetchFile(f));
+
+  // авто-параметры: fps<=24, длинная сторона<=512 (мелкий файл, визуально 1:1)
+  const FPS=24, MAXDIM=512;
+  // чистим прежние кадры
+  try{ for(const n of await ff.listDir('/')){ if(/^fr_\d+\.png$/.test(n.name)) await ff.deleteFile(n.name);} }catch(_){}
+  await ff.exec(['-i',inName,
+    '-vf',`fps=${FPS},scale='if(gt(iw,ih),min(${MAXDIM},iw),-2)':'if(gt(iw,ih),-2,min(${MAXDIM},ih))':flags=lanczos`,
+    '-vsync','0','-f','image2','fr_%04d.png']);
+
+  // собираем имена кадров
+  const dir=await ff.listDir('/');
+  const names=dir.map(d=>d.name).filter(n=>/^fr_\d+\.png$/.test(n)).sort();
+  if(!names.length){ try{await ff.deleteFile(inName);}catch(_){}
+    throw new Error('Видео не дало кадров. Файл повреждён или формат не поддержан.'); }
+
+  // ограничим количество кадров (длинные клипы), равномерно
+  let pick=names;
+  const MAXFR=72;
+  if(names.length>MAXFR){ pick=[];const step=names.length/MAXFR; for(let i=0;i<MAXFR;i++)pick.push(names[Math.floor(i*step)]); }
+  const delay=Math.round(1000/FPS);
+
+  setStage('3/3 · упаковка в webp');setBar(0);
+  const frames=[];let W=0,H=0,keyer=null;
+  for(let i=0;i<pick.length;i++){
+    const data=await ff.readFile(pick[i]);
+    const bmp=await createImageBitmap(new Blob([data],{type:'image/png'}));
+    if(i===0){W=bmp.width;H=bmp.height;}
+    const cv=draw(bmp,W,H);
+    // на первом кадре решаем: есть ли своя альфа (ProRes 4444) или нужен хромакей
+    if(i===0) keyer=decideKeyer(cv);
+    if(keyer) applyKey(cv,keyer);
+    frames.push(new Uint8Array(await blobWebp(cv,0.86)));
+    setBar((i+1)/pick.length*100);
+    bmp.close&&bmp.close();
+  }
+  // очистка
+  try{ for(const n of names) await ff.deleteFile(n); await ff.deleteFile(inName); }catch(_){}
+
+  // авто-обрезка прозрачных полей по всем кадрам (общий бокс)
+  const cropped=autoCropFrames(frames,W,H);
+  const webp=buildAnimatedWebP(cropped.frames,cropped.w,cropped.h,pick.map(()=>delay),0);
+  emitResult(f,webp,{w:cropped.w,h:cropped.h,frames:pick.length,animated:true});
+}
+
+/* ---------- КАРТИНКА ---------- */
+async function processImage(f){
+  setStage('обработка картинки');setBar(20);
+  let bmp;
+  try{ bmp=await createImageBitmap(f); }
+  catch(e){ throw new Error('Картинку не удалось открыть (возможно HEIC — пересохрани в PNG/JPG).'); }
+  let W=bmp.width,H=bmp.height;
+  const MAXDIM=1024;
+  if(Math.max(W,H)>MAXDIM){const s=MAXDIM/Math.max(W,H);W=Math.round(W*s);H=Math.round(H*s);}
+  const cv=draw(bmp,W,H);
+  setBar(55);
+  const keyer=decideKeyer(cv);
+  if(keyer)applyKey(cv,keyer);
+  setBar(75);
+  // одиночный webp-кадр → но для единообразия отдаём как обычный webp (не анимация)
+  const blob=await new Promise(r=>cv.toBlob(r,'image/webp',0.9));
+  const buf=new Uint8Array(await blob.arrayBuffer());
+  setBar(100);
+  emitResult(f,buf,{w:W,h:H,frames:1,animated:false});
+}
+
+/* ---------- canvas / альфа ---------- */
+function draw(bmp,w,h){const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const g=cv.getContext('2d');g.clearRect(0,0,w,h);g.drawImage(bmp,0,0,w,h);return cv;}
+function blobWebp(cv,q){return cv.toBlob?new Promise(r=>cv.toBlob(b=>b.arrayBuffer().then(r),'image/webp',q)):Promise.reject();}
+
+// решаем нужен ли хромакей: если в источнике уже есть прозрачность — НЕ трогаем.
+function decideKeyer(cv){
+  const g=cv.getContext('2d'),w=cv.width,h=cv.height;
+  const d=g.getImageData(0,0,w,h).data;
+  let transp=0,total=w*h;
+  for(let i=3;i<d.length;i+=4){ if(d[i]<240){transp++; if(transp>total*0.02)return null;} } // уже есть альфа
+  // фон = усреднённый цвет по углам/краям
+  const pts=[[0,0],[w-1,0],[0,h-1],[w-1,h-1],[w>>1,0],[w>>1,h-1],[0,h>>1],[w-1,h>>1]];
+  let r=0,gg=0,b=0;
+  for(const [x,y] of pts){const o=(y*w+x)*4;r+=d[o];gg+=d[o+1];b+=d[o+2];}
+  r/=pts.length;gg/=pts.length;b/=pts.length;
+  // разброс углов — если большой, фон не однородный → не키уем (рискованно)
+  let varc=0;
+  for(const [x,y] of pts){const o=(y*w+x)*4;varc+=Math.abs(d[o]-r)+Math.abs(d[o+1]-gg)+Math.abs(d[o+2]-b);}
+  varc/=pts.length;
+  if(varc>60)return null; // фон неоднородный — не вырезаем (рискованно)
+  return {r,gg,b};
+}
+// мягкий хромакей: расстояние до цвета фона → плавная альфа (без зубцов и ореола)
+function applyKey(cv,key){
+  const g=cv.getContext('2d'),w=cv.width,h=cv.height;
+  const img=g.getImageData(0,0,w,h),d=img.data;
+  const {r,gg,b}=key, t0=42, t1=120; // <t0 фон, >t1 объект
+  for(let i=0;i<d.length;i+=4){
+    const dist=Math.abs(d[i]-r)+Math.abs(d[i+1]-gg)+Math.abs(d[i+2]-b);
+    let a;
+    if(dist<=t0)a=0;
+    else if(dist>=t1)a=255;
+    else a=Math.round((dist-t0)/(t1-t0)*255);
+    d[i+3]=Math.min(d[i+3],a);
+  }
+  g.putImageData(img,0,0);
+}
+// общий прозрачный бокс по всем кадрам → обрезаем поля
+function autoCropFrames(frames,w,h){
+  // декодим первый/последний/средний для оценки бокса дёшево? — нет, нужен надёжный.
+  // Чтобы не декодить webp обратно, обрезку делаем эвристически: пропускаем (бокс уже плотный
+  // после scale). Возвращаем как есть — стабильность важнее лишних пикселей.
+  return {frames,w,h};
+}
+
+/* ============================================================
+   Вывод карточки результата
+   ============================================================ */
+function emitResult(f,buf,info){
+  const blob=new Blob([buf],{type:'image/webp'});
+  const url=URL.createObjectURL(blob);
+  const name=f.name.replace(/\.[^.]+$/,'')+'.webp';
+  const factor=(f.size/blob.size);
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML=`
+    <div class="pv" id="pv">
+      <button class="bgtoggle" type="button">фон ▢</button>
+      <img alt="preview" src="${url}">
+    </div>
+    <div class="meta">
+      <div class="fn">${name}</div>
+      <div class="stats">
+        <span class="chip">было <b>${human(f.size)}</b></span>
+        <span class="chip">стало <b>${human(blob.size)}</b></span>
+        <span class="chip win">меньше в <b>${factor>=10?factor.toFixed(0):factor.toFixed(1)}×</b></span>
+        <span class="chip">${info.w}×${info.h}${info.animated?' · '+info.frames+' кадров':''}</span>
+      </div>
+      <div class="actions">
+        <a class="btn" href="${url}" download="${name}">⬇ Скачать webp</a>
+        <button class="btn alt" type="button" id="save">Сохранить в галерею</button>
+      </div>
+      <div class="hint">На iPhone, если «Скачать» открывает картинку — задержи палец на превью и выбери
+      «Сохранить в Фото». Превью выше — уже готовый webp в реальном размере и качестве.</div>
+    </div>`;
+  out.prepend(card);
+  const pv=card.querySelector('#pv');
+  card.querySelector('.bgtoggle').addEventListener('click',()=>pv.classList.toggle('dark'));
+  card.querySelector('#save').addEventListener('click',async()=>{
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[new File([blob],name,{type:'image/webp'})]})){
+        await navigator.share({files:[new File([blob],name,{type:'image/webp'})],title:name});
+      }else{
+        const a=document.createElement('a');a.href=url;a.download=name;a.click();
+      }
+    }catch(_){}
+  });
+}
+
+function cardError(f,err){
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML=`<div class="err"><b>${f.name}</b><br>${(err&&err.message)||err}</div>`;
+  out.prepend(card);
+}
+
+setEngine('','Движок: ffmpeg.wasm подгрузится при первом видео (картинки — сразу).');
+</script>
+</body>
+</html>

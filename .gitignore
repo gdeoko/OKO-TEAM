@@ -15,3 +15,31 @@ vtouch.cjs
 _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
+
+# Mortis build/work artifacts (unzipped third-party project, extracted task archives)
+tools/
+build_mortis/
+new_archive/
+mortis_mice/
+integ/
+final/
+chars/
+orig/
+*.bundle
+oko-bundle-*.txt
+mortis-test/
+test_*.png
+scene-test/
+scene_*.png
+probe.png
+atk_*.png
+frame_*.png
+КАК-ЗАЛИТЬ-ВЕТКУ.txt
+
+# Generated delivery artifacts (Mort quality test, sent to user directly)
+mort-quality-test.html
+mort_new.webp
+mort_compare.png
+MICE-CONVERT-INSTRUCTION.md
+mice-in-chat.html
+bat-originals-REAL-sizes.zip
