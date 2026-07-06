@@ -336,6 +336,16 @@
       <div class="children" id="children"><!-- JS --></div>
       <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
 
+      <h2 class="section-title">Игры и развитие</h2>
+      <button class="games-tile" id="openVerseGame">
+        <div class="games-tile__icon"><span data-icon="gamepad" data-size="24"></span></div>
+        <div class="games-tile__body">
+          <div class="games-tile__name">Собери стих</div>
+          <div class="games-tile__desc">Пазл-игра · собери стих из слов · +15–30 XP</div>
+        </div>
+        <span data-icon="play" data-size="18" class="games-tile__play"></span>
+      </button>
+
       <h2 class="section-title">Настройки</h2>
       <div class="menu-list">
         <button class="menu-item"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
@@ -491,6 +501,24 @@
       </div>
 
       <button class="btn btn--primary lesson-done" id="lessonDone" disabled>Отметить урок пройденным</button>
+    </section>
+
+
+    <!-- ── МИНИ-ИГРА «СОБЕРИ СТИХ» (этап 5) ── -->
+    <section class="screen" data-screen="verse">
+      <button class="child-back" id="verseBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Собери стих</div>
+        <div class="verse-head__meta"><span id="verseLevelName">Лёгкий</span> · <span data-icon="clock" data-size="13"></span> <span id="verseTimer">0:00</span></div>
+      </div>
+      <div class="verse-ref" id="verseRef"></div>
+      <div class="verse-target" id="verseTarget"></div>
+      <div class="verse-bank" id="verseBank"></div>
+      <div class="verse-actions">
+        <button class="btn btn--outline" id="verseReset" style="width:auto">Сбросить</button>
+        <button class="btn btn--primary" id="verseCheck" style="width:auto">Проверить</button>
+      </div>
+      <div class="verse-levels" id="verseLevels"></div>
     </section>
 
   </main>

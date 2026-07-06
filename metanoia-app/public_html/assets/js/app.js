@@ -509,7 +509,10 @@ function runSearch() {
       ${it.locked ? `<div class="sr__lock">${ICON('lock', 16)}</div>` : ''}
     </button>`).join('');
   $$('#searchResults .sr').forEach((el) =>
-    el.addEventListener('click', () => toast('Переход к контенту — по мере готовности разделов')));
+    el.addEventListener('click', () => {
+      if (el.querySelector('.sr__title')?.textContent === 'Собери стих') openVerse('easy');
+      else toast('Переход к контенту — по мере готовности разделов');
+    }));
 }
 
 /* ───────── ДЕТСКИЙ ПРОФИЛЬ И PIN ───────── */
@@ -1205,6 +1208,107 @@ function filterMsgs(q) {
   $('#cvSearchCount').textContent = q ? (found ? `найдено: ${found}` : 'не найдено') : '';
 }
 
+
+/* ───────── МИНИ-ИГРА «СОБЕРИ СТИХ» (этап 5, tap-to-place) ───────── */
+
+const VERSES = {
+  easy:   { ref: 'Пс. 22:1', text: 'Господь Пастырь мой', name: 'Лёгкий', xp: 15 },
+  medium: { ref: '1 Ин. 4:16', text: 'Бог есть любовь и пребывающий в любви', name: 'Средний', xp: 22 },
+  hard:   { ref: 'Мф. 5:16', text: 'Так да светит свет ваш пред людьми чтобы они видели ваши добрые дела', name: 'Сложный', xp: 30 },
+};
+let verseLevel = 'easy';
+let versePlaced = [];       // индексы слов в порядке нажатия
+let verseWords = [];        // {w, idx}
+let verseTimer = null, verseSec = 0;
+
+function shuffleSeeded(arr) {
+  // детерминированная тасовка (без Math.random в кадре — вариативность по длине)
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = (i * 7 + a.length * 13) % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  // если совпало с оригиналом — сдвиг
+  if (a.every((x, i) => x.idx === i)) a.push(a.shift());
+  return a;
+}
+
+function verseFmt(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+
+function openVerse(level) {
+  verseLevel = level || 'easy';
+  const v = VERSES[verseLevel];
+  versePlaced = [];
+  const words = v.text.split(' ');
+  verseWords = shuffleSeeded(words.map((w, idx) => ({ w, idx })));
+  $('#verseRef').textContent = v.ref;
+  $('#verseLevelName').textContent = v.name;
+  renderVerse();
+  renderVerseLevels();
+  verseSec = 0; $('#verseTimer').textContent = '0:00';
+  clearInterval(verseTimer);
+  verseTimer = setInterval(() => { verseSec++; $('#verseTimer').textContent = verseFmt(verseSec); }, 1000);
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'verse'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function renderVerse() {
+  $('#verseTarget').innerHTML = versePlaced.map((pi) =>
+    `<button class="word word--placed" data-take="${pi}">${verseWords[pi].w}</button>`).join('');
+  $('#verseBank').innerHTML = verseWords.map((w, pi) =>
+    versePlaced.includes(pi) ? '' : `<button class="word" data-put="${pi}">${w.w}</button>`).join('');
+  $$('#verseBank [data-put]').forEach((el) => el.addEventListener('click', () => {
+    versePlaced.push(Number(el.dataset.put)); renderVerse();
+  }));
+  $$('#verseTarget [data-take]').forEach((el) => el.addEventListener('click', () => {
+    versePlaced = versePlaced.filter((x) => x !== Number(el.dataset.take)); renderVerse();
+  }));
+}
+
+function renderVerseLevels() {
+  $('#verseLevels').innerHTML = Object.entries(VERSES).map(([k, v]) =>
+    `<button class="verse-level ${k === verseLevel ? 'verse-level--on' : ''}" data-lvl="${k}">${v.name}</button>`).join('');
+  $$('#verseLevels [data-lvl]').forEach((el) =>
+    el.addEventListener('click', () => openVerse(el.dataset.lvl)));
+}
+
+function checkVerse() {
+  const v = VERSES[verseLevel];
+  const total = v.text.split(' ').length;
+  if (versePlaced.length < total) return toast('Собери стих полностью');
+  const correct = versePlaced.every((pi, pos) => verseWords[pi].idx === pos);
+  const cells = $$('#verseTarget .word');
+  versePlaced.forEach((pi, pos) => {
+    cells[pos].classList.add(verseWords[pi].idx === pos ? 'word--right' : 'word--wrong');
+  });
+  if (correct) {
+    clearInterval(verseTimer);
+    const bonus = verseSec < 20 ? 5 : 0;
+    setTimeout(() => {
+      if (window.MAGIC) MAGIC.rewardModal({
+        icon: 'book', title: 'Стих собран!',
+        subtitle: `«${v.text}» — ${v.ref}. Время: ${verseFmt(verseSec)}${bonus ? ' · бонус за скорость!' : ''}`,
+        xp: v.xp + bonus,
+      });
+    }, 500);
+  } else {
+    setTimeout(() => cells.forEach((c) => c.classList.remove('word--wrong')), 600);
+    toast('Почти! Проверь порядок слов');
+  }
+}
+
+function initVerseGame() {
+  $('#openVerseGame')?.addEventListener('click', () => openVerse('easy'));
+  $('#verseBack').addEventListener('click', () => {
+    clearInterval(verseTimer);
+    $('#nav').style.display = '';
+    switchTab('profile');
+  });
+  $('#verseReset').addEventListener('click', () => { versePlaced = []; renderVerse(); });
+  $('#verseCheck').addEventListener('click', checkVerse);
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -1358,6 +1462,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPin();
   initChatView();
   initChatSearch();
+  initVerseGame();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');

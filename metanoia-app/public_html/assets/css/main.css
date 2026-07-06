@@ -1283,3 +1283,58 @@ body.in-chat .header { display: none; }
   .splash__video, .splash__logo svg, .today__streak .ic-terra,
   .reward__halo, .reward__badge { animation: none !important; }
 }
+
+
+/* ══════════ КАРТОЧКА ИГРЫ В ПРОФИЛЕ ══════════ */
+.games-tile {
+  display: flex; align-items: center; gap: 14px;
+  width: 100%; text-align: left;
+  background: linear-gradient(160deg, #fff, #FBF4E9);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-card);
+  padding: 14px 16px; margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(26,58,82,.06);
+}
+.games-tile__icon { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 12px;
+  background: linear-gradient(160deg, var(--gold), var(--terracotta)); color: var(--cream);
+  display: flex; align-items: center; justify-content: center; }
+.games-tile__name { font-weight: 700; font-size: 15px; }
+.games-tile__desc { font-size: 12px; color: var(--gray); margin-top: 2px; }
+.games-tile__play { margin-left: auto; color: var(--terracotta); }
+
+/* ══════════ ИГРА «СОБЕРИ СТИХ» ══════════ */
+.verse-head { margin-bottom: 4px; }
+.verse-head__title { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
+.verse-head__meta { font-size: 13px; color: var(--gray); display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+.verse-ref { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: .04em; margin: 14px 0 8px; }
+.verse-target {
+  min-height: 96px;
+  background: linear-gradient(160deg, #fff, #FBF6EE);
+  border: 1.5px dashed var(--gold);
+  border-radius: var(--radius-card);
+  padding: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
+}
+.verse-target:empty::before { content: 'Нажимай слова снизу по порядку'; color: var(--gray); font-size: 13px; }
+.verse-bank { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.word {
+  font-family: var(--font-body); font-size: 15px; font-weight: 600;
+  padding: 10px 15px; border-radius: 12px;
+  background: #fff; color: var(--navy);
+  border: 1.5px solid rgba(26,58,82,.16);
+  box-shadow: 0 1px 3px rgba(26,58,82,.08);
+  cursor: pointer; transition: transform 120ms var(--ease), background 150ms;
+  animation: wordIn 300ms var(--ease) both;
+}
+@keyframes wordIn { from { opacity: 0; transform: scale(.8); } }
+.word:active { transform: scale(.94); }
+.word--placed { background: var(--terracotta); color: var(--cream); border-color: var(--terracotta); }
+.word--right { background: var(--success); color: #fff; border-color: var(--success); animation: rightPulse 400ms; }
+.word--wrong { background: rgba(212,106,106,.15); border-color: var(--error); animation: pinshake 300ms; }
+@keyframes rightPulse { 50% { transform: scale(1.12); } }
+.verse-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.verse-levels { display: flex; gap: 8px; margin-top: 20px; }
+.verse-level {
+  flex: 1; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600;
+  border: 1.5px solid rgba(26,58,82,.16); color: var(--navy); background: #fff;
+}
+.verse-level--on { background: var(--navy); color: var(--cream); border-color: var(--navy); }
