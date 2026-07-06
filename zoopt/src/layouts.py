@@ -36,13 +36,13 @@ def _category_top(name, w, h, ai_name, heading, items, circle_d, head_cm=8.0):
     if isinstance(heading, (list, tuple)):
         for i, line in enumerate(heading):
             p.text_fit(y_head + i * (head_cm + 1.5), line, F_HEAD, head_cm,
-                       GREEN_DARK, max_w_cm=w - 8, tracking=0.1)
+                       GREEN_DARK, max_w_cm=w - 16, tracking=0.08)
         y_head += (len(heading) - 1) * (head_cm + 1.5)
     else:
         p.text_fit(y_head, heading, F_HEAD, head_cm, GREEN_DARK,
-                   max_w_cm=w - 8, tracking=0.15)
-    p.text_fit(y_head + head_cm + 4.0, _dots(items), F_SUB, 2.7, BLACK,
-               max_w_cm=w - 13)
+                   max_w_cm=w - 16, tracking=0.1)
+    p.text_fit(y_head + head_cm + 4.5, _dots(items), F_SUB, 2.6, BLACK,
+               max_w_cm=w - 17)
     p.corner_leaves(size_cm=4.5)
     return p.finish()
 
@@ -59,7 +59,7 @@ def section_1_top():   # 65×90 — логотип + СКЛАД·МАРКЕТ
 
 def section_1_bottom():  # 65×110 — часы работы + QR
     p = _shell("vitrina_01_bottom_65x110", 65, 110, logo_corner=False)
-    p.text_fit(20, "ЧАСЫ РАБОТЫ", F_HEAD, 6.5, GREEN_DARK, max_w_cm=55, tracking=0.1)
+    p.text_fit(20, "ЧАСЫ РАБОТЫ", F_HEAD, 6.0, GREEN_DARK, max_w_cm=51, tracking=0.08)
     p.moon_circle(p.cx, 48, 36)
     p.text(p.cx, 46, "9:00", F_BLACK, 7.2, BLACK)
     p.text(p.cx, 59, "18:00", F_BLACK, 7.2, BLACK)
@@ -90,7 +90,7 @@ def _door_top(name, w, h, number):
     d = min(w - 12, 42)
     p.moon_circle(p.cx, cy, d)
     p.text(p.cx, cy + d * 0.28, number, F_BLACK, d * 0.62, BLACK)
-    p.text_fit(cy + d / 2.0 + 12, "ВХОД", F_HEAD, 10, GREEN_DARK, max_w_cm=w - 10, tracking=0.3)
+    p.text_fit(cy + d / 2.0 + 12, "ВХОД", F_HEAD, 9.5, GREEN_DARK, max_w_cm=w - 15, tracking=0.25)
     p.corner_leaves(size_cm=4.0)
     return p.finish()
 
@@ -113,14 +113,11 @@ def section_4_top():   # 65×90
                          ["Корма", "Наполнители", "Игрушки"], circle_d=38, head_cm=8.0)
 
 
-def section_4_bottom():  # 65×110 — клубок + мышка + когтеточка
+def section_4_bottom():  # 65×110 — игрушки кошек (AI)
     p = _shell("vitrina_04_bottom_65x110", 65, 110, logo_corner=False)
-    p.text_fit(16, "КОШКИ ЛЮБЯТ ЗоОпт", F_HEAD, 4.5, GREEN_DARK, max_w_cm=57, tracking=0.05)
-    sil.icon(p, "yarn", 18, 55, 22, GREEN)
-    sil.icon(p, "post", 46, 55, 20, GREEN_DARK)
-    sil.icon(p, "cat" if False else "bowl", 32, 78, 8, GREEN_DARK)
-    p.text(p.cx, 100, "Ассортимент 300+ товаров", F_SUB, 3.0, BLACK)
-    p.corner_leaves(size_cm=4.0)
+    p.text_fit(16, "КОШКИ ЛЮБЯТ ЗоОпт", F_HEAD, 4.2, GREEN_DARK, max_w_cm=49, tracking=0.04)
+    p.ai_scene("cattoys", p.cx, 60, max_w_cm=51, max_h_cm=48)
+    p.text_fit(100, "Ассортимент 300+ товаров", F_SUB, 2.8, BLACK, max_w_cm=49)
     return p.finish()
 
 
@@ -145,11 +142,9 @@ def section_6_top():   # 51×117
                          circle_d=40, head_cm=6.0)
 
 
-def section_6_bottom():  # 51×57 — колесо, жёрдочка, кормушка
+def section_6_bottom():  # 51×57 — товары для птиц и грызунов (AI)
     p = _shell("vitrina_06_bottom_51x57", 51, 57, logo_corner=False)
-    sil.icon(p, "wheel", 13, 28, 9, GREEN)
-    sil.icon(p, "perch", 25.5, 28, 9, GREEN_DARK)
-    sil.icon(p, "feeder", 38, 28, 9, GREEN_DARK)
+    p.ai_scene("birds", p.cx, 28, max_w_cm=42, max_h_cm=44)
     return p.finish()
 
 
@@ -160,12 +155,9 @@ def section_7_top():   # 51×117
                          circle_d=40, head_cm=5.0)
 
 
-def section_7_bottom():  # 51×57 — волны и пузыри
+def section_7_bottom():  # 51×57 — аквариум (AI)
     p = _shell("vitrina_07_bottom_51x57", 51, 57, logo_corner=False)
-    sil.waves(p, 22, amp_cm=2.2, wl_cm=12, color=GREEN, weight_cm=0.5)
-    sil.waves(p, 30, amp_cm=2.2, wl_cm=12, color=YELLOW, weight_cm=0.5)
-    sil.icon(p, "bubbles", 20, 15, 8, GREEN)
-    sil.icon(p, "bubbles", 34, 43, 6, GREEN_DARK)
+    p.ai_scene("aqua", p.cx, 28, max_w_cm=43, max_h_cm=46)
     return p.finish()
 
 
@@ -174,21 +166,21 @@ def section_8_top():   # 65×90 — ОПТ
     p = Panel("vitrina_08_top_65x90", 65, 90)
     p.background(); p.edge_stripes()
     p.logo_center(y_cm=6, height_cm=7)
-    p.text_fit(58, "ОПТ", F_BLACK, 46, GREEN_DARK, max_w_cm=52, tracking=0.05)
-    p.text_fit(74, "ДЛЯ МАГАЗИНОВ И ВЕТКЛИНИК", F_SUB_B, 3.6, BLACK, max_w_cm=57)
+    p.text_fit(58, "ОПТ", F_BLACK, 46, GREEN_DARK, max_w_cm=49, tracking=0.05)
+    p.text_fit(74, "ДЛЯ МАГАЗИНОВ И ВЕТКЛИНИК", F_SUB_B, 3.2, BLACK, max_w_cm=49)
     p.corner_leaves(size_cm=5.0)
     return p.finish()
 
 
 def section_8_bottom():  # 65×110 — большой QR прайса + телефон
     p = _shell("vitrina_08_bottom_65x110", 65, 110, logo_corner=False)
-    p.text_fit(16, "ПРАЙС ОПТОМ", F_HEAD, 5.5, GREEN_DARK, max_w_cm=57, tracking=0.1)
+    p.text_fit(16, "ПРАЙС ОПТОМ", F_HEAD, 5.2, GREEN_DARK, max_w_cm=49, tracking=0.08)
     p.qr(p.cx - 15, 24, 30, f"https://{SITE}/wholesale")
     p.text(p.cx, 66, "Наведите камеру —", F_SUB, 2.6, BLACK)
     p.text(p.cx, 70.5, "скачать прайс-лист", F_SUB, 2.6, BLACK)
     p.moon_circle(p.cx, 88, 14, color=YELLOW)
     p.text(p.cx, 88.5, PHONE, F_SUB_B, 2.7, BLACK)
-    p.text(p.cx, 100, SITE + "/wholesale", F_SUB_B, 3.0, GREEN_DARK)
+    p.text_fit(100, SITE + "/wholesale", F_SUB_B, 3.0, GREEN_DARK, max_w_cm=49)
     p.corner_leaves(size_cm=4.0)
     return p.finish()
 

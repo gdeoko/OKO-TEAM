@@ -5,3 +5,4 @@ numpy>=1.26
 fonttools>=4.50
 pikepdf>=8.0
 # системные: potrace (не используется в проде), poppler-utils (pdfinfo/pdftoppm — для проверки)
+gradio_client>=1.0  # генерация иллюстраций через HF Spaces
