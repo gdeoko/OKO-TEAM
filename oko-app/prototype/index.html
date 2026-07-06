@@ -510,7 +510,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.7</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.8</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -842,7 +842,7 @@ const WAVE = seed => { // детерминированная волна голо
 /* kind: text | voice | vnote | file | photo */
 const LIVE_ID = '00000000-0000-0000-0000-00000000c0de';
 const CHATS = [
-  {id:'live', ava:'O', name:'Общий чат OKO', kind:'group', kindIcon:'globe', live:true,
+  {id:'live', cid:LIVE_ID, ava:'O', name:'Общий чат OKO', kind:'group', kindIcon:'globe', live:true,
    preview:'Настоящий чат — пиши, увидят все', time:'', unread:0, online:true, msgs:[
      {kind:'sys', body:'Это живой чат через Supabase Realtime — сообщения настоящие'},
    ]},
@@ -852,21 +852,21 @@ const CHATS = [
      {in:0, t:'12:39', kind:'text', body:'До какого числа у меня подписка?'},
      {in:1, t:'12:40', kind:'text', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
    ]},
-  {id:2, ava:'К', name:'Клуб OKO · Рост', kind:'channel', managed:true, subs:'12.4к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
+  {id:2, cid:'00000000-0000-0000-0000-000000000002', ava:'К', name:'Клуб OKO · Рост', kind:'channel', managed:true, subs:'12.4к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
    msgs:[
      {in:1, t:'10:58', kind:'text', body:'Сегодня разбор: как ролик на 40к просмотров принёс 12 заявок.'},
      {in:1, t:'11:02', kind:'voice', dur:'0:47', seed:7},
      {in:1, t:'11:05', kind:'vnote', dur:'0:31'},
    ]},
-  {id:3, ava:'З', name:'Мой контент-завод', kind:'group', managed:true, members:8, kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
+  {id:3, cid:'00000000-0000-0000-0000-000000000003', ava:'З', name:'Мой контент-завод', kind:'group', managed:true, members:8, kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
    msgs:[
      {in:1, t:'08:00', kind:'text', body:'План на неделю: 5 роликов. Сценарии готовы, рендер в очереди.'},
      {in:1, t:'09:10', kind:'photo'},
      {in:1, t:'09:12', kind:'file', fname:'отчёт-июль.pdf', fsize:'2.4 МБ'},
    ]},
-  {id:4, ava:'КМ', name:'Команда', kind:'group', managed:true, members:5, kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
+  {id:4, cid:'00000000-0000-0000-0000-000000000004', ava:'КМ', name:'Команда', kind:'group', managed:true, members:5, kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
    msgs:[{in:1, t:'вчера', kind:'text', body:'Макеты обложек в фигме, глянь когда будет минута.'}]},
-  {id:5, ava:'А', name:'Аня', kind:'direct', nick:'anya_des', kindIcon:null, preview:'Опрос', time:'вчера', unread:0, online:true,
+  {id:5, cid:'00000000-0000-0000-0000-000000000005', ava:'А', name:'Аня', kind:'direct', nick:'anya_des', kindIcon:null, preview:'Опрос', time:'вчера', unread:0, online:true,
    msgs:[
      {in:1, t:'вчера', kind:'text', body:'Какую обложку берём для клуба?'},
      {in:1, t:'вчера', kind:'poll', q:'Обложка для клуба', opts:['Тёмная с глазом','Лаймовая с сеткой','Минимализм'], votes:[7,4,2], voted:0},
@@ -916,7 +916,7 @@ function renderChatList(filter=''){
       <div class="chat-item" onclick="openConv(${c.id})">
         ${avaHtml(c)}
         <div class="meta">
-          <div class="row1"><span class="name">${c.live?'<span class="live-dot"></span>':''}${c.kindIcon?I(c.kindIcon):''}${c.name}</span><span class="time">${c.time}</span></div>
+          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}${c.name}</span><span class="time">${c.time}</span></div>
           <div class="row1"><span class="preview">${pi?I(pi):''}${c.preview}</span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
         </div>
       </div>`;
@@ -1060,7 +1060,7 @@ function sendText(){
   if(!text || !currentChat) return;
   pushMsg({in:0, t:nowT(), kind:'text', body:text});
   inp.value=''; syncSendIcon();
-  if(currentChat.id==='live') liveSend(text);
+  if(currentChat.cid) liveSend(text);
   if(currentChat.id===1){
     setTimeout(showTyping, 500);
     setTimeout(()=>{ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'}); }, 2100);
@@ -1317,6 +1317,14 @@ const SUPA_KEY = 'sb_publishable_K5SqavCbNnL_UYL-5fKaLA_32-PVPrt'; // публи
 let sb = null, myId = null;
 const nameCache = {};
 
+const chatByCid = cid => CHATS.find(c => c.cid === cid);
+function pushLiveRow(chat, r){
+  const mine = r.sender_id === myId;
+  chat.msgs.push({ in: mine?0:1, t:(r.created_at||'').slice(11,16), kind:'text',
+    body: esc(r.body), who: mine?null:(nameCache[r.sender_id]||'Гость'), sid: r.id });
+  chat.preview = (mine?'Ты: ':'') + String(r.body).slice(0,40);
+  chat.time = (r.created_at||'').slice(11,16);
+}
 async function initLive(){
   if(!window.supabase || sb) return;
   try{
@@ -1329,44 +1337,45 @@ async function initLive(){
     await sb.from('profiles').upsert({ id: myId, display_name: guest }, { onConflict: 'id' });
     nameCache[myId] = guest;
 
+    // История всех живых комнат одним запросом
+    const liveChats = CHATS.filter(c => c.cid);
+    const cids = liveChats.map(c => c.cid);
     const { data: rows } = await sb.from('messages')
-      .select('id, sender_id, body, created_at, profiles:sender_id(display_name)')
-      .eq('chat_id', LIVE_ID).order('created_at', { ascending: false }).limit(40);
-    const live = CHATS.find(c => c.id === 'live');
-    live.msgs = [{kind:'sys', body:'Это живой чат через Supabase Realtime — сообщения настоящие'}];
-    (rows || []).reverse().forEach(r => {
-      nameCache[r.sender_id] = r.profiles?.display_name || 'Гость';
-      live.msgs.push({ in: r.sender_id !== myId, t: (r.created_at||'').slice(11,16), kind:'text',
-        body: esc(r.body), who: r.sender_id !== myId ? nameCache[r.sender_id] : null, sid: r.id });
+      .select('id, chat_id, sender_id, body, created_at, profiles:sender_id(display_name)')
+      .in('chat_id', cids).order('created_at', { ascending: true }).limit(400);
+    (rows || []).forEach(r => {
+      if(r.sender_id && r.profiles?.display_name) nameCache[r.sender_id] = r.profiles.display_name;
+      const chat = chatByCid(r.chat_id);
+      if(chat) pushLiveRow(chat, r);
     });
-    const last = live.msgs[live.msgs.length-1];
-    if(last && last.kind==='text'){ live.preview = last.body.slice(0,40); live.time = last.t; }
     renderChatList(document.getElementById('chatSearch').value);
-    if(currentChat && currentChat.id==='live') renderMsgs();
+    if(currentChat) renderMsgs();
 
-    sb.channel('live-chat')
-      .on('postgres_changes', { event: 'insert', schema: 'public', table: 'messages', filter: `chat_id=eq.${LIVE_ID}` },
+    // Единая подписка на все комнаты
+    sb.channel('all-live')
+      .on('postgres_changes', { event: 'insert', schema: 'public', table: 'messages' },
         async (payload) => {
           const r = payload.new;
-          if(r.sender_id === myId) return;
+          const chat = chatByCid(r.chat_id);
+          if(!chat || r.sender_id === myId) return;
           if(!nameCache[r.sender_id]){
             const { data: pr } = await sb.from('profiles').select('display_name').eq('id', r.sender_id).maybeSingle();
             nameCache[r.sender_id] = pr?.display_name || 'Гость';
           }
-          const lv = CHATS.find(c => c.id === 'live');
-          lv.msgs.push({ in: 1, t: (r.created_at||'').slice(11,16), kind:'text', body: esc(r.body), who: nameCache[r.sender_id], sid: r.id });
-          lv.preview = String(r.body).slice(0,40); lv.time = (r.created_at||'').slice(11,16);
-          if(currentChat && currentChat.id !== 'live') lv.unread = (lv.unread||0) + 1;
+          pushLiveRow(chat, r);
+          if(!currentChat || currentChat.id !== chat.id) chat.unread = (chat.unread||0) + 1;
           renderChatList(document.getElementById('chatSearch').value);
-          if(currentChat && currentChat.id === 'live') renderMsgs();
+          if(currentChat && currentChat.id === chat.id) renderMsgs();
         })
       .subscribe();
-  }catch(e){ /* офлайн или блокировка — чат остаётся мок-режимом */ }
+  }catch(e){ /* офлайн или блокировка — чаты остаются мок-режимом */ }
 }
 function esc(t){ const d = document.createElement('div'); d.textContent = String(t||''); return d.innerHTML; }
 async function liveSend(text){
   if(!sb || !myId) { await initLive(); if(!sb || !myId) return; }
-  try{ await sb.from('messages').insert({ chat_id: LIVE_ID, sender_id: myId, kind: 'text', body: text.slice(0,500) }); }catch(e){}
+  const cid = currentChat && currentChat.cid;
+  if(!cid) return;
+  try{ await sb.from('messages').insert({ chat_id: cid, sender_id: myId, kind: 'text', body: text.slice(0,500) }); }catch(e){}
 }
 
 /* ================= МОЙ ПРОФИЛЬ ================= */
