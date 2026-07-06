@@ -26,18 +26,12 @@ def _shell(name, w, h, logo_corner=True):
     return p
 
 
-def _category_top(name, w, h, animals, heading, items, circle_d, head_cm=8.0):
-    """Верхняя категорийная плёнка: круг-луна + силуэт(ы) + заголовок + список."""
+def _category_top(name, w, h, ai_name, heading, items, circle_d, head_cm=8.0):
+    """Верхняя категорийная плёнка: круг-луна + премиум AI-силуэт + заголовок + список."""
     p = _shell(name, w, h, logo_corner=True)
     cx = p.cx
     cy_circle = h * 0.40
-    p.moon_circle(cx, cy_circle, circle_d)
-    if len(animals) == 1:
-        sil.draw(p, animals[0], cx, cy_circle, circle_d * 0.72, BLACK)
-    else:
-        off = circle_d * 0.22
-        sil.draw(p, animals[0], cx - off, cy_circle - circle_d * 0.05, circle_d * 0.5, BLACK)
-        sil.draw(p, animals[1], cx + off, cy_circle + circle_d * 0.02, circle_d * 0.42, BLACK)
+    p.ai_moon(ai_name, cx, cy_circle, circle_d)
     y_head = cy_circle + circle_d / 2.0 + head_cm + 3.0
     if isinstance(heading, (list, tuple)):
         for i, line in enumerate(heading):
@@ -77,16 +71,13 @@ def section_1_bottom():  # 65×110 — часы работы + QR
 
 # ============================ СЕКЦИЯ 2 (СОБАКИ) ==================
 def section_2_top():   # 51×117
-    return _category_top("vitrina_02_top_51x117", 51, 117, ["dog"], "СОБАКАМ",
+    return _category_top("vitrina_02_top_51x117", 51, 117, "dog", "СОБАКАМ",
                          ["Корма", "Игрушки", "Аксессуары"], circle_d=40, head_cm=8.0)
 
 
-def section_2_bottom():  # 51×57 — лапа + иконки
+def section_2_bottom():  # 51×57 — аксессуары собак (AI)
     p = _shell("vitrina_02_bottom_51x57", 51, 57, logo_corner=False)
-    sil.draw(p, "paw", p.cx, 20, 22, GREEN)
-    sil.icon(p, "bowl", 13, 42, 7, GREEN_DARK)
-    sil.icon(p, "bone", 25.5, 42, 7, GREEN_DARK)
-    sil.icon(p, "leash", 38, 42, 7, GREEN_DARK)
+    p.ai_scene("dogtoys", p.cx, 28, max_w_cm=42, max_h_cm=44)
     return p.finish()
 
 
@@ -118,7 +109,7 @@ def section_3_bottom():  # 51×57 — дверь низ (по ТЗ можно п
 
 # ============================ СЕКЦИЯ 4 (КОШКИ) =================
 def section_4_top():   # 65×90
-    return _category_top("vitrina_04_top_65x90", 65, 90, ["cat"], "КОШКАМ",
+    return _category_top("vitrina_04_top_65x90", 65, 90, "cat", "КОШКАМ",
                          ["Корма", "Наполнители", "Игрушки"], circle_d=38, head_cm=8.0)
 
 
@@ -149,7 +140,7 @@ def section_5_bottom():  # 65×110 — лого + zoopt.ru
 
 # ============================ СЕКЦИЯ 6 (ГРЫЗУНЫ И ПТИЦЫ) ======
 def section_6_top():   # 51×117
-    return _category_top("vitrina_06_top_51x117", 51, 117, ["hamster", "bird"],
+    return _category_top("vitrina_06_top_51x117", 51, 117, "rodent",
                          ["ГРЫЗУНАМ", "И ПТИЦАМ"], ["Клетки", "Корма", "Витамины"],
                          circle_d=40, head_cm=6.0)
 
@@ -164,7 +155,7 @@ def section_6_bottom():  # 51×57 — колесо, жёрдочка, корму
 
 # ============================ СЕКЦИЯ 7 (АКВАРИУМИСТИКА) =======
 def section_7_top():   # 51×117
-    return _category_top("vitrina_07_top_51x117", 51, 117, ["fish", "turtle"],
+    return _category_top("vitrina_07_top_51x117", 51, 117, "aqua",
                          "АКВАРИУМИСТИКА", ["Аквариумы", "Корма", "Фильтры"],
                          circle_d=40, head_cm=5.0)
 

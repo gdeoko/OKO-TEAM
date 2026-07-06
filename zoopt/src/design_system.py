@@ -243,6 +243,30 @@ class Panel:
         r = self.S(diameter_cm / 2.0)
         c.circle(self.X(x_cm), self.Y(y_cm), r, stroke=0, fill=1)
 
+    def ai_scene(self, name, cx_cm, cy_cm, max_w_cm, max_h_cm):
+        """Премиум AI-иллюстрация (assets/ai/cut_<name>.png) вписанная в бокс по центру."""
+        from reportlab.lib.utils import ImageReader
+        ir = ImageReader(os.path.join(ASSETS, "ai", f"cut_{name}.png"))
+        iw, ih = ir.getSize()
+        scale = min(max_w_cm / iw, max_h_cm / ih)
+        w, h = iw * scale, ih * scale
+        self.c.drawImage(ir, self.X(cx_cm - w / 2.0), self.Y(cy_cm + h / 2.0),
+                         width=self.S(w), height=self.S(h), mask='auto')
+
+    def ai_moon(self, name, x_cm, y_cm, diameter_cm, fill_frac=0.76):
+        """Жёлтый круг бренда + премиум AI-силуэт (assets/ai/sil_<name>.png) по центру."""
+        from reportlab.lib.utils import ImageReader
+        self.moon_circle(x_cm, y_cm, diameter_cm)
+        ir = ImageReader(os.path.join(ASSETS, "ai", f"sil_{name}.png"))
+        iw, ih = ir.getSize()
+        maxd = diameter_cm * fill_frac
+        if iw >= ih:
+            w = maxd; h = maxd * ih / iw
+        else:
+            h = maxd; w = maxd * iw / ih
+        self.c.drawImage(ir, self.X(x_cm - w / 2.0), self.Y(y_cm + h / 2.0),
+                         width=self.S(w), height=self.S(h), mask='auto')
+
     # ---------------------------------------------------------- текст
     def _draw_text(self, x_pt, y_pt, s, font, pt, color, align, track_pt):
         """Отрисовка строки текст-объектом с поддержкой межбуквенного трекинга."""
