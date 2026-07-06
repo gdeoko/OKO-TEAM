@@ -944,6 +944,10 @@ function initLesson() {
       res.className = 'test-result pass';
       res.textContent = `Отлично! ${correct} из 3 (${pct}%) — тест пройден, +15 XP${pct === 100 ? ' и +30 XP за 100%!' : ''}`;
       if (!lessonState.test) { lessonState.test = true; lessonSave(); lessonSync(); }
+      if (pct === 100 && window.MAGIC) {
+        const r = $('#testCheck').getBoundingClientRect();
+        MAGIC.celebrate(r.left + r.width / 2, r.top);
+      }
     } else {
       res.className = 'test-result fail';
       res.textContent = `${correct} из 3 — нужно 70%. Перечитай пересказ и попробуй ещё раз (осталось 2 попытки сегодня)`;
@@ -957,7 +961,12 @@ function initLesson() {
     lessonState.done = true; lessonSave(); lessonSync();
     DEMO.blocks[0].lessons[1].state = 'open';
     renderLessons();
-    toast('+20 XP! Урок 2 «Создание мира» открыт');
+    if (window.MAGIC) MAGIC.rewardModal({
+      icon: 'trophy', title: 'Урок пройден!',
+      subtitle: 'Ты получил значок «Первооткрыватель». Урок 2 «Создание мира» открыт.',
+      xp: 20,
+    });
+    else toast('+20 XP! Урок 2 открыт');
   });
 }
 
@@ -1312,6 +1321,7 @@ function hydrateIcons() {
 
 document.addEventListener('DOMContentLoaded', () => {
   hydrateIcons();
+  if (window.MAGIC && document.getElementById('splashFx')) MAGIC.ambientMotes(document.getElementById('splashFx'));
   renderStories();
   renderFeed();
   renderChats();

@@ -1194,3 +1194,92 @@ body.in-chat .header { display: none; }
 }
 .cv-search input:focus { border-color: var(--terracotta); }
 #cvSearchCount { font-size: 11.5px; color: var(--gray); white-space: nowrap; }
+
+/* ══════════ ТЁПЛАЯ МАГИЯ ══════════ */
+.fx-canvas {
+  position: fixed; inset: 0; z-index: 110;
+  pointer-events: none; opacity: 0;
+  transition: opacity 200ms;
+}
+.fx-canvas--on { opacity: 1; }
+
+.splash__fx {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.splash > * { position: relative; z-index: 1; }
+.splash__fx { z-index: 0; }
+
+/* дыхание логотипа сплэша */
+.splash__video, .splash__logo svg {
+  animation: breathe 3.4s var(--ease) infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(212,165,116,0)); }
+  50%      { transform: scale(1.035); filter: drop-shadow(0 8px 26px rgba(212,165,116,.35)); }
+}
+
+/* модалка награды */
+.reward {
+  position: fixed; inset: 0; z-index: 105;
+  background: rgba(16,34,47,.55);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; transition: opacity 260ms var(--ease);
+}
+.reward--on { opacity: 1; }
+.reward__box {
+  position: relative;
+  background: linear-gradient(165deg, #FFFDF9, #F7EEDD);
+  border: 1px solid var(--gold);
+  border-radius: 24px;
+  padding: 34px 28px 26px;
+  width: 100%; max-width: 320px;
+  text-align: center;
+  transform: scale(.7) translateY(20px);
+  transition: transform 340ms cubic-bezier(.34,1.56,.64,1);
+  overflow: hidden;
+}
+.reward--on .reward__box { transform: scale(1) translateY(0); }
+.reward__halo {
+  position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,165,116,.35), transparent 65%);
+  animation: haloPulse 2.6s var(--ease) infinite;
+}
+@keyframes haloPulse { 50% { transform: translateX(-50%) scale(1.15); opacity: .7; } }
+.reward__badge {
+  position: relative;
+  width: 92px; height: 92px; margin: 0 auto 16px; border-radius: 50%;
+  background: linear-gradient(160deg, var(--gold), var(--terracotta));
+  color: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 30px rgba(201,112,100,.4);
+  animation: badgePop 700ms cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes badgePop {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.25) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.reward__title { position: relative; font-family: var(--font-head); font-size: 21px; font-weight: 700; }
+.reward__sub { position: relative; font-size: 13.5px; color: var(--gray); margin-top: 6px; line-height: 1.5; }
+.reward__xp {
+  position: relative; display: inline-block; margin-top: 12px;
+  font-weight: 700; font-size: 14px; color: var(--terracotta);
+  background: rgba(201,112,100,.12); padding: 5px 16px; border-radius: 20px;
+}
+.reward__ok { position: relative; width: 100%; margin-top: 20px; padding: 13px; }
+
+/* живой огонёк streak (раздел 4.8) */
+.today__streak .ic-terra { animation: flicker 1.4s ease-in-out infinite; transform-origin: center bottom; }
+@keyframes flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); opacity: 1; }
+  50%      { transform: scale(1.12) rotate(2deg); opacity: .85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash__video, .splash__logo svg, .today__streak .ic-terra,
+  .reward__halo, .reward__badge { animation: none !important; }
+}
