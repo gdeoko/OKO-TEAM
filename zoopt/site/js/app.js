@@ -118,6 +118,7 @@ function initHero(){
    ===================================================================== */
 function initScroll(){
   const lenis=new Lenis({lerp:.09,wheelMultiplier:1.05});
+  window.__lenis=lenis;
   lenis.on('scroll',ScrollTrigger.update);
   gsap.ticker.add(t=>lenis.raf(t*1000)); gsap.ticker.lagSmoothing(0);
 
