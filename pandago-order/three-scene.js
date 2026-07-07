@@ -344,7 +344,10 @@ export function initScene(container) {
 
   const frameGap = isMobile ? 1000 / 30 : 0;
   let last = 0, t = 0;
-  const mob = () => window.innerWidth < 768;
+  /* «мобильная» раскладка = узкий ИЛИ портретный вьюпорт (планшеты,
+     полная версия на телефоне): байк уходит вниз и мельче, не наезжая
+     на заголовок и кнопки */
+  const mob = () => window.innerWidth < 768 || window.innerWidth < window.innerHeight * 0.95;
   const tmpA = new THREE.Vector3(), tmpB = new THREE.Vector3(), tmpT = new THREE.Vector3();
 
   function frame(now) {

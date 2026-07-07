@@ -264,33 +264,54 @@ function initForm() {
 /* ── Кино-секции: скраб видео скроллом (без внешних библиотек) ── */
 function initCinema() {
   initScrub('#cinema', '#cinemaVideo', '#cinemaBar');
-  initScrub('#teardown', '#teardownVideo', '#teardownBar');
+  initScrub('#teardown', '#teardownVideo', '#teardownBar', '#teardownStill');
 }
 
-function initScrub(secSel, videoSel, barSel) {
+function initScrub(secSel, videoSel, barSel, stillSel) {
   const sec = $(secSel);
-  const video = $(videoSel);
+  let video = $(videoSel);
   const bar = $(barSel);
   if (!sec || !video) return;
+
+  /* Портрет: вместо кропа альбомного видео используем резкий дизолв
+     двух вертикальных кадров (нативная резкость на телефоне) */
+  const still = stillSel ? $(stillSel) : null;
+  const portrait = window.matchMedia('(orientation: portrait)').matches;
+  let stillTop = null;
+  if (still && portrait) {
+    video.remove();
+    video = null;
+    still.hidden = false;
+    stillTop = still.querySelector('.top');
+  }
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = navigator.connection && navigator.connection.saveData;
   if (reduced || saveData) {
-    video.removeAttribute('preload');
-    return; /* остаётся постер */
+    if (video) video.removeAttribute('preload');
+    if (stillTop) stillTop.style.opacity = '1';   /* показываем финал */
+    return;
   }
 
   let duration = 0;
   let target = 0, current = 0, raf = 0;
-  video.addEventListener('loadedmetadata', () => { duration = video.duration || 0; });
-  try { video.load(); } catch (e) {}
+  if (video) {
+    video.addEventListener('loadedmetadata', () => { duration = video.duration || 0; });
+    try { video.load(); } catch (e) {}
+  }
 
   const tick = () => {
     raf = 0;
-    if (!duration) { raf = requestAnimationFrame(tick); return; }
+    if (video && !duration) { raf = requestAnimationFrame(tick); return; }
     current += (target - current) * 0.18;
     if (Math.abs(target - current) > 0.004) raf = requestAnimationFrame(tick);
-    try { video.currentTime = current * duration; } catch (e) {}
+    if (video) {
+      try { video.currentTime = current * duration; } catch (e) {}
+    } else if (stillTop) {
+      stillTop.style.opacity = String(Math.min(1, current * 1.25));
+      stillTop.style.transform = `scale(${1.05 - current * 0.05})`;
+      stillTop.previousElementSibling.style.transform = `scale(${1 + current * 0.08})`;
+    }
     if (bar) bar.style.transform = `scaleX(${current})`;
   };
 
