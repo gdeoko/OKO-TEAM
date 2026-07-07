@@ -69,6 +69,10 @@ res = c.predict(..., api_name="/endpoint")  # результат: dict с лок
 - Перф: DPR<=1.8 (1.5 mobile), частицы вдвое меньше на mobile, рендер только когда секция видима, dispose.
 - CC0 GLB: Khronos glTF-Sample-Assets (Fox — 3 анимации, Duck). Sketchfab API — нужен полный токен.
 
+## REMOTION (видео кодом: промо, титры, инфографика)
+Скилл `.claude/skills/remotion-video/` установлен. Рендер ТОЛЬКО через обёртку headless_shell
+(--browser-executable=/tmp/chrome-ns.sh --gl=swangle) — рецепт в конце того SKILL.md. Версии пиновать: remotion 4.0.245.
+
 ## RIVE (персонажи; замена Spine)
 `factory/vendor/rive.min.js` — ЕДИНСТВЕННО рабочая сборка canvas-single (WASM внутри). Обычный @rive-app/canvas тянет wasm с CDN и падает. Демо: factory/rive/vehicles.riv. `new rive.Rive({src, canvas, autoplay, stateMachines})`. .riv файлы — rive.app/community или от Даниэля.
 
