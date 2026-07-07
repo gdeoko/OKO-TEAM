@@ -20,7 +20,7 @@ description: OKO magic skill — главный производственный
 ## ПАМЯТЬ (первое действие каждой сессии)
 - Прочитай `brain/Claude/Projects/<проект>.md`, `brain/Claude/Инфраструктура.md`, 2 последние `brain/Claude/Sessions/`.
 - В конце сессии допиши `brain/Claude/Sessions/YYYY-MM-DD-<проект>.md`: факты, пути, решения, незакрытое. Закоммить.
-- Секреты: `source ~/.oko/secrets.env` (если нет — ключи в env-переменных окружения: HF_TOKEN, FAL_KEY, TWENTY_FIRST_API_KEY, CLOUDFLARE_*, R2_*). В git секреты НЕ класть.
+- Секреты: ПЕРВЫМ ДЕЛОМ `source <(base64 -d secrets.env.b64)` из корня репо (base64 из-за push-protection GitHub, решение Даниэля). Новые ключи: дописать в расшифровку, перекодировать `base64 -w0 > secrets.env.b64`, закоммитить. Плюс проверить env-переменные окружения.
 
 ## СРЕДА (специфика этого облака — не как в Termux)
 - HTTPS через прокси `$HTTPS_PROXY`; CA-бандл `/root/.ccr/ca-bundle.crt` (boto3/python: verify=CA). node fetch мимо прокси не ходит — curl.
@@ -69,10 +69,6 @@ res = c.predict(..., api_name="/endpoint")  # результат: dict с лок
 - Перф: DPR<=1.8 (1.5 mobile), частицы вдвое меньше на mobile, рендер только когда секция видима, dispose.
 - CC0 GLB: Khronos glTF-Sample-Assets (Fox — 3 анимации, Duck). Sketchfab API — нужен полный токен.
 
-## REMOTION (видео кодом: промо, титры, инфографика)
-Скилл `.claude/skills/remotion-video/` установлен. Рендер ТОЛЬКО через обёртку headless_shell
-(--browser-executable=/tmp/chrome-ns.sh --gl=swangle) — рецепт в конце того SKILL.md. Версии пиновать: remotion 4.0.245.
-
 ## RIVE (персонажи; замена Spine)
 `factory/vendor/rive.min.js` — ЕДИНСТВЕННО рабочая сборка canvas-single (WASM внутри). Обычный @rive-app/canvas тянет wasm с CDN и падает. Демо: factory/rive/vehicles.riv. `new rive.Rive({src, canvas, autoplay, stateMachines})`. .riv файлы — rive.app/community или от Даниэля.
 
@@ -96,52 +92,71 @@ Cloudflare token — АККАУНТ-токен (cfat_): verify только че
 - Проверка: pdfinfo (мм = pts/72*25.4), pdffonts (emb=yes, без Helvetica), pdftoppm превью — смотреть глазами.
 - potrace по AA-краям = грязь; вектор-лого просить у клиента.
 
+## БЕСПЛАТНЫЕ 3D-ИСТОЧНИКИ (проверено в бою, PandaGo 07.2026)
+- poly.pizza: прямой GLB `https://static.poly.pizza/<uuid>.glb` (uuid грепается из HTML карточки /m/<id>). CC0/CC-BY; CC-BY = атрибуция в футер. Перекрас чужой модели под бренд: traverse по мешам, по яркости исходного цвета назначать paint/rubber/glow материалы (референс pandago-order/three-scene.js).
+- Poly Haven API без ключа: `api.polyhaven.com/assets?type=hdris|textures|models`, файлы dl.polyhaven.org. HDRI как scene.environment = фотореалистичный свет/отражения даже на low-poly.
+- Kenney.nl, Quaternius (CC0): city kits, персонажи rigged+animated, прямые zip.
+- Ready Player Me: GLB-аватар по URL `models.readyplayer.me/<id>.glb` без логина; анимации github.com/readyplayerme/animation-library.
+- Реальные города без ключей: OSM Overpass API (overpass-api.de) отдаёт контуры зданий с этажностью — экструзия в Three.js = настоящая Москва/Гуанчжоу low-poly.
+- Mixamo не автоматизируется (Adobe-логин, ToS): раз в жизни скачать пак FBX вручную, положить в dev-assets/characters/ — дальше пользоваться вечно.
+- 3D из фото на HF (gradio_client): TRELLIS (microsoft), Hunyuan3D-2 (tencent), InstantMesh, TripoSR. Higgsfield generate_3d — кредиты.
+
+### Реальное стоковое видео 4К (бесплатно, лицензии без атрибуции)
+- Лучший бесплатный источник реализма: НАСТОЯЩЕЕ 4К-видео (дороги, города, фуры, порты) с Pexels / Pixabay / Coverr / Mixkit. Реальная съёмка всегда реальнее генерации.
+- Проверено из среды 07.2026: cdn.pixabay.com отдаёт mp4 напрямую (206), assets.mixkit.co даёт 403 (блок). Поиск по каталогам требует бесплатный API-ключ (регистрация 1 мин): PEXELS_API_KEY (pexels.com/api) и/или PIXABAY_API_KEY (pixabay.com/api/docs) в Environment variables.
+- Пайплайн сплошного кино за 0 руб: стоковые реальные сцены (дорога, город, склад) + генерации HF для уникальных кадров (разборка техники, брендовые сцены) + Remotion/ffmpeg для склейки и титров + scroll-scrub на сайте.
+
+## РЕФЕРЕНС PANDAGO (второй боевой проект, pandago-order/)
+Скролл-путешествие с байком-проводником: камера по CatmullRom за персонажем (t+0.035), этапы мира вдоль z, GLSL-аврора с uProgress, HUD с lerp-координатами маршрута, перекрашенный CC-BY байк. Превью: forest-beach-360.higgsfield.app (id 96269fa0-7465-4a92-89d5-bdc51f4cec87). Прод клиента: FastPanel, zip в чат, PHP-бэкенд не трогать, config.php с сервера не перезаписывать. Правила текста PandaGo: tools/copy-check.py перед каждым коммитом.
+
 ## АДАПТИВ И ПЕРФ (минимум)
 clamp() типографика; 100svh; тач-цели 44px+; без горизонтального overflow; prefers-reduced-motion → отключить scrub/курсор/пульсы; никаких will-change на backdrop-filter; изображения WebP+lazy кроме hero.
 
+## АПИ-КАТАЛОГ (ссылки и что даёт; ключи складывать в secrets.env)
+- PEXELS_API_KEY: ЕСТЬ, работает. Реальные 4К-видео и фото, 200/час. Поиск: api.pexels.com/videos/search (заголовок Authorization). Только curl, urllib мимо прокси.
+- HF_TOKEN: huggingface.co/settings/tokens (тип Read, бесплатно). Умножает квоты ZeroGPU: FLUX-кадры, Wan-видео. Без него анонимные лимиты.
+- PIXABAY_API_KEY: pixabay.com/api/docs (ключ виден на странице после входа, формат 1234567-hex). Запасной видеосток, cdn отдаёт напрямую.
+- GEMINI_API_KEY: aistudio.google.com/apikey (бесплатный тариф). Gemini для картинок/текста, лимиты щедрые.
+- FAL_KEY: fal.ai/dashboard/keys (платно за факт, ~5-15 руб/клип). Wan/Kling 1080p без очередей — главный платный буст видео.
+- CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID: dash.cloudflare.com/profile/api-tokens, шаблон "Cloudflare Pages: Edit"; Account ID на главной дашборда. Запасной хостинг: npx wrangler pages deploy.
+- TWENTY_FIRST_API_KEY: 21st.dev/magic (бесплатный тариф). Библиотека wow-компонентов.
+- FREESOUND_API_KEY: freesound.org/apiv2/apply (бесплатно). Звуковые эффекты CC.
+- SKETCHFAB_API_TOKEN: sketchfab.com/settings/password (бесплатно). Download API для CC 3D-моделей.
+- Кредиты Higgsfield: пополнение баланса в приложении. generate_3d (фото в GLB), upscale видео 2К/4К.
+- Mixamo: НЕ автоматизируется, разово скачать FBX-пак вручную и прислать в чат.
+
+## КАРТА ВОЗМОЖНОСТЕЙ СРЕДЫ (актуально 07.07.2026)
+
+### Умею сам, без ключей и кредитов (проверено в бою)
+- Сайты уровня Awwwards кодом: Three.js-миры со скролл-камерой по сплайну, GLSL-шейдеры (аврора, domain warp), частицы, туман, bloom, процедурные города/горы, игровой HUD, WebAudio-звук без файлов, скрэмблинг, кастомный курсор, магнитные кнопки, Lenis, GSAP pin/scrub.
+- Бесплатные ассеты напрямую: poly.pizza GLB, Poly Haven HDRI/текстуры, Kenney, Quaternius, Khronos-модели, Lottie, OSM-города.
+- gradio_client на HF Spaces работает даже АНОНИМНО (квота меньше, чем с HF_TOKEN): картинки, правка кадров, видео А-Б, 3D из фото.
+- Self-QA: свой Chromium+Playwright (скриншоты, видео прогона, консоль), ffmpeg, python (reportlab, pikepdf, boto3, fonttools, numpy, scipy).
+- Git: полный цикл, ветки, GitHub MCP (PR, issues, CI-логи).
+
+### Подключённые MCP (что дают)
+- Higgsfield: generate_image/video/audio, generate_3d (фото в GLB), upscale 4K, motion control, хостинг сайтов с публичными ссылками (основной деплой превью). Генерации = кредиты Даниэля, спрашивать.
+- Hugging Face (okoteam): поиск моделей/спейсов, doc-поиск; генерация через gradio_client напрямую (MCP-invoke отключён).
+- Gmail: поиск писем, треды, черновики, ярлыки (отправка через черновик).
+- Figma: чтение и генерация макетов, скриншоты, дизайн-системы, диаграммы FigJam.
+- Canva: генерация/правка дизайнов, экспорт, бренд-киты.
+- Adobe Creative: обработка изображений (фон, ретушь, апскейл, вектор), PDF-конвертация, шрифты, HTML в Express.
+- Magic Patterns: генерация UI-дизайнов и дизайн-систем.
+- Zapier: 9000+ приложений (CRM, таблицы, мессенджеры) через actions.
+- Zoom: записи и саммари встреч.
+- Adobe Marketing: авторизован Даниэлем, проверять в новой сессии.
+
+### Ключи в Environment variables (видны только НОВЫМ сессиям)
+HF_TOKEN (квоты ZeroGPU), FAL_KEY (fal.ai, платно за факт), TWENTY_FIRST_API_KEY (21st.dev), CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (Pages: npx wrangler pages deploy), R2_* (тяжёлые ассеты). Первое действие новой сессии: проверить их наличие в env.
+
+### Требует ручного участия Даниэля
+- Mixamo: разово скачать пак FBX персонажей и прислать в чат.
+- Кредиты Higgsfield: фотореал без лимитов + 3D из фото.
+
+## СТАТУС ПРОЕКТОВ (сводка, детали в brain/Claude/Projects/)
+- PandaGo /order/ (pandago-order/, ветка claude/new-session-xxozd5): ГОТОВ прототип уровня видео-референсов. Скролл-путешествие Гуанчжоу-Монголия-Москва в одной Three.js-сцене (подиум, порт контейнеров, тихая зона, горы, башни+ворота), байк-проводник CC-BY перекрашен под бренд, GLSL-аврора, игровой HUD (этапы, живые координаты, прогресс, звук), калькулятор 84 позиций с переносом в форму, чат-бот принимает заявки, сравнение с дилером, форма с контрактом newLead. Превью: forest-beach-360.higgsfield.app. Прод: FastPanel zip'ом. Дальше: HF-видео-пролёты, 3D из фото техники.
+- ЗооОпт (zoopt/): сайт "Ночной рейс" (скролл-3D, bloom) на spicy-panther-317.higgsfield.app + печатные PDF-плёнки для типографии.
+- OKO App (oko-app/, ветка claude/new-session-w2ptqy): прототип на true-journey-418.higgsfield.app.
+
 ## ПОРЯДОК РАБОТЫ
 1. Память (brain/). 2. Бриф: субъект, аудитория, одна задача. 3. План+фишка. 4. Генерации фоном, пока верстается каркас. 5. Вёрстка mobile-first. 6. Эффекты. 7. Self-QA цикл (скриншоты→правки→повтор). 8. Сжатие ассетов. 9. Деплой+проверка live curl'ом. 10. Показ Даниэлю (файл/видео через отправку, ссылка). 11. Запись в brain/ + commit+push.
-
-## КАРТА ВОЗМОЖНОСТЕЙ (что подключено и проверено, 07.2026)
-
-### Генерация контента
-| Что | Чем | Статус |
-|---|---|---|
-| Картинки (красота) | HF: FLUX.1-Krea-dev, Z-Image-Turbo, Qwen-Image | ✅ бесплатно, HF_TOKEN квоты |
-| Редактирование кадра | HF: Qwen-Image-Edit | ✅ |
-| Видео А→Б (пролёты) | HF: wan-2-2 FLF, LTX-video | ✅ тест пройден |
-| Видео кодом (промо, титры, инфографика) | Remotion + скилл remotion-video | ✅ смоук-рендер прошёл |
-| Премиум фото/видео/3D GLB/аудио/голос | Higgsfield MCP (generate_image/video/3d/audio, upscale 4K, remove_bg, motion_control) | ⚠️ нужны кредиты Даниэля |
-| Платный резерв без очередей | fal.ai (FAL_KEY) | ✅ ключ есть |
-| Дизайн-инструменты | Adobe for creativity MCP (Express, image_*, video_*), Canva MCP, Figma MCP, Magic Patterns | ✅ MCP подключены |
-| Wow-компоненты UI | 21st.dev API | ✅ ключ есть |
-| Персонажи-анимации | Rive (canvas-single вендорен) | ✅ |
-
-### Сайты и хостинг
-- Полный цикл: вёрстка → 3D/WebGL (three.js) → scroll-магия (GSAP+Lenis) → звук (WebAudio) → self-QA (Playwright+Chromium, скриншоты+видео) → деплой Higgsfield → проверка live.
-- Хостинг: Higgsfield websites (публичные ссылки, бесплатно). Тяжёлые ассеты: R2 ⚠️ ждёт network policy, S3 twcstorage ✅ (OKO).
-- UI-скиллы среды: ui-ux-pro-max, frontend-design, design, banner-design, slides, dataviz, webapp-testing.
-
-### Печать и документы
-- PDF в типографию: reportlab CMYK + bleed + метки реза + встроенная кириллица (пайплайн zoopt/src/). ✅ проверено на 16 плёнках.
-
-### Инфраструктура и автоматизация
-- GitHub MCP (репо, PR, экшены), публичный репо gdeoko/oko-magic-skill.
-- Supabase (OKO App): SQL через Management API. Telegram-бот @okoapp. Gmail/Zoom/Zapier MCP — подключены.
-- Память: brain/ (Obsidian-vault) — переживает любые чаты.
-- Routines/cron: могу будить сама себя по расписанию (мониторинг, регулярные задачи).
-
-### Ждём от Даниэля (блокеры)
-1. Ключи → в Environment variables окружения (контейнер эфемерен). 2. Домен `r2.cloudflarestorage.com` в network policy. 3. Полный Sketchfab-токен текстом. 4. Кредиты Higgsfield для премиум-генераций. 5. Полная инструкция видео-scrub пайплайна.
-
-## СТАТУС САЙТА ЗооОпт (сделано, 07.07.2026)
-Live: https://spicy-panther-317.higgsfield.app · Исходник: `zoopt/site/`
-- Концепт «Ночной рейс»: 3D-путешествие камеры по сплайну через ночной мир (луна, 5 станций-глав: собаки, кошки, грызуны/птицы, аквариум, опт), портал, летающая утка, пыль-частицы.
-- Игровой слой: HUD с прогрессом, рейл-навигация с перелётами, кастомный курсор, звук (эмбиент+whoosh), прелоадер с лапками.
-- Витрина 3D: Fox GLB с анимациями (OrbitControls). Секции: кошки/опт/бегущая строка/футер.
-- Self-QA пройден: десктоп 1440 + мобилка 390 (overflow 0, console 0 ошибок), видео-прогоны сняты.
-- Всё вендорено (three 0.160, gsap, lenis) — CDN не нужен.
-- НЕ сделано (следующий этап): e-commerce по ТЗ (каталог, корзина, опт по ИНН), замена лисы на кота/пса, видео-scrub вставки (ждём инструкцию).
-
-## СТАТУС ПЕЧАТИ ЗооОпт
-16 PDF-плёнок оклейки готовы (`zoopt/output/`): CMYK, bleed 5мм, метки реза, шрифты встроены, AI-визуал FLUX, бренд «ЗооОпт» исправлен. До печати: вектор-лого от клиента, PDF/X-4 OutputIntent при требовании типографии.
