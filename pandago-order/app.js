@@ -261,11 +261,16 @@ function initForm() {
   });
 }
 
-/* ── Кино-секция: скраб видео скроллом (без внешних библиотек) ── */
+/* ── Кино-секции: скраб видео скроллом (без внешних библиотек) ── */
 function initCinema() {
-  const sec = $('#cinema');
-  const video = $('#cinemaVideo');
-  const bar = $('#cinemaBar');
+  initScrub('#cinema', '#cinemaVideo', '#cinemaBar');
+  initScrub('#teardown', '#teardownVideo', '#teardownBar');
+}
+
+function initScrub(secSel, videoSel, barSel) {
+  const sec = $(secSel);
+  const video = $(videoSel);
+  const bar = $(barSel);
   if (!sec || !video) return;
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

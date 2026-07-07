@@ -16,8 +16,8 @@
 const STAGE_DEFS = [
   { sel: '#hero',       code: 'ЭТАП 01 / 06', name: 'ГУАНЧЖОУ · СКЛАД' },
   { sel: '#calculator', code: 'ЭТАП 02 / 06', name: 'РАСЧЁТ МАРШРУТА' },
-  { sel: '#process',    code: 'ЭТАП 03 / 06', name: 'ПОРТ · ПОГРУЗКА' },
-  { sel: '#cinema',     code: 'ЭТАП 04 / 06', name: 'СЪЁМКА МАРШРУТА' },
+  { sel: '#teardown',   code: 'ЭТАП 03 / 06', name: 'ПРИЁМКА · РАЗБОР' },
+  { sel: '#cinema',     code: 'ЭТАП 04 / 06', name: 'ТРАССА · НОЧЬ' },
   { sel: '#compare',    code: 'ЭТАП 05 / 06', name: 'КОРИДОР МОНГОЛИЯ' },
   { sel: '#faq',        code: 'ЭТАП 06 / 06', name: 'МОСКВА · ВЫДАЧА' },
 ];
