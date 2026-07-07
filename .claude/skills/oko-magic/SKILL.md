@@ -101,6 +101,11 @@ Cloudflare token — АККАУНТ-токен (cfat_): verify только че
 - Mixamo не автоматизируется (Adobe-логин, ToS): раз в жизни скачать пак FBX вручную, положить в dev-assets/characters/ — дальше пользоваться вечно.
 - 3D из фото на HF (gradio_client): TRELLIS (microsoft), Hunyuan3D-2 (tencent), InstantMesh, TripoSR. Higgsfield generate_3d — кредиты.
 
+### Реальное стоковое видео 4К (бесплатно, лицензии без атрибуции)
+- Лучший бесплатный источник реализма: НАСТОЯЩЕЕ 4К-видео (дороги, города, фуры, порты) с Pexels / Pixabay / Coverr / Mixkit. Реальная съёмка всегда реальнее генерации.
+- Проверено из среды 07.2026: cdn.pixabay.com отдаёт mp4 напрямую (206), assets.mixkit.co даёт 403 (блок). Поиск по каталогам требует бесплатный API-ключ (регистрация 1 мин): PEXELS_API_KEY (pexels.com/api) и/или PIXABAY_API_KEY (pixabay.com/api/docs) в Environment variables.
+- Пайплайн сплошного кино за 0 руб: стоковые реальные сцены (дорога, город, склад) + генерации HF для уникальных кадров (разборка техники, брендовые сцены) + Remotion/ffmpeg для склейки и титров + scroll-scrub на сайте.
+
 ## РЕФЕРЕНС PANDAGO (второй боевой проект, pandago-order/)
 Скролл-путешествие с байком-проводником: камера по CatmullRom за персонажем (t+0.035), этапы мира вдоль z, GLSL-аврора с uProgress, HUD с lerp-координатами маршрута, перекрашенный CC-BY байк. Превью: forest-beach-360.higgsfield.app (id 96269fa0-7465-4a92-89d5-bdc51f4cec87). Прод клиента: FastPanel, zip в чат, PHP-бэкенд не трогать, config.php с сервера не перезаписывать. Правила текста PandaGo: tools/copy-check.py перед каждым коммитом.
 
