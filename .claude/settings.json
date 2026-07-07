@@ -42,7 +42,21 @@
       "SearchSkills",
       "ListPlugins",
       "SearchPlugins",
-      "ListConnectors"
+      "ListConnectors",
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "ToolSearch",
+      "ListMcpResourcesTool",
+      "ReadMcpResourceTool",
+      "ReadMcpResourceDirTool",
+      "DesignSync",
+      "SuggestConnectors",
+      "SuggestSkills",
+      "SuggestPluginInstall",
+      "SearchMcpRegistry"
     ]
   }
 }
