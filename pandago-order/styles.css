@@ -127,7 +127,7 @@ h3 { font-size: var(--fs-h3); }
 
 .g { color: var(--cyan); }
 
-section { position: relative; padding: clamp(72px, 10vw, 140px) 0; }
+section { position: relative; padding: clamp(72px, 10vw, 140px) 0; scroll-margin-top: calc(var(--header-h) + 12px); }
 
 /* ── Премиум-зерно поверх всей страницы ── */
 .grain {
@@ -481,8 +481,8 @@ section { position: relative; padding: clamp(72px, 10vw, 140px) 0; }
 /* ── Карточки ценности ── */
 .value-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: clamp(14px, 1.6vw, 20px);
 }
 .value-card {
   position: relative;
@@ -790,97 +790,76 @@ section { position: relative; padding: clamp(72px, 10vw, 140px) 0; }
   letter-spacing: 0.08em;
 }
 
-/* ── Сравнение ── */
-.cmp-frame {
-  position: relative;
+/* ── Сравнение (чистая адаптивная таблица) ── */
+.cmp-card {
   border-radius: var(--radius-lg);
   border: 1px solid var(--line);
+  background: linear-gradient(165deg, rgba(26, 58, 122, 0.28) 0%, rgba(10, 30, 66, 0.6) 100%);
   overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
 }
-.cmp-side { padding: clamp(24px, 4vw, 48px); }
-.cmp-dealer {
-  background: linear-gradient(180deg, #10192B 0%, #0B1220 100%);
-  color: var(--grey-cool);
+.cmp-legend,
+.cmp-r {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 0.7fr) minmax(120px, 0.9fr);
+  gap: clamp(10px, 2vw, 24px);
+  align-items: center;
+  padding: 16px clamp(16px, 3vw, 30px);
 }
-.cmp-panda {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(110% 100% at 80% 0%, rgba(26, 107, 224, 0.4) 0%, rgba(10, 30, 66, 0.96) 60%),
-    var(--navy);
-  clip-path: inset(0 0 0 50%);
-  will-change: clip-path;
-}
-.cmp-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 22px;
-}
-.cmp-head h3 { font-size: clamp(17px, 2vw, 24px); }
-.cmp-dealer .cmp-head h3 { color: #5E7391; }
-.cmp-tag {
+.cmp-legend {
+  border-bottom: 1px solid var(--line-strong);
+  background: rgba(8, 24, 51, 0.4);
   font-family: var(--f-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: var(--grey-deep);
 }
-.cmp-dealer .cmp-tag { color: #44536B; }
-.cmp-panda .cmp-tag { color: var(--cyan); }
-.cmp-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 0;
-  min-height: 66px;
-  border-bottom: 1px solid rgba(138, 165, 200, 0.12);
-  font-size: 14.5px;
+.cmp-legend .cmp-h-b { color: var(--cyan); }
+.cmp-legend span:not(:first-child),
+.cmp-r-dealer,
+.cmp-r-panda { text-align: right; }
+.cmp-r { border-bottom: 1px solid var(--line); transition: background var(--e-fast); }
+.cmp-r:last-child { border-bottom: none; }
+.cmp-r:hover { background: rgba(26, 107, 224, 0.08); }
+.cmp-r-name { font-weight: 600; font-size: clamp(13px, 1.6vw, 15.5px); color: var(--white); }
+.cmp-r-dealer {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(12px, 1.5vw, 14px);
+  color: #64789A;
+  text-decoration: line-through;
+  text-decoration-color: rgba(100, 120, 154, 0.45);
   white-space: nowrap;
 }
-.cmp-row span { overflow: hidden; text-overflow: ellipsis; }
-.cmp-row b { font-family: var(--f-mono); font-size: 14px; font-weight: 600; }
-.cmp-dealer .cmp-row b { color: #64789A; text-decoration: line-through; text-decoration-color: rgba(100, 120, 154, 0.5); }
-.cmp-panda .cmp-row b { color: var(--white); }
-.cmp-panda .cmp-row .save { font-size: 11.5px; color: var(--cyan); font-family: var(--f-mono); }
-.cmp-handle {
-  position: absolute;
-  top: 0; bottom: 0;
-  left: 50%;
-  width: 2px;
-  background: var(--cyan);
-  box-shadow: 0 0 24px var(--glow);
-  cursor: ew-resize;
-  touch-action: none;
-  z-index: 3;
-}
-.cmp-knob {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: var(--navy);
-  border: 2px solid var(--cyan);
-  box-shadow: 0 0 30px var(--glow);
+.cmp-r-panda {
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  white-space: nowrap;
+}
+.cmp-r-panda b {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(13px, 1.7vw, 16px);
+  font-weight: 600;
+  color: var(--white);
+}
+.cmp-r-save {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  font-family: var(--f-mono);
+  font-size: 11px;
   color: var(--cyan);
 }
-.cmp-knob svg { width: 22px; height: 22px; }
-.cmp-hint {
-  margin-top: 16px;
+.cmp-note {
+  margin-top: 18px;
   text-align: center;
-  font-family: var(--f-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.1em;
-  color: var(--grey-deep);
-  text-transform: uppercase;
+  font-size: 13px;
+  color: var(--grey-cool);
 }
+.cmp-note b { color: var(--cyan-soft); font-weight: 600; }
 
 /* ── Маршрут ── */
 .route-map {
@@ -1349,7 +1328,6 @@ footer {
 
 /* ── Адаптив ── */
 @media (max-width: 1024px) {
-  .value-grid { grid-template-columns: 1fr; }
   .calc-shell { grid-template-columns: 1fr; }
   .calc-result { position: static; }
 }
@@ -1371,8 +1349,16 @@ footer {
   .form-foot .btn { width: 100%; }
   .brand-name { font-size: 14px; }
   .brand img { width: 34px; height: 34px; }
-  .cmp-row { font-size: 12.5px; }
-  .cmp-row b { font-size: 12px; }
+  /* Сравнение: имя модели строкой, цены под ним в две колонки */
+  .cmp-legend { display: none; }
+  .cmp-r {
+    grid-template-columns: 1fr auto;
+    row-gap: 8px;
+    padding: 14px 16px;
+  }
+  .cmp-r-name { grid-column: 1 / -1; }
+  .cmp-r-dealer { text-align: left; align-self: center; }
+  .cmp-r-panda { align-items: flex-end; }
   .cw-panel {
     right: 0; left: 0; bottom: 0;
     width: 100%;

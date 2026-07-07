@@ -126,23 +126,14 @@ export async function initAnimations() {
     });
   });
 
-  /* ── Сравнение: шторка раскрывается от центра при входе ── */
-  const panda = document.getElementById('cmpPanda');
-  const handle = document.getElementById('cmpHandle');
-  if (panda && handle) {
-    const pos = { p: 50 };
-    gsap.fromTo(pos, { p: 96 }, {
-      p: 50,
-      duration: 1.4,
-      ease: 'power3.inOut',
-      scrollTrigger: { trigger: '#cmpFrame', start: 'top 75%', once: true },
-      onUpdate: () => {
-        if (document.getElementById('cmpFrame')?.dataset.dragged) return;
-        panda.style.clipPath = `inset(0 0 0 ${pos.p}%)`;
-        handle.style.left = pos.p + '%';
-      },
+  /* ── Сравнение: строки въезжают со сдвигом ── */
+  gsap.utils.toArray('.cmp-r').forEach((row, i) => {
+    gsap.from(row, {
+      x: -18, autoAlpha: 0, duration: 0.6, delay: i * 0.06, ease: EASE,
+      clearProps: 'all',
+      scrollTrigger: { trigger: '.cmp-card', start: 'top 80%', once: true },
     });
-  }
+  });
 
   /* ── Маршрут: линия прорисовывается ── */
   const route = document.getElementById('routePath');

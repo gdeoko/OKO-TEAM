@@ -243,32 +243,17 @@
     <div class="sec-head" data-reveal>
       <span class="label" data-scramble>Сравнение</span>
       <h2 class="d2">Дилер против<br>прямой поставки</h2>
-      <p class="sec-sub">Те же модели, реальные цены из нашего прайса. Потяните ползунок и посмотрите разницу.</p>
+      <p class="sec-sub">Те же модели, реальные цены из нашего прайса. Слева цена российского дилера, справа под ключ из Китая.</p>
     </div>
-    <div class="cmp-frame" id="cmpFrame" data-reveal>
-      <div class="cmp-side cmp-dealer" id="cmpDealer">
-        <div class="cmp-head">
-          <h3>Российский дилер</h3>
-          <span class="cmp-tag">розница РФ</span>
-        </div>
-        <div id="cmpDealerRows"></div>
+    <div class="cmp-card" data-reveal>
+      <div class="cmp-legend" aria-hidden="true">
+        <span>Модель</span>
+        <span>Дилер в РФ</span>
+        <span class="cmp-h-b">PandaGo под ключ</span>
       </div>
-      <div class="cmp-panda" id="cmpPanda">
-        <div class="cmp-side">
-          <div class="cmp-head">
-            <h3>PandaGo Cargo</h3>
-            <span class="cmp-tag">под ключ из Китая</span>
-          </div>
-          <div id="cmpPandaRows"></div>
-        </div>
-      </div>
-      <div class="cmp-handle" id="cmpHandle" role="slider" aria-label="Ползунок сравнения цен" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
-        <div class="cmp-knob">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 3 12 9 6"/><polyline points="15 6 21 12 15 18"/></svg>
-        </div>
-      </div>
+      <div id="cmpRows"></div>
     </div>
-    <p class="cmp-hint">Потяните за линию влево или вправо</p>
+    <p class="cmp-note" data-reveal>В среднем <b>на 37-40% дешевле</b> розницы российских дилеров.</p>
   </div>
 </section>
 

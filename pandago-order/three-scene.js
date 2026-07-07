@@ -142,7 +142,7 @@ export function initScene(container) {
   const placeBike = () => {
     /* десктоп: справа от текста; мобилка: ниже по центру, мельче */
     const mob = window.innerWidth < 768;
-    if (mob) { bike.position.set(0.6, -4.0, 1); bike.scale.setScalar(0.66); }
+    if (mob) { bike.position.set(0.3, -5.0, -1); bike.scale.setScalar(0.6); }
     else { bike.position.set(4.5, -0.4, 2); bike.scale.setScalar(1.08); }
   };
 

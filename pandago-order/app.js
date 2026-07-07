@@ -161,7 +161,7 @@ function initFaq() {
   });
 }
 
-/* ── Сравнение: строки и ползунок ── */
+/* ── Сравнение: чистая адаптивная таблица ── */
 function initCompare() {
   const rows = [
     { name: 'Sur-Ron Ultra Bee',      panda: 417000,  dealer: 668000 },
@@ -171,52 +171,20 @@ function initCompare() {
     { name: 'Yamaha Grizzly 700',     panda: 1323000, dealer: 2117000 },
   ];
   const fmtN = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  const dealerBox = $('#cmpDealerRows');
-  const pandaBox = $('#cmpPandaRows');
-  if (dealerBox) {
-    dealerBox.innerHTML = rows.map((r) =>
-      `<div class="cmp-row"><span>${r.name}</span><b>${fmtN(r.dealer)} ₽</b></div>`).join('');
-  }
-  if (pandaBox) {
-    pandaBox.innerHTML = rows.map((r) =>
-      `<div class="cmp-row"><span>${r.name}</span><span style="text-align:right"><b>${fmtN(r.panda)} ₽</b><br><span class="save">экономия ${fmtN(r.dealer - r.panda)} ₽</span></span></div>`).join('');
-  }
-
-  const frame = $('#cmpFrame');
-  const panda = $('#cmpPanda');
-  const handle = $('#cmpHandle');
-  if (!frame || !panda || !handle) return;
-
-  const setPos = (pct) => {
-    const p = Math.max(4, Math.min(96, pct));
-    panda.style.clipPath = `inset(0 0 0 ${p}%)`;
-    handle.style.left = p + '%';
-    handle.setAttribute('aria-valuenow', String(Math.round(p)));
-  };
-
-  let dragging = false;
-  const fromEvent = (e) => {
-    const rect = frame.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    return (x / rect.width) * 100;
-  };
-  const start = (e) => {
-    dragging = true;
-    frame.dataset.dragged = '1';
-    setPos(fromEvent(e));
-  };
-  const move = (e) => { if (dragging) setPos(fromEvent(e)); };
-  const end = () => { dragging = false; };
-
-  handle.addEventListener('pointerdown', start);
-  frame.addEventListener('pointerdown', start);
-  window.addEventListener('pointermove', move, { passive: true });
-  window.addEventListener('pointerup', end, { passive: true });
-  handle.addEventListener('keydown', (e) => {
-    const cur = parseFloat(handle.style.left) || 50;
-    if (e.key === 'ArrowLeft') { frame.dataset.dragged = '1'; setPos(cur - 4); e.preventDefault(); }
-    if (e.key === 'ArrowRight') { frame.dataset.dragged = '1'; setPos(cur + 4); e.preventDefault(); }
-  });
+  const box = $('#cmpRows');
+  if (!box) return;
+  box.innerHTML = rows.map((r) => `
+    <div class="cmp-r">
+      <div class="cmp-r-name">${r.name}</div>
+      <div class="cmp-r-dealer">${fmtN(r.dealer)} ₽</div>
+      <div class="cmp-r-panda">
+        <b>${fmtN(r.panda)} ₽</b>
+        <span class="cmp-r-save">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="12" height="12" aria-hidden="true"><polyline points="19 12 12 19 5 12"/><line x1="12" y1="5" x2="12" y2="19"/></svg>
+          ${fmtN(r.dealer - r.panda)} ₽
+        </span>
+      </div>
+    </div>`).join('');
 }
 
 /* ── Наклон карточек за курсором ── */
