@@ -46,8 +46,12 @@ https://true-journey-418.higgsfield.app
 - Telegram-бот: @okoappbot. S3: `https://s3.twcstorage.ru`, бакеты `oko-media`,
   `oko-tmp` (lifecycle 24ч настроен). Gemini — 3 ключа. Claude API — ключ есть,
   баланс пополняется Даниэлем.
-- Все ключи Даниэль прислал в чат сессии от 05.07.2026; должны лежать в
-  Environment variables окружения. Если их нет — спросить у Даниэля, в git не класть.
+- **Интеграции и API-ключи: `INTEGRATIONS.md` (паспорт).** Ключи лежат в
+  `secrets.env.b64` (base64, в git — с явного разрешения Даниэля от 07.07.2026)
+  и автозагружаются SessionStart-хуком в каждый shell. Вручную:
+  `source <(base64 -d secrets.env.b64)`. Ключи не вписывать в код сайтов и браузер.
+- Ключи OKO-инфраструктуры (Supabase PAT, Telegram, S3 twcstorage, Gemini) Даниэль
+  прислал в чат 05.07.2026 — должны быть в Environment variables окружения.
 - Сервер-каркас: `oko-app/server` (Fastify + Supabase, новые ключи sb_/JWKS).
 
 ## Стиль ответов
