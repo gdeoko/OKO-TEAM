@@ -6,6 +6,7 @@
 <title>ЗооОпт · Склад · Маркет — зоотовары оптом и в розницу</title>
 <meta name="description" content="ЗооОпт — оптово-розничная зоо-компания. Корма, игрушки, аксессуары, ветаптека. Опт для магазинов и вет.клиник, розница для владельцев питомцев." />
 <link rel="icon" href="/assets/logo.png" type="image/png">
+<meta name="build" content="zoopt-v3-market">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -109,6 +110,10 @@ body.in-journey .chapters{visibility:visible}
 .ch.right .tags{justify-content:flex-end}
 .ch .tag{font-family:'JetBrains Mono';font-size:12.5px;letter-spacing:.06em;padding:9px 16px;border-radius:var(--r-pill);
   border:1px solid rgba(255,255,255,.22);background:rgba(3,16,10,.42);backdrop-filter:blur(8px);color:#dff3e4}
+@media(max-width:760px){
+  .ch:not(.ch0){justify-content:flex-start;padding-top:clamp(96px,15svh,150px)}
+  .ch:not(.ch0):before{background:linear-gradient(180deg,rgba(3,16,10,.82),rgba(3,16,10,.4) 46%,transparent 66%)}
+}
 
 /* ch0 — hero */
 .ch0-eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:'JetBrains Mono';font-size:12px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:#bfe9c9;
@@ -159,37 +164,33 @@ body.in-journey #hud{visibility:visible;opacity:1}
 .sec-title em{font-style:normal;color:var(--green)}
 .lead{max-width:520px;color:var(--gray);font-size:clamp(1rem,2vw,1.15rem);line-height:1.6;margin-top:16px}
 
-/* 3D showcase */
-#show{position:relative;z-index:5;height:100svh;min-height:640px;overflow:hidden;background:radial-gradient(120% 100% at 70% 40%,#0e3a20 0%,#061c10 45%,#03100a 100%)}
-#gl3d{position:absolute;inset:0;z-index:0;width:100%;height:100%;display:block;cursor:grab}
-#gl3d:active{cursor:grabbing}
-#show:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(100deg,rgba(3,16,10,.78) 0%,rgba(3,16,10,.28) 28%,transparent 48%)}
-.show-overlay{position:absolute;left:0;top:0;z-index:2;max-width:min(92vw,520px);padding:clamp(80px,12vw,120px) clamp(16px,5vw,80px);pointer-events:none}
-.show-overlay .show-btns{pointer-events:auto}
-.show-btns{display:flex;gap:10px;margin-top:26px}
-.pill3d{font-family:'Onest';font-weight:600;font-size:14px;padding:11px 20px;border-radius:var(--r-pill);cursor:pointer;
-  border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.05);color:#fff;transition:.25s;backdrop-filter:blur(6px)}
-.pill3d:hover{background:rgba(255,255,255,.12)}
-.pill3d.on{background:var(--yellow);color:var(--black);border-color:var(--yellow)}
-.show-hint{position:absolute;right:clamp(16px,4vw,48px);bottom:34px;z-index:2;display:inline-flex;align-items:center;gap:8px;
-  color:rgba(223,243,228,.55);font-family:'JetBrains Mono';font-size:11px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none}
-@media(max-width:760px){.show-overlay{max-width:100%}.show-hint{left:50%;right:auto;transform:translateX(-50%)}}
+/* Наш маркет — фото-секция с параллаксом */
+#show{position:relative;z-index:5;min-height:100svh;overflow:hidden;background:#04120a;display:flex;align-items:center}
+.show-bg{position:absolute;left:0;right:0;top:-14%;bottom:-14%;z-index:0;
+  background:url(assets/market.jpg) center/cover no-repeat;will-change:transform}
+#show:before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(100deg,rgba(3,16,10,.9) 0%,rgba(3,16,10,.55) 34%,rgba(3,16,10,.12) 62%),
+             linear-gradient(0deg,rgba(3,16,10,.55),transparent 30%)}
+.show-overlay{position:relative;z-index:2;max-width:min(92vw,560px);padding:clamp(90px,13vw,140px) clamp(16px,5vw,80px)}
+.show-meta{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.show-meta .tag{font-family:'JetBrains Mono';font-size:12.5px;letter-spacing:.06em;padding:9px 16px;border-radius:var(--r-pill);
+  border:1px solid rgba(255,255,255,.22);background:rgba(3,16,10,.45);backdrop-filter:blur(8px);color:#dff3e4}
+.show-btns{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
 
 /* categories grid */
 .cats-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px}
 .cat-grid{margin-top:56px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
 @media(max-width:960px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){.cat-grid{grid-template-columns:1fr}}
-.cat{position:relative;border-radius:var(--r-lg);padding:26px;min-height:360px;overflow:hidden;background:var(--white);
-  box-shadow:0 20px 60px -30px rgba(15,92,36,.28);cursor:pointer;transition:.5s var(--ease);display:flex;flex-direction:column;justify-content:flex-end}
-.cat:hover{transform:translateY(-8px);box-shadow:0 34px 70px -28px rgba(15,92,36,.42)}
-.cat .moon{position:absolute;width:172px;height:172px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFE45C,var(--yellow));right:50%;transform:translateX(50%);top:18px;transition:.6s var(--ease)}
-.cat:hover .moon{transform:translateX(50%) scale(1.06)}
-.cat .an{position:absolute;left:50%;transform:translateX(-50%);top:26px;width:158px;height:158px;object-fit:contain;transition:.6s var(--ease);filter:drop-shadow(0 12px 22px rgba(0,0,0,.22))}
-.cat:hover .an{transform:translateX(-50%) translateY(-4px) scale(1.05)}
-.cat h3{position:relative;font-size:1.55rem;color:var(--black)}
-.cat p{position:relative;color:var(--gray);font-size:.95rem;margin-top:8px}
-.cat .go{position:relative;margin-top:18px;display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--green)}
+.cat{position:relative;border-radius:var(--r-lg);padding:26px;min-height:430px;overflow:hidden;background:#071b10;
+  box-shadow:0 24px 60px -28px rgba(4,20,10,.55);cursor:pointer;transition:.5s var(--ease);display:flex;flex-direction:column;justify-content:flex-end}
+.cat:hover{transform:translateY(-8px);box-shadow:0 38px 80px -26px rgba(4,20,10,.7)}
+.cat .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.cat:hover .ph{transform:scale(1.06)}
+.cat:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(3,14,8,.92) 0%,rgba(3,14,8,.35) 42%,rgba(3,14,8,.05) 65%)}
+.cat h3{position:relative;z-index:1;font-size:1.55rem;color:#fff}
+.cat p{position:relative;z-index:1;color:rgba(230,244,236,.72);font-size:.95rem;margin-top:8px}
+.cat .go{position:relative;z-index:1;margin-top:18px;display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--warm)}
 .cat .go svg{transition:.3s}.cat:hover .go svg{transform:translateX(5px)}
 
 /* wholesale */
@@ -254,21 +255,20 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
 <div id="pre">
   <div class="pre-moon"></div>
   <div class="pre-paws"><span></span><span></span><span></span><span></span></div>
-  <div class="pre-t">ЗооОпт · ночной рейс</div>
+  <div class="pre-t">ЗооОпт · склад · маркет</div>
 </div>
 
 <nav id="nav">
   <a class="brand" href="#top" data-cursor><span class="brand-badge"><span></span></span><span><span class="zoo">Зоо</span>Опт</span></a>
   <div class="nav-links">
-    <a href="#show" data-cursor>3D-витрина</a>
+    <a href="#show" data-cursor>Наш маркет</a>
     <a href="#cats" data-cursor>Каталог</a>
     <a href="#opt" data-cursor>Опт</a>
-    <a href="#strip" data-cursor>О нас</a>
     <a href="#footer" data-cursor>Контакты</a>
   </div>
   <div class="nav-right">
-    <span class="chip mono">RU</span>
-    <a class="chip solid" href="#opt" data-cursor>Войти в опт</a>
+    <a class="chip mono" href="tel:+79779955566" data-cursor>+7 977 99-555-66</a>
+    <a class="chip solid" href="#opt" data-cursor>Оптовый прайс</a>
   </div>
 </nav>
 
@@ -278,72 +278,76 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
 
   <div class="chapters">
     <div class="ch ch0 center" data-ch="0">
-      <span class="ch0-eyebrow">ночной рейс <b>·</b> склад №69-70 <b>·</b> опт и розница</span>
+      <span class="ch0-eyebrow">павильоны №69–70 <b>·</b> ежедневно 9:00–18:00 <b>·</b> опт и розница</span>
       <h1><span class="zoo">ЗОО</span>ОПТ</h1>
       <div class="tagline">Склад · Маркет</div>
-      <p class="sub">Пролетите по нашему ночному складу: четыре мира питомцев, живая 3D-витрина и оптовый портал для бизнеса.</p>
+      <p class="sub">Корма, игрушки, аксессуары и ветаптека — по складским ценам. Розница для хозяев, опт для магазинов и вет.клиник.</p>
       <div class="cta">
-        <button class="btn btn-yellow" data-scroll="#cats" data-cursor>Купить в розницу
+        <button class="btn btn-yellow" data-scroll="#cats" data-cursor>Каталог и цены
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        <button class="btn btn-ghost" data-scroll="#opt" data-cursor>Опт для бизнеса</button>
+        <button class="btn btn-ghost" data-scroll="#opt" data-cursor>Оптовикам</button>
       </div>
-      <div class="scroll-ind"><span>листай — камера полетит</span><div class="mouse"></div></div>
+      <div class="scroll-ind"><span>листайте вниз</span><div class="mouse"></div></div>
     </div>
 
     <div class="ch" data-ch="1">
-      <span class="kicker">глава 01 · собакам</span>
-      <h2>Верным<br><em>и хвостатым</em></h2>
-      <p>Корма холистик и премиум, амуниция, игрушки, лакомства для дрессировки — со склада, без наценки посредников.</p>
-      <div class="tags"><span class="tag">Корма</span><span class="tag">Игрушки</span><span class="tag">Аксессуары</span></div>
+      <span class="kicker">собакам</span>
+      <h2>Всё для вашей<br><em>собаки</em></h2>
+      <p>Сухие и влажные корма премиум-класса, амуниция, игрушки и лакомства. Складские цены — заметно ниже сетевых зоомагазинов.</p>
+      <div class="tags"><span class="tag">Royal Canin</span><span class="tag">Monge</span><span class="tag">Pro Plan</span></div>
     </div>
 
     <div class="ch right" data-ch="2">
-      <span class="kicker">глава 02 · кошкам</span>
-      <h2>Мягким<br><em>и независимым</em></h2>
-      <p>Корма, наполнители, когтеточки и домики. Всё, за что мурчат — в одном складе-маркете.</p>
-      <div class="tags"><span class="tag">Корма</span><span class="tag">Наполнители</span><span class="tag">Игрушки</span></div>
+      <span class="kicker">кошкам</span>
+      <h2>Всё для вашей<br><em>кошки</em></h2>
+      <p>Корма, наполнители, когтеточки, домики и игрушки — всегда в наличии на складе. Новинки привозим каждую неделю.</p>
+      <div class="tags"><span class="tag">Корма</span><span class="tag">Наполнители</span><span class="tag">Домики</span></div>
     </div>
 
     <div class="ch" data-ch="3">
-      <span class="kicker">глава 03 · малыши и вода</span>
-      <h2>Пернатым, хвостатым,<br><em>плавающим</em></h2>
-      <p>Клетки и корма для грызунов и птиц, аквариумы, фильтры и декор для подводных миров.</p>
+      <span class="kicker">птицам · грызунам · рыбкам</span>
+      <h2>Малышам<br><em>и аквариуму</em></h2>
+      <p>Клетки, корма и витамины для грызунов и птиц. Аквариумы, фильтры, декор и корм для рыб — под ключ.</p>
       <div class="tags"><span class="tag">Клетки</span><span class="tag">Витамины</span><span class="tag">Аквариумы</span></div>
     </div>
 
     <div class="ch center" data-ch="4">
-      <span class="kicker">глава 04 · бизнесу</span>
-      <h2>Портал <em>ОПТ</em></h2>
-      <p>Магазинам и вет.клиникам: оптовый прайс по ИНН, минимальный заказ от 15 000 ₽, сборка за 24 часа. Влетайте.</p>
+      <span class="kicker">оптовым клиентам</span>
+      <h2>Опт <em>без посредников</em></h2>
+      <p>Магазинам и вет.клиникам: оптовый прайс по ИНН, заказ от 15 000 ₽, сборка за 24 часа, документы для юрлиц.</p>
       <div class="tags"><span class="tag">−30% к рознице</span><span class="tag">Счёт для юрлиц</span><span class="tag">PDF-прайс</span></div>
     </div>
   </div>
 
   <div id="rail" role="navigation" aria-label="Главы">
-    <div class="node on" data-t="0"><span>Пролог</span><i></i></div>
+    <div class="node on" data-t="0"><span>Главная</span><i></i></div>
     <div class="node" data-t="0.24"><span>Собакам</span><i></i></div>
     <div class="node" data-t="0.44"><span>Кошкам</span><i></i></div>
-    <div class="node" data-t="0.64"><span>Малыши</span><i></i></div>
+    <div class="node" data-t="0.64"><span>Малышам</span><i></i></div>
     <div class="node" data-t="0.84"><span>Опт</span><i></i></div>
   </div>
 
-  <div id="hud"><span id="hud-ch">00 / пролог</span><div class="bar"><i id="hud-bar"></i></div><span id="hud-pct">0%</span></div>
+  <div id="hud"><span id="hud-ch">зооопт · главная</span><div class="bar"><i id="hud-bar"></i></div><span id="hud-pct">0%</span></div>
 </div>
 
-<!-- ================= 3D ВИТРИНА ================= -->
+<!-- ================= НАШ МАРКЕТ ================= -->
 <section id="show">
-  <canvas id="gl3d"></canvas>
+  <div class="show-bg" aria-hidden="true"></div>
   <div class="show-overlay">
-    <span class="eyebrow rv" style="color:var(--yellow)">3D · Живые товары</span>
-    <h2 class="sec-title rv" style="color:#fff">Крути и рассма-<br><em style="color:var(--green-lite)">тривай в 3D</em></h2>
-    <p class="lead rv" style="color:rgba(223,243,228,.75)">Зажми и покрути мышкой или пальцем. Скоро — товары каталога в 3D: техника, аквариумы, домики.</p>
+    <span class="eyebrow rv" style="color:var(--yellow)">Наш склад-маркет</span>
+    <h2 class="sec-title rv" style="color:#fff">Приезжайте —<br><em style="color:var(--green-lite)">всё в наличии</em></h2>
+    <p class="lead rv" style="color:rgba(223,243,228,.8)">Павильоны №69–70. Более 300 товаров на полках: посмотрите вживую, посоветуйтесь с продавцом — или закажите по телефону, соберём в день обращения.</p>
+    <div class="show-meta rv">
+      <span class="tag">Ежедневно 9:00–18:00</span>
+      <span class="tag">Павильоны №69–70</span>
+      <span class="tag">300+ товаров</span>
+    </div>
     <div class="show-btns rv">
-      <button class="pill3d on" data-anim="0" data-cursor>Осмотр</button>
-      <button class="pill3d" data-anim="1" data-cursor>Шаг</button>
-      <button class="pill3d" data-anim="2" data-cursor>Бег</button>
+      <a class="btn btn-yellow" href="tel:+79779955566" data-cursor>Позвонить
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 1.9z"/></svg></a>
+      <button class="btn btn-ghost" data-scroll="#cats" data-cursor>Смотреть каталог</button>
     </div>
   </div>
-  <div class="show-hint rv"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg> зажми и покрути</div>
 </section>
 
 <!-- ================= КАТАЛОГ ================= -->
@@ -356,16 +360,16 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
     <p class="lead rv">5 категорий, 10+ брендов, 300+ товаров. Корма, наполнители, игрушки, аксессуары и ветаптека — со склада.</p>
   </div>
   <div class="cat-grid">
-    <article class="cat rv" data-cursor><div class="moon"></div><img class="an" src="assets/sil_dog.png" alt="Силуэт собаки">
+    <article class="cat rv" data-cursor><img class="ph" src="assets/card_dog.jpg" alt="Золотистый ретривер" loading="lazy">
       <h3>Собакам</h3><p>Корма · Игрушки · Аксессуары</p>
       <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
-    <article class="cat rv" data-cursor><div class="moon"></div><img class="an" src="assets/sil_cat.png" alt="Силуэт кошки">
+    <article class="cat rv" data-cursor><img class="ph" src="assets/card_cat.jpg" alt="Рыжий кот" loading="lazy">
       <h3>Кошкам</h3><p>Корма · Наполнители · Игрушки</p>
       <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
-    <article class="cat rv" data-cursor><div class="moon"></div><img class="an" src="assets/sil_rodent.png" alt="Хомяк и попугай">
+    <article class="cat rv" data-cursor><img class="ph" src="assets/card_parrot.jpg" alt="Волнистый попугай" loading="lazy">
       <h3>Грызунам<br>и птицам</h3><p>Клетки · Корма · Витамины</p>
       <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
-    <article class="cat rv" data-cursor><div class="moon"></div><img class="an" src="assets/sil_aqua.png" alt="Рыбка и черепаха">
+    <article class="cat rv" data-cursor><img class="ph" src="assets/card_fish.jpg" alt="Рыбка петушок" loading="lazy">
       <h3>Аквариум</h3><p>Аквариумы · Корма · Фильтры</p>
       <span class="go">Смотреть <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></article>
   </div>
@@ -413,6 +417,7 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
     <div>
       <h2><span class="zoo">Зоо</span>Опт · Склад · Маркет</h2>
       <p style="color:rgba(255,255,255,.6);max-width:420px;margin-top:16px;line-height:1.6">Оптово-розничная зоо-компания. Работаем с магазинами, вет.клиниками и владельцами питомцев по всей России.</p>
+      <p style="color:rgba(255,255,255,.75);margin-top:14px;font-weight:600">Павильоны №69–70 · Ежедневно 9:00–18:00</p>
       <div style="display:flex;gap:12px;margin-top:24px">
         <a class="btn btn-yellow" href="tel:+79779955566" data-cursor>+7 (977) 99-555-66</a>
       </div>
