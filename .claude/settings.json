@@ -51,10 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npm i -g agent-browser >/dev/null 2>&1 || true",
-            "async": true,
-            "timeout": 300,
-            "statusMessage": "Установка agent-browser"
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" 2>/dev/null || cd /home/user/OKO-TEAM; [ -f secrets.env.b64 ] && base64 -d secrets.env.b64 > secrets.env 2>/dev/null; for f in ~/.bashrc ~/.profile; do grep -q '# oko-secrets' \"$f\" 2>/dev/null || echo 'source /home/user/OKO-TEAM/secrets.env 2>/dev/null # oko-secrets' >> \"$f\"; done; echo 'OKO: ключи интеграций загружены (secrets.env), паспорт: INTEGRATIONS.md'"
           }
         ]
       }

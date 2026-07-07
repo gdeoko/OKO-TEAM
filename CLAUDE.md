@@ -50,3 +50,8 @@ https://true-journey-418.higgsfield.app
 - Запуск в облачной сессии: первый раз `agent-browser open <url> --executable-path /opt/pw-browsers/chromium`.
 - В облаке работает ТОЛЬКО с localhost/локальными dev-серверами: внешние сайты браузеру
   режет egress-прокси (ERR_CONNECTION_RESET) — это не баг agent-browser.
+
+## Интеграции и API-ключи (для ЛЮБОГО чата)
+**Паспорт: `INTEGRATIONS.md`.** Ключи в `secrets.env.b64` (base64) автозагружаются
+SessionStart-хуком в каждый shell. Вручную: `source <(base64 -d secrets.env.b64)`.
+Главный производственный скилл: `/oko-magic`.
