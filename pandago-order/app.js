@@ -315,15 +315,37 @@ function initScrub(secSel, videoSel, barSel, stillSel) {
     if (bar) bar.style.transform = `scaleX(${current})`;
   };
 
+  let lastScrollTs = 0;
+  let autoPlaying = false;
+  let inView = false;
+
   const onScroll = () => {
     const r = sec.getBoundingClientRect();
     const span = r.height - window.innerHeight;
     if (span <= 0) return;
     target = Math.min(1, Math.max(0, -r.top / span));
+    lastScrollTs = performance.now();
+    if (autoPlaying && video) { video.pause(); autoPlaying = false; }
     if (!raf) raf = requestAnimationFrame(tick);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  /* кино живёт само: без скролла видео тихо играет в цикле, скролл
+     перехватывает управление кадром */
+  new IntersectionObserver((es) => { inView = es[0].isIntersecting; }, { threshold: 0.35 })
+    .observe(sec);
+  if (video) {
+    video.loop = true;
+    setInterval(() => {
+      if (!inView) { if (autoPlaying) { video.pause(); autoPlaying = false; } return; }
+      const idle = performance.now() - lastScrollTs > 1300;
+      if (idle && !autoPlaying) {
+        video.playbackRate = 0.6;
+        video.play().then(() => { autoPlaying = true; }).catch(() => {});
+      }
+    }, 400);
+  }
 }
 
 /* ── Живой фон формы: ночная Москва, грузится при приближении ── */
