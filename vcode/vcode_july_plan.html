@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>V.CODE - Контент-план Июль 2026</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+:root{--bg:#f5f5f5;--white:#fff;--accent:#e8842a;--accent-light:#fff5ec;--accent-dark:#c96f1f;--green:#22c55e;--green-light:#ecfdf5;--blue:#3b82f6;--blue-light:#eff6ff;--red:#ef4444;--purple:#a855f7;--text:#111;--text2:#555;--text3:#999;--border:#e5e5e5;--shadow:0 2px 12px rgba(0,0,0,0.07);--radius:14px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+.ticker{background:#111;color:#fff;font-size:11px;font-weight:600;padding:8px 0;white-space:nowrap;overflow:hidden}
+.ticker-inner{display:inline-block;animation:ticker 25s linear infinite}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker span{margin:0 20px;opacity:.7}
+.ticker .ac{color:var(--accent);opacity:1}
+
+.header{background:#111;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:900;font-size:22px;color:#fff;letter-spacing:2px}
+.logo .ac{color:var(--accent)}
+.badge{background:rgba(232,132,42,0.15);color:var(--accent);font-weight:700;font-size:12px;padding:6px 14px;border-radius:20px;border:1px solid rgba(232,132,42,0.3)}
+
+.section{padding:20px 20px 8px}
+.section-label{color:var(--accent);font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.section-title{font-weight:900;font-size:24px;line-height:1.2;color:#111}
+.section-title .ac{color:var(--accent)}
+.section-desc{color:var(--text2);font-size:13px;margin-top:8px;line-height:1.6}
+
+.progress-wrap{padding:12px 20px}
+.progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px}
+.progress-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+
+.stats{display:flex;gap:8px;padding:8px 20px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stats::-webkit-scrollbar{display:none}
+.stat{flex-shrink:0;background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:85px;text-align:center;box-shadow:var(--shadow)}
+.stat-n{font-weight:800;font-size:22px;color:var(--accent)}
+.stat-l{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+.legend{display:flex;gap:14px;padding:14px 20px 8px;font-size:11px;color:var(--text2);flex-wrap:wrap}
+.legend-i{display:flex;align-items:center;gap:5px}
+.legend-d{width:8px;height:8px;border-radius:50%}
+
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px 20px 100px}
+.cal-h{text-align:center;font-weight:700;font-size:9px;color:var(--text3);padding:6px 0;text-transform:uppercase;letter-spacing:1px}
+.cal-d{background:var(--white);border:2px solid transparent;border-radius:var(--radius);padding:6px;min-height:62px;cursor:pointer;transition:all .15s;position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.cal-d:active{transform:scale(0.97)}
+.cal-d.has{border-color:var(--accent)}
+.cal-d.done{background:var(--accent-light);border-color:var(--accent)}
+.cal-d.empty{opacity:.25;cursor:default;box-shadow:none}
+.day-n{font-weight:800;font-size:13px;margin-bottom:3px}
+.day-dots{display:flex;gap:3px;flex-wrap:wrap}
+.dd{width:6px;height:6px;border-radius:50%}
+
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(4px)}
+.overlay.active{display:flex}
+.modal{background:var(--white);border-radius:20px;width:calc(100% - 24px);max-width:600px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 4px 30px rgba(0,0,0,0.25)}
+.modal-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:10px auto 0}
+.modal-head{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--white);z-index:2;border-bottom:1px solid var(--border)}
+.modal-t{font-weight:800;font-size:17px}
+.modal-s{font-size:11px;color:var(--text2);margin-top:2px}
+.modal-x{width:30px;height:30px;border-radius:50%;background:var(--bg);border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:12px 20px 30px}
+
+.ci{background:var(--bg);border:1px solid var(--border);border-radius:14px;margin-bottom:8px;overflow:hidden}
+.ci-head{display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer}
+.ci-cb{width:22px;height:22px;border-radius:7px;border:2px solid #ccc;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.ci-cb.ck{background:var(--accent);border-color:var(--accent)}
+.ci-cb.ck::after{content:'✓';color:#fff;font-size:12px;font-weight:700}
+.ci-badge{font-size:8px;font-weight:700;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.bg-flk{background:var(--blue-light);color:var(--blue)}
+.bg-live{background:var(--green-light);color:#16a34a}
+.bg-car{background:var(--accent-light);color:var(--accent-dark)}
+.ci-title{font-size:12px;font-weight:500;flex:1;line-height:1.4}
+.ci-chev{color:var(--text3);font-size:11px;transition:transform .2s;flex-shrink:0}
+.ci.open .ci-chev{transform:rotate(180deg)}
+.ci.done .ci-title{text-decoration:line-through;opacity:.4}
+.ci-body{display:none;padding:0 14px 14px}
+.ci.open .ci-body{display:block}
+
+.pb{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.pb-label{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent)}
+.pb-acts{display:flex;gap:5px}
+.btn-c,.btn-o{padding:5px 10px;border-radius:7px;font-size:10px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-c{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn-c:active,.btn-c.cp{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-o{background:var(--accent);color:#fff}
+.btn-o:active{opacity:.8}
+.pb-txt{padding:10px 12px;font-size:11px;line-height:1.7;color:var(--text2);white-space:pre-wrap;word-break:break-word;max-height:300px;overflow-y:auto;font-family:'Inter',sans-serif}
+.pb-note{padding:6px 12px;font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px}
+.pb-note::before{content:'📎';font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="ticker"><div class="ticker-inner">
+<span class="ac">V.CODE</span><span>·</span><span>ВИДЕОПРОДАКШН</span><span>·</span><span>ПОДКАСТЫ</span><span>·</span><span>СЪЕМКА</span><span>·</span><span>МОНТАЖ</span><span>·</span><span>СТАВРОПОЛЬ</span><span>·</span>
+<span class="ac">V.CODE</span><span>·</span><span>ВИДЕОПРОДАКШН</span><span>·</span><span>ПОДКАСТЫ</span><span>·</span><span>СЪЕМКА</span><span>·</span><span>МОНТАЖ</span><span>·</span><span>СТАВРОПОЛЬ</span>
+</div></div>
+
+<div class="header">
+<div class="logo"><img src="data:image/png;base64,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" style="height:32px;width:32px;border-radius:5px;margin-right:8px;display:inline-block;vertical-align:middle">V.<span class="ac">CODE</span></div>
+<div class="badge">8-31 июля</div>
+</div>
+
+<div class="section">
+<div class="section-label">контент-план</div>
+<div class="section-title">Июль <span class="ac">V.CODE</span></div>
+<div class="section-desc">Нажмите на день чтобы раскрыть контент.</div>
+</div>
+
+<div class="progress-wrap">
+<div class="progress-info"><span>Прогресс</span><span id="pTxt">0 / 0</span></div>
+<div class="progress-track"><div class="progress-fill" id="pFill" style="width:0%"></div></div>
+</div>
+
+
+
+<div class="legend">
+<div class="legend-i"><div class="legend-d" style="background:var(--green)"></div>Живой</div>
+<div class="legend-i"><div class="legend-d" style="background:var(--blue)"></div>Fliki</div>
+<div class="legend-i"><div class="legend-d" style="background:var(--accent)"></div>Карусель</div>
+</div>
+
+<div class="cal" id="grid"></div>
+
+<div class="overlay" id="ov" onclick="if(event.target===this)cM()">
+<div class="modal">
+<div class="modal-handle"></div>
+<div class="modal-head">
+<div><div class="modal-t" id="mT"></div><div class="modal-s" id="mS"></div></div>
+<button class="modal-x" onclick="cM()">✕</button>
+</div>
+<div class="modal-body" id="mB"></div>
+</div>
+</div>
+
+<script>
+
+const C={};
+
+// ===================== ДЕНЬ 1 (8 июля, вт) =====================
+C[1]=[
+{t:'fliki',cat:'viral',id:'j001',ti:'Пекарня выложила ролик с замесом теста и продала весь хлеб до обеда',
+flk:`# Bakery Posted Dough Kneading Video and Sold Out Before Lunch
+
+Background music: dark cinematic ambient with deep analog synth bass and sparse reverbed piano notes, tension building to warm resolution, slow deliberate tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Extreme close-up of a baker's hands kneading bread dough on a floured wooden surface. The dough stretches and folds with satisfying elasticity. Flour particles float in a warm beam of morning light from a nearby window. Every texture of the dough and the flour-dusted hands is visible. Shot in 60fps slow motion with shallow depth of field. The sensory quality is immediate and hypnotic.
+Voiceover: "Пекарня в Ростове выложила один ролик где пекарь месит тесто руками, и к девяти утра следующего дня весь хлеб был продан."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone propped against a bag of flour on a bakery counter, recording the baker at work. The phone captures the entire kneading process from a low angle. Behind the phone, the warm bakery environment is visible: wooden shelves with fresh loaves, a brick oven glowing with heat in the background. The setup took ten seconds to arrange. Warm golden bakery lighting from the oven and morning windows.
+Voiceover: "Владелец поставил телефон на мешок с мукой, нажал запись и начал работать как обычно, при этом в ролике длиной двадцать секунд не было ни слова, ни музыки, только звук рук и теста."
+
+[SCENE 3 - 5 sec]
+Visual: Close-up of a phone screen showing Instagram reel analytics with the view counter climbing past fifty thousand. The phone lies on a flour-dusted counter next to a fresh golden loaf of bread. Comment notifications slide in one after another with questions about address and time of work. The warm bakery light illuminates both the phone screen and the bread beside it. The contrast between simple phone video and massive engagement is visible in the numbers.
+[SFX: subtle crisp bread crust cracking sound, single satisfying snap, 7%]
+Voiceover: "За два дня ролик набрал восемьдесят тысяч просмотров, потому что звук замеса теста и вид работающих рук запускают сенсорную реакцию которую невозможно пролистать."
+
+[SCENE 4 - 5 sec]
+Visual: A busy bakery counter with a queue of customers. The baker hands a fresh loaf wrapped in paper to a smiling customer. Behind the counter, shelves that were full of bread in the morning are now mostly empty. A small handwritten sign says the next batch will be ready at a specific time. Through the bakery window, more people approach. Warm inviting interior lighting mixed with daylight from the entrance.
+Voiceover: "До этого ролика в пекарню заходили по двадцать человек в день, после ролика очередь выстраивалась к открытию, потому что люди хотели попробовать хлеб который они видели на экране."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: Wide shot of the bakery interior at golden hour, warm light streaming through the window onto the wooden counter. A mirrorless camera on a compact tripod is set up to capture the next morning's baking session with professional lighting from a small portable LED panel. The setup is minimal but transforms the bakery into a content studio. Fresh loaves cool on a rack beside the camera. The combination of craft and technology in one frame tells the story.
+Voiceover: "Телефон на мешке с мукой принёс восемьдесят тысяч просмотров, а профессиональная камера с правильным светом превращает каждое утро в пекарне в контент который продаёт хлеб ещё до того как он остынет."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for a dark premium video production brand V.CODE. Viral story about a bakery that sold out from one dough kneading video.
+
+=== VISUAL CONCEPT ===
+Extreme close-up of baker's hands mid-knead, stretching golden bread dough on a flour-dusted dark wooden surface. Warm directional light from the left catches flour particles suspended in the air like tiny stars. The hands are strong and confident, every knuckle detail visible. In the background, soft warm bokeh from a brick oven glowing orange. The image is deeply sensory and satisfying. On the wooden surface beside the hands, a small V.CODE business card sits dusted with flour, its orange logo barely visible but present as if the videographer left it after setting up the shot.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ЗАМЕСИЛ ТЕСТО НА КАМЕРУ
+Subheadline: продал весь хлеб до обеда
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy drop shadow
+Subheadline: warm orange (#e8842a) below headline
+Baker's hands as hero, warm sensory lighting
+V.CODE card on flour-dusted surface as organic placement
+Flour particles in light beam add cinematic texture
+Dark warm bakery tones
+Film grain: subtle 2.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Пекарня в Ростове. Телефон на мешке с мукой, двадцать секунд замеса теста без слов и музыки. Восемьдесят тысяч просмотров за два дня. Очередь к открытию каждое утро. Звук теста и работающие руки продают лучше любой рекламы.
+
+Хотите такой же эффект для вашего бизнеса с профессиональной камерой и светом - напишите СЪЕМКА в директ.
+
+V.CODE - контент для бизнеса который продаёт. Ставрополь.
+
+Для поиска: контент для пекарни, видео для кафе Instagram, вирусный ролик бизнес, как привлечь клиентов видео, процесс работы ролик, V.CODE, ASMR еда видео, контент для общепита, видеосъемка для бизнеса Ставрополь, ролик залетел бизнес, один ролик изменил бизнес, контент мейкер Ставрополь, видеопродакшн, съемка процесса, студия подкастов аренда`},
+
+{t:'fliki',cat:'viral',id:'j002',ti:'Если бы Наполеон снимал рилсы он бы завоевал мир без единого выстрела',
+flk:`# If Napoleon Made Reels He Would Have Conquered Without a Single Shot
+
+Background music: dark cinematic ambient with deep cello drone and distant war drum pulse fading into modern electronic texture, epic historical tension, slow majestic tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Close-up of an old oil painting of Napoleon in his iconic pose with hand in coat, displayed in an ornate gold frame in a museum setting. Warm spotlight illuminates the painting while the rest of the gallery is dark. Camera slowly pushes in toward the painting focusing on Napoleon's determined expression. Classic museum lighting with warm spotlights creating dramatic shadows on the frame.
+Voiceover: "Наполеон Бонапарт потратил двадцать лет и шестьсот тысяч солдат чтобы заставить Европу говорить о Франции."
+
+[SCENE 2 - 5 sec]
+Visual: A content creator sitting in a modern podcast studio with professional lighting, mirrorless camera recording, microphone on a stand. They speak confidently to camera with natural gestures. The studio setup is compact but professional. On the desk beside them, a history book about Napoleon lies open. Warm studio lighting from softbox creates cinematic atmosphere. The contrast between the historical painting and modern studio is implied through the cut.
+Voiceover: "Сегодня один человек с камерой и тридцатью секундами видео может сделать так, чтобы о его бизнесе говорил весь город за одну ночь, потому что внимание людей переместилось из газет и площадей в экран телефона."
+
+[SCENE 3 - 4 sec]
+Visual: A videographer filming a local business owner at work in their shop. The camera captures the owner's skilled hands creating their product. A portable LED panel provides professional lighting. The phone of the business owner lies on the counter showing Instagram with zero followers. The videographer works efficiently, knowing exactly what angles to capture. Warm practical lighting from the shop environment mixed with the LED panel.
+Voiceover: "При этом Наполеону нужна была армия, а владельцу бизнеса в Ставрополе нужна только камера, свет и тридцать секунд процесса работы."
+
+[SCENE 4 - 4 sec]
+Visual: A phone screen showing a reel going viral, the view counter spinning past hundreds of thousands. The phone sits on a table in a cozy café setting. Behind the phone, through the café window, a busy street is visible with people walking past, many of them looking at their own phones. The warm café lighting creates intimate atmosphere while the viral numbers grow on screen. The scale of digital reach versus physical presence is the visual story.
+Voiceover: "Наполеон завоевал половину Европы, но его никогда не видели в лицо девяносто процентов людей которыми он управлял."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: Wide shot of the V.CODE podcast studio ready for recording. Two chairs, professional microphones, camera on tripod, warm softbox lighting. On the wooden wall panel, the V.CODE neon sign glows with warm orange light. The studio is empty and waiting for the next person who wants their business to be heard. Camera slowly pushes in toward the empty chair. Warm cinematic lighting throughout.
+Voiceover: "Один подкаст в профессиональной студии покажет вас тысячам людей которые могут стать вашими клиентами, при этом вам достаточно просто сесть в кресло и рассказать свою историю."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Absurd storytelling format connecting Napoleon to modern content creation.
+
+=== VISUAL CONCEPT ===
+A dramatic split composition. Left side: a fragment of a classical oil painting of Napoleon in his iconic military uniform, hand in coat, stern expression, rich dark oil painting tones with craquelure texture visible. Right side: a modern podcast studio chair with professional microphone and softbox light, warm orange studio lighting, the V.CODE neon sign glowing on the wooden wall panel behind. A diagonal warm orange line separates the two eras. The visual contrast between 19th century military conquest and 21st century content creation is immediate and provocative. Napoleon's gaze seems directed toward the modern studio as if evaluating this new form of influence.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: НАПОЛЕОН СНИМАЛ БЫ РИЛСЫ
+Subheadline: и завоевал бы мир без единого выстрела
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Napoleon painting left, V.CODE studio right as hero split
+V.CODE neon sign visible on wall panel as brand placement
+Orange diagonal divider between eras
+Classic art tones left, warm modern tones right
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Наполеон потратил двадцать лет и шестьсот тысяч солдат чтобы о Франции говорила вся Европа. Сегодня один человек с камерой и тридцатью секундами видео может сделать так, чтобы о его бизнесе говорил весь город за одну ночь. Ему нужна только камера, свет и тридцать секунд процесса работы.
+
+Садитесь в кресло, рассказывайте свою историю. Остальное делаем мы. Напишите ПОДКАСТ.
+
+V.CODE - студия подкастов и видеопродакшн в Ставрополе.
+
+Для поиска: абсурдный маркетинг, Наполеон рилсы, вирусный контент, как привлечь клиентов, V.CODE, контент для бизнеса, видеопродакшн Ставрополь, подкаст студия, история маркетинга, один ролик изменил бизнес, контент мейкер, студия подкастов, съемка для бизнеса, креативная реклама`},
+
+{t:'live',cat:'viral',id:'j003',ti:'Обзор кофейни в Ставрополе за 30 секунд',
+hook:'Зашёл в кофейню снять обзор на тридцать секунд, смотрите что получилось',
+idea:`Тема: первый обзор локального бизнеса в Ставрополе.
+Хук: зайти в кофейню с камерой, начать снимать с порога.
+Суть: быстрый динамичный обзор кофейни от первого лица. Зайти, показать интерьер, подойти к барной стойке, снять процесс приготовления кофе крупным планом, показать готовый напиток. Тридцать секунд, без длинных разговоров, только визуал и короткие комментарии. Экшн-камера на груди или камера в руках. Это первый ролик в новом формате обзоров.
+Ключевое сообщение: V.CODE делает обзоры бизнесов Ставрополя, хотите обзор своего бизнеса - пишите.`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. First business review format - coffee shop in Stavropol.
+
+=== VISUAL CONCEPT ===
+A photorealistic POV shot entering a cozy coffee shop through the front door. The camera perspective is from chest height as if wearing an action camera. Through the opening door, the warm interior is revealed: a wooden bar counter with an espresso machine, warm pendant lights, steam rising from a coffee cup being prepared. The door frame creates a natural vignette around the warm interior. Motion blur on the door edges adds authentic POV energy. On the coffee shop counter, a small V.CODE branded card sits next to the tip jar, barely visible but present as if the videographer left it there. The warm interior light contrasts with the cooler exterior light behind the viewer.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ОБЗОР ЗА 30 СЕКУНД
+Subheadline: кофейня в Ставрополе
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: bold white upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+POV entering coffee shop as hero perspective
+V.CODE card on counter as subtle brand placement
+Warm interior vs cool exterior light contrast
+Motion blur edges for authentic action camera feel
+Film grain: subtle 2.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Зашёл в кофейню в Ставрополе с камерой. Тридцать секунд, интерьер, бариста, процесс, готовый кофе. Быстрый обзор без воды.
+
+Хотите обзор вашего бизнеса в Ставрополе - напишите СЪЕМКА в директ. Приеду, сниму, смонтирую.
+
+V.CODE - обзоры бизнесов и видеопродакшн в Ставрополе.
+
+Для поиска: обзор кофейни Ставрополь, кофейня Ставрополь, обзор бизнеса видео, V.CODE, видеограф Ставрополь, обзор заведения, контент для кафе, рилс обзор, видеосъемка бизнеса, продюсирование контента, обзоры Ставрополь, контент мейкер, студия подкастов`}
+];
+
+// ===================== ДЕНЬ 2 (9 июля, ср) =====================
+C[2]=[
+{t:'fliki',cat:'viral',id:'j004',ti:'Цветочный магазин снял как собирают букет и получил заказы на месяц вперёд',
+flk:`# Flower Shop Filmed Bouquet Assembly and Got Orders for a Month Ahead
+
+Background music: dark cinematic ambient with gentle harp-like synth textures and deep warm sub-bass, delicate yet confident feel, slow graceful tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Close-up of a florist's hands selecting a single perfect rose from a bucket of flowers, water droplets catching the light on the petals. The hands move with practiced precision, turning the stem to check for quality. Behind the hands, dozens of colorful flower buckets fill the background in soft focus. Warm natural light from a shop window creates beautiful highlights on the wet petals. Shot in slow motion with shallow depth of field.
+Voiceover: "Цветочный магазин в Воронеже работал три года с постоянной выручкой сорок тысяч рублей в день, пока флорист не включила камеру во время сборки букета."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone mounted on a small flexible tripod clamped to the edge of a flower workstation, recording the florist at work from a close-up angle. The florist arranges stems one by one into a growing bouquet, each flower adding color and volume. Tissue paper and ribbon rolls are visible on the workstation. The phone captures the entire process automatically while the florist works naturally. Warm shop lighting with natural daylight from a large window.
+Voiceover: "Она закрепила телефон на штативе у края стола и записала процесс сборки свадебного букета от первого цветка до финальной ленты, при этом ролик длился ровно двадцать пять секунд."
+
+[SCENE 3 - 5 sec]
+Visual: A phone screen showing the reel's comment section flooding with messages. Comments include heart emojis, questions about prices, requests for specific bouquet styles, and tags of friends. The phone sits on the flower workstation next to scattered rose petals and a pair of floral shears. The engagement is overwhelming and genuine. Warm ambient flower shop lighting.
+[SFX: subtle flower stem snip sound, single clean cut, 7%]
+Voiceover: "Ролик набрал сто двадцать тысяч просмотров за три дня, и в комментариях девяносто процентов сообщений содержали вопрос о цене или просьбу собрать такой же букет."
+
+[SCENE 4 - 4 sec]
+Visual: The flower shop workspace now busy with multiple orders. Printed order slips are pinned to a board on the wall, the calendar shows bookings extending weeks ahead. The florist works on one bouquet while two more arrangements wait in progress. Fresh flower deliveries in boxes stack near the entrance. The shop went from steady to overwhelmed. Warm productive atmosphere with flowers everywhere.
+Voiceover: "Выручка магазина выросла со ста двадцати тысяч до трёхсот пятидесяти тысяч рублей в месяц, при этом единственное что изменилось это телефон на штативе который записывает процесс работы каждый день."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A videographer setting up a compact professional camera with a small LED panel at a flower workstation, preparing for a content shoot. The camera LCD shows a beautifully composed preview of the workspace with perfect warm lighting. Fresh flowers glow under the professional light in a way the shop lighting alone never achieved. The transformation from phone footage to professional content is implied by the equipment upgrade. Warm cinematic studio-quality lighting on the flowers.
+Voiceover: "Телефон на штативе утроил выручку, а профессиональная камера с правильным светом превращает каждый собранный букет в рекламу которая приводит клиентов месяцами."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a flower shop that tripled revenue from one bouquet assembly video.
+
+=== VISUAL CONCEPT ===
+Extreme close-up of florist's hands mid-assembly, placing a perfect pink rose into a growing bouquet. Water droplets on petals catch warm directional light creating tiny sparkles. Other flowers in soft focus behind create a rich colorful bokeh. The hands work with grace and precision. On the workstation surface, partially hidden behind a roll of ribbon, a small V.CODE sticker is visible on a phone tripod clamp that is recording the process, linking the professional capture to the V.CODE brand. The overall mood is warm, sensory, and deeply satisfying.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: СОБРАЛА БУКЕТ НА КАМЕРУ
+Subheadline: заказы на месяц вперёд
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Florist's hands assembling bouquet as hero
+V.CODE sticker on tripod clamp as subtle placement
+Water droplets sparkling in warm light
+Rich flower color bokeh background
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Цветочный магазин в Воронеже. Телефон на штативе у края стола, двадцать пять секунд сборки свадебного букета. Сто двадцать тысяч просмотров за три дня. Выручка выросла с сорока тысяч в день до трёхсот пятидесяти тысяч в месяц. Единственное что изменилось это камера которая записывает процесс каждый день.
+
+Снимем процесс вашей работы так, что клиенты выстроятся в очередь. Напишите СЪЕМКА.
+
+V.CODE - контент для бизнеса который продаёт. Ставрополь.
+
+Для поиска: контент для цветочного магазина, видео для флориста, вирусный ролик бизнес, процесс работы видео, как привлечь клиентов, V.CODE, видеосъемка для бизнеса Ставрополь, один ролик изменил бизнес, ASMR цветы, контент для малого бизнеса, ролик залетел, контент мейкер, видеопродакшн`},
+
+{t:'fliki',cat:'viral',id:'j005',ti:'Мастер маникюра выложила процесс и за неделю набрала пять тысяч подписчиков',
+flk:`# Nail Artist Posted Process Video and Gained Five Thousand Followers in a Week
+
+Background music: dark cinematic ambient with clean crystalline synth tones and deep sub-bass pulse, precise and mesmerizing feel, steady hypnotic tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Extreme close-up of a nail artist's brush applying a thin line of gel polish with surgical precision on a client's nail. The brush tip moves with absolute control, the polish flowing in a perfect arc. Shot in macro with shallow depth of field, the nail fills most of the frame. A ring light reflection is visible in the wet polish surface creating a perfect circular highlight. The precision is mesmerizing.
+Voiceover: "Мастер маникюра в Казани выкладывала фотографии работ два года и набрала четыреста подписчиков, потом сняла один ролик с процессом и за неделю пришли пять тысяч."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone clamped to the edge of a manicure desk with a flexible phone holder, recording the nail work from directly above. The phone screen shows the live preview of the close-up nail process looking crisp and satisfying. The manicure workspace is organized: tools laid out, lamp positioned, the client's hand resting comfortably. A ring light provides even illumination on the work area. The setup is simple and took thirty seconds to arrange.
+Voiceover: "Фотографии показывают результат, но ролик с процессом показывает мастерство, и люди сохраняют видео с процессом в семь раз чаще чем фото готовой работы."
+
+[SCENE 3 - 5 sec]
+Visual: Close-up of the completed manicure, client spreading fingers to show the perfect result. The nails catch the light with a flawless glossy finish. Then a quick transition to the phone screen showing the reel performance: view count at two hundred thousand, save count highlighted with an arrow showing it is unusually high compared to likes. The save-to-view ratio is the key metric visible on screen. Warm salon lighting.
+Voiceover: "Ролик с процессом нанесения градиента набрал двести тысяч просмотров и девять тысяч сохранений, потому что каждая девушка которая смотрела этот ролик думала: хочу себе такие же ногти, и сохраняла чтобы показать своему мастеру."
+
+[SCENE 4 - 4 sec]
+Visual: The manicure salon schedule displayed on a tablet screen showing every slot booked for two weeks ahead. The master's phone beside the tablet shows DM notifications from new clients asking for appointments. The workspace is tidy and professional with tools arranged precisely. Warm ambient salon lighting creates a comfortable feminine atmosphere. The business transformation from empty slots to full schedule is visible in the digital display.
+Voiceover: "Через месяц ежедневных роликов с процессом запись закрылась на две недели вперёд, и мастер подняла цены на тридцать процентов потому что спрос превысил количество свободных часов."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A professional camera setup at a manicure station: a mirrorless camera on a small overhead arm captures the nail work from the perfect angle, a portable LED panel provides controlled warm lighting that makes the nail colors pop. The resulting image on the camera LCD looks dramatically better than the phone version. The master works normally while the professional setup captures every detail. The upgrade from phone to professional camera is the visual story.
+Voiceover: "Телефон на держателе дал двести тысяч просмотров и полную запись, а профессиональная камера с правильным светом делает каждый маникюр контентом который привлекает клиентов со всего города."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a nail artist who gained thousands of followers from one process video.
+
+=== VISUAL CONCEPT ===
+Extreme macro close-up of a nail brush applying gel polish on a perfectly shaped nail. The brush tip is in razor-sharp focus, the gel polish flows in a thin controlled line with a glossy wet surface reflecting a ring light as a perfect circle. The precision of the brush stroke is the hero. Colors are rich and vibrant against the skin tone. In the far background, heavily blurred, the nail station workspace is visible with a small V.CODE sticker on the desk lamp arm. The overall mood is precise, satisfying, and premium.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: СНЯЛА ПРОЦЕСС МАНИКЮРА
+Subheadline: 5 000 подписчиков за неделю
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Macro nail brush as hero, razor sharp precision
+V.CODE sticker on desk lamp in blurred background
+Ring light reflection in wet polish as visual detail
+Rich vibrant colors against dark workspace
+Film grain: subtle 1.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Мастер маникюра в Казани два года выкладывала фотографии и набрала четыреста подписчиков. Один ролик с процессом нанесения градиента принёс двести тысяч просмотров, девять тысяч сохранений и пять тысяч подписчиков за неделю. Запись закрылась на две недели вперёд, цены выросли на тридцать процентов.
+
+Снимем процесс вашей работы профессионально. Напишите СЪЕМКА.
+
+V.CODE - контент для бизнеса который заполняет запись. Ставрополь.
+
+Для поиска: контент для мастера маникюра, видео маникюр процесс, вирусный ролик маникюр, как набрать подписчиков мастеру, V.CODE, ASMR маникюр, процесс работы видео, контент для beauty мастера, рилс маникюр, как привлечь клиентов маникюр, видеосъемка для бизнеса, контент мейкер Ставрополь, один ролик изменил бизнес`},
+
+{t:'live',cat:'viral',id:'j006',ti:'Снял обзор барбершопа за 30 секунд, показываю результат',
+hook:'Зашёл в барбершоп с камерой на тридцать секунд, вот что получилось',
+idea:`Тема: второй обзор локального бизнеса, барбершоп в Ставрополе.
+Хук: камера в руках, заходишь с улицы, показываешь интерьер.
+Суть: динамичный обзор барбершопа от первого лица. Заходишь, показываешь кресла, барбер стрижёт клиента (крупный план рук с машинкой), зеркала, атмосфера. Может короткий комментарий барбера. Тридцать секунд максимум, только визуал и движение. Формат обзора закрепляется как серия.
+Ключевое сообщение: V.CODE делает обзоры бизнесов, этот формат работает.`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Business review format - barbershop in Stavropol.
+
+=== VISUAL CONCEPT ===
+Dynamic low-angle shot inside a barbershop, looking up at a barber mid-fade, clipper in hand with hair particles floating in warm amber Edison bulb light. The barber is focused on precision, their expression concentrated. Through the large barbershop mirror in the background, the V.CODE videographer is visible as a silhouette holding a camera, capturing the scene. The mirror reflection adds depth and reveals the production happening behind the beauty. Warm masculine amber tones throughout with polished chrome and leather textures.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ОБЗОР ЗА 30 СЕКУНД
+Subheadline: барбершоп в Ставрополе
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: bold white upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Low angle barber at work as hero
+V.CODE videographer visible in mirror reflection as brand placement
+Warm Edison bulb amber tones
+Hair particles in light beam add texture
+Film grain: subtle 2.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Зашёл в барбершоп в Ставрополе с камерой. Тридцать секунд, интерьер, барбер за работой, руки с машинкой крупным планом, атмосфера. Быстрый обзор без лишних слов.
+
+Хотите обзор вашего бизнеса - напишите СЪЕМКА в директ.
+
+V.CODE - обзоры бизнесов и видеопродакшн в Ставрополе.
+
+Для поиска: обзор барбершопа Ставрополь, барбершоп Ставрополь, обзор бизнеса видео, V.CODE, видеограф Ставрополь, обзор заведения, контент для барбершопа, рилс обзор, видеосъемка бизнеса, продюсирование контента, обзоры Ставрополь`}
+];
+
+// ===================== ДЕНЬ 3 (10 июля, чт) =====================
+C[3]=[
+{t:'fliki',cat:'viral',id:'j007',ti:'Тату-мастер снял процесс набивки и клиенты прилетели из другого города',
+flk:`# Tattoo Artist Filmed Inking Process and Clients Flew In From Another City
+
+Background music: dark cinematic ambient with buzzing textured synth and deep bass undertow, raw and focused energy, steady intense tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Extreme close-up of a tattoo needle touching skin, ink being deposited in precise lines. The needle moves with mechanical precision in slow motion, ink droplets and skin texture visible in macro detail. A bright tattoo lamp illuminates the work area with clinical white light while the rest of the studio is dark. The sound of the tattoo machine is implied by the visual vibration of the needle. Mesmerizing and slightly raw.
+Voiceover: "Тату-мастер из Краснодара снял тридцать секунд процесса набивки розы на предплечье и через две недели к нему прилетел клиент из Москвы."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone mounted on a flexible arm above the tattoo station, recording the process from a bird's-eye view. The phone screen shows the live preview of the tattooing in progress, the emerging design visible on the skin. The tattoo workstation is organized with ink cups, paper towels, and the machine. The master works focused and natural, ignoring the camera completely. Practical tattoo lamp lighting with warm ambient from the studio background.
+Voiceover: "Он закрепил телефон над рабочим местом на гибком штативе и записывал каждую сессию, выкладывая по одному ролику в день с ускоренным процессом от чистой кожи до готового рисунка."
+
+[SCENE 3 - 5 sec]
+Visual: A phone screen showing a DM conversation where a person writes that they saw the master's work on Instagram and want to fly in for a session, asking about the nearest hotels. The phone sits on the tattoo workstation next to ink bottles and a tattoo machine. The message is genuine and enthusiastic. Other DM notification badges show dozens of unread messages. Warm studio ambient lighting on the phone and workspace.
+[SFX: subtle tattoo machine buzz, brief two-second burst, 7%]
+Voiceover: "Клиент из Москвы написал в директ что увидел ролик с розой в рекомендациях, посмотрел все остальные работы и купил билет на самолёт в тот же вечер, потому что по видео он оценил руку мастера точнее чем по любому портфолио."
+
+[SCENE 4 - 4 sec]
+Visual: The tattoo artist's booking calendar on a tablet showing sessions booked solid for six weeks, with a waiting list growing. Geographic markers on some bookings show clients from different cities. The artist reviews the calendar between sessions, their tattooed hands holding the tablet. Professional studio environment with framed tattoo art on the walls. Warm moody studio lighting.
+Voiceover: "Через три месяца ежедневных роликов у него было шестьдесят тысяч подписчиков и запись закрыта на шесть недель вперёд, при этом сорок процентов клиентов приезжали из других городов."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A professional video setup at a tattoo station: a mirrorless camera on a compact overhead arm with a small LED panel providing controlled lighting that makes the tattoo colors look incredibly vivid on screen. The camera LCD shows the work in progress looking dramatically more detailed and cinematic than a phone capture. The tattoo master works while the professional setup captures every line. The equipment upgrade from phone to camera is the visual story.
+Voiceover: "Телефон над рабочим местом привёл клиентов из других городов, а профессиональная камера превращает каждую сессию в портфолио которое работает двадцать четыре часа в сутки."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a tattoo artist who attracted out-of-city clients from one process video.
+
+=== VISUAL CONCEPT ===
+Extreme close-up of a tattoo needle in action on skin, ink lines forming the petal of a rose design. The needle is frozen mid-stroke in sharp focus. Ink droplets and skin texture visible in macro detail. A bright clinical tattoo lamp creates stark white illumination on the work area while everything around falls into rich darkness. The emerging tattoo design is partially visible, beautiful line work revealing artistic skill. On the tattoo artist's gloved hand, a small V.CODE logo is subtly printed on the glove cuff in orange, as if it were branded studio equipment.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: СНЯЛ ПРОЦЕСС НАБИВКИ
+Subheadline: клиент прилетел из Москвы
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Tattoo needle macro as hero, razor sharp
+V.CODE on glove cuff as subtle brand detail
+Clinical white light on work area, dark everywhere else
+Raw intense atmosphere
+Film grain: subtle 2.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Тату-мастер в Краснодаре снимал процесс набивки каждый день. Через две недели клиент прилетел из Москвы. Через три месяца шестьдесят тысяч подписчиков, запись на шесть недель вперёд, сорок процентов клиентов из других городов.
+
+Снимем процесс вашей работы так, что клиенты найдут вас из любого города. Напишите СЪЕМКА.
+
+V.CODE - контент который работает за вас. Ставрополь.
+
+Для поиска: контент для тату мастера, видео тату процесс, вирусный ролик тату, как набрать подписчиков тату, V.CODE, процесс работы видео, тату Instagram, видеосъемка для бизнеса, один ролик изменил бизнес, ASMR тату, контент мейкер Ставрополь, привлечь клиентов из других городов`},
+
+{t:'fliki',cat:'viral',id:'j008',ti:'Титаник утонул за три часа а бизнес без видео тонет три года',
+flk:`# Titanic Sank in Three Hours But Business Without Video Sinks for Three Years
+
+Background music: dark cinematic ambient with massive orchestral string swells and deep rumbling bass, epic tragic grandeur shifting to urgent modern pulse, slow building to powerful. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: A dramatic wide shot of a dark ocean surface at night, cold blue moonlight reflecting off calm water. The vast emptiness of the ocean fills the frame. Stars visible in the sky above the horizon line. Camera positioned at water level looking across the endless dark surface. The scale and loneliness is immediate. Cold blue and silver tones dominate.
+Voiceover: "Титаник утонул за два часа сорок минут, тысяча пятьсот человек оказались в ледяной воде, при этом капитан до последней минуты верил что корабль непотопляем."
+
+[SCENE 2 - 5 sec]
+Visual: A small local business storefront at night with a dim "OPEN" sign in the window. The interior is visible through the glass but mostly empty, a few chairs and tables, no customers. A single fluorescent light illuminates the space with unflattering cold light. On the door, a printed paper flyer advertises a discount. The neighboring storefronts have warmer, more inviting lighting and visible activity inside. The quiet desperation of a struggling business is palpable.
+Voiceover: "Владелец бизнеса который верит что его продукт продаст себя сам делает ту же ошибку, потому что семьдесят процентов малых бизнесов закрываются в первые три года, и главная причина это отсутствие клиентов которые не знают что бизнес существует."
+
+[SCENE 3 - 5 sec]
+Visual: Close-up of a content creator's hands editing a business reel on a laptop. The editing timeline shows a thirty-second clip about a local business. On the monitor, the reel preview looks professional with warm lighting and dynamic cuts. Beside the laptop, a camera and a small LED panel sit ready for the next shoot. The creator works efficiently, dragging clips into the timeline with practiced confidence. Warm desk lamp creates focused workspace lighting.
+[SFX: subtle sonar ping sound, single clean tone, 7%]
+Voiceover: "При этом один ролик с процессом работы снятый за тридцать секунд стоит ноль рублей и способен привести больше клиентов чем три года листовок, баннеров и скидок вместе взятых."
+
+[SCENE 4 - 4 sec]
+Visual: The same business storefront from scene 2 but now transformed. Warm inviting lighting pours from the windows, every seat inside is occupied, a small camera on a tripod near the entrance suggests regular content creation has become part of the business routine. A subtle Instagram QR code sticker is visible on the door replacing the old discount flyer. The neighborhood is the same but this business now glows with life. Warm golden interior light contrasts with the evening street.
+Voiceover: "Титаник был непотопляем до момента встречи с айсбергом, а бизнес непобедим до момента когда конкурент через дорогу начинает снимать контент."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: Wide shot of the V.CODE studio, warm and professional, all equipment powered on, the podcast chairs waiting, softbox lights glowing. On the wooden wall panel, the V.CODE neon sign pulses with warm orange light. Camera slowly pushes in toward the studio as if offering a lifeline. The warmth and professionalism of the studio contrasts with the cold empty business from earlier. This is the solution.
+Voiceover: "Каждый день без контента это день когда ваши будущие клиенты проходят мимо и заходят к тому, кто уже снимает."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Absurd storytelling connecting the Titanic to businesses without video content.
+
+=== VISUAL CONCEPT ===
+A dramatic diagonal split. Upper-left portion: a dark ocean surface at night with cold blue moonlight, a single iceberg tip barely visible, representing the unseen threat. Lower-right portion: a modern local business storefront with warm but empty interior, a dim "OPEN" sign, lonely and struggling. A diagonal warm orange (#e8842a) line separates the two scenes, connecting the historical disaster to the modern business disaster. In the warm business portion, through the window, a small V.CODE neon sign is visible mounted inside as if suggesting the solution has already arrived but hasn't been turned on yet. The parallel between ignoring danger signals (iceberg) and ignoring content (empty business) is the visual story.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ТИТАНИК ТОНУЛ 3 ЧАСА
+Subheadline: бизнес без видео тонет 3 года
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Diagonal split ocean/business as hero concept
+V.CODE sign inside business window as solution hint
+Cold blue ocean tones upper, warm amber business tones lower
+Orange diagonal divider
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Титаник утонул за два часа сорок минут. Капитан до последней минуты верил что корабль непотопляем. Семьдесят процентов малых бизнесов закрываются в первые три года, главная причина это клиенты которые просто не знают что бизнес существует. Один ролик с процессом работы приводит больше клиентов чем три года листовок.
+
+Каждый день без контента это потерянные клиенты. Напишите СЪЕМКА.
+
+V.CODE - контент который спасает бизнес. Ставрополь.
+
+Для поиска: бизнес без видео, зачем бизнесу видео, почему закрываются бизнесы, как привлечь клиентов, V.CODE, контент для бизнеса, абсурдный маркетинг, Титаник маркетинг, один ролик спасает бизнес, контент мейкер Ставрополь, видеопродакшн, почему нет клиентов, видео для бизнеса`},
+
+{t:'live',cat:'viral',id:'j009',ti:'Обзор ресторана в Ставрополе за 30 секунд',
+hook:'Ресторан, камера, тридцать секунд, смотрите',
+idea:`Тема: обзор ресторана в Ставрополе, третий выпуск серии обзоров.
+Хук: зайти в ресторан с камерой, начать с двери.
+Суть: динамичный обзор: дверь, интерьер, кухня (если пустят), блюдо крупным планом, подача. Тридцать секунд. Можно попросить шефа показать процесс подачи. Формат серии закрепляется. Каждый обзор это потенциальный бартер с бизнесом.
+Ключевое сообщение: V.CODE снимает обзоры бизнесов Ставрополя.`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Business review series - restaurant in Stavropol.
+
+=== VISUAL CONCEPT ===
+A photorealistic close-up of a beautifully plated dish being placed on a restaurant table by a chef's hands. Steam rises from the dish catching warm amber lighting from above. The plate composition is artistic with garnishes and sauce patterns. In the background, soft bokeh from the restaurant interior: warm pendant lights, other diners as blurred silhouettes. The dish is the sharp hero element. On the edge of the table, partially visible, a small V.CODE branded card serves as a subtle brand marker suggesting this is a V.CODE review.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ОБЗОР ЗА 30 СЕКУНД
+Subheadline: ресторан в Ставрополе
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: bold white upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Chef's hands placing dish as hero
+V.CODE card on table edge as brand placement
+Warm amber restaurant lighting
+Steam adding sensory atmosphere
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Ресторан в Ставрополе. Камера, тридцать секунд. Интерьер, кухня, подача блюда крупным планом. Без воды, только визуал.
+
+Хотите обзор вашего заведения - напишите СЪЕМКА.
+
+V.CODE - обзоры бизнесов Ставрополя.
+
+Для поиска: обзор ресторана Ставрополь, рестораны Ставрополь, обзор заведения видео, V.CODE, видеограф Ставрополь, обзор кафе, рилс обзор еда, видеосъемка для ресторана, продюсирование контента Ставрополь, обзоры заведений, контент мейкер`}
+];
+
+// ===================== ДЕНЬ 4 (11 июля, пт) =====================
+C[4]=[
+{t:'fliki',cat:'viral',id:'j010',ti:'Автомойка поставила камеру на процесс и клиенты стали приезжать из соседнего района',
+flk:`# Car Wash Set Up Camera on Process and Clients Started Coming From Next District
+
+Background music: dark cinematic ambient with deep rolling bass and crisp water-like synth textures, satisfying and immersive feel, steady flowing tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Extreme close-up of a high-pressure water jet hitting a dirty car surface, blasting mud and grime away in a satisfying fan pattern. Water droplets explode outward in slow motion catching sunlight. The contrast between the dirty and clean areas is dramatic and immediate. Shot at 60fps with warm sunlight creating rainbow effects in the water spray. The visual is deeply satisfying and impossible to scroll past.
+Voiceover: "Автомойка в Волгограде работала с загрузкой пятьдесят процентов, пока мойщик не направил камеру на струю воды во время работы."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone in a waterproof case mounted on a suction cup on the wall of a car wash bay, recording the washing process from a wide angle. The phone captures the full scene: the car being washed, water spraying in arcs, foam cascading down the vehicle. The moist environment with water droplets on the phone case adds authentic texture. Industrial lighting from the wash bay mixed with daylight from the entrance.
+Voiceover: "Он купил водонепроницаемый чехол за пятьсот рублей, закрепил телефон на присоске на стене и записывал каждую мойку, при этом самые залетающие ролики были те где грязная машина становилась чистой за тридцать секунд."
+
+[SCENE 3 - 5 sec]
+Visual: Close-up of a phone screen showing a viral reel of a satisfying car wash transformation. The before/after split is dramatic: left side shows a mud-covered car, right side shows the same car gleaming and spotless. The view counter shows four hundred thousand views. Comment section visible with people tagging friends and asking for the address. The phone sits on a car hood that has just been washed, water beading on the clean surface around the phone.
+[SFX: satisfying high-pressure water spray burst, single clean whoosh, 7%]
+Voiceover: "Ролик с мойкой внедорожника после бездорожья набрал четыреста тысяч просмотров, потому что трансформация из грязного в чистое вызывает ту же дофаминовую реакцию что заставляет людей смотреть ролики с уборкой часами."
+
+[SCENE 4 - 4 sec]
+Visual: The car wash facility now busy with a queue of cars waiting. A sign shows premium detailing services have been added to the menu. The owner checks a booking app on a tablet showing appointments scheduled throughout the week. Through the wash bay entrance, another car pulls in. The facility went from half-empty to consistently full. Bright active atmosphere with water, movement, and energy.
+Voiceover: "Через два месяца клиенты начали приезжать из соседнего района, потому что увидели мойку в рекомендациях, и владелец добавил детейлинг-услуги которые принесли средний чек в три раза выше обычной мойки."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A professional camera in a protective housing capturing a car wash process with a small LED panel providing additional lighting that makes the water spray look cinematic. The camera LCD shows the wash in progress looking dramatically better than the phone footage. Water droplets catch the professional light creating spectacular visual effects. The setup is rugged and practical, designed for wet environments. The upgrade from phone to professional camera is clear.
+Voiceover: "Водонепроницаемый чехол за пятьсот рублей привёл клиентов из другого района, а профессиональная съемка с правильным светом превращает каждую мойку в рекламу которая работает круглый год."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a car wash that expanded business from one satisfying process video.
+
+=== VISUAL CONCEPT ===
+A dramatic close-up of a high-pressure water jet hitting a mud-covered car surface, the moment of impact frozen in time. Water and mud explode outward in a satisfying fan pattern. The clean surface being revealed behind the jet is gleaming and reflective. Sunlight catches the water spray creating tiny rainbow prisms. The contrast between the dirty and clean zones is the entire story in one frame. On the clean portion of the car surface, a reflection of a V.CODE logo sticker on the wash bay wall is barely visible in the wet metal, subtle but present.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: НАПРАВИЛ КАМЕРУ НА СТРУЮ
+Subheadline: клиенты приехали из другого района
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Water jet impact moment as hero, frozen in time
+V.CODE reflection in clean car surface as subtle placement
+Rainbow prisms in water spray
+Dramatic dirty/clean contrast
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Автомойка в Волгограде. Водонепроницаемый чехол за пятьсот рублей, телефон на присоске на стене. Ролик с мойкой грязного внедорожника набрал четыреста тысяч просмотров. Клиенты стали приезжать из соседнего района. Владелец добавил детейлинг и утроил средний чек.
+
+Снимем процесс вашей работы так, что клиенты найдут вас сами. Напишите СЪЕМКА.
+
+V.CODE - контент для бизнеса. Ставрополь.
+
+Для поиска: контент для автомойки, видео автомойка вирусное, ASMR мойка машины, satisfying видео, как привлечь клиентов автомойка, V.CODE, один ролик изменил бизнес, процесс работы видео, видеосъемка для бизнеса Ставрополь, контент мейкер, вирусный ролик бизнес, детейлинг контент`},
+
+{t:'fliki',cat:'viral',id:'j011',ti:'Кондитер украсила торт на камеру и собрала заказы на два месяца',
+flk:`# Pastry Chef Decorated Cake on Camera and Collected Orders for Two Months
+
+Background music: dark cinematic ambient with warm piano melody over deep sub-bass cushion, elegant and precise feel, measured graceful tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Extreme close-up of a pastry bag tip piping a perfect rosette of cream on top of a cake. The cream flows in a controlled spiral, each petal forming with mechanical precision. The cream catches warm side lighting creating shadows that define every swirl. Camera positioned at cake level, the rosette fills most of the frame. Shallow depth of field with the rest of the cake in soft focus. The precision is hypnotic.
+Voiceover: "Кондитер из Самары украшала торты в своей квартире и продавала по пять штук в месяц, пока не сняла процесс украшения на телефон."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone clamped to a shelf above a kitchen counter, recording the cake decorating process from above. The bird's-eye view shows the full cake surface as the decorator works, adding element after element. Tools are organized around the cake: spatulas, piping bags with different tips, food coloring bottles, fondant shapes. The home kitchen is modest but the work is professional. Warm kitchen lighting from overhead fixtures.
+Voiceover: "Она поставила телефон на полку над столом и записала двадцать секунд украшения свадебного торта в ускоренном режиме, при этом весь процесс от голого коржа до готового шедевра уместился в один ролик."
+
+[SCENE 3 - 5 sec]
+Visual: Phone screen showing the reel playing in a loop: a timelapse of a plain white cake transforming into an elaborate decorated masterpiece. The transformation is dramatic and satisfying. Below the reel, view count shows three hundred thousand. The phone lies on a kitchen counter next to a piping bag and scattered sugar pearls. DM notification badges show dozens of unread messages. Warm kitchen ambient light on the phone and surrounding tools.
+Voiceover: "Триста тысяч просмотров за четыре дня и пятьдесят два заказа в директ, потому что каждый кто смотрел этот ролик представлял этот торт на своём празднике."
+
+[SCENE 4 - 4 sec]
+Visual: A small home bakery workspace transformed into a production operation. Multiple cakes in various stages of completion line the counter. A printed schedule on the wall shows orders booked for weeks ahead. The decorator works on one cake while cooling racks hold others. The space went from hobby to business. Warm productive kitchen lighting with flour dust visible in a sunbeam from the window.
+Voiceover: "За два месяца она перешла с пяти тортов в месяц на тридцать, подняла цены вдвое и арендовала отдельное помещение под кондитерскую, при этом единственной рекламой оставались ежедневные ролики с процессом."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A professional camera with a small LED panel set up above a cake decorating station in a proper bakery workspace. The camera LCD shows the cake decoration in progress with stunning lighting that makes the cream textures and colors pop dramatically compared to phone footage. Every swirl and detail is rendered with cinematic quality. The professional setup transforms a simple cake video into art.
+Voiceover: "Телефон на полке превратил хобби в бизнес с тридцатью заказами в месяц, а профессиональная камера с правильным светом делает каждый торт произведением искусства которое продаёт себя само."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a pastry chef who built a business from one cake decorating video.
+
+=== VISUAL CONCEPT ===
+A photorealistic close-up of a pastry bag piping a perfect cream rosette on a cake surface. The cream spiral is in razor-sharp focus, catching warm directional side light that creates defined shadows in every swirl. The cream texture is rich, glossy, and tactile. The pastry bag is held by steady confident hands with traces of flour. In soft focus behind the cake, a small V.CODE neon sign glows on the kitchen wall with warm orange light, suggesting this home bakery is now producing professional content. The combination of handcraft precision and brand presence tells the transformation story.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: УКРАСИЛА ТОРТ НА КАМЕРУ
+Subheadline: заказы на 2 месяца вперёд
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Cream rosette piping as hero, razor sharp
+V.CODE neon in background kitchen as brand placement
+Warm side lighting creating cream texture shadows
+Rich pastry colors against workspace
+Film grain: subtle 1.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Кондитер из Самары. Телефон на полке, двадцать секунд украшения торта в ускоренном режиме. Триста тысяч просмотров, пятьдесят два заказа из директа. С пяти тортов в месяц до тридцати. Цены выросли вдвое. Арендовала отдельное помещение.
+
+Снимем процесс вашей работы профессионально. Напишите СЪЕМКА.
+
+V.CODE - контент который превращает хобби в бизнес. Ставрополь.
+
+Для поиска: контент для кондитера, видео торт процесс, вирусный ролик кондитер, ASMR торт украшение, как продавать торты Instagram, V.CODE, процесс работы видео, один ролик изменил бизнес, контент для домашнего бизнеса, видеосъемка для бизнеса Ставрополь, контент мейкер`},
+
+{t:'live',cat:'backstage',id:'j012',ti:'Как я снимаю обзоры бизнесов: процесс от идеи до публикации',
+hook:'Показываю как снимаю обзоры бизнесов от начала до конца, весь процесс',
+idea:`Тема: закулисье серии обзоров бизнесов.
+Хук: показать оборудование которое берёшь на выезд (камера, свет, экшн-камера), потом процесс съемки.
+Суть: весь путь обзора: сборка оборудования дома, дорога к бизнесу, вход с камерой, съемка (показать несколько ракурсов), возвращение домой, монтаж в CapCut, публикация. Нарезка ключевых моментов с комментариями. Показать что обзор занимает тридцать минут от начала до готового ролика.
+Ключевое сообщение: V.CODE делает профессиональные обзоры бизнесов быстро и качественно.`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Behind the scenes of business review filming process.
+
+=== VISUAL CONCEPT ===
+A photorealistic flat-lay of the mobile filming kit on a dark surface: a compact mirrorless camera, a small portable LED panel, an action camera with chest mount, a lavalier microphone, memory cards, a phone with CapCut editing interface on screen, and a small tripod. All items arranged in an organized grid. Warm orange accent light from the side catches metallic surfaces. In the center of the arrangement, a V.CODE branded sticker and business card sit among the equipment. The kit is compact and efficient, showing that professional content creation is mobile and accessible.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: КАК Я СНИМАЮ ОБЗОРЫ
+Subheadline: весь процесс за 30 минут
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: bold white upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Flat-lay mobile kit as hero
+V.CODE sticker and card in center as brand placement
+Warm orange accent on metallic surfaces
+Dark surface premium product photography feel
+Film grain: subtle 1.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Как снимаю обзоры бизнесов от идеи до публикации. Сборка оборудования, дорога, съемка, монтаж, публикация. Тридцать минут от входа в заведение до готового ролика.
+
+Хотите обзор вашего бизнеса - напишите СЪЕМКА.
+
+V.CODE - обзоры и контент для бизнеса. Ставрополь.
+
+Для поиска: как снимать обзоры, процесс съемки обзора, V.CODE, оборудование для обзоров, мобильная съемка бизнеса, видеограф Ставрополь, обзор бизнеса формат, контент мейкер процесс, продюсирование видео, как делать рилсы обзоры`}
+];
+
+// ===================== ДЕНЬ 5 (12 июля, сб) =====================
+C[5]=[
+{t:'fliki',cat:'viral',id:'j013',ti:'Ветеринар снял как лечит котёнка и весь город узнал его клинику',
+flk:`# Vet Filmed Treating a Kitten and Whole City Learned About His Clinic
+
+Background music: dark cinematic ambient with warm emotional piano over gentle sub-bass, compassionate and touching feel, slow tender tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Close-up of a veterinarian's gloved hands gently examining a small kitten on a stainless steel examination table. The kitten is calm and trusting, the vet's touch is careful and professional. Medical instruments are visible in the background in soft focus. Warm overhead examination light creates a focused pool of illumination on the kitten while the rest of the room is dimmer. The care and expertise are visible in the hand positioning.
+Voiceover: "Ветеринар из Нижнего Новгорода попросил ассистента снять на телефон как он лечит котёнка со сломанной лапкой, и через сутки о его клинике знал весь город."
+
+[SCENE 2 - 5 sec]
+Visual: A smartphone held by an assistant recording the veterinary procedure from a respectful distance. The phone screen shows the vet working gently with the kitten, applying a small splint. The kitten looks at the camera with big eyes. The clinical environment is clean and professional but the emotional content is powerful. Other pet owners in the waiting area are visible through a glass partition in the background. Standard veterinary clinic lighting.
+Voiceover: "Ассистент записала три минуты работы, ускорила до тридцати секунд и добавила спокойную музыку, при этом самый сильный момент в ролике был когда котёнок после фиксации лапки начал мурлыкать прямо на столе."
+
+[SCENE 3 - 5 sec]
+Visual: A phone screen showing the reel exploding with engagement. The view counter is at eight hundred thousand and climbing. The comment section is filled with heart emojis, "crying" emojis, tags of friends, and messages like "the best vet". Share counter shows the reel has been forwarded thousands of times. The phone lies on the vet's desk next to a stethoscope and pet treats. Warm desk lamp illumination.
+[SFX: subtle gentle cat purr, brief and warm, 7%]
+Voiceover: "Восемьсот тысяч просмотров за два дня, потому что ролики с животными запускают эмпатическую реакцию сильнее чем любой другой контент, при этом конверсия в реальных клиентов у ветеринарного контента в три раза выше среднего по Instagram."
+
+[SCENE 4 - 4 sec]
+Visual: A busy veterinary clinic waiting room, every chair occupied by pet owners with their animals. The reception desk has a queue forming. On the wall behind reception, a framed printout of the viral reel's analytics sits next to the clinic's diplomas. Through the exam room door, the vet is visible treating the next patient. The transformation from quiet clinic to busy practice is complete. Bright clean clinical lighting mixed with warm waiting area ambient.
+Voiceover: "За месяц после ролика клиника получила больше новых пациентов чем за предыдущий год, при этом каждый второй клиент говорил что пришёл потому что увидел котёнка в Instagram."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: A professional camera setup in a veterinary exam room: a mirrorless camera on a small tripod positioned to capture treatments without interfering with the medical process, a portable LED panel providing warm supplementary lighting. The vet examines a patient while the camera records automatically. The setup is discrete and practical. On the camera strap, a small V.CODE tag is visible. The professional capture elevates every treatment into content.
+Voiceover: "Телефон ассистента сделал клинику известной на весь город, а профессиональная камера превращает каждый приём в контент который приводит новых пациентов каждый день."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Viral story about a vet whose kitten treatment video made his clinic famous citywide.
+
+=== VISUAL CONCEPT ===
+A photorealistic close-up of veterinarian's gloved hands gently cradling a small kitten with big trusting eyes on a stainless steel exam table. The kitten has a tiny splint on one front paw. The vet's touch is visibly gentle and expert. A warm examination light creates a focused glow on the kitten while the clinical background falls into soft darkness. The emotional power of the image is immediate: care, trust, expertise. On the exam table's edge, a small V.CODE sticker is visible on a piece of medical equipment, subtle but present. The combination of medical professionalism and emotional warmth creates the perfect viral thumbnail.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: СНЯЛ КАК ЛЕЧИТ КОТЁНКА
+Subheadline: весь город узнал клинику
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Kitten in vet's hands as hero, emotional focal point
+V.CODE sticker on equipment as subtle placement
+Warm exam light spotlight effect
+Dark clinical background with soft vignette
+Film grain: subtle 1.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Ветеринар из Нижнего Новгорода. Ассистент сняла на телефон как он лечит котёнка со сломанной лапкой. Тридцать секунд ускоренного видео. Восемьсот тысяч просмотров за два дня. За месяц клиника получила больше новых пациентов чем за предыдущий год.
+
+Снимем работу вашего бизнеса так, что весь город узнает о вас. Напишите СЪЕМКА.
+
+V.CODE - контент который делает бизнес известным. Ставрополь.
+
+Для поиска: контент для ветклиники, видео ветеринар вирусное, ролик с котёнком, как привлечь клиентов ветклиника, V.CODE, эмоциональный контент, один ролик изменил бизнес, видеосъемка для бизнеса Ставрополь, вирусный ролик бизнес, контент мейкер, контент с животными`},
+
+{t:'fliki',cat:'viral',id:'j014',ti:'Клеопатра тратила состояние на внешность а вам достаточно тридцати секунд на камеру',
+flk:`# Cleopatra Spent a Fortune on Appearance But You Just Need 30 Seconds on Camera
+
+Background music: dark cinematic ambient with exotic string instrument texture and deep resonant bass drum, ancient mystery meets modern confidence, slow majestic tempo. Volume: 7%
+
+Subtitles: OFF. Captions: OFF. Text overlays: OFF. Do not add any text layers, subtitle layers, heading layers, title cards, or lower thirds to any scene. Video must contain ONLY voiceover audio and B-roll visuals.
+
+[SCENE 1 - HOOK - 3 sec]
+Visual: Close-up of an ancient Egyptian-style gold jewelry piece or ornate artifact displayed in a museum case with dramatic spotlighting. The gold catches the light with rich warm reflections. The display case glass creates subtle reflections of the museum environment. Deep warm museum lighting on the gold against a dark background. The luxury and expense of ancient beauty standards is palpable.
+Voiceover: "Клеопатра тратила сто килограммов золота в год на косметику, духи и украшения, чтобы каждый человек в Египте знал как она выглядит."
+
+[SCENE 2 - 5 sec]
+Visual: A beauty salon owner sitting in front of a ring light and a smartphone on a tripod, recording a quick skincare tip directly to camera. The setup took thirty seconds: phone, tripod, ring light. The salon is visible behind her with treatment chairs and product shelves. She speaks naturally and confidently, her expertise visible in how she handles the product she demonstrates. Warm salon lighting mixed with the ring light.
+Voiceover: "Сегодня владелица салона красоты в Ставрополе может показать своё мастерство ста тысячам человек за тридцать секунд, при этом ей нужен только телефон и одна минута между клиентами."
+
+[SCENE 3 - 5 sec]
+Visual: A content creator filming a beauty treatment process in a salon: close-up of skilled hands performing a facial procedure. A mirrorless camera on a small tripod captures the process with professional lighting from a portable LED panel. The resulting footage on the camera LCD looks magazine-quality. The beauty professional works naturally while the camera captures art. Warm soft salon lighting supplemented by the LED panel.
+Voiceover: "Клеопатра содержала армию слуг которые разносили её образ по всему Средиземноморью, а Instagram разносит ваше мастерство по всему городу бесплатно, при условии что вы покажете процесс работы."
+
+[SCENE 4 - 4 sec]
+Visual: A phone screen showing a beauty salon's Instagram profile with consistent process videos in the feed. The follower count is growing visibly. Each reel shows a different treatment: facial, massage, skincare routine. The engagement on each post is high. The phone sits on a beauty salon counter next to professional products and tools. The organized content strategy is visible in the consistent feed aesthetic.
+Voiceover: "Каждый ролик с процессом работы мастера привлекает в среднем от двадцати до пятидесяти новых подписчиков, и каждый десятый из них записывается на процедуру в течение месяца."
+
+[SCENE 5 - FINAL - 4 sec]
+Visual: Wide shot of the V.CODE podcast studio. The chairs are set up for a beauty industry conversation. A ring light and a camera on tripod are positioned for a beauty content creation session. Professional softbox lights create flattering warm lighting. On the wooden wall panel, the V.CODE neon sign glows orange. The studio is ready to help the next beauty professional tell their story and show their skills to the world.
+Voiceover: "Клеопатре понадобилось целое царство чтобы о ней знал Египет, вам достаточно сесть в кресло и показать что вы умеете делать руками."`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Absurd storytelling connecting Cleopatra to modern beauty business content.
+
+=== VISUAL CONCEPT ===
+A dramatic diagonal split composition. Upper-left: a golden Egyptian artifact or ornate Cleopatra-style headdress piece under warm museum spotlight, rich gold tones with dark background, ancient luxury and expense. Lower-right: a modern beauty salon with a simple phone on a tripod and ring light, a beauty professional mid-treatment, warm inviting modern tones, accessible and achievable. A diagonal warm orange (#e8842a) glowing line separates the ancient and modern worlds. In the modern salon portion, a V.CODE neon sign is visible on the wall behind the treatment chair, glowing orange. The contrast between ancient fortune and modern simplicity is the visual argument.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: КЛЕОПАТРА ТРАТИЛА СОСТОЯНИЕ
+Subheadline: вам достаточно 30 секунд на камеру
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: extra bold white Inter Black upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Ancient gold left, modern salon right as diagonal split
+V.CODE neon in modern salon as brand placement
+Rich gold tones left, warm accessible tones right
+Orange diagonal divider
+Film grain: subtle 2%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Клеопатра тратила сто килограммов золота в год чтобы о ней знал Египет. Сегодня владелице салона красоты достаточно тридцати секунд видео с процессом работы чтобы о ней узнал весь город. Каждый ролик привлекает от двадцати до пятидесяти подписчиков.
+
+Покажите своё мастерство. Напишите ПОДКАСТ или СЪЕМКА.
+
+V.CODE - студия подкастов и видеопродакшн. Ставрополь.
+
+Для поиска: абсурдный маркетинг, Клеопатра маркетинг, контент для салона красоты, видео beauty мастер, V.CODE, как привлечь клиентов салон, креативная реклама, вирусный контент, один ролик бизнес, контент мейкер Ставрополь, видеопродакшн, студия подкастов`},
+
+{t:'live',cat:'viral',id:'j015',ti:'Обзор фитнес-клуба в Ставрополе за 30 секунд',
+hook:'Фитнес-клуб, камера, тридцать секунд, полетели',
+idea:`Тема: обзор фитнес-клуба, четвёртый выпуск серии обзоров.
+Хук: зайти с камерой с улицы, показать вход.
+Суть: динамичный обзор: вход, ресепшн, зал (показать оборудование, тренирующихся людей), может тренер покажет одно упражнение крупным планом, раздевалки (если уместно). Тридцать секунд, визуал и движение. Серия обзоров продолжается.
+Ключевое сообщение: V.CODE снимает обзоры любых бизнесов.`,
+
+gem:`Create a vertical 9:16 cinematic thumbnail for V.CODE brand. Business review series - fitness club in Stavropol.
+
+=== VISUAL CONCEPT ===
+A dramatic low-angle shot inside a gym, looking up at a person mid-lift with a barbell, their silhouette backlit by bright gym ceiling lights. The barbell is frozen at the top of the lift. Sweat droplets visible in the backlight. Gym equipment visible in the background in soft focus. The energy and power of the moment is captured. On the gym wall in the background, a motivational poster is visible next to a small V.CODE branded card pinned to the notice board, suggesting this is a V.CODE reviewed location.
+
+=== TEXT ON IMAGE (render exactly as written) ===
+Headline: ОБЗОР ЗА 30 СЕКУНД
+Subheadline: фитнес-клуб в Ставрополе
+Watermark: V.CODE
+
+=== DESIGN PARAMETERS (do NOT render as text) ===
+Headline: bold white upper third, heavy shadow
+Subheadline: warm orange (#e8842a) below
+Low angle lifter silhouette as hero
+V.CODE card on gym notice board as brand placement
+Dramatic backlit atmosphere
+Sweat droplets in light add intensity
+Film grain: subtle 2.5%
+Safe zone: bottom 18%
+Aspect ratio: 9:16`,
+
+desc:`Фитнес-клуб в Ставрополе. Камера, тридцать секунд. Вход, зал, оборудование, тренер за работой. Динамичный обзор без воды.
+
+Хотите обзор вашего бизнеса - напишите СЪЕМКА.
+
+V.CODE - обзоры бизнесов Ставрополя.
+
+Для поиска: обзор фитнес клуба Ставрополь, фитнес Ставрополь, обзор спортзала видео, V.CODE, видеограф Ставрополь, обзор заведения, контент для фитнеса, рилс обзор, видеосъемка бизнеса, обзоры Ставрополь, контент мейкер`}
+];
+
+
+// Calendar and UI logic
+const DAYS=24;
+const CAR_DAYS=[5,12,19];
+function gC(d){return C[d]||[]}
+
+function buildCal(){
+const g=document.getElementById('grid');
+const heads=['ПН','ВТ','СР','ЧТ','ПТ','СБ','ВС'];
+heads.forEach(h=>{const e=document.createElement('div');e.className='cal-h';e.textContent=h;g.appendChild(e)});
+// offset: July 8 = Tuesday, so 1 empty cell for Monday
+for(let i=0;i<1;i++){const e=document.createElement('div');e.className='cal-d empty';g.appendChild(e)}
+for(let d=1;d<=DAYS;d++){
+const el=document.createElement('div');
+const items=gC(d);
+el.className='cal-d'+(items.length?' has':'');
+el.innerHTML=`<div class="day-n">${d}</div><div class="day-dots">${items.map(i=>`<div class="dd" style="background:${i.t==='fliki'?'var(--blue)':i.t==='carousel'?'var(--accent)':'var(--green)'}"></div>`).join('')}</div>`;
+if(items.length)el.onclick=()=>openDay(d);
+g.appendChild(el);
+}
+// fill remaining cells
+const rem=(7-DAYS%7)%7;
+for(let i=0;i<rem;i++){const e=document.createElement('div');e.className='cal-d empty';g.appendChild(e)}
+updateProgress();
+}
+
+function openDay(d){
+const items=gC(d);
+document.getElementById('mT').textContent=`День ${d}`;
+const cats={viral:'Виральный',useful:'Полезный',backstage:'Закулисье',selling:'Продающий'};
+document.getElementById('mS').textContent=items.map(i=>i.t==='carousel'?'Карусель':i.t==='fliki'?'Fliki':'Живой').join(' + ');
+const mb=document.getElementById('mB');
+mb.innerHTML='';
+items.forEach(item=>{
+const ci=document.createElement('div');
+ci.className='ci';
+ci.dataset.id=item.id;
+const done=localStorage.getItem('vc_'+item.id)==='1';
+if(done)ci.classList.add('done');
+const badge=item.t==='fliki'?'bg-flk':item.t==='carousel'?'bg-car':'bg-live';
+const label=item.t==='fliki'?'FLIKI':item.t==='carousel'?'КАРУСЕЛЬ':'ЖИВОЙ';
+
+let bodyHTML='';
+if(item.t==='fliki'){
+bodyHTML=`
+<div class="pb"><div class="pb-label">Промпт Fliki<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.flk)}</div></div>
+<div class="pb"><div class="pb-note">Прикрепить: логотип V.CODE</div><div class="pb-label">Обложка Gemini<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.gem)}</div></div>
+<div class="pb"><div class="pb-label">Описание<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.desc)}</div></div>`;
+}else if(item.t==='live'){
+bodyHTML=`
+<div class="pb"><div class="pb-label">Тема и идея<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">ХУК: ${esc(item.hook)}\n\n${esc(item.idea)}</div></div>
+<div class="pb"><div class="pb-note">Прикрепить: фото Владимира + логотип V.CODE</div><div class="pb-label">Обложка Gemini<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.gem)}</div></div>
+<div class="pb"><div class="pb-label">Описание<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.desc)}</div></div>`;
+}else if(item.t==='carousel'){
+bodyHTML=item.slides.map((s,i)=>`<div class="pb"><div class="pb-note">Прикрепить: логотип V.CODE</div><div class="pb-label">Слайд ${s.n}<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(s.gem)}</div></div>`).join('')+
+`<div class="pb"><div class="pb-label">Описание карусели<div class="pb-acts"><button class="btn-c" onclick="cp(this)">Скопировать</button></div></div><div class="pb-txt">${esc(item.desc)}</div></div>`;
+}
+
+ci.innerHTML=`
+<div class="ci-head" onclick="this.parentElement.classList.toggle('open')">
+<div class="ci-cb${done?' ck':''}" onclick="event.stopPropagation();tog(this,'${item.id}')"></div>
+<div class="ci-badge ${badge}">${label}</div>
+<div class="ci-title">${esc(item.ti)}</div>
+<div class="ci-chev">▼</div>
+</div>
+<div class="ci-body">${bodyHTML}</div>`;
+mb.appendChild(ci);
+});
+document.getElementById('ov').classList.add('active');
+}
+
+function cM(){document.getElementById('ov').classList.remove('active')}
+
+function tog(el,id){
+const done=el.classList.toggle('ck');
+localStorage.setItem('vc_'+id,done?'1':'0');
+el.closest('.ci').classList.toggle('done',done);
+updateProgress();
+}
+
+function cp(btn){
+const txt=btn.closest('.pb').querySelector('.pb-txt').textContent;
+try{
+const ta=document.createElement('textarea');
+ta.value=txt;
+ta.style.position='fixed';
+ta.style.left='-9999px';
+ta.style.top='-9999px';
+document.body.appendChild(ta);
+ta.focus();
+ta.select();
+document.execCommand('copy');
+document.body.removeChild(ta);
+btn.classList.add('cp');btn.textContent='Скопировано';
+setTimeout(()=>{btn.classList.remove('cp');btn.textContent='Скопировать'},1500);
+}catch(e){
+if(navigator.clipboard&&navigator.clipboard.writeText){
+navigator.clipboard.writeText(txt).then(()=>{
+btn.classList.add('cp');btn.textContent='Скопировано';
+setTimeout(()=>{btn.classList.remove('cp');btn.textContent='Скопировать'},1500);
+});
+}else{
+btn.textContent='Выделите текст вручную';
+setTimeout(()=>{btn.textContent='Скопировать'},2000);
+}
+}
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function updateProgress(){
+let total=0,done=0;
+Object.values(C).forEach(items=>items.forEach(i=>{total++;if(localStorage.getItem('vc_'+i.id)==='1')done++}));
+document.getElementById('pTxt').textContent=`${done} / ${total}`;
+document.getElementById('pFill').style.width=total?((done/total)*100)+'%':'0%';
+}
+
+buildCal();
+</script>
+</body>
+</html>
+
