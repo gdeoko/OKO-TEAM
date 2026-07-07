@@ -261,6 +261,62 @@ function initForm() {
   });
 }
 
+/* ── Кино-секция: скраб видео скроллом (без внешних библиотек) ── */
+function initCinema() {
+  const sec = $('#cinema');
+  const video = $('#cinemaVideo');
+  const bar = $('#cinemaBar');
+  if (!sec || !video) return;
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (reduced || saveData) {
+    video.removeAttribute('preload');
+    return; /* остаётся постер */
+  }
+
+  let duration = 0;
+  let target = 0, current = 0, raf = 0;
+  video.addEventListener('loadedmetadata', () => { duration = video.duration || 0; });
+  try { video.load(); } catch (e) {}
+
+  const tick = () => {
+    raf = 0;
+    if (!duration) { raf = requestAnimationFrame(tick); return; }
+    current += (target - current) * 0.18;
+    if (Math.abs(target - current) > 0.004) raf = requestAnimationFrame(tick);
+    try { video.currentTime = current * duration; } catch (e) {}
+    if (bar) bar.style.transform = `scaleX(${current})`;
+  };
+
+  const onScroll = () => {
+    const r = sec.getBoundingClientRect();
+    const span = r.height - window.innerHeight;
+    if (span <= 0) return;
+    target = Math.min(1, Math.max(0, -r.top / span));
+    if (!raf) raf = requestAnimationFrame(tick);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+/* ── Живой фон формы: ночная Москва, грузится при приближении ── */
+function initLeadVideo() {
+  const video = $('#leadVideo');
+  const sec = $('#lead');
+  if (!video || !sec) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (reduced || saveData) return; /* остаётся градиент с постером */
+  const io = new IntersectionObserver((es) => {
+    if (!es[0].isIntersecting) return;
+    io.disconnect();
+    video.src = 'assets/media/moscow-cold.mp4';
+    video.play().then(() => video.classList.add('on')).catch(() => {});
+  }, { rootMargin: '600px' });
+  io.observe(sec);
+}
+
 /* ── Ленивый 3D-мир: после первой отрисовки, без reduced-motion ── */
 function initWorld() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -289,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initCompare();
   initTilt();
   initForm();
+  initCinema();
+  initLeadVideo();
 
   Calc.init({
     onUse: () => track('calc_use'),

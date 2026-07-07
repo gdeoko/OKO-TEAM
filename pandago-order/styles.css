@@ -1507,3 +1507,96 @@ footer {
   opacity: 1;
   transform: none;
 }
+
+/* ── Кино-секция: скраб видео на скролле ── */
+.cinema-sec {
+  height: 340svh;
+  padding: 0;
+}
+.cinema-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.cinema-pin video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cinema-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 24, 51, 0.55) 0%, rgba(8, 24, 51, 0) 30%),
+    linear-gradient(0deg, rgba(8, 24, 51, 0.82) 0%, rgba(8, 24, 51, 0) 45%);
+  pointer-events: none;
+}
+.cinema-caption {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: clamp(56px, 10svh, 110px);
+  padding: 0 var(--pad);
+  max-width: var(--wrap);
+  margin: 0 auto;
+}
+.cinema-caption .d2 { font-size: clamp(28px, 5vw, 64px); }
+.cinema-sub {
+  margin-top: 12px;
+  max-width: 480px;
+  color: var(--cyan-soft);
+  font-size: clamp(14px, 1.6vw, 16.5px);
+  text-shadow: 0 1px 12px rgba(8, 24, 51, 0.8);
+}
+.cinema-progress {
+  position: absolute;
+  left: var(--pad); right: var(--pad);
+  bottom: clamp(26px, 5svh, 54px);
+  height: 2px;
+  max-width: calc(var(--wrap) - 2 * var(--pad));
+  margin: 0 auto;
+  background: rgba(138, 165, 200, 0.25);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.cinema-progress span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--electric), var(--cyan));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  box-shadow: 0 0 12px var(--glow);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinema-sec { height: auto; }
+  .cinema-pin { position: relative; height: 72svh; }
+}
+@media (max-width: 767px) {
+  .cinema-caption { padding-right: 64px; }
+}
+
+/* ── Живой фон финальной секции: ночная Москва ── */
+.form-sec { overflow: hidden; }
+.form-bgv {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.form-bgv video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1400ms ease;
+}
+.form-bgv video.on { opacity: 0.5; }
+.form-bgv::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, var(--navy-deep) 0%, rgba(8, 24, 51, 0.45) 30%, rgba(8, 24, 51, 0.55) 70%, var(--navy-deep) 100%);
+}

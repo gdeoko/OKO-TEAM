@@ -11,13 +11,32 @@
    При prefers-reduced-motion HUD статичен, но виден.
    ═══════════════════════════════════════════════════════════════ */
 
-const STAGES = [
-  { at: 0.00, code: 'ЭТАП 01 / 05', name: 'ГУАНЧЖОУ · СКЛАД' },
-  { at: 0.14, code: 'ЭТАП 02 / 05', name: 'ПОРТ · ПОГРУЗКА' },
-  { at: 0.32, code: 'ЭТАП 03 / 05', name: 'РАСЧЁТ МАРШРУТА' },
-  { at: 0.55, code: 'ЭТАП 04 / 05', name: 'КОРИДОР МОНГОЛИЯ' },
-  { at: 0.78, code: 'ЭТАП 05 / 05', name: 'МОСКВА · ВЫДАЧА' },
+/* Этапы привязаны к реальным секциям: точки пересчитываются от их
+   положения на странице, поэтому не съезжают при изменении контента */
+const STAGE_DEFS = [
+  { sel: '#hero',       code: 'ЭТАП 01 / 06', name: 'ГУАНЧЖОУ · СКЛАД' },
+  { sel: '#calculator', code: 'ЭТАП 02 / 06', name: 'РАСЧЁТ МАРШРУТА' },
+  { sel: '#process',    code: 'ЭТАП 03 / 06', name: 'ПОРТ · ПОГРУЗКА' },
+  { sel: '#cinema',     code: 'ЭТАП 04 / 06', name: 'СЪЁМКА МАРШРУТА' },
+  { sel: '#compare',    code: 'ЭТАП 05 / 06', name: 'КОРИДОР МОНГОЛИЯ' },
+  { sel: '#faq',        code: 'ЭТАП 06 / 06', name: 'МОСКВА · ВЫДАЧА' },
 ];
+let STAGES = [{ at: 0, code: STAGE_DEFS[0].code, name: STAGE_DEFS[0].name }];
+
+function calcStages() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  if (max <= 0) return;
+  STAGES = STAGE_DEFS
+    .map((d) => {
+      const el = document.querySelector(d.sel);
+      if (!el) return null;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      return { at: Math.max(0, (top - window.innerHeight * 0.4) / max), code: d.code, name: d.name };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.at - b.at);
+  if (STAGES.length) STAGES[0].at = 0;
+}
 
 /* опорные точки маршрута: широта, долгота */
 const GEO = [
@@ -43,7 +62,7 @@ export function initHud() {
     <div class="hud-corner hud-tl"></div>
     <div class="hud-corner hud-tr"></div>
     <div class="hud-stage">
-      <span class="hud-code" id="hudCode">ЭТАП 01 / 05</span>
+      <span class="hud-code" id="hudCode">ЭТАП 01 / 06</span>
       <span class="hud-name" id="hudName">ГУАНЧЖОУ · СКЛАД</span>
     </div>
     <div class="hud-geo" id="hudGeo">23.13 N · 113.26 E</div>
@@ -81,6 +100,9 @@ export function initHud() {
   };
   window.addEventListener('scroll', readScroll, { passive: true });
   readScroll();
+  calcStages();
+  window.addEventListener('resize', calcStages, { passive: true });
+  setTimeout(calcStages, 1500);   /* после загрузки шрифтов и раскладки */
 
   /* ── Звук: эмбиент-гул из WebAudio, без файлов ── */
   let audio = null;

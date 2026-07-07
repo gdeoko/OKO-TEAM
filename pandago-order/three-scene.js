@@ -112,6 +112,19 @@ export function initScene(container) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   world.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
 
+  /* Десктоп: подменяем окружение реальной ночной HDRI (Poly Haven, CC0)
+     для фотореалистичных отражений. Мобилка и офлайн остаются на Room. */
+  if (!isMobile) {
+    import('three/examples/jsm/loaders/RGBELoader.js').then(({ RGBELoader }) => {
+      new RGBELoader().load(
+        'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/dikhololo_night_1k.hdr',
+        (tex) => { world.environment = pmrem.fromEquirectangular(tex).texture; tex.dispose(); },
+        undefined,
+        () => {} /* нет сети до polyhaven: остаёмся на RoomEnvironment */
+      );
+    }).catch(() => {});
+  }
+
   const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(6, 10, 8); world.add(key);
   const rimC = new THREE.DirectionalLight(C.cyan, 2.8); rimC.position.set(-7, 4, -3); world.add(rimC);
   const rimE = new THREE.DirectionalLight(C.electric, 1.8); rimE.position.set(5, 2, -7); world.add(rimE);
