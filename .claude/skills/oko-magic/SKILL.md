@@ -92,6 +92,18 @@ Cloudflare token — АККАУНТ-токен (cfat_): verify только че
 - Проверка: pdfinfo (мм = pts/72*25.4), pdffonts (emb=yes, без Helvetica), pdftoppm превью — смотреть глазами.
 - potrace по AA-краям = грязь; вектор-лого просить у клиента.
 
+## БЕСПЛАТНЫЕ 3D-ИСТОЧНИКИ (проверено в бою, PandaGo 07.2026)
+- poly.pizza: прямой GLB `https://static.poly.pizza/<uuid>.glb` (uuid грепается из HTML карточки /m/<id>). CC0/CC-BY; CC-BY = атрибуция в футер. Перекрас чужой модели под бренд: traverse по мешам, по яркости исходного цвета назначать paint/rubber/glow материалы (референс pandago-order/three-scene.js).
+- Poly Haven API без ключа: `api.polyhaven.com/assets?type=hdris|textures|models`, файлы dl.polyhaven.org. HDRI как scene.environment = фотореалистичный свет/отражения даже на low-poly.
+- Kenney.nl, Quaternius (CC0): city kits, персонажи rigged+animated, прямые zip.
+- Ready Player Me: GLB-аватар по URL `models.readyplayer.me/<id>.glb` без логина; анимации github.com/readyplayerme/animation-library.
+- Реальные города без ключей: OSM Overpass API (overpass-api.de) отдаёт контуры зданий с этажностью — экструзия в Three.js = настоящая Москва/Гуанчжоу low-poly.
+- Mixamo не автоматизируется (Adobe-логин, ToS): раз в жизни скачать пак FBX вручную, положить в dev-assets/characters/ — дальше пользоваться вечно.
+- 3D из фото на HF (gradio_client): TRELLIS (microsoft), Hunyuan3D-2 (tencent), InstantMesh, TripoSR. Higgsfield generate_3d — кредиты.
+
+## РЕФЕРЕНС PANDAGO (второй боевой проект, pandago-order/)
+Скролл-путешествие с байком-проводником: камера по CatmullRom за персонажем (t+0.035), этапы мира вдоль z, GLSL-аврора с uProgress, HUD с lerp-координатами маршрута, перекрашенный CC-BY байк. Превью: forest-beach-360.higgsfield.app (id 96269fa0-7465-4a92-89d5-bdc51f4cec87). Прод клиента: FastPanel, zip в чат, PHP-бэкенд не трогать, config.php с сервера не перезаписывать. Правила текста PandaGo: tools/copy-check.py перед каждым коммитом.
+
 ## АДАПТИВ И ПЕРФ (минимум)
 clamp() типографика; 100svh; тач-цели 44px+; без горизонтального overflow; prefers-reduced-motion → отключить scrub/курсор/пульсы; никаких will-change на backdrop-filter; изображения WebP+lazy кроме hero.
 
