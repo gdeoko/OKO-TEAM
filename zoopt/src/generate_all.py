@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Главный скрипт: генерирует все 16 PDF-плёнок оклейки витрины ЗоОпт,
+Главный скрипт: генерирует все 16 PDF-плёнок оклейки витрины ЗооОпт,
 собирает контактный лист index.pdf и печатает сводку.
 
 Запуск:  python3 src/generate_all.py
@@ -86,7 +86,7 @@ def build_index(paths):
     c.setFillColor(ds.IVORY); c.rect(0, 0, W, H, stroke=0, fill=1)
     c.setFillColor(ds.GREEN_DARK)
     c.setFont(ds.F_HEAD, 22)
-    c.drawString(20 * mm, H - 26 * mm, "ЗоОпт — оклейка витрины №69-70")
+    c.drawString(20 * mm, H - 26 * mm, "ЗооОпт — оклейка витрины №69-70")
     c.setFont(ds.F_SUB, 11); c.setFillColor(ds.BLACK)
     c.drawString(20 * mm, H - 33 * mm, "Контактный лист · 16 плёнок · превью перед типографией")
 
@@ -142,7 +142,7 @@ def summary(paths):
 
 
 def main():
-    print("ЗоОпт · генератор оклейки витрины\n" + "-" * 40)
+    print("ЗооОпт · генератор оклейки витрины\n" + "-" * 40)
     check_assets()
     paths = build_all()
     try:

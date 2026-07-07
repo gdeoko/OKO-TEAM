@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-16 плёнок оклейки витрины ЗоОпт (павильон №69-70).
+16 плёнок оклейки витрины ЗооОпт (павильон №69-70).
 Каждая функция строит одну плёнку и возвращает путь к PDF.
 Размеры — по замерам витрины (см), контент — по ТЗ.
 """
@@ -115,7 +115,7 @@ def section_4_top():   # 65×90
 
 def section_4_bottom():  # 65×110 — игрушки кошек (AI)
     p = _shell("vitrina_04_bottom_65x110", 65, 110, logo_corner=False)
-    p.text_fit(16, "КОШКИ ЛЮБЯТ ЗоОпт", F_HEAD, 4.2, GREEN_DARK, max_w_cm=49, tracking=0.04)
+    p.text_fit(16, "КОШКИ ЛЮБЯТ ЗооОпт", F_HEAD, 4.2, GREEN_DARK, max_w_cm=49, tracking=0.04)
     p.ai_scene("cattoys", p.cx, 60, max_w_cm=51, max_h_cm=48)
     p.text_fit(100, "Ассортимент 300+ товаров", F_SUB, 2.8, BLACK, max_w_cm=49)
     return p.finish()
