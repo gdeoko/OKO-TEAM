@@ -40,7 +40,7 @@ function initJourney(){
   scene.background=new THREE.Color(0x03100a);
   scene.fog=new THREE.FogExp2(0x041710,0.026);
 
-  const cam=new THREE.PerspectiveCamera(55,1,.1,140);
+  const cam=new THREE.PerspectiveCamera(MOBILE?63:55,1,.1,140);
   const pmrem=new THREE.PMREMGenerator(renderer);
   scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
 
@@ -281,7 +281,7 @@ function initShowcase(){
   const pmrem=new THREE.PMREMGenerator(renderer);
   scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
   const SX=MOBILE?0:1.6;
-  const cam=new THREE.PerspectiveCamera(45,1,.1,100); cam.position.set(SX+3.2,1.8,5.4);
+  const cam=new THREE.PerspectiveCamera(MOBILE?52:45,1,.1,100); cam.position.set(SX+3.2,MOBILE?2.2:1.8,MOBILE?7.6:5.4);
 
   scene.add(new THREE.AmbientLight(0x2a5a3a,.8));
   const k=new THREE.PointLight(0xFFE7A0,90,40,2); k.position.set(SX+4,6,4); scene.add(k);
