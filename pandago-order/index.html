@@ -18,7 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <meta name="theme-color" content="#081833">
-<meta name="build" content="film-v4">
+<meta name="build" content="film-v5">
 <script type="importmap">
 {
   "imports": {
@@ -78,9 +78,8 @@
 <!-- ═══ HERO ═══ -->
 <section class="hero" id="hero">
   <div class="hero-film" aria-hidden="true">
-    <video id="heroVideo" muted loop playsinline autoplay preload="auto" poster="assets/media/hero-poster.jpg">
-      <source src="assets/media/hero-loop.mp4" type="video/mp4">
-    </video>
+    <video id="heroVideo" muted loop playsinline autoplay preload="none" poster="assets/media/hero-poster.jpg"
+      data-src="assets/media/hero-loop.mp4" data-src-m="assets/media/hero-loop-m.mp4"></video>
     <div class="hero-film-veil"></div>
   </div>
   <div class="wrap hero-inner">
@@ -247,9 +246,8 @@
 <!-- ═══ КИНО, АКТ 1: НОЧНОЙ ПОРТ ═══ -->
 <section class="cinema-sec" id="port" aria-label="Видео ночной погрузки в порту">
   <div class="cinema-pin">
-    <video id="portVideo" muted playsinline preload="none" poster="assets/media/port-poster.jpg" aria-hidden="true">
-      <source src="assets/media/port-scrub.mp4" type="video/mp4">
-    </video>
+    <video id="portVideo" muted playsinline preload="none" poster="assets/media/port-poster.jpg" aria-hidden="true"
+      data-src="assets/media/port-scrub.mp4" data-src-m="assets/media/port-scrub-m.mp4"></video>
     <div class="cinema-veil" aria-hidden="true"></div>
     <div class="cinema-bars" aria-hidden="true"></div>
     <div class="cinema-caption">
@@ -264,9 +262,8 @@
 <!-- ═══ КИНО, АКТ 2: РАЗБОР ТЕХНИКИ ═══ -->
 <section class="cinema-sec" id="teardown" aria-label="Видео разборки техники">
   <div class="cinema-pin">
-    <video id="teardownVideo" muted playsinline preload="auto" poster="assets/media/quad-poster.jpg" aria-hidden="true">
-      <source src="assets/media/quad-scrub.mp4" type="video/mp4">
-    </video>
+    <video id="teardownVideo" muted playsinline preload="none" poster="assets/media/quad-poster.jpg" aria-hidden="true"
+      data-src="assets/media/quad-scrub.mp4"></video>
     <div class="cinema-still" id="teardownStill" hidden aria-hidden="true">
       <img src="assets/media/quadA-p.jpg" alt="" loading="lazy">
       <img src="assets/media/quadB-p.jpg" alt="" class="top" loading="lazy">
@@ -285,9 +282,8 @@
 <!-- ═══ КИНО, АКТ 3: КОЛОННА НА ТРАССЕ ═══ -->
 <section class="cinema-sec" id="cinema" aria-label="Видео маршрута">
   <div class="cinema-pin">
-    <video id="cinemaVideo" muted playsinline preload="none" poster="assets/media/road-poster.jpg" aria-hidden="true">
-      <source src="assets/media/road-scrub.mp4" type="video/mp4">
-    </video>
+    <video id="cinemaVideo" muted playsinline preload="none" poster="assets/media/road-poster.jpg" aria-hidden="true"
+      data-src="assets/media/road-scrub.mp4" data-src-m="assets/media/road-scrub-m.mp4"></video>
     <div class="cinema-veil" aria-hidden="true"></div>
     <div class="cinema-bars" aria-hidden="true"></div>
     <div class="cinema-caption">
@@ -379,9 +375,8 @@
 <!-- ═══ КИНО, АКТ 4: ТЕХНИКА В ДЕЛЕ ═══ -->
 <section class="cinema-sec" id="finale" aria-label="Видео техники в движении">
   <div class="cinema-pin">
-    <video id="finaleVideo" muted playsinline preload="none" poster="assets/media/atv-poster.jpg" aria-hidden="true">
-      <source src="assets/media/atv-scrub.mp4" type="video/mp4">
-    </video>
+    <video id="finaleVideo" muted playsinline preload="none" poster="assets/media/atv-poster.jpg" aria-hidden="true"
+      data-src="assets/media/atv-scrub.mp4" data-src-m="assets/media/atv-scrub-m.mp4"></video>
     <div class="cinema-veil" aria-hidden="true"></div>
     <div class="cinema-bars" aria-hidden="true"></div>
     <div class="cinema-caption">
@@ -400,7 +395,7 @@
 <!-- ═══ ФОРМА ═══ -->
 <section class="form-sec" id="lead">
   <div class="form-bgv" aria-hidden="true">
-    <video id="leadVideo" muted loop playsinline preload="none" poster="assets/media/moscow-poster.jpg"></video>
+    <video id="leadVideo" muted loop playsinline preload="none" poster="assets/media/moscow-poster.jpg" data-src="assets/media/moscow-cold.mp4"></video>
   </div>
   <div class="wrap">
     <div class="sec-head" data-reveal style="text-align:center; margin-left:auto; margin-right:auto;">

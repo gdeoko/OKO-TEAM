@@ -92,7 +92,8 @@ export async function initAnimations() {
 
   /* ── Таймлайн: горизонтальный скролл при вертикальной прокрутке ── */
   const track = document.getElementById('timelineTrack');
-  if (track && window.innerWidth > 700) {
+  const finePointer = window.matchMedia('(pointer: fine)').matches;
+  if (track && window.innerWidth > 700 && finePointer) {
     const overflow = () => track.scrollWidth - track.parentElement.clientWidth;
     if (overflow() > 40) {
       /* пин активен: нативный скролл вьюпорта отключаем, ведёт GSAP */

@@ -269,6 +269,31 @@ function initCinema() {
   initScrub('#finale', '#finaleVideo', '#finaleBar');
 }
 
+/* ── Загрузка клипа: маленькая мобильная версия + blob-URL.
+   Хостинг не отдаёт Range, Safari без него не играет вовсе,
+   поэтому качаем файл целиком и подсовываем blob ── */
+const smallScreen = () => window.innerWidth < 900 || window.innerHeight > window.innerWidth;
+function clipSrc(video) {
+  const base = video.dataset.src;
+  const mob = video.dataset.srcM;
+  return (smallScreen() && mob) ? mob : base;
+}
+function loadClip(video) {
+  if (!video || video.dataset.loaded) return;
+  video.dataset.loaded = '1';
+  const src = clipSrc(video);
+  fetch(src)
+    .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.blob(); })
+    .then((b) => {
+      video.src = URL.createObjectURL(b);
+      try { video.load(); } catch (e) {}
+    })
+    .catch(() => {
+      video.src = src;   /* запасной путь: обычная загрузка */
+      try { video.load(); } catch (e) {}
+    });
+}
+
 /* ── Пролог: живой фон hero, останавливается вне экрана ── */
 function initHeroFilm() {
   const video = $('#heroVideo');
@@ -276,6 +301,8 @@ function initHeroFilm() {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = navigator.connection && navigator.connection.saveData;
   if (reduced || saveData) { video.remove(); return; }
+  video.addEventListener('canplay', () => { video.play().catch(() => {}); }, { once: true });
+  loadClip(video);
   new IntersectionObserver((es) => {
     if (es[0].isIntersecting) video.play().catch(() => {});
     else video.pause();
@@ -312,14 +339,13 @@ function initScrub(secSel, videoSel, barSel, stillSel) {
   let target = 0, current = 0, raf = 0;
   if (video) {
     video.addEventListener('loadedmetadata', () => { duration = video.duration || 0; });
-    /* тяжёлые клипы качаются заранее, но только при приближении секции */
-    if (video.preload === 'none') {
+    /* клип качается заранее, при приближении секции */
+    if (video.dataset.src) {
       const io = new IntersectionObserver((es) => {
         if (!es[0].isIntersecting) return;
         io.disconnect();
-        video.preload = 'auto';
-        try { video.load(); } catch (e) {}
-      }, { rootMargin: '1600px' });
+        loadClip(video);
+      }, { rootMargin: '2400px' });
       io.observe(sec);
     } else {
       try { video.load(); } catch (e) {}
@@ -385,8 +411,10 @@ function initLeadVideo() {
   const io = new IntersectionObserver((es) => {
     if (!es[0].isIntersecting) return;
     io.disconnect();
-    video.src = 'assets/media/moscow-cold.mp4';
-    video.play().then(() => video.classList.add('on')).catch(() => {});
+    video.addEventListener('canplay', () => {
+      video.play().then(() => video.classList.add('on')).catch(() => {});
+    }, { once: true });
+    loadClip(video);
   }, { rootMargin: '600px' });
   io.observe(sec);
 }

@@ -70,6 +70,11 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
+/* страница никогда не скроллится вбок: clip не создаёт scroll-контейнер,
+   sticky и пины продолжают работать */
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
+}
 
 img { max-width: 100%; display: block; }
 a { color: var(--cyan); text-decoration: none; }
