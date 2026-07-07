@@ -20,7 +20,7 @@ description: OKO magic skill — главный производственный
 ## ПАМЯТЬ (первое действие каждой сессии)
 - Прочитай `brain/Claude/Projects/<проект>.md`, `brain/Claude/Инфраструктура.md`, 2 последние `brain/Claude/Sessions/`.
 - В конце сессии допиши `brain/Claude/Sessions/YYYY-MM-DD-<проект>.md`: факты, пути, решения, незакрытое. Закоммить.
-- Секреты: `source ~/.oko/secrets.env` (если нет — ключи в env-переменных окружения: HF_TOKEN, FAL_KEY, TWENTY_FIRST_API_KEY, CLOUDFLARE_*, R2_*). В git секреты НЕ класть.
+- Секреты: ПЕРВЫМ ДЕЛОМ `source secrets.env` из корня репо (лежит в git по решению Даниэля), затем проверить env-переменные окружения (HF_TOKEN, FAL_KEY и др.). Новые ключи дописывать в secrets.env.
 
 ## СРЕДА (специфика этого облака — не как в Termux)
 - HTTPS через прокси `$HTTPS_PROXY`; CA-бандл `/root/.ccr/ca-bundle.crt` (boto3/python: verify=CA). node fetch мимо прокси не ходит — curl.
@@ -111,6 +111,19 @@ Cloudflare token — АККАУНТ-токен (cfat_): verify только че
 
 ## АДАПТИВ И ПЕРФ (минимум)
 clamp() типографика; 100svh; тач-цели 44px+; без горизонтального overflow; prefers-reduced-motion → отключить scrub/курсор/пульсы; никаких will-change на backdrop-filter; изображения WebP+lazy кроме hero.
+
+## АПИ-КАТАЛОГ (ссылки и что даёт; ключи складывать в secrets.env)
+- PEXELS_API_KEY: ЕСТЬ, работает. Реальные 4К-видео и фото, 200/час. Поиск: api.pexels.com/videos/search (заголовок Authorization). Только curl, urllib мимо прокси.
+- HF_TOKEN: huggingface.co/settings/tokens (тип Read, бесплатно). Умножает квоты ZeroGPU: FLUX-кадры, Wan-видео. Без него анонимные лимиты.
+- PIXABAY_API_KEY: pixabay.com/api/docs (ключ виден на странице после входа, формат 1234567-hex). Запасной видеосток, cdn отдаёт напрямую.
+- GEMINI_API_KEY: aistudio.google.com/apikey (бесплатный тариф). Gemini для картинок/текста, лимиты щедрые.
+- FAL_KEY: fal.ai/dashboard/keys (платно за факт, ~5-15 руб/клип). Wan/Kling 1080p без очередей — главный платный буст видео.
+- CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID: dash.cloudflare.com/profile/api-tokens, шаблон "Cloudflare Pages: Edit"; Account ID на главной дашборда. Запасной хостинг: npx wrangler pages deploy.
+- TWENTY_FIRST_API_KEY: 21st.dev/magic (бесплатный тариф). Библиотека wow-компонентов.
+- FREESOUND_API_KEY: freesound.org/apiv2/apply (бесплатно). Звуковые эффекты CC.
+- SKETCHFAB_API_TOKEN: sketchfab.com/settings/password (бесплатно). Download API для CC 3D-моделей.
+- Кредиты Higgsfield: пополнение баланса в приложении. generate_3d (фото в GLB), upscale видео 2К/4К.
+- Mixamo: НЕ автоматизируется, разово скачать FBX-пак вручную и прислать в чат.
 
 ## КАРТА ВОЗМОЖНОСТЕЙ СРЕДЫ (актуально 07.07.2026)
 
