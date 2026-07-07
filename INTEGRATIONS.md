@@ -45,7 +45,8 @@
 - Прод PandaGo: FastPanel клиента, zip в чат.
 
 ## Что осталось добить (опционально)
-1. Cloudflare: пересоздать токен по шаблону "Cloudflare Pages: Edit" (текущему не хватает прав).
+1. Cloudflare: ОТЛОЖЕНО решением Даниэля 07.07.2026 (Higgsfield-хостинга достаточно).
+   Не поднимать тему. Если понадобится: пересоздать токен с правом Account -> Cloudflare Pages -> Edit.
 2. GEMINI_API_KEY: aistudio.google.com/apikey (бесплатный Gemini).
 3. Кредиты Higgsfield: 4К-апскейл видео, 3D из фото.
 4. Mixamo: разово скачать FBX-пак персонажей вручную и прислать в чат.
