@@ -18,6 +18,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <meta name="theme-color" content="#081833">
+<meta name="build" content="film-v4">
 <script type="importmap">
 {
   "imports": {
@@ -76,6 +77,12 @@
 
 <!-- ═══ HERO ═══ -->
 <section class="hero" id="hero">
+  <div class="hero-film" aria-hidden="true">
+    <video id="heroVideo" muted loop playsinline autoplay preload="auto" poster="assets/media/hero-poster.jpg">
+      <source src="assets/media/hero-loop.mp4" type="video/mp4">
+    </video>
+    <div class="hero-film-veil"></div>
+  </div>
   <div class="wrap hero-inner">
     <div class="hero-kicker" data-reveal data-parallax="6">
       <span class="dot" aria-hidden="true"></span>
@@ -237,7 +244,24 @@
   </div>
 </section>
 
-<!-- ═══ КИНО: РАЗБОР ТЕХНИКИ ═══ -->
+<!-- ═══ КИНО, АКТ 1: НОЧНОЙ ПОРТ ═══ -->
+<section class="cinema-sec" id="port" aria-label="Видео ночной погрузки в порту">
+  <div class="cinema-pin">
+    <video id="portVideo" muted playsinline preload="none" poster="assets/media/port-poster.jpg" aria-hidden="true">
+      <source src="assets/media/port-scrub.mp4" type="video/mp4">
+    </video>
+    <div class="cinema-veil" aria-hidden="true"></div>
+    <div class="cinema-bars" aria-hidden="true"></div>
+    <div class="cinema-caption">
+      <span class="cinema-act" data-scramble>АКТ 01 · ГУАНЧЖОУ</span>
+      <h2 class="d2">Порт не спит.<br>Груз уходит в рейс</h2>
+      <p class="cinema-sub">Ночная погрузка под кранами терминала. Контейнер опечатан, страховка оформлена, документы на борту.</p>
+    </div>
+    <div class="cinema-progress" aria-hidden="true"><span id="portBar"></span></div>
+  </div>
+</section>
+
+<!-- ═══ КИНО, АКТ 2: РАЗБОР ТЕХНИКИ ═══ -->
 <section class="cinema-sec" id="teardown" aria-label="Видео разборки техники">
   <div class="cinema-pin">
     <video id="teardownVideo" muted playsinline preload="auto" poster="assets/media/quad-poster.jpg" aria-hidden="true">
@@ -248,8 +272,9 @@
       <img src="assets/media/quadB-p.jpg" alt="" class="top" loading="lazy">
     </div>
     <div class="cinema-veil" aria-hidden="true"></div>
+    <div class="cinema-bars" aria-hidden="true"></div>
     <div class="cinema-caption">
-      <span class="label" data-scramble>Приёмка на фабрике</span>
+      <span class="cinema-act" data-scramble>АКТ 02 · ПРИЁМКА</span>
       <h2 class="d2">Разбираем<br>до винта</h2>
       <p class="cinema-sub">Каждый узел на виду: комплектация сверяется на фабрике до отправки.</p>
     </div>
@@ -257,15 +282,16 @@
   </div>
 </section>
 
-<!-- ═══ КИНО: ФУРА НА ТРАССЕ ═══ -->
+<!-- ═══ КИНО, АКТ 3: КОЛОННА НА ТРАССЕ ═══ -->
 <section class="cinema-sec" id="cinema" aria-label="Видео маршрута">
   <div class="cinema-pin">
-    <video id="cinemaVideo" muted playsinline preload="auto" poster="assets/media/truck-poster.jpg" aria-hidden="true">
-      <source src="assets/media/truck-scrub.mp4" type="video/mp4">
+    <video id="cinemaVideo" muted playsinline preload="none" poster="assets/media/road-poster.jpg" aria-hidden="true">
+      <source src="assets/media/road-scrub.mp4" type="video/mp4">
     </video>
     <div class="cinema-veil" aria-hidden="true"></div>
+    <div class="cinema-bars" aria-hidden="true"></div>
     <div class="cinema-caption">
-      <span class="label" data-scramble>Груз в пути</span>
+      <span class="cinema-act" data-scramble>АКТ 03 · ТРАССА</span>
       <h2 class="d2">Ночь. Трасса.<br>Техника идёт в Москву</h2>
       <p class="cinema-sub">Каждая единица закреплена и застрахована. Колонна уже в пути.</p>
     </div>
@@ -347,6 +373,27 @@
       <h2 class="d2">Что спрашивают<br>перед заказом</h2>
     </div>
     <div class="faq-list" id="faqList" data-reveal></div>
+  </div>
+</section>
+
+<!-- ═══ КИНО, АКТ 4: ТЕХНИКА В ДЕЛЕ ═══ -->
+<section class="cinema-sec" id="finale" aria-label="Видео техники в движении">
+  <div class="cinema-pin">
+    <video id="finaleVideo" muted playsinline preload="none" poster="assets/media/atv-poster.jpg" aria-hidden="true">
+      <source src="assets/media/atv-scrub.mp4" type="video/mp4">
+    </video>
+    <div class="cinema-veil" aria-hidden="true"></div>
+    <div class="cinema-bars" aria-hidden="true"></div>
+    <div class="cinema-caption">
+      <span class="cinema-act" data-scramble>АКТ 04 · ФИНАЛ</span>
+      <h2 class="d2">Ваша техника<br>уже в деле</h2>
+      <p class="cinema-sub">Тридцать дней от заявки до первого выезда. Следующая история ваша.</p>
+      <a class="btn btn-primary cinema-cta" href="#lead" data-magnetic="0.3">
+        Оставить заявку
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+    <div class="cinema-progress" aria-hidden="true"><span id="finaleBar"></span></div>
   </div>
 </section>
 
@@ -436,7 +483,7 @@
     <div class="foot-legal">
       <span>PandaGo Cargo · Поставки из КНР под ключ</span>
       <span>Цены на сайте ориентировочные и уточняются в расчёте</span>
-      <span>3D-модель: Zsky (CC BY), poly.pizza</span>
+      <span>3D-модель: Zsky (CC BY), poly.pizza · Видео: Pexels</span>
     </div>
   </div>
 </footer>

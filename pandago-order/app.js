@@ -263,8 +263,23 @@ function initForm() {
 
 /* ── Кино-секции: скраб видео скроллом (без внешних библиотек) ── */
 function initCinema() {
-  initScrub('#cinema', '#cinemaVideo', '#cinemaBar');
+  initScrub('#port', '#portVideo', '#portBar');
   initScrub('#teardown', '#teardownVideo', '#teardownBar', '#teardownStill');
+  initScrub('#cinema', '#cinemaVideo', '#cinemaBar');
+  initScrub('#finale', '#finaleVideo', '#finaleBar');
+}
+
+/* ── Пролог: живой фон hero, останавливается вне экрана ── */
+function initHeroFilm() {
+  const video = $('#heroVideo');
+  if (!video) return;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = navigator.connection && navigator.connection.saveData;
+  if (reduced || saveData) { video.remove(); return; }
+  new IntersectionObserver((es) => {
+    if (es[0].isIntersecting) video.play().catch(() => {});
+    else video.pause();
+  }, { threshold: 0.05 }).observe(video);
 }
 
 function initScrub(secSel, videoSel, barSel, stillSel) {
@@ -297,7 +312,18 @@ function initScrub(secSel, videoSel, barSel, stillSel) {
   let target = 0, current = 0, raf = 0;
   if (video) {
     video.addEventListener('loadedmetadata', () => { duration = video.duration || 0; });
-    try { video.load(); } catch (e) {}
+    /* тяжёлые клипы качаются заранее, но только при приближении секции */
+    if (video.preload === 'none') {
+      const io = new IntersectionObserver((es) => {
+        if (!es[0].isIntersecting) return;
+        io.disconnect();
+        video.preload = 'auto';
+        try { video.load(); } catch (e) {}
+      }, { rootMargin: '1600px' });
+      io.observe(sec);
+    } else {
+      try { video.load(); } catch (e) {}
+    }
   }
 
   const tick = () => {
@@ -393,6 +419,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCompare();
   initTilt();
   initForm();
+  initHeroFilm();
   initCinema();
   initLeadVideo();
 

@@ -14,12 +14,13 @@
 /* Этапы привязаны к реальным секциям: точки пересчитываются от их
    положения на странице, поэтому не съезжают при изменении контента */
 const STAGE_DEFS = [
-  { sel: '#hero',       code: 'ЭТАП 01 / 06', name: 'ГУАНЧЖОУ · СКЛАД' },
-  { sel: '#calculator', code: 'ЭТАП 02 / 06', name: 'РАСЧЁТ МАРШРУТА' },
-  { sel: '#teardown',   code: 'ЭТАП 03 / 06', name: 'ПРИЁМКА · РАЗБОР' },
-  { sel: '#cinema',     code: 'ЭТАП 04 / 06', name: 'ТРАССА · НОЧЬ' },
-  { sel: '#compare',    code: 'ЭТАП 05 / 06', name: 'КОРИДОР МОНГОЛИЯ' },
-  { sel: '#faq',        code: 'ЭТАП 06 / 06', name: 'МОСКВА · ВЫДАЧА' },
+  { sel: '#hero',       code: 'ЭТАП 01 / 07', name: 'ГУАНЧЖОУ · СКЛАД' },
+  { sel: '#calculator', code: 'ЭТАП 02 / 07', name: 'РАСЧЁТ МАРШРУТА' },
+  { sel: '#port',       code: 'ЭТАП 03 / 07', name: 'ПОРТ · ПОГРУЗКА' },
+  { sel: '#teardown',   code: 'ЭТАП 04 / 07', name: 'ПРИЁМКА · РАЗБОР' },
+  { sel: '#cinema',     code: 'ЭТАП 05 / 07', name: 'ТРАССА · НОЧЬ' },
+  { sel: '#compare',    code: 'ЭТАП 06 / 07', name: 'КОРИДОР МОНГОЛИЯ' },
+  { sel: '#finale',     code: 'ЭТАП 07 / 07', name: 'МОСКВА · ВЫДАЧА' },
 ];
 let STAGES = [{ at: 0, code: STAGE_DEFS[0].code, name: STAGE_DEFS[0].name }];
 
