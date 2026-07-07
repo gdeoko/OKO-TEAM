@@ -261,10 +261,10 @@ function initForm() {
   });
 }
 
-/* ── Ленивая 3D-сцена: после первой отрисовки, без reduced-motion ── */
-function initHeroScene() {
+/* ── Ленивый 3D-мир: после первой отрисовки, без reduced-motion ── */
+function initWorld() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const holder = $('#heroCanvas');
+  const holder = $('#worldCanvas');
   if (!holder) return;
   setTimeout(() => {
     import('./three-scene.js')
@@ -273,6 +273,9 @@ function initHeroScene() {
         holder.classList.add('on');
       })
       .catch(() => { /* нет WebGL или CDN: остаётся статичный градиент */ });
+    import('./hud.js')
+      .then((mod) => mod.initHud())
+      .catch(() => {});
   }, 200);
 }
 
@@ -316,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  initHeroScene();
+  initWorld();
   initFx();
   import('./animations.js')
     .then((mod) => mod.initAnimations())
