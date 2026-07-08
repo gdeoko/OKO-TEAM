@@ -630,7 +630,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.19</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.20</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -735,9 +735,9 @@ main>.screen{position:relative;z-index:1}
               <div class="score-row"><span>Субтитры</span><b class="risk">нет</b></div>
             </div>
             <div style="height:12px"></div>
-            <button class="btn" onclick="alert('Мок: перегенерация обложки + субтитры + пересборка ffmpeg')"><svg class="i"><use href="#i-bolt"/></svg> Исправить одним кликом</button>
+            <button class="btn" onclick="toast('Обложка и субтитры пересобраны')"><svg class="i"><use href="#i-bolt"/></svg> Исправить одним кликом</button>
             <div style="height:10px"></div>
-            <button class="btn ghost" onclick="alert('Мок: постинг в VK и Telegram')"><svg class="i"><use href="#i-send"/></svg> Опубликовать во все сети</button>
+            <button class="btn ghost" onclick="toast('Опубликовано в VK и Telegram')"><svg class="i"><use href="#i-send"/></svg> Опубликовать во все сети</button>
           </div>
         </div>
 
@@ -824,8 +824,8 @@ main>.screen{position:relative;z-index:1}
             <span class="switch" id="themeSwitch"><i></i></span>
           </button>
           <button class="prow" onclick="openEdit()"><svg class="i"><use href="#i-user"/></svg> Профиль <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
-          <button class="prow" onclick="alert('Мок: уведомления')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
-          <button class="prow" onclick="alert('Мок: конфиденциальность')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" onclick="openSettings('notif')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" onclick="openSettings('privacy')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="openSheet('progress')"><svg class="i"><use href="#i-flag"/></svg> Прогресс сборки <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" style="border-bottom:none" onclick="doLogout()"><svg class="i"><use href="#i-logout"/></svg> Выйти</button>
         </div>
@@ -928,6 +928,8 @@ main>.screen{position:relative;z-index:1}
 </div>
 <div class="sheet" id="sheet-pay"><div id="payView"></div></div>
 <div class="sheet" id="sheet-payout"><div id="payoutView"></div></div>
+<div class="sheet" id="sheet-notif"><div id="notifView"></div></div>
+<div class="sheet" id="sheet-privacy"><div id="privacyView"></div></div>
 <div class="sheet" id="sheet-comments">
   <h3>Комментарии</h3>
   <div id="cmtList" class="cmt-list"></div>
@@ -1059,6 +1061,27 @@ function setChartPeriod(btn, days){
   btn.classList.add('on');
   renderPartnerChart(days);
 }
+/* ===== Настройки: уведомления и конфиденциальность ===== */
+const SETTINGS = {
+  notif:   {msg:true, react:true, partner:true, news:false},
+  privacy: {online:true, read:true, search:true, dm:false},
+};
+const SETTINGS_META = {
+  notif:   {title:'Уведомления', labels:{msg:'Сообщения и чаты', react:'Реакции и упоминания', partner:'Партнёрские начисления', news:'Новости и советы OKO'}},
+  privacy: {title:'Конфиденциальность', labels:{online:'Показывать «был(а) в сети»', read:'Отчёты о прочтении', search:'Профиль виден в поиске', dm:'Писать могут только подписки'}},
+};
+function openSettings(group){ renderSettings(group); openSheet(group); }
+function renderSettings(group){
+  const meta = SETTINGS_META[group];
+  const id = group==='notif' ? 'notifView' : 'privacyView';
+  document.getElementById(id).innerHTML = `<h3>${meta.title}</h3>` +
+    Object.keys(SETTINGS[group]).map(k=>
+      `<button class="prow" style="width:100%" onclick="toggleSetting('${group}','${k}')">${meta.labels[k]}
+        <span class="switch ${SETTINGS[group][k]?'on':''}"><i></i></span></button>`).join('') +
+    `<p class="dim" style="font-size:11.5px;margin-top:12px;text-align:center">Настройки сохраняются автоматически</p>`;
+}
+function toggleSetting(group,k){ SETTINGS[group][k] = !SETTINGS[group][k]; renderSettings(group); }
+
 /* ===== Заявка на выплату ===== */
 const PAYOUT_BALANCE = 412;
 let payoutMethod = 'card';
@@ -1755,7 +1778,7 @@ const STORIES = [
 ];
 function renderStories(){
   document.getElementById('storiesRow').innerHTML = STORIES.map((st, i) => st.add
-    ? `<div class="story add" onclick="alert('Мок: съёмка сторис')"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${st.name}</small></div>`
+    ? `<div class="story add" onclick="toast('Съёмка истории — скоро')"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${st.name}</small></div>`
     : `<div class="story" id="story-${i}" onclick="openStory(${i})"><div class="ring">${st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${st.ava}</div>`}</div><small>${st.name}</small></div>`
   ).join('');
 }
@@ -2072,14 +2095,14 @@ function openListing(id){
       ? (l.st==='act' ? `<button class="btn" onclick="boostListing(${l.id})">${I('bolt')} Продвинуть в топ</button>` : '')
         + `<button class="btn ghost" style="margin-top:8px" onclick="removeListing(${l.id})">Снять с публикации</button>`
       : `<button class="btn" onclick="contactSeller(${l.id})">${I('chat')} Написать продавцу</button>
-         <button class="btn ghost" style="margin-top:8px" onclick="alert('Мок: безопасная сделка — деньги замораживаются до выполнения')">Заказать через OKO</button>`}
+         <button class="btn ghost" style="margin-top:8px" onclick="toast('Безопасная сделка: деньги заморожены до выполнения')">Заказать через OKO</button>`}
   `;
   openSheet('lst');
 }
 function boostListing(id){
   const l = LISTINGS.find(x=>x.id===id); l.st = 'boost';
   closeSheet(); renderMarket();
-  alert('Мок: продвижение оплачено — объявление в топе категории 7 дней');
+  toast('Продвижение оплачено — в топе категории 7 дней');
 }
 function removeListing(id){
   LISTINGS = LISTINGS.filter(x=>x.id!==id);
