@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf8"><style>
+@font-face{font-family:Orb;src:url(ORB)}@font-face{font-family:DM;src:url(DM)}
+*{margin:0;box-sizing:border-box}html,body{width:1080px;height:1920px;overflow:hidden;color:#fff;font-family:DM;
+ background:linear-gradient(160deg,#1a1608 0%,#0a0906 100%)}
+.room{position:absolute;inset:0}
+.floor{position:absolute;bottom:0;left:0;right:0;height:46%;background:linear-gradient(180deg,#2a2410,#141005);
+ transform:perspective(900px) rotateX(58deg);transform-origin:bottom}
+.top{position:absolute;top:120px;left:70px;right:70px;display:flex;justify-content:space-between;align-items:center}
+.brand{font-family:Orb;font-weight:800;font-size:44px;letter-spacing:2px}.brand b{color:#F4C430}
+.mode{font-family:DM;font-size:28px;color:#F4C430;letter-spacing:3px;border:1.5px solid #F4C430;border-radius:999px;padding:12px 26px}
+svg.lines{position:absolute;inset:0}
+.pt{fill:#F4C430;filter:drop-shadow(0 0 10px #F4C430)}
+.edge{stroke:#F4C430;stroke-width:5;filter:drop-shadow(0 0 8px #F4C430cc);stroke-dasharray:1400;stroke-dashoffset:1400}
+.dim{position:absolute;font-family:Orb;font-weight:700;font-size:44px;color:#fff;background:rgba(10,8,4,.82);
+ border:1.5px solid #F4C430;border-radius:14px;padding:12px 22px;opacity:0;transform:scale(.6);text-shadow:0 0 10px #F4C430}
+.dim.on{animation:pop .4s ease forwards}
+@keyframes pop{to{opacity:1;transform:scale(1)}}
+.total{position:absolute;bottom:150px;left:70px;right:70px;background:rgba(10,8,4,.9);border:2px solid #F4C430;border-radius:22px;
+ padding:34px;display:flex;justify-content:space-between;align-items:center;opacity:0;transform:translateY(30px)}
+.total.on{animation:up .5s ease forwards}@keyframes up{to{opacity:1;transform:translateY(0)}}
+.total .l{font-family:DM;font-size:30px;color:#c9a94a;letter-spacing:2px}
+.total .v{font-family:Orb;font-weight:800;font-size:56px;color:#F4C430}
+</style></head><body>
+<div class="room"><div class="floor"></div></div>
+<div class="top"><div class="brand">3D<b>·</b>MEASURE</div><div class="mode">AR · LIDAR</div></div>
+<svg class="lines" viewBox="0 0 1080 1920">
+ <polyline id="poly" class="edge" points="230,760 850,700 900,1240 300,1330 230,760" fill="rgba(244,196,48,0.06)"/>
+ <circle class="pt" cx="230" cy="760" r="12"/><circle class="pt" cx="850" cy="700" r="12"/>
+ <circle class="pt" cx="900" cy="1240" r="12"/><circle class="pt" cx="300" cy="1330" r="12"/>
+</svg>
+<div class="dim" id="d0" style="top:690px;left:470px">12 ft 4 in</div>
+<div class="dim" id="d1" style="top:930px;left:830px">9 ft 1 in</div>
+<div class="dim" id="d2" style="top:1300px;left:480px">11 ft 8 in</div>
+<div class="dim" id="d3" style="top:1000px;left:150px">8 ft 9 in</div>
+<div class="total" id="tot"><span class="l">FLOOR AREA</span><span class="v">112 sq ft</span></div>
+<script>
+setTimeout(()=>{const p=document.getElementById('poly');p.style.transition='stroke-dashoffset 2.2s ease';p.style.strokeDashoffset=0},300);
+[[1400,'d0'],[1900,'d1'],[2400,'d2'],[2900,'d3']].forEach(([t,id])=>setTimeout(()=>document.getElementById(id).classList.add('on'),t));
+setTimeout(()=>document.getElementById('tot').classList.add('on'),3400);
+window.__ready=true;
+</script></body></html>

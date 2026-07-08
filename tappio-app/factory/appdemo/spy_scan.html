@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf8"><style>
+@font-face{font-family:Orb;src:url(ORB)}@font-face{font-family:DM;src:url(DM)}@font-face{font-family:Syn;src:url(SYN)}
+*{margin:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:#050709;overflow:hidden;font-family:DM;color:#fff}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:120px 70px}
+.top{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:40px}
+.brand{font-family:Orb;font-weight:800;font-size:44px;letter-spacing:2px}
+.brand b{color:#00D9FF}
+.status{font-family:DM;font-size:30px;color:#00D9FF;letter-spacing:3px}
+.radar{position:relative;width:720px;height:720px;border-radius:50%;margin:30px 0;
+ background:radial-gradient(circle,#0a1418 0%,#050709 70%);border:2px solid #00D9FF33;overflow:hidden}
+.ring{position:absolute;border:1.5px solid #00D9FF22;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.sweep{position:absolute;top:0;left:50%;width:50%;height:50%;transform-origin:left bottom;
+ background:conic-gradient(from 0deg,transparent,#00D9FF66);animation:spin 2.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.blip{position:absolute;width:26px;height:26px;border-radius:50%;background:#00D9FF;box-shadow:0 0 24px #00D9FF;opacity:0;transform:translate(-50%,-50%)}
+.blip.on{animation:pop .5s ease forwards}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.4)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.center{position:absolute;top:50%;left:50%;width:14px;height:14px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 20px #fff}
+.sensors{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px}
+.cell{background:#0c1418;border:1.5px solid #12303a;border-radius:22px;padding:34px 30px;display:flex;align-items:center;gap:22px;transition:.3s}
+.cell.act{border-color:#00D9FF;box-shadow:0 0 34px #00D9FF44;background:#0e2028}
+.dot{width:18px;height:18px;border-radius:50%;background:#2a4048;transition:.3s}
+.cell.act .dot{background:#00D9FF;box-shadow:0 0 16px #00D9FF}
+.lbl{font-family:Orb;font-weight:700;font-size:34px;letter-spacing:1px}
+.sub{font-family:DM;font-size:24px;color:#5a7078;margin-left:auto}
+.cell.act .sub{color:#00D9FF}
+.alert{position:absolute;bottom:150px;left:70px;right:70px;background:#1a0a0a;border:2px solid #ff3b3b;border-radius:22px;
+ padding:34px;display:flex;align-items:center;gap:24px;opacity:0;transform:translateY(30px)}
+.alert.on{animation:up .5s ease forwards}
+@keyframes up{to{opacity:1;transform:translateY(0)}}
+.alert .ico{font-family:Orb;font-weight:800;font-size:40px;color:#ff3b3b}
+.alert .txt{font-family:Orb;font-weight:700;font-size:38px;color:#fff}
+</style></head><body>
+<div class="wrap">
+ <div class="top"><div class="brand">SPY<b>·</b>SCAN</div><div class="status" id="st">SCANNING…</div></div>
+ <div class="radar" id="radar">
+  <div class="ring" style="width:240px;height:240px"></div>
+  <div class="ring" style="width:480px;height:480px"></div>
+  <div class="ring" style="width:700px;height:700px"></div>
+  <div class="sweep"></div><div class="center"></div>
+  <div class="blip" id="b1" style="top:32%;left:66%"></div>
+ </div>
+ <div class="sensors">
+  <div class="cell" id="c0"><span class="dot"></span><span class="lbl">WI-FI</span><span class="sub">scan</span></div>
+  <div class="cell" id="c1"><span class="dot"></span><span class="lbl">BLUETOOTH</span><span class="sub">scan</span></div>
+  <div class="cell" id="c2"><span class="dot"></span><span class="lbl">MAGNETIC</span><span class="sub">scan</span></div>
+  <div class="cell" id="c3"><span class="dot"></span><span class="lbl">INFRARED</span><span class="sub">scan</span></div>
+ </div>
+ <div class="alert" id="al"><span class="ico">!</span><span class="txt">1 hidden device found</span></div>
+</div>
+<script>
+const seq=[[300,()=>act(0)],[900,()=>act(1)],[1500,()=>act(2)],[2100,()=>act(3)],
+ [2600,()=>{document.getElementById('b1').classList.add('on')}],
+ [3000,()=>{document.getElementById('st').textContent='THREAT DETECTED';document.getElementById('st').style.color='#ff3b3b'}],
+ [3200,()=>{document.getElementById('al').classList.add('on')}]];
+function act(i){const c=document.getElementById('c'+i);c.classList.add('act');c.querySelector('.sub').textContent='clear'}
+seq.forEach(([t,f])=>setTimeout(f,t));
+window.__ready=true;
+</script></body></html>
