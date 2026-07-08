@@ -1,0 +1,66 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./three.js","three/addons/":"./addons/"}}</script>
+<style>*{margin:0}body{background:#000;width:1080px;height:1920px;overflow:hidden}</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(1080, 1920); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x141210);
+scene.fog = new THREE.Fog(0x141210, 30, 120);
+const cam = new THREE.PerspectiveCamera(60, 1080/1920, 0.1, 300);
+
+// petal sprite texture via canvas
+function petalTexture(c1, c2) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const x = cv.getContext('2d');
+  const g = x.createRadialGradient(64, 44, 6, 64, 64, 62);
+  g.addColorStop(0, '#ffffff'); g.addColorStop(0.4, c1); g.addColorStop(1, c2);
+  x.fillStyle = g;
+  x.beginPath(); x.moveTo(64, 6);
+  x.bezierCurveTo(112, 30, 100, 96, 64, 118);
+  x.bezierCurveTo(28, 96, 16, 30, 64, 6);
+  x.fill();
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const mats = [
+  ['#ffd9e4', '#f6a8c0'], ['#ffc4d4', '#ee93ad'], ['#fff2f4', '#f7cfd6'],
+  ['#f7e8d0', '#eccf9e'], ['#e9f6c8', '#c9e88a'],
+].map(([a, b]) => new THREE.MeshBasicMaterial({ map: petalTexture(a, b), transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+
+let s = 31;
+const rr = () => (s = (s * 16807 + 19) % 2147483647) / 2147483647;
+const petals = [];
+for (let i = 0; i < 320; i++) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1.35), mats[Math.floor(rr() * mats.length)]);
+  const r = 2 + rr() * 14;
+  const a = rr() * Math.PI * 2;
+  m.position.set(Math.cos(a) * r, Math.sin(a) * r * 1.5, -rr() * 110);
+  const sc = 1.2 + rr() * 3.2; m.scale.setScalar(sc);
+  m.rotation.set(rr() * 6.3, rr() * 6.3, rr() * 6.3);
+  m.userData = { rx: (rr() - 0.5) * 0.03, ry: (rr() - 0.5) * 0.03, rz: (rr() - 0.5) * 0.02, drift: (rr() - 0.5) * 0.012 };
+  scene.add(m); petals.push(m);
+}
+// brand accent lights as glowing dots
+const dots = [];
+for (let i = 0; i < 26; i++) {
+  const c = i % 3 ? 0x9CF806 : 0xe8842a;
+  const d = new THREE.Mesh(new THREE.SphereGeometry(0.14 + rr() * 0.2, 8, 8), new THREE.MeshBasicMaterial({ color: c }));
+  const r = 4 + rr() * 15, a = rr() * Math.PI * 2;
+  d.position.set(Math.cos(a) * r, Math.sin(a) * r * 1.5, -rr() * 110);
+  scene.add(d); dots.push(d);
+}
+window.ready = true;
+window.renderFly = (t) => { // t 0..1
+  const z = 8 - t * 100;                 // fly through tunnel
+  cam.position.set(Math.sin(t * 4.2) * 1.6, Math.cos(t * 3.1) * 1.2, z);
+  cam.lookAt(Math.sin(t * 4.2) * 1.2, Math.cos(t * 3.1) * 0.8, z - 12);
+  cam.rotation.z = Math.sin(t * 3.5) * 0.09;
+  for (const p of petals) {
+    p.rotation.x += p.userData.rx; p.rotation.y += p.userData.ry; p.rotation.z += p.userData.rz;
+    p.position.x += p.userData.drift;
+  }
+  renderer.render(scene, cam);
+};
+</script></body></html>

@@ -1,178 +1,216 @@
 ---
 name: reels-machine
-description: Собрать готовый вертикальный ролик для Instagram Reels (1080x1920) из текстового сценария - стоковые кадры, русская нейроозвучка, караоке-субтитры, моушн-дизайн, музыка, SFX, обложка первым кадром. Использовать когда просят сделать/собрать/смонтировать ролик, рилс, видео для соцсетей по сценарию из контент-плана V.CODE или любому другому.
+description: Монтажёр вертикальных роликов под ключ. Из текстового сценария собирает готовый Reels/Shorts/TikTok 1080x1920 уровня топового моушн-дизайнера — стоковые кадры, русская нейроозвучка, караоке-субтитры, 3D-графика, инфографика, шейдерные переходы, музыка. Контент-завод: под каждый ролик своя ниша, свои приёмы, без повторов. Использовать когда просят сделать/собрать/смонтировать ролик, рилс, видео для соцсетей, промо, рекламу по сценарию.
 ---
 
-# Reels Machine - конвейер сборки роликов уровня топовых монтажёров
+# Reels Machine v5 — контент-завод роликов под ключ
 
-Собирает ролик 15-50 сек по сценарию: hook-история → стоковые кадры → озвучка → монтаж с эффектами. Проверен на ролике v001 «Пекарня» (V.CODE, 7 итераций с клиентом).
+Из сценария → готовый вертикальный ролик 1080×1920, 15–50 сек, уровня студийного
+монтажёра. Всё бесплатно и локально (стоки, озвучка, 3D, инфографика, переходы).
+Проверено боем: 7+ роликов V.CODE с итерациями клиента (пекарня, цветочный, продакшн).
 
-## Установка окружения (один раз за сессию)
+**Главная идея — ЗАВОД, а не шаблон.** Каждый ролик собирается заново под свою нишу,
+смысл и настроение. Постоянны ТОЛЬКО бренд-константы (лого, цвета, шрифт субтитров,
+финальная карточка). Всё остальное — кадры, эффекты, переходы, 3D, инфографика,
+грейд, музыка — подбирается под сценарий и НЕ повторяется между роликами.
+
+---
+
+## АРХИТЕКТУРА ЗАВОДА (выполнять по порядку на КАЖДЫЙ ролик)
+
+### Шаг 0. Режиссёрский манифест (перед любым рендером)
+Прочитать сценарий и письменно зафиксировать:
+- **Ниша и тон**: цветы = нежность/пастель; авто = мощь/тил-оранж; еда = аппетит/тепло;
+  бьюти = глянец; стройка = брутал; финансы = чистота/данные.
+- **Грейд** под тон (см. `GRADES` в build_reel.py / reference/GRADES.md).
+- **Темп**: смена кадра 2.5–3 с; хук в первые 0.5 с (обложка первым кадром).
+- **3–5 приёмов ролика** из каталога ниже — РАЗНЫЕ, по смыслу конкретных фраз.
+- **Музыка**: новый трек, которого не было в прошлых роликах (ротация — обязательна).
+
+### Шаг 1. Проверка по реестру (запрет повторов)
+Открыть `reference/USED_EFFECTS.md`. Правило: **один приём — не чаще 1 раза в 3 ролика**;
+**финалы и переходы всегда разные**. Если приём был недавно — взять другой из каталога.
+
+### Шаг 2. Сборка (пайплайн ниже).
+
+### Шаг 3. Чек новизны (перед отправкой)
+Спросить себя: «Что зритель видит в этом ролике ВПЕРВЫЕ, чего не было в прошлом?».
+Если ответа нет — вернуться к каталогу и заменить повторяющийся блок.
+
+### Шаг 4. Запись в реестр
+Дописать в `reference/USED_EFFECTS.md`: дата, ниша, использованные приёмы, переходы,
+музыка, грейд. Это память завода — она не даёт скатиться в шаблон.
+
+---
+
+## УСТАНОВКА ОКРУЖЕНИЯ (один раз за сессию)
 
 ```bash
 sudo apt-get install -y -qq ffmpeg
-pip3 install -q edge-tts
-cat /root/.ccr/ca-bundle.crt >> $(python3 -m certifi)   # TLS через агент-прокси
-npm i playwright   # браузер уже в /opt/pw-browsers/chromium
+pip3 install -q edge-tts rembg onnxruntime pillow numpy
+cat /root/.ccr/ca-bundle.crt >> $(python3 -m certifi)          # TLS через агент-прокси
+# node-модули для моушна (ставить в рабочую папку проекта):
+npm i playwright gsap lottie-web three remotion @remotion/cli @remotion/bundler \
+      @remotion/renderer @remotion/transitions @remotion/light-leaks @remotion/media \
+      gl-transitions maplibre-gl @turf/turf react react-dom
+# браузер уже в /opt/pw-browsers/chromium ; НЕ запускать playwright install
+export RM_NODE_MODULES="$PWD/node_modules"                     # для transitions_gl.cjs
 ```
 
-## Шаги конвейера
+Ключи в `secrets.env` (корень репо): `source secrets.env` перед сетевой работой.
+Сеть — ТОЛЬКО через curl с `--cacert /root/.ccr/ca-bundle.crt` (urllib/node fetch идут мимо прокси).
+
+---
+
+## ПАЙПЛАЙН
 
 ### 1. Сценарий → сегменты озвучки
-Разбить текст на 5-6 предложений (сегменты s1..sN). Правила текста: числа прописью,
-без длинных тире, без «не X а Y». Ударения принудительно через U+0301: те́сто, муки́.
+5–6 предложений (s1..sN). Текст: числа прописью, без длинных тире, без «не X а Y».
+Ударения принудительно через U+0301: те́сто, муки́, догово́р.
 
-### 2. Озвучка с тайм-кодами слов (edge-tts, БЕСПЛАТНО)
-Голос: `ru-RU-DmitryNeural` (мужской реалистичный), rate="+8%", `boundary="WordBoundary"`.
-Сохранять mp3 + json со словами `{w, t, d}` - на них строятся караоке-субтитры и
-привязка анимаций к конкретным словам. Ретраи 4 раза (сервис моргает).
+### 2. Озвучка с тайм-кодами слов — edge-tts (БЕСПЛАТНО)
+`ru-RU-DmitryNeural` (мужской реалистичный), rate="+8%", `boundary="WordBoundary"`
+(иначе тайминги слов пустые!). Сохранять `vo/sN.mp3` + `vo/sN.json` со словами
+`{w, t, d}` — на них строятся караоке и привязка анимаций к словам. Ретраи 4–5 раз.
+Женский голос: `ru-RU-SvetlanaNeural`. (Платный премиум-голос/аватар — HeyGen/Higgsfield,
+подключать только по запросу с оплатой; локальный wav2lip даёт слабый рот — НЕ использовать.)
 
-### 3. Стоковые кадры - ПРИОРИТЕТ ИСТОЧНИКОВ
-Ключи в secrets.env (корень репо, source перед работой: `source secrets.env`).
-1. **Pexels API** (PEXELS_API_KEY) - ГЛАВНЫЙ: нативные вертикальные 1080x1920+,
-   `api.pexels.com/videos/search?query=...&orientation=portrait&size=medium` -
-   скрипт pipeline/fetch_pexels.py. curl с --cacert /root/.ccr/ca-bundle.crt.
-2. **Pixabay API** (PIXABAY_API_KEY) - запасной: `pixabay.com/api/videos/?key=...&q=...`
-3. **Mixkit** - без ключа (см. ниже), кадры в основном landscape 720/1080.
-Скейл для любой ориентации: `scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`.
-Звуки точные: **Freesound API** (FREESOUND_API_KEY):
-`freesound.org/apiv2/search/text/?query=...&token=...&fields=id,name,previews` -
-качать previews.preview-hq-mp3 (без OAuth). Пример: живой эмбиент пекарни, хруст корки.
-Уникальные кадры которых нет в стоках: fal.ai (FAL_KEY, ~5-15р/клип) или
-HF ZeroGPU (HF_TOKEN, FLUX/Wan через gradio_client) - подключать по запросу.
+### 3. Стоки — приоритет источников (ключи в secrets.env)
+1. **Pexels API** (`PEXELS_API_KEY`) — ГЛАВНЫЙ. Нативные вертикальные:
+   `api.pexels.com/videos/search?query=...&orientation=portrait&size=medium&per_page=6`,
+   фильтр `height>width & height>=1900`. Скрипт `pipeline/fetch_pexels.py`.
+   Фото-фоны: `api.pexels.com/v1/search?...&orientation=portrait`.
+2. **Pixabay API** (`PIXABAY_API_KEY`) — запасной видеосток.
+3. **Mixkit** — без ключа (video/sfx живы; музыка отдаёт AccessDenied — брать с Freesound).
+Скейл любой ориентации: `scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`.
+Отбор кадров: качать 5–6 кандидатов, делать tile-грид (fps=1) и выбирать глазами лучший —
+не брать первый попавшийся. Вплетать кадры продакшна (камера, монтаж, площадка) под бренд.
 
-### 3б. Mixkit (без ключей, бесплатная лицензия)
-- Категории: `https://mixkit.co/free-stock-video/{категория}/` (curl с UA Mozilla)
-- Слаги видео в HTML, файлы: `https://assets.mixkit.co/videos/{id}/{id}-1080.mp4` (или -720)
-- Curl к pexels/pixabay режется Cloudflare - не тратить время
-- На сцену 2-4 кадра, смена каждые 2.5-3 сек. Вплетать кадры видеопродакшна
-  (камеры, монтаж, телефон снимает) - связка с брендом V.CODE
-- Музыка: `https://assets.mixkit.co/music/{id}/{id}.mp3` (ambient/cinematic из JSON-LD страницы)
-- SFX: `https://assets.mixkit.co/active_storage/sfx/{id}/{id}-preview.mp3`
-  Проверенные: whooshes 1492/1489/1486/1714/1490, затвор 1133, пуш 2354, толпа 368
+**Звуки/музыка — Freesound API** (`FREESOUND_API_KEY`):
+`freesound.org/apiv2/search/text/?query=...&token=...&fields=id,name,duration,previews`
+→ качать `previews.preview-hq-mp3` (без OAuth). Музыка целыми треками:
+фильтр `duration:[45 TO 180]`, качать через эндпоинт sound (`/sounds/{id}/?fields=previews`).
+Держать ротацию — на каждый ролик СВОЙ трек и СВОЙ набор SFX.
 
-### 4. Моушн-дизайн (Playwright → PNG-секвенции с альфой)
-Генераторы в `pipeline/overlays*.js`: HTML/CSS/canvas анимация, покадровый скриншот
-с `omitBackground: true`. Готовые элементы (переиспользовать, менять тексты):
-- лого-заставка со взрывом частиц (overlays3: sting2)
-- белый счётчик с бегущими цифрами + летящие иконки (overlays: counter)
-- штамп «ПРОДАНО» с ударом (overlays4: stamp)
-- переписка клиентов - чат-пузыри (overlays4: msgs)
-- конфетти на финалку (overlays4: confetti)
-- график роста с лаймовой линией и «x3» (overlays3: chart)
-- геопин города с пульс-кольцами (overlays5: pin)
-- часы-перемотка (overlays5: clock)
-- телефон со скролл-стопом ленты (overlays5: scroll)
-- вайп-шторка переходов, световой блик, видоискатель REC (overlays2)
-- плашки «снято на телефон/профкамеру» (overlays: plates)
-Анимации ПРИВЯЗЫВАТЬ к словам озвучки (время слова из json шага 2).
+### 4. Каталог моушн-приёмов — ВЫБИРАТЬ 3–5 РАЗНЫХ под смысл сценария
+Полный список с кодом — `reference/EFFECTS_CATALOG.md`. Кратко по категориям:
 
-### 4б. Продвинутый моушн (ВСЁ ПРОВЕРЕНО БОЕМ, использовать активно)
-Установка: `npm i gsap lottie-web three remotion @remotion/cli @remotion/bundler @remotion/renderer react react-dom`
+**A. Шейдерные переходы (gl-transitions, 125 шт)** — главный «дорогой» вид.
+`pipeline/motion/transitions_gl.cjs` прогоняет два кадра склейки через GLSL-переход →
+PNG-секвенция поверх stage2. Каждый ролик — ДРУГОЙ набор из 125: WaterDrop, ripple,
+doorway, morph, CrossZoom, DreamyZoom, LinearBlur, DefocusBlur, powerKaleido, GridFlip,
+cube, InvertedPageCurl, ButterflyWaveScrawler, FilmBurn… (`require('gl-transitions')`).
 
-**GSAP** - в Playwright-генераторах вместо ручных ease-функций:
-`page.addScriptTag({content: fs.readFileSync('node_modules/gsap/dist/gsap.min.js','utf8')})`,
-твины с paused:true, по кадрам `tw.progress(f/N)`. Изящные back/elastic/stagger.
+**B. 3D через three.js** (`pipeline/three/`, все с альфой, `--enable-unsafe-swiftshader`):
+- `obj_in_scene.html` — 3D-объект ниши ВНУТРИ живого стокового кадра (контактная тень,
+  свет сцены, орбита камеры, параллакс фона). Ставить объект по смыслу: роза, колесо, чашка.
+- `model_turntable.html` / `model_alpha_overlay.html` — вращение модели Sketchfab
+  (соло или оверлеем на видео).
+- `text3d.html` — 3D-типографика (металл, фаски, clearcoat, цветной свет). Кадрировать
+  так, чтобы слово влезало в 9:16 (size ≤ 0.95, камера дальше).
+- `particles_logo.html` — частицы слетаются в логотип/фигуру ниши.
+- `petals3d.html` — пролёт камеры сквозь 3D-туннель частиц (лепестки/деньги/искры под нишу).
+- `parallax.html` + `motion/depth_parallax.py` — 2.5D: оживление ЛЮБОГО фото картой
+  глубины (Depth-Anything ONNX, локально). Камера не должна влетать глубже лица.
+- `map_fly.html` — карта MapLibre, облёт к городу клиента (тайлы OSM качать локально,
+  headless не ходит в сеть; можно и Remotion-версия с `@remotion/media`).
+ГРАБЛЯ моделей: у моделей с центром вдали от нуля сначала `obj.scale.setScalar(sc)`,
+потом `obj.position.copy(center).multiplyScalar(-sc)`. SpecGloss (KHR_materials_pbr…) не
+поддержан — override `MeshStandardMaterial({map, side:DoubleSide})` на traverse.
 
-**Lottie** - готовые дизайнерские анимации (огонь, лайки, стрелки, взрывы):
-JSON качается напрямую: `https://assets{1..10}.lottiefiles.com/packages/lf20_XXXX.json`
-(id брать со страницы анимации на lottiefiles.com, бесплатные паки; аккаунт не нужен).
-Рендер: lottie-web (node_modules/lottie-web/build/player/lottie.min.js) в Playwright,
-`loadAnimation({renderer:'svg', autoplay:false, animationData})`, по кадрам
-`a.goToAndStop(f, true)` + скриншот omitBackground. Проверенный пример: lf20_touohxv0 (кубок).
+**C. Инфографика Remotion** (`pipeline/motion/infographics.tsx` + `counter_gauge.ts`):
+линейный график роста со свечением, пончик-процент, кольцевой гейдж «x3», бар-чарт с
+пружинами, счётчики-строки, одометр, слайдер «до/после». Рендер:
+`remotion render infographics.tsx <comp> out_dir --sequence --image-format=png
+--gl=swiftshader --browser-executable=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell`.
+Разнообразить: в каждом ролике — ДРУГОЙ вид графика под конкретную цифру сценария.
 
-**3D-вставки Sketchfab + three.js** - ОБЯЗАТЕЛЬНО использовать для wow-моментов
-(вращающаяся камера/продукт/предмет ниши поверх кадра):
-1. Поиск CC-моделей: `api.sketchfab.com/v3/search?type=models&q=...&downloadable=true`
-   (Authorization: Token $SKETCHFAB_API_TOKEN), фильтровать license=CC Attribution
-2. `api.sketchfab.com/v3/models/{uid}/download` → gltf.url → zip → unzip
-3. Рендер: pipeline/three_scene/scene.html (importmap: three.module.min.js И
-   three.core.min.js рядом + examples/jsm/loaders/GLTFLoader.js + examples/jsm/utils/)
-4. ГРАБЛИ: ES-модули НЕ работают с file:// (CORS) - поднять `python3 -m http.server 8777`;
-   WebGL в headless - флаг `--enable-unsafe-swiftshader`; свет ставить ярче (ambient 2+)
-5. В титрах ролика/описании указывать автора модели (CC Attribution)
+**D. Кинетическая типографика** (`pipeline/motion/kinetic_type.ts`): слова вбиваются
+пружиной с blur-шлейфом и ударной волной. НЕ ставить на голый чёрный фон (читается
+черновиком) — только поверх кадра/грейда или с фактурным фоном.
 
-**Remotion** - программные композиции уровня After Effects (спринги, стагеры):
-рендер через @remotion/renderer с `browserExecutable:
-'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell'`
-(обычный chromium не может - старый headless удалён), `chromiumOptions:{gl:'swiftshader'}`,
-codec 'prores' + proResProfile '4444' + `pixelFormat:'yuva444p10le'` для АЛЬФЫ →
-.mov оверлей кладётся в stage2 как обычный вход. Демо: pipeline/remotion_demo.ts.
-Лицензия: бесплатно до 3 человек в команде.
+**E. Световые лики** (`@remotion/light-leaks`, WebGL): живой `<LightLeak seed hueShift>`
+на склейках/выходах вместо статичной текстуры. Рендерить с `--gl=angle`.
 
-**HF ZeroGPU генерация** (HF_TOKEN) - бесплатные FLUX-кадры при наличии квоты:
-`gradio_client.Client("black-forest-labs/FLUX.1-schnell", token=$HF_TOKEN)`,
-`predict(prompt=..., width=768, height=1344, num_inference_steps=4, api_name="/infer")`.
-Квота маленькая и дневная - если "exceeded quota" попробовать позже, не долбить.
-SSL: `os.environ['SSL_CERT_FILE']='/root/.ccr/ca-bundle.crt'`.
+**F. Playwright-оверлеи** (`pipeline/overlays*.js`): DOM/canvas анимации с альфой —
+стеклянные DM-карточки, инста-пост с лайв-лайками, пин с маршрутом+печать города,
+камера-UI (таймкод/REC/фокус), лепестковый дождь, счётчики, чат-переписка, штампы.
 
-### 4в. Lottie-поиск БЕЗ КЛЮЧА (проверено) - искать и качать самостоятельно
-POST https://graphql.lottiefiles.com/2022-08 с JSON:
-`{"query":"query { searchPublicAnimations(query: \"fire\", first: 5) { edges { node { name jsonUrl downloads } } } }"}`
-→ jsonUrl качается напрямую curl-ом. Сортировать по downloads. Рендер как в 4б.
+**G. Lottie без ключа**: `POST https://graphql.lottiefiles.com/2022-08`
+`searchPublicAnimations(query,first){edges{node{jsonUrl downloads}}}` → jsonUrl curl-ом →
+рендер lottie-web в Playwright `goToAndStop(frame)` + omitBackground. Сортировать по downloads.
 
-### 4г. Вырезание фона ЛОКАЛЬНО (rembg, без квот и ключей, проверено)
-`pip3 install rembg onnxruntime`; модель с HF (github release режется прокси):
-`curl -L -o ~/.u2net/u2net.onnx https://huggingface.co/tomjackson2023/rembg/resolve/main/u2net.onnx`
-Использование: вырезать объект/человека из кадра → PNG с альфой → оверлей/коллаж/обложка.
-Для видео: покадрово (fps=15 достаточно) или ffmpeg chromakey если фон однотонный.
+**H. rembg-коллаж** (локально): вырезать объект из кадра → PNG альфа → инста-коллаж,
+обложка, композит на бренд-фоне со свечением. Модель `~/.u2net/u2net.onnx` с
+`huggingface.co/tomjackson2023/rembg/resolve/main/u2net.onnx`.
 
-### 4д. Бесплатные ZeroGPU-спейсы (HF_TOKEN, дневная квота, все проверены init-ом)
-- `black-forest-labs/FLUX.1-schnell` - кадры по тексту (768x1344 вертикаль, steps=4)
-- `Lightricks/ltx-video-distilled` - image-to-video/text-to-video Б-РОЛЛ 2-5 сек, быстрый
-- `multimodalart/wan-2-2-first-last-frame` - видео между двумя кадрами (морф-переходы!)
-- `KwaiVGI/LivePortrait` - оживление лица по driving-видео (аватар)
-- Аналог Nano Banana (редактура кадров: фон/объекты): спейсы `Qwen/Qwen-Image-Edit`
-  или `black-forest-labs/FLUX.1-Kontext-Dev` - инструкция текстом + картинка
-- SadTalker сломан (BUILD_ERROR); для липсинка по аудио искать живой спейс
-  EchoMimic / Hallo на hf.co/spaces (меняются, проверять перед использованием)
-Квоту НЕ жечь на тесты - одна попытка, при exceeded ждать следующего дня.
+**I. Ч/б-панч**: на смешном/ударном моменте кадр на ~0.6 с в нуар (`hue=s=0,eq=contrast=1.3`)
+через split+overlay — популярный приём. По смыслу, 1 раз на ролик.
 
-### 4е. AI-персонаж/аватар (бесплатный пайплайн)
-1. Персонаж: FLUX.1-schnell - портрет выдуманного персонажа (или фото с согласия!)
-2. Озвучка: edge-tts (шаг 2)
-3. Оживление: LivePortrait (driving-видео с мимикой) или audio-driven спейс
-4. Вырезать фон rembg → вставить говорящую голову в ролик как оверлей
-ПРАВИЛО: лица и голоса реальных людей клонировать только с письменного согласия.
+**J. Генерации ZeroGPU** (`HF_TOKEN`, `SSL_CERT_FILE=/root/.ccr/ca-bundle.crt`, дневная квота):
+FLUX.1-schnell (кадры), Lightricks/ltx-video-distilled (i2v б-ролл),
+multimodalart/wan-2-2-first-last-frame (морф-переход между кадрами). Квоту НЕ жечь на
+тесты — одна попытка, при «exceeded» ждать следующего дня. Платно без очередей — fal.ai.
 
-### 5. Обложка (cover_template.html)
-Стиль аккаунта: жирный заголовок сверху (белый + оранжевая строка), драматичный
-кадр из клипа, лого внизу. Скриншот 1080x1920 → вшивается ПЕРВЫМ кадром ролика (0.3с).
+Все анимации ПРИВЯЗЫВАТЬ к словам озвучки (время из json шага 2).
+Оверлеи НЕ должны накладываться по времени — разносить и проверять расписание (см. build_reel).
 
-### 6. Сборка - ТРИ ЭТАПА ffmpeg (pipeline/build_video.py)
-НЕ собирать одним мега-графом - плывут тайминги. Этапы:
-1. **stage1**: cover + шоты (zoompan-зумы попеременно in/out, chromashift-глитч на
-   склейках) + concat + водяной знак + прогресс-бар + цветокор/виньетка/зерно
-2. **stage2**: вайпы, световой блик (blend=screen ТОЛЬКО через format=gbrp!),
-   видоискатель, все PNG-секвенции анимаций (setpts=PTS+T/TB, eof_action=pass)
-3. **stage3**: караоке-субтитры (ASS) + аудио-микс
+### 5. Обложка — первым кадром (0.30 с)
+Стиль аккаунта: жирный заголовок сверху (белый + бренд-строка), драматичный кадр,
+бейдж студии. PIL или HTML→скриншот 1080×1920. Всегда РАЗНАЯ композиция.
 
-КРИТИЧНО: всем image-входам (-loop 1) задавать `-framerate 30` и конечный `-t`,
-иначе 25fps-потоки ломают framesync и видео сжимается/зависает на кадре.
+### 6. Сборка — ТРИ ЭТАПА ffmpeg (`pipeline/build_reel.py`)
+НЕ собирать одним мега-графом — плывут тайминги.
+1. **stage1**: обложка + шоты (4 режима движения чередуются: zoom-in/out, pan-l/r;
+   chromashift-глитч на склейках) + concat + вотермарк лого + прогресс-бар + грейд.
+   Шоты могут быть `SEQ:<dir>` (PNG-секвенция как полноэкранный шот — параллакс/3D/карта).
+2. **stage2**: gl-переходы (`make_gl_transitions`) + все PNG-оверлеи
+   (`setpts=PTS+T/TB`, `overlay=eof_action=pass`). Блик/лик — `format=gbrp`+`blend=screen`.
+3. **stage3**: караоке-ASS + аудио-микс.
+КРИТИЧНО: всем `-loop 1` картинкам `-framerate 30` и конечный `-t`.
 
 ### 7. Караоке-субтитры (ASS, вшиваются в stage3)
-- Шрифт: Союз Гротеск Bold (fonts/soyuz.ttf), размер 76, строчные буквы
-- Одна строка, 2-3 слова (лимит 16 символов), появление по одному слову
-- Активное (звучащее) слово - лайм `&H06F89C&` (#9CF806 с лого OKO), прошлые белые
-- Без обводки: мягкая тень (Shadow 4, BackColour &H78..) + слой свечения (\blur14, alpha &HC8&)
-- Строки НЕ пересекаются: конец строки клампится к старту следующей
+Союз Гротеск Bold (`fonts/soyuz.ttf`) 76, строчные, 1 строка 2–3 слова (≤16 симв),
+появление по слову. Активное слово — лайм `&H06F89C&`, прошлые белые. Без обводки:
+мягкая тень (Shadow 4, BackColour &H78..) + слой свечения (\blur14, alpha &HC8&).
+Строки клампятся: конец ≤ старт следующей − 0.05.
 
 ### 8. Звук
-- Голос: amix сегментов по adelay + dynaudnorm
-- Музыка: volume 0.15, sidechaincompress от голоса (threshold 0.03, ratio 5) - дакинг
-- SFX: разные whoosh на каждый переход, затвор/пуш/толпа по смыслу сцен, ~0.45
-- Финал: loudnorm I=-14:TP=-1.5 (стандарт Instagram)
+Голос: amix по adelay + dynaudnorm. Музыка: volume 0.13–0.15 + `sidechaincompress`
+от голоса (threshold 0.03, ratio 5) — дакинг. SFX: РАЗНЫЕ whoosh на переходы + смысловые
+(cha-ching на деньги, поп на лайк, чайм, затвор). Мастер: `loudnorm I=-14:TP=-1.5` (Instagram).
 
 ### 9. Контроль качества
-Извлечь 8-10 кадров по таймлайну (ffmpeg -ss), склеить hstack, посмотреть глазами:
-тайминг футажа, субтитры, анимации на местах, цвет не фиолетовый (= сломан blend).
+Извлечь 12–15 кадров точным сиком (`ffmpeg -i FILE -ss T`), склеить сеткой, смотреть глазами:
+тайминг футажа, субтитры, оверлеи на местах и НЕ внахлёст, цвет не фиолетовый (=сломан blend),
+3D-объекты в кадре (не улетели), переходы читаются.
 
-## Брендинг V.CODE
-Чёрный #0d0d0d, оранжевый #e8842a, лайм-акцент #9CF806. Лого: logo_hd.png (прозрачный).
-Шрифты: Союз Гротеск (субтитры), Montserrat Black (цифры/заголовки), Oswald (обложки).
-Финальная карточка: лого + «НАПИШИТЕ СЪЕМКА» + конфетти.
+---
 
-## Ограничения
-- Higgsfield-генерация кадров: от 2 кредитов/изображение - проверять balance
-- edge-tts иногда отдаёт пустой результат - обязательны ретраи
-- Соблюдать правила текстов из vcode/VCODE_CONTEXT.txt (Раздел 11)
+## Брендинг (пример V.CODE — менять под клиента)
+Чёрный `#0d0d0d`, оранжевый `#e8842a`, лайм-акцент `#9CF806`. Лого `logo_hd.png`.
+Шрифты: Союз Гротеск (субтитры), Montserrat Black (цифры/заголовки). Финалка: лого +
+CTA-плашка. Под другого клиента — свои цвета/лого/шрифт, механика та же.
+
+## Файлы скилла
+- `pipeline/build_reel.py` — оркестратор 3 этапов (эталон-скелет).
+- `pipeline/fetch_pexels.py` — отбор вертикальных стоков.
+- `pipeline/motion/` — transitions_gl.cjs (gl-переходы), infographics.tsx, counter_gauge.ts,
+  kinetic_type.ts, depth_parallax.py (2.5D).
+- `pipeline/three/` — 3D-сцены (объект в кадре, турнтейбл, 3D-текст, частицы, туннель,
+  параллакс, карта) + three.js рантайм + шрифт.
+- `pipeline/overlays*.js` — Playwright-генераторы DOM/canvas оверлеев.
+- `fonts/`, `logo_hd.png` — бренд-ассеты.
+- `reference/EFFECTS_CATALOG.md` — полный каталог приёмов с кодом.
+- `reference/GRADES.md` — грейды под ниши.
+- `reference/USED_EFFECTS.md` — реестр запрета повторов (память завода).
+
+## Ограничения / грабли (проверено болью)
+- edge-tts моргает — обязательны ретраи; WordBoundary иначе пустой.
+- Mixkit music = AccessDenied → музыка с Freesound.
+- Sketchfab search иногда `{}` → ретраить/менять query.
+- ZeroGPU квота дневная — не долбить.
+- headless не ходит в сеть за тайлами/стилями карт — качать локально, поднимать http.server.
+- ES-модули three требуют `python3 -m http.server` (file:// режет CORS).
+- Remotion: `browser-executable` = headless_shell (обычный chromium не годится);
+  light-leaks/effects — `--gl=angle`; остальное — `--gl=swiftshader`.

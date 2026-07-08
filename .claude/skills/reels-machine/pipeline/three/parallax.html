@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./three.js","three/addons/":"./addons/"}}</script>
+<style>*{margin:0}body{background:#000;width:1080px;height:1920px;overflow:hidden}</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(1080, 1920); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(46, 1080/1920, 0.1, 500);
+const loader = new THREE.TextureLoader();
+window.ready = false;
+const src = loader.load('assets/par_src.png', check);
+const dep = loader.load('assets/par_depth.png', check);
+src.colorSpace = THREE.SRGBColorSpace;
+let loaded = 0;
+function check(){ if(++loaded < 2) return; build(); }
+function build(){
+  // plane matches photo aspect (1066x1920) with overscan
+  const AW = 1066/1920;
+  const H = 120, W = H * AW;
+  const geo = new THREE.PlaneGeometry(W, H, 320, 320);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { map:{value:src}, dmap:{value:dep}, amp:{value:16.0} },
+    vertexShader: `
+      uniform sampler2D dmap; uniform float amp; varying vec2 vUv;
+      void main(){ vUv = uv;
+        float d = texture2D(dmap, uv).r;
+        vec3 p = position; p.z += d * amp;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p,1.0); }`,
+    fragmentShader: `
+      uniform sampler2D map; varying vec2 vUv;
+      void main(){ gl_FragColor = texture2D(map, vUv); }`
+  });
+  scene.add(new THREE.Mesh(geo, mat));
+  window.ready = true;
+}
+window.renderPar = (t) => { // t 0..1
+  const e = 1 - Math.pow(1 - t, 2.2);           // ease-out dolly-in
+  cam.position.z = 96 - 34 * e;                  // fly in
+  cam.position.x = Math.sin(t * Math.PI * 1.2) * 4.2;
+  cam.position.y = Math.cos(t * Math.PI * 0.9) * 2.6 - 1.0;
+  cam.lookAt(0, 0, 8);
+  renderer.render(scene, cam);
+};
+</script></body></html>
