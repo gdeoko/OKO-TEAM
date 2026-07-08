@@ -395,6 +395,22 @@ nav#tabs .nav-logo{display:none}
 .badge.on .i{fill:currentColor}
 .badge span{font-size:10px;font-weight:600;text-align:center;line-height:1.2;color:var(--dim)}
 .badge.on span{color:var(--fg)}
+/* Оплата */
+.pay-periods{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.pay-per{position:relative;padding:12px 4px 10px;border:1px solid var(--border);border-radius:var(--r-md);font-size:12.5px;font-weight:700;transition:transform .12s,border-color .2s,background .2s}
+.pay-per:active{transform:scale(.97)}
+.pay-per.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.pay-disc{position:absolute;top:-8px;right:-4px;background:var(--lime);color:#000;font-size:9.5px;font-weight:800;font-style:normal;padding:2px 6px;border-radius:99px}
+.pay-total{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px}
+.pay-sum{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.pay-old{color:var(--dim);text-decoration:line-through;font-size:14px}
+.pay-methods{display:flex;gap:8px}
+.pay-m{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 4px;border:1px solid var(--border);border-radius:var(--r-md);font-size:11.5px;font-weight:600;transition:transform .12s,border-color .2s,background .2s}
+.pay-m:active{transform:scale(.97)}
+.pay-m.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.pay-m .i{width:22px;height:22px}
+.pay-ok{width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.pay-ok .i{width:34px;height:34px;fill:currentColor}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -574,7 +590,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.14</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.15</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -746,7 +762,7 @@ main>.screen{position:relative;z-index:1}
           <div class="ava lime" id="profAva">Д</div>
           <div>
             <h2 class="name-status" id="profName">Даниэль</h2>
-            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px">PRO до 15.08</span></div>
+            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">PRO до 15.08</span></div>
           </div>
         </div>
         <div class="prof-stats" id="profStats"></div>
@@ -772,20 +788,20 @@ main>.screen{position:relative;z-index:1}
             <h3>START</h3>
             <div class="price"><b>$12</b><span> /мес при оплате за год · ~1190₽</span></div>
             <ul><li>Все чаты и сообщества</li><li>10 проверок видео/мес</li><li>Обучение нейронкам</li><li>Активация партнёрки</li></ul>
-            <button class="btn ghost" onclick="alert('Мок: Lava.top / крипта / карта РФ > вебхук > активация')">Выбрать</button>
+            <button class="btn ghost" onclick="openPay('START')">Выбрать</button>
           </div>
           <div class="plan hot">
             <span class="chip flag">Флагман</span>
             <h3>PRO</h3>
             <div class="price"><b>$39</b><span> /мес при оплате за год · ~3890₽</span></div>
             <ul><li>Система роста по анкете</li><li>Автопостинг в 3 соцсети</li><li>30 проверок видео/мес</li><li>CRM-лайт</li></ul>
-            <button class="btn" onclick="alert('Мок: оплата PRO')">Выбрать</button>
+            <button class="btn" onclick="openPay('PRO')">Выбрать</button>
           </div>
           <div class="plan">
             <h3>BUSINESS</h3>
             <div class="price"><b>$158</b><span> /мес при оплате за год · ~15900₽</span></div>
             <ul><li>Полная Система + сайт по клику</li><li>Контент-завод: 30 роликов/мес</li><li>Автопостинг во все сети</li><li>Приоритетная поддержка</li></ul>
-            <button class="btn ghost" onclick="alert('Мок: оплата BUSINESS')">Выбрать</button>
+            <button class="btn ghost" onclick="openPay('BUSINESS')">Выбрать</button>
           </div>
         </div>
       </div>
@@ -859,6 +875,7 @@ main>.screen{position:relative;z-index:1}
   <textarea id="npBody" rows="4" placeholder="Что нового? Поделись с подписчиками…" style="width:100%;resize:none"></textarea>
   <button class="btn" onclick="createPost()">Опубликовать</button>
 </div>
+<div class="sheet" id="sheet-pay"><div id="payView"></div></div>
 <div class="sheet" id="sheet-comments">
   <h3>Комментарии</h3>
   <div id="cmtList" class="cmt-list"></div>
@@ -1698,6 +1715,60 @@ function saveProfile(){
   PROFILE.status = editStatus;
   renderMyProfile(); closeSheet();
 }
+/* ===== Оплата тарифов ===== */
+const PLANS = {
+  START:    {name:'START',    mo:1490},
+  PRO:      {name:'PRO',      mo:4890},
+  BUSINESS: {name:'BUSINESS', mo:19900},
+};
+const PAY_PERIODS = [[1,'1 мес',0],[3,'3 мес',10],[6,'6 мес',15],[12,'Год',20]];
+const PAY_METHODS = [['card','Карта РФ','card'],['crypto','Крипта','money'],['lava','Lava.top','bolt']];
+let payState = {plan:'PRO', period:12, method:'card'};
+function fmtRub(n){ return n.toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽'; }
+function payPrice(){
+  const p = PLANS[payState.plan]; const [mo,,disc] = PAY_PERIODS.find(x=>x[0]===payState.period);
+  const full = p.mo * mo; const total = Math.round(full * (1 - disc/100));
+  return {full, total, disc, mo};
+}
+function openPay(plan){ payState = {plan, period:12, method:'card'}; renderPay(); openSheet('pay'); }
+function renderPay(){
+  const p = PLANS[payState.plan]; const {full,total,disc} = payPrice();
+  document.getElementById('payView').innerHTML = `
+    <h3>Оформление · ${p.name}</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Активация мгновенно после оплаты</p>
+    <div class="pay-periods">${PAY_PERIODS.map(([m,l,d])=>`
+      <button class="pay-per ${payState.period===m?'on':''}" onclick="payState.period=${m};renderPay()">
+        <span>${l}</span>${d?`<i class="pay-disc">−${d}%</i>`:''}</button>`).join('')}</div>
+    <div class="pay-total">
+      <div><div class="dim" style="font-size:12px">К оплате</div><div class="pay-sum">${fmtRub(total)}</div></div>
+      ${disc?`<div class="pay-old">${fmtRub(full)}</div>`:''}
+    </div>
+    <p style="font-weight:600;font-size:13px;margin:14px 0 8px">Способ оплаты</p>
+    <div class="pay-methods">${PAY_METHODS.map(([k,l,ic])=>`
+      <button class="pay-m ${payState.method===k?'on':''}" onclick="payState.method='${k}';renderPay()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+    <div style="height:16px"></div>
+    <button class="btn" onclick="doPay()"><svg class="i"><use href="#i-lock"/></svg> Оплатить ${fmtRub(total)}</button>
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>`;
+}
+function doPay(){
+  const p = PLANS[payState.plan];
+  document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:20px 0">
+    <div class="spin"></div><p style="font-weight:700;margin-top:14px">Проводим оплату…</p>
+    <p class="dim" style="font-size:12px;margin-top:5px">${{card:'Карта РФ',crypto:'Крипта',lava:'Lava.top'}[payState.method]} · защищённое соединение</p></div>`;
+  setTimeout(()=>{
+    document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:14px 0">
+      <div class="pay-ok">${I('check')}</div>
+      <p style="font-weight:800;font-size:19px;margin-top:12px">Тариф ${p.name} активирован</p>
+      <p class="dim" style="font-size:13px;margin-top:6px">Лимиты обновлены, партнёрка включена. Спасибо!</p>
+      <div style="height:16px"></div>
+      <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
+    PROFILE.tier = p.name;
+    renderMyProfile();
+    const map = {START:'до 15.09', PRO:'до 15.09', BUSINESS:'до 15.09'};
+    const tierEl = document.getElementById('profTier'); if(tierEl) tierEl.textContent = p.name + ' ' + map[p.name];
+    toast('Тариф ' + p.name + ' активирован');
+  }, 1600);
+}
 
 /* ================= ПРОФИЛЬ СОБЕСЕДНИКА / КАНАЛА ================= */
 function openProfile(){
@@ -1875,7 +1946,7 @@ const PROGRESS = [
   {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime, анонимный вход, доставка мгновенно. Дальше: вход через Telegram, личные чаты, медиа в S3.'},
   {s:'wip',  t:'Каналы, лента, посты', d:'Готово в прототипе: создание поста, лайки, живые комментарии, закладки, репосты, лента «Подписки/Рекомендации» с алгоритмом. Дальше — на живых данных Supabase.'},
   {s:'wip',  t:'Мини-аппы на живых данных', d:'Система роста — рабочий визард на 8 секций с персональным планом на выходе. Дальше — генерация полной HTML-системы через Claude, видео-премодератор на Gemini.'},
-  {s:'todo', t:'Оплата и тарифы', d:'Lava.top + крипта + карты РФ, моментальная активация лимитов.'},
+  {s:'wip',  t:'Оплата и тарифы', d:'В прототипе: выбор тарифа, период со скидками (−10/−15/−20%), способы оплаты (карта РФ/крипта/Lava.top), мгновенная активация статуса. Дальше — реальные платёжки и вебхуки.'},
   {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
   {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
   {s:'todo', t:'Запуск 15.07', d:'Прогон сценариев, лимиты, антиспам, админка, деплой продакшена.'},
