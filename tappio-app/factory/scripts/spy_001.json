@@ -1,0 +1,19 @@
+{
+  "id": "spy_001",
+  "app": "spy",
+  "category": "viral",
+  "subformat": "absurd_storytelling",
+  "brand": {"accent":"#00D9FF","accent2":"#7CF5FF","code":"PRIVACY","logo":"spy.png","name":"Spy Camera Finder"},
+  "voice": "en-US-AndrewNeural",
+  "rate": "+6%",
+  "grade": "teal_orange",
+  "cover": {"kicker":"DECLASSIFIED","title":"THE BUG THAT\nFOOLED THE FBI\nFOR 7 YEARS"},
+  "segments": [
+    {"id":"s1","text":"In nineteen forty five, Soviet schoolchildren gave the American ambassador a carved wooden eagle.","overlay":{"type":"kicker","text":"MOSCOW, 1945"}},
+    {"id":"s2","text":"It hung in his Moscow office for seven years.","overlay":{"type":"stat","big":"7 YEARS","sub":"undetected"}},
+    {"id":"s3","text":"Inside was a listening device with no battery and no wires. Nobody found it.","overlay":{"type":"kicker","text":"NO BATTERY. NO WIRES."}},
+    {"id":"s4","text":"Your rental host does not need Soviet engineering. A thirty dollar camera works just fine.","overlay":{"type":"stat","big":"$30","sub":"off the shelf"}},
+    {"id":"s5","text":"Point your phone around the room. Four sensors find what your eyes miss.","overlay":{"type":"chips","items":["WI-FI","BLUETOOTH","MAGNETIC","INFRARED"]}}
+  ],
+  "cta": {"text":"Check the room before you unpack.","code":"PRIVACY"}
+}

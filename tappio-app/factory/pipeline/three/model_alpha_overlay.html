@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./three.js","three/addons/":"./addons/"}}</script>
+<style>*{margin:0}body{background:transparent;width:900px;height:900px;overflow:hidden}</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './GLTFLoader.js';
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+renderer.setSize(900, 900); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100); cam.position.set(0, 0.3, 3.0);
+scene.add(new THREE.AmbientLight(0xffffff, 1.6));
+const key = new THREE.DirectionalLight(0xffe8d8, 2.4); key.position.set(2, 3, 2); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9CF806, 1.6); rim.position.set(-3, 1, -2); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffb0c8, 1.0); fill.position.set(0, -2, 3); scene.add(fill);
+const tex = new THREE.TextureLoader().load('assets/models/rose/textures/petal_diffuse.png');
+tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false;
+const loader = new GLTFLoader();
+window.ready = false; console.log('script start');
+loader.load('assets/models/cam/scene.gltf', (g) => {
+  const obj = g.scene;
+  let meshes = 0;
+
+  const box = new THREE.Box3().setFromObject(obj);
+  const size = box.getSize(new THREE.Vector3()).length();
+  const center = box.getCenter(new THREE.Vector3());
+  const sc = 2.9 / size;
+  obj.scale.setScalar(sc);
+  obj.position.copy(center).multiplyScalar(-sc);
+  const pivot = new THREE.Group(); pivot.add(obj); scene.add(pivot);
+  const shCv = document.createElement('canvas'); shCv.width = shCv.height = 256;
+  const sx = shCv.getContext('2d');
+  const sg = sx.createRadialGradient(128,128,10,128,128,120);
+  sg.addColorStop(0,'rgba(0,0,0,0.5)'); sg.addColorStop(1,'rgba(0,0,0,0)');
+  sx.fillStyle = sg; sx.fillRect(0,0,256,256);
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.5),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shCv), transparent: true, depthWrite: false }));
+  sh.rotation.x = -Math.PI/2; sh.position.y = -1.35; scene.add(sh);
+  window.pivot = pivot; window.ready = true;
+}, undefined, (e) => console.log('gltf ERROR', e.message || e));
+window.renderAt = (angle, tilt) => {
+  window.pivot.rotation.y = angle;
+  window.pivot.rotation.x = tilt !== undefined ? tilt : 0.35 + 0.1 * Math.sin(angle * 0.7);
+  renderer.render(scene, cam);
+};
+</script></body></html>
