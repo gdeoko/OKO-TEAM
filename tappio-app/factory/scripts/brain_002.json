@@ -1,0 +1,11 @@
+{"id":"brain_002","app":"brain","category":"viral","voice":"en-US-MichelleNeural","rate":"+4%","grade":"purple_dream",
+ "brand":{"accent":"#9B5DE5","accent2":"#C9A6F5","code":"FOCUS","logo":"brain.png","name":"Brainova"},
+ "cover":{"style":"kinetic","kicker":"QUICK TEST","top":"WHY DID YOU","big":"WALK IN\nHERE"},
+ "segments":[
+  {"id":"s1","text":"Quick test. You walk into a room and forget why you came in.","visual":"stock","q":["person standing doorway confused","walking into room thinking","person pausing hallway"],"overlay":{"type":"kinetic","top":"YOU FORGOT","big":"WHY"}},
+  {"id":"s2","text":"It happens to almost everyone, and it has a name. The doorway effect.","visual":"stock","q":["doorway threshold home","opening door room","walking through doorway"],"overlay":{"type":"stat","big":"DOORWAY","sub":"effect"}},
+  {"id":"s3","text":"Your brain files the old room away the second you cross the threshold.","visual":"stock","q":["thinking person home","memory concept abstract","person remembering"],"overlay":{"type":"kicker","text":"YOUR BRAIN RESETS"}},
+  {"id":"s4","text":"It is not aging. It is a working memory that never gets trained.","visual":"DEMO:brain_score","overlay":{"type":"kinetic","top":"NOT AGING","big":"UNTRAINED"}},
+  {"id":"s5","text":"Ten minutes a day and the walk in blanks start to fade.","visual":"DEMO:brain_score","overlay":{"type":"kicker","text":"TRAIN IT DAILY"}}
+ ],
+ "cta":{"text":"Train the memory that keeps slipping.","code":"FOCUS"}}

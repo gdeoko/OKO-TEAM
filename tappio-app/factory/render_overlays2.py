@@ -7,7 +7,11 @@ def imgb(p): return "data:image/png;base64,"+base64.b64encode(open(p,"rb").read(
 CSS=f"""@font-face{{font-family:Orb;src:url(data:font/ttf;base64,{ORB})}}@font-face{{font-family:Syn;src:url(data:font/ttf;base64,{SYN})}}@font-face{{font-family:DM;src:url(data:font/ttf;base64,{DM})}}
 *{{margin:0;padding:0;box-sizing:border-box}}html,body{{width:1080px;height:1920px;background:transparent;overflow:hidden}}.stage{{position:absolute;inset:0}}"""
 def kicker(t,a): return f"""<div class="stage" style="display:flex;align-items:flex-start;justify-content:center;padding-top:260px"><div style="background:rgba(5,7,10,.72);backdrop-filter:blur(8px);border:1px solid {a}55;border-left:6px solid {a};padding:26px 42px;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5)"><div style="font-family:DM;color:{a};font-size:27px;letter-spacing:6px;text-transform:uppercase">{t}</div></div></div>"""
-def stat(big,sub,a): return f"""<div class="stage" style="display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-family:Orb;font-weight:800;font-size:200px;line-height:.9;color:#fff;text-shadow:0 0 40px {a}cc,0 8px 40px rgba(0,0,0,.6)">{big}</div><div style="font-family:Syn;font-size:44px;letter-spacing:3px;color:{a};margin-top:14px;text-transform:uppercase">{sub}</div></div>"""
+def stat(big,sub,a):
+    fs=200
+    if len(big)>4: fs=int(200*4.2/len(big))
+    fs=max(96,min(200,fs))
+    return f"""<div class="stage" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 60px"><div style="font-family:Orb;font-weight:800;font-size:{fs}px;line-height:.92;color:#fff;text-align:center;max-width:960px;text-shadow:0 0 40px {a}cc,0 8px 40px rgba(0,0,0,.6)">{big}</div><div style="font-family:Syn;font-size:44px;letter-spacing:3px;color:{a};margin-top:18px;text-transform:uppercase;text-align:center">{sub}</div></div>"""
 def chips(items,a):
     cells="".join(f"""<div style="font-family:DM;font-size:38px;letter-spacing:3px;color:#fff;background:rgba(5,7,10,.72);border:1.5px solid {a};border-radius:999px;padding:20px 34px;box-shadow:0 0 30px {a}44">{it}</div>""" for it in items)
     return f"""<div class="stage" style="display:flex;flex-wrap:wrap;gap:22px;align-content:center;justify-content:center;padding:0 90px">{cells}</div>"""

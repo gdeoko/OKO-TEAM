@@ -1,0 +1,158 @@
+{
+ "batch": 1,
+ "reels": [
+  {
+   "id": "brain_001",
+   "app": "brain",
+   "category": "viral",
+   "cover": "ERASING YOUR MEMORY",
+   "hook": "Brain scans this year found something strange about short videos.",
+   "code": "FOCUS",
+   "grade": "purple_dream",
+   "voice": "en-US-MichelleNeural",
+   "demos": [
+    "brain_score",
+    "brain_score"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "brain_002",
+   "app": "brain",
+   "category": "viral",
+   "cover": "WALK IN HERE",
+   "hook": "Quick test. You walk into a room and forget why you came in.",
+   "code": "FOCUS",
+   "grade": "purple_dream",
+   "voice": "en-US-MichelleNeural",
+   "demos": [
+    "brain_score",
+    "brain_score"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "brain_003",
+   "app": "brain",
+   "category": "value",
+   "cover": "ROTTING YOUR MEMORY",
+   "hook": "Five everyday habits are quietly draining your memory.",
+   "code": "FOCUS",
+   "grade": "purple_dream",
+   "voice": "en-US-MichelleNeural",
+   "demos": [
+    "brain_score"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "brain_004",
+   "app": "brain",
+   "category": "sell",
+   "cover": "IN 30 DAYS",
+   "hook": "I tested my brain on day one and the number stung a little.",
+   "code": "FOCUS",
+   "grade": "purple_dream",
+   "voice": "en-US-MichelleNeural",
+   "demos": [
+    "brain_score",
+    "brain_score"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "spy_001",
+   "app": "spy",
+   "category": "viral",
+   "cover": "THE BUG THAT FOOLED THE FBI FOR 7 YEARS",
+   "hook": "In nineteen forty five, Soviet schoolchildren gave the American ambassador a carved wooden eagle.",
+   "code": "PRIVACY",
+   "grade": "teal_orange",
+   "voice": "en-US-AndrewNeural",
+   "demos": [],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "spy_002",
+   "app": "spy",
+   "category": "viral",
+   "cover": "EVERYONE MISSES",
+   "hook": "Here is a five second test you can do in any bathroom.",
+   "code": "PRIVACY",
+   "grade": "cold_cyan",
+   "voice": "en-US-AndrewNeural",
+   "demos": [
+    "spy_scan"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "spy_003",
+   "app": "spy",
+   "category": "value",
+   "cover": "A CAMERA",
+   "hook": "Save this before your next trip. Seven places cameras love to hide.",
+   "code": "PRIVACY",
+   "grade": "teal_orange",
+   "voice": "en-US-AndrewNeural",
+   "demos": [
+    "spy_scan"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "spy_004",
+   "app": "spy",
+   "category": "sell",
+   "cover": "FINDS THEM",
+   "hook": "Most detector apps check one thing. Wi-Fi. That is it.",
+   "code": "PRIVACY",
+   "grade": "cold_cyan",
+   "voice": "en-US-AndrewNeural",
+   "demos": [
+    "spy_scan",
+    "spy_scan"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "tape_001",
+   "app": "tape",
+   "category": "viral",
+   "cover": "$900 EXTRA",
+   "hook": "This couch cost nine hundred dollars more than it should have.",
+   "code": "MEASURE",
+   "grade": "warm_gold",
+   "voice": "en-US-ChristopherNeural",
+   "demos": [
+    "tape_ar"
+   ],
+   "status": "built",
+   "published": false
+  },
+  {
+   "id": "tape_002",
+   "app": "tape",
+   "category": "sell",
+   "cover": "IN 60 SECONDS",
+   "hook": "Grabbing a tape measure, a pen, and still writing it down wrong.",
+   "code": "MEASURE",
+   "grade": "warm_gold",
+   "voice": "en-US-ChristopherNeural",
+   "demos": [
+    "tape_ar",
+    "tape_ar"
+   ],
+   "status": "built",
+   "published": false
+  }
+ ]
+}

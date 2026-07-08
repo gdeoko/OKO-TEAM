@@ -1,0 +1,11 @@
+{"id":"spy_003","app":"spy","category":"value","voice":"en-US-AndrewNeural","rate":"+6%","grade":"teal_orange",
+ "brand":{"accent":"#00D9FF","accent2":"#7CF5FF","code":"PRIVACY","logo":"spy.png","name":"Spy Camera Finder"},
+ "cover":{"style":"stack","kicker":"SAVE THIS LIST","top":"7 SPOTS THAT HIDE","big":"A CAMERA"},
+ "segments":[
+  {"id":"s1","text":"Save this before your next trip. Seven places cameras love to hide.","visual":"stock","q":["hotel room checklist travel","packing suitcase hotel","hotel room overview"],"overlay":{"type":"kinetic","top":"HIDDEN IN","big":"7 SPOTS"}},
+  {"id":"s2","text":"Smoke detectors on the ceiling. They point straight down at the bed.","visual":"stock","q":["smoke detector ceiling closeup","ceiling smoke alarm","smoke detector room"],"overlay":{"type":"stat","big":"01","sub":"smoke detector"}},
+  {"id":"s3","text":"Alarm clocks, chargers, and air vents facing the bed.","visual":"stock","q":["alarm clock nightstand hotel","usb charger outlet","air vent wall"],"overlay":{"type":"stat","big":"02-04","sub":"clock · charger · vent"}},
+  {"id":"s5","text":"Picture frames, plants, and the tissue box you never think about.","visual":"stock","q":["picture frame wall decor","house plant shelf room","tissue box table"],"overlay":{"type":"stat","big":"05-07","sub":"frame · plant · box"}},
+  {"id":"s6","text":"Checking all seven by hand takes forever. One scan checks the whole room.","visual":"DEMO:spy_scan","overlay":{"type":"kicker","text":"ONE SCAN · WHOLE ROOM"}}
+ ],
+ "cta":{"text":"Scan the room, not just seven spots.","code":"PRIVACY"}}

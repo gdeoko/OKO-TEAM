@@ -1,0 +1,11 @@
+{"id":"tape_001","app":"tape","category":"viral","voice":"en-US-ChristopherNeural","rate":"+5%","grade":"warm_gold",
+ "brand":{"accent":"#F4C430","accent2":"#FFE08A","code":"MEASURE","logo":"tape.png","name":"3D Tape Measure"},
+ "cover":{"style":"stack","kicker":"A TRUE STORY","top":"THIS COUCH COST","big":"$900 EXTRA"},
+ "segments":[
+  {"id":"s1","text":"This couch cost nine hundred dollars more than it should have.","visual":"stock","q":["large sofa living room","couch delivery home","modern sofa room"],"overlay":{"type":"kinetic","top":"IT COST","big":"$900 MORE"}},
+  {"id":"s2","text":"One wrong number on a napkin, and it would not fit through the door.","visual":"stock","q":["measuring tape door frame","doorway narrow home","furniture stuck doorway"],"overlay":{"type":"kicker","text":"ONE WRONG NUMBER"}},
+  {"id":"s3","text":"Return fee, restocking fee, and a second delivery. All for a bad measurement.","visual":"stock","q":["frustrated person moving furniture","delivery truck furniture","person stressed moving"],"overlay":{"type":"stat","big":"3 FEES","sub":"one mistake"}},
+  {"id":"s4","text":"Your phone can measure the whole room and the doorway in seconds.","visual":"DEMO:tape_ar","overlay":{"type":"kinetic","top":"MEASURE","big":"FIRST"}},
+  {"id":"s5","text":"Check the door before you check out the couch.","visual":"stock","q":["person shopping furniture store","couch showroom shopping","furniture store browsing"],"overlay":{"type":"kicker","text":"CHECK THE DOOR FIRST"}}
+ ],
+ "cta":{"text":"Measure before you buy anything big.","code":"MEASURE"}}

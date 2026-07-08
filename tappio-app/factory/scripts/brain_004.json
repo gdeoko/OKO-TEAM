@@ -1,0 +1,11 @@
+{"id":"brain_004","app":"brain","category":"sell","voice":"en-US-MichelleNeural","rate":"+4%","grade":"purple_dream",
+ "brand":{"accent":"#9B5DE5","accent2":"#C9A6F5","code":"FOCUS","logo":"brain.png","name":"Brainova"},
+ "cover":{"style":"kinetic","kicker":"30-DAY RESULT","top":"MY BRAIN SCORE","big":"IN 30 DAYS"},
+ "segments":[
+  {"id":"s1","text":"I tested my brain on day one and the number stung a little.","visual":"stock","q":["person thinking serious","concerned person phone","focused person morning"],"overlay":{"type":"kinetic","top":"DAY ONE","big":"OUCH"}},
+  {"id":"s2","text":"The app measures memory, focus, and speed in one score.","visual":"DEMO:brain_score","overlay":{"type":"chips","items":["MEMORY","FOCUS","SPEED"]}},
+  {"id":"s3","text":"Ten minutes every morning. Just before coffee.","visual":"stock","q":["morning coffee routine calm","person phone coffee morning","cozy morning coffee"],"overlay":{"type":"kinetic","top":"10 MINUTES","big":"DAILY"}},
+  {"id":"s4","text":"Thirty days later the same test came back a different person.","visual":"DEMO:brain_score","overlay":{"type":"stat","big":"+38%","sub":"in 30 days"}},
+  {"id":"s5","text":"Not magic. Just a brain that finally got trained.","visual":"stock","q":["confident person smiling calm","person focused working happy","bright morning person"],"overlay":{"type":"kicker","text":"TRAINED, NOT MAGIC"}}
+ ],
+ "cta":{"text":"Get your Brain Score today.","code":"FOCUS"}}

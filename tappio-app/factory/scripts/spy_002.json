@@ -1,0 +1,11 @@
+{"id":"spy_002","app":"spy","category":"viral","voice":"en-US-AndrewNeural","rate":"+6%","grade":"cold_cyan",
+ "brand":{"accent":"#00D9FF","accent2":"#7CF5FF","code":"PRIVACY","logo":"spy.png","name":"Spy Camera Finder"},
+ "cover":{"style":"stack","kicker":"5-SECOND TEST","top":"THE MIRROR TRICK","big":"EVERYONE MISSES"},
+ "segments":[
+  {"id":"s1","text":"Here is a five second test you can do in any bathroom.","visual":"stock","q":["hotel bathroom mirror modern","clean bathroom mirror","bathroom vanity mirror"],"overlay":{"type":"kicker","text":"TRY THIS TONIGHT"}},
+  {"id":"s2","text":"Put your fingertip on the glass. Look at the gap.","visual":"stock","q":["finger touching mirror closeup","hand on mirror glass","fingertip glass reflection"],"overlay":{"type":"kinetic","top":"FINGER ON","big":"THE GLASS"}},
+  {"id":"s3","text":"A normal mirror leaves a gap between your finger and its reflection.","visual":"stock","q":["mirror reflection finger gap","bathroom mirror hand","reflection closeup glass"],"overlay":{"type":"kicker","text":"GAP = NORMAL MIRROR"}},
+  {"id":"s4","text":"No gap means it could be a two way mirror with something behind it.","visual":"stock","q":["two way mirror dark","mirror suspicious dark room","glass reflection ominous"],"overlay":{"type":"stat","big":"NO GAP","sub":"red flag"}},
+  {"id":"s5","text":"The test is quick, but it does not catch cameras hidden anywhere else.","visual":"DEMO:spy_scan","overlay":{"type":"kicker","text":"MIRROR IS JUST ONE SPOT"}}
+ ],
+ "cta":{"text":"Do the finger test in every rental.","code":"PRIVACY"}}

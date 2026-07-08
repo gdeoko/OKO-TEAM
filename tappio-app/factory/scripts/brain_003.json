@@ -1,0 +1,11 @@
+{"id":"brain_003","app":"brain","category":"value","voice":"en-US-MichelleNeural","rate":"+4%","grade":"purple_dream",
+ "brand":{"accent":"#9B5DE5","accent2":"#C9A6F5","code":"FOCUS","logo":"brain.png","name":"Brainova"},
+ "cover":{"style":"kinetic","kicker":"SAVE THIS","top":"5 HABITS QUIETLY","big":"ROTTING\nYOUR MEMORY"},
+ "segments":[
+  {"id":"s1","text":"Five everyday habits are quietly draining your memory.","visual":"stock","q":["tired person morning bed","person rubbing eyes","stressed person home"],"overlay":{"type":"kinetic","top":"QUIETLY","big":"DRAINING"}},
+  {"id":"s2","text":"Reaching for your phone in the first minute you wake up.","visual":"stock","q":["phone in bed morning","checking phone waking up","phone on pillow morning"],"overlay":{"type":"stat","big":"01","sub":"phone first thing"}},
+  {"id":"s3","text":"Skipping sleep, and doing five things at once all day.","visual":"stock","q":["tired person laptop late night","multitasking stressed office","person busy overwhelmed"],"overlay":{"type":"stat","big":"02-03","sub":"no sleep · multitask"}},
+  {"id":"s5","text":"And never once making your brain work without a screen.","visual":"stock","q":["person staring screen blank","doomscrolling couch","screen light face dark"],"overlay":{"type":"stat","big":"04-05","sub":"sugar · endless scroll"}},
+  {"id":"s6","text":"Ten focused minutes a day undoes more than you think.","visual":"DEMO:brain_score","overlay":{"type":"kicker","text":"10 MINUTES UNDOES IT"}}
+ ],
+ "cta":{"text":"Trade one scroll for ten minutes of focus.","code":"FOCUS"}}
