@@ -69,6 +69,13 @@ res = c.predict(..., api_name="/endpoint")  # результат: dict с лок
 - Перф: DPR<=1.8 (1.5 mobile), частицы вдвое меньше на mobile, рендер только когда секция видима, dispose.
 - CC0 GLB: Khronos glTF-Sample-Assets (Fox — 3 анимации, Duck). Sketchfab API — нужен полный токен.
 
+## КИНО-САЙТЫ «ПОЛЁТ СКВОЗЬ МИР» (scroll-world + forja) — ГЛАВНОЕ для премиум-сайтов
+Установлены два боевых скилла с GitHub (проверены сообществом, адаптированы под нашу MCP-среду):
+- **`scroll-world`** — сайт «камера летит сквозь мир» БЕЗ склеек (техника Emons/Apple, тех же что на референсах Даниэля). Пайплайн: N сцен-стиллов (gpt_image_2) → N dive-клипов (seedance_2_0 i2v) → N-1 коннекторов ИЗ РЕАЛЬНЫХ КАДРОВ соседей (правило бесшовности!) → портативный scrub-движок `references/scrub-engine.js` (blob-seek — решает нашу граблю Range). Читать его SKILL.md + раздел «СРЕДА OKO».
+- **`forja-landing`** — кино-лендинг любого бизнеса: hero-видео Seedance, анти-AI-slop критика по 10 осям, аудит perf/a11y/SEO, готовые Next.js-компоненты.
+- Дизайн-референсы Claude-design: `brain/Claude/refs/claude-design/` (принципы, стили, verification).
+Порядок для «сделай сайт как на видео»: 1) scroll-world для hero-полёта ИЛИ forja для кино-лендинга; 2) генерации фоном (Higgsfield MCP); 3) правило стыков + энкод -g 8; 4) self-QA хэшами (OKO_MAGIC_FIX); 5) деплой+зеркала.
+
 ## RIVE (персонажи; замена Spine)
 `factory/vendor/rive.min.js` — ЕДИНСТВЕННО рабочая сборка canvas-single (WASM внутри). Обычный @rive-app/canvas тянет wasm с CDN и падает. Демо: factory/rive/vehicles.riv. `new rive.Rive({src, canvas, autoplay, stateMachines})`. .riv файлы — rive.app/community или от Даниэля.
 
