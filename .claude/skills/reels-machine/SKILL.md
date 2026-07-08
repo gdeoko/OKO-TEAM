@@ -67,6 +67,45 @@ HF ZeroGPU (HF_TOKEN, FLUX/Wan через gradio_client) - подключать 
 - плашки «снято на телефон/профкамеру» (overlays: plates)
 Анимации ПРИВЯЗЫВАТЬ к словам озвучки (время слова из json шага 2).
 
+### 4б. Продвинутый моушн (ВСЁ ПРОВЕРЕНО БОЕМ, использовать активно)
+Установка: `npm i gsap lottie-web three remotion @remotion/cli @remotion/bundler @remotion/renderer react react-dom`
+
+**GSAP** - в Playwright-генераторах вместо ручных ease-функций:
+`page.addScriptTag({content: fs.readFileSync('node_modules/gsap/dist/gsap.min.js','utf8')})`,
+твины с paused:true, по кадрам `tw.progress(f/N)`. Изящные back/elastic/stagger.
+
+**Lottie** - готовые дизайнерские анимации (огонь, лайки, стрелки, взрывы):
+JSON качается напрямую: `https://assets{1..10}.lottiefiles.com/packages/lf20_XXXX.json`
+(id брать со страницы анимации на lottiefiles.com, бесплатные паки; аккаунт не нужен).
+Рендер: lottie-web (node_modules/lottie-web/build/player/lottie.min.js) в Playwright,
+`loadAnimation({renderer:'svg', autoplay:false, animationData})`, по кадрам
+`a.goToAndStop(f, true)` + скриншот omitBackground. Проверенный пример: lf20_touohxv0 (кубок).
+
+**3D-вставки Sketchfab + three.js** - ОБЯЗАТЕЛЬНО использовать для wow-моментов
+(вращающаяся камера/продукт/предмет ниши поверх кадра):
+1. Поиск CC-моделей: `api.sketchfab.com/v3/search?type=models&q=...&downloadable=true`
+   (Authorization: Token $SKETCHFAB_API_TOKEN), фильтровать license=CC Attribution
+2. `api.sketchfab.com/v3/models/{uid}/download` → gltf.url → zip → unzip
+3. Рендер: pipeline/three_scene/scene.html (importmap: three.module.min.js И
+   three.core.min.js рядом + examples/jsm/loaders/GLTFLoader.js + examples/jsm/utils/)
+4. ГРАБЛИ: ES-модули НЕ работают с file:// (CORS) - поднять `python3 -m http.server 8777`;
+   WebGL в headless - флаг `--enable-unsafe-swiftshader`; свет ставить ярче (ambient 2+)
+5. В титрах ролика/описании указывать автора модели (CC Attribution)
+
+**Remotion** - программные композиции уровня After Effects (спринги, стагеры):
+рендер через @remotion/renderer с `browserExecutable:
+'/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell'`
+(обычный chromium не может - старый headless удалён), `chromiumOptions:{gl:'swiftshader'}`,
+codec 'prores' + proResProfile '4444' + `pixelFormat:'yuva444p10le'` для АЛЬФЫ →
+.mov оверлей кладётся в stage2 как обычный вход. Демо: pipeline/remotion_demo.ts.
+Лицензия: бесплатно до 3 человек в команде.
+
+**HF ZeroGPU генерация** (HF_TOKEN) - бесплатные FLUX-кадры при наличии квоты:
+`gradio_client.Client("black-forest-labs/FLUX.1-schnell", token=$HF_TOKEN)`,
+`predict(prompt=..., width=768, height=1344, num_inference_steps=4, api_name="/infer")`.
+Квота маленькая и дневная - если "exceeded quota" попробовать позже, не долбить.
+SSL: `os.environ['SSL_CERT_FILE']='/root/.ccr/ca-bundle.crt'`.
+
 ### 5. Обложка (cover_template.html)
 Стиль аккаунта: жирный заголовок сверху (белый + оранжевая строка), драматичный
 кадр из клипа, лого внизу. Скриншот 1080x1920 → вшивается ПЕРВЫМ кадром ролика (0.3с).
