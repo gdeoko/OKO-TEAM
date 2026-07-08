@@ -430,6 +430,15 @@ nav#tabs .nav-logo{display:none}
 .ob-dots span.on{background:var(--lime);width:22px;border-radius:99px}
 @media(prefers-reduced-motion:reduce){.ob-stage{animation:none}}
 :root[data-theme="light"] #onboard{background:radial-gradient(circle at 50% 32%,#eef7e0,#fff 72%)}
+/* Партнёрка: график */
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.chart-sum{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.chart-tabs{display:flex;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:3px}
+.chart-tabs button{font-size:12px;font-weight:700;color:var(--dim);padding:5px 11px;border-radius:99px;transition:all .18s}
+.chart-tabs button.on{background:var(--lime);color:#000}
+.chart-wrap{width:100%}
+.p-chart{width:100%;height:132px;display:block;overflow:visible}
+.p-chart .c-lab{fill:var(--dim);font-size:9px;font-weight:600}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -615,7 +624,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.17</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.18</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -762,6 +771,17 @@ main>.screen{position:relative;z-index:1}
           <div class="stat"><div class="v">$412</div><div class="l">к выплате</div></div>
         </div>
         <div class="card" style="margin-top:14px">
+          <div class="chart-head">
+            <div><div class="dim" style="font-size:12px">Доход за период</div><div class="chart-sum" id="chartSum">—</div></div>
+            <div class="chart-tabs" id="chartTabs">
+              <button class="on" onclick="setChartPeriod(this,7)">7д</button>
+              <button onclick="setChartPeriod(this,30)">30д</button>
+              <button onclick="setChartPeriod(this,90)">90д</button>
+            </div>
+          </div>
+          <div class="chart-wrap" id="chartWrap"></div>
+        </div>
+        <div class="card" style="margin-top:12px">
           <p style="font-weight:600;font-size:14px">Твоя реф-ссылка</p>
           <p class="dim" style="font-size:12.5px;margin-top:4px">15% с оплат твоих клиентов (первые 6 мес, далее 5%) + 5% со второго уровня</p>
           <div class="reflink">
@@ -1012,6 +1032,58 @@ function showTab(t){
   document.querySelectorAll('#tabs>button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
   document.getElementById('screenTitle').textContent = TITLES[t];
   if(t==='profile') renderMyProfile();
+  if(t==='partner') renderPartnerChart(chartDays);
+}
+/* ===== Партнёрка: график динамики дохода ===== */
+let chartDays = 7;
+function chartData(days){
+  const arr = [];
+  for(let i=0;i<days;i++){
+    const t = i/Math.max(1,days-1);
+    const trend = 9 + t*24;
+    const wob = Math.sin(i*1.7)*3.2 + Math.sin(i*0.6)*2.4 + Math.sin(i*2.9)*1.4;
+    arr.push(Math.max(2, Math.round(trend + wob + 5)));
+  }
+  return arr;
+}
+function setChartPeriod(btn, days){
+  chartDays = days;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderPartnerChart(days);
+}
+function renderPartnerChart(days){
+  const data = chartData(days);
+  const W=320, H=132, padX=6, padT=10, padB=20;
+  const max=Math.max(...data), min=Math.min(...data);
+  const xs=i=> padX + i*(W-2*padX)/(data.length-1);
+  const ys=v=> padT + (1-(v-min)/((max-min)||1))*(H-padT-padB);
+  const line = data.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)} ${ys(v).toFixed(1)}`).join(' ');
+  const area = `${line} L${xs(data.length-1).toFixed(1)} ${(H-padB).toFixed(1)} L${xs(0).toFixed(1)} ${(H-padB).toFixed(1)} Z`;
+  const lx=xs(data.length-1).toFixed(1), ly=ys(data[data.length-1]).toFixed(1);
+  const total = data.reduce((s,v)=>s+v,0);
+  document.getElementById('chartSum').textContent = '$' + total.toLocaleString('ru-RU').replace(/,/g,' ');
+  // подписи оси X (несколько равномерных)
+  const nLab = days===7?7:(days===30?5:6);
+  let labs='';
+  for(let k=0;k<nLab;k++){
+    const i = Math.round(k*(data.length-1)/(nLab-1));
+    const day = days - i;
+    const txt = i===data.length-1 ? 'сегодня' : ('-'+day+'д');
+    labs += `<text x="${xs(i).toFixed(1)}" y="${H-6}" class="c-lab" text-anchor="${k===0?'start':(k===nLab-1?'end':'middle')}">${txt}</text>`;
+  }
+  document.getElementById('chartWrap').innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="p-chart">
+      <defs><linearGradient id="cgrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--lime)" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="var(--lime)" stop-opacity="0"/>
+      </linearGradient></defs>
+      <path d="${area}" fill="url(#cgrad)"/>
+      <path d="${line}" fill="none" stroke="var(--lime)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lx}" cy="${ly}" r="4" fill="var(--lime)"/>
+      <circle cx="${lx}" cy="${ly}" r="8" fill="var(--lime)" opacity="0.25"/>
+      ${labs}
+    </svg>`;
 }
 
 /* ================= ЧАТЫ ================= */
