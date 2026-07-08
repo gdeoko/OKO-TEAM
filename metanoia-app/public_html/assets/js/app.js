@@ -2002,8 +2002,98 @@ function applyTheme(mode) {
   document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
 }
 
+/* ── Сертификаты ── */
+const CERTIFICATES = [
+  { key: 'b1', title: 'Блок 1 · Знакомство с Богом', short: 'первый блок', award: 'Первооткрыватель', earned: true, date: '8 июля 2026' },
+  { key: 'b2', title: 'Блок 2 · Герои веры', short: 'второй блок', award: 'Хранитель историй', earned: false },
+  { key: 'b3', title: 'Блок 3 · Жизнь Иисуса', short: 'третий блок', award: 'Ученик', earned: false },
+  { key: 'year', title: 'Годовой сертификат школы', short: 'годовую программу', award: 'Выпускник «Метанойя»', earned: false, year: true },
+];
+const CHILD_FOR_CERT = 'Миша';
+
+function openCertificates() {
+  $('#certGrid').innerHTML = CERTIFICATES.map((c) => `
+    <button class="cert-card ${c.earned ? 'cert-card--earned' : 'cert-card--locked'} ${c.year ? 'cert-card--year' : ''}" data-cert="${c.key}">
+      <div class="cert-card__ribbon">${ICON(c.earned ? 'award' : 'lock', 22)}</div>
+      <div class="cert-card__name">${c.title}</div>
+      <div class="cert-card__award">${c.year ? 'Диплом выпускника' : '«' + c.award + '»'}</div>
+      <div class="cert-card__state">${c.earned ? 'Получен · нажми' : 'Завершите блок'}</div>
+    </button>`).join('');
+  $$('#certGrid [data-cert]').forEach((el) => el.addEventListener('click', () => {
+    const c = CERTIFICATES.find((x) => x.key === el.dataset.cert);
+    if (c.earned) openCertView(c); else toast('Сертификат откроется после завершения блока');
+  }));
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'certificates'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+
+function certSVG(cert, name) {
+  const line = cert.year
+    ? `успешно завершил(а) годовую программу<tspan x="240" dy="26">христианской онлайн-школы «Метанойя»</tspan>`
+    : `успешно завершил(а) ${cert.short}<tspan x="240" dy="26">«${cert.title.split('· ')[1] || cert.title}»</tspan>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
+  <rect width="480" height="660" fill="#FAF8F5"/>
+  <rect x="16" y="16" width="448" height="628" fill="none" stroke="#D4A574" stroke-width="3"/>
+  <rect x="26" y="26" width="428" height="608" fill="none" stroke="#C97064" stroke-width="1"/>
+  <g fill="#D4A574"><circle cx="40" cy="40" r="4"/><circle cx="440" cy="40" r="4"/><circle cx="40" cy="620" r="4"/><circle cx="440" cy="620" r="4"/></g>
+  <text x="240" y="92" text-anchor="middle" font-size="15" letter-spacing="6" fill="#1A3A52" font-family="Montserrat, sans-serif">O K O · Т Е А М</text>
+  <g transform="translate(240 150)"><path d="M-34 0 C-20 -22 20 -22 34 0 C20 22 -20 22 -34 0 Z" fill="none" stroke="#1A3A52" stroke-width="2.5"/><circle cx="0" cy="0" r="10" fill="#C97064"/><circle cx="0" cy="0" r="4" fill="#FAF8F5"/></g>
+  <text x="240" y="230" text-anchor="middle" font-size="44" font-weight="700" fill="#1A3A52" letter-spacing="2">СЕРТИФИКАТ</text>
+  <text x="240" y="258" text-anchor="middle" font-size="13" letter-spacing="4" fill="#C97064" font-family="Montserrat, sans-serif">ХРИСТИАНСКАЯ ШКОЛА МЕТАНОЙА</text>
+  <line x1="180" y1="278" x2="300" y2="278" stroke="#D4A574" stroke-width="1.5"/>
+  <text x="240" y="318" text-anchor="middle" font-size="14" fill="#5A6577" font-family="Montserrat, sans-serif">настоящим удостоверяется, что</text>
+  <text x="240" y="372" text-anchor="middle" font-size="40" font-weight="700" fill="#C97064">${name}</text>
+  <text x="240" y="414" text-anchor="middle" font-size="15" fill="#5A6577" font-family="Montserrat, sans-serif">${line}</text>
+  <g transform="translate(240 486)"><circle r="40" fill="none" stroke="#D4A574" stroke-width="2"/><circle r="33" fill="#D4A574" opacity="0.14"/><path d="M0 -20 5 -6 20 -6 8 3 12 18 0 9 -12 18 -8 3 -20 -6 -5 -6 Z" fill="#D4A574"/></g>
+  <text x="240" y="556" text-anchor="middle" font-size="14" font-weight="600" fill="#1A3A52">Награда: «${cert.award}»</text>
+  <text x="130" y="606" text-anchor="middle" font-size="12" fill="#5A6577" font-family="Montserrat, sans-serif">${cert.date || '____________'}</text>
+  <line x1="70" y1="590" x2="190" y2="590" stroke="#5A6577" stroke-width="0.8"/>
+  <text x="130" y="622" text-anchor="middle" font-size="10.5" fill="#8A93A0" font-family="Montserrat, sans-serif">дата</text>
+  <text x="350" y="600" text-anchor="middle" font-size="15" fill="#1A3A52" font-style="italic">Е. Павленко</text>
+  <line x1="290" y1="590" x2="410" y2="590" stroke="#5A6577" stroke-width="0.8"/>
+  <text x="350" y="622" text-anchor="middle" font-size="10.5" fill="#8A93A0" font-family="Montserrat, sans-serif">педагог-основатель</text>
+</svg>`;
+}
+
+let currentCert = null;
+function openCertView(cert) {
+  currentCert = cert;
+  $('#certStage').innerHTML = certSVG(cert, CHILD_FOR_CERT);
+  $('#certView').hidden = false;
+}
+
+function downloadCert() {
+  if (!currentCert) return;
+  const svg = certSVG(currentCert, CHILD_FOR_CERT);
+  const img = new Image();
+  const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  img.onload = () => {
+    const scale = 2, cv = document.createElement('canvas');
+    cv.width = 480 * scale; cv.height = 660 * scale;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#FAF8F5'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    cv.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `Сертификат-Метанойя-${currentCert.key}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('Сертификат сохранён');
+    }, 'image/png');
+  };
+  img.onerror = () => toast('Не удалось сохранить — попробуйте ещё раз');
+  img.src = svgUrl;
+}
+
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
+  $('#openCerts')?.addEventListener('click', openCertificates);
+  $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#certClose')?.addEventListener('click', () => { $('#certView').hidden = true; });
+  $('#certDl')?.addEventListener('click', downloadCert);
   $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#mSubscribe')?.addEventListener('click', openSubscribeScreen);
   $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });

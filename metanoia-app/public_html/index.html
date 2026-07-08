@@ -420,6 +420,15 @@
           <div class="temple__note">Посмотри, как растут друзья по школе за эту неделю</div>
         </div>
       </button>
+
+      <h2 class="section-title">Мои сертификаты</h2>
+      <button class="card temple" id="openCerts" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="award" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">1 из 4 получен · Блок 1 завершён <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Именные сертификаты за блоки и за год — можно скачать</div>
+        </div>
+      </button>
     </section>
 
 
@@ -724,7 +733,26 @@
       <div class="set-about">МЕТАНОЙА · версия 0.5 · сборка OKO TEAM<br>С заботой о духовном росте детей 🕊</div>
     </section>
 
+    <!-- ── СЕРТИФИКАТЫ (этап 5) ── -->
+    <section class="screen" data-screen="certificates">
+      <button class="child-back" id="certsBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="rating-head">
+        <div class="rating-head__title">Мои сертификаты</div>
+        <div class="rating-head__meta">Завершай блоки — открывай именные сертификаты школы</div>
+      </div>
+      <div class="cert-grid" id="certGrid"></div>
+    </section>
+
   </main>
+
+  <!-- Просмотр сертификата -->
+  <div class="cert-view" id="certView" hidden>
+    <div class="cert-view__bar">
+      <button class="cert-view__close" id="certClose"><span data-icon="close" data-size="20"></span></button>
+      <button class="cert-view__dl" id="certDl"><span data-icon="download" data-size="17"></span> Скачать</button>
+    </div>
+    <div class="cert-view__stage" id="certStage"></div>
+  </div>
 
   <!-- ═══════════ НИЖНЯЯ НАВИГАЦИЯ (5 ТАБОВ) ═══════════ -->
   <nav class="nav" id="nav">
