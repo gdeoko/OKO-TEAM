@@ -337,6 +337,15 @@
       <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
 
       <h2 class="section-title">Игры и развитие</h2>
+      <button class="games-tile" id="openBook" style="background:linear-gradient(160deg,#fff,#F3ECFB);border-color:#B9A0D9">
+        <div class="games-tile__icon" style="background:linear-gradient(160deg,#9B7AD4,#C97064)"><span data-icon="book" data-size="24"></span></div>
+        <div class="games-tile__body">
+          <div class="games-tile__name">Книга «Метанойя»</div>
+          <div class="games-tile__desc">Уроки в виде глав книги · читать всей семьёй</div>
+        </div>
+        <span data-icon="play" data-size="18" class="games-tile__play"></span>
+      </button>
+
       <button class="games-tile" id="openVerseGame">
         <div class="games-tile__icon"><span data-icon="gamepad" data-size="24"></span></div>
         <div class="games-tile__body">
@@ -606,6 +615,29 @@
           </g>
         </svg>
       </div>
+    </section>
+
+
+    <!-- ── КНИГА МЕТАНОЙЯ: оглавление ── -->
+    <section class="screen" data-screen="book">
+      <div class="book-cover">
+        <img src="assets/img/logo.png" width="64" height="64" alt="">
+        <div class="book-cover__title">МЕТАНОЙЯ</div>
+        <div class="book-cover__sub">Книга уроков веры для детей</div>
+        <div class="book-cover__author">Екатерина Павленко</div>
+      </div>
+      <p class="feed-card__meta" style="margin:16px 0 10px">Каждый урок становится главой книги. За год — целая авторская книга, которую можно читать всей семьёй.</p>
+      <div id="bookToc"></div>
+    </section>
+
+    <!-- ── КНИГА: читалка главы ── -->
+    <section class="screen" data-screen="reader">
+      <div class="reader-bar">
+        <button class="cv-head__back" id="readerBack"><span data-icon="back" data-size="20"></span></button>
+        <div class="reader-bar__title" id="readerTitle"></div>
+        <button class="reader-bar__size" id="readerSize" aria-label="Размер шрифта">A<sup>+</sup></button>
+      </div>
+      <article class="reader" id="readerBody"></article>
     </section>
 
   </main>

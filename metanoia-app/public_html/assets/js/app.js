@@ -1394,6 +1394,84 @@ function initTemple() {
 
 
 
+
+/* ───────── КНИГА «МЕТАНОЙЯ»: оглавление + читалка (раздел 9.7) ───────── */
+
+const BOOK = {
+  1: {
+    title: 'Глава 1. Кто такой Бог?',
+    body: `<p class="drop">Однажды маленькая девочка спросила маму: «А где живёт Бог?» Мама улыбнулась и ответила: «Он живёт везде, где есть любовь». Так начинается наш первый разговор — самый важный из всех.</p>
+    <p>Бог — это Тот, Кто сотворил всё вокруг: высокое небо и глубокое море, каждую травинку и каждую звезду. Его нельзя увидеть глазами, как нельзя увидеть ветер. Но мы чувствуем ветер, когда он гладит нас по щеке, — и так же мы узнаём Бога по Его добрым делам.</p>
+    <div class="scripture">Бог есть любовь, и пребывающий в любви пребывает в Боге, и Бог в нём.<cite>1 Ин. 4:16</cite></div>
+    <p>Самое главное, что нужно запомнить: Бог любит каждого из нас. Не за то, что мы хорошо себя ведём или получаем пятёрки, — а просто потому, что мы Его дети. Он рядом, когда нам радостно, и особенно близко, когда нам грустно.</p>
+    <p>С Богом можно разговаривать. Это называется молитва — и она не требует особых слов. Можно просто сказать: «Спасибо Тебе за этот день». И Он услышит.</p>`,
+  },
+};
+const BOOK_BLOCKS = [
+  { title: 'Блок 1 · «Знакомство с Богом»', chapters: [
+    { n: 1, title: 'Кто такой Бог?', ready: true },
+    { n: 2, title: 'Создание мира', ready: false },
+    { n: 3, title: 'Адам и Ева', ready: false },
+    { n: 4, title: 'Ноев ковчег', ready: false },
+  ]},
+  { title: 'Блок 2 · «Герои веры»', chapters: [
+    { n: 13, title: 'Авраам — друг Божий', ready: false },
+    { n: 14, title: 'Моисей', ready: false },
+  ]},
+];
+let readerFs = ['s','m','l','xl'];
+let readerFsIdx = 1;
+const FS_PX = { s: 15, m: 16, l: 18, xl: 21 };
+
+function openBook() {
+  $('#bookToc').innerHTML = BOOK_BLOCKS.map((b) => `
+    <div class="toc-block">${b.title}</div>
+    ${b.chapters.map((ch) => `
+      <button class="toc-item ${ch.ready ? '' : 'toc-item--locked'}" data-chapter="${ch.n}">
+        <div class="toc-item__num">${ch.n}</div>
+        <div class="toc-item__t">${ch.title}</div>
+        ${ch.ready ? `<span class="toc-item__read">Читать</span>` : `<span data-icon="lock" data-size="15"></span>`}
+      </button>`).join('')}
+  `).join('');
+  $$('#bookToc [data-chapter]').forEach((el) => el.addEventListener('click', () => {
+    const n = Number(el.dataset.chapter);
+    if (BOOK[n]) openReader(n);
+    else toast('Глава появится после публикации урока');
+  }));
+  hydrateIcons();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'book'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function openReader(n) {
+  const ch = BOOK[n];
+  $('#readerTitle').textContent = ch.title;
+  $('#readerBody').innerHTML = `<h2>${ch.title}</h2>${ch.body}`;
+  applyReaderFs();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'reader'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function applyReaderFs() {
+  const size = FS_PX[readerFs[readerFsIdx]];
+  $('#readerBody').style.setProperty('--reader-fs', size + 'px');
+}
+
+function initBook() {
+  $('#openBook')?.addEventListener('click', openBook);
+  $('#readerBack')?.addEventListener('click', openBook);
+  $('#readerSize')?.addEventListener('click', () => {
+    readerFsIdx = (readerFsIdx + 1) % readerFs.length;
+    localStorage.setItem('mt_reader_fs', readerFsIdx);
+    applyReaderFs();
+    toast('Размер шрифта: ' + readerFs[readerFsIdx].toUpperCase());
+  });
+  const saved = localStorage.getItem('mt_reader_fs');
+  if (saved !== null) readerFsIdx = Number(saved);
+}
+
 /* ───────── РАНГИ РОСТА (раздел 11.2) ───────── */
 
 const RANKS = [
@@ -1656,6 +1734,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initVerseGame();
   initTemple();
   initJourney();
+  initBook();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');

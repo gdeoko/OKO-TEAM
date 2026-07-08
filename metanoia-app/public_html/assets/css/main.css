@@ -1408,3 +1408,61 @@ body.in-chat .header { display: none; }
 .rank__name { font-size: 10.5px; font-weight: 700; line-height: 1.25; }
 .rank__xp { font-size: 9px; color: var(--gray); margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .rank--current .rank__icon { animation: none; } }
+
+
+/* ══════════ КНИГА МЕТАНОЙЯ ══════════ */
+.book-cover {
+  text-align: center; padding: 34px 24px 30px;
+  background: linear-gradient(165deg, #FBF4E7, #F2E4CC);
+  border: 1px solid var(--gold); border-radius: var(--radius-modal);
+  box-shadow: inset 0 0 40px rgba(212,165,116,.15);
+}
+.book-cover img { margin-bottom: 12px; }
+.book-cover__title { font-family: var(--font-head); font-weight: 900; font-size: 30px; letter-spacing: 5px; }
+.book-cover__sub { font-family: var(--font-head); font-style: italic; font-size: 15px; color: var(--gray); margin-top: 8px; }
+.book-cover__author { font-size: 13px; color: var(--terracotta); font-weight: 600; margin-top: 18px; letter-spacing: .04em; }
+
+.toc-block { font-family: var(--font-head); font-size: 15px; font-weight: 700; margin: 18px 0 8px; color: var(--navy); }
+.toc-item {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; text-align: left;
+  background: #fff; border-radius: var(--radius-card);
+  padding: 13px 15px; margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(26,58,82,.05);
+}
+.toc-item--locked { opacity: .5; }
+.toc-item__num { flex: 0 0 30px; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(212,165,116,.2); color: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-weight: 700; font-size: 13px; }
+.toc-item__t { flex: 1; font-weight: 600; font-size: 14px; }
+.toc-item__read { font-size: 11px; color: var(--success); font-weight: 600; }
+
+/* читалка */
+[data-screen="reader"].screen--active {
+  display: flex; flex-direction: column; min-height: calc(100vh - var(--header-h));
+}
+.reader-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 12px; border-bottom: 1px solid rgba(212,165,116,.3);
+  position: sticky; top: 0;
+}
+.reader-bar__title { flex: 1; font-weight: 700; font-size: 14px; }
+.reader-bar__back, .cv-head__back { color: var(--navy); display: flex; }
+.reader-bar__size { font-weight: 700; color: var(--terracotta); font-size: 15px; }
+.reader {
+  --reader-fs: 16px;
+  font-size: var(--reader-fs); line-height: 1.75;
+  padding: 20px 4px 40px; color: var(--navy);
+}
+.reader h2 { font-family: var(--font-head); font-size: calc(var(--reader-fs) + 8px); font-weight: 700; margin: 8px 0 16px; text-wrap: balance; }
+.reader p { margin-bottom: 16px; }
+.reader .drop::first-letter { font-family: var(--font-head); font-size: 3.2em; float: left; line-height: .82; padding: 4px 10px 0 0; color: var(--terracotta); }
+.reader .scripture {
+  background: linear-gradient(160deg, #FBF4E7, #F6EBD8);
+  border-left: 3px solid var(--gold); border-radius: 0 10px 10px 0;
+  padding: 14px 18px; margin: 20px 0;
+  font-family: var(--font-head); font-style: italic;
+  font-size: calc(var(--reader-fs) + 1px); line-height: 1.6;
+}
+.reader .scripture cite { display: block; font-style: normal; font-family: var(--font-body); font-size: 13px; color: var(--gold); font-weight: 700; margin-top: 8px; }
