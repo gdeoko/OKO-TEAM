@@ -534,6 +534,8 @@ function openChild(c) {
   $('#childName').textContent = `${c.name}, ${c.age} лет`;
   $('#childRank').textContent = c.rank;
   $('#childStreak').textContent = c.streak;
+  const xpMatch = (c.rank.match(/(\d+)\s*XP/) || [])[1];
+  renderRanks(xpMatch ? Number(xpMatch) : 0);
   $('#childBadges').innerHTML = CHILD_BADGES.map((b) => `
     <div class="badge-card ${b.earned ? '' : 'badge-card--locked'}">
       <div class="badge-card__icon">${b.earned ? ICON(b.icon, 22) : ICON('lock', 18)}</div>
@@ -1390,6 +1392,52 @@ function initTemple() {
   });
 }
 
+
+
+/* ───────── РАНГИ РОСТА (раздел 11.2) ───────── */
+
+const RANKS = [
+  { icon: 'seed',   name: 'Зёрнышко', from: 0,    to: 100 },
+  { icon: 'sprout', name: 'Росточек', from: 100,  to: 300 },
+  { icon: 'flower', name: 'Цветочек', from: 300,  to: 600 },
+  { icon: 'tree',   name: 'Деревце',  from: 600,  to: 1000 },
+  { icon: 'star',   name: 'Звёздочка',from: 1000, to: 1500 },
+  { icon: 'dove',   name: 'Голубок',  from: 1500, to: 2500 },
+  { icon: 'crown',  name: 'Мудрец',   from: 2500, to: 4000 },
+  { icon: 'church', name: 'Хранитель веры', from: 4000, to: Infinity },
+];
+
+function rankIndex(xp) {
+  for (let i = RANKS.length - 1; i >= 0; i--) if (xp >= RANKS[i].from) return i;
+  return 0;
+}
+
+function renderRanks(xp) {
+  const box = document.getElementById('ranksLadder');
+  if (!box) return;
+  const cur = rankIndex(xp);
+  box.innerHTML = RANKS.map((r, i) => {
+    const cls = i < cur ? 'rank--done' : i === cur ? 'rank--current' : 'rank--future';
+    return `<div class="rank ${cls}">
+      <div class="rank__icon">${ICON(r.icon, 22)}</div>
+      <div class="rank__name">${r.name}</div>
+      <div class="rank__xp">${r.to === Infinity ? r.from + '+' : r.from + '–' + r.to} XP</div>
+    </div>`;
+  }).join('');
+  // прокрутить к текущему рангу
+  const el = box.children[cur];
+  if (el) el.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+
+function rankUpCheck(oldXp, newXp) {
+  const was = rankIndex(oldXp), now = rankIndex(newXp);
+  if (now > was && window.MAGIC) {
+    MAGIC.rewardModal({
+      icon: RANKS[now].icon, title: 'Новый ранг!',
+      subtitle: `Ты поднялся до ранга «${RANKS[now].name}». Продолжай расти в вере!`,
+    });
+  }
+}
 
 /* ───────── ПУТЕШЕСТВИЕ ВЕРЫ: карта прогресса ───────── */
 

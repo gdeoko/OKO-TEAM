@@ -1383,3 +1383,28 @@ body.in-chat .header { display: none; }
   #jPathDone, #jAvatar { transition: none; }
   .j-stop-ring { animation: none; }
 }
+
+
+/* ══════════ РАНГИ РОСТА ══════════ */
+.ranks { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.ranks::-webkit-scrollbar { display: none; }
+.rank {
+  flex: 0 0 84px; text-align: center;
+  background: #fff; border-radius: var(--radius-card);
+  padding: 12px 6px; box-shadow: 0 1px 4px rgba(26,58,82,.05);
+  position: relative;
+}
+.rank--done { background: linear-gradient(160deg, #fff, #FBF4E9); }
+.rank--current { border: 2px solid var(--gold); box-shadow: 0 4px 14px rgba(212,165,116,.3); }
+.rank--future { opacity: .5; }
+.rank__icon {
+  width: 44px; height: 44px; margin: 0 auto 6px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, rgba(212,165,116,.22), rgba(201,112,100,.14)); color: var(--navy);
+}
+.rank--current .rank__icon { background: linear-gradient(160deg, var(--gold), var(--terracotta)); color: var(--cream); animation: rankGlow 2.4s var(--ease) infinite; }
+.rank--future .rank__icon { background: rgba(90,101,119,.1); color: var(--gray); }
+@keyframes rankGlow { 50% { box-shadow: 0 0 0 5px rgba(212,165,116,.2); } }
+.rank__name { font-size: 10.5px; font-weight: 700; line-height: 1.25; }
+.rank__xp { font-size: 9px; color: var(--gray); margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .rank--current .rank__icon { animation: none; } }
