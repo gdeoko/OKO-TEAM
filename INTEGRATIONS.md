@@ -27,10 +27,22 @@ curl (urllib и node fetch ходят мимо прокси). Новый клю�
 `base64 -w0 secrets.env > secrets.env.b64`, закоммитить ТОЛЬКО b64
 (plaintext secrets.env в .gitignore, GitHub push protection режет открытые ключи).
 
-## 1а. ВИДЕОКОНВЕЙЕР reels-machine — фулл-пак (чат V.CODE, проверено боем на j001/j004/j005)
+## 1а. ВИДЕОЗАВОД reels-machine v5 — фулл-пак (чат V.CODE, проверено боем на j001..j009)
 
-Скилл: `.claude/skills/reels-machine/` (SKILL.md + pipeline/ + fonts/ + logo).
-Делает готовый Reels 1080x1920 из сценария: стоки → озвучка → оверлеи → 3-этапный ffmpeg.
+Скилл: `.claude/skills/reels-machine/` (SKILL.md + pipeline/motion + pipeline/three +
+reference/ + fonts/ + logo). Публичная версия: **github.com/gdeoko/oko-magic-skill →
+skills/reels-machine** (без лицензионных шрифтов/лого клиента).
+Делает готовый Reels 1080x1920 из сценария уровня топ-монтажёра. АРХИТЕКТУРА ЗАВОДА:
+на каждый ролик режиссёрский манифест → проверка реестра `reference/USED_EFFECTS.md`
+(приём ≤1 раза в 3 ролика, финалы/переходы всегда разные) → сборка → чек новизны → запись.
+Каталог приёмов — `reference/EFFECTS_CATALOG.md`, грейды — `GRADES.md`, ниши — `NICHE_PLAYBOOK.md`.
+Новое в v5 (проверено): gl-transitions (125 шейдерных переходов, `pipeline/motion/transitions_gl.cjs`),
+2.5D-параллакс из фото (Depth-Anything ONNX, `depth_parallax.py`), 3D-объект внутри
+живого кадра / 3D-текст / частицы-в-лого / туннель / турнтейбл (`pipeline/three/`),
+инфографика Remotion (график/донат/гейдж/бары/одометр/до-после, `infographics.tsx`+`counter_gauge.ts`),
+кинетическая типографика (`kinetic_type.ts`), световые лики (@remotion/light-leaks),
+карта-флайовер MapLibre (`map_fly.html`), rembg-коллаж, ч/б-панч.
+Аватары/липсинк — только платный HeyGen/Higgsfield по запросу (локальный wav2lip слабый).
 
 ### Озвучка и тайминг слов (без ключа)
 - **edge-tts 7.2.8** (pip): голос `ru-RU-DmitryNeural`, rate="+8%",
@@ -173,8 +185,11 @@ Environment variables окружения:
 jsDelivr для HTML НЕ годится (text/plain). Cloudflare Pages — токен без прав (отложено).
 
 ### Публичный репозиторий
-gdeoko/oko-magic-skill — публичная версия OKO magic skill (README EN/RU, demo.gif, MIT)
-+ ветка `sites` с демо-зеркалами сайтов. Пуш: add_repo → git push.
+gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два скилла:
+- `skills/oko-magic` — веб-студия (сайты, 3D-скролл, генерации) + ветка `sites` с зеркалами.
+- `skills/reels-machine` — видеозавод роликов (публичная версия, README EN/RU, BRAND_SETUP).
+Создать НОВЫЙ репо через сессию нельзя (GitHub App без прав, «sessions bound to repos»).
+Публиковать сюда: `add_repo gdeoko/oko-magic-skill` → clone → добавить в `skills/` → push main.
 
 ## 6. Как это попадает в каждый чат
 
