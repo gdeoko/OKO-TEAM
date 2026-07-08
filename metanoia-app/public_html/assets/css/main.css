@@ -1517,3 +1517,137 @@ body.in-chat .header { display: none; }
   background: #fff; border: 1.5px solid rgba(26,58,82,.14); text-align: left; }
 .qopt--right { background: rgba(123,198,122,.15); border-color: var(--success); }
 .qopt--wrong { background: rgba(212,106,106,.12); border-color: var(--error); }
+
+/* ══════════════════════════════════════════════════════════════
+   ЭТАП 5 · Рейтинг недели · Метанойя+ · Настройки · Тёмная тема
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Рейтинг недели ── */
+.rating-head { text-align: center; padding: 6px 0 14px; }
+.rating-head__title { font-family: var(--font-head); font-size: 24px; font-weight: 800; color: var(--navy); }
+.rating-head__meta { font-size: 12.5px; color: var(--gray); margin-top: 4px; }
+.rating-podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin: 8px 0 18px; }
+.pod { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 92px; }
+.pod__ava { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--font-head); font-weight: 800; font-size: 20px; color: #fff; overflow: hidden;
+  box-shadow: 0 4px 14px rgba(26,58,82,.18); border: 3px solid #fff; }
+.pod__ava img { width: 100%; height: 100%; object-fit: cover; }
+.pod__name { font-size: 12.5px; font-weight: 700; color: var(--navy); }
+.pod__xp { font-size: 11.5px; color: var(--gray); }
+.pod__stand { width: 100%; border-radius: 12px 12px 0 0; display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-family: var(--font-head); font-size: 22px; }
+.pod--1 .pod__stand { height: 66px; background: linear-gradient(180deg,#E6C079,#D4A574); }
+.pod--2 .pod__stand { height: 50px; background: linear-gradient(180deg,#B9C4CE,#9AA8B5); }
+.pod--3 .pod__stand { height: 40px; background: linear-gradient(180deg,#D9A283,#C97064); }
+.pod--1 .pod__ava { width: 62px; height: 62px; border-color: var(--gold); }
+.rating-list { display: flex; flex-direction: column; gap: 8px; }
+.lb-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: var(--radius-card);
+  padding: 10px 14px; box-shadow: 0 1px 4px rgba(26,58,82,.05); }
+.lb-row--me { border: 1.5px solid var(--gold); background: linear-gradient(100deg,#fff,#FBF4E9); }
+.lb-row__pos { width: 24px; text-align: center; font-weight: 800; color: var(--gray); font-size: 15px; }
+.lb-row__ava { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  color: #fff; font-weight: 800; font-family: var(--font-head); overflow: hidden; flex: 0 0 auto; }
+.lb-row__ava img { width: 100%; height: 100%; object-fit: cover; }
+.lb-row__body { flex: 1; min-width: 0; }
+.lb-row__name { font-weight: 700; font-size: 14px; color: var(--navy); }
+.lb-row__rank { font-size: 12px; color: var(--gray); }
+.lb-row__xp { font-weight: 800; color: var(--terracotta); font-size: 14px; }
+.lb-row__xp small { font-weight: 600; color: var(--gray); font-size: 11px; }
+.rating-note { margin: 16px 2px 4px; font-size: 12.5px; color: var(--gray); line-height: 1.5; text-align: center; }
+
+/* ── Метанойя+ подписка ── */
+.sub-hero { text-align: center; padding: 14px 0 6px; }
+.sub-hero__crown { width: 74px; height: 74px; margin: 0 auto 10px; border-radius: 22px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(150deg,#E6C079,#D4A574 60%,#C97064); box-shadow: 0 8px 22px rgba(212,165,116,.4); }
+.sub-hero__title { font-family: var(--font-head); font-size: 27px; font-weight: 800; color: var(--navy); }
+.sub-hero__sub { font-size: 13.5px; color: var(--gray); margin: 6px auto 0; max-width: 30ch; line-height: 1.45; }
+.sub-active { margin: 12px 0; padding: 12px 14px; border-radius: var(--radius-card); text-align: center;
+  background: rgba(123,198,122,.14); border: 1px solid var(--success); color: #2f7a3a; font-weight: 700; font-size: 13.5px; }
+.sub-benefits { display: flex; flex-direction: column; gap: 2px; margin: 16px 0 4px; background: #fff;
+  border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 1px 4px rgba(26,58,82,.05); }
+.sub-benefit { display: flex; align-items: center; gap: 12px; padding: 12px 15px; font-size: 13.5px; color: var(--navy); }
+.sub-benefit + .sub-benefit { border-top: 1px solid rgba(26,58,82,.06); }
+.sub-benefit__ic { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 8px; display: grid; place-items: center;
+  color: var(--success); background: rgba(123,198,122,.15); }
+.sub-plans { display: flex; flex-direction: column; gap: 10px; }
+.sub-plan { display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid rgba(26,58,82,.12);
+  border-radius: var(--radius-card); padding: 14px 15px; text-align: left; position: relative; }
+.sub-plan--on { border-color: var(--gold); background: linear-gradient(100deg,#fff,#FBF4E9); box-shadow: 0 4px 14px rgba(212,165,116,.18); }
+.sub-plan__radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(26,58,82,.25); flex: 0 0 auto; display: grid; place-items: center; }
+.sub-plan--on .sub-plan__radio { border-color: var(--gold); background: var(--gold); color: #fff; }
+.sub-plan__body { flex: 1; }
+.sub-plan__name { font-weight: 700; font-size: 15px; color: var(--navy); }
+.sub-plan__desc { font-size: 12px; color: var(--gray); margin-top: 2px; }
+.sub-plan__price { text-align: right; }
+.sub-plan__amt { font-weight: 800; font-size: 16px; color: var(--navy); font-family: var(--font-head); }
+.sub-plan__per { font-size: 11px; color: var(--gray); }
+.sub-plan__tag { position: absolute; top: -9px; right: 14px; background: var(--terracotta); color: #fff;
+  font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+.sub-cta { margin: 18px 0 8px; width: 100%; }
+.sub-note { text-align: center; font-size: 12px; color: var(--gray); line-height: 1.5; }
+
+/* ── Настройки + переключатели ── */
+.set-card { background: #fff; border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 1px 4px rgba(26,58,82,.05); margin-bottom: 6px; }
+.set-row { display: flex; align-items: center; gap: 13px; padding: 13px 15px; }
+.set-row + .set-row { border-top: 1px solid rgba(26,58,82,.06); }
+.set-row__ic { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px; display: grid; place-items: center;
+  color: var(--navy); background: rgba(26,58,82,.06); }
+.set-row__body { flex: 1; min-width: 0; }
+.set-row__name { font-weight: 600; font-size: 14px; color: var(--navy); }
+.set-row__desc { font-size: 11.5px; color: var(--gray); margin-top: 1px; }
+.switch { width: 46px; height: 27px; border-radius: 20px; background: rgba(26,58,82,.18); position: relative;
+  flex: 0 0 auto; transition: background .22s var(--ease); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 21px; height: 21px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .22s var(--ease); }
+.switch--on { background: var(--success); }
+.switch--on::after { transform: translateX(19px); }
+.set-about { text-align: center; font-size: 12px; color: var(--gray); line-height: 1.6; margin: 20px 0 8px; }
+.menu-item--plus { color: var(--terracotta); font-weight: 600; }
+.menu-item__tag { margin-left: auto; background: rgba(212,165,116,.2); color: #b07d3d; font-size: 10.5px;
+  font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+
+/* ══ ТЁМНАЯ ТЕМА ══ */
+[data-theme="dark"] { --cream: #0e1b25; }
+[data-theme="dark"] body { background: #0e1b25; color: #E7EDF3; }
+[data-theme="dark"] .header { background: #14232f; border-bottom-color: rgba(255,255,255,.07); }
+[data-theme="dark"] .header__title, [data-theme="dark"] .screen-title,
+[data-theme="dark"] .section-title, [data-theme="dark"] .profile-head__name,
+[data-theme="dark"] .rating-head__title, [data-theme="dark"] .sub-hero__title { color: #F2F6FA; }
+[data-theme="dark"] .nav { background: rgba(20,35,47,.96); border-top: 1px solid rgba(255,255,255,.06); }
+[data-theme="dark"] .nav__tab { color: #8397A8; }
+[data-theme="dark"] .nav__tab--active { color: var(--gold); }
+[data-theme="dark"] .card,
+[data-theme="dark"] .games-tile,
+[data-theme="dark"] .menu-list,
+[data-theme="dark"] .set-card,
+[data-theme="dark"] .sub-benefits,
+[data-theme="dark"] .sub-plan,
+[data-theme="dark"] .lb-row,
+[data-theme="dark"] .feed-card,
+[data-theme="dark"] .chat-item,
+[data-theme="dark"] .child-card,
+[data-theme="dark"] .lesson-card,
+[data-theme="dark"] .story__avatar,
+[data-theme="dark"] .qopt,
+[data-theme="dark"] .mcard__front,
+[data-theme="dark"] .msg--their .msg__bubble,
+[data-theme="dark"] .msg--their .msg__voice,
+[data-theme="dark"] .msg--their .msg__file,
+[data-theme="dark"] .search-box,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea { background: #1b2c3a; color: #E7EDF3; border-color: rgba(255,255,255,.09); }
+[data-theme="dark"] .card, [data-theme="dark"] .games-tile, [data-theme="dark"] .lb-row,
+[data-theme="dark"] .feed-card, [data-theme="dark"] .set-card { box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+[data-theme="dark"] .menu-item { color: #E7EDF3; border-color: rgba(255,255,255,.06); }
+[data-theme="dark"] .menu-item--plus { color: var(--gold); }
+[data-theme="dark"] .games-tile__name, [data-theme="dark"] .set-row__name, [data-theme="dark"] .lb-row__name,
+[data-theme="dark"] .sub-plan__name, [data-theme="dark"] .sub-plan__amt, [data-theme="dark"] .pod__name,
+[data-theme="dark"] .sub-benefit { color: #EAF0F5; }
+[data-theme="dark"] .set-row__ic { background: rgba(255,255,255,.08); color: #C7D4DF; }
+[data-theme="dark"] .lb-row--me { background: linear-gradient(100deg,#22333f,#2b3a30); }
+[data-theme="dark"] .sub-plan--on { background: linear-gradient(100deg,#22333f,#2e3a2a); }
+[data-theme="dark"] .switch { background: rgba(255,255,255,.16); }
+[data-theme="dark"] .set-about, [data-theme="dark"] .rating-note, [data-theme="dark"] .sub-note { color: #8397A8; }
+[data-theme="dark"] #openBook { background: linear-gradient(160deg,#2a2440,#241d33) !important; border-color: rgba(155,122,212,.5) !important; }
+[data-theme="dark"] .child-card__name { color: #E7EDF3; }
+[data-theme="dark"] .child-card__rank { color: #9FB0C0; }

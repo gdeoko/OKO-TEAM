@@ -357,10 +357,10 @@
 
       <h2 class="section-title">Настройки</h2>
       <div class="menu-list">
-        <button class="menu-item"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
-        <button class="menu-item"><span data-icon="star" data-size="18"></span>Подписка Метанойя+</button>
-        <button class="menu-item"><span data-icon="bell" data-size="18"></span>Уведомления</button>
-        <button class="menu-item"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
+        <button class="menu-item" id="mSettings"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
+        <button class="menu-item menu-item--plus" id="mSubscribe"><span data-icon="crown" data-size="18"></span>Подписка Метанойя+<span class="menu-item__tag">7 дней бесплатно</span></button>
+        <button class="menu-item" id="mNotify"><span data-icon="bell" data-size="18"></span>Уведомления</button>
+        <button class="menu-item" id="mParental"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
         <button class="menu-item"><span data-icon="headset" data-size="18"></span>Поддержка</button>
         <button class="menu-item menu-item--muted"><span data-icon="logout" data-size="18"></span>Выйти</button>
       </div>
@@ -409,6 +409,15 @@
         <div class="temple__body">
           <div class="temple__stage">Остановка 3 · «Египет» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Нажми, чтобы увидеть свой путь на карте</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Рейтинг недели</h2>
+      <button class="card temple" id="openRating" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Ты на 2 месте · 340 XP <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Посмотри, как растут друзья по школе за эту неделю</div>
         </div>
       </button>
     </section>
@@ -674,6 +683,45 @@
       <div class="quiz-timer"><div class="quiz-timer__bar" id="quizBar"></div></div>
       <div class="quiz-q" id="quizQ"></div>
       <div class="quiz-opts" id="quizOpts"></div>
+    </section>
+
+    <!-- ── РЕЙТИНГ НЕДЕЛИ (этап 5) ── -->
+    <section class="screen" data-screen="rating">
+      <button class="child-back" id="ratingBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="rating-head">
+        <div class="rating-head__title">Рейтинг недели</div>
+        <div class="rating-head__meta">Обновляется каждый понедельник · собирай XP в играх и уроках</div>
+      </div>
+      <div class="rating-podium" id="ratingPodium"></div>
+      <div class="rating-list" id="ratingList"></div>
+      <div class="rating-note">Рейтинг мотивирует, но не соревнование ради победы — каждый растёт в своём темпе 🌱</div>
+    </section>
+
+    <!-- ── МЕТАНОЙЯ+ ПОДПИСКА (этап 5) ── -->
+    <section class="screen" data-screen="subscribe">
+      <button class="child-back" id="subBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown"><span data-icon="crown" data-size="40"></span></div>
+        <div class="sub-hero__title">Метанойя+</div>
+        <div class="sub-hero__sub">Полный доступ ко всем играм, урокам и материалам школы</div>
+      </div>
+      <div class="sub-benefits" id="subBenefits"></div>
+      <h2 class="section-title">Выберите тариф</h2>
+      <div class="sub-plans" id="subPlans"></div>
+      <button class="btn btn--primary sub-cta" id="subCta">Оформить Метанойя+</button>
+      <div class="sub-note">Первые 7 дней бесплатно · отмена в любой момент · для всей семьи</div>
+    </section>
+
+    <!-- ── НАСТРОЙКИ (этап 5) ── -->
+    <section class="screen" data-screen="settings">
+      <button class="child-back" id="setBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <h1 class="screen-title" style="margin-bottom:14px">Настройки</h1>
+      <div class="set-card" id="setAppearance"></div>
+      <h2 class="section-title">Уведомления</h2>
+      <div class="set-card" id="setNotify"></div>
+      <h2 class="section-title">Родительский контроль</h2>
+      <div class="set-card" id="setParental"></div>
+      <div class="set-about">МЕТАНОЙА · версия 0.5 · сборка OKO TEAM<br>С заботой о духовном росте детей 🕊</div>
     </section>
 
   </main>

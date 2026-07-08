@@ -1867,7 +1867,161 @@ function hydrateIcons() {
   });
 }
 
+/* ───────── РОСТ: РЕЙТИНГ · МЕТАНОЙЯ+ · НАСТРОЙКИ · ТЁМНАЯ ТЕМА (этап 5) ───────── */
+
+const LB_COLORS = ['#C97064', '#7AAED4', '#D4A574', '#7BC67A', '#9B7AD4', '#5A6577', '#D4974A'];
+const LEADERBOARD = [
+  { name: 'София', xp: 420, rank: 'Цветочек' },
+  { name: 'Миша', xp: 340, rank: 'Росточек', img: 'assets/img/avatars/lion.jpg', me: true },
+  { name: 'Даниил', xp: 305, rank: 'Росточек' },
+  { name: 'Ева', xp: 260, rank: 'Росточек', img: 'assets/img/avatars/star.jpg' },
+  { name: 'Марк', xp: 210, rank: 'Зёрнышко' },
+  { name: 'Лиза', xp: 165, rank: 'Зёрнышко' },
+  { name: 'Тимофей', xp: 120, rank: 'Зёрнышко' },
+];
+
+function lbAva(c, i, cls) {
+  const color = LB_COLORS[i % LB_COLORS.length];
+  const inner = c.img ? `<img src="${c.img}" alt="">` : c.name[0];
+  return `<div class="${cls}" style="background:${color}">${inner}</div>`;
+}
+
+function openRatingScreen() {
+  const sorted = [...LEADERBOARD].sort((a, b) => b.xp - a.xp);
+  const podOrder = [1, 0, 2]; // 2-е, 1-е, 3-е места визуально
+  $('#ratingPodium').innerHTML = podOrder.map((rankIdx) => {
+    const c = sorted[rankIdx]; if (!c) return '';
+    const place = rankIdx + 1;
+    return `<div class="pod pod--${place}">
+      ${lbAva(c, sorted.indexOf(c), 'pod__ava')}
+      <div class="pod__name">${c.name}</div>
+      <div class="pod__xp">${c.xp} XP</div>
+      <div class="pod__stand">${place}</div>
+    </div>`;
+  }).join('');
+  $('#ratingList').innerHTML = sorted.map((c, i) => `
+    <div class="lb-row ${c.me ? 'lb-row--me' : ''}">
+      <div class="lb-row__pos">${i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
+      ${lbAva(c, i, 'lb-row__ava')}
+      <div class="lb-row__body">
+        <div class="lb-row__name">${c.name}${c.me ? ' · это ты' : ''}</div>
+        <div class="lb-row__rank">${c.rank}</div>
+      </div>
+      <div class="lb-row__xp">${c.xp}<small> XP</small></div>
+    </div>`).join('');
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'rating'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+
+/* ── Метанойя+ ── */
+const SUB_BENEFITS = [
+  'Все 20 игр без ограничений',
+  'Полный доступ ко всем 36 урокам года',
+  'Живые созвоны с Екатериной каждую неделю',
+  'Книга «Метанойя» и сертификаты за блоки',
+  'Без рекламы · для всей семьи',
+];
+const SUB_PLANS = [
+  { key: 'month', name: 'Месяц', desc: 'Попробовать без обязательств', amt: '490 ₽', per: 'в месяц' },
+  { key: 'year', name: 'Год', desc: '325 ₽/мес · экономия 33%', amt: '3 900 ₽', per: 'в год', tag: 'Выгодно' },
+  { key: 'life', name: 'Навсегда', desc: 'Единый платёж, доступ навсегда', amt: '9 900 ₽', per: 'разово' },
+];
+let subPlan = 'year';
+
+function openSubscribeScreen() {
+  const active = localStorage.getItem('mt_plus') === '1';
+  $('#subBenefits').innerHTML =
+    (active ? `<div class="sub-active">Метанойя+ активна · спасибо, что растёте с нами 🕊</div>` : '') +
+    SUB_BENEFITS.map((b) => `<div class="sub-benefit"><div class="sub-benefit__ic">${ICON('check', 15)}</div>${b}</div>`).join('');
+  renderSubPlans();
+  $('#subCta').textContent = active ? 'Метанойя+ уже активна' : 'Оформить Метанойя+';
+  $('#subCta').disabled = active;
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'subscribe'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+
+function renderSubPlans() {
+  $('#subPlans').innerHTML = SUB_PLANS.map((p) => `
+    <button class="sub-plan ${p.key === subPlan ? 'sub-plan--on' : ''}" data-plan="${p.key}">
+      ${p.tag ? `<span class="sub-plan__tag">${p.tag}</span>` : ''}
+      <div class="sub-plan__radio">${p.key === subPlan ? ICON('check', 13) : ''}</div>
+      <div class="sub-plan__body"><div class="sub-plan__name">${p.name}</div><div class="sub-plan__desc">${p.desc}</div></div>
+      <div class="sub-plan__price"><div class="sub-plan__amt">${p.amt}</div><div class="sub-plan__per">${p.per}</div></div>
+    </button>`).join('');
+  $$('#subPlans [data-plan]').forEach((el) => el.addEventListener('click', () => { subPlan = el.dataset.plan; renderSubPlans(); hydrateIcons(); }));
+  hydrateIcons();
+}
+
+/* ── Настройки ── */
+function switchRow(id, icon, name, desc, on) {
+  return `<div class="set-row">
+    <div class="set-row__ic">${ICON(icon, 17)}</div>
+    <div class="set-row__body"><div class="set-row__name">${name}</div><div class="set-row__desc">${desc}</div></div>
+    <button class="switch ${on ? 'switch--on' : ''}" id="${id}" role="switch" aria-checked="${on}"></button>
+  </div>`;
+}
+const SET_DEFAULTS = { theme: 'light', n_lessons: true, n_msgs: true, n_calls: true, p_pin: true, p_time: false };
+function setGet(k) { const v = localStorage.getItem('mt_set_' + k); return v === null ? SET_DEFAULTS[k] : v === '1'; }
+function setPut(k, v) { localStorage.setItem('mt_set_' + k, v ? '1' : '0'); }
+
+function openSettingsScreen() {
+  const dark = (localStorage.getItem('mt_theme') || 'light') === 'dark';
+  $('#setAppearance').innerHTML = switchRow('swTheme', dark ? 'moon' : 'sun', 'Тёмная тема', 'Мягкие тёмные тона для вечернего чтения', dark);
+  $('#setNotify').innerHTML =
+    switchRow('swLessons', 'book', 'Новые уроки', 'Уведомлять о новых занятиях', setGet('n_lessons')) +
+    switchRow('swMsgs', 'comment', 'Сообщения', 'Личные сообщения и чаты школы', setGet('n_msgs')) +
+    switchRow('swCalls', 'video', 'Напоминания о созвонах', 'За час до живого занятия', setGet('n_calls'));
+  $('#setParental').innerHTML =
+    switchRow('swPin', 'lock', 'PIN на родительский раздел', 'Защита профиля родителя от детей', setGet('p_pin')) +
+    switchRow('swTime', 'clock', 'Ограничение времени игр', '30 минут игр в день', setGet('p_time'));
+  hydrateIcons();
+  wireSwitch('swTheme', null, (on) => { applyTheme(on ? 'dark' : 'light'); localStorage.setItem('mt_theme', on ? 'dark' : 'light'); openSettingsScreen(); });
+  wireSwitch('swLessons', 'n_lessons'); wireSwitch('swMsgs', 'n_msgs'); wireSwitch('swCalls', 'n_calls');
+  wireSwitch('swPin', 'p_pin'); wireSwitch('swTime', 'p_time');
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'settings'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function wireSwitch(id, key, cb) {
+  const el = $('#' + id); if (!el) return;
+  el.addEventListener('click', () => {
+    const on = !el.classList.contains('switch--on');
+    el.classList.toggle('switch--on', on);
+    el.setAttribute('aria-checked', on);
+    if (key) setPut(key, on);
+    if (cb) cb(on);
+  });
+}
+
+function applyTheme(mode) {
+  document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+}
+
+function initGrowth() {
+  $('#openRating')?.addEventListener('click', openRatingScreen);
+  $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#mSubscribe')?.addEventListener('click', openSubscribeScreen);
+  $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#subCta')?.addEventListener('click', () => {
+    localStorage.setItem('mt_plus', '1');
+    const p = SUB_PLANS.find((x) => x.key === subPlan);
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'crown', title: 'Метанойя+ активирована!', subtitle: `Тариф «${p.name}». Первые 7 дней бесплатно — доступ ко всем играм и урокам открыт.`, xp: 0 });
+    else toast('Метанойя+ активирована');
+    setTimeout(openSubscribeScreen, 300);
+  });
+  $('#mSettings')?.addEventListener('click', openSettingsScreen);
+  $('#mNotify')?.addEventListener('click', openSettingsScreen);
+  $('#mParental')?.addEventListener('click', openSettingsScreen);
+  $('#setBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(localStorage.getItem('mt_theme') || 'light');
   hydrateIcons();
   if (window.MAGIC && document.getElementById('splashFx')) MAGIC.ambientMotes(document.getElementById('splashFx'));
   renderStories();
@@ -1884,7 +2038,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#dailyVerseBtn').addEventListener('click', () => toast('Ежедневный стих — этап 5'));
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
-  $$('.menu-item').forEach((el) =>
+  $$('.menu-item:not([id])').forEach((el) =>
     el.addEventListener('click', () => toast('Раздел в разработке')));
   let searchTimer = null;
   $('#searchInput').addEventListener('input', () => {
@@ -1913,6 +2067,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGamesHub();
   initMemory();
   initQuiz();
+  initGrowth();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');

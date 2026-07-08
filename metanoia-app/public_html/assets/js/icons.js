@@ -60,6 +60,8 @@ const ICON_PATHS = {
   tree:    '<path d="M12 22v-6"/><path d="M12 16a6 6 0 0 0 6-6 5 5 0 0 0-2-4 5 5 0 0 0-8 0 5 5 0 0 0-2 4 6 6 0 0 0 6 6Z"/>',
   crown:   '<path d="M3 8l4 5 5-8 5 8 4-5-2 12H5Z"/><path d="M5 20h14"/>',
   target:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  moon:    '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
+  sun:     '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
 };
 
 /**
