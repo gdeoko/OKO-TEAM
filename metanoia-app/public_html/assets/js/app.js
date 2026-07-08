@@ -1420,7 +1420,7 @@ const GAMES = {
   daily: [
     { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true },
     { key: 'temple-b', icon: 'church', name: 'Строитель храма', meta: 'Растущий храм', play: true },
-    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP' },
+    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true },
     { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Метанойя+' },
     { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Выбери каноническое' },
   ],
@@ -1451,6 +1451,7 @@ function renderGhub(cat) {
     else if (k === 'quiz') openQuiz();
     else if (k === 'journey') openJourneyScreen();
     else if (k === 'temple-b') openTempleScreen();
+    else if (k === 'dailyverse') openDailyVerse();
     else toast('Игра появится на следующих этапах');
   }));
 }
@@ -2088,9 +2089,67 @@ function downloadCert() {
   img.src = svgUrl;
 }
 
+/* ── Ежедневный стих (ритуал дня) ── */
+const DAILY_VERSES = [
+  { t: 'Так да светит свет ваш пред людьми, чтобы они видели ваши добрые дела', r: 'Матфея 5:16', n: 'Сегодня сделай одно доброе дело — тихо, от сердца.' },
+  { t: 'Всё могу в укрепляющем меня Иисусе Христе', r: 'Филиппийцам 4:13', n: 'Если что-то трудно — попроси у Бога сил и попробуй снова.' },
+  { t: 'Возлюби ближнего твоего, как самого себя', r: 'Марка 12:31', n: 'Ближний — это тот, кто рядом. Начни с семьи.' },
+  { t: 'Бог есть любовь', r: '1 Иоанна 4:8', n: 'Три коротких слова, в которых — вся суть.' },
+  { t: 'Просите, и дано будет вам; ищите, и найдёте', r: 'Матфея 7:7', n: 'С Богом можно говорить обо всём. Он слышит.' },
+  { t: 'Радуйтесь всегда в Господе', r: 'Филиппийцам 4:4', n: 'Найди сегодня три вещи, за которые скажешь спасибо.' },
+  { t: 'Господь — Пастырь мой; я ни в чём не буду нуждаться', r: 'Псалом 22:1', n: 'Пастырь заботится о каждой овечке — и о тебе тоже.' },
+  { t: 'Будьте добры друг ко другу, прощайте', r: 'Ефесянам 4:32', n: 'Прощать трудно, но это делает сердце лёгким.' },
+  { t: 'Не бойся, ибо Я с тобою', r: 'Исаии 41:10', n: 'Когда страшно — вспомни: ты не один.' },
+  { t: 'Блаженны чистые сердцем, ибо они Бога узрят', r: 'Матфея 5:8', n: 'Чистое сердце — как чистое окошко: через него виден свет.' },
+];
+
+function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; }
+function dayIndex() { const d = new Date(); const start = new Date(d.getFullYear(), 0, 0); return Math.floor((d - start) / 86400000); }
+
+function openDailyVerse() {
+  const v = DAILY_VERSES[dayIndex() % DAILY_VERSES.length];
+  const claimedToday = localStorage.getItem('mt_dverse_date') === todayKey();
+  const streak = Number(localStorage.getItem('mt_dverse_streak') || 0);
+  $('#dverseText').textContent = '«' + v.t + '»';
+  $('#dverseRef').textContent = v.r;
+  $('#dverseNote').textContent = v.n;
+  const btn = $('#dverseClaim');
+  btn.disabled = claimedToday;
+  btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 XP';
+  $('#dverseStreak').textContent = streak > 0 ? `🔥 ${streak} ${plural(streak, 'день', 'дня', 'дней')} подряд со стихом дня` : '';
+  $('#dailyVerse').hidden = false;
+  hydrateIcons();
+}
+
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+function claimDailyVerse() {
+  if (localStorage.getItem('mt_dverse_date') === todayKey()) return;
+  const last = localStorage.getItem('mt_dverse_date');
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const yKey = `${y.getFullYear()}-${y.getMonth() + 1}-${y.getDate()}`;
+  let streak = Number(localStorage.getItem('mt_dverse_streak') || 0);
+  streak = last === yKey ? streak + 1 : 1;
+  localStorage.setItem('mt_dverse_date', todayKey());
+  localStorage.setItem('mt_dverse_streak', String(streak));
+  if (window.MAGIC) {
+    const b = $('#dverseClaim').getBoundingClientRect();
+    MAGIC.celebrate(b.left + b.width / 2, b.top);
+  }
+  openDailyVerse();
+  toast('+5 XP · стих дня');
+}
+
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
+  $('#dverseClose')?.addEventListener('click', () => { $('#dailyVerse').hidden = true; });
+  $('#dverseClaim')?.addEventListener('click', claimDailyVerse);
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#certClose')?.addEventListener('click', () => { $('#certView').hidden = true; });
   $('#certDl')?.addEventListener('click', downloadCert);
@@ -2125,7 +2184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   tickCountdown();
   setInterval(tickCountdown, 60_000);
 
-  $('#dailyVerseBtn').addEventListener('click', () => toast('Ежедневный стих — этап 5'));
+  $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
   $$('.menu-item:not([id])').forEach((el) =>
