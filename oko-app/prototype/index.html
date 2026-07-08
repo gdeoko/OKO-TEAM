@@ -64,6 +64,9 @@ nav#tabs .nav-logo{display:none}
 
 #app.conv-open header{display:none}
 #app.conv-open nav#tabs{display:none}
+@media(max-width:899px){#app.conv-open .conv{animation:convIn .28s cubic-bezier(.3,1,.4,1)}}
+@keyframes convIn{from{transform:translateX(16%);opacity:.3}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){#app.conv-open .conv{animation:none}}
 @media(min-width:900px){
   #app.conv-open header{display:none}
   #app.conv-open nav#tabs{display:flex}
@@ -138,7 +141,10 @@ nav#tabs .nav-logo{display:none}
 .conv-head .who{font-weight:600;font-size:15px}
 .conv-head .status{font-size:11.5px;color:var(--accent)}
 .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
-.msg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45;animation:fade .2s ease}
+.msg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45}
+.msg-enter{animation:msgIn .3s cubic-bezier(.3,1,.4,1)}
+@keyframes msgIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.msg-enter{animation:none}}
 .msg.in{background:var(--bubble-in);color:var(--bubble-in-text);border-bottom-left-radius:4px;align-self:flex-start}
 .msg.out{background:var(--lime);color:#000;border-bottom-right-radius:4px;align-self:flex-end;font-weight:500}
 .msg .t{display:flex;gap:3px;align-items:center;justify-content:flex-end;font-size:10px;opacity:.55;margin-top:3px}
@@ -510,7 +516,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.9</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.10</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -1003,8 +1009,20 @@ function sendMoney(){
 }
 function renderMsgs(){
   const el = document.getElementById('msgs');
+  const sameChat = renderMsgs._chat === currentChat.id;
+  const prev = sameChat ? (renderMsgs._n || 0) : currentChat.msgs.length; // при открытии чата — без влёта
   el.innerHTML = currentChat.msgs.map(msgHtml).join('');
-  el.scrollTop = el.scrollHeight;
+  const kids = el.children;
+  for(let i = prev; i < kids.length; i++) kids[i].classList.add('msg-enter');
+  const added = kids.length - prev;
+  renderMsgs._n = currentChat.msgs.length;
+  renderMsgs._chat = currentChat.id;
+  // плавный доскролл при новых сообщениях, мгновенный — при открытии чата
+  if(sameChat && added > 0 && el.scrollHeight - el.scrollTop - el.clientHeight < 400){
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  } else {
+    el.scrollTop = el.scrollHeight;
+  }
 }
 /* реакции: тап по сообщению -> панель из трёх SVG-реакций */
 function reactBar(ev, idx){
