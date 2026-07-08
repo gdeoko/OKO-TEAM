@@ -383,6 +383,18 @@ nav#tabs .nav-logo{display:none}
 .plan-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .spin{width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);margin:8px auto 0;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Профиль: статистика и достижения */
+.prof-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 12px}
+.pstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 6px;text-align:center}
+.pstat .v{font-weight:800;font-size:17px;letter-spacing:-.01em}
+.pstat .l{font-size:10.5px;color:var(--dim);margin-top:2px}
+.prof-ach{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+.badge{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;width:74px;padding:11px 6px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);opacity:.4;filter:grayscale(1)}
+.badge.on{opacity:1;filter:none;border-color:var(--lime-dim2,rgba(154,255,0,.35))}
+.badge .i{width:22px;height:22px;color:var(--accent)}
+.badge.on .i{fill:currentColor}
+.badge span{font-size:10px;font-weight:600;text-align:center;line-height:1.2;color:var(--dim)}
+.badge.on span{color:var(--fg)}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -562,7 +574,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.13</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.14</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -731,12 +743,14 @@ main>.screen{position:relative;z-index:1}
     <section class="screen" id="screen-profile">
       <div class="pad">
         <div class="profile-top">
-          <div class="ava lime">Д</div>
+          <div class="ava lime" id="profAva">Д</div>
           <div>
             <h2 class="name-status" id="profName">Даниэль</h2>
             <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px">PRO до 15.08</span></div>
           </div>
         </div>
+        <div class="prof-stats" id="profStats"></div>
+        <div class="prof-ach" id="profAch"></div>
         <div class="card" style="padding:4px 14px">
           <button class="prow" onclick="toggleTheme()">
             <svg class="i" id="themeIcoP"><use href="#i-sun"/></svg> Светлая тема
@@ -955,6 +969,7 @@ function showTab(t){
   document.getElementById('screen-'+t).classList.add('active');
   document.querySelectorAll('#tabs>button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
   document.getElementById('screenTitle').textContent = TITLES[t];
+  if(t==='profile') renderMyProfile();
 }
 
 /* ================= ЧАТЫ ================= */
@@ -1643,6 +1658,28 @@ let editStatus = null;
 function renderMyProfile(){
   document.getElementById('profName').innerHTML = PROFILE.name + (PROFILE.status ? ' ' + I(PROFILE.status) : '');
   document.getElementById('profNick').textContent = '@' + PROFILE.nick;
+  document.getElementById('profAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
+  // статистика: посты и реакции считаем из реального состояния приложения
+  const myPosts = POSTS.sub.filter(p => p.name === PROFILE.name);
+  const posts = 47 + myPosts.length;
+  const reacts = 1280 + myPosts.reduce((s,p)=>s+(p.likes||0),0);
+  const stats = [
+    {v: fmtN(posts), l:'постов'},
+    {v: '2.4к', l:'подписчиков'},
+    {v: fmtN(reacts), l:'реакций'},
+    {v: '128', l:'дней в OKO'},
+  ];
+  document.getElementById('profStats').innerHTML = stats.map(s =>
+    `<div class="pstat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('');
+  const ach = [
+    {ic:'bolt', t:'Ранний', on:true},
+    {ic:'crown', t:'PRO', on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'},
+    {ic:'users', t:'Партнёр', on:true},
+    {ic:'fire', t:'100+ реакций', on:reacts>=100},
+    {ic:'star', t:'Автор', on:myPosts.length>0},
+  ];
+  document.getElementById('profAch').innerHTML = ach.map(a =>
+    `<div class="badge ${a.on?'on':''}" title="${a.t}">${I(a.ic)}<span>${a.t}</span></div>`).join('');
 }
 function openEdit(){
   document.getElementById('editName').value = PROFILE.name;
