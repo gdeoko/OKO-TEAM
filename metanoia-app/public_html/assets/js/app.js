@@ -1309,6 +1309,87 @@ function initVerseGame() {
   $('#verseCheck').addEventListener('click', checkVerse);
 }
 
+
+/* ───────── МОЙ ХРАМ: растущий SVG (геймификация) ───────── */
+
+const TEMPLE_STAGES = [
+  'Участок', 'Фундамент', 'Стены', 'Окна', 'Крыша', 'Купол',
+  'Крест', 'Золочение', 'Колокольня', 'Двери', 'Готов!'
+];
+let templeState = JSON.parse(localStorage.getItem('mt_temple') || '{"bricks":34}');
+
+function templeStageIndex(bricks) {
+  return Math.min(10, Math.floor(bricks / 10)); // 0..10, каждые 10 кирпичей = этап
+}
+
+function renderTemple(animate) {
+  const bricks = Math.min(100, templeState.bricks);
+  const stage = templeStageIndex(bricks);
+  const svg = document.getElementById('templeSvg');
+  if (!svg) return;
+
+  svg.querySelectorAll('.t-part').forEach((el) => {
+    const need = Number(el.dataset.stage);   // 1..11
+    const show = need <= stage + 1;           // участок виден с этапа 0
+    if (show && !el.classList.contains('t-part--on')) {
+      if (animate) {
+        // ступенчатое появление новых частей
+        setTimeout(() => el.classList.add('t-part--on'), (need - 1) * 90);
+      } else el.classList.add('t-part--on');
+    } else if (!show) {
+      el.classList.remove('t-part--on');
+    }
+  });
+
+  svg.classList.toggle('t-complete', bricks >= 100);
+
+  const nm = document.getElementById('templeStageName');
+  if (nm) nm.textContent = bricks >= 100
+    ? 'Храм построен! · «Архитектор веры»'
+    : `Этап ${stage} из 10 · «${TEMPLE_STAGES[stage]}»`;
+  const bar = document.getElementById('templeBar');
+  if (bar) bar.style.width = bricks + '%';
+  const br = document.getElementById('templeBricks');
+  if (br) br.textContent = `${bricks} кирпичиков из 100`;
+
+  const btn = document.getElementById('templeBrick');
+  if (btn) btn.style.display = bricks >= 100 ? 'none' : '';
+}
+
+function openTempleScreen() {
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'temple'));
+  $('#nav').style.display = 'none';
+  // сброс анимации появления
+  document.querySelectorAll('#templeSvg .t-part').forEach((el) => el.classList.remove('t-part--on'));
+  requestAnimationFrame(() => renderTemple(true));
+  window.scrollTo({ top: 0 });
+}
+
+function initTemple() {
+  $('#openTemple')?.addEventListener('click', openTempleScreen);
+  $('#templeBack')?.addEventListener('click', () => {
+    $('#nav').style.display = 'none';
+    openChild(DEMO.children[0]);
+  });
+  $('#templeBrick')?.addEventListener('click', () => {
+    const before = templeStageIndex(templeState.bricks);
+    templeState.bricks = Math.min(100, templeState.bricks + 4);
+    localStorage.setItem('mt_temple', JSON.stringify(templeState));
+    renderTemple(true);
+    const after = templeStageIndex(templeState.bricks);
+    if (templeState.bricks >= 100 && window.MAGIC) {
+      const r = document.getElementById('templeSvg').getBoundingClientRect();
+      MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2);
+      setTimeout(() => MAGIC.rewardModal({
+        icon: 'church', title: 'Храм построен!',
+        subtitle: 'Ты получил значок «Архитектор веры». Это большой путь — поздравляем!',
+      }), 400);
+    } else if (after > before) {
+      toast(`Новый этап: «${TEMPLE_STAGES[after]}»!`);
+    } else toast('+4 кирпичика');
+  });
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -1463,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatView();
   initChatSearch();
   initVerseGame();
+  initTemple();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
