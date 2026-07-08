@@ -411,6 +411,25 @@ nav#tabs .nav-logo{display:none}
 .pay-m .i{width:22px;height:22px}
 .pay-ok{width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .pay-ok .i{width:34px;height:34px;fill:currentColor}
+/* Онбординг */
+#onboard{position:fixed;inset:0;z-index:70;background:radial-gradient(circle at 50% 32%,#0b1204,#000 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 26px calc(30px + env(safe-area-inset-bottom));transition:opacity .4s ease}
+#onboard.hidden{display:none}
+#onboard.closing{opacity:0}
+#onboard .btn{max-width:420px}
+.ob-skip{position:absolute;top:calc(16px + env(safe-area-inset-top));right:20px;color:var(--dim);font-size:13px;font-weight:600;padding:8px}
+.ob-stage{text-align:center;max-width:440px;animation:obIn .4s cubic-bezier(.3,1,.4,1)}
+@keyframes obIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ob-ico{width:96px;height:96px;margin:0 auto 26px;border-radius:28px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.ob-ico .i{width:48px;height:48px}
+.ob-ico.big{background:none;border:none}
+.ob-ico.big .i{width:92px;height:92px;filter:drop-shadow(0 0 26px rgba(154,255,0,.5))}
+.ob-title{font-size:25px;font-weight:800;letter-spacing:-.01em;margin-bottom:12px;color:var(--fg)}
+.ob-desc{font-size:14.5px;line-height:1.6;color:var(--dim)}
+.ob-dots{display:flex;gap:8px}
+.ob-dots span{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.ob-dots span.on{background:var(--lime);width:22px;border-radius:99px}
+@media(prefers-reduced-motion:reduce){.ob-stage{animation:none}}
+:root[data-theme="light"] #onboard{background:radial-gradient(circle at 50% 32%,#eef7e0,#fff 72%)}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -565,6 +584,12 @@ main>.screen{position:relative;z-index:1}
   <div class="eye-wrap"><div class="eye"><svg><use href="#i-logo"/></svg></div></div>
   <div class="word">OKO</div>
 </div>
+<div id="onboard" class="hidden">
+  <button class="ob-skip" onclick="obFinish()">Пропустить</button>
+  <div class="ob-stage" id="obStage"></div>
+  <div class="ob-dots" id="obDots"></div>
+  <button class="btn" id="obNext" onclick="obNext()">Далее</button>
+</div>
 <section id="authScreen">
   <canvas id="authCanvas"></canvas>
   <div class="auth-inner">
@@ -590,7 +615,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.15</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.16</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -1470,6 +1495,37 @@ function doLogin(method){
   document.getElementById('authScreen').classList.add('hidden');
   stopParticles();
   initLive();
+  let seen = false; try{ seen = !!localStorage.getItem('oko-onboarded'); }catch(e){}
+  if(!seen) obShow();
+}
+/* ===== Онбординг ===== */
+const ONBOARD = [
+  {ic:'logo', big:true, t:'Добро пожаловать в OKO', d:'Медийность, контент, маркетинг и бизнес — в одном приложении. Всё, что нужно для роста, под одним глазом.'},
+  {ic:'chat', t:'Живые чаты и сообщества', d:'Личные переписки, группы, каналы и сообщества в реальном времени. Голосовые, кружочки, файлы, опросы — как в любимом мессенджере.'},
+  {ic:'compass', t:'Система роста от ИИ', d:'Пройди анкету — Claude соберёт персональную систему продвижения под твою нишу, цели и бюджет. План на 30 дней за минуту.'},
+  {ic:'users', t:'Зарабатывай в OKO', d:'Биржа услуг, партнёрка 15% / 5% и контент-завод. Приводи людей и клиентов — получай доход прямо в приложении.'},
+];
+let obStep = 0;
+function obShow(){ obStep = 0; document.getElementById('onboard').classList.remove('hidden'); renderOb(); }
+function renderOb(){
+  const s = ONBOARD[obStep];
+  document.getElementById('obStage').innerHTML = `
+    <div class="ob-ico ${s.big?'big':''}">${I(s.ic)}</div>
+    <h2 class="ob-title">${s.t}</h2>
+    <p class="ob-desc">${s.d}</p>`;
+  document.getElementById('obDots').innerHTML = ONBOARD.map((_,i)=>
+    `<span class="${i===obStep?'on':''}"></span>`).join('');
+  document.getElementById('obNext').textContent = obStep === ONBOARD.length-1 ? 'Начать' : 'Далее';
+}
+function obNext(){
+  if(obStep < ONBOARD.length-1){ obStep++; renderOb(); }
+  else obFinish();
+}
+function obFinish(){
+  try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
+  const ob = document.getElementById('onboard');
+  ob.classList.add('closing');
+  setTimeout(()=>{ ob.classList.add('hidden'); ob.classList.remove('closing'); }, 400);
 }
 function doLogout(){
   try{ localStorage.removeItem('oko-auth'); }catch(e){}
