@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Оплата прошла — OKO TEAM</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050505;color:#fff;font-family:'Onest',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;text-align:center;max-width:480px;width:100%}
+
+/* Иконка успеха */
+.success-icon{width:80px;height:80px;border-radius:50%;background:rgba(154,255,0,0.1);border:2px solid rgba(154,255,0,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.success-icon svg{animation:check .4s ease .3s both}
+@keyframes check{from{stroke-dashoffset:50}to{stroke-dashoffset:0}}
+.check-path{stroke-dasharray:50;stroke-dashoffset:0}
+
+/* Конфетти эффект */
+@keyframes confetti{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+.logo{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:rgba(255,255,255,0.4);letter-spacing:2px;margin-bottom:32px}
+.logo span{color:#9AFF00}
+
+.title{font-family:'Unbounded',sans-serif;font-size:clamp(22px,6vw,32px);font-weight:900;line-height:1.2;margin-bottom:12px}
+.title span{color:#9AFF00}
+
+.sub{font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:32px}
+
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(154,255,0,0.15);border-radius:16px;padding:20px;margin-bottom:24px;text-align:left}
+.card-step{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.card-step:last-child{margin-bottom:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:rgba(154,255,0,0.1);border:1px solid rgba(154,255,0,0.25);display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;color:#9AFF00;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6}
+.step-text strong{color:#fff}
+
+.btn-main{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#9AFF00;color:#000;text-decoration:none;padding:15px;border-radius:12px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;transition:all .2s;margin-bottom:12px}
+.btn-main:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 8px 28px rgba(154,255,0,0.25)}
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);text-decoration:none;padding:13px;border-radius:12px;font-size:13px;font-weight:600;transition:all .2s}
+.btn-ghost:hover{border-color:rgba(154,255,0,0.3);color:#fff}
+
+.footer{margin-top:24px;font-size:11px;color:rgba(255,255,255,0.2)}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<div class="wrap">
+  <div class="logo">ОКО<span> TEAM</span></div>
+
+  <div class="success-icon">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline class="check-path" points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+
+  <h1 class="title">Оплата<br><span>прошла!</span></h1>
+  <p class="sub">Даниэль уже получил уведомление и скоро напишет тебе. Осталось совсем немного!</p>
+
+  <div class="card">
+    <div class="card-step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>Напиши Даниэлю в Telegram</strong><br>Он добавит тебя в закрытый чат и пришлёт анкету для сборки системы.</div>
+    </div>
+    <div class="card-step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Заполни анкету</strong><br>10–15 минут — расскажи о нише, целях и конкурентах. Фиксируем всё до детали.</div>
+    </div>
+    <div class="card-step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>10 дней — и система в руках</strong><br>Команда строит персонально под тебя. Финальный созвон и запуск.</div>
+    </div>
+  </div>
+
+  <a href="https://t.me/ktodaniel" target="_blank" class="btn-main">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    Написать Даниэлю @ktodaniel
+  </a>
+  <a href="https://okoteam.top/sistema" class="btn-ghost">
+    ← Вернуться на сайт
+  </a>
+
+  <div class="footer">Письмо с деталями отправлено на твой email · OKO TEAM</div>
+</div>
+
+<script>
+// Анимированный фон
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize(){ W=canvas.width=innerWidth; H=canvas.height=innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+for(let i=0;i<60;i++) particles.push({
+  x:Math.random()*1000, y:Math.random()*800,
+  vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
+  r:Math.random()*1.5+.5, a:Math.random()
+});
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(154,255,0,${p.a*.4})`;
+    ctx.fill();
+  });
+  // Линии между близкими частицами
+  particles.forEach((p,i)=>{
+    particles.slice(i+1).forEach(q=>{
+      const d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<120){
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);
+        ctx.lineTo(q.x,q.y);
+        ctx.strokeStyle=`rgba(154,255,0,${.06*(1-d/120)})`;
+        ctx.lineWidth=.5;
+        ctx.stroke();
+      }
+    });
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+
+// Конфетти при загрузке
+for(let i=0;i<20;i++){
+  const el=document.createElement('div');
+  el.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}%;width:8px;height:8px;background:${Math.random()>.5?'#9AFF00':'#fff'};border-radius:${Math.random()>.5?'50%':'2px'};animation:confetti ${1+Math.random()*2}s ease ${Math.random()}s both;pointer-events:none;z-index:999`;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 4000);
+}
+</script>
+</body>
+</html>

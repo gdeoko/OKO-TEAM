@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WEB Разработка — Сайты, Боты, Приложения · OKO TEAM</title>
+<meta name="description" content="Сайты, боты и приложения под ключ — OKO TEAM — от 30 до 500 роликов в месяц без единой съёмки. Автопостинг. От 19 900 ₽.">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--lime:#9AFF00;--lime2:rgba(154,255,0,.1);--lime3:rgba(154,255,0,.25);--glass:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--w2:rgba(255,255,255,.75);--w3:rgba(255,255,255,.45);--w4:rgba(255,255,255,.22);--green-online:#25d366}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{background:#050505;color:#fff;font-family:'Onest',sans-serif;overflow-x:hidden;line-height:1.6}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.pb{position:fixed;top:0;left:0;height:2px;background:var(--lime);z-index:1000;width:0%;box-shadow:0 0 8px rgba(154,255,0,.5);transition:width .1s}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+section{position:relative;z-index:1}
+.sec-sep{height:1px;background:linear-gradient(to right,transparent,rgba(154,255,0,.4),transparent);z-index:1;animation:sepglow 3s ease-in-out infinite}
+@keyframes sepglow{0%,100%{opacity:.5}50%{opacity:1}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.rv.vis{opacity:1;transform:none}
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:10px}
+.sec-h{font-family:'Unbounded',sans-serif;font-size:clamp(20px,2.8vw,36px);font-weight:900;line-height:1.12;margin-bottom:14px}
+.sec-p{font-size:15px;color:var(--w3);max-width:580px;line-height:1.75}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:rgba(5,5,5,.55);backdrop-filter:blur(24px);border-bottom:1px solid rgba(154,255,0,.06);transition:background .3s}
+.nav.scrolled{background:rgba(5,5,5,.95)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.nav-logo img{width:34px;height:34px;border-radius:8px;object-fit:contain}
+.nav-logo-t{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:#fff;white-space:nowrap}
+.nav-logo-s{font-size:9px;color:var(--lime);font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-a{color:rgba(255,255,255,.55);font-size:12px;font-weight:600;padding:7px 11px;border-radius:20px;text-decoration:none;transition:all .2s;white-space:nowrap}
+.nav-a:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav-cta{background:var(--lime);color:#000;font-weight:800;font-size:11px;padding:8px 16px;border-radius:22px;text-decoration:none;transition:all .2s;opacity:0;pointer-events:none;transform:translateY(-4px);white-space:nowrap}
+.nav-cta.show{opacity:1;pointer-events:auto;transform:none}
+.ham{display:none;background:none;border:1px solid rgba(255,255,255,.15);color:#fff;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0}
+.mob-nav{display:none;position:fixed;top:59px;left:0;right:0;bottom:0;background:rgba(5,5,5,.97);z-index:199;padding:20px;flex-direction:column;gap:6px;backdrop-filter:blur(20px);opacity:0;transform:translateY(-12px);transition:opacity .25s,transform .25s;pointer-events:none}
+.mob-nav.open{display:flex;opacity:1;transform:none;pointer-events:auto}
+.mob-nav .nav-a{font-size:15px;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8)}
+.mob-nav .nav-a svg{flex-shrink:0;color:var(--lime)}
+.mob-nav .nav-cta{opacity:1;pointer-events:auto;transform:none;text-align:center;padding:14px;border-radius:14px;font-size:14px;display:block;margin-top:6px}
+.bl{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:#000;font-size:12px;padding:12px 18px;font-weight:800;border-radius:14px;text-decoration:none;border:none;cursor:pointer;font-family:'Onest',sans-serif;white-space:nowrap;animation:pglow 2.5s infinite;transition:all .22s;letter-spacing:.3px;flex:1;justify-content:center}
+@keyframes pglow{0%,100%{box-shadow:0 0 14px rgba(154,255,0,.3)}50%{box-shadow:0 0 28px rgba(154,255,0,.6)}}
+.bl:hover{opacity:.87;transform:translateY(-2px)}
+.bg{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);color:#fff;font-size:12px;padding:12px 18px;border:1px solid rgba(255,255,255,.15);border-radius:14px;text-decoration:none;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700;white-space:nowrap;transition:all .22s;flex:1;justify-content:center}
+.bg:hover{background:rgba(255,255,255,.09)}
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px 0;position:relative;overflow:hidden}
+
+#hcv{position:absolute;inset:0;z-index:1;pointer-events:none}
+.hero-content{position:relative;z-index:2;width:100%;max-width:900px;padding-bottom:32px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.2);color:var(--lime);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 18px;border-radius:50px;margin-bottom:14px;margin-top:8px}
+.hbdot{width:5px;height:5px;background:var(--lime);border-radius:50%;animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(18px,7.5vw,56px);font-weight:900;line-height:1.05;margin-bottom:14px;letter-spacing:-1px;white-space:nowrap}
+.hero-title .lime{color:var(--lime)}
+.hero-sub{font-size:clamp(13px,1.8vw,16px);color:var(--w3);margin-bottom:20px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.65}
+.hero-stats{display:flex;gap:5px;justify-content:center;margin-bottom:20px;width:100%}
+.h-stat{background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.22);border-radius:12px;padding:10px 6px;flex:1;text-align:center;text-decoration:none;transition:all .25s;position:relative}
+.h-stat:hover{border-color:rgba(154,255,0,.5);background:rgba(154,255,0,.1)}
+.h-stat-n{font-family:'Unbounded',sans-serif;font-size:clamp(12px,3vw,17px);font-weight:900;color:var(--lime);white-space:nowrap}
+.h-stat-l{font-size:9px;color:var(--w3);margin-top:2px;white-space:nowrap}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap}
+.pain{padding:56px 0}
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.pain-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;transition:all .3s;position:relative}
+.pain-card:hover{border-color:rgba(154,255,0,.4);transform:translateY(-2px);box-shadow:0 4px 20px rgba(154,255,0,.08),inset 0 0 30px rgba(154,255,0,.03)}
+.pain-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pain-ico{width:34px;height:34px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.14);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.pain-ico svg{width:16px;height:16px}
+.pain-title{font-size:14px;font-weight:700;line-height:1.25}
+.pain-desc{font-size:12px;color:var(--w3);line-height:1.6;margin-bottom:12px}
+.pain-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.18);color:var(--lime);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none}
+.pain-btn:hover{background:rgba(154,255,0,.14);border-color:var(--lime)}
+.how{padding:56px 0}
+.how-list{display:flex;flex-direction:column;gap:6px;margin-top:28px}
+.how-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;transition:border-color .3s}
+.how-item.open{border-color:rgba(154,255,0,.35);box-shadow:0 4px 20px rgba(154,255,0,.06)}
+.how-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+.how-num{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:rgba(154,255,0,.2);width:32px;flex-shrink:0;transition:color .3s}
+.how-item.open .how-num{color:var(--lime)}
+.how-title{font-size:14px;font-weight:700;flex:1}
+.how-xi{width:24px;height:24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;color:rgba(255,255,255,.3)}
+.how-item.open .how-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.how-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.how-item.open .how-body{max-height:300px}
+.how-inner{padding:0 16px 16px 62px}
+.how-desc{font-size:13px;color:var(--w3);line-height:1.75;margin-bottom:8px}
+.how-subs{display:flex;flex-direction:column;gap:4px}
+.how-sub{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--w2)}
+.how-sub svg{color:var(--lime);flex-shrink:0;margin-top:2px}
+.how-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.how-tag{background:rgba(154,255,0,.05);border:1px solid rgba(154,255,0,.12);color:rgba(154,255,0,.7);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tariffs{padding:56px 0}
+.tar-list{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.tar-card{background:rgba(12,12,12,.95);border:1px solid rgba(255,255,255,.12);border-radius:20px;overflow:hidden;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.tar-card:hover{border-color:rgba(154,255,0,.4);transform:translateY(-2px);box-shadow:0 8px 32px rgba(154,255,0,.1),0 4px 20px rgba(0,0,0,.5)}
+.tar-card.featured{border-color:rgba(154,255,0,.4);background:rgba(10,18,5,.97);box-shadow:0 0 0 1px rgba(154,255,0,.15),0 8px 32px rgba(154,255,0,.12)}
+.tar-inner{padding:20px}
+.tar-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.tar-ico{width:44px;height:44px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.tar-info{flex:1}
+.tar-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.tar-name{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;margin-bottom:4px}
+.tar-sub{font-size:12px;color:var(--w3);line-height:1.4}
+.tar-hit{display:inline-block;background:var(--lime);color:#000;font-size:9px;font-weight:900;padding:2px 9px;border-radius:20px;text-transform:uppercase;margin-top:5px}
+.tar-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.tar-price{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:var(--lime);line-height:1}
+.tar-price-sub{font-size:12px;color:var(--w3)}
+.tar-eco{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.85);font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;margin-bottom:14px}
+.tar-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.15);border-radius:12px;padding:11px 14px;cursor:pointer;transition:all .2s;margin-bottom:10px;user-select:none}
+.tar-toggle:hover{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3)}
+.tar-toggle-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--lime)}
+.tar-toggle-xi{width:22px;height:22px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);transition:transform .3s;flex-shrink:0}
+.tar-card.open .tar-toggle-xi{transform:rotate(45deg)}
+.tar-content{max-height:0;overflow:hidden;transition:max-height .5s ease}
+.tar-card.open .tar-content{max-height:1200px}
+.tar-subs{display:flex;flex-direction:column;gap:0;margin-bottom:12px}
+.tar-sub-item{border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.tar-sub-item:last-child{border-bottom:none}
+.tar-sub-head{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.tar-sub-left{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85)}
+.tar-sub-left svg{color:var(--lime);flex-shrink:0}
+.tar-sub-xi{width:20px;height:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s;color:rgba(255,255,255,.3)}
+.tar-sub-item.open .tar-sub-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.tar-sub-body{max-height:0;overflow:hidden;transition:max-height .35s ease;padding-left:28px}
+.tar-sub-item.open .tar-sub-body{max-height:300px}
+.tar-sub-feats{display:flex;flex-direction:column;gap:4px;padding:6px 0 10px}
+.tar-sub-feat{font-size:12px;color:var(--w3);padding-left:14px;position:relative;line-height:1.5}
+.tar-sub-feat::before{content:'✓';position:absolute;left:0;color:var(--lime);font-weight:700}
+.tar-bonuses{background:rgba(154,255,0,.04);border:1px solid rgba(154,255,0,.1);border-radius:12px;padding:12px 14px;margin-top:8px;cursor:pointer}
+.tar-bonuses-top{display:flex;align-items:center;justify-content:space-between}
+.tar-bon-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:6px}
+.tar-bon-xi{width:20px;height:20px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);transition:transform .3s;flex-shrink:0}
+.tar-bonuses.open .tar-bon-xi{transform:rotate(45deg)}
+.tar-bon-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.tar-bonuses.open .tar-bon-body{max-height:300px}
+.tar-bon-list{display:flex;flex-direction:column;gap:5px;padding-top:10px}
+.tar-bon-item{font-size:12px;color:var(--w2);padding-left:16px;position:relative;line-height:1.5}
+.tar-bon-item::before{content:'✓';position:absolute;left:0;color:var(--lime);font-weight:700}
+.tar-cta{display:flex;align-items:center;justify-content:center;width:100%;background:var(--lime);color:#000;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;padding:14px;border-radius:14px;border:none;cursor:pointer;text-decoration:none;transition:all .2s;margin-top:14px;letter-spacing:.5px;animation:pglow 2.5s infinite}
+.tar-cta:hover{opacity:.9;transform:translateY(-1px)}
+.reviews{padding:56px 0}
+.vc-wrap{overflow:hidden;margin-top:28px;cursor:grab;user-select:none}.vc-wrap:active{cursor:grabbing}
+.vc-track{display:flex;gap:14px;will-change:transform}
+.vc-item{flex-shrink:0;width:100px;height:100px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(154,255,0,.25);position:relative;cursor:pointer;transition:border-color .3s}
+.vc-item:hover,.vc-item.playing{border-color:var(--lime);box-shadow:0 0 18px rgba(154,255,0,.2)}
+.vc-item video{width:100%;height:100%;object-fit:cover;display:block}
+.vc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s}.vc-item.playing .vc-overlay{opacity:0}
+.vc-play{width:32px;height:32px;background:rgba(154,255,0,.2);backdrop-filter:blur(6px);border:1.5px solid rgba(154,255,0,.5);border-radius:50%;display:flex;align-items:center;justify-content:center}.vc-play svg{color:var(--lime);margin-left:2px}
+.vc-name{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;font-weight:700;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);padding:8px 4px 4px}
+.audio-rev{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;margin:20px 0;cursor:pointer;transition:border-color .3s;width:100%}.audio-rev:hover{border-color:rgba(154,255,0,.2)}
+.ar-btn{width:40px;height:40px;background:var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer}.ar-btn svg{color:#000;margin-left:2px}
+.ar-info{display:flex;flex-direction:column;flex-shrink:0}.ar-name{font-size:12px;font-weight:700;margin-bottom:1px}.ar-sub{font-size:10px;color:var(--w3)}
+.ar-wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}
+.ar-wave b{display:block;width:3px;border-radius:3px;background:rgba(154,255,0,.3);animation:ovw 1.2s ease-in-out infinite;flex:1;max-width:4px}
+.ar-wave.pl b{background:var(--lime)}
+.ar-wave b:nth-child(1){height:8px}.ar-wave b:nth-child(2){height:14px;animation-delay:.05s}.ar-wave b:nth-child(3){height:22px;animation-delay:.1s}.ar-wave b:nth-child(4){height:11px;animation-delay:.15s}.ar-wave b:nth-child(5){height:18px;animation-delay:.2s}.ar-wave b:nth-child(6){height:9px;animation-delay:.25s}.ar-wave b:nth-child(7){height:20px;animation-delay:.3s}.ar-wave b:nth-child(8){height:13px;animation-delay:.08s}.ar-wave b:nth-child(9){height:24px;animation-delay:.12s}.ar-wave b:nth-child(10){height:16px;animation-delay:.18s}.ar-wave b:nth-child(11){height:10px;animation-delay:.22s}.ar-wave b:nth-child(12){height:21px;animation-delay:.27s}.ar-wave b:nth-child(13){height:14px;animation-delay:.03s}.ar-wave b:nth-child(14){height:19px;animation-delay:.16s}.ar-wave b:nth-child(15){height:12px;animation-delay:.24s}.ar-wave b:nth-child(16){height:23px;animation-delay:.09s}
+@keyframes ovw{0%,100%{transform:scaleY(1);opacity:.3}50%{transform:scaleY(1.6);opacity:1}}
+.rev-wrap{overflow:hidden;cursor:grab;margin-top:24px;user-select:none}.rev-wrap:active{cursor:grabbing}
+.rev-track{display:flex;gap:12px;will-change:transform}
+.rev-card{flex-shrink:0;width:270px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;transition:border-color .3s}.rev-card:hover{border-color:rgba(154,255,0,.18)}
+.rev-stars{display:flex;gap:2px;margin-bottom:10px}.rev-stars span{color:var(--lime);font-size:12px}
+.rev-text{font-size:12px;color:var(--w2);line-height:1.7;margin-bottom:12px;font-style:italic}
+.rev-author{display:flex;align-items:center;gap:8px}
+.rev-ava{width:30px;height:30px;background:linear-gradient(135deg,rgba(154,255,0,.2),rgba(154,255,0,.05));border:1px solid rgba(154,255,0,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--lime);flex-shrink:0}
+.rev-name{font-size:12px;font-weight:700}.rev-role{font-size:10px;color:var(--w3)}
+.results{padding:56px 0}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px}
+.res-card{background:rgba(154,255,0,.04);border:1px solid rgba(154,255,0,.12);border-radius:14px;padding:20px;text-align:center}
+.res-n{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,34px);font-weight:900;color:var(--lime);margin-bottom:4px}
+.res-l{font-size:12px;color:var(--w3)}
+.process{padding:56px 0}
+.proc-list{display:flex;flex-direction:column;gap:0;margin-top:28px;position:relative}
+.proc-list::before{content:'';position:absolute;left:23px;top:24px;bottom:24px;width:2px;background:linear-gradient(to bottom,var(--lime),rgba(154,255,0,.15));box-shadow:0 0 8px rgba(154,255,0,.4)}
+.proc-list::after{content:'';position:absolute;left:23px;top:24px;width:2px;height:60px;background:linear-gradient(to bottom,rgba(154,255,0,0),var(--lime),rgba(154,255,0,0));animation:proc-pulse 2s ease-in-out infinite;box-shadow:0 0 12px rgba(154,255,0,.8)}
+@keyframes proc-pulse{0%{top:24px;opacity:1}100%{top:calc(100% - 24px);opacity:0}}
+.proc-item{display:flex;gap:16px;padding-bottom:24px;position:relative;z-index:1}
+.proc-item:last-child{padding-bottom:0}
+.proc-num{width:46px;height:46px;background:rgba(154,255,0,.1);border:2px solid rgba(154,255,0,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--lime);flex-shrink:0;box-shadow:0 0 14px rgba(154,255,0,.2),inset 0 0 10px rgba(154,255,0,.05)}
+.proc-body{padding-top:10px}
+.proc-t{font-size:15px;font-weight:700;margin-bottom:4px}
+.proc-d{font-size:13px;color:var(--w3);line-height:1.65}
+.faq{padding:56px 0}
+.faq-list{margin-top:28px}
+.faq-item{border-bottom:1px solid rgba(255,255,255,.05)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 0;cursor:pointer;font-size:14px;font-weight:600;gap:16px;transition:color .2s;user-select:none}.faq-q:hover{color:var(--lime)}
+.faq-arr{flex-shrink:0;width:22px;height:22px;background:rgba(255,255,255,.05);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s;color:rgba(255,255,255,.35)}
+.faq-item.open .faq-arr{background:rgba(154,255,0,.15);transform:rotate(45deg);color:var(--lime);box-shadow:0 0 8px rgba(154,255,0,.3)}
+.faq-a{font-size:13px;color:var(--w3);max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;line-height:1.75}.faq-item.open .faq-a{max-height:300px;padding-bottom:16px}
+.cta-sec{padding:56px 0;text-align:center;position:relative;overflow:hidden}
+.cta-sec::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(ellipse,rgba(154,255,0,.06) 0%,transparent 65%);pointer-events:none}
+.cta-title{font-family:'Unbounded',sans-serif;font-size:clamp(22px,3.5vw,44px);font-weight:900;margin-bottom:12px;line-height:1.1}
+.cta-sub{font-size:14px;color:var(--w3);margin-bottom:28px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.7}
+footer{padding:22px 32px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:1}
+.foot-brand{display:flex;align-items:center;gap:9px}.foot-brand img{width:24px;height:24px;border-radius:6px;object-fit:contain}
+.foot-brand-t{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.22)}
+.foot-links{display:flex;gap:14px;flex-wrap:wrap}
+.foot-link{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s}.foot-link:hover{color:var(--lime)}
+#okf-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px}
+#okf-overlay.open{display:flex}
+#okf-overlay.open~#oko-wrap{display:none!important}#okf-overlay.open~#oko-win{display:none!important}
+#okf-modal{background:#0d0d0d;border:1px solid rgba(154,255,0,.2);border-radius:20px;width:100%;max-width:420px;padding:24px 22px;position:relative;animation:okf-in .3s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
+@keyframes okf-in{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes okf-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#okf-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:auto}
+#okf-close:hover{background:rgba(255,255,255,.2)}
+.okf-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(154,255,0,.08);border:1px solid rgba(154,255,0,.2);border-radius:20px;padding:5px 12px;font-size:10px;font-weight:700;color:#9AFF00;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+.okf-hd{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3}
+.okf-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px}
+.okf-sel-tar{background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.2);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.okf-sel-tar-name{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--lime);margin-bottom:2px}
+.okf-sel-tar-price{font-size:12px;color:var(--w3)}
+.okf-f{margin-bottom:11px}
+.okf-f label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.okf-f label em{color:rgba(154,255,0,.6);font-style:normal}
+.okf-f input,.okf-f select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;font-family:'Onest',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;box-sizing:border-box;cursor:text;-webkit-tap-highlight-color:transparent}
+.okf-f input:focus,.okf-f select:focus{border-color:rgba(154,255,0,.4)}
+.okf-f input::placeholder{color:rgba(255,255,255,.22)}
+.okf-f select{cursor:pointer}
+#okf-btn{width:100%;background:#9AFF00;color:#000;border:none;border-radius:12px;padding:12px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:8px}
+#okf-btn:hover{opacity:.9}
+.okf-err{background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:rgba(255,80,70,.9);margin-top:8px;display:none}.okf-err.show{display:block}
+.okf-priv{font-size:10px;color:rgba(255,255,255,.2);text-align:center;margin-top:10px}
+#oko-wrap{position:fixed;bottom:24px;right:20px;z-index:2147483647;font-family:'Onest',sans-serif;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+#oko-bub{display:flex;flex-direction:column;align-items:flex-end;gap:9px;opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
+#oko-bub.vis{opacity:1;transform:none}
+#oko-av-row{display:flex;align-items:center;gap:8px;flex-direction:row-reverse;cursor:pointer}
+#oko-av{width:58px;height:58px;border-radius:50%;position:relative;box-shadow:0 0 0 2px rgba(154,255,0,.3),0 4px 20px rgba(0,0,0,.5);transition:transform .2s}
+#oko-av:hover{transform:scale(1.07)}
+#oko-av img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block}
+#oko-dot{position:absolute;bottom:2px;right:2px;width:13px;height:13px;background:var(--green-online);border-radius:50%;border:2.5px solid #090909;animation:oko-pdot 2.5s ease-in-out infinite}
+@keyframes oko-pdot{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 5px rgba(37,211,102,0)}}
+#oko-badge{position:absolute;top:-3px;left:-3px;width:19px;height:19px;background:#ff3b30;color:#fff;font-size:10px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #090909;opacity:0;transform:scale(0);transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:2}
+#oko-badge.show{opacity:1;transform:scale(1)}
+#oko-popup{background:rgba(13,13,13,.97);border:1px solid var(--lime3);border-radius:18px 18px 4px 18px;padding:11px 15px;max-width:220px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(6px) scale(.96);transition:opacity .35s,transform .35s;pointer-events:none;cursor:pointer;align-self:flex-end}
+#oko-popup.show{opacity:1;transform:none;pointer-events:auto}
+#oko-popup-from{font-size:10px;font-weight:700;color:var(--lime);margin-bottom:3px}
+#oko-win{position:fixed;bottom:96px;right:20px;width:355px;height:520px;background:#0c0c0c;border:1px solid rgba(154,255,0,.14);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.85);opacity:0;transform:translateY(18px) scale(.96);pointer-events:none;transition:opacity .28s,transform .28s;z-index:2147483646}
+#oko-win.open{opacity:1;transform:none;pointer-events:auto}
+@media(max-width:480px){#oko-win{left:8px;right:8px;width:auto;bottom:88px;height:72vh}#oko-wrap{right:14px;bottom:20px}}
+#oko-hdr{background:#111;border-bottom:1px solid rgba(255,255,255,.055);padding:13px 15px 11px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+#oko-hdr-av{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(154,255,0,.4);flex-shrink:0}
+#oko-hdr-name{font-size:13.5px;font-weight:700;color:#fff}
+#oko-hdr-status{font-size:10.5px;color:var(--green-online);display:flex;align-items:center;gap:4px;margin-top:1px}
+#oko-hdr-status::before{content:'';width:6px;height:6px;background:var(--green-online);border-radius:50%;flex-shrink:0}
+#oko-hdr-info{flex:1;min-width:0}
+#oko-close{width:28px;height:28px;background:rgba(255,255,255,.06);border:none;border-radius:50%;color:rgba(255,255,255,.5);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0}
+#oko-close:hover{background:rgba(255,255,255,.12);color:#fff}
+#oko-msgs{flex:1;overflow-y:auto;padding:14px 12px 6px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+#oko-msgs::-webkit-scrollbar{width:2px}#oko-msgs::-webkit-scrollbar-thumb{background:rgba(154,255,0,.2);border-radius:2px}
+.om{display:flex;flex-direction:column;max-width:84%;animation:om-in .28s ease}
+@keyframes om-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.om.od{align-self:flex-start;align-items:flex-start}.om.ou{align-self:flex-end;align-items:flex-end}
+.omb{padding:8px 12px;font-size:13px;line-height:1.55;word-break:break-word}
+.od .omb{background:#1c1c1c;color:rgba(255,255,255,.92);border-radius:4px 15px 15px 15px}
+.ou .omb{background:linear-gradient(135deg,#1a3300,#284f00);color:#fff;border:1px solid rgba(154,255,0,.18);border-radius:15px 4px 15px 15px}
+.omt{font-size:9.5px;color:rgba(255,255,255,.28);margin-top:2px;padding:0 3px}
+.otyp{display:flex;align-items:center;gap:3px;padding:9px 13px;background:#1c1c1c;border-radius:4px 15px 15px 15px;width:fit-content}
+.otyp span{width:5px;height:5px;background:rgba(255,255,255,.35);border-radius:50%;animation:ot .3s ease-in-out infinite}
+.otyp span:nth-child(2){animation-delay:.15s}.otyp span:nth-child(3){animation-delay:.3s}
+@keyframes ot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+.ors{display:flex;flex-wrap:wrap;gap:6px;padding:5px 0 2px;animation:om-in .28s ease}
+.orb{background:rgba(154,255,0,.065);border:1px solid rgba(154,255,0,.22);color:var(--lime);padding:7px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.orb:hover{background:rgba(154,255,0,.14);transform:translateY(-1px)}
+.odd{text-align:center;font-size:9.5px;color:rgba(255,255,255,.22);margin:5px 0}
+#oko-bar{border-top:1px solid rgba(255,255,255,.055);padding:9px 11px;display:flex;gap:7px;align-items:center;background:#0c0c0c;flex-shrink:0}
+#oko-tg{flex:1;background:linear-gradient(135deg,#9AFF00,#7bcc00);color:#000;border:none;border-radius:22px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s}
+#oko-rst{width:34px;height:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:50%;color:rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0}
+@media(max-width:900px){.pain-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.nav{padding:10px 16px}.nav-links{display:none}.ham{display:flex;align-items:center}.wrap{padding:0 16px}.hero{padding:58px 16px 0;min-height:auto}.pain-grid{grid-template-columns:1fr}footer{flex-direction:column;align-items:flex-start;padding:20px 16px}}
+
+
+
+/* HERO PHONES INLINE */
+.hero-phones-block{width:100%;max-width:420px;margin:16px auto;position:relative;height:220px;flex-shrink:0}
+.phi{position:absolute;background:#0a0a0a;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.8)}
+.phi-center{width:110px;height:190px;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;border:2px solid rgba(154,255,0,.5);box-shadow:0 8px 32px rgba(0,0,0,.8),0 0 24px rgba(154,255,0,.12);animation:phi-float 4s ease-in-out infinite}
+.phi-left{width:90px;height:158px;left:calc(50% - 110px);top:50%;transform:translateY(-50%) rotate(-10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float2 5s ease-in-out infinite}
+.phi-right{width:90px;height:158px;left:calc(50% + 20px);top:50%;transform:translateY(-50%) rotate(10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float3 4.5s ease-in-out infinite}
+@keyframes phi-float{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-10px)}}
+@keyframes phi-float2{0%,100%{transform:translateY(-50%) rotate(-10deg) translateY(0)}50%{transform:translateY(-50%) rotate(-10deg) translateY(-7px)}}
+@keyframes phi-float3{0%,100%{transform:translateY(-50%) rotate(10deg) translateY(0)}50%{transform:translateY(-50%) rotate(10deg) translateY(-9px)}}
+.phi-screen{width:100%;height:100%;background:linear-gradient(180deg,#0d0d0d,#0a1a05);padding:6px 5px;display:flex;flex-direction:column;gap:3px}
+.phi-hd{display:flex;align-items:center;gap:4px;padding:2px}
+.phi-av{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--lime),#5a9900);flex-shrink:0}
+.phi-nm{font-size:7px;font-weight:700;color:#fff;font-family:'Onest',sans-serif}
+.phi-fl{margin-left:auto;background:var(--lime);color:#000;font-size:6px;font-weight:800;padding:1px 5px;border-radius:5px}
+.phi-vid{flex:1;background:rgba(154,255,0,.04);border-radius:6px;position:relative;overflow:hidden;border:1px solid rgba(154,255,0,.08);min-height:70px}
+.phi-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%)}
+.phi-likes{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;align-items:center}
+.phi-lk{display:flex;flex-direction:column;align-items:center;gap:1px}
+.phi-lk-n{font-size:6px;color:rgba(255,255,255,.6);font-family:'Onest',sans-serif;font-weight:700}
+.phi-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(154,255,0,.15)}
+.phi-bar-f{height:100%;background:var(--lime);box-shadow:0 0 6px rgba(154,255,0,.6);animation:phi-prog 6s linear infinite}
+.phi-bar-f2{animation-delay:2s}
+@keyframes phi-prog{0%{width:0}100%{width:100%}}
+.phi-stat{font-size:7px;color:var(--lime);font-weight:900;font-family:'Unbounded',sans-serif;text-align:center;padding:2px 0}
+.phi-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:1}
+.phi-gi{background:rgba(154,255,0,.05);border-radius:3px;border:1px solid rgba(154,255,0,.08)}
+.phi-sub{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;gap:1px}
+.phi-sub-n{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:900;color:var(--lime)}
+.phi-sub-l{font-size:6px;color:rgba(255,255,255,.35);font-family:'Onest',sans-serif}
+/* Соцсети иконки вокруг */
+.phi-soc{position:absolute;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(154,255,0,.25);backdrop-filter:blur(8px);color:var(--lime);font-size:12px}
+.phi-s1{background:rgba(0,0,0,.75);top:10px;left:10px;animation:soc-f1 5s ease-in-out infinite}
+.phi-s2{background:rgba(20,5,30,.75);top:10px;right:10px;animation:soc-f2 6s ease-in-out infinite}
+.phi-s3{background:rgba(30,0,0,.75);bottom:30px;left:5px;animation:soc-f3 7s ease-in-out infinite}
+.phi-s4{background:rgba(0,10,30,.75);bottom:30px;right:5px;animation:soc-f4 5.5s ease-in-out infinite}
+.phi-s5{background:rgba(0,15,30,.75);top:50%;left:2px;transform:translateY(-50%);animation:soc-f5 6.5s ease-in-out infinite}
+@keyframes soc-f1{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-8px)}}
+@keyframes soc-f2{0%,100%{transform:translate(0,0)}50%{transform:translate(-5px,6px)}}
+@keyframes soc-f3{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-9px)}}
+@keyframes soc-f4{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,8px)}}
+@keyframes soc-f5{0%,100%{transform:translateY(-50%)}50%{transform:translate(5px,calc(-50% - 7px))}}
+.phi-ai{position:absolute;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.3);border-radius:7px;padding:3px 7px;font-size:8px;font-weight:900;color:var(--lime);font-family:'Unbounded',sans-serif}
+.phi-ai1{top:5px;left:50%;transform:translateX(-50%);animation:soc-f1 4s ease-in-out infinite}
+.phi-ai2{bottom:5px;right:10px;animation:soc-f3 5s ease-in-out infinite}
+
+.h-stat{background:rgba(154,255,0,.06);backdrop-filter:blur(12px);border:1px solid rgba(154,255,0,.25);border-radius:12px;padding:10px 6px;transition:all .25s;display:flex;flex-direction:column;align-items:center;text-decoration:none;position:relative;cursor:pointer;flex:1;min-width:0;overflow:hidden;box-shadow:0 0 12px rgba(154,255,0,.06),inset 0 1px 0 rgba(154,255,0,.1)}
+.h-stat:hover{border-color:rgba(154,255,0,.5);background:rgba(154,255,0,.1);transform:translateY(-2px);box-shadow:0 0 20px rgba(154,255,0,.15)}
+.h-stat-top{display:flex;align-items:center;gap:4px}
+.h-stat-ico{color:var(--lime);flex-shrink:0;display:none}
+.h-stat-n{font-family:'Unbounded',sans-serif;font-size:clamp(13px,3.5vw,18px);font-weight:900;color:var(--lime);white-space:nowrap}
+.h-stat-ext{opacity:0;transition:opacity .2s;color:rgba(154,255,0,.5)}
+.h-stat:hover .h-stat-ext{opacity:1}
+.h-stat-l{font-size:9px;color:var(--w3);margin-top:2px;white-space:nowrap;text-align:center}
+.hero-stats{display:flex;gap:5px;justify-content:center;margin:0 auto 14px;width:100%}
+.hero-stats{gap:4px}
+.port-wrap{overflow:hidden;cursor:grab;user-select:none}
+.port-track{display:flex;gap:12px;will-change:transform}
+.port-card{flex-shrink:0;width:180px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;transition:all .3s}
+.port-vid{aspect-ratio:3/4;overflow:hidden;background:#0a0a0a;position:relative}
+.port-vid video{width:100%;height:100%;object-fit:cover;display:block}
+.port-info{padding:10px 12px 12px}
+.port-type{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.port-name{font-size:12px;font-weight:700;margin-bottom:8px;line-height:1.3}
+.port-links{display:flex;gap:6px;flex-wrap:wrap}
+.port-link{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--lime);text-decoration:none;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);padding:5px 11px;border-radius:10px;transition:all .2s;white-space:nowrap}
+.vc-wrap{overflow:hidden;margin-top:28px;cursor:grab;user-select:none}
+.vc-track{display:flex;gap:14px;will-change:transform}
+.vc-item{flex-shrink:0;width:100px;height:100px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(154,255,0,.25);position:relative;cursor:pointer;transition:border-color .3s}
+.vc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+.vc-play{width:32px;height:32px;background:rgba(154,255,0,.2);backdrop-filter:blur(6px);border:1.5px solid rgba(154,255,0,.5);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.vc-name{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;font-weight:700;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);padding:8px 4px 4px}
+.audio-rev{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;margin:20px 0;cursor:pointer;transition:border-color .3s;width:100%}
+.ar-btn{width:40px;height:40px;background:var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:all .2s}
+.ar-info{display:flex;flex-direction:column;flex-shrink:0}
+.ar-name{font-size:12px;font-weight:700;margin-bottom:1px}
+.ar-sub{font-size:10px;color:var(--w3)}
+.ar-wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}
+.rev-wrap{overflow:hidden;cursor:grab;margin-top:24px;user-select:none}
+.rev-track{display:flex;gap:12px;will-change:transform}
+.rev-card{flex-shrink:0;width:270px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;transition:border-color .3s}
+.rev-stars{display:flex;gap:2px;margin-bottom:10px}
+.rev-text{font-size:12px;color:var(--w2);line-height:1.7;margin-bottom:12px;font-style:italic}
+.rev-author{display:flex;align-items:center;gap:8px}
+.rev-ava{width:30px;height:30px;background:linear-gradient(135deg,rgba(154,255,0,.2),rgba(154,255,0,.05));border:1px solid rgba(154,255,0,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--lime);flex-shrink:0}
+.rev-name{font-size:12px;font-weight:700}
+.rev-role{font-size:10px;color:var(--w3)}
+.rev-more{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:#000;font-size:12px;font-weight:800;padding:11px 20px;border-radius:22px;text-decoration:none;transition:all .2s;flex:1;justify-content:center}
+.ar-wave b{display:block;width:3px;border-radius:3px;background:rgba(154,255,0,.3);animation:ovw 1.2s ease-in-out infinite;flex:1;max-width:4px}
+.ar-wave b:nth-child(1){height:8px}
+.ar-wave b:nth-child(2){height:14px;animation-delay:.05s}
+.ar-wave b:nth-child(3){height:22px;animation-delay:.1s}
+.ar-wave b:nth-child(4){height:11px;animation-delay:.15s}
+.ar-wave b:nth-child(5){height:18px;animation-delay:.2s}
+.ar-wave b:nth-child(6){height:9px;animation-delay:.25s}
+.ar-wave b:nth-child(7){height:20px;animation-delay:.3s}
+.ar-wave b:nth-child(8){height:13px;animation-delay:.08s}
+.ar-wave b:nth-child(9){height:24px;animation-delay:.12s}
+.ar-wave b:nth-child(10){height:16px;animation-delay:.18s}
+.ar-wave b:nth-child(11){height:10px;animation-delay:.22s}
+.ar-wave b:nth-child(12){height:21px;animation-delay:.27s}
+.ar-wave b:nth-child(13){height:14px;animation-delay:.03s}
+.ar-wave b:nth-child(14){height:19px;animation-delay:.16s}
+.ar-wave b:nth-child(15){height:12px;animation-delay:.24s}
+.ar-wave b:nth-child(16){height:23px;animation-delay:.09s}
+@keyframes ovw{0%,100%{transform:scaleY(1);opacity:.3}
+/* HERO PHONES INLINE */
+.hero-phones-block{width:100%;max-width:420px;margin:16px auto;position:relative;height:220px;flex-shrink:0}
+.phi{position:absolute;background:#0a0a0a;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.8)}
+.phi-center{width:110px;height:190px;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;border:2px solid rgba(154,255,0,.5);box-shadow:0 8px 32px rgba(0,0,0,.8),0 0 24px rgba(154,255,0,.12);animation:phi-float 4s ease-in-out infinite}
+.phi-left{width:90px;height:158px;left:calc(50% - 110px);top:50%;transform:translateY(-50%) rotate(-10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float2 5s ease-in-out infinite}
+.phi-right{width:90px;height:158px;left:calc(50% + 20px);top:50%;transform:translateY(-50%) rotate(10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float3 4.5s ease-in-out infinite}
+@keyframes phi-float{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-10px)}}
+@keyframes phi-float2{0%,100%{transform:translateY(-50%) rotate(-10deg) translateY(0)}50%{transform:translateY(-50%) rotate(-10deg) translateY(-7px)}}
+@keyframes phi-float3{0%,100%{transform:translateY(-50%) rotate(10deg) translateY(0)}50%{transform:translateY(-50%) rotate(10deg) translateY(-9px)}}
+.phi-screen{width:100%;height:100%;background:linear-gradient(180deg,#0d0d0d,#0a1a05);padding:6px 5px;display:flex;flex-direction:column;gap:3px}
+.phi-hd{display:flex;align-items:center;gap:4px;padding:2px}
+.phi-av{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--lime),#5a9900);flex-shrink:0}
+.phi-nm{font-size:7px;font-weight:700;color:#fff;font-family:'Onest',sans-serif}
+.phi-fl{margin-left:auto;background:var(--lime);color:#000;font-size:6px;font-weight:800;padding:1px 5px;border-radius:5px}
+.phi-vid{flex:1;background:rgba(154,255,0,.04);border-radius:6px;position:relative;overflow:hidden;border:1px solid rgba(154,255,0,.08);min-height:70px}
+.phi-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%)}
+.phi-likes{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;align-items:center}
+.phi-lk{display:flex;flex-direction:column;align-items:center;gap:1px}
+.phi-lk-n{font-size:6px;color:rgba(255,255,255,.6);font-family:'Onest',sans-serif;font-weight:700}
+.phi-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(154,255,0,.15)}
+.phi-bar-f{height:100%;background:var(--lime);box-shadow:0 0 6px rgba(154,255,0,.6);animation:phi-prog 6s linear infinite}
+.phi-bar-f2{animation-delay:2s}
+@keyframes phi-prog{0%{width:0}100%{width:100%}}
+.phi-stat{font-size:7px;color:var(--lime);font-weight:900;font-family:'Unbounded',sans-serif;text-align:center;padding:2px 0}
+.phi-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:1}
+.phi-gi{background:rgba(154,255,0,.05);border-radius:3px;border:1px solid rgba(154,255,0,.08)}
+.phi-sub{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;gap:1px}
+.phi-sub-n{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:900;color:var(--lime)}
+.phi-sub-l{font-size:6px;color:rgba(255,255,255,.35);font-family:'Onest',sans-serif}
+/* Соцсети иконки вокруг */
+.phi-soc{position:absolute;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(154,255,0,.25);backdrop-filter:blur(8px);color:var(--lime);font-size:12px}
+.phi-s1{background:rgba(0,0,0,.75);top:10px;left:10px;animation:soc-f1 5s ease-in-out infinite}
+.phi-s2{background:rgba(20,5,30,.75);top:10px;right:10px;animation:soc-f2 6s ease-in-out infinite}
+.phi-s3{background:rgba(30,0,0,.75);bottom:30px;left:5px;animation:soc-f3 7s ease-in-out infinite}
+.phi-s4{background:rgba(0,10,30,.75);bottom:30px;right:5px;animation:soc-f4 5.5s ease-in-out infinite}
+.phi-s5{background:rgba(0,15,30,.75);top:50%;left:2px;transform:translateY(-50%);animation:soc-f5 6.5s ease-in-out infinite}
+@keyframes soc-f1{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-8px)}}
+@keyframes soc-f2{0%,100%{transform:translate(0,0)}50%{transform:translate(-5px,6px)}}
+@keyframes soc-f3{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-9px)}}
+@keyframes soc-f4{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,8px)}}
+@keyframes soc-f5{0%,100%{transform:translateY(-50%)}50%{transform:translate(5px,calc(-50% - 7px))}}
+.phi-ai{position:absolute;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.3);border-radius:7px;padding:3px 7px;font-size:8px;font-weight:900;color:var(--lime);font-family:'Unbounded',sans-serif}
+.phi-ai1{top:5px;left:50%;transform:translateX(-50%);animation:soc-f1 4s ease-in-out infinite}
+.phi-ai2{bottom:5px;right:10px;animation:soc-f3 5s ease-in-out infinite}
+
+.services-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:28px}
+.srv-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px 18px;transition:all .3s}
+.srv-card:hover{border-color:rgba(154,255,0,.25);background:rgba(154,255,0,.03)}
+.srv-ico{width:40px;height:40px;background:rgba(154,255,0,.08);border:1px solid rgba(154,255,0,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:12px}
+.srv-name{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:6px}
+.srv-desc{font-size:12px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:10px}
+.srv-more-body{max-height:0;overflow:hidden;transition:max-height .35s ease;font-size:12px;color:rgba(255,255,255,.45);line-height:1.6}
+.srv-more-body.open{max-height:200px}
+.srv-feat{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;font-size:11.5px;color:rgba(255,255,255,.5)}
+.srv-feat::before{content:'✓';color:var(--lime);flex-shrink:0;font-weight:700}
+@media(max-width:540px){.services-grid{grid-template-columns:1fr}}
+
+
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.pain-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;transition:all .3s;position:relative}
+.pain-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pain-ico{width:34px;height:34px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.14);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.pain-title{font-size:14px;font-weight:700;line-height:1.25}
+.pain-desc{font-size:12px;color:var(--w3);line-height:1.6;margin-bottom:12px}
+.pain-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.18);color:var(--lime);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none}
+.pain-grid{grid-template-columns:1fr 1fr}
+.pain-grid{grid-template-columns:1fr}
+.proc-list{display:flex;flex-direction:column;gap:0;margin-top:28px;position:relative}
+.proc-item{display:flex;gap:16px;padding-bottom:24px;position:relative;z-index:1}
+.proc-num{width:46px;height:46px;background:rgba(154,255,0,.1);border:2px solid rgba(154,255,0,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--lime);flex-shrink:0;box-shadow:0 0 14px rgba(154,255,0,.2),inset 0 0 10px rgba(154,255,0,.05)}
+.proc-body{padding-top:10px}
+.proc-t{font-size:15px;font-weight:700;margin-bottom:4px}
+.proc-d{font-size:13px;color:var(--w3);line-height:1.65}
+
+button,a,[onclick]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bl,.tar-cta,.pain-btn,.hero-cta,.nav-cta,.tc-btn,.tc-what-head,.tar-toggle,.faq-q,.okf-t,.h-stat,.tar-cta{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tc-sec-head,.tc-sec,.tl-item button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+
+.vc-wrap:active{cursor:grabbing}
+.vc-item:hover,.vc-item.playing{border-color:var(--lime);box-shadow:0 0 18px rgba(154,255,0,.2)}
+.vc-item video{width:100%;height:100%;object-fit:cover;display:block}
+.vc-play svg{color:var(--lime);margin-left:2px}
+.vc-item.playing .vc-overlay{opacity:0}
+</style>
+</head>
+<body>
+<div class="pb" id="pb"></div>
+<canvas id="bg"></canvas>
+<canvas id="hcv" style="display:none"></canvas>
+<span id="cnt-1m" style="display:none"></span><span id="cnt-dm" style="display:none"></span><div id="reviewsTrack" style="display:none"></div>
+<nav class="nav" id="nav">
+  <a href="/" class="nav-logo"><img src="media/logo.png" alt="OKO"><div><div class="nav-logo-t">OKO TEAM</div><div class="nav-logo-s">Разработка</div></div></a>
+  <div class="nav-links">
+    <a href="#services" class="nav-a">Боли</a>
+    <a href="#how" class="nav-a">Как работаем</a>
+    <a href="#tariffs" class="nav-a">Тарифы</a>
+    <a href="#reviews" class="nav-a">Отзывы</a>
+    <a href="#faq" class="nav-a">FAQ</a>
+    <a href="/" class="nav-a">← Главная</a>
+  </div>
+  <a href="#tariffs" class="nav-cta" id="nav-cta">РАЗРАБОТАТЬ →</a>
+  <button class="ham" id="ham" onclick="toggleNav()">☰</button>
+</nav>
+<div class="mob-nav" id="mob">
+  <a href="#pain" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>Боли</a>
+  <a href="#how" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>Как работаем</a>
+  <a href="#tariffs" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Тарифы</a>
+  <a href="#reviews" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Отзывы</a>
+  <a href="#faq" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg>FAQ</a>
+  <a href="#cta" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Начать рост</a>
+  <a href="https://t.me/ktodaniel" target="_blank" class="nav-cta" onclick="closeMob()">Написать Даниэлю →</a>
+</div>
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <h1 class="hero-title rv">WEB <span class="lime">РАЗРАБОТКА</span></h1>
+    <div class="hero-sub rv" style="display:flex;align-items:center;justify-content:center;gap:12px">
+      <img src="media/daniel-photo1.jpg" loading="lazy" style="width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--lime);box-shadow:0 0 14px rgba(154,255,0,0.25);flex-shrink:0">
+      <span>Даниэля Ильясова</span>
+    </div>
+        <div class="hero-phones-block rv">
+      <!-- Иконки технологий -->
+      <div class="phi-soc phi-s1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div>
+      <div class="phi-soc phi-s2"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.69 7.96c-.12.58-.46.72-.93.45l-2.56-1.88-1.23 1.19c-.14.14-.25.25-.51.25l.18-2.6 4.72-4.26c.2-.18-.05-.28-.32-.1L7.24 14.6l-2.52-.79c-.54-.17-.55-.54.12-.8l9.88-3.81c.45-.16.84.11.92.6z"/></svg></div>
+      <div class="phi-soc phi-s3"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+      <div class="phi-soc phi-s4"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+      <div class="phi-soc phi-s5"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+      <div class="phi-ai phi-ai1">API</div>
+      <div class="phi-ai phi-ai2">DEV</div>
+
+      <!-- Телефон левый — лендинг -->
+      <div class="phi phi-left">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">Лендинг</div></div>
+          <div style="display:flex;flex-direction:column;gap:3px;flex:1;padding:4px 0">
+            <div style="height:6px;background:rgba(154,255,0,.25);border-radius:2px;width:90%"></div>
+            <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;width:70%"></div>
+            <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;width:80%"></div>
+            <div style="height:18px;background:rgba(154,255,0,.12);border:1px solid rgba(154,255,0,.2);border-radius:4px;margin-top:4px;display:flex;align-items:center;justify-content:center">
+              <div style="height:3px;background:var(--lime);border-radius:1px;width:50%"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:3px">
+              <div style="height:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px"></div>
+              <div style="height:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:3px"></div>
+            </div>
+          </div>
+          <div class="phi-sub"><div class="phi-sub-n" style="color:var(--lime)">8.4%</div><div class="phi-sub-l">конверсия</div></div>
+        </div>
+      </div>
+
+      <!-- Телефон центральный — Telegram бот -->
+      <div class="phi phi-center">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">Бот OKO</div><div class="phi-fl">BOT</div></div>
+          <div class="phi-vid" style="padding:6px 5px;display:flex;flex-direction:column;gap:4px">
+            <div style="background:rgba(154,255,0,.08);border-radius:8px 8px 2px 8px;padding:5px 7px;font-size:7px;color:rgba(255,255,255,.7);line-height:1.4;align-self:flex-end;max-width:90%">Привет! Нужен сайт или бот?</div>
+            <div style="background:rgba(255,255,255,.06);border-radius:2px 8px 8px 8px;padding:5px 7px;font-size:7px;color:rgba(255,255,255,.7);line-height:1.4;align-self:flex-start;max-width:90%">Хочу лендинг для кофейни 🔥</div>
+            <div style="background:rgba(154,255,0,.08);border-radius:8px 8px 2px 8px;padding:5px 7px;font-size:7px;color:rgba(255,255,255,.7);line-height:1.4;align-self:flex-end;max-width:90%">Отлично! Заполните анкету →</div>
+            <div style="display:flex;gap:3px;margin-top:2px">
+              <div style="flex:1;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.2);border-radius:4px;padding:3px 5px;font-size:6px;color:var(--lime);text-align:center">Анкета</div>
+              <div style="flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:3px 5px;font-size:6px;color:rgba(255,255,255,.4);text-align:center">Цены</div>
+            </div>
+            <div class="phi-bar"><div class="phi-bar-f"></div></div>
+          </div>
+          <div class="phi-stat">24/7 авто</div>
+        </div>
+      </div>
+
+      <!-- Телефон правый — приложение -->
+      <div class="phi phi-right">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">Приложение</div></div>
+          <div style="display:flex;flex-direction:column;gap:3px;flex:1;padding:4px 0">
+            <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+              <div style="font-size:6px;color:rgba(154,255,0,.7);font-family:Onest,sans-serif;text-transform:uppercase">Клиенты</div>
+              <div style="font-size:7px;font-family:Unbounded,sans-serif;font-weight:900;color:#fff">142</div>
+            </div>
+            <div style="height:2px;background:rgba(154,255,0,.1);border-radius:1px"><div style="height:100%;width:78%;background:var(--lime);border-radius:1px"></div></div>
+            <div style="display:flex;flex-direction:column;gap:2px;margin-top:3px">
+              <div style="background:rgba(255,255,255,.04);border-radius:3px;padding:3px 5px;font-size:6px;color:rgba(255,255,255,.5)">Иван · Заявка · 14:32</div>
+              <div style="background:rgba(154,255,0,.05);border:1px solid rgba(154,255,0,.1);border-radius:3px;padding:3px 5px;font-size:6px;color:rgba(154,255,0,.8)">Мария · Оплата ✓</div>
+              <div style="background:rgba(255,255,255,.04);border-radius:3px;padding:3px 5px;font-size:6px;color:rgba(255,255,255,.5)">Сергей · Заявка · 15:10</div>
+            </div>
+          </div>
+          <div class="phi-sub"><div class="phi-sub-n">50+</div><div class="phi-sub-l">проектов</div></div>
+        </div>
+      </div>
+    </div>
+
+<div class="hero-stats rv">
+      <a href="https://t.me/okoreviews" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><div class="h-stat-n" data-count="15" data-suffix="К+">0К+</div></div>
+        <div class="h-stat-l">клиентов</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/okocase" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><div class="h-stat-n" data-count="10" data-prefix="$" data-suffix="М+">$0М+</div></div>
+        <div class="h-stat-l">прибыли</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><div class="h-stat-n" data-count="1.5" data-suffix="МЛД+" data-step="0.1" data-decimals="1">0МЛД+</div></div>
+        <div class="h-stat-l">просмотров</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div class="h-stat-n" data-count="40" data-suffix="+">0+</div></div>
+        <div class="h-stat-l">в команде</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    </div>
+    <a href="#tariffs" class="hero-cta rv" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:#000;font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;padding:16px 28px;border-radius:14px;text-decoration:none;margin:0 auto;max-width:360px;transition:all .2s">РАЗРАБОТАТЬ →</a>
+    <p class="rv" style="text-align:center;font-size:11px;color:rgba(255,255,255,0.35);margin-top:16px">Сайты · Лендинги · Telegram-боты · Приложения · Интеграции</p>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="portfolio" id="portfolio" style="padding:56px 0">
+  <div class="wrap"><div class="sec-lbl rv">Примеры работ</div><h2 class="sec-h rv">Готовые проекты наших клиентов</h2></div>
+  <div class="port-wrap rv" id="portWrap" style="padding:0 16px;margin-top:0">
+    <div class="port-track" id="portTrack">
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Коптилыч · Магазин</div><div class="port-links"><a href="http://koptylich.ru/meat" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт · UK</div><div class="port-name">MCR Floor Care</div><div class="port-links"><a href="http://mcrfloorcare.co.uk" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-хаб.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Хаб · Сайт</div><div class="port-name">Бриус TEAM</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть хаб →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/миндос-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">MindOS</div><div class="port-links"><a href="https://okoteam.top/media/mindOS-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/катя-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Ekaterina</div><div class="port-links"><a href="https://okoteam.top/media/Ekaterina-sistem" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/сансаныч-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">Сан Саныч</div><div class="port-links"><a href="https://okoteam.top/media/sansanych-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/приложение-отпбанк.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Приложение</div><div class="port-name">ОТП Банк</div><div class="port-links"><a href="https://okoteam.top/media/otp-bank" target="_blank" class="port-link">Посмотреть →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO · UK</div><div class="port-name">MCR · Система</div><div class="port-links"><a href="http://mcrfloorcare.co.uk/sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">Коптилыч · Система</div><div class="port-links"><a href="http://koptylich.ru/sistema" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Бриус · Сайт</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <!-- duplicates for infinite loop -->
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Коптилыч · Магазин</div><div class="port-links"><a href="http://koptylich.ru/meat" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт · UK</div><div class="port-name">MCR Floor Care</div><div class="port-links"><a href="http://mcrfloorcare.co.uk" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-хаб.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Хаб · Сайт</div><div class="port-name">Бриус TEAM</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть хаб →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/миндос-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">MindOS</div><div class="port-links"><a href="https://okoteam.top/media/mindOS-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/катя-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Ekaterina</div><div class="port-links"><a href="https://okoteam.top/media/Ekaterina-sistem" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+    </div>
+  </div></section>
+<div class="sec-sep"></div>
+<section class="services" id="services" style="padding:56px 0">
+<div class="wrap">
+  <div class="rv">
+    <div class="sec-lbl">Что делаем</div>
+    <h2 class="sec-h">Полный стек <span style="color:var(--lime)">цифровых продуктов</span></h2>
+    <p class="sec-p">Разрабатываем всё для онлайн-присутствия вашего бизнеса.</p>
+  </div>
+  <div class="pain-grid rv" style="margin-top:24px">
+<div class="pain-card rv">
+        <div class="pain-head">
+          <div class="pain-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+          <div class="pain-title">Сайты и лендинги</div>
+        </div>
+        <div class="pain-desc">Продающие страницы которые конвертируют посетителей в клиентов.</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Уникальный дизайн под ваш бренд</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Адаптив для всех устройств</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>SEO-оптимизация с первого дня</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Передача исходников и прав</div></div>
+      </div>
+<div class="pain-card rv">
+        <div class="pain-head">
+          <div class="pain-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+          <div class="pain-title">Telegram-боты</div>
+        </div>
+        <div class="pain-desc">Автоматизация продаж и общения с клиентами 24/7.</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Сбор заявок и квалификация клиентов</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Интеграция с оплатой и CRM</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Рассылки и уведомления</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Инструкция и управление</div></div>
+      </div>
+<div class="pain-card rv">
+        <div class="pain-head">
+          <div class="pain-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <div class="pain-title">Приложения</div>
+        </div>
+        <div class="pain-desc">Веб и мобильные приложения под вашу бизнес-задачу.</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Личный кабинет для клиентов</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Система учёта или CRM</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>API и интеграции сервисов</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Поддержка и обновления</div></div>
+      </div>
+<div class="pain-card rv">
+        <div class="pain-head">
+          <div class="pain-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>
+          <div class="pain-title">Интеграции</div>
+        </div>
+        <div class="pain-desc">Связываем сайт, бота, CRM и аналитику в одну систему.</div>
+        <div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>AmoCRM, Bitrix24, Google Sheets</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Webhook и API интеграции</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Автоматизация бизнес-процессов</div><div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Дашборды и аналитика</div></div>
+      </div>
+  </div>
+</div>
+</section>
+<div class="sec-sep"></div>
+<section class="tariffs" id="tariffs" style="padding:56px 0">
+<div class="wrap">
+  <div class="rv">
+    <div class="sec-lbl">Стоимость</div>
+    <h2 class="sec-h">Цены на <span style="color:var(--lime)">разработку</span></h2>
+    <p class="sec-p">Фиксированная стоимость. Нажмите "Что входит" чтобы увидеть детали.</p>
+  </div>
+  <div class="tar-list rv">
+<div class="tar-card" id="tar-landing">
+        <div class="tar-inner">
+          <div class="tar-top">
+            <div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="tar-info">
+              <div class="tar-lbl">Лендинг</div>
+              <div class="tar-name">ЛЕНДИНГ</div>
+              <div class="tar-sub">1 страница · продажи с первого дня</div>
+            </div>
+          </div>
+          <div class="tar-price-row">
+            <div class="tar-price">от 3 000 ₽</div>
+            <div class="tar-price-sub">под ключ · 3–5 дней</div>
+          </div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)">
+            <div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div>
+            <div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="tar-content">
+            <div class="tar-subs"><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Состав работ</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Дизайн 1 страницы под ваш бренд</div><div class="tar-sub-feat">Адаптивная верстка</div><div class="tar-sub-feat">Форма заявки с интеграцией</div><div class="tar-sub-feat">SEO-мета теги</div><div class="tar-sub-feat">Хостинг и домен — помогаем подключить</div></div></div>
+            </div></div>
+            <div class="tar-sub-item" onclick="toggleTarSub(this)" style="border-color:rgba(255,200,0,.15)">
+              <div class="tar-sub-head" style="padding:10px 0">
+                <div class="tar-sub-left" style="color:rgba(255,200,0,.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div>
+                <div class="tar-sub-xi" style="border-color:rgba(255,200,0,.25);color:rgba(255,200,0,.7)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body">
+                <div class="tar-sub-feats" style="padding-bottom:8px"><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Консультация по тексту для страницы</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Подключение Яндекс.Метрики</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>1 правка после сдачи</div></div>
+              </div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="OKF.open('web')">РАЗРАБОТАТЬ →</button>
+        </div>
+      </div>
+<div class="tar-card" id="tar-bot">
+        <div class="tar-inner">
+          <div class="tar-top">
+            <div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+            <div class="tar-info">
+              <div class="tar-lbl">Telegram-бот</div>
+              <div class="tar-name">БОТ</div>
+              <div class="tar-sub">Автоматические продажи 24/7</div>
+            </div>
+          </div>
+          <div class="tar-price-row">
+            <div class="tar-price">от 5 000 ₽</div>
+            <div class="tar-price-sub">под ключ · 5–7 дней</div>
+          </div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)">
+            <div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div>
+            <div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="tar-content">
+            <div class="tar-subs"><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Состав работ</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Бот для сбора заявок и продаж</div><div class="tar-sub-feat">Меню, кнопки, автоответы</div><div class="tar-sub-feat">Уведомления при новой заявке</div><div class="tar-sub-feat">Интеграция с Google Sheets или CRM</div><div class="tar-sub-feat">Инструкция по управлению</div></div></div>
+            </div><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Дополнительно</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Рассылка по базе подписчиков</div><div class="tar-sub-feat">Интеграция с оплатой (Lava, ЮKassa)</div><div class="tar-sub-feat">Мини-лендинг внутри бота</div></div></div>
+            </div></div>
+            <div class="tar-sub-item" onclick="toggleTarSub(this)" style="border-color:rgba(255,200,0,.15)">
+              <div class="tar-sub-head" style="padding:10px 0">
+                <div class="tar-sub-left" style="color:rgba(255,200,0,.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div>
+                <div class="tar-sub-xi" style="border-color:rgba(255,200,0,.25);color:rgba(255,200,0,.7)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body">
+                <div class="tar-sub-feats" style="padding-bottom:8px"><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Месяц поддержки и правок</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Настройка рассылки по базе</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>1 дополнительная сценарная ветка</div></div>
+              </div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="OKF.open('web')">РАЗРАБОТАТЬ →</button>
+        </div>
+      </div>
+<div class="tar-card featured" id="tar-site">
+        <div class="tar-inner">
+          <div class="tar-top">
+            <div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg></div>
+            <div class="tar-info">
+              <div class="tar-lbl">Сайт</div>
+              <div class="tar-name">САЙТ</div>
+              <div class="tar-sub">До 5 страниц · профессионально<span class="tar-hit">ХИТ</span></div>
+            </div>
+          </div>
+          <div class="tar-price-row">
+            <div class="tar-price">от 10 000 ₽</div>
+            <div class="tar-price-sub">под ключ · 7–14 дней</div>
+          </div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)">
+            <div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div>
+            <div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="tar-content">
+            <div class="tar-subs"><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>Состав работ</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">До 5 страниц с уникальным дизайном</div><div class="tar-sub-feat">Адаптив, скорость, SEO</div><div class="tar-sub-feat">Формы заявок и обратной связи</div><div class="tar-sub-feat">CMS — редактируете сами</div></div></div>
+            </div><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Дополнительно</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Интеграция с CRM на выбор</div><div class="tar-sub-feat">Блог или каталог по запросу</div><div class="tar-sub-feat">SSL сертификат, счётчики аналитики</div></div></div>
+            </div></div>
+            <div class="tar-sub-item" onclick="toggleTarSub(this)" style="border-color:rgba(255,200,0,.15)">
+              <div class="tar-sub-head" style="padding:10px 0">
+                <div class="tar-sub-left" style="color:rgba(255,200,0,.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div>
+                <div class="tar-sub-xi" style="border-color:rgba(255,200,0,.25);color:rgba(255,200,0,.7)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body">
+                <div class="tar-sub-feats" style="padding-bottom:8px"><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>2 месяца поддержки</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Обучение работе с CMS</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Правки в течение 30 дней</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Резервное копирование</div></div>
+              </div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="OKF.open('web')">РАЗРАБОТАТЬ →</button>
+        </div>
+      </div>
+<div class="tar-card" id="tar-app">
+        <div class="tar-inner">
+          <div class="tar-top">
+            <div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+            <div class="tar-info">
+              <div class="tar-lbl">Приложение</div>
+              <div class="tar-name">ПРИЛОЖЕНИЕ</div>
+              <div class="tar-sub">Веб-приложение под задачу</div>
+            </div>
+          </div>
+          <div class="tar-price-row">
+            <div class="tar-price">от 15 000 ₽</div>
+            <div class="tar-price-sub">индивидуально · от 14 дней</div>
+          </div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)">
+            <div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div>
+            <div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="tar-content">
+            <div class="tar-subs"><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Состав работ</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Анализ задачи и прототип</div><div class="tar-sub-feat">Фронтенд + бэкенд разработка</div><div class="tar-sub-feat">База данных и API</div><div class="tar-sub-feat">Авторизация и личный кабинет</div><div class="tar-sub-feat">Деплой и настройка сервера</div></div></div>
+            </div><div class="tar-sub-item" onclick="toggleTarSub(this)">
+              <div class="tar-sub-head">
+                <div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Технологии</div>
+                <div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">HTML/CSS/JS, React или Vue</div><div class="tar-sub-feat">PHP / Node.js на бэкенде</div><div class="tar-sub-feat">MySQL / PostgreSQL</div><div class="tar-sub-feat">Telegram Mini App по запросу</div></div></div>
+            </div></div>
+            <div class="tar-sub-item" onclick="toggleTarSub(this)" style="border-color:rgba(255,200,0,.15)">
+              <div class="tar-sub-head" style="padding:10px 0">
+                <div class="tar-sub-left" style="color:rgba(255,200,0,.9)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div>
+                <div class="tar-sub-xi" style="border-color:rgba(255,200,0,.25);color:rgba(255,200,0,.7)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="tar-sub-body">
+                <div class="tar-sub-feats" style="padding-bottom:8px"><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>3 месяца поддержки</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Документация по проекту</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Обучение команды</div><div style="display:flex;align-items:flex-start;gap:7px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,200,0,0.85)" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><polyline points="20 6 9 17 4 12"/></svg>Масштабирование по потребности</div></div>
+              </div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="OKF.open('web')">РАЗРАБОТАТЬ →</button>
+        </div>
+      </div>
+  </div>
+  <p class="rv" style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,0.3)">Нестандартная задача? <button onclick="OKF.open('web')" style="background:none;border:none;color:var(--lime);cursor:pointer;font-size:12px;font-weight:700;font-family:Onest,sans-serif">Обсудим →</button></p>
+</div>
+</section>
+<div class="sec-sep"></div>
+<section class="reviews" id="reviews" style="padding:56px 0">
+  <div class="wrap">
+    <div class="sec-lbl rv">Отзывы клиентов</div>
+    <h2 class="sec-h rv">Они уже работают с OKO TEAM</h2>
+    <div class="vc-wrap rv" id="vcWrap">
+      <div class="vc-track" id="vcTrack">
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+      </div>
+    </div>
+    <div class="audio-rev rv" onclick="toggleAudio()">
+      <div class="ar-btn"><svg id="arIco" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="ar-info"><div class="ar-name">Коптилыч</div><div class="ar-sub">Голосовой отзыв · 0:38</div></div>
+      <div class="ar-wave" id="arWave"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+      <audio id="audioEl" src="media/коптилыч-гс.ogg" preload="none"></audio>
+    </div>
+    <div class="rev-wrap rv" id="revWrap">
+      <div class="rev-track" id="revTrack">
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Лендинг за 5 дней — 12 заявок в первую неделю. Конверсия 8.4% против 1.2% на старом сайте."</div><div class="rev-author"><div class="rev-ava">А</div><div><div class="rev-name">Александр</div><div class="rev-role">Недвижимость · Лендинг OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Telegram-бот заменил менеджера. Собирает заявки 24/7 автоматически."</div><div class="rev-author"><div class="rev-ava">М</div><div><div class="rev-name">Марина</div><div class="rev-role">Онлайн-школа · Бот OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Сайт за 10 дней. PageSpeed 98. Клиенты говорят — выглядит дорого."</div><div class="rev-author"><div class="rev-ava">Д</div><div><div class="rev-name">Денис</div><div class="rev-role">Юридические услуги · Сайт OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Приложение для учёта клиентов. База в одном месте, работа в 3 раза быстрее."</div><div class="rev-author"><div class="rev-ava">С</div><div><div class="rev-name">Сергей</div><div class="rev-role">Сервисный центр · Приложение OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Лендинг окупился за первую неделю. Чётко по ТЗ, в срок, без доплат."</div><div class="rev-author"><div class="rev-ava">Н</div><div><div class="rev-name">Наталья</div><div class="rev-role">Косметология · Лендинг OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Бот для записи. Запись онлайн, напоминания, оплата — всё сам."</div><div class="rev-author"><div class="rev-ava">К</div><div><div class="rev-name">Карина</div><div class="rev-role">Nail-студия · Бот OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"После сдачи месяц правили без доплат. Честная команда."</div><div class="rev-author"><div class="rev-ava">В</div><div><div class="rev-name">Виктор</div><div class="rev-role">Строительство · Сайт OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Бот с AmoCRM. Каждая заявка автоматически в CRM."</div><div class="rev-author"><div class="rev-ava">И</div><div><div class="rev-name">Илья</div><div class="rev-role">Агентство · Интеграция OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Лендинг за 3 500 ₽. 12 заявок за неделю."</div><div class="rev-author"><div class="rev-ava">А</div><div><div class="rev-name">Александр</div><div class="rev-role">OKO WEB</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Бот 24/7. Полностью заменил менеджера."</div><div class="rev-author"><div class="rev-ava">М</div><div><div class="rev-name">Марина</div><div class="rev-role">OKO WEB</div></div></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px" class="rv"><a href="https://t.me/okoreviews" target="_blank" class="rev-more"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>БОЛЬШЕ ОТЗЫВОВ →</a></div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="how" id="how" style="padding:56px 0">
+<div class="wrap">
+  <div class="rv">
+    <div class="sec-lbl">Процесс</div>
+    <h2 class="sec-h">Как мы <span style="color:var(--lime)">работаем</span></h2>
+    <p class="sec-p">Прозрачно — вы видите каждый этап и получаете проект точно в срок.</p>
+  </div>
+  <div class="proc-list rv" style="margin-top:28px">
+      <div class="proc-item rv">
+        <div class="proc-num">1</div>
+        <div class="proc-body">
+          <div class="proc-t">Бриф и анализ</div>
+          <div class="proc-d">Заполняете анкету. Изучаем задачу, нишу, конкурентов. Определяем стек технологий и финальную стоимость.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Анкета</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Анализ ниши</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">ТЗ</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Смета</span></div>
+        </div>
+      </div>
+      <div class="proc-item rv">
+        <div class="proc-num">2</div>
+        <div class="proc-body">
+          <div class="proc-t">Дизайн и согласование</div>
+          <div class="proc-d">Создаём макет в Figma. Показываем, принимаем правки, согласовываем. К разработке переходим только после вашего одобрения.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Макет Figma</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Мобайл версия</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Правки</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Согласование</span></div>
+        </div>
+      </div>
+      <div class="proc-item rv">
+        <div class="proc-num">3</div>
+        <div class="proc-body">
+          <div class="proc-t">Разработка</div>
+          <div class="proc-d">Верстаем и программируем строго по макету. Каждый день показываем прогресс в чате.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Вёрстка</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Бэкенд</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">CMS</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">API</span></div>
+        </div>
+      </div>
+      <div class="proc-item rv">
+        <div class="proc-num">4</div>
+        <div class="proc-body">
+          <div class="proc-t">Тестирование</div>
+          <div class="proc-d">Проверяем на всех устройствах, браузерах и скоростях. Правим до идеала.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Кросс-браузер</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Мобайл</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Скорость</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Формы</span></div>
+        </div>
+      </div>
+      <div class="proc-item rv">
+        <div class="proc-num">5</div>
+        <div class="proc-body">
+          <div class="proc-t">Сдача и поддержка</div>
+          <div class="proc-d">Передаём исходники, все доступы и инструкцию. Помогаем с хостингом. Остаёмся на связи.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Исходники</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Инструкция</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Деплой</span><span style="background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.8);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px">Поддержка</span></div>
+        </div>
+      </div>
+  </div>
+</div>
+</section>
+<div class="sec-sep"></div>
+<section class="faq" id="faq" style="padding:56px 0">
+<div class="wrap">
+  <div class="rv"><div class="sec-lbl">FAQ</div><h2 class="sec-h">Частые <span style="color:var(--lime)">вопросы</span></h2></div>
+  <div class="faq-list rv">
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Сколько времени занимает разработка?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Лендинг — 3–5 дней. Бот — 5–7 дней. Сайт — 7–14 дней. Приложение — от 14 дней.</div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Цены фиксированные?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да. После согласования ТЗ цена не меняется. Новый функционал — обсуждаем отдельно.</div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Передаёте исходники и права?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, полностью. После оплаты — все файлы, доступы к хостингу и домену.</div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Какие технологии используете?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">HTML/CSS/JS, React, PHP/Node.js, MySQL. Telegram Bot API для ботов.</div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Есть ли поддержка после сдачи?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Лендинг — 1 месяц. Сайт — 2 месяца. Приложение — 3 месяца.</div></div>
+<div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Можно доработать готовый сайт?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да. Оцениваем объём и называем стоимость.</div></div>
+  </div>
+</div>
+</section>
+<div class="sec-sep"></div>
+<section class="cta-f" id="cta" style="padding:56px 0">
+<div class="wrap">
+  <div style="text-align:center" class="rv">
+    <img src="media/daniel-photo1.jpg" loading="lazy" style="width:72px;height:72px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--lime);box-shadow:0 0 20px rgba(154,255,0,.25);display:block;margin:0 auto 18px">
+    <div class="sec-lbl">Начать</div>
+    <h2 class="sec-h">Готовы <span style="color:var(--lime)">разработать</span>?</h2>
+    <p class="sec-p" style="max-width:420px;margin:0 auto 28px">Опишите задачу — рассчитаем стоимость и сроки за 2 часа.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button onclick="OKF.open('web')" style="background:var(--lime);color:#000;border:none;padding:14px 24px;border-radius:12px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;cursor:pointer;transition:opacity .2s">РАЗРАБОТАТЬ →</button>
+      <a href="https://t.me/ktodaniel" target="_blank" style="background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.1);padding:14px 24px;border-radius:12px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Написать Даниэлю</a>
+    </div>
+  </div>
+</div>
+</section>
+<div id="okf-overlay" style="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px"><div id="okf-modal" style="background:#0d0d0d;border:1px solid rgba(154,255,0,0.2);border-radius:20px;width:100%;max-width:420px;padding:28px 24px;position:relative;max-height:92vh;overflow-y:auto"><button onclick="OKF.close()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.06);border:none;color:rgba(255,255,255,0.5);width:30px;height:30px;border-radius:50%;cursor:pointer">✕</button><div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:8px">РАЗРАБОТКА</div><div style="font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;color:#fff;margin-bottom:6px">Обсудим проект</div><div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px">Опишите задачу — рассчитаем стоимость</div><div style="display:flex;flex-direction:column;gap:12px"><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Имя *</label><input id="okf-name" type="text" placeholder="Как вас зовут?" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Email *</label><input id="okf-email" type="email" placeholder="your@email.com" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Телефон *</label><input id="okf-phone" type="tel" placeholder="+7 999 000-00-00" oninput="OKF.maskPhone(this)" onkeydown="OKF.phoneKey(event,this)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Telegram</label><input id="okf-tg" type="text" placeholder="@username" oninput="OKF.maskTg(this)" onfocus="OKF.tgFocus(this)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Тип проекта</label><select id="okf-proj" style="width:100%;background:rgba(30,30,30,1);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"><option value="">Выберите</option><option>Лендинг</option><option>Telegram-бот</option><option>Сайт</option><option>Приложение</option><option>Интеграция</option><option>Другое</option></select></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Описание задачи</label><textarea id="okf-desc" placeholder="Опишите что нужно..." rows="3" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box;resize:vertical"></textarea></div><div><label style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);display:block;margin-bottom:5px">Бюджет</label><select id="okf-budget" style="width:100%;background:rgba(30,30,30,1);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;box-sizing:border-box"><option value="">Не определён</option><option>3 000 — 5 000 ₽</option><option>5 000 — 10 000 ₽</option><option>10 000 — 20 000 ₽</option><option>от 20 000 ₽</option></select></div></div><div id="okf-err" style="margin-top:10px;font-size:12px;color:#ff4444;display:none"></div><button id="okf-btn" onclick="OKF.submit()" style="width:100%;background:var(--lime);color:#000;border:none;padding:14px;border-radius:12px;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;cursor:pointer;margin-top:16px">РАЗРАБОТАТЬ →</button></div></div><style>#okf-overlay.open{display:flex!important}#okf-modal input:focus,#okf-modal textarea:focus,#okf-modal select:focus{border-color:rgba(154,255,0,0.4)!important}</style>
+<script>
+
+// COUNTER ANIMATION
+function animateCounter(el) {
+  var target = parseInt(el.getAttribute('data-count') || '0');
+  var suffix = el.getAttribute('data-suffix') || '';
+  var prefix = el.getAttribute('data-prefix') || '';
+  var duration = 2000;
+  var start = 0;
+  var startTime = null;
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    var progress = Math.min((timestamp - startTime) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var current = Math.floor(eased * target);
+    el.textContent = prefix + current.toLocaleString('ru') + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = prefix + target.toLocaleString('ru') + suffix;
+  }
+  requestAnimationFrame(step);
+}
+// Animate static text counters
+function animateTextCounter(el, finalText, duration) {
+  var chars = '0123456789';
+  var steps = 20;
+  var interval = duration / steps;
+  var count = 0;
+  var timer = setInterval(function() {
+    count++;
+    if (count >= steps) { el.textContent = finalText; clearInterval(timer); return; }
+    var scrambled = finalText.replace(/[0-9]/g, function() { return chars[Math.floor(Math.random()*chars.length)]; });
+    el.textContent = scrambled;
+  }, interval);
+}
+// Intersection Observer for counters
+var counterObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting && !entry.target.dataset.animated) {
+      entry.target.dataset.animated = '1';
+      var el = entry.target;
+      if (el.getAttribute('data-count')) {
+        animateCounter(el);
+      } else {
+        var finalText = el.textContent;
+        animateTextCounter(el, finalText, 1500);
+      }
+    }
+  });
+}, { threshold: 0.5 });
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.h-stat-n').forEach(function(el) {
+    counterObserver.observe(el);
+  });
+});
+
+// PROGRESS BAR
+window.addEventListener('scroll',function(){
+  var h=document.documentElement;
+  var p=(h.scrollTop||document.body.scrollTop)/(h.scrollHeight-h.clientHeight)*100;
+  document.getElementById('pb').style.width=p+'%';
+  var scrolled=window.scrollY>180;
+  document.getElementById('nav').classList.toggle('scrolled',scrolled);
+  document.getElementById('nav-cta').classList.toggle('show',scrolled);
+});
+
+// GLOBAL CANVAS — particles + attraction + ripple
+(function(){
+  var c=document.getElementById('bg');if(!c)return;var ctx=c.getContext('2d');
+  var W,H,pts=[],ripples=[],mx=-9999,my=-9999,t=0;
+  function init(){
+    W=c.width=window.innerWidth;H=c.height=window.innerHeight;
+    pts=[];
+    var n=Math.floor(W*H/10000);
+    for(var i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:.6+Math.random()*1.4,op:.05+Math.random()*.18});
+  }
+  window.addEventListener('resize',init);init();
+  window.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});
+  function addRipple(x,y){ripples.push({x:x,y:y,r:0,op:.45,sp:3.5+Math.random()*2});}
+  window.addEventListener('click',function(e){addRipple(e.clientX,e.clientY);});
+  window.addEventListener('touchstart',function(e){var t=e.touches[0];addRipple(t.clientX,t.clientY);mx=t.clientX;my=t.clientY;},{passive:true});
+  window.addEventListener('touchmove',function(e){var t=e.touches[0];mx=t.clientX;my=t.clientY;},{passive:true});
+  window.addEventListener('touchend',function(){mx=-9999;my=-9999;});
+  var ATTR=160,FORCE=.035;
+  function draw(){
+    requestAnimationFrame(draw);t+=.009;
+    ctx.fillStyle='rgba(5,5,5,0.07)';ctx.fillRect(0,0,W,H);
+    // ambient
+    var g=ctx.createRadialGradient(W/2,H*.4,0,W/2,H*.4,Math.min(W,H)*.45);
+    g.addColorStop(0,'rgba(70,150,0,0.035)');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // ripples
+    for(var i=ripples.length-1;i>=0;i--){
+      var rp=ripples[i];rp.r+=rp.sp;rp.op-=.007;
+      if(rp.op<=0){ripples.splice(i,1);continue;}
+      ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(154,255,0,'+rp.op.toFixed(3)+')';ctx.lineWidth=1.3;ctx.stroke();
+      if(rp.r>40){ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r*.55,0,Math.PI*2);
+        ctx.strokeStyle='rgba(154,255,0,'+(rp.op*.45).toFixed(3)+')';ctx.lineWidth=.7;ctx.stroke();}
+    }
+    // particles
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      var dx=mx-p.x,dy=my-p.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<ATTR&&d>1){var f=FORCE*(1-d/ATTR);p.vx+=dx/d*f;p.vy+=dy/d*f;}
+      p.vx*=.965;p.vy*=.965;
+      p.vx+=(Math.random()-.5)*.03;p.vy+=(Math.random()-.5)*.03;
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      for(var j=i+1;j<pts.length;j++){
+        var q=pts[j],cdx=p.x-q.x,cdy=p.y-q.y,cd=Math.sqrt(cdx*cdx+cdy*cdy);
+        if(cd<130){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle='rgba(154,255,0,'+(0.07*(1-cd/130)).toFixed(3)+')';ctx.lineWidth=.5;ctx.stroke();}
+      }
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(154,255,0,'+p.op+')';ctx.fill();
+    }
+  }
+  draw();
+})();
+
+// HERO ORBITAL CANVAS
+(function(){
+  var c=document.getElementById('hcv');if(!c)return;var ctx=c.getContext('2d');
+  var W,H,nodes=[],t=0,sy=0;
+  function init(){
+    c.width=W=c.parentElement.offsetWidth||window.innerWidth;
+    c.height=H=c.parentElement.offsetHeight||window.innerHeight;
+    nodes=[];
+    var rings=[{r:70,n:5,sp:.009},{r:130,n:9,sp:-.006},{r:195,n:13,sp:.004}];
+    nodes.push({ring:-1,x:0,y:0,size:4,op:.85,pulse:0,psp:.04});
+    rings.forEach(function(rg){
+      for(var i=0;i<rg.n;i++){
+        var a=Math.PI*2/rg.n*i;
+        nodes.push({ring:rg,ang:a,r:rg.r,sp:rg.sp,size:1.2+Math.random()*2.2,op:.25+Math.random()*.45,pulse:Math.random()*Math.PI*2,psp:.015+Math.random()*.025,x:0,y:0});
+      }
+    });
+  }
+  window.addEventListener('resize',init);init();
+  window.addEventListener('scroll',function(){sy=window.scrollY;});
+  function draw(){
+    requestAnimationFrame(draw);t+=.007;
+    ctx.clearRect(0,0,W,H);
+    var fade=Math.max(0,1-sy/(H*.65));if(fade<=0)return;
+    ctx.globalAlpha=fade;
+    var cx=W/2,cy=H*.42;
+    nodes.forEach(function(n){
+      if(n.ring===-1){n.x=cx;n.y=cy;n.pulse+=n.psp;return;}
+      n.ang+=n.sp;n.pulse+=n.psp;
+      n.x=cx+Math.cos(n.ang)*n.r;
+      n.y=cy+Math.sin(n.ang)*n.r*.52;
+    });
+    // orbit ellipses
+    [70,130,195].forEach(function(r){
+      ctx.beginPath();ctx.ellipse(cx,cy,r,r*.52,0,0,Math.PI*2);
+      ctx.strokeStyle='rgba(154,255,0,0.05)';ctx.lineWidth=.5;ctx.stroke();
+    });
+    // center connections
+    var ctr=nodes[0],r0=nodes.filter(function(n){return n.ring&&n.ring.r===70;});
+    r0.forEach(function(n){
+      ctx.beginPath();ctx.moveTo(ctr.x,ctr.y);ctx.lineTo(n.x,n.y);
+      ctx.strokeStyle='rgba(154,255,0,0.07)';ctx.lineWidth=.5;ctx.stroke();
+    });
+    // r0→r1 connections
+    var r1=nodes.filter(function(n){return n.ring&&n.ring.r===130;});
+    r0.forEach(function(a){r1.forEach(function(b){
+      var dx=a.x-b.x,dy=a.y-b.y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<90){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle='rgba(154,255,0,'+(0.05*(1-d/90)).toFixed(3)+')';ctx.lineWidth=.4;ctx.stroke();}
+    });});
+    // nodes
+    nodes.forEach(function(n){
+      var ps=n.ring===-1?1:(.65+Math.sin(n.pulse)*.35);
+      var sz=n.size*ps,op=n.op*ps;
+      if(n.ring===-1){
+        var g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,18);
+        g.addColorStop(0,'rgba(154,255,0,0.25)');g.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(n.x,n.y,18,0,Math.PI*2);ctx.fill();
+      }
+      ctx.beginPath();ctx.arc(n.x,n.y,sz,0,Math.PI*2);
+      ctx.fillStyle='rgba(154,255,0,'+op.toFixed(2)+')';ctx.fill();
+    });
+    // center pulse
+    var cp=.5+Math.sin(t*1.4)*.5;
+    var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,28*cp);
+    cg.addColorStop(0,'rgba(154,255,0,'+(0.12*cp).toFixed(2)+')');cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,28*cp,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  draw();
+})();
+
+// COUNTER
+var counted=false;
+function formatNum(n){
+  if(n>=1000000)return(n/1000000).toFixed(1).replace('.0','')+'M';
+  if(n>=1000)return Math.floor(n/1000)+'K';
+  return Math.floor(n)+'';
+}
+function animCounter(el,target,suffix,special){
+  var start=0,dur=1800,steps=90,inc=target/steps;
+  var timer=setInterval(function(){
+    start+=inc;
+    if(start>=target){
+      start=target;
+      clearInterval(timer);
+      if(special==='1m')el.textContent='1M+';
+      else if(special==='dm')el.textContent='$1M';
+      else el.textContent=Math.floor(start)+suffix;
+      return;
+    }
+    if(special==='1m'||special==='dm'){
+      el.textContent=formatNum(Math.floor(start))+(special==='1m'?'+':'');
+    } else {
+      el.textContent=Math.floor(start)+suffix;
+    }
+  },dur/steps);
+}
+new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting&&!counted){
+      counted=true;
+      document.querySelectorAll('[data-count]').forEach(function(el){
+        animCounter(el,parseInt(el.dataset.count),el.dataset.suffix||'+',null);
+      });
+      var el1m=document.getElementById('cnt-1m');
+      var eldm=document.getElementById('cnt-dm');
+      if(el1m){el1m.textContent='0';animCounter(el1m,1000000,'+','1m');}
+      if(eldm){eldm.textContent='$0';animCounter(eldm,1000000,'','dm');}
+    }
+  });
+},{threshold:.3}).observe(document.querySelector('.hero-stats'));
+
+// NAV
+function toggleNav(){var m=document.getElementById('mob'),h=document.getElementById('ham');var isOpen=m.classList.toggle('open');m.style.display='flex';h.textContent=isOpen?'✕':'☰';if(!isOpen){setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}}
+function closeMob(){var m=document.getElementById('mob'),h=document.getElementById('ham');m.classList.remove('open');h.textContent='☰';setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+
+// SYS TABLE
+function toggleSys(i){
+  var card=document.getElementById('sc'+i),isOpen=card.classList.contains('open');
+  for(var k=0;k<6;k++){var c=document.getElementById('sc'+k);if(c)c.classList.remove('open');}
+  if(!isOpen)card.classList.add('open');
+}
+
+// TARIFF SECTIONS
+function toggleTcSec(el){
+  var isOpen=el.classList.contains('open');
+  var container=el.closest('.tc-what-body')||el.closest('.tc-sections');
+  if(container){container.querySelectorAll('.tc-sec').forEach(function(s){s.classList.remove('open');});}
+  if(!isOpen)el.classList.add('open');
+}
+
+// SAVINGS
+function showSav(el,price,team){
+  var s=el.querySelector('.tc-savings');
+  if(s){var saved=((team-price)/1000).toFixed(0);s.textContent='Экономия '+saved+'К ₽ vs найм команды';}
+}
+function hideSav(el){var s=el.querySelector('.tc-savings');if(s)s.textContent='';}
+
+// FAQ
+function toggleFaq(el){
+  var item=el.parentElement,isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});
+  if(!isOpen)item.classList.add('open');
+}
+
+// WHAT INCLUDES
+function toggleWhat(el){
+  var w=el.parentElement;
+  w.classList.toggle('open');
+}
+// REVEAL
+new IntersectionObserver(function(entries){
+  entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');this.unobserve(e.target);}}.bind(this));
+},{threshold:.07,rootMargin:'0px 0px -25px 0px'}).observe===undefined||
+(function(){
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});
+  },{threshold:.07,rootMargin:'0px 0px -25px 0px'});
+  document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+})();
+
+</script>
+<script>
+
+
+// ══ PORTFOLIO LAZY VIDEO LOAD ══
+(function(){
+  function loadNearby(entries){
+    entries.forEach(function(e){
+      var card=e.target;
+      var vids=card.querySelectorAll('video[data-src]');
+      vids.forEach(function(v){
+        if(e.isIntersecting){
+          if(!v.src){v.src=v.dataset.src;v.load();}
+          v.play().catch(function(){});
+        }else{
+          if(!v.paused)v.pause();
+        }
+      });
+    });
+  }
+  var portIO=new IntersectionObserver(loadNearby,{rootMargin:'200px',threshold:0});
+  function initPortObs(){
+    document.querySelectorAll('.port-card').forEach(function(c){portIO.observe(c);});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initPortObs);}
+  else{initPortObs();}
+})();
+
+
+// ══ PORTFOLIO CAROUSEL (TRUE INFINITE) ══
+(function(){
+var wrap=document.getElementById('portWrap'),track=document.getElementById('portTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.4,raf=null,paused=false;
+function halfW(){return track.scrollWidth/2;}
+function clamp(){
+  var h=halfW();
+  // Wrap around for infinite scroll
+  if(pos>=h)pos=pos-h;
+  if(pos<0)pos=pos+h;
+}
+var _portVis=true;
+new IntersectionObserver(function(e){_portVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+function run(){
+  raf=requestAnimationFrame(run);
+  if(!_portVis||paused||drag)return;
+  pos+=speed;clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+run();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){
+  if(!drag)return;
+  var now=Date.now(),dt=now-lastT||1;
+  vel=(x-lastX)/dt;lastX=x;lastT=now;
+  pos=startPos+(startX-x);
+  clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+function up(){
+  if(!drag)return;drag=false;
+  // momentum
+  var momentum=vel*-80;
+  var steps=60;
+  (function glide(){
+    if(steps-->0&&Math.abs(momentum)>0.5){
+      pos+=momentum;momentum*=0.9;clamp();
+      track.style.transform='translateX(-'+pos+'px)';
+      requestAnimationFrame(glide);
+    }
+  })();
+}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);e.preventDefault();});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+})();
+
+
+var _vcCurrent=null;
+var _audPlay=false;
+function toggleVc(el){
+  if(_vcCurrent&&_vcCurrent!==el){_vcCurrent.classList.remove('playing');_vcCurrent.querySelector('video').muted=true;_vcCurrent.querySelector('video').pause();_vcCurrent.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;return;}
+  if(el.classList.contains('playing')){el.classList.remove('playing');el.querySelector('video').muted=true;el.querySelector('video').pause();el.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;}
+  else{el.classList.add('playing');el.querySelector('video').muted=false;el.querySelector('video').play();el.querySelector('.vc-overlay').style.opacity='0';window._vcPause&&window._vcPause();_vcCurrent=el;}
+}
+function toggleAudio(){var a=document.getElementById('audioEl'),w=document.getElementById('arWave'),ico=document.getElementById('arIco');if(_audPlay){a.pause();_audPlay=false;w.classList.remove('pl');ico.innerHTML='<polygon points="5,3 19,12 5,21"/>';}else{a.play();_audPlay=true;w.classList.add('pl');ico.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';}}
+(function(){
+var wrap=document.getElementById('vcWrap'),track=document.getElementById('vcTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.35,paused=false;
+function maxP(){return track.scrollWidth/2;}
+var _vcVis=true;
+new IntersectionObserver(function(e){_vcVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_vcVis||paused||drag)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*80;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+window._vcPause=function(){paused=true;};window._vcResume=function(){paused=false;};
+})();
+(function(){
+var wrap=document.getElementById('revWrap'),track=document.getElementById('revTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.3;
+function maxP(){return track.scrollWidth/2;}
+var _revVis=true;
+new IntersectionObserver(function(e){_revVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_revVis)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*60;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);
+})();
+function toggleBonuses(el){
+  el.classList.toggle('open');
+  var body=el.querySelector('.prod-bonuses-body');
+  if(body){
+    if(el.classList.contains('open')){body.style.maxHeight=body.scrollHeight+40+'px';}
+    else{body.style.maxHeight='0';}
+  }
+}
+
+(function(){var done=false;function run(){if(done)return;done=true;var p=document.getElementById("sysPerc2");var b=document.getElementById("sysBar2");if(p&&b){var n=0;var t=setInterval(function(){n+=2;if(n>=100){n=100;clearInterval(t);}p.textContent=n+"%";b.style.width=n+"%";},25);}}var io=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting)run();});},{threshold:.2});var h=document.querySelector(".hero-phones-block");if(h)io.observe(h);})();
+
+
+</script>
+<script>
+window.OKF=(function(){
+  var API='/api.php';
+  function open(p){document.getElementById('okf-overlay').classList.add('open');setTimeout(function(){var n=document.getElementById('okf-name');if(n)n.focus();},150);}
+  function close(){document.getElementById('okf-overlay').classList.remove('open');}
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  var ov=document.getElementById('okf-overlay');if(ov)ov.addEventListener('click',function(e){if(e.target===this)close();});
+  function submit(){
+    var name=(document.getElementById('okf-name').value||'').trim();
+    var email=(document.getElementById('okf-email').value||'').trim();
+    var phone=(document.getElementById('okf-phone').value||'').trim();
+    var tg=(document.getElementById('okf-tg')||{value:''}).value.trim().replace('@','');
+    var proj=(document.getElementById('okf-proj')||{value:''}).value;
+    var desc=(document.getElementById('okf-desc')||{value:''}).value.trim();
+    var budget=(document.getElementById('okf-budget')||{value:''}).value;
+    var errEl=document.getElementById('okf-err');var btn=document.getElementById('okf-btn');
+    if(!name||!email||!phone){if(errEl){errEl.textContent='Заполните все поля';errEl.style.display='block';}return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){if(errEl){errEl.textContent='Некорректный email';errEl.style.display='block';}return;}
+    if(errEl)errEl.style.display='none';if(btn){btn.disabled=true;btn.textContent='Отправляем...';}
+    fetch(API+'?action=saveLead',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,email:email,phone:phone,tg:tg,product:'web',extra:{project:proj,description:desc,budget:budget}})
+    }).catch(function(){});
+    var modal=document.getElementById('okf-modal');
+    if(modal)modal.innerHTML='<div style="text-align:center;padding:20px 0"><div style="width:64px;height:64px;border-radius:50%;background:rgba(154,255,0,0.1);border:2px solid rgba(154,255,0,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div style="font-family:Unbounded,Arial,sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:8px">Заявка принята!</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:24px;line-height:1.7">Даниэль рассчитает стоимость<br>и напишет вам в ближайшее время.</div><a href="https://t.me/ktodaniel" target="_blank" style="display:block;background:#9AFF00;color:#000;text-decoration:none;padding:14px;border-radius:12px;font-family:Unbounded,Arial,sans-serif;font-size:13px;font-weight:900;margin-bottom:10px">Написать Даниэлю</a><button onclick="OKF.close()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer">Закрыть</button></div>';
+  }
+  function maskPhone(inp){var v=inp.value,hp=v.startsWith('+'),d=v.replace(/[^\d]/g,'');inp.value=(hp?'+':'')+d;}
+  function phoneKey(e,inp){if([8,46,37,38,39,40,9].indexOf(e.keyCode)>=0)return;if(e.key==='+'&&inp.selectionStart===0)return;if(!/^\d$/.test(e.key))e.preventDefault();}
+  function maskTg(inp){var v=inp.value.replace(/@/g,'').replace(/\s/g,'');inp.value=v?'@'+v:'';}
+  function tgFocus(inp){if(!inp.value)inp.value='@';setTimeout(function(){inp.setSelectionRange(inp.value.length,inp.value.length);},0);}
+  return {open:open,close:close,submit:submit,maskPhone:maskPhone,phoneKey:phoneKey,maskTg:maskTg,tgFocus:tgFocus};
+})();
+</script>
+<script>
+
+// ══ PORTFOLIO LAZY VIDEO LOAD ══
+(function(){
+  function loadNearby(entries){
+    entries.forEach(function(e){
+      var card=e.target;
+      var vids=card.querySelectorAll('video[data-src]');
+      vids.forEach(function(v){
+        if(e.isIntersecting){
+          if(!v.src){v.src=v.dataset.src;v.load();}
+          v.play().catch(function(){});
+        }else{
+          if(!v.paused)v.pause();
+        }
+      });
+    });
+  }
+  var portIO=new IntersectionObserver(loadNearby,{rootMargin:'200px',threshold:0});
+  function initPortObs(){
+    document.querySelectorAll('.port-card').forEach(function(c){portIO.observe(c);});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initPortObs);}
+  else{initPortObs();}
+})();
+
+// ══ PORTFOLIO CAROUSEL (TRUE INFINITE) ══
+(function(){
+var wrap=document.getElementById('portWrap'),track=document.getElementById('portTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.4,raf=null,paused=false;
+function halfW(){return track.scrollWidth/2;}
+function clamp(){
+  var h=halfW();
+  // Wrap around for infinite scroll
+  if(pos>=h)pos=pos-h;
+  if(pos<0)pos=pos+h;
+}
+var _portVis=true;
+new IntersectionObserver(function(e){_portVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+function run(){
+  raf=requestAnimationFrame(run);
+  if(!_portVis||paused||drag)return;
+  pos+=speed;clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+run();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){
+  if(!drag)return;
+  var now=Date.now(),dt=now-lastT||1;
+  vel=(x-lastX)/dt;lastX=x;lastT=now;
+  pos=startPos+(startX-x);
+  clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+function up(){
+  if(!drag)return;drag=false;
+  // momentum
+  var momentum=vel*-80;
+  var steps=60;
+  (function glide(){
+    if(steps-->0&&Math.abs(momentum)>0.5){
+      pos+=momentum;momentum*=0.9;clamp();
+      track.style.transform='translateX(-'+pos+'px)';
+      requestAnimationFrame(glide);
+    }
+  })();
+}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);e.preventDefault();});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+})();
+
+function toggleAudio(){var a=document.getElementById('audioEl'),w=document.getElementById('arWave'),ico=document.getElementById('arIco');if(_audPlay){a.pause();_audPlay=false;w.classList.remove('pl');ico.innerHTML='<polygon points="5,3 19,12 5,21"/>';}else{a.play();_audPlay=true;w.classList.add('pl');ico.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';}}
+(function(){
+var wrap=document.getElementById('vcWrap'),track=document.getElementById('vcTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.35,paused=false;
+function maxP(){return track.scrollWidth/2;}
+var _vcVis=true;
+new IntersectionObserver(function(e){_vcVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_vcVis||paused||drag)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*80;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+window._vcPause=function(){paused=true;};window._vcResume=function(){paused=false;};
+})();
+(function(){
+var wrap=document.getElementById('revWrap'),track=document.getElementById('revTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.3;
+function maxP(){return track.scrollWidth/2;}
+var _revVis=true;
+new IntersectionObserver(function(e){_revVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_revVis)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*60;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);
+})();
+
+function toggleNav(){var m=document.getElementById('mob'),h=document.getElementById('ham');var o=m.classList.toggle('open');m.style.display='flex';h.textContent=o?'✕':'☰';if(!o)setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+function closeMob(){var m=document.getElementById('mob'),h=document.getElementById('ham');m.classList.remove('open');h.textContent='☰';setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+function toggleFaq(el){var item=el.parentElement;var isOpen=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});if(!isOpen)item.classList.add('open');}
+function toggleTarCard(el){
+  var card=el.closest('.tar-card');
+  var wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.tar-card').forEach(function(c){
+    c.classList.remove('open');
+    var ct=c.querySelector('.tar-content');if(ct)ct.style.maxHeight='0';
+  });
+  if(!wasOpen){card.classList.add('open');var ct=card.querySelector('.tar-content');if(ct)ct.style.maxHeight='9999px';setTimeout(function(){card.scrollIntoView({behavior:'smooth',block:'nearest'});},150);}
+}
+function toggleTarSub(el){
+  var item=el.closest('.tar-sub-item');
+  var wasOpen=item.classList.contains('open');
+  var parent=item.parentElement;
+  parent.querySelectorAll('.tar-sub-item').forEach(function(i){
+    i.classList.remove('open');var b=i.querySelector('.tar-sub-body');if(b)b.style.maxHeight='0';
+  });
+  if(!wasOpen){item.classList.add('open');var b=item.querySelector('.tar-sub-body');if(b)b.style.maxHeight=b.scrollHeight+40+'px';}
+}
+function toggleTarBonuses(el){
+  el.classList.toggle('open');
+  var body=el.querySelector('.tar-bon-body');
+  if(body)body.style.maxHeight=el.classList.contains('open')?body.scrollHeight+40+'px':'0';
+}
+
+</script>
+<span id="sysPerc2" style="display:none"></span>
+<div id="sysBar2" style="display:none"></div>
+</body>
+</html>

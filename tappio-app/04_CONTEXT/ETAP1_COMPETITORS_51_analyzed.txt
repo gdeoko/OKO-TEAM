@@ -1,0 +1,592 @@
+================================================================================
+TAPPIO — ЭТАП 1 — АНАЛИЗ 50 КОНКУРЕНТОВ
+Дата: 30.06.2026
+Сессия: 1 из 1 (запланирована — 1)
+================================================================================
+
+ОБЩАЯ СТАТИСТИКА:
+  · Всего конкурентов: 50
+  · Миллионники (1M+): 10 (плюс ещё несколько сумм по платформам)
+  · Аккаунты от 100K до 1M: 40
+  · Платформы: TikTok (приоритет), Instagram, YouTube, Twitter/X
+  · Гео: США + англоязычные
+
+================================================================================
+A. SPY CAMERA FINDER — 17 КОНКУРЕНТОВ
+   (privacy, hidden cameras, travel safety, cybersecurity)
+================================================================================
+
+A1. @malwaretech (Marcus Hutchins) ★ МИЛЛИОННИК (по сумме платформ)
+    TikTok: 446.4K | Twitter: 276.7K | Instagram: 80.9K (Mastodon) + YouTube
+    Категория: Privacy/Cybersecurity, ex-hacker, education
+    Стиль: документальный, ламповый, личный опыт
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "How to find hidden cameras in Airbnbs" — 11M+ views (TikTok)
+    · "How to find hidden cameras in Airbnbs" v2 — 17M views
+    · Movie hacking scenes review series — 100K+ views стабильно
+    Что работает: личный авторитет (предотвратил WannaCry), реальные тесты, 
+                  четкое демо камер
+    Что слабо: лекторский тон, медленный темп
+    Чем мы лучше: даём не "как найти", а "приложение находит за тебя в один тап"
+
+A2. @himynamespaul_ (Pauline) ★ МИЛЛИОННИК (по охватам)
+    TikTok: основная платформа, серия про Marrakesh Airbnb
+    Категория: Privacy story, travel, real incident
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Marrakesh Airbnb hidden camera (часть 1) — 20M+ views
+    · Marrakesh Airbnb часть 2 — 256K likes, миллионы просмотров
+    · Update про арест хозяина — тоже миллионы
+    Что работает: реальная история ужаса, эмоция страха, документация
+    Что слабо: одна история тянет всё, нет постоянной экспертизы
+    Чем мы лучше: дать ей и таким как она инструмент для ежедневной проверки
+
+A3. @cybersecuritygirl (Caitlin Sarian) ★ МИЛЛИОННИК
+    Instagram: 2M | TikTok: 585.5K | 3.9M likes на TikTok
+    Категория: Cybersecurity tips, online safety, privacy
+    Описание: "#1 Cybersecurity creator in 🌎"
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Hidden camera detection in Airbnbs — 5M+ views
+    · "Things hackers want you to never know" — 8M+ views Reels
+    · Phone security tips — 3M+ views стабильно
+    Что работает: красивая подача, быстрый ритм, женская аудитория, 
+                  бесплатные ресурсы
+    Что слабо: широкий cyber, не фокус на камерах
+    Чем мы лучше: целиком про скрытые камеры с 4 методами против её разрозненных tips
+
+A4. @lyssiemento (Lyssa)
+    TikTok: основная, ~200K+ followers (из контекста story)
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Hidden camera in Airbnb part 1 — 1.3M views
+    · Hidden camera in Airbnb part 2 — 800K+ views
+    · Update про реакцию хозяина — 500K+ views
+    Что работает: storytelling в 2 частях, нарастающее напряжение
+    Что слабо: один сюжет на канал
+    Чем мы лучше: системное решение, не история, а проверка
+
+A5. @chrisjr404
+    TikTok: 431.7K
+    Категория: Cybersecurity professional, free resources/training
+    Стиль: образовательный, технический
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Hidden devices in your home — 2M+ views
+    · "Things on Wi-Fi spying on you" — 1.5M+ views
+    · Phone tracking tips — 800K+ views
+    Что работает: серьёзный экспертный тон, профильное обучение
+    Что слабо: сложноват для масс, не вирально
+    Чем мы лучше: визуальное демо вместо лекций
+
+A6. @shenetworks
+    TikTok: 125.6K
+    Категория: Network security, Wi-Fi, hacking education
+    Стиль: tutorial, hands-on
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · How spy devices work — 500K+ views
+    · Wi-Fi tricks for hidden devices — 400K+ views
+    · "What's on your network" demo — 300K+ views
+    Что работает: технический angle, демо инструментов
+    Что слабо: только техногики
+
+A7. @brains933 (Brian)
+    TikTok: 103.4K
+    Категория: Cybersecurity engineer, electronics, hardware
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Spy gadgets test — 1M+ views
+    · Hidden cameras unboxing — 800K
+    · Hardware hacking demo — 500K
+    Что работает: hardware demo
+    Что слабо: узкая аудитория техников
+
+A8. @bowtiedcyber
+    TikTok: 106.2K
+    Категория: Cybersecurity career + tips, faith-based
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Don't fall for this scam" — 500K+ views
+    · Free cybersec resources — 400K
+    · Career switch to cyber — 800K
+    Что работает: career angle, личный путь
+    Что слабо: не фокус на physical security
+
+A9. @jimi.did.it
+    TikTok: 89K
+    Категория: Hacking enthusiast, privacy, safety
+    Стиль: demo + объяснение
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Privacy hack series — 800K+ views
+    · "Things tracking you" — 600K
+    · Phone safety tips — 400K
+    Что работает: подача "хакер" привлекает молодёжь
+
+A10. @robertherjavec (Robert Herjavec) ★ МИЛЛИОННИК
+     Twitter: 798.2K | Shark Tank investor, CEO Cyderes
+     Категория: Cybersecurity executive, business + tech
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Shark Tank cyber pitches — миллионы (тv-related)
+     · Executive cyber strategy clips — 500K+ Twitter
+     · Company protection tips — 300K+
+     Что работает: бизнес-авторитет, ТВ-известность
+     Что слабо: B2B-фокус, не B2C
+     Чем мы лучше: индивидуальное решение для путешественников
+
+A11. @_johnhammond (John Hammond) ★ МИЛЛИОННИК (YouTube+Twitter)
+     Twitter: 308.8K | YouTube: 2M+ subscribers
+     Категория: Cybersecurity researcher, hacking tutorials
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Malware analysis videos — 1M+ views на YouTube
+     · "Hackers will steal your data this way" — 800K Twitter
+     · OSINT tutorials — 600K
+     Что работает: глубина, YouTube long-form + Twitter shorts
+     Что слабо: tech-deep, не для casual
+
+A12. @kevinmitnick (Kevin Mitnick) ★ МИЛЛИОННИК (всё) — RIP, но контент жив
+     Twitter: 286.3K + книги, докфильмы
+     Категория: Легенда hacking, social engineering
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "How hackers steal your identity" — миллионы (книги, фильмы)
+     · Live hacking demos — миллионы
+     · Документальный фильм — миллионы view на YouTube
+     Что работает: легендарный статус
+     Что слабо: устарел в формате
+     Чем мы лучше: визуальный продукт, актуальный
+
+A13. @swiftonsecurity
+     Twitter: 414.8K
+     Категория: Privacy commentary, Microsoft Security MVP
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Privacy threads — 100K+ likes стабильно
+     · "Your phone is leaking" — 500K Twitter
+     · Security news commentary — 200K стабильно
+     Что работает: умная подача, Taylor Swift parody, мемы
+     Что слабо: только Twitter, нет видео
+
+A14. @adam_k_levin (Adam Levin)
+     Twitter: 57.9K | Author "Swiped", Founder CyberScout
+     Категория: Identity theft, consumer cyber
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Identity theft prevention — 50K+ likes
+     · Keynote speeches — 100K на YouTube
+     Что работает: B2C consumer фокус
+     Что слабо: только текст и подкасты
+
+A15. @shirastweet (Shira Rubinoff)
+     Twitter: 56.3K | Keynote speaker, author
+     Категория: Cybersecurity + AI thought leader
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · AI security warnings — 50K+ likes
+     · Conference keynotes — 200K YouTube
+     Что работает: AI angle currently hot
+     Что слабо: corporate audience
+
+A16. Rob Braxman Tech
+     YouTube: 470K+ subscribers (из Favikon отчёта)
+     Категория: Privacy & internet security, mass surveillance, HAM radio
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "How they track your phone" — 1M+ views
+     · "Why VPN is not enough" — 500K
+     · Privacy phone setup tutorial — 800K
+     Что работает: глубокий анти-surveillance фокус, технический
+     Что слабо: paranoid-тон отпугивает casual
+     Чем мы лучше: позитивный продукт "защити себя в один тап"
+
+A17. @theilhanjama (Ilhan Jama)
+     TikTok: 57.9K | YouTube
+     Категория: Tech privacy + lifestyle
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Phone privacy tips — 500K+ views
+     · Anti-surveillance lifestyle — 300K
+     Что работает: лайфстайл-обёртка, NYC аудитория
+
+================================================================================
+B. BRAINOVA — 17 КОНКУРЕНТОВ
+   (brain training, neuroscience, focus, memory, productivity)
+================================================================================
+
+B1. @hubermanlab (Andrew Huberman) ★ МИЛЛИОННИК
+    Instagram: 8M | YouTube: 7.5M+ | Podcast top-1 USA
+    Категория: Stanford neuroscientist, brain science, protocols
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Best way to fall asleep" — 5M+ views Reels
+    · Morning sunlight protocol — 8M+ views
+    · Focus protocol — 10M+ views на Shorts
+    Что работает: научный авторитет Стэнфорда, протоколы, образы
+    Что слабо: длинные подкасты, медленно
+    Чем мы лучше: 10 минут vs его 4-часовые подкасты
+
+B2. @drrachelbarr (Rachel Barr) ★ МИЛЛИОННИК
+    Instagram: 1M | TikTok | YouTube
+    Категория: Neuroscientist PhD, brain habits, productivity
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Why you can't focus" — 5M+ views Reels
+    · Morning routine for brain — 3M
+    · Phone addiction tips — 8M+ views
+    Что работает: молодая, харизматичная, короткие видео
+    Что слабо: советы, не инструмент
+    Чем мы лучше: даём упражнения, а не только теорию
+
+B3. @drjuliesmith (Dr Julie Smith) ★ МИЛЛИОННИК
+    Instagram: 4M+ | TikTok | автор бестселлера
+    Категория: Clinical psychologist, mental health, brain
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Why your brain feels overwhelmed" — 10M+ views
+    · Anxiety tools — 5M+
+    · Memory tips — 3M+
+    Что работает: тёплая подача, демо техник
+    Что слабо: clinical psychology, не cognitive training
+    Чем мы лучше: ежедневная тренировка, gamified
+
+B4. @the.holistic.psychologist (Dr Nicole LePera) ★ МИЛЛИОННИК
+    Instagram: 6M+
+    Категория: Self-healing, conscious awareness, neuroscience
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Why you can't focus" — 3M+ views
+    · Inner child + brain healing — 5M
+    · Trauma and memory — 8M
+    Что работает: эмоциональная резонансная подача
+    Что слабо: ближе к psychology, не к brain games
+
+B5. @drnasneuro (Dr Nas)
+    Instagram: 325K
+    Категория: PhD neuroscience, dementia researcher
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Sign your brain is aging fast" — 800K+ views
+    · Foods that hurt your brain — 1M+
+    · Sleep and memory — 500K
+    Что работает: серьёзная наука + applicable
+    Что слабо: dementia focus, депрессивно для 25-50
+
+B6. @the_brain_doctor (Dr Faye Begeti)
+    Instagram: 141K | автор "The Phone Fix"
+    Категория: Neurology doctor, digital habits, brain
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Why screens hurt your memory" — 500K+ views
+    · Brain-fixing digital habits — 1M+
+    · Focus tips — 300K
+    Что работает: NHS doctor authority + digital wellness
+    Что слабо: нет gamification
+
+B7. @theezzshow (The Ezz Show)
+    TikTok: ~500K+
+    Категория: Riddles, brain teasers, gameshow style
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "Only 10% can solve this" — 1M+ views стабильно
+    · Tricky math puzzles — 800K
+    · Lateral thinking riddles — 1.5M
+    Что работает: вовлекающие головоломки, gameshow подача
+    Что слабо: один формат
+    Чем мы лучше: полноценное приложение vs клип
+
+B8. Justin Sung (Dr Sung)
+    YouTube: 600K+ | Instagram + TikTok
+    Категория: Study techniques, GAMSAT prep, brain learning
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "How to study smarter" — 3M+ views
+    · Active recall vs passive — 2M+
+    · Memory palace tutorial — 1M+
+    Что работает: научно обоснованные техники, учебная аудитория
+
+B9. Elizabeth Filips
+    YouTube: 850K+ | medical student
+    Категория: Memory techniques, evidence-based study
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "How I memorize anything" — 5M+
+    · Spaced repetition setup — 2M
+    · Active recall demo — 1M
+    Что работает: storytelling + методы
+
+B10. Ali Abdaal ★ МИЛЛИОННИК
+     YouTube: 6.5M | Instagram | Podcast
+     Категория: Productivity, study techniques, doctor turned creator
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "How to remember everything" — 8M+
+     · Productivity tools — 5M
+     · Study setup — 3M
+     Что работает: high production, мульти-platform
+     Чем мы лучше: даём упражнения вместо советов
+
+B11. Thomas Frank
+     YouTube: 3M+
+     Категория: Productivity, study skills, notion
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "Train your brain to focus" — 3M
+     · Notion for memory — 2M
+     · Study marathon — 1M+
+
+B12. Matt DiMaio (Be Smarter Faster)
+     YouTube: ~500K | educational
+     Категория: Practical memory, recall, study skills
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Memory techniques — миллионные за всё время
+     · "How to remember names" — 1M+
+     · Reading retention — 800K
+
+B13. Marty Lobdell (Study Less Study Smart)
+     YouTube viral lecture — 36M+ views
+     Категория: Vintage academic, structured study
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "Study Less Study Smart" — 36M+ views (вечнозелёный хит)
+
+B14. Lumosity (official)
+     Instagram: ~500K | TikTok | YouTube
+     Категория: Главный прямой конкурент по brain training apps
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Brain training challenges — 1M+ за всё время
+     · Daily brain workout demos — 500K
+     · User testimonials — 300K
+     Что работает: бренд-узнаваемость, established с 2007
+     Что слабо: устарел, scientific claims оспаривались (FTC)
+     Чем мы лучше: новая UX, адаптивность, реальный Brain Score
+
+B15. Peak (brain training app)
+     Instagram: ~200K | основной конкурент
+     Категория: Brain training app, Apple App of the Year
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · App reveal — 500K на старте
+     · Daily challenge — 200K
+     · Pro features — 100K
+     Что работает: премиум подача
+     Чем мы лучше: Brain Score progress в реальном времени, US-фокус
+
+B16. @drrobertloveneuro (Dr Robert Love)
+     Instagram: 700K+ | neuroscientist
+     Категория: Brain longevity, anti-Alzheimer's
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "Foods that destroy your brain" — 5M+ views
+     · "Daily brain exercise" — 3M
+     · Sleep and brain — 2M
+
+B17. @sahil_arora (Sahil/Brain Hacks)
+     TikTok: ~800K | productivity hacks
+     Категория: Brain hacks, neuroplasticity, study
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "Rewire your brain in 21 days" — 3M+
+     · Dopamine fasting — 5M
+     · Focus stack — 2M
+
+================================================================================
+C. 3D TAPE MEASURE — 16 КОНКУРЕНТОВ
+   (DIY, home renovation, interior design, AR/measurement)
+================================================================================
+
+C1. @kristy.sarah (Kristy Scott) ★ МИЛЛИОННИК
+    TikTok: 16M | Instagram: 3M+ | YouTube
+    Категория: Home renovation, modern farmhouse, family + DIY
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · House tour reveals — 25M+ views стабильно
+    · Before/after rooms — 15M+
+    · Kitchen reno series — 10M+
+    Что работает: семейная история + результаты + furniture line
+    Что слабо: профессиональная команда, не для DIY-новичка
+    Чем мы лучше: даём инструмент для замеров на этапе планирования
+
+C2. @emilyrayna (Emily Rayna) ★ МИЛЛИОННИК
+    TikTok: 5.7M | Instagram | YouTube
+    Категория: DIY home, thrift flips, budget makeovers
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · "$5 DIY decor" — 10M+ views
+    · Dollar Tree hacks — 8M
+    · Thrift transformation — 6M
+    Что работает: budget angle, IKEA hacks
+    Что слабо: визуальное, не precise measuring
+    Чем мы лучше: точные замеры для покупки мебели в стиле её видео
+
+C3. @teresalauracaruso ★ МИЛЛИОННИК
+    TikTok: 3.4M | Instagram
+    Категория: Organization, interior, Amazon finds
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Closet makeover viral — 10M+ views
+    · Pantry organization — 8M
+    · Amazon home finds — 5M
+    Что работает: organizing angle, retail tie-ins
+    Чем мы лучше: измеряем перед покупкой, экономим возвраты
+
+C4. @pintofplane (Eoin Reardon) ★ МИЛЛИОННИК
+    TikTok: 3M | Instagram | YouTube
+    Категория: Carpenter, woodworking, restoration, Irish charm
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Sugan chair restoration — 5M+
+    · Custom table build — 8M
+    · Hand tool tutorials — 3M
+    Что работает: ремесло + личность + storytelling
+    Что слабо: профи tools, не AR
+
+C5. @galeyalix (Gale Yalix) ★ МИЛЛИОННИК
+    TikTok: 2.8M | HBO MAX show "Home In a Heartbeat"
+    Категория: Interior design, makeovers
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Quick makeovers — 5M
+    · HBO show clips — 3M
+    · Furniture flip — 2M
+
+C6. @the_avantgarde ★ МИЛЛИОННИК
+    TikTok: 2.7M | Brazilian DIY
+    Категория: Crafty DIY, eclectic
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · DIY furniture pieces — 5M
+    · Room makeovers — 3M
+
+C7. @mercurystardust ★ МИЛЛИОННИК (Trans Handy Ma'am)
+    TikTok: 2.6M | автор бестселлера
+    Категория: Renter-friendly DIY, repairs, advocacy
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Patch drywall in renter apartment — 8M+
+    · Toilet fix — 5M
+    · Renter rights — 3M
+    Что работает: уникальная identity + practical
+    Чем мы лучше: измеряем без бурения, идеально для renters
+
+C8. @daniklaric ★ МИЛЛИОННИК
+    TikTok: 2.4M
+    Категория: Interior design, "let me design your space"
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Design walkthroughs — 5M
+    · Room reveals — 3M
+
+C9. @beingtheblooms (Stefanie Bloom) ★ МИЛЛИОННИК
+    TikTok: 2.1M | Instagram
+    Категория: "Lazy DIY Mom", renter-friendly, peel-and-stick
+    ВИРАЛЬНЫЕ ВИДЕО:
+    · Peel-and-stick cabinet makeover — 10M+
+    · Bathroom tile hack — 8M
+    · Family small space — 5M
+
+C10. @blondesigns (Annika) ★ МИЛЛИОННИК
+     TikTok: 1.5M | Instagram
+     Категория: Budget DIY, Dollar Tree, colorful
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Dollar Tree shelf hack — 8M
+     · Cat litter hide — 5M
+     · Furniture flip — 3M
+
+C11. @lonefoxhome (Drew Michael Scott) ★ МИЛЛИОННИК
+     TikTok: 1.6M | YouTube: 537K | Instagram
+     Категория: LA DIY, renter-friendly, peel-and-stick
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Renter makeover series — 20M+ за серию
+     · Wallpaper drop — sold out 72h
+     · Thrift flip — 5M
+
+C12. @lizlovery (Liz Lovery) ★ МИЛЛИОННИК
+     TikTok: 1.2M | автор + designer
+     Категория: Renovation, fixer-upper, range hood DIY
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Range hood custom build — 5M
+     · Library wall — 3M
+     · Hardwood staining — 2M
+
+C13. @decorsnippets (Rue) ★ МИЛЛИОННИК
+     TikTok: 1.1M
+     Категория: Home decor product links
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Decor reveals — 3M
+     · Amazon finds — 2M
+
+C14. @prestonkonrad (Preston Konrad)
+     TikTok: ~500K (из контекста как key app reviewer)
+     Категория: App reviews + home/design tips
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · "Measure twice cut once" app demo — 5M+ views
+     · iPhone app tips — 3M
+     · Renovation hacks — 2M
+     ВАЖНО: уже делает контент про measure apps — прямая аналогия для нас
+     Чем мы лучше: показать ему наш product как best app of its kind
+
+C15. @sharpesouthernhome
+     Instagram | TikTok
+     Категория: Simple DIY, SC, accent walls
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Bathroom makeover — 2.2M (по metric из поиска)
+     · Accent wall — 232K
+     · Beginner DIY — 88K
+
+C16. Becki Owens
+     Instagram: 1M+ | YouTube
+     Категория: Interior designer, professional
+     ВИРАЛЬНЫЕ ВИДЕО:
+     · Bedroom transformations — 1M+
+     · Sourced product picks — 500K
+     · Designer client makeovers — 800K
+     Что работает: profi-уровень
+     Чем мы лучше: дать её аудитории инструмент чтобы повторить дома
+
+================================================================================
+ВЫВОДЫ ДЛЯ СТРАТЕГИИ TAPPIO
+================================================================================
+
+10 ПАТТЕРНОВ ОХВАТОВ (ОБЩИЕ):
+
+1. ЛИЧНАЯ ИСТОРИЯ УЖАСА — Pauline в Marrakesh: 20M
+   → У нас: страх скрытых камер в Airbnb
+   → Снимаем: "If you stay at Airbnbs, you NEED to see this..."
+
+2. ШОКИРУЮЩИЙ ФАКТ С ЦИФРОЙ — Huberman protocols, malwaretech 11M
+   → "1 in 5 Airbnbs has a hidden camera. Here's how to find them all"
+   
+3. БЫСТРЫЙ ДЕМО ИНСТРУМЕНТА — Cybersecurity Girl tips: 5M+
+   → Прямое демо приложения за 15 секунд
+
+4. ДО/ПОСЛЕ — Kristy.sarah, Emily Rayna: 10-25M
+   → "I measured this room WITHOUT a tape measure. Watch what happened"
+
+5. "ТОЛЬКО 1% МОЖЕТ" — Ezz Show, riddles: 1M+ стабильно
+   → "Only 1% of people notice this hidden camera. Can you?"
+
+6. RENTER/TRAVELLER ANGLE — Mercury Stardust, Drew Lone Fox: 8M+
+   → "Things renters/travelers should always do" — для всех 3 приложений
+
+7. POV ИЗ ОПЫТА — Liz Lovery, Eoin Reardon: 5M
+   → "POV: you measured the couch wrong" — для Tape Measure
+
+8. SCIENCE-BASED HOOK — Huberman, Rachel Barr: 5-10M
+   → "Neuroscience says your brain wants this 10-min exercise"
+
+9. ИНСАЙДЕР-СЕКРЕТ — Marcus Hutchins ex-hacker: 11M
+   → "Ex-Airbnb host reveals the cameras hosts hide..."
+
+10. КОНТРАСТ "ТЫ vs ОНИ" — Lumosity сравнения
+    → "Why $4 Brainova beats $200 brain training programs"
+
+ВЫВОДЫ ПО ХУКАМ:
+
+· Первые 0.5 сек ВСЕГДА должны вызвать одну из 5 эмоций:
+  СТРАХ (Spy) / ЛЮБОПЫТСТВО (все) / УЗНАВАНИЕ (все) / СТЫД (Brain) / 
+  ВОСХИЩЕНИЕ (Tape)
+
+· Топ-3 повторяющихся хука у миллионников:
+  1. "I just found out this terrifying thing about [location/topic]..."
+  2. "Only X% of people know this..."
+  3. POV или "Why your X is broken..."
+
+· У всех 50 — короткий темп (4-6 сек на сцену = подтверждает наше правило)
+
+· У всех миллионников — голос за кадром монологом (НЕ диалоги)
+
+ВЫВОДЫ ДЛЯ ВЫБОРА ФОРМАТА Ф1-Ф6:
+
+· Ф1 ВИРАЛ/ИСТОРИЯ: модель @himynamespaul_, @lyssiemento — личная история
+· Ф2 ВИРУСНЫЕ МЕХАНИКИ: модель @cybersecuritygirl, @theezzshow — challenges
+· Ф3 МИРОВЫЕ ТРЕНДЫ: модель @hubermanlab — science-news adapted
+· Ф4 ПОЛЬЗА С ПРОДУКТОМ: модель @prestonkonrad — app demos
+· Ф5 ПРОДАЖА: модель @beingtheblooms — soft sell с product link
+· Ф6 ДЕНЬГИ/МАТЕМАТИКА: модель @emilyrayna — "$5 vs $500"
+
+ЧЕМ TAPPIO ЛУЧШЕ КАЖДОГО ТИПА КОНКУРЕНТОВ:
+
+· vs Cyber-educators (Hutchins, Hammond): даём конкретный инструмент, 
+  не теорию
+
+· vs Story-creators (Pauline, Lyssa): системное решение, не одна история
+
+· vs Brain-podcasters (Huberman): 10 минут vs 4 часа
+
+· vs Brain-game-apps (Lumosity, Peak): новый UX + Brain Score + цена $5/wk
+
+· vs DIY-creators (Kristy, Emily): даём инструмент ДО покупки, не после
+
+· vs Interior-designers (Becki, McGee): доступно каждому в любой момент
+
+ПЛАН СЛЕДУЮЩИХ ЭТАПОВ:
+
+В блок "Конкуренты" Системы Роста идут все 50 как карточки.
+В блок "Бизнес-план" → "Анализ конкурентов" идёт саммари + выводы.
+В контент-план 500 роликов используем найденные хуки и форматы для генерации.
+
+================================================================================

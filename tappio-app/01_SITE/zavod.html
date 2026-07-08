@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Контент-завод OKO TEAM · 30–500 роликов без съёмок</title>
+<meta name="description" content="Контент-завод OKO TEAM — от 30 до 500 роликов в месяц без единой съёмки. Автопостинг. От 19 900 ₽.">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--lime:#9AFF00;--lime2:rgba(154,255,0,.1);--lime3:rgba(154,255,0,.25);--glass:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--w2:rgba(255,255,255,.75);--w3:rgba(255,255,255,.45);--w4:rgba(255,255,255,.22);--green-online:#25d366}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{background:#050505;color:#fff;font-family:'Onest',sans-serif;overflow-x:hidden;line-height:1.6}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.pb{position:fixed;top:0;left:0;height:2px;background:var(--lime);z-index:1000;width:0%;box-shadow:0 0 8px rgba(154,255,0,.5);transition:width .1s}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+section{position:relative;z-index:1}
+.sec-sep{height:1px;background:linear-gradient(to right,transparent,rgba(154,255,0,.4),transparent);z-index:1;animation:sepglow 3s ease-in-out infinite}
+@keyframes sepglow{0%,100%{opacity:.5}50%{opacity:1}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.rv.vis{opacity:1;transform:none}
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:10px}
+.sec-h{font-family:'Unbounded',sans-serif;font-size:clamp(20px,2.8vw,36px);font-weight:900;line-height:1.12;margin-bottom:14px}
+.sec-p{font-size:15px;color:var(--w3);max-width:580px;line-height:1.75}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:rgba(5,5,5,.55);backdrop-filter:blur(24px);border-bottom:1px solid rgba(154,255,0,.06);transition:background .3s}
+.nav.scrolled{background:rgba(5,5,5,.95)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.nav-logo img{width:34px;height:34px;border-radius:8px;object-fit:contain}
+.nav-logo-t{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:#fff;white-space:nowrap}
+.nav-logo-s{font-size:9px;color:var(--lime);font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-a{color:rgba(255,255,255,.55);font-size:12px;font-weight:600;padding:7px 11px;border-radius:20px;text-decoration:none;transition:all .2s;white-space:nowrap}
+.nav-a:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav-cta{background:var(--lime);color:#000;font-weight:800;font-size:11px;padding:8px 16px;border-radius:22px;text-decoration:none;transition:all .2s;opacity:0;pointer-events:none;transform:translateY(-4px);white-space:nowrap}
+.nav-cta.show{opacity:1;pointer-events:auto;transform:none}
+.ham{display:none;background:none;border:1px solid rgba(255,255,255,.15);color:#fff;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0}
+.mob-nav{display:none;position:fixed;top:59px;left:0;right:0;bottom:0;background:rgba(5,5,5,.97);z-index:199;padding:20px;flex-direction:column;gap:6px;backdrop-filter:blur(20px);opacity:0;transform:translateY(-12px);transition:opacity .25s,transform .25s;pointer-events:none}
+.mob-nav.open{display:flex;opacity:1;transform:none;pointer-events:auto}
+.mob-nav .nav-a{font-size:15px;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8)}
+.mob-nav .nav-a svg{flex-shrink:0;color:var(--lime)}
+.mob-nav .nav-cta{opacity:1;pointer-events:auto;transform:none;text-align:center;padding:14px;border-radius:14px;font-size:14px;display:block;margin-top:6px}
+.bl{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:#000;font-size:12px;padding:12px 18px;font-weight:800;border-radius:14px;text-decoration:none;border:none;cursor:pointer;font-family:'Onest',sans-serif;white-space:nowrap;animation:pglow 2.5s infinite;transition:all .22s;letter-spacing:.3px;flex:1;justify-content:center}
+@keyframes pglow{0%,100%{box-shadow:0 0 14px rgba(154,255,0,.3)}50%{box-shadow:0 0 28px rgba(154,255,0,.6)}}
+.bl:hover{opacity:.87;transform:translateY(-2px)}
+.bg{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);color:#fff;font-size:12px;padding:12px 18px;border:1px solid rgba(255,255,255,.15);border-radius:14px;text-decoration:none;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700;white-space:nowrap;transition:all .22s;flex:1;justify-content:center}
+.bg:hover{background:rgba(255,255,255,.09)}
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px 0;position:relative;overflow:hidden}
+
+#hcv{position:absolute;inset:0;z-index:1;pointer-events:none}
+.hero-content{position:relative;z-index:2;width:100%;max-width:900px;padding-bottom:32px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.2);color:var(--lime);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 18px;border-radius:50px;margin-bottom:14px;margin-top:8px}
+.hbdot{width:5px;height:5px;background:var(--lime);border-radius:50%;animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(28px,5.5vw,64px);font-weight:900;line-height:1.05;margin-bottom:14px;letter-spacing:-1px}
+.hero-title .lime{color:var(--lime)}
+.hero-sub{font-size:clamp(13px,1.8vw,16px);color:var(--w3);margin-bottom:20px;max-width:520px;margin-left:auto;margin-right:auto;line-height:1.65}
+.hero-stats{display:flex;gap:5px;justify-content:center;margin-bottom:20px;width:100%}
+.h-stat{background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.22);border-radius:12px;padding:10px 6px;flex:1;text-align:center;text-decoration:none;transition:all .25s;position:relative}
+.h-stat:hover{border-color:rgba(154,255,0,.5);background:rgba(154,255,0,.1)}
+.h-stat-n{font-family:'Unbounded',sans-serif;font-size:clamp(12px,3vw,17px);font-weight:900;color:var(--lime);white-space:nowrap}
+.h-stat-l{font-size:9px;color:var(--w3);margin-top:2px;white-space:nowrap}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap}
+.pain{padding:56px 0}
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+.pain-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px;transition:all .3s;position:relative}
+.pain-card:hover{border-color:rgba(154,255,0,.4);transform:translateY(-2px);box-shadow:0 4px 20px rgba(154,255,0,.08),inset 0 0 30px rgba(154,255,0,.03)}
+.pain-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pain-ico{width:34px;height:34px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.14);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.pain-ico svg{width:16px;height:16px}
+.pain-title{font-size:14px;font-weight:700;line-height:1.25}
+.pain-desc{font-size:12px;color:var(--w3);line-height:1.6;margin-bottom:12px}
+.pain-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.18);color:var(--lime);font-size:10px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none}
+.pain-btn:hover{background:rgba(154,255,0,.14);border-color:var(--lime)}
+.how{padding:56px 0}
+.how-list{display:flex;flex-direction:column;gap:6px;margin-top:28px}
+.how-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;transition:border-color .3s}
+.how-item.open{border-color:rgba(154,255,0,.35);box-shadow:0 4px 20px rgba(154,255,0,.06)}
+.how-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+.how-num{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:rgba(154,255,0,.2);width:32px;flex-shrink:0;transition:color .3s}
+.how-item.open .how-num{color:var(--lime)}
+.how-title{font-size:14px;font-weight:700;flex:1}
+.how-xi{width:24px;height:24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;color:rgba(255,255,255,.3)}
+.how-item.open .how-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.how-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.how-item.open .how-body{max-height:300px}
+.how-inner{padding:0 16px 16px 62px}
+.how-desc{font-size:13px;color:var(--w3);line-height:1.75;margin-bottom:8px}
+.how-subs{display:flex;flex-direction:column;gap:4px}
+.how-sub{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--w2)}
+.how-sub svg{color:var(--lime);flex-shrink:0;margin-top:2px}
+.how-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.how-tag{background:rgba(154,255,0,.05);border:1px solid rgba(154,255,0,.12);color:rgba(154,255,0,.7);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+.tariffs{padding:56px 0}
+.tar-list{display:flex;flex-direction:column;gap:14px;margin-top:24px}
+.tar-card{background:rgba(12,12,12,.95);border:1px solid rgba(255,255,255,.12);border-radius:20px;overflow:hidden;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.tar-card:hover{border-color:rgba(154,255,0,.4);transform:translateY(-2px);box-shadow:0 8px 32px rgba(154,255,0,.1),0 4px 20px rgba(0,0,0,.5)}
+.tar-card.featured{border-color:rgba(154,255,0,.4);background:rgba(10,18,5,.97);box-shadow:0 0 0 1px rgba(154,255,0,.15),0 8px 32px rgba(154,255,0,.12)}
+.tar-inner{padding:20px}
+.tar-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.tar-ico{width:44px;height:44px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.tar-info{flex:1}
+.tar-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.tar-name{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;margin-bottom:4px}
+.tar-sub{font-size:12px;color:var(--w3);line-height:1.4}
+.tar-hit{display:inline-block;background:var(--lime);color:#000;font-size:9px;font-weight:900;padding:2px 9px;border-radius:20px;text-transform:uppercase;margin-top:5px}
+.tar-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.tar-price{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--lime);line-height:1}
+.tar-price-sub{font-size:12px;color:var(--w3)}
+.tar-eco{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);color:rgba(154,255,0,.85);font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;margin-bottom:14px}
+.tar-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.15);border-radius:12px;padding:11px 14px;cursor:pointer;transition:all .2s;margin-bottom:10px;user-select:none}
+.tar-toggle:hover{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3)}
+.tar-toggle-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--lime)}
+.tar-toggle-xi{width:22px;height:22px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);transition:transform .3s;flex-shrink:0}
+.tar-card.open .tar-toggle-xi{transform:rotate(45deg)}
+.tar-content{max-height:0;overflow:hidden;transition:max-height .5s ease}
+.tar-card.open .tar-content{max-height:1200px}
+.tar-subs{display:flex;flex-direction:column;gap:0;margin-bottom:12px}
+.tar-sub-item{border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.tar-sub-item:last-child{border-bottom:none}
+.tar-sub-head{display:flex;align-items:center;justify-content:space-between;padding:10px 0}
+.tar-sub-left{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85)}
+.tar-sub-left svg{color:var(--lime);flex-shrink:0}
+.tar-sub-xi{width:20px;height:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s;color:rgba(255,255,255,.3)}
+.tar-sub-item.open .tar-sub-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.tar-sub-body{max-height:0;overflow:hidden;transition:max-height .35s ease;padding-left:28px}
+.tar-sub-item.open .tar-sub-body{max-height:300px}
+.tar-sub-feats{display:flex;flex-direction:column;gap:4px;padding:6px 0 10px}
+.tar-sub-feat{font-size:12px;color:var(--w3);padding-left:14px;position:relative;line-height:1.5}
+.tar-sub-feat::before{content:'✓';position:absolute;left:0;color:var(--lime);font-weight:700}
+.tar-bonuses{background:rgba(154,255,0,.04);border:1px solid rgba(154,255,0,.1);border-radius:12px;padding:12px 14px;margin-top:8px;cursor:pointer}
+.tar-bonuses-top{display:flex;align-items:center;justify-content:space-between}
+.tar-bon-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:6px}
+.tar-bon-xi{width:20px;height:20px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);transition:transform .3s;flex-shrink:0}
+.tar-bonuses.open .tar-bon-xi{transform:rotate(45deg)}
+.tar-bon-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.tar-bonuses.open .tar-bon-body{max-height:300px}
+.tar-bon-list{display:flex;flex-direction:column;gap:5px;padding-top:10px}
+.tar-bon-item{font-size:12px;color:var(--w2);padding-left:16px;position:relative;line-height:1.5}
+.tar-bon-item::before{content:'✓';position:absolute;left:0;color:var(--lime);font-weight:700}
+.tar-cta{display:flex;align-items:center;justify-content:center;width:100%;background:var(--lime);color:#000;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;padding:14px;border-radius:14px;border:none;cursor:pointer;text-decoration:none;transition:all .2s;margin-top:14px;letter-spacing:.5px;animation:pglow 2.5s infinite}
+.tar-cta:hover{opacity:.9;transform:translateY(-1px)}
+.reviews{padding:56px 0}
+.vc-wrap{overflow:hidden;margin-top:28px;cursor:grab;user-select:none}.vc-wrap:active{cursor:grabbing}
+.vc-track{display:flex;gap:14px;will-change:transform}
+.vc-item{flex-shrink:0;width:100px;height:100px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(154,255,0,.25);position:relative;cursor:pointer;transition:border-color .3s}
+.vc-item:hover,.vc-item.playing{border-color:var(--lime);box-shadow:0 0 18px rgba(154,255,0,.2)}
+.vc-item video{width:100%;height:100%;object-fit:cover;display:block}
+.vc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s}.vc-item.playing .vc-overlay{opacity:0}
+.vc-play{width:32px;height:32px;background:rgba(154,255,0,.2);backdrop-filter:blur(6px);border:1.5px solid rgba(154,255,0,.5);border-radius:50%;display:flex;align-items:center;justify-content:center}.vc-play svg{color:var(--lime);margin-left:2px}
+.vc-name{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;font-weight:700;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);padding:8px 4px 4px}
+.audio-rev{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;margin:20px 0;cursor:pointer;transition:border-color .3s;width:100%}.audio-rev:hover{border-color:rgba(154,255,0,.2)}
+.ar-btn{width:40px;height:40px;background:var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer}.ar-btn svg{color:#000;margin-left:2px}
+.ar-info{display:flex;flex-direction:column;flex-shrink:0}.ar-name{font-size:12px;font-weight:700;margin-bottom:1px}.ar-sub{font-size:10px;color:var(--w3)}
+.ar-wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}
+.ar-wave b{display:block;width:3px;border-radius:3px;background:rgba(154,255,0,.3);animation:ovw 1.2s ease-in-out infinite;flex:1;max-width:4px}
+.ar-wave.pl b{background:var(--lime)}
+.ar-wave b:nth-child(1){height:8px}.ar-wave b:nth-child(2){height:14px;animation-delay:.05s}.ar-wave b:nth-child(3){height:22px;animation-delay:.1s}.ar-wave b:nth-child(4){height:11px;animation-delay:.15s}.ar-wave b:nth-child(5){height:18px;animation-delay:.2s}.ar-wave b:nth-child(6){height:9px;animation-delay:.25s}.ar-wave b:nth-child(7){height:20px;animation-delay:.3s}.ar-wave b:nth-child(8){height:13px;animation-delay:.08s}.ar-wave b:nth-child(9){height:24px;animation-delay:.12s}.ar-wave b:nth-child(10){height:16px;animation-delay:.18s}.ar-wave b:nth-child(11){height:10px;animation-delay:.22s}.ar-wave b:nth-child(12){height:21px;animation-delay:.27s}.ar-wave b:nth-child(13){height:14px;animation-delay:.03s}.ar-wave b:nth-child(14){height:19px;animation-delay:.16s}.ar-wave b:nth-child(15){height:12px;animation-delay:.24s}.ar-wave b:nth-child(16){height:23px;animation-delay:.09s}
+@keyframes ovw{0%,100%{transform:scaleY(1);opacity:.3}50%{transform:scaleY(1.6);opacity:1}}
+.rev-wrap{overflow:hidden;cursor:grab;margin-top:24px;user-select:none}.rev-wrap:active{cursor:grabbing}
+.rev-track{display:flex;gap:12px;will-change:transform}
+.rev-card{flex-shrink:0;width:270px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;transition:border-color .3s}.rev-card:hover{border-color:rgba(154,255,0,.18)}
+.rev-stars{display:flex;gap:2px;margin-bottom:10px}.rev-stars span{color:var(--lime);font-size:12px}
+.rev-text{font-size:12px;color:var(--w2);line-height:1.7;margin-bottom:12px;font-style:italic}
+.rev-author{display:flex;align-items:center;gap:8px}
+.rev-ava{width:30px;height:30px;background:linear-gradient(135deg,rgba(154,255,0,.2),rgba(154,255,0,.05));border:1px solid rgba(154,255,0,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--lime);flex-shrink:0}
+.rev-name{font-size:12px;font-weight:700}.rev-role{font-size:10px;color:var(--w3)}
+.results{padding:56px 0}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:28px}
+.res-card{background:rgba(154,255,0,.04);border:1px solid rgba(154,255,0,.12);border-radius:14px;padding:20px;text-align:center}
+.res-n{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,34px);font-weight:900;color:var(--lime);margin-bottom:4px}
+.res-l{font-size:12px;color:var(--w3)}
+.process{padding:56px 0}
+.proc-list{display:flex;flex-direction:column;gap:0;margin-top:28px;position:relative}
+.proc-list::before{content:'';position:absolute;left:23px;top:24px;bottom:24px;width:2px;background:linear-gradient(to bottom,var(--lime),rgba(154,255,0,.15));box-shadow:0 0 8px rgba(154,255,0,.4)}
+.proc-list::after{content:'';position:absolute;left:23px;top:24px;width:2px;height:60px;background:linear-gradient(to bottom,rgba(154,255,0,0),var(--lime),rgba(154,255,0,0));animation:proc-pulse 2s ease-in-out infinite;box-shadow:0 0 12px rgba(154,255,0,.8)}
+@keyframes proc-pulse{0%{top:24px;opacity:1}100%{top:calc(100% - 24px);opacity:0}}
+.proc-item{display:flex;gap:16px;padding-bottom:24px;position:relative;z-index:1}
+.proc-item:last-child{padding-bottom:0}
+.proc-num{width:46px;height:46px;background:rgba(154,255,0,.1);border:2px solid rgba(154,255,0,.4);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--lime);flex-shrink:0;box-shadow:0 0 14px rgba(154,255,0,.2),inset 0 0 10px rgba(154,255,0,.05)}
+.proc-body{padding-top:10px}
+.proc-t{font-size:15px;font-weight:700;margin-bottom:4px}
+.proc-d{font-size:13px;color:var(--w3);line-height:1.65}
+.faq{padding:56px 0}
+.faq-list{margin-top:28px}
+.faq-item{border-bottom:1px solid rgba(255,255,255,.05)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 0;cursor:pointer;font-size:14px;font-weight:600;gap:16px;transition:color .2s;user-select:none}.faq-q:hover{color:var(--lime)}
+.faq-arr{flex-shrink:0;width:22px;height:22px;background:rgba(255,255,255,.05);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s;color:rgba(255,255,255,.35)}
+.faq-item.open .faq-arr{background:rgba(154,255,0,.15);transform:rotate(45deg);color:var(--lime);box-shadow:0 0 8px rgba(154,255,0,.3)}
+.faq-a{font-size:13px;color:var(--w3);max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;line-height:1.75}.faq-item.open .faq-a{max-height:300px;padding-bottom:16px}
+.cta-sec{padding:56px 0;text-align:center;position:relative;overflow:hidden}
+.cta-sec::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(ellipse,rgba(154,255,0,.06) 0%,transparent 65%);pointer-events:none}
+.cta-title{font-family:'Unbounded',sans-serif;font-size:clamp(22px,3.5vw,44px);font-weight:900;margin-bottom:12px;line-height:1.1}
+.cta-sub{font-size:14px;color:var(--w3);margin-bottom:28px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.7}
+footer{padding:22px 32px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:1}
+.foot-brand{display:flex;align-items:center;gap:9px}.foot-brand img{width:24px;height:24px;border-radius:6px;object-fit:contain}
+.foot-brand-t{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.22)}
+.foot-links{display:flex;gap:14px;flex-wrap:wrap}
+.foot-link{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s}.foot-link:hover{color:var(--lime)}
+#okf-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px}
+#okf-overlay.open{display:flex}
+#okf-overlay.open~#oko-wrap{display:none!important}#okf-overlay.open~#oko-win{display:none!important}
+#okf-modal{background:#0d0d0d;border:1px solid rgba(154,255,0,.2);border-radius:20px;width:100%;max-width:420px;padding:24px 22px;position:relative;animation:okf-in .3s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
+@keyframes okf-in{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes okf-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#okf-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:auto}
+#okf-close:hover{background:rgba(255,255,255,.2)}
+.okf-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(154,255,0,.08);border:1px solid rgba(154,255,0,.2);border-radius:20px;padding:5px 12px;font-size:10px;font-weight:700;color:#9AFF00;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+.okf-hd{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3}
+.okf-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:14px}
+.okf-sel-tar{background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.2);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.okf-sel-tar-name{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--lime);margin-bottom:2px}
+.okf-sel-tar-price{font-size:12px;color:var(--w3)}
+.okf-f{margin-bottom:11px}
+.okf-f label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.okf-f label em{color:rgba(154,255,0,.6);font-style:normal}
+.okf-f input,.okf-f select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;font-family:'Onest',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;box-sizing:border-box;cursor:text;-webkit-tap-highlight-color:transparent}
+.okf-f input:focus,.okf-f select:focus{border-color:rgba(154,255,0,.4)}
+.okf-f input::placeholder{color:rgba(255,255,255,.22)}
+.okf-f select{cursor:pointer}
+#okf-btn{width:100%;background:#9AFF00;color:#000;border:none;border-radius:12px;padding:12px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:8px}
+#okf-btn:hover{opacity:.9}
+.okf-err{background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:rgba(255,80,70,.9);margin-top:8px;display:none}.okf-err.show{display:block}
+.okf-priv{font-size:10px;color:rgba(255,255,255,.2);text-align:center;margin-top:10px}
+#oko-wrap{position:fixed;bottom:24px;right:20px;z-index:2147483647;font-family:'Onest',sans-serif;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+#oko-bub{display:flex;flex-direction:column;align-items:flex-end;gap:9px;opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}
+#oko-bub.vis{opacity:1;transform:none}
+#oko-av-row{display:flex;align-items:center;gap:8px;flex-direction:row-reverse;cursor:pointer}
+#oko-av{width:58px;height:58px;border-radius:50%;position:relative;box-shadow:0 0 0 2px rgba(154,255,0,.3),0 4px 20px rgba(0,0,0,.5);transition:transform .2s}
+#oko-av:hover{transform:scale(1.07)}
+#oko-av img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block}
+#oko-dot{position:absolute;bottom:2px;right:2px;width:13px;height:13px;background:var(--green-online);border-radius:50%;border:2.5px solid #090909;animation:oko-pdot 2.5s ease-in-out infinite}
+@keyframes oko-pdot{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 5px rgba(37,211,102,0)}}
+#oko-badge{position:absolute;top:-3px;left:-3px;width:19px;height:19px;background:#ff3b30;color:#fff;font-size:10px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #090909;opacity:0;transform:scale(0);transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:2}
+#oko-badge.show{opacity:1;transform:scale(1)}
+#oko-popup{background:rgba(13,13,13,.97);border:1px solid var(--lime3);border-radius:18px 18px 4px 18px;padding:11px 15px;max-width:220px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(6px) scale(.96);transition:opacity .35s,transform .35s;pointer-events:none;cursor:pointer;align-self:flex-end}
+#oko-popup.show{opacity:1;transform:none;pointer-events:auto}
+#oko-popup-from{font-size:10px;font-weight:700;color:var(--lime);margin-bottom:3px}
+#oko-win{position:fixed;bottom:96px;right:20px;width:355px;height:520px;background:#0c0c0c;border:1px solid rgba(154,255,0,.14);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.85);opacity:0;transform:translateY(18px) scale(.96);pointer-events:none;transition:opacity .28s,transform .28s;z-index:2147483646}
+#oko-win.open{opacity:1;transform:none;pointer-events:auto}
+@media(max-width:480px){#oko-win{left:8px;right:8px;width:auto;bottom:88px;height:72vh}#oko-wrap{right:14px;bottom:20px}}
+#oko-hdr{background:#111;border-bottom:1px solid rgba(255,255,255,.055);padding:13px 15px 11px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+#oko-hdr-av{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(154,255,0,.4);flex-shrink:0}
+#oko-hdr-name{font-size:13.5px;font-weight:700;color:#fff}
+#oko-hdr-status{font-size:10.5px;color:var(--green-online);display:flex;align-items:center;gap:4px;margin-top:1px}
+#oko-hdr-status::before{content:'';width:6px;height:6px;background:var(--green-online);border-radius:50%;flex-shrink:0}
+#oko-hdr-info{flex:1;min-width:0}
+#oko-close{width:28px;height:28px;background:rgba(255,255,255,.06);border:none;border-radius:50%;color:rgba(255,255,255,.5);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0}
+#oko-close:hover{background:rgba(255,255,255,.12);color:#fff}
+#oko-msgs{flex:1;overflow-y:auto;padding:14px 12px 6px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+#oko-msgs::-webkit-scrollbar{width:2px}#oko-msgs::-webkit-scrollbar-thumb{background:rgba(154,255,0,.2);border-radius:2px}
+.om{display:flex;flex-direction:column;max-width:84%;animation:om-in .28s ease}
+@keyframes om-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.om.od{align-self:flex-start;align-items:flex-start}.om.ou{align-self:flex-end;align-items:flex-end}
+.omb{padding:8px 12px;font-size:13px;line-height:1.55;word-break:break-word}
+.od .omb{background:#1c1c1c;color:rgba(255,255,255,.92);border-radius:4px 15px 15px 15px}
+.ou .omb{background:linear-gradient(135deg,#1a3300,#284f00);color:#fff;border:1px solid rgba(154,255,0,.18);border-radius:15px 4px 15px 15px}
+.omt{font-size:9.5px;color:rgba(255,255,255,.28);margin-top:2px;padding:0 3px}
+.otyp{display:flex;align-items:center;gap:3px;padding:9px 13px;background:#1c1c1c;border-radius:4px 15px 15px 15px;width:fit-content}
+.otyp span{width:5px;height:5px;background:rgba(255,255,255,.35);border-radius:50%;animation:ot .3s ease-in-out infinite}
+.otyp span:nth-child(2){animation-delay:.15s}.otyp span:nth-child(3){animation-delay:.3s}
+@keyframes ot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+.ors{display:flex;flex-wrap:wrap;gap:6px;padding:5px 0 2px;animation:om-in .28s ease}
+.orb{background:rgba(154,255,0,.065);border:1px solid rgba(154,255,0,.22);color:var(--lime);padding:7px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s}
+.orb:hover{background:rgba(154,255,0,.14);transform:translateY(-1px)}
+.odd{text-align:center;font-size:9.5px;color:rgba(255,255,255,.22);margin:5px 0}
+#oko-bar{border-top:1px solid rgba(255,255,255,.055);padding:9px 11px;display:flex;gap:7px;align-items:center;background:#0c0c0c;flex-shrink:0}
+#oko-tg{flex:1;background:linear-gradient(135deg,#9AFF00,#7bcc00);color:#000;border:none;border-radius:22px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s}
+#oko-rst{width:34px;height:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:50%;color:rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0}
+@media(max-width:900px){.pain-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.nav{padding:10px 16px}.nav-links{display:none}.ham{display:flex;align-items:center}.wrap{padding:0 16px}.hero{padding:58px 16px 0;min-height:auto}.pain-grid{grid-template-columns:1fr}footer{flex-direction:column;align-items:flex-start;padding:20px 16px}}
+
+
+
+/* HERO PHONES INLINE */
+.hero-phones-block{width:100%;max-width:420px;margin:16px auto;position:relative;height:220px;flex-shrink:0}
+.phi{position:absolute;background:#0a0a0a;border-radius:18px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.8)}
+.phi-center{width:110px;height:190px;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;border:2px solid rgba(154,255,0,.5);box-shadow:0 8px 32px rgba(0,0,0,.8),0 0 24px rgba(154,255,0,.12);animation:phi-float 4s ease-in-out infinite}
+.phi-left{width:90px;height:158px;left:calc(50% - 110px);top:50%;transform:translateY(-50%) rotate(-10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float2 5s ease-in-out infinite}
+.phi-right{width:90px;height:158px;left:calc(50% + 20px);top:50%;transform:translateY(-50%) rotate(10deg);z-index:2;border:1.5px solid rgba(154,255,0,.2);animation:phi-float3 4.5s ease-in-out infinite}
+@keyframes phi-float{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-10px)}}
+@keyframes phi-float2{0%,100%{transform:translateY(-50%) rotate(-10deg) translateY(0)}50%{transform:translateY(-50%) rotate(-10deg) translateY(-7px)}}
+@keyframes phi-float3{0%,100%{transform:translateY(-50%) rotate(10deg) translateY(0)}50%{transform:translateY(-50%) rotate(10deg) translateY(-9px)}}
+.phi-screen{width:100%;height:100%;background:linear-gradient(180deg,#0d0d0d,#0a1a05);padding:6px 5px;display:flex;flex-direction:column;gap:3px}
+.phi-hd{display:flex;align-items:center;gap:4px;padding:2px}
+.phi-av{width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,var(--lime),#5a9900);flex-shrink:0}
+.phi-nm{font-size:7px;font-weight:700;color:#fff;font-family:'Onest',sans-serif}
+.phi-fl{margin-left:auto;background:var(--lime);color:#000;font-size:6px;font-weight:800;padding:1px 5px;border-radius:5px}
+.phi-vid{flex:1;background:rgba(154,255,0,.04);border-radius:6px;position:relative;overflow:hidden;border:1px solid rgba(154,255,0,.08);min-height:70px}
+.phi-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%)}
+.phi-likes{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:5px;align-items:center}
+.phi-lk{display:flex;flex-direction:column;align-items:center;gap:1px}
+.phi-lk-n{font-size:6px;color:rgba(255,255,255,.6);font-family:'Onest',sans-serif;font-weight:700}
+.phi-bar{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(154,255,0,.15)}
+.phi-bar-f{height:100%;background:var(--lime);box-shadow:0 0 6px rgba(154,255,0,.6);animation:phi-prog 6s linear infinite}
+.phi-bar-f2{animation-delay:2s}
+@keyframes phi-prog{0%{width:0}100%{width:100%}}
+.phi-stat{font-size:7px;color:var(--lime);font-weight:900;font-family:'Unbounded',sans-serif;text-align:center;padding:2px 0}
+.phi-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;flex:1}
+.phi-gi{background:rgba(154,255,0,.05);border-radius:3px;border:1px solid rgba(154,255,0,.08)}
+.phi-sub{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px;gap:1px}
+.phi-sub-n{font-family:'Unbounded',sans-serif;font-size:8px;font-weight:900;color:var(--lime)}
+.phi-sub-l{font-size:6px;color:rgba(255,255,255,.35);font-family:'Onest',sans-serif}
+/* Соцсети иконки вокруг */
+.phi-soc{position:absolute;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(154,255,0,.25);backdrop-filter:blur(8px);color:var(--lime);font-size:12px}
+.phi-s1{background:rgba(0,0,0,.75);top:10px;left:10px;animation:soc-f1 5s ease-in-out infinite}
+.phi-s2{background:rgba(20,5,30,.75);top:10px;right:10px;animation:soc-f2 6s ease-in-out infinite}
+.phi-s3{background:rgba(30,0,0,.75);bottom:30px;left:5px;animation:soc-f3 7s ease-in-out infinite}
+.phi-s4{background:rgba(0,10,30,.75);bottom:30px;right:5px;animation:soc-f4 5.5s ease-in-out infinite}
+.phi-s5{background:rgba(0,15,30,.75);top:50%;left:2px;transform:translateY(-50%);animation:soc-f5 6.5s ease-in-out infinite}
+@keyframes soc-f1{0%,100%{transform:translate(0,0)}50%{transform:translate(4px,-8px)}}
+@keyframes soc-f2{0%,100%{transform:translate(0,0)}50%{transform:translate(-5px,6px)}}
+@keyframes soc-f3{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-9px)}}
+@keyframes soc-f4{0%,100%{transform:translate(0,0)}50%{transform:translate(-6px,8px)}}
+@keyframes soc-f5{0%,100%{transform:translateY(-50%)}50%{transform:translate(5px,calc(-50% - 7px))}}
+.phi-ai{position:absolute;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.3);border-radius:7px;padding:3px 7px;font-size:8px;font-weight:900;color:var(--lime);font-family:'Unbounded',sans-serif}
+.phi-ai1{top:5px;left:50%;transform:translateX(-50%);animation:soc-f1 4s ease-in-out infinite}
+.phi-ai2{bottom:5px;right:10px;animation:soc-f3 5s ease-in-out infinite}
+
+button,a,[onclick]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bl,.tar-cta,.pain-btn,.hero-cta,.nav-cta,.tc-btn,.tc-what-head,.tar-toggle,.faq-q,.okf-t,.h-stat,.tar-cta{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tc-sec-head,.tc-sec,.tl-item button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+
+
+.vc-wrap:active{cursor:grabbing}
+.vc-item:hover,.vc-item.playing{border-color:var(--lime);box-shadow:0 0 18px rgba(154,255,0,.2)}
+.vc-item video{width:100%;height:100%;object-fit:cover;display:block}
+.vc-play svg{color:var(--lime);margin-left:2px}
+.vc-item.playing .vc-overlay{opacity:0}
+</style>
+</head>
+<body>
+<div class="pb" id="pb"></div>
+<canvas id="bg"></canvas>
+<nav class="nav" id="nav">
+  <a href="/" class="nav-logo"><img src="media/logo.png" alt="OKO"><div><div class="nav-logo-t">OKO TEAM</div><div class="nav-logo-s">Контент-завод</div></div></a>
+  <div class="nav-links">
+    <a href="#pain" class="nav-a">Боли</a>
+    <a href="#how" class="nav-a">Как работаем</a>
+    <a href="#tariffs" class="nav-a">Тарифы</a>
+    <a href="#reviews" class="nav-a">Отзывы</a>
+    <a href="#faq" class="nav-a">FAQ</a>
+    <a href="/" class="nav-a">← Главная</a>
+  </div>
+  <a href="#tariffs" class="nav-cta" id="nav-cta">ЗАПУСТИТЬ →</a>
+  <button class="ham" id="ham" onclick="toggleNav()">☰</button>
+</nav>
+<div class="mob-nav" id="mob">
+  <a href="#pain" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>Боли</a>
+  <a href="#how" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>Как работаем</a>
+  <a href="#tariffs" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Тарифы</a>
+  <a href="#reviews" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Отзывы</a>
+  <a href="#faq" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg>FAQ</a>
+  <a href="#cta" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Начать рост</a>
+  <a href="https://t.me/ktodaniel" target="_blank" class="nav-cta" onclick="closeMob()">Написать Даниэлю →</a>
+</div>
+<section class="hero" id="hero">
+  <canvas id="hcv"></canvas>
+
+  <div class="hero-content">
+    <div class="hero-badge rv"><span class="hbdot"></span>Контент-завод · OKO TEAM</div>
+    <h1 class="hero-title rv">ОТ 30 ДО 500<br><span class="lime">РОЛИКОВ</span> В МЕСЯЦ</h1>
+    <div class="hero-phones-block rv">
+      <!-- Иконки соцсетей -->
+      <div class="phi-soc phi-s1"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.27 8.27 0 004.84 1.55V6.79a4.85 4.85 0 01-1.07-.1z"/></svg></div>
+      <div class="phi-soc phi-s2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></div>
+      <div class="phi-soc phi-s3"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/></svg></div>
+      <div class="phi-soc phi-s4"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M15.07 2H8.93C3.33 2 2 3.33 2 8.93v6.14C2 20.67 3.33 22 8.93 22h6.14C20.67 22 22 20.67 22 15.07V8.93C22 3.33 20.67 2 15.07 2zm3.08 13.5h-1.52c-.58 0-.75-.46-1.79-1.5-.9-.87-1.3-.99-1.52-.99-.31 0-.4.09-.4.52v1.37c0 .37-.12.59-1.1.59-1.62 0-3.41-.98-4.67-2.82C5.49 10.5 5.07 8.78 5.07 8.4c0-.22.09-.43.52-.43h1.52c.4 0 .55.18.7.61.77 2.22 2.06 4.17 2.59 4.17.2 0 .29-.09.29-.59V9.77c-.06-1.06-.62-1.15-.62-1.53 0-.18.15-.37.4-.37h2.38c.34 0 .46.18.46.59v3.18c0 .34.15.46.25.46.2 0 .37-.12.74-.49 1.15-1.28 1.97-3.25 1.97-3.25.11-.22.29-.43.69-.43h1.52c.46 0 .56.24.46.56-.19.86-2.06 3.52-2.06 3.52-.16.26-.22.37 0 .65.16.22.68.67 1.03 1.08.64.74 1.13 1.36 1.26 1.79.12.4-.09.6-.49.6z"/></svg></div>
+      <div class="phi-soc phi-s5"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8l-1.69 7.96c-.12.58-.46.72-.93.45l-2.56-1.88-1.23 1.19c-.14.14-.25.25-.51.25l.18-2.6 4.72-4.26c.2-.18-.05-.28-.32-.1L7.24 14.6l-2.52-.79c-.54-.17-.55-.54.12-.8l9.88-3.81c.45-.16.84.11.92.6z"/></svg></div>
+      <div class="phi-ai phi-ai1">AI</div>
+      <div class="phi-ai phi-ai2">AUTO</div>
+      <!-- Телефон левый -->
+      <div class="phi phi-left">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">OKO</div></div>
+          <div class="phi-grid">
+            <div class="phi-gi"></div><div class="phi-gi"></div>
+            <div class="phi-gi"></div><div class="phi-gi"></div>
+            <div class="phi-gi"></div><div class="phi-gi"></div>
+          </div>
+          <div class="phi-sub"><div class="phi-sub-n">37К+</div><div class="phi-sub-l">подписчиков</div></div>
+        </div>
+      </div>
+      <!-- Телефон центральный -->
+      <div class="phi phi-center">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">OKO TEAM</div><div class="phi-fl">Follow</div></div>
+          <div class="phi-vid">
+            <div class="phi-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="rgba(154,255,0,.5)"><polygon points="5,3 19,12 5,21"/></svg></div>
+            <div class="phi-likes">
+              <div class="phi-lk"><svg width="9" height="9" viewBox="0 0 24 24" fill="rgba(255,255,255,.6)"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg><div class="phi-lk-n">47К</div></div>
+              <div class="phi-lk"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div class="phi-lk-n">1.2К</div></div>
+            </div>
+            <div class="phi-bar"><div class="phi-bar-f"></div></div>
+          </div>
+          <div class="phi-stat">1.5М+ просмотров</div>
+        </div>
+      </div>
+      <!-- Телефон правый -->
+      <div class="phi phi-right">
+        <div class="phi-screen">
+          <div class="phi-hd"><div class="phi-av"></div><div class="phi-nm">Shorts</div></div>
+          <div class="phi-vid" style="min-height:85px">
+            <div class="phi-play"><svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(154,255,0,.4)"><polygon points="5,3 19,12 5,21"/></svg></div>
+            <div class="phi-bar"><div class="phi-bar-f phi-bar-f2"></div></div>
+          </div>
+          <div class="phi-sub"><div class="phi-sub-n">500К</div><div class="phi-sub-l">охватов</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="hero-sub rv">Без единой съёмки. Команда создаёт ролики, публикует во все соцсети, приводит аудиторию — ты просто растёшь.</p>
+    <div class="hero-stats rv">
+      <a href="https://t.me/okoreviews" target="_blank" class="h-stat"><div class="h-stat-n" data-count="500" data-suffix="+">0+</div><div class="h-stat-l">роликов/мес</div></a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat"><div class="h-stat-n" data-count="10" data-suffix=" сетей">0 сетей</div><div class="h-stat-l">автопостинг</div></a>
+      <a href="https://t.me/okocase" target="_blank" class="h-stat"><div class="h-stat-n" data-prefix="от " data-count="300" data-suffix="₽">от 0₽</div><div class="h-stat-l">за ролик</div></a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat"><div class="h-stat-n" data-count="3" data-suffix=" дня">0 дня</div><div class="h-stat-l">до запуска</div></a>
+    </div>
+    <div class="hero-btns rv">
+      <a href="#tariffs" class="bl">ЗАПУСТИТЬ ЗАВОД →</a>
+      <a href="https://t.me/ktodaniel" target="_blank" class="bg">Бесплатный разбор</a>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="pain" id="pain">
+  <div class="wrap">
+    <div class="sec-lbl rv">Узнаёшь себя?</div>
+    <h2 class="sec-h rv">Почему контент не растёт</h2>
+    <div class="pain-grid">
+      <div class="pain-card rv">
+        <div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="pain-title">Нет времени снимать каждый день</div></div>
+        <div class="pain-desc">Алгоритм требует 3+ роликов в день. Но у тебя бизнес, клиенты и жизнь — не только съёмки.</div>
+        <a class="pain-btn" href="#tariffs" onclick="openZavodAnket('start')">РЕШЕНИЕ → СТАРТ</a>
+      </div>
+      <div class="pain-card rv">
+        <div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="pain-title">Ролики снимаешь — не залетают</div></div>
+        <div class="pain-desc">Тратишь время на контент который никто не смотрит. Без анализа трендов алгоритм тебя игнорирует.</div>
+        <a class="pain-btn" href="#tariffs" onclick="openZavodAnket('growth')">РЕШЕНИЕ → РОСТ</a>
+      </div>
+      <div class="pain-card rv">
+        <div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="pain-title">Аудитория есть — продаж нет</div></div>
+        <div class="pain-desc">Просмотры растут, а деньги нет. Нет воронки которая конвертирует зрителей в клиентов.</div>
+        <a class="pain-btn" href="#tariffs" onclick="openZavodAnket('factory')">РЕШЕНИЕ → ЗАВОД</a>
+      </div>
+      <div class="pain-card rv">
+        <div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="pain-title">Хочу максимум — всё под ключ</div></div>
+        <div class="pain-desc">500 роликов, нейробот, сайт, VIP поддержка — полная автоматизация медийности и продаж.</div>
+        <a class="pain-btn" href="#tariffs" onclick="openZavodAnket('empire')">РЕШЕНИЕ → ИМПЕРИЯ</a>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-lbl rv">Как мы работаем</div>
+    <h2 class="sec-h rv">Команда делает всё сама</h2>
+    <p class="sec-p rv">Ты не снимаешь, не монтируешь, не публикуешь. Команда OKO сама находит тренды, создаёт контент и запускает в эфир.</p>
+    <div class="how-list rv">
+      <div class="how-item">
+        <div class="how-head" onclick="toggleHow(this)"><div class="how-num">01</div><div class="how-title">Анализ ниши и поиск трендов</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="how-body"><div class="how-inner">
+          <div class="how-desc">Команда сама находит вирусные форматы и темы в твоей нише — без твоего участия.</div>
+          <div class="how-subs">
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Анализ топ-10 конкурентов</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Поиск виральных форматов недели</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Контент-стратегия на месяц</div>
+          </div>
+          <div class="how-tags"><span class="how-tag">2-3 дня</span><span class="how-tag">Без тебя</span></div>
+        </div></div>
+      </div>
+      <div class="how-item">
+        <div class="how-head" onclick="toggleHow(this)"><div class="how-num">02</div><div class="how-title">Написание сценариев</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="how-body"><div class="how-inner">
+          <div class="how-desc">Копирайтеры пишут сценарии с сильными хуками в первые 3 секунды — именно это удерживает зрителя.</div>
+          <div class="how-subs">
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Цепляющий хук в первые 3 секунды</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Структура удерживающая досмотры</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>CTA ведущий в воронку продаж</div>
+          </div>
+        </div></div>
+      </div>
+      <div class="how-item">
+        <div class="how-head" onclick="toggleHow(this)"><div class="how-num">03</div><div class="how-title">Производство роликов</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="how-body"><div class="how-inner">
+          <div class="how-desc">Команда создаёт три типа роликов — все без твоего участия в съёмке. Сама находит нарезки, подбирает стоковые, склеивает, монтирует.</div>
+          <div class="how-subs">
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>AI-аватар с твоим лицом и голосом</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Стоковые видео с профессиональной озвучкой</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Нарезки трендовых роликов с брендингом</div>
+          </div>
+          <div class="how-tags"><span class="how-tag">0 съёмок</span><span class="how-tag">Брендинг</span></div>
+        </div></div>
+      </div>
+      <div class="how-item">
+        <div class="how-head" onclick="toggleHow(this)"><div class="how-num">04</div><div class="how-title">Монтаж, субтитры, оформление</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="how-body"><div class="how-inner">
+          <div class="how-desc">Монтажёры склеивают, добавляют субтитры, музыку, эффекты и брендинг. Всё в едином стиле.</div>
+          <div class="how-subs">
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Автоматические субтитры на каждом ролике</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Твой лого, цвета и шрифты везде</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Фоновая музыка под настроение</div>
+          </div>
+        </div></div>
+      </div>
+      <div class="how-item">
+        <div class="how-head" onclick="toggleHow(this)"><div class="how-num">05</div><div class="how-title">Автопостинг во все соцсети</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+        <div class="how-body"><div class="how-inner">
+          <div class="how-desc">Подключаем все соцсети, настраиваем расписание. Ролики выходят сами по оптимальному графику.</div>
+          <div class="how-subs">
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>TikTok, Instagram, YouTube Shorts, VK, TG</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Оптимальное время публикации</div>
+            <div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Аналитика и корректировка стратегии</div>
+          </div>
+          <div class="how-tags"><span class="how-tag">10+ соцсетей</span><span class="how-tag">24/7</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="tariffs" id="tariffs">
+  <div class="wrap">
+    <div class="sec-lbl rv">Тарифы</div>
+    <h2 class="sec-h rv">Выбери объём производства</h2>
+    <div class="tar-list rv">
+
+      <div class="tar-card" id="tar-start">
+        <div class="tar-inner">
+          <div class="tar-top"><div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><div class="tar-info"><div class="tar-lbl">Начало</div><div class="tar-name">СТАРТ</div><div class="tar-sub">30 роликов · идеально для старта</div></div></div>
+          <div class="tar-price-row"><div class="tar-price">19 900 ₽</div><div class="tar-price-sub">разово · 1 месяц</div></div>
+          <div class="tar-eco"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>663₽/ролик · Экономия 25 000₽ vs монтажёр</div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)"><div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div><div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+          <div class="tar-content">
+            <div class="tar-subs">
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>30 видео-роликов</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Три формата: AI-аватар, стоковые, нарезки</div><div class="tar-sub-feat">Субтитры и брендинг на каждом ролике</div><div class="tar-sub-feat">Форматы под каждую платформу</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>4 карусели</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Для Instagram и Telegram</div><div class="tar-sub-feat">Дизайн в стиле твоего бренда</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Автопостинг + оформление 1 соцсети</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Подключение всех соцсетей</div><div class="tar-sub-feat">Шапка, аватар, хайлайтс — единый стиль</div></div></div></div>
+            </div>
+            <div class="tar-bonuses" onclick="toggleTarBonuses(this)">
+              <div class="tar-bonuses-top"><div class="tar-bon-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div><div class="tar-bon-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+              <div class="tar-bon-body"><div class="tar-bon-list"><div class="tar-bon-item">Чат с командой на весь срок</div><div class="tar-bon-item">Ежемесячный отчёт по охватам</div><div class="tar-bon-item">Корректировка стратегии по итогам</div></div></div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="openZavodAnket('start')">ЗАПУСТИТЬ →</button>
+        </div>
+      </div>
+
+      <div class="tar-card featured" id="tar-growth">
+        <div class="tar-inner">
+          <div class="tar-top"><div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="tar-info"><div class="tar-lbl">Хит продаж</div><div class="tar-name">РОСТ</div><div class="tar-sub">100 роликов · максимум роста аудитории</div><span class="tar-hit">ХИТ</span></div></div>
+          <div class="tar-price-row"><div class="tar-price">49 900 ₽</div><div class="tar-price-sub">разово · 1 месяц</div></div>
+          <div class="tar-eco"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>499₽/ролик · Экономия 100 000₽ vs команда</div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)"><div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div><div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+          <div class="tar-content">
+            <div class="tar-subs">
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>100 видео-роликов</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Все форматы производства</div><div class="tar-sub-feat">3+ роликов в день в каждую соцсеть</div><div class="tar-sub-feat">Профессиональный монтаж и субтитры</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>10 каруселей + Stories</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">10 каруселей для Instagram и Telegram</div><div class="tar-sub-feat">Регулярные Stories с вовлечением</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/></svg>Оформление всех соцсетей</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Единый брендинг всех аккаунтов</div><div class="tar-sub-feat">Шапки, аватары, хайлайтс</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Аналитика каждые 2 недели</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Отчёт по охватам и досмотрам</div><div class="tar-sub-feat">Корректировка тем и форматов</div></div></div></div>
+            </div>
+            <div class="tar-bonuses" onclick="toggleTarBonuses(this)">
+              <div class="tar-bonuses-top"><div class="tar-bon-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div><div class="tar-bon-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+              <div class="tar-bon-body"><div class="tar-bon-list"><div class="tar-bon-item">Персональный менеджер на весь срок</div><div class="tar-bon-item">Стратегия роста на месяц</div><div class="tar-bon-item">Чат с командой 24/7</div><div class="tar-bon-item">Корректировка после первых 2 недель</div><div class="tar-bon-item">Ежемесячный разбор результатов</div></div></div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="openZavodAnket('growth')">ЗАПУСТИТЬ →</button>
+        </div>
+      </div>
+
+      <div class="tar-card" id="tar-factory">
+        <div class="tar-inner">
+          <div class="tar-top"><div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div><div class="tar-info"><div class="tar-lbl">Полная автоматизация</div><div class="tar-name">ЗАВОД</div><div class="tar-sub">200 роликов + воронка + нейробот GPT</div></div></div>
+          <div class="tar-price-row"><div class="tar-price">84 900 ₽</div><div class="tar-price-sub">разово · 1 месяц</div></div>
+          <div class="tar-eco"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>424₽/ролик · Контент + продажи на автомате</div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)"><div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div><div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+          <div class="tar-content">
+            <div class="tar-subs">
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>200 видео-роликов</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Все форматы · 6+ роликов в день</div><div class="tar-sub-feat">Максимальная частота для роста</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Воронка + Нейробот GPT</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Нейробот GPT продаёт без тебя 24/7</div><div class="tar-sub-feat">Комментарий → бот → продажа</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Еженедельная аналитика</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Еженедельный отчёт по каждой соцсети</div><div class="tar-sub-feat">Быстрая корректировка стратегии</div></div></div></div>
+            </div>
+            <div class="tar-bonuses" onclick="toggleTarBonuses(this)">
+              <div class="tar-bonuses-top"><div class="tar-bon-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div><div class="tar-bon-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+              <div class="tar-bon-body"><div class="tar-bon-list"><div class="tar-bon-item">Персональный менеджер</div><div class="tar-bon-item">Нейробот GPT в подарок</div><div class="tar-bon-item">Приоритетная поддержка</div><div class="tar-bon-item">Еженедельная аналитика</div><div class="tar-bon-item">Созвон с Даниэлем раз в месяц</div></div></div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="openZavodAnket('factory')">ЗАПУСТИТЬ →</button>
+        </div>
+      </div>
+
+      <div class="tar-card" id="tar-empire">
+        <div class="tar-inner">
+          <div class="tar-top"><div class="tar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="tar-info"><div class="tar-lbl">VIP · Максимум</div><div class="tar-name">ИМПЕРИЯ</div><div class="tar-sub">500 роликов · нейробот · сайт · всё</div></div></div>
+          <div class="tar-price-row"><div class="tar-price">149 900 ₽</div><div class="tar-price-sub">разово · 1 месяц</div></div>
+          <div class="tar-eco"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>300₽/ролик · Максимальная экономия</div>
+          <div class="tar-toggle" onclick="toggleTarCard(this)"><div class="tar-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит</div><div class="tar-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+          <div class="tar-content">
+            <div class="tar-subs">
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>500 видео-роликов</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Все форматы · 16+ роликов в день</div><div class="tar-sub-feat">Полный захват всех алгоритмов</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Нейробот + Воронка + Сайт</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Полный автомат продаж 24/7</div><div class="tar-sub-feat">Сайт под ключ включён</div></div></div></div>
+              <div class="tar-sub-item"><div class="tar-sub-head" onclick="toggleTarSub(this)"><div class="tar-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Ежедневная аналитика</div><div class="tar-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="tar-sub-body"><div class="tar-sub-feats"><div class="tar-sub-feat">Ежедневный отчёт по всем метрикам</div><div class="tar-sub-feat">Мгновенная реакция на тренды</div></div></div></div>
+            </div>
+            <div class="tar-bonuses" onclick="toggleTarBonuses(this)">
+              <div class="tar-bonuses-top"><div class="tar-bon-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div><div class="tar-bon-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>
+              <div class="tar-bon-body"><div class="tar-bon-list"><div class="tar-bon-item">VIP поддержка 24/7</div><div class="tar-bon-item">Личный Даниэль — прямой доступ</div><div class="tar-bon-item">Ежедневная аналитика</div><div class="tar-bon-item">Сайт под ключ в подарок</div><div class="tar-bon-item">Приоритет в очереди на все задачи</div></div></div>
+            </div>
+          </div>
+          <button class="tar-cta" onclick="openZavodAnket('empire')">ЗАПУСТИТЬ →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="reviews" id="reviews">
+  <div class="wrap">
+    <div class="sec-lbl rv">Отзывы клиентов</div>
+    <h2 class="sec-h rv">Они уже работают с OKO TEAM</h2>
+    <div class="vc-wrap rv" id="vcWrap">
+      <div class="vc-track" id="vcTrack">
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+      </div>
+    </div>
+    <div class="audio-rev rv" onclick="toggleAudio()">
+      <div class="ar-btn"><svg id="arIco" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="ar-info"><div class="ar-name">Коптилыч</div><div class="ar-sub">Голосовой отзыв · 0:38</div></div>
+      <div class="ar-wave" id="arWave"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+      <audio id="audioEl" src="media/коптилыч-гс.ogg" preload="none"></audio>
+    </div>
+    <div class="rev-wrap rv" id="revWrap">
+      <div class="rev-track" id="revTrack">
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Было 1 000 подписчиков — стало 37 000 за 2 месяца. Не снял ни одного ролика сам. Команда всё сделала."</div><div class="rev-author"><div class="rev-ava">А</div><div><div class="rev-name">Артём</div><div class="rev-role">Контент-завод · РОСТ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Продажи выросли с $800 до $3 500 за первый месяц. Ролики выходят каждый день автоматически — я просто смотрю на рост."</div><div class="rev-author"><div class="rev-ava">М</div><div><div class="rev-name">Михаил</div><div class="rev-role">Контент-завод · ЗАВОД</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Охваты выросли с 40 000 до 1.2 млн просмотров в месяц. Никогда не думал что такое возможно без съёмок."</div><div class="rev-author"><div class="rev-ava">Д</div><div><div class="rev-name">Денис</div><div class="rev-role">Контент-завод · ИМПЕРИЯ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Запустил завод в январе — в марте уже 500К просмотров в TikTok. Постинг в 8 соцсетей одновременно без меня."</div><div class="rev-author"><div class="rev-ava">С</div><div><div class="rev-name">Сергей</div><div class="rev-role">Контент-завод · РОСТ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Было 0 подписчиков в TikTok. Через 6 недель 12 000 и первые заявки из соцсетей. Окупился за первый месяц."</div><div class="rev-author"><div class="rev-ava">Н</div><div><div class="rev-name">Наталья</div><div class="rev-role">Контент-завод · СТАРТ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Создали аккаунты, оформили, запустили автопостинг. Публикую видео в 10 сетях одновременно. Клиенты идут сами."</div><div class="rev-author"><div class="rev-ava">Ч</div><div><div class="rev-name">Чанна</div><div class="rev-role">Контент-завод · ЗАВОД</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"AI-аватар выглядит как настоящее видео с моим лицом. Клиенты не догадываются что я не снимал. Просмотры растут каждый день."</div><div class="rev-author"><div class="rev-ava">В</div><div><div class="rev-name">Владимир</div><div class="rev-role">Контент-завод · РОСТ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"За 3 месяца с нуля до 85 000 подписчиков в Instagram. Продажи онлайн-курса выросли в 4 раза. Рекомендую всем."</div><div class="rev-author"><div class="rev-ava">К</div><div><div class="rev-name">Кирилл</div><div class="rev-role">Контент-завод · ИМПЕРИЯ</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Было 1 000 подписчиков — стало 37 000 за 2 месяца. Ни одного ролика не снял сам."</div><div class="rev-author"><div class="rev-ava">А</div><div><div class="rev-name">Артём</div><div class="rev-role">Контент-завод</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Продажи с $800 до $3 500 за месяц. Автоматика работает без меня 24/7."</div><div class="rev-author"><div class="rev-ava">М</div><div><div class="rev-name">Михаил</div><div class="rev-role">Контент-завод</div></div></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px" class="rv"><a href="https://t.me/okoreviews" target="_blank" class="bl" style="animation:none;background:var(--lime)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>БОЛЬШЕ ОТЗЫВОВ →</a></div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="results" id="results">
+  <div class="wrap">
+    <div class="sec-lbl rv">Результаты</div>
+    <h2 class="sec-h rv">Что происходит за первый месяц</h2>
+    <div class="res-grid rv">
+      <div class="res-card"><div class="res-n" data-count="300" data-suffix="%">0%</div><div class="res-l">рост охватов за 30 дней</div></div>
+      <div class="res-card"><div class="res-n" data-count="10" data-suffix=" сетей">0 сетей</div><div class="res-l">автопостинг одновременно</div></div>
+      <div class="res-card"><div class="res-n" data-count="0" data-suffix=" съёмок">0 съёмок</div><div class="res-l">требуется от тебя</div></div>
+      <div class="res-card"><div class="res-n" data-count="3" data-suffix=" дня">0 дня</div><div class="res-l">до первых публикаций</div></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="process" id="process">
+  <div class="wrap">
+    <div class="sec-lbl rv">Процесс запуска</div>
+    <h2 class="sec-h rv">От заявки до роликов за 3 дня</h2>
+    <div class="proc-list rv">
+      <div class="proc-item"><div class="proc-num">1</div><div class="proc-body"><div class="proc-t">Заявка и анкета</div><div class="proc-d">Заполняешь анкету о нише, продуктах и целях. Занимает 10 минут.</div></div></div>
+      <div class="proc-item"><div class="proc-num">2</div><div class="proc-body"><div class="proc-t">Анализ ниши и стратегия</div><div class="proc-d">Команда анализирует конкурентов, находит вирусные форматы. Формируем контент-стратегию.</div></div></div>
+      <div class="proc-item"><div class="proc-num">3</div><div class="proc-body"><div class="proc-t">Производство первых роликов</div><div class="proc-d">Создаём первую партию роликов. Видишь прогресс в рабочем чате каждый день.</div></div></div>
+      <div class="proc-item"><div class="proc-num">4</div><div class="proc-body"><div class="proc-t">Запуск автопостинга</div><div class="proc-d">Подключаем все соцсети, настраиваем расписание. Ролики выходят сами по графику.</div></div></div>
+      <div class="proc-item"><div class="proc-num">5</div><div class="proc-body"><div class="proc-t">Рост и аналитика</div><div class="proc-d">Анализируем результаты, корректируем стратегию. Ты видишь рост охватов каждую неделю.</div></div></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="sec-lbl rv">FAQ</div>
+    <h2 class="sec-h rv">Частые вопросы</h2>
+    <div class="faq-list rv">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Нужно ли мне снимать хоть что-то?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Нет. Для AI-аватара нужна запись 2 минут видео один раз для клонирования. Для остальных форматов вообще ничего снимать не нужно.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">В какие соцсети выходит контент?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">TikTok, Instagram Reels, YouTube Shorts, ВКонтакте, Telegram, Facebook, Pinterest, LinkedIn. Одна публикация — автоматически во все платформы.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Как быстро начнётся рост?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">При выходе 3+ роликов в день алгоритмы замечают канал через 2-4 недели. Первые заметные результаты на 3-4 неделе.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Работаете с любой нишей?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да. Работали с недвижимостью, кулинарией, онлайн-курсами, клинингом, косметологией, юриспруденцией и десятками других ниш.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Можно посмотреть примеры работ?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, примеры в Telegram-канале @gdeoko и в разделе портфолио на главной okoteam.top</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Есть ли договор?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, всегда работаем по договору. Фиксируем объём, сроки, стоимость и обязанности. За 5+ лет ни одного незакрытого кейса.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Можно ли продлить на следующий месяц?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, большинство клиентов продолжают работу. При продлении на 3+ месяца действует скидка. Обсуждаем индивидуально.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Что если ролики не залетают?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Анализируем статистику и корректируем стратегию. Алгоритмам нужно 2-4 недели чтобы "понять" канал. Если через месяц результата нет — пересматриваем форматы и темы бесплатно.</div></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+<section class="cta-sec" id="cta">
+  <div class="wrap">
+    <div class="rv">
+      <div class="sec-lbl">Старт за 3 дня</div>
+      <h2 class="cta-title">Готов запустить<br><span style="color:var(--lime)">контент-завод?</span></h2>
+      <p class="cta-sub">Выбери тариф, заполни анкету — первые ролики выйдут через 3 дня. Или напиши Даниэлю если есть вопросы.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="#tariffs" class="bl">ВЫБРАТЬ ТАРИФ →</a>
+        <a href="https://t.me/ktodaniel" target="_blank" class="bg">Написать Даниэлю</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-brand"><img src="media/logo.png" alt="OKO"><div class="foot-brand-t">OKO TEAM © 2026</div></div>
+  <div class="foot-links">
+    <a href="/" class="foot-link">Главная</a>
+    <a href="/web" class="foot-link">Разработка</a>
+    <a href="https://t.me/ktodaniel" target="_blank" class="foot-link">@ktodaniel</a>
+    <a href="https://t.me/okoreviews" target="_blank" class="foot-link">Отзывы</a>
+  </div>
+</footer>
+<div id="okf-overlay">
+  <div id="okf-modal">
+    <button id="okf-close" onclick="OKF.close()">✕</button>
+    <div class="okf-badge" id="okf-badge">КОНТЕНТ-ЗАВОД</div>
+    <div class="okf-hd" id="okf-hd">Запускаем завод</div>
+    <div class="okf-sub" id="okf-sub">Заполни анкету — свяжемся в течение часа</div>
+    <div id="okf-sel-tar" class="okf-sel-tar" style="display:none">
+      <div class="okf-sel-tar-name" id="okf-sel-tar-name">СТАРТ</div>
+      <div class="okf-sel-tar-price" id="okf-sel-tar-price">19 900 ₽</div>
+    </div>
+    <div id="okf-fields">
+      <div class="okf-f"><label>Имя <em>*</em></label><input type="text" id="okf-name" placeholder="Как вас зовут?" autocomplete="given-name"></div>
+      <div class="okf-f"><label>Email <em>*</em></label><input type="email" id="okf-email" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="okf-f"><label>Телефон <em>*</em></label><input type="tel" id="okf-phone" placeholder="+7 999 999 99 99" autocomplete="tel" oninput="OKF.mPhone(this)" onkeydown="OKF.kPhone(event,this)"></div>
+      <div class="okf-f"><label>Telegram</label><input type="text" id="okf-tg" placeholder="@username" oninput="OKF.mTg(this)" onfocus="OKF.fTg(this)"></div>
+      <div class="okf-f"><label>Ниша / сфера</label><input type="text" id="okf-niche" placeholder="Онлайн-курсы, ресторан, недвижимость..."></div>
+      <div class="okf-f"><label>Есть соцсети?</label><select id="okf-hassoc"><option>Нет, начинаем с нуля</option><option>Есть, маленькие</option><option>Есть активные</option></select></div>
+    </div>
+    <button id="okf-btn" onclick="OKF.submit()">ЗАПУСТИТЬ →</button>
+    <div class="okf-err" id="okf-err"></div>
+    <div class="okf-priv">Нажимая кнопку ты соглашаешься на обработку данных</div>
+  </div>
+</div><div id="oko-wrap">
+  <div id="oko-popup" onclick="OKO.open('popup')" ontouchend="event.preventDefault();OKO.open('popup')">
+    <div id="oko-popup-from">Даниэль Ильясов</div>
+    <span id="oko-popup-txt"></span>
+  </div>
+  <div id="oko-bub">
+    <div id="oko-av-row" onclick="OKO.toggle()">
+      <div id="oko-av">
+        <img src="media/asset_5_46c20f23.jpg" alt="Даниэль">
+        <div id="oko-dot"></div>
+        <div id="oko-badge">1</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="oko-win">
+  <div id="oko-hdr">
+    <img id="oko-hdr-av" src="media/asset_5_46c20f23.jpg" alt="">
+    <div id="oko-hdr-info"><div id="oko-hdr-name">Даниэль Ильясов</div><div id="oko-hdr-status">онлайн</div></div>
+    <button id="oko-close" onclick="OKO.close()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div id="oko-msgs"><div class="odd">сегодня</div></div>
+  <div id="oko-bar">
+    <a id="oko-tg" href="https://t.me/ktodaniel" target="_blank" onclick="OKO._trackAct()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink:0"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Написать Даниэлю</a>
+    <button id="oko-rst" onclick="OKO.restart()" title="Начать сначала"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
+  </div>
+<script>
+
+
+
+
+
+
+
+var API='https://okoteam.top/api.php';
+var LAVA_ZAVOD='https://app.lava.top/products/cc256201-d7ca-4fa5-b3eb-cd4ca8ecdcc2';
+var TARS_DATA={start:{name:'СТАРТ',price:'19 900 ₽'},growth:{name:'РОСТ',price:'49 900 ₽'},factory:{name:'ЗАВОД',price:'84 900 ₽'},empire:{name:'ИМПЕРИЯ',price:'149 900 ₽'}};
+
+function openZavodAnket(tar){
+  var t=TARS_DATA[tar]||TARS_DATA.growth;
+  var sel=document.getElementById('okf-sel-tar');
+  document.getElementById('okf-sel-tar-name').textContent=t.name;
+  document.getElementById('okf-sel-tar-price').textContent=t.price;
+  sel.style.display='block';
+  document.getElementById('okf-err').classList.remove('show');
+  document.getElementById('okf-overlay').classList.add('open');
+  var w=document.getElementById('oko-wrap');if(w)w.style.display='none';
+  window._zavodTar=tar;
+}
+
+var OKF=(function(){
+function mPhone(inp){var v=inp.value,hp=v.startsWith('+'),d=v.replace(/\D/g,'');inp.value=(hp?'+':'')+d;}
+function kPhone(e,inp){if([8,46,37,38,39,40,9].includes(e.keyCode))return;if(e.key==='+'&&inp.selectionStart===0)return;if(!/^\d$/.test(e.key))e.preventDefault();}
+function mTg(inp){var v=inp.value.replace(/@/g,'').replace(/\s/g,'');inp.value=v?'@'+v:'';}
+function fTg(inp){if(!inp.value)inp.value='@';setTimeout(function(){inp.setSelectionRange(inp.value.length,inp.value.length);},0);}
+function close(){document.getElementById('okf-overlay').classList.remove('open');var w=document.getElementById('oko-wrap');if(w)w.style.display='';}
+async function submit(){
+  var name=(document.getElementById('okf-name').value||'').trim();
+  var email=(document.getElementById('okf-email').value||'').trim();
+  var phone=(document.getElementById('okf-phone').value||'').trim();
+  var tgEl=document.getElementById('okf-tg');var tg=tgEl?(tgEl.value||'').trim().replace('@',''):'';
+  var errEl=document.getElementById('okf-err');var btn=document.getElementById('okf-btn');
+  if(!name||!email||!phone){errEl.textContent='Заполни все обязательные поля';errEl.classList.add('show');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Введи корректный email';errEl.classList.add('show');return;}
+  var cp=phone.replace(/[^\d]/g,'');if(cp.length<7){errEl.textContent='Введи полный номер телефона';errEl.classList.add('show');return;}
+  errEl.classList.remove('show');btn.disabled=true;btn.textContent='Отправляем...';
+  var extra={niche:(document.getElementById('okf-niche')||{value:''}).value,hassoc:(document.getElementById('okf-hassoc')||{value:''}).value};
+  var tar=window._zavodTar||'growth';
+  try{await fetch(API+'?action=saveLead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone,tg:tg,product:'zavod',tariff:tar,extra:extra})});}catch(e){}
+  sessionStorage.setItem('okf_email',email);sessionStorage.setItem('okf_name',name);
+  sessionStorage.setItem('okf_product','zavod');sessionStorage.setItem('okf_tariff',tar);
+  // Открываем Lava и показываем экран ожидания
+  showWaiting(name, email);
+  window.open(LAVA_ZAVOD, '_blank');
+}
+function showOK(name){
+  document.getElementById('okf-modal').innerHTML='<div style="text-align:center;padding:10px 0"><div style="width:72px;height:72px;border-radius:50%;background:rgba(154,255,0,.12);border:2px solid rgba(154,255,0,.35);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>'
+    +'<div style="font-family:Unbounded,sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:8px">Заявка принята!</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.6">'+name+', Даниэль уже получил уведомление.<br>Свяжется в ближайшее время.</div>'
+    +'<a href="https://t.me/ktodaniel" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#9AFF00;color:#000;text-decoration:none;padding:13px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:12px;font-weight:900;margin-bottom:10px">Написать Даниэлю</a>'
+    +'<button id="okf-cls-btn" style="width:100%;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer;font-family:Onest,sans-serif">Закрыть</button></div>';
+  (function(){var b=document.getElementById('okf-cls-btn');if(b)b.onclick=function(){document.getElementById('okf-overlay').classList.remove('open');}; })();
+}
+
+document.getElementById('okf-overlay').addEventListener('click',function(e){if(e.target===this)close();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+return{close:close,submit:submit,mPhone:mPhone,kPhone:kPhone,mTg:mTg,fTg:fTg};
+})();
+
+var _zavodPoll=null;
+function showWaiting(name,email){
+  var modal=document.getElementById('okf-modal');
+  modal.innerHTML='<div style="text-align:center;padding:10px 0">'
+    +'<div style="width:64px;height:64px;border-radius:50%;background:rgba(154,255,0,.08);border:2px solid rgba(154,255,0,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">'
+    +'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2" style="animation:okf-spin2 2s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>'
+    +'</div>'
+    +'<div style="font-family:Unbounded,sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:8px">Ожидаем оплату...</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.6">Страница оплаты открылась в новой вкладке.<br>После оплаты нажмите кнопку ниже.</div>'
+    +'<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.4)">Письмо придёт на <strong style="color:rgba(255,255,255,.75)">'+email+'</strong></div>'
+    +'<button id="zav-pay-btn" style="width:100%;background:#9AFF00;color:#000;border:none;padding:14px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:13px;font-weight:900;cursor:pointer;margin-bottom:10px">Я оплатил</button>'
+    +'<button id="okf-cls-btn2" style="width:100%;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer">Закрыть</button>'
+    +'</div>';
+  document.getElementById('okf-overlay').classList.add('open');
+  (function(){var b=document.getElementById('okf-cls-btn2');if(b)b.onclick=function(){document.getElementById('okf-overlay').classList.remove('open');};})();
+  // Вешаем обработчик на кнопку без проблем с escaping
+  var payBtn=document.getElementById('zav-pay-btn');
+  if(payBtn){
+    payBtn._email=email; payBtn._name=name;
+    payBtn.onclick=function(){confirmPaid(this._email,this._name);};
+  }
+}
+
+function showSuccess(name){
+  if(_zavodPoll){clearInterval(_zavodPoll);_zavodPoll=null;}
+  document.getElementById('okf-modal').innerHTML='<div style="text-align:center;padding:10px 0">'
+    +'<div style="width:72px;height:72px;border-radius:50%;background:rgba(154,255,0,.12);border:2px solid rgba(154,255,0,.35);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">'
+    +'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
+    +'</div>'
+    +'<div style="font-family:Unbounded,sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:8px">Оплата прошла!</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.6">Отлично, <strong style="color:#fff">'+name+'</strong>!<br>Даниэль уже получил уведомление.</div>'
+    +'<a href="https://t.me/ktodaniel" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#9AFF00;color:#000;text-decoration:none;padding:13px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:12px;font-weight:900;margin-bottom:10px">Написать Даниэлю</a>'
+    +'<button id="okf-cls-btn2" style="width:100%;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer">Закрыть</button>'
+    +'</div>';
+  document.getElementById('okf-overlay').classList.add('open');
+  (function(){var b=document.getElementById('okf-cls-btn2');if(b)b.onclick=function(){document.getElementById('okf-overlay').classList.remove('open');};})();
+}
+
+function startPolling(email,name){
+  _zavodPoll=setInterval(async function(){
+    try{
+      var r=await fetch(API+'?action=checkPaid&email='+encodeURIComponent(email)+'&product=zavod');
+      var d=await r.json();
+      if(d.paid){clearInterval(_zavodPoll);_zavodPoll=null;showSuccess(d.name||name);}
+    }catch(e){}
+  },5000);
+  setTimeout(function(){if(_zavodPoll){clearInterval(_zavodPoll);_zavodPoll=null;}},600000);
+}
+function confirmPaid(email,name){
+  if(_zavodPoll){clearInterval(_zavodPoll);_zavodPoll=null;}
+  fetch(API+'?action=confirmPayment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name,product:'zavod',secret:'oko2026'})}).catch(function(){});
+  showSuccess(name);
+}
+
+function toggleTarCard(el){
+  var card=el.closest('.tar-card');
+  var wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.tar-card').forEach(function(c){
+    c.classList.remove('open');
+    var ct=c.querySelector('.tar-content');if(ct)ct.style.maxHeight='0';
+  });
+  if(!wasOpen){card.classList.add('open');var ct=card.querySelector('.tar-content');if(ct)ct.style.maxHeight='9999px';setTimeout(function(){card.scrollIntoView({behavior:'smooth',block:'nearest'});},150);}
+}
+function toggleTarSub(el){
+  var item=el.closest('.tar-sub-item');
+  var wasOpen=item.classList.contains('open');
+  var parent=item.parentElement;
+  parent.querySelectorAll('.tar-sub-item').forEach(function(i){
+    i.classList.remove('open');var b=i.querySelector('.tar-sub-body');if(b)b.style.maxHeight='0';
+  });
+  if(!wasOpen){item.classList.add('open');var b=item.querySelector('.tar-sub-body');if(b)b.style.maxHeight=b.scrollHeight+40+'px';}
+}
+function toggleTarBonuses(el){
+  el.classList.toggle('open');
+  var body=el.querySelector('.tar-bon-body');
+  if(body)body.style.maxHeight=el.classList.contains('open')?body.scrollHeight+40+'px':'0';
+}
+function toggleHow(head){var item=head.closest('.how-item');var wasOpen=item.classList.contains('open');document.querySelectorAll('.how-item').forEach(function(i){i.classList.remove('open');});if(!wasOpen)item.classList.add('open');}
+function toggleFaq(el){var item=el.parentElement;var isOpen=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});if(!isOpen)item.classList.add('open');}
+
+// Chatbot
+window.OKO=(function(){
+var open=false,started=false;
+function popup(txt){var p=document.getElementById('oko-popup'),t=document.getElementById('oko-popup-txt');if(!p||!t)return;t.textContent=txt;p.classList.add('show');setTimeout(function(){p.classList.remove('show');},5000);}
+function init(){setTimeout(function(){var b=document.getElementById('oko-bub');if(b)b.classList.add('vis');var bd=document.getElementById('oko-badge');if(bd)setTimeout(function(){bd.classList.add('show');},400);setTimeout(function(){popup('Помогу запустить контент-завод. Какой тариф тебя интересует?');},2000);},5000);}
+function openChat(){open=true;var w=document.getElementById('oko-win');if(w)w.classList.add('open');var bd=document.getElementById('oko-badge'),p=document.getElementById('oko-popup');if(bd)bd.classList.remove('show');if(p)p.classList.remove('show');if(!started){started=true;setTimeout(startChat,350);}}
+function closeChat(){open=false;var w=document.getElementById('oko-win');if(w)w.classList.remove('open');}
+function restart(){started=false;var m=document.getElementById('oko-msgs');if(m)m.innerHTML='<div class="odd">сегодня</div>';setTimeout(startChat,350);}
+function M(){return document.getElementById('oko-msgs');}
+function scroll(){var m=M();if(m)setTimeout(function(){m.scrollTop=m.scrollHeight;},60);}
+function nowT(){var d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function addMsg(txt,from,d){return new Promise(function(res){setTimeout(function(){var w=document.createElement('div');w.className='om '+(from==='d'?'od':'ou');w.innerHTML='<div class="omb">'+txt+'</div><div class="omt">'+nowT()+'</div>';M().appendChild(w);scroll();res();},d||0);});}
+function typing(ms){return new Promise(function(res){var w=document.createElement('div');w.className='om od';w.id='oko-typ';w.innerHTML='<div class="otyp"><span></span><span></span><span></span></div>';M().appendChild(w);scroll();setTimeout(function(){var e=document.getElementById('oko-typ');if(e)e.remove();res();},ms||900);});}
+function replies(btns){return new Promise(function(res){var w=document.createElement('div');w.className='ors';btns.forEach(function(b){var el=document.createElement('button');el.className='orb';el.textContent=b.t;el.onclick=function(){w.remove();addMsg(b.t,'u').then(function(){if(b.fn)b.fn();});};w.appendChild(el);});M().appendChild(w);scroll();res();});}
+async function startChat(){
+  await typing(800);
+  await addMsg('Привет! Помогу запустить контент-завод и выбрать нужный тариф. Что тебя интересует?','d');
+  await typing(500);
+  await replies([
+    {t:'СТАРТ — 30 роликов · 19 900₽',fn:async function(){await typing(700);await addMsg('СТАРТ — идеально для начала. 30 роликов + 4 карусели + автопостинг. Экономия 25К vs монтажёр. Цена 663₽/ролик.','d');await typing(400);await replies([{t:'Запустить СТАРТ',fn:function(){openZavodAnket('start');}},{t:'← Назад',fn:restart}]);}},
+    {t:'РОСТ — 100 роликов · 49 900₽',fn:async function(){await typing(700);await addMsg('РОСТ — наш хит. 100 роликов + оформление всех соцсетей + аналитика каждые 2 нед. Экономия 100К. 499₽/ролик.','d');await typing(400);await replies([{t:'Запустить РОСТ',fn:function(){openZavodAnket('growth');}},{t:'← Назад',fn:restart}]);}},
+    {t:'ЗАВОД — 200 роликов · 84 900₽',fn:async function(){await typing(700);await addMsg('ЗАВОД — 200 роликов + нейробот GPT + воронка. Полная автоматизация контента и продаж. 424₽/ролик.','d');await typing(400);await replies([{t:'Запустить ЗАВОД',fn:function(){openZavodAnket('factory');}},{t:'← Назад',fn:restart}]);}},
+    {t:'ИМПЕРИЯ — 500 роликов · 149 900₽',fn:async function(){await typing(700);await addMsg('ИМПЕРИЯ — максимум. 500 роликов + нейробот + сайт + VIP поддержка + личный Даниэль. 300₽/ролик.','d');await typing(400);await replies([{t:'Запустить ИМПЕРИЯ',fn:function(){openZavodAnket('empire');}},{t:'← Назад',fn:restart}]);}},
+    {t:'Помогите выбрать',fn:async function(){await typing(800);await addMsg('Сколько роликов хочешь выпускать в месяц? Это поможет определить оптимальный тариф.','d');await typing(400);await replies([{t:'30 роликов',fn:function(){openZavodAnket('start');}},{t:'100 роликов',fn:function(){openZavodAnket('growth');}},{t:'200+ роликов',fn:function(){openZavodAnket('factory');}},{t:'Написать Даниэлю',fn:function(){window.open('https://t.me/ktodaniel','_blank');}}]);}}
+  ]);
+}
+init();
+return{open:openChat,close:closeChat,toggle:function(){if(open)closeChat();else openChat();},restart:restart};
+})();
+
+// VC карусель
+(function(){var wrap=document.querySelector('.vc-wrap'),track=document.querySelector('.vc-track');if(!wrap||!track)return;var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,vis=true;new IntersectionObserver(function(e){vis=e[0].isIntersecting;},{threshold:0}).observe(wrap);(function run(){requestAnimationFrame(run);if(!vis||drag)return;pos+=.4;if(pos>=track.scrollWidth/2)pos=0;track.style.transform='translateX(-'+pos+'px)';})();function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var h=track.scrollWidth/2;if(pos<0)pos+=h;if(pos>h)pos-=h;track.style.transform='translateX(-'+pos+'px)';}function up(){if(!drag)return;drag=false;}wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);})();
+
+// Rev карусель
+(function(){var wrap=document.querySelector('.rev-wrap'),track=document.querySelector('.rev-track');if(!wrap||!track)return;var pos=0,drag=false,startX=0,startPos=0,vis=true;new IntersectionObserver(function(e){vis=e[0].isIntersecting;},{threshold:0}).observe(wrap);(function run(){requestAnimationFrame(run);if(!vis||drag)return;pos+=.4;if(pos>=track.scrollWidth/2)pos=0;track.style.transform='translateX(-'+pos+'px)';})();function dn(x){drag=true;startX=x;startPos=pos;}function mv(x){if(!drag)return;pos=startPos+(startX-x);var h=track.scrollWidth/2;if(pos<0)pos+=h;if(pos>h)pos-=h;track.style.transform='translateX(-'+pos+'px)';}function up(){drag=false;}wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);})();
+
+// Audio
+function toggleAudio(){var v=document.getElementById('audioEl'),w=document.getElementById('arWave'),i=document.getElementById('arIco');if(!v)return;if(v.paused){v.play();w&&w.classList.add('pl');if(i)i.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';}else{v.pause();w&&w.classList.remove('pl');if(i)i.innerHTML='<polygon points="5,3 19,12 5,21"/>';}}
+
+
+// Counters
+(function(){var done=false;function run(){if(done)return;done=true;document.querySelectorAll('[data-count]').forEach(function(el){var target=parseFloat(el.dataset.count),prefix=el.dataset.prefix||'',suffix=el.dataset.suffix||'',dec=parseInt(el.dataset.decimals||0),step=parseFloat(el.dataset.step||1),dur=1600,steps=Math.ceil(target/step)||1,interval=dur/steps,cur=0;if(target===0){el.textContent=prefix+'0'+suffix;return;}var t=setInterval(function(){cur+=step;if(cur>=target){cur=target;clearInterval(t);}el.textContent=prefix+(dec>0?cur.toFixed(dec):Math.floor(cur))+suffix;},interval);});} var io=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting)run();});},{threshold:.3});var s=document.querySelector('.hero-stats,.res-grid');if(s)io.observe(s);})();
+
+
+// Phones animation
+(function(){
+  var p=document.getElementById('heroPhones');
+  if(!p)return;
+  setTimeout(function(){p.classList.add('vis');},300);
+})();
+
+// ══ CANVAS BG ══
+(function(){
+var c=document.getElementById('bg'),ctx=c.getContext('2d');
+var W,H,pts=[],ripples=[],mx=-9999,my=-9999;
+function init(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;pts=[];var n=Math.floor(W*H/18000);for(var i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:.6+Math.random()*1.4,op:.05+Math.random()*.18});}
+window.addEventListener('resize',init);init();
+window.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});
+window.addEventListener('click',function(e){ripples.push({x:e.clientX,y:e.clientY,r:0,op:.4,sp:3+Math.random()*2});});
+window.addEventListener('touchstart',function(e){var t=e.touches[0];ripples.push({x:t.clientX,y:t.clientY,r:0,op:.4,sp:3});mx=t.clientX;my=t.clientY;},{passive:true});
+var ATTR=140,FORCE=.03;
+var _bgLast=0;
+function draw(ts){
+  requestAnimationFrame(draw);
+  if(ts-_bgLast<33)return; // 30fps
+  _bgLast=ts;
+  ctx.fillStyle='rgba(5,5,5,0.07)';ctx.fillRect(0,0,W,H);
+  var g=ctx.createRadialGradient(W/2,H*.4,0,W/2,H*.4,Math.min(W,H)*.4);g.addColorStop(0,'rgba(70,150,0,0.03)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(var i=ripples.length-1;i>=0;i--){var rp=ripples[i];rp.r+=rp.sp;rp.op-=.008;if(rp.op<=0){ripples.splice(i,1);continue;}ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r,0,Math.PI*2);ctx.strokeStyle='rgba(154,255,0,'+rp.op.toFixed(3)+')';ctx.lineWidth=1;ctx.stroke();}
+  for(var i=0;i<pts.length;i++){var p=pts[i];var dx=mx-p.x,dy=my-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<ATTR&&d>1){var f=FORCE*(1-d/ATTR);p.vx+=dx/d*f;p.vy+=dy/d*f;}p.vx*=.965;p.vy*=.965;p.vx+=(Math.random()-.5)*.03;p.vy+=(Math.random()-.5)*.03;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+  for(var j=i+1;j<pts.length;j++){var q=pts[j],cdx=p.x-q.x,cdy=p.y-q.y,cd=Math.sqrt(cdx*cdx+cdy*cdy);if(cd<80){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(154,255,0,'+(0.05*(1-cd/80)).toFixed(3)+')';ctx.lineWidth=.4;ctx.stroke();}}
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(154,255,0,'+p.op+')';ctx.fill();}
+}
+draw();
+})();
+
+// ══ HERO ORBITAL CANVAS ══
+(function(){
+var c=document.getElementById('hcv'),ctx=c.getContext('2d');
+var W,H,nodes=[],t=0,sy=0;
+function init(){c.width=W=c.parentElement.offsetWidth||window.innerWidth;c.height=H=c.parentElement.offsetHeight||window.innerHeight;nodes=[];var rings=[{r:60,n:4,sp:.01},{r:110,n:7,sp:-.007},{r:165,n:11,sp:.005}];nodes.push({ring:-1,x:0,y:0,size:3.5,op:.8,pulse:0,psp:.04});rings.forEach(function(rg){for(var i=0;i<rg.n;i++){var a=Math.PI*2/rg.n*i;nodes.push({ring:rg,ang:a,r:rg.r,sp:rg.sp,size:1+Math.random()*2,op:.2+Math.random()*.4,pulse:Math.random()*Math.PI*2,psp:.015+Math.random()*.025,x:0,y:0});}});}
+window.addEventListener('resize',init);init();
+window.addEventListener('scroll',function(){sy=window.scrollY;});
+var _hLast=0,_hVisible=true;
+new IntersectionObserver(function(e){_hVisible=e[0].isIntersecting;},{threshold:0}).observe(c);
+function draw(ts){requestAnimationFrame(draw);
+  if(!_hVisible)return;
+  if(ts-_hLast<33)return; // 30fps
+  _hLast=ts;
+  t+=.007;ctx.clearRect(0,0,W,H);var fade=Math.max(0,1-sy/(H*.6));if(fade<=0)return;ctx.globalAlpha=fade;var cx=W/2,cy=H*.38;nodes.forEach(function(n){if(n.ring===-1){n.x=cx;n.y=cy;n.pulse+=n.psp;return;}n.ang+=n.sp;n.pulse+=n.psp;n.x=cx+Math.cos(n.ang)*n.r;n.y=cy+Math.sin(n.ang)*n.r*.5;});[60,110,165].forEach(function(r){ctx.beginPath();ctx.ellipse(cx,cy,r,r*.5,0,0,Math.PI*2);ctx.strokeStyle='rgba(154,255,0,0.04)';ctx.lineWidth=.5;ctx.stroke();});var ctr=nodes[0];nodes.filter(function(n){return n.ring&&n.ring.r===60;}).forEach(function(n){ctx.beginPath();ctx.moveTo(ctr.x,ctr.y);ctx.lineTo(n.x,n.y);ctx.strokeStyle='rgba(154,255,0,0.06)';ctx.lineWidth=.4;ctx.stroke();});nodes.forEach(function(n){var ps=n.ring===-1?1:(.65+Math.sin(n.pulse)*.35);var sz=n.size*ps,op=n.op*ps;ctx.beginPath();ctx.arc(n.x,n.y,sz,0,Math.PI*2);ctx.fillStyle='rgba(154,255,0,'+op.toFixed(2)+')';ctx.fill();});var cp=.5+Math.sin(t*1.4)*.5;var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,22*cp);cg.addColorStop(0,'rgba(154,255,0,'+(0.1*cp).toFixed(2)+')');cg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,22*cp,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+draw();
+})();
+
+// ══ SCROLL + NAV ══
+window.addEventListener('scroll',function(){
+  var sc=document.documentElement.scrollTop||document.body.scrollTop;
+  var h=document.documentElement;
+  document.getElementById('pb').style.width=(sc/(h.scrollHeight-h.clientHeight)*100)+'%';
+  document.getElementById('nav').classList.toggle('scrolled',sc>100);
+  document.getElementById('nav-cta').classList.toggle('show',sc>300);
+});
+function toggleNav(){var m=document.getElementById('mob'),h=document.getElementById('ham');var o=m.classList.toggle('open');m.style.display='flex';h.textContent=o?'✕':'☰';if(!o)setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+function closeMob(){var m=document.getElementById('mob'),h=document.getElementById('ham');m.classList.remove('open');h.textContent='☰';setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+
+// ══ REVEAL ══
+(function(){var io=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:.07,rootMargin:'0px 0px -20px 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});})();
+
+// ══ HERO VIDEO ══
+// ══ HERO VIDEO PLAYER ══
+(function(){
+  var vid,overlay,ctrl,bar,dot,timeEl,ico;
+  var hideT=null,seeking=false,started=false;
+  var PLAY='<polygon points="5,3 19,12 5,21"/>',
+      PAUSE='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+
+  function init(){
+    vid=document.getElementById('heroVid');
+    overlay=document.getElementById('heroOverlay');
+    ctrl=document.getElementById('hvCtrl');
+    bar=document.getElementById('hvBar');
+    dot=document.getElementById('hvDot');
+    timeEl=document.getElementById('hvTime');
+    ico=document.getElementById('hvpIco');
+    if(!vid)return;
+    vid.addEventListener('timeupdate',onTime);
+    vid.addEventListener('ended',function(){vid.currentTime=0;showPause();});
+    vid.addEventListener('loadedmetadata',onTime);
+  }
+
+  function fmt(s){s=Math.floor(s||0);return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;}
+
+  function onTime(){
+    if(seeking||!vid.duration)return;
+    var p=vid.currentTime/vid.duration*100;
+    if(bar)bar.style.width=p+'%';
+    if(dot)dot.style.left=p+'%';
+    if(timeEl)timeEl.textContent=fmt(vid.currentTime)+' / '+fmt(vid.duration);
+  }
+
+  // Показать паузу: центральная кнопка play, прогресс скрыт
+  function showPause(){
+    if(overlay){overlay.classList.remove('hide');}
+    if(ctrl){ctrl.classList.remove('show');}
+    if(ico)ico.innerHTML=PLAY;
+    clearTimeout(hideT);
+  }
+
+  // Когда играет: скрыть всё через 2 сек
+  function scheduleHide(){
+    clearTimeout(hideT);
+    hideT=setTimeout(function(){
+      if(!vid.paused){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+      }
+    },2000);
+  }
+
+  // Показать контролы временно (тап во время воспроизведения)
+  function showControls(){
+    if(overlay)overlay.classList.remove('hide');
+    if(ctrl)ctrl.classList.add('show');
+    if(ico)ico.innerHTML=PAUSE;
+    scheduleHide();
+  }
+
+  // Главный тап по плееру
+  window.hvTap=function(){
+    if(!vid){init();if(!vid)return;}
+    if(!started){
+      // Первый запуск
+      started=true;
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        if(ico)ico.innerHTML=PAUSE;
+        scheduleHide();
+      }).catch(function(){showPause();});
+      return;
+    }
+    if(vid.paused){
+      // На паузе - тап = старт
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        scheduleHide();
+      });
+      if(ico)ico.innerHTML=PAUSE;
+    } else {
+      // Играет - тап = показать контролы или поставить паузу
+      var isHidden=overlay&&overlay.classList.contains('hide');
+      if(isHidden){
+        // Контролы скрыты - показываем
+        showControls();
+      } else {
+        // Контролы видны - ставим паузу
+        vid.pause();showPause();
+      }
+    }
+  };
+
+  // Тап на центральную кнопку (когда на паузе)
+  window.hvToggle=function(e){
+    if(e)e.stopPropagation();
+    if(!vid){init();if(!vid)return;}
+    if(vid.paused){
+      started=true;
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        if(ico)ico.innerHTML=PAUSE;
+        scheduleHide();
+      });
+    } else {
+      vid.pause();showPause();
+    }
+  };
+
+  window.hvSeek=function(e){
+    e.stopPropagation();
+    if(!vid||!vid.duration)return;
+    var rect=e.currentTarget.getBoundingClientRect();
+    var x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    x=Math.max(0,Math.min(x,rect.width));
+    vid.currentTime=(x/rect.width)*vid.duration;
+    onTime();if(!vid.paused)scheduleHide();
+  };
+
+  window.hvTouchSeek=function(e){
+    e.stopPropagation();
+    seeking=true;
+    var prog=e.currentTarget;
+    function mv(ev){
+      var r=prog.getBoundingClientRect(),x=ev.touches[0].clientX-r.left;
+      x=Math.max(0,Math.min(x,r.width));
+      if(vid&&vid.duration){vid.currentTime=(x/r.width)*vid.duration;onTime();}
+    }
+    function en(){seeking=false;document.removeEventListener('touchmove',mv);document.removeEventListener('touchend',en);}
+    document.addEventListener('touchmove',mv,{passive:true});
+    document.addEventListener('touchend',en);
+  };
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+
+// ══ PRODUCTS ACCORDION ══
+function toggleProdCard(el){
+  var card=el.closest('.prod-card');
+  var wasOpen=card.classList.contains('open');
+  // Close all cards
+  document.querySelectorAll('.prod-card').forEach(function(c){
+    c.classList.remove('open');
+    var ct=c.querySelector('.prod-content');
+    if(ct)ct.style.maxHeight='0';
+  });
+  if(!wasOpen){
+    card.classList.add('open');
+    var content=card.querySelector('.prod-content');
+    if(content){
+      // Calculate real height
+      content.style.maxHeight='9999px';
+    }
+    setTimeout(function(){card.scrollIntoView({behavior:'smooth',block:'nearest'});},150);
+  }
+}
+function toggleSubItem(el){
+  var wasOpen=el.classList.contains('open');
+  // Close all siblings in same container
+  var parent=el.parentElement;
+  if(parent){
+    var allItems=parent.querySelectorAll('.prod-sub-item');
+    allItems.forEach(function(i){
+      i.classList.remove('open');
+      // Also hide their body (next sibling)
+      var body=i.nextElementSibling;
+      if(body&&body.classList.contains('prod-sub-body'))body.style.maxHeight='0';
+    });
+  }
+  if(!wasOpen){
+    el.classList.add('open');
+    var body=el.nextElementSibling;
+    if(body&&body.classList.contains('prod-sub-body')){
+      body.style.maxHeight=body.scrollHeight+40+'px';
+    }
+  }
+}
+function toggleBonuses(el){
+  el.classList.toggle('open');
+  var body=el.querySelector('.prod-bonuses-body');
+  if(body){
+    if(el.classList.contains('open')){body.style.maxHeight=body.scrollHeight+40+'px';}
+    else{body.style.maxHeight='0';}
+  }
+}
+function toggleProd(head){
+  var item=head.closest('.prod-item');
+  if(!item){item=head.closest('.prod-card');if(item){toggleProdCard(head);return;}}
+  if(!item)return;
+  var wasOpen=item.classList.contains('open');
+  document.querySelectorAll('.prod-item,.prod-card').forEach(function(i){i.classList.remove('open');});
+  if(!wasOpen)item.classList.add('open');
+}
+function highlightProd(id){setTimeout(function(){var el=document.getElementById(id);if(!el)return;el.scrollIntoView({behavior:'smooth',block:'center'});el.style.borderColor='rgba(154,255,0,0.6)';el.style.boxShadow='0 0 30px rgba(154,255,0,0.15)';setTimeout(function(){el.style.borderColor='';el.style.boxShadow='';},2200);},300);}
+
+// ══ HOW ACCORDION ══
+function toggleHow(head){var item=head.closest('.how-item');var wasOpen=item.classList.contains('open');document.querySelectorAll('.how-item').forEach(function(i){i.classList.remove('open');});if(!wasOpen)item.classList.add('open');}
+
+// ══ FAQ ══
+function toggleFaq(el){var item=el.parentElement,isOpen=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});if(!isOpen)item.classList.add('open');}
+
+// ══ VIDEO CIRCLES CAROUSEL ══
+(function(){
+var wrap=document.getElementById('vcWrap'),track=document.getElementById('vcTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.35,paused=false;
+function maxP(){return track.scrollWidth/2;}
+var _vcVis=true;
+new IntersectionObserver(function(e){_vcVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_vcVis||paused||drag)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*80;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+window._vcPause=function(){paused=true;};window._vcResume=function(){paused=false;};
+})();
+
+var _vcCurrent=null;
+function toggleVc(el){
+  if(_vcCurrent&&_vcCurrent!==el){_vcCurrent.classList.remove('playing');_vcCurrent.querySelector('video').muted=true;_vcCurrent.querySelector('video').pause();_vcCurrent.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;return;}
+  if(el.classList.contains('playing')){el.classList.remove('playing');el.querySelector('video').muted=true;el.querySelector('video').pause();el.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;}
+  else{el.classList.add('playing');el.querySelector('video').muted=false;el.querySelector('video').play();el.querySelector('.vc-overlay').style.opacity='0';window._vcPause&&window._vcPause();_vcCurrent=el;}
+}
+
+// ══ AUDIO REVIEW ══
+var _audPlay=false;
+function toggleAudio(){var a=document.getElementById('audioEl'),w=document.getElementById('arWave'),ico=document.getElementById('arIco');if(_audPlay){a.pause();_audPlay=false;w.classList.remove('pl');ico.innerHTML='<polygon points="5,3 19,12 5,21"/>';}else{a.play();_audPlay=true;w.classList.add('pl');ico.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';}}
+document.getElementById('audioEl').addEventListener('ended',function(){_audPlay=false;document.getElementById('arWave').classList.remove('pl');document.getElementById('arIco').innerHTML='<polygon points="5,3 19,12 5,21"/>';});
+
+// ══ TEXT REVIEWS CAROUSEL ══
+(function(){
+var wrap=document.getElementById('revWrap'),track=document.getElementById('revTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.3;
+function maxP(){return track.scrollWidth/2;}
+var _revVis=true;
+new IntersectionObserver(function(e){_revVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_revVis)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*60;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);
+})();
+
+// ══ PORTFOLIO LAZY VIDEO LOAD ══
+(function(){
+  function loadNearby(entries){
+    entries.forEach(function(e){
+      var card=e.target;
+      var vids=card.querySelectorAll('video[data-src]');
+      vids.forEach(function(v){
+        if(e.isIntersecting){
+          if(!v.src){v.src=v.dataset.src;v.load();}
+          v.play().catch(function(){});
+        }else{
+          if(!v.paused)v.pause();
+        }
+      });
+    });
+  }
+  var portIO=new IntersectionObserver(loadNearby,{rootMargin:'200px',threshold:0});
+  function initPortObs(){
+    document.querySelectorAll('.port-card').forEach(function(c){portIO.observe(c);});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initPortObs);}
+  else{initPortObs();}
+})();
+
+// ══ PORTFOLIO CAROUSEL (TRUE INFINITE) ══
+(function(){
+var wrap=document.getElementById('portWrap'),track=document.getElementById('portTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.4,raf=null,paused=false;
+function halfW(){return track.scrollWidth/2;}
+function clamp(){
+  var h=halfW();
+  // Wrap around for infinite scroll
+  if(pos>=h)pos=pos-h;
+  if(pos<0)pos=pos+h;
+}
+var _portVis=true;
+new IntersectionObserver(function(e){_portVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+function run(){
+  raf=requestAnimationFrame(run);
+  if(!_portVis||paused||drag)return;
+  pos+=speed;clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+run();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){
+  if(!drag)return;
+  var now=Date.now(),dt=now-lastT||1;
+  vel=(x-lastX)/dt;lastX=x;lastT=now;
+  pos=startPos+(startX-x);
+  clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+function up(){
+  if(!drag)return;drag=false;
+  // momentum
+  var momentum=vel*-80;
+  var steps=60;
+  (function glide(){
+    if(steps-->0&&Math.abs(momentum)>0.5){
+      pos+=momentum;momentum*=0.9;clamp();
+      track.style.transform='translateX(-'+pos+'px)';
+      requestAnimationFrame(glide);
+    }
+  })();
+}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);e.preventDefault();});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+})();
+
+// ══ ANKET MODAL ══
+function openAnket(product,e){if(e)e.stopPropagation();OKF.open(product);}
+
+// ══ CHATBOT OKO ══
+window.OKO=(function(){
+var IMG={d:'media/asset_5_46c20f23.jpg'};
+var open=false,started=false,idle=null,lastPopup=null;
+var spDone={};
+var _audioCtx=null;
+
+var S={
+  g:function(k){try{return JSON.parse(localStorage.getItem('oko_'+k));}catch(e){return null;}},
+  s:function(k,v){try{localStorage.setItem('oko_'+k,JSON.stringify(v));}catch(e){}},
+  i:function(k){var v=(S.g(k)||0)+1;S.s(k,v);return v;}
+};
+
+function beep(){
+  try{
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    var ctx=_audioCtx;if(ctx.state==='suspended')ctx.resume();
+    var now=ctx.currentTime,master=ctx.createGain();master.gain.setValueAtTime(.18,now);master.connect(ctx.destination);
+    [{freq:587.3,t:0,dur:.55},{freq:440.0,t:.13,dur:.45}].forEach(function(n){
+      var o=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
+      lp.type='lowpass';lp.frequency.value=2000;o.connect(lp);lp.connect(g);g.connect(master);
+      o.type='sine';o.frequency.setValueAtTime(n.freq,now+n.t);
+      g.gain.setValueAtTime(0,now+n.t);g.gain.linearRampToValueAtTime(1,now+n.t+.018);g.gain.setValueAtTime(1,now+n.t+.04);g.gain.exponentialRampToValueAtTime(.001,now+n.t+n.dur);
+      o.start(now+n.t);o.stop(now+n.t+n.dur+.05);
+    });
+  }catch(e){}
+  if(navigator.vibrate)navigator.vibrate(40);
+}
+document.addEventListener('touchstart',function(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(_audioCtx.state==='suspended')_audioCtx.resume();},{once:true,passive:true});
+document.addEventListener('click',function(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(_audioCtx.state==='suspended')_audioCtx.resume();},{once:true,passive:true});
+
+function nowT(){var d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+
+function popup(txt){
+  ['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(id){var p=document.getElementById(id);if(p)p.classList.remove('show');});
+  var p=document.getElementById('oko-popup'),t=document.getElementById('oko-popup-txt');
+  if(!p||!t)return;t.textContent=txt;p.classList.add('show');setTimeout(function(){p.classList.remove('show');},5000);
+}
+
+function shake(){var a=document.getElementById('oko-av');if(a){a.classList.add('shake');setTimeout(function(){a.classList.remove('shake');},700);}}
+
+function init(){
+  var visits=S.g('visits')||0;S.s('visits',visits+1);
+  setTimeout(function(){
+    var b=document.getElementById('oko-bub');if(b){b.classList.add('vis');beep();}
+    setTimeout(function(){var bd=document.getElementById('oko-badge');if(bd)bd.classList.add('show');},400);
+    setTimeout(function(){
+      var msgs=visits>0?['С возвращением 👋 Помогу подобрать нужный продукт']:
+        ['👁 OKO TEAM — 15К+ клиентов. Покажу что мы делаем за 2 минуты','⚡ Даниэль онлайн — помогу разобраться с продуктами','🔥 Контент-завод, Система OKO, нейробот — выбери своё решение'];
+      popup(msgs[Math.floor(Math.random()*(visits>0?1:msgs.length))]);
+    },2000);
+  },5000);
+}
+
+function openChat(ctx){
+  open=true;document.body.classList.add('chat-open');
+  var w=document.getElementById('oko-win'),wrap=document.getElementById('oko-wrap'),bd=document.getElementById('oko-badge'),p=document.getElementById('oko-popup');
+  if(w){w.classList.add('open');}
+  if(wrap&&window.innerWidth<=480){wrap.style.transform='translateY(110px)';}
+  if(bd)bd.classList.remove('show');if(p)p.classList.remove('show');clearIdle();S.i('opens');
+  if(!started){started=true;setTimeout(function(){startChat(ctx);},350);}
+}
+
+function closeChat(){
+  open=false;document.body.classList.remove('chat-open');
+  var w=document.getElementById('oko-win'),wrap=document.getElementById('oko-wrap');
+  if(w)w.classList.remove('open');
+  if(wrap&&window.innerWidth<=480)wrap.style.transform='translateY(0)';
+  startIdle();
+}
+
+function restart(){started=false;var m=document.getElementById('oko-msgs');if(m)m.innerHTML='<div class="odd">сегодня</div>';setTimeout(function(){startChat();},350);}
+
+var idleMsgs=[
+  {t:25000,m:'Первые 50 клиентов получат систему по цене запуска 🔥'},
+  {t:80000,m:'Пока изучаешь — конкуренты снимают ролики по системе'},
+  {t:160000,m:'Остались вопросы? Разберём за 2 минуты 💬'},
+  {t:280000,m:'Осталось 2 места на эту неделю 🔥'}
+];
+var idleIdx=0;
+function startIdle(){clearIdle();var msg=idleMsgs[Math.min(idleIdx,idleMsgs.length-1)];idleIdx++;idle=setTimeout(function(){if(!open){popup(msg.m);shake();startIdle();}},msg.t);}
+function clearIdle(){if(idle){clearTimeout(idle);idle=null;}}
+
+// Exit intent
+var exitShown=false;
+document.addEventListener('mouseleave',function(e){if(e.clientY<=0&&!open&&!exitShown){exitShown=true;shake();popup('Подожди! Осталось 2 места на эту неделю 🔥');}});
+setInterval(function(){exitShown=false;},60000);
+
+// Scroll section popups
+var spCfg=[
+  {sec:'pain',id:'osp-pain',done:false,msg:'Узнаёшь себя? Помогу найти решение 👆'},
+  {sec:'products',id:'osp-prod',done:false,msg:'Помогу выбрать подходящий продукт 💡'},
+  {sec:'reviews',id:'osp-rev',done:false,msg:'Реальные люди, реальные результаты 👆'},
+  {sec:'portfolio',id:'osp-port',done:false,msg:'Покажу детали любого проекта 📂'},
+  {sec:'cta',id:'osp-cta',done:false,msg:'Готов? Напиши — разберём твою ситуацию 🚀'}
+];
+window.addEventListener('scroll',function(){
+  if(open)return;
+  spCfg.forEach(function(c){
+    if(c.done)return;
+    var s=document.getElementById(c.sec),p=document.getElementById(c.id);
+    if(!s||!p)return;
+    var r=s.getBoundingClientRect();
+    if(r.top<window.innerHeight*.55&&r.bottom>0){
+      c.done=true;
+      ['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(pid){var pp=document.getElementById(pid);if(pp)pp.classList.remove('show');});
+      var bp=document.getElementById('oko-popup');if(bp)bp.classList.remove('show');
+      setTimeout(function(){if(open)return;p.classList.add('show');var bd=document.getElementById('oko-badge');if(bd&&!bd.classList.contains('show'))bd.classList.add('show');setTimeout(function(){p.classList.remove('show');},4000);},300);
+    }
+  });
+},{passive:true});
+['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.addEventListener('click',function(){if(open)closeChat();else openChat('popup');});
+});
+
+// Messages
+function M(){return document.getElementById('oko-msgs');}
+function scrollBot(){var m=M();if(m)setTimeout(function(){m.scrollTop=m.scrollHeight;},60);}
+
+function addMsg(content,from,delay){
+  return new Promise(function(res){
+    setTimeout(function(){
+      var w=document.createElement('div');w.className='om '+(from==='d'?'od':'ou');
+      var t=nowT(),tks=from==='u'?'<span class="otk">✓✓</span>':'';
+      w.innerHTML='<div class="omb">'+content+'</div><div class="omt">'+t+' '+tks+'</div>';
+      M().appendChild(w);scrollBot();res();
+    },delay||0);
+  });
+}
+
+function typing(ms){
+  return new Promise(function(res){
+    var w=document.createElement('div');w.className='om od';w.id='oko-typ';
+    w.innerHTML='<div class="otyp"><span></span><span></span><span></span></div>';
+    M().appendChild(w);scrollBot();
+    setTimeout(function(){var e=document.getElementById('oko-typ');if(e)e.remove();res();},ms||1100);
+  });
+}
+
+function replies(btns){
+  return new Promise(function(res){
+    var w=document.createElement('div');w.className='ors';
+    btns.forEach(function(b){
+      var el=document.createElement('button');el.className='orb';el.textContent=b.t;
+      el.onclick=function(){w.remove();addMsg(b.t,'u').then(function(){handle(b);});};
+      w.appendChild(el);
+    });
+    M().appendChild(w);scrollBot();res();
+  });
+}
+
+function rb(t,fn){return{t:t,fn:fn};}
+
+// Chat flows
+async function startChat(ctx){
+  var visits=S.g('visits')||1;
+  await typing(800);
+  await addMsg(visits>1?'С возвращением! Чем могу помочь? 👋':'Привет! Помогу разобраться с продуктами OKO TEAM и подобрать нужное решение 🎯','d');
+  await typing(600);
+  await fMenu();
+}
+
+async function fMenu(){
+  await replies([
+    rb('🎯 Хочу понять какой продукт подойдёт',fQuiz),
+    rb('📋 Система OKO — контент-план и стратегия',fSistema),
+    rb('🎬 Контент-завод — ролики без съёмок',fZavod),
+    rb('💬 Воронка + нейробот — продажи 24/7',fBot),
+    rb('🌐 Сайт / бот / приложение',fWeb),
+    rb('📞 Консультация с Даниэлем',fConsult),
+    rb('⭐ Посмотреть отзывы',fReviews)
+  ]);
+}
+
+async function fQuiz(){
+  await typing(800);await addMsg('Отлично! Пара вопросов чтобы подобрать лучшее решение.\n\nКакая главная задача прямо сейчас?','d');
+  await replies([
+    rb('📋 Нет системы и стратегии — хаос',async function(){await typing(700);await addMsg('Понял. Тебе нужна <b>Система OKO</b> — твой личный штаб:\n• Контент-план 90 дней с текстами\n• Бизнес-план 18 блоков\n• Скрипты продаж\n• Ежедневный чек-лист\n\nСоздаётся персонально за 10 дней.','d');await typing(500);await fSistema();}),
+    rb('🎬 Хочу много контента без съёмок',async function(){await typing(700);await addMsg('Тогда тебе нужен <b>Контент-завод</b> — от 30 до 500 роликов в месяц без единой съёмки. AI-аватар, стоковые видео, нарезки вирусных роликов.','d');await typing(500);await fZavod();}),
+    rb('💰 Есть аудитория но нет продаж',async function(){await typing(700);await addMsg('Тогда нужна <b>воронка + нейробот</b>. Каждый комментарий → бот пишет в direct → продаёт 24/7 без твоего участия.','d');await typing(500);await fBot();}),
+    rb('🌐 Нужен сайт или бот',fWeb),
+    rb('🎯 Хочу разобрать с Даниэлем лично',fConsult)
+  ]);
+}
+
+async function fSistema(){
+  await typing(800);
+  await addMsg('<b>СИСТЕМА OKO</b> — твой личный штаб в одном HTML-файле.\n\n• Контент-план 90 дней с полными текстами\n• Бизнес-план 18 блоков под нишу\n• Скрипты продаж и шаблоны договоров\n• Ежедневный чек-лист с прогресс-баром\n• Генераторы КП и промпты под ролики\n\nСоздаётся персонально за 10 дней.\n💰 от 25 000 ₽ · 1 / 3 / 6 / 12 месяцев','d');
+  await typing(500);
+  await replies([
+    rb('✅ Активировать Систему OKO',function(){window.location.href='/sistema';}),
+    rb('💰 Цены тарифов',async function(){await typing(600);await addMsg('Тарифы Системы OKO:\n\n📅 1 месяц — 25 000 ₽\n📅 3 месяца — 65 000 ₽ (экономия 13%)\n📅 6 месяцев — 120 000 ₽ (экономия 20%)\n📅 Год — 200 000 ₽ (экономия 33%)','d');await typing(500);await fSistema();}),
+    rb('⭐ Показать примеры систем',async function(){await typing(600);await addMsg('Примеры готовых систем:\n• koptylich.ru/sistema — Коптилыч\n• mcrfloorcare.co.uk/sistem — MCR UK\n• MindOS, Сан Саныч, Ekaterina\n\nКаждая система создаётся персонально.','d');await typing(500);await fSistema();}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fZavod(){
+  await typing(800);
+  await addMsg('<b>КОНТЕНТ-ЗАВОД OKO</b> — от 30 до 500 роликов в месяц без съёмок.\n\n🤖 HeyGen — AI-аватар с твоим лицом\n🎬 Fliki — стоковые видео по сценарию\n✂️ OpusClip — нарезки вирусных роликов\n📅 Автопостинг во все соцсети\n\nТарифы:\nСТАРТ — 19 900₽ · 30 роликов + 4 карусели\nРОСТ — 49 900₽ · 100 роликов + оформление\nЗАВОД — 84 900₽ · 200 роликов + нейробот\nИМПЕРИЯ — 149 900₽ · 500 роликов + сайт','d');
+  await typing(500);
+  await replies([
+    rb('🚀 Запустить контент-завод',function(){window.location.href='/zavod';}),
+    rb('✉️ Написать Даниэлью напрямую',fTG),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fBot(){
+  await typing(800);
+  await addMsg('<b>ВОРОНКА + НЕЙРОБОТ</b>\n\nКаждый комментарий → бот пишет в direct → квалифицирует → продаёт → клиент оплачивает. Без тебя 24/7.\n\nТарифы:\nБАЗОВАЯ — 5 000₽ · 1-3 продукта\nСРЕДНЯЯ — 10 000₽ · 1-5 продуктов + GPT\nПОЛНАЯ — 15 000₽ · 10+ продуктов + GPT','d');
+  await typing(500);
+  await replies([
+    rb('✅ Подключить нейробота',function(){OKF.open('bot');}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fWeb(){
+  await typing(800);
+  await addMsg('<b>САЙТЫ / БОТЫ / ПРИЛОЖЕНИЯ</b> под ключ.\n\n🌐 Лендинг — от 3 000₽\n🤖 Telegram-бот — от 5 000₽\n📱 Многостраничный сайт — от 10 000₽\n📲 Приложение — от 15 000₽\n\n12+ проектов: Коптилыч, MCR UK, Бриус, MindOS, ОТП Банк.','d');
+  await typing(500);
+  await replies([
+    rb('📋 Посмотреть портфолио',async function(){await typing(600);await addMsg('Наши работы:\n• koptylich.ru/meat — магазин копчения\n• mcrfloorcare.co.uk — клининг UK\n• briusteam.ru — хаб команды Бриуса\n• MindOS, Сан Саныч, ОТП Банк\n\nВсё в разделе Портфолио ↑','d');await typing(500);await fWeb();}),
+    rb('✅ Заказать разработку',fTG),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fConsult(){
+  await typing(800);
+  await addMsg('<b>КОНСУЛЬТАЦИЯ с Даниэлем</b>\n\nЛичный созвон один на один.\n\n⏱ 1 час — 14 900₽ · разбор + план + запись + поддержка 7 дней\n⏱ 3 часа — 34 900₽ · контент-план 30 дней + стратегия\n⏱ 5 часов — 49 900₽ · бизнес-план + поддержка 30 дней','d');
+  await typing(500);
+  await replies([
+    rb('📅 Записаться на консультацию',function(){OKF.open('consult');}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fReviews(){
+  await typing(800);
+  await addMsg('Вот что говорят клиенты:\n\n"Безмерно счастлива что познакомилась! Всё оперативно, качественно, профессионально." — Malika\n\n"Было 2.4К → стало 3.7К подписчиков!" — A1D\n\n"Публикую видео в 10 сетях автоматически!" — чанна','d');
+  await typing(500);
+  await replies([
+    rb('⭐ Все отзывы в Telegram',function(){window.open('https://t.me/okoreviews','_blank');}),
+    rb('🚀 Хочу такие же результаты',fQuiz),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fTG(){
+  window.open('https://t.me/ktodaniel','_blank');
+  await typing(600);await addMsg('Открыл Telegram! Напиши «Привет» — Даниэль ответит лично 👋','d');
+  await typing(400);await replies([rb('🏠 Главное меню',fMenu)]);
+}
+
+function handle(b){if(b.fn)b.fn();}
+
+// Input send
+function sendInput(){
+  var inp=document.getElementById('oko-input');if(!inp)return;var v=inp.value.trim();if(!v)return;
+  addMsg(v,'u');inp.value='';
+  var low=v.toLowerCase();
+  if(low.includes('систем'))return fSistema();
+  if(low.includes('контент')||low.includes('завод')||low.includes('ролик'))return fZavod();
+  if(low.includes('бот')||low.includes('воронк'))return fBot();
+  if(low.includes('сайт')||low.includes('приложени'))return fWeb();
+  if(low.includes('консульт')||low.includes('созвон'))return fConsult();
+  if(low.includes('цен')||low.includes('сколько'))return fReviews();
+  if(low.includes('отзыв'))return fReviews();
+  if(low.includes('привет')||low.includes('здравств'))return fMenu();
+  typing(900).then(function(){addMsg('Понял! Для точного ответа лучше написать Даниэлю — он разберёт за 2 минуты 👇','d').then(fTG);});
+}
+
+var inp=document.getElementById('oko-input');
+var snd=document.getElementById('oko-send');
+if(snd)snd.addEventListener('click',sendInput);
+if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendInput();}});
+
+function _trackAct(){S.i('bar_act');}
+function toggle(){if(open)closeChat();else openChat();}
+
+init();startIdle();
+return{open:openChat,close:closeChat,toggle:toggle,restart:restart,_trackAct:_trackAct};
+})();
+
+// ══ COUNTER ANIMATION ══
+(function(){
+  var done=false;
+  function animateCounters(){
+    if(done)return;done=true;
+    document.querySelectorAll('.h-stat-n[data-count]').forEach(function(el){
+      var target=parseFloat(el.dataset.count);
+      var prefix=el.dataset.prefix||'';
+      var suffix=el.dataset.suffix||'';
+      var decimals=parseInt(el.dataset.decimals||0);
+      var step=parseFloat(el.dataset.step||1);
+      var duration=1800;
+      var steps=Math.ceil(target/step);
+      var interval=duration/steps;
+      var current=0;
+      var timer=setInterval(function(){
+        current+=step;
+        if(current>=target){current=target;clearInterval(timer);}
+        el.textContent=prefix+(decimals>0?current.toFixed(decimals):Math.floor(current))+suffix;
+      },interval);
+    });
+  }
+  // Запускаем когда hero-stats появляется на экране
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting)animateCounters();
+    });
+  },{threshold:.3});
+  var stats=document.querySelector('.hero-stats');
+  if(stats)io.observe(stats);
+  else window.addEventListener('load',function(){
+    var s=document.querySelector('.hero-stats');
+    if(s)io.observe(s);
+  });
+})();
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

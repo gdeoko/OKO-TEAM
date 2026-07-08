@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Анкета клиента — Система Роста | OKO TEAM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000;--bg2:#0a0a0a;--bg3:#111;--bg4:#181818;--bg5:#1e1e1e;
+  --lime:#9AFF00;--lime2:rgba(154,255,0,0.12);--lime3:rgba(154,255,0,0.05);
+  --w:#fff;--w8:rgba(255,255,255,0.85);--w6:rgba(255,255,255,0.6);--w4:rgba(255,255,255,0.35);--w2:rgba(255,255,255,0.08);
+  --border:rgba(154,255,0,0.25);--border2:rgba(255,255,255,0.1);--border3:rgba(255,255,255,0.06);
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--w);min-height:100vh;overflow-x:hidden}
+
+#bgc{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.4}
+
+.wrap{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:0 20px 80px}
+
+/* HEADER */
+.hdr{text-align:center;padding:20px 0 12px}
+.hdr-oko{font-size:9px;font-weight:800;letter-spacing:4px;color:var(--lime);text-transform:uppercase;margin-bottom:8px}
+.hdr-eye{width:56px;height:56px;margin:0 auto 10px;position:relative;display:flex;align-items:center;justify-content:center}
+.hdr-title{font-size:clamp(20px,5vw,30px);font-weight:900;line-height:1.1;letter-spacing:-0.5px;margin-bottom:8px}
+.hdr-title span{color:var(--lime)}
+.hdr-sub{font-size:11px;color:var(--w6);line-height:1.6;max-width:420px;margin:0 auto}
+
+/* PROGRESS BAR */
+.prog-wrap{margin:12px 0 14px;background:var(--bg3);border-radius:100px;padding:10px 16px;border:1px solid var(--border3)}
+.prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prog-label{font-size:11px;font-weight:600;color:var(--w6)}
+.prog-pct{font-size:11px;font-weight:700;color:var(--lime)}
+.prog-bar{height:4px;background:var(--w2);border-radius:100px;overflow:hidden;margin-bottom:10px}
+.prog-fill{height:100%;background:var(--lime);border-radius:100px;transition:width 0.5s ease;width:0%}
+
+/* STEP DOTS — view only, not clickable */
+.prog-steps{display:flex;gap:5px;flex-wrap:wrap}
+.step-dot{flex:1;min-width:55px;padding:5px 6px;border-radius:6px;text-align:center;font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;border:1px solid var(--border3);color:var(--w4);background:transparent;cursor:default;pointer-events:none;user-select:none;transition:all 0.3s}
+.step-dot.active{background:var(--lime);color:#000;border-color:var(--lime)}
+.step-dot.done{border-color:rgba(154,255,0,0.4);color:var(--lime);background:var(--lime3)}
+
+/* QUESTION COUNTER */
+.q-counter{text-align:center;margin-bottom:12px;font-size:11px;color:var(--w4);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.q-counter span{color:var(--lime)}
+
+/* SECTION HEADER */
+.sec-head{margin-bottom:20px;padding:18px 22px;background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);border-top:2px solid var(--lime)}
+.sec-num{font-size:9px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:5px}
+.sec-title{font-size:17px;font-weight:800;color:var(--w);margin-bottom:3px}
+.sec-desc{font-size:11px;color:var(--w6);line-height:1.6}
+
+/* QUESTION CARD — single question view */
+.q-card{background:var(--bg2);border:1px solid var(--border3);border-radius:var(--r);padding:22px;transition:border-color 0.3s;animation:fadeIn 0.25s ease}
+.q-card.filled{border-color:rgba(154,255,0,0.35)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.q-label{font-size:14px;font-weight:700;color:var(--w);margin-bottom:5px;line-height:1.5}
+.q-hint{font-size:11px;color:var(--w4);margin-bottom:14px;line-height:1.5}
+.q-required{color:var(--lime);margin-left:3px}
+.q-req-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;color:var(--lime);background:var(--lime3);border:1px solid var(--border);border-radius:4px;padding:2px 6px;margin-bottom:10px;text-transform:uppercase}
+
+/* INPUTS */
+input[type=text],input[type=url],input[type=number],textarea,select{
+  width:100%;padding:12px 14px;background:var(--bg4);border:1px solid var(--border3);border-radius:8px;
+  color:var(--w);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;
+  -webkit-appearance:none;box-sizing:border-box;cursor:text;-webkit-tap-highlight-color:transparent;
+}
+input[type=text]:focus,input[type=url]:focus,input[type=number]:focus,textarea:focus,select:focus{
+  border-color:var(--lime);background:var(--bg5);
+}
+textarea{resize:vertical;min-height:100px;line-height:1.6}
+select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AFF00' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+select option{background:#1a1a1a;color:#fff}
+::placeholder{color:var(--w4)}
+
+/* DON'T KNOW BUTTON */
+.dontknow-wrap{margin-top:8px}
+.btn-dontknow{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:transparent;border:1px dashed rgba(255,255,255,0.2);border-radius:7px;font-size:11px;font-weight:600;color:var(--w4);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s}
+.btn-dontknow:hover{border-color:var(--border);color:var(--w6);background:var(--w2)}
+.btn-dontknow svg{flex-shrink:0}
+
+/* RADIO & CHECK */
+.q-options{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.q-option{padding:9px 15px;background:var(--bg4);border:1px solid var(--border3);border-radius:8px;font-size:12px;color:var(--w6);cursor:pointer;transition:all 0.18s;user-select:none}
+.q-option:hover{border-color:var(--border);color:var(--w)}
+.q-option.selected{background:var(--lime2);border-color:var(--lime);color:var(--lime);font-weight:600}
+.q-option input{display:none}
+.q-options.col{flex-direction:column;gap:6px}
+
+/* GRID */
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.q-grid{grid-template-columns:1fr}}
+
+/* SOCIAL ROW */
+.social-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.social-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;background:var(--bg4);border:1px solid var(--border3)}
+.social-row input{margin-bottom:0}
+
+/* FILE UPLOAD */
+.file-zone{border:1.5px dashed var(--border2);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative}
+.file-zone:hover{border-color:var(--lime);background:var(--lime3)}
+.file-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file-zone-ico{font-size:24px;margin-bottom:6px}
+.file-zone-text{font-size:12px;color:var(--w6)}
+.file-feedback{display:none;margin-top:8px;font-size:11px;color:var(--lime);font-weight:600}
+
+/* CHAR COUNTER */
+.char-wrap{position:relative}
+.char-count{position:absolute;bottom:8px;right:10px;font-size:9px;color:var(--w4)}
+
+/* RANGE */
+.range-wrap{margin-top:8px}
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:var(--w2);border-radius:100px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--lime);cursor:pointer;border:2px solid #000}
+.range-val{text-align:center;margin-top:8px;font-size:14px;font-weight:700;color:var(--lime)}
+
+/* NAVIGATION */
+.nav-row{display:flex;gap:10px;margin-top:20px}
+.btn-prev{padding:13px 20px;background:var(--bg3);border:1px solid var(--border3);border-radius:10px;font-size:13px;font-weight:600;color:var(--w6);cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s;flex-shrink:0}
+.btn-prev:hover{border-color:var(--border2);color:var(--w)}
+.btn-prev:disabled{opacity:0.3;cursor:not-allowed}
+.btn-next{padding:13px 28px;background:var(--lime);border:none;border-radius:10px;font-size:13px;font-weight:800;color:#000;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s;flex:1}
+.btn-next:hover{background:#b0ff20;transform:translateY(-1px)}
+.btn-next:disabled{background:rgba(154,255,0,0.3);color:rgba(0,0,0,0.4);cursor:not-allowed;transform:none}
+
+/* VALIDATION ERROR */
+.val-err{display:none;margin-top:8px;font-size:11px;color:#ff6b6b;font-weight:600;animation:fadeIn 0.2s}
+.val-err.show{display:block}
+.q-card.error-state{border-color:rgba(255,107,107,0.5)}
+
+/* COMPLETION */
+#completion{display:none;text-align:center;padding:48px 24px}
+#completion.active{display:block}
+.comp-check{width:72px;height:72px;background:var(--lime);border-radius:50%;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:32px}
+.comp-title{font-size:26px;font-weight:900;margin-bottom:10px}
+.comp-sub{font-size:13px;color:var(--w6);line-height:1.7;margin-bottom:32px;max-width:400px;margin-left:auto;margin-right:auto}
+.comp-btns{display:flex;flex-direction:column;gap:12px;max-width:360px;margin:0 auto}
+.comp-btn-dl{padding:16px 24px;background:var(--lime);border:none;border-radius:12px;font-size:14px;font-weight:800;color:#000;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:10px}
+.comp-btn-dl:hover{background:#b0ff20;transform:translateY(-1px)}
+.comp-btn-tg{padding:16px 24px;background:#0088cc;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none}
+.comp-btn-tg:hover{background:#0099dd;transform:translateY(-1px)}
+.comp-note{margin-top:16px;font-size:11px;color:var(--w4);line-height:1.6}
+
+/* SUBMIT BTN */
+.btn-submit{width:100%;padding:15px;background:var(--lime);border:none;border-radius:10px;font-size:14px;font-weight:800;color:#000;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.18s;margin-top:20px}
+.btn-submit:hover{background:#b0ff20;transform:translateY(-1px)}
+
+@media(max-width:600px){
+  .hdr{padding:28px 0 18px}
+  .wrap{padding:0 14px 60px}
+  .q-card{padding:18px}
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-oko">OKO TEAM</div>
+  <div class="hdr-eye"><img src="data:image/png;base64,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" alt="OKO" style="width:56px;height:56px;object-fit:contain"></div>
+  <h1 class="hdr-title">Анкета клиента<br><span>Система Роста</span></h1>
+  <p class="hdr-sub">8 разделов · ~20 минут · Отвечай на вопросы по одному — система всё запомнит</p>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-top">
+    <span class="prog-label" id="prog-label">О тебе · Раздел 1 из 8</span>
+    <span class="prog-pct" id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="prog-steps">
+    <div class="step-dot active" id="dot-0">О тебе</div>
+    <div class="step-dot" id="dot-1">Продукты</div>
+    <div class="step-dot" id="dot-2">Соцсети</div>
+    <div class="step-dot" id="dot-3">Визуал</div>
+    <div class="step-dot" id="dot-4">Аудитория</div>
+    <div class="step-dot" id="dot-5">Команда</div>
+    <div class="step-dot" id="dot-6">Цели</div>
+    <div class="step-dot" id="dot-7">Технические</div>
+  </div>
+</div>
+
+<!-- QUESTION COUNTER -->
+<div class="q-counter" id="q-counter">Вопрос <span id="q-num">1</span> из <span id="q-total">64</span></div>
+
+<!-- QUESTION DISPLAY AREA -->
+<div id="q-area"></div>
+
+<!-- NAV -->
+<div class="nav-row" id="nav-row">
+  <button class="btn-prev" id="btn-prev" onclick="goBack()">← Назад</button>
+  <button class="btn-next" id="btn-next" onclick="goNext()">Далее →</button>
+</div>
+
+<!-- COMPLETION -->
+<div id="completion">
+  <div class="comp-check">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <h2 class="comp-title">Анкета получена!</h2>
+  <p class="comp-sub">Даниэль уже получил твои ответы и скоро свяжется с тобой. Если хочешь написать напрямую — жми кнопку ниже.</p>
+  <div id="comp-email-note" style="background:rgba(154,255,0,0.07);border:1px solid rgba(154,255,0,0.2);border-radius:12px;padding:12px 16px;margin:14px 0;font-size:13px;color:rgba(255,255,255,0.7);display:none">
+    📧 Копия анкеты отправлена на <strong id="comp-email-val" style="color:#fff"></strong>
+  </div>
+  <div class="comp-btns">
+    <a class="comp-btn-tg" id="tg-daniel-btn" href="https://t.me/ktodaniel" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Написать Даниэлю
+    </a>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ─── CANVAS ANIMATION ───
+(function(){
+  var c=document.getElementById('bgc');
+  var ctx=c.getContext('2d');
+  var pts=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+  for(var i=0;i<60;i++){
+    pts.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*1.5+0.5,o:Math.random()*0.7+0.3});
+  }
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    pts.forEach(function(p){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>c.width)p.vx*=-1;
+      if(p.y<0||p.y>c.height)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(154,255,0,'+p.o+')';ctx.fill();
+    });
+    for(var i=0;i<pts.length;i++){
+      for(var j=i+1;j<pts.length;j++){
+        var dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;
+        var d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){
+          ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle='rgba(154,255,0,'+(0.12*(1-d/120))+')';ctx.lineWidth=0.5;ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── QUESTIONS DEFINITION ───
+// type: text | textarea | radio | checkbox | number | url | file | social | grid-number
+// required: true/false
+// dontknow: true — show "Не знаю" button (for textarea/text)
+// section: 0-7 (for progress dots)
+
+var questions = [
+  // ── РАЗДЕЛ 1 — О ТЕБЕ (8 questions) ──
+  {id:'q1', sec:0, secTitle:'О тебе и твоём деле', secNum:'Раздел 01 · 8 вопросов', secDesc:'Расскажи кто ты, чем занимаешься и как всё началось. Это основа всей системы.',
+   label:'Как тебя зовут?', hint:'Имя, фамилия — как хочешь чтобы тебя называли в системе', type:'text', required:true, placeholder:'Например: Мария или Иван Петров'},
+  {id:'q2', sec:0, label:'Как называть тебя в контенте? Есть псевдоним?', hint:'Если есть — напиши. Если нет — просто имя', type:'text', required:false, placeholder:'Например: Маша, @masha_expert', dontknow:true},
+  {id:'q3', sec:0, label:'Чем ты занимаешься?', hint:'Опиши своё дело в 1–2 предложениях простыми словами', type:'textarea', required:true, placeholder:'Например: Я помогаю экспертам выстраивать системные продажи через соцсети. Веду личное сопровождение и обучаю команды.', maxlength:500, dontknow:true},
+  {id:'q4', sec:0, label:'Ниша — как бы ты описал одним словом или фразой?', hint:'Не усложняй — просто самое точное слово', type:'radio', required:true,
+   options:['<svg-fork> Кулинария / еда','<svg-phone> SMM / маркетинг','<svg-brief> Бизнес','<svg-brain> Психология / коучинг','<svg-fit> Фитнес / здоровье','<svg-pen> Творчество / дизайн','<svg-coin> Финансы / инвестиции','<svg-edit> Другое'],
+   extra:{id:'q4b', placeholder:'Если другое — напиши свою нишу'}},
+  {id:'q5', sec:0, label:'Сколько лет ты в этой теме?', hint:'', type:'radio', required:false,
+   options:['До 1 года','1–3 года','3–7 лет','7–15 лет','15+ лет']},
+  {id:'q6', sec:0, label:'Расскажи свою историю', hint:'Как начинал, что было сложно, что изменилось. Важно для контента и позиционирования', type:'textarea', required:true, placeholder:'Откуда ты, как пришёл к своему делу, через что прошёл и что понял по пути...', maxlength:1500, dontknow:true},
+  {id:'q7', sec:0, label:'Город и страна', hint:'Где живёшь и работаешь сейчас', type:'text', required:false, placeholder:'Например: Москва, Россия', dontknow:true},
+  {id:'q7b', sec:0, label:'Email для связи', hint:'Укажи рабочую почту — туда придёт копия анкеты', type:'email', required:true, placeholder:'Например: ivan@gmail.com'},
+  {id:'q7c', sec:0, label:'Номер телефона', hint:'Для оперативной связи', type:'tel', required:true, placeholder:'Например: +7 900 000 00 00'},
+  {id:'q7d', sec:0, label:'Никнейм в Telegram', hint:'Личный Telegram куда писать — без @ в начале', type:'text', required:true, placeholder:'Например: ivan_expert'},
+  {id:'q8', sec:0, label:'Что в тебе уникального как в эксперте?', hint:'Что отличает тебя от других в нише? Твой опыт, результаты, подход', type:'textarea', required:false, placeholder:'Например: 8 лет в найме на руководящей должности, потом ушёл и за год выстроил свой проект с нуля...', maxlength:800, dontknow:true},
+
+  // ── РАЗДЕЛ 2 — ПРОДУКТЫ (9 questions) ──
+  {id:'q9', sec:1, secTitle:'Продукты и деньги', secNum:'Раздел 02 · 9 вопросов', secDesc:'Всё про то, что ты продаёшь и сколько зарабатываешь.',
+   label:'Что ты продаёшь прямо сейчас?', hint:'Перечисли все продукты и услуги. Чем подробнее — тем лучше', type:'textarea', required:true, placeholder:'Например:\n— Консультация 1 на 1\n— Групповая программа\n— Закрытый клуб / подписка\n— Онлайн-курс', maxlength:2000, dontknow:true},
+  {id:'q10', sec:1, label:'Какие продукты хочешь запустить в ближайшее время?', hint:'Идеи, планы, что уже в работе', type:'textarea', required:false, placeholder:'Например: Хочу запустить групповой формат и автоматизировать продажи через воронку...', maxlength:1000, dontknow:true},
+  {id:'q11', sec:1, label:'Сколько зарабатываешь сейчас в месяц?', hint:'Примерный диапазон — никуда не уйдёт', type:'radio', required:false,
+   options:['До 50К ₽','50–150К ₽','150–300К ₽','300–600К ₽','600К–1М ₽','1М+ ₽','Предпочитаю не указывать']},
+  {id:'q12', sec:1, label:'Сколько хочешь зарабатывать через 3 месяца?', hint:'Конкретная цифра или диапазон', type:'text', required:true, placeholder:'Например: 300 000 ₽/мес'},
+  {id:'q13', sec:1, label:'А через год?', hint:'', type:'text', required:false, placeholder:'Например: 1 000 000 ₽/мес', dontknow:true},
+  {id:'q14', sec:1, label:'Откуда сейчас приходят клиенты?', hint:'Выбери всё что подходит', type:'checkbox', required:false,
+   options:['Instagram / Reels','Telegram канал','Сарафанное радио / рекомендации','TikTok','YouTube','Таргетированная реклама','Партнёры / коллаборации','Офлайн / мероприятия']},
+  {id:'q15', sec:1, label:'Сколько новых клиентов приходит в месяц?', hint:'', type:'radio', required:false,
+   options:['До 5','5–15','15–50','50–200','200+']},
+  {id:'q16', sec:1, label:'Средний чек одной продажи (₽)', hint:'Укажи цифрой — без пробелов', type:'number', required:false, placeholder:'15000', dontknow:true},
+  {id:'q17', sec:1, label:'Есть ли подписочная модель или закрытый клуб?', hint:'', type:'radio', required:false,
+   options:['Да, уже работает','В планах / хочу запустить','Нет и пока не планирую']},
+
+  // ── РАЗДЕЛ 3 — СОЦСЕТИ (10 questions) ──
+  {id:'q18', sec:2, secTitle:'Соцсети и контент', secNum:'Раздел 03 · 10 вопросов', secDesc:'Расскажи про свои площадки, контент и что уже пробовал.',
+   label:'Ссылки на все твои соцсети', hint:'Вставь ссылки на те площадки где ты есть', type:'social', required:true,
+   socials:[{ico:'<svg-ig>',id:'q18-ig',ph:'Instagram: https://instagram.com/...'},{ico:'<svg-tg>',id:'q18-tg',ph:'Telegram: https://t.me/...'},{ico:'<svg-yt>',id:'q18-yt',ph:'YouTube: https://youtube.com/...'},{ico:'<svg-tt>',id:'q18-tt',ph:'TikTok: https://tiktok.com/...'},{ico:'<svg-web>',id:'q18-site',ph:'Сайт: https://...'}]},
+  {id:'q19', sec:2, label:'Сколько подписчиков сейчас на каждой площадке?', hint:'Напиши цифры — они нужны для трекера роста в системе', type:'grid-number', required:true,
+   fields:[{label:'Instagram',id:'q19-ig'},{label:'Telegram',id:'q19-tg'},{label:'YouTube',id:'q19-yt'},{label:'TikTok',id:'q19-tt'}]},
+  {id:'q20', sec:2, label:'На какой платформе хочешь расти в первую очередь?', hint:'', type:'radio', required:true,
+   options:['Instagram (Reels)','Telegram','TikTok','YouTube','Все одновременно']},
+  {id:'q21', sec:2, label:'Как часто сейчас публикуешь контент?', hint:'', type:'radio', required:false,
+   options:['Почти не публикую','1–3 раза в неделю','Каждый день','Несколько раз в день']},
+  {id:'q22', sec:2, label:'Что публикуешь сейчас?', hint:'', type:'checkbox', required:false,
+   options:['Reels / короткие видео','Карусели / слайды','Сторис','TG-посты с текстом','Прямые эфиры','YouTube видео (длинные)']},
+  {id:'q23', sec:2, label:'Снимаешь сам или с командой?', hint:'', type:'radio', required:false,
+   options:['Полностью сам','Есть оператор / монтажёр','Полная команда','Пока не снимаю']},
+  {id:'q24', sec:2, label:'Какой контент заходил лучше всего?', hint:'Что набирало больше просмотров, реакций, заявок?', type:'textarea', required:false, placeholder:'Например: Личные истории и разборы реальных кейсов собирали больше всего реакций и заявок...', maxlength:800, dontknow:true},
+  {id:'q25', sec:2, label:'Что не получалось или заходило плохо?', hint:'', type:'textarea', required:false, placeholder:'Например: Длинные экспертные тексты почти без реакций, видео с советами без личного контекста...', maxlength:800, dontknow:true},
+  {id:'q26', sec:2, label:'Используешь ли ИИ-инструменты в работе?', hint:'', type:'checkbox', required:false,
+   options:['ChatGPT / Claude для текстов','Gemini / Midjourney для картинок','HeyGen для ИИ-аватара','Fliki / Pictory для стоковых видео','SMMBot / автоворонки','Пока не использую']},
+  {id:'q27', sec:2, label:'На каком языке ведёшь контент?', hint:'', type:'radio', required:false,
+   options:['Русский','Русский + другой','Другой язык'],
+   extra:{id:'q27b', placeholder:'Какой именно язык?'}},
+
+  // ── РАЗДЕЛ 4 — ВИЗУАЛ (7 questions) ──
+  {id:'q28', sec:3, secTitle:'Визуал и стиль', secNum:'Раздел 04 · 7 вопросов', secDesc:'Расскажи про свой бренд и визуальный стиль. На основе этого будет создан весь дизайн системы.',
+   label:'Загрузи логотип (если есть)', hint:'PNG или SVG с прозрачным фоном — идеально. Если нет — пропусти', type:'file', required:false, accept:'.png,.svg,.jpg,.jpeg', fileId:'fb-logo'},
+  {id:'q29', sec:3, label:'Фирменные цвета (если есть)', hint:'HEX-коды, названия или описание. Если нет — цвета подберём на основе анализа', type:'text', required:false, placeholder:'Например: чёрный #000000, золотой #C9A84C', dontknow:true},
+  {id:'q30', sec:3, label:'Какой общий стиль тебе ближе?', hint:'', type:'radio', required:false,
+   options:['<svg-moon> Тёмный / премиум','<svg-sun> Светлый / чистый','<svg-bolt> Яркий / энергичный','<svg-leaf> Натуральный / тёплый','<svg-dot> Минималистичный']},
+  {id:'q31', sec:3, label:'3–5 аккаунтов чей визуал тебе нравится', hint:'Ссылки или @никнеймы — неважно в какой нише, важен стиль', type:'textarea', required:false, placeholder:'Например:\n@username1 — нравится чистый минималистичный стиль\n@username2 — классная подача, всё по делу', maxlength:600, dontknow:true},
+  {id:'q32', sec:3, label:'Как бы описал свой стиль общения с аудиторией?', hint:'', type:'checkbox', required:false,
+   options:['Экспертно и строго','Дружески и тепло','С юмором и легко','Дерзко и провокационно','Мотивирующе и вдохновляюще']},
+  {id:'q33', sec:3, label:'Есть ли фото или видео в хорошем качестве?', hint:'', type:'radio', required:false,
+   options:['Да, есть качественные','Есть но не очень','Нет, нужно сделать']},
+  {id:'q34', sec:3, label:'Загрузи фото для аватара (если есть)', hint:'Квадратное фото лица хорошего качества', type:'file', required:false, accept:'.png,.jpg,.jpeg', fileId:'fb-photo'},
+
+  // ── РАЗДЕЛ 5 — АУДИТОРИЯ (7 questions) ──
+  {id:'q35', sec:4, secTitle:'Аудитория и конкуренты', secNum:'Раздел 05 · 7 вопросов', secDesc:'Кто твой клиент и кто конкуренты — основа для бизнес-плана и контент-стратегии.',
+   label:'Кто твой идеальный клиент?', hint:'Пол, возраст, чем занимается, что беспокоит, о чём мечтает', type:'textarea', required:true, placeholder:'Например: Эксперты и предприниматели 25–45 лет, уже зарабатывают, но хотят выйти на новый уровень через соцсети...', maxlength:1000, dontknow:true},
+  {id:'q36', sec:4, label:'Главная проблема или желание твоего клиента?', hint:'Что он хочет решить или получить благодаря тебе', type:'textarea', required:true, placeholder:'Например: Хочет стабильный поток клиентов без постоянного ручного прогрева и продаж в лоб...', maxlength:800, dontknow:true},
+  {id:'q37', sec:4, label:'Кого считаешь своими конкурентами?', hint:'3–5 ссылок или имён — прямые конкуренты в нише', type:'textarea', required:false, placeholder:'Например:\n@expert1 — похожая аудитория и формат\n@school_xyz — конкурирующий обучающий продукт', maxlength:600, dontknow:true},
+  {id:'q38', sec:4, label:'Чем ты отличаешься от конкурентов?', hint:'Твоё главное отличие — почему клиент должен выбрать тебя', type:'textarea', required:true, placeholder:'Например: Я не даю шаблоны — я работаю с конкретной ситуацией клиента и довожу до результата...', maxlength:800, dontknow:true},
+  {id:'q39', sec:4, label:'Какие возражения чаще всего слышишь?', hint:'«Дорого», «нет времени», «я не умею» — что говорят когда не покупают', type:'textarea', required:false, placeholder:'Например: «Дорого», «нет времени», «сначала подумаю», «уже пробовал — не сработало»...', maxlength:600, dontknow:true},
+  {id:'q40', sec:4, label:'Что говорят клиенты после работы с тобой?', hint:'Конкретные фразы из отзывов, результаты, цифры', type:'textarea', required:true, placeholder:'Например: «Наконец-то появилась система», «За месяц закрыл больше сделок чем за полгода до этого»...', maxlength:1000, dontknow:true},
+  {id:'q41', sec:4, label:'Есть ли конкретные цифры результатов клиентов?', hint:'Например: «Клиент открыл своё кафе через 4 месяца» — любые конкретные данные', type:'textarea', required:false, placeholder:'Перечисли конкретные результаты если есть...', maxlength:800, dontknow:true},
+
+  // ── РАЗДЕЛ 6 — КОМАНДА (6 questions) ──
+  {id:'q42', sec:5, secTitle:'Команда и ресурсы', secNum:'Раздел 06 · 6 вопросов', secDesc:'Что у тебя есть для работы — люди, время, бюджет и инструменты.',
+   label:'Работаешь один или есть команда?', hint:'', type:'radio', required:false,
+   options:['Один','Есть 1–2 помощника','Команда 3–7 человек','Большая команда 7+'],
+   extra:{id:'q42b', placeholder:'Если есть команда — напиши кто и что делает (монтажёр, ассистент, дизайнер...)', type:'textarea'}},
+  {id:'q43', sec:5, label:'Есть ли менеджер продаж или кто-то кто отвечает клиентам?', hint:'', type:'radio', required:false,
+   options:['Да','Нет, сам отвечаю','Планирую нанять']},
+  {id:'q44', sec:5, label:'Бюджет на продвижение в месяц?', hint:'', type:'radio', required:false,
+   options:['Без бюджета','До 20К ₽','20–50К ₽','50–150К ₽','150К+']},
+  {id:'q45', sec:5, label:'Сколько часов в день готов уделять контенту и системе?', hint:'', type:'radio', required:false,
+   options:['До 1 часа','1–2 часа','2–4 часа','4+ часов']},
+  {id:'q46', sec:5, label:'Какие сервисы и инструменты уже используешь?', hint:'', type:'checkbox', required:false,
+   options:['CapCut / монтаж видео','Canva / дизайн','CRM / таблицы клиентов','Автоворонки / боты','Аналитика (LiveDune и др)','Tribute / сервис подписок','GetCourse / платформа обучения']},
+  {id:'q46b', sec:5, label:'Снимаешь контент каждый день или пакетами?', hint:'', type:'radio', required:false,
+   options:['Каждый день по чуть-чуть','1–2 раза в неделю большими блоками','Раз в 2 недели','Пока не снимаю систематически']},
+
+  // ── РАЗДЕЛ 7 — ЦЕЛИ (6 questions) ──
+  {id:'q47', sec:6, secTitle:'Цели и период', secNum:'Раздел 07 · 6 вопросов', secDesc:'Финальный рывок — расскажи на какой период нужна система и чего хочешь достичь.',
+   label:'На какой период нужна Система Роста?', hint:'', type:'radio', required:true,
+   options:['1 месяц','3 месяца','6 месяцев','12 месяцев']},
+  {id:'q48', sec:6, label:'Главная цель на этот период — одна конкретная', hint:'Одна главная цель — не список, а самое важное', type:'text', required:true, placeholder:'Например: Выйти на стабильные 300К ₽/мес и запустить групповой продукт'},
+  {id:'q49', sec:6, label:'Что мешало расти раньше?', hint:'Честно — нехватка времени, не знал с чего начать, пробовал но не получилось?', type:'textarea', required:false, placeholder:'Например: Не было системы — делал хаотично, выгорал и бросал...', maxlength:600, dontknow:true},
+  {id:'q50', sec:6, label:'Что пробовал и не сработало?', hint:'', type:'textarea', required:false, placeholder:'Например: Запускал рекламу — не окупилась. Делал контент без стратегии — не конвертировал...', maxlength:600, dontknow:true},
+  {id:'q51', sec:6, label:'Есть ли большая мечта на 1–3 года?', hint:'Книга, подкаст, офлайн-пространство, франшиза, международный рынок', type:'textarea', required:false, placeholder:'Например: Хочу выйти на международный рынок, написать книгу, запустить большую онлайн-школу...', maxlength:800, dontknow:true},
+  {id:'q52', sec:6, label:'Что ещё важно знать для создания твоей системы?', hint:'Любая информация которая поможет сделать систему точнее', type:'textarea', required:false, placeholder:'Свободное поле — пиши что считаешь нужным...', maxlength:1000, dontknow:true},
+
+  // ── РАЗДЕЛ 8 — ТЕХНИЧЕСКИЕ (12 questions) ──
+  {id:'q53', sec:7, secTitle:'Технические детали', secNum:'Раздел 08 · 12 вопросов', secDesc:'Несколько технических вопросов для точного создания всех документов, договоров и воронок.',
+   label:'Ссылки на способы оплаты', hint:'Tribute, GetCourse, сайт, форма — куда отправлять людей платить', type:'textarea', required:true, placeholder:'Например:\nTribute: https://tribute.co/...\nСайт: https://твойсайт.ru/pay\nTelegram-бот: @mybotname', maxlength:500, dontknow:true},
+  {id:'q54', sec:7, label:'Личный Telegram (куда писать клиентам)', hint:'@никнейм или ссылка t.me/...', type:'text', required:true, placeholder:'Например: @твой_никнейм'},
+  {id:'q55', sec:7, label:'В какое время обычно публикуешь контент?', hint:'Важно для чек-листа задач по дням', type:'radio', required:false,
+   options:['Утром (7–11)','Днём (12–16)','Вечером (17–22)','В разное время']},
+  {id:'q56', sec:7, label:'Типичное время публикации (примерно)', hint:'', type:'text', required:false, placeholder:'Например: 8:00, 12:00, 20:00', dontknow:true},
+  {id:'q57', sec:7, label:'Есть ли отзывы клиентов в текстовом виде или на скринах?', hint:'', type:'radio', required:false,
+   options:['Да, много отзывов','Есть несколько','Пока мало','Нет отзывов']},
+  {id:'q58', sec:7, label:'Самые сильные цифры результатов клиентов', hint:'«Клиент X за Y дней сделал Z» — используется в лендингах и КП', type:'textarea', required:false, placeholder:'Например: Клиент за 2 месяца удвоил охваты и закрыл первую крупную сделку через Telegram...', maxlength:600, dontknow:true},
+  {id:'q59', sec:7, label:'Какие вопросы чаще всего задаёт аудитория?', hint:'Топ-5 тем которые часто спрашивают в директе, комментариях, на эфирах', type:'textarea', required:false, placeholder:'Например: Как начать вести соцсети, где брать клиентов, как сделать первую продажу...', maxlength:600, dontknow:true},
+  {id:'q60', sec:7, label:'Полное ФИО (для договора)', hint:'Используется только в договоре с клиентами', type:'text', required:true, placeholder:'Например: Иванов Иван Иванович'},
+  {id:'q61', sec:7, label:'Город регистрации (для договора)', hint:'', type:'text', required:false, placeholder:'Например: г. Москва', dontknow:true},
+  {id:'q62', sec:7, label:'Какие гарантии готов давать клиентам?', hint:'Используется в договоре и лендингах', type:'textarea', required:false, placeholder:'Например: Если за первые 2 недели не устроит — верну деньги без вопросов...', maxlength:500, dontknow:true},
+  {id:'q63', sec:7, label:'Идеи для лид-магнитов (бесплатных материалов)', hint:'Что полезного ты мог бы дать бесплатно чтобы люди попали в воронку', type:'textarea', required:false, placeholder:'Например: Чек-лист «7 ошибок в контенте», Гайд «Как упаковать эксперта за 1 день»...', maxlength:600, dontknow:true},
+  {id:'q64', sec:7, label:'Есть ли ограничения по местам или датам на продукты?', hint:'Например: «Ужины только по субботам, максимум 12 человек» — используется в триггерах срочности', type:'textarea', required:false, placeholder:'Например: Группа — максимум 10 человек, набор 1 раз в месяц. Инд. работа — 3 места...', maxlength:500, dontknow:true},
+
+  // ── РАЗДЕЛ 1 — ДОПОЛНИТЕЛЬНЫЕ ──
+  // Название бренда (after q2)
+  // inserted inline above — see q2b below
+
+  // ── НОВЫЕ ВОПРОСЫ — КОНЕЦ РАЗДЕЛА 1 ──
+  {id:'qX1', sec:0, label:'Как называется твой проект или бренд?', hint:'Если работаешь под своим именем — пропусти', type:'radio', required:false,
+   options:['Под своим именем — без бренда','Есть название бренда / проекта'],
+   extra:{id:'qX1b', placeholder:'Например: OKO Team, Smart Media, Pro.Finance...'}},
+
+  {id:'qX2', sec:0, label:'Как общаешься с аудиторией?', hint:'Это определяет стиль всех текстов, скриптов и постов в системе', type:'radio', required:true,
+   options:['На «ты» — всегда','На «вы» — всегда','Зависит от площадки']},
+
+  {id:'qX3', sec:0, label:'Есть ли фирменные фразы или слова которые ты часто используешь?', hint:'Выражения, которые стали твоей фишкой — используются в скриптах и контенте', type:'textarea', required:false, placeholder:'Например: «без воды», «разберём по-честному», «системно и без суеты»...', maxlength:400, dontknow:true},
+
+  // ── НОВЫЕ ВОПРОСЫ — РАЗДЕЛ 2 (продукты) ──
+  {id:'qX4', sec:1, label:'Есть ли у тебя дешёвый входной продукт до 2000 ₽?', hint:'Трипваер — первый шаг для тех кто ещё не готов платить много', type:'radio', required:false,
+   options:['Да, есть','Нет','Хочу запустить'],
+   extra:{id:'qX4b', placeholder:'Если есть — опиши коротко что это и что входит'}},
+
+  // ── НОВЫЕ ВОПРОСЫ — РАЗДЕЛ 7 (технические) ──
+  {id:'qX5', sec:7, label:'Правовая форма для договора', hint:'Нужно для генератора договора в системе', type:'radio', required:false,
+   options:['Самозанятый','ИП','ООО / другое юрлицо','Пока нет — работаю неофициально'],
+   extra:{id:'qX5b', placeholder:'ИНН, ОГРНИП или другие реквизиты если есть'}},
+
+  {id:'qX6', sec:7, label:'Есть ли HeyGen аккаунт (ИИ-аватар)?', hint:'Нужно чтобы включить формат ИИ-аватара в контент-план', type:'radio', required:false,
+   options:['Да, есть и настроен','Есть аккаунт, но не настраивал','Нет — не планирую','Нет — хочу попробовать']},
+
+  {id:'qX7', sec:7, label:'Часовой пояс', hint:'Важно для точного расписания публикаций в чек-листе', type:'text', required:false, placeholder:'Например: МСК (UTC+3), Алматы (UTC+5), Дубай (UTC+4)', dontknow:true},
+
+  {id:'qX8', sec:7, label:'Есть ли готовый контент в запасе?', hint:'Снятые но неопубликованные видео, написанные посты — позволяет сразу заполнить первые дни контент-плана', type:'radio', required:false,
+   options:['Да, много — сразу можно публиковать','Есть немного — 3–10 единиц','Нет, всё с нуля']},
+  {id:'qFINAL', sec:7, label:'Дополни — всё что хочешь добавить', hint:'Необязательно. Можешь написать текст, загрузить файлы, фото, видео или записать голосовое / видео прямо здесь', type:'final_media', required:false}
+];
+
+// ─── STATE ───
+var cur = 0;
+var answers = {}; // id -> value
+// ─── LOCALSTORAGE SAVE/RESTORE ───
+var LS_KEY = 'oko_anketa_sistema';
+
+// Save on page close/refresh
+window.addEventListener('beforeunload', function() {
+  if (cur > 0 || Object.keys(answers).length > 0) {
+    saveProgress();
+  }
+});
+
+function stripAt(inp){inp.value=inp.value.replace(/@/g,"");}
+
+function saveProgress() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      cur: cur, answers: answers, sectionShown: sectionShown, ts: Date.now()
+    }));
+    // Flash save indicator
+    var ind = document.getElementById('_save_ind');
+    if (ind) { ind.style.opacity='1'; setTimeout(function(){ind.style.opacity='0';},800); }
+  } catch(e) {}
+}
+function clearProgress() {
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+}
+function hasSavedProgress() {
+  try {
+    var saved = localStorage.getItem(LS_KEY);
+    if (!saved) return false;
+    var d = JSON.parse(saved);
+    if (Date.now() - (d.ts||0) > 7*24*60*60*1000) { clearProgress(); return false; }
+    return (d.cur||0) > 0 || (d.answers && Object.keys(d.answers).length > 0);
+  } catch(e) { return false; }
+}
+function restoreProgress() {
+  try {
+    var d = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    if (d.cur) cur = d.cur;
+    if (d.answers) answers = d.answers;
+    if (d.sectionShown) sectionShown = d.sectionShown;
+  } catch(e) {}
+}
+
+var _anketa_id = 'ank_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+
+function finalSubmit() {
+  clearProgress(); // remove saved progress on completion
+  // Collect all data
+  // Get name from q2 (Как называть тебя), fallback to any short text answer
+  var name = (answers['q2'] || '').trim();
+  if (!name) name = (answers['q1'] || '').trim().split(' ')[0] || 'Клиент';
+  if (name.length > 40) name = name.split(' ')[0] || 'Клиент';
+  // Get email from q7b
+  var email = (answers['q7b'] || '').trim();
+  if (!email) {
+    Object.keys(answers).forEach(function(k) {
+      var v = String(answers[k]||'').trim();
+      if (!email && v.indexOf('@') > 0 && v.indexOf('.') > 1) email = v;
+    });
+  }
+
+  // Show email note if we have email
+  if (email) {
+    var note = document.getElementById('comp-email-note');
+    var emailVal = document.getElementById('comp-email-val');
+    if (note) note.style.display = 'block';
+    if (emailVal) emailVal.textContent = email;
+  }
+
+  // Save text from final question
+  var finalTxt = document.getElementById('qFINAL-text');
+  if (finalTxt && finalTxt.value.trim()) {
+    answers['qFINAL-text'] = finalTxt.value.trim();
+  }
+  // Include media items (from final question recorder)
+  if (typeof _items !== 'undefined' && _items.length > 0) {
+    answers['__media__items'] = _items;
+  }
+
+  var payload = {
+    action: 'saveAnketa',
+    anketa_id: _anketa_id,
+    product: 'sistema',
+    name: name,
+    email: email,
+    answers: answers,
+    progress: questions.length,
+    total: questions.length,
+    complete: true,
+    send_notifications: true,
+    ts: new Date().toISOString()
+  };
+
+  fetch('/api.php?action=saveAnketa', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  }).catch(function(){});
+}
+
+function autoSaveToServer() {
+  try {
+    var name = answers['q1'] || '';
+    var email = answers['q2'] || answers['q_email'] || '';
+    // find email/name from answers
+    Object.keys(answers).forEach(function(k) {
+      var v = answers[k] || '';
+      if (!email && v.indexOf('@') > 0 && v.indexOf('.') > 0) email = v;
+    });
+    var payload = {
+      action: 'saveAnketa',
+      anketa_id: _anketa_id,
+      product: 'sistema',
+      name: name,
+      email: email,
+      answers: answers,
+      progress: cur + 1,
+      total: questions.length,
+      ts: new Date().toISOString()
+    };
+    fetch('/api.php?action=saveAnketa', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).catch(function(){});
+  } catch(e) {}
+}
+var sectionShown = {}; // track which sections we've introduced
+
+var secLabels = ['О тебе · Раздел 1 из 8','Продукты · Раздел 2 из 8','Соцсети · Раздел 3 из 8','Визуал · Раздел 4 из 8','Аудитория · Раздел 5 из 8','Команда · Раздел 6 из 8','Цели · Раздел 7 из 8','Технические · Раздел 8 из 8'];
+
+// ─── RENDER QUESTION ───
+function renderQ(idx) {
+  var q = questions[idx];
+  var area = document.getElementById('q-area');
+
+  // Build HTML
+  var html = '';
+
+  // Section header removed — info shown in progress bar above
+
+  html += '<div class="q-card" id="qcard-main">';
+
+  if (q.required) {
+    html += '<div class="q-req-badge">* обязательный вопрос</div>';
+  }
+
+  html += '<div class="q-label">'+q.label+(q.required?'<span class="q-required"> *</span>':'')+'</div>';
+  if (q.hint) html += '<div class="q-hint">'+q.hint+'</div>';
+
+  // INPUT by type
+  if (q.type === 'text' || q.type === 'email' || q.type === 'tel') {
+    var itype = q.type === 'email' ? 'email' : q.type === 'tel' ? 'tel' : 'text';
+    if (q.id === 'q7d') {
+      html += '<div style="display:flex;align-items:center;background:var(--bg4);border:1px solid var(--border3);border-radius:8px;overflow:hidden">'
+            + '<span style="padding:12px 10px 12px 14px;color:var(--lime);font-weight:700;font-size:15px;flex-shrink:0;user-select:none">@</span>'
+            + '<input type="text" id="q7d" placeholder="ivan_expert" autocomplete="off" style="border:none!important;border-radius:0!important;background:transparent!important;flex:1;padding:12px 14px 12px 4px" oninput="stripAt(this)">'
+            + '</div>';
+    } else {
+      html += '<input type="'+itype+'" id="'+q.id+'" placeholder="'+(q.placeholder||'')+'" autocomplete="off">';
+    }
+    if (q.dontknow) html += dontKnowBtn(q.id);
+  }
+  else if (q.type === 'url') {
+    html += '<input type="url" id="'+q.id+'" placeholder="'+(q.placeholder||'')+'">';
+    if (q.dontknow) html += dontKnowBtn(q.id);
+  }
+  else if (q.type === 'number') {
+    html += '<input type="number" id="'+q.id+'" placeholder="'+(q.placeholder||'')+'">';
+  }
+  else if (q.type === 'textarea') {
+    var ml = q.maxlength || 1000;
+    html += '<div class="char-wrap"><textarea id="'+q.id+'" placeholder="'+(q.placeholder||'')+'" maxlength="'+ml+'"></textarea><span class="char-count" id="cc-'+q.id+'">0/'+ml+'</span></div>';
+    if (q.dontknow) html += dontKnowBtn(q.id);
+  }
+  else if (q.type === 'radio') {
+    html += '<div class="q-options" id="og-'+q.id+'">';
+    q.options.forEach(function(opt) {
+      var val = opt.replace(/^[^\s]+\s/, '').trim(); // strip emoji for value if needed; use full opt
+      html += '<div class="q-option" onclick="selOpt(this,\'og-'+q.id+'\',event)"><input type="radio" name="'+q.id+'" value="'+opt+'" style="display:none">'+renderOptionLabel(opt)+'</div>';
+    });
+    html += '</div>';
+    if (q.extra) {
+      if (q.extra.type === 'textarea') {
+        html += '<textarea id="'+q.extra.id+'" placeholder="'+q.extra.placeholder+'" style="margin-top:10px" rows="3" maxlength="500"></textarea>';
+      } else {
+        html += '<input type="text" id="'+q.extra.id+'" placeholder="'+q.extra.placeholder+'" style="margin-top:10px">';
+      }
+    }
+  }
+  else if (q.type === 'checkbox') {
+    html += '<div class="q-options col" id="og-'+q.id+'">';
+    q.options.forEach(function(opt) {
+      html += '<div class="q-option" onclick="togOpt(this,event)"><input type="checkbox" name="'+q.id+'" value="'+opt+'" style="display:none">'+renderOptionLabel(opt)+'</div>';
+    });
+    html += '</div>';
+  }
+  else if (q.type === 'social') {
+    q.socials.forEach(function(s) {
+      html += '<div class="social-row"><div class="social-ico">'+getSocialIcon(s.ico)+'</div><input type="text" id="'+s.id+'" placeholder="'+s.ph+'"></div>';
+    });
+  }
+  else if (q.type === 'grid-number') {
+    html += '<div class="q-grid">';
+    q.fields.forEach(function(f) {
+      html += '<div><div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:6px">'+f.label+'</div><input type="number" id="'+f.id+'" placeholder="0"></div>';
+    });
+    html += '</div>';
+  }
+  else if (q.type === 'file') {
+    html += '<div class="file-zone"><input type="file" accept="'+(q.accept||'*')+'" onchange="fileSel(this,\''+q.fileId+'\')"><div class="file-zone-ico">🖼</div><div class="file-zone-text">Нажми или перетащи файл сюда<br><span style="font-size:10px;color:var(--w4)">'+q.accept+'</span></div><div class="file-feedback" id="'+q.fileId+'"></div></div>';
+  }
+  else if (q.type === 'final_media') {
+    html += '<div id="final-wrap">'
+      + '<textarea class="q-inp" id="qFINAL-text" placeholder="Напиши здесь..." style="width:100%;min-height:80px;resize:vertical;margin-bottom:14px"></textarea>'
+      + '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--w3);margin-bottom:8px">Прикрепить файл</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .15s;position:relative;width:100%">'
+      + '<input type="file" multiple accept="image/*,video/*,.pdf,.doc,.docx" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="addFiles(this)">'
+      + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(154,255,0,0.7)" stroke-width="2" style="flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+      + '<div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75)">Выбрать файл</div><div style="font-size:10px;color:var(--w3);margin-top:1px">Фото, видео, PDF, документы</div></div>'
+      + '</label>'
+      + '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--w3);margin:14px 0 8px">Запись</div>'
+      + '<div style="display:flex;gap:8px">'
+      + '<button type="button" id="btn-audio" onclick="startRec(\'audio\')" style="flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit;transition:all .15s">'
+      + '<div style="width:28px;height:28px;background:rgba(154,255,0,0.08);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--lime)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>'
+      + '<div style="text-align:left"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75)">Голосовое</div><div style="font-size:10px;color:var(--w3);margin-top:1px">Нажми чтобы начать</div></div>'
+      + '</button>'
+      + '<button type="button" id="btn-video" onclick="startRec(\'video\')" style="flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;cursor:pointer;font-family:inherit;transition:all .15s">'
+      + '<div style="width:28px;height:28px;background:rgba(154,255,0,0.08);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--lime)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>'
+      + '<div style="text-align:left"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.75)">Видео</div><div style="font-size:10px;color:var(--w3);margin-top:1px">Нажми чтобы начать</div></div>'
+      + '</button>'
+      + '</div>'
+      + '<div id="rec-panel" style="display:none;background:rgba(255,70,70,0.05);border:1px solid rgba(255,70,70,0.18);border-radius:12px;padding:13px;margin-top:10px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      + '<div id="rec-dot" style="width:7px;height:7px;border-radius:50%;background:#ff4646;flex-shrink:0;animation:blink 1s infinite"></div>'
+      + '<div id="rec-label" style="font-size:12px;font-weight:700;color:#ff4646;flex:1">Запись...</div>'
+      + '<div id="rec-timer" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.75)">0:00</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+      + '<button type="button" id="btn-pause-rec" onclick="pauseResume()" style="display:flex;align-items:center;gap:5px;background:rgba(255,153,0,0.12);border:1px solid rgba(255,153,0,0.25);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;color:#ffaa00;font-family:inherit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Пауза</button>'
+      + '<button type="button" onclick="stopRec()" style="display:flex;align-items:center;gap:5px;background:rgba(154,255,0,0.08);border:1px solid rgba(154,255,0,0.25);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--lime);font-family:inherit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Сохранить</button>'
+      + '<button type="button" onclick="cancelRec()" style="display:flex;align-items:center;gap:5px;background:rgba(255,70,70,0.08);border:1px solid rgba(255,70,70,0.18);border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;color:#ff4646;font-family:inherit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Отмена</button>'
+      + '</div></div>'
+      + '<div id="final-atts" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>'
+      + '</div>';
+  }
+
+  html += '<div class="val-err" id="val-err">Пожалуйста, ответь на этот вопрос чтобы продолжить</div>';
+  html += '</div>'; // /q-card
+
+  area.innerHTML = html;
+  area.style.animation = 'none';
+
+  // Restore saved answer
+  restoreAnswer(q);
+
+  // Attach char counter
+  if (q.type === 'textarea') {
+    var ta = document.getElementById(q.id);
+    if (ta) {
+      ta.addEventListener('input', function() {
+        var cc = document.getElementById('cc-'+q.id);
+        if (cc) cc.textContent = ta.value.length + '/' + (q.maxlength||1000);
+      });
+    }
+  }
+
+  // Update counter & progress
+  updateMeta(idx);
+
+  // Scroll to top
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function dontKnowBtn(fieldId) {
+  return '<div class="dontknow-wrap"><button class="btn-dontknow" type="button" onclick="setDontKnow(\''+fieldId+'\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Не знаю / затрудняюсь ответить</button></div>';
+}
+
+function setDontKnow(fieldId) {
+  var el = document.getElementById(fieldId);
+  if (el) {
+    el.value = '-';
+    el.dispatchEvent(new Event('input'));
+    // Update char counter if textarea
+    var cc = document.getElementById('cc-' + fieldId);
+    if (cc) cc.textContent = '1/' + (el.getAttribute('maxlength') || 1000);
+  }
+}
+
+// ─── RESTORE SAVED ANSWER ───
+function restoreAnswer(q) {
+  var saved = answers[q.id];
+  if (!saved) return;
+
+  if (q.type === 'text' || q.type === 'email' || q.type === 'tel' || q.type === 'url' || q.type === 'number' || q.type === 'textarea') {
+    var el = document.getElementById(q.id);
+    if (el) {
+      el.value = saved;
+      if (q.type === 'textarea') {
+        var cc = document.getElementById('cc-' + q.id);
+        if (cc) cc.textContent = saved.length + '/' + (q.maxlength || 1000);
+      }
+    }
+  }
+  else if (q.type === 'radio') {
+    var opts = document.querySelectorAll('input[name="'+q.id+'"]');
+    opts.forEach(function(inp) {
+      if (inp.value === saved) {
+        inp.checked = true;
+        inp.closest('.q-option').classList.add('selected');
+      }
+    });
+    if (q.extra && answers[q.extra.id]) {
+      var ex = document.getElementById(q.extra.id);
+      if (ex) ex.value = answers[q.extra.id];
+    }
+  }
+  else if (q.type === 'checkbox') {
+    var vals = saved ? saved.split('|||') : [];
+    vals.forEach(function(v) {
+      var inp = document.querySelector('input[name="'+q.id+'"][value="'+v+'"]');
+      if (inp) inp.closest('.q-option').classList.add('selected');
+    });
+  }
+  else if (q.type === 'social') {
+    q.socials.forEach(function(s) {
+      var el = document.getElementById(s.id);
+      if (el && answers[s.id]) el.value = answers[s.id];
+    });
+  }
+  else if (q.type === 'grid-number') {
+    q.fields.forEach(function(f) {
+      var el = document.getElementById(f.id);
+      if (el && answers[f.id]) el.value = answers[f.id];
+    });
+  }
+}
+
+// ─── SAVE CURRENT ANSWER ───
+function saveAnswer(q) {
+  if (q.type === 'text' || q.type === 'email' || q.type === 'tel' || q.type === 'url' || q.type === 'number') {
+    var el = document.getElementById(q.id);
+    if (el) {
+      var val = el.value.trim();
+      if (q.id === 'q7d' && val && !val.startsWith('@')) val = '@' + val;
+      answers[q.id] = val;
+    }
+  }
+  else if (q.type === 'textarea') {
+    var el = document.getElementById(q.id);
+    if (el) answers[q.id] = el.value.trim();
+  }
+  else if (q.type === 'radio') {
+    var checked = document.querySelector('input[name="'+q.id+'"]:checked');
+    if (checked) answers[q.id] = checked.value;
+    if (q.extra) {
+      var ex = document.getElementById(q.extra.id);
+      if (ex) answers[q.extra.id] = ex.value.trim();
+    }
+  }
+  else if (q.type === 'checkbox') {
+    var checked = document.querySelectorAll('input[name="'+q.id+'"]:checked');
+    var vals = [];
+    checked.forEach(function(c) { vals.push(c.value); });
+    answers[q.id] = vals.join('|||');
+  }
+  else if (q.type === 'social') {
+    q.socials.forEach(function(s) {
+      var el = document.getElementById(s.id);
+      if (el) answers[s.id] = el.value.trim();
+    });
+  }
+  else if (q.type === 'grid-number') {
+    q.fields.forEach(function(f) {
+      var el = document.getElementById(f.id);
+      if (el) answers[f.id] = el.value;
+    });
+  }
+}
+
+// ─── VALIDATE ───
+function validate(q) {
+  if (!q.required) return true;
+
+  if (q.type === 'text' || q.type === 'email' || q.type === 'tel' || q.type === 'url') {
+    var el = document.getElementById(q.id);
+    return el && el.value.trim().length > 0;
+  }
+  if (q.type === 'textarea') {
+    var el = document.getElementById(q.id);
+    return el && el.value.trim().length > 0;
+  }
+  if (q.type === 'radio') {
+    return !!document.querySelector('input[name="'+q.id+'"]:checked');
+  }
+  if (q.type === 'social') {
+    // at least one filled
+    var filled = false;
+    q.socials.forEach(function(s) {
+      var el = document.getElementById(s.id);
+      if (el && el.value.trim()) filled = true;
+    });
+    return filled;
+  }
+  if (q.type === 'grid-number') {
+    // at least one filled
+    var filled = false;
+    q.fields.forEach(function(f) {
+      var el = document.getElementById(f.id);
+      if (el && el.value) filled = true;
+    });
+    return filled;
+  }
+  return true;
+}
+
+// ─── NAVIGATION ───
+function goNext() {
+  var q = questions[cur];
+  saveAnswer(q);
+
+  if (!validate(q)) {
+    var err = document.getElementById('val-err');
+    var card = document.getElementById('qcard-main');
+    if (err) { err.classList.add('show'); }
+    if (card) { card.classList.add('error-state'); }
+    return;
+  }
+
+  if (cur < questions.length - 1) {
+    cur++;
+    renderQ(cur);
+    saveProgress();
+    if (cur % 5 === 0 || cur === questions.length - 1) autoSaveToServer();
+  } else {
+    showCompletion();
+  }
+}
+
+function goBack() {
+  if (cur > 0) {
+    var q = questions[cur];
+    saveAnswer(q);
+    saveProgress();
+    cur--;
+    renderQ(cur);
+    updateProgress();
+  }
+}
+
+// ─── RESUME LOGIC ───
+function doResume() {
+  restoreProgress();
+  var banner = document.getElementById('resume-banner');
+  if (banner) banner.style.display = 'none';
+  renderQ(cur);
+  updateProgress();
+}
+function doStartFresh() {
+  clearProgress();
+  cur = 0; answers = {}; sectionShown = {};
+  var banner = document.getElementById('resume-banner');
+  if (banner) banner.style.display = 'none';
+  renderQ(0);
+  updateProgress();
+}
+
+// Init after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+
+  cur = 0;
+  answers = {};
+  sectionShown = {};
+
+  // Check progress BEFORE renderQ (renderQ calls saveProgress which would overwrite!)
+  var _hasSaved = hasSavedProgress();
+  var _savedCur = 0;
+
+  if (_hasSaved) {
+    try {
+      var _saved = JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+      _savedCur = _saved.cur || 0;
+      var _pct = questions.length > 0 ? Math.round(_savedCur / questions.length * 100) : 0;
+      var banner = document.getElementById('resume-banner');
+      var prog = document.getElementById('resume-progress');
+      if (banner) {
+        banner.style.display = 'flex';
+        if (prog) prog.textContent = '· ' + _pct + '% · вопрос ' + (_savedCur+1) + ' из ' + questions.length;
+      }
+    } catch(e) {}
+  }
+
+  // Render q0 AFTER banner check
+  renderQ(0);
+
+});
+
+// ─── UPDATE META (progress etc) ───
+function updateMeta(idx) {
+  var q = questions[idx];
+  var total = questions.length;
+  var pct = Math.round((idx / total) * 100);
+
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-label').textContent = secLabels[q.sec] || '';
+  document.getElementById('q-num').textContent = idx + 1;
+  document.getElementById('q-total').textContent = total;
+
+  // Update dots
+  for (var i = 0; i < 8; i++) {
+    var dot = document.getElementById('dot-' + i);
+    if (!dot) continue;
+    if (i === q.sec) dot.className = 'step-dot active';
+    else if (i < q.sec) dot.className = 'step-dot done';
+    else dot.className = 'step-dot';
+  }
+
+  // Prev button
+  var btnPrev = document.getElementById('btn-prev');
+  if (btnPrev) btnPrev.disabled = (idx === 0);
+
+  // Next button label
+  var btnNext = document.getElementById('btn-next');
+  if (btnNext) {
+    if (idx === questions.length - 1) {
+      btnNext.textContent = '✅ Завершить';
+    } else {
+      btnNext.textContent = 'Далее →';
+    }
+  }
+}
+
+// ─── COMPLETION ───
+function showCompletion() {
+  finalSubmit(); // save + send emails
+  document.getElementById('q-area').innerHTML = '';
+  document.getElementById('nav-row').style.display = 'none';
+  document.getElementById('q-counter').style.display = 'none';
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-pct').textContent = '100%';
+  document.getElementById('prog-label').textContent = 'Анкета заполнена!';
+  document.querySelectorAll('.step-dot').forEach(function(d) { d.className = 'step-dot done'; });
+  document.getElementById('completion').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ─── OPTION HELPERS ───
+function selOpt(el, groupId, evt) {
+  if (evt) evt.preventDefault();
+  document.getElementById(groupId).querySelectorAll('.q-option').forEach(function(o) {
+    o.classList.remove('selected');
+    var inp = o.querySelector('input');
+    if (inp) inp.checked = false;
+  });
+  el.classList.add('selected');
+  var inp = el.querySelector('input');
+  if (inp) inp.checked = true;
+  var err = document.getElementById('val-err');
+  var card = document.getElementById('qcard-main');
+  if (err) err.classList.remove('show');
+  if (card) card.classList.remove('error-state');
+}
+function togOpt(el, evt) {
+  if (evt) evt.preventDefault();
+  el.classList.toggle('selected');
+  var inp = el.querySelector('input');
+  if (inp) inp.checked = el.classList.contains('selected');
+}
+function fileSel(inp, fbId) {
+  var fb = document.getElementById(fbId);
+  if (fb && inp.files && inp.files[0]) {
+    fb.style.display = 'block';
+    fb.textContent = '✅ ' + inp.files[0].name;
+    // Store as base64 for HTML report
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      // map fbId to question id
+      if (fbId === 'fb-logo') answers['__file__q28'] = e.target.result;
+      if (fbId === 'fb-photo') answers['__file__q34'] = e.target.result;
+    };
+    reader.readAsDataURL(inp.files[0]);
+  }
+}
+
+// ─── COLLECT ANSWERS ───
+function collectAnswers() {
+  var lines = [];
+  lines.push('═══════════════════════════════════════════════════════════');
+  lines.push('АНКЕТА КЛИЕНТА — СИСТЕМА РОСТА | OKO TEAM');
+  lines.push('Дата заполнения: ' + new Date().toLocaleDateString('ru-RU') + ' ' + new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}));
+  lines.push('═══════════════════════════════════════════════════════════');
+  lines.push('');
+
+  var sectionTitles = ['РАЗДЕЛ 1 — О ТЕБЕ И ТВОЁМ ДЕЛЕ','РАЗДЕЛ 2 — ПРОДУКТЫ И ДЕНЬГИ','РАЗДЕЛ 3 — СОЦСЕТИ И КОНТЕНТ','РАЗДЕЛ 4 — ВИЗУАЛ И СТИЛЬ','РАЗДЕЛ 5 — АУДИТОРИЯ И КОНКУРЕНТЫ','РАЗДЕЛ 6 — КОМАНДА И РЕСУРСЫ','РАЗДЕЛ 7 — ЦЕЛИ И ПЕРИОД','РАЗДЕЛ 8 — ТЕХНИЧЕСКИЕ ДЕТАЛИ'];
+  var curSec = -1;
+
+  questions.forEach(function(q) {
+    if (q.sec !== curSec) {
+      curSec = q.sec;
+      lines.push('──────────────────────────────────────────');
+      lines.push(sectionTitles[curSec]);
+      lines.push('──────────────────────────────────────────');
+    }
+
+    var val = answers[q.id];
+    if (!val && q.type === 'checkbox') val = '';
+
+    if (q.type === 'checkbox') {
+      var vals = val ? val.split('|||').filter(Boolean) : [];
+      if (vals.length) lines.push(q.label + ': ' + vals.join(', '));
+    } else if (q.type === 'textarea') {
+      if (val) { lines.push(''); lines.push(q.label + ':'); lines.push(val); }
+    } else if (q.type === 'social') {
+      q.socials.forEach(function(s) {
+        if (answers[s.id]) lines.push(s.ph.split(':')[0] + ': ' + answers[s.id]);
+      });
+    } else if (q.type === 'grid-number') {
+      q.fields.forEach(function(f) {
+        if (answers[f.id]) lines.push(f.label + ': ' + answers[f.id]);
+      });
+    } else if (q.type === 'file') {
+      // skip files in txt
+    } else {
+      if (val) lines.push(q.label + ': ' + val);
+      if (q.extra && answers[q.extra.id]) lines.push('  → ' + answers[q.extra.id]);
+    }
+  });
+
+  lines.push('');
+  lines.push('═══════════════════════════════════════════════════════════');
+  lines.push('OKO TEAM · okoteam.top · @ktodaniel');
+  lines.push('═══════════════════════════════════════════════════════════');
+  return lines.join('\n');
+}
+
+function getFileName() {
+  var name = (answers['q1'] || '').trim();
+  // period from q47: "1 месяц" -> 1, "3 месяца" -> 3, "6 месяцев" -> 6, "12 месяцев" -> 12
+  var period = answers['q47'] || '';
+  var months = period.match(/\d+/);
+  var m = months ? months[0] : '?';
+  return m + ' - ' + (name || 'Клиент');
+}
+
+function downloadHTML() {
+  var html = buildHTMLReport();
+  var a = document.createElement('a');
+  a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+  a.download = getFileName() + '.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function buildHTMLReport() {
+  var name = (answers['q1'] || 'Клиент').trim();
+  var date = new Date().toLocaleDateString('ru-RU');
+  var period = answers['q47'] || '-';
+
+  var sectionTitles = ['О ТЕБЕ И ТВОЁМ ДЕЛЕ','ПРОДУКТЫ И ДЕНЬГИ','СОЦСЕТИ И КОНТЕНТ','ВИЗУАЛ И СТИЛЬ','АУДИТОРИЯ И КОНКУРЕНТЫ','КОМАНДА И РЕСУРСЫ','ЦЕЛИ И ПЕРИОД','ТЕХНИЧЕСКИЕ ДЕТАЛИ'];
+  var curSec = -1;
+  var bodyHTML = '';
+
+  questions.forEach(function(q) {
+    if (q.sec !== curSec) {
+      if (curSec !== -1) bodyHTML += '</div>';
+      curSec = q.sec;
+      bodyHTML += '<div class="section"><h2>' + (curSec+1) + '. ' + sectionTitles[curSec] + '</h2>';
+    }
+
+    var val = answers[q.id] || '';
+
+    if (q.type === 'file') {
+      // embed uploaded image if available
+      var fb = document.getElementById(q.fileId);
+      var fileInp = fb && fb.previousElementSibling;
+      // try to get from stored base64
+      var imgData = answers['__file__' + q.id];
+      if (imgData) {
+        bodyHTML += '<div class="qa"><div class="ql">' + q.label + '</div><div class="qv"><img src="' + imgData + '" style="max-width:200px;max-height:200px;border-radius:8px;margin-top:8px"></div></div>';
+      }
+      return;
+    }
+
+    if (q.type === 'social') {
+      var socVals = [];
+      q.socials.forEach(function(s) { if(answers[s.id]) socVals.push('<span class="tag">' + s.ph.split(':')[0] + '</span> ' + answers[s.id]); });
+      if (socVals.length) bodyHTML += '<div class="qa"><div class="ql">' + q.label + '</div><div class="qv">' + socVals.join('<br>') + '</div></div>';
+      return;
+    }
+
+    if (q.type === 'grid-number') {
+      var gVals = [];
+      q.fields.forEach(function(f) { if(answers[f.id]) gVals.push('<span class="tag">' + f.label + '</span> ' + answers[f.id]); });
+      if (gVals.length) bodyHTML += '<div class="qa"><div class="ql">' + q.label + '</div><div class="qv">' + gVals.join('  ') + '</div></div>';
+      return;
+    }
+
+    if (q.type === 'checkbox') {
+      var vals = val ? val.split("|||").filter(Boolean) : [];
+      if (vals.length) {
+        var tags = vals.map(function(v){ return '<span class="tag">' + v + '</span>'; }).join(' ');
+        bodyHTML += '<div class="qa"><div class="ql">' + q.label + '</div><div class="qv">' + tags + '</div></div>';
+      }
+      return;
+    }
+
+    if (!val) return;
+
+    // strip svg placeholders from displayed label
+    var label = q.label;
+    var displayVal = val.replace(/<svg-[^>]+>/g,'').trim();
+    if (q.type === 'textarea') {
+      bodyHTML += '<div class="qa"><div class="ql">' + label + '</div><div class="qv pre">' + displayVal.replace(/\n/g,'<br>') + '</div></div>';
+    } else {
+      bodyHTML += '<div class="qa"><div class="ql">' + label + '</div><div class="qv">' + displayVal + '</div></div>';
+    }
+    if (q.extra && answers[q.extra.id]) {
+      bodyHTML += '<div class="qa sub"><div class="ql">Уточнение</div><div class="qv">' + answers[q.extra.id] + '</div></div>';
+    }
+  });
+
+  if (curSec !== -1) bodyHTML += '</div>';
+
+  return `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Анкета — ` + name + `</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff;padding:0}
+.cover{background:#000;padding:48px 40px;border-bottom:2px solid #9AFF00;display:flex;align-items:center;gap:24px}
+.cover-logo{width:52px;height:52px;flex-shrink:0}
+.cover-info{flex:1}
+.cover-brand{font-size:10px;font-weight:800;letter-spacing:4px;color:#9AFF00;text-transform:uppercase;margin-bottom:6px}
+.cover-name{font-size:28px;font-weight:900;color:#fff;margin-bottom:4px}
+.cover-meta{font-size:12px;color:rgba(255,255,255,0.5)}
+.cover-period{display:inline-block;background:#9AFF00;color:#000;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;margin-top:8px}
+.content{max-width:800px;margin:0 auto;padding:32px 24px}
+.section{margin-bottom:36px}
+.section h2{font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#9AFF00;padding:10px 0;border-bottom:1px solid rgba(154,255,0,0.2);margin-bottom:16px}
+.qa{display:grid;grid-template-columns:200px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.qa.sub{padding-left:20px;opacity:0.8}
+.ql{font-size:11px;font-weight:600;color:rgba(255,255,255,0.45);line-height:1.5;padding-top:2px}
+.qv{font-size:13px;color:#fff;line-height:1.65}
+.qv.pre{white-space:pre-wrap}
+.tag{display:inline-block;background:rgba(154,255,0,0.12);border:1px solid rgba(154,255,0,0.3);color:#9AFF00;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin:2px 2px 2px 0}
+.footer{text-align:center;padding:32px 24px;font-size:11px;color:rgba(255,255,255,0.3);border-top:1px solid rgba(255,255,255,0.06)}
+@media(max-width:600px){.qa{grid-template-columns:1fr}.ql{font-size:10px}.cover{padding:28px 20px}.content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="cover-logo">
+    <img src="` + (answers['__logoB64__'] || '') + `" style="width:52px;height:52px;object-fit:contain" alt="OKO">
+  </div>
+  <div class="cover-info">
+    <div class="cover-brand">OKO TEAM · Система Роста</div>
+    <div class="cover-name">` + name + `</div>
+    <div class="cover-meta">Анкета заполнена: ` + date + `</div>
+    <div class="cover-period">Система на: ` + period + `</div>
+  </div>
+</div>
+<div class="content">` + bodyHTML + `</div>
+<div class="footer">OKO TEAM · okoteam.top · @ktodaniel</div>
+
+<div id="resume-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#111;border-top:2px solid rgba(154,255,0,0.4);padding:14px 16px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+  <div>
+    <div style="font-size:13px;font-weight:700;color:#9AFF00">У тебя есть незавершённая анкета</div>
+    <div id="resume-progress" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="doResume()" style="background:#9AFF00;color:#000;border:none;border-radius:8px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Продолжить</button>
+    <button onclick="doStartFresh()" style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:inherit">Заново</button>
+  </div>
+</div>
+<div id="_save_ind" style="position:fixed;top:10px;right:10px;background:#9AFF00;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;opacity:0;transition:opacity 0.3s;z-index:99999;pointer-events:none">💾 сохранено</div>
+</body>
+</html>`;
+}
+
+// ─── STORE LOGO B64 AT INIT ───
+(function(){
+  var img = document.querySelector('.hdr-eye img');
+  if (img && img.src && img.src.indexOf('data:') === 0) {
+    answers['__logoB64__'] = img.src;
+  }
+})();
+
+// ─── SVG ICON LIBRARY ───
+var SVG_ICONS = {
+  'fork':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6M12 22v-6M6 6l-2 2 2 2M18 6l2 2-2 2M4 12h6M14 12h6"/></svg>',
+  'phone': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+  'brief': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>',
+  'brain': '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2a5.5 5.5 0 015.5 5.5v1a5.5 5.5 0 01-5.5 5.5A5.5 5.5 0 014 8.5V7.5A5.5 5.5 0 019.5 2z"/><path d="M14.5 2a5.5 5.5 0 015.5 5.5v1a5.5 5.5 0 01-5.5 5.5"/><path d="M12 13v9"/></svg>',
+  'fit':   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6M18 4v6M2 9h4M18 9h4M6 14v6M18 14v6M2 15h4M18 15h4"/></svg>',
+  'pen':   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
+  'coin':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
+  'edit':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  'moon':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>',
+  'sun':   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+  'bolt':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  'leaf':  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8C8 10 5.9 16.17 3.82 22M9.08 9.91C9.08 9.91 6 14 6 20M15.67 12c-.36 3.71-2.43 6.08-4.67 8"/><path d="M2 22c1.67-1.67 3-3 3-3s7-5 12-2c-3 5-9.3 5-15 5z"/></svg>',
+  'dot':   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/></svg>',
+  'ig':    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+  'tg':    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>',
+  'yt':    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>',
+  'tt':    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>',
+  'web':   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>'
+};
+
+function resolveIcon(str) {
+  var m = str.match(/<svg-([^>]+)>/);
+  if (!m) return '';
+  var key = m[1];
+  return SVG_ICONS[key] || '';
+}
+
+function getSocialIcon(ico) {
+  return resolveIcon(ico);
+}
+
+function renderOptionLabel(opt) {
+  var icon = resolveIcon(opt);
+  var text = opt.replace(/<svg-[^>]+>/g, '').trim();
+  if (icon) return '<span style="display:inline-flex;align-items:center;gap:6px">' + icon + text + '</span>';
+  return text;
+}
+
+// ─── INIT ───
+renderQ(0);
+
+// ══ FINAL MEDIA RECORDER ══
+var _finalMediaItems = [];
+var _mediaRecorder = null;
+var _recChunks = [];
+var _recType = '';
+var _recStream = null;
+var _isPaused = false;
+
+function finalAddFiles(inp) {
+  Array.from(inp.files).forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      _finalMediaItems.push({type:'file', name:file.name, dataUrl:e.target.result, mimeType:file.type});
+      renderFinalAttachments();
+    };
+    reader.readAsDataURL(file);
+  });
+  inp.value = '';
+}
+
+function finalStartAudio() {
+  if (!navigator.mediaDevices) { alert('Запись недоступна в этом браузере'); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream) {
+    _recStream = stream; _recType = 'audio'; _recChunks = []; _isPaused = false;
+    _mediaRecorder = new MediaRecorder(stream);
+    _mediaRecorder.ondataavailable = function(e) { if(e.data.size>0) _recChunks.push(e.data); };
+    _mediaRecorder.onstop = function() { finalSaveRec('audio/webm','голосовое'); };
+    _mediaRecorder.start(100);
+    document.getElementById('final-recorder').style.display = 'block';
+    document.getElementById('final-rec-status').textContent = '● Запись голоса...';
+    document.getElementById('btn-rec-audio').style.display = 'none';
+    document.getElementById('btn-rec-video').style.display = 'none';
+  }).catch(function() { alert('Нет доступа к микрофону'); });
+}
+
+function finalStartVideo() {
+  if (!navigator.mediaDevices) { alert('Запись недоступна в этом браузере'); return; }
+  navigator.mediaDevices.getUserMedia({audio:true, video:{facingMode:'user'}}).then(function(stream) {
+    _recStream = stream; _recType = 'video'; _recChunks = []; _isPaused = false;
+    _mediaRecorder = new MediaRecorder(stream);
+    _mediaRecorder.ondataavailable = function(e) { if(e.data.size>0) _recChunks.push(e.data); };
+    _mediaRecorder.onstop = function() { finalSaveRec('video/webm','видео'); };
+    _mediaRecorder.start(100);
+    document.getElementById('final-recorder').style.display = 'block';
+    document.getElementById('final-rec-status').textContent = '● Запись видео...';
+    document.getElementById('btn-rec-audio').style.display = 'none';
+    document.getElementById('btn-rec-video').style.display = 'none';
+  }).catch(function() { alert('Нет доступа к камере или микрофону'); });
+}
+
+function finalPauseResume() {
+  if (!_mediaRecorder) return;
+  var btn = document.getElementById('btn-pause');
+  var status = document.getElementById('final-rec-status');
+  if (_isPaused) {
+    _mediaRecorder.resume(); _isPaused = false;
+    btn.textContent = '⏸ Пауза';
+    status.textContent = '● Запись...'; status.style.color = '#ff7070';
+  } else {
+    _mediaRecorder.pause(); _isPaused = true;
+    btn.textContent = '▶ Продолжить';
+    status.textContent = '⏸ Пауза'; status.style.color = '#ffaa00';
+  }
+}
+
+function finalStopRec() {
+  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
+    _mediaRecorder.stop();
+    if (_recStream) _recStream.getTracks().forEach(function(t){ t.stop(); });
+    document.getElementById('final-recorder').style.display = 'none';
+    document.getElementById('btn-rec-audio').style.display = '';
+    document.getElementById('btn-rec-video').style.display = '';
+  }
+}
+
+function finalSaveRec(mimeType, label) {
+  var blob = new Blob(_recChunks, {type: mimeType});
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var name = label + '_' + Date.now() + '.webm';
+    _finalMediaItems.push({type:_recType, name:name, dataUrl:e.target.result, mimeType:mimeType});
+    renderFinalAttachments();
+  };
+  reader.readAsDataURL(blob);
+  _recChunks = [];
+}
+
+function renderFinalAttachments() {
+  var el = document.getElementById('final-attachments');
+  if (!el) return;
+  el.innerHTML = _finalMediaItems.map(function(item, i) {
+    var preview = '';
+    if (item.mimeType && item.mimeType.startsWith('image/')) {
+      preview = '<img src="'+item.dataUrl+'" style="max-width:100%;max-height:160px;border-radius:8px;margin-top:8px;object-fit:cover">';
+    } else if (item.type === 'audio') {
+      preview = '<audio controls src="'+item.dataUrl+'" style="width:100%;margin-top:8px"></audio>';
+    } else if (item.type === 'video' || (item.mimeType && item.mimeType.startsWith('video/'))) {
+      preview = '<video controls src="'+item.dataUrl+'" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:8px"></video>';
+    }
+    return '<div style="background:rgba(154,255,0,0.05);border:1px solid rgba(154,255,0,0.15);border-radius:10px;padding:10px 12px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      + '<span style="font-size:12px;color:rgba(255,255,255,0.75);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+      + (item.type==='audio'?'🎙 ':item.type==='video'?'📹 ':'📎 ') + item.name + '</span>'
+      + '<button type="button" onclick="finalRemove('+i+')" style="background:rgba(255,70,70,0.12);border:1px solid rgba(255,70,70,0.25);border-radius:6px;padding:4px 10px;font-size:11px;color:#ff7070;cursor:pointer;flex-shrink:0">✕ Удалить</button>'
+      + '</div>' + preview + '</div>';
+  }).join('');
+}
+
+function finalRemove(i) {
+  _finalMediaItems.splice(i, 1);
+  renderFinalAttachments();
+}
+
+
+// ══ FINAL MEDIA ══
+var _items=[],_mr=null,_chunks=[],_rtype='',_stream=null,_paused=false,_rtimer=null,_secs=0;
+
+function addFiles(inp){
+  Array.from(inp.files).forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(e){_items.push({type:'file',name:f.name,dataUrl:e.target.result,mimeType:f.type});renderAtts();};
+    r.readAsDataURL(f);
+  });
+  inp.value='';
+}
+
+function startRec(type){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    alert('Запись работает только на сайте (https://). На хостинге всё работает.');return;
+  }
+  var c=type==='audio'?{audio:true}:{audio:true,video:{facingMode:'user'}};
+  navigator.mediaDevices.getUserMedia(c).then(function(s){
+    _stream=s;_rtype=type;_chunks=[];_paused=false;_secs=0;
+    _mr=new MediaRecorder(s);
+    _mr.ondataavailable=function(e){if(e.data.size>0)_chunks.push(e.data);};
+    _mr.onstop=saveRec;
+    _mr.start(100);
+    var panel=document.getElementById('rec-panel');
+    if(panel)panel.style.display='block';
+    setRecLabel(type==='audio'?'Запись голоса...':'Запись видео...',false);
+    var ba=document.getElementById('btn-audio'),bv=document.getElementById('btn-video');
+    if(ba)ba.disabled=true;if(bv)bv.disabled=true;
+    var bp=document.getElementById('btn-pause-rec');
+    if(bp)bp.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Пауза';
+    _rtimer=setInterval(function(){
+      if(!_paused)_secs++;
+      var m=Math.floor(_secs/60),s=_secs%60;
+      var t=document.getElementById('rec-timer');
+      if(t)t.textContent=m+':'+(s<10?'0':'')+s;
+    },1000);
+  }).catch(function(){alert('Нет доступа к '+(type==='audio'?'микрофону':'камере')+'. Разрешите доступ в браузере.');});
+}
+
+function setRecLabel(txt,paused){
+  var l=document.getElementById('rec-label'),d=document.getElementById('rec-dot');
+  if(l){l.textContent=txt;l.style.color=paused?'#ffaa00':'#ff4646';}
+  if(d){d.style.background=paused?'#ffaa00':'#ff4646';d.style.animation=paused?'none':'blink 1s infinite';}
+}
+
+function pauseResume(){
+  if(!_mr)return;
+  var btn=document.getElementById('btn-pause-rec');
+  if(_paused){
+    _mr.resume();_paused=false;
+    setRecLabel(_rtype==='audio'?'Запись голоса...':'Запись видео...',false);
+    if(btn)btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Пауза';
+  }else{
+    _mr.pause();_paused=true;
+    setRecLabel('Пауза',true);
+    if(btn)btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Продолжить';
+  }
+}
+
+function stopRec(){if(_mr&&_mr.state!=='inactive')_mr.stop();endRec(true);}
+function cancelRec(){var tmp=_chunks;_chunks=[];if(_mr&&_mr.state!=='inactive')_mr.stop();endRec(false);_chunks=[];}
+
+function endRec(save){
+  if(_stream)_stream.getTracks().forEach(function(t){t.stop();});
+  clearInterval(_rtimer);
+  var panel=document.getElementById('rec-panel');if(panel)panel.style.display='none';
+  var ba=document.getElementById('btn-audio'),bv=document.getElementById('btn-video');
+  if(ba)ba.disabled=false;if(bv)bv.disabled=false;
+  if(!save)_chunks=[];
+}
+
+function saveRec(){
+  if(!_chunks.length)return;
+  var mime=_rtype==='audio'?'audio/webm':'video/webm';
+  var blob=new Blob(_chunks,{type:mime});
+  var r=new FileReader();
+  r.onload=function(e){
+    _items.push({type:_rtype,name:(_rtype==='audio'?'голосовое':'видео')+'_'+Date.now()+'.webm',dataUrl:e.target.result,mimeType:mime});
+    renderAtts();
+  };
+  r.readAsDataURL(blob);_chunks=[];
+}
+
+function renderAtts(){
+  var el=document.getElementById('final-atts');
+  if(!el)return;
+  el.innerHTML=_items.map(function(item,i){
+    var p='';
+    if(item.mimeType&&item.mimeType.startsWith('image/'))
+      p='<img src="'+item.dataUrl+'" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;display:block">';
+    else if(item.type==='audio')
+      p='<audio controls src="'+item.dataUrl+'" style="width:100%;margin-top:8px"></audio>';
+    else if(item.type==='video'||(item.mimeType&&item.mimeType.startsWith('video/')))
+      p='<video controls src="'+item.dataUrl+'" style="max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;display:block"></video>';
+    var ico=item.type==='audio'
+      ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>'
+      :item.type==='video'
+      ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>'
+      :'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+    return '<div style="background:rgba(154,255,0,0.04);border:1px solid rgba(154,255,0,0.1);border-radius:10px;padding:10px 12px">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="width:24px;height:24px;background:rgba(154,255,0,0.08);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--lime)">'+ico+'</div>'
+      +'<span style="font-size:12px;color:rgba(255,255,255,0.75);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+item.name+'</span>'
+      +'<button type="button" onclick="delItem('+i+')" style="background:rgba(255,70,70,0.08);border:1px solid rgba(255,70,70,0.18);border-radius:6px;padding:4px 8px;cursor:pointer;color:#ff4646;flex-shrink:0"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+      +'</div>'+p+'</div>';
+  }).join('');
+}
+
+function delItem(i){_items.splice(i,1);renderAtts();}
+
+</script>
+
+<div id="resume-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#111;border-top:2px solid rgba(154,255,0,0.4);padding:14px 16px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+  <div>
+    <div style="font-size:13px;font-weight:700;color:#9AFF00">У тебя есть незавершённая анкета</div>
+    <div id="resume-progress" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="doResume()" style="background:#9AFF00;color:#000;border:none;border-radius:8px;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Продолжить</button>
+    <button onclick="doStartFresh()" style="background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);border-radius:8px;padding:9px 14px;font-size:12px;cursor:pointer;font-family:inherit">Заново</button>
+  </div>
+</div>
+<div id="_save_ind" style="position:fixed;top:10px;right:10px;background:#9AFF00;color:#000;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;opacity:0;transition:opacity 0.3s;z-index:99999;pointer-events:none">💾 сохранено</div>
+</body>
+</html>

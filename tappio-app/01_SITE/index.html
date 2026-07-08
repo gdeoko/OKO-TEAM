@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OKO TEAM · Даниэль Ильясов — Медийность. Бизнес. Рост.</title>
+<meta name="description" content="OKO TEAM — Система Роста, Контент-завод, воронки, сайты и боты. 15К+ клиентов, $10М+ прибыли.">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--lime:#9AFF00;--lime2:rgba(154,255,0,.1);--lime3:rgba(154,255,0,.25);--glass:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--w2:rgba(255,255,255,.75);--w3:rgba(255,255,255,.45);--w4:rgba(255,255,255,.22);--green-online:#25d366}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{background:#050505;color:#fff;font-family:'Onest',sans-serif;overflow-x:hidden;line-height:1.6}
+#bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.pb{position:fixed;top:0;left:0;height:2px;background:var(--lime);z-index:1000;width:0%;box-shadow:0 0 8px rgba(154,255,0,.5);transition:width .1s}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
+section{position:relative;z-index:1}
+.sec-sep{height:1px;background:linear-gradient(to right,transparent,rgba(154,255,0,.4),transparent);z-index:1;animation:sepglow 3s ease-in-out infinite}
+@keyframes sepglow{0%,100%{opacity:.5}50%{opacity:1;background:linear-gradient(to right,transparent,rgba(154,255,0,.7),transparent)}}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+.rv.vis{opacity:1;transform:none}
+.sec-lbl{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:10px}
+.sec-h{font-family:'Unbounded',sans-serif;font-size:clamp(20px,2.8vw,36px);font-weight:900;line-height:1.12;margin-bottom:14px}
+.sec-p{font-size:15px;color:var(--w3);max-width:580px;line-height:1.75}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:rgba(5,5,5,.55);backdrop-filter:blur(24px);border-bottom:1px solid rgba(154,255,0,.06);transition:background .3s}
+.nav.scrolled{background:rgba(5,5,5,.95)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.nav-logo img{width:34px;height:34px;border-radius:8px;object-fit:contain}
+.nav-logo-t{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:#fff;white-space:nowrap}
+.nav-logo-s{font-size:9px;color:var(--lime);font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-a{color:rgba(255,255,255,.55);font-size:12px;font-weight:600;padding:7px 11px;border-radius:20px;text-decoration:none;transition:all .2s;white-space:nowrap}
+.nav-a:hover{color:#fff;background:rgba(255,255,255,.05)}
+.nav-cta{background:var(--lime);color:#000;font-weight:800;font-size:11px;padding:8px 16px;border-radius:22px;text-decoration:none;transition:all .2s;opacity:0;pointer-events:none;transform:translateY(-4px);white-space:nowrap}
+.nav-cta.show{opacity:1;pointer-events:auto;transform:none}
+.ham{display:none;background:none;border:1px solid rgba(255,255,255,.15);color:#fff;padding:7px 10px;border-radius:10px;cursor:pointer;font-size:16px;flex-shrink:0}
+.mob-nav{display:none;position:fixed;top:59px;left:0;right:0;bottom:0;background:rgba(5,5,5,.97);z-index:199;padding:20px;flex-direction:column;gap:6px;backdrop-filter:blur(20px);opacity:0;transform:translateY(-12px);transition:opacity .25s,transform .25s;pointer-events:none}
+.mob-nav.open{display:flex;opacity:1;transform:none;pointer-events:auto}
+.mob-nav .nav-a{font-size:15px;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8)}
+.mob-nav .nav-a svg{flex-shrink:0;color:var(--lime)}
+.mob-nav .nav-cta{opacity:1;pointer-events:auto;transform:none;text-align:center;padding:14px;border-radius:14px;font-size:14px;display:block;margin-top:6px}
+/* HERO BG VIDEO */
+.hero-bg-vid{position:absolute;inset:0;z-index:0;overflow:hidden}
+.hero-bg-vid video{width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.55;display:block}
+.hero-bg-vid::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,5,5,.35) 0%,rgba(5,5,5,.02) 25%,rgba(5,5,5,.15) 60%,rgba(5,5,5,.88) 85%,rgba(5,5,5,1) 100%)}
+/* HERO */
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 16px 0;position:relative;overflow:hidden}
+#hcv{position:absolute;inset:0;z-index:0;pointer-events:none}
+.hero-content{position:relative;z-index:2;width:100%;max-width:900px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.2);color:var(--lime);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:8px 18px;border-radius:50px;margin-bottom:12px;margin-top:8px;max-width:94%;justify-content:center}
+.hbdot{width:5px;height:5px;background:var(--lime);border-radius:50%;animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero-title{font-family:'Unbounded',sans-serif;font-size:clamp(36px,7vw,78px);font-weight:900;line-height:1.0;margin-bottom:12px;letter-spacing:-2px}
+.hero-title .lime{color:var(--lime)}
+.hero-vw{width:100%;max-width:560px;margin:0 auto 12px;border-radius:18px;overflow:hidden;border:1px solid rgba(154,255,0,.2);position:relative;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:0 0 30px rgba(154,255,0,.08);aspect-ratio:16/9}
+.hero-vw video{width:100%;display:block;pointer-events:none}
+
+.hero-vw::before{content:'';position:absolute;inset:0;background:url('media/daniel-photo2.webp') center/cover no-repeat;z-index:0}
+.hero-vw video{position:relative;z-index:1}
+/* Центральный оверлей - кнопка play/pause */
+.hvo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);transition:opacity .3s;z-index:2}
+.hvo.hide{opacity:0;pointer-events:none}
+.hvp{width:64px;height:64px;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);border:2.5px solid rgba(154,255,0,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(154,255,0,.25);transition:transform .15s,box-shadow .15s}
+.hvp:active{transform:scale(.88)}
+.hvp svg{color:var(--lime);filter:drop-shadow(0 0 4px rgba(154,255,0,.5))}
+/* Прогресс-бар - показывается при тапе */
+.hv-prog-wrap{position:absolute;bottom:0;left:0;right:0;z-index:3;padding:32px 14px 14px;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 100%);opacity:0;transition:opacity .3s;pointer-events:none}
+.hv-prog-wrap.show{opacity:1;pointer-events:auto}
+.hv-progress{position:relative;height:4px;background:rgba(255,255,255,.2);border-radius:4px;cursor:pointer;margin-bottom:10px}
+.hv-bar{height:100%;background:var(--lime);border-radius:4px;width:0%;pointer-events:none}
+.hv-dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:13px;height:13px;background:var(--lime);border-radius:50%;box-shadow:0 0 8px rgba(154,255,0,.7);pointer-events:none;left:0%}
+.hv-time{font-size:11px;color:rgba(255,255,255,.6);font-family:'Onest',sans-serif;text-align:right}
+.hero-stats{display:flex;gap:5px;justify-content:center;margin:0 auto 14px;width:100%}
+.h-stat{background:rgba(154,255,0,.06);backdrop-filter:blur(12px);border:1px solid rgba(154,255,0,.25);border-radius:12px;padding:10px 6px;transition:all .25s;display:flex;flex-direction:column;align-items:center;text-decoration:none;position:relative;cursor:pointer;flex:1;min-width:0;overflow:hidden;box-shadow:0 0 12px rgba(154,255,0,.06),inset 0 1px 0 rgba(154,255,0,.1)}
+.h-stat:hover{border-color:rgba(154,255,0,.5);background:rgba(154,255,0,.1);transform:translateY(-2px);box-shadow:0 0 20px rgba(154,255,0,.15)}
+.h-stat-top{display:flex;align-items:center;gap:4px}
+.h-stat-ico{color:var(--lime);flex-shrink:0;display:none}
+.h-stat-n{font-family:'Unbounded',sans-serif;font-size:clamp(13px,3.5vw,18px);font-weight:900;color:var(--lime);white-space:nowrap}
+.h-stat-ext{opacity:0;transition:opacity .2s;color:rgba(154,255,0,.5)}
+.h-stat:hover .h-stat-ext{opacity:1}
+.h-stat-l{font-size:9px;color:var(--w3);margin-top:2px;white-space:nowrap;text-align:center}
+.hero-btns{display:flex;gap:10px;justify-content:center;padding-bottom:32px}
+.bl{display:inline-flex;align-items:center;gap:8px;background:var(--lime);color:#000;font-size:13px;padding:12px 22px;font-weight:800;border-radius:14px;text-decoration:none;border:none;cursor:pointer;font-family:'Onest',sans-serif;white-space:nowrap;animation:pglow 2.5s infinite;transition:all .22s}
+@keyframes pglow{0%,100%{box-shadow:0 0 14px rgba(154,255,0,.3)}50%{box-shadow:0 0 28px rgba(154,255,0,.6)}}
+.bl:hover{opacity:.87;transform:translateY(-2px)}
+.bg{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);color:#fff;font-size:13px;padding:12px 18px;border:1px solid rgba(255,255,255,.15);border-radius:14px;text-decoration:none;cursor:pointer;font-family:'Onest',sans-serif;font-weight:700;white-space:nowrap;transition:all .22s}
+.bg:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.3)}
+/* PAIN */
+.pain{padding:48px 0}
+.pain-grid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:24px}
+.pain-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;transition:all .3s;display:flex;flex-direction:column;gap:0}
+.pain-card:hover{border-color:rgba(154,255,0,.18)}
+.pain-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.pain-ico{width:32px;height:32px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.14);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.pain-ico svg{width:16px;height:16px}
+.pain-title{font-size:14px;font-weight:700;line-height:1.2}
+.pain-desc{font-size:12px;color:var(--w3);line-height:1.55;margin-bottom:10px}
+.pain-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.18);color:var(--lime);font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px;cursor:pointer;transition:all .2s;text-decoration:none;width:fit-content}
+.pain-btn:hover{background:rgba(154,255,0,.14);border-color:var(--lime)}
+/* PRODUCTS */
+.products{padding:48px 0}
+.prod-list{display:flex;flex-direction:column;gap:16px;margin-top:24px}
+/* Карточка как на /sistema */
+.prod-card{background:rgba(12,12,12,.95);border:1px solid rgba(255,255,255,.12);border-radius:20px;overflow:hidden;transition:all .3s;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.prod-card:hover{border-color:rgba(154,255,0,.25);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.prod-card.featured{border-color:rgba(154,255,0,.35);background:rgba(10,18,5,.97);box-shadow:0 4px 28px rgba(154,255,0,.08)}
+.prod-card-inner{padding:20px}
+.prod-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.prod-icon{width:44px;height:44px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--lime);flex-shrink:0}
+.prod-top-info{flex:1}
+.prod-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.prod-title{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:900;line-height:1.2;margin-bottom:5px}
+.prod-subtitle{font-size:12px;color:var(--w3);line-height:1.5}
+.prod-hit{display:inline-block;background:var(--lime);color:#000;font-size:9px;font-weight:900;letter-spacing:1px;padding:3px 9px;border-radius:20px;text-transform:uppercase;margin-top:6px}
+.prod-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}
+.prod-price-main{font-family:'Unbounded',sans-serif;font-size:28px;font-weight:900;color:var(--lime);line-height:1}
+.prod-price-sub{font-size:12px;color:var(--w3)}
+/* Кнопка "Что входит" */
+.prod-toggle{display:flex;align-items:center;justify-content:space-between;background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.15);border-radius:12px;padding:11px 14px;cursor:pointer;transition:all .2s;margin-bottom:10px;user-select:none}
+.prod-toggle:hover{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3)}
+.prod-toggle-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--lime)}
+.prod-toggle-xi{width:22px;height:22px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--lime);transition:transform .3s;flex-shrink:0}
+.prod-card.open .prod-toggle-xi{transform:rotate(45deg)}
+/* Содержимое внутри */
+.prod-content{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.prod-card.open .prod-content{max-height:800px}
+.prod-sub-items{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+.prod-sub-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.prod-sub-item:last-child{border-bottom:none}
+.prod-sub-left{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85)}
+.prod-sub-left svg{color:var(--lime);flex-shrink:0}
+.prod-sub-xi{width:20px;height:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s;color:rgba(255,255,255,.3)}
+.prod-sub-item.open .prod-sub-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.prod-sub-body{max-height:0;overflow:hidden;transition:max-height .35s ease;padding-left:28px}
+.prod-sub-item.open .prod-sub-body{max-height:300px}
+.prod-sub-desc{display:flex;flex-direction:column;gap:4px;padding:6px 0 10px}
+.prod-sub-feat{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--w3)}
+.prod-sub-feat::before{content:'✓';color:var(--lime);flex-shrink:0;font-weight:700}
+/* Бонусы */
+.prod-bonuses{background:rgba(154,255,0,.04);border:1px solid rgba(154,255,0,.1);border-radius:12px;padding:12px 14px;margin-top:10px}
+.prod-bonuses-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;margin-bottom:0}
+.prod-bonuses-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--lime)}
+.prod-bonuses-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.prod-bonuses.open .prod-bonuses-body{max-height:300px}
+.prod-bonuses-list{display:flex;flex-direction:column;gap:5px;padding-top:10px}
+.prod-bonus{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--w2)}
+.prod-bonus::before{content:'✓';color:var(--lime);flex-shrink:0;font-weight:700;margin-top:1px}
+/* CTA кнопка */
+.prod-cta-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--lime);color:#000;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;padding:13px;border-radius:14px;border:none;cursor:pointer;text-decoration:none;transition:all .2s;margin-top:14px;animation:pglow 2.5s infinite;letter-spacing:.5px}
+.prod-cta-btn:hover{opacity:.9;transform:translateY(-1px)}
+/* REVIEWS */
+.reviews{padding:64px 0}
+.vc-wrap{overflow:hidden;margin-top:28px;cursor:grab;user-select:none}.vc-wrap:active{cursor:grabbing}
+.vc-track{display:flex;gap:14px;will-change:transform}
+.vc-item{flex-shrink:0;width:100px;height:100px;border-radius:50%;overflow:hidden;border:2.5px solid rgba(154,255,0,.25);position:relative;cursor:pointer;transition:border-color .3s}
+.vc-item:hover,.vc-item.playing{border-color:var(--lime);box-shadow:0 0 18px rgba(154,255,0,.2)}
+.vc-item video{width:100%;height:100%;object-fit:cover;display:block}
+.vc-overlay{position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;transition:opacity .2s}.vc-item.playing .vc-overlay{opacity:0}
+.vc-play{width:32px;height:32px;background:rgba(154,255,0,.2);backdrop-filter:blur(6px);border:1.5px solid rgba(154,255,0,.5);border-radius:50%;display:flex;align-items:center;justify-content:center}.vc-play svg{color:var(--lime);margin-left:2px}
+.vc-name{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:9px;font-weight:700;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);padding:8px 4px 4px}
+.audio-rev{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 16px;margin:20px 0;cursor:pointer;transition:border-color .3s;width:100%}.audio-rev:hover{border-color:rgba(154,255,0,.2)}
+.ar-btn{width:40px;height:40px;background:var(--lime);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer;transition:all .2s}.ar-btn svg{color:#000;margin-left:2px}.ar-btn:hover{transform:scale(1.05)}
+.ar-info{display:flex;flex-direction:column;flex-shrink:0}.ar-name{font-size:12px;font-weight:700;margin-bottom:1px}.ar-sub{font-size:10px;color:var(--w3)}
+.ar-wave{display:flex;align-items:center;gap:2px;height:28px;flex:1}
+.ar-wave b{display:block;width:3px;border-radius:3px;background:rgba(154,255,0,.3);animation:ovw 1.2s ease-in-out infinite;flex:1;max-width:4px}
+.ar-wave.pl b{background:var(--lime)}
+.ar-wave b:nth-child(1){height:8px}.ar-wave b:nth-child(2){height:14px;animation-delay:.05s}.ar-wave b:nth-child(3){height:22px;animation-delay:.1s}.ar-wave b:nth-child(4){height:11px;animation-delay:.15s}.ar-wave b:nth-child(5){height:18px;animation-delay:.2s}.ar-wave b:nth-child(6){height:9px;animation-delay:.25s}.ar-wave b:nth-child(7){height:20px;animation-delay:.3s}.ar-wave b:nth-child(8){height:13px;animation-delay:.08s}.ar-wave b:nth-child(9){height:24px;animation-delay:.12s}.ar-wave b:nth-child(10){height:16px;animation-delay:.18s}.ar-wave b:nth-child(11){height:10px;animation-delay:.22s}.ar-wave b:nth-child(12){height:21px;animation-delay:.27s}.ar-wave b:nth-child(13){height:14px;animation-delay:.03s}.ar-wave b:nth-child(14){height:19px;animation-delay:.16s}.ar-wave b:nth-child(15){height:12px;animation-delay:.24s}.ar-wave b:nth-child(16){height:23px;animation-delay:.09s}
+@keyframes ovw{0%,100%{transform:scaleY(1);opacity:.3}50%{transform:scaleY(1.6);opacity:1}}
+.rev-btns{display:flex;gap:10px;margin-top:20px}
+.rev-more{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:#000;font-size:12px;font-weight:800;padding:11px 20px;border-radius:22px;text-decoration:none;transition:all .2s;flex:1;justify-content:center}.rev-more:hover{opacity:.87;transform:translateY(-1px)}
+.rev-more-ghost{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);color:#fff;font-size:12px;font-weight:700;padding:11px 20px;border-radius:22px;text-decoration:none;border:1px solid rgba(255,255,255,.15);transition:all .2s;flex:1;justify-content:center}.rev-more-ghost:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.3)}
+.rev-wrap{overflow:hidden;cursor:grab;margin-top:24px;user-select:none}.rev-wrap:active{cursor:grabbing}
+.rev-track{display:flex;gap:12px;will-change:transform}
+.rev-card{flex-shrink:0;width:270px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px;transition:border-color .3s}.rev-card:hover{border-color:rgba(154,255,0,.18)}
+.rev-stars{display:flex;gap:2px;margin-bottom:10px}.rev-stars span{color:var(--lime);font-size:12px}
+.rev-text{font-size:12px;color:var(--w2);line-height:1.7;margin-bottom:12px;font-style:italic}
+.rev-author{display:flex;align-items:center;gap:8px}
+.rev-ava{width:30px;height:30px;background:linear-gradient(135deg,rgba(154,255,0,.2),rgba(154,255,0,.05));border:1px solid rgba(154,255,0,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:900;color:var(--lime);flex-shrink:0}
+.rev-name{font-size:12px;font-weight:700}.rev-role{font-size:10px;color:var(--w3)}
+.rev-more{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:#000;font-size:12px;font-weight:800;padding:10px 20px;border-radius:22px;text-decoration:none;margin-top:20px;transition:all .2s}.rev-more:hover{opacity:.87;transform:translateY(-1px)}
+/* HOW */
+.how{padding:64px 0}
+.how-list{display:flex;flex-direction:column;gap:6px;margin-top:28px}
+.how-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;overflow:hidden;transition:border-color .3s}
+.how-item:hover{border-color:rgba(154,255,0,.15)}.how-item.open{border-color:rgba(154,255,0,.22)}
+.how-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+.how-num{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;color:rgba(154,255,0,.18);width:36px;flex-shrink:0;text-align:center;transition:color .3s}.how-item.open .how-num{color:var(--lime)}
+.how-title{font-size:14px;font-weight:700;flex:1}
+.how-xi{width:24px;height:24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s;color:rgba(255,255,255,.3)}
+.how-item.open .how-xi{background:rgba(154,255,0,.1);border-color:rgba(154,255,0,.3);color:var(--lime);transform:rotate(45deg)}
+.how-body{max-height:0;overflow:hidden;transition:max-height .4s ease}.how-item.open .how-body{max-height:400px}
+.how-inner{padding:0 16px 16px 66px}
+.how-desc{font-size:13px;color:var(--w3);line-height:1.75;margin-bottom:10px}
+.how-subs{display:flex;flex-direction:column;gap:5px}
+.how-sub{font-size:12px;color:var(--w2);display:flex;align-items:flex-start;gap:7px}.how-sub svg{color:var(--lime);flex-shrink:0;margin-top:2px}
+.how-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.how-tag{background:rgba(154,255,0,.05);border:1px solid rgba(154,255,0,.12);color:rgba(154,255,0,.7);font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+/* PORTFOLIO */
+.portfolio{padding:64px 0}
+.port-wrap{overflow:hidden;cursor:grab;user-select:none}.port-wrap:active{cursor:grabbing}
+.port-track{display:flex;gap:12px;will-change:transform}
+.port-card{flex-shrink:0;width:180px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden;transition:all .3s}.port-card:hover{border-color:rgba(154,255,0,.22);transform:translateY(-2px)}
+.port-vid{aspect-ratio:3/4;overflow:hidden;background:#0a0a0a;position:relative}.port-vid video{width:100%;height:100%;object-fit:cover;display:block}
+.port-info{padding:10px 12px 12px}
+.port-type{font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:3px}
+.port-name{font-size:12px;font-weight:700;margin-bottom:8px;line-height:1.3}
+.port-links{display:flex;gap:6px;flex-wrap:wrap}
+.port-link{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:var(--lime);text-decoration:none;background:rgba(154,255,0,.07);border:1px solid rgba(154,255,0,.15);padding:5px 11px;border-radius:10px;transition:all .2s;white-space:nowrap}.port-link:hover{background:rgba(154,255,0,.14);border-color:var(--lime)}
+/* FAQ */
+.faq{padding:64px 0}
+.faq-list{margin-top:28px}
+.faq-item{border-bottom:1px solid rgba(255,255,255,.05)}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:16px 0;cursor:pointer;font-size:14px;font-weight:600;gap:16px;transition:color .2s;user-select:none}.faq-q:hover{color:var(--lime)}
+.faq-arr{flex-shrink:0;width:22px;height:22px;background:rgba(255,255,255,.05);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s;color:rgba(255,255,255,.35)}
+.faq-item.open .faq-arr{background:rgba(154,255,0,.12);transform:rotate(45deg);color:var(--lime)}
+.faq-a{font-size:13px;color:var(--w3);max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s;line-height:1.75}.faq-item.open .faq-a{max-height:300px;padding-bottom:16px}
+.faq-a a{color:var(--lime);text-decoration:none}
+/* CTA */
+.cta-sec{padding:64px 0;text-align:center;position:relative;overflow:hidden}
+.cta-sec::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(ellipse,rgba(154,255,0,.06) 0%,transparent 65%);pointer-events:none}
+.cta-sec .wrap{position:relative;z-index:1}
+.cta-title{font-family:'Unbounded',sans-serif;font-size:clamp(22px,3.5vw,44px);font-weight:900;margin-bottom:12px;line-height:1.1}
+.cta-sub{font-size:14px;color:var(--w3);margin-bottom:28px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.7}
+/* FOOTER */
+footer{padding:22px 32px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:1}
+.foot-brand{display:flex;align-items:center;gap:9px}.foot-brand img{width:24px;height:24px;border-radius:6px;object-fit:contain}
+.foot-brand-t{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:rgba(255,255,255,.22)}
+.foot-links{display:flex;gap:14px;flex-wrap:wrap}
+.foot-link{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s}.foot-link:hover{color:var(--lime)}
+/* ANKET MODAL */
+#okf-overlay{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:16px}
+#okf-overlay.open{display:flex}#okf-overlay.open~#oko-wrap{display:none!important}#okf-overlay.open~#oko-win{display:none!important}#okf-overlay.open~.osp{display:none!important}
+#okf-modal{background:#0d0d0d;border:1px solid rgba(154,255,0,.2);border-radius:20px;width:100%;max-width:420px;padding:24px 22px;position:relative;animation:okf-in .3s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto}
+@keyframes okf-in{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes okf-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#okf-close{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:auto}
+#okf-close:hover{background:rgba(255,255,255,.12);color:#fff}
+.okf-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(154,255,0,.08);border:1px solid rgba(154,255,0,.2);border-radius:20px;padding:5px 12px;font-size:10px;font-weight:700;color:#9AFF00;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+.okf-hd{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3}
+.okf-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:12px;line-height:1.5}
+.okf-tariffs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:14px}
+.okf-t{border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 8px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.03);text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.okf-t:hover{border-color:rgba(154,255,0,.3)}.okf-t.sel{border-color:#9AFF00;background:rgba(154,255,0,.06)}
+.okf-t-per{font-size:9px;color:rgba(255,255,255,.45);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.okf-t-price{font-family:'Unbounded',sans-serif;font-size:11px;font-weight:900;color:#fff}.okf-t.sel .okf-t-price{color:#9AFF00}
+.okf-f{margin-bottom:11px}
+.okf-f label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px}
+.okf-f label em{color:rgba(154,255,0,.6);font-style:normal}
+.okf-f input,.okf-f select,.okf-f textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;font-family:'Onest',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none;box-sizing:border-box;cursor:text;-webkit-tap-highlight-color:transparent}
+.okf-f input:focus,.okf-f select:focus,.okf-f textarea:focus{border-color:rgba(154,255,0,.4)}
+.okf-f input::placeholder,.okf-f textarea::placeholder{color:rgba(255,255,255,.22)}
+.okf-f select{cursor:pointer}.okf-f textarea{resize:vertical;min-height:70px}
+#okf-btn{width:100%;background:#9AFF00;color:#000;border:none;border-radius:12px;padding:12px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+#okf-btn:hover{opacity:.9;transform:translateY(-1px)}.okf-err{background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:rgba(255,80,70,.9);margin-top:8px;display:none}.okf-err.show{display:block}
+.okf-priv{font-size:10px;color:rgba(255,255,255,.2);text-align:center;margin-top:10px;line-height:1.5}
+.okf-radio{line-height:0;flex-shrink:0}
+.okf-f textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;font-family:'Onest',sans-serif;outline:none;transition:border-color .2s;resize:vertical;min-height:80px}
+.okf-f textarea:focus{border-color:rgba(154,255,0,.4)}
+.okf-f textarea::placeholder{color:rgba(255,255,255,.22)}
+.okf-f input[type=datetime-local]{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;font-family:'Onest',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+.okf-f input[type=datetime-local]:focus{border-color:rgba(154,255,0,.4)}
+/* CHATBOT (from sistema) */
+#oko-wrap{position:fixed;bottom:130px;right:20px;z-index:2147483647;font-family:'Onest','Inter',sans-serif;display:flex;flex-direction:column;align-items:flex-end;gap:10px;transition:transform .4s cubic-bezier(.4,0,.2,1)}
+#oko-bub{display:flex;flex-direction:column;align-items:flex-end;gap:9px;opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+#oko-bub.vis{opacity:1;transform:translateY(0)}
+#oko-av-row{display:flex;align-items:center;gap:8px;flex-direction:row-reverse;cursor:pointer}
+#oko-av{width:58px;height:58px;border-radius:50%;position:relative;transition:transform .2s,box-shadow .2s;box-shadow:0 0 0 2px rgba(154,255,0,.3),0 4px 20px rgba(0,0,0,.5)}
+#oko-av:hover{transform:scale(1.07);box-shadow:0 0 0 3px rgba(154,255,0,.5),0 6px 28px rgba(0,0,0,.6)}
+#oko-av img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top;display:block}
+#oko-dot{position:absolute;bottom:2px;right:2px;width:13px;height:13px;background:var(--green-online);border-radius:50%;border:2.5px solid #090909;animation:oko-pdot 2.5s ease-in-out infinite}
+@keyframes oko-pdot{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 5px rgba(37,211,102,0)}}
+#oko-badge{position:absolute;top:-3px;left:-3px;width:19px;height:19px;background:#ff3b30;color:#fff;font-size:10px;font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #090909;opacity:0;transform:scale(0);transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:2}
+#oko-badge.show{opacity:1;transform:scale(1)}
+#oko-popup{background:rgba(13,13,13,.97);border:1px solid var(--lime3);border-radius:18px 18px 4px 18px;padding:11px 15px;max-width:220px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);backdrop-filter:blur(20px);box-shadow:0 8px 30px rgba(0,0,0,.55);opacity:0;transform:translateY(6px) scale(.96);transition:opacity .35s,transform .35s;pointer-events:none;cursor:pointer;align-self:flex-end}
+#oko-popup.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+#oko-popup-from{font-size:10px;font-weight:700;color:var(--lime);margin-bottom:3px;letter-spacing:.4px}
+@keyframes oko-shake{0%,100%{transform:translateX(0) scale(1)}20%{transform:translateX(-4px) rotate(-3deg) scale(1.05)}40%{transform:translateX(4px) rotate(3deg) scale(1.05)}60%{transform:translateX(-3px) rotate(-2deg)}80%{transform:translateX(3px) rotate(2deg)}}
+#oko-av.shake{animation:oko-shake .6s ease}
+#oko-win{position:fixed;bottom:202px;right:20px;width:355px;height:575px;max-height:575px;background:#0c0c0c;border:1px solid rgba(154,255,0,.14);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.85);opacity:0;transform:translateY(18px) scale(.96);pointer-events:none;transition:opacity .28s ease,transform .28s ease;z-index:2147483646}
+#oko-win.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+@media(max-width:480px){#oko-win{left:8px;right:8px;width:auto;bottom:calc(12.5vh + 8px);border-radius:20px;height:75vh;max-height:75vh}#oko-wrap{right:14px;bottom:130px}}
+#oko-hdr{background:linear-gradient(135deg,#111 0%,#0d0d0d 100%);border-bottom:1px solid rgba(255,255,255,.055);padding:13px 15px 11px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+#oko-hdr-av{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid rgba(154,255,0,.4);flex-shrink:0}
+#oko-hdr-info{flex:1;min-width:0}
+#oko-hdr-name{font-size:13.5px;font-weight:700;color:#fff}
+#oko-hdr-status{font-size:10.5px;color:var(--green-online);font-weight:500;margin-top:1px;display:flex;align-items:center;gap:4px}
+#oko-hdr-status::before{content:'';width:6px;height:6px;background:var(--green-online);border-radius:50%;flex-shrink:0}
+#oko-close{width:28px;height:28px;background:rgba(255,255,255,.06);border:none;border-radius:50%;color:rgba(255,255,255,.5);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0}
+#oko-close:hover{background:rgba(255,255,255,.12);color:#fff}
+#oko-msgs{flex:1;overflow-y:auto;padding:14px 12px 6px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth}
+#oko-msgs::-webkit-scrollbar{width:2px}
+#oko-msgs::-webkit-scrollbar-thumb{background:rgba(154,255,0,.2);border-radius:2px}
+.om{display:flex;flex-direction:column;max-width:84%;animation:om-in .28s ease}
+@keyframes om-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.om.od{align-self:flex-start;align-items:flex-start}.om.ou{align-self:flex-end;align-items:flex-end}
+.omb{padding:8px 12px;font-size:13px;line-height:1.55;word-break:break-word}
+.od .omb{background:#1c1c1c;color:rgba(255,255,255,.92);border-radius:4px 15px 15px 15px}
+.ou .omb{background:linear-gradient(135deg,#1a3300,#284f00);color:#fff;border:1px solid rgba(154,255,0,.18);border-radius:15px 4px 15px 15px}
+.omt{font-size:9.5px;color:rgba(255,255,255,.28);margin-top:2px;padding:0 3px;display:flex;align-items:center;gap:3px}
+.otk{color:rgba(154,255,0,.65);font-size:11px}
+.otyp{display:flex;align-items:center;gap:3px;padding:9px 13px;background:#1c1c1c;border-radius:4px 15px 15px 15px;width:fit-content}
+.otyp span{width:5px;height:5px;background:rgba(255,255,255,.35);border-radius:50%;animation:ot .3s ease-in-out infinite}
+.otyp span:nth-child(2){animation-delay:.15s}.otyp span:nth-child(3){animation-delay:.3s}
+@keyframes ot{0%,60%,100%{transform:translateY(0);opacity:.35}30%{transform:translateY(-5px);opacity:1}}
+.ors{display:flex;flex-wrap:wrap;gap:6px;padding:5px 0 2px;animation:om-in .28s ease}
+.orb{background:rgba(154,255,0,.065);border:1px solid rgba(154,255,0,.22);color:var(--lime);padding:7px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s;line-height:1.3;text-align:left;display:inline-flex;align-items:center;gap:5px}
+.orb:hover{background:rgba(154,255,0,.14);border-color:rgba(154,255,0,.45);transform:translateY(-1px)}
+.ovs{background:#1c1c1c;border-radius:4px 15px 15px 15px;padding:9px 12px;display:flex;align-items:center;gap:9px;max-width:210px;cursor:pointer;transition:background .18s;margin-top:3px}.ovs:hover{background:#222}
+.ovs-btn{width:32px;height:32px;background:linear-gradient(135deg,#9AFF00,#6acc00);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;cursor:pointer}
+.ovs-btn svg{fill:#000;margin-left:2px}
+.ovs-wave{flex:1;height:26px;display:flex;align-items:center;gap:2px}
+.ovs-wave b{display:block;width:2.5px;border-radius:2px;background:rgba(154,255,0,.45);animation:ovw 1.2s ease-in-out infinite}
+.ovs-wave b:nth-child(1){height:7px}.ovs-wave b:nth-child(2){height:13px;animation-delay:.1s}.ovs-wave b:nth-child(3){height:19px;animation-delay:.2s}.ovs-wave b:nth-child(4){height:11px;animation-delay:.3s}.ovs-wave b:nth-child(5){height:17px;animation-delay:.15s}
+.ovs-dur{font-size:10.5px;color:rgba(255,255,255,.35);flex-shrink:0}
+.odd{text-align:center;font-size:9.5px;color:rgba(255,255,255,.22);margin:5px 0;position:relative}
+.odd::before,.odd::after{content:'';position:absolute;top:50%;width:28%;height:1px;background:rgba(255,255,255,.06)}.odd::before{left:0}.odd::after{right:0}
+#oko-bar{border-top:1px solid rgba(255,255,255,.055);padding:9px 11px;display:flex;gap:7px;align-items:center;background:#0c0c0c;flex-shrink:0;justify-content:space-between}
+#oko-tg{flex:1;background:linear-gradient(135deg,#9AFF00,#7bcc00);color:#000;border:none;border-radius:22px;padding:9px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .18s}
+#oko-tg:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(154,255,0,.28)}
+#oko-rst{width:34px;height:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:50%;color:rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;flex-shrink:0;padding:0;border:1px solid rgba(255,255,255,.09)}
+#oko-rst:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8)}
+.osp{position:fixed;right:14px;bottom:200px;background:rgba(13,13,13,.97);border:1px solid var(--lime3);border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:210px;font-size:12.5px;line-height:1.5;color:rgba(255,255,255,.92);backdrop-filter:blur(20px);box-shadow:0 8px 24px rgba(0,0,0,.6);opacity:0;transform:translateY(10px);transition:opacity .35s,transform .35s;pointer-events:none;z-index:2147483647;cursor:pointer;display:flex;align-items:center}
+.osp.show{opacity:1;transform:translateY(0);pointer-events:auto}
+body.chat-open .osp{opacity:0!important;pointer-events:none!important}
+.osp-ico{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:rgba(154,255,0,.12);border-radius:50%;margin-right:7px;flex-shrink:0}
+/* RESPONSIVE */
+@media(max-width:900px){.pain-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){
+  .nav{padding:10px 16px}.nav-links{display:none}.ham{display:flex;align-items:center}
+  .wrap{padding:0 16px}.hero{min-height:auto;padding:58px 16px 0}
+  .hero-stats{gap:4px}
+  .hero-btns{gap:8px}.bl,.bg{font-size:12px;padding:11px 14px}
+  .pain-grid{grid-template-columns:1fr}
+  .how-inner{padding:0 14px 14px 14px}
+  footer{flex-direction:column;align-items:flex-start;padding:20px 16px}
+}
+
+/* Все кнопки — вся область кликабельна */
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bl,.tar-cta,.pain-btn,.hero-cta,.nav-cta,.tc-btn,.tc-what-head,.tar-toggle,.faq-q,.okf-t,.h-stat{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tc-sec-head,.tc-sec,.tl-item button,.srv-more-btn{cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{-webkit-tap-highlight-color:transparent}
+
+</style>
+</head>
+<body>
+<div class="pb" id="pb"></div>
+<canvas id="bg"></canvas>
+
+<nav class="nav" id="nav">
+  <a href="/" class="nav-logo"><img src="media/logo.png" alt="OKO"><div><div class="nav-logo-t">OKO TEAM</div><div class="nav-logo-s">Медийность · Рост</div></div></a>
+  <div class="nav-links">
+    <a href="#products" class="nav-a">Продукты</a>
+    <a href="#reviews" class="nav-a">Отзывы</a>
+    <a href="#portfolio" class="nav-a">Портфолио</a>
+    <a href="#faq" class="nav-a">FAQ</a>
+  </div>
+  <a href="https://t.me/ktodaniel" target="_blank" class="nav-cta" id="nav-cta">Консультация</a>
+  <button class="ham" id="ham" onclick="toggleNav()">☰</button>
+</nav>
+<div class="mob-nav" id="mob">
+  <a href="#pain" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Боли</a>
+  <a href="#products" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Продукты</a>
+  <a href="#reviews" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Отзывы</a>
+  <a href="#how" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>Как работаем</a>
+  <a href="#portfolio" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Портфолио</a>
+  <a href="#faq" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/></svg>FAQ</a>
+  <a href="#cta" class="nav-a" onclick="closeMob()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Начать рост</a>
+  <a href="https://t.me/ktodaniel" target="_blank" class="nav-cta" onclick="closeMob()">Написать Даниэлю →</a>
+</div>
+
+<section class="hero" id="hero">
+  <canvas id="hcv"></canvas>
+  <div class="hero-bg-vid">
+    <video autoplay muted loop playsinline><source src="media/okoteam-hero-video.mp4" type="video/mp4"></video>
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge rv"><span class="hbdot"></span>OKO TEAM · Медийность &amp; Бизнес</div>
+    <h1 class="hero-title rv">МЕДИЙНАЯ<br><span class="lime">ИМПЕРИЯ</span></h1>
+    <div class="hero-stats rv">
+      <a href="https://t.me/okoreviews" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><div class="h-stat-n" data-count="15" data-suffix="К+">0К+</div></div>
+        <div class="h-stat-l">клиентов</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/okocase" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><div class="h-stat-n" data-count="10" data-prefix="$" data-suffix="М+">$0М+</div></div>
+        <div class="h-stat-l">прибыли</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><div class="h-stat-n" data-count="1.5" data-suffix="МЛД+" data-step="0.1" data-decimals="1">0МЛД+</div></div>
+        <div class="h-stat-l">просмотров</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+      <a href="https://t.me/gdeoko" target="_blank" class="h-stat">
+        <div class="h-stat-top"><svg class="h-stat-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><div class="h-stat-n" data-count="40" data-suffix="+">0+</div></div>
+        <div class="h-stat-l">в команде</div>
+        <svg class="h-stat-ext" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    </div>
+    <div class="hero-vw rv" id="heroWrap" onclick="hvTap()">
+      <video id="heroVid" playsinline preload="auto" ><source src="media/1video-hero.mp4" type="video/mp4"></video>
+      <!-- Центральный оверлей -->
+      <div class="hvo" id="heroOverlay">
+        <div class="hvp" id="hvpBtn">
+          <svg id="hvpIco" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+      </div>
+      <!-- Прогресс снизу -->
+      <div class="hv-prog-wrap" id="hvCtrl">
+        <div class="hv-progress" id="hvProg" onclick="hvSeek(event)" ontouchstart="hvTouchSeek(event)">
+          <div class="hv-bar" id="hvBar"></div>
+          <div class="hv-dot" id="hvDot"></div>
+        </div>
+        <div class="hv-time" id="hvTime">0:00 / 3:43</div>
+      </div>
+    </div>
+    <div class="hero-btns rv">
+      <a href="#products" class="bl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Хочу расти</a>
+      <a href="https://t.me/ktodaniel" target="_blank" class="bg"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Бесплатный разбор</a>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+
+<section class="pain" id="pain">
+  <div class="wrap">
+    <div class="sec-lbl rv">Узнаёшь себя?</div>
+    <h2 class="sec-h rv">Проблемы которые мы решаем</h2>
+    <div class="pain-grid">
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="pain-title">Нет системы — всё хаос</div></div><div class="pain-desc">Снимаешь наугад, стратегии нет, каждый день теряешь клиентов которые уходят к конкурентам.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-sistema')">РЕШЕНИЕ →</a></div>
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="pain-title">Контент не залетает</div></div><div class="pain-desc">Тратишь время на ролики которые никто не смотрит. Алгоритм игнорирует, охваты падают.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-zavod')">РЕШЕНИЕ →</a></div>
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="pain-title">Аудитория есть — денег нет</div></div><div class="pain-desc">Просмотры растут, подписчики есть — а продаж нет. Воронка не работает или вообще отсутствует.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-bot')">РЕШЕНИЕ →</a></div>
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="pain-title">Сайт отпугивает клиентов</div></div><div class="pain-desc">Человек заходит и сразу уходит. Некрасиво, непонятно, нет доверия — деньги уходят к конкурентам.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-web')">РЕШЕНИЕ →</a></div>
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="pain-title">Нет времени ни на что</div></div><div class="pain-desc">Пока ты снимаешь и монтируешь — некогда продавать. Пока продаёшь — нет контента. Замкнутый круг.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-zavod')">РЕШЕНИЕ →</a></div>
+      <div class="pain-card rv"><div class="pain-head"><div class="pain-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="pain-title">Продажи только вручную</div></div><div class="pain-desc">Каждая продажа требует твоего времени. Ушёл в отпуск или заболел — бизнес встал.</div><a class="pain-btn" href="#products" onclick="highlightProd('prod-bot')">РЕШЕНИЕ →</a></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+
+<section class="products" id="products">
+  <div class="wrap">
+    <div class="sec-lbl rv">Наши продукты</div>
+    <h2 class="sec-h rv">Выбери своё решение</h2>
+    <p class="sec-p rv">Каждый продукт решает конкретную задачу. Можно взять один — можно всё сразу.</p>
+    <div class="prod-list rv">
+
+      <!-- СИСТЕМА OKO -->
+      <div class="prod-card featured" id="prod-sistema">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Флагман</div>
+              <div class="prod-title">СИСТЕМА OKO</div>
+              <div class="prod-subtitle">Персональный штаб в одном файле: контент + стратегия + продажи</div>
+              <span class="prod-hit">ХИТ · 50 в месяц</span>
+            </div>
+          </div>
+          <div class="prod-price-row">
+            <div class="prod-price-main">25 000 ₽</div>
+            <div class="prod-price-sub">разово · от 1 месяца</div>
+          </div>
+          <div class="prod-toggle" onclick="toggleProdCard(this)">
+            <div class="prod-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Что входит в систему</div>
+            <div class="prod-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="prod-content">
+            <div class="prod-sub-items">
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Контент-план · 90 дней</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Темы и хуки роликов для всех соцсетей</div><div class="prod-sub-feat">Готовые сценарии с крючками и структурой</div><div class="prod-sub-feat">Описания к роликам + кодовые слова</div><div class="prod-sub-feat">TG-посты для канала и блога</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v6a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><line x1="12" y1="12" x2="12" y2="12"/></svg>Бизнес-план · 18 блоков</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Точка А → воронка → монетизация</div><div class="prod-sub-feat">Финансовые цели и план по месяцам</div><div class="prod-sub-feat">Анализ конкурентов и позиционирование</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Чек-лист ежедневный</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Ежедневные задачи по дням</div><div class="prod-sub-feat">Чеклист публикаций и выхода в эфир</div><div class="prod-sub-feat">Прогресс-бар по месяцу</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Материалы · Скрипты · КП</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Скрипты продаж под каждый продукт</div><div class="prod-sub-feat">Генератор договоров и КП</div><div class="prod-sub-feat">Промпты под ролики для Gemini/HeyGen</div></div></div>
+            </div>
+            <div class="prod-bonuses" onclick="toggleBonuses(this)">
+              <div class="prod-bonuses-toggle">
+                <div class="prod-bonuses-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:5px"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Бонусы</div>
+                <div class="prod-toggle-xi" style="width:20px;height:20px"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-bonuses-body"><div class="prod-bonuses-list">
+                <div class="prod-bonus">Чат с Даниэлем и участниками системы (30 дней)</div>
+                <div class="prod-bonus">1 час бесплатного доступа в чат участников</div>
+                <div class="prod-bonus">Персональный менеджер на весь срок</div>
+                <div class="prod-bonus">Закрытый контент в чате</div>
+                <div class="prod-bonus">Ежемесячный розыгрыш рекламы/созвона</div>
+              </div></div>
+            </div>
+          </div>
+          <a href="/sistema" class="prod-cta-btn">АКТИВИРОВАТЬ →</a>
+        </div>
+      </div>
+
+      <!-- КОНТЕНТ-ЗАВОД -->
+      <div class="prod-card" id="prod-zavod">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Контент без съёмок</div>
+              <div class="prod-title">КОНТЕНТ-ЗАВОД</div>
+              <div class="prod-subtitle">30–500 роликов в месяц. HeyGen, Fliki, OpusClip + автопостинг</div>
+            </div>
+          </div>
+          <div class="prod-toggle" onclick="toggleProdCard(this)">
+            <div class="prod-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Тарифы и что входит</div>
+            <div class="prod-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="prod-content">
+            <div class="prod-sub-items">
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>СТАРТ — 19 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">30 роликов + 4 карусели · 663₽/ролик</div><div class="prod-sub-feat">Экономия 25 000 ₽ vs найм монтажёра</div><div class="prod-sub-feat">Оформление соцсетей + автопостинг</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>РОСТ — 49 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">100 роликов + оформление · 499₽/ролик</div><div class="prod-sub-feat">Экономия 100 000 ₽ vs найм команды</div><div class="prod-sub-feat">Анализ статистики + доработка стратегии</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>ЗАВОД — 84 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">200 роликов + воронка + нейробот · 424₽/ролик</div><div class="prod-sub-feat">Полная автоматизация контента и продаж</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>ИМПЕРИЯ — 149 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">500 роликов + нейробот + сайт · 300₽/ролик</div><div class="prod-sub-feat">Максимальная экономия — полный цикл</div></div></div>
+            </div>
+          </div>
+          <a href="/zavod" class="prod-cta-btn">ЗАПУСТИТЬ →</a>
+        </div>
+      </div>
+
+      <!-- ВОРОНКА + НЕЙРОБОТ -->
+      <div class="prod-card" id="prod-bot">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Продажи 24/7</div>
+              <div class="prod-title">ВОРОНКА + НЕЙРОБОТ</div>
+              <div class="prod-subtitle">Каждый комментарий → бот пишет в direct → продаёт без тебя</div>
+            </div>
+          </div>
+          <div class="prod-toggle" onclick="toggleProdCard(this)">
+            <div class="prod-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Тарифы</div>
+            <div class="prod-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="prod-content">
+            <div class="prod-sub-items">
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>БАЗОВАЯ — 5 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">1-3 продукта, 1-5 веток сценария</div><div class="prod-sub-feat">Настройка на 1 соцсеть</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>СРЕДНЯЯ — 10 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">1-5 продуктов + нейробот GPT</div><div class="prod-sub-feat">Умный диалог с отработкой возражений</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>ПОЛНАЯ — 15 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">10+ продуктов + GPT + все соцсети</div><div class="prod-sub-feat">Полная автоматизация продаж 24/7</div></div></div>
+            </div>
+          </div>
+          <button class="prod-cta-btn" onclick="openAnket('bot',event)">ПОДКЛЮЧИТЬ →</button>
+        </div>
+      </div>
+
+      <!-- САЙТЫ / БОТЫ -->
+      <div class="prod-card" id="prod-web">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Разработка под ключ</div>
+              <div class="prod-title">САЙТЫ / БОТЫ / ПРИЛОЖЕНИЯ</div>
+              <div class="prod-subtitle">12+ проектов в СНГ и UK. Готово за 3–10 дней</div>
+            </div>
+          </div>
+          <div class="prod-toggle" onclick="toggleProdCard(this)">
+            <div class="prod-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Виды работ и цены</div>
+            <div class="prod-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="prod-content">
+            <div class="prod-sub-items">
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Лендинг — от 3 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Дизайн + вёрстка + подключение оплаты</div><div class="prod-sub-feat">Готово за 3–5 дней</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Telegram-бот — от 5 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Чат-бот с любой логикой</div><div class="prod-sub-feat">Интеграция с оплатой, CRM</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>Многостраничный сайт — от 10 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Корпоративный сайт / портфолио / блог</div><div class="prod-sub-feat">SEO + аналитика + CMS</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/></svg>Приложение — от 15 000 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">iOS + Android / Web-приложение</div><div class="prod-sub-feat">Полный цикл: дизайн → разработка → деплой</div></div></div>
+            </div>
+          </div>
+          <a href="/web" class="prod-cta-btn">ЗАКАЗАТЬ →</a>
+        </div>
+      </div>
+
+      <!-- КОНСУЛЬТАЦИЯ -->
+      <div class="prod-card" id="prod-consult">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Лично с Даниэлем</div>
+              <div class="prod-title">КОНСУЛЬТАЦИЯ</div>
+              <div class="prod-subtitle">Разбор твоей ситуации, план действий, запись созвона</div>
+            </div>
+          </div>
+          <div class="prod-toggle" onclick="toggleProdCard(this)">
+            <div class="prod-toggle-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Форматы</div>
+            <div class="prod-toggle-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </div>
+          <div class="prod-content">
+            <div class="prod-sub-items">
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>1 час — 14 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Разбор + план + запись созвона</div><div class="prod-sub-feat">Поддержка в чате 7 дней</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>3 часа — 34 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Глубокий разбор + контент-план 30 дней</div><div class="prod-sub-feat">Поддержка в чате 14 дней</div></div></div>
+              <div class="prod-sub-item" onclick="toggleSubItem(this)">
+                <div class="prod-sub-left"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>5 часов — 49 900 ₽</div>
+                <div class="prod-sub-xi"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              </div>
+              <div class="prod-sub-body"><div class="prod-sub-desc"><div class="prod-sub-feat">Бизнес-план + стратегия + внедрение</div><div class="prod-sub-feat">Поддержка в чате 30 дней</div></div></div>
+            </div>
+          </div>
+          <button class="prod-cta-btn" onclick="openAnket('consult',event)">ЗАПИСАТЬСЯ →</button>
+        </div>
+      </div>
+
+      <!-- OKO CLUB -->
+      <div class="prod-card" id="prod-club">
+        <div class="prod-card-inner">
+          <div class="prod-top">
+            <div class="prod-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            <div class="prod-top-info">
+              <div class="prod-label">Закрытый клуб</div>
+              <div class="prod-title">OKO CLUB</div>
+              <div class="prod-subtitle">Разборы, инсайды, нетворкинг и прямое общение с Даниэлем</div>
+            </div>
+          </div>
+          <div class="prod-price-row">
+            <div class="prod-price-main">500 ₽</div>
+            <div class="prod-price-sub">/месяц · Telegram</div>
+          </div>
+          <a href="https://t.me/okoclubot" target="_blank" class="prod-cta-btn">ВСТУПИТЬ →</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section></section>
+<div class="sec-sep"></div>
+
+<section class="reviews" id="reviews">
+  <div class="wrap">
+    <div class="sec-lbl rv">Отзывы клиентов</div>
+    <h2 class="sec-h rv">Они уже работают с OKO TEAM</h2>
+    <div class="vc-wrap rv" id="vcWrap">
+      <div class="vc-track" id="vcTrack">
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/александр-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Александр</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/сансаныч-кружок.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Сан Саныч</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview1.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Артём</div></div>
+        <div class="vc-item" onclick="toggleVc(this)"><video src="media/videoreview2.mp4" muted loop playsinline></video><div class="vc-overlay"><div class="vc-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div></div><div class="vc-name">Sparta</div></div>
+      </div>
+    </div>
+    <div class="audio-rev rv" onclick="toggleAudio()">
+      <div class="ar-btn"><svg id="arIco" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></div>
+      <div class="ar-info"><div class="ar-name">Коптилыч</div><div class="ar-sub">Голосовой отзыв · 0:38</div></div>
+      <div class="ar-wave" id="arWave"><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div>
+      <audio id="audioEl" src="media/коптилыч-гс.ogg" preload="none"></audio>
+    </div>
+    <div class="rev-wrap rv" id="revWrap">
+      <div class="rev-track" id="revTrack">
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Безмерно счастлива что познакомилась! Всё оперативно, качественно, профессионально без воды. Наконец есть понимание как система соц.сетей устроена изнутри."</div><div class="rev-author"><div class="rev-ava">M</div><div><div class="rev-name">Malika</div><div class="rev-role">Медийка · Упаковка</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Давно хотел повысить продажи. Как итог: было 2.4К подписчиков — стало 3.7К. Ребята знают что делают!"</div><div class="rev-author"><div class="rev-ava">A</div><div><div class="rev-name">A1 D</div><div class="rev-role">Рост аудитории</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Создали аккаунты, оформили красиво. Постинг автоматический — публикую видео в 10 сетях одновременно. Очень доволен!"</div><div class="rev-author"><div class="rev-ava">Ч</div><div><div class="rev-name">чанна</div><div class="rev-role">Контент-завод</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"То что прислали — реально круто. Система большая и мощная. Для систематизации всего в одном месте — именно то что нужно."</div><div class="rev-author"><div class="rev-ava">J</div><div><div class="rev-name">Juri</div><div class="rev-role">Система OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Помогли упаковать все соц сети, разъяснить стратегию ведения. Монтажёры, смм — крутые!"</div><div class="rev-author"><div class="rev-ava">А</div><div><div class="rev-name">Анастасия</div><div class="rev-role">Ведение медийности</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Это реально очень крутой продукт! Осталось научиться пользоваться всеми инструментами. Благодарю от души."</div><div class="rev-author"><div class="rev-ava">Т</div><div><div class="rev-name">Тамара</div><div class="rev-role">Система OKO</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Упаковали все социальные сети красиво и стильно. Спасибо за классное оформление. Всё просто супер!"</div><div class="rev-author"><div class="rev-ava">В</div><div><div class="rev-name">Виктория</div><div class="rev-role">Комплексное ведение</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Благодарю за разбор блога, за то что помогли разложить всё по полочкам и дали много творческих идей."</div><div class="rev-author"><div class="rev-ava">И</div><div><div class="rev-name">Ирина</div><div class="rev-role">Разбор кейса</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Безмерно счастлива что познакомилась! Всё оперативно, качественно, профессионально."</div><div class="rev-author"><div class="rev-ava">M</div><div><div class="rev-name">Malika</div><div class="rev-role">Медийка</div></div></div></div>
+        <div class="rev-card"><div class="rev-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div><div class="rev-text">"Было 2.4К — стало 3.7К подписчиков. Ребята знают что делают!"</div><div class="rev-author"><div class="rev-ava">A</div><div><div class="rev-name">A1 D</div><div class="rev-role">Рост аудитории</div></div></div></div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px" class="rv"><a href="https://t.me/okoreviews" target="_blank" class="rev-more"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>БОЛЬШЕ ОТЗЫВОВ →</a></div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-lbl rv">Процесс работы</div>
+    <h2 class="sec-h rv">От заявки до результата</h2>
+    <div class="how-list rv">
+      <div class="how-item"><div class="how-head" onclick="toggleHow(this)"><div class="how-num">01</div><div class="how-title">Заявка и первый контакт</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="how-body"><div class="how-inner"><div class="how-desc">Ты оставляешь заявку или пишешь Даниэлю напрямую. Без скриптов — сразу живой разговор о твоей ситуации.</div><div class="how-subs"><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Ответ в течение 2 часов</div><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Первичный разбор бесплатно</div></div><div class="how-tags"><span class="how-tag">Telegram</span><span class="how-tag">Бесплатно</span></div></div></div></div>
+      <div class="how-item"><div class="how-head" onclick="toggleHow(this)"><div class="how-num">02</div><div class="how-title">Анкета и глубокий анализ</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="how-body"><div class="how-inner"><div class="how-desc">Заполняешь анкету о бизнесе, нише и целях. Анализируем тебя, конкурентов и рынок — формируем персональную стратегию.</div><div class="how-subs"><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Анализ топ-10 конкурентов в нише</div><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Исследование трендов и форматов</div></div><div class="how-tags"><span class="how-tag">Анкета</span><span class="how-tag">Анализ</span></div></div></div></div>
+      <div class="how-item"><div class="how-head" onclick="toggleHow(this)"><div class="how-num">03</div><div class="how-title">Создание под ключ</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="how-body"><div class="how-inner"><div class="how-desc">Команда создаёт продукт. Ты видишь каждый шаг в рабочем чате. Все правки включены.</div><div class="how-subs"><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Срок 3–10 дней в зависимости от продукта</div><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Рабочий чат с командой всё время</div></div><div class="how-tags"><span class="how-tag">3-10 дней</span><span class="how-tag">Под ключ</span></div></div></div></div>
+      <div class="how-item"><div class="how-head" onclick="toggleHow(this)"><div class="how-num">04</div><div class="how-title">Запуск и поддержка</div><div class="how-xi"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div class="how-body"><div class="how-inner"><div class="how-desc">Сдаём продукт, обучаем, остаёмся на связи. Ежемесячная аналитика и корректировка стратегии.</div><div class="how-subs"><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Обучение по работе с продуктом</div><div class="how-sub"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Поддержка и обновления включены</div></div><div class="how-tags"><span class="how-tag">Аналитика</span><span class="how-tag">Поддержка</span></div></div></div></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+
+<section class="portfolio" id="portfolio">
+  <div class="wrap"><div class="sec-lbl rv">Портфолио</div><h2 class="sec-h rv">Реальные проекты реальных клиентов</h2></div>
+  <div class="port-wrap rv" id="portWrap" style="padding:0 16px;margin-top:24px">
+    <div class="port-track" id="portTrack">
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Коптилыч · Магазин</div><div class="port-links"><a href="http://koptylich.ru/meat" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт · UK</div><div class="port-name">MCR Floor Care</div><div class="port-links"><a href="http://mcrfloorcare.co.uk" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-хаб.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Хаб · Сайт</div><div class="port-name">Бриус TEAM</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть хаб →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/миндос-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">MindOS</div><div class="port-links"><a href="https://okoteam.top/media/mindOS-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/катя-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Ekaterina</div><div class="port-links"><a href="https://okoteam.top/media/Ekaterina-sistem" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/сансаныч-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">Сан Саныч</div><div class="port-links"><a href="https://okoteam.top/media/sansanych-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/приложение-отпбанк.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Приложение</div><div class="port-name">ОТП Банк</div><div class="port-links"><a href="https://okoteam.top/media/otp-bank" target="_blank" class="port-link">Посмотреть →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO · UK</div><div class="port-name">MCR · Система</div><div class="port-links"><a href="http://mcrfloorcare.co.uk/sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">Коптилыч · Система</div><div class="port-links"><a href="http://koptylich.ru/sistema" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Бриус · Сайт</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <!-- duplicates for infinite loop -->
+      <div class="port-card"><div class="port-vid"><video data-src="media/коптилыч-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Коптилыч · Магазин</div><div class="port-links"><a href="http://koptylich.ru/meat" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/ковры-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт · UK</div><div class="port-name">MCR Floor Care</div><div class="port-links"><a href="http://mcrfloorcare.co.uk" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/бриус-хаб.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Хаб · Сайт</div><div class="port-name">Бриус TEAM</div><div class="port-links"><a href="https://briusteam.ru" target="_blank" class="port-link">Посмотреть хаб →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/миндос-система.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Система OKO</div><div class="port-name">MindOS</div><div class="port-links"><a href="https://okoteam.top/media/mindOS-sistem" target="_blank" class="port-link">Посмотреть систему →</a></div></div></div>
+      <div class="port-card"><div class="port-vid"><video data-src="media/катя-сайт.mp4" preload="none" muted loop autoplay playsinline></video></div><div class="port-info"><div class="port-type">Сайт</div><div class="port-name">Ekaterina</div><div class="port-links"><a href="https://okoteam.top/media/Ekaterina-sistem" target="_blank" class="port-link">Посмотреть сайт →</a></div></div></div>
+    </div>
+  </div></section>
+<div class="sec-sep"></div>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="sec-lbl rv">Часто задают</div>
+    <h2 class="sec-h rv">Ответы на главные вопросы</h2>
+    <div class="faq-list rv">
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Как быстро увижу результат?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Зависит от продукта. Система OKO готова за 7–10 дней. Контент-завод запускается за 3–4 дня — первые ролики в первую неделю. Рост аудитории при 3+ роликах в день заметен через 3–4 недели.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Что входит в Контент-завод — нужно снимать?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Нет, снимать не нужно. HeyGen — AI-аватар с твоим лицом и голосом, Fliki — стоковые видео по сценарию с озвучкой, OpusClip — нарезка виральных роликов ниши. Плюс карусели. Всё публикуется автоматически.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Чем Система OKO отличается от контент-плана?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Это не просто контент-план. Это интерактивный HTML-файл — твой личный штаб. Внутри: контент-план 90 дней с полными текстами, бизнес-план 18 блоков, чек-лист с прогресс-баром, скрипты продаж, генератор договоров и КП. Всё персонально.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Как работает нейробот?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Кто-то пишет комментарий → бот автоматически пишет ему в direct → начинает диалог → выясняет потребность → предлагает продукт → закрывает на оплату. Всё без твоего участия 24/7.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Сколько стоит сайт и что входит?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Лендинг от 3 000₽, бот от 5 000₽, многостраничный сайт от 10 000₽, приложение от 15 000₽. Всё под ключ: дизайн, вёрстка, подключение оплаты, аналитика. Точная цена — после обсуждения задачи.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Работаете с любой нишей?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да. За 5 лет работали с клинингом UK, копчением, AI-платформами, кулинарией, фитнесом, юридическими услугами и десятками других ниш. Анализируем нишу и конкурентов — контент на основе данных.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Можно рассрочку?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, рассрочка доступна на крупные пакеты. Обсуждается индивидуально — напиши Даниэлю <a href="https://t.me/ktodaniel" target="_blank">@ktodaniel</a>.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Есть ли договор и гарантии?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да, работаем по договору. Прописаны объём работ, сроки и обязанности обеих сторон. За 5+ лет ни одного незакрытого кейса.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Как проходит консультация с Даниэлем?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Созвон один на один. Даниэль изучает твои соцсети заранее. Ты получаешь: выжимку решений, запись созвона, детальный план действий и поддержку в чате 7–30 дней.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFaq(this)">Работаете с западными рынками?<span class="faq-arr"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div><div class="faq-a">Да. В портфолио — MCR Floor Care (Великобритания). Контент, скрипты и воронки адаптируем под любой рынок и язык.</div></div>
+    </div>
+  </div>
+</section>
+<div class="sec-sep"></div>
+
+<section class="cta-sec" id="cta">
+  <div class="wrap">
+    <img src="media/asset_5_46c20f23.jpg" class="rv" style="width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid var(--lime);box-shadow:0 0 20px rgba(154,255,0,.25);display:block;margin:0 auto 18px">
+    <h2 class="cta-title rv">Готов к росту?</h2>
+    <p class="cta-sub rv">Чатбот поможет подобрать нужный продукт. Напиши Даниэлю если готов купить, есть вопрос или хочешь консультацию.</p>
+    <div class="rv"><a href="https://t.me/ktodaniel" target="_blank" class="bl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Написать Даниэлю</a></div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-brand"><img src="media/logo.png" alt="OKO"><div class="foot-brand-t">OKO TEAM © 2026</div></div>
+  <div class="foot-links">
+    <a href="https://t.me/ktodaniel" target="_blank" class="foot-link">@ktodaniel</a>
+    <a href="https://t.me/gdeoko" target="_blank" class="foot-link">Канал OKO</a>
+    <a href="https://t.me/okoreviews" target="_blank" class="foot-link">Отзывы</a>
+    <a href="https://t.me/okocase" target="_blank" class="foot-link">Кейсы</a>
+  </div>
+</footer>
+
+<div id="okf-overlay">
+  <div id="okf-modal">
+    <button id="okf-close" onclick="OKF.close()">✕</button>
+    <img id="okf-img" src="" alt="" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:12px;margin-bottom:14px">
+    <div class="okf-badge" id="okf-badge">OKO TEAM</div>
+    <div class="okf-hd" id="okf-hd">Один шаг до старта</div>
+    <div class="okf-sub" id="okf-sub">Заполни данные и мы свяжемся</div>
+    <div id="okf-tariffs" style="display:none"></div>
+    <div id="okf-fields"></div>
+    <div id="okf-extra"></div>
+    <button id="okf-btn" onclick="OKF.submit()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span id="okf-btn-txt">Отправить заявку</span></button>
+    <div class="okf-err" id="okf-err"></div>
+    <div class="okf-priv">Отправляя форму ты соглашаешься на обработку данных</div>
+  </div>
+</div>
+
+<div class="osp" id="osp-pain"><span class="osp-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Узнаёшь себя? Помогу решить</div>
+<div class="osp" id="osp-prod"><span class="osp-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Помогу выбрать нужный продукт</div>
+<div class="osp" id="osp-rev"><span class="osp-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>Реальные люди, реальные результаты</div>
+<div class="osp" id="osp-port"><span class="osp-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></span>Покажу детали любого проекта</div>
+<div class="osp" id="osp-cta"><span class="osp-ico"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></span>Готов? Разберём твою ситуацию</div>
+
+<div id="oko-wrap">
+  <div id="oko-popup" onclick="OKO.open('popup')" ontouchend="event.preventDefault();OKO.open('popup')">
+    <div id="oko-popup-from">Даниэль Ильясов</div>
+    <span id="oko-popup-txt"></span>
+  </div>
+  <div id="oko-bub">
+    <div id="oko-av-row" onclick="OKO.toggle()">
+      <div id="oko-av">
+        <img src="media/asset_5_46c20f23.jpg" alt="Даниэль">
+        <div id="oko-dot"></div>
+        <div id="oko-badge">1</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="oko-win">
+  <div id="oko-hdr">
+    <img id="oko-hdr-av" src="media/asset_5_46c20f23.jpg" alt="">
+    <div id="oko-hdr-info"><div id="oko-hdr-name">Даниэль Ильясов</div><div id="oko-hdr-status">онлайн</div></div>
+    <button id="oko-close" onclick="OKO.close()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div id="oko-msgs"><div class="odd">сегодня</div></div>
+  <div id="oko-bar">
+    <a id="oko-tg" href="https://t.me/ktodaniel" target="_blank" onclick="OKO._trackAct()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" style="flex-shrink:0"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Написать Даниэлю</a>
+    <button id="oko-rst" onclick="OKO.restart()" title="Начать сначала"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
+  </div>
+</div>
+
+<script>
+// ══ CANVAS BG ══
+(function(){
+var c=document.getElementById('bg'),ctx=c.getContext('2d');
+var W,H,pts=[],ripples=[],mx=-9999,my=-9999;
+function init(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;pts=[];var n=Math.floor(W*H/18000);for(var i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:.6+Math.random()*1.4,op:.05+Math.random()*.18});}
+window.addEventListener('resize',init);init();
+window.addEventListener('mousemove',function(e){mx=e.clientX;my=e.clientY;});
+window.addEventListener('click',function(e){ripples.push({x:e.clientX,y:e.clientY,r:0,op:.4,sp:3+Math.random()*2});});
+window.addEventListener('touchstart',function(e){var t=e.touches[0];ripples.push({x:t.clientX,y:t.clientY,r:0,op:.4,sp:3});mx=t.clientX;my=t.clientY;},{passive:true});
+var ATTR=140,FORCE=.03;
+var _bgLast=0;
+function draw(ts){
+  requestAnimationFrame(draw);
+  if(ts-_bgLast<33)return; // 30fps
+  _bgLast=ts;
+  ctx.fillStyle='rgba(5,5,5,0.07)';ctx.fillRect(0,0,W,H);
+  var g=ctx.createRadialGradient(W/2,H*.4,0,W/2,H*.4,Math.min(W,H)*.4);g.addColorStop(0,'rgba(70,150,0,0.03)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  for(var i=ripples.length-1;i>=0;i--){var rp=ripples[i];rp.r+=rp.sp;rp.op-=.008;if(rp.op<=0){ripples.splice(i,1);continue;}ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r,0,Math.PI*2);ctx.strokeStyle='rgba(154,255,0,'+rp.op.toFixed(3)+')';ctx.lineWidth=1;ctx.stroke();}
+  for(var i=0;i<pts.length;i++){var p=pts[i];var dx=mx-p.x,dy=my-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<ATTR&&d>1){var f=FORCE*(1-d/ATTR);p.vx+=dx/d*f;p.vy+=dy/d*f;}p.vx*=.965;p.vy*=.965;p.vx+=(Math.random()-.5)*.03;p.vy+=(Math.random()-.5)*.03;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+  for(var j=i+1;j<pts.length;j++){var q=pts[j],cdx=p.x-q.x,cdy=p.y-q.y,cd=Math.sqrt(cdx*cdx+cdy*cdy);if(cd<80){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(154,255,0,'+(0.05*(1-cd/80)).toFixed(3)+')';ctx.lineWidth=.4;ctx.stroke();}}
+  ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(154,255,0,'+p.op+')';ctx.fill();}
+}
+draw();
+})();
+
+// ══ HERO ORBITAL CANVAS ══
+(function(){
+var c=document.getElementById('hcv'),ctx=c.getContext('2d');
+var W,H,nodes=[],t=0,sy=0;
+function init(){c.width=W=c.parentElement.offsetWidth||window.innerWidth;c.height=H=c.parentElement.offsetHeight||window.innerHeight;nodes=[];var rings=[{r:60,n:4,sp:.01},{r:110,n:7,sp:-.007},{r:165,n:11,sp:.005}];nodes.push({ring:-1,x:0,y:0,size:3.5,op:.8,pulse:0,psp:.04});rings.forEach(function(rg){for(var i=0;i<rg.n;i++){var a=Math.PI*2/rg.n*i;nodes.push({ring:rg,ang:a,r:rg.r,sp:rg.sp,size:1+Math.random()*2,op:.2+Math.random()*.4,pulse:Math.random()*Math.PI*2,psp:.015+Math.random()*.025,x:0,y:0});}});}
+window.addEventListener('resize',init);init();
+window.addEventListener('scroll',function(){sy=window.scrollY;});
+var _hLast=0,_hVisible=true;
+new IntersectionObserver(function(e){_hVisible=e[0].isIntersecting;},{threshold:0}).observe(c);
+function draw(ts){requestAnimationFrame(draw);
+  if(!_hVisible)return;
+  if(ts-_hLast<33)return; // 30fps
+  _hLast=ts;
+  t+=.007;ctx.clearRect(0,0,W,H);var fade=Math.max(0,1-sy/(H*.6));if(fade<=0)return;ctx.globalAlpha=fade;var cx=W/2,cy=H*.38;nodes.forEach(function(n){if(n.ring===-1){n.x=cx;n.y=cy;n.pulse+=n.psp;return;}n.ang+=n.sp;n.pulse+=n.psp;n.x=cx+Math.cos(n.ang)*n.r;n.y=cy+Math.sin(n.ang)*n.r*.5;});[60,110,165].forEach(function(r){ctx.beginPath();ctx.ellipse(cx,cy,r,r*.5,0,0,Math.PI*2);ctx.strokeStyle='rgba(154,255,0,0.04)';ctx.lineWidth=.5;ctx.stroke();});var ctr=nodes[0];nodes.filter(function(n){return n.ring&&n.ring.r===60;}).forEach(function(n){ctx.beginPath();ctx.moveTo(ctr.x,ctr.y);ctx.lineTo(n.x,n.y);ctx.strokeStyle='rgba(154,255,0,0.06)';ctx.lineWidth=.4;ctx.stroke();});nodes.forEach(function(n){var ps=n.ring===-1?1:(.65+Math.sin(n.pulse)*.35);var sz=n.size*ps,op=n.op*ps;ctx.beginPath();ctx.arc(n.x,n.y,sz,0,Math.PI*2);ctx.fillStyle='rgba(154,255,0,'+op.toFixed(2)+')';ctx.fill();});var cp=.5+Math.sin(t*1.4)*.5;var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,22*cp);cg.addColorStop(0,'rgba(154,255,0,'+(0.1*cp).toFixed(2)+')');cg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy,22*cp,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+draw();
+})();
+
+// ══ SCROLL + NAV ══
+window.addEventListener('scroll',function(){
+  var sc=document.documentElement.scrollTop||document.body.scrollTop;
+  var h=document.documentElement;
+  document.getElementById('pb').style.width=(sc/(h.scrollHeight-h.clientHeight)*100)+'%';
+  document.getElementById('nav').classList.toggle('scrolled',sc>100);
+  document.getElementById('nav-cta').classList.toggle('show',sc>300);
+});
+function toggleNav(){var m=document.getElementById('mob'),h=document.getElementById('ham');var o=m.classList.toggle('open');m.style.display='flex';h.textContent=o?'✕':'☰';if(!o)setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+function closeMob(){var m=document.getElementById('mob'),h=document.getElementById('ham');m.classList.remove('open');h.textContent='☰';setTimeout(function(){if(!m.classList.contains('open'))m.style.display='none';},260);}
+
+// ══ REVEAL ══
+(function(){var io=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target);}});},{threshold:.07,rootMargin:'0px 0px -20px 0px'});document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});})();
+
+// ══ HERO VIDEO ══
+// ══ HERO VIDEO PLAYER ══
+(function(){
+  var vid,overlay,ctrl,bar,dot,timeEl,ico;
+  var hideT=null,seeking=false,started=false;
+  var PLAY='<polygon points="5,3 19,12 5,21"/>',
+      PAUSE='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+
+  function init(){
+    vid=document.getElementById('heroVid');
+    overlay=document.getElementById('heroOverlay');
+    ctrl=document.getElementById('hvCtrl');
+    bar=document.getElementById('hvBar');
+    dot=document.getElementById('hvDot');
+    timeEl=document.getElementById('hvTime');
+    ico=document.getElementById('hvpIco');
+    if(!vid)return;
+    vid.addEventListener('timeupdate',onTime);
+    vid.addEventListener('ended',function(){vid.currentTime=0;showPause();});
+    vid.addEventListener('loadedmetadata',onTime);
+  }
+
+  function fmt(s){s=Math.floor(s||0);return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;}
+
+  function onTime(){
+    if(seeking||!vid.duration)return;
+    var p=vid.currentTime/vid.duration*100;
+    if(bar)bar.style.width=p+'%';
+    if(dot)dot.style.left=p+'%';
+    if(timeEl)timeEl.textContent=fmt(vid.currentTime)+' / '+fmt(vid.duration);
+  }
+
+  // Показать паузу: центральная кнопка play, прогресс скрыт
+  function showPause(){
+    if(overlay){overlay.classList.remove('hide');}
+    if(ctrl){ctrl.classList.remove('show');}
+    if(ico)ico.innerHTML=PLAY;
+    clearTimeout(hideT);
+  }
+
+  // Когда играет: скрыть всё через 2 сек
+  function scheduleHide(){
+    clearTimeout(hideT);
+    hideT=setTimeout(function(){
+      if(!vid.paused){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+      }
+    },2000);
+  }
+
+  // Показать контролы временно (тап во время воспроизведения)
+  function showControls(){
+    if(overlay)overlay.classList.remove('hide');
+    if(ctrl)ctrl.classList.add('show');
+    if(ico)ico.innerHTML=PAUSE;
+    scheduleHide();
+  }
+
+  // Главный тап по плееру
+  window.hvTap=function(){
+    if(!vid){init();if(!vid)return;}
+    if(!started){
+      // Первый запуск
+      started=true;
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        if(ico)ico.innerHTML=PAUSE;
+        scheduleHide();
+      }).catch(function(){showPause();});
+      return;
+    }
+    if(vid.paused){
+      // На паузе - тап = старт
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        scheduleHide();
+      });
+      if(ico)ico.innerHTML=PAUSE;
+    } else {
+      // Играет - тап = показать контролы или поставить паузу
+      var isHidden=overlay&&overlay.classList.contains('hide');
+      if(isHidden){
+        // Контролы скрыты - показываем
+        showControls();
+      } else {
+        // Контролы видны - ставим паузу
+        vid.pause();showPause();
+      }
+    }
+  };
+
+  // Тап на центральную кнопку (когда на паузе)
+  window.hvToggle=function(e){
+    if(e)e.stopPropagation();
+    if(!vid){init();if(!vid)return;}
+    if(vid.paused){
+      started=true;
+      vid.play().then(function(){
+        if(overlay)overlay.classList.add('hide');
+        if(ctrl)ctrl.classList.remove('show');
+        if(ico)ico.innerHTML=PAUSE;
+        scheduleHide();
+      });
+    } else {
+      vid.pause();showPause();
+    }
+  };
+
+  window.hvSeek=function(e){
+    e.stopPropagation();
+    if(!vid||!vid.duration)return;
+    var rect=e.currentTarget.getBoundingClientRect();
+    var x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;
+    x=Math.max(0,Math.min(x,rect.width));
+    vid.currentTime=(x/rect.width)*vid.duration;
+    onTime();if(!vid.paused)scheduleHide();
+  };
+
+  window.hvTouchSeek=function(e){
+    e.stopPropagation();
+    seeking=true;
+    var prog=e.currentTarget;
+    function mv(ev){
+      var r=prog.getBoundingClientRect(),x=ev.touches[0].clientX-r.left;
+      x=Math.max(0,Math.min(x,r.width));
+      if(vid&&vid.duration){vid.currentTime=(x/r.width)*vid.duration;onTime();}
+    }
+    function en(){seeking=false;document.removeEventListener('touchmove',mv);document.removeEventListener('touchend',en);}
+    document.addEventListener('touchmove',mv,{passive:true});
+    document.addEventListener('touchend',en);
+  };
+
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{init();}
+})();
+
+// ══ PRODUCTS ACCORDION ══
+function toggleProdCard(el){
+  var card=el.closest('.prod-card');
+  var wasOpen=card.classList.contains('open');
+  // Close all cards
+  document.querySelectorAll('.prod-card').forEach(function(c){
+    c.classList.remove('open');
+    var ct=c.querySelector('.prod-content');
+    if(ct)ct.style.maxHeight='0';
+  });
+  if(!wasOpen){
+    card.classList.add('open');
+    var content=card.querySelector('.prod-content');
+    if(content){
+      // Calculate real height
+      content.style.maxHeight='9999px';
+    }
+    setTimeout(function(){card.scrollIntoView({behavior:'smooth',block:'nearest'});},150);
+  }
+}
+function toggleSubItem(el){
+  var wasOpen=el.classList.contains('open');
+  // Close all siblings in same container
+  var parent=el.parentElement;
+  if(parent){
+    var allItems=parent.querySelectorAll('.prod-sub-item');
+    allItems.forEach(function(i){
+      i.classList.remove('open');
+      // Also hide their body (next sibling)
+      var body=i.nextElementSibling;
+      if(body&&body.classList.contains('prod-sub-body'))body.style.maxHeight='0';
+    });
+  }
+  if(!wasOpen){
+    el.classList.add('open');
+    var body=el.nextElementSibling;
+    if(body&&body.classList.contains('prod-sub-body')){
+      body.style.maxHeight=body.scrollHeight+40+'px';
+    }
+  }
+}
+function toggleBonuses(el){
+  el.classList.toggle('open');
+  var body=el.querySelector('.prod-bonuses-body');
+  if(body){
+    if(el.classList.contains('open')){body.style.maxHeight=body.scrollHeight+40+'px';}
+    else{body.style.maxHeight='0';}
+  }
+}
+function toggleProd(head){
+  var item=head.closest('.prod-item');
+  if(!item){item=head.closest('.prod-card');if(item){toggleProdCard(head);return;}}
+  if(!item)return;
+  var wasOpen=item.classList.contains('open');
+  document.querySelectorAll('.prod-item,.prod-card').forEach(function(i){i.classList.remove('open');});
+  if(!wasOpen)item.classList.add('open');
+}
+function highlightProd(id){setTimeout(function(){var el=document.getElementById(id);if(!el)return;el.scrollIntoView({behavior:'smooth',block:'center'});el.style.borderColor='rgba(154,255,0,0.6)';el.style.boxShadow='0 0 30px rgba(154,255,0,0.15)';setTimeout(function(){el.style.borderColor='';el.style.boxShadow='';},2200);},300);}
+
+// ══ HOW ACCORDION ══
+function toggleHow(head){var item=head.closest('.how-item');var wasOpen=item.classList.contains('open');document.querySelectorAll('.how-item').forEach(function(i){i.classList.remove('open');});if(!wasOpen)item.classList.add('open');}
+
+// ══ FAQ ══
+function toggleFaq(el){var item=el.parentElement,isOpen=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');});if(!isOpen)item.classList.add('open');}
+
+// ══ VIDEO CIRCLES CAROUSEL ══
+(function(){
+var wrap=document.getElementById('vcWrap'),track=document.getElementById('vcTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.35,paused=false;
+function maxP(){return track.scrollWidth/2;}
+var _vcVis=true;
+new IntersectionObserver(function(e){_vcVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_vcVis||paused||drag)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*80;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+window._vcPause=function(){paused=true;};window._vcResume=function(){paused=false;};
+})();
+
+var _vcCurrent=null;
+function toggleVc(el){
+  if(_vcCurrent&&_vcCurrent!==el){_vcCurrent.classList.remove('playing');_vcCurrent.querySelector('video').muted=true;_vcCurrent.querySelector('video').pause();_vcCurrent.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;return;}
+  if(el.classList.contains('playing')){el.classList.remove('playing');el.querySelector('video').muted=true;el.querySelector('video').pause();el.querySelector('.vc-overlay').style.opacity='';window._vcResume&&window._vcResume();_vcCurrent=null;}
+  else{el.classList.add('playing');el.querySelector('video').muted=false;el.querySelector('video').play();el.querySelector('.vc-overlay').style.opacity='0';window._vcPause&&window._vcPause();_vcCurrent=el;}
+}
+
+// ══ AUDIO REVIEW ══
+var _audPlay=false;
+function toggleAudio(){var a=document.getElementById('audioEl'),w=document.getElementById('arWave'),ico=document.getElementById('arIco');if(_audPlay){a.pause();_audPlay=false;w.classList.remove('pl');ico.innerHTML='<polygon points="5,3 19,12 5,21"/>';}else{a.play();_audPlay=true;w.classList.add('pl');ico.innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';}}
+document.getElementById('audioEl').addEventListener('ended',function(){_audPlay=false;document.getElementById('arWave').classList.remove('pl');document.getElementById('arIco').innerHTML='<polygon points="5,3 19,12 5,21"/>';});
+
+// ══ TEXT REVIEWS CAROUSEL ══
+(function(){
+var wrap=document.getElementById('revWrap'),track=document.getElementById('revTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.3;
+function maxP(){return track.scrollWidth/2;}
+var _revVis=true;
+new IntersectionObserver(function(e){_revVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+(function run(){requestAnimationFrame(run);if(!_revVis)return;pos+=speed;if(pos>=maxP())pos=0;track.style.transform='translateX(-'+pos+'px)';})();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){if(!drag)return;var now=Date.now(),dt=now-lastT||1;vel=(x-lastX)/dt;lastX=x;lastT=now;pos=startPos+(startX-x);var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;track.style.transform='translateX(-'+pos+'px)';}
+function up(){if(!drag)return;drag=false;pos-=vel*60;var m=maxP();if(pos<0)pos=0;if(pos>m)pos=m;}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);});window.addEventListener('mousemove',function(e){mv(e.clientX);});window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});window.addEventListener('touchend',up);
+})();
+
+// ══ PORTFOLIO LAZY VIDEO LOAD ══
+(function(){
+  function loadNearby(entries){
+    entries.forEach(function(e){
+      var card=e.target;
+      var vids=card.querySelectorAll('video[data-src]');
+      vids.forEach(function(v){
+        if(e.isIntersecting){
+          if(!v.src){v.src=v.dataset.src;v.load();}
+          v.play().catch(function(){});
+        }else{
+          if(!v.paused)v.pause();
+        }
+      });
+    });
+  }
+  var portIO=new IntersectionObserver(loadNearby,{rootMargin:'200px',threshold:0});
+  function initPortObs(){
+    document.querySelectorAll('.port-card').forEach(function(c){portIO.observe(c);});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initPortObs);}
+  else{initPortObs();}
+})();
+
+// ══ PORTFOLIO CAROUSEL (TRUE INFINITE) ══
+(function(){
+var wrap=document.getElementById('portWrap'),track=document.getElementById('portTrack');
+if(!wrap||!track)return;
+var pos=0,drag=false,startX=0,startPos=0,vel=0,lastX=0,lastT=0,speed=.4,raf=null,paused=false;
+function halfW(){return track.scrollWidth/2;}
+function clamp(){
+  var h=halfW();
+  // Wrap around for infinite scroll
+  if(pos>=h)pos=pos-h;
+  if(pos<0)pos=pos+h;
+}
+var _portVis=true;
+new IntersectionObserver(function(e){_portVis=e[0].isIntersecting;},{threshold:0}).observe(wrap);
+function run(){
+  raf=requestAnimationFrame(run);
+  if(!_portVis||paused||drag)return;
+  pos+=speed;clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+run();
+function dn(x){drag=true;startX=x;startPos=pos;vel=0;lastX=x;lastT=Date.now();}
+function mv(x){
+  if(!drag)return;
+  var now=Date.now(),dt=now-lastT||1;
+  vel=(x-lastX)/dt;lastX=x;lastT=now;
+  pos=startPos+(startX-x);
+  clamp();
+  track.style.transform='translateX(-'+pos+'px)';
+}
+function up(){
+  if(!drag)return;drag=false;
+  // momentum
+  var momentum=vel*-80;
+  var steps=60;
+  (function glide(){
+    if(steps-->0&&Math.abs(momentum)>0.5){
+      pos+=momentum;momentum*=0.9;clamp();
+      track.style.transform='translateX(-'+pos+'px)';
+      requestAnimationFrame(glide);
+    }
+  })();
+}
+wrap.addEventListener('mousedown',function(e){dn(e.clientX);e.preventDefault();});
+window.addEventListener('mousemove',function(e){mv(e.clientX);});
+window.addEventListener('mouseup',up);
+wrap.addEventListener('touchstart',function(e){dn(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchmove',function(e){if(drag)mv(e.touches[0].clientX);},{passive:true});
+window.addEventListener('touchend',up);
+})();
+
+// ══ ANKET MODAL ══
+var OKF=(function(){
+var API='https://okoteam.top/api.php';
+var LAVA_ZAVOD='https://app.lava.top/products/cc256201-d7ca-4fa5-b3eb-cd4ca8ecdcc2';
+var LAVA_CONSULT='https://app.lava.top/products/ac767e5f-ee82-4ef7-9d00-3fded697f981';
+var cur=null,tariff='',poll=null;
+var CFG={
+  bot:{badge:'ВОРОНКА + НЕЙРОБОТ',hd:'Подключаем нейробота',sub:'Опиши задачу — Даниэль рассчитает стоимость',btn:'ПОДКЛЮЧИТЬ →',lava:null,
+    tars:[{id:'base',n:'БАЗОВАЯ'},{id:'mid',n:'СРЕДНЯЯ'},{id:'full',n:'ПОЛНАЯ'}],
+    extra:[{id:'prods',l:'Продукты/услуги',ph:'Консультации, курсы...'},{id:'check',l:'Средний чек',ph:'Например: 5 000 ₽'},{id:'hasfun',l:'Есть уже воронка?',sel:['Нет','Есть но не работает','Есть рабочая']}]},
+  consult:{badge:'КОНСУЛЬТАЦИЯ',hd:'Записаться на консультацию',sub:'Выбери формат — свяжемся и назначим время',btn:'ЗАПИСАТЬСЯ →',lava:LAVA_CONSULT,img:'media/консультация.png',
+    tars:[{id:'1h',n:'1 ЧАС'},{id:'3h',n:'3 ЧАСА'},{id:'5h',n:'5 ЧАСОВ'}],
+    extra:[{id:'niche',l:'Ниша / сфера',ph:'Онлайн-курсы, ресторан...'},{id:'goal',l:'Цель консультации',ta:true,ph:'Опиши своими словами что хочешь получить от консультации...'},{id:'tried',l:'Что уже пробовал',ta:true,ph:'Что делал раньше для решения этой задачи...'},{id:'time',l:'Удобные дата и время',ph:'Например: пятница 15:00 UTC+3',dt:true}]}
+};
+function open(product){
+  cur=product;var c=CFG[product];if(!c)return;
+  tariff=c.tars?c.tars[0].id:'';
+  // Восстанавливаем структуру модала если она была перезаписана showWait/showOK
+  var modal=document.getElementById('okf-modal');
+  if(!document.getElementById('okf-badge')){
+    modal.innerHTML='<button id="okf-close" onclick="OKF.close()">✕</button>'
+      +'<div class="okf-badge" id="okf-badge"></div>'
+      +'<div class="okf-hd" id="okf-hd"></div>'
+      +'<div class="okf-sub" id="okf-sub"></div>'
+      +'<div id="okf-tariffs" class="okf-tariffs"></div>'
+      +'<div id="okf-fields"></div>'
+      +'<div id="okf-extra"></div>'
+      +'<button id="okf-btn" onclick="OKF.submit()" style="width:100%;background:#9AFF00;color:#000;border:none;border-radius:12px;padding:12px;font-family:Unbounded,sans-serif;font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px"><span id="okf-btn-txt"></span></button>'
+      +'<div class="okf-err" id="okf-err"></div>'
+      +'<div class="okf-priv">Нажимая кнопку ты соглашаешься на обработку данных</div>';
+  }
+  // Сброс полей формы
+  ['okf-name','okf-email','okf-phone','okf-tg'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  var errEl=document.getElementById('okf-err');
+  if(errEl){errEl.classList.remove('show');errEl.textContent='';}
+  var btn=document.getElementById('okf-btn');
+  if(btn){btn.disabled=false;}
+  var btnTxt=document.getElementById('okf-btn-txt');
+  if(btnTxt){btnTxt.textContent=c.btn||'ОТПРАВИТЬ →';}
+  // Восстанавливаем основной экран если был экран успеха
+  var fields=document.getElementById('okf-fields');
+  var overlay=document.getElementById('okf-overlay');
+  document.getElementById('okf-badge').textContent=c.badge;
+  document.getElementById('okf-hd').textContent=c.hd;
+  document.getElementById('okf-sub').textContent=c.sub;
+  document.getElementById('okf-btn-txt').textContent=c.btn;
+  // Картинка (для консультации)
+  var imgEl=document.getElementById('okf-img');
+  if(imgEl){if(c.img){imgEl.src=c.img;imgEl.style.display='block';}else{imgEl.style.display='none';}}
+  var tf=document.getElementById('okf-tariffs');
+  tf.style.display='grid';tf.style.gridTemplateColumns='1fr 1fr 1fr';tf.innerHTML=c.tars.map(function(t,i){
+    var radio='<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/></svg>';
+    var radioSel='<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#9AFF00" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="5" fill="#9AFF00"/></svg>';
+    return '<div class="okf-t'+(i===0?' sel':'')+'" onclick="OKF.selT(this,\''+t.id+'\')"><span class="okf-radio">'+(i===0?radioSel:radio)+'</span><div class="okf-t-per">'+t.n+'</div>'+(t.p?'<div class="okf-t-price">'+t.p+'</div>':'')+'</div>';
+  }).join('');
+  document.getElementById('okf-fields').innerHTML='<div class="okf-f"><label>Имя <em>*</em></label><input type="text" id="okf-name" placeholder="Как вас зовут?" autocomplete="given-name"></div><div class="okf-f"><label>Email <em>*</em></label><input type="email" id="okf-email" placeholder="your@email.com" autocomplete="email"></div><div class="okf-f"><label>Телефон <em>*</em></label><input type="tel" id="okf-phone" placeholder="+7 999 999 99 99" autocomplete="tel" oninput="OKF.mPhone(this)" onkeydown="OKF.kPhone(event,this)"></div><div class="okf-f"><label>Telegram <em>*</em></label><input type="text" id="okf-tg" placeholder="@username" oninput="OKF.mTg(this)" onfocus="OKF.fTg(this)"></div>';
+  var ex='';c.extra.forEach(function(f){
+    ex+='<div class="okf-f"><label>'+f.l+'</label>';
+    if(f.sel){
+      ex+='<select id="okf-'+f.id+'">'+f.sel.map(function(o){return '<option>'+o+'</option>';}).join('')+'</select>';
+    }else if(f.ta){
+      ex+='<textarea id="okf-'+f.id+'" placeholder="'+(f.ph||'')+'" rows="3"></textarea>';
+    }else if(f.dt){
+      ex+='<input type="datetime-local" id="okf-'+f.id+'" style="color-scheme:dark">';
+    }else{
+      ex+='<input type="text" id="okf-'+f.id+'" placeholder="'+(f.ph||'')+'">';
+    }
+    ex+='</div>';
+  });
+  document.getElementById('okf-extra').innerHTML=ex;
+  document.getElementById('okf-err').classList.remove('show');
+  // Шапка консультации - картинка
+  var ch=document.getElementById('okf-consult-hdr');
+  if(product==='consult'){
+    if(!ch){
+      var d=document.createElement('div');
+      d.id='okf-consult-hdr';
+      d.style.cssText='width:calc(100% + 44px);margin:-24px -22px 16px;border-radius:16px 16px 0 0;overflow:hidden;display:block';
+      d.innerHTML='<img src="media/консультация.jpg" alt="Консультация" style="width:100%;display:block;border-radius:14px 14px 0 0">';
+      var modal=document.getElementById('okf-modal');
+      modal.insertBefore(d,modal.firstChild);
+    } else {
+      ch.style.display='block';
+    }
+  } else {
+    if(ch)ch.style.display='none';
+  }
+  document.getElementById('okf-overlay').classList.add('open');
+  var w=document.getElementById('oko-wrap');if(w)w.style.display='none';
+  document.querySelectorAll('.osp').forEach(function(el){el.style.display='none';});
+}
+function selT(el,id){
+  tariff=id;
+  var RADIO='<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none"/></svg>';
+  var RADIO_SEL='<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#9AFF00" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="5" fill="#9AFF00"/></svg>';
+  document.querySelectorAll('.okf-t').forEach(function(t){
+    t.classList.remove('sel');
+    var r=t.querySelector('.okf-radio');if(r)r.innerHTML=RADIO;
+  });
+  el.classList.add('sel');
+  var r=el.querySelector('.okf-radio');if(r)r.innerHTML=RADIO_SEL;
+}
+function close(){
+  document.getElementById('okf-overlay').classList.remove('open');
+  if(poll){clearInterval(poll);poll=null;}
+  var w=document.getElementById('oko-wrap');if(w)w.style.display='';
+  document.querySelectorAll('.osp').forEach(function(el){el.style.display='';});
+}
+function mPhone(inp){var v=inp.value,hp=v.startsWith('+'),d=v.replace(/\D/g,'');inp.value=(hp?'+':'')+d;}
+function kPhone(e,inp){if([8,46,37,38,39,40,9].includes(e.keyCode))return;if(e.key==='+'&&inp.selectionStart===0)return;if(!/^\d$/.test(e.key))e.preventDefault();}
+function mTg(inp){var v=inp.value.replace(/@/g,'').replace(/\s/g,'');inp.value=v?'@'+v:'';}
+function fTg(inp){if(!inp.value)inp.value='@';setTimeout(function(){inp.setSelectionRange(inp.value.length,inp.value.length);},0);}
+async function submit(){
+  var name=(document.getElementById('okf-name').value||'').trim();
+  var email=(document.getElementById('okf-email').value||'').trim();
+  var phone=(document.getElementById('okf-phone').value||'').trim();
+  var tgEl=document.getElementById('okf-tg');
+  var tg=tgEl?(tgEl.value||'').trim().replace('@',''):'';
+  var errEl=document.getElementById('okf-err');
+  var btn=document.getElementById('okf-btn');
+
+  if(!name||!email||!phone){errEl.textContent='Заполни все обязательные поля';errEl.classList.add('show');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='Введи корректный email';errEl.classList.add('show');document.getElementById('okf-email').focus();return;}
+  var cleanPhone=phone.replace(/[^\d]/g,'');
+  if(cleanPhone.length<7){errEl.textContent='Введи полный номер телефона';errEl.classList.add('show');document.getElementById('okf-phone').focus();return;}
+  errEl.classList.remove('show');
+  btn.disabled=true;
+  btn.textContent='Отправляем...';
+
+  var c=CFG[cur],extra={};
+  if(c&&c.extra)c.extra.forEach(function(f){var el=document.getElementById('okf-'+f.id);if(el)extra[f.id]=el.value;});
+
+  try{
+    await fetch(API+'?action=saveLead',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,email:email,phone:phone,tg:tg,product:cur,tariff:tariff,extra:extra})
+    });
+  }catch(e){}
+
+  sessionStorage.setItem('okf_email',email);
+  sessionStorage.setItem('okf_name',name);
+  sessionStorage.setItem('okf_product',cur);
+  sessionStorage.setItem('okf_tariff',tariff);
+
+  if(c&&c.lava){showWait(name,email);window.open(c.lava,'_blank');}
+  else showOK(name,true);
+}
+function showErr(msg){var e=document.getElementById('okf-err');e.textContent=msg;e.classList.add('show');var btn=document.getElementById('okf-btn');if(btn){btn.disabled=false;document.getElementById('okf-btn-txt').textContent=CFG[cur].btn;}}
+function showWait(name,email){
+  var modal=document.getElementById('okf-modal');
+  modal.innerHTML='<div style="text-align:center;padding:10px 0"><div style="width:64px;height:64px;border-radius:50%;background:rgba(154,255,0,.08);border:2px solid rgba(154,255,0,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2" style="animation:okf-spin 2s linear infinite"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></div><div style="font-family:Unbounded,sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:8px">Ожидаем оплату...</div><div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.6">Страница оплаты открылась в новой вкладке.<br>После оплаты нажми кнопку ниже.</div><div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.4)">Письмо придёт на <strong style="color:rgba(255,255,255,.75)">'+email+'</strong></div><button id="okf-paid-btn" style="width:100%;background:#9AFF00;color:#000;border:none;padding:14px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:13px;font-weight:900;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Я оплатил</button><button id="okf-close-btn" style="width:100%;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer;font-family:Onest,sans-serif">Закрыть</button></div>';
+  document.getElementById('okf-overlay').classList.add('open');
+  var paidBtn=document.getElementById('okf-paid-btn');
+  var closeBtn=document.getElementById('okf-close-btn');
+  if(paidBtn){var _e=email,_n=name;paidBtn.addEventListener('click',function(){OKF.confPaid(_e,_n);});}
+  if(closeBtn){closeBtn.addEventListener('click',function(){OKF.close();});}
+}
+function showOK(name,noP){document.getElementById('okf-modal').innerHTML='<div style="text-align:center;padding:10px 0"><div style="width:72px;height:72px;border-radius:50%;background:rgba(154,255,0,.12);border:2px solid rgba(154,255,0,.35);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div><div style="font-family:Unbounded,sans-serif;font-size:18px;font-weight:900;color:#fff;margin-bottom:8px">'+(noP?'Заявка принята!':'Оплата прошла!')+'</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;line-height:1.6">'+name+', Даниэль уже получил уведомление.</div><div style="background:rgba(154,255,0,.06);border:1px solid rgba(154,255,0,.15);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left;font-size:13px;color:rgba(255,255,255,.65);line-height:1.8">Письмо отправлено на email<br>Напиши <a href="https://t.me/ktodaniel" target="_blank" style="color:#9AFF00;font-weight:700">@ktodaniel</a> в Telegram</div><a href="https://t.me/ktodaniel" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#9AFF00;color:#000;text-decoration:none;padding:13px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:12px;font-weight:900;margin-bottom:10px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Написать Даниэлю</a><button onclick="OKF.close()" style="width:100%;background:none;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:11px;border-radius:12px;font-size:13px;cursor:pointer;font-family:Onest,sans-serif">Закрыть</button></div>';document.getElementById('okf-overlay').classList.add('open');}
+function startPoll(email,name){var cnt=0;if(poll)clearInterval(poll);poll=setInterval(async function(){cnt++;try{var r=await fetch(API+'?action=checkPaid&email='+encodeURIComponent(email)+'&product='+cur);var d=await r.json();if(d.paid){clearInterval(poll);showOK(d.name||name,false);return;}}catch(e){}if(cnt>=36){clearInterval(poll);var ov=document.getElementById('okf-overlay');if(ov.classList.contains('open'))showFail();}},5000);}
+function showFail(){document.getElementById('okf-modal').innerHTML='<div style="text-align:center;padding:10px 0"><div style="width:64px;height:64px;border-radius:50%;background:rgba(255,150,0,.08);border:2px solid rgba(255,150,0,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFA500" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div style="font-family:Unbounded,sans-serif;font-size:16px;font-weight:900;color:#fff;margin-bottom:8px">Оплата не прошла?</div><div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:24px;line-height:1.6">Напиши Даниэлю — он поможет или обсудит рассрочку.</div><button onclick="OKF.retry()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#9AFF00;color:#000;border:none;padding:13px;border-radius:12px;font-family:Unbounded,sans-serif;font-size:12px;font-weight:900;margin-bottom:10px;cursor:pointer">Попробовать снова</button><a href="https://t.me/ktodaniel" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:none;border:1px solid rgba(154,255,0,.2);color:#9AFF00;text-decoration:none;padding:12px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:10px">Написать Даниэлью</a><button onclick="OKF.close()" style="width:100%;background:none;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35);padding:11px;border-radius:12px;font-size:13px;cursor:pointer;font-family:Onest,sans-serif">Закрыть</button></div>';}
+async function confPaid(email,name){var btn=document.querySelector('#okf-modal button');if(btn){btn.disabled=true;btn.textContent='Подтверждаем...';}try{await fetch(API+'?action=confirmPayment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,name:name,product:cur,tariff:sessionStorage.getItem('okf_tariff')||'',secret:'oko2026'})});}catch(e){}clearInterval(poll);showOK(name,false);}
+function retry(){var email=sessionStorage.getItem('okf_email')||'',name=sessionStorage.getItem('okf_name')||'';var c=CFG[cur];if(c&&c.lava){showWait(name,email);window.open(c.lava,'_blank');startPoll(email,name);}}
+document.getElementById('okf-overlay').addEventListener('click',function(e){if(e.target===this)close();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+return{open:open,close:close,selT:selT,submit:submit,mPhone:mPhone,kPhone:kPhone,mTg:mTg,fTg:fTg,confPaid:confPaid,retry:retry};
+})();
+function openAnket(product,e){if(e)e.stopPropagation();OKF.open(product);}
+
+// ══ CHATBOT OKO ══
+window.OKO=(function(){
+var IMG={d:'media/asset_5_46c20f23.jpg'};
+var open=false,started=false,idle=null,lastPopup=null;
+var spDone={};
+var _audioCtx=null;
+
+var S={
+  g:function(k){try{return JSON.parse(localStorage.getItem('oko_'+k));}catch(e){return null;}},
+  s:function(k,v){try{localStorage.setItem('oko_'+k,JSON.stringify(v));}catch(e){}},
+  i:function(k){var v=(S.g(k)||0)+1;S.s(k,v);return v;}
+};
+
+function beep(){
+  try{
+    if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    var ctx=_audioCtx;if(ctx.state==='suspended')ctx.resume();
+    var now=ctx.currentTime,master=ctx.createGain();master.gain.setValueAtTime(.18,now);master.connect(ctx.destination);
+    [{freq:587.3,t:0,dur:.55},{freq:440.0,t:.13,dur:.45}].forEach(function(n){
+      var o=ctx.createOscillator(),g=ctx.createGain(),lp=ctx.createBiquadFilter();
+      lp.type='lowpass';lp.frequency.value=2000;o.connect(lp);lp.connect(g);g.connect(master);
+      o.type='sine';o.frequency.setValueAtTime(n.freq,now+n.t);
+      g.gain.setValueAtTime(0,now+n.t);g.gain.linearRampToValueAtTime(1,now+n.t+.018);g.gain.setValueAtTime(1,now+n.t+.04);g.gain.exponentialRampToValueAtTime(.001,now+n.t+n.dur);
+      o.start(now+n.t);o.stop(now+n.t+n.dur+.05);
+    });
+  }catch(e){}
+  if(navigator.vibrate)navigator.vibrate(40);
+}
+document.addEventListener('touchstart',function(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(_audioCtx.state==='suspended')_audioCtx.resume();},{once:true,passive:true});
+document.addEventListener('click',function(){if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(_audioCtx.state==='suspended')_audioCtx.resume();},{once:true,passive:true});
+
+function nowT(){var d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+
+function popup(txt){
+  ['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(id){var p=document.getElementById(id);if(p)p.classList.remove('show');});
+  var p=document.getElementById('oko-popup'),t=document.getElementById('oko-popup-txt');
+  if(!p||!t)return;t.textContent=txt;p.classList.add('show');setTimeout(function(){p.classList.remove('show');},5000);
+}
+
+function shake(){var a=document.getElementById('oko-av');if(a){a.classList.add('shake');setTimeout(function(){a.classList.remove('shake');},700);}}
+
+function init(){
+  var visits=S.g('visits')||0;S.s('visits',visits+1);
+  setTimeout(function(){
+    var b=document.getElementById('oko-bub');if(b){b.classList.add('vis');beep();}
+    setTimeout(function(){var bd=document.getElementById('oko-badge');if(bd)bd.classList.add('show');},400);
+    setTimeout(function(){
+      var msgs=visits>0?['С возвращением 👋 Помогу подобрать нужный продукт']:
+        ['👁 OKO TEAM — 15К+ клиентов. Покажу что мы делаем за 2 минуты','⚡ Даниэль онлайн — помогу разобраться с продуктами','🔥 Контент-завод, Система OKO, нейробот — выбери своё решение'];
+      popup(msgs[Math.floor(Math.random()*(visits>0?1:msgs.length))]);
+    },2000);
+  },5000);
+}
+
+function openChat(ctx){
+  open=true;document.body.classList.add('chat-open');
+  var w=document.getElementById('oko-win'),wrap=document.getElementById('oko-wrap'),bd=document.getElementById('oko-badge'),p=document.getElementById('oko-popup');
+  if(w){w.classList.add('open');}
+  if(wrap&&window.innerWidth<=480){wrap.style.transform='translateY(110px)';}
+  if(bd)bd.classList.remove('show');if(p)p.classList.remove('show');clearIdle();S.i('opens');
+  if(!started){started=true;setTimeout(function(){startChat(ctx);},350);}
+}
+
+function closeChat(){
+  open=false;document.body.classList.remove('chat-open');
+  var w=document.getElementById('oko-win'),wrap=document.getElementById('oko-wrap');
+  if(w)w.classList.remove('open');
+  if(wrap&&window.innerWidth<=480)wrap.style.transform='translateY(0)';
+  startIdle();
+}
+
+function restart(){started=false;var m=document.getElementById('oko-msgs');if(m)m.innerHTML='<div class="odd">сегодня</div>';setTimeout(function(){startChat();},350);}
+
+var idleMsgs=[
+  {t:25000,m:'Первые 50 клиентов получат систему по цене запуска 🔥'},
+  {t:80000,m:'Пока изучаешь — конкуренты снимают ролики по системе'},
+  {t:160000,m:'Остались вопросы? Разберём за 2 минуты 💬'},
+  {t:280000,m:'Осталось 2 места на эту неделю 🔥'}
+];
+var idleIdx=0;
+function startIdle(){clearIdle();var msg=idleMsgs[Math.min(idleIdx,idleMsgs.length-1)];idleIdx++;idle=setTimeout(function(){if(!open){popup(msg.m);shake();startIdle();}},msg.t);}
+function clearIdle(){if(idle){clearTimeout(idle);idle=null;}}
+
+// Exit intent
+var exitShown=false;
+document.addEventListener('mouseleave',function(e){if(e.clientY<=0&&!open&&!exitShown){exitShown=true;shake();popup('Подожди! Осталось 2 места на эту неделю 🔥');}});
+setInterval(function(){exitShown=false;},60000);
+
+// Scroll section popups
+var spCfg=[
+  {sec:'pain',id:'osp-pain',done:false,msg:'Узнаёшь себя? Помогу найти решение 👆'},
+  {sec:'products',id:'osp-prod',done:false,msg:'Помогу выбрать подходящий продукт 💡'},
+  {sec:'reviews',id:'osp-rev',done:false,msg:'Реальные люди, реальные результаты 👆'},
+  {sec:'portfolio',id:'osp-port',done:false,msg:'Покажу детали любого проекта 📂'},
+  {sec:'cta',id:'osp-cta',done:false,msg:'Готов? Напиши — разберём твою ситуацию 🚀'}
+];
+window.addEventListener('scroll',function(){
+  if(open)return;
+  spCfg.forEach(function(c){
+    if(c.done)return;
+    var s=document.getElementById(c.sec),p=document.getElementById(c.id);
+    if(!s||!p)return;
+    var r=s.getBoundingClientRect();
+    if(r.top<window.innerHeight*.55&&r.bottom>0){
+      c.done=true;
+      ['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(pid){var pp=document.getElementById(pid);if(pp)pp.classList.remove('show');});
+      var bp=document.getElementById('oko-popup');if(bp)bp.classList.remove('show');
+      setTimeout(function(){if(open)return;p.classList.add('show');var bd=document.getElementById('oko-badge');if(bd&&!bd.classList.contains('show'))bd.classList.add('show');setTimeout(function(){p.classList.remove('show');},4000);},300);
+    }
+  });
+},{passive:true});
+['osp-pain','osp-prod','osp-rev','osp-port','osp-cta'].forEach(function(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.addEventListener('click',function(){if(open)closeChat();else openChat('popup');});
+});
+
+// Messages
+function M(){return document.getElementById('oko-msgs');}
+function scrollBot(){var m=M();if(m)setTimeout(function(){m.scrollTop=m.scrollHeight;},60);}
+
+function addMsg(content,from,delay){
+  return new Promise(function(res){
+    setTimeout(function(){
+      var w=document.createElement('div');w.className='om '+(from==='d'?'od':'ou');
+      var t=nowT(),tks=from==='u'?'<span class="otk">✓✓</span>':'';
+      w.innerHTML='<div class="omb">'+content+'</div><div class="omt">'+t+' '+tks+'</div>';
+      M().appendChild(w);scrollBot();res();
+    },delay||0);
+  });
+}
+
+function typing(ms){
+  return new Promise(function(res){
+    var w=document.createElement('div');w.className='om od';w.id='oko-typ';
+    w.innerHTML='<div class="otyp"><span></span><span></span><span></span></div>';
+    M().appendChild(w);scrollBot();
+    setTimeout(function(){var e=document.getElementById('oko-typ');if(e)e.remove();res();},ms||1100);
+  });
+}
+
+function replies(btns){
+  return new Promise(function(res){
+    var w=document.createElement('div');w.className='ors';
+    btns.forEach(function(b){
+      var el=document.createElement('button');el.className='orb';el.textContent=b.t;
+      el.onclick=function(){w.remove();addMsg(b.t,'u').then(function(){handle(b);});};
+      w.appendChild(el);
+    });
+    M().appendChild(w);scrollBot();res();
+  });
+}
+
+function rb(t,fn){return{t:t,fn:fn};}
+
+// Chat flows
+async function startChat(ctx){
+  var visits=S.g('visits')||1;
+  await typing(800);
+  await addMsg(visits>1?'С возвращением! Чем могу помочь? 👋':'Привет! Помогу разобраться с продуктами OKO TEAM и подобрать нужное решение 🎯','d');
+  await typing(600);
+  await fMenu();
+}
+
+async function fMenu(){
+  await replies([
+    rb('🎯 Хочу понять какой продукт подойдёт',fQuiz),
+    rb('📋 Система OKO — контент-план и стратегия',fSistema),
+    rb('🎬 Контент-завод — ролики без съёмок',fZavod),
+    rb('💬 Воронка + нейробот — продажи 24/7',fBot),
+    rb('🌐 Сайт / бот / приложение',fWeb),
+    rb('📞 Консультация с Даниэлем',fConsult),
+    rb('⭐ Посмотреть отзывы',fReviews)
+  ]);
+}
+
+async function fQuiz(){
+  await typing(800);await addMsg('Отлично! Пара вопросов чтобы подобрать лучшее решение.\n\nКакая главная задача прямо сейчас?','d');
+  await replies([
+    rb('📋 Нет системы и стратегии — хаос',async function(){await typing(700);await addMsg('Понял. Тебе нужна <b>Система OKO</b> — твой личный штаб:\n• Контент-план 90 дней с текстами\n• Бизнес-план 18 блоков\n• Скрипты продаж\n• Ежедневный чек-лист\n\nСоздаётся персонально за 10 дней.','d');await typing(500);await fSistema();}),
+    rb('🎬 Хочу много контента без съёмок',async function(){await typing(700);await addMsg('Тогда тебе нужен <b>Контент-завод</b> — от 30 до 500 роликов в месяц без единой съёмки. AI-аватар, стоковые видео, нарезки вирусных роликов.','d');await typing(500);await fZavod();}),
+    rb('💰 Есть аудитория но нет продаж',async function(){await typing(700);await addMsg('Тогда нужна <b>воронка + нейробот</b>. Каждый комментарий → бот пишет в direct → продаёт 24/7 без твоего участия.','d');await typing(500);await fBot();}),
+    rb('🌐 Нужен сайт или бот',fWeb),
+    rb('🎯 Хочу разобрать с Даниэлем лично',fConsult)
+  ]);
+}
+
+async function fSistema(){
+  await typing(800);
+  await addMsg('<b>СИСТЕМА OKO</b> — твой личный штаб в одном HTML-файле.\n\n• Контент-план 90 дней с полными текстами\n• Бизнес-план 18 блоков под нишу\n• Скрипты продаж и шаблоны договоров\n• Ежедневный чек-лист с прогресс-баром\n• Генераторы КП и промпты под ролики\n\nСоздаётся персонально за 10 дней.\n💰 от 25 000 ₽ · 1 / 3 / 6 / 12 месяцев','d');
+  await typing(500);
+  await replies([
+    rb('✅ Активировать Систему OKO',function(){window.location.href='/sistema';}),
+    rb('💰 Цены тарифов',async function(){await typing(600);await addMsg('Тарифы Системы OKO:\n\n📅 1 месяц — 25 000 ₽\n📅 3 месяца — 65 000 ₽ (экономия 13%)\n📅 6 месяцев — 120 000 ₽ (экономия 20%)\n📅 Год — 200 000 ₽ (экономия 33%)','d');await typing(500);await fSistema();}),
+    rb('⭐ Показать примеры систем',async function(){await typing(600);await addMsg('Примеры готовых систем:\n• koptylich.ru/sistema — Коптилыч\n• mcrfloorcare.co.uk/sistem — MCR UK\n• MindOS, Сан Саныч, Ekaterina\n\nКаждая система создаётся персонально.','d');await typing(500);await fSistema();}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fZavod(){
+  await typing(800);
+  await addMsg('<b>КОНТЕНТ-ЗАВОД OKO</b> — от 30 до 500 роликов в месяц без съёмок.\n\n🤖 HeyGen — AI-аватар с твоим лицом\n🎬 Fliki — стоковые видео по сценарию\n✂️ OpusClip — нарезки вирусных роликов\n📅 Автопостинг во все соцсети\n\nТарифы:\nСТАРТ — 19 900₽ · 30 роликов + 4 карусели\nРОСТ — 49 900₽ · 100 роликов + оформление\nЗАВОД — 84 900₽ · 200 роликов + нейробот\nИМПЕРИЯ — 149 900₽ · 500 роликов + сайт','d');
+  await typing(500);
+  await replies([
+    rb('🚀 Запустить контент-завод',function(){window.location.href='/zavod';}),
+    rb('✉️ Написать Даниэлью напрямую',fTG),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fBot(){
+  await typing(800);
+  await addMsg('<b>ВОРОНКА + НЕЙРОБОТ</b>\n\nКаждый комментарий → бот пишет в direct → квалифицирует → продаёт → клиент оплачивает. Без тебя 24/7.\n\nТарифы:\nБАЗОВАЯ — 5 000₽ · 1-3 продукта\nСРЕДНЯЯ — 10 000₽ · 1-5 продуктов + GPT\nПОЛНАЯ — 15 000₽ · 10+ продуктов + GPT','d');
+  await typing(500);
+  await replies([
+    rb('✅ Подключить нейробота',function(){OKF.open('bot');}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fWeb(){
+  await typing(800);
+  await addMsg('<b>САЙТЫ / БОТЫ / ПРИЛОЖЕНИЯ</b> под ключ.\n\n🌐 Лендинг — от 3 000₽\n🤖 Telegram-бот — от 5 000₽\n📱 Многостраничный сайт — от 10 000₽\n📲 Приложение — от 15 000₽\n\n12+ проектов: Коптилыч, MCR UK, Бриус, MindOS, ОТП Банк.','d');
+  await typing(500);
+  await replies([
+    rb('📋 Посмотреть портфолио',async function(){await typing(600);await addMsg('Наши работы:\n• koptylich.ru/meat — магазин копчения\n• mcrfloorcare.co.uk — клининг UK\n• briusteam.ru — хаб команды Бриуса\n• MindOS, Сан Саныч, ОТП Банк\n\nВсё в разделе Портфолио ↑','d');await typing(500);await fWeb();}),
+    rb('✅ Заказать разработку',fTG),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fConsult(){
+  await typing(800);
+  await addMsg('<b>КОНСУЛЬТАЦИЯ с Даниэлем</b>\n\nЛичный созвон один на один.\n\n⏱ 1 час — 14 900₽ · разбор + план + запись + поддержка 7 дней\n⏱ 3 часа — 34 900₽ · контент-план 30 дней + стратегия\n⏱ 5 часов — 49 900₽ · бизнес-план + поддержка 30 дней','d');
+  await typing(500);
+  await replies([
+    rb('📅 Записаться на консультацию',function(){OKF.open('consult');}),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fReviews(){
+  await typing(800);
+  await addMsg('Вот что говорят клиенты:\n\n"Безмерно счастлива что познакомилась! Всё оперативно, качественно, профессионально." — Malika\n\n"Было 2.4К → стало 3.7К подписчиков!" — A1D\n\n"Публикую видео в 10 сетях автоматически!" — чанна','d');
+  await typing(500);
+  await replies([
+    rb('⭐ Все отзывы в Telegram',function(){window.open('https://t.me/okoreviews','_blank');}),
+    rb('🚀 Хочу такие же результаты',fQuiz),
+    rb('← Назад',fMenu)
+  ]);
+}
+
+async function fTG(){
+  window.open('https://t.me/ktodaniel','_blank');
+  await typing(600);await addMsg('Открыл Telegram! Напиши «Привет» — Даниэль ответит лично 👋','d');
+  await typing(400);await replies([rb('🏠 Главное меню',fMenu)]);
+}
+
+function handle(b){if(b.fn)b.fn();}
+
+// Input send
+function sendInput(){
+  var inp=document.getElementById('oko-input');if(!inp)return;var v=inp.value.trim();if(!v)return;
+  addMsg(v,'u');inp.value='';
+  var low=v.toLowerCase();
+  if(low.includes('систем'))return fSistema();
+  if(low.includes('контент')||low.includes('завод')||low.includes('ролик'))return fZavod();
+  if(low.includes('бот')||low.includes('воронк'))return fBot();
+  if(low.includes('сайт')||low.includes('приложени'))return fWeb();
+  if(low.includes('консульт')||low.includes('созвон'))return fConsult();
+  if(low.includes('цен')||low.includes('сколько'))return fReviews();
+  if(low.includes('отзыв'))return fReviews();
+  if(low.includes('привет')||low.includes('здравств'))return fMenu();
+  typing(900).then(function(){addMsg('Понял! Для точного ответа лучше написать Даниэлю — он разберёт за 2 минуты 👇','d').then(fTG);});
+}
+
+var inp=document.getElementById('oko-input');
+var snd=document.getElementById('oko-send');
+if(snd)snd.addEventListener('click',sendInput);
+if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendInput();}});
+
+function _trackAct(){S.i('bar_act');}
+function toggle(){if(open)closeChat();else openChat();}
+
+init();startIdle();
+return{open:openChat,close:closeChat,toggle:toggle,restart:restart,_trackAct:_trackAct};
+})();
+
+// ══ COUNTER ANIMATION ══
+(function(){
+  var done=false;
+  function animateCounters(){
+    if(done)return;done=true;
+    document.querySelectorAll('.h-stat-n[data-count]').forEach(function(el){
+      var target=parseFloat(el.dataset.count);
+      var prefix=el.dataset.prefix||'';
+      var suffix=el.dataset.suffix||'';
+      var decimals=parseInt(el.dataset.decimals||0);
+      var step=parseFloat(el.dataset.step||1);
+      var duration=1800;
+      var steps=Math.ceil(target/step);
+      var interval=duration/steps;
+      var current=0;
+      var timer=setInterval(function(){
+        current+=step;
+        if(current>=target){current=target;clearInterval(timer);}
+        el.textContent=prefix+(decimals>0?current.toFixed(decimals):Math.floor(current))+suffix;
+      },interval);
+    });
+  }
+  // Запускаем когда hero-stats появляется на экране
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting)animateCounters();
+    });
+  },{threshold:.3});
+  var stats=document.querySelector('.hero-stats');
+  if(stats)io.observe(stats);
+  else window.addEventListener('load',function(){
+    var s=document.querySelector('.hero-stats');
+    if(s)io.observe(s);
+  });
+})();
+</script>
+</body>
+</html>
