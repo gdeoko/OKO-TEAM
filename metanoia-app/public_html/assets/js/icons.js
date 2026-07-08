@@ -59,6 +59,7 @@ const ICON_PATHS = {
   flower:  '<circle cx="12" cy="8" r="2.4"/><path d="M12 8c0-3 2-4 4-3 1 2-1 4-4 3ZM12 8c0-3-2-4-4-3-1 2 1 4 4 3ZM12 8c2 1 3 3 2 5-2 0-3-2-2-5ZM12 8c-2 1-3 3-2 5 2 0 3-2 2-5Z"/><path d="M12 12v9"/>',
   tree:    '<path d="M12 22v-6"/><path d="M12 16a6 6 0 0 0 6-6 5 5 0 0 0-2-4 5 5 0 0 0-8 0 5 5 0 0 0-2 4 6 6 0 0 0 6 6Z"/>',
   crown:   '<path d="M3 8l4 5 5-8 5 8 4-5-2 12H5Z"/><path d="M5 20h14"/>',
+  target:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
 };
 
 /**

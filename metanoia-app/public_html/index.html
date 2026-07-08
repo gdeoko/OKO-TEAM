@@ -346,11 +346,11 @@
         <span data-icon="play" data-size="18" class="games-tile__play"></span>
       </button>
 
-      <button class="games-tile" id="openVerseGame">
+      <button class="games-tile" id="openGamesHub">
         <div class="games-tile__icon"><span data-icon="gamepad" data-size="24"></span></div>
         <div class="games-tile__body">
-          <div class="games-tile__name">Собери стих</div>
-          <div class="games-tile__desc">Пазл-игра · собери стих из слов · +15–30 XP</div>
+          <div class="games-tile__name">Мини-игры</div>
+          <div class="games-tile__desc">20 игр · собери стих, мемори, викторина и другие</div>
         </div>
         <span data-icon="play" data-size="18" class="games-tile__play"></span>
       </button>
@@ -638,6 +638,42 @@
         <button class="reader-bar__size" id="readerSize" aria-label="Размер шрифта">A<sup>+</sup></button>
       </div>
       <article class="reader" id="readerBody"></article>
+    </section>
+
+
+    <!-- ── ХАБ ИГР: все 20 (этап 5) ── -->
+    <section class="screen" data-screen="games">
+      <button class="child-back" id="gamesBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <h1 class="screen-title" style="margin-bottom:4px">Мини-игры</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">20 игр с библейской тематикой. Учись играя — за каждую игру начисляется XP.</p>
+      <div class="ghub-tabs">
+        <button class="ghub-tab ghub-tab--on" data-gcat="free">Бесплатные</button>
+        <button class="ghub-tab" data-gcat="premium">Метанойя+</button>
+        <button class="ghub-tab" data-gcat="daily">Ежедневные</button>
+      </div>
+      <div class="ghub" id="ghub"></div>
+    </section>
+
+    <!-- ── ИГРА: БИБЛЕЙСКОЕ МЕМОРИ ── -->
+    <section class="screen" data-screen="memory">
+      <button class="child-back" id="memBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Библейское мемори</div>
+        <div class="verse-head__meta">Найди все пары · ходов: <span id="memMoves">0</span></div>
+      </div>
+      <div class="mem-grid" id="memGrid"></div>
+    </section>
+
+    <!-- ── ИГРА: ВИКТОРИНА ── -->
+    <section class="screen" data-screen="quiz">
+      <button class="child-back" id="quizBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Викторина на скорость</div>
+        <div class="verse-head__meta">Вопрос <span id="quizNum">1</span> из 5 · очки: <span id="quizScore">0</span></div>
+      </div>
+      <div class="quiz-timer"><div class="quiz-timer__bar" id="quizBar"></div></div>
+      <div class="quiz-q" id="quizQ"></div>
+      <div class="quiz-opts" id="quizOpts"></div>
     </section>
 
   </main>

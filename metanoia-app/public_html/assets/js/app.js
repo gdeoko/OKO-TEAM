@@ -1395,6 +1395,181 @@ function initTemple() {
 
 
 
+
+/* ───────── ХАБ ИГР + МЕМОРИ + ВИКТОРИНА (этап 5) ───────── */
+
+const GAMES = {
+  free: [
+    { key: 'verse', icon: 'book', name: 'Собери стих', meta: 'Пазл-слова · +15–30 XP', play: true },
+    { key: 'memory', icon: 'sparkle', name: 'Библейское мемори', meta: 'Найди пары · +20 XP', play: true },
+    { key: 'quiz', icon: 'flame', name: 'Викторина на скорость', meta: '10 вопросов · +10–30 XP', play: true },
+    { key: 'who', icon: 'search', name: 'Кто это?', meta: 'Угадай по подсказкам', play: false },
+    { key: 'chrono', icon: 'clock', name: 'Хронология', meta: 'Расставь события', play: false },
+  ],
+  premium: [
+    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '100+ уровней' },
+    { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер' },
+    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткость' },
+    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных' },
+    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Строй-тайкун' },
+    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав' },
+    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Угадай историю' },
+    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Моральный выбор' },
+    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Для всей семьи' },
+  ],
+  daily: [
+    { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true },
+    { key: 'temple-b', icon: 'church', name: 'Строитель храма', meta: 'Растущий храм', play: true },
+    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP' },
+    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Метанойя+' },
+    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Выбери каноническое' },
+  ],
+};
+
+function openGamesHub() {
+  renderGhub('free');
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'games'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function renderGhub(cat) {
+  $$('#ghub, .ghub-tab'); // noop
+  $$('.ghub-tab').forEach((b) => b.classList.toggle('ghub-tab--on', b.dataset.gcat === cat));
+  const locked = cat === 'premium';
+  $('#ghub').innerHTML = GAMES[cat].map((g) => `
+    <button class="gcard ${g.play ? 'gcard--play' : 'gcard--locked'}" data-game="${g.key}">
+      ${!g.play ? `<div class="gcard__lock">${ICON('lock', 15)}</div>` : ''}
+      <div class="gcard__icon">${ICON(g.icon, 24)}</div>
+      <div class="gcard__name">${g.name}</div>
+      <div class="gcard__meta">${g.meta}</div>
+    </button>`).join('');
+  $$('#ghub [data-game]').forEach((el) => el.addEventListener('click', () => {
+    const k = el.dataset.game;
+    if (k === 'verse') openVerse('easy');
+    else if (k === 'memory') openMemory();
+    else if (k === 'quiz') openQuiz();
+    else if (k === 'journey') openJourneyScreen();
+    else if (k === 'temple-b') openTempleScreen();
+    else toast('Игра появится на следующих этапах');
+  }));
+}
+
+function initGamesHub() {
+  $('#openGamesHub')?.addEventListener('click', openGamesHub);
+  $('#gamesBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $$('.ghub-tab').forEach((b) => b.addEventListener('click', () => renderGhub(b.dataset.gcat)));
+}
+
+/* ── Библейское мемори ── */
+const MEM_PAIRS = ['dove', 'church', 'cross', 'star', 'book', 'flame', 'heart', 'crown'];
+let memState = { flipped: [], matched: 0, moves: 0, lock: false };
+
+function openMemory() {
+  const cards = [...MEM_PAIRS, ...MEM_PAIRS].map((icon, i) => ({ icon, i }));
+  // детерминированная тасовка
+  for (let i = cards.length - 1; i > 0; i--) { const j = (i * 7 + 5) % (i + 1); [cards[i], cards[j]] = [cards[j], cards[i]]; }
+  memState = { flipped: [], matched: 0, moves: 0, lock: false, cards };
+  $('#memMoves').textContent = '0';
+  $('#memGrid').innerHTML = cards.map((c, idx) => `
+    <div class="mcard" data-mem="${idx}" data-icon="${c.icon}">
+      <div class="mcard__face mcard__back">${ICON('sparkle', 22)}</div>
+      <div class="mcard__face mcard__front">${ICON(c.icon, 24)}</div>
+    </div>`).join('');
+  $$('#memGrid .mcard').forEach((el) => el.addEventListener('click', () => memFlip(el)));
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'memory'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+
+function memFlip(el) {
+  if (memState.lock || el.classList.contains('mcard--flip') || el.classList.contains('mcard--done')) return;
+  el.classList.add('mcard--flip');
+  memState.flipped.push(el);
+  if (memState.flipped.length === 2) {
+    memState.moves++; $('#memMoves').textContent = memState.moves;
+    memState.lock = true;
+    const [a2, b2] = memState.flipped;
+    if (a2.dataset.icon === b2.dataset.icon) {
+      setTimeout(() => {
+        a2.classList.add('mcard--done'); b2.classList.add('mcard--done');
+        memState.flipped = []; memState.lock = false; memState.matched++;
+        if (memState.matched === MEM_PAIRS.length) {
+          const stars = memState.moves <= 12 ? 3 : memState.moves <= 18 ? 2 : 1;
+          if (window.MAGIC) MAGIC.rewardModal({ icon: 'sparkle', title: 'Все пары найдены!',
+            subtitle: `Ходов: ${memState.moves} · ${'★'.repeat(stars)}`, xp: 20 });
+        }
+      }, 500);
+    } else {
+      setTimeout(() => { a2.classList.remove('mcard--flip'); b2.classList.remove('mcard--flip'); memState.flipped = []; memState.lock = false; }, 800);
+    }
+  }
+}
+
+function initMemory() { $('#memBack')?.addEventListener('click', openGamesHub); }
+
+/* ── Викторина на скорость ── */
+const QUIZ = [
+  { q: 'Кто построил ковчег, чтобы спастись от потопа?', opts: ['Моисей', 'Ной', 'Давид', 'Авраам'], right: 1 },
+  { q: 'Сколько дней Бог творил мир?', opts: ['3', '7', '12', '40'], right: 1 },
+  { q: 'Кто победил великана Голиафа?', opts: ['Давид', 'Самсон', 'Иона', 'Даниил'], right: 0 },
+  { q: 'Где родился Иисус?', opts: ['Иерусалим', 'Назарет', 'Вифлеем', 'Египет'], right: 2 },
+  { q: 'Как называется разговор с Богом?', opts: ['Песня', 'Молитва', 'Урок', 'Игра'], right: 1 },
+];
+let quizState = { i: 0, score: 0, timer: null, t: 100 };
+
+function openQuiz() {
+  quizState = { i: 0, score: 0, timer: null, t: 100 };
+  $('#quizScore').textContent = '0';
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'quiz'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const q = QUIZ[quizState.i];
+  $('#quizNum').textContent = quizState.i + 1;
+  $('#quizQ').textContent = q.q;
+  $('#quizOpts').innerHTML = q.opts.map((o, k) => `<button class="qopt" data-opt="${k}">${o}</button>`).join('');
+  $$('#quizOpts .qopt').forEach((el) => el.addEventListener('click', () => answerQuiz(Number(el.dataset.opt))));
+  // таймер 10 сек
+  quizState.t = 100;
+  clearInterval(quizState.timer);
+  const bar = $('#quizBar'); bar.style.width = '100%';
+  quizState.timer = setInterval(() => {
+    quizState.t -= 1; bar.style.width = quizState.t + '%';
+    if (quizState.t <= 0) answerQuiz(-1);
+  }, 100);
+}
+
+function answerQuiz(pick) {
+  clearInterval(quizState.timer);
+  const q = QUIZ[quizState.i];
+  const opts = $$('#quizOpts .qopt');
+  opts.forEach((el, k) => {
+    el.style.pointerEvents = 'none';
+    if (k === q.right) el.classList.add('qopt--right');
+    else if (k === pick) el.classList.add('qopt--wrong');
+  });
+  if (pick === q.right) {
+    const bonus = Math.round(quizState.t / 20);
+    quizState.score += 2 + bonus;
+    $('#quizScore').textContent = quizState.score;
+  }
+  setTimeout(() => {
+    if (quizState.i + 1 < QUIZ.length) { quizState.i++; renderQuiz(); }
+    else {
+      const perfect = quizState.score >= QUIZ.length * 2;
+      if (window.MAGIC) MAGIC.rewardModal({ icon: 'flame', title: 'Викторина пройдена!',
+        subtitle: `Твой результат: ${quizState.score} очков${perfect ? ' · молниеносно!' : ''}`,
+        xp: 10 + quizState.score });
+    }
+  }, 1100);
+}
+
+function initQuiz() { $('#quizBack')?.addEventListener('click', () => { clearInterval(quizState.timer); openGamesHub(); }); }
+
 /* ───────── КНИГА «МЕТАНОЙЯ»: оглавление + читалка (раздел 9.7) ───────── */
 
 const BOOK = {
@@ -1735,6 +1910,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initTemple();
   initJourney();
   initBook();
+  initGamesHub();
+  initMemory();
+  initQuiz();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
