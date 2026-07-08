@@ -27,7 +27,21 @@ npm i playwright   # браузер уже в /opt/pw-browsers/chromium
 Сохранять mp3 + json со словами `{w, t, d}` - на них строятся караоке-субтитры и
 привязка анимаций к конкретным словам. Ретраи 4 раза (сервис моргает).
 
-### 3. Стоковые кадры (Mixkit - без ключей, бесплатная лицензия)
+### 3. Стоковые кадры - ПРИОРИТЕТ ИСТОЧНИКОВ
+Ключи в secrets.env (корень репо, source перед работой: `source secrets.env`).
+1. **Pexels API** (PEXELS_API_KEY) - ГЛАВНЫЙ: нативные вертикальные 1080x1920+,
+   `api.pexels.com/videos/search?query=...&orientation=portrait&size=medium` -
+   скрипт pipeline/fetch_pexels.py. curl с --cacert /root/.ccr/ca-bundle.crt.
+2. **Pixabay API** (PIXABAY_API_KEY) - запасной: `pixabay.com/api/videos/?key=...&q=...`
+3. **Mixkit** - без ключа (см. ниже), кадры в основном landscape 720/1080.
+Скейл для любой ориентации: `scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920`.
+Звуки точные: **Freesound API** (FREESOUND_API_KEY):
+`freesound.org/apiv2/search/text/?query=...&token=...&fields=id,name,previews` -
+качать previews.preview-hq-mp3 (без OAuth). Пример: живой эмбиент пекарни, хруст корки.
+Уникальные кадры которых нет в стоках: fal.ai (FAL_KEY, ~5-15р/клип) или
+HF ZeroGPU (HF_TOKEN, FLUX/Wan через gradio_client) - подключать по запросу.
+
+### 3б. Mixkit (без ключей, бесплатная лицензия)
 - Категории: `https://mixkit.co/free-stock-video/{категория}/` (curl с UA Mozilla)
 - Слаги видео в HTML, файлы: `https://assets.mixkit.co/videos/{id}/{id}-1080.mp4` (или -720)
 - Curl к pexels/pixabay режется Cloudflare - не тратить время

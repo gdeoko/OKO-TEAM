@@ -23,11 +23,11 @@ for s in segs[:-1]:
 bounds.append(main_end)
 windows = [(bounds[i], bounds[i+1]) for i in range(5)]
 SCENE_SHOTS = [
-    [('14326',6.0), ('42471',0.2), ('1669',6.0)],
-    [('50406',2.0), ('42464',4.0), ('42465',5.0)],
-    [('14669',1.0), ('8766',2.0), ('44074',3.0), ('4915',3.0)],
-    [('6787',8.0), ('6948',10.0), ('29330',0.5)],
-    [('1512',3.0), ('47208',5.0), ('2377',2.0), ('1512',20.0)],
+    [('px_knead',2.0), ('px_flour',3.0), ('px_baker',4.0)],
+    [('px_record',6.0), ('px_knead',10.0), ('px_flour',12.0)],
+    [('px_phone',3.0), ('px_edit',8.0), ('px_phone',18.0), ('px_edit',20.0)],
+    [('px_shop',2.0), ('px_oven',2.0), ('px_fresh',1.0)],
+    [('1512',3.0), ('px_camera',0.4), ('px_edit',24.0), ('px_record',22.0)],
 ]
 shots = []
 for (w0,w1), sc in zip(windows, SCENE_SHOTS):
@@ -40,14 +40,14 @@ print('total', round(total,2))
 # ============ STAGE 1: montage (concat+zoom+glitch+watermark+bar+grade) ============
 inputs = []
 for cid, ss, d in shots:
-    inputs += ['-ss', f'{ss:.2f}', '-t', f'{d+0.3:.2f}', '-i', f'clips/{cid}.mp4']
-inputs += ['-loop','1','-framerate','30','-t',f'{COVER:.2f}','-i','v001_cover3.jpg']
+    inputs += ['-ss', f'{ss:.2f}', '-t', f'{d+0.3:.2f}', '-i', (f'clips_px/{cid}.mp4' if cid.startswith('px_') else f'clips/{cid}.mp4')]
+inputs += ['-loop','1','-framerate','30','-t',f'{COVER:.2f}','-i','v001_cover4.jpg']
 inputs += ['-loop','1','-framerate','30','-t','2.5','-i','logo_hd.png']
 fc = []
 for i,(cid, ss, d) in enumerate(shots):
     zoom = "'min(1.02+0.0022*on,1.18)'" if i % 2 == 0 else "'max(1.18-0.0022*on,1.02)'"
     glitch = ",chromashift=crh=-9:cbh=9:enable='lt(t,0.10)'" if i else ""
-    fc.append(f"[{i}:v]trim=0:{d:.3f},setpts=PTS-STARTPTS,scale=-2:1920,crop=1080:1920,fps=30,zoompan=z={zoom}:d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,setsar=1{glitch}[v{i}]")
+    fc.append(f"[{i}:v]trim=0:{d:.3f},setpts=PTS-STARTPTS,scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,fps=30,zoompan=z={zoom}:d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30,setsar=1{glitch}[v{i}]")
 fc.append(f"[{N}:v]scale=1080:1920,fps=30,setsar=1[vcov]")
 fc.append(f"color=c=0x0d0d0d:s=1080x1920:r=30:d={ENDCARD}[cbg]")
 fc.append(f"[{N+1}:v]split=2[lga][lgb]")
@@ -197,7 +197,7 @@ I_WH0 = idx
 for w in WH: add('-i', w)
 I_SHUT = add('-i','audio/sfx_1133.mp3')
 I_NTF  = add('-i','audio/sfx_2354.mp3')
-I_CRWD = add('-i','audio/sfx_368.mp3')
+I_CRWD = add('-i','audio/fs_bakery.mp3')
 T_CNT = starts['s3'] + 1.0
 fc = ["[0:v]ass=subs7.ass:fontsdir=fonts[vout]"]
 vo_in = []
@@ -218,10 +218,14 @@ fc.append(f"[{I_SHUT}:a]atrim=0:1.2,adelay={ms}|{ms},volume=0.5[shut]"); sfx.app
 ms = int((T_CNT+1.35)*1000)
 fc.append(f"[{I_NTF}:a]atrim=0:1.5,adelay={ms}|{ms},volume=0.45[ntf]"); sfx.append("[ntf]")
 ms = int(bounds[3]*1000)
-fc.append(f"[{I_CRWD}:a]atrim=2:9,volume=0.09,adelay={ms}|{ms}[crw]"); sfx.append("[crw]")
+fc.append(f"[{I_CRWD}:a]atrim=4:11,volume=0.10,adelay={ms}|{ms}[crw]"); sfx.append("[crw]")
+inputs += ['-i','audio/fs_crunch.mp3']
+I_CRN = idx
+ms = int((bounds[3]+5.4)*1000)
+fc.append(f"[{I_CRN}:a]atrim=0.3:2.2,volume=0.5,adelay={ms}|{ms}[crn]"); sfx.append("[crn]")
 fc.append("[vo][mus]" + "".join(sfx) + f"amix=inputs={2+len(sfx)}:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
 run(['ffmpeg','-y','-v','error'] + inputs + ['-filter_complex', ';'.join(fc),
      '-map','[vout]','-map','[aout]','-t',f'{total:.2f}',
      '-c:v','libx264','-preset','medium','-crf','22','-pix_fmt','yuv420p',
-     '-c:a','aac','-b:a','192k','-movflags','+faststart','v001_bakery_v11.mp4'])
-print('stage3 ok', probe('v001_bakery_v11.mp4'))
+     '-c:a','aac','-b:a','192k','-movflags','+faststart','v001_bakery_v12.mp4'])
+print('stage3 ok', probe('v001_bakery_v12.mp4'))
