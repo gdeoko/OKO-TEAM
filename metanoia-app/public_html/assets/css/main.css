@@ -1363,3 +1363,23 @@ body.in-chat .header { display: none; }
   .temple-svg .t-part { transition: opacity 300ms; transform: none; }
   .temple-svg.t-complete .t-radiance, .t-gild.t-part--on { animation: none; }
 }
+
+
+/* ══════════ ПУТЕШЕСТВИЕ ВЕРЫ ══════════ */
+.journey-wrap {
+  background: linear-gradient(180deg, #EAF1F6, #FBF6EE);
+  border-radius: var(--radius-modal);
+  padding: 8px; overflow: hidden;
+}
+.journey-svg { width: 100%; height: auto; display: block; }
+#jPathDone { transition: stroke-dashoffset 1.6s var(--ease); }
+.j-stop-dot { transition: all 300ms var(--ease); }
+.j-stop-label { font-family: var(--font-body); font-size: 11px; font-weight: 600; fill: var(--navy); }
+.j-stop-label--locked { fill: var(--gray); opacity: .6; }
+#jAvatar { transition: transform 1.6s cubic-bezier(.4,0,.2,1); }
+.j-stop-ring { animation: jpulse 2s var(--ease) infinite; transform-origin: center; }
+@keyframes jpulse { 50% { opacity: .3; r: 20; } }
+@media (prefers-reduced-motion: reduce) {
+  #jPathDone, #jAvatar { transition: none; }
+  .j-stop-ring { animation: none; }
+}

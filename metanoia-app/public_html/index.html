@@ -392,13 +392,13 @@
       </div>
 
       <h2 class="section-title">Путешествие веры</h2>
-      <div class="card temple">
+      <button class="card temple" id="openJourney" style="width:100%;text-align:left">
         <div class="temple__icon"><span data-icon="map" data-size="44"></span></div>
         <div class="temple__body">
-          <div class="temple__stage">Остановка 3 · «Египет»</div>
-          <div class="temple__note">Карта пути откроется на этапе мини-игр</div>
+          <div class="temple__stage">Остановка 3 · «Египет» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Нажми, чтобы увидеть свой путь на карте</div>
         </div>
-      </div>
+      </button>
     </section>
 
 
@@ -581,6 +581,28 @@
       </div>
 
       <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик (демо)</button>
+    </section>
+
+
+    <!-- ── ПУТЕШЕСТВИЕ ВЕРЫ: карта прогресса (этап 5) ── -->
+    <section class="screen" data-screen="journey">
+      <button class="child-back" id="journeyBack"><span data-icon="back" data-size="18"></span> Профиль ребёнка</button>
+      <h1 class="screen-title" style="margin-bottom:6px">Путешествие веры</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">Каждый пройденный блок ведёт по библейскому пути. Смотри, как далеко ты уже прошёл!</p>
+      <div class="journey-wrap">
+        <svg id="journeySvg" viewBox="0 0 320 560" class="journey-svg" aria-label="Карта пути веры">
+          <path id="jPath" d="M50 40 C 250 70, 40 130, 150 170 S 300 240, 200 290 S 40 360, 160 410 S 300 470, 150 520"
+            fill="none" stroke="rgba(212,165,116,.45)" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
+          <path id="jPathDone" d="M50 40 C 250 70, 40 130, 150 170 S 300 240, 200 290 S 40 360, 160 410 S 300 470, 150 520"
+            fill="none" stroke="var(--terracotta)" stroke-width="5" stroke-linecap="round"/>
+          <g id="jStops"></g>
+          <g id="jAvatar">
+            <defs><clipPath id="jClip"><circle r="17"/></clipPath></defs>
+            <circle r="20" fill="#fff" stroke="var(--gold)" stroke-width="3"/>
+            <image id="jAvatarImg" href="assets/img/avatars/lion.jpg" x="-17" y="-17" width="34" height="34" clip-path="url(#jClip)"/>
+          </g>
+        </svg>
+      </div>
     </section>
 
   </main>

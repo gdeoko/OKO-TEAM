@@ -1390,6 +1390,68 @@ function initTemple() {
   });
 }
 
+
+/* ───────── ПУТЕШЕСТВИЕ ВЕРЫ: карта прогресса ───────── */
+
+const JOURNEY = [
+  'Сад Эдема', 'Ноев ковчег', 'Египет', 'Синай',
+  'Земля обетованная', 'Иерусалим', 'Вифлеем', 'Голгофа', 'Воскресение'
+];
+let journeyStop = 2; // остановка 3 (0-индекс) — демо
+
+function initJourney() {
+  $('#openJourney')?.addEventListener('click', openJourneyScreen);
+  $('#journeyBack')?.addEventListener('click', () => {
+    $('#nav').style.display = 'none';
+    openChild(DEMO.children[0]);
+  });
+}
+
+function openJourneyScreen() {
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'journey'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+  requestAnimationFrame(renderJourney);
+}
+
+function renderJourney() {
+  const path = document.getElementById('jPath');
+  const done = document.getElementById('jPathDone');
+  const avatar = document.getElementById('jAvatar');
+  const stopsG = document.getElementById('jStops');
+  if (!path) return;
+
+  const L = path.getTotalLength();
+  const n = JOURNEY.length;
+  const stopAt = (i) => path.getPointAtLength((i / (n - 1)) * L);
+
+  // остановки
+  stopsG.innerHTML = JOURNEY.map((name, i) => {
+    const pt = stopAt(i);
+    const reached = i <= journeyStop;
+    const isCurrent = i === journeyStop;
+    const labelRight = pt.x < 160;
+    return `
+      ${isCurrent ? `<circle class="j-stop-ring" cx="${pt.x}" cy="${pt.y}" r="14" fill="none" stroke="var(--terracotta)" stroke-width="2"/>` : ''}
+      <circle class="j-stop-dot" cx="${pt.x}" cy="${pt.y}" r="8"
+        fill="${reached ? 'var(--gold)' : '#fff'}" stroke="${reached ? 'var(--terracotta)' : 'rgba(90,101,119,.4)'}" stroke-width="2.5"/>
+      <text class="j-stop-label ${reached ? '' : 'j-stop-label--locked'}"
+        x="${labelRight ? pt.x + 16 : pt.x - 16}" y="${pt.y + 4}"
+        text-anchor="${labelRight ? 'start' : 'end'}">${i + 1}. ${name}</text>`;
+  }).join('');
+
+  // пройденная часть пути — до текущей остановки
+  const doneLen = (journeyStop / (n - 1)) * L;
+  done.style.strokeDasharray = L;
+  done.style.strokeDashoffset = L;
+  requestAnimationFrame(() => { done.style.strokeDashoffset = L - doneLen; });
+
+  // аватар едет к текущей остановке
+  const cur = stopAt(journeyStop);
+  avatar.style.transform = 'translate(50px, 40px)'; // старт
+  requestAnimationFrame(() => { avatar.style.transform = `translate(${cur.x}px, ${cur.y}px)`; });
+}
+
 /* ───────── ОНБОРДИНГ И АВТОРИЗАЦИЯ (демо-режим, API — при деплое) ───────── */
 
 function showApp(name) {
@@ -1545,6 +1607,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatSearch();
   initVerseGame();
   initTemple();
+  initJourney();
   renderSchedule();
   if (window.visualViewport) {
     const vvSync = () => document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
