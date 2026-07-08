@@ -1,0 +1,11 @@
+{"id":"spy_004","app":"spy","category":"sell","voice":"en-US-AndrewNeural","rate":"+6%","grade":"cold_cyan",
+ "brand":{"accent":"#00D9FF","accent2":"#7CF5FF","code":"PRIVACY","logo":"spy.png","name":"Spy Camera Finder"},
+ "cover":{"style":"stack","kicker":"60-SECOND CHECK","top":"ONE SCAN","big":"FINDS THEM"},
+ "segments":[
+  {"id":"s1","text":"Most detector apps check one thing. Wi-Fi. That is it.","visual":"stock","q":["hotel room dark modern","dim hotel bedroom night","luxury hotel room evening"],"overlay":{"type":"kicker","text":"MOST APPS: 1 METHOD"}},
+  {"id":"s2","text":"A hidden camera can hide from Wi-Fi and still watch you.","visual":"stock","q":["smoke detector ceiling closeup","suspicious device wall","hidden camera small device"],"overlay":{"type":"kicker","text":"ONE METHOD MISSES IT"}},
+  {"id":"s3","text":"This one runs four scanners at once. Watch it work.","visual":"DEMO:spy_scan","overlay":{"type":"chips","items":["WI-FI","BLUETOOTH","MAGNETIC","INFRARED"]}},
+  {"id":"s4","text":"Wi-Fi, bluetooth, magnetic field, and infrared. Any room in under a minute.","visual":"DEMO:spy_scan","overlay":{"type":"stat","big":"4-IN-1","sub":"one scan"}},
+  {"id":"s5","text":"If something is watching, you will know before you unpack.","visual":"stock","q":["woman relaxed hotel bed safe","person calm hotel room window","traveler relaxing hotel"],"overlay":{"type":"kicker","text":"KNOW BEFORE YOU SLEEP"}}
+ ],
+ "cta":{"text":"Scan your next room.","code":"PRIVACY"}}

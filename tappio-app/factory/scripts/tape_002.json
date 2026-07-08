@@ -1,0 +1,11 @@
+{"id":"tape_002","app":"tape","category":"sell","voice":"en-US-ChristopherNeural","rate":"+5%","grade":"warm_gold",
+ "brand":{"accent":"#F4C430","accent2":"#FFE08A","code":"MEASURE","logo":"tape.png","name":"3D Tape Measure"},
+ "cover":{"style":"stack","kicker":"NO TAPE. NO NOTES.","top":"MEASURE A ROOM","big":"IN 60 SECONDS"},
+ "segments":[
+  {"id":"s1","text":"Grabbing a tape measure, a pen, and still writing it down wrong.","visual":"stock","q":["person measuring tape wall frustrated","tape measure hand wall","measuring room diy"],"overlay":{"type":"kicker","text":"THE OLD WAY"}},
+  {"id":"s2","text":"Your phone already has a lidar scanner built in. Point it at the room.","visual":"stock","q":["person holding phone empty room","phone camera scanning room","empty apartment phone"],"overlay":{"type":"kicker","text":"YOUR PHONE HAS LIDAR"}},
+  {"id":"s3","text":"Tap the corners. It draws the walls and measures every side.","visual":"DEMO:tape_ar","overlay":{"type":"kinetic","top":"TAP THE","big":"CORNERS"}},
+  {"id":"s4","text":"Floor area, wall length, ceiling height. Saved as a project.","visual":"DEMO:tape_ar","overlay":{"type":"stat","big":"112 sq ft","sub":"auto measured"}},
+  {"id":"s5","text":"Now you buy the couch that actually fits.","visual":"stock","q":["modern living room sofa","interior design couch room","furniture living room bright"],"overlay":{"type":"kicker","text":"BUY WHAT FITS"}}
+ ],
+ "cta":{"text":"Measure before you buy.","code":"MEASURE"}}

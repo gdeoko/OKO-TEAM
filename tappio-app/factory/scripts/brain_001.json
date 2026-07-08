@@ -1,0 +1,11 @@
+{"id":"brain_001","app":"brain","category":"viral","voice":"en-US-MichelleNeural","rate":"+4%","grade":"purple_dream",
+ "brand":{"accent":"#9B5DE5","accent2":"#C9A6F5","code":"FOCUS","logo":"brain.png","name":"Brainova"},
+ "cover":{"style":"kinetic","kicker":"NEUROSCIENCE, 2026","top":"THIS VIDEO IS","big":"ERASING\nYOUR MEMORY"},
+ "segments":[
+  {"id":"s1","text":"Brain scans this year found something strange about short videos.","visual":"stock","q":["brain scan mri blue","neurons firing animation","human brain hologram"],"overlay":{"type":"kicker","text":"fMRI STUDY · 2026"}},
+  {"id":"s2","text":"While you scroll, your brain stays alert but stops saving anything.","visual":"stock","q":["person scrolling phone couch night","thumb scrolling phone closeup","face lit by phone dark"],"overlay":{"type":"kinetic","top":"ALERT BUT","big":"NOT SAVING"}},
+  {"id":"s3","text":"They even named the feeling. Brain rot. Word of the year.","visual":"stock","q":["tired person foggy morning","confused person thinking","stressed person head"],"overlay":{"type":"stat","big":"BRAIN ROT","sub":"word of the year"}},
+  {"id":"s4","text":"The fix is not less phone. It is ten focused minutes a day.","visual":"DEMO:brain_score","overlay":{"type":"kinetic","top":"THE ANTIDOTE","big":"10 MINUTES"}},
+  {"id":"s5","text":"Train the part of your brain the scroll is quietly starving.","visual":"DEMO:brain_score","overlay":{"type":"chips","items":["MEMORY","FOCUS","SPEED"]}}
+ ],
+ "cta":{"text":"Give your brain ten minutes back.","code":"FOCUS"}}
