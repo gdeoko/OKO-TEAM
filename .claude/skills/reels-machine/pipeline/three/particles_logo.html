@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"./three.js","three/addons/":"./addons/"}}</script>
+<style>*{margin:0}body{background:#000;width:1080px;height:1920px;overflow:hidden}</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(1080, 1920); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d0d);
+const cam = new THREE.PerspectiveCamera(50, 1080/1920, 0.1, 100);
+cam.position.set(0, 0, 14);
+
+let s = 41; const rr = () => (s = (s * 16807 + 19) % 2147483647) / 2147483647;
+window.ready = false;
+
+const img = new Image();
+img.onload = () => {
+  const cv = document.createElement('canvas');
+  const W = 300, H = Math.round(300 * img.height / img.width);
+  cv.width = W; cv.height = H;
+  const x = cv.getContext('2d');
+  x.drawImage(img, 0, 0, W, H);
+  const data = x.getImageData(0, 0, W, H).data;
+  const targets = [], colors = [];
+  for (let py = 0; py < H; py += 2) {
+    for (let px = 0; px < W; px += 2) {
+      const i = (py * W + px) * 4;
+      if (data[i + 3] > 120) {
+        targets.push([(px - W / 2) * 0.052, -(py - H / 2) * 0.052, (rr() - 0.5) * 0.35]);
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        // keep logo colors, sprinkle lime accents
+        if (rr() < 0.08) colors.push([0.61, 0.97, 0.02]);
+        else colors.push([Math.max(r / 255, 0.8), Math.max(g / 255, 0.75), Math.max(b / 255, 0.7)]);
+      }
+    }
+  }
+  const N = targets.length;
+  const start = new Float32Array(N * 3), tgt = new Float32Array(N * 3), col = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    // start: big sphere shell
+    const th = rr() * Math.PI * 2, ph = Math.acos(2 * rr() - 1), R = 9 + rr() * 7;
+    start[i*3] = Math.sin(ph) * Math.cos(th) * R;
+    start[i*3+1] = Math.sin(ph) * Math.sin(th) * R * 1.4;
+    start[i*3+2] = Math.cos(ph) * R - 4;
+    tgt[i*3] = targets[i][0]; tgt[i*3+1] = targets[i][1]; tgt[i*3+2] = targets[i][2];
+    col[i*3] = colors[i][0]; col[i*3+1] = colors[i][1]; col[i*3+2] = colors[i][2];
+  }
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(N * 3);
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = new THREE.PointsMaterial({ size: 0.095, vertexColors: true, transparent: true, opacity: 0.95,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+  window.__data = { start, tgt, pos, geo, N, pts };
+  window.ready = true;
+};
+img.src = '../logo_hd.png';
+
+window.renderParticles = (t) => {
+  const { start, tgt, pos, geo, N, pts } = window.__data;
+  // assemble 0..0.62, hold, swirl-out 0.88..1
+  const p = Math.min(1, t / 0.62);
+  const e = 1 - Math.pow(1 - p, 3.2);
+  const out = t > 0.88 ? (t - 0.88) / 0.12 : 0;
+  for (let i = 0; i < N; i++) {
+    const wob = Math.sin(t * 12 + i * 0.7) * 0.02 * (1 - e);
+    let X = start[i*3] + (tgt[i*3] - start[i*3]) * e + wob;
+    let Y = start[i*3+1] + (tgt[i*3+1] - start[i*3+1]) * e + wob;
+    let Z = start[i*3+2] + (tgt[i*3+2] - start[i*3+2]) * e;
+    if (out > 0) {
+      const a = i * 0.618;
+      X += Math.cos(a) * out * out * 22;
+      Y += Math.sin(a) * out * out * 22;
+    }
+    pos[i*3] = X; pos[i*3+1] = Y; pos[i*3+2] = Z;
+  }
+  geo.attributes.position.needsUpdate = true;
+  pts.rotation.y = (1 - e) * 1.2;
+  cam.position.z = 15.5 - e * 2.2;
+  renderer.render(scene, cam);
+};
+</script></body></html>
