@@ -371,6 +371,18 @@ nav#tabs .nav-logo{display:none}
 #toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,20px);background:#111;color:#fff;border:1px solid var(--border);padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:70;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;box-shadow:0 10px 30px rgba(0,0,0,.4)}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 :root[data-theme="light"] #toast{background:#fff;color:#111}
+/* Анкета «Система роста» */
+.anketa-prog{height:5px;border-radius:99px;background:var(--border);overflow:hidden;margin:6px 0 14px}
+.anketa-prog i{display:block;height:100%;width:0;background:var(--lime);border-radius:99px;transition:width .35s cubic-bezier(.3,1,.4,1)}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{text-align:left;padding:13px 15px;border:1px solid var(--border);border-radius:var(--r-md);font-size:14px;font-weight:600;transition:transform .12s,border-color .2s,background .2s}
+.opt:active{transform:scale(.98)}
+.opt.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.plan{display:flex;flex-direction:column;gap:9px}
+.plan-row{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.5}
+.plan-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.spin{width:42px;height:42px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);margin:8px auto 0;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ============ ЭКРАН ВХОДА ============ */
 #authScreen{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;transition:opacity .5s ease,visibility .5s}
@@ -550,7 +562,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.12</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.13</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -680,14 +692,8 @@ main>.screen{position:relative;z-index:1}
         <div class="ma-view" id="ma-system">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
           <h2 class="section-h" style="margin-top:16px">Система роста по анкете</h2>
-          <div class="card">
-            <span class="chip">Секция 1 из 8</span>
-            <div style="height:14px"></div>
-            <p style="font-weight:600;margin-bottom:10px">Кто ты и чем занимаешься?</p>
-            <p class="dim" style="font-size:13px;line-height:1.55">Ниша, продукт, текущие площадки, что уже пробовал. Дальше — цели, аудитория, ресурсы, стиль. Полная анкета подключается из структуры ANKETA.</p>
-            <div style="height:16px"></div>
-            <button class="btn" onclick="alert('Мок: анкета > очередь > Claude API (MASTER-TZ) > HTML-система в кабинете')">Продолжить</button>
-          </div>
+          <div class="anketa-prog"><i id="anketaBar"></i></div>
+          <div class="card" id="anketaCard"></div>
         </div>
       </div>
     </section>
@@ -1308,6 +1314,93 @@ function openMa(id){
   document.getElementById('maGrid').style.display='none';
   document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
   document.getElementById('ma-'+id).style.display='block';
+  if(id==='system'){ aState = {step:0, answers:{}}; renderAnketa(); }
+}
+/* ===== Система роста: многошаговая анкета ===== */
+const ANKETA = [
+  {k:'who', q:'Кто ты и чем занимаешься?', hint:'От этого зависит вся стратегия.',
+   opts:['Эксперт / блогер','Малый бизнес','Магазин / бренд','Услуги, фриланс','Инфопродукт']},
+  {k:'niche', q:'Опиши нишу в двух словах', hint:'Например: «фитнес для мам» или «ремонт квартир под ключ».', text:true},
+  {k:'goal', q:'Главная цель на 3 месяца', hint:'Одна, самая важная.',
+   opts:['Продажи и заявки','Подписчики и охваты','Личный бренд','Трафик в оффлайн','Всё сразу']},
+  {k:'platforms', q:'Где ты сейчас?', hint:'Основная площадка.',
+   opts:['Instagram / Reels','TikTok','YouTube','Telegram / VK','Почти с нуля']},
+  {k:'audience', q:'Кто твой клиент?', hint:'Пол, возраст, что для него важно.', text:true},
+  {k:'time', q:'Сколько времени готов уделять?', hint:'Честно — под это подберём режим.',
+   opts:['1–2 часа в неделю','3–5 часов в неделю','Каждый день понемногу','У меня есть команда']},
+  {k:'format', q:'Какой формат тебе ближе?', hint:'С чем комфортно работать.',
+   opts:['Говорю на камеру','Закадр и монтаж','Тексты и карусели','Не знаю — подскажите']},
+  {k:'budget', q:'Бюджет на продвижение', hint:'В месяц, ориентировочно.',
+   opts:['Пока 0','До 10 000 ₽','10–50 000 ₽','50 000 ₽ и больше']},
+];
+let aState = {step:0, answers:{}};
+function renderAnketa(){
+  const total = ANKETA.length, i = aState.step;
+  document.getElementById('anketaBar').style.width = Math.round(i/total*100)+'%';
+  if(i >= total) return anketaFinish();
+  const s = ANKETA[i], val = aState.answers[s.k];
+  const body = s.text
+    ? `<input id="aInput" placeholder="Напиши здесь…" value="${val?esc(val):''}" oninput="aState.answers['${s.k}']=this.value">`
+    : `<div class="opts">${s.opts.map(o=>`<button class="opt ${val===o?'on':''}" onclick="anketaPick('${s.k}',this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+  document.getElementById('anketaCard').innerHTML = `
+    <span class="chip">Секция ${i+1} из ${total}</span>
+    <div style="height:14px"></div>
+    <p style="font-weight:700;font-size:15.5px;margin-bottom:5px">${s.q}</p>
+    <p class="dim" style="font-size:12.5px;line-height:1.5;margin-bottom:14px">${s.hint}</p>
+    ${body}
+    <div style="height:18px"></div>
+    <div style="display:flex;gap:10px">
+      ${i>0?'<button class="btn ghost" onclick="anketaPrev()" style="flex:1">Назад</button>':''}
+      <button class="btn" onclick="anketaNext()" style="flex:2">${i===total-1?'Собрать систему':'Далее'}</button>
+    </div>`;
+}
+function anketaPick(k, btn, val){
+  aState.answers[k] = val;
+  btn.parentElement.querySelectorAll('.opt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function anketaNext(){
+  const s = ANKETA[aState.step];
+  if(!aState.answers[s.k] || !String(aState.answers[s.k]).trim()){ toast('Ответь, чтобы продолжить'); return; }
+  aState.step++; renderAnketa();
+}
+function anketaPrev(){ if(aState.step>0){ aState.step--; renderAnketa(); } }
+function anketaFinish(){
+  const a = aState.answers;
+  document.getElementById('anketaBar').style.width = '100%';
+  const card = document.getElementById('anketaCard');
+  card.innerHTML = `<div style="text-align:center;padding:8px 0">
+      <div class="spin"></div>
+      <p style="font-weight:700;margin-top:14px">Claude собирает твою систему…</p>
+      <p class="dim" style="font-size:12.5px;margin-top:6px">Анализ ниши, целей и ресурсов по мастер-методике OKO</p>
+    </div>`;
+  setTimeout(()=>{
+    const plan = buildPlan(a);
+    card.innerHTML = `
+      <div class="big-score" style="color:var(--accent)">Готово<small>персональная система роста</small></div>
+      <div class="divider"></div>
+      <p style="font-size:13px;line-height:1.6"><b>Профиль:</b> ${esc(a.who||'')}, ниша «${esc(a.niche||'—')}». Цель — ${esc((a.goal||'').toLowerCase())}.</p>
+      <div style="height:12px"></div>
+      <p style="font-weight:700;font-size:13.5px;margin-bottom:8px">Твой план на 30 дней</p>
+      <div class="plan">${plan.map((p,n)=>`<div class="plan-row"><span class="plan-n">${n+1}</span><span>${p}</span></div>`).join('')}</div>
+      <div style="height:16px"></div>
+      <button class="btn" onclick="toast('Мок: полная HTML-система сохранена в кабинет')"><svg class="i"><use href="#i-bolt"/></svg> Открыть полную систему</button>
+      <div style="height:9px"></div>
+      <button class="btn ghost" onclick="aState={step:0,answers:{}};renderAnketa()">Пройти заново</button>`;
+  }, 1800);
+}
+function buildPlan(a){
+  const rows = [];
+  const fmt = {'Говорю на камеру':'ролики-эксперт формата talking head','Закадр и монтаж':'динамичные Reels с закадровым голосом','Тексты и карусели':'карусели и текстовые посты','Не знаю — подскажите':'ролики + карусели (протестируем оба)'}[a.format] || 'короткие ролики';
+  const freq = {'1–2 часа в неделю':'2 единицы контента в неделю','3–5 часов в неделю':'3–4 единицы в неделю','Каждый день понемногу':'ежедневный постинг','У меня есть команда':'контент-завод на 5+ единиц в неделю'}[a.time] || '3 единицы в неделю';
+  rows.push(`Формат: ${fmt}. Ритм: ${freq}.`);
+  rows.push(`Площадка-ядро: ${a.platforms||'выбираем по нише'} + автопостинг в VK и Telegram.`);
+  rows.push(`Оффер под «${esc(a.audience||'твою аудиторию')}» и 5 болей клиента в контент-план.`);
+  if(a.goal==='Продажи и заявки') rows.push('Воронка: контент → лид-магнит → заявка в OKO-чат. Цель недели — первые 10 заявок.');
+  else if(a.goal==='Подписчики и охваты') rows.push('Упор на хуки и досматриваемость. Цель — 3 ролика с охватом выше среднего.');
+  else rows.push('Регулярность и узнаваемый стиль: единый визуал, рубрики, tone of voice.');
+  rows.push(a.budget==='Пока 0' ? 'Только органика: коллаборации и тренды, 0 ₽ на рекламу.' : `Бюджет ${a.budget}: тест таргета на лучшие 2 ролика.`);
+  return rows;
 }
 function closeMa(){
   document.getElementById('maGrid').style.display='';
@@ -1744,7 +1837,7 @@ const PROGRESS = [
   {s:'done', t:'Инфраструктура', d:'Supabase: база из 28 таблиц развёрнута. S3: два бакета, загрузка по подписанным ссылкам, автоудаление временных видео через 24 часа. Telegram-бот и Gemini подключены и проверены.'},
   {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime, анонимный вход, доставка мгновенно. Дальше: вход через Telegram, личные чаты, медиа в S3.'},
   {s:'wip',  t:'Каналы, лента, посты', d:'Готово в прототипе: создание поста, лайки, живые комментарии, закладки, репосты, лента «Подписки/Рекомендации» с алгоритмом. Дальше — на живых данных Supabase.'},
-  {s:'todo', t:'Мини-аппы на живых данных', d:'Система по анкете (Claude), видео-премодератор (Gemini), партнёрский кабинет.'},
+  {s:'wip',  t:'Мини-аппы на живых данных', d:'Система роста — рабочий визард на 8 секций с персональным планом на выходе. Дальше — генерация полной HTML-системы через Claude, видео-премодератор на Gemini.'},
   {s:'todo', t:'Оплата и тарифы', d:'Lava.top + крипта + карты РФ, моментальная активация лимитов.'},
   {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
   {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
