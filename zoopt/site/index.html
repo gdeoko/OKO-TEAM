@@ -6,7 +6,7 @@
 <title>ЗооОпт · Склад · Маркет — зоотовары оптом и в розницу</title>
 <meta name="description" content="ЗооОпт — оптово-розничная зоо-компания. Корма, игрушки, аксессуары, ветаптека. Опт для магазинов и вет.клиник, розница для владельцев питомцев." />
 <link rel="icon" href="/assets/logo.png" type="image/png">
-<meta name="build" content="zoopt-v4-film">
+<meta name="build" content="zoopt-v5-live">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -105,6 +105,20 @@ nav.solid .chip{border-color:rgba(10,10,10,.18);color:var(--black)}
   .film-hero h1{font-size:clamp(3.2rem,17vw,4.6rem)}
 }
 .film-hero .scroll-ind{position:static;transform:none;margin-top:28px}
+
+/* скраб-секция: бегущий пёс */
+#run{height:320vh;position:relative;background:#04120a}
+.run-stick{position:sticky;top:0;height:100svh;overflow:hidden}
+#runvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.run-shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(3,16,10,.82),rgba(3,16,10,.35) 44%,transparent 66%),
+             linear-gradient(0deg,rgba(3,16,10,.5),transparent 34%)}
+.run-tx{position:absolute;left:0;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;
+  max-width:560px;padding:0 clamp(16px,5vw,80px)}
+.run-tx h2{font-size:clamp(2.2rem,5vw,4.2rem);color:#fff;margin:18px 0 12px;text-shadow:0 10px 60px rgba(0,0,0,.6)}
+.run-tx h2 em{font-style:normal;color:var(--yellow)}
+.run-tx p{max-width:420px;color:rgba(230,244,236,.85);font-size:clamp(.95rem,1.9vw,1.1rem);line-height:1.6}
+@media(max-width:760px){.run-tx{justify-content:flex-start;padding-top:clamp(96px,15svh,150px)}}
 
 /* отделы — живые сцены */
 .dept{position:relative;z-index:5;min-height:100svh;overflow:hidden;display:flex;align-items:center;background:#04120a}
@@ -303,7 +317,7 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
 <!-- ================= ОТДЕЛЫ (живые сцены) ================= -->
 <section class="dept" id="dept-dogs">
   <div class="dept-bg" style="background-image:url(assets/film_dogs.jpg)"></div>
-  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_dogwalk.mp4"></video>
+  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_dogwalk.mp4" data-webm="assets/scene_dogwalk.webm"></video>
   <img class="dept-walker" src="assets/ph_dog.png" alt="Золотистый ретривер">
   <div class="dept-tx">
     <span class="kicker">собакам</span>
@@ -313,9 +327,23 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
   </div>
 </section>
 
+<!-- ================= СКРАБ: мчимся за заказом ================= -->
+<div id="run">
+  <div class="run-stick">
+    <video id="runvid" muted playsinline preload="none"
+      data-src="assets/scene_run.mp4" data-webm="assets/scene_run.webm"></video>
+    <div class="run-shade"></div>
+    <div class="run-tx">
+      <span class="kicker">доставка и сборка</span>
+      <h2>Мчимся за вашим<br><em>заказом</em></h2>
+      <p>Соберём и отгрузим за 24 часа — со склада, без посредников. Листайте — пёс уже бежит.</p>
+    </div>
+  </div>
+</div>
+
 <section class="dept right" id="dept-cats">
   <div class="dept-bg" style="background-image:url(assets/card_cat.jpg)"></div>
-  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_catplay.mp4"></video>
+  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_catplay.mp4" data-webm="assets/scene_catplay.webm"></video>
   <div class="dept-tx">
     <span class="kicker">кошкам</span>
     <h2>Всё для вашей<br><em>кошки</em></h2>
@@ -326,7 +354,7 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
 
 <section class="dept" id="dept-aqua">
   <div class="dept-bg" style="background-image:url(assets/card_fish.jpg)"></div>
-  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_aqua.mp4"></video>
+  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_aqua.mp4" data-webm="assets/scene_aqua.webm"></video>
   <div class="dept-tx">
     <span class="kicker">птицам · грызунам · рыбкам</span>
     <h2>Малышам<br><em>и аквариуму</em></h2>
@@ -337,7 +365,7 @@ footer{background:var(--black);color:#fff;padding:clamp(60px,9vw,110px) clamp(16
 
 <section class="dept right" id="dept-opt2">
   <div class="dept-bg" style="background-image:url(assets/film_dogs.jpg);filter:brightness(.55) saturate(.9)"></div>
-  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_kibble.mp4"></video>
+  <video class="dept-video" muted playsinline loop preload="none" data-src="assets/scene_kibble.mp4" data-webm="assets/scene_kibble.webm"></video>
   <div class="dept-tx">
     <span class="kicker">оптовым клиентам</span>
     <h2>Опт <em>без посредников</em></h2>

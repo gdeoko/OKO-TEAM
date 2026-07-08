@@ -54,6 +54,34 @@ function initFilm(){
     onToggle:s=>document.body.classList.toggle('in-film',s.isActive)});
 }
 
+/* ═══════════ СКРАБ: бегущий пёс ═══════════
+   Хостинг не отдаёт HTTP Range → seekable пустой → currentTime зажат в 0.
+   Лечение: fetch → blob → src. Работает и в Safari. */
+const pickSrc = (v) =>
+  (v.canPlayType('video/webm; codecs="vp9"') && (v.dataset.webm||'')) || v.dataset.src;
+
+async function blobify(v, url){
+  const r = await fetch(url); if(!r.ok) throw new Error(r.status);
+  v.src = URL.createObjectURL(await r.blob());
+  await new Promise((res, rej) => {
+    if (v.readyState >= 1) return res();
+    v.addEventListener('loadedmetadata', res, {once:true});
+    v.addEventListener('error', rej, {once:true});
+  });
+}
+
+function initRun(){
+  const v = document.getElementById('runvid'); if(!v) return;
+  const flat = () => document.getElementById('run').style.height = '100svh';
+  if (RM) return flat();
+  const url = pickSrc(v);
+  [...v.querySelectorAll('source')].forEach(s => s.remove());
+  blobify(v, url).then(() => {
+    gsap.to(v, {currentTime: Math.max(0, v.duration - 0.05), ease:'none',
+      scrollTrigger:{trigger:'#run', start:'top top', end:'bottom bottom', scrub:.5}});
+  }).catch(flat);
+}
+
 /* ═══════════ ОТДЕЛЫ: параллакс + ленивые видео-сцены ═══════════ */
 function initDepts(){
   document.querySelectorAll('.dept').forEach(sec => {
@@ -66,14 +94,22 @@ function initDepts(){
       new IntersectionObserver(es => es.forEach(e => {
         if (e.isIntersecting && !armed){
           armed = true;
-          v.addEventListener('canplay', () => { v.classList.add('on'); v.play().catch(()=>{}); });
-          v.addEventListener('error', () => v.remove(), true);
-          v.src = v.dataset.src;
+          v.loop = true;
+          blobify(v, pickSrc(v)).then(() => { v.classList.add('on'); v.play().catch(()=>{}); })
+            .catch(() => v.remove());
         } else if (armed && v.src){ e.isIntersecting ? v.play().catch(()=>{}) : v.pause(); }
       }), {threshold:.25}).observe(sec);
     }
     ScrollTrigger.create({trigger:sec, start:'top 55%', once:true, onEnter:()=>whoosh()});
   });
+  // страховка: возобновлять лупы, если браузер их притормозил
+  setInterval(() => {
+    document.querySelectorAll('.dept-video.on').forEach(v => {
+      const r = v.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < innerHeight && v.paused) v.play().catch(()=>{});
+    });
+  }, 1500);
+
   const walker = document.querySelector('.dept-walker');
   if (walker && !RM){
     gsap.to(walker, {y:-10, duration:1.6, yoyo:true, repeat:-1, ease:'sine.inOut'});
@@ -176,5 +212,5 @@ function preloader(){
   gsap.delayedCall(1.15, () => pre.classList.add('done'));
 }
 
-initFilm(); initDepts(); initShowcase();
+initFilm(); initRun(); initDepts(); initShowcase();
 initScroll(); initAudio(); initCursor(); preloader();
