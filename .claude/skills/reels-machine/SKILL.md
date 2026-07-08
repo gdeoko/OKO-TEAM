@@ -106,6 +106,35 @@ codec 'prores' + proResProfile '4444' + `pixelFormat:'yuva444p10le'` для АЛ
 Квота маленькая и дневная - если "exceeded quota" попробовать позже, не долбить.
 SSL: `os.environ['SSL_CERT_FILE']='/root/.ccr/ca-bundle.crt'`.
 
+### 4в. Lottie-поиск БЕЗ КЛЮЧА (проверено) - искать и качать самостоятельно
+POST https://graphql.lottiefiles.com/2022-08 с JSON:
+`{"query":"query { searchPublicAnimations(query: \"fire\", first: 5) { edges { node { name jsonUrl downloads } } } }"}`
+→ jsonUrl качается напрямую curl-ом. Сортировать по downloads. Рендер как в 4б.
+
+### 4г. Вырезание фона ЛОКАЛЬНО (rembg, без квот и ключей, проверено)
+`pip3 install rembg onnxruntime`; модель с HF (github release режется прокси):
+`curl -L -o ~/.u2net/u2net.onnx https://huggingface.co/tomjackson2023/rembg/resolve/main/u2net.onnx`
+Использование: вырезать объект/человека из кадра → PNG с альфой → оверлей/коллаж/обложка.
+Для видео: покадрово (fps=15 достаточно) или ffmpeg chromakey если фон однотонный.
+
+### 4д. Бесплатные ZeroGPU-спейсы (HF_TOKEN, дневная квота, все проверены init-ом)
+- `black-forest-labs/FLUX.1-schnell` - кадры по тексту (768x1344 вертикаль, steps=4)
+- `Lightricks/ltx-video-distilled` - image-to-video/text-to-video Б-РОЛЛ 2-5 сек, быстрый
+- `multimodalart/wan-2-2-first-last-frame` - видео между двумя кадрами (морф-переходы!)
+- `KwaiVGI/LivePortrait` - оживление лица по driving-видео (аватар)
+- Аналог Nano Banana (редактура кадров: фон/объекты): спейсы `Qwen/Qwen-Image-Edit`
+  или `black-forest-labs/FLUX.1-Kontext-Dev` - инструкция текстом + картинка
+- SadTalker сломан (BUILD_ERROR); для липсинка по аудио искать живой спейс
+  EchoMimic / Hallo на hf.co/spaces (меняются, проверять перед использованием)
+Квоту НЕ жечь на тесты - одна попытка, при exceeded ждать следующего дня.
+
+### 4е. AI-персонаж/аватар (бесплатный пайплайн)
+1. Персонаж: FLUX.1-schnell - портрет выдуманного персонажа (или фото с согласия!)
+2. Озвучка: edge-tts (шаг 2)
+3. Оживление: LivePortrait (driving-видео с мимикой) или audio-driven спейс
+4. Вырезать фон rembg → вставить говорящую голову в ролик как оверлей
+ПРАВИЛО: лица и голоса реальных людей клонировать только с письменного согласия.
+
 ### 5. Обложка (cover_template.html)
 Стиль аккаунта: жирный заголовок сверху (белый + оранжевая строка), драматичный
 кадр из клипа, лого внизу. Скриншот 1080x1920 → вшивается ПЕРВЫМ кадром ролика (0.3с).
