@@ -3905,6 +3905,38 @@ Claude (правило 7). Сделано:
   (2) согласие на клон голоса Екатерины (ElevenLabs)? (3) аккаунт
   разработчика Google Play (её ФИО/карта). ═══
 
+── 08.07.2026 ── Бэкенд-интеграции «под ключ» (без ключей) ───────
+  Пока ключей нет — написан рабочий код, который включится при
+  вставке ключей в config/.env. Новые файлы api/v1:
+   • core/lava.php — клиент Lava.top (createInvoice, verifyWebhook
+     HMAC-SHA256), configured()/offerFor(). CONFIRM по доке: базовый
+     URL и заголовок подписи вебхука (помечено в коде).
+   • routes/subscriptions.php — GET /me, POST /create {plan}, /trial
+     (7 дней, повтор запрещён), /cancel, /donate. Если Lava не
+     настроена → 503 с понятным текстом.
+   • routes/webhooks.php — POST /webhooks/lava: проверка подписи,
+     идемпотентность по lava_invoice_id, транзакция; success →
+     активирует subscription (monthly/yearly/lifetime дата) или
+     donation; refunded/failed обрабатываются.
+   • routes/oauth.php — POST /oauth/google (проверка id_token через
+     tokeninfo, aud==CLIENT_ID) и /oauth/telegram (проверка подписи
+     Login Widget: HMAC-SHA256, secret=SHA256(bot_token), свежесть
+     суток). oauthUpsert() связывает по google_id/telegram_id/email.
+   • core/tokens.php — issueTokens()/publicUser()/ACCESS_TTL/
+     REFRESH_TTL вынесены из routes/auth.php (общие для auth+oauth),
+     подключены в index.php. auth.php больше их не объявляет.
+   • index.php — в таблицу маршрутов добавлены oauth, subscriptions,
+     webhooks.
+  Схема БД УЖЕ имела всё: users.google_id/telegram_id, таблицы
+  subscriptions/payments/donations с lava_*-полями. Все PHP-файлы
+  проходят php -l (синтаксис OK). config/.env.example дополнен
+  (LAVA_SECRET, LAVA_OFFER_*, APP_ORIGIN, SENDGRID, MAIL_FROM).
+  config/.env в .gitignore — секреты НЕ коммитятся (проверено).
+  Инструкция подключения: metanoia-app/BACKEND-SETUP.md (для
+  Даниэля: хостинг, импорт БД, ключи Lava/Google/Telegram/SendGrid,
+  URL вебхука, cron, 3 вопроса). ЭТО НЕ ЧАСТЬ ССЫЛКИ-ПРИЛОЖЕНИЯ —
+  бэкенд заработает только на боевом хостинге с ключами.
+
 
 ═══════════════════════════════════════════════════════════════════════
  КОНЕЦ ФАЙЛА
