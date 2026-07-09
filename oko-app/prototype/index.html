@@ -174,7 +174,8 @@ nav#tabs .nav-logo{display:none}
 .filemsg b{font-size:13.5px;display:block}
 .filemsg small{font-size:11px;opacity:.65}
 /* photo */
-.photomsg{width:230px;aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,#1d2b08,#0b0f04 65%);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.photomsg{width:230px;aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,#1d2b08,#0b0f04 65%);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);overflow:hidden}
+.photomsg img{width:100%;height:100%;object-fit:cover;display:block}
 :root[data-theme="light"] .photomsg{background:linear-gradient(135deg,#eaf6d9,#d6ecb8 65%);color:#4a8a00}
 :root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#eaf6d9,#dcefc2) !important}
 .photomsg svg.i{width:34px;height:34px}
@@ -941,7 +942,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.32</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.33</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1177,6 +1178,8 @@ main>.screen{position:relative;z-index:1}
 <div class="sheet" id="sheet-attach">
   <h3>Прикрепить</h3>
   <div class="gal-row" id="galRow"></div>
+  <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoPick(event)">
+  <button class="sheet-item" onclick="document.getElementById('photoInput').click()"><svg class="i"><use href="#i-photo"/></svg><span>Фото с устройства<small>Выбрать изображение и отправить</small></span></button>
   <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Start/Pro до 2 ГБ</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('poll')"><svg class="i"><use href="#i-poll"/></svg><span>Опрос<small>Голосование в чате</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('money')"><svg class="i"><use href="#i-money"/></svg><span>Перевести деньги<small>Мгновенно, без комиссии</small></span></button>
@@ -1539,7 +1542,7 @@ function msgHtml(m, idx){
   if(m.kind==='file') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="filemsg">
       <div class="fico">${I('file')}</div><div><b>${m.fname}</b><small>${m.fsize}</small></div></div>${time}${rx}</div>`;
   if(m.kind==='photo') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
-      <div class="photomsg">${I('photo')}</div>${rx}</div>`;
+      <div class="photomsg">${m.src?`<img src="${m.src}" alt="фото">`:I('photo')}</div>${rx}</div>`;
   if(m.kind==='poll'){
     const total = m.votes.reduce((a,b)=>a+b,0) + (m.voted?1:0);
     const opts = m.opts.map((o,oi)=>{
@@ -1948,6 +1951,14 @@ function attach(kind){
   if(kind==='photo') pushMsg({in:0, t:nowT(), kind:'photo'});
   if(kind==='file')  pushMsg({in:0, t:nowT(), kind:'file', fname:'документ.pdf', fsize:'1.2 МБ'});
   if(kind==='vnote') pushMsg({in:0, t:nowT(), kind:'vnote', dur:'0:12'});
+}
+function onPhotoPick(ev){
+  const f = ev.target.files && ev.target.files[0];
+  ev.target.value = '';
+  closeSheet();
+  if(!f || !currentChat) return;
+  const src = URL.createObjectURL(f);
+  pushMsg({in:0, t:nowT(), kind:'photo', src});
 }
 
 /* ================= ЛЕНТА ================= */
