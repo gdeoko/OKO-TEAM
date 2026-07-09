@@ -458,6 +458,28 @@ label.f-lab{display:block}
 .msg-quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
 .msg .edited{font-size:10px;color:var(--dim);margin-left:6px;font-style:italic}
 .msg.out .edited{color:rgba(0,0,0,.45)}
+/* ===== Экран редактирования профиля ===== */
+.prof-bio{font-size:13.5px;line-height:1.5;color:var(--fg);margin:12px 0 2px}
+#editProfile{position:fixed;inset:0;z-index:72;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#editProfile.open{transform:none}
+.ep-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px calc(14px);padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.ep-head b{font-size:16px;font-weight:700}
+.ep-cancel{color:var(--dim);font-size:14.5px}
+.ep-done{color:var(--accent);font-size:14.5px;font-weight:700}
+.ep-body{flex:1;overflow-y:auto;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
+.ep-avawrap{position:relative;width:104px;height:104px;margin:0 auto 8px}
+.ep-ava{width:104px;height:104px;font-size:42px}
+.ep-avabtn{position:absolute;right:-2px;bottom:-2px;width:36px;height:36px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;border:3px solid var(--bg)}
+.ep-avabtn svg.i{width:18px;height:18px}
+.ep-photolink{display:block;margin:0 auto 20px;color:var(--accent);font-size:13.5px;font-weight:600}
+.ep-lab{display:block;font-size:12px;color:var(--dim);font-weight:600;margin:16px 0 7px;text-transform:uppercase;letter-spacing:.03em}
+.ep-nick{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:0 14px}
+.ep-nick span{color:var(--dim);font-size:15px}
+.ep-nick input{border:none;background:none;padding-left:2px;margin:0}
+.ep-body input,.ep-body textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 14px;font-size:15px;color:var(--fg);font-family:inherit}
+.ep-body .ep-nick input{border:none;background:none;padding:13px 2px}
+.ep-body input:focus,.ep-body textarea:focus{border-color:var(--lime);outline:none}
+@media(prefers-reduced-motion:reduce){#editProfile{transition:none}}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -753,7 +775,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.22</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.23</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -929,6 +951,7 @@ main>.screen{position:relative;z-index:1}
             <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">PRO до 15.08</span></div>
           </div>
         </div>
+        <p class="prof-bio" id="profBio"></p>
         <div class="prof-stats" id="profStats"></div>
         <div class="prof-ach" id="profAch"></div>
         <div class="card" style="padding:4px 14px">
@@ -1018,13 +1041,27 @@ main>.screen{position:relative;z-index:1}
   <p class="dim" style="font-size:11.5px;margin-top:10px;text-align:center">Мок: в проде — кошелёк OKO, вывод на карту</p>
 </div>
 <div class="sheet" id="sheet-profile"><div id="profileView"></div></div>
-<div class="sheet" id="sheet-edit">
-  <h3>Мой профиль</h3>
-  <input id="editName" placeholder="Имя">
-  <input id="editNick" placeholder="Никнейм" style="margin-top:0">
-  <p style="font-weight:600;font-size:13.5px;margin:6px 0 2px">Статус <span class="chip" style="font-size:9px">PRO</span></p>
-  <div class="status-pick" id="statusPick"></div>
-  <button class="btn" onclick="saveProfile()">Сохранить</button>
+<div id="editProfile">
+  <div class="ep-head">
+    <button class="ep-cancel" onclick="closeEditProfile()">Отмена</button>
+    <b>Профиль</b>
+    <button class="ep-done" onclick="saveProfile()">Готово</button>
+  </div>
+  <div class="ep-body">
+    <div class="ep-avawrap">
+      <div class="ava lime ep-ava" id="epAva">Д</div>
+      <button class="ep-avabtn" onclick="toast('Загрузка фото подключится с бэкендом')"><svg class="i"><use href="#i-camera"/></svg></button>
+    </div>
+    <button class="ep-photolink" onclick="toast('Загрузка фото подключится с бэкендом')">Изменить фото</button>
+    <label class="ep-lab">Имя</label>
+    <input id="editName" placeholder="Имя">
+    <label class="ep-lab">Никнейм</label>
+    <div class="ep-nick"><span>@</span><input id="editNick" placeholder="никнейм"></div>
+    <label class="ep-lab">О себе</label>
+    <textarea id="editBio" rows="3" placeholder="Пара слов о тебе" style="width:100%;resize:none"></textarea>
+    <label class="ep-lab">Статус</label>
+    <div class="status-pick" id="statusPick"></div>
+  </div>
 </div>
 <div class="sheet" id="sheet-lst"><div id="lstView"></div></div>
 <div class="sheet" id="sheet-filters"><div id="filtersView"></div></div>
@@ -2026,13 +2063,15 @@ async function liveSend(text){
 }
 
 /* ================= МОЙ ПРОФИЛЬ ================= */
-const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'PRO', status:null, role:'owner'};
+const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'PRO', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
 const STATUS_ICONS = ['fire','star','bolt','heart','thumb','crown'];
 let editStatus = null;
 function renderMyProfile(){
   document.getElementById('profName').innerHTML = PROFILE.name + (PROFILE.status ? ' ' + I(PROFILE.status) : '');
   document.getElementById('profNick').textContent = '@' + PROFILE.nick;
   document.getElementById('profAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
+  const bioEl = document.getElementById('profBio');
+  if(bioEl){ bioEl.textContent = PROFILE.bio || ''; bioEl.style.display = PROFILE.bio ? '' : 'none'; }
   // статистика: посты и реакции считаем из реального состояния приложения
   const myPosts = POSTS.sub.filter(p => p.name === PROFILE.name);
   const posts = 47 + myPosts.length;
@@ -2058,10 +2097,13 @@ function renderMyProfile(){
 function openEdit(){
   document.getElementById('editName').value = PROFILE.name;
   document.getElementById('editNick').value = PROFILE.nick;
+  document.getElementById('editBio').value = PROFILE.bio || '';
+  document.getElementById('epAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
   editStatus = PROFILE.status;
   renderStatusPick();
-  openSheet('edit');
+  document.getElementById('editProfile').classList.add('open');
 }
+function closeEditProfile(){ document.getElementById('editProfile').classList.remove('open'); }
 function renderStatusPick(){
   document.getElementById('statusPick').innerHTML = STATUS_ICONS.map(ic =>
     `<button class="${editStatus===ic?'on':''}" onclick="editStatus = editStatus==='${ic}' ? null : '${ic}'; renderStatusPick()">${I(ic)}</button>`).join('');
@@ -2069,8 +2111,9 @@ function renderStatusPick(){
 function saveProfile(){
   PROFILE.name = document.getElementById('editName').value.trim() || PROFILE.name;
   PROFILE.nick = document.getElementById('editNick').value.trim().replace('@','') || PROFILE.nick;
+  PROFILE.bio = document.getElementById('editBio').value.trim();
   PROFILE.status = editStatus;
-  renderMyProfile(); closeSheet();
+  renderMyProfile(); closeEditProfile(); toast('Профиль сохранён');
 }
 /* ===== Оплата тарифов ===== */
 const PLANS = {
