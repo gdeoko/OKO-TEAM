@@ -163,6 +163,9 @@ nav#tabs .nav-logo{display:none}
 /* video note */
 .vnote{width:136px;height:136px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #2a3d10, #0c1204 70%);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;color:var(--lime);position:relative}
 :root[data-theme="light"] .vnote{background:radial-gradient(circle at 35% 30%, #dff5c2, #b9e18d 75%);color:#3c7a00;border-color:#7ACC00}
+.vnote{overflow:hidden}
+.vnote video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+#recPreview{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--lime);flex-shrink:0}
 .vnote svg.i{width:36px;height:36px}
 .vnote .dur{position:absolute;bottom:14px;font-size:11px;color:#fff;background:rgba(0,0,0,.5);border-radius:99px;padding:2px 9px}
 .msg.has-vnote{background:none;padding:0}
@@ -960,7 +963,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.34</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.35</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -997,6 +1000,7 @@ main>.screen{position:relative;z-index:1}
           <div class="composer">
             <button class="tool" onclick="openSheet('attach')" title="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <input id="msgInput" placeholder="Сообщение" autocomplete="off">
+            <video id="recPreview" playsinline muted style="display:none"></video>
             <div class="rec-timer" id="recTimer"><span class="dot"></span><span id="recTime">0:00</span></div>
             <button class="send" id="sendBtn"><svg class="i" id="sendIco"><use href="#i-mic"/></svg></button>
           </div>
@@ -1556,7 +1560,7 @@ function msgHtml(m, idx){
       <button class="pp" data-audio="${m.audio||''}" onclick="event.stopPropagation();togglePlay(this)">${I('play')}</button>
       <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span></div>${time}${rx}</div>`;
   if(m.kind==='vnote') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
-      <div class="vnote">${I('play')}<span class="dur">${m.dur}</span></div>${rx}</div>`;
+      <div class="vnote" ${m.video?`onclick="event.stopPropagation();playVnote(this)"`:''}>${m.video?`<video src="${m.video}" playsinline muted loop></video>`:I('play')}<span class="dur">${m.dur}</span></div>${rx}</div>`;
   if(m.kind==='file') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="filemsg">
       <div class="fico">${I('file')}</div><div><b>${m.fname}</b><small>${m.fsize}</small></div></div>${time}${rx}</div>`;
   if(m.kind==='photo') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
@@ -1807,6 +1811,10 @@ function hideTyping(){
   document.getElementById('typingMsg')?.remove();
   document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
 }
+function playVnote(el){
+  const v = el.querySelector('video'); if(!v) return;
+  if(v.paused){ v.muted=false; v.play().catch(()=>{}); } else { v.pause(); }
+}
 function togglePlay(btn){
   const u = btn.querySelector('use');
   const playing = u.getAttribute('href')==='#i-pause';
@@ -1861,15 +1869,18 @@ function startRec(){
     const sec = Math.floor((Date.now()-recStart)/1000);
     document.getElementById('recTime').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
   }, 250);
-  // настоящая запись голоса (если браузер даёт микрофон)
-  if(recMode==='voice' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder){
-    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+  // настоящая запись (голос — микрофон, кружок — камера+микрофон)
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder){
+    const constraints = recMode==='vnote' ? {video:{facingMode:'user'}, audio:true} : {audio:true};
+    navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
       if(recStart===null){ stream.getTracks().forEach(t=>t.stop()); return; } // уже отпустили
       recStream = stream; recChunks = [];
+      // live-превью камеры в кружке записи
+      if(recMode==='vnote'){ const pv=document.getElementById('recPreview'); if(pv){ pv.srcObject=stream; pv.style.display='block'; pv.play&&pv.play().catch(()=>{}); } }
       try{ mediaRec = new MediaRecorder(stream); }catch(e){ mediaRec=null; return; }
       mediaRec.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
       mediaRec.start();
-    }).catch(()=>{ mediaRec=null; }); // отказ/нет микрофона -> мок
+    }).catch(()=>{ mediaRec=null; }); // отказ/нет доступа -> мок
   }
 }
 function stopRec(){
@@ -1880,15 +1891,18 @@ function stopRec(){
   document.getElementById('sendBtn').classList.remove('rec');
   const dur = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
   const cleanup = ()=>{ if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream=null; } };
+  const isVideo = recMode==='vnote';
+  const pv = document.getElementById('recPreview'); if(pv){ pv.style.display='none'; pv.srcObject=null; }
   if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
     mediaRec.onstop = ()=>{
-      const blob = new Blob(recChunks, {type: mediaRec.mimeType||'audio/webm'});
+      const blob = new Blob(recChunks, {type: mediaRec.mimeType||(isVideo?'video/webm':'audio/webm')});
       const url = recChunks.length ? URL.createObjectURL(blob) : null;
       cleanup(); mediaRec = null;
-      pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec, audio:url});
+      if(isVideo) pushMsg({in:0, t:nowT(), kind:'vnote', dur, video:url});
+      else pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec, audio:url});
       syncSendIcon();
     };
-    try{ mediaRec.stop(); }catch(e){ cleanup(); mediaRec=null; pushMsg({in:0,t:nowT(),kind:'voice',dur,seed:sec}); syncSendIcon(); }
+    try{ mediaRec.stop(); }catch(e){ cleanup(); mediaRec=null; pushMsg({in:0,t:nowT(),kind:isVideo?'vnote':'voice',dur,seed:sec}); syncSendIcon(); }
     return;
   }
   cleanup();
