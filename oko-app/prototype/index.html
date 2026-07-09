@@ -544,6 +544,35 @@ label.f-lab{display:block}
 .call-btn.end{background:#ff3b30;color:#fff;transform:rotate(135deg)}
 .call-btn.end:active{transform:rotate(135deg) scale(.9)}
 .call-btn.end svg.i{width:26px;height:26px}
+/* ===== Превью системы роста ===== */
+#systemView{position:fixed;inset:0;z-index:73;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#systemView.open{transform:none}
+.sv-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.sv-head b{font-size:16px;font-weight:700}
+.sv-head .ep-cancel svg.i{width:22px;height:22px}
+.sv-body{flex:1;overflow-y:auto;padding:20px 18px calc(30px + env(safe-area-inset-bottom))}
+.sys-hero{text-align:center;padding:14px 0 22px}
+.sys-badge{width:64px;height:64px;border-radius:20px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);display:flex;align-items:center;justify-content:center;color:var(--accent);margin:0 auto 14px}
+.sys-badge svg.i{width:32px;height:32px}
+.sys-hero h2{font-size:24px;font-weight:800}
+.sys-hero p{font-size:13px;color:var(--dim);margin-top:5px}
+.sys-sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:15px 16px;margin-bottom:12px}
+.sys-sec h3{font-size:14px;font-weight:800;color:var(--accent);margin-bottom:9px}
+.sys-sec>p{font-size:13px;line-height:1.6;color:var(--fg)}
+.sys-kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.sys-kv:last-child{border-bottom:none}
+.sys-kv span{color:var(--dim)}.sys-kv b{text-align:right}
+.sys-week{margin-bottom:12px}
+.sys-week:last-child{margin-bottom:0}
+.sys-week>b{font-size:13px;color:var(--fg);display:block;margin-bottom:6px}
+.sys-week ul{list-style:none;display:flex;flex-direction:column;gap:5px}
+.sys-week li{position:relative;padding-left:18px;font-size:12.5px;color:var(--dim);line-height:1.45}
+.sys-week li::before{content:'';position:absolute;left:2px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--lime)}
+.sys-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.sys-metric{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 6px;text-align:center}
+.sys-metric .v{font-size:16px;font-weight:800;color:var(--accent)}
+.sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
+@media(prefers-reduced-motion:reduce){#systemView{transition:none}}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -837,6 +866,14 @@ main>.screen{position:relative;z-index:1}
     <div class="mm-actions" id="mmActions"></div>
   </div>
 </div>
+<div id="systemView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="closeSystemView()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Моя система роста</b>
+    <span style="width:24px"></span>
+  </div>
+  <div class="sv-body" id="systemBody"></div>
+</div>
 <div id="callScreen">
   <div class="call-bg" id="callBg"></div>
   <div class="call-top">
@@ -856,7 +893,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.27</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.28</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -1964,11 +2001,51 @@ function anketaFinish(){
       <p style="font-weight:700;font-size:13.5px;margin-bottom:8px">Твой план на 30 дней</p>
       <div class="plan">${plan.map((p,n)=>`<div class="plan-row"><span class="plan-n">${n+1}</span><span>${p}</span></div>`).join('')}</div>
       <div style="height:16px"></div>
-      <button class="btn" onclick="toast('Мок: полная HTML-система сохранена в кабинет')"><svg class="i"><use href="#i-bolt"/></svg> Открыть полную систему</button>
+      <button class="btn" onclick="openSystemPreview()"><svg class="i"><use href="#i-bolt"/></svg> Открыть полную систему</button>
       <div style="height:9px"></div>
       <button class="btn ghost" onclick="aState={step:0,answers:{}};renderAnketa()">Пройти заново</button>`;
   }, 1800);
 }
+function openSystemPreview(){
+  const a = aState.answers;
+  const fmt = {'Говорю на камеру':'talking head — ты в кадре','Закадр и монтаж':'динамичные Reels с закадром','Тексты и карусели':'карусели и лонгриды','Не знаю — подскажите':'ролики + карусели (A/B-тест)'}[a.format] || 'короткие ролики';
+  const freq = {'1–2 часа в неделю':'2 единицы/нед','3–5 часов в неделю':'3–4 единицы/нед','Каждый день понемногу':'ежедневно','У меня есть команда':'5+ единиц/нед (конвейер)'}[a.time] || '3 единицы/нед';
+  const goalLow = (a.goal||'рост').toLowerCase();
+  const weeks = [
+    {t:'Неделя 1 · Фундамент', items:['Упаковка профиля: аватар, шапка, закреп','3 единицы контента в формате «'+fmt+'»','Настроить автопостинг VK + Telegram']},
+    {t:'Неделя 2 · Разгон', items:['Тест 3 разных хуков, замер досмотра','Первый прогрев под «'+goalLow+'»','Собрать лид-магнит / оффер']},
+    {t:'Неделя 3 · Воронка', items:['Запуск воронки: контент → чат OKO → заявка','Коллаборация или тренд для охвата', a.budget==='Пока 0'?'Органический разгон, 0 ₽':'Тест таргета на 2 лучших ролика']},
+    {t:'Неделя 4 · Масштаб', items:['Удвоить то, что зашло по метрикам','Рубрики и контент-план на месяц вперёд','Отчёт: охваты, заявки, выручка']},
+  ];
+  const metrics = [
+    {k:'Охваты', v:'+35–60%'}, {k:'Вовлечённость', v:'x2'},
+    {k: a.goal==='Продажи и заявки'?'Заявки':'Подписчики', v: a.goal==='Продажи и заявки'?'10–30/мес':'+300–900'},
+  ];
+  document.getElementById('systemBody').innerHTML = `
+    <div class="sys-hero">
+      <div class="sys-badge">${I('compass')}</div>
+      <h2>Система роста</h2>
+      <p>${esc(a.who||'Эксперт')} · ниша «${esc(a.niche||'—')}»</p>
+    </div>
+    <div class="sys-sec"><h3>Позиционирование</h3>
+      <p>Ты — ${esc((a.who||'эксперт').toLowerCase())} в нише «${esc(a.niche||'—')}». Главная цель на 3 месяца — ${esc(goalLow)}. Аудитория: ${esc(a.audience||'твой клиент')}.</p></div>
+    <div class="sys-sec"><h3>Контент-стратегия</h3>
+      <div class="sys-kv"><span>Формат-ядро</span><b>${esc(fmt)}</b></div>
+      <div class="sys-kv"><span>Ритм</span><b>${esc(freq)}</b></div>
+      <div class="sys-kv"><span>Площадка</span><b>${esc(a.platforms||'по нише')}</b></div>
+      <div class="sys-kv"><span>Автопостинг</span><b>VK + Telegram</b></div></div>
+    <div class="sys-sec"><h3>План на 30 дней</h3>
+      ${weeks.map(w=>`<div class="sys-week"><b>${w.t}</b><ul>${w.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>
+    <div class="sys-sec"><h3>Цель по метрикам</h3>
+      <div class="sys-metrics">${metrics.map(m=>`<div class="sys-metric"><div class="v">${m.v}</div><div class="k">${m.k}</div></div>`).join('')}</div></div>
+    <div class="sys-sec"><h3>Что дальше</h3>
+      <p>Полную систему в HTML можно скачать, а контент-завод OKO соберёт ролики по этому плану автоматически на тарифе Business.</p></div>
+    <button class="btn" onclick="toast('Система сохранена в личный кабинет')"><svg class="i"><use href="#i-check"/></svg> Сохранить систему</button>
+    <div style="height:9px"></div>
+    <button class="btn ghost" onclick="toast('PDF-версия готова к скачиванию')">Скачать PDF</button>`;
+  document.getElementById('systemView').classList.add('open');
+}
+function closeSystemView(){ document.getElementById('systemView').classList.remove('open'); }
 function buildPlan(a){
   const rows = [];
   const fmt = {'Говорю на камеру':'ролики-эксперт формата talking head','Закадр и монтаж':'динамичные Reels с закадровым голосом','Тексты и карусели':'карусели и текстовые посты','Не знаю — подскажите':'ролики + карусели (протестируем оба)'}[a.format] || 'короткие ролики';
