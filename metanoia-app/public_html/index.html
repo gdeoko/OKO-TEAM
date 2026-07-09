@@ -335,6 +335,16 @@
       <h2 class="section-title">Отчёт за неделю</h2>
       <div class="wreport" id="wreport"><!-- JS --></div>
 
+      <h2 class="section-title">Семейный квест недели</h2>
+      <button class="card temple fq-card" id="openQuest" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="users" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage" id="fqCardStage">Квест недели <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="progress"><div class="progress__fill" id="fqCardBar" style="width:0%"></div></div>
+          <div class="temple__note">Маленькие добрые дела всей семьёй — вместе к общему значку</div>
+        </div>
+      </button>
+
       <h2 class="section-title">Мои дети</h2>
       <div class="children" id="children"><!-- JS --></div>
       <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
@@ -719,6 +729,20 @@
       <div class="chrono-list" id="chronoList"></div>
       <button class="btn btn--primary chrono-check" id="chronoCheck">Проверить порядок</button>
       <div class="chrono-result" id="chronoResult"></div>
+    </section>
+
+    <!-- ── СЕМЕЙНЫЙ КВЕСТ (УЛ3) ── -->
+    <section class="screen" data-screen="quest">
+      <button class="child-back" id="questBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <div class="fq-head">
+        <div class="fq-head__badge" id="fqBadge"><span data-icon="users" data-size="30"></span></div>
+        <div class="fq-head__title" id="fqTitle">Квест недели</div>
+        <div class="fq-head__sub" id="fqSub"></div>
+        <div class="fq-bar"><div class="fq-bar__fill" id="fqBar"></div></div>
+        <div class="fq-count" id="fqCount"></div>
+      </div>
+      <div class="fq-tasks" id="fqTasks"></div>
+      <div class="fq-note">Отмечайте выполненное вместе с детьми. Когда все дела сделаны — вся семья получает общий значок недели 🕊</div>
     </section>
 
     <!-- ── РЕЙТИНГ НЕДЕЛИ (этап 5) ── -->

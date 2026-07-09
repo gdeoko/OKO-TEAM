@@ -2331,6 +2331,74 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Семейный квест недели (УЛ3) ── */
+const FQ = {
+  title: 'Благодарное сердце',
+  sub: 'Квест недели · 1–7 июля',
+  tasks: [
+    { day: 'Понедельник', text: 'За ужином каждый скажет одно «спасибо» — Богу или близкому.' },
+    { day: 'Среда', text: 'Прочитайте вместе одну главу из книги «Метанойя».' },
+    { day: 'Пятница', text: 'Пройдите игру «Дилемма» и обсудите выбор всей семьёй.' },
+    { day: 'Суббота', text: 'Сделайте одно доброе дело для соседа или друга.' },
+    { day: 'Воскресенье', text: 'Короткая совместная молитва перед сном.' },
+  ],
+};
+let fqDone = JSON.parse(localStorage.getItem('mt_quest') || '[]'); // индексы выполненных
+
+function fqProgress() { return { done: fqDone.length, total: FQ.tasks.length }; }
+
+function renderQuestCard() {
+  const { done, total } = fqProgress();
+  const pct = Math.round((done / total) * 100);
+  const bar = $('#fqCardBar'); if (bar) bar.style.width = pct + '%';
+  const st = $('#fqCardStage'); if (st) st.innerHTML = `«${FQ.title}» · ${done}/${total} <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span>`;
+  hydrateIcons();
+}
+
+function openQuest() {
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'quest'));
+  $('#nav').style.display = 'none';
+  renderQuest();
+  window.scrollTo({ top: 0 });
+}
+
+function renderQuest() {
+  const { done, total } = fqProgress();
+  const all = done === total;
+  $('#fqTitle').textContent = '«' + FQ.title + '»';
+  $('#fqSub').textContent = FQ.sub;
+  $('#fqBar').style.width = Math.round((done / total) * 100) + '%';
+  $('#fqCount').textContent = all ? 'Квест выполнен! Значок недели ваш 🎉' : `${done} из ${total} дел сделано`;
+  $('#fqBadge').classList.toggle('fq-head__badge--done', all);
+  $('#fqTasks').innerHTML = FQ.tasks.map((t, i) => {
+    const d = fqDone.includes(i);
+    return `<button class="fq-task ${d ? 'fq-task--done' : ''}" data-fq="${i}">
+      <div class="fq-task__check">${d ? ICON('check', 15) : ''}</div>
+      <div class="fq-task__body"><div class="fq-task__day">${t.day}</div><div class="fq-task__text">${t.text}</div></div>
+    </button>`;
+  }).join('');
+  $$('#fqTasks [data-fq]').forEach((el) => el.addEventListener('click', () => toggleFq(Number(el.dataset.fq))));
+  hydrateIcons();
+}
+
+function toggleFq(i) {
+  const was = fqDone.includes(i);
+  if (was) fqDone = fqDone.filter((x) => x !== i);
+  else fqDone.push(i);
+  localStorage.setItem('mt_quest', JSON.stringify(fqDone));
+  const nowAll = !was && fqDone.length === FQ.tasks.length;
+  renderQuest();
+  renderQuestCard();
+  if (nowAll && window.MAGIC) {
+    const r = $('#fqBadge').getBoundingClientRect();
+    MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2);
+    setTimeout(() => MAGIC.rewardModal({ icon: 'users', title: 'Семейный значок недели!', subtitle: 'Вы прошли квест «' + FQ.title + '» всей семьёй. Так рождается традиция.', xp: 0 }), 350);
+  } else if (!was && window.MAGIC) {
+    const r = $('#fqTasks').querySelector(`[data-fq="${i}"]`)?.getBoundingClientRect();
+    if (r) MAGIC.celebrate(r.left + r.width / 2, r.top + 10);
+  }
+}
+
 /* ── Родительский отчёт за неделю (УЛ2) ── */
 const WREPORT = {
   child: 'Миша', ava: 'assets/img/avatars/lion.jpg', range: '1–7 июля',
@@ -2365,6 +2433,8 @@ function renderWReport() {
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
+  $('#openQuest')?.addEventListener('click', openQuest);
+  $('#questBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#dverseClose')?.addEventListener('click', () => { $('#dailyVerse').hidden = true; });
   $('#dverseClaim')?.addEventListener('click', claimDailyVerse);
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
@@ -2397,6 +2467,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderLessons();
   renderChildren();
   renderWReport();
+  renderQuestCard();
   initNav();
   initSW();
 

@@ -1793,3 +1793,30 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .wreport { background: linear-gradient(160deg,#22333f,#2d2a20); border-color: rgba(212,165,116,.3); }
 [data-theme="dark"] .wstat, [data-theme="dark"] .wreport__dyn { background: rgba(255,255,255,.06); }
 [data-theme="dark"] .wreport__who, [data-theme="dark"] .wtip, [data-theme="dark"] .wreport__dyn { color: #E7EDF3; }
+
+/* ── Семейный квест (УЛ3) ── */
+.fq-head { text-align: center; padding: 6px 0 16px; }
+.fq-head__badge { width: 66px; height: 66px; margin: 0 auto 12px; border-radius: 20px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(150deg,#9B7AD4,#C97064); box-shadow: 0 8px 22px rgba(155,122,212,.35); transition: transform .3s var(--ease); }
+.fq-head__badge--done { background: linear-gradient(150deg,#E6C079,#D4A574); box-shadow: 0 8px 22px rgba(212,165,116,.45); }
+.fq-head__title { font-family: var(--font-head); font-size: 23px; font-weight: 800; color: var(--navy); }
+.fq-head__sub { font-size: 13px; color: var(--gray); margin-top: 4px; }
+.fq-bar { height: 8px; border-radius: 6px; background: rgba(26,58,82,.1); margin: 14px auto 6px; max-width: 240px; overflow: hidden; }
+.fq-bar__fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg,#9B7AD4,#D4A574); transition: width .5s var(--ease); }
+.fq-count { font-size: 12.5px; color: var(--gray); }
+.fq-tasks { display: flex; flex-direction: column; gap: 10px; }
+.fq-task { display: flex; align-items: center; gap: 13px; background: #fff; border-radius: var(--radius-card);
+  padding: 14px 15px; box-shadow: 0 1px 4px rgba(26,58,82,.05); border: 1.5px solid rgba(26,58,82,.07); text-align: left; width: 100%; }
+.fq-task--done { border-color: var(--success); background: rgba(123,198,122,.08); }
+.fq-task__check { width: 26px; height: 26px; flex: 0 0 auto; border-radius: 50%; border: 2px solid rgba(26,58,82,.2);
+  display: grid; place-items: center; color: #fff; transition: all .2s var(--ease); }
+.fq-task--done .fq-task__check { background: var(--success); border-color: var(--success); }
+.fq-task__body { flex: 1; min-width: 0; }
+.fq-task__day { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .4px; }
+.fq-task__text { font-size: 14px; color: var(--navy); line-height: 1.35; margin-top: 2px; }
+.fq-task--done .fq-task__text { color: var(--gray); }
+.fq-note { margin: 18px 2px 4px; font-size: 12.5px; color: var(--gray); line-height: 1.5; text-align: center; }
+[data-theme="dark"] .fq-task { background: #1b2c3a; border-color: rgba(255,255,255,.09); }
+[data-theme="dark"] .fq-task--done { background: rgba(123,198,122,.1); }
+[data-theme="dark"] .fq-task__text { color: #E7EDF3; }
+[data-theme="dark"] .fq-head__title { color: #F2F6FA; }
