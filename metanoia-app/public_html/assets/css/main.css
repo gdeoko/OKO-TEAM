@@ -1934,3 +1934,22 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 [data-theme="dark"] .alb-page--light { background: linear-gradient(160deg,#1b2c3a,#22333f); }
 [data-theme="dark"] .alb-page__t, [data-theme="dark"] .alb-badge__n, [data-theme="dark"] .alb-quest { color: #E7EDF3; }
 [data-theme="dark"] .alb-stat { background: rgba(255,255,255,.06); }
+
+/* ── Мягкая монетизация: желания ребёнка (УЛ9) ── */
+.gpv__wish { width: 100%; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px; border-radius: 22px; font-weight: 700; font-size: 14px; color: #9B7AD4;
+  background: rgba(155,122,212,.1); border: 1.5px solid rgba(155,122,212,.35); }
+.gpv__wish[hidden] { display: none; }
+.gpv__wish span[data-icon] { color: #C97064; }
+.wishes { display: flex; flex-direction: column; gap: 10px; }
+.wish { display: flex; align-items: center; gap: 12px; background: linear-gradient(120deg,#fff,#F3ECFB);
+  border: 1px solid rgba(155,122,212,.35); border-radius: var(--radius-card); padding: 12px 14px; }
+.wish__ic { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 11px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(150deg,#9B7AD4,#C97064); }
+.wish__body { flex: 1; min-width: 0; }
+.wish__name { font-weight: 700; font-size: 14px; color: var(--navy); }
+.wish__note { font-size: 12px; color: var(--gray); margin-top: 1px; }
+.wish__cta { flex: 0 0 auto; padding: 8px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700;
+  color: #fff; background: linear-gradient(135deg,#D4A574,#C97064); }
+[data-theme="dark"] .wish { background: linear-gradient(120deg,#1b2c3a,#2a2440); border-color: rgba(155,122,212,.4); }
+[data-theme="dark"] .wish__name { color: #EAF0F5; }

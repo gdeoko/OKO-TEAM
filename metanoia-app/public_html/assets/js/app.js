@@ -1502,18 +1502,52 @@ function openGamePreview(k) {
   $('#gpvList').innerHTML = (g.bullets || []).map((b) => `<li>${b}</li>`).join('');
   const cta = $('#gpvCta');
   const note = $('#gpvNote');
+  const wish = $('#gpvWish');
   if (g.premium) {
     cta.textContent = 'Открыть в Метанойя+';
     cta.disabled = false;
     cta.onclick = () => { $('#gamePreview').hidden = true; openSubscribeScreen(); };
     note.textContent = 'Первые 7 дней бесплатно · доступ ко всем играм';
+    wish.hidden = false;
+    wish.onclick = () => addWish(g.key);
   } else {
     cta.textContent = 'Мы уже работаем над ней';
     cta.disabled = true;
     cta.onclick = null;
     note.textContent = 'Игра появится в одном из ближайших обновлений';
+    wish.hidden = true;
   }
   $('#gamePreview').hidden = false;
+  hydrateIcons();
+}
+
+/* ── Мягкая монетизация: желания ребёнка (УЛ9) ── */
+function getWishes() { return JSON.parse(localStorage.getItem('mt_wishes') || '[]'); }
+
+function addWish(key) {
+  const w = getWishes();
+  if (!w.includes(key)) { w.push(key); localStorage.setItem('mt_wishes', JSON.stringify(w)); }
+  $('#gamePreview').hidden = true;
+  renderWishes();
+  if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Родители узнают!', subtitle: 'Мы бережно передадим твоё пожелание маме или папе. Они решат вместе с тобой 💛', xp: 0 });
+  else toast('Пожелание отправлено родителям');
+}
+
+function renderWishes() {
+  const keys = getWishes();
+  const block = $('#wishBlock');
+  if (!block) return;
+  if (!keys.length) { block.hidden = true; return; }
+  block.hidden = false;
+  $('#wishes').innerHTML = keys.map((k) => {
+    const g = gameByKey(k); if (!g) return '';
+    return `<div class="wish">
+      <div class="wish__ic">${ICON(g.icon, 18)}</div>
+      <div class="wish__body"><div class="wish__name">${g.name}</div><div class="wish__note">Ребёнок хочет открыть эту игру</div></div>
+      <button class="wish__cta" data-wish="${k}">Открыть</button>
+    </div>`;
+  }).join('');
+  $$('#wishes [data-wish]').forEach((el) => el.addEventListener('click', openSubscribeScreen));
   hydrateIcons();
 }
 
@@ -2712,6 +2746,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChildren();
   renderWReport();
   renderQuestCard();
+  renderWishes();
   initAddChild();
   initOffline();
   initNav();
