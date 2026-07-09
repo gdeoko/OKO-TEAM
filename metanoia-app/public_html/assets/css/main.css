@@ -1705,3 +1705,64 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .dverse__card { background: radial-gradient(120% 90% at 50% 0%, #22333f 0%, #1b2c3a 60%); border-color: rgba(212,165,116,.3); }
 [data-theme="dark"] .dverse__text { color: #EAF0F5; }
 [data-theme="dark"] .dverse__close { background: rgba(255,255,255,.08); }
+
+/* ── Превью заблокированной игры ── */
+.gpv { position: fixed; inset: 0; z-index: 96; background: rgba(20,35,47,.6); backdrop-filter: blur(6px);
+  display: flex; flex-direction: column; overflow-y: auto; padding: 20px; }
+.gpv[hidden] { display: none; }
+.gpv__card { position: relative; margin: auto; width: 100%; max-width: 360px; border-radius: 22px; padding: 30px 24px 22px;
+  background: radial-gradient(120% 80% at 50% 0%, #FBF4E9 0%, #fff 55%); box-shadow: 0 24px 60px rgba(0,0,0,.4);
+  border: 1px solid rgba(212,165,116,.4); text-align: center; animation: dvIn .35s var(--ease); }
+.gpv__close { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(26,58,82,.06); color: var(--gray); display: grid; place-items: center; }
+.gpv__icon { width: 76px; height: 76px; margin: 0 auto 14px; border-radius: 22px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(150deg,#E6C079,#D4A574 60%,#C97064); box-shadow: 0 8px 22px rgba(212,165,116,.4); }
+.gpv__badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  padding: 3px 11px; border-radius: 20px; margin-bottom: 8px; }
+.gpv__badge--plus { background: rgba(212,165,116,.2); color: #b07d3d; }
+.gpv__badge--soon { background: rgba(26,58,82,.08); color: var(--gray); }
+.gpv__name { font-family: var(--font-head); font-size: 23px; font-weight: 800; color: var(--navy); }
+.gpv__desc { font-size: 14px; color: var(--gray); line-height: 1.5; margin: 8px 0 14px; }
+.gpv__list { list-style: none; text-align: left; margin: 0 auto 20px; max-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.gpv__list li { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--navy); }
+.gpv__list li::before { content: ''; flex: 0 0 auto; width: 7px; height: 7px; margin-top: 6px; border-radius: 50%; background: var(--gold); }
+.gpv__cta { width: 100%; }
+.gpv__cta:disabled { opacity: .55; }
+.gpv__note { margin-top: 11px; font-size: 12px; color: var(--gray); line-height: 1.5; }
+[data-theme="dark"] .gpv__card { background: radial-gradient(120% 80% at 50% 0%, #22333f 0%, #1b2c3a 55%); border-color: rgba(212,165,116,.3); }
+[data-theme="dark"] .gpv__name, [data-theme="dark"] .gpv__list li { color: #EAF0F5; }
+[data-theme="dark"] .gpv__close { background: rgba(255,255,255,.08); }
+
+/* ── Кто это? ── */
+.who-clues { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px; }
+.who-clue { background: #fff; border-radius: var(--radius-card); padding: 14px 16px; font-size: 15px; color: var(--navy);
+  box-shadow: 0 1px 4px rgba(26,58,82,.05); border-left: 3px solid var(--gold); animation: dvIn .3s var(--ease); }
+.who-clue__n { font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 3px; }
+.who-more { width: 100%; margin-bottom: 16px; }
+.who-more:disabled { opacity: .5; }
+.who-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.who-opt { padding: 14px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; background: #fff;
+  border: 1.5px solid rgba(26,58,82,.14); color: var(--navy); }
+.who-opt--right { background: rgba(123,198,122,.16); border-color: var(--success); }
+.who-opt--wrong { background: rgba(212,106,106,.12); border-color: var(--error); }
+[data-theme="dark"] .who-clue, [data-theme="dark"] .who-opt { background: #1b2c3a; color: #E7EDF3; border-color: rgba(255,255,255,.09); }
+
+/* ── Хронология ── */
+.chrono-list { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 16px; }
+.chrono-item { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: var(--radius-card);
+  padding: 13px 14px; box-shadow: 0 1px 4px rgba(26,58,82,.06); border: 1.5px solid rgba(26,58,82,.08); }
+.chrono-item--ok { border-color: var(--success); background: rgba(123,198,122,.1); }
+.chrono-item--bad { border-color: var(--error); background: rgba(212,106,106,.08); }
+.chrono-item__grip { color: var(--gray); flex: 0 0 auto; }
+.chrono-item__body { flex: 1; min-width: 0; }
+.chrono-item__title { font-weight: 700; font-size: 14px; color: var(--navy); }
+.chrono-item__ord { font-size: 11.5px; color: var(--gray); margin-top: 1px; }
+.chrono-item__moves { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; }
+.chrono-move { width: 30px; height: 24px; border-radius: 7px; background: rgba(26,58,82,.06); color: var(--navy);
+  display: grid; place-items: center; }
+.chrono-move:disabled { opacity: .3; }
+.chrono-check { width: 100%; }
+.chrono-result { margin-top: 12px; text-align: center; font-weight: 700; font-size: 14px; min-height: 20px; }
+[data-theme="dark"] .chrono-item { background: #1b2c3a; border-color: rgba(255,255,255,.09); }
+[data-theme="dark"] .chrono-item__title { color: #E7EDF3; }
+[data-theme="dark"] .chrono-move { background: rgba(255,255,255,.08); color: #E7EDF3; }

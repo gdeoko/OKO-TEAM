@@ -694,6 +694,30 @@
       <div class="quiz-opts" id="quizOpts"></div>
     </section>
 
+    <!-- ── КТО ЭТО? (этап 5) ── -->
+    <section class="screen" data-screen="who">
+      <button class="child-back" id="whoBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Кто это?</div>
+        <div class="verse-head__meta">Герой <span id="whoNum">1</span> из 5 · очки: <span id="whoScore">0</span></div>
+      </div>
+      <div class="who-clues" id="whoClues"></div>
+      <button class="btn btn--outline who-more" id="whoMore">Ещё подсказка (−5 очков)</button>
+      <div class="who-opts" id="whoOpts"></div>
+    </section>
+
+    <!-- ── ХРОНОЛОГИЯ (этап 5) ── -->
+    <section class="screen" data-screen="chrono">
+      <button class="child-back" id="chronoBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Хронология</div>
+        <div class="verse-head__meta">Расставь события по порядку — от раннего к позднему</div>
+      </div>
+      <div class="chrono-list" id="chronoList"></div>
+      <button class="btn btn--primary chrono-check" id="chronoCheck">Проверить порядок</button>
+      <div class="chrono-result" id="chronoResult"></div>
+    </section>
+
     <!-- ── РЕЙТИНГ НЕДЕЛИ (этап 5) ── -->
     <section class="screen" data-screen="rating">
       <button class="child-back" id="ratingBack"><span data-icon="back" data-size="18"></span> Назад</button>
@@ -744,6 +768,20 @@
     </section>
 
   </main>
+
+  <!-- Превью заблокированной игры -->
+  <div class="gpv" id="gamePreview" hidden>
+    <div class="gpv__card">
+      <button class="gpv__close" id="gpvClose"><span data-icon="close" data-size="18"></span></button>
+      <div class="gpv__icon" id="gpvIcon"></div>
+      <div class="gpv__badge" id="gpvBadge"></div>
+      <div class="gpv__name" id="gpvName"></div>
+      <div class="gpv__desc" id="gpvDesc"></div>
+      <ul class="gpv__list" id="gpvList"></ul>
+      <button class="btn btn--primary gpv__cta" id="gpvCta"></button>
+      <div class="gpv__note" id="gpvNote"></div>
+    </div>
+  </div>
 
   <!-- Ежедневный стих (ритуал дня) -->
   <div class="dverse" id="dailyVerse" hidden>

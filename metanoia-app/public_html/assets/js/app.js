@@ -1400,29 +1400,48 @@ function initTemple() {
 
 const GAMES = {
   free: [
-    { key: 'verse', icon: 'book', name: 'Собери стих', meta: 'Пазл-слова · +15–30 XP', play: true },
-    { key: 'memory', icon: 'sparkle', name: 'Библейское мемори', meta: 'Найди пары · +20 XP', play: true },
-    { key: 'quiz', icon: 'flame', name: 'Викторина на скорость', meta: '10 вопросов · +10–30 XP', play: true },
-    { key: 'who', icon: 'search', name: 'Кто это?', meta: 'Угадай по подсказкам', play: false },
-    { key: 'chrono', icon: 'clock', name: 'Хронология', meta: 'Расставь события', play: false },
+    { key: 'verse', icon: 'book', name: 'Собери стих', meta: 'Пазл-слова · +15–30 XP', play: true,
+      desc: 'Стих Писания рассыпался на слова — собери его в правильном порядке.', bullets: ['Тренирует память Писания', 'Три уровня сложности', '+15–30 XP за стих'] },
+    { key: 'memory', icon: 'sparkle', name: 'Библейское мемори', meta: 'Найди пары · +20 XP', play: true,
+      desc: 'Переворачивай карточки и находи пары символов веры.', bullets: ['8 пар: голубь, храм, крест…', 'Звёзды за скорость', '+20 XP'] },
+    { key: 'quiz', icon: 'flame', name: 'Викторина на скорость', meta: '10 вопросов · +10–30 XP', play: true,
+      desc: 'Отвечай на вопросы по Писанию, пока не закончилось время.', bullets: ['Полоска времени 10 сек', 'Бонус за быстрый ответ', '+10–30 XP'] },
+    { key: 'who', icon: 'search', name: 'Кто это?', meta: 'Угадай по подсказкам · +20 XP', play: true,
+      desc: 'Три подсказки об одном библейском герое. Угадаешь с первой — больше очков.', bullets: ['Чем меньше подсказок — тем больше XP', '10 героев', 'Учит запоминать героев веры'] },
+    { key: 'chrono', icon: 'clock', name: 'Хронология', meta: 'Расставь по порядку · +25 XP', play: true,
+      desc: 'Расставь библейские события в правильном порядке — от сотворения мира до Церкви.', bullets: ['Перетаскивай события', 'Понимание всей истории спасения', '+25 XP'] },
   ],
   premium: [
-    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '100+ уровней' },
-    { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер' },
-    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткость' },
-    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных' },
-    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Строй-тайкун' },
-    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав' },
-    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Угадай историю' },
-    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Моральный выбор' },
-    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Для всей семьи' },
+    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '100+ уровней', premium: true,
+      desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
+    { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер', premium: true,
+      desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Бесконечный раннер', 'Собирай манну за очки', 'История Исхода'] },
+    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткость', premium: true,
+      desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
+    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных', premium: true,
+      desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Десятки животных', 'История Ноя'] },
+    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Строй-тайкун', premium: true,
+      desc: 'Строй великий храм: добывай ресурсы, нанимай мастеров, укрощай детали.', bullets: ['Стройка-тайкун', 'Развитие города', 'Мудрость Соломона'] },
+    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав', premium: true,
+      desc: 'Приключение в пяти главах: решай загадки и найди путь к святыне.', bullets: ['5 глав-историй', 'Загадки и предметы', 'Point-and-click квест'] },
+    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Угадай историю', premium: true,
+      desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', 'Десятки историй', 'Внимание к деталям'] },
+    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Моральный выбор', premium: true,
+      desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
+    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Для всей семьи', premium: true,
+      desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
   ],
   daily: [
-    { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true },
-    { key: 'temple-b', icon: 'church', name: 'Строитель храма', meta: 'Растущий храм', play: true },
-    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true },
-    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Метанойя+' },
-    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Выбери каноническое' },
+    { key: 'journey', icon: 'map', name: 'Путешествие веры', meta: 'Карта прогресса', play: true,
+      desc: 'Двигайся по библейской карте — от Сада Эдема через Египет к Земле обетованной.', bullets: ['Твой путь на карте', 'Остановки-истории', 'Растёт с уроками'] },
+    { key: 'temple-b', icon: 'church', name: 'Строитель храма', meta: 'Растущий храм', play: true,
+      desc: 'Собирай кирпичики за уроки и тесты — и твой храм растёт этап за этапом.', bullets: ['10 этапов стройки', 'Награда за постоянство', 'Значок «Архитектор веры»'] },
+    { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true,
+      desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и +5 XP.', bullets: ['Тёплая привычка', 'Стрик дней подряд', '+5 XP в день'] },
+    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Метанойя+', premium: true,
+      desc: 'Каждый день — новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Только в Метанойя+'] },
+    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Выбери каноническое', premium: true,
+      desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
   ],
 };
 
@@ -1449,10 +1468,12 @@ function renderGhub(cat) {
     if (k === 'verse') openVerse('easy');
     else if (k === 'memory') openMemory();
     else if (k === 'quiz') openQuiz();
+    else if (k === 'who') openWho();
+    else if (k === 'chrono') openChrono();
     else if (k === 'journey') openJourneyScreen();
     else if (k === 'temple-b') openTempleScreen();
     else if (k === 'dailyverse') openDailyVerse();
-    else toast('Игра появится на следующих этапах');
+    else openGamePreview(k);
   }));
 }
 
@@ -1460,6 +1481,158 @@ function initGamesHub() {
   $('#openGamesHub')?.addEventListener('click', openGamesHub);
   $('#gamesBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $$('.ghub-tab').forEach((b) => b.addEventListener('click', () => renderGhub(b.dataset.gcat)));
+  $('#gpvClose')?.addEventListener('click', () => { $('#gamePreview').hidden = true; });
+  $('#whoBack')?.addEventListener('click', openGamesHub);
+  $('#whoMore')?.addEventListener('click', () => { const q = WHO[whoState.i]; if (whoState.clue < q.clues.length) { whoState.clue++; whoState.score = Math.max(0, whoState.score); renderWho(); } });
+  $('#chronoBack')?.addEventListener('click', openGamesHub);
+  $('#chronoCheck')?.addEventListener('click', checkChrono);
+}
+
+/* ── Превью заблокированной / премиум-игры ── */
+function gameByKey(k) { return [...GAMES.free, ...GAMES.premium, ...GAMES.daily].find((g) => g.key === k); }
+
+function openGamePreview(k) {
+  const g = gameByKey(k); if (!g) return;
+  $('#gpvIcon').innerHTML = ICON(g.icon, 34);
+  const badge = $('#gpvBadge');
+  badge.className = 'gpv__badge ' + (g.premium ? 'gpv__badge--plus' : 'gpv__badge--soon');
+  badge.textContent = g.premium ? 'Метанойя+' : 'Скоро';
+  $('#gpvName').textContent = g.name;
+  $('#gpvDesc').textContent = g.desc || '';
+  $('#gpvList').innerHTML = (g.bullets || []).map((b) => `<li>${b}</li>`).join('');
+  const cta = $('#gpvCta');
+  const note = $('#gpvNote');
+  if (g.premium) {
+    cta.textContent = 'Открыть в Метанойя+';
+    cta.disabled = false;
+    cta.onclick = () => { $('#gamePreview').hidden = true; openSubscribeScreen(); };
+    note.textContent = 'Первые 7 дней бесплатно · доступ ко всем играм';
+  } else {
+    cta.textContent = 'Мы уже работаем над ней';
+    cta.disabled = true;
+    cta.onclick = null;
+    note.textContent = 'Игра появится в одном из ближайших обновлений';
+  }
+  $('#gamePreview').hidden = false;
+  hydrateIcons();
+}
+
+/* ── Кто это? (угадай героя по подсказкам) ── */
+const WHO = [
+  { name: 'Ной', opts: ['Ной', 'Моисей', 'Давид', 'Иона'], clues: ['Бог повелел ему построить огромный корабль.', 'Он взял в него каждой твари по паре.', 'После потопа увидел радугу — знак завета.'] },
+  { name: 'Моисей', opts: ['Илия', 'Моисей', 'Авраам', 'Иосиф'], clues: ['Младенцем его нашли в корзине среди тростника.', 'Бог говорил с ним из горящего куста.', 'Он вывел народ из Египта через море.'] },
+  { name: 'Давид', opts: ['Саул', 'Самсон', 'Давид', 'Соломон'], clues: ['В юности он был пастухом и играл на арфе.', 'Одолел великана всего одним камнем.', 'Стал великим царём Израиля.'] },
+  { name: 'Иона', opts: ['Иона', 'Пётр', 'Павел', 'Даниил'], clues: ['Он пытался убежать от Божьего поручения на корабле.', 'Его проглотила огромная рыба.', 'Три дня он молился в её чреве.'] },
+  { name: 'Иосиф', opts: ['Иаков', 'Иосиф', 'Исаак', 'Аарон'], clues: ['Отец подарил ему разноцветную одежду.', 'Братья продали его в Египет.', 'Он умел толковать сны и стал правителем.'] },
+];
+let whoState = { i: 0, clue: 1, score: 0 };
+
+function openWho() {
+  whoState = { i: 0, clue: 1, score: 0 };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'who'));
+  $('#nav').style.display = 'none';
+  renderWho();
+  window.scrollTo({ top: 0 });
+}
+
+function renderWho() {
+  const q = WHO[whoState.i];
+  $('#whoNum').textContent = whoState.i + 1;
+  $('#whoScore').textContent = whoState.score;
+  $('#whoClues').innerHTML = q.clues.slice(0, whoState.clue).map((c, i) =>
+    `<div class="who-clue"><span class="who-clue__n">Подсказка ${i + 1}</span>${c}</div>`).join('');
+  $('#whoMore').disabled = whoState.clue >= q.clues.length;
+  $('#whoMore').style.display = whoState.clue >= q.clues.length ? 'none' : '';
+  $('#whoOpts').innerHTML = q.opts.map((o) => `<button class="who-opt" data-who="${o}">${o}</button>`).join('');
+  $$('#whoOpts [data-who]').forEach((el) => el.addEventListener('click', () => answerWho(el, q)));
+}
+
+function answerWho(el, q) {
+  const right = el.dataset.who === q.name;
+  $$('#whoOpts .who-opt').forEach((b) => { b.disabled = true; if (b.dataset.who === q.name) b.classList.add('who-opt--right'); });
+  if (!right) el.classList.add('who-opt--wrong');
+  if (right) {
+    const gain = Math.max(5, 20 - (whoState.clue - 1) * 5);
+    whoState.score += gain;
+    $('#whoScore').textContent = whoState.score;
+    if (window.MAGIC) { const r = el.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+  }
+  $('#whoMore').style.display = 'none';
+  setTimeout(() => {
+    if (whoState.i < WHO.length - 1) { whoState.i++; whoState.clue = 1; renderWho(); }
+    else finishWho();
+  }, 1100);
+}
+
+function finishWho() {
+  if (window.MAGIC) MAGIC.rewardModal({ icon: 'search', title: 'Игра пройдена!', subtitle: `Ты узнал героев веры и набрал ${whoState.score} очков.`, xp: whoState.score });
+  else toast(`Готово · ${whoState.score} очков`);
+  setTimeout(openGamesHub, 400);
+}
+
+/* ── Хронология (расставь события по порядку) ── */
+const CHRONO = [
+  { t: 'Сотворение мира', ord: 'В начале' },
+  { t: 'Ноев потоп', ord: 'Ветхий Завет' },
+  { t: 'Исход из Египта', ord: 'Ветхий Завет' },
+  { t: 'Царь Давид', ord: 'Ветхий Завет' },
+  { t: 'Рождество Иисуса', ord: 'Новый Завет' },
+  { t: 'Воскресение Христа', ord: 'Новый Завет' },
+];
+let chronoOrder = [];
+
+function openChrono() {
+  // стартовая перестановка (детерминированная, заведомо не по порядку)
+  chronoOrder = [2, 0, 4, 1, 5, 3].map((i) => CHRONO[i]);
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'chrono'));
+  $('#nav').style.display = 'none';
+  $('#chronoResult').textContent = '';
+  renderChrono();
+  window.scrollTo({ top: 0 });
+}
+
+function renderChrono() {
+  $('#chronoList').innerHTML = chronoOrder.map((c, i) => `
+    <div class="chrono-item" data-ci="${i}">
+      <span class="chrono-item__grip">${ICON('menu', 16)}</span>
+      <div class="chrono-item__body"><div class="chrono-item__title">${c.t}</div><div class="chrono-item__ord">${c.ord}</div></div>
+      <div class="chrono-item__moves">
+        <button class="chrono-move" data-mv="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>${ICON('chevron-up', 14)}</button>
+        <button class="chrono-move" data-mv="down" data-i="${i}" ${i === chronoOrder.length - 1 ? 'disabled' : ''}>${ICON('chevron-down', 14)}</button>
+      </div>
+    </div>`).join('');
+  $$('#chronoList .chrono-move').forEach((el) => el.addEventListener('click', () => {
+    const i = Number(el.dataset.i);
+    const j = el.dataset.mv === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= chronoOrder.length) return;
+    [chronoOrder[i], chronoOrder[j]] = [chronoOrder[j], chronoOrder[i]];
+    renderChrono();
+  }));
+  hydrateIcons();
+}
+
+function checkChrono() {
+  let correct = 0;
+  $$('#chronoList .chrono-item').forEach((el, i) => {
+    const ok = chronoOrder[i] === CHRONO[i];
+    el.classList.toggle('chrono-item--ok', ok);
+    el.classList.toggle('chrono-item--bad', !ok);
+    if (ok) correct++;
+  });
+  const res = $('#chronoResult');
+  if (correct === CHRONO.length) {
+    res.style.color = 'var(--success)';
+    res.textContent = 'Верно! Вся история спасения по порядку 🎉';
+    if (window.MAGIC) {
+      const r = $('#chronoCheck').getBoundingClientRect();
+      MAGIC.celebrate(r.left + r.width / 2, r.top);
+      setTimeout(() => MAGIC.rewardModal({ icon: 'clock', title: 'Хронология собрана!', subtitle: 'Ты выстроил события от сотворения мира до Церкви.', xp: 25 }), 300);
+    }
+    setTimeout(openGamesHub, 1600);
+  } else {
+    res.style.color = 'var(--terracotta)';
+    res.textContent = `Правильно на месте: ${correct} из ${CHRONO.length}. Попробуй ещё!`;
+  }
 }
 
 /* ── Библейское мемори ── */
