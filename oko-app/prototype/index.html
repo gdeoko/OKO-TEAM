@@ -421,6 +421,43 @@ nav#tabs .nav-logo{display:none}
 .lf-photo svg.i{width:26px;height:26px}
 .lf-sel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font-size:14px;color:var(--fg)}
 label.f-lab{display:block}
+/* ===== Контекстное меню сообщения ===== */
+#msgMenu{position:fixed;inset:0;z-index:75;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:24px;opacity:0;transition:opacity .2s}
+#msgMenu.open{display:flex;opacity:1}
+.mm-inner{display:flex;flex-direction:column;gap:12px;max-width:340px;width:100%;animation:mmIn .22s cubic-bezier(.3,1.2,.4,1)}
+@keyframes mmIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:none}}
+.mm-reacts{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:7px 8px;justify-content:space-between;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.mm-react{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--fg);transition:transform .12s}
+.mm-react svg.i{width:22px;height:22px}
+.mm-react:active{transform:scale(1.25)}
+.mm-react.on{background:var(--lime-dim)}
+.mm-react.on svg.i{color:var(--accent);fill:currentColor}
+.mm-react.more svg.i{color:var(--dim)}
+.mm-preview{align-self:flex-start;max-width:85%;pointer-events:none}
+.mm-preview.out{align-self:flex-end}
+.mm-preview .msg{cursor:default;animation:none}
+.mm-actions{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.mm-act{display:flex;align-items:center;gap:13px;width:100%;padding:13px 16px;font-size:14.5px;font-weight:500;color:var(--fg);border-bottom:1px solid var(--border);text-align:left}
+.mm-act:last-child{border-bottom:none}
+.mm-act svg.i{width:19px;height:19px;color:var(--dim)}
+.mm-act.danger{color:#ff5a5a}
+.mm-act.danger svg.i{color:#ff5a5a}
+/* панель ответа/редактирования */
+.compose-bar{display:none;align-items:center;gap:10px;padding:9px 14px;border-top:1px solid var(--border);background:var(--surface)}
+.compose-bar.open{display:flex}
+.compose-bar .cb-ic{width:20px;height:20px;color:var(--accent);flex-shrink:0}
+.compose-bar .cb-ic svg.i{width:20px;height:20px}
+.compose-bar .cb-txt{flex:1;min-width:0;border-left:2px solid var(--lime);padding-left:9px}
+.compose-bar .cb-txt b{font-size:12.5px;color:var(--accent);display:block}
+.compose-bar .cb-txt small{font-size:12px;color:var(--dim);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compose-bar .cb-x{width:28px;height:28px;flex-shrink:0;color:var(--dim);transform:rotate(45deg)}
+.compose-bar .cb-x svg.i{width:20px;height:20px}
+/* цитата и метка изменения */
+.msg-quote{border-left:2px solid var(--lime);padding:2px 0 2px 8px;margin-bottom:5px;font-size:12.5px;opacity:.85}
+.msg-quote b{display:block;color:var(--accent);font-size:11.5px}
+.msg-quote span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.msg .edited{font-size:10px;color:var(--dim);margin-left:6px;font-style:italic}
+.msg.out .edited{color:rgba(0,0,0,.45)}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -661,6 +698,16 @@ main>.screen{position:relative;z-index:1}
     <symbol id="i-eye" viewBox="0 0 100 100"><path d="M10 50c10-18 24-27 40-27s30 9 40 27c-10 18-24 27-40 27S20 68 10 50z"/><circle cx="50" cy="50" r="11" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-briefcase" viewBox="0 0 100 100"><rect x="14" y="34" width="72" height="46" rx="9"/><path d="M38 34v-8a8 8 0 0 1 8-8h8a8 8 0 0 1 8 8v8M14 54h72"/></symbol>
     <symbol id="i-fire" viewBox="0 0 100 100"><path d="M50 88c-16 0-28-11-28-26 0-12 8-20 14-28 2 8 6 12 10 14-2-12 2-26 14-34-2 12 4 18 10 24 6 7 8 13 8 22 0 15-12 28-28 28z"/></symbol>
+    <symbol id="i-laugh" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38"/><path d="M32 60c5 12 31 12 36 0" fill="currentColor" stroke="none"/><path d="M33 42h12M55 42h12" stroke-linecap="round"/></symbol>
+    <symbol id="i-wow" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38"/><circle cx="38" cy="42" r="4" fill="currentColor" stroke="none"/><circle cx="62" cy="42" r="4" fill="currentColor" stroke="none"/><ellipse cx="50" cy="65" rx="7" ry="9"/></symbol>
+    <symbol id="i-sad" viewBox="0 0 100 100"><circle cx="50" cy="50" r="38"/><circle cx="38" cy="44" r="3.5" fill="currentColor" stroke="none"/><circle cx="62" cy="44" r="3.5" fill="currentColor" stroke="none"/><path d="M34 68c8-12 24-12 32 0" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 100 100"><path d="M56 12 44 24l-4 22-16 12 40 40 12-16 22-4 12-12z" fill="none"/><path d="M40 60 20 80"/></symbol>
+    <symbol id="i-reply" viewBox="0 0 100 100"><path d="M40 26 14 50l26 24V60c22 0 34 8 40 22 2-30-12-46-40-46z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 100 100"><path d="M68 16 84 32 40 76 20 82l6-20z"/><path d="M60 24 76 40"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 100 100"><path d="M24 28h52M40 28V18h20v10M30 28l4 56h32l4-56M44 40v34M56 40v34"/></symbol>
+    <symbol id="i-forward" viewBox="0 0 100 100"><path d="M60 26 86 50 60 74V60c-22 0-34 8-40 22-2-30 12-46 40-46z"/></symbol>
+    <symbol id="i-pos" viewBox="0 0 100 100"><path d="M50 12c-16 0-28 12-28 28 0 20 28 48 28 48s28-28 28-48c0-16-12-28-28-28z"/><circle cx="50" cy="40" r="10" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-sticker" viewBox="0 0 100 100"><path d="M58 14H30a16 16 0 0 0-16 16v40a16 16 0 0 0 16 16h28l28-28V30a16 16 0 0 0-16-16z"/><path d="M58 86V66a8 8 0 0 1 8-8h20"/></symbol>
   </defs>
 </svg>
 
@@ -695,11 +742,18 @@ main>.screen{position:relative;z-index:1}
   <div class="sv-bar"><i id="svBar"></i></div>
   <div class="sv-card" id="svCard"></div>
 </div>
+<div id="msgMenu" onclick="closeMsgMenu()">
+  <div class="mm-inner" onclick="event.stopPropagation()">
+    <div class="mm-reacts" id="mmReacts"></div>
+    <div class="mm-preview" id="mmPreview"></div>
+    <div class="mm-actions" id="mmActions"></div>
+  </div>
+</div>
 <div id="app">
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.21</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.22</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -729,6 +783,7 @@ main>.screen{position:relative;z-index:1}
             </div>
           </div>
           <div class="msgs" id="msgs"></div>
+          <div class="compose-bar" id="composeBar"></div>
           <div class="composer">
             <button class="tool" onclick="openSheet('attach')" title="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <input id="msgInput" placeholder="Сообщение" autocomplete="off">
@@ -946,6 +1001,7 @@ main>.screen{position:relative;z-index:1}
   <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Start/Pro до 2 ГБ</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('poll')"><svg class="i"><use href="#i-poll"/></svg><span>Опрос<small>Голосование в чате</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('money')"><svg class="i"><use href="#i-money"/></svg><span>Перевести деньги<small>Мгновенно, без комиссии</small></span></button>
+  <button class="sheet-item" onclick="closeSheet();toast('Геопозиция подключится с бэкендом')"><svg class="i"><use href="#i-pos"/></svg><span>Геопозиция<small>Отправить точку на карте</small></span></button>
 </div>
 <div class="sheet" id="sheet-poll">
   <h3>Новый опрос</h3>
@@ -1300,7 +1356,9 @@ function msgHtml(m, idx){
   }
   if(m.kind==='money') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="moneymsg"><div class="mlabel">Перевод</div><div class="msum">${m.amount} ₽</div><div class="mst">${I('check2')} Доставлен</div></div>${time}${rx}</div>`;
   if(m.kind==='sys') return `<div class="msg sys">${m.body}</div>`;
-  return `<div class="msg ${m.in?'in':'out'}" ${tap}>${m.who?`<div class=\"mwho\">${m.who}</div>`:''}${m.body}${time}${rx}</div>`;
+  const quote = m.reply ? `<div class="msg-quote"><b>${esc(m.reply.who)}</b><span>${esc(m.reply.text)}</span></div>` : '';
+  const ed = m.edited ? '<span class="edited">изм.</span>' : '';
+  return `<div class="msg ${m.in?'in':'out'}" ${tap}>${m.who?`<div class=\"mwho\">${m.who}</div>`:''}${quote}${m.body}${ed}${time}${rx}</div>`;
 }
 function votePoll(mi, oi){ const m = currentChat.msgs[mi]; if(m.voted) return; m.voted = oi+1; renderMsgs(); }
 function createPoll(){
@@ -1334,26 +1392,65 @@ function renderMsgs(){
     el.scrollTop = el.scrollHeight;
   }
 }
-/* реакции: тап по сообщению -> панель из трёх SVG-реакций */
-function reactBar(ev, idx){
-  document.querySelectorAll('.react-bar').forEach(b=>b.remove());
-  const bar = document.createElement('div');
-  bar.className = 'react-bar';
-  ['heart','thumb','fire'].forEach(r=>{
-    const b = document.createElement('button');
-    b.innerHTML = I(r);
-    b.onclick = e => { e.stopPropagation(); addReact(idx, r); };
-    bar.appendChild(b);
-  });
-  ev.currentTarget.appendChild(bar);
-  ev.stopPropagation();
-}
-function addReact(idx, r){
+/* ===== Контекстное меню сообщения (Telegram-уровень) ===== */
+const REACTIONS = ['heart','fire','thumb','laugh','wow','sad','star','crown'];
+let msgMenuIdx = null, replyState = null, editState = null;
+function reactBar(ev, idx){ ev.stopPropagation(); openMsgMenu(idx); }
+function openMsgMenu(idx){
+  msgMenuIdx = idx;
   const m = currentChat.msgs[idx];
-  m.reacts = m.reacts || {};
-  m.reacts[r] = (m.reacts[r]||0) === 0 ? 1 : 0; // повторный тап снимает
-  renderMsgs();
+  const mine = !m.in;
+  const canText = m.kind==='text' || !m.kind;
+  document.getElementById('mmReacts').innerHTML =
+    REACTIONS.map(r=>`<button class="mm-react ${m.reacts&&m.reacts[r]?'on':''}" onclick="pickReact(${idx},'${r}')">${I(r)}</button>`).join('')
+    + `<button class="mm-react more" onclick="toast('Полный набор реакций — скоро')">${I('sticker')}</button>`;
+  const prev = document.getElementById('mmPreview');
+  prev.innerHTML = msgHtml(m, idx).replace(/ onclick="[^"]*"/g,'');
+  const acts = [['reply','Ответить',`replyTo(${idx})`,'']];
+  if(canText) acts.push(['copy','Копировать',`copyMsg(${idx})`,'']);
+  acts.push(['forward','Переслать',`forwardMsg(${idx})`,'']);
+  if(mine && canText) acts.push(['edit','Редактировать',`editMsg(${idx})`,'']);
+  acts.push(['pin','Закрепить',`pinMsg(${idx})`,'']);
+  if(mine) acts.push(['trash','Удалить',`deleteMsg(${idx})`,'danger']);
+  document.getElementById('mmActions').innerHTML = acts.map(([ic,l,fn,cls])=>
+    `<button class="mm-act ${cls}" onclick="${fn}">${I(ic)}<span>${l}</span></button>`).join('');
+  document.getElementById('msgMenu').classList.add('open');
 }
+function closeMsgMenu(){ document.getElementById('msgMenu').classList.remove('open'); msgMenuIdx=null; }
+function pickReact(idx,r){
+  const m=currentChat.msgs[idx]; m.reacts=m.reacts||{};
+  m.reacts[r]=(m.reacts[r]||0)===0?1:0;
+  closeMsgMenu(); renderMsgs();
+}
+function copyMsg(idx){ const m=currentChat.msgs[idx]; try{navigator.clipboard&&navigator.clipboard.writeText(m.body||'');}catch(e){} closeMsgMenu(); toast('Скопировано'); }
+function forwardMsg(idx){ closeMsgMenu(); toast('Пересылка — выбор чата подключится'); }
+function pinMsg(idx){ closeMsgMenu(); toast('Сообщение закреплено'); }
+function deleteMsg(idx){
+  currentChat.msgs.splice(idx,1);
+  closeMsgMenu(); renderMsgs._n=Math.max(0,(renderMsgs._n||1)-1); renderMsgs(); toast('Удалено');
+}
+function msgQuoteText(m){ return m.body || kindPreview(m) || ''; }
+function replyTo(idx){
+  const m=currentChat.msgs[idx];
+  replyState={who:m.in?(m.who||currentChat.name):'Ты', text:msgQuoteText(m)}; editState=null;
+  closeMsgMenu(); showComposeBar(); document.getElementById('msgInput').focus();
+}
+function editMsg(idx){
+  editState={idx}; replyState=null;
+  document.getElementById('msgInput').value=currentChat.msgs[idx].body||'';
+  closeMsgMenu(); showComposeBar(); if(window.syncSendIcon)syncSendIcon(); document.getElementById('msgInput').focus();
+}
+function showComposeBar(){
+  const bar=document.getElementById('composeBar');
+  if(editState){
+    bar.innerHTML=`<span class="cb-ic">${I('edit')}</span><div class="cb-txt"><b>Редактирование</b><small>${esc(currentChat.msgs[editState.idx].body||'')}</small></div><button class="cb-x" onclick="cancelCompose()">${I('plus')}</button>`;
+    bar.classList.add('open');
+  } else if(replyState){
+    bar.innerHTML=`<span class="cb-ic">${I('reply')}</span><div class="cb-txt"><b>Ответ · ${esc(replyState.who)}</b><small>${esc(replyState.text)}</small></div><button class="cb-x" onclick="cancelCompose()">${I('plus')}</button>`;
+    bar.classList.add('open');
+  } else { bar.classList.remove('open'); bar.innerHTML=''; }
+}
+function cancelCompose(){ replyState=null; editState=null; document.getElementById('msgInput').value=''; showComposeBar(); if(window.syncSendIcon)syncSendIcon(); }
 /* индикатор «печатает…» */
 function showTyping(){
   const el = document.getElementById('msgs');
@@ -1386,7 +1483,15 @@ function sendText(){
   const inp = document.getElementById('msgInput');
   const text = inp.value.trim();
   if(!text || !currentChat) return;
-  pushMsg({in:0, t:nowT(), kind:'text', body:text});
+  if(editState){ // редактирование существующего сообщения
+    const m = currentChat.msgs[editState.idx];
+    if(m){ m.body = text; m.edited = true; }
+    editState = null; inp.value=''; showComposeBar(); syncSendIcon(); renderMsgs();
+    return;
+  }
+  const msg = {in:0, t:nowT(), kind:'text', body:text};
+  if(replyState){ msg.reply = {who:replyState.who, text:replyState.text}; replyState = null; showComposeBar(); }
+  pushMsg(msg);
   inp.value=''; syncSendIcon();
   if(currentChat.cid) liveSend(text);
   if(currentChat.id===1){
