@@ -573,6 +573,11 @@ label.f-lab{display:block}
 .sys-metric .v{font-size:16px;font-weight:800;color:var(--accent)}
 .sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
 @media(prefers-reduced-motion:reduce){#systemView{transition:none}}
+/* ===== Управление каналом ===== */
+.ch-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0 4px}
+.ch-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center}
+.ch-stat .v{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.ch-stat .l{font-size:10.5px;color:var(--dim);margin-top:2px}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -893,7 +898,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.28</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.29</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -2494,15 +2499,34 @@ function openProfile(){
   let sub = '', extra = '';
   if(c.kind==='channel'){
     sub = (c.subs||'0') + ' подписчиков · канал';
-    extra = `<div class="pv-stats"><span class="chip">Посты в ленте</span><span class="chip">Алгоритмы OKO</span></div>`;
-    if(c.managed) extra += `
+    if(c.managed){
+      extra = `
+      <div class="ch-stats">
+        <div class="ch-stat"><div class="v">${c.subs||'12.4к'}</div><div class="l">подписчиков</div></div>
+        <div class="ch-stat"><div class="v">34.2к</div><div class="l">охват/нед</div></div>
+        <div class="ch-stat"><div class="v">+840</div><div class="l">новых/нед</div></div>
+        <div class="ch-stat"><div class="v">6.2%</div><div class="l">вовлечённость</div></div>
+      </div>
+      <button class="btn" style="margin:6px 0 10px" onclick="closeSheet();openPromoteChannel()">${I('rocket')} Продвинуть канал</button>
       <button class="prow" onclick="toggleWrite()">${I('chat')} Кто может писать
         <span class="switch ${c.writeAll?'on':''}" id="writeSwitch"><i></i></span></button>
       <div class="dim" style="font-size:11.5px;padding:2px 4px 10px" id="writeHint">${c.writeAll?'Пишут все участники':'Публикуют только владелец и админы'}</div>
+      <button class="prow" onclick="toast('Управление админами подключится с бэкендом')">${I('users')} Администраторы <span class="chev">${I('chev')}</span></button>
+      <button class="prow" onclick="toast('Закреплённые посты')">${I('pin')} Закреплённые посты <span class="chev">${I('chev')}</span></button>
       <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} oko.app/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
+    } else {
+      extra = `<div class="pv-stats"><span class="chip">Посты в ленте</span><span class="chip">Алгоритмы OKO</span></div>`;
+    }
   } else if(c.kind==='group'){
     sub = (c.members||2) + ' участников · группа';
-    if(c.managed) extra = `<button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} Ссылка-приглашение <span class="chev">${I('copy')}</span></button>`;
+    if(c.managed) extra = `
+      <div class="ch-stats">
+        <div class="ch-stat"><div class="v">${c.members||5}</div><div class="l">участников</div></div>
+        <div class="ch-stat"><div class="v">${c.msgs?c.msgs.length:0}+</div><div class="l">сообщений</div></div>
+        <div class="ch-stat"><div class="v">Вкл</div><div class="l">антиспам</div></div>
+      </div>
+      <button class="prow" onclick="toast('Управление участниками подключится с бэкендом')">${I('users')} Участники и роли <span class="chev">${I('chev')}</span></button>
+      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} Ссылка-приглашение <span class="chev">${I('copy')}</span></button>`;
   } else {
     sub = '@' + (c.nick||'user') + ' · ' + (c.online ? 'в сети' : 'недавно');
     extra = `<div class="pv-stats"><span class="chip">Медиа 24</span><span class="chip">Файлы 8</span><span class="chip">Ссылки 12</span></div>`;
@@ -2515,6 +2539,24 @@ function openProfile(){
   if(bigAva){ bigAva.style.width='86px'; bigAva.style.height='86px'; bigAva.style.fontSize='30px'; }
   openSheet('profile');
 }
+const CH_PROMOS = [
+  {reach:'5 000',  price:290, desc:'Канал в рекомендациях ленты 3 дня'},
+  {reach:'20 000', price:990, desc:'Топ рекомендаций + поиск по нише 7 дней'},
+  {reach:'100 000',price:3900,desc:'Максимум охвата + подборка «Растущие каналы»'},
+];
+function openPromoteChannel(){
+  const c = currentChat;
+  document.getElementById('promoView').innerHTML = `
+    <h3>Продвижение канала</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">«${esc(c.name)}» · привлечёт новых подписчиков</p>
+    ${CH_PROMOS.map((pr,i)=>`<button class="promo-opt" onclick="buyChannelPromo(${i})">
+      <div class="promo-ic ${['up','vip','turbo'][i]}">${I('rocket')}</div>
+      <div class="promo-b"><b>${pr.reach} показов</b><small>${pr.desc}</small></div>
+      <div class="promo-price">${pr.price} ₽</div></button>`).join('')}
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:10px">Показываем целевой аудитории по нише канала</p>`;
+  openSheet('promo');
+}
+function buyChannelPromo(i){ closeSheet(); toast('Канал продвигается — подписчики пойдут'); }
 function toggleWrite(){
   currentChat.writeAll = !currentChat.writeAll;
   document.getElementById('writeSwitch').classList.toggle('on', currentChat.writeAll);
