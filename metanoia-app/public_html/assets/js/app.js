@@ -1970,7 +1970,7 @@ function setGet(k) { const v = localStorage.getItem('mt_set_' + k); return v ===
 function setPut(k, v) { localStorage.setItem('mt_set_' + k, v ? '1' : '0'); }
 
 function openSettingsScreen() {
-  const dark = (localStorage.getItem('mt_theme') || 'light') === 'dark';
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   $('#setAppearance').innerHTML = switchRow('swTheme', dark ? 'moon' : 'sun', 'Тёмная тема', 'Мягкие тёмные тона для вечернего чтения', dark);
   $('#setNotify').innerHTML =
     switchRow('swLessons', 'book', 'Новые уроки', 'Уведомлять о новых занятиях', setGet('n_lessons')) +
@@ -2001,6 +2001,19 @@ function wireSwitch(id, key, cb) {
 
 function applyTheme(mode) {
   document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+}
+
+// Тема: явный выбор пользователя (mt_theme) важнее; иначе — по системе
+function resolveTheme() {
+  const saved = localStorage.getItem('mt_theme');
+  if (saved) return saved;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function initSystemTheme() {
+  if (!window.matchMedia) return;
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const onChange = () => { if (!localStorage.getItem('mt_theme')) applyTheme(mq.matches ? 'dark' : 'light'); };
+  mq.addEventListener ? mq.addEventListener('change', onChange) : mq.addListener(onChange);
 }
 
 /* ── Сертификаты ── */
@@ -2170,7 +2183,8 @@ function initGrowth() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  applyTheme(localStorage.getItem('mt_theme') || 'light');
+  applyTheme(resolveTheme());
+  initSystemTheme();
   hydrateIcons();
   if (window.MAGIC && document.getElementById('splashFx')) MAGIC.ambientMotes(document.getElementById('splashFx'));
   renderStories();
