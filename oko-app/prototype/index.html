@@ -754,14 +754,24 @@ main>.screen{position:relative;z-index:1}
 .story .ring .ava{width:100%;height:100%;font-size:20px;border:2px solid var(--bg)}
 .story small{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px}
 .story.add .ring{background:none;border:2px dashed var(--dim);padding:1px}
-#storyViewer{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center}
+#storyViewer{position:fixed;inset:0;z-index:76;background:#080808;display:none;flex-direction:column;align-items:center;justify-content:center}
 #storyViewer.open{display:flex}
 #storyViewer .sv-bar{position:absolute;top:14px;left:16px;right:16px;height:3px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden}
 #storyViewer .sv-bar i{display:block;height:100%;width:0;background:#9AFF00;animation:svbar 3.5s linear forwards}
 @keyframes svbar{to{width:100%}}
-#storyViewer .sv-card{text-align:center;color:#fff;padding:24px}
+#storyViewer .sv-card{text-align:center;color:#fff;padding:24px;width:100%;max-width:440px;position:relative}
 #storyViewer .sv-card .ava{width:84px;height:84px;font-size:30px;margin:0 auto 14px}
-#storyViewer .sv-card p{color:#c9c9c9;font-size:15px;line-height:1.6;max-width:300px;margin-top:10px}
+#storyViewer .sv-card p{color:#c9c9c9;font-size:15px;line-height:1.6;max-width:300px;margin:10px auto 0}
+.sv-close{position:absolute;top:26px;right:16px;z-index:2;width:34px;height:34px;color:#fff;transform:rotate(45deg)}
+.sv-close svg.i{width:24px;height:24px}
+.sv-photo{width:100%;max-height:70vh;object-fit:cover;border-radius:16px;display:block}
+.sv-top{display:flex;align-items:center;gap:10px;position:absolute;top:26px;left:20px;right:60px;z-index:2}
+.sv-top .ava{width:38px!important;height:38px!important;font-size:15px!important;margin:0!important;flex-shrink:0}
+.sv-top b{font-size:14px}
+.sv-top .sv-time{font-size:11px;color:#bbb;margin-left:auto}
+.sv-text{margin-top:14px}
+.sv-text.over{position:absolute;left:20px;right:20px;bottom:24px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);padding:12px 14px;border-radius:12px;margin:0;font-size:14px;color:#fff}
+#storyViewer .sv-card.photo{text-align:left;padding:0}
 
 /* ============ РЕАКЦИИ / ПЕЧАТАЕТ / ПРОГРЕСС ============ */
 .msg{position:relative;cursor:pointer}
@@ -886,9 +896,17 @@ main>.screen{position:relative;z-index:1}
     <div class="auth-legal">Продолжая, ты принимаешь условия сервиса и политику конфиденциальности</div>
   </div>
 </section>
-<div id="storyViewer" onclick="closeStory()">
+<div id="storyViewer" onclick="storyNav(event)">
   <div class="sv-bar"><i id="svBar"></i></div>
+  <button class="sv-close" onclick="event.stopPropagation();closeStory()"><svg class="i"><use href="#i-plus"/></svg></button>
   <div class="sv-card" id="svCard"></div>
+</div>
+<div class="sheet" id="sheet-story-create">
+  <h3>Новая история</h3>
+  <input type="file" id="storyPhotoInput" accept="image/*" style="display:none" onchange="pickStoryPhoto(event)">
+  <button class="sheet-item" onclick="document.getElementById('storyPhotoInput').click()"><svg class="i"><use href="#i-photo"/></svg><span>Фото с устройства<small>История на 24 часа</small></span></button>
+  <textarea id="stStoryText" rows="2" placeholder="Текст истории (необязательно)" style="width:100%;resize:none;margin-top:6px"></textarea>
+  <button class="btn" onclick="createTextStory()">Опубликовать текст</button>
 </div>
 <div id="msgMenu" onclick="closeMsgMenu()">
   <div class="mm-inner" onclick="event.stopPropagation()">
@@ -942,7 +960,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.33</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.34</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -2437,25 +2455,73 @@ const STORIES = [
 ];
 function renderStories(){
   document.getElementById('storiesRow').innerHTML = STORIES.map((st, i) => st.add
-    ? `<div class="story add" onclick="toast('Съёмка истории — скоро')"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${st.name}</small></div>`
-    : `<div class="story" id="story-${i}" onclick="openStory(${i})"><div class="ring">${st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${st.ava}</div>`}</div><small>${st.name}</small></div>`
+    ? `<div class="story add" onclick="openStoryCreate()"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${st.name}</small></div>`
+    : `<div class="story ${st.seen?'seen':''}" id="story-${i}" onclick="openStory(${i})"><div class="ring">${st.src?`<div class="ava" style="background-image:url(${st.src});background-size:cover"></div>`:st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${st.ava}</div>`}</div><small>${st.name}</small></div>`
   ).join('');
 }
-let storyTimer = null;
+let storyTimer = null, curStory = 0;
 function openStory(i){
-  const st = STORIES[i];
-  document.getElementById('svCard').innerHTML =
-    (st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${st.ava}</div>`) +
-    `<b style="font-size:18px">${st.name}</b><p>${st.text}</p>`;
-  const bar = document.getElementById('svBar');
-  bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
+  curStory = i; showStory();
   document.getElementById('storyViewer').classList.add('open');
-  document.getElementById('story-' + i)?.classList.add('seen');
-  clearTimeout(storyTimer); storyTimer = setTimeout(closeStory, 3500);
+}
+function showStory(){
+  const i = curStory, st = STORIES[i];
+  if(!st || st.add){ return closeStory(); }
+  const head = (st.src ? `<div class="ava" style="background-image:url(${st.src});background-size:cover"></div>`
+    : st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${st.ava}</div>`);
+  const card = document.getElementById('svCard');
+  const time = `<span class="sv-time">${st.my?'только что':'недавно'}</span>`;
+  if(st.src){
+    card.className = 'sv-card photo';
+    card.innerHTML = `<img class="sv-photo" src="${st.src}" alt="история">
+      <div class="sv-top">${head}<b>${esc(st.name)}</b>${time}</div>
+      ${st.text ? `<p class="sv-text over">${esc(st.text)}</p>` : ''}`;
+  } else {
+    card.className = 'sv-card';
+    card.innerHTML = `${head}<b style="font-size:19px;display:block;margin-bottom:3px">${esc(st.name)}</b>
+      <div style="margin-bottom:14px">${time}</div>
+      ${st.text ? `<p>${esc(st.text)}</p>` : ''}`;
+  }
+  const bar = document.getElementById('svBar');
+  bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'svbar 4s linear forwards';
+  st.seen = true;
+  document.getElementById('story-'+i)?.classList.add('seen');
+  clearTimeout(storyTimer); storyTimer = setTimeout(nextStory, 4000);
+}
+function nextStory(){
+  let j = curStory + 1;
+  while(STORIES[j] && STORIES[j].add) j++;
+  if(j < STORIES.length){ curStory = j; showStory(); } else closeStory();
+}
+function prevStory(){
+  let j = curStory - 1;
+  while(STORIES[j] && STORIES[j].add) j--;
+  if(j >= 0){ curStory = j; showStory(); }
+}
+function storyNav(ev){
+  ev.stopPropagation();
+  const x = ev.clientX, w = window.innerWidth;
+  if(x < w*0.32) prevStory(); else nextStory();
 }
 function closeStory(){
   clearTimeout(storyTimer);
   document.getElementById('storyViewer').classList.remove('open');
+}
+function openStoryCreate(){ document.getElementById('stStoryText').value=''; openSheet('story-create'); }
+function pickStoryPhoto(ev){
+  const f = ev.target.files && ev.target.files[0]; ev.target.value='';
+  if(!f) return;
+  const src = URL.createObjectURL(f);
+  addStory({src, text: document.getElementById('stStoryText').value.trim()});
+}
+function createTextStory(){
+  const t = document.getElementById('stStoryText').value.trim();
+  if(!t){ toast('Напиши текст или выбери фото'); return; }
+  addStory({text:t});
+}
+function addStory(data){
+  STORIES.splice(1, 0, {my:true, name:PROFILE.name, ava:PROFILE.name[0], ...data});
+  closeSheet(); renderStories(); toast('История опубликована на 24 часа');
 }
 
 /* ================= ЖИВОЙ ЧАТ (Supabase Realtime) ================= */
