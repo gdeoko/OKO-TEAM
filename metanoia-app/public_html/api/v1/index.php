@@ -12,6 +12,7 @@ require __DIR__ . '/core/response.php';
 require __DIR__ . '/core/db.php';
 require __DIR__ . '/core/jwt.php';
 require __DIR__ . '/core/auth.php';
+require __DIR__ . '/core/tokens.php';
 require __DIR__ . '/core/ratelimit.php';
 
 // ── CORS (только свой домен) ───────────────────────────────
@@ -42,9 +43,12 @@ $method   = $_SERVER['REQUEST_METHOD'];
 
 // ── Таблица маршрутов ──────────────────────────────────────
 $routes = [
-    'auth'   => __DIR__ . '/routes/auth.php',
-    'users'  => __DIR__ . '/routes/users.php',
-    'health' => null, // обрабатывается ниже
+    'auth'          => __DIR__ . '/routes/auth.php',
+    'oauth'         => __DIR__ . '/routes/oauth.php',
+    'users'         => __DIR__ . '/routes/users.php',
+    'subscriptions' => __DIR__ . '/routes/subscriptions.php',
+    'webhooks'      => __DIR__ . '/routes/webhooks.php',
+    'health'        => null, // обрабатывается ниже
 ];
 
 try {
