@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ЗооОпт · Склад · Маркет — кино-магазин</title>
+<meta name="build" content="zoopt-film-v1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1B8A3A; --green-lite:#4FD97A; --yellow:#FFD500; --warm:#FFE45C;
+  --ink:#0A0A0A; --ivory:#F5F1E8; --gray:#6B7280; --night:#03100A;
+  --ease:cubic-bezier(.16,1,.3,1); --r-pill:999px; --r-lg:22px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Onest',system-ui,sans-serif;background:var(--night);color:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Unbounded',sans-serif;font-weight:800;line-height:.98;letter-spacing:-.01em}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+section{position:relative}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:3px;border-radius:4px}
+
+.grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* preloader */
+#pre{position:fixed;inset:0;z-index:100;background:var(--night);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:26px;transition:opacity .9s var(--ease),visibility .9s}
+#pre.done{opacity:0;visibility:hidden}
+.pre-moon{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 38% 34%,#FFF0A8,var(--yellow) 55%,#e0b400);box-shadow:0 0 70px 14px rgba(255,213,0,.45);animation:breath 2.2s var(--ease) infinite}
+@keyframes breath{0%,100%{transform:scale(.9)}50%{transform:scale(1.05)}}
+.pre-t{font-family:'JetBrains Mono';font-weight:500;letter-spacing:.4em;font-size:11px;color:#9fd8ab;text-transform:uppercase;padding-left:.4em}
+
+/* cursor */
+#cursor{position:fixed;z-index:80;width:32px;height:32px;border:1.5px solid rgba(255,213,0,.9);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;transition:width .25s var(--ease),height .25s var(--ease),background .25s,opacity .3s;mix-blend-mode:screen;opacity:0}
+#cursor.on{opacity:1}#cursor.hot{width:52px;height:52px;background:rgba(255,213,0,.12)}
+#cursor .dot{position:absolute;left:50%;top:50%;width:4px;height:4px;background:var(--yellow);border-radius:50%;transform:translate(-50%,-50%)}
+@media(hover:none){#cursor{display:none}}
+
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(16px,4vw,48px);transition:.45s var(--ease)}
+nav.solid{background:rgba(245,241,232,.82);backdrop-filter:blur(16px) saturate(1.3);box-shadow:0 1px 0 rgba(15,92,36,.08)}
+.brand{display:flex;align-items:center;gap:12px;font-family:'Unbounded';font-weight:900;font-size:20px;letter-spacing:-.02em;color:#fff;transition:color .4s}
+nav.solid .brand{color:var(--ink)}
+.brand .zoo{color:var(--yellow)} nav.solid .brand .zoo{color:var(--green)}
+.brand-badge{width:34px;height:34px;border-radius:50%;background:var(--ink);display:grid;place-items:center;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,213,0,.35)}
+.brand-badge span{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#FFE45C,var(--yellow));box-shadow:0 0 10px rgba(255,213,0,.8)}
+.nav-links{display:flex;gap:28px;font-size:15px;font-weight:500;color:rgba(255,255,255,.85)}
+nav.solid .nav-links{color:var(--ink)}
+.nav-links a{position:relative;padding:4px 0;transition:.25s}
+.nav-links a:after{content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;background:var(--yellow);transition:width .3s var(--ease)}
+nav.solid .nav-links a:after{background:var(--green)}
+.nav-links a:hover:after{width:100%}
+.nav-right{display:flex;align-items:center;gap:12px}
+.chip{font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--r-pill);border:1px solid rgba(255,255,255,.28);color:#fff;transition:.3s}
+nav.solid .chip{border-color:rgba(10,10,10,.18);color:var(--ink)}
+.chip.solid{background:var(--green);border-color:var(--green);color:#fff}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* ============ ФИЛЬМ: полёт по сценам ============ */
+#film{height:800vh;position:relative;background:#000}
+.film-stage{position:sticky;top:0;height:100svh;overflow:hidden}
+.scene{position:absolute;inset:0;opacity:0;will-change:transform,opacity}
+.scene .bg{position:absolute;inset:-6%;background-position:center;background-size:cover;will-change:transform}
+.scene:after{content:"";position:absolute;inset:0;pointer-events:none}
+.scene.left:after{background:linear-gradient(90deg,rgba(3,16,10,.82),rgba(3,16,10,.34) 42%,transparent 64%)}
+.scene.right:after{background:linear-gradient(270deg,rgba(3,16,10,.82),rgba(3,16,10,.34) 42%,transparent 64%)}
+.scene.center:after{background:radial-gradient(70% 60% at 50% 52%,rgba(3,16,10,.55),rgba(3,16,10,.28) 60%,transparent 82%)}
+.flash{position:absolute;inset:0;z-index:6;background:#FFF6D8;opacity:0;pointer-events:none}
+.vig{position:absolute;inset:0;z-index:5;pointer-events:none;background:radial-gradient(130% 100% at 50% 50%,transparent 55%,rgba(1,8,4,.5) 100%)}
+
+.cap{position:absolute;z-index:7;inset:0;display:flex;flex-direction:column;justify-content:center;padding:0 clamp(20px,6vw,96px);pointer-events:none}
+.cap.right{align-items:flex-end;text-align:right}
+.cap.center{align-items:center;text-align:center}
+.cap .kick{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--yellow);display:flex;align-items:center;gap:12px}
+.cap .kick:before{content:"";width:32px;height:1px;background:var(--yellow);opacity:.7}
+.cap.right .kick{flex-direction:row-reverse}
+.cap h2{font-size:clamp(2.4rem,7vw,5.4rem);color:#fff;margin:16px 0 12px;text-shadow:0 10px 60px rgba(0,0,0,.6)}
+.cap h2 em{font-style:normal;color:var(--yellow)}
+.cap p{max-width:440px;color:rgba(235,246,238,.9);font-size:clamp(.95rem,1.9vw,1.14rem);line-height:1.6;text-shadow:0 2px 16px rgba(0,0,0,.6)}
+.cap.right p{margin-left:auto}
+.tags{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}.cap.right .tags{justify-content:flex-end}
+.tag{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.05em;padding:8px 15px;border-radius:var(--r-pill);border:1px solid rgba(255,255,255,.22);background:rgba(3,16,10,.42);backdrop-filter:blur(8px);color:#dff3e4}
+
+/* hero (scene 1) */
+.hero-cap{align-items:center;text-align:center}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:'JetBrains Mono';font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#e8f5ec;border:1px solid rgba(233,245,236,.35);padding:9px 18px;border-radius:var(--r-pill);background:rgba(3,16,10,.5);backdrop-filter:blur(8px)}
+.hero-eyebrow b{color:var(--yellow);font-weight:500}
+.hero-cap h1{font-size:clamp(3.6rem,15vw,12rem);font-weight:900;color:#fff;letter-spacing:-.03em;margin-top:22px;text-shadow:0 10px 90px rgba(0,0,0,.7)}
+.hero-cap h1 .zoo{color:var(--yellow)}
+.hero-cap .tagline{font-family:'Unbounded';font-weight:700;letter-spacing:.42em;font-size:clamp(.68rem,2.2vw,1.05rem);color:#fff;text-transform:uppercase;padding-left:.42em;margin-top:8px}
+.hero-cap .sub{max-width:520px;margin:22px auto 0;font-size:clamp(1rem,2.3vw,1.14rem);line-height:1.6;color:rgba(245,252,247,.92)}
+.hero-cap .cta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;justify-content:center;pointer-events:auto}
+.btn{font-family:'Onest';font-weight:600;font-size:16px;padding:15px 28px;border-radius:var(--r-pill);cursor:pointer;border:0;transition:.3s var(--ease);display:inline-flex;align-items:center;gap:10px}
+.btn-y{background:var(--yellow);color:var(--ink);box-shadow:0 14px 44px -10px rgba(255,213,0,.55)}
+.btn-y:hover{transform:translateY(-3px);box-shadow:0 22px 54px -10px rgba(255,213,0,.7)}
+.btn-g{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.3);backdrop-filter:blur(6px)}
+.btn-g:hover{background:rgba(255,255,255,.16);transform:translateY(-3px)}
+.scroll-ind{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:9px;color:rgba(223,243,228,.6);font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;z-index:7}
+.mouse{width:24px;height:38px;border:2px solid rgba(223,243,228,.45);border-radius:14px;position:relative}
+.mouse:before{content:"";position:absolute;top:7px;left:50%;transform:translateX(-50%);width:4px;height:7px;background:var(--yellow);border-radius:3px;animation:sc 1.7s var(--ease) infinite}
+@keyframes sc{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+
+/* HUD */
+#hud{position:fixed;left:clamp(14px,3vw,40px);bottom:24px;z-index:40;font-family:'JetBrains Mono';font-size:10.5px;letter-spacing:.2em;color:rgba(223,243,228,.55);text-transform:uppercase;visibility:hidden;opacity:0;transition:opacity .5s;display:flex;gap:16px;align-items:center}
+body.in-film #hud{visibility:visible;opacity:1}
+#hud .bar{width:110px;height:2px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
+#hud .bar i{display:block;height:100%;width:0;background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+@media(max-width:760px){#hud{display:none}}
+#rail{position:fixed;right:clamp(10px,2.4vw,28px);top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:2px;visibility:hidden;opacity:0;transition:opacity .5s}
+body.in-film #rail{visibility:visible;opacity:1}
+#rail .node{display:flex;align-items:center;gap:9px;flex-direction:row-reverse;cursor:pointer;padding:6px 0;pointer-events:auto}
+#rail .node i{width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);transition:.3s;flex:0 0 auto}
+#rail .node span{font-family:'JetBrains Mono';font-size:9.5px;letter-spacing:.16em;color:rgba(255,255,255,.45);text-transform:uppercase;opacity:0;transform:translateX(6px);transition:.3s}
+#rail .node:hover span{opacity:1;transform:none}
+#rail .node.on i{background:var(--yellow);border-color:var(--yellow);box-shadow:0 0 12px var(--yellow)}
+#rail .node.on span{opacity:1;transform:none;color:var(--warm)}
+@media(max-width:760px){#rail{display:none}}
+
+/* ============ каталог ============ */
+.after{position:relative;z-index:5}
+.pad{padding:clamp(70px,11vw,140px) clamp(16px,5vw,80px)}
+#cats{background:var(--ivory);color:var(--ink)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--green)}
+.eyebrow:before{content:"";width:26px;height:2px;background:var(--green);border-radius:2px}
+.sec-title{font-size:clamp(2rem,5.5vw,4rem);margin:16px 0 0;color:var(--ink)}
+.sec-title em{font-style:normal;color:var(--green)}
+.lead{max-width:520px;color:var(--gray);font-size:clamp(1rem,2vw,1.15rem);line-height:1.6;margin-top:14px}
+.cats-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px}
+.cat-grid{margin-top:52px;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+@media(max-width:1000px){.cat-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+.cat{position:relative;border-radius:var(--r-lg);overflow:hidden;background:#071b10;min-height:300px;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 22px 50px -28px rgba(4,20,10,.5);transition:.5s var(--ease)}
+.cat:hover{transform:translateY(-8px);box-shadow:0 36px 70px -26px rgba(4,20,10,.7)}
+.cat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;transition:transform .8s var(--ease)}
+.cat:hover img{transform:scale(1.07)}
+.cat:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(3,14,8,.92) 0%,rgba(3,14,8,.3) 45%,transparent 68%)}
+.cat h3{position:relative;z-index:1;font-size:1.35rem;color:#fff;padding:0 20px}
+.cat p{position:relative;z-index:1;color:rgba(230,244,236,.72);font-size:.9rem;margin:6px 0 20px;padding:0 20px}
+
+/* ============ разлёт ============ */
+#explode{height:400vh;position:relative;background:#000}
+.ex-stage{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;place-items:center;background:radial-gradient(120% 100% at 50% 45%,#0e2b18,#03100a 70%)}
+.ex-layer{position:absolute;max-width:min(60vw,520px);will-change:transform,opacity}
+.ex-pack{z-index:3}.ex-kibble{z-index:2;opacity:0;mix-blend-mode:screen}.ex-bowl{z-index:2;opacity:0;max-width:min(66vw,600px);border-radius:20px}
+.ex-cap{position:absolute;left:0;right:0;bottom:clamp(40px,8vh,90px);text-align:center;z-index:5;padding:0 20px}
+.ex-cap .eyebrow{color:var(--yellow);justify-content:center}.ex-cap .eyebrow:before{background:var(--yellow)}
+.ex-cap h2{color:#fff;font-size:clamp(1.8rem,5vw,3.4rem);margin-top:12px;text-shadow:0 8px 40px rgba(0,0,0,.6)}
+.ex-cap p{color:rgba(230,244,236,.8);margin-top:10px;max-width:480px;margin-inline:auto}
+
+/* ============ опт ============ */
+#opt{background:#04120a;color:#fff;overflow:hidden}
+.opt-hero{position:absolute;inset:0;background:url(assets/film/delivery_van.jpg) center/cover;opacity:.28}
+#opt:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,18,10,.95),rgba(4,18,10,.6) 55%,rgba(4,18,10,.3))}
+#opt .inner{position:relative;z-index:2}
+.opt-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+@media(max-width:900px){.opt-grid{grid-template-columns:1fr}}
+#opt .sec-title{color:#fff}#opt .sec-title em{color:var(--yellow)}
+#opt .lead{color:rgba(223,243,228,.75)}
+.opt-list{margin-top:28px;display:grid;gap:12px}
+.opt-item{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09)}
+.opt-item .ic{width:40px;height:40px;flex:0 0 auto;border-radius:12px;background:rgba(255,213,0,.14);display:grid;place-items:center;color:var(--yellow)}
+.opt-item b{font-family:'Unbounded';font-weight:700;font-size:1rem}
+.opt-item span{display:block;color:rgba(223,243,228,.62);font-size:.9rem;margin-top:3px}
+.opt-card{background:linear-gradient(160deg,rgba(27,138,58,.22),rgba(255,213,0,.08));border:1px solid rgba(255,213,0,.25);border-radius:var(--r-lg);padding:32px}
+.opt-card .big{font-family:'Unbounded';font-weight:900;font-size:clamp(2.4rem,6vw,3.6rem);color:var(--yellow)}
+.opt-card .cap2{color:rgba(223,243,228,.7);margin-top:6px}
+.opt-stats{display:flex;gap:24px;margin-top:24px;flex-wrap:wrap}
+.opt-stats div b{font-family:'Unbounded';font-size:1.5rem;color:#fff;display:block}
+.opt-stats div span{color:rgba(223,243,228,.6);font-size:.85rem}
+
+/* stats + footer */
+#strip{background:var(--yellow);color:var(--ink)}
+.strip-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+@media(max-width:720px){.strip-grid{grid-template-columns:repeat(2,1fr)}}
+.strip-grid .n{font-family:'Unbounded';font-weight:900;font-size:clamp(2.4rem,6vw,4rem);line-height:1}
+.strip-grid .l{font-weight:600;margin-top:8px;opacity:.72}
+footer{background:var(--ink);color:#fff;padding:clamp(60px,9vw,110px) clamp(16px,5vw,80px) 40px}
+.foot-top{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px}
+@media(max-width:820px){.foot-top{grid-template-columns:1fr}}
+.foot-top h2{font-size:clamp(2rem,5vw,3.2rem);color:#fff}.foot-top h2 .zoo{color:var(--yellow)}
+.foot-col h4{font-family:'Unbounded';font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--yellow);margin-bottom:14px}
+.foot-col a{display:block;color:rgba(255,255,255,.7);padding:6px 0;transition:.25s}.foot-col a:hover{color:#fff;padding-left:5px}
+.foot-bottom{margin-top:56px;padding-top:22px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:rgba(255,255,255,.5);font-size:.85rem}
+
+#sound{position:fixed;right:18px;bottom:18px;z-index:55;display:inline-flex;align-items:center;gap:9px;padding:10px 15px;border-radius:var(--r-pill);border:1px solid rgba(255,213,0,.4);background:rgba(6,26,14,.6);backdrop-filter:blur(10px);color:#dff3e4;font-family:'JetBrains Mono';font-size:11px;font-weight:500;letter-spacing:.08em;cursor:pointer;transition:.3s}
+#sound:hover{background:rgba(255,213,0,.15)}
+#sound .sdot{width:9px;height:9px;border-radius:50%;background:#6B7280;transition:.3s}
+#sound.on .sdot{background:var(--yellow);box-shadow:0 0 12px var(--yellow);animation:pls 1.4s infinite}
+@keyframes pls{50%{transform:scale(1.35)}}
+.rv{opacity:0;transform:translateY(34px)}
+@media(prefers-reduced-motion:reduce){.pre-moon,.mouse:before,#sound.on .sdot{animation:none}#cursor{display:none}}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div id="cursor"><span class="dot"></span></div>
+<button id="sound" aria-label="Звук"><span class="sdot"></span><span class="slabel">звук выкл</span></button>
+<div id="pre"><div class="pre-moon"></div><div class="pre-t">ЗооОпт · склад · маркет</div></div>
+
+<nav id="nav">
+  <a class="brand" href="#top" data-cursor><span class="brand-badge"><span></span></span><span><span class="zoo">Зоо</span>Опт</span></a>
+  <div class="nav-links">
+    <a href="#cats" data-cursor>Каталог</a><a href="#explode" data-cursor>Корма</a><a href="#opt" data-cursor>Опт</a><a href="#footer" data-cursor>Контакты</a>
+  </div>
+  <div class="nav-right">
+    <a class="chip mono" href="tel:+79779955566" data-cursor>+7 977 99-555-66</a>
+    <a class="chip solid" href="#opt" data-cursor>Оптовый прайс</a>
+  </div>
+</nav>
+
+<!-- ================= ФИЛЬМ ================= -->
+<div id="film"><a id="top"></a>
+  <div class="film-stage">
+    <!-- 8 сцен -->
+    <div class="scene center" data-i="0"><div class="bg" style="background-image:url(assets/film/scene1_facade.jpg)"></div></div>
+    <div class="scene center" data-i="1"><div class="bg" style="background-image:url(assets/film/scene2_doors.jpg)"></div></div>
+    <div class="scene left"   data-i="2"><div class="bg" style="background-image:url(assets/film/scene3_aisle.jpg)"></div></div>
+    <div class="scene left"   data-i="3"><div class="bg" style="background-image:url(assets/film/scene4_dogs.jpg)"></div></div>
+    <div class="scene right"  data-i="4"><div class="bg" style="background-image:url(assets/film/scene5_cats.jpg)"></div></div>
+    <div class="scene center" data-i="5"><div class="bg" style="background-image:url(assets/film/scene6_aqua.jpg)"></div></div>
+    <div class="scene left"   data-i="6"><div class="bg" style="background-image:url(assets/film/scene7_opt.jpg)"></div></div>
+    <div class="scene center" data-i="7"><div class="bg" style="background-image:url(assets/film/scene8_pack_pedestal.jpg)"></div></div>
+    <div class="vig"></div><div class="flash"></div>
+
+    <!-- подписи сцен -->
+    <div class="cap hero-cap" data-c="0">
+      <span class="hero-eyebrow">павильоны №69–70 <b>·</b> ежедневно 9:00–18:00 <b>·</b> опт и розница</span>
+      <h1><span class="zoo">ЗОО</span>ОПТ</h1><div class="tagline">Склад · Маркет</div>
+      <p class="sub">Корма, игрушки, аксессуары и ветаптека — по складским ценам. Листайте — заходим внутрь.</p>
+      <div class="cta"><button class="btn btn-y" data-scroll="#cats" data-cursor>Каталог и цены <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button class="btn btn-g" data-scroll="#opt" data-cursor>Оптовикам</button></div>
+    </div>
+    <div class="cap center" data-c="1"><span class="kick">добро пожаловать</span><h2>Заходим <em>внутрь</em></h2><p>Двери открыты — впереди четыре мира питомцев.</p></div>
+    <div class="cap left" data-c="2"><span class="kick">каталог</span><h2>Более 300<br><em>товаров</em></h2><p>Корма, игрушки, аксессуары и ветаптека на полках — со склада, без наценки посредников.</p><div class="tags"><span class="tag">Royal Canin</span><span class="tag">Monge</span><span class="tag">Pro Plan</span></div></div>
+    <div class="cap left" data-c="3"><span class="kick">собакам</span><h2>Всё для вашей<br><em>собаки</em></h2><p>Сухие и влажные корма премиум-класса, амуниция, игрушки и лакомства.</p></div>
+    <div class="cap right" data-c="4"><span class="kick">кошкам</span><h2>Всё для вашей<br><em>кошки</em></h2><p>Корма, наполнители, когтеточки и домики — всегда в наличии.</p></div>
+    <div class="cap center" data-c="5"><span class="kick">аквариум и малыши</span><h2>Пернатым,<br><em>плавающим</em></h2><p>Аквариумы, фильтры, декор, корма и витамины для рыб, птиц и грызунов.</p></div>
+    <div class="cap left" data-c="6"><span class="kick">оптовым клиентам</span><h2>Опт <em>без посредников</em></h2><p>Магазинам и вет.клиникам: прайс по ИНН, заказ от 15 000 ₽, сборка за 24 часа.</p></div>
+    <div class="cap center" data-c="7"><span class="kick">качество</span><h2>Проверенные<br><em>бренды</em></h2><p>Только сертифицированные корма и товары. Дальше — из чего они состоят.</p></div>
+
+    <div class="scroll-ind" data-c="0"><span>листайте — камера летит</span><div class="mouse"></div></div>
+  </div>
+  <div id="hud"><span id="hud-ch">зооопт · главная</span><div class="bar"><i id="hud-bar"></i></div><span id="hud-pct">0%</span></div>
+  <div id="rail">
+    <div class="node on" data-t="0"><span>Главная</span><i></i></div>
+    <div class="node" data-t="0.29"><span>Собакам</span><i></i></div>
+    <div class="node" data-t="0.5"><span>Кошкам</span><i></i></div>
+    <div class="node" data-t="0.64"><span>Аквариум</span><i></i></div>
+    <div class="node" data-t="0.78"><span>Опт</span><i></i></div>
+  </div>
+</div>
+
+<!-- ================= КАТАЛОГ ================= -->
+<section id="cats" class="after pad">
+  <div class="cats-head">
+    <div><span class="eyebrow rv">Кому подбираем</span><h2 class="sec-title rv">Всё для <em>каждого</em> питомца</h2></div>
+    <p class="lead rv">7 категорий, 15+ брендов, 300+ товаров. Со склада, опт и розница.</p>
+  </div>
+  <div class="cat-grid">
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_dog.jpg" alt="Собаки"><h3>Собакам</h3><p>Корма · Игрушки · Аксессуары</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_cat.jpg" alt="Кошки"><h3>Кошкам</h3><p>Корма · Наполнители · Домики</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_hamster.jpg" alt="Грызуны"><h3>Грызунам</h3><p>Клетки · Корма · Витамины</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_parrot.jpg" alt="Птицы"><h3>Птицам</h3><p>Клетки · Корма · Жёрдочки</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_fish.jpg" alt="Аквариум"><h3>Аквариум</h3><p>Аквариумы · Фильтры · Корма</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_rabbit.jpg" alt="Кролики"><h3>Кроликам</h3><p>Корма · Сено · Клетки</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/portrait_turtle.jpg" alt="Рептилии"><h3>Рептилиям</h3><p>Террариумы · Корма · Лампы</p></article>
+    <article class="cat rv" data-cursor><img src="assets/film/vet_corner.jpg" alt="Ветаптека" style="object-position:center"><h3>Ветаптека</h3><p>Витамины · Уход · Средства</p></article>
+  </div>
+</section>
+
+<!-- ================= РАЗЛЁТ ================= -->
+<div id="explode">
+  <div class="ex-stage">
+    <img class="ex-layer ex-bowl" src="assets/film/bowl_full_scene.jpg" alt="">
+    <img class="ex-layer ex-kibble" src="assets/film/kibble_fly.jpg" alt="">
+    <img class="ex-layer ex-pack" src="assets/film/pack_cut.png" alt="Пачка корма">
+    <div class="ex-cap"><span class="eyebrow">состав, которому доверяют</span><h2 id="ex-title">Настоящее мясо и витамины</h2><p id="ex-body">Внутри — качество: мясо, злаки, витамины. Листайте — пачка раскрывается.</p></div>
+  </div>
+</div>
+
+<!-- ================= ОПТ ================= -->
+<section id="opt" class="pad">
+  <div class="opt-hero"></div>
+  <div class="inner">
+    <div class="opt-grid">
+      <div>
+        <span class="eyebrow rv" style="color:var(--yellow)">B2B · Оптовикам</span>
+        <h2 class="sec-title rv">Опт для магазинов<br>и <em>вет.клиник</em></h2>
+        <p class="lead rv">Регистрируетесь по ИНН — открываются оптовые цены, остатки в реальном времени, выгрузка прайса и оплата по счёту.</p>
+        <div class="opt-list">
+          <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><div><b>Прайс в PDF за секунду</b><span>Актуальные оптовые цены и остатки — в один клик.</span></div></div>
+          <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg></div><div><b>Оплата по счёту</b><span>Для ИП и ООО — счёт, закрывающие, отсрочка.</span></div></div>
+          <div class="opt-item rv"><div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v14H3zM8 21h8M12 17v4"/></svg></div><div><b>Доставка за 24 часа</b><span>Собираем и отгружаем заказ в день обращения.</span></div></div>
+        </div>
+        <button class="btn btn-y rv" style="margin-top:28px" data-scroll="#footer" data-cursor>Оставить заявку на опт <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="opt-card rv">
+        <div class="big">от 15 000 ₽</div><div class="cap2">минимальный оптовый заказ</div>
+        <div class="opt-stats"><div><b>−30%</b><span>к рознице</span></div><div><b>24 ч</b><span>сборка</span></div><div><b>ИНН</b><span>верификация</span></div></div>
+        <img src="assets/film/kibble_pile.jpg" alt="" style="margin-top:22px;width:70%;margin-left:auto;border-radius:16px;filter:drop-shadow(0 20px 30px rgba(0,0,0,.4))">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="strip" class="pad">
+  <div class="strip-grid">
+    <div class="rv"><div class="n" data-count="300">0</div><div class="l">товаров на складе</div></div>
+    <div class="rv"><div class="n" data-count="15">0</div><div class="l">брендов-партнёров</div></div>
+    <div class="rv"><div class="n" data-count="7">0</div><div class="l">категорий</div></div>
+    <div class="rv"><div class="n" data-count="98">0</div><div class="l">% заказов вовремя</div></div>
+  </div>
+</section>
+
+<footer id="footer">
+  <div class="foot-top">
+    <div>
+      <h2><span class="zoo">Зоо</span>Опт · Склад · Маркет</h2>
+      <p style="color:rgba(255,255,255,.6);max-width:420px;margin-top:16px;line-height:1.6">Оптово-розничная зоо-компания. Магазинам, вет.клиникам и владельцам питомцев по всей России.</p>
+      <p style="color:rgba(255,255,255,.75);margin-top:14px;font-weight:600">Павильоны №69–70 · Ежедневно 9:00–18:00</p>
+      <div style="display:flex;gap:12px;margin-top:22px"><a class="btn btn-y" href="tel:+79779955566" data-cursor>+7 (977) 99-555-66</a></div>
+    </div>
+    <div class="foot-col"><h4>Каталог</h4><a href="#cats" data-cursor>Собакам</a><a href="#cats" data-cursor>Кошкам</a><a href="#cats" data-cursor>Грызунам и птицам</a><a href="#cats" data-cursor>Аквариум</a><a href="#cats" data-cursor>Ветаптека</a></div>
+    <div class="foot-col"><h4>Компания</h4><a href="#opt" data-cursor>Опт и условия</a><a href="#" data-cursor>Доставка и оплата</a><a href="#footer" data-cursor>Контакты</a><div style="margin-top:14px;color:rgba(255,255,255,.5);font-size:.85rem">okoteam.top@gmail.com<br>zoopt.ru</div></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 ЗооОпт · Склад · Маркет</span><span>Сделано OKO TEAM · okoteam.top</span></div>
+</footer>
+
+<script src="js/vendor/gsap.min.js"></script>
+<script src="js/vendor/ScrollTrigger.min.js"></script>
+<script src="js/vendor/lenis.min.js"></script>
+<script src="js/film.js" defer></script>
+</body>
+</html>
