@@ -963,7 +963,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.37</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.38</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -2559,6 +2559,26 @@ const SUPA_URL = 'https://tkjewndtlzhnmqwmrnil.supabase.co';
 const SUPA_KEY = 'sb_publishable_K5SqavCbNnL_UYL-5fKaLA_32-PVPrt'; // публичный ключ, так задумано
 let sb = null, myId = null;
 const nameCache = {};
+
+/* Клиентский API-мост к серверу (§1.5 ТЗ: window.OKO.call).
+   Пока useServer=false — весь функционал на моках/Supabase напрямую.
+   При подключении: OKO.useServer=true, OKO.base='https://api.<домен>' — и вызовы пойдут на Fastify-сервер
+   с авторизацией по сессии Supabase. Единая точка, менять UI не придётся. */
+window.OKO = {
+  base: '',
+  useServer: false,
+  async call(path, { method = 'GET', body, auth = true } = {}){
+    if(!this.useServer) throw new Error('server_disabled'); // режим прототипа
+    const headers = { 'content-type': 'application/json' };
+    if(auth && sb){
+      const { data: { session } } = await sb.auth.getSession();
+      if(session) headers.authorization = 'Bearer ' + session.access_token;
+    }
+    const r = await fetch(this.base + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    if(!r.ok) throw new Error('api_' + r.status);
+    return r.json();
+  },
+};
 
 const chatByCid = cid => CHATS.find(c => c.cid === cid);
 function pushLiveRow(chat, r){
