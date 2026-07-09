@@ -963,7 +963,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.35</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.36</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1525,6 +1525,7 @@ function openConv(id){
   document.getElementById('convName').textContent = currentChat.name;
   document.getElementById('convAva').outerHTML = avaHtml(currentChat).replace('class="ava','id="convAva" class="ava');
   document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+  if(currentChat.cid && window.updateOnlineUI) updateOnlineUI();
   renderMsgs();
   if(matchMedia('(max-width:899px)').matches){
     document.querySelector('.chat-col').style.display='none';
@@ -2578,8 +2579,9 @@ async function initLive(){
     renderChatList(document.getElementById('chatSearch').value);
     if(currentChat) renderMsgs();
 
-    // Единая подписка на все комнаты
-    sb.channel('all-live')
+    // Единая подписка на все комнаты + presence (кто в сети) + typing
+    liveChannel = sb.channel('all-live', { config: { presence: { key: myId } } });
+    liveChannel
       .on('postgres_changes', { event: 'insert', schema: 'public', table: 'messages' },
         async (payload) => {
           const r = payload.new;
@@ -2594,8 +2596,40 @@ async function initLive(){
           renderChatList(document.getElementById('chatSearch').value);
           if(currentChat && currentChat.id === chat.id) renderMsgs();
         })
-      .subscribe();
+      .on('presence', { event: 'sync' }, () => {
+        onlineCount = Object.keys(liveChannel.presenceState()).length;
+        updateOnlineUI();
+      })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if(payload && payload.user !== myId) flashLiveTyping(payload.cid, payload.name);
+      })
+      .subscribe(async (status) => {
+        if(status === 'SUBSCRIBED'){ try{ await liveChannel.track({ name: guest }); }catch(e){} }
+      });
+    // отправка «печатает» при вводе в живом чате
+    const inp = document.getElementById('msgInput');
+    if(inp && !inp._typingBound){ inp._typingBound = true; inp.addEventListener('input', sendTyping); }
   }catch(e){ /* офлайн или блокировка — чаты остаются мок-режимом */ }
+}
+let liveChannel = null, onlineCount = 0, lastTypingSent = 0, liveTypingTimer = null;
+function updateOnlineUI(){
+  const st = document.getElementById('convStatus');
+  if(st && currentChat && currentChat.cid) st.textContent = onlineCount > 1 ? onlineCount + ' в сети' : 'в сети';
+}
+function sendTyping(){
+  if(!liveChannel || !currentChat || !currentChat.cid) return;
+  const now = Date.now();
+  if(now - lastTypingSent < 1500) return;
+  lastTypingSent = now;
+  try{ liveChannel.send({ type:'broadcast', event:'typing', payload:{ user:myId, cid:currentChat.cid, name:(nameCache[myId]||'Гость') } }); }catch(e){}
+}
+function flashLiveTyping(cid, name){
+  if(!currentChat || currentChat.cid !== cid) return;
+  const st = document.getElementById('convStatus');
+  if(!st) return;
+  st.textContent = (name||'кто-то') + ' печатает…';
+  clearTimeout(liveTypingTimer);
+  liveTypingTimer = setTimeout(updateOnlineUI, 2500);
 }
 function esc(t){ const d = document.createElement('div'); d.textContent = String(t||''); return d.innerHTML; }
 async function liveSend(text){
