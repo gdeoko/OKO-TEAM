@@ -187,7 +187,11 @@ canvas{display:block}
 .block-head-arr{color:var(--cyan);transition:transform .3s;flex-shrink:0}
 .block-head-arr svg{width:18px;height:18px}
 .block-card.open .block-head-arr{transform:rotate(180deg)}
-.block-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+/* chevron affordance for actual markup (block-head has no arrow element) */
+.block-head{position:relative;padding-right:52px}
+.block-head::after{content:'';position:absolute;right:20px;top:50%;width:11px;height:11px;border-right:2px solid var(--block-color,var(--cyan));border-bottom:2px solid var(--block-color,var(--cyan));transform:translateY(-70%) rotate(45deg);transition:transform .3s;opacity:.85}
+.block-card.open .block-head::after{transform:translateY(-30%) rotate(-135deg)}
+.block-body{max-height:0;overflow:hidden;transition:max-height .55s ease}
 .block-card.open .block-body{max-height:9000px}
 .block-content{padding:0 18px 22px;border-top:1px solid var(--w1);margin-top:0}
 .block-card.open .block-content{padding-top:18px}
@@ -442,127 +446,14 @@ canvas{display:block}
 
 <!-- ==================== HOME ==================== -->
 <div class="page active" id="page-home">
-<section class="hero">
+<section class="hero" style="min-height:auto;padding:120px 0 40px">
   <div class="hero-bg"></div>
   <div class="hero-inner">
-    <div class="hero-badge rv">Система Роста · 60 дней</div>
-    <h1 class="hero-h rv" data-d="1">Маркетинговая <span class="ac">экосистема</span> для трёх iOS-приложений</h1>
-    <div class="hero-name rv" data-d="2">Александр · @a_trafico</div>
-    <p class="hero-sub rv" data-d="2">Полная стратегия, контент-завод на 500 видео и автоматизированная воронка для Brainova, Spy Camera Finder и 3D Tape Measure на рынок США.</p>
-    <div class="hero-period rv" data-d="3">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-      ИМПЕРИЯ · 60 дней · 12 мес аналитика
-    </div>
-    <div class="hero-cta rv" data-d="3">
-      <button class="btn-prim" onclick="go('competitors')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        Открыть систему
-      </button>
-      <button class="btn-sec" onclick="document.getElementById('home-quick').scrollIntoView({behavior:'smooth'})">Обзор разделов</button>
-    </div>
-    <div class="progress-pill rv" data-d="4">
-      <div class="progress-pill-t"><span>Прогресс периода</span> <b>День 1 / 60</b></div>
-      <div class="progress-pill-bar"><div class="progress-pill-fill" id="periodFill"></div></div>
-    </div>
+    <div class="hero-badge rv">Система Роста · Tappio × OKO TEAM</div>
+    <h1 class="hero-h rv" data-d="1">Маркетинговая <span class="ac">экосистема</span><br>трёх iOS-приложений</h1>
+    <p class="hero-sub rv">Выберите раздел системы</p>
   </div>
 </section>
-
-<!-- HOME STATS -->
-<section class="sec">
-  <div class="wrap">
-    <div class="sec-lbl rv">Цифры системы</div>
-    <h2 class="sec-h rv">Что внутри <span class="ac">контракта</span></h2>
-    <div class="home-stats">
-      <div class="stat-card rv" data-d="1">
-        <div class="stat-card-lbl">Видео-роликов</div>
-        <div class="stat-card-n">500<span class="u">шт</span></div>
-        <div class="stat-card-s">за 60 дней, рост 1→15 в день</div>
-      </div>
-      <div class="stat-card p rv" data-d="2">
-        <div class="stat-card-lbl">Каруселей IG</div>
-        <div class="stat-card-n">16<span class="u">шт</span></div>
-        <div class="stat-card-s">по 2 в неделю, 8 слайдов</div>
-      </div>
-      <div class="stat-card g rv" data-d="3">
-        <div class="stat-card-lbl">Конкурентов в базе</div>
-        <div class="stat-card-n">50<span class="u">+</span></div>
-        <div class="stat-card-s">10 миллионников + 40 от 100K</div>
-      </div>
-      <div class="stat-card rv" data-d="4">
-        <div class="stat-card-lbl">Роликов-миллионников</div>
-        <div class="stat-card-n">150<span class="u">+</span></div>
-        <div class="stat-card-s">проанализированы и расшифрованы</div>
-      </div>
-      <div class="stat-card p rv" data-d="1">
-        <div class="stat-card-lbl">Приложений в портфеле</div>
-        <div class="stat-card-n">3<span class="u">шт</span></div>
-        <div class="stat-card-s">Brainova / Spy / 3D Tape Measure</div>
-      </div>
-      <div class="stat-card g rv" data-d="2">
-        <div class="stat-card-lbl">Лид-магнитов</div>
-        <div class="stat-card-n">10<span class="u">шт</span></div>
-        <div class="stat-card-s">PDF и интерактивные тесты</div>
-      </div>
-      <div class="stat-card rv" data-d="3">
-        <div class="stat-card-lbl">Соцсетей запущено</div>
-        <div class="stat-card-n">9<span class="u">шт</span></div>
-        <div class="stat-card-s">IG / TikTok / YT по каждому из 3 прил</div>
-      </div>
-      <div class="stat-card p rv" data-d="4">
-        <div class="stat-card-lbl">Гео</div>
-        <div class="stat-card-n">USA</div>
-        <div class="stat-card-s">Английский, in-app subscription</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- TODAY -->
-<section class="sec" style="padding-top:30px">
-  <div class="wrap">
-    <div class="today-card rv">
-      <div class="today-h">
-        <div class="today-d">Сегодня</div>
-        <div class="today-t">День 1 · Запуск</div>
-      </div>
-      <div class="today-row"><div class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12l5 5L22 4"/></svg> Контент</div><div class="v">1 ролик · Spy · Ф1</div></div>
-      <div class="today-row"><div class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/></svg> Бизнес</div><div class="v">Настройка ManyChat</div></div>
-      <div class="today-row"><div class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l4-4 4 4 5-5 5 5"/></svg> Аналитика</div><div class="v">Базовая выгрузка Apphud</div></div>
-      <div class="today-row"><div class="l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg> Личное</div><div class="v">10 мин Brainova</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- HOME QUICK -->
-<section class="sec" id="home-quick">
-  <div class="wrap">
-    <div class="sec-lbl rv">Быстрые переходы</div>
-    <h2 class="sec-h rv">Куда <span class="ac">пойти</span></h2>
-    <div class="qa-grid">
-      <button class="qa-card rv" data-d="1" onclick="go('competitors')">
-        <div class="qa-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg></div>
-        <div class="qa-card-text"><div class="qa-card-t">Конкуренты</div><div class="qa-card-d">50 карточек, 150 роликов</div></div>
-        <div class="qa-card-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-      <button class="qa-card p rv" data-d="2" onclick="go('business')">
-        <div class="qa-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/></svg></div>
-        <div class="qa-card-text"><div class="qa-card-t">Бизнес-план</div><div class="qa-card-d">17 блоков, точка А → Б</div></div>
-        <div class="qa-card-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-      <button class="qa-card g rv" data-d="3" onclick="go('checklist')">
-        <div class="qa-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
-        <div class="qa-card-text"><div class="qa-card-t">Чек-лист</div><div class="qa-card-d">60 дней по категориям</div></div>
-        <div class="qa-card-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-      <button class="qa-card rv" data-d="4" onclick="go('materials')">
-        <div class="qa-card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 2h8v14H4z"/></svg></div>
-        <div class="qa-card-text"><div class="qa-card-t">Материалы</div><div class="qa-card-d">Скрипты, лид-магниты, промпты</div></div>
-        <div class="qa-card-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-      </button>
-    </div>
-  </div>
-</section>
-
 <!-- HOME SEC CARDS (все 7 разделов) -->
 <section class="sec">
   <div class="wrap">
@@ -7959,6 +7850,21 @@ triggerReveal();
       const item = e.target.closest('.cl-item');
       if(item){ item.classList.toggle('done'); }
     });
+
+    // Block accordion open/close (delegated)
+    document.addEventListener('click', function(e){
+      if(e.target.closest('.bpag') || e.target.closest('.bpag-dot') || e.target.closest('.bpag-btn')) return;
+      const head = e.target.closest('.block-head');
+      if(head){ const card = head.closest('.block-card'); if(card) card.classList.toggle('open'); }
+    });
+    // Open the first block of a section for immediate content
+    function openFirstBlock(name){
+      const p = document.getElementById('page-'+name);
+      if(!p) return;
+      const fb = p.querySelector('.block-card');
+      if(fb) fb.classList.add('open');
+    }
+    document.querySelectorAll('.page').forEach(p=>{ const fb=p.querySelector('.block-card'); if(fb) fb.classList.add('open'); });
 
   </script>
 </body>
