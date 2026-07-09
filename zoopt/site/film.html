@@ -65,6 +65,8 @@ nav.solid .chip{border-color:rgba(10,10,10,.18);color:var(--ink)}
 .film-stage{position:sticky;top:0;height:100svh;overflow:hidden}
 .scene{position:absolute;inset:0;opacity:0;will-change:transform,opacity}
 .scene .bg{position:absolute;inset:-6%;background-position:center;background-size:cover;will-change:transform}
+.scene .vid{position:absolute;inset:-2%;width:104%;height:104%;object-fit:cover;opacity:0;transition:opacity .6s ease;will-change:transform}
+.scene .vid.ready{opacity:1}
 .scene:after{content:"";position:absolute;inset:0;pointer-events:none}
 .scene.left:after{background:linear-gradient(90deg,rgba(3,16,10,.82),rgba(3,16,10,.34) 42%,transparent 64%)}
 .scene.right:after{background:linear-gradient(270deg,rgba(3,16,10,.82),rgba(3,16,10,.34) 42%,transparent 64%)}
@@ -218,7 +220,7 @@ footer{background:var(--ink);color:#fff;padding:clamp(60px,9vw,110px) clamp(16px
     <!-- 8 сцен -->
     <div class="scene center" data-i="0"><div class="bg" style="background-image:url(assets/film/scene1_facade.jpg)"></div></div>
     <div class="scene center" data-i="1"><div class="bg" style="background-image:url(assets/film/scene2_doors.jpg)"></div></div>
-    <div class="scene left"   data-i="2"><div class="bg" style="background-image:url(assets/film/scene3_aisle.jpg)"></div></div>
+    <div class="scene left"   data-i="2"><div class="bg" style="background-image:url(assets/film/scene3_aisle.jpg)"></div><video class="vid" data-scrub data-mp4="assets/film/video/aisle_scene3.mp4" data-webm="assets/film/video/aisle_scene3.webm" muted playsinline preload="auto" poster="assets/film/scene3_aisle.jpg"></video></div>
     <div class="scene left"   data-i="3"><div class="bg" style="background-image:url(assets/film/scene4_dogs.jpg)"></div></div>
     <div class="scene right"  data-i="4"><div class="bg" style="background-image:url(assets/film/scene5_cats.jpg)"></div></div>
     <div class="scene center" data-i="5"><div class="bg" style="background-image:url(assets/film/scene6_aqua.jpg)"></div></div>

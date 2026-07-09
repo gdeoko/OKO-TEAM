@@ -19,6 +19,22 @@ function initFilm(){
   const scrollInd=document.querySelector('.scroll-ind');
   let last=0;
 
+  /* видео-сцены: scroll-scrub через blob (seekable в любом хосте; чинит Safari/без-Range) */
+  const vids=scenes.map(s=>s.querySelector('video[data-scrub]'));
+  const vready=vids.map(()=>false), vdur=vids.map(()=>5), vwant=vids.map(()=>-1);
+  vids.forEach((v,i)=>{ if(!v)return;
+    v.muted=true; v.playsInline=true; v.setAttribute('playsinline','');
+    const webmOk=v.dataset.webm && v.canPlayType('video/webm; codecs="vp9"');
+    const url=(webmOk?v.dataset.webm:v.dataset.mp4)||v.dataset.mp4;
+    fetch(url).then(r=>r.blob()).then(b=>{ v.src=URL.createObjectURL(b);
+      v.addEventListener('loadeddata',()=>{ vdur[i]=v.duration||5; v.pause();
+        try{v.currentTime=0.001;}catch(e){} vready[i]=true; v.classList.add('ready');
+        const seek=()=>{ if(vwant[i]>=0 && Math.abs(v.currentTime-vwant[i])>0.02){ try{v.currentTime=vwant[i];}catch(e){} } requestAnimationFrame(seek); };
+        requestAnimationFrame(seek);
+      },{once:true});
+    }).catch(()=>{});
+  });
+
   function render(p){
     const f=p*(N-1);                     // позиция в «сценах» 0..N-1
     const cur=Math.min(N-1,Math.floor(f));
@@ -28,7 +44,12 @@ function initFilm(){
       if(i===cur){ op=1-smooth(.78,1,frac); z=1+ .16*frac + .08; }
       else if(i===cur+1){ op=smooth(0,.5,frac); z=1.16 - .08*frac; }
       s.style.opacity=op.toFixed(3);
-      bgs[i].style.transform=`scale(${z.toFixed(3)})`;
+      if(bgs[i]) bgs[i].style.transform=`scale(${z.toFixed(3)})`;
+      // видео-скраб: камера летит вперёд ровно пока сцена в кадре (окно [i-1,i+1])
+      if(vids[i]&&vready[i]){
+        const t=Math.min(1,Math.max(0,(f-(i-1))/2));
+        vwant[i]=Math.min(vdur[i]-0.03, t*vdur[i]);
+      }
     });
     // подписи: активна та, что ближе к целому
     const active=Math.round(f);
