@@ -941,7 +941,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.31</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.32</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1532,7 +1532,7 @@ function msgHtml(m, idx){
   const rx = reactHtml(m, idx);
   const tap = `onclick="reactBar(event,${idx})"`;
   if(m.kind==='voice') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="voice">
-      <button class="pp" onclick="event.stopPropagation();togglePlay(this)">${I('play')}</button>
+      <button class="pp" data-audio="${m.audio||''}" onclick="event.stopPropagation();togglePlay(this)">${I('play')}</button>
       <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span></div>${time}${rx}</div>`;
   if(m.kind==='vnote') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
       <div class="vnote">${I('play')}<span class="dur">${m.dur}</span></div>${rx}</div>`;
@@ -1789,7 +1789,15 @@ function hideTyping(){
 function togglePlay(btn){
   const u = btn.querySelector('use');
   const playing = u.getAttribute('href')==='#i-pause';
-  u.setAttribute('href', playing ? '#i-play' : '#i-pause');
+  const url = btn.dataset.audio;
+  if(url){
+    if(!btn._audio){ btn._audio = new Audio(url); btn._audio.onended = ()=>u.setAttribute('href','#i-play'); }
+    if(playing){ btn._audio.pause(); u.setAttribute('href','#i-play'); }
+    else { document.querySelectorAll('.voice .pp use[href="#i-pause"]').forEach(x=>x.setAttribute('href','#i-play'));
+           btn._audio.play().catch(()=>{}); u.setAttribute('href','#i-pause'); }
+    return;
+  }
+  u.setAttribute('href', playing ? '#i-play' : '#i-pause'); // мок-воспроизведение
 }
 const nowT = () => new Date().toTimeString().slice(0,5);
 function pushMsg(m){
@@ -1821,6 +1829,7 @@ function sendText(){
     setTimeout(()=>{ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'}); }, 2100);
   }
 }
+let mediaRec = null, recChunks = [], recStream = null;
 function startRec(){
   if(!currentChat) return;
   recStart = Date.now();
@@ -1831,6 +1840,16 @@ function startRec(){
     const sec = Math.floor((Date.now()-recStart)/1000);
     document.getElementById('recTime').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
   }, 250);
+  // настоящая запись голоса (если браузер даёт микрофон)
+  if(recMode==='voice' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+      if(recStart===null){ stream.getTracks().forEach(t=>t.stop()); return; } // уже отпустили
+      recStream = stream; recChunks = [];
+      try{ mediaRec = new MediaRecorder(stream); }catch(e){ mediaRec=null; return; }
+      mediaRec.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
+      mediaRec.start();
+    }).catch(()=>{ mediaRec=null; }); // отказ/нет микрофона -> мок
+  }
 }
 function stopRec(){
   const sec = Math.max(1, Math.floor((Date.now()-recStart)/1000));
@@ -1839,6 +1858,19 @@ function stopRec(){
   document.getElementById('recTimer').style.display='none';
   document.getElementById('sendBtn').classList.remove('rec');
   const dur = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+  const cleanup = ()=>{ if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream=null; } };
+  if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
+    mediaRec.onstop = ()=>{
+      const blob = new Blob(recChunks, {type: mediaRec.mimeType||'audio/webm'});
+      const url = recChunks.length ? URL.createObjectURL(blob) : null;
+      cleanup(); mediaRec = null;
+      pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec, audio:url});
+      syncSendIcon();
+    };
+    try{ mediaRec.stop(); }catch(e){ cleanup(); mediaRec=null; pushMsg({in:0,t:nowT(),kind:'voice',dur,seed:sec}); syncSendIcon(); }
+    return;
+  }
+  cleanup();
   if(recMode==='voice') pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec});
   else pushMsg({in:0, t:nowT(), kind:'vnote', dur});
   syncSendIcon();
