@@ -2331,6 +2331,69 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Добавить ребёнка ── */
+function initialAvatar(name, color) {
+  const ch = (name.trim()[0] || '?').toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${color}"/><text x="50" y="50" dy="0.35em" text-anchor="middle" font-family="Playfair Display, Georgia, serif" font-size="46" font-weight="700" fill="#fff">${ch}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+const AVATAR_OPTS = [
+  { type: 'img', src: 'assets/img/avatars/lion.jpg' },
+  { type: 'img', src: 'assets/img/avatars/star.jpg' },
+  { type: 'ini', color: '#9B7AD4' },
+  { type: 'ini', color: '#7AAED4' },
+];
+let addkAge = 7, addkPick = 0;
+
+function loadSavedKids() {
+  const saved = JSON.parse(localStorage.getItem('mt_kids') || '[]');
+  saved.forEach((k) => { if (!DEMO.children.some((c) => c.name === k.name && c.age === k.age)) DEMO.children.push(k); });
+}
+
+function openAddChild() {
+  addkAge = 7; addkPick = 0;
+  $('#addkName').value = '';
+  $('#addkAge').textContent = addkAge;
+  renderAddkAvatars();
+  $('#addChild').hidden = false;
+  hydrateIcons();
+  setTimeout(() => $('#addkName').focus(), 100);
+}
+
+function renderAddkAvatars() {
+  const name = $('#addkName').value || '?';
+  $('#addkAvatars').innerHTML = AVATAR_OPTS.map((o, i) => {
+    const inner = o.type === 'img' ? `<img src="${o.src}" alt="">` : `<span style="width:100%;height:100%;display:grid;place-items:center;background:${o.color}">${(name.trim()[0] || '?').toUpperCase()}</span>`;
+    return `<button type="button" class="addk__ava ${i === addkPick ? 'addk__ava--on' : ''}" data-av="${i}">${inner}</button>`;
+  }).join('');
+  $$('#addkAvatars [data-av]').forEach((el) => el.addEventListener('click', () => { addkPick = Number(el.dataset.av); renderAddkAvatars(); }));
+}
+
+function saveChild() {
+  const name = $('#addkName').value.trim();
+  if (!name) { $('#addkName').focus(); toast('Введите имя ребёнка'); return; }
+  const opt = AVATAR_OPTS[addkPick];
+  const img = opt.type === 'img' ? opt.src : initialAvatar(name, opt.color);
+  const kid = { name, age: addkAge, rank: 'Зёрнышко · 0 XP', streak: 0, img };
+  DEMO.children.push(kid);
+  const saved = JSON.parse(localStorage.getItem('mt_kids') || '[]');
+  saved.push(kid);
+  localStorage.setItem('mt_kids', JSON.stringify(saved));
+  renderChildren();
+  $('#addChild').hidden = true;
+  if (window.MAGIC) MAGIC.rewardModal({ icon: 'sparkle', title: 'Ребёнок добавлен!', subtitle: `${name} теперь в вашей семье Метанойя. Начните первый урок вместе.`, xp: 0 });
+  else toast(`${name} добавлен(а)`);
+}
+
+function initAddChild() {
+  $('#addChildBtn')?.addEventListener('click', openAddChild);
+  $('#addkClose')?.addEventListener('click', () => { $('#addChild').hidden = true; });
+  $('#addkMinus')?.addEventListener('click', () => { addkAge = Math.max(3, addkAge - 1); $('#addkAge').textContent = addkAge; });
+  $('#addkPlus')?.addEventListener('click', () => { addkAge = Math.min(16, addkAge + 1); $('#addkAge').textContent = addkAge; });
+  $('#addkName')?.addEventListener('input', renderAddkAvatars);
+  $('#addkSave')?.addEventListener('click', saveChild);
+}
+
 /* ── Задать вопрос · AI-помощник (УЛ5) ──
    Демо: ответы курируются вручную (в проде — AI на материалах Екатерины).
    Чувствительные темы не разбираются, а мягко переводятся на родителей. */
@@ -2538,9 +2601,11 @@ document.addEventListener('DOMContentLoaded', () => {
   renderFeed();
   renderChats();
   renderLessons();
+  loadSavedKids();
   renderChildren();
   renderWReport();
   renderQuestCard();
+  initAddChild();
   initNav();
   initSW();
 
@@ -2549,7 +2614,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
-  $('#addChildBtn').addEventListener('click', () => toast('Добавление ребёнка — этап 2'));
   $$('.menu-item:not([id])').forEach((el) =>
     el.addEventListener('click', () => toast('Раздел в разработке')));
   let searchTimer = null;

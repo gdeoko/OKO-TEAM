@@ -833,6 +833,26 @@
     </div>
   </div>
 
+  <!-- Добавить ребёнка -->
+  <div class="addk" id="addChild" hidden>
+    <div class="addk__card">
+      <button class="addk__close" id="addkClose"><span data-icon="close" data-size="18"></span></button>
+      <div class="addk__title">Добавить ребёнка</div>
+      <label class="addk__lbl">Имя ребёнка</label>
+      <input class="addk__input" id="addkName" type="text" placeholder="Например, Соня" maxlength="20">
+      <label class="addk__lbl">Возраст</label>
+      <div class="addk__age">
+        <button type="button" class="addk__age-btn" id="addkMinus">−</button>
+        <span id="addkAge">7</span>
+        <button type="button" class="addk__age-btn" id="addkPlus">+</button>
+        <span class="addk__age-note">лет</span>
+      </div>
+      <label class="addk__lbl">Выбери аватар</label>
+      <div class="addk__avatars" id="addkAvatars"></div>
+      <button class="btn btn--primary addk__save" id="addkSave">Добавить ребёнка</button>
+    </div>
+  </div>
+
   <!-- Ежедневный стих (ритуал дня) -->
   <div class="dverse" id="dailyVerse" hidden>
     <div class="dverse__card">
