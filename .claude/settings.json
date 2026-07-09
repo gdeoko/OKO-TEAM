@@ -3,6 +3,12 @@
     "defaultMode": "bypassPermissions",
     "allow": [
       "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "ToolSearch",
       "WebSearch",
       "WebFetch",
       "mcp__github",
