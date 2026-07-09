@@ -345,6 +345,15 @@
         </div>
       </button>
 
+      <h2 class="section-title">Наш год с Метанойей</h2>
+      <button class="card temple album-card" id="openAlbum" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="book" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Семейный альбом года <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Уроки, значки и семейные квесты за год — красивая книга на память</div>
+        </div>
+      </button>
+
       <h2 class="section-title">Мои дети</h2>
       <div class="children" id="children"><!-- JS --></div>
       <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
@@ -752,6 +761,16 @@
         <input id="askField" type="text" placeholder="Напиши свой вопрос…" maxlength="200">
         <button type="submit" class="ask-send" aria-label="Отправить"><span data-icon="send" data-size="18"></span></button>
       </form>
+    </section>
+
+    <!-- ── ГОДОВОЙ АЛЬБОМ (УЛ7) ── -->
+    <section class="screen" data-screen="album">
+      <div class="alb-top">
+        <button class="child-back" id="albumBack" style="margin:0"><span data-icon="back" data-size="18"></span> Профиль</button>
+        <button class="alb-dl" id="albumDl"><span data-icon="download" data-size="16"></span> Скачать</button>
+      </div>
+      <div class="alb-pages" id="albumPages"></div>
+      <div class="alb-note">В конце учебного года альбом собирается автоматически. Сейчас — предпросмотр по текущему прогрессу.</div>
     </section>
 
     <!-- ── СЕМЕЙНЫЙ КВЕСТ (УЛ3) ── -->

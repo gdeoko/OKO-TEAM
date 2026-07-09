@@ -2331,6 +2331,92 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Годовой альбом «Наш год с Метанойей» (УЛ7) ── */
+const ALBUM = { child: 'Миша', year: '2025–2026', lessons: 24, games: 41, days: 128, temple: 'построен' };
+
+function openAlbumScreen() {
+  const earned = CHILD_BADGES.filter((b) => b.earned);
+  $('#albumPages').innerHTML = `
+    <div class="alb-page alb-page--cover">
+      <div class="alb-cover__dove">${ICON('dove', 26)}</div>
+      <div class="alb-cover__eyebrow">Семейный альбом</div>
+      <div class="alb-cover__title">Наш год<br>с Метанойей</div>
+      <div class="alb-cover__fam">Семья · ${ALBUM.child} и близкие</div>
+      <div class="alb-cover__year">Учебный год ${ALBUM.year}</div>
+    </div>
+    <div class="alb-page alb-page--light">
+      <div class="alb-page__t">Что мы прошли</div>
+      <div class="alb-page__sub">Целый год маленьких шагов к большому</div>
+      <div class="alb-stats">
+        <div class="alb-stat"><div class="alb-stat__n">${ALBUM.lessons}</div><div class="alb-stat__l">уроков пройдено</div></div>
+        <div class="alb-stat"><div class="alb-stat__n">${ALBUM.games}</div><div class="alb-stat__l">игр сыграно</div></div>
+        <div class="alb-stat"><div class="alb-stat__n">${ALBUM.days}</div><div class="alb-stat__l">дней в приложении</div></div>
+        <div class="alb-stat"><div class="alb-stat__n">${earned.length}</div><div class="alb-stat__l">значков собрано</div></div>
+      </div>
+    </div>
+    <div class="alb-page alb-page--light">
+      <div class="alb-page__t">Наши значки</div>
+      <div class="alb-page__sub">Каждый — за настоящее старание</div>
+      <div class="alb-badges">${earned.map((b) => `<div class="alb-badge"><div class="alb-badge__ic">${ICON(b.icon, 22)}</div><div class="alb-badge__n">${b.name}</div></div>`).join('')}</div>
+    </div>
+    <div class="alb-page alb-page--light">
+      <div class="alb-page__t">Мы делали это вместе</div>
+      <div class="alb-page__sub">Семейные квесты года</div>
+      <div class="alb-quests">
+        <div class="alb-quest"><span class="alb-quest__ic">${ICON('check', 15)}</span> «Благодарное сердце» — говорили спасибо за ужином</div>
+        <div class="alb-quest"><span class="alb-quest__ic">${ICON('check', 15)}</span> Читали книгу «Метанойя» всей семьёй</div>
+        <div class="alb-quest"><span class="alb-quest__ic">${ICON('check', 15)}</span> Молились вместе перед сном</div>
+      </div>
+    </div>`;
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'album'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+
+function albumCoverSVG() {
+  const b = CHILD_BADGES.filter((x) => x.earned).length;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 660" font-family="'Playfair Display', Georgia, serif">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A3A52"/><stop offset="0.7" stop-color="#2c4f6b"/><stop offset="1" stop-color="#C97064"/></linearGradient></defs>
+  <rect width="480" height="660" fill="url(#g)"/>
+  <rect x="20" y="20" width="440" height="620" fill="none" stroke="#D4A574" stroke-width="2"/>
+  <g transform="translate(240 130)"><circle r="34" fill="rgba(255,255,255,0.12)"/><path d="M-24 0 C-14 -16 14 -16 24 0 C14 16 -14 16 -24 0 Z" fill="none" stroke="#D4A574" stroke-width="2.5"/><circle cx="0" cy="0" r="7" fill="#D4A574"/></g>
+  <text x="240" y="215" text-anchor="middle" font-size="13" letter-spacing="6" fill="#D4A574" font-family="Montserrat, sans-serif">СЕМЕЙНЫЙ АЛЬБОМ</text>
+  <text x="240" y="272" text-anchor="middle" font-size="42" font-weight="700" fill="#fff">Наш год</text>
+  <text x="240" y="318" text-anchor="middle" font-size="42" font-weight="700" fill="#fff">с Метанойей</text>
+  <text x="240" y="366" text-anchor="middle" font-size="16" fill="#EAF0F5" font-family="Montserrat, sans-serif">Семья · ${ALBUM.child} и близкие</text>
+  <rect x="150" y="392" width="180" height="34" rx="17" fill="none" stroke="rgba(255,255,255,0.4)"/>
+  <text x="240" y="414" text-anchor="middle" font-size="14" fill="#fff" font-family="Montserrat, sans-serif">Учебный год ${ALBUM.year}</text>
+  <g font-family="Montserrat, sans-serif">
+    <text x="120" y="500" text-anchor="middle" font-size="30" font-weight="700" fill="#D4A574">${ALBUM.lessons}</text><text x="120" y="522" text-anchor="middle" font-size="11" fill="#EAF0F5">уроков</text>
+    <text x="240" y="500" text-anchor="middle" font-size="30" font-weight="700" fill="#D4A574">${ALBUM.games}</text><text x="240" y="522" text-anchor="middle" font-size="11" fill="#EAF0F5">игр</text>
+    <text x="360" y="500" text-anchor="middle" font-size="30" font-weight="700" fill="#D4A574">${b}</text><text x="360" y="522" text-anchor="middle" font-size="11" fill="#EAF0F5">значков</text>
+  </g>
+  <text x="240" y="600" text-anchor="middle" font-size="13" fill="rgba(255,255,255,0.75)" font-family="Montserrat, sans-serif">OKO TEAM · с заботой о духовном росте детей</text>
+</svg>`;
+}
+
+function downloadAlbum() {
+  const svg = albumCoverSVG();
+  const img = new Image();
+  img.onload = () => {
+    const s = 2, cv = document.createElement('canvas');
+    cv.width = 480 * s; cv.height = 660 * s;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    cv.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Наш-год-с-Метанойей.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast('Обложка альбома сохранена');
+    }, 'image/png');
+  };
+  img.onerror = () => toast('Не удалось сохранить — попробуйте ещё раз');
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
 /* ── Автономный режим (УЛ6) ── */
 function updateOffline() {
   const bar = document.getElementById('offlineBar');
@@ -2588,6 +2674,9 @@ function initGrowth() {
   $('#openCerts')?.addEventListener('click', openCertificates);
   $('#openQuest')?.addEventListener('click', openQuest);
   $('#questBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#openAlbum')?.addEventListener('click', openAlbumScreen);
+  $('#albumBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#albumDl')?.addEventListener('click', downloadAlbum);
   initAsk();
   $('#dverseClose')?.addEventListener('click', () => { $('#dailyVerse').hidden = true; });
   $('#dverseClaim')?.addEventListener('click', claimDailyVerse);
