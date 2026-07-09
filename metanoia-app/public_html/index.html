@@ -393,6 +393,15 @@
         <div class="child-streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="childStreak">12</b> дней подряд</div>
       </div>
 
+      <button class="ask-tile" id="openAsk">
+        <div class="ask-tile__ic"><span data-icon="sparkle" data-size="22"></span></div>
+        <div class="ask-tile__body">
+          <div class="ask-tile__name">Задать вопрос</div>
+          <div class="ask-tile__desc">Спроси о Боге, вере и о том, что тревожит — тёплый помощник ответит</div>
+        </div>
+        <span data-icon="send" data-size="18" class="ask-tile__go"></span>
+      </button>
+
       <h2 class="section-title">Ранги роста</h2>
       <div class="ranks" id="ranksLadder"></div>
 
@@ -729,6 +738,20 @@
       <div class="chrono-list" id="chronoList"></div>
       <button class="btn btn--primary chrono-check" id="chronoCheck">Проверить порядок</button>
       <div class="chrono-result" id="chronoResult"></div>
+    </section>
+
+    <!-- ── ЗАДАТЬ ВОПРОС · AI-помощник (УЛ5) ── -->
+    <section class="screen" data-screen="ask">
+      <div class="ask-top">
+        <button class="child-back" id="askBack" style="margin:0"><span data-icon="back" data-size="18"></span> Назад</button>
+        <div class="ask-top__who"><span data-icon="sparkle" data-size="14"></span> Помощник Метанойя</div>
+      </div>
+      <div class="ask-thread" id="askThread"></div>
+      <div class="ask-suggest" id="askSuggest"></div>
+      <form class="ask-input" id="askForm" autocomplete="off">
+        <input id="askField" type="text" placeholder="Напиши свой вопрос…" maxlength="200">
+        <button type="submit" class="ask-send" aria-label="Отправить"><span data-icon="send" data-size="18"></span></button>
+      </form>
     </section>
 
     <!-- ── СЕМЕЙНЫЙ КВЕСТ (УЛ3) ── -->
