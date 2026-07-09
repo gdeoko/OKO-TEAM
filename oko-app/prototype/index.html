@@ -963,7 +963,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.36</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.37</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1648,6 +1648,21 @@ function pickReact(idx,r){
   const m=currentChat.msgs[idx]; m.reacts=m.reacts||{};
   m.reacts[r]=(m.reacts[r]||0)===0?1:0;
   closeMsgMenu(); renderMsgs();
+  // в живом чате — транслируем реакцию всем участникам
+  if(currentChat.cid && m.sid && window.liveChannel){
+    try{ liveChannel.send({ type:'broadcast', event:'reaction', payload:{ user:myId, sid:m.sid, r } }); }catch(e){}
+  }
+}
+function applyLiveReaction(sid, r){
+  if(!sid) return;
+  for(const c of CHATS){
+    if(!c.cid || !c.msgs) continue;
+    const m = c.msgs.find(x=>x.sid===sid);
+    if(m){ m.reacts=m.reacts||{}; m.reacts[r]=(m.reacts[r]||0)+1;
+      if(currentChat && currentChat.id===c.id) renderMsgs();
+      return;
+    }
+  }
 }
 function copyMsg(idx){ const m=currentChat.msgs[idx]; try{navigator.clipboard&&navigator.clipboard.writeText(m.body||'');}catch(e){} closeMsgMenu(); toast('Скопировано'); }
 function forwardMsg(idx){ closeMsgMenu(); toast('Пересылка — выбор чата подключится'); }
@@ -2602,6 +2617,10 @@ async function initLive(){
       })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if(payload && payload.user !== myId) flashLiveTyping(payload.cid, payload.name);
+      })
+      .on('broadcast', { event: 'reaction' }, ({ payload }) => {
+        if(!payload || payload.user === myId) return;
+        applyLiveReaction(payload.sid, payload.r);
       })
       .subscribe(async (status) => {
         if(status === 'SUBSCRIBED'){ try{ await liveChannel.track({ name: guest }); }catch(e){} }
