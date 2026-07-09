@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>ЗооОпт — товар оживает (WebGL)</title>
+<meta name="build" content="zoopt-webgl-r1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--green:#1B8A3A;--green-d:#0F5C24;--yellow:#FFD500;--warm:#FFE45C;--black:#0A0A0A;--ivory:#F5F1E8;--night:#03120B}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Onest',system-ui,sans-serif;background:var(--night);color:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.dm{font-family:'Unbounded',sans-serif;font-weight:800;line-height:.98;letter-spacing:-.01em}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit;text-decoration:none}
+
+/* канвас-сцена — фиксирована, скролл её «скрабит» */
+#stage{position:fixed;inset:0;z-index:1}
+#gl{display:block;width:100%;height:100%}
+.grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.vig{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,transparent 52%,rgba(1,7,4,.72) 100%)}
+
+/* прокручиваемая высота — задаёт длину «фильма» */
+#scroll{position:relative;z-index:4;height:520vh;pointer-events:none}
+
+/* верхняя панель */
+nav{position:fixed;top:0;left:0;right:0;z-index:8;display:flex;align-items:center;justify-content:space-between;
+ padding:18px clamp(16px,4vw,42px);pointer-events:auto}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Unbounded';font-weight:800;font-size:20px}
+.brand i{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 38% 32%,var(--warm),var(--yellow) 62%,#d9a900);display:grid;place-items:center;box-shadow:0 0 24px rgba(255,213,0,.5)}
+.brand i:before{content:"";width:15px;height:15px;border-radius:50%;background:#0A0A0A;box-shadow:5px 0 0 -3px #0A0A0A}
+.brand em{font-style:normal;color:var(--yellow)}
+.navcta{pointer-events:auto;font-family:'JetBrains Mono';font-size:13px;padding:10px 18px;border-radius:999px;background:var(--green);color:#fff;box-shadow:0 8px 30px rgba(27,138,58,.4)}
+
+/* оверлеи по фазам */
+.cap{position:fixed;z-index:6;left:0;right:0;padding:0 clamp(20px,7vw,120px);pointer-events:none;opacity:0;will-change:opacity,transform}
+.cap .kick{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--yellow);display:flex;align-items:center;gap:12px}
+.cap .kick:before{content:"";width:34px;height:1px;background:var(--yellow);opacity:.7}
+.cap h2{font-size:clamp(2.3rem,7vw,5rem);margin:16px 0 14px;text-shadow:0 12px 60px rgba(0,0,0,.7)}
+.cap h2 em{font-style:normal;color:var(--yellow)}
+.cap p{max-width:440px;color:rgba(235,246,238,.9);font-size:clamp(1rem,2vw,1.18rem);line-height:1.6;text-shadow:0 2px 20px rgba(0,0,0,.7)}
+/* top — по центру, mid слева, end по центру снизу */
+#cap0{top:0;height:100svh;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center;padding-top:clamp(78px,13vh,150px)}
+#cap1{top:0;height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+#cap2{top:0;height:100svh;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;padding-bottom:clamp(60px,12vh,140px)}
+.btns{display:flex;gap:14px;margin-top:26px;flex-wrap:wrap;justify-content:center;pointer-events:auto}
+.btn{font-family:'JetBrains Mono';font-size:14px;padding:15px 26px;border-radius:999px;transition:.25s;cursor:pointer}
+.btn.p{background:var(--yellow);color:#0A0A0A;box-shadow:0 10px 40px rgba(255,213,0,.35)}
+.btn.p:hover{transform:translateY(-2px);box-shadow:0 16px 50px rgba(255,213,0,.5)}
+.btn.g{border:1px solid rgba(255,255,255,.32);color:#fff;backdrop-filter:blur(8px)}
+.btn.g:hover{background:rgba(255,255,255,.1)}
+
+/* индикатор скролла */
+.hint{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:7;font-family:'JetBrains Mono';font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.6);display:flex;flex-direction:column;align-items:center;gap:10px;transition:opacity .5s}
+.hint .m{width:22px;height:36px;border:1.5px solid rgba(255,255,255,.4);border-radius:12px;position:relative}
+.hint .m:after{content:"";position:absolute;left:50%;top:7px;width:3px;height:7px;border-radius:2px;background:var(--yellow);transform:translateX(-50%);animation:wh 1.5s infinite}
+@keyframes wh{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+
+/* прогресс-бар */
+.pbar{position:fixed;left:0;top:0;height:3px;z-index:9;background:linear-gradient(90deg,var(--green),var(--yellow));width:0;box-shadow:0 0 14px rgba(255,213,0,.6)}
+
+/* прелоадер */
+#pre{position:fixed;inset:0;z-index:50;background:var(--night);display:grid;place-items:center;transition:opacity .7s,visibility .7s}
+#pre.done{opacity:0;visibility:hidden}
+#pre .ring{width:54px;height:54px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:var(--yellow);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.badge{position:fixed;right:clamp(16px,4vw,42px);bottom:22px;z-index:7;font-family:'JetBrains Mono';font-size:11px;color:rgba(255,255,255,.45)}
+</style>
+</head>
+<body>
+<div id="pre"><div class="ring"></div></div>
+
+<nav>
+  <a class="brand" href="/"><i></i>Зоо<em>Опт</em></a>
+  <a class="navcta mono" href="tel:+79779955566">+7 977 99-555-66</a>
+</nav>
+
+<div id="stage"><canvas id="gl"></canvas></div>
+<div class="vig"></div>
+<div class="grain"></div>
+<div class="pbar" id="pbar"></div>
+
+<!-- фазовые подписи -->
+<div class="cap" id="cap0"><span class="kick">зооопт · товар оживает</span><h2>Внутри —<br><em>настоящая польза</em></h2><p>Листайте вниз — пачка раскроется и покажет, что внутри.</p></div>
+<div class="cap" id="cap1"><span class="kick">состав</span><h2>Мясо, злаки,<br><em>витамины</em></h2><p>Каждая гранула — баланс белка и микроэлементов. Без пустых наполнителей.</p></div>
+<div class="cap" id="cap2"><span class="kick">готово</span><h2>Полная миска пользы</h2><p>И так — каждый день, по складским ценам. Опт для магазинов и клиник, розница для питомцев.</p>
+  <div class="btns"><a class="btn p" href="tel:+79779955566">Оптовый прайс</a><a class="btn g" href="/">Каталог 300+</a></div></div>
+
+<div class="hint" id="hint"><span>листайте</span><span class="m"></span></div>
+<div class="badge mono">WebGL · realtime 3D</div>
+
+<div id="scroll"></div>
+
+<script src="js/vendor/gsap.min.js"></script>
+<script src="js/vendor/ScrollTrigger.min.js"></script>
+<script src="js/vendor/lenis.min.js"></script>
+<script type="importmap">
+{"imports":{"three":"./js/vendor/three.module.js"}}
+</script>
+<script type="module" src="js/hero3d.js"></script>
+</body>
+</html>
