@@ -520,6 +520,30 @@ label.f-lab{display:block}
 .stk-btn small{font-size:11px;color:var(--dim);font-weight:600}
 .sticker-msg{background:none!important;border:none!important;padding:2px 0!important;box-shadow:none}
 .sticker-msg .t{display:block;text-align:right;margin-top:2px}
+/* ===== Звонки ===== */
+.ch-call{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.ch-call:active{background:var(--lime-dim)}
+.ch-call svg.i{width:20px;height:20px}
+#callScreen{position:fixed;inset:0;z-index:78;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%);display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
+#callScreen.open{display:flex;animation:fade .3s}
+.call-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a3310,#050505 70%);opacity:0;transition:opacity .3s;z-index:-1}
+#callScreen.video .call-bg{opacity:1;background:linear-gradient(160deg,#152608,#0a0f04)}
+.call-top{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:20px}
+.call-ava{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a3d10,#0c1204 70%);border:2px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;box-shadow:0 0 50px rgba(154,255,0,.3);animation:callPulse 2.5s ease-in-out infinite}
+@keyframes callPulse{0%,100%{box-shadow:0 0 40px rgba(154,255,0,.25)}50%{box-shadow:0 0 70px rgba(154,255,0,.5)}}
+#callScreen.video .call-ava{width:96px;height:96px;font-size:36px}
+.call-name{font-size:24px;font-weight:800;color:#fff}
+.call-status{font-size:14px;color:rgba(255,255,255,.65)}
+.call-self{position:absolute;top:calc(70px + env(safe-area-inset-top));right:20px;width:92px;height:130px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent)}
+.call-self svg.i{width:30px;height:30px;opacity:.6}
+.call-controls{display:flex;gap:18px;align-items:center}
+.call-btn{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,background .2s}
+.call-btn:active{transform:scale(.9)}
+.call-btn.off{background:rgba(255,255,255,.9);color:#000}
+.call-btn svg.i{width:26px;height:26px}
+.call-btn.end{background:#ff3b30;color:#fff;transform:rotate(135deg)}
+.call-btn.end:active{transform:rotate(135deg) scale(.9)}
+.call-btn.end svg.i{width:26px;height:26px}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -813,11 +837,26 @@ main>.screen{position:relative;z-index:1}
     <div class="mm-actions" id="mmActions"></div>
   </div>
 </div>
+<div id="callScreen">
+  <div class="call-bg" id="callBg"></div>
+  <div class="call-top">
+    <div class="call-ava" id="callAva">O</div>
+    <div class="call-name" id="callName">Собеседник</div>
+    <div class="call-status" id="callStatus">Соединение…</div>
+  </div>
+  <div class="call-self" id="callSelf"><svg class="i"><use href="#i-camera"/></svg></div>
+  <div class="call-controls">
+    <button class="call-btn" id="callMic" onclick="toggleCallBtn('callMic')" title="Микрофон"><svg class="i"><use href="#i-mic"/></svg></button>
+    <button class="call-btn" id="callCam" onclick="toggleCallBtn('callCam')" title="Камера"><svg class="i"><use href="#i-camera"/></svg></button>
+    <button class="call-btn" id="callSpk" onclick="toggleCallBtn('callSpk')" title="Динамик"><svg class="i"><use href="#i-megaphone"/></svg></button>
+    <button class="call-btn end" onclick="endCall()" title="Завершить"><svg class="i"><use href="#i-phone"/></svg></button>
+  </div>
+</div>
 <div id="app">
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.26</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.27</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -838,13 +877,15 @@ main>.screen{position:relative;z-index:1}
         <div style="display:none;flex-direction:column;height:100%" id="convBody">
           <div class="conv-head">
             <button class="back" onclick="closeConv()"><svg class="i"><use href="#i-back"/></svg></button>
-            <div style="display:flex;align-items:center;gap:11px;cursor:pointer;flex:1" onclick="openProfile()">
+            <div style="display:flex;align-items:center;gap:11px;cursor:pointer;flex:1;min-width:0" onclick="openProfile()">
               <div class="ava lime" id="convAva"></div>
-              <div>
+              <div style="min-width:0">
                 <div class="who" id="convName"></div>
                 <div class="status" id="convStatus">онлайн</div>
               </div>
             </div>
+            <button class="ch-call" onclick="startCall(false)" title="Аудиозвонок"><svg class="i"><use href="#i-phone"/></svg></button>
+            <button class="ch-call" onclick="startCall(true)" title="Видеозвонок"><svg class="i"><use href="#i-camera"/></svg></button>
           </div>
           <div class="msgs" id="msgs"></div>
           <div class="compose-bar" id="composeBar"></div>
@@ -1525,6 +1566,44 @@ function showComposeBar(){
   } else { bar.classList.remove('open'); bar.innerHTML=''; }
 }
 function cancelCompose(){ replyState=null; editState=null; document.getElementById('msgInput').value=''; showComposeBar(); if(window.syncSendIcon)syncSendIcon(); }
+/* ===== Звонки (LiveKit UI) ===== */
+let callTimer=null, callSec=0, callVideo=false;
+function startCall(video){
+  if(!currentChat) return;
+  callVideo = video;
+  const scr = document.getElementById('callScreen');
+  document.getElementById('callAva').textContent = (currentChat.name[0]||'O').toUpperCase();
+  document.getElementById('callName').textContent = currentChat.name;
+  document.getElementById('callStatus').textContent = video ? 'Видеозвонок · соединение…' : 'Аудиозвонок · соединение…';
+  scr.classList.toggle('video', video);
+  document.getElementById('callCam').classList.toggle('off', !video);
+  document.getElementById('callSelf').style.display = video ? 'flex' : 'none';
+  ['callMic','callSpk'].forEach(id=>document.getElementById(id).classList.remove('off'));
+  scr.classList.add('open');
+  callSec = 0;
+  setTimeout(()=>{ document.getElementById('callStatus').textContent = 'В сети'; startCallTimer(); }, 1800);
+}
+function startCallTimer(){
+  clearInterval(callTimer);
+  callTimer = setInterval(()=>{
+    callSec++;
+    const m=String(Math.floor(callSec/60)).padStart(2,'0'), s=String(callSec%60).padStart(2,'0');
+    document.getElementById('callStatus').textContent = m+':'+s;
+  }, 1000);
+}
+function toggleCallBtn(id){ document.getElementById(id).classList.toggle('off'); }
+function endCall(){
+  clearInterval(callTimer);
+  const scr=document.getElementById('callScreen'); scr.classList.remove('open','video');
+  if(currentChat && callSec>0){
+    const m=String(Math.floor(callSec/60)).padStart(2,'0'), s=String(callSec%60).padStart(2,'0');
+    pushMsg({in:0, t:nowT(), kind:'sys', body:(callVideo?'Видеозвонок':'Аудиозвонок')+' · '+m+':'+s});
+  } else if(currentChat){
+    pushMsg({in:0, t:nowT(), kind:'sys', body:(callVideo?'Видеозвонок':'Аудиозвонок')+' · отменён'});
+  }
+  callSec=0;
+}
+
 /* ===== Фирменные стикеры OKO ===== */
 const STICKERS = [
   {ic:'logo',   label:'OKO',       hue:90},
