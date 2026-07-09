@@ -321,37 +321,106 @@ nav#tabs .nav-logo{display:none}
 .name-status svg.i{width:17px;height:17px;color:var(--accent)}
 
 /* ============ БИРЖА УСЛУГ ============ */
-.market-note{display:flex;gap:9px;align-items:center;background:var(--lime-dim);border-radius:var(--r-md);padding:11px 13px;font-size:12.5px;color:var(--accent);margin-bottom:12px}
-.market-note svg.i{width:17px;height:17px;flex-shrink:0}
-.mk-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:none}
-.mk-chips::-webkit-scrollbar{display:none}
-.mk-chips button{font-size:12.5px;font-weight:600;color:var(--dim);padding:7px 14px;border-radius:99px;border:1px solid var(--border);white-space:nowrap}
-.mk-chips button.on{color:#000;background:var(--lime);border-color:var(--lime)}
-.listing{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
-.listing:hover{border-color:var(--dim)}
-.listing .meta{flex:1;min-width:0}
-.listing b{font-size:14.5px;display:block}
-.listing .price{color:var(--accent);font-weight:700;font-size:14px;margin-top:2px}
-.listing .seller{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);margin-top:7px}
-.listing .seller svg.i{width:13px;height:13px;color:var(--accent)}
-.listing .ava{width:44px;height:44px;font-size:16px}
-.listing .tag{align-self:flex-start}
-
-/* ============ БИРЖА 2.0 ============ */
-.mk-top{display:flex;gap:8px;margin-bottom:10px}
-.mk-top .searchbar{margin:0;flex:1}
-.mk-sort{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);border:1px solid var(--border);border-radius:99px;padding:0 13px;white-space:nowrap}
-.mk-tabs{display:flex;gap:8px;margin-bottom:10px}
-.mk-tabs button{flex:1;font-size:13px;font-weight:600;color:var(--dim);padding:9px;border-radius:var(--r-sm);border:1px solid var(--border)}
-.mk-tabs button.on{color:#000;background:var(--lime);border-color:var(--lime)}
-.listing .fav{margin-left:auto;color:var(--dim);align-self:flex-start;padding:2px}
-.listing .fav.on{color:var(--accent)}
-.listing .fav.on svg.i{fill:currentColor}
-.lst-status{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:3px 9px}
+/* ===== Биржа (Avito-уровень) ===== */
+.mk-searchbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:13px 18px;color:var(--dim);font-size:14px;margin-bottom:12px;cursor:text}
+.mk-searchbar svg.i{width:19px;height:19px;flex-shrink:0}
+.mk-searchbar input{flex:1;background:none;border:none;color:var(--fg);font-size:14px}
+.mk-searchbar.sm{padding:11px 16px;margin-bottom:10px}
+.mk-quick{display:flex;gap:9px;margin-bottom:18px}
+.mk-quick button{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font-size:13px;font-weight:600;transition:transform .12s}
+.mk-quick button:active{transform:scale(.97)}
+.mk-quick svg.i{width:18px;height:18px;color:var(--accent)}
+.mk-h{font-size:16px;font-weight:800;margin:6px 0 12px}
+.mk-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.mk-cat{display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;text-align:left;transition:transform .12s,border-color .2s}
+.mk-cat:active{transform:scale(.97)}
+.mk-cat:hover{border-color:var(--dim)}
+.mk-cat-ic{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.mk-cat-ic svg.i{width:22px;height:22px}
+.mk-cat b{font-size:13.5px;line-height:1.25}
+.mk-cat small{font-size:11px;color:var(--dim)}
+.mk-feat{display:flex;gap:11px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.mk-feat::-webkit-scrollbar{display:none}
+.feat-card{position:relative;flex:0 0 152px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;cursor:pointer}
+.feat-b{padding:9px 11px 11px}
+.feat-price{font-weight:800;font-size:15px;color:var(--accent)}
+.feat-t{font-size:12.5px;line-height:1.3;margin-top:3px;height:32px;overflow:hidden}
+.feat-s{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim);margin-top:6px}
+.feat-s svg.i{width:12px;height:12px;color:var(--accent)}
+.feat-card .lst-promo{position:absolute;top:8px;left:8px}
+.lst-photo{aspect-ratio:16/10;width:100%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:linear-gradient(135deg,hsl(var(--h,90deg) 40% 14%),#0b0f04 70%);border-bottom:1px solid var(--border)}
+.lst-photo svg.i{width:34px;height:34px;opacity:.6}
+.lst-photo.big{aspect-ratio:16/9;border-radius:var(--r-md);border:1px solid var(--border);margin-bottom:12px}
+.lst-photo.big svg.i{width:56px;height:56px}
+:root[data-theme="light"] .lst-photo{background:linear-gradient(135deg,hsl(var(--h,90deg) 55% 88%),hsl(var(--h,90deg) 45% 78%) 75%)}
+.mk-back{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:13px;font-weight:600;padding:6px 0;margin-bottom:8px}
+.mk-back svg.i{width:17px;height:17px}
+.mk-toolbar{display:flex;gap:9px;margin-bottom:12px}
+.mk-tool{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--fg);border:1px solid var(--border);border-radius:99px;padding:8px 14px;white-space:nowrap}
+.mk-tool svg.i{width:15px;height:15px}
+.mk-fc{background:var(--lime);color:#000;font-style:normal;font-size:11px;font-weight:800;border-radius:99px;padding:0 6px;margin-left:2px}
+.lst-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:11px;cursor:pointer;transition:border-color .15s}
+.lst-card:hover{border-color:var(--dim)}
+.lst-body{padding:11px 13px 13px}
+.lst-price{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.lst-title{font-size:14px;line-height:1.35;margin-top:3px}
+.lst-meta{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--dim);margin-top:7px;flex-wrap:wrap}
+.lst-meta svg.i{width:13px;height:13px;color:var(--accent)}
+.lst-foot{display:flex;align-items:center;gap:8px;margin-top:8px}
+.lst-foot svg.i{width:12px;height:12px}
+.lst-cat{font-size:11px;color:var(--dim)}
+.lst-card .fav{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;color:#fff;border:none}
+.lst-card .fav.on{color:var(--lime)}
+.fav.on svg.i{fill:currentColor}
+.lst-card .fav svg.i{width:18px;height:18px}
+.lst-promo{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;border-radius:99px;padding:3px 8px}
+.lst-promo.turbo{background:linear-gradient(135deg,#B9FF4D,#7ACC00);color:#000}
+.lst-promo.vip{background:linear-gradient(135deg,#ffd24d,#ff9a00);color:#000}
+.lst-promo.up{background:var(--lime-dim);color:var(--accent)}
+.lst-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:3px 9px}
 .lst-status.mod{background:rgba(255,180,0,.15);color:#d99a00}
 .lst-status.act{background:var(--lime-dim);color:var(--accent)}
-.lst-status.boost{background:linear-gradient(135deg,#B9FF4D,#7ACC00);color:#000}
-.mk-empty{text-align:center;color:var(--dim);font-size:13px;padding:30px 10px}
+.lst-status.sold{background:var(--raised);color:var(--dim)}
+.mk-empty{text-align:center;color:var(--dim);font-size:13px;padding:40px 10px}
+.lst-d-price{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.lst-d-title{font-size:17px;font-weight:700;margin:4px 0 10px;line-height:1.3}
+.lst-d-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.lst-d-desc{font-size:13.5px;line-height:1.6;color:var(--fg)}
+.lst-stats{display:flex;gap:16px;margin:12px 0;padding:11px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.lst-stats span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--dim)}
+.lst-stats svg.i{width:15px;height:15px}
+.seller-card{display:flex;align-items:center;gap:12px;padding:6px 0}
+.seller-card .ava{width:48px;height:48px;font-size:18px}
+.st{display:inline-flex}.st svg.i{width:12px;height:12px;color:var(--border)}
+.st.on svg.i{color:#ffc233;fill:#ffc233}
+.rev-list{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.rev{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 13px}
+.rev-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.rev-h b{font-size:13px}
+.rev p{font-size:12.5px;color:var(--dim);line-height:1.45}
+.lst-cta{display:flex;gap:10px}
+.lst-cta .btn{flex:1}
+.f-lab{font-weight:600;font-size:13px;margin:14px 0 8px}
+.f-price{display:flex;align-items:center;gap:10px}
+.f-price input{flex:1;margin:0;text-align:center}
+.f-row{display:flex;gap:8px;flex-wrap:wrap}
+.f-chip{font-size:13px;font-weight:600;color:var(--dim);border:1px solid var(--border);border-radius:99px;padding:9px 16px;transition:all .18s}
+.f-chip.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.promo-opt{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:13px;margin-bottom:10px;text-align:left;transition:transform .12s,border-color .2s}
+.promo-opt:active{transform:scale(.98)}
+.promo-opt:hover{border-color:var(--dim)}
+.promo-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#000}
+.promo-ic.up{background:var(--lime-dim);color:var(--accent)}
+.promo-ic.vip{background:linear-gradient(135deg,#ffd24d,#ff9a00)}
+.promo-ic.turbo{background:linear-gradient(135deg,#B9FF4D,#7ACC00)}
+.promo-ic svg.i{width:22px;height:22px}
+.promo-b{flex:1;display:flex;flex-direction:column;gap:1px}
+.promo-b b{font-size:14.5px}.promo-b small{font-size:11.5px;color:var(--dim)}
+.promo-price{font-weight:800;font-size:16px;color:var(--accent)}
+.lf-photo{aspect-ratio:16/8;border:1.5px dashed var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--dim);font-size:12.5px;margin:6px 0 8px;cursor:pointer}
+.lf-photo svg.i{width:26px;height:26px}
+.lf-sel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font-size:14px;color:var(--fg)}
+label.f-lab{display:block}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -630,7 +699,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.20</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.21</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -743,19 +812,8 @@ main>.screen{position:relative;z-index:1}
 
         <div class="ma-view" id="ma-market">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
-          <h2 class="section-h" style="margin-top:16px">Биржа услуг</h2>
-          <div class="market-note"><svg class="i"><use href="#i-eye"/></svg> Просмотр — бесплатно всем. Размещение услуг — с тарифа Start.</div>
-          <div class="mk-tabs">
-            <button class="on" id="mkTabAll" onclick="setMkTab('all')">Все услуги</button>
-            <button id="mkTabMy" onclick="setMkTab('my')">Мои объявления</button>
-          </div>
-          <div class="mk-top" id="mkSearchRow">
-            <div class="searchbar"><svg class="i"><use href="#i-search"/></svg><input id="mkSearch" placeholder="Поиск услуг" oninput="renderMarket()"></div>
-            <button class="mk-sort" onclick="cycleMkSort()"><svg class="i"><use href="#i-poll"/></svg><span id="mkSortLabel">Популярные</span></button>
-          </div>
-          <div class="mk-chips" id="mkChips"></div>
-          <div id="marketList"></div>
-          <button class="btn" onclick="openSheet('listing')"><svg class="i"><use href="#i-plus"/></svg> Разместить услугу</button>
+          <h2 class="section-h" style="margin-top:16px">Биржа OKO</h2>
+          <div id="marketRoot"></div>
         </div>
         <div class="ma-view" id="ma-system">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
@@ -912,15 +970,10 @@ main>.screen{position:relative;z-index:1}
   <div class="status-pick" id="statusPick"></div>
   <button class="btn" onclick="saveProfile()">Сохранить</button>
 </div>
-<div class="sheet" id="sheet-listing">
-  <h3>Новая услуга</h3>
-  <input id="lsTitle" placeholder="Что предлагаешь? Например: монтаж Reels">
-  <input id="lsPrice" placeholder="Цена, например: от 500 ₽" style="margin-top:0">
-  <input id="lsDesc" placeholder="Короткое описание" style="margin-top:0">
-  <button class="btn" onclick="createListing()">Отправить на модерацию</button>
-  <p class="dim" style="font-size:11.5px;margin-top:10px;text-align:center">Проверка занимает до пары минут. Против спама и запрещёнки.</p>
-</div>
 <div class="sheet" id="sheet-lst"><div id="lstView"></div></div>
+<div class="sheet" id="sheet-filters"><div id="filtersView"></div></div>
+<div class="sheet" id="sheet-promo"><div id="promoView"></div></div>
+<div class="sheet" id="sheet-listingForm"><div id="listingFormView"></div></div>
 <div class="sheet" id="sheet-npost">
   <h3>Новый пост</h3>
   <textarea id="npBody" rows="4" placeholder="Что нового? Поделись с подписчиками…" style="width:100%;resize:none"></textarea>
@@ -1514,6 +1567,7 @@ function openMa(id){
   document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
   document.getElementById('ma-'+id).style.display='block';
   if(id==='system'){ aState = {step:0, answers:{}}; renderAnketa(); }
+  if(id==='market'){ mkView='cats'; mkCat=null; mkSearchQ=''; renderMarket(); }
 }
 /* ===== Система роста: многошаговая анкета ===== */
 const ANKETA = [
@@ -2027,114 +2081,311 @@ function renderGallery(){
     `<div class="gal-thumb" style="background:linear-gradient(135deg,${h},#0a0a0a)" onclick="attach('photo')">${I('photo')}</div>`).join('');
 }
 
-/* ================= БИРЖА УСЛУГ 2.0 ================= */
-const MK_CATS = ['Все','Монтаж','Дизайн','Реклама','Сайты','Тексты'];
-const MK_SORTS = [['pop','Популярные'],['cheap','Сначала дешевле'],['exp','Сначала дороже']];
-let mkCat = 'Все', mkTab = 'all', mkSortI = 0;
-let LISTINGS = [
-  {id:1, t:'Монтаж Reels и Shorts под ключ', p:500, pt:'от 500 ₽', ds:'Динамичный монтаж, субтитры, обложка. Срок — 24 часа.', a:'М', n:'Марк', r:'4.9', d:127, tag:'Монтаж', st:'act', fav:false, my:false},
-  {id:2, t:'Дизайн обложек и карточек', p:300, pt:'от 300 ₽', ds:'Обложки для Reels, карточки для маркетплейсов, фирменный стиль.', a:'Л', n:'Лиза', r:'5.0', d:89, tag:'Дизайн', st:'boost', fav:false, my:false},
-  {id:3, t:'Настройка таргета VK и TG Ads', p:5000, pt:'от 5 000 ₽', ds:'Приведу заявки. Аудит, креативы, ведение 2 недели включено.', a:'С', n:'Сергей', r:'4.8', d:64, tag:'Реклама', st:'act', fav:false, my:false},
-  {id:4, t:'Сайт-визитка за 3 дня', p:15000, pt:'от 15 000 ₽', ds:'Адаптивный сайт под ключ: дизайн, домен, аналитика.', a:'И', n:'Ирина', r:'4.9', d:41, tag:'Сайты', st:'act', fav:false, my:false},
-  {id:5, t:'Продающие тексты и прогревы', p:1000, pt:'от 1 000 ₽', ds:'Сценарии прогревов, посты, лендинги. Пишу под вашу нишу.', a:'А', n:'Артём', r:'4.7', d:112, tag:'Тексты', st:'act', fav:false, my:false},
+/* ================= БИРЖА (Avito-уровень) ================= */
+const MK_CATS = [
+  {k:'video',   name:'Видео и монтаж',      ic:'camera'},
+  {k:'design',  name:'Дизайн',              ic:'photo'},
+  {k:'ads',     name:'Реклама и трафик',    ic:'megaphone'},
+  {k:'sites',   name:'Сайты и приложения',  ic:'globe'},
+  {k:'text',    name:'Тексты и переводы',   ic:'file'},
+  {k:'smm',     name:'SMM и ведение',       ic:'users'},
+  {k:'audio',   name:'Аудио и озвучка',     ic:'mic'},
+  {k:'3d',      name:'3D и графика',         ic:'bolt'},
+  {k:'consult', name:'Консалтинг и обучение',ic:'briefcase'},
 ];
-function setMkTab(t){
-  mkTab = t;
-  document.getElementById('mkTabAll').classList.toggle('on', t==='all');
-  document.getElementById('mkTabMy').classList.toggle('on', t==='my');
-  document.getElementById('mkSearchRow').style.display = t==='all' ? '' : 'none';
-  document.getElementById('mkChips').style.display = t==='all' ? '' : 'none';
-  renderMarket();
-}
-function cycleMkSort(){
-  mkSortI = (mkSortI + 1) % MK_SORTS.length;
-  document.getElementById('mkSortLabel').textContent = MK_SORTS[mkSortI][1];
-  renderMarket();
-}
+const catName = k => (MK_CATS.find(c=>c.k===k)||{}).name || 'Услуги';
+const catIco  = k => (MK_CATS.find(c=>c.k===k)||{}).ic || 'briefcase';
+const MK_SORTS = [['pop','Популярные'],['cheap','Сначала дешевле'],['exp','Сначала дороже'],['rating','По рейтингу'],['new','Сначала новые']];
+const rv = (n,r,t)=>({n,r,t});
+let LISTINGS = [
+  {id:1, cat:'video', type:'service', t:'Монтаж Reels и Shorts под ключ', p:500, pt:'от 500 ₽', ds:'Динамичный монтаж, субтитры, обложка, звук. Срок — 24 часа. Правки бесплатно.', a:'М', n:'Марк Волков', r:4.9, deals:127, city:'Онлайн', term:'1 день', views:2140, favs:64, contacts:88, promo:'up', fav:false, my:false, st:'act', seed:12,
+    reviews:[rv('Ольга',5,'Сделал за день, огонь монтаж'),rv('Игорь',5,'Хуки на месте, рекомендую')]},
+  {id:2, cat:'design', type:'service', t:'Дизайн обложек и карточек товара', p:300, pt:'от 300 ₽', ds:'Обложки для Reels/YouTube, карточки для маркетплейсов, фирменный стиль под ключ.', a:'Л', n:'Лиза Кот', r:5.0, deals:89, city:'Онлайн', term:'2 дня', views:1780, favs:52, contacts:61, promo:'vip', fav:false, my:false, st:'act', seed:31,
+    reviews:[rv('Дана',5,'Карточки подняли CTR в 2 раза')]},
+  {id:3, cat:'ads', type:'service', t:'Настройка таргета VK и Telegram Ads', p:5000, pt:'от 5 000 ₽', ds:'Приведу заявки. Аудит, стратегия, креативы, ведение 2 недели включено.', a:'С', n:'Сергей Дан', r:4.8, deals:64, city:'Москва', term:'от 3 дней', views:980, favs:20, contacts:34, promo:null, fav:false, my:false, st:'act', seed:7,
+    reviews:[rv('Пётр',5,'Заявки пошли на 4-й день'),rv('Аня',4,'Норм, но дороговато')]},
+  {id:4, cat:'sites', type:'service', t:'Сайт-визитка и лендинг за 3 дня', p:15000, pt:'от 15 000 ₽', ds:'Адаптивный сайт под ключ: дизайн, домен, подключение аналитики и форм.', a:'И', n:'Ирина Веб', r:4.9, deals:41, city:'Онлайн', term:'3 дня', views:1320, favs:38, contacts:29, promo:'turbo', fav:false, my:false, st:'act', seed:22,
+    reviews:[rv('Максим',5,'Сайт за 3 дня, всё чётко')]},
+  {id:5, cat:'text', type:'service', t:'Продающие тексты и сценарии прогревов', p:1000, pt:'от 1 000 ₽', ds:'Сценарии прогревов, посты, лендинги под вашу нишу. Первый текст — тест бесплатно.', a:'А', n:'Артём Слов', r:4.7, deals:112, city:'Онлайн', term:'1–2 дня', views:1590, favs:44, contacts:52, promo:null, fav:false, my:false, st:'act', seed:41,
+    reviews:[rv('Вика',5,'Прогрев зашёл, продажи выросли')]},
+  {id:6, cat:'smm', type:'service', t:'Ведение соцсетей под ключ', p:20000, pt:'от 20 000 ₽/мес', ds:'Контент-план, съёмка, монтаж, постинг, аналитика. Полное ведение аккаунта.', a:'К', n:'Катя SMM', r:4.9, deals:73, city:'СПб', term:'помесячно', views:860, favs:31, contacts:40, promo:'up', fav:false, my:false, st:'act', seed:5,
+    reviews:[rv('Рома',5,'Сняли с меня всю рутину')]},
+  {id:7, cat:'audio', type:'service', t:'Нейроозвучка и звук для роликов', p:400, pt:'от 400 ₽', ds:'Русская нейроозвучка, чистка звука, музыка, синхрон под видео.', a:'Д', n:'Денис Аудио', r:4.8, deals:58, city:'Онлайн', term:'1 день', views:720, favs:18, contacts:22, promo:null, fav:false, my:false, st:'act', seed:18,
+    reviews:[rv('Лена',5,'Голос как у диктора')]},
+  {id:8, cat:'3d', type:'service', t:'3D-графика и анимация логотипа', p:3000, pt:'от 3 000 ₽', ds:'3D-логотип, интро, продуктовая визуализация, motion-графика.', a:'Н', n:'Ник 3D', r:5.0, deals:37, city:'Онлайн', term:'от 2 дней', views:640, favs:27, contacts:19, promo:'vip', fav:false, my:false, st:'act', seed:27,
+    reviews:[rv('Стас',5,'Интро — космос')]},
+];
+let mkView = 'cats';      // cats | list | fav
+let mkCat = null;
+let mkSort = 'pop';
+let mkFilters = {min:'', max:'', rating:0, type:'all'};
+const promoRank = p => p==='turbo'?3 : p==='vip'?2 : p==='up'?1 : 0;
+const promoBadge = p => p==='turbo'?'<span class="lst-promo turbo">TURBO</span>'
+  : p==='vip'?'<span class="lst-promo vip">VIP</span>'
+  : p==='up'?'<span class="lst-promo up">↑ Топ</span>' : '';
 function statusChip(st){
   return st==='mod' ? '<span class="lst-status mod">На модерации</span>'
-       : st==='boost' ? '<span class="lst-status boost">Продвигается</span>'
+       : st==='sold' ? '<span class="lst-status sold">Продано</span>'
        : '<span class="lst-status act">Активно</span>';
 }
-function renderMarket(){
-  document.getElementById('mkChips').innerHTML = MK_CATS.map(c =>
-    `<button class="${mkCat===c?'on':''}" onclick="mkCat='${c}';renderMarket()">${c}</button>`).join('');
-  const q = (document.getElementById('mkSearch')?.value || '').trim().toLowerCase();
-  let arr = LISTINGS.slice();
-  if(mkTab==='my'){ arr = arr.filter(l => l.my); }
-  else {
-    arr = arr.filter(l => l.st !== 'mod' || l.my);
-    if(mkCat !== 'Все') arr = arr.filter(l => l.tag === mkCat);
-    if(q) arr = arr.filter(l => (l.t + ' ' + l.ds + ' ' + l.n).toLowerCase().includes(q));
-    const srt = MK_SORTS[mkSortI][0];
-    if(srt==='cheap') arr.sort((a,b)=>a.p-b.p);
-    else if(srt==='exp') arr.sort((a,b)=>b.p-a.p);
-    else arr.sort((a,b)=>(b.st==='boost')-(a.st==='boost') || b.d-a.d);
-  }
-  document.getElementById('marketList').innerHTML = arr.length ? arr.map(l =>
-    `<div class="listing" onclick="openListing(${l.id})">
-      <div class="ava">${l.a}</div>
-      <div class="meta"><b>${l.t}</b><div class="price">${l.pt}</div>
-        <div class="seller">${l.n} · ${I('star')}${l.r} · ${l.d} сделок</div>
-        ${mkTab==='my' ? '<div style="margin-top:6px">'+statusChip(l.st)+'</div>' : ''}</div>
-      ${mkTab==='my' ? '' : `<button class="fav ${l.fav?'on':''}" onclick="event.stopPropagation();toggleFav(${l.id})">${I('heart')}</button>`}
-    </div>`).join('')
-    : `<div class="mk-empty">${mkTab==='my' ? 'У тебя пока нет объявлений — размести первое' : 'Ничего не нашлось — поменяй запрос или категорию'}</div>`;
+function stars(r){ const full=Math.round(r); let s=''; for(let i=1;i<=5;i++) s+=`<span class="st ${i<=full?'on':''}">${I('star')}</span>`; return s; }
+function lstPhoto(l, big){
+  const hue = (l.seed*37)%360;
+  return `<div class="lst-photo ${big?'big':''}" style="--h:${hue}deg">${I(catIco(l.cat))}</div>`;
 }
-function toggleFav(id){ const l = LISTINGS.find(x=>x.id===id); l.fav = !l.fav; renderMarket(); }
+
+/* --- роутер биржи --- */
+function renderMarket(){
+  const wrap = document.getElementById('marketRoot');
+  if(mkView==='cats') return renderMarketCats(wrap);
+  if(mkView==='fav')  return renderMarketList(wrap, true);
+  return renderMarketList(wrap, false);
+}
+function renderMarketCats(wrap){
+  const featured = LISTINGS.filter(l=>!l.my && l.promo).sort((a,b)=>promoRank(b.promo)-promoRank(a.promo)).slice(0,4);
+  wrap.innerHTML = `
+    <div class="mk-searchbar" onclick="mkOpenSearch()"><svg class="i"><use href="#i-search"/></svg><span>Поиск услуг и товаров</span></div>
+    <div class="mk-quick">
+      <button onclick="mkView='fav';mkCat=null;renderMarket()">${I('heart')}<span>Избранное${LISTINGS.filter(l=>l.fav).length?' · '+LISTINGS.filter(l=>l.fav).length:''}</span></button>
+      <button onclick="openMyListings()">${I('briefcase')}<span>Мои объявления</span></button>
+    </div>
+    <h3 class="mk-h">Категории</h3>
+    <div class="mk-cats">${MK_CATS.map(c=>{
+      const n = LISTINGS.filter(l=>l.cat===c.k && !l.my).length;
+      return `<button class="mk-cat" onclick="openMarketCat('${c.k}')"><span class="mk-cat-ic">${I(c.ic)}</span><b>${c.name}</b><small>${n} объявл.</small></button>`;
+    }).join('')}</div>
+    ${featured.length?`<h3 class="mk-h">Рекомендуем</h3><div class="mk-feat">${featured.map(l=>`
+      <div class="feat-card" onclick="openListing(${l.id})">${lstPhoto(l)}
+        <div class="feat-b"><div class="feat-price">${l.pt}</div><div class="feat-t">${l.t}</div>
+        <div class="feat-s">${I('star')}${l.r.toFixed(1)} · ${l.city}</div></div>${promoBadge(l.promo)}</div>`).join('')}</div>`:''}
+    <button class="btn" style="margin-top:16px" onclick="openListingForm()">${I('plus')} Разместить объявление</button>`;
+}
+function openMarketCat(k){ mkCat=k; mkView='list'; mkSearchQ=''; renderMarket(); }
+let mkSearchQ = '';
+function mkOpenSearch(){ mkCat=null; mkView='list'; mkSearchQ=''; renderMarket(); setTimeout(()=>document.getElementById('mkSearchInput')?.focus(),50); }
+
+function mkApplyFilters(arr){
+  const q = mkSearchQ.trim().toLowerCase();
+  if(q) arr = arr.filter(l=>(l.t+' '+l.ds+' '+l.n+' '+catName(l.cat)).toLowerCase().includes(q));
+  if(mkFilters.min) arr = arr.filter(l=>l.p >= +mkFilters.min);
+  if(mkFilters.max) arr = arr.filter(l=>l.p <= +mkFilters.max);
+  if(mkFilters.rating) arr = arr.filter(l=>l.r >= mkFilters.rating);
+  if(mkFilters.type!=='all') arr = arr.filter(l=>l.type===mkFilters.type);
+  if(mkSort==='cheap') arr.sort((a,b)=>a.p-b.p);
+  else if(mkSort==='exp') arr.sort((a,b)=>b.p-a.p);
+  else if(mkSort==='rating') arr.sort((a,b)=>b.r-a.r);
+  else if(mkSort==='new') arr.sort((a,b)=>b.id-a.id);
+  else arr.sort((a,b)=>promoRank(b.promo)-promoRank(a.promo) || b.deals-a.deals);
+  return arr;
+}
+function activeFilterCount(){
+  let n=0; if(mkFilters.min)n++; if(mkFilters.max)n++; if(mkFilters.rating)n++; if(mkFilters.type!=='all')n++; return n;
+}
+function renderMarketList(wrap, favOnly){
+  let arr = LISTINGS.filter(l=>!l.my && l.st==='act');
+  if(favOnly) arr = arr.filter(l=>l.fav);
+  else if(mkCat) arr = arr.filter(l=>l.cat===mkCat);
+  arr = mkApplyFilters(arr);
+  const title = favOnly ? 'Избранное' : (mkCat ? catName(mkCat) : 'Все объявления');
+  const fc = activeFilterCount();
+  wrap.innerHTML = `
+    <button class="mk-back" onclick="mkView='cats';mkCat=null;renderMarket()">${I('back')} Категории</button>
+    <div class="mk-searchbar sm"><svg class="i"><use href="#i-search"/></svg>
+      <input id="mkSearchInput" value="${esc(mkSearchQ)}" placeholder="Поиск в «${title}»" oninput="mkSearchQ=this.value;renderMarketListSoft()"></div>
+    <div class="mk-toolbar">
+      <button class="mk-tool" onclick="openFilters()">${I('poll')} Фильтры${fc?` <i class="mk-fc">${fc}</i>`:''}</button>
+      <button class="mk-tool" onclick="cycleSort()">${MK_SORTS.find(s=>s[0]===mkSort)[1]}</button>
+    </div>
+    <div id="mkResults"></div>`;
+  renderMarketListSoft();
+}
+function renderMarketListSoft(){
+  let arr = LISTINGS.filter(l=>!l.my && l.st==='act');
+  if(mkView==='fav') arr = arr.filter(l=>l.fav);
+  else if(mkCat) arr = arr.filter(l=>l.cat===mkCat);
+  arr = mkApplyFilters(arr);
+  const box = document.getElementById('mkResults'); if(!box) return;
+  box.innerHTML = arr.length ? arr.map(l=>`
+    <div class="lst-card" onclick="openListing(${l.id})">
+      ${lstPhoto(l)}
+      <div class="lst-body">
+        <div class="lst-price">${l.pt}</div>
+        <div class="lst-title">${l.t}</div>
+        <div class="lst-meta">${I('star')}${l.r.toFixed(1)} · ${l.deals} сделок · ${l.city}</div>
+        <div class="lst-foot">${promoBadge(l.promo)}<span class="lst-cat">${catName(l.cat)}</span></div>
+      </div>
+      <button class="fav ${l.fav?'on':''}" onclick="event.stopPropagation();toggleFav(${l.id})">${I('heart')}</button>
+    </div>`).join('')
+    : `<div class="mk-empty">${mkView==='fav'?'В избранном пока пусто — добавь объявления сердечком':'Ничего не нашлось. Сбрось фильтры или измени запрос'}</div>`;
+}
+function cycleSort(){
+  const i = MK_SORTS.findIndex(s=>s[0]===mkSort);
+  mkSort = MK_SORTS[(i+1)%MK_SORTS.length][0];
+  renderMarketList(document.getElementById('marketRoot'), mkView==='fav');
+}
+function toggleFav(id){ const l=LISTINGS.find(x=>x.id===id); l.fav=!l.fav; l.favs+=l.fav?1:-1; renderMarketListSoft(); toast(l.fav?'Добавлено в избранное':'Убрано из избранного'); }
+
+/* --- фильтры --- */
+function openFilters(){ renderFilters(); openSheet('filters'); }
+function renderFilters(){
+  const types = [['all','Все'],['service','Услуги'],['work','Работа'],['goods','Товары']];
+  const rates = [[0,'Любой'],[4,'4+'],[4.5,'4.5+'],[4.8,'4.8+']];
+  document.getElementById('filtersView').innerHTML = `
+    <h3>Фильтры</h3>
+    <p class="f-lab">Цена, ₽</p>
+    <div class="f-price"><input id="fMin" inputmode="numeric" placeholder="от" value="${mkFilters.min}"><span>—</span><input id="fMax" inputmode="numeric" placeholder="до" value="${mkFilters.max}"></div>
+    <p class="f-lab">Тип</p>
+    <div class="f-row">${types.map(([k,l])=>`<button class="f-chip ${mkFilters.type===k?'on':''}" onclick="mkFilters.type='${k}';renderFilters()">${l}</button>`).join('')}</div>
+    <p class="f-lab">Рейтинг продавца</p>
+    <div class="f-row">${rates.map(([v,l])=>`<button class="f-chip ${mkFilters.rating===v?'on':''}" onclick="mkFilters.rating=${v};renderFilters()">${l}</button>`).join('')}</div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn ghost" style="flex:1" onclick="resetFilters()">Сбросить</button>
+      <button class="btn" style="flex:2" onclick="applyFilters()">Показать</button>
+    </div>`;
+}
+function applyFilters(){
+  mkFilters.min = (document.getElementById('fMin').value||'').replace(/\D/g,'');
+  mkFilters.max = (document.getElementById('fMax').value||'').replace(/\D/g,'');
+  closeSheet(); renderMarketList(document.getElementById('marketRoot'), mkView==='fav');
+}
+function resetFilters(){ mkFilters={min:'',max:'',rating:0,type:'all'}; renderFilters(); }
+
+/* --- детальная карточка --- */
 function openListing(id){
   const l = LISTINGS.find(x=>x.id===id);
   const mine = l.my;
+  const rev = l.reviews||[];
   document.getElementById('lstView').innerHTML = `
-    <div class="pv-top"><div class="ava">${l.a}</div><h3>${l.t}</h3>
-      <div class="sub">${l.n} · ${I('star')}${l.r} · ${l.d} сделок</div></div>
-    <div class="card" style="margin-bottom:10px"><div class="price" style="color:var(--accent);font-weight:700;font-size:18px">${l.pt}</div>
-      <p style="font-size:13.5px;line-height:1.55;margin-top:6px">${l.ds}</p>
-      <div style="margin-top:8px">${statusChip(l.st)} <span class="chip" style="margin-left:6px">${l.tag}</span></div></div>
+    ${lstPhoto(l, true)}
+    <div class="lst-d-price">${l.pt}</div>
+    <h3 class="lst-d-title">${l.t}</h3>
+    <div class="lst-d-meta">${promoBadge(l.promo)}<span class="chip">${catName(l.cat)}</span><span class="chip">${l.city}</span><span class="chip">${l.term}</span></div>
+    <p class="lst-d-desc">${esc(l.ds)}</p>
+    <div class="lst-stats"><span>${I('eye')}${fmtN(l.views)}</span><span>${I('heart')}${l.favs}</span><span>${I('chat')}${l.contacts}</span></div>
+    <div class="seller-card">
+      <div class="ava">${l.a}</div>
+      <div><b>${l.n}</b><div class="dim" style="font-size:12px">${stars(l.r)} ${l.r.toFixed(1)} · ${l.deals} сделок</div></div>
+    </div>
+    ${rev.length?`<p class="f-lab" style="margin-top:6px">Отзывы (${rev.length})</p>
+      <div class="rev-list">${rev.map(r=>`<div class="rev"><div class="rev-h"><b>${r.n}</b><span class="rev-st">${stars(r.r)}</span></div><p>${esc(r.t)}</p></div>`).join('')}</div>`:''}
     ${mine
-      ? (l.st==='act' ? `<button class="btn" onclick="boostListing(${l.id})">${I('bolt')} Продвинуть в топ</button>` : '')
-        + `<button class="btn ghost" style="margin-top:8px" onclick="removeListing(${l.id})">Снять с публикации</button>`
-      : `<button class="btn" onclick="contactSeller(${l.id})">${I('chat')} Написать продавцу</button>
-         <button class="btn ghost" style="margin-top:8px" onclick="toast('Безопасная сделка: деньги заморожены до выполнения')">Заказать через OKO</button>`}
+      ? `<div class="divider" style="margin:14px 0"></div>
+         <button class="btn" onclick="openPromo(${l.id})">${I('bolt')} Продвинуть объявление</button>
+         <div style="display:flex;gap:10px;margin-top:9px">
+           <button class="btn ghost" style="flex:1" onclick="openListingForm(${l.id})">Изменить</button>
+           <button class="btn ghost" style="flex:1" onclick="removeListing(${l.id})">Снять</button></div>`
+      : `<div class="lst-cta">
+           <button class="btn ghost" onclick="toggleFav(${l.id});renderListingFav(${l.id})" id="lstFavBtn">${I('heart')} ${l.fav?'В избранном':'В избранное'}</button>
+           <button class="btn" onclick="contactSeller(${l.id})">${I('chat')} Написать</button>
+         </div>
+         <button class="btn" style="margin-top:9px;background:var(--raised);color:var(--fg)" onclick="orderListing(${l.id})">${I('card')} Заказать через OKO · безопасно</button>`}
   `;
   openSheet('lst');
 }
-function boostListing(id){
-  const l = LISTINGS.find(x=>x.id===id); l.st = 'boost';
-  closeSheet(); renderMarket();
-  toast('Продвижение оплачено — в топе категории 7 дней');
-}
-function removeListing(id){
-  LISTINGS = LISTINGS.filter(x=>x.id!==id);
-  closeSheet(); renderMarket();
-}
+function renderListingFav(id){ const l=LISTINGS.find(x=>x.id===id); const b=document.getElementById('lstFavBtn'); if(b) b.innerHTML = I('heart')+' '+(l.fav?'В избранном':'В избранное'); }
+function orderListing(id){ const l=LISTINGS.find(x=>x.id===id); toast('Заказ оформлен — деньги заморожены до выполнения'); contactSeller(id); }
 function contactSeller(id){
   const l = LISTINGS.find(x=>x.id===id);
   closeSheet();
   let chat = CHATS.find(c => c.name === l.n);
   if(!chat){
-    chat = {id:'seller-'+id, ava:l.a, name:l.n, kind:'direct', nick:l.n.toLowerCase(), kindIcon:null,
+    chat = {id:'seller-'+id, ava:l.a, name:l.n, kind:'direct', nick:l.n.toLowerCase().replace(/\s/g,'_'), kindIcon:null,
       preview:'Из биржи: ' + l.t, time:nowT(), unread:0, online:true,
-      msgs:[{kind:'sys', body:'Диалог по услуге «' + l.t + '»'}]};
+      msgs:[{kind:'sys', body:'Диалог по объявлению «' + l.t + '» · ' + l.pt}]};
     CHATS.unshift(chat);
   }
   showTab('chats'); renderChatList(); openConv(chat.id);
 }
-function createListing(){
-  const t = document.getElementById('lsTitle').value.trim();
-  const pr = document.getElementById('lsPrice').value.trim();
-  const ds = document.getElementById('lsDesc').value.trim();
-  if(!t) return;
-  const id = Date.now();
-  LISTINGS.unshift({id, t, p: parseInt(pr.replace(/\D/g,''))||0, pt: pr||'договорная', ds: ds||'Без описания',
-    a: PROFILE.name[0], n: PROFILE.name, r:'—', d:0, tag: mkCat==='Все'?'Тексты':mkCat, st:'mod', fav:false, my:true});
-  ['lsTitle','lsPrice','lsDesc'].forEach(x=>document.getElementById(x).value='');
-  closeSheet(); setMkTab('my');
-  setTimeout(()=>{ // мок-модерация
-    const l = LISTINGS.find(x=>x.id===id);
-    if(l && l.st==='mod'){ l.st='act'; renderMarket(); }
-  }, 4000);
+
+/* --- продвижение --- */
+const PROMOS = [
+  {k:'up',    name:'Поднятие',   price:49,  desc:'Объявление вернётся в топ ленты категории', days:'1 день'},
+  {k:'vip',   name:'VIP',        price:149, desc:'Выделение цветом + в 5 раз больше показов', days:'7 дней'},
+  {k:'turbo', name:'Турбо',      price:349, desc:'Самый верх + VIP-выделение + в топ поиска', days:'7 дней'},
+];
+function openPromo(id){
+  const l = LISTINGS.find(x=>x.id===id);
+  document.getElementById('promoView').innerHTML = `
+    <h3>Продвижение объявления</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">«${l.t}»</p>
+    ${PROMOS.map(p=>`<button class="promo-opt" onclick="buyPromo(${id},'${p.k}')">
+      <div class="promo-ic ${p.k}">${I(p.k==='turbo'?'bolt':p.k==='vip'?'star':'poll')}</div>
+      <div class="promo-b"><b>${p.name}</b><small>${p.desc}</small><small class="dim">${p.days}</small></div>
+      <div class="promo-price">${p.price} ₽</div></button>`).join('')}
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:10px">Оплата разовая, списывается с баланса OKO</p>`;
+  openSheet('promo');
 }
+function buyPromo(id, k){
+  const l = LISTINGS.find(x=>x.id===id); l.promo = k;
+  closeSheet();
+  const nm = PROMOS.find(p=>p.k===k).name;
+  toast('Продвижение «'+nm+'» активировано');
+  openMyListings();
+}
+
+/* --- личный кабинет продавца --- */
+function openMyListings(){
+  const mine = LISTINGS.filter(l=>l.my);
+  const wrap = document.getElementById('marketRoot');
+  wrap.innerHTML = `
+    <button class="mk-back" onclick="mkView='cats';renderMarket()">${I('back')} Биржа</button>
+    <h3 class="mk-h" style="margin-top:6px">Мои объявления</h3>
+    ${mine.length ? mine.map(l=>`
+      <div class="lst-card" onclick="openListing(${l.id})">
+        ${lstPhoto(l)}
+        <div class="lst-body">
+          <div class="lst-price">${l.pt}</div>
+          <div class="lst-title">${l.t}</div>
+          <div class="lst-meta">${statusChip(l.st)} ${l.promo?promoBadge(l.promo):''}</div>
+          <div class="lst-foot dim" style="font-size:11.5px">${I('eye')}${fmtN(l.views)} · ${I('heart')}${l.favs} · ${I('chat')}${l.contacts}</div>
+        </div>
+      </div>`).join('')
+      : `<div class="mk-empty">У тебя пока нет объявлений</div>`}
+    <button class="btn" style="margin-top:14px" onclick="openListingForm()">${I('plus')} Разместить объявление</button>`;
+}
+
+/* --- размещение / редактирование --- */
+let editingListing = null;
+function openListingForm(id){
+  editingListing = id || null;
+  const l = id ? LISTINGS.find(x=>x.id===id) : null;
+  const cats = MK_CATS.map(c=>`<option value="${c.k}" ${l&&l.cat===c.k?'selected':''}>${c.name}</option>`).join('');
+  document.getElementById('listingFormView').innerHTML = `
+    <h3>${l?'Редактировать':'Новое объявление'}</h3>
+    <div class="lf-photo" onclick="toast('Загрузка фото подключится с бэкендом')">${I('photo')}<span>Добавить фото</span></div>
+    <label class="f-lab">Категория</label>
+    <select id="lfCat" class="lf-sel">${cats}</select>
+    <label class="f-lab">Название</label>
+    <input id="lfTitle" placeholder="Например: Монтаж Reels под ключ" value="${l?esc(l.t):''}">
+    <label class="f-lab">Цена</label>
+    <input id="lfPrice" placeholder="Например: от 500 ₽" value="${l?esc(l.pt):''}">
+    <label class="f-lab">Описание</label>
+    <textarea id="lfDesc" rows="3" placeholder="Что входит, сроки, условия" style="width:100%;resize:none">${l?esc(l.ds):''}</textarea>
+    <button class="btn" style="margin-top:14px" onclick="saveListing()">${l?'Сохранить':'Отправить на модерацию'}</button>
+    ${l?'':'<p class="dim" style="font-size:11.5px;margin-top:10px;text-align:center">Проверка занимает пару минут. Против спама и запрещёнки.</p>'}`;
+  openSheet('listingForm');
+}
+function saveListing(){
+  const cat = document.getElementById('lfCat').value;
+  const t = document.getElementById('lfTitle').value.trim();
+  const pt = document.getElementById('lfPrice').value.trim();
+  const ds = document.getElementById('lfDesc').value.trim();
+  if(!t){ toast('Укажи название'); return; }
+  const price = parseInt((pt||'').replace(/\D/g,''))||0;
+  if(editingListing){
+    const l = LISTINGS.find(x=>x.id===editingListing);
+    Object.assign(l, {cat, t, pt:pt||'договорная', p:price, ds:ds||l.ds});
+    closeSheet(); openMyListings(); toast('Объявление обновлено');
+  } else {
+    const id = Date.now();
+    LISTINGS.unshift({id, cat, type:'service', t, p:price, pt:pt||'договорная', ds:ds||'Без описания',
+      a:PROFILE.name[0], n:PROFILE.name, r:5.0, deals:0, city:'Онлайн', term:'по договорённости',
+      views:0, favs:0, contacts:0, promo:null, fav:false, my:true, st:'mod', seed:id%97, reviews:[]});
+    closeSheet(); openMyListings();
+    setTimeout(()=>{ const l=LISTINGS.find(x=>x.id===id); if(l&&l.st==='mod'){ l.st='act'; if(document.getElementById('marketRoot')) openMyListings(); toast('Объявление прошло модерацию'); } }, 3500);
+  }
+}
+function removeListing(id){ LISTINGS = LISTINGS.filter(x=>x.id!==id); closeSheet(); openMyListings(); toast('Объявление снято'); }
 
 /* ================= ПРОГРЕСС СБОРКИ ================= */
 const PROGRESS = [
