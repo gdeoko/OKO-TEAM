@@ -162,6 +162,68 @@ const DRAW={
      X.fillStyle=LIME;X.font='800 36px MR';X.fillText(o.sub||'',x+42,y+104);}
    X.globalAlpha=1;
  },
+ // ---- gauge: semicircle speedometer filling to val% ----
+ gauge(f,F,o){const a=env(f,F,10,10);const p=E.outCubic(Math.min(1,f/(F*0.6)));const val=Math.round((o.val||100)*p);
+   const cx=W/2,cy=(o.y||H*0.34);const R=190;X.globalAlpha=a;X.lineCap='round';
+   X.lineWidth=34;X.strokeStyle='rgba(255,255,255,.14)';X.beginPath();X.arc(cx,cy,R,Math.PI,2*Math.PI);X.stroke();
+   X.strokeStyle=LIME;X.beginPath();X.arc(cx,cy,R,Math.PI,Math.PI+Math.PI*(o.val||100)/100*p);X.stroke();X.lineCap='butt';
+   const ang=Math.PI+Math.PI*(o.val||100)/100*p;X.strokeStyle='#fff';X.lineWidth=6;X.beginPath();X.moveTo(cx,cy);X.lineTo(cx+Math.cos(ang)*(R-20),cy+Math.sin(ang)*(R-20));X.stroke();
+   X.fillStyle='#fff';X.font='800 96px MB';X.textAlign='center';X.fillText(val+'%',cx,cy-30);
+   X.fillStyle=LIME;X.font='800 40px MR';X.fillText(o.label||'',cx,cy+56);X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- checklist: items appear and get checked one by one ----
+ checklist(f,F,o){const items=o.items||['крючок','смена плана','один призыв'];const a=env(f,F,10,12);
+   const x=140,y0=(o.y||H*0.34),gap=150,bw=800;X.globalAlpha=a;X.textAlign='left';
+   items.forEach((tx,i)=>{const t0=6+i*18;if(f<t0)return;const ap=Math.min(1,(f-t0)/8);const chk=Math.min(1,(f-t0-6)/8);
+     const y=y0+i*gap;X.globalAlpha=a*ap;
+     X.fillStyle='rgba(20,20,22,.9)';rr(X,x,y,bw,116,24);X.fill();
+     X.strokeStyle=chk>0?LIME:'rgba(255,255,255,.35)';X.lineWidth=6;rr(X,x+26,y+28,60,60,14);X.stroke();
+     if(chk>0){X.strokeStyle=LIME;X.lineWidth=9;X.beginPath();X.moveTo(x+38,y+58);X.lineTo(x+52,y+72*chk+0*72);X.lineTo(x+78,y+38);X.stroke();}
+     X.fillStyle='#fff';X.font='800 46px MR';X.fillText(tx,x+118,y+74);});
+   X.globalAlpha=1;
+ },
+ // ---- pricetag: swinging tag ----
+ pricetag(f,F,o){const a=env(f,F,8,10);const sw=Math.sin(f*0.18)*0.06*Math.max(0,1-f/F*1.5);const drop=E.outBack(Math.min(1,f/14));
+   const cx=(o.x||0.7)*W,cy=(o.y||0.3)*H-(1-drop)*120;X.save();X.globalAlpha=a;X.translate(cx,cy);X.rotate(sw-0.12);
+   X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=4;X.beginPath();X.moveTo(0,-160);X.lineTo(0,-30);X.stroke();
+   X.fillStyle=LIME;X.beginPath();X.moveTo(-140,-30);X.lineTo(120,-30);X.lineTo(170,60);X.lineTo(120,150);X.lineTo(-140,150);X.closePath();X.fill();
+   X.fillStyle=INK;X.beginPath();X.arc(120,60,16,0,7);X.fill();
+   X.fillStyle=INK;X.font='800 76px MB';X.textAlign='center';X.fillText(o.text||'500 ₽',-10,85);X.restore();X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- quote: big quotation marks + phrase (for myth/statement) ----
+ quote(f,F,o){const a=env(f,F,10,10);const inS=E.outBack(Math.min(1,f/16));X.globalAlpha=a;X.textAlign='center';
+   X.fillStyle=LIME;X.font=`800 ${260*inS}px GL`;X.fillText('“',W/2-40,(o.y||H*0.42));
+   X.fillStyle='#fff';X.font='800 62px GL';const words=(o.text||'').split('|');
+   words.forEach((ln,i)=>X.fillText(ln,W/2,(o.y||H*0.42)+40+i*84));X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- radial: line burst from a point (impact) ----
+ radial(f,F,o){const p=f/F;const cx=(o.x||0.5)*W,cy=(o.y||0.5)*H;const n=o.n||18;const R=60+p*520;const a=Math.sin(p*Math.PI);
+   X.globalAlpha=a*0.85;X.strokeStyle=LIME;X.lineWidth=8;
+   for(let i=0;i<n;i++){const ang=i/n*6.283;X.beginPath();X.moveTo(cx+Math.cos(ang)*R*0.5,cy+Math.sin(ang)*R*0.5);X.lineTo(cx+Math.cos(ang)*R,cy+Math.sin(ang)*R);X.stroke();}
+   X.globalAlpha=1;
+ },
+ // ---- poll: two horizontal bars filling (A vs B) ----
+ poll(f,F,o){const a=env(f,F,10,10);const p=E.outCubic(Math.min(1,f/(F*0.6)));const rows=o.rows||[['без видео',15,'#9a9a9a'],['с видео',100,LIME]];
+   const x=120,y0=(o.y||H*0.36),bw=840,bh=110,gap=170;X.globalAlpha=a;X.textAlign='left';
+   rows.forEach((r,i)=>{const y=y0+i*gap;X.fillStyle='rgba(255,255,255,.12)';rr(X,x,y,bw,bh,20);X.fill();
+     X.fillStyle=r[2];rr(X,x,y,bw*(r[1]/100)*p,bh,20);X.fill();
+     X.fillStyle='#fff';X.font='800 44px MR';X.fillText(r[0],x+28,y+70);
+     X.font='800 52px MB';X.textAlign='right';X.fillText(Math.round(r[1]*p)+'%',x+bw-24,y+72);X.textAlign='left';});
+   X.globalAlpha=1;
+ },
+ // ---- scan: digital scanline sweep + tick marks (tech) ----
+ scan(f,F,o){const a=env(f,F,6,8);const y=((f/F)*H*1.1)%H;X.globalAlpha=a;
+   const g=X.createLinearGradient(0,y-40,0,y+40);g.addColorStop(0,'rgba(234,89,32,0)');g.addColorStop(.5,'rgba(234,89,32,.5)');g.addColorStop(1,'rgba(234,89,32,0)');
+   X.fillStyle=g;X.fillRect(0,y-40,W,80);X.strokeStyle=LIME;X.lineWidth=3;X.beginPath();X.moveTo(0,y);X.lineTo(W,y);X.stroke();
+   X.fillStyle=LIME;for(let i=0;i<W;i+=60){X.fillRect(i,y-3,20,6);}X.globalAlpha=1;
+ },
+ // ---- hashtags: chips float up ----
+ hashtags(f,F,o){const tags=o.tags||['#reels','#продвижение','#съёмка'];const a=env(f,F,10,12);X.textAlign='center';
+   tags.forEach((t,i)=>{const t0=i*10;if(f<t0)return;const lp=(f-t0)/F;const y=(o.y||H*0.8)-lp*300;const x=(0.25+i*0.25)*W+Math.sin(f*0.05+i)*20;
+     X.globalAlpha=a*Math.max(0,1-lp*1.3);X.font='800 44px MR';const w=X.measureText(t).width+50;
+     X.fillStyle='rgba(234,89,32,.9)';rr(X,x-w/2,y-46,w,70,35);X.fill();X.fillStyle='#fff';X.fillText(t,x,y);});
+   X.globalAlpha=1;X.textAlign='left';
+ },
 };
 
 window.FX_SET=spec=>{window._spec=spec;};
