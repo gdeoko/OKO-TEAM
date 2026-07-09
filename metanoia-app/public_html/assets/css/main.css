@@ -1766,3 +1766,30 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .chrono-item { background: #1b2c3a; border-color: rgba(255,255,255,.09); }
 [data-theme="dark"] .chrono-item__title { color: #E7EDF3; }
 [data-theme="dark"] .chrono-move { background: rgba(255,255,255,.08); color: #E7EDF3; }
+
+/* ── Родительский отчёт за неделю (УЛ2) ── */
+.wreport { background: linear-gradient(160deg,#fff,#FBF4E9); border: 1px solid rgba(212,165,116,.4);
+  border-radius: var(--radius-card); padding: 16px; box-shadow: 0 1px 4px rgba(26,58,82,.05); }
+.wreport__head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.wreport__ava { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; }
+.wreport__ava img { width: 100%; height: 100%; object-fit: cover; }
+.wreport__who { font-weight: 700; font-size: 14px; color: var(--navy); }
+.wreport__range { font-size: 11.5px; color: var(--gray); }
+.wreport__stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.wstat { background: rgba(255,255,255,.7); border-radius: 10px; padding: 10px 6px; text-align: center; }
+.wstat__num { font-family: var(--font-head); font-weight: 800; font-size: 20px; color: var(--terracotta); }
+.wstat__num small { font-size: 12px; font-weight: 700; }
+.wstat__lbl { font-size: 10.5px; color: var(--gray); margin-top: 2px; line-height: 1.2; }
+.wstat__up { color: var(--success); } .wstat__down { color: var(--error); }
+.wreport__dyn { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--navy);
+  background: rgba(255,255,255,.7); border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; }
+.wreport__dyn b { color: var(--terracotta); }
+.wreport__tips-t { font-size: 12px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+.wtip { display: flex; gap: 10px; padding: 10px 0; font-size: 13px; color: var(--navy); line-height: 1.45; }
+.wtip + .wtip { border-top: 1px solid rgba(26,58,82,.06); }
+.wtip__ic { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center;
+  color: var(--gold); background: rgba(212,165,116,.16); }
+.wreport__foot { margin-top: 12px; font-size: 11.5px; color: var(--gray); text-align: center; line-height: 1.45; }
+[data-theme="dark"] .wreport { background: linear-gradient(160deg,#22333f,#2d2a20); border-color: rgba(212,165,116,.3); }
+[data-theme="dark"] .wstat, [data-theme="dark"] .wreport__dyn { background: rgba(255,255,255,.06); }
+[data-theme="dark"] .wreport__who, [data-theme="dark"] .wtip, [data-theme="dark"] .wreport__dyn { color: #E7EDF3; }

@@ -2331,6 +2331,37 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Родительский отчёт за неделю (УЛ2) ── */
+const WREPORT = {
+  child: 'Миша', ava: 'assets/img/avatars/lion.jpg', range: '1–7 июля',
+  lessons: 3, games: 8, streak: 12, streakUp: true,
+  rankNote: 'До ранга «Цветочек» осталось <b>60 XP</b> — это примерно два урока.',
+  tips: [
+    'На этой неделе Миша дважды возвращался к притче о блудном сыне. Хороший момент поговорить о прощении за семейным ужином.',
+    'Серия из 12 дней подряд — похвалите его за постоянство, это важнее скорости.',
+    'Он пока не открывал «Хронологию». Предложите пройти её вместе — заодно повторите порядок событий Писания.',
+  ],
+};
+
+function renderWReport() {
+  const w = WREPORT;
+  $('#wreport').innerHTML = `
+    <div class="wreport__head">
+      <div class="wreport__ava"><img src="${w.ava}" alt=""></div>
+      <div><div class="wreport__who">${w.child}</div><div class="wreport__range">${w.range} · итоги недели</div></div>
+    </div>
+    <div class="wreport__stats">
+      <div class="wstat"><div class="wstat__num">${w.lessons}</div><div class="wstat__lbl">уроков<br>пройдено</div></div>
+      <div class="wstat"><div class="wstat__num">${w.games}</div><div class="wstat__lbl">игр<br>сыграно</div></div>
+      <div class="wstat"><div class="wstat__num">${w.streak} <small class="${w.streakUp ? 'wstat__up' : 'wstat__down'}">${w.streakUp ? '↑' : '↓'}</small></div><div class="wstat__lbl">дней<br>подряд</div></div>
+    </div>
+    <div class="wreport__dyn">${ICON('trophy', 16)}<span>${w.rankNote}</span></div>
+    <div class="wreport__tips-t">О чём поговорить с ребёнком</div>
+    ${w.tips.map((t) => `<div class="wtip"><div class="wtip__ic">${ICON('heart', 14)}</div><span>${t}</span></div>`).join('')}
+    <div class="wreport__foot">Отчёт обновляется каждое воскресенье · только для родителя</div>`;
+  hydrateIcons();
+}
+
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
@@ -2365,6 +2396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChats();
   renderLessons();
   renderChildren();
+  renderWReport();
   initNav();
   initSW();
 
