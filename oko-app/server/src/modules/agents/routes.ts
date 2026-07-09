@@ -69,8 +69,11 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
         context = (data ?? []).map((d: { title: string; body: string }) => `# ${d.title}\n${d.body}`).join('\n\n');
       } else {
         // Фолбэк без эмбеддингов — полнотекстовый поиск по базе знаний.
+        // Значимые слова (>3 букв) объединяем через OR, чтобы находить по частичному совпадению.
+        const words = question.toLowerCase().replace(/[^а-яёa-z0-9\s]/gi, ' ').split(/\s+/).filter((w) => w.length > 3).slice(0, 6);
+        const tsq = words.join(' | ') || question;
         const { data } = await app.db
-          .from('kb_documents').select('title, body').textSearch('body', question, { type: 'websearch', config: 'russian' }).limit(5);
+          .from('kb_documents').select('title, body').textSearch('body', tsq, { config: 'russian' }).limit(5);
         context = (data ?? []).map((d) => `# ${d.title}\n${d.body}`).join('\n\n');
       }
 
