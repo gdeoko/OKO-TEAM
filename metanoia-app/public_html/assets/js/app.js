@@ -2331,6 +2331,24 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Автономный режим (УЛ6) ── */
+function updateOffline() {
+  const bar = document.getElementById('offlineBar');
+  if (!bar) return;
+  if (!navigator.onLine) {
+    bar.hidden = false;
+    requestAnimationFrame(() => bar.classList.add('offbar--on'));
+  } else {
+    bar.classList.remove('offbar--on');
+    setTimeout(() => { if (navigator.onLine) bar.hidden = true; }, 420);
+  }
+}
+function initOffline() {
+  window.addEventListener('online', updateOffline);
+  window.addEventListener('offline', updateOffline);
+  updateOffline();
+}
+
 /* ── Добавить ребёнка ── */
 function initialAvatar(name, color) {
   const ch = (name.trim()[0] || '?').toUpperCase();
@@ -2606,6 +2624,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderWReport();
   renderQuestCard();
   initAddChild();
+  initOffline();
   initNav();
   initSW();
 

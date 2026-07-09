@@ -1889,3 +1889,15 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .addk__input, [data-theme="dark"] .addk__age-btn { background: #22333f; color: #E7EDF3; border-color: rgba(255,255,255,.12); }
 [data-theme="dark"] .addk__age #addkAge { color: #E7EDF3; }
 [data-theme="dark"] .addk__close { background: rgba(255,255,255,.08); }
+
+/* ── Автономный режим (УЛ6) ── */
+.offbar { position: fixed; left: 50%; transform: translateX(-50%) translateY(20px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px); z-index: 60;
+  width: calc(100% - 32px); max-width: calc(var(--max-w) - 32px);
+  display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-radius: 14px;
+  background: linear-gradient(135deg,#1A3A52,#2c4f6b); color: #fff; font-size: 12.5px; line-height: 1.4;
+  box-shadow: 0 10px 30px rgba(16,34,47,.4); opacity: 0; transition: opacity .35s var(--ease), transform .35s var(--ease); }
+.offbar span[data-icon] { color: var(--gold); flex: 0 0 auto; }
+.offbar[hidden] { display: none; }
+.offbar--on { opacity: 1; transform: translateX(-50%) translateY(0); }
+body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
