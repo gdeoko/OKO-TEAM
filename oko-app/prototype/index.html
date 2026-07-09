@@ -573,6 +573,15 @@ label.f-lab{display:block}
 .sys-metric .v{font-size:16px;font-weight:800;color:var(--accent)}
 .sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
 @media(prefers-reduced-motion:reduce){#systemView{transition:none}}
+/* ===== Глобальный поиск ===== */
+#searchView{position:fixed;inset:0;z-index:74;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#searchView.open{transform:none}
+.search-head{display:flex;align-items:center;gap:8px;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.search-head .ep-cancel{flex-shrink:0;padding:4px}
+.search-head .ep-cancel svg.i{width:22px;height:22px}
+.search-field{flex:1;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 15px}
+.search-field svg.i{width:18px;height:18px;color:var(--dim);flex-shrink:0}
+.search-field input{flex:1;background:none;border:none;color:var(--fg);font-size:14.5px}
 /* ===== Центр уведомлений ===== */
 .notif-btn{position:relative}
 .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--lime);border:1.5px solid var(--surface);display:none}
@@ -887,6 +896,15 @@ main>.screen{position:relative;z-index:1}
     <div class="mm-actions" id="mmActions"></div>
   </div>
 </div>
+<div id="searchView">
+  <div class="search-head">
+    <button class="ep-cancel" onclick="closeSearch()"><svg class="i"><use href="#i-back"/></svg></button>
+    <div class="search-field"><svg class="i"><use href="#i-search"/></svg>
+      <input id="gSearchInput" placeholder="Люди, каналы, услуги, посты" oninput="renderSearch()">
+    </div>
+  </div>
+  <div class="sv-body" id="searchBody"></div>
+</div>
 <div id="notifsView">
   <div class="sv-head">
     <button class="ep-cancel" onclick="closeNotifs()"><svg class="i"><use href="#i-back"/></svg></button>
@@ -922,7 +940,8 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.30</button>
+    <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.31</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1633,6 +1652,33 @@ function showComposeBar(){
   } else { bar.classList.remove('open'); bar.innerHTML=''; }
 }
 function cancelCompose(){ replyState=null; editState=null; document.getElementById('msgInput').value=''; showComposeBar(); if(window.syncSendIcon)syncSendIcon(); }
+/* ===== Глобальный поиск ===== */
+function openSearch(){ document.getElementById('gSearchInput').value=''; renderSearch(); document.getElementById('searchView').classList.add('open'); setTimeout(()=>document.getElementById('gSearchInput').focus(),50); }
+function closeSearch(){ document.getElementById('searchView').classList.remove('open'); }
+function renderSearch(){
+  const q=(document.getElementById('gSearchInput').value||'').trim().toLowerCase();
+  const body=document.getElementById('searchBody');
+  if(!q){
+    body.innerHTML = `<p class="nt-group">Быстрый доступ</p>
+      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market')"><span class="nt-ic">${I('briefcase')}</span><div class="nt-b"><span>Биржа услуг</span></div></button>
+      <button class="nt-item" onclick="closeSearch();showTab('partner')"><span class="nt-ic">${I('users')}</span><div class="nt-b"><span>Партнёрка</span></div></button>
+      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('system')"><span class="nt-ic">${I('compass')}</span><div class="nt-b"><span>Система роста</span></div></button>`;
+    return;
+  }
+  const people = CHATS.filter(c=>c.kind==='direct' && c.name.toLowerCase().includes(q));
+  const channels = CHATS.filter(c=>(c.kind==='channel'||c.kind==='group') && c.name.toLowerCase().includes(q));
+  const listings = LISTINGS.filter(l=>!l.my && (l.t+' '+l.n+' '+catName(l.cat)).toLowerCase().includes(q)).slice(0,4);
+  const posts = [...POSTS.sub,...POSTS.rec].filter(p=>(p.body+' '+p.name).toLowerCase().includes(q)).slice(0,3);
+  const cid = c => typeof c.id==='number' ? c.id : `'${c.id}'`;
+  const sec=(title,items)=> items.length ? `<p class="nt-group">${title}</p>`+items.join('') : '';
+  let html='';
+  html += sec('Люди', people.map(c=>`<button class="nt-item" onclick="closeSearch();showTab('chats');openConv(${cid(c)})"><span class="nt-ic">${c.avaIcon?I(c.avaIcon):(c.ava||c.name[0])}</span><div class="nt-b"><span><b>${esc(c.name)}</b></span><small>@${c.nick||'user'}</small></div></button>`));
+  html += sec('Каналы и группы', channels.map(c=>`<button class="nt-item" onclick="closeSearch();showTab('chats');openConv(${cid(c)})"><span class="nt-ic">${I(c.kindIcon||'chat')}</span><div class="nt-b"><span><b>${esc(c.name)}</b></span><small>${c.subs?c.subs+' подписчиков':(c.members||'')+' участников'}</small></div></button>`));
+  html += sec('Объявления', listings.map(l=>`<button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market');openListing(${l.id})"><span class="nt-ic">${I(catIco(l.cat))}</span><div class="nt-b"><span><b>${esc(l.t)}</b></span><small>${l.pt} · ${l.n}</small></div></button>`));
+  html += sec('Посты', posts.map(p=>`<button class="nt-item" onclick="closeSearch();showTab('feed')"><span class="nt-ic">${I('feed')}</span><div class="nt-b"><span>${esc(p.body.slice(0,52))}…</span><small>${esc(p.name)}</small></div></button>`));
+  body.innerHTML = html || `<div class="empty-state"><div class="es-ico">${I('search')}</div><p>Ничего не нашлось</p><span>Попробуй другой запрос</span></div>`;
+}
+
 /* ===== Центр уведомлений ===== */
 let NOTIFS = [
   {ic:'heart',   who:'Лиза Кот',      t:'оценила твой пост «Правило простое…»', time:'2 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
