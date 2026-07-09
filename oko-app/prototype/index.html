@@ -480,6 +480,11 @@ label.f-lab{display:block}
 .ep-body .ep-nick input{border:none;background:none;padding:13px 2px}
 .ep-body input:focus,.ep-body textarea:focus{border-color:var(--lime);outline:none}
 @media(prefers-reduced-motion:reduce){#editProfile{transition:none}}
+/* лента: продвижение и меню поста */
+.promo-chip{font-size:9px;background:var(--lime-dim);color:var(--accent);border:1px solid rgba(154,255,0,.3)}
+.post-more{margin-left:auto;color:var(--dim);padding:2px 4px;flex-shrink:0}
+.post-more svg.i{width:18px;height:18px}
+.pm-title{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-weight:700;font-size:14px}
 /* Лента: FAB, комментарии, тост */
 .fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
@@ -730,6 +735,8 @@ main>.screen{position:relative;z-index:1}
     <symbol id="i-forward" viewBox="0 0 100 100"><path d="M60 26 86 50 60 74V60c-22 0-34 8-40 22-2-30 12-46 40-46z"/></symbol>
     <symbol id="i-pos" viewBox="0 0 100 100"><path d="M50 12c-16 0-28 12-28 28 0 20 28 48 28 48s28-28 28-48c0-16-12-28-28-28z"/><circle cx="50" cy="40" r="10" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-sticker" viewBox="0 0 100 100"><path d="M58 14H30a16 16 0 0 0-16 16v40a16 16 0 0 0 16 16h28l28-28V30a16 16 0 0 0-16-16z"/><path d="M58 86V66a8 8 0 0 1 8-8h20"/></symbol>
+    <symbol id="i-more" viewBox="0 0 100 100"><circle cx="50" cy="24" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="76" r="7" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 100 100"><path d="M50 12c14 8 22 24 22 42l-10 10H38l-10-10c0-18 8-34 22-42z"/><circle cx="50" cy="42" r="8"/><path d="M38 64l-12 14 16-4M62 64l12 14-16-4"/></symbol>
   </defs>
 </svg>
 
@@ -775,7 +782,7 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.23</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.24</button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -1172,7 +1179,7 @@ const POSTS = {
      comments:[{a:'С', n:'Сергей', t:'Система > мотивация. Факт'}]},
   ],
   rec:[
-    {id:201, ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'1/5', likes:97, views:21400, liked:false, saved:false, reposts:9, comments:[]},
+    {id:201, ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'1/5', likes:97, views:21400, liked:false, saved:false, reposts:9, promoted:true, comments:[]},
     {id:202, ava:'П', name:'OKO Партнёрам', sub:'рекомендация', body:'Топ-партнёр июля заработал $1 240 на 15%/5%. Реф-ссылка + сторис раз в день. Всё.', media:null, likes:152, views:9800, liked:false, saved:false, reposts:21, comments:[]},
   ]
 };
@@ -1438,6 +1445,7 @@ function openMsgMenu(idx){
   const m = currentChat.msgs[idx];
   const mine = !m.in;
   const canText = m.kind==='text' || !m.kind;
+  document.getElementById('mmReacts').style.display = 'flex';
   document.getElementById('mmReacts').innerHTML =
     REACTIONS.map(r=>`<button class="mm-react ${m.reacts&&m.reacts[r]?'on':''}" onclick="pickReact(${idx},'${r}')">${I(r)}</button>`).join('')
     + `<button class="mm-react more" onclick="toast('Полный набор реакций — скоро')">${I('sticker')}</button>`;
@@ -1635,16 +1643,18 @@ function attach(kind){
 
 /* ================= ЛЕНТА ================= */
 const fmtN = n => n >= 1000 ? (n/1000).toFixed(1).replace('.0','') + 'к' : n;
-function feedScore(p){ return p.likes*2 + 12*3 + (p.views||0)*0.005; }
+function feedScore(p){ return (p.promoted?1e6:0) + p.likes*2 + p.comments.length*5 + (p.reposts||0)*3 + (p.views||0)*0.005; }
 function renderFeed(kind){
   curFeedKind = kind;
   let arr = POSTS[kind].slice();
   if(kind==='rec') arr.sort((a,b)=>feedScore(b)-feedScore(a));
-  const note = kind==='rec' ? `<div style="padding:10px 18px 0"><span class="dim" style="font-size:11.5px">${'Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram'}</span></div>` : '';
+  else arr.sort((a,b)=>(b.promoted?1:0)-(a.promoted?1:0)); // продвинутые чуть выше и в подписках
+  const note = kind==='rec' ? `<div style="padding:10px 18px 0"><span class="dim" style="font-size:11.5px">Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram</span></div>` : '';
   document.getElementById('feedList').innerHTML = note + arr.map((p,pi)=>`
     <article class="post fade-in">
       <div class="head"><div class="ava">${p.ava}</div>
-        <div><div class="name">${p.name}${kind==='rec'&&pi===0?' <span class="chip" style="font-size:9px">В тренде</span>':''}</div><div class="sub">${p.sub}</div></div></div>
+        <div style="flex:1;min-width:0"><div class="name">${p.name}${p.promoted?' <span class="chip promo-chip">Реклама</span>':(kind==='rec'&&pi===0?' <span class="chip" style="font-size:9px">В тренде</span>':'')}</div><div class="sub">${p.sub}</div></div>
+        <button class="post-more" onclick="openPostMenu(${p.id})">${I('more')}</button></div>
       <div class="body">${p.body}</div>
       ${p.media?`<div class="media">${I('circle-play')}<span>${p.media}</span></div>`:''}
       <div class="acts">
@@ -1655,6 +1665,44 @@ function renderFeed(kind){
         <button class="${p.saved?'liked':''}" onclick="toggleSave(${p.id})">${I('bookmark')}</button>
       </div>
     </article>`).join('');
+}
+/* меню поста: своё → продвинуть/удалить, чужое → пожаловаться/скрыть */
+function openPostMenu(id){
+  const p = postById(id); if(!p) return;
+  const mine = p.name === PROFILE.name;
+  const acts = mine
+    ? [['rocket','Продвинуть пост',`openPromotePost(${id})`,''],['trash','Удалить',`deletePost(${id})`,'danger']]
+    : [['eye','Не интересно',`hidePost(${id})`,''],['flag','Пожаловаться',`toast('Жалоба отправлена на модерацию')`,'danger']];
+  document.getElementById('mmReacts').innerHTML = '';
+  document.getElementById('mmReacts').style.display = 'none';
+  document.getElementById('mmPreview').innerHTML = `<div class="pm-title">${esc(p.name)}</div>`;
+  document.getElementById('mmActions').innerHTML = acts.map(([ic,l,fn,cls])=>
+    `<button class="mm-act ${cls}" onclick="closeMsgMenu();${fn}">${I(ic)}<span>${l}</span></button>`).join('');
+  document.getElementById('msgMenu').classList.add('open');
+}
+function deletePost(id){ POSTS.sub=POSTS.sub.filter(p=>p.id!==id); POSTS.rec=POSTS.rec.filter(p=>p.id!==id); renderFeed(curFeedKind); toast('Пост удалён'); }
+function hidePost(id){ POSTS[curFeedKind]=POSTS[curFeedKind].filter(p=>p.id!==id); renderFeed(curFeedKind); toast('Больше не покажем такое'); }
+const POST_PROMOS = [
+  {reach:'1 000',  price:99,  desc:'Показ в рекомендациях целевой аудитории'},
+  {reach:'5 000',  price:390, desc:'В топе рекомендаций + похожие интересы'},
+  {reach:'20 000', price:1290,desc:'Максимальный охват + продвижение канала'},
+];
+let promotingPost = null;
+function openPromotePost(id){
+  promotingPost = id; const p = postById(id);
+  document.getElementById('promoView').innerHTML = `
+    <h3>Продвижение поста</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">«${esc((p.body||'').slice(0,50))}…»</p>
+    ${POST_PROMOS.map((pr,i)=>`<button class="promo-opt" onclick="buyPostPromo(${i})">
+      <div class="promo-ic ${['up','vip','turbo'][i]}">${I('rocket')}</div>
+      <div class="promo-b"><b>${pr.reach} показов</b><small>${pr.desc}</small></div>
+      <div class="promo-price">${pr.price} ₽</div></button>`).join('')}
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:10px">Алгоритм OKO покажет пост тем, кому он интересен</p>`;
+  openSheet('promo');
+}
+function buyPostPromo(i){
+  const p = postById(promotingPost); if(p){ p.promoted=true; p.views += +POST_PROMOS[i].reach.replace(/\s/g,''); }
+  closeSheet(); renderFeed(curFeedKind); toast('Пост продвигается — охват растёт');
 }
 function likePost(id){
   const p = postById(id); if(!p) return;
