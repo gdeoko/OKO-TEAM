@@ -573,6 +573,22 @@ label.f-lab{display:block}
 .sys-metric .v{font-size:16px;font-weight:800;color:var(--accent)}
 .sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
 @media(prefers-reduced-motion:reduce){#systemView{transition:none}}
+/* ===== Центр уведомлений ===== */
+.notif-btn{position:relative}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--lime);border:1.5px solid var(--surface);display:none}
+#notifsView{position:fixed;inset:0;z-index:73;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#notifsView.open{transform:none}
+.nt-group{font-size:11.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 2px 8px}
+.nt-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 10px;border-radius:var(--r-md);text-align:left;transition:background .15s;position:relative}
+.nt-item.unread{background:var(--lime-dim)}
+.nt-item:active{background:var(--surface)}
+.nt-ic{width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.nt-ic svg.i{width:20px;height:20px}
+.nt-b{flex:1;min-width:0}
+.nt-b span{font-size:13.5px;line-height:1.4;display:block}
+.nt-b small{font-size:11px;color:var(--dim)}
+.nt-dot{width:8px;height:8px;border-radius:50%;background:var(--lime);flex-shrink:0}
+@media(prefers-reduced-motion:reduce){#notifsView{transition:none}}
 /* ===== Управление каналом ===== */
 .ch-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0 4px}
 .ch-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center}
@@ -871,6 +887,14 @@ main>.screen{position:relative;z-index:1}
     <div class="mm-actions" id="mmActions"></div>
   </div>
 </div>
+<div id="notifsView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="closeNotifs()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Уведомления</b>
+    <button class="ep-done" onclick="markAllRead()">Прочитать</button>
+  </div>
+  <div class="sv-body" id="notifsBody"></div>
+</div>
 <div id="systemView">
   <div class="sv-head">
     <button class="ep-cancel" onclick="closeSystemView()"><svg class="i"><use href="#i-back"/></svg></button>
@@ -898,7 +922,8 @@ main>.screen{position:relative;z-index:1}
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.29</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.30</button>
+    <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
 
@@ -1608,6 +1633,33 @@ function showComposeBar(){
   } else { bar.classList.remove('open'); bar.innerHTML=''; }
 }
 function cancelCompose(){ replyState=null; editState=null; document.getElementById('msgInput').value=''; showComposeBar(); if(window.syncSendIcon)syncSendIcon(); }
+/* ===== Центр уведомлений ===== */
+let NOTIFS = [
+  {ic:'heart',   who:'Лиза Кот',      t:'оценила твой пост «Правило простое…»', time:'2 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
+  {ic:'comment', who:'Артём Слов',    t:'прокомментировал: «Огонь, давно ждал»', time:'14 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
+  {ic:'briefcase',who:'Биржа OKO',    t:'новая заявка по объявлению «Монтаж Reels»', time:'40 мин', g:'Сегодня', unread:true, act:()=>{showTab('mini');openMa('market')}},
+  {ic:'users',   who:'+3 подписчика', t:'подписались на твой канал', time:'1 ч', g:'Сегодня', unread:false, act:()=>{}},
+  {ic:'money',   who:'Партнёрка',     t:'начисление +$70.35 за оплату PRO', time:'3 ч', g:'Сегодня', unread:false, act:()=>{showTab('partner')}},
+  {ic:'star',    who:'Сергей Дан',    t:'оставил отзыв 5★ по твоей услуге', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
+  {ic:'rocket',  who:'OKO',           t:'твой пост в топе рекомендаций — охват вырос', time:'вчера', g:'Ранее', unread:false, act:()=>{showTab('feed')}},
+];
+function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
+function openNotifs(){ renderNotifs(); document.getElementById('notifsView').classList.add('open'); }
+function closeNotifs(){ document.getElementById('notifsView').classList.remove('open'); }
+function markAllRead(){ NOTIFS.forEach(n=>n.unread=false); renderNotifs(); updateNotifDot(); }
+function renderNotifs(){
+  const groups = {};
+  NOTIFS.forEach((n,i)=>{ (groups[n.g]=groups[n.g]||[]).push({...n,i}); });
+  document.getElementById('notifsBody').innerHTML = Object.keys(groups).map(g=>`
+    <p class="nt-group">${g}</p>
+    ${groups[g].map(n=>`<button class="nt-item ${n.unread?'unread':''}" onclick="notifTap(${n.i})">
+      <span class="nt-ic">${I(n.ic)}</span>
+      <div class="nt-b"><span><b>${esc(n.who)}</b> ${esc(n.t)}</span><small>${n.time}</small></div>
+      ${n.unread?'<i class="nt-dot"></i>':''}</button>`).join('')}`).join('')
+    || '<div class="empty-state"><div class="es-ico">'+I('bell')+'</div><p>Пока тихо</p><span>Тут появятся лайки, заявки и начисления</span></div>';
+}
+function notifTap(i){ const n=NOTIFS[i]; if(!n) return; n.unread=false; closeNotifs(); updateNotifDot(); if(n.act)n.act(); }
+
 /* ===== Звонки (LiveKit UI) ===== */
 let callTimer=null, callSec=0, callVideo=false;
 function startCall(video){
@@ -2928,6 +2980,7 @@ renderGallery();
 renderMarket();
 renderMyProfile();
 renderChatList();
+updateNotifDot();
 renderFeed('sub');
 </script>
 </body>
