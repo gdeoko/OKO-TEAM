@@ -12,17 +12,29 @@
       "WebSearch",
       "WebFetch",
       "mcp__github",
+      "mcp__github__*",
       "mcp__Claude_Code_Remote",
+      "mcp__Claude_Code_Remote__*",
       "mcp__Magic_Patterns",
+      "mcp__Magic_Patterns__*",
       "mcp__Higgsfield",
+      "mcp__Higgsfield__*",
       "mcp__Canva",
+      "mcp__Canva__*",
       "mcp__Adobe_for_creativity",
+      "mcp__Adobe_for_creativity__*",
       "mcp__Adobe_Marketing_Agent",
+      "mcp__Adobe_Marketing_Agent__*",
       "mcp__Figma",
+      "mcp__Figma__*",
       "mcp__Zapier",
+      "mcp__Zapier__*",
       "mcp__Hugging_Face",
+      "mcp__Hugging_Face__*",
       "mcp__Zoom_for_Claude",
+      "mcp__Zoom_for_Claude__*",
       "mcp__Gmail",
+      "mcp__Gmail__*",
       "Artifact",
       "SendUserFile",
       "Skill",
@@ -52,6 +64,17 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"OKO: авто-одобрение (правило Даниэля)\"}}'"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
