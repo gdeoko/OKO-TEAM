@@ -3,11 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>PandaGo Cargo · техника из Китая под ключ</title>
+<title>DIESEL CARGO · техника из Китая под ключ</title>
 <meta name="description" content="Квадроциклы, мотоциклы и гидроциклы из Китая под ключ. Гуанчжоу, Монголия, Москва за 30 дней. Таможенное оформление и доставка внутри.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{
+"three":"./dc/three/three.module.js",
+"three/addons/loaders/GLTFLoader.js":"./dc/three/jsm/loaders/GLTFLoader.js",
+"three/addons/controls/OrbitControls.js":"./dc/three/jsm/controls/OrbitControls.js",
+"three/addons/environments/RoomEnvironment.js":"./dc/three/jsm/environments/RoomEnvironment.js"
+}}</script>
 <style>
 :root{
   --navy:#0A1E42; --abyss:#050E1F; --electric:#1A6BE0; --cyan:#3B9EFF;
@@ -198,6 +204,149 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
 @media(prefers-reduced-motion:reduce){
   .reveal{opacity:1!important;transform:none!important}
 }
+
+/* ---------- video -> 3D showcase ---------- */
+#showcase{position:relative;z-index:5;background:
+  radial-gradient(120% 90% at 50% 30%, #0a1c3a 0%, #050E1F 62%, #02080f 100%);
+  border-top:1px solid var(--line);overflow:hidden;min-height:100svh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:clamp(40px,7vh,90px) clamp(16px,4vw,40px)}
+#showcase .head{max-width:1180px;width:100%;text-align:center;margin:0 auto 6px}
+#showcase .head .eyebrow{margin-bottom:14px}
+#showcase .stage{position:relative;width:100%;max-width:1180px;aspect-ratio:16/9;margin:0 auto;
+  border-radius:20px;overflow:hidden;background:#050E1F;border:1px solid var(--line)}
+#explodeVid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;opacity:1;transition:opacity .6s ease}
+#stage3d{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .8s ease;touch-action:pan-y}
+#showcase.live #explodeVid{opacity:0;pointer-events:none}
+#showcase.live #stage3d{opacity:1}
+.spin-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyanSoft);
+  background:rgba(5,14,31,.5);border:1px solid var(--line);border-radius:100px;padding:6px 13px;backdrop-filter:blur(8px);
+  opacity:0;transition:opacity .6s ease;display:flex;align-items:center;gap:8px}
+#showcase.live .spin-hint{opacity:.9}
+.spin-hint svg{width:14px;height:14px}
+.play-cta{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;cursor:pointer;
+  background:rgba(5,14,31,.15)}
+.play-cta.hide{display:none}
+.play-cta .pbtn{width:70px;height:70px;border-radius:50%;background:rgba(26,107,224,.9);
+  display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px -6px rgba(26,107,224,.8);transition:transform .2s}
+.play-cta:hover .pbtn{transform:scale(1.07)}
+.play-cta .pbtn svg{width:26px;height:26px;fill:#fff;margin-left:4px}
+.labels3d{display:flex;justify-content:center;gap:clamp(14px,6vw,80px);max-width:1180px;width:100%;margin:20px auto 0;
+  opacity:0;transition:opacity .7s ease .2s}
+#showcase.live .labels3d{opacity:1}
+.labels3d .l{text-align:center}
+.labels3d .l .n{font-family:var(--head);font-weight:700;font-size:clamp(14px,2vw,19px)}
+.labels3d .l .p{font-family:var(--mono);font-size:11px;color:var(--cyanSoft);margin-top:3px;letter-spacing:.04em}
+.labels3d .l.mid .n{color:var(--cyan)}
+@media(max-width:700px){
+  #showcase .stage{aspect-ratio:3/4;max-width:520px}
+  .labels3d{gap:10px}
+  .labels3d .l .p{font-size:10px}
+}
+.labels3d .l.sel .n{color:var(--cyan)}
+.labels3d .l.sel::after{content:'';display:block;height:2px;width:26px;margin:6px auto 0;background:var(--cyan);border-radius:2px}
+
+/* ---------- funnel sections ---------- */
+.section{position:relative;z-index:5;background:var(--abyss);padding:clamp(64px,11vh,130px) clamp(16px,4vw,40px);overflow:hidden}
+body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;pointer-events:none;transition:opacity .5s ease}
+.section .in-w{max-width:1180px;margin:0 auto;position:relative;z-index:2}
+.section.alt{background:linear-gradient(180deg,#02080f,#061223)}
+.sec-head{max-width:640px;margin-bottom:38px}
+.sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+.canvas-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.5}
+.canvas-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--abyss) 0%,rgba(5,14,31,.2) 30%,rgba(5,14,31,.35) 70%,var(--abyss) 100%)}
+[data-rv]{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+[data-rv].in{opacity:1;transform:none}
+[data-rv][data-d="1"]{transition-delay:.08s}[data-rv][data-d="2"]{transition-delay:.16s}[data-rv][data-d="3"]{transition-delay:.24s}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:1.05fr .95fr;gap:26px;align-items:stretch}
+.calc .panel{background:rgba(8,20,42,.6);border:1px solid var(--line);border-radius:22px;padding:26px;backdrop-filter:blur(14px)}
+.calc .field{margin-bottom:18px}
+.calc label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:9px}
+.calc select{width:100%;background:rgba(5,14,31,.6);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--porcelain);font-family:var(--body);font-size:15px;outline:none}
+.calc input[type=range]{width:100%;accent-color:var(--electric);height:4px}
+.calc .pv{font-family:var(--head);font-weight:700;font-size:20px;margin-top:8px}
+.calc .result{background:linear-gradient(150deg,rgba(26,107,224,.18),rgba(59,158,255,.06));border:1px solid rgba(59,158,255,.28);
+  border-radius:22px;padding:26px;display:flex;flex-direction:column;justify-content:center}
+.calc .result .lab{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyanSoft)}
+.calc .result .total{font-family:var(--head);font-weight:800;font-size:clamp(30px,5vw,52px);line-height:1.04;margin:6px 0 4px;
+  background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.calc .result .rowline{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--ink)}
+.calc .result .rowline b{color:var(--porcelain);font-weight:600}
+.calc .result .save{margin-top:14px;color:var(--cyan);font-weight:600;font-size:14px}
+
+/* comparison bars */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+.bar{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.bar .t{font-family:var(--head);font-weight:600;font-size:16px;margin-bottom:14px}
+.bar .track{height:14px;border-radius:100px;background:rgba(120,160,220,.12);overflow:hidden}
+.bar .fill{height:100%;border-radius:100px;width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.bar.in .fill.a{width:62%}.bar.in .fill.b{width:100%}
+.bar .fill.a{background:linear-gradient(90deg,var(--electric),var(--cyan))}
+.bar .fill.b{background:linear-gradient(90deg,#33405a,#54627e)}
+.bar .v{margin-top:12px;font-family:var(--head);font-weight:700;font-size:22px}
+.bar.win{border-color:rgba(59,158,255,.35);box-shadow:0 20px 50px -30px rgba(59,158,255,.5)}
+
+/* trust + panda */
+.trust{display:grid;grid-template-columns:.9fr 1.1fr;gap:34px;align-items:center}
+.route-panel{position:relative;border-radius:24px;overflow:hidden;min-height:380px;
+  background:linear-gradient(160deg,#0a1c3a,#050e1f);border:1px solid var(--line);box-shadow:inset 0 0 60px -20px rgba(59,158,255,.3)}
+.route-panel .rp-bg{position:absolute;inset:0;width:100%;height:100%;opacity:.42}
+.route-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+.rp-line{fill:none;stroke:rgba(120,160,220,.22);stroke-width:2}
+.rp-dash{fill:none;stroke:var(--cyan);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:10 320;filter:drop-shadow(0 0 6px var(--cyan));animation:rpflow 4s linear infinite}
+@keyframes rpflow{to{stroke-dashoffset:-330}}
+.rp-node circle{fill:var(--abyss);stroke:var(--cyan);stroke-width:2.5}
+.rp-spark{fill:#fff;filter:drop-shadow(0 0 8px var(--cyan));offset-path:path('M64 300 C 120 260, 90 170, 160 150 C 230 130, 210 70, 256 56');animation:rpmove 4s linear infinite}
+@keyframes rpmove{to{offset-distance:100%}}
+.rp-labels{position:absolute;inset:0;z-index:3}
+.rp-l{position:absolute;transform:translate(-10%,-50%);font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--cyanSoft);
+  background:rgba(5,14,31,.6);border:1px solid var(--line);border-radius:100px;padding:4px 10px;backdrop-filter:blur(6px);white-space:nowrap}
+.rp-badge{position:absolute;right:20px;bottom:20px;z-index:3;display:flex;flex-direction:column;align-items:flex-end;
+  background:rgba(8,20,42,.6);border:1px solid rgba(59,158,255,.3);border-radius:16px;padding:12px 16px;backdrop-filter:blur(8px)}
+.rp-badge b{font-family:var(--head);font-weight:800;font-size:34px;line-height:1;background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.rp-badge span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyanSoft);margin-top:2px}
+#lottiePulse{position:absolute;left:80%;top:15%;width:130px;height:130px;transform:translate(-50%,-50%);z-index:2;opacity:.8;pointer-events:none}
+.trust-list{display:flex;flex-direction:column;gap:14px}
+.tl{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;backdrop-filter:blur(8px)}
+.tl .ic{width:34px;height:34px;flex:0 0 auto;color:var(--cyan)}
+.tl h4{font-family:var(--head);font-weight:600;font-size:16px;margin-bottom:3px}
+.tl p{font-size:13.5px;color:var(--ink);line-height:1.45}
+
+/* reviews marquee */
+.marquee{position:relative;overflow:hidden;margin-top:8px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marquee .row{display:flex;gap:16px;width:max-content;animation:marq 34s linear infinite}
+.marquee:hover .row{animation-play-state:paused}
+@keyframes marq{to{transform:translateX(-50%)}}
+.rev{width:340px;flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;backdrop-filter:blur(8px)}
+.rev .stars{color:var(--cyan);letter-spacing:2px;font-size:13px}
+.rev p{font-size:14px;color:#D6E2F4;line-height:1.5;margin:10px 0 14px}
+.rev .who{display:flex;align-items:center;gap:10px}
+.rev .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(140deg,var(--electric),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;font-size:15px;color:#fff}
+.rev .who .nm{font-weight:600;font-size:14px}.rev .who .ct{font-family:var(--mono);font-size:11px;color:var(--ink)}
+
+/* lead 2 */
+.lead2{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center}
+.lead2 .form{background:rgba(8,20,42,.66);border:1px solid var(--line);border-radius:24px;padding:26px;backdrop-filter:blur(14px)}
+.lead2 .field{margin-bottom:12px}
+.lead2 label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.lead2 input,.lead2 select{width:100%;background:rgba(5,14,31,.6);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--porcelain);font-family:var(--body);font-size:15px;outline:none;transition:border-color .2s}
+.lead2 input:focus,.lead2 select:focus{border-color:var(--cyan)}
+.lead2 input::placeholder{color:#4d6488}
+.lead2 .honey{position:absolute;left:-9999px;opacity:0}
+.lead2 .btn{width:100%;justify-content:center;margin-top:6px}
+.formok2{display:none;text-align:center;padding:22px 6px}.formok2.show{display:block}
+.formok2 .ic{width:52px;height:52px;margin:0 auto 14px;color:var(--cyan)}
+.formok2 h3{font-family:var(--head);font-weight:700;font-size:22px;margin-bottom:8px}
+.formok2 p{color:var(--cyanSoft);font-size:14px}
+
+@media(max-width:820px){
+  .calc,.trust,.lead2{grid-template-columns:1fr;gap:20px}
+  .compare{grid-template-columns:1fr}
+  .panda-wrap{min-height:300px}
+}
 </style>
 </head>
 <body>
@@ -228,11 +377,11 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
   <!-- CH0 HERO -->
   <section class="chapter" data-a="-0.12" data-b="0.17">
     <div class="wrap">
-      <div class="reveal" data-a="-0.12" data-b="0.17" data-from="up"><span class="eyebrow"><span class="dot"></span>PandaGo Cargo · Гуанчжоу · Москва</span></div>
+      <div class="reveal" data-a="-0.12" data-b="0.17" data-from="up"><span class="eyebrow"><span class="dot"></span>DIESEL CARGO · Гуанчжоу · Москва</span></div>
       <h1 class="reveal" data-a="-0.11" data-b="0.17" data-from="up">Техника из Китая<br><span class="grad">под ключ</span></h1>
       <p class="lead reveal" data-a="-0.09" data-b="0.17" data-from="up">Квадроциклы, мотоциклы и гидроциклы напрямую с завода. Доставка и таможенное оформление за 30 дней. Вы получаете технику у своих дверей.</p>
       <div class="cta reveal pointer" data-a="-0.07" data-b="0.17" data-from="up">
-        <a class="btn btn-primary" href="#lead" id="heroCalc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>Рассчитать стоимость</a>
+        <a class="btn btn-primary" href="#lead2" id="heroCalc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>Рассчитать стоимость</a>
         <a class="btn btn-glass" href="https://t.me/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1z"/></svg>Написать в Telegram</a>
       </div>
     </div>
@@ -310,35 +459,12 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
     </div>
   </section>
 
-  <!-- CH4 FINAL / LEAD -->
-  <section class="chapter" data-a="0.80" data-b="1.10" id="lead">
-    <div class="wrap">
-      <div class="final">
-        <div>
-          <div class="reveal" data-a="0.80" data-b="1.10" data-from="up"><span class="eyebrow"><span class="dot"></span>Заявка</span></div>
-          <h2 class="sec-title reveal" data-a="0.81" data-b="1.10" data-from="up">Оформим под ключ</h2>
-          <p class="sec-sub reveal" data-a="0.82" data-b="1.10" data-from="up">Оставьте контакты. Рассчитаем стоимость выбранной техники с доставкой и таможней и пришлём точную смету в течение дня.</p>
-          <div class="cta reveal" data-a="0.84" data-b="1.10" data-from="up">
-            <a class="btn btn-glass pointer" href="https://t.me/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1z"/></svg>Быстрее в Telegram</a>
-          </div>
-        </div>
-        <div class="form reveal pointer" data-a="0.83" data-b="1.10" data-from="scale">
-          <form id="leadForm" novalidate>
-            <div class="field"><label>Ваше имя</label><input name="name" type="text" placeholder="Как к вам обращаться" required></div>
-            <div class="field"><label>Телефон</label><input name="phone" type="tel" placeholder="+7" required></div>
-            <div class="field"><label>Telegram или e-mail</label><input name="contact" type="text" placeholder="@username или почта"></div>
-            <div class="field"><label>Что интересует</label>
-              <select name="service"><option value="Квадроцикл">Квадроцикл</option><option value="Мотоцикл">Мотоцикл</option><option value="Гидроцикл">Гидроцикл</option><option value="Другое">Другое</option></select>
-            </div>
-            <input class="honey" name="website" tabindex="-1" autocomplete="off">
-            <button class="btn btn-primary" type="submit">Получить смету</button>
-          </form>
-          <div class="formok" id="formok">
-            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
-            <h3>Заявка принята</h3><p>Мы свяжемся с вами и пришлём смету в течение дня.</p>
-          </div>
-        </div>
-      </div>
+  <!-- CH4 FINAL -->
+  <section class="chapter" data-a="0.80" data-b="1.12">
+    <div class="wrap" style="text-align:center">
+      <div class="reveal" data-a="0.80" data-b="1.12" data-from="up" style="display:flex;justify-content:center"><span class="eyebrow"><span class="dot"></span>Финал маршрута</span></div>
+      <h2 class="sec-title reveal" data-a="0.81" data-b="1.12" data-from="up" style="margin-top:16px">У ваших дверей<br>за 30 дней</h2>
+      <p class="sec-sub reveal" data-a="0.82" data-b="1.12" data-from="up" style="margin-left:auto;margin-right:auto">Техника выгружена и передана вам с полным пакетом документов. Дальше рассмотрите модели вблизи.</p>
     </div>
   </section>
 
@@ -346,25 +472,179 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
 
 <div id="track"></div>
 
+<section id="showcase">
+  <div class="head">
+    <span class="eyebrow"><span class="dot"></span>Техника вживую · 3D</span>
+    <h2 class="sec-title">Соберите и рассмотрите</h2>
+  </div>
+  <div class="stage" id="showstage">
+    <video id="explodeVid" muted playsinline preload="auto" poster="dc/explode/explode_end.webp">
+      <source src="dc/explode/explode.webm" type="video/webm">
+      <source src="dc/explode/explode.mp4" type="video/mp4">
+    </video>
+    <canvas id="stage3d"></canvas>
+    <div class="play-cta" id="playCta"><div class="pbtn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div></div>
+  </div>
+  <div class="labels3d">
+    <div class="l"><div class="n">Мотоциклы</div><div class="p">от 180 000 ₽</div></div>
+    <div class="l mid"><div class="n">Квадроциклы</div><div class="p">от 320 000 ₽</div></div>
+    <div class="l"><div class="n">Гидроциклы</div><div class="p">от 540 000 ₽</div></div>
+  </div>
+</section>
+
+<!-- CALCULATOR -->
+<section class="section alt" id="calc">
+  <canvas class="aurora canvas-bg"></canvas>
+  <div class="in-w">
+    <div class="sec-head" data-rv>
+      <span class="eyebrow"><span class="dot"></span>Калькулятор</span>
+      <h2 class="sec-title" style="margin-top:14px">Стоимость под ключ</h2>
+      <p class="sec-sub">Цена с доставкой из Китая и полным таможенным оформлением. Двигайте бюджет техники и смотрите итог.</p>
+    </div>
+    <div class="calc">
+      <div class="panel" data-rv data-d="1">
+        <div class="field"><label>Категория</label>
+          <select id="calcCat"><option value="atv">Квадроцикл</option><option value="moto">Мотоцикл</option><option value="jet">Гидроцикл</option></select></div>
+        <div class="field"><label>Цена техники на заводе</label>
+          <input id="calcPrice" type="range" min="192000" max="768000" step="5000" value="320000">
+          <div class="pv" id="calcPriceV">320 000 ₽</div></div>
+        <div class="field" style="margin-bottom:0"><label>В стоимость входит</label>
+          <p style="font-size:13.5px;color:var(--ink);line-height:1.6">Выкуп на заводе, логистика Гуанчжоу, Москва, страхование груза, таможенное оформление и доставка до дверей.</p></div>
+      </div>
+      <div class="result" data-rv data-d="2">
+        <div class="lab">Итого под ключ</div>
+        <div class="total" id="calcTotal">0 ₽</div>
+        <div class="rowline"><span>Средний дилер в РФ</span><b id="calcDealer">0 ₽</b></div>
+        <div class="rowline"><span>Срок доставки</span><b>30 дней</b></div>
+        <div class="save">Ваша экономия: <span id="calcSave">0 ₽</span></div>
+        <a class="btn btn-primary" href="#lead2" style="margin-top:18px;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Зафиксировать смету</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section class="section" id="compare">
+  <div class="in-w">
+    <div class="sec-head" data-rv>
+      <span class="eyebrow"><span class="dot"></span>Сравнение</span>
+      <h2 class="sec-title" style="margin-top:14px">Дешевле, чем у дилера</h2>
+      <p class="sec-sub">Вы платите за технику и доставку, без наценки дилерской сети и посредников.</p>
+    </div>
+    <div class="compare">
+      <div class="bar win" data-rv data-d="1"><div class="t">DIESEL CARGO под ключ</div><div class="track"><div class="fill a"></div></div><div class="v" style="color:var(--cyan)">от 512 000 ₽</div></div>
+      <div class="bar" data-rv data-d="2"><div class="t">Средний дилер в РФ</div><div class="track"><div class="fill b"></div></div><div class="v">от 686 000 ₽</div></div>
+    </div>
+    <p class="sec-sub" data-rv data-d="3" style="margin-top:18px">Экономия до <b style="color:var(--cyan)">170 000 ₽</b> на одной единице техники при том же качестве и гарантии.</p>
+  </div>
+</section>
+
+<!-- TRUST + PANDA -->
+<section class="section alt" id="trust">
+  <div class="in-w">
+    <div class="trust">
+      <div class="route-panel" data-rv>
+        <canvas class="aurora rp-bg"></canvas>
+        <div id="lottiePulse"></div>
+        <svg class="route-svg" viewBox="0 0 320 360" preserveAspectRatio="xMidYMid meet">
+          <path class="rp-line" d="M64 300 C 120 260, 90 170, 160 150 C 230 130, 210 70, 256 56"/>
+          <path class="rp-dash" d="M64 300 C 120 260, 90 170, 160 150 C 230 130, 210 70, 256 56"/>
+          <circle class="rp-spark" r="6"/>
+          <g class="rp-node"><circle cx="64" cy="300" r="7"/></g>
+          <g class="rp-node"><circle cx="160" cy="150" r="7"/></g>
+          <g class="rp-node"><circle cx="256" cy="56" r="7"/></g>
+        </svg>
+        <div class="rp-labels">
+          <span class="rp-l" style="left:8%;top:80%">Гуанчжоу</span>
+          <span class="rp-l" style="left:46%;top:40%">Монголия</span>
+          <span class="rp-l" style="left:70%;top:12%">Москва</span>
+        </div>
+        <div class="rp-badge"><b>30</b><span>дней в пути</span></div>
+      </div>
+      <div>
+        <div class="sec-head" data-rv data-d="1" style="margin-bottom:22px">
+          <span class="eyebrow"><span class="dot"></span>Почему DIESEL CARGO</span>
+          <h2 class="sec-title" style="margin-top:14px">Берём все заботы на себя</h2>
+        </div>
+        <div class="trust-list">
+          <div class="tl" data-rv data-d="1"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><h4><span data-to="30">0</span> дней под ключ</h4><p>От выкупа на заводе до передачи техники у ваших дверей.</p></div></div>
+          <div class="tl" data-rv data-d="2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div><div><h4>Таможня внутри цены</h4><p>Полное оформление и все платежи включены. Без скрытых доплат.</p></div></div>
+          <div class="tl" data-rv data-d="3"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17h18M5 17V9l4-2 4 2v8M13 17V7l4 2v8"/></svg></div><div><h4><span data-to="2400">0</span>+ поставок</h4><p>Отлаженная логистика и проверенные заводы-партнёры в Гуанчжоу.</p></div></div>
+          <div class="tl" data-rv data-d="3"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div><div><h4>Договор и гарантия</h4><p>Официальный договор, документы на технику и гарантийные обязательства.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="section" id="reviews">
+  <div class="in-w">
+    <div class="sec-head center" data-rv>
+      <span class="eyebrow"><span class="dot"></span>Отзывы</span>
+      <h2 class="sec-title" style="margin-top:14px">Технику уже получили</h2>
+    </div>
+  </div>
+  <div class="marquee" data-rv data-d="1">
+    <div class="row">
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Квадроцикл пришёл за 28 дней, всё оформлено. Забрал у подъезда, сэкономил около 150 тысяч.</p><div class="who"><div class="av">С</div><div><div class="nm">Сергей</div><div class="ct">Новосибирск</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Брал мотоцикл, переживал за таможню. В итоге всё сделали сами, я только принял технику.</p><div class="who"><div class="av">А</div><div><div class="nm">Артём</div><div class="ct">Казань</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Гидроцикл к сезону успел. Документы в порядке, менеджер на связи весь путь. Рекомендую.</p><div class="who"><div class="av">Д</div><div><div class="nm">Денис</div><div class="ct">Краснодар</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Заказывал два квадрика на базу отдыха. Цена вышла заметно ниже дилерской, привезли вовремя.</p><div class="who"><div class="av">И</div><div><div class="nm">Игорь</div><div class="ct">Екатеринбург</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Квадроцикл пришёл за 28 дней, всё оформлено. Забрал у подъезда, сэкономил около 150 тысяч.</p><div class="who"><div class="av">С</div><div><div class="nm">Сергей</div><div class="ct">Новосибирск</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Брал мотоцикл, переживал за таможню. В итоге всё сделали сами, я только принял технику.</p><div class="who"><div class="av">А</div><div><div class="nm">Артём</div><div class="ct">Казань</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Гидроцикл к сезону успел. Документы в порядке, менеджер на связи весь путь. Рекомендую.</p><div class="who"><div class="av">Д</div><div><div class="nm">Денис</div><div class="ct">Краснодар</div></div></div></div>
+      <div class="rev"><div class="stars"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="display:inline-block"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17l-6 3.4 1.4-6.8L2.3 9l6.9-.7z"/></svg></div><p>Заказывал два квадрика на базу отдыха. Цена вышла заметно ниже дилерской, привезли вовремя.</p><div class="who"><div class="av">И</div><div><div class="nm">Игорь</div><div class="ct">Екатеринбург</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LEAD 2 -->
+<section class="section alt" id="lead2">
+  <canvas class="aurora canvas-bg"></canvas>
+  <div class="in-w">
+    <div class="lead2">
+      <div data-rv>
+        <span class="eyebrow"><span class="dot"></span>Заявка</span>
+        <h2 class="sec-title" style="margin-top:14px">Рассчитаем вашу технику</h2>
+        <p class="sec-sub">Оставьте контакты. Пришлём точную смету с доставкой и таможней в течение дня и ответим на вопросы.</p>
+        <div class="cta"><a class="btn btn-glass pointer" href="https://t.me/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1z"/></svg>Написать в Telegram</a></div>
+      </div>
+      <div class="form" data-rv data-d="1">
+        <form id="leadForm2" novalidate>
+          <div class="field"><label>Ваше имя</label><input name="name" type="text" placeholder="Как к вам обращаться" required></div>
+          <div class="field"><label>Телефон</label><input name="phone" type="tel" placeholder="+7" required></div>
+          <div class="field"><label>Telegram или e-mail</label><input name="contact" type="text" placeholder="@username или почта"></div>
+          <div class="field"><label>Что интересует</label>
+            <select name="service"><option>Квадроцикл</option><option>Мотоцикл</option><option>Гидроцикл</option><option>Другое</option></select></div>
+          <input class="honey" name="website" tabindex="-1" autocomplete="off">
+          <button class="btn btn-primary" type="submit">Получить смету</button>
+        </form>
+        <div class="formok2" id="formok2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div><h3>Заявка принята</h3><p>Свяжемся с вами и пришлём смету в течение дня.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer id="foot">
   <div class="foot-in">
     <div>
-      <div class="foot-brand">Panda<span class="g">Go</span> Cargo</div>
+      <div class="foot-brand">DIESEL <span class="g">CARGO</span></div>
       <p>Техника из Китая под ключ. Полный цикл: подбор на заводе, логистика, таможня и доставка до дверей по России.</p>
     </div>
     <div class="col">
       <h4>Техника</h4>
-      <a href="#lead">Квадроциклы</a><a href="#lead">Мотоциклы</a><a href="#lead">Гидроциклы</a>
+      <a href="#lead2">Квадроциклы</a><a href="#lead2">Мотоциклы</a><a href="#lead2">Гидроциклы</a>
     </div>
     <div class="col">
       <h4>Контакты</h4>
-      <a href="https://t.me/" target="_blank" rel="noopener">Telegram</a><a href="#lead">Оставить заявку</a>
+      <a href="https://t.me/" target="_blank" rel="noopener">Telegram</a><a href="#lead2">Оставить заявку</a>
     </div>
   </div>
-  <div class="foot-bottom"><span>PandaGo Cargo</span><span>Гуанчжоу · Монголия · Москва · 30 дней</span></div>
+  <div class="foot-bottom"><span>DIESEL CARGO</span><span>Гуанчжоу · Монголия · Москва · 30 дней</span></div>
 </footer>
 
-<div class="build">сборка v0.3 · кинопролёт 4K</div>
+<div class="build">сборка v1.0 · полный сайт</div>
 
 <script>
 (function(){
@@ -378,7 +658,7 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
   var imgs=new Array(N), loaded=0, ready=false;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  function src(i){var s=(i+1)+'';return 'assets/'+SET.dir+'/f_'+PAD.slice(0,4-s.length)+s+'.webp';}
+  function src(i){var s=(i+1)+'';return 'dc/'+SET.dir+'/f_'+PAD.slice(0,4-s.length)+s+'.webp';}
 
   /* ---- responsive canvas ---- */
   var dpr=Math.min(window.devicePixelRatio||1,2.5);
@@ -411,7 +691,8 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
   var spark=document.getElementById('spark'), top=document.getElementById('top');
 
   function scrollMax(){return Math.max(1,document.getElementById('track').offsetHeight - innerHeight);}
-  function onScroll(){target=Math.min(1,Math.max(0,window.pageYOffset/scrollMax()));}
+  function onScroll(){target=Math.min(1,Math.max(0,window.pageYOffset/scrollMax()));
+    document.body.classList.toggle('film-done', window.pageYOffset > scrollMax()-innerHeight*0.35);}
 
   function easeOutCubic(t){return 1-Math.pow(1-t,3);}
   function clamp01(t){return t<0?0:t>1?1:t;}
@@ -496,6 +777,157 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
       name:form.name.value,phone:form.phone.value,contact:form.contact.value,service:form.service.value
     }}));}catch(_){}
   });}
+})();
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+const stageEl=document.getElementById('showstage');
+const canvas=document.getElementById('stage3d');
+const vid=document.getElementById('explodeVid');
+const showcase=document.getElementById('showcase');
+const playCta=document.getElementById('playCta');
+const labelEls=[].slice.call(document.querySelectorAll('.labels3d .l'));
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+let renderer,scene,cam,env;
+const M=[]; let active=1;
+let ready=false,live=false,started=false,loaded=0;
+let autoY=0,dragY=0,targetDragY=0,vel=0,dragging=false,lastX=0,liveT0=0,camFrom=null;
+const camCur={px:2.4,py:1.35,pz:3.4,tx:0,ty:0.55};
+
+const portrait=()=>{const r=stageEl.getBoundingClientRect();return r.height>=r.width;};
+const easeIO=t=>t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function camRest(){ return portrait()?{px:0.2,py:1.15,pz:4.7,tx:0,ty:0.55}:{px:0.3,py:1.5,pz:7.8,tx:0,ty:0.45}; }
+
+function initGL(){
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.06;
+  scene=new THREE.Scene();
+  const pm=new THREE.PMREMGenerator(renderer); env=pm.fromScene(new RoomEnvironment(),0.04).texture; scene.environment=env;
+  cam=new THREE.PerspectiveCamera(34,16/9,0.01,100);
+  const key=new THREE.DirectionalLight(0xbfe0ff,2.3);key.position.set(3,5,4);scene.add(key);
+  const rim=new THREE.DirectionalLight(0x3B9EFF,3.6);rim.position.set(-4,2,-3);scene.add(rim);
+  const fill=new THREE.DirectionalLight(0x1A6BE0,0.9);fill.position.set(0,-2,3);scene.add(fill);
+  scene.add(new THREE.AmbientLight(0x22344f,0.55));
+  const gg=new THREE.Mesh(new THREE.CircleGeometry(9,48),new THREE.MeshBasicMaterial({color:0x08152c}));
+  gg.rotation.x=-Math.PI/2;gg.position.y=-0.002;scene.add(gg);
+  resize();
+}
+const bmat=()=>new THREE.MeshStandardMaterial({color:0x2b3039,metalness:0.55,roughness:0.42});
+function fit(root,h){root.traverse(o=>{if(o.isMesh)o.material=bmat();});
+  const b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+  root.position.sub(c);const k=h/Math.max(s.x,s.y,s.z);root.scale.setScalar(k);
+  const nb=new THREE.Box3().setFromObject(root);root.position.y-=nb.min.y;return root;}
+function loadAll(){
+  const L=new GLTFLoader();
+  const defs=[['moto.glb',1.85,0.5,-3.0],['quad.glb',2.2,-0.5,0],['jetski.glb',2.05,-0.5,3.0]];
+  defs.forEach((d,i)=>L.load('dc/models/'+d[0],g=>{
+    const o=fit(g.scene,d[1]);o.userData.baseRot=d[2];scene.add(o);
+    M[i]={obj:o,baseRot:d[2],slotX:d[3]};done();},undefined,done));
+}
+function done(){loaded++;window.__loaded=loaded;if(loaded>=3){ready=true;layout();if(reduce)goLive(true);}}
+function layout(){ const single=portrait();
+  M.forEach((m,i)=>{if(!m)return; if(single){m.obj.visible=(i===active);m.obj.position.x=0;} else {m.obj.visible=true;m.obj.position.x=m.slotX;}});
+  labelEls.forEach((el,i)=>{el.classList.toggle('sel',single&&i===active);el.style.cursor=single?'pointer':'default';});
+}
+labelEls.forEach((el,i)=>el.addEventListener('click',()=>{if(!portrait())return;active=i;layout();targetDragY=0;dragY=0;autoY=0;}));
+function resize(){const r=stageEl.getBoundingClientRect();renderer.setSize(r.width,r.height,false);cam.aspect=r.width/r.height;cam.updateProjectionMatrix();}
+addEventListener('resize',()=>{if(renderer){resize();if(ready)layout();}});
+function render(){
+  if(!renderer){requestAnimationFrame(render);return;}
+  if(!dragging){vel*=0.94;targetDragY+=vel;autoY+=live?0.0016:0;}
+  dragY+=(targetDragY-dragY)*0.12; const sp=autoY+dragY;
+  M.forEach(m=>{if(m&&m.obj.visible)m.obj.rotation.y=(m.baseRot||0)+sp;});
+  if(live){
+    const t=easeIO(Math.min(1,(performance.now()-liveT0)/1600)),R=camRest(),F=camFrom;
+    cam.position.set(F.px+(R.px-F.px)*t,F.py+(R.py-F.py)*t,F.pz+(R.pz-F.pz)*t);
+    cam.lookAt(F.tx+(R.tx-F.tx)*t,F.ty+(R.ty-F.ty)*t,0);
+    if(!portrait()){const sl=easeIO(Math.min(1,Math.max(0,(performance.now()-liveT0-300)/1400)));
+      if(M[0])M[0].obj.position.x=-9+(M[0].slotX+9)*sl; if(M[2])M[2].obj.position.x=9+(M[2].slotX-9)*sl;}
+  } else { cam.position.set(camCur.px,camCur.py,camCur.pz); cam.lookAt(camCur.tx,camCur.ty,0); }
+  renderer.render(scene,cam); requestAnimationFrame(render);
+}
+function goLive(instant){ if(live)return; live=true; liveT0=performance.now();
+  showcase.classList.add('live'); playCta.classList.add('hide');
+  camFrom={px:2.4,py:1.35,pz:3.4,tx:0,ty:0.55};
+  if(!portrait()){if(M[0])M[0].obj.position.x=-9;if(M[2])M[2].obj.position.x=9;}
+  if(instant)liveT0=performance.now()-3000;
+}
+canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;vel=0;try{canvas.setPointerCapture(e.pointerId);}catch(_){}});
+canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;lastX=e.clientX;targetDragY+=dx*0.006;vel=dx*0.006;});
+addEventListener('pointerup',()=>{dragging=false;});
+function playVideo(){vid.play().then(()=>playCta.classList.add('hide')).catch(()=>{});}
+vid.addEventListener('ended',()=>{if(ready)goLive();else{const t=setInterval(()=>{if(ready){goLive();clearInterval(t);}},120);}});
+playCta.addEventListener('click',()=>{if(vid.ended||live)goLive();else playVideo();});
+const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting&&!started){started=true;initGL();loadAll();render();if(reduce){vid.style.display='none';}else playVideo();}}),{threshold:0.3});
+io.observe(showcase);
+</script>
+
+<script>
+/* ---- reveal-on-scroll for funnel sections ---- */
+(function(){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.16});
+  document.querySelectorAll('[data-rv]').forEach(function(n){io.observe(n);});
+
+  /* ---- counters ---- */
+  var cio=new IntersectionObserver(function(es){es.forEach(function(e){ if(!e.isIntersecting)return; var el=e.target,to=+el.dataset.to,t0=performance.now();
+    (function tick(now){var k=Math.min(1,(now-t0)/1200),v=Math.round((1-Math.pow(1-k,3))*to); el.textContent=v.toLocaleString('ru-RU'); if(k<1)requestAnimationFrame(tick);})(t0);
+    cio.unobserve(el); });},{threshold:0.5});
+  document.querySelectorAll('#trust [data-to]').forEach(function(n){cio.observe(n);});
+
+  /* ---- calculator ---- */
+  var PR={atv:{base:320000,label:'Квадроцикл'},moto:{base:180000,label:'Мотоцикл'},jet:{base:540000,label:'Гидроцикл'}};
+  var cat=document.getElementById('calcCat'), price=document.getElementById('calcPrice'), pv=document.getElementById('calcPriceV');
+  var out=document.getElementById('calcTotal'), save=document.getElementById('calcSave'), dealer=document.getElementById('calcDealer');
+  function fmt(n){return Math.round(n).toLocaleString('ru-RU')+' ₽';}
+  function calc(){ if(!cat)return; var base=+price.value;
+    var logistics=base*0.14+42000, customs=base*0.13, fee=38000;
+    var total=base+logistics+customs+fee; var deal=total*1.34;
+    pv.textContent=fmt(base); out.textContent=fmt(total); if(dealer)dealer.textContent=fmt(deal); if(save)save.textContent=fmt(deal-total);
+  }
+  if(cat){ cat.addEventListener('change',function(){var b=PR[cat.value].base;price.min=Math.round(b*0.6);price.max=Math.round(b*2.4);price.value=b;calc();});
+    price.addEventListener('input',calc); calc(); }
+
+  /* ---- lead form 2 ---- */
+  var f=document.getElementById('leadForm2');
+  if(f)f.addEventListener('submit',function(e){e.preventDefault();if(f.website.value)return;
+    if(!f.name.value.trim()||!f.phone.value.trim()){(f.name.value.trim()?f.phone:f.name).focus();return;}
+    document.getElementById('formok2').classList.add('show'); f.style.display='none';});
+
+  /* ---- Lottie ---- */
+  function initLottie(){ var el=document.getElementById('lottiePulse');
+    if(el&&window.lottie){ try{window.lottie.loadAnimation({container:el,renderer:'svg',loop:true,autoplay:true,path:'dc/lottie/pulse.json'});}catch(_){} } }
+  var ls=document.createElement('script'); ls.src='dc/lib/lottie.min.js'; ls.onload=initLottie; document.body.appendChild(ls);
+
+  /* ---- WebGL aurora background (React-Bits-spirit), lightweight shader ---- */
+  function aurora(cv){
+    var gl=cv.getContext('webgl'); if(!gl)return;
+    var vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+    var fs='precision highp float;uniform vec2 r;uniform float t;'+
+    'float h(vec2 x){return fract(sin(dot(x,vec2(12.9898,78.233)))*43758.5453);}'+
+    'float n(vec2 x){vec2 i=floor(x),f=fract(x);float a=h(i),b=h(i+vec2(1,0)),c=h(i+vec2(0,1)),d=h(i+vec2(1,1));vec2 u=f*f*(3.-2.*f);return mix(a,b,u.x)+(c-a)*u.y*(1.-u.x)+(d-b)*u.x*u.y;}'+
+    'float fbm(vec2 x){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(x);x*=2.;a*=.5;}return v;}'+
+    'void main(){vec2 uv=gl_FragCoord.xy/r;vec2 q=uv;q.y+=t*.02;float f=fbm(q*vec2(3.,2.)+vec2(0.,t*.05));'+
+    'float band=smoothstep(.35,.85,f)*smoothstep(1.,.4,uv.y);'+
+    'vec3 c1=vec3(.10,.42,.88),c2=vec3(.23,.62,1.),c3=vec3(.02,.05,.12);'+
+    'vec3 col=mix(c3,mix(c1,c2,f),band*.9);col+=c2*pow(band,3.)*.5;'+
+    'gl_FragColor=vec4(col,1.);}';
+    function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;}
+    var pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+    var b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    var pl=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(pl);gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
+    var ur=gl.getUniformLocation(pr,'r'),ut=gl.getUniformLocation(pr,'t');
+    function rs(){var dpr=Math.min(devicePixelRatio,1.5);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;gl.viewport(0,0,cv.width,cv.height);}
+    addEventListener('resize',rs);rs();
+    var vis=true; var vio=new IntersectionObserver(function(e){vis=e[0].isIntersecting;},{threshold:0});vio.observe(cv);
+    var t0=performance.now();(function loop(now){ if(vis){gl.uniform2f(ur,cv.width,cv.height);gl.uniform1f(ut,(now-t0)/1000);gl.drawArrays(gl.TRIANGLES,0,3);} requestAnimationFrame(loop);})(t0);
+  }
+  document.querySelectorAll('canvas.aurora').forEach(aurora);
 })();
 </script>
 </body>
