@@ -132,8 +132,8 @@ Environment variables окружения:
 | SUPABASE_PAT (Management API) | Supabase, проект tkjewndtlzhnmqwmrnil, SQL через api.supabase.com |
 | TELEGRAM_BOT_TOKEN | бот @okoappbot |
 | S3 twcstorage (key + secret) | s3.twcstorage.ru, бакеты oko-media, oko-tmp |
-| GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
-| ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
+| GEMINI_API_KEY (4 ключа AQ.Ab8RN6...) | Gemini: текст бесплатно. ОСНОВНОЙ провайдер агентов oko-agents (ротация ключей). Из РФ — через прокси `gemini-proxy.okoteam.workers.dev` (Cloudflare Worker, обход геоблока). Модель `gemini-flash-latest`. |
+| ANTHROPIC_API_KEY | Claude API — теперь РЕЗЕРВ/эскалация (дорого). Баланс на нуле после тестов Sonnet; агенты переведены на Gemini. Прокси `anthropic-proxy.okoteam.workers.dev`. |
 
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
