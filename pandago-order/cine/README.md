@@ -66,3 +66,13 @@ Lottie (lottie-web + pulse.json), VP9/webm+h264, image-sequence scrub, reveal-on
 Правки: дубль id "stage" (фильм vs 3D) → 3D переименован в showstage; секции
 непрозрачные + body.film-done прячет фикс.фильм/оверлеи/хребет; ассеты dc/ (не конфликт
 со старым assets/). copy-check чист, QA десктоп+моб пройден.
+
+## v1.1 — доработка красоты/эффектов (фидбек Даниэля)
+- 3D: MeshStandardMaterial тёмно-синий металлик + envMapIntensity + onBeforeCompile
+  fresnel-emissive cyan-rim (свечение по краям) с hover-усилением (raycast); свет-подиум
+  (radialTex additive), контактные тени, линия-горизонт убрана; камера портрета pz5.3.
+- Карточки/заголовки: стекло + градиентная рамка (mask-composite) + спотлайт ::after
+  (--mx/--my по pointermove) + шиммер (background sheen); скрим за текстом глав фильма.
+- Видео: портрет пересобран каждый 5-й кадр (142 шт, q84) = 8.7MB (было 13MB); scrub-lerp 0.09->0.16.
+- Мобилка: подписи 3D flex-fit, карточки не режутся. scroll-снап к секциям (JS smooth).
+- Бренд DIESEL CARGO. Живо на КОРНЕ forest-beach-360.higgsfield.app (v1.1).

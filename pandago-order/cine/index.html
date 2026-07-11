@@ -241,8 +241,10 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
 .labels3d .l.mid .n{color:var(--cyan)}
 @media(max-width:700px){
   #showcase .stage{aspect-ratio:3/4;max-width:520px}
-  .labels3d{gap:10px}
-  .labels3d .l .p{font-size:10px}
+  .labels3d{gap:6px;justify-content:space-between;width:100%}
+  .labels3d .l{flex:1;min-width:0}
+  .labels3d .l .n{font-size:12px}
+  .labels3d .l .p{font-size:9.5px}
 }
 .labels3d .l.sel .n{color:var(--cyan)}
 .labels3d .l.sel::after{content:'';display:block;height:2px;width:26px;margin:6px auto 0;background:var(--cyan);border-radius:2px}
@@ -345,7 +347,48 @@ body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;p
 @media(max-width:820px){
   .calc,.trust,.lead2{grid-template-columns:1fr;gap:20px}
   .compare{grid-template-columns:1fr}
-  .panda-wrap{min-height:300px}
+  .route-panel{min-height:300px}
+}
+
+/* ============ premium cohesive cards + text effects (React-Bits/UIverse/21st spirit) ============ */
+.card,.cat,.stat,.tl,.rev,.calc .panel,.calc .result,.lead2 .form,.bar{
+  position:relative;isolation:isolate;
+  background:linear-gradient(180deg,rgba(13,28,56,.66),rgba(6,15,32,.72))!important;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid transparent;
+  box-shadow:0 24px 60px -34px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.card::before,.cat::before,.stat::before,.tl::before,.rev::before,.calc .panel::before,.calc .result::before,.lead2 .form::before,.bar::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;opacity:.75;transition:opacity .35s;
+  background:linear-gradient(140deg,rgba(59,158,255,.6),rgba(120,160,220,.05) 42%,rgba(120,160,220,.05) 58%,rgba(26,107,224,.45));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;}
+.card::after,.cat::after,.tl::after,.rev::after,.stat::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;opacity:0;transition:opacity .35s;
+  background:radial-gradient(240px 240px at var(--mx,50%) var(--my,-20%),rgba(59,158,255,.2),transparent 68%)}
+.card:hover::after,.cat:hover::after,.tl:hover::after,.rev:hover::after,.stat:hover::after{opacity:1}
+.card:hover::before,.cat:hover::before,.tl:hover::before,.rev:hover::before,.calc .result::before{opacity:1}
+.cat:hover,.card:hover{transform:translateY(-5px)}
+.cat,.card{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+
+/* animated shimmer on gradient accent + section titles get subtle sheen */
+h1 .grad,.stat .big,.calc .result .total,.rp-badge b{background-size:220% auto;animation:sheen 6s linear infinite}
+@keyframes sheen{to{background-position:220% center}}
+.sec-title{background:linear-gradient(92deg,#eaf2ff,#bcd7ff 55%,#eaf2ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;background-size:220% auto;animation:sheen 9s linear infinite}
+
+/* legibility scrim behind film-chapter text, unifies text with the video background */
+.chapter .wrap{position:relative;z-index:1}
+.chapter .wrap::before{content:'';position:absolute;z-index:-1;inset:-46px -70px;pointer-events:none;
+  background:radial-gradient(130% 110% at 22% 52%,rgba(5,12,26,.78),rgba(5,12,26,.32) 52%,rgba(5,12,26,0) 78%)}
+.chapter .wrap[style*="center"]::before{background:radial-gradient(120% 100% at 50% 50%,rgba(5,12,26,.72),rgba(5,12,26,0) 72%)}
+/* stronger cinematic vignette so blocks read as one picture with the film */
+#grade{background:
+  radial-gradient(120% 85% at 50% 40%, rgba(5,14,31,0) 34%, rgba(5,14,31,.5) 100%),
+  linear-gradient(180deg, rgba(5,14,31,.6) 0%, rgba(5,14,31,.05) 26%, rgba(5,14,31,.15) 55%, rgba(5,14,31,.9) 100%)!important}
+
+@media(max-width:560px){
+  .cat{min-height:0}
+  .rev{width:82vw;max-width:320px}
+  .sec-head{margin-bottom:26px}
 }
 </style>
 </head>
@@ -476,6 +519,7 @@ body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;p
   <div class="head">
     <span class="eyebrow"><span class="dot"></span>Техника вживую · 3D</span>
     <h2 class="sec-title">Соберите и рассмотрите</h2>
+    <p class="sec-sub" style="margin-left:auto;margin-right:auto;text-align:center">Квадроциклы, мотоциклы и гидроциклы в 3D. Выберите категорию и рассчитайте стоимость под ключ.</p>
   </div>
   <div class="stage" id="showstage">
     <video id="explodeVid" muted playsinline preload="auto" poster="dc/explode/explode_end.webp">
@@ -644,7 +688,7 @@ body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;p
   <div class="foot-bottom"><span>DIESEL CARGO</span><span>Гуанчжоу · Монголия · Москва · 30 дней</span></div>
 </footer>
 
-<div class="build">сборка v1.0 · полный сайт</div>
+<div class="build">сборка v1.1 · эффекты</div>
 
 <script>
 (function(){
@@ -652,7 +696,7 @@ body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;p
   /* orientation-aware frame set: phones (portrait) get a tall crisp crop,
      wide screens get the landscape set. Each device loads only its set. */
   var portrait=(window.innerHeight>=window.innerWidth);
-  var SET=portrait?{dir:'port',n:237,w:1080,h:1920}:{dir:'land',n:355,w:1600,h:900};
+  var SET=portrait?{dir:'port',n:142,w:1080,h:1920}:{dir:'land',n:355,w:1600,h:900};
   var N=SET.n;
   var canvas=document.getElementById('film'), ctx=canvas.getContext('2d');
   var imgs=new Array(N), loaded=0, ready=false;
@@ -736,7 +780,7 @@ body.film-done #stage,body.film-done #overlays,body.film-done #spine{opacity:0;p
   }
 
   function loop(){
-    cur+=(target-cur)*0.09;
+    cur+=(target-cur)*0.16;
     if(Math.abs(target-cur)<0.0002)cur=target;
     var f=Math.round(cur*(N-1));
     if(!firstDrawn && imgs[f] && imgs[f].complete){drawFrame(f);firstDrawn=true;curFrame=f;}
@@ -801,34 +845,56 @@ const camCur={px:2.4,py:1.35,pz:3.4,tx:0,ty:0.55};
 
 const portrait=()=>{const r=stageEl.getBoundingClientRect();return r.height>=r.width;};
 const easeIO=t=>t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-function camRest(){ return portrait()?{px:0.2,py:1.15,pz:4.7,tx:0,ty:0.55}:{px:0.3,py:1.5,pz:7.8,tx:0,ty:0.45}; }
+function camRest(){ return portrait()?{px:0.15,py:1.15,pz:5.3,tx:0,ty:0.6}:{px:0.3,py:1.5,pz:7.8,tx:0,ty:0.45}; }
 
+function radialTex(stops){var c=document.createElement('canvas');c.width=c.height=256;var x=c.getContext('2d');
+  var g=x.createRadialGradient(128,128,0,128,128,128);stops.forEach(s=>g.addColorStop(s[0],s[1]));x.fillStyle=g;x.fillRect(0,0,256,256);
+  var t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
 function initGL(){
   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.06;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;
   scene=new THREE.Scene();
   const pm=new THREE.PMREMGenerator(renderer); env=pm.fromScene(new RoomEnvironment(),0.04).texture; scene.environment=env;
   cam=new THREE.PerspectiveCamera(34,16/9,0.01,100);
-  const key=new THREE.DirectionalLight(0xbfe0ff,2.3);key.position.set(3,5,4);scene.add(key);
-  const rim=new THREE.DirectionalLight(0x3B9EFF,3.6);rim.position.set(-4,2,-3);scene.add(rim);
-  const fill=new THREE.DirectionalLight(0x1A6BE0,0.9);fill.position.set(0,-2,3);scene.add(fill);
-  scene.add(new THREE.AmbientLight(0x22344f,0.55));
-  const gg=new THREE.Mesh(new THREE.CircleGeometry(9,48),new THREE.MeshBasicMaterial({color:0x08152c}));
-  gg.rotation.x=-Math.PI/2;gg.position.y=-0.002;scene.add(gg);
+  const key=new THREE.DirectionalLight(0xcfe6ff,2.6);key.position.set(3,5,4);scene.add(key);
+  const rim=new THREE.DirectionalLight(0x3B9EFF,4.6);rim.position.set(-4,2.5,-3);scene.add(rim);
+  const rim2=new THREE.DirectionalLight(0x1A6BE0,3.0);rim2.position.set(4,1,-4);scene.add(rim2);
+  const fill=new THREE.DirectionalLight(0x1A6BE0,0.7);fill.position.set(0,-2,3);scene.add(fill);
+  scene.add(new THREE.AmbientLight(0x1a2c48,0.5));
+  // podium glow bar under the models (no hard floor edge)
+  var glow=new THREE.Mesh(new THREE.PlaneGeometry(16,6),new THREE.MeshBasicMaterial({map:radialTex([[0,'rgba(59,158,255,.55)'],[0.4,'rgba(26,107,224,.18)'],[1,'rgba(0,0,0,0)']]),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  glow.rotation.x=-Math.PI/2;glow.position.y=0.01;scene.add(glow);
   resize();
 }
-const bmat=()=>new THREE.MeshStandardMaterial({color:0x2b3039,metalness:0.55,roughness:0.42});
-function fit(root,h){root.traverse(o=>{if(o.isMesh)o.material=bmat();});
+var shadowTex;
+function bmat(){
+  var m=new THREE.MeshStandardMaterial({color:0x141c2b,metalness:0.9,roughness:0.32,envMapIntensity:1.7});
+  m.userData.glow={value:0};
+  m.onBeforeCompile=function(sh){
+    sh.uniforms.uGlow=m.userData.glow; sh.uniforms.uRim={value:new THREE.Color(0x3B9EFF)};
+    sh.vertexShader='varying vec3 vWN;varying vec3 vVP;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWN=normalize(normalMatrix*normal);vVP=(modelViewMatrix*vec4(transformed,1.)).xyz;');
+    sh.fragmentShader='uniform float uGlow;uniform vec3 uRim;varying vec3 vWN;varying vec3 vVP;\n'+sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\nfloat _f=pow(1.-abs(dot(normalize(vWN),normalize(-vVP))),3.2);gl_FragColor.rgb+=uRim*_f*(0.5+uGlow*2.2);');
+  };
+  return m;
+}
+function fit(root,h){var mats=[];root.traverse(o=>{if(o.isMesh){o.material=bmat();mats.push(o.material);}});
   const b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
   root.position.sub(c);const k=h/Math.max(s.x,s.y,s.z);root.scale.setScalar(k);
-  const nb=new THREE.Box3().setFromObject(root);root.position.y-=nb.min.y;return root;}
+  const nb=new THREE.Box3().setFromObject(root);root.position.y-=nb.min.y;
+  var sz=nb.getSize(new THREE.Vector3());
+  var grp=new THREE.Group();grp.add(root);
+  // contact shadow
+  if(!shadowTex)shadowTex=radialTex([[0,'rgba(0,0,0,.6)'],[0.55,'rgba(0,0,0,.28)'],[1,'rgba(0,0,0,0)']]);
+  var sh=new THREE.Mesh(new THREE.PlaneGeometry(sz.x*k*1.5,sz.z*k*2.2),new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));
+  sh.rotation.x=-Math.PI/2;sh.position.y=0.012;grp.add(sh);
+  grp.userData.mats=mats;return grp;}
 function loadAll(){
   const L=new GLTFLoader();
   const defs=[['moto.glb',1.85,0.5,-3.0],['quad.glb',2.2,-0.5,0],['jetski.glb',2.05,-0.5,3.0]];
   defs.forEach((d,i)=>L.load('dc/models/'+d[0],g=>{
     const o=fit(g.scene,d[1]);o.userData.baseRot=d[2];scene.add(o);
-    M[i]={obj:o,baseRot:d[2],slotX:d[3]};done();},undefined,done));
+    M[i]={obj:o,baseRot:d[2],slotX:d[3],mats:o.userData.mats,glow:0};done();},undefined,done));
 }
 function done(){loaded++;window.__loaded=loaded;if(loaded>=3){ready=true;layout();if(reduce)goLive(true);}}
 function layout(){ const single=portrait();
@@ -842,7 +908,10 @@ function render(){
   if(!renderer){requestAnimationFrame(render);return;}
   if(!dragging){vel*=0.94;targetDragY+=vel;autoY+=live?0.0016:0;}
   dragY+=(targetDragY-dragY)*0.12; const sp=autoY+dragY;
-  M.forEach(m=>{if(m&&m.obj.visible)m.obj.rotation.y=(m.baseRot||0)+sp;});
+  var idle=0.16+0.1*Math.sin(performance.now()/900);
+  M.forEach(function(m,i){ if(!m||!m.obj.visible)return; m.obj.rotation.y=(m.baseRot||0)+sp;
+    var tg=(hoverI===i?1:idle); m.glow+=(tg-m.glow)*0.12;
+    if(m.mats)m.mats.forEach(function(mt){if(mt.userData.glow)mt.userData.glow.value=m.glow;}); });
   if(live){
     const t=easeIO(Math.min(1,(performance.now()-liveT0)/1600)),R=camRest(),F=camFrom;
     cam.position.set(F.px+(R.px-F.px)*t,F.py+(R.py-F.py)*t,F.pz+(R.pz-F.pz)*t);
@@ -858,8 +927,17 @@ function goLive(instant){ if(live)return; live=true; liveT0=performance.now();
   if(!portrait()){if(M[0])M[0].obj.position.x=-9;if(M[2])M[2].obj.position.x=9;}
   if(instant)liveT0=performance.now()-3000;
 }
+var hoverI=-1,ray=new THREE.Raycaster(),ptr=new THREE.Vector2();
 canvas.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;vel=0;try{canvas.setPointerCapture(e.pointerId);}catch(_){}});
-canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;lastX=e.clientX;targetDragY+=dx*0.006;vel=dx*0.006;});
+canvas.addEventListener('pointermove',e=>{
+  if(dragging){const dx=e.clientX-lastX;lastX=e.clientX;targetDragY+=dx*0.006;vel=dx*0.006;return;}
+  if(!cam||e.pointerType!=='mouse'){return;}
+  var r=canvas.getBoundingClientRect();ptr.x=((e.clientX-r.left)/r.width)*2-1;ptr.y=-((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(ptr,cam);var best=-1,bd=1e9;
+  M.forEach(function(m,i){if(!m||!m.obj.visible)return;var hit=ray.intersectObject(m.obj,true);if(hit.length&&hit[0].distance<bd){bd=hit[0].distance;best=i;}});
+  hoverI=best; canvas.style.cursor=best>=0?'grab':'default';
+});
+canvas.addEventListener('pointerleave',()=>{hoverI=-1;});
 addEventListener('pointerup',()=>{dragging=false;});
 function playVideo(){vid.play().then(()=>playCta.classList.add('hide')).catch(()=>{});}
 vid.addEventListener('ended',()=>{if(ready)goLive();else{const t=setInterval(()=>{if(ready){goLive();clearInterval(t);}},120);}});
@@ -928,6 +1006,32 @@ io.observe(showcase);
     var t0=performance.now();(function loop(now){ if(vis){gl.uniform2f(ur,cv.width,cv.height);gl.uniform1f(ut,(now-t0)/1000);gl.drawArrays(gl.TRIANGLES,0,3);} requestAnimationFrame(loop);})(t0);
   }
   document.querySelectorAll('canvas.aurora').forEach(aurora);
+
+  /* ---- spotlight-follow on cards (21st/React-Bits spirit) ---- */
+  document.addEventListener('pointermove',function(e){
+    var c=e.target.closest&&e.target.closest('.card,.cat,.tl,.rev,.stat');
+    if(!c)return;var r=c.getBoundingClientRect();
+    c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');
+  },{passive:true});
+
+  /* ---- gentle scroll-snap / auto-complete to nearest funnel section ---- */
+  var secs=[].slice.call(document.querySelectorAll('#showcase,#calc,#compare,#trust,#reviews,#lead2'));
+  var snapT=null,lastY=window.pageYOffset;
+  function nearestSnap(){
+    var vh=innerHeight, best=null, bd=vh*0.5;
+    secs.forEach(function(s){var t=s.getBoundingClientRect().top;
+      if(t>-vh*0.4 && Math.abs(t)<bd){bd=Math.abs(t);best=s;}});
+    return best;
+  }
+  addEventListener('scroll',function(){
+    clearTimeout(snapT);
+    snapT=setTimeout(function(){
+      if(document.body.matches(':hover')&&Math.abs(window.pageYOffset-lastY)<2)return;
+      var s=nearestSnap(); if(!s)return; var t=s.getBoundingClientRect().top;
+      if(Math.abs(t)>6 && Math.abs(t)<innerHeight*0.42){ s.scrollIntoView({behavior:'smooth',block:'start'}); }
+      lastY=window.pageYOffset;
+    },140);
+  },{passive:true});
 })();
 </script>
 </body>
