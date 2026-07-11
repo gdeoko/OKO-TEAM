@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PandaGo Cargo · техника из Китая под ключ</title>
+<meta name="description" content="Квадроциклы, мотоциклы и гидроциклы из Китая под ключ. Гуанчжоу, Монголия, Москва за 30 дней. Таможенное оформление и доставка внутри.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A1E42; --abyss:#050E1F; --electric:#1A6BE0; --cyan:#3B9EFF;
+  --cyanSoft:#9FD0FF; --porcelain:#F5F8FC; --ink:#7C93B4;
+  --line:rgba(120,160,220,.16); --card:rgba(8,20,42,.55);
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --head:'Unbounded',system-ui,sans-serif;
+  --body:'Golos Text',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:auto}
+body{
+  background:var(--abyss); color:var(--porcelain);
+  font-family:var(--body); -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--mono);letter-spacing:.16em;text-transform:uppercase}
+
+/* ---------- Loader ---------- */
+#loader{
+  position:fixed;inset:0;z-index:100;background:var(--abyss);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  transition:opacity .7s ease;
+}
+#loader.hide{opacity:0;pointer-events:none}
+.ring{width:54px;height:54px;border-radius:50%;
+  border:2px solid rgba(159,208,255,.18);border-top-color:var(--cyan);
+  animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loader .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--ink);text-transform:uppercase}
+#loader .pct{font-family:var(--head);font-weight:700;font-size:20px;color:var(--porcelain)}
+
+/* ---------- Stage (fixed cinematic film) ---------- */
+#stage{position:fixed;inset:0;z-index:1;background:var(--abyss)}
+#film{position:absolute;inset:0;width:100%;height:100%;display:block}
+#grade{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 80% at 50% 42%, rgba(5,14,31,0) 40%, rgba(5,14,31,.55) 100%),
+    linear-gradient(180deg, rgba(5,14,31,.55) 0%, rgba(5,14,31,0) 22%, rgba(5,14,31,0) 55%, rgba(5,14,31,.82) 100%);
+}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* ---------- Overlay chapters ---------- */
+#overlays{position:fixed;inset:0;z-index:3;pointer-events:none}
+.chapter{position:absolute;inset:0;display:flex;padding:clamp(20px,4.5vw,64px);will-change:transform,opacity}
+.wrap{width:100%;max-width:1180px;margin:0 auto;align-self:center}
+.reveal{will-change:transform,opacity;opacity:0}
+.pointer{pointer-events:auto}
+
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--cyanSoft);
+  background:rgba(8,20,42,.5);border:1px solid var(--line);backdrop-filter:blur(8px);
+  padding:8px 13px;border-radius:100px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+
+h1{font-family:var(--head);font-weight:800;line-height:1.02;letter-spacing:-.01em;
+  font-size:clamp(38px,7.4vw,88px);margin:18px 0 0}
+h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.lead{font-size:clamp(15px,2.1vw,20px);color:#D6E2F4;max-width:560px;margin-top:18px;line-height:1.5}
+.sec-title{font-family:var(--head);font-weight:700;font-size:clamp(26px,4.6vw,48px);line-height:1.06;letter-spacing:-.01em}
+.sec-sub{color:var(--cyanSoft);font-size:clamp(14px,1.9vw,17px);max-width:520px;margin-top:12px;line-height:1.5}
+
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--body);font-weight:600;
+  font-size:15px;padding:15px 24px;border-radius:100px;cursor:pointer;border:1px solid transparent;
+  transition:transform .25s ease,box-shadow .25s ease,background .25s ease,filter .25s ease}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--electric);color:#fff;box-shadow:0 10px 30px -8px rgba(26,107,224,.7)}
+.btn-primary:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.btn-glass{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--porcelain);backdrop-filter:blur(10px)}
+.btn-glass:hover{transform:translateY(-2px);border-color:rgba(120,160,220,.4);background:rgba(255,255,255,.09)}
+
+.scrollhint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;flex-direction:column;
+  align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.24em;color:var(--ink);text-transform:uppercase}
+.mouse{width:22px;height:34px;border:1.5px solid rgba(159,208,255,.4);border-radius:12px;position:relative}
+.mouse::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;border-radius:2px;background:var(--cyan);transform:translateX(-50%);animation:wheel 1.5s ease-in-out infinite}
+@keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}60%{opacity:1;transform:translate(-50%,8px)}100%{opacity:0;transform:translate(-50%,10px)}}
+
+/* Step cards */
+.grid{display:grid;gap:16px;margin-top:30px}
+.steps{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;backdrop-filter:blur(10px);
+  transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease}
+.card.pointer:hover{transform:translateY(-4px);border-color:rgba(59,158,255,.45);box-shadow:0 18px 40px -20px rgba(59,158,255,.5)}
+.card .num{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:.16em}
+.card .ic{width:30px;height:30px;margin:14px 0 12px;color:var(--cyan)}
+.card .ic svg{width:100%;height:100%}
+.card h3{font-family:var(--head);font-weight:600;font-size:17px;margin-bottom:6px}
+.card p{font-size:13.5px;color:var(--ink);line-height:1.45}
+
+/* Stats */
+.stats{grid-template-columns:repeat(3,1fr);gap:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 22px;backdrop-filter:blur(10px)}
+.stat .big{font-family:var(--head);font-weight:800;font-size:clamp(34px,6vw,60px);line-height:1;
+  background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat .cap{margin-top:10px;color:var(--cyanSoft);font-size:14px}
+
+/* Catalog */
+.cats{grid-template-columns:repeat(3,1fr);gap:16px}
+.cat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:8px;min-height:186px;transition:transform .3s ease,border-color .3s ease,box-shadow .3s ease}
+.cat.pointer:hover{transform:translateY(-5px);border-color:rgba(59,158,255,.45);box-shadow:0 22px 46px -22px rgba(59,158,255,.55)}
+.cat .ic{width:38px;height:38px;color:var(--cyan)}
+.cat h3{font-family:var(--head);font-weight:700;font-size:21px;margin-top:6px}
+.cat .desc{font-size:13.5px;color:var(--ink);line-height:1.45;flex:1}
+.cat .price{font-family:var(--mono);font-size:13px;color:var(--cyanSoft);letter-spacing:.04em}
+.cat .price b{font-family:var(--head);font-weight:700;font-size:18px;color:var(--porcelain);letter-spacing:0}
+
+/* Final form */
+.final{display:grid;grid-template-columns:1.05fr .95fr;gap:34px;align-items:center}
+.form{background:rgba(8,20,42,.66);border:1px solid var(--line);border-radius:24px;padding:26px;backdrop-filter:blur(14px)}
+.field{margin-bottom:12px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.field input,.field select{width:100%;background:rgba(5,14,31,.6);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;color:var(--porcelain);font-family:var(--body);font-size:15px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--cyan)}
+.field input::placeholder{color:#4d6488}
+.honey{position:absolute;left:-9999px;opacity:0}
+.form .btn{width:100%;justify-content:center;margin-top:6px}
+.formok{display:none;text-align:center;padding:22px 6px}
+.formok.show{display:block}
+.formok .ic{width:52px;height:52px;margin:0 auto 14px;color:var(--cyan)}
+.formok h3{font-family:var(--head);font-weight:700;font-size:22px;margin-bottom:8px}
+.formok p{color:var(--cyanSoft);font-size:14px}
+
+/* Route spine */
+#spine{position:fixed;right:clamp(10px,2vw,26px);top:0;bottom:0;width:34px;z-index:4;pointer-events:none;
+  display:flex;justify-content:center}
+#spine .track{position:absolute;top:14vh;bottom:14vh;width:1px;background:linear-gradient(180deg,transparent,var(--line) 12%,var(--line) 88%,transparent)}
+#spine .spark{position:absolute;left:50%;width:9px;height:9px;border-radius:50%;background:var(--cyan);
+  transform:translate(-50%,-50%);box-shadow:0 0 12px 2px var(--cyan)}
+#spine .tick{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;color:var(--ink);white-space:nowrap;writing-mode:vertical-rl}
+@media(max-width:760px){#spine{display:none}}
+
+/* Top progress */
+#top{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--electric),var(--cyan));z-index:6;width:0}
+
+/* Scroll track (drives scrub) */
+#track{position:relative;z-index:2;height:640vh;pointer-events:none}
+
+/* Footer (normal flow, opaque, covers fixed stage) */
+#foot{position:relative;z-index:5;background:linear-gradient(180deg,var(--abyss),#02080f);
+  border-top:1px solid var(--line);padding:60px clamp(20px,5vw,64px) 40px}
+.foot-in{max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between}
+.foot-brand{font-family:var(--head);font-weight:800;font-size:24px;letter-spacing:.02em}
+.foot-brand .g{color:var(--cyan)}
+.foot p{color:var(--ink);font-size:13.5px;line-height:1.6;max-width:340px;margin-top:10px}
+.foot .col h4{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--cyanSoft);margin-bottom:12px}
+.foot .col a{display:block;color:#C4D3E8;font-size:14px;margin-bottom:9px;transition:color .2s}
+.foot .col a:hover{color:var(--cyan)}
+.foot-bottom{max-width:1180px;margin:34px auto 0;padding-top:20px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;color:var(--ink);font-size:12px;font-family:var(--mono);letter-spacing:.06em}
+
+.build{position:fixed;left:12px;bottom:10px;z-index:7;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  color:rgba(124,147,180,.7);background:rgba(5,14,31,.5);border:1px solid var(--line);padding:4px 8px;border-radius:100px;text-transform:uppercase}
+
+@media(max-width:900px){
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .final{grid-template-columns:1fr;gap:22px}
+  .cats{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .steps{grid-template-columns:1fr 1fr;gap:10px}
+  .card{padding:13px 13px}
+  .card .ic{width:24px;height:24px;margin:9px 0 8px}
+  .card h3{font-size:14.5px}
+  .card p{font-size:11.5px;line-height:1.35}
+  .card .num{font-size:11px}
+  .stats{gap:10px}
+  .stat{padding:16px 16px}
+  .stat .cap{font-size:12.5px}
+  .cat{min-height:0;padding:16px}
+  .grid{margin-top:20px}
+  .lead{font-size:14.5px}
+  .cta{margin-top:22px}
+  .btn{padding:13px 18px;font-size:14px}
+  .chapter{align-items:flex-start;padding-top:10vh}
+  .wrap{align-self:flex-start}
+}
+@media(max-width:380px){
+  .steps{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{opacity:1!important;transform:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="ring"></div>
+  <div class="pct"><span id="pct">0</span>%</div>
+  <div class="lbl">Загрузка кинокадра</div>
+</div>
+
+<div id="stage">
+  <canvas id="film"></canvas>
+  <div id="grade"></div>
+  <div id="grain"></div>
+</div>
+
+<div id="spine">
+  <div class="track"></div>
+  <div class="spark" id="spark"></div>
+  <div class="tick" style="top:15%">Гуанчжоу</div>
+  <div class="tick" style="top:50%">Монголия</div>
+  <div class="tick" style="top:85%">Москва</div>
+</div>
+<div id="top"></div>
+
+<div id="overlays">
+
+  <!-- CH0 HERO -->
+  <section class="chapter" data-a="-0.12" data-b="0.17">
+    <div class="wrap">
+      <div class="reveal" data-a="-0.12" data-b="0.17" data-from="up"><span class="eyebrow"><span class="dot"></span>PandaGo Cargo · Гуанчжоу · Москва</span></div>
+      <h1 class="reveal" data-a="-0.11" data-b="0.17" data-from="up">Техника из Китая<br><span class="grad">под ключ</span></h1>
+      <p class="lead reveal" data-a="-0.09" data-b="0.17" data-from="up">Квадроциклы, мотоциклы и гидроциклы напрямую с завода. Доставка и таможенное оформление за 30 дней. Вы получаете технику у своих дверей.</p>
+      <div class="cta reveal pointer" data-a="-0.07" data-b="0.17" data-from="up">
+        <a class="btn btn-primary" href="#lead" id="heroCalc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg>Рассчитать стоимость</a>
+        <a class="btn btn-glass" href="https://t.me/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1z"/></svg>Написать в Telegram</a>
+      </div>
+    </div>
+    <div class="scrollhint reveal" data-a="-0.12" data-b="0.10" data-from="up"><div class="mouse"></div>Листайте</div>
+  </section>
+
+  <!-- CH1 HOW IT WORKS -->
+  <section class="chapter" data-a="0.17" data-b="0.40">
+    <div class="wrap">
+      <div class="reveal" data-a="0.17" data-b="0.40" data-from="up"><span class="eyebrow"><span class="dot"></span>Как это работает</span></div>
+      <h2 class="sec-title reveal" data-a="0.18" data-b="0.40" data-from="up">Один маршрут, ноль забот</h2>
+      <div class="grid steps">
+        <div class="card reveal pointer" data-a="0.20" data-b="0.40" data-from="up">
+          <div class="num">01</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg></div>
+          <h3>Завод в Гуанчжоу</h3><p>Подбираем модель, проверяем комплектацию и выкупаем напрямую у производителя.</p>
+        </div>
+        <div class="card reveal pointer" data-a="0.22" data-b="0.40" data-from="up">
+          <div class="num">02</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17h18M5 17V9l4-2 4 2v8"/><path d="M13 17V7l4 2v8"/></svg></div>
+          <h3>Порт и погрузка</h3><p>Консолидация груза, контейнер, документы и страховка на всё время пути.</p>
+        </div>
+        <div class="card reveal pointer" data-a="0.24" data-b="0.40" data-from="up">
+          <div class="num">03</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M4 7l8-4 8 4"/><circle cx="12" cy="12" r="2.4"/></svg></div>
+          <h3>Граница и таможня</h3><p>Полное таможенное оформление внутри цены. Никаких скрытых платежей.</p>
+        </div>
+        <div class="card reveal pointer" data-a="0.26" data-b="0.40" data-from="up">
+          <div class="num">04</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 13l9-9 9 9"/><path d="M5 11v9h14v-9"/><path d="M10 20v-5h4v5"/></svg></div>
+          <h3>Двери по РФ</h3><p>Доставляем технику в ваш город и передаём с полным пакетом документов.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH2 STATS -->
+  <section class="chapter" data-a="0.42" data-b="0.60">
+    <div class="wrap">
+      <div class="reveal" data-a="0.42" data-b="0.60" data-from="up"><span class="eyebrow"><span class="dot"></span>Почему нам доверяют</span></div>
+      <h2 class="sec-title reveal" data-a="0.43" data-b="0.60" data-from="up">Проверено маршрутом</h2>
+      <div class="grid stats">
+        <div class="stat reveal" data-a="0.45" data-b="0.60" data-from="scale"><div class="big"><span class="count" data-to="2400">0</span>+</div><div class="cap">поставок техники доведено до дверей</div></div>
+        <div class="stat reveal" data-a="0.47" data-b="0.60" data-from="scale"><div class="big"><span class="count" data-to="30">0</span></div><div class="cap">дней средний срок под ключ</div></div>
+        <div class="stat reveal" data-a="0.49" data-b="0.60" data-from="scale"><div class="big"><span class="count" data-to="100">0</span>%</div><div class="cap">таможня и документы внутри цены</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH3 CATALOG -->
+  <section class="chapter" data-a="0.60" data-b="0.80">
+    <div class="wrap">
+      <div class="reveal" data-a="0.60" data-b="0.80" data-from="up"><span class="eyebrow"><span class="dot"></span>Каталог</span></div>
+      <h2 class="sec-title reveal" data-a="0.61" data-b="0.80" data-from="up">Что везём</h2>
+      <div class="grid cats">
+        <div class="cat reveal pointer" data-a="0.63" data-b="0.80" data-from="left">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17h5l3-6h4M9 11l2-4h4"/></svg></div>
+          <h3>Квадроциклы</h3>
+          <div class="desc">Утилитарные и спортивные ATV для работы и бездорожья.</div>
+          <div class="price">от <b>320 000 ₽</b></div>
+        </div>
+        <div class="cat reveal pointer" data-a="0.65" data-b="0.80" data-from="up">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="17" r="3"/><circle cx="18.5" cy="17" r="3"/><path d="M5.5 17l4-6h6l3 6M9 11l-1-3h4"/></svg></div>
+          <h3>Мотоциклы</h3>
+          <div class="desc">Дорожные, эндуро и спортбайки актуальных серий.</div>
+          <div class="price">от <b>180 000 ₽</b></div>
+        </div>
+        <div class="cat reveal pointer" data-a="0.67" data-b="0.80" data-from="right">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 15c3 2 5 2 9 0s6-2 9 0"/><path d="M5 14l3-5h7l3 4"/><path d="M9 9V6h4"/></svg></div>
+          <h3>Гидроциклы</h3>
+          <div class="desc">Гидроциклы и водная техника с доставкой к сезону.</div>
+          <div class="price">от <b>540 000 ₽</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CH4 FINAL / LEAD -->
+  <section class="chapter" data-a="0.80" data-b="1.10" id="lead">
+    <div class="wrap">
+      <div class="final">
+        <div>
+          <div class="reveal" data-a="0.80" data-b="1.10" data-from="up"><span class="eyebrow"><span class="dot"></span>Заявка</span></div>
+          <h2 class="sec-title reveal" data-a="0.81" data-b="1.10" data-from="up">Оформим под ключ</h2>
+          <p class="sec-sub reveal" data-a="0.82" data-b="1.10" data-from="up">Оставьте контакты. Рассчитаем стоимость выбранной техники с доставкой и таможней и пришлём точную смету в течение дня.</p>
+          <div class="cta reveal" data-a="0.84" data-b="1.10" data-from="up">
+            <a class="btn btn-glass pointer" href="https://t.me/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.7 19.4c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.3-.1-.5-.6-.2L6.4 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5l18.4-7.1c.9-.3 1.6.2 1.3 1z"/></svg>Быстрее в Telegram</a>
+          </div>
+        </div>
+        <div class="form reveal pointer" data-a="0.83" data-b="1.10" data-from="scale">
+          <form id="leadForm" novalidate>
+            <div class="field"><label>Ваше имя</label><input name="name" type="text" placeholder="Как к вам обращаться" required></div>
+            <div class="field"><label>Телефон</label><input name="phone" type="tel" placeholder="+7" required></div>
+            <div class="field"><label>Telegram или e-mail</label><input name="contact" type="text" placeholder="@username или почта"></div>
+            <div class="field"><label>Что интересует</label>
+              <select name="service"><option value="Квадроцикл">Квадроцикл</option><option value="Мотоцикл">Мотоцикл</option><option value="Гидроцикл">Гидроцикл</option><option value="Другое">Другое</option></select>
+            </div>
+            <input class="honey" name="website" tabindex="-1" autocomplete="off">
+            <button class="btn btn-primary" type="submit">Получить смету</button>
+          </form>
+          <div class="formok" id="formok">
+            <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
+            <h3>Заявка принята</h3><p>Мы свяжемся с вами и пришлём смету в течение дня.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="track"></div>
+
+<footer id="foot">
+  <div class="foot-in">
+    <div>
+      <div class="foot-brand">Panda<span class="g">Go</span> Cargo</div>
+      <p>Техника из Китая под ключ. Полный цикл: подбор на заводе, логистика, таможня и доставка до дверей по России.</p>
+    </div>
+    <div class="col">
+      <h4>Техника</h4>
+      <a href="#lead">Квадроциклы</a><a href="#lead">Мотоциклы</a><a href="#lead">Гидроциклы</a>
+    </div>
+    <div class="col">
+      <h4>Контакты</h4>
+      <a href="https://t.me/" target="_blank" rel="noopener">Telegram</a><a href="#lead">Оставить заявку</a>
+    </div>
+  </div>
+  <div class="foot-bottom"><span>PandaGo Cargo</span><span>Гуанчжоу · Монголия · Москва · 30 дней</span></div>
+</footer>
+
+<div class="build">сборка v0.1 · кинопролёт</div>
+
+<script>
+(function(){
+  var N=355, PAD='0000';
+  var canvas=document.getElementById('film'), ctx=canvas.getContext('2d');
+  var imgs=new Array(N), loaded=0, ready=false;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function src(i){var s=(i+1)+'';return 'assets/frames/f_'+PAD.slice(0,4-s.length)+s+'.webp';}
+
+  /* ---- responsive canvas ---- */
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  function resize(){
+    canvas.width=Math.round(innerWidth*dpr);
+    canvas.height=Math.round(innerHeight*dpr);
+    canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+    drawFrame(curFrame,true);
+  }
+  var IW=1152, IH=648;
+  function drawFrame(idx,force){
+    var img=imgs[idx];
+    if(!img||!img.complete){return;}
+    var cw=canvas.width, ch=canvas.height;
+    var scale=Math.max(cw/IW, ch/IH);
+    var w=IW*scale, h=IH*scale, x=(cw-w)/2, y=(ch-h)/2;
+    ctx.drawImage(img,x,y,w,h);
+  }
+
+  /* ---- preload ---- */
+  var pctEl=document.getElementById('pct'), loader=document.getElementById('loader');
+  function bump(){loaded++;var p=Math.round(loaded/N*100);pctEl.textContent=p;
+    if(loaded===N){ready=true;setTimeout(function(){loader.classList.add('hide');},250);}}
+  for(var i=0;i<N;i++){(function(i){var im=new Image();im.onload=bump;im.onerror=bump;im.src=src(i);imgs[i]=im;})(i);}
+
+  /* ---- scrub state ---- */
+  var target=0, cur=0, curFrame=0, firstDrawn=false;
+  var overlays=[].slice.call(document.querySelectorAll('.reveal'));
+  var chapters=[].slice.call(document.querySelectorAll('.chapter'));
+  var spark=document.getElementById('spark'), top=document.getElementById('top');
+
+  function scrollMax(){return Math.max(1,document.getElementById('track').offsetHeight - innerHeight);}
+  function onScroll(){target=Math.min(1,Math.max(0,window.pageYOffset/scrollMax()));}
+
+  function easeOutCubic(t){return 1-Math.pow(1-t,3);}
+  function clamp01(t){return t<0?0:t>1?1:t;}
+
+  function applyReveal(node,p){
+    var a=parseFloat(node.dataset.a), b=parseFloat(node.dataset.b), from=node.dataset.from||'up';
+    var local=(p-a)/(b-a);
+    var op, d;
+    var enter=0.30, exit=0.30;
+    if(local<=0){op=0;d=1;}
+    else if(local>=1){op=0;d=-1;}
+    else if(local<enter){var k=easeOutCubic(local/enter);op=k;d=1-k;}
+    else if(local>1-exit){var k2=easeOutCubic((local-(1-exit))/exit);op=1-k2;d=-k2;}
+    else{op=1;d=0;}
+    var tx=0,ty=0,sc=1;
+    if(from==='up')ty=d*48;
+    else if(from==='left')tx=-d*80;
+    else if(from==='right')tx=d*80;
+    else if(from==='scale'){sc=1-Math.abs(d)*0.12;ty=d*20;}
+    node.style.opacity=op;
+    node.style.transform='translate3d('+tx.toFixed(1)+'px,'+ty.toFixed(1)+'px,0) scale('+sc.toFixed(3)+')';
+  }
+
+  /* counters */
+  var counters=[].slice.call(document.querySelectorAll('.count'));
+  function updateCounters(p){
+    counters.forEach(function(c){
+      var to=+c.dataset.to;
+      var node=c.closest('.reveal');
+      var a=parseFloat(node.dataset.a), b=parseFloat(node.dataset.b);
+      var local=clamp01((p-a)/((b-a)*0.55));
+      c.textContent=Math.round(easeOutCubic(local)*to);
+    });
+  }
+
+  function updateOverlays(p){
+    for(var i=0;i<overlays.length;i++)applyReveal(overlays[i],p);
+    updateCounters(p);
+    if(spark)spark.style.top=(15+p*70)+'%';
+    top.style.width=(p*100)+'%';
+  }
+
+  function loop(){
+    cur+=(target-cur)*0.09;
+    if(Math.abs(target-cur)<0.0002)cur=target;
+    var f=Math.round(cur*(N-1));
+    if(!firstDrawn && imgs[f] && imgs[f].complete){drawFrame(f);firstDrawn=true;curFrame=f;}
+    else if(f!==curFrame){curFrame=f;drawFrame(f);}
+    updateOverlays(cur);
+    requestAnimationFrame(loop);
+  }
+  // QA/deterministic seek hook (harmless in prod)
+  window.__seek=function(p){target=cur=p;var f=Math.round(cur*(N-1));curFrame=f;firstDrawn=true;drawFrame(f,true);updateOverlays(cur);};
+
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',resize);
+  resize();onScroll();
+  if(reduce){
+    // static: draw a mid frame when ready, show all content
+    var iv=setInterval(function(){if(ready){drawFrame(0,true);updateOverlays(0.0);clearInterval(iv);}},100);
+    overlays.forEach(function(n){n.style.opacity=1;n.style.transform='none';});
+  }else{
+    requestAnimationFrame(loop);
+  }
+
+  /* ---- lead form ---- */
+  var form=document.getElementById('leadForm');
+  if(form){form.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(form.website.value){return;} // honeypot
+    if(!form.name.value.trim()||!form.phone.value.trim()){
+      (form.name.value.trim()?form.phone:form.name).focus();return;
+    }
+    document.getElementById('formok').classList.add('show');
+    form.style.display='none';
+    try{window.dispatchEvent(new CustomEvent('lead',{detail:{
+      name:form.name.value,phone:form.phone.value,contact:form.contact.value,service:form.service.value
+    }}));}catch(_){}
+  });}
+})();
+</script>
+</body>
+</html>
