@@ -364,26 +364,31 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
   <div class="foot-bottom"><span>PandaGo Cargo</span><span>Гуанчжоу · Монголия · Москва · 30 дней</span></div>
 </footer>
 
-<div class="build">сборка v0.1 · кинопролёт</div>
+<div class="build">сборка v0.3 · кинопролёт 4K</div>
 
 <script>
 (function(){
-  var N=355, PAD='0000';
+  var PAD='0000';
+  /* orientation-aware frame set: phones (portrait) get a tall crisp crop,
+     wide screens get the landscape set. Each device loads only its set. */
+  var portrait=(window.innerHeight>=window.innerWidth);
+  var SET=portrait?{dir:'port',n:237,w:1080,h:1920}:{dir:'land',n:355,w:1600,h:900};
+  var N=SET.n;
   var canvas=document.getElementById('film'), ctx=canvas.getContext('2d');
   var imgs=new Array(N), loaded=0, ready=false;
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  function src(i){var s=(i+1)+'';return 'assets/frames/f_'+PAD.slice(0,4-s.length)+s+'.webp';}
+  function src(i){var s=(i+1)+'';return 'assets/'+SET.dir+'/f_'+PAD.slice(0,4-s.length)+s+'.webp';}
 
   /* ---- responsive canvas ---- */
-  var dpr=Math.min(window.devicePixelRatio||1,2);
+  var dpr=Math.min(window.devicePixelRatio||1,2.5);
   function resize(){
     canvas.width=Math.round(innerWidth*dpr);
     canvas.height=Math.round(innerHeight*dpr);
     canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
     drawFrame(curFrame,true);
   }
-  var IW=1152, IH=648;
+  var IW=SET.w, IH=SET.h;
   function drawFrame(idx,force){
     var img=imgs[idx];
     if(!img||!img.complete){return;}
@@ -462,7 +467,12 @@ h1 .grad{background:linear-gradient(96deg,var(--porcelain),var(--cyan));-webkit-
   window.__seek=function(p){target=cur=p;var f=Math.round(cur*(N-1));curFrame=f;firstDrawn=true;drawFrame(f,true);updateOverlays(cur);};
 
   window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',resize);
+  var rzT;
+  window.addEventListener('resize',function(){
+    // if orientation flipped, reload to fetch the matching (crisp) frame set
+    if((window.innerHeight>=window.innerWidth)!==portrait){clearTimeout(rzT);rzT=setTimeout(function(){location.reload();},300);return;}
+    resize();
+  });
   resize();onScroll();
   if(reduce){
     // static: draw a mid frame when ready, show all content
