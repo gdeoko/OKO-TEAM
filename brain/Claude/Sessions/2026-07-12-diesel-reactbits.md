@@ -97,3 +97,23 @@ IntersectionObserver пауза оффскрин. Компиляция чист�
 + Galaxy + Aurora + Silk + LiquidChrome + Iridescence + Orb + Lottie(pulse) + SVG-spine.
 В запасе скачаны (не встроены): Beams, DarkVeil, Threads, Ribbons, Particles, LetterGlitch,
 Balatro, Hyperspeed, Dither, Waves, GridMotion.
+
+## v1.5 — скролл-сцена + чёрная дыра + доскролл + ориентация моделей (детальный фидбек Даниэля со скринами)
+Открыл прод, отснял мобайл-скрины Даниэля глазами. Проблемы и фиксы:
+- **Чёрная дыра после фуры**: film-done прятал #stage (последние ~35vh трека = чёрное до
+  шоукейса). Фикс: film-done прячет только #overlays/#spine, последний кадр (фура) остаётся;
+  шоукейс (opaque, z5) наезжает сверху. #shBg (aurora) теперь виден всегда (opacity .4), не чёрный.
+- **Сцена не привязана к скроллу**: переписал шоукейс в sticky-pin. #showcase height:260vh,
+  .show-sticky position:sticky top:0 height:100vh (head сверху, stage flex:1, labels снизу — всё на 1 экране).
+  showProg()=−rect.top/(H−vh). render() по sp: goLive при sp>0.18||vid.ended; камера camFrom(pz3.4)→camRest
+  по fp=(sp-0.12)/0.5; мото/лодка выезжают из ±9 в slot*spread по sl=(sp-0.16)/0.5. Дыхание: bob y=sin,
+  sway=sin*0.14. Убрал таймерный goLive (liveT0). Портрет: тоже трио (spread 0.44, camRest pz8.2).
+- **Доскролл в фильме 1-5**: SNAP=[0.03,0.29,0.51,0.71,0.96]; scroll-idle 180мс → smooth к ближайшей
+  главе если bd<0.17. Флаг snapping чтобы не драться.
+- **Билд-маркер перекрывал карточки на мобиле**: сделал solid-bg pill + pointer-events:none.
+- **Модели стояли боком** → нашёл фронт по angle-grid рендерам (angle.html): quad/moto front=+90°,
+  поставил всем 3/4 фронт baseRot=1.745. **Лодка сначала вышла кормой** (я принял 270°=нос, а это
+  корма; проверил рендером 0/45/90/135/180 — нос bow на +90°) → jetski baseRot=1.745 (нос ведёт).
+- fx-секции 90vh→84vh (меньше пустоты). 3D IO init раньше (threshold .05 + rootMargin 600px).
+QA: Playwright scroll-through, 0 JS-ошибок, overflowX=false. Скрины d_face/m_face/d_jetski_crop.
+Деплой 9f21e9e → v1.5 (маркер «сборка v1.5 · скролл-сцена»). Прод: sticky+doscroll в HTML.
