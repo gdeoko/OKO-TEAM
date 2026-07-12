@@ -132,6 +132,10 @@ OKO нигде не использовать).
 - `stock` — сток-видео/фото. Pexels-видео ✅; Pexels-ФОТО отдаёт 404 (ключ видео-профиля),
   Pixabay режется Cloudflare-челленджем на IP VPS → фото берём из превью Pexels-видео (`pexels-preview`).
 - `search` — интернет-поиск (DuckDuckGo HTML) + краткий ответ Gemini по сниппетам ✅.
+- `voice` — голосовое (edge-tts ru-RU-DmitryNeural → ogg/opus, ffmpeg) ✅. `story` — сторис
+  (картинка FLUX / видео-сток) ✅ (только Босс).
+- `email` — Gmail SMTP, ДВА аккаунта ✅: `okoteam.top@gmail.com` (GMAIL_PASS) и
+  `daniel.okoteam@gmail.com` (GMAIL_PASS2), app-пароли в .env/secrets. Только Босс.
 - `post` — публикация в канал (текст + опц. картинка), ТОЛЬКО по команде Босса.
 Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
 Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
