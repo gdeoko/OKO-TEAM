@@ -166,6 +166,16 @@ send_message работают.
 видео, поиск людей, хантер). Получен через OAuth Implicit Flow (client_id 2685278, response_type=token) —
 парольный вход VK режет. Обновить токен: тот же authorize-URL в браузере Даниэля.
 
+## 1г. YouTube (core/youtube.py) — агент в канале
+
+OAuth канала «ДАНИЭЛЬ | ОКО» (id UCZ67wtnjlDqMdjM0wlukKtQ, 4790 подписчиков) через
+refresh-token. Ключи: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (.env/secrets намертво).
+Проект Google Cloud `oko-youtube-502212` (аккаунт daniel.piano.2002@gmail.com), OAuth-клиент
+Web (redirect developers.google.com/oauthplayground), scope youtube.force-ssl + youtube.upload,
+он в тест-юзерах. Агент: my_channel, search, add_comment, upload_video. Действие
+`video` с platform=youtube (скачать по ссылке → залить на канал, privacy настраивается).
+Обновить токен: authorize-URL (тот же client) → code → обмен на refresh.
+
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
 Заданы в настройках cloud environment «OKO TEAM» на claude.ai. Даниэль присылал
