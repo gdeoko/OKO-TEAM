@@ -136,3 +136,24 @@ VECTR (светлая изо-диорама), CIRO (тёмные летающи�
   Маслянистый скролл: демпфер smP+=(rawSp-smP)*0.13, камера/фанаут по smP (goLive по rawSp).
 QA: Playwright 0 JS-ошибок, overflowX=false обе вьюхи. Скрины d_scene_up/m_scene_up —
 отражения+туман+глянец рендерятся. Деплой 7b3ec50 → v1.7. Модели лицом (baseRot 1.745 все три).
+
+## v1.9-v2.0 — мобильная обрезка + новый UI-язык карточек (Даниэль: «карточки не нравятся, найди другое в интеграциях»)
+- **v1.9 мобильная обрезка карточек** (Даниэль требовал 3+ раза): главы фильма — fixed 100vh
+  оверлеи, контент > экрана резался. На ≤380px шаги шли в 1 колонку (4 стопкой). Фикс:
+  `.steps` 2×2 на ВСЕХ мобилах (убрал 380-правило 1fr), каталог `.cat` компактные горизонт.
+  строки (flex-row, desc на всю ширину order:3), `.chapter` центр + padding 5vh. Проверил
+  360/390 — всё влезает (03/04 не видны на 0.28 = staggered-раскрытие, не баг).
+  Оживил: `.btn-primary` пульс-свечение (ctaGlow 3s), дышащие рамки (позже заменил на beam).
+- **v2.0 новый UI карточек через 21st.dev** (Даниэль не любит стеклянные карточки):
+  21st.dev free = 2 компонента/день. Вытащил **Border Beam** (dillionverma/Magic UI) —
+  бегущий по рамке светящийся луч (offset-path rect + mask, портировал в vanilla `.beamL`).
+  JS-инжект `.beamL` в `.cat/.stat/#calc .result/#calc .panel/#lead2 .form/.route-panel/.bar.win`
+  (11 панелей). Облегчил базу карточек (было тяжёлое стекло rgba .66 → .5, рамка мягче .32),
+  убрал borderBreath. offset-path поддержан (CSS.supports=true). Каталог 21st: aceternity/
+  glowing-effect, bento-grid, dillionverma/shine-border, animated-shiny-text, number-ticker,
+  aceternity/spotlight — в top.tsv (можно тянуть по 2/день или membership).
+Деплой 221e6ac → v2.0. QA 0 ошибок обе вьюхи. 
+TODO из фидбека Даниэля (не сделано, крупное): (1) explode как scroll-scrubbed image-seq
+вместо video (он про глюки MP4 при скролле — прав, film уже webp-seq, но explode ещё video);
+(2) новое HG-видео переход фура→квадрик в 4K; (3) NeRF/3DGS идея (Luma/Polycam→.ply→Spline)
+— тяжёлый эксперимент, отложено. Интеграции-паспорт: OKO_ACCESSES.md (секреты в код НЕ вставлять).
