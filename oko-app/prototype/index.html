@@ -614,6 +614,42 @@ label.f-lab{display:block}
 .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--lime);border:1.5px solid var(--surface);display:none}
 #notifsView{position:fixed;inset:0;z-index:73;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #notifsView.open{transform:none}
+/* Админка */
+#adminView{position:fixed;inset:0;z-index:75;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#adminView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#adminView{transition:none}}
+.adm-tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.adm-tabs::-webkit-scrollbar{display:none}
+.adm-tab{flex-shrink:0;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);white-space:nowrap}
+.adm-tab.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.adm-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:8px}
+.adm-kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
+.adm-kpi b{display:block;font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;color:var(--accent);letter-spacing:.02em}
+.adm-kpi small{display:block;font-size:11px;color:var(--dim);margin-top:4px}
+.adm-kpi i{font-style:normal;font-size:10.5px;font-weight:700}
+.adm-kpi i.up{color:var(--lime)}.adm-kpi i.down{color:#ff5f5f}
+.adm-sec-h{font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 9px}
+.adm-row{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.adm-ava{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a3d10,#0c1204 70%);border:1px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.adm-main{flex:1;min-width:0}
+.adm-main b{font-size:13.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-main small{font-size:11.5px;color:var(--dim)}
+.adm-tag{flex-shrink:0;font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:.03em}
+.adm-tag.free{background:var(--raised);color:var(--dim)}
+.adm-tag.paid{background:var(--lime-dim);color:var(--accent)}
+.adm-tag.wait{background:rgba(255,180,0,.14);color:#ffb400}
+.adm-tag.ok{background:var(--lime);color:#000}
+.adm-tag.no{background:rgba(255,95,95,.14);color:#ff5f5f}
+.adm-acts{display:flex;gap:7px;margin-top:9px}
+.adm-btn{font-size:12px;font-weight:600;padding:7px 12px;border-radius:9px;border:1px solid var(--border);background:var(--raised);color:var(--text)}
+.adm-btn.pri{background:var(--lime);color:#000;border-color:var(--lime)}
+.adm-btn.dng{color:#ff5f5f;border-color:rgba(255,95,95,.3)}
+.adm-flag{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border)}
+.adm-flag .adm-main small{line-height:1.4}
+.adm-log{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.5}
+.adm-log .lt{display:flex;justify-content:space-between;gap:8px;margin-bottom:3px}
+.adm-log .lt b{font-size:12px;color:var(--accent)}
+.adm-log .lt span{font-size:10.5px;color:var(--dim);flex-shrink:0}
 .nt-group{font-size:11.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:14px 2px 8px}
 .nt-item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 10px;border-radius:var(--r-md);text-align:left;transition:background .15s;position:relative}
 .nt-item.unread{background:var(--lime-dim)}
@@ -958,6 +994,15 @@ main>.screen{position:relative;z-index:1}
   </div>
   <div class="sv-body" id="notifsBody"></div>
 </div>
+<div id="adminView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="closeAdmin()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Админка OKO</b>
+    <span class="chip on" style="font-size:9px">LIVE</span>
+  </div>
+  <div class="adm-tabs" id="admTabs"></div>
+  <div class="sv-body" id="admBody"></div>
+</div>
 <div id="systemView">
   <div class="sv-head">
     <button class="ep-cancel" onclick="closeSystemView()"><svg class="i"><use href="#i-back"/></svg></button>
@@ -986,7 +1031,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.39</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.40</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1176,6 +1221,7 @@ main>.screen{position:relative;z-index:1}
           <button class="prow" onclick="openSettings('notif')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="openSettings('privacy')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
           <button class="prow" onclick="openSheet('progress')"><svg class="i"><use href="#i-flag"/></svg> Прогресс сборки <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" id="prowAdmin" onclick="openAdmin()"><svg class="i"><use href="#i-bolt"/></svg> Админка OKO <span class="chip" style="font-size:9px;margin-left:auto">владелец</span></button>
           <button class="prow" style="border-bottom:none" onclick="doLogout()"><svg class="i"><use href="#i-logout"/></svg> Выйти</button>
         </div>
 
@@ -1767,6 +1813,150 @@ let NOTIFS = [
 function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
 function openNotifs(){ renderNotifs(); document.getElementById('notifsView').classList.add('open'); }
 function closeNotifs(){ document.getElementById('notifsView').classList.remove('open'); }
+
+/* ===== Админка OKO (владелец) ===== */
+const ADMIN_TABS = [
+  {k:'overview', t:'Обзор'}, {k:'users', t:'Пользователи'}, {k:'pay', t:'Платежи'},
+  {k:'partners', t:'Партнёрка'}, {k:'moder', t:'Модерация'}, {k:'agents', t:'ИИ-агенты'}, {k:'flags', t:'Флаги'},
+];
+let admTab = 'overview';
+const ADMIN = {
+  kpi: {users:1284, dau:412, mrr:3960, payouts:842, moder:7, churn:2.1},
+  users: [
+    {n:'Марина К.', h:'@marina_smm', tier:'PRO', paid:true, when:'сегодня'},
+    {n:'Игорь В.', h:'@igorvideo', tier:'BUSINESS', paid:true, when:'вчера'},
+    {n:'Гость-8842', h:'аноним', tier:'FREE', paid:false, when:'2 дня назад'},
+    {n:'Алина Р.', h:'@alina.grow', tier:'START', paid:true, when:'3 дня назад'},
+    {n:'Гость-1197', h:'аноним', tier:'FREE', paid:false, when:'4 дня назад'},
+  ],
+  pay: [
+    {n:'Игорь В.', sum:'$199', plan:'BUSINESS · год', st:'ok', when:'вчера 14:20'},
+    {n:'Марина К.', sum:'$49', plan:'PRO · мес', st:'ok', when:'сегодня 09:11'},
+    {n:'Пётр С.', sum:'$15', plan:'START · мес', st:'wait', when:'сегодня 10:02'},
+    {n:'Алина Р.', sum:'$39', plan:'PRO · год', st:'ok', when:'3 дня назад'},
+  ],
+  partners: [
+    {n:'Марина К.', h:'@marina_smm', ref:34, earn:'$412', st:'ok'},
+    {n:'Дмитрий О.', h:'@dmitrymarketing', ref:19, earn:'$228', st:'wait'},
+    {n:'Алина Р.', h:'@alina.grow', ref:8, earn:'$96', st:'ok'},
+  ],
+  moder: [
+    {t:'Объявление: «Монтаж Reels под ключ»', by:'@editor_pro', kind:'Биржа'},
+    {t:'Ролик на премодерации: фитнес-хук 15 сек', by:'@fitmax', kind:'Видео'},
+    {t:'Объявление: «Таргет ВК + запуск»', by:'@target_alena', kind:'Биржа'},
+  ],
+  agents: [
+    {a:'Поддержка', q:'Как активировать партнёрку?', esc:false, when:'2 мин назад'},
+    {a:'Поддержка', q:'Верните деньги за подписку', esc:true, when:'8 мин назад'},
+    {a:'Ассистент', q:'Утренний отчёт за сутки', esc:false, when:'сегодня 09:00'},
+    {a:'Поддержка', q:'Не приходит код входа', esc:true, when:'21 мин назад'},
+  ],
+  flags: [
+    {t:'Контент-завод', d:'Мини-апп конвейера роликов (Business/Scale)', on:true},
+    {t:'Видео-премодератор на Gemini', d:'Реальный анализ загруженных роликов', on:false},
+    {t:'Telegram Login', d:'Вход через @okoappbot initData', on:false},
+    {t:'Оплата Lava.top', d:'Вебхуки → мгновенная активация тарифа', on:false},
+    {t:'Звонки LiveKit', d:'Аудио/видео 1-на-1 и групповые', on:false},
+  ],
+};
+function openAdmin(){ admTab='overview'; renderAdmin(); document.getElementById('adminView').classList.add('open'); }
+function closeAdmin(){ document.getElementById('adminView').classList.remove('open'); }
+function admGo(k){ admTab=k; renderAdmin(); }
+function renderAdmin(){
+  document.getElementById('admTabs').innerHTML = ADMIN_TABS.map(t=>
+    `<button class="adm-tab ${admTab===t.k?'on':''}" onclick="admGo('${t.k}')">${t.t}</button>`).join('');
+  const b = document.getElementById('admBody');
+  b.innerHTML = ({overview:admOverview, users:admUsers, pay:admPay, partners:admPartners, moder:admModer, agents:admAgents, flags:admFlags}[admTab])();
+}
+function admOverview(){
+  const k = ADMIN.kpi;
+  const kpi = (v,l,delta,up)=>`<div class="adm-kpi"><b>${v}</b><small>${l} ${delta?`<i class="${up?'up':'down'}">${delta}</i>`:''}</small></div>`;
+  return `
+    <div class="adm-kpis">
+      ${kpi(k.users.toLocaleString('ru'),'Пользователей','+38 за нед',true)}
+      ${kpi(k.dau,'Активных сегодня','+12%',true)}
+      ${kpi('$'+k.mrr.toLocaleString('ru'),'MRR (мес)','+9%',true)}
+      ${kpi('$'+k.payouts,'К выплате партнёрам','',true)}
+      ${kpi(k.moder,'На модерации','',true)}
+      ${kpi(k.churn+'%','Отток','−0.4пп',true)}
+    </div>
+    <div class="adm-sec-h">Быстрые действия</div>
+    <div class="adm-acts" style="flex-wrap:wrap">
+      <button class="adm-btn pri" onclick="admGo('moder')">Модерация (${k.moder})</button>
+      <button class="adm-btn" onclick="admGo('pay')">Платежи</button>
+      <button class="adm-btn" onclick="admGo('partners')">Выплаты</button>
+      <button class="adm-btn" onclick="admGo('agents')">Логи агентов</button>
+    </div>
+    <div class="adm-sec-h">Сводка за сутки</div>
+    <div class="adm-log"><div class="lt"><b>Регистрации</b><span>24ч</span></div>+38 новых, из них 6 по реф-ссылкам</div>
+    <div class="adm-log"><div class="lt"><b>Выручка</b><span>24ч</span></div>3 оплаты на $263 · партнёрам начислено $31</div>
+    <div class="adm-log"><div class="lt"><b>ИИ-поддержка</b><span>24ч</span></div>47 диалогов, 5 эскалаций в @okohelp, 0 выдуманных фактов</div>`;
+}
+function admUsers(){
+  return `<div class="adm-sec-h">Последние пользователи</div>` + ADMIN.users.map(u=>`
+    <div class="adm-row">
+      <span class="adm-ava">${esc(u.n[0])}</span>
+      <span class="adm-main"><b>${esc(u.n)}</b><small>${esc(u.h)} · ${esc(u.when)}</small></span>
+      <span class="adm-tag ${u.paid?'paid':'free'}">${esc(u.tier)}</span>
+    </div>`).join('') +
+    `<div class="adm-acts"><button class="adm-btn" onclick="toast('Экспорт CSV — на бэкенде')">Экспорт CSV</button></div>`;
+}
+function admPay(){
+  return `<div class="adm-sec-h">Платежи</div>` + ADMIN.pay.map(p=>`
+    <div class="adm-row">
+      <span class="adm-ava">${esc(p.n[0])}</span>
+      <span class="adm-main"><b>${esc(p.n)} · ${esc(p.sum)}</b><small>${esc(p.plan)} · ${esc(p.when)}</small></span>
+      <span class="adm-tag ${p.st==='ok'?'ok':'wait'}">${p.st==='ok'?'проведён':'ожидает'}</span>
+    </div>`).join('');
+}
+function admPartners(){
+  return `<div class="adm-sec-h">Партнёры и выплаты</div>` + ADMIN.partners.map(p=>`
+    <div class="adm-row">
+      <span class="adm-ava">${esc(p.n[0])}</span>
+      <span class="adm-main"><b>${esc(p.n)} · ${esc(p.earn)}</b><small>${esc(p.h)} · ${p.ref} рефералов</small></span>
+      <button class="adm-btn ${p.st==='wait'?'pri':''}" onclick="toast('${p.st==='wait'?'Выплата отправлена (демо)':'Уже выплачено'}')">${p.st==='wait'?'Выплатить':'Оплачено'}</button>
+    </div>`).join('');
+}
+function admModer(){
+  if(!ADMIN.moder.length) return `<div class="adm-sec-h">Очередь модерации</div><p class="dim" style="font-size:13px">Пусто — всё проверено.</p>`;
+  return `<div class="adm-sec-h">Очередь модерации (${ADMIN.moder.length})</div>` + ADMIN.moder.map((m,i)=>`
+    <div class="adm-row" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;align-items:center;gap:11px">
+        <span class="adm-tag ${m.kind==='Видео'?'wait':'paid'}">${esc(m.kind)}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(m.t)}</b><small>${esc(m.by)}</small></span>
+      </div>
+      <div class="adm-acts">
+        <button class="adm-btn pri" onclick="admResolve(${i},1)">Одобрить</button>
+        <button class="adm-btn dng" onclick="admResolve(${i},0)">Отклонить</button>
+      </div>
+    </div>`).join('');
+}
+function admResolve(i, ok){
+  const m = ADMIN.moder[i]; if(!m) return;
+  ADMIN.moder.splice(i,1);
+  ADMIN.kpi.moder = ADMIN.moder.length;
+  toast(ok?'Одобрено и опубликовано':'Отклонено, автор уведомлён');
+  renderAdmin();
+}
+function admAgents(){
+  return `<div class="adm-sec-h">Логи ИИ-агентов</div>` + ADMIN.agents.map(a=>`
+    <div class="adm-log">
+      <div class="lt"><b>${esc(a.a)}</b><span>${esc(a.when)}</span></div>
+      «${esc(a.q)}» ${a.esc?'<span class="adm-tag no" style="margin-left:4px">эскалация → @okohelp</span>':'<span class="adm-tag ok" style="margin-left:4px">отвечено</span>'}
+    </div>`).join('');
+}
+function admFlags(){
+  return `<div class="adm-sec-h">Фича-флаги</div>` + ADMIN.flags.map((f,i)=>`
+    <div class="adm-flag">
+      <span class="adm-main"><b>${esc(f.t)}</b><small>${esc(f.d)}</small></span>
+      <span class="switch ${f.on?'on':''}" onclick="admToggleFlag(${i})"><i></i></span>
+    </div>`).join('');
+}
+function admToggleFlag(i){
+  ADMIN.flags[i].on = !ADMIN.flags[i].on;
+  toast(ADMIN.flags[i].on?'Флаг включён':'Флаг выключен');
+  renderAdmin();
+}
 function markAllRead(){ NOTIFS.forEach(n=>n.unread=false); renderNotifs(); updateNotifDot(); }
 function renderNotifs(){
   const groups = {};
@@ -3344,7 +3534,8 @@ const PROGRESS = [
   {s:'wip',  t:'Оплата и тарифы', d:'В прототипе: выбор тарифа, период со скидками (−10/−15/−20%), способы оплаты (карта РФ/крипта/Lava.top), мгновенная активация статуса. Дальше — реальные платёжки и вебхуки.'},
   {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
   {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
-  {s:'todo', t:'Запуск 15.07', d:'Прогон сценариев, лимиты, антиспам, админка, деплой продакшена.'},
+  {s:'wip',  t:'Админка владельца', d:'Каркас готов в прототипе: обзор с KPI (пользователи, MRR, выплаты, отток), пользователи, платежи, партнёрка/выплаты, очередь модерации, логи ИИ-агентов, фича-флаги. Дальше — на живых данных Supabase.'},
+  {s:'todo', t:'Запуск 15.07', d:'Прогон сценариев, лимиты, антиспам, деплой продакшена.'},
 ];
 function renderProgress(){
   const ico = {done:'check', wip:'clock', todo:'clock'};
