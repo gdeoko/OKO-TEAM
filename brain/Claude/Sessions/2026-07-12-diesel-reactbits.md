@@ -234,3 +234,9 @@ QA d_seq_ab_a/ab_b/explode/3d: 0 ошибок. Деплой 23bb103 → v2.3. П
 - Видео всё ещё используются (фильм+мост+разлёт → 3D). Лаг фильма: dpr 1.5.
 - QA-грабли: headless swiftshader рендерит ~1-2 кадра/сек → демпфер smP не сходится за таймаут, веер/камера «застревали» на скринах (НЕ баг сайта). Решение: window.__snap() форсит smP=showProg перед скриншотом. Оставил __snap в проде (безвреден).
 - Живо v2.9 forest-beach-360, коммит 2b1ef65.
+
+## v3.0 — реалистичные материалы техники (после «делай что нужно»)
+- Пробой GLB (_probe.html + Playwright): каждая модель = ОДИН меш (Mesh10, 30-43k верт), материал белый uniform, БЕЗ текстур. Раздельная покраска по мешам (приём PandaGo three-scene.js: lum-категоризация) НЕВОЗМОЖНА — 1 меш.
+- Решение: дифференциация материала ШЕЙДЕРОМ по высоте в bmat.onBeforeCompile. Varying vLY=(position.y-yMin)/(yMax-yMin) (границы geometry boundingBox через userData.yb, ставятся в fit). Низ (vLY<0.42, smoothstep 0.42..0.18): roughnessFactor→0.85, metalnessFactor→0.08, цвет×0.32 = матовая тёмная РЕЗИНА (шины). Верх = глянцевая крашеная (physical+clearcoat). Инжект в roughnessmap_fragment/metalnessmap_fragment/dithering_fragment.
+- Результат: техника выглядит реально (чёрные резиновые шины + глянцевый корпус), не однородные хром-кляксы. QA мобила+десктоп ок, консоль чист, overflow нет.
+- Живо v3.0 forest-beach-360, коммит 25402a0.
