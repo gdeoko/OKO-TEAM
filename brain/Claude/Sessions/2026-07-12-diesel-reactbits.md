@@ -117,3 +117,22 @@ Balatro, Hyperspeed, Dither, Waves, GridMotion.
 - fx-секции 90vh→84vh (меньше пустоты). 3D IO init раньше (threshold .05 + rootMargin 600px).
 QA: Playwright scroll-through, 0 JS-ошибок, overflowX=false. Скрины d_face/m_face/d_jetski_crop.
 Деплой 9f21e9e → v1.5 (маркер «сборка v1.5 · скролл-сцена»). Прод: sticky+doscroll в HTML.
+
+## v1.6-v1.7 — автономный режим «сделай шикарно» (Даниэль дал 5ч, «не цепляйся к правкам, ты режиссёр»)
+Даниэль прислал референсы (TikTok @webloved/weblove — курс «строю с Claude+Lovable», $20/мес):
+VECTR (светлая изо-диорама), CIRO (тёмные летающие банки с отражениями+scroll), Cartier
+(кино-сцена «ателье» с часами-героем, золотые цилиндры, силуэты). Спросил, нужны ли ему курсы.
+Ответ: НЕТ — это те же приёмы (Three.js, WebGL, scroll-scrub, glossy-материалы, кино-свет),
+что уже применяю. Доказал делом.
+- **v1.6**: убрал ОБА автоскролла (filmSnap + funnel scrollIntoView) — Даниэль: «лагают
+  ускоряют». Починил футер: CSS был `.foot .col a` а элемент `id="foot"` (нет класса .foot)
+  → ссылки инлайн слипались «КвадроциклыМотоциклы» → заменил на `#foot .col a/h4`. Вычистил
+  ВСЕ инструкции-объяснялки (Листайте/Двигайте/Смотрите/Соберите и рассмотрите/выезжает из
+  фуры) → продающий копирайт. Кнопки .btn-glass ярче (cyan-tint). Отступы секций 11vh→8.5vh.
+- **v1.7 (уровень референсов)**: 3D-сцена — glossy mirror-reflections под каждой моделью
+  (reflGrp = clone(root), scale.y=-1, faded 0.22 opacity, DoubleSide; без жёсткого пола чтоб
+  не перекрывал), FogExp2(0x050c1a,0.052) для глубины, драм-свет (key 3.2 + rim 6.0 + rim2 4.0
+  + SpotLight сверху 2.4), материалы стеклянные (metalness 1.0, roughness 0.24, envMap 2.4).
+  Маслянистый скролл: демпфер smP+=(rawSp-smP)*0.13, камера/фанаут по smP (goLive по rawSp).
+QA: Playwright 0 JS-ошибок, overflowX=false обе вьюхи. Скрины d_scene_up/m_scene_up —
+отражения+туман+глянец рендерятся. Деплой 7b3ec50 → v1.7. Модели лицом (baseRot 1.745 все три).
