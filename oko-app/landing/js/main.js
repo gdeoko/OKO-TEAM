@@ -18,9 +18,12 @@
     gsap.ticker.add(t=>lenis.raf(t*1000)); gsap.ticker.lagSmoothing(0);
   }
 
-  // ---- progress bar ----
+  // ---- progress bar + nav bg ----
   const prog=document.getElementById('prog');
+  const nav=document.querySelector('.nav');
   ScrollTrigger.create({ start:0, end:'max', onUpdate:s=>{ prog.style.width=(s.progress*100)+'%'; } });
+  ScrollTrigger.create({ start:'top -40', end:'max', onUpdate:s=>{ nav&&nav.classList.toggle('scrolled', s.scroll()>40); },
+    onLeaveBack:()=>nav&&nav.classList.remove('scrolled') });
 
   // ---- custom cursor ----
   const cur=document.getElementById('cur'), curr=document.getElementById('curr');

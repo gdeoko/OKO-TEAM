@@ -13,6 +13,7 @@
   uniform vec2  uMouse;   // -1..1 look direction
   uniform float uOpen;    // 0..1 eyelid open
   uniform float uZoom;    // 0..1 dive into pupil
+  uniform float uScale;   // >1 shrinks eye (mobile)
   uniform float uDpr;
 
   // hash / noise
@@ -34,7 +35,7 @@
     float dive = smoothstep(0.0,1.0,uZoom);
 
     // camera dive into pupil: scale space up as we zoom
-    float sc = mix(1.0, 0.06, dive);
+    float sc = mix(uScale, 0.06, dive);
     vec2 look = uMouse*0.045*(1.0-dive);
     vec2 p = (uv)*sc - look;
 
@@ -131,7 +132,8 @@
 
   const U={ res:gl.getUniformLocation(prog,'uRes'), time:gl.getUniformLocation(prog,'uTime'),
     mouse:gl.getUniformLocation(prog,'uMouse'), open:gl.getUniformLocation(prog,'uOpen'),
-    zoom:gl.getUniformLocation(prog,'uZoom'), dpr:gl.getUniformLocation(prog,'uDpr') };
+    zoom:gl.getUniformLocation(prog,'uZoom'), scale:gl.getUniformLocation(prog,'uScale'), dpr:gl.getUniformLocation(prog,'uDpr') };
+  function eyeScale(){ return window.innerWidth<=640 ? 1.55 : (window.innerWidth<=900 ? 1.15 : 1.0); }
 
   let DPR=Math.min(window.devicePixelRatio||1, 1.8);
   if(window.innerWidth<720) DPR=Math.min(DPR,1.5);
@@ -162,6 +164,7 @@
     gl.uniform2f(U.mouse, mouse.x, mouse.y);
     gl.uniform1f(U.open, window.OKOeye.open);
     gl.uniform1f(U.zoom, window.OKOeye.zoom);
+    gl.uniform1f(U.scale, eyeScale());
     gl.uniform1f(U.dpr, DPR);
     gl.drawArrays(gl.TRIANGLES,0,3);
     requestAnimationFrame(frame);
