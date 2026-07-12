@@ -78,3 +78,22 @@ rbCanvases=7 (все получили контекст), calcTotal считае�
 - Калькулятор: сумма рвалась «488 94/0 ₽» → white-space:nowrap + clamp 28..52.
 - Лоадер ждал ВСЕ 355 кадров → reveal после 18% (frame0 ready), остальное фоном.
 Деплой 7d267da → v1.3. Прод проверен: маркер + скрим убран (grep old_scrim=0).
+
+## v1.4 — полноэкранные WebGL-сцены посередине (Даниэль: «нет webgl фона посередине»)
+Портировал ещё 2 больших живых шейдера React Bits в движок RB (Python-инъекция, чтобы
+без опечаток; правил vec3-resolution через uniform3f, передачу tt в setter, bool через
+uniform1i):
+- **Galaxy** (звёздное поле, snoise-звёзды, twinkle) — новая full-screen секция #fxGalaxy
+  ПОСЛЕ шоукейса: «От завода в Гуанчжоу до вашего двора» + бейджи 30/2400+/100%.
+- **Orb** (светящееся кольцо, snoise3) — full-screen #fxOrb ПЕРЕД формой: CTA «Ваша
+  техника уже в пути». Грабли: hue=205 увёл в тёплый (бренд запрещает тёплое) → hue=-28
+  = холодный сине-циан.
+CSS `.fx`: 100vw / 90vh, canvas full-opacity (шейдер — герой), радиальный скрим ::after,
+sheen-заголовок, бейджи. Обе добавлены в scroll-snap. 9 WebGL-контекстов всего,
+IntersectionObserver пауза оффскрин. Компиляция чистая (qcheck: 0 shader errs).
+Деплой b8e72f1 → v1.4. Прод: маркер + data-shader galaxy/orb присутствуют.
+
+Живых эффектов на сайте сейчас: film-scroll (webp seq) + video→3D(GLB)+Lightning-вспышка
++ Galaxy + Aurora + Silk + LiquidChrome + Iridescence + Orb + Lottie(pulse) + SVG-spine.
+В запасе скачаны (не встроены): Beams, DarkVeil, Threads, Ribbons, Particles, LetterGlitch,
+Balatro, Hyperspeed, Dither, Waves, GridMotion.
