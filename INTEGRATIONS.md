@@ -136,6 +136,9 @@ OKO нигде не использовать).
   (картинка FLUX / видео-сток) ✅ (только Босс).
 - `email` — Gmail SMTP, ДВА аккаунта ✅: `okoteam.top@gmail.com` (GMAIL_PASS) и
   `daniel.okoteam@gmail.com` (GMAIL_PASS2), app-пароли в .env/secrets. Только Босс.
+- `video` — скачать по ссылке и репостнуть (yt-dlp, 1000+ площадок, ≤45MB) ✅. curl_cffi
+  для CF-сайтов. `find` — поиск людей/каналов в Telegram (contacts.Search), список @ников
+  без авто-рассылки (Босс). Полный набор действий агента см. core/prompts ASSISTANT_JSON_FORMAT.
 - `post` — публикация в канал (текст + опц. картинка), ТОЛЬКО по команде Босса.
 Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
 Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
