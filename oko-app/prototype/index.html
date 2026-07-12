@@ -237,6 +237,29 @@ nav#tabs .nav-logo{display:none}
 .ma-card .foot{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
 .ma-card .foot svg.i{width:16px;height:16px;color:var(--dim)}
 .ma-view{display:none}
+/* Контент-завод */
+.chip.on{color:#000;background:var(--lime)}
+.fx-pills{display:flex;flex-wrap:wrap;gap:8px}
+.fx-pill{font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--text);transition:.15s}
+.fx-pill.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.fx-pill:active{transform:scale(.96)}
+.fx-stats{display:flex;gap:10px;margin-top:14px}
+.fx-stats>div{flex:1;text-align:center;background:var(--raised);border-radius:12px;padding:10px 6px}
+.fx-stats b{display:block;font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;color:var(--accent)}
+.fx-stats small{display:block;font-size:10.5px;color:var(--dim);margin-top:3px}
+.fx-list{display:flex;flex-direction:column;gap:8px}
+.fx-row{display:flex;align-items:center;gap:11px;background:var(--raised);border-radius:12px;padding:10px 12px;border:1px solid transparent;transition:.2s}
+.fx-row.ready{border-color:rgba(154,255,0,.35)}
+.fx-row.pub{border-color:var(--lime);background:var(--lime-dim)}
+.fx-num{width:22px;height:22px;flex-shrink:0;border-radius:50%;background:var(--bg);color:var(--dim);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.fx-idea{flex:1;font-size:13px;line-height:1.35}
+.fx-idea small{display:flex;align-items:center;gap:5px;margin-top:6px;flex-wrap:wrap}
+.fx-idea small b{font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.fx-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0}
+.fx-dot.done{background:var(--lime)}
+.fx-dot.live{background:var(--lime);animation:fxPulse 1s ease-in-out infinite}
+@keyframes fxPulse{0%,100%{opacity:.4;transform:scale(.85)}50%{opacity:1;transform:scale(1.25)}}
+.fx-badge{flex-shrink:0;font-size:10px;font-weight:700;color:#000;background:var(--lime);border-radius:99px;padding:3px 9px;text-transform:uppercase;letter-spacing:.04em}
 .progress{height:6px;background:var(--raised);border-radius:3px;overflow:hidden;margin:14px 0}
 .progress i{display:block;height:100%;background:var(--lime);width:0;transition:width .3s;border-radius:3px}
 .score-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px}
@@ -963,7 +986,7 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.38</button>
+    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.39</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1048,6 +1071,12 @@ main>.screen{position:relative;z-index:1}
             <p>Реф-ссылка, статистика в реальном времени, начисления 15% / 5%, выплаты.</p>
             <div class="foot"><span class="chip">Двигатель роста</span><svg class="i"><use href="#i-chev"/></svg></div>
           </div>
+          <div class="ma-card" onclick="openMa('factory')">
+            <div class="ico"><svg class="i"><use href="#i-bolt"/></svg></div>
+            <h3>Контент-завод</h3>
+            <p>Задай нишу — конвейер соберёт ролики под ключ: сценарий, озвучка, монтаж, субтитры и автопостинг в VK / Telegram / YouTube.</p>
+            <div class="foot"><span class="chip">Business и Scale</span><svg class="i"><use href="#i-chev"/></svg></div>
+          </div>
         </div>
 
         <div class="ma-view" id="ma-video">
@@ -1076,6 +1105,11 @@ main>.screen{position:relative;z-index:1}
           <h2 class="section-h" style="margin-top:16px">Система роста по анкете</h2>
           <div class="anketa-prog"><i id="anketaBar"></i></div>
           <div class="card" id="anketaCard"></div>
+        </div>
+        <div class="ma-view" id="ma-factory">
+          <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
+          <h2 class="section-h" style="margin-top:16px">Контент-завод</h2>
+          <div id="factoryRoot"></div>
         </div>
       </div>
     </section>
@@ -2126,6 +2160,7 @@ function openMa(id){
   document.getElementById('ma-'+id).style.display='block';
   if(id==='system'){ aState = {step:0, answers:{}}; renderAnketa(); }
   if(id==='market'){ mkView='cats'; mkCat=null; mkSearchQ=''; renderMarket(); }
+  if(id==='factory'){ fxReset(); renderFactory(); }
 }
 /* ===== Система роста: многошаговая анкета ===== */
 const ANKETA = [
@@ -2259,6 +2294,116 @@ function closeMa(){
   document.getElementById('vcUpload').style.display='';
   document.getElementById('vcProgress').style.display='none';
   document.getElementById('vcResult').style.display='none';
+  if(fxTimer){ clearInterval(fxTimer); fxTimer=null; }
+}
+
+/* ===== Контент-завод (Business/Scale): конвейер роликов под ключ ===== */
+const FX_STAGES = ['Сценарий','Озвучка','Монтаж','Субтитры','Готово','Опубликовано'];
+const FX_CHANNELS = {vk:'VK Клипы', tg:'Telegram', yt:'YouTube Shorts'};
+let fxState = null, fxTimer = null;
+function fxReset(){
+  if(fxTimer){ clearInterval(fxTimer); fxTimer=null; }
+  fxState = { niche:'', tempo:'3–4 ролика/нед', channels:{vk:true, tg:true, yt:false}, plan:[], queue:[], phase:'setup' };
+}
+function fxIdeas(niche){
+  const n = niche.trim() || 'твоя ниша';
+  return [
+    `«3 ошибки новичков в теме ${n}» — хук-разоблачение`,
+    `Разбор кейса: как клиент вырос в нише ${n} за 30 дней`,
+    `Мини-урок за 40 секунд: главный приём в ${n}`,
+    `Ответ на частый вопрос подписчиков про ${n}`,
+    `Тренд-формат недели, адаптированный под ${n}`,
+    `«До / после» — результат работы в теме ${n}`,
+    `Личная история: почему я в нише ${n}`,
+  ];
+}
+function renderFactory(){
+  const r = document.getElementById('factoryRoot');
+  if(!fxState) fxReset();
+  if(fxState.phase==='setup'){
+    const ch = Object.entries(FX_CHANNELS).map(([k,v])=>
+      `<button class="fx-pill ${fxState.channels[k]?'on':''}" onclick="fxToggle('${k}')">${v}</button>`).join('');
+    const tempos = ['2 ролика/нед','3–4 ролика/нед','Ежедневно','Конвейер 30/мес'];
+    r.innerHTML = `
+      <div class="card">
+        <p class="dim" style="font-size:13px;line-height:1.55">Задай нишу и площадки — конвейер соберёт ролики под ключ: сценарий (Claude), нейро-озвучка, монтаж, караоке-субтитры и автопостинг по расписанию. Исходники автоудаляются через 24 часа.</p>
+        <div style="height:14px"></div>
+        <p style="font-weight:700;font-size:13.5px;margin-bottom:7px">Ниша / тема канала</p>
+        <input id="fxNiche" placeholder="Например: маркетинг для салонов красоты" value="${esc(fxState.niche)}" oninput="fxState.niche=this.value">
+        <div style="height:16px"></div>
+        <p style="font-weight:700;font-size:13.5px;margin-bottom:7px">Куда публиковать</p>
+        <div class="fx-pills">${ch}</div>
+        <div style="height:16px"></div>
+        <p style="font-weight:700;font-size:13.5px;margin-bottom:7px">Темп</p>
+        <div class="fx-pills">${tempos.map(t=>`<button class="fx-pill ${fxState.tempo===t?'on':''}" onclick="fxState.tempo='${t}';renderFactory()">${t}</button>`).join('')}</div>
+        <div style="height:18px"></div>
+        <button class="btn" onclick="fxBuild()"><svg class="i"><use href="#i-bolt"/></svg> Запустить завод</button>
+      </div>`;
+    return;
+  }
+  if(fxState.phase==='building'){
+    r.innerHTML = `<div class="card" style="text-align:center;padding:8px 0">
+        <div class="spin"></div>
+        <p style="font-weight:700;margin-top:14px">Claude собирает контент-план…</p>
+        <p class="dim" style="font-size:12.5px;margin-top:6px">Ниша «${esc(fxState.niche||'—')}» · ${esc(fxState.tempo)}</p>
+      </div>`;
+    return;
+  }
+  // phase === 'run'
+  const chips = Object.entries(fxState.channels).filter(([,v])=>v).map(([k])=>`<span class="chip">${FX_CHANNELS[k]}</span>`).join(' ');
+  const pub = fxState.queue.filter(q=>q.stage>=5).length;
+  const ready = fxState.queue.filter(q=>q.stage>=4).length;
+  const rows = fxState.queue.map((q,i)=>{
+    const st = Math.min(q.stage, FX_STAGES.length-1);
+    const dots = FX_STAGES.map((s,si)=>`<i class="fx-dot ${si<st?'done':''} ${si===st&&st<5?'live':''}"></i>`).join('');
+    const label = FX_STAGES[st];
+    const cls = q.stage>=5?'pub':(q.stage>=4?'ready':'wip');
+    return `<div class="fx-row ${cls}">
+      <span class="fx-num">${i+1}</span>
+      <span class="fx-idea">${esc(q.idea)}<small>${dots}<b>${label}</b></small></span>
+      ${q.stage>=5?`<span class="fx-badge">В эфире</span>`:''}
+    </div>`;
+  }).join('');
+  r.innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="chip on">Ниша: ${esc(fxState.niche||'—')}</span>${chips}
+      </div>
+      <div class="fx-stats">
+        <div><b>${fxState.queue.length}</b><small>в производстве</small></div>
+        <div><b>${ready}</b><small>готово</small></div>
+        <div><b>${pub}</b><small>опубликовано</small></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <p style="font-weight:700;font-size:13.5px;margin-bottom:10px">Конвейер производства</p>
+      <div class="fx-list">${rows}</div>
+    </div>
+    <div style="height:12px"></div>
+    <button class="btn ghost" onclick="fxReset();renderFactory()"><svg class="i"><use href="#i-back"/></svg> Новый канал</button>`;
+}
+function fxToggle(k){ fxState.channels[k] = !fxState.channels[k]; renderFactory(); }
+function fxBuild(){
+  fxState.niche = (document.getElementById('fxNiche')?.value || fxState.niche).trim();
+  if(!Object.values(fxState.channels).some(Boolean)){ toast('Выбери хотя бы одну площадку'); return; }
+  fxState.phase = 'building'; renderFactory();
+  setTimeout(()=>{
+    fxState.plan = fxIdeas(fxState.niche);
+    fxState.queue = fxState.plan.map((idea,i)=>({ idea, stage:0, offset:i }));
+    fxState.phase = 'run'; renderFactory();
+    if(fxTimer) clearInterval(fxTimer);
+    fxTimer = setInterval(fxTick, 900);
+  }, 1500);
+}
+function fxTick(){
+  if(!fxState || fxState.phase!=='run'){ clearInterval(fxTimer); fxTimer=null; return; }
+  let moved = false;
+  for(const q of fxState.queue){
+    if(q.offset>0){ q.offset--; continue; }        // ступенчатый старт по одному
+    if(q.stage < FX_STAGES.length-1){ q.stage++; moved = true; break; }
+  }
+  if(moved) renderFactory();
+  if(fxState.queue.every(q=>q.stage>=FX_STAGES.length-1)){ clearInterval(fxTimer); fxTimer=null; renderFactory(); }
 }
 function vcStart(){
   document.getElementById('vcUpload').style.display='none';
@@ -3195,7 +3340,7 @@ const PROGRESS = [
   {s:'done', t:'Инфраструктура', d:'Supabase: база из 28 таблиц развёрнута. S3: два бакета, загрузка по подписанным ссылкам, автоудаление временных видео через 24 часа. Telegram-бот и Gemini подключены и проверены.'},
   {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime, анонимный вход, доставка мгновенно. Дальше: вход через Telegram, личные чаты, медиа в S3.'},
   {s:'wip',  t:'Каналы, лента, посты', d:'Готово в прототипе: создание поста, лайки, живые комментарии, закладки, репосты, лента «Подписки/Рекомендации» с алгоритмом. Дальше — на живых данных Supabase.'},
-  {s:'wip',  t:'Мини-аппы на живых данных', d:'Система роста — рабочий визард на 8 секций с персональным планом на выходе. Дальше — генерация полной HTML-системы через Claude, видео-премодератор на Gemini.'},
+  {s:'wip',  t:'Мини-аппы на живых данных', d:'Система роста — рабочий визард на 8 секций с персональным планом; Контент-завод — конвейер роликов под ключ (сценарий → озвучка → монтаж → субтитры → автопостинг). Дальше — генерация HTML-системы через Claude и видео-премодератор на Gemini.'},
   {s:'wip',  t:'Оплата и тарифы', d:'В прототипе: выбор тарифа, период со скидками (−10/−15/−20%), способы оплаты (карта РФ/крипта/Lava.top), мгновенная активация статуса. Дальше — реальные платёжки и вебхуки.'},
   {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
   {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
