@@ -148,6 +148,15 @@ OKO нигде не использовать).
 Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
 Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
 
+## 1в. ВКонтакте (core/vk.py) — агент «внутри» аккаунта
+
+Полный user-token (`VK_TOKEN`, Kate Mobile scope, offline) аккаунта Даниэля
+(@daniel.okoteam, id 718773189). Агент умеет: `wall_post` (стена + фото FLUX),
+`send_message`, `users_search`/`groups_search` (поиск клиентов/людей), `upload_photo_to_wall`.
+Действие `post` с `platform:"vk"`. Проверено: me() + users_search работают. Токен в
+.env/secrets намертво. Получен через OAuth Implicit Flow (client_id 2685278, response_type=token) —
+парольный вход VK режет. Обновить токен: тот же authorize-URL в браузере Даниэля.
+
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
 Заданы в настройках cloud environment «OKO TEAM» на claude.ai. Даниэль присылал
