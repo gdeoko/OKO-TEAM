@@ -124,9 +124,11 @@ OKO нигде не использовать).
 ## 1б. «Руки» агентов oko-agents (простые интеграции, без MCP)
 
 `core/tools.py` — агенты (userbot) умеют по действиям из диалога:
-- `image` — генерация картинки (Gemini nano-banana → фолбэк HF FLUX). ГРАБЛЯ: Gemini-image
-  на бесплатной квоте отдаёт 429 (платно), HF serverless FLUX сейчас недоступен (000) —
-  генерация best-effort, заработает при биллинге Gemini. Стоки — надёжнее.
+- `image` — генерация картинки БЕСПЛАТНО через **HF Spaces FLUX.1-schnell** (ZeroGPU,
+  gradio_client, ~10с, качество как у платного Higgsfield) → фолбэк Gemini/HF. Спейсы
+  ротируются (`_FLUX_SPACES` в core/tools). webp→png для Telegram. Higgsfield ($200/мес)
+  для картинок больше НЕ нужен. ГРАБЛЯ: у ZeroGPU дневная квота — при исчерпании ретраить/
+  сменить спейс. gradio_client ставится в .venv на VPS.
 - `stock` — сток-видео/фото. Pexels-видео ✅; Pexels-ФОТО отдаёт 404 (ключ видео-профиля),
   Pixabay режется Cloudflare-челленджем на IP VPS → фото берём из превью Pexels-видео (`pexels-preview`).
 - `search` — интернет-поиск (DuckDuckGo HTML) + краткий ответ Gemini по сниппетам ✅.
