@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ОКО — Всевидящий глаз твоего роста</title>
+<meta name="description" content="ОКО — экосистема роста Даниэля Ильясова. Контент-завод, воронки, ИИ-агенты и сайты, которые работают, пока ты спишь.">
+<meta property="og:title" content="ОКО — Всевидящий глаз твоего роста">
+<meta property="og:description" content="Контент-завод, воронки и ИИ-агенты OKO. Работает, пока ты спишь.">
+<meta property="og:image" content="media/oko-logo-1000.png">
+<link rel="icon" type="image/png" href="media/oko-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050505;--bg2:#080a06;--lime:#9AFF00;--lime-d:#6fbf00;
+  --w1:rgba(255,255,255,.96);--w2:rgba(255,255,255,.66);--w3:rgba(255,255,255,.40);--w4:rgba(255,255,255,.20);
+  --line:rgba(255,255,255,.08);--limeline:rgba(154,255,0,.22);
+  --ff-h:'Unbounded',sans-serif;--ff-b:'Onest',sans-serif;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--w1);font-family:var(--ff-b);line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body.lock{overflow:hidden}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+canvas{display:block}
+::selection{background:var(--lime);color:#000}
+
+/* film grain + vignette */
+#grain{position:fixed;inset:0;z-index:9;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#vig{position:fixed;inset:0;z-index:8;pointer-events:none;background:radial-gradient(130% 120% at 50% 42%,transparent 42%,rgba(0,0,0,.55) 100%)}
+
+/* loader */
+#load{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .8s ease,visibility .8s}
+#load.gone{opacity:0;visibility:hidden}
+.load-eye{width:56px;height:56px;position:relative}
+.load-eye svg{width:100%;height:100%;animation:lblink 2.2s ease-in-out infinite}
+@keyframes lblink{0%,100%{transform:scaleY(1)}48%{transform:scaleY(1)}52%{transform:scaleY(.08)}56%{transform:scaleY(1)}}
+.load-bar{width:132px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.load-bar i{display:block;height:100%;width:0;background:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.7)}
+.load-t{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--w3);font-weight:600}
+
+/* custom cursor (desktop) */
+#cur{position:fixed;top:0;left:0;width:9px;height:9px;border-radius:50%;background:var(--lime);z-index:60;pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s,background .2s}
+#curr{position:fixed;top:0;left:0;width:34px;height:34px;border:1px solid rgba(154,255,0,.5);border-radius:50%;z-index:60;pointer-events:none;transform:translate(-50%,-50%);transition:width .25s,height .25s,border-color .25s}
+@media(hover:none),(pointer:coarse){#cur,#curr{display:none}}
+
+/* progress line */
+#prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--lime);z-index:70;box-shadow:0 0 8px rgba(154,255,0,.6)}
+
+/* nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:16px clamp(16px,4vw,42px);mix-blend-mode:difference}
+.brand{display:flex;align-items:center;gap:11px}
+.brand img{width:30px;height:30px;object-fit:contain;filter:drop-shadow(0 0 6px rgba(154,255,0,.35))}
+.brand-t{font-family:var(--ff-h);font-weight:900;font-size:15px;letter-spacing:1px;color:#fff}
+.nav-r{display:flex;align-items:center;gap:22px}
+.nav-a{font-size:12px;font-weight:600;letter-spacing:.5px;color:#fff;opacity:.85}
+.nav-cta{font-family:var(--ff-b);font-weight:800;font-size:12px;color:#fff;border:1px solid rgba(255,255,255,.9);padding:9px 18px;border-radius:40px}
+@media(max-width:720px){.nav-a{display:none}}
+
+/* build chip */
+.chip{position:fixed;left:clamp(16px,4vw,42px);bottom:20px;z-index:50;display:inline-flex;align-items:center;gap:7px;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--w3);background:rgba(10,10,10,.5);border:1px solid var(--line);padding:6px 12px;border-radius:40px;backdrop-filter:blur(8px)}
+.chip b{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime);animation:cpulse 2.4s infinite}
+@keyframes cpulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* HERO */
+#hero{position:relative;height:100svh;width:100%;overflow:hidden}
+#eye{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.hero-c{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 20px;pointer-events:none}
+.h-badge{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);border:1px solid var(--limeline);border-radius:40px;padding:8px 16px;margin-bottom:26px;background:rgba(154,255,0,.04)}
+.h-badge b{width:5px;height:5px;border-radius:50%;background:var(--lime);animation:cpulse 2s infinite}
+.h-title{font-family:var(--ff-h);font-weight:900;font-size:clamp(64px,20vw,240px);line-height:.86;letter-spacing:-3px;color:#fff;text-shadow:0 0 60px rgba(0,0,0,.6)}
+.h-title .g{color:var(--lime)}
+.h-sub{font-size:clamp(14px,2vw,19px);color:var(--w2);max-width:440px;margin:20px auto 0;line-height:1.6}
+.scrollhint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--w3)}
+.scrollhint i{width:1px;height:34px;background:linear-gradient(var(--lime),transparent);animation:sdrop 1.8s ease-in-out infinite}
+@keyframes sdrop{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* generic section */
+.sec{position:relative;z-index:3;background:var(--bg)}
+.wrap{max-width:1140px;margin:0 auto;padding:0 clamp(16px,4vw,42px)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--lime)}
+
+/* MANIFEST (pinned) */
+#manifest{height:200vh;position:relative}
+.mani-stick{position:sticky;top:0;height:100svh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mani-lines{max-width:1000px;padding:0 24px;text-align:center}
+.mani-line{font-family:var(--ff-h);font-weight:800;font-size:clamp(26px,5.2vw,66px);line-height:1.08;letter-spacing:-1px;color:var(--w4);transition:color .1s}
+.mani-line .g{color:var(--lime)}
+
+/* CAPABILITIES bento */
+.caps{padding:clamp(80px,12vh,150px) 0}
+.caps-head{max-width:640px;margin-bottom:48px}
+.caps-h{font-family:var(--ff-h);font-weight:900;font-size:clamp(30px,5vw,60px);line-height:1.02;letter-spacing:-1.5px;margin-top:18px}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.card{position:relative;border:1px solid var(--line);border-radius:22px;padding:26px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.008));transition:border-color .4s,transform .4s}
+.card:hover{border-color:var(--limeline);transform:translateY(-3px)}
+.card::after{content:'';position:absolute;width:280px;height:280px;right:-90px;top:-90px;background:radial-gradient(circle,rgba(154,255,0,.10),transparent 62%);opacity:0;transition:opacity .5s;pointer-events:none}
+.card:hover::after{opacity:1}
+.c-wide{grid-column:span 4}.c-nar{grid-column:span 2}.c-half{grid-column:span 3}
+.c-ico{width:44px;height:44px;border-radius:12px;border:1px solid var(--limeline);background:rgba(154,255,0,.06);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:20px}
+.c-ico svg{width:22px;height:22px}
+.c-t{font-family:var(--ff-h);font-weight:700;font-size:19px;margin-bottom:8px;letter-spacing:-.3px}
+.c-d{font-size:13.5px;color:var(--w3);line-height:1.65;max-width:380px}
+.c-tag{position:absolute;top:22px;right:22px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--lime);opacity:.7}
+@media(max-width:820px){.bento{grid-template-columns:1fr 1fr}.c-wide,.c-nar,.c-half{grid-column:span 1}.c-wide{grid-column:span 2}}
+@media(max-width:520px){.bento{grid-template-columns:1fr}.c-wide,.c-nar,.c-half{grid-column:span 1}}
+
+/* CINEMATIC scrub */
+#cine{position:relative;height:360vh}
+.cine-stick{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
+#cine-vid,#cine-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#cine-poster{z-index:1}#cine-vid{z-index:2}
+.cine-grad{position:absolute;inset:0;z-index:3;background:linear-gradient(90deg,rgba(5,5,5,.7),transparent 34%,transparent 66%,rgba(5,5,5,.7)),linear-gradient(0deg,rgba(5,5,5,.85),transparent 40%)}
+.cine-cap{position:absolute;z-index:4;left:clamp(16px,5vw,64px);bottom:clamp(60px,12vh,120px);max-width:520px}
+.cine-step{font-family:var(--ff-h);font-weight:900;font-size:clamp(28px,4.6vw,58px);line-height:1.02;letter-spacing:-1px;opacity:0;transform:translateY(24px);transition:opacity .5s,transform .5s}
+.cine-step.on{opacity:1;transform:none}
+.cine-step .g{color:var(--lime)}
+.cine-num{font-family:var(--ff-h);font-size:12px;color:var(--lime);letter-spacing:2px;margin-bottom:10px;display:block}
+
+/* STATS */
+.stats{padding:clamp(80px,12vh,150px) 0;border-top:1px solid var(--line)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+.stat{border:1px solid var(--line);border-radius:20px;padding:30px 22px;text-align:center;background:linear-gradient(180deg,rgba(154,255,0,.03),transparent)}
+.stat-n{font-family:var(--ff-h);font-weight:900;font-size:clamp(32px,5vw,52px);color:var(--lime);line-height:1;letter-spacing:-1px}
+.stat-l{font-size:12px;color:var(--w3);margin-top:10px;letter-spacing:.3px}
+@media(max-width:720px){.stats-grid{grid-template-columns:1fr 1fr}}
+
+/* CTA */
+.cta{padding:clamp(90px,16vh,190px) 0;text-align:center;position:relative;overflow:hidden}
+.cta::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:720px;height:720px;max-width:130vw;background:radial-gradient(circle,rgba(154,255,0,.08),transparent 60%);pointer-events:none}
+.cta-eye{width:64px;height:64px;margin:0 auto 26px;position:relative;z-index:1}
+.cta-h{position:relative;z-index:1;font-family:var(--ff-h);font-weight:900;font-size:clamp(34px,6.4vw,84px);line-height:.98;letter-spacing:-2px}
+.cta-h .g{color:var(--lime)}
+.cta-s{position:relative;z-index:1;font-size:clamp(14px,2vw,17px);color:var(--w2);max-width:480px;margin:22px auto 34px;line-height:1.65}
+.cta-btns{position:relative;z-index:1;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:9px;font-family:var(--ff-b);font-weight:800;font-size:14px;padding:16px 30px;border-radius:44px;transition:transform .2s,box-shadow .2s,background .2s}
+.btn-l{background:var(--lime);color:#000;box-shadow:0 0 0 rgba(154,255,0,.4)}
+.btn-l:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(154,255,0,.28)}
+.btn-g{border:1px solid rgba(255,255,255,.2);color:#fff}
+.btn-g:hover{border-color:#fff;transform:translateY(-2px)}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:34px clamp(16px,4vw,42px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.foot-l{display:flex;align-items:center;gap:10px;color:var(--w3);font-size:12px}
+.foot-l img{width:22px;height:22px;opacity:.8}
+.foot-r{font-size:11px;color:var(--w4);letter-spacing:.4px}
+
+/* TARIFFS */
+.tar{padding:clamp(80px,12vh,150px) 0;border-top:1px solid var(--line)}
+.tar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+.tcard{position:relative;border:1px solid var(--line);border-radius:22px;padding:30px 26px;background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.006));transition:border-color .35s,transform .35s}
+.tcard:hover{border-color:var(--limeline);transform:translateY(-4px)}
+.tcard.feat{border-color:var(--limeline);background:linear-gradient(180deg,rgba(154,255,0,.06),rgba(154,255,0,.01))}
+.tcard.feat::before{content:'Выбор большинства';position:absolute;top:-11px;left:26px;font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#000;background:var(--lime);padding:5px 12px;border-radius:20px}
+.t-name{font-family:var(--ff-h);font-weight:800;font-size:15px;letter-spacing:1px}
+.t-price{font-family:var(--ff-h);font-weight:900;font-size:44px;color:#fff;margin:16px 0 2px;letter-spacing:-1px}
+.tcard.feat .t-price{color:var(--lime)}
+.t-per{font-size:12px;color:var(--w3)}
+.t-rub{font-size:12px;color:var(--w4);margin-top:2px}
+.t-list{list-style:none;margin:22px 0 26px;display:flex;flex-direction:column;gap:11px}
+.t-list li{font-size:13px;color:var(--w2);display:flex;gap:9px;align-items:flex-start;line-height:1.45}
+.t-list li svg{flex-shrink:0;color:var(--lime);margin-top:2px}
+.t-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--ff-b);font-weight:800;font-size:13px;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.16);color:#fff;transition:all .2s}
+.tcard.feat .t-btn{background:var(--lime);color:#000;border-color:var(--lime)}
+.t-btn:hover{transform:translateY(-1px);border-color:#fff}.tcard.feat .t-btn:hover{box-shadow:0 8px 26px rgba(154,255,0,.28)}
+.t-note{text-align:center;margin-top:22px;font-size:12px;color:var(--w3)}
+.t-note b{color:var(--lime);font-weight:700}
+@media(max-width:820px){.tar-grid{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<div id="grain"></div>
+<div id="vig"></div>
+<div id="cur"></div>
+<div id="curr"></div>
+<div id="prog"></div>
+
+<div id="load">
+  <div class="load-eye">
+    <svg viewBox="0 0 100 100" fill="none"><path d="M12 54 Q50 20 88 54" stroke="#9AFF00" stroke-width="7" stroke-linecap="round"/><path d="M50 46a19 19 0 1 0 .01 0Z M62 44a9 9 0 0 1-13 12" fill="#9AFF00"/></svg>
+  </div>
+  <div class="load-bar"><i id="loadbar"></i></div>
+  <div class="load-t">ОКО открывается</div>
+</div>
+
+<nav class="nav">
+  <a class="brand" href="#top"><img src="media/oko-logo.png" alt="OKO"><span class="brand-t">ОКО</span></a>
+  <div class="nav-r">
+    <a class="nav-a" href="#caps">Мини-аппы</a>
+    <a class="nav-a" href="#tar">Тарифы</a>
+    <a class="nav-cta" href="https://t.me/okoappbot" target="_blank" rel="noopener">Открыть в Telegram</a>
+  </div>
+</nav>
+
+<div class="chip" id="top"><b></b>сборка v2.0 · immersive</div>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="eye"></canvas>
+  <div class="hero-c">
+    <span class="h-badge"><b></b>Приложение · Telegram-first</span>
+    <h1 class="h-title">ОКО</h1>
+    <p class="h-sub">Медийность, контент, маркетинг и бизнес — в одном приложении. ИИ-мини-аппы, которые видят твой рост.</p>
+  </div>
+  <div class="scrollhint">Смотри глубже<i></i></div>
+</section>
+
+<!-- MANIFEST -->
+<section id="manifest">
+  <div class="mani-stick">
+    <div class="mani-lines">
+      <div class="mani-line" data-mani>Десять вкладок. Пять подписок.</div>
+      <div class="mani-line" data-mani>И всё равно не <span class="g">растёшь</span>.</div>
+      <div class="mani-line" data-mani>ОКО собирает медийность, контент</div>
+      <div class="mani-line" data-mani>и деньги — в <span class="g">одном приложении</span>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section class="sec caps" id="caps">
+  <div class="wrap">
+    <div class="caps-head reveal">
+      <span class="eyebrow">Мини-аппы ОКО</span>
+      <h2 class="caps-h">Шесть сервисов —<br>в одном приложении</h2>
+    </div>
+    <div class="bento">
+      <div class="card c-wide reveal">
+        <span class="c-tag">Free · 1 / мес</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h12v14H4z" stroke-linejoin="round"/><path d="M16 9l4-2v10l-4-2" stroke-linejoin="round"/><path d="M8 12l2 1.5L8 15" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="c-t">Видео-премодератор</div>
+        <div class="c-d">Загрузи ролик — ОКО оценит готовность, силу хука, вероятность рекомендаций и риски. Исправление одним кликом, до публикации.</div>
+      </div>
+      <div class="card c-nar reveal">
+        <span class="c-tag">Pro +</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V6a2 2 0 0 1 2-2h9l5 5v11" stroke-linejoin="round"/><path d="M8 12h8M8 16h5" stroke-linecap="round"/></svg></div>
+        <div class="c-t">Система роста</div>
+        <div class="c-d">Анкета из 8 секций — на выходе персональная стратегия продвижения: позиционирование, контент-план на 30 дней, цели по метрикам.</div>
+      </div>
+      <div class="card c-nar reveal">
+        <span class="c-tag">от Start</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16l-1 11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke-linecap="round"/></svg></div>
+        <div class="c-t">Биржа услуг</div>
+        <div class="c-d">Монтаж, дизайн, реклама, сайты — исполнители и заказчики в одном месте. Смотреть бесплатно.</div>
+      </div>
+      <div class="card c-nar reveal">
+        <span class="c-tag">Business +</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M9 9l3 2-3 2M14 13h2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="c-t">Контент-завод</div>
+        <div class="c-d">Задай нишу — конвейер соберёт ролики под ключ и разложит по VK, Telegram и YouTube. Автопостинг включён.</div>
+      </div>
+      <div class="card c-nar reveal">
+        <span class="c-tag">15% / 5%</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="7" r="3"/><path d="M5 21c0-3.5 3-5 7-5s7 1.5 7 5" stroke-linecap="round"/><path d="M17 3l2 2-2 2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="c-t">Партнёрский кабинет</div>
+        <div class="c-d">Реф-ссылка, статистика в реальном времени и выплаты. 15% с оплат клиентов и 5% со второго уровня.</div>
+      </div>
+      <div class="card reveal" style="grid-column:1/-1">
+        <span class="c-tag">Ядро приложения</span>
+        <div class="c-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a9 9 0 1 1-4-7.5" stroke-linecap="round"/><path d="M8 12l3 3 5-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="c-t">Лента, каналы и агенты ОКО — всегда рядом</div>
+        <div class="c-d">Своя соцлента, каналы, посты, опросы и фирменные стикеры. ИИ-агенты на Gemini и Claude работают под капотом каждого мини-аппа — вход через Telegram за один тап.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CINEMATIC scrub -->
+<section id="cine">
+  <div class="cine-stick">
+    <img id="cine-poster" src="media/cine-poster.jpg" alt="">
+    <video id="cine-vid" muted playsinline preload="auto" poster="media/cine-poster.jpg"></video>
+    <div class="cine-grad"></div>
+    <div class="cine-cap">
+      <div class="cine-step" data-step="0"><span class="cine-num">01 — ВЗГЛЯД</span>ОКО <span class="g">открывается</span> — и видит твой контент насквозь.</div>
+      <div class="cine-step" data-step="1"><span class="cine-num">02 — ПОТОК</span>Мини-аппы <span class="g">включаются</span> и работают за тебя.</div>
+      <div class="cine-step" data-step="2"><span class="cine-num">03 — РОСТ</span>Медийность и деньги <span class="g">в одном</span> приложении.</div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="sec stats">
+  <div class="wrap">
+    <div class="caps-head reveal" style="margin-bottom:0">
+      <span class="eyebrow">Одним взглядом</span>
+      <h2 class="caps-h">Всё, что раньше жило<br>в десяти сервисах</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat reveal"><div class="stat-n" data-count="6" data-suf="">0</div><div class="stat-l">мини-аппов в одном входе</div></div>
+      <div class="stat reveal"><div class="stat-n" data-count="3" data-suf="">0</div><div class="stat-l">площадки автопостинга</div></div>
+      <div class="stat reveal"><div class="stat-n" data-count="15" data-suf="%">0</div><div class="stat-l">партнёрам с каждой оплаты</div></div>
+      <div class="stat reveal"><div class="stat-n" data-count="24" data-suf="/7">0</div><div class="stat-l">ИИ-агенты не спят</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TARIFFS -->
+<section class="sec tar" id="tar">
+  <div class="wrap">
+    <div class="caps-head reveal" style="margin-bottom:0">
+      <span class="eyebrow">Тарифы</span>
+      <h2 class="caps-h">Открой ОКО<br>на своём уровне</h2>
+    </div>
+    <div class="tar-grid">
+      <div class="tcard reveal">
+        <div class="t-name">START</div>
+        <div class="t-price">$12</div><div class="t-per">в месяц</div><div class="t-rub">1 190 ₽ / мес</div>
+        <ul class="t-list">
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Лента, каналы и стикеры ОКО</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Размещение на Бирже услуг</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Партнёрский кабинет 15%</li>
+        </ul>
+        <a class="t-btn" href="https://t.me/okoappbot" target="_blank" rel="noopener">Начать</a>
+      </div>
+      <div class="tcard feat reveal">
+        <div class="t-name">PRO</div>
+        <div class="t-price">$39</div><div class="t-per">в месяц</div><div class="t-rub">3 890 ₽ / мес</div>
+        <ul class="t-list">
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Всё из START</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Система роста по анкете</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Видео-премодератор без лимитов</li>
+        </ul>
+        <a class="t-btn" href="https://t.me/okoappbot" target="_blank" rel="noopener">Открыть ОКО</a>
+      </div>
+      <div class="tcard reveal">
+        <div class="t-name">BUSINESS</div>
+        <div class="t-price">$159</div><div class="t-per">в месяц</div><div class="t-rub">15 900 ₽ / мес</div>
+        <ul class="t-list">
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Всё из PRO</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Контент-завод: ролики под ключ</li>
+          <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12l4 4 10-10" stroke-linecap="round" stroke-linejoin="round"/></svg>Автопостинг в VK / TG / YouTube</li>
+        </ul>
+        <a class="t-btn" href="https://t.me/okoappbot" target="_blank" rel="noopener">Начать</a>
+      </div>
+    </div>
+    <p class="t-note reveal">При оплате за год — <b>дешевле на 20%</b> · есть Free-режим без подписки</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="sec cta" id="cta">
+  <div class="wrap">
+    <img class="cta-eye" src="media/oko-logo.png" alt="OKO" style="width:64px;height:64px">
+    <h2 class="cta-h">Открой <span class="g">ОКО</span></h2>
+    <p class="cta-s">Медийность, контент, маркетинг и бизнес — в одном приложении. Вход через Telegram за один тап, Free-режим без карты.</p>
+    <div class="cta-btns">
+      <a class="btn btn-l" href="https://t.me/okoappbot" target="_blank" rel="noopener">Продолжить в Telegram
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <a class="btn btn-g" href="#tar">Смотреть тарифы</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-l"><img src="media/oko-logo.png" alt="OKO">ОКО · приложение · Даниэль Ильясов · 2026</div>
+  <div class="foot-r">Медийность, контент, маркетинг и бизнес — в одном</div>
+</footer>
+
+<script src="js/vendor/gsap.min.js"></script>
+<script src="js/vendor/ScrollTrigger.min.js"></script>
+<script src="js/vendor/lenis.min.js"></script>
+<script src="js/eye.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
