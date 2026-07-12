@@ -467,6 +467,15 @@
           <div class="temple__note">Именные сертификаты за блоки и за год — можно скачать</div>
         </div>
       </button>
+
+      <h2 class="section-title">Магазин за баллы</h2>
+      <button class="card temple" id="openShop" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на мерч <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Копи XP за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
+        </div>
+      </button>
     </section>
 
 
@@ -677,11 +686,15 @@
     <!-- ── КНИГА МЕТАНОЙЯ: оглавление ── -->
     <section class="screen" data-screen="book">
       <button class="child-back" id="bookBack"><span data-icon="back" data-size="18"></span> Профиль</button>
-      <div class="book-cover">
-        <img src="assets/img/logo.png" width="64" height="64" alt="">
-        <div class="book-cover__title">МЕТАНОЙЯ</div>
-        <div class="book-cover__sub">Книга уроков веры для детей</div>
-        <div class="book-cover__author">Екатерина Павленко</div>
+      <div class="book-cover book-cover--img">
+        <img class="book-cover__bg" src="assets/img/book-cover.jpg" alt="">
+        <div class="book-cover__scrim"></div>
+        <div class="book-cover__inner">
+          <div class="book-cover__eyebrow">Христианская школа для детей</div>
+          <div class="book-cover__title">МЕТАНОЙЯ</div>
+          <div class="book-cover__sub">Книга уроков веры</div>
+          <div class="book-cover__author">Екатерина Павленко</div>
+        </div>
       </div>
       <p class="feed-card__meta" style="margin:16px 0 10px">Каждый урок становится главой книги. За год — целая авторская книга, которую можно читать всей семьёй.</p>
       <div id="bookToc"></div>
@@ -793,6 +806,18 @@
       </div>
       <div class="fq-tasks" id="fqTasks"></div>
       <div class="fq-note">Отмечайте выполненное вместе с детьми. Когда все дела сделаны — вся семья получает общий значок недели 🕊</div>
+    </section>
+
+    <!-- ── МАГАЗИН ЗА БАЛЛЫ (идея Екатерины) ── -->
+    <section class="screen" data-screen="shop">
+      <button class="child-back" id="shopBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="shop-head">
+        <div class="shop-head__label">У тебя баллов</div>
+        <div class="shop-head__xp"><span data-icon="flame" data-size="22"></span> <span id="shopXp">340</span> XP</div>
+        <div class="shop-head__note">Копи баллы за уроки, тесты и игры — и обменивай на настоящий мерч школы Метанойя</div>
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+      <div class="sub-note">Это предзаказ за баллы. После обмена мы свяжемся с родителем, чтобы передать мерч.</div>
     </section>
 
     <!-- ── РЕЙТИНГ НЕДЕЛИ (этап 5) ── -->

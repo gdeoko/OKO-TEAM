@@ -1994,3 +1994,35 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 /* ── Картинка к стиху дня (правка Екатерины #7) ── */
 .dverse__img { display: block; width: 100%; height: 130px; object-fit: cover; border-radius: 16px; margin-bottom: 14px;
   box-shadow: 0 4px 14px rgba(26,58,82,.18); }
+
+/* ── Обложка книги с иллюстрацией (правка Екатерины #8) ── */
+.book-cover--img { position: relative; border-radius: 18px; overflow: hidden; min-height: 340px;
+  display: flex; align-items: flex-end; box-shadow: 0 10px 30px rgba(26,58,82,.28); }
+.book-cover__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.book-cover__scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,35,47,.85) 0%, rgba(20,35,47,.35) 45%, rgba(20,35,47,0) 75%); }
+.book-cover__inner { position: relative; padding: 22px 22px 24px; color: #fff; text-align: left; width: 100%; }
+.book-cover__eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+.book-cover--img .book-cover__title { font-family: var(--font-head); font-size: 40px; font-weight: 800; letter-spacing: 2px; line-height: 1; color: #fff; }
+.book-cover--img .book-cover__sub { font-size: 15px; opacity: .92; margin-top: 6px; color: #fff; }
+.book-cover--img .book-cover__author { font-size: 13.5px; margin-top: 14px; color: var(--gold); font-style: italic; }
+
+/* ── Магазин за баллы (идея Екатерины) ── */
+.shop-head { text-align: center; padding: 8px 0 16px; }
+.shop-head__label { font-size: 12.5px; color: var(--gray); }
+.shop-head__xp { font-family: var(--font-head); font-weight: 800; font-size: 34px; color: var(--terracotta);
+  display: inline-flex; align-items: center; gap: 8px; margin: 4px 0; }
+.shop-head__xp span[data-icon] { color: var(--gold); }
+.shop-head__note { font-size: 12.5px; color: var(--gray); max-width: 32ch; margin: 4px auto 0; line-height: 1.5; }
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.shop-card { background: linear-gradient(160deg,#fff,#FBF4E9); border: 1px solid rgba(212,165,116,.3);
+  border-radius: var(--radius-card); padding: 16px 12px; text-align: center; box-shadow: 0 2px 8px rgba(201,112,100,.08); }
+.shop-card__ic { width: 54px; height: 54px; margin: 0 auto 8px; border-radius: 16px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(150deg,#E6A15C,#C97064); }
+.shop-card__name { font-weight: 700; font-size: 13.5px; color: var(--navy); }
+.shop-card__cost { font-family: var(--font-head); font-weight: 800; font-size: 16px; color: var(--terracotta); margin: 6px 0 10px; }
+.shop-card__btn { width: 100%; padding: 9px; border-radius: 20px; font-weight: 700; font-size: 12.5px; color: #fff;
+  background: linear-gradient(135deg,#D4A574,#C97064); }
+.shop-card__btn:disabled { background: rgba(26,58,82,.12); color: var(--gray); }
+.shop-card--locked { opacity: .75; }
+[data-theme="dark"] .shop-card { background: linear-gradient(160deg,#1b2c3a,#22333f); border-color: rgba(255,255,255,.09); }
+[data-theme="dark"] .shop-card__name { color: #E7EDF3; }

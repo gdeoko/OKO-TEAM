@@ -2416,6 +2416,39 @@ function claimDailyVerse() {
   toast('+5 XP · стих дня');
 }
 
+/* ── Магазин за баллы (идея Екатерины #12) ── */
+const SHOP_XP = 340; // демо-баланс ребёнка (в проде — реальный XP)
+const MERCH = [
+  { icon: 'sparkle', name: 'Набор наклеек', cost: 300 },
+  { icon: 'book', name: 'Закладка для книг', cost: 700 },
+  { icon: 'star', name: 'Значок-магнит', cost: 900 },
+  { icon: 'cup', name: 'Кружка Метанойи', cost: 1500 },
+  { icon: 'crown', name: 'Футболка', cost: 2500 },
+  { icon: 'church', name: 'Худи Метанойи', cost: 4000 },
+];
+
+function openShop() {
+  const el = $('#shopTileXp');
+  $('#shopXp').textContent = SHOP_XP;
+  $('#shopGrid').innerHTML = MERCH.map((m) => {
+    const can = SHOP_XP >= m.cost;
+    return `<div class="shop-card ${can ? '' : 'shop-card--locked'}">
+      <div class="shop-card__ic">${ICON(m.icon, 24)}</div>
+      <div class="shop-card__name">${m.name}</div>
+      <div class="shop-card__cost">${m.cost} XP</div>
+      <button class="shop-card__btn" data-merch="${m.name}" data-cost="${m.cost}" ${can ? '' : 'disabled'}>${can ? 'Обменять' : `ещё ${m.cost - SHOP_XP}`}</button>
+    </div>`;
+  }).join('');
+  $$('#shopGrid [data-merch]').forEach((b) => b.addEventListener('click', () => {
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Заявка принята!', subtitle: `Ты обменял баллы на «${b.dataset.merch}». Мы свяжемся с родителями, чтобы передать подарок 🎁`, xp: 0 });
+    else toast('Заявка на мерч принята');
+  }));
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'shop'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+
 /* ── Годовой альбом «Наш год с Метанойей» (УЛ7) ── */
 const ALBUM = { child: 'Миша', year: '2025–2026', lessons: 24, games: 41, days: 128, temple: 'построен' };
 
@@ -2757,6 +2790,8 @@ function renderWReport() {
 function initGrowth() {
   $('#openRating')?.addEventListener('click', openRatingScreen);
   $('#openCerts')?.addEventListener('click', openCertificates);
+  $('#openShop')?.addEventListener('click', openShop);
+  $('#shopBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#openQuest')?.addEventListener('click', openQuest);
   $('#questBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#openAlbum')?.addEventListener('click', openAlbumScreen);
