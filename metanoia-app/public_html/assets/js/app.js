@@ -246,11 +246,11 @@ function renderChats() {
 /* ───────── РЕНДЕР: УРОКИ ───────── */
 
 function renderLessons() {
-  $('#lessons').innerHTML = DEMO.blocks.map((block) => `
+  $('#lessons').innerHTML = DEMO.blocks.map((block, bi) => `
     <div class="block-title">${block.title} <small>${block.range} · награда: ${block.award}</small></div>
     ${block.lessons.map((l) => `
-      <button class="lesson-item lesson-item--${l.state} ${l.exam ? 'lesson-item--exam' : ''}" data-state="${l.state}" data-n="${l.n}">
-        <div class="lesson-item__num">${l.n}</div>
+      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''}" data-state="${l.state}" data-n="${l.n}">
+        <div class="lesson-item__num">${l.exam ? ICON('crown', 20) : l.n}</div>
         <div class="lesson-item__body">
           <div class="lesson-item__title">${l.title}</div>
           ${l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : ''}
@@ -1304,8 +1304,7 @@ function initVerseGame() {
   $('#openVerseGame')?.addEventListener('click', () => openVerse('easy'));
   $('#verseBack').addEventListener('click', () => {
     clearInterval(verseTimer);
-    $('#nav').style.display = '';
-    switchTab('profile');
+    openGamesHub();
   });
   $('#verseReset').addEventListener('click', () => { versePlaced = []; renderVerse(); });
   $('#verseCheck').addEventListener('click', checkVerse);
@@ -1507,7 +1506,7 @@ function openGamePreview(k) {
     cta.textContent = 'Открыть в Метанойя+';
     cta.disabled = false;
     cta.onclick = () => { $('#gamePreview').hidden = true; openSubscribeScreen(); };
-    note.textContent = 'Первые 7 дней бесплатно · доступ ко всем играм';
+    note.textContent = 'Доступ ко всем играм и материалам Метанойя+';
     wish.hidden = false;
     wish.onclick = () => addWish(g.key);
   } else {
@@ -1844,6 +1843,7 @@ function applyReaderFs() {
 
 function initBook() {
   $('#openBook')?.addEventListener('click', openBook);
+  $('#bookBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#readerBack')?.addEventListener('click', openBook);
   $('#readerSize')?.addEventListener('click', () => {
     readerFsIdx = (readerFsIdx + 1) % readerFs.length;
@@ -2125,11 +2125,11 @@ function openRatingScreen() {
 
 /* ── Метанойя+ ── */
 const SUB_BENEFITS = [
-  'Все 20 игр без ограничений',
-  'Полный доступ ко всем 36 урокам года',
-  'Живые созвоны с Екатериной каждую неделю',
-  'Книга «Метанойя» и сертификаты за блоки',
-  'Без рекламы · для всей семьи',
+  'Все премиум-игры Метанойя+ (9 игр)',
+  'Личные уроки с Екатериной',
+  'Именные сертификаты за блоки и год',
+  'Ежедневный вызов и «Толкование»',
+  'Поддержка школы · для всей семьи',
 ];
 const SUB_PLANS = [
   { key: 'month', name: 'Месяц', desc: 'Попробовать без обязательств', amt: '490 ₽', per: 'в месяц' },
@@ -2162,6 +2162,57 @@ function renderSubPlans() {
     </button>`).join('');
   $$('#subPlans [data-plan]').forEach((el) => el.addEventListener('click', () => { subPlan = el.dataset.plan; renderSubPlans(); hydrateIcons(); }));
   hydrateIcons();
+}
+
+/* ── Стать партнёром ── */
+const PARTNER_BENEFITS = [
+  'Вы помогаете школе оставаться бесплатной для семей',
+  'Имя на «Стене благодарности» (по желанию)',
+  'Ранний доступ к новым урокам и играм',
+  'Личное слово благодарности от Екатерины',
+];
+const PARTNER_PLANS = [
+  { key: 'p300', name: 'Друг школы', desc: 'Небольшая, но важная поддержка', amt: '300 ₽', per: 'в месяц' },
+  { key: 'p1000', name: 'Партнёр', desc: 'Вы делаете большое дело', amt: '1 000 ₽', per: 'в месяц', tag: 'Популярно' },
+  { key: 'p3000', name: 'Покровитель', desc: 'Особая поддержка служения', amt: '3 000 ₽', per: 'в месяц' },
+];
+let partnerPlan = 'p1000';
+
+function openPartner() {
+  $('#partnerBenefits').innerHTML = PARTNER_BENEFITS.map((b) => `<div class="sub-benefit"><div class="sub-benefit__ic">${ICON('check', 15)}</div>${b}</div>`).join('');
+  renderPartnerPlans();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'partner'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  window.scrollTo({ top: 0 });
+}
+function renderPartnerPlans() {
+  $('#partnerPlans').innerHTML = PARTNER_PLANS.map((p) => `
+    <button class="sub-plan ${p.key === partnerPlan ? 'sub-plan--on' : ''}" data-pp="${p.key}">
+      ${p.tag ? `<span class="sub-plan__tag">${p.tag}</span>` : ''}
+      <div class="sub-plan__radio">${p.key === partnerPlan ? ICON('check', 13) : ''}</div>
+      <div class="sub-plan__body"><div class="sub-plan__name">${p.name}</div><div class="sub-plan__desc">${p.desc}</div></div>
+      <div class="sub-plan__price"><div class="sub-plan__amt">${p.amt}</div><div class="sub-plan__per">${p.per}</div></div>
+    </button>`).join('');
+  $$('#partnerPlans [data-pp]').forEach((el) => el.addEventListener('click', () => { partnerPlan = el.dataset.pp; renderPartnerPlans(); hydrateIcons(); }));
+  hydrateIcons();
+}
+
+/* ── Поддержать школу (пожертвование) ── */
+const DONATE_AMOUNTS = [200, 500, 1000, 2000];
+let donateAmt = 500;
+function openDonate() {
+  donateAmt = 500;
+  $('#donateCustom').value = '';
+  renderDonate();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'donate'));
+  $('#nav').style.display = 'none';
+  window.scrollTo({ top: 0 });
+}
+function renderDonate() {
+  $('#donateGrid').innerHTML = DONATE_AMOUNTS.map((a) => `
+    <button class="donate-amt ${a === donateAmt ? 'donate-amt--on' : ''}" data-da="${a}">${a} ₽</button>`).join('');
+  $$('#donateGrid [data-da]').forEach((el) => el.addEventListener('click', () => { donateAmt = Number(el.dataset.da); $('#donateCustom').value = ''; renderDonate(); }));
 }
 
 /* ── Настройки ── */
@@ -2720,10 +2771,25 @@ function initGrowth() {
   $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#mSubscribe')?.addEventListener('click', openSubscribeScreen);
   $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#mPartner')?.addEventListener('click', openPartner);
+  $('#partnerBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#partnerCta')?.addEventListener('click', () => {
+    const p = PARTNER_PLANS.find((x) => x.key === partnerPlan);
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'dove', title: 'Спасибо, что вы с нами!', subtitle: `Тариф «${p.name}» (${p.amt}/мес). Как только подключим оплату — оформим партнёрство. Ваша поддержка бесценна.`, xp: 0 });
+    else toast('Спасибо за поддержку!');
+  });
+  $('#mDonate')?.addEventListener('click', openDonate);
+  $('#donateBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#donateCta')?.addEventListener('click', () => {
+    const custom = Number($('#donateCustom').value);
+    const amt = custom > 0 ? custom : donateAmt;
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Спасибо от всего сердца!', subtitle: `Ваш дар ${amt} ₽ поможет школе. Как только подключим оплату — примем с благодарностью 🕊`, xp: 0 });
+    else toast('Спасибо за поддержку!');
+  });
   $('#subCta')?.addEventListener('click', () => {
     localStorage.setItem('mt_plus', '1');
     const p = SUB_PLANS.find((x) => x.key === subPlan);
-    if (window.MAGIC) MAGIC.rewardModal({ icon: 'crown', title: 'Метанойя+ активирована!', subtitle: `Тариф «${p.name}». Первые 7 дней бесплатно — доступ ко всем играм и урокам открыт.`, xp: 0 });
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'crown', title: 'Метанойя+ активирована!', subtitle: `Тариф «${p.name}». Дополнительные игры, личные уроки и сертификаты открыты.`, xp: 0 });
     else toast('Метанойя+ активирована');
     setTimeout(openSubscribeScreen, 300);
   });

@@ -385,7 +385,9 @@
       <h2 class="section-title">Настройки</h2>
       <div class="menu-list">
         <button class="menu-item" id="mSettings"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
-        <button class="menu-item menu-item--plus" id="mSubscribe"><span data-icon="crown" data-size="18"></span>Подписка Метанойя+<span class="menu-item__tag">7 дней бесплатно</span></button>
+        <button class="menu-item menu-item--plus" id="mSubscribe"><span data-icon="crown" data-size="18"></span>Метанойя+<span class="menu-item__tag">доп. возможности</span></button>
+        <button class="menu-item menu-item--partner" id="mPartner"><span data-icon="dove" data-size="18"></span>Стать партнёром</button>
+        <button class="menu-item" id="mDonate"><span data-icon="heart" data-size="18"></span>Поддержать школу</button>
         <button class="menu-item" id="mNotify"><span data-icon="bell" data-size="18"></span>Уведомления</button>
         <button class="menu-item" id="mParental"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
         <button class="menu-item"><span data-icon="headset" data-size="18"></span>Поддержка</button>
@@ -674,6 +676,7 @@
 
     <!-- ── КНИГА МЕТАНОЙЯ: оглавление ── -->
     <section class="screen" data-screen="book">
+      <button class="child-back" id="bookBack"><span data-icon="back" data-size="18"></span> Профиль</button>
       <div class="book-cover">
         <img src="assets/img/logo.png" width="64" height="64" alt="">
         <div class="book-cover__title">МЕТАНОЙЯ</div>
@@ -810,13 +813,43 @@
       <div class="sub-hero">
         <div class="sub-hero__crown"><span data-icon="crown" data-size="40"></span></div>
         <div class="sub-hero__title">Метанойя+</div>
-        <div class="sub-hero__sub">Полный доступ ко всем играм, урокам и материалам школы</div>
+        <div class="sub-hero__sub">Уроки школы бесплатны для всех. Метанойя+ — это дополнительные игры, личные уроки и сертификаты</div>
       </div>
       <div class="sub-benefits" id="subBenefits"></div>
       <h2 class="section-title">Выберите тариф</h2>
       <div class="sub-plans" id="subPlans"></div>
       <button class="btn btn--primary sub-cta" id="subCta">Оформить Метанойя+</button>
-      <div class="sub-note">Первые 7 дней бесплатно · отмена в любой момент · для всей семьи</div>
+      <div class="sub-note">Школа и все уроки — бесплатны. Метанойя+ — дополнительные возможности · отмена в любой момент</div>
+    </section>
+
+    <!-- ── СТАТЬ ПАРТНЁРОМ ── -->
+    <section class="screen" data-screen="partner">
+      <button class="child-back" id="partnerBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown" style="background:linear-gradient(150deg,#7AAED4,#1A3A52)"><span data-icon="dove" data-size="40"></span></div>
+        <div class="sub-hero__title">Стать партнёром</div>
+        <div class="sub-hero__sub">Поддержите христианское воспитание детей — регулярно, по силам. Вместе мы делаем школу доступной для каждой семьи.</div>
+      </div>
+      <div class="sub-benefits" id="partnerBenefits"></div>
+      <h2 class="section-title">Выберите вклад в месяц</h2>
+      <div class="sub-plans" id="partnerPlans"></div>
+      <button class="btn btn--primary sub-cta" id="partnerCta">Стать партнёром</button>
+      <div class="sub-note">Имя партнёра — на «Стене благодарности» школы (по желанию). Отмена в любой момент.</div>
+    </section>
+
+    <!-- ── ПОДДЕРЖАТЬ ШКОЛУ (пожертвование) ── -->
+    <section class="screen" data-screen="donate">
+      <button class="child-back" id="donateBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown" style="background:linear-gradient(150deg,#E6C079,#C97064)"><span data-icon="heart" data-size="40"></span></div>
+        <div class="sub-hero__title">Поддержать школу</div>
+        <div class="sub-hero__sub">Любая сумма помогает нам создавать уроки, игры и добрый контент для детей. Спасибо, что вы рядом 🕊</div>
+      </div>
+      <h2 class="section-title">Выберите сумму</h2>
+      <div class="donate-grid" id="donateGrid"></div>
+      <input class="addk__input donate-custom" id="donateCustom" type="number" inputmode="numeric" placeholder="Своя сумма, ₽">
+      <button class="btn btn--primary sub-cta" id="donateCta">Поддержать с любовью</button>
+      <div class="sub-note">Разовое пожертвование. По желанию имя появится на «Стене благодарности».</div>
     </section>
 
     <!-- ── НАСТРОЙКИ (этап 5) ── -->

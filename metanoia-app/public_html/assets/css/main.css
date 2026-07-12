@@ -178,7 +178,7 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .story__ring {
   width: 64px; height: 64px; border-radius: 50%;
   padding: 3px;
-  background: linear-gradient(45deg, var(--info), var(--gold));
+  background: conic-gradient(from 210deg, #C97064, #E6A15C, #E6C079, #7AAED4, #C97064);
   margin: 0 auto;
 }
 .story__ring--seen { background: rgba(90, 101, 119, .3); }
@@ -246,13 +246,15 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 }
 .feed-card__actions button { color: var(--gray); font-size: 13px; display: flex; gap: 5px; }
 .feed-card--quote {
-  background: linear-gradient(160deg, #FBF4E7, #F6EBD8);
-  border: 1px solid var(--gold);
+  background: linear-gradient(150deg, #F6DFA6, #E9C784 70%, #E0B673);
+  border: 1px solid #D4A574;
+  box-shadow: 0 6px 18px rgba(212,165,116,.3);
 }
+.feed-card--quote .feed-card__label { color: #8a5a1f; }
 .feed-card--quote .feed-card__title {
-  font-style: italic; font-size: 17px; line-height: 1.6; font-weight: 400;
+  font-style: italic; font-size: 17px; line-height: 1.6; font-weight: 500; color: #4a3410;
 }
-.quote-ref { color: var(--gold); font-weight: 600; font-size: 13px; margin-top: 8px; }
+.quote-ref { color: #9a5b2a; font-weight: 700; font-size: 13px; margin-top: 8px; }
 .progress {
   height: 6px; background: rgba(90, 101, 119, .15);
   border-radius: 3px; overflow: hidden; margin: 10px 0 4px;
@@ -776,7 +778,8 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .temple { display: flex; gap: 14px; align-items: flex-start; }
 .temple__icon {
   flex: 0 0 64px; width: 64px; height: 64px; border-radius: 14px;
-  background: rgba(212,165,116,.15); color: var(--navy);
+  background: linear-gradient(150deg, #E6A15C, #C97064); color: #fff;
+  box-shadow: 0 4px 12px rgba(201,112,100,.28);
   display: flex; align-items: center; justify-content: center;
 }
 .temple__body { flex: 1; }
@@ -1476,16 +1479,21 @@ body.in-chat .header { display: none; }
 .ghub-tab--on { background: var(--navy); color: var(--cream); }
 .ghub { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .gcard {
-  background: #fff; border-radius: var(--radius-card);
+  background: linear-gradient(160deg, #fff, #FBF4E9); border-radius: var(--radius-card);
   padding: 16px 14px; text-align: center;
-  box-shadow: 0 1px 4px rgba(26,58,82,.06);
+  box-shadow: 0 2px 8px rgba(201,112,100,.1); border: 1px solid rgba(212,165,116,.25);
   position: relative;
 }
-.gcard--locked { opacity: .62; }
+.gcard--locked { opacity: .92; }
 .gcard__icon { width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(160deg, var(--gold), var(--terracotta)); color: var(--cream); }
-.gcard--locked .gcard__icon { background: rgba(90,101,119,.15); color: var(--gray); }
+  background: linear-gradient(150deg, #E6A15C, #C97064); color: #fff;
+  box-shadow: 0 4px 12px rgba(201,112,100,.28); }
+/* каждая карточка — свой тёплый оттенок, чтобы было живо */
+#ghub .gcard:nth-child(3n+2) .gcard__icon { background: linear-gradient(150deg, #E6C079, #D4A574); }
+#ghub .gcard:nth-child(3n) .gcard__icon { background: linear-gradient(150deg, #7AAED4, #4d7ea3); }
+.gcard--locked .gcard__icon { background: linear-gradient(150deg, #E6C79A, #D9A88F); }
+.gcard--locked .gcard__name { color: var(--navy); }
 .gcard__name { font-weight: 700; font-size: 13.5px; line-height: 1.3; }
 .gcard__meta { font-size: 11px; color: var(--gray); margin-top: 3px; }
 .gcard__lock { position: absolute; top: 10px; right: 10px; color: var(--gray); }
@@ -1953,3 +1961,23 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
   color: #fff; background: linear-gradient(135deg,#D4A574,#C97064); }
 [data-theme="dark"] .wish { background: linear-gradient(120deg,#1b2c3a,#2a2440); border-color: rgba(155,122,212,.4); }
 [data-theme="dark"] .wish__name { color: #EAF0F5; }
+
+/* ── Стать партнёром / Поддержать школу (правки Екатерины) ── */
+.menu-item--partner { color: #3a7ca5; font-weight: 600; }
+.menu-item--partner span[data-icon] { color: #3a7ca5; }
+.donate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.donate-amt { padding: 18px 10px; border-radius: var(--radius-card); font-family: var(--font-head); font-weight: 800; font-size: 20px;
+  color: var(--navy); background: linear-gradient(150deg,#fff,#FBF4E9); border: 1.5px solid rgba(212,165,116,.4); }
+.donate-amt--on { border-color: var(--terracotta); background: linear-gradient(150deg,#fff,#FBEEEC); color: var(--terracotta); box-shadow: 0 4px 14px rgba(201,112,100,.2); }
+.donate-amt small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--gray); margin-top: 2px; }
+.donate-custom { margin-bottom: 4px; }
+[data-theme="dark"] .donate-amt { background: linear-gradient(150deg,#1b2c3a,#22333f); color: #E7EDF3; border-color: rgba(255,255,255,.12); }
+[data-theme="dark"] .donate-amt--on { border-color: var(--terracotta); color: var(--terracotta); }
+
+/* ── Живые уроки: цветные плитки-номера по блокам (правка Екатерины #2) ── */
+.lesson-item__num { border-radius: 13px; color: #fff; }
+.lesson-item--locked.lesson-item--b1 .lesson-item__num { background: linear-gradient(150deg,#E7A98F,#C97064); opacity:.9; }
+.lesson-item--locked.lesson-item--b2 .lesson-item__num { background: linear-gradient(150deg,#8FBEE0,#4d7ea3); opacity:.9; }
+.lesson-item--locked.lesson-item--b3 .lesson-item__num { background: linear-gradient(150deg,#EBCE92,#D4A574); opacity:.9; }
+.lesson-item--locked .lesson-item__num { color:#fff; }
+.lesson-item--exam.lesson-item--locked .lesson-item__num { background: linear-gradient(150deg,#E6C079,#C97064) !important; opacity:1; }
