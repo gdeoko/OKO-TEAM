@@ -278,7 +278,10 @@ footer{border-top:1px solid var(--line);padding:34px clamp(16px,4vw,42px);displa
 <section id="cine">
   <div class="cine-stick">
     <img id="cine-poster" src="media/cine-poster.jpg" alt="">
-    <video id="cine-vid" muted playsinline preload="auto" poster="media/cine-poster.jpg"></video>
+    <video id="cine-vid" muted playsinline preload="auto" poster="media/cine-poster.jpg">
+      <source src="media/cine.mp4" type="video/mp4">
+      <source src="media/cine.webm" type="video/webm">
+    </video>
     <div class="cine-grad"></div>
     <div class="cine-cap">
       <div class="cine-step" data-step="0"><span class="cine-num">01 — ВЗГЛЯД</span>ОКО <span class="g">открывается</span> — и видит твой контент насквозь.</div>

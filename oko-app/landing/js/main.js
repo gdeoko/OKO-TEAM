@@ -83,9 +83,7 @@
   if(vid){
     vid.addEventListener('loadedmetadata',()=>{ vidReady=true; vidDur=vid.duration||1; });
     vid.addEventListener('error',()=>{ vidReady=false; });
-    // set source (may be replaced by generated clip)
-    if(!vid.querySelector('source') && vid.dataset.src){ vid.src=vid.dataset.src; }
-    vid.src = 'media/cine.mp4';
+    // sources are declared in HTML (<source> mp4 + webm); just kick loading
     vid.load();
   }
   ScrollTrigger.create({
