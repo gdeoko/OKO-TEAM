@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OKO — тест-пролёт (2 острова)</title>
+<style>
+  /* OKO dark theme tokens override the engine defaults */
+  html,body{margin:0;}
+  .sw-root{
+    --sw-bg:#060706;
+    --sw-ink:#f4fff0;
+    --sw-ink-soft:#8fa088;
+    --sw-accent:#9AFF00;
+    --sw-font-display:"Unbounded","Onest",system-ui,sans-serif;
+    --sw-font-body:"Onest",system-ui,-apple-system,sans-serif;
+  }
+  /* darker copy scrim for legibility on near-black clips */
+  .sw-copylayer::before{opacity:.9;}
+  .sw-copy__title{text-shadow:0 2px 30px #000;}
+  .sw-copy__body{text-shadow:0 1px 16px #000;}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="world"></div>
+<script src="./scrub-engine.js"></script>
+<script>
+  // format switch: ?fmt=webm for headless QA, default mp4 for real browsers
+  var FMT = (new URLSearchParams(location.search).get('fmt') === 'webm') ? 'webm' : 'mp4';
+  var clip = function(n){ return './enc/' + n + '.' + FMT; };
+
+  mountScrollWorld(document.getElementById('world'), {
+    brand: { name: 'OKO', href: '#' },
+    diveScroll: 1.5,
+    connScroll: 0.9,
+    crossfade: 0.14,
+    hint: 'скролль — влетаем внутрь',
+    nav: true,
+    atmosphere: true,
+    sections: [
+      {
+        id: 'hq', label: 'Штаб',
+        still: './stills/1-hq.png',
+        clip: clip('dive1-hq'),
+        accent: '#9AFF00',
+        eyebrow: 'OKO APP',
+        title: 'Твой штаб внутри Telegram',
+        body: 'Единый центр управления: люди, задачи, деньги и контент — в одном живом мире, без переключений между приложениями.',
+        tags: ['Team', 'CRM', 'Финансы', 'Автоматизация']
+      },
+      {
+        id: 'factory', label: 'Контент-завод',
+        still: './stills/2-factory.png',
+        clip: clip('dive2-factory'),
+        accent: '#9AFF00',
+        eyebrow: 'CONTENT ENGINE',
+        title: 'Контент-завод на автопилоте',
+        body: 'Идея превращается в готовые ролики и посты: генерация, монтаж и публикация запускаются в пару касаний прямо из чата.',
+        tags: ['Reels', 'AI-монтаж', 'Публикация'],
+        cta: { primary: { label: 'Открыть в Telegram', href: '#' }, secondary: { label: 'Что внутри', href: '#' } }
+      }
+    ],
+    connectors: [ null ]   // no fly-over yet — direct crossfade at the seam
+  });
+</script>
+</body>
+</html>
