@@ -157,3 +157,15 @@ TODO из фидбека Даниэля (не сделано, крупное): (
 вместо video (он про глюки MP4 при скролле — прав, film уже webp-seq, но explode ещё video);
 (2) новое HG-видео переход фура→квадрик в 4K; (3) NeRF/3DGS идея (Luma/Polycam→.ply→Spline)
 — тяжёлый эксперимент, отложено. Интеграции-паспорт: OKO_ACCESSES.md (секреты в код НЕ вставлять).
+
+## v2.1 — разлёт квадрика на СКРОЛЛЕ (Даниэль просил 3+ раза: «связаннее, круче»)
+Перевёл explode из video в scroll-scrubbed webp-секвенцию (ffmpeg: explode.mp4 142к →
+every 2nd → 71 webp 1280w q78 = 2.3МБ в dc/explode/seq/e_%04d.webp). Убрал <video id=explodeVid>
++ play-cta, добавил <canvas id="expSeq">. IIFE preload 71 кадр + rAF рисует кадр по прогрессу
+шоукейса (sp/EXPLODE_END=0.16 → frame 0..70, object-fit cover вручную). Стык: при sp>0.16
+goLive (3D) + Lightning-вспышка прикрывает свап; #showcase.live #expSeq opacity 0. 3D-модуль:
+убрал vid/playCta/playVideo/ended-listener, goLive по rawSp>0.16, IO без playVideo.
+Теперь ВЕСЬ путь — одна связная scroll-сцена: фильм-фура → выезд квадрика → [скролл] разлёт
+(колёса/панели/энергия/дым, плавно, БЕЗ MP4-глюков) → сборка → бесшовно 3D → разъезд мото/лодка.
+QA d_exp_a/b/3d: 0 ошибок, разлёт и стык рендерятся. Деплой a81f0e5 → v2.1. Прод: frame35=200.
+Осталось из идей Даниэля: HG-видео фура→квадрик 4K для ещё более плавного въезда; NeRF/3DGS.
