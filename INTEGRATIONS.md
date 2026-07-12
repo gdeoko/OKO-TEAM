@@ -121,6 +121,19 @@ soyuz.ttf (Союз Гротеск — субтитры), Montserrat Black (ци
 logo_hd.png. Цвета: #0d0d0d / #e8842a / лайм #9CF806 (акцент, с лого OKO — сам лого
 OKO нигде не использовать).
 
+## 1б. «Руки» агентов oko-agents (простые интеграции, без MCP)
+
+`core/tools.py` — агенты (userbot) умеют по действиям из диалога:
+- `image` — генерация картинки (Gemini nano-banana → фолбэк HF FLUX). ГРАБЛЯ: Gemini-image
+  на бесплатной квоте отдаёт 429 (платно), HF serverless FLUX сейчас недоступен (000) —
+  генерация best-effort, заработает при биллинге Gemini. Стоки — надёжнее.
+- `stock` — сток-видео/фото. Pexels-видео ✅; Pexels-ФОТО отдаёт 404 (ключ видео-профиля),
+  Pixabay режется Cloudflare-челленджем на IP VPS → фото берём из превью Pexels-видео (`pexels-preview`).
+- `search` — интернет-поиск (DuckDuckGo HTML) + краткий ответ Gemini по сниппетам ✅.
+- `post` — публикация в канал (текст + опц. картинка), ТОЛЬКО по команде Босса.
+Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
+Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
+
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
 Заданы в настройках cloud environment «OKO TEAM» на claude.ai. Даниэль присылал
