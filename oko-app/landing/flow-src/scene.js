@@ -11,9 +11,10 @@ import {
 } from 'three/tsl';
 import { bloom } from 'three/examples/jsm/tsl/display/BloomNode.js';
 
-// --- Config ---
-const LINE_COUNT = 4096;
-const TRAIL_LENGTH = 64;
+// --- Config (adaptive: lighter on mobile for smooth FPS) ---
+const MOBILE = Math.min(innerWidth, innerHeight) < 820 || matchMedia('(pointer: coarse)').matches;
+const LINE_COUNT = MOBILE ? 1600 : 4096;
+const TRAIL_LENGTH = MOBILE ? 40 : 64;
 const TOTAL_POINTS = LINE_COUNT * TRAIL_LENGTH;
 const BOUNDS = 6.0;
 
@@ -24,7 +25,7 @@ const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 20
 camera.position.set(0, 6, 18);
 const renderer = new THREE.WebGPURenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(devicePixelRatio);
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 const root = document.getElementById('root') ?? document.body;
 root.appendChild(renderer.domElement);
 await renderer.init();
@@ -354,7 +355,7 @@ await renderer.computeAsync(initCompute);
 await renderer.computeAsync(initTrails);
 
 // --- Pre-warm: simulate ~3 seconds of flow so trails start beautiful ---
-const PREWARM_STEPS = 360;
+const PREWARM_STEPS = MOBILE ? 140 : 300;
 const PREWARM_DT = 1.0 / 60.0;
 uDeltaTime.value = PREWARM_DT;
 for (let i = 0; i < PREWARM_STEPS; i++) {
@@ -476,7 +477,7 @@ scenePass.setMRT(mrt({ output, emissive }));
 const scenePassColor = scenePass.getTextureNode('output');
 const scenePassEmissive = scenePass.getTextureNode('emissive');
 
-const bloomPass = bloom(scenePassEmissive, 2.2, 0.75, 0.15);
+const bloomPass = bloom(scenePassEmissive, 2.2, MOBILE ? 0.5 : 0.75, 0.15);
 
 postProcessing.outputNode = scenePassColor.add(bloomPass);
 
