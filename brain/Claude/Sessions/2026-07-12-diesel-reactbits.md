@@ -316,3 +316,19 @@ CONNECTION_RESET на закрытии — оба безобидны). 3D-скр
 - Разнообразие входа: hero/loopEnd data-from=scale, калькулятор panel=left result=right.
 QA (3D заблокирован в headless для скорости): __loopWrap function, wrap 5722→1, overflowX=0,
 консоль чистая. Live: forest-beach-360, чип v3.5.
+
+## v3.6 — «привязать видео к скроллу» + обратная бесконечность
+Даниэль: (1) обратная сторона петли не работает; (2) видео НЕ привязано к скроллу (параллакс
+ему не читается как связь). Значит нужен реальный scroll-scrub: кадр видео следует за скроллом.
+- Раньше scrub лагал (canvas image-sequence). Причина плавного scrub теперь: перекодировал loop
+  в ALL-KEYFRAME mp4 (ffmpeg -g 1 -keyint_min 1 -bf 0 -sc_threshold 0), 1280x720 24fps crf26 =
+  11МБ. Каждый кадр независим → seek мгновенный → скраб плавный. dc/scrub.mp4.
+- bgvid: снял autoplay/loop. JS: на loadedmetadata → warm play()→pause() (прогрев декодера для
+  мобилы), затем currentTime = scrollProgress*duration с lerp 0.16. Скролл двигает кадр.
+- Обратная петля не работала из-за pull-to-refresh на мобиле (жест вверху перехватывал браузер).
+  Фикс: html,body{overscroll-behavior:none}. Теперь wheel/touch вверху↑ → wrapTo(низ), внизу↓ →
+  wrapTo(верх). Петля бесшовна в обе стороны (первый кадр scrub ≈ последний).
+- Параллакс (scale/drift) оставил как доп. глубину.
+QA (3D заблокирован): fwd wrap 5722→1, rev wrap →5720, overflowX=0, консоль чистая. currentTime
+в headless не проверить (chromium-1194 не декодит клип, rs=0) — на реальном Android Chrome ок.
+Live: forest-beach-360, чип v3.6. Грабли: headless не годится для проверки scrub — только логика.
