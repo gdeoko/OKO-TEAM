@@ -153,7 +153,11 @@ OKO нигде не использовать).
 Полный user-token (`VK_TOKEN`, Kate Mobile scope, offline) аккаунта Даниэля
 (@daniel.okoteam, id 718773189). Агент умеет: `wall_post` (стена + фото FLUX),
 `send_message`, `users_search`/`groups_search` (поиск клиентов/людей), `upload_photo_to_wall`.
-Действие `post` с `platform:"vk"`. Проверено: me() + users_search работают. Токен в
+Действие `post` с `platform:"vk"`. Проверено: me() + users_search + wall_post (с фото FLUX) +
+send_message работают.
+**Паритет с Telegram (core/vk_agent.py):** Long Poll слушает входящие → агент САМ отвечает
+как человек тем же мозгом (assistant + client_memory + действия image/КП), ОТ ЛИЦА Даниэля,
+ручной приоритет 20 мин (если Даниэль пишет сам). Групповые чаты v1 пропускает. Токен в
 .env/secrets намертво. Получен через OAuth Implicit Flow (client_id 2685278, response_type=token) —
 парольный вход VK режет. Обновить токен: тот же authorize-URL в браузере Даниэля.
 
