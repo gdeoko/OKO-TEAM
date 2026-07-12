@@ -58,18 +58,18 @@ const DEMO = {
     {
       title: 'Блок 1 · «Знакомство с Богом»', range: 'уроки 1–12', award: '«Первооткрыватель»',
       lessons: [
-        { n: 1,  title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ' },
-        { n: 2,  title: 'Создание мира', state: 'locked' },
-        { n: 3,  title: 'Адам и Ева', state: 'locked' },
-        { n: 4,  title: 'Ноев ковчег', state: 'locked' },
-        { n: 5,  title: 'Вавилонская башня', state: 'locked' },
-        { n: 6,  title: 'Молитва — разговор с Богом', state: 'locked' },
-        { n: 7,  title: 'Ангелы — посланники Божьи', state: 'locked' },
-        { n: 8,  title: 'Что такое Библия', state: 'locked' },
-        { n: 9,  title: 'Заповеди — правила любви', state: 'locked' },
-        { n: 10, title: 'Совесть и прощение', state: 'locked' },
-        { n: 11, title: 'Благодарность Богу', state: 'locked' },
-        { n: 12, title: 'Большое повторение блока', state: 'locked' },
+        { n: 1,  title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ', img: 'assets/img/lessons/l1.jpg' },
+        { n: 2,  title: 'Создание мира', state: 'locked', img: 'assets/img/lessons/l2.jpg' },
+        { n: 3,  title: 'Адам и Ева', state: 'locked', img: 'assets/img/lessons/l3.jpg' },
+        { n: 4,  title: 'Ноев ковчег', state: 'locked', img: 'assets/img/lessons/l4.jpg' },
+        { n: 5,  title: 'Вавилонская башня', state: 'locked', img: 'assets/img/lessons/l5.jpg' },
+        { n: 6,  title: 'Молитва — разговор с Богом', state: 'locked', img: 'assets/img/lessons/l6.jpg' },
+        { n: 7,  title: 'Ангелы — посланники Божьи', state: 'locked', img: 'assets/img/lessons/l7.jpg' },
+        { n: 8,  title: 'Что такое Библия', state: 'locked', img: 'assets/img/lessons/l8.jpg' },
+        { n: 9,  title: 'Заповеди — правила любви', state: 'locked', img: 'assets/img/lessons/l9.jpg' },
+        { n: 10, title: 'Совесть и прощение', state: 'locked', img: 'assets/img/lessons/l10.jpg' },
+        { n: 11, title: 'Благодарность Богу', state: 'locked', img: 'assets/img/lessons/l11.jpg' },
+        { n: 12, title: 'Большое повторение блока', state: 'locked', img: 'assets/img/lessons/l12.jpg' },
         { n: 'I', title: 'Проверка знаний · Блок 1', state: 'locked', exam: true },
       ],
     },
@@ -249,8 +249,10 @@ function renderLessons() {
   $('#lessons').innerHTML = DEMO.blocks.map((block, bi) => `
     <div class="block-title">${block.title} <small>${block.range} · награда: ${block.award}</small></div>
     ${block.lessons.map((l) => `
-      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''}" data-state="${l.state}" data-n="${l.n}">
-        <div class="lesson-item__num">${l.exam ? ICON('crown', 20) : l.n}</div>
+      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} ${l.img ? 'lesson-item--img' : ''}" data-state="${l.state}" data-n="${l.n}">
+        ${l.img
+          ? `<div class="lesson-item__thumb"><img src="${l.img}" alt="" loading="lazy"><span class="lesson-item__badge">${l.n}</span></div>`
+          : `<div class="lesson-item__num">${l.exam ? ICON('crown', 20) : l.n}</div>`}
         <div class="lesson-item__body">
           <div class="lesson-item__title">${l.title}</div>
           ${l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : ''}
