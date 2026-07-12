@@ -35,17 +35,20 @@ final class Lava
 
     /**
      * Создать счёт. Возвращает ['id' => invoiceId, 'url' => paymentUrl].
+     * Контракт подтверждён на боевом API Lava.top (POST /api/v2/invoice → 201).
      * @throws RuntimeException при ошибке шлюза.
      */
-    public static function createInvoice(string $email, string $offerId, string $currency = 'RUB'): array
+    public static function createInvoice(string $email, string $offerId, string $currency = 'RUB', string $periodicity = 'MONTHLY'): array
     {
         $payload = [
-            'email'    => $email,
-            'offerId'  => $offerId,
-            'currency' => $currency,
+            'email'        => $email,
+            'offerId'      => $offerId,
+            'currency'     => $currency,
+            'periodicity'  => $periodicity,   // MONTHLY / PERIOD_90_DAYS / ...
+            'buyerLanguage' => 'RU',
         ];
         $res = self::request('POST', '/api/v2/invoice', $payload);
-        // Ответ Lava.top: {id, status, amountTotal, paymentUrl|url, ...}
+        // Ответ Lava.top: {id, status, amountTotal, paymentUrl}
         $id  = $res['id'] ?? null;
         $url = $res['paymentUrl'] ?? ($res['url'] ?? null);
         if (!$id || !$url) {
