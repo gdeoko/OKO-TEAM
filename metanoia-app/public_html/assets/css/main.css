@@ -1990,3 +1990,7 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .lesson-item--locked.lesson-item--img .lesson-item__thumb img { filter: saturate(.9) brightness(.98); }
 .lesson-item--locked.lesson-item--img { opacity: 1; }
 .lesson-item--open.lesson-item--img .lesson-item__thumb { box-shadow: 0 0 0 2px var(--terracotta), 0 2px 8px rgba(201,112,100,.3); }
+
+/* ── Картинка к стиху дня (правка Екатерины #7) ── */
+.dverse__img { display: block; width: 100%; height: 130px; object-fit: cover; border-radius: 16px; margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(26,58,82,.18); }
