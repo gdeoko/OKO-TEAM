@@ -79,7 +79,20 @@ _Как применять к OKO:_ хром-глаз OKO = приём №1 (met
 
 ---
 
-## №7 — Mint (mint.gg) — движок НАСТОЯЩЕГО 3D по промпту (кандидат на подключение)
+## №7 — Mint (mint.gg) — движок НАСТОЯЩЕГО 3D по промпту ✅ ПОДКЛЮЧЁН
+**Статус: подключён и авторизован** (аккаунт OKO, ~18.5k кредитов). Инструменты в сессии: `mcp__MIND__*` —
+`start_model_generation` (3D-модель), `start_world_generation` (3D-мир), `start_material_generation` /
+`start_material_pack_generation` (материалы), `start_asset_pack_generation` (набор ассетов),
+`start_image_generation`/`start_image_edit`, `animate_generated_model` / `optimize`/`retopologize` (риг/оптимизация меша),
+`upload_reference_image`, `who_am_i`, `get_credits_balance`, `wait_for_status`, `get_asset_artifact` (скачать GLB).
+Флоу: start_* (preview) → revise_preview → approve_* (финал, спишет кредиты) → get_asset_artifact (GLB).
+**Как подключали (на будущее, для эфемерной облачной сессии):** OAuth вручную через curl —
+метадата `/.well-known/oauth-authorization-server`, свой PKCE (verifier у агента), Даниэль проходит Authorize в браузере,
+код с `localhost:3118/callback` → обмен на `/oauth/token` (auth method `none`, публичный клиент) → токен в header коннектора
+(`claude mcp add mint --transport http <url> --header "Authorization: Bearer <tok>"`). Токен 1ч, есть refresh (агент продлевает).
+Для ПОСТОЯННОГО подключения — добавить Mint в Claude app → Connectors (там refresh живёт между сессиями).
+
+### (было) №7 — Mint — кандидат на подключение
 - Что: AI-генерация 3D — **модели, материалы, анимации, целые миры**, несколько движков в одном агент-воркфлоу.
   Заточен под **Three.js** (веб-деплой), есть image-guided asset packs. Экспорт — вероятно GLB (не подтверждено).
 - **Mint MCP** — «подключить AI-клиент к 3D-пайплайну Mint». Т.е. подключается к Claude как Higgsfield →
