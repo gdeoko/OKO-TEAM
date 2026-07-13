@@ -460,3 +460,18 @@ QA: og/twitter/favicon/canonical есть, og.jpg 200, cursor создаётся
 Тюнить числа (угол/дистанция/тайминги) легко по фидбеку Даниэля.
 ИТОГ сессии: v3.2→v4.3. Осталось: Telegram live-routing (нужен token+chat_id от Даниэля),
 опц. звук/Lottie. deploy_website у Higgsfield подхватил og_image + favicon (SEO работает).
+
+## v4.4 — заявка на бэкенд + ВАЖНЫЙ КОНТЕКСТ
+ОТКРЫТИЕ: forest-beach-360 = проект PandaGo Cargo /order/ (клиент Сергей, «карго техники из
+Китая») — DIESEL CARGO это его кинематографичная итерация. У проекта ГОТОВ PHP-бэкенд:
+POST api.php?action=newLead {name,phone,tg,email,service,msg,contact,website(honeypot)} →
+доставляет в @pandago_order_bot (config.php с секретами на сервере FastPanel, cargo-pandago.online).
+Даниэль прислал токен бота @pandago_order_bot (id 8982451112) — в git/клиент НЕ клал (лежит в
+config.php на проде). Форму подключил к api.php?action=newLead (form-urlencoded), CTA «Написать
+в Telegram» → t.me/pandago_order_bot, fallback (на статик-превью без PHP) открывает бота с
+префилл-текстом. Токен в HTML отсутствует (проверено grep=0).
+ГРАБЛИ: getUpdates бота = 0 (никто не писал), webhook пуст → chat_id для прямой доставки С ПРЕВЬЮ
+пока неизвестен. На проде доставка идёт через api.php+config.php. Чтобы лиды падали прямо с
+higgsfield-превью — нужен relay (CF Worker с токеном+chat_id); ждём, чтобы Даниэль написал боту
+(достану chat_id) ИЛИ дал chat_id.
+Live v4.4.
