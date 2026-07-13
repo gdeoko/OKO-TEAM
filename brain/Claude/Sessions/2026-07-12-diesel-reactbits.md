@@ -411,3 +411,19 @@ hero→showcase→calc→reviews→lead2→loopEnd по p, консоль чис
   Beat engine lerp 0.10.
 QA: lenis object, beats переключаются hero→showcase→calc→reviews→lead2→loopEnd, canvas не чёрный
 (px 153,167,162), overflowX0, консоль чистая. Скрин: резкий склад с техникой. Live v4.0.
+
+## v4.1 — фикс «размазывается/глючит» (стало хуже после v4.0)
+Причина смаза найдена: КРОССФЕЙД соседних кадров (v4.0) на быстрой аэросъёмке даёт двоение/смаз
+— соседние кадры сильно различаются. Плюс наложил 3 слоя сглаживания (Lenis + canvas lerp +
+beat lerp) = резина/глюки, и GPU-blur на полноэкранных beat = джанк на мобиле.
+Исправлено:
+- Canvas: рисую ОДИН резкий ближайший кадр (drawIdx), без кроссфейда, без внутреннего lerp.
+  lastI кэш (не перерисовывать тот же кадр). dpr cap 1.3. Трекает уже-сглаженный Lenis-скролл 1:1.
+- Один источник сглаживания — Lenis (lerp:0.1, не duration; syncTouch:false — тач нативный, не
+  дёргает; wheelMult 1). Снап с guard по velocity (>0.06 — не мешать), duration 0.9, lock.
+- Beat engine: убрал внутренний lerp (window.__P=tgt напрямую, Lenis уже гладкий). Убрал filter
+  blur с beat (в CSS и JS) — translate3d+scale+opacity только. [data-rv] тоже без blur, мягче
+  сдвиги (46px/scale.96), короче стаггер.
+QA (headless): lenis object, beat-with-filter=0 (нет blur), центр.пиксель фона чётко меняется по
+скроллу p0..p1 (кадры идут, p0≈p1 петля), overflowX0, консоль чистая. Скрин: РЕЗКИЙ одиночный
+кадр (фуры ночью, aurora, без двоения). Live v4.1.
