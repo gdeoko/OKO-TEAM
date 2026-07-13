@@ -427,3 +427,21 @@ beat lerp) = резина/глюки, и GPU-blur на полноэкранны�
 QA (headless): lenis object, beat-with-filter=0 (нет blur), центр.пиксель фона чётко меняется по
 скроллу p0..p1 (кадры идут, p0≈p1 петля), overflowX0, консоль чистая. Скрин: РЕЗКИЙ одиночный
 кадр (фуры ночью, aurora, без двоения). Live v4.1.
+
+## v4.2 — апгрейды (Даниэль выбрал все 4 направления)
+Сделано в этом заходе (3 из 4; 3D-выезд — следующий фокусный заход):
+- SEO/шеринг: og:image (dc/og.jpg 1200x630 — резкий кадр «фура + квадро/лодка/мото на рампе»,
+  идеальная обложка), og/twitter теги, canonical, theme-color, SVG-favicon (фура на navy).
+- Микро-детали: курсор-глоу (радиальная подсветка за курсором, desktop hover:hover), магнитные
+  .btn (тянутся к курсору), shine-блик по btn-primary на ховере, счётчик в калькуляторе
+  (count-up при входе блока + val-pulse при изменении слайдера). Beat engine теперь шлёт
+  CustomEvent('beatin') при активации — на нём висит count-up.
+- Заявка: форма POST /api/lead (same-origin), при неудаче — fallback открывает t.me/okoappbot
+  с префилл-текстом (имя/тел/техника), чтобы лид не терялся. ЖДЁТ от Даниэля: bot token +
+  chat_id (или через website_secrets), чтобы поднять реальный серверный роут и слать в тг
+  автоматически. TELEGRAM_BOT_TOKEN в secrets.env.b64 НЕТ (есть HF/Pexels/Pixabay/Freesound/
+  Sketchfab/FAL/21st/Cloudflare/HF_S3) — нужен от Даниэля.
+QA: og/twitter/favicon/canonical есть, og.jpg 200, cursor создаётся, calcTotal count-up
+331k→488k, консоль чистая. Live v4.2.
+ОСТАЛОСЬ: (1) 3D красивый выезд мото/квадро/лодки (three.js, аккуратно — headless не рендерит);
+(2) Telegram live-routing (нужны token+chat_id); опц. звук-эмбиент, Lottie-иконки этапов.
