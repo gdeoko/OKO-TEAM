@@ -394,3 +394,20 @@ hero→showcase→calc→reviews→lead2→loopEnd по p, консоль чис
 (showProg внутр., __P number, #stage3d есть). Live v3.9.
 - ИНФРА: Higgsfield MCP флапал сильно (~несколько раз stream closed на deploy). Помогает тупо
   повторять вызов + CronCreate one-shot как страховка. CDN edge-кэш: cache-bust ?v=ts.
+
+## v4.0 — резкость 1080 + Lenis плавность + снап к блокам
+Даниэль: 4К-апскейл HG = МЫЛО (даже на ПК). Вернуть 1080 оригиналы, ультра-детализация;
+скролл плавнее/медленнее; плавный доскролл до блоков; текст держать дольше (меньше пустых
+экранов); было дёрганно. «почитай скиллы» → web-fx рекомендует Lenis для плавного скролла.
+- Кадры пере-извлёк из loop_1080.mp4 (НАСТОЯЩИЙ 1080 оригинал, 8.4/5.9Мбит, НЕ 4К-апскейл),
+  1920x1080 нативно, webp q80, 160 кадров, 11МБ (65КБ/кадр). Резко (видно квадры/мото на
+  стеллажах, отражения). loop_4k_raw больше не используется для фона.
+- Canvas: КРОССФЕЙД соседних кадров по дробной части curF (drawImage a alpha1 + b alpha=frac)
+  → нет ступенчатости, масло. Lerp медленный 0.09.
+- Lenis (dc/lib/lenis.min.js, vendored unpkg 1.1.14): duration 1.6, syncTouch, wheelMult .9 →
+  плавный интерполированный скролл. Снап: on 'scroll' settle (170ms) → lenis.scrollTo(ближайший
+  beat mid, dur 1.1) → доскролл к блоку, меньше пустых экранов. wrap jump через lenis immediate.
+- Envelope: hold шире (IN .18 OUT .84), окна beat перекрыты (~0.03) → кроссфейд-переходы.
+  Beat engine lerp 0.10.
+QA: lenis object, beats переключаются hero→showcase→calc→reviews→lead2→loopEnd, canvas не чёрный
+(px 153,167,162), overflowX0, консоль чистая. Скрин: резкий склад с техникой. Live v4.0.
