@@ -26,3 +26,12 @@ BRAND_PROFILE Tappio заполнен (3 идентичности, голоса,
 - Ежедневное обучение: аналитика соцсетей+тренды+конкуренты, дашборд на бесплатном хостинге (отдельная ссылка), память в git, усиливать залетевшее.
 - Автозапуск: CCR Routine (cron будит сессию ежедневно).
 Нужно от клиента: ключ Zernio, IG Business+FB page, (позже) записи экрана приложений, дата старта.
+
+## YouTube Tappio ПОДКЛЮЧЁН (14.07.2026)
+Канал TAPPIO (id UChJNuqMcytBhNfR5vsw49HQ, аккаунт tappio.app@gmail.com), свежий (0 видео).
+OAuth через приложение oko-claude2 (client 532707229456-q607..., проект oko-youtube). Scope: youtube.upload + force-ssl.
+Токены в secrets.env.b64: TAPPIO_YT_CLIENT_ID/SECRET/REFRESH_TOKEN/CHANNEL_ID. Личные данные из OKO_KEYS в git НЕ клал.
+Постинг ПРОВЕРЕН: resumable upload spy_001.mp4 -> videoId jpu5aNkSWwo (private). Работает end-to-end.
+Грабли OAuth: redirect_uri должен быть в "Authorized redirect URIs" (не в JavaScript origins!). Для клиента добавляли http://localhost. Client в статусе — проверить Testing/Prod (токен может протухать 7 дней если Testing -> перевести в Production).
+Загрузка: POST https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status, потом PUT байты по Location.
+Осталось: Instagram + TikTok подключить, построить страницу-коннектор (one-click для клиентов ОКО АПП).
