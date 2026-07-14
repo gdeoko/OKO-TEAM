@@ -54,3 +54,12 @@ VPS okoagents.okoteam.top, control /exec (HTTPS, OKO_VPS_CTRL_URL/TOKEN в secre
 Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=YouTube,17/18/29=прочее(Dzen/OK/TenChat). IG/TikTok source_id определю при подключении Tappio.
 СЕЙЧАС в Hoopy - только OKO-аккаунты Даниэля, проект "OKO". Tappio IG/TikTok НЕ подключены.
 Чтобы постить в Tappio IG/TikTok: нужны их логины/пароли -> браузер-агент подключит в Hoopy автоматически (или Даниэль в кабинете). YouTube Tappio - напрямую (готово).
+
+## IG подключение - попытки автоматизации (14.07, ВАЖНЫЕ ВЫВОДЫ)
+Браузер-агент на VPS РАБОТАЕТ: заходит в Hoopy, кликает Instagram (Hoopy IG-connect = официальный OAuth instagram.com, scope instagram_business_content_publish, client_id 784434260665293, redirect hooppy.ru/oauth/29 - БЕЗ Facebook). Прямой вход instagram.com/accounts/login: поля name="email"/"pass" (НЕ username/password - то в OAuth-версии). Кнопка submit.
+Дошли до email-кода (auth_platform/codeentry). Код в почте okoteam.top@gmail.com виден через Gmail-коннектор (mcp__Gmail__search_threads from:security@mail.instagram.com). Код IG ПЕРЕИСПОЛЬЗУЕТ (628884 45 мин, новых не шлёт в рамках одного thread).
+Поле кода на codeentry - защищённое ($$eval('input')=[] в OAuth-версии; в persistent-context прямого входа УДАЛОСЬ заполнить getByRole/pressSequentially, code_typed len=6). НО код 628884 истёк -> не пропустило. После ~10 логинов IG включил анти-бот кулдаун (вход не проходит, страница логина без ошибки). Аккаунт НЕ забанен.
+ВЫВОД: авто-вход в IG из дата-центра (VPS US IP) хрупкий из-за анти-бота Meta. Для надёжности нужен резидентный/мобильный прокси на аккаунт (для ОКО АПП на масштабе - обязательно). 
+РЕКОМЕНДАЦИЯ сейчас: (1) дать аккаунту остыть ~сутки; (2) Даниэль логинится в tappio_app С ТЕЛЕФОНА один раз (доверенное устройство/мобильный IP - снимает подозрение IG), ПОТОМ авто-сессия агента проходит; ИЛИ (3) Даниэль подключает tappio_app в кабинете Hoopy с телефона (2 мин) - дальше постинг через Hoopy API полностью на мне.
+Скрипты: factory/vps/ig_direct_login.mjs (persistent context, email/pass, file-code injection). Сессия сохраняется в /opt/oko-poster/cfg/ig_profile.
+YouTube Tappio, Hoopy API, браузер-логин в Hoopy, обложки - всё РАБОТАЕТ. Приоритет вернуть на КОНТЕНТ (пересборка v6).
