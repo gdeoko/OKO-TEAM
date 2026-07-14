@@ -45,3 +45,12 @@ source_id (по факту подключённых аккаунтов Дани�
 СЕЙЧАС в Hoopy: только личные OKO-аккаунты Даниэля (VK, FB, Telegram, YouTube и др.), проект "OKO" (id 19421). Tappio НЕ подключён.
 НУЖНО: Даниэль подключает в кабинете Hoopy аккаунты Tappio - Instagram (tappio_app) + TikTok (по логину), лучше в отдельном проекте "Tappio". YouTube Tappio делаю напрямую (официально, уже готово).
 Архитектура постинга финальная: YouTube - напрямую я (официально); IG/TikTok/Telegram/VK - через Hoopy API по логину (без Facebook, анти-бан на Hoopy). Один токен Hoopy = все РФ-совместимые соцсети + папки-проекты по клиентам = решение и для ОКО АПП.
+
+## VPS браузер-агент + Hoopy кабинет РАБОТАЮТ (14.07.2026)
+VPS okoagents.okoteam.top, control /exec (HTTPS, OKO_VPS_CTRL_URL/TOKEN в secrets). Хелпер: factory/vps/vps_exec.py.
+Окружение VPS: Node 22, Python 3.14, ffmpeg 8, Docker 29, Playwright 1.49 + Chromium (pw-browsers/, headless, --no-sandbox). /opt/oko-poster (user okoposter).
+Браузер-агент ЛОГИН В HOOPPY: hooppy.ru/auth/login, креды HOOPPY_LOGIN/PASSWORD. Скрипт factory/vps/hooppy_login.mjs -> сессия /opt/oko-poster/cfg/hooppy_session.json (переиспользуется, проверено hooppy_verify.mjs: /accounts "Мои аккаунты" держится). Полный доступ в кабинет = подключать аккаунты/проекты (чего нет в API).
+ВНИМАНИЕ КООРДИНАЦИЯ: второй агент перезаписывает secrets.env.b64 целиком и затирает мои ключи. Восстановил TAPPIO_YT_* (из git b24ff11) и HOOPPY_API_TOKEN. НАДО: договориться, что Tappio-ключи не трогать / append-only, иначе будут пропадать.
+Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=YouTube,17/18/29=прочее(Dzen/OK/TenChat). IG/TikTok source_id определю при подключении Tappio.
+СЕЙЧАС в Hoopy - только OKO-аккаунты Даниэля, проект "OKO". Tappio IG/TikTok НЕ подключены.
+Чтобы постить в Tappio IG/TikTok: нужны их логины/пароли -> браузер-агент подключит в Hoopy автоматически (или Даниэль в кабинете). YouTube Tappio - напрямую (готово).
