@@ -131,7 +131,7 @@ new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
     const m=new THREE.MeshPhysicalMaterial({
       map:old.map||null, color:0x0c120c, roughness:0.28, metalness:0.2,
       clearcoat:1.0, clearcoatRoughness:0.25, envMapIntensity:1.2,
-      emissive:0xffffff, emissiveMap:old.map||null, emissiveIntensity:1.15,
+      emissive:0x9AFF00, emissiveMap:old.map||null, emissiveIntensity:0.95,
       iridescence:1.0, iridescenceIOR:1.35, iridescenceThicknessRange:[120,420],
       sheen:0.6, sheenColor:new THREE.Color(0x9AFF00)
     });
@@ -145,7 +145,7 @@ new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
 // composer / bloom
 const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.85, 0.7, 0.6);
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.62, 0.6, 0.72);
 composer.addPass(bloom);
 
 // pointer
@@ -199,7 +199,7 @@ function frame(){
     eyeGroup.rotation.y += (yaw-eyeGroup.rotation.y)*0.08;
     eyeGroup.rotation.x += (pit-eyeGroup.rotation.x)*0.08;
     if(eyeMat){
-      eyeMat.emissiveIntensity = 1.05 + Math.sin(t*1.6)*0.28 + pulse*0.6;
+      eyeMat.emissiveIntensity = 0.9 + Math.sin(t*1.6)*0.22 + pulse*0.5;
       eyeMat.iridescenceThicknessRange = [120, 360+Math.sin(t*0.9)*120];
     }
     // blink: quick vertical squash
