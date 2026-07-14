@@ -39,3 +39,8 @@
 - Реальные кадры App Store + сайт tappio.pro (запись Playwright) для sell
 - Обложки: сейчас бесплатно (HF/Playwright дизайн), потом Nano Banana Pro 4K
 - Реестр registry.json: антиповтор хуков/приёмов + статус публикации
+
+## Обложки — бесплатный путь ПОДТВЕРЖДЁН (14.07)
+Gemini image (nano-banana) через прокси = 429 (нужен биллинг, free-tier=0). Путь: HF Z-Image-Turbo (gradio_client, анонимно) - 9:16 фон бесплатно, ~2.8MB, /generate(prompt, "1152x2048 ( 9:16 )", seed, steps=8, shift=3, random_seed, []).
+Обложка = AI-фон (HF) + брендовый текст (Playwright, Orbitron/cyan) + иконка. Пример: covers/spy_001_cover.png (готово, премиум-вид).
+ГРАБЛЯ: Z-Image иногда дорисовывает мусорный текст (иероглифы) несмотря на "no text" - добавить negative prompt / затемняющий градиент сверху / кроп. Для FLUX.1-Krea-dev текста меньше.
