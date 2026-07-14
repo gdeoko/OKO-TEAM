@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Гранат 3D — вскрытая структура</title>
+<style>
+  :root{--ink:#f6efe6;--muted:#b79aa0;--gold:#e8b15a;--ruby:#e23c55;--rose:#ff9fb0}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#080304;color:var(--ink);font-family:'Montserrat','Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .serif{font-family:'Playfair Display','Georgia',serif}
+  #scrollspace{height:320vh;position:relative}
+  #pin{position:sticky;top:0;height:100svh;overflow:hidden}
+  canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+  .ui{position:absolute;inset:0;pointer-events:none;z-index:5}
+  .top{position:absolute;top:clamp(18px,5vh,54px);left:0;right:0;text-align:center;padding:0 18px;transition:opacity .6s}
+  .eyebrow{letter-spacing:.42em;text-transform:uppercase;font-size:12px;color:var(--rose);font-weight:600;opacity:.9}
+  .caption{font-size:clamp(22px,3.4vw,40px);line-height:1.12;margin-top:12px;font-weight:600;max-width:20ch;margin-inline:auto}
+  .hint{position:absolute;bottom:26px;left:0;right:0;text-align:center;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);transition:opacity .5s}
+  .badge{position:absolute;left:14px;bottom:12px;font-size:11px;letter-spacing:.18em;color:#6b4a50;text-transform:uppercase}
+
+  .lbl{position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:12.5px;font-weight:600;color:#fff;
+       background:rgba(20,7,10,.82);border:1px solid rgba(232,177,90,.4);padding:5px 11px;border-radius:999px;
+       opacity:0;transition:opacity .25s;backdrop-filter:blur(6px);box-shadow:0 8px 24px rgba(0,0,0,.5);pointer-events:none}
+  .lbl.on{opacity:1}
+
+  .panel{position:absolute;top:0;right:0;height:100svh;width:min(430px,90vw);z-index:20;pointer-events:auto;
+        background:linear-gradient(180deg,#170a0e,#0c0405);border-left:1px solid rgba(232,177,90,.28);
+        box-shadow:-30px 0 70px rgba(0,0,0,.6);padding:clamp(24px,4vw,40px);
+        transform:translateX(105%);transition:transform .55s cubic-bezier(.2,.8,.2,1);overflow-y:auto}
+  .panel.show{transform:translateX(0)}
+  .panel .kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
+  .panel h3{font-size:clamp(23px,4vw,31px);margin:10px 0 16px;line-height:1.1}
+  .panel p{color:#d9c7cb;line-height:1.6;font-size:15px}
+  .panel .close{position:absolute;top:18px;right:18px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;font-size:20px;cursor:pointer;transition:.25s}
+  .panel .close:hover{background:rgba(255,255,255,.1);transform:rotate(90deg)}
+  .rel{margin:20px 0 8px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .rel b{display:block;color:var(--rose);font-size:14px;text-transform:none;margin-top:6px;font-weight:600}
+  .cta{display:inline-flex;align-items:center;gap:9px;margin-top:24px;padding:14px 26px;border-radius:999px;border:none;cursor:pointer;
+        background:linear-gradient(90deg,var(--ruby),#b81e37);color:#fff;font-weight:700;font-size:14.5px;box-shadow:0 14px 34px rgba(226,60,85,.4);transition:.25s}
+  .cta:hover{transform:translateY(-2px)}
+  .cta svg{width:16px;height:16px}
+  #block4{position:relative;z-index:6;background:#080304;min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px;border-top:1px solid rgba(232,177,90,.14)}
+</style>
+</head>
+<body>
+
+<div id="scrollspace">
+  <div id="pin">
+    <div class="ui">
+      <div class="top" id="top">
+        <div class="eyebrow">Женское здоровье</div>
+        <h1 class="caption serif" id="caption">Единая взаимосвязанная система</h1>
+      </div>
+      <div class="hint" id="hint">Скролль — гранат раскрывается · тяни — вращай</div>
+      <div class="badge">3D · Прототип · OKO TEAM</div>
+    </div>
+  </div>
+</div>
+
+<aside class="panel" id="panel">
+  <button class="close" id="close">×</button>
+  <div class="kicker" id="pKicker">Раздел</div>
+  <h3 class="serif" id="pTitle">—</h3>
+  <p id="pText"></p>
+  <div class="rel">Связанные разделы<b id="pRel">—</b></div>
+  <p style="margin-top:20px;color:#a98d92;font-size:13.5px;font-style:italic">«Каждое изменение влияет на систему целиком — как одно зёрнышко граната влияет на весь плод.»</p>
+  <button class="cta" id="cta">Получить объяснение
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </button>
+</aside>
+
+<section id="block4">
+  <div class="eyebrow" style="color:var(--gold)">Блок 4</div>
+  <h2 class="serif" style="font-size:clamp(26px,5vw,44px);margin-top:14px">Получить объяснение</h2>
+  <p style="max-width:52ch;margin:14px auto 0;color:#cbb3b8;line-height:1.7">Целостный взгляд на женское здоровье как на единую систему.</p>
+</section>
+
+<script type="importmap">
+{ "imports": {
+  "three": "../js/vendor/three.module.min.js",
+  "three/addons/": "../js/vendor/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const MODULES = [
+  {t:"Гормональные процессы",        rel:[1,2,5]},
+  {t:"Репродуктивное здоровье",      rel:[0,3,4]},
+  {t:"Менструальный цикл",           rel:[0,1]},
+  {t:"Беременность и её этапы",      rel:[1,6]},
+  {t:"Диагностика",                  rel:[0,1,3,5,6]},
+  {t:"Психоэмоциональное состояние", rel:[0,4,6]},
+  {t:"Перинатальная психология",     rel:[3,4,5]},
+];
+const DESC = [
+  "Гормональный фон — дирижёр всей системы: задаёт ритм циклу, влияет на репродукцию, настроение и обмен веществ.",
+  "Способность к зачатию и вынашиванию напрямую зависит от гормонального баланса и общего состояния организма.",
+  "Регулярность и характер цикла — зеркало гормонального здоровья и первый сигнал изменений.",
+  "Беременность — этап, где физиология и психика женщины работают как единое целое.",
+  "Своевременная диагностика связывает все разделы: один показатель помогает увидеть картину целиком.",
+  "Эмоции и физиология неразделимы: гормональные сдвиги влияют на настроение, а стресс — на тело.",
+  "Психологическое сопровождение до и после родов — часть заботы о здоровье матери и ребёнка.",
+];
+
+const pin = document.getElementById('pin');
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+pin.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(0,0,7.4);
+
+// environment for reflections (procedural, renders in headless)
+const envScene = new THREE.Scene();
+(function(){
+  const g=new THREE.SphereGeometry(20,24,24);
+  const m=new THREE.MeshBasicMaterial({side:THREE.BackSide});
+  const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+  const grd=x.createLinearGradient(0,0,0,256);
+  grd.addColorStop(0,'#3a2530');grd.addColorStop(.5,'#160a0e');grd.addColorStop(1,'#060203');
+  x.fillStyle=grd;x.fillRect(0,0,256,256);
+  x.fillStyle='rgba(255,180,140,.9)';x.beginPath();x.arc(180,70,40,0,7);x.fill();
+  x.fillStyle='rgba(255,90,110,.5)';x.beginPath();x.arc(70,150,55,0,7);x.fill();
+  m.map=new THREE.CanvasTexture(c);
+  envScene.add(new THREE.Mesh(g,m));
+})();
+const pmrem=new THREE.PMREMGenerator(renderer);
+const envMap=pmrem.fromScene(envScene,0.04).texture;
+scene.environment=envMap;
+
+// lights
+scene.add(new THREE.AmbientLight(0xffffff,0.35));
+const key=new THREE.DirectionalLight(0xffe6d0,2.1); key.position.set(3,4,5); scene.add(key);
+const rim=new THREE.DirectionalLight(0xff5a70,1.2); rim.position.set(-4,-1,-3); scene.add(rim);
+const fill=new THREE.PointLight(0xffb060,1.0,30); fill.position.set(-2,3,4); scene.add(fill);
+
+const fruit = new THREE.Group(); scene.add(fruit);
+
+// ---- shell (two halves) ----
+const skinMat = new THREE.MeshStandardMaterial({color:0x7c1522, roughness:0.62, metalness:0.05, envMapIntensity:1.0});
+const pithMat = new THREE.MeshStandardMaterial({color:0xe9d7b4, roughness:0.9, metalness:0.0, side:THREE.DoubleSide, envMapIntensity:.5});
+function halfShell(sign){
+  const g=new THREE.Group();
+  const outer=new THREE.Mesh(new THREE.SphereGeometry(2.05, 64, 48, 0, Math.PI*2, 0, Math.PI/2), skinMat);
+  outer.rotation.z = sign>0?0:Math.PI;
+  // inner pith cap (flat-ish disc lining)
+  const inner=new THREE.Mesh(new THREE.SphereGeometry(1.9, 48, 36, 0, Math.PI*2, 0, Math.PI/2), pithMat);
+  inner.rotation.z = sign>0?0:Math.PI;
+  g.add(outer, inner);
+  return g;
+}
+const topHalf=halfShell(1), botHalf=halfShell(-1);
+fruit.add(topHalf, botHalf);
+// calyx (crown) on top
+const calyx=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.4,6), new THREE.MeshStandardMaterial({color:0x5c3a1e,roughness:.9}));
+calyx.position.y=2.05; topHalf.add(calyx);
+
+// ---- seeds (real geometry, instanced) ----
+const seedGeo=new THREE.IcosahedronGeometry(0.11,0);
+const seedMat=new THREE.MeshStandardMaterial({color:0x9a0d20, roughness:0.22, metalness:0.15,
+    emissive:0x4a0410, emissiveIntensity:0.55, envMapIntensity:1.4, flatShading:true});
+const N=260;
+const seeds=new THREE.InstancedMesh(seedGeo, seedMat, N);
+const dir=[], baseR=[], seedPhase=[];
+const dummy=new THREE.Object3D();
+for(let i=0;i<N;i++){
+  // pack inside a slightly flattened hemand lower dome
+  const u=Math.random(), v=Math.random();
+  const theta=Math.acos(1-2*u*0.9);           // bias to fill dome
+  const phi=2*Math.PI*v;
+  let r=1.0+Math.random()*0.78;
+  const d=new THREE.Vector3(Math.sin(theta)*Math.cos(phi), Math.cos(theta)*0.9, Math.sin(theta)*Math.sin(phi)).normalize();
+  dir.push(d); baseR.push(r); seedPhase.push(Math.random()*7);
+  const s=0.7+Math.random()*0.7;
+  dummy.scale.setScalar(s);
+  dummy.position.copy(d).multiplyScalar(r);
+  dummy.rotation.set(Math.random()*7,Math.random()*7,Math.random()*7);
+  dummy.updateMatrix(); seeds.setMatrixAt(i,dummy.matrix);
+}
+fruit.add(seeds);
+
+// ---- 7 anchor module seeds (bigger, glowing, clickable) ----
+const anchorMat=[];
+const anchors=[];
+const anchorDir=[
+  new THREE.Vector3(-0.6, 0.55, 0.55), new THREE.Vector3(0.7,0.5,0.4),
+  new THREE.Vector3(-0.8,0.15,0.2), new THREE.Vector3(0.75,0.05,-0.1),
+  new THREE.Vector3(0.05,0.75,-0.2), new THREE.Vector3(-0.5,0.45,-0.6),
+  new THREE.Vector3(0.35,0.3,0.7),
+];
+MODULES.forEach((m,i)=>{
+  const mat=new THREE.MeshStandardMaterial({color:0xff2d4c, roughness:0.15, metalness:0.2,
+     emissive:0xff2038, emissiveIntensity:1.1, envMapIntensity:1.6});
+  const mesh=new THREE.Mesh(new THREE.IcosahedronGeometry(0.19,1), mat);
+  const d=anchorDir[i].clone().normalize();
+  mesh.userData={i, d, baseR:1.45+Math.random()*0.2};
+  mesh.position.copy(d).multiplyScalar(mesh.userData.baseR);
+  fruit.add(mesh); anchors.push(mesh); anchorMat.push(mat);
+});
+
+// connection lines between anchors (built on hover)
+const lineMat=new THREE.LineBasicMaterial({color:0xe8b15a, transparent:true, opacity:0.9});
+let lineObj=null;
+function showLinks(i){
+  clearLinks();
+  const pts=[];
+  MODULES[i].rel.forEach(r=>{ pts.push(anchors[i].position.clone(), anchors[r].position.clone()); });
+  const g=new THREE.BufferGeometry().setFromPoints(pts);
+  lineObj=new THREE.LineSegments(g, lineMat); fruit.add(lineObj);
+  anchors.forEach((a,k)=>{ const on=(k===i||MODULES[i].rel.includes(k)); a.material.emissiveIntensity=on?2.2:0.25; a.scale.setScalar(on?1.35:0.8); });
+  showLabel(i);
+}
+function clearLinks(){ if(lineObj){fruit.remove(lineObj);lineObj.geometry.dispose();lineObj=null;} anchors.forEach(a=>{a.material.emissiveIntensity=1.1;a.scale.setScalar(1);}); hideLabel(); }
+
+// HTML label
+const lblEl=document.createElement('div'); lblEl.className='lbl'; document.getElementById('pin').appendChild(lblEl);
+let lblIdx=-1;
+function showLabel(i){lblIdx=i;lblEl.textContent=MODULES[i].t;lblEl.classList.add('on');}
+function hideLabel(){lblIdx=-1;lblEl.classList.remove('on');}
+
+// composer / bloom
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.7, 0.75, 0.85);
+composer.addPass(bloom);
+
+// ---- interaction ----
+let dragRotY=0, dragRotX=0, targetRotY=0, targetRotX=0, dragging=false, lastX=0,lastY=0, moved=false;
+const el=renderer.domElement;
+el.addEventListener('pointerdown',e=>{dragging=true;moved=false;lastX=e.clientX;lastY=e.clientY;el.setPointerCapture(e.pointerId);});
+el.addEventListener('pointermove',e=>{
+  if(dragging){const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+    if(Math.abs(dx)+Math.abs(dy)>2)moved=true;
+    targetRotY+=dx*0.006; targetRotX=Math.max(-0.6,Math.min(0.6,targetRotX+dy*0.004));}
+  updateHover(e);
+});
+el.addEventListener('pointerup',e=>{dragging=false; if(!moved) onClick(e);});
+el.addEventListener('pointerleave',()=>{dragging=false;});
+
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+let hovered=-1;
+function pick(e){
+  const r=el.getBoundingClientRect();
+  mouse.x=((e.clientX-r.left)/r.width)*2-1; mouse.y=-((e.clientY-r.top)/r.height)*2+1;
+  ray.setFromCamera(mouse,camera);
+  return ray.intersectObjects(anchors,false);
+}
+function updateHover(e){
+  if(openAmt<0.25) return;
+  const hit=pick(e);
+  const idx=hit.length?hit[0].object.userData.i:-1;
+  el.style.cursor=idx>=0?'pointer':(dragging?'grabbing':'grab');
+  if(idx!==hovered){ hovered=idx; if(idx>=0) showLinks(idx); else if(!panelOpen) clearLinks(); }
+}
+let panelOpen=false;
+function onClick(e){
+  const hit=pick(e);
+  if(hit.length){ openPanel(hit[0].object.userData.i); }
+}
+
+const panel=document.getElementById('panel');
+function openPanel(i){
+  panelOpen=true; showLinks(i);
+  document.getElementById('pKicker').textContent='Раздел '+(i+1);
+  document.getElementById('pTitle').textContent=MODULES[i].t;
+  document.getElementById('pText').textContent=DESC[i];
+  document.getElementById('pRel').textContent=MODULES[i].rel.map(r=>MODULES[r].t).join(' · ');
+  panel.classList.add('show');
+}
+document.getElementById('close').onclick=()=>{panel.classList.remove('show');panelOpen=false;clearLinks();};
+document.getElementById('cta').onclick=()=>{panel.classList.remove('show');panelOpen=false;clearLinks();document.getElementById('block4').scrollIntoView({behavior:'smooth'});};
+
+// scroll → open amount
+let openAmt=0;
+function onScroll(){
+  const sp=document.getElementById('scrollspace');
+  const total=sp.offsetHeight-innerHeight;
+  const p=Math.min(1,Math.max(0,scrollY/(total*0.75)));
+  openAmt=p;
+}
+addEventListener('scroll',onScroll,{passive:true});
+
+// resize
+function resize(){
+  const w=pin.clientWidth,h=pin.clientHeight;
+  renderer.setSize(w,h); composer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize); resize();
+
+// ---- animate ----
+const clock=new THREE.Clock();
+const tmp=new THREE.Object3D();
+function frame(){
+  const t=clock.getElapsedTime();
+  // smooth rotation + idle spin
+  targetRotY += 0.0016;
+  dragRotY += (targetRotY-dragRotY)*0.08;
+  dragRotX += (targetRotX-dragRotX)*0.08;
+  fruit.rotation.y=dragRotY; fruit.rotation.x=dragRotX + Math.sin(t*0.4)*0.02;
+
+  const o=openAmt;
+  // shells split apart
+  topHalf.position.y = o*1.7;  topHalf.rotation.x = -o*0.5;
+  botHalf.position.y = -o*1.5; botHalf.rotation.x =  o*0.4;
+  topHalf.children[0].material.opacity=1;
+
+  // seeds disperse + breathe
+  for(let i=0;i<N;i++){
+    const r=baseR[i]*(1+o*0.35) + Math.sin(t*1.2+seedPhase[i])*0.02;
+    const disp=o*o*(0.6+ (i%5)*0.12);
+    tmp.position.copy(dir[i]).multiplyScalar(r+disp);
+    const sc=(0.7+ (i%7)*0.06)*(1+ Math.sin(t*1.5+seedPhase[i])*0.05);
+    tmp.scale.setScalar(sc);
+    tmp.rotation.set(seedPhase[i]+t*0.2, seedPhase[i]*2, t*0.15+i);
+    tmp.updateMatrix(); seeds.setMatrixAt(i,tmp.matrix);
+  }
+  seeds.instanceMatrix.needsUpdate=true;
+  seedMat.emissiveIntensity=0.45+Math.sin(t*1.3)*0.18;
+
+  // anchors follow open
+  anchors.forEach(a=>{ a.position.copy(a.userData.d).multiplyScalar(a.userData.baseR*(1+o*0.4)); });
+
+  // label projection
+  if(lblIdx>=0){
+    const p=anchors[lblIdx].position.clone().applyMatrix4(fruit.matrixWorld).project(camera);
+    lblEl.style.left=((p.x*0.5+0.5)*pin.clientWidth)+'px';
+    lblEl.style.top=((-p.y*0.5+0.5)*pin.clientHeight)+'px';
+  }
+  // caption swap + hint fade based on open
+  document.getElementById('caption').textContent = o>0.35 ? 'Всё связано — единый поток' : 'Единая взаимосвязанная система';
+  document.getElementById('hint').style.opacity = o>0.15?0:1;
+
+  composer.render();
+  requestAnimationFrame(frame);
+}
+onScroll(); frame();
+window.__ready=true;
+</script>
+</body>
+</html>
