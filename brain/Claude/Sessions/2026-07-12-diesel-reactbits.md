@@ -523,3 +523,32 @@ Live v4.6. Chat_id'ы Даниэль прислал скринами: konstantin
 Lenis smooth-scroll оставил. Beat-движок (прогресс→блоки) оставил — он на дешёвых transform.
 QA: bgvid VIDEO autoplay+loop, беты переключаются hero→…→loopEnd, overflowX0, консоль чистая,
 все скрипты node --check OK. Live v5.0. dc/seq (кадры) больше не used, оставил в репо.
+
+## 2026-07-14 — v6.1 ФИНАЛ (полный перекоп + сверка с мастер-пакетом)
+Даниэль: «все лагает, по скроллу сайт должен двигаться, блоки крупные, сделай
+на 100% с идеальным плавным скролом... до конца финал». Потом прислал
+dieselprojecthandoff.zip (мастер-пакет PandaGo→DIESEL).
+
+Сделано:
+- Полный rewrite site_build/index.html с laggy pinned-stage на НАТИВНЫЙ smooth-scroll.
+  Убрано: Lenis, beat-engine, loop-wrap, playbackRate-цикл, ВСЕ backdrop-blur +
+  mix-blend (главные источники лагов на телефоне), dead RB-шейдеры.
+  Осталось: fixed video autoplay (GPU), IntersectionObserver reveal, 3D-витрина
+  с render-gate по видимости, калькулятор, карусель отзывов, форма.
+- Воронка: hero → showcase(3D мото/квадро/гидро) → преимущества(6) →
+  процесс(4 шага/30дн) → калькулятор → отзывы → заявка → финал.
+- СВЕРКА С ПРАЙСОМ (handoff/DIESEL_PROJECT/price_reference, курс 73.67):
+  квадро от 673к, гидро от 1084к, мото от 140к. Калькулятор — реальные
+  диапазоны категорий, итого=под ключ, дилер×1.3, экономия=разница.
+- Форма → api.php?action=newLead (реальный бэкенд, 4 админа) → фолбэк /api/lead
+  (превью-Worker) → Telegram. Поля совпадают с контрактом newLead.
+- Правила: 0 тире (—/–), 0 «ты», 0 ИИ-штампов, 0 эмодзи, формал «вы». Крылатый
+  бренд-знак DIESEL (фавикон + логотип).
+- QA Playwright ПК(1440)+мобайл(390): 0 JS-ошибок, 0 overflow, калькулятор
+  верен по 3 категориям, 3D влезает.
+- Deploy: push main (9c8f01c) + deploy_website production. LIVE = v6.1
+  подтверждён curl. https://forest-beach-360.higgsfield.app
+- Мастер-пакет распакован в scratchpad/handoff (site/ = PHP-бэкенд PandaGo,
+  DIESEL_PROJECT/ = контент-фабрика видео, reference-materials/ = логотипы+прайс).
+  NB: реального растрового логотипа DIESEL в zip НЕТ, только описание (крылья+DIESEL)
+  → сделал SVG-крылья. Багги = «цена по запросу» (в калькулятор не включал).
