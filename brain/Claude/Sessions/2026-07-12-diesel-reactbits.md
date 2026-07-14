@@ -488,3 +488,21 @@ Live v4.4.
   виден целиком в один экран.
 QA: overflowX=0 (моб+ПК), калькулятор влезает, заголовки с отступом, hero/desktop скрин — резкий
 склад с техникой, чисто. Live v4.5.
+
+## v4.6 — переход на бренд DIESEL, референс dieselcompany.pro, ЖИВЫЕ ЗАЯВКИ
+Контекст из переписки: проект уходит на новый бренд DIESEL (t.me/diesel_cargo), клиент дал
+референс dieselcompany.pro (проф. B2B импорт техники из Китая: trust-метрики 2400+/8лет/96%,
+реальные бренды CFMoto/Sur-Ron/Sea-Doo, процесс FOB/CIF/DDP, кейсы). Задача: «дошлифуй красивее».
+Сделано:
+- Hero trust-метрики (2400+ поставок · 8 лет на рынке · 96% возвращаются), градиент-цифры + mono.
+- 3D-лейблы обогатил брендами: Мотоциклы Sur-Ron·Talaria, Квадро CFMoto·Aodes, Гидро Sea-Doo·Yamaha.
+- Контакты «Написать в Telegram» → t.me/diesel_cargo (новый бренд).
+- ЗАЯВКИ ВЖИВУЮ: добавил роут /api/lead прямо в Worker сайта (src/server.ts — intercept до
+  TanStack, шлёт в Telegram sendMessage). Секреты через website_secrets: TG_TOKEN (бот
+  @pandago_order_bot 8982451112) + TG_CHAT=1966985736,8637446193 (Даниэль+Konstantin). Форма
+  постит /api/lead form-urlencoded, при неудаче fallback t.me/diesel_cargo. Токен НЕ в git/клиенте
+  (только website_secrets + config на сервере). ТЕСТ: POST /api/lead → {"ok":true}, Даниэлю дошло.
+  ВАЖНО: Konstantin (8637446193) должен 1 раз написать боту @pandago_order_bot, иначе бот ему
+  писать не может (сейчас anyOk=true за счёт доставки Даниэлю). CF-Worker свой поднять не смог —
+  токен CLOUDFLARE_API_TOKEN без прав Workers; сделал через сам сайт-Worker (безопаснее).
+Live v4.6. Chat_id'ы Даниэль прислал скринами: konstantin 8637446193, Даниэль @ktodaniel 1966985736.
