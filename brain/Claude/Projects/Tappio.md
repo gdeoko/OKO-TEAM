@@ -35,3 +35,13 @@ OAuth через приложение oko-claude2 (client 532707229456-q607..., 
 Грабли OAuth: redirect_uri должен быть в "Authorized redirect URIs" (не в JavaScript origins!). Для клиента добавляли http://localhost. Client в статусе — проверить Testing/Prod (токен может протухать 7 дней если Testing -> перевести в Production).
 Загрузка: POST https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status, потом PUT байты по Location.
 Осталось: Instagram + TikTok подключить, построить страницу-коннектор (one-click для клиентов ОКО АПП).
+
+## Hoopy (hooppy.ru) API подключён (14.07.2026)
+Токен в secrets: HOOPPY_API_TOKEN, HOOPPY_API_BASE=https://api.hooppy.ru/api (JWT Passport, user 20086, exp 2027). hooppy.ru/openapi.yaml - спека.
+Домен api.hooppy.ru через прокси работает (root /accounts 500 без пути, с путём ок).
+Эндпоинты: GET /accounts (соцаккаунты), GET /accounts/pages (цели постинга, page_ids), GET /posts/projects (папки-проекты), GET /posts/schedules, POST /files/media/upload (видео/фото), POST /posts (создать/опубликовать), DELETE /posts/{id}.
+POST /posts: publication_when_type 1=сейчас/2=в дату/3=расписание; publication_how_type 1=ручной выбор соцсетей(page_ids)/2=через проект(project_id). Видео сначала /files/media/upload -> id -> в пост с title/description.
+source_id (по факту подключённых аккаунтов Даниэля): 1=VK, 3=Facebook, 9=Telegram-канал, 14=YouTube, +17/18/29 (Dzen/OK/Threads/TenChat?). IG/TikTok source_id определю когда подключит.
+СЕЙЧАС в Hoopy: только личные OKO-аккаунты Даниэля (VK, FB, Telegram, YouTube и др.), проект "OKO" (id 19421). Tappio НЕ подключён.
+НУЖНО: Даниэль подключает в кабинете Hoopy аккаунты Tappio - Instagram (tappio_app) + TikTok (по логину), лучше в отдельном проекте "Tappio". YouTube Tappio делаю напрямую (официально, уже готово).
+Архитектура постинга финальная: YouTube - напрямую я (официально); IG/TikTok/Telegram/VK - через Hoopy API по логину (без Facebook, анти-бан на Hoopy). Один токен Hoopy = все РФ-совместимые соцсети + папки-проекты по клиентам = решение и для ОКО АПП.
