@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>OKO — hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--lime:#9AFF00;--bg:#0a0c0a;--ink:#f2f5ee}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #app{position:fixed;inset:0}
+  canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+  .ui{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .brand{position:absolute;top:24px;left:28px;display:flex;align-items:center;gap:12px}
+  .brand .mark{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.14em;color:#fff;line-height:1}
+  .brand .mark b{color:var(--lime)}
+  .nav{position:absolute;top:26px;right:28px;display:flex;gap:26px;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#8a938a}
+  @media(max-width:720px){.nav{display:none}}
+  .hero{position:absolute;left:0;right:0;bottom:0;padding:0 28px 44px;max-width:760px}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,11vw,120px);line-height:.92;letter-spacing:.01em;color:#fff}
+  .hero h1 span{color:var(--lime)}
+  .hero .sub{margin-top:10px;font-size:clamp(15px,2.4vw,22px);font-weight:300;color:#d7ddd2;max-width:34ch}
+  .hero .desc{margin-top:14px;font-size:clamp(13px,1.6vw,15.5px);font-weight:300;color:#98a098;max-width:52ch;line-height:1.6}
+  .hint{position:absolute;left:28px;bottom:18px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#5f685f;opacity:.0;transition:opacity .6s}
+  .chip{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#5f685f;border:1px solid #23271f;padding:4px 10px;border-radius:999px}
+  .fade{opacity:0;transform:translateY(16px);animation:up .9s cubic-bezier(.16,1,.3,1) forwards}
+  .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}
+  @keyframes up{to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="ui">
+  <div class="brand fade"><span class="mark">ОКО<b>.</b></span></div>
+  <div class="nav fade d1"><span>Возможности</span><span>Мини-аппы</span><span>Безопасность</span><span>О нас</span></div>
+  <div class="chip">сборка v0.1</div>
+  <div class="hero">
+    <h1 class="fade d1">ВИДИМ<br>ВСЁ <span>ГЛАВНОЕ</span></h1>
+    <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
+    <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне. Наведи курсор — глаз следит за тобой.</p>
+  </div>
+  <div class="hint" id="hint">Двигай курсор · нажми на фон</div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "../js/vendor/three.module.min.js",
+  "three/addons/": "../js/vendor/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const LIME = new THREE.Color(0x9AFF00);
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x070907, 0.045);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.set(0,0,8);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+
+scene.add(new THREE.AmbientLight(0x334033, 0.5));
+const key = new THREE.DirectionalLight(0xbfe6ff, 0.8); key.position.set(4,6,6); scene.add(key);
+
+// ---------- background block wall ----------
+const WALL_Z = -7, COLS = 34, ROWS = 20, GAP = 1.06;
+const blockGeo = new THREE.BoxGeometry(1,1,1);
+const blockMat = new THREE.MeshStandardMaterial({color:0x0c0f0c, roughness:0.55, metalness:0.85, envMapIntensity:0.5});
+const NB = COLS*ROWS;
+const blocks = new THREE.InstancedMesh(blockGeo, blockMat, NB);
+const bPos = [];
+let bi=0;
+for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
+  const px=(x-(COLS-1)/2)*GAP, py=(y-(ROWS-1)/2)*GAP;
+  const depth = 0.4+Math.random()*1.4;
+  const d=new THREE.Object3D();
+  d.position.set(px,py,WALL_Z - depth/2 + Math.random()*0.3);
+  d.scale.set(GAP*0.94, GAP*0.94, depth);
+  d.updateMatrix(); blocks.setMatrixAt(bi,d.matrix); bPos.push(new THREE.Vector3(px,py,WALL_Z));
+  bi++;
+}
+scene.add(blocks);
+
+// green pointer light that grazes the wall
+const glowLight = new THREE.PointLight(0x9AFF00, 0, 14, 2); glowLight.position.set(0,0,WALL_Z+2.2); scene.add(glowLight);
+// soft glow sprite behind cursor
+const spriteTex = (()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  const rg=g.createRadialGradient(64,64,0,64,64,64);rg.addColorStop(0,'rgba(154,255,0,.9)');rg.addColorStop(1,'rgba(154,255,0,0)');
+  g.fillStyle=rg;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
+const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex, color:0x9AFF00, blending:THREE.AdditiveBlending, transparent:true, opacity:.0, depthWrite:false}));
+glowSprite.scale.set(6,6,1); glowSprite.position.set(0,0,WALL_Z+1.5); scene.add(glowSprite);
+
+// tap ripples
+const ripples=[];
+function spawnRipple(pos){
+  const g=new THREE.RingGeometry(0.15,0.28,48);
+  const m=new THREE.MeshBasicMaterial({color:0x9AFF00, transparent:true, opacity:.9, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false});
+  const r=new THREE.Mesh(g,m); r.position.copy(pos); r.position.z=WALL_Z+1.6; scene.add(r);
+  ripples.push({r, t:0});
+}
+
+// ---------- OKO eye ----------
+let eye=null, eyeMat=null;
+const eyeGroup = new THREE.Group(); scene.add(eyeGroup);
+new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
+  eye = gltf.scene;
+  const box=new THREE.Box3().setFromObject(eye);
+  const size=box.getSize(new THREE.Vector3()), center=box.getCenter(new THREE.Vector3());
+  eye.position.sub(center);
+  const target=4.2, scl=target/Math.max(size.x,size.y);
+  eye.scale.setScalar(scl);
+  eye.traverse(n=>{ if(n.isMesh){
+    const old=n.material;
+    const m=new THREE.MeshPhysicalMaterial({
+      map:old.map||null, color:0x0c120c, roughness:0.28, metalness:0.2,
+      clearcoat:1.0, clearcoatRoughness:0.25, envMapIntensity:1.2,
+      emissive:0xffffff, emissiveMap:old.map||null, emissiveIntensity:1.15,
+      iridescence:1.0, iridescenceIOR:1.35, iridescenceThicknessRange:[120,420],
+      sheen:0.6, sheenColor:new THREE.Color(0x9AFF00)
+    });
+    n.material=m; eyeMat = eyeMat||m;
+  }});
+  eyeGroup.add(eye);
+  document.getElementById('hint').style.opacity='1';
+  window.__eyeReady=true;
+});
+
+// composer / bloom
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.85, 0.7, 0.6);
+composer.addPass(bloom);
+
+// pointer
+const pointer=new THREE.Vector2(0,0);      // -1..1
+const pointerWall=new THREE.Vector3();
+const ray=new THREE.Raycaster();
+const wallPlane=new THREE.Plane(new THREE.Vector3(0,0,1), -WALL_Z);
+function onMove(cx,cy){
+  const r=renderer.domElement.getBoundingClientRect();
+  pointer.x=((cx-r.left)/r.width)*2-1;
+  pointer.y=-((cy-r.top)/r.height)*2+1;
+  ray.setFromCamera(pointer,camera);
+  ray.ray.intersectPlane(wallPlane, pointerWall);
+}
+addEventListener('pointermove',e=>onMove(e.clientX,e.clientY),{passive:true});
+addEventListener('pointerdown',e=>{ onMove(e.clientX,e.clientY); spawnRipple(pointerWall.clone()); pulse=1; });
+window.__tap=()=>{ spawnRipple(pointerWall.clone()); pulse=1; }; // for QA
+
+function resize(){
+  const w=app.clientWidth,h=app.clientHeight;
+  renderer.setSize(w,h); composer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize',resize); resize();
+
+// blink timer
+let nextBlink=2.5, blinkT=-1;
+let pulse=0;
+const clock=new THREE.Clock();
+function frame(){
+  const dt=clock.getDelta(), t=clock.getElapsedTime();
+
+  // pointer light follows wall point
+  glowLight.position.lerp(new THREE.Vector3(pointerWall.x,pointerWall.y,WALL_Z+2.2), 0.15);
+  glowLight.intensity += ((6+pulse*10) - glowLight.intensity)*0.1;
+  glowSprite.position.lerp(new THREE.Vector3(pointerWall.x,pointerWall.y,WALL_Z+1.5),0.15);
+  glowSprite.material.opacity += ((0.5+pulse*0.5)-glowSprite.material.opacity)*0.1;
+  pulse *= 0.92;
+
+  // ripples
+  for(let i=ripples.length-1;i>=0;i--){
+    const o=ripples[i]; o.t+=dt; const s=1+o.t*10; o.r.scale.set(s,s,s);
+    o.r.material.opacity=Math.max(0,0.9-o.t*1.3);
+    if(o.t>0.75){ scene.remove(o.r); o.r.geometry.dispose(); o.r.material.dispose(); ripples.splice(i,1); }
+  }
+
+  // eye idle + look-at pointer + iridescent breathing
+  if(eye){
+    eyeGroup.position.y = Math.sin(t*0.8)*0.06;
+    const yaw = pointer.x*0.5, pit = -pointer.y*0.35;
+    eyeGroup.rotation.y += (yaw-eyeGroup.rotation.y)*0.08;
+    eyeGroup.rotation.x += (pit-eyeGroup.rotation.x)*0.08;
+    if(eyeMat){
+      eyeMat.emissiveIntensity = 1.05 + Math.sin(t*1.6)*0.28 + pulse*0.6;
+      eyeMat.iridescenceThicknessRange = [120, 360+Math.sin(t*0.9)*120];
+    }
+    // blink: quick vertical squash
+    nextBlink-=dt;
+    if(nextBlink<=0 && blinkT<0){ blinkT=0; nextBlink=2.5+Math.random()*3; }
+    if(blinkT>=0){ blinkT+=dt*7; const k=Math.sin(blinkT); eyeGroup.scale.y = k<0?1:1-k*0.92; if(blinkT>Math.PI){blinkT=-1;eyeGroup.scale.y=1;} }
+  }
+
+  composer.render();
+  requestAnimationFrame(frame);
+}
+frame();
+window.__ready=true;
+</script>
+</body>
+</html>
