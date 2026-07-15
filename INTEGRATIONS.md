@@ -1,6 +1,6 @@
 # OKO TEAM · Паспорт интеграций Claude Code (полный)
 
-Обновлено: 08.07.2026 (добавлен ФУЛЛ-ПАК видеоконвейера из чата V.CODE + всё из чата ЗооОпт).
+Обновлено: 15.07.2026 (Tappio: браузер-агент/сервер, аккаунты IG/YT/TikTok, Hooppy). 08.07.2026 (добавлен ФУЛЛ-ПАК видеоконвейера из чата V.CODE + всё из чата ЗооОпт).
 Единый файл всего, что подключено к Claude во всех чатах.
 Значения ключей: `secrets.env.b64` (base64, рядом в корне). Расшифровка и загрузка
 происходят АВТОМАТИЧЕСКИ при старте каждой сессии (SessionStart-хук в
@@ -120,6 +120,45 @@ Ultra-подписка безлимит), детальный промпт, га�
 soyuz.ttf (Союз Гротеск — субтитры), Montserrat Black (цифры), Manrope 800 (подписи),
 logo_hd.png. Цвета: #0d0d0d / #e8842a / лайм #9CF806 (акцент, с лого OKO — сам лого
 OKO нигде не использовать).
+
+## 1b. Браузер-агент и сервер (полный доступ в интернет)
+
+Собственный сервер-агент: логинится в любые сервисы по логину/паролю, постит,
+читает коды с почты, ходит на любой сайт — как человек.
+
+| Переменная | Что |
+|---|---|
+| OKO_VPS_CTRL_URL (=CONTROL_URL) | HTTPS-эндпоинт управления сервером, `.../exec` |
+| OKO_VPS_CTRL_TOKEN (=CONTROL_TOKEN) | Bearer-токен к /exec |
+
+- Сервер okoagents.okoteam.top. Запуск команд: POST `{"cmd":"..."}` c `Authorization: Bearer $OKO_VPS_CTRL_TOKEN` на `$OKO_VPS_CTRL_URL/exec`. Обёртка: `tappio-app/factory/vps/vps_exec.py` (`vexec`) или `/tmp/vps.py`.
+- Пользователь `okoposter`, в группе **docker** (root-уровень сети через контейнеры), sudo нет. Папка `/opt/oko-poster`, сессии/конфиги в `/opt/oko-poster/cfg`.
+- Стелс-браузер **patchright** (форк Playwright, обходит бот-детект) + chromium (`npm i patchright && npx patchright install chromium`).
+- Обход IP: `/opt/oko-poster/warp` (wgcf+wireproxy → SOCKS5 WARP), `/opt/oko-poster/ts` (tailscale userspace). Для жёсткого анти-бота (TikTok) нужен резид/моб прокси на аккаунт.
+
+## 1c. Аккаунты Tappio (соцсети) — статус и вход
+
+| Сеть | Логин | Секрет (в secrets.env) | Статус |
+|---|---|---|---|
+| Instagram | tappio.app.pro (почта okoteam.top@gmail.com = TAPPIO_IG_EMAIL) | TAPPIO_IG_PASSWORD | **ПОДКЛЮЧЕН.** Стелс-вход без прокси, сессия на VPS `cfg/ig_state.json` + профиль `cfg/ig_patchright_profile`. Постинг работает (`ig_post_desktop.mjs`, desktop create flow). Коды входа — с okoteam.top через Gmail-коннектор. |
+| YouTube | канал TAPPIO (TAPPIO_YT_CHANNEL_ID) | TAPPIO_YT_CLIENT_ID/_CLIENT_SECRET/_REFRESH_TOKEN | **ПОДКЛЮЧЕН**, официальный Data API. |
+| TikTok | @tappio.app (почта tappio.app@gmail.com = TAPPIO_TT_EMAIL) | TAPPIO_TT_PASSWORD, username TAPPIO_TT_LOGIN | Прямой вход с серверного IP блокируется (нужен резид/моб прокси). Подключаем **через Hooppy** (офиц. TikTok OAuth). Код входа на tappio.app@gmail.com — даёт Даниэль. |
+
+Скрипты: `tappio-app/factory/vps/` — ig_patchright.mjs, ig_post_desktop.mjs, ig_verify.mjs, tk_login.mjs, tk_qr.mjs.
+
+## 1d. Hooppy (кросс-постинг бэкенд)
+
+| Переменная | Что |
+|---|---|
+| HOOPPY_LOGIN / HOOPPY_PASSWORD | Вход в кабинет hooppy.ru |
+| HOOPPY_API_TOKEN | Bearer к API |
+| HOOPPY_API_BASE | https://api.hooppy.ru/api |
+
+- Браузер-логин: `hooppy_login.mjs` → `cfg/hooppy_session.json`.
+- Подключение аккаунтов `/accounts/connect` — офиц. OAuth платформ. TikTok: `tiktok.com/v2/auth/authorize`, redirect `hooppy.ru/oauth/14`, scope `video.upload,video.publish`. Ссылка БЕЗ `state` → привязка по сессии Hooppy (клиенту голую ссылку слать нельзя — нужен свой OAuth со state).
+- source_id: 1=VK, 3=Facebook, 9=Telegram-канал, 11=Telegram-юзер, 14=YouTube, 17/18/29=прочее. IG/TikTok source_id — при подключении.
+- Даниэль знаком с владельцем Hooppy → возможен безлимит аккаунтов + партнёрский/white-label API (детали в `brain/Claude/Projects/Tappio.md`).
+
 
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
