@@ -173,7 +173,7 @@ OKO нигде не использовать).
 | **DIESEL** | CLIENT_DIESEL_EMAIL (cargo.panda.go@gmail.com) | CLIENT_DIESEL_PASSWORD | diesel_cargo | diesel_cargo (в Hooppy) | dieselcompany.pro (CLIENT_DIESEL_SITE) |
 
 Статус подключения: Tappio IG+YouTube — готово; TikTok всех — через Hooppy (OAuth с телефона).
-Екатерина/DIESEL IG+YouTube — в работе (стелс-вход + чтение кодов из их Gmail).
+Екатерина IG+YouTube — ГОТОВО. DIESEL IG+YouTube — ГОТОВО. YT-токены: CLIENT_EKAT_YT_REFRESH_TOKEN/_CHANNEL_ID, CLIENT_DIESEL_YT_* (общий app CLIENT_YT_CLIENT_ID/SECRET=TAPPIO_YT_*).
 Переменные клиентов: CLIENT_EKAT_* , CLIENT_DIESEL_* (NAME/EMAIL/PASSWORD/IG/TT[/SITE]).
 
 
