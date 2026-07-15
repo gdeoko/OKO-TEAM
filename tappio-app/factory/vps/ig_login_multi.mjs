@@ -24,13 +24,35 @@ try{
   if(await btn.count())await btn.click(); else await pw.press('Enter');
   log('submitted'); await p.waitForTimeout(9000);
   for(let i=0;i<20;i++){const url=p.url(); if(!/\/accounts\/login\/?$/.test(url))break; await p.waitForTimeout(1500);}
-  const url=p.url(); log('post url', url);
-  const body=(await p.locator('body').innerText().catch(()=>'')).slice(0,300).replace(/\n+/g,' | ');
+  let url=p.url(); log('post url', url);
+  let body=(await p.locator('body').innerText().catch(()=>'')).slice(0,300).replace(/\n+/g,' | ');
   log('body', body);
+  await p.screenshot({path:SHOT}).catch(()=>{});
+
+  // code challenge (email / WhatsApp / SMS): poll per-account code file
+  const CODEF=`/opt/oko-poster/cfg/ig_${ACC}_code.txt`;
+  if(/challenge|codeentry|auth_platform|two_factor/.test(url)||/check your|enter the code|security code|confirm/i.test(body)){
+    log('NEEDS_CODE — awaiting', CODEF);
+    let code=null;
+    for(let i=0;i<96;i++){ if(fs.existsSync(CODEF)){const c=fs.readFileSync(CODEF,'utf8').replace(/\D/g,'');if(c.length>=6){code=c;break;}} await p.waitForTimeout(5000);}
+    if(code){ log('got code', code); let filled=false;
+      for(const loc of [p.locator('input[name="verificationCode"]'),p.locator('input[autocomplete="one-time-code"]'),p.locator('input[type="tel"]').first(),p.locator('input[inputmode="numeric"]').first(),p.getByRole('textbox').first()]){
+        if(await loc.count()===0)continue; if(!await loc.isVisible({timeout:800}).catch(()=>false))continue;
+        await loc.click(); await loc.fill(''); await loc.pressSequentially(code,{delay:170});
+        const v=(await loc.inputValue()).replace(/\D/g,''); if(v.length>=6){filled=true;break;}
+      }
+      if(filled){ let cl=false;
+        for(const t of [/^continue$/i,/^confirm$/i,/^next$/i]){const btn2=p.getByRole('button',{name:t}).first();if(await btn2.count()&&await btn2.isVisible().catch(()=>false)){await btn2.click().catch(()=>{});cl=true;break;}}
+        if(!cl)await p.keyboard.press('Enter');
+        await p.waitForTimeout(9000);
+        for(const t of [/not now/i,/save info/i]){const btn3=p.getByRole('button',{name:t}).first();if(await btn3.count()&&await btn3.isVisible().catch(()=>false)){await btn3.click().catch(()=>{});await p.waitForTimeout(2000);break;}}
+      }
+      url=p.url(); log('after code url', url);
+    } else log('no code arrived');
+  }
   await p.screenshot({path:SHOT}).catch(()=>{});
   await ctx.storageState({path:STATE}).catch(()=>{});
   const logged=/instagram\.com\/(\?|$|#|accounts\/onetap|direct|reels)/.test(url)&&!/login|challenge|codeentry|auth_platform/.test(url);
-  const needsCode=/challenge|codeentry|auth_platform|two_factor/.test(url)||/check your email|confirm|security code|enter the code/i.test(body);
-  log('RESULT', logged?'LOGGED_IN':(needsCode?'NEEDS_CODE':'NOT_LOGGED_IN'), url);
+  log('RESULT', logged?'LOGGED_IN':'NOT_LOGGED_IN', url);
 }catch(e){log('ERR',String(e).slice(0,220));await p.screenshot({path:SHOT}).catch(()=>{});}
 finally{await ctx.close();}
