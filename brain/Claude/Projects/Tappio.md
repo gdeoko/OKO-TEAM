@@ -90,4 +90,9 @@ Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=Y
 Профиль tappio.app.pro: bio клиента "Spot cams/Sharpen brain/Measure all, tappio.pro", 1 post, 1 follower, 6 following.
 ВЫВОД: агент имеет ПОЛНЫЙ доступ — вход + постинг напрямую, без API/Hoopy/прокси. Модель ОКО АПП подтверждена end-to-end.
 Скрипты: ig_post_desktop.mjs (постинг), render_post.mjs (бренд-картинка), ig_check_profile.mjs (проверка профиля/URL постов), ig_explore_create.mjs.
+
+## TikTok подключение (15.07 09:07) — КУЛДАУН, ждём
+Аккаунт: email tappio.app@gmail.com / pass tappio.app_(@)8. Код придёт на tappio.app@gmail.com — Gmail-коннектор его НЕ читает (читает только okoteam.top). Решение по коду: Даниэль говорит код вручную (выбрал вариант 3); в продукте — поле "введи код" в UI или делегированный доступ к почте.
+Скрипт tk_login.mjs (patchright стелс, desktop UA, БЕЗ прокси): форма входа tiktok.com/login/phone-or-email/email загрузилась БЕЗ капчи (отпечаток прошёл), логин/пароль встали в верные поля. НО на сабмит -> "Maximum number of attempts reached. Try again later." = лимит попыток (были прежние попытки до сессии). Капчи/кода не было — упёрлись в rate-limit раньше.
+ВЫВОД: подход рабочий (как IG), нужен КУЛДАУН -> одна чистая попытка, Даниэль наготове с кодом из tappio.app@gmail.com. НЕ долбить (продлевает блок). Скрипт умеет ждать код из файла cfg/tk_code.txt (TK_LOGIN/TK_PASSWORD в env).
 YouTube Tappio, Hoopy API, браузер-логин в Hoopy, обложки - всё РАБОТАЕТ. Приоритет вернуть на КОНТЕНТ (пересборка v6).
