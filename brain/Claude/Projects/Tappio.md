@@ -82,4 +82,12 @@ Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=Y
 - Резерв на будущее (если IG снова спросит верификацию): "Try another way" даёт методы — Email(глушится) / Notification-on-another-device(Approve с телефона) / WhatsApp(код на +39...92). Скрипт умеет IG_WHATSAPP=1 (выбор WhatsApp) и IG_RESEND=1. Для WhatsApp код присылает Даниэль.
 ИТОГ: агент владеет реальной IG-сессией tappio.app.pro на VPS. Повторный логин не нужен — работа по сохранённой сессии (постинг/аналитика/комменты). Прокси НЕ понадобился.
 Скрипты: factory/vps/ig_patchright.mjs (вход+challenge+WhatsApp), factory/vps/ig_verify.mjs (проверка identity).
+
+## IG: ЖИВОЙ ПОСТИНГ РАБОТАЕТ (15.07 08:55) — ПРОВЕРКА БЕЗ БЛОКА ПРОЙДЕНА
+Опубликовали реальный пост через сохранённую сессию. Мобильная веб-IG НЕ даёт создание поста (нет "+"), поэтому постим через ДЕСКТОП-контекст: newContext(storageState:ig_state.json, desktop UA Win/Chrome) — cookies работают при любом UA, ре-челленджа НЕ было.
+Флоу (ig_post_desktop.mjs): Create(лев.меню) -> "Post" подменю -> filechooser setFiles картинку -> Next -> Next -> caption (div[role=textbox]) -> Share -> "Your post has been shared". ПОДТВЕРЖДЕНО скрином + профиль стал "1 post".
+Пост: https://www.instagram.com/tappio.app.pro/p/Dazr3-IDEx8/ (тестовый бренд-тизер TAPPIO "coming soon", 1080x1350, render_post.mjs — HTML+chromium, БЕЗ эмодзи).
+Профиль tappio.app.pro: bio клиента "Spot cams/Sharpen brain/Measure all, tappio.pro", 1 post, 1 follower, 6 following.
+ВЫВОД: агент имеет ПОЛНЫЙ доступ — вход + постинг напрямую, без API/Hoopy/прокси. Модель ОКО АПП подтверждена end-to-end.
+Скрипты: ig_post_desktop.mjs (постинг), render_post.mjs (бренд-картинка), ig_check_profile.mjs (проверка профиля/URL постов), ig_explore_create.mjs.
 YouTube Tappio, Hoopy API, браузер-логин в Hoopy, обложки - всё РАБОТАЕТ. Приоритет вернуть на КОНТЕНТ (пересборка v6).
