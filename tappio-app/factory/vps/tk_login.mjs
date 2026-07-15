@@ -7,10 +7,13 @@ const CODEF='/opt/oko-poster/cfg/tk_code.txt';
 const S=n=>`/opt/oko-poster/cfg/tk_${n}.png`;
 const log=(...a)=>console.log('[tk]',...a);
 
+const PROXY=process.env.PROXY||''; // e.g. socks5://127.0.0.1:25344
 const ctx=await chromium.launchPersistentContext(DIR,{headless:true,channel:'chromium',
   viewport:{width:1280,height:900},
   userAgent:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-  locale:'en-US',timezoneId:'Europe/Rome'});
+  locale:'en-US',timezoneId:'Europe/Rome',
+  ...(PROXY?{proxy:{server:PROXY}}:{})});
+if(PROXY)log('via proxy',PROXY);
 const p=ctx.pages()[0]||await ctx.newPage();
 try{
   await p.goto('https://www.tiktok.com/login/phone-or-email/email',{waitUntil:'domcontentloaded',timeout:60000});
