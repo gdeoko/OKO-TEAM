@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>OKO — hero</title>
+<!-- PERF: cap pixel ratio BEFORE Spline/three read it — kills retina over-render (main lag source) -->
+<script>
+(function(){ try{
+  var coarse = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
+  var cap = Math.min(window.devicePixelRatio||1, coarse?1:1.5);
+  Object.defineProperty(window,'devicePixelRatio',{configurable:true,get:function(){return cap;}});
+}catch(e){} })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,8 +19,12 @@
   :root{--lime:#9AFF00;--bg:#080a08;--ink:#f2f5ee}
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
-  #app{position:fixed;inset:0;z-index:0}
-  #app canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y}
+  /* BACKGROUND — original animated Spline scene */
+  #bg{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 60% 40%,#12160f,#080a08 70%,#050705)}
+  #bg spline-viewer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* EYE — neon layer, screen-blended over the background */
+  #app{position:fixed;inset:0;z-index:1;mix-blend-mode:screen;pointer-events:none}
+  #app canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
   .ui{position:absolute;inset:0;z-index:5;pointer-events:none}
   .ui .nav span{pointer-events:auto}
   .brand{position:absolute;top:max(20px,env(safe-area-inset-top));left:24px;z-index:6}
@@ -27,9 +39,7 @@
   .hero h1 span{color:var(--lime)}
   .hero .sub{margin-top:10px;font-size:clamp(15px,2.3vw,22px);font-weight:300;color:#e0e5da;max-width:30ch;text-shadow:0 2px 20px rgba(0,0,0,.7)}
   .hero .desc{margin-top:12px;font-size:clamp(12.5px,1.5vw,15px);font-weight:300;color:#b3b9b0;max-width:46ch;line-height:1.55;text-shadow:0 2px 20px rgba(0,0,0,.7)}
-  /* portrait: hero text sits at the very bottom, eye is centered above (set in 3D) */
-  @media(max-aspect-ratio:1/1){ .hero{max-width:none;right:0;text-align:left} .hero h1{font-size:clamp(44px,13vw,90px)} }
-  /* wide/landscape: keep text on the LEFT half so it never touches the eye on the right */
+  @media(max-aspect-ratio:1/1){ .hero{max-width:none;right:0} .hero h1{font-size:clamp(44px,13vw,90px)} }
   @media(min-aspect-ratio:3/2){ .hero{max-width:52%} .hero h1{font-size:clamp(40px,5.4vw,104px)} .hero .sub{max-width:26ch} .hero .desc{max-width:40ch} }
   .fade{opacity:0;transform:translateY(16px);animation:up .9s cubic-bezier(.16,1,.3,1) forwards}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}
@@ -41,6 +51,9 @@
 </style>
 </head>
 <body>
+<div id="bg">
+  <spline-viewer url="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode" loading-anim-type="none"></spline-viewer>
+</div>
 <div id="app"></div>
 <div class="ui">
   <div class="brand fade"><span class="mark">ОКО<b>.</b></span></div>
@@ -50,9 +63,12 @@
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне.</p>
   </div>
-  <div class="chip">сборка v0.4</div>
+  <div class="chip">сборка v0.5</div>
 </div>
 <div class="loader" id="loader"><i></i></div>
+
+<!-- Spline web component (loads separately; if it fails, the eye layer still runs) -->
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.48/build/spline-viewer.js"></script>
 
 <script type="importmap">
 { "imports": {
@@ -70,54 +86,26 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 const isMobile = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
 const app = document.getElementById('app');
-const renderer = new THREE.WebGLRenderer({antialias:!isMobile, powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile?1.5:2));
+const renderer = new THREE.WebGLRenderer({antialias:!isMobile, alpha:false, powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile?1:1.5));
+renderer.setClearColor(0x000000, 1);          // opaque black -> dropped by mix-blend:screen
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x05070c, 0.04);
 const DIST = 8;
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 camera.position.set(0,0,DIST);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
-scene.add(new THREE.AmbientLight(0x2a352a, 0.7));
-const key = new THREE.DirectionalLight(0xbfe6ff, 0.75); key.position.set(4,6,6); scene.add(key);
+scene.add(new THREE.AmbientLight(0x445544, 0.6));
+const key = new THREE.DirectionalLight(0xbfe6ff, 0.85); key.position.set(4,6,6); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9AFF00, 0.5); rim.position.set(-4,-2,3); scene.add(rim);
 
-// ---------------- lightweight block wall (native, no Spline) ----------------
-const WALL_Z = -7;
-const COLS = isMobile? 20 : 30, ROWS = isMobile? 14 : 20, GAP = 1.15;
-const blockGeo = new THREE.BoxGeometry(1,1,1);
-const blockMat = new THREE.MeshStandardMaterial({color:0x0b0e0b, roughness:0.5, metalness:0.9, envMapIntensity:0.55});
-const wallUniforms = { uTime:{value:0} };
-blockMat.onBeforeCompile = (sh)=>{
-  sh.uniforms.uTime = wallUniforms.uTime;
-  sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>',
-    `#include <begin_vertex>
-     vec4 iPos = instanceMatrix[3];
-     float wv = sin(uTime*0.5 + iPos.x*0.45 + iPos.y*0.35) * 0.22
-              + sin(uTime*0.32 - iPos.y*0.3) * 0.14;
-     transformed.z += wv;`);
-};
-const blocks = new THREE.InstancedMesh(blockGeo, blockMat, COLS*ROWS);
-blocks.frustumCulled = false;
-const seeds=[]; let bi=0; const dO=new THREE.Object3D();
-for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
-  const px=(x-(COLS-1)/2)*GAP, py=(y-(ROWS-1)/2)*GAP, depth=0.4+Math.random()*1.7;
-  dO.position.set(px,py,WALL_Z-depth/2+Math.random()*0.25);
-  dO.scale.set(GAP*(0.86+Math.random()*0.1), GAP*(0.86+Math.random()*0.1), depth);
-  dO.updateMatrix(); blocks.setMatrixAt(bi++,dO.matrix);
-}
-scene.add(blocks);
-// cursor glow = light INSIDE the wall that illuminates the panels (not a sprite on top)
-const glowLight = new THREE.PointLight(0x9AFF00, 9, 15, 2); glowLight.position.set(0,0,WALL_Z+1.2); scene.add(glowLight);
-const glowCore  = new THREE.PointLight(0xcaff7a, 4.5, 7, 2); glowCore.position.set(0,0,WALL_Z+0.5); scene.add(glowCore);
-
-// ---------------- liquid-glow noise patch ----------------
+// liquid-glow noise
 const NOISE = `
 float hash(vec2 p){ p=fract(p*vec2(123.34,345.45)); p+=dot(p,p+34.345); return fract(p.x*p.y); }
 float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
@@ -125,82 +113,59 @@ float vnoise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);
 float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<4;i++){ s+=a*vnoise(p); p*=2.02; a*=0.5;} return s; }
 `;
 function liquify(mat){
-  mat.onBeforeCompile = (sh)=>{
-    sh.uniforms.uTime = {value:0};
-    mat.userData.sh = sh;
-    sh.fragmentShader = 'uniform float uTime;\n'+NOISE+sh.fragmentShader;
-    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>',
+  mat.onBeforeCompile=(sh)=>{ sh.uniforms.uTime={value:0}; mat.userData.sh=sh;
+    sh.fragmentShader='uniform float uTime;\n'+NOISE+sh.fragmentShader;
+    sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',
       `#include <emissivemap_fragment>
-       vec2 uvw = vMapUv;
-       float w = fbm(uvw*1.6 + vec2(uTime*0.03, uTime*0.02));
-       float f = fbm(uvw*2.6 + w*1.2 - vec2(uTime*0.022, uTime*0.015));
-       // smooth, gentle liquid sheen (no hard patches)
-       float flow = 0.9 + 0.32*sin(f*6.2831853 + uTime*0.4);
-       totalEmissiveRadiance *= flow;`);
-  };
-  mat.customProgramCacheKey = ()=> 'okoliquid';
+       vec2 uvw=vMapUv;
+       float w=fbm(uvw*1.6+vec2(uTime*0.03,uTime*0.02));
+       float f=fbm(uvw*2.6+w*1.2-vec2(uTime*0.022,uTime*0.015));
+       float flow=0.9+0.32*sin(f*6.2831853+uTime*0.4);
+       totalEmissiveRadiance*=flow;`); };
+  mat.customProgramCacheKey=()=> 'okoliquid';
 }
 
-// ---------------- OKO eye ----------------
+// OKO eye
 let eye=null, eyeGroup=new THREE.Group(); scene.add(eyeGroup);
 let eyeW0=1.9, eyeH0=1.32, eyeMats=[];
 new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
   eye=gltf.scene;
   const box=new THREE.Box3().setFromObject(eye); const size=box.getSize(new THREE.Vector3()), c=box.getCenter(new THREE.Vector3());
   eye.position.sub(c); eyeW0=size.x; eyeH0=size.y;
-  eye.traverse(n=>{ if(n.isMesh){
-    const old=n.material;
+  eye.traverse(n=>{ if(n.isMesh){ const old=n.material;
     const m=new THREE.MeshPhysicalMaterial({ map:old.map||null, color:0x0e140e, roughness:0.10, metalness:0.0,
       clearcoat:1.0, clearcoatRoughness:0.045, envMapIntensity:2.0, ior:1.45, reflectivity:0.6, specularIntensity:1.0,
       emissive:0x9AFF00, emissiveMap:old.map||null, emissiveIntensity:1.0,
       iridescence:0.35, iridescenceIOR:1.3, iridescenceThicknessRange:[200,520], sheen:0.35, sheenColor:new THREE.Color(0xbfff6a) });
     liquify(m); n.material=m; eyeMats.push(m);
   }});
-  eyeGroup.add(eye);
-  layout();
-  document.getElementById('loader').classList.add('hide');
-  window.__eyeReady=true;
+  eyeGroup.add(eye); layout();
+  document.getElementById('loader').classList.add('hide'); window.__eyeReady=true;
 });
 
-// composer / bloom
 const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.55, 0.9, 0.62);
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.6, 0.85, 0.6);
 composer.addPass(bloom);
-// travelling specular highlight -> glossy "liquid glass" sheen on the eye
-const eyeLight = new THREE.PointLight(0xffffff, 7, 22, 2); scene.add(eyeLight);
+const eyeLight=new THREE.PointLight(0xffffff, 7, 22, 2); scene.add(eyeLight);
 
-// ---------------- responsive layout ----------------
+// responsive layout
 let target={scale:1,x:0,y:0};
-function viewSize(){ const vH=2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*DIST; return {vW:vH*camera.aspect, vH}; }
+function viewSize(){ const vH=2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*DIST; return {vW:vH*camera.aspect,vH}; }
 function layout(){
-  const {vW,vH}=viewSize(); const a=camera.aspect;
-  let maxW,maxH,x,y;
-  if(a < 0.85){                     // портрет (телефон вертикально) — глаз по центру, сверху
-    maxW=vW*0.78; maxH=vH*0.40; x=0; y=vH*0.16;
-  } else if(a > 1.5){               // широкий (ПК/ландшафт) — глаз справа
-    maxW=vW*0.46; maxH=vH*0.78; x=vW*0.24; y=vH*0.02;
-  } else {                          // планшет/квадрат — глаз правее центра
-    maxW=vW*0.62; maxH=vH*0.60; x=vW*0.14; y=vH*0.06;
-  }
-  const s=Math.min(maxW/eyeW0, maxH/eyeH0);
-  target={scale:s, x, y};
+  const {vW,vH}=viewSize(); const a=camera.aspect; let maxW,maxH,x,y;
+  if(a<0.85){ maxW=vW*0.78; maxH=vH*0.40; x=0; y=vH*0.16; }
+  else if(a>1.5){ maxW=vW*0.46; maxH=vH*0.78; x=vW*0.24; y=vH*0.02; }
+  else { maxW=vW*0.62; maxH=vH*0.60; x=vW*0.14; y=vH*0.06; }
+  target={scale:Math.min(maxW/eyeW0,maxH/eyeH0), x, y};
 }
-function resize(){
-  const w=innerWidth,h=innerHeight;
-  renderer.setSize(w,h); composer.setSize(w,h);
-  camera.aspect=w/h; camera.updateProjectionMatrix(); layout();
-}
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h); composer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix(); layout(); }
 addEventListener('resize',resize); resize();
 
-// pointer
-const pointer=new THREE.Vector2(0,0), pWall=new THREE.Vector3();
-const ray=new THREE.Raycaster(), wallPlane=new THREE.Plane(new THREE.Vector3(0,0,1),-WALL_Z);
-function moveTo(cx,cy){ pointer.x=(cx/innerWidth)*2-1; pointer.y=-(cy/innerHeight)*2+1;
-  ray.setFromCamera(pointer,camera); ray.ray.intersectPlane(wallPlane,pWall); }
-addEventListener('pointermove',e=>moveTo(e.clientX,e.clientY),{passive:true});
-addEventListener('pointerdown',e=>{ moveTo(e.clientX,e.clientY); pulse=1; });
-window.__tap=()=>{pulse=1;};
+const pointer=new THREE.Vector2(0,0);
+addEventListener('pointermove',e=>{ pointer.x=(e.clientX/innerWidth)*2-1; pointer.y=-(e.clientY/innerHeight)*2+1; },{passive:true});
+addEventListener('pointerdown',()=>{pulse=1;});
 
 let pulse=0, hidden=false;
 document.addEventListener('visibilitychange',()=>hidden=document.hidden);
@@ -208,27 +173,18 @@ const clock=new THREE.Clock();
 function frame(){
   requestAnimationFrame(frame);
   if(hidden) return;
-  const dt=Math.min(clock.getDelta(),0.05), t=clock.getElapsedTime();
-  wallUniforms.uTime.value = t;
-  // cursor glow lights the panels from within the wall
-  glowLight.position.lerp(new THREE.Vector3(pWall.x,pWall.y,WALL_Z+1.2),0.14);
-  glowCore.position.lerp(new THREE.Vector3(pWall.x,pWall.y,WALL_Z+0.5),0.14);
-  glowLight.intensity += ((9+pulse*10)-glowLight.intensity)*0.1;
-  glowCore.intensity  += ((4.5+pulse*6)-glowCore.intensity)*0.1;
+  const t=clock.getElapsedTime();
   pulse*=0.92;
   if(eye){
-    // travelling glossy highlight around the eye
-    eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
-    // ease to responsive target + breathing float (no blink)
     const br=1+Math.sin(t*0.9)*0.03;
     eyeGroup.scale.lerp(new THREE.Vector3(target.scale*br,target.scale*br,target.scale*br),0.1);
     eyeGroup.position.x += (target.x-eyeGroup.position.x)*0.1;
     eyeGroup.position.y += ((target.y+Math.sin(t*0.8)*0.12)-eyeGroup.position.y)*0.1;
     eyeGroup.rotation.y += (pointer.x*0.3-eyeGroup.rotation.y)*0.07;
-    eyeGroup.rotation.x += (-pointer.y*0.2 + Math.sin(t*0.6)*0.02 - eyeGroup.rotation.x)*0.07;
+    eyeGroup.rotation.x += (-pointer.y*0.2+Math.sin(t*0.6)*0.02-eyeGroup.rotation.x)*0.07;
     eyeGroup.rotation.z = Math.sin(t*0.5)*0.015;
-    for(const m of eyeMats){ if(m.userData.sh) m.userData.sh.uniforms.uTime.value=t;
-      m.emissiveIntensity=0.9+pulse*0.5; }
+    eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
+    for(const m of eyeMats){ if(m.userData.sh) m.userData.sh.uniforms.uTime.value=t; m.emissiveIntensity=0.9+pulse*0.5; }
   }
   composer.render();
 }
