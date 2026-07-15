@@ -1,0 +1,99 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased}
+.card{width:1000px;height:1000px;position:relative;overflow:hidden;font-family:'Manrope',sans-serif;
+  background:radial-gradient(120% 90% at 50% 8%,#eaf6ff 0%,#dcefff 38%,#cfe6fb 70%,#bfdaf3 100%)}
+/* верх: 3 блока пользы */
+.benefits{position:absolute;top:34px;left:34px;right:34px;display:flex;gap:16px;z-index:6}
+.bcard{flex:1;background:rgba(255,255,255,.82);border:1.5px solid rgba(31,120,200,.16);border-radius:22px;
+  padding:16px 12px 14px;text-align:center;backdrop-filter:blur(4px);box-shadow:0 8px 22px rgba(31,90,150,.10)}
+.bico{width:46px;height:46px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#2a8fe0,#1f6fc0);border-radius:14px}
+.bt{font-family:'Montserrat';font-weight:800;font-size:23px;color:#123b63;letter-spacing:.3px}
+.bs{font-weight:600;font-size:14.5px;color:#3f6b93;margin-top:2px;line-height:1.2}
+/* заголовок */
+.head{position:absolute;top:232px;left:48px;z-index:6}
+.zink{font-family:'Montserrat';font-weight:900;font-size:150px;line-height:.82;color:#0f3a67;
+  letter-spacing:-2px;text-shadow:0 6px 20px rgba(20,70,130,.18)}
+.zink b{color:#1f86dc}
+.sub{font-family:'Montserrat';font-weight:700;font-size:33px;color:#2f6fae;margin-top:10px;letter-spacing:.5px}
+/* аптечный бренд */
+.pharm{position:absolute;top:250px;right:44px;z-index:7;display:flex;align-items:center;gap:8px;
+  background:#fff;border:2px solid #d3e6f7;border-radius:40px;padding:9px 18px 9px 12px;box-shadow:0 6px 16px rgba(31,90,150,.12)}
+.pharm .cross{width:26px;height:26px;background:#e63b3b;border-radius:7px;position:relative}
+.pharm .cross::before,.pharm .cross::after{content:'';position:absolute;background:#fff;border-radius:2px}
+.pharm .cross::before{width:14px;height:4px;top:11px;left:6px}
+.pharm .cross::after{height:14px;width:4px;left:11px;top:6px}
+.pharm span{font-family:'Montserrat';font-weight:800;font-size:15px;color:#123b63;line-height:1}
+/* флакон */
+.bottleWrap{position:absolute;right:70px;bottom:150px;width:430px;height:560px;z-index:5;
+  filter:drop-shadow(0 30px 40px rgba(20,60,110,.28))}
+.tabs{position:absolute;right:400px;bottom:186px;z-index:4;display:flex;gap:-10px}
+.tab{width:74px;height:74px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#5a6b7d,#2c3846 70%);box-shadow:inset 0 -6px 10px rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.22);margin-left:-14px}
+/* инфо-блок */
+.info{position:absolute;left:48px;bottom:196px;z-index:6;display:flex;gap:0;background:#0f3a67;border-radius:18px;
+  overflow:hidden;box-shadow:0 12px 26px rgba(15,58,103,.32)}
+.info .i{padding:16px 26px;text-align:center;border-right:1.5px solid rgba(255,255,255,.15)}
+.info .i:last-child{border:none}
+.info .n{font-family:'Montserrat';font-weight:900;font-size:34px;color:#8fd0ff;line-height:1}
+.info .l{font-weight:600;font-size:14px;color:#cfe6fb;margin-top:3px}
+/* низ: сертификаты приглушённо */
+.certs{position:absolute;left:48px;bottom:44px;z-index:6;display:flex;gap:14px;align-items:center;opacity:.62}
+.chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.7);border:1.4px solid rgba(31,120,200,.22);
+  border-radius:30px;padding:8px 16px;font-family:'Montserrat';font-weight:800;font-size:15px;color:#2b5a83}
+.chip .dot{width:20px;height:20px;border-radius:6px;background:#2a8fe0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px}
+</style></head>
+<body>
+<div class="card">
+  <div class="benefits">
+    <div class="bcard"><div class="bico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></div><div class="bt">Кожа</div><div class="bs">чистая<br>и сияющая</div></div>
+    <div class="bcard"><div class="bico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M5 21c0-6 2-11 4-14M10 21c1-7 3-12 5-15M15 21c2-6 3-10 4-13"/></svg></div><div class="bt">Волосы</div><div class="bs">крепкие<br>и блестящие</div></div>
+    <div class="bcard"><div class="bico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M8 20V9a4 4 0 018 0v11"/><rect x="8" y="4" width="8" height="6" rx="4"/></svg></div><div class="bt">Ногти</div><div class="bs">здоровые<br>и прочные</div></div>
+  </div>
+
+  <div class="head">
+    <div class="zink">ЦИН<b>К</b></div>
+    <div class="sub">Бисглицинат + Пиколинат</div>
+  </div>
+
+  <div class="pharm"><div class="cross"></div><span>аптечный<br>бренд</span></div>
+
+  <!-- флакон SVG -->
+  <svg class="bottleWrap" viewBox="0 0 430 560">
+    <defs>
+      <linearGradient id="body" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#0c2f57"/><stop offset=".18" stop-color="#164a82"/>
+        <stop offset=".5" stop-color="#1e5c9c"/><stop offset=".85" stop-color="#123f70"/><stop offset="1" stop-color="#0a2748"/></linearGradient>
+      <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#c9a24a"/><stop offset=".5" stop-color="#f4d98f"/><stop offset=".5" stop-color="#f4d98f"/><stop offset="1" stop-color="#b98e35"/></linearGradient>
+      <linearGradient id="label" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eef4fb"/></linearGradient>
+    </defs>
+    <rect x="150" y="6" width="130" height="46" rx="10" fill="url(#cap)"/>
+    <rect x="140" y="50" width="150" height="20" rx="6" fill="#0a2748"/>
+    <path d="M96 78 h238 a26 26 0 0 1 26 26 v396 a34 34 0 0 1 -34 34 H104 a34 34 0 0 1 -34 -34 V104 a26 26 0 0 1 26 -26 Z" fill="url(#body)"/>
+    <rect x="96" y="150" width="238" height="300" rx="14" fill="url(#label)"/>
+    <text x="215" y="205" font-family="Montserrat" font-weight="900" font-size="52" fill="#0f3a67" text-anchor="middle">ЦИНК</text>
+    <text x="215" y="238" font-family="Montserrat" font-weight="700" font-size="21" fill="#1f86dc" text-anchor="middle">ХЕЛАТ</text>
+    <rect x="132" y="262" width="166" height="2.4" fill="#d3e6f7"/>
+    <text x="215" y="300" font-family="Manrope" font-weight="700" font-size="18" fill="#2f6fae" text-anchor="middle">Бисглицинат</text>
+    <text x="215" y="326" font-family="Manrope" font-weight="700" font-size="18" fill="#2f6fae" text-anchor="middle">+ Пиколинат</text>
+    <rect x="150" y="352" width="130" height="52" rx="12" fill="#0f3a67"/>
+    <text x="215" y="386" font-family="Montserrat" font-weight="900" font-size="26" fill="#8fd0ff" text-anchor="middle">25 мг</text>
+    <text x="215" y="430" font-family="Manrope" font-weight="700" font-size="16" fill="#5a7ea4" text-anchor="middle">120 таблеток</text>
+  </svg>
+  <div class="tabs"><div class="tab"></div><div class="tab"></div><div class="tab"></div></div>
+
+  <div class="info">
+    <div class="i"><div class="n">25</div><div class="l">мг цинка</div></div>
+    <div class="i"><div class="n">120</div><div class="l">таблеток</div></div>
+    <div class="i"><div class="n">1</div><div class="l">табл. в день</div></div>
+  </div>
+
+  <div class="certs">
+    <div class="chip"><span class="dot">✓</span>ISO 22000</div>
+    <div class="chip"><span class="dot">ЧЗ</span>Честный знак</div>
+  </div>
+</div>
+</body></html>
