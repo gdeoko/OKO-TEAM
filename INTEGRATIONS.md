@@ -286,3 +286,27 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 3. Кредиты Higgsfield: 4К-апскейл видео, 3D из фото.
 4. Mixamo: разово скачать FBX-пак персонажей вручную и прислать в чат.
 5. Cloudflare Pages: отложено, не поднимать.
+
+---
+
+## Обновление 15.07.2026 — арсенал беспоук-монтажа (из чата «ролик Михаила», гориз. 16:9)
+
+- **Скилл `/reels-machine` → `reference/MOTION_ARSENAL.md`** — полный боевой арсенал:
+  библиотека форм вставок (круг/телефон/ромб/шестиугольник/полоса/наклон/арка/TV/…, маски+
+  лаймовые кольца в `pipeline/horizontal/shapes/`), раскладки place, движок `anim.js`
+  (беспоук-инфографика → webm с альфой), 3D-GLB (three.js + gltf-transform децимация),
+  WebGL/Lottie/Spine, звук с SFX по смыслу, законы «ноль статики / лицо не перекрывать /
+  контраст затемнением, а не плашкой / микс форм и фулл-экрана». Готовый код —
+  `.claude/skills/reels-machine/pipeline/horizontal/` (compose3/drive3/fmts/audio_v2/anim/).
+- **КРИТИЧНЫЕ грабли:** webm-альфу читать `-c:v libvpx-vp9` ПЕРЕД `-i` (иначе альфа →
+  чёрный прямоугольник); фон.ffmpeg реапается ~2-3мин → резать грейд/4K на куски; база с
+  частыми keyframe (`-g 15`) для быстрого seek; чат-лимит 30МБ → хостить Higgsfield
+  `media_upload`→PUT curl→`media_confirm`→CDN; zoompan zoom-out/pan даёт ЧЁРНЫЙ кадр —
+  фулл-экран движение только crop-pan.
+
+| Интеграция | Что даёт | Заметки |
+|---|---|---|
+| MIND (MCP `mcp__MIND__*`) | генерация и АНИМАЦИЯ 3D: `start_model_generation`, `start_material_generation`, `start_world_generation`, `animate_generated_model` | альтернатива tripo/Sketchfab для крутящихся 3D-фигур |
+| Higgsfield `video_analysis_create`/`_status` | посценовый анализ готового ролика | poll до completed; коннектор бывает нестабилен |
+| Higgsfield `virality_predictor` | хук/удержание/виральность | дашборд по загруженному видео |
+| Higgsfield `media_upload`+`media_confirm` | хостинг файла → публичный CDN-URL | обход 30МБ-лимита чата; PUT байтов curl'ом |
