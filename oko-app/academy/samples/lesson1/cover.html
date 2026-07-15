@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--lime:#9AFF00;--ink:#070a04;--white:#f4f8ee;--muted:#9aa891;--line:#2b3a17;--card:#121a0b}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--ink);
+  font-family:'Montserrat','Arial Black',sans-serif;color:var(--white)}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden}
+#bg{position:absolute;inset:0}
+#vign{position:absolute;inset:0;background:radial-gradient(120% 100% at 70% 40%,transparent 35%,rgba(0,0,0,.62) 100%)}
+#glow{position:absolute;width:900px;height:900px;left:56%;top:50%;transform:translateY(-50%);
+  background:radial-gradient(closest-side,rgba(154,255,0,.16),transparent 70%)}
+.wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 120px}
+.left{max-width:1050px}
+.badge{display:inline-flex;align-items:center;gap:14px;border:1px solid var(--line);background:rgba(14,20,8,.6);
+  padding:12px 22px;border-radius:40px;font-weight:800;letter-spacing:.28em;font-size:20px;color:var(--muted);text-transform:uppercase}
+.badge b{color:var(--lime)}
+.eyebrow{margin-top:40px;font-size:30px;letter-spacing:.34em;font-weight:800;color:var(--lime);text-transform:uppercase}
+h1{font-size:158px;line-height:.9;font-weight:900;letter-spacing:-.02em;margin-top:24px;
+  text-shadow:0 0 70px rgba(154,255,0,.22)}
+h1 .l{color:var(--lime)}
+.year{display:inline-block;margin-top:8px;font-size:120px;font-weight:900;color:transparent;-webkit-text-stroke:3px var(--lime);letter-spacing:.02em}
+.form{margin-top:44px;display:flex;align-items:center;gap:22px;font-size:34px;font-weight:800}
+.form span{padding:14px 28px;border-radius:14px;background:rgba(14,20,8,.7);border:1px solid var(--line)}
+.form span.hot{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.form b{color:var(--lime);font-size:40px}
+.right{position:relative;width:640px;height:640px;display:flex;align-items:center;justify-content:center}
+.ologo{width:400px;height:400px;filter:drop-shadow(0 0 60px rgba(154,255,0,.55));position:relative;z-index:3}
+.ring{position:absolute;border:2px solid rgba(154,255,0,.18);border-radius:50%}
+.node{position:absolute;width:78px;height:78px;border-radius:22px;background:linear-gradient(155deg,#1b2b09,#0b1104);
+  border:2px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.node svg{width:40px;height:40px;stroke:var(--lime);fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.wm{position:absolute;top:44px;left:120px;display:flex;align-items:center;gap:14px;z-index:5}
+.wm img{width:56px;height:56px;filter:drop-shadow(0 0 12px rgba(154,255,0,.5))}
+.wm .t{font-weight:800;font-size:26px}.wm .t b{color:var(--lime)}.wm .t small{display:block;font-size:12px;letter-spacing:.4em;color:var(--muted);margin-top:2px}
+.foot{position:absolute;bottom:56px;left:120px;right:120px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-weight:700;font-size:24px;letter-spacing:.04em}
+.foot .r{color:var(--lime)}
+</style></head>
+<body><div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="glow"></div><div id="vign"></div>
+  <div class="wm"><img src="assets/logo.png"><div class="t"><b>OKO</b><small>АКАДЕМИЯ</small></div></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="badge">НЕЙРОСЕТИ · <b>БЛОК&nbsp;1</b> · УРОК&nbsp;1</div>
+      <div class="eyebrow">Академия OKO</div>
+      <h1>Карта<br><span class="l">нейросетей</span></h1>
+      <div class="year">2026</div>
+      <div class="form"><span>ЗАДАЧА</span><b>→</b><span>КАТЕГОРИЯ</span><b>→</b><span class="hot">МОДЕЛЬ</span></div>
+    </div>
+    <div class="right">
+      <div class="ring" style="width:560px;height:560px"></div>
+      <div class="ring" style="width:400px;height:400px"></div>
+      <img class="ologo" src="assets/logo.png">
+    </div>
+  </div>
+  <div class="foot"><div>Какая модель под какую задачу — за 4 минуты</div><div class="r">okoteam.top</div></div>
+</div>
+<script>
+// same living grid, static frame
+const ctx=document.getElementById('bg').getContext('2d'),GW=1920,GH=1080,CELL=78,hue=83;
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+ctx.clearRect(0,0,GW,GH);
+const cols=Math.ceil(GW/CELL)+1,rows=Math.ceil(GH/CELL)+1;
+ctx.lineWidth=1;ctx.strokeStyle=`hsla(${hue},100%,55%,0.06)`;ctx.beginPath();
+for(let c=0;c<=cols;c++){ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,GH);}
+for(let r=0;r<=rows;r++){ctx.moveTo(0,r*CELL);ctx.lineTo(GW,r*CELL);}
+ctx.stroke();
+// scatter glowing cells, denser near right (logo)
+let seed=7; const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
+for(let i=0;i<46;i++){const c=Math.floor(rnd()*cols),r=Math.floor(rnd()*rows);
+  const cx=c*CELL+CELL/2, bias=cx>1100?0.9:0.5; const g=(0.3+rnd()*0.7)*bias;
+  ctx.shadowColor=`hsla(${hue},100%,55%,${0.8*g})`;ctx.shadowBlur=26*g;
+  ctx.fillStyle=`hsla(${hue},100%,${54+g*12}%,${0.18*g})`; rr(ctx,c*CELL+7,r*CELL+7,CELL-14,CELL-14,11);ctx.fill();
+  ctx.shadowBlur=8*g;ctx.fillStyle=`hsla(${hue},100%,72%,${0.5*g})`;ctx.beginPath();ctx.arc(c*CELL+CELL/2,r*CELL+CELL/2,3,0,6.28);ctx.fill();}
+ctx.shadowBlur=0;
+// 7 orbit nodes around logo
+const IC=['<path d="M8 11h20M8 19h20M8 27h12"/>','<rect x="7" y="8" width="24" height="22" rx="4"/><circle cx="14" cy="16" r="3"/><path d="M8 27l7-6 6 5 5-4 5 4"/>','<rect x="7" y="10" width="20" height="19" rx="3"/><path d="M27 15l6-4v16l-6-4z"/>','<path d="M14 12L7 19l7 7M24 12l7 7-7 7"/>','<rect x="15" y="7" width="8" height="16" rx="4"/><path d="M10 19a9 9 0 0 0 18 0M19 28v5"/>','<path d="M15 27V9l14-3v18"/><circle cx="12" cy="28" r="4"/><circle cx="26" cy="25" r="4"/>','<circle cx="19" cy="19" r="6"/><path d="M19 7v5M19 26v5M7 19h5M26 19h5"/>'];
+const right=document.querySelector('.right');const R=280,cx=320,cy=320;
+for(let k=0;k<7;k++){const a=-Math.PI/2+k*(2*Math.PI/7);const x=cx+Math.cos(a)*R-39,y=cy+Math.sin(a)*R-39;
+  const n=document.createElement('div');n.className='node';n.style.left=x+'px';n.style.top=y+'px';
+  n.innerHTML=`<svg viewBox="0 0 38 38">${IC[k]}</svg>`;right.appendChild(n);}
+</script></body></html>
