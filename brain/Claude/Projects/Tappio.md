@@ -73,4 +73,13 @@ Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=Y
 - НО: после ~15 попыток за 1.5ч IG ЗАТРОТТЛИЛ выдачу новых кодов — залип на старом 628884 (истёк), новых писем не шлёт даже по "Get a new code". Троттл временный (обычно часы/сутки), аккаунт НЕ забанен.
 - ig_patchright.mjs сохраняет cookies в /opt/oko-poster/cfg/ig_state.json при успехе -> после ОДНОГО входа сессия переиспользуется, повторный логин не нужен.
 ЧИСТЫЙ ПЛАН: дать аккаунту остыть (~сутки), затем ОДНА спокойная попытка -> поймать ОДИН свежий код из Gmail -> сохранить сессию. Прокси для базовой связки НЕ обязателен; нужен только на масштабе ОКО АПП (много аккаунтов с одного IP = подозрительно).
+
+## IG: ВОШЛИ УСПЕШНО (15.07 08:33 UTC) — ГОТОВО
+После ~12ч остывания: чистый профиль + ig_patchright.mjs (стелс, БЕЗ прокси, тот же VPS US IP) -> submit логин/пароль -> IG ПРОПУСТИЛ БЕЗ КОДА, сразу на ленту instagram.com/?deoia=1. RESULT=LOGGED_IN.
+Верификация identity (ig_verify.mjs -> /accounts/edit/): username = tappio.app.pro. ПОДТВЕРЖДЕНО.
+- Сессия: persistent profile /opt/oko-poster/cfg/ig_patchright_profile (30 cookies). Сохранена: cfg/ig_state.json + бэкапы cfg/ig_state.backup.json, cfg/ig_profile_backup.tgz (21MB).
+- Способ входа: patchright launchPersistentContext (channel:chromium, mobile UA Pixel7, 412x915, tz Europe/Rome). Стелс-отпечаток пробивает бот-блок. Email-код был затроттлен, но при этой попытке IG вообще не запросил верификацию.
+- Резерв на будущее (если IG снова спросит верификацию): "Try another way" даёт методы — Email(глушится) / Notification-on-another-device(Approve с телефона) / WhatsApp(код на +39...92). Скрипт умеет IG_WHATSAPP=1 (выбор WhatsApp) и IG_RESEND=1. Для WhatsApp код присылает Даниэль.
+ИТОГ: агент владеет реальной IG-сессией tappio.app.pro на VPS. Повторный логин не нужен — работа по сохранённой сессии (постинг/аналитика/комменты). Прокси НЕ понадобился.
+Скрипты: factory/vps/ig_patchright.mjs (вход+challenge+WhatsApp), factory/vps/ig_verify.mjs (проверка identity).
 YouTube Tappio, Hoopy API, браузер-логин в Hoopy, обложки - всё РАБОТАЕТ. Приоритет вернуть на КОНТЕНТ (пересборка v6).

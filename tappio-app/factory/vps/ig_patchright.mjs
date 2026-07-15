@@ -97,6 +97,30 @@ try {
       } else log('no try-another-way button');
     }
 
+    // choose WhatsApp verification (email is throttled)
+    if (process.env.IG_WHATSAPP === '1') {
+      const ta = p.getByRole('button',{name:/try another way/i}).first();
+      if (await ta.count() && await ta.isVisible().catch(()=>false)) { await ta.click().catch(()=>{}); await p.waitForTimeout(3500); }
+      // select the WhatsApp method row (radio/label)
+      let picked=false;
+      for (const loc of [p.getByText(/^\s*WhatsApp\s*$/i).first(), p.getByText(/whatsapp/i).first(), p.locator('label:has-text("WhatsApp")').first()]) {
+        if (await loc.count()===0) continue;
+        if (!await loc.isVisible().catch(()=>false)) continue;
+        await loc.click().catch(()=>{}); picked=true; log('picked WhatsApp'); break;
+      }
+      if(!picked) log('WhatsApp option not found');
+      await p.waitForTimeout(1200);
+      // confirm with Continue
+      for (const t of [/^continue$/i,/^next$/i,/^send code$/i]) {
+        const b=p.getByRole('button',{name:t}).first();
+        if (await b.count() && await b.isVisible().catch(()=>false)) { await b.click().catch(()=>{}); log('clicked',t.source); break; }
+      }
+      await p.waitForTimeout(5000);
+      await p.screenshot({ path: '/opt/oko-poster/cfg/ig_wa.png' }).catch(()=>{});
+      const wtxt = await p.evaluate(()=>document.body.innerText.slice(0,300).replace(/\n+/g,' | '));
+      log('WA_PAGE', wtxt);
+    }
+
     log('awaiting code file', CODEF);
     let code = null;
     for (let i=0;i<72;i++){ // up to 6 min
