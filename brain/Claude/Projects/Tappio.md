@@ -95,4 +95,28 @@ Hoopy source_id: 1=VK,3=Facebook,9=Telegram-канал,11=Telegram-юзер,14=Y
 Аккаунт: email tappio.app@gmail.com / pass tappio.app_(@)8. Код придёт на tappio.app@gmail.com — Gmail-коннектор его НЕ читает (читает только okoteam.top). Решение по коду: Даниэль говорит код вручную (выбрал вариант 3); в продукте — поле "введи код" в UI или делегированный доступ к почте.
 Скрипт tk_login.mjs (patchright стелс, desktop UA, БЕЗ прокси): форма входа tiktok.com/login/phone-or-email/email загрузилась БЕЗ капчи (отпечаток прошёл), логин/пароль встали в верные поля. НО на сабмит -> "Maximum number of attempts reached. Try again later." = лимит попыток (были прежние попытки до сессии). Капчи/кода не было — упёрлись в rate-limit раньше.
 ВЫВОД: подход рабочий (как IG), нужен КУЛДАУН -> одна чистая попытка, Даниэль наготове с кодом из tappio.app@gmail.com. НЕ долбить (продлевает блок). Скрипт умеет ждать код из файла cfg/tk_code.txt (TK_LOGIN/TK_PASSWORD в env).
+
+## TikTok: обход прокси — ТЕСТЫ (15.07) и РЕШЕНИЕ ЧЕРЕЗ HOOPPY
+Прямой вход TikTok с сервера невозможен без резидент/мобильного IP:
+- Дата-центр IP (Timeweb 104.171.132.45) -> "Maximum attempts" (rate-limit по IP, не по профилю/юзернейму).
+- QR-вход -> "попробуйте другой способ" (отклонён).
+- Cloudflare WARP (бесплатно, wgcf+wireproxy userspace SOCKS5 :25344, egress 104.28.x Cloudflare) -> лимит попыток УШЁЛ, но TikTok ответил "Internal server error" = Cloudflare IP тоже режет.
+- Вывод: TikTok пускает ТОЛЬКО резидентный/мобильный IP (в отличие от IG — там хватило отпечатка). Бесплатный авто-обход с сервера исчерпан.
+- Бесплатный рабочий вариант: телефон Даниэля как exit-node (Tailscale userspace на VPS готов: /opt/oko-poster/ts, socks5 :1055; нужен телефон+аккаунт Tailscale+exit node). Не автоматизируется на потоке клиентов (1 IP на много акков = бан).
+Инфра VPS: okoposter БЕЗ sudo, но в группе docker; ghcr.io пуллит (docker hub 429). wgcf/wireproxy/tailscale бинарники в /opt/oko-poster/{warp,ts}.
+
+## РЕШЕНИЕ TikTok: через Hooppy (официальный OAuth) — Даниэль авторизует с телефона
+Hooppy dashboard (hooppy.ru, вход HOOPPY_LOGIN/PASSWORD, сессия cfg/hooppy_session.json). Страница подключения /accounts/connect.
+TikTok connect = ОФИЦИАЛЬНЫЙ OAuth: https://www.tiktok.com/v2/auth/authorize/?redirect_uri=https://hooppy.ru/oauth/14&client_key=aweoatbsettfanq2&response_type=code&scope=user.info.basic,user.info.profile,video.upload,video.publish
+- OAuth-ссылка ФИКСИРОВАННАЯ, БЕЗ state -> Hooppy привязывает к аккаунту по СЕССИИ (кукам hooppy), не по ссылке. Голую ссылку клиенту слать нельзя (не привяжется без Hooppy-сессии).
+- С нашего сервера OAuth упирается в вход TikTok (IP-блок) -> довершает Даниэль с телефона: hooppy.ru -> Мои аккаунты -> Подключить -> TikTok -> Authorize (в его Hooppy-сессии, TikTok на телефоне залогинен).
+- redirect /oauth/14. После подключения найти source_id TikTok через Hooppy API и постить.
+Скрипты: hooppy_connect_tt.mjs (логин+探), hooppy_tt_oauth.mjs, hooppy_tt_link.mjs.
+
+## АРХИТЕКТУРА ОКО АПП (решено с Даниэлем 15.07)
+Каналы: IG напрямую (вход+постинг+активность, БЕЗ прокси — хватает отпечатка), YouTube напрямую (офиц. API), TikTok через Hooppy (OAuth).
+Клиентский поток БЕЗ пароля: OAuth 1 тап (клиент авторизует в окне платформы в своей сессии) -> токен на бэкенд -> постим через API. Пароль+прокси нужны ТОЛЬКО для "полной активности" (лайки/подписки/алгоритм/ДМ) — премиум-слой.
+API-потолок: OAuth даёт постинг+аналитику+ответы на комменты. Лайки/подписки/накрутка — только браузер+прокси на аккаунт.
+Две архитектуры: (1) Hooppy как бэкенд — быстро, у Даниэля БЕЗЛИМИТ аккаунтов через владельца Hooppy (минус снят); (2) своё OAuth-приложение ОКО (свой client_id у TikTok/Meta/Google, свой state на клиента -> голую ссылку клиенту слать МОЖНО) — независимость, ~0 стоимость, но нужно ревью платформ + построить бэкенд. План: запуск на Hooppy (+спросить владельца про партнёрский/white-label API), своё OAuth — шаг 2.
+Прокси на масштабе: 1 IP на 1 аккаунт (много акков с 1 IP = бан). IG дешевле (без прокси), TikTok требует прокси на аккаунт для полной активности; для OAuth-постинга прокси НЕ нужен (официальный API).
 YouTube Tappio, Hoopy API, браузер-логин в Hoopy, обложки - всё РАБОТАЕТ. Приоритет вернуть на КОНТЕНТ (пересборка v6).
