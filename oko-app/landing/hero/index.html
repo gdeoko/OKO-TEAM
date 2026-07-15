@@ -9,7 +9,7 @@
 (function(){ try{
   window.__realDPR = window.devicePixelRatio || 1;
   var coarse = matchMedia('(pointer:coarse)').matches || innerWidth < 760;
-  var cap = coarse ? 1 : 1.25;                       // Spline renders at this
+  var cap = coarse ? 1 : 1.0;                         // Spline renders at this (1x = smooth, bg is forgiving)
   Object.defineProperty(window,'devicePixelRatio',{configurable:true,get:function(){return cap;}});
 }catch(e){} })();
 </script>
@@ -22,6 +22,9 @@
   html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
   #bg{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 60% 40%,#12160f,#080a08 70%,#050705)}
   #bg spline-viewer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* tablet/tall screens: zoom the Spline scene so it covers the viewport (no top/bottom crop-gaps) */
+  @media(max-aspect-ratio:4/3){ #bg spline-viewer{transform:scale(1.3);transform-origin:center center} }
+  @media(max-aspect-ratio:3/4){ #bg spline-viewer{transform:scale(1.7)} }
   /* EYE — SOLID (alpha transparent canvas, no blend); crisp full-res */
   #app{position:fixed;inset:0;z-index:2;pointer-events:none}
   #app canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
@@ -63,7 +66,7 @@
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне.</p>
   </div>
-  <div class="chip">сборка v0.7</div>
+  <div class="chip">сборка v0.8</div>
 </div>
 <div class="loader" id="loader"><i></i></div>
 
@@ -141,13 +144,19 @@ function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
 addEventListener('resize',resize); resize();
 
 const pointer=new THREE.Vector2(0,0);
-addEventListener('pointermove',e=>{ pointer.x=(e.clientX/innerWidth)*2-1; pointer.y=-(e.clientY/innerHeight)*2+1; },{passive:true});
-// no on-top touch flash — the original only lights the panels UNDER the squares (Spline's own logic)
-addEventListener('pointerdown',()=>{ pulse=1; });
-
 let pulse=0, hidden=false;
-document.addEventListener('visibilitychange',()=>hidden=document.hidden);
 const clock=new THREE.Clock();
+// look-follow with auto-return to center: eye follows the finger/cursor while active,
+// then smoothly returns to face the viewer when you release / stop moving. All devices.
+let lastMove=-99, released=true;
+function setPtr(e){ pointer.x=(e.clientX/innerWidth)*2-1; pointer.y=-(e.clientY/innerHeight)*2+1; lastMove=clock.getElapsedTime(); released=false; }
+addEventListener('pointermove',setPtr,{passive:true});
+addEventListener('pointerdown',e=>{ setPtr(e); pulse=1; });
+addEventListener('pointerup',()=>{ released=true; });
+addEventListener('pointercancel',()=>{ released=true; });
+addEventListener('pointerleave',()=>{ released=true; });
+addEventListener('blur',()=>{ released=true; });
+document.addEventListener('visibilitychange',()=>{hidden=document.hidden; if(hidden) released=true;});
 function frame(){
   requestAnimationFrame(frame);
   if(hidden) return;
@@ -158,8 +167,11 @@ function frame(){
     eyeGroup.scale.lerp(new THREE.Vector3(target.scale*br,target.scale*br,target.scale*br),0.1);
     eyeGroup.position.x += (target.x-eyeGroup.position.x)*0.1;
     eyeGroup.position.y += ((target.y+Math.sin(t*0.8)*0.12)-eyeGroup.position.y)*0.1;
-    eyeGroup.rotation.y += (pointer.x*0.3-eyeGroup.rotation.y)*0.06;
-    eyeGroup.rotation.x += (-pointer.y*0.2+Math.sin(t*0.6)*0.02-eyeGroup.rotation.x)*0.06;
+    // idle (released or no movement for a moment) -> look target eases back to center (face the viewer)
+    const idle = released || (t - lastMove > 1.1);
+    const lx = idle ? 0 : pointer.x, ly = idle ? 0 : pointer.y;
+    eyeGroup.rotation.y += (lx*0.32 - eyeGroup.rotation.y)*0.05;
+    eyeGroup.rotation.x += (-ly*0.22 + Math.sin(t*0.6)*0.02 - eyeGroup.rotation.x)*0.05;
     eyeGroup.rotation.z = Math.sin(t*0.5)*0.014;
     eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
     halo.material.opacity += ((0.5+pulse*0.5)-halo.material.opacity)*0.1;
