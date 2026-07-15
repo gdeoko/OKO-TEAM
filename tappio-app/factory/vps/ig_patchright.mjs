@@ -53,6 +53,8 @@ try {
   for (let i=0;i<20;i++){ const u=p.url(); if(!/\/accounts\/login\/?$/.test(u)) break; await p.waitForTimeout(1500); }
   let url = p.url();
   log('post-login url=', url);
+  await p.waitForTimeout(4000); // let codeentry fully render
+  await p.screenshot({ path: '/opt/oko-poster/cfg/ig_codeentry_live.png' }).catch(()=>{});
   const bodyTxt = (await p.locator('body').innerText().catch(()=>'')).slice(0, 400).replace(/\n+/g,' | ');
   log('body:', bodyTxt);
 
@@ -82,6 +84,17 @@ try {
       }
       if(!resent) log('resend link not found/clickable');
       await p.waitForTimeout(2500);
+    }
+
+    // explore alternative verification paths
+    if (process.env.IG_TRYOTHER === '1') {
+      const b = p.getByRole('button',{name:/try another way/i}).first();
+      if (await b.count() && await b.isVisible().catch(()=>false)) {
+        await b.click().catch(()=>{}); await p.waitForTimeout(3500);
+        await p.screenshot({ path: '/opt/oko-poster/cfg/ig_tryother.png' }).catch(()=>{});
+        const opts = await p.evaluate(()=>document.body.innerText.slice(0,600).replace(/\n+/g,' | '));
+        log('TRYOTHER_OPTIONS', opts);
+      } else log('no try-another-way button');
     }
 
     log('awaiting code file', CODEF);
