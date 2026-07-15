@@ -160,6 +160,23 @@ OKO нигде не использовать).
 - Даниэль знаком с владельцем Hooppy → возможен безлимит аккаунтов + партнёрский/white-label API (детали в `brain/Claude/Projects/Tappio.md`).
 
 
+## 1e. Клиенты (мульти-проект) — аккаунты и доступы
+
+Секреты в secrets.env.b64. Пароль в колонке — он же для соцсетей и почты (клиент дал один).
+Коды верификации приходят на почту клиента (Gmail-коннектор читает только okoteam.top —
+для клиентских почт логинимся в их Gmail стелс-браузером по паролю ИЛИ клиент даёт код).
+
+| Проект | Почта (=Google/YouTube) | Пароль | Instagram | TikTok | Сайт |
+|---|---|---|---|---|---|
+| **Tappio** | okoteam.top@gmail.com (IG) / tappio.app@gmail.com (TikTok) | TAPPIO_IG_PASSWORD / TAPPIO_TT_PASSWORD | tappio.app.pro (ПОДКЛЮЧЕН) | @tappio.app (в Hooppy) | tappio.pro |
+| **Екатерина \| духовное воспитание** | CLIENT_EKAT_EMAIL (ekaterinasbogom@gmail.com) | CLIENT_EKAT_PASSWORD | mama_s_bogom | mama.s.bogom (в Hooppy) | — |
+| **DIESEL** | CLIENT_DIESEL_EMAIL (cargo.panda.go@gmail.com) | CLIENT_DIESEL_PASSWORD | diesel_cargo | diesel_cargo (в Hooppy) | dieselcompany.pro (CLIENT_DIESEL_SITE) |
+
+Статус подключения: Tappio IG+YouTube — готово; TikTok всех — через Hooppy (OAuth с телефона).
+Екатерина/DIESEL IG+YouTube — в работе (стелс-вход + чтение кодов из их Gmail).
+Переменные клиентов: CLIENT_EKAT_* , CLIENT_DIESEL_* (NAME/EMAIL/PASSWORD/IG/TT[/SITE]).
+
+
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
 Заданы в настройках cloud environment «OKO TEAM» на claude.ai. Даниэль присылал
