@@ -66,7 +66,7 @@
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне.</p>
   </div>
-  <div class="chip">сборка v0.8</div>
+  <div class="chip">сборка v0.9</div>
 </div>
 <div class="loader" id="loader"><i></i></div>
 
@@ -167,11 +167,14 @@ function frame(){
     eyeGroup.scale.lerp(new THREE.Vector3(target.scale*br,target.scale*br,target.scale*br),0.1);
     eyeGroup.position.x += (target.x-eyeGroup.position.x)*0.1;
     eyeGroup.position.y += ((target.y+Math.sin(t*0.8)*0.12)-eyeGroup.position.y)*0.1;
-    // idle (released or no movement for a moment) -> look target eases back to center (face the viewer)
+    // face the CAMERA at rest (compensate perspective skew when the eye sits off-centre, e.g. right side on PC)
+    const faceYaw = Math.atan2(-eyeGroup.position.x, DIST);
+    const facePitch = Math.atan2(eyeGroup.position.y, DIST);
+    // idle (released or no movement) -> look target eases back to centre (face the viewer)
     const idle = released || (t - lastMove > 1.1);
     const lx = idle ? 0 : pointer.x, ly = idle ? 0 : pointer.y;
-    eyeGroup.rotation.y += (lx*0.32 - eyeGroup.rotation.y)*0.05;
-    eyeGroup.rotation.x += (-ly*0.22 + Math.sin(t*0.6)*0.02 - eyeGroup.rotation.x)*0.05;
+    eyeGroup.rotation.y += ((faceYaw + lx*0.32) - eyeGroup.rotation.y)*0.05;
+    eyeGroup.rotation.x += ((facePitch - ly*0.22) + Math.sin(t*0.6)*0.02 - eyeGroup.rotation.x)*0.05;
     eyeGroup.rotation.z = Math.sin(t*0.5)*0.014;
     eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
     halo.material.opacity += ((0.5+pulse*0.5)-halo.material.opacity)*0.1;
