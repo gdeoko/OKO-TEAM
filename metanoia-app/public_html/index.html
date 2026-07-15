@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#FAF8F5">
+  <meta name="description" content="Метанойя — христианская онлайн-школа для детей 5–14 лет">
+  <title>Метанойя</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/img/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/img/icon-192.png">
+
+  <!-- Шрифты бренда: Playfair Display (заголовки) + Montserrat (текст) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+
+  <!-- ═══════════ SPLASH SCREEN ═══════════ -->
+  <div id="splash" class="splash">
+    <canvas class="splash__fx" id="splashFx"></canvas>
+    <div class="splash__logo">
+      <video class="splash__video" autoplay muted playsinline preload="auto"
+        src="assets/video/logo-intro.mp4" poster="assets/img/logo.png"
+        aria-label="Логотип Метанойя"></video>
+    </div>
+    <div class="splash__title">МЕТАНОЙЯ</div>
+    <div class="splash__subtitle">Христианская онлайн-школа для детей</div>
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+
+
+  <!-- ═══════════ ОНБОРДИНГ (первый запуск) ═══════════ -->
+  <div id="onboarding" class="onb" hidden>
+    <button class="onb__skip" id="onbSkip">Пропустить</button>
+    <div class="onb__track" id="onbTrack">
+      <section class="onb__slide">
+        <img src="assets/img/logo.png" width="150" height="150" alt="">
+        <h2>Добро пожаловать!</h2>
+        <p>Христианская онлайн-школа для детей</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="book" data-size="52"></span></div>
+        <h2>Бесплатные уроки</h2>
+        <p>Живые занятия с педагогом. Уроки веры — как служение. Бесплатно для всех.</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="trophy" data-size="52"></span></div>
+        <h2>Игры, награды, рейтинг</h2>
+        <p>Учись играя! 20 мини-игр, значки, серии, рейтинги.</p>
+      </section>
+      <section class="onb__slide">
+        <div class="onb__icon"><span data-icon="comment" data-size="52"></span></div>
+        <h2>Общайся с педагогом и семьями</h2>
+        <p>Задавай вопросы, делись успехами, находи единомышленников.</p>
+        <button class="btn btn--primary onb__start" id="onbStart">Начать</button>
+      </section>
+    </div>
+    <div class="onb__dots" id="onbDots"><i class="onb__dot onb__dot--on"></i><i class="onb__dot"></i><i class="onb__dot"></i><i class="onb__dot"></i></div>
+  </div>
+
+  <!-- ═══════════ ВХОД / РЕГИСТРАЦИЯ ═══════════ -->
+  <div id="auth" class="auth" hidden>
+    <div class="auth__box">
+      <div class="auth__logo">
+        <img src="assets/img/logo.png" width="64" height="64" alt="">
+        <div class="auth__title">МЕТАНОЙЯ</div>
+      </div>
+
+      <div class="auth__tabs">
+        <button class="auth__tab auth__tab--on" data-authtab="login">Вход</button>
+        <button class="auth__tab" data-authtab="register">Регистрация</button>
+      </div>
+
+      <form class="auth__form" id="loginForm" novalidate>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" placeholder="mama@example.ru" required></label>
+        <label class="field"><span>Пароль</span>
+          <input type="password" name="password" placeholder="••••••••" required></label>
+        <button class="btn btn--primary auth__submit" type="submit">Войти</button>
+        <button class="auth__forgot" type="button" id="forgotBtn">Забыли пароль?</button>
+        <div class="auth__divider"><i></i><em>или</em><i></i></div>
+        <button class="btn btn--outline auth__oauth" type="button" data-oauth="google">Войти через Google</button>
+        <button class="btn btn--outline auth__oauth" type="button" data-oauth="telegram">Войти через Telegram</button>
+      </form>
+
+      <form class="auth__form" id="registerForm" hidden novalidate>
+        <label class="field"><span>Ваше имя</span>
+          <input type="text" name="name" placeholder="Мария" required></label>
+        <label class="field"><span>Email</span>
+          <input type="email" name="email" placeholder="mama@example.ru" required></label>
+        <label class="field"><span>Пароль <small>минимум 8 символов, буква и цифра</small></span>
+          <input type="password" name="password" required></label>
+        <div class="field-row">
+          <label class="field"><span>Роль</span>
+            <select name="role">
+              <option value="parent">Родитель</option>
+              <option value="student12">Ученик 12+</option>
+            </select></label>
+          <label class="field"><span>Конфессия</span>
+            <select name="confession">
+              <option value="orthodox">Православие</option>
+              <option value="protestant">Протестантизм</option>
+              <option value="catholic">Католицизм</option>
+              <option value="other">Другое</option>
+              <option value="undecided" selected>Не определился</option>
+            </select></label>
+        </div>
+        <div class="field-row">
+          <label class="field"><span>Страна</span>
+            <input type="text" name="country" placeholder="Россия"></label>
+          <label class="field"><span>Город</span>
+            <input type="text" name="city" placeholder="Москва"></label>
+        </div>
+        <div class="auth__child" data-childblock>
+          <div class="auth__child-title"><span data-icon="star" data-size="14"></span> Первый ребёнок</div>
+          <div class="field-row">
+            <label class="field"><span>Имя</span>
+              <input type="text" name="child_name" placeholder="Миша"></label>
+            <label class="field field--narrow"><span>Возраст</span>
+              <input type="number" name="child_age" min="5" max="14" placeholder="8"></label>
+          </div>
+        </div>
+        <button class="btn btn--primary auth__submit" type="submit">Создать аккаунт</button>
+      </form>
+
+      <button class="auth__guest" id="guestBtn">Посмотреть демо без регистрации</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ ПРОСМОТР STORIES ═══════════ -->
+  <div id="storyViewer" class="sv" hidden>
+    <div class="sv__bars" id="svBars"></div>
+    <div class="sv__head">
+      <div class="sv__who" id="svWho"></div>
+      <button class="sv__close" id="svClose" aria-label="Закрыть"><span data-icon="close" data-size="22"></span></button>
+    </div>
+    <div class="sv__content" id="svContent"></div>
+    <button class="sv__zone sv__zone--prev" id="svPrev" aria-label="Назад"></button>
+    <button class="sv__zone sv__zone--next" id="svNext" aria-label="Вперёд"></button>
+  </div>
+
+  <!-- ═══════════ ШТОРКА КОММЕНТАРИЕВ ═══════════ -->
+  <div id="sheetWrap" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet">
+      <div class="sheet__grip"></div>
+      <div class="sheet__title">Комментарии <span id="sheetCount"></span></div>
+      <div class="sheet__list" id="sheetList"></div>
+      <div class="sheet__input">
+        <input type="text" id="sheetField" placeholder="Написать комментарий..." maxlength="500">
+        <button id="sheetSend" aria-label="Отправить"><span data-icon="send" data-size="20"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PIN РОДИТЕЛЯ ═══════════ -->
+  <div id="pinModal" class="pinm" hidden>
+    <div class="pinm__box">
+      <div class="pinm__title">PIN родителя</div>
+      <div class="pinm__hint">Чтобы вернуться в профиль родителя, введи PIN (в демо: 1234)</div>
+      <div class="pinm__dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+      <div class="pinm__pad" id="pinPad"></div>
+      <button class="pinm__cancel" id="pinCancel">Отмена</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ УВЕДОМЛЕНИЯ ═══════════ -->
+  <div id="notifPanel" class="notif" hidden>
+    <div class="notif__head">
+      <button id="notifBack"><span data-icon="back" data-size="20"></span></button>
+      <b>Уведомления</b>
+      <button id="notifReadAll">Прочитать все</button>
+    </div>
+    <div class="notif__list" id="notifList"></div>
+  </div>
+
+
+  <!-- ═══════════ ДЕЙСТВИЯ С СООБЩЕНИЕМ (долгий тап) ═══════════ -->
+  <div id="msgActions" class="ma" hidden>
+    <div class="ma__backdrop" id="maBackdrop"></div>
+    <div class="ma__panel">
+      <div class="ma__reactions" id="maReactions"></div>
+      <div class="ma__row">
+        <button id="maReply"><span data-icon="back" data-size="16"></span> Ответить</button>
+        <button id="maCopy"><span data-icon="book" data-size="16"></span> Копировать</button>
+        <button id="maDelete" hidden><span data-icon="close" data-size="16"></span> Удалить</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════ ВЛОЖЕНИЯ (скрепка) ═══════════ -->
+  <div id="attachSheet" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" data-close-attach></div>
+    <div class="sheet asheet">
+      <div class="sheet__grip"></div>
+      <button class="asheet__item" data-attach="photo"><span data-icon="image" data-size="20"></span> Фото или видео из галереи</button>
+      <button class="asheet__item" data-attach="file"><span data-icon="file" data-size="20"></span> Файл (PDF, DOC — до 20 МБ)</button>
+      <button class="asheet__item asheet__item--dim" data-attach="poll"><span data-icon="poll" data-size="20"></span> Опрос <small>только Екатерина</small></button>
+    </div>
+  </div>
+
+  <!-- ═══════════ НОВОЕ ЛИЧНОЕ СООБЩЕНИЕ ═══════════ -->
+  <div id="dmSheet" class="sheet-wrap" hidden>
+    <div class="sheet-backdrop" data-close-dm></div>
+    <div class="sheet asheet">
+      <div class="sheet__grip"></div>
+      <div class="sheet__title">Написать родителю</div>
+      <div id="dmList"></div>
+      <div class="asheet__note">Личные сообщения доступны только между родителями. Дети общаются в чате учеников под присмотром педагога.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ ПРОФИЛЬ УЧАСТНИКА ═══════════ -->
+  <div id="userCard" class="pinm" hidden>
+    <div class="pinm__box ucard">
+      <div class="ucard__avatar" id="ucAvatar"></div>
+      <div class="ucard__name" id="ucName"></div>
+      <div class="ucard__meta" id="ucMeta"></div>
+      <button class="btn btn--primary" id="ucWrite" style="width:100%">Написать сообщение</button>
+      <button class="pinm__cancel" id="ucClose">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ ШАПКА ═══════════ -->
+  <header class="header" id="header">
+    <div class="header__left">
+      <img class="header__logo" src="assets/img/logo.png" width="36" height="36" alt="Метанойя">
+      <span class="header__name">МЕТАНОЙЯ</span>
+    </div>
+    <div class="header__right">
+      <button class="header__bell" id="bellBtn" aria-label="Уведомления">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+        </svg>
+        <span class="badge badge--bell" id="bellBadge">3</span>
+      </button>
+      <button class="header__avatar" id="avatarBtn" aria-label="Профиль">Д</button>
+    </div>
+  </header>
+
+  <!-- ═══════════ ЭКРАНЫ (5 ТАБОВ) ═══════════ -->
+  <main class="screens" id="screens">
+
+    <!-- ── 🏠 ГЛАВНАЯ ── -->
+    <section class="screen screen--active" data-screen="home">
+      <div class="ptr" id="ptr"><div class="spinner"></div></div>
+      <!-- Stories -->
+      <div class="stories" id="stories"><!-- JS --></div>
+
+      <!-- Виджет «Сегодня» -->
+      <div class="today card card--gold">
+        <div class="today__row">
+          <span class="today__streak"><span data-icon="flame" data-size="17" class="ic-terra"></span> <b id="streakDays">12</b> дней подряд</span>
+          <span class="today__xp">+<b id="xpToday">45</b> XP сегодня</span>
+        </div>
+        <div class="today__call">
+          <div class="today__call-label">Ближайший созвон:</div>
+          <div class="today__call-title">«Притча о блудном сыне»</div>
+          <div class="today__call-timer"><span data-icon="clock" data-size="14"></span> через <span id="callCountdown">2ч 15мин</span></div>
+        </div>
+        <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn"><span data-icon="book" data-size="18" class="ic-gold"></span> Ежедневный стих</button>
+      </div>
+
+      <!-- Лента -->
+      <div class="feed" id="feed"><!-- JS --></div>
+      <div class="feed-end" id="feedMore"></div>
+    </section>
+
+    <!-- ── 🔍 ПОИСК ── -->
+    <section class="screen" data-screen="search">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="searchInput" placeholder="Поиск уроков, игр, материалов..." autocomplete="off">
+      </div>
+      <div class="tabs-row">
+        <button class="tab-chip tab-chip--active">Рекомендуем</button>
+        <button class="tab-chip">Популярное</button>
+        <button class="tab-chip">Новое</button>
+      </div>
+      <div class="filter-row">
+        <button class="filter-chip">5–7</button>
+        <button class="filter-chip">7–10</button>
+        <button class="filter-chip">10–14</button>
+        <button class="filter-chip">Видео</button>
+        <button class="filter-chip">Игра</button>
+        <button class="filter-chip">Тест</button>
+        <button class="filter-chip">Ветхий Завет</button>
+        <button class="filter-chip">Новый Завет</button>
+        <button class="filter-chip">Молитва</button>
+        <button class="filter-chip">Притчи</button>
+      </div>
+      <div class="empty-state" id="searchEmpty">
+        <div class="empty-state__icon"><span data-icon="search" data-size="40"></span></div>
+        <p>Начни вводить запрос — найдём уроки, игры и материалы.</p>
+      </div>
+      <div class="feed" id="searchResults"></div>
+    </section>
+
+    <!-- ── 💬 ЧАТЫ ── -->
+    <section class="screen" data-screen="chats">
+      <div class="chats-head">
+        <h1 class="screen-title">Чаты</h1>
+        <button id="newChatBtn" aria-label="Новое сообщение"><span data-icon="comment" data-size="22"></span><span data-icon="plus" data-size="13" class="chats-head__plus"></span></button>
+      </div>
+      <div class="chat-list" id="chatList"><!-- JS --></div>
+    </section>
+
+    <!-- ── 📚 УРОКИ ── -->
+    <section class="screen" data-screen="lessons">
+      <h1 class="screen-title">Уроки</h1>
+      <h2 class="section-title" style="margin-top:0">Ближайшие созвоны</h2>
+      <div id="schedule"></div>
+      <h2 class="section-title">Программа года · 36 уроков</h2>
+      <div class="lessons" id="lessons"><!-- JS --></div>
+    </section>
+
+    <!-- ── 👤 ПРОФИЛЬ ── -->
+    <section class="screen" data-screen="profile">
+      <div class="profile-head">
+        <div class="profile-head__avatar">Д</div>
+        <div>
+          <div class="profile-head__name">Даниэль</div>
+          <div class="profile-head__meta">Родитель · Москва, Россия</div>
+        </div>
+      </div>
+
+      <div id="wishBlock" hidden>
+        <h2 class="section-title">Желания ребёнка</h2>
+        <div class="wishes" id="wishes"><!-- JS --></div>
+      </div>
+
+      <h2 class="section-title">Отчёт за неделю</h2>
+      <div class="wreport" id="wreport"><!-- JS --></div>
+
+      <h2 class="section-title">Семейный квест недели</h2>
+      <button class="card temple fq-card" id="openQuest" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="users" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage" id="fqCardStage">Квест недели <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="progress"><div class="progress__fill" id="fqCardBar" style="width:0%"></div></div>
+          <div class="temple__note">Маленькие добрые дела всей семьёй — вместе к общему значку</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Наш год с Метанойей</h2>
+      <button class="card temple album-card" id="openAlbum" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="book" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Семейный альбом года <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Уроки, значки и семейные квесты за год — красивая книга на память</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Мои дети</h2>
+      <div class="children" id="children"><!-- JS --></div>
+      <button class="btn btn--outline" id="addChildBtn"><span data-icon="plus" data-size="18"></span>Добавить ребёнка</button>
+
+      <h2 class="section-title">Игры и развитие</h2>
+      <button class="games-tile" id="openBook" style="background:linear-gradient(160deg,#fff,#F3ECFB);border-color:#B9A0D9">
+        <div class="games-tile__icon" style="background:linear-gradient(160deg,#9B7AD4,#C97064)"><span data-icon="book" data-size="24"></span></div>
+        <div class="games-tile__body">
+          <div class="games-tile__name">Книга «Метанойя»</div>
+          <div class="games-tile__desc">Уроки в виде глав книги · читать всей семьёй</div>
+        </div>
+        <span data-icon="play" data-size="18" class="games-tile__play"></span>
+      </button>
+
+      <button class="games-tile" id="openGamesHub">
+        <div class="games-tile__icon"><span data-icon="gamepad" data-size="24"></span></div>
+        <div class="games-tile__body">
+          <div class="games-tile__name">Мини-игры</div>
+          <div class="games-tile__desc">20 игр · собери стих, мемори, викторина и другие</div>
+        </div>
+        <span data-icon="play" data-size="18" class="games-tile__play"></span>
+      </button>
+
+      <h2 class="section-title">Настройки</h2>
+      <div class="menu-list">
+        <button class="menu-item" id="mSettings"><span data-icon="gear" data-size="18"></span>Настройки аккаунта</button>
+        <button class="menu-item menu-item--plus" id="mSubscribe"><span data-icon="crown" data-size="18"></span>Метанойя+<span class="menu-item__tag">доп. возможности</span></button>
+        <button class="menu-item menu-item--partner" id="mPartner"><span data-icon="dove" data-size="18"></span>Стать партнёром</button>
+        <button class="menu-item" id="mDonate"><span data-icon="heart" data-size="18"></span>Поддержать школу</button>
+        <button class="menu-item" id="mNotify"><span data-icon="bell" data-size="18"></span>Уведомления</button>
+        <button class="menu-item" id="mParental"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
+        <button class="menu-item"><span data-icon="headset" data-size="18"></span>Поддержка</button>
+        <button class="menu-item menu-item--muted"><span data-icon="logout" data-size="18"></span>Выйти</button>
+      </div>
+    </section>
+
+    <!-- ── ДЕТСКИЙ ПРОФИЛЬ (переключение из родителя) ── -->
+    <section class="screen" data-screen="child">
+      <button class="child-back" id="childBack"><span data-icon="back" data-size="18"></span> Профиль родителя</button>
+      <div class="child-head">
+        <img class="child-head__avatar" id="childAvatar" src="assets/img/avatars/lion.jpg" alt="">
+        <div class="child-head__name" id="childName">Миша, 8 лет</div>
+        <div class="child-head__rank" id="childRank">Росточек · уровень 2</div>
+        <div class="xpbar">
+          <div class="xpbar__fill" id="childXpFill"></div>
+        </div>
+        <div class="xpbar__label" id="childXpLabel">220 / 300 XP до «Цветочка»</div>
+        <div class="child-streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="childStreak">12</b> дней подряд</div>
+      </div>
+
+      <button class="ask-tile" id="openAsk">
+        <div class="ask-tile__ic"><span data-icon="sparkle" data-size="22"></span></div>
+        <div class="ask-tile__body">
+          <div class="ask-tile__name">Задать вопрос</div>
+          <div class="ask-tile__desc">Спроси о Боге, вере и о том, что тревожит — тёплый помощник ответит</div>
+        </div>
+        <span data-icon="send" data-size="18" class="ask-tile__go"></span>
+      </button>
+
+      <h2 class="section-title">Ранги роста</h2>
+      <div class="ranks" id="ranksLadder"></div>
+
+      <h2 class="section-title">Мои значки</h2>
+      <div class="badges" id="childBadges"></div>
+
+      <h2 class="section-title">Мой храм</h2>
+      <button class="card temple" id="openTemple" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="church" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Этап 3 из 10 · «Стены» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="progress"><div class="progress__fill" style="width:34%"></div></div>
+          <div class="temple__note">34 кирпичика из 100 — нажми, чтобы посмотреть свой храм</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Прогресс по блокам</h2>
+      <div class="card">
+        <div class="blockp"><span>Блок 1 · Знакомство с Богом</span><div class="progress"><div class="progress__fill" style="width:66%"></div></div><em>8 / 12</em></div>
+        <div class="blockp"><span>Блок 2 · Герои веры</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 12</em></div>
+        <div class="blockp"><span>Блок 3 · Жизнь Иисуса</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div><em>0 / 12</em></div>
+      </div>
+
+      <h2 class="section-title">Путешествие веры</h2>
+      <button class="card temple" id="openJourney" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="map" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Остановка 3 · «Египет» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Нажми, чтобы увидеть свой путь на карте</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Рейтинг недели</h2>
+      <button class="card temple" id="openRating" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">Ты на 2 месте · 340 XP <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Посмотри, как растут друзья по школе за эту неделю</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Мои сертификаты</h2>
+      <button class="card temple" id="openCerts" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="award" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">1 из 4 получен · Блок 1 завершён <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Именные сертификаты за блоки и за год — можно скачать</div>
+        </div>
+      </button>
+
+      <h2 class="section-title">Магазин за баллы</h2>
+      <button class="card temple" id="openShop" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на мерч <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Копи XP за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
+        </div>
+      </button>
+    </section>
+
+
+    <!-- ── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ── -->
+    <section class="screen" data-screen="chatview">
+      <div class="cv-head">
+        <button class="cv-head__back" id="cvBack"><span data-icon="back" data-size="20"></span></button>
+        <div class="cv-head__avatar" id="cvAvatar"></div>
+        <div class="cv-head__info">
+          <div class="cv-head__name" id="cvName"></div>
+          <div class="cv-head__status" id="cvStatus"></div>
+        </div>
+        <button class="cv-head__search" id="cvSearchBtn" aria-label="Поиск по сообщениям"><span data-icon="search" data-size="19"></span></button>
+      </div>
+      <div class="cv-search" id="cvSearchBar" hidden>
+        <input type="search" id="cvSearchField" placeholder="Поиск по сообщениям...">
+        <span id="cvSearchCount"></span>
+      </div>
+      <div class="cv-pinned" id="cvPinned" hidden><span data-icon="pin" data-size="13"></span><span id="cvPinnedText"></span></div>
+      <div class="cv-msgs" id="cvMsgs"></div>
+      <div class="cv-stickers" id="cvStickers" hidden></div>
+      <div class="cv-record" id="cvRecord" hidden>
+        <span class="cv-record__dot"></span>
+        <span id="cvRecTime">0:00</span>
+        <span class="cv-record__hint" id="cvRecHint">отпусти, чтобы отправить</span>
+        <button id="cvRecCancel">Отмена</button>
+      </div>
+      <div class="cv-input" id="cvInputRow">
+        <button class="cv-input__btn" id="cvStickerBtn" aria-label="Стикеры"><span data-icon="sparkle" data-size="22"></span></button>
+        <button class="cv-input__btn" id="cvAttachBtn" aria-label="Вложения"><span data-icon="attach" data-size="21"></span></button>
+        <input type="text" id="cvField" placeholder="Сообщение..." maxlength="4096">
+        <button class="cv-input__send" id="cvSend" aria-label="Отправить" hidden><span data-icon="send" data-size="20"></span></button>
+        <button class="cv-input__send cv-input__voice" id="cvVoice" aria-label="Голосовое"><span id="cvVoiceIcon" data-icon="mic" data-size="20"></span></button>
+      </div>
+      <input type="file" id="cvPhotoInput" accept="image/*" hidden>
+      <input type="file" id="cvFileInput" hidden>
+      <div class="cv-readonly" id="cvReadonly" hidden>Это канал педагога: писать может только Екатерина, отвечать можно в комментариях</div>
+    </section>
+
+
+    <!-- ── ЭКРАН УРОКА (этап 4, начало) ── -->
+    <section class="screen" data-screen="lesson">
+      <button class="child-back" id="lessonBack"><span data-icon="back" data-size="18"></span> Все уроки</button>
+      <div class="feed-card__cover feed-card__cover--img lesson-cover">
+        <img src="assets/img/covers/lesson-1.jpg" alt="">
+      </div>
+      <h1 class="screen-title" style="margin-top:14px">Урок 1. Кто такой Бог?</h1>
+      <div class="feed-card__meta">Блок 1 «Знакомство с Богом» · 32 мин · для всех возрастов</div>
+
+      <div class="lesson-steps" id="lessonSteps">
+        <div class="lstep" data-step="watch"><i></i>Просмотрено</div>
+        <div class="lstep" data-step="test"><i></i>Тест</div>
+        <div class="lstep" data-step="hw"><i></i>ДЗ</div>
+      </div>
+
+      <div class="card video-stub" id="videoStub">
+        <span data-icon="play" data-size="34"></span>
+        <div><b>Видеоурок</b><br><small>Появится здесь после записи первых уроков (июль). Пока можно пройти материалы и тест.</small></div>
+      </div>
+
+      <h2 class="section-title">Детский пересказ</h2>
+      <div class="card lesson-text">
+        <p>Бог — это Тот, Кто создал всё: небо, землю, море, животных и каждого из нас. Его нельзя увидеть глазами, но можно узнать по Его делам — как ветер: мы его не видим, но чувствуем.</p>
+        <p>Самое главное: Бог нас любит. Каждого. Всегда. Он рядом, когда нам весело и когда грустно. С Ним можно разговаривать — это называется молитва.</p>
+      </div>
+
+      <h2 class="section-title">Цитата из Писания</h2>
+      <article class="card feed-card feed-card--quote">
+        <div class="feed-card__title">«Бог есть любовь, и пребывающий в любви пребывает в Боге»</div>
+        <div class="quote-ref">1 Ин. 4:16</div>
+      </article>
+
+      <h2 class="section-title">Проверь себя</h2>
+      <div class="card" id="lessonTest">
+        <div class="q" data-q="0">
+          <div class="q__text">1. Кто создал небо, землю и человека?</div>
+          <label class="q__opt"><input type="radio" name="q0" value="0"> Природа</label>
+          <label class="q__opt"><input type="radio" name="q0" value="1"> Бог</label>
+          <label class="q__opt"><input type="radio" name="q0" value="2"> Люди</label>
+        </div>
+        <div class="q" data-q="1">
+          <div class="q__text">2. Как называется разговор с Богом?</div>
+          <label class="q__opt"><input type="radio" name="q1" value="0"> Молитва</label>
+          <label class="q__opt"><input type="radio" name="q1" value="1"> Песня</label>
+          <label class="q__opt"><input type="radio" name="q1" value="2"> Урок</label>
+        </div>
+        <div class="q" data-q="2">
+          <div class="q__text">3. Правда ли, что Бог любит каждого человека?</div>
+          <label class="q__opt"><input type="radio" name="q2" value="0"> Правда</label>
+          <label class="q__opt"><input type="radio" name="q2" value="1"> Неправда</label>
+        </div>
+        <button class="btn btn--primary" id="testCheck" style="width:100%">Проверить ответы</button>
+        <div class="test-result" id="testResult" hidden></div>
+      </div>
+
+      <h2 class="section-title">Домашнее задание</h2>
+      <div class="card lesson-text">
+        <p>Нарисуй вместе с родителями то, что Бог создал и что тебе нравится больше всего. Сфотографируй рисунок и отправь Екатерине.</p>
+        <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Загрузить фото рисунка</button>
+      </div>
+
+      <button class="btn btn--primary lesson-done" id="lessonDone" disabled>Отметить урок пройденным</button>
+    </section>
+
+
+    <!-- ── МИНИ-ИГРА «СОБЕРИ СТИХ» (этап 5) ── -->
+    <section class="screen" data-screen="verse">
+      <button class="child-back" id="verseBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Собери стих</div>
+        <div class="verse-head__meta"><span id="verseLevelName">Лёгкий</span> · <span data-icon="clock" data-size="13"></span> <span id="verseTimer">0:00</span></div>
+      </div>
+      <div class="verse-ref" id="verseRef"></div>
+      <div class="verse-target" id="verseTarget"></div>
+      <div class="verse-bank" id="verseBank"></div>
+      <div class="verse-actions">
+        <button class="btn btn--outline" id="verseReset" style="width:auto">Сбросить</button>
+        <button class="btn btn--primary" id="verseCheck" style="width:auto">Проверить</button>
+      </div>
+      <div class="verse-levels" id="verseLevels"></div>
+    </section>
+
+
+    <!-- ── МОЙ ХРАМ: растущий SVG (этап 5 / геймификация) ── -->
+    <section class="screen" data-screen="temple">
+      <button class="child-back" id="templeBack"><span data-icon="back" data-size="18"></span> Профиль ребёнка</button>
+      <h1 class="screen-title" style="margin-bottom:6px">Мой храм</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">Каждый урок, тест и игра добавляют кирпичик. Построй храм целиком — получи значок «Архитектор веры».</p>
+
+      <div class="temple-stage-wrap">
+        <svg id="templeSvg" viewBox="0 0 320 300" class="temple-svg" aria-label="Мой храм">
+          <defs>
+            <radialGradient id="tGlow" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="rgba(212,165,116,.55)"/>
+              <stop offset="100%" stop-color="rgba(212,165,116,0)"/>
+            </radialGradient>
+          </defs>
+          <circle class="t-radiance" cx="160" cy="140" r="150" fill="url(#tGlow)" opacity="0"/>
+          <!-- 0 участок -->
+          <ellipse class="t-part" data-stage="1" cx="160" cy="278" rx="120" ry="16" fill="#E8E0D2"/>
+          <!-- 1 фундамент -->
+          <rect class="t-part" data-stage="2" x="82" y="250" width="156" height="26" rx="3" fill="#5A6577"/>
+          <!-- 2 стены -->
+          <rect class="t-part" data-stage="3" x="96" y="150" width="128" height="102" fill="#26506E"/>
+          <!-- 3 окна -->
+          <g class="t-part" data-stage="4" fill="#FAF8F5">
+            <rect x="112" y="176" width="20" height="34" rx="10"/>
+            <rect x="188" y="176" width="20" height="34" rx="10"/>
+          </g>
+          <!-- 4 крыша/барабан -->
+          <path class="t-part" data-stage="5" d="M96 150 L160 104 L224 150 Z" fill="#1A3A52"/>
+          <rect class="t-part" data-stage="5" x="146" y="86" width="28" height="30" fill="#26506E"/>
+          <!-- 5 купол (золото) -->
+          <path class="t-part" data-stage="6" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="#D4A574"/>
+          <!-- 6 крест -->
+          <g class="t-part" data-stage="7" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
+            <path d="M160 60 V34"/><path d="M150 44 H170"/>
+          </g>
+          <!-- 7 золочение (свечение куполу) -->
+          <path class="t-part t-gild" data-stage="8" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="none" stroke="#F0D9B0" stroke-width="2"/>
+          <!-- 8 колокольня -->
+          <g class="t-part" data-stage="9" fill="#26506E">
+            <rect x="52" y="196" width="34" height="56"/>
+            <path d="M52 196 L69 172 L86 196 Z" fill="#1A3A52"/>
+            <circle cx="69" cy="214" r="7" fill="#D4A574"/>
+          </g>
+          <!-- 9 двери -->
+          <path class="t-part" data-stage="10" d="M144 252 v-40 a16 16 0 0 1 32 0 v40 Z" fill="#8A5A3C"/>
+          <!-- 10 роспись/детали -->
+          <g class="t-part" data-stage="11" stroke="#D4A574" stroke-width="2" fill="none">
+            <path d="M96 150 h128"/><circle cx="160" cy="230" r="6"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="temple-progress">
+        <div class="temple-progress__label"><span id="templeStageName">Этап 3 из 10 · «Стены»</span></div>
+        <div class="progress"><div class="progress__fill" id="templeBar" style="width:34%"></div></div>
+        <div class="feed-card__meta" id="templeBricks" style="margin-top:6px">34 кирпичика из 100</div>
+      </div>
+
+      <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик (демо)</button>
+    </section>
+
+
+    <!-- ── ПУТЕШЕСТВИЕ ВЕРЫ: карта прогресса (этап 5) ── -->
+    <section class="screen" data-screen="journey">
+      <button class="child-back" id="journeyBack"><span data-icon="back" data-size="18"></span> Профиль ребёнка</button>
+      <h1 class="screen-title" style="margin-bottom:6px">Путешествие веры</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">Каждый пройденный блок ведёт по библейскому пути. Смотри, как далеко ты уже прошёл!</p>
+      <div class="journey-wrap">
+        <svg id="journeySvg" viewBox="0 0 320 560" class="journey-svg" aria-label="Карта пути веры">
+          <path id="jPath" d="M50 40 C 250 70, 40 130, 150 170 S 300 240, 200 290 S 40 360, 160 410 S 300 470, 150 520"
+            fill="none" stroke="rgba(212,165,116,.45)" stroke-width="5" stroke-dasharray="2 12" stroke-linecap="round"/>
+          <path id="jPathDone" d="M50 40 C 250 70, 40 130, 150 170 S 300 240, 200 290 S 40 360, 160 410 S 300 470, 150 520"
+            fill="none" stroke="var(--terracotta)" stroke-width="5" stroke-linecap="round"/>
+          <g id="jStops"></g>
+          <g id="jAvatar">
+            <defs><clipPath id="jClip"><circle r="17"/></clipPath></defs>
+            <circle r="20" fill="#fff" stroke="var(--gold)" stroke-width="3"/>
+            <image id="jAvatarImg" href="assets/img/avatars/lion.jpg" x="-17" y="-17" width="34" height="34" clip-path="url(#jClip)"/>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+
+    <!-- ── КНИГА МЕТАНОЙЯ: оглавление ── -->
+    <section class="screen" data-screen="book">
+      <button class="child-back" id="bookBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <div class="book-cover book-cover--img">
+        <img class="book-cover__bg" src="assets/img/book-cover.jpg" alt="">
+        <div class="book-cover__scrim"></div>
+        <div class="book-cover__inner">
+          <div class="book-cover__eyebrow">Христианская школа для детей</div>
+          <div class="book-cover__title">МЕТАНОЙЯ</div>
+          <div class="book-cover__sub">Книга уроков веры</div>
+          <div class="book-cover__author">Екатерина Павленко</div>
+        </div>
+      </div>
+      <p class="feed-card__meta" style="margin:16px 0 10px">Каждый урок становится главой книги. За год — целая авторская книга, которую можно читать всей семьёй.</p>
+      <div id="bookToc"></div>
+    </section>
+
+    <!-- ── КНИГА: читалка главы ── -->
+    <section class="screen" data-screen="reader">
+      <div class="reader-bar">
+        <button class="cv-head__back" id="readerBack"><span data-icon="back" data-size="20"></span></button>
+        <div class="reader-bar__title" id="readerTitle"></div>
+        <button class="reader-bar__size" id="readerSize" aria-label="Размер шрифта">A<sup>+</sup></button>
+      </div>
+      <article class="reader" id="readerBody"></article>
+    </section>
+
+
+    <!-- ── ХАБ ИГР: все 20 (этап 5) ── -->
+    <section class="screen" data-screen="games">
+      <button class="child-back" id="gamesBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <h1 class="screen-title" style="margin-bottom:4px">Мини-игры</h1>
+      <p class="feed-card__meta" style="margin-bottom:14px">20 игр с библейской тематикой. Учись играя — за каждую игру начисляется XP.</p>
+      <div class="ghub-tabs">
+        <button class="ghub-tab ghub-tab--on" data-gcat="free">Бесплатные</button>
+        <button class="ghub-tab" data-gcat="premium">Метанойя+</button>
+        <button class="ghub-tab" data-gcat="daily">Ежедневные</button>
+      </div>
+      <div class="ghub" id="ghub"></div>
+    </section>
+
+    <!-- ── ИГРА: БИБЛЕЙСКОЕ МЕМОРИ ── -->
+    <section class="screen" data-screen="memory">
+      <button class="child-back" id="memBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Библейское мемори</div>
+        <div class="verse-head__meta">Найди все пары · ходов: <span id="memMoves">0</span></div>
+      </div>
+      <div class="mem-grid" id="memGrid"></div>
+    </section>
+
+    <!-- ── ИГРА: ВИКТОРИНА ── -->
+    <section class="screen" data-screen="quiz">
+      <button class="child-back" id="quizBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Викторина на скорость</div>
+        <div class="verse-head__meta">Вопрос <span id="quizNum">1</span> из 5 · очки: <span id="quizScore">0</span></div>
+      </div>
+      <div class="quiz-timer"><div class="quiz-timer__bar" id="quizBar"></div></div>
+      <div class="quiz-q" id="quizQ"></div>
+      <div class="quiz-opts" id="quizOpts"></div>
+    </section>
+
+    <!-- ── КТО ЭТО? (этап 5) ── -->
+    <section class="screen" data-screen="who">
+      <button class="child-back" id="whoBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Кто это?</div>
+        <div class="verse-head__meta">Герой <span id="whoNum">1</span> из 5 · очки: <span id="whoScore">0</span></div>
+      </div>
+      <div class="who-clues" id="whoClues"></div>
+      <button class="btn btn--outline who-more" id="whoMore">Ещё подсказка (−5 очков)</button>
+      <div class="who-opts" id="whoOpts"></div>
+    </section>
+
+    <!-- ── ХРОНОЛОГИЯ (этап 5) ── -->
+    <section class="screen" data-screen="chrono">
+      <button class="child-back" id="chronoBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Хронология</div>
+        <div class="verse-head__meta">Расставь события по порядку — от раннего к позднему</div>
+      </div>
+      <div class="chrono-list" id="chronoList"></div>
+      <button class="btn btn--primary chrono-check" id="chronoCheck">Проверить порядок</button>
+      <div class="chrono-result" id="chronoResult"></div>
+    </section>
+
+    <!-- ── ЗАДАТЬ ВОПРОС · AI-помощник (УЛ5) ── -->
+    <section class="screen" data-screen="ask">
+      <div class="ask-top">
+        <button class="child-back" id="askBack" style="margin:0"><span data-icon="back" data-size="18"></span> Назад</button>
+        <div class="ask-top__who"><span data-icon="sparkle" data-size="14"></span> Помощник Метанойя</div>
+      </div>
+      <div class="ask-thread" id="askThread"></div>
+      <div class="ask-suggest" id="askSuggest"></div>
+      <form class="ask-input" id="askForm" autocomplete="off">
+        <input id="askField" type="text" placeholder="Напиши свой вопрос…" maxlength="200">
+        <button type="submit" class="ask-send" aria-label="Отправить"><span data-icon="send" data-size="18"></span></button>
+      </form>
+    </section>
+
+    <!-- ── ГОДОВОЙ АЛЬБОМ (УЛ7) ── -->
+    <section class="screen" data-screen="album">
+      <div class="alb-top">
+        <button class="child-back" id="albumBack" style="margin:0"><span data-icon="back" data-size="18"></span> Профиль</button>
+        <button class="alb-dl" id="albumDl"><span data-icon="download" data-size="16"></span> Скачать</button>
+      </div>
+      <div class="alb-pages" id="albumPages"></div>
+      <div class="alb-note">В конце учебного года альбом собирается автоматически. Сейчас — предпросмотр по текущему прогрессу.</div>
+    </section>
+
+    <!-- ── СЕМЕЙНЫЙ КВЕСТ (УЛ3) ── -->
+    <section class="screen" data-screen="quest">
+      <button class="child-back" id="questBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <div class="fq-head">
+        <div class="fq-head__badge" id="fqBadge"><span data-icon="users" data-size="30"></span></div>
+        <div class="fq-head__title" id="fqTitle">Квест недели</div>
+        <div class="fq-head__sub" id="fqSub"></div>
+        <div class="fq-bar"><div class="fq-bar__fill" id="fqBar"></div></div>
+        <div class="fq-count" id="fqCount"></div>
+      </div>
+      <div class="fq-tasks" id="fqTasks"></div>
+      <div class="fq-note">Отмечайте выполненное вместе с детьми. Когда все дела сделаны — вся семья получает общий значок недели 🕊</div>
+    </section>
+
+    <!-- ── МАГАЗИН ЗА БАЛЛЫ (идея Екатерины) ── -->
+    <section class="screen" data-screen="shop">
+      <button class="child-back" id="shopBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="shop-head">
+        <div class="shop-head__label">У тебя баллов</div>
+        <div class="shop-head__xp"><span data-icon="flame" data-size="22"></span> <span id="shopXp">340</span> XP</div>
+        <div class="shop-head__note">Копи баллы за уроки, тесты и игры — и обменивай на настоящий мерч школы Метанойя</div>
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+      <div class="sub-note">Это предзаказ за баллы. После обмена мы свяжемся с родителем, чтобы передать мерч.</div>
+    </section>
+
+    <!-- ── РЕЙТИНГ НЕДЕЛИ (этап 5) ── -->
+    <section class="screen" data-screen="rating">
+      <button class="child-back" id="ratingBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="rating-head">
+        <div class="rating-head__title">Рейтинг недели</div>
+        <div class="rating-head__meta">Обновляется каждый понедельник · собирай XP в играх и уроках</div>
+      </div>
+      <div class="rating-podium" id="ratingPodium"></div>
+      <div class="rating-list" id="ratingList"></div>
+      <div class="rating-note">Рейтинг мотивирует, но не соревнование ради победы — каждый растёт в своём темпе 🌱</div>
+    </section>
+
+    <!-- ── МЕТАНОЙЯ+ ПОДПИСКА (этап 5) ── -->
+    <section class="screen" data-screen="subscribe">
+      <button class="child-back" id="subBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown"><span data-icon="crown" data-size="40"></span></div>
+        <div class="sub-hero__title">Метанойя+</div>
+        <div class="sub-hero__sub">Уроки школы бесплатны для всех. Метанойя+ — это дополнительные игры, материалы для практики и рабочая тетрадь</div>
+      </div>
+      <div class="sub-benefits" id="subBenefits"></div>
+      <h2 class="section-title">Выберите тариф</h2>
+      <div class="sub-plans" id="subPlans"></div>
+      <button class="btn btn--primary sub-cta" id="subCta">Оформить Метанойя+</button>
+      <div class="sub-note">Школа и все уроки — бесплатны. Метанойя+ — дополнительные возможности · отмена в любой момент</div>
+    </section>
+
+    <!-- ── СТАТЬ ПАРТНЁРОМ ── -->
+    <section class="screen" data-screen="partner">
+      <button class="child-back" id="partnerBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown" style="background:linear-gradient(150deg,#7AAED4,#1A3A52)"><span data-icon="dove" data-size="40"></span></div>
+        <div class="sub-hero__title">Стать партнёром</div>
+        <div class="sub-hero__sub">Поддержите христианское воспитание детей — регулярно, по силам. Вместе мы делаем школу доступной для каждой семьи.</div>
+      </div>
+      <div class="sub-benefits" id="partnerBenefits"></div>
+      <h2 class="section-title">Выберите вклад в месяц</h2>
+      <div class="sub-plans" id="partnerPlans"></div>
+      <button class="btn btn--primary sub-cta" id="partnerCta">Стать партнёром</button>
+      <div class="sub-note">Имя партнёра — на «Стене благодарности» школы (по желанию). Отмена в любой момент.</div>
+    </section>
+
+    <!-- ── ПОДДЕРЖАТЬ ШКОЛУ (пожертвование) ── -->
+    <section class="screen" data-screen="donate">
+      <button class="child-back" id="donateBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="sub-hero">
+        <div class="sub-hero__crown" style="background:linear-gradient(150deg,#E6C079,#C97064)"><span data-icon="heart" data-size="40"></span></div>
+        <div class="sub-hero__title">Поддержать школу</div>
+        <div class="sub-hero__sub">Любая сумма помогает нам создавать уроки, игры и добрый контент для детей. Спасибо, что вы рядом 🕊</div>
+      </div>
+      <h2 class="section-title">Выберите сумму</h2>
+      <div class="donate-grid" id="donateGrid"></div>
+      <input class="addk__input donate-custom" id="donateCustom" type="number" inputmode="numeric" placeholder="Своя сумма, ₽">
+      <button class="btn btn--primary sub-cta" id="donateCta">Поддержать с любовью</button>
+      <div class="sub-note">Разовое пожертвование. По желанию имя появится на «Стене благодарности».</div>
+    </section>
+
+    <!-- ── НАСТРОЙКИ (этап 5) ── -->
+    <section class="screen" data-screen="settings">
+      <button class="child-back" id="setBack"><span data-icon="back" data-size="18"></span> Профиль</button>
+      <h1 class="screen-title" style="margin-bottom:14px">Настройки</h1>
+      <div class="set-card" id="setAppearance"></div>
+      <h2 class="section-title">Уведомления</h2>
+      <div class="set-card" id="setNotify"></div>
+      <h2 class="section-title">Родительский контроль</h2>
+      <div class="set-card" id="setParental"></div>
+      <div class="set-about">МЕТАНОЙА · версия 0.5 · сборка OKO TEAM<br>С заботой о духовном росте детей 🕊</div>
+    </section>
+
+    <!-- ── СЕРТИФИКАТЫ (этап 5) ── -->
+    <section class="screen" data-screen="certificates">
+      <button class="child-back" id="certsBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div class="rating-head">
+        <div class="rating-head__title">Мои сертификаты</div>
+        <div class="rating-head__meta">Завершай блоки — открывай именные сертификаты школы</div>
+      </div>
+      <div class="cert-grid" id="certGrid"></div>
+    </section>
+
+  </main>
+
+  <!-- Превью заблокированной игры -->
+  <div class="gpv" id="gamePreview" hidden>
+    <div class="gpv__card">
+      <button class="gpv__close" id="gpvClose"><span data-icon="close" data-size="18"></span></button>
+      <div class="gpv__icon" id="gpvIcon"></div>
+      <div class="gpv__badge" id="gpvBadge"></div>
+      <div class="gpv__name" id="gpvName"></div>
+      <div class="gpv__desc" id="gpvDesc"></div>
+      <ul class="gpv__list" id="gpvList"></ul>
+      <button class="btn btn--primary gpv__cta" id="gpvCta"></button>
+      <button class="gpv__wish" id="gpvWish" hidden><span data-icon="heart" data-size="15"></span> Попросить у родителей</button>
+      <div class="gpv__note" id="gpvNote"></div>
+    </div>
+  </div>
+
+  <!-- Добавить ребёнка -->
+  <div class="addk" id="addChild" hidden>
+    <div class="addk__card">
+      <button class="addk__close" id="addkClose"><span data-icon="close" data-size="18"></span></button>
+      <div class="addk__title">Добавить ребёнка</div>
+      <label class="addk__lbl">Имя ребёнка</label>
+      <input class="addk__input" id="addkName" type="text" placeholder="Например, Соня" maxlength="20">
+      <label class="addk__lbl">Возраст</label>
+      <div class="addk__age">
+        <button type="button" class="addk__age-btn" id="addkMinus">−</button>
+        <span id="addkAge">7</span>
+        <button type="button" class="addk__age-btn" id="addkPlus">+</button>
+        <span class="addk__age-note">лет</span>
+      </div>
+      <label class="addk__lbl">Выбери аватар</label>
+      <div class="addk__avatars" id="addkAvatars"></div>
+      <button class="btn btn--primary addk__save" id="addkSave">Добавить ребёнка</button>
+    </div>
+  </div>
+
+  <!-- Ежедневный стих (ритуал дня) -->
+  <div class="dverse" id="dailyVerse" hidden>
+    <div class="dverse__card">
+      <button class="dverse__close" id="dverseClose"><span data-icon="close" data-size="18"></span></button>
+      <img class="dverse__img" src="assets/img/verse-day.jpg" alt="">
+      <div class="dverse__eyebrow"><span data-icon="sparkle" data-size="14"></span> <span id="dverseDate">Стих дня</span></div>
+      <div class="dverse__text" id="dverseText"></div>
+      <div class="dverse__ref" id="dverseRef"></div>
+      <div class="dverse__note" id="dverseNote"></div>
+      <button class="btn btn--primary dverse__claim" id="dverseClaim">Прочитал(а) · получить +5 XP</button>
+      <div class="dverse__streak" id="dverseStreak"></div>
+    </div>
+  </div>
+
+  <!-- Просмотр сертификата -->
+  <div class="cert-view" id="certView" hidden>
+    <div class="cert-view__bar">
+      <button class="cert-view__close" id="certClose"><span data-icon="close" data-size="20"></span></button>
+      <button class="cert-view__dl" id="certDl"><span data-icon="download" data-size="17"></span> Скачать</button>
+    </div>
+    <div class="cert-view__stage" id="certStage"></div>
+  </div>
+
+  <!-- ═══════════ НИЖНЯЯ НАВИГАЦИЯ (5 ТАБОВ) ═══════════ -->
+  <nav class="nav" id="nav">
+    <button class="nav__tab nav__tab--active" data-tab="home" aria-label="Главная">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+      <span>Главная</span>
+    </button>
+    <button class="nav__tab" data-tab="search" aria-label="Поиск">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Поиск</span>
+    </button>
+    <button class="nav__tab" data-tab="chats" aria-label="Чаты">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span>Чаты</span>
+      <span class="badge badge--nav" id="chatsBadge">5</span>
+    </button>
+    <button class="nav__tab" data-tab="lessons" aria-label="Уроки">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <span>Уроки</span>
+    </button>
+    <button class="nav__tab" data-tab="profile" aria-label="Профиль">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Профиль</span>
+    </button>
+  </nav>
+
+  <!-- Индикатор автономного режима (УЛ6) -->
+  <div class="offbar" id="offlineBar" hidden>
+    <span data-icon="dove" data-size="16"></span>
+    <span>Нет сети — Метанойя рядом. Уроки, книга и игры работают в автономном режиме.</span>
+  </div>
+
+  <!-- Тост для заглушек -->
+  <div class="toast" id="toast"></div>
+
+  <script src="assets/js/icons.js"></script>
+  <script src="assets/js/magic.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

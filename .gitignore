@@ -15,6 +15,7 @@ vtouch.cjs
 _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
+metanoia-app/config/.env
 
 # ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env

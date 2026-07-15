@@ -1,0 +1,82 @@
+/* ══════════════════════════════════════════════════════════════
+   МЕТАНОЙЯ · icons.js · фирменный SVG-набор (раздел 4.6 ТЗ)
+   Line-icons, stroke 1.8, скруглённые концы. Вместо эмодзи.
+   Использование: ICON('flame', 20) → строка <svg>
+   ══════════════════════════════════════════════════════════════ */
+
+'use strict';
+
+const ICON_PATHS = {
+  /* базовые действия */
+  heart:   '<path d="M19.5 13.6 12 21l-7.5-7.4A5.2 5.2 0 1 1 12 6.6a5.2 5.2 0 1 1 7.5 7Z"/>',
+  comment: '<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5Z"/>',
+  share:   '<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
+  plus:    '<path d="M12 5v14M5 12h14"/>',
+  play:    '<path d="M7 4.5 19 12 7 19.5Z"/>',
+  search:  '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  check:   '<path d="m4 12.5 5 5L20 6.5"/>',
+
+  /* виджет «Сегодня» */
+  flame:   '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5-1.6-1.3-2.7-2.8-3.2-4.9-.2-.9-1.4-1.2-1.9-.4C9.6 6.2 9 8 9 9.5 7.6 9 7 7.9 7 6.6c0-.6-.8-1-1.2-.5C4.6 7.6 4 9.5 4 11.4A7.6 7.6 0 0 0 12 22Z"/>',
+  clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+  book:    '<path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2Z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7Z"/>',
+  sparkle: '<path d="M12 3l1.9 5.6L20 10.5l-6.1 1.9L12 18l-1.9-5.6L4 10.5l6.1-1.9Z"/>',
+
+  /* stories и чаты */
+  dove:    '<path d="M20.5 5.5c-3.2.3-5.2 1.5-6.6 3.6L9.5 15l-5.5 2 3.2 1.1L8.3 21l2.2-5.2 4.6-4.4c1.6-1.5 4-1.9 5.4-5.9Z"/><path d="M13.5 6.5C13 4.8 11.8 3.6 10 3c.8 1.6.9 3 .4 4.6"/>',
+  users:   '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/>',
+  gamepad: '<path d="M6 11h4M8 9v4"/><path d="M15.5 12h.01M18.5 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6C2.6 9.4 2 14.5 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.4-1.4a2 2 0 0 1 1.4-.6h4.4a2 2 0 0 1 1.4.6L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.5-.6-6.6-.7-7.4A4 4 0 0 0 17.3 5Z"/>',
+  headset: '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3Z"/>',
+  megaphone:'<path d="m3 11 18-6v14L3 13z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  pin:     '<path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.7l-1.8-.9A2 2 0 0 1 15 10.8V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1Z"/>',
+  mute:    '<path d="M11 5 6 9H2v6h4l5 4Z"/><path d="m23 9-6 6M17 9l6 6"/>',
+
+  /* уроки, награды */
+  lock:    '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  star:    '<path d="m12 2.5 2.9 5.9 6.6 1-4.7 4.6 1.1 6.5L12 17.4l-5.9 3.1 1.1-6.5-4.7-4.6 6.6-1Z"/>',
+  trophy:  '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 15v2c0 .6-.5 1-1 1.2-1.2.6-2 2-2 3.8"/><path d="M14 15v2c0 .6.5 1 1 1.2 1.2.6 2 2 2 3.8"/><path d="M18 2H6v7a6 6 0 0 0 12 0Z"/>',
+  cross:   '<path d="M12 3v18"/><path d="M6.5 8.5h11"/>',
+  video:   '<path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/>',
+
+  /* профиль и настройки */
+  gear:    '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>',
+  bell:    '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
+  shield:  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>',
+  logout:  '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  church:  '<path d="M12 2v5"/><path d="M9.5 4.5h5"/><path d="M6 21v-8l6-4 6 4v8"/><path d="M2 21h20"/><path d="M10 21v-4a2 2 0 0 1 4 0v4"/>',
+  map:     '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/>',
+  back:    '<path d="m15 18-6-6 6-6"/>',
+  close:   '<path d="M18 6 6 18M6 6l12 12"/>',
+  send:    '<path d="m3 3 18 9-18 9 4-9Z"/><path d="M7 12h8"/>',
+  mic:     '<rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3.5"/>',
+  circle:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/>',
+  image:   '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/>',
+  file:    '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
+  poll:    '<path d="M6 20V10M12 20V4M18 20v-6"/>',
+  attach:  '<path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  seed:    '<path d="M12 21v-6"/><ellipse cx="12" cy="10" rx="4" ry="6"/><path d="M12 21c-3 0-5-1.5-5-4M12 21c3 0 5-1.5 5-4"/>',
+  sprout:  '<path d="M12 21v-9"/><path d="M12 12c0-3-2-5-6-5 0 4 3 6 6 5Z"/><path d="M12 14c0-3 2-4 6-4 0 3-3 5-6 4Z"/>',
+  flower:  '<circle cx="12" cy="8" r="2.4"/><path d="M12 8c0-3 2-4 4-3 1 2-1 4-4 3ZM12 8c0-3-2-4-4-3-1 2 1 4 4 3ZM12 8c2 1 3 3 2 5-2 0-3-2-2-5ZM12 8c-2 1-3 3-2 5 2 0 3-2 2-5Z"/><path d="M12 12v9"/>',
+  tree:    '<path d="M12 22v-6"/><path d="M12 16a6 6 0 0 0 6-6 5 5 0 0 0-2-4 5 5 0 0 0-8 0 5 5 0 0 0-2 4 6 6 0 0 0 6 6Z"/>',
+  crown:   '<path d="M3 8l4 5 5-8 5 8 4-5-2 12H5Z"/><path d="M5 20h14"/>',
+  target:  '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  award:   '<circle cx="12" cy="8" r="5"/><path d="M8.2 12.5 7 22l5-3 5 3-1.2-9.5"/>',
+  download: '<path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/>',
+  menu:    '<path d="M4 8h16M4 16h16"/>',
+  'chevron-up':   '<path d="m6 15 6-6 6 6"/>',
+  'chevron-down': '<path d="m6 9 6 6 6-6"/>',
+  cup:     '<path d="M4 8h12v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M16 9h2.5a2.5 2.5 0 0 1 0 5H16"/><path d="M4 21h12"/>',
+  moon:    '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
+  sun:     '<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+};
+
+/**
+ * @param {string} name  ключ из ICON_PATHS
+ * @param {number} [size=20]  размер в px
+ * @param {string} [cls='']   доп. css-класс
+ */
+function ICON(name, size = 20, cls = '') {
+  const paths = ICON_PATHS[name];
+  if (!paths) return '';
+  return `<svg class="ic ${cls}" viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+}
