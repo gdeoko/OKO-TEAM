@@ -10,40 +10,57 @@
 <style>
   :root{--lime:#9AFF00;--bg:#0a0c0a;--ink:#f2f5ee}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
-  #app{position:fixed;inset:0}
-  canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+  html,body{height:100%;background:#0a0c0a;color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  /* background: the Spline scene from the reference */
+  #bg{position:fixed;inset:0;z-index:0;background:radial-gradient(120% 90% at 60% 40%,#141814,#0a0c0a 70%,#050705)}
+  #bg spline-viewer{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* eye layer: neon, screen-blended over the background */
+  #app{position:fixed;inset:0;z-index:1;mix-blend-mode:screen;pointer-events:none}
+  #app canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
   .ui{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .ui a,.ui .nav span{pointer-events:auto}
   .brand{position:absolute;top:24px;left:28px;display:flex;align-items:center;gap:12px}
   .brand .mark{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.14em;color:#fff;line-height:1}
   .brand .mark b{color:var(--lime)}
   .nav{position:absolute;top:26px;right:28px;display:flex;gap:26px;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#8a938a}
+  .nav span{cursor:pointer;transition:color .2s}.nav span:hover{color:#fff}
   @media(max-width:720px){.nav{display:none}}
   .hero{position:absolute;left:0;right:0;bottom:0;padding:0 28px 44px;max-width:760px}
-  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,11vw,120px);line-height:.92;letter-spacing:.01em;color:#fff}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,11vw,120px);line-height:.92;letter-spacing:.01em;color:#fff;text-shadow:0 4px 40px rgba(0,0,0,.6)}
   .hero h1 span{color:var(--lime)}
   .hero .sub{margin-top:10px;font-size:clamp(15px,2.4vw,22px);font-weight:300;color:#d7ddd2;max-width:34ch}
-  .hero .desc{margin-top:14px;font-size:clamp(13px,1.6vw,15.5px);font-weight:300;color:#98a098;max-width:52ch;line-height:1.6}
-  .hint{position:absolute;left:28px;bottom:18px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#5f685f;opacity:.0;transition:opacity .6s}
-  .chip{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#5f685f;border:1px solid #23271f;padding:4px 10px;border-radius:999px}
+  .hero .desc{margin-top:14px;font-size:clamp(13px,1.6vw,15.5px);font-weight:300;color:#aab0a8;max-width:52ch;line-height:1.6}
+  .hint{position:absolute;left:28px;bottom:18px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#6a736a;opacity:0;transition:opacity .6s}
+  .chip{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#6a736a;border:1px solid #23271f;padding:4px 10px;border-radius:999px;background:rgba(8,10,8,.4)}
   .fade{opacity:0;transform:translateY(16px);animation:up .9s cubic-bezier(.16,1,.3,1) forwards}
   .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}
   @keyframes up{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+<!-- BACKGROUND: exact Spline scene from the reference -->
+<div id="bg">
+  <spline-viewer url="https://prod.spline.design/Slk6b8kz3LRlKiyk/scene.splinecode" loading-anim-type="none"></spline-viewer>
+</div>
+
+<!-- EYE LAYER (neon, screen-blended) -->
 <div id="app"></div>
+
+<!-- UI -->
 <div class="ui">
   <div class="brand fade"><span class="mark">ОКО<b>.</b></span></div>
   <div class="nav fade d1"><span>Возможности</span><span>Мини-аппы</span><span>Безопасность</span><span>О нас</span></div>
-  <div class="chip">сборка v0.1</div>
+  <div class="chip">сборка v0.2</div>
   <div class="hero">
     <h1 class="fade d1">ВИДИМ<br>ВСЁ <span>ГЛАВНОЕ</span></h1>
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне. Наведи курсор — глаз следит за тобой.</p>
   </div>
-  <div class="hint" id="hint">Двигай курсор · нажми на фон</div>
+  <div class="hint" id="hint">Двигай курсор · глаз следит</div>
 </div>
+
+<!-- Spline web component (loads in a real browser) -->
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.48/build/spline-viewer.js"></script>
 
 <script type="importmap">
 { "imports": {
@@ -59,62 +76,24 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-const LIME = new THREE.Color(0x9AFF00);
 const app = document.getElementById('app');
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x000000, 1);            // opaque black -> dropped out by mix-blend:screen
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.05;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x070907, 0.045);
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 camera.position.set(0,0,8);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
-
-scene.add(new THREE.AmbientLight(0x334033, 0.5));
-const key = new THREE.DirectionalLight(0xbfe6ff, 0.8); key.position.set(4,6,6); scene.add(key);
-
-// ---------- background block wall ----------
-const WALL_Z = -7, COLS = 34, ROWS = 20, GAP = 1.06;
-const blockGeo = new THREE.BoxGeometry(1,1,1);
-const blockMat = new THREE.MeshStandardMaterial({color:0x0c0f0c, roughness:0.55, metalness:0.85, envMapIntensity:0.5});
-const NB = COLS*ROWS;
-const blocks = new THREE.InstancedMesh(blockGeo, blockMat, NB);
-const bPos = [];
-let bi=0;
-for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++){
-  const px=(x-(COLS-1)/2)*GAP, py=(y-(ROWS-1)/2)*GAP;
-  const depth = 0.4+Math.random()*1.4;
-  const d=new THREE.Object3D();
-  d.position.set(px,py,WALL_Z - depth/2 + Math.random()*0.3);
-  d.scale.set(GAP*0.94, GAP*0.94, depth);
-  d.updateMatrix(); blocks.setMatrixAt(bi,d.matrix); bPos.push(new THREE.Vector3(px,py,WALL_Z));
-  bi++;
-}
-scene.add(blocks);
-
-// green pointer light that grazes the wall
-const glowLight = new THREE.PointLight(0x9AFF00, 0, 14, 2); glowLight.position.set(0,0,WALL_Z+2.2); scene.add(glowLight);
-// soft glow sprite behind cursor
-const spriteTex = (()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
-  const rg=g.createRadialGradient(64,64,0,64,64,64);rg.addColorStop(0,'rgba(154,255,0,.9)');rg.addColorStop(1,'rgba(154,255,0,0)');
-  g.fillStyle=rg;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(c);})();
-const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({map:spriteTex, color:0x9AFF00, blending:THREE.AdditiveBlending, transparent:true, opacity:.0, depthWrite:false}));
-glowSprite.scale.set(6,6,1); glowSprite.position.set(0,0,WALL_Z+1.5); scene.add(glowSprite);
-
-// tap ripples
-const ripples=[];
-function spawnRipple(pos){
-  const g=new THREE.RingGeometry(0.15,0.28,48);
-  const m=new THREE.MeshBasicMaterial({color:0x9AFF00, transparent:true, opacity:.9, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false});
-  const r=new THREE.Mesh(g,m); r.position.copy(pos); r.position.z=WALL_Z+1.6; scene.add(r);
-  ripples.push({r, t:0});
-}
+scene.add(new THREE.AmbientLight(0x445544, 0.6));
+const key = new THREE.DirectionalLight(0xbfe6ff, 0.9); key.position.set(4,6,6); scene.add(key);
+const rim = new THREE.DirectionalLight(0x9AFF00, 0.5); rim.position.set(-4,-2,3); scene.add(rim);
 
 // ---------- OKO eye ----------
 let eye=null, eyeMat=null;
@@ -129,8 +108,8 @@ new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
   eye.traverse(n=>{ if(n.isMesh){
     const old=n.material;
     const m=new THREE.MeshPhysicalMaterial({
-      map:old.map||null, color:0x0c120c, roughness:0.28, metalness:0.2,
-      clearcoat:1.0, clearcoatRoughness:0.25, envMapIntensity:1.2,
+      map:old.map||null, color:0x0c120c, roughness:0.26, metalness:0.2,
+      clearcoat:1.0, clearcoatRoughness:0.22, envMapIntensity:1.2,
       emissive:0x9AFF00, emissiveMap:old.map||null, emissiveIntensity:0.95,
       iridescence:1.0, iridescenceIOR:1.35, iridescenceThicknessRange:[120,420],
       sheen:0.6, sheenColor:new THREE.Color(0x9AFF00)
@@ -145,69 +124,40 @@ new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
 // composer / bloom
 const composer=new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene,camera));
-const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.62, 0.6, 0.72);
+const bloom=new UnrealBloomPass(new THREE.Vector2(1,1), 0.7, 0.6, 0.6);
 composer.addPass(bloom);
 
-// pointer
-const pointer=new THREE.Vector2(0,0);      // -1..1
-const pointerWall=new THREE.Vector3();
-const ray=new THREE.Raycaster();
-const wallPlane=new THREE.Plane(new THREE.Vector3(0,0,1), -WALL_Z);
-function onMove(cx,cy){
-  const r=renderer.domElement.getBoundingClientRect();
-  pointer.x=((cx-r.left)/r.width)*2-1;
-  pointer.y=-((cy-r.top)/r.height)*2+1;
-  ray.setFromCamera(pointer,camera);
-  ray.ray.intersectPlane(wallPlane, pointerWall);
-}
-addEventListener('pointermove',e=>onMove(e.clientX,e.clientY),{passive:true});
-addEventListener('pointerdown',e=>{ onMove(e.clientX,e.clientY); spawnRipple(pointerWall.clone()); pulse=1; });
-window.__tap=()=>{ spawnRipple(pointerWall.clone()); pulse=1; }; // for QA
+// pointer (window-level so it works even though canvas is pointer-events:none)
+const pointer=new THREE.Vector2(0,0);
+addEventListener('pointermove',e=>{
+  pointer.x=(e.clientX/innerWidth)*2-1;
+  pointer.y=-(e.clientY/innerHeight)*2+1;
+},{passive:true});
 
 function resize(){
-  const w=app.clientWidth,h=app.clientHeight;
+  const w=innerWidth,h=innerHeight;
   renderer.setSize(w,h); composer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
 }
 addEventListener('resize',resize); resize();
 
-// blink timer
 let nextBlink=2.5, blinkT=-1;
-let pulse=0;
 const clock=new THREE.Clock();
 function frame(){
   const dt=clock.getDelta(), t=clock.getElapsedTime();
-
-  // pointer light follows wall point
-  glowLight.position.lerp(new THREE.Vector3(pointerWall.x,pointerWall.y,WALL_Z+2.2), 0.15);
-  glowLight.intensity += ((6+pulse*10) - glowLight.intensity)*0.1;
-  glowSprite.position.lerp(new THREE.Vector3(pointerWall.x,pointerWall.y,WALL_Z+1.5),0.15);
-  glowSprite.material.opacity += ((0.5+pulse*0.5)-glowSprite.material.opacity)*0.1;
-  pulse *= 0.92;
-
-  // ripples
-  for(let i=ripples.length-1;i>=0;i--){
-    const o=ripples[i]; o.t+=dt; const s=1+o.t*10; o.r.scale.set(s,s,s);
-    o.r.material.opacity=Math.max(0,0.9-o.t*1.3);
-    if(o.t>0.75){ scene.remove(o.r); o.r.geometry.dispose(); o.r.material.dispose(); ripples.splice(i,1); }
-  }
-
-  // eye idle + look-at pointer + iridescent breathing
   if(eye){
     eyeGroup.position.y = Math.sin(t*0.8)*0.06;
     const yaw = pointer.x*0.5, pit = -pointer.y*0.35;
     eyeGroup.rotation.y += (yaw-eyeGroup.rotation.y)*0.08;
     eyeGroup.rotation.x += (pit-eyeGroup.rotation.x)*0.08;
     if(eyeMat){
-      eyeMat.emissiveIntensity = 0.9 + Math.sin(t*1.6)*0.22 + pulse*0.5;
+      eyeMat.emissiveIntensity = 0.9 + Math.sin(t*1.6)*0.22;
       eyeMat.iridescenceThicknessRange = [120, 360+Math.sin(t*0.9)*120];
     }
-    // blink: quick vertical squash
     nextBlink-=dt;
     if(nextBlink<=0 && blinkT<0){ blinkT=0; nextBlink=2.5+Math.random()*3; }
     if(blinkT>=0){ blinkT+=dt*7; const k=Math.sin(blinkT); eyeGroup.scale.y = k<0?1:1-k*0.92; if(blinkT>Math.PI){blinkT=-1;eyeGroup.scale.y=1;} }
   }
-
   composer.render();
   requestAnimationFrame(frame);
 }
