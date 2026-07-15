@@ -233,6 +233,52 @@ const DRAW={
      X.beginPath();X.moveTo(x+24,y+24);X.lineTo(x+cellsz-24,y+cellsz-24);X.moveTo(x+cellsz-24,y+24);X.lineTo(x+24,y+cellsz-24);X.stroke();}
    X.globalAlpha=1;X.textAlign='left';
  },
+ // ---- breakthrough line chart: rises and punches through a ceiling ----
+ breakthrough(f,F,o){const a=env(f,F,12,12);const cw=880,ch=620,cx=(W-cw)/2,cy=(o.y||300);X.globalAlpha=a;
+   const draw=E.inOut(Math.min(1,(f-6)/(F*0.62)));
+   // ceiling line
+   const ceilY=cy+ch*0.32;X.setLineDash([16,12]);X.strokeStyle='rgba(255,255,255,.4)';X.lineWidth=4;
+   X.beginPath();X.moveTo(cx,ceilY);X.lineTo(cx+cw,ceilY);X.stroke();X.setLineDash([]);
+   X.fillStyle='rgba(255,255,255,.6)';X.font='800 30px MR';X.textAlign='left';X.fillText(o.ceil||'потолок охватов',cx,ceilY-16);
+   // curve: exponential rise breaking ceiling
+   const fn=x=>{const base=ch*0.9*(1-Math.pow(1-x,2.4));return cy+ch-base;};
+   const n=48,lim=Math.floor(draw*n);const pts=[];for(let i=0;i<=lim;i++){const x=i/n;pts.push([cx+x*cw,fn(x)]);}
+   X.strokeStyle=LIME;X.lineWidth=9;X.lineCap='round';X.lineJoin='round';X.shadowColor=LIME;X.shadowBlur=16;
+   X.beginPath();pts.forEach((p,i)=>i?X.lineTo(p[0],p[1]):X.moveTo(p[0],p[1]));X.stroke();X.shadowBlur=0;
+   if(pts.length){const h=pts[pts.length-1];X.fillStyle=LIME;X.beginPath();X.arc(h[0],h[1],13,0,7);X.fill();
+     if(h[1]<ceilY){X.fillStyle='#fff';X.font='800 40px MB';X.textAlign='center';X.fillText(o.top||'×5',h[0],h[1]-28);}}
+   X.fillStyle='rgba(255,255,255,.75)';X.font='800 40px MR';X.textAlign='center';X.fillText(o.label||'',W/2,cy+ch+52);
+   X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- multiplier gauge ring (x3 / x5) ----
+ gauge3x(f,F,o){const a=env(f,F,10,10);const p=E.outElastic(Math.min(1,f/(F*0.6)));const cx=W/2,cy=(o.y?o.y*H:H*0.32),R=170;
+   const target=o.mult||3;const val=(1+(target-1)*Math.min(1,p));X.globalAlpha=a;
+   X.lineWidth=40;X.strokeStyle='rgba(255,255,255,.12)';X.beginPath();X.arc(cx,cy,R,0,7);X.stroke();
+   X.strokeStyle=LIME;X.lineCap='round';X.beginPath();X.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+7*0.999*Math.min(1,(val-1)/(target-1||1)));X.stroke();X.lineCap='butt';
+   X.fillStyle='#fff';X.font='800 150px MB';X.textAlign='center';X.fillText('×'+val.toFixed(1).replace('.0',''),cx,cy+50);
+   X.fillStyle=LIME;X.font='800 40px MR';X.fillText(o.label||'',cx,cy+R+70);X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- star rating fill ----
+ ratings(f,F,o){const a=env(f,F,10,10);const stars=o.stars||5,val=o.val||4.9;const sz=110,gap=20;
+   const tw=stars*sz+(stars-1)*gap,x0=(W-tw)/2,y=(o.y?o.y*H:H*0.34);X.globalAlpha=a;
+   const filled=(val/stars)*stars;
+   for(let i=0;i<stars;i++){const t0=6+i*7;const sp=E.outBack(Math.min(1,(f-t0)/12));if(f<t0)continue;
+     const cxx=x0+i*(sz+gap)+sz/2;X.save();X.globalAlpha=a*Math.min(1,(f-t0)/6);X.translate(cxx,y);X.scale(sp,sp);
+     const on=(i+1)<=Math.round(filled);X.fillStyle=on?LIME:'rgba(255,255,255,.18)';
+     X.beginPath();for(let k=0;k<10;k++){const ra=k%2?sz*0.22:sz*0.5;const ang=-Math.PI/2+k*Math.PI/5;X.lineTo(ra*Math.cos(ang),ra*Math.sin(ang));}X.closePath();X.fill();X.restore();}
+   X.fillStyle='#fff';X.font='800 90px MB';X.textAlign='center';X.globalAlpha=a;X.fillText(val.toFixed(1),W/2,y+180);
+   X.fillStyle=LIME;X.font='800 38px MR';X.fillText(o.label||'',W/2,y+232);X.globalAlpha=1;X.textAlign='left';
+ },
+ // ---- horizontal bar race (ranked list) ----
+ barrace(f,F,o){const a=env(f,F,10,10);const data=o.data||[['ролик',100,LIME],['реклама',30,'#9a9a9a']];
+   const bw=760,bh=88,gap=40,x0=(W-bw)/2,y0=(o.y?o.y*H:H*0.34);X.globalAlpha=a;
+   data.forEach((d,i)=>{const t0=6+i*8;const p=E.outCubic(Math.min(1,(f-t0)/16));if(f<t0)return;const y=y0+i*(bh+gap);
+     X.fillStyle='rgba(255,255,255,.08)';rr(X,x0,y,bw,bh,bh/2);X.fill();
+     X.fillStyle=d[2];rr(X,x0,y,Math.max(bh,bw*(d[1]/100)*p),bh,bh/2);X.fill();
+     X.fillStyle='#fff';X.font='800 40px MR';X.textAlign='left';X.fillText(d[0],x0+30,y+56);
+     X.textAlign='right';X.font='800 44px MB';X.fillText(Math.round(d[1]*p)+'%',x0+bw-24,y+58);});
+   X.globalAlpha=1;X.textAlign='left';
+ },
 };
 
 window.FX_SET=spec=>{window._spec=spec;};
