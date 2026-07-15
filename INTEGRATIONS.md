@@ -66,6 +66,17 @@ curl (urllib и node fetch ходят мимо прокси). Новый клю�
 - source_id постинга: 1=VK, 3=Facebook, 9=Telegram-канал, 11=Telegram-юзер, 14=YouTube (и TikTok redirect /14), 17/18/29=прочее. IG/TikTok source_id определить при подключении.
 - Даниэль знаком с владельцем Hooppy → возможен безлимит аккаунтов + партнёрский/white-label API (см. `brain/Claude/Projects/Tappio.md`).
 
+### API ПОСТИНГА (реверс-инжинирнут 15.07.2026, РАБОТАЕТ — все 3 TikTok запощены)
+Base `https://api.hooppy.ru/api`, Bearer HOOPPY_API_TOKEN (Passport JWT). ВАЖНО: на VPS curl БЕЗ --cacert (обычный интернет; agent-CA /root/.ccr только в контейнере агента).
+1) **Загрузка медиа:** `POST /api/files/media/upload` multipart: `file`=@video.mp4, `file_id`=<любой уникальный> → `{"photo":{id,name,file_path,file_thumbnail_path,seconds,type}}`.
+2) **Создание поста:** `POST /api/posts` JSON:
+`{"as_copy":0,"publication_when_type":1,"publication_how_type":1,"publication_where_type":1,"created_by":0,"texts":[{"text":"<p>КАПШН</p>","source_id":0}],"attachments":[{"type":"photos","data":[<media_obj из шага 1>]}],"ids":"","selected_pages_by_source_ids":{"14":[PAGE_ID]},"selected_albums_by_source_ids":{}}` → `{"id":<post_id>}`.
+when_type=1=сейчас, how_type=1=ручной, source 14=TikTok.
+**ГЛАВНОЕ:** поле аккаунта = `selected_pages_by_source_ids` c **PAGE_ID ≠ account_id**! page_id из `GET /api/posts/0/edit?as_copy=0` → `social_pages_by_accounts[].pages[].id`.
+PAGE_ID (secrets HOOPPY_TT_PAGE_*): Tappio=2350868, Екатерина=2352065, DIESEL=2350915.
+Скрипт: `tappio-app/factory/vps/hooppy_post_api.py <page_id> <video.mp4> "<caption>"` (env HOOPPY_API_TOKEN).
+Проверено: посты 91817636/91817821/91817823 созданы, ошибок нет.
+
 ## 1e. Клиенты (мульти-проект) — аккаунты и доступы
 
 Секреты в secrets.env.b64. Пароль в колонке — он же для соцсетей и почты (клиент дал один).
