@@ -66,7 +66,7 @@
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне.</p>
   </div>
-  <div class="chip">сборка v1.2</div>
+  <div class="chip">сборка v1.3</div>
 </div>
 <div class="loader" id="loader"><i></i></div>
 
@@ -170,9 +170,9 @@ function frame(){
     // flat projection -> eye sits upright with NO base rotation; only follows the pointer, returns to 0 (straight) at rest
     const idle = released || (t - lastMove > 1.1);
     const lx = idle ? 0 : pointer.x, ly = idle ? 0 : pointer.y;
-    // follow the finger — clearly visible tilt toward the pointer in every direction (moderate, not overdone)
-    eyeGroup.rotation.y += (-lx*0.46 - eyeGroup.rotation.y)*0.06;
-    eyeGroup.rotation.x += ( ly*0.36 + Math.sin(t*0.6)*0.012 - eyeGroup.rotation.x)*0.06;
+    // follow the finger — natural (non-mirrored): finger right -> lean right, finger up -> look up
+    eyeGroup.rotation.y += ( lx*0.46 - eyeGroup.rotation.y)*0.06;
+    eyeGroup.rotation.x += (-ly*0.36 + Math.sin(t*0.6)*0.012 - eyeGroup.rotation.x)*0.06;
     eyeGroup.rotation.z += (0 - eyeGroup.rotation.z)*0.05;   // keep dead-straight (no roll)
     eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
     halo.material.opacity += ((0.5+pulse*0.5)-halo.material.opacity)*0.1;
