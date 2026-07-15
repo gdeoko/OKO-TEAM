@@ -66,7 +66,7 @@
     <p class="sub fade d2">Супер-приложение, которое держит твою жизнь в фокусе.</p>
     <p class="desc fade d3">Оплаты, мини-приложения, ИИ-помощник и безопасность — в одном Telegram-окне.</p>
   </div>
-  <div class="chip">сборка v0.9</div>
+  <div class="chip">сборка v1.0</div>
 </div>
 <div class="loader" id="loader"><i></i></div>
 
@@ -95,8 +95,8 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 app.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-const DIST = 8;
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+const DIST = 16;                                   // far + narrow FOV = flat, telephoto-like projection
+const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 100);  // no perspective skew for off-centre eye
 camera.position.set(0,0,DIST);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -136,7 +136,7 @@ let target={scale:1,x:0,y:0};
 function viewSize(){ const vH=2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*DIST; return {vW:vH*camera.aspect,vH}; }
 function layout(){ const {vW,vH}=viewSize(); const a=camera.aspect; let maxW,maxH,x,y;
   if(a<0.85){ maxW=vW*0.78; maxH=vH*0.40; x=0; y=vH*0.16; }
-  else if(a>1.5){ maxW=vW*0.46; maxH=vH*0.78; x=vW*0.24; y=vH*0.02; }
+  else if(a>1.5){ maxW=vW*0.42; maxH=vH*0.74; x=vW*0.18; y=vH*0.02; }
   else { maxW=vW*0.62; maxH=vH*0.60; x=vW*0.14; y=vH*0.06; }
   target={scale:Math.min(maxW/eyeW0,maxH/eyeH0), x, y}; }
 function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
@@ -167,15 +167,12 @@ function frame(){
     eyeGroup.scale.lerp(new THREE.Vector3(target.scale*br,target.scale*br,target.scale*br),0.1);
     eyeGroup.position.x += (target.x-eyeGroup.position.x)*0.1;
     eyeGroup.position.y += ((target.y+Math.sin(t*0.8)*0.12)-eyeGroup.position.y)*0.1;
-    // face the CAMERA at rest (compensate perspective skew when the eye sits off-centre, e.g. right side on PC)
-    const faceYaw = Math.atan2(-eyeGroup.position.x, DIST);
-    const facePitch = Math.atan2(eyeGroup.position.y, DIST);
-    // idle (released or no movement) -> look target eases back to centre (face the viewer)
+    // flat projection -> eye sits upright with NO base rotation; only follows the pointer, returns to 0 (straight) at rest
     const idle = released || (t - lastMove > 1.1);
     const lx = idle ? 0 : pointer.x, ly = idle ? 0 : pointer.y;
-    eyeGroup.rotation.y += ((faceYaw + lx*0.32) - eyeGroup.rotation.y)*0.05;
-    eyeGroup.rotation.x += ((facePitch - ly*0.22) + Math.sin(t*0.6)*0.02 - eyeGroup.rotation.x)*0.05;
-    eyeGroup.rotation.z = Math.sin(t*0.5)*0.014;
+    eyeGroup.rotation.y += (lx*0.28 - eyeGroup.rotation.y)*0.05;
+    eyeGroup.rotation.x += (-ly*0.18 + Math.sin(t*0.6)*0.012 - eyeGroup.rotation.x)*0.05;
+    eyeGroup.rotation.z += (0 - eyeGroup.rotation.z)*0.05;   // keep dead-straight (no roll)
     eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
     halo.material.opacity += ((0.5+pulse*0.5)-halo.material.opacity)*0.1;
     // subtle living glow via emissive pulse (liquid-glass feel from the travelling specular light)
