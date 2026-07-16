@@ -53,10 +53,13 @@ def main():
     out = f"{wd}/aud/music.mp3"
     moods = d.get("music", {}).get("queries") or ["cinematic underscore"]
     seed = int(hashlib.md5(d["id"].encode()).hexdigest(), 16)
-    for i, mood in enumerate(moods):
-        if jamendo(mood, seed + i, out) or freesound(mood, seed + i, out):
-            return
-    # фолбэк — старый общий трек, чтобы сборка не падала
+    # 3 попытки по всем mood'ам — транзиентный таймаут Jamendo/Freesound не должен ронять в общий трек
+    for attempt in range(3):
+        for i, mood in enumerate(moods):
+            if jamendo(mood, seed + i + attempt, out) or freesound(mood, seed + i + attempt, out):
+                return
+        print(f"music retry {attempt+1}/3 (транзиентный сбой источников)")
+    # фолбэк — старый общий трек, чтобы сборка не падала (крайний случай)
     fb = "work/spy_001/aud/music.mp3"
     if os.path.exists(fb):
         subprocess.run(['cp', fb, out]); print("music FALLBACK shared track")

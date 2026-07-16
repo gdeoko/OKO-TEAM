@@ -89,10 +89,32 @@ Jamendo API (публичный client_id-фолбэк `2c9a11b9`, свой в e
 `xfade` 24 типа, ротация по seed: `offset_k = k*(D-XD)`, где D=длина кадра, XD=0.45.
 Итоговая длина беда = `N*D-(N-1)*XD` = длине контента. (gl-transitions 125 — апгрейд на будущее.)
 
-### Осмысленные SFX (build4)
-`whoosh` на каждом переходе (`k*(D-XD)`), `impact` на КАЖДОЙ цифровой инфографике
-(stat_count/ring/bars/ticker), `ding` на CTA. Музыка даккается под голос
-`sidechaincompress`, мастер `loudnorm I=-14:TP=-1.5`.
+### Разнообразные SFX по смыслу (fetch_sfx.py + build4)
+`fetch_sfx.py` качает библиотеку с Freesound: 9 категорий × 3 = 27 РАЗНЫХ звуков
+(pop/tick/sweep/riser/impact/ding/swish/data/whoosh), ГЛОБАЛЬНЫЙ дедуп по id (иначе разные
+запросы возвращают один топ-звук), loudnorm выравнивает громкость. Freesound: `sort` ломает
+запрос — НЕ использовать; фильтр `duration:[0.2 TO 3.5]` энкодить. Маппинг в build4:
+`SFX_MAP` тип наложения → категория (stat_count→pop, ring→sweep, bars→data, kinetic→impact,
+callout→ding, lowerthird→swish, linechart→riser, donut/gauge→sweep, chips/kicker→tick).
+Переходы ротуют `whoosh/swish/sweep` по индексу — НЕ один звук. Звук играет НАТУРАЛЬНО
+(никакого `atrim=0:0.5` — это давало «обрубки»). Вариант в категории выбирается по индексу
+наложения → соседние отличаются.
+
+### Музыка — плавно, БЕЗ обрыва (важно)
+`fetch_music.py`: 3 ретрая по источникам (транзиентный таймаут Jamendo не должен ронять в
+общий трек). build4: `afade in 1.8с / out 2.8с`. КРИТИЧНО: `sidechaincompress` обрезает
+музыку по длине голоса → сайдчейн-голос паддить на полную длину
+(`[voice1]apad,atrim=0:total`), а финал закрыть `,apad,atrim=0:total`, иначе аудио короче
+видео на ~2с и музыка обрывается в эндкарде. Проверять: `ffprobe` audio dur ≈ video dur;
+хвостовые окна volumedetect должны монотонно падать (фейд, а не обрыв). volumedetect печатает
+на уровне info — НЕ гасить `-v error`.
+
+### Код-инфографика (render_ov3) — её должно быть БОЛЬШЕ
+Все типы рисуются кодом и анимированы: `stat_count, bars, ring, ticker, chips, lowerthird,
+kinetic, callout, kicker` + новые `linechart` (линия пробивает пунктирный «потолок» —
+самый заходящий приём), `donut` (сегменты + легенда + % ), `gauge` (полукруг + стрелка).
+Баланс сценария смещать в сторону инфографики (donut/linechart/gauge/ring/bars/stat), а не
+голого текста (kinetic/kicker).
 
 ### Длина и темп
 20-45с (проверено: spy 39с, brain 43с, tape 45с). Кадр ~2.3с. Наложение почти непрерывно.

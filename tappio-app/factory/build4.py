@@ -190,18 +190,20 @@ def main():
     for i,f in enumerate(files): a_in+=['-i',f]; fidx[f]=mi+1+i
     af=amaps[:]; vm="".join(f"[a{j}]" for j in range(k))
     af.append(f"{vm}amix=inputs={k}:normalize=0,asplit=2[voice1][voice2]")
+    # сайдчейн-голос паддим на ПОЛНУЮ длину — иначе sidechaincompress обрезает музыку по голосу
+    af.append(f"[voice1]apad,atrim=0:{total:.2f},asetpts=N/SR/TB[voice1p]")
     # музыка: плавный вход/выход БЕЗ обрыва (длинные фейды по краям ролика)
-    af.append(f"[{mi}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},volume=0.17,afade=t=in:st=0:d=1.8,afade=t=out:st={total-2.6:.2f}:d=2.6[mus]")
+    af.append(f"[{mi}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},volume=0.17,afade=t=in:st=0:d=1.8,afade=t=out:st={total-2.8:.2f}:d=2.8[mus]")
     ev=[]
     for n,(f,t,vol) in enumerate(events):
         af.append(f"[{fidx[f]}:a]adelay={int(t*1000)}|{int(t*1000)},volume={vol:.2f}[e{n}]"); ev.append(f"[e{n}]")
     if ev:
         af.append("".join(ev)+f"amix=inputs={len(ev)}:normalize=0[sfxall]")
-    af.append(f"[mus][voice1]sidechaincompress=threshold=0.03:ratio=6:attack=5:release=250[mduck]")
+    af.append(f"[mus][voice1p]sidechaincompress=threshold=0.03:ratio=6:attack=5:release=250[mduck]")
     if ev:
-        af.append(f"[voice2][mduck][sfxall]amix=inputs=3:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
+        af.append(f"[voice2][mduck][sfxall]amix=inputs=3:normalize=0:duration=longest,loudnorm=I=-14:TP=-1.5:LRA=11,apad,atrim=0:{total:.2f}[aout]")
     else:
-        af.append(f"[voice2][mduck]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
+        af.append(f"[voice2][mduck]amix=inputs=2:normalize=0:duration=longest,loudnorm=I=-14:TP=-1.5:LRA=11,apad,atrim=0:{total:.2f}[aout]")
     run(['ffmpeg','-y','-v','error']+a_in+['-filter_complex',';'.join(af),'-map','[aout]','-t',f'{total:.2f}',f"{wd}/audio.m4a"],"AUDIO")
     print("audio ok")
 
