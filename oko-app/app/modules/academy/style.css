@@ -32,6 +32,9 @@
 .ac-lesson-row svg.i{width:17px;height:17px;color:var(--dim);flex-shrink:0}
 .ac-lesson-row .go{color:var(--accent)}
 .ac-mini-pct{font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 9px;flex-shrink:0}
+.ac-mini-cert{width:26px;height:26px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(154,255,0,.35)}
+:root[data-theme="light"] .ac-mini-cert{box-shadow:none}
+.ac-mini-cert svg.i{width:14px;height:14px;color:#000}
 
 /* --- «скоро» --- */
 .ac-soon{display:flex;align-items:center;gap:14px}

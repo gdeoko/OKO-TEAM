@@ -1,24 +1,22 @@
 /* ================= ACADEMY: Академия OKO (префикс ac-) =================
-   Курс «Нейросети 2026»: урок 1 (видео + слайды + тест + практика + мини-игра)
-   и официальный сертификат (canvas: печать + подпись из core-ext). */
+   Курс «Нейросети 2026»: 5 уроков (видео + слайды + тест + практика + мини-игра),
+   per-урок прогресс и официальный сертификат за КАЖДЫЙ урок
+   (canvas: печать + подпись из core-ext). */
 
 const AC_VIDEO_URL = 'https://true-journey-418.higgsfield.app/media/oko_lesson1_web.mp4'; // урок 1, хостится на домене приложения
+const AC_PASS = 70;
 
-/* ---------- состояние (localStorage oko-academy) ---------- */
-const acS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-academy'))||null; }catch(e){ return null; } })() || {
-  video:false, slides:false, test:false, testScore:0, task:false, taskText:'', game:false, gameWrong:null,
-  slideMax:0, cert:null, certs:[]
-};
-function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
+/* ================= КУРС: 5 УРОКОВ ================= */
+const AC_COURSE = [
 
-let acView = 'home';            // 'home' | 'lesson'
-let acQuiz = null;              // сессия теста (не персистится)
-let acG = null;                 // сессия мини-игры
-let acTaskChecking = false;     // «Проверяется ИИ-куратором»
-let acCertUrl = null;           // кэш PNG сертификата
-
-/* ---------- контент урока 1: слайды ---------- */
-const AC_SLIDES = [
+/* ---------- УРОК 1: Карта нейросетей 2026 ---------- */
+{
+  title:'Карта нейросетей 2026',
+  sub:'3:24 · видео + слайды + тест + игра',
+  dur:'3:24',
+  videoUrl: AC_VIDEO_URL,
+  c1:'КАРТА НЕЙРОСЕТЕЙ', c2:'2026',
+  slides:[
   {t:'Карта категорий', pts:[
     'Правило №1: сначала <b>задача</b>, потом модель',
     'Все нейросети — всего <b>7 семей</b>: текст, картинки, видео, код, озвучка, музыка, автоматизация',
@@ -68,49 +66,411 @@ const AC_SLIDES = [
     'Музыка → Suno · Озвучка → локальные TTS',
     'Экономия → агрегаторы и связки'],
    svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="26" y="6" width="68" height="58" rx="8"/><path d="M36 20l4 4 7-8M36 36l4 4 7-8M36 52l4 4 7-8" stroke-width="2.8"/><path d="M54 21h28M54 37h28M54 53h20"/></svg>'},
-];
-
-/* ---------- контент: тест (6 вопросов) ---------- */
-const AC_QUIZ = [
+  ],
+  quiz:[
   {q:'С чего начинается выбор нейросети по карте из урока?', o:['С названия самой хайповой модели','С формулировки задачи','С цены подписки','С обзоров блогеров'], a:1},
   {q:'Кому отдать длинный документ или код?', o:['Midjourney','Suno','Claude','Kling'], a:2},
   {q:'Фотореализм почти бесплатно (~5 центов за кадр) — это…', o:['Flux','Veo','ChatGPT','Runway'], a:0},
   {q:'«Кино за копейки» — примерно 10 центов за секунду видео — это…', o:['Veo','Kling','Nano Banana','Cursor'], a:1},
   {q:'Готовый музыкальный трек по одному запросу делает…', o:['ElevenLabs','Gemini','Lovable','Suno'], a:3},
   {q:'Главная формула карты нейросетей 2026:', o:['Модель → Цена → Задача','Категория → Модель → Задача','Задача → Категория → Модель','Промпт → Модель → Результат'], a:2},
-];
-const AC_PASS = 70;
-
-/* ---------- контент: мини-игра «Сопоставь инструмент с задачей» ---------- */
-const AC_PAIRS = [
+  ],
+  pairs:[
   ['Claude','Длинный документ и код'],
   ['Flux','Фотореализм за копейки'],
   ['Kling','Дёшево протестировать видео-идею'],
   ['Suno','Трек под ролик за один запрос'],
   ['Nano Banana','Поправить текст на готовой картинке'],
+  ],
+  task:{
+    intro:'Возьми свою реальную задачу и разложи её по формуле урока — так, как отдал бы нейросети в работу:',
+    chips:['Задача','Категория','Модель','Почему именно она'],
+    ph:'Пример: Задача — обложка для урока. Категория — картинки. Модель — Flux: нужен фотореализм и объём дёшево. Формат — вертикаль 2:3, тёмный фон, лаймовый акцент.',
+    verdict:'Категория выбрана верно, модель соответствует бюджету задачи. Совет куратора: добавляй в промпт ожидаемый формат результата — модель ответит точнее.'
+  }
+},
+
+/* ---------- УРОК 2: Промпт-инжиниринг ---------- */
+{
+  title:'Промпт-инжиниринг',
+  sub:'формула промпта · few-shot · chain-of-thought',
+  dur:'', videoUrl:'',
+  c1:'ПРОМПТ', c2:'ИНЖИНИРИНГ',
+  slides:[
+  {t:'Формула сильного промпта', pts:[
+    '<b>Роль → Задача → Контекст → Формат → Ограничения</b> — пять блоков',
+    'Слабый промпт: «напиши пост». Сильный — закрывает все пять блоков',
+    'Чем меньше модель догадывается, тем точнее результат',
+    'Формула работает в любой нейросети: ChatGPT, Claude, Gemini'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="26" width="16" height="18" rx="4"/><rect x="30" y="26" width="16" height="18" rx="4"/><rect x="54" y="26" width="16" height="18" rx="4"/><rect x="78" y="26" width="16" height="18" rx="4"/><rect x="100" y="26" width="16" height="18" rx="4"/><path d="M23 35h5M47 35h5M71 35h5M95 35h3" opacity=".7"/><path d="M14 20v-8h94v46h-6" opacity=".35"/><circle cx="14" cy="52" r="2" fill="currentColor" stroke="none"/><circle cx="38" cy="52" r="2" fill="currentColor" stroke="none"/><circle cx="62" cy="52" r="2" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Роль и задача', pts:[
+    '«Ты — маркетолог с 10-летним опытом» — роль включает нужный пласт знаний',
+    'Задача — <b>глаголом</b>: напиши, сравни, разложи, предложи 5 вариантов',
+    'Одна задача = один промпт. Несколько — режь на шаги',
+    'Роль меняет и стиль, и глубину ответа'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="30" cy="22" r="9"/><path d="M14 58c2-14 8-20 16-20s14 6 16 20"/><path d="M52 35h28" opacity=".8"/><path d="M74 29l8 6-8 6" opacity=".8"/><circle cx="98" cy="35" r="14"/><circle cx="98" cy="35" r="8"/><circle cx="98" cy="35" r="2.5" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Контекст решает всё', pts:[
+    'Дай факты: продукт, аудитория, цена, тон бренда',
+    'Модель <b>не телепат</b> — что не сказал, то она выдумает',
+    'Вставляй примеры своих текстов — стиль скопируется',
+    'Большие документы и таблицы отдавай целиком, не пересказом'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="22" y="20" width="52" height="42" rx="6"/><path d="M30 14h52v42" opacity=".55"/><path d="M38 8h52v42" opacity=".3"/><path d="M32 32h32M32 41h24M32 50h30"/><circle cx="98" cy="52" r="10"/><path d="M105 59l9 9"/></svg>'},
+  {t:'Формат и ограничения', pts:[
+    'Проси конкретно: <b>таблица</b>, нумерованный список, JSON',
+    'Ограничь объём: «до 500 знаков», «ровно 3 варианта»',
+    '«Без воды, без вступлений, без клише» — негативные ограничения',
+    'Заданный формат = результат сразу готов к использованию'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="10" width="66" height="50" rx="6"/><path d="M14 26h66M14 42h66M36 10v50M58 10v50"/><path d="M92 18h18M92 30h14M92 42h18M92 54h10" opacity=".7"/><path d="M88 51l-4 10" opacity=".7"/></svg>'},
+  {t:'Few-shot: покажи примеры', pts:[
+    '2–3 пары <b>«вход → выход»</b> прямо в промпте',
+    'Модель копирует паттерн точнее любых описаний',
+    'Лучший способ передать стиль, структуру и тон',
+    'Работает для заголовков, писем, карточек товаров'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="20" height="14" rx="4"/><path d="M32 15h10M38 11l6 4-6 4"/><rect x="48" y="8" width="20" height="14" rx="4" fill="currentColor" fill-opacity=".15"/><rect x="8" y="28" width="20" height="14" rx="4"/><path d="M32 35h10M38 31l6 4-6 4"/><rect x="48" y="28" width="20" height="14" rx="4" fill="currentColor" fill-opacity=".15"/><rect x="80" y="14" width="32" height="24" rx="6"/><path d="M88 22h16M88 30h12"/><path d="M96 44v10M92 50l4 4 4-4"/></svg>'},
+  {t:'Chain-of-thought', pts:[
+    '«<b>Рассуждай по шагам</b>» — и точность на логике резко растёт',
+    'Сложную задачу дели на этапы: сначала план, потом исполнение',
+    'Попроси модель проверить собственный ответ перед выдачей',
+    'Расчёты, стратегия, договоры — всегда через шаги'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 58h22V44h22V30h22V16h24"/><circle cx="23" cy="52" r="3" fill="currentColor" stroke="none"/><circle cx="45" cy="38" r="3" fill="currentColor" stroke="none"/><circle cx="67" cy="24" r="3" fill="currentColor" stroke="none"/><path d="M96 10l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6-4.5-4 6-1z" fill="currentColor" stroke="none" opacity=".9"/></svg>'},
+  {t:'Итерация и типовые ошибки', pts:[
+    'Первый ответ — <b>черновик</b>: уточняй «короче», «жёстче», «под B2B»',
+    'Ошибка №1: несколько задач в одном промпте',
+    'Ошибка №2: нет формата — получаешь простыню текста',
+    'Ошибка №3: нет примеров там, где важен стиль'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M60 12a23 23 0 1 1-21 14"/><path d="M32 14l6 12 13-4"/><circle cx="60" cy="35" r="8" opacity=".7"/><path d="M100 22v14M100 44v.5" stroke-width="3"/></svg>'},
+  {t:'Промпты для бизнеса', pts:[
+    'Собери <b>библиотеку промптов</b> компании — как регламенты',
+    'Шаблоны с переменными: {товар}, {аудитория}, {акция}',
+    'Один отлаженный промпт экономит часы каждый день',
+    'Прогони новый промпт 3–5 раз — проверь стабильность результата'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="26" y="22" width="68" height="38" rx="8"/><path d="M48 22v-6a6 6 0 0 1 6-6h12a6 6 0 0 1 6 6v6"/><path d="M26 38h28M66 38h28"/><rect x="54" y="33" width="12" height="10" rx="3" fill="currentColor" fill-opacity=".2"/><path d="M104 14l2.5 5 5 .8-3.7 3.4.8 5-4.6-2.5-4.6 2.5.8-5-3.7-3.4 5-.8z" fill="currentColor" stroke="none" opacity=".85"/></svg>'},
+  ],
+  quiz:[
+  {q:'Правильный порядок блоков сильного промпта:', o:['Формат → Роль → Задача → Контекст','Роль → Задача → Контекст → Формат → Ограничения','Контекст → Роль → Ограничения → Задача','Задача → Формат → Роль → Контекст'], a:1},
+  {q:'Few-shot — это…', o:['Попросить ответ покороче','Показать 2–3 примера «вход → выход»','Запустить промпт несколько раз подряд','Урезать контекст до минимума'], a:1},
+  {q:'Chain-of-thought повышает точность, потому что модель…', o:['Отвечает быстрее','Тратит меньше токенов','Рассуждает по шагам, а не выдаёт ответ сразу','Подключается к интернету'], a:2},
+  {q:'Негативное ограничение в промпте — это…', o:['Грубый тон запроса','Указание, чего НЕ делать: «без воды и клише»','Жалоба на прошлый ответ','Отключение истории чата'], a:1},
+  {q:'Первый ответ модели правильнее всего воспринимать как…', o:['Финальный результат','Случайный шум','Черновик для итераций','Ошибку модели'], a:2},
+  {q:'Типовая ошибка промпта из урока:', o:['Указать модели роль','Несколько задач в одном промпте без формата','Добавить примеры «вход → выход»','Ограничить объём ответа'], a:1},
+  ],
+  pairs:[
+  ['Роль','«Ты — юрист с 10-летним опытом»'],
+  ['Few-shot','2–3 примера «вход → выход»'],
+  ['Chain-of-thought','«Рассуждай по шагам»'],
+  ['Негативное ограничение','«Без воды и клише»'],
+  ['Формат','«Ответ — таблицей из 3 колонок»'],
+  ],
+  task:{
+    intro:'Собери промпт под свою реальную бизнес-задачу по формуле урока:',
+    chips:['Роль','Задача','Контекст','Формат','Ограничения'],
+    ph:'Пример: Роль — опытный SMM-маркетолог. Задача — напиши 5 заголовков для поста о скидке 20%. Контекст — кофейня в центре, аудитория 20–35. Формат — нумерованный список до 60 знаков. Ограничения — без клише и капслока.',
+    verdict:'Все пять блоков формулы на месте — промпт готов к работе. Совет куратора: добавь 1–2 примера «вход → выход», и стиль ответов станет твоим на 100%.'
+  }
+},
+
+/* ---------- УРОК 3: Генерация картинок PRO ---------- */
+{
+  title:'Генерация картинок PRO',
+  sub:'Midjourney v7 · Flux · Nano Banana',
+  dur:'', videoUrl:'',
+  c1:'ГЕНЕРАЦИЯ КАРТИНОК', c2:'PRO',
+  slides:[
+  {t:'Три топ-модели 2026', pts:[
+    '<b>Midjourney v7</b> — эстетика, арт-направление, «вау»-кадры',
+    '<b>Flux</b> — фотореализм, дёшево, открытая модель',
+    '<b>Nano Banana</b> (Gemini) — правки, текст на картинке, точное следование ТЗ',
+    'Выбирай модель под задачу, а не наоборот'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="14" width="30" height="42" rx="6"/><rect x="45" y="8" width="30" height="48" rx="6"/><rect x="82" y="14" width="30" height="42" rx="6"/><path d="M14 48l8-8 6 5 4-4" opacity=".8"/><circle cx="60" cy="22" r="4"/><path d="M50 48l9-10 7 6 4-5" opacity=".8"/><path d="M90 26h14M90 34h10M90 42h14" opacity=".8"/><path d="M56 60l4 4 6-8" stroke-width="2.8"/></svg>'},
+  {t:'Анатомия промпта картинки', pts:[
+    '<b>Субъект → Стиль → Свет → Камера → Композиция</b>',
+    'Порядок слов = приоритет: главное — в начало',
+    'Коротко и конкретно бьёт длинно и расплывчато',
+    'Один промпт — одна сцена, без «и ещё…»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="10" width="58" height="50" rx="7"/><circle cx="34" cy="28" r="7"/><path d="M14 52l16-13 12 9 12-11 12 12"/><path d="M84 14h26M84 26h20M84 38h24M84 50h16" opacity=".75"/><circle cx="80" cy="14" r="1.8" fill="currentColor" stroke="none"/><circle cx="80" cy="26" r="1.8" fill="currentColor" stroke="none"/><circle cx="80" cy="38" r="1.8" fill="currentColor" stroke="none"/><circle cx="80" cy="50" r="1.8" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Субъект и стиль', pts:[
+    'Конкретика: не «собака», а «щенок корги, 3 месяца, мокрая шерсть»',
+    'Стиль: photo, 3D render, flat illustration, oil painting',
+    'Эстетики <b>editorial / cinematic / minimalist</b> задают настроение',
+    'Материалы и фактуры добавляют реализма: matte, glossy, velvet'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="38" cy="35" r="20"/><circle cx="38" cy="29" r="7"/><path d="M25 48c3-8 7-11 13-11s10 3 13 11"/><path d="M74 18c14-6 26-2 30 6-6 2-10 8-18 8s-14-6-12-14z"/><path d="M78 32l-8 26" opacity=".8"/><circle cx="99" cy="52" r="3" fill="currentColor" stroke="none"/><circle cx="88" cy="58" r="2.4" fill="currentColor" stroke="none" opacity=".6"/></svg>'},
+  {t:'Свет и камера', pts:[
+    'Свет — половина кадра: <b>golden hour, softbox, neon glow</b>',
+    'Объектив: 85mm portrait — лица, wide angle — пространство',
+    'Глубина резкости: shallow depth of field, bokeh',
+    'Ракурс: eye level, low angle (мощь), top-down (флэтлей)'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="26" cy="20" r="9"/><path d="M26 5v4M26 31v4M11 20h4M37 20h4M15 9l3 3M37 31l-3-3M37 9l-3 3M15 31l3-3"/><rect x="54" y="26" width="52" height="34" rx="7"/><path d="M68 26l5-8h14l5 8"/><circle cx="80" cy="43" r="10"/><circle cx="80" cy="43" r="4" opacity=".7"/><circle cx="99" cy="34" r="1.8" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Композиция и формат', pts:[
+    'Rule of thirds, negative space, close-up / full shot',
+    'Соотношение сторон под площадку: <b>9:16</b> сторис, <b>1:1</b> лента, <b>16:9</b> обложка',
+    'Оставляй место под текст, если кадр пойдёт в баннер',
+    'Центральная симметрия — приём премиальных брендов'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="84" height="54" rx="7"/><path d="M46 8v54M74 8v54M18 26h84M18 44h84" opacity=".4"/><circle cx="74" cy="26" r="6" fill="currentColor" fill-opacity=".25"/><circle cx="74" cy="26" r="2.5" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Референсы и consistency', pts:[
+    'Image reference — прикладывай образец стиля или продукта',
+    'Один герой в серии: <b>character reference</b> + фиксированный seed',
+    'Бренд-кит в каждом промпте: фирменные цвета, логотип отдельным слоем',
+    'Серия в едином стиле перформит лучше одиночных кадров'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="16" width="34" height="38" rx="6"/><circle cx="27" cy="30" r="6"/><path d="M17 48c2-6 5-9 10-9s8 3 10 9"/><rect x="76" y="16" width="34" height="38" rx="6"/><circle cx="93" cy="30" r="6"/><path d="M83 48c2-6 5-9 10-9s8 3 10 9"/><path d="M50 32h20M50 40h20" opacity=".7"/><path d="M64 26l6 6-6 6M56 34l-6 6 6 6" opacity=".7"/></svg>'},
+  {t:'Апскейл и правки', pts:[
+    'Генерируй в базовом разрешении, финалку — <b>апскейл до 2K/4K</b>',
+    'Руки, текст, мелочи — не перегенерация, а точечная правка (inpaint)',
+    'Nano Banana правит словами: «замени надпись, остальное не трогай»',
+    'Противоречия в промпте («минимализм, много деталей») ломают кадр'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="30" width="26" height="20" rx="4"/><path d="M44 40h14M52 34l6 6-6 6"/><rect x="66" y="12" width="44" height="46" rx="6"/><path d="M72 50l12-12 8 6 10-10 8 8" opacity=".8"/><path d="M100 18l2 4 4 .6-3 2.8.7 4-3.7-2-3.7 2 .7-4-3-2.8 4-.6z" fill="currentColor" stroke="none" opacity=".85"/></svg>'},
+  {t:'Коммерческое использование', pts:[
+    'Права на коммерцию — почти всегда на <b>платных тарифах</b>: проверь лицензию',
+    'Чужие лица, персонажи и логотипы — нельзя без прав',
+    'Храни промпты и исходники — пригодятся для серий и споров',
+    'На потоке считай юнит-экономику: цена кадра × объём'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="12" width="56" height="46" rx="7"/><circle cx="32" cy="26" r="5"/><path d="M14 50l18-14 12 9 10-9 16 14" opacity=".8"/><circle cx="94" cy="42" r="16"/><path d="M94 33v18M99 37c-1.5-2-8-2.5-8 1.5s9 2 9 6.5-7 3.5-9 1.5"/></svg>'},
+  ],
+  quiz:[
+  {q:'Фотореализм дёшево и на открытой модели — это…', o:['Midjourney v7','Flux','Nano Banana','Suno'], a:1},
+  {q:'Анатомия промпта картинки из урока:', o:['Стиль → Свет → Субъект → Формат','Субъект → Стиль → Свет → Камера → Композиция','Камера → Субъект → Формат → Свет','Композиция → Свет → Стиль → Камера'], a:1},
+  {q:'Поправить надпись на готовой картинке, не трогая остальное, лучше всего умеет…', o:['Kling','Midjourney','Nano Banana','Wan'], a:2},
+  {q:'Один и тот же герой во всей серии картинок — это…', o:['Апскейл','Character reference + фиксированный seed','Негативный промпт','Reframe'], a:1},
+  {q:'Апскейл нужен, чтобы…', o:['Ускорить генерацию','Поднять разрешение финалки до 2K/4K','Сменить стиль кадра','Убрать фон'], a:1},
+  {q:'Что проверить перед коммерческим использованием картинки?', o:['Количество лайков','Лицензию тарифа и отсутствие чужих брендов/лиц','Размер файла','Название модели'], a:1},
+  ],
+  pairs:[
+  ['Midjourney v7','Арт и «вау»-эстетика'],
+  ['Flux','Фотореализм за копейки'],
+  ['Nano Banana','Правки и текст на картинке'],
+  ['85mm portrait','Портрет с мягким боке'],
+  ['Апскейл','Финалка в 4K для печати'],
+  ],
+  task:{
+    intro:'Разложи промпт картинки для своего проекта по анатомии из урока:',
+    chips:['Субъект','Стиль','Свет','Камера','Композиция'],
+    ph:'Пример: Субъект — чашка латте с арт-пенкой. Стиль — editorial photo. Свет — мягкий утренний из окна. Камера — 85mm, shallow depth of field. Композиция — rule of thirds, место под текст справа, формат 4:5.',
+    verdict:'Анатомия выдержана: субъект конкретный, свет и камера заданы. Совет куратора: зафиксируй seed и палитру бренда — получишь консистентную серию, а не разрозненные кадры.'
+  }
+},
+
+/* ---------- УРОК 4: Видео-нейросети ---------- */
+{
+  title:'Видео-нейросети',
+  sub:'Veo 3 · Kling 2 · Runway · Wan',
+  dur:'', videoUrl:'',
+  c1:'ВИДЕО', c2:'НЕЙРОСЕТИ',
+  slides:[
+  {t:'Кто есть кто в видео', pts:[
+    '<b>Veo 3</b> — топ-качество + родной звук и речь',
+    '<b>Kling 2</b> — лучшая цена/качество, идеален для тестов',
+    '<b>Runway</b> — контроль, маркетинг, инструменты монтажа',
+    '<b>Wan</b> — открытая модель, бесплатно на своём железе'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="30" width="24" height="28" rx="4"/><rect x="36" y="18" width="24" height="40" rx="4"/><rect x="64" y="26" width="24" height="32" rx="4"/><rect x="92" y="36" width="20" height="22" rx="4"/><path d="M45 32v12l10-6z" fill="currentColor" stroke="none"/><path d="M48 8l2 4 4 .6-3 2.8.7 4-3.7-2-3.7 2 .7-4-3-2.8 4-.6z" fill="currentColor" stroke="none" opacity=".9"/></svg>'},
+  {t:'Text-to-video vs Image-to-video', pts:[
+    'Text-to-video: быстро, но результат — лотерея',
+    '<b>Image-to-video</b>: сначала идеальный кадр, потом «оживление»',
+    'Для бренда почти всегда i2v — полный контроль первого кадра',
+    'Картинку кадра готовь по анатомии из урока 3'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14h26M10 22h20M10 30h24" opacity=".7"/><path d="M40 22h10M46 18l5 4-5 4" opacity=".7"/><rect x="10" y="42" width="26" height="20" rx="4"/><circle cx="18" cy="49" r="2.4"/><path d="M10 58l8-7 6 5 4-4 8 6" opacity=".8"/><path d="M40 52h10M46 48l5 4-5 4"/><rect x="58" y="18" width="52" height="36" rx="7"/><path d="M78 28v16l14-8z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Первый и последний кадр', pts:[
+    'Задаёшь <b>начало и конец</b> — модель строит переход между ними',
+    'Связка клипов: последний кадр клипа = первый кадр следующего',
+    'Так собирается бесшовный ролик из коротких генераций',
+    'Резкие смены сцены прячь за монтажным переходом'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="20" width="32" height="30" rx="5"/><rect x="80" y="20" width="32" height="30" rx="5"/><path d="M44 35c10-14 22 14 32 0" stroke-dasharray="4 5"/><circle cx="24" cy="32" r="4"/><path d="M16 44l8-7 8 6" opacity=".8"/><circle cx="96" cy="30" r="4"/><path d="M88 44l8-8 8 7" opacity=".8"/></svg>'},
+  {t:'Липсинк и звук', pts:[
+    '<b>Veo 3</b> генерирует речь и шумы прямо в кадре',
+    'Отдельный липсинк: готовая озвучка + лицо героя',
+    'Звуковые эффекты под каждое движение — кадр оживает',
+    'Музыка — под смысл сцены, не «фоном»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="34" cy="32" r="18"/><circle cx="28" cy="27" r="2" fill="currentColor" stroke="none"/><circle cx="41" cy="27" r="2" fill="currentColor" stroke="none"/><ellipse cx="34" cy="40" rx="6" ry="4"/><path d="M64 24v22M74 18v34M84 26v18M94 14v42M104 24v22" stroke-width="2.8"/></svg>'},
+  {t:'Вертикальный контент', pts:[
+    '<b>9:16</b> — Reels, Shorts, TikTok: основной формат 2026',
+    'Хук в первые 1,5 секунды — иначе свайп',
+    'Субтитры обязательны: большинство смотрит без звука',
+    'Лучше генерить сразу 9:16, а не спасать горизонталь reframe-ом'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="44" y="4" width="32" height="62" rx="8"/><path d="M55 26v14l12-7z" fill="currentColor" stroke="none"/><path d="M52 52h16M52 58h10" opacity=".8"/><path d="M20 22c4 8 4 18 0 26M12 28c2.5 5 2.5 9 0 14" opacity=".6"/><path d="M100 22c-4 8-4 18 0 26M108 28c-2.5 5-2.5 9 0 14" opacity=".6"/></svg>'},
+  {t:'Пайплайн ролика', pts:[
+    '<b>Сценарий → раскадровка → кадры-картинки → i2v-клипы → монтаж</b>',
+    'Один клип — 5–8 секунд: дальше модель «плывёт»',
+    'Озвучка и субтитры — после сборки видеоряда',
+    'Финальный проход: цвет, темп под музыку, логотип'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="35" r="7"/><circle cx="60" cy="35" r="7"/><circle cx="106" cy="35" r="7"/><circle cx="37" cy="35" r="7" fill="currentColor" fill-opacity=".18"/><circle cx="83" cy="35" r="7" fill="currentColor" fill-opacity=".18"/><path d="M21 35h9M44 35h9M67 35h9M90 35h9"/><path d="M103 32l4 3 4-3" opacity="0"/><path d="M14 20v-8h92v8" opacity=".35"/></svg>'},
+  {t:'Экономика продакшна', pts:[
+    'Тестируй идею на дешёвой модели, финал — на топовой',
+    'Не генери 20 дублей — правь промпт после каждого',
+    '30-сек ролик = 4–6 клипов: планируй бюджет заранее',
+    'Неудачные клипы — в библиотеку: пригодятся в другом монтаже'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14l40 12-8 10-40-12z"/><path d="M14 26h44v28a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6z"/><path d="M28 44v6M36 40v10M44 44v6" opacity=".8"/><circle cx="92" cy="40" r="16"/><path d="M92 31v18M97 35c-1.5-2-8-2.5-8 1.5s9 2 9 6.5-7 3.5-9 1.5"/></svg>'},
+  {t:'Типовые ошибки', pts:[
+    'Длинные сцены: режь всё на клипы по 5–8 секунд',
+    'Морфинг рук и лиц — меняй ракурс или план',
+    'Скачки стиля между клипами — фиксируй референс и палитру',
+    'Проверяй результат на телефоне: смотреть будут там'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M60 10 96 58H24z"/><path d="M60 28v14M60 50v.5" stroke-width="3"/><path d="M12 20l10 10M22 20l-10 10" opacity=".6"/><path d="M98 18l10 10M108 18l-10 10" opacity=".6"/></svg>'},
+  ],
+  quiz:[
+  {q:'Родной звук и речь прямо при генерации видео даёт…', o:['Kling 2','Wan','Veo 3','Flux'], a:2},
+  {q:'Для брендового ролика с контролем каждого кадра выбирают…', o:['Text-to-video','Image-to-video','Апскейл','Липсинк'], a:1},
+  {q:'Бесшовная склейка нейро-клипов — это когда…', o:['Все клипы одной длины','Последний кадр клипа = первый кадр следующего','Одна модель на все клипы','Музыка без пауз'], a:1},
+  {q:'Субтитры в вертикальном ролике обязательны, потому что…', o:['Так требует платформа','Большинство смотрит без звука','Иначе не пройти модерацию','Это просто красиво'], a:1},
+  {q:'Оптимальная длина одного нейро-клипа:', o:['1–2 секунды','5–8 секунд','20–30 секунд','1 минута'], a:1},
+  {q:'Дёшево протестировать видео-идею лучше всего в…', o:['Veo 3','Kling 2','ElevenLabs','Nano Banana'], a:1},
+  ],
+  pairs:[
+  ['Veo 3','Качество + родной звук'],
+  ['Kling 2','Цена/качество для тестов'],
+  ['Runway','Контроль и инструменты монтажа'],
+  ['Image-to-video','Оживить готовый кадр'],
+  ['Первый-последний кадр','Бесшовный переход между клипами'],
+  ],
+  task:{
+    intro:'Распиши пайплайн 30-секундного ролика о своём продукте:',
+    chips:['Сценарий','Кадры','Модель','Клипы 5–8 с','Звук'],
+    ph:'Пример: Сценарий — 3 сцены о доставке за 15 минут. Кадры — Flux, 9:16. Модель — тест в Kling 2, финал в Veo 3. Клипы — 5 по 6 секунд, склейка «первый-последний кадр». Звук — озвучка + караоке-сабы.',
+    verdict:'Пайплайн рабочий: сцены короткие, склейка по кадрам, звук после сборки. Совет куратора: заложи один запасной клип на сцену — сэкономишь время, когда генерация «поплывёт».'
+  }
+},
+
+/* ---------- УРОК 5: Свой ИИ-ассистент ---------- */
+{
+  title:'Свой ИИ-ассистент',
+  sub:'агент под бизнес · RAG · Telegram',
+  dur:'', videoUrl:'',
+  c1:'СВОЙ', c2:'ИИ-АССИСТЕНТ',
+  slides:[
+  {t:'Зачем бизнесу агент', pts:[
+    'Отвечает <b>24/7 за секунды</b> — клиент не ждёт утра',
+    'Снимает 60–80% типовых вопросов с людей',
+    'Не болеет, не выгорает, помнит все регламенты',
+    'Окупается уже на зарплате первого оператора поддержки'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="18" width="44" height="34" rx="10"/><circle cx="34" cy="33" r="3.5" fill="currentColor" stroke="none"/><circle cx="50" cy="33" r="3.5" fill="currentColor" stroke="none"/><path d="M34 43c2.5 3 9.5 3 13 0"/><path d="M42 18v-8M38 10h8" opacity=".7"/><circle cx="92" cy="35" r="17"/><path d="M92 25v10l7 5"/></svg>'},
+  {t:'Как устроен агент', pts:[
+    '<b>LLM + системный промпт + база знаний + интеграции</b>',
+    'Это не чат-бот по кнопкам: понимает свободную речь',
+    'LLM — «мозг», база знаний — «память», интеграции — «руки»',
+    'Собирается без программиста: конструкторы + API'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="35" r="13"/><path d="M55 35a5 5 0 0 1 10 0" opacity=".7"/><path d="M60 22V8M60 48v14M47 32 20 20M73 32l27-12M47 40 20 52M73 40l27 12"/><rect x="10" y="12" width="16" height="12" rx="3"/><rect x="94" y="12" width="16" height="12" rx="3"/><rect x="10" y="46" width="16" height="12" rx="3"/><rect x="94" y="46" width="16" height="12" rx="3"/></svg>'},
+  {t:'База знаний (RAG)', pts:[
+    'FAQ, прайсы, регламенты, скрипты продаж → база знаний',
+    'Агент ищет релевантный фрагмент и отвечает <b>по фактам</b>',
+    'Обновил документ — агент сразу «поумнел»',
+    'Золотое правило: не знаешь — не выдумывай, зови человека'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="42" cy="16" rx="26" ry="8"/><path d="M16 16v38c0 4.4 11.6 8 26 8s26-3.6 26-8V16"/><path d="M16 35c0 4.4 11.6 8 26 8s26-3.6 26-8" opacity=".6"/><circle cx="94" cy="44" r="11"/><path d="M102 52l10 10"/></svg>'},
+  {t:'Системный промпт агента', pts:[
+    'Личность и тон бренда: как здоровается, как отвечает',
+    'Жёсткие правила: что нельзя обещать и обсуждать',
+    'Сценарии эскалации: когда переключать на менеджера',
+    'Примеры идеальных диалогов — few-shot из урока 2'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M34 6h40l14 14v44H34z"/><path d="M74 6v14h14" opacity=".7"/><path d="M44 30h32M44 39h24M44 48h30"/><circle cx="24" cy="24" r="8" opacity=".7"/><path d="M21 24l2.5 2.5 4.5-5" opacity=".7"/></svg>'},
+  {t:'Подключение к Telegram', pts:[
+    'Бот создаётся через <b>BotFather</b> за две минуты',
+    'Схема: сообщение → webhook → сервер → LLM → ответ',
+    'Кнопки для сценариев + свободный диалог для всего остального',
+    'Клиенты уже в мессенджере — не надо загонять их на сайт'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 32 104 8 82 60 56 44z"/><path d="M56 44l10-16" opacity=".7"/><path d="M56 44v14l10-9" opacity=".7"/></svg>'},
+  {t:'Продажи и поддержка на автомате', pts:[
+    'Квалификация лида: агент сам задаёт уточняющие вопросы',
+    'Запись на встречу и оплата — прямо в чате',
+    'Горячий лид мгновенно улетает менеджеру с резюме диалога',
+    'Ночные заявки больше не теряются'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10h60l-18 20v18l-14 8V30z"/><circle cx="96" cy="22" r="9"/><path d="M82 52c2-9 7-13 14-13s12 4 14 13" opacity=".9"/><path d="M62 52h8" opacity=".7"/><path d="M66 48l4 4-4 4" opacity=".7"/></svg>'},
+  {t:'Метрики качества', pts:[
+    '<b>Доля решённых без человека</b> — главная метрика',
+    'Точность: прогоняй агента по тест-набору вопросов',
+    'Время ответа и CSAT — оценка клиента после диалога',
+    'Еженедельно читай логи: там готовый список улучшений'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v52h94"/><rect x="26" y="38" width="12" height="22" rx="3"/><rect x="48" y="26" width="12" height="34" rx="3"/><rect x="70" y="32" width="12" height="28" rx="3"/><rect x="92" y="16" width="12" height="44" rx="3" fill="currentColor" fill-opacity=".18"/><path d="M26 30l22-10 22 6 22-14" opacity=".6" stroke-dasharray="3 4"/></svg>'},
+  {t:'Безопасность', pts:[
+    'Персональные данные клиентов — не в промпты и не в логи',
+    '<b>Prompt-injection</b>: «забудь инструкции» — агент должен устоять',
+    'Ограничивай полномочия: скидки и возвраты подтверждает человек',
+    'Тестируй агента как злоумышленник до запуска'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M60 6 92 16v18c0 16-13 27-32 32C41 61 28 50 28 34V16z"/><path d="M48 34l8 8 16-16" stroke-width="2.8"/></svg>'},
+  ],
+  quiz:[
+  {q:'Главная выгода ИИ-агента для бизнеса:', o:['Заменяет сайт компании','Снимает 60–80% типовых вопросов 24/7','Ведёт бухгалтерию','Пишет код за разработчика'], a:1},
+  {q:'База знаний (RAG) нужна, чтобы агент…', o:['Отвечал быстрее','Отвечал по фактам компании, а не выдумывал','Работал без интернета','Экономил токены'], a:1},
+  {q:'Что задаёт системный промпт агента?', o:['Скорость сервера','Тон бренда, правила и сценарии эскалации','Дизайн окна чата','Цену подписки'], a:1},
+  {q:'Бот в Telegram создаётся через…', o:['BotFather','Госуслуги','App Store','Настройки телефона'], a:0},
+  {q:'Главная метрика качества агента:', o:['Длина ответов','Доля вопросов, решённых без человека','Число кнопок в меню','Количество стикеров'], a:1},
+  {q:'Prompt-injection — это…', o:['Способ ускорить ответ','Попытка вредоносным сообщением перехватить управление агентом','Обновление базы знаний','Платная функция LLM'], a:1},
+  ],
+  pairs:[
+  ['База знаний (RAG)','Ответы по фактам компании'],
+  ['Системный промпт','Тон бренда и жёсткие правила'],
+  ['BotFather','Создание Telegram-бота'],
+  ['Эскалация','Передача сложного кейса человеку'],
+  ['CSAT','Оценка клиента после диалога'],
+  ],
+  task:{
+    intro:'Спроектируй своего ИИ-агента: ниша, типовые вопросы, тон, эскалация:',
+    chips:['Ниша','5 вопросов','Тон','База знаний','Эскалация'],
+    ph:'Пример: Ниша — студия маникюра. Вопросы — цены, запись, адрес, мастера, уход. Тон — тёплый, на «вы». База — прайс и FAQ. Эскалация — жалобы и переносы записи → администратору.',
+    verdict:'Каркас агента готов: типовые вопросы покрыты, эскалация продумана. Совет куратора: собери тест-набор из 20 реальных диалогов и прогоняй его после каждого изменения промпта.'
+  }
+},
 ];
 
-const AC_LESSONS = [
-  {t:'Карта нейросетей 2026', s:'3:24 · видео + слайды + тест + игра'},
-  {t:'Промпт-инжиниринг', s:'скоро · формулы сильных промптов'},
-  {t:'Генерация картинок PRO', s:'скоро · Midjourney, Flux, Nano Banana'},
-  {t:'Видео-нейросети', s:'скоро · Veo, Kling, Runway'},
-  {t:'Свой ИИ-ассистент', s:'скоро · агент под твой бизнес'},
-];
+/* ---------- состояние (localStorage oko-academy, per-урок) ---------- */
+function acNewLS(){
+  return {video:false, slides:false, test:false, testScore:0, task:false, taskText:'',
+          game:false, gameWrong:null, slideMax:0, cert:null};
+}
+function acLoadState(){
+  let s = null;
+  try{ s = JSON.parse(localStorage.getItem('oko-academy')); }catch(e){}
+  if(!s) return {lessons:{}, certs:[]};
+  if(s.lessons){ if(!Array.isArray(s.certs)) s.certs = []; return s; }
+  /* миграция старого одноурочного формата → урок 0 */
+  const l0 = Object.assign(acNewLS(), {
+    video:!!s.video, slides:!!s.slides, test:!!s.test, testScore:s.testScore||0,
+    task:!!s.task, taskText:s.taskText||'', game:!!s.game,
+    gameWrong:(s.gameWrong===undefined?null:s.gameWrong), slideMax:s.slideMax||0,
+    cert:s.cert||null
+  });
+  const fix = c => c ? Object.assign({lesson:0, lessonTitle:AC_COURSE[0].title}, c) : c;
+  l0.cert = fix(l0.cert);
+  const certs = (s.certs||[]).map(fix);
+  return {lessons:{0:l0}, certs};
+}
+const acS = acLoadState();
+function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
+acSave(); // сразу персистим мигрированный формат
 
-/* ---------- прогресс урока ---------- */
-function acItems(){
+let acView = 'home';            // 'home' | 'lesson'
+let acL = 0;                    // индекс текущего урока
+let acQuiz = null;              // сессия теста (не персистится)
+let acG = null;                 // сессия мини-игры
+let acTaskChecking = false;     // «Проверяется ИИ-куратором»
+let acCertUrl = null;           // кэш PNG сертификата
+let acCertShownNo = null;
+
+function acCur(){ return AC_COURSE[acL]; }
+function acLS(i){
+  const k = (i===undefined ? acL : i);
+  if(!acS.lessons[k]) acS.lessons[k] = acNewLS();
+  return acS.lessons[k];
+}
+
+/* ---------- прогресс ---------- */
+function acItems(i){
+  const ls = acS.lessons[i===undefined?acL:i] || {};
   return [
-    ['Видео просмотрено', acS.video],
-    ['Слайды пролистаны', acS.slides],
-    ['Тест сдан на 70%+', acS.test],
-    ['Практика зачтена', acS.task],
-    ['Мини-игра пройдена', acS.game],
+    ['Видео просмотрено', !!ls.video],
+    ['Слайды пролистаны', !!ls.slides],
+    ['Тест сдан на '+AC_PASS+'%+', !!ls.test],
+    ['Практика зачтена', !!ls.task],
+    ['Мини-игра пройдена', !!ls.game],
   ];
 }
-function acLessonPct(){ return acItems().filter(x=>x[1]).length * 20; }
-function acCoursePct(){ return Math.round(acLessonPct() / 5); }
-function acCertEligible(){ return acS.video && acS.testScore >= AC_PASS; }
+function acLessonPct(i){ return acItems(i).filter(x=>x[1]).length * 20; }
+function acCoursePct(){
+  let sum = 0;
+  for(let i=0; i<AC_COURSE.length; i++) sum += acLessonPct(i);
+  return Math.round(sum / AC_COURSE.length);
+}
+function acLessonDone(i){
+  const ls = acS.lessons[i];
+  return !!(ls && ls.cert) || acLessonPct(i) === 100;
+}
+function acUnlocked(i){ return i === 0 || acLessonDone(i-1); }
+function acCertEligible(){ const ls = acLS(); return ls.video && ls.testScore >= AC_PASS; }
 
 /* ================= РЕНДЕР ================= */
 function acRender(){
@@ -127,21 +487,25 @@ function acRender(){
 /* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
 function acHomeHtml(){
   const pct = acCoursePct(), C = 2*Math.PI*33;
-  const rows = AC_LESSONS.map((l,i)=>{
-    if(i===0) return `<button class="ac-lesson-row" onclick="acOpenLesson()">
-      <span class="ac-num">1</span>
-      <span class="meta"><span class="t">${l.t}</span><span class="s" style="display:block">${l.s}</span></span>
-      ${acLessonPct()>0?`<span class="ac-mini-pct">${acLessonPct()}%</span>`:''}
-      <svg class="i go"><use href="#i-chev"/></svg></button>`;
-    return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после урока ${i}')">
+  const rows = AC_COURSE.map((l,i)=>{
+    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после сертификата урока ${i}')">
       <span class="ac-num">${i+1}</span>
-      <span class="meta"><span class="t">${l.t}</span><span class="s" style="display:block">${l.s}</span></span>
+      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
       <svg class="i"><use href="#i-lock"/></svg></button>`;
+    const ls = acS.lessons[i], p = acLessonPct(i);
+    const st = (ls && ls.cert)
+      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
+      : (p > 0 ? `<span class="ac-mini-pct">${p}%</span>` : '');
+    return `<button class="ac-lesson-row" onclick="acOpenLesson(${i})">
+      <span class="ac-num">${i+1}</span>
+      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
+      ${st}
+      <svg class="i go"><use href="#i-chev"/></svg></button>`;
   }).join('');
   const certs = acS.certs.length ? acS.certs.map((c,i)=>`
     <div class="ac-cert-item" style="animation-delay:${i*.05}s">
       <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
-      <span class="meta"><span class="t">Урок 1 · Карта нейросетей 2026</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
       <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
     </div>`).join('')
     : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
@@ -171,26 +535,35 @@ function acHomeHtml(){
     <div style="height:14px"></div>`;
 }
 
-/* ---------- СТРАНИЦА УРОКА 1 ---------- */
-function acOpenLesson(){ acView='lesson'; acRender(); const m=document.querySelector('main'); if(m) m.scrollTop=0; }
+/* ---------- СТРАНИЦА УРОКА ---------- */
+function acOpenLesson(i){
+  const k = (typeof i === 'number') ? i : 0;
+  if(!acUnlocked(k)){ toast('Урок '+(k+1)+' откроется после сертификата урока '+k); return; }
+  acL = k;
+  acView = 'lesson'; acQuiz = null; acG = null; acTaskChecking = false;
+  acRender();
+  const m = document.querySelector('main'); if(m) m.scrollTop = 0;
+}
 function acBackHome(){ acView='home'; acRender(); }
 
 function acLessonHtml(){
+  const L = acCur();
+  const durLabel = L.videoUrl ? `${L.dur} видео` : 'видео в производстве';
   return `
     <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Академия</button>
     <div class="ac-lesson-head">
-      <span class="chip">Урок 1 из 5</span>
-      <h2>Карта нейросетей 2026</h2>
-      <div class="m"><span>${I('clock')} 3:24 видео</span><span>·</span><span>8 слайдов</span><span>·</span><span>тест из 6 вопросов</span><span>·</span><span>мини-игра</span></div>
+      <span class="chip">Урок ${acL+1} из ${AC_COURSE.length}</span>
+      <h2>${L.title}</h2>
+      <div class="m"><span>${I('clock')} ${durLabel}</span><span>·</span><span>${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
     </div>
 
     <div id="acVideoBox"></div>
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Слайды урока</h2>
     <div id="acSlidesBox">
-      <div class="ac-slides" id="acSlides">${AC_SLIDES.map((s,i)=>`
+      <div class="ac-slides" id="acSlides">${L.slides.map((s,i)=>`
         <div class="ac-slide ${i===0?'cur':''}" data-i="${i}">
-          <span class="n">Слайд ${i+1} / ${AC_SLIDES.length}</span>
+          <span class="n">Слайд ${i+1} / ${L.slides.length}</span>
           <h3>${s.t}</h3>
           <div class="pic">${s.svg}</div>
           <ul>${s.pts.map(p=>`<li>${p}</li>`).join('')}</ul>
@@ -198,7 +571,7 @@ function acLessonHtml(){
       </div>
       <div class="ac-slides-nav">
         <button class="ac-arrow" onclick="acSlideGo(-1)"><svg class="i"><use href="#i-back"/></svg></button>
-        <span class="ac-dots" id="acDots">${AC_SLIDES.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</span>
+        <span class="ac-dots" id="acDots">${L.slides.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</span>
         <button class="ac-arrow next" onclick="acSlideGo(1)"><svg class="i"><use href="#i-back"/></svg></button>
       </div>
     </div>
@@ -224,6 +597,7 @@ function acLessonHtml(){
 function acRenderVideoBox(){
   const box = document.getElementById('acVideoBox');
   if(!box) return;
+  const L = acCur(), ls = acLS();
   const cover = `
     <div class="ac-player" onclick="acPlay()" id="acPlayer">
       <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
@@ -234,30 +608,30 @@ function acRenderVideoBox(){
         </g>
         <circle cx="530" cy="80" r="120" fill="rgba(154,255,0,.07)"/>
         <use href="#i-logo" x="472" y="34" width="120" height="120"/>
-        <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">КАРТА НЕЙРОСЕТЕЙ</text>
-        <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">2026</text>
-        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК 1</text>
+        <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
+        <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
+        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acL+1}</text>
       </svg>
       <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
-      <span class="dur">3:24</span>
+      <span class="dur">${L.dur || 'скоро'}</span>
     </div>`;
-  const player = AC_VIDEO_URL
-    ? `<div class="ac-player" style="cursor:default"><video controls playsinline src="${AC_VIDEO_URL}"></video></div>`
+  const player = L.videoUrl
+    ? `<div class="ac-player" style="cursor:default"><video controls playsinline src="${L.videoUrl}"></video></div>`
     : cover;
   box.innerHTML = player + `
-    <div class="ac-video-actions">${acS.video
+    <div class="ac-video-actions">${ls.video
       ? `<span class="ac-done-chip">${I('check2')} Видео просмотрено</span>`
       : `<button class="btn" onclick="acMarkVideo()">${I('check2')} Отметить просмотренным</button>`}
     </div>`;
 }
 function acPlay(){
-  if(AC_VIDEO_URL) return;
-  showPopup({ico:'circle-play', title:'Видео выгружается на CDN',
-    body:'Ролик урока уже смонтирован — длительность 3:24, озвучка и караоке-субтитры готовы. Совсем скоро он появится прямо здесь. Пока изучи слайды ниже — в них весь материал.',
+  if(acCur().videoUrl) return;
+  showPopup({ico:'circle-play', title:'Видео урока в производстве',
+    body:'Ролик урока «'+acCur().title+'» сейчас монтируется: озвучка, анимации и караоке-субтитры по стандарту Академии. Совсем скоро он появится прямо здесь. Пока изучи слайды ниже — в них весь материал урока.',
     actions:[{label:'Понятно'}]});
 }
 function acMarkVideo(){
-  acS.video = true; acSave();
+  acLS().video = true; acSave();
   toast('Видео засчитано · +20% к уроку');
   acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox();
 }
@@ -276,7 +650,7 @@ function acBindSlides(){
       const kids = el.children;
       if(!kids.length) return;
       const step = kids[0].offsetWidth + 12;
-      const i = Math.max(0, Math.min(AC_SLIDES.length-1, Math.round(el.scrollLeft / step)));
+      const i = Math.max(0, Math.min(acCur().slides.length-1, Math.round(el.scrollLeft / step)));
       if(i !== acSlideIdx){ acSlideIdx = i; acSlideSync(); }
     });
   }, {passive:true});
@@ -285,9 +659,10 @@ function acSlideSync(){
   const dots = document.querySelectorAll('#acDots i');
   dots.forEach((d,i)=>d.classList.toggle('on', i===acSlideIdx));
   document.querySelectorAll('#acSlides .ac-slide').forEach((s,i)=>s.classList.toggle('cur', i===acSlideIdx));
-  if(acSlideIdx > acS.slideMax){ acS.slideMax = acSlideIdx; acSave(); }
-  if(acS.slideMax >= AC_SLIDES.length-1 && !acS.slides){
-    acS.slides = true; acSave();
+  const ls = acLS();
+  if(acSlideIdx > ls.slideMax){ ls.slideMax = acSlideIdx; acSave(); }
+  if(ls.slideMax >= acCur().slides.length-1 && !ls.slides){
+    ls.slides = true; acSave();
     toast('Слайды пройдены · +20% к уроку');
     acRenderProgressBox(); acRenderCertBox();
   }
@@ -296,7 +671,7 @@ function acSlideGo(d){
   const el = document.getElementById('acSlides');
   if(!el || !el.children.length) return;
   const step = el.children[0].offsetWidth + 12;
-  const i = Math.max(0, Math.min(AC_SLIDES.length-1, acSlideIdx + d));
+  const i = Math.max(0, Math.min(acCur().slides.length-1, acSlideIdx + d));
   el.scrollTo({left: i*step, behavior:'smooth'});
   acSlideIdx = i; acSlideSync();
 }
@@ -305,14 +680,15 @@ function acSlideGo(d){
 function acRenderTestBox(){
   const box = document.getElementById('acTestBox');
   if(!box) return;
+  const quiz = acCur().quiz, ls = acLS();
   if(!acQuiz){
-    box.innerHTML = acS.test
-      ? `<div class="ac-score" style="font-size:52px">${acS.testScore}%</div>
-         <div class="ac-score-sub">Тест сдан. Лучший результат — <b>${acS.testScore}%</b> при пороге ${AC_PASS}%.</div>
+    box.innerHTML = ls.test
+      ? `<div class="ac-score" style="font-size:52px">${ls.testScore}%</div>
+         <div class="ac-score-sub">Тест сдан. Лучший результат — <b>${ls.testScore}%</b> при пороге ${AC_PASS}%.</div>
          <button class="btn ghost" onclick="acQuizStart()">Пройти заново</button>`
-      : `<p style="font-size:13.5px;line-height:1.55">${AC_QUIZ.length} вопросов по карте нейросетей. По одному на экран, порог зачёта — <b style="color:var(--accent)">${AC_PASS}%</b>.${acS.testScore?` Прошлая попытка: ${acS.testScore}%.`:''}</p>
+      : `<p style="font-size:13.5px;line-height:1.55">${quiz.length} вопросов по материалу урока. По одному на экран, порог зачёта — <b style="color:var(--accent)">${AC_PASS}%</b>.${ls.testScore?` Прошлая попытка: ${ls.testScore}%.`:''}</p>
          <div style="height:12px"></div>
-         <button class="btn" onclick="acQuizStart()">${I('bolt')} ${acS.testScore?'Попробовать ещё раз':'Начать тест'}</button>`;
+         <button class="btn" onclick="acQuizStart()">${I('bolt')} ${ls.testScore?'Попробовать ещё раз':'Начать тест'}</button>`;
     return;
   }
   if(acQuiz.done){
@@ -320,17 +696,17 @@ function acRenderTestBox(){
     box.innerHTML = `
       <div class="ac-score" id="acScoreNum" ${pass?'':'style="color:var(--danger);text-shadow:none"'}>0%</div>
       <div class="ac-score-sub">${pass
-        ? `Порог ${AC_PASS}% пройден — <b>тест зачтён</b>. Верных ответов: ${acQuiz.hits} из ${AC_QUIZ.length}.`
-        : `<span class="fail">Не хватило до порога ${AC_PASS}%.</span> Верных: ${acQuiz.hits} из ${AC_QUIZ.length}. Пролистай слайды и попробуй снова.`}</div>
+        ? `Порог ${AC_PASS}% пройден — <b>тест зачтён</b>. Верных ответов: ${acQuiz.hits} из ${quiz.length}.`
+        : `<span class="fail">Не хватило до порога ${AC_PASS}%.</span> Верных: ${acQuiz.hits} из ${quiz.length}. Пролистай слайды и попробуй снова.`}</div>
       <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>`;
     const el = document.getElementById('acScoreNum');
     acCountUp(el, score, '%');
     return;
   }
-  const q = AC_QUIZ[acQuiz.i];
+  const q = quiz[acQuiz.i];
   box.innerHTML = `
-    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${AC_QUIZ.length}</span><span>верных: <b>${acQuiz.hits}</b></span></div>
-    <div class="progress" style="margin:0 0 4px"><i style="width:${(acQuiz.i/AC_QUIZ.length*100)}%"></i></div>
+    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${quiz.length}</span><span>верных: <b>${acQuiz.hits}</b></span></div>
+    <div class="progress" style="margin:0 0 4px"><i style="width:${(acQuiz.i/quiz.length*100)}%"></i></div>
     <div class="ac-q">${q.q}</div>
     ${q.o.map((o,i)=>`<button class="ac-opt" id="acOpt${i}" onclick="acAnswer(${i})"><span class="lb">${'АБВГ'[i]}</span><span>${o}</span></button>`).join('')}`;
 }
@@ -341,7 +717,8 @@ function acQuizStart(){
 function acAnswer(i){
   if(!acQuiz || acQuiz.lock || acQuiz.done) return;
   acQuiz.lock = true;
-  const q = AC_QUIZ[acQuiz.i];
+  const quiz = acCur().quiz;
+  const q = quiz[acQuiz.i];
   const right = i === q.a;
   if(right) acQuiz.hits++;
   const ok = document.getElementById('acOpt'+q.a);
@@ -350,12 +727,13 @@ function acAnswer(i){
   setTimeout(()=>{
     acQuiz.lock = false;
     acQuiz.i++;
-    if(acQuiz.i >= AC_QUIZ.length){
+    if(acQuiz.i >= quiz.length){
       acQuiz.done = true;
-      acQuiz.score = Math.round(acQuiz.hits / AC_QUIZ.length * 100);
-      if(acQuiz.score > acS.testScore) acS.testScore = acQuiz.score;
-      if(acQuiz.score >= AC_PASS && !acS.test){
-        acS.test = true;
+      acQuiz.score = Math.round(acQuiz.hits / quiz.length * 100);
+      const ls = acLS();
+      if(acQuiz.score > ls.testScore) ls.testScore = acQuiz.score;
+      if(acQuiz.score >= AC_PASS && !ls.test){
+        ls.test = true;
         toast('Тест сдан · +20% к уроку');
       }
       acSave();
@@ -378,25 +756,26 @@ function acCountUp(el, to, suffix){
 function acRenderTaskBox(){
   const box = document.getElementById('acTaskBox');
   if(!box) return;
+  const T = acCur().task, ls = acLS();
   if(acTaskChecking){
     box.innerHTML = `<div class="ac-checking"><span class="ac-spin"></span>
-      <div><p>Проверяется ИИ-куратором<small>Сверяю задачу, категорию и модель с картой урока…</small></p></div></div>`;
+      <div><p>Проверяется ИИ-куратором<small>Сверяю ответ с материалом урока…</small></p></div></div>`;
     return;
   }
-  if(acS.task){
+  if(ls.task){
     box.innerHTML = `
       <div class="ac-verdict">
         <div class="h">${I('check2')} Зачтено</div>
-        <p>Категория выбрана верно, модель соответствует бюджету задачи. Совет куратора: добавляй в промпт ожидаемый формат результата — модель ответит точнее.</p>
+        <p>${T.verdict}</p>
       </div>
       <div style="height:10px"></div>
-      <p class="dim" style="font-size:12px;line-height:1.5">Твой ответ: «${esc(acS.taskText.slice(0,140))}${acS.taskText.length>140?'…':''}»</p>`;
+      <p class="dim" style="font-size:12px;line-height:1.5">Твой ответ: «${esc(ls.taskText.slice(0,140))}${ls.taskText.length>140?'…':''}»</p>`;
     return;
   }
   box.innerHTML = `
-    <p style="font-size:13.5px;line-height:1.55">Возьми свою реальную задачу и разложи её по формуле урока — так, как отдал бы нейросети в работу:</p>
-    <div class="ac-task-formula"><span>Задача</span>${I('chev')}<span>Категория</span>${I('chev')}<span>Модель</span>${I('chev')}<span>Почему именно она</span></div>
-    <textarea class="ac-task-ta" id="acTaskTa" placeholder="Пример: Задача — обложка для урока. Категория — картинки. Модель — Flux: нужен фотореализм и объём дёшево. Формат — вертикаль 2:3, тёмный фон, лаймовый акцент.">${esc(acS.taskText)}</textarea>
+    <p style="font-size:13.5px;line-height:1.55">${T.intro}</p>
+    <div class="ac-task-formula">${T.chips.map((c,i)=>(i? I('chev'):'')+`<span>${c}</span>`).join('')}</div>
+    <textarea class="ac-task-ta" id="acTaskTa" placeholder="${esc(T.ph)}">${esc(ls.taskText)}</textarea>
     <div style="height:10px"></div>
     <button class="btn" onclick="acTaskSend()">${I('send')} Отправить на проверку</button>`;
 }
@@ -404,12 +783,13 @@ function acTaskSend(){
   const ta = document.getElementById('acTaskTa');
   const v = (ta && ta.value || '').trim();
   if(v.length < 40){ toast('Раскрой подробнее — минимум 40 символов'); return; }
-  acS.taskText = v; acSave();
+  const ls = acLS();
+  ls.taskText = v; acSave();
   acTaskChecking = true;
   acRenderTaskBox();
   setTimeout(()=>{
     acTaskChecking = false;
-    acS.task = true; acSave();
+    ls.task = true; acSave();
     toast('Практика зачтена · +20% к уроку');
     acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox();
   }, 4000);
@@ -420,27 +800,29 @@ function acShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.
 function acRenderGameBox(){
   const box = document.getElementById('acGameBox');
   if(!box) return;
+  const pairs = acCur().pairs, ls = acLS();
   if(!acG){
-    box.innerHTML = acS.game
-      ? `<div class="ac-game-done"><div class="big">5 / 5</div>
-         <p>Все пары собраны${acS.gameWrong!==null?` · ошибок: ${acS.gameWrong}`:''}. Инструменты и задачи — в связке.</p>
+    box.innerHTML = ls.game
+      ? `<div class="ac-game-done"><div class="big">${pairs.length} / ${pairs.length}</div>
+         <p>Все пары собраны${ls.gameWrong!==null?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
          <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`
-      : `<p style="font-size:13.5px;line-height:1.55"><b>Сопоставь инструмент с задачей.</b> Тапни инструмент слева, затем его задачу справа. Верная пара улетает, неверная — трясётся.</p>
+      : `<p style="font-size:13.5px;line-height:1.55"><b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.</p>
          <div style="height:12px"></div>
          <button class="btn" onclick="acGameStart()">${I('play')} Играть</button>`;
     return;
   }
-  const left = acG.left.map(i=>`<button class="ac-tile ${acG.sel===i?'sel':''}" id="acGL${i}" onclick="acGPick(${i})">${AC_PAIRS[i][0]}</button>`).join('');
-  const right = acG.right.map(i=>`<button class="ac-tile" id="acGR${i}" onclick="acGMatch(${i})">${AC_PAIRS[i][1]}</button>`).join('');
+  const left = acG.left.map(i=>`<button class="ac-tile ${acG.sel===i?'sel':''}" id="acGL${i}" onclick="acGPick(${i})">${pairs[i][0]}</button>`).join('');
+  const right = acG.right.map(i=>`<button class="ac-tile" id="acGR${i}" onclick="acGMatch(${i})">${pairs[i][1]}</button>`).join('');
   box.innerHTML = `
-    <div class="ac-game-score"><span>Собрано пар: <b>${acG.hits} / ${AC_PAIRS.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-game-score"><span>Собрано пар: <b>${acG.hits} / ${pairs.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
     <div class="ac-game-cols">
-      <div class="ac-game-col"><div class="h">Инструмент</div>${left}</div>
-      <div class="ac-game-col"><div class="h">Задача</div>${right}</div>
+      <div class="ac-game-col"><div class="h">Понятие</div>${left}</div>
+      <div class="ac-game-col"><div class="h">Пара</div>${right}</div>
     </div>`;
 }
 function acGameStart(){
-  acG = {left:[0,1,2,3,4], right:acShuffle([0,1,2,3,4]), sel:null, hits:0, wrong:0, lock:false};
+  const idx = acCur().pairs.map((_,i)=>i);
+  acG = {left:idx.slice(), right:acShuffle(idx), sel:null, hits:0, wrong:0, lock:false};
   acRenderGameBox();
 }
 function acGPick(i){
@@ -453,7 +835,7 @@ function acGPick(i){
 }
 function acGMatch(i){
   if(!acG || acG.lock) return;
-  if(acG.sel === null){ toast('Сначала выбери инструмент слева'); return; }
+  if(acG.sel === null){ toast('Сначала выбери элемент слева'); return; }
   const L = document.getElementById('acGL'+acG.sel), R = document.getElementById('acGR'+i);
   if(acG.sel === i){
     acG.lock = true;
@@ -466,8 +848,9 @@ function acGMatch(i){
       if(!acG.left.length){
         const wrong = acG.wrong;
         acG = null;
-        acS.gameWrong = wrong;
-        if(!acS.game){ acS.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
+        const ls = acLS();
+        ls.gameWrong = wrong;
+        if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
         acSave();
         acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
       } else acRenderGameBox();
@@ -488,29 +871,32 @@ function acGMatch(i){
 function acRenderProgressBox(){
   const box = document.getElementById('acProgressBox');
   if(!box) return;
-  const pct = acLessonPct();
-  box.innerHTML = acItems().map(([label,done])=>`
+  const pct = acLessonPct(acL);
+  const next = (acL < AC_COURSE.length-1 && acLessonDone(acL))
+    ? `<p class="dim" style="font-size:12px;text-align:center;margin-top:4px">Урок ${acL+2} «${AC_COURSE[acL+1].title}» открыт</p>` : '';
+  box.innerHTML = acItems(acL).map(([label,done])=>`
     <div class="ac-check-row ${done?'done':''}">
       <span class="ac-check-ic"><svg class="i"><use href="#i-check2"/></svg></span>
       <span>${label}</span><span class="pct">${done?'+20%':'—'}</span>
     </div>`).join('') + `
     <div class="progress" style="margin:12px 0 6px"><i style="width:${pct}%"></i></div>
-    <p class="dim" style="font-size:12px;text-align:center">Урок пройден на <b style="color:var(--accent)">${pct}%</b></p>`;
+    <p class="dim" style="font-size:12px;text-align:center">Урок пройден на <b style="color:var(--accent)">${pct}%</b></p>` + next;
 }
 
 /* ================= СЕРТИФИКАТ ================= */
 function acRenderCertBox(){
   const box = document.getElementById('acCertBox');
   if(!box) return;
-  const okV = acS.video, okT = acS.testScore >= AC_PASS;
-  if(acS.cert){
+  const ls = acLS();
+  const okV = ls.video, okT = ls.testScore >= AC_PASS;
+  if(ls.cert){
     box.innerHTML = `
       <div class="card ac-cert-card ready">
         <div class="ac-cert-head">
           <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
           <div><h3>Сертификат получен</h3><p>Официальный документ Академии OKO с печатью и подписью</p></div>
         </div>
-        <span class="ac-cert-no">${esc(acS.cert.no)} · ${esc(acS.cert.date)} · тест ${acS.cert.score}%</span>
+        <span class="ac-cert-no">${esc(ls.cert.no)} · ${esc(ls.cert.date)} · тест ${ls.cert.score}%</span>
         <div class="ac-cert-actions">
           <button class="btn" onclick="acCertDownload()">${I('file')} Скачать PNG</button>
           <button class="btn ghost" onclick="acCertShow()">${I('eye')} Показать</button>
@@ -523,7 +909,7 @@ function acRenderCertBox(){
       <div class="card ac-cert-card ready">
         <div class="ac-cert-head">
           <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
-          <div><h3>Сертификат готов к выдаче</h3><p>Видео просмотрено, тест сдан на ${acS.testScore}% — условия выполнены</p></div>
+          <div><h3>Сертификат готов к выдаче</h3><p>Видео просмотрено, тест сдан на ${ls.testScore}% — условия выполнены</p></div>
         </div>
         <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат</button>
       </div>`;
@@ -537,24 +923,29 @@ function acRenderCertBox(){
       </div>
       <div class="ac-cert-req">
         <div class="${okV?'ok':''}">${I(okV?'check2':'circle-play')} Отметить видео просмотренным</div>
-        <div class="${okT?'ok':''}">${I(okT?'check2':'poll')} Сдать тест на ${AC_PASS}% и выше${acS.testScore?` (сейчас ${acS.testScore}%)`:''}</div>
+        <div class="${okT?'ok':''}">${I(okT?'check2':'poll')} Сдать тест на ${AC_PASS}% и выше${ls.testScore?` (сейчас ${ls.testScore}%)`:''}</div>
       </div>
     </div>`;
 }
 
 function acIssueCert(){
+  const ls = acLS();
   const cert = {
     no: 'OKO-CERT-' + String(Math.floor(1e5 + Math.random()*9e5)),
     date: new Date().toLocaleDateString('ru-RU'),
-    score: acS.testScore,
-    name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии'
+    score: ls.testScore,
+    name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии',
+    lesson: acL,
+    lessonTitle: acCur().title
   };
-  acS.cert = cert;
+  ls.cert = cert;
   acS.certs.unshift(cert);
   acSave();
   acCertUrl = null;
-  toast('Сертификат выдан: ' + cert.no);
-  acRenderCertBox();
+  toast(acL < AC_COURSE.length-1
+    ? 'Сертификат выдан · урок ' + (acL+2) + ' открыт'
+    : 'Сертификат выдан: ' + cert.no);
+  acRenderCertBox(); acRenderProgressBox();
   acCertShow();
 }
 
@@ -671,12 +1062,19 @@ function acMakeCert(cert, cb){
     ctx.strokeStyle = 'rgba(154,255,0,.5)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W/2-260, 512); ctx.lineTo(W/2+260, 512); ctx.stroke();
     // курс / урок
+    const lessonNo = (typeof cert.lesson === 'number' ? cert.lesson : 0) + 1;
+    const lessonTitle = '«' + (cert.lessonTitle || AC_COURSE[0].title).toUpperCase() + '»';
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 26px Montserrat, Arial';
-    ctx.fillText('успешно прошёл урок', W/2, 566);
+    ctx.fillText('успешно прошёл урок ' + lessonNo, W/2, 566);
     ctx.fillStyle = lime;
-    ctx.font = '64px "Bebas Neue", Impact, sans-serif';
-    ctx.fillText('«КАРТА НЕЙРОСЕТЕЙ 2026»', W/2, 646);
+    let fs = 64;
+    ctx.font = fs + 'px "Bebas Neue", Impact, sans-serif';
+    while(fs > 40 && ctx.measureText(lessonTitle).width > W-260){
+      fs -= 4;
+      ctx.font = fs + 'px "Bebas Neue", Impact, sans-serif';
+    }
+    ctx.fillText(lessonTitle, W/2, 646);
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 24px Montserrat, Arial';
     ctx.fillText('курса «Нейросети 2026» Академии OKO', W/2, 696);
@@ -732,11 +1130,14 @@ function acMakeCert(cert, cb){
 
 function acCertRec(i){
   if(typeof i === 'number' && acS.certs[i]) return acS.certs[i];
-  return acS.cert || acS.certs[0] || null;
+  if(acCertShownNo){
+    const shown = acS.certs.find(c=>c.no===acCertShownNo);
+    if(shown) return shown;
+  }
+  return (acView==='lesson' ? acLS().cert : null) || acS.certs[0] || null;
 }
-let acCertShownNo = null;
 function acCertShow(i){
-  const cert = acCertRec(i);
+  const cert = (typeof i === 'number') ? acS.certs[i] : (acLS().cert || acCertRec());
   if(!cert){ toast('Сертификат ещё не выдан'); return; }
   const open = url=>{
     const full = document.getElementById('acCertFull');

@@ -28,6 +28,7 @@ ORDER = [
     'market-pro',      # биржа: кабинет продавца + пакеты услуг OKO
     'feed-algo',       # алгоритмы рекомендаций ленты по интересам
     'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
+    'pwa',             # установка на главный экран + service worker
 ]
 
 def read(p):

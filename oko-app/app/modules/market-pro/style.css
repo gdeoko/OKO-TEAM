@@ -1,0 +1,179 @@
+/* ===== MARKET-PRO: кабинет продавца + пакеты OKO Production (префикс mp-) ===== */
+@keyframes mpFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes mpPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes mpBarIn{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes mpSweep{0%{transform:translateX(-130%) skewX(-18deg)}100%{transform:translateX(260%) skewX(-18deg)}}
+@keyframes mpBreath{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes mpFlash{0%{background:var(--lime-dim)}100%{background:transparent}}
+@keyframes mpSpin{to{transform:rotate(360deg)}}
+
+/* ---------- кнопка-строка «Кабинет продавца» (биржа, под быстрыми кнопками) ---------- */
+.mp-cab-row{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin:-9px 0 12px;text-align:left;transition:transform .12s,border-color .2s,box-shadow .2s;animation:mpFade .3s ease both}
+.mp-cab-row:hover{border-color:var(--accent);box-shadow:0 0 14px rgba(154,255,0,.12)}
+.mp-cab-row:active{transform:scale(.98)}
+.mp-cab-ic{width:38px;height:38px;border-radius:12px;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.mp-cab-ic svg.i{width:20px;height:20px}
+.mp-cab-b{flex:1;min-width:0}
+.mp-cab-b b{display:block;font-size:13.5px}
+.mp-cab-b small{font-size:11px;color:var(--dim)}
+.mp-cab-row .mp-chev{width:15px;height:15px;color:var(--dim);transition:transform .2s}
+.mp-cab-row:hover .mp-chev{transform:translateX(3px);color:var(--accent)}
+
+/* ---------- премиум-баннер «OKO Production — под ключ» ---------- */
+.mp-banner{position:relative;overflow:hidden;display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:radial-gradient(130% 220% at 100% 0%,rgba(154,255,0,.22),transparent 52%),linear-gradient(135deg,#141c07,#050802 74%);border:1px solid rgba(154,255,0,.4);border-radius:var(--r-lg);padding:16px 15px;margin:0 0 20px;cursor:pointer;transition:transform .12s,border-color .2s,box-shadow .25s;animation:mpFade .35s ease both}
+.mp-banner:hover{border-color:var(--lime);box-shadow:var(--glow)}
+.mp-banner:active{transform:scale(.985)}
+.mp-banner::before{content:'';position:absolute;top:0;bottom:0;width:46%;left:0;background:linear-gradient(105deg,transparent,rgba(154,255,0,.09),transparent);animation:mpSweep 3.6s ease-in-out infinite;pointer-events:none}
+.mp-banner::after{content:'';position:absolute;top:-55%;right:-12%;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.18),transparent 65%);animation:mpBreath 4.5s ease-in-out infinite;pointer-events:none}
+:root[data-theme="light"] .mp-banner{background:radial-gradient(130% 220% at 100% 0%,rgba(110,200,0,.16),transparent 52%),linear-gradient(135deg,#eef6de,#f8fbf2 74%);border-color:#b9d788}
+:root[data-theme="light"] .mp-banner:hover{box-shadow:0 4px 18px rgba(83,168,0,.18)}
+.mp-banner-logo{position:relative;z-index:1;width:44px;height:44px;border-radius:13px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.35);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
+.mp-banner-logo svg{width:26px;height:26px;filter:drop-shadow(0 0 6px rgba(154,255,0,.5))}
+:root[data-theme="light"] .mp-banner-logo svg{filter:none}
+.mp-banner-b{position:relative;z-index:1;flex:1;min-width:0}
+.mp-banner-t{display:block;font-family:var(--font-display);font-size:22px;letter-spacing:.07em;line-height:1.02;color:var(--text)}
+.mp-banner-t b{color:var(--accent);font-weight:400}
+.mp-banner-s{display:block;font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.35}
+.mp-banner-cta{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.mp-banner-chip{font-size:11px;font-weight:800;letter-spacing:.05em;color:#000;background:var(--lime);border-radius:99px;padding:5px 11px;white-space:nowrap;box-shadow:var(--glow)}
+.mp-banner-cta svg.i{width:15px;height:15px;color:var(--accent)}
+
+/* ---------- кабинет продавца (sheet) ---------- */
+.mp-cab-head{display:flex;align-items:center;gap:12px;margin:2px 0 14px}
+.mp-cab-ava{width:46px;height:46px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0;box-shadow:var(--glow)}
+.mp-cab-head b{font-size:15.5px;display:flex;align-items:center;gap:6px}
+.mp-cab-head small{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--dim);margin-top:3px}
+.mp-cab-head small .st{display:inline-flex}
+.mp-cab-head small .st svg.i{width:11px;height:11px;color:var(--border)}
+.mp-cab-head small .st.on svg.i{color:var(--lime);fill:var(--lime)}
+.mp-h{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin:16px 0 9px;display:flex;align-items:center;gap:7px}
+.mp-h svg.i{width:13px;height:13px;color:var(--accent)}
+.mp-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mp-kpi-t{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 6px 9px;text-align:center;transition:border-color .2s;animation:mpFade .3s ease both}
+.mp-kpi-t:nth-child(2){animation-delay:.05s}.mp-kpi-t:nth-child(3){animation-delay:.1s}.mp-kpi-t:nth-child(4){animation-delay:.15s}
+.mp-kpi-t:hover{border-color:var(--accent)}
+.mp-kpi-t svg.i{width:16px;height:16px;color:var(--accent)}
+.mp-kpi-t b{display:block;font-family:var(--font-display);font-size:21px;letter-spacing:.03em;margin-top:4px;line-height:1}
+.mp-kpi-t small{display:block;font-size:9.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+/* баланс продаж */
+.mp-balcard{position:relative;overflow:hidden;background:radial-gradient(120% 180% at 90% 0%,rgba(154,255,0,.16),transparent 55%),linear-gradient(140deg,#101708,#070a04 70%);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px 15px 13px;animation:mpFade .3s ease both}
+:root[data-theme="light"] .mp-balcard{background:linear-gradient(140deg,#f0f7e4,#e9f2dc 70%)}
+.mp-bal-sum{font-family:var(--font-display);font-size:36px;line-height:1;letter-spacing:.03em;margin:2px 0 10px;text-shadow:0 0 22px rgba(154,255,0,.4)}
+:root[data-theme="light"] .mp-bal-sum{text-shadow:none}
+.mp-bal-sum b{color:var(--accent);font-weight:400}
+.mp-calc{border-top:1px dashed var(--border);padding-top:9px;margin-bottom:12px}
+.mp-calc-row{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);padding:2.5px 0}
+.mp-calc-row b{color:var(--text);font-weight:700}
+.mp-calc-row.fee b{color:var(--danger)}
+.mp-calc-row.total{border-top:1px solid var(--border);margin-top:5px;padding-top:7px;font-weight:700;color:var(--text)}
+.mp-calc-row.total b{color:var(--accent);font-size:14px}
+/* мои объявления: мини-статистика */
+.mp-lst{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 12px;margin-bottom:8px;cursor:pointer;transition:transform .12s,border-color .2s;animation:mpFade .3s ease both}
+.mp-lst:hover{border-color:var(--dim)}
+.mp-lst:active{transform:scale(.98)}
+.mp-lst-ic{width:36px;height:36px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mp-lst-ic svg.i{width:18px;height:18px}
+.mp-lst-b{flex:1;min-width:0}
+.mp-lst-b b{display:block;font-size:12.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-lst-s{display:flex;gap:10px;font-size:10.5px;color:var(--dim);margin-top:3px;flex-wrap:wrap}
+.mp-lst-s span{display:inline-flex;align-items:center;gap:3px}
+.mp-lst-s svg.i{width:11px;height:11px}
+.mp-lst-rev{font-size:12.5px;font-weight:800;color:var(--accent);white-space:nowrap;flex-shrink:0}
+/* сделки с эскроу */
+.mp-deal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 12px;margin-bottom:8px;animation:mpFade .3s ease both}
+.mp-deal-top{display:flex;align-items:center;gap:8px}
+.mp-deal-top b{flex:1;min-width:0;font-size:12.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-deal-sum{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap}
+.mp-deal-meta{display:flex;align-items:center;gap:8px;margin-top:7px;flex-wrap:wrap}
+.mp-deal-meta small{font-size:10.5px;color:var(--dim)}
+.mp-st{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.04em;border-radius:99px;padding:3.5px 9px}
+.mp-st svg.i{width:10px;height:10px}
+.mp-st.work{background:rgba(255,180,0,.13);color:#ffb400}
+.mp-st.wait{background:var(--lime-dim);color:var(--accent)}
+.mp-st.done{background:var(--raised);color:var(--dim)}
+:root[data-theme="light"] .mp-st.work{background:rgba(200,130,0,.12);color:#a86e00}
+.mp-dir{font-size:10px;font-weight:700;color:var(--dim);border:1px solid var(--border);border-radius:99px;padding:3px 8px}
+.mp-deal-act{margin-top:9px;display:flex;gap:8px}
+.mp-deal-act button{flex:1;font-size:11.5px;font-weight:700;padding:8px 10px;border-radius:var(--r-sm);background:var(--lime-dim);color:var(--accent);border:1px solid rgba(154,255,0,.3);transition:transform .12s}
+.mp-deal-act button:active{transform:scale(.97)}
+.mp-esc{display:inline-flex;align-items:center;gap:4px}
+.mp-esc svg.i{width:10px;height:10px}
+/* отзывы */
+.mp-rev{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;animation:mpFade .3s ease both}
+.mp-rev-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.mp-rev-h b{font-size:12px}
+.mp-rev p{font-size:12px;color:var(--dim);line-height:1.4}
+.mp-rev-st{display:flex}
+.mp-rev-st svg.i{width:11px;height:11px;color:var(--border)}
+.mp-rev-st .on svg.i{color:var(--lime);fill:var(--lime)}
+.mp-rate-big{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px}
+.mp-rate-big b{font-family:var(--font-display);font-size:34px;line-height:1;color:var(--accent)}
+.mp-rate-big small{font-size:11px;color:var(--dim);display:block;margin-top:2px}
+.mp-empty{font-size:12px;color:var(--dim);padding:8px 2px}
+
+/* ---------- вьюха пакетов OKO Production ---------- */
+.mp-hero{position:relative;overflow:hidden;text-align:center;background:radial-gradient(120% 160% at 50% 0%,rgba(154,255,0,.16),transparent 60%),linear-gradient(160deg,#10170a,#050800 75%);border:1px solid rgba(154,255,0,.3);border-radius:var(--r-lg);padding:26px 18px 22px;margin-bottom:18px;animation:mpFade .35s ease both}
+:root[data-theme="light"] .mp-hero{background:radial-gradient(120% 160% at 50% 0%,rgba(110,200,0,.14),transparent 60%),linear-gradient(160deg,#f0f7e2,#fafcf5 75%)}
+.mp-hero::after{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.15),transparent 66%);animation:mpBreath 5s ease-in-out infinite;pointer-events:none}
+.mp-hero svg{width:40px;height:40px;color:var(--accent);filter:drop-shadow(0 0 8px rgba(154,255,0,.5));margin-bottom:8px}
+:root[data-theme="light"] .mp-hero svg{filter:none}
+.mp-hero h2{font-size:34px;letter-spacing:.1em;line-height:1}
+.mp-hero h2 b{color:var(--accent);font-weight:400}
+.mp-hero p{position:relative;z-index:1;font-size:12.5px;color:var(--dim);margin-top:8px;line-height:1.5;max-width:340px;margin-left:auto;margin-right:auto}
+.mp-pack{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 16px 16px;margin-bottom:14px;transition:border-color .25s,box-shadow .25s;animation:mpFade .35s ease both}
+.mp-pack:hover{border-color:var(--dim)}
+.mp-pack.hot{border-color:rgba(154,255,0,.55);background:radial-gradient(130% 170% at 100% 0%,rgba(154,255,0,.1),transparent 55%),var(--surface)}
+.mp-pack.hot:hover{box-shadow:var(--glow)}
+.mp-pack-flag{position:absolute;top:14px;right:-33px;transform:rotate(38deg);background:var(--lime);color:#000;font-size:9.5px;font-weight:800;letter-spacing:.1em;padding:4px 38px}
+.mp-pack-name{font-family:var(--font-display);font-size:30px;letter-spacing:.08em;line-height:1;color:var(--text)}
+.mp-pack-tag{font-size:11.5px;color:var(--dim);margin-top:4px}
+.mp-pack-price{display:flex;align-items:baseline;gap:9px;margin:12px 0 4px}
+.mp-pack-price b{font-family:var(--font-display);font-size:42px;line-height:1;letter-spacing:.02em;color:var(--accent);text-shadow:0 0 20px rgba(154,255,0,.35)}
+:root[data-theme="light"] .mp-pack-price b{text-shadow:none}
+.mp-pack-price span{font-size:12px;color:var(--dim);font-weight:600}
+.mp-inc{margin:12px 0 4px}
+.mp-inc li{display:flex;align-items:flex-start;gap:9px;list-style:none;font-size:12.5px;line-height:1.45;padding:4.5px 0}
+.mp-inc li svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.mp-inc li.bonus{color:var(--text);font-weight:600}
+.mp-inc li.bonus svg.i{filter:drop-shadow(0 0 5px rgba(154,255,0,.6))}
+:root[data-theme="light"] .mp-inc li.bonus svg.i{filter:none}
+.mp-bonus-lab{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.12em;color:#000;background:var(--lime);border-radius:99px;padding:4px 11px;margin:8px 0 2px;box-shadow:var(--glow)}
+/* «что получаешь по неделям» */
+.mp-weeks{border-top:1px dashed var(--border);margin-top:12px;padding-top:11px}
+.mp-weeks-h{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+.mp-week{display:flex;gap:11px;padding:0 0 12px;position:relative}
+.mp-week::before{content:'';position:absolute;left:13px;top:28px;bottom:-2px;width:2px;background:linear-gradient(var(--lime-dim),transparent)}
+.mp-week:last-child::before{display:none}
+.mp-week-n{width:27px;height:27px;border-radius:50%;background:var(--lime-dim);border:1px solid rgba(154,255,0,.35);color:var(--accent);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mp-week-b b{display:block;font-size:11.5px;letter-spacing:.03em}
+.mp-week-b small{font-size:11px;color:var(--dim);line-height:1.4;display:block;margin-top:1px}
+.mp-pack .btn{margin-top:6px}
+.mp-pack-note{font-size:10.5px;color:var(--dim);text-align:center;margin-top:9px}
+/* индивидуальный пакет */
+.mp-pack.custom{display:flex;align-items:center;gap:13px;padding:16px}
+.mp-pack.custom .mp-cab-ic{width:44px;height:44px}
+.mp-pack.custom .mp-pack-name{font-size:22px}
+.mp-pack.custom p{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.4}
+.mp-pack.custom .btn{margin:0;flex-shrink:0;width:auto;padding:11px 15px;font-size:12px}
+
+/* ---------- sheet заказа пакета ---------- */
+.mp-ord-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.mp-ord-head .mp-banner-logo{width:40px;height:40px}
+.mp-ord-head b{font-size:15px;display:block}
+.mp-ord-head small{font-size:11.5px;color:var(--dim)}
+.mp-ok-wrap{text-align:center;padding:18px 0 6px}
+.mp-ok{width:64px;height:64px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:var(--glow);animation:mpPop .45s cubic-bezier(.3,1.4,.5,1) both}
+.mp-ok svg.i{width:30px;height:30px}
+.mp-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);margin:0 auto;animation:mpSpin .8s linear infinite}
+.mp-lack{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.3);border-radius:var(--r-md);padding:11px 13px;font-size:12px;color:var(--danger);font-weight:600;margin:10px 0}
+
+/* ---------- закреплённые ветки работ в чате ---------- */
+.mp-pin{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px 9px;animation:mpFade .25s ease both}
+.mp-pin-h{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+.mp-pin-h svg.i{width:12px;height:12px}
+.mp-pin-chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
+.mp-pin-chips::-webkit-scrollbar{display:none}
+.mp-pin-chips button{flex-shrink:0;font-size:11px;font-weight:700;padding:6px 12px;border-radius:99px;background:var(--raised);border:1px solid var(--border);color:var(--text);transition:all .18s}
+.mp-pin-chips button:hover{border-color:var(--lime);color:var(--accent)}
+.mp-pin-chips button:active{transform:scale(.95)}
+.mp-branch-flash{animation:mpFlash 1.6s ease both;border-radius:var(--r-sm)}
