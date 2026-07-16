@@ -249,7 +249,7 @@ function renderLessons() {
   $('#lessons').innerHTML = DEMO.blocks.map((block, bi) => `
     <div class="block-title">${block.title} <small>${block.range} · награда: ${block.award}</small></div>
     ${block.lessons.map((l) => `
-      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} ${l.img ? 'lesson-item--img' : ''}" data-state="${l.state}" data-n="${l.n}">
+      <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} ${l.img ? 'lesson-item--img' : ''}" data-state="${l.state}" data-n="${l.n}" data-bi="${bi}">
         ${l.img
           ? `<div class="lesson-item__thumb"><img src="${l.img}" alt="" loading="lazy"><span class="lesson-item__badge">${l.n}</span></div>`
           : `<div class="lesson-item__num">${l.exam ? ICON('crown', 20) : l.n}</div>`}
@@ -266,7 +266,9 @@ function renderLessons() {
     el.addEventListener('click', () => {
       const n = Number(el.dataset.n);
       if (Number.isNaN(n)) {
-        toast('Проверка знаний откроется после всех уроков блока');
+        // экзамен блока — определяем индекс блока по кнопке
+        const bi = Number(el.dataset.bi);
+        openExam(Number.isNaN(bi) ? 0 : bi);
         return;
       }
       openLesson(n);
@@ -1078,8 +1080,8 @@ function nextLessonTitle(n) {
 }
 
 function unlockAllLessons() {
-  // Витрина: открываем все уроки для просмотра контента (прогресс-геймификация — на бэкенде)
-  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (!l.exam && l.state === 'locked') l.state = 'open'; }));
+  // Витрина: открываем все уроки и проверки для просмотра (прогресс-геймификация — на бэкенде)
+  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (l.state === 'locked') l.state = 'open'; }));
 }
 
 function initLesson() {
@@ -1087,6 +1089,96 @@ function initLesson() {
     $('#nav').style.display = '';
     switchTab('lessons');
   });
+  $('#examBack')?.addEventListener('click', () => {
+    $('#nav').style.display = '';
+    switchTab('lessons');
+  });
+}
+
+/* ───────── ПРОВЕРКА ЗНАНИЙ (экзамен блока) ───────── */
+
+let examState = null; // { bi, questions:[{q,opts,answer,from}], answers:{} }
+
+function openExam(bi) {
+  const block = DEMO.blocks[bi];
+  if (!block) return;
+  // Собираем по одному вопросу из каждого урока блока (там, где есть контент)
+  const questions = [];
+  block.lessons.forEach((l) => {
+    if (l.exam) return;
+    const c = lessonContent(l.n);
+    if (c && c.quiz && c.quiz.length) {
+      // детерминированный выбор вопроса (по номеру урока)
+      const q = c.quiz[l.n % c.quiz.length];
+      questions.push({ q: q.q, opts: q.opts, answer: q.answer, from: l.n, title: l.title });
+    }
+  });
+  examState = { bi, questions, answers: {} };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'exam'));
+  $('#nav').style.display = 'none';
+  renderExam();
+  window.scrollTo({ top: 0 });
+}
+
+function renderExam() {
+  const { bi, questions } = examState;
+  const block = DEMO.blocks[bi];
+  const total = questions.length;
+  $('#examBody').innerHTML = `
+    <div class="exam-head">
+      <div class="exam-head__ic">${ICON('crown', 26)}</div>
+      <div>
+        <div class="exam-head__title">Проверка знаний</div>
+        <div class="exam-head__sub">${block.title.replace(/^Блок \d+ · /, '')} · ${total} вопросов · порог 70%</div>
+      </div>
+    </div>
+    <div class="card" id="examQuiz">
+      ${questions.map((q, qi) => `<div class="q" data-q="${qi}">
+        <div class="q__text">${qi + 1}. ${q.q}</div>
+        ${q.opts.map((o, oi) => `<label class="q__opt"><input type="radio" name="ex${qi}" value="${oi}"> ${o}</label>`).join('')}
+      </div>`).join('')}
+      <button class="btn btn--primary" id="examCheck" style="width:100%">Завершить проверку</button>
+      <div class="test-result" id="examResult" hidden></div>
+    </div>`;
+  hydrateIcons();
+  $('#examCheck').addEventListener('click', gradeExam);
+}
+
+function gradeExam() {
+  const { bi, questions } = examState;
+  let correct = 0, answered = 0;
+  questions.forEach((q, qi) => {
+    const sel = document.querySelector(`input[name="ex${qi}"]:checked`);
+    $$(`input[name="ex${qi}"]`).forEach((i) => i.closest('.q__opt').classList.remove('right', 'wrong'));
+    if (!sel) return;
+    answered++;
+    const label = sel.closest('.q__opt');
+    if (Number(sel.value) === q.answer) { correct++; label.classList.add('right'); }
+    else label.classList.add('wrong');
+  });
+  if (answered < questions.length) return toast('Ответь на все вопросы');
+  const pct = Math.round(correct / questions.length * 100);
+  const res = $('#examResult');
+  res.hidden = false;
+  const block = DEMO.blocks[bi];
+  const award = block.award;
+  if (pct >= 70) {
+    res.className = 'test-result pass';
+    res.textContent = `Поздравляем! ${correct} из ${questions.length} (${pct}%). Проверка блока пройдена — значок ${award} твой!`;
+    localStorage.setItem('mt_exam_' + bi, JSON.stringify({ pct, ts: Date.now() }));
+    if (window.MAGIC) {
+      const r = $('#examCheck').getBoundingClientRect();
+      MAGIC.celebrate(r.left + r.width / 2, r.top);
+      setTimeout(() => MAGIC.rewardModal({
+        icon: 'crown', title: 'Проверка блока пройдена!',
+        subtitle: `Ты получил значок ${award}. Сертификат доступен в разделе «Сертификаты».`,
+        xp: 50,
+      }), 400);
+    }
+  } else {
+    res.className = 'test-result fail';
+    res.textContent = `${correct} из ${questions.length} (${pct}%) — нужно 70%. Повтори уроки блока и попробуй снова.`;
+  }
 }
 
 
