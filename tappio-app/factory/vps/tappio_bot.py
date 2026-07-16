@@ -68,11 +68,14 @@ def txt_progress():
             f"<i>Обновлено: {s.get('updated','—')}</i>")
 
 def txt_accounts():
+    ig = 'https://www.instagram.com/tappio.app.pro/'
+    yt = 'https://www.youtube.com/channel/UChJNuqMcytBhNfR5vsw49HQ'
+    tt = 'https://www.tiktok.com/@tappio.app'
     return ("<b>🔗 Аккаунты Tappio</b>\n\n"
-            "Instagram: <b>tappio.app.pro</b> — прямая сессия ✅\n"
-            "YouTube: <b>TAPPIO</b> — Data API ✅\n"
-            "TikTok: <b>@tappio.app</b> — через Hooppy ✅\n\n"
-            "<i>Бот ведёт только проект Tappio.</i>")
+            f"📸 Instagram: <a href=\"{ig}\">@tappio.app.pro</a> ✅\n"
+            f"▶️ YouTube: <a href=\"{yt}\">канал TAPPIO</a> ✅\n"
+            f"🎵 TikTok: <a href=\"{tt}\">@tappio.app</a> ✅\n\n"
+            "<i>Нажми на ссылку — откроется профиль. Бот ведёт только Tappio.</i>")
 
 def txt_report():
     try: return open(REPORT).read()[:3500]
@@ -131,7 +134,8 @@ def setup():
     ], ensure_ascii=False))
 
 def send(chat, text):
-    api('sendMessage', chat_id=chat, text=text, parse_mode='HTML', reply_markup=kb())
+    api('sendMessage', chat_id=chat, text=text, parse_mode='HTML',
+        disable_web_page_preview='true', reply_markup=kb())
 
 def main():
     setup()
