@@ -1,0 +1,52 @@
+{
+  "id": "brain_v3",
+  "app": "brain",
+  "voice": "en-US-BrianNeural",
+  "rate": "+5%",
+  "grade": "purple_dream",
+  "brand": {"accent": "#9B5DE5", "accent2": "#C9A7FF", "code": "FOCUS", "logo": "brain.png", "name": "BRAINOVA"},
+  "music": {"queries": ["uplifting focus ambient", "warm inspiring piano electronic", "calm motivational underscore"]},
+  "cover": {"style": "kinetic", "kicker": "60-SECOND TEST", "top": "YOUR BRAIN AGE", "big": "MIGHT SHOCK\nYOU", "q": ["human brain glowing neurons abstract"]},
+  "segments": [
+    {"id": "b1", "text": "Quick question. You walk into a room, and forget why you came in. How often?"},
+    {"id": "b2", "text": "That is not age. That is an untrained working memory. And you can measure it."},
+    {"id": "b3", "text": "This test takes sixty seconds. It scores memory, focus, and reaction speed."},
+    {"id": "b4", "text": "Then it builds a daily plan. Five minutes a day, games that adapt to you."},
+    {"id": "b5", "text": "People who train just two weeks see their focus score climb. The graph is addictive."},
+    {"id": "b6", "text": "So, ready to see your number? Your brain is trainable. Start today."}
+  ],
+  "shots": [
+    {"q": ["person thinking looking up remembering"], "motion": "zin"},
+    {"q": ["empty doorway home walking through"], "motion": "panr"},
+    {"q": ["glowing brain neurons synapse abstract"], "motion": "zin"},
+    {"q": ["person focused studying laptop calm"], "motion": "panl"},
+    {"q": ["clock ticking time closeup"], "motion": "zout"},
+    {"visual": "DEMO:brain_score"},
+    {"q": ["hand tapping smartphone screen bright"], "motion": "zin"},
+    {"q": ["chess pieces strategy closeup"], "motion": "panr"},
+    {"q": ["morning coffee routine desk cozy"], "motion": "pandown"},
+    {"q": ["puzzle pieces connecting macro"], "motion": "zin"},
+    {"visual": "DEMO:brain_score"},
+    {"q": ["sunrise window calm mindful person"], "motion": "panl"},
+    {"q": ["colorful abstract particles network"], "motion": "zout"},
+    {"q": ["happy person celebrating small win"], "motion": "zin"},
+    {"q": ["notebook checklist planning morning"], "motion": "pandown"},
+    {"q": ["person smiling confident bright room"], "motion": "zin"}
+  ],
+  "overlays": [
+    {"at": 0.03, "dur": 1.5, "type": "kicker", "text": "60-SECOND BRAIN TEST"},
+    {"at": 0.10, "dur": 1.7, "type": "kinetic", "top": "WHY DID I", "big": "COME IN HERE?"},
+    {"at": 0.18, "dur": 1.6, "type": "stat_count", "to": 7, "suffix": "x", "label": "A DAY, ON AVERAGE", "pos": "center"},
+    {"at": 0.26, "dur": 2.0, "type": "bars", "title": "WHAT IT SCORES", "unit": "", "pos": "center", "items": [["Working memory", 92], ["Focus span", 78], ["Reaction speed", 85]]},
+    {"at": 0.36, "dur": 1.5, "type": "lowerthird", "title": "60 SECONDS", "sub": "one score, three skills"},
+    {"at": 0.43, "dur": 1.6, "type": "ticker", "to": 5, "suffix": " min", "label": "A DAY TO TRAIN", "pos": "upper"},
+    {"at": 0.51, "dur": 1.6, "type": "chips", "pos": "upper", "items": ["MEMORY", "FOCUS", "LOGIC", "SPEED"]},
+    {"at": 0.59, "dur": 1.7, "type": "ring", "pct": 74, "label": "FOCUS SCORE IN 2 WEEKS", "pos": "upper"},
+    {"at": 0.67, "dur": 1.5, "type": "kinetic", "top": "THE GRAPH IS", "big": "ADDICTIVE"},
+    {"at": 0.74, "dur": 1.6, "type": "stat_count", "to": 30, "prefix": "+", "suffix": "%", "label": "FOCUS AFTER 14 DAYS", "pos": "center"},
+    {"at": 0.82, "dur": 1.5, "type": "lowerthird", "title": "ADAPTS TO YOU", "sub": "games get harder as you grow"},
+    {"at": 0.89, "dur": 1.6, "type": "kinetic", "top": "YOUR BRAIN IS", "big": "TRAINABLE"},
+    {"at": 0.95, "dur": 1.5, "type": "kicker", "text": "SEE YOUR NUMBER"}
+  ],
+  "cta": {"text": "See your brain age in 60 seconds. Comment FOCUS for the app.", "code": "FOCUS"}
+}
