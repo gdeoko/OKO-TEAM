@@ -230,3 +230,12 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 3. Кредиты Higgsfield: 4К-апскейл видео, 3D из фото.
 4. Mixamo: разово скачать FBX-пак персонажей вручную и прислать в чат.
 5. Cloudflare Pages: отложено, не поднимать.
+
+## VPS-агент OKO как «руки» для скачивания/аналитики (V.CODE и др.)
+- Endpoint `OKO_POSTER_URL` (`.../poster/exec`) + `OKO_POSTER_TOKEN` — выполняет
+  shell на VPS `okoposter@msk-1-vm` (чистый IP). Установлены yt-dlp+curl_cffi+ffmpeg,
+  залогиненный Chrome-профиль `/opt/oko-poster/profile` (IG-стелс).
+- Обёртка: `vcode/vps.py` — `meta <url>` (views/likes/comments), `dl <url> out.mp4`
+  (скачать+забрать base64 ≤45МБ), `exec '<sh>'`. Проверка: `python3 vcode/vps.py meta "<yt-url>"`.
+- Грабли: полный `yt-dlp -J` не влезает в канал exec — извлекать поля НА VPS;
+  TikTok иногда пусто (ретрай); IG без кук закрыт (нужен `--cookies-from-browser chromium:/opt/oko-poster/profile`).
