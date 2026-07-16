@@ -25,6 +25,7 @@ ORDER = [
     'verify-stickers', # верификация + стикеры/TON-эмодзи
     'i18n-settings',   # язык в настройках + переводы хрома
     'admin-hq',        # HQ-окно и расширение админки
+    'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
 ]
 
 def read(p):

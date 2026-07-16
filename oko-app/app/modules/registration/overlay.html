@@ -1,0 +1,79 @@
+<div id="regView">
+  <div class="ep-head">
+    <button class="ep-cancel" onclick="regBack()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Регистрация</b>
+    <span class="reg-stepnum" id="regStepNum">Шаг 1 из 3</span>
+  </div>
+  <div class="reg-progress"><i id="regBar" style="width:33.4%"></i></div>
+  <div class="reg-body">
+
+    <!-- ШАГ 1: контакт + пароль -->
+    <section class="reg-step active" id="regStep1">
+      <h2 class="reg-h">Создай аккаунт</h2>
+      <p class="reg-sub">Почта или телефон и пароль — этого достаточно для старта в OKO.</p>
+      <div class="reg-seg">
+        <button type="button" class="on" id="regSegEmail" onclick="regMethodSet('email')"><svg class="i"><use href="#i-send"/></svg> Почта</button>
+        <button type="button" id="regSegPhone" onclick="regMethodSet('phone')"><svg class="i"><use href="#i-phone"/></svg> Телефон</button>
+      </div>
+      <label class="ep-lab" id="regContactLab">Электронная почта</label>
+      <input id="regContact" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" oninput="regContactInput()">
+      <label class="ep-lab">Пароль</label>
+      <div class="reg-passwrap">
+        <input id="regPass" type="password" placeholder="Минимум 6 символов" autocomplete="new-password" oninput="regPassMeter()">
+        <button type="button" class="reg-eye" onclick="regTogglePass()" title="Показать пароль"><svg class="i"><use href="#i-eye"/></svg></button>
+      </div>
+      <div class="reg-strength"><i id="regStrBar"></i></div>
+      <div class="reg-strength-lab" id="regStrLab">Надёжность пароля</div>
+      <div class="reg-err" id="regErr1"></div>
+      <button class="btn reg-next" id="regBtn1" onclick="regNext1()">Продолжить <svg class="i"><use href="#i-chev"/></svg></button>
+      <div class="reg-secure"><svg class="i"><use href="#i-lock"/></svg> Данные шифруются и не передаются третьим лицам</div>
+    </section>
+
+    <!-- ШАГ 2: код подтверждения -->
+    <section class="reg-step" id="regStep2">
+      <div class="reg-code-ico"><svg class="i"><use href="#i-lock"/></svg></div>
+      <h2 class="reg-h" style="text-align:center">Код подтверждения</h2>
+      <p class="reg-sub" style="text-align:center" id="regCodeSub">Мы отправили 4-значный код</p>
+      <div class="reg-code" id="regCodeRow">
+        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" data-i="0">
+        <input inputmode="numeric" maxlength="1" data-i="1">
+        <input inputmode="numeric" maxlength="1" data-i="2">
+        <input inputmode="numeric" maxlength="1" data-i="3">
+      </div>
+      <div class="reg-err" id="regErr2" style="text-align:center"></div>
+      <button type="button" class="reg-resend" id="regResendBtn" onclick="regResend()" disabled>Отправить код повторно (30 с)</button>
+      <button class="btn reg-next" onclick="regVerifyCode()">Подтвердить</button>
+    </section>
+
+    <!-- ШАГ 3: профиль + интересы + условия -->
+    <section class="reg-step" id="regStep3">
+      <h2 class="reg-h">Твой профиль</h2>
+      <p class="reg-sub">Как тебя показывать в OKO и что тебе интересно.</p>
+      <label class="ep-lab">Имя</label>
+      <input id="regName" placeholder="Как к тебе обращаться" autocomplete="name" oninput="regUpdateFinish()">
+      <label class="ep-lab">Никнейм</label>
+      <div class="ep-nick reg-nick">
+        <span>@</span><input id="regNick" placeholder="никнейм" autocomplete="off" oninput="regNickInput()">
+        <span class="reg-nick-st" id="regNickSt"></span>
+      </div>
+      <div class="reg-nick-msg" id="regNickMsg"></div>
+      <label class="ep-lab">Дата рождения</label>
+      <input id="regBirth" type="date" onchange="regBirthCheck()">
+      <div class="reg-warn" id="regAgeWarn">
+        <svg class="i"><use href="#i-flag"/></svg>
+        <span>Тебе меньше 18 — разделы 18+ (казино-игры, часть биржи и рекламы) будут ограничены до совершеннолетия.</span>
+      </div>
+      <label class="ep-lab">Интересы</label>
+      <p class="reg-hint">Выбери хотя бы один — лента и рекомендации подстроятся под тебя.</p>
+      <div class="reg-ints" id="regInts"></div>
+      <label class="reg-terms">
+        <input type="checkbox" id="regTerms" onchange="regUpdateFinish()">
+        <span class="reg-box"><svg class="i"><use href="#i-check"/></svg></span>
+        <span class="reg-terms-txt">Принимаю <a onclick="event.preventDefault();event.stopPropagation();regLegal('terms')">условия сервиса</a> и <a onclick="event.preventDefault();event.stopPropagation();regLegal('privacy')">политику конфиденциальности</a></span>
+      </label>
+      <div class="reg-err" id="regErr3"></div>
+      <button class="btn reg-next" id="regFinishBtn" onclick="regFinish()" disabled>Создать аккаунт</button>
+    </section>
+
+  </div>
+</div>
