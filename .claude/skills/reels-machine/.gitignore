@@ -29,3 +29,5 @@ pipeline/n14/*_A.png
 pipeline/n14/*_B.png
 package.json
 pipeline/n14/*.ass
+pipeline/n14/fx_jobs.json
+pipeline/n14/stage2_plan.json
