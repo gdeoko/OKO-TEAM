@@ -33,3 +33,11 @@
   n4[film camera, light bulb, gear, play button, handshake, rocket]; n5[stopwatch, clapper, fire, target, bell, swipe up].
 - fx: каждый тип в одном ролике; 3D: droplet/diamond/torus/ring/coin; rem: counter(n4), graph(n5).
 - gl: по 6 уникальных переходов на ролик. Кадры — 15 уникальных/ролик (hi-res ≤2560), дедуп по id.
+
+## Ролик n14 «3 приёма снять дорого» (2026-07-16) — полезный формат, голос Dmitry +6%
+- fx: camui, steps(1-2-3 свет/шаг/ритм), lowerthird×3 (ПРИЁМ 1/2/3), callout(к свету лицом),
+  stamp×2 (БЕЗ ЗУМА / НАПИШИТЕ), gridpop, toast(свет·звук·монтаж), ticker, dm(СЪЕМКА), likes, shine.
+- gl: windowslice, Swirl, doorway, Fold, hexagonalize (5 свежих, мимо реестра).
+- 3d: torus / оранж #EA5920 (свежая фигура).
+- grade: crisp_studio (новый — контраст+unsharp+винетка). music: Freesound 717286 «Upbeat Corporate Inspirational».
+- Караоке: Союз Гротеск строчные, активное слово оранж &H2059EA& (стандартное ASS \k, одно событие на строку).
