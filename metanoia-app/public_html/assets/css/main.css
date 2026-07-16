@@ -1056,6 +1056,49 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .exam-head__title { font-family: var(--font-head, 'Playfair Display', serif); font-size: 20px; font-weight: 700; }
 .exam-head__sub { font-size: 12.5px; opacity: .85; margin-top: 2px; }
 
+/* игра «Дилемма» */
+.dil-situation__t { font-weight: 700; font-size: 15px; color: var(--terracotta); margin-bottom: 6px; }
+.dil-situation p { font-size: 14px; line-height: 1.6; }
+.dil-opts { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 0; }
+.dil-opt { text-align: left; padding: 14px 16px; border-radius: 14px; font-size: 14px; line-height: 1.45;
+  background: var(--card, #fff); border: 1.5px solid rgba(26,58,82,.12); color: var(--navy); cursor: pointer;
+  transition: transform .12s var(--ease), border-color .12s var(--ease); }
+.dil-opt:active { transform: scale(.98); }
+.dil-opt--good { border-color: var(--success); background: rgba(123,198,122,.12); }
+.dil-opt--bad { border-color: var(--terracotta); background: rgba(201,112,100,.1); }
+.dil-feedback { margin-top: 14px; padding: 16px; border-radius: 14px; }
+.dil-feedback--good { background: rgba(123,198,122,.12); }
+.dil-feedback--soft { background: rgba(122,174,212,.12); }
+.dil-feedback__row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.55; color: var(--navy); }
+.dil-feedback__row .ic { flex: 0 0 auto; color: var(--terracotta); margin-top: 1px; }
+.dil-verse { margin-top: 12px; font-size: 13px; font-style: italic; color: var(--gray); line-height: 1.5; }
+.dil-verse em { color: var(--terracotta); font-style: normal; font-weight: 600; }
+
+/* игра «Библейский детектив» */
+.det-clues { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.det-clue { padding: 12px 14px; border-radius: 12px; background: rgba(212,165,116,.12); font-size: 14px; line-height: 1.5; }
+.det-clue__n { display: block; font-size: 11px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
+.det-opts { display: flex; flex-direction: column; gap: 10px; }
+.det-opt { padding: 14px 16px; border-radius: 14px; font-size: 14px; background: var(--card, #fff);
+  border: 1.5px solid rgba(26,58,82,.12); color: var(--navy); cursor: pointer; transition: transform .12s var(--ease); }
+.det-opt:active { transform: scale(.98); }
+.det-opt--right { border-color: var(--success); background: rgba(123,198,122,.14); }
+.det-opt--wrong { border-color: var(--error); background: rgba(212,106,106,.1); }
+.det-reveal { margin-top: 14px; padding: 16px; border-radius: 14px; }
+.det-reveal--ok { background: rgba(123,198,122,.12); }
+.det-reveal--no { background: rgba(212,165,116,.14); }
+.det-reveal__t { font-weight: 700; font-size: 15px; margin-bottom: 6px; color: var(--navy); }
+.det-reveal p { font-size: 14px; line-height: 1.55; }
+
+/* семейный алтарь (девоционалы) */
+.dev-head { margin: 4px 0 16px; }
+.dev-head__day { font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .05em; }
+.dev-head__title { font-family: var(--font-head, 'Playfair Display', serif); font-size: 24px; font-weight: 700; color: var(--navy); margin-top: 4px; line-height: 1.2; }
+.dev-nav { display: flex; gap: 10px; margin-top: 20px; }
+.dev-nav .btn { flex: 1; }
+[data-theme="dark"] .dil-opt, [data-theme="dark"] .det-opt { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.14); color: var(--cream); }
+[data-theme="dark"] .dev-head__title { color: var(--cream); }
+
 
 /* ══════════ TELEGRAM-ФУНКЦИИ ЧАТА ══════════ */
 .chats-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }

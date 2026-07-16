@@ -1181,6 +1181,149 @@ function gradeExam() {
   }
 }
 
+/* ───────── ИГРА «ДИЛЕММА» (моральный выбор) ───────── */
+function DIL() { return (typeof window !== 'undefined' && window.DILEMMAS) ? window.DILEMMAS : []; }
+let dilState = { i: 0, answered: false };
+
+function openDilemma() {
+  if (!DIL().length) { toast('Игра скоро появится'); return; }
+  dilState = { i: 0, answered: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'dilemma'));
+  $('#nav').style.display = 'none';
+  renderDilemma();
+  window.scrollTo({ top: 0 });
+}
+
+function renderDilemma() {
+  const d = DIL()[dilState.i];
+  $('#dilemmaNum').textContent = dilState.i + 1;
+  $('#dilemmaTotal').textContent = DIL().length;
+  $('#dilemmaBody').innerHTML = `
+    <div class="card dil-situation"><div class="dil-situation__t">${d.title}</div><p>${d.situation}</p></div>
+    <div class="dil-opts" id="dilOpts">
+      ${d.options.map((o, oi) => `<button class="dil-opt" data-oi="${oi}">${o.text}</button>`).join('')}
+    </div>
+    <div class="dil-feedback" id="dilFeedback" hidden></div>`;
+  dilState.answered = false;
+  $$('#dilOpts .dil-opt').forEach((el) => el.addEventListener('click', () => answerDilemma(Number(el.dataset.oi))));
+}
+
+function answerDilemma(oi) {
+  if (dilState.answered) return;
+  dilState.answered = true;
+  const d = DIL()[dilState.i];
+  const chosen = d.options[oi];
+  $$('#dilOpts .dil-opt').forEach((el, i) => {
+    el.disabled = true;
+    if (d.options[i].good) el.classList.add('dil-opt--good');
+    else if (i === oi) el.classList.add('dil-opt--bad');
+  });
+  const last = dilState.i >= DIL().length - 1;
+  const fb = $('#dilFeedback');
+  fb.hidden = false;
+  fb.className = 'dil-feedback ' + (chosen.good ? 'dil-feedback--good' : 'dil-feedback--soft');
+  fb.innerHTML = `
+    <div class="dil-feedback__row">${ICON(chosen.good ? 'check' : 'heart', 18)}<span>${chosen.feedback}</span></div>
+    <div class="dil-verse">«${d.verse.text}» <em>${d.verse.ref}</em></div>
+    <button class="btn btn--primary" id="dilNext" style="width:100%;margin-top:12px">${last ? 'Завершить' : 'Следующая ситуация'}</button>`;
+  if (chosen.good && window.MAGIC) { const r = fb.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+  $('#dilNext').addEventListener('click', () => {
+    if (last) {
+      if (window.MAGIC) MAGIC.rewardModal({ icon: 'heart', title: 'Ты прошёл все ситуации!', subtitle: 'Учиться выбирать добро — это тоже вера. Молодец!', xp: 25 });
+      setTimeout(openGamesHub, 400);
+    } else { dilState.i++; renderDilemma(); window.scrollTo({ top: 0 }); }
+  });
+}
+
+/* ───────── ИГРА «БИБЛЕЙСКИЙ ДЕТЕКТИВ» ───────── */
+function DET() { return (typeof window !== 'undefined' && window.DETECTIVE) ? window.DETECTIVE : []; }
+let detState = { i: 0, clue: 1, score: 0, answered: false };
+
+function openDetective() {
+  if (!DET().length) { toast('Игра скоро появится'); return; }
+  detState = { i: 0, clue: 1, score: 0, answered: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'detective'));
+  $('#nav').style.display = 'none';
+  renderDetective();
+  window.scrollTo({ top: 0 });
+}
+
+function renderDetective() {
+  const c = DET()[detState.i];
+  $('#detNum').textContent = detState.i + 1;
+  $('#detTotal').textContent = DET().length;
+  $('#detScore').textContent = detState.score;
+  $('#detBody').innerHTML = `
+    <div class="det-clues">${c.clues.slice(0, detState.clue).map((cl, i) => `<div class="det-clue"><span class="det-clue__n">Улика ${i + 1}</span>${cl}</div>`).join('')}</div>
+    ${detState.clue < c.clues.length ? `<button class="btn btn--outline" id="detMore" style="width:100%;margin-bottom:12px">Ещё улика (−5 очков)</button>` : ''}
+    <div class="det-opts" id="detOpts">${c.options.map((o) => `<button class="det-opt" data-a="${o}">${o}</button>`).join('')}</div>
+    <div class="det-reveal" id="detReveal" hidden></div>`;
+  detState.answered = false;
+  $('#detMore')?.addEventListener('click', () => { if (detState.clue < c.clues.length) { detState.clue++; renderDetective(); } });
+  $$('#detOpts .det-opt').forEach((el) => el.addEventListener('click', () => answerDetective(el.dataset.a)));
+}
+
+function answerDetective(ans) {
+  if (detState.answered) return;
+  detState.answered = true;
+  const c = DET()[detState.i];
+  const right = ans === c.answer;
+  $$('#detOpts .det-opt').forEach((b) => { b.disabled = true; if (b.dataset.a === c.answer) b.classList.add('det-opt--right'); else if (b.dataset.a === ans) b.classList.add('det-opt--wrong'); });
+  if (right) { const gain = Math.max(5, 20 - (detState.clue - 1) * 5); detState.score += gain; $('#detScore').textContent = detState.score; }
+  const last = detState.i >= DET().length - 1;
+  const rv = $('#detReveal');
+  rv.hidden = false;
+  rv.className = 'det-reveal ' + (right ? 'det-reveal--ok' : 'det-reveal--no');
+  rv.innerHTML = `<div class="det-reveal__t">${right ? 'Раскрыто!' : 'Верный ответ: ' + c.answer}</div><p>${c.reveal}</p>
+    <button class="btn btn--primary" id="detNext" style="width:100%;margin-top:10px">${last ? 'Завершить' : 'Следующее дело'}</button>`;
+  if (right && window.MAGIC) { const r = rv.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+  $('#detNext').addEventListener('click', () => {
+    if (last) {
+      if (window.MAGIC) MAGIC.rewardModal({ icon: 'search', title: 'Все дела раскрыты!', subtitle: `Ты настоящий знаток Писания — ${detState.score} очков!`, xp: detState.score });
+      setTimeout(openGamesHub, 400);
+    } else { detState.i++; detState.clue = 1; renderDetective(); window.scrollTo({ top: 0 }); }
+  });
+}
+
+/* ───────── СЕМЕЙНЫЙ АЛТАРЬ (девоционалы) ───────── */
+function DEV() { return (typeof window !== 'undefined' && window.DEVOTIONALS) ? window.DEVOTIONALS : []; }
+let devState = { i: 0 };
+
+function openDevotional() {
+  if (!DEV().length) { toast('Девоционалы скоро появятся'); return; }
+  // «сегодняшний» день детерминированно из сохранённого прогресса
+  const saved = Number(localStorage.getItem('mt_dev_day') || '0');
+  devState = { i: Math.min(Math.max(0, saved), DEV().length - 1) };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'devotional'));
+  $('#nav').style.display = 'none';
+  renderDevotional();
+  window.scrollTo({ top: 0 });
+}
+
+function renderDevotional() {
+  const d = DEV()[devState.i];
+  const total = DEV().length;
+  $('#devBody').innerHTML = `
+    <div class="dev-head">
+      <div class="dev-head__day">День ${d.day} из ${total}</div>
+      <h1 class="dev-head__title">${d.title}</h1>
+    </div>
+    <article class="card feed-card feed-card--quote"><div class="feed-card__title">«${d.verse.text}»</div><div class="quote-ref">${d.verse.ref}</div></article>
+    <h2 class="section-title">Мысль дня</h2>
+    <div class="card lesson-text"><p>${d.thought}</p></div>
+    ${d.action ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${d.action}</span></div>` : ''}
+    <h2 class="section-title">Спросите за ужином</h2>
+    <div class="card lesson-text"><p>${d.question}</p></div>
+    <div class="card lesson-prayer">${ICON('dove', 18)}<p>${d.prayer}</p></div>
+    <div class="dev-nav">
+      <button class="btn btn--outline" id="devPrev" ${devState.i === 0 ? 'disabled' : ''}>← Вчера</button>
+      <button class="btn btn--primary" id="devNext" ${devState.i >= total - 1 ? 'disabled' : ''}>Завтра →</button>
+    </div>`;
+  hydrateIcons();
+  $('#devPrev')?.addEventListener('click', () => { if (devState.i > 0) { devState.i--; localStorage.setItem('mt_dev_day', devState.i); renderDevotional(); window.scrollTo({ top: 0 }); } });
+  $('#devNext')?.addEventListener('click', () => { if (devState.i < total - 1) { devState.i++; localStorage.setItem('mt_dev_day', devState.i); renderDevotional(); window.scrollTo({ top: 0 }); } });
+}
+
 
 /* ───────── TELEGRAM-ФУНКЦИИ: ГОЛОСОВЫЕ, КРУЖОЧКИ, ВЛОЖЕНИЯ, ЛИЧКИ ───────── */
 
@@ -1629,9 +1772,9 @@ const GAMES = {
       desc: 'Строй великий храм: добывай ресурсы, нанимай мастеров, укрощай детали.', bullets: ['Стройка-тайкун', 'Развитие города', 'Мудрость Соломона'] },
     { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав', premium: true,
       desc: 'Приключение в пяти главах: решай загадки и найди путь к святыне.', bullets: ['5 глав-историй', 'Загадки и предметы', 'Point-and-click квест'] },
-    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Угадай историю', premium: true,
-      desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', 'Десятки историй', 'Внимание к деталям'] },
-    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Моральный выбор', premium: true,
+    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Играбельно · +очки', premium: true, play: true,
+      desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', '6 историй', 'Внимание к деталям'] },
+    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Играбельно · +25 XP', premium: true, play: true,
       desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
     { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Для всей семьи', premium: true,
       desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
@@ -1682,6 +1825,8 @@ function renderGhub(cat) {
     else if (k === 'david') openDavid();
     else if (k === 'exodus') openExodus();
     else if (k === 'ark') openArk();
+    else if (k === 'dilemma') openDilemma();
+    else if (k === 'detective') openDetective();
     else openGamePreview(k);
   }));
 }
@@ -1701,6 +1846,8 @@ function initGamesHub() {
   $('#exodusBack')?.addEventListener('click', () => { exodusStop(); openGamesHub(); });
   $('#exodusGo')?.addEventListener('click', exodusStart);
   $('#arkBack')?.addEventListener('click', () => { arkStop(); openGamesHub(); });
+  $('#dilemmaBack')?.addEventListener('click', openGamesHub);
+  $('#detectiveBack')?.addEventListener('click', openGamesHub);
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
@@ -3370,6 +3517,8 @@ function initGrowth() {
   $('#openCerts')?.addEventListener('click', openCertificates);
   $('#openShop')?.addEventListener('click', openShop);
   $('#shopBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
+  $('#openDevotional')?.addEventListener('click', openDevotional);
+  $('#devBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#openQuest')?.addEventListener('click', openQuest);
   $('#questBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#openAlbum')?.addEventListener('click', openAlbumScreen);

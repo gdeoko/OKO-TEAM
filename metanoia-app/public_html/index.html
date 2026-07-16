@@ -476,6 +476,15 @@
           <div class="temple__note">Копи XP за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
         </div>
       </button>
+
+      <h2 class="section-title">Семейный алтарь</h2>
+      <button class="card temple" id="openDevotional" style="width:100%;text-align:left">
+        <div class="temple__icon"><span data-icon="dove" data-size="44"></span></div>
+        <div class="temple__body">
+          <div class="temple__stage">30 дней вместе с семьёй <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__note">Короткий стих, мысль и вопрос на каждый день — читайте с ребёнком за ужином</div>
+        </div>
+      </button>
     </section>
 
 
@@ -526,6 +535,32 @@
     <section class="screen" data-screen="exam">
       <button class="child-back" id="examBack"><span data-icon="back" data-size="18"></span> Все уроки</button>
       <div id="examBody"></div>
+    </section>
+
+    <!-- ── ИГРА «ДИЛЕММА» (моральный выбор) ── -->
+    <section class="screen" data-screen="dilemma">
+      <button class="child-back" id="dilemmaBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Дилемма</div>
+        <div class="verse-head__meta">Ситуация <span id="dilemmaNum">1</span> из <span id="dilemmaTotal">8</span></div>
+      </div>
+      <div id="dilemmaBody"></div>
+    </section>
+
+    <!-- ── ИГРА «БИБЛЕЙСКИЙ ДЕТЕКТИВ» ── -->
+    <section class="screen" data-screen="detective">
+      <button class="child-back" id="detectiveBack"><span data-icon="back" data-size="18"></span> К играм</button>
+      <div class="verse-head">
+        <div class="verse-head__title">Библейский детектив</div>
+        <div class="verse-head__meta">Дело <span id="detNum">1</span> из <span id="detTotal">6</span> · очки: <span id="detScore">0</span></div>
+      </div>
+      <div id="detBody"></div>
+    </section>
+
+    <!-- ── СЕМЕЙНЫЙ АЛТАРЬ (девоционалы, родительская зона) ── -->
+    <section class="screen" data-screen="devotional">
+      <button class="child-back" id="devBack"><span data-icon="back" data-size="18"></span> Назад</button>
+      <div id="devBody"></div>
     </section>
 
 
@@ -1007,6 +1042,7 @@
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/magic.js"></script>
   <script src="assets/js/lessons.js"></script>
+  <script src="assets/js/gamedata.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
