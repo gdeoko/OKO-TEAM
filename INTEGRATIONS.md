@@ -21,6 +21,8 @@
 | CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID | Cloudflare | Хостинг Pages | ОТЛОЖЕНО решением Даниэля 07.07: токену не хватает прав, не поднимать тему |
 | HF_S3_ENDPOINT + HF_S3_ACCESS_KEY_ID + HF_S3_SECRET_ACCESS_KEY | HF S3 | Хранилище файлов okoteam (boto3, verify=/root/.ccr/ca-bundle.crt) | list_buckets |
 | R2_ENDPOINT + R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY | Cloudflare R2 | S3-хранилище тяжёлых видео/ассетов (из чата ЗооОпт). БЛОКЕР: домен r2.cloudflarestorage.com не в network policy окружения — добавить в allowlist | boto3 list_buckets (сейчас connect 000) |
+| SHOTSTACK_SANDBOX_KEY / SHOTSTACK_PROD_KEY | Shotstack (подключён 16.07) | Облачный ПРОГРАММНЫЙ монтаж по JSON: таймлайн, титры, переходы, караоке-субтитры, футаж, музыка → рендер MP4. Ядро «крутого монтажа под ключ», встраивается в reels-machine. Sandbox бесплатный (вотермарк), prod платный. Заголовок `x-api-key`. Endpoints: sandbox `https://api.shotstack.io/edit/stage/render`, prod `.../edit/v1/render`. Ассеты — `.../ingest/{stage}`, шаблоны — `.../edit/{stage}/templates`. | `curl -H "x-api-key: $SHOTSTACK_SANDBOX_KEY" https://api.shotstack.io/edit/stage/render/0000...` → 400 (auth ок), 403 = чужой stage |
+| CREATOMATE_API_KEY + CREATOMATE_PUBLIC_TOKEN | Creatomate (подключён 16.07) | Шаблонный видео-рендер по template_id + modifications (соцролики, автоматизация из данных). API key — серверный (Bearer), public token (`public-...`) — для клиентского preview, в браузер отдавать можно. | `curl -X POST -H "Authorization: Bearer $CREATOMATE_API_KEY" -d '{}' https://api.creatomate.com/v1/renders` → 400 «нужен template_id» = ключ ок |
 
 Правила: ключи НЕ вписывать в код сайтов и не отдавать в браузер. Сеть — только
 curl (urllib и node fetch ходят мимо прокси). Новый ключ: дописать в secrets.env,
@@ -150,7 +152,12 @@ Environment variables окружения:
 | Zapier | работает | 9000+ приложений через actions |
 | Zoom | работает | записи и саммари встреч |
 | Claude Code Remote | работает | окружения, Routines (расписания), send_later |
-| Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может) |
+| Descript | работает (подключён 16.07) | МОНТАЖ видео по промптам: import_media, prompt_project_agent (тримминг, перестановка, удаление слов-паразитов, субтитры, сток), publish → share URL |
+| HyperFrames by HeyGen | работает (подключён 16.07) | моушен-графика/анимированные слайды из HTML → render_video (MP4/WebM/MOV). compose/render только из hosted-клиента (claude.ai), из CLI — read-only |
+| Shutterstock | работает (подключён 16.07, без ключа) | поиск стока image/video/music/sfx, отдаёт preview mp4/webm 4K. Read-only (без лицензирования/скачивания) |
+| Brandfetch | работает (подключён 16.07) | бренд-ассеты: brand_search, get_brand, логотипы/иконки/символы через CDN, цвета/шрифты бренда |
+| Google Drive | работает (подключён 16.07) | хранилище: search_files, read/download, create_file. Импорт медиа в Descript принимает Drive share-ссылки как есть |
+| Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может), про рекламные кампании — не про монтаж |
 
 ## 4. Скиллы (.claude/skills, собраны со ВСЕХ чатов)
 
