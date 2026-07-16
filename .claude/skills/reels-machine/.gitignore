@@ -31,3 +31,4 @@ package.json
 pipeline/n14/*.ass
 pipeline/n14/fx_jobs.json
 pipeline/n14/stage2_plan.json
+pipeline/models/

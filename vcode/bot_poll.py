@@ -63,6 +63,23 @@ def main():
         m=u.get("message") or u.get("edited_message")
         if not m: continue
         chat=m["chat"]["id"]; txt=(m.get("text") or "").strip(); low=txt.lower()
+        # голосовые/аудио → сохраняем в vcode/voice/ для клона голоса (XTTS)
+        media=m.get("voice") or m.get("audio")
+        if media and media.get("file_id"):
+            try:
+                fr=tg("getFile", file_id=media["file_id"])
+                fp=fr.get("result",{}).get("file_path")
+                if fp:
+                    vdir=os.path.join(ROOT,"vcode","voice"); os.makedirs(vdir,exist_ok=True)
+                    ext=os.path.splitext(fp)[1] or ".ogg"
+                    n=len([f for f in os.listdir(vdir) if not f.startswith('.')])+1
+                    out=os.path.join(vdir,f"sample_{n}{ext}")
+                    subprocess.run(["curl","-s","--cacert",CA,"-o",out,
+                        f"https://api.telegram.org/file/bot{TOK}/{fp}"],check=True)
+                    send(chat,f"Принял голосовой образец #{n}. Как будет ≥3 — сделаю клон Вашего голоса и озвучу им ролики.")
+            except Exception as e:
+                send(chat,"Голосовой пришёл, но не смог сохранить — пришлите ещё раз, пожалуйста.")
+            continue
         if low in ("/start","start","/help"):
             send(chat,"Бот V.CODE на связи. Выберите кнопку снизу или пришлите ссылку на ролик."); continue
         urls=[x for x in URL_RE.findall(txt) if SOC_RE.search(x)]
