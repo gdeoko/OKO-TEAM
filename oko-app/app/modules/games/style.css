@@ -1,0 +1,120 @@
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» (префикс gm-) ===== */
+
+/* шапка экрана */
+.gm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.gm-sub{display:flex;align-items:center;gap:8px;margin-top:5px}
+.gm-sub small{font-size:11px;color:var(--dim)}
+.gm-18{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--danger);border:1.5px solid var(--danger);border-radius:99px;padding:2px 8px;flex-shrink:0}
+
+/* дневной лимит */
+.gm-limit{margin-bottom:14px}
+.gm-limit-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);margin-bottom:5px}
+.gm-limit-row b{color:var(--text);font-weight:700;white-space:nowrap}
+.gm-limit-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);overflow:hidden}
+.gm-limit-bar i{display:block;height:100%;background:var(--lime);border-radius:3px;transition:width .6s cubic-bezier(.3,1,.4,1)}
+.gm-limit.full .gm-limit-bar i{background:var(--danger)}
+.gm-limit.full .gm-limit-row b{color:var(--danger)}
+
+/* переключатель игр */
+.gm-tabs{display:flex;gap:8px;margin-bottom:14px}
+.gm-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:700;color:var(--dim);transition:all .18s}
+.gm-tabs button svg.i{width:16px;height:16px}
+.gm-tabs button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent);box-shadow:var(--glow)}
+.gm-tabs button:active{transform:scale(.97)}
+
+/* игровой стол: тёмный «казино»-фон в обеих темах (осознанно) */
+.gm-wheel-card,.gm-road-card{position:relative;overflow:hidden;background:radial-gradient(130% 120% at 50% -10%,rgba(154,255,0,.13),transparent 55%),linear-gradient(160deg,#0e1408,#060804 70%);border:1px solid #2c3b14;border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;animation:fade .3s ease}
+:root[data-theme="light"] .gm-wheel-card,
+:root[data-theme="light"] .gm-road-card{border-color:#b9d494;box-shadow:0 10px 30px rgba(20,40,0,.18)}
+
+/* --- РУЛЕТКА --- */
+.gm-pointer{position:relative;z-index:4;height:26px;margin-bottom:-14px;display:flex;justify-content:center;filter:drop-shadow(0 0 8px rgba(154,255,0,.8));animation:gmPtr 2.6s ease-in-out infinite}
+@keyframes gmPtr{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+.gm-wheel-wrap{position:relative;width:248px;height:248px;margin:0 auto}
+.gm-wheel{position:absolute;inset:0;border-radius:50%;border:3px solid #2c3b14;box-shadow:0 0 0 6px #0c1106,0 0 34px rgba(154,255,0,.22),inset 0 0 26px rgba(0,0,0,.6);will-change:transform}
+.gm-wheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -15.4deg,rgba(0,0,0,.55) 0 .9deg,transparent .9deg 30deg);pointer-events:none}
+.gm-sec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:17px;letter-spacing:.05em;line-height:1;pointer-events:none}
+.gm-wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
+.gm-wheel-hub svg.i{width:36px;height:36px;color:#9AFF00}
+@keyframes gmHub{0%,100%{box-shadow:0 0 10px rgba(154,255,0,.3),inset 0 0 10px rgba(154,255,0,.12)}50%{box-shadow:0 0 28px rgba(154,255,0,.6),inset 0 0 16px rgba(154,255,0,.2)}}
+.gm-shake{animation:gmShake .5s ease}
+@keyframes gmShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+
+/* табло результата */
+.gm-result{min-height:46px;margin:16px 0 2px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center}
+.gm-result b{font-family:var(--font-display);font-size:27px;letter-spacing:.04em;line-height:1}
+.gm-result span,.gm-hint{font-size:12px;color:#8fa07a}
+.gm-win{color:#9AFF00;text-shadow:0 0 16px rgba(154,255,0,.6);animation:gmPop .45s cubic-bezier(.3,1.6,.4,1)}
+.gm-lose{color:var(--danger);animation:gmPop .3s ease}
+@keyframes gmPop{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+.gm-run{font-size:12.5px;color:#8fa07a;animation:gmBlink 1s ease infinite}
+@keyframes gmBlink{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ставка: инпут + чипы (на тёмном столе) */
+.gm-bet{display:flex;gap:8px;margin:12px 0 10px}
+.gm-bet input{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid #2c3b14;border-radius:var(--r-md);padding:12px 14px;color:#fff;font-size:15px;font-weight:700;outline:none;text-align:center;transition:border-color .18s}
+.gm-bet input:focus{border-color:#9AFF00;box-shadow:0 0 12px rgba(154,255,0,.25)}
+.gm-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.gm-chips button{padding:9px 4px;border:1px solid #2c3b14;border-radius:99px;font-size:12px;font-weight:700;color:#b9c9a2;transition:all .15s}
+.gm-chips button.on{border-color:#9AFF00;background:rgba(154,255,0,.14);color:#9AFF00;box-shadow:0 0 10px rgba(154,255,0,.25)}
+.gm-chips button:active{transform:scale(.93)}
+
+/* главные кнопки игр */
+.gm-spin{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#9AFF00;color:#000;font-weight:800;font-size:14.5px;letter-spacing:.03em;padding:14px 10px;border-radius:var(--r-md);transition:transform .12s,opacity .2s;animation:gmBtnPulse 2.4s ease-in-out infinite}
+.gm-spin svg.i{width:17px;height:17px}
+.gm-spin:active{transform:scale(.97)}
+.gm-spin.off{opacity:.4;pointer-events:none;animation:none;box-shadow:none}
+.gm-spin.ghost{background:transparent;color:#9AFF00;border:1px solid #9AFF00;animation:none}
+@keyframes gmBtnPulse{0%,100%{box-shadow:0 0 8px rgba(154,255,0,.25)}50%{box-shadow:0 0 26px rgba(154,255,0,.55)}}
+
+/* конфетти */
+.gm-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:6}
+.gm-confetti i{position:absolute;top:-14px;width:7px;height:11px;border-radius:2px;animation:gmFall 1.3s cubic-bezier(.2,.6,.6,1) forwards}
+@keyframes gmFall{0%{transform:translateY(-12px) rotate(0);opacity:1}78%{opacity:1}100%{transform:translateY(360px) rotate(560deg);opacity:0}}
+
+/* --- ДОРОГА --- */
+.gm-road-mults{display:flex;gap:6px;margin-bottom:12px}
+.gm-rm{flex:1;text-align:center;padding:7px 2px;border-radius:99px;border:1px solid #2c3b14;font-size:11.5px;font-weight:800;color:#7d8f68;transition:all .25s}
+.gm-rm.done{border-color:#9AFF00;background:rgba(154,255,0,.16);color:#9AFF00}
+.gm-rm.cur{border-color:#9AFF00;background:#9AFF00;color:#0a0a0a;box-shadow:0 0 14px rgba(154,255,0,.5);animation:gmBtnPulse 1.6s ease-in-out infinite}
+.gm-road-track{position:relative;display:flex;gap:7px;padding-top:48px;margin-bottom:14px}
+.gm-cell{height:58px;border-radius:var(--r-md);border:1px solid #2c3b14;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;letter-spacing:.04em;color:#7d8f68;transition:all .3s}
+.gm-cell svg.i{width:17px;height:17px}
+.gm-cell.gm-start{flex:0 0 44px;color:#9AFF00;background:rgba(154,255,0,.08);border-color:rgba(154,255,0,.3)}
+.gm-cell.gm-tile{flex:1;min-width:0}
+.gm-cell.ok{border-color:#9AFF00;background:rgba(154,255,0,.2);color:#9AFF00;box-shadow:0 0 16px rgba(154,255,0,.4)}
+.gm-cell.bad{border-color:var(--danger);background:rgba(255,77,77,.18);color:var(--danger);box-shadow:0 0 16px rgba(255,77,77,.45);animation:gmShake .45s ease}
+.gm-eye{position:absolute;top:12px;left:22px;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(154,255,0,.45);transition:left .45s cubic-bezier(.3,1.2,.4,1);z-index:2}
+.gm-eye svg.i{width:22px;height:22px;color:#9AFF00}
+.gm-eye.gm-hop{animation:gmHop .5s cubic-bezier(.3,1.4,.4,1)}
+@keyframes gmHop{0%{transform:translateY(0) scale(1)}45%{transform:translateY(-18px) scale(1.1)}100%{transform:translateY(0) scale(1)}}
+.gm-eye.gm-fall{animation:gmFallEye .85s ease forwards}
+@keyframes gmFallEye{30%{transform:translateY(30px) rotate(50deg);opacity:1}100%{transform:translateY(92px) rotate(160deg);opacity:0}}
+
+.gm-road-stat{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:11.5px;color:#8fa07a}
+.gm-road-stat b{color:#fff;font-weight:800}
+.gm-road-btns{display:grid;grid-template-columns:1fr 1.25fr;gap:8px}
+.gm-road-msg{margin-bottom:10px;font-size:13px;color:#b9c9a2;animation:gmPop .35s ease}
+.gm-road-msg b{font-family:var(--font-display);font-size:21px;letter-spacing:.04em;margin-right:6px}
+
+/* история игр */
+.gm-op{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.gm-op:last-child{border-bottom:none}
+.gm-op-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gm-op-ic.in{background:var(--lime-dim);color:var(--accent)}
+.gm-op-ic.out{background:rgba(255,77,77,.12);color:var(--danger)}
+.gm-op-ic svg.i{width:17px;height:17px}
+.gm-op-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gm-op-t1{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-op-t2{font-size:11px;color:var(--dim)}
+.gm-op-sum{font-size:14px;font-weight:800;white-space:nowrap;flex-shrink:0}
+.gm-op-sum.in{color:var(--accent)}
+.gm-op-sum.out{color:var(--danger)}
+.gm-empty{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--dim);font-size:12.5px;padding:22px 0}
+.gm-empty svg.i{width:30px;height:30px;color:var(--border)}
+
+/* ответственная игра */
+.gm-resp{display:flex;gap:12px;margin-top:14px;align-items:flex-start;text-align:left}
+.gm-resp svg.i{width:20px;height:20px;color:var(--accent);flex-shrink:0;margin-top:2px}
+.gm-resp p{font-size:11.5px;color:var(--dim);line-height:1.55}
+.gm-resp p b{color:var(--text)}

@@ -1,0 +1,115 @@
+/* ===== ADS: рекламный кабинет (префикс ads-) ===== */
+.ads-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.ads-live{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 11px}
+.ads-live i{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:adsPulse 1.6s ease-in-out infinite}
+@keyframes adsPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(154,255,0,.5)}50%{opacity:.55;box-shadow:0 0 0 5px rgba(154,255,0,0)}}
+
+.ads-summary .stat{animation:fade .3s ease both}
+.ads-summary .stat:nth-child(2){animation-delay:.05s}
+.ads-summary .stat:nth-child(3){animation-delay:.1s}
+.ads-summary .stat:nth-child(4){animation-delay:.15s}
+.ads-summary .stat .v{transition:opacity .2s}
+.ads-summary .stat .v small{font-size:16px;color:var(--dim)}
+
+.ads-create-btn{margin:16px 0 14px;box-shadow:var(--glow)}
+.ads-create-btn svg.i{width:18px;height:18px}
+
+.ads-ai-note{display:flex;gap:12px;align-items:flex-start;padding:14px}
+.ads-ai-note b{font-size:13.5px;display:block;margin-bottom:3px}
+.ads-ai-note small{font-size:11.5px;color:var(--dim);line-height:1.45;display:block}
+.ads-ai-ic{width:36px;height:36px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ads-ai-ic svg.i{width:18px;height:18px;animation:adsBolt 2.4s ease-in-out infinite}
+@keyframes adsBolt{0%,88%,100%{opacity:1}92%{opacity:.35}96%{opacity:1}94%{opacity:.5}}
+
+/* карточка кампании */
+.ads-camp{margin-bottom:12px;padding:15px;animation:fade .3s ease both}
+.ads-camp-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.ads-camp-name{flex:1;min-width:0;font-size:15px;font-weight:700;line-height:1.3}
+.ads-camp-txt{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ads-st{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:4px 10px;border:1px solid transparent}
+.ads-st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.ads-st.act{color:var(--accent);background:var(--lime-dim);border-color:rgba(154,255,0,.3)}
+.ads-st.act::before{animation:adsPulse 1.6s infinite}
+.ads-st.mod{color:#ffb020;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3)}
+.ads-st.mod::before{animation:adsPulse 1s infinite}
+.ads-st.pause{color:var(--dim);background:var(--raised);border-color:var(--border)}
+.ads-st.rej{color:var(--danger);background:rgba(255,77,77,.1);border-color:rgba(255,77,77,.3)}
+.ads-st.done{color:var(--dim);background:var(--raised);border-color:var(--border)}
+
+.ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
+.ads-m b{display:block;font-family:var(--font-display);font-size:17px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-m span{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.ads-m.hot b{color:var(--accent)}
+
+.ads-spark{display:block;width:100%;height:44px;margin-bottom:10px;border-radius:var(--r-sm)}
+
+.ads-budget-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);overflow:hidden;margin-bottom:10px}
+.ads-budget-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime-dim),var(--lime));transition:width .6s cubic-bezier(.3,1,.4,1)}
+
+.ads-reason{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--danger);background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.25);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:10px;line-height:1.4}
+.ads-reason svg.i{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+
+.ads-modwait{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--dim);padding:4px 2px}
+.ads-modwait svg.i{width:15px;height:15px;color:#ffb020;animation:adsSpin 1.4s linear infinite}
+@keyframes adsSpin{to{transform:rotate(360deg)}}
+
+.ads-camp-acts{display:flex;gap:8px}
+.ads-camp-acts .btn.sm{flex:1;gap:6px}
+.ads-camp-acts .btn.sm svg.i{width:14px;height:14px}
+.ads-camp-acts .btn.sm.stop{color:var(--danger);border-color:rgba(255,77,77,.45);background:transparent}
+
+.ads-empty{text-align:center;padding:26px 14px;color:var(--dim);font-size:13px}
+.ads-empty svg.i{width:34px;height:34px;display:block;margin:0 auto 10px;color:var(--dim);opacity:.6}
+
+/* ===== sheet создания ===== */
+.ads-steps{display:flex;gap:6px;margin:-4px 0 14px}
+.ads-steps i{flex:1;height:4px;border-radius:2px;background:var(--raised);border:1px solid var(--border);transition:all .3s}
+.ads-steps i.on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.4)}
+
+.ads-step{animation:adsStepIn .28s cubic-bezier(.3,1,.4,1) both}
+@keyframes adsStepIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+.ads-lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+.ads-ta{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;font-family:var(--font-body);outline:none;margin:10px 0 12px;resize:none;line-height:1.45}
+.ads-ta:focus{border-color:var(--lime)}
+#sheet-ads-create input:focus{border-color:var(--lime)}
+
+.ads-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.ads-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:8px 14px;transition:all .16s}
+.ads-chip svg.i{width:13px;height:13px}
+.ads-chip:active{transform:scale(.94)}
+.ads-chip.on{color:#000;background:var(--lime);border-color:var(--lime);box-shadow:0 0 12px rgba(154,255,0,.35)}
+
+.ads-reach{padding:14px;text-align:center;margin-bottom:14px;background:radial-gradient(120% 150% at 50% 0%,rgba(154,255,0,.1),transparent 60%),var(--surface)}
+.ads-reach-l{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.ads-reach-l svg.i{width:14px;height:14px;color:var(--accent)}
+.ads-reach-v{font-family:var(--font-display);font-size:40px;line-height:1.1;color:var(--accent);margin:6px 0 2px;text-shadow:0 0 18px rgba(154,255,0,.4)}
+:root[data-theme="light"] .ads-reach-v{text-shadow:none}
+.ads-reach-s{font-size:11px;color:var(--dim)}
+
+.ads-forecast{padding:6px 14px;margin:12px 0}
+.ads-f-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ads-f-row:last-child{border-bottom:none}
+.ads-f-row span{display:inline-flex;align-items:center;gap:8px;color:var(--dim)}
+.ads-f-row span svg.i{width:15px;height:15px;color:var(--accent)}
+.ads-f-row b{font-weight:800;color:var(--text);white-space:nowrap}
+
+.ads-balance{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px}
+.ads-balance b{color:var(--accent)}
+
+.ads-nav{display:flex;gap:8px;margin-top:14px}
+.ads-nav .btn.ghost{width:38%}
+
+/* CTA в посте ленты */
+.ads-post-cta{margin-top:10px}
+.ads-post-cta button{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:#000;font-weight:700;font-size:12.5px;padding:9px 18px;border-radius:99px;transition:transform .12s;box-shadow:0 0 14px rgba(154,255,0,.25)}
+.ads-post-cta button:active{transform:scale(.95)}
+.ads-post-cta button svg.i{width:13px;height:13px;stroke:currentColor}
+
+/* светлая тема — приглушить свечения */
+:root[data-theme="light"] .ads-st.mod{background:rgba(255,176,32,.14)}
+:root[data-theme="light"] .ads-chip.on,
+:root[data-theme="light"] .ads-post-cta button{box-shadow:none}
+:root[data-theme="light"] .ads-steps i.on{box-shadow:none}
+:root[data-theme="light"] .ads-reach{background:var(--surface)}

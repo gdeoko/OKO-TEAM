@@ -1,0 +1,69 @@
+<!-- ИГРЫ OKO: рулетка + «Дорога» (префикс gm-) -->
+<section class="screen" id="screen-games">
+  <div class="pad">
+
+    <div class="gm-head">
+      <div>
+        <h2 class="section-h" style="margin-bottom:2px">Игры OKO</h2>
+        <div class="gm-sub"><span class="gm-18">18+</span><small>Ставки — только с кошелька OKO</small></div>
+      </div>
+      <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
+    </div>
+
+    <div class="gm-limit" id="gmLimit">
+      <div class="gm-limit-row"><span>Дневной лимит ставок</span><b id="gmLimitTxt">0 ₽ из 10 000 ₽</b></div>
+      <div class="gm-limit-bar"><i id="gmLimitBar" style="width:0%"></i></div>
+    </div>
+
+    <div class="gm-tabs">
+      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка OKO</button>
+      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога OKO</button>
+    </div>
+
+    <!-- РУЛЕТКА OKO -->
+    <div id="gmGame-wheel">
+      <div class="gm-wheel-card">
+        <div class="gm-pointer"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M15 26L2 2h26z" fill="#9AFF00" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div class="gm-wheel-wrap" id="gmWheelWrap">
+          <div class="gm-wheel" id="gmWheel"></div>
+          <div class="gm-wheel-hub"><svg class="i"><use href="#i-logo"/></svg></div>
+        </div>
+        <div class="gm-result" id="gmWheelResult"><span class="gm-hint">12 секторов · до ×10 · выплата сразу на кошелёк</span></div>
+        <div class="gm-bet"><input id="gmWheelBet" type="number" inputmode="numeric" min="10" step="10" value="100" placeholder="Ставка, ₽" oninput="gmChipClear(this)"></div>
+        <div class="gm-chips">
+          <button onclick="gmChip('gmWheelBet',50,this)">50 ₽</button>
+          <button class="on" onclick="gmChip('gmWheelBet',100,this)">100 ₽</button>
+          <button onclick="gmChip('gmWheelBet',500,this)">500 ₽</button>
+          <button onclick="gmChip('gmWheelBet',1000,this)">1000 ₽</button>
+        </div>
+        <button class="gm-spin" id="gmSpinBtn" onclick="gmSpin()"><svg class="i"><use href="#i-bolt"/></svg>Крутить колесо</button>
+      </div>
+    </div>
+
+    <!-- ДОРОГА OKO -->
+    <div id="gmGame-road" style="display:none">
+      <div class="gm-road-card">
+        <div class="gm-road-mults" id="gmRoadMults"></div>
+        <div class="gm-road-track" id="gmTrack">
+          <div class="gm-cell gm-start" id="gmStartCell"><svg class="i"><use href="#i-flag"/></svg></div>
+          <div class="gm-cell gm-tile">×1,2</div>
+          <div class="gm-cell gm-tile">×1,6</div>
+          <div class="gm-cell gm-tile">×2,4</div>
+          <div class="gm-cell gm-tile">×4</div>
+          <div class="gm-cell gm-tile">×8</div>
+          <div class="gm-eye" id="gmEye"><svg class="i"><use href="#i-logo"/></svg></div>
+        </div>
+        <div id="gmRoadCtrl"></div>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">История игр</h2>
+    <div class="card" style="padding:4px 14px" id="gmHistory"></div>
+
+    <div class="card gm-resp">
+      <svg class="i"><use href="#i-lock"/></svg>
+      <p><b>Ответственная игра.</b> Игры OKO доступны только пользователям старше 18 лет. Дневной лимит ставок — 10 000 ₽, сбрасывается в полночь. Это развлечение, а не заработок: на дистанции преимущество всегда у казино. Играй в удовольствие и останавливайся вовремя.</p>
+    </div>
+    <div style="height:14px"></div>
+  </div>
+</section>

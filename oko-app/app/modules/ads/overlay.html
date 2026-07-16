@@ -1,0 +1,79 @@
+<!-- ADS: создание кампании (3 шага) -->
+<div class="sheet" id="sheet-ads-create">
+  <h3>Новая кампания</h3>
+  <div class="ads-steps" id="adsSteps"><i class="on"></i><i></i><i></i></div>
+
+  <!-- ШАГ 1: объявление -->
+  <div class="ads-step" id="adsStep1">
+    <label class="ads-lbl">Заголовок</label>
+    <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
+    <label class="ads-lbl">Текст объявления</label>
+    <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку"></textarea>
+    <label class="ads-lbl">Кнопка (CTA)</label>
+    <div class="ads-chips" id="adsCtaChips">
+      <button class="ads-chip on" data-v="Подробнее" onclick="adsPickCta(this)">Подробнее</button>
+      <button class="ads-chip" data-v="Купить" onclick="adsPickCta(this)">Купить</button>
+      <button class="ads-chip" data-v="Подписаться" onclick="adsPickCta(this)">Подписаться</button>
+    </div>
+    <label class="ads-lbl">Ссылка</label>
+    <input id="adsInpLink" inputmode="url" placeholder="https://">
+    <button class="btn" style="margin-top:14px" onclick="adsStep(2)">Далее<svg class="i"><use href="#i-chev"/></svg></button>
+  </div>
+
+  <!-- ШАГ 2: аудитория -->
+  <div class="ads-step" id="adsStep2" style="display:none">
+    <label class="ads-lbl">География</label>
+    <div class="ads-chips" id="adsGeoChips">
+      <button class="ads-chip on" data-v="РФ" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-pos"/></svg>РФ</button>
+      <button class="ads-chip" data-v="СНГ" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-pos"/></svg>СНГ</button>
+      <button class="ads-chip" data-v="Весь мир" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-globe"/></svg>Весь мир</button>
+    </div>
+    <label class="ads-lbl">Интересы</label>
+    <div class="ads-chips" id="adsIntChips">
+      <button class="ads-chip" data-v="нейросети" onclick="adsToggleMulti(this)">нейросети</button>
+      <button class="ads-chip" data-v="бизнес" onclick="adsToggleMulti(this)">бизнес</button>
+      <button class="ads-chip" data-v="контент" onclick="adsToggleMulti(this)">контент</button>
+      <button class="ads-chip" data-v="маркетинг" onclick="adsToggleMulti(this)">маркетинг</button>
+      <button class="ads-chip" data-v="игры" onclick="adsToggleMulti(this)">игры</button>
+      <button class="ads-chip" data-v="крипта" onclick="adsToggleMulti(this)">крипта</button>
+    </div>
+    <label class="ads-lbl">Возраст</label>
+    <div class="ads-chips" id="adsAgeChips">
+      <button class="ads-chip" data-v="18-24" onclick="adsToggleMulti(this)">18–24</button>
+      <button class="ads-chip on" data-v="25-34" onclick="adsToggleMulti(this)">25–34</button>
+      <button class="ads-chip" data-v="35-44" onclick="adsToggleMulti(this)">35–44</button>
+      <button class="ads-chip" data-v="45+" onclick="adsToggleMulti(this)">45+</button>
+    </div>
+    <div class="ads-reach card">
+      <div class="ads-reach-l"><svg class="i"><use href="#i-eye"/></svg>Прогноз охвата</div>
+      <div class="ads-reach-v" id="adsReachV">0</div>
+      <div class="ads-reach-s" id="adsReachS">человек в выбранной аудитории</div>
+    </div>
+    <div class="ads-nav">
+      <button class="btn ghost" onclick="adsStep(1)">Назад</button>
+      <button class="btn" onclick="adsStep(3)">Далее<svg class="i"><use href="#i-chev"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ШАГ 3: бюджет -->
+  <div class="ads-step" id="adsStep3" style="display:none">
+    <label class="ads-lbl">Дневной бюджет, ₽</label>
+    <input id="adsInpBudget" inputmode="numeric" value="1000" oninput="adsCalcForecast()">
+    <div class="ads-chips" style="margin-top:2px">
+      <button class="ads-chip" onclick="adsSetBudget(500)">500 ₽</button>
+      <button class="ads-chip on" onclick="adsSetBudget(1000)">1 000 ₽</button>
+      <button class="ads-chip" onclick="adsSetBudget(3000)">3 000 ₽</button>
+      <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
+    </div>
+    <div class="card ads-forecast">
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
+    </div>
+    <div class="ads-balance" id="adsBalanceNote"></div>
+    <div class="ads-nav">
+      <button class="btn ghost" onclick="adsStep(2)">Назад</button>
+      <button class="btn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg>Запустить</button>
+    </div>
+  </div>
+</div>

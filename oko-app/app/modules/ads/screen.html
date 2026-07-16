@@ -1,0 +1,24 @@
+<!-- РЕКЛАМНЫЙ КАБИНЕТ (модуль ads) -->
+<section class="screen" id="screen-ads">
+  <div class="pad">
+    <div class="ads-head">
+      <h2 class="section-h" style="margin-bottom:0">Рекламный кабинет</h2>
+      <span class="ads-live" id="adsLive"><i></i>метрики live</span>
+    </div>
+    <div class="stat-grid ads-summary" id="adsSummary"></div>
+
+    <button class="btn ads-create-btn" onclick="adsOpenCreate()"><svg class="i"><use href="#i-megaphone"/></svg>Создать кампанию</button>
+
+    <div class="card ads-ai-note">
+      <span class="ads-ai-ic"><svg class="i"><use href="#i-bolt"/></svg></span>
+      <div>
+        <b>Модерация ИИ-агентом</b>
+        <small>Каждое объявление проверяется автоматически за ~3 секунды: запрещённые тематики, скам, азартные игры. Отклонили — бюджет вернётся на лицевой счёт мгновенно.</small>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Кампании</h2>
+    <div id="adsList"></div>
+    <div style="height:14px"></div>
+  </div>
+</section>

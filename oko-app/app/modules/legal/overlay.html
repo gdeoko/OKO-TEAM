@@ -1,0 +1,13 @@
+<!-- ===== LEGAL: fullscreen-вьюха юридических документов (по образцу searchView) ===== -->
+<div id="legalView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="closeLegalDoc()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b id="lgHeadTitle">Документы OKO</b>
+    <div class="lg-langs">
+      <button class="lg-lang" id="lgLangRu" onclick="lgSetLang('ru')">RU</button>
+      <button class="lg-lang" id="lgLangEn" onclick="lgSetLang('en')">EN</button>
+    </div>
+  </div>
+  <div class="lg-tabs" id="lgTabs"></div>
+  <div class="sv-body" id="lgBody"></div>
+</div>

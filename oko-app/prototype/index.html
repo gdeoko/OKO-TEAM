@@ -1077,6 +1077,573 @@ main>.screen{position:relative;z-index:1}
 @keyframes walPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes walRing{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.35);opacity:0}}
 
+/* ===== module: games ===== */
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» (префикс gm-) ===== */
+
+/* шапка экрана */
+.gm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
+.gm-sub{display:flex;align-items:center;gap:8px;margin-top:5px}
+.gm-sub small{font-size:11px;color:var(--dim)}
+.gm-18{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--danger);border:1.5px solid var(--danger);border-radius:99px;padding:2px 8px;flex-shrink:0}
+
+/* дневной лимит */
+.gm-limit{margin-bottom:14px}
+.gm-limit-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);margin-bottom:5px}
+.gm-limit-row b{color:var(--text);font-weight:700;white-space:nowrap}
+.gm-limit-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);overflow:hidden}
+.gm-limit-bar i{display:block;height:100%;background:var(--lime);border-radius:3px;transition:width .6s cubic-bezier(.3,1,.4,1)}
+.gm-limit.full .gm-limit-bar i{background:var(--danger)}
+.gm-limit.full .gm-limit-row b{color:var(--danger)}
+
+/* переключатель игр */
+.gm-tabs{display:flex;gap:8px;margin-bottom:14px}
+.gm-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:700;color:var(--dim);transition:all .18s}
+.gm-tabs button svg.i{width:16px;height:16px}
+.gm-tabs button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent);box-shadow:var(--glow)}
+.gm-tabs button:active{transform:scale(.97)}
+
+/* игровой стол: тёмный «казино»-фон в обеих темах (осознанно) */
+.gm-wheel-card,.gm-road-card{position:relative;overflow:hidden;background:radial-gradient(130% 120% at 50% -10%,rgba(154,255,0,.13),transparent 55%),linear-gradient(160deg,#0e1408,#060804 70%);border:1px solid #2c3b14;border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;animation:fade .3s ease}
+:root[data-theme="light"] .gm-wheel-card,
+:root[data-theme="light"] .gm-road-card{border-color:#b9d494;box-shadow:0 10px 30px rgba(20,40,0,.18)}
+
+/* --- РУЛЕТКА --- */
+.gm-pointer{position:relative;z-index:4;height:26px;margin-bottom:-14px;display:flex;justify-content:center;filter:drop-shadow(0 0 8px rgba(154,255,0,.8));animation:gmPtr 2.6s ease-in-out infinite}
+@keyframes gmPtr{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+.gm-wheel-wrap{position:relative;width:248px;height:248px;margin:0 auto}
+.gm-wheel{position:absolute;inset:0;border-radius:50%;border:3px solid #2c3b14;box-shadow:0 0 0 6px #0c1106,0 0 34px rgba(154,255,0,.22),inset 0 0 26px rgba(0,0,0,.6);will-change:transform}
+.gm-wheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -15.4deg,rgba(0,0,0,.55) 0 .9deg,transparent .9deg 30deg);pointer-events:none}
+.gm-sec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:17px;letter-spacing:.05em;line-height:1;pointer-events:none}
+.gm-wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
+.gm-wheel-hub svg.i{width:36px;height:36px;color:#9AFF00}
+@keyframes gmHub{0%,100%{box-shadow:0 0 10px rgba(154,255,0,.3),inset 0 0 10px rgba(154,255,0,.12)}50%{box-shadow:0 0 28px rgba(154,255,0,.6),inset 0 0 16px rgba(154,255,0,.2)}}
+.gm-shake{animation:gmShake .5s ease}
+@keyframes gmShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+
+/* табло результата */
+.gm-result{min-height:46px;margin:16px 0 2px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center}
+.gm-result b{font-family:var(--font-display);font-size:27px;letter-spacing:.04em;line-height:1}
+.gm-result span,.gm-hint{font-size:12px;color:#8fa07a}
+.gm-win{color:#9AFF00;text-shadow:0 0 16px rgba(154,255,0,.6);animation:gmPop .45s cubic-bezier(.3,1.6,.4,1)}
+.gm-lose{color:var(--danger);animation:gmPop .3s ease}
+@keyframes gmPop{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+.gm-run{font-size:12.5px;color:#8fa07a;animation:gmBlink 1s ease infinite}
+@keyframes gmBlink{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ставка: инпут + чипы (на тёмном столе) */
+.gm-bet{display:flex;gap:8px;margin:12px 0 10px}
+.gm-bet input{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid #2c3b14;border-radius:var(--r-md);padding:12px 14px;color:#fff;font-size:15px;font-weight:700;outline:none;text-align:center;transition:border-color .18s}
+.gm-bet input:focus{border-color:#9AFF00;box-shadow:0 0 12px rgba(154,255,0,.25)}
+.gm-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.gm-chips button{padding:9px 4px;border:1px solid #2c3b14;border-radius:99px;font-size:12px;font-weight:700;color:#b9c9a2;transition:all .15s}
+.gm-chips button.on{border-color:#9AFF00;background:rgba(154,255,0,.14);color:#9AFF00;box-shadow:0 0 10px rgba(154,255,0,.25)}
+.gm-chips button:active{transform:scale(.93)}
+
+/* главные кнопки игр */
+.gm-spin{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#9AFF00;color:#000;font-weight:800;font-size:14.5px;letter-spacing:.03em;padding:14px 10px;border-radius:var(--r-md);transition:transform .12s,opacity .2s;animation:gmBtnPulse 2.4s ease-in-out infinite}
+.gm-spin svg.i{width:17px;height:17px}
+.gm-spin:active{transform:scale(.97)}
+.gm-spin.off{opacity:.4;pointer-events:none;animation:none;box-shadow:none}
+.gm-spin.ghost{background:transparent;color:#9AFF00;border:1px solid #9AFF00;animation:none}
+@keyframes gmBtnPulse{0%,100%{box-shadow:0 0 8px rgba(154,255,0,.25)}50%{box-shadow:0 0 26px rgba(154,255,0,.55)}}
+
+/* конфетти */
+.gm-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:6}
+.gm-confetti i{position:absolute;top:-14px;width:7px;height:11px;border-radius:2px;animation:gmFall 1.3s cubic-bezier(.2,.6,.6,1) forwards}
+@keyframes gmFall{0%{transform:translateY(-12px) rotate(0);opacity:1}78%{opacity:1}100%{transform:translateY(360px) rotate(560deg);opacity:0}}
+
+/* --- ДОРОГА --- */
+.gm-road-mults{display:flex;gap:6px;margin-bottom:12px}
+.gm-rm{flex:1;text-align:center;padding:7px 2px;border-radius:99px;border:1px solid #2c3b14;font-size:11.5px;font-weight:800;color:#7d8f68;transition:all .25s}
+.gm-rm.done{border-color:#9AFF00;background:rgba(154,255,0,.16);color:#9AFF00}
+.gm-rm.cur{border-color:#9AFF00;background:#9AFF00;color:#0a0a0a;box-shadow:0 0 14px rgba(154,255,0,.5);animation:gmBtnPulse 1.6s ease-in-out infinite}
+.gm-road-track{position:relative;display:flex;gap:7px;padding-top:48px;margin-bottom:14px}
+.gm-cell{height:58px;border-radius:var(--r-md);border:1px solid #2c3b14;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;letter-spacing:.04em;color:#7d8f68;transition:all .3s}
+.gm-cell svg.i{width:17px;height:17px}
+.gm-cell.gm-start{flex:0 0 44px;color:#9AFF00;background:rgba(154,255,0,.08);border-color:rgba(154,255,0,.3)}
+.gm-cell.gm-tile{flex:1;min-width:0}
+.gm-cell.ok{border-color:#9AFF00;background:rgba(154,255,0,.2);color:#9AFF00;box-shadow:0 0 16px rgba(154,255,0,.4)}
+.gm-cell.bad{border-color:var(--danger);background:rgba(255,77,77,.18);color:var(--danger);box-shadow:0 0 16px rgba(255,77,77,.45);animation:gmShake .45s ease}
+.gm-eye{position:absolute;top:12px;left:22px;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(154,255,0,.45);transition:left .45s cubic-bezier(.3,1.2,.4,1);z-index:2}
+.gm-eye svg.i{width:22px;height:22px;color:#9AFF00}
+.gm-eye.gm-hop{animation:gmHop .5s cubic-bezier(.3,1.4,.4,1)}
+@keyframes gmHop{0%{transform:translateY(0) scale(1)}45%{transform:translateY(-18px) scale(1.1)}100%{transform:translateY(0) scale(1)}}
+.gm-eye.gm-fall{animation:gmFallEye .85s ease forwards}
+@keyframes gmFallEye{30%{transform:translateY(30px) rotate(50deg);opacity:1}100%{transform:translateY(92px) rotate(160deg);opacity:0}}
+
+.gm-road-stat{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:11.5px;color:#8fa07a}
+.gm-road-stat b{color:#fff;font-weight:800}
+.gm-road-btns{display:grid;grid-template-columns:1fr 1.25fr;gap:8px}
+.gm-road-msg{margin-bottom:10px;font-size:13px;color:#b9c9a2;animation:gmPop .35s ease}
+.gm-road-msg b{font-family:var(--font-display);font-size:21px;letter-spacing:.04em;margin-right:6px}
+
+/* история игр */
+.gm-op{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.gm-op:last-child{border-bottom:none}
+.gm-op-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gm-op-ic.in{background:var(--lime-dim);color:var(--accent)}
+.gm-op-ic.out{background:rgba(255,77,77,.12);color:var(--danger)}
+.gm-op-ic svg.i{width:17px;height:17px}
+.gm-op-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gm-op-t1{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-op-t2{font-size:11px;color:var(--dim)}
+.gm-op-sum{font-size:14px;font-weight:800;white-space:nowrap;flex-shrink:0}
+.gm-op-sum.in{color:var(--accent)}
+.gm-op-sum.out{color:var(--danger)}
+.gm-empty{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--dim);font-size:12.5px;padding:22px 0}
+.gm-empty svg.i{width:30px;height:30px;color:var(--border)}
+
+/* ответственная игра */
+.gm-resp{display:flex;gap:12px;margin-top:14px;align-items:flex-start;text-align:left}
+.gm-resp svg.i{width:20px;height:20px;color:var(--accent);flex-shrink:0;margin-top:2px}
+.gm-resp p{font-size:11.5px;color:var(--dim);line-height:1.55}
+.gm-resp p b{color:var(--text)}
+
+/* ===== module: academy ===== */
+/* ===== ACADEMY: Академия OKO (префикс ac-) ===== */
+
+/* --- герой курса --- */
+.ac-hero{position:relative;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 18px;margin-bottom:14px;background:radial-gradient(130% 160% at 88% 8%,rgba(154,255,0,.18),transparent 55%),linear-gradient(135deg,#101708,#060904 70%)}
+:root[data-theme="light"] .ac-hero{background:radial-gradient(130% 160% at 88% 8%,rgba(110,200,0,.16),transparent 55%),linear-gradient(135deg,#f2f8e8,#e6f0d8 70%)}
+.ac-hero::after{content:'';position:absolute;top:-46%;right:-14%;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.16),transparent 65%);pointer-events:none;animation:acBreath 5.5s ease-in-out infinite}
+@keyframes acBreath{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.06)}}
+.ac-hero h2{font-size:30px;line-height:.98;margin-bottom:5px;position:relative;z-index:1}
+.ac-hero p{font-size:12.5px;color:var(--accent);font-weight:600;position:relative;z-index:1}
+
+/* --- карточка курса + прогресс-кольцо --- */
+.ac-course-top{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.ac-ring{width:74px;height:74px;flex-shrink:0;position:relative}
+.ac-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ac-ring .bg{fill:none;stroke:var(--raised);stroke-width:7}
+.ac-ring .val{fill:none;stroke:var(--lime);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.3,1,.4,1);filter:drop-shadow(0 0 5px rgba(154,255,0,.5))}
+:root[data-theme="light"] .ac-ring .val{filter:none}
+.ac-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:20px;color:var(--accent);letter-spacing:.02em}
+.ac-course-top h3{font-size:24px;line-height:1;margin-bottom:4px}
+.ac-course-top .dim{font-size:12.5px;line-height:1.45}
+
+.ac-lesson-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-bottom:1px solid var(--border);text-align:left;transition:background .15s;animation:fade .3s ease both}
+.ac-lesson-row:last-child{border-bottom:none}
+.ac-lesson-row:not(.locked):hover{background:var(--lime-dim)}
+.ac-lesson-row:not(.locked):active{transform:scale(.985)}
+.ac-num{width:32px;height:32px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:17px;padding-top:2px}
+.ac-lesson-row.locked .ac-num{background:var(--raised);color:var(--dim)}
+.ac-lesson-row .meta{flex:1;min-width:0}
+.ac-lesson-row .t{font-weight:600;font-size:14px;line-height:1.25}
+.ac-lesson-row.locked .t{color:var(--dim)}
+.ac-lesson-row .s{font-size:11.5px;color:var(--dim);margin-top:2px}
+.ac-lesson-row svg.i{width:17px;height:17px;color:var(--dim);flex-shrink:0}
+.ac-lesson-row .go{color:var(--accent)}
+.ac-mini-pct{font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 9px;flex-shrink:0}
+
+/* --- «скоро» --- */
+.ac-soon{display:flex;align-items:center;gap:14px}
+.ac-soon .ico{width:46px;height:46px;border-radius:14px;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
+.ac-soon .ico svg.i{width:22px;height:22px}
+.ac-soon h3{font-size:20px;margin-bottom:3px}
+.ac-soon p{font-size:12.5px;color:var(--dim);line-height:1.45}
+
+/* --- страница урока --- */
+.ac-back{margin-bottom:14px}
+.ac-lesson-head{margin-bottom:16px}
+.ac-lesson-head h2{font-size:30px;line-height:1;margin:8px 0 6px}
+.ac-lesson-head .m{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--dim)}
+.ac-lesson-head .m svg.i{width:14px;height:14px;vertical-align:-.2em}
+
+/* --- видео-плеер --- */
+.ac-player{position:relative;aspect-ratio:16/9;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);background:#070a04;cursor:pointer}
+.ac-player svg.ac-cover{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ac-player video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.ac-play-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5);animation:acPlayPulse 2s ease-out infinite;transition:transform .15s}
+.ac-player:hover .ac-play-btn{transform:translate(-50%,-50%) scale(1.08)}
+.ac-play-btn svg.i{width:26px;height:26px;margin-left:3px}
+@keyframes acPlayPulse{0%{box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5)}70%{box-shadow:0 0 0 18px rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}}
+.ac-player .dur{position:absolute;right:10px;bottom:10px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:99px;padding:3px 10px;z-index:2}
+.ac-video-actions{display:flex;gap:8px;margin-top:10px}
+.ac-video-actions .btn{flex:1}
+.ac-done-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:8px 14px}
+.ac-done-chip svg.i{width:15px;height:15px}
+
+/* --- слайды: горизонтальный scroll-snap --- */
+.ac-slides{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ac-slides::-webkit-scrollbar{display:none}
+.ac-slide{flex:0 0 min(86%,340px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px;transition:border-color .25s,box-shadow .25s}
+.ac-slide.cur{border-color:rgba(154,255,0,.45);box-shadow:0 0 22px rgba(154,255,0,.08)}
+.ac-slide .n{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+.ac-slide h3{font-size:23px;line-height:1;color:var(--text)}
+.ac-slide .pic{height:76px;color:var(--accent)}
+.ac-slide .pic svg{width:100%;height:100%}
+.ac-slide ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.ac-slide li{font-size:12.5px;line-height:1.45;padding-left:16px;position:relative}
+.ac-slide li::before{content:'';position:absolute;left:0;top:8px;width:9px;height:2px;background:var(--accent);border-radius:1px}
+.ac-slide li b{color:var(--accent)}
+.ac-slides-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:6px}
+.ac-arrow{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ac-arrow:hover{border-color:var(--accent)}
+.ac-arrow:active{transform:scale(.9)}
+.ac-arrow svg.i{width:16px;height:16px}
+.ac-arrow.next svg.i{transform:rotate(180deg)}
+.ac-dots{display:flex;gap:6px}
+.ac-dots i{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .25s}
+.ac-dots i.on{background:var(--lime);width:18px;border-radius:3px;box-shadow:0 0 8px rgba(154,255,0,.5)}
+:root[data-theme="light"] .ac-dots i.on{box-shadow:none}
+
+/* --- тест --- */
+.ac-quiz-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);margin-bottom:8px}
+.ac-quiz-top b{color:var(--accent)}
+.ac-q{font-size:15.5px;font-weight:600;line-height:1.4;margin:6px 0 14px}
+.ac-opt{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 14px;font-size:13.5px;font-weight:500;margin-bottom:8px;transition:border-color .15s,transform .12s;animation:fade .3s ease both}
+.ac-opt:nth-child(2){animation-delay:.04s}.ac-opt:nth-child(3){animation-delay:.08s}.ac-opt:nth-child(4){animation-delay:.12s}
+.ac-opt:not(.ok):not(.bad):hover{border-color:var(--dim)}
+.ac-opt:active{transform:scale(.985)}
+.ac-opt .lb{width:24px;height:24px;flex-shrink:0;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--dim);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ac-opt.ok{border-color:var(--lime);background:var(--lime-dim);animation:acOkPop .35s ease}
+.ac-opt.ok .lb{background:var(--lime);color:#000;border-color:var(--lime)}
+.ac-opt.bad{border-color:var(--danger);background:rgba(255,77,77,.1);animation:acShake .4s ease}
+.ac-opt.bad .lb{background:var(--danger);color:#fff;border-color:var(--danger)}
+@keyframes acOkPop{0%{transform:scale(1)}45%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes acShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.ac-score{font-family:var(--font-display);font-size:76px;color:var(--accent);text-align:center;line-height:1;text-shadow:0 0 24px rgba(154,255,0,.4)}
+:root[data-theme="light"] .ac-score{text-shadow:none}
+.ac-score-sub{text-align:center;font-size:12.5px;color:var(--dim);margin:6px 0 16px;line-height:1.5}
+.ac-score-sub b{color:var(--accent)}
+.ac-score-sub .fail{color:var(--danger);font-weight:700}
+
+/* --- практика --- */
+.ac-task-ta{width:100%;min-height:120px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font-body);font-size:13.5px;line-height:1.5;padding:12px 14px;outline:none;resize:vertical;transition:border-color .15s}
+.ac-task-ta:focus{border-color:var(--accent)}
+.ac-task-formula{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.ac-task-formula span{font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 11px;letter-spacing:.03em}
+.ac-task-formula svg.i{width:13px;height:13px;color:var(--dim);align-self:center}
+.ac-checking{display:flex;align-items:center;gap:12px;padding:6px 0}
+.ac-spin{width:22px;height:22px;flex-shrink:0;border:2.5px solid var(--border);border-top-color:var(--lime);border-radius:50%;animation:acSpin .8s linear infinite}
+@keyframes acSpin{to{transform:rotate(360deg)}}
+.ac-checking p{font-size:13px;font-weight:600}
+.ac-checking small{display:block;font-size:11.5px;color:var(--dim);font-weight:400;margin-top:2px}
+.ac-verdict{border:1px solid rgba(154,255,0,.4);background:var(--lime-dim);border-radius:var(--r-md);padding:13px 14px;animation:acOkPop .4s ease}
+.ac-verdict .h{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;color:var(--accent);margin-bottom:6px}
+.ac-verdict .h svg.i{width:16px;height:16px}
+.ac-verdict p{font-size:12.5px;line-height:1.5}
+
+/* --- мини-игра --- */
+.ac-game-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ac-game-col{display:flex;flex-direction:column;gap:8px}
+.ac-game-col .h{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:center;margin-bottom:2px}
+.ac-tile{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 10px;font-size:12px;font-weight:600;line-height:1.3;text-align:center;transition:border-color .15s,transform .15s,opacity .3s;animation:fade .3s ease both}
+.ac-tile:hover{border-color:var(--dim)}
+.ac-tile:active{transform:scale(.96)}
+.ac-tile.sel{border-color:var(--lime);background:var(--lime-dim);color:var(--accent);box-shadow:0 0 12px rgba(154,255,0,.18)}
+.ac-tile.hit{border-color:var(--lime);background:var(--lime);color:#000;animation:acFly .55s cubic-bezier(.4,0,.9,.4) forwards}
+@keyframes acFly{0%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 rgba(154,255,0,.7)}30%{transform:scale(1.08);box-shadow:0 0 26px 8px rgba(154,255,0,.5)}100%{transform:translateY(-46px) scale(.55);opacity:0}}
+.ac-tile.shake{border-color:var(--danger);background:rgba(255,77,77,.1);animation:acShake .45s ease}
+.ac-game-score{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);margin-bottom:10px}
+.ac-game-score b{color:var(--accent)}
+.ac-game-done{text-align:center;padding:8px 0 2px}
+.ac-game-done .big{font-family:var(--font-display);font-size:44px;color:var(--accent);line-height:1}
+.ac-game-done p{font-size:12.5px;color:var(--dim);margin:6px 0 14px}
+
+/* --- прогресс урока --- */
+.ac-check-row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:500}
+.ac-check-row:last-child{border-bottom:none}
+.ac-check-ic{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--border);color:transparent;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.ac-check-row.done .ac-check-ic{background:var(--lime);border-color:var(--lime);color:#000;animation:acOkPop .35s ease}
+.ac-check-ic svg.i{width:13px;height:13px;stroke-width:10}
+.ac-check-row.done span{color:var(--text)}
+.ac-check-row:not(.done) span{color:var(--dim)}
+.ac-check-row .pct{margin-left:auto;font-size:11px;font-weight:700;color:var(--dim)}
+.ac-check-row.done .pct{color:var(--accent)}
+
+/* --- сертификат --- */
+.ac-cert-card{position:relative;overflow:hidden}
+.ac-cert-card.ready{border-color:rgba(154,255,0,.45)}
+.ac-cert-head{display:flex;align-items:center;gap:13px;margin-bottom:10px}
+.ac-cert-head .ico{width:44px;height:44px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-cert-head .ico svg.i{width:22px;height:22px}
+.ac-cert-head h3{font-size:21px;line-height:1;margin-bottom:3px}
+.ac-cert-head p{font-size:12px;color:var(--dim)}
+.ac-cert-req{display:flex;flex-direction:column;gap:7px;margin:8px 0 4px}
+.ac-cert-req div{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--dim)}
+.ac-cert-req div.ok{color:var(--text)}
+.ac-cert-req svg.i{width:15px;height:15px;color:var(--dim)}
+.ac-cert-req div.ok svg.i{color:var(--accent)}
+.ac-cert-no{font-family:monospace;font-size:12px;color:var(--accent);background:var(--lime-dim);border-radius:8px;padding:6px 10px;display:inline-block;margin:4px 0 12px}
+.ac-cert-actions{display:flex;gap:8px}
+.ac-cert-actions .btn{flex:1}
+
+.ac-cert-item{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.ac-cert-item:last-child{border-bottom:none}
+.ac-cert-item .ico{width:38px;height:38px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-cert-item .ico svg.i{width:18px;height:18px}
+.ac-cert-item .meta{flex:1;min-width:0}
+.ac-cert-item .t{font-size:13px;font-weight:600;line-height:1.3}
+.ac-cert-item .s{font-size:11px;color:var(--dim);margin-top:2px;font-family:monospace}
+.ac-cert-item .btn.sm{flex-shrink:0}
+
+/* --- fullscreen просмотр сертификата --- */
+.ac-cert-full{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.ac-cert-full.open{display:flex;animation:fade .25s ease}
+.ac-cert-full img{max-width:min(96vw,900px);max-height:72dvh;border-radius:10px;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 40px rgba(154,255,0,.12)}
+.ac-cert-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center}
+.ac-cert-close svg.i{width:18px;height:18px;transform:rotate(45deg)}
+.ac-cert-full-actions{display:flex;gap:10px}
+.ac-cert-full-actions .btn{width:auto}
+
+/* ===== module: ads ===== */
+/* ===== ADS: рекламный кабинет (префикс ads-) ===== */
+.ads-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.ads-live{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 11px}
+.ads-live i{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:adsPulse 1.6s ease-in-out infinite}
+@keyframes adsPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(154,255,0,.5)}50%{opacity:.55;box-shadow:0 0 0 5px rgba(154,255,0,0)}}
+
+.ads-summary .stat{animation:fade .3s ease both}
+.ads-summary .stat:nth-child(2){animation-delay:.05s}
+.ads-summary .stat:nth-child(3){animation-delay:.1s}
+.ads-summary .stat:nth-child(4){animation-delay:.15s}
+.ads-summary .stat .v{transition:opacity .2s}
+.ads-summary .stat .v small{font-size:16px;color:var(--dim)}
+
+.ads-create-btn{margin:16px 0 14px;box-shadow:var(--glow)}
+.ads-create-btn svg.i{width:18px;height:18px}
+
+.ads-ai-note{display:flex;gap:12px;align-items:flex-start;padding:14px}
+.ads-ai-note b{font-size:13.5px;display:block;margin-bottom:3px}
+.ads-ai-note small{font-size:11.5px;color:var(--dim);line-height:1.45;display:block}
+.ads-ai-ic{width:36px;height:36px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ads-ai-ic svg.i{width:18px;height:18px;animation:adsBolt 2.4s ease-in-out infinite}
+@keyframes adsBolt{0%,88%,100%{opacity:1}92%{opacity:.35}96%{opacity:1}94%{opacity:.5}}
+
+/* карточка кампании */
+.ads-camp{margin-bottom:12px;padding:15px;animation:fade .3s ease both}
+.ads-camp-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.ads-camp-name{flex:1;min-width:0;font-size:15px;font-weight:700;line-height:1.3}
+.ads-camp-txt{font-size:12px;color:var(--dim);line-height:1.45;margin:-4px 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ads-st{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:4px 10px;border:1px solid transparent}
+.ads-st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.ads-st.act{color:var(--accent);background:var(--lime-dim);border-color:rgba(154,255,0,.3)}
+.ads-st.act::before{animation:adsPulse 1.6s infinite}
+.ads-st.mod{color:#ffb020;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3)}
+.ads-st.mod::before{animation:adsPulse 1s infinite}
+.ads-st.pause{color:var(--dim);background:var(--raised);border-color:var(--border)}
+.ads-st.rej{color:var(--danger);background:rgba(255,77,77,.1);border-color:rgba(255,77,77,.3)}
+.ads-st.done{color:var(--dim);background:var(--raised);border-color:var(--border)}
+
+.ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
+.ads-m b{display:block;font-family:var(--font-display);font-size:17px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-m span{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.ads-m.hot b{color:var(--accent)}
+
+.ads-spark{display:block;width:100%;height:44px;margin-bottom:10px;border-radius:var(--r-sm)}
+
+.ads-budget-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);overflow:hidden;margin-bottom:10px}
+.ads-budget-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime-dim),var(--lime));transition:width .6s cubic-bezier(.3,1,.4,1)}
+
+.ads-reason{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--danger);background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.25);border-radius:var(--r-sm);padding:9px 11px;margin-bottom:10px;line-height:1.4}
+.ads-reason svg.i{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+
+.ads-modwait{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--dim);padding:4px 2px}
+.ads-modwait svg.i{width:15px;height:15px;color:#ffb020;animation:adsSpin 1.4s linear infinite}
+@keyframes adsSpin{to{transform:rotate(360deg)}}
+
+.ads-camp-acts{display:flex;gap:8px}
+.ads-camp-acts .btn.sm{flex:1;gap:6px}
+.ads-camp-acts .btn.sm svg.i{width:14px;height:14px}
+.ads-camp-acts .btn.sm.stop{color:var(--danger);border-color:rgba(255,77,77,.45);background:transparent}
+
+.ads-empty{text-align:center;padding:26px 14px;color:var(--dim);font-size:13px}
+.ads-empty svg.i{width:34px;height:34px;display:block;margin:0 auto 10px;color:var(--dim);opacity:.6}
+
+/* ===== sheet создания ===== */
+.ads-steps{display:flex;gap:6px;margin:-4px 0 14px}
+.ads-steps i{flex:1;height:4px;border-radius:2px;background:var(--raised);border:1px solid var(--border);transition:all .3s}
+.ads-steps i.on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.4)}
+
+.ads-step{animation:adsStepIn .28s cubic-bezier(.3,1,.4,1) both}
+@keyframes adsStepIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+
+.ads-lbl{display:block;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+.ads-ta{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;font-family:var(--font-body);outline:none;margin:10px 0 12px;resize:none;line-height:1.45}
+.ads-ta:focus{border-color:var(--lime)}
+#sheet-ads-create input:focus{border-color:var(--lime)}
+
+.ads-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.ads-chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:8px 14px;transition:all .16s}
+.ads-chip svg.i{width:13px;height:13px}
+.ads-chip:active{transform:scale(.94)}
+.ads-chip.on{color:#000;background:var(--lime);border-color:var(--lime);box-shadow:0 0 12px rgba(154,255,0,.35)}
+
+.ads-reach{padding:14px;text-align:center;margin-bottom:14px;background:radial-gradient(120% 150% at 50% 0%,rgba(154,255,0,.1),transparent 60%),var(--surface)}
+.ads-reach-l{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.ads-reach-l svg.i{width:14px;height:14px;color:var(--accent)}
+.ads-reach-v{font-family:var(--font-display);font-size:40px;line-height:1.1;color:var(--accent);margin:6px 0 2px;text-shadow:0 0 18px rgba(154,255,0,.4)}
+:root[data-theme="light"] .ads-reach-v{text-shadow:none}
+.ads-reach-s{font-size:11px;color:var(--dim)}
+
+.ads-forecast{padding:6px 14px;margin:12px 0}
+.ads-f-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ads-f-row:last-child{border-bottom:none}
+.ads-f-row span{display:inline-flex;align-items:center;gap:8px;color:var(--dim)}
+.ads-f-row span svg.i{width:15px;height:15px;color:var(--accent)}
+.ads-f-row b{font-weight:800;color:var(--text);white-space:nowrap}
+
+.ads-balance{font-size:11.5px;color:var(--dim);text-align:center;margin-bottom:2px}
+.ads-balance b{color:var(--accent)}
+
+.ads-nav{display:flex;gap:8px;margin-top:14px}
+.ads-nav .btn.ghost{width:38%}
+
+/* CTA в посте ленты */
+.ads-post-cta{margin-top:10px}
+.ads-post-cta button{display:inline-flex;align-items:center;gap:7px;background:var(--lime);color:#000;font-weight:700;font-size:12.5px;padding:9px 18px;border-radius:99px;transition:transform .12s;box-shadow:0 0 14px rgba(154,255,0,.25)}
+.ads-post-cta button:active{transform:scale(.95)}
+.ads-post-cta button svg.i{width:13px;height:13px;stroke:currentColor}
+
+/* светлая тема — приглушить свечения */
+:root[data-theme="light"] .ads-st.mod{background:rgba(255,176,32,.14)}
+:root[data-theme="light"] .ads-chip.on,
+:root[data-theme="light"] .ads-post-cta button{box-shadow:none}
+:root[data-theme="light"] .ads-steps i.on{box-shadow:none}
+:root[data-theme="light"] .ads-reach{background:var(--surface)}
+
+/* ===== module: legal ===== */
+/* ===== LEGAL (lg-): юридические документы OKO — RU/EN, подпись + печать ===== */
+#legalView{position:fixed;inset:0;z-index:76;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#legalView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#legalView{transition:none}}
+
+/* переключатель языка в шапке */
+.lg-langs{display:flex;gap:6px;flex-shrink:0}
+.lg-lang{font-size:11px;font-weight:800;letter-spacing:.1em;padding:6px 12px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);transition:all .18s}
+.lg-lang:hover{color:var(--accent);border-color:var(--accent)}
+.lg-lang.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+
+/* табы документов */
+.lg-tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.lg-tabs::-webkit-scrollbar{display:none}
+.lg-tab{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);white-space:nowrap;transition:all .18s}
+.lg-tab svg.i{width:14px;height:14px}
+.lg-tab:hover{color:var(--accent)}
+.lg-tab.on{background:var(--lime-dim);border-color:var(--accent);color:var(--accent)}
+
+/* полотно документа */
+.lg-doc{max-width:720px;margin:0 auto;line-height:1.65;font-size:13.5px;padding-bottom:30px;animation:lgIn .35s ease}
+@keyframes lgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.lg-doc{animation:none}}
+.lg-doc-head{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:22px}
+.lg-doc-logo{width:46px;height:46px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
+:root[data-theme="light"] .lg-doc-logo{filter:none}
+.lg-doc-head h1{font-family:var(--font-display);font-size:29px;line-height:1.05;letter-spacing:.05em;margin-bottom:6px}
+.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+.lg-doc-meta b{color:var(--text);font-weight:700}
+
+/* секции */
+.lg-sec{margin-bottom:22px}
+.lg-sec h2{font-family:var(--font-display);font-size:20px;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+.lg-sec p{margin-bottom:9px;color:var(--text)}
+.lg-sec p:last-child{margin-bottom:0}
+.lg-sec b{font-weight:700}
+.lg-sec ul{list-style:none;margin:4px 0 10px;display:flex;flex-direction:column;gap:6px}
+.lg-sec li{position:relative;padding-left:18px;color:var(--text)}
+.lg-sec li::before{content:'';position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--lime)}
+
+/* таблица тарифов */
+.lg-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 10px}
+.lg-table th,.lg-table td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+.lg-table th{background:var(--raised);color:var(--accent);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+.lg-table td:first-child{font-weight:800;white-space:nowrap}
+.lg-note{font-size:11.5px;color:var(--dim)}
+
+/* реквизиты */
+.lg-req{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:26px}
+.lg-req b{color:var(--text)}
+
+/* блок печати и подписи (базовый .doc-sign-block — в core-ext) */
+.lg-doc .doc-sign-block{padding:6px 2px 0}
+.lg-seal{flex-shrink:0}
+:root:not([data-theme="light"]) .lg-seal{filter:brightness(1.85) saturate(.85)}
+.lg-sig-wrap{display:flex;flex-direction:column;min-width:200px}
+.lg-sig-line{height:1px;background:var(--dim);opacity:.6;margin-top:-8px}
+.lg-sig-cap{font-size:11px;color:var(--dim);margin-top:5px;letter-spacing:.02em}
+
+/* кликабельные ссылки на экране входа */
+.lg-a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;transition:opacity .15s}
+.lg-a:hover{opacity:.75}
+
+/* ===== module: verify-stickers ===== */
+/* ===== verify-stickers (vs-): верификация + премиум-стикеры TON ===== */
+
+/* --- синяя галочка у имён --- */
+.vs-badge{display:inline-flex;vertical-align:-0.12em;margin-left:4px;flex-shrink:0;animation:vs-pop .38s cubic-bezier(.45,1.6,.4,1)}
+.vs-badge svg{width:.95em;height:.95em;min-width:12px;min-height:12px;display:block;filter:drop-shadow(0 0 5px rgba(29,155,240,.55))}
+@keyframes vs-pop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+
+/* --- строка «Верификация» в профиле --- */
+.vs-chip{font-size:9px;font-weight:800;letter-spacing:.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);color:var(--dim);text-transform:uppercase}
+.vs-chip.wait{color:#3fb6ff;border-color:rgba(0,152,234,.55);animation:vs-pulse 1.4s ease-in-out infinite}
+.vs-chip.on{color:#0a0a0a;background:var(--lime);border-color:var(--lime);box-shadow:var(--glow)}
+@keyframes vs-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* --- sheet верификации --- */
+.vs-vcard{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);margin:8px 0 16px;animation:vs-fadein .35s ease}
+.vs-vic{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--lime-dim);color:var(--accent);flex-shrink:0}
+.vs-vic svg{width:25px;height:25px}
+.vs-vcard b{display:block;font-size:15px;line-height:1.25}
+.vs-vcard small{color:var(--dim);font-size:12px;line-height:1.4;display:block;margin-top:2px}
+.vs-vcard.pending{border-color:rgba(0,152,234,.45)}
+.vs-vcard.pending .vs-vic{background:rgba(0,152,234,.14);color:#3fb6ff;animation:vs-pulse 1.4s ease-in-out infinite}
+.vs-vcard.ok{border-color:rgba(29,155,240,.5);box-shadow:0 0 18px rgba(29,155,240,.14)}
+.vs-vcard.ok .vs-vic{background:rgba(29,155,240,.15)}
+.vs-vcard.ok .vs-vic svg{width:30px;height:30px}
+@keyframes vs-fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.vs-cond{display:flex;gap:12px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--border);font-size:13.5px;font-weight:500}
+.vs-cond:last-of-type{border-bottom:none}
+.vs-cond svg{width:19px;height:19px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.vs-cond small{display:block;font-weight:400;color:var(--dim);font-size:11.5px;margin-top:2px;line-height:1.45}
+
+.vs-progress{height:4px;border-radius:999px;background:var(--raised);overflow:hidden;margin:14px 0 6px;position:relative}
+.vs-progress i{position:absolute;inset:0;width:40%;border-radius:999px;background:linear-gradient(90deg,transparent,#0098EA,#5ad0ff,transparent);animation:vs-scan 1.3s linear infinite}
+@keyframes vs-scan{from{transform:translateX(-110%)}to{transform:translateX(300%)}}
+
+/* --- премиум-секция TON в гриде стикеров --- */
+.vs-stk-head{grid-column:1/-1;display:flex;align-items:center;gap:9px;margin-top:8px;padding-top:12px;border-top:1px solid var(--border);font-family:var(--font-display);letter-spacing:2px;font-size:14px;color:#3fb6ff}
+.vs-stk-head svg{width:16px;height:16px;flex-shrink:0;filter:drop-shadow(0 0 4px rgba(0,152,234,.6))}
+.vs-stk-head .vs-pro{margin-left:auto;font-family:var(--font-body);font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);padding:3px 9px;border-radius:999px}
+.vs-stk{position:relative}
+.vs-stk .vs-lock{position:absolute;top:4px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(8,10,14,.8);border:1px solid rgba(0,152,234,.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.vs-stk .vs-lock svg{width:11px;height:11px;color:#3fb6ff}
+.vs-locked .vs-tstk{opacity:.4;filter:grayscale(.35)}
+.vs-locked small{opacity:.55}
+:root[data-theme="light"] .vs-stk .vs-lock{background:rgba(255,255,255,.85)}
+
+/* --- сам TON-стикер (кругляш) --- */
+.vs-tstk{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 38% 30%,#0e2c46,#050d18 74%);border:1.5px solid rgba(0,152,234,.75);box-shadow:0 0 14px rgba(0,152,234,.3),inset 0 0 12px rgba(0,152,234,.18)}
+.vs-tstk svg{width:66%;height:66%;display:block;filter:drop-shadow(0 0 6px rgba(0,152,234,.55))}
+:root[data-theme="light"] .vs-tstk{background:radial-gradient(circle at 38% 30%,#eaf7ff,#c9e8fd 76%);border-color:#59b7ec;box-shadow:0 0 10px rgba(0,152,234,.22),inset 0 0 10px rgba(0,152,234,.1)}
+
+/* --- дождь кристаллов при отправке TON-стикера --- */
+.vs-rain{position:fixed;overflow:hidden;pointer-events:none;z-index:36}
+.vs-rain i{position:absolute;top:-30px;display:block;animation:vs-fall linear forwards}
+.vs-rain i svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 4px rgba(0,152,234,.65))}
+@keyframes vs-fall{
+  0%{transform:translateY(0) rotate(-25deg);opacity:0}
+  10%{opacity:1}
+  80%{opacity:1}
+  100%{transform:translateY(var(--fy,600px)) rotate(170deg);opacity:0}
+}
+
+/* --- стикер к новому посту --- */
+.vs-np-label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--dim);margin:12px 0 8px}
+.vs-np-label svg{width:16px;height:16px;color:var(--accent)}
+.vs-np-hint{margin-left:auto;font-size:10px;font-weight:500;color:var(--dim);opacity:.7}
+.vs-np-strip{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;scrollbar-width:none}
+.vs-np-strip::-webkit-scrollbar{display:none}
+.vs-np-strip button{flex-shrink:0;border-radius:12px;padding:4px;border:1.5px solid transparent;position:relative;transition:transform .12s,border-color .15s,box-shadow .15s}
+.vs-np-strip button.on{border-color:var(--lime);box-shadow:var(--glow);transform:scale(1.06)}
+.vs-np-strip button:active{transform:scale(.9)}
+.vs-np-strip button.vs-locked{opacity:.45}
+.vs-post-stk{display:inline-flex;align-items:center;gap:7px;margin-top:6px;padding:5px 12px 5px 6px;border:1px solid rgba(0,152,234,.4);border-radius:999px;background:var(--raised);font-size:11.5px;font-weight:600;animation:vs-pop .35s cubic-bezier(.45,1.6,.4,1)}
+.vs-post-stk b{color:#3fb6ff;font-weight:700}
+
 
 </style>
 </head>
@@ -1487,6 +2054,109 @@ main>.screen{position:relative;z-index:1}
   </div>
 </section>
 
+<!-- ===== module: games ===== -->
+<!-- ИГРЫ OKO: рулетка + «Дорога» (префикс gm-) -->
+<section class="screen" id="screen-games">
+  <div class="pad">
+
+    <div class="gm-head">
+      <div>
+        <h2 class="section-h" style="margin-bottom:2px">Игры OKO</h2>
+        <div class="gm-sub"><span class="gm-18">18+</span><small>Ставки — только с кошелька OKO</small></div>
+      </div>
+      <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
+    </div>
+
+    <div class="gm-limit" id="gmLimit">
+      <div class="gm-limit-row"><span>Дневной лимит ставок</span><b id="gmLimitTxt">0 ₽ из 10 000 ₽</b></div>
+      <div class="gm-limit-bar"><i id="gmLimitBar" style="width:0%"></i></div>
+    </div>
+
+    <div class="gm-tabs">
+      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка OKO</button>
+      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога OKO</button>
+    </div>
+
+    <!-- РУЛЕТКА OKO -->
+    <div id="gmGame-wheel">
+      <div class="gm-wheel-card">
+        <div class="gm-pointer"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M15 26L2 2h26z" fill="#9AFF00" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/></svg></div>
+        <div class="gm-wheel-wrap" id="gmWheelWrap">
+          <div class="gm-wheel" id="gmWheel"></div>
+          <div class="gm-wheel-hub"><svg class="i"><use href="#i-logo"/></svg></div>
+        </div>
+        <div class="gm-result" id="gmWheelResult"><span class="gm-hint">12 секторов · до ×10 · выплата сразу на кошелёк</span></div>
+        <div class="gm-bet"><input id="gmWheelBet" type="number" inputmode="numeric" min="10" step="10" value="100" placeholder="Ставка, ₽" oninput="gmChipClear(this)"></div>
+        <div class="gm-chips">
+          <button onclick="gmChip('gmWheelBet',50,this)">50 ₽</button>
+          <button class="on" onclick="gmChip('gmWheelBet',100,this)">100 ₽</button>
+          <button onclick="gmChip('gmWheelBet',500,this)">500 ₽</button>
+          <button onclick="gmChip('gmWheelBet',1000,this)">1000 ₽</button>
+        </div>
+        <button class="gm-spin" id="gmSpinBtn" onclick="gmSpin()"><svg class="i"><use href="#i-bolt"/></svg>Крутить колесо</button>
+      </div>
+    </div>
+
+    <!-- ДОРОГА OKO -->
+    <div id="gmGame-road" style="display:none">
+      <div class="gm-road-card">
+        <div class="gm-road-mults" id="gmRoadMults"></div>
+        <div class="gm-road-track" id="gmTrack">
+          <div class="gm-cell gm-start" id="gmStartCell"><svg class="i"><use href="#i-flag"/></svg></div>
+          <div class="gm-cell gm-tile">×1,2</div>
+          <div class="gm-cell gm-tile">×1,6</div>
+          <div class="gm-cell gm-tile">×2,4</div>
+          <div class="gm-cell gm-tile">×4</div>
+          <div class="gm-cell gm-tile">×8</div>
+          <div class="gm-eye" id="gmEye"><svg class="i"><use href="#i-logo"/></svg></div>
+        </div>
+        <div id="gmRoadCtrl"></div>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">История игр</h2>
+    <div class="card" style="padding:4px 14px" id="gmHistory"></div>
+
+    <div class="card gm-resp">
+      <svg class="i"><use href="#i-lock"/></svg>
+      <p><b>Ответственная игра.</b> Игры OKO доступны только пользователям старше 18 лет. Дневной лимит ставок — 10 000 ₽, сбрасывается в полночь. Это развлечение, а не заработок: на дистанции преимущество всегда у казино. Играй в удовольствие и останавливайся вовремя.</p>
+    </div>
+    <div style="height:14px"></div>
+  </div>
+</section>
+
+<!-- ===== module: academy ===== -->
+<!-- АКАДЕМИЯ OKO: курсы, уроки, сертификаты -->
+<section class="screen" id="screen-academy">
+  <div class="pad" id="acRoot"></div>
+</section>
+
+<!-- ===== module: ads ===== -->
+<!-- РЕКЛАМНЫЙ КАБИНЕТ (модуль ads) -->
+<section class="screen" id="screen-ads">
+  <div class="pad">
+    <div class="ads-head">
+      <h2 class="section-h" style="margin-bottom:0">Рекламный кабинет</h2>
+      <span class="ads-live" id="adsLive"><i></i>метрики live</span>
+    </div>
+    <div class="stat-grid ads-summary" id="adsSummary"></div>
+
+    <button class="btn ads-create-btn" onclick="adsOpenCreate()"><svg class="i"><use href="#i-megaphone"/></svg>Создать кампанию</button>
+
+    <div class="card ads-ai-note">
+      <span class="ads-ai-ic"><svg class="i"><use href="#i-bolt"/></svg></span>
+      <div>
+        <b>Модерация ИИ-агентом</b>
+        <small>Каждое объявление проверяется автоматически за ~3 секунды: запрещённые тематики, скам, азартные игры. Отклонили — бюджет вернётся на лицевой счёт мгновенно.</small>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Кампании</h2>
+    <div id="adsList"></div>
+    <div style="height:14px"></div>
+  </div>
+</section>
+
 
   </main>
 
@@ -1678,6 +2348,119 @@ main>.screen{position:relative;z-index:1}
 <!-- КОШЕЛЁК: пополнение и вывод -->
 <div class="sheet" id="sheet-walTopup"><div id="walTopupView"></div></div>
 <div class="sheet" id="sheet-walWithdraw"><div id="walWdView"></div></div>
+
+<!-- ===== module: academy ===== -->
+<!-- АКАДЕМИЯ: полноэкранный просмотр сертификата -->
+<div class="ac-cert-full" id="acCertFull">
+  <button class="ac-cert-close" onclick="acCertFullClose()"><svg class="i"><use href="#i-plus"/></svg></button>
+  <img id="acCertFullImg" alt="Сертификат Академии OKO">
+  <div class="ac-cert-full-actions">
+    <button class="btn sm" onclick="acCertDownload()"><svg class="i"><use href="#i-file"/></svg> Скачать PNG</button>
+    <button class="btn sm ghost" onclick="acCertFullClose()">Закрыть</button>
+  </div>
+</div>
+
+<!-- ===== module: ads ===== -->
+<!-- ADS: создание кампании (3 шага) -->
+<div class="sheet" id="sheet-ads-create">
+  <h3>Новая кампания</h3>
+  <div class="ads-steps" id="adsSteps"><i class="on"></i><i></i><i></i></div>
+
+  <!-- ШАГ 1: объявление -->
+  <div class="ads-step" id="adsStep1">
+    <label class="ads-lbl">Заголовок</label>
+    <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
+    <label class="ads-lbl">Текст объявления</label>
+    <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку"></textarea>
+    <label class="ads-lbl">Кнопка (CTA)</label>
+    <div class="ads-chips" id="adsCtaChips">
+      <button class="ads-chip on" data-v="Подробнее" onclick="adsPickCta(this)">Подробнее</button>
+      <button class="ads-chip" data-v="Купить" onclick="adsPickCta(this)">Купить</button>
+      <button class="ads-chip" data-v="Подписаться" onclick="adsPickCta(this)">Подписаться</button>
+    </div>
+    <label class="ads-lbl">Ссылка</label>
+    <input id="adsInpLink" inputmode="url" placeholder="https://">
+    <button class="btn" style="margin-top:14px" onclick="adsStep(2)">Далее<svg class="i"><use href="#i-chev"/></svg></button>
+  </div>
+
+  <!-- ШАГ 2: аудитория -->
+  <div class="ads-step" id="adsStep2" style="display:none">
+    <label class="ads-lbl">География</label>
+    <div class="ads-chips" id="adsGeoChips">
+      <button class="ads-chip on" data-v="РФ" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-pos"/></svg>РФ</button>
+      <button class="ads-chip" data-v="СНГ" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-pos"/></svg>СНГ</button>
+      <button class="ads-chip" data-v="Весь мир" onclick="adsPickGeo(this)"><svg class="i"><use href="#i-globe"/></svg>Весь мир</button>
+    </div>
+    <label class="ads-lbl">Интересы</label>
+    <div class="ads-chips" id="adsIntChips">
+      <button class="ads-chip" data-v="нейросети" onclick="adsToggleMulti(this)">нейросети</button>
+      <button class="ads-chip" data-v="бизнес" onclick="adsToggleMulti(this)">бизнес</button>
+      <button class="ads-chip" data-v="контент" onclick="adsToggleMulti(this)">контент</button>
+      <button class="ads-chip" data-v="маркетинг" onclick="adsToggleMulti(this)">маркетинг</button>
+      <button class="ads-chip" data-v="игры" onclick="adsToggleMulti(this)">игры</button>
+      <button class="ads-chip" data-v="крипта" onclick="adsToggleMulti(this)">крипта</button>
+    </div>
+    <label class="ads-lbl">Возраст</label>
+    <div class="ads-chips" id="adsAgeChips">
+      <button class="ads-chip" data-v="18-24" onclick="adsToggleMulti(this)">18–24</button>
+      <button class="ads-chip on" data-v="25-34" onclick="adsToggleMulti(this)">25–34</button>
+      <button class="ads-chip" data-v="35-44" onclick="adsToggleMulti(this)">35–44</button>
+      <button class="ads-chip" data-v="45+" onclick="adsToggleMulti(this)">45+</button>
+    </div>
+    <div class="ads-reach card">
+      <div class="ads-reach-l"><svg class="i"><use href="#i-eye"/></svg>Прогноз охвата</div>
+      <div class="ads-reach-v" id="adsReachV">0</div>
+      <div class="ads-reach-s" id="adsReachS">человек в выбранной аудитории</div>
+    </div>
+    <div class="ads-nav">
+      <button class="btn ghost" onclick="adsStep(1)">Назад</button>
+      <button class="btn" onclick="adsStep(3)">Далее<svg class="i"><use href="#i-chev"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ШАГ 3: бюджет -->
+  <div class="ads-step" id="adsStep3" style="display:none">
+    <label class="ads-lbl">Дневной бюджет, ₽</label>
+    <input id="adsInpBudget" inputmode="numeric" value="1000" oninput="adsCalcForecast()">
+    <div class="ads-chips" style="margin-top:2px">
+      <button class="ads-chip" onclick="adsSetBudget(500)">500 ₽</button>
+      <button class="ads-chip on" onclick="adsSetBudget(1000)">1 000 ₽</button>
+      <button class="ads-chip" onclick="adsSetBudget(3000)">3 000 ₽</button>
+      <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
+    </div>
+    <div class="card ads-forecast">
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
+    </div>
+    <div class="ads-balance" id="adsBalanceNote"></div>
+    <div class="ads-nav">
+      <button class="btn ghost" onclick="adsStep(2)">Назад</button>
+      <button class="btn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg>Запустить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== module: legal ===== -->
+<!-- ===== LEGAL: fullscreen-вьюха юридических документов (по образцу searchView) ===== -->
+<div id="legalView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="closeLegalDoc()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b id="lgHeadTitle">Документы OKO</b>
+    <div class="lg-langs">
+      <button class="lg-lang" id="lgLangRu" onclick="lgSetLang('ru')">RU</button>
+      <button class="lg-lang" id="lgLangEn" onclick="lgSetLang('en')">EN</button>
+    </div>
+  </div>
+  <div class="lg-tabs" id="lgTabs"></div>
+  <div class="sv-body" id="lgBody"></div>
+</div>
+
+<!-- ===== module: verify-stickers ===== -->
+<div class="sheet" id="sheet-vs-verify">
+  <h3>Верификация</h3>
+  <div id="vsVerifyView"></div>
+</div>
 
 
 <script>/* supabase-js v2 UMD, вшит для автономности */
@@ -4795,6 +5578,2041 @@ regTitle('wallet', 'Кошелёк');
 walInsertChips();
 walUpdateChips();
 if(document.getElementById('screen-wallet') && document.getElementById('screen-wallet').classList.contains('active')) renderWallet();
+
+/* ===== module: games ===== */
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» (префикс gm-) =====
+   Ставки ТОЛЬКО с кошелька (walletCharge/walletAdd), доход OKO — okoEarn.
+   Механика рулетки перенесена из Mortis: CSS-колесо (conic-gradient) +
+   страховочный setTimeout — результат обрабатывается ровно один раз. */
+
+/* ---------- SVG-иконки модуля (штрих 7, скруглённые концы) ---------- */
+(function gmIcons(){
+  const defs = document.querySelector('svg defs');
+  if(!defs) return;
+  const mk = (id, inner)=>{
+    if(defs.querySelector('#'+id)) return;
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id', id); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = inner; defs.appendChild(s);
+  };
+  /* фишка казино */
+  mk('i-gm-chip','<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 12v13M50 75v13M12 50h13M75 50h13M23 23l9 9M68 68l9 9M77 23l-9 9M32 68l-9 9" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+  /* дорога с разметкой */
+  mk('i-gm-road','<path d="M16 88C32 62 32 38 24 12M84 88C68 62 68 38 76 12" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 14v13M50 44v13M50 74v13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+})();
+
+/* ---------- общее состояние ---------- */
+const GM_LIMIT_MAX = 10000; /* дневной лимит ставок, ₽ */
+const GM_HIST = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games'))||[]; }catch(e){ return []; } })();
+
+function gmFmtMult(m){ return '×' + String(m).replace('.', ','); }
+
+function gmUpdateBalance(){
+  const el = document.getElementById('gmBalance');
+  if(el) el.textContent = fmtMoney(WALLET.balance);
+}
+
+/* ---------- дневной лимит (ответственная игра) ---------- */
+function gmLimitState(){
+  let s = null;
+  try{ s = JSON.parse(localStorage.getItem('oko-games-limit')); }catch(e){}
+  const today = new Date().toISOString().slice(0,10);
+  if(!s || s.date !== today) s = {date: today, spent: 0};
+  return s;
+}
+function gmLimitCheck(bet){
+  const s = gmLimitState();
+  if(s.spent + bet > GM_LIMIT_MAX){
+    showPopup({
+      ico:'lock', title:'Дневной лимит ставок',
+      body:`Ответственная игра: лимит — <b>${fmtMoney(GM_LIMIT_MAX)}</b> ставок в день. Сегодня уже поставлено <b>${fmtMoney(s.spent)}</b>. Новые ставки откроются завтра.`,
+      actions:[{label:'Понятно'},{label:'В кошелёк', ghost:true, onclick:()=>showTab('wallet')}]
+    });
+    return false;
+  }
+  return true;
+}
+function gmLimitSpend(bet){
+  const s = gmLimitState();
+  s.spent += bet;
+  try{ localStorage.setItem('oko-games-limit', JSON.stringify(s)); }catch(e){}
+  gmRenderLimit();
+}
+function gmRenderLimit(){
+  const s = gmLimitState();
+  const txt = document.getElementById('gmLimitTxt');
+  const bar = document.getElementById('gmLimitBar');
+  const box = document.getElementById('gmLimit');
+  if(!txt || !bar || !box) return;
+  txt.textContent = fmtMoney(s.spent) + ' из ' + fmtMoney(GM_LIMIT_MAX);
+  bar.style.width = Math.min(100, s.spent / GM_LIMIT_MAX * 100) + '%';
+  box.classList.toggle('full', s.spent >= GM_LIMIT_MAX);
+}
+
+/* ---------- ставка: инпут + чипы ---------- */
+function gmBet(inputId){
+  const v = Math.floor(Number(document.getElementById(inputId).value) || 0);
+  if(v < 10){ toast('Минимальная ставка — 10 ₽'); return 0; }
+  return v;
+}
+function gmChip(inputId, v, btn){
+  document.getElementById(inputId).value = v;
+  if(inputId === 'gmRoadBet') gmRoadBetVal = v;
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b === btn));
+}
+function gmChipClear(inp){
+  const box = inp.closest('.gm-bet') && inp.closest('.gm-bet').nextElementSibling;
+  if(box && box.classList.contains('gm-chips')) box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+}
+
+/* ---------- переключение игр ---------- */
+function gmShowGame(g){
+  ['wheel','road'].forEach(k=>{
+    document.getElementById('gmGame-'+k).style.display = (k===g ? '' : 'none');
+    document.getElementById('gmTab-'+k).classList.toggle('on', k===g);
+  });
+  if(g === 'road') requestAnimationFrame(()=>gmSyncEye(true));
+}
+
+/* ================= РУЛЕТКА OKO =================
+   12 секторов: x0 ×4, x1.2 ×3, x1.5 ×2, x2 ×1, x3 ×1, x10 ×1.
+   Итог раунда выбирается взвешенно (RTP ≈ 90%), колесо доезжает
+   до соответствующего сектора. */
+const GM_SECTORS = [10, 0, 1.2, 0, 2, 0, 1.5, 1.2, 0, 3, 1.2, 1.5];
+const GM_COLORS = { /* [фон сектора, цвет подписи] */
+  0:  ['#141414', '#6e6e6e'],
+  1.2:['#1e3305', '#c9ff70'],
+  1.5:['#2e4d06', '#dbff9e'],
+  2:  ['#487a08', '#f0ffd8'],
+  3:  ['#6fb50d', '#0c1400'],
+  10: ['#9AFF00', '#000000']
+};
+const GM_WEIGHTS = [[0,530],[1.2,230],[1.5,120],[2,60],[3,40],[10,20]]; /* из 1000, RTP ≈ 89.6% */
+
+let gmWheelAngle = 0;
+let gmSpinning = false;   /* флаг из Mortis: результат ровно один раз */
+let gmSpinToken = 0;
+
+function gmBuildWheel(){
+  const w = document.getElementById('gmWheel');
+  if(!w) return;
+  const stops = GM_SECTORS.map((m,i)=>`${GM_COLORS[m][0]} ${i*30}deg ${(i+1)*30}deg`).join(',');
+  w.style.background = `conic-gradient(from -15deg, ${stops})`;
+  w.innerHTML = GM_SECTORS.map((m,i)=>
+    `<span class="gm-sec" style="color:${GM_COLORS[m][1]};transform:translate(-50%,-50%) rotate(${i*30}deg) translateY(-96px)">${gmFmtMult(m)}</span>`
+  ).join('');
+}
+
+function gmSetResult(html){
+  const el = document.getElementById('gmWheelResult');
+  if(el) el.innerHTML = html;
+}
+
+function gmSpin(){
+  if(gmSpinning){ toast('Колесо ещё крутится'); return; }
+  const bet = gmBet('gmWheelBet');
+  if(!bet) return;
+  if(!gmLimitCheck(bet)) return;
+  if(!walletCharge(bet, 'Ставка в рулетке')) return;
+  gmLimitSpend(bet);
+  gmUpdateBalance();
+
+  gmSpinning = true;
+  const token = ++gmSpinToken;
+  document.getElementById('gmSpinBtn').classList.add('off');
+  gmSetResult(`<span class="gm-run">Ставка ${fmtMoney(bet)} принята — колесо крутится…</span>`);
+
+  /* взвешенный исход, затем случайный сектор с этим множителем */
+  let r = Math.random() * 1000, mult = 0;
+  for(const [m, wt] of GM_WEIGHTS){ if(r < wt){ mult = m; break; } r -= wt; }
+  const opts = GM_SECTORS.map((m,i)=>m===mult ? i : -1).filter(i=>i>=0);
+  const idx = opts[Math.floor(Math.random() * opts.length)];
+
+  const wheel = document.getElementById('gmWheel');
+  const cur = ((gmWheelAngle % 360) + 360) % 360;
+  wheel.style.transition = 'none';
+  wheel.style.transform = `rotate(${cur}deg)`;
+  void wheel.offsetWidth; /* форс-рефлоу перед новым переходом */
+
+  const turns = 5 + Math.floor(Math.random() * 3);        /* 5–7 оборотов */
+  const jitter = Math.random() * 22 - 11;                 /* внутри сектора (±11° < 15°) */
+  const delta = ((360 - idx * 30) - cur + 720) % 360;
+  const target = cur + turns * 360 + delta + jitter;
+  gmWheelAngle = target;
+  wheel.style.transition = 'transform 8s cubic-bezier(0.12,0.65,0.13,1)';
+  wheel.style.transform = `rotate(${target}deg)`;
+
+  /* КРИТИЧНО (фикс из Mortis): transitionend может потеряться (смена вкладки,
+     reduced-motion) — страховочный таймер 8200мс; token гарантирует один вызов */
+  const settle = ()=>{
+    if(token !== gmSpinToken || !gmSpinning) return;
+    gmSpinning = false;
+    gmWheelFinish(bet, mult);
+  };
+  wheel.addEventListener('transitionend', settle, {once:true});
+  setTimeout(settle, 8200);
+}
+
+function gmWheelFinish(bet, mult){
+  document.getElementById('gmSpinBtn').classList.remove('off');
+  const win = Math.round(bet * mult * 100) / 100;
+  if(win > 0){
+    walletAdd(win, 'Выигрыш в рулетке');
+    gmConfetti(document.querySelector('.gm-wheel-card'));
+    gmSetResult(`<b class="gm-win">+ ${fmtMoney(win)}</b><span>Сектор ${gmFmtMult(mult)} — выплата уже на кошельке</span>`);
+  }else{
+    const wrap = document.getElementById('gmWheelWrap');
+    wrap.classList.remove('gm-shake'); void wrap.offsetWidth; wrap.classList.add('gm-shake');
+    gmSetResult(`<b class="gm-lose">×0</b><span>Ставка сгорела — колесо ждёт реванша</span>`);
+  }
+  const net = bet - win;
+  if(net > 0) okoEarn(net, 'Игры: рулетка');
+  gmHistPush({g:'wheel', bet, win, mult, at: Date.now()});
+  gmUpdateBalance();
+}
+
+/* лаймовое конфетти */
+function gmConfetti(host){
+  if(!host) return;
+  const box = document.createElement('div');
+  box.className = 'gm-confetti';
+  const cols = ['#9AFF00','#c9ff70','#6fb50d','#eaffcc','#ffffff'];
+  let h = '';
+  for(let i=0;i<28;i++){
+    h += `<i style="left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%cols.length]};animation-delay:${(Math.random()*0.35).toFixed(2)}s;animation-duration:${(0.9+Math.random()*0.8).toFixed(2)}s"></i>`;
+  }
+  box.innerHTML = h;
+  host.appendChild(box);
+  setTimeout(()=>box.remove(), 2200);
+}
+
+/* ================= ДОРОГА OKO =================
+   5 плит, шансы на шаг [92,84,74,60,45]%, множители [1.2,1.6,2.4,4,8].
+   Ставка списывается на старте; «Забрать» — walletAdd(bet*множитель). */
+const GM_ROAD_MULTS = [1.2, 1.6, 2.4, 4, 8];
+const GM_ROAD_ODDS  = [92, 84, 74, 60, 45];
+let gmRoad = {active:false, step:0, bet:0, busy:false};
+let gmRoadBetVal = 100;
+
+function gmRoadMultsRender(){
+  const el = document.getElementById('gmRoadMults');
+  if(!el) return;
+  el.innerHTML = GM_ROAD_MULTS.map((m,i)=>{
+    let cls = '';
+    if(gmRoad.active && i < gmRoad.step) cls = 'done';
+    else if(gmRoad.active && i === gmRoad.step) cls = 'cur';
+    return `<span class="gm-rm ${cls}">${gmFmtMult(m)}</span>`;
+  }).join('');
+}
+
+function gmRoadTiles(){ return document.querySelectorAll('#gmTrack .gm-tile'); }
+function gmRoadClearTiles(){ gmRoadTiles().forEach(t=>t.classList.remove('ok','bad')); }
+
+/* позиция глаза: i = индекс плиты, -1 = старт */
+function gmMoveEye(i, noHop){
+  const eye = document.getElementById('gmEye');
+  const el = i < 0 ? document.getElementById('gmStartCell') : gmRoadTiles()[i];
+  if(!eye || !el) return;
+  eye.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px';
+  eye.classList.remove('gm-fall');
+  if(!noHop){ eye.classList.remove('gm-hop'); void eye.offsetWidth; eye.classList.add('gm-hop'); }
+}
+function gmSyncEye(noHop){
+  gmMoveEye(gmRoad.active && gmRoad.step > 0 ? gmRoad.step - 1 : -1, noHop);
+}
+
+function gmRoadCtrl(msg){
+  const el = document.getElementById('gmRoadCtrl');
+  if(!el) return;
+  if(!gmRoad.active){
+    el.innerHTML = `
+      ${msg ? `<div class="gm-road-msg">${msg}</div>` : ''}
+      <div class="gm-bet"><input id="gmRoadBet" type="number" inputmode="numeric" min="10" step="10" value="${gmRoadBetVal}" placeholder="Ставка, ₽" oninput="gmRoadBetVal=this.value;gmChipClear(this)"></div>
+      <div class="gm-chips">
+        <button ${gmRoadBetVal==50?'class="on"':''} onclick="gmChip('gmRoadBet',50,this)">50 ₽</button>
+        <button ${gmRoadBetVal==100?'class="on"':''} onclick="gmChip('gmRoadBet',100,this)">100 ₽</button>
+        <button ${gmRoadBetVal==500?'class="on"':''} onclick="gmChip('gmRoadBet',500,this)">500 ₽</button>
+        <button ${gmRoadBetVal==1000?'class="on"':''} onclick="gmChip('gmRoadBet',1000,this)">1000 ₽</button>
+      </div>
+      <button class="gm-spin" onclick="gmRoadStart()">${I('play')}Старт — выйти на дорогу</button>`;
+  }else{
+    const s = gmRoad.step;
+    const curMult = s > 0 ? GM_ROAD_MULTS[s-1] : 0;
+    const cash = s > 0 ? Math.round(gmRoad.bet * curMult * 100) / 100 : 0;
+    el.innerHTML = `
+      <div class="gm-road-stat">
+        <span>Ставка <b>${fmtMoney(gmRoad.bet)}</b></span>
+        <span>Шанс шага <b>${GM_ROAD_ODDS[s]}%</b></span>
+        <span>Сейчас <b>${s > 0 ? gmFmtMult(curMult) : '—'}</b></span>
+      </div>
+      <div class="gm-road-btns">
+        <button class="gm-spin" onclick="gmRoadStep()">${I('bolt')}Шаг</button>
+        <button class="gm-spin ghost ${s > 0 ? '' : 'off'}" onclick="gmRoadCash()">${I('money')}Забрать ${s > 0 ? fmtMoney(cash) : ''}</button>
+      </div>`;
+  }
+}
+
+function gmRoadStart(){
+  if(gmRoad.active) return;
+  const bet = gmBet('gmRoadBet');
+  if(!bet) return;
+  if(!gmLimitCheck(bet)) return;
+  if(!walletCharge(bet, 'Ставка: Дорога OKO')) return;
+  gmLimitSpend(bet);
+  gmRoad = {active:true, step:0, bet, busy:false};
+  gmRoadClearTiles();
+  gmSyncEye(true);
+  gmRoadMultsRender();
+  gmRoadCtrl();
+  gmUpdateBalance();
+}
+
+function gmRoadStep(){
+  if(!gmRoad.active || gmRoad.busy) return;
+  gmRoad.busy = true;
+  const i = gmRoad.step;
+  const tile = gmRoadTiles()[i];
+  gmMoveEye(i); /* прыжок на плиту */
+  setTimeout(()=>{
+    const ok = Math.random() * 100 < GM_ROAD_ODDS[i];
+    if(ok){
+      tile.classList.add('ok');
+      gmRoad.step++;
+      gmRoad.busy = false;
+      gmRoadMultsRender();
+      if(gmRoad.step === GM_ROAD_MULTS.length){
+        gmRoadCash(); /* дошёл до конца — авто-выплата ×8 */
+      }else{
+        gmRoadCtrl();
+      }
+    }else{
+      tile.classList.add('bad');
+      document.getElementById('gmEye').classList.add('gm-fall'); /* глаз падает */
+      okoEarn(gmRoad.bet, 'Игры: дорога');
+      gmHistPush({g:'road', bet:gmRoad.bet, win:0, mult:0, at: Date.now()});
+      const lostBet = gmRoad.bet, lostStep = i + 1;
+      gmRoad.active = false;
+      setTimeout(()=>{
+        gmRoad.busy = false;
+        gmRoadClearTiles();
+        gmSyncEye(true);
+        gmRoadMultsRender();
+        gmRoadCtrl(`<b class="gm-lose">Провал</b>плита ${lostStep} не выдержала — ставка ${fmtMoney(lostBet)} сгорела`);
+      }, 950);
+    }
+  }, 520);
+}
+
+function gmRoadCash(){
+  if(!gmRoad.active || gmRoad.step < 1 || gmRoad.busy) return;
+  const mult = GM_ROAD_MULTS[gmRoad.step - 1];
+  const win = Math.round(gmRoad.bet * mult * 100) / 100;
+  walletAdd(win, 'Выигрыш: Дорога OKO');
+  const net = gmRoad.bet - win;
+  if(net > 0) okoEarn(net, 'Игры: дорога');
+  gmHistPush({g:'road', bet:gmRoad.bet, win, mult, at: Date.now()});
+  gmConfetti(document.querySelector('.gm-road-card'));
+  gmRoad.active = false;
+  gmRoadClearTiles();
+  gmSyncEye(true);
+  gmRoadMultsRender();
+  gmRoadCtrl(`<b class="gm-win">+ ${fmtMoney(win)}</b>забрал на ${gmFmtMult(mult)} — выплата на кошельке`);
+  gmUpdateBalance();
+}
+
+/* ---------- история игр (последние 20) ---------- */
+function gmHistPush(e){
+  GM_HIST.unshift(e);
+  if(GM_HIST.length > 20) GM_HIST.length = 20;
+  try{ localStorage.setItem('oko-games', JSON.stringify(GM_HIST)); }catch(err){}
+  gmRenderHistory();
+}
+function gmRenderHistory(){
+  const el = document.getElementById('gmHistory');
+  if(!el) return;
+  if(!GM_HIST.length){
+    el.innerHTML = `<div class="gm-empty">${I('clock')}<span>Ещё нет сыгранных раундов — сделай первую ставку</span></div>`;
+    return;
+  }
+  el.innerHTML = GM_HIST.map(h=>{
+    const win = h.win > 0;
+    const name = h.g === 'wheel' ? 'Рулетка OKO' : 'Дорога OKO';
+    const d = new Date(h.at);
+    const time = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) + ' ' +
+                 d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+    const detail = win ? (h.g === 'wheel' ? 'сектор ' : 'забрал на ') + gmFmtMult(h.mult) : 'проигрыш';
+    return `<div class="gm-op">
+      <span class="gm-op-ic ${win ? 'in' : 'out'}">${I(h.g === 'wheel' ? 'gm-chip' : 'gm-road')}</span>
+      <div class="gm-op-b"><span class="gm-op-t1">${name} · ставка ${fmtMoney(h.bet)}</span><span class="gm-op-t2">${detail} · ${time}</span></div>
+      <b class="gm-op-sum ${win ? 'in' : 'out'}">${win ? '+' : '−'} ${fmtMoney(win ? h.win : h.bet)}</b>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- патчи ядра (прежние версии сохранены и вызываются) ---------- */
+const _prevWalletAddGm = walletAdd;
+walletAdd = function(sum, why){
+  _prevWalletAddGm(sum, why);
+  gmUpdateBalance();
+};
+const _prevWalletChargeGm = walletCharge;
+walletCharge = function(sum, why){
+  const ok = _prevWalletChargeGm(sum, why);
+  gmUpdateBalance();
+  return ok;
+};
+const _prevShowTabGm = showTab;
+showTab = function(t){
+  _prevShowTabGm(t);
+  if(t === 'games'){
+    gmUpdateBalance();
+    gmRenderLimit();
+    gmRenderHistory();
+    requestAnimationFrame(()=>gmSyncEye(true)); /* позиция глаза после показа экрана */
+  }
+};
+
+/* ---------- самоинициализация ---------- */
+regTitle('games', 'Игры');
+addSvcTile({id:'games', label:'Игры OKO', ico:'fire', first:true, onclick:()=>showTab('games')});
+gmBuildWheel();
+gmRoadMultsRender();
+gmRoadCtrl();
+gmRenderHistory();
+gmRenderLimit();
+gmUpdateBalance();
+window.addEventListener('resize', ()=>{
+  const sc = document.getElementById('screen-games');
+  if(sc && sc.classList.contains('active')) gmSyncEye(true);
+});
+
+/* ===== module: academy ===== */
+/* ================= ACADEMY: Академия OKO (префикс ac-) =================
+   Курс «Нейросети 2026»: урок 1 (видео + слайды + тест + практика + мини-игра)
+   и официальный сертификат (canvas: печать + подпись из core-ext). */
+
+const AC_VIDEO_URL = ''; // URL видео урока 1 на CDN. Пусто = ролик ещё выгружается (3:24 смонтировано).
+
+/* ---------- состояние (localStorage oko-academy) ---------- */
+const acS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-academy'))||null; }catch(e){ return null; } })() || {
+  video:false, slides:false, test:false, testScore:0, task:false, taskText:'', game:false, gameWrong:null,
+  slideMax:0, cert:null, certs:[]
+};
+function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
+
+let acView = 'home';            // 'home' | 'lesson'
+let acQuiz = null;              // сессия теста (не персистится)
+let acG = null;                 // сессия мини-игры
+let acTaskChecking = false;     // «Проверяется ИИ-куратором»
+let acCertUrl = null;           // кэш PNG сертификата
+
+/* ---------- контент урока 1: слайды ---------- */
+const AC_SLIDES = [
+  {t:'Карта категорий', pts:[
+    'Правило №1: сначала <b>задача</b>, потом модель',
+    'Все нейросети — всего <b>7 семей</b>: текст, картинки, видео, код, озвучка, музыка, автоматизация',
+    'Понял, к какой семье относится задача — полдела сделано',
+    'Новинки выходят каждую неделю — карта важнее списка'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="60" cy="35" r="10"/><circle cx="60" cy="35" r="3.5" fill="currentColor" stroke="none"/><path d="M60 25V10M60 45v15M50 32 22 20M70 32l28-12M50 39 22 52M70 39l28 13M48 35H30M72 35h18" opacity=".8"/><circle cx="22" cy="19" r="5"/><circle cx="98" cy="19" r="5"/><circle cx="22" cy="52" r="5"/><circle cx="98" cy="52" r="5"/><circle cx="60" cy="9" r="5"/><circle cx="60" cy="61" r="5"/><circle cx="28" cy="35" r="5"/></svg>'},
+  {t:'Текст: рабочий конь', pts:[
+    '<b>ChatGPT</b> — универсальный солдат, хорош почти во всём',
+    '<b>Claude</b> — король больших текстов и кода, контекст на десятки страниц',
+    '<b>Gemini</b> — свежий поиск и связка с Google',
+    'Код или длинный документ → Claude · факт из сети → Gemini · остальное → ChatGPT'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="14" y="10" width="66" height="42" rx="9"/><path d="M26 24h42M26 33h34M26 42h40"/><path d="M34 52 28 62l16-10" stroke-linejoin="round"/><rect x="88" y="26" width="22" height="30" rx="6" opacity=".7"/><path d="M93 34h12M93 41h9M93 48h12" opacity=".7"/></svg>'},
+  {t:'Картинки: тут крутятся деньги', pts:[
+    '<b>Midjourney</b> — лучшая эстетика, арт и «вау»',
+    '<b>Flux</b> — фотореализм почти бесплатно, ~5¢ за кадр',
+    '<b>Nano Banana</b> — правки и текст прямо на картинке, без перегенерации',
+    '<b>Higgsfield</b> собирает все модели в одном окне'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="8" width="80" height="54" rx="8"/><circle cx="43" cy="24" r="6"/><path d="M20 54l24-20 16 13 18-16 22 20"/><path d="M104 12l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6-4.5-4 6-1z" fill="currentColor" stroke="none" opacity=".9"/></svg>'},
+  {t:'Видео: дорого и зрелищно', pts:[
+    '<b>Veo</b> — лучшее качество + родной звук, почти продакшн',
+    '<b>Kling</b> — кино за копейки, ~10¢ за секунду',
+    '<b>Runway</b> — заточен под маркетинг и монтаж',
+    'Тест идеи → Kling · финалка клиенту → Veo'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="84" height="46" rx="8"/><path d="M52 22v18l16-9z" fill="currentColor" stroke="none"/><path d="M18 62h84" opacity=".6"/><circle cx="34" cy="62" r="3" fill="currentColor" stroke="none"/><path d="M26 16h6M26 46h6M88 16h6M88 46h6" opacity=".6"/></svg>'},
+  {t:'Озвучка и музыка', pts:[
+    '<b>ElevenLabs</b> — премиум-голос для витринных проектов',
+    '<b>Локальные нейро-TTS</b> — бесплатно и безлимит (этот урок озвучен именно так)',
+    '<b>Suno</b> — готовый трек по одному запросу',
+    'Музыку всегда подбирай под смысл ролика'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M14 35v0M22 28v14M30 20v30M38 26v18M46 14v42M54 24v22M62 30v10M70 22v26M78 28v14"/><path d="M96 46V16l14-4v26" stroke-linejoin="round"/><circle cx="91" cy="46" r="5.5"/><circle cx="105" cy="38" r="5.5"/></svg>'},
+  {t:'Код без программиста', pts:[
+    '<b>Cursor</b>, <b>Lovable</b>, <b>Claude Code</b> — тройка лидеров',
+    'Описываешь словами → получаешь рабочее приложение',
+    'MVP за вечер вместо недель разработки',
+    'Чем точнее ТЗ, тем меньше правок'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M38 18 18 35l20 17M82 18l20 17-20 17M68 12 52 58"/></svg>'},
+  {t:'Как выбирать: формула', pts:[
+    '<b>Задача → Категория → Модель</b> — три шага, пара секунд',
+    'Лазейка: <b>Higgsfield Ultra</b> — десятки топ-моделей одной подпиской',
+    'Связка «локальные голоса + n8n на своём сервере» роняет себестоимость до копеек',
+    'Не плати каждой модели по отдельности'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 12h88L74 34v22l-12 8V34z"/><path d="M60 10v0" opacity=".5"/><circle cx="99" cy="52" r="9"/><path d="M96 52l2.5 2.5 5-5"/></svg>'},
+  {t:'Чек-лист урока', pts:[
+    'Текст → Claude и компания',
+    'Картинки → Flux (объём) / Midjourney (вау)',
+    'Видео → Kling (тест) / Veo (финал)',
+    'Музыка → Suno · Озвучка → локальные TTS',
+    'Экономия → агрегаторы и связки'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="26" y="6" width="68" height="58" rx="8"/><path d="M36 20l4 4 7-8M36 36l4 4 7-8M36 52l4 4 7-8" stroke-width="2.8"/><path d="M54 21h28M54 37h28M54 53h20"/></svg>'},
+];
+
+/* ---------- контент: тест (6 вопросов) ---------- */
+const AC_QUIZ = [
+  {q:'С чего начинается выбор нейросети по карте из урока?', o:['С названия самой хайповой модели','С формулировки задачи','С цены подписки','С обзоров блогеров'], a:1},
+  {q:'Кому отдать длинный документ или код?', o:['Midjourney','Suno','Claude','Kling'], a:2},
+  {q:'Фотореализм почти бесплатно (~5 центов за кадр) — это…', o:['Flux','Veo','ChatGPT','Runway'], a:0},
+  {q:'«Кино за копейки» — примерно 10 центов за секунду видео — это…', o:['Veo','Kling','Nano Banana','Cursor'], a:1},
+  {q:'Готовый музыкальный трек по одному запросу делает…', o:['ElevenLabs','Gemini','Lovable','Suno'], a:3},
+  {q:'Главная формула карты нейросетей 2026:', o:['Модель → Цена → Задача','Категория → Модель → Задача','Задача → Категория → Модель','Промпт → Модель → Результат'], a:2},
+];
+const AC_PASS = 70;
+
+/* ---------- контент: мини-игра «Сопоставь инструмент с задачей» ---------- */
+const AC_PAIRS = [
+  ['Claude','Длинный документ и код'],
+  ['Flux','Фотореализм за копейки'],
+  ['Kling','Дёшево протестировать видео-идею'],
+  ['Suno','Трек под ролик за один запрос'],
+  ['Nano Banana','Поправить текст на готовой картинке'],
+];
+
+const AC_LESSONS = [
+  {t:'Карта нейросетей 2026', s:'3:24 · видео + слайды + тест + игра'},
+  {t:'Промпт-инжиниринг', s:'скоро · формулы сильных промптов'},
+  {t:'Генерация картинок PRO', s:'скоро · Midjourney, Flux, Nano Banana'},
+  {t:'Видео-нейросети', s:'скоро · Veo, Kling, Runway'},
+  {t:'Свой ИИ-ассистент', s:'скоро · агент под твой бизнес'},
+];
+
+/* ---------- прогресс урока ---------- */
+function acItems(){
+  return [
+    ['Видео просмотрено', acS.video],
+    ['Слайды пролистаны', acS.slides],
+    ['Тест сдан на 70%+', acS.test],
+    ['Практика зачтена', acS.task],
+    ['Мини-игра пройдена', acS.game],
+  ];
+}
+function acLessonPct(){ return acItems().filter(x=>x[1]).length * 20; }
+function acCoursePct(){ return Math.round(acLessonPct() / 5); }
+function acCertEligible(){ return acS.video && acS.testScore >= AC_PASS; }
+
+/* ================= РЕНДЕР ================= */
+function acRender(){
+  const root = document.getElementById('acRoot');
+  if(!root) return;
+  root.innerHTML = acView === 'home' ? acHomeHtml() : acLessonHtml();
+  root.classList.remove('fade-in'); void root.offsetWidth; root.classList.add('fade-in');
+  if(acView === 'lesson'){
+    acRenderVideoBox(); acBindSlides(); acRenderTestBox();
+    acRenderTaskBox(); acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+  }
+}
+
+/* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
+function acHomeHtml(){
+  const pct = acCoursePct(), C = 2*Math.PI*33;
+  const rows = AC_LESSONS.map((l,i)=>{
+    if(i===0) return `<button class="ac-lesson-row" onclick="acOpenLesson()">
+      <span class="ac-num">1</span>
+      <span class="meta"><span class="t">${l.t}</span><span class="s" style="display:block">${l.s}</span></span>
+      ${acLessonPct()>0?`<span class="ac-mini-pct">${acLessonPct()}%</span>`:''}
+      <svg class="i go"><use href="#i-chev"/></svg></button>`;
+    return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после урока ${i}')">
+      <span class="ac-num">${i+1}</span>
+      <span class="meta"><span class="t">${l.t}</span><span class="s" style="display:block">${l.s}</span></span>
+      <svg class="i"><use href="#i-lock"/></svg></button>`;
+  }).join('');
+  const certs = acS.certs.length ? acS.certs.map((c,i)=>`
+    <div class="ac-cert-item" style="animation-delay:${i*.05}s">
+      <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
+      <span class="meta"><span class="t">Урок 1 · Карта нейросетей 2026</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
+    </div>`).join('')
+    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
+  return `
+    <div class="ac-hero"><h2>Академия OKO</h2><p>Уроки полного формата · официальные сертификаты</p></div>
+
+    <div class="card">
+      <div class="ac-course-top">
+        <span class="ac-ring">
+          <svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="33"/>
+          <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct/100)).toFixed(1)}"/></svg>
+          <b>${pct}%</b>
+        </span>
+        <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
+      </div>
+      <div>${rows}</div>
+    </div>
+
+    <div class="card ac-soon" style="margin-top:12px" onclick="toast('Курс «Контент и Reels» уже в производстве')">
+      <span class="ico"><svg class="i"><use href="#i-camera"/></svg></span>
+      <div style="flex:1"><h3>Контент и Reels</h3><p>Сценарии, монтаж и вирусные форматы</p></div>
+      <span class="chip">скоро</span>
+    </div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои сертификаты</h2>
+    <div class="card" style="padding:6px 14px">${certs}</div>
+    <div style="height:14px"></div>`;
+}
+
+/* ---------- СТРАНИЦА УРОКА 1 ---------- */
+function acOpenLesson(){ acView='lesson'; acRender(); const m=document.querySelector('main'); if(m) m.scrollTop=0; }
+function acBackHome(){ acView='home'; acRender(); }
+
+function acLessonHtml(){
+  return `
+    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Академия</button>
+    <div class="ac-lesson-head">
+      <span class="chip">Урок 1 из 5</span>
+      <h2>Карта нейросетей 2026</h2>
+      <div class="m"><span>${I('clock')} 3:24 видео</span><span>·</span><span>8 слайдов</span><span>·</span><span>тест из 6 вопросов</span><span>·</span><span>мини-игра</span></div>
+    </div>
+
+    <div id="acVideoBox"></div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Слайды урока</h2>
+    <div id="acSlidesBox">
+      <div class="ac-slides" id="acSlides">${AC_SLIDES.map((s,i)=>`
+        <div class="ac-slide ${i===0?'cur':''}" data-i="${i}">
+          <span class="n">Слайд ${i+1} / ${AC_SLIDES.length}</span>
+          <h3>${s.t}</h3>
+          <div class="pic">${s.svg}</div>
+          <ul>${s.pts.map(p=>`<li>${p}</li>`).join('')}</ul>
+        </div>`).join('')}
+      </div>
+      <div class="ac-slides-nav">
+        <button class="ac-arrow" onclick="acSlideGo(-1)"><svg class="i"><use href="#i-back"/></svg></button>
+        <span class="ac-dots" id="acDots">${AC_SLIDES.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</span>
+        <button class="ac-arrow next" onclick="acSlideGo(1)"><svg class="i"><use href="#i-back"/></svg></button>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
+    <div class="card" id="acTestBox"></div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Практика</h2>
+    <div class="card" id="acTaskBox"></div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мини-игра</h2>
+    <div class="card" id="acGameBox"></div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Прогресс урока</h2>
+    <div class="card" style="padding:8px 16px 14px" id="acProgressBox"></div>
+
+    <div style="height:14px"></div>
+    <div id="acCertBox"></div>
+    <div style="height:16px"></div>`;
+}
+
+/* ---------- а) ВИДЕО ---------- */
+function acRenderVideoBox(){
+  const box = document.getElementById('acVideoBox');
+  if(!box) return;
+  const cover = `
+    <div class="ac-player" onclick="acPlay()" id="acPlayer">
+      <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+        <rect width="640" height="360" fill="#070a04"/>
+        <g stroke="rgba(154,255,0,.09)" stroke-width="1">
+          ${[80,160,240,320,400,480,560].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="360"/>`).join('')}
+          ${[72,144,216,288].map(y=>`<line x1="0" y1="${y}" x2="640" y2="${y}"/>`).join('')}
+        </g>
+        <circle cx="530" cy="80" r="120" fill="rgba(154,255,0,.07)"/>
+        <use href="#i-logo" x="472" y="34" width="120" height="120"/>
+        <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">КАРТА НЕЙРОСЕТЕЙ</text>
+        <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">2026</text>
+        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК 1</text>
+      </svg>
+      <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
+      <span class="dur">3:24</span>
+    </div>`;
+  const player = AC_VIDEO_URL
+    ? `<div class="ac-player" style="cursor:default"><video controls playsinline src="${AC_VIDEO_URL}"></video></div>`
+    : cover;
+  box.innerHTML = player + `
+    <div class="ac-video-actions">${acS.video
+      ? `<span class="ac-done-chip">${I('check2')} Видео просмотрено</span>`
+      : `<button class="btn" onclick="acMarkVideo()">${I('check2')} Отметить просмотренным</button>`}
+    </div>`;
+}
+function acPlay(){
+  if(AC_VIDEO_URL) return;
+  showPopup({ico:'circle-play', title:'Видео выгружается на CDN',
+    body:'Ролик урока уже смонтирован — длительность 3:24, озвучка и караоке-субтитры готовы. Совсем скоро он появится прямо здесь. Пока изучи слайды ниже — в них весь материал.',
+    actions:[{label:'Понятно'}]});
+}
+function acMarkVideo(){
+  acS.video = true; acSave();
+  toast('Видео засчитано · +20% к уроку');
+  acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox();
+}
+
+/* ---------- б) СЛАЙДЫ ---------- */
+let acSlideIdx = 0;
+function acBindSlides(){
+  const el = document.getElementById('acSlides');
+  if(!el) return;
+  acSlideIdx = 0;
+  let raf = null;
+  el.addEventListener('scroll', ()=>{
+    if(raf) return;
+    raf = requestAnimationFrame(()=>{
+      raf = null;
+      const kids = el.children;
+      if(!kids.length) return;
+      const step = kids[0].offsetWidth + 12;
+      const i = Math.max(0, Math.min(AC_SLIDES.length-1, Math.round(el.scrollLeft / step)));
+      if(i !== acSlideIdx){ acSlideIdx = i; acSlideSync(); }
+    });
+  }, {passive:true});
+}
+function acSlideSync(){
+  const dots = document.querySelectorAll('#acDots i');
+  dots.forEach((d,i)=>d.classList.toggle('on', i===acSlideIdx));
+  document.querySelectorAll('#acSlides .ac-slide').forEach((s,i)=>s.classList.toggle('cur', i===acSlideIdx));
+  if(acSlideIdx > acS.slideMax){ acS.slideMax = acSlideIdx; acSave(); }
+  if(acS.slideMax >= AC_SLIDES.length-1 && !acS.slides){
+    acS.slides = true; acSave();
+    toast('Слайды пройдены · +20% к уроку');
+    acRenderProgressBox(); acRenderCertBox();
+  }
+}
+function acSlideGo(d){
+  const el = document.getElementById('acSlides');
+  if(!el || !el.children.length) return;
+  const step = el.children[0].offsetWidth + 12;
+  const i = Math.max(0, Math.min(AC_SLIDES.length-1, acSlideIdx + d));
+  el.scrollTo({left: i*step, behavior:'smooth'});
+  acSlideIdx = i; acSlideSync();
+}
+
+/* ---------- в) ТЕСТ ---------- */
+function acRenderTestBox(){
+  const box = document.getElementById('acTestBox');
+  if(!box) return;
+  if(!acQuiz){
+    box.innerHTML = acS.test
+      ? `<div class="ac-score" style="font-size:52px">${acS.testScore}%</div>
+         <div class="ac-score-sub">Тест сдан. Лучший результат — <b>${acS.testScore}%</b> при пороге ${AC_PASS}%.</div>
+         <button class="btn ghost" onclick="acQuizStart()">Пройти заново</button>`
+      : `<p style="font-size:13.5px;line-height:1.55">${AC_QUIZ.length} вопросов по карте нейросетей. По одному на экран, порог зачёта — <b style="color:var(--accent)">${AC_PASS}%</b>.${acS.testScore?` Прошлая попытка: ${acS.testScore}%.`:''}</p>
+         <div style="height:12px"></div>
+         <button class="btn" onclick="acQuizStart()">${I('bolt')} ${acS.testScore?'Попробовать ещё раз':'Начать тест'}</button>`;
+    return;
+  }
+  if(acQuiz.done){
+    const score = acQuiz.score, pass = score >= AC_PASS;
+    box.innerHTML = `
+      <div class="ac-score" id="acScoreNum" ${pass?'':'style="color:var(--danger);text-shadow:none"'}>0%</div>
+      <div class="ac-score-sub">${pass
+        ? `Порог ${AC_PASS}% пройден — <b>тест зачтён</b>. Верных ответов: ${acQuiz.hits} из ${AC_QUIZ.length}.`
+        : `<span class="fail">Не хватило до порога ${AC_PASS}%.</span> Верных: ${acQuiz.hits} из ${AC_QUIZ.length}. Пролистай слайды и попробуй снова.`}</div>
+      <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>`;
+    const el = document.getElementById('acScoreNum');
+    acCountUp(el, score, '%');
+    return;
+  }
+  const q = AC_QUIZ[acQuiz.i];
+  box.innerHTML = `
+    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${AC_QUIZ.length}</span><span>верных: <b>${acQuiz.hits}</b></span></div>
+    <div class="progress" style="margin:0 0 4px"><i style="width:${(acQuiz.i/AC_QUIZ.length*100)}%"></i></div>
+    <div class="ac-q">${q.q}</div>
+    ${q.o.map((o,i)=>`<button class="ac-opt" id="acOpt${i}" onclick="acAnswer(${i})"><span class="lb">${'АБВГ'[i]}</span><span>${o}</span></button>`).join('')}`;
+}
+function acQuizStart(){
+  acQuiz = {i:0, hits:0, lock:false, done:false, score:0};
+  acRenderTestBox();
+}
+function acAnswer(i){
+  if(!acQuiz || acQuiz.lock || acQuiz.done) return;
+  acQuiz.lock = true;
+  const q = AC_QUIZ[acQuiz.i];
+  const right = i === q.a;
+  if(right) acQuiz.hits++;
+  const ok = document.getElementById('acOpt'+q.a);
+  if(ok) ok.classList.add('ok');
+  if(!right){ const bad = document.getElementById('acOpt'+i); if(bad) bad.classList.add('bad'); }
+  setTimeout(()=>{
+    acQuiz.lock = false;
+    acQuiz.i++;
+    if(acQuiz.i >= AC_QUIZ.length){
+      acQuiz.done = true;
+      acQuiz.score = Math.round(acQuiz.hits / AC_QUIZ.length * 100);
+      if(acQuiz.score > acS.testScore) acS.testScore = acQuiz.score;
+      if(acQuiz.score >= AC_PASS && !acS.test){
+        acS.test = true;
+        toast('Тест сдан · +20% к уроку');
+      }
+      acSave();
+      acRenderProgressBox(); acRenderCertBox();
+    }
+    acRenderTestBox();
+  }, right ? 700 : 1100);
+}
+function acCountUp(el, to, suffix){
+  if(!el) return;
+  const t0 = performance.now(), dur = 950;
+  (function step(t){
+    const k = Math.min(1, (t-t0)/dur), e = 1 - Math.pow(1-k, 3);
+    el.textContent = Math.round(to*e) + (suffix||'');
+    if(k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ---------- г) ПРАКТИКА ---------- */
+function acRenderTaskBox(){
+  const box = document.getElementById('acTaskBox');
+  if(!box) return;
+  if(acTaskChecking){
+    box.innerHTML = `<div class="ac-checking"><span class="ac-spin"></span>
+      <div><p>Проверяется ИИ-куратором<small>Сверяю задачу, категорию и модель с картой урока…</small></p></div></div>`;
+    return;
+  }
+  if(acS.task){
+    box.innerHTML = `
+      <div class="ac-verdict">
+        <div class="h">${I('check2')} Зачтено</div>
+        <p>Категория выбрана верно, модель соответствует бюджету задачи. Совет куратора: добавляй в промпт ожидаемый формат результата — модель ответит точнее.</p>
+      </div>
+      <div style="height:10px"></div>
+      <p class="dim" style="font-size:12px;line-height:1.5">Твой ответ: «${esc(acS.taskText.slice(0,140))}${acS.taskText.length>140?'…':''}»</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <p style="font-size:13.5px;line-height:1.55">Возьми свою реальную задачу и разложи её по формуле урока — так, как отдал бы нейросети в работу:</p>
+    <div class="ac-task-formula"><span>Задача</span>${I('chev')}<span>Категория</span>${I('chev')}<span>Модель</span>${I('chev')}<span>Почему именно она</span></div>
+    <textarea class="ac-task-ta" id="acTaskTa" placeholder="Пример: Задача — обложка для урока. Категория — картинки. Модель — Flux: нужен фотореализм и объём дёшево. Формат — вертикаль 2:3, тёмный фон, лаймовый акцент.">${esc(acS.taskText)}</textarea>
+    <div style="height:10px"></div>
+    <button class="btn" onclick="acTaskSend()">${I('send')} Отправить на проверку</button>`;
+}
+function acTaskSend(){
+  const ta = document.getElementById('acTaskTa');
+  const v = (ta && ta.value || '').trim();
+  if(v.length < 40){ toast('Раскрой подробнее — минимум 40 символов'); return; }
+  acS.taskText = v; acSave();
+  acTaskChecking = true;
+  acRenderTaskBox();
+  setTimeout(()=>{
+    acTaskChecking = false;
+    acS.task = true; acSave();
+    toast('Практика зачтена · +20% к уроку');
+    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox();
+  }, 4000);
+}
+
+/* ---------- д) МИНИ-ИГРА ---------- */
+function acShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function acRenderGameBox(){
+  const box = document.getElementById('acGameBox');
+  if(!box) return;
+  if(!acG){
+    box.innerHTML = acS.game
+      ? `<div class="ac-game-done"><div class="big">5 / 5</div>
+         <p>Все пары собраны${acS.gameWrong!==null?` · ошибок: ${acS.gameWrong}`:''}. Инструменты и задачи — в связке.</p>
+         <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`
+      : `<p style="font-size:13.5px;line-height:1.55"><b>Сопоставь инструмент с задачей.</b> Тапни инструмент слева, затем его задачу справа. Верная пара улетает, неверная — трясётся.</p>
+         <div style="height:12px"></div>
+         <button class="btn" onclick="acGameStart()">${I('play')} Играть</button>`;
+    return;
+  }
+  const left = acG.left.map(i=>`<button class="ac-tile ${acG.sel===i?'sel':''}" id="acGL${i}" onclick="acGPick(${i})">${AC_PAIRS[i][0]}</button>`).join('');
+  const right = acG.right.map(i=>`<button class="ac-tile" id="acGR${i}" onclick="acGMatch(${i})">${AC_PAIRS[i][1]}</button>`).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Собрано пар: <b>${acG.hits} / ${AC_PAIRS.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-game-cols">
+      <div class="ac-game-col"><div class="h">Инструмент</div>${left}</div>
+      <div class="ac-game-col"><div class="h">Задача</div>${right}</div>
+    </div>`;
+}
+function acGameStart(){
+  acG = {left:[0,1,2,3,4], right:acShuffle([0,1,2,3,4]), sel:null, hits:0, wrong:0, lock:false};
+  acRenderGameBox();
+}
+function acGPick(i){
+  if(!acG || acG.lock) return;
+  acG.sel = acG.sel === i ? null : i;
+  acG.left.forEach(k=>{
+    const el = document.getElementById('acGL'+k);
+    if(el) el.classList.toggle('sel', acG.sel===k);
+  });
+}
+function acGMatch(i){
+  if(!acG || acG.lock) return;
+  if(acG.sel === null){ toast('Сначала выбери инструмент слева'); return; }
+  const L = document.getElementById('acGL'+acG.sel), R = document.getElementById('acGR'+i);
+  if(acG.sel === i){
+    acG.lock = true;
+    if(L) L.classList.add('hit');
+    if(R) R.classList.add('hit');
+    setTimeout(()=>{
+      acG.left = acG.left.filter(k=>k!==i);
+      acG.right = acG.right.filter(k=>k!==i);
+      acG.hits++; acG.sel = null; acG.lock = false;
+      if(!acG.left.length){
+        const wrong = acG.wrong;
+        acG = null;
+        acS.gameWrong = wrong;
+        if(!acS.game){ acS.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
+        acSave();
+        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+      } else acRenderGameBox();
+    }, 560);
+  } else {
+    acG.wrong++;
+    if(L) L.classList.add('shake');
+    if(R) R.classList.add('shake');
+    acG.lock = true;
+    setTimeout(()=>{
+      acG.lock = false; acG.sel = null;
+      acRenderGameBox();
+    }, 460);
+  }
+}
+
+/* ---------- прогресс: чек-лист 5 пунктов ---------- */
+function acRenderProgressBox(){
+  const box = document.getElementById('acProgressBox');
+  if(!box) return;
+  const pct = acLessonPct();
+  box.innerHTML = acItems().map(([label,done])=>`
+    <div class="ac-check-row ${done?'done':''}">
+      <span class="ac-check-ic"><svg class="i"><use href="#i-check2"/></svg></span>
+      <span>${label}</span><span class="pct">${done?'+20%':'—'}</span>
+    </div>`).join('') + `
+    <div class="progress" style="margin:12px 0 6px"><i style="width:${pct}%"></i></div>
+    <p class="dim" style="font-size:12px;text-align:center">Урок пройден на <b style="color:var(--accent)">${pct}%</b></p>`;
+}
+
+/* ================= СЕРТИФИКАТ ================= */
+function acRenderCertBox(){
+  const box = document.getElementById('acCertBox');
+  if(!box) return;
+  const okV = acS.video, okT = acS.testScore >= AC_PASS;
+  if(acS.cert){
+    box.innerHTML = `
+      <div class="card ac-cert-card ready">
+        <div class="ac-cert-head">
+          <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
+          <div><h3>Сертификат получен</h3><p>Официальный документ Академии OKO с печатью и подписью</p></div>
+        </div>
+        <span class="ac-cert-no">${esc(acS.cert.no)} · ${esc(acS.cert.date)} · тест ${acS.cert.score}%</span>
+        <div class="ac-cert-actions">
+          <button class="btn" onclick="acCertDownload()">${I('file')} Скачать PNG</button>
+          <button class="btn ghost" onclick="acCertShow()">${I('eye')} Показать</button>
+        </div>
+      </div>`;
+    return;
+  }
+  if(acCertEligible()){
+    box.innerHTML = `
+      <div class="card ac-cert-card ready">
+        <div class="ac-cert-head">
+          <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
+          <div><h3>Сертификат готов к выдаче</h3><p>Видео просмотрено, тест сдан на ${acS.testScore}% — условия выполнены</p></div>
+        </div>
+        <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат</button>
+      </div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="card ac-cert-card">
+      <div class="ac-cert-head">
+        <span class="ico" style="background:var(--raised);color:var(--dim)"><svg class="i"><use href="#i-lock"/></svg></span>
+        <div><h3>Сертификат урока</h3><p>Официальный документ с печатью и подписью — за реальный результат</p></div>
+      </div>
+      <div class="ac-cert-req">
+        <div class="${okV?'ok':''}">${I(okV?'check2':'circle-play')} Отметить видео просмотренным</div>
+        <div class="${okT?'ok':''}">${I(okT?'check2':'poll')} Сдать тест на ${AC_PASS}% и выше${acS.testScore?` (сейчас ${acS.testScore}%)`:''}</div>
+      </div>
+    </div>`;
+}
+
+function acIssueCert(){
+  const cert = {
+    no: 'OKO-CERT-' + String(Math.floor(1e5 + Math.random()*9e5)),
+    date: new Date().toLocaleDateString('ru-RU'),
+    score: acS.testScore,
+    name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии'
+  };
+  acS.cert = cert;
+  acS.certs.unshift(cert);
+  acSave();
+  acCertUrl = null;
+  toast('Сертификат выдан: ' + cert.no);
+  acRenderCertBox();
+  acCertShow();
+}
+
+/* --- отрисовка canvas 1600×1131 --- */
+function acSigImage(cb){
+  if(typeof SIGNATURE_B64 === 'undefined'){ cb(null); return; }
+  const img = new Image();
+  img.onload = ()=>{
+    try{
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      const x = c.getContext('2d');
+      x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+      for(let i=0; i<p.length; i+=4){
+        const lum = (p[i]+p[i+1]+p[i+2]) / 3;
+        p[i+3] = Math.round(p[i+3] * (1 - lum/255)); // тёмный штрих → непрозрачный
+        p[i]=232; p[i+1]=240; p[i+2]=255;            // перекрас в светлый (для тёмного фона)
+      }
+      x.putImageData(d, 0, 0);
+      cb(c);
+    }catch(e){ cb(img); }
+  };
+  img.onerror = ()=>cb(null);
+  img.src = 'data:image/png;base64,' + SIGNATURE_B64;
+}
+function acRingText(ctx, cx, cy, r, text, font){
+  ctx.save();
+  ctx.font = font;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const step = (Math.PI*2) / text.length;
+  for(let i=0; i<text.length; i++){
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(i*step);
+    ctx.translate(0, -r);
+    ctx.fillText(text[i], 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function acDrawSeal(ctx, cx, cy, r){
+  const blue = '#2b4fd8';
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.12);
+  ctx.translate(-cx, -cy);
+  // лёгкая подложка, чтобы синяя печать читалась на тёмном
+  ctx.beginPath(); ctx.arc(cx, cy, r+6, 0, 7);
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fill();
+  ctx.strokeStyle = blue; ctx.fillStyle = blue; ctx.globalAlpha = .96;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.lineWidth = 4; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r-7, 0, 7); ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r*0.6, 0, 7); ctx.lineWidth = 2; ctx.stroke();
+  acRingText(ctx, cx, cy, r-24, SEAL_REQ.fio + ' · ' + SEAL_REQ.inn + ' · ', '700 14px Montserrat, Arial');
+  acRingText(ctx, cx, cy, r*0.6 - 15, SEAL_REQ.geo + ' · ОФИЦИАЛЬНЫЙ ДОКУМЕНТ · ', '600 9px Montserrat, Arial');
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '800 21px Montserrat, Arial';
+  ctx.fillText(SEAL_REQ.brand, cx, cy-6);
+  ctx.font = '600 11px Montserrat, Arial';
+  ctx.fillText('АКАДЕМИЯ', cx, cy+16);
+  ctx.restore();
+}
+function acMakeCert(cert, cb){
+  const ready = (document.fonts && document.fonts.load)
+    ? Promise.all([
+        document.fonts.load('100px "Bebas Neue"'),
+        document.fonts.load('700 30px Montserrat'),
+      ]).catch(()=>{})
+    : Promise.resolve();
+  ready.then(()=>acSigImage(sig=>{
+    const W = 1600, H = 1131;
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const lime = '#9AFF00';
+    // фон + тонкая сетка
+    ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(154,255,0,.05)'; ctx.lineWidth = 1;
+    for(let x=0; x<=W; x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0; y<=H; y+=64){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    // мягкое свечение в углу
+    const g = ctx.createRadialGradient(W-220, 180, 40, W-220, 180, 560);
+    g.addColorStop(0, 'rgba(154,255,0,.10)'); g.addColorStop(1, 'rgba(154,255,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // двойная лаймовая рамка
+    ctx.strokeStyle = lime; ctx.lineWidth = 5; ctx.strokeRect(38, 38, W-76, H-76);
+    ctx.lineWidth = 1.5; ctx.globalAlpha = .65; ctx.strokeRect(58, 58, W-116, H-116); ctx.globalAlpha = 1;
+    // уголки
+    ctx.lineWidth = 5;
+    [[38,38,1,1],[W-38,38,-1,1],[38,H-38,1,-1],[W-38,H-38,-1,-1]].forEach(([x,y,dx,dy])=>{
+      ctx.beginPath(); ctx.moveTo(x+dx*44, y); ctx.lineTo(x, y); ctx.lineTo(x, y+dy*44); ctx.stroke();
+    });
+    try{ ctx.letterSpacing = '6px'; }catch(e){}
+    ctx.textAlign = 'center';
+    // шапка
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.font = '42px "Bebas Neue", Impact, sans-serif';
+    ctx.fillText('А К А Д Е М И Я   O K O', W/2, 148);
+    // заголовок
+    ctx.fillStyle = lime;
+    ctx.shadowColor = 'rgba(154,255,0,.45)'; ctx.shadowBlur = 34;
+    ctx.font = '150px "Bebas Neue", Impact, sans-serif';
+    ctx.fillText('СЕРТИФИКАТ', W/2, 300);
+    ctx.shadowBlur = 0;
+    try{ ctx.letterSpacing = '2px'; }catch(e){}
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = '500 27px Montserrat, Arial';
+    ctx.fillText('подтверждает, что', W/2, 372);
+    // имя
+    ctx.fillStyle = '#fff';
+    ctx.font = '96px "Bebas Neue", Impact, sans-serif';
+    ctx.fillText(cert.name.toUpperCase(), W/2, 486);
+    ctx.strokeStyle = 'rgba(154,255,0,.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W/2-260, 512); ctx.lineTo(W/2+260, 512); ctx.stroke();
+    // курс / урок
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = '500 26px Montserrat, Arial';
+    ctx.fillText('успешно прошёл урок', W/2, 566);
+    ctx.fillStyle = lime;
+    ctx.font = '64px "Bebas Neue", Impact, sans-serif';
+    ctx.fillText('«КАРТА НЕЙРОСЕТЕЙ 2026»', W/2, 646);
+    ctx.fillStyle = 'rgba(255,255,255,.6)';
+    ctx.font = '500 24px Montserrat, Arial';
+    ctx.fillText('курса «Нейросети 2026» Академии OKO', W/2, 696);
+    // чип результата
+    const chipT = 'Результат теста: ' + cert.score + '%';
+    ctx.font = '700 26px Montserrat, Arial';
+    const cw = ctx.measureText(chipT).width + 66;
+    ctx.fillStyle = 'rgba(154,255,0,.13)';
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(W/2-cw/2, 730, cw, 58, 29); else ctx.rect(W/2-cw/2, 730, cw, 58);
+    ctx.fill();
+    ctx.strokeStyle = lime; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.fillStyle = lime;
+    ctx.fillText(chipT, W/2, 768);
+    // дата и номер (слева внизу)
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.font = '600 19px Montserrat, Arial';
+    ctx.fillText('ДАТА ВЫДАЧИ', 120, 878);
+    ctx.fillStyle = '#fff';
+    ctx.font = '46px "Bebas Neue", Impact, sans-serif';
+    ctx.fillText(cert.date, 120, 928);
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.font = '600 19px Montserrat, Arial';
+    ctx.fillText('НОМЕР', 120, 972);
+    ctx.fillStyle = lime;
+    ctx.font = '700 26px Montserrat, Arial';
+    ctx.fillText('№ ' + cert.no, 120, 1004);
+    // подпись (по центру-слева внизу)
+    const sx1 = 560, sx2 = 880, sy = 952;
+    ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sx1, sy); ctx.lineTo(sx2, sy); ctx.stroke();
+    if(sig){
+      const sw = 300, sh = sw * (sig.height / sig.width);
+      ctx.drawImage(sig, (sx1+sx2)/2 - sw/2, sy - sh*0.82, sw, sh);
+    }
+    ctx.fillStyle = '#fff';
+    ctx.font = '600 24px Montserrat, Arial';
+    ctx.fillText('/ Ильясов Д.А. /', sx2 + 18, sy + 8);
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.font = '500 16px Montserrat, Arial';
+    ctx.fillText('подпись руководителя Академии', sx1, sy + 32);
+    // печать (справа внизу)
+    acDrawSeal(ctx, 1350, 900, 138);
+    // реквизиты снизу мелко
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,.34)';
+    ctx.font = '500 15px Montserrat, Arial';
+    ctx.fillText(SEAL_REQ.fio + ' · ' + SEAL_REQ.inn + ' · ' + SEAL_REQ.brand + ' · okoteam.top@gmail.com', W/2, 1076);
+    cb(cv.toDataURL('image/png'));
+  }));
+}
+
+function acCertRec(i){
+  if(typeof i === 'number' && acS.certs[i]) return acS.certs[i];
+  return acS.cert || acS.certs[0] || null;
+}
+let acCertShownNo = null;
+function acCertShow(i){
+  const cert = acCertRec(i);
+  if(!cert){ toast('Сертификат ещё не выдан'); return; }
+  const open = url=>{
+    const full = document.getElementById('acCertFull');
+    const img = document.getElementById('acCertFullImg');
+    if(!full || !img) return;
+    img.src = url;
+    full.classList.add('open');
+  };
+  if(acCertUrl && acCertShownNo === cert.no){ open(acCertUrl); return; }
+  acMakeCert(cert, url=>{ acCertUrl = url; acCertShownNo = cert.no; open(url); });
+}
+function acCertFullClose(){
+  const full = document.getElementById('acCertFull');
+  if(full) full.classList.remove('open');
+}
+function acCertDownload(){
+  const cert = acCertRec();
+  if(!cert){ toast('Сертификат ещё не выдан'); return; }
+  const dl = url=>{
+    const a = document.createElement('a');
+    a.href = url; a.download = cert.no + '.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('PNG сохранён: ' + cert.no + '.png');
+  };
+  if(acCertUrl && acCertShownNo === cert.no){ dl(acCertUrl); return; }
+  acMakeCert(cert, url=>{ acCertUrl = url; acCertShownNo = cert.no; dl(url); });
+}
+
+/* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
+(function acInit(){
+  regTitle('academy', 'Академия');
+  addSvcTile({id:'academy', label:'Академия', ico:'star', first:true, onclick:()=>showTab('academy')});
+  const _prevShowTabAc = showTab;
+  showTab = function(t){
+    _prevShowTabAc(t);
+    if(t === 'academy') acRender();
+  };
+  const scr = document.getElementById('screen-academy');
+  if(scr && scr.classList.contains('active')) acRender();
+})();
+
+/* ===== module: ads ===== */
+/* ===== ADS: рекламный кабинет (префикс ads-) ===== */
+
+const ADS_LS = 'oko-ads';
+const ADS_CPM = 28;               /* ₽ за 1000 показов */
+const ADS_POST_BASE = 9000;       /* id постов рекламы в ленте */
+const ADS_STATUS = {
+  mod:  {l:'Модерация'},
+  act:  {l:'Активна'},
+  pause:{l:'Пауза'},
+  rej:  {l:'Отклонена'},
+  done: {l:'Завершена'}
+};
+/* стоп-слова ИИ-модератора: наркотики / казино / оружие / скам / пирамиды + синонимы */
+const ADS_STOPWORDS = [
+  'наркот','героин','кокаин','марихуан','мефедрон','спайс','закладк',
+  'казино','букмекер','ставки на спорт','азартн','гэмблинг','слоты на деньги',
+  'оружи','пистолет','боеприпас','гранат',
+  'скам','лохотрон','развод на деньги','фальшив','подделк',
+  'пирамид','быстрый заработок без вложений','гарантия дохода','хайп-проект'
+];
+
+let ADS = {
+  seq: 3,
+  camps: [
+    {id:1, name:'OKO Академия — поток №4', text:'Контент-завод за 7 дней: 30 роликов в месяц на автомате. Старт 20 июля, осталось 14 мест из 50.',
+     cta:'Подписаться', link:'https://oko.app/academy', geo:'РФ', interests:['контент','маркетинг'], ages:['18-24','25-34'],
+     budget:3000, spent:1268.4, imps:45320, clicks:1121, status:'act',
+     hist:[120,180,150,240,210,320,280,360,300,410,380,460,420,510,470,560,530,610], created: Date.now()-2*864e5},
+    {id:2, name:'Партнёрка OKO — 15% с оборота', text:'Приводи авторов и получай 15% с их подписки + 5% со второй линии. Выплаты сразу на лицевой счёт.',
+     cta:'Подробнее', link:'https://oko.app/partners', geo:'СНГ', interests:['бизнес','маркетинг'], ages:['25-34','35-44'],
+     budget:1500, spent:1500, imps:53570, clicks:1547, status:'done',
+     hist:[520,610,580,660,700,640,720,690,750,710,680,730,700,660,610,540,420,260], created: Date.now()-9*864e5},
+  ]
+};
+
+function adsSave(){ try{ localStorage.setItem(ADS_LS, JSON.stringify(ADS)); }catch(e){} }
+function adsLoad(){
+  try{
+    const raw = localStorage.getItem(ADS_LS);
+    if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.camps)) ADS = d; }
+  }catch(e){}
+}
+
+/* ---------- метрики / рендер ---------- */
+function adsCtr(c){ return c.imps ? (c.clicks / c.imps * 100) : 0; }
+
+function adsRenderSummary(){
+  const box = document.getElementById('adsSummary'); if(!box) return;
+  const t = ADS.camps.reduce((a,c)=>({sp:a.sp+c.spent, im:a.im+c.imps, cl:a.cl+c.clicks}), {sp:0,im:0,cl:0});
+  const ctr = t.im ? (t.cl/t.im*100) : 0;
+  box.innerHTML = `
+    <div class="stat"><div class="v">${fmtN(Math.round(t.sp))} <small>₽</small></div><div class="l">потрачено</div></div>
+    <div class="stat"><div class="v">${fmtN(t.im)}</div><div class="l">показы</div></div>
+    <div class="stat"><div class="v">${fmtN(t.cl)}</div><div class="l">клики</div></div>
+    <div class="stat"><div class="v">${ctr.toFixed(1)}<small>%</small></div><div class="l">ctr</div></div>`;
+}
+
+function adsCampActs(c){
+  if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
+  if(c.status==='act')  return `<div class="ads-camp-acts">
+      <button class="btn sm ghost" onclick="adsPause(${c.id})">${I('pause')}Пауза</button>
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Остановить</button></div>`;
+  if(c.status==='pause')return `<div class="ads-camp-acts">
+      <button class="btn sm" onclick="adsResume(${c.id})">${I('play')}Возобновить</button>
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Остановить</button></div>`;
+  return `<div class="ads-camp-acts">
+      <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
+}
+
+function adsRenderList(){
+  const box = document.getElementById('adsList'); if(!box) return;
+  if(!ADS.camps.length){
+    box.innerHTML = `<div class="card ads-empty">${I('megaphone')}Кампаний пока нет — создай первую, объявление попадёт в ленту OKO</div>`;
+    return;
+  }
+  box.innerHTML = ADS.camps.map((c,i)=>`
+    <div class="card ads-camp" data-cid="${c.id}" style="animation-delay:${i*.05}s">
+      <div class="ads-camp-top">
+        <div class="ads-camp-name">${esc(c.name)}</div>
+        <span class="ads-st ${c.status}">${ADS_STATUS[c.status].l}</span>
+      </div>
+      <div class="ads-camp-txt">${esc(c.text)}</div>
+      <div class="ads-metrics">
+        <div class="ads-m"><b data-m="imps">${fmtN(c.imps)}</b><span>показы</span></div>
+        <div class="ads-m"><b data-m="clicks">${fmtN(c.clicks)}</b><span>клики</span></div>
+        <div class="ads-m hot"><b data-m="ctr">${adsCtr(c).toFixed(1)}%</b><span>ctr</span></div>
+        <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}₽</b><span>из ${fmtN(c.budget)}₽</span></div>
+      </div>
+      <div class="ads-budget-bar"><i data-m="bar" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
+      <canvas class="ads-spark" id="adsSpark${c.id}"></canvas>
+      ${c.status==='rej' && c.reason ? `<div class="ads-reason">${I('flag')}<span>Отклонено ИИ-модератором: ${esc(c.reason)}. Бюджет возвращён на лицевой счёт.</span></div>` : ''}
+      ${adsCampActs(c)}
+    </div>`).join('');
+  requestAnimationFrame(()=>ADS.camps.forEach(c=>adsDrawSpark(c)));
+}
+
+function adsDrawSpark(c){
+  const cv = document.getElementById('adsSpark'+c.id); if(!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 300, h = cv.clientHeight || 44;
+  cv.width = w*dpr; cv.height = h*dpr;
+  const x = cv.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,w,h);
+  const d = (c.hist && c.hist.length>1) ? c.hist : [0,0];
+  const max = Math.max(...d, 1), min = Math.min(...d);
+  const px = i => 2 + i*(w-4)/(d.length-1);
+  const py = v => h-4 - (v-min)/(max-min || 1)*(h-10);
+  const grad = x.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(154,255,0,.28)'); grad.addColorStop(1,'rgba(154,255,0,0)');
+  x.beginPath(); x.moveTo(px(0), h);
+  d.forEach((v,i)=>x.lineTo(px(i), py(v)));
+  x.lineTo(px(d.length-1), h); x.closePath(); x.fillStyle = grad; x.fill();
+  x.beginPath();
+  d.forEach((v,i)=> i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
+  x.strokeStyle = '#9AFF00'; x.lineWidth = 1.6; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke();
+  const lv = d[d.length-1];
+  x.beginPath(); x.arc(px(d.length-1), py(lv), 2.6, 0, Math.PI*2);
+  x.fillStyle = '#9AFF00'; x.shadowColor = 'rgba(154,255,0,.8)'; x.shadowBlur = 6; x.fill();
+}
+
+function adsRender(){ adsRenderSummary(); adsRenderList(); }
+
+/* обновление цифр на месте (тикер), без пересборки DOM — не сбивает нажатия */
+function adsTickUI(){
+  adsRenderSummary();
+  ADS.camps.forEach(c=>{
+    const el = document.querySelector(`.ads-camp[data-cid="${c.id}"]`); if(!el) return;
+    const set = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n) n.textContent = v; };
+    set('imps', fmtN(c.imps)); set('clicks', fmtN(c.clicks));
+    set('ctr', adsCtr(c).toFixed(1)+'%'); set('spent', fmtN(Math.round(c.spent))+'₽');
+    const bar = el.querySelector('[data-m="bar"]'); if(bar) bar.style.width = Math.min(100, c.spent/c.budget*100)+'%';
+    adsDrawSpark(c);
+  });
+}
+
+/* ---------- создание кампании ---------- */
+let adsDraft = {cta:'Подробнее', geo:'РФ'};
+
+function adsOpenCreate(){
+  adsDraft = {cta:'Подробнее', geo:'РФ'};
+  ['adsInpTitle','adsInpText','adsInpLink'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
+  document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.querySelectorAll('#adsGeoChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.querySelectorAll('#adsIntChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('#adsAgeChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v==='25-34'));
+  const bi = document.getElementById('adsInpBudget'); if(bi) bi.value = '1000';
+  adsStep(1); openSheet('ads-create');
+}
+
+function adsStep(n){
+  if(n>1){
+    const title = document.getElementById('adsInpTitle').value.trim();
+    const text  = document.getElementById('adsInpText').value.trim();
+    if(!title){ toast('Добавь заголовок объявления'); return; }
+    if(!text){ toast('Добавь текст объявления'); return; }
+  }
+  for(let i=1;i<=3;i++) document.getElementById('adsStep'+i).style.display = (i===n?'block':'none');
+  document.querySelectorAll('#adsSteps i').forEach((d,i)=>d.classList.toggle('on', i<n));
+  if(n===2) adsCalcReach();
+  if(n===3) adsCalcForecast();
+}
+
+function adsPickCta(btn){
+  document.querySelectorAll('#adsCtaChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.cta = btn.dataset.v;
+}
+function adsPickGeo(btn){
+  document.querySelectorAll('#adsGeoChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.geo = btn.dataset.v; adsCalcReach();
+}
+function adsToggleMulti(btn){ btn.classList.toggle('on'); adsCalcReach(); }
+function adsPicked(boxId){
+  return [...document.querySelectorAll('#'+boxId+' .ads-chip.on')].map(b=>b.dataset.v);
+}
+
+/* живой прогноз охвата */
+let adsReachCur = 0, adsReachRaf = 0;
+function adsCalcReach(){
+  const geoBase = {'РФ':11800000, 'СНГ':26400000, 'Весь мир':92000000}[adsDraft.geo] || 11800000;
+  const intShares = {'нейросети':.055,'бизнес':.09,'контент':.08,'маркетинг':.07,'игры':.11,'крипта':.045};
+  const ageShares = {'18-24':.21,'25-34':.31,'35-44':.24,'45+':.24};
+  const ints = adsPicked('adsIntChips'), ages = adsPicked('adsAgeChips');
+  const intK = ints.length ? Math.min(.4, ints.reduce((s,v)=>s+(intShares[v]||0),0)) : .5;
+  const ageK = ages.length ? ages.reduce((s,v)=>s+(ageShares[v]||0),0) : 1;
+  const target = Math.round(geoBase * intK * ageK);
+  const sub = document.getElementById('adsReachS');
+  if(sub) sub.textContent = `${adsDraft.geo} · ${ints.length? ints.length+' интерес(а)' : 'широкая аудитория'} · ${ages.length? ages.join(', ') : 'все возрасты'}`;
+  cancelAnimationFrame(adsReachRaf);
+  const from = adsReachCur, t0 = performance.now();
+  const step = now=>{
+    const k = Math.min(1, (now-t0)/450), e = 1-Math.pow(1-k,3);
+    adsReachCur = Math.round(from + (target-from)*e);
+    const el = document.getElementById('adsReachV');
+    if(el) el.textContent = fmtN(adsReachCur);
+    if(k<1) adsReachRaf = requestAnimationFrame(step);
+  };
+  adsReachRaf = requestAnimationFrame(step);
+}
+
+function adsSetBudget(v){
+  document.getElementById('adsInpBudget').value = v;
+  document.querySelectorAll('#adsStep3 .ads-chip').forEach(b=>b.classList.toggle('on', b.textContent.replace(/\s|₽/g,'')==String(v)));
+  adsCalcForecast();
+}
+
+function adsCalcForecast(){
+  const b = Math.max(0, parseInt(document.getElementById('adsInpBudget').value,10) || 0);
+  const imps = Math.round(b/ADS_CPM*1000);
+  const set = (id,v)=>{ const e = document.getElementById(id); if(e) e.innerHTML = v; };
+  set('adsFImps',  imps ? `~ ${fmtN(Math.round(imps*.85))} – ${fmtN(Math.round(imps*1.15))}` : '—');
+  set('adsFClicks',imps ? `~ ${fmtN(Math.max(1,Math.round(imps*.01)))} – ${fmtN(Math.round(imps*.04))}` : '—');
+  set('adsFCharge', b ? fmtMoney(b) : '—');
+  const note = document.getElementById('adsBalanceNote');
+  if(note) note.innerHTML = `На лицевом счёте: <b>${fmtMoney(WALLET.balance)}</b>${b>WALLET.balance?' — не хватает, пополни кошелёк':''}`;
+}
+
+function adsLaunch(){
+  const name = document.getElementById('adsInpTitle').value.trim();
+  const text = document.getElementById('adsInpText').value.trim();
+  let link  = document.getElementById('adsInpLink').value.trim();
+  const budget = Math.max(0, parseInt(document.getElementById('adsInpBudget').value,10) || 0);
+  if(!name || !text){ adsStep(1); return; }
+  if(budget < 100){ toast('Минимальный бюджет — 100 ₽'); return; }
+  if(link && !/^https?:\/\//i.test(link)) link = 'https://'+link;
+  if(!walletCharge(budget, 'Реклама: '+name)) return;
+  okoEarn(budget, 'Рекламный кабинет');
+  const camp = {
+    id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
+    geo: adsDraft.geo, interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
+    budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now()
+  };
+  ADS.camps.unshift(camp);
+  adsSave(); closeSheet(); adsRender();
+  toast('Кампания отправлена на модерацию ИИ-агенту');
+  setTimeout(()=>adsModerate(camp.id), 3000);
+}
+
+/* ---------- ИИ-модерация ---------- */
+function adsModerate(id){
+  const c = ADS.camps.find(x=>x.id===id);
+  if(!c || c.status!=='mod') return;
+  const hay = (c.name+' '+c.text).toLowerCase();
+  const bad = ADS_STOPWORDS.find(w=>hay.includes(w));
+  if(bad){
+    c.status = 'rej'; c.reason = 'запрещённая тематика («'+bad+'»)';
+    walletAdd(c.budget, 'Возврат: реклама отклонена — '+c.name);
+    showPopup({ico:'flag', title:'Реклама отклонена',
+      body:`ИИ-модератор нашёл в объявлении «${esc(c.name)}» запрещённую тематику: <b>«${esc(bad)}»</b>.<br><br>Бюджет ${fmtMoney(c.budget)} уже вернулся на лицевой счёт. Исправь текст и запусти заново.`,
+      actions:[{label:'Понятно'}]});
+  }else{
+    c.status = 'act';
+    adsPushToFeed(c);
+    toast('Кампания «'+c.name+'» прошла модерацию — объявление в ленте');
+  }
+  adsSave(); adsRender();
+}
+
+/* ---------- пост в ленте ---------- */
+function adsPostId(id){ return ADS_POST_BASE + id; }
+
+function adsPushToFeed(c){
+  const pid = adsPostId(c.id);
+  if(POSTS.rec.some(p=>p.id===pid)) return;
+  POSTS.rec.unshift({
+    id: pid, ava: (PROFILE.name[0]||'O').toUpperCase(), name: PROFILE.name, sub: 'спонсировано',
+    body: `<b>${esc(c.name)}</b><br>${esc(c.text)}<div class="ads-post-cta"><button onclick="event.stopPropagation();adsCtaClick(${c.id})">${esc(c.cta)} ${I('chev')}</button></div>`,
+    media: null, likes: 0, views: c.imps, liked: false, saved: false, reposts: 0,
+    promoted: true, comments: []
+  });
+  const feedOn = document.getElementById('screen-feed');
+  if(feedOn && feedOn.classList.contains('active') && typeof renderFeed==='function') renderFeed(curFeedKind);
+}
+
+function adsPullFromFeed(c){
+  const pid = adsPostId(c.id);
+  const before = POSTS.rec.length;
+  POSTS.rec = POSTS.rec.filter(p=>p.id!==pid);
+  const feedOn = document.getElementById('screen-feed');
+  if(POSTS.rec.length!==before && feedOn && feedOn.classList.contains('active')) renderFeed(curFeedKind);
+}
+
+function adsCtaClick(id){
+  const c = ADS.camps.find(x=>x.id===id);
+  if(!c || c.status!=='act'){ toast('Объявление не активно'); return; }
+  c.clicks++;
+  adsSave();
+  toast('Клик засчитан'+(c.link?' — переход: '+c.link.replace(/^https?:\/\//,'').slice(0,34):''));
+  if(document.getElementById('screen-ads').classList.contains('active')) adsTickUI();
+}
+
+/* ---------- управление кампаниями ---------- */
+function adsPause(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='act') return;
+  c.status = 'pause'; adsPullFromFeed(c);
+  adsSave(); adsRender(); toast('Кампания на паузе — показы остановлены');
+}
+function adsResume(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='pause') return;
+  if(c.spent >= c.budget){ c.status = 'done'; adsSave(); adsRender(); toast('Бюджет уже исчерпан'); return; }
+  c.status = 'act'; adsPushToFeed(c);
+  adsSave(); adsRender(); toast('Кампания снова активна');
+}
+function adsStop(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  showPopup({ico:'flag', title:'Остановить кампанию?',
+    body:`«${esc(c.name)}» будет завершена, объявление уйдёт из ленты. Потрачено ${fmtMoney(c.spent)} из ${fmtMoney(c.budget)}.`,
+    actions:[
+      {label:'Остановить', onclick:()=>{
+        c.status = 'done'; adsPullFromFeed(c);
+        adsSave(); adsRender(); toast('Кампания завершена');
+      }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function adsDelete(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsPullFromFeed(c);
+  ADS.camps = ADS.camps.filter(x=>x.id!==id);
+  adsSave(); adsRender(); toast('Кампания удалена');
+}
+
+/* ---------- живая статистика: тикер раз в 5 секунд ---------- */
+function adsTick(){
+  let changed = false;
+  ADS.camps.forEach(c=>{
+    if(c.status!=='act') return;
+    changed = true;
+    const dImps = 70 + Math.floor(Math.random()*180);            /* показы за тик */
+    const ctr = 0.01 + Math.random()*0.03;                        /* CTR 1–4% */
+    const dClicks = Math.round(dImps*ctr);
+    const dSpend = dImps/1000*ADS_CPM;
+    c.imps += dImps; c.clicks += dClicks;
+    c.spent = Math.min(c.budget, c.spent + dSpend);
+    c.hist.push(dImps); if(c.hist.length>24) c.hist.shift();
+    const post = POSTS.rec.find(p=>p.id===adsPostId(c.id));
+    if(post) post.views = c.imps;
+    if(c.spent >= c.budget){
+      c.status = 'done'; adsPullFromFeed(c);
+      toast('Кампания «'+c.name+'» завершена — бюджет исчерпан');
+      if(document.getElementById('screen-ads').classList.contains('active')) adsRender();
+    }
+  });
+  if(!changed) return;
+  adsSave();
+  if(document.getElementById('screen-ads').classList.contains('active')) adsTickUI();
+}
+
+/* ---------- патчи ядра (с сохранением прежнего поведения) ---------- */
+const _prevShowTabAds = showTab;
+showTab = function(t){
+  _prevShowTabAds(t);
+  if(t==='ads') adsRender();
+};
+
+/* ---------- самоинициализация ---------- */
+adsLoad();
+regTitle('ads', 'Реклама');
+addSvcTile({id:'ads', label:'Реклама', ico:'megaphone', onclick:()=>showTab('ads')});
+if(typeof regT==='function') regT({ads:{ru:'Реклама', en:'Ads'}});
+/* активные кампании возвращаются в ленту после перезагрузки */
+ADS.camps.forEach(c=>{
+  if(c.status==='act') adsPushToFeed(c);
+  if(c.status==='mod') setTimeout(()=>adsModerate(c.id), 3000); /* зависшая модерация — допроверить */
+});
+adsRender();
+setInterval(adsTick, 5000);
+window.addEventListener('resize', ()=>{
+  if(document.getElementById('screen-ads').classList.contains('active'))
+    ADS.camps.forEach(c=>adsDrawSpark(c));
+});
+
+/* ===== module: legal ===== */
+/* ================= LEGAL: юридические документы OKO (префикс lg-) =================
+   Оферта / Политика конфиденциальности / Пользовательское соглашение, RU + EN.
+   Печать (sealSvg) и подпись (signatureImg) — из core-ext. openLegalDoc(kind) — публичное API. */
+
+/* ---------- состояние (localStorage oko-legal) ---------- */
+const lgS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-legal'))||null; }catch(e){ return null; } })() || { lang: (typeof LANG!=='undefined'?LANG:'ru') };
+function lgSave(){ try{ localStorage.setItem('oko-legal', JSON.stringify(lgS)); }catch(e){} }
+let lgKind = 'offer'; // offer | privacy | terms
+
+const LG_TABS = [
+  {k:'offer',   ru:'Оферта',            en:'Offer'},
+  {k:'privacy', ru:'Конфиденциальность',en:'Privacy'},
+  {k:'terms',   ru:'Соглашение',        en:'Terms'}
+];
+
+/* ---------- общие реквизиты ---------- */
+const LG_REQ = {
+  ru: {
+    op: 'Индивидуальный предприниматель Ильясов Даниэль Альбертович',
+    inn: 'ИНН 682016634349',
+    geo: 'г. Москва, Российская Федерация · представительство: г. Дубай, ОАЭ',
+    mail: 'okoteam.top@gmail.com',
+    sig: 'Ильясов Д.А. / Индивидуальный предприниматель',
+    date: '16 июля 2026 г.'
+  },
+  en: {
+    op: 'Sole Proprietor Ilyasov Daniel Albertovich',
+    inn: 'Taxpayer ID (INN) 682016634349',
+    geo: 'Moscow, Russian Federation · representative office: Dubai, UAE',
+    mail: 'okoteam.top@gmail.com',
+    sig: 'D. A. Ilyasov / Sole Proprietor',
+    date: 'July 16, 2026'
+  }
+};
+
+/* ================================================================
+   ТЕКСТЫ ДОКУМЕНТОВ. secs: массив {h, b} — заголовок и HTML-тело.
+   ================================================================ */
+const LG_DOCS = {
+
+/* ============================ ОФЕРТА ============================ */
+offer: {
+ru: { title:'Публичная оферта', rev:'Редакция № 3', secs:[
+{h:'Общие положения и акцепт', b:
+`<p>Настоящий документ является официальным предложением (публичной офертой) Индивидуального предпринимателя Ильясова Даниэля Альбертовича (ИНН 682016634349, г. Москва, Российская Федерация; представительство: г. Дубай, ОАЭ), далее — <b>«Оператор»</b>, заключить договор возмездного оказания услуг сервиса OKO на изложенных ниже условиях в соответствии со ст. 435, 437 и 438 Гражданского кодекса РФ.</p>
+<p>Полным и безоговорочным акцептом оферты признаётся любое из действий: регистрация аккаунта в приложении OKO, оплата тарифа, пополнение лицевого счёта либо фактическое использование любой функции Сервиса. С момента акцепта договор считается заключённым.</p>`},
+{h:'Термины', b:
+`<ul>
+<li><b>Сервис (OKO)</b> — программный комплекс Оператора: мобильное и веб-приложение OKO, включая мессенджер, социальную ленту, биржу услуг, академию, игровой раздел, рекламный кабинет, партнёрскую программу и лицевой счёт.</li>
+<li><b>Пользователь</b> — дееспособное физическое лицо либо представитель юридического лица, акцептовавшие оферту.</li>
+<li><b>Лицевой счёт</b> — внутренний учётный счёт Пользователя в Сервисе, отражающий баланс средств для оплаты услуг.</li>
+<li><b>Биржа</b> — раздел Сервиса для заключения сделок между заказчиками и исполнителями услуг.</li>
+<li><b>Эскроу</b> — механика блокировки средств заказчика до подтверждения приёмки работы.</li>
+<li><b>Тариф</b> — объём платного функционала (START, PRO, BUSINESS) на выбранный период.</li>
+</ul>`},
+{h:'Предмет договора', b:
+`<p>Оператор предоставляет Пользователю право использования Сервиса в пределах его функциональных возможностей: обмен сообщениями и звонки, публикация контента в социальной ленте, размещение и заказ услуг на Бирже, обучение в Академии, участие в играх (18+), размещение рекламы через рекламный кабинет, участие в партнёрской программе и операции по лицевому счёту.</p>
+<p>Базовый функционал предоставляется бесплатно. Расширенный функционал предоставляется по подписке согласно выбранному Тарифу.</p>`},
+{h:'Тарифы и порядок оплаты', b:
+`<table class="lg-table">
+<tr><th>Тариф</th><th>Цена / мес*</th><th>Состав</th></tr>
+<tr><td>START</td><td>$12</td><td>Все чаты и сообщества, 10 проверок видео в месяц, обучение нейросетям, активация партнёрской программы.</td></tr>
+<tr><td>PRO</td><td>$39</td><td>Полный доступ к Бирже и Академии, расширенная аналитика, приоритетная модерация контента.</td></tr>
+<tr><td>BUSINESS</td><td>$158</td><td>Рекламный кабинет без ограничений, командные аккаунты, персональный менеджер и приоритетная поддержка.</td></tr>
+</table>
+<p class="lg-note">* Указана цена за месяц при оплате за год. Скидки периодов от базовой месячной цены: 3 месяца — 10%, 6 месяцев — 15%, 12 месяцев — 20%.</p>
+<p>Способы оплаты: банковские карты РФ, криптовалюта, платёжная платформа Lava.top. Цены могут указываться в долларах США; фактическое списание производится в валюте платёжного метода по курсу на дату платежа. Подписка продлевается автоматически на аналогичный период; автопродление отключается в настройках до даты списания.</p>`},
+{h:'Лицевой счёт и списания', b:
+`<p>Пополнение лицевого счёта производится способами, указанными в разделе 4. Все внутренние платежи (услуги Биржи, реклама, игровой раздел, платные функции) списываются с лицевого счёта в момент подтверждения операции Пользователем.</p>
+<p>Средства на лицевом счёте не являются вкладом, на них не начисляются проценты; лицевой счёт не является банковским счётом или электронным средством платежа кредитной организации. История операций доступна Пользователю в разделе «Кошелёк» без ограничения срока.</p>`},
+{h:'Биржа услуг: комиссия и эскроу', b:
+`<p>При оформлении заказа на Бирже сумма сделки блокируется на лицевом счёте заказчика (эскроу) и перечисляется исполнителю после подтверждения заказчиком приёмки работы либо автоматически по истечении 7 дней с момента сдачи работы при отсутствии претензий.</p>
+<p>Комиссия Сервиса составляет <b>10%</b> от суммы сделки и удерживается с исполнителя при успешном завершении. При споре стороны обязаны пройти арбитраж Сервиса; решение арбитража о распределении заблокированных средств обязательно для сторон в рамках Сервиса.</p>
+<p>Вывод средств с лицевого счёта на внешние реквизиты — комиссия <b>2%</b> от суммы вывода, срок исполнения до 5 рабочих дней. Оператор вправе запросить подтверждение личности при выводе.</p>`},
+{h:'Партнёрская программа', b:
+`<p>Пользователь получает вознаграждение от платежей приглашённых им пользователей: <b>15%</b> — от платежей рефералов первого уровня, <b>5%</b> — от платежей рефералов второго уровня. Вознаграждение начисляется на лицевой счёт в момент успешного платежа реферала.</p>
+<p>Запрещены самореферальство, накрутка, спам-привлечение и иной фрод. Нарушение влечёт аннулирование начисленных вознаграждений и отключение от программы.</p>`},
+{h:'Возвраты', b:
+`<p>Пользователь вправе отказаться от оплаченной подписки в течение 14 календарных дней с момента оплаты при условии, что платный функционал фактически не использовался, — возврат производится в полном объёме тем же способом оплаты.</p>
+<p>При технической невозможности оказания услуг по вине Оператора возврат производится пропорционально неиспользованному периоду. Средства, израсходованные на сделки Биржи, рекламу и игровой раздел, возврату не подлежат, за исключением случаев, прямо предусмотренных законом.</p>
+<p>Заявление о возврате направляется на okoteam.top@gmail.com; срок рассмотрения — 10 рабочих дней.</p>`},
+{h:'Ответственность сторон', b:
+`<p>Сервис предоставляется «как есть». Оператор не отвечает за содержание пользовательского контента, а также за исполнение обязательств между заказчиками и исполнителями Биржи, кроме функций эскроу и арбитража.</p>
+<p>Совокупная ответственность Оператора по договору ограничена суммой платежей Пользователя за последние 3 месяца. Пользователь несёт ответственность за достоверность предоставленных данных и сохранность доступа к своему аккаунту.</p>`},
+{h:'Форс-мажор', b:
+`<p>Стороны освобождаются от ответственности за неисполнение обязательств вследствие обстоятельств непреодолимой силы: стихийные бедствия, военные действия, акты органов власти, аварии сетей связи и энергоснабжения, массовые сбои платёжных систем. Сторона, для которой наступили такие обстоятельства, уведомляет другую сторону в разумный срок.</p>`},
+{h:'Срок действия и изменение оферты', b:
+`<p>Договор действует с момента акцепта бессрочно. Оператор вправе изменять условия оферты, публикуя новую редакцию в приложении; о существенных изменениях Пользователи уведомляются не позднее чем за 10 дней до вступления в силу. Продолжение использования Сервиса после вступления изменений в силу означает согласие с новой редакцией.</p>`},
+{h:'Реквизиты Оператора', b:
+`<p><b>ИП Ильясов Даниэль Альбертович</b> · ИНН 682016634349 · г. Москва, Российская Федерация · представительство: г. Дубай, ОАЭ · e-mail: okoteam.top@gmail.com.</p>`}
+]},
+en: { title:'Public Offer Agreement', rev:'Revision No. 3', secs:[
+{h:'General Provisions and Acceptance', b:
+`<p>This document is an official proposal (public offer) of Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE), hereinafter the <b>"Operator"</b>, to conclude a paid services agreement for the OKO service on the terms below, pursuant to Articles 435, 437 and 438 of the Civil Code of the Russian Federation.</p>
+<p>Full and unconditional acceptance of this offer is any of the following: registering an account in the OKO app, paying for a plan, topping up the personal account, or actually using any feature of the Service. The agreement is deemed concluded upon acceptance.</p>`},
+{h:'Definitions', b:
+`<ul>
+<li><b>Service (OKO)</b> — the Operator's software suite: the OKO mobile and web application, including the messenger, social feed, services marketplace, academy, games section, advertising cabinet, affiliate program and personal account.</li>
+<li><b>User</b> — a legally capable individual or a representative of a legal entity who has accepted this offer.</li>
+<li><b>Personal Account</b> — the User's internal ledger within the Service reflecting the balance of funds for paying for services.</li>
+<li><b>Marketplace</b> — the section of the Service for transactions between clients and service providers.</li>
+<li><b>Escrow</b> — the mechanism of holding the client's funds until acceptance of the work is confirmed.</li>
+<li><b>Plan</b> — the scope of paid functionality (START, PRO, BUSINESS) for a selected period.</li>
+</ul>`},
+{h:'Subject Matter', b:
+`<p>The Operator grants the User the right to use the Service within its functionality: messaging and calls, publishing content in the social feed, offering and ordering services on the Marketplace, learning in the Academy, participation in games (18+), placing advertising via the advertising cabinet, participation in the affiliate program, and operations on the personal account.</p>
+<p>Basic functionality is free of charge. Extended functionality is provided by subscription according to the selected Plan.</p>`},
+{h:'Plans and Payment', b:
+`<table class="lg-table">
+<tr><th>Plan</th><th>Price / mo*</th><th>Includes</th></tr>
+<tr><td>START</td><td>$12</td><td>All chats and communities, 10 video checks per month, AI training courses, affiliate program activation.</td></tr>
+<tr><td>PRO</td><td>$39</td><td>Full access to the Marketplace and Academy, advanced analytics, priority content moderation.</td></tr>
+<tr><td>BUSINESS</td><td>$158</td><td>Unlimited advertising cabinet, team accounts, dedicated manager and priority support.</td></tr>
+</table>
+<p class="lg-note">* Monthly price with annual billing. Period discounts off the base monthly price: 3 months — 10%, 6 months — 15%, 12 months — 20%.</p>
+<p>Payment methods: Russian bank cards, cryptocurrency, and the Lava.top payment platform. Prices may be quoted in US dollars; the actual charge is made in the currency of the payment method at the exchange rate on the payment date. Subscriptions renew automatically for the same period; auto-renewal can be disabled in the settings before the billing date.</p>`},
+{h:'Personal Account and Charges', b:
+`<p>The personal account is topped up using the methods listed in Section 4. All internal payments (Marketplace services, advertising, games, paid features) are debited from the personal account at the moment the User confirms the operation.</p>
+<p>Funds on the personal account are not a deposit and bear no interest; the personal account is not a bank account or an electronic payment instrument of a credit institution. The transaction history is available to the User in the Wallet section without any time limit.</p>`},
+{h:'Marketplace: Commission and Escrow', b:
+`<p>When an order is placed on the Marketplace, the transaction amount is held on the client's personal account (escrow) and transferred to the provider after the client confirms acceptance of the work, or automatically 7 days after delivery if no claims are raised.</p>
+<p>The Service commission is <b>10%</b> of the transaction amount, withheld from the provider upon successful completion. In case of a dispute the parties must use the Service arbitration; its decision on the distribution of the held funds is binding within the Service.</p>
+<p>Withdrawal of funds from the personal account to external details is subject to a <b>2%</b> fee and is processed within 5 business days. The Operator may request identity verification upon withdrawal.</p>`},
+{h:'Affiliate Program', b:
+`<p>The User receives remuneration from payments made by the users they invite: <b>15%</b> of first-level referral payments and <b>5%</b> of second-level referral payments. Remuneration is credited to the personal account at the moment of the referral's successful payment.</p>
+<p>Self-referrals, artificial inflation, spam acquisition and other fraud are prohibited and result in cancellation of accrued remuneration and exclusion from the program.</p>`},
+{h:'Refunds', b:
+`<p>The User may cancel a paid subscription within 14 calendar days of payment provided the paid functionality has not actually been used — a full refund is issued via the original payment method.</p>
+<p>If the services cannot be provided for technical reasons attributable to the Operator, a refund is issued pro rata for the unused period. Funds spent on Marketplace transactions, advertising and the games section are non-refundable except as expressly required by law.</p>
+<p>Refund requests are sent to okoteam.top@gmail.com; processing time is 10 business days.</p>`},
+{h:'Liability', b:
+`<p>The Service is provided "as is". The Operator is not responsible for user-generated content or for the performance of obligations between Marketplace clients and providers, except for the escrow and arbitration functions.</p>
+<p>The Operator's aggregate liability under the agreement is limited to the amount of the User's payments over the last 3 months. The User is responsible for the accuracy of the data provided and for safeguarding access to their account.</p>`},
+{h:'Force Majeure', b:
+`<p>The parties are released from liability for non-performance caused by force majeure: natural disasters, military actions, acts of public authorities, failures of communication and power networks, and mass outages of payment systems. The affected party shall notify the other party within a reasonable time.</p>`},
+{h:'Term and Amendments', b:
+`<p>The agreement takes effect upon acceptance and remains in force indefinitely. The Operator may amend the offer by publishing a new revision in the app; Users are notified of material changes at least 10 days before they take effect. Continued use of the Service after the changes take effect constitutes consent to the new revision.</p>`},
+{h:'Operator Details', b:
+`<p><b>Sole Proprietor Ilyasov Daniel Albertovich</b> · Taxpayer ID (INN) 682016634349 · Moscow, Russian Federation · representative office: Dubai, UAE · e-mail: okoteam.top@gmail.com.</p>`}
+]}
+},
+
+/* ===================== КОНФИДЕНЦИАЛЬНОСТЬ ===================== */
+privacy: {
+ru: { title:'Политика конфиденциальности', rev:'Редакция № 3', secs:[
+{h:'Общие положения', b:
+`<p>Настоящая Политика определяет порядок обработки и защиты персональных данных пользователей приложения OKO. Оператор персональных данных — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ).</p>
+<p>Обработка ведётся в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных»; для пользователей из Европейской экономической зоны дополнительно применяются принципы GDPR: законность, минимизация данных, ограничение целей и сроков хранения, прозрачность.</p>`},
+{h:'Состав обрабатываемых данных', b:
+`<ul>
+<li><b>Данные аккаунта:</b> имя, никнейм, адрес электронной почты, номер телефона, аватар, идентификаторы входа (Telegram ID, Google, Apple).</li>
+<li><b>Данные профиля и анкеты:</b> сведения о деятельности, навыках и целях, заполняемые пользователем добровольно.</li>
+<li><b>Платёжные метаданные:</b> суммы, даты и статусы операций, идентификаторы транзакций платёжных провайдеров. Полные номера банковских карт Оператор не получает и не хранит.</li>
+<li><b>Контент:</b> сообщения, посты, отклики на Бирже, материалы, загружаемые в Сервис.</li>
+<li><b>Технические данные:</b> IP-адрес, тип устройства и ОС, язык, cookies, журналы событий (логи).</li>
+<li><b>Статистика использования:</b> обезличенные метрики активности в разделах Сервиса.</li>
+</ul>`},
+{h:'Цели обработки', b:
+`<ul>
+<li>Регистрация, аутентификация и работа аккаунта.</li>
+<li>Исполнение договора: подписки, сделки Биржи, эскроу, выводы средств, партнёрские начисления.</li>
+<li>Модерация контента и обеспечение безопасности, предотвращение мошенничества.</li>
+<li>Поддержка пользователей и обратная связь.</li>
+<li>Улучшение Сервиса на основе обезличенной аналитики.</li>
+<li>Информирование о работе Сервиса; рекламные рассылки — только с отдельного согласия, с возможностью отказа в один клик.</li>
+</ul>`},
+{h:'Правовые основания', b:
+`<p>Основаниями обработки являются: исполнение договора (публичной оферты), согласие субъекта персональных данных, законные интересы Оператора (безопасность, защита от фрода) и исполнение требований законодательства (бухгалтерский и налоговый учёт).</p>`},
+{h:'Cookies и аналитика', b:
+`<p>Сервис использует cookies и аналогичные технологии: обязательные (сессия, безопасность), функциональные (настройки темы и языка) и аналитические (обезличенная статистика). Пользователь может ограничить cookies в настройках браузера или устройства; обязательные cookies необходимы для работы Сервиса.</p>`},
+{h:'Передача данных третьим лицам', b:
+`<p>Данные передаются только в объёме, необходимом для конкретной цели:</p>
+<ul>
+<li>Платёжным провайдерам (Lava.top, банковские и криптовалютные процессинги) — для проведения платежей.</li>
+<li>Поставщикам облачной инфраструктуры и хостинга — для хранения и обработки данных по поручению Оператора.</li>
+<li>Telegram — при входе через Telegram-аккаунт.</li>
+<li>Государственным органам — исключительно по законному запросу.</li>
+</ul>
+<p>Оператор не продаёт персональные данные и не передаёт их третьим лицам для их собственных маркетинговых целей.</p>`},
+{h:'Хранение и сроки', b:
+`<p>Запись, систематизация, накопление, хранение, уточнение и извлечение персональных данных граждан РФ осуществляются с использованием баз данных на территории РФ (ч. 5 ст. 18 152-ФЗ).</p>
+<p>Сроки: данные аккаунта — на период действия аккаунта и 3 года после его удаления (для разрешения споров и по требованиям закона); документы об операциях — 5 лет; технические логи — 12 месяцев. По истечении сроков данные удаляются либо обезличиваются.</p>`},
+{h:'Права пользователя', b:
+`<ul>
+<li>Получить сведения об обработке и копию своих данных.</li>
+<li>Требовать уточнения, блокирования или удаления данных («право быть забытым»).</li>
+<li>Отозвать согласие на обработку в любой момент.</li>
+<li>Получить данные в структурированном машиночитаемом формате (переносимость).</li>
+<li>Возразить против обработки, основанной на законном интересе.</li>
+<li>Обжаловать действия Оператора в Роскомнадзоре либо ином надзорном органе по месту нахождения пользователя.</li>
+</ul>
+<p>Запросы направляются на okoteam.top@gmail.com; срок ответа — 30 дней.</p>`},
+{h:'Защита данных', b:
+`<p>Применяются организационные и технические меры: шифрование каналов связи (TLS), хеширование паролей, разграничение доступа сотрудников по принципу минимальной необходимости, резервное копирование, журналирование доступа. При инциденте, создающем угрозу правам субъектов, Оператор уведомляет надзорный орган и затронутых пользователей в установленные законом сроки.</p>`},
+{h:'Возрастные ограничения', b:
+`<p>Сервис предназначен для лиц старше 16 лет; игровой раздел — строго 18+. Оператор не осуществляет намеренный сбор данных детей. При обнаружении аккаунта, созданного лицом младше допустимого возраста, аккаунт и связанные данные удаляются.</p>`},
+{h:'Изменения и контакты', b:
+`<p>Оператор вправе обновлять Политику; новая редакция публикуется в приложении с указанием даты. Продолжение использования Сервиса означает согласие с обновлённой Политикой.</p>
+<p>Вопросы по обработке персональных данных: <b>okoteam.top@gmail.com</b>.</p>`}
+]},
+en: { title:'Privacy Policy', rev:'Revision No. 3', secs:[
+{h:'General Provisions', b:
+`<p>This Policy defines how personal data of OKO app users is processed and protected. The data controller is Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE).</p>
+<p>Processing is carried out in accordance with Russian Federal Law No. 152-FZ "On Personal Data" of 27.07.2006; for users from the European Economic Area the GDPR principles additionally apply: lawfulness, data minimisation, purpose and storage limitation, and transparency.</p>`},
+{h:'Data We Process', b:
+`<ul>
+<li><b>Account data:</b> name, nickname, e-mail address, phone number, avatar, sign-in identifiers (Telegram ID, Google, Apple).</li>
+<li><b>Profile data:</b> information about activities, skills and goals provided voluntarily by the user.</li>
+<li><b>Payment metadata:</b> amounts, dates and statuses of operations, transaction identifiers of payment providers. The Operator never receives or stores full bank card numbers.</li>
+<li><b>Content:</b> messages, posts, Marketplace bids, and materials uploaded to the Service.</li>
+<li><b>Technical data:</b> IP address, device and OS type, language, cookies, event logs.</li>
+<li><b>Usage statistics:</b> anonymised activity metrics across the Service.</li>
+</ul>`},
+{h:'Purposes of Processing', b:
+`<ul>
+<li>Registration, authentication and account operation.</li>
+<li>Performance of the agreement: subscriptions, Marketplace transactions, escrow, withdrawals, affiliate accruals.</li>
+<li>Content moderation, security and fraud prevention.</li>
+<li>User support and feedback.</li>
+<li>Improving the Service based on anonymised analytics.</li>
+<li>Service notifications; marketing communications — only with separate consent, with one-click opt-out.</li>
+</ul>`},
+{h:'Legal Bases', b:
+`<p>Processing is based on: performance of the agreement (the public offer), the data subject's consent, the Operator's legitimate interests (security, fraud prevention), and compliance with legal obligations (accounting and tax requirements).</p>`},
+{h:'Cookies and Analytics', b:
+`<p>The Service uses cookies and similar technologies: essential (session, security), functional (theme and language preferences) and analytical (anonymised statistics). Users may restrict cookies in their browser or device settings; essential cookies are required for the Service to operate.</p>`},
+{h:'Disclosure to Third Parties', b:
+`<p>Data is shared only to the extent necessary for a specific purpose:</p>
+<ul>
+<li>Payment providers (Lava.top, bank and cryptocurrency processors) — to process payments.</li>
+<li>Cloud infrastructure and hosting providers — to store and process data on behalf of the Operator.</li>
+<li>Telegram — when signing in with a Telegram account.</li>
+<li>Public authorities — solely upon a lawful request.</li>
+</ul>
+<p>The Operator does not sell personal data and does not share it with third parties for their own marketing purposes.</p>`},
+{h:'Storage and Retention', b:
+`<p>Recording, systematisation, accumulation, storage, clarification and retrieval of personal data of Russian citizens are performed using databases located in the Russian Federation (Art. 18(5) of Law 152-FZ).</p>
+<p>Retention periods: account data — for the lifetime of the account plus 3 years after deletion (for dispute resolution and legal requirements); transaction records — 5 years; technical logs — 12 months. Upon expiry, data is deleted or anonymised.</p>`},
+{h:'Your Rights', b:
+`<ul>
+<li>Obtain information about processing and a copy of your data.</li>
+<li>Request rectification, restriction or erasure of data (the "right to be forgotten").</li>
+<li>Withdraw consent to processing at any time.</li>
+<li>Receive your data in a structured, machine-readable format (portability).</li>
+<li>Object to processing based on legitimate interest.</li>
+<li>Lodge a complaint with Roskomnadzor or another supervisory authority at your location.</li>
+</ul>
+<p>Requests are sent to okoteam.top@gmail.com; the response time is 30 days.</p>`},
+{h:'Data Security', b:
+`<p>Organisational and technical measures are applied: encryption of communication channels (TLS), password hashing, least-privilege staff access, backups, and access logging. In the event of an incident endangering the rights of data subjects, the Operator notifies the supervisory authority and affected users within the timeframes required by law.</p>`},
+{h:'Age Restrictions', b:
+`<p>The Service is intended for persons over 16; the games section is strictly 18+. The Operator does not knowingly collect children's data. If an account created by an underage person is discovered, the account and related data are deleted.</p>`},
+{h:'Amendments and Contact', b:
+`<p>The Operator may update this Policy; the new revision is published in the app with its date. Continued use of the Service constitutes acceptance of the updated Policy.</p>
+<p>Personal data enquiries: <b>okoteam.top@gmail.com</b>.</p>`}
+]}
+},
+
+/* ======================= СОГЛАШЕНИЕ ======================= */
+terms: {
+ru: { title:'Пользовательское соглашение', rev:'Редакция № 3', secs:[
+{h:'Общие положения', b:
+`<p>Настоящее Соглашение устанавливает правила пользования платформой OKO и действует совместно с Публичной офертой и Политикой конфиденциальности. Регистрируясь в Сервисе, Пользователь подтверждает, что ознакомился с Соглашением и обязуется его соблюдать.</p>
+<p>Оператор платформы — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ).</p>`},
+{h:'Аккаунт и верификация', b:
+`<p>Пользователь обязан указывать достоверные данные и поддерживать их актуальность. Допускается один личный аккаунт на человека; передача аккаунта третьим лицам запрещена.</p>
+<p>Сервис предоставляет добровольную верификацию (отметка подлинности). Для верификации, а также при выводе средств и в спорных ситуациях Оператор вправе запросить документы, подтверждающие личность или полномочия. Верификация может быть отозвана при нарушении правил.</p>`},
+{h:'Общие правила поведения', b:
+`<ul>
+<li>Уважительное общение: запрещены травля, угрозы, оскорбления и дискриминация по любому признаку.</li>
+<li>Запрещено выдавать себя за другое лицо, организацию или представителя Сервиса.</li>
+<li>Запрещены массовые рассылки, спам, накрутка метрик и автоматизированный сбор данных без согласия Оператора.</li>
+<li>Запрещены попытки взлома, обхода технических ограничений и вмешательства в работу Сервиса.</li>
+</ul>`},
+{h:'Запрещённый контент', b:
+`<p>На платформе запрещено размещать, рекламировать и распространять:</p>
+<ul>
+<li>Наркотические средства, психотропные вещества и их пропаганду.</li>
+<li>Порнографию; материалы 18+ без соответствующей маркировки и возрастного ограничения доступа.</li>
+<li>Мошеннические схемы, финансовые пирамиды, фишинг и вводящие в заблуждение предложения.</li>
+<li>Экстремистские и террористические материалы, призывы к насилию.</li>
+<li>Контент, нарушающий законодательство: незаконный оборот оружия, персональные данные третьих лиц без их согласия, вредоносное ПО.</li>
+<li>Контент, нарушающий интеллектуальные права третьих лиц.</li>
+</ul>`},
+{h:'ИИ-модерация и блокировки', b:
+`<p>Загружаемый контент (видео, изображения, тексты) проходит автоматическую премодерацию с использованием ИИ-моделей. При выявлении признаков нарушения контент может быть скрыт до проверки; спорные случаи эскалируются модератору-человеку.</p>
+<p>Меры при нарушениях (применяются соразмерно тяжести): предупреждение, удаление контента, ограничение функций, временная блокировка, удаление аккаунта. При блокировке за грубые нарушения средства, полученные преступным путём, могут быть заморожены до выяснения обстоятельств.</p>
+<p>Пользователь вправе подать апелляцию на решение модерации через поддержку в течение 30 дней; апелляция рассматривается человеком.</p>`},
+{h:'Игры и ответственная игра (18+)', b:
+`<p>Игровой раздел доступен только пользователям, достигшим 18 лет. Игры Сервиса — развлекательные механики с использованием внутреннего баланса лицевого счёта.</p>
+<ul>
+<li>Пользователь может установить дневные и месячные лимиты трат в игровом разделе.</li>
+<li>Доступна функция самоисключения — временного или постоянного отключения игрового раздела.</li>
+<li>Запрещено участие в играх с чужих аккаунтов и использование ботов.</li>
+<li>Игровые механики не гарантируют выигрыш; трать только те средства, потерю которых можешь себе позволить.</li>
+</ul>`},
+{h:'Интеллектуальная собственность', b:
+`<p>Исключительные права на платформу OKO, её код, дизайн, логотип и товарные знаки принадлежат Оператору. Использование элементов платформы вне Сервиса без письменного разрешения запрещено.</p>
+<p>Права на пользовательский контент сохраняются за Пользователем. Размещая контент, Пользователь предоставляет Оператору неисключительную безвозмездную лицензию на его хранение, отображение и техническую обработку в целях работы Сервиса. Правообладатели могут направить жалобу о нарушении своих прав на okoteam.top@gmail.com — контент-нарушитель удаляется после проверки.</p>`},
+{h:'Правила Биржи услуг', b:
+`<ul>
+<li>Сделки заключаются только через эскроу-механику Сервиса; обход комиссии и увод сделок «мимо кассы» запрещены.</li>
+<li>Исполнитель обязан выполнять работу в заявленный срок и с заявленным качеством; заказчик — принимать работу или мотивированно её отклонять.</li>
+<li>Запрещены фиктивные сделки, накрутка отзывов и рейтинга.</li>
+<li>Споры разрешаются арбитражем Сервиса на основании переписки и материалов сделки.</li>
+</ul>`},
+{h:'Санкции и порядок применения', b:
+`<p>При нарушении Соглашения Оператор вправе применить меры из раздела 5 без предварительного уведомления, если нарушение создаёт угрозу другим пользователям или Сервису. Повторные и грубые нарушения ведут к необратимому удалению аккаунта. Остаток средств на лицевом счёте (кроме средств, полученных с нарушением) возвращается Пользователю по реквизитам после верификации личности.</p>`},
+{h:'Разрешение споров', b:
+`<p>Стороны применяют обязательный претензионный порядок: претензия направляется на okoteam.top@gmail.com, срок ответа — 30 дней. При недостижении согласия спор передаётся в суд по месту нахождения Оператора в соответствии с законодательством РФ. Для пользователей вне РФ возможен арбитраж в согласованной сторонами юрисдикции.</p>`},
+{h:'Заключительные положения', b:
+`<p>Недействительность отдельного положения Соглашения не влечёт недействительности остальных. Оператор вправе обновлять Соглашение в порядке, аналогичном изменению Публичной оферты. Актуальная редакция всегда доступна в приложении в разделе «Документы OKO».</p>`}
+]},
+en: { title:'Terms of Service', rev:'Revision No. 3', secs:[
+{h:'General Provisions', b:
+`<p>These Terms establish the rules for using the OKO platform and apply together with the Public Offer and the Privacy Policy. By registering in the Service, the User confirms that they have read the Terms and undertake to comply with them.</p>
+<p>The platform operator is Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE).</p>`},
+{h:'Account and Verification', b:
+`<p>The User must provide accurate data and keep it up to date. One personal account per person is allowed; transferring an account to third parties is prohibited.</p>
+<p>The Service offers voluntary verification (authenticity badge). For verification, as well as for withdrawals and in disputes, the Operator may request documents confirming identity or authority. Verification may be revoked for violations of the rules.</p>`},
+{h:'General Conduct Rules', b:
+`<ul>
+<li>Respectful communication: harassment, threats, insults and discrimination on any grounds are prohibited.</li>
+<li>Impersonating another person, organisation or a Service representative is prohibited.</li>
+<li>Mass mailings, spam, metric manipulation and automated data collection without the Operator's consent are prohibited.</li>
+<li>Hacking attempts, circumvention of technical restrictions and interference with the Service are prohibited.</li>
+</ul>`},
+{h:'Prohibited Content', b:
+`<p>It is prohibited to post, advertise or distribute on the platform:</p>
+<ul>
+<li>Narcotic drugs, psychotropic substances and their promotion.</li>
+<li>Pornography; 18+ materials without proper labelling and age-restricted access.</li>
+<li>Fraudulent schemes, financial pyramids, phishing and misleading offers.</li>
+<li>Extremist and terrorist materials, incitement to violence.</li>
+<li>Content violating the law: illegal arms trafficking, third parties' personal data without their consent, malware.</li>
+<li>Content infringing third-party intellectual property rights.</li>
+</ul>`},
+{h:'AI Moderation and Restrictions', b:
+`<p>Uploaded content (video, images, texts) undergoes automatic pre-moderation using AI models. If signs of a violation are detected, the content may be hidden pending review; disputed cases are escalated to a human moderator.</p>
+<p>Enforcement measures (applied proportionately to severity): warning, content removal, feature restriction, temporary suspension, account deletion. In case of suspension for gross violations, funds obtained unlawfully may be frozen pending investigation.</p>
+<p>The User may appeal a moderation decision via support within 30 days; appeals are reviewed by a human.</p>`},
+{h:'Games and Responsible Play (18+)', b:
+`<p>The games section is available only to users aged 18 and over. The Service's games are entertainment mechanics using the internal personal account balance.</p>
+<ul>
+<li>The User may set daily and monthly spending limits in the games section.</li>
+<li>A self-exclusion feature is available — temporary or permanent disabling of the games section.</li>
+<li>Playing from other users' accounts and using bots is prohibited.</li>
+<li>Game mechanics do not guarantee winnings; only spend what you can afford to lose.</li>
+</ul>`},
+{h:'Intellectual Property', b:
+`<p>Exclusive rights to the OKO platform, its code, design, logo and trademarks belong to the Operator. Use of platform elements outside the Service without written permission is prohibited.</p>
+<p>Rights to user content remain with the User. By posting content, the User grants the Operator a non-exclusive royalty-free licence to store, display and technically process it for the operation of the Service. Rights holders may report infringement to okoteam.top@gmail.com — infringing content is removed after review.</p>`},
+{h:'Marketplace Rules', b:
+`<ul>
+<li>Transactions are concluded only through the Service's escrow mechanism; commission circumvention and taking deals off-platform are prohibited.</li>
+<li>The provider must deliver the work on time and to the declared quality; the client must accept the work or reject it with justification.</li>
+<li>Fake transactions and manipulation of reviews and ratings are prohibited.</li>
+<li>Disputes are resolved by the Service arbitration based on correspondence and transaction materials.</li>
+</ul>`},
+{h:'Sanctions and Enforcement', b:
+`<p>In case of a violation of the Terms, the Operator may apply the measures listed in Section 5 without prior notice if the violation endangers other users or the Service. Repeated and gross violations lead to irreversible account deletion. The remaining personal account balance (except funds obtained through violations) is returned to the User after identity verification.</p>`},
+{h:'Dispute Resolution', b:
+`<p>The parties apply a mandatory pre-trial claim procedure: claims are sent to okoteam.top@gmail.com, with a 30-day response period. If no agreement is reached, the dispute is referred to the court at the Operator's location under the laws of the Russian Federation. For users outside Russia, arbitration in a jurisdiction agreed by the parties is possible.</p>`},
+{h:'Final Provisions', b:
+`<p>The invalidity of any individual provision of the Terms does not invalidate the remaining provisions. The Operator may update the Terms in the same manner as the Public Offer. The current revision is always available in the app under "OKO Legal".</p>`}
+]}
+}
+};
+
+/* ---------- рендер ---------- */
+function lgDocHtml(kind, lang){
+  const d = LG_DOCS[kind][lang];
+  const r = LG_REQ[lang];
+  const opLabel = lang==='en' ? 'Operator' : 'Оператор';
+  const revLabel = lang==='en' ? d.rev + ' · effective ' + r.date : d.rev + ' · дата вступления в силу: ' + r.date;
+  return `<div class="lg-doc">
+    <div class="lg-doc-head">
+      <svg class="lg-doc-logo"><use href="#i-logo"/></svg>
+      <div>
+        <h1>${d.title}</h1>
+        <div class="lg-doc-meta"><b>OKO</b> · ${revLabel}</div>
+        <div class="lg-doc-meta">${opLabel}: ${r.op}, ${r.inn}</div>
+      </div>
+    </div>
+    ${d.secs.map((s,i)=>`<section class="lg-sec"><h2>${i+1}. ${s.h}</h2>${s.b}</section>`).join('')}
+    <div class="lg-req">
+      <b>${r.op}</b><br>${r.inn}<br>${r.geo}<br>E-mail: ${r.mail}
+    </div>
+    <div class="doc-sign-block">
+      <div class="lg-seal">${sealSvg(150)}</div>
+      <div class="lg-sig-wrap">
+        <div class="sig">${signatureImg(150)}</div>
+        <div class="lg-sig-line"></div>
+        <div class="lg-sig-cap">${r.sig}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function lgRender(){
+  const head = document.getElementById('lgHeadTitle');
+  if(head) head.textContent = lgS.lang==='en' ? 'OKO Legal' : 'Документы OKO';
+  const ru = document.getElementById('lgLangRu'), en = document.getElementById('lgLangEn');
+  if(ru) ru.classList.toggle('on', lgS.lang==='ru');
+  if(en) en.classList.toggle('on', lgS.lang==='en');
+  const tabs = document.getElementById('lgTabs');
+  if(tabs) tabs.innerHTML = LG_TABS.map(t0=>
+    `<button class="lg-tab ${t0.k===lgKind?'on':''}" onclick="lgGo('${t0.k}')">${I('file')} ${t0[lgS.lang]||t0.ru}</button>`).join('');
+  const body = document.getElementById('lgBody');
+  if(body){ body.innerHTML = lgDocHtml(lgKind, lgS.lang); body.scrollTop = 0; }
+}
+
+/* ---------- публичное API ---------- */
+function openLegalDoc(kind){
+  if(LG_DOCS[kind]) lgKind = kind;
+  lgRender();
+  const v = document.getElementById('legalView');
+  if(v) v.classList.add('open');
+}
+function closeLegalDoc(){
+  const v = document.getElementById('legalView');
+  if(v) v.classList.remove('open');
+}
+function lgGo(kind){ if(LG_DOCS[kind]){ lgKind = kind; lgRender(); } }
+function lgSetLang(l){
+  if(l!=='ru' && l!=='en') return;
+  lgS.lang = l; lgSave(); lgRender();
+}
+
+/* ---------- самоинициализация ---------- */
+(function lgInit(){
+  /* а) строка «Документы OKO» в профиле — перед «Выйти» */
+  try{
+    const rows = document.querySelectorAll('#screen-profile .prow');
+    let logoutRow = null;
+    rows.forEach(r=>{ if((r.getAttribute('onclick')||'').indexOf('doLogout')>-1) logoutRow = r; });
+    if(logoutRow && !document.getElementById('prowLegal')){
+      const b = document.createElement('button');
+      b.className = 'prow'; b.id = 'prowLegal';
+      b.innerHTML = `${I('file')} Документы OKO <span class="chev">${I('chev')}</span>`;
+      b.onclick = ()=>openLegalDoc('offer');
+      logoutRow.parentNode.insertBefore(b, logoutRow);
+    }
+  }catch(e){}
+
+  /* б) тайл в хабе «Мини-аппы» */
+  if(typeof addSvcTile==='function'){
+    addSvcTile({id:'legal', label:'Документы', ico:'file', onclick:()=>openLegalDoc('offer')});
+  }
+
+  /* в) кликабельные ссылки на экране входа */
+  try{
+    const al = document.querySelector('.auth-legal');
+    if(al){
+      al.innerHTML = 'Продолжая, ты принимаешь <span class="lg-a" onclick="openLegalDoc(\'terms\')">условия сервиса</span> и <span class="lg-a" onclick="openLegalDoc(\'privacy\')">политику конфиденциальности</span>';
+    }
+  }catch(e){}
+
+  /* следовать за глобальным переключением языка (если пользователь меняет язык приложения) */
+  if(typeof onLangChange==='function'){
+    onLangChange(l=>{
+      if(l==='ru'||l==='en'){
+        lgS.lang = l; lgSave();
+        const v = document.getElementById('legalView');
+        if(v && v.classList.contains('open')) lgRender();
+      }
+    });
+  }
+
+  /* i18n-регистрация подписи строки профиля (на будущее, ядро i18n) */
+  if(typeof regT==='function'){
+    regT({ 'lg.docs': {ru:'Документы OKO', en:'OKO Legal'} });
+  }
+})();
 
 /* ===== module: tg-webapp ===== */
 /* ===== TG-WEBAPP: интеграция с Telegram Mini App (@okoappbot) =====

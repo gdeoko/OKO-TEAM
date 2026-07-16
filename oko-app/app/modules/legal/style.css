@@ -1,0 +1,62 @@
+/* ===== LEGAL (lg-): юридические документы OKO — RU/EN, подпись + печать ===== */
+#legalView{position:fixed;inset:0;z-index:76;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#legalView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#legalView{transition:none}}
+
+/* переключатель языка в шапке */
+.lg-langs{display:flex;gap:6px;flex-shrink:0}
+.lg-lang{font-size:11px;font-weight:800;letter-spacing:.1em;padding:6px 12px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);transition:all .18s}
+.lg-lang:hover{color:var(--accent);border-color:var(--accent)}
+.lg-lang.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+
+/* табы документов */
+.lg-tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.lg-tabs::-webkit-scrollbar{display:none}
+.lg-tab{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);white-space:nowrap;transition:all .18s}
+.lg-tab svg.i{width:14px;height:14px}
+.lg-tab:hover{color:var(--accent)}
+.lg-tab.on{background:var(--lime-dim);border-color:var(--accent);color:var(--accent)}
+
+/* полотно документа */
+.lg-doc{max-width:720px;margin:0 auto;line-height:1.65;font-size:13.5px;padding-bottom:30px;animation:lgIn .35s ease}
+@keyframes lgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.lg-doc{animation:none}}
+.lg-doc-head{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:22px}
+.lg-doc-logo{width:46px;height:46px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
+:root[data-theme="light"] .lg-doc-logo{filter:none}
+.lg-doc-head h1{font-family:var(--font-display);font-size:29px;line-height:1.05;letter-spacing:.05em;margin-bottom:6px}
+.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+.lg-doc-meta b{color:var(--text);font-weight:700}
+
+/* секции */
+.lg-sec{margin-bottom:22px}
+.lg-sec h2{font-family:var(--font-display);font-size:20px;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+.lg-sec p{margin-bottom:9px;color:var(--text)}
+.lg-sec p:last-child{margin-bottom:0}
+.lg-sec b{font-weight:700}
+.lg-sec ul{list-style:none;margin:4px 0 10px;display:flex;flex-direction:column;gap:6px}
+.lg-sec li{position:relative;padding-left:18px;color:var(--text)}
+.lg-sec li::before{content:'';position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--lime)}
+
+/* таблица тарифов */
+.lg-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 10px}
+.lg-table th,.lg-table td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
+.lg-table th{background:var(--raised);color:var(--accent);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+.lg-table td:first-child{font-weight:800;white-space:nowrap}
+.lg-note{font-size:11.5px;color:var(--dim)}
+
+/* реквизиты */
+.lg-req{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:26px}
+.lg-req b{color:var(--text)}
+
+/* блок печати и подписи (базовый .doc-sign-block — в core-ext) */
+.lg-doc .doc-sign-block{padding:6px 2px 0}
+.lg-seal{flex-shrink:0}
+:root:not([data-theme="light"]) .lg-seal{filter:brightness(1.85) saturate(.85)}
+.lg-sig-wrap{display:flex;flex-direction:column;min-width:200px}
+.lg-sig-line{height:1px;background:var(--dim);opacity:.6;margin-top:-8px}
+.lg-sig-cap{font-size:11px;color:var(--dim);margin-top:5px;letter-spacing:.02em}
+
+/* кликабельные ссылки на экране входа */
+.lg-a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;transition:opacity .15s}
+.lg-a:hover{opacity:.75}
