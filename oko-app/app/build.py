@@ -27,6 +27,7 @@ ORDER = [
     'admin-hq',        # HQ-окно и расширение админки
     'market-pro',      # биржа: кабинет продавца + пакеты услуг OKO
     'feed-algo',       # алгоритмы рекомендаций ленты по интересам
+    'demo-content',    # живое наполнение: чаты, каналы, сторис
     'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
     'pwa',             # установка на главный экран + service worker
 ]
