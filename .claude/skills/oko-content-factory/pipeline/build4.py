@@ -168,24 +168,29 @@ def main():
     a_in+=['-i',f"{wd}/aud/music.mp3"]; mi=k
     # ---- РАЗНООБРАЗНЫЕ SFX по смыслу (библиотека Freesound, маппинг тип->категория) ----
     pool=json.load(open("aud_sfx/_pool.json")) if os.path.exists("aud_sfx/_pool.json") else {}
-    SFX_MAP={'stat_count':'pop','ticker':'tick','ring':'sweep','bars':'data','stat':'pop',
-             'chips':'tick','kinetic':'impact','callout':'ding','lowerthird':'swish','kicker':'tick',
-             'linechart':'riser','donut':'sweep','gauge':'sweep','compare':'impact'}
-    VOL={'pop':0.5,'tick':0.4,'sweep':0.5,'data':0.45,'impact':0.62,'ding':0.55,'swish':0.45,'riser':0.55,'whoosh':0.42}
-    def sfx_file(cat, idx):
-        lst=pool.get(cat) or pool.get('whoosh') or []
-        return lst[idx%len(lst)] if lst else None
-    events=[]  # (file, time, vol) — БЕЗ обрубки, звук играет натурально
-    tcats=['whoosh','swish','sweep']            # переходы: ротация, не один звук
-    for k2 in range(1,N):
-        cat=tcats[k2%len(tcats)]; f=sfx_file(cat,k2)
-        if f: events.append((f, k2*(D-XD), VOL[cat]*0.8))
-    for j,m in enumerate(meta):                 # наложения: SFX по типу
-        cat=SFX_MAP.get(d["overlays"][m["i"]].get("type"))
-        f=sfx_file(cat,j) if cat else None
-        if f: events.append((f, LEAD+m["at"]*(t_main_end-LEAD), VOL[cat]))
-    fding=sfx_file('ding',1)                     # ding на CTA
-    if fding: events.append((fding, cta_start, VOL['ding']))
+    # 5 семейств: trans(переходы), reveal(цифры/данные), impact(акцент), ding(CTA), riser(рост).
+    # Текстовые наложения (kicker/lowerthird) — БЕЗ звука (чтобы не долбило). Громкость мягкая.
+    FAM={'stat_count':'reveal','ticker':'reveal','ring':'reveal','bars':'reveal','stat':'reveal',
+         'donut':'reveal','gauge':'reveal','chips':'reveal','callout':'reveal','linechart':'riser',
+         'kinetic':'impact','compare':'impact'}
+    VOL={'trans':0.22,'reveal':0.34,'impact':0.5,'ding':0.42,'riser':0.42}
+    # события (время, семейство) в порядке времени
+    evs=[]
+    for k2 in range(1,N): evs.append((k2*(D-XD),'trans'))
+    for j,m in enumerate(meta):
+        fam=FAM.get(d["overlays"][m["i"]].get("type"))
+        if fam: evs.append((LEAD+m["at"]*(t_main_end-LEAD), fam))
+    evs.append((cta_start,'ding'))
+    evs.sort(key=lambda e:e[0])
+    # назначаем файлы: round-robin внутри семейства + НИКОГДА тот же файл подряд (глобально)
+    cnt={}; last=None; events=[]
+    for (t,fam) in evs:
+        lst=pool.get(fam) or pool.get('trans') or []
+        if not lst: continue
+        i=cnt.get(fam,0); f=lst[i%len(lst)]
+        if f==last and len(lst)>1: i+=1; f=lst[i%len(lst)]
+        cnt[fam]=i+1; last=f
+        events.append((f,t,VOL[fam]))
     files=sorted({e[0] for e in events}); fidx={}
     for i,f in enumerate(files): a_in+=['-i',f]; fidx[f]=mi+1+i
     af=amaps[:]; vm="".join(f"[a{j}]" for j in range(k))
