@@ -129,6 +129,22 @@ kinetic, callout, kicker` + новые `linechart` (линия пробивае�
 - Разные состояния app-демо в одном ролике (сейчас два одинаковых DEMO).
 - Gemini-аудит готового ролика (gemwatch) + virality_predictor.
 
+## ⚠️ СЕССИИ ЕЖЕДНЕВНОГО ТРИГГЕРА — БЕЗ MCP-КОННЕКТОРОВ (connector-free пути)
+Триггерные сессии (create_new_session_on_fire) запускаются БЕЗ mcp__* коннекторов
+(Higgsfield/HF/GitHub-MCP недоступны). Всё делать connector-free (curl/gradio_client/git):
+- **ИИ-обложка без Higgsfield:** генерь через HF Spaces `gradio_client` (FLUX/Z-Image,
+  `HF_TOKEN`) — см. скилл oko-magic (cover_flux). При исчерпании ZeroGPU-квоты — HTML-обложка
+  (render_ov3 cover_ov.png, build4 сам подставит фолбэк). Никогда не блокируйся из-за обложки.
+- **Доставка ролика на VPS для IG — через git-raw (репо публичный, ПРОВЕРЕНО):** ролик уже
+  коммитится в `tappio.app`; на VPS скачать raw-ссылкой (VPS имеет чистый интернет):
+  ```
+  vexec "curl -s -o /opt/oko-poster/cfg/reel.mp4 https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/<id>.mp4"
+  ```
+  (Сначала `git push origin tappio.app`, затем VPS тянет raw. Higgsfield media_upload — только
+  как резерв, если коннектор ВДРУГ доступен.) Чтобы не пухла история — периодически чистить
+  старые output/*.mp4 из репо (оставлять последние ~10).
+- **TikTok/YouTube/аналитика/активность** — уже чистый curl/API, коннектор не нужен.
+
 ## ПУБЛИКАЦИЯ в 3 соцсети (рабочие рецепты, проверено 2026-07-16 на spy_real)
 
 ### 0. Доставка ролика на VPS (для IG). /exec НЕ годится для больших файлов
