@@ -166,33 +166,42 @@ def main():
         a_in+=['-i',f"{wd}/vo/{s}.mp3"]; st=starts_all[s]
         amaps.append(f"[{k}:a]adelay={int(st*1000)}|{int(st*1000)},volume=1.15[a{k}]"); k+=1
     a_in+=['-i',f"{wd}/aud/music.mp3"]; mi=k
-    a_in+=['-i',f"aud_sfx/whoosh.mp3"] if os.path.exists("aud_sfx/whoosh.mp3") else ['-i',"work/spy_001/aud/whoosh.mp3"]; wi=k+1
-    a_in+=['-i',"work/spy_001/aud/impact.mp3"]; ii=k+2
-    a_in+=['-i',"work/spy_001/aud/click.mp3"]; di=k+3
+    # ---- РАЗНООБРАЗНЫЕ SFX по смыслу (библиотека Freesound, маппинг тип->категория) ----
+    pool=json.load(open("aud_sfx/_pool.json")) if os.path.exists("aud_sfx/_pool.json") else {}
+    SFX_MAP={'stat_count':'pop','ticker':'tick','ring':'sweep','bars':'data','stat':'pop',
+             'chips':'tick','kinetic':'impact','callout':'ding','lowerthird':'swish','kicker':'tick',
+             'linechart':'riser','donut':'sweep','gauge':'sweep','compare':'impact'}
+    VOL={'pop':0.5,'tick':0.4,'sweep':0.5,'data':0.45,'impact':0.62,'ding':0.55,'swish':0.45,'riser':0.55,'whoosh':0.42}
+    def sfx_file(cat, idx):
+        lst=pool.get(cat) or pool.get('whoosh') or []
+        return lst[idx%len(lst)] if lst else None
+    events=[]  # (file, time, vol) — БЕЗ обрубки, звук играет натурально
+    tcats=['whoosh','swish','sweep']            # переходы: ротация, не один звук
+    for k2 in range(1,N):
+        cat=tcats[k2%len(tcats)]; f=sfx_file(cat,k2)
+        if f: events.append((f, k2*(D-XD), VOL[cat]*0.8))
+    for j,m in enumerate(meta):                 # наложения: SFX по типу
+        cat=SFX_MAP.get(d["overlays"][m["i"]].get("type"))
+        f=sfx_file(cat,j) if cat else None
+        if f: events.append((f, LEAD+m["at"]*(t_main_end-LEAD), VOL[cat]))
+    fding=sfx_file('ding',1)                     # ding на CTA
+    if fding: events.append((fding, cta_start, VOL['ding']))
+    files=sorted({e[0] for e in events}); fidx={}
+    for i,f in enumerate(files): a_in+=['-i',f]; fidx[f]=mi+1+i
     af=amaps[:]; vm="".join(f"[a{j}]" for j in range(k))
     af.append(f"{vm}amix=inputs={k}:normalize=0,asplit=2[voice1][voice2]")
-    af.append(f"[{mi}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},volume=0.16,afade=in:st=0:d=1,afade=out:st={total-1.2:.2f}:d=1.2[mus]")
-    # whoosh на каждый переход между кадрами
-    sfx=[]
-    for k2 in range(1,N):
-        tcut=k2*(D-XD)
-        sfx.append(f"[{wi}:a]atrim=0:0.5,adelay={int(tcut*1000)}|{int(tcut*1000)},volume=0.26[wh{k2}]")
-    # impact на КАЖДОЙ цифровой инфографике (осмысленный SFX)
-    NUM={'stat_count','ring','bars','ticker','stat'}
-    imp_lbls=[]
-    for j,m in enumerate(meta):
-        oty=d["overlays"][m["i"]].get("type")
-        if oty in NUM:
-            t=LEAD+m["at"]*(t_main_end-LEAD)
-            sfx.append(f"[{ii}:a]adelay={int(t*1000)}|{int(t*1000)},volume=0.55[im{j}]"); imp_lbls.append(f"[im{j}]")
-    # ding на CTA
-    sfx.append(f"[{di}:a]adelay={int(cta_start*1000)}|{int(cta_start*1000)},volume=0.5[ding]")
-    af+=sfx
-    all_sfx="".join(f"[wh{k2}]" for k2 in range(1,N))+"".join(imp_lbls)+"[ding]"
-    n_sfx=(N-1)+len(imp_lbls)+1
-    af.append(f"{all_sfx}amix=inputs={n_sfx}:normalize=0[sfxall]")
+    # музыка: плавный вход/выход БЕЗ обрыва (длинные фейды по краям ролика)
+    af.append(f"[{mi}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},volume=0.17,afade=t=in:st=0:d=1.8,afade=t=out:st={total-2.6:.2f}:d=2.6[mus]")
+    ev=[]
+    for n,(f,t,vol) in enumerate(events):
+        af.append(f"[{fidx[f]}:a]adelay={int(t*1000)}|{int(t*1000)},volume={vol:.2f}[e{n}]"); ev.append(f"[e{n}]")
+    if ev:
+        af.append("".join(ev)+f"amix=inputs={len(ev)}:normalize=0[sfxall]")
     af.append(f"[mus][voice1]sidechaincompress=threshold=0.03:ratio=6:attack=5:release=250[mduck]")
-    af.append(f"[voice2][mduck][sfxall]amix=inputs=3:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
+    if ev:
+        af.append(f"[voice2][mduck][sfxall]amix=inputs=3:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
+    else:
+        af.append(f"[voice2][mduck]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]")
     run(['ffmpeg','-y','-v','error']+a_in+['-filter_complex',';'.join(af),'-map','[aout]','-t',f'{total:.2f}',f"{wd}/audio.m4a"],"AUDIO")
     print("audio ok")
 

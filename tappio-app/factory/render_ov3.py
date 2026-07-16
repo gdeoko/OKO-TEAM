@@ -86,6 +86,40 @@ function init(){
         <div style="font-family:Orb;font-size:34px;color:${A}">▲</div>
         <div><div id="tnum" style="font-family:Orb;font-weight:800;font-size:96px;color:#fff;line-height:.9">0</div>
         <div style="font-family:Syn;font-size:34px;color:${A};letter-spacing:2px;text-transform:uppercase">${d.label||''}</div></div></div>`)}</div>`;
+  } else if(T==='linechart'){
+    h=`<div id="wrap" style="position:absolute;top:${posY}px;left:56px;right:56px">${card(`<div style="padding:34px 40px">
+      <div style="font-family:Orb;font-weight:800;font-size:40px;color:#fff;margin-bottom:6px">${d.title||''}</div>
+      <svg width="880" height="420" viewBox="0 0 880 420">
+        <line x1="0" y1="120" x2="880" y2="120" stroke="${A}" stroke-width="2.5" stroke-dasharray="12 10" opacity=".55"/>
+        <text x="878" y="106" text-anchor="end" font-family="DM" font-size="26" fill="${A}">${d.ceiling||'THE CEILING'}</text>
+        <path id="lcline" d="" fill="none" stroke="${A}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 12px ${A})"/>
+        <circle id="lcdot" r="13" fill="#fff" cx="0" cy="380" style="filter:drop-shadow(0 0 12px ${A})"/>
+      </svg>
+      <div style="display:flex;align-items:baseline;gap:14px;margin-top:4px">
+        <div id="lcval" style="font-family:Orb;font-weight:800;font-size:76px;color:${A};line-height:.9">0${d.suffix||''}</div>
+        <div style="font-family:Syn;font-size:34px;color:#fff;text-transform:uppercase;letter-spacing:2px">${d.label||''}</div></div>
+    </div>`)}</div>`;
+  } else if(T==='donut'){
+    const segs=d.items||[["A",50],["B",30],["C",20]]; const tot=segs.reduce((s,x)=>s+x[1],0)||1;
+    const cols=[A,A2,'#5a6472','#8892a0'];
+    let off=0, arcs='';
+    segs.forEach((s,i)=>{const frac=s[1]/tot; arcs+=`<circle class="dseg" data-len="${frac*1194}" data-off="${off*1194}" cx="220" cy="220" r="190" fill="none" stroke="${cols[i%cols.length]}" stroke-width="46" stroke-dasharray="0 1194" transform="rotate(${-90+off*360} 220 220)" style="filter:drop-shadow(0 0 8px ${cols[i%cols.length]}88)"/>`; off+=frac;});
+    const leg=segs.map((s,i)=>`<div style="display:flex;align-items:center;gap:12px;margin:8px 0"><div style="width:26px;height:26px;border-radius:6px;background:${cols[i%cols.length]}"></div><div style="font-family:DM;font-size:32px;color:#fff">${s[0]}</div><div style="font-family:Orb;font-size:32px;color:${A};margin-left:auto">${Math.round(s[1]/tot*100)}%</div></div>`).join('');
+    h=`<div id="wrap" style="position:absolute;top:${posY}px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:20px">
+      ${card(`<div style="display:flex;align-items:center;gap:36px;padding:34px 44px">
+        <svg width="440" height="440" viewBox="0 0 440 440">${arcs}
+          <text x="220" y="236" text-anchor="middle" font-family="Orb" font-weight="800" font-size="72" fill="#fff">${d.center||''}</text></svg>
+        <div style="min-width:280px">${leg}</div></div>`)}</div>`;
+  } else if(T==='gauge'){
+    h=`<div id="wrap" style="position:absolute;top:${posY}px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:14px">
+      ${card(`<div style="padding:36px 50px;display:flex;flex-direction:column;align-items:center">
+      <svg width="500" height="300" viewBox="0 0 500 290">
+        <path d="M60,260 A190,190 0 0,1 440,260" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="34" stroke-linecap="round"/>
+        <path id="gharc" d="M60,260 A190,190 0 0,1 440,260" fill="none" stroke="${A}" stroke-width="34" stroke-linecap="round" stroke-dasharray="597" stroke-dashoffset="597" style="filter:drop-shadow(0 0 12px ${A})"/>
+        <line id="ghneedle" x1="250" y1="260" x2="250" y2="95" stroke="#fff" stroke-width="8" stroke-linecap="round" transform="rotate(-90 250 260)" style="filter:drop-shadow(0 0 8px ${A})"/>
+        <circle cx="250" cy="260" r="18" fill="${A}"/>
+        <text id="ghnum" x="250" y="220" text-anchor="middle" font-family="Orb" font-weight="800" font-size="86" fill="#fff">0</text></svg>
+      <div style="font-family:Syn;font-size:38px;color:${A};letter-spacing:2px;text-transform:uppercase;text-align:center">${d.label||''}</div></div>`)}</div>`;
   }
   stage.innerHTML=h;
 }
@@ -105,6 +139,17 @@ window.frame=function(p){
   else if(T==='kinetic'){ const s=0.86+0.14*eOut(r/0.5); document.getElementById('kbig').style.transform=`scale(${s})`; }
   else if(T==='callout'){ document.getElementById('ring2').setAttribute('stroke-dashoffset',942*(1-eOut(r))); }
   else if(T==='ticker'){ document.getElementById('tnum').textContent=(d.prefix||'')+Math.round((d.to||0)*r)+(d.suffix||''); }
+  else if(T==='linechart'){
+    const line=document.getElementById('lcline');
+    if(!line.getAttribute('d')){ const pts=[[0,380],[146,346],[293,300],[440,246],[586,168],[733,96],[880,54]]; line.setAttribute('d','M'+pts.map(p=>p.join(',')).join(' L')); }
+    const L=line.getTotalLength(); line.style.strokeDasharray=L; line.style.strokeDashoffset=L*(1-r);
+    const pt=line.getPointAtLength(L*Math.max(0.001,r)); const dot=document.getElementById('lcdot'); dot.setAttribute('cx',pt.x); dot.setAttribute('cy',pt.y);
+    document.getElementById('lcval').textContent=Math.round((d.to||0)*r)+(d.suffix||''); }
+  else if(T==='donut'){ document.querySelectorAll('.dseg').forEach(s=>{const len=+s.dataset.len; s.setAttribute('stroke-dasharray',(len*r)+' 1194');}); }
+  else if(T==='gauge'){ const val=d.to||0, mx=d.max||100; const frac=Math.min(1,val/mx)*r;
+    document.getElementById('gharc').setAttribute('stroke-dashoffset',597*(1-frac));
+    document.getElementById('ghneedle').setAttribute('transform',`rotate(${-90+180*frac} 250 260)`);
+    document.getElementById('ghnum').textContent=Math.round(val*r)+(d.suffix||''); }
 };
 """
 
