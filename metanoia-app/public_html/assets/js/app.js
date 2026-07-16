@@ -1415,8 +1415,8 @@ const GAMES = {
   premium: [
     { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: 'Играбельно · +30 XP', premium: true, play: true,
       desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
-    { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер', premium: true,
-      desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Бесконечный раннер', 'Собирай манну за очки', 'История Исхода'] },
+    { key: 'exodus', icon: 'map', name: 'Исход: собери манну', meta: 'Играбельно · +25 XP', premium: true, play: true,
+      desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Аркада на время', 'Собирай манну за очки', 'История Исхода'] },
     { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Играбельно · +25 XP', premium: true, play: true,
       desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
     { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных', premium: true,
@@ -1476,6 +1476,7 @@ function renderGhub(cat) {
     else if (k === 'dailyverse') openDailyVerse();
     else if (k === 'match3') openMatch3();
     else if (k === 'david') openDavid();
+    else if (k === 'exodus') openExodus();
     else openGamePreview(k);
   }));
 }
@@ -1492,6 +1493,8 @@ function initGamesHub() {
   $('#m3Back')?.addEventListener('click', () => { cancelAnimationFrame(david.raf); openGamesHub(); });
   $('#davidBack')?.addEventListener('click', () => { cancelAnimationFrame(david.raf); openGamesHub(); });
   $('#davidFire')?.addEventListener('click', davidFire);
+  $('#exodusBack')?.addEventListener('click', () => { exodusStop(); openGamesHub(); });
+  $('#exodusGo')?.addEventListener('click', exodusStart);
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
@@ -2624,6 +2627,81 @@ function davidEnd(win) {
     ? { icon: 'target', title: 'Голиаф повержен!', subtitle: 'С верой и меткостью даже великан не страшен. Как Давид — ты победил!', xp }
     : { icon: 'target', title: 'Камни закончились', subtitle: `Попаданий: ${david.hits} из ${DAVID_GOAL}. Давид тоже тренировался — попробуй ещё!`, xp });
   else toast(win ? 'Голиаф повержен!' : 'Камни закончились');
+  setTimeout(openGamesHub, win ? 1700 : 1400);
+}
+
+/* ── Исход: собери манну (аркада на время) ── */
+const EXODUS_GOAL = 15, EXODUS_TIME = 30;
+let exodus = { score: 0, time: EXODUS_TIME, spawn: 0, tick: 0, running: false };
+
+function openExodus() {
+  exodusStop();
+  exodus = { score: 0, time: EXODUS_TIME, spawn: 0, tick: 0, running: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'exodus'));
+  $('#nav').style.display = 'none';
+  $('#exodusScore').textContent = '0';
+  $('#exodusGoal').textContent = EXODUS_GOAL;
+  $('#exodusTime').textContent = EXODUS_TIME;
+  $('#exodusBar').style.width = '0%';
+  const start = $('#exodusStart');
+  if (start) start.style.display = '';
+  window.scrollTo({ top: 0 });
+}
+
+function exodusStop() {
+  clearInterval(exodus.spawn); clearInterval(exodus.tick);
+  exodus.spawn = 0; exodus.tick = 0; exodus.running = false;
+}
+
+function exodusStart() {
+  if (exodus.running) return;
+  exodus.running = true;
+  const start = $('#exodusStart');
+  if (start) start.style.display = 'none';
+  exodus.tick = setInterval(() => {
+    exodus.time--;
+    $('#exodusTime').textContent = Math.max(0, exodus.time);
+    if (exodus.time <= 0) exodusEnd();
+  }, 1000);
+  exodus.spawn = setInterval(exodusSpawn, 720);
+  exodusSpawn();
+}
+
+function exodusSpawn() {
+  const field = $('#exodusField');
+  if (!field) return;
+  const stone = Math.random() < 0.25;
+  const el = document.createElement('button');
+  el.className = 'exodus-item ' + (stone ? 'exodus-item--stone' : 'exodus-item--manna');
+  el.innerHTML = ICON(stone ? 'circle' : 'sparkle', stone ? 26 : 24);
+  const x = 6 + Math.random() * 78, y = 8 + Math.random() * 74;
+  el.style.left = x + '%'; el.style.top = y + '%';
+  el.addEventListener('click', () => {
+    if (!exodus.running || el.classList.contains('exodus-item--gone')) return;
+    el.classList.add('exodus-item--gone');
+    if (stone) {
+      exodus.score = Math.max(0, exodus.score - 1);
+    } else {
+      exodus.score++;
+      if (window.MAGIC) { const r = el.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2); }
+    }
+    $('#exodusScore').textContent = exodus.score;
+    $('#exodusBar').style.width = Math.min(100, Math.round(exodus.score / EXODUS_GOAL * 100)) + '%';
+    setTimeout(() => el.remove(), 120);
+    if (exodus.score >= EXODUS_GOAL) exodusEnd();
+  });
+  field.appendChild(el);
+  setTimeout(() => { el.classList.add('exodus-item--gone'); setTimeout(() => el.remove(), 200); }, 1150);
+}
+
+function exodusEnd() {
+  const win = exodus.score >= EXODUS_GOAL;
+  exodusStop();
+  $$('#exodusField .exodus-item').forEach((e) => e.remove());
+  if (window.MAGIC) MAGIC.rewardModal(win
+    ? { icon: 'sparkle', title: 'Манна собрана!', subtitle: `Ты собрал ${exodus.score} манны, как народ в пустыне. Господь заботится о Своих!`, xp: 25 }
+    : { icon: 'map', title: 'Время вышло', subtitle: `Собрано ${exodus.score} из ${EXODUS_GOAL}. Ещё попытка — и получится!`, xp: exodus.score >= 8 ? 10 : 0 });
+  else toast(win ? 'Манна собрана!' : 'Время вышло');
   setTimeout(openGamesHub, win ? 1700 : 1400);
 }
 

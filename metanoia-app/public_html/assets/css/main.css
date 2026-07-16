@@ -2061,3 +2061,25 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 [data-theme="dark"] .david-goliath { background: linear-gradient(180deg,#25313d 0%,#2c3a30 100%); }
 [data-theme="dark"] .david-bar { background: rgba(255,255,255,.12); }
 [data-theme="dark"] .david-bar__marker { background: #fff; }
+
+/* ── Исход: собери манну ── */
+.exodus-bar { height: 8px; border-radius: 6px; background: rgba(26,58,82,.1); overflow: hidden; margin: 0 0 12px; }
+.exodus-bar__fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg,#D4A574,#7AAED4); transition: width .25s var(--ease); }
+.exodus-field { position: relative; height: 340px; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(180deg,#f3ead6 0%,#e7dcc2 100%); touch-action: manipulation; }
+.exodus-start { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 12px; text-align: center; padding: 24px; }
+.exodus-start__ic { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; margin: 0 auto;
+  color: #fff; background: linear-gradient(160deg,#D4A574,#C97064); box-shadow: 0 10px 24px rgba(201,112,100,.3); }
+.exodus-start__t { font-size: 13px; color: var(--navy); line-height: 1.55; max-width: 260px; }
+.exodus-item { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; border: none; cursor: pointer;
+  transition: transform .12s var(--ease), opacity .18s var(--ease); animation: exodusPop .18s var(--ease); }
+.exodus-item--manna { background: radial-gradient(circle at 40% 35%,#eecf94,#D4A574); box-shadow: 0 4px 12px rgba(212,165,116,.5); }
+.exodus-item--stone { background: radial-gradient(circle at 40% 35%,#8a94a0,#5a6b7a); box-shadow: 0 4px 12px rgba(26,58,82,.35); }
+.exodus-item--gone { opacity: 0; transform: scale(.3); }
+.exodus-item:active { transform: scale(.86); }
+@keyframes exodusPop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+.exodus-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
+[data-theme="dark"] .exodus-bar { background: rgba(255,255,255,.12); }
+[data-theme="dark"] .exodus-field { background: linear-gradient(180deg,#2a2620 0%,#221f1a 100%); }
+[data-theme="dark"] .exodus-start__t { color: var(--cream); }
