@@ -268,11 +268,8 @@ function hqHqView(){
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
 }
 function hqOpen3d(){
-  showPopup({
-    ico:'eye', title:'3D-командный центр',
-    body:'Собирается — этап 2. Изометрический офис OKO: роботы-агенты с глазом-лого за столами, живые экраны, провода к мозгу-ядру и War-room. Здесь будет полноценная 3D-сцена штаба.',
-    actions:[{label:'Жду', onclick:()=>toast('Скажем, когда 3D-штаб будет готов')}]
-  });
+  if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
+  window.open('/hq.html','_blank');
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */

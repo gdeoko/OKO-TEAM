@@ -2627,7 +2627,7 @@ main>.screen{position:relative;z-index:1}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.52</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.53</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -9273,11 +9273,8 @@ function hqHqView(){
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
 }
 function hqOpen3d(){
-  showPopup({
-    ico:'eye', title:'3D-командный центр',
-    body:'Собирается — этап 2. Изометрический офис OKO: роботы-агенты с глазом-лого за столами, живые экраны, провода к мозгу-ядру и War-room. Здесь будет полноценная 3D-сцена штаба.',
-    actions:[{label:'Жду', onclick:()=>toast('Скажем, когда 3D-штаб будет готов')}]
-  });
+  if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
+  window.open('/hq.html','_blank');
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */
