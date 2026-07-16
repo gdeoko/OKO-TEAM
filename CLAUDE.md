@@ -22,6 +22,14 @@
    В агентах — `oko-agents/core/brand.py` (`LOGO_DATA_URI`). НЕ рисовать SVG-заглушки,
    НЕ растягивать, НЕ менять цвета лого. Обновлять эти файлы при новой версии лого.
 
+7. **ПЛАТНЫЕ КРЕДИТЫ/ГЕНЕРАЦИИ — ТОЛЬКО С ЯВНОГО РАЗРЕШЕНИЯ ДАНИЭЛЯ.** Правило №1
+   (никаких подтверждений) НЕ распространяется на трату денег. СПРАШИВАТЬ перед:
+   генерациями Higgsfield (`generate_image/video/audio/3d`, upscale, Marketing Studio —
+   жгут кредиты), рендерами Shotstack **prod** (`SHOTSTACK_PROD_KEY` платный — для тестов
+   ТОЛЬКО sandbox), fal.ai, платными API. Бесплатное можно без спроса: Shotstack sandbox
+   (вотермарк), стоки Pexels/Pixabay/Shutterstock-preview, edge-tts, HF ZeroGPU,
+   локальный ffmpeg/Playwright. Для черновиков/тестов — всегда бесплатный путь.
+
 ## Публичная ссылка (единственная витрина прогресса)
 https://true-journey-418.higgsfield.app
 
