@@ -120,6 +120,14 @@ function init(){
         <circle cx="250" cy="260" r="18" fill="${A}"/>
         <text id="ghnum" x="250" y="220" text-anchor="middle" font-family="Orb" font-weight="800" font-size="86" fill="#fff">0</text></svg>
       <div style="font-family:Syn;font-size:38px;color:${A};letter-spacing:2px;text-transform:uppercase;text-align:center">${d.label||''}</div></div>`)}</div>`;
+  } else if(T==='checklist'){
+    const items=d.items||["Mirror","Outlet","Smoke detector"];
+    const rows=items.map((it,i)=>`<div class="ckrow" data-i="${i}" style="display:flex;align-items:center;gap:22px;margin:16px 0;opacity:0">
+      <div class="ckbox" style="width:56px;height:56px;border-radius:14px;border:3px solid ${A};display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 16px ${A}44">
+        <svg width="36" height="36" viewBox="0 0 36 36"><path class="ckmark" d="M7,18 L15,26 L29,10" fill="none" stroke="${A}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="44" stroke-dashoffset="44"/></svg></div>
+      <div style="font-family:Syn;font-weight:700;font-size:48px;color:#fff">${it}</div></div>`).join('');
+    h=`<div id="wrap" style="position:absolute;top:${posY}px;left:60px;right:60px">${card(`<div style="padding:34px 44px">
+      <div style="font-family:DM;font-size:28px;letter-spacing:6px;color:${A};text-transform:uppercase;margin-bottom:16px">${d.title||'CHECK THESE'}</div>${rows}</div>`)}</div>`;
   }
   stage.innerHTML=h;
 }
@@ -150,6 +158,10 @@ window.frame=function(p){
     document.getElementById('gharc').setAttribute('stroke-dashoffset',597*(1-frac));
     document.getElementById('ghneedle').setAttribute('transform',`rotate(${-90+180*frac} 250 260)`);
     document.getElementById('ghnum').textContent=Math.round(val*r)+(d.suffix||''); }
+  else if(T==='checklist'){ document.querySelectorAll('.ckrow').forEach(row=>{const i=+row.dataset.i;
+    const a=Math.max(0,Math.min(1,(r-i*0.20)/0.28)); row.style.opacity=a*vis; row.style.transform=`translateX(${-24*(1-a)}px)`;
+    const mk=row.querySelector('.ckmark'); const mp=Math.max(0,Math.min(1,(r-i*0.20-0.12)/0.18)); mk.setAttribute('stroke-dashoffset',44*(1-mp));
+    row.querySelector('.ckbox').style.background=mp>0.5?A+'22':'transparent'; }); }
 };
 """
 

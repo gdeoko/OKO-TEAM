@@ -1,0 +1,46 @@
+{
+  "id": "spy_real",
+  "app": "spy",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+6%",
+  "grade": "cold_cyan",
+  "brand": {"accent": "#00D9FF", "accent2": "#7CFCFF", "code": "PRIVACY", "logo": "spy.png", "name": "SPY CAMERA FINDER"},
+  "music": {"queries": ["investigative suspense tension", "cinematic reveal dark documentary", "mystery underscore tense"]},
+  "cover": {"ai": "assets/ai_covers/spy_mirror_1080.png", "kicker": "REAL CASE", "top": "THE 2-SECOND TEST", "big": "IT'S BEHIND\nTHE MIRROR", "q": ["hotel bathroom mirror dim"]},
+  "segments": [
+    {"id": "b1", "text": "She showered here for three days. The camera was behind the mirror the whole time."},
+    {"id": "b2", "text": "Here is the two second test. Touch the mirror. If your fingertip meets its reflection with no gap, it is a two-way mirror."},
+    {"id": "b3", "text": "Then the outlets. The vents. The smoke alarm. Real cases, every one of them."},
+    {"id": "b4", "text": "You do not need a forty dollar detector. Your phone already finds the lens and the signal."},
+    {"id": "b5", "text": "One scan. Sixty seconds. Every reflective surface, every device on the network."},
+    {"id": "b6", "text": "Your privacy should not cost extra. Check the room before you relax."}
+  ],
+  "shots": [
+    {"q": ["hotel bathroom mirror dim closeup"], "motion": "zin"},
+    {"q": ["worried woman bathroom mirror reflection"], "insert": "tilt", "pos": "center"},
+    {"q": ["finger touching mirror reflection macro"], "motion": "zin"},
+    {"q": ["white electrical wall outlet closeup"], "insert": "hexagon", "pos": "center"},
+    {"q": ["air vent grille wall closeup metal"], "motion": "panl"},
+    {"q": ["modern hotel bathroom interior clean"], "motion": "pandown"},
+    {"visual": "DEMO:spy_scan"},
+    {"q": ["phone flashlight scanning dark wall night"], "insert": "phone", "pos": "center"},
+    {"q": ["camera lens reflection glint macro dark"], "insert": "diamond", "pos": "center"},
+    {"q": ["wifi router network lights blinking closeup"], "insert": "tv", "pos": "center"},
+    {"visual": "DEMO:spy_scan"},
+    {"q": ["relieved woman relaxing safe hotel room window"], "motion": "pandown"}
+  ],
+  "overlays": [
+    {"at": 0.03, "dur": 1.6, "type": "kicker", "text": "REAL CASE · MARRAKESH"},
+    {"at": 0.10, "dur": 1.7, "type": "kinetic", "top": "IT WAS BEHIND THE", "big": "MIRROR"},
+    {"at": 0.19, "dur": 1.7, "type": "lowerthird", "title": "THE FINGERNAIL TEST", "sub": "gap = safe · no gap = two-way"},
+    {"at": 0.27, "dur": 1.5, "type": "callout", "text": "NO GAP = 2-WAY", "x": 545, "y": 690},
+    {"at": 0.35, "dur": 2.4, "type": "checklist", "title": "SCAN THESE FIRST", "items": ["Mirrors", "Outlets", "Air vents", "Smoke alarms"], "pos": "center"},
+    {"at": 0.49, "dur": 2.2, "type": "bars", "title": "WHERE THEY ARE FOUND", "unit": "%", "pos": "center", "items": [["Bathroom", 44], ["Bedroom", 33], ["Living room", 23]]},
+    {"at": 0.61, "dur": 1.7, "type": "stat_count", "to": 40, "prefix": "$", "label": "DETECTOR YOU DON'T NEED", "pos": "center"},
+    {"at": 0.69, "dur": 1.7, "type": "chips", "pos": "upper", "items": ["LENS", "IR LIGHT", "WI-FI", "NETWORK"]},
+    {"at": 0.77, "dur": 2.0, "type": "gauge", "to": 60, "max": 60, "suffix": "s", "label": "ONE FULL SCAN", "pos": "center"},
+    {"at": 0.87, "dur": 2.2, "type": "donut", "center": "100%", "items": [["Reflective", 40], ["Outlets / vents", 30], ["Network", 30]], "pos": "center"},
+    {"at": 0.96, "dur": 1.5, "type": "kinetic", "top": "YOUR PHONE", "big": "IS ENOUGH"}
+  ],
+  "cta": {"text": "Check the room before you relax. Comment PRIVACY for the app.", "code": "PRIVACY"}
+}
