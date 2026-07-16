@@ -129,6 +129,47 @@ kinetic, callout, kicker` + новые `linechart` (линия пробивае�
 - Разные состояния app-демо в одном ролике (сейчас два одинаковых DEMO).
 - Gemini-аудит готового ролика (gemwatch) + virality_predictor.
 
+## ПУБЛИКАЦИЯ в 3 соцсети (рабочие рецепты, проверено 2026-07-16 на spy_real)
+
+### 0. Доставка ролика на VPS (для IG). /exec НЕ годится для больших файлов
+Тело `$OKO_VPS_CTRL_URL/exec` имеет мелкий лимит (~10КБ) — чанкинг base64 непрактичен, R2
+блокируется SSL из этой среды, HF S3 требует repo-формат. РАБОЧИЙ путь — Higgsfield CDN:
+```
+mcp__Higgsfield__media_upload(filename="reel.mp4", content_type="video/mp4")  # -> upload_url + CDN url + media_id
+curl -X PUT -H "Content-Type: video/mp4" --data-binary @reel.mp4 "<upload_url>"  # с --cacert агент-CA
+mcp__Higgsfield__media_confirm(media_id, type="video")
+# VPS скачивает: vexec "curl -s -o /opt/oko-poster/cfg/reel.mp4 '<cdn_url d2ol7oe51mr4n9...>'"
+```
+Мелкие файлы (скрипты .mjs ≤6КБ) — можно `echo <base64> | base64 -d > file` через один /exec.
+
+### 1. TikTok — Hooppy API (из контейнера, CURL_CA=агент-CA)
+```
+CURL_CA=/root/.ccr/ca-bundle.crt python3 vps/hooppy_post_api.py <page_id> <video.mp4> "<caption>"
+# page_id Tappio=2350868, source_id=14. Возвращает post id. (Проверять, что Hooppy реально выложил.)
+```
+
+### 2. YouTube Shorts — Data API (из контейнера)
+```
+CURL_CA=/root/.ccr/ca-bundle.crt python3 vps/yt_upload.py \
+  <CLIENT_ID_env> <CLIENT_SECRET_env> <REFRESH_env> <video.mp4> "<title #shorts>" "<desc>" "tag1,tag2"
+# Tappio: TAPPIO_YT_CLIENT_ID/SECRET/REFRESH_TOKEN. Refresh->access token->resumable upload. Отдаёт shorts URL.
+```
+
+### 3. Instagram Reels — stealth storageState (на VPS)
+КЛЮЧЕВОЕ: постить через **storageState живой сессии** (`ig_state.json` = tappio.app.pro),
+а НЕ персистентный профиль `ig_profile` (он показывал /popular/, файл не прикреплялся).
+Скрипт `vps/ig_reel_state.mjs` (универсальный, env: IG_STATE/IG_VIDEO/CAPB64/IG_TAG):
+```
+# на VPS, видео уже в /opt/oko-poster/cfg/<video>.mp4:
+cd /opt/oko-poster && CAPB64=<base64 caption> IG_TAG=igt IG_VIDEO=/opt/oko-poster/cfg/reel.mp4 \
+  timeout 300 node ig_reel_state.mjs
+```
+Поток: goto instagram → проверить WHO == нужный аккаунт → New post → Post → filechooser(setFiles) →
+OK-reel → crop icon → **Original (9:16, иначе IG режет в 1:1)** → Next×2 → caption → Share →
+ждать «reel has been shared» (16МБ обрабатывается ~40с). Сессии клиентов: Tappio `ig_state.json`,
+DIESEL `ig_diesel_state.json`/`ig_diesel_profile`, EKAT `ig_ekat_*`. Если WHO=login/challenge —
+сессия протухла, нужна переавторизация (ig_login_multi + код). Скрины: `/opt/oko-poster/cfg/igt_*.png`.
+
 ## Ежедневная АКТИВНОСТЬ в IG/YouTube (обязательно, каждый день перед созданием роликов)
 Правило Даниэля (постоянное): каждый день во время фазы анализа конкурентов, ПЕРЕД сборкой
 ролика, проявлять живую активность аккаунта бренда в Instagram и YouTube — «без фанатизма»
