@@ -154,7 +154,7 @@ Ultra-подписка с безлимитом Nano Banana Pro.
 U+0301: те́сто, догово́р.
 
 ### 2. Озвучка с тайм-кодами слов — edge-tts (БЕСПЛАТНО)
-`ru-RU-DmitryNeural` (муж.) / `ru-RU-SvetlanaNeural` (жен.), rate="+8%",
+`ru-RU-DmitryNeural` (муж.) / `ru-RU-SvetlanaNeural` (жен.), rate="+6%",
 `boundary="WordBoundary"` (иначе тайминги пустые!). Сохранять `vo/sN.mp3`+`vo/sN.json`
 `{w,t,d}` — на них строятся караоке и привязка анимаций к словам. Ретраи 4–5 раз.
 
