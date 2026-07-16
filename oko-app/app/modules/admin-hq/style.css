@@ -1,0 +1,90 @@
+/* ===== ADMIN-HQ: админка владельца + окно штаба OKO HQ (префикс hq-) ===== */
+
+/* ---------- гейт «Раздел владельца» ---------- */
+.hq-gate{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
+.hq-gate input{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.hq-gate input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--lime-dim)}
+.hq-gate-err{min-height:16px;font-size:12px;font-weight:600;color:var(--danger);text-align:center}
+.hq-shake{animation:hqShake .4s}
+@keyframes hqShake{0%,100%{transform:none}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* ---------- чип гендиректора в профиле ---------- */
+.hq-ceo-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:var(--lime);color:#000;font-family:var(--font-display);font-size:13.5px;letter-spacing:.13em;padding:4px 12px 3px;border-radius:99px;box-shadow:var(--glow);animation:fade .5s ease both}
+.hq-ceo-chip svg.i{width:13px;height:13px;color:#000}
+:root[data-theme="light"] .hq-ceo-chip{box-shadow:0 2px 10px rgba(110,200,0,.35)}
+
+/* ---------- вкладка «Доходы» ---------- */
+.hq-rev-hero{text-align:center;padding:24px 16px 20px;margin-bottom:4px;position:relative;overflow:hidden;background:radial-gradient(130% 170% at 50% -20%,var(--lime-dim),transparent 60%),var(--surface)}
+.hq-rev-hero small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.hq-rev-total{display:block;font-family:var(--font-display);font-size:52px;line-height:1;color:var(--accent);letter-spacing:.03em;text-shadow:0 0 26px rgba(154,255,0,.35);animation:fade .5s ease both}
+:root[data-theme="light"] .hq-rev-total{text-shadow:none}
+.hq-rev-sub{margin-top:9px;font-size:12px;color:var(--dim)}
+.hq-rev-sub b{color:var(--accent);font-weight:700}
+.hq-src{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px;animation:fade .4s ease both}
+.hq-src-t{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;margin-bottom:8px}
+.hq-src-t b{font-weight:600}
+.hq-src-t span{color:var(--dim);flex-shrink:0}
+.hq-src-t span i{font-style:normal;color:var(--accent);font-weight:700}
+.hq-bar{height:6px;border-radius:99px;background:var(--raised);overflow:hidden}
+.hq-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lime),#63cc00);transition:width .6s cubic-bezier(.2,.8,.3,1);animation:hqBarIn .9s cubic-bezier(.2,.8,.3,1) both}
+@keyframes hqBarIn{from{width:0}}
+.hq-op-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.hq-op-ic svg.i{width:17px;height:17px}
+.hq-op-sum{flex-shrink:0;font-weight:700;font-size:13px;color:var(--accent)}
+
+/* ---------- вкладка «Штаб HQ» ---------- */
+.hq-head{display:flex;align-items:center;gap:13px;margin-bottom:6px;position:relative;overflow:hidden;background:radial-gradient(120% 170% at 100% 0%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-head-eye{width:52px;height:52px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.hq-head-eye svg{width:30px;height:30px;animation:hqEye 5.5s ease-in-out infinite}
+@keyframes hqEye{0%,88%,100%{transform:scaleY(1)}92%{transform:scaleY(.12)}96%{transform:scaleY(1)}}
+.hq-head-b{flex:1;min-width:0}
+.hq-head-b h3{font-size:21px;line-height:1;margin-bottom:4px}
+.hq-head-b small{font-size:11px;color:var(--dim);display:block;line-height:1.45}
+.hq-3d-btn{margin-top:10px}
+
+.hq-rooms{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(min-width:760px){.hq-rooms{grid-template-columns:repeat(4,1fr)}}
+.hq-room{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:7px;text-align:left;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
+.hq-room:hover{border-color:var(--accent)}
+.hq-room:active{transform:scale(.97)}
+.hq-room-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hq-room-ic svg.i{width:18px;height:18px}
+.hq-room b{font-size:12.5px;display:flex;align-items:center;gap:6px}
+.hq-room small{font-size:10.5px;color:var(--dim);line-height:1.35}
+
+.hq-agents{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(min-width:760px){.hq-agents{grid-template-columns:repeat(3,1fr)}}
+.hq-ag{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:fade .4s ease both}
+.hq-ag-top{display:flex;align-items:center;gap:9px;min-width:0}
+.hq-ava{width:40px;height:40px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid currentColor}
+.hq-ava svg{width:24px;height:24px}
+.hq-ag-n{min-width:0}
+.hq-ag-n b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-ag-st{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:2px}
+.hq-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hq-dot.work{background:var(--lime);animation:hqPulse 1.5s infinite}
+.hq-dot.think{background:#4aa0ff;animation:hqPulseB 2.2s infinite}
+.hq-dot.wait{background:#ffb400}
+@keyframes hqPulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.45)}50%{box-shadow:0 0 0 5px rgba(154,255,0,0)}}
+@keyframes hqPulseB{0%,100%{box-shadow:0 0 0 0 rgba(74,160,255,.45)}50%{box-shadow:0 0 0 5px rgba(74,160,255,0)}}
+.hq-ag-task{font-size:11.5px;color:var(--dim);line-height:1.4;min-height:31px}
+
+.hq-log{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 13px;font-size:12px;font-family:ui-monospace,'SF Mono',Consolas,monospace;line-height:1.5;max-height:290px;overflow-y:auto}
+.hq-ll{display:flex;gap:7px;padding:3.5px 0;border-bottom:1px dashed var(--border);align-items:baseline}
+.hq-ll:last-child{border-bottom:none}
+.hq-ll.new{animation:hqLine .45s ease}
+@keyframes hqLine{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:none}}
+.hq-lt{color:var(--dim);flex-shrink:0;font-size:11px}
+.hq-ll b{font-weight:700;flex-shrink:0}
+.hq-ll .m{opacity:.88;min-width:0}
+
+/* ---------- модерация+: ИИ-агент ---------- */
+.hq-mod{padding:13px 14px;margin-bottom:4px;background:radial-gradient(120% 160% at 0% 0%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-mod-head{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px}
+.hq-mod-head b{flex:1}
+.hq-mod-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.hq-ms{background:var(--raised);border-radius:10px;padding:9px 5px;text-align:center}
+.hq-ms b{display:block;font-family:var(--font-display);font-size:22px;color:var(--accent);line-height:1}
+.hq-ms.bad b{color:var(--danger)}
+.hq-ms small{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;font-weight:700}
+.hq-mod-note{margin-top:10px;font-size:11px;color:var(--dim);line-height:1.45}

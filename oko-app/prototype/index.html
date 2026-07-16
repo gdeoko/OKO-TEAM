@@ -1644,6 +1644,123 @@ main>.screen{position:relative;z-index:1}
 .vs-post-stk{display:inline-flex;align-items:center;gap:7px;margin-top:6px;padding:5px 12px 5px 6px;border:1px solid rgba(0,152,234,.4);border-radius:999px;background:var(--raised);font-size:11.5px;font-weight:600;animation:vs-pop .35s cubic-bezier(.45,1.6,.4,1)}
 .vs-post-stk b{color:#3fb6ff;font-weight:700}
 
+/* ===== module: i18n-settings ===== */
+/* ===== I18N-SETTINGS: язык интерфейса + авто-перевод чатов (префикс st-) ===== */
+
+/* строка «Язык» в профиле */
+#stLangRow .st-cur{margin-left:auto;color:var(--dim);font-size:12.5px;font-weight:600}
+#stLangRow .chev{margin-left:8px}
+
+/* sheet выбора языка */
+.st-lang-opt{position:relative;transition:background .15s}
+.st-lang-opt:active{background:var(--raised)}
+.st-lang-opt .st-lang-tag{width:36px;height:36px;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;letter-spacing:.6px;color:var(--dim);flex:none;transition:all .2s}
+.st-lang-opt.on .st-lang-tag{background:var(--lime-dim);color:var(--accent);border-color:transparent;box-shadow:var(--glow)}
+.st-lang-opt .st-check{margin-left:auto;color:var(--accent);animation:stPop .28s cubic-bezier(.3,1.4,.5,1)}
+.st-lang-opt .st-check svg.i{width:19px;height:19px}
+@keyframes stPop{from{transform:scale(.35);opacity:0}to{transform:scale(1);opacity:1}}
+.st-note{color:var(--dim);font-size:11.5px;line-height:1.55;margin-top:12px}
+
+/* бейдж «Переведено · OKO AI» под входящим сообщением */
+.st-trans{display:flex;align-items:center;gap:5px;margin-top:6px;padding-top:5px;border-top:1px dashed var(--border);font-size:10px;font-weight:600;letter-spacing:.35px;color:var(--dim);animation:stFade .35s ease}
+.st-trans svg.i{width:11px;height:11px;color:var(--accent);flex:none}
+@keyframes stFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+:root[data-theme="light"] .st-trans{border-top-color:rgba(0,0,0,.12)}
+:root[data-theme="light"] .st-lang-opt.on .st-lang-tag{box-shadow:none}
+
+/* ===== module: admin-hq ===== */
+/* ===== ADMIN-HQ: админка владельца + окно штаба OKO HQ (префикс hq-) ===== */
+
+/* ---------- гейт «Раздел владельца» ---------- */
+.hq-gate{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
+.hq-gate input{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s}
+.hq-gate input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--lime-dim)}
+.hq-gate-err{min-height:16px;font-size:12px;font-weight:600;color:var(--danger);text-align:center}
+.hq-shake{animation:hqShake .4s}
+@keyframes hqShake{0%,100%{transform:none}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* ---------- чип гендиректора в профиле ---------- */
+.hq-ceo-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:var(--lime);color:#000;font-family:var(--font-display);font-size:13.5px;letter-spacing:.13em;padding:4px 12px 3px;border-radius:99px;box-shadow:var(--glow);animation:fade .5s ease both}
+.hq-ceo-chip svg.i{width:13px;height:13px;color:#000}
+:root[data-theme="light"] .hq-ceo-chip{box-shadow:0 2px 10px rgba(110,200,0,.35)}
+
+/* ---------- вкладка «Доходы» ---------- */
+.hq-rev-hero{text-align:center;padding:24px 16px 20px;margin-bottom:4px;position:relative;overflow:hidden;background:radial-gradient(130% 170% at 50% -20%,var(--lime-dim),transparent 60%),var(--surface)}
+.hq-rev-hero small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.hq-rev-total{display:block;font-family:var(--font-display);font-size:52px;line-height:1;color:var(--accent);letter-spacing:.03em;text-shadow:0 0 26px rgba(154,255,0,.35);animation:fade .5s ease both}
+:root[data-theme="light"] .hq-rev-total{text-shadow:none}
+.hq-rev-sub{margin-top:9px;font-size:12px;color:var(--dim)}
+.hq-rev-sub b{color:var(--accent);font-weight:700}
+.hq-src{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px;animation:fade .4s ease both}
+.hq-src-t{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;margin-bottom:8px}
+.hq-src-t b{font-weight:600}
+.hq-src-t span{color:var(--dim);flex-shrink:0}
+.hq-src-t span i{font-style:normal;color:var(--accent);font-weight:700}
+.hq-bar{height:6px;border-radius:99px;background:var(--raised);overflow:hidden}
+.hq-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--lime),#63cc00);transition:width .6s cubic-bezier(.2,.8,.3,1);animation:hqBarIn .9s cubic-bezier(.2,.8,.3,1) both}
+@keyframes hqBarIn{from{width:0}}
+.hq-op-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.hq-op-ic svg.i{width:17px;height:17px}
+.hq-op-sum{flex-shrink:0;font-weight:700;font-size:13px;color:var(--accent)}
+
+/* ---------- вкладка «Штаб HQ» ---------- */
+.hq-head{display:flex;align-items:center;gap:13px;margin-bottom:6px;position:relative;overflow:hidden;background:radial-gradient(120% 170% at 100% 0%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-head-eye{width:52px;height:52px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.hq-head-eye svg{width:30px;height:30px;animation:hqEye 5.5s ease-in-out infinite}
+@keyframes hqEye{0%,88%,100%{transform:scaleY(1)}92%{transform:scaleY(.12)}96%{transform:scaleY(1)}}
+.hq-head-b{flex:1;min-width:0}
+.hq-head-b h3{font-size:21px;line-height:1;margin-bottom:4px}
+.hq-head-b small{font-size:11px;color:var(--dim);display:block;line-height:1.45}
+.hq-3d-btn{margin-top:10px}
+
+.hq-rooms{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(min-width:760px){.hq-rooms{grid-template-columns:repeat(4,1fr)}}
+.hq-room{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:7px;text-align:left;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
+.hq-room:hover{border-color:var(--accent)}
+.hq-room:active{transform:scale(.97)}
+.hq-room-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hq-room-ic svg.i{width:18px;height:18px}
+.hq-room b{font-size:12.5px;display:flex;align-items:center;gap:6px}
+.hq-room small{font-size:10.5px;color:var(--dim);line-height:1.35}
+
+.hq-agents{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(min-width:760px){.hq-agents{grid-template-columns:repeat(3,1fr)}}
+.hq-ag{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:fade .4s ease both}
+.hq-ag-top{display:flex;align-items:center;gap:9px;min-width:0}
+.hq-ava{width:40px;height:40px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid currentColor}
+.hq-ava svg{width:24px;height:24px}
+.hq-ag-n{min-width:0}
+.hq-ag-n b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-ag-st{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:2px}
+.hq-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.hq-dot.work{background:var(--lime);animation:hqPulse 1.5s infinite}
+.hq-dot.think{background:#4aa0ff;animation:hqPulseB 2.2s infinite}
+.hq-dot.wait{background:#ffb400}
+@keyframes hqPulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.45)}50%{box-shadow:0 0 0 5px rgba(154,255,0,0)}}
+@keyframes hqPulseB{0%,100%{box-shadow:0 0 0 0 rgba(74,160,255,.45)}50%{box-shadow:0 0 0 5px rgba(74,160,255,0)}}
+.hq-ag-task{font-size:11.5px;color:var(--dim);line-height:1.4;min-height:31px}
+
+.hq-log{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 13px;font-size:12px;font-family:ui-monospace,'SF Mono',Consolas,monospace;line-height:1.5;max-height:290px;overflow-y:auto}
+.hq-ll{display:flex;gap:7px;padding:3.5px 0;border-bottom:1px dashed var(--border);align-items:baseline}
+.hq-ll:last-child{border-bottom:none}
+.hq-ll.new{animation:hqLine .45s ease}
+@keyframes hqLine{from{opacity:0;transform:translateY(-7px)}to{opacity:1;transform:none}}
+.hq-lt{color:var(--dim);flex-shrink:0;font-size:11px}
+.hq-ll b{font-weight:700;flex-shrink:0}
+.hq-ll .m{opacity:.88;min-width:0}
+
+/* ---------- модерация+: ИИ-агент ---------- */
+.hq-mod{padding:13px 14px;margin-bottom:4px;background:radial-gradient(120% 160% at 0% 0%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-mod-head{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px}
+.hq-mod-head b{flex:1}
+.hq-mod-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.hq-ms{background:var(--raised);border-radius:10px;padding:9px 5px;text-align:center}
+.hq-ms b{display:block;font-family:var(--font-display);font-size:22px;color:var(--accent);line-height:1}
+.hq-ms.bad b{color:var(--danger)}
+.hq-ms small{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;font-weight:700}
+.hq-mod-note{margin-top:10px;font-size:11px;color:var(--dim);line-height:1.45}
+
 
 </style>
 </head>
@@ -2460,6 +2577,14 @@ main>.screen{position:relative;z-index:1}
 <div class="sheet" id="sheet-vs-verify">
   <h3>Верификация</h3>
   <div id="vsVerifyView"></div>
+</div>
+
+<!-- ===== module: i18n-settings ===== -->
+<!-- I18N-SETTINGS: выбор языка интерфейса -->
+<div class="sheet" id="sheet-stLang">
+  <h3 id="stLangTitle">Язык · Language</h3>
+  <div id="stLangList"></div>
+  <p class="st-note" id="stLangNote">Интерфейс переключается мгновенно. Контент пользователей остаётся на языке оригинала — включи авто-перевод чатов в профиле.</p>
 </div>
 
 
@@ -4634,17 +4759,20 @@ function removeListing(id){ LISTINGS = LISTINGS.filter(x=>x.id!==id); closeSheet
 
 /* ================= ПРОГРЕСС СБОРКИ ================= */
 const PROGRESS = [
-  {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, партнёрка, тарифы. SVG-иконки, две темы, публичная ссылка.'},
-  {s:'done', t:'Каркас сервера и БД', d:'API-модули, схема Postgres, тарифные лимиты, партнёрские начисления 15%/5% — код готов к подключению.'},
-  {s:'done', t:'Инфраструктура', d:'Supabase: база из 28 таблиц развёрнута. S3: два бакета, загрузка по подписанным ссылкам, автоудаление временных видео через 24 часа. Telegram-бот и Gemini подключены и проверены.'},
-  {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime, анонимный вход, доставка мгновенно. Дальше: вход через Telegram, личные чаты, медиа в S3.'},
-  {s:'wip',  t:'Каналы, лента, посты', d:'Готово в прототипе: создание поста, лайки, живые комментарии, закладки, репосты, лента «Подписки/Рекомендации» с алгоритмом. Дальше — на живых данных Supabase.'},
-  {s:'wip',  t:'Мини-аппы на живых данных', d:'Система роста — рабочий визард на 8 секций с персональным планом; Контент-завод — конвейер роликов под ключ (сценарий → озвучка → монтаж → субтитры → автопостинг). Дальше — генерация HTML-системы через Claude и видео-премодератор на Gemini.'},
-  {s:'wip',  t:'Оплата и тарифы', d:'В прототипе: выбор тарифа, период со скидками (−10/−15/−20%), способы оплаты (карта РФ/крипта/Lava.top), мгновенная активация статуса. Дальше — реальные платёжки и вебхуки.'},
-  {s:'todo', t:'ИИ-штат и контент-завод', d:'Агенты Поддержка и Ассистент, конвейер роликов, автопостинг VK/TG.'},
-  {s:'todo', t:'TG Mini App и звонки', d:'Фул-версия в Telegram, LiveKit-созвоны.'},
-  {s:'wip',  t:'Админка владельца', d:'Каркас готов в прототипе: обзор с KPI (пользователи, MRR, выплаты, отток), пользователи, платежи, партнёрка/выплаты, очередь модерации, логи ИИ-агентов, фича-флаги. Дальше — на живых данных Supabase.'},
-  {s:'todo', t:'Запуск 15.07', d:'Прогон сценариев, лимиты, антиспам, деплой продакшена.'},
+  {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, тарифы. SVG-иконки, две темы, mobile-first.'},
+  {s:'done', t:'Каркас сервера и БД', d:'API-модули, схема Postgres (28 таблиц в Supabase), тарифные лимиты, партнёрские начисления 15%/5%.'},
+  {s:'done', t:'Кошелёк и лицевой счёт', d:'Баланс на всё: тарифы, продвижение, переводы. Биржа с комиссией 10% и эскроу, вывод средств, история операций.'},
+  {s:'done', t:'Игры OKO', d:'Рулетка (12 секторов, до ×10) и «Дорога OKO». Ставки только с кошелька, дневной лимит, 18+.'},
+  {s:'done', t:'Академия: урок 1 полного формата', d:'Видео + слайды + тест + задание + мини-игра. Официальный сертификат с печатью и подписью.'},
+  {s:'done', t:'Рекламный кабинет', d:'Кампании с таргетом и бюджетом с лицевого счёта, ИИ-модерация объявлений, реклама в ленте, живая статистика.'},
+  {s:'done', t:'Регистрация, верификация, стикеры', d:'Полная регистрация с кодом и интересами, синяя галочка верификации, премиум-пак TON Crystal.'},
+  {s:'done', t:'Юр-документы RU/EN', d:'Оферта, конфиденциальность, соглашение — два языка, печать и подпись ИП.'},
+  {s:'done', t:'Админка владельца и штаб HQ', d:'Доходы по источникам, отделы и 10 ИИ-агентов, ИИ-модерация с логом блокировок.'},
+  {s:'done', t:'Telegram Mini App', d:'@okoappbot: кнопка OPEN, fullscreen, автовход по Telegram-профилю.'},
+  {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime. Дальше: вход по коду на весь функционал.'},
+  {s:'wip',  t:'Мультиязык', d:'RU/EN переключение интерфейса готово, авто-перевод чатов — мок. Полный перевод контента дальше.'},
+  {s:'todo', t:'Мобильные сборки и 3D-штаб', d:'Android APK / iOS-обёртки, 3D-командный центр HQ.'},
+  {s:'todo', t:'Запуск', d:'Живые платежи, антиспам, лимиты, прогон сценариев, продакшен.'},
 ];
 function renderProgress(){
   const ico = {done:'check', wip:'clock', todo:'clock'};
@@ -5991,7 +6119,7 @@ window.addEventListener('resize', ()=>{
    Курс «Нейросети 2026»: урок 1 (видео + слайды + тест + практика + мини-игра)
    и официальный сертификат (canvas: печать + подпись из core-ext). */
 
-const AC_VIDEO_URL = ''; // URL видео урока 1 на CDN. Пусто = ролик ещё выгружается (3:24 смонтировано).
+const AC_VIDEO_URL = 'https://true-journey-418.higgsfield.app/media/oko_lesson1_web.mp4'; // урок 1, хостится на домене приложения
 
 /* ---------- состояние (localStorage oko-academy) ---------- */
 const acS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-academy'))||null; }catch(e){ return null; } })() || {
@@ -7614,20 +7742,1051 @@ function lgSetLang(l){
   }
 })();
 
+/* ===== module: verify-stickers ===== */
+/* ============================================================
+   МОДУЛЬ verify-stickers (vs-)
+   1) Верификация аккаунта (синяя галочка): строка в профиле,
+      sheet со статусом и условиями, заявка -> модерация -> бейдж.
+   2) Галочки у имён в профиле / ленте / списке чатов (chain-патчи).
+   3) Премиум-стикеры «TON Crystal» (пак pack:'ton', гейт PRO/BUSINESS),
+      дождь кристаллов при отправке, стикер к новому посту.
+   ============================================================ */
+
+/* ---------- 1. ВЕРИФИКАЦИЯ ---------- */
+let VS_VERIFY = { status: 'none', name: null }; /* none | pending | approved */
+function vsSave(){ try{ localStorage.setItem('oko-verify', JSON.stringify(VS_VERIFY)); }catch(e){} }
+(function vsRestore(){
+  try{
+    const d = JSON.parse(localStorage.getItem('oko-verify') || 'null');
+    if(d && d.status){
+      VS_VERIFY = d;
+      if(d.status === 'pending') VS_VERIFY.status = 'none'; /* заявка не переживает перезагрузку */
+      if(d.status === 'approved'){
+        if(typeof VERIFIED !== 'undefined'){ VERIFIED.add(PROFILE.name); if(d.name) VERIFIED.add(d.name); }
+      }
+    }
+  }catch(e){}
+})();
+
+function vsBadgeHtml(){
+  return `<span class="vs-badge" title="Верифицированный аккаунт"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#i-verified"/></svg></span>`;
+}
+function vsPremiumOk(){
+  return /PRO|BUSINESS/.test(PROFILE.tier || '') || (typeof isOwner === 'function' && isOwner());
+}
+
+/* строка «Верификация» в карточке настроек профиля (перед админкой) */
+function vsInsertProw(){
+  if(document.getElementById('vsProwVerify')) return;
+  const anchor = document.getElementById('prowAdmin');
+  if(!anchor || !anchor.parentNode) return;
+  const b = document.createElement('button');
+  b.className = 'prow'; b.id = 'vsProwVerify';
+  b.onclick = vsOpenVerify;
+  b.innerHTML = `<svg class="i"><use href="#i-verified"/></svg> Верификация <span class="vs-chip" id="vsProwChip" style="margin-left:auto">нет</span> <span class="chev" style="margin-left:0"><svg class="i"><use href="#i-chev"/></svg></span>`;
+  anchor.parentNode.insertBefore(b, anchor);
+  vsUpdateProw();
+}
+function vsUpdateProw(){
+  const c = document.getElementById('vsProwChip'); if(!c) return;
+  const st = VS_VERIFY.status;
+  c.className = 'vs-chip' + (st === 'approved' ? ' on' : st === 'pending' ? ' wait' : '');
+  c.style.marginLeft = 'auto';
+  c.textContent = st === 'approved' ? 'есть' : st === 'pending' ? 'проверка' : 'нет';
+}
+
+function vsOpenVerify(){ vsRenderVerify(); openSheet('vs-verify'); }
+function vsRenderVerify(){
+  const v = document.getElementById('vsVerifyView'); if(!v) return;
+  const st = VS_VERIFY.status;
+  const meta = {
+    none:     { cls:'',        ico:'user',     t:'Не верифицирован', s:'Синяя галочка подтверждает подлинность аккаунта для всех в OKO' },
+    pending:  { cls:'pending', ico:'clock',    t:'На рассмотрении',  s:'Модерация проверяет аккаунт и активность — обычно до 24 часов' },
+    approved: { cls:'ok',      ico:'verified', t:'Верифицирован',    s:'Аккаунт подтверждён — галочка видна в профиле, ленте и чатах' },
+  }[st];
+  const conds = `
+    <div class="vs-cond">${I('crown')}<div>Тариф PRO или BUSINESS<small>Активная подписка на момент подачи и проверки заявки</small></div></div>
+    <div class="vs-cond">${I('bolt')}<div>Живой аккаунт<small>30+ дней в OKO, регулярные посты и реальная активность</small></div></div>
+    <div class="vs-cond">${I('briefcase')}<div>Либо официальный бизнес<small>Подтверждение юрлица или ИП документами — без требования к тарифу</small></div></div>`;
+  const action = st === 'none'
+    ? `<button class="btn" style="width:100%;margin-top:14px" onclick="vsApply()"><svg class="i"><use href="#i-verified"/></svg> Подать заявку</button>`
+    : st === 'pending'
+    ? `<div class="vs-progress"><i></i></div><button class="btn ghost" style="width:100%;opacity:.65" disabled>Проверяем аккаунт…</button>`
+    : `<button class="btn ghost" style="width:100%;margin-top:14px" onclick="closeSheet()">Отлично</button>`;
+  v.innerHTML = `
+    <div class="vs-vcard ${meta.cls}">
+      <div class="vs-vic">${I(meta.ico)}</div>
+      <div><b>${meta.t}${st==='approved' ? vsBadgeHtml() : ''}</b><small>${meta.s}</small></div>
+    </div>
+    <h2 class="section-h" style="margin:0 0 2px">Условия</h2>
+    ${conds}
+    ${action}`;
+}
+
+function vsApply(){
+  if(VS_VERIFY.status !== 'none') return;
+  VS_VERIFY.status = 'pending'; vsSave();
+  vsUpdateProw(); vsRenderVerify();
+  toast('Заявка отправлена на модерацию');
+  setTimeout(()=>{
+    if(VS_VERIFY.status !== 'pending') return;
+    if(vsPremiumOk()){
+      VS_VERIFY.status = 'approved'; VS_VERIFY.name = PROFILE.name; vsSave();
+      if(typeof VERIFIED !== 'undefined') VERIFIED.add(PROFILE.name);
+      if(typeof showPopup === 'function') showPopup({
+        ico:'verified', title:'Аккаунт верифицирован',
+        body:`Поздравляем, ${esc(PROFILE.name)}! Синяя галочка теперь рядом с твоим именем — в профиле, ленте и чатах.`,
+        actions:[{label:'Красота'}]
+      });
+      if(typeof renderMyProfile === 'function') renderMyProfile();
+      vsDecorateAll();
+    } else {
+      VS_VERIFY.status = 'none'; vsSave();
+      if(typeof showPopup === 'function') showPopup({
+        ico:'lock', title:'Заявка отклонена',
+        body:'Для верификации нужен активный тариф PRO или BUSINESS либо подтверждённый официальный бизнес. Оформи PRO — и подай заявку снова.',
+        actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
+      });
+    }
+    vsUpdateProw(); vsRenderVerify();
+  }, 5000);
+}
+
+/* ---------- 2. ГАЛОЧКИ У ИМЁН (DOM-декораторы + chain-патчи) ---------- */
+function vsDecorateProfile(){
+  if(typeof VERIFIED === 'undefined') return;
+  const el = document.getElementById('profName');
+  if(el && VERIFIED.has(PROFILE.name) && !el.querySelector('.vs-badge'))
+    el.insertAdjacentHTML('beforeend', vsBadgeHtml());
+}
+function vsDecorateFeed(){
+  if(typeof VERIFIED === 'undefined') return;
+  document.querySelectorAll('#feedList .post .head .name').forEach(el=>{
+    if(el.querySelector('.vs-badge')) return;
+    const tn = el.firstChild;
+    if(!tn || tn.nodeType !== Node.TEXT_NODE) return;
+    if(VERIFIED.has(tn.textContent.trim())){
+      const sp = document.createElement('span');
+      sp.className = 'vs-badge'; sp.title = 'Верифицированный аккаунт';
+      sp.innerHTML = '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#i-verified"/></svg>';
+      el.insertBefore(sp, tn.nextSibling); /* галочка сразу после имени, до чипов «Реклама/В тренде» */
+    }
+  });
+}
+function vsDecorateChats(){
+  if(typeof VERIFIED === 'undefined') return;
+  document.querySelectorAll('#chatList .chat-item .row1 .name').forEach(el=>{
+    if(el.querySelector('.vs-badge')) return;
+    const name = Array.from(el.childNodes).filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join('').trim();
+    if(VERIFIED.has(name)) el.insertAdjacentHTML('beforeend', vsBadgeHtml());
+  });
+}
+function vsDecorateAll(){ vsDecorateProfile(); vsDecorateFeed(); vsDecorateChats(); }
+
+const _prevRenderMyProfileVs = renderMyProfile;
+renderMyProfile = function(){
+  _prevRenderMyProfileVs();
+  vsInsertProw(); vsUpdateProw(); vsDecorateProfile();
+};
+const _prevRenderFeedVs = renderFeed;
+renderFeed = function(kind){
+  _prevRenderFeedVs(kind);
+  vsDecorateFeed();
+};
+const _prevRenderChatListVs = renderChatList;
+renderChatList = function(filter){
+  _prevRenderChatListVs(filter === undefined ? '' : filter);
+  vsDecorateChats();
+};
+
+/* ---------- 3. ПРЕМИУМ-СТИКЕРЫ «TON CRYSTAL» ---------- */
+const VS_TON_START = STICKERS.length;
+STICKERS.push(
+  { ic:'vs-gem',    label:'Кристалл',    hue:200, pack:'ton', premium:true },
+  { ic:'vs-coin',   label:'Тонкоин',     hue:200, pack:'ton', premium:true },
+  { ic:'vs-rocket', label:'Ту зе мун',   hue:200, pack:'ton', premium:true },
+  { ic:'vs-eye',    label:'OKO Crystal', hue:200, pack:'ton', premium:true },
+  { ic:'vs-bolt',   label:'Разряд',      hue:200, pack:'ton', premium:true },
+);
+
+/* дорогая SVG-графика TON: градиенты, блики, уникальные id на каждый рендер */
+let vsUid = 0;
+function vsTonSvg(key, size){
+  const u = 'vsg' + (vsUid++);
+  return `<span class="vs-tstk" style="width:${size}px;height:${size}px"><svg viewBox="0 0 100 100" aria-hidden="true">${vsTonArt(key, u)}</svg></span>`;
+}
+function vsTonArt(k, u){
+  const defs = `<defs>
+    <linearGradient id="${u}a" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8fe3ff"/><stop offset=".5" stop-color="#22b1f2"/><stop offset="1" stop-color="#0069c2"/>
+    </linearGradient>
+    <linearGradient id="${u}b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8f4ff"/><stop offset="1" stop-color="#0098EA"/>
+    </linearGradient>
+    <radialGradient id="${u}c" cx=".35" cy=".3" r=".95">
+      <stop offset="0" stop-color="#bdefff"/><stop offset=".55" stop-color="#0098EA"/><stop offset="1" stop-color="#005a99"/>
+    </radialGradient>
+  </defs>`;
+  if(k === 'vs-gem') return defs + `
+    <path d="M50 10 L83 40 L50 90 L17 40 Z" fill="url(#${u}a)"/>
+    <path d="M17 40 L83 40 L50 90 Z" fill="url(#${u}b)" opacity=".5"/>
+    <path d="M50 10 L64 40 L50 90 L36 40 Z" fill="#ffffff" opacity=".22"/>
+    <path d="M50 10 L83 40 M50 10 L17 40 M17 40 L83 40 M36 40 L50 90 M64 40 L50 90" stroke="#eafaff" stroke-width="1.6" opacity=".8" fill="none"/>
+    <path d="M77 12 l2.6 6.4 6.4 2.6 -6.4 2.6 -2.6 6.4 -2.6 -6.4 -6.4 -2.6 6.4 -2.6 z" fill="#fff" opacity=".95"/>
+    <circle cx="24" cy="20" r="2.2" fill="#fff" opacity=".8"/>`;
+  if(k === 'vs-coin') return defs + `
+    <circle cx="50" cy="50" r="43" fill="url(#${u}c)"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="url(#${u}b)" stroke-width="4"/>
+    <circle cx="50" cy="50" r="34" fill="none" stroke="#eafaff" stroke-width="1.4" opacity=".5"/>
+    <path d="M33 33 h34 c4.6 0 7.2 5 4.8 8.9 L54.7 71.4 c-2.1 3.5 -7.3 3.5 -9.4 0 L28.2 41.9 C25.8 38 28.4 33 33 33 Z" fill="#fff"/>
+    <path d="M50 34 V59" stroke="url(#${u}a)" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M20 40 A34 34 0 0 1 38 15" stroke="#fff" stroke-width="3" opacity=".55" fill="none" stroke-linecap="round"/>`;
+  if(k === 'vs-rocket') return defs + `
+    <g transform="rotate(35 50 50)">
+      <path d="M43 64 Q50 92 50 97 Q50 92 57 64 Z" fill="#9AFF00" opacity=".85"/>
+      <path d="M46.5 64 Q50 84 50 88 Q50 84 53.5 64 Z" fill="#fff" opacity=".85"/>
+      <path d="M37 52 L23 72 L37 66 Z" fill="url(#${u}b)"/>
+      <path d="M63 52 L77 72 L63 66 Z" fill="url(#${u}b)"/>
+      <path d="M50 6 C62 20 66 40 63 63 L37 63 C34 40 38 20 50 6 Z" fill="url(#${u}a)"/>
+      <path d="M50 6 C56 20 58 40 56.5 63 L50 63 Z" fill="#fff" opacity=".14"/>
+      <circle cx="50" cy="35" r="9.5" fill="#06101c" stroke="#eafaff" stroke-width="2.4"/>
+      <path d="M50 29 l5 5 -5 8 -5 -8 z" fill="url(#${u}b)"/>
+    </g>
+    <path d="M15 22 l2.2 5.2 5.2 2.2 -5.2 2.2 -2.2 5.2 -2.2 -5.2 -5.2 -2.2 5.2 -2.2 z" fill="#fff" opacity=".9"/>
+    <circle cx="85" cy="76" r="2.4" fill="#8fe3ff" opacity=".9"/>`;
+  if(k === 'vs-eye') return defs + `
+    <path d="M50 5 L88 29 L88 68 L50 95 L12 68 L12 29 Z" fill="url(#${u}a)" opacity=".26" stroke="url(#${u}b)" stroke-width="2.6"/>
+    <path d="M18 50 Q50 24 82 50 Q50 76 18 50 Z" fill="#06101c" stroke="url(#${u}b)" stroke-width="3"/>
+    <circle cx="50" cy="50" r="17" fill="none" stroke="#9AFF00" stroke-width="1.4" opacity=".55" stroke-dasharray="4 6"/>
+    <circle cx="50" cy="50" r="13" fill="url(#${u}c)"/>
+    <circle cx="50" cy="50" r="5.5" fill="#041018"/>
+    <circle cx="45.5" cy="45" r="2.8" fill="#fff"/>
+    <path d="M83 14 l2.4 5.6 5.6 2.4 -5.6 2.4 -2.4 5.6 -2.4 -5.6 -5.6 -2.4 5.6 -2.4 z" fill="#fff" opacity=".9"/>`;
+  /* vs-bolt */
+  return defs + `
+    <path d="M57 5 L25 55 L45 55 L40 95 L76 41 L54 41 Z" fill="url(#${u}a)" stroke="#dff4ff" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M55 12 L33 50 L47 50 L44 80" stroke="#fff" stroke-width="2.2" opacity=".55" fill="none" stroke-linejoin="round"/>
+    <path d="M57 5 L54 41 L76 41 Z" fill="#fff" opacity=".18"/>
+    <path d="M18 18 l2.2 5.2 5.2 2.2 -5.2 2.2 -2.2 5.2 -2.2 -5.2 -5.2 -2.2 5.2 -2.2 z" fill="#fff" opacity=".9"/>
+    <circle cx="82" cy="80" r="2.4" fill="#8fe3ff" opacity=".9"/>`;
+}
+
+/* stickerSvg: TON-стикеры рисуем своей графикой (и в гриде, и в сообщениях) */
+const _prevStickerSvgVs = stickerSvg;
+stickerSvg = function(s, size){
+  if(s && s.pack === 'ton') return vsTonSvg(s.ic, size);
+  return _prevStickerSvgVs(s, size);
+};
+
+/* грид стикеров: премиум-секция «TON Crystal · PRO» с гейтом */
+const _prevOpenStickersVs = openStickers;
+openStickers = function(){
+  _prevOpenStickersVs();
+  const grid = document.getElementById('stickersGrid'); if(!grid) return;
+  /* убрать TON-кнопки, отрисованные ядром без гейта и без секции */
+  grid.querySelectorAll('.stk-btn').forEach(b=>{
+    const m = (b.getAttribute('onclick') || '').match(/sendSticker\((\d+)\)/);
+    if(m && +m[1] >= VS_TON_START) b.remove();
+  });
+  const ok = vsPremiumOk();
+  let html = `<div class="vs-stk-head">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 L86 42 L50 92 L14 42 Z" fill="#2fb3f2" stroke="#bfeaff" stroke-width="5"/><path d="M50 8 L64 42 L50 92 L36 42 Z" fill="#eafaff" opacity=".5"/></svg>
+    TON CRYSTAL <span class="vs-pro">${ok ? 'ОТКРЫТО' : 'PRO'}</span></div>`;
+  html += STICKERS.map((s, i)=>{
+    if(s.pack !== 'ton') return '';
+    return ok
+      ? `<button class="stk-btn vs-stk" onclick="sendSticker(${i})">${vsTonSvg(s.ic, 58)}<small>${s.label}</small></button>`
+      : `<button class="stk-btn vs-stk vs-locked" onclick="vsLockedTap()">${vsTonSvg(s.ic, 58)}<span class="vs-lock">${I('lock')}</span><small>${s.label}</small></button>`;
+  }).join('');
+  grid.insertAdjacentHTML('beforeend', html);
+};
+
+function vsLockedTap(){
+  showPopup({
+    ico:'lock', title:'Стикеры TON — в подписке PRO',
+    body:'Премиум-пак «TON Crystal» с эффектом дождя кристаллов открывается на тарифах PRO и BUSINESS.',
+    actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
+  });
+}
+
+/* отправка: гейт + дождь кристаллов поверх ленты сообщений */
+const _prevSendStickerVs = sendSticker;
+sendSticker = function(i){
+  const s = STICKERS[i];
+  if(s && s.pack === 'ton' && !vsPremiumOk()){ closeSheet(); vsLockedTap(); return; }
+  _prevSendStickerVs(i);
+  if(s && s.pack === 'ton') vsCrystalRain();
+};
+
+function vsCrystalRain(){
+  const host = document.getElementById('msgs'); if(!host) return;
+  const r = host.getBoundingClientRect();
+  if(r.width < 10 || r.height < 10) return;
+  const box = document.createElement('div');
+  box.className = 'vs-rain';
+  box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;--fy:${Math.round(r.height + 60)}px`;
+  const n = 10 + Math.floor(Math.random() * 6); /* 10–15 кристаллов */
+  let h = '';
+  for(let k = 0; k < n; k++){
+    const sz = Math.round(10 + Math.random() * 12);
+    const x = (Math.random() * 94).toFixed(1);
+    const dur = (1.05 + Math.random() * 0.45).toFixed(2);
+    const dl = (Math.random() * 0.35).toFixed(2);
+    h += `<i style="left:${x}%;width:${sz}px;height:${sz}px;animation-duration:${dur}s;animation-delay:${dl}s">
+      <svg viewBox="0 0 100 100"><path d="M50 8 L86 42 L50 92 L14 42 Z" fill="#2fb3f2" stroke="#bfeaff" stroke-width="5"/><path d="M50 8 L64 42 L50 92 L36 42 Z" fill="#eafaff" opacity=".55"/></svg></i>`;
+  }
+  box.innerHTML = h;
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(), 2100);
+}
+
+/* ---------- 4. СТИКЕР К НОВОМУ ПОСТУ (sheet-npost) ---------- */
+let vsNpPick = null;
+function vsInitNpost(){
+  const sheet = document.getElementById('sheet-npost');
+  if(!sheet || document.getElementById('vsNpRow')) return;
+  const btn = sheet.querySelector('button.btn'); if(!btn) return;
+  const w = document.createElement('div'); w.id = 'vsNpRow';
+  w.innerHTML = `<div class="vs-np-label">${I('sticker')} Стикер к посту <span class="vs-np-hint">необязательно</span></div><div class="vs-np-strip" id="vsNpStrip"></div>`;
+  sheet.insertBefore(w, btn);
+  vsRenderNpStrip();
+}
+function vsRenderNpStrip(){
+  const el = document.getElementById('vsNpStrip'); if(!el) return;
+  const ok = vsPremiumOk();
+  el.innerHTML = STICKERS.map((s, i)=>{
+    const locked = s.pack === 'ton' && !ok;
+    return `<button class="${vsNpPick === i ? 'on' : ''}${locked ? ' vs-locked' : ''}" title="${s.label}" onclick="${locked ? 'vsLockedTap()' : `vsPickNp(${i})`}">${stickerSvg(s, 34)}</button>`;
+  }).join('');
+}
+function vsPickNp(i){ vsNpPick = (vsNpPick === i ? null : i); vsRenderNpStrip(); }
+
+const _prevCreatePostVs = createPost;
+createPost = function(){
+  const hadText = !!document.getElementById('npBody').value.trim();
+  const pick = vsNpPick;
+  _prevCreatePostVs();
+  if(!hadText) return; /* ядро не создало пост */
+  if(pick != null){
+    const p = POSTS.sub[0];
+    const s = STICKERS[pick];
+    if(p && s && p.name === PROFILE.name){
+      p.body += `<br><span class="vs-post-stk">${stickerSvg(s, 22)}<b>${esc(s.label)}</b></span>`;
+      renderFeed(typeof curFeedKind !== 'undefined' && curFeedKind ? curFeedKind : 'sub');
+    }
+    vsNpPick = null; vsRenderNpStrip();
+  }
+};
+
+/* ---------- САМОИНИЦИАЛИЗАЦИЯ ---------- */
+(function vsInit(){
+  /* демо: официальный канал OKO в ленте тоже с галочкой */
+  try{ if(typeof VERIFIED !== 'undefined') VERIFIED.add('OKO · Официальный'); }catch(e){}
+  vsInsertProw();
+  vsInitNpost();
+  /* первые рендеры ядра прошли до патчей — дорисовать бейджи в текущем DOM */
+  vsDecorateAll();
+})();
+
+/* ===== module: i18n-settings ===== */
+/* ================= I18N-SETTINGS: язык интерфейса RU/EN + авто-перевод чатов =================
+   Префикс st-. Опирается на i18n-ядро core-ext: LANG, regT, t, onLangChange, setLang, regTitle. */
+
+/* ---------- состояние модуля ---------- */
+const ST_STATE = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-i18n-settings'))||{}; }catch(e){ return {}; } })();
+if(typeof ST_STATE.auto !== 'boolean') ST_STATE.auto = false;
+function stSave(){ try{ localStorage.setItem('oko-i18n-settings', JSON.stringify(ST_STATE)); }catch(e){} }
+
+/* ---------- словарь хрома (регистрация в i18n-ядре) ---------- */
+regT({
+  /* вкладки нижней навигации */
+  'st.nav.feed':    {ru:'Лента',        en:'Feed'},
+  'st.nav.chats':   {ru:'Чаты',         en:'Chats'},
+  'st.nav.mini':    {ru:'Мини-аппы',    en:'Hub'},
+  'st.nav.wallet':  {ru:'Кошелёк',      en:'Wallet'},
+  'st.nav.profile': {ru:'Профиль',      en:'Profile'},
+  /* заголовки экранов (TITLES) */
+  'st.title.feed':    {ru:'Лента',       en:'Feed'},
+  'st.title.chats':   {ru:'Чаты',        en:'Chats'},
+  'st.title.mini':    {ru:'Мини-аппы',   en:'Hub'},
+  'st.title.partner': {ru:'Партнёрка',   en:'Partner Hub'},
+  'st.title.profile': {ru:'Профиль',     en:'Profile'},
+  'st.title.wallet':  {ru:'Кошелёк',     en:'Wallet'},
+  'st.title.games':   {ru:'Игры',        en:'Games'},
+  'st.title.academy': {ru:'Академия',    en:'Academy'},
+  'st.title.ads':     {ru:'Реклама',     en:'Ads'},
+  /* статичные заголовки и кнопки */
+  'st.h.services':    {ru:'Сервисы OKO',           en:'OKO Services'},
+  'st.h.servicesSub': {ru:'Мессенджер, лента, биржа и ИИ-инструменты', en:'Messenger, feed, marketplace & AI tools'},
+  'st.h.partner':     {ru:'Партнёрский кабинет',   en:'Partner Hub'},
+  'st.h.plans':       {ru:'Тарифы',                en:'Plans'},
+  'st.w.account':     {ru:'Лицевой счёт',          en:'Account'},
+  'st.w.topup':       {ru:'Пополнить',             en:'Top up'},
+  'st.w.withdraw':    {ru:'Вывести',               en:'Withdraw'},
+  'st.w.history':     {ru:'История',               en:'History'},
+  'st.w.spending':    {ru:'Расходы по категориям', en:'Spending by category'},
+  'st.w.ops':         {ru:'История операций',      en:'Transaction history'},
+  'st.w.fAll':        {ru:'Все',                   en:'All'},
+  'st.w.fIn':         {ru:'Пополнения',            en:'Deposits'},
+  'st.w.fOut':        {ru:'Списания',              en:'Charges'},
+  /* строки профиля */
+  'st.p.theme':       {ru:'Светлая тема',          en:'Light theme'},
+  'st.p.profile':     {ru:'Профиль',               en:'Profile'},
+  'st.p.notif':       {ru:'Уведомления',           en:'Notifications'},
+  'st.p.privacy':     {ru:'Конфиденциальность',    en:'Privacy'},
+  'st.p.progress':    {ru:'Прогресс сборки',       en:'Build progress'},
+  'st.p.admin':       {ru:'Админка OKO',           en:'OKO Admin'},
+  'st.p.logout':      {ru:'Выйти',                 en:'Log out'},
+  /* плейсхолдеры поиска */
+  'st.ph.gsearch':    {ru:'Люди, каналы, услуги, посты', en:'People, channels, services, posts'},
+  'st.ph.search':     {ru:'Поиск',                 en:'Search'},
+  /* собственные строки модуля */
+  'st.row.lang':      {ru:'Язык · Language',       en:'Language'},
+  'st.row.auto':      {ru:'Авто-перевод чатов',    en:'Auto-translate chats'},
+  'st.sheet.title':   {ru:'Язык · Language',       en:'Language'},
+  'st.sheet.note':    {ru:'Интерфейс переключается мгновенно. Контент пользователей остаётся на языке оригинала — включи авто-перевод чатов в профиле.',
+                       en:'The interface switches instantly. User content stays in its original language — enable chat auto-translation in your profile.'},
+  'st.opt.ruSub':     {ru:'Основной язык OKO',     en:'Default OKO language'},
+  'st.opt.enSub':     {ru:'Интерфейс на английском', en:'English interface'},
+  'st.badge':         {ru:'Переведено · OKO AI',   en:'Translated · OKO AI'},
+  'st.toast.autoOn':  {ru:'Авто-перевод включён — входящие переводит OKO AI', en:'Auto-translation on — incoming messages translated by OKO AI'},
+  'st.toast.autoOff': {ru:'Авто-перевод выключен', en:'Auto-translation off'}
+});
+
+/* ключи TITLES, которые модуль умеет переводить (обновляются только если экран существует) */
+const ST_TITLE_KEYS = ['feed','chats','mini','partner','profile','wallet','games','academy','ads'];
+
+/* статичные элементы хрома: селектор -> ключ словаря (переводим только реально существующие) */
+const ST_STATIC = [
+  {sel:'#maHero h2',                                   key:'st.h.services'},
+  {sel:'#maHero p',                                    key:'st.h.servicesSub'},
+  {sel:'.svc-h',                                       key:'st.h.services'},
+  {sel:'#screen-partner .section-h',                   key:'st.h.partner'},
+  {sel:'#screen-profile .section-h',                   key:'st.h.plans'},
+  {sel:'#screen-wallet .wal-acc-label',                key:'st.w.account'},
+  {sel:'#screen-wallet .wal-act[onclick^="walOpenTopup"]',    key:'st.w.topup'},
+  {sel:'#screen-wallet .wal-act[onclick^="walOpenWithdraw"]', key:'st.w.withdraw'},
+  {sel:'#screen-wallet .wal-act[onclick^="walScrollHistory"]',key:'st.w.history'},
+  {sel:'#screen-wallet .section-h:not(#walHistAnchor)',key:'st.w.spending'},
+  {sel:'#walHistAnchor',                               key:'st.w.ops'},
+  {sel:'#walFilters [data-f="all"]',                   key:'st.w.fAll'},
+  {sel:'#walFilters [data-f="in"]',                    key:'st.w.fIn'},
+  {sel:'#walFilters [data-f="out"]',                   key:'st.w.fOut'},
+  {sel:'#screen-profile .prow[onclick="toggleTheme()"]',        key:'st.p.theme'},
+  {sel:'#screen-profile .prow[onclick="openEdit()"]',           key:'st.p.profile'},
+  {sel:"#screen-profile .prow[onclick=\"openSettings('notif')\"]",   key:'st.p.notif'},
+  {sel:"#screen-profile .prow[onclick=\"openSettings('privacy')\"]", key:'st.p.privacy'},
+  {sel:"#screen-profile .prow[onclick=\"openSheet('progress')\"]",   key:'st.p.progress'},
+  {sel:'#prowAdmin',                                   key:'st.p.admin'},
+  {sel:'#screen-profile .prow[onclick="doLogout()"]',  key:'st.p.logout'}
+];
+
+/* заменить первый значимый текстовый узел элемента (не трогая svg/switch/chev внутри) */
+function stSetText(el, txt){
+  if(!el) return;
+  for(const n of el.childNodes){
+    if(n.nodeType === 3 && n.nodeValue.trim()){ n.nodeValue = ' ' + txt + ' '; return; }
+  }
+}
+
+/* ---------- обработчик смены языка (регистрируется в onLangChange) ---------- */
+function stApplyLang(l){
+  /* 1. подписи вкладок нижней навигации (текстовый узел после svg) */
+  document.querySelectorAll('#tabs>button[data-t]').forEach(b=>{
+    const key = 'st.nav.' + b.dataset.t;
+    if(I18N[key]) stSetText(b, t(key));
+  });
+  /* 2. TITLES всех известных экранов — только реально зарегистрированных */
+  if(typeof TITLES === 'object'){
+    ST_TITLE_KEYS.forEach(k=>{
+      if(TITLES[k] !== undefined && I18N['st.title.'+k]) regTitle(k, t('st.title.'+k));
+    });
+    /* текущий заголовок шапки */
+    const act = document.querySelector('main .screen.active');
+    const head = document.getElementById('screenTitle');
+    if(act && head){
+      const k = act.id.replace('screen-','');
+      if(TITLES[k]) head.textContent = TITLES[k];
+    }
+  }
+  /* 3. статичные заголовки/кнопки — с проверкой существования */
+  ST_STATIC.forEach(o=>{
+    document.querySelectorAll(o.sel).forEach(el=>{
+      if(el.children.length === 0) el.textContent = t(o.key);
+      else stSetText(el, t(o.key));
+    });
+  });
+  /* 4. плейсхолдеры поиска */
+  const gs = document.getElementById('gSearchInput'); if(gs) gs.placeholder = t('st.ph.gsearch');
+  const cs = document.getElementById('chatSearch');   if(cs) cs.placeholder = t('st.ph.search');
+  /* 5. собственные элементы модуля */
+  const lt = document.getElementById('stLangText'); if(lt) lt.textContent = t('st.row.lang');
+  const lc = document.getElementById('stLangCur');  if(lc) lc.textContent = l==='en' ? 'English' : 'Русский';
+  const ar = document.getElementById('stAutoRow');  if(ar) stSetText(ar, t('st.row.auto'));
+  const sh = document.getElementById('stLangTitle'); if(sh) sh.textContent = t('st.sheet.title');
+  const sn = document.getElementById('stLangNote');  if(sn) sn.textContent = t('st.sheet.note');
+  stRenderLangList();
+  /* 6. перерисовать открытый чат, чтобы бейджи перевода сменили язык */
+  stRerenderChat();
+}
+
+/* ---------- sheet выбора языка ---------- */
+function stRenderLangList(){
+  const box = document.getElementById('stLangList');
+  if(!box) return;
+  const L = (typeof LANG === 'string') ? LANG : 'ru';
+  box.innerHTML = [
+    ['ru','Русский','РУ','st.opt.ruSub'],
+    ['en','English','EN','st.opt.enSub']
+  ].map(([code,label,tag,sub])=>`
+    <button class="sheet-item st-lang-opt ${L===code?'on':''}" onclick="stPickLang('${code}')">
+      <span class="st-lang-tag">${tag}</span>
+      <span>${label}<small>${t(sub)}</small></span>
+      ${L===code ? `<span class="st-check">${I('check2')}</span>` : ''}
+    </button>`).join('');
+}
+function stOpenLang(){ stRenderLangList(); openSheet('stLang'); }
+function stPickLang(l){
+  if(l === LANG){ closeSheet(); return; }
+  setLang(l);                 // персист (oko-lang) + все onLangChange-хуки, включая stApplyLang
+  stRenderLangList();         // галочка перескакивает с анимацией
+  setTimeout(closeSheet, 260);
+}
+
+/* ---------- авто-перевод чатов ---------- */
+function stToggleAuto(){
+  ST_STATE.auto = !ST_STATE.auto;
+  stSave();
+  const sw = document.getElementById('stAutoSwitch');
+  if(sw) sw.classList.toggle('on', ST_STATE.auto);
+  toast(t(ST_STATE.auto ? 'st.toast.autoOn' : 'st.toast.autoOff'));
+  stRerenderChat();
+}
+function stRerenderChat(){
+  if(typeof renderMsgs !== 'function') return;
+  if(typeof currentChat === 'undefined' || !currentChat) return;
+  const box = document.getElementById('msgs');
+  if(!box || !box.children.length) return;
+  try{ renderMsgs(); }catch(e){}
+}
+/* DOM-проход: тонкий бейдж «Переведено · OKO AI» под входящими текстовыми сообщениями */
+function stMarkTranslated(){
+  if(!ST_STATE.auto) return;
+  const box = document.getElementById('msgs');
+  if(!box) return;
+  box.querySelectorAll('.msg.in').forEach(m=>{
+    if(m.dataset.stDone) return;
+    if(m.classList.contains('sys') || m.classList.contains('sticker-msg') || m.classList.contains('has-vnote')) return;
+    if(m.querySelector('.voice,.filemsg,.photomsg,.pollmsg,.moneymsg')) return; // только текст
+    const b = document.createElement('div');
+    b.className = 'st-trans';
+    b.innerHTML = `${I('globe')}<span>${t('st.badge')}</span>`;
+    m.appendChild(b);
+    m.dataset.stDone = '1';
+  });
+}
+
+/* ---------- вставка строк в профиль ---------- */
+function stInsertRows(){
+  if(document.getElementById('stLangRow')) return;
+  const admin = document.getElementById('prowAdmin');
+  const card = admin ? admin.parentElement : document.querySelector('#screen-profile .card');
+  if(!card) return;
+
+  const langRow = document.createElement('button');
+  langRow.className = 'prow'; langRow.id = 'stLangRow';
+  langRow.onclick = stOpenLang;
+  langRow.innerHTML = `${I('globe')} <span id="stLangText">${t('st.row.lang')}</span>` +
+    `<span class="st-cur" id="stLangCur">${LANG==='en'?'English':'Русский'}</span>` +
+    `<span class="chev">${I('chev')}</span>`;
+
+  const autoRow = document.createElement('button');
+  autoRow.className = 'prow'; autoRow.id = 'stAutoRow';
+  autoRow.onclick = stToggleAuto;
+  autoRow.innerHTML = `${I('st-translate')} ${t('st.row.auto')} ` +
+    `<span class="switch ${ST_STATE.auto?'on':''}" id="stAutoSwitch"><i></i></span>`;
+
+  if(admin){ card.insertBefore(langRow, admin); card.insertBefore(autoRow, admin); }
+  else { card.appendChild(langRow); card.appendChild(autoRow); }
+}
+
+/* ---------- своя SVG-иконка «перевод» (штрих как у ядра: stroke 7, округлые концы) ---------- */
+function stAddIcon(){
+  const defs = document.querySelector('svg defs');
+  if(!defs || document.getElementById('i-st-translate')) return;
+  const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+  s.setAttribute('id','i-st-translate'); s.setAttribute('viewBox','0 0 100 100');
+  s.innerHTML = '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M14 70 L30 26 L46 70"/><path d="M20 55 h20"/>' +
+    '<path d="M60 32 h28"/><path d="M60 46 h28"/><path d="M60 60 h18"/>' +
+    '<path d="M84 60 l-7 12"/></g>';
+  defs.appendChild(s);
+}
+
+/* ---------- самоинициализация ---------- */
+(function stInit(){
+  stAddIcon();
+  stInsertRows();
+
+  /* chain-патч renderMsgs ядра: после каждого рендера — DOM-проход бейджей */
+  if(typeof renderMsgs === 'function'){
+    const _stPrevRenderMsgs = renderMsgs;
+    renderMsgs = function(){
+      _stPrevRenderMsgs.apply(this, arguments);
+      stMarkTranslated();
+    };
+  }
+
+  onLangChange(stApplyLang);
+
+  /* язык уже персистится в setLang (oko-lang); при загрузке применяем сохранённый EN напрямую */
+  if(LANG === 'en') stApplyLang('en');
+})();
+
+/* ===== module: admin-hq ===== */
+/* ================= ADMIN-HQ: админка владельца + окно штаба OKO HQ =================
+   Опирается на core-ext: isOwner, adminLogin, showPopup, okoRevenueTotal, OKO_REVENUE,
+   fmtMoney, okoEarn. Патчит: openAdmin (гейт), renderAdmin (вкладки Доходы/Штаб HQ),
+   admModer (ИИ-модерация сверху), admOverview (KPI дохода), renderMyProfile (чип CEO). */
+
+/* ---------- иконка i-shield (безопасность) в общий defs ---------- */
+(function hqAddIcons(){
+  const defs = document.querySelector('svg defs');
+  if(!defs || document.getElementById('i-shield')) return;
+  const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+  s.setAttribute('id','i-shield'); s.setAttribute('viewBox','0 0 100 100');
+  s.innerHTML = '<path d="M50 12l30 12v22c0 20-13 34-30 42-17-8-30-22-30-42V24l30-12z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M37 50l10 10 17-20" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>';
+  defs.appendChild(s);
+})();
+
+/* ---------- состояние модуля ---------- */
+const HQ_STATE = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-admin-hq'))||{}; }catch(e){ return {}; } })();
+function hqSave(){ try{ localStorage.setItem('oko-admin-hq', JSON.stringify(HQ_STATE)); }catch(e){} }
+
+/* ---------- демо-наполнение выручки OKO (один раз, реальные источники okoEarn) ---------- */
+(function hqSeedRevenue(){
+  if(HQ_STATE.revSeeded) return;
+  if(typeof OKO_REVENUE === 'undefined') return;
+  const D = 864e5, now = Date.now();
+  // [днейНазад, сумма, источник] — те же метки src, что шлют модули через okoEarn()
+  const seed = [
+    [0.10, 1490, 'Тарифы'],          [0.22, 250,  'Комиссия Биржи 10%'],
+    [0.35, 349,  'Продвижение'],     [0.60, 120,  'Игры: рулетка'],
+    [0.90, 3000, 'Рекламный кабинет'],[1.15, 45,   'Комиссия вывода'],
+    [1.40, 2990, 'Тарифы'],          [1.85, 890,  'Комиссия Биржи 10%'],
+    [2.30, 60,   'Игры: дорога'],    [3.10, 990,  'Продвижение'],
+    [3.70, 1490, 'Тарифы'],          [4.20, 340,  'Игры: рулетка'],
+    [5.05, 1500, 'Рекламный кабинет'],[5.80, 320,  'Комиссия Биржи 10%'],
+    [6.40, 120,  'Комиссия вывода'], [7.25, 4990, 'Тарифы'],
+    [8.10, 590,  'Продвижение'],     [9.00, 150,  'Игры: дорога'],
+    [10.2, 1200, 'Комиссия Биржи 10%'],[11.4, 990, 'Тарифы'],
+    [12.6, 5000, 'Рекламный кабинет'],[13.9, 80,  'Игры: рулетка'],
+    [15.1, 450,  'Комиссия Биржи 10%'],[16.8, 349, 'Продвижение'],
+    [18.0, 2990, 'Тарифы'],          [19.5, 75,   'Комиссия вывода'],
+    [21.2, 210,  'Игры: рулетка'],   [23.0, 1000, 'Рекламный кабинет'],
+    [24.8, 150,  'Комиссия Биржи 10%'],[26.5, 1490,'Тарифы'],
+    [28.2, 90,   'Игры: дорога'],    [29.6, 500,  'Комиссия Биржи 10%'],
+  ];
+  seed.forEach(([d,sum,src])=> OKO_REVENUE.push({sum, src, at: now - d*D}));
+  OKO_REVENUE.sort((a,b)=>b.at-a.at);
+  try{ localStorage.setItem('oko-revenue', JSON.stringify(OKO_REVENUE)); }catch(e){}
+  HQ_STATE.revSeeded = 1; hqSave();
+})();
+
+/* ---------- хелперы ---------- */
+function hqHM(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function hqWhen(at){
+  const d = new Date(at), n = new Date();
+  if(d.toDateString() === n.toDateString()) return 'сегодня '+hqHM(d);
+  if(d.toDateString() === new Date(n-864e5).toDateString()) return 'вчера '+hqHM(d);
+  return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+hqHM(d);
+}
+
+/* ==================== 1. ГЕЙТ: раздел владельца ==================== */
+const _prevOpenAdminHq = openAdmin;
+openAdmin = function(){
+  if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
+  _prevOpenAdminHq();
+};
+function hqShowGate(){
+  showPopup({
+    ico:'lock', title:'Раздел владельца',
+    body:`Админка и штаб OKO HQ доступны только владельцу. Подтверди личность.
+      <div class="hq-gate">
+        <input id="hqGateEmail" type="email" inputmode="email" autocomplete="email" placeholder="Email владельца">
+        <input id="hqGatePass" type="password" autocomplete="current-password" placeholder="Пароль"
+               onkeydown="if(event.key==='Enter')hqGateSubmit()">
+        <div class="hq-gate-err" id="hqGateErr"></div>
+        <button class="btn" id="hqGateBtn" onclick="hqGateSubmit()">Войти</button>
+      </div>`,
+    actions:[{label:'Отмена', ghost:true}]
+  });
+  setTimeout(()=>{ const e=document.getElementById('hqGateEmail'); if(e) e.focus(); }, 60);
+}
+async function hqGateSubmit(){
+  const em = document.getElementById('hqGateEmail'), ps = document.getElementById('hqGatePass'),
+        btn = document.getElementById('hqGateBtn'), err = document.getElementById('hqGateErr');
+  if(!em || !btn) return;
+  btn.disabled = true; btn.textContent = 'Проверка…'; if(err) err.textContent = '';
+  let ok = false;
+  try{ ok = await adminLogin(em.value, ps ? ps.value : ''); }catch(e){ ok = false; }
+  if(ok){
+    closePopup();
+    toast('Владелец подтверждён');
+    if(typeof renderMyProfile === 'function') try{ renderMyProfile(); }catch(e){}
+    _prevOpenAdminHq();
+    if(hqPendingTab){ admGo(hqPendingTab); hqPendingTab = null; }
+  } else {
+    btn.disabled = false; btn.textContent = 'Войти';
+    if(err) err.textContent = 'Доступ запрещён';
+    const card = document.querySelector('#okoPopup .pop-card');
+    if(card){ card.classList.remove('hq-shake'); void card.offsetWidth; card.classList.add('hq-shake'); }
+  }
+}
+let hqPendingTab = null;
+
+/* ==================== 2-3. ВКЛАДКИ: Доходы + Штаб HQ ==================== */
+ADMIN_TABS.push({k:'revenue', t:'Доходы'});
+ADMIN_TABS.push({k:'hq', t:'Штаб HQ'});
+
+const _prevRenderAdminHq = renderAdmin;
+renderAdmin = function(){
+  if(admTab === 'revenue' || admTab === 'hq'){
+    document.getElementById('admTabs').innerHTML = ADMIN_TABS.map(t=>
+      `<button class="adm-tab ${admTab===t.k?'on':''}" onclick="admGo('${t.k}')">${t.t}</button>`).join('');
+    document.getElementById('admBody').innerHTML = admTab==='revenue' ? hqRevenueView() : hqHqView();
+    if(admTab === 'hq') hqStartLog(); else hqStopLog();
+    return;
+  }
+  hqStopLog();
+  _prevRenderAdminHq();
+};
+const _prevCloseAdminHq = closeAdmin;
+closeAdmin = function(){ hqStopLog(); _prevCloseAdminHq(); };
+
+/* ---------- вкладка «Доходы» ---------- */
+const HQ_SRC_ICO = {
+  'Тарифы':'crown', 'Комиссия Биржи 10%':'briefcase', 'Рекламный кабинет':'megaphone',
+  'Продвижение':'rocket', 'Игры: рулетка':'fire', 'Игры: дорога':'fire', 'Комиссия вывода':'card'
+};
+function hqRevenueView(){
+  const total = Math.round(okoRevenueTotal());
+  const now = new Date();
+  const mStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const mSum = Math.round(OKO_REVENUE.filter(r=>r.at>=mStart).reduce((s,r)=>s+r.sum,0));
+  const dim = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const proj = Math.round(now.getDate() ? mSum / now.getDate() * dim : 0);
+
+  // агрегация по источникам
+  const by = {};
+  OKO_REVENUE.forEach(r=>{ by[r.src] = (by[r.src]||0) + r.sum; });
+  const srcs = Object.keys(by).map(k=>({src:k, sum:by[k]})).sort((a,b)=>b.sum-a.sum);
+  const max = srcs.length ? srcs[0].sum : 1;
+
+  const srcRows = srcs.map((s,i)=>`
+    <div class="hq-src" style="animation-delay:${i*0.05}s">
+      <div class="hq-src-t"><b>${esc(s.src)}</b><span><i>${fmtMoney(Math.round(s.sum))}</i> · ${total?Math.round(s.sum/total*100):0}%</span></div>
+      <div class="hq-bar"><i style="width:${Math.max(3, s.sum/max*100)}%"></i></div>
+    </div>`).join('');
+
+  const ops = OKO_REVENUE.slice(0,30).map(r=>`
+    <div class="adm-row">
+      <span class="hq-op-ic">${I(HQ_SRC_ICO[r.src]||'money')}</span>
+      <span class="adm-main"><b>${esc(r.src)}</b><small>${hqWhen(r.at)}</small></span>
+      <span class="hq-op-sum">+${fmtMoney(Math.round(r.sum))}</span>
+    </div>`).join('');
+
+  return `
+    <div class="hq-rev-hero card">
+      <small>Доход OKO — всего</small>
+      <b class="hq-rev-total">${fmtMoney(total)}</b>
+      <div class="hq-rev-sub">за этот месяц <b>${fmtMoney(mSum)}</b> · проекция месяца <b>${fmtMoney(proj)}</b></div>
+    </div>
+    <div class="adm-sec-h">По источникам</div>
+    ${srcRows || '<p class="dim" style="font-size:13px">Пока нет операций — доход копится из комиссий, тарифов и рекламы.</p>'}
+    <div class="adm-sec-h">Последние операции (${Math.min(30, OKO_REVENUE.length)})</div>
+    ${ops}`;
+}
+
+/* ---------- вкладка «Штаб HQ» ---------- */
+const HQ_ROOMS = [
+  {n:'Финансы',      ic:'money',     c:'#d4af37', s:'КУДиР ведётся · налог отложен', live:1},
+  {n:'Юридический',  ic:'file',      c:'#ef4444', s:'договор №14 на проверке 161-ФЗ', live:1},
+  {n:'Безопасность', ic:'shield',    c:'#9AFF00', s:'аптайм 99.98% · 0 инцидентов', live:1},
+  {n:'Research Lab', ic:'search',    c:'#4aa0ff', s:'разбор ниши · 2 отчёта в мозг', live:1},
+  {n:'War-room',     ic:'fire',      c:'#ff7a3c', s:'1 горячий лид · планёрка 16:00', live:1},
+  {n:'Comms',        ic:'megaphone', c:'#22d3ee', s:'3 канала · автоответы вкл', live:0},
+  {n:'Publishing',   ic:'rocket',    c:'#a855f7', s:'очередь: 3 ролика · пост 18:00', live:1},
+  {n:'HR / Найм',    ic:'users',     c:'#ff6bad', s:'прогрев 2 новых аккаунтов', live:0},
+];
+const HQ_AGENTS = [
+  {id:'ceo',      role:'Гендиректор', c:'#9AFF00', st:'work',  p:72, task:'аппрув КП для MedCraft',
+    pool:['обход штаба · раздача задач','смотрит дашборд выручки','аппрув договора №14','планёрка war-room 16:00']},
+  {id:'sales',    role:'Sales',       c:'#4aa0ff', st:'work',  p:44, task:'дожим лида @stomat_pro — стадия КП',
+    pool:['называет цену @beauty_msk','отправка КП клинике «Дента»','прогрев базы · 12 лидов','горячий лид → war-room']},
+  {id:'editor',   role:'Editor',      c:'#a855f7', st:'work',  p:63, task:'рендер урока 2 Академии',
+    pool:['монтаж Reels ЗооОпт №3','караоке-субтитры урока 3','цветокор ролика MedCraft','сборка тест-ролика клиенту']},
+  {id:'designer', role:'Designer',    c:'#ff7a3c', st:'think', p:28, task:'обложка «Цинк» для MedCraft',
+    pool:['карточка товара ЗооОпт','баннер тарифов OKO','обложка урока 4','макет сторис ×3']},
+  {id:'marketer', role:'Marketer',    c:'#22d3ee', st:'work',  p:51, task:'воронка для ниши стоматологий',
+    pool:['разбор ниши «фитнес»','контент-план ЗооОпт · август','сегменты ЦА для рекламы','A/B оффер тарифов']},
+  {id:'legal',    role:'Legal',       c:'#d4af37', st:'wait',  p:90, task:'договор №14 · проверка 161-ФЗ',
+    pool:['оферта для Академии','проверка ПД по 152-ФЗ','договор для @beauty_msk','чек реквизитов lava']},
+  {id:'copy',     role:'Copy',        c:'#ff6bad', st:'work',  p:37, task:'5 хуков для Reels ЗооОпт',
+    pool:['скрипт прогрева ×3','заголовки лендинга OKO','пост-анонс Академии','оффер для стоматологий']},
+  {id:'support',  role:'Support',     c:'#34d399', st:'work',  p:81, task:'тикет #218: не приходит код входа',
+    pool:['тикет #221: возврат за тариф','FAQ по кошельку','онбординг нового PRO','тикет #224: смена ника']},
+  {id:'factory',  role:'Factory',     c:'#facc15', st:'work',  p:58, task:'очередь: 3 ролика · постинг 18:00',
+    pool:['ролик/день ЗооОпт · сборка','аналитика охватов 10:00','усиление залетевшего формата','календарь автопостинга']},
+  {id:'assist',   role:'Assistants',  c:'#8892a0', st:'think', p:19, task:'парсинг конкурентов от 1М просмотров',
+    pool:['разбор загрузок в мозг','ресёрч трендов Reels','OCR договора-скана','подбор номеров для прогрева']},
+];
+const HQ_ST_LABEL = {work:'в работе', wait:'ожидает', think:'думает'};
+const HQ_LOG_POOL = [
+  {a:'designer', m:'обложка урока 2 готова'},
+  {a:'sales',    m:'лид @stomat_pro перешёл на стадию «КП отправлено»'},
+  {a:'editor',   m:'рендер 72% · субтитры синхронизированы'},
+  {a:'legal',    m:'договор №14 чист по 161-ФЗ · передан CEO'},
+  {a:'factory',  m:'ролик №3 ушёл в очередь автопостинга'},
+  {a:'marketer', m:'воронка стоматологий: CPL прогноз 210 ₽'},
+  {a:'support',  m:'тикет #218 закрыт · пользователь доволен'},
+  {a:'copy',     m:'3 хука из 5 готовы · A/B на завтра'},
+  {a:'assist',   m:'спарсено 14 конкурентов · отчёт в мозг'},
+  {a:'ceo',      m:'аппрув КП MedCraft · отправить сегодня'},
+  {a:'sales',    m:'новый входящий лид из ВК · передан в воронку'},
+  {a:'factory',  m:'аналитика 10:00 собрана · охваты +18%'},
+  {a:'editor',   m:'урок 2: финальный экспорт 1080×1920'},
+  {a:'legal',    m:'блокирован Сбер-реквизит в диалоге · заменён на lava'},
+  {a:'designer', m:'баннер тарифов · 2 варианта на выбор'},
+  {a:'support',  m:'среднее время ответа за час: 41 сек'},
+  {a:'marketer', m:'сегмент ЦА «владельцы клиник» готов'},
+  {a:'assist',   m:'OCR скана завершён · данные в vault'},
+  {a:'copy',     m:'заголовки лендинга: 6 вариантов в тесте'},
+  {a:'ceo',      m:'выручка дня выше плана · штабу зачёт'},
+];
+let HQ_LOG = [];
+(function hqSeedLog(){
+  const now = Date.now();
+  let t = now;
+  for(let i=0;i<13;i++){
+    t -= (60 + Math.random()*180) * 1000;
+    const e = HQ_LOG_POOL[(HQ_LOG_POOL.length - 1 - i) % HQ_LOG_POOL.length];
+    HQ_LOG.push({t: hqHM(new Date(t)), a: e.a, m: e.m});
+  }
+})();
+function hqAgent(id){ return HQ_AGENTS.find(a=>a.id===id); }
+function hqLogLine(e, fresh){
+  const ag = hqAgent(e.a) || {role:'OKO', c:'var(--accent)'};
+  return `<div class="hq-ll${fresh?' new':''}"><span class="hq-lt">${e.t}</span><b style="color:${ag.c}">${esc(ag.role)}</b><span class="m">→ ${esc(e.m)}</span></div>`;
+}
+function hqAgentCard(a, i){
+  return `<div class="hq-ag" style="animation-delay:${i*0.04}s">
+    <div class="hq-ag-top">
+      <span class="hq-ava" style="color:${a.c};background:${a.c}1e"><svg class="i"><use href="#i-logo"/></svg></span>
+      <span class="hq-ag-n"><b>${esc(a.role)}</b>
+        <span class="hq-ag-st"><i class="hq-dot ${a.st}" id="hq-d-${a.id}"></i><span id="hq-s-${a.id}">${HQ_ST_LABEL[a.st]}</span></span>
+      </span>
+    </div>
+    <div class="hq-ag-task" id="hq-t-${a.id}">${esc(a.task)}</div>
+    <div class="hq-bar"><i id="hq-p-${a.id}" style="width:${a.p}%;background:linear-gradient(90deg,${a.c},${a.c}99)"></i></div>
+  </div>`;
+}
+function hqHqView(){
+  return `
+    <div class="hq-head card">
+      <span class="hq-head-eye"><svg class="i"><use href="#i-logo"/></svg></span>
+      <div class="hq-head-b">
+        <h3>OKO HQ — командный центр</h3>
+        <small>10 агентов · 8 отделов · аптайм 99.98%<br>мозг синхронизирован ${hqHM(new Date())}</small>
+        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('eye')} Открыть 3D-штаб</button>
+      </div>
+    </div>
+    <div class="adm-sec-h">Отделы</div>
+    <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
+      <button class="hq-room" style="animation-delay:${i*0.04}s" onclick="toast('Отдел «${r.n}»: детальный дашборд — этап 2')">
+        <span class="hq-room-ic" style="color:${r.c};background:${r.c}1e">${I(r.ic)}</span>
+        <b>${esc(r.n)} ${r.live?'<i class="hq-dot work"></i>':''}</b>
+        <small>${esc(r.s)}</small>
+      </button>`).join('')}</div>
+    <div class="adm-sec-h">Агенты (${HQ_AGENTS.length})</div>
+    <div class="hq-agents" id="hqAgents">${HQ_AGENTS.map(hqAgentCard).join('')}</div>
+    <div class="adm-sec-h">Живой лог штаба</div>
+    <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
+}
+function hqOpen3d(){
+  showPopup({
+    ico:'eye', title:'3D-командный центр',
+    body:'Собирается — этап 2. Изометрический офис OKO: роботы-агенты с глазом-лого за столами, живые экраны, провода к мозгу-ядру и War-room. Здесь будет полноценная 3D-сцена штаба.',
+    actions:[{label:'Жду', onclick:()=>toast('Скажем, когда 3D-штаб будет готов')}]
+  });
+}
+
+/* ---------- живой лог: тик каждые 6 секунд ---------- */
+let hqTimer = null;
+function hqStartLog(){ if(!hqTimer) hqTimer = setInterval(hqTick, 6000); }
+function hqStopLog(){ if(hqTimer){ clearInterval(hqTimer); hqTimer = null; } }
+function hqTick(){
+  const av = document.getElementById('adminView');
+  if(!av || !av.classList.contains('open') || admTab !== 'hq'){ hqStopLog(); return; }
+  // новая строка лога
+  const e = HQ_LOG_POOL[Math.floor(Math.random()*HQ_LOG_POOL.length)];
+  const line = {t: hqHM(new Date()), a: e.a, m: e.m};
+  HQ_LOG.unshift(line); if(HQ_LOG.length > 15) HQ_LOG.length = 15;
+  const logEl = document.getElementById('hqLog');
+  if(logEl){
+    logEl.insertAdjacentHTML('afterbegin', hqLogLine(line, true));
+    while(logEl.children.length > 15) logEl.lastElementChild.remove();
+  }
+  // прогресс агентов: 2 случайных двигаются
+  for(let k=0;k<2;k++){
+    const a = HQ_AGENTS[Math.floor(Math.random()*HQ_AGENTS.length)];
+    if(a.st === 'wait') continue;
+    a.p += 3 + Math.floor(Math.random()*7);
+    if(a.p >= 100){
+      const done = {t: hqHM(new Date()), a: a.id, m: 'задача готова: '+a.task};
+      HQ_LOG.unshift(done); if(HQ_LOG.length > 15) HQ_LOG.length = 15;
+      if(logEl){ logEl.insertAdjacentHTML('afterbegin', hqLogLine(done, true)); while(logEl.children.length > 15) logEl.lastElementChild.remove(); }
+      a.task = a.pool[a._pi = ((a._pi||0)+1) % a.pool.length];
+      a.p = 4 + Math.floor(Math.random()*10);
+    }
+    const bar = document.getElementById('hq-p-'+a.id); if(bar) bar.style.width = a.p+'%';
+    const tt = document.getElementById('hq-t-'+a.id); if(tt) tt.textContent = a.task;
+  }
+  // изредка агент меняет состояние
+  if(Math.random() < 0.22){
+    const a = HQ_AGENTS[Math.floor(Math.random()*HQ_AGENTS.length)];
+    const order = ['work','think','work','wait'];
+    a.st = order[Math.floor(Math.random()*order.length)];
+    const d = document.getElementById('hq-d-'+a.id); if(d) d.className = 'hq-dot '+a.st;
+    const s = document.getElementById('hq-s-'+a.id); if(s) s.textContent = HQ_ST_LABEL[a.st];
+  }
+}
+
+/* ==================== 4. МОДЕРАЦИЯ+: ИИ-агент сверху очереди ==================== */
+const HQ_MOD = HQ_STATE.mod || {spam:46, scam:12, adult:7, drugs:3, checked:8214};
+HQ_STATE.mod = HQ_MOD; hqSave();
+const HQ_MOD_FEED = [
+  {k:'Спам',      cls:'wait', frag:'«Зaрaбoтok 90к/нед, пиши в ЛC…» ×14 чатов', ago:6,   act:'скрыто · мут 24ч'},
+  {k:'Скам',      cls:'no',   frag:'«Сбор на лечение, карта 2202 70••…»',       ago:18,  act:'бан + жалоба'},
+  {k:'18+',       cls:'no',   frag:'фото в ленте · «ночные знакомства»',        ago:41,  act:'удалено'},
+  {k:'Наркотики', cls:'no',   frag:'сленг-паттерн «клад» в групповом чате',     ago:73,  act:'бан навсегда'},
+  {k:'Спам',      cls:'wait', frag:'массовая рассылка инвайтов ×34',            ago:95,  act:'ограничение 48ч'},
+  {k:'Скам',      cls:'no',   frag:'фейк-магазин «OKO Store» на Бирже',         ago:130, act:'удалено + бан'},
+];
+const _prevAdmModerHq = admModer;
+admModer = function(){
+  const m = HQ_MOD;
+  const head = `
+    <div class="hq-mod card">
+      <div class="hq-mod-head"><i class="hq-dot work"></i><b>ИИ-агент модерации: активен</b><span class="chip on" style="font-size:9px">24/7</span></div>
+      <div class="hq-mod-stats">
+        <div class="hq-ms"><b>${m.spam}</b><small>спам</small></div>
+        <div class="hq-ms bad"><b>${m.scam}</b><small>скам</small></div>
+        <div class="hq-ms bad"><b>${m.adult}</b><small>18+</small></div>
+        <div class="hq-ms bad"><b>${m.drugs}</b><small>наркотики</small></div>
+      </div>
+      <div class="hq-mod-note">За сутки проверено ${m.checked.toLocaleString('ru')} сообщений и постов. Автоблок мгновенный, спорное — в очередь ниже.</div>
+    </div>
+    <div class="adm-sec-h">Последние блокировки ИИ</div>
+    ${HQ_MOD_FEED.map(f=>`
+      <div class="adm-row">
+        <span class="adm-tag ${f.cls}">${esc(f.k)}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(f.frag)}</b><small>${f.ago} мин назад · ${esc(f.act)}</small></span>
+      </div>`).join('')}`;
+  return head + _prevAdmModerHq();
+};
+
+/* ==================== 6. ОБЗОР: KPI «Доход OKO» ==================== */
+const _prevAdmOverviewHq = admOverview;
+admOverview = function(){
+  const html = _prevAdmOverviewHq();
+  const kpi = `<div class="adm-kpi"><b style="font-size:24px;padding-top:4px;display:block">${fmtMoney(Math.round(okoRevenueTotal()))}</b><small>Доход OKO (комиссии) <i class="up" style="cursor:pointer" onclick="admGo('revenue')">→ Доходы</i></small></div>`;
+  return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi);
+};
+
+/* ==================== 5. ПРОФИЛЬ: чип CEO + строка «Штаб OKO HQ» ==================== */
+function hqOpenHqTab(){
+  if(typeof isOwner === 'function' && !isOwner()){ hqPendingTab='hq'; hqShowGate(); return; }
+  openAdmin(); admGo('hq');
+}
+function hqDecorateProfile(){
+  const nameEl = document.getElementById('profName');
+  if(nameEl){
+    const wrap = nameEl.parentElement;
+    let chip = document.getElementById('hqCeoChip');
+    if(PROFILE.ceo){
+      if(!chip && wrap){
+        chip = document.createElement('div');
+        chip.id = 'hqCeoChip'; chip.className = 'hq-ceo-chip';
+        chip.innerHTML = `${I('crown')} ГЕНЕРАЛЬНЫЙ ДИРЕКТОР OKO`;
+        wrap.appendChild(chip);
+      }
+    } else if(chip) chip.remove();
+  }
+  const anchor = document.getElementById('prowAdmin');
+  let row = document.getElementById('hqProwHq');
+  if(typeof isOwner === 'function' && isOwner()){
+    if(!row && anchor){
+      row = document.createElement('button');
+      row.id = 'hqProwHq'; row.className = 'prow';
+      row.innerHTML = `<svg class="i"><use href="#i-eye"/></svg> Штаб OKO HQ <span class="chip" style="font-size:9px;margin-left:auto">10 агентов</span>`;
+      row.onclick = hqOpenHqTab;
+      anchor.parentElement.insertBefore(row, anchor);
+    }
+  } else if(row) row.remove();
+}
+const _prevRenderMyProfileHq = renderMyProfile;
+renderMyProfile = function(){
+  _prevRenderMyProfileHq();
+  hqDecorateProfile();
+};
+
+/* ==================== самоинициализация ==================== */
+(function hqInit(){
+  hqDecorateProfile();
+})();
+
 /* ===== module: tg-webapp ===== */
 /* ===== TG-WEBAPP: интеграция с Telegram Mini App (@okoappbot) =====
    Скрипт telegram-web-app.js подгружается динамически и опционально:
-   вне Telegram (или офлайн) приложение работает как обычно. */
+   вне Telegram (или офлайн) приложение работает как обычно.
+   Режим: FULLSCREEN (Bot API 8.0) + учёт safe-area, чтобы шапка
+   не уезжала под статус-бар телефона. */
 (function tgWebAppInit(){
+  function applySafeArea(tg){
+    try{
+      const sa = tg.safeAreaInset || {top:0,bottom:0,left:0,right:0};
+      const ca = tg.contentSafeAreaInset || {top:0,bottom:0,left:0,right:0};
+      const top = (sa.top||0) + (ca.top||0);
+      const bottom = Math.max(sa.bottom||0, 0);
+      const app = document.getElementById('app');
+      if(app){
+        app.style.paddingTop = top + 'px';
+        app.style.paddingBottom = bottom + 'px';
+      }
+      ['authScreen','onboard','splash'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.style.paddingTop = top + 'px';
+      });
+    }catch(e){}
+  }
   function apply(){
     const tg = window.Telegram && window.Telegram.WebApp;
     if(!tg || !tg.initData) return; // не в Telegram
     try{
       tg.ready();
       tg.expand();
+      if(tg.requestFullscreen){ try{ tg.requestFullscreen(); }catch(e){} }
       if(tg.setHeaderColor) tg.setHeaderColor('#000000');
       if(tg.setBackgroundColor) tg.setBackgroundColor('#000000');
       if(tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      if(tg.lockOrientation){ try{ tg.lockOrientation('portrait'); }catch(e){} }
+      applySafeArea(tg);
+      if(tg.onEvent){
+        tg.onEvent('safeAreaChanged', ()=>applySafeArea(tg));
+        tg.onEvent('contentSafeAreaChanged', ()=>applySafeArea(tg));
+        tg.onEvent('fullscreenChanged', ()=>applySafeArea(tg));
+      }
       const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
       if(u && u.first_name){
         PROFILE.name = u.first_name + (u.last_name ? ' ' + u.last_name : '');

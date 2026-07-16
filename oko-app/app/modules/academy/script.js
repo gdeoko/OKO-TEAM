@@ -2,7 +2,7 @@
    Курс «Нейросети 2026»: урок 1 (видео + слайды + тест + практика + мини-игра)
    и официальный сертификат (canvas: печать + подпись из core-ext). */
 
-const AC_VIDEO_URL = ''; // URL видео урока 1 на CDN. Пусто = ролик ещё выгружается (3:24 смонтировано).
+const AC_VIDEO_URL = 'https://true-journey-418.higgsfield.app/media/oko_lesson1_web.mp4'; // урок 1, хостится на домене приложения
 
 /* ---------- состояние (localStorage oko-academy) ---------- */
 const acS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-academy'))||null; }catch(e){ return null; } })() || {
