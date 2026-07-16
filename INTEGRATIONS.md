@@ -121,61 +121,6 @@ soyuz.ttf (Союз Гротеск — субтитры), Montserrat Black (ци
 logo_hd.png. Цвета: #0d0d0d / #e8842a / лайм #9CF806 (акцент, с лого OKO — сам лого
 OKO нигде не использовать).
 
-## 1б. «Руки» агентов oko-agents (простые интеграции, без MCP)
-
-`core/tools.py` — агенты (userbot) умеют по действиям из диалога:
-- `image` — генерация картинки БЕСПЛАТНО через **HF Spaces FLUX.1-schnell** (ZeroGPU,
-  gradio_client, ~10с, качество как у платного Higgsfield) → фолбэк Gemini/HF. Спейсы
-  ротируются (`_FLUX_SPACES` в core/tools). webp→png для Telegram. Higgsfield ($200/мес)
-  для картинок больше НЕ нужен. ГРАБЛЯ: у ZeroGPU дневная квота — при исчерпании ретраить/
-  сменить спейс. gradio_client ставится в .venv на VPS.
-- `stock` — сток-видео/фото. Pexels-видео ✅; Pexels-ФОТО отдаёт 404 (ключ видео-профиля),
-  Pixabay режется Cloudflare-челленджем на IP VPS → фото берём из превью Pexels-видео (`pexels-preview`).
-- `search` — интернет-поиск (DuckDuckGo HTML) + краткий ответ Gemini по сниппетам ✅.
-- `voice` — голосовое (edge-tts ru-RU-DmitryNeural → ogg/opus, ffmpeg) ✅. `story` — сторис
-  (картинка FLUX / видео-сток) ✅ (только Босс).
-- `email` — Gmail SMTP, ДВА аккаунта ✅: `okoteam.top@gmail.com` (GMAIL_PASS) и
-  `daniel.okoteam@gmail.com` (GMAIL_PASS2), app-пароли в .env/secrets. Только Босс.
-- `video` — скачать по ссылке и репостнуть (yt-dlp, 1000+ площадок, ≤45MB) ✅. curl_cffi
-  для CF-сайтов. `find` — поиск людей/каналов в Telegram (contacts.Search), список @ников
-  без авто-рассылки (Босс). Полный набор действий агента см. core/prompts ASSISTANT_JSON_FORMAT.
-- `hire` — АВТОНОМНЫЙ ХАНТЕР (core/hire): Босс ставит цель словами → Gemini разбирает
-  (роль/регион/ключевики/тестовое/питч) → contacts.Search находит ЛЮДЕЙ → `_hire_loop`
-  по-человечески пишет (config.HIRE: 1/~10мин, ≤8/сут, ночная пауза — беречь от банов),
-  диалог ведётся как рекрутёр (контекст кандидата в client_ctx), стадии найден→написал→
-  диалог→тест→принят/отказ, отчёты в топик analytics штаба. Аутрич только с acc2/acc3.
-- `post` — публикация в канал (текст + опц. картинка), ТОЛЬКО по команде Босса.
-Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
-Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
-
-## 1в. ВКонтакте (core/vk.py) — агент «внутри» аккаунта
-
-Полный user-token (`VK_TOKEN`, Kate Mobile scope, offline) аккаунта Даниэля
-(@daniel.okoteam, id 718773189). Агент умеет: `wall_post` (стена + фото FLUX),
-`send_message`, `users_search`/`groups_search` (поиск клиентов/людей), `upload_photo_to_wall`.
-Действие `post` с `platform:"vk"`. Проверено: me() + users_search + wall_post (с фото FLUX) +
-send_message работают.
-**Паритет с Telegram (core/vk_agent.py):** Long Poll слушает входящие → агент САМ отвечает
-как человек тем же мозгом (assistant + client_memory), ОТ ЛИЦА Даниэля, ручной приоритет
-20 мин. Действия в ВК-диалоге: картинка (FLUX в личку), КП-ссылка, ДОГОВОР (docx документом),
-ГОЛОСОВОЕ (аудиосообщение edge-tts), поиск. Групповые чаты v1 пропускает.
-**Хантер** ищет людей и в ВК (vk.users_search) + аутрич/фоллоу-ап через ВК для vk-кандидатов.
-**Сторис** (vk.post_photo_story, проверено) и **репост видео** (vk.upload_video: yt-dlp→video.save→
-стена) через действия story/video с platform=vk. Токен в .env/secrets намертво.
-ИТОГ: ВК = полный паритет с Telegram (диалоги, картинки, голос, КП, договор, постинг, сторис,
-видео, поиск людей, хантер). Получен через OAuth Implicit Flow (client_id 2685278, response_type=token) —
-парольный вход VK режет. Обновить токен: тот же authorize-URL в браузере Даниэля.
-
-## 1г. YouTube (core/youtube.py) — агент в канале
-
-OAuth канала «ДАНИЭЛЬ | ОКО» (id UCZ67wtnjlDqMdjM0wlukKtQ, 4790 подписчиков) через
-refresh-token. Ключи: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (.env/secrets намертво).
-Проект Google Cloud `oko-youtube-502212` (аккаунт daniel.piano.2002@gmail.com), OAuth-клиент
-Web (redirect developers.google.com/oauthplayground), scope youtube.force-ssl + youtube.upload,
-он в тест-юзерах. Агент: my_channel, search, add_comment, upload_video. Действие
-`video` с platform=youtube (скачать по ссылке → залить на канал, privacy настраивается).
-Обновить токен: authorize-URL (тот же client) → code → обмен на refresh.
-
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
 Заданы в настройках cloud environment «OKO TEAM» на claude.ai. Даниэль присылал
@@ -187,8 +132,8 @@ Environment variables окружения:
 | SUPABASE_PAT (Management API) | Supabase, проект tkjewndtlzhnmqwmrnil, SQL через api.supabase.com |
 | TELEGRAM_BOT_TOKEN | бот @okoappbot |
 | S3 twcstorage (key + secret) | s3.twcstorage.ru, бакеты oko-media, oko-tmp |
-| GEMINI_API_KEY (4 ключа AQ.Ab8RN6...) | Gemini: текст бесплатно. ОСНОВНОЙ провайдер агентов oko-agents (ротация ключей). Из РФ — через прокси `gemini-proxy.okoteam.workers.dev` (Cloudflare Worker, обход геоблока). Модель `gemini-flash-latest`. |
-| ANTHROPIC_API_KEY | Claude API — теперь РЕЗЕРВ/эскалация (дорого). Баланс на нуле после тестов Sonnet; агенты переведены на Gemini. Прокси `anthropic-proxy.okoteam.workers.dev`. |
+| GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
+| ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
 
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
@@ -285,3 +230,24 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 3. Кредиты Higgsfield: 4К-апскейл видео, 3D из фото.
 4. Mixamo: разово скачать FBX-пак персонажей вручную и прислать в чат.
 5. Cloudflare Pages: отложено, не поднимать.
+
+## VPS-агент OKO как «руки» для скачивания/аналитики (V.CODE и др.)
+- Endpoint `OKO_POSTER_URL` (`.../poster/exec`) + `OKO_POSTER_TOKEN` — выполняет
+  shell на VPS `okoposter@msk-1-vm` (чистый IP). Установлены yt-dlp+curl_cffi+ffmpeg,
+  залогиненный Chrome-профиль `/opt/oko-poster/profile` (IG-стелс).
+- Обёртка: `vcode/vps.py` — `meta <url>` (views/likes/comments), `dl <url> out.mp4`
+  (скачать+забрать base64 ≤45МБ), `exec '<sh>'`. Проверка: `python3 vcode/vps.py meta "<yt-url>"`.
+- Грабли: полный `yt-dlp -J` не влезает в канал exec — извлекать поля НА VPS;
+  TikTok иногда пусто (ретрай); IG без кук закрыт (нужен `--cookies-from-browser chromium:/opt/oko-poster/profile`).
+
+## XTTS-v2 — озвучка роликов (локальный клон голоса, бесплатно)
+- Основной голос роликов V.CODE: мужской, клон тембра по образцу `ref_male.wav`.
+- Обёртка: `.claude/skills/reels-machine/pipeline/motion/xtts_voice.py` — `say(text,out,ref)`;
+  XTTS-v2 если доступен, иначе фолбэк edge-tts (ru-RU-DmitryNeural, +8%, WordBoundary для караоке).
+- Установка (изолированный venv, обход конфликтов torchcodec/coqpit/transformers):
+  `python3 -m venv xtts-venv && xtts-venv/bin/pip install torch==2.4.1 torchaudio==2.4.1
+   --index-url https://download.pytorch.org/whl/cpu && xtts-venv/bin/pip install coqui-tts==0.25.3`
+  (даёт coqpit-config 0.1.2 + transformers 4.46.2; НЕ torch≥2.9 — иначе тянет torchcodec).
+  Путь к python задаётся `XTTS_PY`. Первый запуск качает модель ~1.8ГБ (COQUI_TOS_AGREED=1).
+- Скорость на CPU: загрузка модели ~33с, ~14с на короткую фразу. Референс — чистый wav 22050/моно.
+- Грабли: coqui-tts<0.25 тянет старый `coqpit` (падает на типах Py3.11); нужен spacy→`click`.

@@ -25,7 +25,11 @@ SKILL.md). Всё остальное в скилле — общая механи
 - Цифры/заголовки в графике: Montserrat Black / Golos 900 / Manrope 800.
 
 ### Голос (бренд-константа)
-- `<ru-RU-DmitryNeural (муж) | ru-RU-SvetlanaNeural (жен)>`, rate `+8%`, boundary `WordBoundary`.
+- Основной: **XTTS-v2** (локальный, бесплатный, клон тембра по референсу, ближе к ElevenLabs) —
+  мужской голос по образцу `ref_male.wav`. Обёртка `pipeline/motion/xtts_voice.py` (`say(text,out,ref)`),
+  ставится в отдельный venv (torch==2.4.1 + coqui-tts==0.25.3, см. INTEGRATIONS).
+- Фолбэк: `edge-tts` `<ru-RU-DmitryNeural (муж) | ru-RU-SvetlanaNeural (жен)>`, rate `+8%`, `WordBoundary`
+  (нужен для тайминга караоке-субтитров).
 
 ### Лого и обложка
 - `logo_hd.png` — даёт КЛИЕНТ (PNG с прозрачностью). В скилл не входит.
