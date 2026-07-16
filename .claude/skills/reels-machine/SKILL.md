@@ -246,6 +246,8 @@ whoosh на переходы + смысловые. Мастер: `loudnorm I=-14
 - `reference/EFFECTS_CATALOG.md`, `GRADES.md`, `NICHE_PLAYBOOK.md`, `USED_EFFECTS.md`.
 
 ## Грабли (проверено болью)
+- **ZOOMPAN ЗАМОРАЖИВАЕТ ВИДЕО** (критично): `zoompan` на видео-входе выдаёт d кадров на КАЖДЫЙ входной кадр → фризит первый кадр = получается слайд-шоу из ФОТО. Для живого видео камерное движение делать ТОЛЬКО crop-pan: `scale=1339:2381,crop=1080:1920:x='(iw-1080)*(t/DUR)':y=...` — видео ИГРАЕТ, окно едет. Кадры отбирать по РЕАЛЬНОМУ движению (frame-diff motion-score, tblend=difference+signalstats), статику (<6) не брать.
+- **Анализ конкурентов ПЕРЕД сборкой** — YouTube Data API (order=viewCount, ниша) даёт хуки/форматы/метрики от 1М+ бесплатно и надёжно; IG/TikTok — браузер-агент VPS.
 - edge-tts моргает — ретраи; WordBoundary иначе пустой.
 - Mixkit music = AccessDenied → музыка с Freesound.
 - Higgsfield-коннектор флапает — генерацию обложки ретраить, id забирать позже.
