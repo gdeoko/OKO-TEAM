@@ -41,3 +41,11 @@
 - 3d: torus / оранж #EA5920 (свежая фигура).
 - grade: crisp_studio (новый — контраст+unsharp+винетка). music: Freesound 717286 «Upbeat Corporate Inspirational».
 - Караоке: Союз Гротеск строчные, активное слово оранж &H2059EA& (стандартное ASS \k, одно событие на строку).
+
+## Ролик n15 «Конкурент уже снимает» (2026-07-16) — виральный/продающий, голос Silero eugene
+- fx: camui, statcard×2 (89% выбирают глазами / 100% досматривают), stamp×2 (А ВЫ? / НАПИШИТЕ),
+  lowerthird×2 (ФАКТ / ДОВЕРИЕ), callout(листает мимо), bars×2 (без видео/с видео; реклама/видео),
+  moneycount(50 000 ₽ на рекламу), ratings(5 вам доверяют), toast, dm, likes, ticker, shine.
+- gl: CrossZoom, Rolls, StereoViewer, Overexposure, ZoomLeftWipe (5 свежих).
+- 3d: coin / оранж #EA5920. grade: bold_punch (контраст+curves+винетка). music: Freesound 785656 «Trailer Cinematic».
+- Голос Silero v4_ru eugene (авто-ударения). Субтитры Союз 2 слова, без тени/границы (Outline=0 Shadow=0).
