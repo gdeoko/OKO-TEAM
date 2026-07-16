@@ -1,0 +1,18 @@
+/* ===== CORE-EXT: попапы, печать, общие элементы новых модулей ===== */
+#okoPopup{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:70;display:flex;align-items:center;justify-content:center;padding:22px}
+#okoPopup .pop-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px 20px;max-width:400px;width:100%;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+#okoPopup .pop-ico{width:58px;height:58px;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+#okoPopup .pop-ico svg{width:28px;height:28px;color:var(--accent)}
+#okoPopup h3{font-size:24px;margin-bottom:8px}
+#okoPopup .pop-body{color:var(--dim);font-size:13.5px;line-height:1.55;margin-bottom:18px}
+#okoPopup .pop-actions{display:flex;flex-direction:column;gap:9px}
+#okoPopup .btn{width:100%}
+
+.balance-chip{display:inline-flex;align-items:center;gap:6px;background:var(--lime-dim);color:var(--accent);font-weight:700;font-size:12.5px;border-radius:99px;padding:6px 12px;cursor:pointer}
+.balance-chip svg.i{width:15px;height:15px}
+
+.doc-sign-block{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-top:22px}
+.doc-sign-block .sig{position:relative}
+.doc-sign-block .sig img{mix-blend-mode:multiply}
+:root[data-theme="dark"] .doc-sign-block .sig img,
+:root:not([data-theme="light"]) .doc-sign-block .sig img{filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen}
