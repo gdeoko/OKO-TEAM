@@ -42,7 +42,7 @@ def xtts(text, out, ref="ref_male.wav", lang="ru"):
     except Exception:
         return False
 
-def edge_fallback(text, out, voice="ru-RU-DmitryNeural", rate="+8%"):
+def edge_fallback(text, out, voice="ru-RU-DmitryNeural", rate="+6%"):
     import edge_tts
     tmp=out if out.endswith(".mp3") else out+".mp3"
     async def go():
