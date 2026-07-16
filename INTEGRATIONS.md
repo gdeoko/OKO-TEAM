@@ -152,6 +152,31 @@ Environment variables окружения:
 | Claude Code Remote | работает | окружения, Routines (расписания), send_later |
 | Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может) |
 
+### 3а. Higgsfield CLI + Skills (не только MCP!) — на ВСЕХ чатах
+Higgsfield даёт три способа доступа: **MCP** (коннектор выше), **CLI** и **Skill**.
+CLI работает **БЕЗ MCP-коннектора** → это решает проблему Routine-сессий (в них
+MCP-коннекторы не пробрасываются). Ставится и авторизуется на любом чате автоматически.
+
+- **CLI**: `npm install -g @higgsfield/cli` (бинарь `higgsfield`/`hf`, Go). Ставит
+  SessionStart-хук `.claude/hooks/oko-session-start.sh` в фоне, если бинаря нет.
+  Команды: `higgsfield generate create <model> --prompt "..." --wait`,
+  `model list`, `voices`, `soul-id`, `marketing-studio`, `website`, `account status`.
+- **Skills (6 приложений с higgsfield.ai/cli)** в `.claude/skills/`:
+  `higgsfield-generate` (фото/видео/3D/аудио + Marketing Studio + Virality),
+  `higgsfield-soul-id` (обучение лица → reference_id), `higgsfield-product-photoshoot`,
+  `higgsfield-marketplace-cards`, `higgsfield-websites`. Плюс video-analyzer внутри generate.
+- **Авторизация (одноразово, нужен Даниэль — браузерный OAuth loopback):**
+  1) на СВОЁМ компе `npm i -g @higgsfield/cli` → `higgsfield auth login` (откроется браузер,
+     логин 5 сек, аккаунт с 2165 Ultra кредитами);
+  2) прислать содержимое `~/.config/higgsfield/credentials.json` (или `higgsfield auth token`);
+  3) я кладу его как `HIGGSFIELD_CREDENTIALS_B64` в `secrets.env` (base64) → хук на каждом
+     чате пишет `~/.config/higgsfield/credentials.json`, CLE сам обновляет access по refresh_token.
+  Env `HIGGSFIELD_CREDENTIALS_PATH` переопределяет путь к credentials.json.
+  Проверка: `higgsfield account status` → `<email> — <plan>, <N> credits`.
+- Грабли: loopback-callback (`localhost:8765`) завершается только на машине с браузером —
+  из облачного контейнера кросс-девайс OAuth не закрыть, поэтому логин делает Даниэль, а
+  переносим credentials.json. Refresh_token переносим между машинами (scope offline_access).
+
 ## 4. Скиллы (.claude/skills, собраны со ВСЕХ чатов)
 
 - **oko-magic — ГЛАВНЫЙ**: производственный регламент любой задачи, все пайплайны
@@ -164,6 +189,9 @@ Environment variables окружения:
   frontend-patterns, frontend-a11y, react-patterns, react-performance,
   web-artifacts-builder, webapp-testing, expo-ui, expo-deployment, upgrading-expo,
   native-data-fetching.
+- Higgsfield (6 приложений, ставятся на все чаты — см. §3а): higgsfield-generate,
+  higgsfield-soul-id, higgsfield-product-photoshoot, higgsfield-marketplace-cards,
+  higgsfield-websites. Работают через CLI `higgsfield` (без MCP-коннектора).
 - Маркетинг и бренд: brand, brand-guidelines, seo (на ветке
   github-marketing-skills ещё: content-matrix, content-strategy, copywriting).
 - Процесс: brainstorming, writing-plans, executing-plans, test-driven-development,
