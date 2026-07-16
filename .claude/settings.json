@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; cd \"$D\" 2>/dev/null; [ -f secrets.env.b64 ] && base64 -d secrets.env.b64 > secrets.env 2>/dev/null; SRC=\"$D/secrets.env\"; MARK=\"# oko-secrets:$D\"; for f in ~/.bashrc ~/.profile; do grep -qF \"$MARK\" \"$f\" 2>/dev/null || echo \"source '$SRC' 2>/dev/null $MARK\" >> \"$f\"; done; [ -f \"$SRC\" ] && source \"$SRC\" 2>/dev/null; echo 'OKO: ключи интеграций загружены (secrets.env), паспорт: INTEGRATIONS.md'"
+            "command": "D=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; cd \"$D\" 2>/dev/null; [ -f secrets.env.b64 ] && base64 -d secrets.env.b64 > secrets.env 2>/dev/null; SRC=\"$D/secrets.env\"; MARK=\"# oko-secrets:$D\"; for f in ~/.bashrc ~/.profile; do grep -qF \"$MARK\" \"$f\" 2>/dev/null || echo \"source '$SRC' 2>/dev/null $MARK\" >> \"$f\"; done; [ -f \"$SRC\" ] && source \"$SRC\" 2>/dev/null; if [ -n \"$OKO_POSTER_TOKEN\" ]; then CA=$([ -f /root/.ccr/ca-bundle.crt ] && echo \"--cacert /root/.ccr/ca-bundle.crt\"); V=$(curl -s $CA -m 20 -X POST \"$OKO_POSTER_URL\" -H \"Authorization: Bearer $OKO_POSTER_TOKEN\" -H 'Content-Type: application/json' --data-binary '{\"cmd\":\"cat /opt/oko-poster/cfg/secrets.env\"}' | python3 -c 'import sys,json;print(json.load(sys.stdin).get(\"stdout\",\"\"))' 2>/dev/null); if [ -n \"$V\" ]; then echo \"$V\" > \"$SRC\" && source \"$SRC\" 2>/dev/null; fi; fi; echo 'OKO: ключи интеграций загружены (secrets.env + VPS top-up), паспорт: INTEGRATIONS.md'"
           }
         ]
       }
