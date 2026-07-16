@@ -1419,8 +1419,8 @@ const GAMES = {
       desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Аркада на время', 'Собирай манну за очки', 'История Исхода'] },
     { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Играбельно · +25 XP', premium: true, play: true,
       desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
-    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных', premium: true,
-      desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Десятки животных', 'История Ноя'] },
+    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Играбельно · +30 XP', premium: true, play: true,
+      desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Пары животных', 'История Ноя'] },
     { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Строй-тайкун', premium: true,
       desc: 'Строй великий храм: добывай ресурсы, нанимай мастеров, укрощай детали.', bullets: ['Стройка-тайкун', 'Развитие города', 'Мудрость Соломона'] },
     { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав', premium: true,
@@ -1477,6 +1477,7 @@ function renderGhub(cat) {
     else if (k === 'match3') openMatch3();
     else if (k === 'david') openDavid();
     else if (k === 'exodus') openExodus();
+    else if (k === 'ark') openArk();
     else openGamePreview(k);
   }));
 }
@@ -1495,6 +1496,7 @@ function initGamesHub() {
   $('#davidFire')?.addEventListener('click', davidFire);
   $('#exodusBack')?.addEventListener('click', () => { exodusStop(); openGamesHub(); });
   $('#exodusGo')?.addEventListener('click', exodusStart);
+  $('#arkBack')?.addEventListener('click', () => { arkStop(); openGamesHub(); });
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
@@ -2703,6 +2705,89 @@ function exodusEnd() {
     : { icon: 'map', title: 'Время вышло', subtitle: `Собрано ${exodus.score} из ${EXODUS_GOAL}. Ещё попытка — и получится!`, xp: exodus.score >= 8 ? 10 : 0 });
   else toast(win ? 'Манна собрана!' : 'Время вышло');
   setTimeout(openGamesHub, win ? 1700 : 1400);
+}
+
+/* ── Ноев Ковчег: собери пары животных ── */
+const ARK_ANIMALS = [
+  { icon: 'dove', color: '#7AAED4' },
+  { icon: 'fish', color: '#4FA6A6' },
+  { icon: 'turtle', color: '#7B9E5A' },
+  { icon: 'rabbit', color: '#C98BA0' },
+  { icon: 'bird', color: '#E0954E' },
+  { icon: 'butterfly', color: '#9B7AD4' },
+];
+const ARK_TIME = 45;
+let ark = { cards: [], sel: null, pairs: 0, time: ARK_TIME, tick: 0, busy: false };
+
+function openArk() {
+  arkStop();
+  const deck = [];
+  ARK_ANIMALS.forEach((a, i) => { deck.push({ id: i, ...a }); deck.push({ id: i, ...a }); });
+  // детерминированная тасовка
+  for (let i = deck.length - 1; i > 0; i--) { const j = (i * 7 + 3) % (i + 1); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  ark = { cards: deck, sel: null, pairs: 0, time: ARK_TIME, tick: 0, busy: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'ark'));
+  $('#nav').style.display = 'none';
+  $('#arkTotal').textContent = ARK_ANIMALS.length;
+  $('#arkPairs').textContent = '0';
+  $('#arkTime').textContent = ARK_TIME;
+  $('#arkWater').style.height = '0%';
+  renderArk();
+  ark.tick = setInterval(() => {
+    ark.time--;
+    $('#arkTime').textContent = Math.max(0, ark.time);
+    $('#arkWater').style.height = Math.min(100, Math.round((ARK_TIME - ark.time) / ARK_TIME * 100)) + '%';
+    if (ark.time <= 0) arkEnd(false);
+  }, 1000);
+  window.scrollTo({ top: 0 });
+}
+
+function arkStop() { clearInterval(ark.tick); ark.tick = 0; }
+
+function renderArk() {
+  const g = $('#arkGrid');
+  g.innerHTML = '';
+  ark.cards.forEach((c, idx) => {
+    const cell = document.createElement('button');
+    cell.className = 'ark-card' + (c.done ? ' ark-card--done' : '') + (ark.sel === idx ? ' ark-card--on' : '');
+    cell.style.setProperty('--ac', c.color);
+    cell.innerHTML = ICON(c.icon, 28);
+    cell.addEventListener('click', () => arkTap(idx));
+    g.appendChild(cell);
+  });
+}
+
+function arkTap(idx) {
+  if (ark.busy || ark.cards[idx].done) return;
+  if (ark.sel === null) { ark.sel = idx; renderArk(); return; }
+  if (ark.sel === idx) { ark.sel = null; renderArk(); return; }
+  const a = ark.cards[ark.sel], b = ark.cards[idx];
+  if (a.id === b.id) {
+    ark.cards[ark.sel].done = true; ark.cards[idx].done = true;
+    ark.pairs++;
+    $('#arkPairs').textContent = ark.pairs;
+    ark.sel = null;
+    renderArk();
+    if (window.MAGIC) { const r = $('#arkGrid').getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 3); }
+    if (ark.pairs >= ARK_ANIMALS.length) arkEnd(true);
+  } else {
+    // мимо — краткая подсветка и сброс
+    ark.busy = true;
+    const prev = ark.sel; ark.sel = idx; renderArk();
+    const cells = $$('#arkGrid .ark-card');
+    cells[prev]?.classList.add('ark-card--miss'); cells[idx]?.classList.add('ark-card--miss');
+    setTimeout(() => { ark.sel = null; ark.busy = false; renderArk(); }, 520);
+  }
+}
+
+function arkEnd(win) {
+  arkStop();
+  ark.busy = true;
+  if (window.MAGIC) MAGIC.rewardModal(win
+    ? { icon: 'dove', title: 'Все на борту!', subtitle: 'Ты собрал всех животных парами и спас их от потопа, как Ной. Бог хранит верных!', xp: 30 }
+    : { icon: 'dove', title: 'Вода поднялась', subtitle: `На борту ${ark.pairs} из ${ARK_ANIMALS.length} пар. Попробуй ещё — успеешь!`, xp: ark.pairs >= 4 ? 12 : 0 });
+  else toast(win ? 'Все на борту!' : 'Вода поднялась');
+  setTimeout(openGamesHub, win ? 1800 : 1400);
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */
