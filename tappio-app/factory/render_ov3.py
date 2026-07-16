@@ -70,9 +70,12 @@ function init(){
       <div style="font-family:Syn;font-size:36px;color:${A};letter-spacing:2px;margin-top:6px">${d.sub||''}</div></div></div>`)}</div>`;
   } else if(T==='kinetic'){
     const big=(d.big||'').replace(/\n/g,'<br>');
+    const words=(d.big||'').split(/\s|<br>|\n/).filter(Boolean);
+    const maxw=Math.max(1,...words.map(w=>w.length));
+    const kfs=Math.max(60,Math.min(120,Math.floor(980/(0.60*maxw))));  // авто-подбор под длинное слово
     h=`<div id="wrap" style="position:absolute;top:0;bottom:0;left:0;right:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
       <div style="font-family:DM;font-size:40px;letter-spacing:10px;color:${A};text-transform:uppercase;background:rgba(5,7,10,.5);padding:8px 22px;border-radius:8px">${d.top||''}</div>
-      <div id="kbig" style="font-family:Syn;font-weight:800;font-size:120px;line-height:.94;color:#fff;text-align:center;text-transform:uppercase;letter-spacing:-1px;max-width:940px;word-break:keep-all;overflow-wrap:normal;text-shadow:0 0 46px ${A}bb,0 8px 40px rgba(0,0,0,.6)">${big}</div></div>`;
+      <div id="kbig" style="font-family:Syn;font-weight:800;font-size:${kfs}px;line-height:.94;color:#fff;text-align:center;text-transform:uppercase;letter-spacing:-1px;max-width:980px;word-break:keep-all;overflow-wrap:normal;text-shadow:0 0 46px ${A}bb,0 8px 40px rgba(0,0,0,.6)">${big}</div></div>`;
   } else if(T==='callout'){
     h=`<div id="wrap" style="position:absolute;top:${d.y||600}px;left:${d.x||600}px">
       <svg width="360" height="360" viewBox="0 0 360 360" style="overflow:visible"><circle id="ring2" cx="180" cy="180" r="150" fill="none" stroke="${A}" stroke-width="8" stroke-dasharray="942" stroke-dashoffset="942" style="filter:drop-shadow(0 0 12px ${A})"/></svg>
@@ -123,12 +126,16 @@ async def render_overlay(pw_page, spec, dur, out_mov, tmp):
 
 async def render_cover_endcard(page, d, wd, a, a2):
     logo = imgb(os.path.abspath(f'assets/logos/{d["brand"]["logo"]}'))
-    c = d["cover"]; big = c.get("big", "").replace("\n", "<br>")
+    c = d["cover"]; big_raw = c.get("big", "")
+    _words = [w for w in big_raw.replace("\n", " ").split() if w]
+    _maxw = max((len(w) for w in _words), default=1)
+    cfs = max(64, min(118, int(980 / (0.60 * _maxw))))  # авто-подбор кегля обложки
+    big = big_raw.replace("\n", "<br>")
     cover = f"""<div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,7,10,.5),rgba(5,7,10,.18) 40%,rgba(5,7,10,.82))"></div>
     <div style="position:absolute;top:200px;left:60px;right:60px;display:flex;flex-direction:column;gap:18px">
      <div style="align-self:flex-start;font-family:DM;color:{a};font-size:30px;letter-spacing:8px;border:1.5px solid {a};border-radius:999px;padding:12px 28px;background:rgba(5,7,10,.5)">{c['kicker']}</div>
      <div style="font-family:DM;font-size:52px;letter-spacing:8px;color:{a2};text-transform:uppercase">{c.get('top','')}</div>
-     <div style="font-family:Syn;font-weight:800;font-size:112px;line-height:.94;color:#fff;text-transform:uppercase;letter-spacing:-1px;max-width:960px;word-break:keep-all;overflow-wrap:normal;text-shadow:0 6px 40px rgba(0,0,0,.7),0 0 60px {a}55">{big}</div>
+     <div style="font-family:Syn;font-weight:800;font-size:{cfs}px;line-height:.94;color:#fff;text-transform:uppercase;letter-spacing:-1px;max-width:980px;word-break:keep-all;overflow-wrap:normal;text-shadow:0 6px 40px rgba(0,0,0,.7),0 0 60px {a}55">{big}</div>
     </div>"""
     await page.set_content(f"<style>{CSS}</style><div id='stage'>{cover}</div>")
     await page.wait_for_timeout(180); await page.screenshot(path=f"{wd}/cover_ov.png", omit_background=True)

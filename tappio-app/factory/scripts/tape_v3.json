@@ -8,12 +8,12 @@
   "music": {"queries": ["upbeat indie acoustic diy", "positive corporate light groove", "warm optimistic guitar"]},
   "cover": {"style": "kinetic", "kicker": "MEASURE FAIL", "top": "IT COST ME", "big": "A $900\nMISTAKE", "q": ["measuring tape wood workshop closeup"]},
   "segments": [
-    {"id": "b1", "text": "I bought a couch. Measured the doorway with a tape. Off by two inches."},
-    {"id": "b2", "text": "Nine hundred dollars, sent back. All because a metal tape bends and lies."},
-    {"id": "b3", "text": "So now I measure with my phone. Point the camera, tap two points, done."},
-    {"id": "b4", "text": "It draws the line in the room. Length, width, height, area, all at once."},
-    {"id": "b5", "text": "Furniture, walls, a rug, a shelf. It saves every project and exports a PDF."},
-    {"id": "b6", "text": "No tape. No helper holding the other end. Just your phone. Measure once."}
+    {"id": "b1", "text": "I measured a doorway with a tape. Off by two inches."},
+    {"id": "b2", "text": "A nine hundred dollar couch, sent back. Metal tapes bend and lie."},
+    {"id": "b3", "text": "Now I measure with my phone. Point, tap two points, done."},
+    {"id": "b4", "text": "Length, width, height, area. All drawn right in the room."},
+    {"id": "b5", "text": "It saves every project and exports a clean PDF."},
+    {"id": "b6", "text": "No tape. No helper. Just your phone. Measure once."}
   ],
   "shots": [
     {"q": ["metal tape measure extending closeup"], "motion": "zin"},

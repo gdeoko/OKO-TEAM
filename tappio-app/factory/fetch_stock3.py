@@ -16,6 +16,9 @@ def pick_file(v):
     return fs[0]  # smallest >=1900 vertical = enough для 1080p, быстрее качать
 
 def fetch_one(queries, used, wd, name):
+    dst0 = f"{wd}/stock/{name}.mp4"
+    if os.path.exists(dst0) and os.path.getsize(dst0) > 180000:
+        print(name, 'cached'); return True  # переиспользуем уже скачанный клип
     for q in queries:
         for page in (1, 2):
             u = (f"https://api.pexels.com/videos/search?query={urllib.parse.quote(q)}"
