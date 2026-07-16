@@ -49,3 +49,5 @@ pipeline/n15/*.log
 pipeline/n15/*.ass
 pipeline/n15/fx_jobs.json
 pipeline/n15/stage2_plan.json
+pipeline/n15/fonts/
+pipeline/n15/three_jobs.json
