@@ -4,6 +4,25 @@
    Режим: FULLSCREEN (Bot API 8.0) + учёт safe-area, чтобы шапка
    не уезжала под статус-бар телефона. */
 (function tgWebAppInit(){
+  /* СИНХРОНИЗАЦИЯ ВЫСОТЫ: убирает «пустоту» при скролле — высота приложения
+     жёстко равна видимой области (visualViewport), а не 100dvh, который
+     в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
+  function okoSyncVh(){
+    try{
+      const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
+      if(!h) return;
+      document.documentElement.style.height = h + 'px';
+      document.body.style.height = h + 'px';
+      const app = document.getElementById('app');
+      if(app) app.style.height = h + 'px';
+    }catch(e){}
+  }
+  window.addEventListener('resize', okoSyncVh);
+  window.addEventListener('orientationchange', ()=>setTimeout(okoSyncVh, 120));
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', okoSyncVh);
+  okoSyncVh();
+  setTimeout(okoSyncVh, 400); setTimeout(okoSyncVh, 1500);
+
   function applySafeArea(tg){
     try{
       const sa = tg.safeAreaInset || {top:0,bottom:0,left:0,right:0};
@@ -34,9 +53,10 @@
       if(tg.lockOrientation){ try{ tg.lockOrientation('portrait'); }catch(e){} }
       applySafeArea(tg);
       if(tg.onEvent){
-        tg.onEvent('safeAreaChanged', ()=>applySafeArea(tg));
-        tg.onEvent('contentSafeAreaChanged', ()=>applySafeArea(tg));
-        tg.onEvent('fullscreenChanged', ()=>applySafeArea(tg));
+        tg.onEvent('viewportChanged', okoSyncVh);
+        tg.onEvent('safeAreaChanged', ()=>{applySafeArea(tg); okoSyncVh();});
+        tg.onEvent('contentSafeAreaChanged', ()=>{applySafeArea(tg); okoSyncVh();});
+        tg.onEvent('fullscreenChanged', ()=>{applySafeArea(tg); okoSyncVh();});
       }
       const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
       if(u && u.first_name){
