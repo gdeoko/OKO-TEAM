@@ -262,6 +262,13 @@ nav#tabs .nav-logo{display:none}
 .ma-hero-txt{position:relative;z-index:2;padding:18px 20px;padding-right:84px}
 .ma-hero-txt h2{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:.96;letter-spacing:.02em;margin:0 0 4px}
 .ma-hero-txt p{font-size:12.5px;color:var(--accent);font-weight:600;margin:0}
+/* светлая тема: хиро остаётся тёмным бренд-пятном — текст принудительно светлый */
+:root[data-theme="light"] .ma-hero-txt h2{color:#fff}
+:root[data-theme="light"] .ma-hero-txt p{color:var(--lime)}
+/* светлая тема: плитки сервисов единообразные светлые */
+:root[data-theme="light"] .svc-ic{background:var(--lime-dim);border-color:var(--border);box-shadow:0 4px 14px rgba(60,90,20,.12)}
+:root[data-theme="light"] .svc-ic::before{background:none}
+:root[data-theme="light"] .svc-ic svg.i{color:var(--accent);filter:none}
 /* Контент-завод */
 .chip.on{color:#000;background:var(--lime)}
 .fx-pills{display:flex;flex-wrap:wrap;gap:8px}
