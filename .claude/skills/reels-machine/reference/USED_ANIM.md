@@ -16,3 +16,11 @@
 | 2026-07 · d12 не досматривают · fx[camui,slam,callout,stamp×3,shine,dm,ticker] · lottie[timer, checkmark] · gl[GlitchDisplace,directionalwarp,SimpleZoomOut,pixelize] · 3d[diamond/lime] · infogr[retention graph] · grade[clean_ad] |
 | 2026-07 · d13 один ролик · fx[camui,stamp,bars,callout,dm,likes,toast,shine,ticker] · lottie[clock, chat] · gl[splitSlideInOutHorizontal,crosswarp,SimpleFlip,Bounce,wipeLeft] · 3d[diamond/lime] · infogr[counter 200k, bars реклама/ролик] · grade[warm_cine] |
 <!-- Следующие ролики: взять ДРУГИЕ типы, переходы, 3D-фигуры, Lottie, грейды. -->
+
+## Партия n1–n5 (Ставрополь, локальные, 16.07.2026) — голос Dmitry +6%
+- n1 «5 бизнесов»: fx camui+statcard+likes+ticker, 3D droplet, Lottie(map pin, growth arrow), grade warm_cine, gl CrossZoom/Radial/cube/Dreamy/fade.
+- n2 «конкурент снимает»: fx slam+callout+bars, 3D diamond, Lottie(race finish, ig heart), grade moody_dark, gl directionalwarp/GlitchMemories/SimpleFlip/burn/wipeLeft.
+- n3 «сколько стоит молчать»: fx particles(ember)+statcard+donut+stamp, 3D torus, Lottie(coins, graph down), grade clean_ad, gl pixelize/StaticFade/LinearBlur/DoomScreen/fade.
+- n4 «ролики которые продают»: fx lowerthird+shine, rem counter, 3D ring, Lottie(camera, play, thumbs), grade epic_gold, gl WaterDrop/FilmBurn/cube/Bounce/DreamyZoom.
+- n5 «клиент за 30 сек»: fx toast+dm, rem graph, 3D coin, Lottie(stopwatch, rocket), grade glossy, gl SimpleZoom/GridFlip/crosswarp/fade/ripple.
+- Правило: каждый тип FX — ровно в одном ролике партии; 3D-фигуры и Lottie-запросы уникальны.
