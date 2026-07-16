@@ -1,0 +1,74 @@
+# Суточное расписание контент-завода
+# Все времена в МСК (Europe/Moscow)
+
+client_slug: example-brand
+timezone: Europe/Moscow
+
+# Основной цикл
+daily:
+  # 09:00 — публикация готового ролика (Hooppy отправит по расписанию)
+  publish_time: "09:00"
+
+  # 10:00 — сбор аналитики за вчера + отчёт в бота
+  analytics_report_time: "10:00"
+
+  # 11:00 — анализ конкурентов на завтра (5+ роликов от 1M)
+  competitor_scan_time: "11:00"
+
+  # 14:00 — написание сценария завтрашнего ролика
+  scenario_time: "14:00"
+
+  # 15:00–20:00 — сборка ролика (пайплайн build_reel.py)
+  build_start_time: "15:00"
+
+  # 20:00 — QC-аудит через Gemini
+  qc_time: "20:00"
+
+# Масштабирование количества роликов в день
+scaling:
+  start_date: "2026-07-16"
+  start_count: 1
+  # каждые N дней добавляем +1 ролик в день
+  increment_every_days: 3
+  target_count: 3
+  target_date: "2026-08-01"
+
+# Время публикаций если роликов больше 1
+publish_slots:
+  count_1: ["09:00"]
+  count_2: ["09:00", "19:00"]
+  count_3: ["09:00", "14:00", "20:00"]
+  count_4: ["08:00", "12:00", "17:00", "21:00"]
+  count_5: ["07:30", "11:00", "14:30", "18:00", "21:30"]
+
+# Каналы публикации
+channels:
+  instagram: true
+  tiktok: true
+  youtube_shorts: true
+  # long-form youtube — раз в неделю (если контент подходит)
+  youtube_long: false
+
+# Дополнительный контент
+extras:
+  # Карусель раз в неделю
+  carousel_day: "friday"
+  carousel_time: "18:00"
+
+  # Сторис 2-3 в день (по best hours из learning_profile)
+  stories_per_day: 2
+
+# Пороги детекции залёта
+hit_detection:
+  # ролик залетел если ≥ N× среднего по каналу
+  ratio_vs_avg: 3.0
+  # или ≥ N просмотров абсолютно
+  min_absolute_views: 10000
+  # и engagement rate ≥ N× среднего
+  engagement_ratio: 1.5
+
+# Ограничения производительности
+resource_limits:
+  max_parallel_builds: 2
+  ffmpeg_chunk_max_seconds: 90
+  playwright_batch_size: 12
