@@ -264,14 +264,12 @@ function renderLessons() {
 
   $$('#lessons .lesson-item').forEach((el) => {
     el.addEventListener('click', () => {
-      if (el.dataset.state === 'locked') {
-        const n = Number(el.dataset.n);
-        toast(Number.isNaN(n)
-          ? 'Проверка знаний откроется после всех уроков блока'
-          : `Пройди урок ${n - 1} — тест и ДЗ, чтобы открыть`);
-      } else {
-        openLesson();
+      const n = Number(el.dataset.n);
+      if (Number.isNaN(n)) {
+        toast('Проверка знаний откроется после всех уроков блока');
+        return;
       }
+      openLesson(n);
     });
   });
 }
@@ -900,80 +898,194 @@ function bindLongPress() {
   });
 }
 
-/* ───────── ЭКРАН УРОКА (этап 4, начало) ───────── */
+/* ───────── ЭКРАН УРОКА (динамический, все 36 уроков) ───────── */
 
-const TEST_ANSWERS = { q0: '1', q1: '0', q2: '0' };
-let lessonState = JSON.parse(localStorage.getItem('mt_lesson1') || '{"watch":false,"test":false,"hw":false,"done":false}');
+let currentLesson = 1;
 
-function lessonSync() {
-  $$('#lessonSteps .lstep').forEach((el) =>
-    el.classList.toggle('done', !!lessonState[el.dataset.step]));
-  $('#lessonDone').disabled = !(lessonState.watch && lessonState.test) || lessonState.done;
-  $('#lessonDone').textContent = lessonState.done ? 'Урок пройден — урок 2 открыт!' : 'Отметить урок пройденным';
+// Мета урока (заголовок, блок, картинка) из DEMO.blocks по номеру
+function lessonMeta(n) {
+  for (let bi = 0; bi < DEMO.blocks.length; bi++) {
+    const block = DEMO.blocks[bi];
+    const l = block.lessons.find((x) => x.n === n);
+    if (l) return { l, block, bi, blockTitle: block.title.replace(/^Блок \d+ · /, '').replace(/[«»]/g, '') };
+  }
+  return null;
 }
 
-function openLesson() {
+function lessonContent(n) {
+  const map = (typeof window !== 'undefined' && window.LESSONS) ? window.LESSONS : {};
+  return map[n] || null;
+}
+
+function lessonStateKey(n) { return 'mt_lesson_' + n; }
+function getLessonState(n) {
+  return JSON.parse(localStorage.getItem(lessonStateKey(n)) || '{"watch":false,"test":false,"hw":false,"done":false}');
+}
+function saveLessonState(n, st) { localStorage.setItem(lessonStateKey(n), JSON.stringify(st)); }
+
+function openLesson(n) {
+  currentLesson = Number(n) || 1;
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'lesson'));
   $('#nav').style.display = 'none';
-  lessonSync();
+  renderLesson(currentLesson);
   window.scrollTo({ top: 0 });
 }
 
-function lessonSave() { localStorage.setItem('mt_lesson1', JSON.stringify(lessonState)); }
+function renderLesson(n) {
+  const meta = lessonMeta(n);
+  const c = lessonContent(n);
+  const st = getLessonState(n);
+  const body = $('#lessonBody');
+  if (!meta) { body.innerHTML = '<div class="card">Урок не найден.</div>'; return; }
+  const title = meta.l.title;
+  const cover = meta.l.img || 'assets/img/lessons/l1.jpg';
+
+  // Контент ещё не подгружен (для новых уроков — мягкий фолбэк)
+  const story = c && c.story ? c.story : ['Материал этого урока скоро появится здесь. А пока можно пройти другие уроки и игры.'];
+  const verse = c && c.verse ? c.verse : { text: 'Бог есть любовь, и пребывающий в любви пребывает в Боге', ref: '1 Ин 4:16' };
+  const quiz = c && c.quiz ? c.quiz : [];
+  const questions = c && c.questions ? c.questions : [];
+
+  body.innerHTML = `
+    <div class="feed-card__cover feed-card__cover--img lesson-cover"><img src="${cover}" alt=""></div>
+    <h1 class="screen-title" style="margin-top:14px">Урок ${n}. ${title}</h1>
+    <div class="feed-card__meta">${meta.block.title} · для всех возрастов</div>
+
+    <div class="lesson-steps" id="lessonSteps">
+      <div class="lstep ${st.watch ? 'done' : ''}" data-step="watch"><i></i>Просмотрено</div>
+      <div class="lstep ${st.test ? 'done' : ''}" data-step="test"><i></i>Тест</div>
+      <div class="lstep ${st.hw ? 'done' : ''}" data-step="hw"><i></i>ДЗ</div>
+    </div>
+
+    <div class="card video-stub" id="videoStub">
+      <span data-icon="play" data-size="34"></span>
+      <div><b>Видеоурок</b><br><small>Появится здесь после записи уроков. Пока можно пройти материалы и тест.</small></div>
+    </div>
+
+    ${c && c.intro ? `<div class="card lesson-text lesson-intro"><p>${c.intro}</p></div>` : ''}
+
+    <h2 class="section-title">Цитата из Писания</h2>
+    <article class="card feed-card feed-card--quote">
+      <div class="feed-card__title">«${verse.text}»</div>
+      <div class="quote-ref">${verse.ref}</div>
+    </article>
+
+    <h2 class="section-title">Детский пересказ</h2>
+    <div class="card lesson-text">${story.map((p) => `<p>${p}</p>`).join('')}</div>
+
+    ${c && c.golden ? `<div class="card lesson-golden">${ICON('sparkle', 18)}<span>${c.golden}</span></div>` : ''}
+
+    ${questions.length ? `<h2 class="section-title">Вопросы для беседы</h2>
+      <div class="card lesson-text lesson-questions">${questions.map((q, i) => `<div class="lq"><span class="lq__n">${i + 1}</span>${q}</div>`).join('')}</div>` : ''}
+
+    ${quiz.length ? `<h2 class="section-title">Проверь себя</h2>
+      <div class="card" id="lessonTest">
+        ${quiz.map((q, qi) => `<div class="q" data-q="${qi}">
+          <div class="q__text">${qi + 1}. ${q.q}</div>
+          ${q.opts.map((o, oi) => `<label class="q__opt"><input type="radio" name="q${qi}" value="${oi}"> ${o}</label>`).join('')}
+        </div>`).join('')}
+        <button class="btn btn--primary" id="testCheck" style="width:100%">Проверить ответы</button>
+        <div class="test-result" id="testResult" hidden></div>
+      </div>` : ''}
+
+    ${c && c.prayer ? `<h2 class="section-title">Помолимся вместе</h2>
+      <div class="card lesson-prayer">${ICON('dove', 18)}<p>${c.prayer}</p></div>` : ''}
+
+    <h2 class="section-title">Домашнее задание</h2>
+    <div class="card lesson-text">
+      <p>${c && c.parentNote ? c.parentNote : 'Нарисуй вместе с родителями то, что тебе запомнилось из урока, и отправь рисунок Екатерине.'}</p>
+      <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Загрузить фото рисунка</button>
+    </div>
+
+    <button class="btn btn--primary lesson-done" id="lessonDone">${st.done ? 'Урок пройден ✓' : 'Отметить урок пройденным'}</button>
+  `;
+
+  hydrateIcons();
+  wireLesson(n, quiz);
+}
+
+function wireLesson(n, quiz) {
+  const st = getLessonState(n);
+  const syncSteps = () => {
+    $$('#lessonSteps .lstep').forEach((el) => el.classList.toggle('done', !!getLessonState(n)[el.dataset.step]));
+  };
+
+  $('#videoStub')?.addEventListener('click', () => {
+    const s = getLessonState(n);
+    if (!s.watch) { s.watch = true; saveLessonState(n, s); syncSteps(); toast('+20 XP за просмотр (видео появится позже)'); }
+    else toast('Видео появится после записи уроков');
+  });
+
+  $('#testCheck')?.addEventListener('click', () => {
+    if (!quiz.length) return;
+    let correct = 0, answered = 0;
+    quiz.forEach((q, qi) => {
+      const sel = document.querySelector(`input[name="q${qi}"]:checked`);
+      $$(`input[name="q${qi}"]`).forEach((i) => i.closest('.q__opt').classList.remove('right', 'wrong'));
+      if (!sel) return;
+      answered++;
+      const label = sel.closest('.q__opt');
+      if (Number(sel.value) === q.answer) { correct++; label.classList.add('right'); }
+      else label.classList.add('wrong');
+    });
+    if (answered < quiz.length) return toast('Ответь на все вопросы');
+    const res = $('#testResult');
+    res.hidden = false;
+    const pct = Math.round(correct / quiz.length * 100);
+    if (pct >= 70) {
+      res.className = 'test-result pass';
+      res.textContent = `Отлично! ${correct} из ${quiz.length} (${pct}%) — тест пройден, +15 XP${pct === 100 ? ' и +30 XP за 100%!' : ''}`;
+      const s = getLessonState(n);
+      if (!s.test) { s.test = true; saveLessonState(n, s); syncSteps(); }
+      if (pct === 100 && window.MAGIC) { const r = $('#testCheck').getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+    } else {
+      res.className = 'test-result fail';
+      res.textContent = `${correct} из ${quiz.length} — нужно 70%. Перечитай пересказ и попробуй ещё раз.`;
+    }
+  });
+
+  $('#hwUpload')?.addEventListener('click', () => {
+    const s = getLessonState(n); s.hw = true; saveLessonState(n, s); syncSteps();
+    toast('Загрузка файлов включится на хостинге — шаг засчитан для демо');
+  });
+
+  $('#lessonDone')?.addEventListener('click', () => {
+    const s = getLessonState(n); s.done = true; saveLessonState(n, s); syncSteps();
+    $('#lessonDone').textContent = 'Урок пройден ✓';
+    // открыть следующий урок в списке
+    const meta = lessonMeta(n);
+    if (meta) {
+      const idx = meta.block.lessons.findIndex((x) => x.n === n);
+      const next = meta.block.lessons[idx + 1];
+      if (next && next.state === 'locked') { next.state = 'open'; renderLessons(); }
+    }
+    const nextTitle = nextLessonTitle(n);
+    if (window.MAGIC) MAGIC.rewardModal({
+      icon: 'trophy', title: 'Урок пройден!',
+      subtitle: nextTitle ? `Молодец! Открыт следующий урок: «${nextTitle}».` : 'Молодец! Ты прошёл урок.',
+      xp: 20,
+    });
+    else toast('+20 XP!');
+  });
+}
+
+function nextLessonTitle(n) {
+  const meta = lessonMeta(n);
+  if (!meta) return '';
+  const idx = meta.block.lessons.findIndex((x) => x.n === n);
+  const next = meta.block.lessons[idx + 1];
+  return next && !next.exam ? next.title : '';
+}
+
+function unlockAllLessons() {
+  // Витрина: открываем все уроки для просмотра контента (прогресс-геймификация — на бэкенде)
+  DEMO.blocks.forEach((b) => b.lessons.forEach((l) => { if (!l.exam && l.state === 'locked') l.state = 'open'; }));
+}
 
 function initLesson() {
   $('#lessonBack').addEventListener('click', () => {
     $('#nav').style.display = '';
     switchTab('lessons');
-  });
-  $('#videoStub').addEventListener('click', () => {
-    if (!lessonState.watch) {
-      lessonState.watch = true; lessonSave(); lessonSync();
-      toast('+20 XP за просмотр (видео появится в июле)');
-    } else toast('Видео появится после записи уроков');
-  });
-  $('#testCheck').addEventListener('click', () => {
-    let correct = 0, answered = 0;
-    Object.keys(TEST_ANSWERS).forEach((q) => {
-      const sel = document.querySelector(`input[name="${q}"]:checked`);
-      if (!sel) return;
-      answered++;
-      const label = sel.closest('.q__opt');
-      $$(`input[name="${q}"]`).forEach((i) => i.closest('.q__opt').classList.remove('right', 'wrong'));
-      if (sel.value === TEST_ANSWERS[q]) { correct++; label.classList.add('right'); }
-      else label.classList.add('wrong');
-    });
-    if (answered < 3) return toast('Ответь на все вопросы');
-    const res = $('#testResult');
-    res.hidden = false;
-    const pct = Math.round(correct / 3 * 100);
-    if (pct >= 70) {
-      res.className = 'test-result pass';
-      res.textContent = `Отлично! ${correct} из 3 (${pct}%) — тест пройден, +15 XP${pct === 100 ? ' и +30 XP за 100%!' : ''}`;
-      if (!lessonState.test) { lessonState.test = true; lessonSave(); lessonSync(); }
-      if (pct === 100 && window.MAGIC) {
-        const r = $('#testCheck').getBoundingClientRect();
-        MAGIC.celebrate(r.left + r.width / 2, r.top);
-      }
-    } else {
-      res.className = 'test-result fail';
-      res.textContent = `${correct} из 3 — нужно 70%. Перечитай пересказ и попробуй ещё раз (осталось 2 попытки сегодня)`;
-    }
-  });
-  $('#hwUpload').addEventListener('click', () => {
-    lessonState.hw = true; lessonSave(); lessonSync();
-    toast('Загрузка файлов включится на хостинге — шаг засчитан для демо');
-  });
-  $('#lessonDone').addEventListener('click', () => {
-    lessonState.done = true; lessonSave(); lessonSync();
-    DEMO.blocks[0].lessons[1].state = 'open';
-    renderLessons();
-    if (window.MAGIC) MAGIC.rewardModal({
-      icon: 'trophy', title: 'Урок пройден!',
-      subtitle: 'Ты получил значок «Первооткрыватель». Урок 2 «Создание мира» открыт.',
-      xp: 20,
-    });
-    else toast('+20 XP! Урок 2 открыт');
   });
 }
 
@@ -3216,6 +3328,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStories();
   renderFeed();
   renderChats();
+  unlockAllLessons();
   renderLessons();
   loadSavedKids();
   renderChildren();

@@ -1029,6 +1029,25 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 .lesson-done { width: 100%; margin-top: 20px; padding: 15px; }
 .lesson-done:disabled { opacity: .45; }
 
+/* доп. блоки динамического урока */
+.lesson-intro p { font-style: italic; color: var(--navy); }
+.lesson-golden { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 4px;
+  background: linear-gradient(135deg, rgba(212,165,116,.16), rgba(201,112,100,.12));
+  border-radius: 14px; font-weight: 700; font-size: 14px; color: var(--navy); line-height: 1.5; }
+.lesson-golden .ic { color: var(--gold); flex: 0 0 auto; }
+.lesson-questions .lq { display: flex; gap: 10px; font-size: 14px; line-height: 1.55; padding: 8px 0;
+  border-bottom: 1px solid rgba(26,58,82,.07); }
+.lesson-questions .lq:last-child { border-bottom: none; }
+.lesson-questions .lq__n { flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--terracotta); color: #fff; font-weight: 700; font-size: 12px;
+  display: grid; place-items: center; }
+.lesson-prayer { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px;
+  background: rgba(122,174,212,.1); border-radius: 14px; }
+.lesson-prayer .ic { color: var(--blue); flex: 0 0 auto; margin-top: 2px; }
+.lesson-prayer p { font-size: 14px; line-height: 1.6; font-style: italic; color: var(--navy); margin: 0; }
+[data-theme="dark"] .lesson-golden { color: var(--cream); }
+[data-theme="dark"] .lesson-prayer p, [data-theme="dark"] .lesson-intro p { color: var(--cream); }
+
 
 /* ══════════ TELEGRAM-ФУНКЦИИ ЧАТА ══════════ */
 .chats-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }

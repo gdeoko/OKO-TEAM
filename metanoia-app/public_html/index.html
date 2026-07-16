@@ -519,65 +519,7 @@
     <!-- ── ЭКРАН УРОКА (этап 4, начало) ── -->
     <section class="screen" data-screen="lesson">
       <button class="child-back" id="lessonBack"><span data-icon="back" data-size="18"></span> Все уроки</button>
-      <div class="feed-card__cover feed-card__cover--img lesson-cover">
-        <img src="assets/img/covers/lesson-1.jpg" alt="">
-      </div>
-      <h1 class="screen-title" style="margin-top:14px">Урок 1. Кто такой Бог?</h1>
-      <div class="feed-card__meta">Блок 1 «Знакомство с Богом» · 32 мин · для всех возрастов</div>
-
-      <div class="lesson-steps" id="lessonSteps">
-        <div class="lstep" data-step="watch"><i></i>Просмотрено</div>
-        <div class="lstep" data-step="test"><i></i>Тест</div>
-        <div class="lstep" data-step="hw"><i></i>ДЗ</div>
-      </div>
-
-      <div class="card video-stub" id="videoStub">
-        <span data-icon="play" data-size="34"></span>
-        <div><b>Видеоурок</b><br><small>Появится здесь после записи первых уроков (июль). Пока можно пройти материалы и тест.</small></div>
-      </div>
-
-      <h2 class="section-title">Детский пересказ</h2>
-      <div class="card lesson-text">
-        <p>Бог — это Тот, Кто создал всё: небо, землю, море, животных и каждого из нас. Его нельзя увидеть глазами, но можно узнать по Его делам — как ветер: мы его не видим, но чувствуем.</p>
-        <p>Самое главное: Бог нас любит. Каждого. Всегда. Он рядом, когда нам весело и когда грустно. С Ним можно разговаривать — это называется молитва.</p>
-      </div>
-
-      <h2 class="section-title">Цитата из Писания</h2>
-      <article class="card feed-card feed-card--quote">
-        <div class="feed-card__title">«Бог есть любовь, и пребывающий в любви пребывает в Боге»</div>
-        <div class="quote-ref">1 Ин. 4:16</div>
-      </article>
-
-      <h2 class="section-title">Проверь себя</h2>
-      <div class="card" id="lessonTest">
-        <div class="q" data-q="0">
-          <div class="q__text">1. Кто создал небо, землю и человека?</div>
-          <label class="q__opt"><input type="radio" name="q0" value="0"> Природа</label>
-          <label class="q__opt"><input type="radio" name="q0" value="1"> Бог</label>
-          <label class="q__opt"><input type="radio" name="q0" value="2"> Люди</label>
-        </div>
-        <div class="q" data-q="1">
-          <div class="q__text">2. Как называется разговор с Богом?</div>
-          <label class="q__opt"><input type="radio" name="q1" value="0"> Молитва</label>
-          <label class="q__opt"><input type="radio" name="q1" value="1"> Песня</label>
-          <label class="q__opt"><input type="radio" name="q1" value="2"> Урок</label>
-        </div>
-        <div class="q" data-q="2">
-          <div class="q__text">3. Правда ли, что Бог любит каждого человека?</div>
-          <label class="q__opt"><input type="radio" name="q2" value="0"> Правда</label>
-          <label class="q__opt"><input type="radio" name="q2" value="1"> Неправда</label>
-        </div>
-        <button class="btn btn--primary" id="testCheck" style="width:100%">Проверить ответы</button>
-        <div class="test-result" id="testResult" hidden></div>
-      </div>
-
-      <h2 class="section-title">Домашнее задание</h2>
-      <div class="card lesson-text">
-        <p>Нарисуй вместе с родителями то, что Бог создал и что тебе нравится больше всего. Сфотографируй рисунок и отправь Екатерине.</p>
-        <button class="btn btn--outline" id="hwUpload" style="margin-top:10px">Загрузить фото рисунка</button>
-      </div>
-
-      <button class="btn btn--primary lesson-done" id="lessonDone" disabled>Отметить урок пройденным</button>
+      <div id="lessonBody"></div>
     </section>
 
 
@@ -1058,6 +1000,7 @@
 
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/magic.js"></script>
+  <script src="assets/js/lessons.js"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>
