@@ -33,7 +33,7 @@ SKILL.md). Всё остальное в скилле — общая механи
   Позже — клон голоса Екатерины (по её согласию). Формат «говорящая голова» — её реальный голос.
 
 ### Лого и обложка
-- `logo_hd.png` (в папке скилла) = `brand/metanoia-logo.png` (μ + золотые крылья, navy/gold).
+- `logo_hd.png` = `brand/metanoia/png/metanoia-logo-1024.png` (ПРОЗРАЧНЫЙ) (μ + золотые крылья, navy/gold).
 - Обложка = ИИ-генерация (Nano Banana Pro) в тёплой storybook-гамме + **композит реального
   лого**. Промпт-стиль: «soft warm children storybook watercolor, cream terracotta gold navy,
   gentle light, lighthouse/warm home motif». Фолбэк без Ultra: сток + текст (PIL) + лого.
