@@ -28,3 +28,4 @@ pipeline/n14/*.log
 pipeline/n14/*_A.png
 pipeline/n14/*_B.png
 package.json
+pipeline/n14/*.ass
