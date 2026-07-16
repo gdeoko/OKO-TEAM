@@ -1,6 +1,6 @@
 # OKO TEAM · Паспорт интеграций Claude Code (полный)
 
-Обновлено: 15.07.2026 (Tappio: браузер-агент/сервер, аккаунты IG/YT/TikTok, Hooppy). 08.07.2026 (добавлен ФУЛЛ-ПАК видеоконвейера из чата V.CODE + всё из чата ЗооОпт).
+Обновлено: 08.07.2026 (добавлен ФУЛЛ-ПАК видеоконвейера из чата V.CODE + всё из чата ЗооОпт).
 Единый файл всего, что подключено к Claude во всех чатах.
 Значения ключей: `secrets.env.b64` (base64, рядом в корне). Расшифровка и загрузка
 происходят АВТОМАТИЧЕСКИ при старте каждой сессии (SessionStart-хук в
@@ -121,61 +121,60 @@ soyuz.ttf (Союз Гротеск — субтитры), Montserrat Black (ци
 logo_hd.png. Цвета: #0d0d0d / #e8842a / лайм #9CF806 (акцент, с лого OKO — сам лого
 OKO нигде не использовать).
 
-## 1b. Браузер-агент и сервер (полный доступ в интернет)
+## 1б. «Руки» агентов oko-agents (простые интеграции, без MCP)
 
-Собственный сервер-агент: логинится в любые сервисы по логину/паролю, постит,
-читает коды с почты, ходит на любой сайт — как человек.
+`core/tools.py` — агенты (userbot) умеют по действиям из диалога:
+- `image` — генерация картинки БЕСПЛАТНО через **HF Spaces FLUX.1-schnell** (ZeroGPU,
+  gradio_client, ~10с, качество как у платного Higgsfield) → фолбэк Gemini/HF. Спейсы
+  ротируются (`_FLUX_SPACES` в core/tools). webp→png для Telegram. Higgsfield ($200/мес)
+  для картинок больше НЕ нужен. ГРАБЛЯ: у ZeroGPU дневная квота — при исчерпании ретраить/
+  сменить спейс. gradio_client ставится в .venv на VPS.
+- `stock` — сток-видео/фото. Pexels-видео ✅; Pexels-ФОТО отдаёт 404 (ключ видео-профиля),
+  Pixabay режется Cloudflare-челленджем на IP VPS → фото берём из превью Pexels-видео (`pexels-preview`).
+- `search` — интернет-поиск (DuckDuckGo HTML) + краткий ответ Gemini по сниппетам ✅.
+- `voice` — голосовое (edge-tts ru-RU-DmitryNeural → ogg/opus, ffmpeg) ✅. `story` — сторис
+  (картинка FLUX / видео-сток) ✅ (только Босс).
+- `email` — Gmail SMTP, ДВА аккаунта ✅: `okoteam.top@gmail.com` (GMAIL_PASS) и
+  `daniel.okoteam@gmail.com` (GMAIL_PASS2), app-пароли в .env/secrets. Только Босс.
+- `video` — скачать по ссылке и репостнуть (yt-dlp, 1000+ площадок, ≤45MB) ✅. curl_cffi
+  для CF-сайтов. `find` — поиск людей/каналов в Telegram (contacts.Search), список @ников
+  без авто-рассылки (Босс). Полный набор действий агента см. core/prompts ASSISTANT_JSON_FORMAT.
+- `hire` — АВТОНОМНЫЙ ХАНТЕР (core/hire): Босс ставит цель словами → Gemini разбирает
+  (роль/регион/ключевики/тестовое/питч) → contacts.Search находит ЛЮДЕЙ → `_hire_loop`
+  по-человечески пишет (config.HIRE: 1/~10мин, ≤8/сут, ночная пауза — беречь от банов),
+  диалог ведётся как рекрутёр (контекст кандидата в client_ctx), стадии найден→написал→
+  диалог→тест→принят/отказ, отчёты в топик analytics штаба. Аутрич только с acc2/acc3.
+- `post` — публикация в канал (текст + опц. картинка), ТОЛЬКО по команде Босса.
+Ключи на VPS в `/opt/oko-agents/.env` (Pexels/Pixabay/Freesound/HF/Gemini), бэкап — secrets.env.b64.
+Действия image/stock/search доступны и в клиентском диалоге; post/send_dm/payment — только владелец.
 
-| Переменная | Что |
-|---|---|
-| OKO_VPS_CTRL_URL (=CONTROL_URL) | HTTPS-эндпоинт управления сервером, `.../exec` |
-| OKO_VPS_CTRL_TOKEN (=CONTROL_TOKEN) | Bearer-токен к /exec |
+## 1в. ВКонтакте (core/vk.py) — агент «внутри» аккаунта
 
-- Сервер okoagents.okoteam.top. Запуск команд: POST `{"cmd":"..."}` c `Authorization: Bearer $OKO_VPS_CTRL_TOKEN` на `$OKO_VPS_CTRL_URL/exec`. Обёртка: `tappio-app/factory/vps/vps_exec.py` (`vexec`) или `/tmp/vps.py`.
-- Пользователь `okoposter`, в группе **docker** (root-уровень сети через контейнеры), sudo нет. Папка `/opt/oko-poster`, сессии/конфиги в `/opt/oko-poster/cfg`.
-- Стелс-браузер **patchright** (форк Playwright, обходит бот-детект) + chromium (`npm i patchright && npx patchright install chromium`).
-- Обход IP: `/opt/oko-poster/warp` (wgcf+wireproxy → SOCKS5 WARP), `/opt/oko-poster/ts` (tailscale userspace). Для жёсткого анти-бота (TikTok) нужен резид/моб прокси на аккаунт.
+Полный user-token (`VK_TOKEN`, Kate Mobile scope, offline) аккаунта Даниэля
+(@daniel.okoteam, id 718773189). Агент умеет: `wall_post` (стена + фото FLUX),
+`send_message`, `users_search`/`groups_search` (поиск клиентов/людей), `upload_photo_to_wall`.
+Действие `post` с `platform:"vk"`. Проверено: me() + users_search + wall_post (с фото FLUX) +
+send_message работают.
+**Паритет с Telegram (core/vk_agent.py):** Long Poll слушает входящие → агент САМ отвечает
+как человек тем же мозгом (assistant + client_memory), ОТ ЛИЦА Даниэля, ручной приоритет
+20 мин. Действия в ВК-диалоге: картинка (FLUX в личку), КП-ссылка, ДОГОВОР (docx документом),
+ГОЛОСОВОЕ (аудиосообщение edge-tts), поиск. Групповые чаты v1 пропускает.
+**Хантер** ищет людей и в ВК (vk.users_search) + аутрич/фоллоу-ап через ВК для vk-кандидатов.
+**Сторис** (vk.post_photo_story, проверено) и **репост видео** (vk.upload_video: yt-dlp→video.save→
+стена) через действия story/video с platform=vk. Токен в .env/secrets намертво.
+ИТОГ: ВК = полный паритет с Telegram (диалоги, картинки, голос, КП, договор, постинг, сторис,
+видео, поиск людей, хантер). Получен через OAuth Implicit Flow (client_id 2685278, response_type=token) —
+парольный вход VK режет. Обновить токен: тот же authorize-URL в браузере Даниэля.
 
-## 1c. Аккаунты Tappio (соцсети) — статус и вход
+## 1г. YouTube (core/youtube.py) — агент в канале
 
-| Сеть | Логин | Секрет (в secrets.env) | Статус |
-|---|---|---|---|
-| Instagram | tappio.app.pro (почта okoteam.top@gmail.com = TAPPIO_IG_EMAIL) | TAPPIO_IG_PASSWORD | **ПОДКЛЮЧЕН.** Стелс-вход без прокси, сессия на VPS `cfg/ig_state.json` + профиль `cfg/ig_patchright_profile`. Постинг работает (`ig_post_desktop.mjs`, desktop create flow). Коды входа — с okoteam.top через Gmail-коннектор. |
-| YouTube | канал TAPPIO (TAPPIO_YT_CHANNEL_ID) | TAPPIO_YT_CLIENT_ID/_CLIENT_SECRET/_REFRESH_TOKEN | **ПОДКЛЮЧЕН**, официальный Data API. |
-| TikTok | @tappio.app (почта tappio.app@gmail.com = TAPPIO_TT_EMAIL) | TAPPIO_TT_PASSWORD, username TAPPIO_TT_LOGIN | Прямой вход с серверного IP блокируется (нужен резид/моб прокси). Подключаем **через Hooppy** (офиц. TikTok OAuth). Код входа на tappio.app@gmail.com — даёт Даниэль. |
-
-Скрипты: `tappio-app/factory/vps/` — ig_patchright.mjs, ig_post_desktop.mjs, ig_verify.mjs, tk_login.mjs, tk_qr.mjs.
-
-## 1d. Hooppy (кросс-постинг бэкенд)
-
-| Переменная | Что |
-|---|---|
-| HOOPPY_LOGIN / HOOPPY_PASSWORD | Вход в кабинет hooppy.ru |
-| HOOPPY_API_TOKEN | Bearer к API |
-| HOOPPY_API_BASE | https://api.hooppy.ru/api |
-
-- Браузер-логин: `hooppy_login.mjs` → `cfg/hooppy_session.json`.
-- Подключение аккаунтов `/accounts/connect` — офиц. OAuth платформ. TikTok: `tiktok.com/v2/auth/authorize`, redirect `hooppy.ru/oauth/14`, scope `video.upload,video.publish`. Ссылка БЕЗ `state` → привязка по сессии Hooppy (клиенту голую ссылку слать нельзя — нужен свой OAuth со state).
-- source_id: 1=VK, 3=Facebook, 9=Telegram-канал, 11=Telegram-юзер, 14=YouTube, 17/18/29=прочее. IG/TikTok source_id — при подключении.
-- Даниэль знаком с владельцем Hooppy → возможен безлимит аккаунтов + партнёрский/white-label API (детали в `brain/Claude/Projects/Tappio.md`).
-
-
-## 1e. Клиенты (мульти-проект) — аккаунты и доступы
-
-Секреты в secrets.env.b64. Пароль в колонке — он же для соцсетей и почты (клиент дал один).
-Коды верификации приходят на почту клиента (Gmail-коннектор читает только okoteam.top —
-для клиентских почт логинимся в их Gmail стелс-браузером по паролю ИЛИ клиент даёт код).
-
-| Проект | Почта (=Google/YouTube) | Пароль | Instagram | TikTok | Сайт |
-|---|---|---|---|---|---|
-| **Tappio** | okoteam.top@gmail.com (IG) / tappio.app@gmail.com (TikTok) | TAPPIO_IG_PASSWORD / TAPPIO_TT_PASSWORD | tappio.app.pro (ПОДКЛЮЧЕН) | @tappio.app (в Hooppy) | tappio.pro |
-| **Екатерина \| духовное воспитание** | CLIENT_EKAT_EMAIL (ekaterinasbogom@gmail.com) | CLIENT_EKAT_PASSWORD | mama_s_bogom | mama.s.bogom (в Hooppy) | — |
-| **DIESEL** | CLIENT_DIESEL_EMAIL (cargo.panda.go@gmail.com) | CLIENT_DIESEL_PASSWORD | diesel_cargo | diesel_cargo (в Hooppy) | dieselcompany.pro (CLIENT_DIESEL_SITE) |
-
-Статус подключения: Tappio IG+YouTube — готово; TikTok всех — через Hooppy (OAuth с телефона).
-Екатерина IG+YouTube — ГОТОВО. DIESEL IG+YouTube — ГОТОВО. YT-токены: CLIENT_EKAT_YT_REFRESH_TOKEN/_CHANNEL_ID, CLIENT_DIESEL_YT_* (общий app CLIENT_YT_CLIENT_ID/SECRET=TAPPIO_YT_*).
-Переменные клиентов: CLIENT_EKAT_* , CLIENT_DIESEL_* (NAME/EMAIL/PASSWORD/IG/TT[/SITE]).
-
+OAuth канала «ДАНИЭЛЬ | ОКО» (id UCZ67wtnjlDqMdjM0wlukKtQ, 4790 подписчиков) через
+refresh-token. Ключи: YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN (.env/secrets намертво).
+Проект Google Cloud `oko-youtube-502212` (аккаунт daniel.piano.2002@gmail.com), OAuth-клиент
+Web (redirect developers.google.com/oauthplayground), scope youtube.force-ssl + youtube.upload,
+он в тест-юзерах. Агент: my_channel, search, add_comment, upload_video. Действие
+`video` с platform=youtube (скачать по ссылке → залить на канал, privacy настраивается).
+Обновить токен: authorize-URL (тот же client) → code → обмен на refresh.
 
 ## 2. Ключи в Environment variables облака (НЕ в git)
 
@@ -188,8 +187,8 @@ Environment variables окружения:
 | SUPABASE_PAT (Management API) | Supabase, проект tkjewndtlzhnmqwmrnil, SQL через api.supabase.com |
 | TELEGRAM_BOT_TOKEN | бот @okoappbot |
 | S3 twcstorage (key + secret) | s3.twcstorage.ru, бакеты oko-media, oko-tmp |
-| GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
-| ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
+| GEMINI_API_KEY (4 ключа AQ.Ab8RN6...) | Gemini: текст бесплатно. ОСНОВНОЙ провайдер агентов oko-agents (ротация ключей). Из РФ — через прокси `gemini-proxy.okoteam.workers.dev` (Cloudflare Worker, обход геоблока). Модель `gemini-flash-latest`. |
+| ANTHROPIC_API_KEY | Claude API — теперь РЕЗЕРВ/эскалация (дорого). Баланс на нуле после тестов Sonnet; агенты переведены на Gemini. Прокси `anthropic-proxy.okoteam.workers.dev`. |
 
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
@@ -286,27 +285,3 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 3. Кредиты Higgsfield: 4К-апскейл видео, 3D из фото.
 4. Mixamo: разово скачать FBX-пак персонажей вручную и прислать в чат.
 5. Cloudflare Pages: отложено, не поднимать.
-
----
-
-## Обновление 15.07.2026 — арсенал беспоук-монтажа (из чата «ролик Михаила», гориз. 16:9)
-
-- **Скилл `/reels-machine` → `reference/MOTION_ARSENAL.md`** — полный боевой арсенал:
-  библиотека форм вставок (круг/телефон/ромб/шестиугольник/полоса/наклон/арка/TV/…, маски+
-  лаймовые кольца в `pipeline/horizontal/shapes/`), раскладки place, движок `anim.js`
-  (беспоук-инфографика → webm с альфой), 3D-GLB (three.js + gltf-transform децимация),
-  WebGL/Lottie/Spine, звук с SFX по смыслу, законы «ноль статики / лицо не перекрывать /
-  контраст затемнением, а не плашкой / микс форм и фулл-экрана». Готовый код —
-  `.claude/skills/reels-machine/pipeline/horizontal/` (compose3/drive3/fmts/audio_v2/anim/).
-- **КРИТИЧНЫЕ грабли:** webm-альфу читать `-c:v libvpx-vp9` ПЕРЕД `-i` (иначе альфа →
-  чёрный прямоугольник); фон.ffmpeg реапается ~2-3мин → резать грейд/4K на куски; база с
-  частыми keyframe (`-g 15`) для быстрого seek; чат-лимит 30МБ → хостить Higgsfield
-  `media_upload`→PUT curl→`media_confirm`→CDN; zoompan zoom-out/pan даёт ЧЁРНЫЙ кадр —
-  фулл-экран движение только crop-pan.
-
-| Интеграция | Что даёт | Заметки |
-|---|---|---|
-| MIND (MCP `mcp__MIND__*`) | генерация и АНИМАЦИЯ 3D: `start_model_generation`, `start_material_generation`, `start_world_generation`, `animate_generated_model` | альтернатива tripo/Sketchfab для крутящихся 3D-фигур |
-| Higgsfield `video_analysis_create`/`_status` | посценовый анализ готового ролика | poll до completed; коннектор бывает нестабилен |
-| Higgsfield `virality_predictor` | хук/удержание/виральность | дашборд по загруженному видео |
-| Higgsfield `media_upload`+`media_confirm` | хостинг файла → публичный CDN-URL | обход 30МБ-лимита чата; PUT байтов curl'ом |
