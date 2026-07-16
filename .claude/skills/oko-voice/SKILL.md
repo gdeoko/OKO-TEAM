@@ -51,10 +51,26 @@ Env-переключатели: `OKO_TTS_ENGINE=silero|xtts`, `OKO_TTS_VOICE=eug
 - aidar — мужской, поэнергичнее.
 - kseniya / xenia / baya — женские.
 
-## XTTS-v2 (премиум/клон)
+## XTTS-v2 (премиум/клон) — РАБОЧИЙ рецепт клона голоса
 - Модель `tts_models/multilingual/multi-dataset/xtts_v2` (~1.8ГБ, качается coqui-tts).
-- Клон: `--ref voice.wav` (6–20с чистой речи) → голос копируется.
-- Русский: `language="ru"`. Совместимость: `transformers<4.50` (в 5.x убрали isin_mps_friendly).
+- **Клон голоса по образцу** (лучший «живой» результат): `speaker_wav="ref.wav"` (15–30с
+  чистой речи одного человека, 22050 моно PCM), `language="ru"`. Это буквально голос
+  человека → звучит живо. Пример — клон голоса Даниэля по его двум ~55с записям.
+- **ГРАБЛЯ torchcodec (обязательно!):** torch≥2.9/torchaudio требует torchcodec для
+  `torchaudio.load`, а он тянет CUDA-либы (`libnvrtc`) → падает на CPU. Обход: torchcodec
+  должен быть УСТАНОВЛЕН (иначе `import TTS` падает), НО подменить загрузчик на soundfile:
+  ```python
+  import torch, torchaudio, soundfile as sf
+  def _sf_load(p,*a,**k):
+      d,sr=sf.read(p,dtype='float32',always_2d=True); return torch.from_numpy(d.T.copy()),sr
+  torchaudio.load=_sf_load          # ДО import TTS
+  from TTS.api import TTS
+  ```
+- Ставить: `pip install coqui-tts "transformers==4.57" torchcodec soundfile`.
+- **Ускорение/темп:** генерить в натуральном темпе → `ffmpeg atempo=1.5` (сохраняет питч).
+  XTTS-клон часто читает медленно — 1.3–1.5× выводит в нормальный дикторский темп.
+- **Ударения:** XTTS свой g2p (RUAccent-метки `+` НЕ передавать — читает как артефакт).
+  Стресс-ошибки править точечно фонетикой по слуху владельца (я аудио не слышу).
 
 ## Пайплайн озвучки урока/ролика (как делать правильно)
 1. Текст сценария → числа прописью, сложные ударения через `+` перед гласной (`догово+р`).
