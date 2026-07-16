@@ -16,6 +16,8 @@ SCRIPT = [
 ]
 SEG=[{"start":0.0,"end":28.2},{"start":28.75,"end":56.926},{"start":57.426,"end":90.282},{"start":90.782,"end":120.686},{"start":121.186,"end":146.89},{"start":147.39,"end":170.526},{"start":171.026,"end":198.026},{"start":198.526,"end":223.318},{"start":223.818,"end":236.922}]
 
+_d=json.load(open("karaoke_data.json"))          # override with current eugene script + timings
+SCRIPT=_d["script"]; SEG=_d["seg"]
 def strip_acc(s): return ''.join(c for c in unicodedata.normalize('NFD',s) if unicodedata.category(c)!='Mn')
 def norm(w): return re.sub(r'[^0-9a-zа-яё]','',strip_acc(w).lower())
 

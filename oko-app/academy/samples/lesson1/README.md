@@ -2,8 +2,11 @@
 
 Полностью анимационный видео-урок 1920×1080, ~4 мин. Собран локально, 0 кредитов.
 
+## Голос: Silero **eugene** (бренд OKO, бесплатно, безлимит) — скилл /oko-voice.
+## Рендер: детерминированный покадровый 30fps (без лагов) → см. render_frames.py.
+
 ## Пайплайн (воспроизвести)
-1. `narration.py` — гуманизированная озвучка edge-tts (Dmitry), ударения+паузы, → `vo/full.mp3` + `timings.json`.
+1. `narration_silero.py` — гуманизированная озвучка edge-tts (Dmitry), ударения+паузы, → `vo/full.mp3` + `timings.json`.
 2. `whisper` (small) → `words.json` (тайминги слов).
 3. `karaoke.py` — караоке-субтитры ASS: текст сценария 1:1, тайминги из Whisper (difflib-выравнивание).
 4. `fetch_audio.py` — музыка + SFX с Freesound (под смысл урока).
