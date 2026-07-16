@@ -56,25 +56,32 @@ fx_jobs=[]
 def fx(type, seg, off, fr, **kw):
     d=f'{OVD}/{type}_{seg}_{int(off*100)}'
     j=dict(type=type, dir=d, frames=fr, **kw); fx_jobs.append((j, at(seg,off))); return d
+GR='#8a8a8a'  # нейтральный серый для «плохого» столбца (без зелёного)
 # cover: camera-UI рамка (бренд)
 fx('camui','cover',0.0,60, tc='REC 00:03')
-# s1 hook: slam «3 ПРИЁМА» + steps 1-2-3 (превью приёмов)
-fx('steps','s1',1.7,58, items=[['1','свет от окна'],['2','шаг ближе'],['3','ритм монтажа']], y=520)
+# s1 hook (~1-5с): statcard «3» + steps 1-2-3 + shine  → код-инфографика подряд
+fx('statcard','s1',0.5,44, val=3, label='простых приёма', y=300)
+fx('steps','s1',1.9,58, items=[['1','свет от окна'],['2','шаг ближе'],['3','ритм монтажа']], y=560)
 fx('shine','s1',0.9,26)
-# s2 приём1 свет: lowerthird + callout
-fx('lowerthird','s2',0.4,66, title='ПРИЁМ 1', sub='свет от окна', y=1150)
-fx('callout','s2',3.0,44, x=0.5, y=0.34, label='к свету лицом')
-# s3 приём2 шаг: lowerthird + stamp «БЕЗ ЗУМА»
-fx('lowerthird','s3',0.3,64, title='ПРИЁМ 2', sub='шаг ближе, не зум', y=1150)
-fx('stamp','s3',2.4,42, text='БЕЗ ЗУМА', color=OR, x=0.5, y=0.6, big=True, rot=-0.12)
-# s4 приём3 ритм: lowerthird + gridpop (смена планов) + slam «3 СЕК»
-fx('lowerthird','s4',0.3,60, title='ПРИЁМ 3', sub='ритм монтажа', y=1150)
-fx('gridpop','s4',1.5,58, y=560)
-fx('slam','s4',3.6,38, words=['КАЖДЫЕ 3 СЕК'], colors=[WH], y=1000)
-# s5 база: toast «свет · звук · монтаж»
-fx('toast','s5',0.6,54, text='свет · звук · монтаж')
-fx('ticker','s2',0.0,170, text='V.CODE · видеопродакшн · Ставрополь · снимаем дорого · ')
-# s6 CTA: dm + likes + stamp
+# s2 приём1 свет (~5-15с): lowerthird + callout + bars(тень/свет) + donut(80%)
+fx('lowerthird','s2',0.4,60, title='ПРИЁМ 1', sub='свет от окна', y=1150)
+fx('callout','s2',2.4,42, x=0.5, y=0.30, label='к свету лицом')
+fx('bars','s2',4.4,64, data=[['без света',26,GR],['от окна',100,OR]])
+fx('donut','s2',7.2,60, val=80, label='кадра решает свет', x=0.5, y=0.28)
+# s3 приём2 шаг (~15-24с): lowerthird + stamp + bars(зум/шаг) + statcard(100%)
+fx('lowerthird','s3',0.3,60, title='ПРИЁМ 2', sub='шаг ближе, не зум', y=1150)
+fx('stamp','s3',2.2,40, text='БЕЗ ЗУМА', color=OR, x=0.5, y=0.56, big=True, rot=-0.12)
+fx('bars','s3',4.6,60, data=[['цифровой зум',18,GR],['шаг ногами',100,OR]])
+fx('statcard','s3',7.0,52, val=100, suf='%', label='качества сохранил', y=300)
+# s4 приём3 ритм (~24-31с): lowerthird + gridpop + statcard(3 сек)
+fx('lowerthird','s4',0.3,56, title='ПРИЁМ 3', sub='ритм монтажа', y=1150)
+fx('gridpop','s4',1.6,56, y=560)
+fx('statcard','s4',4.0,48, val=3, suf=' сек', label='на один кадр', y=300)
+# s5 база (~31-37с): toast + ratings(5) уровень студии
+fx('toast','s5',0.5,50, text='свет · звук · монтаж')
+fx('ratings','s5',2.6,54, stars=5, val=5, label='уровень студии', y=340)
+fx('ticker','s2',0.0,300, text='V.CODE · видеопродакшн · Ставрополь · снимаем дорого · ')
+# s6 CTA (~37-45с): dm + likes + stamp
 fx('dm','s6',0.5,56, items=['СЪЕМКА','+1 заявка','запись открыта'], y=980)
 fx('likes','s6',1.7,48, n=18)
 fx('stamp','s6',2.6,44, text='НАПИШИТЕ', color=OR, x=0.5, y=0.30, rot=0.08)

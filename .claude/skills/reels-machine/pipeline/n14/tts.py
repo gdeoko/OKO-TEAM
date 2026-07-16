@@ -2,7 +2,7 @@ import json, asyncio, edge_tts, os, subprocess, unicodedata, re
 segs=json.load(open('n14/segs.json'))
 VOICE="ru-RU-DmitryNeural"; RATE="+6%"
 def dur(p): return float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',p]).strip())
-def strip_acc(s): return ''.join(c for c in unicodedata.normalize('NFD',s) if unicodedata.category(c)!='Mn')
+def strip_acc(s): return ''.join(c for c in s if c not in ('́','̀'))  # убираем ТОЛЬКО ударения, й/ё сохраняем
 async def synth(sid,text):
     for a in range(6):
         try:

@@ -47,7 +47,7 @@ PlayResX: 1080
 PlayResY: 1920
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Sub,Soyuz Grotesk,76,&H002059EA&,&H00FFFFFF,&H00101010,&H64000000,-1,0,0,0,100,100,1,0,1,5,3,2,90,90,340,204
+Style: Sub,Soyuz Grotesk,82,&H002059EA&,&H00FFFFFF,&H00101010,&H64000000,-1,0,0,0,100,100,1,0,1,0,0,2,90,90,330,204
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
@@ -61,7 +61,7 @@ for s in SEGS:
     lines=[]; cur=[]; ln=0
     for w in words:
         wl=len(w['w'])
-        if cur and (len(cur)>=3 or ln+wl+1>16): lines.append(cur); cur=[]; ln=0
+        if cur and (len(cur)>=2 or ln+wl+1>16): lines.append(cur); cur=[]; ln=0
         cur.append(w); ln+=wl+1
     if cur: lines.append(cur)
     for line in lines:
