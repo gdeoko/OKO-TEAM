@@ -47,7 +47,8 @@ description: Монтажёр вертикальных роликов под к�
 
 ```bash
 sudo apt-get install -y -qq ffmpeg
-pip3 install -q edge-tts rembg onnxruntime pillow numpy
+pip3 install -q rembg onnxruntime pillow numpy faster-whisper       # озвучка: /oko-voice (Silero eugene)
+pip3 install -q torch torchaudio --index-url https://download.pytorch.org/whl/cpu  # для Silero TTS
 cat /root/.ccr/ca-bundle.crt >> $(python3 -m certifi)          # TLS через агент-прокси
 # node-модули для моушна (ставить в рабочую папку проекта):
 npm i playwright gsap lottie-web three remotion @remotion/cli @remotion/bundler \
@@ -68,12 +69,18 @@ export RM_NODE_MODULES="$PWD/node_modules"                     # для transiti
 5–6 предложений (s1..sN). Текст: числа прописью, без длинных тире, без «не X а Y».
 Ударения принудительно через U+0301: те́сто, муки́, догово́р.
 
-### 2. Озвучка с тайм-кодами слов — edge-tts (БЕСПЛАТНО)
-`ru-RU-DmitryNeural` (мужской реалистичный), rate="+8%", `boundary="WordBoundary"`
-(иначе тайминги слов пустые!). Сохранять `vo/sN.mp3` + `vo/sN.json` со словами
-`{w, t, d}` — на них строятся караоке и привязка анимаций к словам. Ретраи 4–5 раз.
-Женский голос: `ru-RU-SvetlanaNeural`. (Платный премиум-голос/аватар — HeyGen/Higgsfield,
-подключать только по запросу с оплатой; локальный wav2lip даёт слабый рот — НЕ использовать.)
+### 2. Озвучка — ГОЛОС OKO (скилл `/oko-voice`, БЕСПЛАТНО, локально)
+**Только бесплатные локальные нейро-TTS. edge-tts НЕ использовать (робот, ошибки ударений).**
+- Бренд-голос: **Silero v4_ru speaker `eugene`** (муж, утверждён Даниэлем). Женский — `kseniya/xenia`.
+- Премиум/клон голоса: **XTTS-v2** (ближе к ElevenLabs, `--ref` для клона по образцу).
+- Платные ElevenLabs/Higgsfield-кредиты НЕ жечь на озвучку (кредит ≈ $0.066, ~$1/урок).
+```bash
+python3 .claude/skills/oko-voice/scripts/oko_tts.py --engine silero --voice eugene \
+        --textfile vo/sN.txt --out vo/sN.wav
+```
+Ударения — `+` перед гласной (`догово+р`); Silero держит их через `put_accent`.
+**Тайм-коды слов для караоке** — faster-whisper (`small`, `word_timestamps`) по готовому wav →
+`vo/sN.json` со словами `{w,t,d}` (на них строятся караоке и привязка анимаций к словам).
 
 ### 3. Стоки — приоритет источников (ключи в secrets.env)
 1. **Pexels API** (`PEXELS_API_KEY`) — ГЛАВНЫЙ. Нативные вертикальные:
@@ -206,7 +213,8 @@ CTA-плашка. Под другого клиента — свои цвета/�
 - `reference/USED_EFFECTS.md` — реестр запрета повторов (память завода).
 
 ## Ограничения / грабли (проверено болью)
-- edge-tts моргает — обязательны ретраи; WordBoundary иначе пустой.
+- Озвучка — ТОЛЬКО `/oko-voice` (Silero eugene, бесплатно). edge-tts НЕ использовать (робот).
+  Тайм-коды слов для караоке — faster-whisper по готовому wav (не WordBoundary).
 - Mixkit music = AccessDenied → музыка с Freesound.
 - Sketchfab search иногда `{}` → ретраить/менять query.
 - ZeroGPU квота дневная — не долбить.

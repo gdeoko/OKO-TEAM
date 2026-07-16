@@ -145,6 +145,10 @@ import { Sequence } from "remotion";
 
 ## AI 语音解说集成
 
+> **OKO TEAM (Даниэль): для озвучки любых роликов/уроков использовать скилл `/oko-voice`
+> (Silero `eugene`, бесплатно, локально) — НЕ MiniMax/Edge TTS и НЕ платные кредиты.
+> For OKO projects use `/oko-voice` (free local Silero `eugene`), not the engines below.**
+
 为视频添加 AI 语音解说，实现音视频同步。支持两种方案：
 
 | 方案 | 优点 | 缺点 | 硬件要求 | 推荐度 |
