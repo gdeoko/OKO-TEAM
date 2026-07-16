@@ -31,6 +31,14 @@ cadence: РОВНО 1 ролик в день, ВСЕГДА (не больше), 
 report_bot: CLIENT_EKAT_ANALYTICS_BOT_TOKEN (@metanoiaorder_bot). Отчёт ежедневно 10:00 МСК
             (07:00 UTC). Админы/получатели: CLIENT_EKAT_ANALYTICS_ADMINS (Екатерина 765430195;
             владельца добавить после его /start). chat_id владельца — из getUpdates, в секрет.
+bot_backend: factory/metanoia_bot.py задеплоен на VPS /opt/oko-poster/metanoia_bot.py
+            (long-polling, reply-keyboard: За вчера/За неделю/Прогресс/Что зашло/Аккаунты/
+            Сайт/Статус/Помощь), keepalive в cron каждую минуту. Ежедневная рутина ПИШЕТ в
+            /opt/oko-poster/cfg/ (через VPS /exec): metanoia_report_latest.txt (за вчера),
+            metanoia_week.txt, metanoia_winners.txt, metanoia_site.txt, metanoia_state.json
+            ({reels_total,views_total,followers_total,updated}) — бот отдаёт их по кнопкам.
+            Рассылка отчёта: всем chat_id из /opt/oko-poster/cfg/metanoia_recipients.txt
+            (бот автособирает при /start). Тексты бота — HTML parse_mode.
 site: metanoia-180.ru (по ТЗ) — аналитика визитов/переходов/кликов/заявок в тот же отчёт.
       Уточнить у владельца рабочий домен лендинга и метрику (Я.Метрика/GA) для доступа.
 
