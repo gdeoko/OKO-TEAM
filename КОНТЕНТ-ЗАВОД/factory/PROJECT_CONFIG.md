@@ -65,3 +65,17 @@ infra: VPS okoagents.okoteam.top через OKO_VPS_CTRL_URL/_TOKEN (POST /exec)
 Путь Екатерины · «Мама, а…?» · Миф недели · Герой веры (демо) · Как говорить о… ·
 Бытовое богословие · Семейный ритуал · Внутри Метанойи · Отзывы семей (с нед. 8).
 Форматы: говорящая голова · закадр+видеоряд · текст на экране · разбор/реакция · демо приложения.
+
+## Публикация — ПРОВЕРЕННЫЕ команды (16.07.2026, все 3 площадки работают)
+Хостинг файла: `higgsfield upload create <mp4> --json` → CDN URL (для переноса на VPS: VPS `curl -o`).
+- **YouTube Shorts**: Data API resumable upload (part=snippet,status). Расписание — `status.publishAt`
+  (RFC3339 UTC) + privacyStatus=private; публикация сразу — privacyStatus=public. Категория 27.
+- **TikTok @mama.s.bogom**: VPS `/opt/oko-poster/metanoia_post1.sh` (ИСПРАВЛЕН: берёт токен из
+  `source cfg/secrets.env`, НЕ хардкод). Внутри `hooppy_post_api.py 2352065 <mp4> "<caption>"`
+  (api.hooppy.ru, upload→{photo}, create post). Грабля: без реального HOOPPY_API_TOKEN → KeyError 'photo'.
+- **Instagram Reels @mama_s_bogom**: VPS `python3 /opt/oko-poster/ig_post_reel.py <mp4> <caption.txt>`
+  (instagrapi `login_by_sessionid` из cookies `cfg/ig_ekat_state.json` (Playwright storage_state,
+  ключ sessionid); миниатюра — ffmpeg кадр 1с, передаётся `thumbnail=`; moviepy НЕ нужен).
+  instagrapi установлен на VPS. Сессия ds_user_id 78204563542.
+Порядок в рутине: собрать → залить на VPS (cfg/metanoia_reel1.mp4) + caption (cfg/metanoia_caption1.txt)
+→ YouTube (publishAt 16:00 UTC) + TikTok + IG. Проверить факт публикации на каждой.
