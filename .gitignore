@@ -20,3 +20,7 @@ PROJECT_CONTEXT.txt
 secrets.env
 OKO_MASTER_VAULT.md
 OKO_MASTER_VAULT.md.b64
+
+# python cache
+__pycache__/
+*.pyc

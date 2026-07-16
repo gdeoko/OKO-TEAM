@@ -234,6 +234,47 @@ whoosh на переходы + смысловые. Мастер: `loudnorm I=-14
 
 ---
 
+## ☁️ ОБЛАЧНЫЙ РЕНДЕР — Shotstack / Creatomate (`pipeline/cloud/`)
+
+Альтернатива локальному ffmpeg — облачный монтаж по JSON. Ключи в `secrets.env`
+(автозагрузка). Сеть только через curl — обёртки уже на curl-subprocess. Проверены
+боем: оба отдают валидный MP4 1080×1920.
+
+**Когда что брать:**
+- **Локальный ffmpeg (build_reel.py)** — флагман: полный контроль, PNG-оверлеи с альфой,
+  gl-переходы, 3D, караоке-ASS по слову, беспоук-анимации. Дефолт для контент-завода.
+- **Shotstack** — быстрый чистый монтаж по таймлайну без ручного ffmpeg; когда нужен
+  программный рендер из кода (клипы + титры + переходы + саундтрек). Sandbox бесплатный
+  (вотермарк), prod — платный (`SHOTSTACK_PROD_KEY`).
+- **Creatomate** — серийный рендер «по данным»: один шаблон (template_id) + пачка
+  modifications → пачка роликов. Плюс inline-source сцены. Free-tier рендерит медленно
+  (2–3 мин на клип) — таймаут обёрток 600с.
+
+**Использование:**
+```python
+import sys; sys.path.insert(0, '.../reels-machine/pipeline')
+from cloud import shotstack as ss, creatomate as cm
+
+# Shotstack: вертикальный ролик из шотов + караоке-титров + музыки
+tl  = ss.build_vertical(
+        shots=[{"src": url_mp4, "length": 3, "effect": "zoomIn"}, ...],
+        subs=[{"text": "ПРОДАНО", "start": 1.2, "length": 1.0, "color": "#9AFF00"}],
+        music_url=music, bg="#0d0d0d")
+mp4 = ss.render(tl, env="sandbox", out_path="reel.mp4")   # env="prod" — без вотермарка
+url = ss.ingest(external_url, env="prod")                  # залить ассет в CDN Shotstack
+
+# Creatomate: пачка по шаблону
+paths = cm.batch(template_id, [ {"Text-1.text": "A"}, {"Text-1.text": "B"} ], out_dir="out")
+mp4   = cm.render(source=scene_dict, out_path="scene.mp4")  # inline-сцена без шаблона
+```
+Грабли: у Shotstack `title`-asset — legacy, но стабилен для титров; на переходах
+клипы должны перекрываться по времени. Creatomate `public-...` токен — только для
+браузерного preview, серверный ключ в браузер НЕ отдавать.
+
+---
+
+---
+
 ## Бренд-константы (пример V.CODE — вынести в `reference/BRAND_PROFILE.md`)
 Чёрный `#0d0d0d`, **акцент оранж `#EA5920` (из лого)** + белый. БЕЗ зелёного. Лого `logo_hd.png`.
 Голос `ru-RU-DmitryNeural`. Субтитры: Союз Гротеск, активное слово оранж `&H2059EA&`. Финалка:
@@ -242,6 +283,8 @@ whoosh на переходы + смысловые. Мастер: `loudnorm I=-14
 
 ## Файлы скилла
 - `pipeline/build_reel.py` — оркестратор 3 этапов.
+- `pipeline/cloud/` — облачный рендер: `shotstack.py` (таймлайн-JSON, render/ingest/
+  build_vertical), `creatomate.py` (шаблон/inline-source, render/batch), `README.md`.
 - `pipeline/fetch_pexels.py` — отбор вертикальных стоков (расширять на уникальность+реестр).
 - `pipeline/motion/` — fx_engine.js (+fx_page.html), lottie_render.js, transitions_gl.cjs,
   infographics.tsx, counter_gauge.ts, kinetic_type.ts, depth_parallax.py.
