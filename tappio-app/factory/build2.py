@@ -128,7 +128,12 @@ def main():
     ov_base=n+1
     for k,(png,a,b,style) in enumerate(ovs):
         inputs+=['-loop','1','-framerate','30','-t',f'{total:.2f}','-i',f"{wd}/{png}"]
-        idx=ov_base+k; fade,xy=ov_anim(style if style!='fadecover' else 'plain',a,b)
+        idx=ov_base+k
+        if style=='fadecover':
+            # обложка видна ПОЛНОСТЬЮ с кадра 0 (для thumbnail), затем плавно уходит в ролик
+            fade=f"fade=out:st={max(a,b-0.35):.2f}:d=0.35:alpha=1"; xy="0:0"
+        else:
+            fade,xy=ov_anim(style,a,b)
         fc.append(f"[{idx}:v]format=rgba,fps=30,{fade}[o{k}]")
         nl=f"[ov{k}]"; fc.append(f"{chain}[o{k}]overlay={xy}:enable='between(t,{a:.2f},{b:.2f})'{nl}"); chain=nl
     fc.append(f"{chain}null[vout]")

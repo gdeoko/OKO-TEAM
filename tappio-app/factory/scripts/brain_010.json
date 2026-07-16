@@ -1,0 +1,11 @@
+{"id":"brain_010","app":"brain","category":"viral","voice":"en-US-BrianNeural","rate":"+5%","grade":"purple_dream",
+ "brand":{"accent":"#9B5DE5","accent2":"#C9A6F5","code":"FOCUS","logo":"brain.png","name":"Brainova"},
+ "cover":{"style":"kinetic","kicker":"MEMORY TEST","top":"NAME 3 REASONS","big":"YOU WALKED\nIN THE ROOM"},
+ "segments":[
+  {"id":"s1","text":"Name three reasons you walked into the room. Go.","visual":"stock","q":["open doorway pov walking","person blank confused stare","empty living room doorway"],"overlay":{"type":"kinetic","top":"NAME","big":"3 REASONS"}},
+  {"id":"s2","text":"If you froze, you are not alone. Attention dropped to forty-seven seconds.","visual":"stock","q":["thumb scrolling phone closeup","clock ticking macro","tired person phone night"],"overlay":{"type":"stat","big":"47 SEC","sub":"average attention span"}},
+  {"id":"s3","text":"The good news, memory has a warm-up, just like a muscle.","visual":"stock","q":["person running exercise sunrise","glowing brain hologram","focused person studying"],"overlay":{"type":"kicker","text":"MEMORY = A MUSCLE"}},
+  {"id":"s4","text":"Ten focused minutes a day, and your recall starts climbing.","visual":"DEMO:brain_score","overlay":{"type":"kinetic","top":"10 MINUTES","big":"A DAY"}},
+  {"id":"s5","text":"Train the part of your brain the scroll is quietly starving.","visual":"DEMO:brain_score","overlay":{"type":"chips","items":["MEMORY","FOCUS","SPEED"]}}
+ ],
+ "cta":{"text":"Give your brain ten minutes back.","code":"FOCUS"}}

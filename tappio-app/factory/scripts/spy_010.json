@@ -1,0 +1,11 @@
+{"id":"spy_010","app":"spy","category":"viral","voice":"en-US-AndrewNeural","rate":"+6%","grade":"teal_orange",
+ "brand":{"accent":"#00D9FF","accent2":"#8BE9FF","code":"PRIVACY","logo":"spy.png","name":"Spy Camera Finder"},
+ "cover":{"style":"kinetic","kicker":"PRIVACY · 2026","top":"A $12 CAMERA","big":"CAN SEE\nYOU"},
+ "segments":[
+  {"id":"s1","text":"The KGB hid a microphone inside a wooden seal for seven years.","visual":"stock","q":["cold war spy vintage","old wooden emblem carving macro","dark secret room dramatic"],"overlay":{"type":"kicker","text":"THE THING · 1945"}},
+  {"id":"s2","text":"Today a working spy camera costs twelve dollars and fits in a screw.","visual":"stock","q":["tiny hidden camera lens macro","phone charger adapter closeup","smoke detector ceiling closeup"],"overlay":{"type":"kinetic","top":"TWELVE","big":"DOLLARS"}},
+  {"id":"s3","text":"They hide in rentals, hotels, and the last place you would look.","visual":"stock","q":["hotel room bed night","airbnb apartment interior","alarm clock nightstand macro"],"overlay":{"type":"stat","big":"7 SPOTS","sub":"in every rental"}},
+  {"id":"s4","text":"One scan checks four sensors at once. Wi-Fi, infrared, magnetic, radio.","visual":"DEMO:spy_scan","overlay":{"type":"kinetic","top":"ONE SCAN","big":"4 SENSORS"}},
+  {"id":"s5","text":"Sixty seconds to know your space is truly yours.","visual":"DEMO:spy_scan","overlay":{"type":"chips","items":["WI-FI","INFRARED","RADIO"]}}
+ ],
+ "cta":{"text":"Take back your privacy.","code":"PRIVACY"}}
