@@ -6,7 +6,7 @@
   "grade": "teal_orange",
   "brand": {"accent": "#00D9FF", "accent2": "#7CFCFF", "code": "PRIVACY", "logo": "spy.png", "name": "SPY CAMERA FINDER"},
   "music": {"queries": ["dark tension cinematic", "suspense pulse electronic", "cinematic underscore dark"]},
-  "cover": {"style": "kinetic", "kicker": "PRIVACY BREACH", "top": "A $12 CAMERA", "big": "IS WATCHING YOU", "q": ["hidden camera lens macro dark"]},
+  "cover": {"style": "kinetic", "kicker": "PRIVACY BREACH", "top": "A $12 CAMERA", "big": "IS WATCHING\nYOU RIGHT NOW", "q": ["hidden camera lens macro dark"]},
   "segments": [
     {"id": "b1", "text": "There is a camera in this room right now. And you can't see it."},
     {"id": "b2", "text": "They cost twelve dollars. They fit inside a smoke detector, a charger, an alarm clock."},
@@ -18,7 +18,7 @@
   "shots": [
     {"q": ["hidden spy camera macro lens"], "motion": "zin"},
     {"q": ["dark hotel room night dim"], "motion": "panr"},
-    {"q": ["smoke detector ceiling closeup"], "motion": "zin"},
+    {"q": ["white smoke alarm on ceiling", "fire alarm ceiling round white"], "motion": "zin"},
     {"q": ["usb charger wall plug closeup"], "motion": "panl"},
     {"q": ["alarm clock bedside dark room"], "motion": "zout"},
     {"q": ["person entering hotel room luggage"], "motion": "panr"},
@@ -34,17 +34,20 @@
     {"q": ["locking door privacy secure home"], "motion": "zin"}
   ],
   "overlays": [
-    {"at": 0.03, "dur": 1.6, "type": "kicker", "text": "PRIVACY BREACH"},
-    {"at": 0.10, "dur": 1.9, "type": "stat_count", "to": 12, "prefix": "$", "label": "COST OF A HIDDEN CAM", "pos": "center"},
-    {"at": 0.19, "dur": 1.6, "type": "kinetic", "top": "THEY HIDE IN", "big": "PLAIN SIGHT"},
-    {"at": 0.27, "dur": 2.2, "type": "bars", "title": "WHERE THEY HIDE", "unit": "%", "pos": "center", "items": [["Smoke detector", 41], ["Alarm clock", 27], ["USB charger", 18], ["Mirror / decor", 14]]},
-    {"at": 0.39, "dur": 1.8, "type": "ring", "pct": 83, "label": "RENTALS NEVER SCANNED", "pos": "upper"},
-    {"at": 0.49, "dur": 1.6, "type": "lowerthird", "title": "4-SENSOR SCAN", "sub": "one room, 60 seconds"},
-    {"at": 0.57, "dur": 1.9, "type": "chips", "pos": "upper", "items": ["INFRARED", "MAGNETIC", "WI-FI", "BLUETOOTH"]},
-    {"at": 0.67, "dur": 1.7, "type": "ticker", "to": 60, "suffix": "s", "label": "FULL ROOM SCAN", "pos": "upper"},
-    {"at": 0.76, "dur": 1.6, "type": "callout", "text": "LENS DETECTED", "x": 560, "y": 720},
-    {"at": 0.85, "dur": 1.7, "type": "kinetic", "top": "TAKE BACK", "big": "YOUR SPACE"},
-    {"at": 0.93, "dur": 1.5, "type": "kicker", "text": "SCAN BEFORE YOU UNPACK"}
+    {"at": 0.03, "dur": 1.5, "type": "kicker", "text": "PRIVACY BREACH"},
+    {"at": 0.09, "dur": 1.7, "type": "stat_count", "to": 12, "prefix": "$", "label": "COST OF A HIDDEN CAM", "pos": "center"},
+    {"at": 0.16, "dur": 1.5, "type": "kinetic", "top": "THEY HIDE IN", "big": "PLAIN SIGHT"},
+    {"at": 0.23, "dur": 2.0, "type": "bars", "title": "WHERE THEY HIDE", "unit": "%", "pos": "center", "items": [["Smoke detector", 41], ["Alarm clock", 27], ["USB charger", 18], ["Mirror / decor", 14]]},
+    {"at": 0.33, "dur": 1.5, "type": "lowerthird", "title": "SMOKE DETECTORS", "sub": "the #1 hiding spot"},
+    {"at": 0.40, "dur": 1.7, "type": "ring", "pct": 83, "label": "RENTALS NEVER SCANNED", "pos": "upper"},
+    {"at": 0.48, "dur": 1.5, "type": "kinetic", "top": "MOST PEOPLE", "big": "NEVER CHECK"},
+    {"at": 0.55, "dur": 1.5, "type": "lowerthird", "title": "4-SENSOR SCAN", "sub": "one room, 60 seconds"},
+    {"at": 0.61, "dur": 1.7, "type": "chips", "pos": "upper", "items": ["INFRARED", "MAGNETIC", "WI-FI", "BLUETOOTH"]},
+    {"at": 0.68, "dur": 1.4, "type": "callout", "text": "LENS FOUND", "x": 540, "y": 700},
+    {"at": 0.74, "dur": 1.6, "type": "ticker", "to": 60, "suffix": "s", "label": "TO SCAN A ROOM", "pos": "upper"},
+    {"at": 0.81, "dur": 1.6, "type": "stat_count", "to": 4, "label": "SENSORS, ONE APP", "pos": "center"},
+    {"at": 0.88, "dur": 1.6, "type": "kinetic", "top": "TAKE BACK", "big": "YOUR SPACE"},
+    {"at": 0.95, "dur": 1.5, "type": "kicker", "text": "SCAN BEFORE YOU UNPACK"}
   ],
   "cta": {"text": "Scan your room before you unpack. Comment PRIVACY for the app.", "code": "PRIVACY"}
 }
