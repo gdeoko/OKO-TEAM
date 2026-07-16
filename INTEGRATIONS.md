@@ -225,17 +225,33 @@ MCP-коннекторы не пробрасываются). Ставится и
   `higgsfield-generate` (фото/видео/3D/аудио + Marketing Studio + Virality),
   `higgsfield-soul-id` (обучение лица → reference_id), `higgsfield-product-photoshoot`,
   `higgsfield-marketplace-cards`, `higgsfield-websites`. Плюс video-analyzer внутри generate.
-- **Авторизация (одноразово, нужен Даниэль — браузерный OAuth loopback):**
-  1) на СВОЁМ компе `npm i -g @higgsfield/cli` → `higgsfield auth login` (откроется браузер,
-     логин 5 сек, аккаунт с 2165 Ultra кредитами);
-  2) прислать содержимое `~/.config/higgsfield/credentials.json` (или `higgsfield auth token`);
-  3) я кладу его как `HIGGSFIELD_CREDENTIALS_B64` в `secrets.env` (base64) → хук на каждом
-     чате пишет `~/.config/higgsfield/credentials.json`, CLE сам обновляет access по refresh_token.
-  Env `HIGGSFIELD_CREDENTIALS_PATH` переопределяет путь к credentials.json.
-  Проверка: `higgsfield account status` → `<email> — <plan>, <N> credits`.
-- Грабли: loopback-callback (`localhost:8765`) завершается только на машине с браузером —
-  из облачного контейнера кросс-девайс OAuth не закрыть, поэтому логин делает Даниэль, а
-  переносим credentials.json. Refresh_token переносим между машинами (scope offline_access).
+- **Авторизация — СДЕЛАНА, автоматом во всех чатах (VPS-брокер).** Аккаунт
+  okoteam.top@gmail.com, план **ultra**, workspace `d7fe59d5-af19-4d33-9753-2735901d0da3`.
+  Схема (refresh-токен Clerk РОТИРУЕТСЯ при каждом использовании, поэтому централизованно):
+  - VPS `/opt/oko-poster/hf_token.sh` — брокер: хранит refresh-токен в
+    `cfg/hf_refresh_token.txt`, под flock обновляет его через `clerk.higgsfield.ai/oauth/token`
+    (grant_type=refresh_token, client_id=sRGCQJvvJkPrrtRj), отдаёт свежий `access_token`.
+  - SessionStart-хук (`oko-session-start.sh` / inline в дефолт-ветке) дёргает брокер через
+    `$OKO_VPS_CTRL_URL/exec` и пишет `~/.config/higgsfield/credentials.json`
+    (**формат: flat, `auth_version:2`, `refresh_token:""` — чтобы локальный CLI НЕ ротировал
+    токен VPS**) + `config.json` с `workspace_id`.
+  - `secrets.env`: `SSL_CERT_FILE=/root/.ccr/ca-bundle.crt` (Go-CLI доверяет CA прокси),
+    `HIGGSFIELD_WORKSPACE_ID`, `HIGGSFIELD_CREDENTIALS_PATH`.
+  Проверка: `higgsfield account status` → `okoteam.top@gmail.com — ultra plan, N credits`.
+  Если авторизация когда-нибудь отвалится (протух refresh) — заново: я генерю PKCE-ссылку
+  `clerk.higgsfield.ai/oauth/authorize?...redirect_uri=http://localhost:8765/callback`,
+  Даниэль открывает в браузере телефона → Approve → присылает `code` из адресной строки,
+  я меняю его на токен и кладу новый refresh на VPS.
+- Грабли:
+  - Формат credentials.json определён перебором (DisallowUnknownFields): валидны поля
+    `auth_version(int 2)`, `access_token`, `refresh_token`, `token_type`, `expires_in`,
+    `scope`, `created_at`, `created_from`, `email`, `workspace_id`, `user`. Поле `expires_at`
+    ЛОМАЕТ парсинг (это тег другой структуры) — не класть. Вложенный `{"token":{...}}` →
+    «Not authenticated», без `auth_version` → «older auth flow».
+  - Go-CLI не читает `HTTPS_PROXY`-CA сам → нужен `SSL_CERT_FILE`, иначе «no response received».
+  - CLI не поддерживает Android (`EBADPLATFORM`) — Termux отпадает, только desktop/браузер.
+  - Clerk-вход `POST /v1/client/sign_ins` из облачного egress ловит `429` (бот-защита) —
+    headless-логин по паролю невозможен; логин только из реального браузера Даниэля.
 
 ## 4. Скиллы (.claude/skills, собраны со ВСЕХ чатов)
 
