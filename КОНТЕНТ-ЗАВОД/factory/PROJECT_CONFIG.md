@@ -19,6 +19,9 @@ accounts:
   tiktok:    @mama.s.bogom через Hooppy — HOOPPY_TT_PAGE_EKAT (2352065), source_id 14,
              общий HOOPPY_API_TOKEN. Постинг: hooppy_post_api.py 2352065 <mp4> "<caption>".
 
+brand_voice_engine: Higgsfield generate_audio · text2speech_v2 · variant=elevenlabs ·
+            voice_type=preset · voice_id=ca83ca7f-c186-493d-bd69-0d765fa861b2 (Elena, жен, ~0.3-0.6кр/ролик).
+            Позже — клон реального голоса Екатерины (create_voice).
 brand_profile: .claude/skills/reels-machine/reference/BRAND_PROFILE.md (Метанойя)
 logo: brand/metanoia-logo.png (μ + золотые крылья, navy/gold, кремовый фон)
 
