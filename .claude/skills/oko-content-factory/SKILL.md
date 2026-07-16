@@ -1294,7 +1294,13 @@ oko-content-factory/
 человечного результата. Без этого сценарий не идёт в сборку.
 
 ### 15.7 Голос
-- edge-tts (Svetlana/Dmitry) и Silero — **фолбэк-качество, для тёплых экспертных ниш
-  недостаточно.** Цель — **клон реального голоса эксперта** (XTTS-v2 локально —
+- **ГЛАВНЫЙ ГОЛОС — Higgsfield `generate_audio` (ElevenLabs/Seed), топ-качество, дёшево:**
+  `model:text2speech_v2 variant:elevenlabs voice_type:preset voice_id:<из list_voices>`
+  (русские женские Elena/Tasha/Nora/Ava/…). Цена ~0.3 кредита за фразу, ролик <2 кредитов
+  (Ultra 2165 кр = ~1000+ роликов). **HF PRO не нужен.** seed_audio ~0.7 кр/фраза.
+- **Клон реального голоса эксперта** — Higgsfield `create_voice` (аплоад 1–2 мин чистой
+  речи) → `generate_audio voice_type:element voice_id:<клон>`. Это идеал для канала эксперта.
+- edge-tts (Svetlana/Dmitry) и Silero — фолбэк-качество, для тёплых экспертных ниш
+  недостаточно. Цель — **клон реального голоса эксперта** (XTTS-v2 локально —
   transformers 4.43–4.46, иначе dep-конфликт; либо HF-клон Qwen3-TTS/OmniVoice, когда
   ZeroGPU-квота доступна). Просить у клиента 1–2 мин чистой речи для клона.
