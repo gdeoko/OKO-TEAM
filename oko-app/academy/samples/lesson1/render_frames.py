@@ -1,7 +1,7 @@
 from playwright.sync_api import sync_playwright
 import os,math
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-FPS=30; TOTAL=151.312; N=math.ceil(TOTAL*FPS)
+FPS=30; TOTAL=152.85; N=math.ceil(TOTAL*FPS)
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path='/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
         args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist',
