@@ -53,7 +53,7 @@ header .brand svg{width:30px;height:30px;color:var(--accent);filter:drop-shadow(
 :root[data-theme="light"] header .brand svg{filter:none}
 header .logo{font-family:var(--font-display);font-size:27px;color:var(--accent);letter-spacing:.18em;line-height:1;padding-top:2px}
 header .screen-title{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.14em;margin-left:auto}
-.theme-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);border:1px solid var(--border);font-size:15px}
+.theme-btn{width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);border:1px solid var(--border);font-size:15px}
 .theme-btn:hover{color:var(--accent)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;position:relative}
 nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
@@ -239,19 +239,19 @@ nav#tabs .nav-logo{display:none}
 .ma-view{display:none}
 /* VK-стиль сетка сервисов (иконки 1:1) */
 .svc-h{font-size:15px;font-weight:700;margin:2px 2px 12px;letter-spacing:.01em}
-.svc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px;margin-bottom:6px}
+.svc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px;margin-bottom:6px;align-items:start}
 .svc{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;padding:0;cursor:pointer}
-.svc-ic{width:100%;aspect-ratio:1;border-radius:24px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(155deg,#182a0b,#0b1005);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .13s}
+.svc-ic{width:100%;max-width:74px;margin:0 auto;aspect-ratio:1;border-radius:22px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(155deg,#182a0b,#0b1005);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .13s}
 .svc-ic::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 28%,rgba(154,255,0,.28),transparent 62%)}
 .svc-ic svg.i{width:46%;height:46%;color:var(--lime);position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(154,255,0,.4))}
 .svc:active .svc-ic{transform:scale(.93)}
-.svc-label{font-size:11.5px;font-weight:600;color:var(--text);text-align:center;line-height:1.2}
+.svc-label{font-size:10.8px;font-weight:600;color:var(--text);text-align:center;line-height:1.2;min-height:26px;overflow-wrap:anywhere}
 .svc-note{font-size:11.5px;color:var(--dim);text-align:center;margin:14px 0 2px}
 .ic-tariff::before{background:radial-gradient(circle at 50% 28%,rgba(154,255,0,.42),transparent 60%)}
-.ma-hero{position:relative;height:160px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;border:1px solid var(--border);background:radial-gradient(130% 150% at 86% 40%,rgba(154,255,0,.20),transparent 52%),linear-gradient(120deg,#0d1407,#050705);display:flex;align-items:center}
+.ma-hero{position:relative;min-height:150px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;border:1px solid var(--border);background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(154,255,0,.05) 27px 28px),repeating-linear-gradient(90deg,transparent 0 27px,rgba(154,255,0,.05) 27px 28px),radial-gradient(120% 170% at 90% -10%,rgba(154,255,0,.22),transparent 55%),linear-gradient(120deg,#0d1407,#050705);display:flex;align-items:center}
 .ma-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),transparent 58%)}
-.ma-hero-logo{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:132px;height:132px;color:var(--lime);z-index:1;pointer-events:none;filter:drop-shadow(0 0 22px rgba(154,255,0,.5))}
-.ma-hero-txt{position:relative;z-index:2;padding:18px 20px}
+.ma-hero-logo{position:absolute;right:14px;top:14px;width:56px;height:56px;color:var(--lime);z-index:1;pointer-events:none;filter:drop-shadow(0 0 14px rgba(154,255,0,.45));opacity:.9}
+.ma-hero-txt{position:relative;z-index:2;padding:18px 20px;padding-right:84px}
 .ma-hero-txt h2{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:.96;letter-spacing:.02em;margin:0 0 4px}
 .ma-hero-txt p{font-size:12.5px;color:var(--accent);font-weight:600;margin:0}
 /* Контент-завод */
@@ -1934,7 +1934,6 @@ main>.screen{position:relative;z-index:1}
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
     <div class="screen-title" id="screenTitle">Лента</div>
     <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="chip" style="cursor:pointer" onclick="openSheet('progress')">сборка v0.50</button>
     <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
     <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
   </header>
@@ -1997,7 +1996,7 @@ main>.screen{position:relative;z-index:1}
         <div id="maGrid">
           <h2 class="svc-h" style="display:none">Сервисы OKO</h2>
           <div class="svc-grid">
-            <button class="svc" onclick="openMa('video')"><span class="svc-ic ic-video"><svg class="i"><use href="#i-camera"/></svg></span><span class="svc-label">Премодератор</span></button>
+            <button class="svc" onclick="openMa('video')"><span class="svc-ic ic-video"><svg class="i"><use href="#i-camera"/></svg></span><span class="svc-label">Проверка видео</span></button>
             <button class="svc" onclick="openMa('system')"><span class="svc-ic ic-system"><svg class="i"><use href="#i-rocket"/></svg></span><span class="svc-label">Система роста</span></button>
             <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="openMa('factory')"><span class="svc-ic ic-factory"><svg class="i"><use href="#i-bolt"/></svg></span><span class="svc-label">Контент-завод</span></button>
@@ -2374,7 +2373,7 @@ main>.screen{position:relative;z-index:1}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO</h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.51</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
