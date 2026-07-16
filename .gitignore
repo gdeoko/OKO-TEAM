@@ -16,9 +16,5 @@ _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
 
-# СЕКРЕТЫ НИКОГДА НЕ КОММИТИТЬ (ни plaintext, ни base64 — base64 это НЕ шифрование).
-# Ключи выдаются окружением через Environment variables (см. INTEGRATIONS.md / SECURITY_REMEDIATION.md).
+# ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env
-secrets.env.b64
-*.secrets
-*.secret
