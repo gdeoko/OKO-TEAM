@@ -246,6 +246,9 @@ whoosh на переходы + смысловые. Мастер: `loudnorm I=-14
 - `reference/EFFECTS_CATALOG.md`, `GRADES.md`, `NICHE_PLAYBOOK.md`, `USED_EFFECTS.md`.
 
 ## Грабли (проверено болью)
+- **Обложка БЕЗ Higgsfield (бесплатно):** Pollinations FLUX — `https://image.pollinations.ai/prompt/<URL-enc>?width=896&height=1568&model=flux&nologo=true&seed=N&enhance=true` (без ключа) ИЛИ Gemini через прокси волта `https://gemini-proxy.okoteam.workers.dev/v1beta/models/gemini-2.5-flash-image:generateContent?key=<GEMINI_KEY>` (ротация 4 ключей на 429). ИИ даёт ФОН/сцену, текст+лого композитим PIL (чёткая кириллица). Higgsfield Nano Banana — только если явно разрешено жечь кредиты.
+- **Тёплый бренд = мягкий звук:** для нежных ниш (дети/вера/забота) НЕ ставить резкие impact/click/whoosh — они читаются как «дебилизм». Только красивая непрерывная фоновая музыка + мягкий дакинг под голос; SFX либо нет, либо очень тихий свош.
+- **Голос:** edge-tts `ru-RU-SvetlanaNeural` (жен, чистый) лучше Silero baya для тёплых ниш. Идеал — клон реального голоса эксперта (XTTS/Qwen clone). XTTS локально = dep-ад с transformers; HF-клон-спейсы (Qwen3-TTS/OmniVoice) живы, но ZeroGPU-квота дневная.
 - **ZOOMPAN ЗАМОРАЖИВАЕТ ВИДЕО** (критично): `zoompan` на видео-входе выдаёт d кадров на КАЖДЫЙ входной кадр → фризит первый кадр = получается слайд-шоу из ФОТО. Для живого видео камерное движение делать ТОЛЬКО crop-pan: `scale=1339:2381,crop=1080:1920:x='(iw-1080)*(t/DUR)':y=...` — видео ИГРАЕТ, окно едет. Кадры отбирать по РЕАЛЬНОМУ движению (frame-diff motion-score, tblend=difference+signalstats), статику (<6) не брать.
 - **Анализ конкурентов ПЕРЕД сборкой** — YouTube Data API (order=viewCount, ниша) даёт хуки/форматы/метрики от 1М+ бесплатно и надёжно; IG/TikTok — браузер-агент VPS.
 - edge-tts моргает — ретраи; WordBoundary иначе пустой.
