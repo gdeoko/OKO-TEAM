@@ -476,7 +476,26 @@ const ST_DICT = {
   'Логи ИИ-агентов':'AI agent logs','Фича-флаги':'Feature flags','Регистрации':'Sign-ups','Выручка':'Revenue',
   'ИИ-поддержка':'AI support','Email владельца':'Owner email','Раздел владельца':'Owner area','Проверка…':'Checking…',
   'Владелец подтверждён':'Owner confirmed','Доступ запрещён':'Access denied',
-  'Пока нет операций — доход копится из комиссий, тарифов и рекламы.':'No transactions yet — revenue accrues from fees, plans and ads.'
+  'Пока нет операций — доход копится из комиссий, тарифов и рекламы.':'No transactions yet — revenue accrues from fees, plans and ads.',
+  /* --- хаб / категории биржи --- */
+  'Документы':'Documents','Избранное':'Saved','Услуги':'Services','Видео и монтаж':'Video & editing',
+  'Реклама и трафик':'Ads & traffic','Сайты и приложения':'Websites & apps','Тексты и переводы':'Copy & translation',
+  'SMM и ведение':'SMM & management','Аудио и озвучка':'Audio & voiceover','3D и графика':'3D & graphics',
+  'Консалтинг и обучение':'Consulting & training',
+  /* --- профиль: статистика и бейджи --- */
+  'постов':'posts','реакций':'reactions','дней в OKO':'days in OKO','Ранний':'Early','Партнёр':'Partner',
+  '100+ реакций':'100+ reactions','Автор':'Author','нет':'no','есть':'yes','Штаб OKO HQ':'OKO HQ','Твоя':'You',
+  'Открыть 3D-штаб':'Open the 3D HQ',
+  /* --- игры / реклама: добивка --- */
+  'Старт — выйти на дорогу':'Start — hit the road',
+  'Каждое объявление проверяется автоматически за ~3 секунды: запрещённые тематики, скам, азартные игры. Отклонили — бюджет вернётся на лицевой счёт мгновенно.':'Every ad is checked automatically in ~3 seconds: prohibited topics, scams, gambling. If rejected, the budget returns to your account instantly.',
+  'Контент-завод за 7 дней: 30 роликов в месяц на автомате. Старт 20 июля, осталось 14 мест из 50.':'Content factory in 7 days: 30 videos a month on autopilot. Starts July 20, only 14 of 50 seats left.',
+  'Приводи авторов и получай 15% с их подписки + 5% со второй линии. Выплаты сразу на лицевой счёт.':'Refer creators and earn 15% of their subscription + 5% from the second line. Paid instantly to your account.',
+  /* --- демо-объявления биржи (сид-контент приложения) --- */
+  'Монтаж Reels и Shorts под ключ':'Turnkey Reels & Shorts editing','Сайт-визитка и лендинг за 3 дня':'Business card site & landing in 3 days',
+  'Дизайн обложек и карточек товара':'Cover & product card design','3D-графика и анимация логотипа':'3D graphics & logo animation',
+  'Монтаж Reels под ключ':'Turnkey Reels editing','Лендинг под ключ за 5 дней':'Turnkey landing page in 5 days',
+  'Разбор и стратегия роста канала':'Channel audit & growth strategy'
 };
 
 /* --- шаблоны для строк с числами (применяются, если точного совпадения нет) --- */
@@ -523,7 +542,15 @@ const ST_RX = [
   [/^PRO до ([\d.]+)$/, 'PRO until $1'],
   [/^Отправить код повторно \((\d+) с\)$/, 'Resend code ($1 s)'],
   [/^([\d.,]+)к$/, '$1k'],
-  [/^забрал на ×([\d.,]+)$/, 'cashed out at ×$1']
+  [/^забрал на ×([\d.,]+)$/, 'cashed out at ×$1'],
+  [/^(\d+) объявл\.$/, '$1 listings'],
+  [/^сегодня (\d{1,2}:\d{2})$/, 'today $1'],
+  [/^вчера (\d{1,2}:\d{2})$/, 'yesterday $1'],
+  [/^([\d.,]+)к₽$/, '$1k ₽'],
+  [/^из ([\d.,]+)к₽$/, 'of $1k ₽'],
+  [/^из ([\d\s.,]+ ?₽)$/, 'of $1'],
+  [/^(\d+) агентов$/, '$1 agents'],
+  [/^([\d.,]+) · Онлайн$/, '$1 · Online']
 ];
 
 /* --- что НЕ переводим: контент пользователей + свои переключатели --- */
