@@ -68,13 +68,11 @@ def txt_progress():
             f"<i>Обновлено: {s.get('updated','—')}</i>")
 
 def txt_accounts():
-    d = hooppy('/accounts')
-    lines = ["<b>🔗 Подключённые аккаунты</b>\n"]
-    lines.append("Instagram: tappio.app.pro · mama_s_bogom · diesel_cargo — прямые сессии ✅")
-    lines.append("YouTube: TAPPIO · Екатерина · DIESEL — Data API ✅")
-    tt = [a.get('social_account_link','').split('@')[-1] for a in d.get('list',[])]
-    lines.append("TikTok (Hooppy): " + (" · ".join(tt) if tt else "—") + (" ✅" if tt else ""))
-    return "\n".join(lines)
+    return ("<b>🔗 Аккаунты Tappio</b>\n\n"
+            "Instagram: <b>tappio.app.pro</b> — прямая сессия ✅\n"
+            "YouTube: <b>TAPPIO</b> — Data API ✅\n"
+            "TikTok: <b>@tappio.app</b> — через Hooppy ✅\n\n"
+            "<i>Бот ведёт только проект Tappio.</i>")
 
 def txt_report():
     try: return open(REPORT).read()[:3500]
