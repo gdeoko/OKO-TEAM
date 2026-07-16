@@ -197,6 +197,25 @@ Environment variables окружения:
 | GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
 | ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
 
+## 2а. Соцсети OKO — доступы и оперативка (Даниэль, 16.07.2026)
+
+**Все логины/пароли/телефоны/токен бота — в `secrets.env` (переменные `OKO_*` и
+`TELEGRAM_BOT_TOKEN`), в открытый паспорт НЕ вписаны.** Публичное:
+- Единый никнейм: **daniel.oko.app** (YouTube: **daniel.okoapp**).
+- Telegram-канал: https://t.me/gdeoko · бот приложения: **@okoappbot**.
+- Аккаунты (логины-почты/телефоны в secrets): TikTok, Instagram, Likee, YouTube,
+  ВКонтакте, Telegram. Общие пароли — `OKO_COMMON_PASSWORD_1/2` в secrets.
+- Переменные: `OKO_SOCIAL_HANDLE`, `OKO_*_EMAIL`, `OKO_VK_PHONE/PASSWORD`,
+  `OKO_TG_PHONE/PASSWORD`, `OKO_TG_CHANNEL`, `OKO_BOT_USERNAME`.
+
+Оперативка (для соцавтопилота):
+- **YouTube, ВКонтакте, Telegram** — агент уже залогинен.
+- **TikTok** — вход через Hooppy.ru; для активности (ответы на комменты, постинг,
+  выгрузка аналитики) нужен прямой вход агента в аккаунт, как в Instagram.
+- **VK-пароль** Даниэль просил обновить — при работе с VK сверять/менять.
+- Приглашение в MAX-мессенджер (max.ru/join/...) прислано — вступать по запросу.
+
+
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
 | Коннектор | Статус | Что даёт |
