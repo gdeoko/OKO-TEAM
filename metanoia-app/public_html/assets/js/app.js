@@ -1413,7 +1413,7 @@ const GAMES = {
       desc: 'Расставь библейские события в правильном порядке — от сотворения мира до Церкви.', bullets: ['Перетаскивай события', 'Понимание всей истории спасения', '+25 XP'] },
   ],
   premium: [
-    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: '100+ уровней', premium: true,
+    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: 'Играбельно · +30 XP', premium: true, play: true,
       desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
     { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер', premium: true,
       desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Бесконечный раннер', 'Собирай манну за очки', 'История Исхода'] },
@@ -1474,6 +1474,7 @@ function renderGhub(cat) {
     else if (k === 'journey') openJourneyScreen();
     else if (k === 'temple-b') openTempleScreen();
     else if (k === 'dailyverse') openDailyVerse();
+    else if (k === 'match3') openMatch3();
     else openGamePreview(k);
   }));
 }
@@ -1487,6 +1488,7 @@ function initGamesHub() {
   $('#whoMore')?.addEventListener('click', () => { const q = WHO[whoState.i]; if (whoState.clue < q.clues.length) { whoState.clue++; whoState.score = Math.max(0, whoState.score); renderWho(); } });
   $('#chronoBack')?.addEventListener('click', openGamesHub);
   $('#chronoCheck')?.addEventListener('click', checkChrono);
+  $('#m3Back')?.addEventListener('click', openGamesHub);
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
@@ -2414,6 +2416,127 @@ function claimDailyVerse() {
   }
   openDailyVerse();
   toast('+5 XP · стих дня');
+}
+
+/* ── Три в ряд: Дары Духа (match-3) ── */
+const M3_SYM = [
+  { icon: 'dove', color: '#7AAED4' },
+  { icon: 'flame', color: '#E07A4E' },
+  { icon: 'heart', color: '#D46A6A' },
+  { icon: 'star', color: '#E6C079' },
+  { icon: 'book', color: '#9B7AD4' },
+  { icon: 'cross', color: '#7BC67A' },
+];
+const M3_ROWS = 7, M3_COLS = 6, M3_TARGET = 400;
+let m3 = { grid: [], score: 0, moves: 18, sel: null, busy: false };
+
+function m3Rand() { return Math.floor(Math.random() * M3_SYM.length); }
+
+function m3FindMatches() {
+  const set = new Set();
+  for (let r = 0; r < M3_ROWS; r++) {
+    for (let c = 0; c < M3_COLS; c++) {
+      const v = m3.grid[r][c];
+      if (v < 0) continue;
+      // горизонталь
+      if (c + 2 < M3_COLS && m3.grid[r][c + 1] === v && m3.grid[r][c + 2] === v) {
+        let k = c; while (k < M3_COLS && m3.grid[r][k] === v) { set.add(r + ',' + k); k++; }
+      }
+      // вертикаль
+      if (r + 2 < M3_ROWS && m3.grid[r + 1][c] === v && m3.grid[r + 2][c] === v) {
+        let k = r; while (k < M3_ROWS && m3.grid[k][c] === v) { set.add(k + ',' + c); k++; }
+      }
+    }
+  }
+  return set;
+}
+
+function m3Gravity() {
+  for (let c = 0; c < M3_COLS; c++) {
+    const col = [];
+    for (let r = M3_ROWS - 1; r >= 0; r--) if (m3.grid[r][c] >= 0) col.push(m3.grid[r][c]);
+    for (let r = M3_ROWS - 1; r >= 0; r--) m3.grid[r][c] = col.length ? col.shift() : m3Rand();
+  }
+}
+
+function m3Resolve(score) {
+  let any = false;
+  while (true) {
+    const m = m3FindMatches();
+    if (m.size === 0) break;
+    any = true;
+    if (score) m3.score += m.size * 10;
+    m.forEach((k) => { const [r, c] = k.split(',').map(Number); m3.grid[r][c] = -1; });
+    m3Gravity();
+  }
+  return any;
+}
+
+function openMatch3() {
+  m3 = { grid: [], score: 0, moves: 18, sel: null, busy: false };
+  for (let r = 0; r < M3_ROWS; r++) { m3.grid[r] = []; for (let c = 0; c < M3_COLS; c++) m3.grid[r][c] = m3Rand(); }
+  m3Resolve(false); // устаканить без очков
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'match3'));
+  $('#nav').style.display = 'none';
+  renderM3();
+  window.scrollTo({ top: 0 });
+}
+
+function renderM3() {
+  $('#m3Score').textContent = m3.score;
+  $('#m3Moves').textContent = m3.moves;
+  $('#m3Target').textContent = M3_TARGET;
+  $('#m3Bar').style.width = Math.min(100, Math.round(m3.score / M3_TARGET * 100)) + '%';
+  const g = $('#m3grid');
+  g.innerHTML = '';
+  for (let r = 0; r < M3_ROWS; r++) for (let c = 0; c < M3_COLS; c++) {
+    const v = m3.grid[r][c];
+    const cell = document.createElement('button');
+    cell.className = 'm3-cell' + (m3.sel && m3.sel[0] === r && m3.sel[1] === c ? ' m3-cell--on' : '');
+    cell.style.background = M3_SYM[v].color;
+    cell.innerHTML = ICON(M3_SYM[v].icon, 22);
+    cell.addEventListener('click', () => m3Tap(r, c));
+    g.appendChild(cell);
+  }
+}
+
+function m3Tap(r, c) {
+  if (m3.busy || m3.moves <= 0) return;
+  if (!m3.sel) { m3.sel = [r, c]; renderM3(); return; }
+  const [sr, sc] = m3.sel;
+  if (sr === r && sc === c) { m3.sel = null; renderM3(); return; }
+  const adjacent = Math.abs(sr - r) + Math.abs(sc - c) === 1;
+  if (!adjacent) { m3.sel = [r, c]; renderM3(); return; }
+  // пробуем обмен
+  m3.busy = true;
+  [m3.grid[sr][sc], m3.grid[r][c]] = [m3.grid[r][c], m3.grid[sr][sc]];
+  const before = m3.score;
+  const matched = m3Resolve(true);
+  m3.sel = null;
+  if (!matched) {
+    [m3.grid[sr][sc], m3.grid[r][c]] = [m3.grid[r][c], m3.grid[sr][sc]]; // откат
+    m3.busy = false;
+    renderM3();
+    return;
+  }
+  m3.moves--;
+  renderM3();
+  m3.busy = false;
+  if (window.MAGIC && m3.score > before) {
+    const b = $('#m3grid').getBoundingClientRect();
+    MAGIC.celebrate(b.left + b.width / 2, b.top + b.height / 3);
+  }
+  if (m3.score >= M3_TARGET) m3End(true);
+  else if (m3.moves <= 0) m3End(false);
+}
+
+function m3End(win) {
+  m3.busy = true;
+  if (window.MAGIC) MAGIC.rewardModal(win
+    ? { icon: 'sparkle', title: 'Уровень пройден!', subtitle: `Ты собрал ${m3.score} очков. Дары Духа приумножаются!`, xp: 30 }
+    : { icon: 'flame', title: 'Ходы закончились', subtitle: `Набрано ${m3.score} из ${M3_TARGET}. Попробуй ещё раз — получится!`, xp: 0 });
+  else toast(win ? 'Уровень пройден!' : 'Ходы закончились');
+  setTimeout(openGamesHub, win ? 1600 : 1400);
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */

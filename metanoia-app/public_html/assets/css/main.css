@@ -2026,3 +2026,15 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .shop-card--locked { opacity: .75; }
 [data-theme="dark"] .shop-card { background: linear-gradient(160deg,#1b2c3a,#22333f); border-color: rgba(255,255,255,.09); }
 [data-theme="dark"] .shop-card__name { color: #E7EDF3; }
+
+/* ── Три в ряд: Дары Духа ── */
+.m3-bar { height: 8px; border-radius: 6px; background: rgba(26,58,82,.1); overflow: hidden; margin: 0 0 12px; }
+.m3-bar__fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg,#D4A574,#C97064); transition: width .3s var(--ease); }
+.m3-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; touch-action: manipulation; }
+.m3-cell { aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; color: #fff;
+  transition: transform .12s var(--ease), opacity .18s var(--ease); }
+.m3-cell--on { outline: 3px solid var(--navy); outline-offset: -3px; transform: scale(.92); }
+.m3-cell--clear { opacity: 0; transform: scale(.4); }
+.m3-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
+[data-theme="dark"] .m3-bar { background: rgba(255,255,255,.12); }
+[data-theme="dark"] .m3-cell--on { outline-color: #fff; }
