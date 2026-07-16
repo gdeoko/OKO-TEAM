@@ -175,6 +175,10 @@ OKO нигде не использовать).
 Статус подключения: Tappio IG+YouTube — готово; TikTok всех — через Hooppy (OAuth с телефона).
 Екатерина IG+YouTube — ГОТОВО. DIESEL IG+YouTube — ГОТОВО. YT-токены: CLIENT_EKAT_YT_REFRESH_TOKEN/_CHANNEL_ID, CLIENT_DIESEL_YT_* (общий app CLIENT_YT_CLIENT_ID/SECRET=TAPPIO_YT_*).
 Переменные клиентов: CLIENT_EKAT_* , CLIENT_DIESEL_* (NAME/EMAIL/PASSWORD/IG/TT[/SITE]).
+Бот аналитики/отчётов Екатерины (Метанойя): `@metanoiaorder_bot` («МЕТАНОЙА · analytics») —
+`CLIENT_EKAT_ANALYTICS_BOT_TOKEN` / `CLIENT_EKAT_ANALYTICS_BOT_USERNAME`. Сюда social-autopilot
+шлёт ежедневный отчёт по контент-заводу Метанойи. TikTok Метанойи: `HOOPPY_TT_PAGE_EKAT` (2352065)
+через общий `HOOPPY_API_TOKEN`. Логотип бренда: `brand/metanoia-logo.png` + `brand/metanoia-logo-b64.txt`.
 
 
 ## 2. Ключи в Environment variables облака (НЕ в git)
@@ -310,3 +314,22 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 | Higgsfield `video_analysis_create`/`_status` | посценовый анализ готового ролика | poll до completed; коннектор бывает нестабилен |
 | Higgsfield `virality_predictor` | хук/удержание/виральность | дашборд по загруженному видео |
 | Higgsfield `media_upload`+`media_confirm` | хостинг файла → публичный CDN-URL | обход 30МБ-лимита чата; PUT байтов curl'ом |
+
+## Обновление 16.07.2026 — МЕТАНОЙА · контент-завод (движок social-autopilot)
+
+- **Проект:** христианская школа Екатерины «Метанойя». Ведение соцсетей — скилл
+  `/social-autopilot` (аналитика → разведка 1М+ → сценарии → humanizer → сборка
+  reels-machine → кросс-пост TikTok+IG+YouTube → отчёт в бот). Ниша/тон: духовное
+  воспитание, семья, забота, наука о мозге/памяти × вера.
+- **Аккаунты** (в secrets как `CLIENT_EKAT_*`): почта/YouTube `ekaterinasbogom@gmail.com`,
+  IG `mama_s_bogom`, TikTok `@mama.s.bogom` (Hooppy page `2352065`, source_id 14),
+  YouTube channel `UCHQL8pDtCadNY-m1b8H_AaQ` (OAuth: общий `CLIENT_YT_CLIENT_ID/SECRET`,
+  `CLIENT_EKAT_YT_REFRESH_TOKEN`). Коды входа IG/TikTok приходят на почту Екатерины.
+- **Бот отчётов:** `@metanoiaorder_bot` — `CLIENT_EKAT_ANALYTICS_BOT_TOKEN`.
+- **Логотип бренда** (μ + золотые крылья, navy/gold на кремовом): `brand/metanoia-logo.png`,
+  data-URI `brand/metanoia-logo-b64.txt`. Не искажать пропорции, не менять цвета.
+- **Контент-план:** `КОНТЕНТ-ЗАВОД/` (мастер-бриф, старт-7-дней, план-90-дней),
+  контекст проекта — `METANOYA_CONTEXT.txt`. Приложение (снимать демо):
+  https://nimble-bean-709.higgsfield.app
+- **Правило:** плейнтекст-паспорт с паролями в git НЕ кладём; ключи — только в
+  `secrets.env` (коммитим `secrets.env.b64`).
