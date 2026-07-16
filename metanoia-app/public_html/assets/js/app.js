@@ -2726,7 +2726,7 @@ const DAILY_VERSES = [
   { t: 'Так да светит свет ваш пред людьми, чтобы они видели ваши добрые дела', r: 'Матфея 5:16', n: 'Сегодня сделай одно доброе дело — тихо, от сердца.' },
   { t: 'Всё могу в укрепляющем меня Иисусе Христе', r: 'Филиппийцам 4:13', n: 'Если что-то трудно — попроси у Бога сил и попробуй снова.' },
   { t: 'Возлюби ближнего твоего, как самого себя', r: 'Марка 12:31', n: 'Ближний — это тот, кто рядом. Начни с семьи.' },
-  { t: 'Бог есть любовь', r: '1 Иоанна 4:8', n: 'Три коротких слова, в которых — вся суть.' },
+  { t: 'Бог есть любовь, и пребывающий в любви пребывает в Боге, и Бог в нём', r: '1 Иоанна 4:16', n: 'Три коротких слова, в которых — вся суть.', audio: 'assets/audio/verse-day.mp3' },
   { t: 'Просите, и дано будет вам; ищите, и найдёте', r: 'Матфея 7:7', n: 'С Богом можно говорить обо всём. Он слышит.' },
   { t: 'Радуйтесь всегда в Господе', r: 'Филиппийцам 4:4', n: 'Найди сегодня три вещи, за которые скажешь спасибо.' },
   { t: 'Господь — Пастырь мой; я ни в чём не буду нуждаться', r: 'Псалом 22:1', n: 'Пастырь заботится о каждой овечке — и о тебе тоже.' },
@@ -2739,12 +2739,27 @@ function todayKey() { const d = new Date(); return `${d.getFullYear()}-${d.getMo
 function dayIndex() { const d = new Date(); const start = new Date(d.getFullYear(), 0, 0); return Math.floor((d - start) / 86400000); }
 
 function openDailyVerse() {
-  const v = DAILY_VERSES[dayIndex() % DAILY_VERSES.length];
+  // Витрина: показываем озвученный стих, чтобы сразу услышать голос (в проде — по дню)
+  const voicedIdx = DAILY_VERSES.findIndex((x) => x.audio);
+  const v = DAILY_VERSES[voicedIdx >= 0 ? voicedIdx : (dayIndex() % DAILY_VERSES.length)];
   const claimedToday = localStorage.getItem('mt_dverse_date') === todayKey();
   const streak = Number(localStorage.getItem('mt_dverse_streak') || 0);
   $('#dverseText').textContent = '«' + v.t + '»';
   $('#dverseRef').textContent = v.r;
   $('#dverseNote').textContent = v.n;
+  // озвучка стиха (реальная запись голосом)
+  const audioEl = $('#dverseAudio');
+  const listenBtn = $('#dverseListen');
+  if (v.audio) {
+    audioEl.src = v.audio;
+    listenBtn.hidden = false;
+    $('#dverseListenLbl').textContent = 'Послушать голосом';
+    listenBtn.classList.remove('dverse__listen--playing');
+  } else {
+    listenBtn.hidden = true;
+    audioEl.pause();
+    audioEl.removeAttribute('src');
+  }
   const btn = $('#dverseClaim');
   btn.disabled = claimedToday;
   btn.textContent = claimedToday ? 'Стих на сегодня прочитан ✓' : 'Прочитал(а) · получить +5 XP';
@@ -3525,8 +3540,18 @@ function initGrowth() {
   $('#albumBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#albumDl')?.addEventListener('click', downloadAlbum);
   initAsk();
-  $('#dverseClose')?.addEventListener('click', () => { $('#dailyVerse').hidden = true; });
+  $('#dverseClose')?.addEventListener('click', () => { const a = $('#dverseAudio'); if (a) a.pause(); $('#dailyVerse').hidden = true; });
   $('#dverseClaim')?.addEventListener('click', claimDailyVerse);
+  $('#dverseListen')?.addEventListener('click', () => {
+    const a = $('#dverseAudio'); const btn = $('#dverseListen'); const lbl = $('#dverseListenLbl');
+    if (!a || !a.getAttribute('src')) return;
+    if (a.paused) { a.play(); btn.classList.add('dverse__listen--playing'); lbl.textContent = 'Пауза'; }
+    else { a.pause(); btn.classList.remove('dverse__listen--playing'); lbl.textContent = 'Послушать голосом'; }
+  });
+  $('#dverseAudio')?.addEventListener('ended', () => {
+    $('#dverseListen')?.classList.remove('dverse__listen--playing');
+    const lbl = $('#dverseListenLbl'); if (lbl) lbl.textContent = 'Послушать ещё раз';
+  });
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#certClose')?.addEventListener('click', () => { $('#certView').hidden = true; });
   $('#certDl')?.addEventListener('click', downloadCert);

@@ -1776,6 +1776,13 @@ body.in-chat .header { display: none; }
   font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 14px; }
 .dverse__text { font-family: var(--font-head); font-size: 21px; line-height: 1.4; color: var(--navy); font-style: italic; }
 .dverse__ref { margin-top: 12px; font-weight: 700; color: var(--terracotta); font-size: 14px; }
+.dverse__listen { display: inline-flex; align-items: center; gap: 7px; margin: 14px auto 0;
+  padding: 9px 18px; border-radius: 999px; border: 1.5px solid var(--terracotta);
+  background: rgba(201,112,100,.08); color: var(--terracotta); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: transform .12s var(--ease), background .15s var(--ease); }
+.dverse__listen:active { transform: scale(.96); }
+.dverse__listen--playing { background: var(--terracotta); color: #fff; }
+.dverse__listen[hidden] { display: none; }
 .dverse__note { margin: 16px 0 20px; font-size: 13.5px; color: var(--gray); line-height: 1.5; }
 .dverse__claim { width: 100%; }
 .dverse__claim:disabled { opacity: .55; }
