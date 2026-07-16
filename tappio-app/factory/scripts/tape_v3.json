@@ -11,8 +11,8 @@
     {"id": "b1", "text": "I measured a doorway with a tape. Off by two inches."},
     {"id": "b2", "text": "A nine hundred dollar couch, sent back. Metal tapes bend and lie."},
     {"id": "b3", "text": "Now I measure with my phone. Point, tap two points, done."},
-    {"id": "b4", "text": "Length, width, height, area. All drawn right in the room."},
-    {"id": "b5", "text": "It saves every project and exports a clean PDF."},
+    {"id": "b4", "text": "Length, width, height, area. Drawn right in the room."},
+    {"id": "b5", "text": "It saves every project, exports a PDF."},
     {"id": "b6", "text": "No tape. No helper. Just your phone. Measure once."}
   ],
   "shots": [
