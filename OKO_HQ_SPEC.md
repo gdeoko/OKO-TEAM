@@ -339,6 +339,34 @@ oko-hq/
 
 ---
 
+## 15а. СВЯЗАННЫЕ ФАЙЛЫ (в этом же ЗИПе)
+- **`OKO_HQ_AGENTS.md`** — все 10 ролей детально (внешность, атрибут, поведение, экран, команды, данные) + диспетчер.
+- **`OKO_HQ_BRAIN.md`** — мозг/память: категории-волокна, модель узла, визуал, загрузка/разбор, API, поиск.
+- **`concept/scene.html` + `three.module.js` + `render.py`** — РАБОЧИЙ старт-код: 3 робота-агента OKO
+  с глазом-логотипом, рендерится через Chromium (проверено). Отсюда стартует сборка персонажа.
+- **`OKO_MASTER_VAULT.md`** — все ключи/токены/доступы.
+- **`OKO_AGENT_CONTROL.md`** — как дёргать агента/мост/базу из кода.
+- **`oko-setup.sh`** — one-file бутстрап (ключи+мост).
+- **`brand/`** — лого OKO (png + base64) для глаза/бейджей.
+- **`knowledge/sales_knowledge_artem.md`** — база продаж (память мозга).
+
+## 15б. QUICKSTART для сборки в чате OKO App (FABLE 5)
+1. Распаковать ЗИП, запустить `bash oko-setup.sh` (подтянет ключи+мост+vault).
+2. `npm create vite@latest oko-hq -- --template react-ts && cd oko-hq && npm i three postprocessing gsap zustand howler`.
+3. Взять за основу персонажа `concept/scene.html` (робот+глаз-лого уже работают), перенести в
+   `src/agents/Agent.ts`, добавить скелет-анимации.
+4. Идти ПО ФАЗАМ (§14), после каждой — самопроверка Playwright/Chromium (скрин+FPS):
+   `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`, сервить через
+   `python3 -m http.server` (ES-модули по file:// режет CORS).
+5. Данные — через `OKO_AGENT_CONTROL.md` (`CONTROL_URL`/`vexec`/`taskqueue`). Живой агент — не трогать
+   Gemini-ключи батчами (локально whisper/tesseract).
+6. Деплой: Higgsfield website (`website_repo_access`→`deploy_website`) или embed в OKO App.
+
+**Стартовый минимум персонажа (из рабочего concept/scene.html):** округлый корпус (Sphere squished)
++ голова (Sphere) + лицо-глаз: дуга-веко (`TorusGeometry(...,Math.PI)`) + зрачок (`CircleGeometry`,
+emissive #9AFF00) + вырез-полумесяц (тёмный `CircleGeometry` со смещением) + antenna + руки-капсулы +
+акцент-кольцо роли. Свет: Hemisphere + Directional(shadow) + лаймовый PointLight. Tonemap ACES, Bloom.
+
 ## 16. ИТОГ
 Это не «дашборд», а **игровой командный центр OKO** — живой 3D-штаб, где ты видишь всех агентов,
 их экраны и мысли, кидаешь задачи голосом/файлом/текстом, а мозг в центре хранит и растит всю
