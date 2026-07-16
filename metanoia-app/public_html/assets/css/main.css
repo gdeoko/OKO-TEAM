@@ -2038,3 +2038,26 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .m3-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
 [data-theme="dark"] .m3-bar { background: rgba(255,255,255,.12); }
 [data-theme="dark"] .m3-cell--on { outline-color: #fff; }
+
+/* ── Давид и Голиаф ── */
+.david-stage { margin-top: 4px; }
+.david-goliath { position: relative; height: 190px; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(180deg,#cfe0ee 0%,#eef4d9 100%); display: grid; place-items: center; }
+.david-goliath__fig { width: 96px; height: 96px; border-radius: 22px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(160deg,#5a6b7a,#3a4a58); box-shadow: 0 10px 24px rgba(26,58,82,.28);
+  transition: transform .18s var(--ease); }
+.david-goliath__fig--hit { transform: scale(.86) rotate(-6deg); background: linear-gradient(160deg,#C97064,#a8564b); }
+.david-target { position: absolute; top: 26px; width: 34px; height: 34px; border-radius: 50%;
+  border: 3px solid var(--terracotta); display: grid; place-items: center; }
+.david-target__zone { width: 10px; height: 10px; border-radius: 50%; background: var(--terracotta); }
+.david-bar { position: relative; height: 26px; border-radius: 13px; margin: 16px 0 18px;
+  background: rgba(26,58,82,.1); overflow: hidden; }
+.david-bar__zone { position: absolute; top: 0; bottom: 0; border-radius: 8px;
+  background: linear-gradient(90deg,#D4A574,#e0b980); box-shadow: inset 0 0 0 1px rgba(212,165,116,.6); }
+.david-bar__marker { position: absolute; top: -3px; bottom: -3px; width: 5px; margin-left: -2px;
+  border-radius: 3px; background: var(--navy); box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.david-fire { width: 100%; }
+.david-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
+[data-theme="dark"] .david-goliath { background: linear-gradient(180deg,#25313d 0%,#2c3a30 100%); }
+[data-theme="dark"] .david-bar { background: rgba(255,255,255,.12); }
+[data-theme="dark"] .david-bar__marker { background: #fff; }

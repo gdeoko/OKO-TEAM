@@ -1417,7 +1417,7 @@ const GAMES = {
       desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
     { key: 'exodus', icon: 'map', name: 'Исход', meta: 'Раннер', premium: true,
       desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Бесконечный раннер', 'Собирай манну за очки', 'История Исхода'] },
-    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Меткость', premium: true,
+    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Играбельно · +25 XP', premium: true, play: true,
       desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
     { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Собери пары животных', premium: true,
       desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Десятки животных', 'История Ноя'] },
@@ -1475,6 +1475,7 @@ function renderGhub(cat) {
     else if (k === 'temple-b') openTempleScreen();
     else if (k === 'dailyverse') openDailyVerse();
     else if (k === 'match3') openMatch3();
+    else if (k === 'david') openDavid();
     else openGamePreview(k);
   }));
 }
@@ -1488,7 +1489,9 @@ function initGamesHub() {
   $('#whoMore')?.addEventListener('click', () => { const q = WHO[whoState.i]; if (whoState.clue < q.clues.length) { whoState.clue++; whoState.score = Math.max(0, whoState.score); renderWho(); } });
   $('#chronoBack')?.addEventListener('click', openGamesHub);
   $('#chronoCheck')?.addEventListener('click', checkChrono);
-  $('#m3Back')?.addEventListener('click', openGamesHub);
+  $('#m3Back')?.addEventListener('click', () => { cancelAnimationFrame(david.raf); openGamesHub(); });
+  $('#davidBack')?.addEventListener('click', () => { cancelAnimationFrame(david.raf); openGamesHub(); });
+  $('#davidFire')?.addEventListener('click', davidFire);
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
@@ -2537,6 +2540,91 @@ function m3End(win) {
     : { icon: 'flame', title: 'Ходы закончились', subtitle: `Набрано ${m3.score} из ${M3_TARGET}. Попробуй ещё раз — получится!`, xp: 0 });
   else toast(win ? 'Уровень пройден!' : 'Ходы закончились');
   setTimeout(openGamesHub, win ? 1600 : 1400);
+}
+
+/* ── Давид и Голиаф (меткость по таймингу) ── */
+const DAVID_GOAL = 3, DAVID_STONES = 5;
+let david = { stones: DAVID_STONES, hits: 0, pos: 0, dir: 1, speed: 1.6, zoneL: 40, zoneW: 20, raf: 0, busy: false };
+
+function openDavid() {
+  david = { stones: DAVID_STONES, hits: 0, pos: 0, dir: 1, speed: 1.6, zoneL: 40, zoneW: 20, raf: 0, busy: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'david'));
+  $('#nav').style.display = 'none';
+  $('#davidFig').innerHTML = ICON('users', 40);
+  $('#davidHint').textContent = 'Останови метку в золотой зоне — и попадёшь Голиафу в лоб';
+  $('#davidHint').style.color = '';
+  $('#davidFire').disabled = false;
+  davidPlaceZone();
+  davidRender();
+  davidLoop();
+  window.scrollTo({ top: 0 });
+}
+
+function davidPlaceZone() {
+  const max = 100 - david.zoneW;
+  david.zoneL = 15 + Math.random() * (max - 20);
+  $('#davidZone').style.left = david.zoneL + '%';
+  $('#davidZone').style.width = david.zoneW + '%';
+}
+
+function davidLoop() {
+  cancelAnimationFrame(david.raf);
+  const step = () => {
+    if (david.busy) return;
+    david.pos += david.dir * david.speed;
+    if (david.pos >= 100) { david.pos = 100; david.dir = -1; }
+    if (david.pos <= 0) { david.pos = 0; david.dir = 1; }
+    $('#davidMarker').style.left = david.pos + '%';
+    david.raf = requestAnimationFrame(step);
+  };
+  david.raf = requestAnimationFrame(step);
+}
+
+function davidRender() {
+  $('#davidStones').textContent = david.stones;
+  $('#davidHits').textContent = david.hits;
+  $('#davidGoal').textContent = DAVID_GOAL;
+  $('#davidMarker').style.left = david.pos + '%';
+}
+
+function davidFire() {
+  if (david.busy || david.stones <= 0) return;
+  cancelAnimationFrame(david.raf);
+  const hit = david.pos >= david.zoneL && david.pos <= david.zoneL + david.zoneW;
+  david.stones--;
+  const hint = $('#davidHint');
+  if (hit) {
+    david.hits++;
+    david.speed = Math.min(3.2, david.speed + 0.35); // сложнее с каждым попаданием
+    david.zoneW = Math.max(11, david.zoneW - 2);
+    hint.style.color = 'var(--success)';
+    hint.textContent = 'Точно в цель! 🎯';
+    $('#davidFig').classList.add('david-goliath__fig--hit');
+    if (window.MAGIC) {
+      const t = $('#davidTarget').getBoundingClientRect();
+      MAGIC.celebrate(t.left + t.width / 2, t.top + t.height / 2);
+    }
+    setTimeout(() => $('#davidFig').classList.remove('david-goliath__fig--hit'), 400);
+  } else {
+    hint.style.color = 'var(--terracotta)';
+    hint.textContent = 'Мимо! Целься спокойнее.';
+  }
+  davidRender();
+  if (david.hits >= DAVID_GOAL) return davidEnd(true);
+  if (david.stones <= 0) return davidEnd(false);
+  david.busy = true;
+  setTimeout(() => { david.busy = false; davidPlaceZone(); davidLoop(); }, 650);
+}
+
+function davidEnd(win) {
+  cancelAnimationFrame(david.raf);
+  $('#davidFire').disabled = true;
+  const xp = win ? 25 : 0;
+  if (window.MAGIC) MAGIC.rewardModal(win
+    ? { icon: 'target', title: 'Голиаф повержен!', subtitle: 'С верой и меткостью даже великан не страшен. Как Давид — ты победил!', xp }
+    : { icon: 'target', title: 'Камни закончились', subtitle: `Попаданий: ${david.hits} из ${DAVID_GOAL}. Давид тоже тренировался — попробуй ещё!`, xp });
+  else toast(win ? 'Голиаф повержен!' : 'Камни закончились');
+  setTimeout(openGamesHub, win ? 1700 : 1400);
 }
 
 /* ── Магазин за баллы (идея Екатерины #12) ── */
