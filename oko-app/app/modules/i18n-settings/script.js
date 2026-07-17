@@ -420,7 +420,7 @@ const ST_DICT = {
   /* --- биржа / market-pro --- */
   'Поиск услуг и товаров':'Search services & goods','Категории':'Categories','Рекомендуем':'Recommended',
   'Фильтры':'Filters','Цена, ₽':'Price, ₽','Рейтинг продавца':'Seller rating','Мои объявления':'My listings',
-  'У тебя пока нет объявлений':'You have no listings yet','↑ Топ':'↑ Top','На модерации':'In review','Продано':'Sold',
+  'У тебя пока нет объявлений':'You have no listings yet','ТОП':'TOP','На модерации':'In review','Продано':'Sold',
   'Активно':'Active','Продвижение объявления':'Listing promotion','Продвинуть объявление':'Promote listing',
   'Оплата разовая, списывается с баланса OKO':'One-time payment, charged to your OKO balance','Добавить фото':'Add photo',
   'Например: Монтаж Reels под ключ':'E.g.: Turnkey Reels editing','Например: от 500 ₽':'E.g.: from 500 ₽',

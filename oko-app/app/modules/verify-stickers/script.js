@@ -21,6 +21,12 @@ function vsSave(){ try{ localStorage.setItem('oko-verify', JSON.stringify(VS_VER
       }
     }
   }catch(e){}
+  /* синхронизация: если аккаунт уже в VERIFIED (галочка у имени),
+     статус верификации не может быть «нет» — иначе противоречие в UI */
+  if(VS_VERIFY.status === 'none' && typeof VERIFIED !== 'undefined' && VERIFIED.has(PROFILE.name)){
+    VS_VERIFY = { status: 'approved', name: PROFILE.name };
+    vsSave();
+  }
 })();
 
 function vsBadgeHtml(){

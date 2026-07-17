@@ -316,6 +316,10 @@ function regSchedulePopups(){
 function regPopupPro(){
   if(regPopupsSeen().pro) return;
   if(document.getElementById('regView').classList.contains('open')) return;
+  /* не перебивать открытый sheet/попап — попробовать позже */
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+    regPopTimers.push(setTimeout(regPopupPro, 20000)); return;
+  }
   regPopupMark('pro');
   showPopup({ico:'crown', title:'Открой OKO PRO',
     body:'Приоритет в ленте и поиске, расширенная аналитика, кабинет продвижения и сниженная комиссия биржи. За год — выгода 20%.',
@@ -327,6 +331,9 @@ function regPopupPro(){
 function regPopupNotif(){
   if(regPopupsSeen().notif) return;
   if(document.getElementById('regView').classList.contains('open')) return;
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+    regPopTimers.push(setTimeout(regPopupNotif, 20000)); return;
+  }
   regPopupMark('notif');
   showPopup({ico:'bell', title:'Включи уведомления',
     body:'Ответы в чатах, отклики на бирже и начисления партнёрки — узнавай о них сразу, а не когда зайдёшь.',

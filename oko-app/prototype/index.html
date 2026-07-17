@@ -26,7 +26,7 @@
 :root{
   --bg:#000; --surface:#0d0d0d; --raised:#161616; --border:#222;
   --lime:#9AFF00; --lime-dim:rgba(154,255,0,.12); --accent:#9AFF00;
-  --text:#fff; --dim:#9b9b9b; --danger:#ff4d4d;
+  --text:#fff; --fg:var(--text); --dim:#9b9b9b; --danger:#ff4d4d;
   --bubble-in:#161616; --bubble-in-text:#fff;
   --glow:0 0 18px rgba(154,255,0,.35);
   --r-sm:8px; --r-md:14px; --r-lg:22px;
@@ -137,7 +137,8 @@ nav#tabs .nav-logo{display:none}
 .chat-item .name svg.i{width:14px;height:14px;color:var(--dim)}
 .chat-item .time{font-size:11.5px;color:var(--dim);flex-shrink:0}
 .chat-item .preview{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;display:flex;align-items:center;gap:5px}
-.chat-item .preview svg.i{width:14px;height:14px;color:var(--accent)}
+.chat-item .preview svg.i{width:14px;height:14px;color:var(--accent);flex-shrink:0}
+.chat-item .name .ci-txt,.chat-item .preview .ci-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .badge{background:var(--lime);color:#000;font-size:11px;font-weight:700;min-width:19px;height:19px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
 .fab{position:absolute;right:18px;bottom:18px;width:56px;height:56px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:var(--glow),0 6px 20px rgba(0,0,0,.4);z-index:5}
 .fab svg.i{width:24px;height:24px;stroke-width:8}
@@ -211,6 +212,8 @@ nav#tabs .nav-logo{display:none}
 @media(min-width:900px){
   .chat-col{width:360px;border-right:1px solid var(--border);flex-shrink:0}
   .conv{display:flex}
+  .conv .empty-hint{display:flex}
+  #screen-feed{max-width:820px;margin:0 auto;width:100%}
 }
 
 /* ============ FEED ============ */
@@ -271,6 +274,8 @@ nav#tabs .nav-logo{display:none}
 :root[data-theme="light"] .svc-ic svg.i{color:var(--accent);filter:none}
 /* Контент-завод */
 .chip.on{color:#000;background:var(--lime)}
+#fxNiche{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none;margin:0 0 4px;transition:border-color .15s}
+#fxNiche:focus{border-color:var(--accent)}
 .fx-pills{display:flex;flex-wrap:wrap;gap:8px}
 .fx-pill{font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--text);transition:.15s}
 .fx-pill.on{background:var(--lime);color:#000;border-color:var(--lime)}
@@ -640,7 +645,7 @@ label.f-lab{display:block}
 .search-head .ep-cancel svg.i{width:22px;height:22px}
 .search-field{flex:1;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 15px}
 .search-field svg.i{width:18px;height:18px;color:var(--dim);flex-shrink:0}
-.search-field input{flex:1;background:none;border:none;color:var(--fg);font-size:14.5px}
+.search-field input{flex:1;background:none;border:none;outline:none;color:var(--fg);font-size:14.5px;min-width:0}
 /* ===== Центр уведомлений ===== */
 .notif-btn{position:relative}
 .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--lime);border:1.5px solid var(--surface);display:none}
@@ -3081,8 +3086,8 @@ function renderChatList(filter=''){
       <div class="chat-item" onclick="openConv(${c.id})">
         ${avaHtml(c)}
         <div class="meta">
-          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}${c.name}</span><span class="time">${c.time}</span></div>
-          <div class="row1"><span class="preview">${pi?I(pi):''}${c.preview}</span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
+          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span></span><span class="time">${c.time}</span></div>
+          <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${c.preview}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
         </div>
       </div>`;
     }).join('');
@@ -3107,6 +3112,9 @@ function openConv(id){
 function closeConv(){
   document.querySelector('.chat-col').style.display='';
   document.getElementById('conv').style.display='';
+  document.getElementById('convBody').style.display='none';
+  document.getElementById('convEmpty').style.display='';
+  currentChat = null;
   document.getElementById('app').classList.remove('conv-open');
 }
 /* клавиатура: держим ленту сообщений у низа */
@@ -4751,7 +4759,7 @@ let mkFilters = {min:'', max:'', rating:0, type:'all'};
 const promoRank = p => p==='turbo'?3 : p==='vip'?2 : p==='up'?1 : 0;
 const promoBadge = p => p==='turbo'?'<span class="lst-promo turbo">TURBO</span>'
   : p==='vip'?'<span class="lst-promo vip">VIP</span>'
-  : p==='up'?'<span class="lst-promo up">↑ Топ</span>' : '';
+  : p==='up'?'<span class="lst-promo up">ТОП</span>' : '';
 function statusChip(st){
   return st==='mod' ? '<span class="lst-status mod">На модерации</span>'
        : st==='sold' ? '<span class="lst-status sold">Продано</span>'
@@ -5533,6 +5541,10 @@ function regSchedulePopups(){
 function regPopupPro(){
   if(regPopupsSeen().pro) return;
   if(document.getElementById('regView').classList.contains('open')) return;
+  /* не перебивать открытый sheet/попап — попробовать позже */
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+    regPopTimers.push(setTimeout(regPopupPro, 20000)); return;
+  }
   regPopupMark('pro');
   showPopup({ico:'crown', title:'Открой OKO PRO',
     body:'Приоритет в ленте и поиске, расширенная аналитика, кабинет продвижения и сниженная комиссия биржи. За год — выгода 20%.',
@@ -5544,6 +5556,9 @@ function regPopupPro(){
 function regPopupNotif(){
   if(regPopupsSeen().notif) return;
   if(document.getElementById('regView').classList.contains('open')) return;
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+    regPopTimers.push(setTimeout(regPopupNotif, 20000)); return;
+  }
   regPopupMark('notif');
   showPopup({ico:'bell', title:'Включи уведомления',
     body:'Ответы в чатах, отклики на бирже и начисления партнёрки — узнавай о них сразу, а не когда зайдёшь.',
@@ -8428,6 +8443,12 @@ function vsSave(){ try{ localStorage.setItem('oko-verify', JSON.stringify(VS_VER
       }
     }
   }catch(e){}
+  /* синхронизация: если аккаунт уже в VERIFIED (галочка у имени),
+     статус верификации не может быть «нет» — иначе противоречие в UI */
+  if(VS_VERIFY.status === 'none' && typeof VERIFIED !== 'undefined' && VERIFIED.has(PROFILE.name)){
+    VS_VERIFY = { status: 'approved', name: PROFILE.name };
+    vsSave();
+  }
 })();
 
 function vsBadgeHtml(){
@@ -9173,7 +9194,7 @@ const ST_DICT = {
   /* --- биржа / market-pro --- */
   'Поиск услуг и товаров':'Search services & goods','Категории':'Categories','Рекомендуем':'Recommended',
   'Фильтры':'Filters','Цена, ₽':'Price, ₽','Рейтинг продавца':'Seller rating','Мои объявления':'My listings',
-  'У тебя пока нет объявлений':'You have no listings yet','↑ Топ':'↑ Top','На модерации':'In review','Продано':'Sold',
+  'У тебя пока нет объявлений':'You have no listings yet','ТОП':'TOP','На модерации':'In review','Продано':'Sold',
   'Активно':'Active','Продвижение объявления':'Listing promotion','Продвинуть объявление':'Promote listing',
   'Оплата разовая, списывается с баланса OKO':'One-time payment, charged to your OKO balance','Добавить фото':'Add photo',
   'Например: Монтаж Reels под ключ':'E.g.: Turnkey Reels editing','Например: от 500 ₽':'E.g.: from 500 ₽',
