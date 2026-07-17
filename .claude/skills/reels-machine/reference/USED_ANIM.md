@@ -33,3 +33,4 @@
   n4[film camera, light bulb, gear, play button, handshake, rocket]; n5[stopwatch, clapper, fire, target, bell, swipe up].
 - fx: каждый тип в одном ролике; 3D: droplet/diamond/torus/ring/coin; rem: counter(n4), graph(n5).
 - gl: по 6 уникальных переходов на ролик. Кадры — 15 уникальных/ролик (hi-res ≤2560), дедуп по id.
+| 2026-07 · promo студия (клон-голос Владимира) · fx[watermark-logo, progress-bar, karaoke-Soyuz] · gl[fade,wiperight,fadeblack,slideleft,dissolve,circleopen,smoothleft,wipeup,radial,slideright,dissolve,smoothright,fadewhite] · bespoke[AI-обложка Nano Banana + AI-аутро-карточка] · grade[warm+teal_orange, vignette, grain] · music[Freesound 726502 Dark Cinematic Trailer] · sfx[Freesound swoosh на склейках] · voice[Higgsfield seed_audio клон "Vladimir VCODE"] |
