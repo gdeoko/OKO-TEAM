@@ -1,3 +1,23 @@
+# 🤖 RUNBOOK АВТОПРОГОНА — триггер «Tappio автопилот» (каждые 2ч). ВЫПОЛНЯЙ ИМЕННО ТАК.
+Ты в свежем контейнере БЕЗ MCP-коннекторов. Задача запуска — добрать дневную квоту роликов
+(рамп 3→15/день). Шаги строго, без импровизации:
+1. `source <(base64 -d /home/user/OKO-TEAM/secrets.env.b64)`; `cd /home/user/OKO-TEAM && git checkout tappio.app && git pull -q origin tappio.app`; `cd tappio-app/factory`.
+2. `bash setup_env.sh` → жди `ENV READY` (если NOT-READY — доустанови недостающее, повтори; таймбоксы внутри).
+3. `N=$(python3 quota.py check)`. **Если N=0 → норма дня выполнена: НИЧЕГО не делай, тихо заверши** (не постить, не писать в чат/бот).
+4. Собери `K=min(N,2)` ролика ЗА ЭТОТ ФАЕР (остальное доберут следующие фаеры каждые 2ч). Для каждого:
+   a. Ротуй приложение spy→brain→tape (глянь последние в USED_ANIM). Свежий угол (можно быстрый WebSearch ниши). Сверься с USED_FOOTAGE/USED_ANIM — НЕ повторяй кадры/механики/углы/тексты.
+   b. Напиши `scripts/<app>_<YYYYMMDD>_<n>.json` по образцу `pipeline/example_script.json`/`scripts/tape_auto1.json`. **ЖЁСТКО: 6 КОРОТКИХ битов озвучки ≤11 слов** (иначе ролик >45с = брак); 10-14 shots (новые запросы) + формы-вставки `insert`; 9-11 наложений с упором на КОД-ИНФОГРАФИКУ (checklist/donut/gauge/linechart/bars/ring/stat/chips — РАЗНЫЕ); обложка БЕЗ поля `ai` (HTML — надёжно).
+   c. `bash auto_run.sh <id> "<caption: польза + 'Comment <CODE> for the app' + 8-10 поисковых хэштегов>" "<yt заголовок #shorts>"`. Дождись финальной строки:
+      • `AUTO_DONE …` → `python3 quota.py inc`; допиши углы/механики в USED_ANIM.md.
+      • `TOO_LONG …` → сократи биты ещё сильнее и пересобери ОДИН раз.
+      • `BUILD_FAILED` → глянь `work/<id>_auto.log`, почини очевидное, повтори ОДИН раз; не вышло — пропусти, сообщи в бот.
+   auto_run САМ: собирает (HTML-обложка), коммитит+пушит ролик, git-raw доставляет на VPS, постит TikTok+YouTube+Instagram, шлёт отчёт в @tappiorder_bot, дописывает USED_FOOTAGE.
+5. Финал: `git add -A && git commit -m "autopilot" && git push origin tappio.app` (ретраи). `python3 quota.py status`. Короткий итог в чат.
+6. АКТИВНОСТЬ (только на ПЕРВОМ фаере дня — если в начале `done==0`): `node vps/ig_engage.mjs` через VPS ($OKO_VPS_CTRL_URL/exec, лимиты в скрипте), лог в ENGAGEMENT_LOG.
+**НЕ используй Higgsfield/media_upload — коннектора нет.** Обложка HTML, доставка git-raw (см. «connector-free» ниже). Ничего не проси у Даниэля.
+
+---
+
 # IMPLEMENTATION — рабочий боевой движок (v4), проверено на Tappio
 
 Этот файл — мост между абстрактным SKILL.md и РЕАЛЬНЫМ кодом, который уже собирает
