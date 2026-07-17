@@ -1324,6 +1324,211 @@ function renderDevotional() {
   $('#devNext')?.addEventListener('click', () => { if (devState.i < total - 1) { devState.i++; localStorage.setItem('mt_dev_day', devState.i); renderDevotional(); window.scrollTo({ top: 0 }); } });
 }
 
+/* ───────── ПУЛ ВОПРОСОВ ИЗ УРОКОВ ───────── */
+function quizPool() {
+  const map = (typeof window !== 'undefined' && window.LESSONS) ? window.LESSONS : {};
+  const pool = [];
+  Object.keys(map).forEach((n) => {
+    const c = map[n];
+    if (c && c.quiz) c.quiz.forEach((q) => pool.push({ q: q.q, opts: q.opts, answer: q.answer }));
+  });
+  return pool;
+}
+// детерминированная тасовка по seed
+function seededShuffle(arr, seed) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = (i * (seed + 13) + 7) % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+/* ───────── СЕМЕЙНЫЙ КВИЗ (2 игрока, pass-and-play) ───────── */
+const FAM_ROUNDS = 6; // по 3 вопроса каждому
+let famState = { qs: [], i: 0, scores: [0, 0], answered: false };
+
+function openFamily() {
+  const pool = quizPool();
+  if (pool.length < FAM_ROUNDS) { toast('Игра скоро появится'); return; }
+  famState = { qs: seededShuffle(pool, dayIndex()).slice(0, FAM_ROUNDS), i: 0, scores: [0, 0], answered: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'family'));
+  $('#nav').style.display = 'none';
+  renderFamily();
+  window.scrollTo({ top: 0 });
+}
+
+function renderFamily() {
+  if (famState.i >= FAM_ROUNDS) return finishFamily();
+  const q = famState.qs[famState.i];
+  const player = famState.i % 2; // 0 или 1
+  famState.answered = false;
+  $('#familyBody').innerHTML = `
+    <div class="fam-turn fam-turn--p${player + 1}">
+      <div class="fam-turn__who">Ходит Игрок ${player + 1}</div>
+      <div class="fam-turn__score">Игрок 1: ${famState.scores[0]} · Игрок 2: ${famState.scores[1]}</div>
+      <div class="fam-turn__round">Вопрос ${famState.i + 1} из ${FAM_ROUNDS}</div>
+    </div>
+    <div class="card"><div class="q__text" style="margin-bottom:12px">${q.q}</div>
+      <div id="famOpts">${q.opts.map((o, oi) => `<button class="fam-opt" data-oi="${oi}">${o}</button>`).join('')}</div>
+    </div>`;
+  $$('#famOpts .fam-opt').forEach((el) => el.addEventListener('click', () => answerFamily(Number(el.dataset.oi))));
+}
+
+function answerFamily(oi) {
+  if (famState.answered) return;
+  famState.answered = true;
+  const q = famState.qs[famState.i];
+  const player = famState.i % 2;
+  const right = oi === q.answer;
+  $$('#famOpts .fam-opt').forEach((el, i) => { el.disabled = true; if (i === q.answer) el.classList.add('fam-opt--right'); else if (i === oi) el.classList.add('fam-opt--wrong'); });
+  if (right) { famState.scores[player]++; if (window.MAGIC) { const r = $('#familyBody').getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top + 60); } }
+  setTimeout(() => { famState.i++; renderFamily(); window.scrollTo({ top: 0 }); }, right ? 900 : 1200);
+}
+
+function finishFamily() {
+  const [a, b] = famState.scores;
+  const title = a === b ? 'Ничья — дружная семья!' : `Победил Игрок ${a > b ? 1 : 2}!`;
+  if (window.MAGIC) MAGIC.rewardModal({ icon: 'users', title, subtitle: `Игрок 1: ${a} · Игрок 2: ${b}. Играть вместе — уже победа.`, xp: 20 });
+  else toast(title);
+  setTimeout(openGamesHub, 500);
+}
+
+/* ───────── ЕЖЕДНЕВНЫЙ ВЫЗОВ ───────── */
+const CHALLENGES = [
+  { task: 'Скажи сегодня «спасибо» трём людям — и Богу за них.', deed: 'Благодарность' },
+  { task: 'Сделай доброе дело тихо, чтобы никто не заметил.', deed: 'Доброта' },
+  { task: 'Помирись с тем, на кого обижался. Прощение делает сердце лёгким.', deed: 'Прощение' },
+  { task: 'Помолись сегодня за свою семью своими словами.', deed: 'Молитва' },
+  { task: 'Помоги маме или папе без просьбы.', deed: 'Послушание' },
+  { task: 'Поделись чем-то своим с другом или братом.', deed: 'Щедрость' },
+  { task: 'Найди в природе три Божьих чуда и скажи «как красиво!».', deed: 'Благодарность' },
+  { task: 'Поддержи того, кому сегодня грустно. Ты можешь стать маячком.', deed: 'Милосердие' },
+];
+
+function openChallenge() {
+  const idx = dayIndex() % CHALLENGES.length;
+  const ch = CHALLENGES[idx];
+  const pool = quizPool();
+  const q = pool.length ? seededShuffle(pool, dayIndex() + 5)[0] : null;
+  const doneToday = localStorage.getItem('mt_challenge_date') === todayKey();
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'challenge'));
+  $('#nav').style.display = 'none';
+  $('#challengeBody').innerHTML = `
+    <div class="ch-head"><div class="ch-head__ic">${ICON('trophy', 26)}</div>
+      <div><div class="ch-head__title">Вызов дня</div><div class="ch-head__sub">Тема: ${ch.deed} · Метанойя+</div></div></div>
+    <div class="card ch-task">${ICON('flame', 18)}<p>${ch.task}</p></div>
+    ${q ? `<h2 class="section-title">Вопрос дня</h2>
+    <div class="card"><div class="q__text" style="margin-bottom:12px">${q.q}</div>
+      <div id="chOpts">${q.opts.map((o, oi) => `<button class="fam-opt" data-oi="${oi}">${o}</button>`).join('')}</div>
+      <div class="test-result" id="chResult" hidden></div></div>` : ''}
+    <button class="btn btn--primary" id="chClaim" style="width:100%;margin-top:16px" ${doneToday ? 'disabled' : ''}>${doneToday ? 'Вызов дня выполнен ✓' : 'Отметить выполненным · +15 XP'}</button>`;
+  hydrateIcons();
+  if (q) $$('#chOpts .fam-opt').forEach((el) => el.addEventListener('click', () => {
+    $$('#chOpts .fam-opt').forEach((b, i) => { b.disabled = true; if (i === q.answer) b.classList.add('fam-opt--right'); else if (b === el) b.classList.add('fam-opt--wrong'); });
+    const res = $('#chResult'); res.hidden = false;
+    const ok = Number(el.dataset.oi) === q.answer;
+    res.className = 'test-result ' + (ok ? 'pass' : 'fail');
+    res.textContent = ok ? 'Верно! Так держать.' : 'Не угадал — но вызов дня всё равно можно выполнить.';
+  }));
+  $('#chClaim')?.addEventListener('click', () => {
+    if (localStorage.getItem('mt_challenge_date') === todayKey()) return;
+    localStorage.setItem('mt_challenge_date', todayKey());
+    if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Вызов дня выполнен!', subtitle: 'Возвращайся завтра — новый вызов уже ждёт.', xp: 15 });
+    else toast('+15 XP!');
+    setTimeout(openGamesHub, 400);
+  });
+  window.scrollTo({ top: 0 });
+}
+
+/* ───────── ТОЛКОВАНИЕ (выбери каноническое) ───────── */
+function INT() { return (typeof window !== 'undefined' && window.INTERPRET) ? window.INTERPRET : []; }
+let intState = { i: 0, score: 0, answered: false };
+
+function openInterpret() {
+  if (!INT().length) { toast('Игра скоро появится'); return; }
+  intState = { i: 0, score: 0, answered: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'interpret'));
+  $('#nav').style.display = 'none';
+  renderInterpret();
+  window.scrollTo({ top: 0 });
+}
+
+function renderInterpret() {
+  const c = INT()[intState.i];
+  $('#intNum').textContent = intState.i + 1;
+  $('#intTotal').textContent = INT().length;
+  $('#intScore').textContent = intState.score;
+  intState.answered = false;
+  $('#intBody').innerHTML = `
+    <article class="card feed-card feed-card--quote"><div class="feed-card__title">«${c.passage}»</div><div class="quote-ref">${c.ref}</div></article>
+    <div class="int-q">${c.question}</div>
+    <div class="int-opts" id="intOpts">${c.options.map((o, oi) => `<button class="dil-opt" data-oi="${oi}">${o.text}</button>`).join('')}</div>
+    <div class="dil-feedback" id="intFb" hidden></div>`;
+  $$('#intOpts .dil-opt').forEach((el) => el.addEventListener('click', () => answerInterpret(Number(el.dataset.oi))));
+}
+
+function answerInterpret(oi) {
+  if (intState.answered) return;
+  intState.answered = true;
+  const c = INT()[intState.i];
+  const chosen = c.options[oi];
+  $$('#intOpts .dil-opt').forEach((el, i) => { el.disabled = true; if (c.options[i].canonical) el.classList.add('dil-opt--good'); else if (i === oi) el.classList.add('dil-opt--bad'); });
+  if (chosen.canonical) { intState.score += 15; $('#intScore').textContent = intState.score; if (window.MAGIC) { const r = $('#intBody').getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top + 80); } }
+  const last = intState.i >= INT().length - 1;
+  const fb = $('#intFb'); fb.hidden = false;
+  fb.className = 'dil-feedback ' + (chosen.canonical ? 'dil-feedback--good' : 'dil-feedback--soft');
+  fb.innerHTML = `<div class="dil-feedback__row">${ICON(chosen.canonical ? 'check' : 'book', 18)}<span>${chosen.note}</span></div>
+    <button class="btn btn--primary" id="intNext" style="width:100%;margin-top:12px">${last ? 'Завершить' : 'Следующий отрывок'}</button>`;
+  $('#intNext').addEventListener('click', () => {
+    if (last) { if (window.MAGIC) MAGIC.rewardModal({ icon: 'cross', title: 'Готово!', subtitle: `Ты вникал в смысл Писания — ${intState.score} очков.`, xp: intState.score }); setTimeout(openGamesHub, 400); }
+    else { intState.i++; renderInterpret(); window.scrollTo({ top: 0 }); }
+  });
+}
+
+/* ───────── КОВЧЕГ ЗАВЕТА (квест, 5 глав) ───────── */
+function QST() { return (typeof window !== 'undefined' && window.QUEST) ? window.QUEST : []; }
+let q2State = { i: 0, answered: false };
+
+function openQuest2() {
+  if (!QST().length) { toast('Квест скоро появится'); return; }
+  q2State = { i: 0, answered: false };
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'quest2'));
+  $('#nav').style.display = 'none';
+  renderQuest2();
+  window.scrollTo({ top: 0 });
+}
+
+function renderQuest2() {
+  const c = QST()[q2State.i];
+  $('#q2Num').textContent = q2State.i + 1;
+  $('#q2Total').textContent = QST().length;
+  q2State.answered = false;
+  $('#q2Body').innerHTML = `
+    <div class="q2-chapter">${c.title}</div>
+    <div class="card lesson-text q2-scene"><p>${c.scene}</p></div>
+    <div class="q2-question">${c.question}</div>
+    <div class="dil-opts" id="q2Opts">${c.options.map((o, oi) => `<button class="dil-opt" data-oi="${oi}">${o.text}</button>`).join('')}</div>
+    <div class="dil-feedback" id="q2Fb" hidden></div>`;
+  $$('#q2Opts .dil-opt').forEach((el) => el.addEventListener('click', () => answerQuest2(Number(el.dataset.oi))));
+}
+
+function answerQuest2(oi) {
+  if (q2State.answered) return;
+  q2State.answered = true;
+  const c = QST()[q2State.i];
+  const chosen = c.options[oi];
+  $$('#q2Opts .dil-opt').forEach((el, i) => { el.disabled = true; if (c.options[i].correct) el.classList.add('dil-opt--good'); else if (i === oi) el.classList.add('dil-opt--bad'); });
+  const last = q2State.i >= QST().length - 1;
+  const fb = $('#q2Fb'); fb.hidden = false;
+  fb.className = 'dil-feedback ' + (chosen.correct ? 'dil-feedback--good' : 'dil-feedback--soft');
+  fb.innerHTML = `<div class="dil-feedback__row">${ICON(chosen.correct ? 'check' : 'heart', 18)}<span>${chosen.outcome}</span></div>
+    <div class="dil-verse">«${c.verse.text}» <em>${c.verse.ref}</em></div>
+    <button class="btn btn--primary" id="q2Next" style="width:100%;margin-top:12px">${last ? 'Завершить путь' : 'Дальше в путь →'}</button>`;
+  if (chosen.correct && window.MAGIC) { const r = fb.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+  $('#q2Next').addEventListener('click', () => {
+    if (last) { if (window.MAGIC) MAGIC.rewardModal({ icon: 'star', title: 'Путь пройден!', subtitle: 'Ты прошёл весь путь веры до конца. Бог хранит идущих за Ним.', xp: 35 }); setTimeout(openGamesHub, 400); }
+    else { q2State.i++; renderQuest2(); window.scrollTo({ top: 0 }); }
+  });
+}
+
 
 /* ───────── TELEGRAM-ФУНКЦИИ: ГОЛОСОВЫЕ, КРУЖОЧКИ, ВЛОЖЕНИЯ, ЛИЧКИ ───────── */
 
@@ -1768,15 +1973,15 @@ const GAMES = {
       desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
     { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Играбельно · +30 XP', premium: true, play: true,
       desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Пары животных', 'История Ноя'] },
-    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Строй-тайкун', premium: true,
-      desc: 'Строй великий храм: добывай ресурсы, нанимай мастеров, укрощай детали.', bullets: ['Стройка-тайкун', 'Развитие города', 'Мудрость Соломона'] },
-    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Квест, 5 глав', premium: true,
-      desc: 'Приключение в пяти главах: решай загадки и найди путь к святыне.', bullets: ['5 глав-историй', 'Загадки и предметы', 'Point-and-click квест'] },
+    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Играбельно · стройка', premium: true, play: true,
+      desc: 'Строй великий храм: собирай кирпичики за уроки и игры, этап за этапом.', bullets: ['Стройка храма', 'Растёт с прогрессом', 'Значок «Архитектор веры»'] },
+    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Играбельно · +35 XP', premium: true, play: true,
+      desc: 'Приключение в пяти главах: пройди путь веры, делая верный выбор.', bullets: ['5 глав-историй', 'Выбор на каждом шаге', 'История пути к святыне'] },
     { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Играбельно · +очки', premium: true, play: true,
       desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', '6 историй', 'Внимание к деталям'] },
     { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Играбельно · +25 XP', premium: true, play: true,
       desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
-    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Для всей семьи', premium: true,
+    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Играбельно · 2 игрока', premium: true, play: true,
       desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
   ],
   daily: [
@@ -1786,9 +1991,9 @@ const GAMES = {
       desc: 'Собирай кирпичики за уроки и тесты — и твой храм растёт этап за этапом.', bullets: ['10 этапов стройки', 'Награда за постоянство', 'Значок «Архитектор веры»'] },
     { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true,
       desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и +5 XP.', bullets: ['Тёплая привычка', 'Стрик дней подряд', '+5 XP в день'] },
-    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Метанойя+', premium: true,
+    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Играбельно · +15 XP', premium: true, play: true,
       desc: 'Каждый день — новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Только в Метанойя+'] },
-    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Выбери каноническое', premium: true,
+    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Играбельно · +очки', premium: true, play: true,
       desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
   ],
 };
@@ -1827,6 +2032,11 @@ function renderGhub(cat) {
     else if (k === 'ark') openArk();
     else if (k === 'dilemma') openDilemma();
     else if (k === 'detective') openDetective();
+    else if (k === 'family') openFamily();
+    else if (k === 'challenge') openChallenge();
+    else if (k === 'interpret') openInterpret();
+    else if (k === 'quest') openQuest2();
+    else if (k === 'temple') openTempleScreen();
     else openGamePreview(k);
   }));
 }
@@ -1848,6 +2058,10 @@ function initGamesHub() {
   $('#arkBack')?.addEventListener('click', () => { arkStop(); openGamesHub(); });
   $('#dilemmaBack')?.addEventListener('click', openGamesHub);
   $('#detectiveBack')?.addEventListener('click', openGamesHub);
+  $('#familyBack')?.addEventListener('click', openGamesHub);
+  $('#challengeBack')?.addEventListener('click', openGamesHub);
+  $('#interpretBack')?.addEventListener('click', openGamesHub);
+  $('#quest2Back')?.addEventListener('click', openGamesHub);
 }
 
 /* ── Превью заблокированной / премиум-игры ── */
