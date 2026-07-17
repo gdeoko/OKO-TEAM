@@ -81,6 +81,11 @@ rep=(f"<b>📊 МЕТАНОЙА · аналитика {today}</b>\n\n"
      f"<b>▶️ YouTube</b> — подписчиков {num(out['yt'].get('subs',0))}, просмотров {num(out['yt'].get('views',0))}\n{ytl}\n"
      f"<b>📸 Instagram</b> — подписчиков {num(out['ig'].get('followers',0))}\n{igl}\n"
      f"<b>🎵 TikTok</b> — подписчиков {num(out['tt'].get('followers') or '—')}\n")
+# строка активности
+try:
+    e=json.load(open(f"{CFG}/metanoia_engage_last.json"))
+    rep+=f"\n<b>Активность сегодня:</b> лайков {e.get('liked',0)}, подписок {e.get('followed',0)} (#{e.get('tag','')})\n"
+except: pass
 if out["err"]: rep+=f"\n<i>Недоступно: {'; '.join(out['err'])[:200]}</i>"
 open(f"{CFG}/metanoia_report_latest.txt","w",encoding="utf-8").write(rep)
 open(f"{CFG}/metanoia_week.txt","a",encoding="utf-8").write(f"{today}: 👥{num(foll)} 👁{num(views)} 🎬{reels}\n")

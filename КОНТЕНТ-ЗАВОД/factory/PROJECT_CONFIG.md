@@ -79,3 +79,10 @@ infra: VPS okoagents.okoteam.top через OKO_VPS_CTRL_URL/_TOKEN (POST /exec)
   instagrapi установлен на VPS. Сессия ds_user_id 78204563542.
 Порядок в рутине: собрать → залить на VPS (cfg/metanoia_reel1.mp4) + caption (cfg/metanoia_caption1.txt)
 → YouTube (publishAt 16:00 UTC) + TikTok + IG. Проверить факт публикации на каждой.
+
+## Сборка ролика — ТОЛЬКО по runbook (детерминированно, надёжно)
+Дневная сборка идёт СТРОГО по `КОНТЕНТ-ЗАВОД/factory/pipeline/PIPELINE.md` (проверенные команды
+и скрипты: ovgen.mjs, build_segments.py, xfade.py, align.py, subs_karaoke.py, composite.py,
+outro_gen.mjs). Импровизировать только КРЕАТИВ (тема/сценарий/тексты оверлеев), механику — по скриптам.
+Аналитика+активность — отдельно и надёжно на VPS (cron 10:00 МСК: metanoia_engage.py → metanoia_analytics.py),
+сборку НЕ трогают. Страховка постинга — триггер 19:40 МСК (досабирает, если плановый прогон упал).
