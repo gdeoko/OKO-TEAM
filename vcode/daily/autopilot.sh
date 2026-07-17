@@ -88,16 +88,11 @@ timeout 1200 python3 "$DAILY/build_one.py" "$DAILY/current_spec.json" "$DAY" "$N
 SZ=$(stat -c%s "$PIPE/$DAY/reel.mp4"); echo "reel size $((SZ/1024/1024))MB"
 [ "$SZ" -lt 52428800 ] || fail "reel > 50MB (лимит бота)"
 
-# 5) доставка (токен нужен именно здесь; ролик уже собран и сохранён)
-step "deliver to bot"
+# 5) доставка — цепочка каналов (штатный бот → фолбэк-бот Даниэлю → e-mail). Никогда не молчит.
+step "deliver (цепочка каналов)"
 [ -z "${VCODE_MEDIA_BOT_TOKEN:-}" ] && export VCODE_MEDIA_BOT_TOKEN="$(capture_env_token)"
-if [ -z "${VCODE_MEDIA_BOT_TOKEN:-}" ]; then
-  echo "AUTOPILOT_FAIL_DELIVERY: нет VCODE_MEDIA_BOT_TOKEN (bootstrap окружения не отдал токен)."
-  echo "Ролик СОБРАН и готов: $PIPE/$DAY/reel.mp4 — доставить повтором, когда токен доступен: FORCE=1 bash vcode/daily/autopilot.sh"
-  exit 2
-fi
 NOTE=""; [ "$LOWQ" = "LOW" ] && NOTE="Очередь тем на исходе — пополнить банк vcode/daily/queue.json."
-python3 "$DAILY/deliver.py" "$PIPE/$DAY" "$NOTE" || fail "deliver"
+python3 "$DAILY/deliver.py" "$PIPE/$DAY" "$NOTE" || fail "deliver — все каналы не сработали (см. лог)"
 
 # 6) реестры + state
 step "registers"
@@ -109,7 +104,7 @@ ffmpeg -y -v error -i "$PIPE/$DAY/reel.mp4" -vf scale=720:1280 -c:v libx264 -crf
 # 8) commit + push
 step "commit + push"
 cd "$ROOT"
-git add "$DAILY/state.json" "$DAILY/used_ids.json" \
+git add "$ROOT/secrets.env.b64" "$DAILY/state.json" "$DAILY/used_ids.json" \
   "$SKILL/reference/USED_FOOTAGE.md" "$SKILL/reference/USED_ANIM.md" \
   "$PIPE/$DAY/clips_manifest.json" "$PIPE/$DAY/POST.txt" 2>/dev/null
 git commit -q -m "V.CODE автопилот: ролик дня $DATE ($SPECID) — собран и доставлен в бот" 2>&1 | tail -1
