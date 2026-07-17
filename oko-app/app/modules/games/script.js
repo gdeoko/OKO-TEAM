@@ -526,6 +526,11 @@ function gmLbDrift(){
     gmLbSave();
   }
 }
+function gmPluralWins(n){
+  if(n % 10 === 1 && n % 100 !== 11) return 'выигрыш';
+  if(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 'выигрыша';
+  return 'выигрышей';
+}
 function gmLbRow(r, pos){
   const mv = r.me && GM_LB.move ? `<svg class="i gm-lb-mv ${GM_LB.move}"><use href="#i-chev"/></svg>` : '';
   const posHtml = pos === 1 ? `<b class="gm-lb-pos p1">${I('gm-cup')}</b>` : `<b class="gm-lb-pos ${pos<=3?'p'+pos:''}">${pos}</b>`;
@@ -534,7 +539,7 @@ function gmLbRow(r, pos){
     <span class="gm-lb-ava">${esc((r.n[0]||'?').toUpperCase())}</span>
     <div class="gm-lb-b">
       <span class="gm-lb-n">${esc(r.n)}${r.me ? vBadge(r.n) : ''}${r.me ? '<i class="gm-lb-you">ты</i>' : ''}${mv}</span>
-      <small>${r.w} ${r.w % 10 === 1 && r.w % 100 !== 11 ? 'выигрыш' : 'выигрышей'} за неделю</small>
+      <small>${r.w} ${gmPluralWins(r.w)} за неделю</small>
     </div>
     <b class="gm-lb-sum">${fmtMoney(r.s)}</b>
   </div>`;

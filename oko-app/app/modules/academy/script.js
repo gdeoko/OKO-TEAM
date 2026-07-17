@@ -928,6 +928,114 @@ function acRenderProgressBox(){
     <p class="dim" style="font-size:12px;text-align:center">Урок пройден на <b style="color:var(--accent)">${pct}%</b></p>` + next;
 }
 
+/* ================= КОНСПЕКТ УРОКА (лонгрид из слайдов) ================= */
+function acNotesStrip(h){ return String(h).replace(/<[^>]+>/g,''); }
+function acNotesWords(){
+  return acCur().slides.reduce((n,s)=>n + acNotesStrip(s.t + ' ' + s.pts.join(' ')).split(/\s+/).length, 0);
+}
+function acNotesHtml(){
+  const L = acCur();
+  const mins = Math.max(2, Math.round(acNotesWords() / 150));
+  const secs = L.slides.map((s,i)=>{
+    const p = s.pts.map(t=>t.trim().replace(/[.!…]+\s*$/,'')).join('. ') + '.';
+    return `<div class="ac-note-sec"><span class="n">${String(i+1).padStart(2,'0')}</span><h4>${s.t}</h4><p>${p}</p></div>`;
+  }).join('');
+  return `
+  <div class="card ac-notes" id="acNotes">
+    <button class="ac-notes-head" onclick="acNotesToggle()">
+      <span class="ico">${I('file')}</span>
+      <span class="meta"><b>Текстовая версия урока</b><span>${L.slides.length} разделов · ~${mins} мин чтения · весь материал без видео</span></span>
+      <svg class="i chev"><use href="#i-chev"/></svg>
+    </button>
+    <div class="ac-notes-body">
+      <p class="ac-notes-intro">Полный конспект урока «${L.title}» — все тезисы слайдов, собранные в один читабельный текст. Удобно повторить перед тестом или сохранить себе.</p>
+      ${secs}
+      <div style="height:14px"></div>
+      <button class="btn ghost" style="width:100%" onclick="acNotesDownload()">${I('file')} Скачать .txt</button>
+    </div>
+  </div>`;
+}
+function acNotesToggle(){
+  const el = document.getElementById('acNotes');
+  if(el) el.classList.toggle('open');
+}
+function acNotesTxt(){
+  const L = acCur();
+  let out = 'АКАДЕМИЯ OKO · КУРС «НЕЙРОСЕТИ 2026»\r\n'
+          + 'КОНСПЕКТ · УРОК ' + (acL+1) + ' — ' + L.title.toUpperCase() + '\r\n'
+          + '='.repeat(46) + '\r\n\r\n';
+  L.slides.forEach((s,i)=>{
+    out += (i+1) + '. ' + acNotesStrip(s.t).toUpperCase() + '\r\n';
+    s.pts.forEach(p=>{ out += '   — ' + acNotesStrip(p) + '\r\n'; });
+    out += '\r\n';
+  });
+  out += '-'.repeat(46) + '\r\nПройди тест и получи официальный сертификат OKO:\r\nhttps://true-journey-418.higgsfield.app\r\n';
+  return out;
+}
+function acNotesDownload(){
+  try{
+    const blob = new Blob(['\ufeff' + acNotesTxt()], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'OKO-урок-' + (acL+1) + '-конспект.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 800);
+    toast('Конспект сохранён: урок ' + (acL+1) + '.txt');
+  }catch(e){
+    acCopyText(acNotesTxt(), 'Скачивание недоступно — конспект скопирован в буфер');
+  }
+}
+
+/* ================= НАПОМИНАНИЕ (раз в сутки при входе) ================= */
+function acRemindCheck(){
+  try{
+    if(!localStorage.getItem('oko-auth')) return;            // ещё не в приложении
+    if(document.getElementById('okoPopup')) return;          // другой попап — не мешаем, покажем в след. заход
+    const scr = document.getElementById('screen-academy');
+    if(scr && scr.classList.contains('active')) return;      // уже в академии
+    const today = acDayStr();
+    if(acS.remindDay === today) return;                      // раз в сутки
+    const nx = acNextLesson();
+    if(nx < 0) return;                                       // всё пройдено — не беспокоим
+    const left = 100 - acLessonPct(nx);
+    acS.remindDay = today; acSave();
+    showPopup({ico:'star', title:'Академия OKO',
+      body:'Продолжи урок ' + (nx+1) + ' «' + esc(AC_COURSE[nx].title) + '» — осталось <b style="color:var(--accent)">' + left + '%</b> до полного прохождения.',
+      actions:[
+        {label:'Продолжить урок', onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
+        {label:'Позже', ghost:true}
+      ]});
+  }catch(e){}
+}
+
+/* ================= ПОДЕЛИТЬСЯ СЕРТИФИКАТОМ ================= */
+function acCopyText(t, okMsg){
+  const done = ()=>toast(okMsg || 'Скопировано в буфер');
+  const fallback = ()=>{
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.cssText = 'position:fixed;top:-200px;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove(); done();
+    }catch(e){ toast('Не удалось скопировать'); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(done).catch(fallback);
+  else fallback();
+}
+function acCertShare(i){
+  const c = (typeof i === 'number') ? acS.certs[i] : acCertRec();
+  if(!c){ toast('Сертификат ещё не выдан'); return; }
+  const text = 'Официальный сертификат Академии OKO ' + c.no
+    + ' — урок ' + ((c.lesson||0)+1) + ' «' + (c.lessonTitle || AC_COURSE[c.lesson||0].title)
+    + '» пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
+  if(navigator.share){
+    navigator.share({title:'Сертификат Академии OKO', text:text}).catch(()=>{});
+  } else {
+    acCopyText(text, 'Текст сертификата скопирован — вставь в любой чат');
+  }
+}
+
 /* ================= СЕРТИФИКАТ ================= */
 function acRenderCertBox(){
   const box = document.getElementById('acCertBox');
@@ -945,6 +1053,7 @@ function acRenderCertBox(){
         <div class="ac-cert-actions">
           <button class="btn" onclick="acCertDownload()">${I('file')} Скачать PNG</button>
           <button class="btn ghost" onclick="acCertShow()">${I('eye')} Показать</button>
+          <button class="btn ghost ac-ico-btn" onclick="acCertShare()" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
         </div>
       </div>`;
     return;
@@ -1218,8 +1327,9 @@ function acCertDownload(){
   const _prevShowTabAc = showTab;
   showTab = function(t){
     _prevShowTabAc(t);
-    if(t === 'academy') acRender();
+    if(t === 'academy'){ acStreakTouch(); acRender(); }
   };
   const scr = document.getElementById('screen-academy');
-  if(scr && scr.classList.contains('active')) acRender();
+  if(scr && scr.classList.contains('active')){ acStreakTouch(); acRender(); }
+  setTimeout(acRemindCheck, 2200);           // напоминание об уроке — раз в сутки
 })();

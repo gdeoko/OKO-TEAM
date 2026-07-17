@@ -1453,6 +1453,32 @@ main>.screen{position:relative;z-index:1}
 :root[data-theme="light"] .ac-mini-cert{box-shadow:none}
 .ac-mini-cert svg.i{width:14px;height:14px;color:#000}
 
+/* --- стрик: дни подряд в учёбе --- */
+.ac-streak{display:flex;align-items:center;gap:13px;margin-bottom:12px;animation:fade .3s ease both}
+.ac-streak .ac-flame{width:44px;height:44px;border-radius:13px;background:var(--raised);color:var(--dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .3s,color .3s}
+.ac-streak .ac-flame svg.i{width:22px;height:22px}
+.ac-streak.hot{border-color:rgba(154,255,0,.4)}
+.ac-streak.hot .ac-flame{background:var(--lime-dim);color:var(--accent);box-shadow:0 0 18px rgba(154,255,0,.25);animation:acFlame 1.7s ease-in-out infinite}
+:root[data-theme="light"] .ac-streak.hot .ac-flame{box-shadow:none}
+@keyframes acFlame{0%,100%{transform:scale(1) rotate(0)}30%{transform:scale(1.1) rotate(-4deg)}60%{transform:scale(.96) rotate(3deg)}}
+.ac-streak .meta{flex:1;min-width:0}
+.ac-streak .meta b{font-size:14px;display:block;line-height:1.3}
+.ac-streak .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px;line-height:1.4}
+.ac-hot-chip{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;padding:5px 12px;flex-shrink:0;animation:acHotPulse 2s ease-in-out infinite}
+.ac-hot-chip svg.i{width:13px;height:13px;color:#000}
+@keyframes acHotPulse{0%,100%{box-shadow:0 0 8px rgba(154,255,0,.35)}50%{box-shadow:0 0 20px rgba(154,255,0,.65)}}
+:root[data-theme="light"] .ac-hot-chip{animation:none;box-shadow:none}
+
+/* --- «следующий урок» под прогрессом --- */
+.ac-next-row{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font-size:12.5px;color:var(--dim);background:var(--raised);border:1px dashed var(--border);border-radius:var(--r-md);padding:10px 12px;margin:0 0 10px;transition:border-color .15s,transform .12s}
+.ac-next-row:not(.done):hover{border-color:var(--accent)}
+.ac-next-row:not(.done):active{transform:scale(.985)}
+.ac-next-row b{color:var(--accent);font-weight:700}
+.ac-next-row>span{flex:1;min-width:0;line-height:1.4}
+.ac-next-row svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+.ac-next-row .go{color:var(--dim);width:14px;height:14px}
+.ac-next-row.done{border-style:solid;border-color:rgba(154,255,0,.35);color:var(--text)}
+
 /* --- «скоро» --- */
 .ac-soon{display:flex;align-items:center;gap:14px}
 .ac-soon .ico{width:46px;height:46px;border-radius:14px;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
@@ -1504,6 +1530,31 @@ main>.screen{position:relative;z-index:1}
 .ac-dots i{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .25s}
 .ac-dots i.on{background:var(--lime);width:18px;border-radius:3px;box-shadow:0 0 8px rgba(154,255,0,.5)}
 :root[data-theme="light"] .ac-dots i.on{box-shadow:none}
+
+/* --- конспект: аккордеон-лонгрид --- */
+.ac-notes{padding:0;overflow:hidden}
+.ac-notes-head{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:14px 16px;transition:background .15s}
+.ac-notes-head:hover{background:var(--lime-dim)}
+.ac-notes-head:active{transform:scale(.99)}
+.ac-notes-head .ico{width:40px;height:40px;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-notes-head .ico svg.i{width:19px;height:19px}
+.ac-notes-head .meta{flex:1;min-width:0}
+.ac-notes-head .meta b{font-size:14px;display:block;line-height:1.3}
+.ac-notes-head .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px;line-height:1.4}
+.ac-notes-head .chev{width:16px;height:16px;color:var(--accent);flex-shrink:0;transition:transform .25s}
+.ac-notes.open .ac-notes-head .chev{transform:rotate(90deg)}
+.ac-notes-body{display:none;padding:2px 16px 16px;border-top:1px solid var(--border)}
+.ac-notes.open .ac-notes-body{display:block;animation:fade .3s ease}
+.ac-notes-intro{font-size:12.5px;color:var(--dim);line-height:1.55;margin-top:12px}
+.ac-note-sec{margin-top:16px;padding-left:36px;position:relative;animation:fade .35s ease both}
+.ac-note-sec .n{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:8px;background:var(--lime-dim);color:var(--accent);font-family:var(--font-display);font-size:14px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.ac-note-sec h4{font-size:15.5px;font-weight:700;line-height:1.3;margin-bottom:5px}
+.ac-note-sec p{font-size:12.5px;line-height:1.62;color:var(--text)}
+.ac-note-sec p b{color:var(--accent)}
+
+/* --- иконка-кнопка (поделиться) --- */
+.ac-ico-btn{flex:0 0 auto !important;width:auto;padding-left:12px;padding-right:12px}
+.ac-ico-btn svg.i{width:15px;height:15px}
 
 /* --- тест --- */
 .ac-quiz-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);margin-bottom:8px}
@@ -1640,9 +1691,9 @@ main>.screen{position:relative;z-index:1}
 .ads-st.act::before{animation:adsPulse 1.6s infinite}
 .ads-st.mod{color:#ffb020;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3)}
 .ads-st.mod::before{animation:adsPulse 1s infinite}
-.ads-st.pause{color:var(--dim);background:var(--raised);border-color:var(--border)}
-.ads-st.rej{color:var(--danger);background:rgba(255,77,77,.1);border-color:rgba(255,77,77,.3)}
-.ads-st.done{color:var(--dim);background:var(--raised);border-color:var(--border)}
+.ads-st.pause{color:#4da6ff;background:rgba(77,166,255,.12);border-color:rgba(77,166,255,.3)}
+.ads-st.rej{color:var(--danger);background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.3)}
+.ads-st.done{color:#b48cff;background:rgba(180,140,255,.12);border-color:rgba(180,140,255,.3)}
 
 .ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
@@ -1663,9 +1714,57 @@ main>.screen{position:relative;z-index:1}
 @keyframes adsSpin{to{transform:rotate(360deg)}}
 
 .ads-camp-acts{display:flex;gap:8px}
-.ads-camp-acts .btn.sm{flex:1;gap:6px}
-.ads-camp-acts .btn.sm svg.i{width:14px;height:14px}
+.ads-camp-acts .btn.sm{flex:1;gap:5px;padding:8px 8px;font-size:12px;white-space:nowrap}
+.ads-camp-acts .btn.sm svg.i{width:14px;height:14px;flex-shrink:0}
 .ads-camp-acts .btn.sm.stop{color:var(--danger);border-color:rgba(255,77,77,.45);background:transparent}
+
+/* ===== разворот «Статистика»: бар-чарт по дням + CTR + A/B ===== */
+.ads-stats-toggle{display:flex;align-items:center;gap:8px;width:100%;font-size:12px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:10px;transition:all .18s;cursor:pointer}
+.ads-stats-toggle svg.i{width:14px;height:14px;color:var(--accent)}
+.ads-stats-toggle:active{transform:scale(.98)}
+.ads-stats-toggle i{margin-left:auto;display:flex;transition:transform .25s}
+.ads-stats-toggle i svg.i{width:13px;height:13px;color:var(--dim)}
+.ads-stats-toggle.open{color:var(--text);border-color:rgba(154,255,0,.35)}
+.ads-stats-toggle.open i{transform:rotate(90deg)}
+.ads-abmark{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:2px 7px}
+
+.ads-stats{animation:adsStatsIn .3s cubic-bezier(.3,1,.4,1) both;margin-bottom:10px}
+@keyframes adsStatsIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.ads-days{display:block;width:100%;height:132px}
+.ads-legend{display:flex;justify-content:center;gap:14px;font-size:9.5px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:6px 0 4px}
+.ads-legend span{display:inline-flex;align-items:center;gap:5px}
+.ads-legend i{width:8px;height:8px;border-radius:2px}
+.ads-legend .lg-imp{background:var(--lime)}
+.ads-legend .lg-clk{background:#ffb020}
+.ads-legend .lg-ctr{height:2px;width:13px;border-radius:1px;background:var(--text)}
+.ads-stats-sub{text-align:center;font-size:10.5px;color:var(--dim);margin-bottom:8px}
+.ads-stats-sub b{color:var(--accent);font-weight:800}
+
+.ads-ab{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:4px}
+.ads-ab-h{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.ads-ab-h svg.i{width:13px;height:13px;color:var(--accent)}
+.ads-ab-run{margin-left:auto;font-size:9px;color:#ffb020;letter-spacing:.06em;animation:adsPulse 1.6s infinite}
+.ads-ab-done{margin-left:auto;font-size:9px;color:var(--accent);letter-spacing:.06em}
+.ads-ab-row{display:flex;align-items:center;gap:9px;padding:7px 0}
+.ads-ab-row+.ads-ab-row{border-top:1px dashed var(--border)}
+.ads-ab-tag{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--surface);border:1px solid var(--border);color:var(--dim);flex-shrink:0}
+.ads-ab-row.win .ads-ab-tag{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:0 0 10px rgba(154,255,0,.4)}
+.ads-ab-mid{flex:1;min-width:0}
+.ads-ab-t{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.ads-ab-bar{height:4px;border-radius:2px;background:var(--surface);border:1px solid var(--border);overflow:hidden}
+.ads-ab-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime-dim),var(--lime));transition:width .5s;border-radius:2px}
+.ads-ab-row:not(.win) .ads-ab-bar i{opacity:.45}
+.ads-ab-num{text-align:right;flex-shrink:0}
+.ads-ab-num b{display:block;font-family:var(--font-display);font-size:15px;color:var(--text);line-height:1;letter-spacing:.03em}
+.ads-ab-row.win .ads-ab-num b{color:var(--accent)}
+.ads-ab-num span{font-size:9px;color:var(--dim)}
+.ads-ab-win{flex-shrink:0;display:flex;color:var(--accent)}
+.ads-ab-win svg.i{width:15px;height:15px;filter:drop-shadow(0 0 6px rgba(154,255,0,.6))}
+
+/* ===== пополнение бюджета (чипы в попапе) ===== */
+.ads-topup{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.ads-topup .ads-chip{color:var(--accent);border-color:rgba(154,255,0,.4);background:var(--lime-dim);font-size:14px;font-weight:700;padding:10px 20px}
+.ads-topup .ads-chip:active{transform:scale(.94)}
 
 .ads-empty{text-align:center;padding:26px 14px;color:var(--dim);font-size:13px}
 .ads-empty svg.i{width:34px;height:34px;display:block;margin:0 auto 10px;color:var(--dim);opacity:.6}
@@ -1696,7 +1795,14 @@ main>.screen{position:relative;z-index:1}
 :root[data-theme="light"] .ads-reach-v{text-shadow:none}
 .ads-reach-s{font-size:11px;color:var(--dim)}
 
-.ads-forecast{padding:6px 14px;margin:12px 0}
+.ads-ab-opt{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.ads-ab-opt .ads-chip{flex-shrink:0}
+.ads-ab-opt small{font-size:10.5px;color:var(--dim);line-height:1.35;flex:1}
+#adsInpTitleB{margin-top:-4px}
+
+.ads-forecast{padding:6px 14px 6px;margin:12px 0}
+.ads-f-head{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);padding:11px 0 2px}
+.ads-f-head svg.i{width:14px;height:14px}
 .ads-f-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}
 .ads-f-row:last-child{border-bottom:none}
 .ads-f-row span{display:inline-flex;align-items:center;gap:8px;color:var(--dim)}
@@ -1715,12 +1821,16 @@ main>.screen{position:relative;z-index:1}
 .ads-post-cta button:active{transform:scale(.95)}
 .ads-post-cta button svg.i{width:13px;height:13px;stroke:currentColor}
 
-/* светлая тема — приглушить свечения */
-:root[data-theme="light"] .ads-st.mod{background:rgba(255,176,32,.14)}
+/* светлая тема — приглушить свечения, насытить цвета бейджей */
+:root[data-theme="light"] .ads-st.mod{color:#b07400;background:rgba(255,176,32,.16)}
+:root[data-theme="light"] .ads-st.pause{color:#1673cc;background:rgba(77,166,255,.14)}
+:root[data-theme="light"] .ads-st.done{color:#7a4fd6;background:rgba(180,140,255,.16)}
 :root[data-theme="light"] .ads-chip.on,
 :root[data-theme="light"] .ads-post-cta button{box-shadow:none}
 :root[data-theme="light"] .ads-steps i.on{box-shadow:none}
 :root[data-theme="light"] .ads-reach{background:var(--surface)}
+:root[data-theme="light"] .ads-ab-row.win .ads-ab-tag{box-shadow:none}
+:root[data-theme="light"] .ads-ab-win svg.i{filter:none}
 
 /* ===== module: legal ===== */
 /* ===== LEGAL (lg-): юридические документы OKO — RU/EN, подпись + печать ===== */
@@ -1921,6 +2031,56 @@ main>.screen{position:relative;z-index:1}
 .hq-op-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
 .hq-op-ic svg.i{width:17px;height:17px}
 .hq-op-sum{flex-shrink:0;font-weight:700;font-size:13px;color:var(--accent)}
+
+/* ---------- фильтр-чипы по источникам ---------- */
+.hq-chips{display:flex;gap:7px;overflow-x:auto;padding:8px 1px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hq-chips::-webkit-scrollbar{display:none}
+.hq-chip{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:7px 13px;font-size:11.5px;font-weight:600;color:var(--dim);transition:all .15s;white-space:nowrap}
+.hq-chip:hover{border-color:var(--accent);color:var(--text)}
+.hq-chip.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+:root[data-theme="light"] .hq-chip.on{box-shadow:0 2px 8px rgba(110,200,0,.3)}
+
+/* ---------- суммы за периоды ---------- */
+.hq-pers{padding:4px 14px;margin-bottom:4px}
+.hq-per{display:flex;align-items:baseline;gap:9px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13px}
+.hq-per:last-child{border-bottom:none}
+.hq-per span{font-weight:600}
+.hq-per small{color:var(--dim);font-size:11px;flex:1}
+.hq-per b{color:var(--accent);font-weight:700}
+.hq-src{cursor:pointer;transition:border-color .15s,transform .15s}
+.hq-src:active{transform:scale(.985)}
+.hq-src.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+
+/* ---------- пользователи: действия ---------- */
+.hq-usr{flex-direction:column;align-items:stretch;gap:9px}
+.hq-usr-top{display:flex;align-items:center;gap:11px;min-width:0}
+.hq-usr-acts{display:flex;gap:7px;flex-wrap:wrap}
+.hq-usr-acts .adm-btn{flex:1;min-width:96px;text-align:center;justify-content:center}
+.hq-usr.ban{border-color:rgba(255,95,95,.35)}
+.hq-usr.ban .adm-ava{filter:grayscale(1);opacity:.6}
+
+/* ---------- онлайн-мониторинг ---------- */
+.hq-online{display:flex;align-items:center;gap:14px;padding:13px 15px;margin-bottom:6px;background:radial-gradient(120% 170% at 0% 100%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-on-l{flex-shrink:0;min-width:0}
+.hq-on-l small{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.hq-on-l b{display:block;font-family:var(--font-display);font-size:34px;line-height:1;color:var(--accent);animation:fade .4s ease both}
+.hq-on-d{display:block;margin-top:3px;font-size:10.5px;color:var(--dim)}
+.hq-on-d i.up{font-style:normal;color:var(--accent);font-weight:700}
+.hq-on-d i.dn{font-style:normal;color:var(--danger);font-weight:700}
+.hq-on-r{flex:1;min-width:0}
+.hq-spark{display:block;width:100%;height:44px}
+
+/* ---------- панель «Быстро» ---------- */
+.hq-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.hq-qbtn{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 9px 11px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
+.hq-qbtn:hover{border-color:var(--accent)}
+.hq-qbtn:active{transform:scale(.96)}
+.hq-qbtn b{font-size:12.5px}
+.hq-qbtn small{font-size:9.5px;color:var(--dim);line-height:1.3}
+.hq-qic{width:34px;height:34px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.hq-qic svg.i{width:17px;height:17px}
+.hq-qbtn.dng .hq-qic{background:rgba(255,95,95,.12);color:var(--danger)}
+.hq-qbtn.dng:hover{border-color:var(--danger)}
 
 /* ---------- вкладка «Штаб HQ» ---------- */
 .hq-head{display:flex;align-items:center;gap:13px;margin-bottom:6px;position:relative;overflow:hidden;background:radial-gradient(120% 170% at 100% 0%,var(--lime-dim),transparent 55%),var(--surface)}
@@ -2157,6 +2317,52 @@ main>.screen{position:relative;z-index:1}
 .mp-ok svg.i{width:30px;height:30px}
 .mp-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);margin:0 auto;animation:mpSpin .8s linear infinite}
 .mp-lack{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.3);border-radius:var(--r-md);padding:11px 13px;font-size:12px;color:var(--danger);font-weight:600;margin:10px 0}
+
+/* ---------- отзыв после сделки (sheet) ---------- */
+.mp-rv-title{font-family:var(--font-display);font-size:25px;letter-spacing:.06em;line-height:1}
+.mp-rv-sub{font-size:12.5px;color:var(--dim);margin-top:4px}
+.mp-rv-who{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:var(--dim);line-height:1.45;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-top:10px}
+.mp-rv-who svg.i{width:13px;height:13px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.mp-rstars{display:flex;justify-content:center;gap:9px;margin:16px 0 6px}
+.mp-rstar{width:46px;height:46px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);transition:all .16s;animation:mpFade .25s ease both}
+.mp-rstar:nth-child(2){animation-delay:.03s}.mp-rstar:nth-child(3){animation-delay:.06s}.mp-rstar:nth-child(4){animation-delay:.09s}.mp-rstar:nth-child(5){animation-delay:.12s}
+.mp-rstar svg.i{width:22px;height:22px}
+.mp-rstar.on{color:var(--lime);border-color:rgba(154,255,0,.45);background:var(--lime-dim);box-shadow:0 0 12px rgba(154,255,0,.16)}
+.mp-rstar.on svg.i{fill:var(--lime)}
+.mp-rstar:hover{border-color:var(--lime)}
+.mp-rstar:active{transform:scale(.88)}
+:root[data-theme="light"] .mp-rstar.on{box-shadow:0 2px 10px rgba(83,168,0,.2)}
+.mp-rlab{text-align:center;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;min-height:14px}
+.mp-ta{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.45;padding:11px 12px;resize:none;margin-bottom:12px;transition:border-color .2s}
+.mp-ta:focus{outline:none;border-color:var(--lime)}
+.mp-ta::placeholder{color:var(--dim)}
+.mp-revok{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:5px 11px}
+.mp-revok svg.i{width:11px;height:11px;color:var(--accent)}
+.mp-deal-act button.ghost{background:var(--raised);color:var(--text);border-color:var(--border)}
+.mp-deal-act button.ghost:hover{border-color:var(--dim)}
+
+/* ---------- значок «Проверенный» в карточке объявления ---------- */
+.mp-ver-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:4px 9px;margin-left:auto;flex-shrink:0;animation:mpFade .3s ease both}
+.mp-ver-chip svg.i{width:11px;height:11px;fill:currentColor}
+:root[data-theme="light"] .mp-ver-chip{border-color:#b9d788}
+
+/* ---------- жалоба на объявление ---------- */
+.mp-report-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:11px;padding:10px;border-radius:var(--r-sm);background:transparent;border:1px dashed var(--border);color:var(--dim);font-size:11.5px;font-weight:600;transition:all .2s}
+.mp-report-btn svg.i{width:13px;height:13px}
+.mp-report-btn:hover{color:var(--danger);border-color:rgba(255,77,77,.45)}
+.mp-report-btn:active{transform:scale(.98)}
+.mp-report-btn.sent{color:var(--accent);border-style:solid;border-color:rgba(154,255,0,.3);background:var(--lime-dim)}
+.mp-report-btn.sent:hover{color:var(--accent)}
+.mp-rep-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.mp-rep-note{font-size:10.5px;color:var(--dim);text-align:center;margin-top:9px}
+.mp-rep-done{width:58px;height:58px;border-radius:50%;background:var(--lime-dim);border:1px solid rgba(154,255,0,.35);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:8px auto 12px;animation:mpPop .45s cubic-bezier(.3,1.4,.5,1) both}
+.mp-rep-done svg.i{width:26px;height:26px}
+
+/* ---------- фильтр «Только проверенные» ---------- */
+.mp-fver-wrap{animation:mpFade .25s ease both}
+.mp-fver-wrap small{display:block;font-size:10.5px;color:var(--dim);margin-top:7px}
+.mp-fver{display:inline-flex;align-items:center;gap:6px}
+.mp-fver svg.i{width:13px;height:13px;fill:currentColor}
 
 /* ---------- закреплённые ветки работ в чате ---------- */
 .mp-pin{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px 9px;animation:mpFade .25s ease both}
@@ -3274,6 +3480,7 @@ main>.screen{position:relative;z-index:1}
   <img id="acCertFullImg" alt="Сертификат Академии OKO">
   <div class="ac-cert-full-actions">
     <button class="btn sm" onclick="acCertDownload()"><svg class="i"><use href="#i-file"/></svg> Скачать PNG</button>
+    <button class="btn sm ghost" onclick="acCertShare()"><svg class="i"><use href="#i-share"/></svg> Поделиться</button>
     <button class="btn sm ghost" onclick="acCertFullClose()">Закрыть</button>
   </div>
 </div>
@@ -3288,6 +3495,11 @@ main>.screen{position:relative;z-index:1}
   <div class="ads-step" id="adsStep1">
     <label class="ads-lbl">Заголовок</label>
     <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
+    <div class="ads-ab-opt">
+      <button class="ads-chip" id="adsAbChip" onclick="adsToggleAb()"><svg class="i"><use href="#i-poll"/></svg>A/B тест</button>
+      <small>второй вариант заголовка — OKO покажет оба и найдёт лучший по CTR</small>
+    </div>
+    <input id="adsInpTitleB" maxlength="60" placeholder="Заголовок — вариант B" style="display:none">
     <label class="ads-lbl">Текст объявления</label>
     <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку"></textarea>
     <label class="ads-lbl">Кнопка (CTA)</label>
@@ -3347,8 +3559,10 @@ main>.screen{position:relative;z-index:1}
       <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
     </div>
     <div class="card ads-forecast">
+      <div class="ads-f-head"><svg class="i"><use href="#i-poll"/></svg>Прогноз на 7 дней</div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-money"/></svg>Цена клика (CPC)</span><b id="adsFCpc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
     </div>
     <div class="ads-balance" id="adsBalanceNote"></div>
@@ -3392,6 +3606,9 @@ main>.screen{position:relative;z-index:1}
 <!-- MARKET-PRO: кабинет продавца и заказ пакета OKO Production -->
 <div class="sheet" id="sheet-mpCab"><div id="mpCabView"></div></div>
 <div class="sheet" id="sheet-mpOrder"><div id="mpOrderView"></div></div>
+<!-- MARKET-PRO: отзыв после сделки и жалоба на объявление -->
+<div class="sheet" id="sheet-mpReview"><div id="mpReviewView"></div></div>
+<div class="sheet" id="sheet-mpReport"><div id="mpReportView"></div></div>
 
 <!-- ===== module: profile-social ===== -->
 <!-- ===== PROFILE-SOCIAL: fullscreen-вьюха чужого профиля (по образцу .sv-head) ===== -->
@@ -7543,6 +7760,11 @@ function gmLbDrift(){
     gmLbSave();
   }
 }
+function gmPluralWins(n){
+  if(n % 10 === 1 && n % 100 !== 11) return 'выигрыш';
+  if(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 'выигрыша';
+  return 'выигрышей';
+}
 function gmLbRow(r, pos){
   const mv = r.me && GM_LB.move ? `<svg class="i gm-lb-mv ${GM_LB.move}"><use href="#i-chev"/></svg>` : '';
   const posHtml = pos === 1 ? `<b class="gm-lb-pos p1">${I('gm-cup')}</b>` : `<b class="gm-lb-pos ${pos<=3?'p'+pos:''}">${pos}</b>`;
@@ -7551,7 +7773,7 @@ function gmLbRow(r, pos){
     <span class="gm-lb-ava">${esc((r.n[0]||'?').toUpperCase())}</span>
     <div class="gm-lb-b">
       <span class="gm-lb-n">${esc(r.n)}${r.me ? vBadge(r.n) : ''}${r.me ? '<i class="gm-lb-you">ты</i>' : ''}${mv}</span>
-      <small>${r.w} ${r.w % 10 === 1 && r.w % 100 !== 11 ? 'выигрыш' : 'выигрышей'} за неделю</small>
+      <small>${r.w} ${gmPluralWins(r.w)} за неделю</small>
     </div>
     <b class="gm-lb-sum">${fmtMoney(r.s)}</b>
   </div>`;
@@ -8700,6 +8922,114 @@ function acRenderProgressBox(){
     <p class="dim" style="font-size:12px;text-align:center">Урок пройден на <b style="color:var(--accent)">${pct}%</b></p>` + next;
 }
 
+/* ================= КОНСПЕКТ УРОКА (лонгрид из слайдов) ================= */
+function acNotesStrip(h){ return String(h).replace(/<[^>]+>/g,''); }
+function acNotesWords(){
+  return acCur().slides.reduce((n,s)=>n + acNotesStrip(s.t + ' ' + s.pts.join(' ')).split(/\s+/).length, 0);
+}
+function acNotesHtml(){
+  const L = acCur();
+  const mins = Math.max(2, Math.round(acNotesWords() / 150));
+  const secs = L.slides.map((s,i)=>{
+    const p = s.pts.map(t=>t.trim().replace(/[.!…]+\s*$/,'')).join('. ') + '.';
+    return `<div class="ac-note-sec"><span class="n">${String(i+1).padStart(2,'0')}</span><h4>${s.t}</h4><p>${p}</p></div>`;
+  }).join('');
+  return `
+  <div class="card ac-notes" id="acNotes">
+    <button class="ac-notes-head" onclick="acNotesToggle()">
+      <span class="ico">${I('file')}</span>
+      <span class="meta"><b>Текстовая версия урока</b><span>${L.slides.length} разделов · ~${mins} мин чтения · весь материал без видео</span></span>
+      <svg class="i chev"><use href="#i-chev"/></svg>
+    </button>
+    <div class="ac-notes-body">
+      <p class="ac-notes-intro">Полный конспект урока «${L.title}» — все тезисы слайдов, собранные в один читабельный текст. Удобно повторить перед тестом или сохранить себе.</p>
+      ${secs}
+      <div style="height:14px"></div>
+      <button class="btn ghost" style="width:100%" onclick="acNotesDownload()">${I('file')} Скачать .txt</button>
+    </div>
+  </div>`;
+}
+function acNotesToggle(){
+  const el = document.getElementById('acNotes');
+  if(el) el.classList.toggle('open');
+}
+function acNotesTxt(){
+  const L = acCur();
+  let out = 'АКАДЕМИЯ OKO · КУРС «НЕЙРОСЕТИ 2026»\r\n'
+          + 'КОНСПЕКТ · УРОК ' + (acL+1) + ' — ' + L.title.toUpperCase() + '\r\n'
+          + '='.repeat(46) + '\r\n\r\n';
+  L.slides.forEach((s,i)=>{
+    out += (i+1) + '. ' + acNotesStrip(s.t).toUpperCase() + '\r\n';
+    s.pts.forEach(p=>{ out += '   — ' + acNotesStrip(p) + '\r\n'; });
+    out += '\r\n';
+  });
+  out += '-'.repeat(46) + '\r\nПройди тест и получи официальный сертификат OKO:\r\nhttps://true-journey-418.higgsfield.app\r\n';
+  return out;
+}
+function acNotesDownload(){
+  try{
+    const blob = new Blob(['\ufeff' + acNotesTxt()], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'OKO-урок-' + (acL+1) + '-конспект.txt';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 800);
+    toast('Конспект сохранён: урок ' + (acL+1) + '.txt');
+  }catch(e){
+    acCopyText(acNotesTxt(), 'Скачивание недоступно — конспект скопирован в буфер');
+  }
+}
+
+/* ================= НАПОМИНАНИЕ (раз в сутки при входе) ================= */
+function acRemindCheck(){
+  try{
+    if(!localStorage.getItem('oko-auth')) return;            // ещё не в приложении
+    if(document.getElementById('okoPopup')) return;          // другой попап — не мешаем, покажем в след. заход
+    const scr = document.getElementById('screen-academy');
+    if(scr && scr.classList.contains('active')) return;      // уже в академии
+    const today = acDayStr();
+    if(acS.remindDay === today) return;                      // раз в сутки
+    const nx = acNextLesson();
+    if(nx < 0) return;                                       // всё пройдено — не беспокоим
+    const left = 100 - acLessonPct(nx);
+    acS.remindDay = today; acSave();
+    showPopup({ico:'star', title:'Академия OKO',
+      body:'Продолжи урок ' + (nx+1) + ' «' + esc(AC_COURSE[nx].title) + '» — осталось <b style="color:var(--accent)">' + left + '%</b> до полного прохождения.',
+      actions:[
+        {label:'Продолжить урок', onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
+        {label:'Позже', ghost:true}
+      ]});
+  }catch(e){}
+}
+
+/* ================= ПОДЕЛИТЬСЯ СЕРТИФИКАТОМ ================= */
+function acCopyText(t, okMsg){
+  const done = ()=>toast(okMsg || 'Скопировано в буфер');
+  const fallback = ()=>{
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = t; ta.style.cssText = 'position:fixed;top:-200px;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove(); done();
+    }catch(e){ toast('Не удалось скопировать'); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(done).catch(fallback);
+  else fallback();
+}
+function acCertShare(i){
+  const c = (typeof i === 'number') ? acS.certs[i] : acCertRec();
+  if(!c){ toast('Сертификат ещё не выдан'); return; }
+  const text = 'Официальный сертификат Академии OKO ' + c.no
+    + ' — урок ' + ((c.lesson||0)+1) + ' «' + (c.lessonTitle || AC_COURSE[c.lesson||0].title)
+    + '» пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
+  if(navigator.share){
+    navigator.share({title:'Сертификат Академии OKO', text:text}).catch(()=>{});
+  } else {
+    acCopyText(text, 'Текст сертификата скопирован — вставь в любой чат');
+  }
+}
+
 /* ================= СЕРТИФИКАТ ================= */
 function acRenderCertBox(){
   const box = document.getElementById('acCertBox');
@@ -8717,6 +9047,7 @@ function acRenderCertBox(){
         <div class="ac-cert-actions">
           <button class="btn" onclick="acCertDownload()">${I('file')} Скачать PNG</button>
           <button class="btn ghost" onclick="acCertShow()">${I('eye')} Показать</button>
+          <button class="btn ghost ac-ico-btn" onclick="acCertShare()" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
         </div>
       </div>`;
     return;
@@ -8990,10 +9321,11 @@ function acCertDownload(){
   const _prevShowTabAc = showTab;
   showTab = function(t){
     _prevShowTabAc(t);
-    if(t === 'academy') acRender();
+    if(t === 'academy'){ acStreakTouch(); acRender(); }
   };
   const scr = document.getElementById('screen-academy');
-  if(scr && scr.classList.contains('active')) acRender();
+  if(scr && scr.classList.contains('active')){ acStreakTouch(); acRender(); }
+  setTimeout(acRemindCheck, 2200);           // напоминание об уроке — раз в сутки
 })();
 
 /* ===== module: ads ===== */
@@ -9024,6 +9356,7 @@ let ADS = {
     {id:1, name:'OKO Академия — поток №4', text:'Контент-завод за 7 дней: 30 роликов в месяц на автомате. Старт 20 июля, осталось 14 мест из 50.',
      cta:'Подписаться', link:'https://oko.app/academy', geo:'РФ', interests:['контент','маркетинг'], ages:['18-24','25-34'],
      budget:3000, spent:1268.4, imps:45320, clicks:1121, status:'act',
+     ab:{tb:'30 роликов в месяц без монтажёра и съёмок', ka:.019, kb:.031, a:{i:22660,c:427}, b:{i:22660,c:694}},
      hist:[120,180,150,240,210,320,280,360,300,410,380,460,420,510,470,560,530,610], created: Date.now()-2*864e5},
     {id:2, name:'Партнёрка OKO — 15% с оборота', text:'Приводи авторов и получай 15% с их подписки + 5% со второй линии. Выплаты сразу на лицевой счёт.',
      cta:'Подробнее', link:'https://oko.app/partners', geo:'СНГ', interests:['бизнес','маркетинг'], ages:['25-34','35-44'],
@@ -9040,8 +9373,40 @@ function adsLoad(){
   }catch(e){}
 }
 
+/* ---------- дни: аналитика по дням (7 суток, [{i,c}] где i=показы c=клики) ---------- */
+function adsDayKey(){ return Math.floor(Date.now()/864e5); }
+function adsSeedDays(c){
+  /* распределяем накопленные показы/клики по 7 дням правдоподобными весами */
+  const w = c.status==='done' ? [.28,.26,.24,.22,0,0,0] : [0,0,.06,.12,.2,.28,.34];
+  let li = 0; w.forEach((k,i)=>{ if(k>0) li = i; });
+  c.days = w.map(k=>({i:Math.round(c.imps*k), c:Math.round(c.clicks*k)}));
+  let ri = c.imps, rc = c.clicks;
+  c.days.forEach((d,i)=>{ if(i!==li){ ri-=d.i; rc-=d.c; } });
+  c.days[li] = {i:Math.max(0,ri), c:Math.max(0,rc)};
+}
+function adsRollDays(c){
+  const today = adsDayKey();
+  let diff = today - (c.dstamp || today);
+  if(diff>0){
+    if(diff>7) diff = 7;
+    for(let i=0;i<diff;i++){ c.days.shift(); c.days.push({i:0,c:0}); }
+  }
+  c.dstamp = today;
+}
+function adsMigrate(){
+  ADS.camps.forEach(c=>{
+    if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
+    if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
+    adsRollDays(c);
+  });
+}
+
 /* ---------- метрики / рендер ---------- */
 function adsCtr(c){ return c.imps ? (c.clicks / c.imps * 100) : 0; }
+function adsCpcTxt(c){
+  const cpc = c.clicks ? c.spent/c.clicks : 0;
+  return cpc ? (cpc<10 ? cpc.toFixed(2) : fmtN(Math.round(cpc)))+' ₽' : '—';
+}
 
 function adsRenderSummary(){
   const box = document.getElementById('adsSummary'); if(!box) return;
@@ -9057,11 +9422,13 @@ function adsRenderSummary(){
 function adsCampActs(c){
   if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
   if(c.status==='act')  return `<div class="ads-camp-acts">
+      <button class="btn sm" onclick="adsTopup(${c.id})">${I('plus')}Пополнить</button>
       <button class="btn sm ghost" onclick="adsPause(${c.id})">${I('pause')}Пауза</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Остановить</button></div>`;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`;
   if(c.status==='pause')return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsResume(${c.id})">${I('play')}Возобновить</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Остановить</button></div>`;
+      <button class="btn sm ghost" onclick="adsTopup(${c.id})">${I('plus')}Бюджет</button>
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`;
   return `<div class="ads-camp-acts">
       <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
 }
@@ -9087,10 +9454,144 @@ function adsRenderList(){
       </div>
       <div class="ads-budget-bar"><i data-m="bar" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
       <canvas class="ads-spark" id="adsSpark${c.id}"></canvas>
+      <button class="ads-stats-toggle ${adsOpenStats.has(c.id)?'open':''}" onclick="adsToggleStats(${c.id})">
+        ${I('poll')}Статистика${c.ab?`<em class="ads-abmark">A/B</em>`:''}<i>${I('chev')}</i></button>
+      ${adsOpenStats.has(c.id) ? adsStatsBlock(c) : ''}
       ${c.status==='rej' && c.reason ? `<div class="ads-reason">${I('flag')}<span>Отклонено ИИ-модератором: ${esc(c.reason)}. Бюджет возвращён на лицевой счёт.</span></div>` : ''}
       ${adsCampActs(c)}
     </div>`).join('');
-  requestAnimationFrame(()=>ADS.camps.forEach(c=>adsDrawSpark(c)));
+  requestAnimationFrame(()=>ADS.camps.forEach(c=>{
+    adsDrawSpark(c);
+    if(adsOpenStats.has(c.id)) adsDrawDays(c);
+  }));
+}
+
+/* ---------- разворот «Статистика»: бар-чарт по дням + CTR-линия + A/B ---------- */
+const adsOpenStats = new Set();
+function adsToggleStats(id){
+  if(adsOpenStats.has(id)) adsOpenStats.delete(id); else adsOpenStats.add(id);
+  adsRenderList();
+}
+function adsSub7(c){
+  const d7 = c.days || [];
+  const ti = d7.reduce((s,d)=>s+d.i,0), tc = d7.reduce((s,d)=>s+d.c,0);
+  return `за 7 дней: <b>${fmtN(ti)}</b> показов · <b>${fmtN(tc)}</b> кликов · CPC <b>${adsCpcTxt(c)}</b>`;
+}
+function adsStatsBlock(c){
+  return `<div class="ads-stats">
+    <canvas class="ads-days" id="adsDays${c.id}"></canvas>
+    <div class="ads-legend">
+      <span><i class="lg-imp"></i>показы</span>
+      <span><i class="lg-clk"></i>клики</span>
+      <span><i class="lg-ctr"></i>CTR</span>
+    </div>
+    <div class="ads-stats-sub" data-m="sub7">${adsSub7(c)}</div>
+    ${c.ab ? `<div class="ads-ab" data-m="ab">${adsAbInner(c)}</div>` : ''}
+  </div>`;
+}
+
+/* победитель A/B: минимум 400 показов на вариант и отрыв CTR > 10% */
+function adsAbWinner(c){
+  if(!c.ab) return null;
+  const a = c.ab.a, b = c.ab.b;
+  if(a.i < 400 || b.i < 400) return null;
+  const ca = a.c/a.i, cb = b.c/b.i;
+  if(Math.abs(ca-cb) < Math.min(ca,cb)*.1) return null;
+  return ca > cb ? 'a' : 'b';
+}
+function adsAbInner(c){
+  const win = adsAbWinner(c);
+  const row = (k, title)=>{
+    const v = c.ab[k], o = c.ab[k==='a'?'b':'a'];
+    const ctr = v.i ? v.c/v.i*100 : 0, octr = o.i ? o.c/o.i*100 : 0;
+    const w = Math.max(ctr, octr) ? ctr/Math.max(ctr, octr)*100 : 0;
+    return `<div class="ads-ab-row ${win===k?'win':''}">
+      <span class="ads-ab-tag">${k.toUpperCase()}</span>
+      <div class="ads-ab-mid">
+        <div class="ads-ab-t">${esc(title)}</div>
+        <div class="ads-ab-bar"><i style="width:${w}%"></i></div>
+      </div>
+      <div class="ads-ab-num"><b>${ctr.toFixed(2)}%</b><span>${fmtN(v.i)} пок.</span></div>
+      ${win===k ? `<span class="ads-ab-win" title="лидер">${I('crown')}</span>` : ''}
+    </div>`;
+  };
+  return `<div class="ads-ab-h">${I('bolt')}A/B тест заголовка
+      ${win ? `<span class="ads-ab-done">победитель найден</span>` : `<span class="ads-ab-run">идёт тест</span>`}</div>
+    ${row('a', c.name)}${row('b', c.ab.tb)}`;
+}
+
+function adsRRect(x, px, py, pw, ph, r){
+  if(ph < .5) return;
+  r = Math.min(r, pw/2, ph);
+  x.beginPath();
+  x.moveTo(px, py+ph); x.lineTo(px, py+r);
+  x.arcTo(px, py, px+r, py, r); x.lineTo(px+pw-r, py);
+  x.arcTo(px+pw, py, px+pw, py+r, r); x.lineTo(px+pw, py+ph);
+  x.closePath(); x.fill();
+}
+function adsDrawDays(c){
+  const cv = document.getElementById('adsDays'+c.id); if(!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || 300, h = cv.clientHeight || 132;
+  cv.width = w*dpr; cv.height = h*dpr;
+  const x = cv.getContext('2d'); x.scale(dpr,dpr); x.clearRect(0,0,w,h);
+  const days = (c.days && c.days.length===7) ? c.days : [...Array(7)].map(()=>({i:0,c:0}));
+  const light = document.documentElement.getAttribute('data-theme')==='light';
+  const txt   = light ? 'rgba(20,24,12,.55)' : 'rgba(255,255,255,.45)';
+  const ctrCol= light ? '#1a1d16' : '#ffffff';
+  const padT = 8, padB = 16, padS = 6;
+  const ih = h-padT-padB, iw = (w-padS*2)/7;
+  const maxI = Math.max(...days.map(d=>d.i), 1);
+  const maxC = Math.max(...days.map(d=>d.c), 1);
+  const names = ['вс','пн','вт','ср','чт','пт','сб'];
+  const now = new Date();
+  x.strokeStyle = light ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)';
+  x.lineWidth = 1; x.beginPath(); x.moveTo(2, h-padB+.5); x.lineTo(w-2, h-padB+.5); x.stroke();
+  days.forEach((d,i)=>{
+    const cx = padS + i*iw + iw/2;
+    const bw = Math.max(4, Math.min(11, iw*.22));
+    x.fillStyle = 'rgba(154,255,0,.85)';
+    adsRRect(x, cx-bw-1.5, h-padB - d.i/maxI*ih, bw, d.i/maxI*ih, 2);
+    x.fillStyle = 'rgba(255,176,32,.85)';
+    adsRRect(x, cx+1.5, h-padB - d.c/maxC*ih, bw, d.c/maxC*ih, 2);
+    const dt = new Date(now.getTime() - (6-i)*864e5);
+    x.fillStyle = i===6 ? '#9AFF00' : txt;
+    x.font = '600 8.5px Montserrat, sans-serif'; x.textAlign = 'center';
+    x.fillText(i===6 ? 'сегодня' : names[dt.getDay()], cx, h-4);
+  });
+  const ctrs = days.map(d=>d.i ? d.c/d.i*100 : 0);
+  const maxCtr = Math.max(...ctrs, .01);
+  const pY = v => h-padB-4 - v/maxCtr*(ih-14);
+  x.globalAlpha = .8; x.strokeStyle = ctrCol; x.lineWidth = 1.4; x.setLineDash([4,3]);
+  x.beginPath();
+  ctrs.forEach((v,i)=>{ const cx = padS+i*iw+iw/2; i ? x.lineTo(cx, pY(v)) : x.moveTo(cx, pY(v)); });
+  x.stroke(); x.setLineDash([]);
+  ctrs.forEach((v,i)=>{ const cx = padS+i*iw+iw/2;
+    x.beginPath(); x.arc(cx, pY(v), 2, 0, Math.PI*2); x.fillStyle = ctrCol; x.fill(); });
+  x.globalAlpha = 1;
+}
+
+/* ---------- пополнение бюджета кампании ---------- */
+function adsTopup(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  showPopup({ico:'card', title:'Пополнить бюджет',
+    body:`«${esc(c.name)}»: потрачено <b>${fmtMoney(c.spent)}</b> из <b>${fmtMoney(c.budget)}</b>.<br>
+      Сумма спишется с лицевого счёта (${fmtMoney(WALLET.balance)}).
+      <div class="ads-topup">
+        <button class="ads-chip" onclick="adsTopupDo(${c.id},500)">+500 ₽</button>
+        <button class="ads-chip" onclick="adsTopupDo(${c.id},1000)">+1 000 ₽</button>
+      </div>`,
+    actions:[{label:'Отмена', ghost:true}]});
+}
+function adsTopupDo(id, sum){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  closePopup();
+  if(!walletCharge(sum, 'Пополнение кампании: '+c.name)) return;
+  okoEarn(sum, 'Рекламный кабинет');
+  c.budget += sum;
+  if(c.status==='done' && c.spent < c.budget){ c.status = 'act'; adsPushToFeed(c); }
+  adsSave(); adsRender();
+  toast('Бюджет кампании +'+fmtN(sum)+' ₽ — открутка продолжается');
 }
 
 function adsDrawSpark(c){
@@ -9128,6 +9629,11 @@ function adsTickUI(){
     set('ctr', adsCtr(c).toFixed(1)+'%'); set('spent', fmtN(Math.round(c.spent))+'₽');
     const bar = el.querySelector('[data-m="bar"]'); if(bar) bar.style.width = Math.min(100, c.spent/c.budget*100)+'%';
     adsDrawSpark(c);
+    if(adsOpenStats.has(c.id)){
+      adsDrawDays(c);
+      const sub = el.querySelector('[data-m="sub7"]'); if(sub) sub.innerHTML = adsSub7(c);
+      const ab = el.querySelector('[data-m="ab"]'); if(ab) ab.innerHTML = adsAbInner(c);
+    }
   });
 }
 
@@ -9135,8 +9641,10 @@ function adsTickUI(){
 let adsDraft = {cta:'Подробнее', geo:'РФ'};
 
 function adsOpenCreate(){
-  adsDraft = {cta:'Подробнее', geo:'РФ'};
-  ['adsInpTitle','adsInpText','adsInpLink'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
+  adsDraft = {cta:'Подробнее', geo:'РФ', ab:false, reach:0};
+  ['adsInpTitle','adsInpText','adsInpLink','adsInpTitleB'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
+  const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.remove('on');
+  const abInp = document.getElementById('adsInpTitleB'); if(abInp) abInp.style.display = 'none';
   document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
   document.querySelectorAll('#adsGeoChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
   document.querySelectorAll('#adsIntChips .ads-chip').forEach(b=>b.classList.remove('on'));
@@ -9151,6 +9659,9 @@ function adsStep(n){
     const text  = document.getElementById('adsInpText').value.trim();
     if(!title){ toast('Добавь заголовок объявления'); return; }
     if(!text){ toast('Добавь текст объявления'); return; }
+    if(adsDraft.ab && !document.getElementById('adsInpTitleB').value.trim()){
+      toast('Добавь вариант B заголовка или выключи A/B тест'); return;
+    }
   }
   for(let i=1;i<=3;i++) document.getElementById('adsStep'+i).style.display = (i===n?'block':'none');
   document.querySelectorAll('#adsSteps i').forEach((d,i)=>d.classList.toggle('on', i<n));
@@ -9167,6 +9678,12 @@ function adsPickGeo(btn){
   btn.classList.add('on'); adsDraft.geo = btn.dataset.v; adsCalcReach();
 }
 function adsToggleMulti(btn){ btn.classList.toggle('on'); adsCalcReach(); }
+function adsToggleAb(){
+  adsDraft.ab = !adsDraft.ab;
+  const chip = document.getElementById('adsAbChip'); if(chip) chip.classList.toggle('on', adsDraft.ab);
+  const inp = document.getElementById('adsInpTitleB');
+  if(inp){ inp.style.display = adsDraft.ab ? '' : 'none'; if(adsDraft.ab) inp.focus(); }
+}
 function adsPicked(boxId){
   return [...document.querySelectorAll('#'+boxId+' .ads-chip.on')].map(b=>b.dataset.v);
 }
@@ -9181,6 +9698,7 @@ function adsCalcReach(){
   const intK = ints.length ? Math.min(.4, ints.reduce((s,v)=>s+(intShares[v]||0),0)) : .5;
   const ageK = ages.length ? ages.reduce((s,v)=>s+(ageShares[v]||0),0) : 1;
   const target = Math.round(geoBase * intK * ageK);
+  adsDraft.reach = target;
   const sub = document.getElementById('adsReachS');
   if(sub) sub.textContent = `${adsDraft.geo} · ${ints.length? ints.length+' интерес(а)' : 'широкая аудитория'} · ${ages.length? ages.join(', ') : 'все возрасты'}`;
   cancelAnimationFrame(adsReachRaf);
@@ -9203,10 +9721,15 @@ function adsSetBudget(v){
 
 function adsCalcForecast(){
   const b = Math.max(0, parseInt(document.getElementById('adsInpBudget').value,10) || 0);
-  const imps = Math.round(b/ADS_CPM*1000);
+  let imps = Math.round(b/ADS_CPM*1000);
+  /* охват аудитории ограничивает показы: частота ~2.5 на человека за 7 дней */
+  if(adsDraft.reach) imps = Math.min(imps, Math.round(adsDraft.reach*2.5));
+  const cLo = Math.max(1, Math.round(imps*.01)), cHi = Math.max(1, Math.round(imps*.04));
+  const cpc = imps ? b/((cLo+cHi)/2) : 0;
   const set = (id,v)=>{ const e = document.getElementById(id); if(e) e.innerHTML = v; };
   set('adsFImps',  imps ? `~ ${fmtN(Math.round(imps*.85))} – ${fmtN(Math.round(imps*1.15))}` : '—');
-  set('adsFClicks',imps ? `~ ${fmtN(Math.max(1,Math.round(imps*.01)))} – ${fmtN(Math.round(imps*.04))}` : '—');
+  set('adsFClicks',imps ? `~ ${fmtN(cLo)} – ${fmtN(cHi)}` : '—');
+  set('adsFCpc',   imps ? `~ ${cpc<10 ? cpc.toFixed(1) : fmtN(Math.round(cpc))} ₽` : '—');
   set('adsFCharge', b ? fmtMoney(b) : '—');
   const note = document.getElementById('adsBalanceNote');
   if(note) note.innerHTML = `На лицевом счёте: <b>${fmtMoney(WALLET.balance)}</b>${b>WALLET.balance?' — не хватает, пополни кошелёк':''}`;
@@ -9225,8 +9748,11 @@ function adsLaunch(){
   const camp = {
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
     geo: adsDraft.geo, interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
-    budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now()
+    budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now(),
+    days: [...Array(7)].map(()=>({i:0,c:0})), dstamp: adsDayKey()
   };
+  const tb = adsDraft.ab ? document.getElementById('adsInpTitleB').value.trim() : '';
+  if(tb) camp.ab = {tb, ka: .012+Math.random()*.025, kb: .012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}};
   ADS.camps.unshift(camp);
   adsSave(); closeSheet(); adsRender();
   toast('Кампания отправлена на модерацию ИИ-агенту');
@@ -9281,6 +9807,11 @@ function adsCtaClick(id){
   const c = ADS.camps.find(x=>x.id===id);
   if(!c || c.status!=='act'){ toast('Объявление не активно'); return; }
   c.clicks++;
+  adsRollDays(c); c.days[6].c++;
+  if(c.ab){
+    const tot = c.ab.a.i + c.ab.b.i;
+    (tot && Math.random() < c.ab.a.i/tot ? c.ab.a : c.ab.b).c++;
+  }
   adsSave();
   toast('Клик засчитан'+(c.link?' — переход: '+c.link.replace(/^https?:\/\//,'').slice(0,34):''));
   if(document.getElementById('screen-ads').classList.contains('active')) adsTickUI();
@@ -9324,12 +9855,22 @@ function adsTick(){
     if(c.status!=='act') return;
     changed = true;
     const dImps = 70 + Math.floor(Math.random()*180);            /* показы за тик */
-    const ctr = 0.01 + Math.random()*0.03;                        /* CTR 1–4% */
-    const dClicks = Math.round(dImps*ctr);
+    let dClicks;
+    if(c.ab){
+      /* A/B: показы делятся ~50/50, клики — по скрытому CTR варианта */
+      const ia = Math.round(dImps*(.45+Math.random()*.1)), ib = dImps-ia;
+      const ca = Math.round(ia*c.ab.ka*(.7+Math.random()*.6));
+      const cb = Math.round(ib*c.ab.kb*(.7+Math.random()*.6));
+      c.ab.a.i += ia; c.ab.a.c += ca; c.ab.b.i += ib; c.ab.b.c += cb;
+      dClicks = ca + cb;
+    }else{
+      dClicks = Math.round(dImps*(0.01 + Math.random()*0.03));   /* CTR 1–4% */
+    }
     const dSpend = dImps/1000*ADS_CPM;
     c.imps += dImps; c.clicks += dClicks;
     c.spent = Math.min(c.budget, c.spent + dSpend);
     c.hist.push(dImps); if(c.hist.length>24) c.hist.shift();
+    adsRollDays(c); c.days[6].i += dImps; c.days[6].c += dClicks;
     const post = POSTS.rec.find(p=>p.id===adsPostId(c.id));
     if(post) post.views = c.imps;
     if(c.spent >= c.budget){
@@ -9352,6 +9893,7 @@ showTab = function(t){
 
 /* ---------- самоинициализация ---------- */
 adsLoad();
+adsMigrate();
 regTitle('ads', 'Реклама');
 addSvcTile({id:'ads', label:'Реклама', ico:'megaphone', onclick:()=>showTab('ads')});
 if(typeof regT==='function') regT({ads:{ru:'Реклама', en:'Ads'}});
@@ -9364,8 +9906,13 @@ adsRender();
 setInterval(adsTick, 5000);
 window.addEventListener('resize', ()=>{
   if(document.getElementById('screen-ads').classList.contains('active'))
-    ADS.camps.forEach(c=>adsDrawSpark(c));
+    ADS.camps.forEach(c=>{ adsDrawSpark(c); if(adsOpenStats.has(c.id)) adsDrawDays(c); });
 });
+/* смена темы → перерисовать чарты (цвета текста/CTR-линии адаптивные) */
+new MutationObserver(()=>{
+  if(document.getElementById('screen-ads').classList.contains('active'))
+    ADS.camps.forEach(c=>{ if(adsOpenStats.has(c.id)) adsDrawDays(c); });
+}).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 
 /* ===== module: legal ===== */
 /* ================= LEGAL: юридические документы OKO (префикс lg-) =================
@@ -10948,6 +11495,15 @@ function stAddIcon(){
 const HQ_STATE = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-admin-hq'))||{}; }catch(e){ return {}; } })();
 function hqSave(){ try{ localStorage.setItem('oko-admin-hq', JSON.stringify(HQ_STATE)); }catch(e){} }
 
+/* ---------- действия админа по юзерам (бан/галочка) — персист oko-admin-actions ---------- */
+const HQ_ACT = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-admin-actions'))||{users:{}}; }catch(e){ return {users:{}}; } })();
+HQ_ACT.users = HQ_ACT.users || {};
+function hqActSave(){ try{ localStorage.setItem('oko-admin-actions', JSON.stringify(HQ_ACT)); }catch(e){} }
+(function hqRestoreVerified(){ /* выданные галочки переживают перезагрузку */
+  if(typeof VERIFIED === 'undefined') return;
+  Object.keys(HQ_ACT.users).forEach(n=>{ if(HQ_ACT.users[n].ver) VERIFIED.add(n); });
+})();
+
 /* ---------- демо-наполнение выручки OKO (один раз, реальные источники okoEarn) ---------- */
 (function hqSeedRevenue(){
   if(HQ_STATE.revSeeded) return;
@@ -11054,6 +11610,8 @@ const HQ_SRC_ICO = {
   'Тарифы':'crown', 'Комиссия Биржи 10%':'briefcase', 'Рекламный кабинет':'megaphone',
   'Продвижение':'rocket', 'Игры: рулетка':'fire', 'Игры: дорога':'fire', 'Комиссия вывода':'card'
 };
+let hqRevSrc = 'all', hqRevSrcs = ['all'];
+function hqRevFilter(i){ hqRevSrc = hqRevSrcs[i] || 'all'; renderAdmin(); }
 function hqRevenueView(){
   const total = Math.round(okoRevenueTotal());
   const now = new Date();
@@ -11068,13 +11626,26 @@ function hqRevenueView(){
   const srcs = Object.keys(by).map(k=>({src:k, sum:by[k]})).sort((a,b)=>b.sum-a.sum);
   const max = srcs.length ? srcs[0].sum : 1;
 
+  // фильтр по источнику (чипы)
+  hqRevSrcs = ['all'].concat(srcs.map(s=>s.src));
+  if(hqRevSrc !== 'all' && !by[hqRevSrc]) hqRevSrc = 'all';
+  const list = hqRevSrc==='all' ? OKO_REVENUE : OKO_REVENUE.filter(r=>r.src===hqRevSrc);
+  const chips = hqRevSrcs.map((s,i)=>
+    `<button class="hq-chip ${hqRevSrc===s?'on':''}" onclick="hqRevFilter(${i})">${s==='all'?'Все источники':esc(s)}</button>`).join('');
+
+  // суммы за периоды (по активному фильтру)
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const per = from=>{ const a=list.filter(r=>r.at>=from); return {s:Math.round(a.reduce((x,r)=>x+r.sum,0)), n:a.length}; };
+  const pT = per(dayStart), p7 = per(Date.now()-7*864e5), p30 = per(Date.now()-30*864e5);
+  const perRow = (l,p)=>`<div class="hq-per"><span>${l}</span><small>${p.n} опер.</small><b>+${fmtMoney(p.s)}</b></div>`;
+
   const srcRows = srcs.map((s,i)=>`
-    <div class="hq-src" style="animation-delay:${i*0.05}s">
+    <div class="hq-src ${hqRevSrc===s.src?'on':''}" style="animation-delay:${i*0.05}s" onclick="hqRevFilter(${hqRevSrc===s.src?0:i+1})">
       <div class="hq-src-t"><b>${esc(s.src)}</b><span><i>${fmtMoney(Math.round(s.sum))}</i> · ${total?Math.round(s.sum/total*100):0}%</span></div>
       <div class="hq-bar"><i style="width:${Math.max(3, s.sum/max*100)}%"></i></div>
     </div>`).join('');
 
-  const ops = OKO_REVENUE.slice(0,30).map(r=>`
+  const ops = list.slice(0,30).map(r=>`
     <div class="adm-row">
       <span class="hq-op-ic">${I(HQ_SRC_ICO[r.src]||'money')}</span>
       <span class="adm-main"><b>${esc(r.src)}</b><small>${hqWhen(r.at)}</small></span>
@@ -11087,10 +11658,127 @@ function hqRevenueView(){
       <b class="hq-rev-total">${fmtMoney(total)}</b>
       <div class="hq-rev-sub">за этот месяц <b>${fmtMoney(mSum)}</b> · проекция месяца <b>${fmtMoney(proj)}</b></div>
     </div>
+    <div class="hq-chips">${chips}</div>
+    <div class="adm-sec-h">Суммы${hqRevSrc!=='all' ? ' · '+esc(hqRevSrc) : ''}</div>
+    <div class="hq-pers card">${perRow('Сегодня',pT)}${perRow('7 дней',p7)}${perRow('30 дней',p30)}</div>
     <div class="adm-sec-h">По источникам</div>
     ${srcRows || '<p class="dim" style="font-size:13px">Пока нет операций — доход копится из комиссий, тарифов и рекламы.</p>'}
-    <div class="adm-sec-h">Последние операции (${Math.min(30, OKO_REVENUE.length)})</div>
-    ${ops}`;
+    <div class="adm-sec-h">Операции${hqRevSrc!=='all' ? ' · '+esc(hqRevSrc) : ''} (${Math.min(30, list.length)})</div>
+    ${ops || '<p class="dim" style="font-size:13px">По этому источнику операций пока нет.</p>'}
+    <div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+}
+
+/* ---------- экспорт: .txt-сводка владельца ---------- */
+function hqExportReport(){
+  const L = [], now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const stamp = pad(now.getDate())+'.'+pad(now.getMonth()+1)+'.'+now.getFullYear()+' '+hqHM(now);
+  L.push('OKO — СВОДНЫЙ ОТЧЁТ ВЛАДЕЛЬЦА');
+  L.push('Сформирован: '+stamp);
+  L.push('==============================================');
+
+  /* пользователи */
+  L.push('', 'ПОЛЬЗОВАТЕЛИ');
+  const k = ADMIN.kpi;
+  L.push('Всего: '+k.users.toLocaleString('ru')+' · активных сегодня: '+k.dau+' · отток: '+k.churn+'%');
+  ADMIN.users.forEach(u=>{
+    const a = HQ_ACT.users[u.n] || {};
+    const fl = [u.tier];
+    if(typeof VERIFIED !== 'undefined' && VERIFIED.has(u.n)) fl.push('галочка');
+    if(a.ban) fl.push('БАН');
+    L.push('  '+u.n+' ('+u.h+') — '+fl.join(' · ')+' — '+u.when);
+  });
+
+  /* доходы по источникам */
+  L.push('', 'ДОХОДЫ ПО ИСТОЧНИКАМ');
+  const by = {}; OKO_REVENUE.forEach(r=>{ by[r.src]=(by[r.src]||0)+r.sum; });
+  const total = Math.round(okoRevenueTotal());
+  Object.keys(by).sort((a,b)=>by[b]-by[a]).forEach(s=>{
+    L.push('  '+s+': '+fmtMoney(Math.round(by[s]))+' ('+(total?Math.round(by[s]/total*100):0)+'%)');
+  });
+  const sumFrom = from=>Math.round(OKO_REVENUE.filter(r=>r.at>=from).reduce((x,r)=>x+r.sum,0));
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  L.push('Итого: '+fmtMoney(total)+' · сегодня '+fmtMoney(sumFrom(dayStart))
+    +' · 7д '+fmtMoney(sumFrom(Date.now()-7*864e5))+' · 30д '+fmtMoney(sumFrom(Date.now()-30*864e5)));
+
+  /* рекламные кампании */
+  L.push('', 'РЕКЛАМНЫЕ КАМПАНИИ');
+  if(typeof ADS !== 'undefined' && ADS.camps && ADS.camps.length){
+    ADS.camps.forEach(c=>{
+      const st = (typeof ADS_STATUS !== 'undefined' && ADS_STATUS[c.status]) ? ADS_STATUS[c.status].l : c.status;
+      L.push('  '+c.name+' — '+st+' · бюджет '+fmtMoney(c.budget)+' · откручено '+fmtMoney(Math.round(c.spent))
+        +' · '+(c.imps||0).toLocaleString('ru')+' показов · '+(c.clicks||0).toLocaleString('ru')+' кликов');
+    });
+  } else L.push('  нет данных');
+
+  /* сделки биржи */
+  L.push('', 'СДЕЛКИ БИРЖИ (эскроу)');
+  if(typeof MP !== 'undefined' && MP.deals && MP.deals.length){
+    const stL = {work:'в работе', wait:'на подтверждении', done:'завершена'};
+    MP.deals.forEach(d=> L.push('  '+d.t+' — '+d.n+' · '+fmtMoney(d.sum)+' · '+(stL[d.st]||d.st)));
+  } else L.push('  нет данных');
+
+  L.push('', '==============================================', 'OKO · штаб владельца · отчёт сформирован автоматически');
+
+  const fname = 'oko-report-'+now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'.txt';
+  const url = URL.createObjectURL(new Blob(['﻿'+L.join('\n')], {type:'text/plain;charset=utf-8'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('Отчёт выгружен: '+fname);
+}
+
+/* ==================== 2b. ПОЛЬЗОВАТЕЛИ: бан / галочка / написать ==================== */
+const _prevAdmUsersHq = admUsers; /* базовый рендер заменён расширенным (chain сохранён) */
+admUsers = function(){
+  return `<div class="adm-sec-h">Последние пользователи (${ADMIN.users.length})</div>` + ADMIN.users.map((u,i)=>{
+    const a = HQ_ACT.users[u.n] || {};
+    return `
+    <div class="adm-row hq-usr ${a.ban?'ban':''}">
+      <div class="hq-usr-top">
+        <span class="adm-ava">${esc(u.n[0])}</span>
+        <span class="adm-main"><b>${esc(u.n)}${typeof vBadge==='function' ? vBadge(u.n) : ''}</b><small>${esc(u.h)} · ${esc(u.when)}</small></span>
+        ${a.ban ? '<span class="adm-tag no">БАН</span>' : ''}
+        <span class="adm-tag ${u.paid?'paid':'free'}">${esc(u.tier)}</span>
+      </div>
+      <div class="hq-usr-acts">
+        <button class="adm-btn ${a.ban?'':'dng'}" onclick="hqUserBan(${i})">${a.ban?'Разбанить':'Забанить'}</button>
+        <button class="adm-btn" onclick="hqUserVerify(${i})">${(typeof VERIFIED!=='undefined' && VERIFIED.has(u.n)) ? 'Снять галочку' : 'Выдать галочку'}</button>
+        <button class="adm-btn pri" onclick="hqUserMsg(${i})">Написать</button>
+      </div>
+    </div>`;
+  }).join('') +
+  `<div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+};
+function hqUserBan(i){
+  const u = ADMIN.users[i]; if(!u) return;
+  const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
+  a.ban = a.ban ? 0 : 1;
+  hqActSave(); renderAdmin();
+  toast(a.ban ? 'Пользователь '+u.n+' забанен' : u.n+' разбанен — доступ восстановлен');
+}
+function hqUserVerify(i){
+  const u = ADMIN.users[i]; if(!u || typeof VERIFIED === 'undefined') return;
+  const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
+  if(VERIFIED.has(u.n)){ VERIFIED.delete(u.n); a.ver = 0; toast('Галочка снята: '+u.n); }
+  else { VERIFIED.add(u.n); a.ver = 1; toast('Галочка выдана: '+u.n); }
+  hqActSave(); renderAdmin();
+}
+function hqUserMsg(i){
+  const u = ADMIN.users[i]; if(!u) return;
+  let c = CHATS.find(x=>x.kind==='direct' && x.name===u.n);
+  if(!c){
+    c = {id:'hq-u'+i, ava:u.n[0], name:u.n, kind:'direct', nick:(u.h||'').replace('@',''), kindIcon:null,
+         preview:'Диалог начат из админки', time:hqHM(new Date()), unread:0, online:false,
+         msgs:[{kind:'sys', body:'Диалог с пользователем открыт владельцем из админки OKO'}]};
+    CHATS.unshift(c);
+  }
+  closeAdmin();
+  showTab('chats');
+  const s = document.getElementById('chatSearch');
+  renderChatList(s ? s.value : '');
+  openConv(c.id);
 }
 
 /* ---------- вкладка «Штаб HQ» ---------- */
@@ -11159,6 +11847,46 @@ let HQ_LOG = [];
     HQ_LOG.push({t: hqHM(new Date(t)), a: e.a, m: e.m});
   }
 })();
+/* ---------- онлайн-мониторинг: «сейчас в приложении» + спарклайн ---------- */
+let hqOnline = 0, hqOnlineHist = [];
+(function hqSeedOnline(){
+  let v = 380 + Math.floor(Math.random()*60);
+  for(let i=0;i<24;i++){
+    v = Math.max(300, Math.min(520, v + Math.floor(Math.random()*17) - 8));
+    hqOnlineHist.push(v);
+  }
+  hqOnline = hqOnlineHist[hqOnlineHist.length-1];
+})();
+function hqSparkSvg(){
+  const h = hqOnlineHist;
+  const min = Math.min.apply(null,h) - 6, max = Math.max.apply(null,h) + 6;
+  const pts = h.map((v,i)=>((i/(h.length-1))*100).toFixed(1)+','+(26-(v-min)/(max-min)*22).toFixed(1)).join(' ');
+  return `<svg class="hq-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+    <polygon points="0,28 ${pts} 100,28" fill="var(--lime-dim)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--lime)" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+function hqOnlineBlock(){
+  return `<div class="hq-online card">
+    <div class="hq-on-l">
+      <small><i class="hq-dot work"></i> Сейчас в приложении</small>
+      <b id="hqOnlineN">${hqOnline}</b>
+      <span class="hq-on-d" id="hqOnlineD">live · пик ${Math.max.apply(null,hqOnlineHist)}</span>
+    </div>
+    <div class="hq-on-r" id="hqSparkWrap">${hqSparkSvg()}</div>
+  </div>`;
+}
+function hqOnlineTick(){
+  const d = Math.floor(Math.random()*19) - 9;
+  hqOnline = Math.max(300, Math.min(520, hqOnline + d));
+  hqOnlineHist.push(hqOnline); if(hqOnlineHist.length > 24) hqOnlineHist.shift();
+  const nEl = document.getElementById('hqOnlineN'); if(nEl) nEl.textContent = hqOnline;
+  const dEl = document.getElementById('hqOnlineD');
+  if(dEl) dEl.innerHTML = (d>=0 ? '<i class="up">+'+d+'</i>' : '<i class="dn">−'+Math.abs(d)+'</i>')
+    + ' за тик · пик '+Math.max.apply(null,hqOnlineHist);
+  const sw = document.getElementById('hqSparkWrap'); if(sw) sw.innerHTML = hqSparkSvg();
+}
+
 function hqAgent(id){ return HQ_AGENTS.find(a=>a.id===id); }
 function hqLogLine(e, fresh){
   const ag = hqAgent(e.a) || {role:'OKO', c:'var(--accent)'};
@@ -11186,6 +11914,7 @@ function hqHqView(){
         <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('eye')} Открыть 3D-штаб</button>
       </div>
     </div>
+    ${hqOnlineBlock()}
     <div class="adm-sec-h">Отделы</div>
     <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
       <button class="hq-room" style="animation-delay:${i*0.04}s" onclick="toast('Отдел «${r.n}»: детальный дашборд — этап 2')">
@@ -11236,6 +11965,7 @@ function hqStopLog(){ if(hqTimer){ clearInterval(hqTimer); hqTimer = null; } }
 function hqTick(){
   const av = document.getElementById('adminView');
   if(!av || !av.classList.contains('open') || admTab !== 'hq'){ hqStopLog(); return; }
+  hqOnlineTick(); // онлайн-счётчик + спарклайн
   // новая строка лога
   const e = HQ_LOG_POOL[Math.floor(Math.random()*HQ_LOG_POOL.length)];
   const line = {t: hqHM(new Date()), a: e.a, m: e.m};
@@ -11304,13 +12034,44 @@ admModer = function(){
   return head + _prevAdmModerHq();
 };
 
-/* ==================== 6. ОБЗОР: KPI «Доход OKO» ==================== */
+/* ==================== 6. ОБЗОР: KPI «Доход OKO» + панель «Быстро» ==================== */
 const _prevAdmOverviewHq = admOverview;
 admOverview = function(){
   const html = _prevAdmOverviewHq();
   const kpi = `<div class="adm-kpi"><b style="font-size:24px;padding-top:4px;display:block">${fmtMoney(Math.round(okoRevenueTotal()))}</b><small>Доход OKO (комиссии) <i class="up" style="cursor:pointer" onclick="admGo('revenue')">→ Доходы</i></small></div>`;
-  return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi);
+  const quick = `
+    <div class="adm-sec-h">Быстро · действия владельца</div>
+    <div class="hq-quick">
+      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тестовые на кошелёк</small></button>
+      <button class="hq-qbtn" onclick="hqExportReport()"><span class="hq-qic">${I('file')}</span><b>Отчёт .txt</b><small>полная сводка</small></button>
+      <button class="hq-qbtn dng" onclick="hqResetDemo()"><span class="hq-qic">${I('trash')}</span><b>Сброс демо</b><small>очистить oko-данные</small></button>
+    </div>`;
+  return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi) + quick;
 };
+function hqQuickMoney(){
+  if(typeof walletAdd !== 'function'){ toast('Кошелёк недоступен'); return; }
+  walletAdd(10000, 'Тестовое начисление владельца');
+  toast('+10 000 ₽ зачислено на кошелёк (тест)');
+}
+function hqResetDemo(){
+  showPopup({
+    ico:'trash', title:'Сбросить демо-данные?',
+    body:'Будут очищены все локальные данные приложения (ключи oko-*): кошелёк, доходы, кампании, сделки, прогресс. Авторизация и статус владельца сохранятся. После сброса приложение перезагрузится.',
+    actions:[
+      {label:'Сбросить всё', onclick:hqDoResetDemo},
+      {label:'Отмена', ghost:true}
+    ]
+  });
+}
+function hqDoResetDemo(){
+  try{
+    Object.keys(localStorage).forEach(k=>{
+      if(k.indexOf('oko-')===0 && !/auth|owner/.test(k)) localStorage.removeItem(k);
+    });
+  }catch(e){}
+  toast('Демо-данные сброшены — перезагрузка…');
+  setTimeout(()=>location.reload(), 700);
+}
 
 /* ==================== 5. ПРОФИЛЬ: чип CEO + строка «Штаб OKO HQ» ==================== */
 function hqOpenHqTab(){
@@ -11360,9 +12121,14 @@ renderMyProfile = function(){
    эскроу-сделки, вывод на кошелёк, рейтинг и отзывы.
    Часть 2 — флагманские пакеты «OKO Production — под ключ»: оплата с кошелька,
    рабочий чат клиента с ветками работ, уведомление.
+   Часть 3 — шлифовка: отзывы после сделки (звёзды 1-5 + текст -> l.reviews + пересчёт l.r),
+   чат с продавцом с автоприветствием, жалоба на объявление (chip-причины -> ADMIN.moder),
+   фильтр «Только проверенные» (verified или рейтинг 4.8+).
    Патчи (chain): renderMarket (кнопка кабинета + премиум-баннер), orderListing
    (регистрация сделки в кабинете, саму покупку НЕ трогаем — она уже патчена wallet),
-   openConv (закреплённые ветки работ). Персист: localStorage oko-market-pro. */
+   openConv (закреплённые ветки работ), openListing (бейдж/жалоба/кнопка), contactSeller
+   (автоприветствие), mkApplyFilters/renderFilters/activeFilterCount/resetFilters
+   (фильтр проверенных), admModer (счётчик жалоб). Персист: localStorage oko-market-pro. */
 
 /* ---------- константы ---------- */
 const MP_USD = 90;             // курс прототипа, ₽ за $
@@ -11411,12 +12177,14 @@ if(!MP || !MP.v){
   MP = { v:1, seq:0, gross:58000, customChatId:null, orders:[],
     stats:{901:{orders:9, rev:405000}, 902:{orders:6, rev:114000}, 903:{orders:8, rev:64000}},
     deals:[
-      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H},
-      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H},
-      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H},
+      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
+      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
+      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903},
     ]};
   mpSave();
 }
+MP.myRevs  = MP.myRevs  || [];  // отзывы, добавленные после сделок (реплей после перезагрузки)
+MP.reports = MP.reports || [];  // локальный лог жалоб на объявления
 const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
 
 /* ---------- демо: мои объявления продавца (LISTINGS не персистится — сеем каждый запуск) ---------- */
@@ -11442,7 +12210,29 @@ const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
   );
 })();
 
+/* ---------- реплей сохранённых отзывов (LISTINGS пересоздаются каждый запуск) ---------- */
+(function mpReplayReviews(){
+  const touched = new Set();
+  (MP.myRevs||[]).forEach(rv0=>{
+    const l = LISTINGS.find(x=>x.id===rv0.lid);
+    if(!l) return;
+    (l.reviews = l.reviews||[]).unshift({n:rv0.n, r:rv0.r, t:rv0.t});
+    touched.add(l);
+  });
+  touched.forEach(l=>mpRecalcRating(l));
+})();
+
 /* ---------- хелперы ---------- */
+function mpRecalcRating(l){
+  const rv = l.reviews||[];
+  if(rv.length) l.r = Math.round(rv.reduce((s,x)=>s+x.r,0)/rv.length*10)/10;
+}
+function mpDealListing(d){
+  return (d.lid && LISTINGS.find(x=>x.id===d.lid)) || LISTINGS.find(x=>x.t===d.t) || null;
+}
+function mpIsVerified(l){
+  return (typeof VERIFIED!=='undefined' && VERIFIED.has(l.n)) || l.r>=4.8;
+}
 function mpWhen(at){
   const d = new Date(at), n = new Date();
   const hm = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
@@ -11527,8 +12317,11 @@ function mpRenderCab(){
       const st = MP_ST[d.st];
       const act = d.dir==='in'
         ? (d.st==='work' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>` : '')
-        : (d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>` : '');
+         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>`
+         : mpRevBtn(d))
+        : (d.st==='work' ? `<div class="mp-deal-act"><button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button></div>`
+         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>`
+         : mpRevBtn(d));
       return `<div class="mp-deal">
         <div class="mp-deal-top"><b>${esc(d.t)}</b><span class="mp-deal-sum">${fmtMoney(d.sum)}</span></div>
         <div class="mp-deal-meta">
@@ -11560,9 +12353,77 @@ function mpDealNext(id){
     } else {
       WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
       toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
+      setTimeout(()=>mpOpenReview(d.id), 500); // сразу предложим оценить исполнителя
     }
   }
   mpSave(); mpRenderCab();
+}
+function mpDealPoke(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.dir!=='out' || d.st!=='work') return;
+  d.st = 'wait'; mpSave();
+  toast('Исполнитель сдал работу — проверь и подтверди получение');
+  mpRenderCab();
+}
+
+/* ================= ОТЗЫВЫ ПОСЛЕ СДЕЛКИ ================= */
+let mpRevDealId = null, mpRevStars = 5;
+const MP_STAR_LAB = {1:'Ужасно', 2:'Плохо', 3:'Нормально', 4:'Хорошо', 5:'Отлично'};
+function mpRevBtn(d){
+  if(d.rev) return `<div class="mp-deal-act"><span class="mp-revok">${I('check')} Отзыв оставлен · ${d.rev}/5</span></div>`;
+  if(!mpDealListing(d)) return '';
+  return `<div class="mp-deal-act"><button onclick="mpOpenReview('${d.id}')">${I('star')} Оставить отзыв</button></div>`;
+}
+function mpOpenReview(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='done' || d.rev) return;
+  mpRevDealId = id; mpRevStars = 5;
+  mpRenderReview();
+  openSheet('mpReview');
+}
+function mpRenderReview(){
+  const d = MP.deals.find(x=>x.id===mpRevDealId);
+  const box = document.getElementById('mpReviewView');
+  if(!d || !box) return;
+  const who = d.dir==='out'
+    ? 'Оцени исполнителя — отзыв появится в его объявлении и пересчитает рейтинг'
+    : 'Покупатель '+esc(d.n)+' оценивает сделку — отзыв появится в твоём объявлении';
+  box.innerHTML = `
+    <h3 class="mp-rv-title">Оставить отзыв</h3>
+    <p class="mp-rv-sub">${esc(d.t)} · ${fmtMoney(d.sum)}</p>
+    <p class="mp-rv-who">${I('star')} ${who}</p>
+    <div class="mp-rstars" id="mpRstars">${mpStarsBig()}</div>
+    <div class="mp-rlab" id="mpRlab">${MP_STAR_LAB[mpRevStars]}</div>
+    <textarea id="mpRevText" class="mp-ta" rows="4" maxlength="280" placeholder="Что понравилось, что можно улучшить…"></textarea>
+    <button class="btn" onclick="mpSubmitReview()">${I('star')} Опубликовать отзыв</button>`;
+}
+function mpStarsBig(){
+  let s = '';
+  for(let i=1;i<=5;i++) s += `<button class="mp-rstar ${i<=mpRevStars?'on':''}" onclick="mpSetStars(${i})">${I('star')}</button>`;
+  return s;
+}
+function mpSetStars(n){
+  mpRevStars = n;
+  const el = document.getElementById('mpRstars'); if(el) el.innerHTML = mpStarsBig();
+  const lb = document.getElementById('mpRlab');   if(lb) lb.textContent = MP_STAR_LAB[n];
+}
+function mpSubmitReview(){
+  const d = MP.deals.find(x=>x.id===mpRevDealId);
+  if(!d) return;
+  const txt = ((document.getElementById('mpRevText')||{}).value||'').trim();
+  if(txt.length<3){ toast('Пара слов о сделке — и отзыв готов'); return; }
+  const l = mpDealListing(d);
+  const author = d.dir==='out' ? PROFILE.name : d.n;
+  if(l){
+    (l.reviews = l.reviews||[]).unshift({n:author, r:mpRevStars, t:txt});
+    mpRecalcRating(l);
+    MP.myRevs.push({lid:l.id, n:author, r:mpRevStars, t:txt, at:Date.now()});
+  }
+  d.rev = mpRevStars;
+  mpSave();
+  closeSheet();
+  toast(l ? 'Отзыв опубликован — рейтинг объявления теперь '+l.r.toFixed(1) : 'Отзыв сохранён');
+  mpOpenCabinet(); // вернуться в кабинет с обновлённым состоянием
 }
 function mpWithdraw(){
   const bal = mpBal();
@@ -11771,7 +12632,7 @@ orderListing = function(id){
   if(WALLET.hold <= holdBefore) return; // оплата не прошла — сделку не регистрируем
   const l = LISTINGS.find(x=>x.id===id);
   if(!l) return;
-  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now()});
+  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id});
   mpSave();
   const sheet = document.getElementById('sheet-mpCab');
   if(sheet && sheet.classList.contains('open')) mpRenderCab();
@@ -11804,6 +12665,161 @@ function mpGoBranch(name){
   node.classList.remove('mp-branch-flash');
   void node.offsetWidth;
   node.classList.add('mp-branch-flash');
+}
+
+/* карточка объявления: значок проверенного, «Написать продавцу», меню «Пожаловаться» */
+const _prevOpenListingMp = openListing;
+openListing = function(id){
+  _prevOpenListingMp(id);
+  mpDecorateListing(id);
+};
+function mpDecorateListing(id){
+  const l = LISTINGS.find(x=>x.id===id);
+  const v = document.getElementById('lstView');
+  if(!l || !v) return;
+  const seller = v.querySelector('.seller-card');
+  if(seller){
+    const nameEl = seller.querySelector('b');
+    if(nameEl && typeof vBadge==='function' && !nameEl.querySelector('svg')) nameEl.insertAdjacentHTML('beforeend', vBadge(l.n));
+    if(mpIsVerified(l) && !seller.querySelector('.mp-ver-chip'))
+      seller.insertAdjacentHTML('beforeend', `<span class="mp-ver-chip">${I('verified')} Проверенный</span>`);
+  }
+  if(l.my) return; // на своём объявлении ни чата, ни жалобы
+  const write = v.querySelector('.lst-cta .btn:not(.ghost)');
+  if(write) write.innerHTML = I('chat')+' Написать продавцу';
+  if(!document.getElementById('mpReportBtn')){
+    const sent = (MP.reports||[]).some(r=>r.lid===l.id);
+    const b = document.createElement('button');
+    b.id = 'mpReportBtn';
+    b.className = 'mp-report-btn'+(sent?' sent':'');
+    b.innerHTML = sent ? I('check')+' Жалоба на рассмотрении модерации'
+                       : I('flag')+' Пожаловаться на объявление';
+    b.onclick = ()=>mpOpenReport(l.id);
+    v.appendChild(b);
+  }
+}
+
+/* чат с продавцом: автоприветствие при создании/открытии диалога из карточки */
+const _prevContactSellerMp = contactSeller;
+contactSeller = function(id){
+  _prevContactSellerMp(id);
+  const l = LISTINGS.find(x=>x.id===id);
+  if(!l) return;
+  const chat = CHATS.find(c=>c.name===l.n);
+  if(!chat) return;
+  const greet = 'Здравствуйте! Интересует «'+l.t+'»';
+  if(chat.msgs.some(m=>m.kind==='text' && m.body===greet)) return; // уже здоровались по этому объявлению
+  if(typeof currentChat!=='undefined' && currentChat===chat && typeof pushMsg==='function'){
+    pushMsg({in:0, t:nowT(), kind:'text', body:greet});
+  } else {
+    chat.msgs.push({in:0, t:nowT(), kind:'text', body:greet});
+    chat.preview = 'Ты: '+greet; chat.time = nowT();
+  }
+};
+
+/* ================= ЖАЛОБА НА ОБЪЯВЛЕНИЕ ================= */
+let mpRepLid = null, mpRepReason = null;
+const MP_REP_REASONS = ['Мошенничество','Спам и реклама','Запрещённый товар','Цена не соответствует','Оскорбления','Другое'];
+function mpOpenReport(id){
+  mpRepLid = id; mpRepReason = null;
+  mpRenderReport();
+  openSheet('mpReport');
+}
+function mpRenderReport(){
+  const l = LISTINGS.find(x=>x.id===mpRepLid);
+  const box = document.getElementById('mpReportView');
+  if(!l || !box) return;
+  const sent = (MP.reports||[]).some(r=>r.lid===l.id);
+  box.innerHTML = sent ? `
+    <div class="mp-rep-done">${I('flag')}</div>
+    <h3 class="mp-rv-title" style="text-align:center">Жалоба на рассмотрении</h3>
+    <p class="mp-rv-sub" style="text-align:center">Модерация уже проверяет «${esc(l.t)}». Обычно это занимает до 24 часов.</p>
+    <div style="height:14px"></div>
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`
+  : `
+    <h3 class="mp-rv-title">Пожаловаться</h3>
+    <p class="mp-rv-sub">${esc(l.t)} · ${esc(l.n)}</p>
+    <p class="f-lab">Причина жалобы</p>
+    <div class="mp-rep-chips" id="mpRepChips">${mpRepChips()}</div>
+    <textarea id="mpRepText" class="mp-ta" rows="3" maxlength="240" placeholder="Комментарий для модерации (необязательно)"></textarea>
+    <button class="btn" onclick="mpSubmitReport()">${I('flag')} Отправить жалобу</button>
+    <p class="mp-rep-note">Жалоба анонимна для продавца и уходит модерации OKO</p>`;
+}
+function mpRepChips(){
+  return MP_REP_REASONS.map((r,i)=>
+    `<button class="f-chip ${mpRepReason===r?'on':''}" onclick="mpRepPick(${i})">${r}</button>`).join('');
+}
+function mpRepPick(i){
+  mpRepReason = MP_REP_REASONS[i];
+  const el = document.getElementById('mpRepChips');
+  if(el) el.innerHTML = mpRepChips(); // перерисовываем только чипы — текст комментария не теряется
+}
+function mpSubmitReport(){
+  const l = LISTINGS.find(x=>x.id===mpRepLid);
+  if(!l) return;
+  if(!mpRepReason){ toast('Выбери причину жалобы'); return; }
+  const txt = ((document.getElementById('mpRepText')||{}).value||'').trim();
+  MP.reports.push({lid:l.id, t:l.t, reason:mpRepReason, txt, at:Date.now()});
+  mpSave();
+  if(typeof ADMIN!=='undefined' && ADMIN.moder){ // chain-доступ к очереди модерации админки
+    ADMIN.moder.unshift({t:'Жалоба: «'+l.t+'» — '+mpRepReason, by:'@'+(PROFILE.nick||'user'), kind:'Биржа'});
+    if(ADMIN.kpi) ADMIN.kpi.moder = ADMIN.moder.length;
+  }
+  closeSheet();
+  toast('Передано модерации — спасибо, что бережёшь Биржу');
+  openListing(mpRepLid); // вернуться в карточку: кнопка уже в статусе «на рассмотрении»
+}
+
+/* админка: счётчик и лог жалоб с Биржи во вкладке «Модерация» */
+if(typeof admModer==='function'){
+  const _prevAdmModerMp = admModer;
+  admModer = function(){
+    const rep = MP.reports||[];
+    const inQ = (typeof ADMIN!=='undefined' && ADMIN.moder) ? ADMIN.moder.filter(m=>(m.t||'').indexOf('Жалоба:')===0).length : 0;
+    const rows = rep.slice(-4).reverse().map(r=>`
+      <div class="adm-row">
+        <span class="adm-tag no">${esc(r.reason)}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(r.t)}</b><small>${esc(r.txt||'без комментария')} · ${mpWhen(r.at)}</small></span>
+      </div>`).join('');
+    const block = `
+      <div class="adm-sec-h">Жалобы с Биржи · всего ${rep.length}${inQ?` · в очереди ${inQ}`:''}</div>
+      ${rep.length ? rows : '<p class="dim" style="font-size:13px">Жалоб нет — Биржа чистая.</p>'}`;
+    return _prevAdmModerMp() + block;
+  };
+}
+
+/* ================= ФИЛЬТР «ТОЛЬКО ПРОВЕРЕННЫЕ» ================= */
+if(typeof mkFilters.mpVerif==='undefined') mkFilters.mpVerif = false;
+const _prevMkApplyFiltersMp = mkApplyFilters;
+mkApplyFilters = function(arr){
+  arr = _prevMkApplyFiltersMp(arr);
+  if(mkFilters.mpVerif) arr = arr.filter(mpIsVerified);
+  return arr;
+};
+const _prevActiveFilterCountMp = activeFilterCount;
+activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0); };
+const _prevResetFiltersMp = resetFilters;
+resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; };
+const _prevRenderFiltersMp = renderFilters;
+renderFilters = function(){
+  _prevRenderFiltersMp();
+  const v = document.getElementById('filtersView');
+  if(!v || v.querySelector('.mp-fver-wrap')) return;
+  const btnRow = v.lastElementChild; // строка «Сбросить / Показать»
+  const w = document.createElement('div');
+  w.className = 'mp-fver-wrap';
+  w.innerHTML = `<p class="f-lab">Продавец</p>
+    <button class="f-chip mp-fver ${mkFilters.mpVerif?'on':''}" onclick="mpToggleVerif()">${I('verified')} Только проверенные</button>
+    <small>значок OKO или рейтинг продавца 4.8+</small>`;
+  v.insertBefore(w, btnRow);
+};
+function mpToggleVerif(){
+  // сохраняем введённую цену — перерисовка фильтров её не съест
+  const mn = document.getElementById('fMin'), mx = document.getElementById('fMax');
+  if(mn) mkFilters.min = (mn.value||'').replace(/\D/g,'');
+  if(mx) mkFilters.max = (mx.value||'').replace(/\D/g,'');
+  mkFilters.mpVerif = !mkFilters.mpVerif;
+  renderFilters();
 }
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */

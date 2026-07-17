@@ -167,6 +167,52 @@
 .mp-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--lime);margin:0 auto;animation:mpSpin .8s linear infinite}
 .mp-lack{background:rgba(255,77,77,.08);border:1px solid rgba(255,77,77,.3);border-radius:var(--r-md);padding:11px 13px;font-size:12px;color:var(--danger);font-weight:600;margin:10px 0}
 
+/* ---------- отзыв после сделки (sheet) ---------- */
+.mp-rv-title{font-family:var(--font-display);font-size:25px;letter-spacing:.06em;line-height:1}
+.mp-rv-sub{font-size:12.5px;color:var(--dim);margin-top:4px}
+.mp-rv-who{display:flex;align-items:flex-start;gap:7px;font-size:11.5px;color:var(--dim);line-height:1.45;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;margin-top:10px}
+.mp-rv-who svg.i{width:13px;height:13px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.mp-rstars{display:flex;justify-content:center;gap:9px;margin:16px 0 6px}
+.mp-rstar{width:46px;height:46px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);transition:all .16s;animation:mpFade .25s ease both}
+.mp-rstar:nth-child(2){animation-delay:.03s}.mp-rstar:nth-child(3){animation-delay:.06s}.mp-rstar:nth-child(4){animation-delay:.09s}.mp-rstar:nth-child(5){animation-delay:.12s}
+.mp-rstar svg.i{width:22px;height:22px}
+.mp-rstar.on{color:var(--lime);border-color:rgba(154,255,0,.45);background:var(--lime-dim);box-shadow:0 0 12px rgba(154,255,0,.16)}
+.mp-rstar.on svg.i{fill:var(--lime)}
+.mp-rstar:hover{border-color:var(--lime)}
+.mp-rstar:active{transform:scale(.88)}
+:root[data-theme="light"] .mp-rstar.on{box-shadow:0 2px 10px rgba(83,168,0,.2)}
+.mp-rlab{text-align:center;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;min-height:14px}
+.mp-ta{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font-body);font-size:13px;line-height:1.45;padding:11px 12px;resize:none;margin-bottom:12px;transition:border-color .2s}
+.mp-ta:focus{outline:none;border-color:var(--lime)}
+.mp-ta::placeholder{color:var(--dim)}
+.mp-revok{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:5px 11px}
+.mp-revok svg.i{width:11px;height:11px;color:var(--accent)}
+.mp-deal-act button.ghost{background:var(--raised);color:var(--text);border-color:var(--border)}
+.mp-deal-act button.ghost:hover{border-color:var(--dim)}
+
+/* ---------- значок «Проверенный» в карточке объявления ---------- */
+.mp-ver-chip{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:4px 9px;margin-left:auto;flex-shrink:0;animation:mpFade .3s ease both}
+.mp-ver-chip svg.i{width:11px;height:11px;fill:currentColor}
+:root[data-theme="light"] .mp-ver-chip{border-color:#b9d788}
+
+/* ---------- жалоба на объявление ---------- */
+.mp-report-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:11px;padding:10px;border-radius:var(--r-sm);background:transparent;border:1px dashed var(--border);color:var(--dim);font-size:11.5px;font-weight:600;transition:all .2s}
+.mp-report-btn svg.i{width:13px;height:13px}
+.mp-report-btn:hover{color:var(--danger);border-color:rgba(255,77,77,.45)}
+.mp-report-btn:active{transform:scale(.98)}
+.mp-report-btn.sent{color:var(--accent);border-style:solid;border-color:rgba(154,255,0,.3);background:var(--lime-dim)}
+.mp-report-btn.sent:hover{color:var(--accent)}
+.mp-rep-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.mp-rep-note{font-size:10.5px;color:var(--dim);text-align:center;margin-top:9px}
+.mp-rep-done{width:58px;height:58px;border-radius:50%;background:var(--lime-dim);border:1px solid rgba(154,255,0,.35);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:8px auto 12px;animation:mpPop .45s cubic-bezier(.3,1.4,.5,1) both}
+.mp-rep-done svg.i{width:26px;height:26px}
+
+/* ---------- фильтр «Только проверенные» ---------- */
+.mp-fver-wrap{animation:mpFade .25s ease both}
+.mp-fver-wrap small{display:block;font-size:10.5px;color:var(--dim);margin-top:7px}
+.mp-fver{display:inline-flex;align-items:center;gap:6px}
+.mp-fver svg.i{width:13px;height:13px;fill:currentColor}
+
 /* ---------- закреплённые ветки работ в чате ---------- */
 .mp-pin{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 14px 9px;animation:mpFade .25s ease both}
 .mp-pin-h{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}

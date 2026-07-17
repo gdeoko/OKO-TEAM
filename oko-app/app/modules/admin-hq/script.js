@@ -17,6 +17,15 @@
 const HQ_STATE = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-admin-hq'))||{}; }catch(e){ return {}; } })();
 function hqSave(){ try{ localStorage.setItem('oko-admin-hq', JSON.stringify(HQ_STATE)); }catch(e){} }
 
+/* ---------- действия админа по юзерам (бан/галочка) — персист oko-admin-actions ---------- */
+const HQ_ACT = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-admin-actions'))||{users:{}}; }catch(e){ return {users:{}}; } })();
+HQ_ACT.users = HQ_ACT.users || {};
+function hqActSave(){ try{ localStorage.setItem('oko-admin-actions', JSON.stringify(HQ_ACT)); }catch(e){} }
+(function hqRestoreVerified(){ /* выданные галочки переживают перезагрузку */
+  if(typeof VERIFIED === 'undefined') return;
+  Object.keys(HQ_ACT.users).forEach(n=>{ if(HQ_ACT.users[n].ver) VERIFIED.add(n); });
+})();
+
 /* ---------- демо-наполнение выручки OKO (один раз, реальные источники okoEarn) ---------- */
 (function hqSeedRevenue(){
   if(HQ_STATE.revSeeded) return;
@@ -123,6 +132,8 @@ const HQ_SRC_ICO = {
   'Тарифы':'crown', 'Комиссия Биржи 10%':'briefcase', 'Рекламный кабинет':'megaphone',
   'Продвижение':'rocket', 'Игры: рулетка':'fire', 'Игры: дорога':'fire', 'Комиссия вывода':'card'
 };
+let hqRevSrc = 'all', hqRevSrcs = ['all'];
+function hqRevFilter(i){ hqRevSrc = hqRevSrcs[i] || 'all'; renderAdmin(); }
 function hqRevenueView(){
   const total = Math.round(okoRevenueTotal());
   const now = new Date();
@@ -137,13 +148,26 @@ function hqRevenueView(){
   const srcs = Object.keys(by).map(k=>({src:k, sum:by[k]})).sort((a,b)=>b.sum-a.sum);
   const max = srcs.length ? srcs[0].sum : 1;
 
+  // фильтр по источнику (чипы)
+  hqRevSrcs = ['all'].concat(srcs.map(s=>s.src));
+  if(hqRevSrc !== 'all' && !by[hqRevSrc]) hqRevSrc = 'all';
+  const list = hqRevSrc==='all' ? OKO_REVENUE : OKO_REVENUE.filter(r=>r.src===hqRevSrc);
+  const chips = hqRevSrcs.map((s,i)=>
+    `<button class="hq-chip ${hqRevSrc===s?'on':''}" onclick="hqRevFilter(${i})">${s==='all'?'Все источники':esc(s)}</button>`).join('');
+
+  // суммы за периоды (по активному фильтру)
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const per = from=>{ const a=list.filter(r=>r.at>=from); return {s:Math.round(a.reduce((x,r)=>x+r.sum,0)), n:a.length}; };
+  const pT = per(dayStart), p7 = per(Date.now()-7*864e5), p30 = per(Date.now()-30*864e5);
+  const perRow = (l,p)=>`<div class="hq-per"><span>${l}</span><small>${p.n} опер.</small><b>+${fmtMoney(p.s)}</b></div>`;
+
   const srcRows = srcs.map((s,i)=>`
-    <div class="hq-src" style="animation-delay:${i*0.05}s">
+    <div class="hq-src ${hqRevSrc===s.src?'on':''}" style="animation-delay:${i*0.05}s" onclick="hqRevFilter(${hqRevSrc===s.src?0:i+1})">
       <div class="hq-src-t"><b>${esc(s.src)}</b><span><i>${fmtMoney(Math.round(s.sum))}</i> · ${total?Math.round(s.sum/total*100):0}%</span></div>
       <div class="hq-bar"><i style="width:${Math.max(3, s.sum/max*100)}%"></i></div>
     </div>`).join('');
 
-  const ops = OKO_REVENUE.slice(0,30).map(r=>`
+  const ops = list.slice(0,30).map(r=>`
     <div class="adm-row">
       <span class="hq-op-ic">${I(HQ_SRC_ICO[r.src]||'money')}</span>
       <span class="adm-main"><b>${esc(r.src)}</b><small>${hqWhen(r.at)}</small></span>
@@ -156,10 +180,127 @@ function hqRevenueView(){
       <b class="hq-rev-total">${fmtMoney(total)}</b>
       <div class="hq-rev-sub">за этот месяц <b>${fmtMoney(mSum)}</b> · проекция месяца <b>${fmtMoney(proj)}</b></div>
     </div>
+    <div class="hq-chips">${chips}</div>
+    <div class="adm-sec-h">Суммы${hqRevSrc!=='all' ? ' · '+esc(hqRevSrc) : ''}</div>
+    <div class="hq-pers card">${perRow('Сегодня',pT)}${perRow('7 дней',p7)}${perRow('30 дней',p30)}</div>
     <div class="adm-sec-h">По источникам</div>
     ${srcRows || '<p class="dim" style="font-size:13px">Пока нет операций — доход копится из комиссий, тарифов и рекламы.</p>'}
-    <div class="adm-sec-h">Последние операции (${Math.min(30, OKO_REVENUE.length)})</div>
-    ${ops}`;
+    <div class="adm-sec-h">Операции${hqRevSrc!=='all' ? ' · '+esc(hqRevSrc) : ''} (${Math.min(30, list.length)})</div>
+    ${ops || '<p class="dim" style="font-size:13px">По этому источнику операций пока нет.</p>'}
+    <div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+}
+
+/* ---------- экспорт: .txt-сводка владельца ---------- */
+function hqExportReport(){
+  const L = [], now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const stamp = pad(now.getDate())+'.'+pad(now.getMonth()+1)+'.'+now.getFullYear()+' '+hqHM(now);
+  L.push('OKO — СВОДНЫЙ ОТЧЁТ ВЛАДЕЛЬЦА');
+  L.push('Сформирован: '+stamp);
+  L.push('==============================================');
+
+  /* пользователи */
+  L.push('', 'ПОЛЬЗОВАТЕЛИ');
+  const k = ADMIN.kpi;
+  L.push('Всего: '+k.users.toLocaleString('ru')+' · активных сегодня: '+k.dau+' · отток: '+k.churn+'%');
+  ADMIN.users.forEach(u=>{
+    const a = HQ_ACT.users[u.n] || {};
+    const fl = [u.tier];
+    if(typeof VERIFIED !== 'undefined' && VERIFIED.has(u.n)) fl.push('галочка');
+    if(a.ban) fl.push('БАН');
+    L.push('  '+u.n+' ('+u.h+') — '+fl.join(' · ')+' — '+u.when);
+  });
+
+  /* доходы по источникам */
+  L.push('', 'ДОХОДЫ ПО ИСТОЧНИКАМ');
+  const by = {}; OKO_REVENUE.forEach(r=>{ by[r.src]=(by[r.src]||0)+r.sum; });
+  const total = Math.round(okoRevenueTotal());
+  Object.keys(by).sort((a,b)=>by[b]-by[a]).forEach(s=>{
+    L.push('  '+s+': '+fmtMoney(Math.round(by[s]))+' ('+(total?Math.round(by[s]/total*100):0)+'%)');
+  });
+  const sumFrom = from=>Math.round(OKO_REVENUE.filter(r=>r.at>=from).reduce((x,r)=>x+r.sum,0));
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  L.push('Итого: '+fmtMoney(total)+' · сегодня '+fmtMoney(sumFrom(dayStart))
+    +' · 7д '+fmtMoney(sumFrom(Date.now()-7*864e5))+' · 30д '+fmtMoney(sumFrom(Date.now()-30*864e5)));
+
+  /* рекламные кампании */
+  L.push('', 'РЕКЛАМНЫЕ КАМПАНИИ');
+  if(typeof ADS !== 'undefined' && ADS.camps && ADS.camps.length){
+    ADS.camps.forEach(c=>{
+      const st = (typeof ADS_STATUS !== 'undefined' && ADS_STATUS[c.status]) ? ADS_STATUS[c.status].l : c.status;
+      L.push('  '+c.name+' — '+st+' · бюджет '+fmtMoney(c.budget)+' · откручено '+fmtMoney(Math.round(c.spent))
+        +' · '+(c.imps||0).toLocaleString('ru')+' показов · '+(c.clicks||0).toLocaleString('ru')+' кликов');
+    });
+  } else L.push('  нет данных');
+
+  /* сделки биржи */
+  L.push('', 'СДЕЛКИ БИРЖИ (эскроу)');
+  if(typeof MP !== 'undefined' && MP.deals && MP.deals.length){
+    const stL = {work:'в работе', wait:'на подтверждении', done:'завершена'};
+    MP.deals.forEach(d=> L.push('  '+d.t+' — '+d.n+' · '+fmtMoney(d.sum)+' · '+(stL[d.st]||d.st)));
+  } else L.push('  нет данных');
+
+  L.push('', '==============================================', 'OKO · штаб владельца · отчёт сформирован автоматически');
+
+  const fname = 'oko-report-'+now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate())+'.txt';
+  const url = URL.createObjectURL(new Blob(['﻿'+L.join('\n')], {type:'text/plain;charset=utf-8'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('Отчёт выгружен: '+fname);
+}
+
+/* ==================== 2b. ПОЛЬЗОВАТЕЛИ: бан / галочка / написать ==================== */
+const _prevAdmUsersHq = admUsers; /* базовый рендер заменён расширенным (chain сохранён) */
+admUsers = function(){
+  return `<div class="adm-sec-h">Последние пользователи (${ADMIN.users.length})</div>` + ADMIN.users.map((u,i)=>{
+    const a = HQ_ACT.users[u.n] || {};
+    return `
+    <div class="adm-row hq-usr ${a.ban?'ban':''}">
+      <div class="hq-usr-top">
+        <span class="adm-ava">${esc(u.n[0])}</span>
+        <span class="adm-main"><b>${esc(u.n)}${typeof vBadge==='function' ? vBadge(u.n) : ''}</b><small>${esc(u.h)} · ${esc(u.when)}</small></span>
+        ${a.ban ? '<span class="adm-tag no">БАН</span>' : ''}
+        <span class="adm-tag ${u.paid?'paid':'free'}">${esc(u.tier)}</span>
+      </div>
+      <div class="hq-usr-acts">
+        <button class="adm-btn ${a.ban?'':'dng'}" onclick="hqUserBan(${i})">${a.ban?'Разбанить':'Забанить'}</button>
+        <button class="adm-btn" onclick="hqUserVerify(${i})">${(typeof VERIFIED!=='undefined' && VERIFIED.has(u.n)) ? 'Снять галочку' : 'Выдать галочку'}</button>
+        <button class="adm-btn pri" onclick="hqUserMsg(${i})">Написать</button>
+      </div>
+    </div>`;
+  }).join('') +
+  `<div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+};
+function hqUserBan(i){
+  const u = ADMIN.users[i]; if(!u) return;
+  const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
+  a.ban = a.ban ? 0 : 1;
+  hqActSave(); renderAdmin();
+  toast(a.ban ? 'Пользователь '+u.n+' забанен' : u.n+' разбанен — доступ восстановлен');
+}
+function hqUserVerify(i){
+  const u = ADMIN.users[i]; if(!u || typeof VERIFIED === 'undefined') return;
+  const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
+  if(VERIFIED.has(u.n)){ VERIFIED.delete(u.n); a.ver = 0; toast('Галочка снята: '+u.n); }
+  else { VERIFIED.add(u.n); a.ver = 1; toast('Галочка выдана: '+u.n); }
+  hqActSave(); renderAdmin();
+}
+function hqUserMsg(i){
+  const u = ADMIN.users[i]; if(!u) return;
+  let c = CHATS.find(x=>x.kind==='direct' && x.name===u.n);
+  if(!c){
+    c = {id:'hq-u'+i, ava:u.n[0], name:u.n, kind:'direct', nick:(u.h||'').replace('@',''), kindIcon:null,
+         preview:'Диалог начат из админки', time:hqHM(new Date()), unread:0, online:false,
+         msgs:[{kind:'sys', body:'Диалог с пользователем открыт владельцем из админки OKO'}]};
+    CHATS.unshift(c);
+  }
+  closeAdmin();
+  showTab('chats');
+  const s = document.getElementById('chatSearch');
+  renderChatList(s ? s.value : '');
+  openConv(c.id);
 }
 
 /* ---------- вкладка «Штаб HQ» ---------- */
@@ -228,6 +369,46 @@ let HQ_LOG = [];
     HQ_LOG.push({t: hqHM(new Date(t)), a: e.a, m: e.m});
   }
 })();
+/* ---------- онлайн-мониторинг: «сейчас в приложении» + спарклайн ---------- */
+let hqOnline = 0, hqOnlineHist = [];
+(function hqSeedOnline(){
+  let v = 380 + Math.floor(Math.random()*60);
+  for(let i=0;i<24;i++){
+    v = Math.max(300, Math.min(520, v + Math.floor(Math.random()*17) - 8));
+    hqOnlineHist.push(v);
+  }
+  hqOnline = hqOnlineHist[hqOnlineHist.length-1];
+})();
+function hqSparkSvg(){
+  const h = hqOnlineHist;
+  const min = Math.min.apply(null,h) - 6, max = Math.max.apply(null,h) + 6;
+  const pts = h.map((v,i)=>((i/(h.length-1))*100).toFixed(1)+','+(26-(v-min)/(max-min)*22).toFixed(1)).join(' ');
+  return `<svg class="hq-spark" viewBox="0 0 100 28" preserveAspectRatio="none">
+    <polygon points="0,28 ${pts} 100,28" fill="var(--lime-dim)"/>
+    <polyline points="${pts}" fill="none" stroke="var(--lime)" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+}
+function hqOnlineBlock(){
+  return `<div class="hq-online card">
+    <div class="hq-on-l">
+      <small><i class="hq-dot work"></i> Сейчас в приложении</small>
+      <b id="hqOnlineN">${hqOnline}</b>
+      <span class="hq-on-d" id="hqOnlineD">live · пик ${Math.max.apply(null,hqOnlineHist)}</span>
+    </div>
+    <div class="hq-on-r" id="hqSparkWrap">${hqSparkSvg()}</div>
+  </div>`;
+}
+function hqOnlineTick(){
+  const d = Math.floor(Math.random()*19) - 9;
+  hqOnline = Math.max(300, Math.min(520, hqOnline + d));
+  hqOnlineHist.push(hqOnline); if(hqOnlineHist.length > 24) hqOnlineHist.shift();
+  const nEl = document.getElementById('hqOnlineN'); if(nEl) nEl.textContent = hqOnline;
+  const dEl = document.getElementById('hqOnlineD');
+  if(dEl) dEl.innerHTML = (d>=0 ? '<i class="up">+'+d+'</i>' : '<i class="dn">−'+Math.abs(d)+'</i>')
+    + ' за тик · пик '+Math.max.apply(null,hqOnlineHist);
+  const sw = document.getElementById('hqSparkWrap'); if(sw) sw.innerHTML = hqSparkSvg();
+}
+
 function hqAgent(id){ return HQ_AGENTS.find(a=>a.id===id); }
 function hqLogLine(e, fresh){
   const ag = hqAgent(e.a) || {role:'OKO', c:'var(--accent)'};
@@ -255,6 +436,7 @@ function hqHqView(){
         <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('eye')} Открыть 3D-штаб</button>
       </div>
     </div>
+    ${hqOnlineBlock()}
     <div class="adm-sec-h">Отделы</div>
     <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
       <button class="hq-room" style="animation-delay:${i*0.04}s" onclick="toast('Отдел «${r.n}»: детальный дашборд — этап 2')">
@@ -305,6 +487,7 @@ function hqStopLog(){ if(hqTimer){ clearInterval(hqTimer); hqTimer = null; } }
 function hqTick(){
   const av = document.getElementById('adminView');
   if(!av || !av.classList.contains('open') || admTab !== 'hq'){ hqStopLog(); return; }
+  hqOnlineTick(); // онлайн-счётчик + спарклайн
   // новая строка лога
   const e = HQ_LOG_POOL[Math.floor(Math.random()*HQ_LOG_POOL.length)];
   const line = {t: hqHM(new Date()), a: e.a, m: e.m};
@@ -373,13 +556,44 @@ admModer = function(){
   return head + _prevAdmModerHq();
 };
 
-/* ==================== 6. ОБЗОР: KPI «Доход OKO» ==================== */
+/* ==================== 6. ОБЗОР: KPI «Доход OKO» + панель «Быстро» ==================== */
 const _prevAdmOverviewHq = admOverview;
 admOverview = function(){
   const html = _prevAdmOverviewHq();
   const kpi = `<div class="adm-kpi"><b style="font-size:24px;padding-top:4px;display:block">${fmtMoney(Math.round(okoRevenueTotal()))}</b><small>Доход OKO (комиссии) <i class="up" style="cursor:pointer" onclick="admGo('revenue')">→ Доходы</i></small></div>`;
-  return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi);
+  const quick = `
+    <div class="adm-sec-h">Быстро · действия владельца</div>
+    <div class="hq-quick">
+      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тестовые на кошелёк</small></button>
+      <button class="hq-qbtn" onclick="hqExportReport()"><span class="hq-qic">${I('file')}</span><b>Отчёт .txt</b><small>полная сводка</small></button>
+      <button class="hq-qbtn dng" onclick="hqResetDemo()"><span class="hq-qic">${I('trash')}</span><b>Сброс демо</b><small>очистить oko-данные</small></button>
+    </div>`;
+  return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi) + quick;
 };
+function hqQuickMoney(){
+  if(typeof walletAdd !== 'function'){ toast('Кошелёк недоступен'); return; }
+  walletAdd(10000, 'Тестовое начисление владельца');
+  toast('+10 000 ₽ зачислено на кошелёк (тест)');
+}
+function hqResetDemo(){
+  showPopup({
+    ico:'trash', title:'Сбросить демо-данные?',
+    body:'Будут очищены все локальные данные приложения (ключи oko-*): кошелёк, доходы, кампании, сделки, прогресс. Авторизация и статус владельца сохранятся. После сброса приложение перезагрузится.',
+    actions:[
+      {label:'Сбросить всё', onclick:hqDoResetDemo},
+      {label:'Отмена', ghost:true}
+    ]
+  });
+}
+function hqDoResetDemo(){
+  try{
+    Object.keys(localStorage).forEach(k=>{
+      if(k.indexOf('oko-')===0 && !/auth|owner/.test(k)) localStorage.removeItem(k);
+    });
+  }catch(e){}
+  toast('Демо-данные сброшены — перезагрузка…');
+  setTimeout(()=>location.reload(), 700);
+}
 
 /* ==================== 5. ПРОФИЛЬ: чип CEO + строка «Штаб OKO HQ» ==================== */
 function hqOpenHqTab(){

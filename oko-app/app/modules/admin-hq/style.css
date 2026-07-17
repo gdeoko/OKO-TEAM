@@ -32,6 +32,56 @@
 .hq-op-ic svg.i{width:17px;height:17px}
 .hq-op-sum{flex-shrink:0;font-weight:700;font-size:13px;color:var(--accent)}
 
+/* ---------- фильтр-чипы по источникам ---------- */
+.hq-chips{display:flex;gap:7px;overflow-x:auto;padding:8px 1px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hq-chips::-webkit-scrollbar{display:none}
+.hq-chip{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:7px 13px;font-size:11.5px;font-weight:600;color:var(--dim);transition:all .15s;white-space:nowrap}
+.hq-chip:hover{border-color:var(--accent);color:var(--text)}
+.hq-chip.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+:root[data-theme="light"] .hq-chip.on{box-shadow:0 2px 8px rgba(110,200,0,.3)}
+
+/* ---------- суммы за периоды ---------- */
+.hq-pers{padding:4px 14px;margin-bottom:4px}
+.hq-per{display:flex;align-items:baseline;gap:9px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13px}
+.hq-per:last-child{border-bottom:none}
+.hq-per span{font-weight:600}
+.hq-per small{color:var(--dim);font-size:11px;flex:1}
+.hq-per b{color:var(--accent);font-weight:700}
+.hq-src{cursor:pointer;transition:border-color .15s,transform .15s}
+.hq-src:active{transform:scale(.985)}
+.hq-src.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+
+/* ---------- пользователи: действия ---------- */
+.hq-usr{flex-direction:column;align-items:stretch;gap:9px}
+.hq-usr-top{display:flex;align-items:center;gap:11px;min-width:0}
+.hq-usr-acts{display:flex;gap:7px;flex-wrap:wrap}
+.hq-usr-acts .adm-btn{flex:1;min-width:96px;text-align:center;justify-content:center}
+.hq-usr.ban{border-color:rgba(255,95,95,.35)}
+.hq-usr.ban .adm-ava{filter:grayscale(1);opacity:.6}
+
+/* ---------- онлайн-мониторинг ---------- */
+.hq-online{display:flex;align-items:center;gap:14px;padding:13px 15px;margin-bottom:6px;background:radial-gradient(120% 170% at 0% 100%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-on-l{flex-shrink:0;min-width:0}
+.hq-on-l small{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.hq-on-l b{display:block;font-family:var(--font-display);font-size:34px;line-height:1;color:var(--accent);animation:fade .4s ease both}
+.hq-on-d{display:block;margin-top:3px;font-size:10.5px;color:var(--dim)}
+.hq-on-d i.up{font-style:normal;color:var(--accent);font-weight:700}
+.hq-on-d i.dn{font-style:normal;color:var(--danger);font-weight:700}
+.hq-on-r{flex:1;min-width:0}
+.hq-spark{display:block;width:100%;height:44px}
+
+/* ---------- панель «Быстро» ---------- */
+.hq-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.hq-qbtn{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 9px 11px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
+.hq-qbtn:hover{border-color:var(--accent)}
+.hq-qbtn:active{transform:scale(.96)}
+.hq-qbtn b{font-size:12.5px}
+.hq-qbtn small{font-size:9.5px;color:var(--dim);line-height:1.3}
+.hq-qic{width:34px;height:34px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.hq-qic svg.i{width:17px;height:17px}
+.hq-qbtn.dng .hq-qic{background:rgba(255,95,95,.12);color:var(--danger)}
+.hq-qbtn.dng:hover{border-color:var(--danger)}
+
 /* ---------- вкладка «Штаб HQ» ---------- */
 .hq-head{display:flex;align-items:center;gap:13px;margin-bottom:6px;position:relative;overflow:hidden;background:radial-gradient(120% 170% at 100% 0%,var(--lime-dim),transparent 55%),var(--surface)}
 .hq-head-eye{width:52px;height:52px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;color:var(--accent)}

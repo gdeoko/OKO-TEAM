@@ -1,0 +1,75 @@
+/* ===== SETTINGS-PLUS (st2-): полноэкранный раздел «Настройки» ===== */
+
+/* вьюха: справа-налево, как psView/editProfile; z 66 — попапы (70) поверх */
+#st2View{position:fixed;inset:0;z-index:66;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#st2View.open{transform:none}
+@media(prefers-reduced-motion:reduce){#st2View{transition:none}}
+#st2View .sv-body{max-width:640px;width:100%;margin:0 auto}
+
+/* секции-карточки со стаггер-появлением */
+.st2-sec{margin-bottom:22px;animation:st2In .45s ease both}
+.st2-sec:nth-child(2){animation-delay:.05s}
+.st2-sec:nth-child(3){animation-delay:.1s}
+.st2-sec:nth-child(4){animation-delay:.15s}
+.st2-sec:nth-child(5){animation-delay:.2s}
+.st2-sec:nth-child(6){animation-delay:.25s}
+@keyframes st2In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.st2-sec{animation:none}}
+.st2-h{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:16px;letter-spacing:.09em;color:var(--dim);margin:0 2px 8px;text-transform:uppercase}
+.st2-h svg.i{width:15px;height:15px;color:var(--accent)}
+.st2-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:2px 14px;transition:border-color .25s}
+.st2-card .prow:last-child{border-bottom:none}
+
+/* значение справа в строке (почта, размер кэша…) */
+.st2-card .prow .st2-val{margin-left:auto;color:var(--dim);font-size:12.5px;font-weight:600;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .2s}
+.st2-card .prow .st2-val~.chev,.st2-card .prow .st2-val~.switch{margin-left:8px}
+.st2-clearing .st2-val{color:var(--accent);font-variant-numeric:tabular-nums}
+.st2-chip{font-size:9px;padding:3px 8px;margin-left:8px;flex-shrink:0}
+
+/* сегмент-переключатель «кто может писать» */
+.st2-seg{display:flex;gap:4px;background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:4px;margin-left:auto;flex-shrink:0}
+.st2-seg button{padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;color:var(--dim);transition:all .2s;white-space:nowrap}
+.st2-seg button.on{background:var(--lime);color:#000;box-shadow:var(--glow)}
+:root[data-theme="light"] .st2-seg button.on{box-shadow:none}
+
+/* сессии */
+.st2-ses{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--border);transition:opacity .28s,transform .28s}
+.st2-ses:last-of-type{border-bottom:none}
+.st2-ses.st2-out{opacity:0;transform:translateX(46px)}
+.st2-ses-ico{width:38px;height:38px;border-radius:12px;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.st2-ses-ico svg.i{width:19px;height:19px;color:var(--accent)}
+.st2-ses-b{flex:1;min-width:0}
+.st2-ses-b b{display:flex;align-items:center;font-size:13.5px;gap:2px}
+.st2-ses-b small{display:block;color:var(--dim);font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st2-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime);display:inline-block;margin-right:6px;animation:st2Pulse 2s infinite;flex-shrink:0}
+@keyframes st2Pulse{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.st2-dot{animation:none}}
+.st2-kill{color:var(--danger);font-size:11px;font-weight:700;padding:7px 11px;border:1px solid rgba(255,80,80,.4);border-radius:99px;transition:all .2s;flex-shrink:0}
+.st2-kill:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.st2-kill:active{transform:scale(.94)}
+.st2-killall{display:block;width:100%;text-align:center;color:var(--danger);font-size:12px;font-weight:700;padding:12px 4px;border-top:1px solid var(--border);transition:opacity .2s}
+.st2-killall:hover{opacity:.75}
+.st2-empty{text-align:center;color:var(--dim);font-size:12px;padding:16px 4px}
+
+/* опасная зона */
+.st2-danger{border-color:rgba(255,80,80,.45);padding:16px 14px;background:var(--surface)}
+@supports (background:color-mix(in srgb,red 5%,transparent)){
+  .st2-danger{background:color-mix(in srgb,var(--danger) 5%,var(--surface))}
+}
+.st2-danger h4{font-size:14px;font-weight:800;color:var(--danger);display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.st2-danger h4 svg.i{width:16px;height:16px}
+.st2-danger p{font-size:12px;line-height:1.55;color:var(--dim)}
+.st2-del{width:100%;margin-top:13px;background:none;border:1px solid var(--danger);color:var(--danger);border-radius:var(--r-md);padding:12px;font-weight:800;font-size:13.5px;transition:all .2s}
+.st2-del:hover{background:var(--danger);color:#fff;box-shadow:0 6px 24px rgba(255,60,60,.3)}
+.st2-del:active{transform:scale(.98)}
+#okoPopup .btn.st2-btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+
+/* инпут внутри попапа (ник / почта / подтверждение удаления) */
+.st2-pin{margin:2px 0}
+.st2-pin input{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-size:15px;color:var(--text);font-family:inherit;text-align:center}
+.st2-pin input:focus{border-color:var(--lime);outline:none}
+.st2-perr{color:var(--danger);font-size:12px;font-weight:700;margin-top:9px;animation:st2Shake .35s}
+@keyframes st2Shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* подпись внизу вьюхи */
+.st2-foot{text-align:center;color:var(--dim);font-size:10.5px;letter-spacing:.04em;padding:2px 0 8px;opacity:.75}

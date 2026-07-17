@@ -3,9 +3,14 @@
    эскроу-сделки, вывод на кошелёк, рейтинг и отзывы.
    Часть 2 — флагманские пакеты «OKO Production — под ключ»: оплата с кошелька,
    рабочий чат клиента с ветками работ, уведомление.
+   Часть 3 — шлифовка: отзывы после сделки (звёзды 1-5 + текст -> l.reviews + пересчёт l.r),
+   чат с продавцом с автоприветствием, жалоба на объявление (chip-причины -> ADMIN.moder),
+   фильтр «Только проверенные» (verified или рейтинг 4.8+).
    Патчи (chain): renderMarket (кнопка кабинета + премиум-баннер), orderListing
    (регистрация сделки в кабинете, саму покупку НЕ трогаем — она уже патчена wallet),
-   openConv (закреплённые ветки работ). Персист: localStorage oko-market-pro. */
+   openConv (закреплённые ветки работ), openListing (бейдж/жалоба/кнопка), contactSeller
+   (автоприветствие), mkApplyFilters/renderFilters/activeFilterCount/resetFilters
+   (фильтр проверенных), admModer (счётчик жалоб). Персист: localStorage oko-market-pro. */
 
 /* ---------- константы ---------- */
 const MP_USD = 90;             // курс прототипа, ₽ за $
@@ -54,12 +59,14 @@ if(!MP || !MP.v){
   MP = { v:1, seq:0, gross:58000, customChatId:null, orders:[],
     stats:{901:{orders:9, rev:405000}, 902:{orders:6, rev:114000}, 903:{orders:8, rev:64000}},
     deals:[
-      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H},
-      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H},
-      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H},
+      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
+      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
+      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903},
     ]};
   mpSave();
 }
+MP.myRevs  = MP.myRevs  || [];  // отзывы, добавленные после сделок (реплей после перезагрузки)
+MP.reports = MP.reports || [];  // локальный лог жалоб на объявления
 const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
 
 /* ---------- демо: мои объявления продавца (LISTINGS не персистится — сеем каждый запуск) ---------- */
@@ -85,7 +92,29 @@ const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
   );
 })();
 
+/* ---------- реплей сохранённых отзывов (LISTINGS пересоздаются каждый запуск) ---------- */
+(function mpReplayReviews(){
+  const touched = new Set();
+  (MP.myRevs||[]).forEach(rv0=>{
+    const l = LISTINGS.find(x=>x.id===rv0.lid);
+    if(!l) return;
+    (l.reviews = l.reviews||[]).unshift({n:rv0.n, r:rv0.r, t:rv0.t});
+    touched.add(l);
+  });
+  touched.forEach(l=>mpRecalcRating(l));
+})();
+
 /* ---------- хелперы ---------- */
+function mpRecalcRating(l){
+  const rv = l.reviews||[];
+  if(rv.length) l.r = Math.round(rv.reduce((s,x)=>s+x.r,0)/rv.length*10)/10;
+}
+function mpDealListing(d){
+  return (d.lid && LISTINGS.find(x=>x.id===d.lid)) || LISTINGS.find(x=>x.t===d.t) || null;
+}
+function mpIsVerified(l){
+  return (typeof VERIFIED!=='undefined' && VERIFIED.has(l.n)) || l.r>=4.8;
+}
 function mpWhen(at){
   const d = new Date(at), n = new Date();
   const hm = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
@@ -170,8 +199,11 @@ function mpRenderCab(){
       const st = MP_ST[d.st];
       const act = d.dir==='in'
         ? (d.st==='work' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>` : '')
-        : (d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>` : '');
+         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>`
+         : mpRevBtn(d))
+        : (d.st==='work' ? `<div class="mp-deal-act"><button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button></div>`
+         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>`
+         : mpRevBtn(d));
       return `<div class="mp-deal">
         <div class="mp-deal-top"><b>${esc(d.t)}</b><span class="mp-deal-sum">${fmtMoney(d.sum)}</span></div>
         <div class="mp-deal-meta">
@@ -203,9 +235,77 @@ function mpDealNext(id){
     } else {
       WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
       toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
+      setTimeout(()=>mpOpenReview(d.id), 500); // сразу предложим оценить исполнителя
     }
   }
   mpSave(); mpRenderCab();
+}
+function mpDealPoke(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.dir!=='out' || d.st!=='work') return;
+  d.st = 'wait'; mpSave();
+  toast('Исполнитель сдал работу — проверь и подтверди получение');
+  mpRenderCab();
+}
+
+/* ================= ОТЗЫВЫ ПОСЛЕ СДЕЛКИ ================= */
+let mpRevDealId = null, mpRevStars = 5;
+const MP_STAR_LAB = {1:'Ужасно', 2:'Плохо', 3:'Нормально', 4:'Хорошо', 5:'Отлично'};
+function mpRevBtn(d){
+  if(d.rev) return `<div class="mp-deal-act"><span class="mp-revok">${I('check')} Отзыв оставлен · ${d.rev}/5</span></div>`;
+  if(!mpDealListing(d)) return '';
+  return `<div class="mp-deal-act"><button onclick="mpOpenReview('${d.id}')">${I('star')} Оставить отзыв</button></div>`;
+}
+function mpOpenReview(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='done' || d.rev) return;
+  mpRevDealId = id; mpRevStars = 5;
+  mpRenderReview();
+  openSheet('mpReview');
+}
+function mpRenderReview(){
+  const d = MP.deals.find(x=>x.id===mpRevDealId);
+  const box = document.getElementById('mpReviewView');
+  if(!d || !box) return;
+  const who = d.dir==='out'
+    ? 'Оцени исполнителя — отзыв появится в его объявлении и пересчитает рейтинг'
+    : 'Покупатель '+esc(d.n)+' оценивает сделку — отзыв появится в твоём объявлении';
+  box.innerHTML = `
+    <h3 class="mp-rv-title">Оставить отзыв</h3>
+    <p class="mp-rv-sub">${esc(d.t)} · ${fmtMoney(d.sum)}</p>
+    <p class="mp-rv-who">${I('star')} ${who}</p>
+    <div class="mp-rstars" id="mpRstars">${mpStarsBig()}</div>
+    <div class="mp-rlab" id="mpRlab">${MP_STAR_LAB[mpRevStars]}</div>
+    <textarea id="mpRevText" class="mp-ta" rows="4" maxlength="280" placeholder="Что понравилось, что можно улучшить…"></textarea>
+    <button class="btn" onclick="mpSubmitReview()">${I('star')} Опубликовать отзыв</button>`;
+}
+function mpStarsBig(){
+  let s = '';
+  for(let i=1;i<=5;i++) s += `<button class="mp-rstar ${i<=mpRevStars?'on':''}" onclick="mpSetStars(${i})">${I('star')}</button>`;
+  return s;
+}
+function mpSetStars(n){
+  mpRevStars = n;
+  const el = document.getElementById('mpRstars'); if(el) el.innerHTML = mpStarsBig();
+  const lb = document.getElementById('mpRlab');   if(lb) lb.textContent = MP_STAR_LAB[n];
+}
+function mpSubmitReview(){
+  const d = MP.deals.find(x=>x.id===mpRevDealId);
+  if(!d) return;
+  const txt = ((document.getElementById('mpRevText')||{}).value||'').trim();
+  if(txt.length<3){ toast('Пара слов о сделке — и отзыв готов'); return; }
+  const l = mpDealListing(d);
+  const author = d.dir==='out' ? PROFILE.name : d.n;
+  if(l){
+    (l.reviews = l.reviews||[]).unshift({n:author, r:mpRevStars, t:txt});
+    mpRecalcRating(l);
+    MP.myRevs.push({lid:l.id, n:author, r:mpRevStars, t:txt, at:Date.now()});
+  }
+  d.rev = mpRevStars;
+  mpSave();
+  closeSheet();
+  toast(l ? 'Отзыв опубликован — рейтинг объявления теперь '+l.r.toFixed(1) : 'Отзыв сохранён');
+  mpOpenCabinet(); // вернуться в кабинет с обновлённым состоянием
 }
 function mpWithdraw(){
   const bal = mpBal();
@@ -414,7 +514,7 @@ orderListing = function(id){
   if(WALLET.hold <= holdBefore) return; // оплата не прошла — сделку не регистрируем
   const l = LISTINGS.find(x=>x.id===id);
   if(!l) return;
-  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now()});
+  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id});
   mpSave();
   const sheet = document.getElementById('sheet-mpCab');
   if(sheet && sheet.classList.contains('open')) mpRenderCab();
@@ -447,6 +547,161 @@ function mpGoBranch(name){
   node.classList.remove('mp-branch-flash');
   void node.offsetWidth;
   node.classList.add('mp-branch-flash');
+}
+
+/* карточка объявления: значок проверенного, «Написать продавцу», меню «Пожаловаться» */
+const _prevOpenListingMp = openListing;
+openListing = function(id){
+  _prevOpenListingMp(id);
+  mpDecorateListing(id);
+};
+function mpDecorateListing(id){
+  const l = LISTINGS.find(x=>x.id===id);
+  const v = document.getElementById('lstView');
+  if(!l || !v) return;
+  const seller = v.querySelector('.seller-card');
+  if(seller){
+    const nameEl = seller.querySelector('b');
+    if(nameEl && typeof vBadge==='function' && !nameEl.querySelector('svg')) nameEl.insertAdjacentHTML('beforeend', vBadge(l.n));
+    if(mpIsVerified(l) && !seller.querySelector('.mp-ver-chip'))
+      seller.insertAdjacentHTML('beforeend', `<span class="mp-ver-chip">${I('verified')} Проверенный</span>`);
+  }
+  if(l.my) return; // на своём объявлении ни чата, ни жалобы
+  const write = v.querySelector('.lst-cta .btn:not(.ghost)');
+  if(write) write.innerHTML = I('chat')+' Написать продавцу';
+  if(!document.getElementById('mpReportBtn')){
+    const sent = (MP.reports||[]).some(r=>r.lid===l.id);
+    const b = document.createElement('button');
+    b.id = 'mpReportBtn';
+    b.className = 'mp-report-btn'+(sent?' sent':'');
+    b.innerHTML = sent ? I('check')+' Жалоба на рассмотрении модерации'
+                       : I('flag')+' Пожаловаться на объявление';
+    b.onclick = ()=>mpOpenReport(l.id);
+    v.appendChild(b);
+  }
+}
+
+/* чат с продавцом: автоприветствие при создании/открытии диалога из карточки */
+const _prevContactSellerMp = contactSeller;
+contactSeller = function(id){
+  _prevContactSellerMp(id);
+  const l = LISTINGS.find(x=>x.id===id);
+  if(!l) return;
+  const chat = CHATS.find(c=>c.name===l.n);
+  if(!chat) return;
+  const greet = 'Здравствуйте! Интересует «'+l.t+'»';
+  if(chat.msgs.some(m=>m.kind==='text' && m.body===greet)) return; // уже здоровались по этому объявлению
+  if(typeof currentChat!=='undefined' && currentChat===chat && typeof pushMsg==='function'){
+    pushMsg({in:0, t:nowT(), kind:'text', body:greet});
+  } else {
+    chat.msgs.push({in:0, t:nowT(), kind:'text', body:greet});
+    chat.preview = 'Ты: '+greet; chat.time = nowT();
+  }
+};
+
+/* ================= ЖАЛОБА НА ОБЪЯВЛЕНИЕ ================= */
+let mpRepLid = null, mpRepReason = null;
+const MP_REP_REASONS = ['Мошенничество','Спам и реклама','Запрещённый товар','Цена не соответствует','Оскорбления','Другое'];
+function mpOpenReport(id){
+  mpRepLid = id; mpRepReason = null;
+  mpRenderReport();
+  openSheet('mpReport');
+}
+function mpRenderReport(){
+  const l = LISTINGS.find(x=>x.id===mpRepLid);
+  const box = document.getElementById('mpReportView');
+  if(!l || !box) return;
+  const sent = (MP.reports||[]).some(r=>r.lid===l.id);
+  box.innerHTML = sent ? `
+    <div class="mp-rep-done">${I('flag')}</div>
+    <h3 class="mp-rv-title" style="text-align:center">Жалоба на рассмотрении</h3>
+    <p class="mp-rv-sub" style="text-align:center">Модерация уже проверяет «${esc(l.t)}». Обычно это занимает до 24 часов.</p>
+    <div style="height:14px"></div>
+    <button class="btn ghost" onclick="closeSheet()">Понятно</button>`
+  : `
+    <h3 class="mp-rv-title">Пожаловаться</h3>
+    <p class="mp-rv-sub">${esc(l.t)} · ${esc(l.n)}</p>
+    <p class="f-lab">Причина жалобы</p>
+    <div class="mp-rep-chips" id="mpRepChips">${mpRepChips()}</div>
+    <textarea id="mpRepText" class="mp-ta" rows="3" maxlength="240" placeholder="Комментарий для модерации (необязательно)"></textarea>
+    <button class="btn" onclick="mpSubmitReport()">${I('flag')} Отправить жалобу</button>
+    <p class="mp-rep-note">Жалоба анонимна для продавца и уходит модерации OKO</p>`;
+}
+function mpRepChips(){
+  return MP_REP_REASONS.map((r,i)=>
+    `<button class="f-chip ${mpRepReason===r?'on':''}" onclick="mpRepPick(${i})">${r}</button>`).join('');
+}
+function mpRepPick(i){
+  mpRepReason = MP_REP_REASONS[i];
+  const el = document.getElementById('mpRepChips');
+  if(el) el.innerHTML = mpRepChips(); // перерисовываем только чипы — текст комментария не теряется
+}
+function mpSubmitReport(){
+  const l = LISTINGS.find(x=>x.id===mpRepLid);
+  if(!l) return;
+  if(!mpRepReason){ toast('Выбери причину жалобы'); return; }
+  const txt = ((document.getElementById('mpRepText')||{}).value||'').trim();
+  MP.reports.push({lid:l.id, t:l.t, reason:mpRepReason, txt, at:Date.now()});
+  mpSave();
+  if(typeof ADMIN!=='undefined' && ADMIN.moder){ // chain-доступ к очереди модерации админки
+    ADMIN.moder.unshift({t:'Жалоба: «'+l.t+'» — '+mpRepReason, by:'@'+(PROFILE.nick||'user'), kind:'Биржа'});
+    if(ADMIN.kpi) ADMIN.kpi.moder = ADMIN.moder.length;
+  }
+  closeSheet();
+  toast('Передано модерации — спасибо, что бережёшь Биржу');
+  openListing(mpRepLid); // вернуться в карточку: кнопка уже в статусе «на рассмотрении»
+}
+
+/* админка: счётчик и лог жалоб с Биржи во вкладке «Модерация» */
+if(typeof admModer==='function'){
+  const _prevAdmModerMp = admModer;
+  admModer = function(){
+    const rep = MP.reports||[];
+    const inQ = (typeof ADMIN!=='undefined' && ADMIN.moder) ? ADMIN.moder.filter(m=>(m.t||'').indexOf('Жалоба:')===0).length : 0;
+    const rows = rep.slice(-4).reverse().map(r=>`
+      <div class="adm-row">
+        <span class="adm-tag no">${esc(r.reason)}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(r.t)}</b><small>${esc(r.txt||'без комментария')} · ${mpWhen(r.at)}</small></span>
+      </div>`).join('');
+    const block = `
+      <div class="adm-sec-h">Жалобы с Биржи · всего ${rep.length}${inQ?` · в очереди ${inQ}`:''}</div>
+      ${rep.length ? rows : '<p class="dim" style="font-size:13px">Жалоб нет — Биржа чистая.</p>'}`;
+    return _prevAdmModerMp() + block;
+  };
+}
+
+/* ================= ФИЛЬТР «ТОЛЬКО ПРОВЕРЕННЫЕ» ================= */
+if(typeof mkFilters.mpVerif==='undefined') mkFilters.mpVerif = false;
+const _prevMkApplyFiltersMp = mkApplyFilters;
+mkApplyFilters = function(arr){
+  arr = _prevMkApplyFiltersMp(arr);
+  if(mkFilters.mpVerif) arr = arr.filter(mpIsVerified);
+  return arr;
+};
+const _prevActiveFilterCountMp = activeFilterCount;
+activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0); };
+const _prevResetFiltersMp = resetFilters;
+resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; };
+const _prevRenderFiltersMp = renderFilters;
+renderFilters = function(){
+  _prevRenderFiltersMp();
+  const v = document.getElementById('filtersView');
+  if(!v || v.querySelector('.mp-fver-wrap')) return;
+  const btnRow = v.lastElementChild; // строка «Сбросить / Показать»
+  const w = document.createElement('div');
+  w.className = 'mp-fver-wrap';
+  w.innerHTML = `<p class="f-lab">Продавец</p>
+    <button class="f-chip mp-fver ${mkFilters.mpVerif?'on':''}" onclick="mpToggleVerif()">${I('verified')} Только проверенные</button>
+    <small>значок OKO или рейтинг продавца 4.8+</small>`;
+  v.insertBefore(w, btnRow);
+};
+function mpToggleVerif(){
+  // сохраняем введённую цену — перерисовка фильтров её не съест
+  const mn = document.getElementById('fMin'), mx = document.getElementById('fMax');
+  if(mn) mkFilters.min = (mn.value||'').replace(/\D/g,'');
+  if(mx) mkFilters.max = (mx.value||'').replace(/\D/g,'');
+  mkFilters.mpVerif = !mkFilters.mpVerif;
+  renderFilters();
 }
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */

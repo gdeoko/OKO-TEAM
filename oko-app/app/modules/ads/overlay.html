@@ -7,6 +7,11 @@
   <div class="ads-step" id="adsStep1">
     <label class="ads-lbl">Заголовок</label>
     <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
+    <div class="ads-ab-opt">
+      <button class="ads-chip" id="adsAbChip" onclick="adsToggleAb()"><svg class="i"><use href="#i-poll"/></svg>A/B тест</button>
+      <small>второй вариант заголовка — OKO покажет оба и найдёт лучший по CTR</small>
+    </div>
+    <input id="adsInpTitleB" maxlength="60" placeholder="Заголовок — вариант B" style="display:none">
     <label class="ads-lbl">Текст объявления</label>
     <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку"></textarea>
     <label class="ads-lbl">Кнопка (CTA)</label>
@@ -66,8 +71,10 @@
       <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
     </div>
     <div class="card ads-forecast">
+      <div class="ads-f-head"><svg class="i"><use href="#i-poll"/></svg>Прогноз на 7 дней</div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
+      <div class="ads-f-row"><span><svg class="i"><use href="#i-money"/></svg>Цена клика (CPC)</span><b id="adsFCpc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
     </div>
     <div class="ads-balance" id="adsBalanceNote"></div>
