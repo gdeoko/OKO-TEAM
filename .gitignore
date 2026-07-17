@@ -15,3 +15,6 @@ vtouch.cjs
 _vb_*.png
 _v_*.png
 PROJECT_CONTEXT.txt
+
+# плейнтекст ключей — в git только secrets.env.b64
+secrets.env
