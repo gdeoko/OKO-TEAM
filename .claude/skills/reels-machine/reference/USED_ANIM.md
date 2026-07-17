@@ -58,3 +58,5 @@
 - 3d: droplet / оранж #EA5920 (давно не использовалась). grade: firelight (тёплый огонь печи — новый).
 - music: Freesound 728746 «Emotional Motivational Cinematic». SFX: sfx_bank (impact/pop/whoosh/riser/ding).
 - Голос Silero v4_ru eugene (авто-ударения). Обложка: Nano Banana Pro (печь+камера+пицца) + реальный лого.
+
+## Автопилот 2026-07-17 · barbershop_week (viral) — голос Silero eugene, обложка cover_flux, fx/gl/3d/grade авто-ротацией по индексу; тема «Барбершоп в вашем городе стоял пустым по будням.».

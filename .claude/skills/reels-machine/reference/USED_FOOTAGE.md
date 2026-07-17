@@ -67,3 +67,21 @@
 | 2026-07-17 | n16 пиццерия | pex | 35145273 | оператор кинокамеры |
 | 2026-07-17 | n16 пиццерия | pex | 38410498 | листает рилсы в телефоне |
 | 2026-07-17 | n16 пиццерия | pex | 15689201 | набирает сообщение (CTA) |
+
+## Автопилот 2026-07-17 · barbershop_week — 14 уникальных Pexels
+| дата | ролик | ист | id |
+|------|-------|-----|----|
+| 2026-07-17 | auto·barbershop_week | pex | 7426663 |
+| 2026-07-17 | auto·barbershop_week | pex | 7697530 |
+| 2026-07-17 | auto·barbershop_week | pex | 37748407 |
+| 2026-07-17 | auto·barbershop_week | pex | 7426677 |
+| 2026-07-17 | auto·barbershop_week | pex | 38161399 |
+| 2026-07-17 | auto·barbershop_week | pex | 7226924 |
+| 2026-07-17 | auto·barbershop_week | pex | 7821861 |
+| 2026-07-17 | auto·barbershop_week | pex | 38410499 |
+| 2026-07-17 | auto·barbershop_week | pex | 8375447 |
+| 2026-07-17 | auto·barbershop_week | pex | 3998507 |
+| 2026-07-17 | auto·barbershop_week | pex | 35313942 |
+| 2026-07-17 | auto·barbershop_week | pex | 34536744 |
+| 2026-07-17 | auto·barbershop_week | pex | 7426710 |
+| 2026-07-17 | auto·barbershop_week | pex | 7362704 |
