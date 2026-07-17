@@ -2029,6 +2029,143 @@ main>.screen{position:relative;z-index:1}
 .fa-sentinel{height:2px}
 .fa-end{padding:18px;text-align:center;font-size:11.5px;color:var(--dim)}
 
+/* ===== module: chats-plus ===== */
+/* ===== CHATS-PLUS: статусы, поиск по сообщениям, закреп, скорость голосовых, свайп-ответ ===== */
+
+/* --- 1. Статусы сообщений (галочки у исходящих) --- */
+.msg .t.cp-t{opacity:1;color:rgba(0,0,0,.55)}
+.msg.sticker-msg .t.cp-t,.msg.has-vnote .t.cp-t{color:var(--dim)}
+.cp-st{display:inline-flex;align-items:center}
+.cp-st svg.i{width:13px;height:13px;stroke-width:9}
+.cp-st[data-st="read"]{color:#1c7a00}
+.msg.sticker-msg .cp-st[data-st="read"],.msg.has-vnote .cp-st[data-st="read"]{color:var(--accent)}
+:root[data-theme="light"] .cp-st[data-st="read"]{color:#2e6d00}
+.cp-st.cp-pop{animation:cpStPop .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes cpStPop{from{transform:scale(.35)}to{transform:none}}
+@media(prefers-reduced-motion:reduce){.cp-st.cp-pop{animation:none}}
+
+/* --- 2. Поиск по сообщениям --- */
+.cp-msearch{display:none;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.cp-msearch.on{display:flex;animation:cpBarIn .2s ease}
+.cp-ms-ic{width:16px;height:16px;color:var(--dim);flex-shrink:0}
+.cp-ms-ic svg.i{width:16px;height:16px}
+.cp-msearch input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:var(--font-body)}
+.cp-ms-count{font-size:11px;color:var(--dim);white-space:nowrap}
+.cp-ms-nav{width:28px;height:28px;border-radius:8px;color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cp-ms-nav:hover,.cp-ms-nav:active{background:var(--lime-dim)}
+.cp-ms-nav svg.i{width:16px;height:16px;transform:rotate(-90deg)}
+.cp-ms-nav.cp-ms-next svg.i{transform:rotate(90deg)}
+.cp-ms-x{width:28px;height:28px;flex-shrink:0;color:var(--dim);transform:rotate(45deg);display:flex;align-items:center;justify-content:center}
+.cp-ms-x:hover,.cp-ms-x:active{color:var(--accent)}
+.cp-ms-x svg.i{width:18px;height:18px}
+.cp-mk{background:var(--lime-dim);color:var(--accent);border-radius:3px;padding:0 1px}
+.msg.out .cp-mk{background:rgba(0,0,0,.78);color:var(--lime)}
+.cp-mk.cp-cur{background:var(--lime);color:#000;box-shadow:0 0 10px rgba(154,255,0,.55)}
+.msg.out .cp-mk.cp-cur{background:#000;color:var(--lime);box-shadow:0 0 10px rgba(0,0,0,.35)}
+
+/* --- 3. Пин-бар закреплённого сообщения --- */
+.cp-pinbar{display:none;align-items:center;gap:10px;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--surface);cursor:pointer;flex-shrink:0;user-select:none}
+.cp-pinbar.on{display:flex}
+.cp-pinbar:active{background:var(--raised)}
+.cp-pinbar.cp-pin-in{animation:cpBarIn .25s ease}
+@keyframes cpBarIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.cp-pin-ic{width:18px;height:18px;color:var(--accent);flex-shrink:0}
+.cp-pin-ic svg.i{width:18px;height:18px}
+.cp-pin-txt{flex:1;min-width:0;border-left:2px solid var(--lime);padding-left:9px}
+.cp-pin-txt b{display:block;font-size:11.5px;color:var(--accent)}
+.cp-pin-txt small{display:block;font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-pin-x{width:28px;height:28px;flex-shrink:0;color:var(--dim);transform:rotate(45deg);display:flex;align-items:center;justify-content:center}
+.cp-pin-x:hover,.cp-pin-x:active{color:var(--accent)}
+.cp-pin-x svg.i{width:18px;height:18px}
+.cp-flash{animation:cpFlash 1.1s ease}
+@keyframes cpFlash{0%,100%{box-shadow:none}25%{box-shadow:0 0 0 3px var(--lime),0 0 18px rgba(154,255,0,.5)}}
+
+/* --- 4. Скорость воспроизведения голосовых --- */
+.cp-speed{font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:99px;padding:3px 8px;background:rgba(0,0,0,.18);color:#000;flex-shrink:0;font-family:var(--font-body);transition:transform .12s}
+.msg.in .cp-speed{background:var(--lime-dim);color:var(--accent)}
+.cp-speed:active{transform:scale(.9)}
+
+/* --- 5. Свайп-ответ --- */
+.msgs{overflow-x:hidden;touch-action:pan-y} /* горизонтальный жест обрабатывает JS, скролл — браузер */
+.msg.cp-sw{position:relative;transition:none}
+.msg.cp-sw-back{position:relative;transition:transform .22s ease}
+.cp-sw-ic{position:absolute;left:-36px;top:50%;transform:translateY(-50%);width:27px;height:27px;border-radius:50%;background:var(--raised);border:1px solid var(--border);color:var(--dim);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:background .15s,color .15s}
+.cp-sw-ic svg.i{width:14px;height:14px}
+.msg.cp-sw-hit .cp-sw-ic{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+
+/* ===== module: profile-social ===== */
+/* ===== PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ===== */
+
+/* fullscreen-вьюха профиля (по образцу searchView/legalView).
+   z-index 66: выше хрома приложения, НИЖЕ попапов/тоста (70) — мини-попап
+   подписки и уведомления ложатся поверх профиля */
+#psView{position:fixed;inset:0;z-index:66;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#psView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#psView{transition:none}}
+#psView .sv-body{max-width:640px;width:100%;margin:0 auto}
+
+/* шапка профиля */
+.ps-top{text-align:center;padding-top:6px}
+.ps-ava{width:86px;height:86px;border-radius:50%;background:var(--lime-dim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;color:var(--accent);margin:0 auto 12px;box-shadow:var(--glow);animation:psAvaIn .35s ease}
+:root[data-theme="light"] .ps-ava{box-shadow:none}
+.ps-ava svg.i{width:50%;height:50%}
+@keyframes psAvaIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ps-ava{animation:none}}
+.ps-name{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.ps-nick{font-size:12.5px;color:var(--dim);margin-top:3px}
+.ps-on{color:var(--accent)}
+.ps-bio{font-size:13px;line-height:1.55;color:var(--text);opacity:.9;max-width:420px;margin:10px auto 0}
+
+/* статистика: посты / подписчики / подписки */
+.ps-stats{display:flex;gap:10px;margin:16px 0 14px}
+.ps-stat{flex:1;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 6px;transition:border-color .2s}
+.ps-stat:hover{border-color:var(--accent)}
+.ps-stat b{display:block;font-family:var(--font-display);font-size:23px;line-height:1;color:var(--accent);letter-spacing:.02em;white-space:nowrap}
+.ps-stat small{display:block;font-size:10px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+.ps-bump{animation:psBump .45s ease}
+@keyframes psBump{0%{transform:scale(1)}35%{transform:scale(1.24)}100%{transform:scale(1)}}
+
+/* кнопки Подписаться / Написать */
+.ps-actions{display:flex;gap:10px}
+.ps-actions .btn{flex:1;padding:12px 8px;font-size:13.5px}
+.ps-actions .btn svg.i{width:16px;height:16px}
+#psFollowBtn:not(.ghost){box-shadow:var(--glow)}
+:root[data-theme="light"] #psFollowBtn:not(.ghost){box-shadow:none}
+
+/* лента постов автора */
+.ps-sec{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-size:17px;letter-spacing:.07em;margin:22px 0 10px}
+.ps-sec .ps-cnt{font-size:10.5px;font-family:var(--font-body);font-weight:700;background:var(--lime-dim);color:var(--accent);border-radius:99px;padding:3px 9px;letter-spacing:0}
+.ps-post{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;transition:border-color .2s,transform .15s}
+.ps-post:hover{border-color:var(--accent)}
+.ps-post-time{font-size:10px;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em}
+.ps-post-body{font-size:13.5px;line-height:1.55}
+.ps-post-media{display:inline-flex;align-items:center;gap:7px;margin-top:9px;background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:11.5px;color:var(--dim)}
+.ps-post-media svg.i{width:15px;height:15px;color:var(--accent)}
+.ps-post-meta{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:12px;color:var(--dim)}
+.ps-post-meta svg.i{width:15px;height:15px}
+.ps-post-meta>span{display:inline-flex;align-items:center;gap:5px}
+.ps-like{display:inline-flex;align-items:center;gap:5px;color:var(--dim);transition:color .15s,transform .12s}
+.ps-like:active{transform:scale(.9)}
+.ps-like.on{color:var(--accent)}
+.ps-like.on svg.i{fill:currentColor}
+.ps-views{margin-left:auto}
+.ps-empty{text-align:center;padding:28px 14px;color:var(--dim)}
+.ps-empty svg.i{width:34px;height:34px;opacity:.5;margin-bottom:8px}
+.ps-empty p{font-weight:700;color:var(--text);font-size:14px}
+.ps-empty span{font-size:12px}
+
+/* метки в общей ленте: чип «Подписка» у авторов, на которых подписан */
+.ps-fchip{font-size:9px;padding:3px 8px;margin-left:6px;vertical-align:1px;animation:psChipIn .3s ease}
+.ps-fchip svg.i{width:10px;height:10px;vertical-align:-1px;margin-right:3px}
+@keyframes psChipIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ps-fchip,.ps-bump{animation:none}}
+
+/* точки входа: имя/аватар автора кликабельны */
+#feedList .post .head .ava,#feedList .post .head .name,#feedList .post .head .sub{cursor:pointer}
+#feedList .post .head .ava{transition:transform .15s,box-shadow .2s}
+#feedList .post .head .ava:hover{transform:scale(1.06);box-shadow:var(--glow)}
+#convAva{cursor:pointer}
+
 
 </style>
 </head>
@@ -2858,6 +2995,17 @@ main>.screen{position:relative;z-index:1}
 <!-- MARKET-PRO: кабинет продавца и заказ пакета OKO Production -->
 <div class="sheet" id="sheet-mpCab"><div id="mpCabView"></div></div>
 <div class="sheet" id="sheet-mpOrder"><div id="mpOrderView"></div></div>
+
+<!-- ===== module: profile-social ===== -->
+<!-- ===== PROFILE-SOCIAL: fullscreen-вьюха чужого профиля (по образцу .sv-head) ===== -->
+<div id="psView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="psClose()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b id="psHeadName">Профиль</b>
+    <span style="width:24px"></span>
+  </div>
+  <div class="sv-body" id="psBody"></div>
+</div>
 
 
 <script>/* supabase-js v2 UMD, вшит для автономности */
@@ -10942,6 +11090,778 @@ function dcRenderAll(){
     dcPatchStory();
     if(dcSeed()) dcRenderAll();
   }catch(e){ console.warn('demo-content init:', e); }
+})();
+
+/* ===== module: chats-plus ===== */
+/* ===== CHATS-PLUS: доработки мессенджера ПОВЕРХ ядра (префикс cp-) =====
+   base.html не тронут — только chain-патчи функций ядра и DOM-проходы.
+   1) Статусы сообщений: галочки у исходящих (одна = отправлено, две = доставлено,
+      две зелёные = прочитано). Мок: «прочитано» через 2–5 с, если чат онлайн.
+   2) Поиск по сообщениям: лупа в шапке конва -> строка поиска, подсветка,
+      счётчик «N из M», стрелки раньше/позже.
+   3) Реальный закреп: пин-бар над лентой, тап скроллит к сообщению, крестик снимает.
+   4) Скорость голосовых x1/x1.5/x2 (chain togglePlay/playVnote), персист.
+   5) Свайп-ответ: горизонтальный свайп вправо >40px -> replyTo (без конфликта
+      со скроллом: жест берём только при |dx|>|dy|*2). */
+
+const CP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-chats-plus'))||{}; }catch(e){ return {}; } })();
+if(CP.speed!==1.5 && CP.speed!==2) CP.speed = 1;
+function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed})); }catch(e){} }
+const cpMsgsEl = () => document.getElementById('msgs');
+
+/* ================= 1. СТАТУСЫ СООБЩЕНИЙ ================= */
+const CP_ST_TITLE = {sent:'Отправлено', delivered:'Доставлено', read:'Прочитано'};
+
+function cpPaintStatuses(){
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const el = cpMsgsEl(); if(!el) return;
+  const kids = el.children, msgs = currentChat.msgs || [];
+  for(let i=0; i<msgs.length && i<kids.length; i++){
+    const m = msgs[i];
+    if(!m || m.in || m.kind==='sys') continue;
+    const t = kids[i].querySelector('.t');
+    if(!t) continue; /* vnote и пр. без строки времени */
+    t.classList.add('cp-t');
+    const st = m.cpSt || (currentChat.online ? 'read' : 'delivered');
+    let sp = t.querySelector('.cp-st');
+    if(!sp){
+      const old = t.querySelector('svg'); if(old) old.remove(); /* родная одиночная check2 */
+      sp = document.createElement('span'); sp.className = 'cp-st';
+      t.appendChild(sp);
+    }
+    if(sp.dataset.st !== st){
+      const had = !!sp.dataset.st;
+      sp.dataset.st = st;
+      sp.title = CP_ST_TITLE[st] || '';
+      sp.innerHTML = st==='sent' ? I('check') : I('check2');
+      if(had){ sp.classList.remove('cp-pop'); void sp.offsetWidth; sp.classList.add('cp-pop'); }
+    }
+  }
+}
+function cpPaintIf(chat){ if(typeof currentChat!=='undefined' && currentChat===chat) cpPaintStatuses(); }
+
+/* мок-жизнь статусов: sent -> delivered (~1 c) -> read (2–5 c, если чат онлайн) */
+if(typeof pushMsg === 'function'){
+  const _cpPrevPushMsg = pushMsg;
+  pushMsg = function(m){
+    _cpPrevPushMsg.apply(this, arguments);
+    if(!m || m.in || m.kind==='sys' || typeof currentChat==='undefined' || !currentChat) return;
+    const chat = currentChat;
+    m.cpSt = 'sent'; cpPaintIf(chat);
+    setTimeout(()=>{ if(m.cpSt==='sent'){ m.cpSt='delivered'; cpPaintIf(chat); } }, 600 + Math.random()*600);
+    if(chat.online)
+      setTimeout(()=>{ m.cpSt='read'; cpPaintIf(chat); }, 2000 + Math.random()*3000);
+  };
+}
+
+/* ================= 2. ПОИСК ПО СООБЩЕНИЯМ ================= */
+let cpMarks = [], cpCur = -1;
+
+function cpOpenSearch(){
+  const bar = document.getElementById('cpSearchBar');
+  if(!bar || typeof currentChat==='undefined' || !currentChat) return;
+  if(bar.classList.contains('on')){ cpCloseSearch(); return; }
+  bar.classList.add('on');
+  const inp = document.getElementById('cpSearchInput');
+  inp.value = ''; cpUpdateCount();
+  setTimeout(()=>inp.focus(), 60);
+  if(typeof nvPush==='function') nvPush('cp:msearch', ()=>cpCloseSearch(true));
+}
+function cpCloseSearch(fromNav){
+  const bar = document.getElementById('cpSearchBar');
+  if(!bar || !bar.classList.contains('on')) return;
+  bar.classList.remove('on');
+  const inp = document.getElementById('cpSearchInput');
+  if(inp) inp.value = '';
+  cpClearMarks(); cpUpdateCount();
+  if(!fromNav && typeof nvPop==='function') nvPop('cp:msearch');
+}
+function cpClearMarks(){
+  cpMarks.forEach(mk=>{
+    const p = mk.parentNode; if(!p) return; /* лента могла перерендериться */
+    p.replaceChild(document.createTextNode(mk.textContent), mk);
+    p.normalize();
+  });
+  cpMarks = []; cpCur = -1;
+}
+function cpSearchRun(){
+  cpClearMarks();
+  const inp = document.getElementById('cpSearchInput');
+  const q = (inp && inp.value || '').trim().toLowerCase();
+  const el = cpMsgsEl();
+  if(!q || !el){ cpUpdateCount(); return; }
+  el.querySelectorAll('.msg').forEach(msg=>{
+    if(msg.id==='typingMsg') return;
+    const tw = document.createTreeWalker(msg, NodeFilter.SHOW_TEXT, { acceptNode: n => {
+      if(!n.nodeValue || n.nodeValue.toLowerCase().indexOf(q) < 0) return NodeFilter.FILTER_REJECT;
+      const pe = n.parentElement;
+      if(pe && (pe.closest('.t') || pe.closest('.cp-st') || pe.closest('.cp-speed'))) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    const nodes = []; while(tw.nextNode()) nodes.push(tw.currentNode);
+    nodes.forEach(node=>{
+      const text = node.nodeValue, low = text.toLowerCase();
+      const frag = document.createDocumentFragment();
+      let from = 0, pos;
+      while((pos = low.indexOf(q, from)) >= 0){
+        frag.appendChild(document.createTextNode(text.slice(from, pos)));
+        const mk = document.createElement('mark');
+        mk.className = 'cp-mk'; mk.textContent = text.slice(pos, pos + q.length);
+        frag.appendChild(mk); cpMarks.push(mk);
+        from = pos + q.length;
+      }
+      frag.appendChild(document.createTextNode(text.slice(from)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+  cpCur = cpMarks.length - 1; /* стартуем с самого свежего совпадения */
+  cpFocusMark(true);
+}
+function cpFocusMark(instant){
+  cpMarks.forEach((m,i)=>m.classList.toggle('cp-cur', i===cpCur));
+  const mk = cpMarks[cpCur];
+  if(mk) mk.scrollIntoView({behavior: instant ? 'auto' : 'smooth', block:'center'});
+  cpUpdateCount();
+}
+function cpSearchStep(d){
+  if(!cpMarks.length) return;
+  cpCur = (cpCur + d + cpMarks.length) % cpMarks.length;
+  cpFocusMark(false);
+}
+function cpUpdateCount(){
+  const c = document.getElementById('cpSearchCount'); if(!c) return;
+  const inp = document.getElementById('cpSearchInput');
+  const q = (inp && inp.value || '').trim();
+  c.textContent = !q ? '' : (cpMarks.length ? (cpCur+1)+' из '+cpMarks.length : 'нет совпадений');
+}
+function cpReapplySearch(){
+  const bar = document.getElementById('cpSearchBar');
+  if(!bar || !bar.classList.contains('on')) return;
+  const inp = document.getElementById('cpSearchInput');
+  if(inp && inp.value.trim()){ cpMarks = []; cpCur = -1; cpSearchRun(); }
+}
+
+/* ================= 3. ЗАКРЕП СООБЩЕНИЯ (реальный пин-бар) ================= */
+const _cpPrevPinMsg = (typeof pinMsg === 'function') ? pinMsg : null;
+pinMsg = function(idx){
+  if(typeof closeMsgMenu==='function') closeMsgMenu();
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const m = currentChat.msgs[idx];
+  if(!m || m.kind==='sys') return;
+  if(currentChat.cpPin === m){ toast('Уже закреплено'); return; }
+  currentChat.cpPin = m; /* ссылка на объект — индексы могут съехать при удалении */
+  cpUpdatePinBar(true);
+  toast('Сообщение закреплено');
+};
+function cpUpdatePinBar(anim){
+  const bar = document.getElementById('cpPinBar'); if(!bar) return;
+  const chat = (typeof currentChat!=='undefined') ? currentChat : null;
+  const pin = chat && chat.cpPin;
+  const idx = pin ? chat.msgs.indexOf(pin) : -1;
+  if(idx < 0){
+    bar.classList.remove('on');
+    if(chat && pin) chat.cpPin = null; /* закреплённое удалили */
+    return;
+  }
+  const txt = document.getElementById('cpPinText');
+  if(txt) txt.textContent = ((typeof msgQuoteText==='function' ? msgQuoteText(pin) : pin.body) || 'Сообщение');
+  const was = bar.classList.contains('on');
+  bar.classList.add('on');
+  if(anim && !was){ bar.classList.remove('cp-pin-in'); void bar.offsetWidth; bar.classList.add('cp-pin-in'); }
+}
+function cpScrollToPinned(){
+  const chat = (typeof currentChat!=='undefined') ? currentChat : null;
+  if(!chat || !chat.cpPin) return;
+  const idx = chat.msgs.indexOf(chat.cpPin);
+  const el = cpMsgsEl();
+  const kid = el && el.children[idx];
+  if(!kid) return;
+  kid.scrollIntoView({behavior:'smooth', block:'center'});
+  kid.classList.remove('cp-flash'); void kid.offsetWidth; kid.classList.add('cp-flash');
+}
+function cpUnpin(ev){
+  if(ev) ev.stopPropagation();
+  if(typeof currentChat!=='undefined' && currentChat) currentChat.cpPin = null;
+  cpUpdatePinBar();
+  toast('Закреп снят');
+}
+
+/* ================= 4. СКОРОСТЬ ГОЛОСОВЫХ x1/x1.5/x2 ================= */
+function cpSpeedLabel(){ return 'x' + (CP.speed===1.5 ? '1.5' : CP.speed===2 ? '2' : '1'); }
+function cpDecorateVoices(){
+  const el = cpMsgsEl(); if(!el) return;
+  el.querySelectorAll('.voice').forEach(v=>{
+    if(v.querySelector('.cp-speed')) return;
+    const b = document.createElement('button');
+    b.className = 'cp-speed'; b.title = 'Скорость воспроизведения';
+    b.textContent = cpSpeedLabel();
+    b.onclick = cpCycleSpeed;
+    v.appendChild(b);
+  });
+}
+function cpCycleSpeed(ev){
+  if(ev) ev.stopPropagation();
+  CP.speed = CP.speed===1 ? 1.5 : CP.speed===1.5 ? 2 : 1;
+  cpSave();
+  document.querySelectorAll('.cp-speed').forEach(b=>b.textContent = cpSpeedLabel());
+  document.querySelectorAll('.voice .pp').forEach(pp=>{ if(pp._audio) try{ pp._audio.playbackRate = CP.speed; }catch(e){} });
+  document.querySelectorAll('.vnote video').forEach(v=>{ try{ v.playbackRate = CP.speed; }catch(e){} });
+}
+if(typeof togglePlay === 'function'){
+  const _cpPrevTogglePlay = togglePlay;
+  togglePlay = function(btn){
+    _cpPrevTogglePlay.apply(this, arguments);
+    if(btn && btn._audio) try{ btn._audio.playbackRate = CP.speed; }catch(e){}
+  };
+}
+if(typeof playVnote === 'function'){
+  const _cpPrevPlayVnote = playVnote;
+  playVnote = function(el){
+    _cpPrevPlayVnote.apply(this, arguments);
+    const v = el && el.querySelector && el.querySelector('video');
+    if(v) try{ v.playbackRate = CP.speed; }catch(e){}
+  };
+}
+
+/* ================= 5. СВАЙП-ОТВЕТ ================= */
+let cpSw = null;
+function cpSwipeInit(){
+  const el = cpMsgsEl(); if(!el || el._cpSwipe) return; el._cpSwipe = true;
+  el.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1){ cpSw = null; return; }
+    const msg = e.target.closest('.msg');
+    if(!msg || msg.classList.contains('sys') || msg.classList.contains('typing')){ cpSw = null; return; }
+    cpSw = {el:msg, x:e.touches[0].clientX, y:e.touches[0].clientY, dx:0, on:false};
+  }, {passive:true});
+  el.addEventListener('touchmove', e=>{
+    if(!cpSw) return;
+    const dx = e.touches[0].clientX - cpSw.x;
+    const dy = e.touches[0].clientY - cpSw.y;
+    if(!cpSw.on){
+      if(dx > 12 && Math.abs(dx) > Math.abs(dy)*2){ /* уверенно горизонтальный, вправо */
+        cpSw.on = true;
+        cpSw.el.classList.add('cp-sw');
+        if(!cpSw.el.querySelector('.cp-sw-ic')){
+          const ic = document.createElement('span');
+          ic.className = 'cp-sw-ic'; ic.innerHTML = I('reply');
+          cpSw.el.appendChild(ic);
+        }
+      } else if(Math.abs(dy) > 14 || dx < -14){ cpSw = null; return; } /* это скролл — отпускаем */
+    }
+    if(cpSw && cpSw.on){
+      e.preventDefault();
+      const d = Math.max(0, Math.min(dx, 76));
+      cpSw.dx = d;
+      cpSw.el.style.transform = 'translateX(' + d + 'px)';
+      const ic = cpSw.el.querySelector('.cp-sw-ic');
+      if(ic) ic.style.opacity = Math.min(1, d/40);
+      cpSw.el.classList.toggle('cp-sw-hit', d > 40);
+    }
+  }, {passive:false});
+  const end = ()=>{
+    if(!cpSw) return;
+    const s = cpSw; cpSw = null;
+    const hit = s.on && s.dx > 40;
+    const idx = Array.prototype.indexOf.call(el.children, s.el);
+    s.el.classList.remove('cp-sw');
+    s.el.classList.add('cp-sw-back');
+    s.el.style.transform = '';
+    s.el.classList.remove('cp-sw-hit');
+    setTimeout(()=>{
+      s.el.classList.remove('cp-sw-back');
+      const ic = s.el.querySelector('.cp-sw-ic'); if(ic) ic.remove();
+    }, 240);
+    if(hit && idx >= 0 && typeof currentChat!=='undefined' && currentChat
+       && currentChat.msgs[idx] && currentChat.msgs[idx].kind !== 'sys'
+       && typeof replyTo === 'function') replyTo(idx);
+  };
+  el.addEventListener('touchend', end);
+  el.addEventListener('touchcancel', end);
+}
+
+/* ================= UI-ИНЖЕКЦИЯ (шапка конва, пин-бар, строка поиска) ================= */
+function cpBuildUi(){
+  const head = document.querySelector('#convBody .conv-head');
+  if(!head || document.getElementById('cpSearchBtn')) return;
+  /* лупа в шапке — перед кнопками звонков */
+  const btn = document.createElement('button');
+  btn.className = 'ch-call'; btn.id = 'cpSearchBtn'; btn.title = 'Поиск по сообщениям';
+  btn.innerHTML = I('search');
+  btn.onclick = cpOpenSearch;
+  head.insertBefore(btn, head.querySelector('.ch-call'));
+  /* пин-бар */
+  const pin = document.createElement('div');
+  pin.className = 'cp-pinbar'; pin.id = 'cpPinBar';
+  pin.onclick = cpScrollToPinned;
+  pin.innerHTML = `<span class="cp-pin-ic">${I('pin')}</span>
+    <div class="cp-pin-txt"><b>Закреплённое сообщение</b><small id="cpPinText"></small></div>
+    <button class="cp-pin-x" onclick="cpUnpin(event)" title="Открепить">${I('plus')}</button>`;
+  head.insertAdjacentElement('afterend', pin);
+  /* строка поиска */
+  const bar = document.createElement('div');
+  bar.className = 'cp-msearch'; bar.id = 'cpSearchBar';
+  bar.innerHTML = `<span class="cp-ms-ic">${I('search')}</span>
+    <input id="cpSearchInput" placeholder="Поиск по сообщениям" autocomplete="off">
+    <span class="cp-ms-count" id="cpSearchCount"></span>
+    <button class="cp-ms-nav" onclick="cpSearchStep(-1)" title="Раньше">${I('chev')}</button>
+    <button class="cp-ms-nav cp-ms-next" onclick="cpSearchStep(1)" title="Позже">${I('chev')}</button>
+    <button class="cp-ms-x" onclick="cpCloseSearch()" title="Закрыть поиск">${I('plus')}</button>`;
+  pin.insertAdjacentElement('afterend', bar);
+  const inp = bar.querySelector('#cpSearchInput');
+  inp.addEventListener('input', cpSearchRun);
+  inp.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){ e.preventDefault(); cpSearchStep(e.shiftKey ? 1 : -1); }
+  });
+}
+
+/* ================= CHAIN-ПАТЧИ РЕНДЕРА И НАВИГАЦИИ КОНВА ================= */
+if(typeof renderMsgs === 'function'){
+  const _cpPrevRenderMsgs = renderMsgs;
+  renderMsgs = function(){
+    _cpPrevRenderMsgs.apply(this, arguments);
+    cpPaintStatuses();
+    cpDecorateVoices();
+    cpUpdatePinBar();
+    cpReapplySearch();
+  };
+}
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv = openConv;
+  openConv = function(){
+    cpCloseSearch(); /* поиск не тащим между чатами */
+    _cpPrevOpenConv.apply(this, arguments);
+  };
+}
+if(typeof closeConv === 'function'){
+  const _cpPrevCloseConv = closeConv;
+  closeConv = function(){
+    cpCloseSearch();
+    _cpPrevCloseConv.apply(this, arguments);
+  };
+}
+
+/* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
+(function cpInit(){
+  cpBuildUi();
+  cpSwipeInit();
+  /* исторические исходящие: онлайн-чат — прочитаны, офлайн — доставлены */
+  try{
+    (typeof CHATS !== 'undefined' ? CHATS : []).forEach(c=>{
+      (c.msgs || []).forEach(m=>{
+        if(m && !m.in && m.kind !== 'sys' && !m.cpSt) m.cpSt = c.online ? 'read' : 'delivered';
+      });
+    });
+  }catch(e){}
+  /* конва уже открыта (пересборка на лету) — прогнать декор */
+  if(typeof currentChat !== 'undefined' && currentChat){
+    cpPaintStatuses(); cpDecorateVoices(); cpUpdatePinBar();
+  }
+})();
+
+/* ===== module: profile-social ===== */
+/* ================= PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ================= */
+/* Fullscreen-профиль любого автора (#psView): аватар, имя + verified, ник, био,
+   статистика, Подписаться/Отписаться (персист oko-social), Написать (личный чат),
+   лента постов автора. Точки входа: имя/аватар в ленте (делегирование на #feedList),
+   аватар в шапке конва (кроме своих/каналов), автор в глобальном поиске.
+   Подписки поднимают посты автора выше во вкладке «Подписки» (стабильная
+   пересортировка POSTS.sub) и дают буст в рекомендациях (chain feedScore). */
+
+const PS = {
+  cur: null,      /* имя автора, чей профиль открыт */
+  follow: {},     /* {имя: ts подписки} — персист в oko-social */
+};
+
+/* ---------- персист ---------- */
+function psLoadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-social') || 'null');
+    if(s && s.follow && typeof s.follow === 'object') PS.follow = s.follow;
+  }catch(e){}
+}
+function psSaveState(){
+  try{ localStorage.setItem('oko-social', JSON.stringify({follow: PS.follow, at: Date.now()})); }catch(e){}
+}
+function psIsFollowing(name){ return !!PS.follow[name]; }
+
+/* ---------- утилиты ---------- */
+function psHash(s){
+  let h = 2166136261;
+  for(let i = 0; i < String(s).length; i++){ h ^= String(s).charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function psFmt(n){ try{ return Math.round(n).toLocaleString('ru-RU'); }catch(e){ return String(n); } }
+function psAttr(s){ return esc(s).replace(/'/g, '&#39;'); }
+function psInitials(name){
+  return String(name).trim().split(/\s+/).slice(0, 2).map(w => (w[0]||'').toUpperCase()).join('') || 'U';
+}
+const PS_TRANSLIT = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'c','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+function psNick(name){
+  const raw = String(name).toLowerCase().replace(/[^a-zа-яё0-9]+/g, '')
+    .split('').map(ch => PS_TRANSLIT[ch] !== undefined ? PS_TRANSLIT[ch] : ch).join('');
+  return (raw.slice(0, 14) || 'user' + (psHash(name) % 999));
+}
+function psAgo(p){
+  if(!p.ts) return 'недавно';
+  const h = Math.max(1, Math.round((Date.now() - p.ts) / 36e5));
+  if(h < 24) return h + ' ч назад';
+  const d = Math.round(h / 24);
+  return d + ' ' + (d === 1 ? 'день' : (d < 5 ? 'дня' : 'дней')) + ' назад';
+}
+/* id поста из карточки ленты (по onclick кнопки меню — не ломая чужой DOM) */
+function psPostIdOf(art){
+  const b = art && art.querySelector('.post-more');
+  const m = b && (b.getAttribute('onclick') || '').match(/openPostMenu\((\d+)/);
+  return m ? +m[1] : null;
+}
+
+/* ---------- био: рукописные для известных авторов + генератор ---------- */
+const PS_BIOS = {
+  'Марк Волков':      'Монтажёр вертикальных форматов. Собираю Reels для локального бизнеса: хук, ритм, караоке-субтитры. Кейсы и цифры досмотров — в постах.',
+  'Алина Крид':       'SMM-стратег. Разбираю алгоритмы простыми словами и превращаю метрики в план публикаций. Тесты форматов — каждую неделю.',
+  'OKO Team':         'Официальная команда OKO. Анонсы сборок, новые разделы приложения и разборы фич — из первых рук.',
+  'OKO · Официальный':'Официальный канал OKO в ленте: обновления премодератора, алгоритмов и сервисов приложения.',
+  'Даниэль / рост':   'Канал о росте на системе: контент-заводы, автоматизация и цифры вместо вдохновения.',
+  'Даниэль':          'Основатель OKO. Строю приложение, где мессенджер, лента и заработок живут в одном месте.',
+  'Клуб OKO':         'Сообщество практиков OKO: открытые разборы, эфиры и первые заказы на бирже.',
+  'Клуб OKO · Рост':  'Закрытый клуб роста: еженедельные разборы роликов и воронок участников.',
+  'Кейс недели':      'Подборка живых кейсов из OKO: цифры, воронки и что реально сработало.',
+  'OKO Партнёрам':    'Всё про партнёрскую программу OKO: ставки, выплаты и топы месяца.',
+  'Поддержка OKO':    'ИИ-поддержка OKO. Отвечает на вопросы о приложении круглосуточно; сложные случаи передаёт команде.',
+  'Аня':              'Дизайнер обложек и визуала. Люблю чистую сетку, лайм и тёмные темы.',
+  'Биржа OKO':        'Сервис безопасных сделок OKO: исполнители с рейтингом, оплата после приёмки.',
+};
+const PS_BIO_TOPIC = {
+  ai:       'Пишу про нейросети без магии: пайплайны, промпты и локальные модели в деле.',
+  content:  'Контент как система: хуки, монтаж, удержание. Разбираю на живых роликах.',
+  business: 'Считаю юнит-экономику и строю процессы, которые работают без собственника.',
+  marketing:'Перформанс и креативы: связки, тесты, CPL. Только то, что пережило A/B.',
+  games:    'Геймдев маленькой командой: прототипы, плейтесты и честные цифры ретеншна.',
+  crypto:   'Слежу за TON и ончейн-метриками. Без сигналов — только данные и риски.',
+};
+const PS_BIO_POOL = [
+  'Автор OKO. Делюсь опытом и цифрами из своих проектов — без воды.',
+  'Веду канал о своём деле: процессы, ошибки и что в итоге сработало.',
+  'Практик, а не теоретик: каждый пост — из реальной задачи.',
+  'Собираю здесь то, что помогает расти: приёмы, инструменты, разборы.',
+];
+function psBio(name, topic, sub){
+  if(PS_BIOS[name]) return PS_BIOS[name];
+  if(topic && PS_BIO_TOPIC[topic]) return PS_BIO_TOPIC[topic];
+  const s = String(sub || '').toLowerCase();
+  if(s.indexOf('smm') > -1) return PS_BIO_TOPIC.marketing;
+  if(s.indexOf('монтаж') > -1) return PS_BIO_TOPIC.content;
+  if(s.indexOf('сообщество') > -1) return 'Живое сообщество в OKO: обсуждения, разборы и взаимопомощь участников.';
+  return PS_BIO_POOL[psHash(name) % PS_BIO_POOL.length];
+}
+
+/* ---------- модель автора: посты + чаты + детерминированная статистика ---------- */
+function psAuthor(name){
+  const posts = [];
+  try{ [...POSTS.sub, ...POSTS.rec].forEach(p => { if(p.name === name) posts.push(p); }); }catch(e){}
+  posts.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  const p0 = posts[0] || null;
+  const chat = (typeof CHATS !== 'undefined') ? CHATS.find(c => c.kind === 'direct' && c.name === name) : null;
+  const anyChat = chat || ((typeof CHATS !== 'undefined') ? CHATS.find(c => c.name === name) : null);
+  const h = psHash(name);
+  const sub = (p0 && p0.sub) || '';
+
+  let followers = 0;
+  const m = sub.match(/(\d+(?:[.,]\d+)?)\s*к/i);
+  if(m) followers = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
+  else if(anyChat && anyChat.subs){
+    const mm = String(anyChat.subs).match(/(\d+(?:[.,]\d+)?)\s*к/i);
+    if(mm) followers = Math.round(parseFloat(mm[1].replace(',', '.')) * 1000);
+  }
+  if(!followers) followers = 300 + h % 4200;
+
+  return {
+    name, posts, sub,
+    nick: (chat && chat.nick) ? chat.nick : psNick(name),
+    online: chat ? !!chat.online : (h % 3 === 0),
+    followers,
+    followingN: 12 + h % 480,
+    ava: (p0 && p0.ava) || (anyChat && anyChat.ava) || psInitials(name),
+    avaIcon: (!(p0 && p0.ava) && anyChat && anyChat.avaIcon) ? anyChat.avaIcon : null,
+    topic: (posts.map(p => p.topic).find(Boolean)) || null,
+  };
+}
+
+/* ---------- рендер профиля ---------- */
+function psPostsHtml(a){
+  if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Пока нет постов</p><span>Публикации автора появятся здесь</span></div>`;
+  return a.posts.map(p => `
+    <article class="ps-post fade-in">
+      <div class="ps-post-time">${psAgo(p)}${p.promoted ? ' · реклама' : ''}</div>
+      <div class="ps-post-body">${p.body}</div>
+      ${p.media ? `<div class="ps-post-media">${I('circle-play')}<span>${p.media}</span></div>` : ''}
+      <div class="ps-post-meta">
+        <button class="ps-like ${p.liked ? 'on' : ''}" onclick="psLike(${p.id})">${I('heart')}<span>${p.likes}</span></button>
+        <span>${I('comment')}${p.comments ? p.comments.length : 0}</span>
+        <span>${I('share')}${p.reposts || 0}</span>
+        <span class="ps-views">${I('eye')}${typeof fmtN === 'function' ? fmtN(p.views || 0) : (p.views || 0)}</span>
+      </div>
+    </article>`).join('');
+}
+function psRender(name){
+  const a = psAuthor(name);
+  const f = psIsFollowing(name);
+  const head = document.getElementById('psHeadName');
+  if(head) head.textContent = '@' + a.nick;
+  const body = document.getElementById('psBody');
+  if(!body) return;
+  body.innerHTML = `
+    <div class="ps-top fade-in">
+      <div class="ps-ava">${a.avaIcon ? I(a.avaIcon) : esc(a.ava)}</div>
+      <h3 class="ps-name">${esc(a.name)}${typeof vBadge === 'function' ? vBadge(a.name) : ''}</h3>
+      <div class="ps-nick">@${esc(a.nick)}${a.online ? ' · <span class="ps-on">в сети</span>' : ''}</div>
+      <p class="ps-bio">${esc(psBio(a.name, a.topic, a.sub))}</p>
+      <div class="ps-stats">
+        <div class="ps-stat"><b>${a.posts.length}</b><small>постов</small></div>
+        <div class="ps-stat"><b id="psFollowers">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></div>
+        <div class="ps-stat"><b>${psFmt(a.followingN)}</b><small>подписок</small></div>
+      </div>
+      <div class="ps-actions">
+        <button class="btn ${f ? 'ghost' : ''}" id="psFollowBtn" onclick="psToggleFollow()">${I(f ? 'check' : 'plus')} ${f ? 'Отписаться' : 'Подписаться'}</button>
+        <button class="btn ghost" onclick="psMessage()">${I('chat')} Написать</button>
+      </div>
+    </div>
+    <div class="ps-sec">Посты автора <span class="ps-cnt">${a.posts.length}</span></div>
+    <div id="psPosts">${psPostsHtml(a)}</div>`;
+}
+
+/* ---------- открыть/закрыть вьюху ---------- */
+function psOpenProfile(name){
+  if(!name) return;
+  if(typeof PROFILE !== 'undefined' && name === PROFILE.name){ /* свой профиль — родная вкладка */
+    if(typeof showTab === 'function') showTab('profile');
+    return;
+  }
+  PS.cur = name;
+  psRender(name);
+  const v = document.getElementById('psView');
+  if(v && !v.classList.contains('open')){
+    v.classList.add('open');
+    if(typeof nvPush === 'function') nvPush('view:psProfile', psClose);
+  }
+}
+function psClose(){
+  const v = document.getElementById('psView');
+  if(v) v.classList.remove('open');
+  PS.cur = null;
+  if(typeof nvPop === 'function') nvPop('view:psProfile');
+}
+
+/* ---------- подписка / отписка ---------- */
+function psGoSubFeed(){
+  psClose();
+  if(typeof showTab === 'function') showTab('feed');
+  const btn = document.querySelector('.feed-tabs button');
+  if(btn && typeof feedTab === 'function') feedTab(btn, 'sub');
+  else if(typeof renderFeed === 'function') renderFeed('sub');
+}
+function psToggleFollow(){
+  const name = PS.cur;
+  if(!name) return;
+  const f = !psIsFollowing(name);
+  if(f) PS.follow[name] = Date.now(); else delete PS.follow[name];
+  psSaveState();
+
+  /* счётчик подписчиков — с бампом */
+  const a = psAuthor(name);
+  const el = document.getElementById('psFollowers');
+  if(el){
+    el.textContent = psFmt(a.followers + (f ? 1 : 0));
+    el.classList.remove('ps-bump'); void el.offsetWidth; el.classList.add('ps-bump');
+  }
+  const btn = document.getElementById('psFollowBtn');
+  if(btn){
+    btn.classList.toggle('ghost', f);
+    btn.innerHTML = I(f ? 'check' : 'plus') + ' ' + (f ? 'Отписаться' : 'Подписаться');
+  }
+  /* лента «Подписки» пересортировывается сразу, если открыта */
+  if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined' && curFeedKind === 'sub'){
+    try{ renderFeed('sub'); }catch(e){}
+  }
+  if(f && typeof showPopup === 'function'){
+    showPopup({ico:'users', title:'Подписка оформлена',
+      body:`Теперь его посты — выше в твоей ленте «Подписки». Ты подписан на <b>${esc(name)}</b>.`,
+      actions:[{label:'В ленту', onclick: psGoSubFeed}, {label:'Понятно', ghost:true}]});
+  } else if(!f && typeof toast === 'function'){
+    toast('Ты отписался от ' + name);
+  }
+}
+
+/* ---------- «Написать»: найти/создать личный чат + openConv ---------- */
+function psMessage(){
+  const name = PS.cur;
+  if(!name || typeof CHATS === 'undefined') return;
+  const a = psAuthor(name);
+  let c = CHATS.find(x => x.kind === 'direct' && x.name === name);
+  if(!c){
+    c = {id: Date.now(), name, kind:'direct', nick: a.nick, kindIcon: null,
+      preview:'Чат создан', time:(typeof nowT === 'function' ? nowT() : ''), unread:0, online: !!a.online,
+      msgs:[{kind:'sys', body:'Личный чат с ' + name + ' создан'}]};
+    if(a.avaIcon) c.avaIcon = a.avaIcon; else c.ava = a.ava;
+    CHATS.unshift(c);
+  }
+  psClose();
+  if(typeof showTab === 'function') showTab('chats');
+  try{
+    if(typeof renderChatList === 'function'){
+      const s = document.getElementById('chatSearch');
+      renderChatList(s ? s.value : '');
+    }
+  }catch(e){}
+  if(typeof openConv === 'function') openConv(c.id);
+}
+
+/* ---------- лайк из профиля (через ядро — сигналы feed-algo сохраняются) ---------- */
+function psLike(id){
+  if(typeof likePost === 'function') likePost(id);
+  const wrap = document.getElementById('psPosts');
+  if(wrap && PS.cur) wrap.innerHTML = psPostsHtml(psAuthor(PS.cur));
+}
+
+/* ================= ТОЧКА ВХОДА 1: лента (делегирование на #feedList) ================= */
+function psFeedTap(e){
+  const hit = e.target.closest && e.target.closest('#feedList .post .head .ava, #feedList .post .head .name, #feedList .post .head .sub');
+  if(!hit) return;
+  if(e.target.closest('.post-more') || e.target.closest('.chip')) return; /* меню и чипы — не трогаем */
+  const art = hit.closest('article.post');
+  const id = psPostIdOf(art);
+  const p = (id != null && typeof postById === 'function') ? postById(id) : null;
+  if(!p || !p.name) return;
+  psOpenProfile(p.name);
+}
+
+/* ================= ТОЧКА ВХОДА 2: аватар в шапке конва (кроме своих/каналов) ================= */
+function psConvAvaTap(e){
+  const ava = e.target.closest && e.target.closest('#convAva');
+  if(!ava) return;
+  const c = (typeof currentChat !== 'undefined') && currentChat;
+  if(!c || c.kind !== 'direct' || c.id === 'live') return;              /* каналы/группы/живой чат — прежнее поведение */
+  if(typeof PROFILE !== 'undefined' && c.name === PROFILE.name) return; /* свой чат — прежнее поведение */
+  e.stopPropagation(); e.preventDefault();
+  psOpenProfile(c.name);
+}
+
+/* ================= ТОЧКА ВХОДА 3: глобальный поиск (chain renderSearch) ================= */
+function psDecorateSearch(){
+  const body = document.getElementById('searchBody');
+  if(!body || typeof CHATS === 'undefined') return;
+  const inp = document.getElementById('gSearchInput');
+  const q = ((inp && inp.value) || '').trim().toLowerCase();
+  if(!q) return;
+
+  /* 1) «Люди»: тап ведёт в профиль (оттуда — «Написать» в чат) */
+  body.querySelectorAll('.nt-item').forEach(btn => {
+    const oc = btn.getAttribute('onclick') || '';
+    if(oc.indexOf('openConv(') < 0 || oc.indexOf('openListing') > -1) return;
+    const m = oc.match(/openConv\((?:'([^']+)'|(\d+))\)/);
+    if(!m) return;
+    const id = m[2] !== undefined ? +m[2] : m[1];
+    const c = CHATS.find(x => x.id === id);
+    if(!c || c.kind !== 'direct' || c.id === 'live') return;
+    if(typeof PROFILE !== 'undefined' && c.name === PROFILE.name) return;
+    btn.setAttribute('onclick', `closeSearch();psOpenProfile('${psAttr(c.name)}')`);
+  });
+
+  /* 2) секция «Авторы» — авторы постов ленты по запросу */
+  try{
+    const inChats = new Set(CHATS.filter(c => c.kind === 'direct').map(c => c.name));
+    const seen = new Set(); const authors = [];
+    [...POSTS.sub, ...POSTS.rec].forEach(p => {
+      if(!p.name || seen.has(p.name)) return; seen.add(p.name);
+      if(typeof PROFILE !== 'undefined' && p.name === PROFILE.name) return;
+      if(inChats.has(p.name)) return; /* уже в секции «Люди» */
+      if(p.name.toLowerCase().includes(q)) authors.push(p);
+    });
+    if(!authors.length) return;
+    const html = `<p class="nt-group">Авторы</p>` + authors.slice(0, 5).map(p =>
+      `<button class="nt-item" onclick="closeSearch();psOpenProfile('${psAttr(p.name)}')">
+        <span class="nt-ic">${esc(p.ava || p.name[0])}</span>
+        <div class="nt-b"><span><b>${esc(p.name)}</b>${typeof vBadge === 'function' ? vBadge(p.name) : ''}</span><small>${esc(p.sub || 'автор в OKO')}</small></div>
+      </button>`).join('');
+    const empty = body.querySelector('.empty-state');
+    if(empty) body.innerHTML = html;
+    else body.insertAdjacentHTML('beforeend', html);
+  }catch(e){}
+}
+
+/* ================= ПОДПИСКИ ПОДНИМАЮТ ПОСТЫ: сортировка sub + буст rec ================= */
+/* стабильная пересортировка POSTS.sub: подписки выше, исходный порядок помним в _psIdx */
+function psSortSub(){
+  if(typeof POSTS === 'undefined' || !Array.isArray(POSTS.sub)) return;
+  let min = Infinity;
+  POSTS.sub.forEach(p => { if(typeof p._psIdx === 'number' && p._psIdx < min) min = p._psIdx; });
+  if(min === Infinity) min = 0;
+  const fresh = POSTS.sub.filter(p => typeof p._psIdx !== 'number');
+  fresh.forEach((p, i) => { p._psIdx = min - fresh.length + i; }); /* новые посты — сверху своей группы */
+  POSTS.sub.sort((a, b) =>
+    ((psIsFollowing(b.name) ? 1 : 0) - (psIsFollowing(a.name) ? 1 : 0)) || (a._psIdx - b._psIdx));
+}
+/* декор вкладки «Подписки»: verified-галочка + чип «Подписка» */
+function psDecorateSub(){
+  const list = document.getElementById('feedList');
+  if(!list) return;
+  list.querySelectorAll('article.post').forEach(art => {
+    const id = psPostIdOf(art);
+    const p = (id != null && typeof postById === 'function') ? postById(id) : null;
+    if(!p) return;
+    const nameEl = art.querySelector('.head .name');
+    if(!nameEl) return;
+    if(typeof vBadge === 'function' && typeof VERIFIED !== 'undefined' && VERIFIED.has(p.name) && !nameEl.querySelector('.ps-vb'))
+      nameEl.insertAdjacentHTML('beforeend', `<span class="ps-vb">${vBadge(p.name)}</span>`);
+    if(psIsFollowing(p.name) && !nameEl.querySelector('.ps-fchip'))
+      nameEl.insertAdjacentHTML('beforeend', ` <span class="chip ps-fchip">${I('check')}Подписка</span>`);
+  });
+}
+
+/* ================= САМОИНИЦИАЛИЗАЦИЯ И ПАТЧИ (chain) ================= */
+(function psInit(){
+  psLoadState();
+
+  /* chain renderFeed: сортировка «Подписок» перед рендером ядра + декор после */
+  if(typeof renderFeed === 'function'){
+    const _psPrevRenderFeed = renderFeed;
+    renderFeed = function(kind){
+      kind = kind || (typeof curFeedKind !== 'undefined' ? curFeedKind : 'sub') || 'sub';
+      if(kind === 'sub'){ try{ psSortSub(); }catch(e){} }
+      _psPrevRenderFeed(kind);
+      if(kind === 'sub'){ try{ psDecorateSub(); }catch(e){} }
+    };
+  }
+
+  /* chain feedScore: подписки чуть выше и в рекомендациях */
+  if(typeof feedScore === 'function'){
+    const _psPrevFeedScore = feedScore;
+    feedScore = function(p){
+      let s = _psPrevFeedScore(p);
+      if(p && p.name && psIsFollowing(p.name)) s += 180;
+      return s;
+    };
+  }
+
+  /* chain renderSearch: авторы в поиске */
+  if(typeof renderSearch === 'function'){
+    const _psPrevRenderSearch = renderSearch;
+    renderSearch = function(){
+      _psPrevRenderSearch();
+      try{ psDecorateSearch(); }catch(e){}
+    };
+  }
+
+  /* делегирование кликов: лента + аватар конва (capture — раньше onclick-атрибутов) */
+  const fl = document.getElementById('feedList');
+  if(fl && !fl._psTap){ fl.addEventListener('click', psFeedTap); fl._psTap = true; }
+  document.addEventListener('click', psConvAvaTap, true);
+
+  /* применить сортировку/декор к уже отрисованной ленте */
+  try{
+    if(typeof curFeedKind !== 'undefined' && curFeedKind === 'sub' && document.getElementById('feedList'))
+      renderFeed('sub');
+  }catch(e){}
 })();
 
 /* ===== module: navstack ===== */

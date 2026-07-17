@@ -1,0 +1,71 @@
+/* ===== PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ===== */
+
+/* fullscreen-вьюха профиля (по образцу searchView/legalView).
+   z-index 66: выше хрома приложения, НИЖЕ попапов/тоста (70) — мини-попап
+   подписки и уведомления ложатся поверх профиля */
+#psView{position:fixed;inset:0;z-index:66;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
+#psView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#psView{transition:none}}
+#psView .sv-body{max-width:640px;width:100%;margin:0 auto}
+
+/* шапка профиля */
+.ps-top{text-align:center;padding-top:6px}
+.ps-ava{width:86px;height:86px;border-radius:50%;background:var(--lime-dim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:30px;color:var(--accent);margin:0 auto 12px;box-shadow:var(--glow);animation:psAvaIn .35s ease}
+:root[data-theme="light"] .ps-ava{box-shadow:none}
+.ps-ava svg.i{width:50%;height:50%}
+@keyframes psAvaIn{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ps-ava{animation:none}}
+.ps-name{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.ps-nick{font-size:12.5px;color:var(--dim);margin-top:3px}
+.ps-on{color:var(--accent)}
+.ps-bio{font-size:13px;line-height:1.55;color:var(--text);opacity:.9;max-width:420px;margin:10px auto 0}
+
+/* статистика: посты / подписчики / подписки */
+.ps-stats{display:flex;gap:10px;margin:16px 0 14px}
+.ps-stat{flex:1;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 6px;transition:border-color .2s}
+.ps-stat:hover{border-color:var(--accent)}
+.ps-stat b{display:block;font-family:var(--font-display);font-size:23px;line-height:1;color:var(--accent);letter-spacing:.02em;white-space:nowrap}
+.ps-stat small{display:block;font-size:10px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.08em}
+.ps-bump{animation:psBump .45s ease}
+@keyframes psBump{0%{transform:scale(1)}35%{transform:scale(1.24)}100%{transform:scale(1)}}
+
+/* кнопки Подписаться / Написать */
+.ps-actions{display:flex;gap:10px}
+.ps-actions .btn{flex:1;padding:12px 8px;font-size:13.5px}
+.ps-actions .btn svg.i{width:16px;height:16px}
+#psFollowBtn:not(.ghost){box-shadow:var(--glow)}
+:root[data-theme="light"] #psFollowBtn:not(.ghost){box-shadow:none}
+
+/* лента постов автора */
+.ps-sec{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-size:17px;letter-spacing:.07em;margin:22px 0 10px}
+.ps-sec .ps-cnt{font-size:10.5px;font-family:var(--font-body);font-weight:700;background:var(--lime-dim);color:var(--accent);border-radius:99px;padding:3px 9px;letter-spacing:0}
+.ps-post{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;transition:border-color .2s,transform .15s}
+.ps-post:hover{border-color:var(--accent)}
+.ps-post-time{font-size:10px;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em}
+.ps-post-body{font-size:13.5px;line-height:1.55}
+.ps-post-media{display:inline-flex;align-items:center;gap:7px;margin-top:9px;background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:5px 12px;font-size:11.5px;color:var(--dim)}
+.ps-post-media svg.i{width:15px;height:15px;color:var(--accent)}
+.ps-post-meta{display:flex;align-items:center;gap:14px;margin-top:10px;font-size:12px;color:var(--dim)}
+.ps-post-meta svg.i{width:15px;height:15px}
+.ps-post-meta>span{display:inline-flex;align-items:center;gap:5px}
+.ps-like{display:inline-flex;align-items:center;gap:5px;color:var(--dim);transition:color .15s,transform .12s}
+.ps-like:active{transform:scale(.9)}
+.ps-like.on{color:var(--accent)}
+.ps-like.on svg.i{fill:currentColor}
+.ps-views{margin-left:auto}
+.ps-empty{text-align:center;padding:28px 14px;color:var(--dim)}
+.ps-empty svg.i{width:34px;height:34px;opacity:.5;margin-bottom:8px}
+.ps-empty p{font-weight:700;color:var(--text);font-size:14px}
+.ps-empty span{font-size:12px}
+
+/* метки в общей ленте: чип «Подписка» у авторов, на которых подписан */
+.ps-fchip{font-size:9px;padding:3px 8px;margin-left:6px;vertical-align:1px;animation:psChipIn .3s ease}
+.ps-fchip svg.i{width:10px;height:10px;vertical-align:-1px;margin-right:3px}
+@keyframes psChipIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ps-fchip,.ps-bump{animation:none}}
+
+/* точки входа: имя/аватар автора кликабельны */
+#feedList .post .head .ava,#feedList .post .head .name,#feedList .post .head .sub{cursor:pointer}
+#feedList .post .head .ava{transition:transform .15s,box-shadow .2s}
+#feedList .post .head .ava:hover{transform:scale(1.06);box-shadow:var(--glow)}
+#convAva{cursor:pointer}
