@@ -1,0 +1,54 @@
+/* ===== TOUR (tr-) — интерактивный тур по приложению: спотлайт + карточки ===== */
+#trOverlay{position:fixed;inset:0;z-index:65;opacity:0;transition:opacity .32s ease;overscroll-behavior:contain}
+#trOverlay.tr-on{opacity:1}
+
+/* вырез-спотлайт: прозрачная «дыра», тьма — гигантским box-shadow вокруг */
+.tr-hole{position:absolute;border-radius:16px;pointer-events:none;
+  box-shadow:0 0 0 200vmax rgba(0,0,0,.74);
+  transition:top .5s cubic-bezier(.35,.9,.25,1),left .5s cubic-bezier(.35,.9,.25,1),
+             width .5s cubic-bezier(.35,.9,.25,1),height .5s cubic-bezier(.35,.9,.25,1),
+             border-radius .5s ease}
+.tr-hole.tr-jump{transition:none}
+.tr-hole::after{content:'';position:absolute;inset:-3px;border:2px solid var(--lime);
+  border-radius:inherit;box-shadow:0 0 20px rgba(154,255,0,.5),inset 0 0 14px rgba(154,255,0,.18);
+  animation:trPulse 1.9s ease-in-out infinite}
+@keyframes trPulse{0%,100%{opacity:.95}50%{opacity:.4}}
+
+/* карточка шага */
+.tr-card{position:absolute;left:50%;transform:translateX(-50%);width:calc(100% - 28px);
+  max-width:352px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:16px 16px 13px;
+  box-shadow:0 18px 60px rgba(0,0,0,.55),0 0 0 1px rgba(154,255,0,.06);
+  transition:top .5s cubic-bezier(.35,.9,.25,1)}
+.tr-card.tr-jump{transition:none}
+.tr-arr{position:absolute;width:14px;height:14px;background:var(--surface);transform:rotate(45deg);
+  transition:left .5s cubic-bezier(.35,.9,.25,1)}
+.tr-arr.up{top:-8px;border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.tr-arr.down{bottom:-8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.tr-arr.hide{display:none}
+
+.tr-body{animation:trIn .34s ease both}
+@keyframes trIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.tr-step-chip{display:inline-flex;align-items:center;gap:7px;font-size:9.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin-bottom:7px}
+.tr-step-chip svg.i{width:13px;height:13px}
+.tr-card h3{font-family:var(--font-display);font-size:23px;letter-spacing:.02em;line-height:1;margin:0 0 6px}
+.tr-card p{color:var(--dim);font-size:12.8px;line-height:1.55;margin:0}
+
+.tr-foot{display:flex;align-items:center;gap:10px;margin-top:13px}
+.tr-dots{display:flex;gap:6px}
+.tr-dots span{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;
+  transition:background .25s,transform .25s,box-shadow .25s}
+.tr-dots span.on{background:var(--lime);box-shadow:0 0 8px rgba(154,255,0,.7);transform:scale(1.25)}
+.tr-dots span:hover{transform:scale(1.25)}
+.tr-btns{display:flex;align-items:center;gap:6px;margin-left:auto}
+.tr-skip{background:none;border:none;color:var(--dim);font-size:12px;font-weight:600;
+  padding:9px 10px;cursor:pointer;border-radius:var(--r-sm);transition:color .2s,background .2s}
+.tr-skip:hover{color:var(--text);background:var(--raised)}
+.tr-next{width:auto;padding:10px 18px;font-size:13px}
+.tr-next:active{transform:scale(.95)}
+.tr-next svg.i{width:14px;height:14px}
+
+/* светлая тема: затемнение мягче, карточка без лаймового ореола-тени */
+:root[data-theme="light"] .tr-hole{box-shadow:0 0 0 200vmax rgba(16,22,8,.6)}
+:root[data-theme="light"] .tr-card{box-shadow:0 18px 50px rgba(20,30,8,.28)}

@@ -25,6 +25,7 @@
 .st2-card .prow .st2-val~.chev,.st2-card .prow .st2-val~.switch{margin-left:8px}
 .st2-clearing .st2-val{color:var(--accent);font-variant-numeric:tabular-nums}
 .st2-chip{font-size:9px;padding:3px 8px;margin-left:8px;flex-shrink:0}
+.st2-chip svg.i{width:10px!important;height:10px!important;vertical-align:-1.5px;margin-right:3px;color:var(--accent)}
 
 /* сегмент-переключатель «кто может писать» */
 .st2-seg{display:flex;gap:4px;background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:4px;margin-left:auto;flex-shrink:0}
