@@ -3,7 +3,7 @@
 # публикация TikTok+YouTube+Instagram -> отчёт в бот -> реестры. Каждый шаг с таймаутом,
 # best-effort (сбой шага не роняет весь прогон). Обложка — HTML (надёжно, без коннекторов/квот).
 # Использование: bash auto_run.sh <id> "<caption>" "<yt_title>"
-set -uo pipefail
+set -o pipefail   # без -e/-u: сбой одного шага не должен ронять весь автопрогон
 cd "$(dirname "$0")"; FACT="$(pwd)"; REPO="$(cd ../.. && pwd)"
 ID="${1:?need id}"; CAP="${2:-Check the room before you relax. Comment PRIVACY for the app.}"; YTTITLE="${3:-Hidden camera check #shorts}"
 source <(base64 -d "$REPO/secrets.env.b64") 2>/dev/null || true
@@ -21,6 +21,9 @@ else
   log "BUILD FAILED"; tail -5 "work/${ID}_auto.log"; echo "BUILD_FAILED"; exit 2
 fi
 [ -s "output/$ID.mp4" ] || { log "no output"; exit 2; }
+# контроль длины 20-45с: >47 = сценарий слишком длинный, НЕ публиковать (сессия перепишет короче)
+DUR_INT=$(printf '%.0f' "$DUR" 2>/dev/null || echo 0)
+if [ "$DUR_INT" -gt 47 ] 2>/dev/null; then log "TOO_LONG ${DUR}s (>47) — не публикую"; echo "TOO_LONG $DUR"; exit 3; fi
 
 # 2) КОММИТ ролика (нужно для git-raw доставки на VPS)
 cd "$REPO"
