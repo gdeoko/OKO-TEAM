@@ -49,3 +49,12 @@
 - gl: CrossZoom, Rolls, StereoViewer, Overexposure, ZoomLeftWipe (5 свежих).
 - 3d: coin / оранж #EA5920. grade: bold_punch (контраст+curves+винетка). music: Freesound 785656 «Trailer Cinematic».
 - Голос Silero v4_ru eugene (авто-ударения). Субтитры Союз 2 слова, без тени/границы (Outline=0 Shadow=0).
+
+## Ролик n16 «Пиццерия сняла один ролик» (2026-07-17) — виральный, голос Silero eugene
+- fx: camui(REC), slam(ПУСТО/ПО БУДНЯМ), stamp×2 (ЗНАКОМО? / НАПИШИТЕ), lowerthird(ОДИН РОЛИК),
+  callout(снимают процесс), statcard(300 000 просмотров), gridpop, donut(100% занято),
+  profilecmp(будни 30 / пятница 100), toast(свет·вкус·эмоция), likes, dm(СЪЕМКА), ticker, shine.
+- gl: Mosaic, InvertedPageCurl, kaleidoscope, wind, squareswire (5 свежих, мимо реестра).
+- 3d: droplet / оранж #EA5920 (давно не использовалась). grade: firelight (тёплый огонь печи — новый).
+- music: Freesound 728746 «Emotional Motivational Cinematic». SFX: sfx_bank (impact/pop/whoosh/riser/ding).
+- Голос Silero v4_ru eugene (авто-ударения). Обложка: Nano Banana Pro (печь+камера+пицца) + реальный лого.
