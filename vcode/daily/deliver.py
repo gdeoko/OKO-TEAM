@@ -18,13 +18,26 @@ title=post.strip().split('\n',1)[0] if post.strip() else 'Ролик дня'
 cap=f"🎬 Ролик дня — «{title}»\n\nФайл без сжатия ниже. Описание для публикации — отдельным сообщением. Публикуете со своего аккаунта."
 if NOTE: cap+=f"\n\n{NOTE}"
 
-def tg(tok, method, **fields):
-    api=f"https://api.telegram.org/bot{tok}"
-    cmd=['curl','-s','--max-time','180','--cacert',CA]
-    for k,v in fields.items(): cmd+=['--form-string' if isinstance(v,str) else '-F', f"{k}={v}"]
-    cmd.append(f"{api}/{method}")
-    try: return json.loads(subprocess.run(cmd,capture_output=True,timeout=200).stdout.decode() or '{}')
-    except Exception as e: return {'ok':False,'err':str(e)[:120]}
+import time
+def tg(tok, method, retries=4, **fields):
+    api=f"https://api.telegram.org/bot{tok}"; desc='fail'
+    for i in range(retries):
+        cmd=['curl','-s','--max-time','200','--cacert',CA]
+        for k,v in fields.items():
+            # "@путь" — это ЗАГРУЗКА ФАЙЛА (curl -F интерпретирует @), остальное — текст (--form-string).
+            if isinstance(v,str) and v.startswith('@'):
+                cmd+=['-F', f"{k}={v}"]
+            else:
+                cmd+=['--form-string', f"{k}={v}"]
+        cmd.append(f"{api}/{method}")
+        try:
+            out=subprocess.run(cmd,capture_output=True,timeout=240).stdout.decode().strip()
+            d=json.loads(out or '{}')
+            if d.get('ok'): return d
+            desc=d.get('description','')
+        except Exception as e: desc='empty/non-json:'+str(e)[:60]
+        if i<retries-1: time.sleep(2*(i+1))
+    return {'ok':False,'description':desc}
 
 def send_via_bot(tok, chats, thumb_ok):
     ok=False
