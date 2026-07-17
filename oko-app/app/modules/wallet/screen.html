@@ -8,6 +8,10 @@
       </div>
       <div class="wal-balance" id="walBalance">0 <b>₽</b></div>
       <div class="wal-hold" id="walHold"><svg class="i"><use href="#i-lock"/></svg><span>В холде (эскроу): <b>0 ₽</b></span></div>
+      <div class="wal-chart-wrap">
+        <div class="wal-chart-h"><span>Динамика · 30 дней</span><span class="wal-delta in" id="walDelta"></span></div>
+        <canvas id="walChart" class="wal-chart" height="66"></canvas>
+      </div>
       <div class="wal-actions">
         <button class="wal-act" onclick="walOpenTopup()"><svg class="i"><use href="#i-plus"/></svg>Пополнить</button>
         <button class="wal-act ghost" onclick="walOpenWithdraw()"><svg class="i"><use href="#i-card"/></svg>Вывести</button>
@@ -15,11 +19,50 @@
       </div>
     </div>
 
+    <div class="card wal-auto" id="walAutoCard" onclick="walToggleAutopay()" role="button">
+      <div class="wal-auto-ic"><svg class="i"><use href="#i-crown"/></svg></div>
+      <div class="wal-auto-b">
+        <b>Подписка PRO — автопродление</b>
+        <span id="walAutoSub">Выключено</span>
+      </div>
+      <span class="switch" id="walAutoSw"><i></i></span>
+    </div>
+
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Расходы по категориям</h2>
     <div class="wal-cat-bar" id="walCatBar"></div>
     <div class="wal-cats" id="walCats"></div>
 
-    <h2 class="section-h" id="walHistAnchor" style="margin:24px 0 4px;font-size:21px">История операций</h2>
+    <h2 class="section-h" style="margin:24px 0 12px;font-size:21px">Лимиты и безопасность</h2>
+    <div class="card wal-sec" style="padding:2px 14px">
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-card"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Суточный лимит вывода</b>
+          <span id="walSecWdSub">0 ₽ из 100 000 ₽ за сегодня</span>
+          <div class="wal-limit-bar"><i id="walSecWdBar"></i></div>
+        </div>
+      </div>
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-check"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Покупки без подтверждения</b>
+          <span>До 5 000 ₽ — мгновенно, выше — с подтверждением операции</span>
+        </div>
+      </div>
+      <div class="wal-sec-row tap" onclick="walTogglePin()" role="button">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-lock"/></svg></div>
+        <div class="wal-sec-b">
+          <b>ПИН-код на вывод</b>
+          <span id="walPinSub">Выключен — включи для защиты вывода</span>
+        </div>
+        <span class="switch" id="walPinSw"><i></i></span>
+      </div>
+    </div>
+
+    <div class="wal-hist-head">
+      <h2 class="section-h" id="walHistAnchor" style="margin:0;font-size:21px">История операций</h2>
+      <button class="wal-stmt-btn" onclick="walOpenStatement()"><svg class="i"><use href="#i-file"/></svg>Выписка</button>
+    </div>
     <div class="wal-filters" id="walFilters">
       <button class="on" data-f="all" onclick="walSetFilter('all')">Все</button>
       <button data-f="in" onclick="walSetFilter('in')">Пополнения</button>

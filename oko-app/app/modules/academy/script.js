@@ -433,6 +433,33 @@ const acS = acLoadState();
 function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
 acSave(); // сразу персистим мигрированный формат
 
+/* ---------- стрик: дни подряд в учёбе ---------- */
+function acDayStr(d){
+  const x = d || new Date();
+  return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+}
+function acStreak(){
+  if(!acS.streak) acS.streak = {last:'', days:0, best:0};
+  return acS.streak;
+}
+function acStreakTouch(){
+  const st = acStreak(), today = acDayStr();
+  if(st.last === today) return st.days;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  st.days = (st.last === acDayStr(y)) ? st.days + 1 : 1;
+  st.last = today;
+  if(st.days > (st.best||0)) st.best = st.days;
+  acSave();
+  return st.days;
+}
+
+/* ---------- следующий урок (первый открытый и не завершённый) ---------- */
+function acNextLesson(){
+  for(let i=0; i<AC_COURSE.length; i++)
+    if(acUnlocked(i) && !acLessonDone(i)) return i;
+  return -1;
+}
+
 let acView = 'home';            // 'home' | 'lesson'
 let acL = 0;                    // индекс текущего урока
 let acQuiz = null;              // сессия теста (не персистится)
@@ -506,12 +533,26 @@ function acHomeHtml(){
     <div class="ac-cert-item" style="animation-delay:${i*.05}s">
       <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
       <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
       <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
     </div>`).join('')
     : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
+  const st = acStreak();
+  const hot = st.days >= 3;
+  const streak = `
+    <div class="card ac-streak ${hot?'hot':''}">
+      <span class="ac-flame">${I('fire')}</span>
+      <div class="meta"><b>Дней подряд в учёбе: ${st.days||0}</b>
+        <span>${hot ? 'Серия в огне — так держать!' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
+      ${hot?`<span class="ac-hot-chip">${I('fire')} ${st.days}</span>`:''}
+    </div>`;
+  const nx = acNextLesson();
+  const nextRow = nx >= 0
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Следующий: <b>урок ${nx+1} — ${AC_COURSE[nx].title}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Все уроки курса пройдены — сертификаты у тебя</span></div>`;
   return `
     <div class="ac-hero"><h2>Академия OKO</h2><p>Уроки полного формата · официальные сертификаты</p></div>
-
+    ${streak}
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">
@@ -521,6 +562,7 @@ function acHomeHtml(){
         </span>
         <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
       </div>
+      ${nextRow}
       <div>${rows}</div>
     </div>
 
@@ -575,6 +617,9 @@ function acLessonHtml(){
         <button class="ac-arrow next" onclick="acSlideGo(1)"><svg class="i"><use href="#i-back"/></svg></button>
       </div>
     </div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Конспект</h2>
+    ${acNotesHtml()}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
     <div class="card" id="acTestBox"></div>

@@ -1044,6 +1044,45 @@ main>.screen{position:relative;z-index:1}
 .wal-act.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .wal-act:first-child{box-shadow:var(--glow)}
 
+/* график баланса 30 дней (в карточке счёта) */
+.wal-chart-wrap{position:relative;z-index:1;margin:0 0 14px}
+.wal-chart-h{display:flex;align-items:center;justify-content:space-between;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:7px}
+.wal-delta{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:0;text-transform:none;border-radius:99px;padding:3px 9px;animation:fade .35s ease}
+.wal-delta.in{color:var(--accent);background:var(--lime-dim)}
+.wal-delta.out{color:var(--danger);background:rgba(255,77,77,.12)}
+.wal-delta svg{width:9px;height:9px;flex-shrink:0}
+.wal-chart{display:block;width:100%;height:66px;animation:fade .4s ease}
+
+/* автопродление PRO */
+.wal-auto{display:flex;align-items:center;gap:12px;padding:14px;margin-top:14px;cursor:pointer;transition:transform .12s,border-color .2s;animation:fade .3s ease both}
+.wal-auto:active{transform:scale(.985)}
+.wal-auto-ic{width:42px;height:42px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-auto-ic svg.i{width:21px;height:21px}
+.wal-auto-b{flex:1;min-width:0}
+.wal-auto-b b{display:block;font-size:13.5px}
+.wal-auto-b span{display:block;font-size:11.5px;color:var(--dim);margin-top:3px}
+.wal-auto .switch{flex-shrink:0}
+
+/* лимиты и безопасность */
+.wal-sec-row{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.wal-sec-row:last-child{border-bottom:none}
+.wal-sec-row.tap{cursor:pointer;transition:opacity .15s}
+.wal-sec-row.tap:active{opacity:.75}
+.wal-sec-ic{width:36px;height:36px;border-radius:50%;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-start}
+.wal-sec-ic svg.i{width:17px;height:17px}
+.wal-sec-b{flex:1;min-width:0}
+.wal-sec-b b{display:block;font-size:13.5px}
+.wal-sec-b span{display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.45}
+.wal-limit-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);margin-top:8px;overflow:hidden}
+.wal-limit-bar i{display:block;height:100%;width:0;border-radius:3px;background:var(--lime);transition:width .6s cubic-bezier(.3,1,.4,1)}
+.wal-sec-row .switch{flex-shrink:0}
+
+/* шапка истории + кнопка «Выписка» */
+.wal-hist-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 4px}
+.wal-stmt-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:7px 13px;transition:transform .12s;flex-shrink:0}
+.wal-stmt-btn:active{transform:scale(.95)}
+.wal-stmt-btn svg.i{width:14px;height:14px}
+
 /* распределение расходов */
 .wal-cat-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--raised);border:1px solid var(--border);margin-bottom:12px}
 .wal-cat-bar i{display:block;height:100%;background:var(--lime);transform-origin:left;animation:walBarIn .6s cubic-bezier(.3,1,.4,1) both}
@@ -1097,8 +1136,83 @@ main>.screen{position:relative;z-index:1}
 @keyframes walPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes walRing{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.35);opacity:0}}
 
+/* реквизиты пополнения: мок-карта, QR, крипто-адреса */
+.wal-mockcard{margin-top:12px;background:radial-gradient(130% 160% at 90% -10%,rgba(154,255,0,.22),transparent 55%),linear-gradient(135deg,#141d0a,#05070a 72%);border:1px solid rgba(154,255,0,.32);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;color:#e8ffe0}
+.wal-mc-row{display:flex;justify-content:space-between;align-items:center;color:#9AFF00}
+.wal-mc-chip{width:33px;height:24px}
+.wal-mc-sys{font-size:10px;letter-spacing:.18em;font-weight:700}
+.wal-mc-num{display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-size:21px;letter-spacing:.13em;color:#fff;margin:13px 0 11px;transition:transform .12s}
+.wal-mc-num:active{transform:scale(.97)}
+.wal-mc-num svg.i{width:15px;height:15px;color:#9AFF00}
+.wal-mc-bot{display:flex;justify-content:space-between;font-size:10.5px;color:rgba(232,255,224,.62);letter-spacing:.05em}
+.wal-req-qr{display:flex;gap:12px;align-items:center;margin-top:10px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px}
+.wal-req-qr svg{flex-shrink:0}
+.wal-req-qr b{font-size:12.5px;display:block}
+.wal-req-qr span{font-size:11px;color:var(--dim);display:block;margin-top:4px;line-height:1.45}
+.wal-req{margin-top:12px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.wal-req-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.wal-req-h svg.i{width:16px;height:16px;color:var(--accent)}
+.wal-req-h b{color:var(--accent)}
+.wal-addr{display:flex;align-items:center;gap:9px;width:100%;margin-top:9px;background:var(--surface);border:1px dashed var(--accent);border-radius:10px;padding:10px 12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--accent);text-align:left;transition:transform .12s}
+.wal-addr:active{transform:scale(.98)}
+.wal-addr span{flex:1;word-break:break-all;line-height:1.4}
+.wal-addr svg.i{width:14px;height:14px;flex-shrink:0}
+.wal-req-warn{font-size:10.5px;color:var(--danger);margin-top:8px;line-height:1.5}
+
+/* ПИН-пад */
+.wal-pin{text-align:center;padding:4px 0 6px;animation:fade .25s ease}
+.wal-pin-lock{width:52px;height:52px;border-radius:50%;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.wal-pin-lock svg.i{width:24px;height:24px}
+.wal-pin-dots{display:flex;gap:15px;justify-content:center;margin:20px 0 22px}
+.wal-pin-dots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:all .16s}
+.wal-pin-dots span.on{background:var(--lime);border-color:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.5)}
+:root[data-theme="light"] .wal-pin-dots span.on{box-shadow:none}
+.wal-pin-dots.err{animation:walShake .4s ease}
+@keyframes walShake{0%,100%{transform:none}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.wal-pin-keys{display:grid;grid-template-columns:repeat(3,74px);gap:10px;justify-content:center}
+.wal-pin-keys button{height:54px;border-radius:16px;background:var(--surface);border:1px solid var(--border);font-size:20px;font-weight:700;color:var(--text);transition:all .12s}
+.wal-pin-keys button:active{transform:scale(.92);background:var(--lime-dim);border-color:var(--lime);color:var(--accent)}
+.wal-pin-keys button.ghosty{background:transparent;border:none;font-size:12px;font-weight:600;color:var(--dim);display:flex;align-items:center;justify-content:center}
+.wal-pin-keys button.ghosty svg.i{width:20px;height:20px}
+
+/* выписка: fullscreen-документ */
+.wal-stmt{position:fixed;inset:0;z-index:120;background:var(--bg);display:none;flex-direction:column}
+.wal-stmt.open{display:flex;animation:fade .25s ease}
+.wal-stmt-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.wal-stmt-bar>span{flex:1;text-align:center;font-family:var(--font-display);font-size:19px;letter-spacing:.08em;color:var(--text)}
+.wal-stmt-nav{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text);flex-shrink:0;transition:transform .12s}
+.wal-stmt-nav:active{transform:scale(.92)}
+.wal-stmt-nav svg.i{width:17px;height:17px}
+.wal-stmt-scroll{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+.wal-stmt-foot{padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0}
+.wal-stmt-paper{max-width:560px;margin:0 auto;background:#fff;color:#151515;border-radius:12px;padding:20px 18px 22px;box-shadow:0 12px 44px rgba(0,0,0,.4);animation:walRise .35s ease}
+:root[data-theme="light"] .wal-stmt-paper{box-shadow:0 8px 30px rgba(0,0,0,.14);border:1px solid #e3e6ef}
+.wal-st-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1.5px solid #dfe3ee;padding-bottom:12px}
+.wal-st-req b{font-size:11px;display:block;letter-spacing:.02em}
+.wal-st-req span{display:block;font-size:10px;color:#556;margin-top:3px;letter-spacing:.03em}
+.wal-st-seal{flex-shrink:0;margin:-6px -4px 0 0}
+.wal-stmt-paper h1{font-family:var(--font-display);font-size:23px;letter-spacing:.06em;margin:14px 0 10px;color:#111}
+.wal-st-meta div{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:3px 0}
+.wal-st-meta span{color:#667}
+.wal-st-meta b{font-weight:700;color:#111;text-align:right}
+.wal-st-ops{border-top:1px solid #e3e6ef;border-bottom:1px solid #e3e6ef;margin:12px 0 10px;padding:2px 0}
+.wal-st-op{display:flex;gap:8px;font-size:11.5px;padding:6px 0;border-bottom:1px dashed #eef0f6;align-items:baseline}
+.wal-st-op:last-child{border-bottom:none}
+.wal-st-op .d{color:#889;flex-shrink:0;font-size:10px;width:88px}
+.wal-st-op .w{flex:1;color:#223;min-width:0}
+.wal-st-op b{white-space:nowrap;font-weight:700}
+.wal-st-op b.in{color:#3f8e00}
+.wal-st-op b.out{color:#c22936}
+.wal-st-tot div{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:#334}
+.wal-st-tot b.in{color:#3f8e00}
+.wal-st-tot b.out{color:#c22936}
+.wal-st-tot .net{border-top:1px solid #e3e6ef;margin-top:4px;padding-top:8px;font-weight:700;color:#111}
+.wal-st-sign{display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:12px}
+.wal-st-sig span{display:block;font-size:10px;color:#556;margin-top:4px}
+.wal-st-note{font-size:9.5px;color:#98a;max-width:50%;line-height:1.55;text-align:right}
+
 /* ===== module: games ===== */
-/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» (префикс gm-) ===== */
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» + «Кости» (префикс gm-) ===== */
 
 /* шапка экрана */
 .gm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -1218,6 +1332,87 @@ main>.screen{position:relative;z-index:1}
 .gm-resp svg.i{width:20px;height:20px;color:var(--accent);flex-shrink:0;margin-top:2px}
 .gm-resp p{font-size:11.5px;color:var(--dim);line-height:1.55}
 .gm-resp p b{color:var(--text)}
+
+/* --- блокировка ставок на время раунда --- */
+.gm-locked .gm-bet input,
+.gm-locked .gm-chips button,
+.gm-locked .gm-dice-picks button,
+.gm-locked .gm-road-btns button{opacity:.45;pointer-events:none}
+
+/* --- КОСТИ: 3D-кубы --- */
+.gm-dice-card{position:relative;overflow:hidden;background:radial-gradient(130% 120% at 50% -10%,rgba(154,255,0,.13),transparent 55%),linear-gradient(160deg,#0e1408,#060804 70%);border:1px solid #2c3b14;border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;animation:fade .3s ease}
+:root[data-theme="light"] .gm-dice-card{border-color:#b9d494;box-shadow:0 10px 30px rgba(20,40,0,.18)}
+.gm-dice-stage{display:flex;justify-content:center;gap:38px;padding:30px 0 26px;perspective:560px}
+.gm-die{width:64px;height:64px;position:relative}
+.gm-cube{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+.gm-face{position:absolute;inset:0;background:linear-gradient(145deg,#1a2410,#0b1106);border:1.5px solid #3c5216;border-radius:13px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;box-shadow:inset 0 0 12px rgba(0,0,0,.55),0 0 8px rgba(154,255,0,.12);backface-visibility:hidden}
+.gm-face i{width:10px;height:10px;border-radius:50%;place-self:center;background:transparent}
+.gm-face i.on{background:#9AFF00;box-shadow:0 0 6px rgba(154,255,0,.8)}
+.gm-dice-picks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 2px}
+.gm-dice-picks button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1px solid #2c3b14;border-radius:var(--r-md);color:#b9c9a2;transition:all .15s}
+.gm-dice-picks button b{font-size:12.5px;font-weight:800}
+.gm-dice-picks button span{font-family:var(--font-display);font-size:12px;letter-spacing:.06em;color:#7d8f68}
+.gm-dice-picks button.on{border-color:#9AFF00;background:rgba(154,255,0,.14);color:#9AFF00;box-shadow:0 0 10px rgba(154,255,0,.25)}
+.gm-dice-picks button.on span{color:#9AFF00}
+.gm-dice-picks button.hit{border-color:#9AFF00;background:#9AFF00;color:#000;box-shadow:0 0 18px rgba(154,255,0,.6)}
+.gm-dice-picks button.hit span{color:#000}
+.gm-dice-picks button:active{transform:scale(.95)}
+
+/* --- БОНУС ДНЯ: кнопка-баннер --- */
+.gm-bonus-btn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;margin-bottom:14px;border:1px solid var(--lime);border-radius:var(--r-md);background:linear-gradient(120deg,var(--lime-dim),transparent 70%);color:var(--text);transition:all .2s;animation:gmBtnPulse 2.8s ease-in-out infinite}
+.gm-bonus-btn>svg.i:first-child{width:22px;height:22px;color:var(--accent);flex-shrink:0}
+.gm-bonus-btn .gm-bonus-t{flex:1;min-width:0}
+.gm-bonus-btn .gm-bonus-t span{display:block;font-weight:800;font-size:13.5px}
+.gm-bonus-btn .gm-bonus-t small{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.gm-bonus-btn .gm-bonus-t small b{color:var(--accent);font-variant-numeric:tabular-nums}
+.gm-bonus-btn svg.gm-bonus-chev{width:15px;height:15px;color:var(--dim);flex-shrink:0}
+.gm-bonus-btn:active{transform:scale(.98)}
+.gm-bonus-btn.done{border-color:var(--border);background:var(--surface);animation:none}
+.gm-bonus-btn.done>svg.i:first-child{color:var(--dim)}
+
+/* --- БОНУС ДНЯ: шит с колесом подарков --- */
+#sheet-gmBonus{text-align:center}
+#sheet-gmBonus h3{text-align:left}
+.gm-bonus-stage{padding-top:2px}
+.gm-bwheel-wrap{position:relative;width:212px;height:212px;margin:0 auto}
+.gm-bwheel{position:absolute;inset:0;border-radius:50%;border:3px solid #2c3b14;box-shadow:0 0 0 6px #0c1106,0 0 28px rgba(154,255,0,.22),inset 0 0 22px rgba(0,0,0,.6);will-change:transform}
+.gm-bwheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -22.9deg,rgba(0,0,0,.55) 0 .9deg,transparent .9deg 45deg);pointer-events:none}
+.gm-bsec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:16px;letter-spacing:.05em;line-height:1;pointer-events:none}
+.gm-bwheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
+.gm-bwheel-hub svg.i{width:26px;height:26px;color:#9AFF00}
+#sheet-gmBonus .gm-spin{margin-top:4px}
+.gm-bonus-claimed{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 6px 8px}
+.gm-bonus-claimed svg.i{width:34px;height:34px;color:var(--accent)}
+.gm-bonus-claimed b{font-size:15px}
+.gm-bonus-claimed span{font-size:12.5px;color:var(--dim)}
+.gm-bonus-claimed span b{color:var(--accent);font-size:12.5px;font-variant-numeric:tabular-nums}
+.gm-bonus-claimed .btn{margin-top:8px}
+
+/* --- ЛИДЕРЫ НЕДЕЛИ --- */
+.gm-lb-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 2px 10px;border-bottom:1px solid var(--border)}
+.gm-lb-head span{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700}
+.gm-lb-head span svg.i{width:16px;height:16px;color:var(--accent)}
+.gm-lb-head small{font-size:11px;color:var(--dim);white-space:nowrap}
+.gm-lb-row{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.gm-lb-row:last-child{border-bottom:none}
+.gm-lb-row.me{background:var(--lime-dim);border-radius:var(--r-sm);padding-left:8px;padding-right:8px;border-bottom-color:transparent;box-shadow:inset 0 0 0 1px var(--lime)}
+.gm-lb-pos{width:26px;flex-shrink:0;text-align:center;font-family:var(--font-display);font-size:16px;color:var(--dim)}
+.gm-lb-pos.p1 svg.i{width:19px;height:19px;color:var(--accent);filter:drop-shadow(0 0 6px rgba(154,255,0,.6))}
+.gm-lb-pos.p2{color:var(--text)}
+.gm-lb-pos.p3{color:var(--text);opacity:.75}
+.gm-lb-ava{width:32px;height:32px;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);flex-shrink:0}
+.gm-lb-row.me .gm-lb-ava{background:var(--lime);color:#000;border-color:var(--lime)}
+.gm-lb-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.gm-lb-n{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.gm-lb-b small{font-size:10.5px;color:var(--dim)}
+.gm-lb-you{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#000;background:var(--lime);border-radius:99px;padding:1.5px 7px}
+.gm-lb-mv{width:13px;height:13px;flex-shrink:0}
+.gm-lb-mv.up{color:var(--accent);transform:rotate(-90deg);animation:gmLbUp .8s ease infinite alternate}
+.gm-lb-mv.down{color:var(--danger);transform:rotate(90deg)}
+@keyframes gmLbUp{from{translate:0 1px}to{translate:0 -2px}}
+.gm-lb-sum{font-size:13.5px;font-weight:800;white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums}
+.gm-lb-row.me .gm-lb-sum{color:var(--accent)}
+.gm-lb-gap{text-align:center;color:var(--dim);font-size:14px;letter-spacing:.3em;padding:2px 0}
 
 /* ===== module: academy ===== */
 /* ===== ACADEMY: Академия OKO (префикс ac-) ===== */
@@ -2166,6 +2361,116 @@ main>.screen{position:relative;z-index:1}
 #feedList .post .head .ava:hover{transform:scale(1.06);box-shadow:var(--glow)}
 #convAva{cursor:pointer}
 
+/* ===== module: stories-plus ===== */
+/* ===== STORIES-PLUS (sp-): редактор сторис, просмотры, реакции, мультисторис ===== */
+
+/* ---------- редактор текст-сторис (fullscreen поверх приложения) ---------- */
+#spEditor{position:fixed;inset:0;z-index:66;background:var(--bg);display:flex;flex-direction:column;transform:translateY(102%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:640px;margin:0 auto}
+#spEditor.open{transform:none}
+@media(prefers-reduced-motion:reduce){#spEditor{transition:none}}
+.sp-ed-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 8px}
+.sp-ed-head b{font-family:var(--font-display);font-size:22px;letter-spacing:.05em}
+.sp-ed-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text);background:var(--surface);border:1px solid var(--border);transition:border-color .2s,transform .15s;flex-shrink:0}
+.sp-ed-ic:hover{border-color:var(--accent)}
+.sp-ed-ic:active{transform:scale(.92)}
+.sp-ed-ic svg.i{width:19px;height:19px}
+.sp-ed-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:6px 16px}
+.sp-ed-card{position:relative;aspect-ratio:9/16;height:100%;max-height:46dvh;max-width:86vw;border-radius:18px;border:1px solid rgba(154,255,0,.28);box-shadow:0 10px 42px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:background .25s ease}
+:root[data-theme="light"] .sp-ed-card{box-shadow:0 10px 34px rgba(30,50,0,.22)}
+#spEdText{width:100%;max-height:100%;overflow-y:auto;padding:18px 16px;outline:none;font-weight:600;line-height:1.45;word-break:break-word;font-family:var(--font-body)}
+#spEdText:empty::before{content:attr(data-ph);color:currentColor;opacity:.45;font-weight:500}
+.sp-sz-s #spEdText{font-size:12.5px}
+.sp-sz-m #spEdText{font-size:16px}
+.sp-sz-l #spEdText{font-size:21px;line-height:1.3}
+.sp-al-left #spEdText{text-align:left}
+.sp-al-center #spEdText{text-align:center}
+.sp-al-right #spEdText{text-align:right}
+.sp-ed-sticker{position:absolute;width:34px;height:34px;border-radius:10px;background:rgba(0,0,0,.4);border:1px solid rgba(154,255,0,.55);display:none;align-items:center;justify-content:center;color:#9AFF00;z-index:2;transition:top .2s,left .2s,right .2s,bottom .2s}
+.sp-ed-sticker svg.i{width:20px;height:20px}
+.sp-ed-card.sp-stk .sp-ed-sticker{display:flex;animation:spPop .25s ease}
+@keyframes spPop{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.sp-ed-card.sp-stk .sp-ed-sticker{animation:none}}
+
+/* панель инструментов редактора */
+.sp-ed-swatches{display:flex;gap:10px;justify-content:center;align-items:center;padding:6px 16px 10px}
+.sp-sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;flex-shrink:0}
+.sp-sw:hover{transform:scale(1.08)}
+.sp-sw.on{border-color:var(--lime);transform:scale(1.14);box-shadow:var(--glow)}
+:root[data-theme="light"] .sp-sw.on{box-shadow:0 0 12px rgba(110,200,0,.4)}
+.sp-ed-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:0 16px 12px;flex-wrap:wrap}
+.sp-seg-group{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px;gap:2px}
+.sp-seg-group button{width:38px;height:32px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-weight:800;transition:background .15s,color .15s}
+.sp-seg-group button.on{background:var(--lime-dim);color:var(--accent)}
+.sp-seg-group button svg.i{width:17px;height:17px}
+.sp-stk-toggle{width:44px;height:38px;border-radius:99px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);transition:border-color .15s,color .15s,box-shadow .15s}
+.sp-stk-toggle.on{color:var(--accent);border-color:var(--lime);box-shadow:var(--glow)}
+:root[data-theme="light"] .sp-stk-toggle.on{box-shadow:none}
+.sp-stk-toggle svg.i{width:20px;height:20px}
+.sp-ed-pub{margin:0 16px calc(16px + env(safe-area-inset-bottom));padding:14px;font-size:15px}
+
+/* ---------- вьювер: прогресс-сегменты мультисторис ---------- */
+.sp-bars{position:absolute;top:10px;left:16px;right:16px;display:flex;gap:5px;z-index:3;pointer-events:none}
+#storyViewer.sp-multi > .sv-bar{display:none}
+.sp-seg{flex:1;height:16px;display:flex;align-items:center;cursor:pointer;background:none;padding:0;pointer-events:auto}
+.sp-seg i{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
+.sp-seg i b{display:block;height:100%;width:0;background:#9AFF00;border-radius:2px}
+.sp-seg.done i b{width:100%}
+.sp-seg.act i b{animation:svbar 4s linear forwards}
+#storyViewer.sp-paused .sp-seg.act i b{animation-play-state:paused}
+#storyViewer.sp-paused .sv-bar i{animation-play-state:paused}
+
+/* ---------- вьювер: низ (счётчик просмотров / реакции) ---------- */
+.sp-foot{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:3;pointer-events:none}
+.sp-eye{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:99px;padding:9px 16px;font-size:13.5px;font-weight:700;backdrop-filter:blur(6px);pointer-events:auto;transition:transform .15s,border-color .15s;animation:spPop .25s ease}
+.sp-eye:hover{border-color:#9AFF00}
+.sp-eye:active{transform:scale(.95)}
+.sp-eye svg.i{width:17px;height:17px;color:#9AFF00}
+.sp-eye svg.i:last-child{width:13px;height:13px;color:#bbb;transform:rotate(90deg)}
+.sp-reacts{display:flex;gap:14px;pointer-events:auto}
+.sp-react{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s;animation:spPop .25s ease}
+.sp-react:hover{border-color:#9AFF00}
+.sp-react:active{transform:scale(1.18)}
+.sp-react.on{background:rgba(154,255,0,.18);border-color:#9AFF00;color:#9AFF00}
+.sp-react svg.i{width:21px;height:21px}
+@media(prefers-reduced-motion:reduce){.sp-eye,.sp-react{animation:none}}
+
+/* летящая реакция */
+.sp-fly{position:fixed;z-index:79;color:#9AFF00;pointer-events:none;opacity:0;animation:spFly 1s ease-out forwards}
+.sp-fly svg.i{width:26px;height:26px}
+@keyframes spFly{0%{opacity:0;transform:translate(0,10px) scale(.55)}18%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0px),-140px) scale(1.3)}}
+
+/* стикер-глаз OKO в карточке сторис */
+.sp-sticker{position:absolute;width:44px;height:44px;border-radius:12px;background:rgba(0,0,0,.42);border:1px solid rgba(154,255,0,.6);display:flex;align-items:center;justify-content:center;color:#9AFF00;box-shadow:0 0 18px rgba(154,255,0,.3);z-index:2;animation:spPop .3s ease}
+.sp-sticker svg.i{width:26px;height:26px}
+.sp-pos-tl{top:12px;left:12px}
+.sp-pos-tr{top:12px;right:12px}
+.sp-pos-bl{bottom:12px;left:12px}
+.sp-pos-br{bottom:12px;right:12px}
+@media(prefers-reduced-motion:reduce){.sp-sticker{animation:none}}
+
+/* счётчик историй на кружке автора в ленте */
+.sp-cnt{position:absolute;right:-3px;bottom:-2px;min-width:19px;height:19px;border-radius:10px;background:#000;border:1.5px solid var(--lime);color:var(--lime);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;font-style:normal}
+:root[data-theme="light"] .sp-cnt{background:#fff;color:var(--accent);border-color:var(--accent)}
+
+/* ---------- шторка «кто посмотрел» (поверх вьювера, z 80 > 76) ---------- */
+#spVwWrap{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center}
+#spVwWrap.open{display:flex}
+.sp-vw{width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:8px 18px calc(18px + env(safe-area-inset-bottom));max-height:62dvh;overflow-y:auto;animation:spVwUp .28s cubic-bezier(.3,1,.4,1)}
+@keyframes spVwUp{from{transform:translateY(55%);opacity:.4}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.sp-vw{animation:none}}
+.sp-vw-grip{width:38px;height:4px;border-radius:2px;background:var(--border);margin:4px auto 14px}
+.sp-vw h3{font-size:20px;display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.sp-vw h3 svg.i{width:19px;height:19px;color:var(--accent)}
+.sp-vw h3 span{margin-left:auto;font-family:var(--font-display);font-size:23px;color:var(--accent);letter-spacing:.03em}
+.sp-vw-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.sp-vw-item:last-child{border-bottom:none}
+.sp-vw-item .ava{width:40px;height:40px;font-size:15px}
+.sp-vw-item b{font-size:14px;display:block}
+.sp-vw-item small{color:var(--dim);font-size:11.5px;display:block;margin-top:1px}
+.sp-vw-re{margin-left:auto;color:var(--accent);display:flex}
+.sp-vw-re svg.i{width:18px;height:18px}
+.sp-vw-empty{color:var(--dim);font-size:13px;text-align:center;padding:18px 0 10px}
+
 
 </style>
 </head>
@@ -2553,6 +2858,10 @@ main>.screen{position:relative;z-index:1}
       </div>
       <div class="wal-balance" id="walBalance">0 <b>₽</b></div>
       <div class="wal-hold" id="walHold"><svg class="i"><use href="#i-lock"/></svg><span>В холде (эскроу): <b>0 ₽</b></span></div>
+      <div class="wal-chart-wrap">
+        <div class="wal-chart-h"><span>Динамика · 30 дней</span><span class="wal-delta in" id="walDelta"></span></div>
+        <canvas id="walChart" class="wal-chart" height="66"></canvas>
+      </div>
       <div class="wal-actions">
         <button class="wal-act" onclick="walOpenTopup()"><svg class="i"><use href="#i-plus"/></svg>Пополнить</button>
         <button class="wal-act ghost" onclick="walOpenWithdraw()"><svg class="i"><use href="#i-card"/></svg>Вывести</button>
@@ -2560,11 +2869,50 @@ main>.screen{position:relative;z-index:1}
       </div>
     </div>
 
+    <div class="card wal-auto" id="walAutoCard" onclick="walToggleAutopay()" role="button">
+      <div class="wal-auto-ic"><svg class="i"><use href="#i-crown"/></svg></div>
+      <div class="wal-auto-b">
+        <b>Подписка PRO — автопродление</b>
+        <span id="walAutoSub">Выключено</span>
+      </div>
+      <span class="switch" id="walAutoSw"><i></i></span>
+    </div>
+
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Расходы по категориям</h2>
     <div class="wal-cat-bar" id="walCatBar"></div>
     <div class="wal-cats" id="walCats"></div>
 
-    <h2 class="section-h" id="walHistAnchor" style="margin:24px 0 4px;font-size:21px">История операций</h2>
+    <h2 class="section-h" style="margin:24px 0 12px;font-size:21px">Лимиты и безопасность</h2>
+    <div class="card wal-sec" style="padding:2px 14px">
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-card"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Суточный лимит вывода</b>
+          <span id="walSecWdSub">0 ₽ из 100 000 ₽ за сегодня</span>
+          <div class="wal-limit-bar"><i id="walSecWdBar"></i></div>
+        </div>
+      </div>
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-check"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Покупки без подтверждения</b>
+          <span>До 5 000 ₽ — мгновенно, выше — с подтверждением операции</span>
+        </div>
+      </div>
+      <div class="wal-sec-row tap" onclick="walTogglePin()" role="button">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-lock"/></svg></div>
+        <div class="wal-sec-b">
+          <b>ПИН-код на вывод</b>
+          <span id="walPinSub">Выключен — включи для защиты вывода</span>
+        </div>
+        <span class="switch" id="walPinSw"><i></i></span>
+      </div>
+    </div>
+
+    <div class="wal-hist-head">
+      <h2 class="section-h" id="walHistAnchor" style="margin:0;font-size:21px">История операций</h2>
+      <button class="wal-stmt-btn" onclick="walOpenStatement()"><svg class="i"><use href="#i-file"/></svg>Выписка</button>
+    </div>
     <div class="wal-filters" id="walFilters">
       <button class="on" data-f="all" onclick="walSetFilter('all')">Все</button>
       <button data-f="in" onclick="walSetFilter('in')">Пополнения</button>
@@ -2576,7 +2924,7 @@ main>.screen{position:relative;z-index:1}
 </section>
 
 <!-- ===== module: games ===== -->
-<!-- ИГРЫ OKO: рулетка + «Дорога» (префикс gm-) -->
+<!-- ИГРЫ OKO: рулетка + «Дорога» + «Кости» + лидеры недели + бонус дня (префикс gm-) -->
 <section class="screen" id="screen-games">
   <div class="pad">
 
@@ -2593,9 +2941,12 @@ main>.screen{position:relative;z-index:1}
       <div class="gm-limit-bar"><i id="gmLimitBar" style="width:0%"></i></div>
     </div>
 
+    <button class="gm-bonus-btn" id="gmBonusBtn" onclick="gmBonusOpen()"></button>
+
     <div class="gm-tabs">
-      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка OKO</button>
-      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога OKO</button>
+      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка</button>
+      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога</button>
+      <button id="gmTab-dice" onclick="gmShowGame('dice')"><svg class="i"><use href="#i-gm-dice"/></svg>Кости</button>
     </div>
 
     <!-- РУЛЕТКА OKO -->
@@ -2634,6 +2985,33 @@ main>.screen{position:relative;z-index:1}
         <div id="gmRoadCtrl"></div>
       </div>
     </div>
+
+    <!-- КОСТИ OKO -->
+    <div id="gmGame-dice" style="display:none">
+      <div class="gm-dice-card">
+        <div class="gm-dice-stage">
+          <div class="gm-die" id="gmDie1"></div>
+          <div class="gm-die" id="gmDie2"></div>
+        </div>
+        <div class="gm-result" id="gmDiceResult"><span class="gm-hint">Сумма двух костей: меньше 7, ровно 7 или больше 7</span></div>
+        <div class="gm-dice-picks" id="gmDicePicks">
+          <button data-pick="under" class="on" onclick="gmDicePick('under',this)"><b>Меньше 7</b><span>×1,9</span></button>
+          <button data-pick="seven" onclick="gmDicePick('seven',this)"><b>Ровно 7</b><span>×5</span></button>
+          <button data-pick="over" onclick="gmDicePick('over',this)"><b>Больше 7</b><span>×1,9</span></button>
+        </div>
+        <div class="gm-bet"><input id="gmDiceBet" type="number" inputmode="numeric" min="10" step="10" value="100" placeholder="Ставка, ₽" oninput="gmChipClear(this)"></div>
+        <div class="gm-chips">
+          <button onclick="gmChip('gmDiceBet',50,this)">50 ₽</button>
+          <button class="on" onclick="gmChip('gmDiceBet',100,this)">100 ₽</button>
+          <button onclick="gmChip('gmDiceBet',500,this)">500 ₽</button>
+          <button onclick="gmChip('gmDiceBet',1000,this)">1000 ₽</button>
+        </div>
+        <button class="gm-spin" id="gmDiceBtn" onclick="gmDiceRoll()"><svg class="i"><use href="#i-bolt"/></svg>Бросить кости</button>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Лидеры недели</h2>
+    <div class="card" style="padding:4px 14px" id="gmLb"></div>
 
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">История игр</h2>
     <div class="card" style="padding:4px 14px" id="gmHistory"></div>
@@ -2866,9 +3244,28 @@ main>.screen{position:relative;z-index:1}
 </div>
 
 <!-- ===== module: wallet ===== -->
-<!-- КОШЕЛЁК: пополнение и вывод -->
+<!-- КОШЕЛЁК: пополнение, вывод, ПИН-код -->
 <div class="sheet" id="sheet-walTopup"><div id="walTopupView"></div></div>
 <div class="sheet" id="sheet-walWithdraw"><div id="walWdView"></div></div>
+<div class="sheet" id="sheet-walPin"><div id="walPinView"></div></div>
+
+<!-- КОШЕЛЁК: выписка по счёту (fullscreen-документ) -->
+<div class="wal-stmt" id="walStmt">
+  <div class="wal-stmt-bar">
+    <button class="wal-stmt-nav" onclick="walCloseStatement()" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span>Выписка по счёту</span>
+    <button class="wal-stmt-nav" onclick="walDownloadStatement()" aria-label="Скачать"><svg class="i"><use href="#i-dl"/></svg></button>
+  </div>
+  <div class="wal-stmt-scroll"><div class="wal-stmt-paper" id="walStmtPaper"></div></div>
+  <div class="wal-stmt-foot"><button class="btn" onclick="walDownloadStatement()"><svg class="i"><use href="#i-dl"/></svg> Скачать выписку (.txt)</button></div>
+</div>
+
+<!-- ===== module: games ===== -->
+<!-- ИГРЫ OKO: шит ежедневного бонуса — колесо мини-подарков -->
+<div class="sheet" id="sheet-gmBonus">
+  <h3>Бонус дня</h3>
+  <div id="gmBonusBody"></div>
+</div>
 
 <!-- ===== module: academy ===== -->
 <!-- АКАДЕМИЯ: полноэкранный просмотр сертификата -->
@@ -3005,6 +3402,46 @@ main>.screen{position:relative;z-index:1}
     <span style="width:24px"></span>
   </div>
   <div class="sv-body" id="psBody"></div>
+</div>
+
+<!-- ===== module: stories-plus ===== -->
+<!-- ===== STORIES-PLUS (sp-): редактор текст-сторис + шторка просмотров ===== -->
+<div id="spEditor">
+  <div class="sp-ed-head">
+    <button class="sp-ed-ic" onclick="spCloseEditor()" title="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Новая история</b>
+    <button class="sp-ed-ic" onclick="spPickPhoto()" title="Фото с устройства"><svg class="i"><use href="#i-photo"/></svg></button>
+  </div>
+  <div class="sp-ed-stage">
+    <div class="sp-ed-card" id="spEdCard">
+      <div id="spEdText" contenteditable="true" data-ph="Твоя история…" oninput="spEdSync()"></div>
+      <button class="sp-ed-sticker" id="spEdSticker" onclick="spCycleSticker(event)" title="Передвинуть стикер"><svg class="i"><use href="#i-logo"/></svg></button>
+    </div>
+  </div>
+  <div class="sp-ed-tools">
+    <div class="sp-ed-swatches" id="spEdSwatches"></div>
+    <div class="sp-ed-row">
+      <div class="sp-seg-group" id="spEdSizes">
+        <button data-v="s" onclick="spEdSize('s')" title="Мелкий текст"><span style="font-size:11px">А</span></button>
+        <button data-v="m" onclick="spEdSize('m')" title="Средний текст"><span style="font-size:14px">А</span></button>
+        <button data-v="l" onclick="spEdSize('l')" title="Крупный текст"><span style="font-size:18px">А</span></button>
+      </div>
+      <div class="sp-seg-group" id="spEdAligns">
+        <button data-v="left" onclick="spEdAlign('left')" title="По левому краю"><svg class="i"><use href="#i-sp-al"/></svg></button>
+        <button data-v="center" onclick="spEdAlign('center')" title="По центру"><svg class="i"><use href="#i-sp-ac"/></svg></button>
+        <button data-v="right" onclick="spEdAlign('right')" title="По правому краю"><svg class="i"><use href="#i-sp-ar"/></svg></button>
+      </div>
+      <button class="sp-stk-toggle" id="spEdStkBtn" onclick="spToggleSticker()" title="Стикер-глаз OKO"><svg class="i"><use href="#i-logo"/></svg></button>
+    </div>
+    <button class="btn sp-ed-pub" onclick="spPublish()">Опубликовать историю</button>
+  </div>
+</div>
+<div id="spVwWrap" onclick="spCloseViewers()">
+  <div class="sp-vw" onclick="event.stopPropagation()">
+    <div class="sp-vw-grip"></div>
+    <h3><svg class="i"><use href="#i-eye"/></svg>Просмотры<span id="spVwCount"></span></h3>
+    <div id="spVwList"></div>
+  </div>
 </div>
 
 
@@ -5769,16 +6206,26 @@ doLogin = function(method){
 /* ===== module: wallet ===== */
 /* ================= WALLET: экран кошелька / лицевой счёт =================
    Опирается на core-ext: WALLET, walletAdd, walletCharge, fmtMoney, okoEarn.
-   Патчит денежные потоки ядра (тарифы, продвижение, биржа, переводы, партнёрка). */
+   Патчит денежные потоки ядра (тарифы, продвижение, биржа, переводы, партнёрка).
+   Плюс: график баланса 30 дней, автопродление PRO, выписка (.txt + документ),
+   реквизиты пополнения, лимиты счёта и ПИН-код на вывод. */
 
-/* ---------- иконка TON (кристалл) в общий defs ---------- */
+/* ---------- иконки TON (кристалл) и «скачать» в общий defs ---------- */
 (function walAddIcons(){
   const defs = document.querySelector('svg defs');
-  if(!defs || document.getElementById('i-ton')) return;
-  const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-  s.setAttribute('id','i-ton'); s.setAttribute('viewBox','0 0 100 100');
-  s.innerHTML = '<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
-  defs.appendChild(s);
+  if(!defs) return;
+  if(!document.getElementById('i-ton')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-ton'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }
+  if(!document.getElementById('i-dl')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-dl'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }
 })();
 
 /* ---------- демо-наполнение леджера (один раз, реалистичные операции) ---------- */
@@ -5801,6 +6248,29 @@ doLogin = function(method){
   try{ localStorage.setItem('oko-wallet-demo','1'); }catch(e){}
 })();
 
+/* история за месяц для графика (только старые даты, баланс НЕ меняют —
+   восстанавливаются графиком назад от текущего) */
+(function walSeedDemo2(){
+  try{ if(localStorage.getItem('oko-wallet-demo2')==='1') return; }catch(e){}
+  const D = 864e5, now = Date.now();
+  const hist = [
+    {t:'+', sum:1200, why:'Продажа на Бирже: обложка канала',   at: now - 3*D},
+    {t:'-', sum:150,  why:'Стикеры OKO · набор «Неон»',         at: now - 4*D},
+    {t:'+', sum:900,  why:'Партнёрская программа · выплата',    at: now - 6*D},
+    {t:'-', sum:349,  why:'Продвижение объявления · Старт',     at: now - 8*D},
+    {t:'-', sum:600,  why:'Игра «Дорога» · ставка',             at: now - 11*D},
+    {t:'+', sum:800,  why:'Пополнение · USDT',                  at: now - 13*D},
+    {t:'-', sum:1490, why:'Тариф START · 1 мес',                at: now - 19*D},
+    {t:'+', sum:700,  why:'Возврат по спору · Биржа',           at: now - 22*D},
+    {t:'-', sum:250,  why:'Перевод в чате · Аня Соколова',      at: now - 26*D},
+    {t:'+', sum:1500, why:'Пополнение · Карта РФ',              at: now - 28*D},
+  ];
+  WALLET.ledger = WALLET.ledger.concat(hist);
+  WALLET.ledger.sort((a,b)=>b.at-a.at);
+  walletSave();
+  try{ localStorage.setItem('oko-wallet-demo2','1'); }catch(e){}
+})();
+
 /* ---------- состояние модуля ---------- */
 let walFilter = 'all';
 let walTopupState = {sum:1000, method:'card'};
@@ -5813,13 +6283,27 @@ const WAL_METHODS = [
 ];
 const WAL_M_LABEL = {card:'Карта РФ', usdt:'Крипта USDT', lava:'Lava.top', ton:'TON'};
 const WAL_USD_RATE = 90; // курс прототипа для партнёрских выплат в $
+const WAL_WD_DAY_LIMIT = 100000;        // суточный лимит вывода
+const WAL_NOCONF_LIMIT = 5000;          // покупки без подтверждения
+const WAL_CARD_NUM = '2200 7007 1234 5566';
+const WAL_USDT_ADDR = 'TQoKo4fHFYyeJtsDdD7TgKLxAV1mFJnEok';
+const WAL_TON_ADDR = 'UQAoKoAppTonWa11etMockAddr9hfP2vXqLmTz4A';
+
+/* доп-настройки кошелька (персист): автопродление, ПИН, суточный вывод */
+const WAL_X = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet-x'))||{}; }catch(e){ return {}; } })();
+function walXSave(){ try{ localStorage.setItem('oko-wallet-x', JSON.stringify(WAL_X)); }catch(e){} }
+function walProPrice(){ return (typeof PLANS!=='undefined' && PLANS.PRO) ? PLANS.PRO.mo : 4890; }
+function walDMY(ts){ const d = new Date(ts); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
+function walDMYT(ts){ const d = new Date(ts); return walDMY(ts)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function walCopy(txt, msg){ try{ navigator.clipboard.writeText(txt); }catch(e){} toast(msg||'Скопировано'); }
 
 /* ---------- категории расходов ---------- */
 function walCat(why){
   if(/продвижен/i.test(why)) return 'Продвижение';
   if(/бирж/i.test(why)) return 'Биржа';
   if(/игр|рулетк|ставк|дорог/i.test(why)) return 'Игры';
-  if(/тариф/i.test(why)) return 'Тарифы';
+  if(/тариф|автопродлен/i.test(why)) return 'Тарифы';
+  if(/вывод/i.test(why)) return 'Вывод средств';
   if(/перевод/i.test(why)) return 'Переводы';
   return 'Прочее';
 }
@@ -5861,7 +6345,86 @@ function renderWallet(){
   walRenderCats();
   walRenderLedger();
   walUpdateChips();
+  walRenderAutopay();
+  walRenderSec();
+  walDrawChart();
 }
+
+/* ---------- ГРАФИК БАЛАНСА за 30 дней (восстановление по леджеру) ---------- */
+function walSeries(days){
+  const now = Date.now(), day = 864e5, pts = [];
+  for(let i = days; i >= 0; i--){
+    const T = now - i * day;
+    let b = WALLET.balance;
+    for(const op of WALLET.ledger){
+      if(op.at > T) b += op.t === '+' ? -op.sum : op.sum; // откатываем более поздние операции
+    }
+    pts.push(b);
+  }
+  return pts;
+}
+function walDrawChart(){
+  const cv = document.getElementById('walChart');
+  if(!cv) return;
+  requestAnimationFrame(()=>{
+    const W = cv.clientWidth, H = 66;
+    if(!W) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const pts = walSeries(30), n = pts.length;
+    const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+    const span = (max - min) || Math.max(Math.abs(max), 100) * 0.25;
+    const lo = min - span * 0.12, hi = max + span * 0.12;
+    const X = i => 3 + i / (n - 1) * (W - 6);
+    const Y = v => H - 5 - (v - lo) / (hi - lo) * (H - 12);
+    const light = document.documentElement.dataset.theme === 'light';
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#9AFF00';
+    /* сетка */
+    ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1; ctx.setLineDash([3,5]);
+    [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
+    ctx.setLineDash([]);
+    /* плавная линия по средним точкам */
+    const path = ()=>{
+      ctx.beginPath();
+      ctx.moveTo(X(0), Y(pts[0]));
+      for(let i = 1; i < n - 1; i++)
+        ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
+      ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
+    };
+    /* градиент-заливка */
+    path();
+    ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, light ? 'rgba(83,168,0,.28)' : 'rgba(154,255,0,.30)');
+    g.addColorStop(1, 'rgba(154,255,0,0)');
+    ctx.fillStyle = g; ctx.fill();
+    /* линия */
+    path();
+    ctx.strokeStyle = accent; ctx.lineWidth = 2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    /* точка «сейчас» */
+    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
+    ctx.fillStyle = accent; ctx.fill();
+    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
+    ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+    /* чип динамики */
+    const dEl = document.getElementById('walDelta');
+    if(dEl){
+      const diff = pts[n-1] - pts[0];
+      const pct = pts[0] ? Math.round(diff / Math.abs(pts[0]) * 100) : 0;
+      const up = diff >= 0;
+      dEl.className = 'wal-delta ' + (up ? 'in' : 'out');
+      dEl.innerHTML = `<svg viewBox="0 0 100 100" style="${up?'':'transform:rotate(180deg)'}"><path d="M20 66 50 34 80 66" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>${up?'+':'−'} ${fmtMoney(Math.abs(diff))}${pct ? ' · ' + (up?'+':'−') + Math.abs(pct) + '%' : ''}`;
+    }
+  });
+}
+
 function walRenderCats(){
   const bar = document.getElementById('walCatBar'), wrap = document.getElementById('walCats');
   if(!bar || !wrap) return;
@@ -5906,12 +6469,153 @@ function walSetFilter(f){
   walRenderLedger();
 }
 function walCopyAcc(){
-  try{ navigator.clipboard.writeText(WALLET.acc); }catch(e){}
-  toast('Номер счёта скопирован: ' + WALLET.acc);
+  walCopy(WALLET.acc, 'Номер счёта скопирован: ' + WALLET.acc);
 }
 function walScrollHistory(){
   const a = document.getElementById('walHistAnchor');
   if(a) a.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- АВТОПРОДЛЕНИЕ ПОДПИСКИ PRO ---------- */
+function walRenderAutopay(){
+  const sw = document.getElementById('walAutoSw'), sub = document.getElementById('walAutoSub');
+  if(!sw || !sub) return;
+  sw.classList.toggle('on', !!WAL_X.autopay);
+  sub.textContent = WAL_X.autopay
+    ? 'Следующее списание ' + walDMY(WAL_X.nextAt) + ' · ' + fmtMoney(walProPrice())
+    : 'Выключено — тариф не продлевается сам';
+}
+function walToggleAutopay(){
+  if(WAL_X.autopay){
+    WAL_X.autopay = false; walXSave(); walRenderAutopay();
+    toast('Автопродление PRO выключено');
+    return;
+  }
+  const next = Date.now() + 30 * 864e5;
+  showPopup({ico:'crown', title:'Автопродление PRO',
+    body:'Тариф PRO — <b>' + fmtMoney(walProPrice()) + ' / мес</b>.<br>Первое автосписание с лицевого счёта — <b>' + walDMY(next) + '</b>.<br>Отключить можно в любой момент в кошельке.',
+    actions:[
+      {label:'Включить автопродление', onclick:()=>{
+        WAL_X.autopay = true; WAL_X.nextAt = next; walXSave();
+        walRenderAutopay(); toast('Автопродление PRO включено — списание ' + walDMY(next));
+      }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+/* просроченное автопродление — списываем при запуске (мок реального крона) */
+(function walAutoChargeDue(){
+  if(!WAL_X.autopay || !WAL_X.nextAt || Date.now() < WAL_X.nextAt) return;
+  const price = walProPrice();
+  if(WALLET.balance >= price && walletCharge(price, 'Автопродление тарифа PRO')){
+    okoEarn(price, 'Тарифы');
+    WAL_X.nextAt = Date.now() + 30 * 864e5;
+    toast('Тариф PRO продлён автоматически: ' + fmtMoney(price));
+  } else {
+    WAL_X.autopay = false;
+    toast('Автопродление PRO: не хватило средств — выключено');
+  }
+  walXSave();
+})();
+
+/* ---------- ЛИМИТЫ И БЕЗОПАСНОСТЬ ---------- */
+function walWdUsedToday(){
+  return WAL_X.wdDay === new Date().toDateString() ? (WAL_X.wdSum || 0) : 0;
+}
+function walRenderSec(){
+  const sub = document.getElementById('walSecWdSub'), bar = document.getElementById('walSecWdBar');
+  const used = walWdUsedToday();
+  if(sub) sub.textContent = fmtMoney(used) + ' из ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' за сегодня';
+  if(bar) bar.style.width = Math.min(100, used / WAL_WD_DAY_LIMIT * 100).toFixed(1) + '%';
+  const psw = document.getElementById('walPinSw'), psub = document.getElementById('walPinSub');
+  if(psw) psw.classList.toggle('on', !!WAL_X.pin);
+  if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен — включи для защиты вывода';
+}
+function walTogglePin(){
+  if(WAL_X.pin) walPinOpen('off', 'walPinView');
+  else walPinOpen('set', 'walPinView');
+}
+
+/* ---------- ПИН-ПАД (мок 4 цифры, персист) ---------- */
+let walPinCtx = null;
+function walPinOpen(mode, targetId, onOk){
+  walPinCtx = {mode, targetId, onOk: onOk || null, stage: 1, first: '', buf: ''};
+  if(targetId === 'walPinView') openSheet('walPin');
+  walPinRender();
+}
+function walPinRender(err){
+  const c = walPinCtx; if(!c) return;
+  const box = document.getElementById(c.targetId); if(!box) return;
+  const T = {
+    set1:    ['Придумай ПИН-код', '4 цифры — понадобится при каждом выводе средств'],
+    set2:    ['Повтори ПИН-код', 'Ещё раз те же 4 цифры для подтверждения'],
+    off:     ['Отключение ПИН-кода', 'Введи текущий ПИН-код'],
+    confirm: ['Подтверди вывод', 'Введи ПИН-код, чтобы вывести средства'],
+  };
+  const [title, sub] = T[c.mode === 'set' ? 'set' + c.stage : c.mode];
+  box.innerHTML = `
+  <div class="wal-pin">
+    <div class="wal-pin-lock">${I('lock')}</div>
+    <h3 style="text-align:center">${title}</h3>
+    <p class="dim" style="font-size:12px;text-align:center;margin-top:4px">${sub}</p>
+    <div class="wal-pin-dots ${err ? 'err' : ''}" id="walPinDots">${[0,1,2,3].map(i=>`<span class="${i < c.buf.length ? 'on' : ''}"></span>`).join('')}</div>
+    <div class="wal-pin-keys">
+      ${[1,2,3,4,5,6,7,8,9].map(d=>`<button onclick="walPinKey(${d})">${d}</button>`).join('')}
+      <button class="ghosty" onclick="walPinCancel()">Отмена</button>
+      <button onclick="walPinKey(0)">0</button>
+      <button class="ghosty" onclick="walPinBackspace()" aria-label="Стереть"><svg class="i"><use href="#i-back"/></svg></button>
+    </div>
+  </div>`;
+}
+function walPinDots(){
+  const c = walPinCtx, d = document.getElementById('walPinDots');
+  if(!c || !d) return;
+  [...d.children].forEach((s,i)=>s.classList.toggle('on', i < c.buf.length));
+}
+function walPinKey(n){
+  const c = walPinCtx; if(!c || c.buf.length >= 4) return;
+  c.buf += String(n); walPinDots();
+  if(c.buf.length === 4) setTimeout(walPinEval, 170);
+}
+function walPinBackspace(){
+  const c = walPinCtx; if(!c) return;
+  c.buf = c.buf.slice(0, -1); walPinDots();
+}
+function walPinErr(msg){
+  const c = walPinCtx; if(!c) return;
+  c.buf = '';
+  toast(msg);
+  walPinRender(true);
+  setTimeout(()=>{ const d = document.getElementById('walPinDots'); if(d) d.classList.remove('err'); }, 450);
+}
+function walPinEval(){
+  const c = walPinCtx; if(!c) return;
+  const code = c.buf;
+  if(c.mode === 'set'){
+    if(c.stage === 1){ c.first = code; c.stage = 2; c.buf = ''; walPinRender(); return; }
+    if(code === c.first){
+      WAL_X.pin = code; walXSave(); walPinCtx = null;
+      closeSheet(); walRenderSec();
+      toast('ПИН-код на вывод установлен');
+    } else { c.stage = 1; c.first = ''; walPinErr('ПИН-коды не совпали — начни заново'); }
+    return;
+  }
+  if(c.mode === 'off'){
+    if(code === WAL_X.pin){
+      WAL_X.pin = null; walXSave(); walPinCtx = null;
+      closeSheet(); walRenderSec();
+      toast('ПИН-код отключён');
+    } else walPinErr('Неверный ПИН-код');
+    return;
+  }
+  if(c.mode === 'confirm'){
+    if(code === WAL_X.pin){ const ok = c.onOk; walPinCtx = null; if(ok) ok(); }
+    else walPinErr('Неверный ПИН-код');
+  }
+}
+function walPinCancel(){
+  const c = walPinCtx; walPinCtx = null;
+  if(c && c.mode === 'confirm') walRenderWithdraw();
+  else closeSheet();
 }
 
 /* ---------- баланс-чипы (хаб + профиль) ---------- */
@@ -5942,6 +6646,55 @@ function walUpdateChips(){
   });
 }
 
+/* ---------- псевдо-QR (детерминированный SVG-плейсхолдер) ---------- */
+function walQrSvg(seed, size){
+  let h = 2166136261;
+  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = ()=>{ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
+  const N = 21, finder = (r,c)=> (r < 8 && c < 8) || (r < 8 && c >= N-8) || (r >= N-8 && c < 8);
+  let cells = '';
+  for(let r = 0; r < N; r++) for(let c = 0; c < N; c++)
+    if(!finder(r,c) && rnd() < 0.46) cells += `<rect x="${c}" y="${r}" width="1" height="1"/>`;
+  const fp = (r,c)=>`<rect x="${c}" y="${r}" width="7" height="7" fill="#111"/><rect x="${c+1}" y="${r+1}" width="5" height="5" fill="#fff"/><rect x="${c+2}" y="${r+2}" width="3" height="3" fill="#111"/>`;
+  return `<svg viewBox="-1.5 -1.5 24 24" width="${size}" height="${size}" shape-rendering="crispEdges" style="border-radius:8px;background:#fff">
+    <rect x="-1.5" y="-1.5" width="24" height="24" fill="#fff"/>
+    <g fill="#111">${cells}</g>${fp(0,0)}${fp(0,14)}${fp(14,0)}</svg>`;
+}
+
+/* ---------- реквизиты пополнения по способу ---------- */
+function walTopReqHtml(m){
+  if(m === 'card') return `
+    <div class="wal-mockcard fade-in">
+      <div class="wal-mc-row">
+        <svg class="wal-mc-chip" viewBox="0 0 44 32"><rect x="1" y="1" width="42" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M1 12h14M1 20h14M29 12h14M29 20h14M15 5v22M29 5v22" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
+        <span class="wal-mc-sys">МИР · СБП</span>
+      </div>
+      <button class="wal-mc-num" onclick="walCopy(WAL_CARD_NUM,'Номер карты скопирован')">${WAL_CARD_NUM}${I('copy')}</button>
+      <div class="wal-mc-bot"><span>OKO PAY · перевод по номеру</span><span>Т-Банк</span></div>
+    </div>
+    <div class="wal-req-qr fade-in">
+      ${walQrSvg('oko-card-' + WALLET.acc, 88)}
+      <div><b>QR для оплаты</b><span>Отсканируй в приложении банка — сумма и назначение платежа подставятся сами. Зачисление мгновенно.</span></div>
+    </div>`;
+  if(m === 'usdt') return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('money')}<span>Адрес USDT · сеть <b>TRC20</b></span></div>
+      <button class="wal-addr" onclick="walCopy(WAL_USDT_ADDR,'Адрес USDT скопирован')"><span>${WAL_USDT_ADDR}</span>${I('copy')}</button>
+      <p class="wal-req-warn">Отправляй только USDT в сети TRC20 — перевод в другой сети будет потерян. Курс фиксируется в момент зачисления.</p>
+    </div>`;
+  if(m === 'ton') return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('ton')}<span>Адрес кошелька <b>TON</b></span></div>
+      <button class="wal-addr" onclick="walCopy(WAL_TON_ADDR,'Адрес TON скопирован')"><span>${WAL_TON_ADDR}</span>${I('copy')}</button>
+      <p class="wal-req-warn" style="color:var(--dim)">Переводи Toncoin из любого TON-кошелька — зачисление за 1–2 минуты по текущему курсу.</p>
+    </div>`;
+  return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('bolt')}<span>Оплата через Lava.top</span></div>
+      <p class="wal-req-warn" style="color:var(--dim);margin-top:7px">Счёт откроется в защищённом шлюзе после нажатия «Пополнить» — карты любой страны, СБП и крипта.</p>
+    </div>`;
+}
+
 /* ---------- пополнение ---------- */
 function walOpenTopup(prefill){
   walTopupState = {sum: prefill || 1000, method:'card'};
@@ -5960,6 +6713,7 @@ function walRenderTopup(){
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Способ пополнения</p>
     <div class="wal-methods">${WAL_METHODS.map(([k,l,ic])=>`
       <button class="wal-m ${s.method===k?'on':''}" onclick="walTopupState.method='${k}';walRenderTopup()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+    <div id="walTopReq">${walTopReqHtml(s.method)}</div>
     <div style="height:14px"></div>
     <button class="btn" onclick="walDoTopup()"><svg class="i"><use href="#i-plus"/></svg> <span id="walTopBtnSum">Пополнить на ${fmtMoney(s.sum)}</span></button>
     <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Без комиссии. Мок: в проде — платёжный шлюз OKO.</p>`;
@@ -5988,7 +6742,7 @@ function walDoTopup(){
   }, 1100);
 }
 
-/* ---------- вывод (комиссия 2%) ---------- */
+/* ---------- вывод (комиссия 2%, суточный лимит, ПИН) ---------- */
 function walOpenWithdraw(){
   walWdState = {sum:0, method:'card'};
   walRenderWithdraw();
@@ -5999,7 +6753,7 @@ function walRenderWithdraw(){
   const s = walWdState;
   document.getElementById('walWdView').innerHTML = `
     <h3>Вывод средств</h3>
-    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b></p>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b> · лимит на сегодня: ${fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - walWdUsedToday()))}</p>
     <input id="walWdSum" type="number" min="1" max="${WALLET.balance}" placeholder="Сумма вывода, ₽" value="${s.sum||''}"
       oninput="walWdState.sum=Math.max(0,Number(this.value)||0);walSyncWdCalc()">
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Куда вывести</p>
@@ -6007,7 +6761,7 @@ function walRenderWithdraw(){
       <button class="wal-m ${s.method===k?'on':''}" onclick="walWdState.method='${k}';walRenderWithdraw()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
     <div class="wal-fee" id="walWdCalc"></div>
     <button class="btn" onclick="walDoWithdraw()"><svg class="i"><use href="#i-card"/></svg> <span id="walWdBtn">Вывести</span></button>
-    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.</p>`;
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.${WAL_X.pin ? ' Защищено ПИН-кодом.' : ''}</p>`;
   walSyncWdCalc();
 }
 function walSyncWdCalc(){
@@ -6024,9 +6778,22 @@ function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
   if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
+  const used = walWdUsedToday();
+  if(used + s.sum > WAL_WD_DAY_LIMIT){
+    toast('Суточный лимит вывода ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' — сегодня доступно ' + fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - used)));
+    return;
+  }
+  if(WAL_X.pin){ walPinOpen('confirm', 'walWdView', walExecWithdraw); return; }
+  walExecWithdraw();
+}
+function walExecWithdraw(){
+  const s = walWdState;
   const fee = walWdFee(s.sum), get = s.sum - fee;
-  if(!walletCharge(s.sum, 'Вывод на ' + WAL_M_LABEL[s.method])){ return; }
+  if(!walletCharge(s.sum, 'Вывод средств · ' + WAL_M_LABEL[s.method])){ return; }
   okoEarn(fee, 'Комиссия вывода');
+  const today = new Date().toDateString();
+  if(WAL_X.wdDay !== today){ WAL_X.wdDay = today; WAL_X.wdSum = 0; }
+  WAL_X.wdSum += s.sum; walXSave();
   const v = document.getElementById('walWdView');
   v.innerHTML = `<div style="text-align:center;padding:22px 0">
     <div class="spin"></div><p style="font-weight:700;margin-top:14px">Оформляем заявку…</p></div>`;
@@ -6042,6 +6809,106 @@ function walDoWithdraw(){
   }, 900);
 }
 
+/* ---------- ВЫПИСКА: документ с печатью + скачивание .txt ---------- */
+function walStmtTotals(){
+  let inN = 0, inS = 0, outN = 0, outS = 0;
+  WALLET.ledger.forEach(o=>{ if(o.t === '+'){ inN++; inS += o.sum; } else { outN++; outS += o.sum; } });
+  return {inN, inS, outN, outS, net: inS - outS};
+}
+function walStmtHtml(){
+  const ops = WALLET.ledger.slice().sort((a,b)=>b.at-a.at);
+  const t = walStmtTotals(), now = Date.now();
+  const from = ops.length ? ops[ops.length-1].at : now, to = ops.length ? ops[0].at : now;
+  return `
+  <div class="wal-st-head">
+    <div class="wal-st-req">
+      <b>${SEAL_REQ.fio}</b>
+      <span>${SEAL_REQ.inn}</span>
+      <span>${SEAL_REQ.brand} · ${SEAL_REQ.geo}</span>
+    </div>
+    <div class="wal-st-seal">${sealSvg(84)}</div>
+  </div>
+  <h1>Выписка по лицевому счёту</h1>
+  <div class="wal-st-meta">
+    <div><span>Лицевой счёт</span><b>${WALLET.acc}</b></div>
+    <div><span>Владелец</span><b>${esc(PROFILE.name)} · @${esc(PROFILE.nick)}</b></div>
+    <div><span>Период</span><b>${walDMY(from)} — ${walDMY(to)}</b></div>
+    <div><span>Сформирована</span><b>${walDMYT(now)}</b></div>
+  </div>
+  <div class="wal-st-ops">${ops.map(o=>`
+    <div class="wal-st-op">
+      <span class="d">${walDMYT(o.at)}</span>
+      <span class="w">${esc(o.why)}</span>
+      <b class="${o.t==='+'?'in':'out'}">${o.t==='+'?'+':'−'} ${fmtMoney(o.sum)}</b>
+    </div>`).join('')}</div>
+  <div class="wal-st-tot">
+    <div><span>Пополнения (${t.inN})</span><b class="in">+ ${fmtMoney(t.inS)}</b></div>
+    <div><span>Списания (${t.outN})</span><b class="out">− ${fmtMoney(t.outS)}</b></div>
+    <div class="net"><span>Итог за период</span><b>${t.net>=0?'+':'−'} ${fmtMoney(Math.abs(t.net))}</b></div>
+    <div class="net"><span>Баланс на дату выписки</span><b>${fmtMoney(WALLET.balance)}</b></div>
+    ${WALLET.hold > 0 ? `<div><span>В холде (эскроу)</span><b>${fmtMoney(WALLET.hold)}</b></div>` : ''}
+  </div>
+  <div class="wal-st-sign">
+    <div class="wal-st-sig">${signatureImg(118)}<span>Ильясов Д. А. · ${walDMY(now)}</span></div>
+    <span class="wal-st-note">Документ сформирован автоматически в OKO APP и подтверждает операции по лицевому счёту.</span>
+  </div>`;
+}
+function walStmtText(){
+  const ops = WALLET.ledger.slice().sort((a,b)=>b.at-a.at);
+  const t = walStmtTotals(), now = Date.now();
+  const from = ops.length ? ops[ops.length-1].at : now, to = ops.length ? ops[0].at : now;
+  const hr = '='.repeat(58), sep = '-'.repeat(58), L = [];
+  L.push(hr);
+  L.push('        OKO APP — ВЫПИСКА ПО ЛИЦЕВОМУ СЧЁТУ');
+  L.push(hr);
+  L.push('Счёт:          ' + WALLET.acc);
+  L.push('Владелец:      ' + PROFILE.name + ' (@' + PROFILE.nick + ')');
+  L.push('Период:        ' + walDMY(from) + ' — ' + walDMY(to));
+  L.push('Сформирована:  ' + walDMYT(now));
+  L.push(sep);
+  ops.forEach(o=>{
+    L.push(walDMYT(o.at) + '  ' + (o.t === '+' ? '+' : '-') + fmtMoney(o.sum).padStart(13) + '  ' + o.why);
+  });
+  L.push(sep);
+  L.push('Пополнений:    ' + t.inN + ' на сумму ' + fmtMoney(t.inS));
+  L.push('Списаний:      ' + t.outN + ' на сумму ' + fmtMoney(t.outS));
+  L.push('Итог периода:  ' + (t.net >= 0 ? '+' : '-') + fmtMoney(Math.abs(t.net)));
+  L.push('Баланс:        ' + fmtMoney(WALLET.balance) + (WALLET.hold > 0 ? ' (в холде ' + fmtMoney(WALLET.hold) + ')' : ''));
+  L.push(sep);
+  L.push(SEAL_REQ.fio + ' · ' + SEAL_REQ.inn);
+  L.push(SEAL_REQ.brand + ' · ' + SEAL_REQ.geo);
+  L.push('Документ сформирован автоматически в OKO APP.');
+  L.push(hr);
+  return L.join('\n');
+}
+function walStmtHide(){
+  const el = document.getElementById('walStmt');
+  if(el) el.classList.remove('open');
+}
+function walOpenStatement(){
+  const paper = document.getElementById('walStmtPaper');
+  if(paper) paper.innerHTML = walStmtHtml();
+  const el = document.getElementById('walStmt');
+  if(el) el.classList.add('open');
+  if(typeof nvPush === 'function') nvPush('wal-stmt', walStmtHide);
+}
+function walCloseStatement(){
+  walStmtHide();
+  if(typeof nvPop === 'function') nvPop('wal-stmt');
+}
+function walDownloadStatement(){
+  const d = new Date();
+  const name = 'OKO-выписка-' + WALLET.acc + '-' + d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.txt';
+  const blob = new Blob(['\ufeff' + walStmtText()], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
+  toast('Выписка сохранена: ' + name);
+}
+
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */
 
 /* чипы обновляются при любой операции кошелька */
@@ -6053,6 +6920,13 @@ const _prevShowTabWal = showTab;
 showTab = function(t){
   _prevShowTabWal(t);
   if(t === 'wallet') renderWallet();
+};
+
+/* перерисовать график при смене темы (цвет линии и сетки зависят от темы) */
+const _prevApplyThemeWal = applyTheme;
+applyTheme = function(t){
+  _prevApplyThemeWal(t);
+  if(typeof walDrawChart === 'function') walDrawChart();
 };
 
 /* тарифы: списание с кошелька; при нехватке — предложение пополнить */
@@ -6141,10 +7015,11 @@ walUpdateChips();
 if(document.getElementById('screen-wallet') && document.getElementById('screen-wallet').classList.contains('active')) renderWallet();
 
 /* ===== module: games ===== */
-/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» (префикс gm-) =====
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» + «Кости» (префикс gm-) =====
    Ставки ТОЛЬКО с кошелька (walletCharge/walletAdd), доход OKO — okoEarn.
    Механика рулетки перенесена из Mortis: CSS-колесо (conic-gradient) +
-   страховочный setTimeout — результат обрабатывается ровно один раз. */
+   страховочный setTimeout — результат обрабатывается ровно один раз.
+   Плюс: таблица лидеров недели (персист) и ежедневный бонус (колесо подарков). */
 
 /* ---------- SVG-иконки модуля (штрих 7, скруглённые концы) ---------- */
 (function gmIcons(){
@@ -6160,17 +7035,31 @@ if(document.getElementById('screen-wallet') && document.getElementById('screen-w
   mk('i-gm-chip','<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 12v13M50 75v13M12 50h13M75 50h13M23 23l9 9M68 68l9 9M77 23l-9 9M32 68l-9 9" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
   /* дорога с разметкой */
   mk('i-gm-road','<path d="M16 88C32 62 32 38 24 12M84 88C68 62 68 38 76 12" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 14v13M50 44v13M50 74v13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+  /* игральная кость (5 точек) */
+  mk('i-gm-dice','<rect x="14" y="14" width="72" height="72" rx="16" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="34" cy="34" r="6.5" fill="currentColor" stroke="none"/><circle cx="66" cy="34" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="34" cy="66" r="6.5" fill="currentColor" stroke="none"/><circle cx="66" cy="66" r="6.5" fill="currentColor" stroke="none"/>');
+  /* подарок с лентой */
+  mk('i-gm-gift','<path d="M20 46v34a8 8 0 008 8h44a8 8 0 008-8V46" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><rect x="14" y="30" width="72" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 30v58" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 30C39 30 30 22 32 13c9-2 16 7 18 17zM50 30c11 0 20-8 18-17-9-2-16 7-18 17z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
+  /* кубок чемпиона */
+  mk('i-gm-cup','<path d="M32 14h36v24a18 18 0 01-36 0z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M32 22H17a15 15 0 0015 17M68 22h15a15 15 0 01-15 17" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 56v14M38 84h24M43 70h14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
 })();
 
 /* ---------- общее состояние ---------- */
 const GM_LIMIT_MAX = 10000; /* дневной лимит ставок, ₽ */
 const GM_HIST = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games'))||[]; }catch(e){ return []; } })();
+const GM_GAME_NAMES = {wheel:'Рулетка OKO', road:'Дорога OKO', dice:'Кости OKO'};
+const GM_GAME_ICONS = {wheel:'gm-chip', road:'gm-road', dice:'gm-dice'};
 
 function gmFmtMult(m){ return '×' + String(m).replace('.', ','); }
 
 function gmUpdateBalance(){
   const el = document.getElementById('gmBalance');
   if(el) el.textContent = fmtMoney(WALLET.balance);
+}
+
+/* блокировка ставок на время раунда: input + чипы + выбор исхода */
+function gmLockBets(hostId, on){
+  const el = document.getElementById(hostId);
+  if(el) el.classList.toggle('gm-locked', !!on);
 }
 
 /* ---------- дневной лимит (ответственная игра) ---------- */
@@ -6228,7 +7117,7 @@ function gmChipClear(inp){
 
 /* ---------- переключение игр ---------- */
 function gmShowGame(g){
-  ['wheel','road'].forEach(k=>{
+  ['wheel','road','dice'].forEach(k=>{
     document.getElementById('gmGame-'+k).style.display = (k===g ? '' : 'none');
     document.getElementById('gmTab-'+k).classList.toggle('on', k===g);
   });
@@ -6281,6 +7170,7 @@ function gmSpin(){
   gmSpinning = true;
   const token = ++gmSpinToken;
   document.getElementById('gmSpinBtn').classList.add('off');
+  gmLockBets('gmGame-wheel', true);
   gmSetResult(`<span class="gm-run">Ставка ${fmtMoney(bet)} принята — колесо крутится…</span>`);
 
   /* взвешенный исход, затем случайный сектор с этим множителем */
@@ -6316,10 +7206,12 @@ function gmSpin(){
 
 function gmWheelFinish(bet, mult){
   document.getElementById('gmSpinBtn').classList.remove('off');
+  gmLockBets('gmGame-wheel', false);
   const win = Math.round(bet * mult * 100) / 100;
   if(win > 0){
     walletAdd(win, 'Выигрыш в рулетке');
     gmConfetti(document.querySelector('.gm-wheel-card'));
+    gmLbAddWin(win);
     gmSetResult(`<b class="gm-win">+ ${fmtMoney(win)}</b><span>Сектор ${gmFmtMult(mult)} — выплата уже на кошельке</span>`);
   }else{
     const wrap = document.getElementById('gmWheelWrap');
@@ -6385,6 +7277,7 @@ function gmSyncEye(noHop){
 function gmRoadCtrl(msg){
   const el = document.getElementById('gmRoadCtrl');
   if(!el) return;
+  el.classList.remove('gm-locked');
   if(!gmRoad.active){
     el.innerHTML = `
       ${msg ? `<div class="gm-road-msg">${msg}</div>` : ''}
@@ -6431,6 +7324,7 @@ function gmRoadStart(){
 function gmRoadStep(){
   if(!gmRoad.active || gmRoad.busy) return;
   gmRoad.busy = true;
+  gmLockBets('gmRoadCtrl', true); /* кнопки Шаг/Забрать не жмутся во время прыжка */
   const i = gmRoad.step;
   const tile = gmRoadTiles()[i];
   gmMoveEye(i); /* прыжок на плиту */
@@ -6473,6 +7367,7 @@ function gmRoadCash(){
   if(net > 0) okoEarn(net, 'Игры: дорога');
   gmHistPush({g:'road', bet:gmRoad.bet, win, mult, at: Date.now()});
   gmConfetti(document.querySelector('.gm-road-card'));
+  gmLbAddWin(win);
   gmRoad.active = false;
   gmRoadClearTiles();
   gmSyncEye(true);
@@ -6480,6 +7375,324 @@ function gmRoadCash(){
   gmRoadCtrl(`<b class="gm-win">+ ${fmtMoney(win)}</b>забрал на ${gmFmtMult(mult)} — выплата на кошельке`);
   gmUpdateBalance();
 }
+
+/* ================= КОСТИ OKO =================
+   Две 3D-кости (CSS-кубы), ставка на сумму: меньше 7 (×1,9), ровно 7 (×5),
+   больше 7 (×1,9). Честный бросок 2d6; RTP: 15/36×1.9 ≈ 79%, 6/36×5 ≈ 83%. */
+const GM_DICE_BETS = {under:{m:1.9, t:'меньше 7'}, seven:{m:5, t:'ровно 7'}, over:{m:1.9, t:'больше 7'}};
+const GM_PIPS = {1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]};
+/* грань -> значение (противоположные в сумме дают 7) и её позиция на кубе */
+const GM_FACES = [
+  ['translateZ(32px)', 1], ['rotateY(180deg) translateZ(32px)', 6],
+  ['rotateY(90deg) translateZ(32px)', 3], ['rotateY(-90deg) translateZ(32px)', 4],
+  ['rotateX(90deg) translateZ(32px)', 5], ['rotateX(-90deg) translateZ(32px)', 2]
+];
+/* какой поворот куба показывает значение зрителю */
+const GM_DICE_ROT = {1:[0,0], 2:[90,0], 3:[0,-90], 4:[0,90], 5:[-90,0], 6:[0,180]};
+let gmDice = {rolling:false, pick:'under', token:0};
+let gmDiceTurns = {gmDie1:0, gmDie2:0};
+
+function gmBuildDice(){
+  ['gmDie1','gmDie2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = '<div class="gm-cube">' + GM_FACES.map(([tf, v])=>
+      `<div class="gm-face" style="transform:${tf}">${Array.from({length:9},(_,i)=>`<i class="${GM_PIPS[v].includes(i)?'on':''}"></i>`).join('')}</div>`
+    ).join('') + '</div>';
+  });
+  gmDiceSet('gmDie1', 3, true);
+  gmDiceSet('gmDie2', 4, true);
+}
+/* повернуть куб на значение v; при броске — с накопленными кувырками по двум осям */
+function gmDiceSet(id, v, instant){
+  const cube = document.querySelector('#'+id+' .gm-cube');
+  if(!cube) return;
+  const [rx, ry] = GM_DICE_ROT[v];
+  if(instant){
+    cube.style.transition = 'none';
+    gmDiceTurns[id] = 0;
+    cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    void cube.offsetWidth;
+    return;
+  }
+  gmDiceTurns[id] += 2 + Math.floor(Math.random()*3); /* +2–4 полных оборота */
+  const k = gmDiceTurns[id] * 360;
+  cube.style.transition = 'transform 1.5s cubic-bezier(.18,.72,.24,1)';
+  cube.style.transform = `rotateX(${rx + k}deg) rotateY(${ry + k}deg)`;
+}
+function gmDicePick(k, btn){
+  if(gmDice.rolling) return;
+  gmDice.pick = k;
+  document.querySelectorAll('#gmDicePicks button').forEach(b=>b.classList.toggle('on', b === btn));
+}
+function gmDiceSetResult(html){
+  const el = document.getElementById('gmDiceResult');
+  if(el) el.innerHTML = html;
+}
+function gmDiceRoll(){
+  if(gmDice.rolling){ toast('Кости ещё в воздухе'); return; }
+  const bet = gmBet('gmDiceBet');
+  if(!bet) return;
+  if(!gmLimitCheck(bet)) return;
+  if(!walletCharge(bet, 'Ставка: Кости OKO')) return;
+  gmLimitSpend(bet);
+  gmUpdateBalance();
+
+  gmDice.rolling = true;
+  const token = ++gmDice.token;
+  document.getElementById('gmDiceBtn').classList.add('off');
+  gmLockBets('gmGame-dice', true);
+  gmDiceSetResult(`<span class="gm-run">Ставка ${fmtMoney(bet)} на «${GM_DICE_BETS[gmDice.pick].t}» — кости в воздухе…</span>`);
+
+  const d1 = 1 + Math.floor(Math.random()*6);
+  const d2 = 1 + Math.floor(Math.random()*6);
+  gmDiceSet('gmDie1', d1);
+  gmDiceSet('gmDie2', d2);
+
+  /* transitionend + страховочный таймер (паттерн рулетки), token = один вызов */
+  const settle = ()=>{
+    if(token !== gmDice.token || !gmDice.rolling) return;
+    gmDice.rolling = false;
+    gmDiceFinish(bet, d1, d2);
+  };
+  const cube = document.querySelector('#gmDie1 .gm-cube');
+  if(cube) cube.addEventListener('transitionend', settle, {once:true});
+  setTimeout(settle, 1700);
+}
+function gmDiceFinish(bet, d1, d2){
+  document.getElementById('gmDiceBtn').classList.remove('off');
+  gmLockBets('gmGame-dice', false);
+  const sum = d1 + d2;
+  const out = sum < 7 ? 'under' : (sum > 7 ? 'over' : 'seven');
+  const cfg = GM_DICE_BETS[gmDice.pick];
+  const hit = out === gmDice.pick;
+  const win = hit ? Math.round(bet * cfg.m * 100) / 100 : 0;
+  /* подсветить фактический исход на кнопках */
+  const ob = document.querySelector(`#gmDicePicks button[data-pick="${out}"]`);
+  if(ob){ ob.classList.add('hit'); setTimeout(()=>ob.classList.remove('hit'), 1500); }
+  if(win > 0){
+    walletAdd(win, 'Выигрыш: Кости OKO');
+    gmConfetti(document.querySelector('.gm-dice-card'));
+    gmLbAddWin(win);
+    gmDiceSetResult(`<b class="gm-win">+ ${fmtMoney(win)}</b><span>Выпало ${d1} + ${d2} = ${sum} — ставка «${cfg.t}» ${gmFmtMult(cfg.m)} сыграла</span>`);
+  }else{
+    const card = document.querySelector('.gm-dice-card');
+    card.classList.remove('gm-shake'); void card.offsetWidth; card.classList.add('gm-shake');
+    gmDiceSetResult(`<b class="gm-lose">×0</b><span>Выпало ${d1} + ${d2} = ${sum} (${GM_DICE_BETS[out].t}) — ставка «${cfg.t}» не сыграла</span>`);
+  }
+  const net = bet - win;
+  if(net > 0) okoEarn(net, 'Игры: кости');
+  gmHistPush({g:'dice', bet, win, mult: hit ? cfg.m : 0, d: sum, at: Date.now()});
+  gmUpdateBalance();
+}
+
+/* ================= ТАБЛИЦА ЛИДЕРОВ НЕДЕЛИ =================
+   Топ-10: мок-игроки + свой ник. Свои выигрыши реально суммируются и двигают
+   позицию. Персист под 'oko-games-lb', сброс каждую неделю. */
+const GM_LB_NAMES = ['Марат К.','nastya.vibe','Кирилл Т.','ZONA_51','Полина М.','deniska_pro',
+                     'Артём В.','lera.moon','Саид А.','mr_fortuna','Ольга Ж.','tigran.dice'];
+let GM_LB = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games-lb'))||null; }catch(e){ return null; } })();
+
+function gmWeekKey(){
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 864e5 + jan1.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + week;
+}
+function gmLbSave(){ try{ localStorage.setItem('oko-games-lb', JSON.stringify(GM_LB)); }catch(e){} }
+function gmLbEnsure(){
+  const wk = gmWeekKey();
+  if(GM_LB && GM_LB.week === wk && Array.isArray(GM_LB.bots)) return;
+  const pool = GM_LB_NAMES.slice();
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  GM_LB = {
+    week: wk, my: 0, myW: 0, move: null,
+    bots: pool.slice(0,10).map(n=>({n, s: Math.round((300 + Math.random()*8200)/10)*10, w: 2 + Math.floor(Math.random()*34)}))
+  };
+  gmLbSave();
+}
+function gmLbRank(){
+  gmLbEnsure();
+  const rows = GM_LB.bots.map(b=>({n: b.n, s: b.s, w: b.w, me: false}));
+  rows.push({n: PROFILE.name, s: Math.round(GM_LB.my*100)/100, w: GM_LB.myW, me: true});
+  rows.sort((a,b)=>b.s - a.s);
+  return rows;
+}
+function gmLbMyRank(){ return gmLbRank().findIndex(r=>r.me) + 1; }
+function gmLbAddWin(sum){
+  gmLbEnsure();
+  const before = gmLbMyRank();
+  GM_LB.my += sum;
+  GM_LB.myW++;
+  const after = gmLbMyRank();
+  if(after < before){ GM_LB.move = 'up'; toast(`Лидеры недели: ты поднялся на ${after}-е место`); }
+  else if(after > before) GM_LB.move = 'down';
+  gmLbSave();
+  gmLbRender();
+}
+/* «живая» таблица: при заходе на экран кто-то из мок-игроков иногда выигрывает */
+function gmLbDrift(){
+  gmLbEnsure();
+  if(Math.random() < 0.45){
+    const b = GM_LB.bots[Math.floor(Math.random() * GM_LB.bots.length)];
+    b.s += Math.round((40 + Math.random()*550)/10)*10;
+    b.w++;
+    gmLbSave();
+  }
+}
+function gmLbRow(r, pos){
+  const mv = r.me && GM_LB.move ? `<svg class="i gm-lb-mv ${GM_LB.move}"><use href="#i-chev"/></svg>` : '';
+  const posHtml = pos === 1 ? `<b class="gm-lb-pos p1">${I('gm-cup')}</b>` : `<b class="gm-lb-pos ${pos<=3?'p'+pos:''}">${pos}</b>`;
+  return `<div class="gm-lb-row ${r.me ? 'me' : ''}">
+    ${posHtml}
+    <span class="gm-lb-ava">${esc((r.n[0]||'?').toUpperCase())}</span>
+    <div class="gm-lb-b">
+      <span class="gm-lb-n">${esc(r.n)}${r.me ? vBadge(r.n) : ''}${r.me ? '<i class="gm-lb-you">ты</i>' : ''}${mv}</span>
+      <small>${r.w} ${r.w % 10 === 1 && r.w % 100 !== 11 ? 'выигрыш' : 'выигрышей'} за неделю</small>
+    </div>
+    <b class="gm-lb-sum">${fmtMoney(r.s)}</b>
+  </div>`;
+}
+function gmLbRender(){
+  const el = document.getElementById('gmLb');
+  if(!el) return;
+  const rows = gmLbRank();
+  const myIdx = rows.findIndex(r=>r.me);
+  const days = 7 - ((new Date().getDay() + 6) % 7);
+  let html = `<div class="gm-lb-head"><span>${I('gm-cup')}Выигрыши за эту неделю</span><small>сброс через ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}</small></div>`;
+  html += rows.slice(0, 10).map((r,i)=>gmLbRow(r, i+1)).join('');
+  if(myIdx >= 10) html += `<div class="gm-lb-gap">···</div>` + gmLbRow(rows[myIdx], myIdx + 1);
+  el.innerHTML = html;
+}
+
+/* ================= ЕЖЕДНЕВНЫЙ БОНУС =================
+   Колесо мини-подарков 50–500 ₽: один бесплатный спин в сутки,
+   таймштамп — в 'oko-games-bonus', сброс в полночь. Подарок = расход OKO
+   (маркетинг), поэтому okoEarn не трогаем. */
+const GM_BONUS_VALS = [50, 75, 100, 150, 200, 250, 300, 500];
+const GM_BONUS_W    = [24, 20, 17, 12, 10,  8,   6,   3];
+const GM_BONUS_COLS = ['#1e3305','#2e4d06','#1e3305','#487a08','#1e3305','#2e4d06','#243d06','#9AFF00'];
+let gmBonus = {spinning:false, token:0, angle:0};
+
+function gmBonusStamp(){ try{ return Number(localStorage.getItem('oko-games-bonus')) || 0; }catch(e){ return 0; } }
+function gmBonusClaimedToday(){
+  const ts = gmBonusStamp();
+  if(!ts) return false;
+  const a = new Date(ts), b = new Date();
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function gmBonusLeftMs(){
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n;
+}
+function gmFmtCd(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const p = n => String(n).padStart(2, '0');
+  return p(Math.floor(s/3600)) + ':' + p(Math.floor(s%3600/60)) + ':' + p(s%60);
+}
+function gmBonusBtnRender(){
+  const b = document.getElementById('gmBonusBtn');
+  if(!b) return;
+  if(gmBonusClaimedToday()){
+    b.classList.add('done');
+    b.innerHTML = `${I('clock')}<div class="gm-bonus-t"><span>Бонус дня получен</span><small>новый спин через <b id="gmBonusCd">${gmFmtCd(gmBonusLeftMs())}</b></small></div>${I('chev','gm-bonus-chev')}`;
+  }else{
+    b.classList.remove('done');
+    b.innerHTML = `${I('gm-gift')}<div class="gm-bonus-t"><span>Бонус дня</span><small>крути колесо подарков — до ${fmtMoney(500)} на счёт</small></div>${I('chev','gm-bonus-chev')}`;
+  }
+}
+function gmBonusOpen(){
+  openSheet('gmBonus'); /* navstack сам ведёт back по патчу openSheet/closeSheet */
+  gmBonusRender();
+}
+function gmBonusRender(){
+  const el = document.getElementById('gmBonusBody');
+  if(!el) return;
+  if(gmBonusClaimedToday()){
+    el.innerHTML = `
+      <div class="gm-bonus-claimed">
+        ${I('clock')}
+        <b>Сегодняшний подарок уже на кошельке</b>
+        <span>Новый спин откроется в полночь — через <b id="gmBonusCd2">${gmFmtCd(gmBonusLeftMs())}</b></span>
+        <button class="btn ghost" onclick="closeSheet()">Понятно</button>
+      </div>`;
+    return;
+  }
+  const stops = GM_BONUS_VALS.map((v,i)=>`${GM_BONUS_COLS[i]} ${i*45}deg ${(i+1)*45}deg`).join(',');
+  el.innerHTML = `
+    <div class="gm-bonus-stage">
+      <div class="gm-pointer"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M15 26L2 2h26z" fill="#9AFF00" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <div class="gm-bwheel-wrap">
+        <div class="gm-bwheel" id="gmBWheel" style="background:conic-gradient(from -22.5deg, ${stops})">${
+          GM_BONUS_VALS.map((v,i)=>`<span class="gm-bsec" style="color:${GM_BONUS_COLS[i]==='#9AFF00'?'#000':'#d3ff8f'};transform:translate(-50%,-50%) rotate(${i*45}deg) translateY(-80px)">${v}</span>`).join('')
+        }</div>
+        <div class="gm-bwheel-hub">${I('gm-gift')}</div>
+      </div>
+    </div>
+    <div class="gm-result" id="gmBonusRes"><span class="gm-hint">Один бесплатный спин каждый день · от ${fmtMoney(50)} до ${fmtMoney(500)}</span></div>
+    <button class="gm-spin" id="gmBonusSpinBtn" onclick="gmBonusSpin()">${I('gm-gift')}Крутить колесо подарков</button>`;
+  gmBonus.angle = 0;
+}
+function gmBonusSpin(){
+  if(gmBonus.spinning) return;
+  if(gmBonusClaimedToday()){ gmBonusRender(); return; }
+  gmBonus.spinning = true;
+  const token = ++gmBonus.token;
+  const btn = document.getElementById('gmBonusSpinBtn');
+  if(btn) btn.classList.add('off');
+  const res = document.getElementById('gmBonusRes');
+  if(res) res.innerHTML = `<span class="gm-run">Колесо подарков крутится…</span>`;
+
+  /* взвешенный подарок */
+  const total = GM_BONUS_W.reduce((a,b)=>a+b, 0);
+  let r = Math.random() * total, idx = 0;
+  for(let i = 0; i < GM_BONUS_W.length; i++){ if(r < GM_BONUS_W[i]){ idx = i; break; } r -= GM_BONUS_W[i]; }
+  const val = GM_BONUS_VALS[idx];
+
+  const wheel = document.getElementById('gmBWheel');
+  const cur = ((gmBonus.angle % 360) + 360) % 360;
+  wheel.style.transition = 'none';
+  wheel.style.transform = `rotate(${cur}deg)`;
+  void wheel.offsetWidth;
+  const turns = 4 + Math.floor(Math.random() * 3);
+  const jitter = Math.random() * 30 - 15; /* внутри сектора 45° */
+  const delta = ((360 - idx * 45) - cur + 720) % 360;
+  const target = cur + turns * 360 + delta + jitter;
+  gmBonus.angle = target;
+  wheel.style.transition = 'transform 4.6s cubic-bezier(0.12,0.65,0.13,1)';
+  wheel.style.transform = `rotate(${target}deg)`;
+
+  const settle = ()=>{
+    if(token !== gmBonus.token || !gmBonus.spinning) return;
+    gmBonus.spinning = false;
+    gmBonusFinish(val);
+  };
+  wheel.addEventListener('transitionend', settle, {once:true});
+  setTimeout(settle, 4900);
+}
+function gmBonusFinish(val){
+  try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){}
+  walletAdd(val, 'Бонус дня — колесо подарков');
+  gmConfetti(document.getElementById('sheet-gmBonus'));
+  const res = document.getElementById('gmBonusRes');
+  if(res) res.innerHTML = `<b class="gm-win">+ ${fmtMoney(val)}</b><span>Подарок уже на кошельке — возвращайся завтра</span>`;
+  const btn = document.getElementById('gmBonusSpinBtn');
+  if(btn){ btn.classList.add('off'); btn.innerHTML = `${I('check')}Получено — новый спин завтра`; }
+  gmBonusBtnRender();
+  gmUpdateBalance();
+}
+/* живой обратный отсчёт до полуночи (кнопка + шит) */
+setInterval(()=>{
+  if(!gmBonusClaimedToday()) return;
+  const cd = gmFmtCd(gmBonusLeftMs());
+  const a = document.getElementById('gmBonusCd');
+  const b = document.getElementById('gmBonusCd2');
+  if(a) a.textContent = cd;
+  if(b) b.textContent = cd;
+}, 1000);
 
 /* ---------- история игр (последние 20) ---------- */
 function gmHistPush(e){
@@ -6497,13 +7710,15 @@ function gmRenderHistory(){
   }
   el.innerHTML = GM_HIST.map(h=>{
     const win = h.win > 0;
-    const name = h.g === 'wheel' ? 'Рулетка OKO' : 'Дорога OKO';
+    const name = GM_GAME_NAMES[h.g] || h.g;
     const d = new Date(h.at);
     const time = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) + ' ' +
                  d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-    const detail = win ? (h.g === 'wheel' ? 'сектор ' : 'забрал на ') + gmFmtMult(h.mult) : 'проигрыш';
+    let detail;
+    if(h.g === 'dice') detail = `выпало ${h.d != null ? h.d : '—'} · ` + (win ? gmFmtMult(h.mult) : 'проигрыш');
+    else detail = win ? (h.g === 'wheel' ? 'сектор ' : 'забрал на ') + gmFmtMult(h.mult) : 'проигрыш';
     return `<div class="gm-op">
-      <span class="gm-op-ic ${win ? 'in' : 'out'}">${I(h.g === 'wheel' ? 'gm-chip' : 'gm-road')}</span>
+      <span class="gm-op-ic ${win ? 'in' : 'out'}">${I(GM_GAME_ICONS[h.g] || 'gm-chip')}</span>
       <div class="gm-op-b"><span class="gm-op-t1">${name} · ставка ${fmtMoney(h.bet)}</span><span class="gm-op-t2">${detail} · ${time}</span></div>
       <b class="gm-op-sum ${win ? 'in' : 'out'}">${win ? '+' : '−'} ${fmtMoney(win ? h.win : h.bet)}</b>
     </div>`;
@@ -6529,6 +7744,9 @@ showTab = function(t){
     gmUpdateBalance();
     gmRenderLimit();
     gmRenderHistory();
+    gmLbDrift();      /* таблица лидеров живёт: мок-игроки тоже выигрывают */
+    gmLbRender();
+    gmBonusBtnRender();
     requestAnimationFrame(()=>gmSyncEye(true)); /* позиция глаза после показа экрана */
   }
 };
@@ -6537,10 +7755,14 @@ showTab = function(t){
 regTitle('games', 'Игры');
 addSvcTile({id:'games', label:'Игры OKO', ico:'fire', first:true, onclick:()=>showTab('games')});
 gmBuildWheel();
+gmBuildDice();
 gmRoadMultsRender();
 gmRoadCtrl();
 gmRenderHistory();
 gmRenderLimit();
+gmLbEnsure();
+gmLbRender();
+gmBonusBtnRender();
 gmUpdateBalance();
 window.addEventListener('resize', ()=>{
   const sc = document.getElementById('screen-games');
@@ -6983,6 +8205,33 @@ const acS = acLoadState();
 function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
 acSave(); // сразу персистим мигрированный формат
 
+/* ---------- стрик: дни подряд в учёбе ---------- */
+function acDayStr(d){
+  const x = d || new Date();
+  return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0') + '-' + String(x.getDate()).padStart(2,'0');
+}
+function acStreak(){
+  if(!acS.streak) acS.streak = {last:'', days:0, best:0};
+  return acS.streak;
+}
+function acStreakTouch(){
+  const st = acStreak(), today = acDayStr();
+  if(st.last === today) return st.days;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  st.days = (st.last === acDayStr(y)) ? st.days + 1 : 1;
+  st.last = today;
+  if(st.days > (st.best||0)) st.best = st.days;
+  acSave();
+  return st.days;
+}
+
+/* ---------- следующий урок (первый открытый и не завершённый) ---------- */
+function acNextLesson(){
+  for(let i=0; i<AC_COURSE.length; i++)
+    if(acUnlocked(i) && !acLessonDone(i)) return i;
+  return -1;
+}
+
 let acView = 'home';            // 'home' | 'lesson'
 let acL = 0;                    // индекс текущего урока
 let acQuiz = null;              // сессия теста (не персистится)
@@ -7056,12 +8305,26 @@ function acHomeHtml(){
     <div class="ac-cert-item" style="animation-delay:${i*.05}s">
       <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
       <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
       <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
     </div>`).join('')
     : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
+  const st = acStreak();
+  const hot = st.days >= 3;
+  const streak = `
+    <div class="card ac-streak ${hot?'hot':''}">
+      <span class="ac-flame">${I('fire')}</span>
+      <div class="meta"><b>Дней подряд в учёбе: ${st.days||0}</b>
+        <span>${hot ? 'Серия в огне — так держать!' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
+      ${hot?`<span class="ac-hot-chip">${I('fire')} ${st.days}</span>`:''}
+    </div>`;
+  const nx = acNextLesson();
+  const nextRow = nx >= 0
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Следующий: <b>урок ${nx+1} — ${AC_COURSE[nx].title}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Все уроки курса пройдены — сертификаты у тебя</span></div>`;
   return `
     <div class="ac-hero"><h2>Академия OKO</h2><p>Уроки полного формата · официальные сертификаты</p></div>
-
+    ${streak}
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">
@@ -7071,6 +8334,7 @@ function acHomeHtml(){
         </span>
         <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
       </div>
+      ${nextRow}
       <div>${rows}</div>
     </div>
 
@@ -7125,6 +8389,9 @@ function acLessonHtml(){
         <button class="ac-arrow next" onclick="acSlideGo(1)"><svg class="i"><use href="#i-back"/></svg></button>
       </div>
     </div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Конспект</h2>
+    ${acNotesHtml()}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
     <div class="card" id="acTestBox"></div>
@@ -11567,9 +12834,11 @@ function psAuthor(name){
   const sub = (p0 && p0.sub) || '';
 
   let followers = 0;
-  const m = sub.match(/(\d+(?:[.,]\d+)?)\s*к/i);
-  if(m) followers = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
-  else if(anyChat && anyChat.subs){
+  for(const p of posts){ /* аудитория из любого поста автора: «канал · 48.2к» */
+    const m = String(p.sub || '').match(/(\d+(?:[.,]\d+)?)\s*к/i);
+    if(m){ followers = Math.round(parseFloat(m[1].replace(',', '.')) * 1000); break; }
+  }
+  if(!followers && anyChat && anyChat.subs){
     const mm = String(anyChat.subs).match(/(\d+(?:[.,]\d+)?)\s*к/i);
     if(mm) followers = Math.round(parseFloat(mm[1].replace(',', '.')) * 1000);
   }
@@ -11811,7 +13080,9 @@ function psDecorateSub(){
     if(!p) return;
     const nameEl = art.querySelector('.head .name');
     if(!nameEl) return;
-    if(typeof vBadge === 'function' && typeof VERIFIED !== 'undefined' && VERIFIED.has(p.name) && !nameEl.querySelector('.ps-vb'))
+    /* галочка verified — только если её ещё никто не поставил (verify-stickers/feed-algo) */
+    if(typeof vBadge === 'function' && typeof VERIFIED !== 'undefined' && VERIFIED.has(p.name) &&
+       !nameEl.querySelector('.ps-vb, .vs-badge, .fa-vb, use[href*="i-verified"]'))
       nameEl.insertAdjacentHTML('beforeend', `<span class="ps-vb">${vBadge(p.name)}</span>`);
     if(psIsFollowing(p.name) && !nameEl.querySelector('.ps-fchip'))
       nameEl.insertAdjacentHTML('beforeend', ` <span class="chip ps-fchip">${I('check')}Подписка</span>`);
@@ -11862,6 +13133,379 @@ function psDecorateSub(){
     if(typeof curFeedKind !== 'undefined' && curFeedKind === 'sub' && document.getElementById('feedList'))
       renderFeed('sub');
   }catch(e){}
+})();
+
+/* ===== module: stories-plus ===== */
+/* ===== STORIES-PLUS (sp-): сторис-редактор, просмотры, реакции, мультисторис =====
+   base.html не тронут — только chain-патчи ядра (openStoryCreate / createTextStory /
+   addStory / showStory / closeStory / renderStories) + свои вьюхи из overlay.html.
+   1) Полноценный редактор текст-сторис: 6 бренд-градиентов свотчами, размер и
+      выравнивание текста, live-предпросмотр 9:16, стикер-глаз OKO по углам.
+   2) Просмотры своих сторис: счётчик-глаз в вьювере + шторка «кто посмотрел»
+      (мок-имена в духе демо-контента, список растёт со временем).
+   3) Быстрые реакции на чужие сторис (сердце/огонь/палец) с летящей анимацией.
+   4) Прогресс-сегменты мультисторис: у автора с >1 историей — полоски сверху с
+      тап-переключением; кружки в ленте группируются по автору (бейдж-счётчик). */
+
+/* ---------- состояние (персист только настроек редактора) ---------- */
+const SP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-stories-plus'))||{}; }catch(e){ return {}; } })();
+SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br'}, SP.ed||{});
+function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed})); }catch(e){} }
+
+/* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
+const SP_BGS = [
+  {bg:'linear-gradient(135deg,#B9FF4D 0%,#9AFF00 45%,#3f6b00 100%)', fg:'#0b1400'},
+  {bg:'linear-gradient(160deg,#131f04 0%,#060606 55%,#0e1a03 100%)', fg:'#fff'},
+  {bg:'linear-gradient(150deg,#0a1a10 0%,#050505 60%,#08240e 100%)', fg:'#fff'},
+  {bg:'linear-gradient(155deg,#233a00 0%,#0b1400 55%,#000 100%)',    fg:'#fff'},
+  {bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)', fg:'#fff'},
+  {bg:'linear-gradient(145deg,#1c1c1c 0%,#000 60%,#131f04 100%)',    fg:'#fff'},
+];
+
+/* ---------- свои SVG-иконки выравнивания (штрих как у ядра) ---------- */
+(function spIcons(){
+  const defs = document.querySelector('svg defs'); if(!defs) return;
+  const mk = (id, html)=>{
+    if(document.getElementById(id)) return;
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id', id); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = html; defs.appendChild(s);
+  };
+  mk('i-sp-al','<path d="M14 25h72M14 50h42M14 75h58"/>');
+  mk('i-sp-ac','<path d="M14 25h72M29 50h42M21 75h58"/>');
+  mk('i-sp-ar','<path d="M14 25h72M44 50h42M28 75h58"/>');
+})();
+
+/* ---------- мок-зрители (в духе демо-контента) ---------- */
+const SP_POOL = [
+  ['МВ','Марк Волков'],['АК','Алина Крид'],['ИС','Игорь Савин'],['НК','Настя Ким'],
+  ['ЛГ','Лера Голд'],['ТА','Тимур Ахметов'],['ПГ','Паша Гринёв'],['ОВ','Оля Верес'],
+  ['КМ','Кирилл Мороз'],['СБ','Соня Белова'],['ДР','Денис Рублёв'],['ЖС','Жанна Сотник'],
+];
+const SP_TIMES = ['только что','1 мин назад','3 мин назад','8 мин назад','14 мин назад','27 мин назад',
+  '41 мин назад','1 ч назад','2 ч назад','3 ч назад','5 ч назад','9 ч назад'];
+
+function spGrowViews(st, n){
+  st.spViewers = st.spViewers || [];
+  st.spVwReacts = st.spVwReacts || {};
+  const used = new Set(st.spViewers);
+  const free = SP_POOL.map((_, i)=>i).filter(i=>!used.has(i));
+  while(n-- > 0 && free.length){
+    const k = free.splice(Math.floor(Math.random()*free.length), 1)[0];
+    st.spViewers.unshift(k);
+    if(Math.random() < .35) st.spVwReacts[k] = ['heart','fire','thumb'][Math.floor(Math.random()*3)];
+  }
+}
+function spEnsureViews(st, grow){
+  if(!st.spViewers) spGrowViews(st, 3 + Math.floor(Math.random()*3));
+  else if(grow && Math.random() < .75) spGrowViews(st, 1 + Math.floor(Math.random()*2));
+  return st.spViewers.length;
+}
+
+/* ---------- группировка сторис по автору ---------- */
+function spKey(st){ return st.my ? '@me' : st.name; }
+function spGroups(){
+  const groups = [], by = {};
+  (typeof STORIES !== 'undefined' ? STORIES : []).forEach((st, i)=>{
+    if(st.add){ groups.push({add:true, name:st.name}); return; }
+    const k = spKey(st);
+    if(by[k]) by[k].idx.push(i);
+    else { const g = {key:k, idx:[i]}; by[k] = g; groups.push(g); }
+  });
+  return groups;
+}
+function spOpenGroup(keyEnc){
+  const key = decodeURIComponent(keyEnc||'');
+  const g = spGroups().find(x=>!x.add && x.key === key);
+  if(!g) return;
+  const idx = g.idx.find(i=>!STORIES[i].seen);
+  openStory(idx === undefined ? g.idx[0] : idx);
+}
+
+/* кружки в ленте: один автор — один кружок, бейдж с числом историй */
+if(typeof renderStories === 'function'){
+  const _spPrevRenderStories = renderStories;
+  renderStories = function(){
+    const row = document.getElementById('storiesRow');
+    if(!row) return _spPrevRenderStories();
+    row.innerHTML = spGroups().map(g=>{
+      if(g.add) return `<div class="story add" onclick="openStoryCreate()"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${esc(g.name||'Твоя')}</small></div>`;
+      const st = STORIES[g.idx[0]];
+      const seen = g.idx.every(i=>STORIES[i].seen);
+      const ava = st.src ? `<div class="ava" style="background-image:url(${st.src});background-size:cover"></div>`
+        : st.avaIcon ? `<div class="ava lime">${I(st.avaIcon)}</div>` : `<div class="ava">${esc(st.ava)}</div>`;
+      const cnt = g.idx.length > 1 ? `<b class="sp-cnt">${g.idx.length}</b>` : '';
+      return `<div class="story ${seen?'seen':''}" id="story-${g.idx[0]}" data-spg="${encodeURIComponent(g.key)}" onclick="spOpenGroup(this.dataset.spg)"><div class="ring" style="position:relative">${ava}${cnt}</div><small>${esc(st.name)}</small></div>`;
+    }).join('');
+  };
+}
+
+/* ---------- декор вьювера: сегменты, счётчик, реакции, стили редактора ---------- */
+let spLastIdx = -1;
+
+function spViewerEls(){
+  const v = document.getElementById('storyViewer'); if(!v) return null;
+  let bars = document.getElementById('spBars');
+  if(!bars){
+    bars = document.createElement('div'); bars.id = 'spBars'; bars.className = 'sp-bars';
+    v.appendChild(bars);
+    const foot = document.createElement('div'); foot.id = 'spFoot'; foot.className = 'sp-foot';
+    v.appendChild(foot);
+  }
+  return {v, bars, foot: document.getElementById('spFoot')};
+}
+
+function spDecorate(){
+  const els = spViewerEls(); if(!els) return;
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add) return;
+  els.v.classList.remove('sp-paused');
+
+  /* 4. прогресс-сегменты мультисторис (у автора >1 истории) */
+  const g = spGroups().find(x=>!x.add && x.key === spKey(st));
+  if(g && g.idx.length > 1){
+    els.v.classList.add('sp-multi');
+    const cur = g.idx.indexOf(curStory);
+    els.bars.innerHTML = g.idx.map((idx, k)=>
+      `<button class="sp-seg ${k < cur ? 'done' : k === cur ? 'act' : ''}" onclick="spJump(${idx},event)" title="История ${k+1}"><i><b></b></i></button>`).join('');
+  } else {
+    els.v.classList.remove('sp-multi');
+    els.bars.innerHTML = '';
+  }
+  /* дожать «просмотрено» на сгруппированном кружке */
+  if(g){
+    const ring = document.getElementById('story-'+g.idx[0]);
+    if(ring && g.idx.every(i=>STORIES[i].seen)) ring.classList.add('seen');
+  }
+
+  /* 1. стили из редактора: цвет текста, размер, выравнивание, стикер */
+  const card = document.getElementById('svCard');
+  if(card){
+    card.style.color = (st.sp && st.sp.fg) ? st.sp.fg : '';
+    if(st.sp){
+      const p = card.querySelector('p');
+      if(p){
+        p.style.fontSize = ({s:'14px', m:'18px', l:'23px'})[st.sp.size] || '';
+        p.style.textAlign = st.sp.align || 'center';
+        if(st.sp.align && st.sp.align !== 'center'){ p.style.maxWidth = '100%'; p.style.width = '100%'; }
+        p.style.color = st.sp.fg || '#fff';
+        p.style.fontWeight = '600';
+      }
+      const tm = card.querySelector('.sv-time');
+      if(tm && st.sp.fg){ tm.style.color = st.sp.fg; tm.style.opacity = '.62'; }
+      if(st.sp.sticker && !card.querySelector('.sp-sticker'))
+        card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I('logo')}</div>`);
+    }
+  }
+
+  /* 2/3. низ вьювера: свои — счётчик глаз, чужие — быстрые реакции */
+  const grow = spLastIdx !== curStory;
+  spLastIdx = curStory;
+  if(st.my){
+    const n = spEnsureViews(st, grow);
+    els.foot.innerHTML = `<button class="sp-eye" onclick="spOpenViewers(event)">${I('eye')}<span>${n}</span>${I('chev')}</button>`;
+  } else {
+    els.foot.innerHTML = `<div class="sp-reacts">` + ['heart','fire','thumb'].map(ic=>
+      `<button class="sp-react ${st.spReacted===ic?'on':''}" onclick="spReact('${ic}',event)" title="Отправить реакцию">${I(ic)}</button>`).join('') + `</div>`;
+  }
+}
+
+function spJump(idx, ev){
+  if(ev) ev.stopPropagation();
+  if(typeof curStory === 'undefined' || !STORIES[idx]) return;
+  curStory = idx; showStory();
+}
+
+/* 3. реакция на чужую сторис: подсветка + летящая анимация + тост */
+function spReact(ic, ev){
+  if(ev) ev.stopPropagation();
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st) return;
+  st.spReacted = ic;
+  document.querySelectorAll('#spFoot .sp-react').forEach(b=>b.classList.remove('on'));
+  const btn = ev && ev.currentTarget;
+  if(btn) btn.classList.add('on');
+  if(btn && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const r = btn.getBoundingClientRect();
+    for(let k = 0; k < 5; k++){
+      const f = document.createElement('div');
+      f.className = 'sp-fly';
+      f.style.left = (r.left + r.width/2 - 13 + (Math.random()*28 - 14)) + 'px';
+      f.style.top = (r.top - 8) + 'px';
+      f.style.setProperty('--dx', (Math.random()*76 - 38) + 'px');
+      f.style.animationDelay = (k*90) + 'ms';
+      f.style.animationDuration = (0.85 + Math.random()*0.5) + 's';
+      f.innerHTML = I(ic, 'fill');
+      document.body.appendChild(f);
+      f.addEventListener('animationend', ()=>f.remove());
+      setTimeout(()=>f.remove(), 2400); /* страховка */
+    }
+  }
+  toast('Реакция отправлена');
+}
+
+/* 2. шторка «кто посмотрел» (сторис на паузе, поверх вьювера) */
+function spOpenViewers(ev){
+  if(ev) ev.stopPropagation();
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  const wrap = document.getElementById('spVwWrap');
+  if(!st || !st.my || !wrap) return;
+  spEnsureViews(st, false);
+  document.getElementById('spVwCount').textContent = st.spViewers.length;
+  document.getElementById('spVwList').innerHTML = st.spViewers.length ? st.spViewers.map((pi, j)=>{
+    const p = SP_POOL[pi];
+    const re = st.spVwReacts && st.spVwReacts[pi];
+    return `<div class="sp-vw-item" style="animation-delay:${Math.min(j*45, 400)}ms">
+      <div class="ava">${esc(p[0])}</div>
+      <div><b>${esc(p[1])}${typeof vBadge==='function' ? vBadge(p[1]) : ''}</b><small>${SP_TIMES[Math.min(j, SP_TIMES.length-1)]}</small></div>
+      ${re ? `<span class="sp-vw-re" title="Реакция">${I(re)}</span>` : ''}
+    </div>`;
+  }).join('') : '<div class="sp-vw-empty">Пока никто не посмотрел</div>';
+  wrap.classList.add('open');
+  try{ clearTimeout(storyTimer); }catch(e){}
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.add('sp-paused');
+  if(typeof nvPush === 'function') nvPush('view:sp-viewers', spCloseViewers);
+}
+function spCloseViewers(){
+  const wrap = document.getElementById('spVwWrap');
+  if(!wrap || !wrap.classList.contains('open')) return;
+  wrap.classList.remove('open');
+  if(typeof nvPop === 'function') nvPop('view:sp-viewers');
+  const v = document.getElementById('storyViewer');
+  if(v && v.classList.contains('open')) showStory(); /* продолжить текущий слайд заново */
+}
+
+/* ---------- 1. редактор текст-сторис ---------- */
+function spOpenEditor(){
+  const ed = document.getElementById('spEditor'); if(!ed) return;
+  const txt = document.getElementById('spEdText');
+  if(txt) txt.innerText = '';
+  spEdApply(); spEdSync();
+  ed.classList.add('open');
+  setTimeout(()=>{ try{ txt && txt.focus(); }catch(e){} }, 330);
+  if(typeof nvPush === 'function') nvPush('view:sp-editor', spCloseEditor);
+}
+function spCloseEditor(){
+  const ed = document.getElementById('spEditor');
+  if(!ed || !ed.classList.contains('open')) return;
+  ed.classList.remove('open');
+  if(typeof nvPop === 'function') nvPop('view:sp-editor');
+}
+function spEdApply(){
+  const card = document.getElementById('spEdCard'); if(!card) return;
+  const cfg = SP_BGS[SP.ed.bg] || SP_BGS[1];
+  card.style.background = cfg.bg;
+  card.style.color = cfg.fg;
+  card.className = 'sp-ed-card sp-sz-' + SP.ed.size + ' sp-al-' + SP.ed.align + (SP.ed.sticker ? ' sp-stk' : '');
+  const stk = document.getElementById('spEdSticker');
+  if(stk) stk.className = 'sp-ed-sticker sp-pos-' + (SP.ed.pos || 'br');
+  const sw = document.getElementById('spEdSwatches');
+  if(sw && !sw.children.length)
+    sw.innerHTML = SP_BGS.map((b, i)=>`<button class="sp-sw" style="background:${b.bg}" onclick="spEdBg(${i})" title="Фон ${i+1}"></button>`).join('');
+  if(sw) Array.from(sw.children).forEach((b, i)=>b.classList.toggle('on', i === SP.ed.bg));
+  document.querySelectorAll('#spEdSizes button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.size));
+  document.querySelectorAll('#spEdAligns button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.align));
+  const tb = document.getElementById('spEdStkBtn');
+  if(tb) tb.classList.toggle('on', !!SP.ed.sticker);
+}
+function spEdBg(i){ SP.ed.bg = i; spSave(); spEdApply(); }
+function spEdSize(v){ SP.ed.size = v; spSave(); spEdApply(); }
+function spEdAlign(v){ SP.ed.align = v; spSave(); spEdApply(); }
+function spToggleSticker(){ SP.ed.sticker = !SP.ed.sticker; spSave(); spEdApply(); }
+function spCycleSticker(ev){
+  if(ev) ev.stopPropagation();
+  const order = ['br','bl','tl','tr'];
+  SP.ed.pos = order[(order.indexOf(SP.ed.pos) + 1) % order.length] || 'br';
+  spSave(); spEdApply();
+}
+/* совместимость с pickStoryPhoto ядра: он берёт текст из #stStoryText */
+function spEdSync(){
+  const src = document.getElementById('spEdText');
+  const dst = document.getElementById('stStoryText');
+  if(src && dst) dst.value = (src.innerText || '').trim();
+}
+function spPickPhoto(){
+  spEdSync();
+  const inp = document.getElementById('storyPhotoInput');
+  if(inp) inp.click(); else toast('Фото недоступно');
+}
+function spPublish(){
+  const el = document.getElementById('spEdText');
+  const txt = (el ? el.innerText : '').replace(/\s+/g,' ').trim();
+  if(!txt){ toast('Напиши текст истории'); return; }
+  if(typeof addStory !== 'function') return;
+  const cfg = SP_BGS[SP.ed.bg] || SP_BGS[1];
+  addStory({text:txt, bg:cfg.bg,
+    sp:{size:SP.ed.size, align:SP.ed.align, sticker:!!SP.ed.sticker, pos:SP.ed.pos, fg:cfg.fg}});
+}
+
+/* ---------- chain-патчи ядра ---------- */
+if(typeof openStoryCreate === 'function'){
+  const _spPrevOpenStoryCreate = openStoryCreate;
+  openStoryCreate = function(){
+    if(document.getElementById('spEditor')) spOpenEditor();
+    else _spPrevOpenStoryCreate(); /* фолбэк — прежний sheet */
+  };
+}
+if(typeof createTextStory === 'function'){
+  const _spPrevCreateTextStory = createTextStory;
+  createTextStory = function(){
+    const ed = document.getElementById('spEditor');
+    if(ed && ed.classList.contains('open')) spPublish();
+    else _spPrevCreateTextStory();
+  };
+}
+if(typeof addStory === 'function'){
+  const _spPrevAddStory = addStory;
+  addStory = function(data){
+    _spPrevAddStory(data);   /* splice + closeSheet + renderStories (уже сгруппированный) + toast */
+    spCloseEditor();
+  };
+}
+if(typeof showStory === 'function'){
+  const _spPrevShowStory = showStory; /* поверх патча demo-content (градиент-фон) */
+  showStory = function(){
+    _spPrevShowStory();
+    try{ spDecorate(); }catch(e){ console.warn('stories-plus decorate:', e); }
+  };
+}
+if(typeof closeStory === 'function'){
+  const _spPrevCloseStory = closeStory;
+  closeStory = function(){
+    _spPrevCloseStory();
+    spLastIdx = -1;
+    const wrap = document.getElementById('spVwWrap');
+    if(wrap && wrap.classList.contains('open')){
+      wrap.classList.remove('open');
+      if(typeof nvPop === 'function') nvPop('view:sp-viewers');
+    }
+  };
+}
+
+/* ---------- демо: вторые истории у авторов (виден мультисторис-режим) ---------- */
+function spSeed(){
+  if(typeof STORIES === 'undefined' || STORIES.some(s=>s.spSeed)) return;
+  const put = (name, story)=>{
+    const i = STORIES.findIndex(s=>!s.add && s.name === name);
+    if(i >= 0) STORIES.splice(i + 1, 0, story);
+  };
+  put('OKO', {spSeed:true, avaIcon:'logo', name:'OKO',
+    text:'Сторис-редактор уже здесь: градиенты бренда, размер текста и стикер-глаз. Жми плюс в ленте.',
+    bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)',
+    sp:{size:'m', align:'center', sticker:true, pos:'br', fg:'#fff'}});
+  put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
+    text:'Вторая часть кейса кофейни: до и после цветокора. Исходник против финала — разница в один вечер работы.',
+    bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'});
+}
+
+/* ---------- самоинициализация ---------- */
+(function spInit(){
+  try{
+    spSeed();
+    if(typeof renderStories === 'function' && document.getElementById('storiesRow')) renderStories();
+    spEdApply(); /* свотчи и состояние контролов готовы до первого открытия */
+  }catch(e){ console.warn('stories-plus init:', e); }
 })();
 
 /* ===== module: navstack ===== */

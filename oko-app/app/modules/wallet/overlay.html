@@ -1,3 +1,15 @@
-<!-- КОШЕЛЁК: пополнение и вывод -->
+<!-- КОШЕЛЁК: пополнение, вывод, ПИН-код -->
 <div class="sheet" id="sheet-walTopup"><div id="walTopupView"></div></div>
 <div class="sheet" id="sheet-walWithdraw"><div id="walWdView"></div></div>
+<div class="sheet" id="sheet-walPin"><div id="walPinView"></div></div>
+
+<!-- КОШЕЛЁК: выписка по счёту (fullscreen-документ) -->
+<div class="wal-stmt" id="walStmt">
+  <div class="wal-stmt-bar">
+    <button class="wal-stmt-nav" onclick="walCloseStatement()" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span>Выписка по счёту</span>
+    <button class="wal-stmt-nav" onclick="walDownloadStatement()" aria-label="Скачать"><svg class="i"><use href="#i-dl"/></svg></button>
+  </div>
+  <div class="wal-stmt-scroll"><div class="wal-stmt-paper" id="walStmtPaper"></div></div>
+  <div class="wal-stmt-foot"><button class="btn" onclick="walDownloadStatement()"><svg class="i"><use href="#i-dl"/></svg> Скачать выписку (.txt)</button></div>
+</div>

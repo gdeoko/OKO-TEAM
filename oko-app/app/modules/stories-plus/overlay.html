@@ -1,0 +1,38 @@
+<!-- ===== STORIES-PLUS (sp-): редактор текст-сторис + шторка просмотров ===== -->
+<div id="spEditor">
+  <div class="sp-ed-head">
+    <button class="sp-ed-ic" onclick="spCloseEditor()" title="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Новая история</b>
+    <button class="sp-ed-ic" onclick="spPickPhoto()" title="Фото с устройства"><svg class="i"><use href="#i-photo"/></svg></button>
+  </div>
+  <div class="sp-ed-stage">
+    <div class="sp-ed-card" id="spEdCard">
+      <div id="spEdText" contenteditable="true" data-ph="Твоя история…" oninput="spEdSync()"></div>
+      <button class="sp-ed-sticker" id="spEdSticker" onclick="spCycleSticker(event)" title="Передвинуть стикер"><svg class="i"><use href="#i-logo"/></svg></button>
+    </div>
+  </div>
+  <div class="sp-ed-tools">
+    <div class="sp-ed-swatches" id="spEdSwatches"></div>
+    <div class="sp-ed-row">
+      <div class="sp-seg-group" id="spEdSizes">
+        <button data-v="s" onclick="spEdSize('s')" title="Мелкий текст"><span style="font-size:11px">А</span></button>
+        <button data-v="m" onclick="spEdSize('m')" title="Средний текст"><span style="font-size:14px">А</span></button>
+        <button data-v="l" onclick="spEdSize('l')" title="Крупный текст"><span style="font-size:18px">А</span></button>
+      </div>
+      <div class="sp-seg-group" id="spEdAligns">
+        <button data-v="left" onclick="spEdAlign('left')" title="По левому краю"><svg class="i"><use href="#i-sp-al"/></svg></button>
+        <button data-v="center" onclick="spEdAlign('center')" title="По центру"><svg class="i"><use href="#i-sp-ac"/></svg></button>
+        <button data-v="right" onclick="spEdAlign('right')" title="По правому краю"><svg class="i"><use href="#i-sp-ar"/></svg></button>
+      </div>
+      <button class="sp-stk-toggle" id="spEdStkBtn" onclick="spToggleSticker()" title="Стикер-глаз OKO"><svg class="i"><use href="#i-logo"/></svg></button>
+    </div>
+    <button class="btn sp-ed-pub" onclick="spPublish()">Опубликовать историю</button>
+  </div>
+</div>
+<div id="spVwWrap" onclick="spCloseViewers()">
+  <div class="sp-vw" onclick="event.stopPropagation()">
+    <div class="sp-vw-grip"></div>
+    <h3><svg class="i"><use href="#i-eye"/></svg>Просмотры<span id="spVwCount"></span></h3>
+    <div id="spVwList"></div>
+  </div>
+</div>

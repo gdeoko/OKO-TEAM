@@ -106,9 +106,11 @@ function psAuthor(name){
   const sub = (p0 && p0.sub) || '';
 
   let followers = 0;
-  const m = sub.match(/(\d+(?:[.,]\d+)?)\s*к/i);
-  if(m) followers = Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
-  else if(anyChat && anyChat.subs){
+  for(const p of posts){ /* аудитория из любого поста автора: «канал · 48.2к» */
+    const m = String(p.sub || '').match(/(\d+(?:[.,]\d+)?)\s*к/i);
+    if(m){ followers = Math.round(parseFloat(m[1].replace(',', '.')) * 1000); break; }
+  }
+  if(!followers && anyChat && anyChat.subs){
     const mm = String(anyChat.subs).match(/(\d+(?:[.,]\d+)?)\s*к/i);
     if(mm) followers = Math.round(parseFloat(mm[1].replace(',', '.')) * 1000);
   }
@@ -350,7 +352,9 @@ function psDecorateSub(){
     if(!p) return;
     const nameEl = art.querySelector('.head .name');
     if(!nameEl) return;
-    if(typeof vBadge === 'function' && typeof VERIFIED !== 'undefined' && VERIFIED.has(p.name) && !nameEl.querySelector('.ps-vb'))
+    /* галочка verified — только если её ещё никто не поставил (verify-stickers/feed-algo) */
+    if(typeof vBadge === 'function' && typeof VERIFIED !== 'undefined' && VERIFIED.has(p.name) &&
+       !nameEl.querySelector('.ps-vb, .vs-badge, .fa-vb, use[href*="i-verified"]'))
       nameEl.insertAdjacentHTML('beforeend', `<span class="ps-vb">${vBadge(p.name)}</span>`);
     if(psIsFollowing(p.name) && !nameEl.querySelector('.ps-fchip'))
       nameEl.insertAdjacentHTML('beforeend', ` <span class="chip ps-fchip">${I('check')}Подписка</span>`);

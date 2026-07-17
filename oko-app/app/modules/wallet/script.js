@@ -1,15 +1,25 @@
 /* ================= WALLET: экран кошелька / лицевой счёт =================
    Опирается на core-ext: WALLET, walletAdd, walletCharge, fmtMoney, okoEarn.
-   Патчит денежные потоки ядра (тарифы, продвижение, биржа, переводы, партнёрка). */
+   Патчит денежные потоки ядра (тарифы, продвижение, биржа, переводы, партнёрка).
+   Плюс: график баланса 30 дней, автопродление PRO, выписка (.txt + документ),
+   реквизиты пополнения, лимиты счёта и ПИН-код на вывод. */
 
-/* ---------- иконка TON (кристалл) в общий defs ---------- */
+/* ---------- иконки TON (кристалл) и «скачать» в общий defs ---------- */
 (function walAddIcons(){
   const defs = document.querySelector('svg defs');
-  if(!defs || document.getElementById('i-ton')) return;
-  const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-  s.setAttribute('id','i-ton'); s.setAttribute('viewBox','0 0 100 100');
-  s.innerHTML = '<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
-  defs.appendChild(s);
+  if(!defs) return;
+  if(!document.getElementById('i-ton')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-ton'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }
+  if(!document.getElementById('i-dl')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-dl'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }
 })();
 
 /* ---------- демо-наполнение леджера (один раз, реалистичные операции) ---------- */
@@ -32,6 +42,29 @@
   try{ localStorage.setItem('oko-wallet-demo','1'); }catch(e){}
 })();
 
+/* история за месяц для графика (только старые даты, баланс НЕ меняют —
+   восстанавливаются графиком назад от текущего) */
+(function walSeedDemo2(){
+  try{ if(localStorage.getItem('oko-wallet-demo2')==='1') return; }catch(e){}
+  const D = 864e5, now = Date.now();
+  const hist = [
+    {t:'+', sum:1200, why:'Продажа на Бирже: обложка канала',   at: now - 3*D},
+    {t:'-', sum:150,  why:'Стикеры OKO · набор «Неон»',         at: now - 4*D},
+    {t:'+', sum:900,  why:'Партнёрская программа · выплата',    at: now - 6*D},
+    {t:'-', sum:349,  why:'Продвижение объявления · Старт',     at: now - 8*D},
+    {t:'-', sum:600,  why:'Игра «Дорога» · ставка',             at: now - 11*D},
+    {t:'+', sum:800,  why:'Пополнение · USDT',                  at: now - 13*D},
+    {t:'-', sum:1490, why:'Тариф START · 1 мес',                at: now - 19*D},
+    {t:'+', sum:700,  why:'Возврат по спору · Биржа',           at: now - 22*D},
+    {t:'-', sum:250,  why:'Перевод в чате · Аня Соколова',      at: now - 26*D},
+    {t:'+', sum:1500, why:'Пополнение · Карта РФ',              at: now - 28*D},
+  ];
+  WALLET.ledger = WALLET.ledger.concat(hist);
+  WALLET.ledger.sort((a,b)=>b.at-a.at);
+  walletSave();
+  try{ localStorage.setItem('oko-wallet-demo2','1'); }catch(e){}
+})();
+
 /* ---------- состояние модуля ---------- */
 let walFilter = 'all';
 let walTopupState = {sum:1000, method:'card'};
@@ -44,13 +77,27 @@ const WAL_METHODS = [
 ];
 const WAL_M_LABEL = {card:'Карта РФ', usdt:'Крипта USDT', lava:'Lava.top', ton:'TON'};
 const WAL_USD_RATE = 90; // курс прототипа для партнёрских выплат в $
+const WAL_WD_DAY_LIMIT = 100000;        // суточный лимит вывода
+const WAL_NOCONF_LIMIT = 5000;          // покупки без подтверждения
+const WAL_CARD_NUM = '2200 7007 1234 5566';
+const WAL_USDT_ADDR = 'TQoKo4fHFYyeJtsDdD7TgKLxAV1mFJnEok';
+const WAL_TON_ADDR = 'UQAoKoAppTonWa11etMockAddr9hfP2vXqLmTz4A';
+
+/* доп-настройки кошелька (персист): автопродление, ПИН, суточный вывод */
+const WAL_X = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet-x'))||{}; }catch(e){ return {}; } })();
+function walXSave(){ try{ localStorage.setItem('oko-wallet-x', JSON.stringify(WAL_X)); }catch(e){} }
+function walProPrice(){ return (typeof PLANS!=='undefined' && PLANS.PRO) ? PLANS.PRO.mo : 4890; }
+function walDMY(ts){ const d = new Date(ts); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
+function walDMYT(ts){ const d = new Date(ts); return walDMY(ts)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function walCopy(txt, msg){ try{ navigator.clipboard.writeText(txt); }catch(e){} toast(msg||'Скопировано'); }
 
 /* ---------- категории расходов ---------- */
 function walCat(why){
   if(/продвижен/i.test(why)) return 'Продвижение';
   if(/бирж/i.test(why)) return 'Биржа';
   if(/игр|рулетк|ставк|дорог/i.test(why)) return 'Игры';
-  if(/тариф/i.test(why)) return 'Тарифы';
+  if(/тариф|автопродлен/i.test(why)) return 'Тарифы';
+  if(/вывод/i.test(why)) return 'Вывод средств';
   if(/перевод/i.test(why)) return 'Переводы';
   return 'Прочее';
 }
@@ -92,7 +139,86 @@ function renderWallet(){
   walRenderCats();
   walRenderLedger();
   walUpdateChips();
+  walRenderAutopay();
+  walRenderSec();
+  walDrawChart();
 }
+
+/* ---------- ГРАФИК БАЛАНСА за 30 дней (восстановление по леджеру) ---------- */
+function walSeries(days){
+  const now = Date.now(), day = 864e5, pts = [];
+  for(let i = days; i >= 0; i--){
+    const T = now - i * day;
+    let b = WALLET.balance;
+    for(const op of WALLET.ledger){
+      if(op.at > T) b += op.t === '+' ? -op.sum : op.sum; // откатываем более поздние операции
+    }
+    pts.push(b);
+  }
+  return pts;
+}
+function walDrawChart(){
+  const cv = document.getElementById('walChart');
+  if(!cv) return;
+  requestAnimationFrame(()=>{
+    const W = cv.clientWidth, H = 66;
+    if(!W) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const pts = walSeries(30), n = pts.length;
+    const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+    const span = (max - min) || Math.max(Math.abs(max), 100) * 0.25;
+    const lo = min - span * 0.12, hi = max + span * 0.12;
+    const X = i => 3 + i / (n - 1) * (W - 6);
+    const Y = v => H - 5 - (v - lo) / (hi - lo) * (H - 12);
+    const light = document.documentElement.dataset.theme === 'light';
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#9AFF00';
+    /* сетка */
+    ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1; ctx.setLineDash([3,5]);
+    [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
+    ctx.setLineDash([]);
+    /* плавная линия по средним точкам */
+    const path = ()=>{
+      ctx.beginPath();
+      ctx.moveTo(X(0), Y(pts[0]));
+      for(let i = 1; i < n - 1; i++)
+        ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
+      ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
+    };
+    /* градиент-заливка */
+    path();
+    ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, light ? 'rgba(83,168,0,.28)' : 'rgba(154,255,0,.30)');
+    g.addColorStop(1, 'rgba(154,255,0,0)');
+    ctx.fillStyle = g; ctx.fill();
+    /* линия */
+    path();
+    ctx.strokeStyle = accent; ctx.lineWidth = 2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    /* точка «сейчас» */
+    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
+    ctx.fillStyle = accent; ctx.fill();
+    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
+    ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+    /* чип динамики */
+    const dEl = document.getElementById('walDelta');
+    if(dEl){
+      const diff = pts[n-1] - pts[0];
+      const pct = pts[0] ? Math.round(diff / Math.abs(pts[0]) * 100) : 0;
+      const up = diff >= 0;
+      dEl.className = 'wal-delta ' + (up ? 'in' : 'out');
+      dEl.innerHTML = `<svg viewBox="0 0 100 100" style="${up?'':'transform:rotate(180deg)'}"><path d="M20 66 50 34 80 66" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>${up?'+':'−'} ${fmtMoney(Math.abs(diff))}${pct ? ' · ' + (up?'+':'−') + Math.abs(pct) + '%' : ''}`;
+    }
+  });
+}
+
 function walRenderCats(){
   const bar = document.getElementById('walCatBar'), wrap = document.getElementById('walCats');
   if(!bar || !wrap) return;
@@ -137,12 +263,153 @@ function walSetFilter(f){
   walRenderLedger();
 }
 function walCopyAcc(){
-  try{ navigator.clipboard.writeText(WALLET.acc); }catch(e){}
-  toast('Номер счёта скопирован: ' + WALLET.acc);
+  walCopy(WALLET.acc, 'Номер счёта скопирован: ' + WALLET.acc);
 }
 function walScrollHistory(){
   const a = document.getElementById('walHistAnchor');
   if(a) a.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- АВТОПРОДЛЕНИЕ ПОДПИСКИ PRO ---------- */
+function walRenderAutopay(){
+  const sw = document.getElementById('walAutoSw'), sub = document.getElementById('walAutoSub');
+  if(!sw || !sub) return;
+  sw.classList.toggle('on', !!WAL_X.autopay);
+  sub.textContent = WAL_X.autopay
+    ? 'Следующее списание ' + walDMY(WAL_X.nextAt) + ' · ' + fmtMoney(walProPrice())
+    : 'Выключено — тариф не продлевается сам';
+}
+function walToggleAutopay(){
+  if(WAL_X.autopay){
+    WAL_X.autopay = false; walXSave(); walRenderAutopay();
+    toast('Автопродление PRO выключено');
+    return;
+  }
+  const next = Date.now() + 30 * 864e5;
+  showPopup({ico:'crown', title:'Автопродление PRO',
+    body:'Тариф PRO — <b>' + fmtMoney(walProPrice()) + ' / мес</b>.<br>Первое автосписание с лицевого счёта — <b>' + walDMY(next) + '</b>.<br>Отключить можно в любой момент в кошельке.',
+    actions:[
+      {label:'Включить автопродление', onclick:()=>{
+        WAL_X.autopay = true; WAL_X.nextAt = next; walXSave();
+        walRenderAutopay(); toast('Автопродление PRO включено — списание ' + walDMY(next));
+      }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+/* просроченное автопродление — списываем при запуске (мок реального крона) */
+(function walAutoChargeDue(){
+  if(!WAL_X.autopay || !WAL_X.nextAt || Date.now() < WAL_X.nextAt) return;
+  const price = walProPrice();
+  if(WALLET.balance >= price && walletCharge(price, 'Автопродление тарифа PRO')){
+    okoEarn(price, 'Тарифы');
+    WAL_X.nextAt = Date.now() + 30 * 864e5;
+    toast('Тариф PRO продлён автоматически: ' + fmtMoney(price));
+  } else {
+    WAL_X.autopay = false;
+    toast('Автопродление PRO: не хватило средств — выключено');
+  }
+  walXSave();
+})();
+
+/* ---------- ЛИМИТЫ И БЕЗОПАСНОСТЬ ---------- */
+function walWdUsedToday(){
+  return WAL_X.wdDay === new Date().toDateString() ? (WAL_X.wdSum || 0) : 0;
+}
+function walRenderSec(){
+  const sub = document.getElementById('walSecWdSub'), bar = document.getElementById('walSecWdBar');
+  const used = walWdUsedToday();
+  if(sub) sub.textContent = fmtMoney(used) + ' из ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' за сегодня';
+  if(bar) bar.style.width = Math.min(100, used / WAL_WD_DAY_LIMIT * 100).toFixed(1) + '%';
+  const psw = document.getElementById('walPinSw'), psub = document.getElementById('walPinSub');
+  if(psw) psw.classList.toggle('on', !!WAL_X.pin);
+  if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен — включи для защиты вывода';
+}
+function walTogglePin(){
+  if(WAL_X.pin) walPinOpen('off', 'walPinView');
+  else walPinOpen('set', 'walPinView');
+}
+
+/* ---------- ПИН-ПАД (мок 4 цифры, персист) ---------- */
+let walPinCtx = null;
+function walPinOpen(mode, targetId, onOk){
+  walPinCtx = {mode, targetId, onOk: onOk || null, stage: 1, first: '', buf: ''};
+  if(targetId === 'walPinView') openSheet('walPin');
+  walPinRender();
+}
+function walPinRender(err){
+  const c = walPinCtx; if(!c) return;
+  const box = document.getElementById(c.targetId); if(!box) return;
+  const T = {
+    set1:    ['Придумай ПИН-код', '4 цифры — понадобится при каждом выводе средств'],
+    set2:    ['Повтори ПИН-код', 'Ещё раз те же 4 цифры для подтверждения'],
+    off:     ['Отключение ПИН-кода', 'Введи текущий ПИН-код'],
+    confirm: ['Подтверди вывод', 'Введи ПИН-код, чтобы вывести средства'],
+  };
+  const [title, sub] = T[c.mode === 'set' ? 'set' + c.stage : c.mode];
+  box.innerHTML = `
+  <div class="wal-pin">
+    <div class="wal-pin-lock">${I('lock')}</div>
+    <h3 style="text-align:center">${title}</h3>
+    <p class="dim" style="font-size:12px;text-align:center;margin-top:4px">${sub}</p>
+    <div class="wal-pin-dots ${err ? 'err' : ''}" id="walPinDots">${[0,1,2,3].map(i=>`<span class="${i < c.buf.length ? 'on' : ''}"></span>`).join('')}</div>
+    <div class="wal-pin-keys">
+      ${[1,2,3,4,5,6,7,8,9].map(d=>`<button onclick="walPinKey(${d})">${d}</button>`).join('')}
+      <button class="ghosty" onclick="walPinCancel()">Отмена</button>
+      <button onclick="walPinKey(0)">0</button>
+      <button class="ghosty" onclick="walPinBackspace()" aria-label="Стереть"><svg class="i"><use href="#i-back"/></svg></button>
+    </div>
+  </div>`;
+}
+function walPinDots(){
+  const c = walPinCtx, d = document.getElementById('walPinDots');
+  if(!c || !d) return;
+  [...d.children].forEach((s,i)=>s.classList.toggle('on', i < c.buf.length));
+}
+function walPinKey(n){
+  const c = walPinCtx; if(!c || c.buf.length >= 4) return;
+  c.buf += String(n); walPinDots();
+  if(c.buf.length === 4) setTimeout(walPinEval, 170);
+}
+function walPinBackspace(){
+  const c = walPinCtx; if(!c) return;
+  c.buf = c.buf.slice(0, -1); walPinDots();
+}
+function walPinErr(msg){
+  const c = walPinCtx; if(!c) return;
+  c.buf = '';
+  toast(msg);
+  walPinRender(true);
+  setTimeout(()=>{ const d = document.getElementById('walPinDots'); if(d) d.classList.remove('err'); }, 450);
+}
+function walPinEval(){
+  const c = walPinCtx; if(!c) return;
+  const code = c.buf;
+  if(c.mode === 'set'){
+    if(c.stage === 1){ c.first = code; c.stage = 2; c.buf = ''; walPinRender(); return; }
+    if(code === c.first){
+      WAL_X.pin = code; walXSave(); walPinCtx = null;
+      closeSheet(); walRenderSec();
+      toast('ПИН-код на вывод установлен');
+    } else { c.stage = 1; c.first = ''; walPinErr('ПИН-коды не совпали — начни заново'); }
+    return;
+  }
+  if(c.mode === 'off'){
+    if(code === WAL_X.pin){
+      WAL_X.pin = null; walXSave(); walPinCtx = null;
+      closeSheet(); walRenderSec();
+      toast('ПИН-код отключён');
+    } else walPinErr('Неверный ПИН-код');
+    return;
+  }
+  if(c.mode === 'confirm'){
+    if(code === WAL_X.pin){ const ok = c.onOk; walPinCtx = null; if(ok) ok(); }
+    else walPinErr('Неверный ПИН-код');
+  }
+}
+function walPinCancel(){
+  const c = walPinCtx; walPinCtx = null;
+  if(c && c.mode === 'confirm') walRenderWithdraw();
+  else closeSheet();
 }
 
 /* ---------- баланс-чипы (хаб + профиль) ---------- */
@@ -173,6 +440,55 @@ function walUpdateChips(){
   });
 }
 
+/* ---------- псевдо-QR (детерминированный SVG-плейсхолдер) ---------- */
+function walQrSvg(seed, size){
+  let h = 2166136261;
+  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = ()=>{ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
+  const N = 21, finder = (r,c)=> (r < 8 && c < 8) || (r < 8 && c >= N-8) || (r >= N-8 && c < 8);
+  let cells = '';
+  for(let r = 0; r < N; r++) for(let c = 0; c < N; c++)
+    if(!finder(r,c) && rnd() < 0.46) cells += `<rect x="${c}" y="${r}" width="1" height="1"/>`;
+  const fp = (r,c)=>`<rect x="${c}" y="${r}" width="7" height="7" fill="#111"/><rect x="${c+1}" y="${r+1}" width="5" height="5" fill="#fff"/><rect x="${c+2}" y="${r+2}" width="3" height="3" fill="#111"/>`;
+  return `<svg viewBox="-1.5 -1.5 24 24" width="${size}" height="${size}" shape-rendering="crispEdges" style="border-radius:8px;background:#fff">
+    <rect x="-1.5" y="-1.5" width="24" height="24" fill="#fff"/>
+    <g fill="#111">${cells}</g>${fp(0,0)}${fp(0,14)}${fp(14,0)}</svg>`;
+}
+
+/* ---------- реквизиты пополнения по способу ---------- */
+function walTopReqHtml(m){
+  if(m === 'card') return `
+    <div class="wal-mockcard fade-in">
+      <div class="wal-mc-row">
+        <svg class="wal-mc-chip" viewBox="0 0 44 32"><rect x="1" y="1" width="42" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M1 12h14M1 20h14M29 12h14M29 20h14M15 5v22M29 5v22" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
+        <span class="wal-mc-sys">МИР · СБП</span>
+      </div>
+      <button class="wal-mc-num" onclick="walCopy(WAL_CARD_NUM,'Номер карты скопирован')">${WAL_CARD_NUM}${I('copy')}</button>
+      <div class="wal-mc-bot"><span>OKO PAY · перевод по номеру</span><span>Т-Банк</span></div>
+    </div>
+    <div class="wal-req-qr fade-in">
+      ${walQrSvg('oko-card-' + WALLET.acc, 88)}
+      <div><b>QR для оплаты</b><span>Отсканируй в приложении банка — сумма и назначение платежа подставятся сами. Зачисление мгновенно.</span></div>
+    </div>`;
+  if(m === 'usdt') return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('money')}<span>Адрес USDT · сеть <b>TRC20</b></span></div>
+      <button class="wal-addr" onclick="walCopy(WAL_USDT_ADDR,'Адрес USDT скопирован')"><span>${WAL_USDT_ADDR}</span>${I('copy')}</button>
+      <p class="wal-req-warn">Отправляй только USDT в сети TRC20 — перевод в другой сети будет потерян. Курс фиксируется в момент зачисления.</p>
+    </div>`;
+  if(m === 'ton') return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('ton')}<span>Адрес кошелька <b>TON</b></span></div>
+      <button class="wal-addr" onclick="walCopy(WAL_TON_ADDR,'Адрес TON скопирован')"><span>${WAL_TON_ADDR}</span>${I('copy')}</button>
+      <p class="wal-req-warn" style="color:var(--dim)">Переводи Toncoin из любого TON-кошелька — зачисление за 1–2 минуты по текущему курсу.</p>
+    </div>`;
+  return `
+    <div class="wal-req fade-in">
+      <div class="wal-req-h">${I('bolt')}<span>Оплата через Lava.top</span></div>
+      <p class="wal-req-warn" style="color:var(--dim);margin-top:7px">Счёт откроется в защищённом шлюзе после нажатия «Пополнить» — карты любой страны, СБП и крипта.</p>
+    </div>`;
+}
+
 /* ---------- пополнение ---------- */
 function walOpenTopup(prefill){
   walTopupState = {sum: prefill || 1000, method:'card'};
@@ -191,6 +507,7 @@ function walRenderTopup(){
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Способ пополнения</p>
     <div class="wal-methods">${WAL_METHODS.map(([k,l,ic])=>`
       <button class="wal-m ${s.method===k?'on':''}" onclick="walTopupState.method='${k}';walRenderTopup()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+    <div id="walTopReq">${walTopReqHtml(s.method)}</div>
     <div style="height:14px"></div>
     <button class="btn" onclick="walDoTopup()"><svg class="i"><use href="#i-plus"/></svg> <span id="walTopBtnSum">Пополнить на ${fmtMoney(s.sum)}</span></button>
     <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Без комиссии. Мок: в проде — платёжный шлюз OKO.</p>`;
@@ -219,7 +536,7 @@ function walDoTopup(){
   }, 1100);
 }
 
-/* ---------- вывод (комиссия 2%) ---------- */
+/* ---------- вывод (комиссия 2%, суточный лимит, ПИН) ---------- */
 function walOpenWithdraw(){
   walWdState = {sum:0, method:'card'};
   walRenderWithdraw();
@@ -230,7 +547,7 @@ function walRenderWithdraw(){
   const s = walWdState;
   document.getElementById('walWdView').innerHTML = `
     <h3>Вывод средств</h3>
-    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b></p>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b> · лимит на сегодня: ${fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - walWdUsedToday()))}</p>
     <input id="walWdSum" type="number" min="1" max="${WALLET.balance}" placeholder="Сумма вывода, ₽" value="${s.sum||''}"
       oninput="walWdState.sum=Math.max(0,Number(this.value)||0);walSyncWdCalc()">
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Куда вывести</p>
@@ -238,7 +555,7 @@ function walRenderWithdraw(){
       <button class="wal-m ${s.method===k?'on':''}" onclick="walWdState.method='${k}';walRenderWithdraw()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
     <div class="wal-fee" id="walWdCalc"></div>
     <button class="btn" onclick="walDoWithdraw()"><svg class="i"><use href="#i-card"/></svg> <span id="walWdBtn">Вывести</span></button>
-    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.</p>`;
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.${WAL_X.pin ? ' Защищено ПИН-кодом.' : ''}</p>`;
   walSyncWdCalc();
 }
 function walSyncWdCalc(){
@@ -255,9 +572,22 @@ function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
   if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
+  const used = walWdUsedToday();
+  if(used + s.sum > WAL_WD_DAY_LIMIT){
+    toast('Суточный лимит вывода ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' — сегодня доступно ' + fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - used)));
+    return;
+  }
+  if(WAL_X.pin){ walPinOpen('confirm', 'walWdView', walExecWithdraw); return; }
+  walExecWithdraw();
+}
+function walExecWithdraw(){
+  const s = walWdState;
   const fee = walWdFee(s.sum), get = s.sum - fee;
-  if(!walletCharge(s.sum, 'Вывод на ' + WAL_M_LABEL[s.method])){ return; }
+  if(!walletCharge(s.sum, 'Вывод средств · ' + WAL_M_LABEL[s.method])){ return; }
   okoEarn(fee, 'Комиссия вывода');
+  const today = new Date().toDateString();
+  if(WAL_X.wdDay !== today){ WAL_X.wdDay = today; WAL_X.wdSum = 0; }
+  WAL_X.wdSum += s.sum; walXSave();
   const v = document.getElementById('walWdView');
   v.innerHTML = `<div style="text-align:center;padding:22px 0">
     <div class="spin"></div><p style="font-weight:700;margin-top:14px">Оформляем заявку…</p></div>`;
@@ -273,6 +603,106 @@ function walDoWithdraw(){
   }, 900);
 }
 
+/* ---------- ВЫПИСКА: документ с печатью + скачивание .txt ---------- */
+function walStmtTotals(){
+  let inN = 0, inS = 0, outN = 0, outS = 0;
+  WALLET.ledger.forEach(o=>{ if(o.t === '+'){ inN++; inS += o.sum; } else { outN++; outS += o.sum; } });
+  return {inN, inS, outN, outS, net: inS - outS};
+}
+function walStmtHtml(){
+  const ops = WALLET.ledger.slice().sort((a,b)=>b.at-a.at);
+  const t = walStmtTotals(), now = Date.now();
+  const from = ops.length ? ops[ops.length-1].at : now, to = ops.length ? ops[0].at : now;
+  return `
+  <div class="wal-st-head">
+    <div class="wal-st-req">
+      <b>${SEAL_REQ.fio}</b>
+      <span>${SEAL_REQ.inn}</span>
+      <span>${SEAL_REQ.brand} · ${SEAL_REQ.geo}</span>
+    </div>
+    <div class="wal-st-seal">${sealSvg(84)}</div>
+  </div>
+  <h1>Выписка по лицевому счёту</h1>
+  <div class="wal-st-meta">
+    <div><span>Лицевой счёт</span><b>${WALLET.acc}</b></div>
+    <div><span>Владелец</span><b>${esc(PROFILE.name)} · @${esc(PROFILE.nick)}</b></div>
+    <div><span>Период</span><b>${walDMY(from)} — ${walDMY(to)}</b></div>
+    <div><span>Сформирована</span><b>${walDMYT(now)}</b></div>
+  </div>
+  <div class="wal-st-ops">${ops.map(o=>`
+    <div class="wal-st-op">
+      <span class="d">${walDMYT(o.at)}</span>
+      <span class="w">${esc(o.why)}</span>
+      <b class="${o.t==='+'?'in':'out'}">${o.t==='+'?'+':'−'} ${fmtMoney(o.sum)}</b>
+    </div>`).join('')}</div>
+  <div class="wal-st-tot">
+    <div><span>Пополнения (${t.inN})</span><b class="in">+ ${fmtMoney(t.inS)}</b></div>
+    <div><span>Списания (${t.outN})</span><b class="out">− ${fmtMoney(t.outS)}</b></div>
+    <div class="net"><span>Итог за период</span><b>${t.net>=0?'+':'−'} ${fmtMoney(Math.abs(t.net))}</b></div>
+    <div class="net"><span>Баланс на дату выписки</span><b>${fmtMoney(WALLET.balance)}</b></div>
+    ${WALLET.hold > 0 ? `<div><span>В холде (эскроу)</span><b>${fmtMoney(WALLET.hold)}</b></div>` : ''}
+  </div>
+  <div class="wal-st-sign">
+    <div class="wal-st-sig">${signatureImg(118)}<span>Ильясов Д. А. · ${walDMY(now)}</span></div>
+    <span class="wal-st-note">Документ сформирован автоматически в OKO APP и подтверждает операции по лицевому счёту.</span>
+  </div>`;
+}
+function walStmtText(){
+  const ops = WALLET.ledger.slice().sort((a,b)=>b.at-a.at);
+  const t = walStmtTotals(), now = Date.now();
+  const from = ops.length ? ops[ops.length-1].at : now, to = ops.length ? ops[0].at : now;
+  const hr = '='.repeat(58), sep = '-'.repeat(58), L = [];
+  L.push(hr);
+  L.push('        OKO APP — ВЫПИСКА ПО ЛИЦЕВОМУ СЧЁТУ');
+  L.push(hr);
+  L.push('Счёт:          ' + WALLET.acc);
+  L.push('Владелец:      ' + PROFILE.name + ' (@' + PROFILE.nick + ')');
+  L.push('Период:        ' + walDMY(from) + ' — ' + walDMY(to));
+  L.push('Сформирована:  ' + walDMYT(now));
+  L.push(sep);
+  ops.forEach(o=>{
+    L.push(walDMYT(o.at) + '  ' + (o.t === '+' ? '+' : '-') + fmtMoney(o.sum).padStart(13) + '  ' + o.why);
+  });
+  L.push(sep);
+  L.push('Пополнений:    ' + t.inN + ' на сумму ' + fmtMoney(t.inS));
+  L.push('Списаний:      ' + t.outN + ' на сумму ' + fmtMoney(t.outS));
+  L.push('Итог периода:  ' + (t.net >= 0 ? '+' : '-') + fmtMoney(Math.abs(t.net)));
+  L.push('Баланс:        ' + fmtMoney(WALLET.balance) + (WALLET.hold > 0 ? ' (в холде ' + fmtMoney(WALLET.hold) + ')' : ''));
+  L.push(sep);
+  L.push(SEAL_REQ.fio + ' · ' + SEAL_REQ.inn);
+  L.push(SEAL_REQ.brand + ' · ' + SEAL_REQ.geo);
+  L.push('Документ сформирован автоматически в OKO APP.');
+  L.push(hr);
+  return L.join('\n');
+}
+function walStmtHide(){
+  const el = document.getElementById('walStmt');
+  if(el) el.classList.remove('open');
+}
+function walOpenStatement(){
+  const paper = document.getElementById('walStmtPaper');
+  if(paper) paper.innerHTML = walStmtHtml();
+  const el = document.getElementById('walStmt');
+  if(el) el.classList.add('open');
+  if(typeof nvPush === 'function') nvPush('wal-stmt', walStmtHide);
+}
+function walCloseStatement(){
+  walStmtHide();
+  if(typeof nvPop === 'function') nvPop('wal-stmt');
+}
+function walDownloadStatement(){
+  const d = new Date();
+  const name = 'OKO-выписка-' + WALLET.acc + '-' + d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.txt';
+  const blob = new Blob(['\ufeff' + walStmtText()], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
+  toast('Выписка сохранена: ' + name);
+}
+
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */
 
 /* чипы обновляются при любой операции кошелька */
@@ -284,6 +714,13 @@ const _prevShowTabWal = showTab;
 showTab = function(t){
   _prevShowTabWal(t);
   if(t === 'wallet') renderWallet();
+};
+
+/* перерисовать график при смене темы (цвет линии и сетки зависят от темы) */
+const _prevApplyThemeWal = applyTheme;
+applyTheme = function(t){
+  _prevApplyThemeWal(t);
+  if(typeof walDrawChart === 'function') walDrawChart();
 };
 
 /* тарифы: списание с кошелька; при нехватке — предложение пополнить */

@@ -1,4 +1,4 @@
-<!-- ИГРЫ OKO: рулетка + «Дорога» (префикс gm-) -->
+<!-- ИГРЫ OKO: рулетка + «Дорога» + «Кости» + лидеры недели + бонус дня (префикс gm-) -->
 <section class="screen" id="screen-games">
   <div class="pad">
 
@@ -15,9 +15,12 @@
       <div class="gm-limit-bar"><i id="gmLimitBar" style="width:0%"></i></div>
     </div>
 
+    <button class="gm-bonus-btn" id="gmBonusBtn" onclick="gmBonusOpen()"></button>
+
     <div class="gm-tabs">
-      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка OKO</button>
-      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога OKO</button>
+      <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка</button>
+      <button id="gmTab-road" onclick="gmShowGame('road')"><svg class="i"><use href="#i-gm-road"/></svg>Дорога</button>
+      <button id="gmTab-dice" onclick="gmShowGame('dice')"><svg class="i"><use href="#i-gm-dice"/></svg>Кости</button>
     </div>
 
     <!-- РУЛЕТКА OKO -->
@@ -56,6 +59,33 @@
         <div id="gmRoadCtrl"></div>
       </div>
     </div>
+
+    <!-- КОСТИ OKO -->
+    <div id="gmGame-dice" style="display:none">
+      <div class="gm-dice-card">
+        <div class="gm-dice-stage">
+          <div class="gm-die" id="gmDie1"></div>
+          <div class="gm-die" id="gmDie2"></div>
+        </div>
+        <div class="gm-result" id="gmDiceResult"><span class="gm-hint">Сумма двух костей: меньше 7, ровно 7 или больше 7</span></div>
+        <div class="gm-dice-picks" id="gmDicePicks">
+          <button data-pick="under" class="on" onclick="gmDicePick('under',this)"><b>Меньше 7</b><span>×1,9</span></button>
+          <button data-pick="seven" onclick="gmDicePick('seven',this)"><b>Ровно 7</b><span>×5</span></button>
+          <button data-pick="over" onclick="gmDicePick('over',this)"><b>Больше 7</b><span>×1,9</span></button>
+        </div>
+        <div class="gm-bet"><input id="gmDiceBet" type="number" inputmode="numeric" min="10" step="10" value="100" placeholder="Ставка, ₽" oninput="gmChipClear(this)"></div>
+        <div class="gm-chips">
+          <button onclick="gmChip('gmDiceBet',50,this)">50 ₽</button>
+          <button class="on" onclick="gmChip('gmDiceBet',100,this)">100 ₽</button>
+          <button onclick="gmChip('gmDiceBet',500,this)">500 ₽</button>
+          <button onclick="gmChip('gmDiceBet',1000,this)">1000 ₽</button>
+        </div>
+        <button class="gm-spin" id="gmDiceBtn" onclick="gmDiceRoll()"><svg class="i"><use href="#i-bolt"/></svg>Бросить кости</button>
+      </div>
+    </div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Лидеры недели</h2>
+    <div class="card" style="padding:4px 14px" id="gmLb"></div>
 
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">История игр</h2>
     <div class="card" style="padding:4px 14px" id="gmHistory"></div>
