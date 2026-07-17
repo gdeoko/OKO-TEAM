@@ -8,12 +8,12 @@
   "music": {"queries": ["upbeat indie acoustic diy", "positive corporate light groove", "warm optimistic guitar"]},
   "cover": {"kicker": "WILL IT FIT?", "top": "MEASURE ANY ROOM", "big": "WITHOUT\nA TAPE", "q": ["person measuring room phone ar"]},
   "segments": [
-    {"id": "b1", "text": "Buying a rug, a TV, a shelf. Will it actually fit? Stop guessing."},
-    {"id": "b2", "text": "Point your phone. Tap two points. The length appears, right on the floor."},
-    {"id": "b3", "text": "Width, height, area, all at once. No tape, no helper holding the other end."},
-    {"id": "b4", "text": "Save every wall, every corner, as a project. Export a clean PDF in one tap."},
-    {"id": "b5", "text": "Furniture, art, a fridge gap, a doorway. Measure it from your couch in ten seconds."},
-    {"id": "b6", "text": "Your phone already has the sensor. Measure once, buy right."}
+    {"id": "b1", "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."},
+    {"id": "b2", "text": "Point your phone, tap two points. The length appears on the floor."},
+    {"id": "b3", "text": "Width, height, area. No tape, no helper."},
+    {"id": "b4", "text": "Save every wall as a project. Export a PDF in one tap."},
+    {"id": "b5", "text": "Measure any space from your couch in ten seconds."},
+    {"id": "b6", "text": "Your phone has the sensor. Measure once, buy right."}
   ],
   "shots": [
     {"q": ["person measuring living room with phone ar"], "motion": "zin"},
