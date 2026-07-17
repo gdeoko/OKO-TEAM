@@ -269,7 +269,33 @@ function hqHqView(){
 }
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
-  window.open('/hq.html','_blank');
+  /* локальный file:// не умеет iframe на /hq.html — открываем вкладкой */
+  if(location.protocol !== 'https:' && location.protocol !== 'http:'){ window.open('/hq.html','_blank'); return; }
+  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){} // владелец уже авторизован в приложении
+  let v = document.getElementById('hqEmbed');
+  if(!v){
+    v = document.createElement('div');
+    v.id = 'hqEmbed';
+    v.innerHTML = `
+      <div class="hq-emb-head">
+        <button class="hq-emb-back" onclick="hqCloseEmbed()">${I('back')} Назад</button>
+        <b>OKO HQ · ШТАБ</b>
+        <a class="hq-emb-ext" href="/hq.html" target="_blank" title="Открыть отдельной вкладкой">${I('share')}</a>
+      </div>
+      <iframe id="hqFrame" allow="autoplay; fullscreen" src="about:blank"></iframe>`;
+    document.body.appendChild(v);
+  }
+  const fr = document.getElementById('hqFrame');
+  if(fr.getAttribute('src') !== '/hq.html') fr.setAttribute('src', '/hq.html');
+  v.classList.add('open');
+  if(typeof nvPush === 'function') nvPush('hq-embed', hqCloseEmbed);
+}
+function hqCloseEmbed(){
+  const v = document.getElementById('hqEmbed');
+  if(!v) return;
+  v.classList.remove('open');
+  const fr = document.getElementById('hqFrame');
+  if(fr) fr.setAttribute('src', 'about:blank'); // освободить GPU/видео
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */

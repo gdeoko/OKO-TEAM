@@ -1784,6 +1784,15 @@ main>.screen{position:relative;z-index:1}
 .hq-ms small{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin-top:3px;font-weight:700}
 .hq-mod-note{margin-top:10px;font-size:11px;color:var(--dim);line-height:1.45}
 
+/* ===== встроенный 3D-штаб (iframe внутри приложения) ===== */
+#hqEmbed{position:fixed;inset:0;z-index:64;background:#000;display:none;flex-direction:column}
+#hqEmbed.open{display:flex}
+#hqEmbed .hq-emb-head{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);background:#050505;flex-shrink:0}
+#hqEmbed .hq-emb-head b{font-family:var(--font-display);letter-spacing:.14em;font-size:16px;color:var(--lime);flex:1;text-align:center}
+#hqEmbed .hq-emb-back{display:inline-flex;align-items:center;gap:6px;color:var(--lime);font-weight:600;font-size:13px;border:1px solid var(--border);border-radius:99px;padding:7px 14px}
+#hqEmbed .hq-emb-ext{display:inline-flex;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);align-items:center;justify-content:center;color:var(--dim)}
+#hqEmbed iframe{flex:1;width:100%;border:none;background:#000}
+
 /* ===== module: market-pro ===== */
 /* ===== MARKET-PRO: кабинет продавца + пакеты OKO Production (префикс mp-) ===== */
 @keyframes mpFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -9776,7 +9785,33 @@ function hqHqView(){
 }
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
-  window.open('/hq.html','_blank');
+  /* локальный file:// не умеет iframe на /hq.html — открываем вкладкой */
+  if(location.protocol !== 'https:' && location.protocol !== 'http:'){ window.open('/hq.html','_blank'); return; }
+  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){} // владелец уже авторизован в приложении
+  let v = document.getElementById('hqEmbed');
+  if(!v){
+    v = document.createElement('div');
+    v.id = 'hqEmbed';
+    v.innerHTML = `
+      <div class="hq-emb-head">
+        <button class="hq-emb-back" onclick="hqCloseEmbed()">${I('back')} Назад</button>
+        <b>OKO HQ · ШТАБ</b>
+        <a class="hq-emb-ext" href="/hq.html" target="_blank" title="Открыть отдельной вкладкой">${I('share')}</a>
+      </div>
+      <iframe id="hqFrame" allow="autoplay; fullscreen" src="about:blank"></iframe>`;
+    document.body.appendChild(v);
+  }
+  const fr = document.getElementById('hqFrame');
+  if(fr.getAttribute('src') !== '/hq.html') fr.setAttribute('src', '/hq.html');
+  v.classList.add('open');
+  if(typeof nvPush === 'function') nvPush('hq-embed', hqCloseEmbed);
+}
+function hqCloseEmbed(){
+  const v = document.getElementById('hqEmbed');
+  if(!v) return;
+  v.classList.remove('open');
+  const fr = document.getElementById('hqFrame');
+  if(fr) fr.setAttribute('src', 'about:blank'); // освободить GPU/видео
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */
