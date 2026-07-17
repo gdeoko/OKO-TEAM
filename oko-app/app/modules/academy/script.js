@@ -172,8 +172,8 @@ const AC_COURSE = [
 /* ---------- УРОК 3: Генерация картинок PRO ---------- */
 {
   title:'Генерация картинок PRO',
-  sub:'Midjourney v7 · Flux · Nano Banana',
-  dur:'', videoUrl:'',
+  sub:'3:05 · Midjourney v7 · Flux · Nano Banana',
+  dur:'3:05', videoUrl:'https://true-journey-418.higgsfield.app/media/oko_lesson3_web.mp4',
   c1:'ГЕНЕРАЦИЯ КАРТИНОК', c2:'PRO',
   slides:[
   {t:'Три топ-модели 2026', pts:[
