@@ -1,21 +1,26 @@
 # Голос OKO (утверждён Даниэлем) — клон его голоса, для агента и всех уроков
 
-- **oko_voice_reference.wav** — образец голоса Даниэля (проф. микрофон, очищенный).
-  Это РЕФЕРЕНС для клонирования XTTS. Отдавать голосовому ИИ-агенту / использовать во всех озвучках.
-- **oko_voice_sample.mp3** — как звучит финальный голос (clean_speed).
+## АКТУАЛЬНЫЙ студийный референс (использовать этот)
+- **oko_ref_pro.wav** — ЧИСТЫЙ референс для клонирования XTTS (22050 моно). Собран из самой
+  чистой проф-записи владельца (пик −4.7дБ, без клиппинга) — два натуральных спана БЕЗ
+  скороговорки-панграммы. Дефолтный ref в `oko_voice_pro.py`.
+- **oko_ref_pro_A.wav** (25с) / **oko_ref_pro_B.wav** (19.7с) — те же спаны по отдельности.
+- **oko_voice_reference.wav** — прежний референс (оставлен, не удалять).
+- **oko_voice_sample.mp3** — как звучал прежний голос.
 
-## Рецепт (как воспроизвести голос 1:1)
-Движок: **XTTS-v2** (локально, бесплатно, безлимит). Скилл `/oko-voice`.
-```python
-import torch, torchaudio, soundfile as sf
-def _sf(p,*a,**k):
-    d,sr=sf.read(p,dtype='float32',always_2d=True); return torch.from_numpy(d.T.copy()),sr
-torchaudio.load=_sf                      # обход torchcodec (CPU)
-from TTS.api import TTS
-tts=TTS("tts_models/multilingual/multi-dataset/xtts_v2")
-tts.tts_to_file(text=TXT, language="ru", speaker_wav="oko_voice_reference.wav",
-    file_path="out.wav", split_sentences=True, temperature=0.5,
-    repetition_penalty=6.0, length_penalty=1.0, top_k=40, top_p=0.8)
-# затем ускорение (утверждено): ffmpeg -i out.wav -filter:a "atempo=1.5,loudnorm=I=-16:TP=-1.5" final.mp3
+## Рецепт (как воспроизвести голос 1:1) — НОВЫЙ ЧИСТЫЙ ПАЙПЛАЙН
+Движок: **XTTS-v2** (локально, бесплатно, безлимит). Скилл `/oko-voice`, скрипт `oko_voice_pro.py`.
+```bash
+python3 .claude/skills/oko-voice/scripts/oko_voice_pro.py --textfile script.txt --out vo.wav
+# tone: clean (дефолт) | low (−1 полутон) | warm
 ```
-Настройки утверждены: **clean_speed** = чистый клон + ускорение 1.5×, БЕЗ доп. эффектов/EQ/шумодава.
+Ключевое (решает жалобы «хвостики/мамблы» и «не студийно»):
+- Конфиг XTTS: `temperature=0.3, repetition_penalty=10.0, top_k=30, top_p=0.75,
+  length_penalty=1.0, split_sentences=False` (интеллигибельность в A/B 0.81→0.93).
+- **Tail-trim по whisper word-timestamps** — режем аудио по концу последнего реального
+  слова + 0.18с + fade → хвосты-галлюцинации отрезаются по построению.
+- **БЕЗ atempo=1.5** — натуральный темп XTTS ≈18 симв/с уже дикторский (старый разгон 1.5×
+  давал «чипмунк»/«под водой»).
+- Мастеринг лёгкий: `highpass=75, afftdn nr=10 (слабо), deesser, +1.2дБ@3кГц, loudnorm I=-16:TP=-1.5`.
+  Без реверба/эксайтера/тяжёлого EQ и без agressive-шумодава.
+- Ограничение: «ОКО» последним словом фразы XTTS комкает — не ставить его в самый конец.

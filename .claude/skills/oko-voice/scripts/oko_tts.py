@@ -78,9 +78,13 @@ def synth_silero(text, voice, out_wav):
     return len(arr) / SR
 
 def synth_xtts(text, ref, out_wav, language="ru"):
+    # ВНИМАНИЕ: для студийного клона голоса Даниэля (уроки/агент) используй
+    # oko_voice_pro.py — там tail-trim от «хвостиков» и мастеринг. Здесь — базовый вызов.
     from TTS.api import TTS as CoquiTTS
     tts = CoquiTTS("tts_models/multilingual/multi-dataset/xtts_v2", progress_bar=False)
-    kw = dict(text=text, language=language, file_path=out_wav)
+    # победивший конфиг из A/B (низкая температура = меньше галлюцинаций/мамблов)
+    kw = dict(text=text, language=language, file_path=out_wav, split_sentences=True,
+              temperature=0.3, repetition_penalty=10.0, length_penalty=1.0, top_k=30, top_p=0.75)
     if ref and os.path.exists(ref):
         kw["speaker_wav"] = ref
     else:
