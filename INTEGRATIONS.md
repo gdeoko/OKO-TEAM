@@ -21,11 +21,25 @@
 | CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID | Cloudflare | Хостинг Pages | ОТЛОЖЕНО решением Даниэля 07.07: токену не хватает прав, не поднимать тему |
 | HF_S3_ENDPOINT + HF_S3_ACCESS_KEY_ID + HF_S3_SECRET_ACCESS_KEY | HF S3 | Хранилище файлов okoteam (boto3, verify=/root/.ccr/ca-bundle.crt) | list_buckets |
 | R2_ENDPOINT + R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY | Cloudflare R2 | S3-хранилище тяжёлых видео/ассетов (из чата ЗооОпт). БЛОКЕР: домен r2.cloudflarestorage.com не в network policy окружения — добавить в allowlist | boto3 list_buckets (сейчас connect 000) |
+| SHOTSTACK_SANDBOX_KEY / SHOTSTACK_PROD_KEY | Shotstack (подключён 16.07) | Облачный ПРОГРАММНЫЙ монтаж по JSON: таймлайн, титры, переходы, караоке-субтитры, футаж, музыка → рендер MP4. Ядро «крутого монтажа под ключ», встраивается в reels-machine. Sandbox бесплатный (вотермарк), prod платный. Заголовок `x-api-key`. Endpoints: sandbox `https://api.shotstack.io/edit/stage/render`, prod `.../edit/v1/render`. Ассеты — `.../ingest/{stage}`, шаблоны — `.../edit/{stage}/templates`. | `curl -H "x-api-key: $SHOTSTACK_SANDBOX_KEY" https://api.shotstack.io/edit/stage/render/0000...` → 400 (auth ок), 403 = чужой stage |
+| CREATOMATE_API_KEY + CREATOMATE_PUBLIC_TOKEN | Creatomate (подключён 16.07) | Шаблонный видео-рендер по template_id + modifications (соцролики, автоматизация из данных). API key — серверный (Bearer), public token (`public-...`) — для клиентского preview, в браузер отдавать можно. | `curl -X POST -H "Authorization: Bearer $CREATOMATE_API_KEY" -d '{}' https://api.creatomate.com/v1/renders` → 400 «нужен template_id» = ключ ок |
 
 Правила: ключи НЕ вписывать в код сайтов и не отдавать в браузер. Сеть — только
 curl (urllib и node fetch ходят мимо прокси). Новый ключ: дописать в secrets.env,
 `base64 -w0 secrets.env > secrets.env.b64`, закоммитить ТОЛЬКО b64
 (plaintext secrets.env в .gitignore, GitHub push protection режет открытые ключи).
+
+### 1б. Клон голоса Даниэля (БЕСПЛАТНЫЙ безлимит) — для озвучки контент-завода
+- Скрипт-ротатор: `.claude/skills/reels-machine/pipeline/social/oko_voice.py`
+  `python oko_voice.py "текст" out.wav --ref <ref.wav>` — перебирает бесплатные HF-спейсы
+  (OmniVoice→VoxCPM→Qwen3→MegaTTS3), берёт доступный по квоте. Длинный текст режется на
+  фрагменты и склеивается (ffmpeg) → озвучка ЛЮБОЙ длины, 0 ₽.
+- Референсы (чистые записи Даниэля без музыки): `.claude/skills/reels-machine/assets/voice/`
+  `daniel_ref_15s.wav`, `daniel_ref_28s.wav`. Выбранный движок качества — «A» = OmniVoice.
+- Зависит от `gradio_client` + `imageio-ffmpeg` + `HF_TOKEN`. Квота ZeroGPU у каждого
+  спейса своя (дневная) — ротатор суммирует → сотни клипов/день бесплатно.
+- Готовый пользовательский набор: ZIP `OKO_voice_clone` (Даниэлю отдан в чат 18.07).
+- Турбо-режим (платно, копейки, с разрешения): fal.ai TTS — честный безлимит без квот.
 
 ## 1а. ВИДЕОЗАВОД reels-machine v6 — фулл-пак (чат V.CODE, проверено боем на j001..j013)
 
@@ -130,10 +144,42 @@ Environment variables окружения:
 | Переменная | Сервис |
 |---|---|
 | SUPABASE_PAT (Management API) | Supabase, проект tkjewndtlzhnmqwmrnil, SQL через api.supabase.com |
-| TELEGRAM_BOT_TOKEN | бот @okoappbot |
+| TELEGRAM_BOT_TOKEN | бот @okoappbot — ПОЛУЧЕН 16.07, лежит в secrets.env (getMe→okoappbot, проверен) |
 | S3 twcstorage (key + secret) | s3.twcstorage.ru, бакеты oko-media, oko-tmp |
 | GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
 | ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
+
+## 2а. Соцсети OKO — доступы и оперативка (Даниэль, 16.07.2026)
+
+**Все логины/пароли/телефоны/токен бота — в `secrets.env` (переменные `OKO_*` и
+`TELEGRAM_BOT_TOKEN`), в открытый паспорт НЕ вписаны.** Публичное:
+- Единый никнейм: **daniel.oko.app** (YouTube: **daniel.okoapp**).
+- Telegram-канал: https://t.me/gdeoko · бот приложения: **@okoappbot**.
+- Аккаунты (логины-почты/телефоны в secrets): TikTok, Instagram, Likee, YouTube,
+  ВКонтакте, Telegram. Общие пароли — `OKO_COMMON_PASSWORD_1/2` в secrets.
+- Переменные: `OKO_SOCIAL_HANDLE`, `OKO_*_EMAIL`, `OKO_VK_PHONE/PASSWORD`,
+  `OKO_TG_PHONE/PASSWORD`, `OKO_TG_CHANNEL`, `OKO_BOT_USERNAME`.
+
+Оперативка (для соцавтопилота):
+- **YouTube, ВКонтакте, Telegram** — агент уже залогинен.
+- **Likee** — агент залогинен (18.07): вход email+пароль (`OKO_LIKEE_PASSWORD=181202`),
+  но submit формы срабатывает только JS-кликом по `.likee-btn.clickable` (не Playwright-клик).
+  Профиль браузера: VPS `/opt/oko-poster/cfg/likee_profile`. Постинг работает:
+  uploadvideo → setInputFiles → поле «Add video description» (getByPlaceholder) →
+  кнопка `.plist-upload` (div, не button) → saveVideo code:0. Ролик выходит через ~30 мин.
+- **Instagram** — агент залогинен (18.07) как daniel.oko.app (ds_user_id 14590089612).
+  ВАЖНО: reCAPTCHA Enterprise появляется ТОЛЬКО в headless — вход делать **headed через
+  xvfb**. Форма грузится, submit по Enter (у IG кнопки — div, не button). На новом
+  устройстве IG просит подтверждение → Даниэль одобряет в приложении → сессия проходит.
+  Профиль: VPS `/opt/oko-poster/cfg/ig_oko_profile`, стейт `cfg/ig_oko_state.json`.
+  Грабли: веб-создатель постов (create → Далее) отдаёт «Произошла ошибка» — НЕ через веб.
+  РАБОЧИЙ ПОСТИНГ: instagrapi по sessionid из ig_oko_state.json →
+  `.claude/skills/reels-machine/pipeline/social/ig_photo_post.py <img> <caption>`
+  (фото — photo_upload; рилс — clip_upload, см. VPS ig_post_reel.py). Проверено 18.07:
+  пост https://www.instagram.com/p/Da73MxFCWtP/ опубликован через instagrapi.
+- **TikTok** — вход через Hooppy.ru; прямой вход агента не идёт (нужен человеческий IP).
+- **VK-пароль** Даниэль просил обновить — при работе с VK сверять/менять.
+- Приглашение в MAX-мессенджер (max.ru/join/...) прислано — вступать по запросу.
 
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
@@ -150,7 +196,12 @@ Environment variables окружения:
 | Zapier | работает | 9000+ приложений через actions |
 | Zoom | работает | записи и саммари встреч |
 | Claude Code Remote | работает | окружения, Routines (расписания), send_later |
-| Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может) |
+| Descript | работает (подключён 16.07) | МОНТАЖ видео по промптам: import_media, prompt_project_agent (тримминг, перестановка, удаление слов-паразитов, субтитры, сток), publish → share URL |
+| HyperFrames by HeyGen | работает (подключён 16.07) | моушен-графика/анимированные слайды из HTML → render_video (MP4/WebM/MOV). compose/render только из hosted-клиента (claude.ai), из CLI — read-only |
+| Shutterstock | работает (подключён 16.07, без ключа) | поиск стока image/video/music/sfx, отдаёт preview mp4/webm 4K. Read-only (без лицензирования/скачивания) |
+| Brandfetch | работает (подключён 16.07) | бренд-ассеты: brand_search, get_brand, логотипы/иконки/символы через CDN, цвета/шрифты бренда |
+| Google Drive | работает (подключён 16.07) | хранилище: search_files, read/download, create_file. Импорт медиа в Descript принимает Drive share-ссылки как есть |
+| Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может), про рекламные кампании — не про монтаж |
 
 ## 4. Скиллы (.claude/skills, собраны со ВСЕХ чатов)
 
@@ -251,12 +302,3 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
   Путь к python задаётся `XTTS_PY`. Первый запуск качает модель ~1.8ГБ (COQUI_TOS_AGREED=1).
 - Скорость на CPU: загрузка модели ~33с, ~14с на короткую фразу. Референс — чистый wav 22050/моно.
 - Грабли: coqui-tts<0.25 тянет старый `coqpit` (падает на типах Py3.11); нужен spacy→`click`.
-
-## Голос V.CODE — OmniVoice (метод Даниэля, ОСНОВНОЙ)
-- Движок: HF Space `k2-fsa/OmniVoice` через `gradio_client`, zero-shot клон по референсу.
-  Бесплатно, безлимитно, русский, качество. Скрипт+референсы: `vcode/daily/voice_omnivoice/`.
-- Запуск: `python clone_voice_omnivoice.py "текст" out.wav --ref reference/vladimir_ref_30s.wav --ns 48`.
-- HF_TOKEN в `secrets.env.b64` (снимает лимиты ZeroGPU).
-- Грабли: OmniVoice вставляет стартовый призвук (~1.2–1.4с) → обрезать по whisper-таймингу
-  первого слова. Скорость — atempo в пост (1.8× ок).
-- Запасной GPU-путь: Kaggle F5-TTS Russian (`vcode/daily/kaggle_tts`, KAGGLE_API_TOKEN).
