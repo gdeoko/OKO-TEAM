@@ -234,8 +234,10 @@ function walRenderCats(){
   const total = cats.reduce((s,c)=>s+c[1],0);
   bar.innerHTML = cats.map(([,v],i)=>
     `<i style="width:${(v/total*100).toFixed(1)}%;opacity:${(1 - i*0.16).toFixed(2)};animation-delay:${i*70}ms"></i>`).join('');
-  wrap.innerHTML = cats.map(([k,v],i)=>
-    `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="opacity:${(1 - i*0.16).toFixed(2)}"></span>${k}<b>${fmtMoney(v)}</b></span>`).join('');
+  wrap.innerHTML = cats.map(([k,v],i)=>{
+    const pct = Math.round(v / total * 100);
+    return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="opacity:${(1 - i*0.16).toFixed(2)}"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
+  }).join('');
 }
 function walRenderLedger(){
   const box = document.getElementById('walLedger');
