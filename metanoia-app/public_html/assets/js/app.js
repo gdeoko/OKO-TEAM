@@ -11,18 +11,18 @@
 const DEMO = {
   stories: [
     { img: 'assets/img/avatars/ekaterina.jpg', name: 'Екатерина', badge: 'Педагог', seen: false },
-    { icon: 'video',   name: 'Анонс урока', seen: false },
-    { icon: 'sparkle', name: 'Мотивация', seen: false },
-    { icon: 'trophy',  name: 'Успехи', seen: true },
-    { icon: 'cross',   name: 'Цитата дня', seen: true },
+    { img: 'assets/img/stories/anons.jpg', icon: 'video',   name: 'Анонс урока', seen: false },
+    { img: 'assets/img/stories/motivation.jpg', icon: 'sparkle', name: 'Мотивация', seen: false },
+    { img: 'assets/img/stories/success.jpg', icon: 'trophy',  name: 'Успехи', seen: true },
+    { img: 'assets/img/stories/quote.jpg', icon: 'cross',   name: 'Цитата дня', seen: true },
   ],
 
   feed: [
     {
       type: 'lesson', label: 'Новый урок',
-      coverImg: 'assets/img/covers/lesson-1.jpg',
-      title: 'Урок 1. Кто такой Бог?',
-      meta: 'Блок 1 «Знакомство с Богом» · 32 мин',
+      coverImg: 'assets/img/chapters/ch1.jpg',
+      title: 'Урок 1. Пророчества; почему Господь родился на земле',
+      meta: 'Глава 1 «Жизнь Господа» · видеоурок',
       progress: 40, likes: 24, comments: 7,
     },
     {
@@ -56,57 +56,126 @@ const DEMO = {
 
   blocks: [
     {
-      title: 'Блок 1 · «Знакомство с Богом»', range: 'уроки 1–12', award: '«Первооткрыватель»',
+      title: 'Глава 1 · Новый Завет «Жизнь Господа»', range: 'уроки 1–35', award: '«Ученик Господа»',
       lessons: [
-        { n: 1,  title: 'Кто такой Бог?', state: 'open', meta: 'Просмотрено · Тест · ДЗ', img: 'assets/img/lessons/l1.jpg' },
-        { n: 2,  title: 'Создание мира', state: 'locked', img: 'assets/img/lessons/l2.jpg' },
-        { n: 3,  title: 'Адам и Ева', state: 'locked', img: 'assets/img/lessons/l3.jpg' },
-        { n: 4,  title: 'Ноев ковчег', state: 'locked', img: 'assets/img/lessons/l4.jpg' },
-        { n: 5,  title: 'Вавилонская башня', state: 'locked', img: 'assets/img/lessons/l5.jpg' },
-        { n: 6,  title: 'Молитва — разговор с Богом', state: 'locked', img: 'assets/img/lessons/l6.jpg' },
-        { n: 7,  title: 'Ангелы — посланники Божьи', state: 'locked', img: 'assets/img/lessons/l7.jpg' },
-        { n: 8,  title: 'Что такое Библия', state: 'locked', img: 'assets/img/lessons/l8.jpg' },
-        { n: 9,  title: 'Заповеди — правила любви', state: 'locked', img: 'assets/img/lessons/l9.jpg' },
-        { n: 10, title: 'Совесть и прощение', state: 'locked', img: 'assets/img/lessons/l10.jpg' },
-        { n: 11, title: 'Благодарность Богу', state: 'locked', img: 'assets/img/lessons/l11.jpg' },
-        { n: 12, title: 'Большое повторение блока', state: 'locked', img: 'assets/img/lessons/l12.jpg' },
-        { n: 'I', title: 'Проверка знаний · Блок 1', state: 'locked', exam: true },
+        { n: 1, cn: 1, title: "Пророчества; почему Господь родился на земле", state: 'open' },
+        { n: 2, cn: 2, title: "Рождение Иоанна Крестителя", state: 'locked' },
+        { n: 3, cn: 3, title: "Рождение Господа", state: 'locked' },
+        { n: 4, cn: 4, title: "Поклонение волхвов", state: 'locked' },
+        { n: 5, cn: 5, title: "Отрок Иисус поражает учёных", state: 'locked' },
+        { n: 6, cn: 6, title: "Крещение Господа", state: 'locked' },
+        { n: 7, cn: 7, title: "Первые ученики", state: 'locked' },
+        { n: 8, cn: 8, title: "Чудо в Кане (превращение воды в вино)", state: 'locked' },
+        { n: 9, cn: 9, title: "Купальня Вифезда", state: 'locked' },
+        { n: 10, cn: 10, title: "Избрание двенадцати апостолов", state: 'locked' },
+        { n: 11, cn: 11, title: "Нагорная проповедь: как молиться", state: 'locked' },
+        { n: 12, cn: 12, title: "Нагорная проповедь: не заботьтесь ни о чём", state: 'locked' },
+        { n: 13, cn: 13, title: "Нагорная проповедь: дом, построенный на камне", state: 'locked' },
+        { n: 14, cn: 14, title: "Господь исцеляет прокажённого и слугу", state: 'locked' },
+        { n: 15, cn: 15, title: "Вдова из Наина", state: 'locked' },
+        { n: 16, cn: 16, title: "Притча о сеятеле", state: 'locked' },
+        { n: 17, cn: 17, title: "Воскрешение дочери Иаира", state: 'locked' },
+        { n: 18, cn: 18, title: "Насыщение 5000 людей", state: 'locked' },
+        { n: 19, cn: 19, title: "Иисус идёт по морю", state: 'locked' },
+        { n: 20, cn: 20, title: "Добрый самарянин", state: 'locked' },
+        { n: 21, cn: 21, title: "Марфа и Мария", state: 'locked' },
+        { n: 22, cn: 22, title: "Человек, родившийся слепым", state: 'locked' },
+        { n: 23, cn: 23, title: "Воскрешение Лазаря", state: 'locked' },
+        { n: 24, cn: 24, title: "Книжники и фарисеи", state: 'locked' },
+        { n: 25, cn: 25, title: "Малые дети", state: 'locked' },
+        { n: 26, cn: 26, title: "Притча о великом ужине", state: 'locked' },
+        { n: 27, cn: 27, title: "Притча о блудном сыне", state: 'locked' },
+        { n: 28, cn: 28, title: "Притча о виноградной лозе", state: 'locked' },
+        { n: 29, cn: 29, title: "Вербное воскресенье: торжественный вход", state: 'locked' },
+        { n: 30, cn: 30, title: "Заговор Иуды; Тайная вечеря", state: 'locked' },
+        { n: 31, cn: 31, title: "Молитва в Гефсимании; предательство и арест", state: 'locked' },
+        { n: 32, cn: 32, title: "Суд и распятие Иисуса", state: 'locked' },
+        { n: 33, cn: 33, title: "Пасха (Воскресение)", state: 'locked' },
+        { n: 34, cn: 34, title: "Путь в Эммаус; Вознесение", state: 'locked' },
+        { n: 35, cn: 35, title: "Что совершил Господь", state: 'locked' },
+        { n: 'I', title: 'Проверка знаний · Глава 1', state: 'locked', exam: true },
       ],
     },
     {
-      title: 'Блок 2 · «Герои веры»', range: 'уроки 13–24', award: '«Знаток героев»',
+      title: 'Глава 2 · Ветхий Завет', range: 'уроки 1–35', award: '«Странник небес»',
       lessons: [
-        { n: 13, title: 'Авраам — друг Божий', state: 'locked', img: 'assets/img/lessons/l13.jpg' },
-        { n: 14, title: 'Исаак и Иаков', state: 'locked', img: 'assets/img/lessons/l14.jpg' },
-        { n: 15, title: 'Иосиф и его братья', state: 'locked', img: 'assets/img/lessons/l15.jpg' },
-        { n: 16, title: 'Моисей: рождение и призвание', state: 'locked', img: 'assets/img/lessons/l16.jpg' },
-        { n: 17, title: 'Исход из Египта', state: 'locked', img: 'assets/img/lessons/l17.jpg' },
-        { n: 18, title: 'Десять заповедей', state: 'locked', img: 'assets/img/lessons/l18.jpg' },
-        { n: 19, title: 'Иисус Навин и стены Иерихона', state: 'locked', img: 'assets/img/lessons/l19.jpg' },
-        { n: 20, title: 'Давид и Голиаф', state: 'locked', img: 'assets/img/lessons/l20.jpg' },
-        { n: 21, title: 'Мудрость царя Соломона', state: 'locked', img: 'assets/img/lessons/l21.jpg' },
-        { n: 22, title: 'Пророк Илия', state: 'locked', img: 'assets/img/lessons/l22.jpg' },
-        { n: 23, title: 'Даниил во рву львином', state: 'locked', img: 'assets/img/lessons/l23.jpg' },
-        { n: 24, title: 'Иона и большая рыба', state: 'locked', img: 'assets/img/lessons/l24.jpg' },
-        { n: 'II', title: 'Проверка знаний · Блок 2', state: 'locked', exam: true },
+        { n: 36, cn: 1, title: "Первый день творения", state: 'locked' },
+        { n: 37, cn: 2, title: "Второй день творения", state: 'locked' },
+        { n: 38, cn: 3, title: "Третий день творения", state: 'locked' },
+        { n: 39, cn: 4, title: "Четвёртый день творения", state: 'locked' },
+        { n: 40, cn: 5, title: "Пятый день творения", state: 'locked' },
+        { n: 41, cn: 6, title: "Шестой день творения", state: 'locked' },
+        { n: 42, cn: 7, title: "Седьмой день творения", state: 'locked' },
+        { n: 43, cn: 8, title: "Введение в жизнь после смерти", state: 'locked' },
+        { n: 44, cn: 9, title: "Люди не могут умереть", state: 'locked' },
+        { n: 45, cn: 10, title: "Мир духов", state: 'locked' },
+        { n: 46, cn: 11, title: "Каков ты на самом деле", state: 'locked' },
+        { n: 47, cn: 12, title: "Пути в рай и в ад", state: 'locked' },
+        { n: 48, cn: 13, title: "Младенцы в раю", state: 'locked' },
+        { n: 49, cn: 14, title: "Дети в раю (часть 1)", state: 'locked' },
+        { n: 50, cn: 15, title: "Дети в раю (часть 2)", state: 'locked' },
+        { n: 51, cn: 16, title: "Брак на небесах", state: 'locked' },
+        { n: 52, cn: 17, title: "Господь в раю", state: 'locked' },
+        { n: 53, cn: 18, title: "Жизнь в трёх небесах", state: 'locked' },
+        { n: 54, cn: 19, title: "Работа, которую выполняют ангелы", state: 'locked' },
+        { n: 55, cn: 20, title: "Один день из жизни ангела", state: 'locked' },
+        { n: 56, cn: 21, title: "Ад", state: 'locked' },
+        { n: 57, cn: 22, title: "Мы свободны выбирать рай или ад", state: 'locked' },
+        { n: 58, cn: 23, title: "Как мы попадаем в рай", state: 'locked' },
+        { n: 59, cn: 24, title: "Иоанн видит Господа среди золотых светильников", state: 'locked' },
+        { n: 60, cn: 25, title: "Престол на небесах", state: 'locked' },
+        { n: 61, cn: 26, title: "Свиток с семью печатями", state: 'locked' },
+        { n: 62, cn: 27, title: "Великое множество в белых одеждах", state: 'locked' },
+        { n: 63, cn: 28, title: "Ангел с маленькой книжкой", state: 'locked' },
+        { n: 64, cn: 29, title: "Жена, облечённая в солнце; Михаил и дракон", state: 'locked' },
+        { n: 65, cn: 30, title: "Два зверя", state: 'locked' },
+        { n: 66, cn: 31, title: "Господь на белом коне", state: 'locked' },
+        { n: 67, cn: 32, title: "Белый престол и Книга жизни", state: 'locked' },
+        { n: 68, cn: 33, title: "Святой город, Новый Иерусалим", state: 'locked' },
+        { n: 69, cn: 34, title: "Река жизни; Древо жизни", state: 'locked' },
+        { n: 70, cn: 35, title: "Отправление двенадцати учеников", state: 'locked' },
+        { n: 'II', title: 'Проверка знаний · Глава 2', state: 'locked', exam: true },
       ],
     },
     {
-      title: 'Блок 3 · «Жизнь Иисуса»', range: 'уроки 25–36', award: '«Ученик Христа» + сертификат года',
+      title: 'Глава 3 · История народа Божьего — Израиль', range: 'уроки 1–35', award: '«Знаток героев» + сертификат года',
       lessons: [
-        { n: 25, title: 'Рождество', state: 'locked', img: 'assets/img/lessons/l25.jpg' },
-        { n: 26, title: 'Детство Иисуса', state: 'locked', img: 'assets/img/lessons/l26.jpg' },
-        { n: 27, title: 'Крещение в Иордане', state: 'locked', img: 'assets/img/lessons/l27.jpg' },
-        { n: 28, title: 'Двенадцать учеников', state: 'locked', img: 'assets/img/lessons/l28.jpg' },
-        { n: 29, title: 'Чудеса Иисуса', state: 'locked', img: 'assets/img/lessons/l29.jpg' },
-        { n: 30, title: 'Притча о добром самарянине', state: 'locked', img: 'assets/img/lessons/l30.jpg' },
-        { n: 31, title: 'Притча о блудном сыне', state: 'locked', img: 'assets/img/lessons/l31.jpg' },
-        { n: 32, title: 'Нагорная проповедь', state: 'locked', img: 'assets/img/lessons/l32.jpg' },
-        { n: 33, title: 'Вход в Иерусалим', state: 'locked', img: 'assets/img/lessons/l33.jpg' },
-        { n: 34, title: 'Тайная вечеря', state: 'locked', img: 'assets/img/lessons/l34.jpg' },
-        { n: 35, title: 'Пасха: Крест и Воскресение', state: 'locked', img: 'assets/img/lessons/l35.jpg' },
-        { n: 36, title: 'Вознесение и рождение Церкви', state: 'locked', img: 'assets/img/lessons/l36.jpg' },
-        { n: 'Ф', title: 'Финальная проверка + сертификат', state: 'locked', exam: true },
+        { n: 71, cn: 1, title: "Призвание Аврама", state: 'locked' },
+        { n: 72, cn: 2, title: "Авраам и ангелы; рождение Исаака", state: 'locked' },
+        { n: 73, cn: 3, title: "Жертвоприношение Исаака", state: 'locked' },
+        { n: 74, cn: 4, title: "Исаак женится на Ревекке", state: 'locked' },
+        { n: 75, cn: 5, title: "Рождение Иакова и Исава; похищение благословения", state: 'locked' },
+        { n: 76, cn: 6, title: "Сон Иакова", state: 'locked' },
+        { n: 77, cn: 7, title: "Иаков женится на Лии и Рахили", state: 'locked' },
+        { n: 78, cn: 8, title: "Возвращение Иакова", state: 'locked' },
+        { n: 79, cn: 9, title: "Иосиф и его братья", state: 'locked' },
+        { n: 80, cn: 10, title: "Иосиф в Египте", state: 'locked' },
+        { n: 81, cn: 11, title: "Иосиф принимает свою семью", state: 'locked' },
+        { n: 82, cn: 12, title: "Рождение Моисея", state: 'locked' },
+        { n: 83, cn: 13, title: "Моисей и неопалимая купина", state: 'locked' },
+        { n: 84, cn: 14, title: "Десять казней и Пасха", state: 'locked' },
+        { n: 85, cn: 15, title: "Переход через Красное море; манна", state: 'locked' },
+        { n: 86, cn: 16, title: "Моисей ударяет в скалу", state: 'locked' },
+        { n: 87, cn: 17, title: "Десять заповедей; золотой телец", state: 'locked' },
+        { n: 88, cn: 18, title: "Скиния и Ковчег Завета", state: 'locked' },
+        { n: 89, cn: 19, title: "Иисус Навин ведёт битву; Аарон и Ор", state: 'locked' },
+        { n: 90, cn: 20, title: "Переход через Иордан; Иерихон", state: 'locked' },
+        { n: 91, cn: 21, title: "Битва при Гаваоне; раздел земли", state: 'locked' },
+        { n: 92, cn: 22, title: "Рождение и призвание Самуила", state: 'locked' },
+        { n: 93, cn: 23, title: "Саул помазан; правление и отвержение", state: 'locked' },
+        { n: 94, cn: 24, title: "Давид помазан; Давид побеждает Голиафа", state: 'locked' },
+        { n: 95, cn: 25, title: "Давид и Ионафан", state: 'locked' },
+        { n: 96, cn: 26, title: "Давид как царь", state: 'locked' },
+        { n: 97, cn: 27, title: "Мудрость Соломона и Храм", state: 'locked' },
+        { n: 98, cn: 28, title: "Илия возвещает засуху; помощь вдове", state: 'locked' },
+        { n: 99, cn: 29, title: "Илия и пророки Ваала", state: 'locked' },
+        { n: 100, cn: 30, title: "Призвание Елисея; Илия восходит на небо", state: 'locked' },
+        { n: 101, cn: 31, title: "Елисей и масло вдовы; воскрешение сына", state: 'locked' },
+        { n: 102, cn: 32, title: "Исцеление проказы Неемана", state: 'locked' },
+        { n: 103, cn: 33, title: "Даниил во рву львином", state: 'locked' },
+        { n: 104, cn: 34, title: "Иона", state: 'locked' },
+        { n: 105, cn: 35, title: "Почему Господь должен был прийти", state: 'locked' },
+        { n: 'III', title: 'Проверка знаний · Глава 3', state: 'locked', exam: true },
       ],
     },
   ],
@@ -146,6 +215,8 @@ function initNav() {
       if (isActive) {
         // Повторный тап на активный таб → прокрутка вверх (как в Instagram)
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (btn.dataset.tab === 'games') {
+        openGamesHub();
       } else {
         switchTab(btn.dataset.tab);
       }
@@ -214,8 +285,10 @@ function renderFeed() {
     el.addEventListener('click', () => openComments(Number(el.dataset.post))));
   $$('#feed [data-act="share"]').forEach((el) =>
     el.addEventListener('click', () => toast('Поделиться — после публикации приложения')));
-  $$('#feed [data-act="watch"], #feed [data-act="join"]').forEach((el) =>
-    el.addEventListener('click', () => toast('Экран урока и запись на созвон — этап 4')));
+  $$('#feed [data-act="watch"]').forEach((el) =>
+    el.addEventListener('click', () => openLesson(1)));
+  $$('#feed [data-act="join"]').forEach((el) =>
+    el.addEventListener('click', () => toast('Запись на созвон включится на боевом хостинге')));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -251,8 +324,8 @@ function renderLessons() {
     ${block.lessons.map((l) => `
       <button class="lesson-item lesson-item--${l.state} lesson-item--b${bi + 1} ${l.exam ? 'lesson-item--exam' : ''} ${l.img ? 'lesson-item--img' : ''}" data-state="${l.state}" data-n="${l.n}" data-bi="${bi}">
         ${l.img
-          ? `<div class="lesson-item__thumb"><img src="${l.img}" alt="" loading="lazy"><span class="lesson-item__badge">${l.n}</span></div>`
-          : `<div class="lesson-item__num">${l.exam ? ICON('crown', 20) : l.n}</div>`}
+          ? `<div class="lesson-item__thumb"><img src="${l.img}" alt="" loading="lazy"><span class="lesson-item__badge">${l.cn || l.n}</span></div>`
+          : `<div class="lesson-item__num">${l.exam ? ICON('crown', 20) : (l.cn || l.n)}</div>`}
         <div class="lesson-item__body">
           <div class="lesson-item__title">${l.title}</div>
           ${l.meta ? `<div class="lesson-item__meta">${l.meta}</div>` : ''}
@@ -312,7 +385,7 @@ const STORIES_CONTENT = [
   { // Анонс урока
     slides: [
       { img: 'assets/img/covers/lesson-1.jpg', overlay: true,
-        title: 'Урок 1 уже открыт', sub: '«Кто такой Бог?» — начни путешествие с первого шага.' },
+        title: 'Урок 1 уже открыт', sub: '«Пророчества» — начни путешествие с первого урока.' },
     ],
   },
   { // Мотивация
@@ -469,10 +542,10 @@ function initComments() {
 /* ───────── ПОИСК ───────── */
 
 const SEARCH_INDEX = [
-  { t: 'lesson', title: 'Кто такой Бог?', meta: 'Урок 1 · Блок 1 · видео 32 мин', age: '5-7 7-10 10-14', theme: 'ВЗ' },
-  { t: 'lesson', title: 'Создание мира', meta: 'Урок 2 · Блок 1 · скоро', age: '5-7 7-10', theme: 'ВЗ', locked: true },
-  { t: 'lesson', title: 'Адам и Ева', meta: 'Урок 3 · Блок 1 · скоро', age: '5-7 7-10', theme: 'ВЗ', locked: true },
-  { t: 'lesson', title: 'Ноев ковчег', meta: 'Урок 4 · Блок 1 · скоро', age: '5-7', theme: 'ВЗ', locked: true },
+  { t: 'lesson', title: 'Пророчества; почему Господь родился на земле', meta: 'Урок 1 · Глава 1 «Жизнь Господа»', age: '5-7 7-10 10-14', theme: 'НЗ' },
+  { t: 'lesson', title: 'Рождение Иоанна Крестителя', meta: 'Урок 2 · Глава 1 «Жизнь Господа»', age: '5-7 7-10', theme: 'НЗ' },
+  { t: 'lesson', title: 'Рождение Господа', meta: 'Урок 3 · Глава 1 «Жизнь Господа»', age: '5-7 7-10', theme: 'НЗ' },
+  { t: 'lesson', title: 'Призвание Аврама', meta: 'Урок 1 · Глава 3 «Израиль»', age: '5-7', theme: 'ВЗ' },
   { t: 'game', title: 'Собери стих', meta: 'Игра · пазл-слова · бесплатно', age: '5-7 7-10 10-14', theme: 'Молитва' },
   { t: 'game', title: 'Библейское мемори', meta: 'Игра · память · бесплатно', age: '5-7 7-10', theme: 'ВЗ' },
   { t: 'game', title: 'Викторина на скорость', meta: 'Игра · квиз · бесплатно', age: '7-10 10-14', theme: 'ВЗ НЗ' },
@@ -724,7 +797,7 @@ function initChatView() {
 /* ───────── УВЕДОМЛЕНИЯ ───────── */
 
 const NOTIFS = [
-  { icon: 'video',  title: 'Новый урок доступен', text: '«Кто такой Бог?» — начни первым', time: '2 ч назад' },
+  { icon: 'video',  title: 'Новый урок доступен', text: '«Пророчества; почему Господь родился на земле» — начни первым', time: '2 ч назад' },
   { icon: 'trophy', title: 'Миша получил значок «Молниеносный»', text: '10 из 10 в викторине на скорость', time: '5 ч назад' },
   { icon: 'dove',   title: 'Сообщение от Екатерины', text: 'Добро пожаловать в нашу школу!', time: 'вчера' },
   { icon: 'clock',  title: 'Созвон завтра в 18:00', text: '«Притча о блудном сыне» — вы записаны', time: 'вчера' },
@@ -763,8 +836,8 @@ const EXTRA_FEED = [
     text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
   { type: 'quote', label: 'Цитата дня · вчера',
     title: '«Начало мудрости — страх Господень»', ref: 'Притч. 1:7', likes: 27, comments: 1 },
-  { type: 'lesson', label: 'Скоро', coverImg: 'assets/img/covers/lesson-4.jpg',
-    title: 'Урок 4. Ноев ковчег', meta: 'Блок 1 · откроется после урока 3', likes: 9, comments: 0 },
+  { type: 'lesson', label: 'Скоро', coverImg: 'assets/img/chapters/ch1.jpg',
+    title: 'Урок 4. Поклонение волхвов', meta: 'Глава 1 «Жизнь Господа» · скоро', likes: 9, comments: 0 },
 ];
 let feedPage = 0;
 
@@ -940,7 +1013,8 @@ function renderLesson(n) {
   const body = $('#lessonBody');
   if (!meta) { body.innerHTML = '<div class="card">Урок не найден.</div>'; return; }
   const title = meta.l.title;
-  const cover = meta.l.img || 'assets/img/lessons/l1.jpg';
+  const cn = meta.l.cn || n;
+  const cover = meta.l.img || `assets/img/chapters/ch${meta.bi + 1}.jpg`;
 
   // Контент ещё не подгружен (для новых уроков — мягкий фолбэк)
   const story = c && c.story ? c.story : ['Материал этого урока скоро появится здесь. А пока можно пройти другие уроки и игры.'];
@@ -950,7 +1024,7 @@ function renderLesson(n) {
 
   body.innerHTML = `
     <div class="feed-card__cover feed-card__cover--img lesson-cover"><img src="${cover}" alt=""></div>
-    <h1 class="screen-title" style="margin-top:14px">Урок ${n}. ${title}</h1>
+    <h1 class="screen-title" style="margin-top:14px">Урок ${cn}. ${title}</h1>
     <div class="feed-card__meta">${meta.block.title} · для всех возрастов</div>
 
     <div class="lesson-steps" id="lessonSteps">
@@ -1124,6 +1198,15 @@ function renderExam() {
   const { bi, questions } = examState;
   const block = DEMO.blocks[bi];
   const total = questions.length;
+  if (total === 0) {
+    $('#examBody').innerHTML = `
+      <div class="exam-head"><div class="exam-head__ic">${ICON('crown', 26)}</div>
+        <div><div class="exam-head__title">Проверка знаний</div>
+          <div class="exam-head__sub">${block.title.replace(/^Глава \d+ · /, '')}</div></div></div>
+      <div class="card lesson-text"><p>Материал этой главы готовит педагог школы. Как только уроки главы будут наполнены, здесь появится проверка знаний.</p></div>`;
+    hydrateIcons();
+    return;
+  }
   $('#examBody').innerHTML = `
     <div class="exam-head">
       <div class="exam-head__ic">${ICON('crown', 26)}</div>
@@ -1921,8 +2004,9 @@ function openTempleScreen() {
 }
 
 function initTemple() {
-  $('#openTemple')?.addEventListener('click', openTempleScreen);
+  $('#openTemple')?.addEventListener('click', () => { gameOpener = 'child'; openTempleScreen(); });
   $('#templeBack')?.addEventListener('click', () => {
+    if (gameOpener === 'games') { openGamesHub(); return; }
     $('#nav').style.display = 'none';
     openChild(DEMO.children[0]);
   });
@@ -1998,10 +2082,14 @@ const GAMES = {
   ],
 };
 
+let gameOpener = 'games'; // откуда открыли temple/journey: 'games' или 'child'
+
 function openGamesHub() {
   renderGhub('free');
+  $$('.nav__tab').forEach((b) => b.classList.toggle('nav__tab--active', b.dataset.tab === 'games'));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'games'));
-  $('#nav').style.display = 'none';
+  $('#nav').style.display = '';               // игры — теперь основной таб внизу
+  const gb = $('#gamesBack'); if (gb) gb.style.display = 'none';
   window.scrollTo({ top: 0 });
 }
 
@@ -2012,7 +2100,7 @@ function renderGhub(cat) {
   $('#ghub').innerHTML = GAMES[cat].map((g) => `
     <button class="gcard ${g.play ? 'gcard--play' : 'gcard--locked'}" data-game="${g.key}">
       ${!g.play ? `<div class="gcard__lock">${ICON('lock', 15)}</div>` : ''}
-      <div class="gcard__icon">${ICON(g.icon, 24)}</div>
+      <div class="gcard__img gcard__img--${g.key}"><img src="assets/img/games/${g.key}.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
       <div class="gcard__name">${g.name}</div>
       <div class="gcard__meta">${g.meta}</div>
     </button>`).join('');
@@ -2023,8 +2111,8 @@ function renderGhub(cat) {
     else if (k === 'quiz') openQuiz();
     else if (k === 'who') openWho();
     else if (k === 'chrono') openChrono();
-    else if (k === 'journey') openJourneyScreen();
-    else if (k === 'temple-b') openTempleScreen();
+    else if (k === 'journey') { gameOpener = 'games'; openJourneyScreen(); }
+    else if (k === 'temple-b') { gameOpener = 'games'; openTempleScreen(); }
     else if (k === 'dailyverse') openDailyVerse();
     else if (k === 'match3') openMatch3();
     else if (k === 'david') openDavid();
@@ -2036,7 +2124,7 @@ function renderGhub(cat) {
     else if (k === 'challenge') openChallenge();
     else if (k === 'interpret') openInterpret();
     else if (k === 'quest') openQuest2();
-    else if (k === 'temple') openTempleScreen();
+    else if (k === 'temple') { gameOpener = 'games'; openTempleScreen(); }
     else openGamePreview(k);
   }));
 }
@@ -2486,8 +2574,9 @@ const JOURNEY = [
 let journeyStop = 2; // остановка 3 (0-индекс) — демо
 
 function initJourney() {
-  $('#openJourney')?.addEventListener('click', openJourneyScreen);
+  $('#openJourney')?.addEventListener('click', () => { gameOpener = 'child'; openJourneyScreen(); });
   $('#journeyBack')?.addEventListener('click', () => {
+    if (gameOpener === 'games') { openGamesHub(); return; }
     $('#nav').style.display = 'none';
     openChild(DEMO.children[0]);
   });
@@ -3825,6 +3914,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
+  $('#searchBtn')?.addEventListener('click', () => {
+    $$('.nav__tab').forEach((b) => b.classList.remove('nav__tab--active'));
+    $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'search'));
+    $('#nav').style.display = '';
+    setTimeout(() => $('#searchInput')?.focus(), 100);
+    window.scrollTo({ top: 0 });
+  });
   $$('.menu-item:not([id])').forEach((el) =>
     el.addEventListener('click', () => toast('Раздел в разработке')));
   let searchTimer = null;

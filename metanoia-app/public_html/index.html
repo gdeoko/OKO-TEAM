@@ -236,6 +236,9 @@
       <span class="header__name">МЕТАНОЙЯ</span>
     </div>
     <div class="header__right">
+      <button class="header__bell" id="searchBtn" aria-label="Поиск">
+        <svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
       <button class="header__bell" id="bellBtn" aria-label="Уведомления">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
@@ -342,7 +345,7 @@
 
       <h2 class="section-title">Семейный квест недели</h2>
       <button class="card temple fq-card" id="openQuest" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="users" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/games/family.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage" id="fqCardStage">Квест недели <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="progress"><div class="progress__fill" id="fqCardBar" style="width:0%"></div></div>
@@ -352,7 +355,7 @@
 
       <h2 class="section-title">Наш год с Метанойей</h2>
       <button class="card temple album-card" id="openAlbum" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="book" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/cards/album.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">Семейный альбом года <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Уроки, значки и семейные квесты за год — красивая книга на память</div>
@@ -426,7 +429,7 @@
 
       <h2 class="section-title">Мой храм</h2>
       <button class="card temple" id="openTemple" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="church" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/games/temple.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">Этап 3 из 10 · «Стены» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="progress"><div class="progress__fill" style="width:34%"></div></div>
@@ -443,7 +446,7 @@
 
       <h2 class="section-title">Путешествие веры</h2>
       <button class="card temple" id="openJourney" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="map" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/games/journey.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">Остановка 3 · «Египет» <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Нажми, чтобы увидеть свой путь на карте</div>
@@ -452,7 +455,7 @@
 
       <h2 class="section-title">Рейтинг недели</h2>
       <button class="card temple" id="openRating" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/cards/rating.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">Ты на 2 месте · 340 XP <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Посмотри, как растут друзья по школе за эту неделю</div>
@@ -461,7 +464,7 @@
 
       <h2 class="section-title">Мои сертификаты</h2>
       <button class="card temple" id="openCerts" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="award" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/cards/certs.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">1 из 4 получен · Блок 1 завершён <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Именные сертификаты за блоки и за год — можно скачать</div>
@@ -470,7 +473,7 @@
 
       <h2 class="section-title">Магазин за баллы</h2>
       <button class="card temple" id="openShop" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="trophy" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/cards/shop.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на мерч <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Копи XP за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
@@ -479,7 +482,7 @@
 
       <h2 class="section-title">Семейный алтарь</h2>
       <button class="card temple" id="openDevotional" style="width:100%;text-align:left">
-        <div class="temple__icon"><span data-icon="dove" data-size="44"></span></div>
+        <div class="temple__img"><img src="assets/img/cards/devotional.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
           <div class="temple__stage">30 дней вместе с семьёй <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Короткий стих, мысль и вопрос на каждый день — читайте с ребёнком за ужином</div>
@@ -1045,9 +1048,9 @@
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
       <span>Главная</span>
     </button>
-    <button class="nav__tab" data-tab="search" aria-label="Поиск">
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <span>Поиск</span>
+    <button class="nav__tab" data-tab="games" aria-label="Игры">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4"/><path d="M15.5 12h.01M18.5 10h.01"/><path d="M17.3 5H6.7a4 4 0 0 0-4 3.6C2.6 9.4 2 14.5 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.4-1.4a2 2 0 0 1 1.4-.6h4.4a2 2 0 0 1 1.4.6L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.5-.6-6.6-.7-7.4A4 4 0 0 0 17.3 5Z"/></svg>
+      <span>Игры</span>
     </button>
     <button class="nav__tab" data-tab="chats" aria-label="Чаты">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>

@@ -246,15 +246,19 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
 }
 .feed-card__actions button { color: var(--gray); font-size: 13px; display: flex; gap: 5px; }
 .feed-card--quote {
-  background: linear-gradient(150deg, #F6DFA6, #E9C784 70%, #E0B673);
-  border: 1px solid #D4A574;
-  box-shadow: 0 6px 18px rgba(212,165,116,.3);
+  background: linear-gradient(rgba(250,248,245,.84), rgba(250,248,245,.9)), url('../img/quote-bg.jpg') center/cover no-repeat, linear-gradient(150deg,#FBF4E9,#F3E7D3);
+  border: 1px solid rgba(212,165,116,.4);
+  box-shadow: 0 6px 18px rgba(26,58,82,.1);
 }
-.feed-card--quote .feed-card__label { color: #8a5a1f; }
+.feed-card--quote .feed-card__label { color: var(--terracotta); }
 .feed-card--quote .feed-card__title {
-  font-style: italic; font-size: 17px; line-height: 1.6; font-weight: 500; color: #4a3410;
+  font-style: italic; font-size: 17px; line-height: 1.6; font-weight: 500; color: var(--navy);
 }
-.quote-ref { color: #9a5b2a; font-weight: 700; font-size: 13px; margin-top: 8px; }
+.quote-ref { color: var(--terracotta); font-weight: 700; font-size: 13px; margin-top: 8px; }
+[data-theme="dark"] .feed-card--quote {
+  background: linear-gradient(rgba(26,32,40,.82), rgba(26,32,40,.88)), url('../img/quote-bg.jpg') center/cover no-repeat, #222;
+}
+[data-theme="dark"] .feed-card--quote .feed-card__title { color: var(--cream); }
 .progress {
   height: 6px; background: rgba(90, 101, 119, .15);
   border-radius: 3px; overflow: hidden; margin: 10px 0 4px;
@@ -282,7 +286,7 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
   font-size: 13px; font-weight: 500;
   color: var(--gray); background: rgba(90, 101, 119, .08);
 }
-.tab-chip--active { background: var(--navy); color: var(--cream); }
+.tab-chip--active { background: var(--terracotta); color: var(--cream); }
 .filter-row {
   display: flex; gap: 8px; flex-wrap: nowrap;
   overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px;
@@ -782,6 +786,13 @@ button:active { transform: scale(0.97); transition: transform 100ms; }
   box-shadow: 0 4px 12px rgba(201,112,100,.28);
   display: flex; align-items: center; justify-content: center;
 }
+.temple__img {
+  flex: 0 0 64px; width: 64px; height: 64px; border-radius: 14px; overflow: hidden;
+  background: linear-gradient(150deg, #F0E4CF, #E8D4BC);
+  box-shadow: 0 4px 12px rgba(201,112,100,.2);
+  display: flex; align-items: center; justify-content: center;
+}
+.temple__img img { width: 100%; height: 100%; object-fit: cover; }
 .temple__body { flex: 1; }
 .temple__stage { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
 .temple__note { font-size: 12px; color: var(--gray); margin-top: 6px; }
@@ -1446,7 +1457,7 @@ body.in-chat .header { display: none; }
   flex: 1; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600;
   border: 1.5px solid rgba(26,58,82,.16); color: var(--navy); background: #fff;
 }
-.verse-level--on { background: var(--navy); color: var(--cream); border-color: var(--navy); }
+.verse-level--on { background: var(--terracotta); color: var(--cream); border-color: var(--terracotta); }
 
 
 /* ══════════ МОЙ ХРАМ (растущий SVG) ══════════ */
@@ -1581,7 +1592,7 @@ body.in-chat .header { display: none; }
 .ghub-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .ghub-tab { flex: 1; padding: 9px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
   color: var(--gray); background: rgba(90,101,119,.08); }
-.ghub-tab--on { background: var(--navy); color: var(--cream); }
+.ghub-tab--on { background: var(--terracotta); color: var(--cream); }
 .ghub { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .gcard {
   background: linear-gradient(160deg, #fff, #FBF4E9); border-radius: var(--radius-card);
@@ -1594,6 +1605,11 @@ body.in-chat .header { display: none; }
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(150deg, #E6A15C, #C97064); color: #fff;
   box-shadow: 0 4px 12px rgba(201,112,100,.28); }
+.gcard__img { width: 100%; height: 84px; margin: 0 auto 10px; border-radius: 14px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(150deg, #F0E4CF, #E8D4BC); box-shadow: 0 4px 12px rgba(201,112,100,.2); }
+.gcard__img img { width: 100%; height: 100%; object-fit: cover; }
+.gcard__img--fallback { color: #fff; background: linear-gradient(150deg, #E6A15C, #C97064); }
 /* каждая карточка — свой тёплый оттенок, чтобы было живо */
 #ghub .gcard:nth-child(3n+2) .gcard__icon { background: linear-gradient(150deg, #E6C079, #D4A574); }
 #ghub .gcard:nth-child(3n) .gcard__icon { background: linear-gradient(150deg, #7AAED4, #4d7ea3); }
@@ -1788,7 +1804,7 @@ body.in-chat .header { display: none; }
 .cert-view__bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px;
   padding-top: calc(14px + env(safe-area-inset-top)); }
 .cert-view__close { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; display: grid; place-items: center; }
-.cert-view__dl { display: flex; align-items: center; gap: 7px; background: var(--gold); color: #fff; font-weight: 700;
+.cert-view__dl { display: flex; align-items: center; gap: 7px; background: var(--terracotta); color: #fff; font-weight: 700;
   font-size: 14px; padding: 10px 18px; border-radius: 24px; }
 .cert-view__stage { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 16px 24px; overflow: auto; }
 .cert-view__stage svg { width: auto; max-width: min(460px, 92vw); height: auto; max-height: calc(100dvh - 96px); border-radius: 8px;
@@ -2024,7 +2040,7 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 
 /* ── Годовой альбом (УЛ7) ── */
 .alb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.alb-dl { display: inline-flex; align-items: center; gap: 7px; background: var(--gold); color: #fff; font-weight: 700;
+.alb-dl { display: inline-flex; align-items: center; gap: 7px; background: var(--terracotta); color: #fff; font-weight: 700;
   font-size: 13.5px; padding: 9px 16px; border-radius: 22px; }
 .alb-pages { display: flex; flex-direction: column; gap: 16px; }
 .alb-page { border-radius: 16px; padding: 24px 20px; position: relative; overflow: hidden;
