@@ -1,0 +1,285 @@
+/* ================= CHANNELS: платные каналы / курсы + управление (префикс ch-) ================= */
+#chView{position:fixed;inset:0;z-index:67;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .32s cubic-bezier(.3,1,.4,1);
+  max-width:1280px;margin:0 auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#chView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#chView{transition:none}}
+
+/* заголовок вьюхи */
+.ch-head{display:flex;align-items:center;gap:10px;padding:14px 16px;
+  padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.ch-head .ch-back{color:var(--dim);display:inline-flex;padding:2px;flex-shrink:0}
+.ch-head .ch-back svg.i{width:22px;height:22px}
+.ch-head b{font-size:16.5px;font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-head .ch-htools{display:inline-flex;gap:4px;flex-shrink:0}
+.ch-head .ch-htools button{color:var(--dim);padding:5px;border-radius:var(--r-sm)}
+.ch-head .ch-htools button:hover{color:var(--text);background:var(--raised)}
+.ch-head .ch-htools svg.i{width:20px;height:20px}
+.ch-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:16px 16px calc(30px + env(safe-area-inset-bottom))}
+
+/* ---- общие ---- */
+.ch-sec-h{font:700 11px/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  margin:22px 4px 11px;display:flex;align-items:center;gap:7px}
+.ch-sec-h:first-child{margin-top:4px}
+.ch-sec-h svg.i{width:15px;height:15px;color:var(--lime)}
+.ch-empty{text-align:center;color:var(--dim);font-size:13px;padding:26px 14px;border:1px dashed var(--border);border-radius:var(--r-md)}
+
+/* карточка канала в списке */
+.ch-card{display:flex;align-items:center;gap:12px;padding:12px 13px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:9px;cursor:pointer;
+  transition:transform .16s,border-color .2s,background .2s;position:relative;overflow:hidden}
+.ch-card:hover{border-color:var(--lime-dim);background:var(--raised);transform:translateY(-1px)}
+.ch-card:active{transform:scale(.985)}
+.ch-av{width:52px;height:52px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font:800 21px/1 var(--font-display);letter-spacing:.02em;color:#0a0a0a;position:relative;overflow:hidden}
+.ch-av svg.i{width:26px;height:26px;color:#0a0a0a}
+.ch-av.mini{width:40px;height:40px;border-radius:12px;font-size:16px}
+.ch-av.big{width:84px;height:84px;border-radius:24px;font-size:34px}
+.ch-av .ch-avlock{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:50%;
+  background:var(--surface);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface)}
+.ch-av .ch-avlock svg.i{width:12px;height:12px;color:var(--lime)}
+.ch-cbody{flex:1;min-width:0}
+.ch-cname{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-cname .vs-badge svg,.ch-cname svg.i{flex-shrink:0}
+.ch-csub{color:var(--dim);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.ch-csub svg.i{width:12px;height:12px}
+.ch-tag{font:800 9px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:6px;flex-shrink:0}
+.ch-tag.paid{background:var(--lime);color:#0a0a0a}
+.ch-tag.course{background:linear-gradient(120deg,#9AFF00,#6fd400);color:#0a0a0a}
+.ch-tag.free{background:var(--raised);color:var(--dim)}
+.ch-price-pill{margin-left:auto;flex-shrink:0;font-weight:800;font-size:13px;color:var(--lime);white-space:nowrap}
+
+/* CTA создать */
+.ch-create-cta{display:flex;align-items:center;gap:12px;width:100%;padding:15px 14px;border-radius:var(--r-md);
+  background:linear-gradient(120deg,rgba(154,255,0,.14),rgba(154,255,0,.03));border:1px solid var(--lime-dim);
+  color:var(--text);cursor:pointer;transition:transform .16s,box-shadow .2s;margin-bottom:6px}
+.ch-create-cta:hover{transform:translateY(-1px);box-shadow:var(--glow)}
+.ch-create-cta .ch-cc-ic{width:44px;height:44px;border-radius:13px;background:var(--lime);color:#0a0a0a;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ch-create-cta .ch-cc-ic svg.i{width:23px;height:23px}
+.ch-create-cta b{display:block;font-size:14.5px}
+.ch-create-cta small{color:var(--dim);font-size:11.5px}
+
+/* ---- создание: тип ---- */
+.ch-type-grid{display:grid;gap:10px;margin-bottom:6px}
+.ch-type-card{display:flex;align-items:center;gap:13px;padding:14px;border-radius:var(--r-md);
+  background:var(--surface);border:1.5px solid var(--border);cursor:pointer;text-align:left;transition:all .18s}
+.ch-type-card:hover{border-color:var(--lime-dim)}
+.ch-type-card.on{border-color:var(--lime);background:var(--raised);box-shadow:0 0 0 3px rgba(154,255,0,.1)}
+.ch-type-card .ch-tc-ic{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--raised);color:var(--lime);transition:all .18s}
+.ch-type-card.on .ch-tc-ic{background:var(--lime);color:#0a0a0a}
+.ch-type-card .ch-tc-ic svg.i{width:24px;height:24px}
+.ch-type-card b{font-size:14.5px;display:block}
+.ch-type-card small{color:var(--dim);font-size:12px;display:block;margin-top:2px;line-height:1.35}
+.ch-type-card .ch-tc-check{margin-left:auto;flex-shrink:0;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;transition:all .18s}
+.ch-type-card.on .ch-tc-check{background:var(--lime);border-color:var(--lime)}
+.ch-type-card .ch-tc-check svg.i{width:13px;height:13px;color:#0a0a0a;opacity:0;transition:opacity .18s}
+.ch-type-card.on .ch-tc-check svg.i{opacity:1}
+
+/* форма */
+.ch-lab{font:700 12px/1 var(--font-body);color:var(--dim);margin:16px 4px 8px;display:block}
+.ch-input,.ch-ta{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  color:var(--text);font:400 14px/1.4 var(--font-body);padding:12px 13px;transition:border-color .2s}
+.ch-input:focus,.ch-ta:focus{outline:none;border-color:var(--lime)}
+.ch-ta{resize:none;line-height:1.5}
+.ch-price-row{display:flex;align-items:center;gap:8px}
+.ch-price-row .ch-input{flex:1}
+.ch-price-row .ch-unit{color:var(--dim);font-size:13px;font-weight:600;white-space:nowrap}
+.ch-price-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.ch-price-chips button{background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);
+  font-size:12.5px;font-weight:600;padding:7px 13px;cursor:pointer;transition:all .16s}
+.ch-price-chips button:hover{border-color:var(--lime-dim)}
+.ch-price-chips button.on{background:var(--lime);color:#0a0a0a;border-color:var(--lime)}
+
+/* аватар + фон пикеры */
+.ch-appear-prev{border-radius:var(--r-md);overflow:hidden;position:relative;height:130px;display:flex;align-items:flex-end;
+  padding:14px;margin-bottom:14px;border:1px solid var(--border)}
+.ch-appear-prev .ch-ap-ava{width:64px;height:64px;border-radius:19px;display:flex;align-items:center;justify-content:center;
+  font:800 26px/1 var(--font-display);color:#0a0a0a;box-shadow:0 6px 18px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.85)}
+.ch-appear-prev .ch-ap-name{color:#fff;font-weight:800;font-size:16px;margin-left:12px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.ch-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:9px}
+.ch-sw{aspect-ratio:1;border-radius:14px;cursor:pointer;border:2.5px solid transparent;transition:transform .14s,border-color .16s;position:relative}
+.ch-sw:hover{transform:scale(1.05)}
+.ch-sw.on{border-color:var(--lime)}
+.ch-sw.on::after{content:'';position:absolute;inset:0;border-radius:11px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}
+.ch-letter-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.ch-letter-row .ch-lt{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);border:2px solid var(--border);cursor:pointer;color:var(--lime);transition:all .16s}
+.ch-letter-row .ch-lt:hover{border-color:var(--lime-dim)}
+.ch-letter-row .ch-lt.on{border-color:var(--lime);background:var(--raised)}
+.ch-letter-row .ch-lt svg.i{width:21px;height:21px;color:var(--lime)}
+
+/* ---- просмотр канала ---- */
+.ch-cover{border-radius:var(--r-lg);overflow:hidden;position:relative;padding:20px 16px 16px;margin-bottom:14px;
+  display:flex;flex-direction:column;align-items:center;text-align:center}
+.ch-cover::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.42))}
+.ch-cover>*{position:relative;z-index:1}
+.ch-cover .ch-av.big{border:3px solid rgba(255,255,255,.9);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.ch-cv-name{color:#fff;font:800 22px/1.1 var(--font-display);letter-spacing:.02em;margin-top:12px;text-shadow:0 2px 8px rgba(0,0,0,.5);
+  display:flex;align-items:center;gap:7px;justify-content:center}
+.ch-cv-sub{color:rgba(255,255,255,.85);font-size:12.5px;margin-top:5px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.ch-cv-stats{display:flex;gap:18px;margin-top:12px}
+.ch-cv-stats div{color:#fff;text-align:center}
+.ch-cv-stats b{display:block;font:800 17px/1 var(--font-display)}
+.ch-cv-stats small{color:rgba(255,255,255,.8);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.ch-desc{font-size:13.5px;line-height:1.55;color:var(--text);background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:13px 14px;margin-bottom:14px}
+
+/* paywall */
+.ch-paywall{border-radius:var(--r-lg);border:1px solid var(--lime-dim);overflow:hidden;margin-bottom:8px;
+  background:linear-gradient(180deg,rgba(154,255,0,.08),var(--surface))}
+.ch-pw-blur{position:relative;padding:16px;filter:blur(3px);opacity:.5;pointer-events:none;user-select:none;max-height:150px;overflow:hidden}
+.ch-pw-body{padding:18px 16px 16px;text-align:center}
+.ch-pw-lock{width:52px;height:52px;border-radius:50%;background:var(--lime);color:#0a0a0a;display:inline-flex;
+  align-items:center;justify-content:center;margin-bottom:12px;box-shadow:var(--glow)}
+.ch-pw-lock svg.i{width:26px;height:26px}
+.ch-pw-body h3{font-size:17px;font-weight:800;margin-bottom:5px}
+.ch-pw-body p{color:var(--dim);font-size:12.5px;line-height:1.5;margin-bottom:14px}
+.ch-pw-price{font:800 30px/1 var(--font-display);color:var(--lime);margin-bottom:2px}
+.ch-pw-price span{font-size:14px;color:var(--dim)}
+.ch-pw-benefits{text-align:left;max-width:320px;margin:0 auto 16px}
+.ch-pw-benefits li{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--text);padding:5px 0}
+.ch-pw-benefits svg.i{width:16px;height:16px;color:var(--lime);flex-shrink:0;margin-top:1px}
+
+/* посты канала */
+.ch-post{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 14px;margin-bottom:10px;animation:chFade .4s both}
+.ch-post-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ch-post-h .ch-av.mini{border-radius:11px}
+.ch-post-h b{font-size:13px;font-weight:700}
+.ch-post-h small{color:var(--dim);font-size:11px;margin-left:auto}
+.ch-post-txt{font-size:13.5px;line-height:1.55;color:var(--text)}
+.ch-post-media{margin-top:10px;border-radius:var(--r-sm);height:150px;display:flex;align-items:center;justify-content:center;
+  color:var(--lime);position:relative;overflow:hidden}
+.ch-post-media svg.i{width:44px;height:44px;position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.4))}
+.ch-post-acts{display:flex;gap:16px;margin-top:11px;color:var(--dim);font-size:12px;font-weight:600;align-items:center}
+.ch-post-acts button{display:inline-flex;align-items:center;gap:5px;color:var(--dim);transition:color .16s}
+.ch-post-acts button:hover{color:var(--lime)}
+.ch-post-acts button.on{color:var(--lime)}
+.ch-post-acts button svg.i{width:16px;height:16px}
+.ch-post-acts .ch-views{margin-left:auto;display:inline-flex;gap:5px;align-items:center}
+.ch-post-acts .ch-views svg.i{width:15px;height:15px}
+
+/* курс: уроки */
+.ch-prog-top{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:14px}
+.ch-prog-top .ch-pt-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.ch-prog-top b{font-size:14px;font-weight:800}
+.ch-prog-top .ch-pt-pct{color:var(--lime);font:800 15px/1 var(--font-display)}
+.ch-prog-bar{height:8px;border-radius:5px;background:var(--raised);overflow:hidden}
+.ch-prog-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#6fd400,#9AFF00);
+  transition:width .6s cubic-bezier(.3,1,.4,1);box-shadow:0 0 10px rgba(154,255,0,.5)}
+.ch-lesson{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:11px 13px;margin-bottom:8px;cursor:pointer;transition:all .16s}
+.ch-lesson:hover{border-color:var(--lime-dim);background:var(--raised)}
+.ch-lesson .ch-ls-n{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--raised);color:var(--lime);font:800 14px/1 var(--font-display);position:relative}
+.ch-lesson.done .ch-ls-n{background:var(--lime);color:#0a0a0a}
+.ch-lesson .ch-ls-n svg.i{width:17px;height:17px}
+.ch-lesson .ch-ls-b{flex:1;min-width:0}
+.ch-lesson .ch-ls-b b{font-size:13.5px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-lesson .ch-ls-b small{color:var(--dim);font-size:11.5px;display:flex;align-items:center;gap:5px;margin-top:2px}
+.ch-lesson .ch-ls-b small svg.i{width:12px;height:12px}
+.ch-lesson .ch-ls-play{color:var(--lime);flex-shrink:0}
+.ch-lesson .ch-ls-play svg.i{width:26px;height:26px}
+.ch-lesson.locked{opacity:.6;cursor:default}
+.ch-lesson.locked:hover{border-color:var(--border);background:var(--surface)}
+
+/* урок-плеер */
+.ch-player{border-radius:var(--r-md);height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:14px}
+.ch-player::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.05),rgba(0,0,0,.55))}
+.ch-player .ch-play-btn{position:relative;z-index:1;width:70px;height:70px;border-radius:50%;background:rgba(154,255,0,.95);
+  color:#0a0a0a;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(0,0,0,.4);cursor:pointer;transition:transform .18s}
+.ch-player .ch-play-btn:hover{transform:scale(1.07)}
+.ch-player .ch-play-btn svg.i{width:32px;height:32px;margin-left:3px}
+
+/* ---- управление ---- */
+.ch-manage-hub .ch-av.big{margin:0 auto 10px;display:flex}
+.ch-mrow{display:flex;align-items:center;gap:13px;width:100%;padding:14px 13px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;cursor:pointer;text-align:left;transition:all .16s}
+.ch-mrow:hover{border-color:var(--lime-dim);background:var(--raised);transform:translateX(2px)}
+.ch-mrow .ch-mr-ic{width:38px;height:38px;border-radius:11px;background:var(--raised);color:var(--lime);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ch-mrow:hover .ch-mr-ic{background:var(--lime-dim)}
+.ch-mrow .ch-mr-ic svg.i{width:20px;height:20px}
+.ch-mrow .ch-mr-b{flex:1;min-width:0}
+.ch-mrow .ch-mr-b b{font-size:14px;font-weight:700;display:block}
+.ch-mrow .ch-mr-b small{color:var(--dim);font-size:11.5px;display:block;margin-top:1px}
+.ch-mrow .ch-mr-val{color:var(--dim);font-size:12.5px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.ch-mrow .ch-mr-val svg.i{width:16px;height:16px}
+.ch-mrow.danger .ch-mr-ic{color:var(--danger)}
+.ch-mrow.danger .ch-mr-b b{color:var(--danger)}
+
+/* переключатель-строка */
+.ch-toggle-row{display:flex;align-items:center;gap:12px;width:100%;padding:13px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;text-align:left;cursor:pointer}
+.ch-toggle-row .ch-tr-ic{color:var(--lime);flex-shrink:0;display:inline-flex}
+.ch-toggle-row .ch-tr-ic svg.i{width:20px;height:20px}
+.ch-toggle-row .ch-tr-b{flex:1;min-width:0}
+.ch-toggle-row .ch-tr-b b{font-size:13.5px;font-weight:700;display:block}
+.ch-toggle-row .ch-tr-b small{color:var(--dim);font-size:11.5px;display:block;margin-top:1px;line-height:1.35}
+
+/* сегментированный выбор типа */
+.ch-seg{display:grid;gap:9px;margin-bottom:6px}
+.ch-owner-note{font-size:11.5px;color:var(--dim);line-height:1.5;padding:6px 4px 2px}
+
+/* доход владельца */
+.ch-earn{border-radius:var(--r-md);padding:16px;margin-bottom:14px;border:1px solid var(--lime-dim);
+  background:linear-gradient(135deg,rgba(154,255,0,.1),var(--surface))}
+.ch-earn small.ch-earn-lab{font:700 10px/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.ch-earn .ch-earn-sum{font:800 30px/1 var(--font-display);color:var(--lime);margin:7px 0 3px}
+.ch-earn .ch-earn-sum span{font-size:15px;color:var(--text)}
+.ch-earn .ch-earn-calc{margin:10px 0 12px}
+.ch-earn .ch-earn-calc div{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--dim)}
+.ch-earn .ch-earn-calc div b{color:var(--text);font-weight:700}
+.ch-earn .ch-earn-calc div.fee b{color:var(--danger)}
+.ch-earn .ch-earn-calc div.total{border-top:1px solid var(--border);margin-top:5px;padding-top:8px}
+.ch-earn .ch-earn-calc div.total b{color:var(--lime)}
+
+/* KPI + статистика */
+.ch-kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
+.ch-kpi-t{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:13px;text-align:center}
+.ch-kpi-t svg.i{width:19px;height:19px;color:var(--lime);margin-bottom:5px}
+.ch-kpi-t b{display:block;font:800 22px/1 var(--font-display)}
+.ch-kpi-t small{color:var(--dim);font-size:11px;display:block;margin-top:3px}
+.ch-canvas-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:14px}
+.ch-canvas-wrap .ch-cw-h{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+.ch-canvas-wrap .ch-cw-h span{color:var(--lime);font-weight:800;font-size:13px}
+.ch-canvas-wrap canvas{width:100%;height:130px;display:block}
+.ch-donut{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:14px}
+.ch-donut canvas{width:96px;height:96px;flex-shrink:0}
+.ch-donut-leg{flex:1;min-width:0}
+.ch-donut-leg div{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0}
+.ch-donut-leg i{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.ch-donut-leg b{margin-left:auto;font-weight:700}
+
+/* участники / админы / чс */
+.ch-member{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--border)}
+.ch-member:last-child{border-bottom:none}
+.ch-member .ch-av.mini{border-radius:12px}
+.ch-member .ch-m-b{flex:1;min-width:0}
+.ch-member .ch-m-b b{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:5px}
+.ch-member .ch-m-b small{color:var(--dim);font-size:11.5px;display:block}
+.ch-member .ch-m-role{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  padding:3px 8px;border-radius:6px;background:var(--lime-dim);color:var(--accent);flex-shrink:0}
+.ch-member .ch-m-role.owner{background:var(--lime);color:#0a0a0a}
+.ch-member .ch-m-act{color:var(--dim);padding:5px;flex-shrink:0;border-radius:8px;transition:all .16s}
+.ch-member .ch-m-act:hover{color:var(--danger);background:var(--raised)}
+.ch-member .ch-m-act svg.i{width:18px;height:18px}
+.ch-add-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;margin-top:10px;
+  border:1px dashed var(--lime-dim);border-radius:var(--r-md);color:var(--lime);font-weight:700;font-size:13px;cursor:pointer;transition:all .16s}
+.ch-add-btn:hover{background:var(--lime-dim)}
+.ch-add-btn svg.i{width:18px;height:18px}
+
+@keyframes chFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* профиль: строка «Мои каналы» */
+#chProwCount{margin-left:auto;background:var(--lime);color:#0a0a0a;font:800 10px/1 var(--font-body);
+  padding:3px 7px;border-radius:9px}
+
+/* адаптив десктоп */
+@media(min-width:900px){
+  .ch-kpi{grid-template-columns:repeat(4,1fr)}
+  .ch-type-grid{grid-template-columns:1fr}
+}

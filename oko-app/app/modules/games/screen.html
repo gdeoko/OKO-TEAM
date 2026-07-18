@@ -7,7 +7,10 @@
         <h2 class="section-h" style="margin-bottom:2px">Игры OKO</h2>
         <div class="gm-sub"><span class="gm-18">18+</span><small>Ставки — только с кошелька OKO</small></div>
       </div>
-      <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
+      <div class="gm-head-chips">
+        <button class="gm-tk-chip" onclick="gmPrizesOpen()" title="Билеты — валюта круток. Открыть «Мои призы»"><svg class="i"><use href="#i-gm-ticket"/></svg><span class="gm-tk-val">0</span></button>
+        <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
+      </div>
     </div>
 
     <div class="gm-limit" id="gmLimit">
@@ -15,7 +18,12 @@
       <div class="gm-limit-bar"><i id="gmLimitBar" style="width:0%"></i></div>
     </div>
 
-    <button class="gm-bonus-btn" id="gmBonusBtn" onclick="gmBonusOpen()"></button>
+    <div class="gm-boost-badge" id="gmBoostBadge" style="display:none"></div>
+
+    <div class="gm-prize-cta">
+      <button class="gm-bonus-btn" id="gmBonusBtn" onclick="gmBonusOpen()"></button>
+      <button class="gm-bonus-btn gm-prizes-btn" id="gmPrizesBtn" onclick="gmPrizesOpen()"></button>
+    </div>
 
     <div class="gm-tabs">
       <button class="on" id="gmTab-wheel" onclick="gmShowGame('wheel')"><svg class="i"><use href="#i-gm-chip"/></svg>Рулетка</button>

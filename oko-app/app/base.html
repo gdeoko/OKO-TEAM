@@ -1415,6 +1415,35 @@ function toggleTheme(){
 }
 try{ applyTheme(localStorage.getItem('oko-theme')||'dark'); }catch(e){}
 
+/* ===== SAFE-AREA -> CSS-переменные для fullscreen-вьюх ВНЕ #app =====
+   tg-webapp пэддит только #app; fixed-оверлеи (поиск/уведомления/админка/
+   редактор профиля/звонок/сторис) живут вне #app и в Telegram-фуллскрине
+   заезжают под верхнюю панель. Пробрасываем инсеты TG в --oko-sa*.
+   Вне Telegram переменные не ставятся -> CSS падает на env(safe-area-*). */
+(function okoSafeAreaVars(){
+  var rs=document.documentElement.style;
+  function set(t,b,l,r){
+    rs.setProperty('--oko-sat',(t||0)+'px'); rs.setProperty('--oko-sab',(b||0)+'px');
+    rs.setProperty('--oko-sal',(l||0)+'px'); rs.setProperty('--oko-sar',(r||0)+'px');
+  }
+  function sync(){
+    try{
+      var tg=window.Telegram&&window.Telegram.WebApp;
+      if(tg&&tg.initData){
+        var sa=tg.safeAreaInset||{}, ca=tg.contentSafeAreaInset||{};
+        set((sa.top||0)+(ca.top||0), Math.max(sa.bottom||0,ca.bottom||0),
+            (sa.left||0)+(ca.left||0), (sa.right||0)+(ca.right||0));
+      }
+    }catch(e){}
+  }
+  sync();
+  ['resize','orientationchange'].forEach(function(ev){
+    window.addEventListener(ev,function(){setTimeout(sync,120);});
+  });
+  [300,1200,2600].forEach(function(d){setTimeout(sync,d);});
+  document.addEventListener('DOMContentLoaded',sync);
+})();
+
 /* ================= ИКОНКА-ХЕЛПЕР ================= */
 const I = (n,cls='') => `<svg class="i ${cls}"><use href="#i-${n}"/></svg>`;
 const WAVE = seed => { // детерминированная волна голосового

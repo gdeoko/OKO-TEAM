@@ -292,7 +292,103 @@
 .gm-lb-row.me .gm-lb-sum{color:var(--accent)}
 .gm-lb-gap{text-align:center;color:var(--dim);font-size:14px;letter-spacing:.3em;padding:2px 0}
 
+/* ============================================================
+   ПРИЗОВОЙ ПУЛ: билеты, бусты, «Мои призы», призовая крутка
+   ============================================================ */
+
+/* чипы в шапке: билеты + деньги */
+.gm-head-chips{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.gm-tk-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;border:1px solid var(--lime);background:var(--lime-dim);color:var(--accent);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;transition:transform .15s,box-shadow .2s;box-shadow:0 0 0 0 rgba(154,255,0,0)}
+.gm-tk-chip svg.i{width:16px;height:16px}
+.gm-tk-chip:hover{box-shadow:0 0 14px var(--lime-dim)}
+.gm-tk-chip:active{transform:scale(.94)}
+
+/* бейдж активного буста */
+.gm-boost-badge{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:11px 13px;border-radius:var(--r-md);border:1px solid var(--lime);background:linear-gradient(120deg,var(--lime-dim),transparent 75%);color:var(--text);font-size:12.5px;animation:gmBoostIn .4s cubic-bezier(.2,.8,.25,1)}
+.gm-boost-badge svg.i{width:20px;height:20px;color:var(--accent);flex-shrink:0;animation:gmBoostArrow 1.5s ease-in-out infinite}
+.gm-boost-badge b{color:var(--accent);font-family:var(--font-display);font-size:16px;letter-spacing:.03em;margin:0 1px}
+@keyframes gmBoostIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes gmBoostArrow{0%,100%{transform:translateY(1px)}50%{transform:translateY(-2px)}}
+
+/* пара баннеров: призовая крутка + мои призы */
+.gm-prize-cta{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.gm-prize-cta .gm-bonus-btn{margin-bottom:0}
+.gm-prizes-btn{border-color:var(--border);background:var(--surface);animation:none}
+.gm-prizes-btn>svg.i:first-child{color:var(--accent)}
+
+/* призовая крутка: интро + режимы */
+.gm-spin-intro{font-size:12px;color:var(--dim);line-height:1.5;text-align:center;margin:0 0 12px;padding:0 4px}
+.gm-spin-modes{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.gm-spin-alt{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gm-spin-cd{font-size:13px}
+.gm-spin-cd b{font-variant-numeric:tabular-nums;color:var(--gm-lime-ink)}
+.gm-spin-modes .gm-spin.off .gm-spin-cd b{color:var(--dim)}
+
+/* ссылка «Мои призы» в шите крутки */
+.gm-prizes-link{width:100%;display:flex;align-items:center;gap:9px;margin-top:12px;padding:11px 14px;border:1px solid var(--gm-tile-border);border-radius:var(--r-md);background:var(--gm-tile);color:var(--gm-ink-soft);font-size:13px;font-weight:700;transition:transform .15s,border-color .2s,color .2s}
+.gm-prizes-link svg.i{width:17px;height:17px;color:var(--gm-lime-ink)}
+.gm-prizes-link span{flex:1;text-align:left}
+.gm-prizes-link .gm-prizes-cnt{min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--gm-lime-soft);color:var(--gm-lime-ink);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.gm-prizes-link:hover{border-color:var(--gm-lime-ink);color:var(--gm-ink)}
+.gm-prizes-link:active{transform:scale(.98)}
+
+/* компактнее подписи секторов призового колеса (12 секторов) */
+.gm-bwheel .gm-bsec{font-size:12.5px;letter-spacing:.02em}
+
+/* --- анимация выпадения приза (по центру колеса) --- */
+.gm-reveal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;z-index:5}
+.gm-reveal.show{opacity:1}
+.gm-reveal-rays{position:absolute;width:150%;height:150%;border-radius:50%;background:conic-gradient(var(--gm-lime-soft) 0 8deg,transparent 8deg 30deg);opacity:0}
+.gm-reveal.show .gm-reveal-rays{animation:gmRays 1.1s ease-out both}
+@keyframes gmRays{0%{opacity:0;transform:scale(.3) rotate(0)}30%{opacity:.9}100%{opacity:0;transform:scale(1.15) rotate(80deg)}}
+.gm-reveal-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 18px;min-width:130px;border-radius:var(--r-lg);background:var(--gm-hub-bg);border:2px solid var(--gm-hub-ink);box-shadow:0 0 34px var(--gm-lime-strong),inset 0 0 20px rgba(154,255,0,.12)}
+.gm-reveal.show .gm-reveal-card{animation:gmRevealPop .7s cubic-bezier(.2,1.5,.35,1) both}
+@keyframes gmRevealPop{0%{opacity:0;transform:scale(.3) rotate(-14deg)}55%{opacity:1;transform:scale(1.08) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+.gm-reveal-ic{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gm-lime-soft);color:var(--gm-lime-ink)}
+.gm-reveal-ic svg.i{width:30px;height:30px}
+.gm-reveal.show .gm-reveal-ic{animation:gmRevealIc 2s ease-in-out .5s infinite}
+@keyframes gmRevealIc{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.gm-reveal-card b{font-family:var(--font-display);font-size:19px;letter-spacing:.03em;color:var(--gm-ink);text-align:center;line-height:1.05}
+
+/* --- «Мои призы»: шит --- */
+#sheet-gmPrizes h3{text-align:left}
+.gm-prz-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.gm-prz-stat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);transition:border-color .2s,transform .2s}
+.gm-prz-stat:hover{border-color:var(--lime)}
+.gm-prz-sic{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--lime-dim);color:var(--accent);margin-bottom:3px}
+.gm-prz-sic svg.i{width:16px;height:16px}
+.gm-prz-stat b{font-family:var(--font-display);font-size:22px;letter-spacing:.03em;color:var(--text);line-height:1}
+.gm-prz-stat small{font-size:10.5px;color:var(--dim)}
+
+.gm-prz-list{display:flex;flex-direction:column}
+.gm-prize{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border);animation:gmPrizeIn .35s cubic-bezier(.2,.8,.25,1) both}
+.gm-prize:last-child{border-bottom:none}
+@keyframes gmPrizeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.gm-prize-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--lime-dim);color:var(--accent)}
+.gm-prize-ic svg.i{width:19px;height:19px}
+.gm-prize-ic.p-discount,.gm-prize-ic.p-tier{background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400}
+.gm-prize-ic.p-boost{background:var(--lime);color:#0a1400}
+.gm-prize-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.gm-prize-t{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-prize-s{font-size:11px;color:var(--dim)}
+.gm-prize.used{opacity:.62}
+.gm-prize-badge{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 9px;border-radius:99px;white-space:nowrap}
+.gm-prize-badge.b-active{color:var(--accent);background:var(--lime-dim);border:1px solid var(--lime)}
+.gm-prize-badge.b-done{color:var(--accent);background:var(--lime-dim);border:1px solid transparent}
+.gm-prize-badge.b-used{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+
+/* промокод в карточке приза */
+.gm-code{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;margin-top:5px;padding:4px 10px;border-radius:8px;border:1px dashed var(--lime);background:var(--lime-dim);color:var(--accent);font-family:var(--font-display);font-size:13px;letter-spacing:.08em;transition:transform .15s,background .2s}
+.gm-code svg.i{width:13px;height:13px}
+.gm-code:active{transform:scale(.95)}
+.gm-code.used{border-style:solid;border-color:var(--border);background:var(--raised);color:var(--dim);cursor:default}
+
+/* промо-плашка в оформлении оплаты (подхват скидки из игр) */
+.gm-pay-promo{display:flex;align-items:center;gap:9px;margin:8px 0 12px;padding:10px 12px;border-radius:var(--r-md);border:1px dashed var(--lime);background:var(--lime-dim);color:var(--text);font-size:12.5px;animation:gmBoostIn .35s ease both}
+.gm-pay-promo svg.i{width:17px;height:17px;color:var(--accent);flex-shrink:0}
+.gm-pay-promo b{font-family:var(--font-display);letter-spacing:.06em;color:var(--accent);font-size:14px}
+
 /* уважение к reduced-motion */
 @media (prefers-reduced-motion:reduce){
-  .gm-wheel-card::before,.gm-dice-card::before,.gm-eye::before,.gm-eye svg.i,.gm-pointer,.gm-wheel-hub,.gm-bwheel-hub,.gm-spin,.gm-bonus-btn,.gm-rm.cur,.gm-cell.next{animation:none !important}
+  .gm-wheel-card::before,.gm-dice-card::before,.gm-eye::before,.gm-eye svg.i,.gm-pointer,.gm-wheel-hub,.gm-bwheel-hub,.gm-spin,.gm-bonus-btn,.gm-rm.cur,.gm-cell.next,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays{animation:none !important}
 }

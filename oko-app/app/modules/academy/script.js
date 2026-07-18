@@ -1000,23 +1000,47 @@ function acNotesDownload(){
   }
 }
 
-/* ================= НАПОМИНАНИЕ (раз в сутки при входе) ================= */
+/* ================= НАПОМИНАНИЕ (раз в сутки при входе) =================
+   Показываем только при входе в приложение/Академию, раз в сутки, и НИКОГДА
+   поверх активного действия: открытый sheet, игра, мини-апп, попап или
+   полноэкранная вьюха → откладываем и пробуем позже. */
+function acRemindBusy(){
+  if(document.getElementById('okoPopup')) return true;         // уже показан попап
+  if(document.querySelector('.sheet.open')) return true;       // открыт bottom-sheet
+  /* открыта полноэкранная вьюха (звонок / регистрация / канал / профиль и т.п.) */
+  if(document.querySelector('#callScreen.open, #regView.open, .ma-view.open')) return true;
+  /* открыт мини-апп внутри хаба «Мини-аппы» (сетка спрятана — значит внутри вьюхи) */
+  const mg = document.getElementById('maGrid');
+  if(mg && mg.style.display === 'none') return true;
+  /* пользователь в разделе Игры / Мини-аппы — не мешаем активному занятию */
+  const act = document.querySelector('.screen.active');
+  if(act && /^screen-(games|mini)$/.test(act.id)) return true;
+  return false;
+}
 function acRemindCheck(){
   try{
     if(!localStorage.getItem('oko-auth')) return;            // ещё не в приложении
-    if(document.getElementById('okoPopup')) return;          // другой попап — не мешаем, покажем в след. заход
     const scr = document.getElementById('screen-academy');
-    if(scr && scr.classList.contains('active')) return;      // уже в академии
+    if(scr && scr.classList.contains('active')) return;      // уже в академии — напоминать незачем
     const today = acDayStr();
     if(acS.remindDay === today) return;                      // раз в сутки
     const nx = acNextLesson();
     if(nx < 0) return;                                       // всё пройдено — не беспокоим
-    const left = 100 - acLessonPct(nx);
+    if(acRemindBusy()){ setTimeout(acRemindCheck, 20000); return; }  // занят — отложить
+    const pct = acLessonPct(nx), title = esc(AC_COURSE[nx].title);
+    let body, label;
+    if(pct <= 0){
+      body = 'Начни урок ' + (nx+1) + ' «' + title + '» — тебя ждёт разбор темы, слайды, тест и практика.';
+      label = 'Начать урок';
+    } else {
+      body = 'Продолжи урок ' + (nx+1) + ' «' + title + '» — пройдено '
+           + '<b style="color:var(--accent)">' + pct + '%</b>, осталось ' + (100 - pct) + '%.';
+      label = 'Продолжить урок';
+    }
     acS.remindDay = today; acSave();
-    showPopup({ico:'star', title:'Академия OKO',
-      body:'Продолжи урок ' + (nx+1) + ' «' + esc(AC_COURSE[nx].title) + '» — осталось <b style="color:var(--accent)">' + left + '%</b> до полного прохождения.',
+    showPopup({ico:'star', title:'Академия OKO', body:body,
       actions:[
-        {label:'Продолжить урок', onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
+        {label:label, onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
         {label:'Позже', ghost:true}
       ]});
   }catch(e){}

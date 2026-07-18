@@ -7,24 +7,32 @@
    ============================================================ */
 
 /* ---------- SAFE-AREA: все fullscreen-вьюхи не заезжают под чёлку ---------- */
+/* --oko-sa* приходят из base.html (инсеты Telegram-фуллскрина). Вне TG они
+   не заданы → max() падает на env(safe-area-*). Fixed-оверлеи живут ВНЕ #app,
+   поэтому пэддинг #app из tg-webapp их не защищает — защищаем здесь. */
 /* базовые классы шапок — единый безопасный отступ сверху */
 .sv-head,
 .ep-head,
 .search-head{
-  padding-top:max(env(safe-area-inset-top),14px);
+  padding-top:max(env(safe-area-inset-top),var(--oko-sat,0px),14px);
 }
 /* вьюхи-модули, у которых своя шапка без safe-area */
 #hqEmbed .hq-emb-head,
 #regView .ep-head,
 #legalView .lg-tabs{
-  padding-top:max(env(safe-area-inset-top),12px);
+  padding-top:max(env(safe-area-inset-top),var(--oko-sat,0px),12px);
 }
 /* контейнеры-вьюхи: нижний safe-area, чтобы контент не прятался за home-bar */
 #searchView .sv-body,
 #notifsView .sv-body,
 #adminView .sv-body,
 #systemView .sv-body{
-  padding-bottom:calc(30px + env(safe-area-inset-bottom));
+  padding-bottom:max(calc(30px + env(safe-area-inset-bottom)),calc(30px + var(--oko-sab,0px)));
+}
+/* звонок — тоже вне #app, верх/низ под инсеты TG */
+#callScreen{
+  padding-top:max(calc(60px + env(safe-area-inset-top)),calc(50px + var(--oko-sat,0px)));
+  padding-bottom:max(calc(40px + env(safe-area-inset-bottom)),calc(34px + var(--oko-sab,0px)));
 }
 
 /* ---------- ПУСТОЕ ПОЛЕ ВНИЗУ: дыхание контента + safe-area ---------- */
@@ -164,3 +172,100 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
 }
 @keyframes uicSplashHalo{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:.9;transform:scale(1.08)}}
 @media(prefers-reduced-motion:reduce){#splash .eye::after{animation:none}}
+
+/* ============================================================
+   АДАПТИВ: TG / телефон / планшет / ПК / ультраширокий
+   Контейнеры центрируются, ничего не растягивается и не обрезается.
+   ============================================================ */
+
+/* ---------- ПК ≥900px: единая контент-колонка (лента/хаб/профиль/кошелёк/
+   игры/академия/реклама и т.д. центрируются, не растягиваются на ширь) ---------- */
+@media(min-width:900px){
+  /* все экраны с оболочкой .pad -> одна согласованная колонка по центру */
+  main>.screen>.pad{
+    max-width:900px;margin-inline:auto;width:100%;
+    padding-left:26px;padding-right:26px;
+  }
+  /* лента уже центрируется своим #screen-feed{max-width:820px}; выравниваем
+     её ширину под общий ритм колонки */
+  #screen-feed{max-width:900px}
+  /* fixed-панели капнуты на 1280 (base.html). Их ВНУТРЕННИЙ контент —
+     форм-центрируем, чтобы поля/списки не были на всю ширь монитора */
+  .ep-body>*,
+  #systemView .sv-body>*,
+  #searchView .sv-body>*,
+  #notifsView .sv-body>*{
+    max-width:640px;margin-inline:auto;
+  }
+  /* поиск/уведомления/система: сама шапка тоже по центру колонки */
+  #searchView .search-head,
+  #systemView .sv-head,
+  #notifsView .sv-head{padding-left:max(18px,calc((100% - 640px)/2));padding-right:max(18px,calc((100% - 640px)/2))}
+  /* админка — дашборд, ей нужна ширина: колонку не сужаем, лишь центрируем */
+  #adminView .sv-body{max-width:1040px;margin-inline:auto;width:100%}
+  /* HOVER: карточки мини-аппов заметнее приподнимаются на ПК (тач их не трогает) */
+  .ma-card:hover{transform:translateY(-2px)}
+}
+
+/* десктоп двухколоночный чат: не даём разговору расплываться слишком широко */
+@media(min-width:900px){
+  #conv .msgs{width:100%;max-width:900px;margin-inline:auto}
+}
+
+/* ---------- ПЛАНШЕТ 700–1100 в портрете: аккуратная ширина колонки ---------- */
+@media(min-width:700px) and (max-width:899px){
+  main>.screen>.pad{max-width:720px;margin-inline:auto;width:100%}
+  #screen-feed{max-width:720px;margin-inline:auto;width:100%}
+}
+
+/* ---------- LANDSCAPE на телефоне: safe-area слева/справа (чёлка сбоку) ---------- */
+@media(max-width:899px) and (orientation:landscape){
+  header{
+    padding-left:max(16px,env(safe-area-inset-left),var(--oko-sal,0px));
+    padding-right:max(16px,env(safe-area-inset-right),var(--oko-sar,0px));
+  }
+  main>.screen>.pad{
+    padding-left:max(18px,env(safe-area-inset-left),var(--oko-sal,0px));
+    padding-right:max(18px,env(safe-area-inset-right),var(--oko-sar,0px));
+  }
+  /* нижнюю навигацию в ландшафте прижимаем компактнее по высоте */
+  nav#tabs>button{padding-top:7px;padding-bottom:6px}
+}
+
+/* ---------- УЗКИЕ ЭКРАНЫ ≤360px: убрать риск переполнения/обрезки ---------- */
+@media(max-width:360px){
+  .pad{padding:14px}
+  header{padding-left:12px;padding-right:12px;gap:8px}
+  nav#tabs>button{font-size:9.8px;padding-left:2px;padding-right:2px}
+  /* хаб-сетка сервисов: 4 колонки на 360 не жмут подписи */
+  .svc-grid{gap:12px 6px}
+  .svc-label{font-size:10px}
+}
+
+/* ---------- SHEET: на широких экранах не гигантский, по центру (уже 480),
+   на узких — во всю ширину с боковым зазором; высота под landscape ---------- */
+.sheet{max-width:min(480px,calc(100vw - 20px))}
+@media(max-height:520px){
+  .sheet{max-height:92dvh}
+  .sheet .stickers-grid,.stickers-grid{max-height:44vh}
+}
+
+/* ---------- УЛЬТРАШИРОКИЙ >1280: закрытые slide-in панели капнуты на 1280 и
+   центрированы (base.html), поэтому translateX(100%) не убирает их полностью —
+   на ширине >1280 остаётся тонкая полоска справа. Прячем гарантированно. ---------- */
+@media(min-width:1281px){
+  #editProfile:not(.open),
+  #systemView:not(.open),
+  #searchView:not(.open),
+  #notifsView:not(.open),
+  #adminView:not(.open),
+  #regView:not(.open),
+  #legalView:not(.open),
+  #psView:not(.open),
+  #st2View:not(.open),
+  #chView:not(.open){transform:translateX(100vw)}
+}
+
+/* ---------- ГЛОБАЛЬНО: ничего не выпирает по горизонтали ---------- */
+img,video,canvas,svg{max-width:100%}
+.pad,.card,.sheet{overflow-wrap:anywhere}

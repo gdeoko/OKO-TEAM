@@ -495,10 +495,46 @@ function hqHqView(){
     <div class="adm-sec-h">Живой лог штаба</div>
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
 }
+/* абсолютный публичный адрес штаба — единственная витрина прогресса */
+const HQ_URL_ABS = 'https://true-journey-418.higgsfield.app/hq.html';
+/* src для iframe: на http(s) грузим относительный (тот же origin → контент инспектируется
+   и не блокируется egress-прокси); на file:// и прочих — абсолютный публичный. */
+function hqEmbedSrc(){
+  return (location.protocol === 'https:' || location.protocol === 'http:') ? '/hq.html' : HQ_URL_ABS;
+}
+let hqLoadTimer = null;      // сторож onload
+let hqLoadHandled = false;   // защита от двойного срабатывания (onload + timeout)
+
+/* открыть штаб во внешней вкладке: в Telegram → tg.openLink, иначе → window.open */
+function hqOpenExternal(){
+  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+  try{
+    if(tg && typeof tg.openLink === 'function'){ tg.openLink(HQ_URL_ABS); return true; }
+  }catch(e){}
+  try{
+    const w = window.open(HQ_URL_ABS, '_blank', 'noopener');
+    return !!w;
+  }catch(e){ return false; }
+}
+
+/* фолбэк: встраивание не удалось (пусто/таймаут/ошибка) → внешняя вкладка + понятное состояние */
+function hqEmbedFallback(reason){
+  if(hqLoadHandled) return;
+  hqLoadHandled = true;
+  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
+  hqOpenExternal();
+  const v = document.getElementById('hqEmbed');
+  if(v){
+    v.classList.remove('hq-emb-busy');
+    v.classList.add('hq-emb-failed');
+    const fr = document.getElementById('hqFrame');
+    if(fr) fr.setAttribute('src', 'about:blank'); // не держать битый кадр/GPU
+  }
+  if(typeof toast === 'function') toast('Штаб открыт в новой вкладке');
+}
+
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
-  /* локальный file:// не умеет iframe на /hq.html — открываем вкладкой */
-  if(location.protocol !== 'https:' && location.protocol !== 'http:'){ window.open('/hq.html','_blank'); return; }
   try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){} // владелец уже авторизован в приложении
   let v = document.getElementById('hqEmbed');
   if(!v){
@@ -508,22 +544,63 @@ function hqOpen3d(){
       <div class="hq-emb-head">
         <button class="hq-emb-back" onclick="hqCloseEmbed()">${I('back')} Назад</button>
         <b>OKO HQ · ШТАБ</b>
-        <a class="hq-emb-ext" href="/hq.html" target="_blank" title="Открыть отдельной вкладкой">${I('share')}</a>
+        <button class="hq-emb-ext" onclick="hqOpenExternal()" title="Открыть в новой вкладке">${I('share')}</button>
       </div>
-      <iframe id="hqFrame" allow="autoplay; fullscreen" src="about:blank"></iframe>`;
+      <div class="hq-emb-stage">
+        <iframe id="hqFrame" allow="autoplay; fullscreen" referrerpolicy="no-referrer" src="about:blank"></iframe>
+        <div class="hq-emb-load" id="hqEmbLoad">
+          <span class="hq-emb-spin" aria-hidden="true"></span>
+          <span>Загружаю 3D-штаб…</span>
+        </div>
+        <div class="hq-emb-fail">
+          <b>Штаб открылся в новой вкладке</b>
+          <small>Встроить не удалось — публичный штаб живёт отдельной страницей.</small>
+          <button class="btn sm" onclick="hqOpenExternal()">${I('share')} Открыть 3D-штаб</button>
+        </div>
+      </div>`;
     document.body.appendChild(v);
   }
   const fr = document.getElementById('hqFrame');
-  if(fr.getAttribute('src') !== '/hq.html') fr.setAttribute('src', '/hq.html');
-  v.classList.add('open');
+  const src = hqEmbedSrc();
+  // сброс состояния перед новой попыткой
+  hqLoadHandled = false;
+  v.classList.remove('hq-emb-failed');
+  v.classList.add('open', 'hq-emb-busy');
+  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
+
+  fr.onload = function(){
+    if(hqLoadHandled) return;
+    // тот же origin (http/https + /hq.html) → проверяем, что кадр не пустой
+    try{
+      const doc = fr.contentDocument;
+      if(doc){
+        const body = doc.body;
+        const txt = (body && body.innerText || '').trim();
+        const kids = body ? body.children.length : 0;
+        if(kids === 0 && txt.length < 4){ hqEmbedFallback('empty'); return; }
+      }
+      // doc === null при кросс-origin — это норм (кадр реально загрузился с внешнего origin)
+    }catch(e){ /* SecurityError = кросс-origin = кадр загрузился, всё ок */ }
+    hqLoadHandled = true;
+    if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
+    v.classList.remove('hq-emb-busy'); // прячем спиннер, показываем кадр
+  };
+  fr.onerror = function(){ hqEmbedFallback('error'); };
+
+  // сторож: ~4с нет onload → считаем, что не загрузилось, уходим в фолбэк
+  hqLoadTimer = setTimeout(function(){ hqEmbedFallback('timeout'); }, 4000);
+
+  fr.setAttribute('src', src);
   if(typeof nvPush === 'function') nvPush('hq-embed', hqCloseEmbed);
 }
 function hqCloseEmbed(){
+  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
+  hqLoadHandled = true;
   const v = document.getElementById('hqEmbed');
   if(!v) return;
-  v.classList.remove('open');
+  v.classList.remove('open', 'hq-emb-busy', 'hq-emb-failed');
   const fr = document.getElementById('hqFrame');
-  if(fr) fr.setAttribute('src', 'about:blank'); // освободить GPU/видео
+  if(fr){ fr.onload = null; fr.onerror = null; fr.setAttribute('src', 'about:blank'); } // освободить GPU/видео
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */
