@@ -47,17 +47,19 @@ else STATUS="$STATUS YouTube:FAIL"; log "YouTube fail"; fi
 # 5) Instagram (git-raw -> VPS -> stealth reel-постер)
 IG="IG:FAIL"
 RAW="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/$ID.mp4"
-vexec(){ curl -s $([ -f "$CA" ] && echo --cacert "$CA") -m "${2:-120}" -X POST "$OKO_VPS_CTRL_URL/exec" -H "Authorization: Bearer $OKO_VPS_CTRL_TOKEN" -H "Content-Type: application/json" --data-binary "$1" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stdout",""))' 2>/dev/null; }
+# vexec: команду шлём как ПЛЕЙН-строку, JSON-экранирование через python (пуленепробиваемо)
+vexec(){ local body; body=$(python3 -c 'import json,sys;print(json.dumps({"cmd":sys.argv[1]}))' "$1"); \
+  curl -s $([ -f "$CA" ] && echo --cacert "$CA") -m "${2:-120}" -X POST "$OKO_VPS_CTRL_URL/exec" -H "Authorization: Bearer $OKO_VPS_CTRL_TOKEN" -H "Content-Type: application/json" --data-binary "$body" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stdout",""))' 2>/dev/null; }
 # git-raw на GitHub CDN обновляется не мгновенно после push — ретраим до 6 раз
 DL=0
 for att in 1 2 3 4 5 6; do
-  DL=$(vexec "{\"cmd\":\"curl -s -o /opt/oko-poster/cfg/$ID.mp4 '$RAW' && ls -l /opt/oko-poster/cfg/$ID.mp4 | awk '{print \\\$5}'\"}" 200)
+  DL=$(vexec "curl -s -o /opt/oko-poster/cfg/$ID.mp4 '$RAW'; wc -c < /opt/oko-poster/cfg/$ID.mp4" 200 | tr -d ' \n')
   [ "${DL:-0}" -gt 500000 ] 2>/dev/null && { log "git-raw ready ($DL) att=$att"; break; }
   log "git-raw not ready att=$att (dl=$DL), ждём 15с"; sleep 15
 done
 if [ "${DL:-0}" -gt 500000 ] 2>/dev/null; then
   CAPB64=$(printf '%s' "$CAP" | base64 -w0)
-  RES=$(vexec "{\"cmd\":\"cd /opt/oko-poster && CAPB64=$CAPB64 IG_TAG=auto IG_VIDEO=/opt/oko-poster/cfg/$ID.mp4 timeout 300 node ig_reel_state.mjs 2>&1 | tail -3\"}" 340)
+  RES=$(vexec "cd /opt/oko-poster && CAPB64=$CAPB64 IG_TAG=auto IG_VIDEO=/opt/oko-poster/cfg/$ID.mp4 timeout 300 node ig_reel_state.mjs 2>&1 | tail -3" 340)
   echo "$RES" | grep -q "SHARED confirmed\|LIKELY_SHARED" && IG="IG:posted" || IG="IG:check($(echo "$RES"|tail -1))"
   log "IG $IG"
 else log "IG delivery failed (dl=$DL)"; fi
