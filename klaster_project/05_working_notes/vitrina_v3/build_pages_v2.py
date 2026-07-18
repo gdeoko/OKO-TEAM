@@ -10,7 +10,12 @@ FONTS=open(f"{BASE}/03_deliverables/website/assets/css/fonts.css").read()
 EMBLEM=open(f"{SCRATCH}/web_emblem256.txt").read().strip()
 LOGO=open(f"{SCRATCH}/web_logo512.txt").read().strip()
 AVATAR=open(f"{SCRATCH}/web_avatar256.txt").read().strip()
-def esc(s): return html.escape(str(s or ""))
+def esc(s): return html.escape(str(s or "").replace("—","-").replace("–","-"))
+def plural(n, forms):
+    n=abs(int(n)); n10=n%10; n100=n%100
+    if n10==1 and n100!=11: return forms[0]
+    if 2<=n10<=4 and not (12<=n100<=14): return forms[1]
+    return forms[2]
 content=json.load(open(f"{SCRATCH}/content.json",encoding="utf-8"))
 calendar=json.load(open(f"{SCRATCH}/calendar.json",encoding="utf-8"))
 
@@ -73,7 +78,15 @@ svg.ic{width:16px;height:16px}
 .dl a.primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#12130f;border:0}
 .type-demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:26px}
 .rv{opacity:0;transform:translateY(14px);transition:.5s}.rv.in{opacity:1;transform:none}
-@media(max-width:640px){.wrap{padding:20px 14px 60px}.cal-grid{gap:4px}.cal-cell{min-height:66px;padding:5px}.cal-its{display:none}.cal-d{font-size:12px}}
+.home{min-height:44px;box-sizing:border-box}
+@media(max-width:640px){.wrap{padding:20px 14px 60px}
+ .cal-grid{grid-template-columns:1fr;gap:6px}.cal-wd{display:none}
+ .cal-cell{min-height:0;display:flex;align-items:flex-start;gap:10px;padding:11px 12px}
+ .cal-cell:not(.has){display:none}
+ .cal-d{min-width:24px;font-size:15px}
+ .cal-dots{display:none}
+ .cal-its{display:grid!important;gap:4px;flex:1}
+ .cal-it{white-space:normal;font-size:12.5px;line-height:1.35}}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}}
 """
 PARTICLES=r"""
@@ -93,7 +106,7 @@ def shell(title,desc,body,extra_js=""):
 {CSS}</style></head><body>
 <canvas id="bgfx"></canvas><div class="glow g1"></div><div class="glow g2"></div>
 <div class="wrap">
-<div class="topnav"><img src="{EMBLEM}" alt="Активити"><div class="bt">КЛАСТЕР<small>Витрина проекта</small></div>
+<div class="topnav"><img src="{EMBLEM}" alt="Кластер"><div class="bt">КЛАСТЕР<small>Витрина проекта</small></div>
 <a class="home" href="/">{BACK} На главную</a></div>
 {body}
 </div><script>{PARTICLES}{extra_js}</script></body></html>"""
@@ -104,7 +117,8 @@ def kpis_html(kpis):
 days=calendar.get("days",[])
 tcolors={"reels":"reels","post":"post","carousel":"carousel","article":"article","story":"story","live":"live"}
 tnames={"reels":"Reels","post":"Пост","carousel":"Карусель","article":"Статья","story":"Stories","live":"Эфир"}
-leg="".join(f'<span class="lg lg-{v}"><i></i>{tnames[k]}</span>' for k,v in tcolors.items())
+used_types={it.get("type") for d in days for it in d.get("items",[])}
+leg="".join(f'<span class="lg lg-{v}"><i></i>{tnames[k]}</span>' for k,v in tcolors.items() if k in used_types)
 byday={d["day"]:d.get("items",[]) for d in days}
 wd=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"]
 heads="".join(f'<div class="cal-wd">{w}</div>' for w in wd)
@@ -120,7 +134,7 @@ plan_kpis=cnt.get("kpis") or [{"value":"340","label":"Reels за 3 мес"},{"va
 cbody=f"""<div class="eyebrow rv">Контент-план · Месяц 1</div><h1 class="rv">Календарь контента</h1>
 <p class="lead rv">{esc(cnt.get("intro","Контент-план месяца 1 по дням. Цвет обозначает формат, наведение показывает тему."))}</p>
 {kpis_html(plan_kpis)}
-<h2 class="sub rv">Календарь месяца 1 · {total} единиц</h2>
+<h2 class="sub rv">Календарь месяца 1 · {total} {plural(total,["единица","единицы","единиц"])}</h2>
 <div class="cal-legend rv">{leg}</div>
 <div class="cal-grid rv">{heads}{"".join(cells)}</div>"""
 open(f"{PUB}/content.html","w",encoding="utf-8").write(shell("Контент-план · Кластер","Календарь контента месяца 1: Reels, посты, карусели, статьи по дням.",cbody))
@@ -151,8 +165,8 @@ bbody=f"""<div class="eyebrow rv">Бренд · Логотип и стиль</di
 </div>
 <h2 class="sub rv">Типографика</h2>
 <div class="type-demo rv">
- <div style="font-family:'Oswald';font-weight:700;font-size:40px;text-transform:uppercase;letter-spacing:.02em">Oswald — заголовки</div>
- <div style="font-family:'Manrope';font-size:17px;color:var(--ink2);margin-top:10px">Manrope — основной текст интерфейса и абзацы. Гуманистический гротеск, кириллица, веса 400 / 500 / 700.</div>
+ <div style="font-family:'Oswald';font-weight:700;font-size:40px;text-transform:uppercase;letter-spacing:.02em">Oswald - заголовки</div>
+ <div style="font-family:'Manrope';font-size:17px;color:var(--ink2);margin-top:10px">Manrope - основной текст интерфейса и абзацы. Гуманистический гротеск, кириллица, веса 400 / 500 / 700.</div>
 </div>
 <h2 class="sub rv">Обзор пакета</h2>
 <div class="lbox dark rv" style="min-height:auto;padding:16px"><img src="/brand/aktiviti/proof.jpg" alt="Обзор пакета лого" style="max-width:100%;max-height:none;border-radius:10px"></div>"""

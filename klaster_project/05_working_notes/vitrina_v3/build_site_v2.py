@@ -11,7 +11,7 @@ EMBLEM=open(f"{SCRATCH}/web_emblem256.txt").read().strip()
 IMG=json.load(open(f"{SCRATCH}/site_imgs.json"))
 CAT=json.load(open(f"{SCRATCH}/site_catalog.json",encoding="utf-8"))
 COPY={s["id"]:s for s in json.load(open(f"{SCRATCH}/sitecopy.json",encoding="utf-8"))["sections"]}
-def esc(s): return html.escape(str(s or ""))
+def esc(s): return html.escape(str(s or "").replace("—","-").replace("–","-"))
 def C(sid,f,d=""): return COPY.get(sid,{}).get(f,d)
 def bullets(sid): return COPY.get(sid,{}).get("bullets",[])
 
@@ -286,7 +286,12 @@ form.lead .btn.pri{width:100%;justify-content:center;margin-top:6px}
 .rv{opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}.rv.in{opacity:1;transform:none}
 /* responsive */
 @media(max-width:960px){
- .hdr nav,.hdr .cta{display:none}.hdr .burger{display:grid}
+ .hdr nav,.hdr .cta{display:none}.hdr .burger{display:grid;height:44px}
+ .cf{min-height:44px;display:inline-flex;align-items:center;padding:11px 16px}
+ .cc-btn{min-height:44px;padding:12px 16px}
+ .chat-quick button{min-height:40px;padding:9px 14px}
+ .mappin{font-size:10px;padding:4px 8px;white-space:normal;max-width:42vw}
+ .foot-c a{display:inline-block;padding:7px 0;line-height:1.3}.foot-bot{color:rgba(255,255,255,.62)}
  .two,.trans-wrap,.form-wrap{grid-template-columns:1fr;gap:28px}
  .stats{grid-template-columns:repeat(3,1fr);gap:14px}
  .grid3,.grid3.ind,.mosaic,.catgrid{grid-template-columns:1fr 1fr}
@@ -346,9 +351,9 @@ document.querySelectorAll('.chat-quick button').forEach(b=>b.addEventListener('c
 BURGER=f'<button class="burger" aria-label="Меню">{ic("menu",22)}</button>'
 doc=f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Бизнес-парк «Кластер» — производство и офис внутри МКАД</title>
+<title>Бизнес-парк «Кластер» - производство и офис внутри МКАД</title>
 <meta name="description" content="{esc(C('hero','body'))[:155]}">
-<meta property="og:title" content="Бизнес-парк «Кластер» — пространство успешных компаний">
+<meta property="og:title" content="Бизнес-парк «Кластер» - пространство успешных компаний">
 <meta property="og:image" content="/og-cover.jpg">
 <style>{FONTS}
 {CSS}</style></head><body>
@@ -365,7 +370,7 @@ doc=f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
 
 <section class="hero" id="top">
  <img class="hero-poster" src="{IMG.get('poster','')}" alt="Бизнес-парк Кластер, аэросъёмка">
- <video autoplay muted loop playsinline poster="{IMG.get('poster','')}" onerror="this.style.display='none'"><source src="/hero.mp4" type="video/mp4"></video>
+ <video autoplay muted loop playsinline onerror="this.style.display='none'"><source src="/hero.mp4" type="video/mp4"></video>
  <div class="container hero-in">
   <div class="eyebrow">{esc(C('hero','eyebrow'))}</div>
   <h1>Пространство <span class="g">успешных</span> компаний</h1>

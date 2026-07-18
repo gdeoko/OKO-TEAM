@@ -11,7 +11,7 @@ FONTS = open(f"{BASE}/03_deliverables/website/assets/css/fonts.css").read()
 EMBLEM = open(f"{SCRATCH}/web_emblem256.txt").read().strip()
 LOGO = open(f"{SCRATCH}/web_logo512.txt").read().strip()
 
-def esc(s): return html.escape(str(s or ""))
+def esc(s): return html.escape(str(s or "").replace("—","-").replace("–","-"))
 
 # ---------- data ----------
 content = json.load(open(f"{SCRATCH}/content.json", encoding="utf-8"))
@@ -191,7 +191,7 @@ def section_calendar():
         titles="".join(f'<div class="cal-it it-{tcolors.get(it.get("type"),"post")}">{esc(it.get("title",""))[:34]}</div>' for it in items[:2])
         cells.append(f'''<div class="cal-cell {'has' if items else ''} rv"><div class="cal-d">{d}</div><div class="cal-dots">{dots}</div><div class="cal-its">{titles}</div></div>''')
     total=sum(len(v) for v in byday.values())
-    return f'''<p class="lead rv">Контент-план месяца 1 в виде календаря. Цвет — формат, наведение — тема. Всего единиц в месяце: {total}.</p>
+    return f'''<p class="lead rv">Контент-план месяца 1 в виде календаря. Цвет - формат, наведение - тема. Всего единиц в месяце: {total}.</p>
     <div class="cal-legend rv">{leg}</div>
     <div class="cal-grid rv">{heads}{"".join(cells)}</div>'''
 
@@ -211,7 +211,7 @@ CSS = r"""
  --bg:#08090b;--bg2:#0c0e12;--panel:#101318;--panel2:#151922;--card:#12151b;
  --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
  --gold:#E9B84A;--gold2:#C9982E;--amber:#E8A400;--gold-soft:rgba(233,184,74,.12);--gold-glow:rgba(233,184,74,.28);
- --ink:#EEF0F3;--ink2:#C6CAD2;--muted:#8A909B;--muted2:#5e646e;
+ --ink:#EEF0F3;--ink2:#C6CAD2;--muted:#8A909B;--muted2:#7C8390;
  --ff-d:'Oswald',sans-serif;--ff:'Manrope',sans-serif;--sb:264px}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--ff);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -244,7 +244,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--ff);line-height:1.6
 .top{display:none;position:sticky;top:0;z-index:30;align-items:center;gap:12px;padding:12px 16px;
  background:rgba(10,12,15,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .top img{width:30px;height:30px}.top .tt{font-family:var(--ff-d);font-size:15px;flex:1}
-.burger{width:42px;height:38px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03);display:grid;place-items:center;cursor:pointer}
+.burger{width:44px;height:44px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03);display:grid;place-items:center;cursor:pointer}
 .burger svg{width:20px;height:20px;stroke:var(--ink)}
 .scrim{display:none;position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
 /* main */
@@ -369,6 +369,10 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
  .cal-grid{grid-template-columns:repeat(7,1fr);gap:4px}
  .cal-cell{min-height:64px;padding:5px}.cal-its{display:none}.cal-d{font-size:12px}
  .cbar{flex-direction:column;align-items:stretch}.cc-search{min-width:0}
+ .nav{padding:12px 10px;min-height:44px}.side .home{min-height:44px}
+ .chip{padding:11px 15px;min-height:44px;display:inline-flex;align-items:center}
+ .cc-link{padding:8px 0;min-height:44px}
+ .cc-plat{font-size:11px}.brand small{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.bar-fill{transition:none}}
 """
@@ -378,11 +382,11 @@ const order=%%ORDER%%;
 const secs=[...document.querySelectorAll('.sec')], navs=[...document.querySelectorAll('.nav')];
 const side=document.querySelector('.side'), scrim=document.querySelector('.scrim');
 function reveal(sec){const els=sec.querySelectorAll('.rv');els.forEach((e,i)=>setTimeout(()=>e.classList.add('in'),40+i*45));}
-function countup(sec){sec.querySelectorAll('.kpi-v').forEach(el=>{const t=+el.dataset.target;if(!t||t>100000){return}const raw=el.dataset.raw;const suf=raw.replace(/[0-9\s]/g,'');let n=0;const step=Math.max(1,Math.round(t/38));const id=setInterval(()=>{n+=step;if(n>=t){n=t;clearInterval(id)}el.textContent=n.toLocaleString('ru')+suf.replace(/^\d*/,'')},22);});}
+function countup(sec){sec.querySelectorAll('.kpi-v').forEach(el=>{const raw=el.dataset.raw;const m=raw.match(/^(\d{1,3}(?:[\s ]\d{3})*|\d+)(.*)$/s);if(!m){el.textContent=raw;return}const t=+m[1].replace(/[\s ]/g,'');const suf=m[2]||'';if(!t||t>100000||/\d/.test(suf)){el.textContent=raw;return}let n=0;const step=Math.max(1,Math.round(t/38));const id=setInterval(()=>{n+=step;if(n>=t){n=t;clearInterval(id)}el.textContent=n.toLocaleString('ru')+suf},22);});}
 function show(id,push){if(!order.includes(id))id=order[0];secs.forEach(s=>s.classList.toggle('on',s.id==='sec-'+id));
  navs.forEach(a=>a.classList.toggle('active',a.dataset.sec===id));
  const sec=document.getElementById('sec-'+id);if(sec){sec.querySelectorAll('.rv').forEach(e=>e.classList.remove('in'));reveal(sec);countup(sec);}
- window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});if(push!==false)history.replaceState(0,'','#'+id);closeNav();}
+ window.scrollTo(0,0);if(push!==false)history.replaceState(0,'','#'+id);closeNav();}
 navs.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.sec)}));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){e.preventDefault();show(b.dataset.go);}});
 function openNav(){side.classList.add('open');scrim.classList.add('show')}
