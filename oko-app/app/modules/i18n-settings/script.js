@@ -344,6 +344,8 @@ const ST_DICT = {
   'Проводим оплату…':'Processing payment…','Активация мгновенно после оплаты':'Activated instantly after payment',
   'Лимиты обновлены, партнёрка включена. Спасибо!':'Limits updated, partner program enabled. Thanks!',
   /* --- кошелёк --- */
+  'Динамика · 30 дней':'Trend · 30 days','Подписка PRO — автопродление':'PRO subscription — auto-renewal',
+  'Выключено — тариф не продлевается сам':'Off — the plan does not renew itself','Выключено':'Off',
   'Лицевой счёт':'Account','Пополнить':'Top up','Вывести':'Withdraw','История':'History',
   'Расходы по категориям':'Spending by category','История операций':'Transaction history','Пополнения':'Deposits',
   'Списания':'Charges','Карта РФ':'Russian card','Крипта USDT':'USDT crypto','Переводы':'Transfers','Прочее':'Other',
@@ -531,6 +533,7 @@ const ST_RX = [
   [/^Оплатить ([\d\s.,]+ ?₽)$/, 'Pay $1'],
   [/^Заказать пакет · ([\d\s.,]+ ?₽)$/, 'Order package · $1'],
   [/^Пополнить на ([\d\s.,]+ ?₽)$/, 'Top up $1'],
+  [/^Следующее списание (.+)$/, 'Next charge $1'],
   [/^Кошелёк пополнен на ([\d\s.,]+ ?₽)$/, 'Wallet topped up by $1'],
   [/^Тест сдан\. Лучший результат — (\d+)%$/, 'Quiz passed. Best score — $1%'],
   [/^Урок пройден на (\d+)%$/, 'Lesson completed at $1%'],

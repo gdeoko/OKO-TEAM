@@ -6488,6 +6488,15 @@ function regFinish(){
 
 /* ---------- системные попапы (каждый один раз, oko-reg-popups) ---------- */
 let regPopTimers = [];
+/* открыта переписка или полноэкранная вьюха (профиль/расширенные настройки)?
+   — тогда промо-попап не перекрываем, а откладываем (как для sheet/попапа) */
+function regViewBusy(){
+  const cb = document.getElementById('convBody');
+  if(cb && cb.style.display !== 'none' && cb.offsetParent !== null) return true;
+  const st2 = document.getElementById('st2View'); if(st2 && st2.classList.contains('open')) return true;
+  const ps  = document.getElementById('psView');  if(ps  && ps.classList.contains('open'))  return true;
+  return false;
+}
 function regSchedulePopups(){
   regPopTimers.forEach(t=>clearTimeout(t)); regPopTimers = [];
   const seen = regPopupsSeen();
@@ -6497,8 +6506,8 @@ function regSchedulePopups(){
 function regPopupPro(){
   if(regPopupsSeen().pro) return;
   if(document.getElementById('regView').classList.contains('open')) return;
-  /* не перебивать открытый sheet/попап — попробовать позже */
-  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+  /* не перебивать открытый sheet/попап/переписку/полноэкранную вьюху — попробовать позже */
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup') || regViewBusy()){
     regPopTimers.push(setTimeout(regPopupPro, 20000)); return;
   }
   regPopupMark('pro');
@@ -6512,7 +6521,7 @@ function regPopupPro(){
 function regPopupNotif(){
   if(regPopupsSeen().notif) return;
   if(document.getElementById('regView').classList.contains('open')) return;
-  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup') || regViewBusy()){
     regPopTimers.push(setTimeout(regPopupNotif, 20000)); return;
   }
   regPopupMark('notif');
@@ -11234,6 +11243,8 @@ const ST_DICT = {
   'Проводим оплату…':'Processing payment…','Активация мгновенно после оплаты':'Activated instantly after payment',
   'Лимиты обновлены, партнёрка включена. Спасибо!':'Limits updated, partner program enabled. Thanks!',
   /* --- кошелёк --- */
+  'Динамика · 30 дней':'Trend · 30 days','Подписка PRO — автопродление':'PRO subscription — auto-renewal',
+  'Выключено — тариф не продлевается сам':'Off — the plan does not renew itself','Выключено':'Off',
   'Лицевой счёт':'Account','Пополнить':'Top up','Вывести':'Withdraw','История':'History',
   'Расходы по категориям':'Spending by category','История операций':'Transaction history','Пополнения':'Deposits',
   'Списания':'Charges','Карта РФ':'Russian card','Крипта USDT':'USDT crypto','Переводы':'Transfers','Прочее':'Other',
@@ -11421,6 +11432,7 @@ const ST_RX = [
   [/^Оплатить ([\d\s.,]+ ?₽)$/, 'Pay $1'],
   [/^Заказать пакет · ([\d\s.,]+ ?₽)$/, 'Order package · $1'],
   [/^Пополнить на ([\d\s.,]+ ?₽)$/, 'Top up $1'],
+  [/^Следующее списание (.+)$/, 'Next charge $1'],
   [/^Кошелёк пополнен на ([\d\s.,]+ ?₽)$/, 'Wallet topped up by $1'],
   [/^Тест сдан\. Лучший результат — (\d+)%$/, 'Quiz passed. Best score — $1%'],
   [/^Урок пройден на (\d+)%$/, 'Lesson completed at $1%'],
@@ -12364,6 +12376,9 @@ const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
     (l.reviews = l.reviews||[]).unshift({n:rv0.n, r:rv0.r, t:rv0.t});
     touched.add(l);
   });
+  /* стартовый рейтинг своих сид-объявлений должен сразу совпадать со своими же отзывами
+     (иначе, напр., #903 показывает 4.8 при единственном 5★-отзыве — mismatch до 1-го реального) */
+  LISTINGS.forEach(l=>{ if(l.my && l.reviews && l.reviews.length) touched.add(l); });
   touched.forEach(l=>mpRecalcRating(l));
 })();
 
@@ -13182,7 +13197,9 @@ function faDecorate(){
       head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
     }
     const nameEl = art.querySelector('.head .name');
-    if(nameEl && !nameEl.querySelector('.fa-vb') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
+    /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
+       поставить .vs-badge — не дорисовываем вторую галочку поверх (устраняет дубль в rec) */
+    if(nameEl && !nameEl.querySelector('.fa-vb, .vs-badge') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
       const chip = nameEl.querySelector('.chip');
       const badge = `<span class="fa-vb">${vBadge(p.name)}</span>`;
       if(chip) chip.insertAdjacentHTML('beforebegin', badge); else nameEl.insertAdjacentHTML('beforeend', badge);

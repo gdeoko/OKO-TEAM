@@ -307,6 +307,15 @@ function regFinish(){
 
 /* ---------- системные попапы (каждый один раз, oko-reg-popups) ---------- */
 let regPopTimers = [];
+/* открыта переписка или полноэкранная вьюха (профиль/расширенные настройки)?
+   — тогда промо-попап не перекрываем, а откладываем (как для sheet/попапа) */
+function regViewBusy(){
+  const cb = document.getElementById('convBody');
+  if(cb && cb.style.display !== 'none' && cb.offsetParent !== null) return true;
+  const st2 = document.getElementById('st2View'); if(st2 && st2.classList.contains('open')) return true;
+  const ps  = document.getElementById('psView');  if(ps  && ps.classList.contains('open'))  return true;
+  return false;
+}
 function regSchedulePopups(){
   regPopTimers.forEach(t=>clearTimeout(t)); regPopTimers = [];
   const seen = regPopupsSeen();
@@ -316,8 +325,8 @@ function regSchedulePopups(){
 function regPopupPro(){
   if(regPopupsSeen().pro) return;
   if(document.getElementById('regView').classList.contains('open')) return;
-  /* не перебивать открытый sheet/попап — попробовать позже */
-  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+  /* не перебивать открытый sheet/попап/переписку/полноэкранную вьюху — попробовать позже */
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup') || regViewBusy()){
     regPopTimers.push(setTimeout(regPopupPro, 20000)); return;
   }
   regPopupMark('pro');
@@ -331,7 +340,7 @@ function regPopupPro(){
 function regPopupNotif(){
   if(regPopupsSeen().notif) return;
   if(document.getElementById('regView').classList.contains('open')) return;
-  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup')){
+  if(document.querySelector('.sheet.open') || document.getElementById('okoPopup') || regViewBusy()){
     regPopTimers.push(setTimeout(regPopupNotif, 20000)); return;
   }
   regPopupMark('notif');

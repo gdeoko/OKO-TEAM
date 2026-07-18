@@ -209,7 +209,9 @@ function faDecorate(){
       head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
     }
     const nameEl = art.querySelector('.head .name');
-    if(nameEl && !nameEl.querySelector('.fa-vb') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
+    /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
+       поставить .vs-badge — не дорисовываем вторую галочку поверх (устраняет дубль в rec) */
+    if(nameEl && !nameEl.querySelector('.fa-vb, .vs-badge') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
       const chip = nameEl.querySelector('.chip');
       const badge = `<span class="fa-vb">${vBadge(p.name)}</span>`;
       if(chip) chip.insertAdjacentHTML('beforebegin', badge); else nameEl.insertAdjacentHTML('beforeend', badge);

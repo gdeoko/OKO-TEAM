@@ -101,6 +101,9 @@ const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
     (l.reviews = l.reviews||[]).unshift({n:rv0.n, r:rv0.r, t:rv0.t});
     touched.add(l);
   });
+  /* стартовый рейтинг своих сид-объявлений должен сразу совпадать со своими же отзывами
+     (иначе, напр., #903 показывает 4.8 при единственном 5★-отзыве — mismatch до 1-го реального) */
+  LISTINGS.forEach(l=>{ if(l.my && l.reviews && l.reviews.length) touched.add(l); });
   touched.forEach(l=>mpRecalcRating(l));
 })();
 
