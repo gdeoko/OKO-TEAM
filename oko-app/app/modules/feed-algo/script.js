@@ -15,6 +15,7 @@ const FA = {
   genId: 778000,    /* id генерируемых постов (ads занимает 9000+, пул — 777xxx) */
   usedCombos: {},   /* защита от повторов шаблон+автор в генераторе */
   io: null,
+  infoOpen: false,  /* раскрыто ли пояснение «как работает лента» */
 };
 
 /* ---------- персист сигналов ---------- */
@@ -181,10 +182,26 @@ function faDecorate(){
   const list = document.getElementById('feedList');
   if(!list || curFeedKind !== 'rec') return;
 
-  /* кнопка-чип «Обновить подборку» сверху */
-  if(!list.querySelector('.fa-toolbar')){
+  /* убрать длинную текстовую врезку ядра «Ранжирует алгоритм OKO…» — её роль берёт на себя
+     аккуратная шапка с раскрывающимся пояснением (никакого визуального шума над лентой) */
+  const baseNote = list.querySelector(':scope > div:not([class])');
+  if(baseNote) baseNote.remove();
+
+  /* единая чистая шапка: «Умная лента» + (i) пояснение + «Обновить подборку» */
+  if(!list.querySelector('.fa-bar')){
+    const open = FA.infoOpen ? ' fa-open' : '';
     list.insertAdjacentHTML('afterbegin',
-      `<div class="fa-toolbar"><button class="fa-refresh" onclick="faRefresh()"><svg class="i"><use href="#i-fa-refresh"/></svg><span>Обновить подборку</span></button><span class="fa-algo-note">умная лента</span></div>`);
+      `<div class="fa-head">`+
+        `<div class="fa-bar">`+
+          `<div class="fa-bar-l">`+
+            `<span class="fa-dot"></span>`+
+            `<span class="fa-title">Умная лента</span>`+
+            `<button class="fa-info${open}" type="button" aria-label="Как работает лента" onclick="faToggleInfo(this)">${I('fa-info')}</button>`+
+          `</div>`+
+          `<button class="fa-refresh" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`+
+        `</div>`+
+        `<div class="fa-explain${open}"><p>Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram. Реагируй на посты — лента точнее подстроится под тебя.</p></div>`+
+      `</div>`);
   }
 
   /* реклама: вынуть из органики и вставить каждые 4-5 позиций (первая — не топ-1) */
@@ -200,13 +217,18 @@ function faDecorate(){
     merged.forEach(el=>list.appendChild(el));
   }
 
-  /* чип «почему показано» + галочка verified — DOM-проходом, без дублей */
+  /* один аккуратный чип «почему показано» + галочка verified — DOM-проходом, без дублей */
   list.querySelectorAll('article.post').forEach(art=>{
     const p = postById(faIdOf(art)); if(!p) return;
+    /* у рекламы уже есть бейдж «Реклама» в имени, у топ-поста — «В тренде»:
+       второй чип «почему» был бы дублем-шумом → показываем только осмысленный */
+    const nameChip = art.querySelector('.head .name .chip');
     const head = art.querySelector('.head');
-    if(head && !art.querySelector('.fa-why')){
+    if(head && !art.querySelector('.fa-why') && !p.promoted){
       const w = faWhy(p);
-      head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
+      if(!(w.cls === 'hot' && nameChip)){
+        head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
+      }
     }
     const nameEl = art.querySelector('.head .name');
     /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
@@ -235,6 +257,16 @@ renderFeed = function(kind){
   _faPrevRenderFeed(kind);           /* «Подписки» не трогаем — декор только для rec */
   if(kind === 'rec') faDecorate();
 };
+
+/* раскрыть/свернуть тонкое пояснение «как работает лента» (тултип-строка) */
+function faToggleInfo(btn){
+  FA.infoOpen = !FA.infoOpen;
+  const head = btn.closest('.fa-head'); if(!head) return;
+  btn.classList.toggle('fa-open', FA.infoOpen);
+  const ex = head.querySelector('.fa-explain');
+  if(ex) ex.classList.toggle('fa-open', FA.infoOpen);
+  try{ localStorage.setItem('oko-feed-info', FA.infoOpen ? '1' : '0'); }catch(e){}
+}
 
 function faRefresh(){
   FA.seed = (Math.random() * 4294967295) >>> 0;   /* новый шум */
@@ -323,12 +355,33 @@ function faLoadMore(){
 (function faInit(){
   /* svg-иконка «обновить» в общие defs */
   const defs = document.querySelector('svg defs');
-  if(defs && !document.getElementById('i-fa-refresh')){
-    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-    s.setAttribute('id','i-fa-refresh'); s.setAttribute('viewBox','0 0 100 100');
-    s.innerHTML = '<path d="M84 50a34 34 0 1 1-10-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><polyline points="76 10 76 27 59 26" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>';
-    defs.appendChild(s);
+  const addSym = (id, inner)=>{
+    if(defs && !document.getElementById(id)){
+      const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      s.setAttribute('id', id); s.setAttribute('viewBox','0 0 100 100');
+      s.innerHTML = inner; defs.appendChild(s);
+    }
+  };
+  addSym('i-fa-refresh', '<path d="M84 50a34 34 0 1 1-10-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><polyline points="76 10 76 27 59 26" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
+  addSym('i-fa-info', '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><line x1="50" y1="45" x2="50" y2="70" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="31" r="4.6" fill="currentColor"/>');
+  /* i18n: чтобы EN-режим не оставлял русские строки шапки (авто-переводчик по ST_DICT) */
+  if(typeof ST_DICT !== 'undefined'){
+    const add = {
+      'Умная лента':'Smart feed',
+      'Обновить подборку':'Refresh feed',
+      'Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram. Реагируй на посты — лента точнее подстроится под тебя.':
+        'Ranked by the OKO algorithm: engagement and recency — like Instagram, unlike Telegram. React to posts and the feed tunes to you.',
+      'Похоже на то, что ты лайкал':'Similar to what you liked',
+      'Популярно сейчас':'Trending now',
+      'Подборка пересобрана':'Feed rebuilt',
+      'Ты посмотрел всю подборку — нажми «Обновить подборку» сверху':'You have seen the whole feed — tap “Refresh feed” at the top',
+      'Твой интерес: Нейросети':'Your interest: AI','Твой интерес: Контент':'Your interest: Content',
+      'Твой интерес: Бизнес':'Your interest: Business','Твой интерес: Маркетинг':'Your interest: Marketing',
+      'Твой интерес: Игры':'Your interest: Games','Твой интерес: Крипта':'Your interest: Crypto',
+    };
+    for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
   }
+  try{ FA.infoOpen = localStorage.getItem('oko-feed-info') === '1'; }catch(e){}
   faLoadSignals();
   if('IntersectionObserver' in window){
     FA.io = new IntersectionObserver(es=>{

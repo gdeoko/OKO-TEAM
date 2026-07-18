@@ -1,30 +1,107 @@
 /* feed-algo: алгоритмическая лента рекомендаций */
 
-/* --- панель над лентой: обновить подборку --- */
-.fa-toolbar{display:flex;align-items:center;gap:10px;padding:12px 18px 2px}
-.fa-refresh{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
-  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);
-  border-radius:99px;padding:8px 14px;transition:box-shadow .18s,transform .12s,background .18s}
-.fa-refresh svg.i{width:14px;height:14px;transition:transform .3s}
-.fa-refresh:hover{box-shadow:var(--glow)}
-.fa-refresh:hover svg.i{animation:fa-spin .9s linear infinite}
-.fa-refresh:active{transform:scale(.96)}
-:root[data-theme="light"] .fa-refresh{border-color:rgba(83,168,0,.35)}
-.fa-algo-note{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:600}
-@keyframes fa-spin{to{transform:rotate(360deg)}}
+/* ======================= ШАПКА «УМНАЯ ЛЕНТА» ======================= */
+.fa-head{padding:12px 18px 4px;animation:fa-fade .35s ease}
+.fa-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fa-bar-l{display:inline-flex;align-items:center;gap:8px;min-width:0}
+.fa-dot{width:7px;height:7px;border-radius:50%;background:var(--lime);flex:none;
+  box-shadow:0 0 0 0 rgba(154,255,0,.5);animation:fa-pulse 2.6s ease-in-out infinite}
+.fa-title{font-family:var(--font-display);letter-spacing:.06em;font-size:16px;line-height:1;
+  color:var(--text);white-space:nowrap;text-transform:uppercase}
+.fa-info{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+  border-radius:50%;color:var(--dim);border:1px solid var(--border);background:transparent;flex:none;
+  transition:color .18s,border-color .18s,background .18s,transform .18s}
+.fa-info svg.i{width:12px;height:12px}
+.fa-info:hover{color:var(--accent);border-color:rgba(154,255,0,.4)}
+.fa-info.fa-open{color:#000;background:var(--lime);border-color:var(--lime);transform:rotate(0)}
 
-/* --- чип «почему показано» --- */
-.fa-why{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:.03em;
+/* кнопка «обновить подборку» */
+.fa-refresh{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;flex:none;
+  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);
+  border-radius:99px;padding:7px 13px;transition:box-shadow .2s,transform .12s,background .2s,border-color .2s}
+.fa-refresh svg.i{width:14px;height:14px;transition:transform .3s}
+.fa-refresh:hover{box-shadow:var(--glow);border-color:rgba(154,255,0,.5)}
+.fa-refresh:hover svg.i{animation:fa-spin .9s linear infinite}
+.fa-refresh:active{transform:scale(.95)}
+:root[data-theme="light"] .fa-refresh{border-color:rgba(83,168,0,.35)}
+
+/* тонкая раскрывающаяся строка-пояснение */
+.fa-explain{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.22,.9,.36,1),margin .32s}
+.fa-explain>p{overflow:hidden;margin:0;font-size:11.5px;line-height:1.5;color:var(--dim)}
+.fa-explain.fa-open{grid-template-rows:1fr;margin-top:8px}
+.fa-explain.fa-open>p{border-left:2px solid var(--lime);padding:2px 0 2px 10px}
+
+@keyframes fa-spin{to{transform:rotate(360deg)}}
+@keyframes fa-pulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.5)}50%{box-shadow:0 0 0 5px rgba(154,255,0,0)}}
+@keyframes fa-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ======================= ЧИП «ПОЧЕМУ ПОКАЗАНО» ======================= */
+.fa-why{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:.02em;
   color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:99px;
-  padding:3.5px 10px;margin:-2px 0 9px;max-width:100%;animation:fade .3s ease}
-.fa-why svg.i{width:12px;height:12px;flex:none}
+  padding:4px 10px 4px 8px;margin:-2px 0 10px;max-width:100%;animation:fa-fade .3s ease;vertical-align:middle}
+.fa-why svg.i{width:12px;height:12px;flex:none;opacity:.9}
 .fa-why span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fa-why.int{color:var(--accent);background:var(--lime-dim);border-color:rgba(154,255,0,.25)}
 :root[data-theme="light"] .fa-why.int{border-color:rgba(83,168,0,.3)}
 .fa-why.like{color:var(--accent)}
-.fa-why.like svg.i{fill:currentColor}
+.fa-why.like svg.i{fill:currentColor;opacity:1}
+.fa-why.hot svg.i{color:#ff8a3d}
 
-/* --- skeleton подгрузки --- */
+/* ======================= ПРЕМИУМ-ПОЛИШ КАРТОЧКИ ПОСТА ======================= */
+#feedList .post{position:relative;transition:background .2s}
+#feedList .post:hover{background:color-mix(in srgb,var(--surface) 55%,transparent)}
+@supports not (background:color-mix(in srgb,red,blue)){#feedList .post:hover{background:var(--surface)}}
+#feedList .post .head{align-items:center}
+#feedList .post .head .ava{box-shadow:inset 0 0 0 1px rgba(154,255,0,.08)}
+#feedList .post .head .name{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
+#feedList .post .head .sub{margin-top:2px}
+#feedList .post .body{color:var(--text)}
+
+/* бейджи «В тренде» / «Реклама» — ровные, вертикально по центру имени */
+#feedList .post .head .name .chip{font-size:9px;line-height:1;padding:3.5px 8px;letter-spacing:.05em;
+  vertical-align:middle;border:1px solid rgba(154,255,0,.28)}
+:root[data-theme="light"] #feedList .post .head .name .chip{border-color:rgba(83,168,0,.3)}
+
+/* медиа-плейсхолдер: красивый «видео-кадр» с glow-кнопкой и бейджем длительности */
+#feedList .post .media{position:relative;overflow:hidden;gap:0;letter-spacing:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),inset 0 -40px 60px -30px rgba(0,0,0,.5)}
+#feedList .post .media::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(154,255,0,.10),transparent 60%);pointer-events:none}
+#feedList .post .media::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,transparent 0,transparent 22px,rgba(154,255,0,.03) 23px,transparent 24px);
+  pointer-events:none;opacity:.6}
+#feedList .post .media svg.i{position:relative;z-index:1;width:26px;height:26px;color:#000;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;border-radius:50%;background:var(--lime);
+  box-shadow:0 6px 22px rgba(154,255,0,.4),0 0 0 8px rgba(154,255,0,.12);
+  transition:transform .22s,box-shadow .22s}
+#feedList .post .media:hover svg.i{transform:scale(1.08);box-shadow:0 8px 28px rgba(154,255,0,.55),0 0 0 12px rgba(154,255,0,.14)}
+#feedList .post .media>span{position:absolute;z-index:1;right:10px;bottom:10px;
+  font-family:var(--font-body);font-size:11px;font-weight:600;letter-spacing:.02em;
+  color:#fff;background:rgba(0,0,0,.62);border-radius:6px;padding:3px 8px;line-height:1;backdrop-filter:blur(4px)}
+:root[data-theme="light"] #feedList .post .media{box-shadow:inset 0 0 0 1px rgba(0,0,0,.05),inset 0 -40px 60px -30px rgba(0,0,0,.12)}
+:root[data-theme="light"] #feedList .post .media>span{color:#fff;background:rgba(0,0,0,.55)}
+
+/* реакции — живые: цвет по бренду, лёгкий подъём, «дыхание» лайка */
+#feedList .post .acts{align-items:center}
+#feedList .post .acts button{border-radius:8px;padding:3px 4px;transition:color .16s,transform .12s,background .16s}
+#feedList .post .acts button:hover{color:var(--accent);transform:translateY(-1px)}
+#feedList .post .acts button:hover svg.i{transform:scale(1.12)}
+#feedList .post .acts button svg.i{transition:transform .16s}
+#feedList .post .acts button:active{transform:scale(.92)}
+#feedList .post .acts button.liked svg.i{animation:fa-heart .4s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes fa-heart{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* ======================= ТАБЫ «ПОДПИСКИ / РЕКОМЕНДАЦИИ» ======================= */
+#screen-feed .feed-tabs button{position:relative;transition:color .2s,background .25s cubic-bezier(.22,.9,.36,1),
+  border-color .2s,box-shadow .2s,transform .12s}
+#screen-feed .feed-tabs button:hover{color:var(--text);border-color:rgba(154,255,0,.35)}
+#screen-feed .feed-tabs button.on{box-shadow:var(--glow)}
+#screen-feed .feed-tabs button.on:hover{color:#000}
+#screen-feed .feed-tabs button:active{transform:scale(.96)}
+:root[data-theme="light"] #screen-feed .feed-tabs button:hover{border-color:rgba(83,168,0,.4)}
+
+/* ======================= SKELETON ПОДГРУЗКИ ======================= */
 .fa-skel{padding:16px 18px;border-bottom:1px solid var(--border)}
 .fa-skel .fa-b{background:linear-gradient(90deg,var(--raised) 25%,var(--border) 50%,var(--raised) 75%);
   background-size:200% 100%;animation:fa-shimmer 1.1s linear infinite;border-radius:8px}
@@ -36,7 +113,7 @@
 .fa-skel-body.w1{width:96%}.fa-skel-body.w2{width:88%}.fa-skel-body.w3{width:58%}
 @keyframes fa-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 
-/* --- плавная анимация пересборки подборки --- */
+/* ======================= ПЕРЕСБОРКА ПОДБОРКИ ======================= */
 #feedList.fa-anim article.post{animation:fa-pop .45s cubic-bezier(.22,.9,.36,1) both}
 #feedList.fa-anim article.post:nth-of-type(1){animation-delay:.02s}
 #feedList.fa-anim article.post:nth-of-type(2){animation-delay:.07s}
@@ -48,6 +125,11 @@
 #feedList.fa-anim article.post:nth-of-type(8){animation-delay:.37s}
 @keyframes fa-pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
 
-/* --- сторожок бесконечной прокрутки --- */
+/* ======================= СТОРОЖОК БЕСКОНЕЧНОЙ ЛЕНТЫ ======================= */
 .fa-sentinel{height:2px}
 .fa-end{padding:18px;text-align:center;font-size:11.5px;color:var(--dim)}
+
+@media(prefers-reduced-motion:reduce){
+  .fa-dot,.fa-refresh:hover svg.i,#feedList .post .acts button.liked svg.i{animation:none!important}
+  .fa-explain{transition:none}
+}
