@@ -1,1 +1,15 @@
-{"id":3,"actions":[["useframe","widget/account"],["eval","(()=>{const out=[];function walk(r){r.querySelectorAll('input,select,textarea').forEach(e=>{out.push(e.tagName+'|'+(e.type||'')+'|ph='+(e.placeholder||'')+'|nm='+(e.name||'')+'|al='+(e.getAttribute('aria-label')||'')+'|id='+(e.id||''));});r.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)walk(e.shadowRoot);});}walk(document);return out;})()"]],"settle":1500}
+{"id":4,"actions":[
+["useframe","widget/account"],
+["fill","input[name=firstName]","Daniel"],
+["fill","input[name=lastName]","Okoteam"],
+["selopt","select[name=countrySelect]","Russia"],
+["wait","1500"],
+["selopt","select >> nth=1","March"],
+["selopt","select >> nth=2","12"],
+["selopt","select >> nth=3","1992"],
+["fill","input[name=appleId]","okoteam.top@gmail.com"],
+["fill","input[name=password]","OkoTeam!2026grab"],
+["fill","input[name=confirmPassword]","OkoTeam!2026grab"],
+["selopt","select[name=phoneCode]","Russia"],
+["fill","input[name=phoneNumber]","9911855074"]
+],"settle":3000}
