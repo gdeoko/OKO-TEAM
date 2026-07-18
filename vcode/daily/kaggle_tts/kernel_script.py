@@ -22,13 +22,13 @@ try: a.load(omograph_model_size='turbo3', use_dictionary=True, tiny_mode=False)
 except Exception: a.load(omograph_model_size='turbo', use_dictionary=True)
 REFT=a.process_all("Поэтому я стараюсь говорить спокойно, чётко, выговаривая каждое слово. В нашей жизни технологии меняются невероятно быстро.")
 inp=glob.glob("/kaggle/input/**/lines.json", recursive=True)
-lines=json.load(open(inp[0])) if inp else ["Привет! Меня зовут Владимир.","Это голос для роликов нашей студии — чистый русский, студийное качество.","Один короткий ролик каждый день, без единой ошибки в ударениях."]
+lines=json.load(open(inp[0])) if inp else ["Привет! Меня зовут Владимир!","Смотри, что мы теперь умеем — новый ролик каждый день, без единой записи в микрофон!","Чистый русский, живой голос, студийное качество. Погнали!"]
 from f5_tts.api import F5TTS
 f5=F5TTS(model="F5TTS_v1_Base", ckpt_file=CK, vocab_file=VB, device="cuda")
 import soundfile as sf, numpy as np
 outs=[]; sr=24000
 for i,ln in enumerate(lines):
-    wav,sr,_=f5.infer(ref_file=REF, ref_text=REFT, gen_text=a.process_all(ln), nfe_step=32, remove_silence=True)
+    wav,sr,_=f5.infer(ref_file=REF, ref_text=REFT, gen_text=a.process_all(ln), nfe_step=48, cfg_strength=2.5, sway_sampling_coef=-1.0, remove_silence=True)
     outs.append(np.asarray(wav)); sf.write(f"/kaggle/working/seg_{i:02d}.wav", np.asarray(wav), sr)
 sf.write("/kaggle/working/out.wav", np.concatenate(outs), sr)
 print("SEGMENTS", len(lines), "DONE", flush=True)
