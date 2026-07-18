@@ -112,14 +112,25 @@ function gmShowGame(g){
    Итог раунда выбирается взвешенно (RTP ≈ 90%), колесо доезжает
    до соответствующего сектора. */
 const GM_SECTORS = [10, 0, 1.2, 0, 2, 0, 1.5, 1.2, 0, 3, 1.2, 1.5];
-const GM_COLORS = { /* [фон сектора, цвет подписи] */
-  0:  ['#141414', '#6e6e6e'],
+/* палитра колеса зависит от темы: [фон сектора, цвет подписи] */
+const GM_COLORS_DARK = {
+  0:  ['#141a0e', '#6f7d5e'],
   1.2:['#1e3305', '#c9ff70'],
   1.5:['#2e4d06', '#dbff9e'],
   2:  ['#487a08', '#f0ffd8'],
   3:  ['#6fb50d', '#0c1400'],
-  10: ['#9AFF00', '#000000']
+  10: ['#9AFF00', '#0a1400']
 };
+const GM_COLORS_LIGHT = {
+  0:  ['#eef2e6', '#98a58c'],  /* светлый нейтральный сектор */
+  1.2:['#dcedb6', '#4e6d16'],
+  1.5:['#c3e488', '#3a5c0f'],
+  2:  ['#a6d94f', '#1f3f08'],
+  3:  ['#7ec81c', '#0d2200'],
+  10: ['#9AFF00', '#0a1400']
+};
+function gmIsLight(){ return document.documentElement.dataset.theme === 'light'; }
+function gmColors(){ return gmIsLight() ? GM_COLORS_LIGHT : GM_COLORS_DARK; }
 const GM_WEIGHTS = [[0,530],[1.2,230],[1.5,120],[2,60],[3,40],[10,20]]; /* из 1000, RTP ≈ 89.6% */
 
 let gmWheelAngle = 0;
@@ -129,10 +140,11 @@ let gmSpinToken = 0;
 function gmBuildWheel(){
   const w = document.getElementById('gmWheel');
   if(!w) return;
-  const stops = GM_SECTORS.map((m,i)=>`${GM_COLORS[m][0]} ${i*30}deg ${(i+1)*30}deg`).join(',');
+  const C = gmColors();
+  const stops = GM_SECTORS.map((m,i)=>`${C[m][0]} ${i*30}deg ${(i+1)*30}deg`).join(',');
   w.style.background = `conic-gradient(from -15deg, ${stops})`;
   w.innerHTML = GM_SECTORS.map((m,i)=>
-    `<span class="gm-sec" style="color:${GM_COLORS[m][1]};transform:translate(-50%,-50%) rotate(${i*30}deg) translateY(-96px)">${gmFmtMult(m)}</span>`
+    `<span class="gm-sec" style="color:${C[m][1]};transform:translate(-50%,-50%) rotate(${i*30}deg) translateY(-96px)">${gmFmtMult(m)}</span>`
   ).join('');
 }
 
@@ -242,7 +254,28 @@ function gmRoadMultsRender(){
 }
 
 function gmRoadTiles(){ return document.querySelectorAll('#gmTrack .gm-tile'); }
-function gmRoadClearTiles(){ gmRoadTiles().forEach(t=>t.classList.remove('ok','bad')); }
+function gmRoadClearTiles(){ gmRoadTiles().forEach(t=>t.classList.remove('ok','bad','next')); }
+/* подсветить плиту, на которую сейчас шагнёт глаз */
+function gmRoadMarkNext(){
+  const tiles = gmRoadTiles();
+  tiles.forEach(t=>t.classList.remove('next'));
+  if(gmRoad.active && !gmRoad.busy && gmRoad.step < tiles.length) tiles[gmRoad.step].classList.add('next');
+}
+/* искры из плиты при удачном шаге */
+function gmSpark(tile){
+  if(!tile) return;
+  const box = document.createElement('div');
+  box.className = 'gm-spark';
+  let h = '';
+  for(let i=0;i<8;i++){
+    const a = (i/8)*Math.PI*2 + Math.random()*0.5;
+    const d = 26 + Math.random()*20;
+    h += `<i style="--dx:${(Math.cos(a)*d).toFixed(0)}px;--dy:${(Math.sin(a)*d).toFixed(0)}px;animation-delay:${(Math.random()*0.08).toFixed(2)}s"></i>`;
+  }
+  box.innerHTML = h;
+  tile.appendChild(box);
+  setTimeout(()=>box.remove(), 800);
+}
 
 /* позиция глаза: i = индекс плиты, -1 = старт */
 function gmMoveEye(i, noHop){
@@ -301,6 +334,7 @@ function gmRoadStart(){
   gmSyncEye(true);
   gmRoadMultsRender();
   gmRoadCtrl();
+  gmRoadMarkNext();
   gmUpdateBalance();
 }
 
@@ -310,11 +344,13 @@ function gmRoadStep(){
   gmLockBets('gmRoadCtrl', true); /* кнопки Шаг/Забрать не жмутся во время прыжка */
   const i = gmRoad.step;
   const tile = gmRoadTiles()[i];
+  tile.classList.remove('next');
   gmMoveEye(i); /* прыжок на плиту */
   setTimeout(()=>{
     const ok = Math.random() * 100 < GM_ROAD_ODDS[i];
     if(ok){
       tile.classList.add('ok');
+      gmSpark(tile);
       gmRoad.step++;
       gmRoad.busy = false;
       gmRoadMultsRender();
@@ -322,6 +358,7 @@ function gmRoadStep(){
         gmRoadCash(); /* дошёл до конца — авто-выплата ×8 */
       }else{
         gmRoadCtrl();
+        gmRoadMarkNext();
       }
     }else{
       tile.classList.add('bad');
@@ -562,7 +599,9 @@ function gmLbRender(){
    (маркетинг), поэтому okoEarn не трогаем. */
 const GM_BONUS_VALS = [50, 75, 100, 150, 200, 250, 300, 500];
 const GM_BONUS_W    = [24, 20, 17, 12, 10,  8,   6,   3];
-const GM_BONUS_COLS = ['#1e3305','#2e4d06','#1e3305','#487a08','#1e3305','#2e4d06','#243d06','#9AFF00'];
+const GM_BONUS_COLS_DARK  = ['#1e3305','#2e4d06','#1e3305','#487a08','#1e3305','#2e4d06','#243d06','#9AFF00'];
+const GM_BONUS_COLS_LIGHT = ['#dcedb6','#c3e488','#dcedb6','#a6d94f','#dcedb6','#c3e488','#cfe79a','#9AFF00'];
+function gmBonusCols(){ return gmIsLight() ? GM_BONUS_COLS_LIGHT : GM_BONUS_COLS_DARK; }
 let gmBonus = {spinning:false, token:0, angle:0};
 
 function gmBonusStamp(){ try{ return Number(localStorage.getItem('oko-games-bonus')) || 0; }catch(e){ return 0; } }
@@ -609,13 +648,15 @@ function gmBonusRender(){
       </div>`;
     return;
   }
-  const stops = GM_BONUS_VALS.map((v,i)=>`${GM_BONUS_COLS[i]} ${i*45}deg ${(i+1)*45}deg`).join(',');
+  const COLS = gmBonusCols();
+  const secInk = gmIsLight() ? '#2f4d0a' : '#d3ff8f';
+  const stops = GM_BONUS_VALS.map((v,i)=>`${COLS[i]} ${i*45}deg ${(i+1)*45}deg`).join(',');
   el.innerHTML = `
     <div class="gm-bonus-stage">
       <div class="gm-pointer"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M15 26L2 2h26z" fill="#9AFF00" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/></svg></div>
       <div class="gm-bwheel-wrap">
         <div class="gm-bwheel" id="gmBWheel" style="background:conic-gradient(from -22.5deg, ${stops})">${
-          GM_BONUS_VALS.map((v,i)=>`<span class="gm-bsec" style="color:${GM_BONUS_COLS[i]==='#9AFF00'?'#000':'#d3ff8f'};transform:translate(-50%,-50%) rotate(${i*45}deg) translateY(-80px)">${v}</span>`).join('')
+          GM_BONUS_VALS.map((v,i)=>`<span class="gm-bsec" style="color:${COLS[i]==='#9AFF00'?'#0a1400':secInk};transform:translate(-50%,-50%) rotate(${i*45}deg) translateY(-80px)">${v}</span>`).join('')
         }</div>
         <div class="gm-bwheel-hub">${I('gm-gift')}</div>
       </div>
@@ -725,6 +766,16 @@ walletCharge = function(sum, why){
   gmUpdateBalance();
   return ok;
 };
+/* пересобрать колёса под новую тему (палитра секторов задаётся из JS) */
+if(typeof applyTheme === 'function'){
+  const _prevApplyThemeGm = applyTheme;
+  applyTheme = function(t){
+    _prevApplyThemeGm(t);
+    gmBuildWheel();
+    if(document.getElementById('gmBWheel') && !gmBonus.spinning) gmBonusRender();
+  };
+}
+
 const _prevShowTabGm = showTab;
 showTab = function(t){
   _prevShowTabGm(t);

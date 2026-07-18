@@ -194,7 +194,12 @@
 :root[data-theme="light"] .cp-cl{color:rgba(20,30,5,.6)}
 .call-btn.off .cp-cl{color:#fff}
 :root[data-theme="light"] .call-btn.off .cp-cl{color:#0d110a}
-.cp-cl-end{color:rgba(255,90,90,.9)}
+/* красная кнопка сброса: не крутим саму кнопку (иначе подпись «Сброс» встаёт боком),
+   разворачиваем только иконку трубки — подпись остаётся ровной снизу */
+.call-btn.end{transform:none}
+.call-btn.end:active{transform:scale(.9)}
+.call-btn.end svg.i{transform:rotate(135deg)}
+.cp-cl-end{color:rgba(255,90,90,.95);font-weight:700}
 .call-self{overflow:hidden;box-shadow:0 8px 26px rgba(0,0,0,.34);border:1.5px solid rgba(154,255,0,.4)}
 .cp-self-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;border-radius:15px}
 /* плашка свёрнутого звонка */

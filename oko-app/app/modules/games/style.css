@@ -1,4 +1,68 @@
-/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» + «Кости» (префикс gm-) ===== */
+/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» + «Кости» (префикс gm-) =====
+   Тема-переменные: тёмная = премиум-казино (как было, но краше), светлая =
+   элегантный светлый премиум-стол (лайм-акценты, читаемо). Ни одного «мёртвого»
+   хардкод-цвета в столах — всё через var(--gm-*). */
+
+/* ---------- палитра игрового стола (тёмная = дефолт) ---------- */
+#screen-games, #sheet-gmBonus{
+  --gm-felt:radial-gradient(130% 120% at 50% -12%,rgba(154,255,0,.16),transparent 56%),linear-gradient(162deg,#121b0a,#070a04 72%);
+  --gm-edge:#2f4016;
+  --gm-edge-shadow:0 16px 40px rgba(0,0,0,.5),inset 0 0 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(154,255,0,.08);
+  --gm-ink:#eaffcc;
+  --gm-ink-dim:#8fa07a;
+  --gm-ink-soft:#b9c9a2;
+  --gm-tile:linear-gradient(162deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  --gm-tile-border:#2c3b14;
+  --gm-tile-ink:#8aa06a;
+  --gm-tile-shadow:#0a1004;
+  --gm-field:rgba(255,255,255,.05);
+  --gm-field-ink:#fff;
+  --gm-chip-ink:#b9c9a2;
+  --gm-lime-ink:#9AFF00;              /* читаемый лайм для текста/иконок на столе */
+  --gm-lime-soft:rgba(154,255,0,.14);
+  --gm-lime-strong:rgba(154,255,0,.4);
+  --gm-wheel-ring:#2c3b14;
+  --gm-wheel-shadow:0 0 0 6px #0c1106,0 0 34px rgba(154,255,0,.22),inset 0 0 26px rgba(0,0,0,.6);
+  --gm-spoke:rgba(0,0,0,.5);
+  --gm-hub-bg:#0a0d05;
+  --gm-hub-ink:#9AFF00;
+  --gm-die-face:linear-gradient(145deg,#1a2410,#0b1106);
+  --gm-die-border:#3c5216;
+  --gm-pip:#9AFF00;
+  --gm-lane:rgba(154,255,0,.4);
+  --gm-road-ground:linear-gradient(180deg,rgba(154,255,0,.05),rgba(0,0,0,.25));
+  --gm-eye-aura:rgba(154,255,0,.35);
+}
+:root[data-theme="light"] #screen-games,
+:root[data-theme="light"] #sheet-gmBonus{
+  --gm-felt:radial-gradient(130% 120% at 50% -14%,rgba(110,200,0,.18),transparent 60%),linear-gradient(165deg,#ffffff,#eef5e1 80%);
+  --gm-edge:#d1e2b4;
+  --gm-edge-shadow:0 14px 34px rgba(80,120,20,.16),inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(150,190,100,.14);
+  --gm-ink:#1c2a10;
+  --gm-ink-dim:#6e8256;
+  --gm-ink-soft:#527038;
+  --gm-tile:linear-gradient(162deg,#ffffff,#f2f8e8);
+  --gm-tile-border:#dae6c6;
+  --gm-tile-ink:#5f7a3c;
+  --gm-tile-shadow:#d6e3c0;
+  --gm-field:#ffffff;
+  --gm-field-ink:#1c2a10;
+  --gm-chip-ink:#5f7340;
+  --gm-lime-ink:#3f8a00;
+  --gm-lime-soft:rgba(110,200,0,.16);
+  --gm-lime-strong:rgba(90,170,0,.5);
+  --gm-wheel-ring:#cfe0b2;
+  --gm-wheel-shadow:0 0 0 6px #ffffff,0 12px 30px rgba(80,120,20,.22),0 0 22px rgba(110,200,0,.24),inset 0 0 18px rgba(120,170,60,.16);
+  --gm-spoke:rgba(255,255,255,.65);
+  --gm-hub-bg:#ffffff;
+  --gm-hub-ink:#3f8a00;
+  --gm-die-face:linear-gradient(150deg,#ffffff,#eef4e3);
+  --gm-die-border:#cfe0b2;
+  --gm-pip:#5aa300;
+  --gm-lane:rgba(90,170,0,.42);
+  --gm-road-ground:linear-gradient(180deg,rgba(110,200,0,.08),rgba(120,160,70,.06));
+  --gm-eye-aura:rgba(110,200,0,.4);
+}
 
 /* шапка экрана */
 .gm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -11,90 +75,119 @@
 .gm-limit-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);margin-bottom:5px}
 .gm-limit-row b{color:var(--text);font-weight:700;white-space:nowrap}
 .gm-limit-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);overflow:hidden}
-.gm-limit-bar i{display:block;height:100%;background:var(--lime);border-radius:3px;transition:width .6s cubic-bezier(.3,1,.4,1)}
-.gm-limit.full .gm-limit-bar i{background:var(--danger)}
+.gm-limit-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),#6fb50d);border-radius:3px;transition:width .6s cubic-bezier(.3,1,.4,1);box-shadow:0 0 10px rgba(154,255,0,.5)}
+.gm-limit.full .gm-limit-bar i{background:var(--danger);box-shadow:0 0 10px rgba(255,77,77,.5)}
 .gm-limit.full .gm-limit-row b{color:var(--danger)}
 
 /* переключатель игр */
 .gm-tabs{display:flex;gap:8px;margin-bottom:14px}
-.gm-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:700;color:var(--dim);transition:all .18s}
-.gm-tabs button svg.i{width:16px;height:16px}
+.gm-tabs button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;border:1px solid var(--border);border-radius:var(--r-md);font-size:13px;font-weight:700;color:var(--dim);background:var(--surface);transition:transform .18s,border-color .18s,color .18s,background .18s,box-shadow .18s}
+.gm-tabs button svg.i{width:16px;height:16px;transition:transform .3s cubic-bezier(.3,1.4,.4,1)}
 .gm-tabs button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent);box-shadow:var(--glow)}
-.gm-tabs button:active{transform:scale(.97)}
+.gm-tabs button.on svg.i{transform:scale(1.12) rotate(-6deg)}
+.gm-tabs button:active{transform:scale(.96)}
 
-/* игровой стол: тёмный «казино»-фон в обеих темах (осознанно) */
-.gm-wheel-card,.gm-road-card{position:relative;overflow:hidden;background:radial-gradient(130% 120% at 50% -10%,rgba(154,255,0,.13),transparent 55%),linear-gradient(160deg,#0e1408,#060804 70%);border:1px solid #2c3b14;border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;animation:fade .3s ease}
-:root[data-theme="light"] .gm-wheel-card,
-:root[data-theme="light"] .gm-road-card{border-color:#b9d494;box-shadow:0 10px 30px rgba(20,40,0,.18)}
+/* игровой стол: тёмный премиум-казино / светлый премиум-стол */
+.gm-wheel-card,.gm-road-card,.gm-dice-card{position:relative;overflow:hidden;background:var(--gm-felt);border:1px solid var(--gm-edge);border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;box-shadow:var(--gm-edge-shadow);animation:gmCardIn .45s cubic-bezier(.2,.8,.25,1)}
+@keyframes gmCardIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+/* мягкие «блики» по краям стола */
+.gm-wheel-card::before,.gm-dice-card::before{content:'';position:absolute;top:-40%;left:-20%;width:80%;height:120%;background:radial-gradient(closest-side,rgba(154,255,0,.06),transparent 70%);pointer-events:none;animation:gmDrift 9s ease-in-out infinite}
+@keyframes gmDrift{0%,100%{transform:translate(0,0)}50%{transform:translate(38%,10%)}}
 
 /* --- РУЛЕТКА --- */
 .gm-pointer{position:relative;z-index:4;height:26px;margin-bottom:-14px;display:flex;justify-content:center;filter:drop-shadow(0 0 8px rgba(154,255,0,.8));animation:gmPtr 2.6s ease-in-out infinite}
 @keyframes gmPtr{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
 .gm-wheel-wrap{position:relative;width:248px;height:248px;margin:0 auto}
-.gm-wheel{position:absolute;inset:0;border-radius:50%;border:3px solid #2c3b14;box-shadow:0 0 0 6px #0c1106,0 0 34px rgba(154,255,0,.22),inset 0 0 26px rgba(0,0,0,.6);will-change:transform}
-.gm-wheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -15.4deg,rgba(0,0,0,.55) 0 .9deg,transparent .9deg 30deg);pointer-events:none}
-.gm-sec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:17px;letter-spacing:.05em;line-height:1;pointer-events:none}
-.gm-wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
-.gm-wheel-hub svg.i{width:36px;height:36px;color:#9AFF00}
-@keyframes gmHub{0%,100%{box-shadow:0 0 10px rgba(154,255,0,.3),inset 0 0 10px rgba(154,255,0,.12)}50%{box-shadow:0 0 28px rgba(154,255,0,.6),inset 0 0 16px rgba(154,255,0,.2)}}
+.gm-wheel{position:absolute;inset:0;border-radius:50%;border:3px solid var(--gm-wheel-ring);box-shadow:var(--gm-wheel-shadow);will-change:transform}
+.gm-wheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -15.4deg,var(--gm-spoke) 0 .9deg,transparent .9deg 30deg);pointer-events:none}
+.gm-sec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:17px;letter-spacing:.05em;line-height:1;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.gm-wheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:var(--gm-hub-bg);border:2px solid var(--gm-hub-ink);display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
+.gm-wheel-hub svg.i{width:36px;height:36px;color:var(--gm-hub-ink)}
+@keyframes gmHub{0%,100%{box-shadow:0 0 10px rgba(154,255,0,.3),inset 0 0 10px rgba(154,255,0,.12)}50%{box-shadow:0 0 30px rgba(154,255,0,.6),inset 0 0 16px rgba(154,255,0,.2)}}
 .gm-shake{animation:gmShake .5s ease}
 @keyframes gmShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 
 /* табло результата */
 .gm-result{min-height:46px;margin:16px 0 2px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center}
 .gm-result b{font-family:var(--font-display);font-size:27px;letter-spacing:.04em;line-height:1}
-.gm-result span,.gm-hint{font-size:12px;color:#8fa07a}
-.gm-win{color:#9AFF00;text-shadow:0 0 16px rgba(154,255,0,.6);animation:gmPop .45s cubic-bezier(.3,1.6,.4,1)}
+.gm-result span,.gm-hint{font-size:12px;color:var(--gm-ink-dim)}
+.gm-win{color:var(--gm-lime-ink);text-shadow:0 0 16px var(--gm-lime-strong);animation:gmPop .5s cubic-bezier(.3,1.6,.4,1)}
 .gm-lose{color:var(--danger);animation:gmPop .3s ease}
 @keyframes gmPop{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
-.gm-run{font-size:12.5px;color:#8fa07a;animation:gmBlink 1s ease infinite}
+.gm-run{font-size:12.5px;color:var(--gm-ink-dim);animation:gmBlink 1s ease infinite}
 @keyframes gmBlink{0%,100%{opacity:.4}50%{opacity:1}}
 
-/* ставка: инпут + чипы (на тёмном столе) */
+/* ставка: инпут + чипы */
 .gm-bet{display:flex;gap:8px;margin:12px 0 10px}
-.gm-bet input{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid #2c3b14;border-radius:var(--r-md);padding:12px 14px;color:#fff;font-size:15px;font-weight:700;outline:none;text-align:center;transition:border-color .18s}
-.gm-bet input:focus{border-color:#9AFF00;box-shadow:0 0 12px rgba(154,255,0,.25)}
+.gm-bet input{flex:1;min-width:0;background:var(--gm-field);border:1px solid var(--gm-tile-border);border-radius:var(--r-md);padding:12px 14px;color:var(--gm-field-ink);font-size:15px;font-weight:700;outline:none;text-align:center;transition:border-color .18s,box-shadow .18s}
+.gm-bet input:focus{border-color:var(--gm-lime-ink);box-shadow:0 0 0 3px var(--gm-lime-soft)}
 .gm-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
-.gm-chips button{padding:9px 4px;border:1px solid #2c3b14;border-radius:99px;font-size:12px;font-weight:700;color:#b9c9a2;transition:all .15s}
-.gm-chips button.on{border-color:#9AFF00;background:rgba(154,255,0,.14);color:#9AFF00;box-shadow:0 0 10px rgba(154,255,0,.25)}
-.gm-chips button:active{transform:scale(.93)}
+.gm-chips button{padding:9px 4px;border:1px solid var(--gm-tile-border);border-radius:99px;font-size:12px;font-weight:700;color:var(--gm-chip-ink);background:var(--gm-tile);transition:transform .15s,border-color .15s,color .15s,background .15s,box-shadow .15s}
+.gm-chips button.on{border-color:var(--gm-lime-ink);background:var(--gm-lime-soft);color:var(--gm-lime-ink);box-shadow:0 0 10px var(--gm-lime-soft)}
+.gm-chips button:active{transform:scale(.92)}
 
 /* главные кнопки игр */
-.gm-spin{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#9AFF00;color:#000;font-weight:800;font-size:14.5px;letter-spacing:.03em;padding:14px 10px;border-radius:var(--r-md);transition:transform .12s,opacity .2s;animation:gmBtnPulse 2.4s ease-in-out infinite}
+.gm-spin{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#b6ff3a,#9AFF00 55%,#7fd400);color:#0a0a0a;font-weight:800;font-size:14.5px;letter-spacing:.03em;padding:14px 10px;border-radius:var(--r-md);transition:transform .12s,opacity .2s;animation:gmBtnPulse 2.4s ease-in-out infinite}
 .gm-spin svg.i{width:17px;height:17px}
 .gm-spin:active{transform:scale(.97)}
-.gm-spin.off{opacity:.4;pointer-events:none;animation:none;box-shadow:none}
-.gm-spin.ghost{background:transparent;color:#9AFF00;border:1px solid #9AFF00;animation:none}
-@keyframes gmBtnPulse{0%,100%{box-shadow:0 0 8px rgba(154,255,0,.25)}50%{box-shadow:0 0 26px rgba(154,255,0,.55)}}
+.gm-spin.off{opacity:.4;pointer-events:none;animation:none;box-shadow:none;filter:grayscale(.25)}
+.gm-spin.ghost{background:transparent;color:var(--gm-lime-ink);border:1px solid var(--gm-lime-ink);animation:none}
+@keyframes gmBtnPulse{0%,100%{box-shadow:0 0 8px rgba(154,255,0,.28)}50%{box-shadow:0 0 26px rgba(154,255,0,.58)}}
 
 /* конфетти */
 .gm-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:6}
 .gm-confetti i{position:absolute;top:-14px;width:7px;height:11px;border-radius:2px;animation:gmFall 1.3s cubic-bezier(.2,.6,.6,1) forwards}
 @keyframes gmFall{0%{transform:translateY(-12px) rotate(0);opacity:1}78%{opacity:1}100%{transform:translateY(360px) rotate(560deg);opacity:0}}
 
-/* --- ДОРОГА --- */
-.gm-road-mults{display:flex;gap:6px;margin-bottom:12px}
-.gm-rm{flex:1;text-align:center;padding:7px 2px;border-radius:99px;border:1px solid #2c3b14;font-size:11.5px;font-weight:800;color:#7d8f68;transition:all .25s}
-.gm-rm.done{border-color:#9AFF00;background:rgba(154,255,0,.16);color:#9AFF00}
-.gm-rm.cur{border-color:#9AFF00;background:#9AFF00;color:#0a0a0a;box-shadow:0 0 14px rgba(154,255,0,.5);animation:gmBtnPulse 1.6s ease-in-out infinite}
-.gm-road-track{position:relative;display:flex;gap:7px;padding-top:48px;margin-bottom:14px}
-.gm-cell{height:58px;border-radius:var(--r-md);border:1px solid #2c3b14;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;letter-spacing:.04em;color:#7d8f68;transition:all .3s}
-.gm-cell svg.i{width:17px;height:17px}
-.gm-cell.gm-start{flex:0 0 44px;color:#9AFF00;background:rgba(154,255,0,.08);border-color:rgba(154,255,0,.3)}
-.gm-cell.gm-tile{flex:1;min-width:0}
-.gm-cell.ok{border-color:#9AFF00;background:rgba(154,255,0,.2);color:#9AFF00;box-shadow:0 0 16px rgba(154,255,0,.4)}
-.gm-cell.bad{border-color:var(--danger);background:rgba(255,77,77,.18);color:var(--danger);box-shadow:0 0 16px rgba(255,77,77,.45);animation:gmShake .45s ease}
-.gm-eye{position:absolute;top:12px;left:22px;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(154,255,0,.45);transition:left .45s cubic-bezier(.3,1.2,.4,1);z-index:2}
-.gm-eye svg.i{width:22px;height:22px;color:#9AFF00}
-.gm-eye.gm-hop{animation:gmHop .5s cubic-bezier(.3,1.4,.4,1)}
-@keyframes gmHop{0%{transform:translateY(0) scale(1)}45%{transform:translateY(-18px) scale(1.1)}100%{transform:translateY(0) scale(1)}}
-.gm-eye.gm-fall{animation:gmFallEye .85s ease forwards}
-@keyframes gmFallEye{30%{transform:translateY(30px) rotate(50deg);opacity:1}100%{transform:translateY(92px) rotate(160deg);opacity:0}}
+/* ============================================================
+   --- ДОРОГА OKO --- премиум-дорожка с плитами и глазом-персонажем
+   ============================================================ */
+/* лента множителей — связанный «прогресс-риббон» */
+.gm-road-mults{position:relative;display:flex;gap:6px;margin-bottom:14px;z-index:1}
+.gm-road-mults::before{content:'';position:absolute;left:6%;right:6%;top:50%;height:2px;transform:translateY(-1px);background:repeating-linear-gradient(90deg,var(--gm-tile-border) 0 8px,transparent 8px 14px);z-index:-1}
+.gm-rm{flex:1;text-align:center;padding:8px 2px;border-radius:99px;border:1px solid var(--gm-tile-border);background:var(--gm-tile);font-size:11.5px;font-weight:800;color:var(--gm-tile-ink);transition:transform .25s cubic-bezier(.3,1.3,.4,1),border-color .25s,background .25s,color .25s,box-shadow .25s}
+.gm-rm.done{border-color:var(--gm-lime-ink);background:var(--gm-lime-soft);color:var(--gm-lime-ink)}
+.gm-rm.cur{border-color:var(--gm-lime-ink);background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;box-shadow:0 0 16px var(--gm-lime-strong);transform:scale(1.14) translateY(-1px);animation:gmBtnPulse 1.6s ease-in-out infinite}
 
-.gm-road-stat{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:11.5px;color:#8fa07a}
-.gm-road-stat b{color:#fff;font-weight:800}
+/* трек с плитами */
+.gm-road-track{position:relative;display:flex;gap:7px;padding-top:52px;margin-bottom:16px}
+/* «асфальт» под плитами + пунктирная разметка полосы */
+.gm-road-track::before{content:'';position:absolute;left:0;right:0;bottom:-6px;top:46px;border-radius:var(--r-md);background:var(--gm-road-ground);z-index:0;opacity:.9}
+.gm-road-track::after{content:'';position:absolute;left:52px;right:6px;top:calc(46px + (58px + 6px)/2);height:2px;transform:translateY(-1px);background:repeating-linear-gradient(90deg,var(--gm-lane) 0 12px,transparent 12px 26px);z-index:0;opacity:.55}
+.gm-cell{position:relative;z-index:1;height:58px;border-radius:var(--r-md);border:1px solid var(--gm-tile-border);background:var(--gm-tile);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px;letter-spacing:.04em;color:var(--gm-tile-ink);box-shadow:0 3px 0 var(--gm-tile-shadow),0 6px 14px rgba(0,0,0,.22);transition:transform .3s cubic-bezier(.3,1.2,.4,1),border-color .3s,background .3s,color .3s,box-shadow .3s}
+.gm-cell svg.i{width:17px;height:17px}
+.gm-cell.gm-start{flex:0 0 44px;color:var(--gm-lime-ink);background:var(--gm-lime-soft);border-color:var(--gm-lime-ink);box-shadow:0 3px 0 var(--gm-tile-shadow),0 0 14px var(--gm-lime-soft)}
+.gm-cell.gm-tile{flex:1;min-width:0}
+/* плита, на которую сейчас шагнёт глаз — мягкая пульсация-подсветка */
+.gm-cell.next{border-color:var(--gm-lime-ink);color:var(--gm-lime-ink);animation:gmNext 1.5s ease-in-out infinite}
+@keyframes gmNext{0%,100%{box-shadow:0 3px 0 var(--gm-tile-shadow),0 0 0 0 var(--gm-lime-soft)}50%{box-shadow:0 3px 0 var(--gm-tile-shadow),0 0 18px 2px var(--gm-lime-soft)}}
+.gm-cell.ok{border-color:var(--gm-lime-ink);background:var(--gm-lime-soft);color:var(--gm-lime-ink);box-shadow:0 3px 0 var(--gm-tile-shadow),0 0 18px var(--gm-lime-strong);transform:translateY(-2px)}
+.gm-cell.bad{border-color:var(--danger);background:rgba(255,77,77,.18);color:var(--danger);box-shadow:0 0 18px rgba(255,77,77,.5);animation:gmShake .45s ease}
+:root[data-theme="light"] .gm-cell.bad{background:rgba(212,58,58,.12)}
+
+/* глаз-персонаж OKO */
+.gm-eye{position:absolute;top:14px;left:22px;width:44px;height:44px;margin-left:-22px;border-radius:50%;background:var(--gm-hub-bg);border:2px solid var(--gm-hub-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px var(--gm-lime-strong);transition:left .45s cubic-bezier(.3,1.2,.4,1);z-index:3}
+.gm-eye::before{content:'';position:absolute;inset:-9px;border-radius:50%;background:radial-gradient(circle,var(--gm-eye-aura),transparent 68%);z-index:-1;animation:gmAura 2.4s ease-in-out infinite}
+@keyframes gmAura{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.95;transform:scale(1.14)}}
+/* тень-«капелька» под глазом на дороге */
+.gm-eye::after{content:'';position:absolute;bottom:-14px;left:50%;width:30px;height:8px;border-radius:50%;transform:translateX(-50%);background:radial-gradient(closest-side,rgba(0,0,0,.4),transparent 75%);z-index:-1}
+:root[data-theme="light"] .gm-eye::after{background:radial-gradient(closest-side,rgba(80,120,20,.28),transparent 75%)}
+.gm-eye svg.i{width:24px;height:24px;color:var(--gm-hub-ink);animation:gmBlink2 4.2s ease-in-out infinite}
+@keyframes gmBlink2{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.15)}}
+.gm-eye.gm-hop{animation:gmHop .5s cubic-bezier(.3,1.4,.4,1)}
+@keyframes gmHop{0%{transform:translateY(0) scale(1,1)}25%{transform:translateY(-6px) scale(.9,1.12)}55%{transform:translateY(-20px) scale(1.08,.94)}80%{transform:translateY(0) scale(1.06,.94)}100%{transform:translateY(0) scale(1,1)}}
+.gm-eye.gm-fall{animation:gmFallEye .9s cubic-bezier(.4,.1,.7,1) forwards}
+@keyframes gmFallEye{25%{transform:translateY(24px) rotate(45deg) scale(.95);opacity:1}100%{transform:translateY(96px) rotate(200deg) scale(.7);opacity:0}}
+
+/* искры при удачном шаге */
+.gm-spark{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:4}
+.gm-spark i{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--gm-lime-ink);box-shadow:0 0 8px var(--gm-lime-ink);animation:gmSpark .62s cubic-bezier(.2,.7,.4,1) forwards}
+@keyframes gmSpark{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+
+.gm-road-stat{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:11.5px;color:var(--gm-ink-dim)}
+.gm-road-stat b{color:var(--gm-ink);font-weight:800}
 .gm-road-btns{display:grid;grid-template-columns:1fr 1.25fr;gap:8px}
-.gm-road-msg{margin-bottom:10px;font-size:13px;color:#b9c9a2;animation:gmPop .35s ease}
+.gm-road-msg{margin-bottom:10px;font-size:13px;color:var(--gm-ink-soft);animation:gmPop .35s ease}
 .gm-road-msg b{font-family:var(--font-display);font-size:21px;letter-spacing:.04em;margin-right:6px}
 
 /* история игр */
@@ -126,26 +219,25 @@
 .gm-locked .gm-road-btns button{opacity:.45;pointer-events:none}
 
 /* --- КОСТИ: 3D-кубы --- */
-.gm-dice-card{position:relative;overflow:hidden;background:radial-gradient(130% 120% at 50% -10%,rgba(154,255,0,.13),transparent 55%),linear-gradient(160deg,#0e1408,#060804 70%);border:1px solid #2c3b14;border-radius:var(--r-lg);padding:20px 16px 18px;text-align:center;animation:fade .3s ease}
-:root[data-theme="light"] .gm-dice-card{border-color:#b9d494;box-shadow:0 10px 30px rgba(20,40,0,.18)}
 .gm-dice-stage{display:flex;justify-content:center;gap:38px;padding:30px 0 26px;perspective:560px}
 .gm-die{width:64px;height:64px;position:relative}
 .gm-cube{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
-.gm-face{position:absolute;inset:0;background:linear-gradient(145deg,#1a2410,#0b1106);border:1.5px solid #3c5216;border-radius:13px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;box-shadow:inset 0 0 12px rgba(0,0,0,.55),0 0 8px rgba(154,255,0,.12);backface-visibility:hidden}
+.gm-face{position:absolute;inset:0;background:var(--gm-die-face);border:1.5px solid var(--gm-die-border);border-radius:13px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:8px;box-shadow:inset 0 0 12px rgba(0,0,0,.35),0 0 8px rgba(154,255,0,.12);backface-visibility:hidden}
+:root[data-theme="light"] .gm-face{box-shadow:inset 0 0 12px rgba(120,160,70,.16),0 2px 8px rgba(80,120,20,.14)}
 .gm-face i{width:10px;height:10px;border-radius:50%;place-self:center;background:transparent}
-.gm-face i.on{background:#9AFF00;box-shadow:0 0 6px rgba(154,255,0,.8)}
+.gm-face i.on{background:var(--gm-pip);box-shadow:0 0 6px var(--gm-lime-strong)}
 .gm-dice-picks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 2px}
-.gm-dice-picks button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1px solid #2c3b14;border-radius:var(--r-md);color:#b9c9a2;transition:all .15s}
+.gm-dice-picks button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1px solid var(--gm-tile-border);border-radius:var(--r-md);background:var(--gm-tile);color:var(--gm-chip-ink);transition:transform .15s,border-color .15s,color .15s,background .15s,box-shadow .15s}
 .gm-dice-picks button b{font-size:12.5px;font-weight:800}
-.gm-dice-picks button span{font-family:var(--font-display);font-size:12px;letter-spacing:.06em;color:#7d8f68}
-.gm-dice-picks button.on{border-color:#9AFF00;background:rgba(154,255,0,.14);color:#9AFF00;box-shadow:0 0 10px rgba(154,255,0,.25)}
-.gm-dice-picks button.on span{color:#9AFF00}
-.gm-dice-picks button.hit{border-color:#9AFF00;background:#9AFF00;color:#000;box-shadow:0 0 18px rgba(154,255,0,.6)}
-.gm-dice-picks button.hit span{color:#000}
+.gm-dice-picks button span{font-family:var(--font-display);font-size:12px;letter-spacing:.06em;color:var(--gm-tile-ink)}
+.gm-dice-picks button.on{border-color:var(--gm-lime-ink);background:var(--gm-lime-soft);color:var(--gm-lime-ink);box-shadow:0 0 10px var(--gm-lime-soft)}
+.gm-dice-picks button.on span{color:var(--gm-lime-ink)}
+.gm-dice-picks button.hit{border-color:var(--gm-lime-ink);background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;box-shadow:0 0 18px var(--gm-lime-strong)}
+.gm-dice-picks button.hit span{color:#0a1400}
 .gm-dice-picks button:active{transform:scale(.95)}
 
 /* --- БОНУС ДНЯ: кнопка-баннер --- */
-.gm-bonus-btn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;margin-bottom:14px;border:1px solid var(--lime);border-radius:var(--r-md);background:linear-gradient(120deg,var(--lime-dim),transparent 70%);color:var(--text);transition:all .2s;animation:gmBtnPulse 2.8s ease-in-out infinite}
+.gm-bonus-btn{width:100%;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 14px;margin-bottom:14px;border:1px solid var(--lime);border-radius:var(--r-md);background:linear-gradient(120deg,var(--lime-dim),transparent 70%);color:var(--text);transition:transform .2s,border-color .2s,background .2s;animation:gmBtnPulse 2.8s ease-in-out infinite}
 .gm-bonus-btn>svg.i:first-child{width:22px;height:22px;color:var(--accent);flex-shrink:0}
 .gm-bonus-btn .gm-bonus-t{flex:1;min-width:0}
 .gm-bonus-btn .gm-bonus-t span{display:block;font-weight:800;font-size:13.5px}
@@ -161,11 +253,11 @@
 #sheet-gmBonus h3{text-align:left}
 .gm-bonus-stage{padding-top:2px}
 .gm-bwheel-wrap{position:relative;width:212px;height:212px;margin:0 auto}
-.gm-bwheel{position:absolute;inset:0;border-radius:50%;border:3px solid #2c3b14;box-shadow:0 0 0 6px #0c1106,0 0 28px rgba(154,255,0,.22),inset 0 0 22px rgba(0,0,0,.6);will-change:transform}
-.gm-bwheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -22.9deg,rgba(0,0,0,.55) 0 .9deg,transparent .9deg 45deg);pointer-events:none}
-.gm-bsec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:16px;letter-spacing:.05em;line-height:1;pointer-events:none}
-.gm-bwheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:#0a0d05;border:2px solid #9AFF00;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
-.gm-bwheel-hub svg.i{width:26px;height:26px;color:#9AFF00}
+.gm-bwheel{position:absolute;inset:0;border-radius:50%;border:3px solid var(--gm-wheel-ring);box-shadow:var(--gm-wheel-shadow);will-change:transform}
+.gm-bwheel::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(from -22.9deg,var(--gm-spoke) 0 .9deg,transparent .9deg 45deg);pointer-events:none}
+.gm-bsec{position:absolute;top:50%;left:50%;font-family:var(--font-display);font-size:16px;letter-spacing:.05em;line-height:1;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.gm-bwheel-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:58px;height:58px;border-radius:50%;background:var(--gm-hub-bg);border:2px solid var(--gm-hub-ink);display:flex;align-items:center;justify-content:center;z-index:2;animation:gmHub 3.2s ease-in-out infinite}
+.gm-bwheel-hub svg.i{width:26px;height:26px;color:var(--gm-hub-ink)}
 #sheet-gmBonus .gm-spin{margin-top:4px}
 .gm-bonus-claimed{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 6px 8px}
 .gm-bonus-claimed svg.i{width:34px;height:34px;color:var(--accent)}
@@ -199,3 +291,8 @@
 .gm-lb-sum{font-size:13.5px;font-weight:800;white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums}
 .gm-lb-row.me .gm-lb-sum{color:var(--accent)}
 .gm-lb-gap{text-align:center;color:var(--dim);font-size:14px;letter-spacing:.3em;padding:2px 0}
+
+/* уважение к reduced-motion */
+@media (prefers-reduced-motion:reduce){
+  .gm-wheel-card::before,.gm-dice-card::before,.gm-eye::before,.gm-eye svg.i,.gm-pointer,.gm-wheel-hub,.gm-bwheel-hub,.gm-spin,.gm-bonus-btn,.gm-rm.cur,.gm-cell.next{animation:none !important}
+}
