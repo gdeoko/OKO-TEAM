@@ -1,0 +1,166 @@
+/* ============================================================
+   UI-CHROME · глобальный хром и премиум-полировка
+   Владелец: base.html + этот модуль. Грузится последним в ORDER,
+   чтобы аккуратно унифицировать глобальные элементы поверх ядра.
+   НЕ трогает: composer/.msgs/#msgMenu/#callScreen/#storyViewer,
+   .post-карточки и чипы ленты, экраны игр/кошелька/академии/биржи.
+   ============================================================ */
+
+/* ---------- SAFE-AREA: все fullscreen-вьюхи не заезжают под чёлку ---------- */
+/* базовые классы шапок — единый безопасный отступ сверху */
+.sv-head,
+.ep-head,
+.search-head{
+  padding-top:max(env(safe-area-inset-top),14px);
+}
+/* вьюхи-модули, у которых своя шапка без safe-area */
+#hqEmbed .hq-emb-head,
+#regView .ep-head,
+#legalView .lg-tabs{
+  padding-top:max(env(safe-area-inset-top),12px);
+}
+/* контейнеры-вьюхи: нижний safe-area, чтобы контент не прятался за home-bar */
+#searchView .sv-body,
+#notifsView .sv-body,
+#adminView .sv-body,
+#systemView .sv-body{
+  padding-bottom:calc(30px + env(safe-area-inset-bottom));
+}
+
+/* ---------- ПУСТОЕ ПОЛЕ ВНИЗУ: дыхание контента + safe-area ---------- */
+main>.screen>.pad{
+  padding-bottom:calc(22px + env(safe-area-inset-bottom));
+}
+/* лента и списки без .pad — небольшой хвост снизу под home-bar */
+#feedList,
+#chatList{
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* ============ НИЖНЯЯ НАВИГАЦИЯ: индикатор + плавное переключение ============ */
+nav#tabs{position:relative}
+nav#tabs>button{position:relative;transition:color .22s ease;overflow:visible}
+nav#tabs>button svg.i{transition:transform .28s cubic-bezier(.34,1.4,.5,1),filter .22s}
+/* верхний лайм-индикатор активной вкладки (мобайл) */
+nav#tabs>button::before{
+  content:'';position:absolute;top:0;left:50%;
+  width:24px;height:3px;border-radius:0 0 3px 3px;background:var(--lime);
+  transform:translateX(-50%) scaleX(0);transform-origin:center;
+  transition:transform .3s cubic-bezier(.34,1.4,.5,1),opacity .25s;
+  opacity:0;box-shadow:0 0 9px rgba(154,255,0,.55);
+}
+nav#tabs>button.active::before{transform:translateX(-50%) scaleX(1);opacity:1}
+nav#tabs>button.active svg.i{transform:translateY(-1px) scale(1.1);filter:drop-shadow(0 0 6px rgba(154,255,0,.5))}
+nav#tabs>button:active svg.i{transform:scale(.88)}
+:root[data-theme="light"] nav#tabs>button.active svg.i{filter:none}
+:root[data-theme="light"] nav#tabs>button::before{box-shadow:0 0 6px rgba(110,200,0,.4)}
+/* десктоп: индикатор слева, вертикальный (сайдбар) */
+@media(min-width:900px){
+  nav#tabs>button::before{
+    top:50%;left:0;width:3px;height:26px;border-radius:0 3px 3px 0;
+    transform:translateY(-50%) scaleY(0);
+  }
+  nav#tabs>button.active::before{transform:translateY(-50%) scaleY(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  nav#tabs>button svg.i,nav#tabs>button::before{transition:none}
+}
+
+/* ============ КНОПКИ: единые состояния/тени/градиент лайма ============ */
+.btn{
+  border-radius:var(--r-md);
+  transition:transform .12s ease,box-shadow .22s ease,filter .22s ease,background .2s;
+  box-shadow:0 6px 18px rgba(154,255,0,.16);
+}
+.btn:hover{box-shadow:0 8px 24px rgba(154,255,0,.26);filter:brightness(1.04)}
+.btn:active{transform:scale(.97);box-shadow:0 3px 10px rgba(154,255,0,.2)}
+.btn.ghost{box-shadow:none;transition:transform .12s ease,background .2s,border-color .2s,color .2s}
+.btn.ghost:hover{background:var(--lime-dim);border-color:var(--accent)}
+.btn.ghost:active{transform:scale(.97)}
+.btn[disabled],.btn:disabled{opacity:.5;pointer-events:none;box-shadow:none;filter:grayscale(.3)}
+:root[data-theme="light"] .btn{box-shadow:0 5px 14px rgba(110,200,0,.22)}
+:root[data-theme="light"] .btn:hover{box-shadow:0 7px 20px rgba(110,200,0,.32)}
+
+/* ============ ЧИПЫ: аккуратный лайм-градиент и рамка ============ */
+.chip{
+  border:1px solid transparent;line-height:1.5;
+  background:linear-gradient(135deg,rgba(154,255,0,.18),rgba(154,255,0,.08));
+  transition:background .2s,border-color .2s,color .2s;
+}
+:root[data-theme="light"] .chip{
+  background:linear-gradient(135deg,rgba(110,200,0,.16),rgba(110,200,0,.07));
+  border-color:rgba(110,200,0,.18);
+}
+.chip.on{background:var(--lime);border-color:var(--lime);color:#000}
+
+/* ============ КАРТОЧКИ: единый радиус, мягкая тень, живой ховер ============ */
+.card{
+  transition:border-color .22s ease,box-shadow .22s ease;
+  box-shadow:0 1px 0 rgba(255,255,255,.015) inset,0 8px 22px rgba(0,0,0,.22);
+}
+:root[data-theme="light"] .card{box-shadow:0 6px 16px rgba(40,60,15,.06)}
+.card:hover{border-color:color-mix(in srgb,var(--border) 55%,var(--accent))}
+
+/* ============ СТРОКИ ПРОФИЛЯ: ховер/актив как у нативных списков ============ */
+.prow{border-radius:12px;padding:14px 12px;margin:0 -8px;transition:background .18s,transform .1s}
+.prow:hover{background:var(--lime-dim)}
+.prow:active{transform:scale(.99);background:var(--lime-dim)}
+.prow .chev svg.i{transition:transform .2s}
+.prow:hover .chev svg.i{transform:translateX(3px);color:var(--accent)}
+
+/* ============ АВАТАРЫ: тонкое лайм-кольцо на брендовых ============ */
+.ava.lime{box-shadow:0 0 0 1px rgba(154,255,0,.3),0 4px 12px rgba(154,255,0,.14)}
+:root[data-theme="light"] .ava.lime{box-shadow:0 0 0 1px rgba(110,200,0,.28)}
+
+/* ============ SHEET: чуть премиальнее ручка и подложка ============ */
+.sheet{box-shadow:0 -18px 50px rgba(0,0,0,.5)}
+:root[data-theme="light"] .sheet{box-shadow:0 -14px 40px rgba(40,60,15,.14)}
+.sheet::before{transition:background .2s}
+.sheet-overlay{backdrop-filter:blur(2px)}
+.sheet-item{border-radius:10px;transition:background .16s}
+.sheet-item:hover{background:var(--lime-dim)}
+
+/* ============ СТАТ-КАРТОЧКИ: единый ховер и лёгкий glow цифры ============ */
+.stat{transition:border-color .22s,transform .14s}
+.stat:hover{border-color:color-mix(in srgb,var(--border) 50%,var(--accent))}
+.stat .v{text-shadow:0 0 18px rgba(154,255,0,.18)}
+:root[data-theme="light"] .stat .v{text-shadow:none}
+
+/* ============ SVC-плитки хаба: мягкий подъём + блик ============ */
+.svc-ic{transition:transform .15s cubic-bezier(.34,1.4,.5,1),box-shadow .22s}
+.svc:hover .svc-ic{transform:translateY(-2px);box-shadow:0 12px 26px rgba(0,0,0,.5)}
+:root[data-theme="light"] .svc:hover .svc-ic{box-shadow:0 8px 20px rgba(60,90,20,.16)}
+
+/* ============ MA-HERO: медленный дрейф сетки + пульс glow ============ */
+#screen-mini .ma-hero{background-size:28px 28px,28px 28px,auto,auto;animation:uicHeroGrid 22s linear infinite}
+@keyframes uicHeroGrid{to{background-position:28px 28px,28px 28px,0 0,0 0}}
+#screen-mini .ma-hero-logo{animation:uicHeroGlow 5s ease-in-out infinite}
+@keyframes uicHeroGlow{
+  0%,100%{filter:drop-shadow(0 0 12px rgba(154,255,0,.4));opacity:.85}
+  50%{filter:drop-shadow(0 0 22px rgba(154,255,0,.7));opacity:1}
+}
+/* svc-grid: очень лёгкий каскад появления при открытии хаба */
+#screen-mini .svc-grid .svc{animation:uicSvcIn .45s cubic-bezier(.3,1,.4,1) both}
+#screen-mini .svc-grid .svc:nth-child(1){animation-delay:.02s}
+#screen-mini .svc-grid .svc:nth-child(2){animation-delay:.05s}
+#screen-mini .svc-grid .svc:nth-child(3){animation-delay:.08s}
+#screen-mini .svc-grid .svc:nth-child(4){animation-delay:.11s}
+#screen-mini .svc-grid .svc:nth-child(5){animation-delay:.14s}
+#screen-mini .svc-grid .svc:nth-child(6){animation-delay:.17s}
+#screen-mini .svc-grid .svc:nth-child(7){animation-delay:.2s}
+#screen-mini .svc-grid .svc:nth-child(8){animation-delay:.23s}
+@keyframes uicSvcIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  #screen-mini .ma-hero,#screen-mini .ma-hero-logo,#screen-mini .svc-grid .svc{animation:none}
+}
+
+/* ============ ВХОД: премиум-акцент онбординг-точек и splash-глаза ============ */
+#onboard .ob-dots span.on{box-shadow:0 0 10px rgba(154,255,0,.6)}
+#splash .eye{position:relative}
+#splash .eye::after{
+  content:'';position:absolute;inset:-18%;border-radius:50%;
+  background:radial-gradient(circle,rgba(154,255,0,.25),transparent 62%);
+  animation:uicSplashHalo 2.4s ease-in-out infinite;pointer-events:none;
+}
+@keyframes uicSplashHalo{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:.9;transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){#splash .eye::after{animation:none}}

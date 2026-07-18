@@ -1,0 +1,6 @@
+*.wav
+!reference/*.wav
+*.reftext.txt
+t*.wav
+cal_*.wav
+anon_test.wav

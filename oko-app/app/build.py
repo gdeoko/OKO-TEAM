@@ -36,6 +36,7 @@ ORDER = [
     'navstack',        # единый стек навигации: назад везде (TG BackButton + history)
     'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
     'pwa',             # установка на главный экран + service worker
+    'ui-chrome',       # глобальный хром: шапка/навигация/safe-area/полировка (грузится последним)
 ]
 
 def read(p):

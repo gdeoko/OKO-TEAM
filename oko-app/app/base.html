@@ -55,14 +55,18 @@ svg.i.fill{fill:currentColor;stroke:none}
 /* ============ APP SHELL ============ */
 #app{display:flex;flex-direction:column;height:100%;max-width:1280px;margin:0 auto}
 @supports(height:100dvh){#app{height:100dvh}}
-header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
-header .brand{display:flex;align-items:center;gap:10px}
-header .brand svg{width:30px;height:30px;color:var(--accent);filter:drop-shadow(0 0 6px rgba(154,255,0,.45))}
+header{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(180deg,rgba(154,255,0,.035),transparent 70%),var(--bg)}
+:root[data-theme="light"] header{background:linear-gradient(180deg,rgba(110,200,0,.05),transparent 70%),var(--bg)}
+header .brand{display:flex;align-items:center;gap:9px}
+header .brand svg{width:29px;height:29px;color:var(--accent);filter:drop-shadow(0 0 5px rgba(154,255,0,.4))}
 :root[data-theme="light"] header .brand svg{filter:none}
-header .logo{font-family:var(--font-display);font-size:27px;color:var(--accent);letter-spacing:.18em;line-height:1;padding-top:2px}
-header .screen-title{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.14em;margin-left:auto}
-.theme-btn{width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);border:1px solid var(--border);font-size:15px}
-.theme-btn:hover{color:var(--accent)}
+header .logo{font-family:var(--font-display);font-size:26px;color:var(--accent);letter-spacing:.16em;line-height:1;padding-top:2px}
+header .screen-title{font-family:var(--font-body);font-size:16px;font-weight:600;letter-spacing:.005em;color:var(--text);line-height:1;margin:0 0 0 3px;padding-left:13px;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .screen-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:19px;background:var(--border)}
+.hdr-actions{display:flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0}
+.theme-btn{width:38px;height:38px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:15px;transition:color .18s,background .18s,transform .12s}
+.theme-btn:hover{color:var(--accent);background:var(--lime-dim)}
+.theme-btn:active{transform:scale(.9)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;position:relative}
 nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
 nav#tabs>button{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--dim);font-size:10.5px;letter-spacing:.02em;transition:color .18s}
@@ -1066,10 +1070,12 @@ main>.screen{position:relative;z-index:1}
 <div id="app">
   <header>
     <div class="brand"><svg><use href="#i-logo"/></svg><span class="logo">OKO</span></div>
-    <div class="screen-title" id="screenTitle">Лента</div>
-    <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
-    <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
-    <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
+    <h1 class="screen-title" id="screenTitle">Лента</h1>
+    <div class="hdr-actions">
+      <button class="theme-btn" onclick="openSearch()" title="Поиск"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="theme-btn notif-btn" onclick="openNotifs()" title="Уведомления"><svg class="i"><use href="#i-bell"/></svg><i class="notif-dot" id="notifDot"></i></button>
+      <button class="theme-btn" onclick="toggleTheme()" title="Тема"><svg class="i" id="themeIcoM"><use href="#i-sun"/></svg></button>
+    </div>
   </header>
 
   <main>
