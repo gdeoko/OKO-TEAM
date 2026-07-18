@@ -7,7 +7,7 @@ on:
 jobs:
   grab:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - name: setup
         run: |
@@ -15,41 +15,29 @@ jobs:
           npm i playwright@1.47.0 >/dev/null 2>&1
           npx playwright install chromium >/dev/null 2>&1
           echo "installed"
-      - name: recon
-        env:
-          SHARE: 'https://www.icloud.com/iclouddrive/06eROXSn2dhO8ND2oTTFXRowQ'
+      - name: probe
         run: |
           cat > run.mjs <<'JS'
           import { chromium } from 'playwright';
-          const SH=process.env.SHARE;
-          const b=await chromium.launch({headless:true});
-          const ctx=await b.newContext({acceptDownloads:true,userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15', viewport:{width:1440,height:1000}});
+          import fs from 'fs';
+          const b=await chromium.launch({headless:true,args:['--lang=en-US']});
+          const ctx=await b.newContext({locale:'en-US',userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15', viewport:{width:1200,height:1500}});
           const p=await ctx.newPage();
-          const net=[];
-          p.on('response', async r=>{const u=r.url();
-            if(/cvws\.icloud-content\.com|content-disposition|singleFileDownload|CloudDocs\/(list|retrieve|download)|records\/query|retrieveItemDetails|\/download\//.test(u)){
-              let h={};try{h=r.headers();}catch(e){}
-              net.push({u:u.slice(0,260),status:r.status(),cd:h['content-disposition']||''});}});
-          async function up(f){try{const {execSync}=await import('child_process');return execSync(`curl -s -F "reqtype=fileupload" -F "fileToUpload=@${f}" https://catbox.moe/user/api.php`).toString().trim();}catch(e){return 'upfail '+e.message;}}
-          async function shot(n){try{await p.screenshot({path:n,fullPage:true});console.log('SHOT_'+n+':',await up(n));}catch(e){console.log('shot err',e.message);}}
-          function inv(f){return f.evaluate(()=>{const out=[];document.querySelectorAll('button,[role=button],a,[role=row],[role=gridcell],[aria-label]').forEach(e=>{const l=(e.getAttribute('aria-label')||e.textContent||'').trim();if(l&&l.length<80)out.push((e.tagName||'')+':'+l);});return [...new Set(out)].slice(0,120);});}
-          try{await p.goto(SH,{waitUntil:'domcontentloaded',timeout:90000});}catch(e){console.log('goto',e.message);}
-          await p.waitForTimeout(15000);
+          const urls=[];
+          p.on('response',r=>{const u=r.url();if(/appleid|idmsa|captcha|widget/.test(u))urls.push(r.status()+' '+u.slice(0,110));});
+          try{await p.goto('https://appleid.apple.com/account',{waitUntil:'domcontentloaded',timeout:90000});}catch(e){console.log('goto',e.message);}
+          await p.waitForTimeout(14000);
+          console.log('URL_NOW:',p.url());
           console.log('TITLE:',await p.title().catch(()=>''));
-          await shot('s1.png');
-          console.log('FRAMES:',p.frames().map(f=>f.url().slice(0,60)));
-          for(const f of p.frames()){try{console.log('INV['+f.url().slice(0,40)+']:',JSON.stringify(await inv(f)));}catch(e){}}
-          for(const f of p.frames()){
-            for(const sel of ['text=test паша','[aria-label*="test"]','[aria-label*="Shared Folder"]','.folder','[role="row"]']){
-              try{const el=await f.$(sel);if(el){await el.dblclick({timeout:3000}).catch(()=>{});console.log('DBLCLICK',sel,'in',f.url().slice(0,40));await p.waitForTimeout(4000);break;}}catch(e){}
-            }
-          }
-          await p.waitForTimeout(6000);
-          await shot('s2.png');
-          let items=new Set();
-          for(const f of p.frames()){try{(await f.evaluate(()=>Array.from(document.querySelectorAll('[role="row"],[role="gridcell"],[aria-label]')).map(e=>(e.getAttribute('aria-label')||e.textContent||'').trim()).filter(s=>s&&s.length<120))).forEach(x=>items.add(x));}catch(e){}}
-          console.log('ITEMS_AFTER_OPEN:',JSON.stringify([...items].slice(0,100)));
-          console.log('NET:',JSON.stringify(net.slice(0,40)));
+          let txt='';try{txt=(await p.evaluate(()=>document.body?document.body.innerText:'')).replace(/\n+/g,' | ').slice(0,1200);}catch(e){}
+          console.log('BODYTEXT:',txt);
+          console.log('NET:',JSON.stringify(urls.slice(0,25)));
+          try{await p.screenshot({path:'a.jpg',type:'jpeg',quality:38});
+            const bb=fs.readFileSync('a.jpg').toString('base64');
+            console.log('IMG_LEN:',bb.length);
+            for(let i=0;i<bb.length;i+=6000)console.log('IMG['+(i/6000)+']:'+bb.slice(i,i+6000));
+            console.log('IMG_END');
+          }catch(e){console.log('shot',e.message);}
           await b.close();
           JS
           node run.mjs || true
