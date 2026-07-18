@@ -1,0 +1,83 @@
+# PIPELINE — детерминированный runbook дневного ролика МЕТАНОЙА
+
+Проверено на ролике 02 (все 3 соцсети). Следуй ПО ШАГАМ — не импровизируй механику,
+импровизируй только КРЕАТИВ (тема/сценарий/тексты оверлеев). Все скрипты рядом в этой папке.
+Рабочая папка: `WD=/tmp/.../scratchpad/reelNN` (создать), внутри `clips/ work/ seg/ ov/`.
+
+## 0. Окружение (быстро, не тяжёлое)
+```
+source /home/user/OKO-TEAM/secrets.env
+export HTTPS_PROXY="${HTTPS_PROXY}" SSL_CERT_FILE=/root/.ccr/ca-bundle.crt
+higgsfield account status   # должно быть ultra; авторизация — из VPS-брокера (SessionStart-хук)
+pip install --break-system-packages -q faster-whisper   # для синхрона субтитров
+# playwright + chromium уже в облачном образе: /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+# node_modules с playwright: scratchpad/reel01v2/work (запускать .mjs оттуда)
+```
+
+## 1. Креатив (единственное, что меняется каждый день)
+- Выбери рубрику/тему (чередуй, сверься с SCENARIOS.md/WINNERS.md — не повторять вчера).
+- Разведка: 5 конкурентов (тренды/приёмы) → COMPETITORS.md. YT search бывает 429 → веб-поиск.
+- Напиши VO-текст (тёплый, хук-утверждение первым, 30-35с ≈ 800-900 симв, микс 50/30/20).
+- Придумай 8+ оверлеев кодом под ЭТУ тему (НОВЫЕ механики, не набор прошлого — см. USED_ANIM).
+
+## 2. Кадры (Pexels, свежие, без повторов)
+Запросы из темы (portrait, size medium, per_page 4). Дедуп по USED_FOOTAGE.md. Скачать 12 в 4K
+(`videos.pexels.com/...uhd...`) через `curl --cacert $SSL_CERT_FILE`. Проверить freezedetect —
+без статики. (Эталон отбора/скачивания — как в build_segments.py вход.)
+
+## 3. Голос + музыка + обложка (Higgsfield CLI — автономно)
+```
+higgsfield generate create text2speech_v2 --variant elevenlabs \
+  --voice_id ca83ca7f-c186-493d-bd69-0d765fa861b2 --voice_type preset \
+  --prompt "<VO>" --wait --wait-timeout 150s        # → mp3 URL → work/vo.mp3
+higgsfield generate create sonilo_music --duration 37 --prompt "<настроение>" --wait  # → work/music.m4a
+higgsfield generate create nano_banana_pro --aspect_ratio 9:16 --resolution 2k --prompt "<storybook>" --wait
+# обложку композитить с ПРОЗРАЧНЫМ лого brand/metanoia/png (без квадрата), заголовок Playfair+Soyuz
+```
+
+## 4. Монтаж база
+```
+python3 build_segments.py   # 12 сегментов, РАЗНЫЕ движения (push/pan/pull/drift) + вечерний грейд
+                            # поднять тени тёмных клипов: curves shadow-lift + eq gamma~1.18
+python3 xfade.py            # склейка РАЗНЫМИ переходами (fade/slide/wipe/circle/dissolve)
+```
+
+## 5. Инфографика кодом (Playwright → alpha webm)
+- Опиши 8+ сцен в overlays_lib.mjs (jobs.json) + 2-3 новые под тему (jobs2). Рендер:
+```
+cd scratchpad/reel01v2/work && node ovgen.mjs <WD>/jobs.json    # → WD/ov/o*.webm (yuva420p vp9)
+node outro_gen.mjs                                              # анимированный аутро (маяк/свет+лого)
+```
+ГРАБЛЯ: при наложении webm в ffmpeg декодить ЯВНО `-c:v libvpx-vp9 -i o.webm`, иначе чёрный фон.
+
+## 6. Субтитры (синхрон по голосу!)
+```
+python3 align.py            # faster-whisper → work/words.json (word timestamps)
+python3 subs_karaoke.py     # Союз Гротеск, 2 слова, караоке \kf, РЕЗКИЕ (без \blur), без обводки,
+                            # MarginV~610, НЕ на обложке (<2.4с skip). fontsdir=fonts/
+```
+
+## 7. Свод
+```
+python3 composite.py        # intro(обложка)+montage_b+outro2 xfade → 9 оверлеев (libvpx-vp9!) →
+                            # прогресс-бар drawbox → субтитры → аудио36 (VO+музыка дакинг+fade). 36с.
+```
+QA: снять 5-6 кадров, глазами проверить (видеоряд виден под инфографикой, субтитры резкие/по голосу).
+
+## 8. Публикация во ВСЕ 3 (см. PROJECT_CONFIG «Публикация — проверенные команды»)
+```
+URL=$(higgsfield upload create <reel.mp4> --json | jq -r .url)   # хостинг на CDN
+# YouTube: Data API resumable upload + status.privacyStatus=public (или publishAt 16:00 UTC)
+# на VPS: скачать URL → cfg/metanoia_reel1.mp4 ; подпись → cfg/metanoia_caption1.txt
+# TikTok:  rm -f cfg/tt_post1.done && bash /opt/oko-poster/metanoia_post1.sh
+# IG:      python3 /opt/oko-poster/ig_post_reel.py cfg/metanoia_reel1.mp4 cfg/metanoia_caption1.txt
+```
+Проверить факт публикации на каждой площадке.
+
+## 9. Реестры + отчёт
+Допиши USED_FOOTAGE (id), USED_ANIM (механики), SCENARIOS, COMPETITORS. commit+push
+в ветку claude/metanoya-content-factory-9s9uju. Отчёт: тема + 3 ссылки.
+
+---
+Аналитика — ОТДЕЛЬНО и НАДЁЖНО на VPS (cron 10:00 МСК, `metanoia_analytics.py`), сборку не трогает.
+Страховка постинга — триггер 19:40 МСК (досабирает, если плановый прогон упал).

@@ -21,8 +21,6 @@
 | CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID | Cloudflare | Хостинг Pages | ОТЛОЖЕНО решением Даниэля 07.07: токену не хватает прав, не поднимать тему |
 | HF_S3_ENDPOINT + HF_S3_ACCESS_KEY_ID + HF_S3_SECRET_ACCESS_KEY | HF S3 | Хранилище файлов okoteam (boto3, verify=/root/.ccr/ca-bundle.crt) | list_buckets |
 | R2_ENDPOINT + R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY | Cloudflare R2 | S3-хранилище тяжёлых видео/ассетов (из чата ЗооОпт). БЛОКЕР: домен r2.cloudflarestorage.com не в network policy окружения — добавить в allowlist | boto3 list_buckets (сейчас connect 000) |
-| SHOTSTACK_SANDBOX_KEY / SHOTSTACK_PROD_KEY | Shotstack (подключён 16.07) | Облачный ПРОГРАММНЫЙ монтаж по JSON: таймлайн, титры, переходы, караоке-субтитры, футаж, музыка → рендер MP4. Ядро «крутого монтажа под ключ», встраивается в reels-machine. Sandbox бесплатный (вотермарк), prod платный. Заголовок `x-api-key`. Endpoints: sandbox `https://api.shotstack.io/edit/stage/render`, prod `.../edit/v1/render`. Ассеты — `.../ingest/{stage}`, шаблоны — `.../edit/{stage}/templates`. | `curl -H "x-api-key: $SHOTSTACK_SANDBOX_KEY" https://api.shotstack.io/edit/stage/render/0000...` → 400 (auth ок), 403 = чужой stage |
-| CREATOMATE_API_KEY + CREATOMATE_PUBLIC_TOKEN | Creatomate (подключён 16.07) | Шаблонный видео-рендер по template_id + modifications (соцролики, автоматизация из данных). API key — серверный (Bearer), public token (`public-...`) — для клиентского preview, в браузер отдавать можно. | `curl -X POST -H "Authorization: Bearer $CREATOMATE_API_KEY" -d '{}' https://api.creatomate.com/v1/renders` → 400 «нужен template_id» = ключ ок |
 
 Правила: ключи НЕ вписывать в код сайтов и не отдавать в браузер. Сеть — только
 curl (urllib и node fetch ходят мимо прокси). Новый ключ: дописать в secrets.env,
@@ -197,25 +195,6 @@ Environment variables окружения:
 | GEMINI_API_KEY (3 ключа) | Gemini: текст бесплатно, картинки при включённом биллинге |
 | ANTHROPIC_API_KEY | Claude API, баланс пополняет Даниэль |
 
-## 2а. Соцсети OKO — доступы и оперативка (Даниэль, 16.07.2026)
-
-**Все логины/пароли/телефоны/токен бота — в `secrets.env` (переменные `OKO_*` и
-`TELEGRAM_BOT_TOKEN`), в открытый паспорт НЕ вписаны.** Публичное:
-- Единый никнейм: **daniel.oko.app** (YouTube: **daniel.okoapp**).
-- Telegram-канал: https://t.me/gdeoko · бот приложения: **@okoappbot**.
-- Аккаунты (логины-почты/телефоны в secrets): TikTok, Instagram, Likee, YouTube,
-  ВКонтакте, Telegram. Общие пароли — `OKO_COMMON_PASSWORD_1/2` в secrets.
-- Переменные: `OKO_SOCIAL_HANDLE`, `OKO_*_EMAIL`, `OKO_VK_PHONE/PASSWORD`,
-  `OKO_TG_PHONE/PASSWORD`, `OKO_TG_CHANNEL`, `OKO_BOT_USERNAME`.
-
-Оперативка (для соцавтопилота):
-- **YouTube, ВКонтакте, Telegram** — агент уже залогинен.
-- **TikTok** — вход через Hooppy.ru; для активности (ответы на комменты, постинг,
-  выгрузка аналитики) нужен прямой вход агента в аккаунт, как в Instagram.
-- **VK-пароль** Даниэль просил обновить — при работе с VK сверять/менять.
-- Приглашение в MAX-мессенджер (max.ru/join/...) прислано — вступать по запросу.
-
-
 ## 3. MCP-коннекторы (подключаются на claude.ai -> Settings -> Connectors)
 
 | Коннектор | Статус | Что даёт |
@@ -231,11 +210,6 @@ Environment variables окружения:
 | Zapier | работает | 9000+ приложений через actions |
 | Zoom | работает | записи и саммари встреч |
 | Claude Code Remote | работает | окружения, Routines (расписания), send_later |
-| Descript | работает (подключён 16.07) | МОНТАЖ видео по промптам: import_media, prompt_project_agent (тримминг, перестановка, удаление слов-паразитов, субтитры, сток), publish → share URL |
-| HyperFrames by HeyGen | работает (подключён 16.07) | моушен-графика/анимированные слайды из HTML → render_video (MP4/WebM/MOV). compose/render только из hosted-клиента (claude.ai), из CLI — read-only |
-| Shutterstock | работает (подключён 16.07, без ключа) | поиск стока image/video/music/sfx, отдаёт preview mp4/webm 4K. Read-only (без лицензирования/скачивания) |
-| Brandfetch | работает (подключён 16.07) | бренд-ассеты: brand_search, get_brand, логотипы/иконки/символы через CDN, цвета/шрифты бренда |
-| Google Drive | работает (подключён 16.07) | хранилище: search_files, read/download, create_file. Импорт медиа в Descript принимает Drive share-ссылки как есть |
 | Adobe Marketing | НЕ авторизован | нужна кнопка Connect на claude.ai (только Даниэль может) |
 
 ### 3а. Higgsfield CLI + Skills (не только MCP!) — на ВСЕХ чатах
@@ -403,3 +377,11 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
   https://nimble-bean-709.higgsfield.app
 - **Правило:** плейнтекст-паспорт с паролями в git НЕ кладём; ключи — только в
   `secrets.env` (коммитим `secrets.env.b64`).
+
+### Клон голоса Екатерины (МЕТАНОЙА) — ГОТОВ 18.07
+- Higgsfield element voice, `EKAT_VOICE_ID=28a9c823-63af-491b-b410-d22067178dce` (в secrets.env).
+- Генерация: `generate_audio model=seed_audio voice_type=element voice_id=$EKAT_VOICE_ID` (или CLI text2speech).
+  Безлимитно в рамках ultra-плана (платного), без пофайловой платы.
+- СТУДИЙНАЯ обработка (убирает «подводность»), ffmpeg -af:
+  `highpass=f=85,equalizer=f=300:t=q:w=1.2:g=-3,equalizer=f=2600:t=q:w=1.4:g=2.5,equalizer=f=4500:t=q:w=1.6:g=3,treble=g=3:f=9000,deesser=i=0.4,acompressor=threshold=-18dB:ratio=3:attack=6:release=90:makeup=2,[atempo=1.4,]loudnorm=I=-14:TP=-1.2:LRA=10`
+- Исходные сэмплы: 3×60с (чат 18.07). Мастер 150с загружен как media 8c64a7a2.
