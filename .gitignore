@@ -20,3 +20,5 @@ vcode/daily/last_run.log
 vcode/daily/current_spec.json
 xtts-venv/
 f5-venv/
+__pycache__/
+*.pyc
