@@ -1,0 +1,52 @@
+import os,json
+W=os.path.dirname(os.path.abspath(__file__))
+TOTAL=json.load(open(W+"/words.json"))["total"]
+FB="file://"+os.environ.get("FACTORY_FONTS","/home/user/OKO-TEAM/oko-app/factory/fonts")
+# clean animated scene titles (ONE font: Soyuz Bold, no borders). Only on open scenes (s1 hook, s6 CTA).
+TITLES=[
+ {"lines":["ЗАПЧАСТИ","И ГАРАНТИЯ"],"accent":1,"start":1.6,"end":4.3,"y":720},
+ {"lines":["ВОПРОС","ЗАКРЫТ"],"accent":1,"start":4.5,"end":7.15,"y":720},
+ {"lines":["НАПИШИТЕ","ГОРОД И ЗАДАЧУ"],"accent":1,"start":30.9,"end":35.8,"y":1230},
+]
+HTML="""<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('%FB%/SoyuzGrotesk-Bold.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;font-family:'soyuz'}
+.title{position:absolute;left:0;width:1080px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.ln{overflow:hidden;padding:0 6px 10px}
+.ln .in{display:block;color:#F6F4F1;font-size:104px;line-height:1.0;letter-spacing:1px;white-space:nowrap;
+  text-shadow:0 6px 30px rgba(0,0,0,.85),0 2px 4px rgba(0,0,0,.8)}
+.ln.acc .in{color:#FF7A3C}
+.ln.small .in{font-size:64px}
+</style></head><body>
+<div id="stage"></div>
+<script>
+const TITLES=__T__, TOTAL=__TOTAL__;
+const stage=document.getElementById('stage');
+function ease(x){return 1-Math.pow(1-x,3)} function clamp(x){return Math.max(0,Math.min(1,x))}
+function fit(inEl){ // shrink line if wider than 900
+  const w=inEl.getBoundingClientRect().width; if(w>900){inEl.style.fontSize=(parseFloat(getComputedStyle(inEl).fontSize)*900/w)+'px';}
+}
+window.render=function(t){
+  const ts=t*TOTAL; stage.innerHTML='';
+  const T=TITLES.find(x=>ts>=x.start-0.1 && ts<=x.end+0.4); if(!T) return;
+  const box=document.createElement('div'); box.className='title'; box.style.top=T.y+'px';
+  T.lines.forEach((ln,i)=>{
+    const d=document.createElement('div'); d.className='ln'+(i===T.accent?' acc':'')+(ln.length>13?' small':'');
+    const sp=document.createElement('span'); sp.className='in'; sp.textContent=ln; d.appendChild(sp); box.appendChild(d);
+  });
+  stage.appendChild(box);
+  [...box.querySelectorAll('.in')].forEach(fit);
+  // per-line mask reveal (translateY from 110% to 0), staggered; then fade out
+  const outp=ease(clamp((ts-(T.end))/0.35));
+  box.querySelectorAll('.ln').forEach((ln,i)=>{
+    const p=ease(clamp((ts-(T.start+i*0.16))/0.34));
+    ln.querySelector('.in').style.transform='translateY('+((1-p)*112)+'%)';
+  });
+  box.style.opacity=1-outp; box.style.transform='translateY('+(outp*-18)+'px) scale('+(1-outp*0.03)+')';
+};
+window.render(0);
+</script></body></html>"""
+html=HTML.replace("%FB%",FB).replace("__T__",json.dumps(TITLES,ensure_ascii=False)).replace("__TOTAL__",str(TOTAL))
+open(W+"/ig/html/titles.html","w").write(html)
+print("titles.html built,",len(TITLES),"titles")

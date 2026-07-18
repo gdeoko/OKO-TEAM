@@ -1,0 +1,63 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'mont9';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+@font-face{font-family:'mont7';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/montserrat-v31-cyrillic_latin-700.ttf')}
+@font-face{font-family:'man8';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#06070b}
+#bg{position:absolute;inset:0;background:radial-gradient(60% 40% at 50% 42%,#221206 0%,#0a0709 55%,#050507 100%)}
+#rays{position:absolute;left:50%;top:800px;width:1600px;height:1600px;margin:-800px 0 0 -800px;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(234,89,32,.10) 0deg,rgba(234,89,32,0) 7deg 18deg);
+  filter:blur(2px)}
+.dot{position:absolute;width:8px;height:8px;border-radius:50%;background:#FF7A3C;filter:blur(.5px)}
+#logo{position:absolute;left:50%;top:520px;width:300px;height:300px;margin-left:-150px;
+  transform-origin:center}
+#logo img{width:100%;height:100%;object-fit:contain;
+  filter:drop-shadow(0 0 34px rgba(234,89,32,.75))}
+#wrap{position:absolute;left:0;top:0;width:1080px;text-align:center}
+#d1{position:absolute;left:0;top:838px;width:1080px;height:130px;display:flex;align-items:center;justify-content:center;font-family:'mont9';font-size:126px;color:#F6F4F1;letter-spacing:3px}
+#d2{position:absolute;left:0;top:968px;width:1080px;height:130px;display:flex;align-items:center;justify-content:center;font-family:'mont9';font-size:126px;color:#EA5920;letter-spacing:3px}
+#ul{position:absolute;left:50%;top:1140px;height:12px;background:#EA5920;border-radius:6px;margin-left:-160px;width:320px}
+#tag{position:absolute;left:0;top:1200px;width:1080px;text-align:center;font-family:'man8';font-size:46px;color:#F6F4F1}
+#cta{position:absolute;left:50%;top:1370px;transform-origin:center;
+  font-family:'mont7';font-size:52px;color:#0c0a08;background:linear-gradient(135deg,#EA5920,#FF8A48);
+  padding:30px 66px;border-radius:40px;box-shadow:0 26px 70px rgba(234,89,32,.5);white-space:nowrap}
+#url{position:absolute;left:0;top:1560px;width:1080px;text-align:center;font-family:'mont7';font-size:44px;color:#d8d3ce}
+</style></head><body>
+<div id="bg"></div><div id="rays"></div>
+<div id="dots"></div>
+<div id="logo"><img src="__LOGO__"></div>
+<div id="d1">DIESEL</div>
+<div id="d2">CARGO</div>
+<div id="ul"></div>
+<div id="tag">Техника из Китая под ключ</div>
+<div id="cta">Оставить заявку</div>
+<div id="url">dieselcompany.pro</div>
+<script>
+const dots=document.getElementById('dots');
+const DP=[]; for(let i=0;i<26;i++){const e=document.createElement('div');e.className='dot';
+  const a=(i*137.5)%360, r=280+((i*53)%520); e.bx=540+Math.cos(a*Math.PI/180)*r; e.by=760+Math.sin(a*Math.PI/180)*r*0.9;
+  e.sp=0.4+((i%5)*0.16); dots.appendChild(e); DP.push(e);}
+function ease(x){return 1-Math.pow(1-x,3)} function clamp(x){return Math.max(0,Math.min(1,x))}
+const rays=document.getElementById('rays'),logo=document.getElementById('logo');
+const d1=document.getElementById('d1'),d2=document.getElementById('d2'),ul=document.getElementById('ul');
+const tag=document.getElementById('tag'),cta=document.getElementById('cta'),url=document.getElementById('url');
+function up(el,p,dy){el.style.opacity=p; el.style.transform='translateY('+((1-p)*dy)+'px)';}
+window.render=function(t){
+  rays.style.transform='rotate('+(t*22)+'deg)'; rays.style.opacity=0.4+0.25*Math.sin(t*6.28*1.5);
+  DP.forEach((e,i)=>{const fp=clamp((t-0.15-((i%7)*0.02))/0.5);
+    e.style.left=e.bx+'px'; e.style.top=(e.by-t*e.sp*120)+'px'; e.style.opacity=fp*(0.5+0.5*Math.sin(t*6.28*e.sp+i))*(1-clamp((t-0.85)/0.15));});
+  // logo pop + glow pulse
+  const lp=ease(clamp(t/0.30));
+  logo.style.opacity=lp; logo.style.transform='scale('+(0.62+0.38*lp)+') rotate('+((1-lp)*-8)+'deg)';
+  logo.querySelector('img').style.filter='drop-shadow(0 0 '+(20+18*Math.sin(t*6.28*1.2))+'px rgba(234,89,32,.8))';
+  up(d1,ease(clamp((t-0.18)/0.22)),40);
+  up(d2,ease(clamp((t-0.26)/0.22)),40);
+  const up2=ease(clamp((t-0.34)/0.2)); ul.style.opacity=up2; ul.style.width=(320*up2)+'px'; ul.style.marginLeft=(-160*up2)+'px';
+  up(tag,ease(clamp((t-0.44)/0.2)),26);
+  const cp=ease(clamp((t-0.56)/0.2)); const pulse=1+0.03*Math.sin((t-0.56)*6.28*2)*(t>0.56?1:0);
+  cta.style.opacity=cp; cta.style.transform='translateX(-50%) scale('+((0.8+0.2*cp)*pulse)+')';
+  up(url,ease(clamp((t-0.7)/0.2)),20);
+};
+window.render(0);
+</script></body></html>

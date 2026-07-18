@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'mont';src:url('file:///tmp/claude-0/-home-user-OKO-TEAM/f1a565bc-8f30-56e2-87d2-1ade6002be0e/scratchpad/factory/reelsmachineskill_3/reels-machine/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0}
+.line{position:absolute;left:0;width:1080px;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:0 22px;padding:0 90px;transform-origin:center}
+.w{display:inline-block;color:#F6F4F1;white-space:nowrap;
+  text-shadow:0 4px 22px rgba(0,0,0,.9),0 1px 3px rgba(0,0,0,.9);transform-origin:center bottom}
+.w.done{color:#F6F4F1}
+.w.next{color:rgba(246,244,241,.42)}
+.w.act{color:#FF7A3C}
+.w.blk{color:#0c0a08;background:#EA5920;border-radius:14px;padding:2px 16px;
+  box-shadow:0 10px 30px rgba(234,89,32,.45);text-shadow:none}
+</style></head><body>
+<div id="stage"></div>
+<script>
+const LINES=[{"seg": "s1", "start": 1.0, "end": 1.754, "words": [{"w": "Технику", "s": 1.0, "e": 1.548}, {"w": "из", "s": 1.548, "e": 1.754}]}, {"seg": "s1", "start": 1.754, "end": 2.576, "words": [{"w": "Китая", "s": 1.754, "e": 2.165}, {"w": "часто", "s": 2.165, "e": 2.576}]}, {"seg": "s1", "start": 2.576, "end": 3.467, "words": [{"w": "боятся", "s": 2.576, "e": 3.056}, {"w": "брать", "s": 3.056, "e": 3.467}]}, {"seg": "s1", "start": 3.467, "end": 4.564, "words": [{"w": "из-за", "s": 3.467, "e": 3.878}, {"w": "запчастей", "s": 3.878, "e": 4.564}]}, {"seg": "s1", "start": 4.564, "end": 5.318, "words": [{"w": "и", "s": 4.564, "e": 4.701}, {"w": "гарантии", "s": 4.701, "e": 5.318}]}, {"seg": "s1", "start": 5.318, "end": 5.592, "words": [{"w": "—", "s": 5.318, "e": 5.455}, {"w": "у", "s": 5.455, "e": 5.592}]}, {"seg": "s1", "start": 5.592, "end": 6.209, "words": [{"w": "нас", "s": 5.592, "e": 5.866}, {"w": "этот", "s": 5.866, "e": 6.209}]}, {"seg": "s1", "start": 6.209, "end": 7.168, "words": [{"w": "вопрос", "s": 6.209, "e": 6.688}, {"w": "закрыт", "s": 6.688, "e": 7.168}]}, {"seg": "s2", "start": 7.288, "end": 8.194, "words": [{"w": "Каждую", "s": 7.288, "e": 7.741}, {"w": "машину", "s": 7.741, "e": 8.194}]}, {"seg": "s2", "start": 8.194, "end": 9.228, "words": [{"w": "проверяем", "s": 8.194, "e": 8.84}, {"w": "перед", "s": 8.84, "e": 9.228}]}, {"seg": "s2", "start": 9.228, "end": 10.005, "words": [{"w": "отгрузкой", "s": 9.228, "e": 9.875}, {"w": "и", "s": 9.875, "e": 10.005}]}, {"seg": "s2", "start": 10.005, "end": 10.91, "words": [{"w": "даём", "s": 10.005, "e": 10.328}, {"w": "гарантию", "s": 10.328, "e": 10.91}]}, {"seg": "s2", "start": 10.91, "end": 11.751, "words": [{"w": "с", "s": 10.91, "e": 11.04}, {"w": "поддержкой", "s": 11.04, "e": 11.751}]}, {"seg": "s2", "start": 11.751, "end": 12.592, "words": [{"w": "по", "s": 11.751, "e": 11.945}, {"w": "запчастям", "s": 11.945, "e": 12.592}]}, {"seg": "s3", "start": 12.712, "end": 13.488, "words": [{"w": "Помогаем", "s": 12.712, "e": 13.347}, {"w": "с", "s": 13.347, "e": 13.488}]}, {"seg": "s3", "start": 13.488, "end": 14.264, "words": [{"w": "сервисом", "s": 13.488, "e": 14.123}, {"w": "и", "s": 14.123, "e": 14.264}]}, {"seg": "s3", "start": 14.264, "end": 15.675, "words": [{"w": "обучением", "s": 14.264, "e": 14.969}, {"w": "оператора", "s": 14.969, "e": 15.675}]}, {"seg": "s3", "start": 15.675, "end": 16.662, "words": [{"w": "чтобы", "s": 15.675, "e": 16.098}, {"w": "техника", "s": 16.098, "e": 16.662}]}, {"seg": "s3", "start": 16.662, "end": 17.438, "words": [{"w": "работала", "s": 16.662, "e": 17.297}, {"w": "а", "s": 17.297, "e": 17.438}]}, {"seg": "s3", "start": 17.438, "end": 18.496, "words": [{"w": "не", "s": 17.438, "e": 17.65}, {"w": "простаивала", "s": 17.65, "e": 18.496}]}, {"seg": "s4", "start": 18.616, "end": 19.88, "words": [{"w": "Выкупаем", "s": 18.616, "e": 19.285}, {"w": "технику", "s": 19.285, "e": 19.88}]}, {"seg": "s4", "start": 19.88, "end": 20.624, "words": [{"w": "на", "s": 19.88, "e": 20.103}, {"w": "заводе", "s": 20.103, "e": 20.624}]}, {"seg": "s4", "start": 20.624, "end": 21.665, "words": [{"w": "страхуем", "s": 20.624, "e": 21.293}, {"w": "груз", "s": 21.293, "e": 21.665}]}, {"seg": "s4", "start": 21.665, "end": 22.929, "words": [{"w": "проходим", "s": 21.665, "e": 22.335}, {"w": "таможню", "s": 22.335, "e": 22.929}]}, {"seg": "s4", "start": 22.929, "end": 23.748, "words": [{"w": "и", "s": 22.929, "e": 23.078}, {"w": "привозим", "s": 23.078, "e": 23.748}]}, {"seg": "s4", "start": 23.748, "end": 24.268, "words": [{"w": "её", "s": 23.748, "e": 23.971}, {"w": "под", "s": 23.971, "e": 24.268}]}, {"seg": "s4", "start": 24.268, "end": 24.64, "words": [{"w": "ключ", "s": 24.268, "e": 24.64}]}, {"seg": "s5", "start": 24.76, "end": 25.248, "words": [{"w": "В", "s": 24.76, "e": 24.899}, {"w": "цену", "s": 24.899, "e": 25.248}]}, {"seg": "s5", "start": 25.248, "end": 26.014, "words": [{"w": "уже", "s": 25.248, "e": 25.526}, {"w": "входит", "s": 25.526, "e": 26.014}]}, {"seg": "s5", "start": 26.014, "end": 26.85, "words": [{"w": "доставка", "s": 26.014, "e": 26.641}, {"w": "до", "s": 26.641, "e": 26.85}]}, {"seg": "s5", "start": 26.85, "end": 27.895, "words": [{"w": "вашего", "s": 26.85, "e": 27.337}, {"w": "объекта", "s": 27.337, "e": 27.895}]}, {"seg": "s5", "start": 27.895, "end": 28.8, "words": [{"w": "оформление", "s": 27.895, "e": 28.661}, {"w": "и", "s": 28.661, "e": 28.8}]}, {"seg": "s5", "start": 28.8, "end": 29.706, "words": [{"w": "полный", "s": 28.8, "e": 29.288}, {"w": "пакет", "s": 29.288, "e": 29.706}]}, {"seg": "s5", "start": 29.706, "end": 30.472, "words": [{"w": "документов", "s": 29.706, "e": 30.472}]}, {"seg": "s6", "start": 30.592, "end": 31.478, "words": [{"w": "Напишите", "s": 30.592, "e": 31.206}, {"w": "ваш", "s": 31.206, "e": 31.478}]}, {"seg": "s6", "start": 31.478, "end": 32.024, "words": [{"w": "город", "s": 31.478, "e": 31.887}, {"w": "и", "s": 31.887, "e": 32.024}]}, {"seg": "s6", "start": 32.024, "end": 32.637, "words": [{"w": "задачу", "s": 32.024, "e": 32.501}, {"w": "в", "s": 32.501, "e": 32.637}]}, {"seg": "s6", "start": 32.637, "end": 33.66, "words": [{"w": "комментариях", "s": 32.637, "e": 33.524}, {"w": "и", "s": 33.524, "e": 33.66}]}, {"seg": "s6", "start": 33.66, "end": 34.478, "words": [{"w": "мы", "s": 33.66, "e": 33.865}, {"w": "подберём", "s": 33.865, "e": 34.478}]}, {"seg": "s6", "start": 34.478, "end": 35.16, "words": [{"w": "технику", "s": 34.478, "e": 35.024}, {"w": "с", "s": 35.024, "e": 35.16}]}, {"seg": "s6", "start": 35.16, "end": 35.978, "words": [{"w": "гарантией", "s": 35.16, "e": 35.842}, {"w": "и", "s": 35.842, "e": 35.978}]}, {"seg": "s6", "start": 35.978, "end": 36.592, "words": [{"w": "расчётом", "s": 35.978, "e": 36.592}]}], STYLE={"s1": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}, "s2": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}, "s3": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}, "s4": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}, "s5": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}, "s6": {"font": "soyuz", "y": 1615, "size": 76, "treat": "amberText"}}, TOTAL=38.992;
+const stage=document.getElementById('stage');
+function ease(x){return 1-Math.pow(1-x,3)} function clamp(x){return Math.max(0,Math.min(1,x))}
+function render(t){
+  const ts=t*TOTAL;
+  stage.innerHTML='';
+  // find active line (last line whose start<=ts and ts<end+tail)
+  let cur=null;
+  for(const L of LINES){ if(ts>=L.start-0.12 && ts<=L.end+0.35){ cur=L; } }
+  if(!cur) return;
+  const st=STYLE[cur.seg]||STYLE.s3;
+  const div=document.createElement('div'); div.className='line';
+  const fs=st.size;
+  div.style.fontFamily=st.font; div.style.fontSize=fs+'px';
+  div.style.top=(st.y-fs)+'px';
+  // line enter animation
+  const inp=ease(clamp((ts-(cur.start-0.12))/0.22));
+  const outp=ease(clamp((ts-(cur.end+0.12))/0.23));
+  div.style.opacity=inp*(1-outp);
+  div.style.transform='translateY('+((1-inp)*26 + outp*-14)+'px)';
+  for(const wd of cur.words){
+    const s=document.createElement('span'); s.textContent=wd.w;
+    const active = ts>=wd.s-0.04 && ts<wd.e+0.02;
+    const done = ts>=wd.e;
+    let cls='w '+(active?'':(done?'done':'next'));
+    if(active){ cls += (st.treat==='block'?' blk':' act'); }
+    s.className=cls;
+    if(active){ const pop=ease(clamp((ts-wd.s)/0.13)); s.style.transform='scale('+(1.0+0.13*(1-Math.abs(1-2*pop)))+')'; }
+    div.appendChild(s);
+  }
+  stage.appendChild(div);
+}
+window.render=render; render(0);
+</script></body></html>
