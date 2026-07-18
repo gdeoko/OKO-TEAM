@@ -150,8 +150,19 @@ Environment variables окружения:
 
 Оперативка (для соцавтопилота):
 - **YouTube, ВКонтакте, Telegram** — агент уже залогинен.
-- **TikTok** — вход через Hooppy.ru; для активности (ответы на комменты, постинг,
-  выгрузка аналитики) нужен прямой вход агента в аккаунт, как в Instagram.
+- **Likee** — агент залогинен (18.07): вход email+пароль (`OKO_LIKEE_PASSWORD=181202`),
+  но submit формы срабатывает только JS-кликом по `.likee-btn.clickable` (не Playwright-клик).
+  Профиль браузера: VPS `/opt/oko-poster/cfg/likee_profile`. Постинг работает:
+  uploadvideo → setInputFiles → поле «Add video description» (getByPlaceholder) →
+  кнопка `.plist-upload` (div, не button) → saveVideo code:0. Ролик выходит через ~30 мин.
+- **Instagram** — агент залогинен (18.07) как daniel.oko.app (ds_user_id 14590089612).
+  ВАЖНО: reCAPTCHA Enterprise появляется ТОЛЬКО в headless — вход делать **headed через
+  xvfb**. Форма грузится, submit по Enter (у IG кнопки — div, не button). На новом
+  устройстве IG просит подтверждение → Даниэль одобряет в приложении → сессия проходит.
+  Профиль: VPS `/opt/oko-poster/cfg/ig_oko_profile`, стейт `cfg/ig_oko_state.json`.
+  Грабли: постинг сразу после свежего входа даёт «Произошла ошибка» (IG режет write на
+  прогрев) — первый пост делать после прогрева сессии.
+- **TikTok** — вход через Hooppy.ru; прямой вход агента не идёт (нужен человеческий IP).
 - **VK-пароль** Даниэль просил обновить — при работе с VK сверять/менять.
 - Приглашение в MAX-мессенджер (max.ru/join/...) прислано — вступать по запросу.
 
