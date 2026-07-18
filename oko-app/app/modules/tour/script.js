@@ -207,6 +207,15 @@ window.addEventListener('resize', function(){
   trRzT = setTimeout(function(){ if(trOpen) trGo(trIdx); }, 140);
 });
 
+/* клавиатура (десктоп): Esc — пропустить, ←/→ — навигация, Enter — далее */
+document.addEventListener('keydown', function(e){
+  if(!trOpen) return;
+  if(e.key === 'Escape'){ e.preventDefault(); trSkip(); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); trNext(); }
+  else if(e.key === 'Enter'){ e.preventDefault(); trNext(); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); if(trIdx > 0) trGo(trIdx - 1, -1); }
+});
+
 /* ---------- авто-старт: один раз после первого входа ---------- */
 function trBusy(){
   const auth = document.getElementById('authScreen');

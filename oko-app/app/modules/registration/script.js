@@ -295,7 +295,7 @@ function regFinish(){
     regPopupMark('welcome');
     setTimeout(()=>{
       showPopup({ico:'logo', title:'Добро пожаловать в OKO',
-        body:'Аккаунт создан, ' + esc(name) + '. 2 500 ₽ уже на твоём лицевом счёте — потрать на продвижение, биржу или игры.',
+        body: regWelcomeBody(name),
         actions:[
           {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('Бонус на лицевом счёте — кошелёк уже в сборке'); }},
           {label:'Позже', ghost:true},
@@ -304,6 +304,52 @@ function regFinish(){
   }
   regSchedulePopups();
 }
+
+/* ---------- премиум-тела системных попапов (rich HTML, свои reg-pop-* классы) ---------- */
+function regFeatRow(ico, txt){
+  return `<div class="reg-pop-feat">${I(ico)}<span>${txt}</span></div>`;
+}
+function regWelcomeBody(name){
+  return `<div class="reg-pop">
+    <p class="reg-pop-lead">Аккаунт создан, <b>${esc(name)}</b>. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
+    <div class="reg-pop-bonus">
+      <span class="reg-pop-bonus-ico">${I('money')}</span>
+      <div><b>2 500 ₽</b><small>уже на лицевом счёте</small></div>
+      <span class="reg-pop-bonus-tag">Приветственный бонус</span>
+    </div>
+    <div class="reg-pop-feats">
+      ${regFeatRow('rocket','Продвижение постов и каналов')}
+      ${regFeatRow('briefcase','Биржа заказов и услуг')}
+      ${regFeatRow('play','Игры и ежедневные бонусы')}
+    </div>
+  </div>`;
+}
+function regProBody(){
+  return `<div class="reg-pop">
+    <p class="reg-pop-lead">Максимум возможностей OKO — приоритет, аналитика и сниженная комиссия.</p>
+    <div class="reg-pop-feats">
+      ${regFeatRow('rocket','Приоритет в ленте и поиске')}
+      ${regFeatRow('poll','Расширенная аналитика профиля')}
+      ${regFeatRow('megaphone','Кабинет продвижения')}
+      ${regFeatRow('money','Сниженная комиссия биржи')}
+    </div>
+    <div class="reg-pop-price">
+      <div><b>от 490 ₽</b><small>в месяц</small></div>
+      <span class="reg-pop-save">Выгода 20% при оплате за год</span>
+    </div>
+  </div>`;
+}
+function regNotifBody(){
+  return `<div class="reg-pop">
+    <p class="reg-pop-lead">Узнавай о важном сразу, а не когда откроешь приложение.</p>
+    <div class="reg-pop-feats">
+      ${regFeatRow('comment','Ответы и сообщения в чатах')}
+      ${regFeatRow('briefcase','Отклики и сделки на бирже')}
+      ${regFeatRow('money','Начисления партнёрской программы')}
+    </div>
+  </div>`;
+}
+try{ window.regWelcomeBody = regWelcomeBody; window.regProBody = regProBody; window.regNotifBody = regNotifBody; }catch(e){}
 
 /* ---------- системные попапы (каждый один раз, oko-reg-popups) ---------- */
 let regPopTimers = [];
@@ -331,7 +377,7 @@ function regPopupPro(){
   }
   regPopupMark('pro');
   showPopup({ico:'crown', title:'Открой OKO PRO',
-    body:'Приоритет в ленте и поиске, расширенная аналитика, кабинет продвижения и сниженная комиссия биржи. За год — выгода 20%.',
+    body: regProBody(),
     actions:[
       {label:'Оформить PRO', onclick:()=>{ if(typeof openPay === 'function') openPay('PRO'); else toast('Тарифы скоро откроются'); }},
       {label:'Позже', ghost:true},
@@ -345,7 +391,7 @@ function regPopupNotif(){
   }
   regPopupMark('notif');
   showPopup({ico:'bell', title:'Включи уведомления',
-    body:'Ответы в чатах, отклики на бирже и начисления партнёрки — узнавай о них сразу, а не когда зайдёшь.',
+    body: regNotifBody(),
     actions:[
       {label:'Включить', onclick:()=>{
         try{ if(window.Notification && Notification.requestPermission) Notification.requestPermission(); }catch(e){}

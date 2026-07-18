@@ -95,11 +95,11 @@ function st2Render(){
   if(!body) return;
   const alive = st2Alive(), others = alive.filter(s => !s.cur);
   const N = [
-    ['msg',       'Сообщения и чаты'],
-    ['feed',      'Лента: реакции и упоминания'],
-    ['market',    'Биржа: заказы и отклики'],
-    ['academy',   'Академия: новые уроки'],
-    ['marketing', 'Новости и предложения OKO'],
+    ['msg',       'Сообщения и чаты',            'chat'],
+    ['feed',      'Лента: реакции и упоминания', 'heart'],
+    ['market',    'Биржа: заказы и отклики',     'briefcase'],
+    ['academy',   'Академия: новые уроки',       'star'],
+    ['marketing', 'Новости и предложения OKO',   'megaphone'],
   ];
   body.innerHTML = `
   <div class="st2-sec">
@@ -115,8 +115,8 @@ function st2Render(){
   </div>
   <div class="st2-sec">
     <div class="st2-h">${I('bell')} Уведомления</div>
-    <div class="st2-card">${N.map(([k, l]) =>
-      `<button class="prow" onclick="st2Tgl('notif','${k}',this)">${l} ${st2Sw(ST2.notif[k])}</button>`).join('')}
+    <div class="st2-card">${N.map(([k, l, ico]) =>
+      `<button class="prow" onclick="st2Tgl('notif','${k}',this)">${I(ico)} ${l} ${st2Sw(ST2.notif[k])}</button>`).join('')}
     </div>
   </div>
   <div class="st2-sec">

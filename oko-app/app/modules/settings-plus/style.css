@@ -17,8 +17,23 @@
 @media(prefers-reduced-motion:reduce){.st2-sec{animation:none}}
 .st2-h{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:16px;letter-spacing:.09em;color:var(--dim);margin:0 2px 8px;text-transform:uppercase}
 .st2-h svg.i{width:15px;height:15px;color:var(--accent)}
-.st2-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:2px 14px;transition:border-color .25s}
+.st2-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:2px 14px;transition:border-color .25s,box-shadow .25s}
 .st2-card .prow:last-child{border-bottom:none}
+.st2-card:hover{border-color:color-mix(in srgb,var(--accent) 34%,var(--border))}
+
+/* строки-настройки: живой ховер/пресс, скруглённая подсветка, ровные иконки */
+#st2View .prow{border-radius:12px;padding-left:10px;padding-right:8px;transition:background .18s,transform .12s}
+#st2View .prow[onclick]:hover{background:var(--lime-dim)}
+#st2View .prow[onclick]:active{transform:scale(.985)}
+#st2View .prow>svg.i{flex-shrink:0}
+
+/* красивый switch: плавная пружина, свечение включённого, отклик на нажатие */
+#st2View .switch{transition:background .28s cubic-bezier(.3,1.4,.5,1),box-shadow .28s}
+#st2View .switch i{transition:left .28s cubic-bezier(.3,1.6,.5,1),background .2s,transform .12s}
+#st2View .switch.on{box-shadow:0 0 0 1px var(--lime),0 0 14px rgba(154,255,0,.4)}
+:root[data-theme="light"] #st2View .switch.on{box-shadow:0 0 0 1px var(--lime),0 2px 8px rgba(90,150,10,.28)}
+#st2View .prow:active .switch i{transform:scale(.9)}
+@media(prefers-reduced-motion:reduce){#st2View .switch,#st2View .switch i{transition:none}}
 
 /* значение справа в строке (почта, размер кэша…) */
 .st2-card .prow .st2-val{margin-left:auto;color:var(--dim);font-size:12.5px;font-weight:600;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .2s}

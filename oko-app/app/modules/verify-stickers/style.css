@@ -38,16 +38,34 @@
 .vs-stk-head svg{width:16px;height:16px;flex-shrink:0;filter:drop-shadow(0 0 4px rgba(0,152,234,.6))}
 .vs-stk-head .vs-pro{margin-left:auto;font-family:var(--font-body);font-size:8.5px;font-weight:800;letter-spacing:.6px;color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);padding:3px 9px;border-radius:999px}
 .vs-stk{position:relative}
-.vs-stk .vs-lock{position:absolute;top:4px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(8,10,14,.8);border:1px solid rgba(0,152,234,.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.vs-stk .vs-lock{position:absolute;top:7px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(8,10,14,.82);border:1px solid rgba(0,152,234,.5);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);z-index:2}
 .vs-stk .vs-lock svg{width:11px;height:11px;color:#3fb6ff}
-.vs-locked .vs-tstk{opacity:.4;filter:grayscale(.35)}
+.vs-locked .vs-stk-art{opacity:.42;filter:grayscale(.4)}
 .vs-locked small{opacity:.55}
-:root[data-theme="light"] .vs-stk .vs-lock{background:rgba(255,255,255,.85)}
+:root[data-theme="light"] .vs-stk .vs-lock{background:rgba(255,255,255,.88);border-color:#8fccf0}
 
-/* --- сам TON-стикер (кругляш) --- */
-.vs-tstk{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 38% 30%,#0e2c46,#050d18 74%);border:1.5px solid rgba(0,152,234,.75);box-shadow:0 0 14px rgba(0,152,234,.3),inset 0 0 12px rgba(0,152,234,.18)}
-.vs-tstk svg{width:66%;height:66%;display:block;filter:drop-shadow(0 0 6px rgba(0,152,234,.55))}
-:root[data-theme="light"] .vs-tstk{background:radial-gradient(circle at 38% 30%,#eaf7ff,#c9e8fd 76%);border-color:#59b7ec;box-shadow:0 0 10px rgba(0,152,234,.22),inset 0 0 10px rgba(0,152,234,.1)}
+/* --- премиум-иллюстрация стикера: плавает прозрачно (в сообщении и на тайле) --- */
+.vs-stk-art{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;vertical-align:middle}
+.vs-stk-art svg{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))}
+.vs-stk-art.vs-ton svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,.3)) drop-shadow(0 0 7px rgba(0,152,234,.5))}
+:root[data-theme="light"] .vs-stk-art svg{filter:drop-shadow(0 3px 6px rgba(20,30,45,.2))}
+:root[data-theme="light"] .vs-stk-art.vs-ton svg{filter:drop-shadow(0 2px 5px rgba(20,30,45,.18)) drop-shadow(0 0 6px rgba(0,152,234,.4))}
+/* крупный стикер в ленте сообщений — мягкое свечение под темп бренда */
+.sticker-msg .vs-stk-art svg{filter:drop-shadow(0 6px 14px rgba(0,0,0,.4))}
+.sticker-msg .vs-stk-art.vs-ton svg{filter:drop-shadow(0 5px 12px rgba(0,0,0,.4)) drop-shadow(0 0 14px rgba(0,152,234,.45))}
+:root[data-theme="light"] .sticker-msg .vs-stk-art svg{filter:drop-shadow(0 6px 14px rgba(20,30,45,.24))}
+.sticker-msg .vs-stk-art{animation:vs-stk-in .42s cubic-bezier(.34,1.56,.44,1)}
+@keyframes vs-stk-in{0%{transform:scale(.5) rotate(-8deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+
+/* --- премиум-тайл в гриде стикеров (ядровой .stk-btn: ровная сетка) --- */
+.stk-btn{background:linear-gradient(158deg,var(--raised),var(--surface));border:1px solid var(--border);border-radius:var(--r-md);padding:13px 8px 10px;min-height:104px;justify-content:center;transition:transform .18s cubic-bezier(.34,1.4,.5,1),box-shadow .22s ease,border-color .22s ease}
+.stk-btn .vs-stk-art{transition:transform .2s cubic-bezier(.34,1.6,.5,1)}
+.stk-btn:hover{transform:translateY(-3px);border-color:var(--lime);box-shadow:0 10px 24px rgba(0,0,0,.32),var(--glow)}
+.stk-btn:hover .vs-stk-art{transform:scale(1.08) rotate(-3deg)}
+.stk-btn:active{transform:scale(.93)}
+.stk-btn.vs-stk:hover{border-color:#3fb6ff;box-shadow:0 10px 24px rgba(0,0,0,.32),0 0 16px rgba(0,152,234,.35)}
+:root[data-theme="light"] .stk-btn:hover{box-shadow:0 10px 22px rgba(20,30,45,.14),var(--glow)}
+:root[data-theme="light"] .stk-btn.vs-stk:hover{box-shadow:0 10px 22px rgba(20,30,45,.14),0 0 16px rgba(0,152,234,.28)}
 
 /* --- дождь кристаллов при отправке TON-стикера --- */
 .vs-rain{position:fixed;overflow:hidden;pointer-events:none;z-index:36}

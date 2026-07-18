@@ -99,3 +99,154 @@
   .reg-body .reg-code input{width:50px;height:58px;font-size:24px}
   .reg-h{font-size:28px}
 }
+
+/* ============================================================
+   ПРЕМИУМ-СЛОЙ РЕГИСТРАЦИИ (фон/анимации, поля, попапы)
+   ============================================================ */
+
+/* --- живой брендовый фон вьюхи входа --- */
+#regView{background:var(--bg);isolation:isolate}
+#regView::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(680px 520px at 82% -8%, rgba(154,255,0,.13), transparent 62%),
+    radial-gradient(560px 460px at -12% 108%, rgba(154,255,0,.09), transparent 60%),
+    radial-gradient(900px 700px at 50% 130%, rgba(154,255,0,.05), transparent 70%);
+  animation:regAmbient 18s ease-in-out infinite alternate}
+#regView::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(154,255,0,.10) 1px, transparent 1.4px);
+  background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(120% 90% at 50% 0%, #000 8%, transparent 62%);
+  mask-image:radial-gradient(120% 90% at 50% 0%, #000 8%, transparent 62%);
+  animation:regGrid 24s linear infinite}
+#regView > .ep-head,#regView > .reg-progress,#regView > .reg-body{position:relative;z-index:1}
+:root[data-theme="light"] #regView::before{
+  background:
+    radial-gradient(680px 520px at 82% -8%, rgba(122,204,0,.16), transparent 62%),
+    radial-gradient(560px 460px at -12% 108%, rgba(122,204,0,.12), transparent 60%),
+    radial-gradient(900px 700px at 50% 130%, rgba(122,204,0,.06), transparent 70%)}
+:root[data-theme="light"] #regView::after{opacity:.4;background-image:radial-gradient(rgba(122,204,0,.14) 1px, transparent 1.4px)}
+@keyframes regAmbient{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(-2.5%,1.8%,0) scale(1.07)}}
+@keyframes regGrid{to{background-position:26px 26px}}
+@media(prefers-reduced-motion:reduce){#regView::before,#regView::after{animation:none}}
+
+/* --- прогресс-бар: живой блик + степ-пипы --- */
+.reg-progress{position:relative}
+.reg-progress i{position:relative}
+.reg-progress i::after{content:'';position:absolute;top:0;right:0;bottom:0;width:34px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85));mix-blend-mode:overlay;
+  animation:regBarSheen 2.4s ease-in-out infinite}
+@keyframes regBarSheen{0%,100%{opacity:0}50%{opacity:.9}}
+@media(prefers-reduced-motion:reduce){.reg-progress i::after{animation:none;opacity:0}}
+
+/* --- заголовки шагов: акцент лаймом --- */
+.reg-h{background:linear-gradient(92deg,var(--text) 66%,var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+:root[data-theme="light"] .reg-h{background:linear-gradient(92deg,var(--text) 72%,#5aa300);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* --- поля ввода: мягкая подложка + фокус --- */
+.reg-body input{box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
+.reg-body input:focus{box-shadow:0 0 0 3px var(--lime-dim),0 8px 24px -12px rgba(154,255,0,.5)}
+.reg-body input::placeholder{color:var(--dim);opacity:.7}
+
+/* --- сегмент почта/телефон: плавный лайм-переключатель --- */
+.reg-seg{position:relative;overflow:hidden}
+.reg-seg button{position:relative;z-index:1}
+.reg-seg button.on svg.i{filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+
+/* --- меры надёжности пароля: блик на «отлично» --- */
+.reg-strength i.hi{position:relative;overflow:hidden}
+.reg-strength i.hi::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
+  transform:translateX(-100%);animation:regStrSheen 1.6s ease-in-out infinite}
+@keyframes regStrSheen{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.reg-strength i.hi::after{animation:none;opacity:0}}
+
+/* --- кнопка «дальше»: подсветка при готовности --- */
+.reg-next:not(:disabled){box-shadow:0 10px 30px -10px rgba(154,255,0,.55)}
+.reg-next:not(:disabled):hover{transform:translateY(-1px)}
+.reg-next svg.i{transition:transform .18s}
+.reg-next:not(:disabled):hover svg.i{transform:translateX(3px)}
+
+/* --- ценностная строка под шагом 1 --- */
+.reg-props{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;
+  margin-top:22px;opacity:0;animation:regIn .5s .15s ease forwards}
+.reg-prop{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--dim);
+  background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:6px 11px}
+.reg-prop svg.i{width:13px;height:13px;color:var(--accent)}
+.reg-prop-dot{width:3px;height:3px;border-radius:50%;background:var(--border)}
+
+/* --- шаг 2: точка-каретка в активном поле кода --- */
+.reg-code input:focus{caret-color:var(--lime)}
+.reg-code input.fill{animation:regCodePop .22s cubic-bezier(.3,1.4,.4,1)}
+@keyframes regCodePop{0%{transform:scale(.86)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.reg-code input.fill{animation:none}}
+.reg-code-ico::after{content:'';position:absolute;width:64px;height:64px;border-radius:50%;
+  border:1.5px solid rgba(154,255,0,.35);animation:regRing 2.2s ease-out infinite}
+.reg-code-ico{position:relative}
+@keyframes regRing{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+@media(prefers-reduced-motion:reduce){.reg-code-ico::after{animation:none;opacity:0}}
+
+/* --- шаг 3: интерес-чипы появляются каскадом --- */
+.reg-int{position:relative;overflow:hidden}
+.reg-step.active .reg-int{animation:regChipIn .42s cubic-bezier(.2,1,.3,1) both}
+.reg-step.active .reg-int:nth-child(1){animation-delay:.02s}
+.reg-step.active .reg-int:nth-child(2){animation-delay:.07s}
+.reg-step.active .reg-int:nth-child(3){animation-delay:.12s}
+.reg-step.active .reg-int:nth-child(4){animation-delay:.17s}
+.reg-step.active .reg-int:nth-child(5){animation-delay:.22s}
+.reg-step.active .reg-int:nth-child(6){animation-delay:.27s}
+@keyframes regChipIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-step.active .reg-int{animation:none}}
+.reg-int:hover{border-color:var(--lime);transform:translateY(-1px)}
+.reg-int.on::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  animation:regChipSheen .6s ease}
+@keyframes regChipSheen{to{left:130%}}
+.reg-int.on svg.i,.reg-int.on span{position:relative;z-index:1}
+
+/* --- никнейм: подложка-статус --- */
+.ep-nick.reg-nick{transition:border-color .2s,box-shadow .2s}
+.reg-nick:has(#regNick:focus){border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+
+/* --- дата рождения: аккуратный лайм-пикер --- */
+.reg-body input[type="date"]::-webkit-calendar-picker-indicator{opacity:.6;cursor:pointer;filter:invert(.5)}
+:root[data-theme="light"] .reg-body input[type="date"]::-webkit-calendar-picker-indicator{filter:none;opacity:.55}
+
+/* ============ ПРЕМИУМ-ПОПАПЫ welcome / pro / notif ============ */
+#okoPopup .reg-pop{text-align:left}
+.reg-pop-lead{color:var(--dim);font-size:13px;line-height:1.55;text-align:center;margin:-4px 0 14px}
+.reg-pop-lead b{color:var(--text);font-weight:700}
+
+/* бонус-плашка welcome */
+.reg-pop-bonus{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:var(--r-md);
+  background:linear-gradient(135deg,var(--lime-dim),rgba(154,255,0,.04));
+  border:1px solid rgba(154,255,0,.28);margin-bottom:14px;position:relative;overflow:hidden}
+.reg-pop-bonus::before{content:'';position:absolute;top:-60%;left:-30%;width:60%;height:220%;
+  background:linear-gradient(90deg,transparent,rgba(154,255,0,.18),transparent);transform:rotate(18deg);
+  animation:regBonusSheen 3.6s ease-in-out infinite}
+@keyframes regBonusSheen{0%{left:-40%}55%,100%{left:130%}}
+@media(prefers-reduced-motion:reduce){.reg-pop-bonus::before{animation:none;opacity:0}}
+.reg-pop-bonus-ico{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--lime);box-shadow:0 6px 18px -6px rgba(154,255,0,.7);position:relative;z-index:1}
+.reg-pop-bonus-ico svg.i{width:21px;height:21px;color:#000}
+.reg-pop-bonus > div{display:flex;flex-direction:column;line-height:1.1;position:relative;z-index:1}
+.reg-pop-bonus > div b{font-family:var(--font-display);font-size:26px;color:var(--text);letter-spacing:.01em}
+.reg-pop-bonus > div small{font-size:11px;color:var(--dim);margin-top:2px}
+.reg-pop-bonus-tag{margin-left:auto;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--accent);background:rgba(154,255,0,.14);border-radius:99px;padding:4px 8px;text-align:center;line-height:1.2;
+  max-width:84px;position:relative;z-index:1}
+
+/* список фич pro/notif/welcome */
+.reg-pop-feats{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+.reg-pop-feat{display:flex;align-items:center;gap:11px;padding:9px 4px;font-size:13px;font-weight:600;color:var(--text);
+  border-bottom:1px solid var(--border)}
+.reg-pop-feat:last-child{border-bottom:none}
+.reg-pop-feat svg.i{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.reg-pop-feat span{flex:1}
+
+/* цена pro */
+.reg-pop-price{display:flex;align-items:center;gap:12px;margin-top:14px;padding:12px 14px;border-radius:var(--r-md);
+  background:var(--raised);border:1px solid var(--border)}
+.reg-pop-price > div{display:flex;flex-direction:column;line-height:1.1}
+.reg-pop-price > div b{font-family:var(--font-display);font-size:24px;color:var(--text)}
+.reg-pop-price > div small{font-size:11px;color:var(--dim);margin-top:2px}
+.reg-pop-save{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent);text-align:right;max-width:140px;line-height:1.3}
