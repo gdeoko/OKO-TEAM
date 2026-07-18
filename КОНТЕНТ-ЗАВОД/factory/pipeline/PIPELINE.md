@@ -25,14 +25,22 @@ pip install --break-system-packages -q faster-whisper   # для синхрон�
 (`videos.pexels.com/...uhd...`) через `curl --cacert $SSL_CERT_FILE`. Проверить freezedetect —
 без статики. (Эталон отбора/скачивания — как в build_segments.py вход.)
 
-## 3. Голос + музыка + обложка (Higgsfield CLI — автономно)
+## 3. Голос + музыка + обложка — ТОЛЬКО БЕСПЛАТНО (Higgsfield НЕ использовать для голоса/обложек!)
+Даниэль запретил тратить Higgsfield на голос и картинки. Голос — КЛОН Екатерины бесплатно
+через HF (Higgs Audio v3), обложки — бесплатно Pollinations FLUX.
 ```
-higgsfield generate create text2speech_v2 --variant elevenlabs \
-  --voice_id ca83ca7f-c186-493d-bd69-0d765fa861b2 --voice_type preset \
-  --prompt "<VO>" --wait --wait-timeout 150s        # → mp3 URL → work/vo.mp3
-higgsfield generate create sonilo_music --duration 37 --prompt "<настроение>" --wait  # → work/music.m4a
-higgsfield generate create nano_banana_pro --aspect_ratio 9:16 --resolution 2k --prompt "<storybook>" --wait
-# обложку композитить с ПРОЗРАЧНЫМ лого brand/metanoia/png (без квадрата), заголовок Playfair+Soyuz
+# ГОЛОС (клон Екатерины, бесплатно, HF ZeroGPU) — pipeline/tts_free.py
+python3 КОНТЕНТ-ЗАВОД/factory/pipeline/tts_free.py "<VO текст>" work/vo.mp3 1.0   # speed 1.0 (или 1.4)
+#   движок Higgs Audio v3 (patriotyk/higgs-audio-v3-tts), запасной OmniVoice; студийная обработка внутри.
+#   референс голоса: factory/voice/ekat_ref.mp3 (+ ekat_ref_text.txt). Требует HF_TOKEN.
+#   ВАЖНО: русский текст писать с Ё где нужно; проверить распознаванием (whisper) что слова не искажены.
+
+# ОБЛОЖКА/картинки (бесплатно, Pollinations FLUX, без ключа/квоты) — pipeline/cover_free.py
+python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "<storybook prompt, no text>" work/cover_base.jpg 1080 1920 <seed>
+#   затем композитить заголовок Playfair+Soyuz + ПРОЗРАЧНЫЙ лого brand/metanoia/png (без квадрата).
+
+# МУЗЫКА: sonilo_music у Higgsfield платный. Бесплатно — Pixabay/Freesound (ключи в secrets:
+#   PIXABAY_API_KEY, FREESOUND_API_KEY) или тихий эмбиент-луп из библиотеки. Не тратить Higgsfield.
 ```
 
 ## 4. Монтаж база
