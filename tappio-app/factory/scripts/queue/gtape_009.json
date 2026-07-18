@@ -2,7 +2,7 @@
  "id": "gtape_009",
  "app": "tape",
  "voice": "en-US-ChristopherNeural",
- "rate": "+6%",
+ "rate": "+4%",
  "grade": "warm_gold",
  "brand": {
   "accent": "#F4C430",
@@ -13,9 +13,9 @@
  },
  "music": {
   "queries": [
-   "happy ukulele diy",
+   "cheerful folk clap",
    "bright pop home",
-   "cheerful folk clap"
+   "positive corporate light groove"
   ]
  },
  "cover": {
@@ -23,7 +23,7 @@
   "top": "DECORATE",
   "big": "WITHOUT\nHOLES",
   "q": [
-   "carpenter measuring wood workshop"
+   "rolled up rug floor room"
   ]
  },
  "segments": [
@@ -55,29 +55,42 @@
  "shots": [
   {
    "q": [
-    "carpenter measuring wood workshop"
+    "curtains window measuring home"
    ],
-   "motion": "panr"
+   "motion": "zout"
   },
   {
    "q": [
-    "picture frame hanging wall level"
+    "furniture store showroom sofa"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
    ],
    "insert": "rrect",
-   "pos": "center"
+   "pos": "lower"
   },
   {
    "q": [
-    "bedroom bed frame assembly"
+    "dining table room measure"
    ],
    "motion": "pandown"
   },
   {
    "q": [
-    "office desk setup measuring space"
+    "kitchen cabinets measuring renovation"
    ],
-   "insert": "arch",
-   "pos": "lower"
+   "insert": "hexagon",
+   "pos": "upper"
   },
   {
    "q": [
@@ -87,148 +100,113 @@
   },
   {
    "q": [
-    "paint wall renovation room"
+    "carpenter measuring wood workshop"
    ],
-   "insert": "circle",
+   "insert": "arch",
    "pos": "upper"
   },
   {
    "q": [
-    "hands holding phone ar app screen"
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
    ],
    "motion": "panr"
   },
   {
    "q": [
-    "apartment tour empty rooms"
-   ],
-   "insert": "hexagon",
-   "pos": "center"
-  },
-  {
-   "q": [
-    "bookshelf assembly instructions floor"
-   ],
-   "motion": "pandown"
-  },
-  {
-   "q": [
-    "dining table room measure"
+    "cozy furnished living room warm light"
    ],
    "insert": "phone",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "garden patio outdoor measuring"
-   ],
-   "motion": "zin"
-  },
-  {
-   "q": [
-    "closet organizer measuring wardrobe"
-   ],
-   "insert": "tv",
    "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "zout"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.07,
+   "dur": 2.09,
    "type": "kicker",
-   "text": "AR MEASURE"
+   "text": "WILL IT FIT?"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "NO",
-   "big": "TAPE"
-  },
-  {
-   "at": 0.222,
-   "dur": 2.0,
+   "at": 0.107,
+   "dur": 2.05,
    "type": "lowerthird",
-   "title": "TAP TWO POINTS",
-   "sub": "length appears on the floor"
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
   },
   {
-   "at": 0.318,
-   "dur": 2.2,
+   "at": 0.287,
+   "dur": 1.69,
+   "type": "stat_count",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.377,
+   "dur": 2.05,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.504,
+   "dur": 1.88,
    "type": "chips",
    "items": [
-    "LENGTH",
-    "WIDTH",
-    "HEIGHT",
-    "AREA"
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
    ],
-   "pos": "upper"
+   "pos": "lower"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
-   "type": "bars",
-   "title": "TIME TO MEASURE",
-   "unit": "s",
-   "items": [
-    [
-     "Tape + helper",
-     90
-    ],
-    [
-     "Phone",
-     10
-    ]
-   ],
-   "pos": "center"
+   "at": 0.564,
+   "dur": 2.06,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
   },
   {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 4,
-   "max": 100,
-   "suffix": "%",
-   "label": "RETURN RATE",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
+   "at": 0.865,
+   "dur": 1.62,
    "type": "callout",
-   "text": "NO TAPE, NO HELPER",
+   "text": "MEASURE FROM THE COUCH",
    "pos": "center"
   },
   {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 3,
-   "suffix": "%",
-   "label": "ERROR",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
+   "at": 0.865,
    "dur": 2.6,
    "type": "checklist",
    "items": [
-    "Point the phone",
-    "Tap two points",
-    "Read the length",
-    "Save the project"
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
    ],
    "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 10,
-   "suffix": "s",
-   "label": "PER MEASURE",
-   "pos": "lower"
   }
  ],
  "cta": {

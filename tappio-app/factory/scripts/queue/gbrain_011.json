@@ -3,7 +3,7 @@
  "app": "brain",
  "voice": "en-US-BrianNeural",
  "rate": "+5%",
- "grade": "purple_dream",
+ "grade": "clean_ad",
  "brand": {
   "accent": "#9B5DE5",
   "accent2": "#C9A7FF",
@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "bright optimistic electronic",
-   "uplifting focus ambient",
-   "warm inspiring piano electronic"
+   "dreamy synth focus",
+   "calm motivational underscore"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "REMEMBER",
   "big": "ANY NAME\nFOR GOOD",
   "q": [
-   "person sleeping rest night"
+   "clock ticking time closeup"
   ]
  },
  "segments": [
@@ -55,119 +54,148 @@
  "shots": [
   {
    "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
     "person sleeping rest night"
    ],
    "motion": "panl"
   },
   {
    "q": [
-    "walking park green trees"
+    "smartphone brain game screen"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
    ],
    "insert": "diamond",
    "pos": "upper"
   },
   {
    "q": [
-    "fish oil supplement pills"
+    "person doing crossword puzzle"
    ],
    "motion": "panup"
   },
   {
    "q": [
-    "focused eyes close up concentration"
-   ],
-   "insert": "rrect",
-   "pos": "center"
-  },
-  {
-   "q": [
-    "memory old photos hands"
-   ],
-   "motion": "zout"
-  },
-  {
-   "q": [
-    "teacher classroom explaining"
-   ],
-   "insert": "arch",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "person thinking trying to remember"
-   ],
-   "motion": "panl"
-  },
-  {
-   "q": [
-    "student studying desk lamp night"
+    "walking park green trees"
    ],
    "insert": "circle",
    "pos": "upper"
   },
   {
    "q": [
-    "brain scan mri blue"
+    "memory old photos hands"
    ],
-   "motion": "panup"
+   "motion": "panr"
   },
   {
    "q": [
-    "coffee cup morning desk"
+    "student studying desk lamp night"
    ],
-   "insert": "hexagon",
+   "insert": "tilt",
    "pos": "center"
   },
   {
    "q": [
-    "woman meditating calm light"
+    "fish oil supplement pills"
    ],
-   "motion": "zout"
-  },
-  {
-   "q": [
-    "man reading book focused"
-   ],
-   "insert": "phone",
-   "pos": "lower"
+   "motion": "pandown"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.071,
+   "dur": 1.79,
    "type": "kicker",
-   "text": "DAILY REP"
+   "text": "MEMORY 101"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "TRAIN",
-   "big": "DAILY"
+   "at": 0.229,
+   "dur": 1.88,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
   },
   {
-   "at": 0.222,
-   "dur": 2.0,
+   "at": 0.359,
+   "dur": 1.73,
+   "type": "ticker",
+   "to": 14,
+   "suffix": "d",
+   "label": "STREAK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.36,
+   "dur": 1.83,
    "type": "lowerthird",
    "title": "DAILY STREAK",
    "sub": "compounds fast"
   },
   {
-   "at": 0.318,
-   "dur": 2.2,
-   "type": "chips",
-   "items": [
-    "SPEED",
-    "MEMORY",
-    "FOCUS",
-    "LOGIC"
-   ],
-   "pos": "upper"
+   "at": 0.466,
+   "dur": 1.97,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.507,
+   "dur": 1.91,
+   "type": "gauge",
+   "to": 14,
+   "max": 30,
+   "suffix": "d",
+   "label": "TO SHARPER RECALL",
+   "pos": "center"
+  },
+  {
+   "at": 0.758,
+   "dur": 1.94,
+   "type": "kinetic",
+   "top": "TRAIN",
+   "big": "DAILY"
+  },
+  {
+   "at": 0.856,
+   "dur": 1.81,
    "type": "bars",
    "title": "RECALL SPEED",
    "unit": "%",
@@ -182,53 +210,6 @@
     ]
    ],
    "pos": "center"
-  },
-  {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 78,
-   "max": 100,
-   "suffix": "%",
-   "label": "FOCUS SCORE",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
-   "type": "callout",
-   "text": "IT'S ENCODING, NOT AGE",
-   "pos": "center"
-  },
-  {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 14,
-   "suffix": "d",
-   "label": "TO SHARPER",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
-   "dur": 2.6,
-   "type": "checklist",
-   "items": [
-    "Hear it",
-    "Picture it",
-    "Repeat it",
-    "Recall it"
-   ],
-   "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 147,
-   "suffix": "%",
-   "label": "RECALL SPEED",
-   "pos": "lower"
   }
  ],
  "cta": {

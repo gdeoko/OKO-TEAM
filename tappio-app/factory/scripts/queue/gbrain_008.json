@@ -2,7 +2,7 @@
  "id": "gbrain_008",
  "app": "brain",
  "voice": "en-US-BrianNeural",
- "rate": "+5%",
+ "rate": "+6%",
  "grade": "purple_dream",
  "brand": {
   "accent": "#9B5DE5",
@@ -13,9 +13,9 @@
  },
  "music": {
   "queries": [
-   "calm motivational underscore",
+   "gentle cinematic hope",
    "dreamy synth focus",
-   "gentle cinematic hope"
+   "calm motivational underscore"
   ]
  },
  "cover": {
@@ -23,7 +23,7 @@
   "top": "TRAIN FOCUS",
   "big": "LIKE A\nMUSCLE",
   "q": [
-   "glass of water healthy morning"
+   "fish oil supplement pills"
   ]
  },
  "segments": [
@@ -55,119 +55,113 @@
  "shots": [
   {
    "q": [
-    "glass of water healthy morning"
-   ],
-   "motion": "panr"
-  },
-  {
-   "q": [
-    "yoga breathing calm room"
-   ],
-   "insert": "rrect",
-   "pos": "center"
-  },
-  {
-   "q": [
-    "smartphone brain game screen"
+    "runner morning sunrise energy"
    ],
    "motion": "pandown"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "phone",
+   "pos": "center"
   },
   {
    "q": [
     "clock ticking time closeup"
    ],
-   "insert": "arch",
-   "pos": "lower"
+   "motion": "zout"
   },
   {
    "q": [
-    "light bulb idea dark"
-   ],
-   "motion": "zin"
-  },
-  {
-   "q": [
-    "group people names introduction"
+    "glass of water healthy morning"
    ],
    "insert": "circle",
-   "pos": "upper"
-  },
-  {
-   "q": [
-    "sticky notes wall reminders"
-   ],
-   "motion": "panr"
-  },
-  {
-   "q": [
-    "person sleeping rest night"
-   ],
-   "insert": "hexagon",
    "pos": "center"
   },
   {
    "q": [
-    "walking park green trees"
+    "teacher classroom explaining"
    ],
-   "motion": "pandown"
+   "motion": "panup"
   },
   {
    "q": [
-    "fish oil supplement pills"
+    "puzzle pieces hands table"
    ],
-   "insert": "phone",
-   "pos": "lower"
+   "insert": "tv",
+   "pos": "center"
   },
   {
    "q": [
     "focused eyes close up concentration"
    ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
    "motion": "zin"
   },
   {
    "q": [
-    "memory old photos hands"
+    "walking park green trees"
    ],
-   "insert": "tv",
+   "insert": "rrect",
    "pos": "upper"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.187,
+   "dur": 1.75,
    "type": "kicker",
    "text": "BRAIN AGE"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "FOCUS",
-   "big": "UP"
-  },
-  {
-   "at": 0.222,
-   "dur": 2.0,
-   "type": "lowerthird",
-   "title": "SAY IT BACK",
-   "sub": "names stick instantly"
-  },
-  {
-   "at": 0.318,
+   "at": 0.403,
    "dur": 2.2,
-   "type": "chips",
-   "items": [
-    "SPEED",
-    "MEMORY",
-    "FOCUS",
-    "LOGIC"
-   ],
-   "pos": "upper"
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.427,
+   "dur": 1.69,
+   "type": "kinetic",
+   "top": "TRAIN",
+   "big": "DAILY"
+  },
+  {
+   "at": 0.522,
+   "dur": 1.73,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.546,
+   "dur": 2.21,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.919,
+   "dur": 1.93,
    "type": "bars",
    "title": "RECALL SPEED",
    "unit": "%",
@@ -182,53 +176,6 @@
     ]
    ],
    "pos": "center"
-  },
-  {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 78,
-   "max": 100,
-   "suffix": "%",
-   "label": "FOCUS SCORE",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
-   "type": "callout",
-   "text": "IT'S ENCODING, NOT AGE",
-   "pos": "center"
-  },
-  {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 14,
-   "suffix": "d",
-   "label": "TO SHARPER",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
-   "dur": 2.6,
-   "type": "checklist",
-   "items": [
-    "Take the test",
-    "Play 5 min",
-    "Beat your score",
-    "Keep the streak"
-   ],
-   "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 147,
-   "suffix": "%",
-   "label": "RECALL SPEED",
-   "pos": "lower"
   }
  ],
  "cta": {

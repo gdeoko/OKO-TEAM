@@ -15,5 +15,25 @@
   "spy": 12,
   "brain": 12,
   "tape": 12
+ },
+ "ov_fp": {
+  "spy": [
+   "bars|checklist|chips|gauge|kinetic|lowerthird|stat_count|ticker",
+   "callout|chips|gauge|kinetic|stat_count|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|lowerthird|stat_count|ticker",
+   "checklist|chips|gauge|kicker|lowerthird|stat_count|ticker"
+  ],
+  "brain": [
+   "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|callout|gauge|kicker|kinetic|stat_count",
+   "bars|callout|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
+  ],
+  "tape": [
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "callout|chips|gauge|kicker|kinetic|ticker",
+   "callout|checklist|chips|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
+  ]
  }
 }

@@ -2,8 +2,8 @@
  "id": "gbrain_005",
  "app": "brain",
  "voice": "en-US-BrianNeural",
- "rate": "+5%",
- "grade": "purple_dream",
+ "rate": "+6%",
+ "grade": "teal_orange",
  "brand": {
   "accent": "#9B5DE5",
   "accent2": "#C9A7FF",
@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "bright optimistic electronic",
-   "uplifting focus ambient",
-   "warm inspiring piano electronic"
+   "dreamy synth focus",
+   "uplifting focus ambient"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "IS YOUR MIND",
   "big": "OLDER THAN\nYOU?",
   "q": [
-   "person forgetting keys frustrated"
+   "elderly person smiling sharp mind"
   ]
  },
  "segments": [
@@ -55,20 +54,59 @@
  "shots": [
   {
    "q": [
-    "person forgetting keys frustrated"
+    "focused eyes close up concentration"
    ],
-   "motion": "zout"
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "insert": "phone",
+   "pos": "upper"
   },
   {
    "q": [
     "chess board close up thinking"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
    ],
    "insert": "arch",
    "pos": "lower"
   },
   {
    "q": [
-    "puzzle pieces hands table"
+    "smartphone brain game screen"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "walking park green trees"
    ],
    "motion": "panl"
   },
@@ -76,18 +114,18 @@
    "q": [
     "elderly person smiling sharp mind"
    ],
-   "insert": "circle",
-   "pos": "upper"
+   "insert": "rrect",
+   "pos": "lower"
   },
   {
    "q": [
-    "runner morning sunrise energy"
+    "clock ticking time closeup"
    ],
-   "motion": "panup"
+   "motion": "panr"
   },
   {
    "q": [
-    "notebook writing pen hand"
+    "woman meditating calm light"
    ],
    "insert": "hexagon",
    "pos": "center"
@@ -96,113 +134,107 @@
    "q": [
     "person doing crossword puzzle"
    ],
-   "motion": "zout"
-  },
-  {
-   "q": [
-    "glass of water healthy morning"
-   ],
-   "insert": "phone",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "yoga breathing calm room"
-   ],
-   "motion": "panl"
-  },
-  {
-   "q": [
-    "smartphone brain game screen"
-   ],
-   "insert": "tv",
-   "pos": "upper"
-  },
-  {
-   "q": [
-    "clock ticking time closeup"
-   ],
    "motion": "panup"
   },
   {
    "q": [
     "light bulb idea dark"
    ],
-   "insert": "tilt",
-   "pos": "center"
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "zin"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.063,
+   "dur": 1.93,
    "type": "kicker",
-   "text": "MEMORY 101"
+   "text": "60-SEC TEST"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "BEAT",
-   "big": "THE FOG"
-  },
-  {
-   "at": 0.222,
-   "dur": 2.0,
+   "at": 0.183,
+   "dur": 1.61,
    "type": "lowerthird",
-   "title": "FIVE MINUTES A DAY",
-   "sub": "focus grows like a muscle"
+   "title": "SHORT HARD PUZZLES",
+   "sub": "reset your attention"
   },
   {
-   "at": 0.318,
-   "dur": 2.2,
-   "type": "chips",
-   "items": [
-    "SPEED",
-    "MEMORY",
-    "FOCUS",
-    "LOGIC"
-   ],
-   "pos": "upper"
-  },
-  {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.407,
+   "dur": 1.91,
    "type": "bars",
-   "title": "RECALL SPEED",
+   "title": "DISTRACTION",
    "unit": "%",
    "items": [
     [
-     "Week 1",
-     100
+     "Before",
+     80
     ],
     [
-     "Week 3",
-     147
+     "After",
+     29
     ]
    ],
    "pos": "center"
   },
   {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 78,
-   "max": 100,
-   "suffix": "%",
-   "label": "FOCUS SCORE",
-   "pos": "center"
+   "at": 0.428,
+   "dur": 1.81,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "upper"
   },
   {
-   "at": 0.606,
-   "dur": 2.0,
+   "at": 0.487,
+   "dur": 2.14,
    "type": "callout",
-   "text": "IT'S ENCODING, NOT AGE",
+   "text": "STREAKS BEAT WILLPOWER",
    "pos": "center"
   },
   {
-   "at": 0.702,
-   "dur": 2.2,
+   "at": 0.57,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.646,
+   "dur": 1.98,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.65,
+   "dur": 1.98,
+   "type": "gauge",
+   "to": 14,
+   "max": 30,
+   "suffix": "d",
+   "label": "TO SHARPER RECALL",
+   "pos": "center"
+  },
+  {
+   "at": 0.701,
+   "dur": 1.92,
    "type": "stat_count",
    "to": 14,
    "suffix": "d",
@@ -210,25 +242,11 @@
    "pos": "center"
   },
   {
-   "at": 0.798,
-   "dur": 2.6,
-   "type": "checklist",
-   "items": [
-    "Hear it",
-    "Picture it",
-    "Repeat it",
-    "Recall it"
-   ],
-   "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 147,
-   "suffix": "%",
-   "label": "RECALL SPEED",
-   "pos": "lower"
+   "at": 0.732,
+   "dur": 1.71,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
   }
  ],
  "cta": {

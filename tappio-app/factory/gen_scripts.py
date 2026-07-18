@@ -15,7 +15,7 @@
   python3 gen_scripts.py topup <MIN>  -> дозалить очередь до MIN файлов (по умолчанию 12)
 Файлы: scripts/queue/g<app>_<seq>.json  ; состояние: gen_state.json (в git — кросс-сессионно).
 """
-import json, os, sys, random
+import json, os, sys, random, hashlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 QUEUE = os.path.join(HERE, "scripts", "queue")
@@ -25,6 +25,21 @@ os.makedirs(QUEUE, exist_ok=True)
 INSERTS = ["circle", "hexagon", "phone", "tv", "tilt", "diamond", "rrect", "arch"]
 MOTIONS = ["zin", "zout", "panr", "panl", "pandown", "panup"]
 POS = ["center", "upper", "lower"]
+# грейды, совместимые с брендом каждого app — варьируем, чтобы ролики не выглядели одинаково
+GRADES = {
+    "spy":   ["cold_cyan", "teal_orange", "clean_ad"],
+    "brain": ["purple_dream", "teal_orange", "clean_ad"],
+    "tape":  ["warm_gold", "clean_ad", "teal_orange"],
+}
+# все типы инфографики, которые умеет движок и под которые есть контент-пулы
+ALL_OV_TYPES = ["kicker", "kinetic", "lowerthird", "chips", "bars", "gauge",
+                "callout", "stat_count", "checklist", "ticker"]
+
+
+def rng_for(rid):
+    """Детерминированный, но «случайный» ГПСЧ на каждый ролик — стабилен между сессиями."""
+    seed = int(hashlib.md5(rid.encode()).hexdigest()[:12], 16)
+    return random.Random(seed)
 
 # ------------------------------------------------------------------ БРЕНДЫ
 BRAND = {
@@ -322,39 +337,62 @@ def save_state(s):
     json.dump(s, open(STATE, "w"), ensure_ascii=False, indent=1)
 
 
-def build_shots(app, off):
-    pool = SHOTQ[app]
+def build_shots(app, off, rng):
+    """Случайная структура: разное число кадров (10-16), случайное чередование
+    движение/форма-вставка/демо, без повтора формы или движения подряд."""
+    pool = SHOTQ[app][:]
+    rng.shuffle(pool)
     n = len(pool)
+    ncount = rng.randint(10, 16)
+    inserts = INSERTS[:]; rng.shuffle(inserts)
+    motions = MOTIONS[:]; rng.shuffle(motions)
     shots = []
-    used_ins = []
-    used_mot = []
-    for i in range(12):
+    last_kind = None
+    ii = mi = 0
+    for i in range(ncount):
         q = pool[(off + i) % n]
         shot = {"q": [q]}
-        # чередуем: чётные — движение, нечётные — форма-вставка (как в эталонных сценариях)
-        if i % 2 == 0:
-            m = MOTIONS[(off + i) % len(MOTIONS)]
-            shot["motion"] = m
+        # решаем тип кадра случайно, но без двух форм/движений подряд
+        r = rng.random()
+        if last_kind != "insert" and (r < 0.42 or last_kind == "motion"):
+            shot["insert"] = inserts[ii % len(inserts)]; ii += 1
+            shot["pos"] = rng.choice(POS)
+            last_kind = "insert"
         else:
-            ins = INSERTS[(off + i // 2) % len(INSERTS)]
-            shot["insert"] = ins
-            shot["pos"] = POS[(off + i) % len(POS)]
+            shot["motion"] = motions[mi % len(motions)]; mi += 1
+            last_kind = "motion"
         shots.append(shot)
     return shots
 
 
-def build_overlays(app, ovoff):
+def build_overlays(app, ovoff, rng):
+    """Случайный СОСТАВ (подмножество типов), ПОРЯДОК, КОЛИЧЕСТВО (6-11) и тайминги —
+    структура наложений разная у каждого ролика, ноль общего шаблона."""
     pools = OVERLAY_POOLS[app]
+    avail = [t for t in ALL_OV_TYPES if pools.get(t)]
+    kcount = rng.randint(6, min(11, len(avail)))
+    # kicker почти всегда первым (хук), остальное — случайная выборка и порядок
+    chosen = []
+    if "kicker" in avail and rng.random() < 0.85:
+        chosen.append("kicker")
+    rest = [t for t in avail if t not in chosen]
+    rng.shuffle(rest)
+    chosen += rest[: max(0, kcount - len(chosen))]
+    if "kicker" in chosen:
+        chosen = ["kicker"] + [t for t in chosen if t != "kicker"]
+    k = len(chosen)
+    # случайные, но неубывающие тайминги в окне 0.03..0.92
+    span = 0.89
+    pts = sorted(0.03 + span * rng.random() for _ in range(k))
     ovs = []
-    # 10 наложений: равномерно во времени 0.03..0.90, длительности 1.6-2.2
-    slots = [round(0.03 + i * 0.096, 3) for i in range(10)]
-    for i, typ in enumerate(OV_TYPE_ORDER):
-        at = slots[i]
+    ovcnt = {}
+    for i, typ in enumerate(chosen):
+        at = round(pts[i], 3)
         pick = pools.get(typ, [])
-        if not pick:
-            continue
-        item = pick[(ovoff + i) % len(pick)]
-        o = {"at": at, "dur": 1.6 + (i % 4) * 0.2, "type": typ}
+        idx = (ovoff + ovcnt.get(typ, 0) + rng.randrange(len(pick))) % len(pick)
+        ovcnt[typ] = ovcnt.get(typ, 0) + 1
+        item = pick[idx]
+        o = {"at": at, "dur": round(rng.uniform(1.6, 2.4), 2), "type": typ}
         if typ == "kicker":
             o["text"] = item
         elif typ == "kinetic":
@@ -393,33 +431,42 @@ def make_one(app, state):
     state["seq"] += 1
     seq = state["seq"]
     rid = "g%s_%03d" % (app, seq)
+    rng = rng_for(rid)
 
     shot_off = state["shot_off"].get(app, 0)
     ov_off = state.get("ov_off", {}).get(app, 0)
 
-    # музыка: 3 запроса со сдвигом — индивидуально на ролик
-    mp = meta["music"]; mo = seq % len(mp)
-    music_q = [mp[(mo + j) % len(mp)] for j in range(3)]
+    # музыка: случайный сдвиг + случайное число запросов (2-3) — индивидуально на ролик
+    mp = meta["music"][:]; rng.shuffle(mp)
+    music_q = mp[: rng.randint(2, 3)]
+
+    grade = rng.choice(GRADES.get(app, [meta["grade"]]))
+    # скорость озвучки чуть варьируем — динамика разная
+    rate = rng.choice(["+4%", "+5%", "+6%", "+7%"])
 
     d = {
         "id": rid,
         "app": app,
         "voice": meta["voice"],
-        "rate": meta["rate"],
-        "grade": meta["grade"],
+        "rate": rate,
+        "grade": grade,
         "brand": dict(meta["brand"]),
         "music": {"queries": music_q},
         "cover": {"kicker": ang["k"], "top": ang["top"], "big": ang["big"],
-                  "q": [SHOTQ[app][(shot_off) % len(SHOTQ[app])]]},
+                  "q": [rng.choice(SHOTQ[app])]},
         "segments": [{"id": "b%d" % (j + 1), "text": t} for j, t in enumerate(ang["seg"])],
-        "shots": build_shots(app, shot_off),
-        "overlays": build_overlays(app, ov_off),
+        "shots": build_shots(app, shot_off, rng),
+        "overlays": build_overlays(app, ov_off, rng),
         "cta": {"text": "Comment %s for the app." % meta["brand"]["code"], "code": meta["brand"]["code"]},
         "caption": "%s Comment %s for the app. %s" % (ang["cap"], meta["brand"]["code"], meta["hashtags"]),
         "yt_title": ang["yt"],
     }
-    # сдвигаем оффсеты, чтобы следующий ролик этого app взял другие кадры/инфографику
-    state["shot_off"][app] = (shot_off + 7) % len(SHOTQ[app])   # 7 — взаимно простое с длиной пула
+    # журнал механик — след «отпечаток» набора наложений, чтобы контролировать неповторяемость
+    fp = "|".join(sorted(o["type"] for o in d["overlays"]))
+    state.setdefault("ov_fp", {}).setdefault(app, [])
+    state["ov_fp"][app] = (state["ov_fp"][app] + [fp])[-20:]
+    # сдвигаем оффсеты (взаимно простые с длинами пулов) — на всякий, поверх rng
+    state["shot_off"][app] = (shot_off + 7) % len(SHOTQ[app])
     state.setdefault("ov_off", {})[app] = (ov_off + 3)
     return rid, d
 

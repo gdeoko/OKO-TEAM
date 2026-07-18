@@ -2,8 +2,8 @@
  "id": "gspy_007",
  "app": "spy",
  "voice": "en-US-AndrewNeural",
- "rate": "+6%",
- "grade": "cold_cyan",
+ "rate": "+4%",
+ "grade": "clean_ad",
  "brand": {
   "accent": "#00D9FF",
   "accent2": "#7CFCFF",
@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "cyber suspense pulse",
    "cinematic underscore tech",
-   "minimal techno tension"
+   "cyber suspense pulse"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "WHERE CAMS",
   "big": "ALWAYS\nHIDE",
   "q": [
-   "air vent grille ceiling"
+   "bookshelf decor living room"
   ]
  },
  "segments": [
@@ -55,119 +54,165 @@
  "shots": [
   {
    "q": [
-    "air vent grille ceiling"
-   ],
-   "motion": "panr"
-  },
-  {
-   "q": [
-    "picture frame on wall room"
+    "tv on wall hotel room"
    ],
    "insert": "rrect",
-   "pos": "center"
-  },
-  {
-   "q": [
-    "woman looking around hotel room worried"
-   ],
-   "motion": "pandown"
-  },
-  {
-   "q": [
-    "laptop screen code green"
-   ],
-   "insert": "arch",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "security camera lens macro"
-   ],
-   "motion": "zin"
-  },
-  {
-   "q": [
-    "curtains window hotel evening"
-   ],
-   "insert": "circle",
    "pos": "upper"
-  },
-  {
-   "q": [
-    "desk lamp table hotel"
-   ],
-   "motion": "panr"
-  },
-  {
-   "q": [
-    "bookshelf decor living room"
-   ],
-   "insert": "hexagon",
-   "pos": "center"
   },
   {
    "q": [
     "door lock hotel keycard"
    ],
-   "motion": "pandown"
+   "motion": "panr"
   },
   {
    "q": [
-    "surveillance concept eye lens"
+    "airbnb apartment cozy night"
    ],
    "insert": "phone",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "network cables server blue light"
-   ],
-   "motion": "zin"
+   "pos": "upper"
   },
   {
    "q": [
     "person relaxing bed phone night"
    ],
-   "insert": "tv",
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "insert": "arch",
    "pos": "upper"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "tv",
+   "pos": "lower"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
-   "type": "kicker",
-   "text": "LENS CHECK"
-  },
-  {
-   "at": 0.126,
+   "at": 0.038,
    "dur": 1.8,
-   "type": "kinetic",
-   "top": "SCAN",
-   "big": "NOW"
+   "type": "kicker",
+   "text": "PRIVACY 101"
   },
   {
-   "at": 0.222,
-   "dur": 2.0,
-   "type": "lowerthird",
-   "title": "SCAN THE WI-FI",
-   "sub": "unknown devices appear"
+   "at": 0.176,
+   "dur": 2.19,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
   },
   {
-   "at": 0.318,
-   "dur": 2.2,
+   "at": 0.283,
+   "dur": 1.9,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.45,
+   "dur": 2.22,
    "type": "chips",
    "items": [
-    "VENTS",
-    "CLOCKS",
-    "OUTLETS",
-    "TVs"
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
    ],
    "pos": "upper"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.613,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.691,
+   "dur": 1.94,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  },
+  {
+   "at": 0.708,
+   "dur": 1.95,
    "type": "bars",
    "title": "TIME TO SCAN",
    "unit": "s",
@@ -184,51 +229,18 @@
    "pos": "center"
   },
   {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 5,
-   "max": 10,
-   "suffix": "",
-   "label": "SPOTS TO CHECK",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
+   "at": 0.751,
+   "dur": 2.26,
    "type": "callout",
-   "text": "MOST CAMS NEED WI-FI",
+   "text": "IR GLINT GIVES IT AWAY",
    "pos": "center"
   },
   {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 30,
-   "suffix": "s",
-   "label": "PER ROOM",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
-   "dur": 2.6,
-   "type": "checklist",
-   "items": [
-    "Scan Wi-Fi",
-    "Lights off",
-    "Check vents",
-    "Unplug unknowns"
-   ],
-   "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 60,
-   "suffix": "s",
-   "label": "FULL SWEEP",
-   "pos": "lower"
+   "at": 0.823,
+   "dur": 1.66,
+   "type": "lowerthird",
+   "title": "UNPLUG UNKNOWNS",
+   "sub": "30 seconds, total"
   }
  ],
  "cta": {

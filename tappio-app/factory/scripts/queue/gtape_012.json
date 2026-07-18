@@ -2,8 +2,8 @@
  "id": "gtape_012",
  "app": "tape",
  "voice": "en-US-ChristopherNeural",
- "rate": "+6%",
- "grade": "warm_gold",
+ "rate": "+5%",
+ "grade": "teal_orange",
  "brand": {
   "accent": "#F4C430",
   "accent2": "#FFE08A",
@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "upbeat indie acoustic diy",
-   "positive corporate light groove",
-   "warm optimistic guitar"
+   "cheerful folk clap",
+   "bright pop home"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "BUY FURNITURE",
   "big": "THAT ACTUALLY\nFITS",
   "q": [
-   "apartment tour empty rooms"
+   "hand pointing phone at wall measuring"
   ]
  },
  "segments": [
@@ -55,46 +54,66 @@
  "shots": [
   {
    "q": [
-    "apartment tour empty rooms"
+    "office desk setup measuring space"
    ],
-   "motion": "panl"
+   "insert": "hexagon",
+   "pos": "center"
   },
   {
    "q": [
-    "bookshelf assembly instructions floor"
+    "hands arranging shelf wall decor"
    ],
-   "insert": "diamond",
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "phone",
    "pos": "upper"
   },
   {
    "q": [
-    "dining table room measure"
+    "moving boxes new apartment"
    ],
-   "motion": "panup"
-  },
-  {
-   "q": [
-    "garden patio outdoor measuring"
-   ],
-   "insert": "rrect",
-   "pos": "center"
+   "motion": "pandown"
   },
   {
    "q": [
     "closet organizer measuring wardrobe"
    ],
-   "motion": "zout"
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zin"
   },
   {
    "q": [
     "couple planning home layout tablet"
    ],
-   "insert": "arch",
+   "insert": "circle",
    "pos": "lower"
   },
   {
    "q": [
-    "person measuring living room with phone ar"
+    "person relaxing on couch bright apartment"
    ],
    "motion": "panl"
   },
@@ -102,72 +121,46 @@
    "q": [
     "empty living room wooden floor sunlight"
    ],
-   "insert": "circle",
-   "pos": "upper"
-  },
-  {
-   "q": [
-    "hand pointing phone at wall measuring"
-   ],
-   "motion": "panup"
-  },
-  {
-   "q": [
-    "rolled up rug floor room"
-   ],
-   "insert": "hexagon",
+   "insert": "diamond",
    "pos": "center"
   },
   {
    "q": [
-    "measuring tape metal bending closeup"
+    "carpenter measuring wood workshop"
    ],
    "motion": "zout"
   },
   {
    "q": [
-    "modern tv mounted on wall living room"
+    "cozy furnished living room warm light"
    ],
-   "insert": "phone",
-   "pos": "lower"
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panr"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.101,
+   "dur": 1.72,
    "type": "kicker",
    "text": "MEASURE 101"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
+   "at": 0.166,
+   "dur": 1.61,
    "type": "kinetic",
-   "top": "STOP",
-   "big": "GUESSING"
+   "top": "FIT",
+   "big": "CHECK"
   },
   {
-   "at": 0.222,
-   "dur": 2.0,
-   "type": "lowerthird",
-   "title": "EXPORT A PDF",
-   "sub": "sizes in one tap"
-  },
-  {
-   "at": 0.318,
-   "dur": 2.2,
-   "type": "chips",
-   "items": [
-    "LENGTH",
-    "WIDTH",
-    "HEIGHT",
-    "AREA"
-   ],
-   "pos": "upper"
-  },
-  {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.224,
+   "dur": 1.97,
    "type": "bars",
    "title": "TIME TO MEASURE",
    "unit": "s",
@@ -184,33 +177,42 @@
    "pos": "center"
   },
   {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 4,
-   "max": 100,
-   "suffix": "%",
-   "label": "RETURN RATE",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
+   "at": 0.228,
+   "dur": 1.62,
    "type": "callout",
-   "text": "NO TAPE, NO HELPER",
+   "text": "MEASURE FROM THE COUCH",
    "pos": "center"
   },
   {
-   "at": 0.702,
-   "dur": 2.2,
+   "at": 0.253,
+   "dur": 2.02,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.462,
+   "dur": 1.61,
    "type": "stat_count",
-   "to": 3,
-   "suffix": "%",
-   "label": "ERROR",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
    "pos": "center"
   },
   {
-   "at": 0.798,
+   "at": 0.622,
+   "dur": 1.96,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.716,
    "dur": 2.6,
    "type": "checklist",
    "items": [
@@ -222,13 +224,23 @@
    "pos": "center"
   },
   {
-   "at": 0.894,
-   "dur": 1.8,
+   "at": 0.742,
+   "dur": 1.63,
    "type": "ticker",
    "to": 10,
    "suffix": "s",
    "label": "PER MEASURE",
    "pos": "lower"
+  },
+  {
+   "at": 0.829,
+   "dur": 1.83,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
   }
  ],
  "cta": {

@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "cyber suspense pulse",
-   "cinematic underscore tech",
-   "minimal techno tension"
+   "investigative documentary underscore",
+   "neon night synth"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "EVERY HIDDEN CAM",
   "big": "IS ON THE\nNETWORK",
   "q": [
-   "hotel room modern interior"
+   "surveillance concept eye lens"
   ]
  },
  "segments": [
@@ -55,29 +54,62 @@
  "shots": [
   {
    "q": [
-    "hotel room modern interior"
-   ],
-   "motion": "zin"
-  },
-  {
-   "q": [
-    "airbnb apartment cozy night"
+    "person relaxing bed phone night"
    ],
    "insert": "circle",
-   "pos": "upper"
+   "pos": "center"
   },
   {
    "q": [
     "hand holding smartphone dark"
    ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
    "motion": "panr"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "insert": "arch",
+   "pos": "lower"
   },
   {
    "q": [
     "wifi router network dark tech"
    ],
-   "insert": "hexagon",
-   "pos": "center"
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
   },
   {
    "q": [
@@ -87,46 +119,33 @@
   },
   {
    "q": [
-    "tv on wall hotel room"
+    "security camera lens macro"
    ],
    "insert": "phone",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "power outlet wall socket closeup"
-   ],
-   "motion": "zin"
-  },
-  {
-   "q": [
-    "alarm clock nightstand bedroom"
-   ],
-   "insert": "tv",
-   "pos": "upper"
-  },
-  {
-   "q": [
-    "person entering hotel room luggage"
-   ],
-   "motion": "panr"
-  },
-  {
-   "q": [
-    "traveler suitcase hotel hallway"
-   ],
-   "insert": "tilt",
    "pos": "center"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
   },
   {
    "q": [
     "dark bedroom lamp light"
    ],
-   "motion": "pandown"
+   "motion": "panl"
   },
   {
    "q": [
-    "phone flashlight scanning wall"
+    "closet wardrobe hotel room"
    ],
    "insert": "diamond",
    "pos": "lower"
@@ -134,28 +153,17 @@
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
-   "type": "kicker",
-   "text": "WI-FI SCAN"
+   "at": 0.252,
+   "dur": 1.77,
+   "type": "ticker",
+   "to": 60,
+   "suffix": "s",
+   "label": "FULL SWEEP",
+   "pos": "lower"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "LIGHTS",
-   "big": "OFF"
-  },
-  {
-   "at": 0.222,
-   "dur": 2.0,
-   "type": "lowerthird",
-   "title": "CHECK THE VENTS",
-   "sub": "line of sight to the bed"
-  },
-  {
-   "at": 0.318,
-   "dur": 2.2,
+   "at": 0.322,
+   "dur": 2.39,
    "type": "chips",
    "items": [
     "VENTS",
@@ -166,8 +174,41 @@
    "pos": "upper"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
+   "at": 0.35,
+   "dur": 2.27,
+   "type": "lowerthird",
+   "title": "KILL THE LIGHTS",
+   "sub": "lenses glow in IR"
+  },
+  {
+   "at": 0.64,
+   "dur": 1.82,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  },
+  {
+   "at": 0.805,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "LOOK",
+   "big": "CLOSER"
+  },
+  {
+   "at": 0.82,
+   "dur": 2.4,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.833,
+   "dur": 1.8,
    "type": "bars",
    "title": "TIME TO SCAN",
    "unit": "s",
@@ -184,33 +225,7 @@
    "pos": "center"
   },
   {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 5,
-   "max": 10,
-   "suffix": "",
-   "label": "SPOTS TO CHECK",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
-   "type": "callout",
-   "text": "MOST CAMS NEED WI-FI",
-   "pos": "center"
-  },
-  {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 30,
-   "suffix": "s",
-   "label": "PER ROOM",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
+   "at": 0.92,
    "dur": 2.6,
    "type": "checklist",
    "items": [
@@ -220,15 +235,6 @@
     "Unplug unknowns"
    ],
    "pos": "center"
-  },
-  {
-   "at": 0.894,
-   "dur": 1.8,
-   "type": "ticker",
-   "to": 60,
-   "suffix": "s",
-   "label": "FULL SWEEP",
-   "pos": "lower"
   }
  ],
  "cta": {

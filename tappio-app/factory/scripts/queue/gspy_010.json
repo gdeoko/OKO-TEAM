@@ -2,7 +2,7 @@
  "id": "gspy_010",
  "app": "spy",
  "voice": "en-US-AndrewNeural",
- "rate": "+6%",
+ "rate": "+5%",
  "grade": "cold_cyan",
  "brand": {
   "accent": "#00D9FF",
@@ -13,9 +13,8 @@
  },
  "music": {
   "queries": [
-   "investigative documentary underscore",
    "neon night synth",
-   "dark tension electronic"
+   "minimal techno tension"
   ]
  },
  "cover": {
@@ -23,7 +22,7 @@
   "top": "30-SECOND",
   "big": "ROOM\nSWEEP",
   "q": [
-   "bookshelf decor living room"
+   "smoke detector ceiling closeup"
   ]
  },
  "segments": [
@@ -55,20 +54,53 @@
  "shots": [
   {
    "q": [
-    "bookshelf decor living room"
-   ],
-   "motion": "panl"
-  },
-  {
-   "q": [
-    "door lock hotel keycard"
+    "picture frame on wall room"
    ],
    "insert": "diamond",
    "pos": "upper"
   },
   {
    "q": [
-    "surveillance concept eye lens"
+    "hotel room modern interior"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
    ],
    "motion": "panup"
   },
@@ -76,86 +108,59 @@
    "q": [
     "network cables server blue light"
    ],
-   "insert": "rrect",
-   "pos": "center"
-  },
-  {
-   "q": [
-    "person relaxing bed phone night"
-   ],
-   "motion": "zout"
-  },
-  {
-   "q": [
-    "closet wardrobe hotel room"
-   ],
-   "insert": "arch",
-   "pos": "lower"
-  },
-  {
-   "q": [
-    "reflection glass light dot"
-   ],
-   "motion": "panl"
-  },
-  {
-   "q": [
-    "hotel room modern interior"
-   ],
    "insert": "circle",
    "pos": "upper"
   },
   {
    "q": [
-    "airbnb apartment cozy night"
+    "door lock hotel keycard"
    ],
-   "motion": "panup"
+   "motion": "panl"
   },
   {
    "q": [
-    "hand holding smartphone dark"
+    "usb charger plug closeup"
    ],
    "insert": "hexagon",
    "pos": "center"
   },
   {
    "q": [
-    "wifi router network dark tech"
+    "traveler suitcase hotel hallway"
    ],
-   "motion": "zout"
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "pandown"
   },
   {
    "q": [
     "smoke detector ceiling closeup"
    ],
    "insert": "phone",
-   "pos": "lower"
+   "pos": "center"
   }
  ],
  "overlays": [
   {
-   "at": 0.03,
-   "dur": 1.6,
+   "at": 0.1,
+   "dur": 1.77,
    "type": "kicker",
    "text": "PRIVACY 101"
   },
   {
-   "at": 0.126,
-   "dur": 1.8,
-   "type": "kinetic",
-   "top": "STOP",
-   "big": "GUESSING"
-  },
-  {
-   "at": 0.222,
+   "at": 0.109,
    "dur": 2.0,
-   "type": "lowerthird",
-   "title": "UNPLUG UNKNOWNS",
-   "sub": "30 seconds, total"
-  },
-  {
-   "at": 0.318,
-   "dur": 2.2,
    "type": "chips",
    "items": [
     "VENTS",
@@ -166,69 +171,51 @@
    "pos": "upper"
   },
   {
-   "at": 0.414,
-   "dur": 1.6,
-   "type": "bars",
-   "title": "TIME TO SCAN",
-   "unit": "s",
-   "items": [
-    [
-     "Manual",
-     300
-    ],
-    [
-     "App",
-     30
-    ]
-   ],
-   "pos": "center"
-  },
-  {
-   "at": 0.51,
-   "dur": 1.8,
-   "type": "gauge",
-   "to": 5,
-   "max": 10,
-   "suffix": "",
-   "label": "SPOTS TO CHECK",
-   "pos": "center"
-  },
-  {
-   "at": 0.606,
-   "dur": 2.0,
-   "type": "callout",
-   "text": "MOST CAMS NEED WI-FI",
-   "pos": "center"
-  },
-  {
-   "at": 0.702,
-   "dur": 2.2,
-   "type": "stat_count",
-   "to": 30,
-   "suffix": "s",
-   "label": "PER ROOM",
-   "pos": "center"
-  },
-  {
-   "at": 0.798,
+   "at": 0.477,
    "dur": 2.6,
    "type": "checklist",
    "items": [
-    "Smoke detector",
-    "Alarm clock",
-    "TV frame",
-    "Power outlet"
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
    ],
    "pos": "center"
   },
   {
-   "at": 0.894,
-   "dur": 1.8,
+   "at": 0.494,
+   "dur": 2.27,
    "type": "ticker",
-   "to": 60,
-   "suffix": "s",
-   "label": "FULL SWEEP",
+   "to": 100,
+   "suffix": "%",
+   "label": "PRIVACY BACK",
    "pos": "lower"
+  },
+  {
+   "at": 0.626,
+   "dur": 1.85,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.833,
+   "dur": 1.74,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  },
+  {
+   "at": 0.897,
+   "dur": 2.3,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
   }
  ],
  "cta": {
