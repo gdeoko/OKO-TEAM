@@ -62,6 +62,19 @@ try{
   if(COVER && fs.existsSync(COVER)){
     try{
       await p.screenshot({path:S('4a_cover_pre')}).catch(()=>{});
+      // ДИАГНОСТИКА вёрстки экрана обложки — узнать реальные подписи контролов
+      try{
+        const diag=await p.evaluate(()=>{
+          const norm=e=>(e.getAttribute&&e.getAttribute('aria-label'))||e.innerText||'';
+          const btns=[...document.querySelectorAll('button,[role="button"],div[role="button"]')].map(b=>(b.innerText||b.getAttribute('aria-label')||'').trim()).filter(Boolean);
+          const cov=[...document.querySelectorAll('*')].filter(e=>/cover|обложк|thumbnail/i.test(norm(e))).map(e=>e.tagName+'|'+norm(e).trim().slice(0,40)).filter((v,i,a)=>a.indexOf(v)===i);
+          const sliders=[...document.querySelectorAll('[role="slider"],[draggable="true"],input[type="range"]')].map(e=>e.tagName+'|'+(e.getAttribute('aria-label')||e.getAttribute('role')||'')).slice(0,8);
+          return {btns:[...new Set(btns)].slice(0,30), cov:cov.slice(0,12), sliders};
+        });
+        log('DIAG btns', JSON.stringify(diag.btns));
+        log('DIAG cover-els', JSON.stringify(diag.cov));
+        log('DIAG sliders', JSON.stringify(diag.sliders));
+      }catch(e){ log('diag err',String(e).slice(0,100)); }
       let coverDone=false;
       // 1) кастомная обложка: секция "Cover" -> "Add from computer" (свой filechooser)
       const coverLbl=p.getByText(/^cover$/i).first();
