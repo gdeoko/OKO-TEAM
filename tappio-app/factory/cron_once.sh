@@ -19,9 +19,12 @@ grep -q "ENV READY" work/_setup.log || { echo "ENV_NOT_READY"; tail -3 work/_set
 REMAIN=$(python3 quota.py check 2>/dev/null || echo 0)
 if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.py status))"; exit 0; fi
 
+# автодозаливка очереди (без LLM) — генератор держит >=12 сценариев
+python3 gen_scripts.py topup 12 >/dev/null 2>&1 || true
+
 # следующий сценарий из очереди
 NEXT=$(ls scripts/queue/*.json 2>/dev/null | sort | head -1)
-[ -z "$NEXT" ] && { echo "QUEUE_EMPTY — нужна дозаливка сценариев (лёгкая LLM-сессия)"; exit 0; }
+[ -z "$NEXT" ] && { echo "QUEUE_EMPTY — генератор не дал сценариев (см. gen_scripts.py)"; exit 0; }
 ID=$(basename "$NEXT" .json)
 cp "$NEXT" "scripts/$ID.json"
 CAP=$(python3 -c "import json;d=json.load(open('scripts/$ID.json'));print(d.get('caption') or (d['cta']['text']))" 2>/dev/null)

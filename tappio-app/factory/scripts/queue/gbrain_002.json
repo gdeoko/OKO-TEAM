@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_002",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "calm motivational underscore",
+   "dreamy synth focus",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "person thinking trying to remember"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "It is not age. It is attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.6,
+   "type": "kicker",
+   "text": "60-SEC TEST"
+  },
+  {
+   "at": 0.126,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.222,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "SHORT HARD PUZZLES",
+   "sub": "reset your attention"
+  },
+  {
+   "at": 0.318,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.51,
+   "dur": 1.8,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.606,
+   "dur": 2.0,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.702,
+   "dur": 2.2,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 1.8,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning",
+ "yt_title": "Why you forget every name #shorts"
+}

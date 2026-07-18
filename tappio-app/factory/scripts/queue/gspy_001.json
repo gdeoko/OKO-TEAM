@@ -1,0 +1,240 @@
+{
+ "id": "gspy_001",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "cyber suspense pulse",
+   "cinematic underscore tech",
+   "minimal techno tension"
+  ]
+ },
+ "cover": {
+  "kicker": "WI-FI SCAN",
+  "top": "EVERY HIDDEN CAM",
+  "big": "IS ON THE\nNETWORK",
+  "q": [
+   "hotel room modern interior"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Checked into a rental? A hidden lens could be watching."
+  },
+  {
+   "id": "b2",
+   "text": "Most spy cams need Wi-Fi. That is their weak spot."
+  },
+  {
+   "id": "b3",
+   "text": "Open the app, scan the network in seconds."
+  },
+  {
+   "id": "b4",
+   "text": "It flags every unknown device on that router."
+  },
+  {
+   "id": "b5",
+   "text": "Then sweep the room: your camera catches the IR glint."
+  },
+  {
+   "id": "b6",
+   "text": "One scan before you unpack. Peace of mind, instantly."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.6,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.126,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "LIGHTS",
+   "big": "OFF"
+  },
+  {
+   "at": 0.222,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "CHECK THE VENTS",
+   "sub": "line of sight to the bed"
+  },
+  {
+   "at": 0.318,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.51,
+   "dur": 1.8,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  },
+  {
+   "at": 0.606,
+   "dur": 2.0,
+   "type": "callout",
+   "text": "MOST CAMS NEED WI-FI",
+   "pos": "center"
+  },
+  {
+   "at": 0.702,
+   "dur": 2.2,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 1.8,
+   "type": "ticker",
+   "to": 60,
+   "suffix": "s",
+   "label": "FULL SWEEP",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips",
+ "yt_title": "Find hidden cameras with a Wi-Fi scan #shorts"
+}

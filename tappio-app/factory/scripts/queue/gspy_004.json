@@ -1,0 +1,240 @@
+{
+ "id": "gspy_004",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "investigative documentary underscore",
+   "neon night synth",
+   "dark tension electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "IR GLINT",
+  "top": "THE LENS",
+  "big": "ALWAYS\nGLOWS",
+  "q": [
+   "alarm clock nightstand bedroom"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Turn off the lights. Raise your phone camera."
+  },
+  {
+   "id": "b2",
+   "text": "A hidden lens reflects infrared as a tiny bright dot."
+  },
+  {
+   "id": "b3",
+   "text": "Slowly pan across mirrors, vents and smoke detectors."
+  },
+  {
+   "id": "b4",
+   "text": "The app highlights suspicious reflections for you."
+  },
+  {
+   "id": "b5",
+   "text": "Found one? Cover it and report the listing."
+  },
+  {
+   "id": "b6",
+   "text": "Sixty seconds of scanning saves your privacy."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.6,
+   "type": "kicker",
+   "text": "SCAN FIRST"
+  },
+  {
+   "at": 0.126,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "LOOK",
+   "big": "CLOSER"
+  },
+  {
+   "at": 0.222,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "KILL THE LIGHTS",
+   "sub": "lenses glow in IR"
+  },
+  {
+   "at": 0.318,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.51,
+   "dur": 1.8,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  },
+  {
+   "at": 0.606,
+   "dur": 2.0,
+   "type": "callout",
+   "text": "MOST CAMS NEED WI-FI",
+   "pos": "center"
+  },
+  {
+   "at": 0.702,
+   "dur": 2.2,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 1.8,
+   "type": "ticker",
+   "to": 60,
+   "suffix": "s",
+   "label": "FULL SWEEP",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips",
+ "yt_title": "Spot a hidden camera lens in the dark #shorts"
+}

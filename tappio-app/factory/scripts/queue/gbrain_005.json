@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_005",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "bright optimistic electronic",
+   "uplifting focus ambient",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "person forgetting keys frustrated"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.6,
+   "type": "kicker",
+   "text": "MEMORY 101"
+  },
+  {
+   "at": 0.126,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "BEAT",
+   "big": "THE FOG"
+  },
+  {
+   "at": 0.222,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.318,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.51,
+   "dur": 1.8,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.606,
+   "dur": 2.0,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.702,
+   "dur": 2.2,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 1.8,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning",
+ "yt_title": "Is your brain older than you are? #shorts"
+}

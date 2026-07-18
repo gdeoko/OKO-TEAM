@@ -1,0 +1,19 @@
+{
+ "seq": 12,
+ "angle_idx": {
+  "spy": 4,
+  "brain": 4,
+  "tape": 4
+ },
+ "app_rr": 12,
+ "shot_off": {
+  "spy": 0,
+  "brain": 1,
+  "tape": 1
+ },
+ "ov_off": {
+  "spy": 12,
+  "brain": 12,
+  "tape": 12
+ }
+}

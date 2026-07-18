@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_008",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "calm motivational underscore",
+   "dreamy synth focus",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "5-MIN HABIT",
+  "top": "TRAIN FOCUS",
+  "big": "LIKE A\nMUSCLE",
+  "q": [
+   "glass of water healthy morning"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Focus is not a gift, it is a muscle."
+  },
+  {
+   "id": "b2",
+   "text": "Five minutes a day is enough to grow it."
+  },
+  {
+   "id": "b3",
+   "text": "Short, hard puzzles push your limit gently."
+  },
+  {
+   "id": "b4",
+   "text": "The app adapts as you get faster."
+  },
+  {
+   "id": "b5",
+   "text": "In two weeks distractions lose their grip."
+  },
+  {
+   "id": "b6",
+   "text": "Start with five minutes tomorrow."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.6,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.126,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "FOCUS",
+   "big": "UP"
+  },
+  {
+   "at": 0.222,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "SAY IT BACK",
+   "sub": "names stick instantly"
+  },
+  {
+   "at": 0.318,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.51,
+   "dur": 1.8,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.606,
+   "dur": 2.0,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.702,
+   "dur": 2.2,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 1.8,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Focus is a muscle, not a gift. Five minutes of adaptive puzzles a day, and in two weeks distractions lose their grip. Start tomorrow. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning",
+ "yt_title": "Train your focus like a muscle #shorts"
+}
