@@ -37,9 +37,9 @@ jobs:
           function tgt(){return curFrame||p;}
           function sh(c){return execSync(c,{stdio:['pipe','pipe','pipe']}).toString().trim();}
           function readCmd(){try{sh('git fetch -q origin '+BR);return sh('git show origin/'+BR+':icl_cmd.txt');}catch(e){return '';}}
-          async function writeState(o){
-            fs.writeFileSync('icl_state.txt',JSON.stringify(o,null,1));
-            for(let i=0;i<5;i++){try{sh('git add icl_state.txt icl_shot.jpg 2>/dev/null; git commit -q -m state --allow-empty; git pull -q --rebase origin '+BR+'; git push -q origin HEAD:'+BR);return;}catch(e){try{sh('git rebase --abort 2>/dev/null');}catch(_){} }}
+          function writeState(o){
+            fs.writeFileSync('icl_state.txt',JSON.stringify(o));
+            try{sh('git add -f icl_state.txt icl_shot.jpg 2>/dev/null; git add -f icl_state.txt 2>/dev/null; git commit -q -m s --allow-empty; git push -qf origin HEAD:icl-state');console.log('pushed',o.id);}catch(e){console.log('PUSHERR',e.message.slice(0,200));}
           }
           async function doActions(acts){
             const log=[];
@@ -62,13 +62,14 @@ jobs:
             }
             return log;
           }
+          console.log('DRIVER UP');
           let seen=-1;
           const t0=Date.now();
           while(Date.now()-t0 < 33*60*1000){
             let raw=readCmd();
             let cmd=null; try{cmd=JSON.parse(raw);}catch(e){}
             if(cmd && cmd.id>seen){
-              seen=cmd.id;
+              seen=cmd.id; console.log('exec',cmd.id);
               const log=await doActions(cmd.actions||[]);
               await p.waitForTimeout(cmd.settle||2500);
               let url='',title='',body='',invn='';
@@ -77,7 +78,7 @@ jobs:
               try{body=(await tgt().evaluate(()=>document.body?document.body.innerText:'')).replace(/\s+/g,' ').slice(0,700);}catch(e){}
               try{invn=JSON.stringify(await tgt().evaluate(()=>{const o=[];document.querySelectorAll('input,button,select,a,[role=button]').forEach(e=>{const l=(e.getAttribute('aria-label')||e.getAttribute('placeholder')||e.name||e.textContent||'').trim().slice(0,40);if(l)o.push((e.tagName||'').toLowerCase()+':'+l);});return [...new Set(o)].slice(0,60);}));}catch(e){}
               try{await p.screenshot({path:'icl_shot.jpg',type:'jpeg',quality:40,fullPage:false});}catch(e){}
-              await writeState({id:cmd.id,url,title,log,inv:invn,body});
+              writeState({id:cmd.id,url,title,log,inv:invn,body});
             }
             await new Promise(r=>setTimeout(r,6000));
           }
