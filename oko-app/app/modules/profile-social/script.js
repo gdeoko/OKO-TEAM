@@ -128,6 +128,73 @@ function psAuthor(name){
   };
 }
 
+/* ---------- обложка: детерминированный вариант композиции ---------- */
+function psCoverClass(name){ return 'v' + (psHash('cov:' + name) % 5); } /* v0..v4 (v0 = базовый) */
+
+/* ---------- ачивки автора (детерминированно из модели) ---------- */
+function psAchievements(a){
+  const h = psHash('ach:' + a.name);
+  const out = [];
+  const verified = (typeof VERIFIED !== 'undefined' && VERIFIED.has(a.name));
+  const team = /OKO|Клуб OKO|Поддержка|Партнёрам|Биржа/.test(a.name);
+  if(team) out.push({ic:'crown', label:'Команда OKO', gold:true});
+  if(verified) out.push({ic:'verified', label:'Проверенный'});
+  /* аудитория */
+  if(a.followers >= 20000) out.push({ic:'fire', label:'Топ-аудитория', gold:true});
+  else if(a.followers >= 5000) out.push({ic:'users', label:'Растущий канал'});
+  /* активность */
+  if(a.posts.length >= 6) out.push({ic:'bolt', label:'Активный автор'});
+  else if(a.posts.length >= 2) out.push({ic:'edit', label:'Автор OKO'});
+  /* тематика */
+  const topicBadge = {
+    ai:      {ic:'rocket',    label:'ИИ-эксперт'},
+    content: {ic:'circle-play',label:'Контент-мейкер'},
+    business:{ic:'briefcase', label:'Предприниматель'},
+    marketing:{ic:'megaphone',label:'Маркетолог'},
+    games:   {ic:'rocket',    label:'Геймдев'},
+    crypto:  {ic:'money',     label:'Крипто-аналитик'},
+  }[a.topic];
+  if(topicBadge) out.push(topicBadge);
+  /* добор до минимум 3 из стабильного пула (детерминированно по хэшу, без повторов) */
+  const pool = [
+    {ic:'star',  label:'Ветеран OKO'},
+    {ic:'flag',  label:'Ранний участник'},
+    {ic:'heart', label:'Любимец подписчиков'},
+    {ic:'thumb', label:'Проверено делом'},
+    {ic:'clock', label:'Всегда на связи'},
+    {ic:'rocket',label:'Быстрый рост'},
+  ];
+  const start = h % pool.length;
+  for(let i = 0; out.length < 3 && i < pool.length; i++) out.push(pool[(start + i) % pool.length]);
+  /* dedupe по label, максимум 4 — чтобы лента не обрезалась даже на десктопе (640px) */
+  const seen = new Set();
+  return out.filter(b => !seen.has(b.label) && seen.add(b.label)).slice(0, 4);
+}
+function psAchHtml(a){
+  const list = psAchievements(a);
+  if(!list.length) return '';
+  return `<div class="ps-ach">` + list.map((b, i) =>
+    `<span class="ps-badge${b.gold ? ' gold' : ''}" style="animation-delay:${40 + i * 55}ms">
+       <span class="ps-bi">${I(b.ic)}</span>${esc(b.label)}
+     </span>`).join('') + `</div>`;
+}
+
+/* ---------- count-up статистики при открытии профиля ---------- */
+function psAnimateStats(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  document.querySelectorAll('#psBody .ps-stat b[data-to]').forEach(el => {
+    const to = +el.getAttribute('data-to'); if(!isFinite(to)) return;
+    if(reduce || to <= 0){ el.textContent = psFmt(to); return; }
+    const dur = 650, t0 = performance.now();
+    (function step(now){
+      const k = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - k, 3); /* easeOutCubic */
+      el.textContent = psFmt(to * e);
+      if(k < 1) requestAnimationFrame(step); else el.textContent = psFmt(to);
+    })(t0);
+  });
+}
+
 /* ---------- рендер профиля ---------- */
 function psPostsHtml(a){
   if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Пока нет постов</p><span>Публикации автора появятся здесь</span></div>`;
@@ -152,15 +219,23 @@ function psRender(name){
   const body = document.getElementById('psBody');
   if(!body) return;
   body.innerHTML = `
+    <div class="ps-cover ${psCoverClass(a.name)} fade-in">
+      <div class="ps-cover-grid"></div>
+      <div class="ps-cover-mark">${I('logo')}</div>
+    </div>
     <div class="ps-top fade-in">
-      <div class="ps-ava">${a.avaIcon ? I(a.avaIcon) : esc(a.ava)}</div>
+      <div class="ps-ava-wrap">
+        <div class="ps-ava">${a.avaIcon ? I(a.avaIcon) : esc(a.ava)}</div>
+        ${a.online ? '<span class="ps-ava-on" title="в сети"></span>' : ''}
+      </div>
       <h3 class="ps-name">${esc(a.name)}${typeof vBadge === 'function' ? vBadge(a.name) : ''}</h3>
-      <div class="ps-nick">@${esc(a.nick)}${a.online ? ' · <span class="ps-on">в сети</span>' : ''}</div>
+      <div class="ps-nick">@${esc(a.nick)}${a.online ? '<span class="ps-dot">·</span><span class="ps-on">в сети</span>' : ''}</div>
       <p class="ps-bio">${esc(psBio(a.name, a.topic, a.sub))}</p>
+      ${psAchHtml(a)}
       <div class="ps-stats">
-        <div class="ps-stat"><b>${a.posts.length}</b><small>постов</small></div>
-        <div class="ps-stat"><b id="psFollowers">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></div>
-        <div class="ps-stat"><b>${psFmt(a.followingN)}</b><small>подписок</small></div>
+        <div class="ps-stat"><b data-to="${a.posts.length}">${a.posts.length}</b><small>постов</small></div>
+        <div class="ps-stat"><b id="psFollowers" data-to="${a.followers + (f ? 1 : 0)}">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></div>
+        <div class="ps-stat"><b data-to="${a.followingN}">${psFmt(a.followingN)}</b><small>подписок</small></div>
       </div>
       <div class="ps-actions">
         <button class="btn ${f ? 'ghost' : ''}" id="psFollowBtn" onclick="psToggleFollow()">${I(f ? 'check' : 'plus')} ${f ? 'Отписаться' : 'Подписаться'}</button>
@@ -180,6 +255,7 @@ function psOpenProfile(name){
   }
   PS.cur = name;
   psRender(name);
+  try{ psAnimateStats(); }catch(e){}
   const v = document.getElementById('psView');
   if(v && !v.classList.contains('open')){
     v.classList.add('open');

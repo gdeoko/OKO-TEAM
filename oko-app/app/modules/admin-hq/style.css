@@ -32,6 +32,34 @@
 .hq-op-ic svg.i{width:17px;height:17px}
 .hq-op-sum{flex-shrink:0;font-weight:700;font-size:13px;color:var(--accent)}
 
+/* ---------- график динамики дохода (14 дней) ---------- */
+.hq-chart{padding:15px 15px 12px;margin-bottom:4px;position:relative;overflow:hidden;background:radial-gradient(120% 150% at 100% 0%,var(--lime-dim),transparent 55%),var(--surface)}
+.hq-chart-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px}
+.hq-chart-h small{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+.hq-chart-h b{font-size:13px;color:var(--accent);font-weight:700;flex-shrink:0}
+.hq-chart-plot{display:flex;align-items:flex-end;gap:4px;height:104px;position:relative}
+.hq-chart-grid{position:absolute;inset:0 0 15px;pointer-events:none}
+.hq-chart-grid span{position:absolute;left:0;right:0;height:1px;background:var(--border);opacity:.55}
+.hq-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.hq-col i{display:block;width:100%;max-width:15px;height:var(--h);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--lime),#5cae00);animation:hqColUp .75s cubic-bezier(.2,.85,.3,1) both;transition:filter .15s}
+.hq-col.pk i{background:linear-gradient(180deg,#c8ff5e,var(--lime));box-shadow:0 0 13px rgba(154,255,0,.55)}
+@keyframes hqColUp{from{height:0}}
+.hq-col em{font-style:normal;font-size:8.5px;color:var(--dim);margin-top:5px;font-weight:600;line-height:1}
+.hq-col-v{position:absolute;top:0;transform:translateY(-108%);background:var(--raised);border:1px solid var(--border);color:var(--accent);font-size:10px;font-weight:700;padding:3px 7px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.hq-col:hover .hq-col-v{opacity:1;transform:translateY(-118%)}
+.hq-col:hover i{filter:brightness(1.18)}
+:root[data-theme="light"] .hq-col-v{box-shadow:0 4px 12px rgba(0,0,0,.14)}
+
+/* ---------- мини-спарклайн в KPI-плитке обзора ---------- */
+.hq-kpi-rev{position:relative}
+.hq-kpi-spark{display:block;width:100%;height:20px;margin:5px 0 1px;overflow:visible}
+.hq-kpi-spark .ln{stroke:var(--lime);stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:220;stroke-dashoffset:220;animation:hqSparkDraw 1.1s .1s cubic-bezier(.4,0,.2,1) forwards}
+.hq-kpi-spark .ar{fill:var(--lime-dim);opacity:0;animation:hqSparkFill .6s .7s ease forwards}
+.hq-kpi-spark .dot{fill:var(--lime);opacity:0;animation:hqSparkDot .3s 1s ease forwards}
+@keyframes hqSparkDraw{to{stroke-dashoffset:0}}
+@keyframes hqSparkFill{to{opacity:1}}
+@keyframes hqSparkDot{to{opacity:1}}
+
 /* ---------- фильтр-чипы по источникам ---------- */
 .hq-chips{display:flex;gap:7px;overflow-x:auto;padding:8px 1px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .hq-chips::-webkit-scrollbar{display:none}
@@ -73,7 +101,7 @@
 /* ---------- панель «Быстро» ---------- */
 .hq-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .hq-qbtn{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 9px 11px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
-.hq-qbtn:hover{border-color:var(--accent)}
+.hq-qbtn:hover{border-color:var(--accent);transform:translateY(-2px)}
 .hq-qbtn:active{transform:scale(.96)}
 .hq-qbtn b{font-size:12.5px}
 .hq-qbtn small{font-size:9.5px;color:var(--dim);line-height:1.3}
@@ -90,12 +118,19 @@
 .hq-head-b{flex:1;min-width:0}
 .hq-head-b h3{font-size:21px;line-height:1;margin-bottom:4px}
 .hq-head-b small{font-size:11px;color:var(--dim);display:block;line-height:1.45}
-.hq-3d-btn{margin-top:10px}
+.hq-3d-btn{margin-top:11px;position:relative;overflow:hidden;border:none;color:#08160a;background:linear-gradient(120deg,#c8ff5e,#9AFF00 46%,#5cae00);box-shadow:0 6px 20px rgba(154,255,0,.34),inset 0 1px 0 rgba(255,255,255,.35);letter-spacing:.02em}
+.hq-3d-btn svg.i{width:15px;height:15px}
+.hq-3d-btn::after{content:"";position:absolute;top:0;left:-70%;width:48%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-18deg);pointer-events:none;animation:hq3dShine 3.8s ease-in-out infinite}
+@keyframes hq3dShine{0%,18%{left:-70%}62%,100%{left:150%}}
+.hq-3d-btn:active{transform:scale(.97)}
+:root[data-theme="light"] .hq-3d-btn{box-shadow:0 5px 16px rgba(110,200,0,.42),inset 0 1px 0 rgba(255,255,255,.4)}
+@media(prefers-reduced-motion:reduce){.hq-3d-btn::after{animation:none;display:none}}
 
 .hq-rooms{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(min-width:760px){.hq-rooms{grid-template-columns:repeat(4,1fr)}}
 .hq-room{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:7px;text-align:left;transition:transform .15s,border-color .15s;animation:fade .4s ease both}
-.hq-room:hover{border-color:var(--accent)}
+.hq-room:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.22)}
+:root[data-theme="light"] .hq-room:hover{box-shadow:0 8px 18px rgba(20,30,0,.1)}
 .hq-room:active{transform:scale(.97)}
 .hq-room-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
 .hq-room-ic svg.i{width:18px;height:18px}
@@ -142,7 +177,7 @@
 /* ===== встроенный 3D-штаб (iframe внутри приложения) ===== */
 #hqEmbed{position:fixed;inset:0;z-index:64;background:#000;display:none;flex-direction:column}
 #hqEmbed.open{display:flex}
-#hqEmbed .hq-emb-head{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);background:#050505;flex-shrink:0}
+#hqEmbed .hq-emb-head{display:flex;align-items:center;gap:12px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--border);background:#050505;flex-shrink:0}
 #hqEmbed .hq-emb-head b{font-family:var(--font-display);letter-spacing:.14em;font-size:16px;color:var(--lime);flex:1;text-align:center}
 #hqEmbed .hq-emb-back{display:inline-flex;align-items:center;gap:6px;color:var(--lime);font-weight:600;font-size:13px;border:1px solid var(--border);border-radius:99px;padding:7px 14px}
 #hqEmbed .hq-emb-ext{display:inline-flex;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);align-items:center;justify-content:center;color:var(--dim)}

@@ -64,6 +64,51 @@ function hqWhen(at){
   if(d.toDateString() === new Date(n-864e5).toDateString()) return 'вчера '+hqHM(d);
   return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+' '+hqHM(d);
 }
+/* дневные корзины дохода за N дней (учитывают активный фильтр источника) */
+function hqDailyBuckets(list, days){
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const out = [];
+  for(let i=days-1;i>=0;i--){
+    const d0 = start - i*864e5, d1 = d0 + 864e5;
+    let sum = 0;
+    for(const r of list){ if(r.at>=d0 && r.at<d1) sum += r.sum; }
+    out.push({at:d0, sum});
+  }
+  return out;
+}
+/* столбчатый график динамики дохода за 14 дней */
+function hqRevChart(list){
+  const b = hqDailyBuckets(list, 14);
+  const peak = b.reduce((m,x)=>Math.max(m,x.sum), 0);
+  const max = Math.max(1, peak);
+  const cols = b.map((x,i)=>{
+    const h = x.sum ? Math.max(5, Math.round(x.sum/max*78)) : 1.5;
+    const day = new Date(x.at).getDate();
+    const isPk = peak>0 && x.sum===peak;
+    return `<div class="hq-col${isPk?' pk':''}" style="--h:${h}%">`
+      + `<span class="hq-col-v">+${fmtMoney(Math.round(x.sum))}</span>`
+      + `<i style="animation-delay:${(i*0.035).toFixed(3)}s"></i><em>${day}</em></div>`;
+  }).join('');
+  return `<div class="hq-chart card">
+    <div class="hq-chart-h"><small>Динамика дохода · 14 дней</small><b>пик +${fmtMoney(Math.round(peak))}</b></div>
+    <div class="hq-chart-plot"><div class="hq-chart-grid"><span style="top:0"></span><span style="top:50%"></span><span style="bottom:0"></span></div>${cols}</div>
+  </div>`;
+}
+/* мини-спарклайн (area+line) для KPI-плитки обзора — весь доход, 14 дней */
+function hqMiniSpark(){
+  const b = hqDailyBuckets(typeof OKO_REVENUE!=='undefined'?OKO_REVENUE:[], 14);
+  const max = Math.max(1, ...b.map(x=>x.sum));
+  const n = b.length;
+  const xy = b.map((x,i)=>[ +(i/(n-1)*100).toFixed(2), +(19 - (x.sum/max)*17).toFixed(2) ]);
+  const line = xy.map(p=>p[0]+','+p[1]).join(' ');
+  const area = '0,20 ' + line + ' 100,20';
+  const last = xy[xy.length-1];
+  return `<svg class="hq-kpi-spark" viewBox="0 0 100 22" preserveAspectRatio="none">`
+    + `<polygon class="ar" points="${area}"/>`
+    + `<polyline class="ln" points="${line}"/>`
+    + `<circle class="dot" cx="${last[0]}" cy="${last[1]}" r="2.4"/></svg>`;
+}
 
 /* ==================== 1. ГЕЙТ: раздел владельца ==================== */
 const _prevOpenAdminHq = openAdmin;
@@ -181,6 +226,7 @@ function hqRevenueView(){
       <div class="hq-rev-sub">за этот месяц <b>${fmtMoney(mSum)}</b> · проекция месяца <b>${fmtMoney(proj)}</b></div>
     </div>
     <div class="hq-chips">${chips}</div>
+    ${hqRevChart(list)}
     <div class="adm-sec-h">Суммы${hqRevSrc!=='all' ? ' · '+esc(hqRevSrc) : ''}</div>
     <div class="hq-pers card">${perRow('Сегодня',pT)}${perRow('7 дней',p7)}${perRow('30 дней',p30)}</div>
     <div class="adm-sec-h">По источникам</div>
@@ -560,7 +606,7 @@ admModer = function(){
 const _prevAdmOverviewHq = admOverview;
 admOverview = function(){
   const html = _prevAdmOverviewHq();
-  const kpi = `<div class="adm-kpi"><b style="font-size:24px;padding-top:4px;display:block">${fmtMoney(Math.round(okoRevenueTotal()))}</b><small>Доход OKO (комиссии) <i class="up" style="cursor:pointer" onclick="admGo('revenue')">→ Доходы</i></small></div>`;
+  const kpi = `<div class="adm-kpi hq-kpi-rev"><b style="font-size:24px;padding-top:4px;display:block">${fmtMoney(Math.round(okoRevenueTotal()))}</b>${hqMiniSpark()}<small>Доход OKO (комиссии) <i class="up" style="cursor:pointer" onclick="admGo('revenue')">→ Доходы</i></small></div>`;
   const quick = `
     <div class="adm-sec-h">Быстро · действия владельца</div>
     <div class="hq-quick">
