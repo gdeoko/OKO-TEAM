@@ -2940,9 +2940,9 @@ function initSystemTheme() {
 
 /* ── Сертификаты ── */
 const CERTIFICATES = [
-  { key: 'b1', title: 'Блок 1 · Знакомство с Богом', short: 'первый блок', award: 'Первооткрыватель', earned: true, date: '8 июля 2026' },
-  { key: 'b2', title: 'Блок 2 · Герои веры', short: 'второй блок', award: 'Хранитель историй', earned: false },
-  { key: 'b3', title: 'Блок 3 · Жизнь Иисуса', short: 'третий блок', award: 'Ученик', earned: false },
+  { key: 'b1', title: 'Глава 1 · Жизнь Господа', short: 'первую главу', award: 'Ученик Господа', earned: true, date: '8 июля 2026' },
+  { key: 'b2', title: 'Глава 2 · Ветхий Завет', short: 'вторую главу', award: 'Странник небес', earned: false },
+  { key: 'b3', title: 'Глава 3 · Израиль', short: 'третью главу', award: 'Знаток героев', earned: false },
   { key: 'year', title: 'Годовой сертификат школы', short: 'годовую программу', award: 'Выпускник «Метанойя»', earned: false, year: true },
 ];
 const CHILD_FOR_CERT = 'Миша';
