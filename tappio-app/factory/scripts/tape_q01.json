@@ -1,0 +1,240 @@
+{
+  "id": "tape_auto1",
+  "app": "tape",
+  "voice": "en-US-ChristopherNeural",
+  "rate": "+6%",
+  "grade": "warm_gold",
+  "brand": {
+    "accent": "#F4C430",
+    "accent2": "#FFE08A",
+    "code": "MEASURE",
+    "logo": "tape.png",
+    "name": "3D TAPE MEASURE"
+  },
+  "music": {
+    "queries": [
+      "upbeat indie acoustic diy",
+      "positive corporate light groove",
+      "warm optimistic guitar"
+    ]
+  },
+  "cover": {
+    "kicker": "WILL IT FIT?",
+    "top": "MEASURE ANY ROOM",
+    "big": "WITHOUT\nA TAPE",
+    "q": [
+      "person measuring room phone ar"
+    ]
+  },
+  "segments": [
+    {
+      "id": "b1",
+      "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+    },
+    {
+      "id": "b2",
+      "text": "Point your phone, tap two points. The length appears on the floor."
+    },
+    {
+      "id": "b3",
+      "text": "Width, height, area. No tape, no helper."
+    },
+    {
+      "id": "b4",
+      "text": "Save every wall as a project. Export a PDF in one tap."
+    },
+    {
+      "id": "b5",
+      "text": "Measure any space from your couch in ten seconds."
+    },
+    {
+      "id": "b6",
+      "text": "Your phone has the sensor. Measure once, buy right."
+    }
+  ],
+  "shots": [
+    {
+      "q": [
+        "person measuring living room with phone ar"
+      ],
+      "motion": "zin"
+    },
+    {
+      "q": [
+        "empty living room wooden floor sunlight"
+      ],
+      "insert": "tv",
+      "pos": "center"
+    },
+    {
+      "q": [
+        "hand pointing phone at wall measuring"
+      ],
+      "motion": "panr"
+    },
+    {
+      "q": [
+        "rolled up rug floor room"
+      ],
+      "insert": "hexagon",
+      "pos": "center"
+    },
+    {
+      "q": [
+        "measuring tape metal bending closeup"
+      ],
+      "motion": "zout"
+    },
+    {
+      "visual": "DEMO:tape_ar"
+    },
+    {
+      "q": [
+        "modern tv mounted on wall living room"
+      ],
+      "insert": "tilt",
+      "pos": "center"
+    },
+    {
+      "q": [
+        "hands arranging shelf wall decor"
+      ],
+      "motion": "pandown"
+    },
+    {
+      "q": [
+        "blueprint floor plan on tablet desk"
+      ],
+      "insert": "diamond",
+      "pos": "center"
+    },
+    {
+      "visual": "DEMO:tape_ar"
+    },
+    {
+      "q": [
+        "person relaxing on couch bright apartment"
+      ],
+      "motion": "panl"
+    },
+    {
+      "q": [
+        "cozy furnished living room warm light"
+      ],
+      "motion": "zin"
+    }
+  ],
+  "overlays": [
+    {
+      "at": 0.03,
+      "dur": 1.6,
+      "type": "kicker",
+      "text": "WILL IT FIT?"
+    },
+    {
+      "at": 0.11,
+      "dur": 1.7,
+      "type": "kinetic",
+      "top": "STOP",
+      "big": "GUESSING"
+    },
+    {
+      "at": 0.19,
+      "dur": 1.6,
+      "type": "lowerthird",
+      "title": "TAP TWO POINTS",
+      "sub": "length appears on the floor"
+    },
+    {
+      "at": 0.27,
+      "dur": 1.7,
+      "type": "chips",
+      "pos": "upper",
+      "items": [
+        "LENGTH",
+        "WIDTH",
+        "HEIGHT",
+        "AREA"
+      ]
+    },
+    {
+      "at": 0.36,
+      "dur": 2.2,
+      "type": "bars",
+      "title": "TAPE VS PHONE ERROR",
+      "unit": "%",
+      "pos": "center",
+      "items": [
+        [
+          "Metal tape",
+          62
+        ],
+        [
+          "Phone AR",
+          6
+        ]
+      ]
+    },
+    {
+      "at": 0.48,
+      "dur": 2.0,
+      "type": "gauge",
+      "to": 10,
+      "max": 10,
+      "suffix": "s",
+      "label": "PER MEASUREMENT",
+      "pos": "center"
+    },
+    {
+      "at": 0.59,
+      "dur": 1.6,
+      "type": "callout",
+      "text": "SAVED AS PROJECT",
+      "x": 545,
+      "y": 690
+    },
+    {
+      "at": 0.67,
+      "dur": 2.2,
+      "type": "donut",
+      "center": "PDF",
+      "items": [
+        [
+          "Walls",
+          40
+        ],
+        [
+          "Furniture",
+          35
+        ],
+        [
+          "Floor area",
+          25
+        ]
+      ],
+      "pos": "center"
+    },
+    {
+      "at": 0.79,
+      "dur": 1.7,
+      "type": "stat_count",
+      "to": 100,
+      "suffix": "%",
+      "label": "OFFLINE, NO TAPE",
+      "pos": "center"
+    },
+    {
+      "at": 0.88,
+      "dur": 1.6,
+      "type": "kinetic",
+      "top": "MEASURE ONCE",
+      "big": "BUY RIGHT"
+    }
+  ],
+  "cta": {
+    "text": "Stop guessing. Measure with your phone. Comment MEASURE for the app.",
+    "code": "MEASURE"
+  },
+  "caption": "A rug, a TV, a shelf \u2014 will it fit? Point your phone, tap two points, the length appears on the floor. Width, height, area \u2014 no tape, no helper. Save every wall as a project, export a PDF. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy",
+  "yt_title": "Measure any room without a tape #shorts"
+}
