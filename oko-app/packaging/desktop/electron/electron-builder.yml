@@ -1,0 +1,52 @@
+appId: com.oko.app
+productName: OKO
+copyright: © 2026 OKO TEAM
+directories:
+  output: release
+  buildResources: build
+files:
+  - main.js
+  - preload.js
+  - app/**/*
+  - package.json
+
+# Icons: put generated icons into ./build before building:
+#   build/icon.ico   (Windows, from packaging/icons/desktop/icon.ico)
+#   build/icon.icns  (macOS,   from packaging/icons/desktop/icon.icns)
+#   build/icon.png   (Linux 512x512, from packaging/icons/desktop/icon-512.png)
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages: [ru_RU, en_US]
+  shortcutName: OKO
+
+mac:
+  category: public.app-category.social-networking
+  target:
+    - target: dmg
+      arch: [universal]
+  icon: build/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  title: OKO
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Network
+  icon: build/icon.png
+  maintainer: OKO TEAM <okoteam.top@gmail.com>
+  synopsis: OKO — супер-приложение

@@ -1,0 +1,57 @@
+{
+  "packageId": "com.oko.app",
+  "host": "true-journey-418.higgsfield.app",
+  "name": "OKO",
+  "launcherName": "OKO",
+  "display": "standalone",
+  "themeColor": "#000000",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#000000",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://true-journey-418.higgsfield.app/oko-icon-512.png",
+  "maskableIconUrl": "https://true-journey-418.higgsfield.app/oko-maskable-512.png",
+  "monochromeIconUrl": "https://true-journey-418.higgsfield.app/oko-icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "oko"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Чаты",
+      "shortName": "Чаты",
+      "url": "/?tab=messages",
+      "chosenIconUrl": "https://true-journey-418.higgsfield.app/oko-icon-192.png"
+    },
+    {
+      "name": "Лента",
+      "shortName": "Лента",
+      "url": "/?tab=feed",
+      "chosenIconUrl": "https://true-journey-418.higgsfield.app/oko-icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://true-journey-418.higgsfield.app/oko-manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://true-journey-418.higgsfield.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.0.0"
+}

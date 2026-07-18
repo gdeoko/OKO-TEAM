@@ -1,0 +1,33 @@
+<!--
+  OKO — фрагменты для ios/App/App/Info.plist.
+  Добавлять ТОЛЬКО те ключи, чьи функции реально используются: лишние строки-разрешения
+  вызывают замечания ревью Apple. Тексты можно править под UX.
+-->
+<key>CFBundleDisplayName</key>
+<string>OKO</string>
+
+<!-- Камера — звонки/сторис -->
+<key>NSCameraUsageDescription</key>
+<string>OKO использует камеру для видеозвонков, сторис и съёмки контента.</string>
+
+<!-- Микрофон — голосовые/звонки -->
+<key>NSMicrophoneUsageDescription</key>
+<string>OKO использует микрофон для голосовых сообщений и звонков.</string>
+
+<!-- Фото — вложения -->
+<key>NSPhotoLibraryUsageDescription</key>
+<string>OKO нужен доступ к фото для отправки изображений в чатах и ленте.</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>OKO сохраняет полученные медиа в вашу галерею.</string>
+
+<!-- Геолокация — только если есть гео-функции (иначе НЕ добавлять) -->
+<!--
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>OKO использует геолокацию для показа услуг и предложений рядом.</string>
+-->
+
+<!-- Тёмная тема статус-бара под бренд -->
+<key>UIStatusBarStyle</key>
+<string>UIStatusBarStyleLightContent</string>
+<key>UIViewControllerBasedStatusBarAppearance</key>
+<false/>

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OKO",
+  "version": "1.0.0",
+  "identifier": "com.oko.app",
+  "build": {
+    "frontendDist": "./dist",
+    "beforeBuildCommand": "",
+    "beforeDevCommand": ""
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "OKO",
+        "url": "https://true-journey-418.higgsfield.app",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 380,
+        "minHeight": 640,
+        "resizable": true,
+        "center": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "backgroundColor": "#000000",
+        "theme": "Dark"
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": []
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage", "nsis", "msi", "app", "dmg"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "SocialNetworking",
+    "shortDescription": "OKO — супер-приложение",
+    "longDescription": "OKO: мессенджер, лента, биржа услуг, академия, игры и ИИ-инструменты в одном приложении.",
+    "copyright": "© 2026 OKO TEAM",
+    "publisher": "OKO TEAM",
+    "windows": {
+      "wix": { "language": ["ru-RU", "en-US"] },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["Russian", "English"]
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": null,
+      "entitlements": null
+    },
+    "linux": {
+      "appimage": { "bundleMediaFramework": true }
+    }
+  }
+}
