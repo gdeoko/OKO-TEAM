@@ -1,0 +1,86 @@
+name: icl-drive
+on:
+  push:
+    branches: [claude/youtube-video-editing-591bd5]
+    paths: ['.github/workflows/icl-drive.yml', 'icl_start.txt']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  drive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/youtube-video-editing-591bd5
+      - name: setup
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm i playwright@1.47.0 >/dev/null 2>&1
+          npx playwright install chromium >/dev/null 2>&1
+          git config user.email bot@oko && git config user.name okobot
+          echo ok
+      - name: drive
+        env:
+          BR: claude/youtube-video-editing-591bd5
+        run: |
+          cat > drive.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import { execSync } from 'child_process';
+          import fs from 'fs';
+          const BR=process.env.BR;
+          const b=await chromium.launch({headless:true,args:['--lang=en-US','--no-sandbox']});
+          const ctx=await b.newContext({acceptDownloads:true,locale:'en-US',userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',viewport:{width:1280,height:1600}});
+          const p=await ctx.newPage();
+          let curFrame=null;
+          function tgt(){return curFrame||p;}
+          function sh(c){return execSync(c,{stdio:['pipe','pipe','pipe']}).toString().trim();}
+          function readCmd(){try{sh('git fetch -q origin '+BR);return sh('git show origin/'+BR+':icl_cmd.txt');}catch(e){return '';}}
+          async function writeState(o){
+            fs.writeFileSync('icl_state.txt',JSON.stringify(o,null,1));
+            for(let i=0;i<5;i++){try{sh('git add icl_state.txt icl_shot.jpg 2>/dev/null; git commit -q -m state --allow-empty; git pull -q --rebase origin '+BR+'; git push -q origin HEAD:'+BR);return;}catch(e){try{sh('git rebase --abort 2>/dev/null');}catch(_){} }}
+          }
+          async function doActions(acts){
+            const log=[];
+            for(const a of acts){
+              const [op,x,y]=a;
+              try{
+                if(op==='goto'){await p.goto(x,{waitUntil:'domcontentloaded',timeout:90000});curFrame=null;}
+                else if(op==='wait'){await p.waitForTimeout(+x);}
+                else if(op==='useframe'){curFrame=x===''?null:p.frames().find(f=>f.url().includes(x))||null; log.push('frames='+JSON.stringify(p.frames().map(f=>f.url().slice(0,50))));}
+                else if(op==='fill'){await tgt().fill(x,y,{timeout:15000});}
+                else if(op==='type'){await tgt().type(x,y,{delay:60,timeout:15000});}
+                else if(op==='click'){await tgt().click(x,{timeout:15000});}
+                else if(op==='clicktext'){await tgt().getByText(x,{exact:false}).first().click({timeout:15000});}
+                else if(op==='press'){await tgt().press(x,y,{timeout:15000});}
+                else if(op==='selopt'){await tgt().selectOption(x,{label:y},{timeout:15000});}
+                else if(op==='eval'){log.push('EVAL='+JSON.stringify(await tgt().evaluate(x)).slice(0,1500));}
+                else if(op==='dblclick'){await tgt().dblclick(x,{timeout:15000});}
+                log.push(op+' ok');
+              }catch(e){log.push(op+' ERR '+e.message.slice(0,140));}
+            }
+            return log;
+          }
+          let seen=-1;
+          const t0=Date.now();
+          while(Date.now()-t0 < 33*60*1000){
+            let raw=readCmd();
+            let cmd=null; try{cmd=JSON.parse(raw);}catch(e){}
+            if(cmd && cmd.id>seen){
+              seen=cmd.id;
+              const log=await doActions(cmd.actions||[]);
+              await p.waitForTimeout(cmd.settle||2500);
+              let url='',title='',body='',invn='';
+              try{url=tgt().url();}catch(e){}
+              try{title=await p.title();}catch(e){}
+              try{body=(await tgt().evaluate(()=>document.body?document.body.innerText:'')).replace(/\s+/g,' ').slice(0,700);}catch(e){}
+              try{invn=JSON.stringify(await tgt().evaluate(()=>{const o=[];document.querySelectorAll('input,button,select,a,[role=button]').forEach(e=>{const l=(e.getAttribute('aria-label')||e.getAttribute('placeholder')||e.name||e.textContent||'').trim().slice(0,40);if(l)o.push((e.tagName||'').toLowerCase()+':'+l);});return [...new Set(o)].slice(0,60);}));}catch(e){}
+              try{await p.screenshot({path:'icl_shot.jpg',type:'jpeg',quality:40,fullPage:false});}catch(e){}
+              await writeState({id:cmd.id,url,title,log,inv:invn,body});
+            }
+            await new Promise(r=>setTimeout(r,6000));
+          }
+          await b.close();
+          JS
+          node drive.mjs || true
