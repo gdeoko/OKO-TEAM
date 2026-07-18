@@ -1418,6 +1418,8 @@ body.in-chat .header { display: none; }
 .games-tile__icon { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 12px;
   background: linear-gradient(160deg, var(--gold), var(--terracotta)); color: var(--cream);
   display: flex; align-items: center; justify-content: center; }
+.games-tile__icon--img { overflow: hidden; background: linear-gradient(150deg,#F0E4CF,#E8D4BC); }
+.games-tile__icon--img img { width: 100%; height: 100%; object-fit: cover; }
 .games-tile__name { font-weight: 700; font-size: 15px; }
 .games-tile__desc { font-size: 12px; color: var(--gray); margin-top: 2px; }
 .games-tile__play { margin-left: auto; color: var(--terracotta); }
@@ -1776,6 +1778,22 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .set-row__ic { background: rgba(255,255,255,.08); color: #C7D4DF; }
 [data-theme="dark"] .lb-row--me { background: linear-gradient(100deg,#22333f,#2b3a30); }
 [data-theme="dark"] .sub-plan--on { background: linear-gradient(100deg,#22333f,#2e3a2a); }
+
+/* тёмная тема: доработка ранее непокрытых компонентов (аудит) */
+[data-theme="dark"] .lesson-item { background: #1b2c3a; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+[data-theme="dark"] .lesson-item--locked { background: #16242f; }
+[data-theme="dark"] .lesson-item__title { color: #EAF0F5; }
+[data-theme="dark"] .lesson-item__num { background: rgba(255,255,255,.1); color: #EAF0F5; }
+[data-theme="dark"] .gcard { background: linear-gradient(160deg,#1f2f3d,#1a2733); border-color: rgba(255,255,255,.08); }
+[data-theme="dark"] .gcard__name { color: #EAF0F5; }
+[data-theme="dark"] .rank { background: #1b2c3a; }
+[data-theme="dark"] .rank--on { background: linear-gradient(150deg,#3a2b28,#2b3a30); }
+[data-theme="dark"] .rank__name { color: #EAF0F5; }
+[data-theme="dark"] .toc-item { background: #1b2c3a; }
+[data-theme="dark"] .toc-item__t { color: #EAF0F5; }
+[data-theme="dark"] .reader { color: #E7EDF3; }
+[data-theme="dark"] .reader .scripture { background: linear-gradient(150deg,#22333f,#2a2620); color: #EAF0F5; }
+[data-theme="dark"] .blockp span { color: #EAF0F5; }
 [data-theme="dark"] .switch { background: rgba(255,255,255,.16); }
 [data-theme="dark"] .set-about, [data-theme="dark"] .rating-note, [data-theme="dark"] .sub-note { color: #8397A8; }
 [data-theme="dark"] #openBook { background: linear-gradient(160deg,#2a2440,#241d33) !important; border-color: rgba(155,122,212,.5) !important; }

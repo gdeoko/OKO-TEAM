@@ -830,8 +830,8 @@ function initNotifs() {
 /* ───────── PULL-TO-REFRESH И БЕСКОНЕЧНАЯ ЛЕНТА ───────── */
 
 const EXTRA_FEED = [
-  { type: 'chapter', label: 'Новая глава книги «Метанойя»', title: 'Глава 1. Начало пути',
-    text: 'Литературная версия первого урока — читайте всей семьёй.', likes: 12, comments: 2 },
+  { type: 'chapter', label: 'Новая глава книги «Метанойя»', title: 'Глава 1 · Жизнь Господа',
+    text: 'Уроки главы в виде книги — читайте всей семьёй.', likes: 12, comments: 2 },
   { type: 'achievement', label: 'Достижение', title: 'Аня получила значок «Первооткрыватель»',
     text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
   { type: 'quote', label: 'Цитата дня · вчера',
@@ -2471,19 +2471,22 @@ let readerFsIdx = 1;
 const FS_PX = { s: 15, m: 16, l: 18, xl: 21 };
 
 function openBook() {
-  $('#bookToc').innerHTML = BOOK_BLOCKS.map((b) => `
-    <div class="toc-block">${b.title}</div>
-    ${b.chapters.map((ch) => `
-      <button class="toc-item ${ch.ready ? '' : 'toc-item--locked'}" data-chapter="${ch.n}">
-        <div class="toc-item__num">${ch.n}</div>
-        <div class="toc-item__t">${ch.title}</div>
-        ${ch.ready ? `<span class="toc-item__read">Читать</span>` : `<span data-icon="lock" data-size="15"></span>`}
-      </button>`).join('')}
+  // Книга = уроки программы. Оглавление из глав, чтение — из контента урока.
+  $('#bookToc').innerHTML = DEMO.blocks.map((block) => `
+    <div class="toc-block">${block.title}</div>
+    ${block.lessons.filter((l) => !l.exam).map((l) => {
+      const ready = !!lessonContent(l.n);
+      return `<button class="toc-item ${ready ? '' : 'toc-item--locked'}" data-chapter="${l.n}">
+        <div class="toc-item__num">${l.cn || l.n}</div>
+        <div class="toc-item__t">${l.title}</div>
+        ${ready ? `<span class="toc-item__read">Читать</span>` : `<span data-icon="lock" data-size="15"></span>`}
+      </button>`;
+    }).join('')}
   `).join('');
   $$('#bookToc [data-chapter]').forEach((el) => el.addEventListener('click', () => {
     const n = Number(el.dataset.chapter);
-    if (BOOK[n]) openReader(n);
-    else toast('Глава появится после публикации урока');
+    if (lessonContent(n)) openReader(n);
+    else toast('Материал этого урока готовит педагог школы');
   }));
   hydrateIcons();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'book'));
@@ -2492,9 +2495,17 @@ function openBook() {
 }
 
 function openReader(n) {
-  const ch = BOOK[n];
-  $('#readerTitle').textContent = ch.title;
-  $('#readerBody').innerHTML = `<h2>${ch.title}</h2>${ch.body}`;
+  const c = lessonContent(n);
+  const meta = lessonMeta(n);
+  if (!c || !meta) { toast('Материал этого урока готовит педагог школы'); return; }
+  const title = meta.l.title;
+  const intro = c.intro ? `<p class="drop">${c.intro}</p>` : '';
+  const scripture = c.verse ? `<div class="scripture">${c.verse.text}<cite>${c.verse.ref}</cite></div>` : '';
+  const story = (c.story || []).map((p) => `<p>${p}</p>`).join('');
+  const golden = c.golden ? `<div class="scripture">${c.golden}</div>` : '';
+  const prayer = c.prayer ? `<p><em>${c.prayer}</em></p>` : '';
+  $('#readerTitle').textContent = title;
+  $('#readerBody').innerHTML = `<h2>${title}</h2>${intro}${scripture}${story}${golden}${prayer}`;
   applyReaderFs();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'reader'));
   $('#nav').style.display = 'none';
@@ -3887,6 +3898,16 @@ function initGrowth() {
   $('#mNotify')?.addEventListener('click', openSettingsScreen);
   $('#mParental')?.addEventListener('click', openSettingsScreen);
   $('#setBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
+  $('#mSupport')?.addEventListener('click', () => {
+    switchTab('chats');
+    toast('Напишите нам в «Поддержку» — отвечаем в течение дня');
+  });
+  $('#mLogout')?.addEventListener('click', () => {
+    try { localStorage.removeItem('mt_auth'); } catch (e) {}
+    const auth = $('#auth'); if (auth) auth.hidden = false;
+    window.scrollTo({ top: 0 });
+    toast('Вы вышли из аккаунта');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

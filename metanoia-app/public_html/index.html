@@ -368,7 +368,7 @@
 
       <h2 class="section-title">Игры и развитие</h2>
       <button class="games-tile" id="openBook" style="background:linear-gradient(160deg,#fff,#F3ECFB);border-color:#B9A0D9">
-        <div class="games-tile__icon" style="background:linear-gradient(160deg,#9B7AD4,#C97064)"><span data-icon="book" data-size="24"></span></div>
+        <div class="games-tile__icon games-tile__icon--img"><img src="assets/img/book-cover.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
         <div class="games-tile__body">
           <div class="games-tile__name">Книга «Метанойя»</div>
           <div class="games-tile__desc">Уроки в виде глав книги · читать всей семьёй</div>
@@ -377,10 +377,10 @@
       </button>
 
       <button class="games-tile" id="openGamesHub">
-        <div class="games-tile__icon"><span data-icon="gamepad" data-size="24"></span></div>
+        <div class="games-tile__icon games-tile__icon--img"><img src="assets/img/games/match3.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
         <div class="games-tile__body">
           <div class="games-tile__name">Мини-игры</div>
-          <div class="games-tile__desc">20 игр · собери стих, мемори, викторина и другие</div>
+          <div class="games-tile__desc">16 игр · собери стих, мемори, викторина и другие</div>
         </div>
         <span data-icon="play" data-size="18" class="games-tile__play"></span>
       </button>
@@ -393,8 +393,8 @@
         <button class="menu-item" id="mDonate"><span data-icon="heart" data-size="18"></span>Поддержать школу</button>
         <button class="menu-item" id="mNotify"><span data-icon="bell" data-size="18"></span>Уведомления</button>
         <button class="menu-item" id="mParental"><span data-icon="shield" data-size="18"></span>Родительский контроль</button>
-        <button class="menu-item"><span data-icon="headset" data-size="18"></span>Поддержка</button>
-        <button class="menu-item menu-item--muted"><span data-icon="logout" data-size="18"></span>Выйти</button>
+        <button class="menu-item" id="mSupport"><span data-icon="headset" data-size="18"></span>Поддержка</button>
+        <button class="menu-item menu-item--muted" id="mLogout"><span data-icon="logout" data-size="18"></span>Выйти</button>
       </div>
     </section>
 
