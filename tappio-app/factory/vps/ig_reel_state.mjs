@@ -89,6 +89,7 @@ try{
       log('coverDone',coverDone);
     }catch(e){ log('cover step err',String(e).slice(0,140)); }
   }
+  if(process.env.IG_DRYRUN){ log('DRYRUN — обложку поставили, шеринг пропущен'); await ctx.close(); await b.close(); process.exit(0); }
   const capBox=p.locator('div[aria-label="Write a caption..."], textarea[aria-label="Write a caption..."], div[contenteditable="true"]').first();
   if(await capBox.count()){ await capBox.click().catch(()=>{}); await p.keyboard.type(CAP.slice(0,2100),{delay:2}); log('caption typed'); }
   else log('NO caption box');
