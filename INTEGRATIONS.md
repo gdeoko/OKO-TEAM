@@ -160,8 +160,11 @@ Environment variables окружения:
   xvfb**. Форма грузится, submit по Enter (у IG кнопки — div, не button). На новом
   устройстве IG просит подтверждение → Даниэль одобряет в приложении → сессия проходит.
   Профиль: VPS `/opt/oko-poster/cfg/ig_oko_profile`, стейт `cfg/ig_oko_state.json`.
-  Грабли: постинг сразу после свежего входа даёт «Произошла ошибка» (IG режет write на
-  прогрев) — первый пост делать после прогрева сессии.
+  Грабли: веб-создатель постов (create → Далее) отдаёт «Произошла ошибка» — НЕ через веб.
+  РАБОЧИЙ ПОСТИНГ: instagrapi по sessionid из ig_oko_state.json →
+  `.claude/skills/reels-machine/pipeline/social/ig_photo_post.py <img> <caption>`
+  (фото — photo_upload; рилс — clip_upload, см. VPS ig_post_reel.py). Проверено 18.07:
+  пост https://www.instagram.com/p/Da73MxFCWtP/ опубликован через instagrapi.
 - **TikTok** — вход через Hooppy.ru; прямой вход агента не идёт (нужен человеческий IP).
 - **VK-пароль** Даниэль просил обновить — при работе с VK сверять/менять.
 - Приглашение в MAX-мессенджер (max.ru/join/...) прислано — вступать по запросу.
