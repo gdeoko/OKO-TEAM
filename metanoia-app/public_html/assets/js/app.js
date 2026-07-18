@@ -670,7 +670,7 @@ const CHAT_MSGS = {
   0: { readonly: true, pinned: 'Правила школы: доброта, уважение, поддержка. Пишем с любовью!',
     msgs: [
       { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Мир вашему дому, дорогие семьи! Здесь я буду делиться новостями школы и отвечать на вопросы.', time: '10:02' },
-      { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', voice: { dur: 18, url: 'assets/audio/welcome.mp3' }, time: '11:15' },
+      { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', voice: { dur: 12, url: 'assets/audio/welcome.mp3' }, time: '11:15' },
       { who: 'Екатерина', img: 'assets/img/avatars/ekaterina.jpg', text: 'Добро пожаловать в нашу школу!', time: '12:34' },
     ] },
   1: { pinned: 'Знакомимся: напишите, из какого вы города!',
