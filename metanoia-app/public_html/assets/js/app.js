@@ -1033,9 +1033,9 @@ function renderLesson(n) {
       <div class="lstep ${st.hw ? 'done' : ''}" data-step="hw"><i></i>ДЗ</div>
     </div>
 
-    <div class="card video-stub" id="videoStub">
-      <span data-icon="play" data-size="34"></span>
-      <div><b>Видеоурок</b><br><small>Появится здесь после записи уроков. Пока можно пройти материалы и тест.</small></div>
+    <div class="video-stub" id="videoStub" style="background-image:linear-gradient(to top,rgba(20,35,47,.9),rgba(20,35,47,.35)),url('${cover}')">
+      <div class="video-stub__play">${ICON('play', 26)}</div>
+      <div class="video-stub__cap"><b>Видеоурок</b><span>Появится здесь после записи · пока проходите материалы и тест</span></div>
     </div>
 
     ${c && c.intro ? `<div class="card lesson-text lesson-intro"><p>${c.intro}</p></div>` : ''}
@@ -3940,6 +3940,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(tickCountdown, 60_000);
 
   $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
+  $('#joinCall')?.addEventListener('click', () => toast('Запись на созвон скоро откроется'));
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#searchBtn')?.addEventListener('click', () => {
     $$('.nav__tab').forEach((b) => b.classList.remove('nav__tab--active'));

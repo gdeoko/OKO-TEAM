@@ -260,15 +260,22 @@
 
       <!-- Виджет «Сегодня» -->
       <div class="today card card--gold">
-        <div class="today__row">
-          <span class="today__streak"><span data-icon="flame" data-size="17" class="ic-terra"></span> <b id="streakDays">12</b> дней подряд</span>
-          <span class="today__xp">+<b id="xpToday">45</b> XP сегодня</span>
+        <div class="today__head">
+          <span class="today__eyebrow">Сегодня</span>
+          <span class="today__streak"><span data-icon="flame" data-size="16" class="ic-terra"></span> <b id="streakDays">12</b> дней подряд</span>
         </div>
-        <div class="today__call">
-          <div class="today__call-label">Ближайший созвон:</div>
-          <div class="today__call-title">«Притча о блудном сыне»</div>
-          <div class="today__call-timer"><span data-icon="clock" data-size="14"></span> через <span id="callCountdown">2ч 15мин</span></div>
+        <div class="today__pills">
+          <span class="tpill tpill--xp">+<b id="xpToday">45</b> XP сегодня</span>
+          <span class="tpill tpill--rank"><span data-icon="sprout" data-size="13"></span> Росточек</span>
         </div>
+        <button class="today__call" id="joinCall">
+          <span class="today__call-ic"><span data-icon="video" data-size="20"></span></span>
+          <span class="today__call-body">
+            <span class="today__call-label">Ближайший созвон · через <span id="callCountdown">2ч 15мин</span></span>
+            <span class="today__call-title">«Притча о блудном сыне»</span>
+          </span>
+          <span class="today__call-go">Записаться</span>
+        </button>
         <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn"><span data-icon="book" data-size="18" class="ic-gold"></span> Ежедневный стих</button>
       </div>
 
@@ -314,6 +321,10 @@
         <button id="newChatBtn" aria-label="Новое сообщение"><span data-icon="comment" data-size="22"></span><span data-icon="plus" data-size="13" class="chats-head__plus"></span></button>
       </div>
       <div class="chat-list" id="chatList"><!-- JS --></div>
+      <div class="chats-hint">
+        <span data-icon="dove" data-size="26"></span>
+        <p>Здесь вы на связи с педагогом и семьями школы. Задавайте вопросы, делитесь успехами — мы рядом.</p>
+      </div>
     </section>
 
     <!-- ── 📚 УРОКИ ── -->
