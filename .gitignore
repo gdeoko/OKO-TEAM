@@ -18,3 +18,4 @@ PROJECT_CONTEXT.txt
 secrets.env
 vcode/daily/last_run.log
 vcode/daily/current_spec.json
+xtts-venv/
