@@ -1,1 +1,1 @@
-{"id":1,"actions":[["goto","https://appleid.apple.com/account"],["wait","9000"]],"settle":3000}
+{"id":2,"actions":[["eval","(()=>{const out=[];function walk(r){r.querySelectorAll('input,select,textarea').forEach(e=>{out.push(e.tagName+'|'+(e.type||'')+'|ph='+(e.placeholder||'')+'|nm='+(e.name||'')+'|al='+(e.getAttribute('aria-label')||'')+'|id='+(e.id||''));});r.querySelectorAll('*').forEach(e=>{if(e.shadowRoot)walk(e.shadowRoot);});}walk(document);return out;})()"]],"settle":1500}
