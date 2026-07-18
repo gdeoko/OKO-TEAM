@@ -77,15 +77,44 @@ function adsCpcTxt(c){
   return cpc ? (cpc<10 ? cpc.toFixed(2) : fmtN(Math.round(cpc)))+' ₽' : '—';
 }
 
+/* сводка: живые анимированные счётчики (count-up с easeOut на входе и на каждом тике) */
+const ADS_SUM = [
+  {k:'sp',  l:'потрачено', unit:'₽', fmt:v=>fmtN(Math.round(v))},
+  {k:'im',  l:'показы',              fmt:v=>fmtN(Math.round(v))},
+  {k:'cl',  l:'клики',               fmt:v=>fmtN(Math.round(v))},
+  {k:'ctr', l:'ctr',       unit:'%', fmt:v=>v.toFixed(1)}
+];
+const adsSumState = {};   /* k -> {cur, raf} */
+function adsSumTotals(){
+  const t = ADS.camps.reduce((a,c)=>({sp:a.sp+c.spent, im:a.im+c.imps, cl:a.cl+c.clicks}), {sp:0,im:0,cl:0});
+  t.ctr = t.im ? (t.cl/t.im*100) : 0;
+  return t;
+}
+function adsCountTo(s, target){
+  const el = document.querySelector(`#adsSummary .v[data-sk="${s.k}"]`); if(!el) return;
+  const st = adsSumState[s.k] || (adsSumState[s.k] = {cur:0, raf:0});
+  cancelAnimationFrame(st.raf);
+  const unit = s.unit ? ` <small>${s.unit}</small>` : '';
+  const paint = v => { el.innerHTML = s.fmt(v)+unit; };
+  if(Math.abs(target-st.cur) < 1e-4){ st.cur = target; paint(target); return; }
+  const from = st.cur, t0 = performance.now(), dur = 640;
+  const step = now=>{
+    const k = Math.min(1, (now-t0)/dur), e = 1-Math.pow(1-k,3);
+    st.cur = from + (target-from)*e; paint(st.cur);
+    if(k<1) st.raf = requestAnimationFrame(step); else { st.cur = target; paint(target); }
+  };
+  st.raf = requestAnimationFrame(step);
+}
+function adsSummaryReset(){ Object.values(adsSumState).forEach(s=>{ cancelAnimationFrame(s.raf); s.cur = 0; }); }
 function adsRenderSummary(){
   const box = document.getElementById('adsSummary'); if(!box) return;
-  const t = ADS.camps.reduce((a,c)=>({sp:a.sp+c.spent, im:a.im+c.imps, cl:a.cl+c.clicks}), {sp:0,im:0,cl:0});
-  const ctr = t.im ? (t.cl/t.im*100) : 0;
-  box.innerHTML = `
-    <div class="stat"><div class="v">${fmtN(Math.round(t.sp))} <small>₽</small></div><div class="l">потрачено</div></div>
-    <div class="stat"><div class="v">${fmtN(t.im)}</div><div class="l">показы</div></div>
-    <div class="stat"><div class="v">${fmtN(t.cl)}</div><div class="l">клики</div></div>
-    <div class="stat"><div class="v">${ctr.toFixed(1)}<small>%</small></div><div class="l">ctr</div></div>`;
+  if(box.children.length !== ADS_SUM.length){
+    box.innerHTML = ADS_SUM.map(s=>
+      `<div class="stat"><div class="v" data-sk="${s.k}">0${s.unit?` <small>${s.unit}</small>`:''}</div><div class="l">${s.l}</div></div>`
+    ).join('');
+  }
+  const t = adsSumTotals();
+  ADS_SUM.forEach(s=>adsCountTo(s, t[s.k]));
 }
 
 function adsCampActs(c){
@@ -119,7 +148,7 @@ function adsRenderList(){
         <div class="ads-m"><b data-m="imps">${fmtN(c.imps)}</b><span>показы</span></div>
         <div class="ads-m"><b data-m="clicks">${fmtN(c.clicks)}</b><span>клики</span></div>
         <div class="ads-m hot"><b data-m="ctr">${adsCtr(c).toFixed(1)}%</b><span>ctr</span></div>
-        <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}₽</b><span>из ${fmtN(c.budget)}₽</span></div>
+        <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}<i class="ads-cur">₽</i></b><span>из ${fmtN(c.budget)}<i class="ads-cur">₽</i></span></div>
       </div>
       <div class="ads-budget-bar"><i data-m="bar" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
       <canvas class="ads-spark" id="adsSpark${c.id}"></canvas>
@@ -295,7 +324,8 @@ function adsTickUI(){
     const el = document.querySelector(`.ads-camp[data-cid="${c.id}"]`); if(!el) return;
     const set = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n) n.textContent = v; };
     set('imps', fmtN(c.imps)); set('clicks', fmtN(c.clicks));
-    set('ctr', adsCtr(c).toFixed(1)+'%'); set('spent', fmtN(Math.round(c.spent))+'₽');
+    set('ctr', adsCtr(c).toFixed(1)+'%');
+    const sp = el.querySelector('[data-m="spent"]'); if(sp) sp.innerHTML = fmtN(Math.round(c.spent))+'<i class="ads-cur">₽</i>';
     const bar = el.querySelector('[data-m="bar"]'); if(bar) bar.style.width = Math.min(100, c.spent/c.budget*100)+'%';
     adsDrawSpark(c);
     if(adsOpenStats.has(c.id)){
@@ -557,7 +587,7 @@ function adsTick(){
 const _prevShowTabAds = showTab;
 showTab = function(t){
   _prevShowTabAds(t);
-  if(t==='ads') adsRender();
+  if(t==='ads'){ adsSummaryReset(); adsRender(); }
 };
 
 /* ---------- самоинициализация ---------- */

@@ -32,6 +32,13 @@
 .ac-lesson-row svg.i{width:17px;height:17px;color:var(--dim);flex-shrink:0}
 .ac-lesson-row .go{color:var(--accent)}
 .ac-mini-pct{font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 9px;flex-shrink:0}
+/* мини-кольцо прогресса урока в списке */
+.ac-mini-ring{width:36px;height:36px;flex-shrink:0;position:relative}
+.ac-mini-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ac-mini-ring .bg{fill:none;stroke:var(--raised);stroke-width:4}
+.ac-mini-ring .val{fill:none;stroke:var(--lime);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.3,1,.4,1);filter:drop-shadow(0 0 3px rgba(154,255,0,.5))}
+:root[data-theme="light"] .ac-mini-ring .val{filter:none}
+.ac-mini-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:12px;color:var(--accent);letter-spacing:.02em;padding-top:1px}
 .ac-mini-cert{width:26px;height:26px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(154,255,0,.35)}
 :root[data-theme="light"] .ac-mini-cert{box-shadow:none}
 .ac-mini-cert svg.i{width:14px;height:14px;color:#000}
@@ -93,8 +100,10 @@
 /* --- слайды: горизонтальный scroll-snap --- */
 .ac-slides{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .ac-slides::-webkit-scrollbar{display:none}
-.ac-slide{flex:0 0 min(86%,340px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px;transition:border-color .25s,box-shadow .25s}
-.ac-slide.cur{border-color:rgba(154,255,0,.45);box-shadow:0 0 22px rgba(154,255,0,.08)}
+.ac-slide{flex:0 0 min(86%,340px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px;transform:scale(.94);opacity:.62;transition:border-color .3s,box-shadow .35s,transform .4s cubic-bezier(.3,1,.4,1),opacity .4s ease}
+.ac-slide.cur{border-color:rgba(154,255,0,.45);box-shadow:0 0 22px rgba(154,255,0,.08);transform:scale(1);opacity:1}
+.ac-slide .pic svg{transition:transform .5s cubic-bezier(.3,1,.4,1)}
+.ac-slide.cur .pic svg{transform:scale(1.04)}
 .ac-slide .n{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
 .ac-slide h3{font-size:23px;line-height:1;color:var(--text)}
 .ac-slide .pic{height:76px;color:var(--accent)}

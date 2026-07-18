@@ -223,3 +223,106 @@
 .mp-pin-chips button:hover{border-color:var(--lime);color:var(--accent)}
 .mp-pin-chips button:active{transform:scale(.95)}
 .mp-branch-flash{animation:mpFlash 1.6s ease both;border-radius:var(--r-sm)}
+
+/* ================= ИНФОГРАФИКА КАБИНЕТА ================= */
+@keyframes mpBarUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes mpBarW{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes mpEscPulse{0%,100%{box-shadow:0 0 0 3px var(--lime-dim)}50%{box-shadow:0 0 0 6px transparent}}
+/* --- динамика выручки: столбчатый график --- */
+.mp-chart{background:radial-gradient(120% 150% at 100% 0%,rgba(154,255,0,.1),transparent 55%),var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 14px 12px;animation:mpFade .3s ease both}
+:root[data-theme="light"] .mp-chart{background:radial-gradient(120% 150% at 100% 0%,rgba(110,200,0,.12),transparent 55%),var(--surface)}
+.mp-chart-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mp-chart-top b{font-family:var(--font-display);font-size:23px;letter-spacing:.02em;line-height:1;color:var(--text)}
+.mp-chart-top small{display:block;font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.mp-grow{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:5px 11px}
+.mp-grow.up{color:#000;background:var(--lime);box-shadow:var(--glow)}
+.mp-grow.down{color:var(--danger);background:rgba(255,77,77,.12)}
+.mp-grow svg.i{width:12px;height:12px}
+.mp-tbars{display:flex;align-items:flex-end;gap:6px}
+.mp-tb-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}
+.mp-tb-val{font-size:8px;font-weight:700;color:var(--dim);margin-bottom:4px;white-space:nowrap;letter-spacing:-.02em}
+.mp-tb-track{width:100%;height:78px;display:flex;align-items:flex-end;justify-content:center}
+.mp-tb-bar{width:62%;height:var(--h);min-height:6px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,rgba(154,255,0,.32),rgba(154,255,0,.1));border:1px solid rgba(154,255,0,.25);border-bottom:none;transform-origin:bottom;animation:mpBarUp .8s cubic-bezier(.2,.85,.25,1) both;animation-delay:var(--d,0s)}
+.mp-tb-bar.now{background:linear-gradient(180deg,var(--lime),rgba(154,255,0,.4));border-color:var(--lime);box-shadow:0 0 14px rgba(154,255,0,.4)}
+:root[data-theme="light"] .mp-tb-bar{background:linear-gradient(180deg,rgba(120,200,0,.4),rgba(120,200,0,.14));border-color:rgba(120,200,0,.3)}
+:root[data-theme="light"] .mp-tb-bar.now{background:linear-gradient(180deg,#7ec400,#a6e84d);border-color:#6bb000;box-shadow:0 2px 10px rgba(83,168,0,.3)}
+.mp-tb-x{font-size:9.5px;color:var(--dim);margin-top:6px;text-transform:capitalize}
+.mp-tb-col:last-child .mp-tb-x{color:var(--accent);font-weight:700}
+/* --- воронка показы -> контакты -> заказы --- */
+.mp-funnel{display:flex;flex-direction:column;gap:11px}
+.mp-fn-row{animation:mpFade .3s ease both}
+.mp-fn-row:nth-child(2){animation-delay:.06s}.mp-fn-row:nth-child(3){animation-delay:.12s}
+.mp-fn-lab{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:6px}
+.mp-fn-lab svg.i{width:14px;height:14px;color:var(--accent)}
+.mp-fn-lab span{color:var(--dim)}
+.mp-fn-lab b{margin-left:auto;font-family:var(--font-display);font-size:16px;letter-spacing:.03em;color:var(--text)}
+.mp-fn-track{height:14px;background:var(--raised);border-radius:99px;overflow:hidden}
+.mp-fn-bar{display:block;width:var(--w);height:100%;border-radius:99px;transform-origin:left;animation:mpBarW .9s cubic-bezier(.2,.85,.25,1) both}
+.mp-fn-bar.s0{background:linear-gradient(90deg,rgba(154,255,0,.4),var(--lime))}
+.mp-fn-bar.s1{background:linear-gradient(90deg,rgba(154,255,0,.32),rgba(154,255,0,.7));animation-delay:.1s}
+.mp-fn-bar.s2{background:linear-gradient(90deg,rgba(154,255,0,.28),rgba(154,255,0,.55));animation-delay:.2s}
+.mp-fn-conv{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);margin-top:5px}
+.mp-fn-conv svg.i{width:10px;height:10px;transform:rotate(90deg);color:var(--accent)}
+.mp-fn-conv b{color:var(--accent);font-weight:800}
+/* --- распределение оценок --- */
+.mp-rate-mid{flex:1;min-width:0}
+.mp-rdist{width:100%;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.mp-rd-row{display:flex;align-items:center;gap:8px}
+.mp-rd-k{display:inline-flex;align-items:center;gap:2px;font-size:10.5px;font-weight:700;color:var(--dim);width:26px;flex-shrink:0}
+.mp-rd-k svg.i{width:10px;height:10px;color:var(--lime);fill:var(--lime)}
+.mp-rd-track{flex:1;height:8px;background:var(--raised);border-radius:99px;overflow:hidden}
+.mp-rd-bar{display:block;width:var(--w);height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(154,255,0,.5),var(--lime));transform-origin:left;animation:mpBarW .85s cubic-bezier(.2,.85,.25,1) both}
+.mp-rd-n{font-size:10.5px;color:var(--dim);width:16px;text-align:right;flex-shrink:0}
+/* rate-big становится колонкой, чтобы вместить распределение */
+.mp-rate-big{flex-wrap:wrap}
+
+/* ================= ЭСКРОУ-ТРЕКЕР СТАДИЙ ================= */
+.mp-esc-track{position:relative;display:flex;justify-content:space-between;margin:11px 0 3px;padding:0 2px}
+.mp-esc-line,.mp-esc-fill{position:absolute;top:8px;left:12px;right:12px;height:2px;border-radius:2px}
+.mp-esc-line{background:var(--border)}
+.mp-esc-fill{background:linear-gradient(90deg,var(--lime),rgba(154,255,0,.6));width:calc((100% - 24px) * var(--fill) / 100);box-shadow:0 0 8px rgba(154,255,0,.4);transform-origin:left;animation:mpBarW .7s cubic-bezier(.2,.85,.25,1) both}
+:root[data-theme="light"] .mp-esc-fill{box-shadow:0 0 6px rgba(83,168,0,.3)}
+.mp-esc-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0}
+.mp-esc-dot{width:18px;height:18px;border-radius:50%;background:var(--raised);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:#000;transition:all .3s}
+.mp-esc-dot svg.i{width:9px;height:9px}
+.mp-esc-node small{font-size:8.5px;color:var(--dim);text-align:center;letter-spacing:.01em;white-space:nowrap;transition:color .3s}
+.mp-esc-node.done .mp-esc-dot{background:var(--lime);border-color:var(--lime)}
+.mp-esc-node.cur .mp-esc-dot{background:var(--surface);border-color:var(--lime);animation:mpEscPulse 2s ease-in-out infinite}
+.mp-esc-node.cur small{color:var(--accent);font-weight:800}
+.mp-esc-node.done small{color:var(--text)}
+
+/* ================= ПОЛИРОВКА КАРТОЧЕК БИРЖИ (таргет базовых классов) ================= */
+/* карточки категорий — медиа-акцент, вход со стаггером, hover-лифт */
+.mk-cats .mk-cat{position:relative;overflow:hidden;animation:mpFade .34s ease both;transition:transform .14s,border-color .2s,box-shadow .25s}
+.mk-cats .mk-cat::before{content:'';position:absolute;inset:0;background:radial-gradient(90% 120% at 0% 0%,rgba(154,255,0,.08),transparent 55%);opacity:0;transition:opacity .25s;pointer-events:none}
+.mk-cats .mk-cat:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.4);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.mk-cats .mk-cat:hover::before{opacity:1}
+:root[data-theme="light"] .mk-cats .mk-cat:hover{box-shadow:0 6px 16px rgba(83,168,0,.12)}
+.mk-cats .mk-cat:hover .mk-cat-ic{box-shadow:0 0 14px rgba(154,255,0,.28);transform:scale(1.05)}
+.mk-cat-ic{transition:transform .2s,box-shadow .25s}
+.mk-cats .mk-cat:nth-child(1){animation-delay:.02s}.mk-cats .mk-cat:nth-child(2){animation-delay:.05s}
+.mk-cats .mk-cat:nth-child(3){animation-delay:.08s}.mk-cats .mk-cat:nth-child(4){animation-delay:.11s}
+.mk-cats .mk-cat:nth-child(5){animation-delay:.14s}.mk-cats .mk-cat:nth-child(6){animation-delay:.17s}
+.mk-cats .mk-cat:nth-child(7){animation-delay:.2s}.mk-cats .mk-cat:nth-child(8){animation-delay:.23s}
+.mk-cats .mk-cat:nth-child(9){animation-delay:.26s}
+/* карточки объявлений — hover-лифт + свечение рамки */
+#mkResults .lst-card{transition:transform .14s,border-color .2s,box-shadow .25s}
+#mkResults .lst-card:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.35);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+:root[data-theme="light"] #mkResults .lst-card:hover{box-shadow:0 8px 20px rgba(83,168,0,.13)}
+/* медиа-плейсхолдер: мягкий блик по кругу при наведении */
+.lst-photo{position:relative}
+.lst-card .lst-photo,.feat-card .lst-photo{overflow:hidden}
+.lst-card:hover .lst-photo svg.i{transform:scale(1.08);opacity:.8}
+.lst-photo svg.i{transition:transform .3s,opacity .3s}
+.feat-card{transition:transform .14s,border-color .2s,box-shadow .25s}
+.feat-card:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.4);box-shadow:0 6px 18px rgba(0,0,0,.28)}
+/* рейтинг-пилюля и знак «проверен» поверх медиа-плейсхолдера */
+.mp-photo-rate{position:absolute;left:8px;bottom:8px;z-index:2;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;letter-spacing:.01em;color:#fff;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:99px;padding:3px 8px 3px 6px;animation:mpFade .3s ease both}
+.mp-photo-rate svg.i{width:11px;height:11px;color:var(--lime);fill:var(--lime)}
+:root[data-theme="light"] .mp-photo-rate{background:rgba(0,0,0,.42)}
+.mp-photo-ver{position:absolute;right:8px;bottom:8px;z-index:2;width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(154,255,0,.5);animation:mpPop .4s cubic-bezier(.3,1.4,.5,1) both}
+.mp-photo-ver svg.i{width:13px;height:13px;fill:currentColor}
+.lst-photo.big .mp-photo-ver{width:30px;height:30px;right:12px;bottom:12px}
+.lst-photo.big .mp-photo-ver svg.i{width:17px;height:17px}
+.feat-card .mp-photo-ver{width:19px;height:19px;right:6px;bottom:6px}
+.feat-card .mp-photo-ver svg.i{width:11px;height:11px}

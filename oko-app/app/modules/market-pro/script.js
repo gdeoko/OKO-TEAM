@@ -141,6 +141,89 @@ function mpMyReviews(){
   return out;
 }
 
+/* ---------- инфографика: динамика выручки (6 мес.), внутренне-согласованный тренд ---------- */
+const MP_TREND_W = [0.52, 0.61, 0.55, 0.74, 0.83, 1.0]; // относительная форма кривой роста
+function mpMonthLabels(){
+  const ru = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const out = [], now = new Date();
+  for(let i=5;i>=0;i--){ const d = new Date(now.getFullYear(), now.getMonth()-i, 1); out.push(ru[d.getMonth()]); }
+  return out;
+}
+function mpTrendVals(total){
+  const s = MP_TREND_W.reduce((a,b)=>a+b,0);
+  return MP_TREND_W.map(x=>Math.round(total/s*x)); // сумма месяцев == общая выручка
+}
+/* ---------- инфографика: воронка показы -> контакты -> заказы (реальные числа) ---------- */
+function mpFunnel(views, contacts, orders){
+  const rows = [
+    {ic:'eye',       lab:'Показы',   n:views},
+    {ic:'chat',      lab:'Контакты', n:contacts},
+    {ic:'briefcase', lab:'Заказы',   n:orders},
+  ];
+  const max = Math.max(1, views);
+  return `<div class="mp-funnel">${rows.map((r,i)=>{
+    const w = Math.max(7, Math.round(r.n/max*100));
+    const conv = i>0 ? (rows[i-1].n ? Math.round(r.n/rows[i-1].n*1000)/10 : 0) : null;
+    return `<div class="mp-fn-row">
+      <div class="mp-fn-lab">${I(r.ic)}<span>${r.lab}</span><b>${fmtN(r.n)}</b></div>
+      <div class="mp-fn-track"><span class="mp-fn-bar s${i}" style="--w:${w}%"></span></div>
+      ${conv!==null?`<div class="mp-fn-conv">${I('chev')} конверсия <b>${conv}%</b></div>`:''}
+    </div>`;
+  }).join('')}</div>`;
+}
+/* ---------- инфографика: распределение оценок (реальные отзывы) ---------- */
+function mpRatingDist(revs){
+  const cnt = {5:0,4:0,3:0,2:0,1:0};
+  revs.forEach(r=>{ const k = Math.max(1,Math.min(5,Math.round(r.r))); cnt[k]++; });
+  const max = Math.max(1, ...Object.values(cnt));
+  let rows = '';
+  for(let s=5;s>=1;s--){
+    const w = Math.round(cnt[s]/max*100);
+    rows += `<div class="mp-rd-row"><span class="mp-rd-k">${s}${I('star')}</span>
+      <span class="mp-rd-track"><span class="mp-rd-bar" style="--w:${cnt[s]?w:0}%"></span></span>
+      <span class="mp-rd-n">${cnt[s]}</span></div>`;
+  }
+  return `<div class="mp-rdist">${rows}</div>`;
+}
+/* ---------- блок аналитики (динамика выручки + воронка) ---------- */
+function mpAnalytics(revenue, views, contacts, orders){
+  const vals = mpTrendVals(revenue), labs = mpMonthLabels();
+  const max = Math.max(1, ...vals);
+  const growth = vals[0] ? Math.round((vals[5]-vals[0])/vals[0]*100) : 0;
+  const bars = vals.map((v,i)=>{
+    const h = Math.max(6, Math.round(v/max*100));
+    return `<div class="mp-tb-col"><span class="mp-tb-val">${fmtN(v)}</span>
+      <span class="mp-tb-track"><span class="mp-tb-bar${i===5?' now':''}" style="--h:${h}%;--d:${i*0.07}s"></span></span>
+      <span class="mp-tb-x">${labs[i]}</span></div>`;
+  }).join('');
+  return `
+    <div class="mp-h">${I('poll')} Динамика выручки · 6 мес.</div>
+    <div class="mp-chart">
+      <div class="mp-chart-top">
+        <div><b>${fmtMoney(revenue)}</b><small>за полгода</small></div>
+        <span class="mp-grow ${growth>=0?'up':'down'}">${I(growth>=0?'rocket':'chev')} ${growth>=0?'+':''}${growth}%</span>
+      </div>
+      <div class="mp-tbars">${bars}</div>
+    </div>
+    <div class="mp-h">${I('bolt')} Воронка продаж</div>
+    ${mpFunnel(views, contacts, orders)}`;
+}
+/* ---------- эскроу-трекер стадий сделки ---------- */
+function mpEscrowStep(d){
+  const nodes = d.dir==='in'
+    ? ['Оплата','В работе','Сдача','Выплата']
+    : ['Оплата','В работе','Проверка','Получено'];
+  const cur = d.st==='work' ? 1 : d.st==='wait' ? 2 : nodes.length; // done -> все стадии закрыты
+  const fill = Math.min(100, Math.round(cur/(nodes.length-1)*100));
+  return `<div class="mp-esc-track" style="--fill:${fill}%">
+    <div class="mp-esc-line"></div><div class="mp-esc-fill"></div>
+    ${nodes.map((n,i)=>{
+      const cls = i<cur ? 'done' : i===cur ? 'cur' : '';
+      return `<div class="mp-esc-node ${cls}"><span class="mp-esc-dot">${i<cur?I('check'):''}</span><small>${n}</small></div>`;
+    }).join('')}
+  </div>`;
+}
+
 /* ================= ЧАСТЬ 1 · КАБИНЕТ ПРОДАВЦА ================= */
 function mpOpenCabinet(){ mpRenderCab(); openSheet('mpCab'); }
 function mpRenderCab(){
@@ -170,6 +253,8 @@ function mpRenderCab(){
       <div class="mp-kpi-t">${I('briefcase')}<b data-mpcount="${orders}">0</b><small>заказы</small></div>
       <div class="mp-kpi-t">${I('money')}<b data-mpcount="${revenue}">0</b><small>выручка ₽</small></div>
     </div>
+
+    ${mpAnalytics(revenue, views, contacts, orders)}
 
     <div class="mp-h">${I('card')} Баланс продаж</div>
     <div class="mp-balcard">
@@ -214,12 +299,14 @@ function mpRenderCab(){
           <span class="mp-dir">${d.dir==='in'?'Продажа':'Покупка'}</span>
           <small>${esc(d.n)} · ${mpWhen(d.at)}</small>
           ${d.st!=='done'?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
-        </div>${act}</div>`;
+        </div>
+        ${mpEscrowStep(d)}${act}</div>`;
     }).join('')}
 
     <div class="mp-h">${I('star')} Рейтинг и отзывы</div>
     <div class="mp-rate-big"><b>${avg?avg.toFixed(1):'—'}</b>
-      <div>${stars(avg)}<small>${revs.length} отзывов по ${mine.length} объявлениям</small></div></div>
+      <div class="mp-rate-mid">${stars(avg)}<small>${revs.length} отзывов по ${mine.length} объявлениям</small></div>
+      ${revs.length?mpRatingDist(revs):''}</div>
     ${revs.slice(0,6).map(r=>`<div class="mp-rev">
       <div class="mp-rev-h"><b>${esc(r.n)}</b><span class="mp-rev-st">${stars(r.r)}</span></div>
       <p>${esc(r.t)}</p></div>`).join('')}
@@ -484,7 +571,7 @@ function mpCustomChat(){
 const _prevRenderMarketMp = renderMarket;
 renderMarket = function(){
   _prevRenderMarketMp();
-  if(typeof mkView!=='undefined' && mkView==='cats') mpInjectMarket();
+  if(typeof mkView!=='undefined' && mkView==='cats'){ mpInjectMarket(); mpDecorateCards(); }
 };
 function mpInjectMarket(){
   const root = document.getElementById('marketRoot');
@@ -507,6 +594,36 @@ function mpInjectMarket(){
     </span>
     <span class="mp-banner-cta"><span class="mp-banner-chip">от $1500</span>${I('chev')}</span>`;
   row.insertAdjacentElement('afterend', bn);
+}
+
+/* биржа: бейджи «Проверенный» и рейтинг-пилюля на медиа-плейсхолдерах карточек */
+function mpIdFromCard(el){
+  const m = (el.getAttribute('onclick')||'').match(/openListing\((\d+)\)/);
+  return m ? +m[1] : null;
+}
+function mpRatingPill(l){
+  return `<span class="mp-photo-rate">${I('star')}${l.r.toFixed(1)}</span>`;
+}
+function mpVerMini(){ return `<span class="mp-photo-ver" title="Проверенный продавец">${I('verified')}</span>`; }
+function mpDecoratePhoto(photo, l){
+  if(!photo || photo.querySelector('.mp-photo-rate')) return;
+  if(l.r) photo.insertAdjacentHTML('beforeend', mpRatingPill(l));
+  if(mpIsVerified(l)) photo.insertAdjacentHTML('beforeend', mpVerMini());
+}
+function mpDecorateCards(){
+  document.querySelectorAll('#mkResults .lst-card').forEach(card=>{
+    const id = mpIdFromCard(card), l = id && LISTINGS.find(x=>x.id===id);
+    if(l) mpDecoratePhoto(card.querySelector('.lst-photo'), l);
+  });
+  document.querySelectorAll('.mk-feat .feat-card').forEach(card=>{
+    const id = mpIdFromCard(card), l = id && LISTINGS.find(x=>x.id===id);
+    if(l && mpIsVerified(l) && !card.querySelector('.mp-photo-ver'))
+      (card.querySelector('.lst-photo')||card).insertAdjacentHTML('beforeend', mpVerMini());
+  });
+}
+if(typeof renderMarketListSoft==='function'){
+  const _prevRMLS = renderMarketListSoft;
+  renderMarketListSoft = function(){ _prevRMLS.apply(this, arguments); mpDecorateCards(); };
 }
 
 /* заказ на бирже: покупка уже патчена wallet (эскроу+комиссия) — только читаем результат */
@@ -562,6 +679,9 @@ function mpDecorateListing(id){
   const l = LISTINGS.find(x=>x.id===id);
   const v = document.getElementById('lstView');
   if(!l || !v) return;
+  const bigPhoto = v.querySelector('.lst-photo.big');
+  if(bigPhoto && mpIsVerified(l) && !bigPhoto.querySelector('.mp-photo-ver'))
+    bigPhoto.insertAdjacentHTML('beforeend', mpVerMini());
   const seller = v.querySelector('.seller-card');
   if(seller){
     const nameEl = seller.querySelector('b');

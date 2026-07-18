@@ -508,12 +508,23 @@ function acRender(){
   if(acView === 'lesson'){
     acRenderVideoBox(); acBindSlides(); acRenderTestBox();
     acRenderTaskBox(); acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+  } else {
+    acAnimRings();
   }
+}
+/* сведение колец прогресса из «пустого» в цель — эффектный sweep при входе */
+function acAnimRings(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('#acRoot .ac-ring .val, #acRoot .ac-mini-ring .val').forEach(c=>{
+      const off = c.getAttribute('data-off');
+      if(off !== null) c.style.strokeDashoffset = off;
+    });
+  }));
 }
 
 /* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
 function acHomeHtml(){
-  const pct = acCoursePct(), C = 2*Math.PI*33;
+  const pct = acCoursePct(), C = 2*Math.PI*33, CR = 2*Math.PI*15;
   const rows = AC_COURSE.map((l,i)=>{
     if(!acUnlocked(i)) return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после сертификата урока ${i}')">
       <span class="ac-num">${i+1}</span>
@@ -522,7 +533,10 @@ function acHomeHtml(){
     const ls = acS.lessons[i], p = acLessonPct(i);
     const st = (ls && ls.cert)
       ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
-      : (p > 0 ? `<span class="ac-mini-pct">${p}%</span>` : '');
+      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
+          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
+          <b>${p}</b></span>` : '');
     return `<button class="ac-lesson-row" onclick="acOpenLesson(${i})">
       <span class="ac-num">${i+1}</span>
       <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
@@ -557,7 +571,7 @@ function acHomeHtml(){
       <div class="ac-course-top">
         <span class="ac-ring">
           <svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="33"/>
-          <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct/100)).toFixed(1)}"/></svg>
+          <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C*(1-pct/100)).toFixed(1)}"/></svg>
           <b>${pct}%</b>
         </span>
         <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>

@@ -39,7 +39,9 @@
 .ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
 .ads-m b{display:block;font-family:var(--font-display);font-size:17px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-m b .ads-cur{font-family:var(--font-body);font-size:.62em;font-weight:700;color:var(--dim);letter-spacing:0;margin-left:2px;vertical-align:.05em}
 .ads-m span{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.ads-m span .ads-cur{font-style:normal;margin-left:1px}
 .ads-m.hot b{color:var(--accent)}
 
 .ads-spark{display:block;width:100%;height:44px;margin-bottom:10px;border-radius:var(--r-sm)}

@@ -1559,6 +1559,13 @@ main>.screen{position:relative;z-index:1}
 .ac-lesson-row svg.i{width:17px;height:17px;color:var(--dim);flex-shrink:0}
 .ac-lesson-row .go{color:var(--accent)}
 .ac-mini-pct{font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 9px;flex-shrink:0}
+/* мини-кольцо прогресса урока в списке */
+.ac-mini-ring{width:36px;height:36px;flex-shrink:0;position:relative}
+.ac-mini-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.ac-mini-ring .bg{fill:none;stroke:var(--raised);stroke-width:4}
+.ac-mini-ring .val{fill:none;stroke:var(--lime);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.3,1,.4,1);filter:drop-shadow(0 0 3px rgba(154,255,0,.5))}
+:root[data-theme="light"] .ac-mini-ring .val{filter:none}
+.ac-mini-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:12px;color:var(--accent);letter-spacing:.02em;padding-top:1px}
 .ac-mini-cert{width:26px;height:26px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(154,255,0,.35)}
 :root[data-theme="light"] .ac-mini-cert{box-shadow:none}
 .ac-mini-cert svg.i{width:14px;height:14px;color:#000}
@@ -1620,8 +1627,10 @@ main>.screen{position:relative;z-index:1}
 /* --- слайды: горизонтальный scroll-snap --- */
 .ac-slides{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .ac-slides::-webkit-scrollbar{display:none}
-.ac-slide{flex:0 0 min(86%,340px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px;transition:border-color .25s,box-shadow .25s}
-.ac-slide.cur{border-color:rgba(154,255,0,.45);box-shadow:0 0 22px rgba(154,255,0,.08)}
+.ac-slide{flex:0 0 min(86%,340px);scroll-snap-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;gap:10px;min-height:250px;transform:scale(.94);opacity:.62;transition:border-color .3s,box-shadow .35s,transform .4s cubic-bezier(.3,1,.4,1),opacity .4s ease}
+.ac-slide.cur{border-color:rgba(154,255,0,.45);box-shadow:0 0 22px rgba(154,255,0,.08);transform:scale(1);opacity:1}
+.ac-slide .pic svg{transition:transform .5s cubic-bezier(.3,1,.4,1)}
+.ac-slide.cur .pic svg{transform:scale(1.04)}
 .ac-slide .n{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
 .ac-slide h3{font-size:23px;line-height:1;color:var(--text)}
 .ac-slide .pic{height:76px;color:var(--accent)}
@@ -1808,7 +1817,9 @@ main>.screen{position:relative;z-index:1}
 .ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
 .ads-m b{display:block;font-family:var(--font-display);font-size:17px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-m b .ads-cur{font-family:var(--font-body);font-size:.62em;font-weight:700;color:var(--dim);letter-spacing:0;margin-left:2px;vertical-align:.05em}
 .ads-m span{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.ads-m span .ads-cur{font-style:normal;margin-left:1px}
 .ads-m.hot b{color:var(--accent)}
 
 .ads-spark{display:block;width:100%;height:44px;margin-bottom:10px;border-radius:var(--r-sm)}
@@ -2484,6 +2495,109 @@ main>.screen{position:relative;z-index:1}
 .mp-pin-chips button:hover{border-color:var(--lime);color:var(--accent)}
 .mp-pin-chips button:active{transform:scale(.95)}
 .mp-branch-flash{animation:mpFlash 1.6s ease both;border-radius:var(--r-sm)}
+
+/* ================= ИНФОГРАФИКА КАБИНЕТА ================= */
+@keyframes mpBarUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes mpBarW{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes mpEscPulse{0%,100%{box-shadow:0 0 0 3px var(--lime-dim)}50%{box-shadow:0 0 0 6px transparent}}
+/* --- динамика выручки: столбчатый график --- */
+.mp-chart{background:radial-gradient(120% 150% at 100% 0%,rgba(154,255,0,.1),transparent 55%),var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 14px 12px;animation:mpFade .3s ease both}
+:root[data-theme="light"] .mp-chart{background:radial-gradient(120% 150% at 100% 0%,rgba(110,200,0,.12),transparent 55%),var(--surface)}
+.mp-chart-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mp-chart-top b{font-family:var(--font-display);font-size:23px;letter-spacing:.02em;line-height:1;color:var(--text)}
+.mp-chart-top small{display:block;font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.mp-grow{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:5px 11px}
+.mp-grow.up{color:#000;background:var(--lime);box-shadow:var(--glow)}
+.mp-grow.down{color:var(--danger);background:rgba(255,77,77,.12)}
+.mp-grow svg.i{width:12px;height:12px}
+.mp-tbars{display:flex;align-items:flex-end;gap:6px}
+.mp-tb-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center}
+.mp-tb-val{font-size:8px;font-weight:700;color:var(--dim);margin-bottom:4px;white-space:nowrap;letter-spacing:-.02em}
+.mp-tb-track{width:100%;height:78px;display:flex;align-items:flex-end;justify-content:center}
+.mp-tb-bar{width:62%;height:var(--h);min-height:6px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,rgba(154,255,0,.32),rgba(154,255,0,.1));border:1px solid rgba(154,255,0,.25);border-bottom:none;transform-origin:bottom;animation:mpBarUp .8s cubic-bezier(.2,.85,.25,1) both;animation-delay:var(--d,0s)}
+.mp-tb-bar.now{background:linear-gradient(180deg,var(--lime),rgba(154,255,0,.4));border-color:var(--lime);box-shadow:0 0 14px rgba(154,255,0,.4)}
+:root[data-theme="light"] .mp-tb-bar{background:linear-gradient(180deg,rgba(120,200,0,.4),rgba(120,200,0,.14));border-color:rgba(120,200,0,.3)}
+:root[data-theme="light"] .mp-tb-bar.now{background:linear-gradient(180deg,#7ec400,#a6e84d);border-color:#6bb000;box-shadow:0 2px 10px rgba(83,168,0,.3)}
+.mp-tb-x{font-size:9.5px;color:var(--dim);margin-top:6px;text-transform:capitalize}
+.mp-tb-col:last-child .mp-tb-x{color:var(--accent);font-weight:700}
+/* --- воронка показы -> контакты -> заказы --- */
+.mp-funnel{display:flex;flex-direction:column;gap:11px}
+.mp-fn-row{animation:mpFade .3s ease both}
+.mp-fn-row:nth-child(2){animation-delay:.06s}.mp-fn-row:nth-child(3){animation-delay:.12s}
+.mp-fn-lab{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:6px}
+.mp-fn-lab svg.i{width:14px;height:14px;color:var(--accent)}
+.mp-fn-lab span{color:var(--dim)}
+.mp-fn-lab b{margin-left:auto;font-family:var(--font-display);font-size:16px;letter-spacing:.03em;color:var(--text)}
+.mp-fn-track{height:14px;background:var(--raised);border-radius:99px;overflow:hidden}
+.mp-fn-bar{display:block;width:var(--w);height:100%;border-radius:99px;transform-origin:left;animation:mpBarW .9s cubic-bezier(.2,.85,.25,1) both}
+.mp-fn-bar.s0{background:linear-gradient(90deg,rgba(154,255,0,.4),var(--lime))}
+.mp-fn-bar.s1{background:linear-gradient(90deg,rgba(154,255,0,.32),rgba(154,255,0,.7));animation-delay:.1s}
+.mp-fn-bar.s2{background:linear-gradient(90deg,rgba(154,255,0,.28),rgba(154,255,0,.55));animation-delay:.2s}
+.mp-fn-conv{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--dim);margin-top:5px}
+.mp-fn-conv svg.i{width:10px;height:10px;transform:rotate(90deg);color:var(--accent)}
+.mp-fn-conv b{color:var(--accent);font-weight:800}
+/* --- распределение оценок --- */
+.mp-rate-mid{flex:1;min-width:0}
+.mp-rdist{width:100%;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+.mp-rd-row{display:flex;align-items:center;gap:8px}
+.mp-rd-k{display:inline-flex;align-items:center;gap:2px;font-size:10.5px;font-weight:700;color:var(--dim);width:26px;flex-shrink:0}
+.mp-rd-k svg.i{width:10px;height:10px;color:var(--lime);fill:var(--lime)}
+.mp-rd-track{flex:1;height:8px;background:var(--raised);border-radius:99px;overflow:hidden}
+.mp-rd-bar{display:block;width:var(--w);height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(154,255,0,.5),var(--lime));transform-origin:left;animation:mpBarW .85s cubic-bezier(.2,.85,.25,1) both}
+.mp-rd-n{font-size:10.5px;color:var(--dim);width:16px;text-align:right;flex-shrink:0}
+/* rate-big становится колонкой, чтобы вместить распределение */
+.mp-rate-big{flex-wrap:wrap}
+
+/* ================= ЭСКРОУ-ТРЕКЕР СТАДИЙ ================= */
+.mp-esc-track{position:relative;display:flex;justify-content:space-between;margin:11px 0 3px;padding:0 2px}
+.mp-esc-line,.mp-esc-fill{position:absolute;top:8px;left:12px;right:12px;height:2px;border-radius:2px}
+.mp-esc-line{background:var(--border)}
+.mp-esc-fill{background:linear-gradient(90deg,var(--lime),rgba(154,255,0,.6));width:calc((100% - 24px) * var(--fill) / 100);box-shadow:0 0 8px rgba(154,255,0,.4);transform-origin:left;animation:mpBarW .7s cubic-bezier(.2,.85,.25,1) both}
+:root[data-theme="light"] .mp-esc-fill{box-shadow:0 0 6px rgba(83,168,0,.3)}
+.mp-esc-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;min-width:0}
+.mp-esc-dot{width:18px;height:18px;border-radius:50%;background:var(--raised);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;color:#000;transition:all .3s}
+.mp-esc-dot svg.i{width:9px;height:9px}
+.mp-esc-node small{font-size:8.5px;color:var(--dim);text-align:center;letter-spacing:.01em;white-space:nowrap;transition:color .3s}
+.mp-esc-node.done .mp-esc-dot{background:var(--lime);border-color:var(--lime)}
+.mp-esc-node.cur .mp-esc-dot{background:var(--surface);border-color:var(--lime);animation:mpEscPulse 2s ease-in-out infinite}
+.mp-esc-node.cur small{color:var(--accent);font-weight:800}
+.mp-esc-node.done small{color:var(--text)}
+
+/* ================= ПОЛИРОВКА КАРТОЧЕК БИРЖИ (таргет базовых классов) ================= */
+/* карточки категорий — медиа-акцент, вход со стаггером, hover-лифт */
+.mk-cats .mk-cat{position:relative;overflow:hidden;animation:mpFade .34s ease both;transition:transform .14s,border-color .2s,box-shadow .25s}
+.mk-cats .mk-cat::before{content:'';position:absolute;inset:0;background:radial-gradient(90% 120% at 0% 0%,rgba(154,255,0,.08),transparent 55%);opacity:0;transition:opacity .25s;pointer-events:none}
+.mk-cats .mk-cat:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.4);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.mk-cats .mk-cat:hover::before{opacity:1}
+:root[data-theme="light"] .mk-cats .mk-cat:hover{box-shadow:0 6px 16px rgba(83,168,0,.12)}
+.mk-cats .mk-cat:hover .mk-cat-ic{box-shadow:0 0 14px rgba(154,255,0,.28);transform:scale(1.05)}
+.mk-cat-ic{transition:transform .2s,box-shadow .25s}
+.mk-cats .mk-cat:nth-child(1){animation-delay:.02s}.mk-cats .mk-cat:nth-child(2){animation-delay:.05s}
+.mk-cats .mk-cat:nth-child(3){animation-delay:.08s}.mk-cats .mk-cat:nth-child(4){animation-delay:.11s}
+.mk-cats .mk-cat:nth-child(5){animation-delay:.14s}.mk-cats .mk-cat:nth-child(6){animation-delay:.17s}
+.mk-cats .mk-cat:nth-child(7){animation-delay:.2s}.mk-cats .mk-cat:nth-child(8){animation-delay:.23s}
+.mk-cats .mk-cat:nth-child(9){animation-delay:.26s}
+/* карточки объявлений — hover-лифт + свечение рамки */
+#mkResults .lst-card{transition:transform .14s,border-color .2s,box-shadow .25s}
+#mkResults .lst-card:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.35);box-shadow:0 8px 22px rgba(0,0,0,.3)}
+:root[data-theme="light"] #mkResults .lst-card:hover{box-shadow:0 8px 20px rgba(83,168,0,.13)}
+/* медиа-плейсхолдер: мягкий блик по кругу при наведении */
+.lst-photo{position:relative}
+.lst-card .lst-photo,.feat-card .lst-photo{overflow:hidden}
+.lst-card:hover .lst-photo svg.i{transform:scale(1.08);opacity:.8}
+.lst-photo svg.i{transition:transform .3s,opacity .3s}
+.feat-card{transition:transform .14s,border-color .2s,box-shadow .25s}
+.feat-card:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.4);box-shadow:0 6px 18px rgba(0,0,0,.28)}
+/* рейтинг-пилюля и знак «проверен» поверх медиа-плейсхолдера */
+.mp-photo-rate{position:absolute;left:8px;bottom:8px;z-index:2;display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;letter-spacing:.01em;color:#fff;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:99px;padding:3px 8px 3px 6px;animation:mpFade .3s ease both}
+.mp-photo-rate svg.i{width:11px;height:11px;color:var(--lime);fill:var(--lime)}
+:root[data-theme="light"] .mp-photo-rate{background:rgba(0,0,0,.42)}
+.mp-photo-ver{position:absolute;right:8px;bottom:8px;z-index:2;width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(154,255,0,.5);animation:mpPop .4s cubic-bezier(.3,1.4,.5,1) both}
+.mp-photo-ver svg.i{width:13px;height:13px;fill:currentColor}
+.lst-photo.big .mp-photo-ver{width:30px;height:30px;right:12px;bottom:12px}
+.lst-photo.big .mp-photo-ver svg.i{width:17px;height:17px}
+.feat-card .mp-photo-ver{width:19px;height:19px;right:6px;bottom:6px}
+.feat-card .mp-photo-ver svg.i{width:11px;height:11px}
 
 /* ===== module: feed-algo ===== */
 /* feed-algo: алгоритмическая лента рекомендаций */
@@ -9226,12 +9340,23 @@ function acRender(){
   if(acView === 'lesson'){
     acRenderVideoBox(); acBindSlides(); acRenderTestBox();
     acRenderTaskBox(); acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+  } else {
+    acAnimRings();
   }
+}
+/* сведение колец прогресса из «пустого» в цель — эффектный sweep при входе */
+function acAnimRings(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('#acRoot .ac-ring .val, #acRoot .ac-mini-ring .val').forEach(c=>{
+      const off = c.getAttribute('data-off');
+      if(off !== null) c.style.strokeDashoffset = off;
+    });
+  }));
 }
 
 /* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
 function acHomeHtml(){
-  const pct = acCoursePct(), C = 2*Math.PI*33;
+  const pct = acCoursePct(), C = 2*Math.PI*33, CR = 2*Math.PI*15;
   const rows = AC_COURSE.map((l,i)=>{
     if(!acUnlocked(i)) return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после сертификата урока ${i}')">
       <span class="ac-num">${i+1}</span>
@@ -9240,7 +9365,10 @@ function acHomeHtml(){
     const ls = acS.lessons[i], p = acLessonPct(i);
     const st = (ls && ls.cert)
       ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
-      : (p > 0 ? `<span class="ac-mini-pct">${p}%</span>` : '');
+      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
+          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
+          <b>${p}</b></span>` : '');
     return `<button class="ac-lesson-row" onclick="acOpenLesson(${i})">
       <span class="ac-num">${i+1}</span>
       <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
@@ -9275,7 +9403,7 @@ function acHomeHtml(){
       <div class="ac-course-top">
         <span class="ac-ring">
           <svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="33"/>
-          <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct/100)).toFixed(1)}"/></svg>
+          <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C*(1-pct/100)).toFixed(1)}"/></svg>
           <b>${pct}%</b>
         </span>
         <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
@@ -10132,15 +10260,44 @@ function adsCpcTxt(c){
   return cpc ? (cpc<10 ? cpc.toFixed(2) : fmtN(Math.round(cpc)))+' ₽' : '—';
 }
 
+/* сводка: живые анимированные счётчики (count-up с easeOut на входе и на каждом тике) */
+const ADS_SUM = [
+  {k:'sp',  l:'потрачено', unit:'₽', fmt:v=>fmtN(Math.round(v))},
+  {k:'im',  l:'показы',              fmt:v=>fmtN(Math.round(v))},
+  {k:'cl',  l:'клики',               fmt:v=>fmtN(Math.round(v))},
+  {k:'ctr', l:'ctr',       unit:'%', fmt:v=>v.toFixed(1)}
+];
+const adsSumState = {};   /* k -> {cur, raf} */
+function adsSumTotals(){
+  const t = ADS.camps.reduce((a,c)=>({sp:a.sp+c.spent, im:a.im+c.imps, cl:a.cl+c.clicks}), {sp:0,im:0,cl:0});
+  t.ctr = t.im ? (t.cl/t.im*100) : 0;
+  return t;
+}
+function adsCountTo(s, target){
+  const el = document.querySelector(`#adsSummary .v[data-sk="${s.k}"]`); if(!el) return;
+  const st = adsSumState[s.k] || (adsSumState[s.k] = {cur:0, raf:0});
+  cancelAnimationFrame(st.raf);
+  const unit = s.unit ? ` <small>${s.unit}</small>` : '';
+  const paint = v => { el.innerHTML = s.fmt(v)+unit; };
+  if(Math.abs(target-st.cur) < 1e-4){ st.cur = target; paint(target); return; }
+  const from = st.cur, t0 = performance.now(), dur = 640;
+  const step = now=>{
+    const k = Math.min(1, (now-t0)/dur), e = 1-Math.pow(1-k,3);
+    st.cur = from + (target-from)*e; paint(st.cur);
+    if(k<1) st.raf = requestAnimationFrame(step); else { st.cur = target; paint(target); }
+  };
+  st.raf = requestAnimationFrame(step);
+}
+function adsSummaryReset(){ Object.values(adsSumState).forEach(s=>{ cancelAnimationFrame(s.raf); s.cur = 0; }); }
 function adsRenderSummary(){
   const box = document.getElementById('adsSummary'); if(!box) return;
-  const t = ADS.camps.reduce((a,c)=>({sp:a.sp+c.spent, im:a.im+c.imps, cl:a.cl+c.clicks}), {sp:0,im:0,cl:0});
-  const ctr = t.im ? (t.cl/t.im*100) : 0;
-  box.innerHTML = `
-    <div class="stat"><div class="v">${fmtN(Math.round(t.sp))} <small>₽</small></div><div class="l">потрачено</div></div>
-    <div class="stat"><div class="v">${fmtN(t.im)}</div><div class="l">показы</div></div>
-    <div class="stat"><div class="v">${fmtN(t.cl)}</div><div class="l">клики</div></div>
-    <div class="stat"><div class="v">${ctr.toFixed(1)}<small>%</small></div><div class="l">ctr</div></div>`;
+  if(box.children.length !== ADS_SUM.length){
+    box.innerHTML = ADS_SUM.map(s=>
+      `<div class="stat"><div class="v" data-sk="${s.k}">0${s.unit?` <small>${s.unit}</small>`:''}</div><div class="l">${s.l}</div></div>`
+    ).join('');
+  }
+  const t = adsSumTotals();
+  ADS_SUM.forEach(s=>adsCountTo(s, t[s.k]));
 }
 
 function adsCampActs(c){
@@ -10174,7 +10331,7 @@ function adsRenderList(){
         <div class="ads-m"><b data-m="imps">${fmtN(c.imps)}</b><span>показы</span></div>
         <div class="ads-m"><b data-m="clicks">${fmtN(c.clicks)}</b><span>клики</span></div>
         <div class="ads-m hot"><b data-m="ctr">${adsCtr(c).toFixed(1)}%</b><span>ctr</span></div>
-        <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}₽</b><span>из ${fmtN(c.budget)}₽</span></div>
+        <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}<i class="ads-cur">₽</i></b><span>из ${fmtN(c.budget)}<i class="ads-cur">₽</i></span></div>
       </div>
       <div class="ads-budget-bar"><i data-m="bar" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
       <canvas class="ads-spark" id="adsSpark${c.id}"></canvas>
@@ -10350,7 +10507,8 @@ function adsTickUI(){
     const el = document.querySelector(`.ads-camp[data-cid="${c.id}"]`); if(!el) return;
     const set = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n) n.textContent = v; };
     set('imps', fmtN(c.imps)); set('clicks', fmtN(c.clicks));
-    set('ctr', adsCtr(c).toFixed(1)+'%'); set('spent', fmtN(Math.round(c.spent))+'₽');
+    set('ctr', adsCtr(c).toFixed(1)+'%');
+    const sp = el.querySelector('[data-m="spent"]'); if(sp) sp.innerHTML = fmtN(Math.round(c.spent))+'<i class="ads-cur">₽</i>';
     const bar = el.querySelector('[data-m="bar"]'); if(bar) bar.style.width = Math.min(100, c.spent/c.budget*100)+'%';
     adsDrawSpark(c);
     if(adsOpenStats.has(c.id)){
@@ -10612,7 +10770,7 @@ function adsTick(){
 const _prevShowTabAds = showTab;
 showTab = function(t){
   _prevShowTabAds(t);
-  if(t==='ads') adsRender();
+  if(t==='ads'){ adsSummaryReset(); adsRender(); }
 };
 
 /* ---------- самоинициализация ---------- */
@@ -12986,6 +13144,89 @@ function mpMyReviews(){
   return out;
 }
 
+/* ---------- инфографика: динамика выручки (6 мес.), внутренне-согласованный тренд ---------- */
+const MP_TREND_W = [0.52, 0.61, 0.55, 0.74, 0.83, 1.0]; // относительная форма кривой роста
+function mpMonthLabels(){
+  const ru = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const out = [], now = new Date();
+  for(let i=5;i>=0;i--){ const d = new Date(now.getFullYear(), now.getMonth()-i, 1); out.push(ru[d.getMonth()]); }
+  return out;
+}
+function mpTrendVals(total){
+  const s = MP_TREND_W.reduce((a,b)=>a+b,0);
+  return MP_TREND_W.map(x=>Math.round(total/s*x)); // сумма месяцев == общая выручка
+}
+/* ---------- инфографика: воронка показы -> контакты -> заказы (реальные числа) ---------- */
+function mpFunnel(views, contacts, orders){
+  const rows = [
+    {ic:'eye',       lab:'Показы',   n:views},
+    {ic:'chat',      lab:'Контакты', n:contacts},
+    {ic:'briefcase', lab:'Заказы',   n:orders},
+  ];
+  const max = Math.max(1, views);
+  return `<div class="mp-funnel">${rows.map((r,i)=>{
+    const w = Math.max(7, Math.round(r.n/max*100));
+    const conv = i>0 ? (rows[i-1].n ? Math.round(r.n/rows[i-1].n*1000)/10 : 0) : null;
+    return `<div class="mp-fn-row">
+      <div class="mp-fn-lab">${I(r.ic)}<span>${r.lab}</span><b>${fmtN(r.n)}</b></div>
+      <div class="mp-fn-track"><span class="mp-fn-bar s${i}" style="--w:${w}%"></span></div>
+      ${conv!==null?`<div class="mp-fn-conv">${I('chev')} конверсия <b>${conv}%</b></div>`:''}
+    </div>`;
+  }).join('')}</div>`;
+}
+/* ---------- инфографика: распределение оценок (реальные отзывы) ---------- */
+function mpRatingDist(revs){
+  const cnt = {5:0,4:0,3:0,2:0,1:0};
+  revs.forEach(r=>{ const k = Math.max(1,Math.min(5,Math.round(r.r))); cnt[k]++; });
+  const max = Math.max(1, ...Object.values(cnt));
+  let rows = '';
+  for(let s=5;s>=1;s--){
+    const w = Math.round(cnt[s]/max*100);
+    rows += `<div class="mp-rd-row"><span class="mp-rd-k">${s}${I('star')}</span>
+      <span class="mp-rd-track"><span class="mp-rd-bar" style="--w:${cnt[s]?w:0}%"></span></span>
+      <span class="mp-rd-n">${cnt[s]}</span></div>`;
+  }
+  return `<div class="mp-rdist">${rows}</div>`;
+}
+/* ---------- блок аналитики (динамика выручки + воронка) ---------- */
+function mpAnalytics(revenue, views, contacts, orders){
+  const vals = mpTrendVals(revenue), labs = mpMonthLabels();
+  const max = Math.max(1, ...vals);
+  const growth = vals[0] ? Math.round((vals[5]-vals[0])/vals[0]*100) : 0;
+  const bars = vals.map((v,i)=>{
+    const h = Math.max(6, Math.round(v/max*100));
+    return `<div class="mp-tb-col"><span class="mp-tb-val">${fmtN(v)}</span>
+      <span class="mp-tb-track"><span class="mp-tb-bar${i===5?' now':''}" style="--h:${h}%;--d:${i*0.07}s"></span></span>
+      <span class="mp-tb-x">${labs[i]}</span></div>`;
+  }).join('');
+  return `
+    <div class="mp-h">${I('poll')} Динамика выручки · 6 мес.</div>
+    <div class="mp-chart">
+      <div class="mp-chart-top">
+        <div><b>${fmtMoney(revenue)}</b><small>за полгода</small></div>
+        <span class="mp-grow ${growth>=0?'up':'down'}">${I(growth>=0?'rocket':'chev')} ${growth>=0?'+':''}${growth}%</span>
+      </div>
+      <div class="mp-tbars">${bars}</div>
+    </div>
+    <div class="mp-h">${I('bolt')} Воронка продаж</div>
+    ${mpFunnel(views, contacts, orders)}`;
+}
+/* ---------- эскроу-трекер стадий сделки ---------- */
+function mpEscrowStep(d){
+  const nodes = d.dir==='in'
+    ? ['Оплата','В работе','Сдача','Выплата']
+    : ['Оплата','В работе','Проверка','Получено'];
+  const cur = d.st==='work' ? 1 : d.st==='wait' ? 2 : nodes.length; // done -> все стадии закрыты
+  const fill = Math.min(100, Math.round(cur/(nodes.length-1)*100));
+  return `<div class="mp-esc-track" style="--fill:${fill}%">
+    <div class="mp-esc-line"></div><div class="mp-esc-fill"></div>
+    ${nodes.map((n,i)=>{
+      const cls = i<cur ? 'done' : i===cur ? 'cur' : '';
+      return `<div class="mp-esc-node ${cls}"><span class="mp-esc-dot">${i<cur?I('check'):''}</span><small>${n}</small></div>`;
+    }).join('')}
+  </div>`;
+}
+
 /* ================= ЧАСТЬ 1 · КАБИНЕТ ПРОДАВЦА ================= */
 function mpOpenCabinet(){ mpRenderCab(); openSheet('mpCab'); }
 function mpRenderCab(){
@@ -13015,6 +13256,8 @@ function mpRenderCab(){
       <div class="mp-kpi-t">${I('briefcase')}<b data-mpcount="${orders}">0</b><small>заказы</small></div>
       <div class="mp-kpi-t">${I('money')}<b data-mpcount="${revenue}">0</b><small>выручка ₽</small></div>
     </div>
+
+    ${mpAnalytics(revenue, views, contacts, orders)}
 
     <div class="mp-h">${I('card')} Баланс продаж</div>
     <div class="mp-balcard">
@@ -13059,12 +13302,14 @@ function mpRenderCab(){
           <span class="mp-dir">${d.dir==='in'?'Продажа':'Покупка'}</span>
           <small>${esc(d.n)} · ${mpWhen(d.at)}</small>
           ${d.st!=='done'?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
-        </div>${act}</div>`;
+        </div>
+        ${mpEscrowStep(d)}${act}</div>`;
     }).join('')}
 
     <div class="mp-h">${I('star')} Рейтинг и отзывы</div>
     <div class="mp-rate-big"><b>${avg?avg.toFixed(1):'—'}</b>
-      <div>${stars(avg)}<small>${revs.length} отзывов по ${mine.length} объявлениям</small></div></div>
+      <div class="mp-rate-mid">${stars(avg)}<small>${revs.length} отзывов по ${mine.length} объявлениям</small></div>
+      ${revs.length?mpRatingDist(revs):''}</div>
     ${revs.slice(0,6).map(r=>`<div class="mp-rev">
       <div class="mp-rev-h"><b>${esc(r.n)}</b><span class="mp-rev-st">${stars(r.r)}</span></div>
       <p>${esc(r.t)}</p></div>`).join('')}
@@ -13329,7 +13574,7 @@ function mpCustomChat(){
 const _prevRenderMarketMp = renderMarket;
 renderMarket = function(){
   _prevRenderMarketMp();
-  if(typeof mkView!=='undefined' && mkView==='cats') mpInjectMarket();
+  if(typeof mkView!=='undefined' && mkView==='cats'){ mpInjectMarket(); mpDecorateCards(); }
 };
 function mpInjectMarket(){
   const root = document.getElementById('marketRoot');
@@ -13352,6 +13597,36 @@ function mpInjectMarket(){
     </span>
     <span class="mp-banner-cta"><span class="mp-banner-chip">от $1500</span>${I('chev')}</span>`;
   row.insertAdjacentElement('afterend', bn);
+}
+
+/* биржа: бейджи «Проверенный» и рейтинг-пилюля на медиа-плейсхолдерах карточек */
+function mpIdFromCard(el){
+  const m = (el.getAttribute('onclick')||'').match(/openListing\((\d+)\)/);
+  return m ? +m[1] : null;
+}
+function mpRatingPill(l){
+  return `<span class="mp-photo-rate">${I('star')}${l.r.toFixed(1)}</span>`;
+}
+function mpVerMini(){ return `<span class="mp-photo-ver" title="Проверенный продавец">${I('verified')}</span>`; }
+function mpDecoratePhoto(photo, l){
+  if(!photo || photo.querySelector('.mp-photo-rate')) return;
+  if(l.r) photo.insertAdjacentHTML('beforeend', mpRatingPill(l));
+  if(mpIsVerified(l)) photo.insertAdjacentHTML('beforeend', mpVerMini());
+}
+function mpDecorateCards(){
+  document.querySelectorAll('#mkResults .lst-card').forEach(card=>{
+    const id = mpIdFromCard(card), l = id && LISTINGS.find(x=>x.id===id);
+    if(l) mpDecoratePhoto(card.querySelector('.lst-photo'), l);
+  });
+  document.querySelectorAll('.mk-feat .feat-card').forEach(card=>{
+    const id = mpIdFromCard(card), l = id && LISTINGS.find(x=>x.id===id);
+    if(l && mpIsVerified(l) && !card.querySelector('.mp-photo-ver'))
+      (card.querySelector('.lst-photo')||card).insertAdjacentHTML('beforeend', mpVerMini());
+  });
+}
+if(typeof renderMarketListSoft==='function'){
+  const _prevRMLS = renderMarketListSoft;
+  renderMarketListSoft = function(){ _prevRMLS.apply(this, arguments); mpDecorateCards(); };
 }
 
 /* заказ на бирже: покупка уже патчена wallet (эскроу+комиссия) — только читаем результат */
@@ -13407,6 +13682,9 @@ function mpDecorateListing(id){
   const l = LISTINGS.find(x=>x.id===id);
   const v = document.getElementById('lstView');
   if(!l || !v) return;
+  const bigPhoto = v.querySelector('.lst-photo.big');
+  if(bigPhoto && mpIsVerified(l) && !bigPhoto.querySelector('.mp-photo-ver'))
+    bigPhoto.insertAdjacentHTML('beforeend', mpVerMini());
   const seller = v.querySelector('.seller-card');
   if(seller){
     const nameEl = seller.querySelector('b');
