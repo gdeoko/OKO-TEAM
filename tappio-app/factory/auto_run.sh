@@ -25,9 +25,12 @@ fi
 DUR_INT=$(printf '%.0f' "$DUR" 2>/dev/null || echo 0)
 if [ "$DUR_INT" -gt 47 ] 2>/dev/null; then log "TOO_LONG ${DUR}s (>47) — не публикую"; echo "TOO_LONG $DUR"; exit 3; fi
 
+# 1b) ОБЛОЖКА рила = кадр-0 (наш брендовый дизайн) в JPG для IG
+ffmpeg -y -ss 0.06 -i "output/$ID.mp4" -vframes 1 -q:v 2 "output/${ID}_cover.jpg" 2>/dev/null && log "cover jpg готов" || log "cover jpg fail"
+
 # 2) КОММИТ ролика (нужно для git-raw доставки на VPS)
 cd "$REPO"
-git add "tappio-app/factory/output/$ID.mp4" "tappio-app/factory/scripts/$ID.json" 2>/dev/null
+git add "tappio-app/factory/output/$ID.mp4" "tappio-app/factory/output/${ID}_cover.jpg" "tappio-app/factory/scripts/$ID.json" 2>/dev/null
 git commit -q -m "auto: ролик $ID (автопрогон)" 2>/dev/null || true
 for i in 1 2 3 4; do git push -q origin tappio.app 2>&1 && break || sleep $((2**i)); done
 log "pushed reel to tappio.app"
@@ -47,6 +50,7 @@ else STATUS="$STATUS YouTube:FAIL"; log "YouTube fail"; fi
 # 5) Instagram (git-raw -> VPS -> stealth reel-постер)
 IG="IG:FAIL"
 RAW="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/$ID.mp4"
+RAWCOV="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/${ID}_cover.jpg"
 # vexec: команду шлём как ПЛЕЙН-строку, JSON-экранирование через python (пуленепробиваемо)
 vexec(){ local body; body=$(python3 -c 'import json,sys;print(json.dumps({"cmd":sys.argv[1]}))' "$1"); \
   curl -s $([ -f "$CA" ] && echo --cacert "$CA") -m "${2:-120}" -X POST "$OKO_VPS_CTRL_URL/exec" -H "Authorization: Bearer $OKO_VPS_CTRL_TOKEN" -H "Content-Type: application/json" --data-binary "$body" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stdout",""))' 2>/dev/null; }
@@ -58,8 +62,11 @@ for att in 1 2 3 4 5 6; do
   log "git-raw not ready att=$att (dl=$DL), ждём 15с"; sleep 15
 done
 if [ "${DL:-0}" -gt 500000 ] 2>/dev/null; then
+  # обложку тянем тем же git-raw (best-effort — если не дойдёт, постер сам возьмёт кадр 0 ползунком)
+  COVDL=$(vexec "curl -s -o /opt/oko-poster/cfg/${ID}_cover.jpg '$RAWCOV'; wc -c < /opt/oko-poster/cfg/${ID}_cover.jpg" 60 | tr -d ' \n')
+  log "cover dl=$COVDL"
   CAPB64=$(printf '%s' "$CAP" | base64 -w0)
-  RES=$(vexec "cd /opt/oko-poster && CAPB64=$CAPB64 IG_TAG=auto IG_VIDEO=/opt/oko-poster/cfg/$ID.mp4 timeout 300 node ig_reel_state.mjs 2>&1 | tail -3" 340)
+  RES=$(vexec "cd /opt/oko-poster && CAPB64=$CAPB64 IG_TAG=auto IG_COVER=/opt/oko-poster/cfg/${ID}_cover.jpg IG_VIDEO=/opt/oko-poster/cfg/$ID.mp4 timeout 300 node ig_reel_state.mjs 2>&1 | tail -4" 340)
   echo "$RES" | grep -q "SHARED confirmed\|LIKELY_SHARED" && IG="IG:posted" || IG="IG:check($(echo "$RES"|tail -1))"
   log "IG $IG"
 else log "IG delivery failed (dl=$DL)"; fi

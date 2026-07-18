@@ -4,6 +4,7 @@ import { chromium } from 'patchright';
 import fs from 'fs';
 const STATE=process.env.IG_STATE||'/opt/oko-poster/cfg/ig_state.json';
 const VIDEO=process.env.IG_VIDEO||'/opt/oko-poster/cfg/spy_real.mp4';
+const COVER=process.env.IG_COVER||'';   // кадр-0 (наш дизайн) как обложка рила
 const CAP=Buffer.from(process.env.CAPB64||'','base64').toString('utf8') || 'tappio';
 const TAG=process.env.IG_TAG||'igstate';
 const S=n=>`/opt/oko-poster/cfg/${TAG}_${n}.png`;
@@ -57,6 +58,37 @@ try{
     await p.screenshot({path:S('3next'+i)}).catch(()=>{});
   }
   await sleep(1500);
+  // --- ОБЛОЖКА рила = наш кадр-0 (иначе IG берёт случайный кадр из середины). Best-effort. ---
+  if(COVER && fs.existsSync(COVER)){
+    try{
+      await p.screenshot({path:S('4a_cover_pre')}).catch(()=>{});
+      let coverDone=false;
+      // 1) кастомная обложка: секция "Cover" -> "Add from computer" (свой filechooser)
+      const coverLbl=p.getByText(/^cover$/i).first();
+      if(await coverLbl.count()){
+        const sec=coverLbl.locator('xpath=ancestor::div[4]');
+        const fc2=p.waitForEvent('filechooser',{timeout:5000}).catch(()=>null);
+        const addBtn=sec.getByRole('button',{name:/add from computer|select from computer|upload/i}).first();
+        if(await addBtn.count().catch(()=>0)){ await addBtn.click({timeout:3000}).catch(()=>{}); }
+        else { await coverLbl.click().catch(()=>{}); }
+        const ch2=await fc2;
+        if(ch2){ await ch2.setFiles(COVER); coverDone=true; log('cover uploaded'); await sleep(3500); }
+      }
+      // 2) фолбэк: тянем ползунок киноленты обложки в крайнее левое = кадр 0
+      if(!coverDone){
+        const handle=p.locator('[role="slider"], [draggable="true"]').first();
+        if(await handle.count().catch(()=>0)){
+          const box=await handle.boundingBox().catch(()=>null);
+          if(box){ const y=box.y+box.height/2;
+            await p.mouse.move(box.x+box.width/2,y); await p.mouse.down();
+            await p.mouse.move(box.x-600,y,{steps:14}); await p.mouse.up();
+            coverDone=true; log('cover slider->frame0'); await sleep(1500); }
+        }
+      }
+      await p.screenshot({path:S('4b_cover_post')}).catch(()=>{});
+      log('coverDone',coverDone);
+    }catch(e){ log('cover step err',String(e).slice(0,140)); }
+  }
   const capBox=p.locator('div[aria-label="Write a caption..."], textarea[aria-label="Write a caption..."], div[contenteditable="true"]').first();
   if(await capBox.count()){ await capBox.click().catch(()=>{}); await p.keyboard.type(CAP.slice(0,2100),{delay:2}); log('caption typed'); }
   else log('NO caption box');
