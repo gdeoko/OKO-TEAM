@@ -36,6 +36,8 @@ ORDER = [
     'navstack',        # единый стек навигации: назад везде (TG BackButton + history)
     'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
     'pwa',             # установка на главный экран + service worker
+    'paywall',         # locked-функции, паволлы, триггеры подписки, редизайн тарифов
+    'channels',        # платные каналы/курсы с комиссией 10%, управление как в TG
     'ui-chrome',       # глобальный хром: шапка/навигация/safe-area/полировка (грузится последним)
 ]
 
