@@ -1739,7 +1739,7 @@ body.in-chat .header { display: none; }
   font-weight: 700; padding: 2px 9px; border-radius: 20px; }
 
 /* ══ ТЁМНАЯ ТЕМА ══ */
-[data-theme="dark"] { --cream: #0e1b25; }
+[data-theme="dark"] { --cream: #0e1b25; --gray: #9fb0bd; }
 [data-theme="dark"] body { background: #0e1b25; color: #E7EDF3; }
 [data-theme="dark"] .header { background: #14232f; border-bottom-color: rgba(255,255,255,.07); }
 [data-theme="dark"] .header__title, [data-theme="dark"] .screen-title,
@@ -2278,3 +2278,34 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   }
   .spinner { animation: none !important; opacity: .8; }
 }
+
+/* ══════════ ШЛИФОВКА ПО АУДИТУ (визуал + тач) ══════════ */
+/* Тёмная тема: значки, цитата, кнопка стиха, золотая кнопка */
+[data-theme="dark"] .badge-card { background: #1b2c3a; }
+[data-theme="dark"] .badge-card__name { color: #EAF0F5; }
+[data-theme="dark"] .feed-card--quote .feed-card__title { color: #f4ead6; }
+[data-theme="dark"] .feed-card--quote .feed-card__label { color: #e0b878; }
+[data-theme="dark"] .btn--outline-gold { color: #f0dcae; background: rgba(212,165,116,.14); }
+[data-theme="dark"] .today__verse { color: #f0dcae; }
+[data-theme="dark"] .lesson-text, [data-theme="dark"] .lesson-text p { color: #d9e2e9; }
+[data-theme="dark"] .temple__note, [data-theme="dark"] .feed-card__meta,
+[data-theme="dark"] .feed-card__text { color: #aebcc7; }
+
+/* Тач-таргеты ≥40px без сдвига вёрстки */
+.child-back { min-height: 40px; padding: 8px 6px 8px 0; margin: -6px 0 8px 0; }
+.feed-card__actions button { padding: 8px 6px; margin: -4px 0; min-height: 38px; }
+.ghub-tab { min-height: 40px; }
+.ev__btn { min-height: 40px; }
+.header__bell, .header__avatar { touch-action: manipulation; }
+
+/* Карточки игр: «Играть» на одной базовой линии, без «сироты» XP */
+.gcard { display: flex; flex-direction: column; }
+.gcard__name { margin-top: 2px; }
+.gcard__meta { text-wrap: balance; }
+.gcard--play::after { margin-top: auto; padding-top: 8px; }
+
+/* Книга: «Читать» — акцентный терракотовый (было зелёное) */
+.toc-item__read { color: var(--terracotta); }
+
+/* Читалка: длинный заголовок в одну строку */
+.reader-head__title, #readerTitle { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
