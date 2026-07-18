@@ -1,1 +1,1 @@
-{"id":7,"actions":[["useframe","widget/account"],["fill","input[name=captcha]","ALD9"],["clicktext","Continue"],["wait","7000"]],"settle":4000}
+{"id":8,"actions":[["useframe","widget/account"],["clicktext","Continue"],["wait","9000"]],"settle":5000}
