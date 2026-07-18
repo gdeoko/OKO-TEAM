@@ -52,58 +52,34 @@ try{
   log('aspect-original',gotOrig);
   await sleep(1200);
   await p.screenshot({path:S('2b_crop')}).catch(()=>{});
+  // Экран Edit содержит секцию "Cover photo" -> "Select from computer": грузим наш кадр-0.
+  let coverDone=false;
   for(let i=0;i<3;i++){
-    // дамп контролов ЭТОГО экрана (ищем, где живёт обложка/Cover)
-    try{
-      const scr=await p.evaluate(()=>{
-        const t=e=>((e.getAttribute&&e.getAttribute('aria-label'))||e.innerText||'').trim();
-        const btns=[...new Set([...document.querySelectorAll('button,[role="button"],div[role="button"]')].map(t).filter(Boolean))].slice(0,26);
-        const cov=[...document.querySelectorAll('*')].filter(e=>/cover|обложк|thumbnail/i.test(t(e))&&e.tagName!=='SCRIPT').map(e=>e.tagName+'|'+t(e).slice(0,34)).filter((v,ix,a)=>a.indexOf(v)===ix).slice(0,10);
-        return {btns,cov};
-      });
-      log('SCREEN'+i,'btns',JSON.stringify(scr.btns));
-      log('SCREEN'+i,'cover',JSON.stringify(scr.cov));
-    }catch(e){ log('scr diag err',String(e).slice(0,80)); }
+    let hasCover=false;
+    try{ hasCover=await p.evaluate(()=>[...document.querySelectorAll('span,div,button')].some(e=>/^cover photo$/i.test(((e.getAttribute&&e.getAttribute('aria-label'))||e.innerText||'').trim()))); }catch(e){}
+    if(hasCover && COVER && fs.existsSync(COVER) && !coverDone){
+      try{
+        await p.screenshot({path:S('4a_cover_pre')}).catch(()=>{});
+        const covLbl=p.getByText('Cover photo',{exact:true}).first();
+        const sec=covLbl.locator('xpath=ancestor::div[2]');
+        const fc2=p.waitForEvent('filechooser',{timeout:6000}).catch(()=>null);
+        for(const loc of [sec.getByText(/select from computer/i).first(), p.getByText(/select from computer/i).first()]){
+          if(await loc.count().catch(()=>0)){ await loc.click({timeout:3000}).catch(()=>{}); break; }
+        }
+        const ch2=await fc2;
+        if(ch2){ await ch2.setFiles(COVER); coverDone=true; log('cover uploaded (Cover photo)'); await sleep(3500);
+          await clickAny([p.getByRole('button',{name:/^done$/i}), p.getByRole('button',{name:/^apply$/i}), p.getByRole('button',{name:/^save$/i})],'cover-done'); await sleep(1200); }
+        else log('cover chooser не открылся');
+        await p.screenshot({path:S('4b_cover_post')}).catch(()=>{});
+      }catch(e){ log('cover upload err',String(e).slice(0,140)); }
+    }
     await p.screenshot({path:S('3screen'+i)}).catch(()=>{});
     const clicked=await clickAny([p.getByRole('button',{name:/^next$/i})],'next'+i);
     if(!clicked) break; await sleep(2500);
   }
+  log('coverDone',coverDone);
   await sleep(1500);
-  // --- ОБЛОЖКА рила = наш кадр-0 (иначе IG берёт случайный кадр из середины). Best-effort. ---
-  if(COVER && fs.existsSync(COVER)){
-    try{
-      await p.screenshot({path:S('4a_cover_pre')}).catch(()=>{});
-      // ДИАГНОСТИКА вёрстки экрана обложки — узнать реальные подписи контролов
-      try{
-        const diag=await p.evaluate(()=>{
-          const norm=e=>(e.getAttribute&&e.getAttribute('aria-label'))||e.innerText||'';
-          const btns=[...document.querySelectorAll('button,[role="button"],div[role="button"]')].map(b=>(b.innerText||b.getAttribute('aria-label')||'').trim()).filter(Boolean);
-          const cov=[...document.querySelectorAll('*')].filter(e=>/cover|обложк|thumbnail/i.test(norm(e))).map(e=>e.tagName+'|'+norm(e).trim().slice(0,40)).filter((v,i,a)=>a.indexOf(v)===i);
-          const sliders=[...document.querySelectorAll('[role="slider"],[draggable="true"],input[type="range"]')].map(e=>e.tagName+'|'+(e.getAttribute('aria-label')||e.getAttribute('role')||'')).slice(0,8);
-          return {btns:[...new Set(btns)].slice(0,30), cov:cov.slice(0,12), sliders};
-        });
-        log('DIAG btns', JSON.stringify(diag.btns));
-        log('DIAG cover-els', JSON.stringify(diag.cov));
-        log('DIAG sliders', JSON.stringify(diag.sliders));
-      }catch(e){ log('diag err',String(e).slice(0,100)); }
-      let coverDone=false;
-      // 1) кастомная обложка: секция "Cover" -> "Add from computer" (свой filechooser)
-      const coverLbl=p.getByText(/^cover$/i).first();
-      if(await coverLbl.count()){
-        const sec=coverLbl.locator('xpath=ancestor::div[4]');
-        const fc2=p.waitForEvent('filechooser',{timeout:5000}).catch(()=>null);
-        const addBtn=sec.getByRole('button',{name:/add from computer|select from computer|upload/i}).first();
-        if(await addBtn.count().catch(()=>0)){ await addBtn.click({timeout:3000}).catch(()=>{}); }
-        else { await coverLbl.click().catch(()=>{}); }
-        const ch2=await fc2;
-        if(ch2){ await ch2.setFiles(COVER); coverDone=true; log('cover uploaded'); await sleep(3500); }
-      }
-      // (НЕ трогаем произвольные слайдеры — на финальном экране единственный слайдер = громкость!)
-      await p.screenshot({path:S('4b_cover_post')}).catch(()=>{});
-      log('coverDone',coverDone);
-    }catch(e){ log('cover step err',String(e).slice(0,140)); }
-  }
-  if(process.env.IG_DRYRUN){ log('DRYRUN — обложку поставили, шеринг пропущен'); await ctx.close(); await b.close(); process.exit(0); }
+  if(process.env.IG_DRYRUN){ log('DRYRUN — обложка coverDone='+coverDone+', шеринг пропущен'); await ctx.close(); await b.close(); process.exit(0); }
   const capBox=p.locator('div[aria-label="Write a caption..."], textarea[aria-label="Write a caption..."], div[contenteditable="true"]').first();
   if(await capBox.count()){ await capBox.click().catch(()=>{}); await p.keyboard.type(CAP.slice(0,2100),{delay:2}); log('caption typed'); }
   else log('NO caption box');
