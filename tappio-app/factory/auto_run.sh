@@ -54,6 +54,12 @@ RAWCOV="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/
 # vexec: команду шлём как ПЛЕЙН-строку, JSON-экранирование через python (пуленепробиваемо)
 vexec(){ local body; body=$(python3 -c 'import json,sys;print(json.dumps({"cmd":sys.argv[1]}))' "$1"); \
   curl -s $([ -f "$CA" ] && echo --cacert "$CA") -m "${2:-120}" -X POST "$OKO_VPS_CTRL_URL/exec" -H "Authorization: Bearer $OKO_VPS_CTRL_TOKEN" -H "Content-Type: application/json" --data-binary "$body" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stdout",""))' 2>/dev/null; }
+# ЗАЩИТА ОТ ДУБЛЕЙ: если этот id уже публиковали в IG (есть код в реестре) — НЕ постим повторно
+ALREADY=$(python3 -c "import json,os;d=json.load(open('posted_reels.json')) if os.path.exists('posted_reels.json') else {};print(d.get('$ID',{}).get('ig_code','') or '')" 2>/dev/null)
+if [ -n "$ALREADY" ]; then
+  IG="IG:already($ALREADY)"; log "IG уже публиковали ($ALREADY) — пропуск, дубль не создаём"
+  STATUS="$STATUS $IG"
+else
 # git-raw на GitHub CDN обновляется не мгновенно после push — ретраим до 6 раз
 DL=0
 for att in 1 2 3 4 5 6; do
@@ -71,6 +77,25 @@ if [ "${DL:-0}" -gt 500000 ] 2>/dev/null; then
   log "IG $IG"
 else log "IG delivery failed (dl=$DL)"; fi
 STATUS="$STATUS $IG"
+# САМОПРОВЕРКА + захват кода: считываем ленту, пишем shortcode нового рила в реестр (для дедупа/удаления)
+if [ "$IG" = "IG:posted" ]; then
+  NEWCODE=$(vexec "cd /opt/oko-poster && IG_N=1 node ig_list.mjs 2>/dev/null" 120 | python3 -c 'import sys,json
+try: a=json.load(sys.stdin); print(a[0]["code"] if a else "")
+except: print("")' 2>/dev/null)
+  python3 - "$ID" "$NEWCODE" <<'PY' 2>/dev/null
+import json,sys,os
+reg="posted_reels.json"; d={}
+if os.path.exists(reg):
+    try: d=json.load(open(reg))
+    except Exception: d={}
+rid,code=sys.argv[1],(sys.argv[2] if len(sys.argv)>2 else "")
+e=d.get(rid,{}); e["ig_code"]=code or e.get("ig_code",""); d[rid]=e
+json.dump(d,open(reg,"w"),ensure_ascii=False,indent=1)
+print("registry",rid,code)
+PY
+  log "IG code записан: ${NEWCODE:-?}"
+fi
+fi   # конец блока ЗАЩИТЫ ОТ ДУБЛЕЙ
 
 # 6) ОТЧЁТ в бот
 CHAT="${TAPPIO_ANALYTICS_CHAT_ID:-1966985736}"
@@ -84,8 +109,8 @@ grep -oE "shot_[0-9]+ <- .* id [0-9]+" "work/${ID}_auto.log" 2>/dev/null | while
   echo "| $vid | pexels | auto | $(date +%F 2>/dev/null) | $ID |" >> "$REPO/.claude/skills/oko-content-factory/reference/USED_FOOTAGE.md"
 done
 cd "$REPO"
-git add .claude/skills/oko-content-factory/reference/USED_FOOTAGE.md 2>/dev/null
-git commit -q -m "auto: реестр footage $ID" 2>/dev/null || true
+git add .claude/skills/oko-content-factory/reference/USED_FOOTAGE.md tappio-app/factory/posted_reels.json 2>/dev/null
+git commit -q -m "auto: реестр footage+posted $ID" 2>/dev/null || true
 for i in 1 2 3; do git push -q origin tappio.app 2>&1 && break || sleep $((2**i)); done
 
 log "DONE $ID | $STATUS"

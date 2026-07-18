@@ -45,21 +45,34 @@ try{
     }));
     log('SVGS',JSON.stringify(d.svgs)); log('BTNS',JSON.stringify(d.btns));
   }catch(e){ log('diag err',String(e).slice(0,80)); }
-  // "..." More options — расширенный набор кандидатов
-  await clickAny([
-    p.locator('svg[aria-label="More options"]'),
-    p.locator('svg[aria-label="More"]'),
-    p.getByRole('button',{name:/more options|more$/i}),
-    p.locator('[aria-label="More options"]'),
-    p.locator('svg[aria-label="More options"]').locator('xpath=ancestor::*[@role="button" or self::button][1]'),
-    p.locator('div[role="button"] svg[aria-label*="More" i]').locator('xpath=ancestor::div[@role="button"][1]')
+  // "..." More options — верхний рил в скроллере = наш. Кликаем кликабельного предка иконки "More".
+  const moreClicked=await clickAny([
+    p.locator('svg[aria-label="More options"]').first().locator('xpath=ancestor::*[@role="button" or self::button][1]'),
+    p.locator('svg[aria-label="More"]').first().locator('xpath=ancestor::*[@role="button" or self::button][1]'),
+    p.locator('svg[aria-label="More options"]').first(),
+    p.locator('svg[aria-label="More"]').first(),
+    p.getByRole('button',{name:/more options|^more$/i}).first()
   ],'more-options');
-  await sleep(1500);
+  await sleep(2000);
   await p.screenshot({path:'/opt/oko-poster/cfg/del_1menu.png'}).catch(()=>{});
-  // если меню не открылось — дамп кнопок диалога
-  try{ const items=await p.evaluate(()=>[...new Set([...document.querySelectorAll('button,[role="button"],[role="menuitem"]')].map(b=>(b.innerText||'').trim()).filter(Boolean))].slice(0,25)); log('MENU',JSON.stringify(items)); }catch(e){}
+  // дамп именно диалога/меню (portal): ищем "Delete"
+  try{
+    const dlg=await p.evaluate(()=>{
+      const dl=[...document.querySelectorAll('[role="dialog"]')].map(d=>(d.innerText||'').replace(/\s+/g,' ').trim().slice(0,200));
+      const items=[...new Set([...document.querySelectorAll('[role="dialog"] button,[role="dialog"] [role="button"],[role="menuitem"]')].map(b=>(b.innerText||'').trim()).filter(Boolean))].slice(0,20);
+      return {dl,items};
+    });
+    log('DIALOGS',JSON.stringify(dlg.dl)); log('MENU',JSON.stringify(dlg.items));
+  }catch(e){ log('menu diag err',String(e).slice(0,80)); }
   await p.screenshot({path:'/opt/oko-poster/cfg/del_1menu.png'}).catch(()=>{});
-  // "Delete" в меню
+  // прямого "Delete" может не быть — сначала "Manage post" -> подменю
+  if(!(await p.getByText('Delete',{exact:true}).count().catch(()=>0))){
+    const mg=await clickAny([p.getByText('Manage post',{exact:true}), p.getByRole('button',{name:/manage post/i})],'manage-post');
+    if(mg){ await sleep(1800); await p.screenshot({path:'/opt/oko-poster/cfg/del_1b_manage.png'}).catch(()=>{});
+      try{ const it=await p.evaluate(()=>[...new Set([...document.querySelectorAll('[role="dialog"] button,[role="dialog"] [role="button"],[role="menuitem"]')].map(b=>(b.innerText||'').trim()).filter(Boolean))].slice(0,20)); log('MANAGE',JSON.stringify(it)); }catch(e){}
+    }
+  }
+  // "Delete" в меню/подменю
   const gotDel=await clickAny([p.getByRole('button',{name:/^delete$/i}), p.getByText('Delete',{exact:true})],'delete-menu');
   await sleep(1200);
   if(!gotDel){ log('ERR_NO_DELETE_ITEM'); await p.screenshot({path:'/opt/oko-poster/cfg/del_err.png'}).catch(()=>{}); await ctx.close(); await b.close(); process.exit(0); }
