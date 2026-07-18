@@ -156,13 +156,21 @@ Ultra-подписка с безлимитом Nano Banana Pro.
 ## ПАЙПЛАЙН
 
 ### 1. Сценарий → сегменты озвучки
-5–6 предложений (s1..sN). Числа прописью, без длинных тире и «не X а Y». Ударения через
-U+0301: те́сто, догово́р.
+5–6 предложений (s1..sN). Числа прописью, без длинных тире и «не X а Y». Пунктуация —
+на месте (точки/запятые/! — от них интонация). Ручные ударения НЕ нужны: OmniVoice читает
+русский нативно (U+0301 может прочитаться буквально — не ставить).
 
-### 2. Озвучка с тайм-кодами слов — edge-tts (БЕСПЛАТНО)
-`ru-RU-DmitryNeural` (муж.) / `ru-RU-SvetlanaNeural` (жен.), rate="+6%",
-`boundary="WordBoundary"` (иначе тайминги пустые!). Сохранять `vo/sN.mp3`+`vo/sN.json`
-`{w,t,d}` — на них строятся караоке и привязка анимаций к словам. Ретраи 4–5 раз.
+### 2. Озвучка — ГОЛОС V.CODE, ТОЛЬКО OmniVoice-клон Владимира (ЗАФИКСИРОВАНО, скорость 1.8×)
+См. `pipeline/voice_omnivoice/VOICE_POLICY.md`. Движок: OmniVoice (k2-fsa), бесплатно/безлимит.
+Одна команда на сегмент — сразу mp3 (1.8× + мастер + авто-обрезка призвука) И тайминги слов:
+```bash
+export HF_TOKEN=<из secrets.env.b64>
+python pipeline/voice_omnivoice/vcode_voice.py "Текст sN" vo/sN.mp3 --json vo/sN.json
+```
+`vo/sN.json` = `[{w,t,d}]` (whisper по финальному 1.8× аудио) — на них строятся караоке и
+привязка анимаций к словам. Референс `reference/vladimir_ref_30s.wav`, ns=48.
+❌ НЕ использовать edge-tts / silero / XTTS. Скорость и референс менять только по просьбе Даниэля.
+Запас при сбое OmniVoice — Kaggle F5 (`vcode/daily/kaggle_tts`).
 
 ### 3. Кадры — УНИКАЛЬНЫЕ, по битам сценария (Закон 2)
 - **Pexels API** (`PEXELS_API_KEY`) главный; **Pixabay** (`PIXABAY_API_KEY`) запасной.
@@ -234,47 +242,6 @@ whoosh на переходы + смысловые. Мастер: `loudnorm I=-14
 
 ---
 
-## ☁️ ОБЛАЧНЫЙ РЕНДЕР — Shotstack / Creatomate (`pipeline/cloud/`)
-
-Альтернатива локальному ffmpeg — облачный монтаж по JSON. Ключи в `secrets.env`
-(автозагрузка). Сеть только через curl — обёртки уже на curl-subprocess. Проверены
-боем: оба отдают валидный MP4 1080×1920.
-
-**Когда что брать:**
-- **Локальный ffmpeg (build_reel.py)** — флагман: полный контроль, PNG-оверлеи с альфой,
-  gl-переходы, 3D, караоке-ASS по слову, беспоук-анимации. Дефолт для контент-завода.
-- **Shotstack** — быстрый чистый монтаж по таймлайну без ручного ffmpeg; когда нужен
-  программный рендер из кода (клипы + титры + переходы + саундтрек). Sandbox бесплатный
-  (вотермарк), prod — платный (`SHOTSTACK_PROD_KEY`).
-- **Creatomate** — серийный рендер «по данным»: один шаблон (template_id) + пачка
-  modifications → пачка роликов. Плюс inline-source сцены. Free-tier рендерит медленно
-  (2–3 мин на клип) — таймаут обёрток 600с.
-
-**Использование:**
-```python
-import sys; sys.path.insert(0, '.../reels-machine/pipeline')
-from cloud import shotstack as ss, creatomate as cm
-
-# Shotstack: вертикальный ролик из шотов + караоке-титров + музыки
-tl  = ss.build_vertical(
-        shots=[{"src": url_mp4, "length": 3, "effect": "zoomIn"}, ...],
-        subs=[{"text": "ПРОДАНО", "start": 1.2, "length": 1.0, "color": "#9AFF00"}],
-        music_url=music, bg="#0d0d0d")
-mp4 = ss.render(tl, env="sandbox", out_path="reel.mp4")   # env="prod" — без вотермарка
-url = ss.ingest(external_url, env="prod")                  # залить ассет в CDN Shotstack
-
-# Creatomate: пачка по шаблону
-paths = cm.batch(template_id, [ {"Text-1.text": "A"}, {"Text-1.text": "B"} ], out_dir="out")
-mp4   = cm.render(source=scene_dict, out_path="scene.mp4")  # inline-сцена без шаблона
-```
-Грабли: у Shotstack `title`-asset — legacy, но стабилен для титров; на переходах
-клипы должны перекрываться по времени. Creatomate `public-...` токен — только для
-браузерного preview, серверный ключ в браузер НЕ отдавать.
-
----
-
----
-
 ## Бренд-константы (пример V.CODE — вынести в `reference/BRAND_PROFILE.md`)
 Чёрный `#0d0d0d`, **акцент оранж `#EA5920` (из лого)** + белый. БЕЗ зелёного. Лого `logo_hd.png`.
 Голос `ru-RU-DmitryNeural`. Субтитры: Союз Гротеск, активное слово оранж `&H2059EA&`. Финалка:
@@ -283,8 +250,6 @@ mp4   = cm.render(source=scene_dict, out_path="scene.mp4")  # inline-сцена 
 
 ## Файлы скилла
 - `pipeline/build_reel.py` — оркестратор 3 этапов.
-- `pipeline/cloud/` — облачный рендер: `shotstack.py` (таймлайн-JSON, render/ingest/
-  build_vertical), `creatomate.py` (шаблон/inline-source, render/batch), `README.md`.
 - `pipeline/fetch_pexels.py` — отбор вертикальных стоков (расширять на уникальность+реестр).
 - `pipeline/motion/` — fx_engine.js (+fx_page.html), lottie_render.js, transitions_gl.cjs,
   infographics.tsx, counter_gauge.ts, kinetic_type.ts, depth_parallax.py.
