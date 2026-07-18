@@ -37,9 +37,27 @@ try{
   log('owner',owner,'expected',USER);
   if(owner!=='?' && owner.toLowerCase()!==USER.toLowerCase()){ log('SKIP_NOT_OWNER ('+owner+') — НЕ удаляю чужой пост'); await ctx.close(); await b.close(); process.exit(0); }
   await p.screenshot({path:'/opt/oko-poster/cfg/del_0post.png'}).catch(()=>{});
-  // "..." More options
-  await clickAny([p.locator('svg[aria-label="More options"]'), p.getByRole('button',{name:/more options/i}), p.locator('[aria-label="More options"]')],'more-options');
+  // ДИАГНОСТИКА: все svg-иконки и кнопки на странице поста (найти реальный "...")
+  try{
+    const d=await p.evaluate(()=>({
+      svgs:[...new Set([...document.querySelectorAll('svg[aria-label]')].map(s=>s.getAttribute('aria-label')))].slice(0,40),
+      btns:[...new Set([...document.querySelectorAll('button,[role="button"]')].map(b=>(b.getAttribute('aria-label')||b.innerText||'').trim()).filter(Boolean))].slice(0,30)
+    }));
+    log('SVGS',JSON.stringify(d.svgs)); log('BTNS',JSON.stringify(d.btns));
+  }catch(e){ log('diag err',String(e).slice(0,80)); }
+  // "..." More options — расширенный набор кандидатов
+  await clickAny([
+    p.locator('svg[aria-label="More options"]'),
+    p.locator('svg[aria-label="More"]'),
+    p.getByRole('button',{name:/more options|more$/i}),
+    p.locator('[aria-label="More options"]'),
+    p.locator('svg[aria-label="More options"]').locator('xpath=ancestor::*[@role="button" or self::button][1]'),
+    p.locator('div[role="button"] svg[aria-label*="More" i]').locator('xpath=ancestor::div[@role="button"][1]')
+  ],'more-options');
   await sleep(1500);
+  await p.screenshot({path:'/opt/oko-poster/cfg/del_1menu.png'}).catch(()=>{});
+  // если меню не открылось — дамп кнопок диалога
+  try{ const items=await p.evaluate(()=>[...new Set([...document.querySelectorAll('button,[role="button"],[role="menuitem"]')].map(b=>(b.innerText||'').trim()).filter(Boolean))].slice(0,25)); log('MENU',JSON.stringify(items)); }catch(e){}
   await p.screenshot({path:'/opt/oko-poster/cfg/del_1menu.png'}).catch(()=>{});
   // "Delete" в меню
   const gotDel=await clickAny([p.getByRole('button',{name:/^delete$/i}), p.getByText('Delete',{exact:true})],'delete-menu');
