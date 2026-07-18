@@ -251,3 +251,12 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
   Путь к python задаётся `XTTS_PY`. Первый запуск качает модель ~1.8ГБ (COQUI_TOS_AGREED=1).
 - Скорость на CPU: загрузка модели ~33с, ~14с на короткую фразу. Референс — чистый wav 22050/моно.
 - Грабли: coqui-tts<0.25 тянет старый `coqpit` (падает на типах Py3.11); нужен spacy→`click`.
+
+## Голос V.CODE — OmniVoice (метод Даниэля, ОСНОВНОЙ)
+- Движок: HF Space `k2-fsa/OmniVoice` через `gradio_client`, zero-shot клон по референсу.
+  Бесплатно, безлимитно, русский, качество. Скрипт+референсы: `vcode/daily/voice_omnivoice/`.
+- Запуск: `python clone_voice_omnivoice.py "текст" out.wav --ref reference/vladimir_ref_30s.wav --ns 48`.
+- HF_TOKEN в `secrets.env.b64` (снимает лимиты ZeroGPU).
+- Грабли: OmniVoice вставляет стартовый призвук (~1.2–1.4с) → обрезать по whisper-таймингу
+  первого слова. Скорость — atempo в пост (1.8× ок).
+- Запасной GPU-путь: Kaggle F5-TTS Russian (`vcode/daily/kaggle_tts`, KAGGLE_API_TOKEN).
