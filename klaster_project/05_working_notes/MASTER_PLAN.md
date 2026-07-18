@@ -1,3 +1,7 @@
+# ВИТРИНА ПРОЕКТА (live): https://klaster-oko.higgsfield.app
+# Разделы: /site (сайт) · /sistema (Система OKO) · /sistema#sec-competitors (110 конкурентов) · /brand (брендбук) · /content (контент-план)
+# Обновление: репозиторий сайта Higgsfield (website_id 0bfda5fd-...), deploy_website. Аудит агентами пройден, 28 findings исправлены.
+
 # MASTER PLAN — автономная сборка «Кластер» (18.07.2026)
 
 Источник правды — `BRAND_FACTS.md`. Статусы: [x] готово · [~] частично · [!] ограничение среды.
