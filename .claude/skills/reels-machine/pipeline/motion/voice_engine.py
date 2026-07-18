@@ -111,7 +111,9 @@ def _resolve_ref(ref):
 
 def say(text, out, ref="voices/ref_ekaterina.wav", tempo=1.0, engine="auto", ref_text=""):
     ref=_resolve_ref(ref)
-    st=stress(text, accent_char=True)
+    # '+' перед ударной гласной (формат Higgs/F5/Silero). U+0301 ломает XTTS-токенизатор
+    # («китайский») — поэтому НЕ используем accent_char.
+    st=stress(text, accent_char=False)
     raw=out+".raw.wav"
     used=None
     order=(["higgs","xtts","edge"] if engine=="auto" else [engine])
