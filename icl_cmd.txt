@@ -1,7 +1,1 @@
-{"id":5,"actions":[
-["useframe","widget/account"],
-["fill","input[name=password]","Vento!Rax92zQ"],
-["fill","input[name=confirmPassword]","Vento!Rax92zQ"],
-["fill","input[name=captcha]","pH77"],
-["press","input[name=captcha]","Tab"]
-],"settle":2500}
+{"id":6,"actions":[["useframe","widget/account"],["clicktext","Continue"],["wait","6000"]],"settle":4000}
