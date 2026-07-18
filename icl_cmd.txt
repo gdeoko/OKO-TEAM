@@ -1,7 +1,1 @@
-{"id":9,"actions":[
-["useframe","widget/account"],
-["selopt","select[name=countrySelect]","Uzbekistan"],
-["wait","1800"],
-["fill","input[name=phoneNumber]","500405670"],
-["press","input[name=phoneNumber]","Tab"]
-],"settle":2500}
+{"id":10,"actions":[["useframe","widget/account"],["fill","input[name=captcha]","AQWZ"],["press","input[name=captcha]","Tab"],["wait","1200"],["clicktext","Continue"],["wait","9000"]],"settle":5000}
