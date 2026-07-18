@@ -54,7 +54,7 @@ function el(){const e=document.createElement('div');e.className='box';return e;}
 function env(p){const i=ST.ease(clamp(p/0.16)),o=ease(clamp((p-0.86)/0.14));return {op:i*(1-o),ty:(1-i)*26 - o*12};}
 
 function draw(a,p){
-  const d=a.data, t=a.type, b=el(); let w=560,pos=null; const g=ST.ease(clamp((p-0.1)/0.55));
+  const d=a.data, t=a.type, b=el(); let w=560,pos=null; const g=ease(clamp((p-0.1)/0.55));
   if(t=='chips'){ w=760; let h='<div style="display:flex;flex-wrap:wrap;justify-content:center;width:'+w+'px">';
     d.items.forEach((it,i)=>{const s=ease(clamp((p-(0.12+i*0.12))/0.2));
       h+='<span class="wht" style="display:inline-block;font-size:34px;'+boxCSS('14px 24px').replace(/padding[^;]*;/,'')+'padding:14px 24px;margin:6px;opacity:'+s+';transform:translateY('+((1-s)*20)+'px) scale('+(0.9+0.1*s)+')">'+it+'</span>';});
