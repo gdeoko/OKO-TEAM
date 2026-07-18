@@ -53,9 +53,20 @@ try{
   await sleep(1200);
   await p.screenshot({path:S('2b_crop')}).catch(()=>{});
   for(let i=0;i<3;i++){
+    // дамп контролов ЭТОГО экрана (ищем, где живёт обложка/Cover)
+    try{
+      const scr=await p.evaluate(()=>{
+        const t=e=>((e.getAttribute&&e.getAttribute('aria-label'))||e.innerText||'').trim();
+        const btns=[...new Set([...document.querySelectorAll('button,[role="button"],div[role="button"]')].map(t).filter(Boolean))].slice(0,26);
+        const cov=[...document.querySelectorAll('*')].filter(e=>/cover|обложк|thumbnail/i.test(t(e))&&e.tagName!=='SCRIPT').map(e=>e.tagName+'|'+t(e).slice(0,34)).filter((v,ix,a)=>a.indexOf(v)===ix).slice(0,10);
+        return {btns,cov};
+      });
+      log('SCREEN'+i,'btns',JSON.stringify(scr.btns));
+      log('SCREEN'+i,'cover',JSON.stringify(scr.cov));
+    }catch(e){ log('scr diag err',String(e).slice(0,80)); }
+    await p.screenshot({path:S('3screen'+i)}).catch(()=>{});
     const clicked=await clickAny([p.getByRole('button',{name:/^next$/i})],'next'+i);
     if(!clicked) break; await sleep(2500);
-    await p.screenshot({path:S('3next'+i)}).catch(()=>{});
   }
   await sleep(1500);
   // --- ОБЛОЖКА рила = наш кадр-0 (иначе IG берёт случайный кадр из середины). Best-effort. ---
@@ -87,17 +98,7 @@ try{
         const ch2=await fc2;
         if(ch2){ await ch2.setFiles(COVER); coverDone=true; log('cover uploaded'); await sleep(3500); }
       }
-      // 2) фолбэк: тянем ползунок киноленты обложки в крайнее левое = кадр 0
-      if(!coverDone){
-        const handle=p.locator('[role="slider"], [draggable="true"]').first();
-        if(await handle.count().catch(()=>0)){
-          const box=await handle.boundingBox().catch(()=>null);
-          if(box){ const y=box.y+box.height/2;
-            await p.mouse.move(box.x+box.width/2,y); await p.mouse.down();
-            await p.mouse.move(box.x-600,y,{steps:14}); await p.mouse.up();
-            coverDone=true; log('cover slider->frame0'); await sleep(1500); }
-        }
-      }
+      // (НЕ трогаем произвольные слайдеры — на финальном экране единственный слайдер = громкость!)
       await p.screenshot({path:S('4b_cover_post')}).catch(()=>{});
       log('coverDone',coverDone);
     }catch(e){ log('cover step err',String(e).slice(0,140)); }
