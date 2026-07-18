@@ -29,6 +29,18 @@ curl (urllib и node fetch ходят мимо прокси). Новый клю�
 `base64 -w0 secrets.env > secrets.env.b64`, закоммитить ТОЛЬКО b64
 (plaintext secrets.env в .gitignore, GitHub push protection режет открытые ключи).
 
+### 1б. Клон голоса Даниэля (БЕСПЛАТНЫЙ безлимит) — для озвучки контент-завода
+- Скрипт-ротатор: `.claude/skills/reels-machine/pipeline/social/oko_voice.py`
+  `python oko_voice.py "текст" out.wav --ref <ref.wav>` — перебирает бесплатные HF-спейсы
+  (OmniVoice→VoxCPM→Qwen3→MegaTTS3), берёт доступный по квоте. Длинный текст режется на
+  фрагменты и склеивается (ffmpeg) → озвучка ЛЮБОЙ длины, 0 ₽.
+- Референсы (чистые записи Даниэля без музыки): `.claude/skills/reels-machine/assets/voice/`
+  `daniel_ref_15s.wav`, `daniel_ref_28s.wav`. Выбранный движок качества — «A» = OmniVoice.
+- Зависит от `gradio_client` + `imageio-ffmpeg` + `HF_TOKEN`. Квота ZeroGPU у каждого
+  спейса своя (дневная) — ротатор суммирует → сотни клипов/день бесплатно.
+- Готовый пользовательский набор: ZIP `OKO_voice_clone` (Даниэлю отдан в чат 18.07).
+- Турбо-режим (платно, копейки, с разрешения): fal.ai TTS — честный безлимит без квот.
+
 ## 1а. ВИДЕОЗАВОД reels-machine v6 — фулл-пак (чат V.CODE, проверено боем на j001..j013)
 
 Скилл: `.claude/skills/reels-machine/` (SKILL.md + pipeline/motion + pipeline/three +
