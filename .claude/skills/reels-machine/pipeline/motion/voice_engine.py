@@ -83,7 +83,11 @@ _XG=("import os,sys;os.environ['COQUI_TOS_AGREED']='1'\n"
      "from TTS.api import TTS\n"
      "txt,out,ref=sys.argv[1],sys.argv[2],sys.argv[3]\n"
      "t=TTS('tts_models/multilingual/multi-dataset/xtts_v2',progress_bar=False)\n"
-     "t.tts_to_file(text=txt,speaker_wav=ref,language='ru',file_path=out,temperature=0.65)\n"
+     # проверенные параметры: мягко + разбивка предложений (меньше заиканий XTTS).
+     # ВАЖНО: только ЧИСТЫЙ текст — символы ударения ('+' или U+0301) ломают XTTS в кашу.
+     "t.tts_to_file(text=txt,speaker_wav=ref,language='ru',file_path=out,"
+     "temperature=0.7,repetition_penalty=2.0,length_penalty=1.0,top_k=50,top_p=0.85,"
+     "enable_text_splitting=True)\n"
      "print('XTTS_OK')\n")
 def xtts(text_stressed, ref, out_raw):
     py=_xtts_py()
@@ -111,23 +115,23 @@ def _resolve_ref(ref):
 
 def say(text, out, ref="voices/ref_ekaterina.wav", tempo=1.0, engine="auto", ref_text=""):
     ref=_resolve_ref(ref)
-    # '+' перед ударной гласной (формат Higgs/F5/Silero). U+0301 ломает XTTS-токенизатор
-    # («китайский») — поэтому НЕ используем accent_char.
-    st=stress(text, accent_char=False)
+    # ТОЛЬКО чистый текст во все движки: символы ударения ('+'/U+0301) ломают XTTS в кашу,
+    # а XTTS/Higgs/edge и так хорошо читают русский нативно. Бренды латиницей — транслит в кириллицу.
+    txt=text
     raw=out+".raw.wav"
     used=None
     order=(["higgs","xtts","edge"] if engine=="auto" else [engine])
     for eng in order:
         ok=False
-        if eng=="higgs": ok=higgs(st, ref, raw, ref_text)
-        elif eng=="xtts": ok=xtts(st, ref, raw)
-        elif eng=="edge": ok=edge(text, raw)  # edge сам ставит ударения из своего словаря
+        if eng=="higgs": ok=higgs(txt, ref, raw, ref_text)
+        elif eng=="xtts": ok=xtts(txt, ref, raw)
+        elif eng=="edge": ok=edge(txt, raw)
         if ok: used=eng; break
-    if not used: return {"engine":"FAIL","out":out,"text_used":st}
+    if not used: return {"engine":"FAIL","out":out,"text_used":txt}
     studio_master(raw, out, tempo)
     try: os.remove(raw)
     except Exception: pass
-    return {"engine":used,"out":out,"text_used":st}
+    return {"engine":used,"out":out,"text_used":txt}
 
 if __name__=="__main__":
     args=[a for a in sys.argv[1:] if not a.startswith("--")]
