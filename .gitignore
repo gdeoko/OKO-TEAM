@@ -18,3 +18,4 @@ PROJECT_CONTEXT.txt
 
 # ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env
+__pycache__/
