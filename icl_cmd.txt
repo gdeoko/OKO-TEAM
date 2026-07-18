@@ -1,1 +1,1 @@
-{"id":0,"actions":[]}
+{"id":1,"actions":[["goto","https://appleid.apple.com/account"],["wait","9000"]],"settle":3000}
