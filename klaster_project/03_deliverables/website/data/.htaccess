@@ -1,2 +1,2 @@
-deny data dir from web
+# Запрет прямого доступа к логам заявок (персональные данные)
 Require all denied

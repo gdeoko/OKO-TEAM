@@ -76,7 +76,7 @@ function smtp_mail($cfg,$to,$subject,$html){
     $fp=fopen('php://temp','rw+'); fwrite($fp,$msg); rewind($fp);
     $ch=curl_init();
     curl_setopt_array($ch,[CURLOPT_URL=>'smtps://smtp.gmail.com:465',CURLOPT_RETURNTRANSFER=>1,
-      CURLOPT_SSL_VERIFYPEER=>0,CURLOPT_SSL_VERIFYHOST=>0,CURLOPT_USERNAME=>$cfg['GMAIL'],
+      CURLOPT_SSL_VERIFYPEER=>1,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_USERNAME=>$cfg['GMAIL'],
       CURLOPT_PASSWORD=>$cfg['GMAIL_APP'],CURLOPT_MAIL_FROM=>'<'.$cfg['GMAIL'].'>',
       CURLOPT_MAIL_RCPT=>['<'.$to.'>'],CURLOPT_READDATA=>$fp,CURLOPT_UPLOAD=>1,CURLOPT_TIMEOUT=>15]);
     curl_exec($ch); $err=curl_error($ch); curl_close($ch); fclose($fp);
