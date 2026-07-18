@@ -1,1 +1,7 @@
-{"id":8,"actions":[["useframe","widget/account"],["clicktext","Continue"],["wait","9000"]],"settle":5000}
+{"id":9,"actions":[
+["useframe","widget/account"],
+["selopt","select[name=countrySelect]","Uzbekistan"],
+["wait","1800"],
+["fill","input[name=phoneNumber]","500405670"],
+["press","input[name=phoneNumber]","Tab"]
+],"settle":2500}
