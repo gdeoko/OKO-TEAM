@@ -30,3 +30,6 @@
 build_accents.py: добавлены механики bigstat/speedo/odometer/lowerthird/vs/linechart/iconrow/sidebars/donut +
 per-reel OVL_STYLE (5 стилей боксов). Выбор механики ПО СМЫСЛУ, микс зон, разный стиль у соседних роликов.
 Занятые в последних роликах наборы НЕ повторять. Классические chips/ticks/ring-«плашки-подряд» — больше НЕ использовать как основу.
+
+## День 18.07 — ролик #5 КВАДРО (первый на НОВОМ движке)
+Квадроциклы из Китая, стиль-сид 1 (сплошной-дарк). Механики: bigstat(4×4)/iconrow/speedo(90км/ч)/sidebars/donut/ticks/route/stamp/lowerthird/chips/badge — микс зон, не как у прошлых. YT Vev86wlZ87E, TikTok+IG. Завтра: МОТО или ГИДРО-вариант, стиль-сид 2/3, другие механики (odometer/vs/linechart).
