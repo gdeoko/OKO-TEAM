@@ -377,3 +377,11 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
   https://nimble-bean-709.higgsfield.app
 - **Правило:** плейнтекст-паспорт с паролями в git НЕ кладём; ключи — только в
   `secrets.env` (коммитим `secrets.env.b64`).
+
+### Клон голоса Екатерины (МЕТАНОЙА) — ГОТОВ 18.07
+- Higgsfield element voice, `EKAT_VOICE_ID=28a9c823-63af-491b-b410-d22067178dce` (в secrets.env).
+- Генерация: `generate_audio model=seed_audio voice_type=element voice_id=$EKAT_VOICE_ID` (или CLI text2speech).
+  Безлимитно в рамках ultra-плана (платного), без пофайловой платы.
+- СТУДИЙНАЯ обработка (убирает «подводность»), ffmpeg -af:
+  `highpass=f=85,equalizer=f=300:t=q:w=1.2:g=-3,equalizer=f=2600:t=q:w=1.4:g=2.5,equalizer=f=4500:t=q:w=1.6:g=3,treble=g=3:f=9000,deesser=i=0.4,acompressor=threshold=-18dB:ratio=3:attack=6:release=90:makeup=2,[atempo=1.4,]loudnorm=I=-14:TP=-1.2:LRA=10`
+- Исходные сэмплы: 3×60с (чат 18.07). Мастер 150с загружен как media 8c64a7a2.
