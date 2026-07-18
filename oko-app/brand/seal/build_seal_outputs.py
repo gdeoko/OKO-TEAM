@@ -10,7 +10,9 @@ import make_seal
 OUT = "/home/user/OKO-TEAM/oko-app/brand/seal"
 if os.path.isdir(OUT):
     for f in glob.glob(f"{OUT}/*"):
-        os.remove(f)
+        # never delete build scripts, __pycache__, or any directory
+        if os.path.isfile(f) and not f.endswith(".py"):
+            os.remove(f)
 os.makedirs(OUT, exist_ok=True)
 
 COLORS = {"blue": "#1e3a8a", "violet": "#2b4fd8", "black": "#111111", "lime": "#9AFF00"}

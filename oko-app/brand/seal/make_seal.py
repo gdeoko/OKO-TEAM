@@ -4,6 +4,7 @@
 import math, re, os, sys
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.boundsPen import BoundsPen
 
 FONT = "/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts/montserrat-v31-cyrillic_latin-700.ttf"
 LOGO_SVG = "/home/user/OKO-TEAM/oko-app/brand/vector/oko-logo.svg"
@@ -24,6 +25,18 @@ def glyph_path_and_adv(ch):
     _glyphset[gname].draw(pen)
     return pen.getCommands(), adv
 
+_BOUNDS_CACHE = {}
+def glyph_ink(ch):
+    """Return (xmin, xmax) ink bounds in font units, or None for blank glyphs."""
+    if ch in _BOUNDS_CACHE:
+        return _BOUNDS_CACHE[ch]
+    gname = _cmap.get(ord(ch)) or _cmap.get(ord(' '))
+    bp = BoundsPen(_glyphset)
+    _glyphset[gname].draw(bp)
+    res = (bp.bounds[0], bp.bounds[2]) if bp.bounds else None
+    _BOUNDS_CACHE[ch] = res
+    return res
+
 CX = CY = 500.0
 
 LAST_SPAN = {}
@@ -39,28 +52,54 @@ def arc_span(text, radius, font_px, tracking_px):
             total += math.degrees(tracking_px / radius)
     return total
 
-def arc_text(text, radius, center_deg, font_px, tracking_px, side="top", tag=None):
+def arc_text(text, radius, center_deg, font_px, tracking_px, side="top", tag=None,
+             optical=True):
     """Return SVG path-d fragments for text laid along a circle.
     center_deg: clockwise angle from top (0=12 o'clock) where the text is centred.
     side: 'top' -> reading clockwise, glyph tops point outward.
-          'bottom' -> reading left->right along bottom, glyph tops point inward."""
+          'bottom' -> reading left->right along bottom, glyph tops point inward.
+    optical=True: space glyphs by their INK bounds so the *visual* gap between
+    letters is constant (true optical kerning) instead of by mechanical advances.
+    tracking_px is then the target visual gap between adjacent ink edges."""
     s = font_px / _upm
-    items = []
-    total = 0.0
-    for i, ch in enumerate(text):
+    word_gap = tracking_px * 1.85    # extra breathing room where a space occurs
+    # -- tokenise: drop blanks, remember which glyphs had a space before them --
+    tokens = []  # (ch, ink_w_px, ink_center_fontunits, space_before)
+    pending_space = False
+    for ch in text:
+        if ch == ' ':
+            pending_space = True
+            continue
+        ink = glyph_ink(ch)
         _, adv = glyph_path_and_adv(ch)
-        w_deg = math.degrees((adv * s) / radius)
-        items.append([ch, adv, w_deg])
-        total += w_deg
-        if i < len(text) - 1:
-            total += math.degrees(tracking_px / radius)
+        if optical and ink is not None:
+            xmin, xmax = ink
+            iw = (xmax - xmin) * s
+            icf = (xmin + xmax) / 2.0
+        else:
+            iw = adv * s
+            icf = adv / 2.0
+        tokens.append((ch, iw, icf, pending_space))
+        pending_space = False
+
+    # -- lay out: constant optical gap between every glyph, +word_gap after spaces --
+    cursor = 0.0
+    placed = []  # (ch, center_px, ink_center_fontunits)
+    for j, (ch, iw, icf, sp) in enumerate(tokens):
+        if j > 0:
+            cursor += tracking_px + (word_gap if sp else 0.0)
+        placed.append((ch, cursor + iw / 2.0, icf))
+        cursor += iw
+    total_px = cursor
+    total_deg = math.degrees(total_px / radius)
     if tag:
-        LAST_SPAN[tag] = total
+        LAST_SPAN[tag] = total_deg
+
     d = 1.0 if side == "top" else -1.0
-    phi = center_deg - d * total / 2.0
+    start_deg = center_deg - d * total_deg / 2.0
     out = []
-    for i, (ch, adv, w_deg) in enumerate(items):
-        cdeg = phi + d * (w_deg / 2.0)
+    for ch, center_px, icf in placed:
+        cdeg = start_deg + d * math.degrees(center_px / radius)
         rad = math.radians(cdeg)
         px = CX + radius * math.sin(rad)
         py = CY - radius * math.cos(rad)
@@ -68,9 +107,8 @@ def arc_text(text, radius, center_deg, font_px, tracking_px, side="top", tag=Non
         path, _ = glyph_path_and_adv(ch)
         if path.strip():
             tf = (f"translate({px:.3f},{py:.3f}) rotate({rot:.4f}) "
-                  f"scale({s:.6f},{-s:.6f}) translate({-adv/2.0:.3f},0)")
+                  f"scale({s:.6f},{-s:.6f}) translate({-icf:.3f},0)")
             out.append(f'<path transform="{tf}" d="{path}"/>')
-        phi += d * (w_deg + math.degrees(tracking_px / radius))
     return "\n".join(out)
 
 def star(cx, cy, r_out, r_in=None, points=5, rot_deg=-90):
@@ -129,8 +167,10 @@ def ring_c(r, w, color, dash=None, op=1.0):
     d = f' stroke-dasharray="{dash}"' if dash else ""
     return f'<circle cx="{CX}" cy="{CY}" r="{r}" fill="none" stroke="{color}" stroke-width="{w}" opacity="{op}"{d}/>'
 
-def guilloche_band(Rc, amp, lobes, color, sw=0.7, op=0.5, n=1600, phases=(0.0, math.pi)):
-    """Interwoven sinusoidal security band (banknote-style guilloché)."""
+def guilloche_band(Rc, amp, lobes, color, sw=0.7, op=0.5, n=2400, phases=(0.0, math.pi)):
+    """Interwoven sinusoidal security band (banknote-style guilloché).
+    Constant amplitude, closed & seamless (lobes must be integer so it wraps)."""
+    lobes = int(round(lobes))
     out = []
     for ph in phases:
         pts = []
@@ -139,7 +179,46 @@ def guilloche_band(Rc, amp, lobes, color, sw=0.7, op=0.5, n=1600, phases=(0.0, m
             r = Rc + amp * math.sin(lobes * th + ph)
             pts.append("%.2f,%.2f" % polar(math.degrees(th), r))
         out.append(f'<polyline fill="none" stroke="{color}" stroke-width="{sw}" '
-                   f'opacity="{op}" points="{" ".join(pts)}"/>')
+                   f'opacity="{op}" stroke-linejoin="round" points="{" ".join(pts)}"/>')
+    return "\n".join(out)
+
+
+def guilloche_braid(Rc, amp, lobes, color, sw=0.55, op=0.45, n=2600):
+    """Two counter-running constant-amplitude sine waves that interlace into a
+    continuous braid (fine engraving look). Even all the way round the ring."""
+    lobes = int(round(lobes))
+    out = []
+    for sgn in (1.0, -1.0):
+        pts = []
+        for i in range(n + 1):
+            th = 2 * math.pi * i / n
+            r = Rc + sgn * amp * math.sin(lobes * th)
+            pts.append("%.2f,%.2f" % polar(math.degrees(th), r))
+        out.append(f'<polyline fill="none" stroke="{color}" stroke-width="{sw}" '
+                   f'opacity="{op}" stroke-linejoin="round" points="{" ".join(pts)}"/>')
+    return "\n".join(out)
+
+
+def pearl_ring(r, count, dot_r, color, op=1.0):
+    """Ring of evenly spaced micro-dots (pearling / beading) — premium edge detail."""
+    out = []
+    for k in range(count):
+        deg = 360.0 * k / count
+        x, y = polar(deg, r)
+        out.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{dot_r:.2f}" '
+                   f'fill="{color}" opacity="{op}"/>')
+    return "\n".join(out)
+
+
+def tick_ring(r0, r1, count, color, sw=1.0, op=1.0, phase=0.0):
+    """Ring of fine radial tick marks between radii r0 and r1."""
+    out = []
+    for k in range(count):
+        deg = phase + 360.0 * k / count
+        x0, y0 = polar(deg, r0)
+        x1, y1 = polar(deg, r1)
+        out.append(f'<line x1="{x0:.2f}" y1="{y0:.2f}" x2="{x1:.2f}" y2="{y1:.2f}" '
+                   f'stroke="{color}" stroke-width="{sw}" opacity="{op}"/>')
     return "\n".join(out)
 
 def separator(style, deg, radius, color, size):
@@ -187,11 +266,11 @@ def build_seal(color="#1e3a8a", stamp=False, variant="A"):
     if variant == "A":
         Rt, Rb = 421, 452
         ft, fb = 40, 36
-        tt, tb = 7.0, 2.6
+        tt, tb = 10.5, 7.0   # optical: constant visual gap between ink edges
     else:
         Rt, Rb = 423, 454
         ft, fb = 41, 37
-        tt, tb = 8.0, 2.8
+        tt, tb = 8.5, 6.5   # optical gaps (alt variant)
     top = arc_text(TOP_TEXT, radius=Rt, center_deg=0.0, font_px=ft, tracking_px=tt, side="top", tag="top")
     bottom = arc_text(BOTTOM_TEXT, radius=Rb, center_deg=180.0, font_px=fb, tracking_px=tb, side="bottom", tag="bottom")
     els.append(top); els.append(bottom)
@@ -199,9 +278,15 @@ def build_seal(color="#1e3a8a", stamp=False, variant="A"):
     els.append(ring_c(407, 1.8, color))
     # ================= decorative middle zone ============
     if variant == "A":
-        els.append(guilloche_band(381, 9.0, 44, color, sw=0.7, op=0.5))
-        els.append(guilloche_band(381, 4.2, 88, color, sw=0.5, op=0.32, phases=(0.0,)))
+        # LUX edge details: bead (pearl) ring + a whisper-thin inner frame
+        els.append(pearl_ring(400.5, 132, 1.25, color, op=0.95))
+        els.append(ring_c(395, 0.8, color, op=0.55))
+        # refined banknote guilloche: interlaced constant-amplitude braid + fine shimmer
+        els.append(guilloche_braid(377, 8.0, 44, color, sw=0.55, op=0.5))
+        els.append(guilloche_band(377, 3.2, 88, color, sw=0.42, op=0.3, phases=(0.0,)))
         els.append(ring_c(357, 1.4, color, op=0.9))
+        # fine minute-ticks hugging the medallion edge
+        els.append(tick_ring(349.5, 355.0, 120, color, sw=0.8, op=0.7))
         med_out, med_in = 346, 337
         logo_size, cy_logo = 352, CY - 84   # hero eye: ~1.52x, centred high in medallion
         f_name = 58
@@ -210,9 +295,11 @@ def build_seal(color="#1e3a8a", stamp=False, variant="A"):
         med_out, med_in = 366, 356
         logo_size, cy_logo = 236, CY - 74
         f_name = 54
-    # ================= medallion double ring =============
+    # ================= medallion refined edge =============
     els.append(ring_c(med_out, 3.0, color))
     els.append(ring_c(med_in, 1.5, color))
+    if variant == "A":
+        els.append(ring_c(med_in - 6.0, 0.7, color, op=0.5))  # whisper hairline -> triple edge
     # ================= separators at 3 & 9 o'clock =======
     sep_style = "diamond" if variant == "A" else "dotcircle"
     sep_r = (Rt + Rb) / 2.0
@@ -228,7 +315,7 @@ def build_seal(color="#1e3a8a", stamp=False, variant="A"):
         els.append(straight_text("МОСКВА · РФ", cy=CY + 172, font_px=21, tracking_px=4))
         # inner arc text hugging the bottom inside of the medallion (top kept clean)
         els.append(arc_text("МЕДИЙНОСТЬ · КОНТЕНТ · МАРКЕТИНГ", radius=302,
-                            center_deg=180.0, font_px=22, tracking_px=3.0,
+                            center_deg=180.0, font_px=22, tracking_px=4.2,
                             side="bottom", tag="inner"))
     else:
         els.append(straight_text("ОКО PROJECT", cy=CY + 92, font_px=f_name, tracking_px=5))
