@@ -1,105 +1,90 @@
-# AUTOBUILD — авто-сборка ролика DIESEL и постановка в очередь VPS
+# AUTOBUILD — полный цикл авто-сборки ролика DIESEL (с нуля, БЕЗ повторов)
 
-Этот ранбук выполняет СВЕЖАЯ автосессия (по расписанию). Цель: собрать ОДИН
-новый рекламный ролик DIESEL CARGO (спецтехника из Китая под ключ) проверенным
-пайплайном и положить его в очередь VPS — дальше VPS-крон сам публикует его в
-YouTube + TikTok + Instagram (10:00 / 15:00 / 20:00 МСК).
+Выполняет свежая автосессия по расписанию. Цель: собрать ОДИН новый ролик/пост
+и положить в очередь VPS. Публикует VPS-крон (10/15/20 МСК). Вручную НЕ публиковать.
 
-Ключи (YT/TikTok/VPS) уже в окружении (SessionStart-хук грузит `secrets.env`).
-Проверить: `echo $OKO_VPS_CTRL_URL` и `echo ${YT_REFRESH_TOKEN:0:6}` — не пусто.
+Ключи в env (SessionStart-хук из secrets.env): `$OKO_VPS_CTRL_URL`, `$YT_REFRESH_TOKEN`,
+`$PEXELS_API_KEY`, `$PIXABAY_API_KEY`, `$GEMINI_API_KEY`, `$HF_TOKEN` и др.
 
-## 0. Клиент и правила
-- Бренд: DIESEL CARGO, dieselcompany.pro, ниша — импорт строительной/спецтехники из Китая под ключ.
-- Палитра: чёрный + амбер #EA5920. Шрифты: Montserrat/Manrope/Soyuz. Голос: edge-tts `ru-RU-DmitryNeural` (PLAIN текст, без ударений).
-- НЕ выдумывать цены. Формальное «вы». CTA — «напишите город и задачу в комментариях».
-- РАЗНООБРАЗИЕ: каждый ролик — НОВАЯ тема/угол, НОВЫЕ кадры (другие video id), новые данные инфографики.
-  Не повторять тему/кадры прошлых роликов. Смотреть `factory/USED.md` (дописывать туда id/темы).
+## КЛИЕНТ И КОНТЕНТ-МИКС (ВАЖНО)
+DIESEL CARGO — импорт из Китая, dieselcompany.pro, бренд чёрный+амбер #EA5920.
+**ОСНОВА контента (≈80%): МОТО (мотоциклы), КВАДРО (квадроциклы/ATV), ГИДРО (гидроциклы/джетски).**
+Спецтехника (экскаваторы/погрузчики) — РЕДКО (не чаще 1 из 6–8 роликов). Ротация тем — из этих трёх.
+Формат: в основном Reels, но ИНОГДА — карусель (подборка/сравнение) или Stories. Чередовать.
 
-## 1. Рабочая копия пайплайна
+## ЗАКОН РАЗНООБРАЗИЯ (ЖЁСТКО — прошлые ролики были шаблонны, это брак)
+Каждый ролик создаётся С НУЛЯ. Запрещены ЛЮБЫЕ повторы с прошлыми роликами (см. `USED.md`):
+- НЕ повторять тему/нишу/хук/сценарную механику (даже образно/по смыслу).
+- НЕ повторять НАБОР наложений/инфографики. Механики оверлеев брать НОВЫЕ каждый раз из широкой
+  палитры и НЕ как в прошлых 3–4 роликах: счётчики, графики (bar/line/donut/ring/gauge), таймлайн,
+  сравнение до/после, карта-маршрут, чек-лист, штамп-печать, ценник-слэм, спидометр/тахометр (для мото),
+  волна/трек (для гидро), 3D-вращение модели, партиклы, split-screen, стат-карточки, тикер, «сторис-опрос».
+  → Больше анимаций и инфографики, НАРИСОВАННОЙ КОДОМ (HTML/CSS/SVG/Canvas), под конкретную цифру/метафору.
+- НОВЫЕ кадры (другие video id, дедуп по `USED.md`), новый грейд, новая музыка, новые SFX, новая обложка-раскладка,
+  новые переходы. Неизменны только бренд-константы: лого, амбер #EA5920, шрифты, голос Dmitry, финалка-эндкард.
+- Красный флаг = «взял прошлый ролик и поменял цифры/слова». Так НЕЛЬЗЯ.
+
+## ЭТАП 0 — Активность + анализ конкурентов (перед сборкой)
+1. Органика (без фанатизма, лимиты от бана): зайти в IG (браузер-агент на VPS, профиль diesel_cargo),
+   поиск по нише/бренду (мото/квадро/гидро из Китая), подписаться на 2–3 аккаунта, лайк+коммент 3–5 конкурентам.
+2. Анализ конкурентов: найти ~10 конкурентов в нише, отобрать РОЛИКИ ОТ 1 МЛН просмотров. По 5–10 таким:
+   скачать → расшифровка (faster-whisper/Gemini) → раскадровка → разбор ХУКА, структуры, воронки, описания,
+   лайков/комментов/репостов/подписок. Понять, ЧТО зашло у трендовых роликов.
+3. Сценарий — С НУЛЯ на основе анализа (хук как у виральных, но свой оффер), прогнать логику через маркетинг-
+   и медийность-скиллы (`marketing-psychology`, `hook-generator`, `oko-magic`/`reels-machine`). Адаптировать
+   тренд под бренд DIESEL. Формальное «вы», без выдуманных цен, CTA «напишите город и задачу в комментариях».
+
+## ЭТАП 1 — Рабочая копия пайплайна
 ```
 ROOT=/home/user/OKO-TEAM/oko-app/factory
-W=$SCRATCH/reel_$(date +%s); mkdir -p $W/{vo,foot,ig/html,segs,cover_cand}
-cp $ROOT/pipeline/*.py $ROOT/pipeline/capture.js $W/
-cp -r $ROOT/pipeline/html/* $W/ig/html/ ; cp -r $ROOT/pipeline/sfx $W/sfx
-cp $ROOT/pipeline/endcard.mp4 $W/endcard.mp4
+export FACTORY_ROOT=$ROOT FACTORY_FONTS=$ROOT/fonts FACTORY_LOGO=$ROOT/logo_hd.png
+W=$SCRATCH/reel_$(date +%s); mkdir -p $W/{vo,foot,ig/html,segs,cover_cand}; export REEL_W=$W
+cp $ROOT/pipeline/*.py $ROOT/pipeline/capture.js $W/; cp -r $ROOT/pipeline/html/* $W/ig/html/
+cp -r $ROOT/pipeline/sfx $W/sfx; cp $ROOT/pipeline/endcard.mp4 $W/endcard.mp4
 ```
-В скриптах `plan.py/build_*.py` путь к шрифтам `FB`/`F` = `$ROOT/fonts` (поправить абсолютным путём),
-лого = `$ROOT/logo_hd.png`. `make_cover.py`: W → твой $W.
+Пайплайн-скрипты — ОСНОВА, но под закон разнообразия ты ДОПОЛНЯЕШЬ/переписываешь механики оверлеев
+(build_accents/новые code-инфографики) под конкретный ролик, а не просто меняешь данные.
 
-## 2. Сценарий (6 сегментов) — НОВАЯ тема
-Написать `$W/vo/script_src.json` (ключи s1..s6): хук → возможности → надёжность →
-импорт под ключ → что входит в цену → CTA. Примеры тем (взять НЕиспользованную):
-мини-экскаватор; фронтальные погрузчики/флот; гарантия+сервис+запчасти; сравнение аренда/покупка;
-самосвалы; дорожные катки; автокраны; вилочные погрузчики; бульдозеры; экономика владения.
+## ЭТАП 2 — Сборка
+- Озвучка edge-tts `ru-RU-DmitryNeural` (PLAIN текст) по 6 сегментам → `$W/vo/s1..s6.mp3`.
+- `python3 $W/plan.py` (timing/subs/words).
+- 10–14 УНИКАЛЬНЫХ вертикальных клипов под сценарий (мото/квадро/гидро — Pexels/Pixabay/Shutterstock;
+  для гидро: jet ski, для квадро: atv/quad bike, для мото: motorcycle ride). Проверить соответствие озвучке.
+- НОВЫЕ code-оверлеи под тему (спидометр для мото, трек-волна для гидро, и т.д.), титры, обложка (make_cover).
+- Собрать: `assemble.py` + overlays (capture.js→qtrle .mov, N=words.total*30) + `audio.py` (музыка+fade+duck+SFX) → `compose.py`.
+- QC-сетка 12 кадров: 9:16, обложка ровная, субтитры 2 слова без обводки, инфографика в каждом кадре и НЕ как в прошлых, лицо не перекрыто, эндкард ровный.
 
-## 3. Озвучка → план → графика → сборка (проверенная цепочка)
-```
-# VO
-python3 - <<'PY'
-import asyncio,edge_tts,json
-W="'$W'";S=json.load(open(W+"/vo/script_src.json"))
-async def m():
-  for s in ["s1","s2","s3","s4","s5","s6"]:
-    await edge_tts.Communicate(S[s],"ru-RU-DmitryNeural",rate="+6%").save(f"{W}/vo/{s}.mp3")
-asyncio.run(m())
-PY
-python3 $W/plan.py            # timing.json / subs.ass / words.json
-```
-- Кадры: скачать 12 УНИКАЛЬНЫХ вертикальных клипов под сценарий (Pexels/Pixabay, ключи в env)
-  в `$W/foot/b01..b12.mp4`. Проверить, что кадры СООТВЕТСТВУЮТ озвучке (не форсить).
-- `build_accents.py`: массив `A` (12 инфографик, типы chips/ticks/ring/route/bar/stamp/badge, без 2 одинаковых подряд, x=l/c/r) под текущую тему; ВРЕМЕНА выставить по 2 на сегмент из `timing.json` seg_start/segdurs.
-- `build_titles.py`: 2 заголовка на хук (s1) + 1 на CTA (s6).
-- `make_cover.py`: обложка — hero-кадр темы + бренд-текст (без выдуманной цены).
-- Собрать:
-```
-python3 $W/build_accents.py; python3 $W/build_titles.py; python3 $W/build_subs.py
-python3 $W/make_cover.py
-python3 $W/assemble.py &        # base.mp4
-python3 $W/audio.py &           # audio.m4a
-# overlays -> qtrle .mov (N = words.json total * 30)
-N=$(python3 -c "import json;print(int(round(json.load(open('$W/words.json'))['total']*30)))")
-for n in accents titles subs; do
-  rm -rf $W/ig/frames/$n; mkdir -p $W/ig/frames/$n
-  node $W/capture.js "$W/ig/html/$n.html" $N $W/ig/frames/$n
-  ffmpeg -y -framerate 30 -i $W/ig/frames/$n/f%03d.png -c:v qtrle -pix_fmt argb $W/ig/$n.mov -loglevel error
-done
-wait
-python3 $W/compose.py           # -> $W/reel.mp4 (1080x1920)
-```
-- QC: вытащить 12 кадров сеткой, проверить: обложка ровная, субтитры 2 слова без обводки,
-  инфографика в каждом кадре и не перекрывает лицо, эндкард ровный, 9:16.
+## ЭТАП 3 — Описание (по ТЗ)
+`meta.json {title, yt_desc, caption}`: и yt_desc, и caption = краткое содержание + польза + воронка
+(«напишите город и задачу в комментариях») + **15–30 ключевых фраз для поиска ВНИЗУ без хештегов** + dieselcompany.pro.
 
-## 4. Описание (ОБЯЗАТЕЛЬНО по ТЗ)
-Собрать `meta.json`: `{title, yt_desc, caption}`. И yt_desc, и caption содержат:
-краткое содержание + польза + воронка (напишите город и задачу) + **15–30 ключевых фраз**
-для поиска ВНИЗУ (без хештегов, через запятую). dieselcompany.pro в тексте.
-
-## 5. Положить в очередь VPS (крон опубликует сам)
-Найти следующий свободный номер очереди и залить ролик кусками + meta.json:
+## ЭТАП 4 — В очередь VPS (крон опубликует сам)
 ```
 python3 - <<'PY'
-import os,base64,glob,subprocess,requests,hashlib,json
-URL=os.environ['OKO_VPS_CTRL_URL'];TOK=os.environ['OKO_VPS_CTRL_TOKEN']
+import os,base64,glob,subprocess,requests,hashlib
+URL=os.environ['OKO_VPS_CTRL_URL'];TOK=os.environ['OKO_VPS_CTRL_TOKEN'];W=os.environ['REEL_W']
 H={"Authorization":f"Bearer {TOK}","Content-Type":"application/json"}
-W="'$W'"
-# next queue id
-r=requests.post(URL+"/exec",headers=H,json={"cmd":"ls /opt/oko-poster/queue 2>/dev/null; echo ---; ls /opt/oko-poster/published 2>/dev/null"},timeout=30)
+r=requests.post(URL+"/exec",headers=H,json={"cmd":"ls /opt/oko-poster/queue 2>/dev/null;echo ---;ls /opt/oko-poster/published 2>/dev/null"},timeout=30)
 used=set(x for x in r.json()['stdout'].split() if x.isdigit())
 nn=next(f"{i:03d}" for i in range(1,999) if f"{i:03d}" not in used)
-requests.post(URL+"/exec",headers=H,json={"cmd":f"rm -rf /opt/oko-poster/queue/{nn} && mkdir -p /opt/oko-poster/queue/{nn}/parts"},timeout=30)
+requests.post(URL+"/exec",headers=H,json={"cmd":f"rm -rf /opt/oko-poster/queue/{nn}&&mkdir -p /opt/oko-poster/queue/{nn}/parts"},timeout=30)
 subprocess.run(["split","-b","1500000","-d","-a","3",W+"/reel.mp4",W+"/part_"])
-parts=sorted(glob.glob(W+"/part_*"))
-for f in parts:
+for f in sorted(glob.glob(W+"/part_*")):
   requests.post(URL+"/deploy",headers=H,json={"path":f"queue/{nn}/parts/"+os.path.basename(f),"content_b64":base64.b64encode(open(f,'rb').read()).decode()},timeout=120)
 requests.post(URL+"/deploy",headers=H,json={"path":f"queue/{nn}/meta.json","content_b64":base64.b64encode(open(W+"/meta.json",'rb').read()).decode()},timeout=30)
 loc=hashlib.md5(open(W+"/reel.mp4",'rb').read()).hexdigest()
-rr=requests.post(URL+"/exec",headers=H,json={"cmd":f"cd /opt/oko-poster/queue/{nn} && cat parts/part_* > reel.mp4 && rm -rf parts && md5sum reel.mp4"},timeout=60)
-print("QUEUED",nn,"| vps",rr.json()['stdout'].strip(),"| local",loc,"| MATCH",loc in rr.json()['stdout'])
+rr=requests.post(URL+"/exec",headers=H,json={"cmd":f"cd /opt/oko-poster/queue/{nn}&&cat parts/part_*>reel.mp4&&rm -rf parts&&md5sum reel.mp4"},timeout=60)
+print("QUEUED",nn,"MATCH",loc in rr.json()['stdout'])
 PY
 ```
-Если md5 совпал — ролик в очереди, крон опубликует его в ближайший слот (10/15/20 МСК).
-НЕ публиковать вручную (крон сам). Дописать тему/id кадров в `factory/USED.md`.
+Дописать тему + id кадров + использованные механики оверлеев в `USED.md`, запушить в ветку `claude/new-session-xxozd5`.
 
-## Проверка постинга (для отладки)
-`publish_next.py` на VPS — retry-safe, дублей не делает (YT/TikTok/IG отмечаются done).
-Лог: `/opt/oko-poster/logs/factory.log` и `logs/cron.log`.
+## ПЛАН МАСШТАБА (не забывать)
+Старт 3 ролика/день ПЕРВЫЕ 5 ДНЕЙ, затем равномерно наращивать до **15/день**, чтобы к концу августа
+суммарно вышло **500 роликов**. Цель: 20k подписчиков, 100M просмотров. Ежедневно — органика (Этап 0).
+Публикация разнесена по времени (10/15/20 МСК +) для анти-бана. Наращивание количества — через добавление
+слотов cron постинга и слотов авто-сборки (контролируемо, не спам).
+
+## ОТЛАДКА
+Постер `publish_next.py` (retry-safe, IG не блокирует очередь после 3 попыток). Логи:
+`/opt/oko-poster/logs/factory.log`, `logs/cron.log`.
