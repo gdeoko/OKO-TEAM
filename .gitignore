@@ -18,3 +18,5 @@ PROJECT_CONTEXT.txt
 
 # ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env
+klaster_project/03_deliverables/website/api/config.php
+klaster_project/03_deliverables/website/data/leads.json

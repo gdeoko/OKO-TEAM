@@ -1,0 +1,8 @@
+[
+  {"title":"Производственный блок А","status":"Свободно","img":"/assets/img/photos/hall_empty.jpg","params":["420 м²","потолки 9 м","100 кВт","отдельный вход + ворота"],"price":"по запросу","priceNote":"аренда, м²/год"},
+  {"title":"Склад с зоной погрузки","status":"Свободно","img":"/assets/img/renders/facade_loading.jpg","params":["800 м²","потолки 8 м","кран-балка","рампа"],"price":"по запросу","priceNote":"аренда, м²/год"},
+  {"title":"Производство + офис","status":"Свободно","img":"/assets/img/photos/interior_corridor.jpg","params":["650 м²","1 этаж","мощность увеличивается","с/у и офис"],"price":"по запросу","priceNote":"аренда, м²/год"},
+  {"title":"Лёгкое производство","status":"Свободно","img":"/assets/img/photos/production_workers.jpg","params":["260 м²","потолки 6 м","готов к заезду","отдельный вход"],"price":"по запросу","priceNote":"аренда, м²/год"},
+  {"title":"Офисное помещение","status":"Свободно","img":"/assets/img/photos/coworking.jpg","params":["120 м²","ремонт","переговорная","паркинг"],"price":"по запросу","priceNote":"аренда, м²/год"},
+  {"title":"Большой производственный цех","status":"По запросу","img":"/assets/img/renders/facade_entrance.jpg","params":["до 3 000 м²","потолки 12 м","до 500 кВт","2 лифта 5 т"],"price":"по запросу","priceNote":"аренда, м²/год"}
+]
