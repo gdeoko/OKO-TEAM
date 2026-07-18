@@ -3318,7 +3318,7 @@ main>.screen{position:relative;z-index:1}
 .sp-ed-ic:active{transform:scale(.92)}
 .sp-ed-ic svg.i{width:19px;height:19px}
 .sp-ed-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:6px 16px}
-.sp-ed-card{position:relative;aspect-ratio:9/16;height:100%;max-height:46dvh;max-width:86vw;border-radius:18px;border:1px solid rgba(154,255,0,.28);box-shadow:0 10px 42px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:background .25s ease}
+.sp-ed-card{position:relative;aspect-ratio:9/16;height:100%;max-height:56dvh;max-width:min(86vw,320px);border-radius:20px;border:1px solid rgba(154,255,0,.28);box-shadow:0 14px 48px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:background .25s ease}
 :root[data-theme="light"] .sp-ed-card{box-shadow:0 10px 34px rgba(30,50,0,.22)}
 #spEdText{width:100%;max-height:100%;overflow-y:auto;padding:18px 16px;outline:none;font-weight:600;line-height:1.45;word-break:break-word;font-family:var(--font-body)}
 #spEdText:empty::before{content:attr(data-ph);color:currentColor;opacity:.45;font-weight:500}
@@ -3352,7 +3352,9 @@ main>.screen{position:relative;z-index:1}
 .sp-ed-pub{margin:0 16px calc(16px + env(safe-area-inset-bottom));padding:14px;font-size:15px}
 
 /* ---------- вьювер: прогресс-сегменты мультисторис ---------- */
-.sp-bars{position:absolute;top:10px;left:16px;right:16px;display:flex;gap:5px;z-index:3;pointer-events:none}
+/* и одиночный бар ядра: держим фон-колонку сторис как «телефон» по центру на широких экранах */
+#storyViewer .sv-bar,.sp-bars{left:50%;right:auto;transform:translateX(-50%);width:min(calc(100% - 32px),460px)}
+.sp-bars{position:absolute;top:10px;display:flex;gap:5px;z-index:3;pointer-events:none}
 #storyViewer.sp-multi > .sv-bar{display:none}
 .sp-seg{flex:1;height:16px;display:flex;align-items:center;cursor:pointer;background:none;padding:0;pointer-events:auto}
 .sp-seg i{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
