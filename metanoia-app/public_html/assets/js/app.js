@@ -33,6 +33,7 @@ const DEMO = {
     },
     {
       type: 'quote', label: 'Цитата дня',
+      img: 'assets/img/verse-quote.jpg',
       title: '«Так да светит свет ваш пред людьми, чтобы они видели ваши добрые дела и прославляли Отца вашего Небесного»',
       ref: 'Мф. 5:16',
       likes: 41, comments: 3,
@@ -252,7 +253,8 @@ function feedCard(item, idx) {
 
   if (item.type === 'quote') {
     return `<article class="card feed-card feed-card--quote">
-      <div class="feed-card__type">${item.label}</div>
+      <div class="feed-card__quote-badge"><span data-icon="sparkle" data-size="14"></span> ${item.label}</div>
+      <div class="feed-card__quote-img"><img src="${item.img || 'assets/img/quote-bg.jpg'}" alt="" loading="lazy"></div>
       <div class="feed-card__title">${item.title}</div>
       <div class="quote-ref">${item.ref}</div>
       ${actions}
@@ -656,13 +658,13 @@ function initPin() {
 /* ───────── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ───────── */
 
 const STICKERS = [
-  'pray:assets/svg/stickers/burning-candle.svg',
-  'heart:assets/svg/stickers/winged-heart.svg',
-  'sun:assets/svg/stickers/smiling-sun.svg',
-  'bell:assets/svg/stickers/bell-ring.svg',
-  'sparkles:assets/svg/stickers/sparkles.svg',
-  'flame:assets/svg/stickers/faith-flame.svg',
-].map((s) => { const [key, url] = s.split(':'); return { key, url }; });
+  'candle:assets/img/stickers/candle.jpg',
+  'heart:assets/img/stickers/heart.jpg',
+  'sun:assets/img/stickers/sun.jpg',
+  'bell:assets/img/stickers/bell.jpg',
+  'sparkles:assets/img/stickers/sparkles.jpg',
+  'flame:assets/img/stickers/flame.jpg',
+].map((s) => { const i = s.indexOf(':'); return { key: s.slice(0, i), url: s.slice(i + 1) }; });
 
 const CHAT_MSGS = {
   0: { readonly: true, pinned: 'Правила школы: доброта, уважение, поддержка. Пишем с любовью!',
@@ -683,7 +685,7 @@ const CHAT_MSGS = {
     ] },
   3: { msgs: [
       { who: 'Миша', text: 'Я собрал стих за 20 секунд!', time: '09:41' },
-      { who: 'Аня', sticker: 'assets/svg/stickers/sparkles.svg', time: '09:43' },
+      { who: 'Аня', sticker: 'assets/img/stickers/sparkles.jpg', time: '09:43' },
     ] },
   4: { msgs: [
       { who: 'Поддержка', text: 'Здравствуйте! Чем можем помочь? Отвечаем в течение дня, подписчикам Метанойя+ — в течение часа.', time: 'вчера' },
@@ -834,7 +836,7 @@ const EXTRA_FEED = [
     text: 'Уроки главы в виде книги — читайте всей семьёй.', likes: 12, comments: 2 },
   { type: 'achievement', label: 'Достижение', title: 'Аня получила значок «Первооткрыватель»',
     text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
-  { type: 'quote', label: 'Цитата дня · вчера',
+  { type: 'quote', label: 'Цитата дня · вчера', img: 'assets/img/quote-bg.jpg',
     title: '«Начало мудрости — страх Господень»', ref: 'Притч. 1:7', likes: 27, comments: 1 },
   { type: 'lesson', label: 'Скоро', coverImg: 'assets/img/chapters/ch1.jpg',
     title: 'Урок 4. Поклонение волхвов', meta: 'Глава 1 «Жизнь Господа» · скоро', likes: 9, comments: 0 },
@@ -888,7 +890,7 @@ function initPTR() {
 
 /* ───────── РЕАКЦИИ И ДЕЙСТВИЯ С СООБЩЕНИЯМИ ───────── */
 
-const REACTIONS = ['winged-heart', 'faith-flame', 'smiling-sun', 'sparkles', 'burning-candle', 'bell-ring'];
+const REACTIONS = ['heart', 'flame', 'sun', 'sparkles', 'candle', 'bell'];
 let reactions = JSON.parse(localStorage.getItem('mt_react2') || '{}'); // {chatId: {msgKey: [keys]}}
 let maTarget = null;   // { key, mine, text }
 let replyTo = null;    // { who, text }
@@ -899,13 +901,13 @@ function reactsHtml(chatId, msgKey) {
   const counts = {};
   r.forEach((k) => { counts[k] = (counts[k] || 0) + 1; });
   return `<div class="msg__reacts">${Object.entries(counts).map(([k, n]) =>
-    `<span class="msg__react msg__react--mine"><img src="assets/svg/stickers/${k}.svg" alt="">${n}</span>`).join('')}</div>`;
+    `<span class="msg__react msg__react--mine"><img src="assets/img/stickers/${k}.jpg" alt="">${n}</span>`).join('')}</div>`;
 }
 
 function openMsgActions(key, mine, text) {
   maTarget = { key, mine, text };
   $('#maReactions').innerHTML = REACTIONS.map((k) =>
-    `<button data-react="${k}"><img src="assets/svg/stickers/${k}.svg" alt="${k}"></button>`).join('');
+    `<button data-react="${k}"><img src="assets/img/stickers/${k}.jpg" alt="${k}"></button>`).join('');
   $$('#maReactions [data-react]').forEach((b) =>
     b.addEventListener('click', () => {
       const store = (reactions[cvChatId] = reactions[cvChatId] || {});
@@ -1954,32 +1956,39 @@ const TEMPLE_STAGES = [
   'Участок', 'Фундамент', 'Стены', 'Окна', 'Крыша', 'Купол',
   'Крест', 'Золочение', 'Колокольня', 'Двери', 'Готов!'
 ];
-let templeState = JSON.parse(localStorage.getItem('mt_temple') || '{"bricks":34}');
+let templeState = JSON.parse(localStorage.getItem('mt_temple') || '{"bricks":34,"decor":[]}');
+if (!templeState.decor) templeState.decor = [];
 
 function templeStageIndex(bricks) {
   return Math.min(10, Math.floor(bricks / 10)); // 0..10, каждые 10 кирпичей = этап
 }
 
+// Украшения храма — продолжение после 100%
+const TEMPLE_DECOR = [
+  { key: 'garden', icon: 'sprout', name: 'Разбить сад', note: 'Посади вокруг храма живой сад', xp: 30 },
+  { key: 'candles', icon: 'flame', name: 'Зажечь свечи', note: 'Наполни храм тёплым светом', xp: 30 },
+  { key: 'bell', icon: 'church', name: 'Повесить колокол', note: 'Пусть звон созывает на молитву', xp: 40 },
+  { key: 'feast', icon: 'crown', name: 'Праздник освящения', note: 'Собери друзей на большой праздник', xp: 50 },
+];
+
+function templeHeroStage(bricks) {
+  if (bricks >= 100) return 10;
+  if (bricks >= 60) return 6;
+  if (bricks >= 30) return 3;
+  return 0;
+}
+
 function renderTemple(animate) {
   const bricks = Math.min(100, templeState.bricks);
   const stage = templeStageIndex(bricks);
-  const svg = document.getElementById('templeSvg');
-  if (!svg) return;
 
-  svg.querySelectorAll('.t-part').forEach((el) => {
-    const need = Number(el.dataset.stage);   // 1..11
-    const show = need <= stage + 1;           // участок виден с этапа 0
-    if (show && !el.classList.contains('t-part--on')) {
-      if (animate) {
-        // ступенчатое появление новых частей
-        setTimeout(() => el.classList.add('t-part--on'), (need - 1) * 90);
-      } else el.classList.add('t-part--on');
-    } else if (!show) {
-      el.classList.remove('t-part--on');
-    }
+  // Красивый визуал: подставляем нужную акварельную иллюстрацию этапа
+  const hs = templeHeroStage(bricks);
+  document.querySelectorAll('#templeHero .temple-hero__img').forEach((im) => {
+    im.classList.toggle('temple-hero__img--on', Number(im.dataset.tstage) === hs);
   });
-
-  svg.classList.toggle('t-complete', bricks >= 100);
+  const hero = document.getElementById('templeHero');
+  if (hero) hero.classList.toggle('temple-hero--complete', bricks >= 100);
 
   const nm = document.getElementById('templeStageName');
   if (nm) nm.textContent = bricks >= 100
@@ -1992,13 +2001,59 @@ function renderTemple(animate) {
 
   const btn = document.getElementById('templeBrick');
   if (btn) btn.style.display = bricks >= 100 ? 'none' : '';
+
+  renderTempleDecor();
+}
+
+function renderTempleDecor() {
+  const wrap = document.getElementById('templeNext');
+  if (!wrap) return;
+  const done = templeState.bricks >= 100;
+  wrap.hidden = !done;
+  if (!done) return;
+  const grid = document.getElementById('templeDecor');
+  if (grid) {
+    grid.innerHTML = TEMPLE_DECOR.map((d) => {
+      const ok = templeState.decor.includes(d.key);
+      return `<button class="tdecor ${ok ? 'tdecor--done' : ''}" data-decor="${d.key}">
+        <span class="tdecor__ic">${ICON(d.icon, 20)}</span>
+        <span class="tdecor__body"><span class="tdecor__name">${d.name}</span><span class="tdecor__note">${d.note}</span></span>
+        <span class="tdecor__xp">${ok ? '✓' : '+' + d.xp}</span>
+      </button>`;
+    }).join('');
+    grid.querySelectorAll('[data-decor]').forEach((b) => b.addEventListener('click', () => addTempleDecor(b.dataset.decor)));
+  }
+  const allDone = TEMPLE_DECOR.every((d) => templeState.decor.includes(d.key));
+  const note = document.getElementById('templeDecorDone');
+  if (note) note.hidden = !allDone;
+}
+
+function addTempleDecor(key) {
+  if (templeState.decor.includes(key)) return;
+  templeState.decor.push(key);
+  localStorage.setItem('mt_temple', JSON.stringify(templeState));
+  const d = TEMPLE_DECOR.find((x) => x.key === key);
+  renderTempleDecor();
+  if (window.MAGIC) {
+    const el = document.querySelector(`[data-decor="${key}"]`);
+    if (el) { const r = el.getBoundingClientRect(); MAGIC.celebrate(r.left + r.width / 2, r.top); }
+  }
+  toast(`${d.name} · +${d.xp} XP`);
+  if (TEMPLE_DECOR.every((x) => templeState.decor.includes(x.key)) && window.MAGIC) {
+    setTimeout(() => MAGIC.rewardModal({ icon: 'crown', title: 'Храм освящён!',
+      subtitle: 'Ты украсил свой храм и наполнил его светом. Значок «Хранитель храма» твой!' }), 500);
+  }
+}
+
+function setBackLabel(id) {
+  const b = document.getElementById(id);
+  if (b) { b.innerHTML = `<span data-icon="back" data-size="18"></span> ${gameOpener === 'games' ? 'К играм' : 'Профиль ребёнка'}`; hydrateIcons(); }
 }
 
 function openTempleScreen() {
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'temple'));
   $('#nav').style.display = 'none';
-  // сброс анимации появления
-  document.querySelectorAll('#templeSvg .t-part').forEach((el) => el.classList.remove('t-part--on'));
+  setBackLabel('templeBack');
   requestAnimationFrame(() => renderTemple(true));
   window.scrollTo({ top: 0 });
 }
@@ -2017,11 +2072,11 @@ function initTemple() {
     renderTemple(true);
     const after = templeStageIndex(templeState.bricks);
     if (templeState.bricks >= 100 && window.MAGIC) {
-      const r = document.getElementById('templeSvg').getBoundingClientRect();
+      const r = document.getElementById('templeHero').getBoundingClientRect();
       MAGIC.celebrate(r.left + r.width / 2, r.top + r.height / 2);
       setTimeout(() => MAGIC.rewardModal({
         icon: 'church', title: 'Храм построен!',
-        subtitle: 'Ты получил значок «Архитектор веры». Это большой путь — поздравляем!',
+        subtitle: 'Ты получил значок «Архитектор веры». Теперь укрась свой храм — путь продолжается!',
       }), 400);
     } else if (after > before) {
       toast(`Новый этап: «${TEMPLE_STAGES[after]}»!`);
@@ -2346,7 +2401,7 @@ function openMemory() {
   $('#memGrid').innerHTML = cards.map((c, idx) => `
     <div class="mcard" data-mem="${idx}" data-icon="${c.icon}">
       <div class="mcard__face mcard__back">${ICON('sparkle', 22)}</div>
-      <div class="mcard__face mcard__front">${ICON(c.icon, 24)}</div>
+      <div class="mcard__face mcard__front mcard__front--img"><img src="assets/img/mem/${c.icon}.jpg" alt="" loading="lazy"></div>
     </div>`).join('');
   $$('#memGrid .mcard').forEach((el) => el.addEventListener('click', () => memFlip(el)));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'memory'));
@@ -2596,6 +2651,7 @@ function initJourney() {
 function openJourneyScreen() {
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'journey'));
   $('#nav').style.display = 'none';
+  setBackLabel('journeyBack');
   window.scrollTo({ top: 0 });
   requestAnimationFrame(renderJourney);
 }
@@ -3389,12 +3445,12 @@ function exodusEnd() {
 
 /* ── Ноев Ковчег: собери пары животных ── */
 const ARK_ANIMALS = [
-  { icon: 'dove', color: '#7AAED4' },
-  { icon: 'fish', color: '#4FA6A6' },
-  { icon: 'turtle', color: '#7B9E5A' },
-  { icon: 'rabbit', color: '#C98BA0' },
-  { icon: 'bird', color: '#E0954E' },
-  { icon: 'butterfly', color: '#9B7AD4' },
+  { icon: 'dove', img: 'dove', color: '#7AAED4' },
+  { icon: 'fish', img: 'fish', color: '#4FA6A6' },
+  { icon: 'turtle', img: 'turtle', color: '#7B9E5A' },
+  { icon: 'rabbit', img: 'rabbit', color: '#C98BA0' },
+  { icon: 'bird', img: 'bird', color: '#E0954E' },
+  { icon: 'butterfly', img: 'butterfly', color: '#9B7AD4' },
 ];
 const ARK_TIME = 45;
 let ark = { cards: [], sel: null, pairs: 0, time: ARK_TIME, tick: 0, busy: false };
@@ -3429,9 +3485,9 @@ function renderArk() {
   g.innerHTML = '';
   ark.cards.forEach((c, idx) => {
     const cell = document.createElement('button');
-    cell.className = 'ark-card' + (c.done ? ' ark-card--done' : '') + (ark.sel === idx ? ' ark-card--on' : '');
+    cell.className = 'ark-card ark-card--img' + (c.done ? ' ark-card--done' : '') + (ark.sel === idx ? ' ark-card--on' : '');
     cell.style.setProperty('--ac', c.color);
-    cell.innerHTML = ICON(c.icon, 28);
+    cell.innerHTML = `<img src="assets/img/ark/${c.img}.jpg" alt="" loading="lazy">`;
     cell.addEventListener('click', () => arkTap(idx));
     g.appendChild(cell);
   });

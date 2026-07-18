@@ -276,7 +276,15 @@
           </span>
           <span class="today__call-go">Записаться</span>
         </button>
-        <button class="btn btn--outline-gold today__verse" id="dailyVerseBtn"><span data-icon="book" data-size="18" class="ic-gold"></span> Ежедневный стих</button>
+        <button class="today__verse-card" id="dailyVerseBtn">
+          <span class="today__verse-thumb"><img src="assets/img/verse-day.jpg" alt="" loading="lazy"></span>
+          <span class="today__verse-body">
+            <span class="today__verse-eyebrow"><span data-icon="sparkle" data-size="13"></span> Ежедневный стих</span>
+            <span class="today__verse-teaser" id="verseTeaser">«Бог есть любовь…»</span>
+            <span class="today__verse-cta"><span data-icon="play" data-size="12"></span> Открыть и послушать голосом</span>
+          </span>
+          <span class="today__verse-go" aria-hidden="true">→</span>
+        </button>
       </div>
 
       <!-- Лента -->
@@ -634,59 +642,33 @@
       <h1 class="screen-title" style="margin-bottom:6px">Мой храм</h1>
       <p class="feed-card__meta" style="margin-bottom:14px">Каждый урок, тест и игра добавляют кирпичик. Построй храм целиком — получи значок «Архитектор веры».</p>
 
-      <div class="temple-stage-wrap">
-        <svg id="templeSvg" viewBox="0 0 320 300" class="temple-svg" aria-label="Мой храм">
-          <defs>
-            <radialGradient id="tGlow" cx="50%" cy="45%" r="55%">
-              <stop offset="0%" stop-color="rgba(212,165,116,.55)"/>
-              <stop offset="100%" stop-color="rgba(212,165,116,0)"/>
-            </radialGradient>
-          </defs>
-          <circle class="t-radiance" cx="160" cy="140" r="150" fill="url(#tGlow)" opacity="0"/>
-          <!-- 0 участок -->
-          <ellipse class="t-part" data-stage="1" cx="160" cy="278" rx="120" ry="16" fill="#E8E0D2"/>
-          <!-- 1 фундамент -->
-          <rect class="t-part" data-stage="2" x="82" y="250" width="156" height="26" rx="3" fill="#5A6577"/>
-          <!-- 2 стены -->
-          <rect class="t-part" data-stage="3" x="96" y="150" width="128" height="102" fill="#26506E"/>
-          <!-- 3 окна -->
-          <g class="t-part" data-stage="4" fill="#FAF8F5">
-            <rect x="112" y="176" width="20" height="34" rx="10"/>
-            <rect x="188" y="176" width="20" height="34" rx="10"/>
-          </g>
-          <!-- 4 крыша/барабан -->
-          <path class="t-part" data-stage="5" d="M96 150 L160 104 L224 150 Z" fill="#1A3A52"/>
-          <rect class="t-part" data-stage="5" x="146" y="86" width="28" height="30" fill="#26506E"/>
-          <!-- 5 купол (золото) -->
-          <path class="t-part" data-stage="6" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="#D4A574"/>
-          <!-- 6 крест -->
-          <g class="t-part" data-stage="7" stroke="#D4A574" stroke-width="4" stroke-linecap="round">
-            <path d="M160 60 V34"/><path d="M150 44 H170"/>
-          </g>
-          <!-- 7 золочение (свечение куполу) -->
-          <path class="t-part t-gild" data-stage="8" d="M146 86 Q160 44 174 86 Q168 92 160 92 Q152 92 146 86 Z" fill="none" stroke="#F0D9B0" stroke-width="2"/>
-          <!-- 8 колокольня -->
-          <g class="t-part" data-stage="9" fill="#26506E">
-            <rect x="52" y="196" width="34" height="56"/>
-            <path d="M52 196 L69 172 L86 196 Z" fill="#1A3A52"/>
-            <circle cx="69" cy="214" r="7" fill="#D4A574"/>
-          </g>
-          <!-- 9 двери -->
-          <path class="t-part" data-stage="10" d="M144 252 v-40 a16 16 0 0 1 32 0 v40 Z" fill="#8A5A3C"/>
-          <!-- 10 роспись/детали -->
-          <g class="t-part" data-stage="11" stroke="#D4A574" stroke-width="2" fill="none">
-            <path d="M96 150 h128"/><circle cx="160" cy="230" r="6"/>
-          </g>
-        </svg>
+      <div class="temple-hero" id="templeHero">
+        <img class="temple-hero__img" data-tstage="0" src="assets/img/temple/stage0.jpg" alt="Стройка храма">
+        <img class="temple-hero__img" data-tstage="3" src="assets/img/temple/stage3.jpg" alt="">
+        <img class="temple-hero__img" data-tstage="6" src="assets/img/temple/stage6.jpg" alt="">
+        <img class="temple-hero__img" data-tstage="10" src="assets/img/temple/stage10.jpg" alt="">
+        <div class="temple-hero__glow"></div>
+        <div class="temple-hero__badge" id="templeHeroBadge"><span data-icon="church" data-size="15"></span> <span id="templeStageName">Этап 3 из 10 · «Стены»</span></div>
       </div>
 
       <div class="temple-progress">
-        <div class="temple-progress__label"><span id="templeStageName">Этап 3 из 10 · «Стены»</span></div>
         <div class="progress"><div class="progress__fill" id="templeBar" style="width:34%"></div></div>
         <div class="feed-card__meta" id="templeBricks" style="margin-top:6px">34 кирпичика из 100</div>
       </div>
 
       <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик</button>
+
+      <!-- Продолжение после 100%: украшаем храм -->
+      <div class="temple-next" id="templeNext" hidden>
+        <div class="temple-next__hero">
+          <img src="assets/img/temple/stage10.jpg" alt="Храм построен">
+          <div class="temple-next__crown"><span data-icon="crown" data-size="22"></span></div>
+        </div>
+        <h2 class="temple-next__title">Храм построен! 🎉</h2>
+        <p class="feed-card__meta">Ты получил значок «Архитектор веры». Но путь продолжается — теперь укрась свой храм и наполни его светом.</p>
+        <div class="temple-decor" id="templeDecor"></div>
+        <div class="temple-next__note" id="templeDecorDone" hidden>Храм сияет во всей красе. Впереди — новые главы и новые вершины веры. С Богом!</div>
+      </div>
     </section>
 
 
