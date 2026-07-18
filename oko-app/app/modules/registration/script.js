@@ -315,7 +315,7 @@ function regWelcomeBody(name){
     <div class="reg-pop-bonus">
       <span class="reg-pop-bonus-ico">${I('money')}</span>
       <div><b>2 500 ₽</b><small>уже на лицевом счёте</small></div>
-      <span class="reg-pop-bonus-tag">Приветственный бонус</span>
+      <span class="reg-pop-bonus-tag">Подарок</span>
     </div>
     <div class="reg-pop-feats">
       ${regFeatRow('rocket','Продвижение постов и каналов')}

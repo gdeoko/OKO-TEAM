@@ -231,9 +231,9 @@
 .reg-pop-bonus > div{display:flex;flex-direction:column;line-height:1.1;position:relative;z-index:1}
 .reg-pop-bonus > div b{font-family:var(--font-display);font-size:26px;color:var(--text);letter-spacing:.01em}
 .reg-pop-bonus > div small{font-size:11px;color:var(--dim);margin-top:2px}
-.reg-pop-bonus-tag{margin-left:auto;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  color:var(--accent);background:rgba(154,255,0,.14);border-radius:99px;padding:4px 8px;text-align:center;line-height:1.2;
-  max-width:84px;position:relative;z-index:1}
+.reg-pop-bonus-tag{margin-left:auto;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  white-space:nowrap;color:var(--accent);background:rgba(154,255,0,.14);border-radius:99px;padding:5px 9px;
+  line-height:1;position:relative;z-index:1;flex-shrink:0}
 
 /* список фич pro/notif/welcome */
 .reg-pop-feats{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
