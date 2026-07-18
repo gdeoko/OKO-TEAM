@@ -92,6 +92,55 @@ def ref_text_for(ref):
     open(cache, "w", encoding="utf-8").write(txt)
     return txt
 
+# ---------- ОЧИСТКА РЕФЕРЕНСА (ОБЯЗАТЕЛЬНЫЙ шаг) ----------
+# Референс часто вырезан из промо-ролика с МУЗЫКОЙ под голосом. OmniVoice zero-shot
+# клонирует и голос, И музыкальный фон -> в озвучке слышна музыка. Лечится source
+# separation: demucs (htdemucs, two-stems) -> берём ТОЛЬКО стем vocals, чистим,
+# 24k mono. Результат кэшируется рядом как <ref>.clean.wav (+ .reftext.txt).
+def ensure_clean_ref(ref):
+    ref = os.path.abspath(ref)
+    base = os.path.splitext(ref)[0]
+    # уже чистый (наш маркер) — не трогаем
+    if base.endswith("_clean") or base.endswith(".clean"):
+        return ref
+    clean = base + ".clean.wav"
+    if os.path.exists(clean) and dur_of(clean) > 1.0:
+        return clean
+    print(f"[ref] source separation (demucs htdemucs) -> vocals only ...")
+    wd = tempfile.mkdtemp(prefix="demucs_")
+    try:
+        sh([sys.executable, "-m", "demucs", "--two-stems=vocals", "-n", "htdemucs",
+            "-o", wd, ref])
+    except Exception as e:
+        print(f"[ref] demucs недоступен ({str(e)[:80]}) -> fallback spleeter")
+        try:
+            sh([sys.executable, "-m", "spleeter", "separate", "-p", "spleeter:2stems",
+                "-o", wd, ref])
+        except Exception as e2:
+            print(f"[ref] spleeter тоже недоступен -> использую исходный референс (без очистки!)")
+            return ref
+    voc = None
+    for root, _, files in os.walk(wd):
+        for f in files:
+            if f == "vocals.wav":
+                voc = os.path.join(root, f)
+    if not voc:
+        print("[ref] стем vocals не найден -> исходный референс")
+        return ref
+    # чистка вокал-стема: обрезка тишины по краям, highpass 60, loudnorm, 24k mono, БЕЗ лоупасса
+    sh(["ffmpeg", "-y", "-i", voc, "-af",
+        "silenceremove=start_periods=1:start_silence=0.1:start_threshold=-40dB:detection=peak,"
+        "areverse,silenceremove=start_periods=1:start_silence=0.1:start_threshold=-40dB:detection=peak,"
+        "areverse,highpass=f=60,loudnorm=I=-16:TP=-1.5:LRA=11,"
+        "aresample=24000,aformat=channel_layouts=mono", clean])
+    # перенести транскрипт-кэш (тот же текст речи), если был у исходного
+    src_rt = base + ".reftext.txt"
+    dst_rt = os.path.splitext(clean)[0] + ".reftext.txt"
+    if os.path.exists(src_rt) and not os.path.exists(dst_rt):
+        shutil.copy(src_rt, dst_rt)
+    print(f"[ref] чистый референс готов -> {clean}")
+    return clean
+
 # ---------- сегментация ----------
 def split_sentences(text):
     text = re.sub(r'\s+', ' ', text.strip())
@@ -189,9 +238,11 @@ def trim_silence(src, dst):
 
 # ---------- главный проход ----------
 def synth(text, out, ref=DEFAULT_REF, speed=1.0, lang="Russian", ns=60, gs=2.0,
-          max_attempts=4, gap=0.25, workdir=None, mp3=False, timings_path=None,
-          segments=None):
+          max_attempts=4, gap=0.18, workdir=None, mp3=False, timings_path=None,
+          segments=None, clean_ref=True):
     ref = os.path.abspath(ref)
+    if clean_ref:
+        ref = ensure_clean_ref(ref)   # ОБЯЗАТЕЛЬНО: убрать музыку/фон из референса
     rtext = ref_text_for(ref)
     print(f"[ref] ref_text ({len(rtext)} симв.): {rtext[:90]}...")
     segs = segments if segments is not None else segment_text(text)
@@ -228,19 +279,20 @@ def synth(text, out, ref=DEFAULT_REF, speed=1.0, lang="Russian", ns=60, gs=2.0,
                          "last_ok": best[3], "du": best[4], "dur": round(d, 3)})
         print(f"  [s{i}] ПРИНЯТ cover={best[2]:.2f} last_ok={best[3]} dur={d:.2f}s")
 
-    # склейка с паузами
+    # склейка с паузами + плавные границы (fade in/out ~12-18мс убирают щелчки от
+    # жёсткой обрезки хвостов) + пауза gap между сегментами -> речь не «дёрганая».
     concat = os.path.join(wd, "concat.wav")
-    filt, inp = [], []
+    inp = []
     for k, f in enumerate(seg_files):
         inp += ["-i", f]
     n = len(seg_files)
-    # aresample каждый к 24k mono затем concat с тишиной между
+    FI, FO = 0.012, 0.018   # fade in / fade out на каждом сегменте
     parts = []
     for k in range(n):
-        parts.append(f"[{k}:a]aresample=24000,aformat=channel_layouts=mono[a{k}]")
-    # silence source
-    sil = f"anullsrc=r=24000:cl=mono[sil0]"
-    chain = ""
+        d = seg_meta[k]["dur"]
+        fo_st = max(0.0, d - FO)
+        parts.append(f"[{k}:a]aresample=24000,aformat=channel_layouts=mono,"
+                     f"afade=t=in:st=0:d={FI},afade=t=out:st={fo_st:.3f}:d={FO}[a{k}]")
     seq = []
     for k in range(n):
         seq.append(f"[a{k}]")
@@ -293,10 +345,12 @@ def main():
     ap.add_argument("--ns", type=float, default=60)
     ap.add_argument("--gs", type=float, default=2.0)
     ap.add_argument("--max-attempts", type=int, default=4)
-    ap.add_argument("--gap", type=float, default=0.25)
+    ap.add_argument("--gap", type=float, default=0.18)
     ap.add_argument("--workdir", default=None)
     ap.add_argument("--timings", default=None)
     ap.add_argument("--mp3", action="store_true")
+    ap.add_argument("--no-clean-ref", dest="clean_ref", action="store_false",
+                    help="НЕ прогонять референс через source separation (по умолчанию прогоняем)")
     a = ap.parse_args()
     if a.textfile:
         text = open(a.textfile, encoding="utf-8").read()
