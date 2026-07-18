@@ -1975,7 +1975,7 @@ body.in-chat .header { display: none; }
 [data-theme="dark"] .fq-task__text { color: #E7EDF3; }
 [data-theme="dark"] .fq-head__title { color: #F2F6FA; }
 
-/* ── Задать вопрос · AI-помощник (УЛ5) ── */
+/* ── Задать вопрос · тёплый помощник ── */
 .ask-tile { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; margin: 4px 0 8px;
   background: linear-gradient(120deg,#F3ECFB,#FBF4E9); border: 1px solid rgba(155,122,212,.4);
   border-radius: var(--radius-card); padding: 14px 15px; box-shadow: 0 2px 10px rgba(155,122,212,.14); }
@@ -2245,3 +2245,36 @@ body.no-nav .offbar { bottom: calc(env(safe-area-inset-bottom) + 14px); }
 .ark-hint { margin: 14px 2px 0; font-size: 12.5px; color: var(--gray); text-align: center; line-height: 1.5; }
 [data-theme="dark"] .ark-flood { background: rgba(122,174,212,.2); }
 [data-theme="dark"] .ark-card--on { outline-color: #fff; }
+
+/* ══════════ ДОСТУПНОСТЬ (a11y-аудит) ══════════ */
+/* Видимый фокус с клавиатуры на всех интерактивных элементах */
+:focus-visible { outline: 3px solid var(--terracotta); outline-offset: 2px; border-radius: 4px; }
+[data-theme="dark"] :focus-visible { outline-color: var(--gold); }
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid var(--terracotta); outline-offset: 1px; }
+
+/* Тач-таргеты в шапке — не меньше 40px */
+.header__bell { min-width: 40px; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+.header__avatar { min-width: 40px; min-height: 40px; }
+
+/* Неактивные табы нижней навигации — читаемее (контраст) */
+.nav__tab { color: #5a6577; }
+
+/* Золотой ТЕКСТ (мелкий) — темнее для читаемости; крупный золотой декор не трогаем */
+.quote-ref, .verse-ref, .reader cite, .sv-text__ref, .det-clue__n, .dev-head__day,
+.who-clue__n, .fq-task__day, .dverse__eyebrow, .alb-cover__eyebrow { color: #a9762f; }
+[data-theme="dark"] .quote-ref, [data-theme="dark"] .verse-ref, [data-theme="dark"] .reader cite,
+[data-theme="dark"] .sv-text__ref, [data-theme="dark"] .det-clue__n, [data-theme="dark"] .dev-head__day,
+[data-theme="dark"] .who-clue__n, [data-theme="dark"] .fq-task__day, [data-theme="dark"] .dverse__eyebrow,
+[data-theme="dark"] .alb-cover__eyebrow { color: #e0b878; }
+
+/* Уважение prefers-reduced-motion для всех навязчивых анимаций */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .spinner { animation: none !important; opacity: .8; }
+}

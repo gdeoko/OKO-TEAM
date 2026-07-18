@@ -51,7 +51,7 @@
       <section class="onb__slide">
         <div class="onb__icon"><span data-icon="trophy" data-size="52"></span></div>
         <h2>Игры, награды, рейтинг</h2>
-        <p>Учись играя! 20 мини-игр, значки, серии, рейтинги.</p>
+        <p>Учись играя! 19 мини-игр, значки, серии, рейтинги.</p>
       </section>
       <section class="onb__slide">
         <div class="onb__icon"><span data-icon="comment" data-size="52"></span></div>
@@ -134,7 +134,7 @@
 
 
   <!-- ═══════════ ПРОСМОТР STORIES ═══════════ -->
-  <div id="storyViewer" class="sv" hidden>
+  <div id="storyViewer" class="sv" role="dialog" aria-modal="true" hidden>
     <div class="sv__bars" id="svBars"></div>
     <div class="sv__head">
       <div class="sv__who" id="svWho"></div>
@@ -146,24 +146,24 @@
   </div>
 
   <!-- ═══════════ ШТОРКА КОММЕНТАРИЕВ ═══════════ -->
-  <div id="sheetWrap" class="sheet-wrap" hidden>
+  <div id="sheetWrap" class="sheet-wrap" role="dialog" aria-modal="true" hidden>
     <div class="sheet-backdrop" id="sheetBackdrop"></div>
     <div class="sheet">
       <div class="sheet__grip"></div>
       <div class="sheet__title">Комментарии <span id="sheetCount"></span></div>
       <div class="sheet__list" id="sheetList"></div>
       <div class="sheet__input">
-        <input type="text" id="sheetField" placeholder="Написать комментарий..." maxlength="500">
+        <input type="text" id="sheetField" aria-label="Написать комментарий" placeholder="Написать комментарий..." maxlength="500">
         <button id="sheetSend" aria-label="Отправить"><span data-icon="send" data-size="20"></span></button>
       </div>
     </div>
   </div>
 
   <!-- ═══════════ PIN РОДИТЕЛЯ ═══════════ -->
-  <div id="pinModal" class="pinm" hidden>
+  <div id="pinModal" class="pinm" role="dialog" aria-modal="true" hidden>
     <div class="pinm__box">
       <div class="pinm__title">PIN родителя</div>
-      <div class="pinm__hint">Чтобы вернуться в профиль родителя, введи PIN (в демо: 1234)</div>
+      <div class="pinm__hint">Чтобы вернуться в профиль родителя, введите PIN-код</div>
       <div class="pinm__dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
       <div class="pinm__pad" id="pinPad"></div>
       <button class="pinm__cancel" id="pinCancel">Отмена</button>
@@ -172,9 +172,9 @@
 
 
   <!-- ═══════════ УВЕДОМЛЕНИЯ ═══════════ -->
-  <div id="notifPanel" class="notif" hidden>
+  <div id="notifPanel" class="notif" role="dialog" aria-modal="true" hidden>
     <div class="notif__head">
-      <button id="notifBack"><span data-icon="back" data-size="20"></span></button>
+      <button id="notifBack" aria-label="Назад"><span data-icon="back" data-size="20"></span></button>
       <b>Уведомления</b>
       <button id="notifReadAll">Прочитать все</button>
     </div>
@@ -183,7 +183,7 @@
 
 
   <!-- ═══════════ ДЕЙСТВИЯ С СООБЩЕНИЕМ (долгий тап) ═══════════ -->
-  <div id="msgActions" class="ma" hidden>
+  <div id="msgActions" class="ma" role="dialog" aria-modal="true" hidden>
     <div class="ma__backdrop" id="maBackdrop"></div>
     <div class="ma__panel">
       <div class="ma__reactions" id="maReactions"></div>
@@ -219,7 +219,7 @@
   </div>
 
   <!-- ═══════════ ПРОФИЛЬ УЧАСТНИКА ═══════════ -->
-  <div id="userCard" class="pinm" hidden>
+  <div id="userCard" class="pinm" role="dialog" aria-modal="true" hidden>
     <div class="pinm__box ucard">
       <div class="ucard__avatar" id="ucAvatar"></div>
       <div class="ucard__name" id="ucName"></div>
@@ -281,7 +281,7 @@
     <section class="screen" data-screen="search">
       <div class="search-bar">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input type="search" id="searchInput" placeholder="Поиск уроков, игр, материалов..." autocomplete="off">
+        <input type="search" id="searchInput" aria-label="Поиск по урокам, играм и материалам" placeholder="Поиск уроков, игр, материалов..." autocomplete="off">
       </div>
       <div class="tabs-row">
         <button class="tab-chip tab-chip--active">Рекомендуем</button>
@@ -380,7 +380,7 @@
         <div class="games-tile__icon games-tile__icon--img"><img src="assets/img/games/match3.jpg" alt="" loading="lazy" onerror="this.remove()"></div>
         <div class="games-tile__body">
           <div class="games-tile__name">Мини-игры</div>
-          <div class="games-tile__desc">16 игр · собери стих, мемори, викторина и другие</div>
+          <div class="games-tile__desc">19 игр · собери стих, мемори, викторина и другие</div>
         </div>
         <span data-icon="play" data-size="18" class="games-tile__play"></span>
       </button>
@@ -475,7 +475,7 @@
       <button class="card temple" id="openShop" style="width:100%;text-align:left">
         <div class="temple__img"><img src="assets/img/cards/shop.jpg" alt="" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="temple__body">
-          <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на мерч <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
+          <div class="temple__stage" id="shopTileXp">Твои баллы · обменяй на подарки <span data-icon="play" data-size="13" style="color:var(--terracotta)"></span></div>
           <div class="temple__note">Копи XP за уроки и игры — меняй на наклейки, кружки и футболки Метанойи</div>
         </div>
       </button>
@@ -494,7 +494,7 @@
     <!-- ── ЭКРАН ПЕРЕПИСКИ (этап 3, начало) ── -->
     <section class="screen" data-screen="chatview">
       <div class="cv-head">
-        <button class="cv-head__back" id="cvBack"><span data-icon="back" data-size="20"></span></button>
+        <button class="cv-head__back" id="cvBack" aria-label="Назад"><span data-icon="back" data-size="20"></span></button>
         <div class="cv-head__avatar" id="cvAvatar"></div>
         <div class="cv-head__info">
           <div class="cv-head__name" id="cvName"></div>
@@ -503,7 +503,7 @@
         <button class="cv-head__search" id="cvSearchBtn" aria-label="Поиск по сообщениям"><span data-icon="search" data-size="19"></span></button>
       </div>
       <div class="cv-search" id="cvSearchBar" hidden>
-        <input type="search" id="cvSearchField" placeholder="Поиск по сообщениям...">
+        <input type="search" id="cvSearchField" aria-label="Поиск по сообщениям" placeholder="Поиск по сообщениям...">
         <span id="cvSearchCount"></span>
       </div>
       <div class="cv-pinned" id="cvPinned" hidden><span data-icon="pin" data-size="13"></span><span id="cvPinnedText"></span></div>
@@ -518,7 +518,7 @@
       <div class="cv-input" id="cvInputRow">
         <button class="cv-input__btn" id="cvStickerBtn" aria-label="Стикеры"><span data-icon="sparkle" data-size="22"></span></button>
         <button class="cv-input__btn" id="cvAttachBtn" aria-label="Вложения"><span data-icon="attach" data-size="21"></span></button>
-        <input type="text" id="cvField" placeholder="Сообщение..." maxlength="4096">
+        <input type="text" id="cvField" aria-label="Написать сообщение" placeholder="Сообщение..." maxlength="4096">
         <button class="cv-input__send" id="cvSend" aria-label="Отправить" hidden><span data-icon="send" data-size="20"></span></button>
         <button class="cv-input__send cv-input__voice" id="cvVoice" aria-label="Голосовое"><span id="cvVoiceIcon" data-icon="mic" data-size="20"></span></button>
       </div>
@@ -675,7 +675,7 @@
         <div class="feed-card__meta" id="templeBricks" style="margin-top:6px">34 кирпичика из 100</div>
       </div>
 
-      <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик (демо)</button>
+      <button class="btn btn--primary" id="templeBrick" style="width:100%;margin-top:18px">Добавить кирпичик</button>
     </section>
 
 
@@ -721,7 +721,7 @@
     <!-- ── КНИГА: читалка главы ── -->
     <section class="screen" data-screen="reader">
       <div class="reader-bar">
-        <button class="cv-head__back" id="readerBack"><span data-icon="back" data-size="20"></span></button>
+        <button class="cv-head__back" id="readerBack" aria-label="Назад"><span data-icon="back" data-size="20"></span></button>
         <div class="reader-bar__title" id="readerTitle"></div>
         <button class="reader-bar__size" id="readerSize" aria-label="Размер шрифта">A<sup>+</sup></button>
       </div>
@@ -733,7 +733,7 @@
     <section class="screen" data-screen="games">
       <button class="child-back" id="gamesBack"><span data-icon="back" data-size="18"></span> Профиль</button>
       <h1 class="screen-title" style="margin-bottom:4px">Мини-игры</h1>
-      <p class="feed-card__meta" style="margin-bottom:14px">20 игр с библейской тематикой. Учись играя — за каждую игру начисляется XP.</p>
+      <p class="feed-card__meta" style="margin-bottom:14px">19 игр с библейской тематикой. Учись играя — за каждую игру начисляется XP.</p>
       <div class="ghub-tabs">
         <button class="ghub-tab ghub-tab--on" data-gcat="free">Бесплатные</button>
         <button class="ghub-tab" data-gcat="premium">Метанойя+</button>
@@ -788,7 +788,7 @@
       <div class="chrono-result" id="chronoResult"></div>
     </section>
 
-    <!-- ── ЗАДАТЬ ВОПРОС · AI-помощник (УЛ5) ── -->
+    <!-- ── ЗАДАТЬ ВОПРОС · тёплый помощник ── -->
     <section class="screen" data-screen="ask">
       <div class="ask-top">
         <button class="child-back" id="askBack" style="margin:0"><span data-icon="back" data-size="18"></span> Назад</button>
@@ -797,7 +797,7 @@
       <div class="ask-thread" id="askThread"></div>
       <div class="ask-suggest" id="askSuggest"></div>
       <form class="ask-input" id="askForm" autocomplete="off">
-        <input id="askField" type="text" placeholder="Напиши свой вопрос…" maxlength="200">
+        <input id="askField" aria-label="Задать вопрос" type="text" placeholder="Напиши свой вопрос…" maxlength="200">
         <button type="submit" class="ask-send" aria-label="Отправить"><span data-icon="send" data-size="18"></span></button>
       </form>
     </section>
@@ -832,10 +832,10 @@
       <div class="shop-head">
         <div class="shop-head__label">У тебя баллов</div>
         <div class="shop-head__xp"><span data-icon="flame" data-size="22"></span> <span id="shopXp">340</span> XP</div>
-        <div class="shop-head__note">Копи баллы за уроки, тесты и игры — и обменивай на настоящий мерч школы Метанойя</div>
+        <div class="shop-head__note">Копи баллы за уроки, тесты и игры — и обменивай на подарки школы</div>
       </div>
       <div class="shop-grid" id="shopGrid"></div>
-      <div class="sub-note">Это предзаказ за баллы. После обмена мы свяжемся с родителем, чтобы передать мерч.</div>
+      <div class="sub-note">Это предзаказ за баллы. После обмена мы свяжемся с родителем, чтобы передать подарок.</div>
     </section>
 
     <!-- ── ТРИ В РЯД: ДАРЫ ДУХА (этап 5) ── -->
@@ -953,7 +953,7 @@
       </div>
       <h2 class="section-title">Выберите сумму</h2>
       <div class="donate-grid" id="donateGrid"></div>
-      <input class="addk__input donate-custom" id="donateCustom" type="number" inputmode="numeric" placeholder="Своя сумма, ₽">
+      <input class="addk__input donate-custom" id="donateCustom" aria-label="Своя сумма пожертвования" type="number" inputmode="numeric" placeholder="Своя сумма, ₽">
       <button class="btn btn--primary sub-cta" id="donateCta">Поддержать с любовью</button>
       <div class="sub-note">Разовое пожертвование. По желанию имя появится на «Стене благодарности».</div>
     </section>
@@ -967,7 +967,7 @@
       <div class="set-card" id="setNotify"></div>
       <h2 class="section-title">Родительский контроль</h2>
       <div class="set-card" id="setParental"></div>
-      <div class="set-about">МЕТАНОЙА · версия 0.5 · сборка OKO TEAM<br>С заботой о духовном росте детей 🕊</div>
+      <div class="set-about">МЕТАНОЙЯ · с любовью, OKO TEAM<br>С заботой о духовном росте детей 🕊</div>
     </section>
 
     <!-- ── СЕРТИФИКАТЫ (этап 5) ── -->
@@ -983,9 +983,9 @@
   </main>
 
   <!-- Превью заблокированной игры -->
-  <div class="gpv" id="gamePreview" hidden>
+  <div class="gpv" id="gamePreview" role="dialog" aria-modal="true" hidden>
     <div class="gpv__card">
-      <button class="gpv__close" id="gpvClose"><span data-icon="close" data-size="18"></span></button>
+      <button class="gpv__close" id="gpvClose" aria-label="Закрыть"><span data-icon="close" data-size="18"></span></button>
       <div class="gpv__icon" id="gpvIcon"></div>
       <div class="gpv__badge" id="gpvBadge"></div>
       <div class="gpv__name" id="gpvName"></div>
@@ -998,9 +998,9 @@
   </div>
 
   <!-- Добавить ребёнка -->
-  <div class="addk" id="addChild" hidden>
+  <div class="addk" id="addChild" role="dialog" aria-modal="true" hidden>
     <div class="addk__card">
-      <button class="addk__close" id="addkClose"><span data-icon="close" data-size="18"></span></button>
+      <button class="addk__close" id="addkClose" aria-label="Закрыть"><span data-icon="close" data-size="18"></span></button>
       <div class="addk__title">Добавить ребёнка</div>
       <label class="addk__lbl">Имя ребёнка</label>
       <input class="addk__input" id="addkName" type="text" placeholder="Например, Соня" maxlength="20">
@@ -1018,9 +1018,9 @@
   </div>
 
   <!-- Ежедневный стих (ритуал дня) -->
-  <div class="dverse" id="dailyVerse" hidden>
+  <div class="dverse" id="dailyVerse" role="dialog" aria-modal="true" hidden>
     <div class="dverse__card">
-      <button class="dverse__close" id="dverseClose"><span data-icon="close" data-size="18"></span></button>
+      <button class="dverse__close" id="dverseClose" aria-label="Закрыть"><span data-icon="close" data-size="18"></span></button>
       <img class="dverse__img" src="assets/img/verse-day.jpg" alt="">
       <div class="dverse__eyebrow"><span data-icon="sparkle" data-size="14"></span> <span id="dverseDate">Стих дня</span></div>
       <div class="dverse__text" id="dverseText"></div>
@@ -1034,9 +1034,9 @@
   </div>
 
   <!-- Просмотр сертификата -->
-  <div class="cert-view" id="certView" hidden>
+  <div class="cert-view" id="certView" role="dialog" aria-modal="true" hidden>
     <div class="cert-view__bar">
-      <button class="cert-view__close" id="certClose"><span data-icon="close" data-size="20"></span></button>
+      <button class="cert-view__close" id="certClose" aria-label="Закрыть"><span data-icon="close" data-size="20"></span></button>
       <button class="cert-view__dl" id="certDl"><span data-icon="download" data-size="17"></span> Скачать</button>
     </div>
     <div class="cert-view__stage" id="certStage"></div>
@@ -1074,7 +1074,7 @@
   </div>
 
   <!-- Тост для заглушек -->
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="assets/js/icons.js"></script>
   <script src="assets/js/magic.js"></script>

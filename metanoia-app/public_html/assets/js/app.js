@@ -284,11 +284,11 @@ function renderFeed() {
   $$('#feed [data-act="comment"]').forEach((el) =>
     el.addEventListener('click', () => openComments(Number(el.dataset.post))));
   $$('#feed [data-act="share"]').forEach((el) =>
-    el.addEventListener('click', () => toast('Поделиться — после публикации приложения')));
+    el.addEventListener('click', () => toast('Поделиться можно будет после запуска')));
   $$('#feed [data-act="watch"]').forEach((el) =>
     el.addEventListener('click', () => openLesson(1)));
   $$('#feed [data-act="join"]').forEach((el) =>
-    el.addEventListener('click', () => toast('Запись на созвон включится на боевом хостинге')));
+    el.addEventListener('click', () => toast('Запись на созвон скоро откроется')));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -586,7 +586,7 @@ function runSearch() {
   $$('#searchResults .sr').forEach((el) =>
     el.addEventListener('click', () => {
       if (el.querySelector('.sr__title')?.textContent === 'Собери стих') openVerse('easy');
-      else toast('Переход к контенту — по мере готовности разделов');
+      else toast('Скоро откроется');
     }));
 }
 
@@ -982,7 +982,7 @@ function lessonMeta(n) {
   for (let bi = 0; bi < DEMO.blocks.length; bi++) {
     const block = DEMO.blocks[bi];
     const l = block.lessons.find((x) => x.n === n);
-    if (l) return { l, block, bi, blockTitle: block.title.replace(/^Блок \d+ · /, '').replace(/[«»]/g, '') };
+    if (l) return { l, block, bi, blockTitle: block.title.replace(/^Глава \d+ · /, '').replace(/[«»]/g, '') };
   }
   return null;
 }
@@ -1122,7 +1122,7 @@ function wireLesson(n, quiz) {
 
   $('#hwUpload')?.addEventListener('click', () => {
     const s = getLessonState(n); s.hw = true; saveLessonState(n, s); syncSteps();
-    toast('Загрузка файлов включится на хостинге — шаг засчитан для демо');
+    toast('Загрузка рисунка скоро откроется — шаг засчитан');
   });
 
   $('#lessonDone')?.addEventListener('click', () => {
@@ -1212,7 +1212,7 @@ function renderExam() {
       <div class="exam-head__ic">${ICON('crown', 26)}</div>
       <div>
         <div class="exam-head__title">Проверка знаний</div>
-        <div class="exam-head__sub">${block.title.replace(/^Блок \d+ · /, '')} · ${total} вопросов · порог 70%</div>
+        <div class="exam-head__sub">${block.title.replace(/^Глава \d+ · /, '')} · ${total} вопросов · порог 70%</div>
       </div>
     </div>
     <div class="card" id="examQuiz">
@@ -1713,7 +1713,7 @@ function initAttach() {
     $('#attachSheet').hidden = true;
     if (b.dataset.attach === 'photo') $('#cvPhotoInput').click();
     if (b.dataset.attach === 'file') $('#cvFileInput').click();
-    if (b.dataset.attach === 'poll') toast('Опросы создаёт Екатерина из админ-панели');
+    if (b.dataset.attach === 'poll') toast('Опросы создаёт только Екатерина');
   }));
   $('#cvPhotoInput').addEventListener('change', (e) => {
     const f = e.target.files[0];
@@ -2049,23 +2049,23 @@ const GAMES = {
       desc: 'Расставь библейские события в правильном порядке — от сотворения мира до Церкви.', bullets: ['Перетаскивай события', 'Понимание всей истории спасения', '+25 XP'] },
   ],
   premium: [
-    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: 'Играбельно · +30 XP', premium: true, play: true,
+    { key: 'match3', icon: 'sparkle', name: 'Три в ряд: Дары Духа', meta: 'Играть · +30 XP', premium: true, play: true,
       desc: 'Собирай тройки символов даров Духа Святого и проходи уровень за уровнем.', bullets: ['Больше 100 уровней', 'Растущая сложность', 'Бустеры и комбо'] },
-    { key: 'exodus', icon: 'map', name: 'Исход: собери манну', meta: 'Играбельно · +25 XP', premium: true, play: true,
+    { key: 'exodus', icon: 'map', name: 'Исход: собери манну', meta: 'Играть · +25 XP', premium: true, play: true,
       desc: 'Веди народ Израиля через пустыню: собирай манну и уклоняйся от преград.', bullets: ['Аркада на время', 'Собирай манну за очки', 'История Исхода'] },
-    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Играбельно · +25 XP', premium: true, play: true,
+    { key: 'david', icon: 'target', name: 'Давид и Голиаф', meta: 'Играть · +25 XP', premium: true, play: true,
       desc: 'Рассчитай силу и траекторию — один точный бросок пращи решает всё.', bullets: ['Физика броска', 'Уровни сложности', 'Смелость веры'] },
-    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Играбельно · +30 XP', premium: true, play: true,
+    { key: 'ark', icon: 'dove', name: 'Ноев Ковчег', meta: 'Играть · +30 XP', premium: true, play: true,
       desc: 'Собери всех животных парами и проведи их в ковчег до начала дождя.', bullets: ['Игра на время', 'Пары животных', 'История Ноя'] },
-    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Играбельно · стройка', premium: true, play: true,
+    { key: 'temple', icon: 'church', name: 'Храм Соломона', meta: 'Играть · стройка', premium: true, play: true,
       desc: 'Строй великий храм: собирай кирпичики за уроки и игры, этап за этапом.', bullets: ['Стройка храма', 'Растёт с прогрессом', 'Значок «Архитектор веры»'] },
-    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Играбельно · +35 XP', premium: true, play: true,
+    { key: 'quest', icon: 'star', name: 'Ковчег Завета', meta: 'Играть · +35 XP', premium: true, play: true,
       desc: 'Приключение в пяти главах: пройди путь веры, делая верный выбор.', bullets: ['5 глав-историй', 'Выбор на каждом шаге', 'История пути к святыне'] },
-    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Играбельно · +очки', premium: true, play: true,
+    { key: 'detective', icon: 'search', name: 'Библейский детектив', meta: 'Играть · +очки', premium: true, play: true,
       desc: 'По уликам догадайся, о какой библейской истории идёт речь.', bullets: ['Дедукция для детей', '6 историй', 'Внимание к деталям'] },
-    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Играбельно · +25 XP', premium: true, play: true,
+    { key: 'dilemma', icon: 'heart', name: 'Дилемма', meta: 'Играть · +25 XP', premium: true, play: true,
       desc: 'Жизненные ситуации и выбор: как поступить по совести и по вере?', bullets: ['Разговор о ценностях', 'Нет «проигрыша»', 'Обсуждай с родителями'] },
-    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Играбельно · 2 игрока', premium: true, play: true,
+    { key: 'family', icon: 'users', name: 'Семейный квиз', meta: 'Играть · 2 игрока', premium: true, play: true,
       desc: 'Играйте вдвоём на одном устройстве — кто лучше знает Писание?', bullets: ['2 игрока на одном экране', 'Вопросы для всей семьи', 'Вечер вместе'] },
   ],
   daily: [
@@ -2075,9 +2075,9 @@ const GAMES = {
       desc: 'Собирай кирпичики за уроки и тесты — и твой храм растёт этап за этапом.', bullets: ['10 этапов стройки', 'Награда за постоянство', 'Значок «Архитектор веры»'] },
     { key: 'dailyverse', icon: 'book', name: 'Ежедневный стих', meta: 'Ритуал дня · +5 XP', play: true,
       desc: 'Один короткий стих в день с простым пояснением. Прочитал — получил свет и +5 XP.', bullets: ['Тёплая привычка', 'Стрик дней подряд', '+5 XP в день'] },
-    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Играбельно · +15 XP', premium: true, play: true,
+    { key: 'challenge', icon: 'trophy', name: 'Ежедневный вызов', meta: 'Играть · +15 XP', premium: true, play: true,
       desc: 'Каждый день — новое маленькое задание: стих, доброе дело, молитва, тест.', bullets: ['Задание на каждый день', 'Награды за серии', 'Только в Метанойя+'] },
-    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Играбельно · +очки', premium: true, play: true,
+    { key: 'interpret', icon: 'cross', name: 'Толкование', meta: 'Играть · +очки', premium: true, play: true,
       desc: 'Среди похожих вариантов выбери верное, каноническое толкование притчи.', bullets: ['Учит понимать притчи', 'Одобрено педагогом', 'Для старших детей'] },
   ],
 };
@@ -2719,7 +2719,7 @@ function initAuth() {
   $('#guestBtn').addEventListener('click', () => {
     localStorage.setItem('mt_auth', '1');
     showApp(null);
-    toast('Демо-режим: все данные тестовые');
+    toast('Вы вошли как гость — можно всё посмотреть');
   });
   $('#forgotBtn').addEventListener('click', () => toast('Восстановление пароля — после подключения почты'));
   $$('.auth__oauth').forEach((b) =>
@@ -2988,7 +2988,7 @@ function certSVG(cert, name) {
   <text x="240" y="92" text-anchor="middle" font-size="15" letter-spacing="6" fill="#1A3A52" font-family="Montserrat, sans-serif">O K O · Т Е А М</text>
   <g transform="translate(240 150)"><path d="M-34 0 C-20 -22 20 -22 34 0 C20 22 -20 22 -34 0 Z" fill="none" stroke="#1A3A52" stroke-width="2.5"/><circle cx="0" cy="0" r="10" fill="#C97064"/><circle cx="0" cy="0" r="4" fill="#FAF8F5"/></g>
   <text x="240" y="230" text-anchor="middle" font-size="44" font-weight="700" fill="#1A3A52" letter-spacing="2">СЕРТИФИКАТ</text>
-  <text x="240" y="258" text-anchor="middle" font-size="13" letter-spacing="4" fill="#C97064" font-family="Montserrat, sans-serif">ХРИСТИАНСКАЯ ШКОЛА МЕТАНОЙА</text>
+  <text x="240" y="258" text-anchor="middle" font-size="13" letter-spacing="4" fill="#C97064" font-family="Montserrat, sans-serif">ХРИСТИАНСКАЯ ШКОЛА МЕТАНОЙЯ</text>
   <line x1="180" y1="278" x2="300" y2="278" stroke="#D4A574" stroke-width="1.5"/>
   <text x="240" y="318" text-anchor="middle" font-size="14" fill="#5A6577" font-family="Montserrat, sans-serif">настоящим удостоверяется, что</text>
   <text x="240" y="372" text-anchor="middle" font-size="40" font-weight="700" fill="#C97064">${name}</text>
@@ -3495,7 +3495,7 @@ function openShop() {
   }).join('');
   $$('#shopGrid [data-merch]').forEach((b) => b.addEventListener('click', () => {
     if (window.MAGIC) MAGIC.rewardModal({ icon: 'trophy', title: 'Заявка принята!', subtitle: `Ты обменял баллы на «${b.dataset.merch}». Мы свяжемся с родителями, чтобы передать подарок 🎁`, xp: 0 });
-    else toast('Заявка на мерч принята');
+    else toast('Заявка на подарок принята');
   }));
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'shop'));
   $('#nav').style.display = 'none';
@@ -3670,8 +3670,8 @@ function initAddChild() {
   $('#addkSave')?.addEventListener('click', saveChild);
 }
 
-/* ── Задать вопрос · AI-помощник (УЛ5) ──
-   Демо: ответы курируются вручную (в проде — AI на материалах Екатерины).
+/* ── Задать вопрос · тёплый помощник ──
+   Ответы курируются педагогом на материалах школы.
    Чувствительные темы не разбираются, а мягко переводятся на родителей. */
 const ASK_SENSITIVE = ['умереть', 'умру', 'убить', 'убью', 'не хочу жить', 'бьют', 'бьёт', 'ударил', 'больно делают', 'ненавижу себя', 'обижают', 'страшно дома', 'секрет от родителей'];
 const ASK_ANSWERS = [
@@ -3866,6 +3866,12 @@ function initGrowth() {
     $('#dverseListen')?.classList.remove('dverse__listen--playing');
     const lbl = $('#dverseListenLbl'); if (lbl) lbl.textContent = 'Послушать ещё раз';
   });
+  // Esc закрывает открытую модалку/шторку (a11y)
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const modals = ['#msgActions', '#userCard', '#attachSheet', '#dmSheet', '#sheetWrap', '#certView', '#dailyVerse', '#addChild', '#gamePreview', '#notifPanel', '#pinModal', '#storyViewer'];
+    for (const sel of modals) { const el = $(sel); if (el && !el.hidden) { el.hidden = true; return; } }
+  });
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#certClose')?.addEventListener('click', () => { $('#certView').hidden = true; });
   $('#certDl')?.addEventListener('click', downloadCert);
@@ -3943,7 +3949,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo({ top: 0 });
   });
   $$('.menu-item:not([id])').forEach((el) =>
-    el.addEventListener('click', () => toast('Раздел в разработке')));
+    el.addEventListener('click', () => toast('Этот раздел скоро появится')));
   let searchTimer = null;
   $('#searchInput').addEventListener('input', () => {
     clearTimeout(searchTimer);
