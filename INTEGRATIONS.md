@@ -29,11 +29,17 @@ curl (urllib и node fetch ходят мимо прокси). Новый клю�
 `base64 -w0 secrets.env > secrets.env.b64`, закоммитить ТОЛЬКО b64
 (plaintext secrets.env в .gitignore, GitHub push protection режет открытые ключи).
 
-### 1б. Клон голоса Даниэля (БЕСПЛАТНЫЙ безлимит) — для озвучки контент-завода
-- Скрипт-ротатор: `.claude/skills/reels-machine/pipeline/social/oko_voice.py`
-  `python oko_voice.py "текст" out.wav --ref <ref.wav>` — перебирает бесплатные HF-спейсы
+### 1б. Клон голоса Даниэля (студийный PRO) — для озвучки контент-завода
+- **ГЛАВНЫЙ: `.claude/skills/reels-machine/pipeline/social/oko_voice_pro.py`**
+  `python oko_voice_pro.py "текст" out.mp3 --ref <ref.wav>` — весь конвейер одной командой:
+  словарь ударений (`stress_dict.txt`, ОКО→О́КО, формат acute/юникод) → OmniVoice ns=64
+  (движок A, лучший тембр) → resemble-enhance RK4/nfe128 (студийная чистота+живость) →
+  мастеринг 1.7× + презенс + 44.1кГц. Ударения правим ТОЧЕЧНО (полный ruaccent портит
+  естественность — Даниэль выбрал acute на фирменные слова).
+- **Безлимит движка A** = HF PRO ($9/мес) на аккаунте okoteam (оформлено 19.07, isPro:True).
+- Скрипт-ротатор (фолбэк/бесплатно): `oko_voice.py` — перебирает бесплатные HF-спейсы
   (OmniVoice→VoxCPM→Qwen3→MegaTTS3), берёт доступный по квоте. Длинный текст режется на
-  фрагменты и склеивается (ffmpeg) → озвучка ЛЮБОЙ длины, 0 ₽.
+  фрагменты и склеивается (ffmpeg) → озвучка ЛЮБОЙ длины.
 - Референсы (чистые записи Даниэля без музыки): `.claude/skills/reels-machine/assets/voice/`
   `daniel_ref_15s.wav`, `daniel_ref_28s.wav`. Выбранный движок качества — «A» = OmniVoice.
 - Зависит от `gradio_client` + `imageio-ffmpeg` + `HF_TOKEN`. Квота ZeroGPU у каждого
