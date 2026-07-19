@@ -29,7 +29,7 @@ def _omnivoice(c, text, ref, lang, hf):
     from gradio_client import handle_file
     r = c.predict(text=text, lang="Russian" if lang == "ru" else "English",
                   ref_aud=handle_file(ref), ref_text="", instruct="",
-                  ns=40, gs=2.0, dn=True, sp=1.0, du=_du(text), pp=True, po=True,
+                  ns=64, gs=2.0, dn=True, sp=1.0, du=_du(text), pp=True, po=True,
                   api_name="/_clone_fn")
     return r[0] if isinstance(r, (list, tuple)) else r
 
