@@ -1029,6 +1029,8 @@ function renderLesson(n) {
     <h1 class="screen-title" style="margin-top:14px">Урок ${cn}. ${title}</h1>
     <div class="feed-card__meta">${meta.block.title} · для всех возрастов</div>
 
+    <button class="lesson-voice" id="lessonVoice"><span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать вступление голосом Екатерины</button>
+
     <div class="lesson-steps" id="lessonSteps">
       <div class="lstep ${st.watch ? 'done' : ''}" data-step="watch"><i></i>Просмотрено</div>
       <div class="lstep ${st.test ? 'done' : ''}" data-step="test"><i></i>Тест</div>
@@ -1094,6 +1096,17 @@ function wireLesson(n, quiz) {
     else toast('Видео появится после записи уроков');
   });
 
+  const lv = $('#lessonVoice');
+  if (lv) {
+    let lvAudio = null;
+    lv.addEventListener('click', () => {
+      if (!lvAudio) lvAudio = new Audio('assets/audio/lesson-intro.mp3');
+      lv.classList.add('lesson-voice--playing');
+      try { lvAudio.currentTime = 0; lvAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
+      lvAudio.onended = () => lv.classList.remove('lesson-voice--playing');
+    });
+  }
+
   $('#testCheck')?.addEventListener('click', () => {
     if (!quiz.length) return;
     let correct = 0, answered = 0;
@@ -1141,7 +1154,7 @@ function wireLesson(n, quiz) {
     if (window.MAGIC) MAGIC.rewardModal({
       icon: 'trophy', title: 'Урок пройден!',
       subtitle: nextTitle ? `Молодец! Открыт следующий урок: «${nextTitle}».` : 'Молодец! Ты прошёл урок.',
-      xp: 20,
+      xp: 20, voice: 'assets/audio/well-done.mp3',
     });
     else toast('+20 XP!');
   });
@@ -1257,7 +1270,7 @@ function gradeExam() {
       setTimeout(() => MAGIC.rewardModal({
         icon: 'crown', title: 'Проверка блока пройдена!',
         subtitle: `Ты получил значок ${award}. Сертификат доступен в разделе «Сертификаты».`,
-        xp: 50,
+        xp: 50, voice: 'assets/audio/cert.mp3',
       }), 400);
     }
   } else {
@@ -2725,6 +2738,11 @@ function initOnboarding() {
   };
   $('#onbSkip').addEventListener('click', finish);
   $('#onbStart').addEventListener('click', finish);
+  let greetAudio = null;
+  $('#onbGreet')?.addEventListener('click', () => {
+    if (!greetAudio) greetAudio = new Audio('assets/audio/greet.mp3');
+    try { greetAudio.currentTime = 0; greetAudio.play().catch(() => {}); } catch (e) {}
+  });
 }
 
 function markInvalid(input, bad) {
@@ -3930,8 +3948,13 @@ function initGrowth() {
     for (const sel of modals) { const el = $(sel); if (el && !el.hidden) { el.hidden = true; return; } }
   });
   $('#certsBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
-  $('#certClose')?.addEventListener('click', () => { $('#certView').hidden = true; });
+  let certAudio = null;
+  $('#certClose')?.addEventListener('click', () => { if (certAudio) certAudio.pause(); $('#certView').hidden = true; });
   $('#certDl')?.addEventListener('click', downloadCert);
+  $('#certVoice')?.addEventListener('click', () => {
+    if (!certAudio) certAudio = new Audio('assets/audio/cert.mp3');
+    try { certAudio.currentTime = 0; certAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
+  });
   $('#ratingBack')?.addEventListener('click', () => { $('#nav').style.display = 'none'; openChild(DEMO.children[0]); });
   $('#mSubscribe')?.addEventListener('click', openSubscribeScreen);
   $('#subBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });

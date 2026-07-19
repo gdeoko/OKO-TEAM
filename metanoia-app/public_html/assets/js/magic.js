@@ -134,7 +134,7 @@ function celebrate(originX, originY) {
 
 /* ───────── МОДАЛКА НАГРАДЫ ───────── */
 
-function rewardModal({ icon = 'trophy', title, subtitle, xp }) {
+function rewardModal({ icon = 'trophy', title, subtitle, xp, voice }) {
   const wrap = document.createElement('div');
   wrap.className = 'reward';
   wrap.innerHTML = `
@@ -144,13 +144,20 @@ function rewardModal({ icon = 'trophy', title, subtitle, xp }) {
       <div class="reward__title">${title}</div>
       ${subtitle ? `<div class="reward__sub">${subtitle}</div>` : ''}
       ${xp ? `<div class="reward__xp">+${xp} XP</div>` : ''}
+      ${voice ? `<button class="reward__voice" aria-label="Послушать голосом Екатерины">${typeof ICON === 'function' ? ICON('play', 15) : '▶'} Голос Екатерины</button>` : ''}
       <button class="btn btn--primary reward__ok">Отлично!</button>
     </div>`;
   document.body.appendChild(wrap);
   requestAnimationFrame(() => wrap.classList.add('reward--on'));
   const r = wrap.querySelector('.reward__badge').getBoundingClientRect();
   setTimeout(() => celebrate(r.left + r.width / 2, r.top + r.height / 2), 220);
-  const close = () => { wrap.classList.remove('reward--on'); setTimeout(() => wrap.remove(), 300); };
+  let audio = null;
+  if (voice) {
+    audio = new Audio(voice);
+    audio.play().catch(() => {}); // автозвук может быть заблокирован — тогда по кнопке
+    wrap.querySelector('.reward__voice').addEventListener('click', (e) => { e.stopPropagation(); try { audio.currentTime = 0; audio.play(); } catch (x) {} });
+  }
+  const close = () => { if (audio) audio.pause(); wrap.classList.remove('reward--on'); setTimeout(() => wrap.remove(), 300); };
   wrap.querySelector('.reward__ok').addEventListener('click', close);
   wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
 }
