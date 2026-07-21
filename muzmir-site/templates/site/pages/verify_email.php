@@ -14,7 +14,7 @@ if ($token !== '') {
 }
 
 // Токен пустой или недействительный.
-$xicon = '<svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#8B6F1F" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
+$xicon = '<svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="var(--gold-2)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>';
 
 ob_start(); ?>
 <section class="section">

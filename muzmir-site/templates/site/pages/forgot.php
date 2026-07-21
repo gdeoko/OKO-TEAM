@@ -65,7 +65,7 @@ function reset_email_html(string $name, string $link): string {
 HTML;
 }
 
-$done_icon = '<svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="#8B6F1F" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>';
+$done_icon = '<svg viewBox="0 0 24 24" width="46" height="46" fill="none" stroke="var(--gold-2)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>';
 
 ob_start(); ?>
 <section class="section">

@@ -12,11 +12,11 @@ ob_start(); ?>
     <div class="grid grid-2">
       <div class="card reveal">
         <h3>Реквизиты и контакты</h3>
-        <p style="color:var(--ink)"><strong>Адрес:</strong> <?= h(cfgv('org_address')) ?></p>
-        <p style="color:var(--ink)"><strong>Телефон:</strong> <a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a></p>
-        <p style="color:var(--ink)"><strong>Электронная почта:</strong> <a href="mailto:<?= h(cfgv('org_email')) ?>"><?= h(cfgv('org_email')) ?></a></p>
-        <p style="color:var(--ink)"><strong>Часы работы:</strong> <?= h(cfgv('org_hours')) ?></p>
-        <p style="color:var(--ink)"><strong>Мы в социальных сетях:</strong>
+        <p style="color:var(--text-dim)"><strong>Адрес:</strong> <?= h(cfgv('org_address')) ?></p>
+        <p style="color:var(--text-dim)"><strong>Телефон:</strong> <a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a></p>
+        <p style="color:var(--text-dim)"><strong>Электронная почта:</strong> <a href="mailto:<?= h(cfgv('org_email')) ?>"><?= h(cfgv('org_email')) ?></a></p>
+        <p style="color:var(--text-dim)"><strong>Часы работы:</strong> <?= h(cfgv('org_hours')) ?></p>
+        <p style="color:var(--text-dim)"><strong>Мы в социальных сетях:</strong>
           <a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">ВКонтакте</a> ·
           <a href="<?= h(cfgv('org_tg_channel')) ?>" target="_blank" rel="noopener">Telegram</a>
         </p>

@@ -31,10 +31,10 @@ $defaultBody = '<p>Настоящая Политика конфиденциал�
 ob_start(); ?>
 <style>
 .article-cap p:first-of-type::first-letter{
-  font-family:var(--ff-head);font-size:3.4em;line-height:.78;float:left;
-  padding:.04em .1em 0 0;color:var(--gold-dark);font-weight:700;
+  font-family:var(--ff-serif);font-size:3.4em;line-height:.78;float:left;
+  padding:.04em .1em 0 0;color:var(--gold-2);font-weight:700;
 }
-.article-cap h3{margin-top:1.6em}
+.article-cap h3{margin-top:1.6em;color:var(--text)}
 </style>
 
 <section class="section">
@@ -44,7 +44,7 @@ ob_start(); ?>
       <h2>Политика конфиденциальности</h2>
       <div class="gold-rule"></div>
     </div>
-    <div class="article-cap reveal" style="color:var(--ink)">
+    <div class="article-cap reveal" style="color:var(--text-dim)">
       <?= $page['body'] ?? $defaultBody ?>
     </div>
   </div>

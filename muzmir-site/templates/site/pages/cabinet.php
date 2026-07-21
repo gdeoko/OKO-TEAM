@@ -99,17 +99,19 @@ if ($isTeacher) $sections[] = ['students','Мои ученики'];
 ob_start(); ?>
 <style>
 .cab{display:grid;grid-template-columns:260px 1fr;gap:32px;align-items:start}
-.cab-side{position:sticky;top:96px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-card)}
+.cab-side{position:sticky;top:96px;background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
 .cab-user{display:flex;gap:12px;align-items:center;padding-bottom:16px;margin-bottom:12px;border-bottom:1px solid var(--line)}
-.cab-ava{width:46px;height:46px;border-radius:50%;background:var(--grad-gold);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-head);font-size:1.2rem;flex:none}
+.cab-ava{width:46px;height:46px;border-radius:50%;background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:700;font-size:1.2rem;flex:none}
 .cab-nav{display:flex;flex-direction:column;gap:4px}
-.cab-nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--navy);font-weight:600;font-size:.95rem}
-.cab-nav a:hover{background:var(--gold-light)}
-.cab-nav a.active{background:var(--grad-gold);color:#fff}
-.cab-nav a.active svg{stroke:#fff}
+.cab-nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--text-dim);font-weight:600;font-size:.95rem;transition:background .18s,color .18s}
+.cab-nav a:hover{background:var(--gold-soft);color:var(--text)}
+.cab-nav a.active{background:var(--grad-gold);color:#1a1206}
+.cab-nav a.active svg{stroke:#1a1206}
 .cab-panel{display:none}
 .cab-panel.active{display:block}
-.cab-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow-card);margin-bottom:16px}
+.cab-card{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:20px 22px;
+  box-shadow:var(--shadow-card);margin-bottom:16px;backdrop-filter:blur(14px)}
 .cab-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .cab-meta{color:var(--muted);font-size:.9rem;margin:6px 0 0}
 .cab-empty{text-align:center;color:var(--muted);padding:40px 20px}
@@ -124,7 +126,7 @@ ob_start(); ?>
         <div class="cab-user">
           <div class="cab-ava"><?= h(mb_strtoupper(mb_substr($user['full_name'] ?: $user['email'], 0, 1))) ?></div>
           <div style="min-width:0">
-            <strong style="display:block;font-family:var(--ff-head)"><?= h($user['full_name'] ?: 'Участник') ?></strong>
+            <strong style="display:block;font-family:var(--ff-serif)"><?= h($user['full_name'] ?: 'Участник') ?></strong>
             <span style="color:var(--muted);font-size:.82rem;word-break:break-all"><?= h($user['email']) ?></span>
           </div>
         </div>
@@ -150,7 +152,7 @@ ob_start(); ?>
             <div class="cab-card">
               <div class="cab-row">
                 <div>
-                  <strong style="font-family:var(--ff-head);font-size:1.1rem"><?= h($a['comp_name'] ?: 'Конкурс') ?></strong>
+                  <strong style="font-family:var(--ff-serif);font-size:1.1rem"><?= h($a['comp_name'] ?: 'Конкурс') ?></strong>
                   <p class="cab-meta">
                     <?php if ($a['number']): ?>Заявка № <?= h($a['number']) ?> · <?php endif; ?>
                     <?= h($a['nomination'] ?: 'Номинация не указана') ?>
@@ -160,7 +162,7 @@ ob_start(); ?>
                 </div>
                 <div style="text-align:right">
                   <?= $badge($sl,$st) ?>
-                  <?php if (!empty($a['result'])): ?><p class="cab-meta" style="color:var(--gold-dark);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
+                  <?php if (!empty($a['result'])): ?><p class="cab-meta" style="color:var(--gold-2);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
                 </div>
               </div>
             </div>
@@ -176,7 +178,7 @@ ob_start(); ?>
             <div class="cab-card">
               <div class="cab-row">
                 <div>
-                  <strong style="font-family:var(--ff-head);font-size:1.1rem"><?= h($d['result'] ?: $d['app_result'] ?: 'Диплом') ?></strong>
+                  <strong style="font-family:var(--ff-serif);font-size:1.1rem"><?= h($d['result'] ?: $d['app_result'] ?: 'Диплом') ?></strong>
                   <p class="cab-meta"><?= h($d['comp_name'] ?: 'Конкурс') ?> · <?= h($d['full_name']) ?></p>
                   <p class="cab-meta">Диплом № <?= h($d['number']) ?> · <?= h(ru_date(substr((string)$d['created_at'],0,10))) ?></p>
                 </div>
@@ -210,7 +212,7 @@ ob_start(); ?>
             <div class="cab-card">
               <div class="cab-row">
                 <div>
-                  <strong style="font-family:var(--ff-head);font-size:1.1rem"><?= h($o['items'] ?: 'Наградная продукция') ?></strong>
+                  <strong style="font-family:var(--ff-serif);font-size:1.1rem"><?= h($o['items'] ?: 'Наградная продукция') ?></strong>
                   <p class="cab-meta"><?= h($o['competition'] ?: '') ?><?php if ($o['result']): ?> · <?= h($o['result']) ?><?php endif; ?></p>
                   <p class="cab-meta">Заказ от <?= h(ru_date(substr((string)$o['created_at'],0,10))) ?><?php if ($o['amount']): ?> · <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
                   <?php if (!empty($o['tracking'])): ?><p class="cab-meta">Трек-номер: <strong><?= h($o['tracking']) ?></strong></p><?php endif; ?>
@@ -295,12 +297,12 @@ ob_start(); ?>
             <div class="cab-card">
               <div class="cab-row">
                 <div>
-                  <strong style="font-family:var(--ff-head);font-size:1.05rem"><?= h($s['full_name']) ?></strong>
+                  <strong style="font-family:var(--ff-serif);font-size:1.05rem"><?= h($s['full_name']) ?></strong>
                   <p class="cab-meta"><?= h($s['comp_name'] ?: 'Конкурс') ?> · <?= h($s['nomination'] ?: '') ?></p>
                 </div>
                 <div style="text-align:right">
                   <?= $badge($sl,$st) ?>
-                  <?php if (!empty($s['result'])): ?><p class="cab-meta" style="color:var(--gold-dark);font-weight:700"><?= h($s['result']) ?></p><?php endif; ?>
+                  <?php if (!empty($s['result'])): ?><p class="cab-meta" style="color:var(--gold-2);font-weight:700"><?= h($s['result']) ?></p><?php endif; ?>
                 </div>
               </div>
             </div>

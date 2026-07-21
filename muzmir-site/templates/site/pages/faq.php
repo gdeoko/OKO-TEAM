@@ -13,7 +13,7 @@ ob_start(); ?>
 
     <?php if (!$faqs): ?>
       <div class="card reveal" style="text-align:center">
-        <p style="color:var(--ink);margin:0">Раздел с вопросами пока наполняется. Если у Вас есть вопрос, напишите на <a href="mailto:<?= h(cfgv('org_email')) ?>"><?= h(cfgv('org_email')) ?></a> или воспользуйтесь формой обратной связи на странице «<a href="<?= url('/contacts') ?>">Контакты</a>».</p>
+        <p style="color:var(--text-dim);margin:0">Раздел с вопросами пока наполняется. Если у Вас есть вопрос, напишите на <a href="mailto:<?= h(cfgv('org_email')) ?>"><?= h(cfgv('org_email')) ?></a> или воспользуйтесь формой обратной связи на странице «<a href="<?= url('/contacts') ?>">Контакты</a>».</p>
       </div>
     <?php else: ?>
       <div class="reveal">

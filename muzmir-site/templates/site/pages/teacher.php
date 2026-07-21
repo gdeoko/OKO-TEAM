@@ -136,31 +136,34 @@ $tabs = [
 ob_start(); ?>
 <style>
 .tch{display:grid;grid-template-columns:250px 1fr;gap:32px;align-items:start}
-.tch-side{position:sticky;top:96px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-card)}
+.tch-side{position:sticky;top:96px;background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
 .tch-user{display:flex;gap:12px;align-items:center;padding-bottom:16px;margin-bottom:12px;border-bottom:1px solid var(--line)}
-.tch-ava{width:46px;height:46px;border-radius:50%;background:var(--grad-gold);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--ff-head);font-size:1.2rem;flex:none}
+.tch-ava{width:46px;height:46px;border-radius:50%;background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:700;font-size:1.2rem;flex:none}
 .tch-nav{display:flex;flex-direction:column;gap:4px}
-.tch-nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--navy);font-weight:600;font-size:.92rem}
-.tch-nav a:hover{background:var(--gold-light)}
-.tch-nav a.active{background:var(--grad-gold);color:#fff}
-.tch-nav a.active svg{stroke:#fff}
+.tch-nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--text-dim);font-weight:600;font-size:.92rem;transition:background .18s,color .18s}
+.tch-nav a:hover{background:var(--gold-soft);color:var(--text)}
+.tch-nav a.active{background:var(--grad-gold);color:#1a1206}
+.tch-nav a.active svg{stroke:#1a1206}
 .tch-panel{display:none}
 .tch-panel.active{display:block}
-.tch-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow-card);margin-bottom:16px}
+.tch-card{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:20px 22px;
+  box-shadow:var(--shadow-card);margin-bottom:16px;backdrop-filter:blur(14px)}
 .tch-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .tch-meta{color:var(--muted);font-size:.9rem;margin:6px 0 0}
 .tch-empty{text-align:center;color:var(--muted);padding:40px 20px}
 .t-table{width:100%;border-collapse:collapse;min-width:640px}
-.t-table th,.t-table td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.9rem}
+.t-table th,.t-table td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.9rem;color:var(--text-dim)}
 .t-table th{font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .t-table-wrap{overflow-x:auto}
 .row-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1.4fr auto;gap:10px;align-items:end;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .row-grid .field{margin-bottom:0}
 .row-grid .rm-row{height:44px;width:44px;flex:none;padding:0;color:var(--error);border-color:var(--error)}
 @media(max-width:960px){.row-grid{grid-template-columns:1fr 1fr}.row-grid .rm-row{grid-column:span 2;width:100%}}
-.discount-box{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center;background:var(--gold-light);border-radius:var(--radius-sm);padding:14px 18px;margin:16px 0}
-.discount-box b{font-family:var(--ff-head);color:var(--gold-dark);font-size:1.3rem}
-.file-drop{border:1.5px dashed var(--line);border-radius:var(--radius-sm);padding:20px;text-align:center;color:var(--muted)}
+.discount-box{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;align-items:center;background:var(--gold-soft);
+  border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:14px 18px;margin:16px 0;color:var(--text-dim)}
+.discount-box b{font-family:var(--ff-serif);color:var(--gold-2);font-size:1.3rem}
+.file-drop{border:1.5px dashed var(--glass-brd);border-radius:var(--radius-sm);padding:20px;text-align:center;color:var(--muted);background:var(--glass)}
 .import-err{color:var(--error);font-size:.86rem;margin:4px 0}
 @media(max-width:860px){.tch{grid-template-columns:1fr}.tch-side{position:static}
   .tch-nav{flex-direction:row;overflow-x:auto;gap:6px}.tch-nav a{white-space:nowrap;padding:9px 12px}}
@@ -172,7 +175,7 @@ ob_start(); ?>
         <div class="tch-user">
           <div class="tch-ava"><?= h(mb_strtoupper(mb_substr($user['full_name'] ?: $user['email'], 0, 1))) ?></div>
           <div style="min-width:0">
-            <strong style="display:block;font-family:var(--ff-head)"><?= h($user['full_name'] ?: 'Педагог') ?></strong>
+            <strong style="display:block;font-family:var(--ff-serif)"><?= h($user['full_name'] ?: 'Педагог') ?></strong>
             <span style="color:var(--muted);font-size:.82rem;word-break:break-all"><?= h($user['email']) ?></span>
           </div>
         </div>
@@ -210,7 +213,7 @@ ob_start(); ?>
             <div class="tch-card">
               <div class="tch-row">
                 <div>
-                  <strong style="font-family:var(--ff-head);font-size:1.05rem"><?= h($a['full_name']) ?></strong>
+                  <strong style="font-family:var(--ff-serif);font-size:1.05rem"><?= h($a['full_name']) ?></strong>
                   <p class="tch-meta">
                     <?php if ($a['number']): ?>№ <?= h($a['number']) ?> · <?php endif; ?>
                     <?= h($a['comp_name'] ?: 'Конкурс') ?> · <?= h($a['nomination'] ?: '') ?>
@@ -219,7 +222,7 @@ ob_start(); ?>
                 </div>
                 <div style="text-align:right">
                   <?= $badge($sl, $st) ?>
-                  <?php if (!empty($a['result'])): ?><p class="tch-meta" style="color:var(--gold-dark);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
+                  <?php if (!empty($a['result'])): ?><p class="tch-meta" style="color:var(--gold-2);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
                 </div>
               </div>
             </div>

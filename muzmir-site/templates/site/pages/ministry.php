@@ -16,7 +16,7 @@ ob_start(); ?>
 <style>
 .mg-filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
 .mg-filter{padding:9px 18px;font-size:.9rem}
-.mg-filter.active{background:var(--grad-gold);color:#fff;border-color:transparent}
+.mg-filter.active{background:var(--grad-gold);color:#1a1206;border-color:transparent}
 .mg-item{padding:0;overflow:hidden;cursor:pointer}
 .mg-item img{aspect-ratio:3/4;object-fit:cover;width:100%}
 .mg-item .mg-cap{padding:14px 16px}
@@ -42,7 +42,7 @@ ob_start(); ?>
 
     <?php if (!$letters): ?>
       <div class="card reveal" style="max-width:640px;margin:0 auto;text-align:center">
-        <p style="color:var(--ink);margin:0">Скан-копии писем и благодарностей от министерств культуры и образования регионов готовятся к публикации. Раздел будет дополнен по мере поступления документов.</p>
+        <p style="color:var(--text-dim);margin:0">Скан-копии писем и благодарностей от министерств культуры и образования регионов готовятся к публикации. Раздел будет дополнен по мере поступления документов.</p>
       </div>
     <?php else: ?>
       <?php if ($regions): ?>

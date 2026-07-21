@@ -21,45 +21,53 @@ $BASE = rtrim(cfgv('base_url'), '/');
 ?><!doctype html>
 <html lang="ru">
 <head>
+<script>document.documentElement.dataset.theme=(function(){try{var tg=window.Telegram&&window.Telegram.WebApp;if(tg&&tg.colorScheme)return tg.colorScheme;}catch(e){}return (window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>КЦ «Музыкальный Мир»</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{--gold:#C9A84C;--gold-dark:#8B6F1F;--navy:#1B2340;--cream:#FFFCF5;--gold-light:#FFF8E1;
-  --line:rgba(139,111,31,.18);--muted:#6b6a63;--mint:#8FBC94;--radius:14px;
-  --ff-head:"Playfair Display",Georgia,serif;--ff-body:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+:root{--bg:#0b0a0d;--panel:rgba(30,26,20,.6);--glass:rgba(28,24,18,.65);--glass-brd:rgba(201,168,76,.22);
+  --gold:#E8C25A;--gold-2:#C9A84C;--gold-soft:rgba(232,194,90,.14);
+  --text:#F3ECDA;--text-dim:#b8ad93;--muted:#8b8069;--line:rgba(201,168,76,.16);
+  --mint:#8FBC94;--error:#E27B7B;--radius:14px;
+  --grad-gold:linear-gradient(135deg,#F3D57C 0%,#E8C25A 40%,#B98F2E 100%);
+  --ff-serif:"Cormorant Garamond",Georgia,serif;--ff-body:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color-scheme:dark}
+:root[data-theme="light"]{--bg:#FFFCF5;--panel:rgba(255,255,255,.8);--glass:rgba(255,255,255,.75);--glass-brd:rgba(201,168,76,.28);
+  --gold:#C9A84C;--gold-2:#B8973B;--gold-soft:rgba(201,168,76,.1);
+  --text:#1B2340;--text-dim:#5b5647;--muted:#7a7360;--line:rgba(139,111,31,.16);color-scheme:light}
 *{box-sizing:border-box}
-body{margin:0;font-family:var(--ff-body);background:var(--cream);color:var(--navy);
-  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:76px}
-h1,h2,h3{font-family:var(--ff-head);margin:0 0 .4em;line-height:1.15}
-a{color:var(--gold-dark);text-decoration:none}
+body{margin:0;font-family:var(--ff-body);background:var(--bg);color:var(--text);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:76px;transition:background .3s,color .3s}
+h1,h2,h3{font-family:var(--ff-serif);font-weight:700;margin:0 0 .4em;line-height:1.15;color:var(--text)}
+a{color:var(--gold-2);text-decoration:none}
 .wrap{max-width:560px;margin:0 auto;padding:14px}
 .top{display:flex;align-items:center;gap:10px;padding:6px 0 14px}
-.top img{width:40px;height:40px;border-radius:50%;box-shadow:0 2px 8px rgba(139,111,31,.25)}
-.top b{font-family:var(--ff-head);font-size:1.05rem;line-height:1.05}
-.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;
-  box-shadow:0 2px 12px rgba(139,111,31,.07);margin-bottom:12px}
+.top img{width:40px;height:40px;border-radius:50%;box-shadow:0 2px 10px rgba(232,194,90,.3);border:1px solid var(--glass-brd)}
+.top b{font-family:var(--ff-serif);font-size:1.05rem;line-height:1.05;color:var(--text)}
+.card{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:14px 16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);margin-bottom:12px;backdrop-filter:blur(12px)}
 .card h3{font-size:1.05rem}
 .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:0}
 .row small{color:var(--muted);font-size:.82rem}
 .badge{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px;
-  background:rgba(90,122,158,.15);color:#5A7A9E;white-space:nowrap}
-.badge.ok{background:rgba(143,188,148,.2);color:#3f7a4a}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;
+  background:var(--gold-soft);color:var(--gold-2);white-space:nowrap;border:1px solid var(--glass-brd)}
+.badge.ok{background:rgba(143,188,148,.16);color:var(--mint);border-color:rgba(143,188,148,.3)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;
   padding:12px 18px;border-radius:12px;border:0;cursor:pointer;width:100%;font-size:.98rem;
-  background:linear-gradient(135deg,#D8BC63,#C9A84C 45%,#8B6F1F);color:#fff}
-.btn.ghost{background:#fff;border:1.5px solid var(--gold);color:var(--gold-dark)}
+  background:var(--grad-gold);color:#1a1206;box-shadow:0 8px 24px rgba(201,168,76,.3)}
+.btn.ghost{background:var(--glass);border:1.5px solid var(--glass-brd);color:var(--gold-2);box-shadow:none}
 .muted{color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:20px 8px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.chip{white-space:nowrap;background:var(--gold-light);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.86rem;color:var(--navy)}
-.tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,252,245,.96);border-top:1px solid var(--line);
-  backdrop-filter:blur(8px);display:flex;max-width:560px;margin:0 auto}
+.chip{white-space:nowrap;background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.86rem;color:var(--text)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 82%,transparent);border-top:1px solid var(--line);
+  backdrop-filter:blur(14px);display:flex;max-width:560px;margin:0 auto}
 .tabbar button{flex:1;background:none;border:0;padding:10px 4px 12px;cursor:pointer;color:var(--muted);
   font-family:var(--ff-body);font-weight:600;font-size:.72rem;display:flex;flex-direction:column;align-items:center;gap:4px}
-.tabbar button.active{color:var(--gold-dark)}
+.tabbar button.active{color:var(--gold-2)}
 .tabbar svg{width:22px;height:22px}
 .panel{display:none}.panel.active{display:block}
 </style>
@@ -155,7 +163,13 @@ a{color:var(--gold-dark);text-decoration:none}
 <script>
 (function(){
   var tg = window.Telegram && window.Telegram.WebApp;
-  if (tg) { try { tg.ready(); tg.expand(); } catch(e){} }
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch(e){}
+    try {
+      if (tg.colorScheme) document.documentElement.dataset.theme = tg.colorScheme;
+      tg.onEvent('themeChanged', function(){ if (tg.colorScheme) document.documentElement.dataset.theme = tg.colorScheme; });
+    } catch(e){}
+  }
 
   // Навигация по разделам.
   var btns = document.querySelectorAll('.tabbar button');
