@@ -51,7 +51,10 @@ LLM (Gemini-прокси OKO):
 ## Запуск
 
 ```bash
-# сервер
+# сервер (рекомендуемый способ - подхватывает agent/.env, если есть)
+./agent/run.sh
+
+# или напрямую
 MUZMIR_AGENT_TOKEN=secret GEMINI_API_KEY=... python3 agent/server.py
 
 # быстрый ответ из CLI
@@ -60,6 +63,9 @@ python3 agent/brain.py "Как подать заявку и когда прид�
 # демо постов-афиш
 python3 agent/content.py
 ```
+
+`agent/run.sh` читает секреты из окружения; для локальной разработки можно
+положить их в `agent/.env` (в git не класть) - скрипт подхватит файл сам.
 
 Проверка компиляции: `python3 -m py_compile agent/*.py agent/social/*.py`.
 
@@ -107,14 +113,20 @@ POST /chat
 
 Связка по ТЗ (раздел 7 контекста, раздел 7 TZ_MAIN):
 
-1. Чат-виджет: фронт сайта -> `POST /api/v1/agent/chat` на сайте ->
-   PHP проксирует на `{agent_url}/chat` с Bearer-токеном -> `brain.answer()`.
-   Для авторизованного пользователя PHP кладёт в `user` его имя и статусы заявок.
+1. Чат-виджет: фронт сайта -> `POST /api/v1/chat.php` на сайте ->
+   `agent_chat_proxy()` (в `api/v1/_boot.php`) POST-ом шлёт `{text, session,
+   user_id}` на **базовый** `agent_url` -> сервер агента трактует корневой путь
+   `/` (и `/chat`) как чат -> `brain.answer()` -> `{"ok":true,"reply":"..."}`.
+   PHP читает поле `reply`. Формат сохранён - менять `chat.php` не требуется.
 
-2. События конкурсов: при открытии/закрытии приёма и публикации результатов
-   сайт шлёт `POST {agent_url}/event` (или `/webhook`) с `type` и данными
-   конкурса -> агент собирает пост по правилам КЦ (`content.py`) и рассылает
-   через `social.broadcast()` в ВК/TG/YouTube.
+2. События конкурсов: при смене статуса конкурса в админке (`admin/competitions.php`)
+   сайт зовёт `emit_event($type, $data)` (`core/events.php`), который POST-ом
+   шлёт `{type, competition:{...}}` на `agent_url + '/event'` с Bearer-токеном
+   и пишет строку в `events_log`. Соответствие статус -> событие:
+   `open -> competition_open`, `closed -> competition_closed`,
+   `finished -> results_published`. Агент собирает пост по правилам КЦ
+   (`content.py`) и рассылает через `social.broadcast()` в ВК/TG/YouTube.
+   Другие типы (`new_application`, `payment_success`) - для будущих сценариев.
 
 3. Модерация комментариев: адаптеры дают доступ к площадкам; типовые ответы
    формирует `brain.answer()`, сложные случаи эскалируются в админку сайта

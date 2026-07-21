@@ -113,11 +113,16 @@ class Handler(BaseHTTPRequestHandler):
 
         data = self._read_json()
 
-        # Поддержка и коротких путей (/chat), и путей сайта (/api/v1/agent/chat).
-        if path.endswith("/chat"):
-            self._handle_chat(data)
-        elif path.endswith("/event") or path.endswith("/webhook"):
+        # Маршрутизация:
+        #   /event, /webhook           -> событие сайта (пост-афиша + рассылка);
+        #   /chat и всё остальное      -> чат.
+        # Сайт (api/v1/_boot.php: agent_chat_proxy) шлёт чат POST-ом на базовый
+        # agent_url (путь "/"), а события emit_event() шлёт на agent_url + "/event".
+        # Поэтому "/" и любой путь с суффиксом /chat трактуем как чат.
+        if path.endswith("/event") or path.endswith("/webhook"):
             self._handle_event(data)
+        elif path.endswith("/chat") or path in ("/", ""):
+            self._handle_chat(data)
         else:
             self._send(404, {"ok": False, "error": "not found"})
 

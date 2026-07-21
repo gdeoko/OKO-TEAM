@@ -33,12 +33,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'sort'         => (int) input('sort'),
         ];
 
+        $oldStatus = $id ? (string) scalar("SELECT status FROM competitions WHERE id=?", [$id]) : '';
+
         if ($id) {
             update('competitions', $data, 'id=:wid', ['wid' => $id]);
             audit('competition_update', 'competition', $id, ['name' => $data['name']]);
         } else {
             $id = insert('competitions', $data);
             audit('competition_create', 'competition', $id, ['name' => $data['name']]);
+        }
+
+        // Событие сайта -> мозг-агент при смене статуса конкурса.
+        require_once BASE_PATH . '/core/events.php';
+        $newStatus = $data['status'];
+        if ($newStatus !== $oldStatus) {
+            $competition = [
+                'name'      => $data['name'],
+                'type'      => $data['type'] === 'national' ? 'всероссийский' : 'международный',
+                'end_date'  => $data['end_date'] ? ru_date($data['end_date']) : '',
+                'url'       => url('/competition/' . $data['slug']),
+                'slug'      => $data['slug'],
+                'code'      => $data['code'],
+            ];
+            if ($newStatus === 'open') {
+                emit_event('competition_open', ['competition' => $competition]);
+            } elseif ($newStatus === 'closed') {
+                emit_event('competition_closed', ['competition' => $competition]);
+            } elseif ($newStatus === 'finished') {
+                emit_event('results_published', ['competition' => $competition]);
+            }
         }
 
         // Прайс наград — перезаписываем набор по конкурсу
