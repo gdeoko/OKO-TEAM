@@ -11,3 +11,7 @@ public/posters/*
 *.log
 node_modules/
 .DS_Store
+
+public/polozhenie_*.pdf
+public/posters/*.png
+public/diplomas/*.pdf
