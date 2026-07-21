@@ -349,7 +349,7 @@ function chPageList(){
     html += `<div class="ch-sec-h">${chI('bookmark')} Мои подписки</div>`;
     html += subbed.map(c=>card(c,'sub')).join('');
   }
-  html += `<div class="ch-sec-h">${chI('compass')} Рекомендуем · платные и курсы</div>`;
+  html += `<div class="ch-sec-h">${chI('compass')} Рекомендуем · каналы, клубы и курсы</div>`;
   html += discover.map(c=>card(c,'disc')).join('');
   return {title:'Каналы', html};
 }
