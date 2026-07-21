@@ -35,8 +35,12 @@ AVAIL=$(df -Pk "$FACT" 2>/dev/null | awk 'NR==2{print $4}')
 # 6) IG-сессия жива?
 vexec(){ local body; body=$(python3 -c 'import json,sys;print(json.dumps({"cmd":sys.argv[1]}))' "$1"); \
   curl -s $([ -f "$CA" ] && echo --cacert "$CA") -m "${2:-120}" -X POST "$OKO_VPS_CTRL_URL/exec" -H "Authorization: Bearer $OKO_VPS_CTRL_TOKEN" -H "Content-Type: application/json" --data-binary "$body" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("stdout",""))' 2>/dev/null; }
-IGA=$(vexec "cd /opt/oko-poster && node ig_alive.mjs 2>/dev/null | tail -1" 90)
-echo "$IGA" | grep -q ALIVE || bad "IG-сессия мертва — нужен вход в @tappio.pro"
+# IG проверяем с 2 попытками (гасим транзиентные сбои). Про IG алертим РАЗ В ДЕНЬ (не спамим).
+IGA=""; for t in 1 2; do IGA=$(vexec "cd /opt/oko-poster && node ig_alive.mjs 2>/dev/null | tail -1" 90); echo "$IGA" | grep -q ALIVE && break; sleep 4; done
+if ! echo "$IGA" | grep -q ALIVE; then
+  MARK="work/.ig_dead_$(date +%F 2>/dev/null)"
+  if [ ! -f "$MARK" ]; then bad "IG-сессия мертва — нужен вход в @tappio.pro (датацентр рубит сессии; стабильно — только с прокси)"; touch "$MARK"; fi
+fi
 
 # git-фиксация возможных изменений очереди/флагов
 cd "$REPO"; git add -A 2>/dev/null; git commit -q -m "health: автопроверка $(date -u +%H:%M)" 2>/dev/null
