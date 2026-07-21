@@ -22,7 +22,7 @@ def er(it):
     return f"{100*(l+c)/v:.1f}%" if v else "—"
 
 def card(it, an, accent):
-    sb=it.get("storyboard")
+    sb=it.get("storyboard") or it.get("thumbnail")
     img=f'<img src="file://{sb}" style="width:100%;border-radius:10px;margin:8px 0">' if sb and os.path.exists(sb) else ""
     rows=[("Просмотры",hnum(it.get("views"))),("Лайки",hnum(it.get("likes"))),
           ("Комменты",hnum(it.get("comments"))),("Вовлечённость",er(it)),
@@ -69,7 +69,9 @@ def main():
     open(a.out,"w").write(html)
     if a.pdf:
         try:
-            subprocess.run(["chromium","--headless","--no-sandbox","--disable-gpu",
+            import glob as _g
+            _chr=([x for x in ["/opt/pw-browsers/chromium"]+_g.glob("/opt/pw-browsers/**/chrome*",recursive=True) if os.path.exists(x)]+["chromium"])[0]
+            subprocess.run([_chr,"--headless","--no-sandbox","--disable-gpu",
                 f"--print-to-pdf={a.pdf}","--no-pdf-header-footer",f"file://{os.path.abspath(a.out)}"],
                 capture_output=True,timeout=90)
         except Exception as e: sys.stderr.write(f"[pdf fail: {e}]\n")
