@@ -48,7 +48,8 @@ final class PdfFlow {
 
     public function spacer(int $px): void { $this->y += $px; }
 
-    /** Заголовок раздела с номером. */
+    /** Заголовок раздела с номером. Кегль автоматически уменьшается, чтобы длинное
+     *  название раздела не вылезало за правое поле страницы. */
     public function heading(string $num, string $title): void {
         $this->ensure(90);
         $font = pl_font('serif-bold');
@@ -58,7 +59,10 @@ final class PdfFlow {
         $c = imagecolorallocate($this->img, $this->navy[0], $this->navy[1], $this->navy[2]);
         imagefilledrectangle($this->img, $bx, $by, $bx + 44, $by + 44, $c);
         pl_text($this->img, $bx, $by + 33, 20, [255, 255, 255], pl_font('serif-bold'), $num, 'center', $bx + 44);
-        pl_text($this->img, $bx + 62, $by + 33, $size, $this->navy, $font, mb_strtoupper($title, 'UTF-8'));
+        $titleUp = mb_strtoupper($title, 'UTF-8');
+        $availW = ($this->W - $this->mR) - ($bx + 62);
+        while ($size > 15 && pl_text_w($size, $font, $titleUp) > $availW) { $size--; }
+        pl_text($this->img, $bx + 62, $by + 33, $size, $this->navy, $font, $titleUp);
         $this->y += 56;
         pl_rule($this->img, $this->mL, $this->y, $this->W - $this->mR, [214, 200, 170], 1);
         $this->y += 26;
@@ -117,7 +121,9 @@ function pdf_regulation(array $competition): string {
         $doc = new PdfFlow();
 
         $name   = (string)($competition['name'] ?? 'Конкурс');
-        $type   = (($competition['type'] ?? 'international') === 'national') ? 'Всероссийский' : 'Международный';
+        $isNational = (($competition['type'] ?? 'international') === 'national');
+        $type   = $isNational ? 'Всероссийский' : 'Международный';
+        $typeGen= $isNational ? 'всероссийского' : 'международного'; // родительный падеж для «...конкурса»
         $isPaid = (int)($competition['is_paid'] ?? 0) === 1;
         $price  = (int)($competition['price'] ?? 0);
         $start  = $competition['start_date'] ?? null;
@@ -134,17 +140,20 @@ function pdf_regulation(array $competition): string {
         if (!$activeNoms) $activeNoms = array_keys($allNoms);
 
         /* ---------- ШАПКА (раздел 1: реквизиты и правовые основания) ------- */
+        // «prokultura_pro_rf.png» — светлый (белый) логотип, рассчитанный на тёмную
+        // подложку; на светлом фоне положения надпись «КУЛЬТУРА.РФ» становится не
+        // видна. Для белого листа берём тёмный горизонтальный вариант того же лого.
         $logos = [
             $imgDir . 'emblem_minkultury_rf.png',
-            $imgDir . 'prokultura_pro_rf.png',
+            $imgDir . 'prokultura_full_horizontal.png',
             $imgDir . 'logo_muzmir_main.png',
         ];
         // три логотипа в ряд по верху
         pl_image($doc->img, $logos[0], $doc->mL, 96, null, 96);
         pl_image($doc->img, $logos[2], $doc->W - $doc->mR - 96, 96, 96, 96);
-        // центральный горизонтальный лого PROКультура
-        if (is_file($imgDir . 'prokultura_pro_rf.png')) {
-            pl_image($doc->img, $imgDir . 'prokultura_pro_rf.png', (int)($doc->W/2 - 150), 128, 300, null);
+        // центральный горизонтальный лого PROКультура (тёмная версия для светлого фона)
+        if (is_file($logos[1])) {
+            pl_image($doc->img, $logos[1], (int)($doc->W/2 - 150), 128, 300, null);
         }
         $doc->y = 214;
         pl_rule($doc->img, $doc->mL, $doc->y, $doc->W - $doc->mR, $doc->gold, 2);
@@ -161,7 +170,7 @@ function pdf_regulation(array $competition): string {
                 'ПОЛОЖЕНИЕ', 6, 'center', $doc->W - $doc->mR);
         $doc->y += 66;
         pl_text($doc->img, $doc->mL, $doc->y + 24, 24, $doc->ink, pl_font('serif'),
-                'о проведении ' . mb_strtolower($type, 'UTF-8') . ' онлайн-конкурса', 'center', $doc->W - $doc->mR);
+                'о проведении ' . $typeGen . ' онлайн-конкурса', 'center', $doc->W - $doc->mR);
         $doc->y += 42;
         foreach (pl_wrap('«' . trim($name, '«»') . '»', 30, pl_font('serif-bold'), $doc->contentW()) as $ln) {
             pl_text($doc->img, $doc->mL, $doc->y + 30, 30, $doc->gold, pl_font('serif-bold'), $ln, 'center', $doc->W - $doc->mR);
@@ -243,7 +252,19 @@ function pdf_regulation(array $competition): string {
         $doc->spacer(6);
         $allowed = array_values(array_unique(array_values(ALLOWED_PLATFORMS())));
         $doc->keyval('Разрешённые платформы', implode(', ', $allowed));
-        $blocked = array_map(fn($d) => ucfirst(explode('.', $d)[0]), BLOCKED_PLATFORMS());
+        // Человекочитаемые названия для доменов из справочника (несколько доменов
+        // могут указывать на один и тот же сервис, например youtube.com/youtu.be) —
+        // без этой карты в документ попадали обрывки вида «Youtube, Youtu, Fb».
+        $blockedNames = [
+            'youtube.com' => 'YouTube', 'youtu.be' => 'YouTube',
+            'instagram.com' => 'Instagram',
+            'facebook.com' => 'Facebook', 'fb.watch' => 'Facebook',
+            'tiktok.com' => 'TikTok',
+        ];
+        $blocked = array_map(
+            fn($d) => $blockedNames[$d] ?? ucfirst(explode('.', $d)[0]),
+            BLOCKED_PLATFORMS()
+        );
         $doc->keyval('Запрещённые платформы', implode(', ', array_values(array_unique($blocked))));
         $doc->para('Материалы низкого технического качества, с посторонней рекламой или нарушающие '
             . 'авторские права к участию не допускаются.');
@@ -314,9 +335,12 @@ function pdf_regulation(array $competition): string {
         // подпись
         if (is_file($imgDir . 'podpis_albert.png'))
             pl_image($doc->img, $imgDir . 'podpis_albert.png', $doc->mL + 20, $fy + 66, 200, null);
-        // печать справа (полупрозрачно)
+        // печать справа. ВАЖНО: opacity < 100 в pl_image() для PNG с альфа-каналом
+        // (imagecopymergegray не учитывает альфу временного холста) даёт чёрный
+        // прямоугольник вместо прозрачного фона печати — держим 100%, печать и так
+        // выглядит нарядно и не «плывёт» на просвет.
         if (is_file($imgDir . 'pechat_kc_muzmir.png'))
-            pl_image($doc->img, $imgDir . 'pechat_kc_muzmir.png', $doc->W - $doc->mR - 190, $fy - 6, 180, 180, 88);
+            pl_image($doc->img, $imgDir . 'pechat_kc_muzmir.png', $doc->W - $doc->mR - 190, $fy - 6, 180, 180, 100);
 
         // сохранение
         $slug = $competition['slug'] ?? pl_slug($name);
