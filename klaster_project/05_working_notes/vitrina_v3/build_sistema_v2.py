@@ -11,7 +11,18 @@ FONTS = open(f"{BASE}/03_deliverables/website/assets/css/fonts.css").read()
 EMBLEM = open(f"{SCRATCH}/web_emblem256.txt").read().strip()
 LOGO = open(f"{SCRATCH}/web_logo512.txt").read().strip()
 
-def esc(s): return html.escape(str(s or "").replace("—","-").replace("–","-"))
+import re as _re
+_NDA=[("BIVERTECH","инжиниринг полного цикла"),("БИВЕРТЕХ","инжиниринг полного цикла"),
+ ("bivertech","инжиниринг полного цикла"),("СИТИПРИНТ","оперативная типография"),
+ ("ситипринт","оперативная типография"),("NEED TO BUILD","деревообрабатывающая мануфактура"),
+ ("OFFICE SOLUTIONS","офисные решения"),("Бобрышев","основатели"),
+ ("станки из диабаза","станкостроение"),("из диабаза","с композитной станиной"),("диабаз","композитная станина")]
+def _scrub(s):
+    for a,b in _NDA: s=s.replace(a,b)
+    return s
+def esc(s):
+    s=_scrub(str(s or "")).replace("—","-").replace("–","-").replace("м2","м²")
+    return html.escape(s)
 
 # ---------- data ----------
 content = json.load(open(f"{SCRATCH}/content.json", encoding="utf-8"))
@@ -168,7 +179,7 @@ def section_competitors():
     {kpis_html(d.get("kpis") or [{"value":"110","label":"конкурентов"},{"value":"9","label":"сегментов"},{"value":"100%","label":"проверенные ссылки"}])}
     {platform_chart()}
     <div class="cbar"><div class="chips">{"".join(chips)}</div>
-    <div class="cc-search">{icon("search","ic-sm")}<input id="ccq" placeholder="Поиск по названию, позиционированию, приёму"></div></div>
+    <div class="cc-search">{icon("search","ic-sm")}<input id="ccq" type="search" aria-label="Поиск по конкурентам" placeholder="Поиск по названию, позиционированию, приёму"></div></div>
     <div class="ccount" id="ccount"></div>
     <div class="ccards" id="ccards">{"".join(cards)}</div>
     {insights}'''
@@ -202,14 +213,14 @@ def render_section(sid):
     idx=SECTION_ORDER.index(sid)+1
     return f'''<section id="sec-{sid}" class="sec"><div class="sec-head rv"><div class="sec-num">{idx:02d}</div><div><div class="eyebrow">Система OKO · 90 дней</div><h1>{esc(LABELS[sid])}</h1></div></div>{inner}</section>'''
 
-nav="".join(f'''<a class="nav" data-sec="{sid}"><span class="nav-ic">{icon(sid,"ic")}</span><span class="nav-n">{i+1:02d}</span><span class="nav-t">{esc(LABELS[sid])}</span></a>''' for i,sid in enumerate(SECTION_ORDER))
+nav="".join(f'''<a class="nav" href="#{sid}" data-sec="{sid}"><span class="nav-ic">{icon(sid,"ic")}</span><span class="nav-n">{i+1:02d}</span><span class="nav-t">{esc(LABELS[sid])}</span></a>''' for i,sid in enumerate(SECTION_ORDER))
 sections="".join(render_section(sid) for sid in SECTION_ORDER)
 
 CSS = r"""
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
  --bg:#08090b;--bg2:#0c0e12;--panel:#101318;--panel2:#151922;--card:#12151b;
- --line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12);
+ --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.14);--ease:cubic-bezier(.2,.8,.2,1);
  --gold:#E9B84A;--gold2:#C9982E;--amber:#E8A400;--gold-soft:rgba(233,184,74,.12);--gold-glow:rgba(233,184,74,.28);
  --ink:#EEF0F3;--ink2:#C6CAD2;--muted:#8A909B;--muted2:#7C8390;
  --ff-d:'Oswald',sans-serif;--ff:'Manrope',sans-serif;--sb:264px}
@@ -225,7 +236,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--ff);line-height:1.6
  border-right:1px solid var(--line);backdrop-filter:blur(14px);padding:22px 14px;scrollbar-width:thin}
 .side::-webkit-scrollbar{width:6px}.side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
 .brand{display:flex;align-items:center;gap:11px;padding:6px 10px 16px;border-bottom:1px solid var(--line);margin-bottom:14px}
-.brand img{width:38px;height:38px;object-fit:contain}
+.emb-i{display:block;background:var(--emb) center/contain no-repeat;flex-shrink:0}
+.brand .emb-i{width:38px;height:38px}
 .brand .bt{font-family:var(--ff-d);font-weight:600;font-size:16px;letter-spacing:.04em;line-height:1}
 .brand .bt small{display:block;font-family:var(--ff);font-weight:600;font-size:10px;letter-spacing:.18em;color:var(--gold);margin-top:4px;text-transform:uppercase}
 .home{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;font-weight:600;text-decoration:none;padding:8px 10px;margin-bottom:8px;border-radius:9px}
@@ -243,7 +255,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--ff);line-height:1.6
 /* topbar mobile */
 .top{display:none;position:sticky;top:0;z-index:30;align-items:center;gap:12px;padding:12px 16px;
  background:rgba(10,12,15,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.top img{width:30px;height:30px}.top .tt{font-family:var(--ff-d);font-size:15px;flex:1}
+.top .emb-i{width:30px;height:30px}.top .tt{font-family:var(--ff-d);font-size:15px;flex:1}
 .burger{width:44px;height:44px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03);display:grid;place-items:center;cursor:pointer}
 .burger svg{width:20px;height:20px;stroke:var(--ink)}
 .scrim{display:none;position:fixed;inset:0;z-index:25;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
@@ -261,15 +273,15 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
 .lead{font-size:17px;color:var(--ink2);max-width:760px;margin-bottom:26px}
 /* kpis */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
-.kpi{background:linear-gradient(180deg,var(--panel2),var(--card));border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.kpi{background:linear-gradient(180deg,var(--panel2),var(--card));border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 28px -16px rgba(0,0,0,.65)}
 .kpi:before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
-.kpi-v{font-family:var(--ff-d);font-weight:700;font-size:34px;line-height:1;background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-v{font-family:var(--ff-d);font-weight:700;font-size:34px;line-height:1;color:#F3EEE2;font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 .kpi-l{font-size:13px;color:var(--ink2);margin-top:7px;font-weight:600}
 .kpi-s{font-size:11.5px;color:var(--muted);margin-top:3px}
 /* cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:26px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;transition:.2s;position:relative}
-.card:hover{transform:translateY(-3px);border-color:rgba(233,184,74,.4);box-shadow:0 16px 40px rgba(0,0,0,.4),0 0 0 1px rgba(233,184,74,.15)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;transition:transform .22s var(--ease),border-color .22s var(--ease),box-shadow .22s var(--ease);position:relative;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 8px 24px -14px rgba(0,0,0,.6)}
+.card:hover{transform:translateY(-4px);border-color:rgba(233,184,74,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 24px 60px -18px rgba(0,0,0,.7),0 0 0 1px rgba(233,184,74,.18)}
 .tag{display:inline-block;font-family:var(--ff-d);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);
  background:var(--gold-soft);border:1px solid rgba(233,184,74,.24);border-radius:20px;padding:4px 11px;margin-bottom:12px}
 .card h3{font-family:var(--ff-d);font-weight:600;font-size:18px;margin-bottom:8px;letter-spacing:.01em}
@@ -329,7 +341,7 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
 /* calendar */
 .cal-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px}
 .lg{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)}.lg i{width:11px;height:11px;border-radius:3px;display:block}
-.lg-reels i{background:#E9B84A}.lg-post i{background:#4AA3E9}.lg-carousel i{background:#8B5CF6}.lg-article i{background:#2CB67D}.lg-story i{background:#E9694A}.lg-live i{background:#E94A8B}
+.lg-reels i{background:#E9B84A}.lg-post i{background:#6E7683}.lg-carousel i{background:#B08A3C}.lg-article i{background:#7C8B7A}.lg-story i{background:#C77B54}.lg-live i{background:#A85C6B}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .cal-wd{font-family:var(--ff-d);font-size:12px;color:var(--muted);text-align:center;padding-bottom:4px;letter-spacing:.05em}
 .cal-cell{min-height:92px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 9px 8px;transition:.16s;position:relative}
@@ -337,10 +349,10 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
 .cal-cell.has:hover{border-color:rgba(233,184,74,.4);transform:translateY(-2px)}
 .cal-d{font-family:var(--ff-d);font-size:14px;color:var(--ink2)}.cal-cell.has .cal-d{color:var(--gold)}
 .cal-dots{display:flex;gap:3px;margin:5px 0}.dot{width:7px;height:7px;border-radius:2px;display:block}
-.dot-reels{background:#E9B84A}.dot-post{background:#4AA3E9}.dot-carousel{background:#8B5CF6}.dot-article{background:#2CB67D}.dot-story{background:#E9694A}.dot-live{background:#E94A8B}
+.dot-reels{background:#E9B84A}.dot-post{background:#6E7683}.dot-carousel{background:#B08A3C}.dot-article{background:#7C8B7A}.dot-story{background:#C77B54}.dot-live{background:#A85C6B}
 .cal-its{display:grid;gap:3px}
 .cal-it{font-size:10.5px;line-height:1.3;color:var(--ink2);padding:3px 5px;border-radius:5px;background:rgba(255,255,255,.03);border-left:2px solid var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.it-reels{border-color:#E9B84A}.it-post{border-color:#4AA3E9}.it-carousel{border-color:#8B5CF6}.it-article{border-color:#2CB67D}.it-story{border-color:#E9694A}.it-live{border-color:#E94A8B}
+.it-reels{border-color:#E9B84A}.it-post{border-color:#6E7683}.it-carousel{border-color:#B08A3C}.it-article{border-color:#7C8B7A}.it-story{border-color:#C77B54}.it-live{border-color:#A85C6B}
 /* launcher grid */
 .launch{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .lch{display:grid;grid-template-columns:auto auto 1fr auto;grid-template-areas:"ic n t a" "ic n s a";column-gap:12px;align-items:center;
@@ -354,6 +366,10 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
 /* reveal */
 .rv{opacity:0;transform:translateY(14px);transition:opacity .5s,transform .5s}
 .rv.in{opacity:1;transform:none}
+
+::selection{background:rgba(233,184,74,.28);color:#fff}
+:where(.nav,.chip,.lch,.cc-link,.home,.burger,.cc-btn){-webkit-tap-highlight-color:transparent}
+:where(.nav,.chip,.lch,.cc-link,.home,.burger) :focus-visible,:where(.nav,.chip,.lch,.cc-link,.home,.burger):focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px}
 /* responsive */
 @media(max-width:900px){
  :root{--sb:0px}
@@ -365,6 +381,7 @@ h2.sub{font-family:var(--ff-d);font-weight:600;font-size:24px;margin:34px 0 14px
  .wrap{padding:22px 16px 70px}
  .sec-num{font-size:36px}
  .kpis{grid-template-columns:1fr 1fr}
+ .kpi-v{font-size:27px}
  .cards,.ccards{grid-template-columns:1fr}
  .cal-grid{grid-template-columns:repeat(7,1fr);gap:4px}
  .cal-cell{min-height:64px;padding:5px}.cal-its{display:none}.cal-d{font-size:12px}
@@ -381,7 +398,7 @@ JS = r"""
 const order=%%ORDER%%;
 const secs=[...document.querySelectorAll('.sec')], navs=[...document.querySelectorAll('.nav')];
 const side=document.querySelector('.side'), scrim=document.querySelector('.scrim');
-function reveal(sec){const els=sec.querySelectorAll('.rv');els.forEach((e,i)=>setTimeout(()=>e.classList.add('in'),40+i*45));}
+function reveal(sec){const els=sec.querySelectorAll('.rv');els.forEach((e,i)=>setTimeout(()=>e.classList.add('in'),40+Math.min(i,16)*45));}
 function countup(sec){sec.querySelectorAll('.kpi-v').forEach(el=>{const raw=el.dataset.raw;const m=raw.match(/^(\d{1,3}(?:[\s ]\d{3})*|\d+)(.*)$/s);if(!m){el.textContent=raw;return}const t=+m[1].replace(/[\s ]/g,'');const suf=m[2]||'';if(!t||t>100000||/\d/.test(suf)){el.textContent=raw;return}let n=0;const step=Math.max(1,Math.round(t/38));const id=setInterval(()=>{n+=step;if(n>=t){n=t;clearInterval(id)}el.textContent=n.toLocaleString('ru')+suf},22);});}
 function show(id,push){if(!order.includes(id))id=order[0];secs.forEach(s=>s.classList.toggle('on',s.id==='sec-'+id));
  navs.forEach(a=>a.classList.toggle('active',a.dataset.sec===id));
@@ -389,8 +406,8 @@ function show(id,push){if(!order.includes(id))id=order[0];secs.forEach(s=>s.clas
  window.scrollTo(0,0);if(push!==false)history.replaceState(0,'','#'+id);closeNav();}
 navs.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();show(a.dataset.sec)}));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){e.preventDefault();show(b.dataset.go);}});
-function openNav(){side.classList.add('open');scrim.classList.add('show')}
-function closeNav(){side.classList.remove('open');scrim.classList.remove('show')}
+function openNav(){side.classList.add('open');scrim.classList.add('show');document.body.style.overflow='hidden'}
+function closeNav(){side.classList.remove('open');scrim.classList.remove('show');document.body.style.overflow=''}
 document.querySelector('.burger')?.addEventListener('click',openNav);scrim?.addEventListener('click',closeNav);
 show((location.hash||'').replace('#','')||order[0],false);
 // competitors filter+search
@@ -414,13 +431,14 @@ doc=f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">
 <meta name="description" content="Интерактивный штаб проекта «Кластер»: стратегия, ЦА, ниша, 110 конкурентов, контент-план 90 дней, SEO, дорожная карта и KPI.">
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgo=">
 <style>{FONTS}
-{CSS}</style></head><body>
+{CSS}
+:root{{--emb:url({EMBLEM})}}</style></head><body>
 <canvas id="bgfx"></canvas><div class="glow g1"></div><div class="glow g2"></div>
-<div class="top"><img src="{EMBLEM}" alt=""><div class="tt">Система OKO</div><button class="burger" aria-label="Меню">{BURGER}</button></div>
+<div class="top"><i class="emb-i" role="img" aria-label="Кластер"></i><div class="tt">Система OKO</div><button class="burger" aria-label="Меню">{BURGER}</button></div>
 <div class="scrim"></div>
 <div class="app">
 <aside class="side">
- <div class="brand"><img src="{EMBLEM}" alt="Активити"><div class="bt">КЛАСТЕР<small>Система OKO</small></div></div>
+ <div class="brand"><i class="emb-i" role="img" aria-label="Кластер"></i><div class="bt">КЛАСТЕР<small>Система OKO</small></div></div>
  <a class="home" href="/">{icon("arrow","ic")} На главную витрины</a>
  <nav>{nav}</nav>
  <div class="side-foot">Бизнес-парк «Кластер» · ООО «Активити»<br>Подготовлено OKO TEAM · 2026</div>

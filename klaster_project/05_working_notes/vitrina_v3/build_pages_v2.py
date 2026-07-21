@@ -31,7 +31,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--ff);line-height:1.6
 .glow.g2{bottom:-160px;left:-100px;width:560px;height:560px;background:radial-gradient(circle,rgba(120,90,20,.14),transparent 70%)}
 .wrap{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:26px 26px 80px}
 .topnav{display:flex;align-items:center;gap:14px;padding:6px 2px 26px;border-bottom:1px solid var(--line);margin-bottom:30px}
-.topnav img{width:40px;height:40px}
+.topnav .nav-emb{width:40px;height:40px;display:block;background:var(--emb) center/contain no-repeat}
 .topnav .bt{font-family:var(--ff-d);font-weight:600;font-size:17px;line-height:1}
 .topnav .bt small{display:block;font-size:10px;letter-spacing:.18em;color:var(--gold);margin-top:3px;text-transform:uppercase;font-family:var(--ff);font-weight:600}
 .home{margin-left:auto;display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;padding:9px 14px;border:1px solid var(--line);border-radius:10px}
@@ -44,22 +44,22 @@ svg.ic{width:16px;height:16px}
 /* calendar */
 .cal-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:18px}
 .lg{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink2)}.lg i{width:11px;height:11px;border-radius:3px;display:block}
-.lg-reels i{background:#E9B84A}.lg-post i{background:#4AA3E9}.lg-carousel i{background:#8B5CF6}.lg-article i{background:#2CB67D}.lg-story i{background:#E9694A}.lg-live i{background:#E94A8B}
+.lg-reels i{background:#E9B84A}.lg-post i{background:#6E93B8}.lg-carousel i{background:#8E7BB0}.lg-article i{background:#5FA88A}.lg-story i{background:#C77B5A}.lg-live i{background:#B56E8E}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .cal-wd{font-family:var(--ff-d);font-size:12px;color:var(--muted);text-align:center;padding-bottom:4px}
-.cal-cell{min-height:104px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px;transition:.16s}
+.cal-cell{min-height:96px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px;transition:.16s}
 .cal-cell.has{background:linear-gradient(180deg,var(--panel2),var(--card))}
 .cal-cell.has:hover{border-color:rgba(233,184,74,.4);transform:translateY(-2px)}
 .cal-d{font-family:var(--ff-d);font-size:14px;color:var(--muted)}.cal-cell.has .cal-d{color:var(--gold)}
 .cal-dots{display:flex;gap:3px;margin:5px 0}.dot{width:7px;height:7px;border-radius:2px;display:block}
-.dot-reels{background:#E9B84A}.dot-post{background:#4AA3E9}.dot-carousel{background:#8B5CF6}.dot-article{background:#2CB67D}.dot-story{background:#E9694A}.dot-live{background:#E94A8B}
+.dot-reels{background:#E9B84A}.dot-post{background:#6E93B8}.dot-carousel{background:#8E7BB0}.dot-article{background:#5FA88A}.dot-story{background:#C77B5A}.dot-live{background:#B56E8E}
 .cal-its{display:grid;gap:3px}
-.cal-it{font-size:10.5px;line-height:1.3;color:var(--ink2);padding:3px 5px;border-radius:5px;background:rgba(255,255,255,.03);border-left:2px solid var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.it-reels{border-color:#E9B84A}.it-post{border-color:#4AA3E9}.it-carousel{border-color:#8B5CF6}.it-article{border-color:#2CB67D}.it-story{border-color:#E9694A}.it-live{border-color:#E94A8B}
+.cal-it{font-size:11.5px;line-height:1.4;color:var(--ink2);padding:4px 8px;border-radius:5px;background:rgba(255,255,255,.03);border-left:2px solid var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.it-reels{border-color:#E9B84A}.it-post{border-color:#6E93B8}.it-carousel{border-color:#8E7BB0}.it-article{border-color:#5FA88A}.it-story{border-color:#C77B5A}.it-live{border-color:#B56E8E}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:26px}
-.kpi{background:linear-gradient(180deg,var(--panel2),var(--card));border:1px solid var(--line);border-radius:16px;padding:18px;position:relative;overflow:hidden}
+.kpi{background:linear-gradient(180deg,var(--panel2),var(--card));border:1px solid var(--line);border-radius:16px;padding:18px;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 30px -18px rgba(0,0,0,.7)}
 .kpi:before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
-.kpi-v{font-family:var(--ff-d);font-weight:700;font-size:32px;line-height:1;background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.kpi-v{font-family:var(--ff-d);font-weight:700;font-size:clamp(24px,3vw,32px);line-height:1;color:#F3EEE2;font-variant-numeric:tabular-nums;white-space:nowrap}
 .kpi-l{font-size:13px;color:var(--ink2);margin-top:7px;font-weight:600}
 /* brand */
 .logos{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:14px}
@@ -67,6 +67,7 @@ svg.ic{width:16px;height:16px}
 .lbox.dark{background:radial-gradient(circle at 50% 40%,#1a1d24,#0a0b0d)}
 .lbox.light{background:#f3f4f6}.lbox.gold{background:linear-gradient(135deg,#E9B84A,#C9982E)}
 .lbox img{max-width:74%;max-height:120px;object-fit:contain}
+.lb-i{width:74%;height:120px;background-position:center;background-repeat:no-repeat;background-size:contain;display:block}
 .lbox .cap{position:absolute;left:14px;bottom:12px;font-size:11px;color:var(--muted);font-family:var(--ff-d);letter-spacing:.08em;text-transform:uppercase}
 .lbox.light .cap{color:#8a9099}
 .sw{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:16px 0 26px}
@@ -79,6 +80,10 @@ svg.ic{width:16px;height:16px}
 .type-demo{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-bottom:26px}
 .rv{opacity:0;transform:translateY(14px);transition:.5s}.rv.in{opacity:1;transform:none}
 .home{min-height:44px;box-sizing:border-box}
+
+::selection{background:rgba(233,184,74,.28);color:#fff}
+:where(.home,.dl a,.cf,.faq-q):focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px}
+body{-webkit-tap-highlight-color:transparent}
 @media(max-width:640px){.wrap{padding:20px 14px 60px}
  .cal-grid{grid-template-columns:1fr;gap:6px}.cal-wd{display:none}
  .cal-cell{min-height:0;display:flex;align-items:flex-start;gap:10px;padding:11px 12px}
@@ -103,10 +108,11 @@ def shell(title,desc,body,extra_js=""):
     return f"""<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{esc(title)}</title><meta name="description" content="{esc(desc)}">
 <style>{FONTS}
+:root{{--emb:url({EMBLEM})}}
 {CSS}</style></head><body>
 <canvas id="bgfx"></canvas><div class="glow g1"></div><div class="glow g2"></div>
 <div class="wrap">
-<div class="topnav"><img src="{EMBLEM}" alt="Кластер"><div class="bt">КЛАСТЕР<small>Витрина проекта</small></div>
+<div class="topnav"><i class="nav-emb" role="img" aria-label="Кластер"></i><div class="bt">КЛАСТЕР<small>Витрина проекта</small></div>
 <a class="home" href="/">{BACK} На главную</a></div>
 {body}
 </div><script>{PARTICLES}{extra_js}</script></body></html>"""
@@ -126,7 +132,7 @@ cells=[]
 for d in range(1,31):
     items=byday.get(d,[])
     dots="".join(f'<i class="dot dot-{tcolors.get(it.get("type"),"post")}"></i>' for it in items[:4])
-    titles="".join(f'<div class="cal-it it-{tcolors.get(it.get("type"),"post")}" title="{esc(it.get("title",""))}">{esc(it.get("title",""))[:40]}</div>' for it in items[:2])
+    titles="".join(f'<div class="cal-it it-{tcolors.get(it.get("type"),"post")}" title="{esc(it.get("title",""))}">{esc(it.get("title",""))}</div>' for it in items[:2])
     cells.append(f'<div class="cal-cell {"has" if items else ""}"><div class="cal-d">{d}</div><div class="cal-dots">{dots}</div><div class="cal-its">{titles}</div></div>')
 total=sum(len(v) for v in byday.values())
 cnt=content.get("content",{})
@@ -141,20 +147,20 @@ open(f"{PUB}/content.html","w",encoding="utf-8").write(shell("Контент-п�
 print("content.html", os.path.getsize(f"{PUB}/content.html")//1024,"KB")
 
 # ---------- brand.html: logo showcase ----------
-ZIP_HREF="/brand/aktiviti/LOGO_AKTIVITI_web.zip"
-bbody=f"""<div class="eyebrow rv">Бренд · Логотип и стиль</div><h1 class="rv">Логотип «Активити»</h1>
+ZIP_HREF="/brand/aktiviti/LOGO_AKTIVITI_mini.zip"
+bbody=f"""<style>:root{{--logo:url({LOGO});--av:url({AVATAR})}}</style><div class="eyebrow rv">Бренд · Логотип и стиль</div><h1 class="rv">Логотип «Активити»</h1>
 <p class="lead rv">Фирменный знак бизнес-парка «Кластер» (ООО «Активити»): монограмма-«А» с вордмарком. Восстановлен по оригиналу и доведён до премиум-качества. Ниже начертания, палитра, шрифты и файлы во всех форматах.</p>
-<div class="dl rv"><a class="primary" href="{ZIP_HREF}" download>Скачать пакет (ZIP, все форматы)</a>
+<div class="dl rv"><a class="primary" href="{ZIP_HREF}" download>Скачать пакет (ZIP)</a>
 <a href="/brand/aktiviti/logo.png" download>Логотип PNG</a>
 <a href="/brand/aktiviti/emblem.png" download>Эмблема PNG</a>
 <a href="/brand/aktiviti/emblem-mono.svg" download>Вектор SVG</a>
 <a href="/brand/aktiviti/avatar.png" download>Аватар PNG</a></div>
 <h2 class="sub rv">Начертания</h2>
 <div class="logos rv">
- <div class="lbox dark"><img src="{LOGO}" alt="Логотип на тёмном"><span class="cap">Основной знак</span></div>
- <div class="lbox light"><img src="{LOGO}" alt="Логотип на светлом"><span class="cap">На светлом</span></div>
- <div class="lbox dark"><img src="{EMBLEM}" alt="Эмблема"><span class="cap">Эмблема</span></div>
- <div class="lbox dark"><img src="{AVATAR}" alt="Аватар"><span class="cap">Аватар · соцсети</span></div>
+ <div class="lbox dark"><i class="lb-i" style="background-image:var(--logo)"></i><span class="cap">Основной знак</span></div>
+ <div class="lbox light"><i class="lb-i" style="background-image:var(--logo)"></i><span class="cap">На светлом</span></div>
+ <div class="lbox dark"><i class="lb-i" style="background-image:var(--emb)"></i><span class="cap">Эмблема</span></div>
+ <div class="lbox dark"><i class="lb-i" style="background-image:var(--av)"></i><span class="cap">Аватар · соцсети</span></div>
 </div>
 <h2 class="sub rv">Палитра</h2>
 <div class="sw rv">
@@ -165,7 +171,7 @@ bbody=f"""<div class="eyebrow rv">Бренд · Логотип и стиль</di
 </div>
 <h2 class="sub rv">Типографика</h2>
 <div class="type-demo rv">
- <div style="font-family:'Oswald';font-weight:700;font-size:40px;text-transform:uppercase;letter-spacing:.02em">Oswald - заголовки</div>
+ <div style="font-family:'Oswald';font-weight:700;font-size:clamp(26px,7vw,40px);text-transform:uppercase;letter-spacing:.02em">Oswald - заголовки</div>
  <div style="font-family:'Manrope';font-size:17px;color:var(--ink2);margin-top:10px">Manrope - основной текст интерфейса и абзацы. Гуманистический гротеск, кириллица, веса 400 / 500 / 700.</div>
 </div>
 <h2 class="sub rv">Обзор пакета</h2>
