@@ -69,3 +69,9 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 Механики (11, свежий набор/зоны): badge(верх)→iconrow→vs→lowerthird→sidebars→bigstat(центр 4×4)→donut(ресурс)→route→iconrow→badge→stamp. Стиль 0 стекло-тёплый (≠ #8 стиль 2).
 Стоки: 12 Pexels quad/atv/offroad (b01-b12, все вертикальные, новые). Обложка: FLUX-лимит→фолбэк кадр квадро+бренд. Голос Dmitry +6%.
 Публикация batch A: YT 8XMXHnEeYRo · TikTok 2350915 · IG @diesel_cargo (SHARED). День 21.07: posted_A=1/5.
+
+## 21.07 — ролик #10 (batch B) МОТО «тот же завод — другая цена» — стиль 3 (градиент-амбер)
+Тема: мотоцикл из Китая напрямую с завода, без переплаты за шильдик. Хук: та же сборка/мотор, что у дорогих брендов. Микс: польза+вирал.
+Механики (12, НОВЫЙ набор ≠ #9): speedo(137км/ч)→chips→lowerthird→iconrow→odometer(48000км)→linechart→bigstat(EFI)→donut→route→chips→badge→stamp. Стиль 3 градиент-амбер (≠ #9 стиль 0).
+Стоки: 12 Pexels motorcycle/sport-moto (все вертикальные, новые). Обложка FLUX ok. Голос Dmitry +6%.
+Публикация batch B: YT 6rMgveduxtQ · TikTok 2363201 · IG @diesel_kitay (SHARED). День 21.07: posted_B=1/5.
