@@ -99,6 +99,9 @@ function db_migrate(PDO $pdo): void {
         status TEXT DEFAULT 'draft',        -- draft|open|closed|judging|finished
         regulation_pdf TEXT DEFAULT '',
         diploma_template TEXT DEFAULT '',
+        diploma_theme TEXT DEFAULT '',       -- ключ темы фона диплома
+        diploma_bg TEXT DEFAULT '',          -- путь к фону-подложке диплома (png)
+        diploma_approved INTEGER DEFAULT 0,  -- шаблон подтверждён в админке/боте
         region_logos TEXT DEFAULT '',       -- json список лого субъектов
         nominations TEXT DEFAULT '',        -- json активных номинаций
         sort INTEGER DEFAULT 0,
