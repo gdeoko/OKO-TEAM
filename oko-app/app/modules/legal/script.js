@@ -5,31 +5,34 @@
 /* ---------- состояние (localStorage oko-legal) ---------- */
 const lgS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-legal'))||null; }catch(e){ return null; } })() || { lang: (typeof LANG!=='undefined'?LANG:'ru') };
 function lgSave(){ try{ localStorage.setItem('oko-legal', JSON.stringify(lgS)); }catch(e){} }
-let lgKind = 'offer'; // offer | privacy | terms
+let lgKind = 'offer'; // offer | privacy | terms | consent
 
 const LG_TABS = [
   {k:'offer',   ru:'Оферта',            en:'Offer'},
   {k:'privacy', ru:'Конфиденциальность',en:'Privacy'},
-  {k:'terms',   ru:'Соглашение',        en:'Terms'}
+  {k:'terms',   ru:'Соглашение',        en:'Terms'},
+  {k:'consent', ru:'Согласие на ПД',    en:'Data consent'}
 ];
 
 /* ---------- общие реквизиты ---------- */
 const LG_REQ = {
   ru: {
     op: 'Индивидуальный предприниматель Ильясов Даниэль Альбертович',
+    brand: 'Проект «ОКО PROJECT»',
     inn: 'ИНН 682016634349',
     geo: 'г. Москва, Российская Федерация · представительство: г. Дубай, ОАЭ',
     mail: 'okoteam.top@gmail.com',
     sig: 'Ильясов Д.А. / Индивидуальный предприниматель',
-    date: '16 июля 2026 г.'
+    date: '21 июля 2026 г.'
   },
   en: {
     op: 'Sole Proprietor Ilyasov Daniel Albertovich',
+    brand: '"OKO PROJECT"',
     inn: 'Taxpayer ID (INN) 682016634349',
     geo: 'Moscow, Russian Federation · representative office: Dubai, UAE',
     mail: 'okoteam.top@gmail.com',
     sig: 'D. A. Ilyasov / Sole Proprietor',
-    date: 'July 16, 2026'
+    date: 'July 21, 2026'
   }
 };
 
@@ -40,7 +43,7 @@ const LG_DOCS = {
 
 /* ============================ ОФЕРТА ============================ */
 offer: {
-ru: { title:'Публичная оферта', rev:'Редакция № 3', secs:[
+ru: { title:'Публичная оферта', rev:'Редакция № 4', secs:[
 {h:'Общие положения и акцепт', b:
 `<p>Настоящий документ является официальным предложением (публичной офертой) Индивидуального предпринимателя Ильясова Даниэля Альбертовича (ИНН 682016634349, г. Москва, Российская Федерация; представительство: г. Дубай, ОАЭ), далее — <b>«Оператор»</b>, заключить договор возмездного оказания услуг сервиса OKO на изложенных ниже условиях в соответствии со ст. 435, 437 и 438 Гражданского кодекса РФ.</p>
 <p>Полным и безоговорочным акцептом оферты признаётся любое из действий: регистрация аккаунта в приложении OKO, оплата тарифа, пополнение лицевого счёта либо фактическое использование любой функции Сервиса. С момента акцепта договор считается заключённым.</p>`},
@@ -89,7 +92,7 @@ ru: { title:'Публичная оферта', rev:'Редакция № 3', sec
 {h:'Реквизиты Оператора', b:
 `<p><b>ИП Ильясов Даниэль Альбертович</b> · ИНН 682016634349 · г. Москва, Российская Федерация · представительство: г. Дубай, ОАЭ · e-mail: okoteam.top@gmail.com.</p>`}
 ]},
-en: { title:'Public Offer Agreement', rev:'Revision No. 3', secs:[
+en: { title:'Public Offer Agreement', rev:'Revision No. 4', secs:[
 {h:'General Provisions and Acceptance', b:
 `<p>This document is an official proposal (public offer) of Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE), hereinafter the <b>"Operator"</b>, to conclude a paid services agreement for the OKO service on the terms below, pursuant to Articles 435, 437 and 438 of the Civil Code of the Russian Federation.</p>
 <p>Full and unconditional acceptance of this offer is any of the following: registering an account in the OKO app, paying for a plan, topping up the personal account, or actually using any feature of the Service. The agreement is deemed concluded upon acceptance.</p>`},
@@ -142,7 +145,7 @@ en: { title:'Public Offer Agreement', rev:'Revision No. 3', secs:[
 
 /* ===================== КОНФИДЕНЦИАЛЬНОСТЬ ===================== */
 privacy: {
-ru: { title:'Политика конфиденциальности', rev:'Редакция № 3', secs:[
+ru: { title:'Политика конфиденциальности', rev:'Редакция № 4', secs:[
 {h:'Общие положения', b:
 `<p>Настоящая Политика определяет порядок обработки и защиты персональных данных пользователей приложения OKO. Оператор персональных данных — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ).</p>
 <p>Обработка ведётся в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных»; для пользователей из Европейской экономической зоны дополнительно применяются принципы GDPR: законность, минимизация данных, ограничение целей и сроков хранения, прозрачность.</p>`},
@@ -198,7 +201,7 @@ ru: { title:'Политика конфиденциальности', rev:'Ред
 `<p>Оператор вправе обновлять Политику; новая редакция публикуется в приложении с указанием даты. Продолжение использования Сервиса означает согласие с обновлённой Политикой.</p>
 <p>Вопросы по обработке персональных данных: <b>okoteam.top@gmail.com</b>.</p>`}
 ]},
-en: { title:'Privacy Policy', rev:'Revision No. 3', secs:[
+en: { title:'Privacy Policy', rev:'Revision No. 4', secs:[
 {h:'General Provisions', b:
 `<p>This Policy defines how personal data of OKO app users is processed and protected. The data controller is Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE).</p>
 <p>Processing is carried out in accordance with Russian Federal Law No. 152-FZ "On Personal Data" of 27.07.2006; for users from the European Economic Area the GDPR principles additionally apply: lawfulness, data minimisation, purpose and storage limitation, and transparency.</p>`},
@@ -258,7 +261,7 @@ en: { title:'Privacy Policy', rev:'Revision No. 3', secs:[
 
 /* ======================= СОГЛАШЕНИЕ ======================= */
 terms: {
-ru: { title:'Пользовательское соглашение', rev:'Редакция № 3', secs:[
+ru: { title:'Пользовательское соглашение', rev:'Редакция № 4', secs:[
 {h:'Общие положения', b:
 `<p>Настоящее Соглашение устанавливает правила пользования платформой OKO и действует совместно с Публичной офертой и Политикой конфиденциальности. Регистрируясь в Сервисе, Пользователь подтверждает, что ознакомился с Соглашением и обязуется его соблюдать.</p>
 <p>Оператор платформы — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ).</p>`},
@@ -311,7 +314,7 @@ ru: { title:'Пользовательское соглашение', rev:'Ред
 {h:'Заключительные положения', b:
 `<p>Недействительность отдельного положения Соглашения не влечёт недействительности остальных. Оператор вправе обновлять Соглашение в порядке, аналогичном изменению Публичной оферты. Актуальная редакция всегда доступна в приложении в разделе «Документы OKO».</p>`}
 ]},
-en: { title:'Terms of Service', rev:'Revision No. 3', secs:[
+en: { title:'Terms of Service', rev:'Revision No. 4', secs:[
 {h:'General Provisions', b:
 `<p>These Terms establish the rules for using the OKO platform and apply together with the Public Offer and the Privacy Policy. By registering in the Service, the User confirms that they have read the Terms and undertake to comply with them.</p>
 <p>The platform operator is Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE).</p>`},
