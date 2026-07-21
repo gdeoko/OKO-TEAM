@@ -15,6 +15,10 @@ cd "$REPO" && git checkout -q tappio.app 2>/dev/null && git pull -q origin tappi
 bash setup_env.sh > work/_setup.log 2>&1
 grep -q "ENV READY" work/_setup.log || { echo "ENV_NOT_READY"; tail -3 work/_setup.log; exit 1; }
 
+# ПОЧАСОВАЯ ПРОВЕРКА ВСЕГО (мост с проверкой) — раз в час по маркеру, через существующие тики
+HMARK="work/.health_$(date -u +%Y%m%d%H 2>/dev/null)"
+if [ ! -f "$HMARK" ]; then bash health.sh > work/_health.log 2>&1 || true; touch "$HMARK" 2>/dev/null; echo "[health] $(tail -1 work/_health.log)"; fi
+
 # квота
 REMAIN=$(python3 quota.py check 2>/dev/null || echo 0)
 if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.py status))"; exit 0; fi
