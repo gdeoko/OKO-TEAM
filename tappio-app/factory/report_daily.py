@@ -70,9 +70,14 @@ def main():
     if not rows:
         L.append("<i>Пока нет роликов с записанным YouTube-id (появятся со следующих публикаций).</i>")
     L.append("")
-    L.append("<b>TikTok:</b> метрики — в кабинете Hooppy (API просмотров тут не тянем).")
-    L.append("<b>Instagram:</b> нужен вход в сессию (сейчас разлогинен) — как войдёшь, добавлю IG-метрики.")
-    L.append("<i>Цифры реальные, с площадок. Ничего не выдумано.</i>")
+    # Instagram — наши опубликованные рилы (из реестра, реальные ссылки на tappio.pro)
+    ig_items = [(rid, e) for rid, e in reg.items() if e.get("ig_code")]
+    L.append(f"<b>Instagram (@tappio.pro):</b> опубликовано рилов: <b>{len(ig_items)}</b>")
+    for rid, e in ig_items[-8:]:
+        L.append(f"• {e.get('app','')} {rid}: instagram.com/reel/{e['ig_code']}")
+    L.append("<i>IG-просмотры/лайки — в кабинете аккаунта; ссылки выше кликабельны.</i>")
+    L.append("<b>TikTok:</b> метрики — в кабинете Hooppy.")
+    L.append("<i>Цифры YouTube реальные, с площадки. Ничего не выдумано.</i>")
     doc = "\n".join(L)
 
     tok = os.environ.get("TAPPIO_ANALYTICS_BOT_TOKEN"); chat = os.environ.get("TAPPIO_ANALYTICS_CHAT_ID", "1966985736")

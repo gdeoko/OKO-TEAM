@@ -25,13 +25,22 @@ async def main():
     d=json.load(open(sys.argv[1])); wd=sys.argv[2]; os.makedirs(wd,exist_ok=True)
     voice=d["voice"]; rate=d.get("rate","+0%")
     segs=list(d["segments"])+[{"id":"cta","text":d["cta"]["text"]+" The code word is "+d["cta"]["code"]+"."}]
-    for s in segs:
+    def slower(r, by=5):
+        try:
+            v=int(re.sub(r'[^0-9-]','',r) or 0); return f'{v-by:+d}%'
+        except Exception: return r
+    for idx,s in enumerate(segs):
+        # ЭМФАЗА ХУКА: первый бит произносим чуть медленнее (весомее, зрителя цепляет)
+        srate = slower(rate,6) if idx==0 else rate
         for a in range(5):
             try:
-                sents=await synth(s["text"],voice,rate,f'{wd}/{s["id"]}.mp3')
+                sents=await synth(s["text"],voice,srate,f'{wd}/{s["id"]}.mp3')
                 if os.path.getsize(f'{wd}/{s["id"]}.mp3')>1200 and sents:
                     w=words_from_sents(sents); json.dump(w,open(f'{wd}/{s["id"]}.json',"w"))
-                    print(s["id"],"ok",len(w),"words"); break
+                    # ПРОВЕРКА ТЕМПА: не тараторит ли (>4 слов/сек = слишком быстро)
+                    dur=sum(x["d"] for x in w) or 1; wps=len(w)/dur
+                    warn=" ⚠fast" if wps>4.0 else ""
+                    print(s["id"],"ok",len(w),"words",f"{wps:.1f}wps{warn}"); break
             except Exception as e: print(s["id"],"retry",a,repr(e)[:80])
         else: raise SystemExit(f'VO failed {s["id"]}')
 asyncio.run(main())
