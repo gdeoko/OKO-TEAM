@@ -12,10 +12,12 @@ mb_internal_encoding('UTF-8');
 if (!defined('BASE_PATH')) define('BASE_PATH', __DIR__);
 
 /** Достаёт значение из окружения с дефолтом. */
+if (!function_exists('env')) {
 function env(string $key, $default = null) {
     $v = getenv($key);
     if ($v === false || $v === '') return $default;
     return $v;
+}
 }
 
 // Локальные секреты (не в git) переопределяют окружение.
@@ -23,10 +25,12 @@ $localCfg = [];
 if (is_file(__DIR__ . '/config.local.php')) {
     $localCfg = require __DIR__ . '/config.local.php';
 }
+if (!function_exists('cfg')) {
 function cfg(string $key, $default = null) {
     global $localCfg;
     if (array_key_exists($key, $localCfg)) return $localCfg[$key];
     return env($key, $default);
+}
 }
 
 return [
