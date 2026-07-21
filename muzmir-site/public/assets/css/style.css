@@ -18,6 +18,9 @@
   --ff-display:"Bebas Neue",Impact,sans-serif;
   --ff-serif:"Cormorant Garamond",Georgia,serif;
   --ff-body:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  /* обратная совместимость со старыми именами переменных */
+  --cream:var(--bg); --gold-light:var(--gold-soft); --parchment:var(--bg-2);
+  --gold-dark:var(--gold-deep); --ff-head:var(--ff-serif); --info:#5A7A9E; --warning:#E0A946; --ink:var(--text);
   color-scheme:dark;
 }
 :root[data-theme="light"]{
