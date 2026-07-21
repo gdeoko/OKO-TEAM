@@ -62,8 +62,11 @@ PY
   else STATUS="$STATUS YouTube:?"; cat work/${ID}_yt.log|tail -2; fi
 else STATUS="$STATUS YouTube:FAIL"; log "YouTube fail"; fi
 
-# 5) Instagram (git-raw -> VPS -> stealth reel-постер)
+# 5) Instagram — на паузе до подключения владельцем? молча пропускаем (флаг ig_hold.flag)
 IG="IG:FAIL"
+if [ -f ig_hold.flag ] || [ -f analysis/ig_hold.flag ]; then
+  IG="IG:on_hold"; log "IG на паузе (владелец подключит) — пропуск без алерта"; STATUS="$STATUS $IG"
+else
 RAW="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/$ID.mp4"
 RAWCOV="https://raw.githubusercontent.com/gdeoko/OKO-TEAM/tappio.app/tappio-app/factory/output/${ID}_cover.jpg"
 # vexec: команду шлём как ПЛЕЙН-строку, JSON-экранирование через python (пуленепробиваемо)
@@ -127,6 +130,7 @@ PY
 fi
 fi   # конец IGPROBE-гарда (жива ли сессия)
 fi   # конец блока ЗАЩИТЫ ОТ ДУБЛЕЙ
+fi   # конец блока паузы IG (ig_hold.flag)
 
 # 6) ОТЧЁТ в бот
 CHAT="${TAPPIO_ANALYTICS_CHAT_ID:-1966985736}"
