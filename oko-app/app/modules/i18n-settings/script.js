@@ -542,7 +542,11 @@ const ST_DICT = {
   'Опубликовать историю':'Publish story','Просмотры':'Views',
   /* --- TON / подарки (verify-stickers) --- */
   'История TON':'TON history','Мой подарок':'My gift','Подарить другу':'Gift to a friend',
-  'Подарок':'Gift','Пополнить TON':'Top up TON'
+  'Подарок':'Gift','Пополнить TON':'Top up TON','Отправить':'Send','Получить':'Receive',
+  'Баланс':'Balance','Адрес получателя':'Recipient address','UQ… адрес TON-кошелька':'UQ… TON wallet address',
+  'Вставить':'Paste','Купить ещё':'Buy more','В коллекции:':'In collection:','МАКС':'MAX',
+  'Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.':'Prototype: the transfer deducts TON from your local wallet and lands in history. Real TON network transfers will connect at release via TON Connect.',
+  'Честная заглушка: настоящие переводы TON и NFT-подарки подключатся в релизе через TON Connect. Баланс и коллекция хранятся локально на устройстве.':'Honest placeholder: real TON transfers and NFT gifts will connect at release via TON Connect. Balance and collection are stored locally on your device.'
 };
 
 /* --- шаблоны для строк с числами (применяются, если точного совпадения нет) --- */
@@ -606,7 +610,10 @@ const ST_RX = [
   [/^(\d+) аккаунтов$/, '$1 accounts'],
   [/^(\d+) каналов$/, '$1 channels'],
   [/^(\d+) просмотров$/, '$1 views'],
-  [/^(\d+) призов$/, '$1 prizes']
+  [/^(\d+) призов$/, '$1 prizes'],
+  [/^Отправить ([\d\s.,]+) TON$/, 'Send $1 TON'],
+  [/^Пополнить TON на ([\d\s.,]+ ?₽)$/, 'Top up TON by $1'],
+  [/^(\d+) TON$/, '$1 TON']
 ];
 
 /* --- что НЕ переводим: контент пользователей + свои переключатели --- */

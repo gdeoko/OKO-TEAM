@@ -540,61 +540,21 @@ function hqHqView(){
     <div class="adm-sec-h">Живой лог штаба</div>
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
 }
-/* абсолютный публичный адрес штаба — единственная витрина прогресса */
+/* Абсолютный публичный адрес 3D-штаба. По требованию владельца тяжёлый WebGL НЕ встраивается
+   в приложение (лагает в Telegram-webview) — штаб открывается отдельной вкладкой (ссылкой). */
 const HQ_URL_ABS = 'https://true-journey-418.higgsfield.app/hq.html';
-/* src для iframe: на http(s) грузим относительный (тот же origin → контент инспектируется
-   и не блокируется egress-прокси); на file:// и прочих — абсолютный публичный. */
-function hqEmbedSrc(){
-  return (location.protocol === 'https:' || location.protocol === 'http:') ? '/hq.html' : HQ_URL_ABS;
-}
-let hqLoadTimer = null;      // сторож onload
-let hqLoadHandled = false;   // защита от двойного срабатывания (onload + timeout)
 
 /* открыть штаб во внешней вкладке: в Telegram → tg.openLink, иначе → window.open */
 function hqOpenExternal(){
   const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-  try{
-    if(tg && typeof tg.openLink === 'function'){ tg.openLink(HQ_URL_ABS); return true; }
-  }catch(e){}
-  try{
-    const w = window.open(HQ_URL_ABS, '_blank', 'noopener');
-    return !!w;
-  }catch(e){ return false; }
+  try{ if(tg && typeof tg.openLink === 'function'){ tg.openLink(HQ_URL_ABS); return true; } }catch(e){}
+  try{ const w = window.open(HQ_URL_ABS, '_blank', 'noopener'); return !!w; }catch(e){ return false; }
 }
-
-/* фолбэк: встраивание не удалось (пусто/таймаут/ошибка) → внешняя вкладка + понятное состояние */
-function hqEmbedFallback(reason){
-  if(hqLoadHandled) return;
-  hqLoadHandled = true;
-  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-  hqOpenExternal();
-  const v = document.getElementById('hqEmbed');
-  if(v){
-    v.classList.remove('hq-emb-busy');
-    v.classList.add('hq-emb-failed');
-    const fr = document.getElementById('hqFrame');
-    if(fr) fr.setAttribute('src', 'about:blank'); // не держать битый кадр/GPU
-  }
-  if(typeof toast === 'function') toast('Штаб открыт в новой вкладке');
-}
-
-/* 3D-штаб НЕ встраивается в приложение (тяжёлый WebGL лагает внутри Telegram-webview).
-   По требованию владельца — открываем полноценный штаб отдельной вкладкой (ссылкой). */
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
   try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){}
   const ok = hqOpenExternal();
   if(typeof toast === 'function') toast(ok ? 'Открываю 3D-штаб в новой вкладке' : 'Штаб: ' + HQ_URL_ABS);
-}
-function hqCloseEmbed(){ const v = document.getElementById('hqEmbed'); if(v) v.classList.remove('open'); }
-function hqCloseEmbed(){
-  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-  hqLoadHandled = true;
-  const v = document.getElementById('hqEmbed');
-  if(!v) return;
-  v.classList.remove('open', 'hq-emb-busy', 'hq-emb-failed');
-  const fr = document.getElementById('hqFrame');
-  if(fr){ fr.onload = null; fr.onerror = null; fr.setAttribute('src', 'about:blank'); } // освободить GPU/видео
 }
 
 /* ---------- живой лог: тик каждые 6 секунд ---------- */
@@ -650,6 +610,110 @@ const HQ_MOD_FEED = [
   {k:'Спам',      cls:'wait', frag:'массовая рассылка инвайтов ×34',            ago:95,  act:'ограничение 48ч'},
   {k:'Скам',      cls:'no',   frag:'фейк-магазин «OKO Store» на Бирже',         ago:130, act:'удалено + бан'},
 ];
+/* ---- жалобы пользователей (персист oko-admin-hq.reports) ---- */
+const HQ_REPORTS = (HQ_STATE.reports && Array.isArray(HQ_STATE.reports)) ? HQ_STATE.reports : [
+  {id:'r1', kind:'Профиль',    tgt:'Гость-8842',       by:'@marina_smm',       reason:'выдаёт себя за поддержку OKO, выманивает коды входа', ago:9,  done:0},
+  {id:'r2', kind:'Пост',       tgt:'@fastcash_pro',    by:'@igorvideo',        reason:'финансовая пирамида в рекомендациях ленты',          ago:24, done:0},
+  {id:'r3', kind:'Объявление', tgt:'«iPhone 15 за 9900»', by:'@alina.grow',    reason:'товар-приманка, продавец без единой сделки',         ago:52, done:0},
+  {id:'r4', kind:'Канал',      tgt:'«Сигналы OKO PRO»',by:'@dmitrymarketing',  reason:'платный канал обещает доход 300% в месяц',           ago:88, done:0},
+];
+HQ_STATE.reports = HQ_REPORTS; hqSave();
+const HQ_REP_ICO = {'Профиль':'user','Пост':'feed','Объявление':'briefcase','Канал':'crown'};
+const HQ_REP_DONE = {ban:{l:'заблокирован', cls:'no'}, warn:{l:'предупреждён', cls:'wait'}, ok:{l:'отклонена', cls:'ok'}};
+function hqReportFind(id){ return HQ_REPORTS.find(r=>r.id===id); }
+function hqReportBan(id){
+  const r = hqReportFind(id); if(!r || r.done) return;
+  r.done = 'ban';
+  const u = ADMIN.users.find(x=>x.n===r.tgt || x.h===r.tgt); /* если цель — известный юзер, баним и его карточку */
+  if(u){ const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n]||{}; a.ban = 1; hqActSave(); }
+  hqSave(); renderAdmin(); toast('Нарушитель заблокирован, жалоба закрыта');
+}
+function hqReportWarn(id){ const r=hqReportFind(id); if(!r||r.done) return; r.done='warn'; hqSave(); renderAdmin(); toast('Предупреждение отправлено автору'); }
+function hqReportDismiss(id){ const r=hqReportFind(id); if(!r||r.done) return; r.done='ok'; hqSave(); renderAdmin(); toast('Жалоба отклонена — нарушений не найдено'); }
+function hqReportsBlock(){
+  const open = HQ_REPORTS.filter(r=>!r.done).length;
+  const rows = HQ_REPORTS.map(r=>{
+    if(r.done){
+      const d = HQ_REP_DONE[r.done] || {l:'закрыта', cls:'ok'};
+      return `<div class="adm-row hq-rep done">
+        <span class="hq-rep-ic">${I(HQ_REP_ICO[r.kind]||'flag')}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(r.kind)}: ${esc(r.tgt)}</b><small>${esc(r.reason)}</small></span>
+        <span class="adm-tag ${d.cls}">${d.l}</span></div>`;
+    }
+    return `<div class="hq-rep card">
+      <div class="hq-rep-top">
+        <span class="hq-rep-ic">${I(HQ_REP_ICO[r.kind]||'flag')}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(r.kind)}: ${esc(r.tgt)}</b><small>жалоба от ${esc(r.by)} · ${r.ago} мин назад</small></span>
+      </div>
+      <div class="hq-rep-reason">${I('flag')}<span>${esc(r.reason)}</span></div>
+      <div class="hq-rep-acts">
+        <button class="adm-btn dng" onclick="hqReportBan('${r.id}')">Заблокировать</button>
+        <button class="adm-btn" onclick="hqReportWarn('${r.id}')">Предупредить</button>
+        <button class="adm-btn" onclick="hqReportDismiss('${r.id}')">Отклонить</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="adm-sec-h">Жалобы пользователей${open?' · '+open+' новых':''}</div>${rows}`;
+}
+
+/* ---- реклама на модерации: реальные кампании из кабинета (ADS) + собственная очередь ---- */
+const HQ_ADREV = (HQ_STATE.adRev && Array.isArray(HQ_STATE.adRev)) ? HQ_STATE.adRev : [
+  {id:'a1', name:'Курс «Трейдинг на автопилоте»', fmt:'Продвижение поста', budget:5000, reason:'обещание гарантированного дохода — против правил площадки', done:0},
+  {id:'a2', name:'ЗооОпт — корма оптом дешевле',  fmt:'Объявление Биржи',  budget:2000, reason:'',                                                     done:0},
+  {id:'a3', name:'Клиника «Дента» · импланты',    fmt:'Баннер',            budget:3500, reason:'мед-тематика — требуется подтверждение лицензии',      done:0},
+];
+HQ_STATE.adRev = HQ_ADREV; hqSave();
+function hqAdRevDecide(id, ok){
+  const a = HQ_ADREV.find(x=>x.id===id); if(!a || a.done) return;
+  a.done = ok ? 'act' : 'rej';
+  hqSave(); renderAdmin(); toast(ok ? 'Кампания одобрена и запущена' : 'Кампания отклонена, бюджет возвращён');
+}
+function hqRealPendingAds(){
+  if(typeof ADS==='undefined' || !ADS || !Array.isArray(ADS.camps)) return [];
+  return ADS.camps.filter(c=>c && c.status==='mod');
+}
+function hqRealAdDecide(id, ok){
+  if(typeof ADS==='undefined' || !ADS.camps) return;
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  if(ok){ c.status='act'; if(typeof adsPushToFeed==='function'){ try{ adsPushToFeed(c); }catch(e){} } }
+  else { c.status='rej'; c.reason='отклонено владельцем на ручной модерации'; }
+  if(typeof adsSave==='function'){ try{ adsSave(); }catch(e){} }
+  renderAdmin(); toast(ok ? 'Реальная кампания одобрена' : 'Реальная кампания отклонена');
+}
+function hqAdsBlock(){
+  const real = hqRealPendingAds();
+  const realRows = real.map(c=>`
+    <div class="hq-ad card live">
+      <div class="hq-ad-top"><span class="hq-ad-ic">${I('megaphone')}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(c.name)}</b><small>из рекламного кабинета · бюджет ${fmtMoney(c.budget)} · ждёт решения</small></span>
+        <span class="adm-tag wait">LIVE</span></div>
+      <div class="hq-ad-acts">
+        <button class="adm-btn pri" onclick="hqRealAdDecide(${c.id},1)">Одобрить</button>
+        <button class="adm-btn dng" onclick="hqRealAdDecide(${c.id},0)">Отклонить</button>
+      </div>
+    </div>`).join('');
+  const rows = HQ_ADREV.map(a=>{
+    if(a.done){
+      return `<div class="adm-row hq-ad done"><span class="hq-ad-ic">${I('megaphone')}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(a.name)}</b><small>${esc(a.fmt)} · ${fmtMoney(a.budget)}</small></span>
+        <span class="adm-tag ${a.done==='act'?'ok':'no'}">${a.done==='act'?'одобрена':'отклонена'}</span></div>`;
+    }
+    return `<div class="hq-ad card">
+      <div class="hq-ad-top"><span class="hq-ad-ic">${I('megaphone')}</span>
+        <span class="adm-main"><b style="white-space:normal">${esc(a.name)}</b><small>${esc(a.fmt)} · бюджет ${fmtMoney(a.budget)}</small></span></div>
+      ${a.reason
+        ? `<div class="hq-rep-reason">${I('flag')}<span>Флаг ИИ: ${esc(a.reason)}</span></div>`
+        : `<div class="hq-ad-clean">${I('check2')}<span>ИИ нарушений не нашёл — на финальное решение владельца</span></div>`}
+      <div class="hq-ad-acts">
+        <button class="adm-btn pri" onclick="hqAdRevDecide('${a.id}',1)">Одобрить</button>
+        <button class="adm-btn dng" onclick="hqAdRevDecide('${a.id}',0)">Отклонить</button>
+      </div>
+    </div>`;
+  }).join('');
+  const openN = real.length + HQ_ADREV.filter(a=>!a.done).length;
+  return `<div class="adm-sec-h">Реклама на модерации${openN?' · '+openN:''}</div>${realRows}${rows}`;
+}
+
 const _prevAdmModerHq = admModer;
 admModer = function(){
   const m = HQ_MOD;
@@ -670,8 +734,38 @@ admModer = function(){
         <span class="adm-tag ${f.cls}">${esc(f.k)}</span>
         <span class="adm-main"><b style="white-space:normal">${esc(f.frag)}</b><small>${f.ago} мин назад · ${esc(f.act)}</small></span>
       </div>`).join('')}`;
-  return head + _prevAdmModerHq();
+  return head + hqReportsBlock() + hqAdsBlock() + _prevAdmModerHq();
 };
+
+/* ==================== 4b. ПАРТНЁРКА: сводка + рабочие выплаты (персист) ==================== */
+function hqPartEarn(p){ return parseInt(String(p.earn).replace(/[^0-9]/g,'')) || 0; }
+function hqPartPaid(p){ HQ_ACT.paid = HQ_ACT.paid || {}; return HQ_ACT.paid[p.n] || p.st==='ok'; }
+const _prevAdmPartnersHq = admPartners;
+admPartners = function(){
+  HQ_ACT.paid = HQ_ACT.paid || {};
+  const totalRef = ADMIN.partners.reduce((s,p)=>s+p.ref, 0);
+  const toPay = ADMIN.partners.filter(p=>!hqPartPaid(p)).reduce((s,p)=>s+hqPartEarn(p), 0);
+  const rows = ADMIN.partners.map((p,i)=>`
+    <div class="adm-row">
+      <span class="adm-ava">${esc(p.n[0])}</span>
+      <span class="adm-main"><b>${esc(p.n)} · ${esc(p.earn)}</b><small>${esc(p.h)} · ${p.ref} рефералов</small></span>
+      ${hqPartPaid(p)
+        ? '<span class="adm-tag ok">выплачено</span>'
+        : `<button class="adm-btn pri" onclick="hqPartnerPay(${i})">Выплатить</button>`}
+    </div>`).join('');
+  return `
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${ADMIN.partners.length}</b><small>партнёров</small></div>
+      <div class="hq-part-s"><b>${totalRef}</b><small>рефералов</small></div>
+      <div class="hq-part-s"><b>$${toPay}</b><small>к выплате</small></div>
+    </div>
+    <div class="adm-sec-h">Партнёры и выплаты</div>${rows}`;
+};
+function hqPartnerPay(i){
+  const p = ADMIN.partners[i]; if(!p) return;
+  HQ_ACT.paid = HQ_ACT.paid || {}; HQ_ACT.paid[p.n] = 1; hqActSave();
+  renderAdmin(); toast('Выплата '+p.earn+' отправлена партнёру '+p.n);
+}
 
 /* ==================== 6. ОБЗОР: KPI «Доход OKO» + панель «Быстро» ==================== */
 const _prevAdmOverviewHq = admOverview;
