@@ -855,10 +855,9 @@ label.f-lab{display:block}
 @media(prefers-reduced-motion:reduce){#splash .eye-wrap,#splash .eye,#splash .word{animation:none;opacity:1;transform:none}}
 
 /* ============ АМБИЕНТ + ПЕРЕХОДЫ ЭКРАНОВ ============ */
-main::before{content:'';position:absolute;inset:-20%;background:radial-gradient(600px 400px at 80% -10%,rgba(154,255,0,.05),transparent 60%),radial-gradient(500px 380px at -10% 110%,rgba(154,255,0,.04),transparent 60%);pointer-events:none;z-index:0;animation:ambient 16s ease-in-out infinite alternate}
-:root[data-theme="light"] main::before{background:radial-gradient(600px 400px at 80% -10%,rgba(110,200,0,.06),transparent 60%),radial-gradient(500px 380px at -10% 110%,rgba(110,200,0,.05),transparent 60%)}
-@keyframes ambient{to{transform:translate3d(3%,2%,0) scale(1.06)}}
-@media(prefers-reduced-motion:reduce){main::before{animation:none}}
+/* ТОЛЬКО лёгкое сияние сверху. НИКАКИХ радиалов/градиентов снизу — убрана «кривая темнота» внизу всех экранов. Без анимации, чтобы ничего не «дышало» тёмным. */
+main::before{content:'';position:absolute;left:0;right:0;top:0;height:220px;background:radial-gradient(600px 300px at 80% -40%,rgba(154,255,0,.05),transparent 62%);pointer-events:none;z-index:0}
+:root[data-theme="light"] main::before{background:radial-gradient(600px 300px at 80% -40%,rgba(110,200,0,.05),transparent 62%)}
 main>.screen{position:relative;z-index:1}
 .screen.active{animation:screenIn .3s cubic-bezier(.3,1,.4,1)}
 @keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -1327,7 +1326,6 @@ main>.screen{position:relative;z-index:1}
   <button class="sheet-item" onclick="pickChatKind('direct')"><svg class="i"><use href="#i-user"/></svg><span>Личный чат<small>Диалог один на один</small></span></button>
   <button class="sheet-item" onclick="pickChatKind('group')"><svg class="i"><use href="#i-users"/></svg><span>Группа<small>До 200 000 участников</small></span></button>
   <button class="sheet-item" onclick="pickChatKind('channel')"><svg class="i"><use href="#i-megaphone"/></svg><span>Канал<small>Посты в ленту подписчиков</small></span></button>
-  <button class="sheet-item" onclick="pickChatKind('community')"><svg class="i"><use href="#i-globe"/></svg><span>Сообщество<small>Канал + чаты + мини-аппы</small></span></button>
   <div id="newChatForm" style="display:none">
     <input id="newChatTitle" placeholder="Название">
     <button class="btn" onclick="createChat()">Создать</button>
@@ -2352,8 +2350,8 @@ function pickChatKind(kind){
   document.getElementById('newChatForm').style.display='block';
   document.getElementById('newChatTitle').focus();
 }
-const KIND_LABEL = {direct:'Личный чат', group:'Группа', channel:'Канал', community:'Сообщество'};
-const KIND_ICON  = {direct:'user', group:'users', channel:'megaphone', community:'globe'};
+const KIND_LABEL = {direct:'Личный чат', group:'Группа', channel:'Канал'};
+const KIND_ICON  = {direct:'user', group:'users', channel:'megaphone'};
 function createChat(){
   const title = document.getElementById('newChatTitle').value.trim();
   if(!title) return;

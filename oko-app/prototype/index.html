@@ -855,10 +855,9 @@ label.f-lab{display:block}
 @media(prefers-reduced-motion:reduce){#splash .eye-wrap,#splash .eye,#splash .word{animation:none;opacity:1;transform:none}}
 
 /* ============ АМБИЕНТ + ПЕРЕХОДЫ ЭКРАНОВ ============ */
-main::before{content:'';position:absolute;inset:-20%;background:radial-gradient(600px 400px at 80% -10%,rgba(154,255,0,.05),transparent 60%),radial-gradient(500px 380px at -10% 110%,rgba(154,255,0,.04),transparent 60%);pointer-events:none;z-index:0;animation:ambient 16s ease-in-out infinite alternate}
-:root[data-theme="light"] main::before{background:radial-gradient(600px 400px at 80% -10%,rgba(110,200,0,.06),transparent 60%),radial-gradient(500px 380px at -10% 110%,rgba(110,200,0,.05),transparent 60%)}
-@keyframes ambient{to{transform:translate3d(3%,2%,0) scale(1.06)}}
-@media(prefers-reduced-motion:reduce){main::before{animation:none}}
+/* ТОЛЬКО лёгкое сияние сверху. НИКАКИХ радиалов/градиентов снизу — убрана «кривая темнота» внизу всех экранов. Без анимации, чтобы ничего не «дышало» тёмным. */
+main::before{content:'';position:absolute;left:0;right:0;top:0;height:220px;background:radial-gradient(600px 300px at 80% -40%,rgba(154,255,0,.05),transparent 62%);pointer-events:none;z-index:0}
+:root[data-theme="light"] main::before{background:radial-gradient(600px 300px at 80% -40%,rgba(110,200,0,.05),transparent 62%)}
 main>.screen{position:relative;z-index:1}
 .screen.active{animation:screenIn .3s cubic-bezier(.3,1,.4,1)}
 @keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -5623,7 +5622,6 @@ img,video,canvas,svg{max-width:100%}
   <button class="sheet-item" onclick="pickChatKind('direct')"><svg class="i"><use href="#i-user"/></svg><span>Личный чат<small>Диалог один на один</small></span></button>
   <button class="sheet-item" onclick="pickChatKind('group')"><svg class="i"><use href="#i-users"/></svg><span>Группа<small>До 200 000 участников</small></span></button>
   <button class="sheet-item" onclick="pickChatKind('channel')"><svg class="i"><use href="#i-megaphone"/></svg><span>Канал<small>Посты в ленту подписчиков</small></span></button>
-  <button class="sheet-item" onclick="pickChatKind('community')"><svg class="i"><use href="#i-globe"/></svg><span>Сообщество<small>Канал + чаты + мини-аппы</small></span></button>
   <div id="newChatForm" style="display:none">
     <input id="newChatTitle" placeholder="Название">
     <button class="btn" onclick="createChat()">Создать</button>
@@ -5703,7 +5701,7 @@ img,video,canvas,svg{max-width:100%}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.61</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.62</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -7107,8 +7105,8 @@ function pickChatKind(kind){
   document.getElementById('newChatForm').style.display='block';
   document.getElementById('newChatTitle').focus();
 }
-const KIND_LABEL = {direct:'Личный чат', group:'Группа', channel:'Канал', community:'Сообщество'};
-const KIND_ICON  = {direct:'user', group:'users', channel:'megaphone', community:'globe'};
+const KIND_LABEL = {direct:'Личный чат', group:'Группа', channel:'Канал'};
+const KIND_ICON  = {direct:'user', group:'users', channel:'megaphone'};
 function createChat(){
   const title = document.getElementById('newChatTitle').value.trim();
   if(!title) return;
@@ -17661,10 +17659,10 @@ const DC_CHATS = [
      {in:1, t:'вчера', kind:'text', body:'Дайджест дня. Агентные пайплайны собирают ролик от сценария до монтажа за один прогон. Ручной труд смещается в контроль качества — и это главный навык года.'},
      {in:1, t:'09:40', kind:'text', body:'Дайджест дня. Локальные модели догоняют облако: субтитры и черновой перевод на ноутбуке уже быстрее, чем через API. Экономика потокового контента меняется на глазах.'},
    ]},
-  {id:9007, ava:'БО', name:'Бизнес в OKO', kind:'community', members:2300, kindIcon:'globe',
+  {id:9007, ava:'БО', name:'Бизнес в OKO', kind:'group', members:2300, kindIcon:'users',
    preview:'Модератор: комиссия только с закрытой сделки', time:'вчера', unread:0, online:true,
    msgs:[
-     {kind:'sys', body:'Сообщество предпринимателей OKO · 2 300 участников'},
+     {kind:'sys', body:'Группа предпринимателей OKO · 2 300 участников'},
      {in:1, who:'Бизнес в OKO', t:'12 июля', kind:'text', body:'Анонс недели: в четверг открытый разбор «Первые заказы на бирже OKO за 7 дней» — профиль, портфолио, отклики, цены. Вопросы собираем в этой ветке.', reacts:{fire:21}},
      {in:1, who:'Кирилл', t:'вчера', kind:'text', body:'Вопрос: беру заказы на монтаж как самозанятый. Какая комиссия у биржи и когда она списывается?'},
      {in:1, who:'Модератор', t:'вчера', kind:'text', body:'Комиссия 10% и только с закрытой сделки: пока заказ в работе, деньги лежат на холде кошелька. Отменился заказ — вернётся вся сумма.', reacts:{thumb:6}},
