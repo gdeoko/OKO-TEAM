@@ -53,9 +53,18 @@ try{
         log('code_entered', c);
         for(const t of ['Confirm','Continue','Next','Submit','Подтвердить']){const bt=await p.$(`button:has-text("${t}")`); if(bt&&await bt.isVisible().catch(()=>false)){await bt.click().catch(()=>{});break;}}
         await p.keyboard.press('Enter').catch(()=>{}); codeDone=true; await sleep(6000);
-      } else if(i%3===0){ log('WAITING_CODE — жду свежий код в '+CODEF); }
+      } else if(i%3===0){ log('WAITING_CODE — жду код ИЛИ подтверждение с телефона'); }
     }
-    for(const t of ['Not now','Не сейчас','Dismiss','Save info','Trust','Continue']){const btn=await p.$(`button:has-text("${t}")`)||await p.$(`div[role="button"]:has-text("${t}")`); if(btn&&await btn.isVisible().catch(()=>false)){await btn.click().catch(()=>{});await sleep(1200);}}
+    // код НЕ нужен (подтверждение на телефоне): жмём "This was me / Continue / Confirm" и перезагружаем, ловим одобрение
+    if(onCode && !codeDone){
+      if(i===1){ const btns=await p.evaluate(()=>[...new Set([...document.querySelectorAll('button,[role="button"],a')].map(b=>(b.innerText||'').trim()).filter(Boolean))].slice(0,14)).catch(()=>[]); log('CODE_SCREEN btns', JSON.stringify(btns)); }
+      for(const t of ['This was me','It was me','Yes, this was me','Confirm','Continue','Approve','Dismiss','OK']){
+        const bt=await p.$(`button:has-text("${t}")`)||await p.$(`div[role="button"]:has-text("${t}")`)||await p.$(`a:has-text("${t}")`);
+        if(bt && await bt.isVisible().catch(()=>false)){ await bt.click().catch(()=>{}); log('clicked '+t); await sleep(4000); break; }
+      }
+      if(i%4===3){ await p.reload({waitUntil:'domcontentloaded'}).catch(()=>{}); await sleep(3000); log('reloaded, catching approval'); }
+    }
+    for(const t of ['Not now','Не сейчас','Dismiss','Save info','Trust']){const btn=await p.$(`button:has-text("${t}")`)||await p.$(`div[role="button"]:has-text("${t}")`); if(btn&&await btn.isVisible().catch(()=>false)){await btn.click().catch(()=>{});await sleep(1200);}}
     log('wait', i, (onCode?'CODE_SCREEN':p.url().slice(0,45)));
     await sleep(4000);
   }

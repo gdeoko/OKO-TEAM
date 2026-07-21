@@ -4,7 +4,7 @@
 import { chromium } from 'patchright';
 import fs from 'fs';
 const STATE=process.env.IG_STATE||'/opt/oko-poster/cfg/ig_state.json';
-const USER=process.env.IG_USER||'tappio.app.pro';
+const USER=process.env.IG_USER||'tappio.pro';
 const N=+(process.env.IG_N||12);
 const log=(...a)=>console.error('[list]',...a);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));

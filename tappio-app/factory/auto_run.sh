@@ -75,8 +75,8 @@ if [ -n "$ALREADY" ]; then
 else
 # БЫСТРЫЙ ЧЕК IG-СЕССИИ: если аккаунт разлогинен (лента пуста), не тратим время на
 # доставку+постер — TikTok+YouTube уже прошли. Как только вернётся вход — IG сам подхватится.
-IGPROBE=$(vexec "cd /opt/oko-poster && IG_N=1 node ig_list.mjs 2>/dev/null" 70)
-if ! echo "$IGPROBE" | grep -q '"code"'; then
+IGPROBE=$(vexec "cd /opt/oko-poster && node ig_alive.mjs 2>/dev/null" 70)
+if ! echo "$IGPROBE" | grep -q 'ALIVE'; then
   IG="IG:session_expired"; log "IG сессия протухла — пропуск IG (нужен ре-логин), TikTok+YouTube ок"
   STATUS="$STATUS $IG"
   # разовый алерт в бота (раз в день) — маркер по дате
