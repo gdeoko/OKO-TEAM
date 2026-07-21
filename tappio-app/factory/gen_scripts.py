@@ -479,6 +479,18 @@ def make_one(app, state):
         tags = " ".join("#" + t for t in trend[:4])
         d["caption"] = d["caption"] + " " + tags
         d["trend_keys"] = trend[:8]
+
+    # МИКС КОНТЕНТА 50/30/20: ротация по seq (10-слотовый паттерн: 5 viral, 3 useful, 2 sales)
+    MIX = ["viral","viral","useful","viral","sales","viral","useful","viral","useful","sales"]
+    ctype = MIX[seq % 10]
+    d["content_type"] = ctype
+    code = meta["brand"]["code"]
+    if ctype == "sales":
+        # усиленная воронка: сильный CTA + кодовое слово + ссылка
+        d["cta"]["text"] = f"Get it now — comment {code} and I'll send the link. Link in bio."
+        d["caption"] = d["caption"] + f" 👉 Comment {code} for the link — link in bio."
+    elif ctype == "useful":
+        d["caption"] = "USEFUL: " + d["caption"]
     # журнал механик — след «отпечаток» набора наложений, чтобы контролировать неповторяемость
     fp = "|".join(sorted(o["type"] for o in d["overlays"]))
     state.setdefault("ov_fp", {}).setdefault(app, [])

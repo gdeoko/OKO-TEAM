@@ -52,7 +52,19 @@ def main():
         rows.append((rid, e["yt_id"], st, dv, e.get("app","")))
         tot_v += st["views"]; tot_l += st["likes"]; tot_c += st["comments"]
         snap[e["yt_id"]] = {"views": st["views"], "likes": st["likes"]}
-    json.dump(snap, open(SNAP, "w"))
+    # АДАПТИВ: ролик, который был в снапшоте (не новый) и всё ещё почти без просмотров — просадка
+    from datetime import date, timedelta
+    sagging = [rid for rid, vid, st, dv, app in rows
+               if snap.get(vid) is not None and st["views"] < 50]
+    # (snap уже обновлён выше; берём тех, у кого был предыдущий замер и всё равно мёртвый рост)
+    flagp = os.path.join(HERE, "analysis", "perf_flag.json")
+    try:
+        if len([r for r in rows if r[3] == 0 and r[2]["views"] < 50]) >= 1 and len(rows) >= 3:
+            until = (date.today() + timedelta(days=3)).isoformat()
+            json.dump({"cap": 5, "until": until, "reason": "просмотры проседают/0"}, open(flagp, "w"))
+        else:
+            if os.path.exists(flagp): os.remove(flagp)   # рост есть — снимаем ограничение, рамп продолжается
+    except Exception: pass
 
     total_reels = len(reg)
     L = []
