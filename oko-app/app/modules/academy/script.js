@@ -407,6 +407,293 @@ const AC_COURSE = [
 },
 ];
 
+/* ================= КУРС 2 (ПРЕМИУМ): «КОНТЕНТ И REELS» =================
+   3 полноценных урока со слайдами, тестом, практикой и мини-игрой.
+   Гейт: подписка PRO+ ИЛИ разовая покупка. */
+const AC_COURSE_REELS = [
+
+/* ---------- УРОК: Вирусный сценарий за 15 минут ---------- */
+{
+  title:'Вирусный сценарий за 15 минут',
+  sub:'хук · удержание · триггеры репостов',
+  dur:'', videoUrl:'',
+  c1:'ВИРУСНЫЙ', c2:'СЦЕНАРИЙ',
+  slides:[
+  {t:'Анатомия вирусного ролика', pts:[
+    'Сначала <b>структура</b>, потом съёмка — не наоборот',
+    'Четыре блока: <b>хук → удержание → развязка → CTA</b>',
+    'Один ролик — одна мысль, всё лишнее режь',
+    'Длина под смысл: чаще 7–40 секунд'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="14" width="18" height="42" rx="4" fill="currentColor" fill-opacity=".18"/><rect x="34" y="14" width="18" height="42" rx="4"/><rect x="58" y="14" width="18" height="42" rx="4"/><rect x="82" y="14" width="18" height="42" rx="4"/><path d="M19 24v22M43 24v22M67 24v22M91 24v22" opacity=".6"/><path d="M104 20v30" opacity=".5"/><path d="M14 62h92" opacity=".4"/></svg>'},
+  {t:'Хук: первые 2 секунды', pts:[
+    'В первые 2 секунды — <b>обещание выгоды</b> или интрига',
+    'Хук-текст на экране <b>плюс</b> голос — работают вместе',
+    'Заходит: вопрос, цифра, конфликт, «не делай это»',
+    'Никаких длинных заставок — сразу к сути'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 46 20 12l30 20-14 4 10 20z" fill="currentColor" stroke="none" opacity=".9"/><path d="M64 20h40M64 32h32M64 44h40" opacity=".75"/><circle cx="58" cy="20" r="2" fill="currentColor" stroke="none"/><circle cx="58" cy="32" r="2" fill="currentColor" stroke="none"/><circle cx="58" cy="44" r="2" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Удержание: петли внимания', pts:[
+    'Микро-обещания: «дальше покажу, как…» — тянут дальше',
+    'Смена плана каждые <b>2–3 секунды</b> — глазу не скучно',
+    'Показывай визуальный прогресс к развязке',
+    'Убирай паузы и «воздух» — плотность держит досмотр'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 40c14-30 30 30 44 0s30-30 44 0" opacity=".85"/><circle cx="12" cy="40" r="3" fill="currentColor" stroke="none"/><circle cx="34" cy="28" r="3" fill="currentColor" stroke="none"/><circle cx="56" cy="40" r="3" fill="currentColor" stroke="none"/><circle cx="78" cy="52" r="3" fill="currentColor" stroke="none"/><circle cx="100" cy="40" r="3" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Сторителлинг за 20 секунд', pts:[
+    'Схемы, что цепляют: <b>было → стало</b>, ошибка → решение',
+    'Конфликт в начале держит до самой развязки',
+    'Эмоция важнее фактов — сначала прочувствовать',
+    'Герой = зритель: он должен узнать себя'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="18" width="38" height="34" rx="6"/><path d="M18 44l10-9 7 6 5-5" opacity=".6"/><rect x="72" y="18" width="38" height="34" rx="6" fill="currentColor" fill-opacity=".15"/><path d="M80 44l9-12 7 8 6-6"/><path d="M52 35h16M62 30l6 5-6 5"/></svg>'},
+  {t:'Триггеры репостов', pts:[
+    'Люди делятся ради <b>пользы, статуса, эмоции, узнавания</b>',
+    '«Сохрани, чтобы не потерять» — двигает в сохранения',
+    'Спорное, но честное мнение = комментарии и споры',
+    'Дай зрителю повод сказать: «это про меня»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="26" cy="35" r="9"/><circle cx="90" cy="18" r="8"/><circle cx="90" cy="52" r="8"/><path d="M34 31l48-10M34 39l48 8"/><path d="M22 35l3 3 6-7" opacity=".7"/></svg>'},
+  {t:'CTA без впаривания', pts:[
+    'Один призыв на ролик — не распыляй внимание',
+    'Мягко: «подпишись, если было полезно»',
+    'Вопрос в конце — запускает комментарии',
+    'Закреплённый комментарий продолжает воронку'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="24" y="24" width="72" height="26" rx="13" fill="currentColor" fill-opacity=".16"/><path d="M40 37h30" /><path d="M66 31l7 6-7 6"/><path d="M60 12v6M84 16l-4 5M36 16l4 5" opacity=".6"/></svg>'},
+  {t:'Форматы, что залетают', pts:[
+    'Обучалка, разбор, реакция, POV, листикл-подборка',
+    'Бери тренд и <b>адаптируй под свою нишу</b>, а не копируй',
+    'Серийность: «часть 1 из 3» — зритель ждёт продолжения',
+    'Свой повторяемый формат = стабильные охваты'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="26" height="42" rx="5"/><rect x="47" y="14" width="26" height="42" rx="5" fill="currentColor" fill-opacity=".15"/><rect x="82" y="14" width="26" height="42" rx="5"/><path d="M20 26v18M55 26v18M90 26v18" opacity=".5"/><path d="M57 35l6-5v10z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Чек-лист сценария', pts:[
+    'Хук ≤ 2 секунд и одна ясная мысль',
+    'Петли удержания и смена планов',
+    'Эмоция и узнавание для репоста',
+    'CTA-вопрос + караоке-субтитры'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="26" y="6" width="68" height="58" rx="8"/><path d="M36 20l4 4 7-8M36 36l4 4 7-8M36 52l4 4 7-8" stroke-width="2.8"/><path d="M54 21h28M54 37h28M54 53h20"/></svg>'},
+  ],
+  quiz:[
+  {q:'С чего начинается вирусный ролик по уроку?', o:['Со съёмки красивых кадров','Со структуры: хук → удержание → развязка → CTA','С подбора музыки','С покупки рекламы'], a:1},
+  {q:'Задача хука в первые 2 секунды —', o:['Показать логотип','Дать обещание выгоды или интригу','Перечислить регалии автора','Поставить длинную заставку'], a:1},
+  {q:'Что удерживает зрителя до конца?', o:['Длинные паузы','Микро-обещания и смена планов каждые 2–3 с','Один статичный кадр','Отсутствие субтитров'], a:1},
+  {q:'Фраза «сохрани, чтобы не потерять» работает на…', o:['Лайки','Сохранения','Отписки','Рекламу'], a:1},
+  {q:'Сколько призывов (CTA) стоит давать в одном ролике?', o:['Как можно больше','Один чёткий','Ни одного','Ровно пять'], a:1},
+  {q:'Правильная работа с трендом —', o:['Скопировать один в один','Адаптировать под свою нишу','Игнорировать тренды','Ждать, пока тренд умрёт'], a:1},
+  ],
+  pairs:[
+  ['Хук','Первые 2 секунды: выгода или интрига'],
+  ['Петля удержания','«Дальше покажу, как…»'],
+  ['Триггер репоста','«Это же про меня»'],
+  ['CTA','Один вопрос в конце ролика'],
+  ['Серийность','«Часть 1 из 3»'],
+  ],
+  task:{
+    intro:'Собери каркас вирусного ролика для своей ниши по структуре урока:',
+    chips:['Хук','Удержание','Развязка','CTA'],
+    ph:'Пример: Хук — «Три ошибки убивают ваши Reels» (текст + голос, 2 с). Удержание — разбираю каждую ошибку с примером, смена плана каждые 2 с. Развязка — как сделать правильно. CTA — «Какая ошибка была у тебя? Пиши в комментах».',
+    verdict:'Структура собрана верно: сильный хук, петли удержания и один чёткий CTA. Совет куратора: вынеси хук-текст на экран крупно — так он сработает даже без звука.'
+  }
+},
+
+/* ---------- УРОК: Монтаж Reels, который держит ---------- */
+{
+  title:'Монтаж Reels, который держит',
+  sub:'ритм · караоке-субтитры · звук и цвет',
+  dur:'', videoUrl:'',
+  c1:'МОНТАЖ', c2:'REELS',
+  slides:[
+  {t:'Ритм решает всё', pts:[
+    'Режь <b>по музыке и речи</b> — склейки на битах и словах',
+    'Удаляй «воздух»: вдохи, паузы, запинки',
+    'Средний план держи <b>1,5–2,5 секунды</b>',
+    'Плотный ритм = высокий досмотр'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M10 35h8M22 22v26M30 30v10M38 16v38M46 26v18M54 20v30M62 32v6M70 18v34M78 28v14M86 22v26M94 30v10M102 24v22M110 35h0"/></svg>'},
+  {t:'Джамп-каты и динамика', pts:[
+    'Склейка на слове убирает лишнее и ускоряет темп',
+    '<b>Zoom-панч</b> на акценте добавляет энергии',
+    'Никаких «мёртвых» кадров, где ничего не происходит',
+    'Движение в кадре — постоянно, под темп'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="20" width="40" height="30" rx="5"/><rect x="66" y="14" width="40" height="42" rx="5"/><path d="M78 26l16 18M94 26L78 44" opacity=".7"/><path d="M56 35h10M62 31l5 4-5 4"/></svg>'},
+  {t:'Караоке-субтитры', pts:[
+    '<b>90% смотрят без звука</b> — субтитры обязательны',
+    'Крупно, с контрастом, читаемо на любом фоне',
+    'Подсветка <b>по слову</b> в бренд-цвете держит взгляд',
+    'Не перекрывай интерфейс площадки снизу'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="44" y="6" width="32" height="58" rx="8"/><rect x="50" y="40" width="12" height="7" rx="2" fill="currentColor" stroke="none"/><path d="M64 43h6" opacity=".7"/><path d="M50 50h20" opacity=".6"/><path d="M22 30c4 6 4 12 0 18M104 30c-4 6-4 12 0 18" opacity=".5"/></svg>'},
+  {t:'Звук: музыка и SFX', pts:[
+    'Музыка — <b>под смысл</b> сцены, а не просто фоном',
+    'SFX под каждое движение — свуши, клики, удары',
+    '<b>Дакинг</b>: приглушай музыку под голос',
+    'Звук-хук в первую секунду цепляет ухо'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 28v14M22 22v26M30 32v6M38 18v34M46 26v18" stroke-width="2.8"/><path d="M70 46V18l22-6v28" stroke-linejoin="round"/><circle cx="64" cy="46" r="6"/><circle cx="86" cy="40" r="6"/></svg>'},
+  {t:'Цвет и единый стиль', pts:[
+    'Единый <b>пресет/LUT</b> на весь ролик — картинка «дорогая»',
+    'Держи бренд-палитру: акцентный цвет узнаётся',
+    'Контраст текста и фона — читаемость прежде всего',
+    'Одинаковый стиль в серии = сильный бренд'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="40" cy="35" r="22"/><path d="M40 13a22 22 0 0 1 0 44z" fill="currentColor" stroke="none" opacity=".85"/><circle cx="86" cy="24" r="6" fill="currentColor" stroke="none" opacity=".9"/><circle cx="100" cy="38" r="6"/><circle cx="86" cy="50" r="6" fill="currentColor" stroke="none" opacity=".5"/></svg>'},
+  {t:'B-roll и перебивки', pts:[
+    'Иллюстрируй слова кадрами — «показывай, не рассказывай»',
+    'Сток <b>4K</b> — уникальный, не заезженный',
+    'Перебивка прячет склейку и держит темп',
+    'Не повторяй один и тот же кадр в ролике'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="16" width="46" height="34" rx="5"/><circle cx="24" cy="28" r="5"/><path d="M14 46l14-12 10 8 8-7 10 9" opacity=".7"/><rect x="66" y="24" width="44" height="30" rx="5" fill="currentColor" fill-opacity=".14"/><path d="M82 32v14l12-7z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Темп, длина, формат', pts:[
+    'Держи плотность до конца — обрезай хвост',
+    'Формат <b>1080×1920</b>, вертикаль 9:16',
+    'Учитывай safe-зоны под интерфейс площадки',
+    'Финал не тяни: закончил мысль — руби'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="46" y="6" width="28" height="58" rx="7"/><path d="M46 16h28M46 54h28" opacity=".45" stroke-dasharray="3 4"/><path d="M55 30v10l10-5z" fill="currentColor" stroke="none"/><path d="M20 24v22M100 24v22" opacity=".5"/></svg>'},
+  {t:'Экспорт и превью', pts:[
+    'Высокий битрейт — без «мыла» и артефактов',
+    '<b>Первый кадр</b> = мини-хук: он же обложка',
+    'Обложка с крупным текстом ловит на пролистывании',
+    'Проверь ролик <b>на телефоне</b> — смотреть будут там'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="44" height="34" rx="5"/><path d="M20 42l12-10 8 7 6-6 10 9" opacity=".7"/><path d="M34 54v6M24 60h20" opacity=".6"/><path d="M70 31h30M86 20l14 11-14 11" /></svg>'},
+  ],
+  quiz:[
+  {q:'По чему в первую очередь режут вирусный ролик?', o:['По таймеру каждые 10 с','По музыке и речи — на битах и словах','Наугад','По длине исходников'], a:1},
+  {q:'Караоке-субтитры обязательны, потому что…', o:['Так требует закон','Большинство смотрит без звука','Иначе видео не загрузится','Это дешевле музыки'], a:1},
+  {q:'«Дакинг» звука — это…', o:['Замена музыки на тишину','Приглушение музыки под голос','Ускорение трека','Добавление эха'], a:1},
+  {q:'Зачем единый пресет/LUT на весь ролик?', o:['Чтобы файл был меньше','Чтобы картинка выглядела дорого и в едином стиле','Чтобы убрать субтитры','Чтобы ускорить экспорт'], a:1},
+  {q:'Первый кадр ролика важен, потому что он…', o:['Не виден зрителю','Служит обложкой и мини-хуком','Задаёт длину видео','Отвечает за звук'], a:1},
+  {q:'Где обязательно проверить готовый Reels?', o:['Только на большом мониторе','На телефоне — там его и смотрят','В распечатке','Нигде, и так сойдёт'], a:1},
+  ],
+  pairs:[
+  ['Джамп-кат','Склейка на слове, ускоряет темп'],
+  ['Караоке-субтитры','Подсветка по слову без звука'],
+  ['Дакинг','Музыка тише под голос'],
+  ['LUT/пресет','Единый «дорогой» цвет'],
+  ['B-roll','Перебивка прячет склейку'],
+  ],
+  task:{
+    intro:'Опиши монтажный план своего Reels по приёмам урока:',
+    chips:['Ритм','Джамп-каты','Субтитры','Звук','Цвет'],
+    ph:'Пример: Ритм — режу по биту трека, планы по 2 с. Джамп-каты на ключевых словах + zoom-панч на выводе. Субтитры караоке, лаймовый акцент. Звук — трек под энергию + свуш на переходах, дакинг под голос. Цвет — единый пресет, бренд-палитра.',
+    verdict:'Монтажный план плотный: ритм по звуку, караоке-сабы и единый цвет. Совет куратора: заложи звук-хук в первую секунду — ухо цепляется раньше, чем глаз.'
+  }
+},
+
+/* ---------- УРОК: Дистрибуция и алгоритмы 2026 ---------- */
+{
+  title:'Дистрибуция и алгоритмы 2026',
+  sub:'удержание · A/B хуков · масштаб',
+  dur:'', videoUrl:'',
+  c1:'ДИСТРИБУЦИЯ', c2:'АЛГОРИТМЫ',
+  slides:[
+  {t:'Как думает алгоритм', pts:[
+    'Главное — <b>удержание и досмотры</b>, а не лайки',
+    'Репосты и сохранения весят больше лайков',
+    'Первые часы после публикации решают судьбу ролика',
+    'Алгоритм тестирует видео на малой аудитории'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="35" r="12"/><path d="M55 35a5 5 0 0 1 10 0" opacity=".7"/><path d="M60 23V10M60 47v13M48 32 24 22M72 32l24-10M48 38 24 48M72 38l24 10"/><circle cx="20" cy="20" r="4"/><circle cx="100" cy="20" r="4"/><circle cx="20" cy="50" r="4"/><circle cx="100" cy="50" r="4"/></svg>'},
+  {t:'Время и частота', pts:[
+    '<b>Стабильность</b> важнее редких всплесков',
+    'Публикуй регулярно — алгоритм любит ритм',
+    'Тестируй окна времени под свою аудиторию',
+    'Серия форматов приучает зрителя возвращаться'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="34" cy="35" r="20"/><path d="M34 22v13l9 6"/><path d="M70 20h34M70 32h28M70 44h34" opacity=".7"/><circle cx="64" cy="20" r="1.8" fill="currentColor" stroke="none"/><circle cx="64" cy="32" r="1.8" fill="currentColor" stroke="none"/><circle cx="64" cy="44" r="1.8" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Метрики, что смотреть', pts:[
+    '<b>Удержание %</b> и среднее время просмотра — главное',
+    'Дочитывания до CTA показывают силу концовки',
+    'Репосты и сохранения — сигнал ценности',
+    'Читай воронку ролика: где зритель уходит'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v52h96"/><rect x="24" y="20" width="12" height="40" rx="3" fill="currentColor" fill-opacity=".18"/><rect x="46" y="30" width="12" height="30" rx="3"/><rect x="68" y="26" width="12" height="34" rx="3"/><rect x="90" y="40" width="12" height="20" rx="3"/><path d="M24 18l22 6 22-2 22 12" opacity=".55" stroke-dasharray="3 4"/></svg>'},
+  {t:'A/B хуков и обложек', pts:[
+    'Готовь <b>3 варианта хука</b> на один ролик',
+    'Меняй за раз только одно — иначе не понять причину',
+    'Тестируй обложки: первый кадр решает клик',
+    'Решай данными, а не «мне так больше нравится»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="12" width="34" height="22" rx="5"/><rect x="14" y="38" width="34" height="22" rx="5" fill="currentColor" fill-opacity=".15"/><path d="M52 23h14M62 19l5 4-5 4M52 49h14M62 45l5 4-5 4" opacity=".7"/><rect x="72" y="24" width="34" height="22" rx="5"/><path d="M80 42l4 4 6-8" stroke-width="2.8"/></svg>'},
+  {t:'Мультиплатформа', pts:[
+    'Один сценарий → <b>Reels, Shorts, TikTok</b>',
+    'Адаптируй под площадку, а не тупо копируй',
+    'Убирай чужие водяные знаки — их душат алгоритмы',
+    'Каждая площадка = дополнительный охват бесплатно'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="16" width="24" height="38" rx="5"/><rect x="48" y="16" width="24" height="38" rx="5" fill="currentColor" fill-opacity=".15"/><rect x="86" y="16" width="24" height="38" rx="5"/><path d="M18 30l6-4v8zM56 30l6-4v8zM94 30l6-4v8z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Работа с комментариями', pts:[
+    'Закрепляй лучший комментарий — продолжает воронку',
+    'Отвечай <b>ролик-ответом</b> на частые вопросы',
+    'Вовлечение в комментах поднимает охваты',
+    'Комьюнити возвращается за новыми видео'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h54a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H40l-14 10V48h-2a8 8 0 0 1-8-8V16z"/><path d="M28 28h30M28 38h20" opacity=".7"/><circle cx="96" cy="30" r="10"/><path d="M92 30l3 3 6-7" opacity=".8"/></svg>'},
+  {t:'Масштаб: контент-завод', pts:[
+    'Снимай <b>пачками</b> — один съёмочный день на неделю',
+    'Копи шаблоны приёмов, но <b>без повторов</b> в ленте',
+    'Аналитика ежедневно — усиливай залетевшее',
+    'Система важнее вдохновения: конвейер стабильнее'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="14" width="20" height="16" rx="3"/><rect x="10" y="40" width="20" height="16" rx="3"/><rect x="50" y="27" width="20" height="16" rx="3" fill="currentColor" fill-opacity=".16"/><rect x="90" y="14" width="20" height="16" rx="3"/><rect x="90" y="40" width="20" height="16" rx="3"/><path d="M30 22h10l10 9M30 48h10l10-9M70 35h20" opacity=".7"/></svg>'},
+  {t:'Чек-лист роста', pts:[
+    'Тестируй 3 хука на каждый ролик',
+    'Держи удержание выше 50%',
+    'CTA-вопрос + триггер репоста',
+    'Каждый день — разбор метрик и выводы'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 54l22-18 16 10 30-30"/><path d="M74 16h16v16" /><circle cx="16" cy="54" r="3" fill="currentColor" stroke="none"/><circle cx="38" cy="36" r="3" fill="currentColor" stroke="none"/><circle cx="54" cy="46" r="3" fill="currentColor" stroke="none"/></svg>'},
+  ],
+  quiz:[
+  {q:'Что для алгоритма важнее всего?', o:['Число лайков','Удержание и досмотры','Длина описания','Количество хэштегов'], a:1},
+  {q:'Какие сигналы весят больше лайков?', o:['Просмотры профиля','Репосты и сохранения','Время публикации','Число подписок автора'], a:1},
+  {q:'Как правильно проводить A/B-тест хука?', o:['Менять всё сразу','Менять за раз только одно','Не тестировать вовсе','Смотреть только на лайки'], a:1},
+  {q:'Что даёт публикация на нескольких площадках?', o:['Штраф от алгоритма','Дополнительный охват бесплатно','Потерю качества','Ничего'], a:1},
+  {q:'Зачем закреплять комментарий?', o:['Для красоты','Продолжить воронку и вовлечение','Скрыть критику','Ускорить загрузку'], a:1},
+  {q:'Что важнее для стабильного роста?', o:['Ждать вдохновения','Система и ежедневная аналитика','Один вирусный ролик','Больше хэштегов'], a:1},
+  ],
+  pairs:[
+  ['Удержание %','Главная метрика алгоритма'],
+  ['Сохранения','Сигнал ценности контента'],
+  ['A/B хука','3 варианта, меняем одно'],
+  ['Мультиплатформа','Один сценарий на 3 площадки'],
+  ['Контент-завод','Съёмка пачками + аналитика'],
+  ],
+  task:{
+    intro:'Составь план дистрибуции и роста для своего аккаунта:',
+    chips:['Частота','Метрика','A/B','Площадки','Разбор'],
+    ph:'Пример: Частота — 1 ролик в день, окно 19:00. Метрика — удержание, цель >55%. A/B — 3 хука на ролик, меняю только первый кадр. Площадки — Reels + Shorts + TikTok. Разбор — каждый вечер смотрю воронку и усиливаю залетевший формат.',
+    verdict:'План рабочий: стабильная частота, ясная метрика и ежедневный разбор. Совет куратора: заведи таблицу форматов — так быстро увидишь, какой приём стабильно даёт удержание.'
+  }
+},
+];
+/* приклеиваем премиум-уроки к общему плоскому списку (глобальные индексы сохраняются) */
+AC_COURSE.push.apply(AC_COURSE, AC_COURSE_REELS);
+
+/* ================= КАТАЛОГ КУРСОВ =================
+   Плоский AC_COURSE — источник состояния (per глобальный индекс урока).
+   AC_COURSES — метаданные курсов поверх диапазонов [from .. from+count-1]. */
+const AC_COURSES = [
+  { id:'ai', title:'Нейросети 2026', tag:'Базовый курс',
+    sub:'5 уроков · тесты и практика · сертификат за каждый урок',
+    from:0, count:5, free:true, minTier:'PRO', price:0,
+    c1:'НЕЙРОСЕТИ', c2:'2026' },
+  { id:'reels', title:'Контент и Reels', tag:'Премиум',
+    sub:'3 урока · вирусные видео от сценария до алгоритмов',
+    from:5, count:3, free:false, minTier:'PRO', price:2900,
+    c1:'КОНТЕНТ', c2:'И REELS' },
+];
+
+/* индекс курса по глобальному номеру урока */
+function acCourseOf(i){
+  for(let c=0;c<AC_COURSES.length;c++){
+    const m=AC_COURSES[c];
+    if(i>=m.from && i<m.from+m.count) return c;
+  }
+  return 0;
+}
+function acLocalNo(i){ return i - AC_COURSES[acCourseOf(i)].from + 1; }        // номер урока внутри курса (с 1)
+function acCourseLen(ci){ return AC_COURSES[ci].count; }
+function acCourseFirst(ci){ return AC_COURSES[ci].from; }
+function acCourseIdx(ci){ const m=AC_COURSES[ci], a=[]; for(let i=0;i<m.count;i++) a.push(m.from+i); return a; }
+/* доступ к курсу: бесплатный / куплен / открыт подпиской */
+function acOwnsCourse(ci){ try{ return !!(acS.owned && acS.owned[AC_COURSES[ci].id]); }catch(e){ return false; } }
+function acCourseAccessible(ci){
+  const m=AC_COURSES[ci];
+  if(m.free) return true;
+  if(acOwnsCourse(ci)) return true;
+  return (typeof okoHasSub==='function') ? okoHasSub(m.minTier) : false;
+}
+function acCoursePctOf(ci){
+  const idx=acCourseIdx(ci); if(!idx.length) return 0;
+  let s=0; idx.forEach(i=>s+=acLessonPct(i));
+  return Math.round(s/idx.length);
+}
+function acCourseDone(ci){ return acCourseIdx(ci).every(i=>acLessonDone(i)); }
+function acCourseCertCount(ci){ return acCourseIdx(ci).filter(i=>{ const ls=acS.lessons[i]; return ls&&ls.cert; }).length; }
+
 /* ---------- состояние (localStorage oko-academy, per-урок) ---------- */
 function acNewLS(){
   return {video:false, slides:false, test:false, testScore:0, task:false, taskText:'',

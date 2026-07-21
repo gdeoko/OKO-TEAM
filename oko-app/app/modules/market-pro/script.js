@@ -261,7 +261,7 @@ function mpRenderCab(){
   const term = d => (d.st==='done'||d.st==='cancel');
   const deals = MP.deals.slice().sort((a,b)=>(term(a)-term(b)) || (a.st==='dispute'?-1:0)-(b.st==='dispute'?-1:0) || b.at-a.at);
   const openN = MP.deals.filter(d=>MP_ST_OPEN(d.st)).length;
-  const holdSum = MP.deals.filter(d=>d.st==='wait'||d.st==='dispute').reduce((s,d)=>s+d.sum,0);
+  const holdSum = MP.deals.filter(d=>MP_ST_OPEN(d.st)).reduce((s,d)=>s+d.sum,0);
   box.innerHTML = `
     <div class="mp-cab-head">
       <div class="mp-cab-ava">${esc(PROFILE.name[0])}</div>
@@ -317,7 +317,7 @@ function mpRenderCab(){
           <span class="mp-st ${d.st}">${I(st.ic)}${st.t}</span>
           <span class="mp-dir ${d.dir}">${d.dir==='in'?'Продажа':'Покупка'}</span>
           <small>${esc(d.n)} · ${mpWhen(d.at)}</small>
-          ${(d.st==='wait'||d.st==='dispute')?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
+          ${MP_ST_OPEN(d.st)?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
         </div>
         ${mpEscrowStep(d)}${mpDealActions(d)}</div>`;
     }).join('')}
