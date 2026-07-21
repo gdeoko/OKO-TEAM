@@ -20,24 +20,33 @@ def _mark_used(ids):
     with open(REG, "a") as f:
         for i in ids: f.write(f"- {i}\n")
 
+SP_SHORT = "EgIYAQ%253D%253D"  # YouTube-фильтр "< 4 минут" — surface коротких роликов
+
 def search(queries, n, min_views, exclude):
-    seen=set(exclude); out=[]
+    """Поиск Shorts/reels: YouTube URL с фильтром <4мин + match-filter duration<=180,
+    вывод через --print (надёжно). Отбор 1М+, дедуп, сортировка по просмотрам."""
+    import urllib.parse
+    seen=set(exclude); cand=[]
     for q in queries:
+        url=f"https://www.youtube.com/results?search_query={urllib.parse.quote_plus(q)}&sp={SP_SHORT}"
         try:
-            r=subprocess.run(["yt-dlp","--flat-playlist","--no-warnings","-J",f"ytsearch40:{q}"],
-                             capture_output=True, text=True, timeout=120)
-            d=json.loads(r.stdout or "{}")
+            r=subprocess.run(["yt-dlp","--no-warnings","--match-filter","duration<=180",
+                "--playlist-items","1-40","--print","%(duration)s|%(view_count)s|%(id)s|%(channel)s|%(title)s",url],
+                capture_output=True,text=True,timeout=240)
         except Exception as e:
             sys.stderr.write(f"[search fail {q}: {e}]\n"); continue
-        for e in d.get("entries",[]) or []:
-            vid=e.get("id"); vc=e.get("view_count") or 0
-            if not vid or vid in seen: continue
-            if vc < min_views: continue
-            seen.add(vid)
-            out.append({"id":vid,"title":e.get("title"),"views":vc,
-                        "url":f"https://youtube.com/watch?v={vid}","channel":e.get("channel") or e.get("uploader")})
-    out.sort(key=lambda x:x["views"], reverse=True)
-    return out[:n]
+        for line in (r.stdout or "").splitlines():
+            parts=line.split("|",4)
+            if len(parts)<5: continue
+            du,vc,vid,ch,title=parts
+            try: du=int(float(du)); vc=int(float(vc))
+            except: continue
+            if not vid or vid in seen or vc<min_views or du>180: continue
+            seen.add(vid); cand.append({"id":vid,"title":title,"views":vc,"duration":du,
+                "channel":ch,"url":f"https://youtube.com/watch?v={vid}"})
+    cand.sort(key=lambda x:x["views"], reverse=True)
+    sys.stderr.write(f"[Shorts-кандидатов ≥{min_views}: {len(cand)}]\n")
+    return cand[:n]
 
 def enrich(item, outdir):
     """Полные метрики + скачивание + раскадровка + транскрипт."""
@@ -63,8 +72,10 @@ def enrich(item, outdir):
     if src and os.path.exists(src):
         # раскадровка: сетка кадров каждые ~1.5с
         grid=os.path.join(base,"storyboard.jpg")
+        du=item.get("duration") or 30
+        cols=5; rows=max(2,min(8,int((du/2.0)//cols)+1)); step=max(0.8, du/(cols*rows))
         subprocess.run(["ffmpeg","-y","-v","error","-i",src,"-vf",
-            "fps=1/1.5,scale=320:-1,tile=5x6","-frames:v","1",grid],capture_output=True,timeout=120)
+            f"fps=1/{step:.2f},scale=240:-1,tile={cols}x{rows}","-frames:v","1",grid],capture_output=True,timeout=120)
         item["storyboard"]=grid if os.path.exists(grid) else None
         # аудио→транскрипт
         wav=os.path.join(base,"a.wav")
