@@ -265,6 +265,21 @@ nav#tabs .nav-logo{display:none}
 .svc:active .svc-ic{transform:scale(.93)}
 .svc-label{font-size:10.8px;font-weight:600;color:var(--text);text-align:center;line-height:1.2;min-height:26px;overflow-wrap:anywhere}
 .svc-note{font-size:11.5px;color:var(--dim);text-align:center;margin:14px 0 2px}
+/* нижняя брендовая полоса хаба — закрывает «пустое поле снизу» полезным контентом */
+.ma-foot{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+.ma-foot-card{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:13px 14px;border-radius:var(--r-md);border:1px solid var(--border);background:linear-gradient(135deg,rgba(154,255,0,.06),rgba(154,255,0,.02)),var(--surface);transition:transform .12s ease,border-color .2s,box-shadow .2s}
+.ma-foot-card:active{transform:scale(.985)}
+.ma-foot-card:hover{border-color:color-mix(in srgb,var(--border) 45%,var(--accent))}
+.ma-foot-ic{width:42px;height:42px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--lime-dim);color:var(--accent)}
+.ma-foot-ic.gold{background:linear-gradient(135deg,rgba(255,214,92,.22),rgba(255,214,92,.08));color:#e9c04a}
+.ma-foot-ic svg.i{width:20px;height:20px}
+.ma-foot-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ma-foot-b b{font-size:14px;font-weight:600}
+.ma-foot-b small{font-size:11.5px;color:var(--dim);line-height:1.35}
+.ma-foot-ch{width:16px;height:16px;color:var(--dim);flex-shrink:0}
+.ma-foot-brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;padding:6px 0 2px;color:var(--dim);font-size:11px;letter-spacing:.02em;opacity:.75}
+.ma-foot-brand svg.i{width:16px;height:16px;color:var(--accent);opacity:.9}
+:root[data-theme="light"] .ma-foot-ic.gold{background:linear-gradient(135deg,rgba(214,170,40,.2),rgba(214,170,40,.08));color:#b8901f}
 .ic-tariff::before{background:radial-gradient(circle at 50% 28%,rgba(154,255,0,.42),transparent 60%)}
 .ma-hero{position:relative;min-height:150px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;border:1px solid var(--border);background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(154,255,0,.05) 27px 28px),repeating-linear-gradient(90deg,transparent 0 27px,rgba(154,255,0,.05) 27px 28px),radial-gradient(120% 170% at 90% -10%,rgba(154,255,0,.22),transparent 55%),linear-gradient(120deg,#0d1407,#050705);display:flex;align-items:center}
 .ma-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),transparent 58%)}
@@ -1149,6 +1164,19 @@ main>.screen{position:relative;z-index:1}
             <button class="svc" onclick="showTab('profile')"><span class="svc-ic ic-profile"><svg class="i"><use href="#i-user"/></svg></span><span class="svc-label">Профиль</span></button>
           </div>
           <p class="svc-note">Нажми на сервис — откроется внутри OKO</p>
+          <div class="ma-foot">
+            <button class="ma-foot-card" onclick="showTab('partner')">
+              <span class="ma-foot-ic"><svg class="i"><use href="#i-users"/></svg></span>
+              <span class="ma-foot-b"><b>Партнёрка 15% + 5%</b><small>Приглашай — получай с каждой продажи</small></span>
+              <svg class="i ma-foot-ch"><use href="#i-chev"/></svg>
+            </button>
+            <button class="ma-foot-card" onclick="openPay('MAX')">
+              <span class="ma-foot-ic gold"><svg class="i"><use href="#i-crown"/></svg></span>
+              <span class="ma-foot-b"><b>Разблокируй всё — тариф MAX</b><small>Контент-завод, система и команда OKO</small></span>
+              <svg class="i ma-foot-ch"><use href="#i-chev"/></svg>
+            </button>
+            <div class="ma-foot-brand"><svg class="i"><use href="#i-logo"/></svg><span>OKO · экосистема медийности и бизнеса</span></div>
+          </div>
         </div>
 
         <div class="ma-view" id="ma-video">

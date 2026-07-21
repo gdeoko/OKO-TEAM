@@ -112,7 +112,7 @@ function chSeed(){
   return { v:1, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
-CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{};
+CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{};
 
 function chMockMembers(n){
   const pool = [
@@ -135,6 +135,9 @@ function chTypeLabel(t){ return t==='paid'?'Платный':t==='course'?'Кур
 function chAvStyle(c){ return `background:${CH_BGS[c.bg||0]};`; }
 function chAvColor(c){ return CH_AV_BGS[c.bg||0]==='#0a0a0a' ? 'color:#9AFF00' : ''; }
 function chAvInner(c,cls){
+  if(c.avatar){
+    return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}"></div>`;
+  }
   const style = `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}`;
   const dark = (CH_AV_BGS[c.bg||0]==='#0a0a0a');
   const content = c.icon ? chI(c.icon) : chEsc((c.name[0]||'K').toUpperCase());
@@ -146,6 +149,53 @@ function chCourseProg(c){
   return Math.round(done/c.lessons.length*100);
 }
 function chBadge(c){ return c.verified ? `<svg class="i fill" style="width:0.95em;height:0.95em;vertical-align:-0.12em;margin-left:1px;color:var(--lime)"><use href="#i-verified"/></svg>` : ''; }
+function chSlug(s){ return String(s||'').toLowerCase().replace(/[^a-zа-я0-9_]/gi,'').replace(/ё/g,'е').slice(0,18) || 'channel'; }
+function chNick(c){ if(!c.nick) c.nick = chSlug(c.name); return c.nick; }
+/* url(...) для фото-аватара/обложки, если владелец загрузил картинку */
+function chAvPhoto(c){ return c.avatar ? `background-image:url(${c.avatar});background-size:cover;background-position:center;color:transparent` : ''; }
+
+/* канал публикует пост → он попадает и в ленту рекомендаций (как Instagram) */
+let CH_FEED_SEQ = 900000;
+function chPushToFeed(c, post){
+  if(typeof POSTS==='undefined' || !POSTS.rec) return;
+  const id = ++CH_FEED_SEQ;
+  post._feedId = id;
+  POSTS.rec.unshift({
+    id, ava:(c.name[0]||'K').toUpperCase(), avaIcon:c.icon||null, avaImg:c.avatar||null,
+    name:c.name, sub:'канал · '+chFmtN(c.subs||0), body:post.txt||'',
+    media: post.img ? null : (post.media==='circle-play'?'0:30':post.media==='poll'?'опрос':null),
+    img: post.img||null, likes:post.likes||0, views:post.views||1,
+    liked:false, saved:false, reposts:0, comments:[], chOrigin:c.id
+  });
+  if(typeof renderFeed==='function' && typeof curFeedKind!=='undefined' && curFeedKind==='rec'){ try{ renderFeed('rec'); }catch(e){} }
+}
+/* чтение картинки с устройства → сжатие в dataURL (persist-safe) */
+function chReadImage(file, maxW, quality, cb){
+  if(!file || !/^image\//.test(file.type)){ toast('Выберите изображение'); return; }
+  const rd = new FileReader();
+  rd.onload = e=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const sc = Math.min(1, maxW/img.width);
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width*sc); cv.height = Math.round(img.height*sc);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      let out; try{ out = cv.toDataURL('image/jpeg', quality); }catch(err){ out = e.target.result; }
+      cb(out);
+    };
+    img.onerror = ()=>toast('Не удалось прочитать изображение');
+    img.src = e.target.result;
+  };
+  rd.onerror = ()=>toast('Ошибка чтения файла');
+  rd.readAsDataURL(file);
+}
+/* невидимый file-input, вызывается по кнопке */
+function chPickFile(onFile){
+  const inp = document.createElement('input');
+  inp.type='file'; inp.accept='image/*'; inp.style.display='none';
+  inp.onchange = ()=>{ const f=inp.files&&inp.files[0]; if(f) onFile(f); inp.remove(); };
+  document.body.appendChild(inp); inp.click();
+}
 
 /* ================= НАВИГАЦИЯ ВЬЮХИ (внутренний стек страниц) ================= */
 let chNav = [];   // [{page, arg}]
@@ -186,6 +236,8 @@ function chRender(){
     case 'create':  out = chPageCreate(); break;
     case 'channel': out = chPageChannel(top.arg); break;
     case 'lesson':  out = chPageLesson(top.arg); break;
+    case 'compose': out = chPageCompose(top.arg); break;
+    case 'addLesson': out = chPageAddLesson(top.arg); break;
     case 'manage':  out = chPageManage(top.arg); break;
     case 'mType':   out = chPageMType(top.arg); break;
     case 'mSubs':   out = chPageMSubs(top.arg); break;
@@ -359,11 +411,15 @@ function chPageChannel(id){
   if(!c) return {title:'Канал', html:'<div class="ch-empty">Канал не найден</div>'};
   const mine = chIsMine(c);
   const subbed = chIsSubbed(c);
-  const bgStyle = `background:${CH_BGS[c.bg||0]}`;
+  const bgStyle = c.cover
+    ? `background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.5)),url(${c.cover});background-size:cover;background-position:center`
+    : `background:${CH_BGS[c.bg||0]}`;
   const cover = `
-    <div class="ch-cover" style="${bgStyle}">
+    <div class="ch-cover${c.cover?' has-photo':''}" style="${bgStyle}">
+      ${mine?`<button class="ch-cv-edit" onclick="chGo('mAppear','${c.id}')" title="Оформление">${chI('camera')}</button>`:''}
       ${chAvInner(c,'big')}
       <div class="ch-cv-name">${chEsc(c.name)}${chBadge(c)}</div>
+      <div class="ch-cv-id">@${chEsc(chNick(c))}</div>
       <div class="ch-cv-sub">${chTypeLabel(c.type)}${c.type!=='free'?` · ${c.price} ₽${c.type==='paid'?'/мес':''}`:''}${mine?' · вы владелец':''}</div>
       <div class="ch-cv-stats">
         <div><b>${chFmtN(c.subs||0)}</b><small>подписчиков</small></div>
@@ -401,9 +457,17 @@ function chPageChannel(id){
   html += `<div class="ch-desc">${chEsc(c.desc)}</div>`;
 
   if(mine){
-    html += `<button class="btn ghost" style="margin-bottom:14px" onclick="chGo('manage','${c.id}')">${chI('bolt')} Управление каналом</button>`;
-  } else if(c.type!=='free'){
-    html += `<button class="btn ghost" style="margin-bottom:14px" onclick="chUnsub('${c.id}')">${chI('check')} Вы подписаны${c.type==='paid'?' · управлять':''}</button>`;
+    html += `<div class="ch-owner-bar">
+      <button class="btn" onclick="chGo('${c.type==='course'?'addLesson':'compose'}','${c.id}')">${chI('plus')} ${c.type==='course'?'Добавить урок':'Опубликовать пост'}</button>
+      <button class="btn ghost" onclick="chGo('manage','${c.id}')">${chI('bolt')} Управление</button>
+    </div>`;
+  } else {
+    const authorName = c.owner || (c.admins&&c.admins[0]&&c.admins[0].name) || c.name;
+    const authorNick = c.ownerNick || chNick(c);
+    html += `<div class="ch-owner-bar">
+      <button class="btn ghost" onclick="chDM('${chEsc(authorName)}','${chEsc(authorNick)}')">${chI('send')} Написать автору</button>
+      ${c.type!=='free'?`<button class="btn ghost" onclick="chUnsub('${c.id}')">${chI('check')} Подписка</button>`:''}
+    </div>`;
   }
 
   if(c.type==='course'){
@@ -438,7 +502,9 @@ function chPostHtml(c,p,i){
   return `<div class="ch-post">
     <div class="ch-post-h">${chAvInner(c,'mini')}<b>${chEsc(c.name)}</b><small>${p.when||''}</small></div>
     <div class="ch-post-txt">${chEsc(p.txt)}</div>
-    ${p.media?`<div class="ch-post-media" style="background:${CH_BGS[c.bg||0]}">${chI(p.media)}</div>`:''}
+    ${p.img?`<div class="ch-post-media photo" style="background-image:url(${p.img})"></div>`
+      :p.media==='poll'?chPollHtml(c,p,i)
+      :p.media?`<div class="ch-post-media" style="background:${CH_BGS[c.bg||0]}">${chI(p.media)}${p.media==='circle-play'?'<span class="ch-pm-dur">видео</span>':''}</div>`:''}
     <div class="ch-post-acts">
       ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}',${i})">${chI('heart')}${likes}</button>`:''}
       ${c.discussions?`<button onclick="toast('Обсуждения включены — комментарии подключатся с бэкендом')">${chI('comment')}Обсудить</button>`:''}
@@ -446,6 +512,32 @@ function chPostHtml(c,p,i){
     </div>
   </div>`;
 }
+/* живой опрос под постом (голос сохраняется) */
+function chPollHtml(c,p,i){
+  const opts = (p.poll&&p.poll.opts) || ['Уже применяю','Возьму в работу'];
+  const key = c.id+':'+i;
+  const voted = CH.votes[key];
+  const base = (p.poll&&p.poll.base) || [Math.max(3,(p.views||40)%60+12), Math.max(2,(p.views||30)%40+7)];
+  const counts = opts.map((_,k)=> base[k%base.length] + (voted===k?1:0));
+  const total = counts.reduce((a,b)=>a+b,0)||1;
+  const q = (p.poll&&p.poll.q) || 'А ты как?';
+  return `<div class="ch-poll">
+    <div class="ch-poll-q">${chI('poll')} ${chEsc(q)}</div>
+    ${opts.map((o,k)=>{
+      const pct = Math.round(counts[k]/total*100);
+      return `<button class="ch-poll-opt${voted!=null?' voted':''}${voted===k?' mine':''}" ${voted!=null?'disabled':''} onclick="chVote('${c.id}',${i},${k})">
+        <span class="ch-po-fill" style="width:${voted!=null?pct:0}%"></span>
+        <span class="ch-po-t">${chEsc(o)}</span>
+        ${voted!=null?`<span class="ch-po-p">${pct}%</span>`:''}
+      </button>`;
+    }).join('')}
+    <div class="ch-poll-total">${voted!=null?chFmtN(total)+' голосов':'Нажми, чтобы проголосовать'}</div>
+  </div>`;
+}
+window.chVote = function(id,i,k){
+  const c = chChannel(id); if(!c) return;
+  CH.votes[id+':'+i] = k; chSave(); chRender();
+};
 window.chLike = function(id,i){
   const c = chChannel(id); if(!c||!c.reactions) return;
   CH.likes[id] = CH.likes[id]||{};
