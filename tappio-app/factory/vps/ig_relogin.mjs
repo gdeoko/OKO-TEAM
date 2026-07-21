@@ -41,8 +41,11 @@ try{
   let codeDone=false;
   for(let i=0;i<45;i++){
     if(await isHome()){ await ctx.storageState({path:OUT}); log('LOGGED_IN saved'); await b.close(); process.exit(0); }
-    const ci=p.locator('input[name="verificationCode"], input[autocomplete="one-time-code"], input[aria-label*="code" i], input[type="tel"]').first();
-    const onCode = await ci.count().catch(()=>0) && await ci.isVisible().catch(()=>false);
+    const urlCode = /codeentry|two_factor|auth_platform|challenge|two_step/i.test(p.url());
+    let ci=p.locator('input[name="verificationCode"], input[autocomplete="one-time-code"], input[aria-label*="code" i], input[inputmode="numeric"], input[type="tel"]').first();
+    let hasCi = await ci.count().catch(()=>0) && await ci.isVisible().catch(()=>false);
+    if(!hasCi && urlCode){ ci = p.locator('input:visible').first(); hasCi = await ci.count().catch(()=>0); }
+    const onCode = urlCode || hasCi;
     if(onCode && !codeDone){
       const c = readCode() || (i===0?CODE:'');
       if(c){
