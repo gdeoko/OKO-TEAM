@@ -1,6 +1,34 @@
 {
- "gspy_001": {"ig_code": "Da7WXe0S5XR"},
- "tape_q01": {"ig_code": "Da7SVBGykQO"},
- "brain_q01": {"ig_code": "Da7SBlNS7xA"},
- "spy_q01": {"ig_code": "Da7RzCbSv_n"}
+ "gspy_001": {
+  "ig_code": "Da7WXe0S5XR",
+  "yt_id": "ryPyUiS8thQ",
+  "app": "spy"
+ },
+ "tape_q01": {
+  "ig_code": "Da7SVBGykQO",
+  "yt_id": "KQ1HGVgcCPc",
+  "app": "tape"
+ },
+ "brain_q01": {
+  "ig_code": "Da7SBlNS7xA",
+  "yt_id": "cXoCI9Hrbo4",
+  "app": "brain"
+ },
+ "spy_q01": {
+  "ig_code": "Da7RzCbSv_n",
+  "yt_id": "gjyxd2wYMek",
+  "app": "spy"
+ },
+ "gbrain_002": {
+  "yt_id": "QbjBWImjvos",
+  "app": "brain"
+ },
+ "gbrain_005": {
+  "yt_id": "Yjl-OE7a-f0",
+  "app": "brain"
+ },
+ "gbrain_008": {
+  "yt_id": "OF9boQuULz0",
+  "app": "brain"
+ }
 }

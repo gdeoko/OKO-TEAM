@@ -44,7 +44,20 @@ else STATUS="$STATUS TikTok:FAIL"; log "TikTok fail"; fi
 # 4) YouTube (API)
 if timeout 400 python3 vps/yt_upload.py TAPPIO_YT_CLIENT_ID TAPPIO_YT_CLIENT_SECRET TAPPIO_YT_REFRESH_TOKEN "output/$ID.mp4" "$YTTITLE" "$CAP" "hidden camera,airbnb,privacy,spy camera,travel safety" > work/${ID}_yt.log 2>&1; then
   YT=$(grep -oE 'shorts/[A-Za-z0-9_-]+' work/${ID}_yt.log | head -1)
-  [ -n "$YT" ] && { STATUS="$STATUS YouTube:$YT"; log "YouTube $YT"; } || { STATUS="$STATUS YouTube:?"; cat work/${ID}_yt.log|tail -2; }
+  if [ -n "$YT" ]; then STATUS="$STATUS YouTube:$YT"; log "YouTube $YT"
+    # записать YouTube-id в реестр (для ежедневного отчёта метрик)
+    YID=$(echo "$YT" | sed 's#shorts/##')
+    python3 - "$ID" "$YID" <<'PY' 2>/dev/null
+import json,sys,os
+reg="posted_reels.json"; d={}
+if os.path.exists(reg):
+    try: d=json.load(open(reg))
+    except Exception: d={}
+rid,yid=sys.argv[1],sys.argv[2]
+e=d.get(rid,{}); e["yt_id"]=yid; e.setdefault("app", rid.replace("g","",1).split("_")[0]); d[rid]=e
+json.dump(d,open(reg,"w"),ensure_ascii=False,indent=1)
+PY
+  else STATUS="$STATUS YouTube:?"; cat work/${ID}_yt.log|tail -2; fi
 else STATUS="$STATUS YouTube:FAIL"; log "YouTube fail"; fi
 
 # 5) Instagram (git-raw -> VPS -> stealth reel-постер)
