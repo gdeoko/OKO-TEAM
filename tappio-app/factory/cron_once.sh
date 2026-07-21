@@ -44,6 +44,11 @@ print(pick)
 [ -z "$NEXT" ] && { echo "QUEUE_EMPTY — генератор не дал сценариев (см. gen_scripts.py)"; exit 0; }
 ID=$(basename "$NEXT" .json)
 cp "$NEXT" "scripts/$ID.json"
+APP=$(python3 -c "import json;print(json.load(open('scripts/$ID.json')).get('app','spy'))" 2>/dev/null)
+# АНАЛИЗ ПЕРЕД РОЛИКОМ: свежая разведка конкурентов именно этого app (тихо, без дубля документа)
+timeout 150 python3 recon.py "$APP" quiet 2>&1 | tail -1 || true
+# ПОЛИРОВКА СЦЕНАРИЯ: humanizer + усиление хука по конкурентам + оценка виральности
+python3 script_polish.py "scripts/$ID.json" 2>&1 | tail -1 || true
 CAP=$(python3 -c "import json;d=json.load(open('scripts/$ID.json'));print(d.get('caption') or (d['cta']['text']))" 2>/dev/null)
 YT=$(python3 -c "import json;d=json.load(open('scripts/$ID.json'));print(d.get('yt_title','New reel #shorts'))" 2>/dev/null)
 

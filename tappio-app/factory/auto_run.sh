@@ -24,6 +24,8 @@ fi
 # контроль длины 20-45с: >47 = сценарий слишком длинный, НЕ публиковать (сессия перепишет короче)
 DUR_INT=$(printf '%.0f' "$DUR" 2>/dev/null || echo 0)
 if [ "$DUR_INT" -gt 47 ] 2>/dev/null; then log "TOO_LONG ${DUR}s (>47) — не публикую"; echo "TOO_LONG $DUR"; exit 3; fi
+# QC-ГЕЙТ: оценка на «залёт» + разнообразие/динамика (в отчёт, не блокирует — длину уже проверили)
+QCLINE=$(python3 qc.py "$ID" 2>/dev/null | tail -1); log "$QCLINE"
 
 # 1b) ОБЛОЖКА рила = кадр-0 (наш брендовый дизайн) в JPG для IG
 ffmpeg -y -ss 0.06 -i "output/$ID.mp4" -vframes 1 -q:v 2 "output/${ID}_cover.jpg" 2>/dev/null && log "cover jpg готов" || log "cover jpg fail"
@@ -128,7 +130,7 @@ fi   # конец блока ЗАЩИТЫ ОТ ДУБЛЕЙ
 
 # 6) ОТЧЁТ в бот
 CHAT="${TAPPIO_ANALYTICS_CHAT_ID:-1966985736}"
-MSG="<b>TAPPIO · автопрогон ✅</b>%0A🎬 $ID ($DUR c)%0A$STATUS%0A%0A<i>Собрано и опубликовано автоматически.</i>"
+MSG="<b>TAPPIO · автопрогон ✅</b>%0A🎬 $ID ($DUR c)%0A$STATUS%0A🎯 ${QCLINE}%0A%0A<i>Собрано и опубликовано автоматически.</i>"
 curl -s --cacert $CA -m 25 "https://api.telegram.org/bot$TAPPIO_ANALYTICS_BOT_TOKEN/sendMessage" \
   --data-urlencode "chat_id=$CHAT" -d "text=$MSG" -d "parse_mode=HTML" -d "disable_web_page_preview=true" >/dev/null 2>&1 && log "report sent"
 

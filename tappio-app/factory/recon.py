@@ -116,11 +116,12 @@ def send_bot(text):
 
 def main():
     which = sys.argv[1] if len(sys.argv)>1 else "all"
+    quiet = (len(sys.argv)>2 and sys.argv[2]=="quiet")   # обновить анализ БЕЗ документа в бота (per-reel)
     apps = ["spy","brain","tape"] if which=="all" else [which]
     for app in apps:
         res=recon_app(app)
-        doc=fmt_doc(res)
-        send_bot(doc)
+        if not quiet:
+            send_bot(fmt_doc(res))
         print(f"RECON {app}: top={len(res['top'])} millions={res['millions']} avg={res['avg_views']} hooks={res['hooks'][:6]}")
 
 if __name__=="__main__":
