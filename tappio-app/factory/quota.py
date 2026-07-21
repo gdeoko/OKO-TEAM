@@ -13,9 +13,10 @@ START = date(2026, 7, 17)
 def quota_for(d):
     n = (d - START).days
     if n < 0: return 0
-    if n < 5: return 3
-    q = 3 + (n - 5) // 2 + 1          # +1 каждые 2 дня после первых 5 дней
-    return min(15, max(3, q))
+    if n < 5: return 3               # 17-21 июля: 3/день (пройдено)
+    # с 22 июля: базово 5/день, +1 каждые 2 дня, постепенно до 15
+    q = 5 + (n - 5) // 2
+    return min(15, max(5, q))
 
 def load():
     try: return json.load(open(STATE))

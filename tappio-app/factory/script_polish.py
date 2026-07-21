@@ -56,12 +56,22 @@ def main():
     hooks, top = trend_hooks(app)
 
     notes = []
+    # ТЕМА/УГОЛ ИЗ КОНКУРЕНТОВ: берём свежий заголовок из топа (ротация по id) — на нём основан ролик.
+    import hashlib
+    if top:
+        idx = int(hashlib.md5(d.get("id","x").encode()).hexdigest()[:6],16) % len(top)
+        comp = top[idx]
+        ct = comp.get("title","")
+        if ct:
+            d["comp_angle"] = {"title": ct[:90], "views": comp.get("views",0), "channel": comp.get("channel","")}
+            notes.append(f"angle<-{comp.get('views',0)//1000}k")
+            # yt_title в тренд-стиле опирается на реальную рабочую тему конкурента
+            first = " ".join(re.findall(r"[A-Za-z0-9']+", ct)[:6])
+            if first: d["yt_title"] = (first[:60].strip().rstrip(".")+" #shorts")
     # усиление хука: первый бит должен цеплять
     if segs:
         h = segs[0]["text"]
         if not STRONG.match(h):
-            # добавим числовой/императивный крючок из паттерна конкурентов
-            kw = (hooks[0].capitalize()+" " ) if hooks else ""
             segs[0]["text"] = ("Stop scrolling. " + h) if len(h) < 60 else h
             notes.append("hook_boosted")
     # скоринг виральности (эвристика 0-100)
