@@ -49,6 +49,15 @@ $u = current_user();
     <?php foreach ($nav as $href => $label): ?>
       <a href="<?= url($href) ?>" class="<?= $active === $href ? 'active' : '' ?>"><?= h($label) ?></a>
     <?php endforeach; ?>
+    <div class="nav-cta-mobile">
+      <?php if ($u): ?>
+        <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
+        <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Панель управления</a><?php endif; ?>
+      <?php else: ?>
+        <a class="btn btn--ghost" href="<?= url('/login') ?>">Войти</a>
+        <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
+      <?php endif; ?>
+    </div>
   </nav>
   <div class="nav-actions">
     <?php if ($u): ?>
