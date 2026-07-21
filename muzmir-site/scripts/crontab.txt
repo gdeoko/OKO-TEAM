@@ -1,0 +1,37 @@
+# Cron-задания сайта КЦ «Музыкальный Мир».
+# Подробности и порядок установки - docs/CRON.md.
+#
+# Времена ниже рассчитаны на TZ=Europe/Moscow (см. date_default_timezone_set
+# в config.php). Если crontab на сервере работает в другом часовом поясе -
+# смотрите примечание про TZ в docs/CRON.md и пересчитайте часы полей.
+#
+# Замените /var/www/muzmir-site на реальный путь установки и /usr/bin/php
+# на реальный путь к PHP-CLI (which php).
+
+MAILTO=""
+PHP=/usr/bin/php
+APP=/var/www/muzmir-site
+
+# Очередь писем - каждую минуту.
+* * * * * cd $APP && $PHP cron/process_newsletter_queue.php >> data/logs/cron_stdout.log 2>&1
+
+# Проверка доступности сайта - каждые 5 минут.
+*/5 * * * * cd $APP && $PHP cron/health_check.php >> data/logs/cron_stdout.log 2>&1
+
+# Публикация отложенных афиш в соцсети (через внешнего агента) - раз в час.
+7 * * * * cd $APP && $PHP cron/publish_scheduled_posts.php >> data/logs/cron_stdout.log 2>&1
+
+# Даты конкурсов: автозакрытие приёма + генерация афиш - раз в день, ночью.
+15 3 * * * cd $APP && $PHP cron/check_competitions_dates.php >> data/logs/cron_stdout.log 2>&1
+
+# Напоминания участникам (оплата / награды / дедлайн) - раз в день, утром.
+0 6 * * * cd $APP && $PHP cron/send_reminders.php >> data/logs/cron_stdout.log 2>&1
+
+# Суточный бэкап БД - раз в день, ночью (после проверки дат конкурсов).
+30 3 * * * cd $APP && $PHP cron/daily_backup.php >> data/logs/cron_stdout.log 2>&1
+
+# Полный бэкап (БД + uploads + дипломы) - раз в неделю, ночь с воскресенья на понедельник.
+45 3 * * 1 cd $APP && $PHP cron/weekly_backup.php >> data/logs/cron_stdout.log 2>&1
+
+# Месячная сводка владельцу - 1-го числа месяца, утром.
+0 8 1 * * cd $APP && $PHP cron/monthly_report.php >> data/logs/cron_stdout.log 2>&1
