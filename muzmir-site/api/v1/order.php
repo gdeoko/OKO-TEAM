@@ -32,7 +32,7 @@ $orderId = insert('awards_orders', [
 ]);
 
 // --- заглушка создания платежа ЮKassa ---
-$payment = yukassa_create_payment($amount, 'Наградные материалы, заказ №' . $orderId, ['order_id' => $orderId]);
+$payment = yukassa_create_payment($amount, 'Наградные материалы, заказ №' . $orderId, ['order_id' => $orderId, 'email' => mb_strtolower(input('email'))]);
 if ($payment && !empty($payment['id'])) {
     update('awards_orders', ['payment_id' => $payment['id']], 'id=:id', ['id' => $orderId]);
     if (tbl_exists('payments')) {

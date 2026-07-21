@@ -92,13 +92,29 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     if (!$shop || !$secret || $amount <= 0) {
         return ['id' => 'stub-' . bin2hex(random_bytes(6)), 'status' => 'pending', 'stub' => true, 'confirmation_url' => null];
     }
-    $payload = json_encode([
+    $body = [
         'amount'       => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
         'capture'      => true,
         'confirmation' => ['type' => 'redirect', 'return_url' => rtrim(cfgv('base_url'), '/') . '/cabinet'],
         'description'  => mb_substr($description, 0, 128),
         'metadata'     => $meta,
-    ], JSON_UNESCAPED_UNICODE);
+    ];
+    // Чек 54-ФЗ (для самозанятого/НПД ЮKassa регистрирует чек). Добавляем, если есть email.
+    $email = $meta['email'] ?? '';
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $body['receipt'] = [
+            'customer' => ['email' => $email],
+            'items'    => [[
+                'description'     => mb_substr($description, 0, 128),
+                'quantity'        => '1.00',
+                'amount'          => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
+                'vat_code'        => 1,              // без НДС (самозанятый/НПД)
+                'payment_mode'    => 'full_payment',
+                'payment_subject' => 'service',
+            ]],
+        ];
+    }
+    $payload = json_encode($body, JSON_UNESCAPED_UNICODE);
     $ch = curl_init('https://api.yookassa.ru/v3/payments');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
