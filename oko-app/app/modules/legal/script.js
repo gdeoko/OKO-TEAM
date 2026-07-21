@@ -367,6 +367,96 @@ en: { title:'Terms of Service', rev:'Revision No. 4', secs:[
 {h:'Final Provisions', b:
 `<p>The invalidity of any individual provision of the Terms does not invalidate the remaining provisions. The Operator may update the Terms in the same manner as the Public Offer. The current revision is always available in the app under "OKO Legal".</p>`}
 ]}
+},
+
+/* ============ СОГЛАСИЕ НА ОБРАБОТКУ ПЕРСОНАЛЬНЫХ ДАННЫХ ============ */
+consent: {
+ru: { title:'Согласие на обработку персональных данных', rev:'Редакция № 4', secs:[
+{h:'Субъект и Оператор', b:
+`<p>Настоящим я, дееспособное физическое лицо — пользователь приложения OKO (далее — <b>«Субъект»</b>), действуя своей волей и в своём интересе, в соответствии со ст. 9 Федерального закона от 27.07.2006 № 152-ФЗ «О персональных данных» даю согласие на обработку моих персональных данных Оператору — <b>Индивидуальному предпринимателю Ильясову Даниэлю Альбертовичу</b> (проект «ОКО PROJECT», ИНН 682016634349, г. Москва, Российская Федерация; представительство: г. Дубай, ОАЭ), e-mail: okoteam.top@gmail.com.</p>
+<p>Согласие даётся в момент регистрации в Сервисе путём проставления соответствующей отметки и является конкретным, предметным, информированным, сознательным и однозначным.</p>`},
+{h:'Цели обработки', b:
+`<p>Персональные данные обрабатываются в следующих целях:</p>
+<ul>
+<li>регистрация, аутентификация и ведение аккаунта в Сервисе;</li>
+<li>исполнение Публичной оферты: подписки, сделки Биржи, эскроу, вывод средств, партнёрские начисления;</li>
+<li>обеспечение связи, поддержки и обратной связи с Субъектом;</li>
+<li>модерация контента, обеспечение безопасности и предотвращение мошенничества;</li>
+<li>улучшение Сервиса на основе обезличенной аналитики;</li>
+<li>направление информационных и — при отдельном согласии — рекламных сообщений.</li>
+</ul>`},
+{h:'Перечень персональных данных', b:
+`<p>Субъект даёт согласие на обработку следующих персональных данных:</p>
+<ul>
+<li>фамилия, имя, отчество (при указании), отображаемое имя и никнейм;</li>
+<li>адрес электронной почты и номер телефона;</li>
+<li>дата рождения, изображение профиля (аватар), сведения «о себе», интересы;</li>
+<li>идентификаторы входа (Telegram ID, Google, Apple) и данные аккаунта;</li>
+<li>платёжные метаданные (суммы, даты, статусы и идентификаторы операций — без полных номеров карт);</li>
+<li>технические данные: IP-адрес, тип устройства и ОС, язык, cookies, журналы событий.</li>
+</ul>`},
+{h:'Перечень действий и способы обработки', b:
+`<p>Согласие распространяется на любые действия (операции) с персональными данными: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ) в объёме, указанном в разделе 5, обезличивание, блокирование, удаление и уничтожение.</p>
+<p>Обработка осуществляется как с использованием средств автоматизации (включая ИИ-модели премодерации контента), так и без таковых. Запись, систематизация, накопление, хранение, уточнение и извлечение персональных данных граждан РФ осуществляются с использованием баз данных на территории Российской Федерации (ч. 5 ст. 18 152-ФЗ).</p>`},
+{h:'Передача третьим лицам (поручение обработки)', b:
+`<p>Субъект соглашается на поручение обработки его персональных данных в минимально необходимом объёме следующим категориям лиц, действующим по поручению Оператора и обязанным соблюдать конфиденциальность:</p>
+<ul>
+<li>платёжным провайдерам (Lava.top, банковские и криптовалютные процессинги) — для проведения платежей;</li>
+<li>поставщикам облачной инфраструктуры и хостинга — для хранения и технической обработки данных;</li>
+<li>Telegram — при входе через Telegram-аккаунт;</li>
+<li>государственным органам — исключительно по законному запросу.</li>
+</ul>
+<p>Оператор не продаёт персональные данные и не передаёт их третьим лицам для их собственных маркетинговых целей.</p>`},
+{h:'Срок действия и порядок отзыва', b:
+`<p>Согласие действует с момента его предоставления в течение всего срока использования Сервиса и <b>3 (три) года</b> после удаления аккаунта либо до достижения целей обработки, если иное не предусмотрено законом (документы об операциях хранятся 5 лет, технические логи — 12 месяцев).</p>
+<p>Согласие может быть отозвано в любой момент путём направления письменного заявления на okoteam.top@gmail.com либо через функцию удаления аккаунта в приложении. После отзыва Оператор прекращает обработку и уничтожает (обезличивает) данные в срок, не превышающий 30 дней, за исключением данных, обработка которых продолжается на иных законных основаниях (исполнение договора, требования учёта, защита прав).</p>`},
+{h:'Права субъекта и подтверждение', b:
+`<p>Субъект подтверждает, что ознакомлен со своими правами, предусмотренными 152-ФЗ (получение сведений об обработке, уточнение, блокирование, удаление данных, отзыв согласия, обжалование в Роскомнадзоре), а также с Политикой конфиденциальности Оператора.</p>
+<p>Проставляя отметку о согласии при регистрации, Субъект подтверждает достоверность предоставленных данных и своё согласие с условиями настоящего документа. Настоящее согласие является электронным документом и не требует проставления собственноручной подписи Субъекта.</p>`}
+]},
+en: { title:'Consent to Personal Data Processing', rev:'Revision No. 4', secs:[
+{h:'Data Subject and Operator', b:
+`<p>I, a legally capable individual and user of the OKO app (the <b>"Data Subject"</b>), acting of my own free will and in my own interest, in accordance with Article 9 of Russian Federal Law No. 152-FZ "On Personal Data" of 27.07.2006, consent to the processing of my personal data by the Operator — <b>Sole Proprietor Ilyasov Daniel Albertovich</b> ("OKO PROJECT", Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE), e-mail: okoteam.top@gmail.com.</p>
+<p>This consent is given upon registration in the Service by ticking the relevant box and is specific, informed, conscious and unambiguous.</p>`},
+{h:'Purposes of Processing', b:
+`<p>Personal data is processed for the following purposes:</p>
+<ul>
+<li>registration, authentication and maintenance of the Service account;</li>
+<li>performance of the Public Offer: subscriptions, Marketplace transactions, escrow, withdrawals, affiliate accruals;</li>
+<li>communication, support and feedback with the Data Subject;</li>
+<li>content moderation, security and fraud prevention;</li>
+<li>improving the Service based on anonymised analytics;</li>
+<li>sending service messages and — with separate consent — marketing messages.</li>
+</ul>`},
+{h:'Categories of Personal Data', b:
+`<p>The Data Subject consents to the processing of the following personal data:</p>
+<ul>
+<li>surname, first name, patronymic (if provided), display name and nickname;</li>
+<li>e-mail address and phone number;</li>
+<li>date of birth, profile picture (avatar), "about" information, interests;</li>
+<li>sign-in identifiers (Telegram ID, Google, Apple) and account data;</li>
+<li>payment metadata (amounts, dates, statuses and transaction identifiers — without full card numbers);</li>
+<li>technical data: IP address, device and OS type, language, cookies, event logs.</li>
+</ul>`},
+{h:'Actions and Methods of Processing', b:
+`<p>This consent covers any actions (operations) with personal data: collection, recording, systematisation, accumulation, storage, clarification (updating, modification), retrieval, use, transfer (provision, access) to the extent set out in Section 5, anonymisation, blocking, deletion and destruction.</p>
+<p>Processing is carried out both by automated means (including AI content pre-moderation models) and without them. Recording, systematisation, accumulation, storage, clarification and retrieval of personal data of Russian citizens are performed using databases located in the Russian Federation (Art. 18(5) of Law 152-FZ).</p>`},
+{h:'Transfer to Third Parties (Processing Instruction)', b:
+`<p>The Data Subject consents to instructing the processing of their personal data, to the minimum necessary extent, to the following categories of persons acting on the Operator's behalf and bound by confidentiality:</p>
+<ul>
+<li>payment providers (Lava.top, bank and cryptocurrency processors) — to process payments;</li>
+<li>cloud infrastructure and hosting providers — to store and technically process data;</li>
+<li>Telegram — when signing in with a Telegram account;</li>
+<li>public authorities — solely upon a lawful request.</li>
+</ul>
+<p>The Operator does not sell personal data and does not share it with third parties for their own marketing purposes.</p>`},
+{h:'Validity and Withdrawal', b:
+`<p>This consent is valid from the moment it is given, throughout the entire period of use of the Service and for <b>3 (three) years</b> after account deletion, or until the purposes of processing are achieved, unless otherwise provided by law (transaction records are kept for 5 years, technical logs for 12 months).</p>
+<p>The consent may be withdrawn at any time by sending a written request to okoteam.top@gmail.com or via the account deletion feature in the app. After withdrawal, the Operator ceases processing and destroys (anonymises) the data within no more than 30 days, except for data whose processing continues on other lawful grounds (performance of the agreement, accounting requirements, protection of rights).</p>`},
+{h:'Data Subject Rights and Confirmation', b:
+`<p>The Data Subject confirms awareness of their rights under Law 152-FZ (obtaining information about processing, rectification, blocking, deletion of data, withdrawal of consent, lodging a complaint with Roskomnadzor), as well as familiarity with the Operator's Privacy Policy.</p>
+<p>By ticking the consent box during registration, the Data Subject confirms the accuracy of the data provided and their agreement with the terms of this document. This consent is an electronic document and does not require the Data Subject's handwritten signature.</p>`}
+]}
 }
 };
 
@@ -374,20 +464,30 @@ en: { title:'Terms of Service', rev:'Revision No. 4', secs:[
 function lgDocHtml(kind, lang){
   const d = LG_DOCS[kind][lang];
   const r = LG_REQ[lang];
-  const opLabel = lang==='en' ? 'Operator' : 'Оператор';
-  const revLabel = lang==='en' ? d.rev + ' · effective ' + r.date : d.rev + ' · дата вступления в силу: ' + r.date;
-  return `<div class="lg-doc">
+  const opLabel   = lang==='en' ? 'Operator'  : 'Оператор';
+  const tocLabel  = lang==='en' ? 'Contents'  : 'Содержание';
+  const reqLabel  = lang==='en' ? 'Operator details' : 'Реквизиты Оператора';
+  const topLabel  = lang==='en' ? 'to contents' : 'к содержанию';
+  const revLabel  = lang==='en' ? d.rev + ' · effective ' + r.date : d.rev + ' · дата вступления в силу: ' + r.date;
+  const sid = (i)=>'lg-s-'+kind+'-'+i;
+  const toc = `<nav class="lg-toc" aria-label="${tocLabel}">
+      <div class="lg-toc-h">${I('file')}<b>${tocLabel}</b></div>
+      <ol>${d.secs.map((s,i)=>`<li><button type="button" class="lg-toc-a" onclick="lgJump('${sid(i)}')"><span class="lg-toc-n">${i+1}</span><span>${s.h}</span></button></li>`).join('')}</ol>
+    </nav>`;
+  return `<div class="lg-doc" id="lgDoc">
     <div class="lg-doc-head">
       <svg class="lg-doc-logo"><use href="#i-logo"/></svg>
       <div>
         <h1>${d.title}</h1>
-        <div class="lg-doc-meta"><b>OKO</b> · ${revLabel}</div>
+        <div class="lg-doc-meta"><b>OKO PROJECT</b> · ${revLabel}</div>
         <div class="lg-doc-meta">${opLabel}: ${r.op}, ${r.inn}</div>
       </div>
     </div>
-    ${d.secs.map((s,i)=>`<section class="lg-sec"><h2>${i+1}. ${s.h}</h2>${s.b}</section>`).join('')}
+    ${toc}
+    ${d.secs.map((s,i)=>`<section class="lg-sec" id="${sid(i)}"><h2><span class="lg-sec-n">${i+1}.</span> ${s.h}<button type="button" class="lg-sec-top" onclick="lgJump('lgDoc')" title="${topLabel}">${I('chev')}</button></h2>${s.b}</section>`).join('')}
     <div class="lg-req">
-      <b>${r.op}</b><br>${r.inn}<br>${r.geo}<br>E-mail: ${r.mail}
+      <div class="lg-req-h">${reqLabel}</div>
+      <b>${r.op}</b><br>${r.brand}<br>${r.inn}<br>${r.geo}<br>E-mail: ${r.mail}
     </div>
     <div class="doc-sign-block">
       <div class="lg-seal">${sealSvg(150)}</div>
@@ -398,6 +498,19 @@ function lgDocHtml(kind, lang){
       </div>
     </div>
   </div>`;
+}
+
+/* плавный скролл к секции/оглавлению внутри контейнера документа */
+function lgJump(id){
+  const el = document.getElementById(id);
+  const box = document.getElementById('lgBody');
+  if(!el || !box) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const r1 = el.getBoundingClientRect(), r2 = box.getBoundingClientRect();
+  const top = box.scrollTop + (r1.top - r2.top) - 14;
+  box.scrollTo({top: top<0?0:top, behavior: reduce ? 'auto' : 'smooth'});
+  el.classList.add('lg-flash');
+  setTimeout(()=>el.classList.remove('lg-flash'), 900);
 }
 
 function lgRender(){
@@ -430,6 +543,18 @@ function lgSetLang(l){
   lgS.lang = l; lgSave(); lgRender();
 }
 
+/* строка юр-ссылок на экране входа — на текущем языке приложения */
+function lgRenderAuthLegal(l){
+  const al = document.querySelector('.auth-legal');
+  if(!al) return;
+  const en = l==='en';
+  const pre  = en ? 'By continuing you accept the ' : 'Продолжая, ты принимаешь ';
+  const mid  = en ? ' and the ' : ' и ';
+  const terms= en ? 'Terms of Service' : 'условия сервиса';
+  const priv = en ? 'Privacy Policy' : 'политику конфиденциальности';
+  al.innerHTML = `${pre}<span class="lg-a" onclick="openLegalDoc('terms')">${terms}</span>${mid}<span class="lg-a" onclick="openLegalDoc('privacy')">${priv}</span>`;
+}
+
 /* ---------- самоинициализация ---------- */
 (function lgInit(){
   /* а) строка «Документы OKO» в профиле — перед «Выйти» */
@@ -451,13 +576,8 @@ function lgSetLang(l){
     addSvcTile({id:'legal', label:'Документы', ico:'file', onclick:()=>openLegalDoc('offer')});
   }
 
-  /* в) кликабельные ссылки на экране входа */
-  try{
-    const al = document.querySelector('.auth-legal');
-    if(al){
-      al.innerHTML = 'Продолжая, ты принимаешь <span class="lg-a" onclick="openLegalDoc(\'terms\')">условия сервиса</span> и <span class="lg-a" onclick="openLegalDoc(\'privacy\')">политику конфиденциальности</span>';
-    }
-  }catch(e){}
+  /* в) кликабельные ссылки на экране входа — на текущем языке */
+  try{ lgRenderAuthLegal(typeof LANG!=='undefined'?LANG:'ru'); }catch(e){}
 
   /* следовать за глобальным переключением языка (если пользователь меняет язык приложения) */
   if(typeof onLangChange==='function'){
@@ -466,11 +586,12 @@ function lgSetLang(l){
         lgS.lang = l; lgSave();
         const v = document.getElementById('legalView');
         if(v && v.classList.contains('open')) lgRender();
+        try{ lgRenderAuthLegal(l); }catch(e){}
       }
     });
   }
 
-  /* i18n-регистрация подписи строки профиля (на будущее, ядро i18n) */
+  /* i18n-регистрация подписей (ядро i18n) */
   if(typeof regT==='function'){
     regT({ 'lg.docs': {ru:'Документы OKO', en:'OKO Legal'} });
   }

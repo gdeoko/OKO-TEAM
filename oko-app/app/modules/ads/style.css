@@ -60,6 +60,29 @@
 .ads-camp-acts .btn.sm{flex:1;gap:5px;padding:8px 8px;font-size:12px;white-space:nowrap}
 .ads-camp-acts .btn.sm svg.i{width:14px;height:14px;flex-shrink:0}
 .ads-camp-acts .btn.sm.stop{color:var(--danger);border-color:rgba(255,77,77,.45);background:transparent}
+.ads-camp-acts2{margin-top:8px}
+.ads-camp-acts2 .btn.sm{width:100%;gap:7px;padding:9px 8px;font-size:12px}
+.ads-camp-acts2 .btn.sm.dup{color:var(--dim);border-style:dashed}
+.ads-camp-acts2 .btn.sm.dup:hover{color:var(--accent);border-color:rgba(154,255,0,.45)}
+.ads-camp-acts2 .btn.sm.dup svg.i{width:14px;height:14px}
+
+/* ===== воронка конверсии ===== */
+.ads-fn{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px 12px;margin-top:8px}
+.ads-fn-h{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+.ads-fn-h svg.i{width:13px;height:13px;color:var(--accent)}
+.ads-fn-row{display:flex;align-items:center;gap:10px}
+.ads-fn-ic{width:26px;height:26px;border-radius:8px;border:1px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ads-fn-ic svg.i{width:14px;height:14px}
+.ads-fn-mid{flex:1;min-width:0}
+.ads-fn-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px}
+.ads-fn-l{font-size:11.5px;font-weight:600;color:var(--text)}
+.ads-fn-v{font-family:var(--font-display);font-size:15px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-fn-bar{height:7px;border-radius:4px;background:var(--surface);border:1px solid var(--border);overflow:hidden}
+.ads-fn-bar i{display:block;height:100%;width:0;border-radius:4px;transition:width .7s cubic-bezier(.3,1,.4,1)}
+.ads-fn-drop{display:flex;align-items:center;gap:7px;padding:3px 0 3px 36px;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+.ads-fn-arw{display:flex;color:var(--border)}
+.ads-fn-arw svg.i{width:12px;height:12px;transform:rotate(90deg)}
+.ads-fn-drop b{font-family:var(--font-display);font-size:13px;letter-spacing:.03em;color:var(--accent);font-weight:400}
 
 /* ===== разворот «Статистика»: бар-чарт по дням + CTR + A/B ===== */
 .ads-stats-toggle{display:flex;align-items:center;gap:8px;width:100%;font-size:12px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:10px;transition:all .18s;cursor:pointer}

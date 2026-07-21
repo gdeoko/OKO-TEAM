@@ -25,14 +25,14 @@
     <input type="file" id="adsFileVideo" accept="video/*" style="display:none" onchange="adsMediaChosen(this,'video')">
 
     <label class="ads-lbl">Заголовок</label>
-    <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
+    <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней" oninput="adsRenderPreview()">
     <div class="ads-ab-opt">
       <button class="ads-chip" id="adsAbChip" onclick="adsToggleAb()"><svg class="i"><use href="#i-poll"/></svg>A/B тест</button>
       <small>второй вариант заголовка — OKO покажет оба и найдёт лучший по CTR</small>
     </div>
     <input id="adsInpTitleB" maxlength="60" placeholder="Заголовок — вариант B" style="display:none">
     <label class="ads-lbl">Текст объявления</label>
-    <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку"></textarea>
+    <textarea class="ads-ta" id="adsInpText" rows="3" maxlength="300" placeholder="Что получит человек и почему стоит нажать кнопку" oninput="adsRenderPreview()"></textarea>
     <label class="ads-lbl">Кнопка (CTA)</label>
     <div class="ads-chips" id="adsCtaChips">
       <button class="ads-chip on" data-v="Подробнее" onclick="adsPickCta(this)">Подробнее</button>

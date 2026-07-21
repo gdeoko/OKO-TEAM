@@ -297,12 +297,28 @@ function hqExportReport(){
   toast('Отчёт выгружен: '+fname);
 }
 
-/* ==================== 2b. ПОЛЬЗОВАТЕЛИ: бан / галочка / написать ==================== */
-const _prevAdmUsersHq = admUsers; /* базовый рендер заменён расширенным (chain сохранён) */
-admUsers = function(){
-  return `<div class="adm-sec-h">Последние пользователи (${ADMIN.users.length})</div>` + ADMIN.users.map((u,i)=>{
-    const a = HQ_ACT.users[u.n] || {};
-    return `
+/* ==================== 2b. ПОЛЬЗОВАТЕЛИ: поиск / фильтр / бан / галочка / написать ==================== */
+let hqUsrQ = '', hqUsrFilter = 'all';
+const HQ_USR_FILTERS = [
+  {k:'all',  l:'Все'}, {k:'paid', l:'Платные'}, {k:'free', l:'Бесплатные'},
+  {k:'ver',  l:'С галочкой'}, {k:'ban',  l:'Забаненные'},
+];
+function hqUsrMatch(u){
+  const a = HQ_ACT.users[u.n] || {};
+  const ver = (typeof VERIFIED!=='undefined' && VERIFIED.has(u.n));
+  if(hqUsrFilter==='paid' && !u.paid) return false;
+  if(hqUsrFilter==='free' && u.paid) return false;
+  if(hqUsrFilter==='ver'  && !ver) return false;
+  if(hqUsrFilter==='ban'  && !a.ban) return false;
+  if(hqUsrQ && (u.n+' '+u.h).toLowerCase().indexOf(hqUsrQ.toLowerCase()) < 0) return false;
+  return true;
+}
+/* сохраняем оригинальный индекс в ADMIN.users — действия работают по нему при любом фильтре */
+function hqUsrList(){ return ADMIN.users.map((u,i)=>({u,i})).filter(x=>hqUsrMatch(x.u)); }
+function hqUserRow(u, i){
+  const a = HQ_ACT.users[u.n] || {};
+  const ver = (typeof VERIFIED!=='undefined' && VERIFIED.has(u.n));
+  return `
     <div class="adm-row hq-usr ${a.ban?'ban':''}">
       <div class="hq-usr-top">
         <span class="adm-ava">${esc(u.n[0])}</span>
@@ -312,18 +328,45 @@ admUsers = function(){
       </div>
       <div class="hq-usr-acts">
         <button class="adm-btn ${a.ban?'':'dng'}" onclick="hqUserBan(${i})">${a.ban?'Разбанить':'Забанить'}</button>
-        <button class="adm-btn" onclick="hqUserVerify(${i})">${(typeof VERIFIED!=='undefined' && VERIFIED.has(u.n)) ? 'Снять галочку' : 'Выдать галочку'}</button>
+        <button class="adm-btn" onclick="hqUserVerify(${i})">${ver ? 'Снять галочку' : 'Выдать галочку'}</button>
         <button class="adm-btn pri" onclick="hqUserMsg(${i})">Написать</button>
       </div>
     </div>`;
-  }).join('') +
-  `<div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+}
+function hqUsrListHtml(){
+  const list = hqUsrList();
+  if(!list.length) return `<p class="dim hq-usr-empty">Никого не найдено${hqUsrQ?' по запросу «'+esc(hqUsrQ)+'»':' по этому фильтру'}.</p>`;
+  return list.map(x=>hqUserRow(x.u, x.i)).join('');
+}
+/* обновляем ТОЛЬКО список — поле поиска не пересоздаётся, фокус/каретка сохраняются */
+function hqUsrRenderList(){
+  const box = document.getElementById('hqUsrList'); if(box) box.innerHTML = hqUsrListHtml();
+  const c = document.getElementById('hqUsrCount'); if(c) c.textContent = hqUsrList().length;
+}
+function hqUsrSearch(v){ hqUsrQ = v; hqUsrRenderList(); }
+function hqUsrSetFilter(k){
+  hqUsrFilter = k;
+  const chips = document.getElementById('hqUsrChips');
+  if(chips) chips.querySelectorAll('.hq-chip').forEach(el=>el.classList.toggle('on', el.dataset.k===k));
+  hqUsrRenderList();
+}
+const _prevAdmUsersHq = admUsers; /* базовый рендер заменён расширенным (chain сохранён) */
+admUsers = function(){
+  const chips = HQ_USR_FILTERS.map(f=>
+    `<button class="hq-chip ${hqUsrFilter===f.k?'on':''}" data-k="${f.k}" onclick="hqUsrSetFilter('${f.k}')">${f.l}</button>`).join('');
+  return `
+    <div class="adm-sec-h">Пользователи · <span id="hqUsrCount">${hqUsrList().length}</span> из ${ADMIN.users.length}</div>
+    <div class="hq-usr-search">${I('search')}<input id="hqUsrInput" placeholder="Поиск по имени или @нику" value="${esc(hqUsrQ)}" oninput="hqUsrSearch(this.value)" autocomplete="off"></div>
+    <div class="hq-chips" id="hqUsrChips">${chips}</div>
+    <div id="hqUsrList">${hqUsrListHtml()}</div>
+    <div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
 };
 function hqUserBan(i){
   const u = ADMIN.users[i]; if(!u) return;
   const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
   a.ban = a.ban ? 0 : 1;
-  hqActSave(); renderAdmin();
+  hqActSave();
+  if(admTab==='users') hqUsrRenderList(); else renderAdmin();
   toast(a.ban ? 'Пользователь '+u.n+' забанен' : u.n+' разбанен — доступ восстановлен');
 }
 function hqUserVerify(i){
@@ -331,7 +374,8 @@ function hqUserVerify(i){
   const a = HQ_ACT.users[u.n] = HQ_ACT.users[u.n] || {};
   if(VERIFIED.has(u.n)){ VERIFIED.delete(u.n); a.ver = 0; toast('Галочка снята: '+u.n); }
   else { VERIFIED.add(u.n); a.ver = 1; toast('Галочка выдана: '+u.n); }
-  hqActSave(); renderAdmin();
+  hqActSave();
+  if(admTab==='users') hqUsrRenderList(); else renderAdmin();
 }
 function hqUserMsg(i){
   const u = ADMIN.users[i]; if(!u) return;

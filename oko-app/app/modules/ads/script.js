@@ -122,6 +122,7 @@ function adsMigrate(){
     if(!Array.isArray(c.devs)) c.devs = [];
     if(!Array.isArray(c.times)) c.times = [];
     if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
+    if(!c.cvr) c.cvr = +(0.16 + Math.random()*0.18).toFixed(3);   /* доля кликов → целевое действие */
     if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
     if(c.demo && !c.media) c.media = adsBrandPoster(c);
     adsRollDays(c);
@@ -179,15 +180,17 @@ function adsRenderSummary(){
 
 function adsCampActs(c){
   if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
+  const dup = `<div class="ads-camp-acts2"><button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать кампанию</button></div>`;
   if(c.status==='act')  return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsTopup(${c.id})">${I('plus')}Пополнить</button>
       <button class="btn sm ghost" onclick="adsPause(${c.id})">${I('pause')}Пауза</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
   if(c.status==='pause')return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsResume(${c.id})">${I('play')}Возобновить</button>
       <button class="btn sm ghost" onclick="adsTopup(${c.id})">${I('plus')}Бюджет</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
   return `<div class="ads-camp-acts">
+      <button class="btn sm ghost" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button>
       <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
 }
 
@@ -226,7 +229,7 @@ function adsRenderList(){
     </div>`).join('');
   requestAnimationFrame(()=>ADS.camps.forEach(c=>{
     adsDrawSpark(c);
-    if(adsOpenStats.has(c.id)) adsDrawDays(c);
+    if(adsOpenStats.has(c.id)){ adsDrawDays(c); adsSyncFunnel(c, true); }
   }));
 }
 
@@ -260,6 +263,7 @@ function adsStatsBlock(c){
       <span><i class="lg-ctr"></i>CTR</span>
     </div>
     <div class="ads-stats-sub" data-m="sub7">${adsSub7(c)}</div>
+    ${adsFunnel(c)}
     ${c.ab ? `<div class="ads-ab" data-m="ab">${adsAbInner(c)}</div>` : ''}
   </div>`;
 }
@@ -291,6 +295,55 @@ function adsAbInner(c){
   return `<div class="ads-ab-h">${I('bolt')}A/B тест заголовка
       ${win ? `<span class="ads-ab-done">победитель найден</span>` : `<span class="ads-ab-run">идёт тест</span>`}</div>
     ${row('a', c.name)}${row('b', c.ab.tb)}`;
+}
+
+/* ---------- воронка конверсии: Показы → Клики → Целевые действия ---------- */
+function adsConv(c){ return Math.round((c.clicks||0) * (c.cvr || 0.22)); }
+const ADS_FN_STAGES = [
+  {k:'imps', ic:'eye',  l:'Показы',           col:'#9AFF00'},
+  {k:'clk',  ic:'bolt', l:'Клики',            col:'#ffb020'},
+  {k:'cv',   ic:'check',l:'Целевые действия', col:'#4da6ff'}
+];
+function adsFunnel(c){
+  let html = `<div class="ads-fn"><div class="ads-fn-h">${I('poll')}Воронка конверсии</div>`;
+  ADS_FN_STAGES.forEach((s,i)=>{
+    if(i) html += `<div class="ads-fn-drop"><span class="ads-fn-arw">${I('chev')}</span>`+
+      `<b data-dr="${i===1?'ctr':'cr'}">0%</b><span>${i===1?'CTR':'в действие'}</span></div>`;
+    html += `<div class="ads-fn-row">
+      <span class="ads-fn-ic" style="color:${s.col};background:${s.col}1f;border-color:${s.col}55">${I(s.ic)}</span>
+      <div class="ads-fn-mid">
+        <div class="ads-fn-top"><span class="ads-fn-l">${s.l}</span><b class="ads-fn-v" data-fn="${s.k}">0</b></div>
+        <div class="ads-fn-bar"><i data-fn2="${s.k}" style="width:0;background:linear-gradient(90deg,${s.col}3a,${s.col})"></i></div>
+      </div></div>`;
+  });
+  return html + '</div>';
+}
+/* автономный count-up для одного элемента */
+function adsCountEl(el, target){
+  const t0 = performance.now(), dur = 700;
+  const step = now=>{
+    const k = Math.min(1, (now-t0)/dur), e = 1-Math.pow(1-k,3);
+    el.textContent = fmtN(Math.round(target*e));
+    if(k<1) requestAnimationFrame(step); else el.textContent = fmtN(target);
+  };
+  requestAnimationFrame(step);
+}
+function adsSyncFunnel(c, animate){
+  const wrap = document.querySelector(`.ads-camp[data-cid="${c.id}"] .ads-fn`); if(!wrap) return;
+  const imps = c.imps||0, clk = c.clicks||0, cv = adsConv(c), base = Math.max(imps,1);
+  const vals = {imps, clk, cv};
+  wrap.querySelectorAll('.ads-fn-v').forEach(el=>{
+    const to = vals[el.dataset.fn] || 0;
+    if(animate) adsCountEl(el, to); else el.textContent = fmtN(to);
+  });
+  wrap.querySelectorAll('.ads-fn-bar i').forEach(el=>{
+    const frac = Math.max(0, Math.min(1, (vals[el.dataset.fn2]||0)/base));
+    el.style.width = Math.max(6, Math.pow(frac, 0.34)*100) + '%';
+  });
+  wrap.querySelectorAll('.ads-fn-drop b').forEach(el=>{
+    if(el.dataset.dr==='ctr') el.textContent = (imps ? clk/imps*100 : 0).toFixed(1)+'%';
+    else el.textContent = (clk ? cv/clk*100 : 0).toFixed(0)+'%';
+  });
 }
 
 function adsRRect(x, px, py, pw, ph, r){
@@ -405,6 +458,7 @@ function adsTickUI(){
     adsDrawSpark(c);
     if(adsOpenStats.has(c.id)){
       adsDrawDays(c);
+      adsSyncFunnel(c, false);
       const sub = el.querySelector('[data-m="sub7"]'); if(sub) sub.innerHTML = adsSub7(c);
       const ab = el.querySelector('[data-m="ab"]'); if(ab) ab.innerHTML = adsAbInner(c);
     }
@@ -835,6 +889,7 @@ function adsLaunch(){
   const camp = {
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
     fmt: adsDraft.fmt, model: adsDraft.model, bid, ctrEst: Math.max(.008, ctrEst),
+    cvr: +(0.16 + Math.random()*0.18).toFixed(3),
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
     interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
     devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips'),
@@ -968,6 +1023,59 @@ function adsDelete(id){
   adsPullFromFeed(c);
   ADS.camps = ADS.camps.filter(x=>x.id!==id);
   adsSave(); adsRender(); toast('Кампания удалена');
+}
+
+/* ---------- дублирование: открываем мастер, прекопировав все настройки ---------- */
+function adsPrefillFromCamp(c){
+  adsRevokeDraftMedia();
+  adsDraft = {
+    fmt: ADS_FORMATS[c.fmt] ? c.fmt : 'post',
+    model: c.model || (ADS_FORMATS[c.fmt]||ADS_FORMATS.post).model,
+    cta: c.cta || 'Подробнее',
+    sex: c.sex || 'any',
+    geo: ADS_CITIES[c.geo] || c.geo==='Весь мир' ? c.geo : 'РФ',
+    cities: Array.isArray(c.cities) ? [...c.cities] : [],
+    ab: !!c.ab, reach: 0,
+    media: c.media ? Object.assign({}, c.media) : null
+  };
+  const setVal = (id,v)=>{ const e = document.getElementById(id); if(e) e.value = v==null?'':v; };
+  setVal('adsInpTitle', c.name);
+  setVal('adsInpText', c.text);
+  setVal('adsInpLink', c.link);
+  setVal('adsInpTitleB', c.ab ? c.ab.tb : '');
+  /* A/B чип и поле варианта B */
+  const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.toggle('on', !!c.ab);
+  const abInp = document.getElementById('adsInpTitleB'); if(abInp) abInp.style.display = c.ab ? '' : 'none';
+  /* одиночные наборы */
+  const single = (box,val)=>document.querySelectorAll('#'+box+' .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===val));
+  single('adsCtaChips', adsDraft.cta);
+  single('adsSexChips', adsDraft.sex);
+  single('adsGeoChips', adsDraft.geo);
+  /* множественные наборы */
+  const multi = (box,arr)=>document.querySelectorAll('#'+box+' .ads-chip').forEach(b=>b.classList.toggle('on', (arr||[]).includes(b.dataset.v)));
+  multi('adsIntChips',  c.interests);
+  multi('adsAgeChips',  c.ages);
+  multi('adsDevChips',  c.devs);
+  multi('adsTimeChips', c.times);
+  /* модель, ставка, бюджет — прописываем так, чтобы adsSyncModelUI не перетёр */
+  const bidInp = document.getElementById('adsInpBid');
+  if(bidInp){ bidInp.value = c.bid || adsRecBid(); bidInp.dataset.model = adsDraft.model; }
+  const budInp = document.getElementById('adsInpBudget'); if(budInp) budInp.value = c.budget || 1000;
+  document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.toggle('on', b.textContent.replace(/\s|₽/g,'')===String(c.budget)));
+  document.querySelectorAll('#adsModelChips .ads-model-b').forEach(b=>b.classList.toggle('on', b.dataset.v===adsDraft.model));
+  /* рендеры зависимых блоков */
+  adsRenderFmts();
+  adsRenderCities();
+  adsRenderSaved();
+  adsRenderMediaZone();
+  adsSyncModelUI();
+}
+function adsDuplicate(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsPrefillFromCamp(c);
+  adsStep(1);
+  openSheet('ads-create');
+  toast('Копия «'+c.name+'» — проверьте и запустите');
 }
 
 /* ---------- живая статистика: тикер раз в 5 секунд ---------- */
