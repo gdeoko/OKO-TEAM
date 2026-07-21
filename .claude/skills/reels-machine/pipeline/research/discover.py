@@ -48,44 +48,62 @@ def search(queries, n, min_views, exclude):
     sys.stderr.write(f"[Shorts-кандидатов ≥{min_views}: {len(cand)}]\n")
     return cand[:n]
 
+def _vtt_text(path):
+    import re as _re
+    out=[]
+    for ln in open(path,encoding="utf-8",errors="ignore"):
+        ln=ln.strip()
+        if not ln or ln.startswith(("WEBVTT","Kind:","Language:")) or "-->" in ln or ln.isdigit(): continue
+        ln=_re.sub(r"<[^>]+>","",ln).replace("&nbsp;"," ").strip()
+        if ln and (not out or out[-1]!=ln): out.append(ln)
+    return " ".join(out)[:3000]
+
 def enrich(item, outdir):
-    """Полные метрики + скачивание + раскадровка + транскрипт."""
+    """БЕЗ cookies: метрики + субтитры(транскрипт) + обложка-кадр.
+    Полное видео/раскадровка — только если задан YT_COOKIES (path к cookies.txt)."""
     vid=item["id"]; base=os.path.join(outdir,vid); os.makedirs(base,exist_ok=True)
+    ck=os.environ.get("YT_COOKIES"); cookie=["--cookies",ck] if ck and os.path.exists(ck) else []
     # метрики
     try:
-        r=subprocess.run(["yt-dlp","--no-warnings","-J",item["url"]],capture_output=True,text=True,timeout=120)
+        r=subprocess.run(["yt-dlp","--no-warnings"]+cookie+["-J","--skip-download",item["url"]],
+            capture_output=True,text=True,timeout=120)
         m=json.loads(r.stdout or "{}")
-        item.update(views=m.get("view_count",item["views"]), likes=m.get("like_count"),
-            comments=m.get("comment_count"), duration=m.get("duration"),
-            channel=m.get("channel"), followers=m.get("channel_follower_count"),
-            description=(m.get("description") or "")[:1200], upload=m.get("upload_date"),
+        item.update(views=m.get("view_count",item.get("views")), likes=m.get("like_count"),
+            comments=m.get("comment_count"), duration=m.get("duration",item.get("duration")),
+            channel=m.get("channel",item.get("channel")), followers=m.get("channel_follower_count"),
+            description=(m.get("description") or "")[:1500], upload=m.get("upload_date"),
             tags=(m.get("tags") or [])[:15])
     except Exception as e: sys.stderr.write(f"[meta {vid}: {e}]\n")
-    # скачать (<=1080, коротко)
-    mp4=os.path.join(base,"v.mp4")
+    # субтитры -> транскрипт (без скачивания видео)
     try:
-        subprocess.run(["yt-dlp","--no-warnings","-f","mp4[height<=1080]/best[height<=1080]/best",
-            "-o",mp4,item["url"]],capture_output=True,text=True,timeout=240)
-    except Exception as e: sys.stderr.write(f"[dl {vid}: {e}]\n")
-    real=glob.glob(os.path.join(base,"v.*"))
-    src=real[0] if real else None
-    if src and os.path.exists(src):
-        # раскадровка: сетка кадров каждые ~1.5с
-        grid=os.path.join(base,"storyboard.jpg")
-        du=item.get("duration") or 30
-        cols=5; rows=max(2,min(8,int((du/2.0)//cols)+1)); step=max(0.8, du/(cols*rows))
-        subprocess.run(["ffmpeg","-y","-v","error","-i",src,"-vf",
-            f"fps=1/{step:.2f},scale=240:-1,tile={cols}x{rows}","-frames:v","1",grid],capture_output=True,timeout=120)
-        item["storyboard"]=grid if os.path.exists(grid) else None
-        # аудио→транскрипт
-        wav=os.path.join(base,"a.wav")
-        subprocess.run(["ffmpeg","-y","-v","error","-i",src,"-ac","1","-ar","16000",wav],capture_output=True,timeout=120)
+        subprocess.run(["yt-dlp","--no-warnings"]+cookie+["--write-auto-subs","--write-subs",
+            "--sub-langs","ru,ru-orig,en,en-orig","--skip-download","--sub-format","vtt",
+            "-o",os.path.join(base,"sub.%(ext)s"),item["url"]],capture_output=True,timeout=120)
+        vtts=sorted(glob.glob(os.path.join(base,"sub*.vtt")), key=lambda x:(".ru" not in x, x))
+        item["transcript"]=_vtt_text(vtts[0]) if vtts else ""
+    except Exception as e: item["transcript"]=f"[sub fail: {e}]"
+    # обложка-кадр (без auth)
+    thumb=os.path.join(base,"thumb.jpg")
+    for q in ("maxresdefault","hqdefault","sddefault"):
         try:
-            from faster_whisper import WhisperModel
-            wm=WhisperModel("small",device="cpu",compute_type="int8")
-            segs,_=wm.transcribe(wav,vad_filter=True)
-            item["transcript"]=" ".join(s.text.strip() for s in segs)[:2500]
-        except Exception as e: item["transcript"]=f"[whisper fail: {e}]"
+            subprocess.run(["curl","-s","-o",thumb,"--cacert","/root/.ccr/ca-bundle.crt",
+                f"https://i.ytimg.com/vi/{vid}/{q}.jpg"],capture_output=True,timeout=40)
+            if os.path.exists(thumb) and os.path.getsize(thumb)>5000: break
+        except Exception: pass
+    item["thumbnail"]=thumb if os.path.exists(thumb) and os.path.getsize(thumb)>5000 else None
+    # опционально: полное видео + раскадровка (нужны cookies)
+    item["storyboard"]=None
+    if cookie:
+        mp4=os.path.join(base,"v.mp4")
+        subprocess.run(["yt-dlp","--no-warnings"]+cookie+["-f","best[height<=1080]/best","-o",mp4,item["url"]],
+            capture_output=True,timeout=240)
+        srcs=glob.glob(os.path.join(base,"v.*"))
+        if srcs:
+            grid=os.path.join(base,"storyboard.jpg"); du=item.get("duration") or 30
+            cols=5; rows=max(2,min(8,int((du/2.0)//cols)+1)); step=max(0.8,du/(cols*rows))
+            subprocess.run(["ffmpeg","-y","-v","error","-i",srcs[0],"-vf",
+                f"fps=1/{step:.2f},scale=240:-1,tile={cols}x{rows}","-frames:v","1",grid],capture_output=True,timeout=120)
+            if os.path.exists(grid): item["storyboard"]=grid
     return item
 
 def main():
