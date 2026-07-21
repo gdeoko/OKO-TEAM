@@ -271,10 +271,43 @@ function faDecorate(){
   }
 }
 
+/* ---------- красивое пустое состояние ленты (иллюстрация + CTA) ---------- */
+function faEmptyArt(){
+  return `<svg class="fa-empty-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">`+
+    `<rect x="22" y="30" width="76" height="62" rx="13" stroke="currentColor" stroke-width="4" opacity=".32"/>`+
+    `<circle cx="40" cy="49" r="7.5" fill="var(--lime)"/>`+
+    `<rect x="55" y="44" width="33" height="5" rx="2.5" fill="currentColor" opacity=".42"/>`+
+    `<rect x="55" y="54" width="21" height="5" rx="2.5" fill="currentColor" opacity=".26"/>`+
+    `<rect x="34" y="70" width="52" height="5" rx="2.5" fill="currentColor" opacity=".24"/>`+
+    `<rect x="34" y="80" width="36" height="5" rx="2.5" fill="currentColor" opacity=".16"/>`+
+    `<g class="fa-empty-wave" stroke="var(--lime)" stroke-width="4.4" stroke-linecap="round" fill="none">`+
+      `<path d="M90 24a18 18 0 0 1 0 26"/>`+
+      `<path d="M98 16a30 30 0 0 1 0 42" opacity=".55"/>`+
+    `</g></svg>`;
+}
+function faGoRec(){
+  const b = [...document.querySelectorAll('#screen-feed .feed-tabs button')]
+    .find(x => /'rec'/.test(x.getAttribute('onclick') || ''));
+  if(b) b.click();
+}
+function faRenderEmpty(list, kind){
+  const rec = kind === 'rec';
+  const title = rec ? 'Пока пусто' : 'Тут появятся посты';
+  const text  = rec
+    ? 'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.'
+    : 'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.';
+  const cta = rec
+    ? `<button class="fa-empty-cta" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`
+    : `<button class="fa-empty-cta" type="button" onclick="faGoRec()">${I('compass')}<span>Открыть рекомендации</span></button>`;
+  list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span>${cta}</div>`;
+}
+
 const _faPrevRenderFeed = renderFeed;
 renderFeed = function(kind){
   kind = kind || curFeedKind || 'sub';
   _faPrevRenderFeed(kind);           /* «Подписки» не трогаем — декор только для rec */
+  const list = document.getElementById('feedList');
+  if(list && !list.querySelector('article.post')){ faRenderEmpty(list, kind); return; }
   if(kind === 'rec') faDecorate();
 };
 
@@ -377,6 +410,7 @@ function faLoadMore(){
    поле ввода с аватаром и контекстом «Ответ …». Модель дополняется на лету, session-only. */
 FA.cidSeq = 900000;
 FA.replyTo = null;
+const FA_CMT_PAGE = 6;   /* сколько корневых комментариев показываем до «показать ещё» */
 
 function faPlural(n, one, few, many){
   const m10 = n % 10, m100 = n % 100;
@@ -474,7 +508,19 @@ function faRenderComments(id){
     list.innerHTML = `<div class="fac-empty">${I('comment')}<b>Пока тихо</b><span>Стань первым, кто оставит комментарий</span></div>`;
     return;
   }
-  list.innerHTML = `<div class="fac-wrap">${p.comments.map(c => faCommentHTML(id, c, false)).join('')}</div>`;
+  const shown = Math.min(p.comments.length, p._cmtShown || FA_CMT_PAGE);
+  const items = p.comments.slice(0, shown).map(c => faCommentHTML(id, c, false)).join('');
+  const rest = p.comments.length - shown;
+  const more = rest > 0
+    ? `<button class="fac-more" type="button" onclick="faMoreComments(${id})">`+
+        `<span>Показать ещё ${rest} ${faPlural(rest, 'комментарий', 'комментария', 'комментариев')}</span>${I('chev')}</button>`
+    : '';
+  list.innerHTML = `<div class="fac-wrap">${items}</div>${more}`;
+}
+function faMoreComments(id){
+  const p = postById(id); if(!p) return;
+  p._cmtShown = (p._cmtShown || FA_CMT_PAGE) + FA_CMT_PAGE;
+  faRenderComments(id);
 }
 function faUpdateCardCount(p){
   if(!p) return;
@@ -530,6 +576,7 @@ function faClearReply(){
 openComments = function(id){
   const p = postById(id); if(!p) return;
   commentsFor = id;
+  p._cmtShown = FA_CMT_PAGE;          /* каждое открытие — с первой «страницы» */
   faClearReply();
   faRenderComments(id);
   openSheet('comments');
@@ -553,6 +600,7 @@ addComment = function(){
   inp.value = '';
   faClearReply();
   if(p.topic) faSignal(p.topic, 0.7);
+  p._cmtShown = Math.max(p._cmtShown || FA_CMT_PAGE, p.comments.length);  /* свой коммент всегда виден */
   faRenderComments(commentsFor);
   faUpdateCardCount(p);
   const list = document.getElementById('cmtList');
@@ -591,6 +639,12 @@ addComment = function(){
       'Ответить':'Reply','Скрыть ответы':'Hide replies','Пока тихо':'No comments yet',
       'Стань первым, кто оставит комментарий':'Be the first to comment',
       'Написать комментарий…':'Write a comment…','Комментарий добавлен':'Comment added',
+      'Канал':'Channel','Открыть рекомендации':'Open recommendations',
+      'Пока пусто':'Nothing here yet','Тут появятся посты':'Posts will appear here',
+      'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.':
+        'No fresh posts found. Refresh and the algorithm will build a new feed for you.',
+      'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.':
+        'Follow channels and authors — their posts show up here. Meanwhile, check the recommendations.',
     };
     for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
   }

@@ -332,29 +332,142 @@ function mpRenderCab(){
     <div style="height:6px"></div>`;
   mpCountUp();
 }
+/* ---------- набор действий под каждой сделкой (зависит от направления и статуса) ---------- */
+function mpDealActions(d){
+  if(d.st==='cancel') return ''; // отменённая сделка — терминальна, действий нет
+  const chat = MP_ST_OPEN(d.st)
+    ? `<button class="ghost" onclick="mpOpenDealChat('${d.id}')">${I('chat')} Чат по сделке</button>` : '';
+  let main = '';
+  if(d.dir==='in'){                                   // ПРОДАЖА (пользователь — продавец)
+    if(d.st==='new')        main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Принять заказ</button>`;
+    else if(d.st==='work')  main = `<button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button>`;
+    else if(d.st==='wait')  main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button>`;
+    else if(d.st==='dispute') main = `<button onclick="mpDealResolve('${d.id}','refund')">${I('back')} Вернуть деньги</button>
+                                      <button onclick="mpDealResolve('${d.id}','done')">${I('check')} Завершить</button>`;
+    else return mpRevBtn(d);                           // done / cancel
+  } else {                                             // ПОКУПКА (пользователь — покупатель)
+    if(d.st==='new' || d.st==='work'){
+      main = `<button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button>
+              <button class="warn" onclick="mpDealCancel('${d.id}')">${I('back')} Отменить · возврат</button>`;
+    } else if(d.st==='wait'){
+      main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button>
+              <button class="warn" onclick="mpDealDispute('${d.id}')">${I('flag')} Открыть спор</button>`;
+    } else if(d.st==='dispute'){
+      main = `<button onclick="mpDealResolve('${d.id}','refund')">${I('back')} Вернуть деньги</button>
+              <button class="ghost" onclick="mpDealResolve('${d.id}','done')">${I('check')} Всё ок, завершить</button>`;
+    } else return mpRevBtn(d);                          // done / cancel
+  }
+  return `<div class="mp-deal-act">${main}${chat}</div>`;
+}
 function mpDealNext(id){
   const d = MP.deals.find(x=>x.id===id);
   if(!d) return;
-  if(d.st==='work'){ d.st='wait'; toast('Работа сдана — ждём подтверждения покупателя'); }
-  else if(d.st==='wait'){
-    d.st = 'done';
-    if(d.dir==='in'){
-      MP.gross += d.sum;
-      toast('Сделка завершена · +'+fmtMoney(Math.round(d.sum*(1-MP_FEE)))+' в баланс продаж');
-    } else {
-      WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
-      toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
-      setTimeout(()=>mpOpenReview(d.id), 500); // сразу предложим оценить исполнителя
-    }
+  if(d.st==='new'){ d.st='work'; toast('Заказ принят — сделка в работе'); mpDealChatNote(d,'Продавец принял заказ. Работа началась.'); }
+  else if(d.st==='work'){ d.st='wait'; toast('Работа сдана — деньги на холде до подтверждения'); mpDealChatNote(d, d.dir==='in'?'Продавец сдал работу. Проверьте и подтвердите — эскроу снимется.':'Работа сдана исполнителем.'); }
+  else if(d.st==='wait'){ mpDealComplete(d); return; }
+  mpSave(); mpRenderCab();
+}
+function mpDealComplete(d){
+  d.st = 'done';
+  if(d.dir==='in'){                                   // продажа: выручка в баланс продаж, комиссия при выводе
+    MP.gross += d.sum;
+    toast('Сделка завершена · +'+fmtMoney(Math.round(d.sum*(1-MP_FEE)))+' в баланс продаж');
+  } else {                                            // покупка: снимаем холд — деньги ушли исполнителю
+    mpReleaseHold(d);
+    toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
+    setTimeout(()=>mpOpenReview(d.id), 500);
   }
+  mpDealChatNote(d, 'Сделка успешно завершена. Спасибо!');
   mpSave(); mpRenderCab();
 }
 function mpDealPoke(id){
   const d = MP.deals.find(x=>x.id===id);
-  if(!d || d.dir!=='out' || d.st!=='work') return;
+  if(!d || d.dir!=='out' || (d.st!=='work' && d.st!=='new')) return;
   d.st = 'wait'; mpSave();
   toast('Исполнитель сдал работу — проверь и подтверди получение');
+  mpDealChatNote(d, 'Исполнитель отметил работу как сданную — на проверке у покупателя.');
   mpRenderCab();
+}
+/* снять эскроу-холд (реальные деньги только если сделка их реально держит) */
+function mpReleaseHold(d){
+  if(d.held){ WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave(); d.held = false; }
+}
+/* возврат покупателю: холд -> баланс, откат комиссии */
+function mpRefundBuyer(d){
+  if(d.held){
+    WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
+    walletAdd(d.sum, 'Возврат по сделке Биржи');
+    okoEarn(-Math.round(d.sum*MP_FEE*100)/100, 'Возврат комиссии Биржи');
+    d.held = false;
+  }
+}
+function mpDealCancel(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.dir!=='out' || !MP_ST_OPEN(d.st)) return;
+  showPopup({ico:'back', title:'Отменить сделку?', body:'Сделка «'+esc(d.t)+'» будет отменена, а '+fmtMoney(d.sum)+' из эскроу вернутся на кошелёк.',
+    actions:[
+      {label:'Оставить', ghost:true, onclick:()=>closePopup()},
+      {label:'Отменить и вернуть', onclick:()=>{ closePopup(); mpRefundBuyer(d); d.st='cancel'; mpSave();
+        toast('Сделка отменена · '+fmtMoney(d.sum)+' возвращены на кошелёк');
+        mpDealChatNote(d,'Покупатель отменил сделку. Эскроу возвращён на кошелёк.'); mpRenderCab(); }}
+    ]});
+}
+function mpDealDispute(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='wait') return;
+  d.st = 'dispute'; mpSave();
+  if(typeof ADMIN!=='undefined' && ADMIN.moder){
+    ADMIN.moder.unshift({t:'Спор по сделке: «'+d.t+'» — '+fmtMoney(d.sum), by:'@'+(PROFILE.nick||'user'), kind:'Биржа'});
+    if(ADMIN.kpi) ADMIN.kpi.moder = ADMIN.moder.length;
+  }
+  toast('Спор открыт — деньги заморожены, модерация OKO подключится');
+  mpDealChatNote(d,'Открыт спор. Средства заморожены до решения модерации OKO.');
+  mpRenderCab();
+}
+function mpDealResolve(id, outcome){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='dispute') return;
+  if(outcome==='refund'){
+    if(d.dir==='out') mpRefundBuyer(d);
+    d.st = 'cancel'; toast('Спор решён в пользу возврата · '+fmtMoney(d.sum)+' вернулись');
+    mpDealChatNote(d,'Спор решён: средства возвращены покупателю.');
+    mpSave(); mpRenderCab();
+  } else {
+    mpDealComplete(d); // завершение с обычной логикой (выручка/снятие холда)
+  }
+}
+
+/* ---------- чат по сделке: связка эскроу с мессенджером ---------- */
+function mpDealChat(d){
+  let chat = (d.chatId && CHATS.find(c=>c.id===d.chatId)) || CHATS.find(c=>c.name===d.n);
+  if(!chat){
+    const id = 'deal-'+d.id;
+    chat = {id, ava:(d.n||'?')[0], name:d.n, kind:'direct', nick:(d.n||'user').toLowerCase().replace(/\s/g,'_'),
+      kindIcon:null, preview:'Сделка: '+d.t, time:nowT(), unread:0, online:true,
+      msgs:[{kind:'sys', body:'Сделка по объявлению «'+d.t+'» · '+fmtMoney(d.sum)+' · '+(d.dir==='in'?'вы продавец':'вы покупатель')},
+            {kind:'sys', body:'Эскроу OKO: деньги под защитой до подтверждения выполнения'}]};
+    CHATS.unshift(chat);
+  }
+  d.chatId = chat.id;
+  return chat;
+}
+function mpDealChatNote(d, text){
+  const chat = (d.chatId && CHATS.find(c=>c.id===d.chatId)) || CHATS.find(c=>c.name===d.n);
+  if(!chat) return;
+  chat.msgs.push({kind:'sys', body:'Сделка · '+MP_ST[d.st].t+': '+text});
+  chat.preview = text; chat.time = nowT();
+  if(typeof currentChat!=='undefined' && currentChat===chat && typeof openConv==='function') openConv(chat.id);
+  if(typeof renderChatList==='function' && document.getElementById('screen-chats')) renderChatList();
+}
+function mpOpenDealChat(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d) return;
+  const chat = mpDealChat(d);
+  mpSave();
+  closeSheet();
+  showTab('chats');
+  if(typeof renderChatList==='function') renderChatList();
+  openConv(chat.id);
 }
 
 /* ================= ОТЗЫВЫ ПОСЛЕ СДЕЛКИ ================= */
@@ -597,7 +710,7 @@ function mpInjectMarket(){
   if(!root) return;
   const quick = root.querySelector('.mk-quick');
   if(!quick || document.getElementById('mpCabRow')) return;
-  const active = MP.deals.filter(d=>d.st!=='done').length;
+  const active = MP.deals.filter(d=>MP_ST_OPEN(d.st)).length;
   const row = document.createElement('button');
   row.id = 'mpCabRow'; row.className = 'mp-cab-row'; row.onclick = mpOpenCabinet;
   row.innerHTML = `<span class="mp-cab-ic">${I('crown')}</span>
@@ -642,7 +755,21 @@ function mpDecorateCards(){
 }
 if(typeof renderMarketListSoft==='function'){
   const _prevRMLS = renderMarketListSoft;
-  renderMarketListSoft = function(){ _prevRMLS.apply(this, arguments); mpDecorateCards(); };
+  renderMarketListSoft = function(){
+    const box = document.getElementById('mkResults');
+    if(box) box.classList.remove('mp-cascade'); // печать в поиске не должна каждый раз анимировать заново
+    _prevRMLS.apply(this, arguments);
+    mpDecorateCards();
+  };
+}
+/* каскадное появление карточек — только при полном входе в список (не на каждый символ поиска) */
+if(typeof renderMarketList==='function'){
+  const _prevRML = renderMarketList;
+  renderMarketList = function(){
+    _prevRML.apply(this, arguments);
+    const box = document.getElementById('mkResults');
+    if(box){ void box.offsetWidth; box.classList.add('mp-cascade'); }
+  };
 }
 
 /* заказ на бирже: покупка уже патчена wallet (эскроу+комиссия) — только читаем результат */
@@ -653,8 +780,16 @@ orderListing = function(id){
   if(WALLET.hold <= holdBefore) return; // оплата не прошла — сделку не регистрируем
   const l = LISTINGS.find(x=>x.id===id);
   if(!l) return;
-  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id});
+  const d = {id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id, held:true, chatId:'seller-'+id};
+  MP.deals.unshift(d);
   mpSave();
+  // связка с мессенджером: в диалоге продавца отмечаем эскроу-защиту
+  const chat = CHATS.find(c=>c.id==='seller-'+id) || CHATS.find(c=>c.name===l.n);
+  if(chat){ d.chatId = chat.id;
+    chat.msgs.push({kind:'sys', body:'Заказ оформлен · '+fmtMoney(l.p)+' в эскроу OKO до подтверждения выполнения'});
+    chat.preview = 'Эскроу: '+fmtMoney(l.p)+' в холде'; chat.time = nowT();
+    if(typeof renderChatList==='function' && document.getElementById('screen-chats')) renderChatList();
+  }
   const sheet = document.getElementById('sheet-mpCab');
   if(sheet && sheet.classList.contains('open')) mpRenderCab();
 };
@@ -812,39 +947,50 @@ if(typeof admModer==='function'){
   };
 }
 
-/* ================= ФИЛЬТР «ТОЛЬКО ПРОВЕРЕННЫЕ» ================= */
+/* ================= ФИЛЬТРЫ: город + «только проверенные» ================= */
 if(typeof mkFilters.mpVerif==='undefined') mkFilters.mpVerif = false;
+if(typeof mkFilters.city==='undefined')    mkFilters.city   = '';
+function mpCities(){
+  const seen = [];
+  LISTINGS.forEach(l=>{ if(!l.my && l.city && seen.indexOf(l.city)<0) seen.push(l.city); });
+  return seen;
+}
 const _prevMkApplyFiltersMp = mkApplyFilters;
 mkApplyFilters = function(arr){
   arr = _prevMkApplyFiltersMp(arr);
+  if(mkFilters.city)   arr = arr.filter(l=>l.city===mkFilters.city);
   if(mkFilters.mpVerif) arr = arr.filter(mpIsVerified);
   return arr;
 };
 const _prevActiveFilterCountMp = activeFilterCount;
-activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0); };
+activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0) + (mkFilters.city?1:0); };
 const _prevResetFiltersMp = resetFilters;
-resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; };
+resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; mkFilters.city = ''; };
 const _prevRenderFiltersMp = renderFilters;
 renderFilters = function(){
   _prevRenderFiltersMp();
   const v = document.getElementById('filtersView');
   if(!v || v.querySelector('.mp-fver-wrap')) return;
   const btnRow = v.lastElementChild; // строка «Сбросить / Показать»
+  const cities = mpCities();
+  const cityChips = [['','Любой']].concat(cities.map(c=>[c,c]))
+    .map(([val,lab])=>`<button class="f-chip ${mkFilters.city===val?'on':''}" onclick="mpSetCity('${val.replace(/'/g,"\\'")}')">${val?I('pos'):''}${lab}</button>`).join('');
   const w = document.createElement('div');
   w.className = 'mp-fver-wrap';
-  w.innerHTML = `<p class="f-lab">Продавец</p>
+  w.innerHTML = `<p class="f-lab">${I('pos')} Город</p>
+    <div class="f-row mp-city-row">${cityChips}</div>
+    <p class="f-lab">Продавец</p>
     <button class="f-chip mp-fver ${mkFilters.mpVerif?'on':''}" onclick="mpToggleVerif()">${I('verified')} Только проверенные</button>
     <small>значок OKO или рейтинг продавца 4.8+</small>`;
   v.insertBefore(w, btnRow);
 };
-function mpToggleVerif(){
-  // сохраняем введённую цену — перерисовка фильтров её не съест
+function mpKeepPrice(){
   const mn = document.getElementById('fMin'), mx = document.getElementById('fMax');
   if(mn) mkFilters.min = (mn.value||'').replace(/\D/g,'');
   if(mx) mkFilters.max = (mx.value||'').replace(/\D/g,'');
-  mkFilters.mpVerif = !mkFilters.mpVerif;
-  renderFilters();
 }
+function mpToggleVerif(){ mpKeepPrice(); mkFilters.mpVerif = !mkFilters.mpVerif; renderFilters(); }
+function mpSetCity(city){ mpKeepPrice(); mkFilters.city = city; renderFilters(); }
 
 /* ================= ФОТО В ОБЪЯВЛЕНИИ (реальная загрузка, downscale, галерея) =================
    База отдаёт .lf-photo как заглушку-тост и не поддерживает фото. Здесь — рабочая загрузка

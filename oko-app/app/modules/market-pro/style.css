@@ -358,3 +358,60 @@
 .mp-gal-t.on{border-color:var(--lime);opacity:1;box-shadow:0 0 10px rgba(154,255,0,.25)}
 .mp-gal-t:active{transform:scale(.93)}
 :root[data-theme="light"] .mp-gal-t.on{box-shadow:0 2px 8px rgba(83,168,0,.22)}
+
+/* ================= КАСКАД КАРТОЧЕК СПИСКА (без моргания при поиске) ================= */
+#mkResults.mp-cascade .lst-card{animation:mpCardIn .34s cubic-bezier(.2,.8,.25,1) both}
+@keyframes mpCardIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+#mkResults.mp-cascade .lst-card:nth-child(1){animation-delay:.02s}
+#mkResults.mp-cascade .lst-card:nth-child(2){animation-delay:.06s}
+#mkResults.mp-cascade .lst-card:nth-child(3){animation-delay:.10s}
+#mkResults.mp-cascade .lst-card:nth-child(4){animation-delay:.14s}
+#mkResults.mp-cascade .lst-card:nth-child(5){animation-delay:.18s}
+#mkResults.mp-cascade .lst-card:nth-child(6){animation-delay:.22s}
+#mkResults.mp-cascade .lst-card:nth-child(7){animation-delay:.26s}
+#mkResults.mp-cascade .lst-card:nth-child(8){animation-delay:.30s}
+#mkResults.mp-cascade .lst-card:nth-child(9){animation-delay:.34s}
+#mkResults.mp-cascade .lst-card:nth-child(n+10){animation-delay:.38s}
+/* сердечко избранного — микро-интеракция */
+.lst-card .fav{transition:transform .18s cubic-bezier(.3,1.5,.5,1),color .2s}
+.lst-card .fav:active{transform:scale(.82)}
+.lst-card .fav.on svg.i{fill:var(--lime);color:var(--lime);animation:mpHeart .42s cubic-bezier(.3,1.5,.5,1)}
+@keyframes mpHeart{0%{transform:scale(.6)}55%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* ================= ФИЛЬТР ГОРОДА ================= */
+.mp-city-row{flex-wrap:wrap;gap:7px}
+.mp-city-row .f-chip{display:inline-flex;align-items:center;gap:5px}
+.mp-city-row .f-chip svg.i{width:12px;height:12px}
+
+/* ================= СТАТУСЫ СДЕЛКИ (новый / спор / отмена) ================= */
+.mp-st.new{background:rgba(154,255,0,.14);color:var(--accent)}
+.mp-st.dispute{background:rgba(255,77,77,.14);color:var(--danger)}
+.mp-st.cancel{background:var(--raised);color:var(--dim)}
+:root[data-theme="light"] .mp-st.dispute{background:rgba(214,48,48,.12);color:#c0392b}
+.mp-dir.in{color:var(--accent);border-color:rgba(154,255,0,.3)}
+.mp-dir.out{color:var(--text)}
+.mp-h-badge{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.03em;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;padding:3px 9px;text-transform:none}
+.mp-h-badge.hold{margin-left:6px;display:inline-flex;align-items:center;gap:4px;color:#ffb400;background:rgba(255,180,0,.12);border-color:rgba(255,180,0,.3)}
+.mp-h-badge.hold svg.i{width:10px;height:10px}
+:root[data-theme="light"] .mp-h-badge.hold{color:#a86e00;background:rgba(200,130,0,.1)}
+/* карточка сделки в особых состояниях */
+.mp-deal.dispute{border-color:rgba(255,77,77,.4);background:radial-gradient(120% 130% at 100% 0%,rgba(255,77,77,.06),transparent 55%),var(--surface)}
+.mp-deal.cancelled{opacity:.72}
+.mp-deal.cancelled .mp-deal-sum{text-decoration:line-through;color:var(--dim)}
+/* плоские уведомления трекера (спор / отмена) */
+.mp-esc-flat{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;line-height:1.35;border-radius:var(--r-sm);padding:9px 11px;margin-top:9px}
+.mp-esc-flat svg.i{width:13px;height:13px;flex-shrink:0}
+.mp-esc-flat.cancel{background:var(--raised);color:var(--dim);border:1px solid var(--border)}
+.mp-esc-flat.dispute{background:rgba(255,77,77,.09);color:var(--danger);border:1px solid rgba(255,77,77,.28)}
+.mp-esc-flat.dispute svg.i{fill:currentColor}
+:root[data-theme="light"] .mp-esc-flat.dispute{background:rgba(214,48,48,.08)}
+/* трекер в состоянии спора — заливка красная */
+.mp-esc-track.dispute .mp-esc-fill{background:linear-gradient(90deg,var(--danger),rgba(255,77,77,.6));box-shadow:0 0 8px rgba(255,77,77,.35)}
+.mp-esc-track.dispute .mp-esc-node.cur .mp-esc-dot{border-color:var(--danger);animation:none;box-shadow:0 0 0 3px rgba(255,77,77,.15)}
+.mp-esc-track.dispute .mp-esc-node.cur small{color:var(--danger)}
+/* действия сделки — несколько кнопок в ряд, вариант «warn» */
+.mp-deal-act{flex-wrap:wrap}
+.mp-deal-act button{min-width:0}
+.mp-deal-act button.warn{background:rgba(255,77,77,.1);color:var(--danger);border-color:rgba(255,77,77,.32)}
+.mp-deal-act button.warn:hover{border-color:var(--danger)}
+:root[data-theme="light"] .mp-deal-act button.warn{background:rgba(214,48,48,.09);color:#c0392b}

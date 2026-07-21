@@ -461,8 +461,8 @@ function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON
   if(!Array.isArray(VS_TON.tx)) VS_TON.tx = [];
   if(typeof VS_TON.balance !== 'number' || isNaN(VS_TON.balance)) VS_TON.balance = 0;
   if(!VS_TON.addr){
-    const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-    let s = 'UQ'; for(let i=0;i<44;i++) s += al[Math.floor(Math.random()*al.length)];
+    const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789-_';
+    let s = 'UQ'; for(let i=0;i<46;i++) s += al[Math.floor(Math.random()*al.length)];
     VS_TON.addr = s;
     /* честный приветственный баланс прототипа, чтобы механика покупки работала */
     if(VS_TON.balance === 0 && (!VS_TON.tx || !VS_TON.tx.length)){
@@ -564,7 +564,7 @@ function vsInjectTonSymbol(){
 }
 
 /* ---------- ОТПРАВКА / ПРИЁМ TON (адрес↔адрес) ---------- */
-let VS_SEND_AMT = 1;
+let VS_SEND_AMT = 1, VS_SEND_ADDR = '';
 function vsAddrValid(a){
   a = String(a||'').trim();
   /* user-friendly (UQ/EQ/kQ/0Q + base64url, 48) или raw 0:hex64 */
@@ -572,22 +572,24 @@ function vsAddrValid(a){
   if(/^-?[0-9]:[0-9a-fA-F]{64}$/.test(a)) return true;
   return false;
 }
-function vsOpenSendTon(){ if(!(VS_SEND_AMT>0)) VS_SEND_AMT = 1; vsRenderSendTon(); openSheet('vs-ton-sendton'); }
+function vsOpenSendTon(){ if(!(VS_SEND_AMT>0)) VS_SEND_AMT = 1; VS_SEND_ADDR = ''; vsRenderSendTon(); openSheet('vs-ton-sendton'); }
 function vsRenderSendTon(){
   const v = document.getElementById('vsSendTonView'); if(!v) return;
   const bal = vsTonFmt(VS_TON.balance);
   const amt = VS_SEND_AMT;
   const rub = Math.round(amt*VS_TON_RATE);
   const rubStr = (typeof fmtMoney==='function') ? fmtMoney(rub) : rub+' ₽';
-  const chips = [0.5,1,5, VS_TON.balance>0?Math.round(VS_TON.balance*100)/100:10];
+  const maxv = Math.round(VS_TON.balance*100)/100;
+  const raw = [0.5, 1, 5, maxv > 0 ? maxv : 10];
   const seen = {};
-  const chipsH = chips.filter(a=>a>0 && !seen[a] && (seen[a]=1)).map((a,idx)=>
-    `<button class="${amt===a?'on':''}" onclick="vsSetSendAmt(${a})">${idx===chips.length-1&&a===Math.round(VS_TON.balance*100)/100?'МАКС':vsTonFmt(a)+' TON'}</button>`).join('');
+  const chips = raw.filter(a=> a>0 && !seen[a] && (seen[a]=1));
+  const chipsH = chips.map(a=>
+    `<button class="${amt===a?'on':''}" onclick="vsSetSendAmt(${a})">${a===maxv && maxv>0 ? 'МАКС' : vsTonFmt(a)+' TON'}</button>`).join('');
   v.innerHTML = `
     <div class="vs-sendton-bal">${vsGemMark(16)} Баланс <b>${bal} TON</b></div>
     <label class="vs-field-lbl" for="vsSendAddr">Адрес получателя</label>
     <div class="vs-addr-input">
-      <input id="vsSendAddr" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="UQ… адрес TON-кошелька" oninput="vsSendValidate()">
+      <input id="vsSendAddr" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="UQ… адрес TON-кошелька" value="${esc(VS_SEND_ADDR)}" oninput="vsSendValidate()">
       <button type="button" class="vs-addr-paste" onclick="vsPasteAddr()" title="Вставить">${I('copy')}</button>
     </div>
     <div class="vs-addr-err" id="vsSendErr"></div>
@@ -615,6 +617,7 @@ function vsSendValidate(){
   const btn = document.getElementById('vsSendBtn');
   if(!inp || !btn) return true;
   const a = inp.value.trim();
+  VS_SEND_ADDR = a;
   let msg = '';
   if(a && !vsAddrValid(a)) msg = 'Похоже, адрес неполный — формат TON: UQ… (48 символов)';
   else if(a && a === VS_TON.addr) msg = 'Это адрес твоего же кошелька';
@@ -640,7 +643,7 @@ function vsDoSendTon(){
   vsTonSave();
   closeSheet();
   toast('Отправлено · '+vsTonFmt(amt)+' TON');
-  VS_SEND_AMT = 1;
+  VS_SEND_AMT = 1; VS_SEND_ADDR = '';
   vsTonBurst();
   vsRenderTon();
 }
