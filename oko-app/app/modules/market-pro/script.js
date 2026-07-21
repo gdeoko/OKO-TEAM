@@ -24,10 +24,14 @@ const MP_BRANCHES = [
   ['Отчёты',   'аналитика, метрики, еженедельные итоги'],
 ];
 const MP_ST = {
-  work: {t:'В работе',               ic:'clock'},
-  wait: {t:'Ожидает подтверждения',  ic:'eye'},
-  done: {t:'Завершена',              ic:'check'},
+  new:     {t:'Новый заказ',            ic:'bolt'},
+  work:    {t:'В работе',               ic:'clock'},
+  wait:    {t:'На холде · проверка',    ic:'lock'},
+  done:    {t:'Завершена',              ic:'check'},
+  dispute: {t:'Спор',                   ic:'flag'},
+  cancel:  {t:'Отменена · возврат',     ic:'back'},
 };
+const MP_ST_OPEN = st => st!=='done' && st!=='cancel'; // сделка «живая» (эскроу активен)
 
 /* ---------- пакеты услуг ---------- */
 const MP_PACKS = {
@@ -54,16 +58,28 @@ const MP_PACKS = {
 /* ---------- состояние (персист) ---------- */
 let MP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-market-pro'))||null; }catch(e){ return null; } })();
 function mpSave(){ try{ localStorage.setItem('oko-market-pro', JSON.stringify(MP)); }catch(e){} }
+const MP_H = 3600e3;
+function mpSeedDeals(){
+  const now = Date.now(), H = MP_H;
+  return [
+    {id:'d0', t:'Пакет: 15 Shorts для запуска',       n:'Тимур Н.',   sum:12000, st:'new',  dir:'in',  at:now-40*60e3, lid:901},
+    {id:'d1', t:'Контент-завод: 30 роликов в месяц',  n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
+    {id:'d2', t:'Лендинг под ключ за 5 дней',         n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
+    {id:'d3', t:'Разбор и стратегия роста канала',    n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903, rev:5},
+    {id:'d4', t:'Дизайн обложек и карточек товара',   n:'Лиза Кот',   sum:300,   st:'wait', dir:'out', at:now-9*H,  lid:2, held:false},
+  ];
+}
 if(!MP || !MP.v){
-  const H = 3600e3, now = Date.now();
-  MP = { v:1, seq:0, gross:58000, customChatId:null, orders:[],
+  MP = { v:2, seq:0, gross:58000, customChatId:null, orders:[],
     stats:{901:{orders:9, rev:405000}, 902:{orders:6, rev:114000}, 903:{orders:8, rev:64000}},
-    deals:[
-      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
-      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
-      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903},
-    ]};
+    deals: mpSeedDeals() };
   mpSave();
+}
+/* миграция v1 -> v2: не стираем сохранённые данные, лишь добираем демо-статусы «новый» и «покупка» */
+if(MP.v < 2){
+  const have = new Set(MP.deals.map(d=>d.id));
+  mpSeedDeals().forEach(d=>{ if((d.id==='d0'||d.id==='d4') && !have.has(d.id)) MP.deals.push(d); });
+  MP.v = 2; mpSave();
 }
 MP.myRevs  = MP.myRevs  || [];  // отзывы, добавленные после сделок (реплей после перезагрузки)
 MP.reports = MP.reports || [];  // локальный лог жалоб на объявления
@@ -210,18 +226,22 @@ function mpAnalytics(revenue, views, contacts, orders){
 }
 /* ---------- эскроу-трекер стадий сделки ---------- */
 function mpEscrowStep(d){
+  if(d.st==='cancel')
+    return `<div class="mp-esc-flat cancel">${I('back')} Сделка отменена · ${fmtMoney(d.sum)} возвращены на кошелёк</div>`;
   const nodes = d.dir==='in'
-    ? ['Оплата','В работе','Сдача','Выплата']
+    ? ['Заказ','В работе','Сдача','Выплата']
     : ['Оплата','В работе','Проверка','Получено'];
-  const cur = d.st==='work' ? 1 : d.st==='wait' ? 2 : nodes.length; // done -> все стадии закрыты
+  const dispute = d.st==='dispute';
+  // new:0  work:1  wait/dispute:2  done:all
+  const cur = d.st==='new' ? 0 : d.st==='work' ? 1 : (d.st==='wait'||dispute) ? 2 : nodes.length;
   const fill = Math.min(100, Math.round(cur/(nodes.length-1)*100));
-  return `<div class="mp-esc-track" style="--fill:${fill}%">
+  return `<div class="mp-esc-track${dispute?' dispute':''}" style="--fill:${fill}%">
     <div class="mp-esc-line"></div><div class="mp-esc-fill"></div>
     ${nodes.map((n,i)=>{
       const cls = i<cur ? 'done' : i===cur ? 'cur' : '';
       return `<div class="mp-esc-node ${cls}"><span class="mp-esc-dot">${i<cur?I('check'):''}</span><small>${n}</small></div>`;
     }).join('')}
-  </div>`;
+  </div>${dispute?`<div class="mp-esc-flat dispute">${I('flag')} Спор открыт · модерация OKO проверяет сделку, деньги заморожены</div>`:''}`;
 }
 
 /* ================= ЧАСТЬ 1 · КАБИНЕТ ПРОДАВЦА ================= */
@@ -238,7 +258,10 @@ function mpRenderCab(){
   const avg = revs.length ? revs.reduce((s,r)=>s+r.r,0)/revs.length : 0;
   const fee = MP.gross - mpBal();
   const badge = (typeof vBadge==='function') ? vBadge(PROFILE.name) : '';
-  const deals = MP.deals.slice().sort((a,b)=>(a.st==='done')-(b.st==='done') || b.at-a.at);
+  const term = d => (d.st==='done'||d.st==='cancel');
+  const deals = MP.deals.slice().sort((a,b)=>(term(a)-term(b)) || (a.st==='dispute'?-1:0)-(b.st==='dispute'?-1:0) || b.at-a.at);
+  const openN = MP.deals.filter(d=>MP_ST_OPEN(d.st)).length;
+  const holdSum = MP.deals.filter(d=>d.st==='wait'||d.st==='dispute').reduce((s,d)=>s+d.sum,0);
   box.innerHTML = `
     <div class="mp-cab-head">
       <div class="mp-cab-ava">${esc(PROFILE.name[0])}</div>
@@ -282,25 +305,21 @@ function mpRenderCab(){
         <span class="mp-lst-rev">${fmtN(s.rev)} ₽</span></div>`;
     }).join('') : '<div class="mp-empty">Объявлений нет — размести первое на Бирже</div>'}
 
-    <div class="mp-h">${I('lock')} Активные сделки · эскроу</div>
+    <div class="mp-h">${I('lock')} Сделки · эскроу
+      ${openN?`<span class="mp-h-badge">${openN} активн.</span>`:''}
+      ${holdSum?`<span class="mp-h-badge hold">${I('lock')}${fmtMoney(holdSum)} в холде</span>`:''}
+    </div>
     ${deals.map(d=>{
       const st = MP_ST[d.st];
-      const act = d.dir==='in'
-        ? (d.st==='work' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>`
-         : mpRevBtn(d))
-        : (d.st==='work' ? `<div class="mp-deal-act"><button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>`
-         : mpRevBtn(d));
-      return `<div class="mp-deal">
+      return `<div class="mp-deal${d.st==='dispute'?' dispute':''}${d.st==='cancel'?' cancelled':''}">
         <div class="mp-deal-top"><b>${esc(d.t)}</b><span class="mp-deal-sum">${fmtMoney(d.sum)}</span></div>
         <div class="mp-deal-meta">
           <span class="mp-st ${d.st}">${I(st.ic)}${st.t}</span>
-          <span class="mp-dir">${d.dir==='in'?'Продажа':'Покупка'}</span>
+          <span class="mp-dir ${d.dir}">${d.dir==='in'?'Продажа':'Покупка'}</span>
           <small>${esc(d.n)} · ${mpWhen(d.at)}</small>
-          ${d.st!=='done'?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
+          ${(d.st==='wait'||d.st==='dispute')?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
         </div>
-        ${mpEscrowStep(d)}${act}</div>`;
+        ${mpEscrowStep(d)}${mpDealActions(d)}</div>`;
     }).join('')}
 
     <div class="mp-h">${I('star')} Рейтинг и отзывы</div>

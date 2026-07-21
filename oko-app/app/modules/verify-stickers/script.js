@@ -553,7 +553,146 @@ function vsInjectTonSymbol(){
     s.setAttribute('id','i-vs-gem'); s.setAttribute('viewBox','0 0 100 100');
     s.innerHTML = '<path d="M50 12 L82 40 L50 90 L18 40 Z M18 40 H82 M38 40 L50 90 M62 40 L50 90 M50 12 L38 40 M50 12 L62 40" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
     defs.appendChild(s);
+    /* стрелка «получить» (вниз в лоток) — единый бренд-штрих stroke 7, round */
+    if(!document.getElementById('i-vs-recv')){
+      const r = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      r.setAttribute('id','i-vs-recv'); r.setAttribute('viewBox','0 0 100 100');
+      r.innerHTML = '<path d="M50 14 V64 M30 44 L50 66 L70 44 M20 78 H80" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
+      defs.appendChild(r);
+    }
   }catch(e){}
+}
+
+/* ---------- ОТПРАВКА / ПРИЁМ TON (адрес↔адрес) ---------- */
+let VS_SEND_AMT = 1;
+function vsAddrValid(a){
+  a = String(a||'').trim();
+  /* user-friendly (UQ/EQ/kQ/0Q + base64url, 48) или raw 0:hex64 */
+  if(/^[UEk0]Q[A-Za-z0-9_-]{46}$/.test(a)) return true;
+  if(/^-?[0-9]:[0-9a-fA-F]{64}$/.test(a)) return true;
+  return false;
+}
+function vsOpenSendTon(){ if(!(VS_SEND_AMT>0)) VS_SEND_AMT = 1; vsRenderSendTon(); openSheet('vs-ton-sendton'); }
+function vsRenderSendTon(){
+  const v = document.getElementById('vsSendTonView'); if(!v) return;
+  const bal = vsTonFmt(VS_TON.balance);
+  const amt = VS_SEND_AMT;
+  const rub = Math.round(amt*VS_TON_RATE);
+  const rubStr = (typeof fmtMoney==='function') ? fmtMoney(rub) : rub+' ₽';
+  const chips = [0.5,1,5, VS_TON.balance>0?Math.round(VS_TON.balance*100)/100:10];
+  const seen = {};
+  const chipsH = chips.filter(a=>a>0 && !seen[a] && (seen[a]=1)).map((a,idx)=>
+    `<button class="${amt===a?'on':''}" onclick="vsSetSendAmt(${a})">${idx===chips.length-1&&a===Math.round(VS_TON.balance*100)/100?'МАКС':vsTonFmt(a)+' TON'}</button>`).join('');
+  v.innerHTML = `
+    <div class="vs-sendton-bal">${vsGemMark(16)} Баланс <b>${bal} TON</b></div>
+    <label class="vs-field-lbl" for="vsSendAddr">Адрес получателя</label>
+    <div class="vs-addr-input">
+      <input id="vsSendAddr" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="UQ… адрес TON-кошелька" oninput="vsSendValidate()">
+      <button type="button" class="vs-addr-paste" onclick="vsPasteAddr()" title="Вставить">${I('copy')}</button>
+    </div>
+    <div class="vs-addr-err" id="vsSendErr"></div>
+    <div class="vs-topup-big" style="margin-top:6px">${vsGemMark(28)}<b>${vsTonFmt(amt)}</b> TON</div>
+    <div class="vs-topup-rub">≈ ${rubStr}</div>
+    <div class="vs-topup-chips">${chipsH}</div>
+    <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.</div>
+    <button class="btn" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
+  vsSendValidate();
+}
+function vsSetSendAmt(a){ VS_SEND_AMT = Math.round((+a||0)*100)/100; vsRenderSendTon(); }
+function vsPasteAddr(){
+  try{
+    if(navigator.clipboard && navigator.clipboard.readText){
+      navigator.clipboard.readText().then(txt=>{
+        const inp = document.getElementById('vsSendAddr');
+        if(inp && txt){ inp.value = String(txt).trim(); vsSendValidate(); }
+      }).catch(()=>toast('Разреши доступ к буферу обмена'));
+    } else toast('Вставь адрес вручную');
+  }catch(e){ toast('Вставь адрес вручную'); }
+}
+function vsSendValidate(){
+  const inp = document.getElementById('vsSendAddr');
+  const err = document.getElementById('vsSendErr');
+  const btn = document.getElementById('vsSendBtn');
+  if(!inp || !btn) return true;
+  const a = inp.value.trim();
+  let msg = '';
+  if(a && !vsAddrValid(a)) msg = 'Похоже, адрес неполный — формат TON: UQ… (48 символов)';
+  else if(a && a === VS_TON.addr) msg = 'Это адрес твоего же кошелька';
+  else if(VS_SEND_AMT > VS_TON.balance) msg = 'Недостаточно TON — пополни кошелёк';
+  else if(!(VS_SEND_AMT > 0)) msg = 'Укажи сумму больше нуля';
+  if(err){ err.textContent = msg; err.style.display = msg ? 'block' : 'none'; }
+  const ok = !!a && vsAddrValid(a) && a !== VS_TON.addr && VS_SEND_AMT > 0 && VS_SEND_AMT <= VS_TON.balance;
+  btn.disabled = !ok; btn.classList.toggle('vs-btn-off', !ok);
+  return ok;
+}
+function vsDoSendTon(){
+  if(!vsSendValidate()){
+    const a = (document.getElementById('vsSendAddr')||{}).value || '';
+    if(!a.trim()){ toast('Введи адрес получателя'); }
+    return;
+  }
+  const inp = document.getElementById('vsSendAddr');
+  const addr = inp.value.trim();
+  const amt = VS_SEND_AMT;
+  VS_TON.balance = Math.round((VS_TON.balance - amt)*100)/100;
+  VS_TON.tx.unshift({ t:'-', ton:amt, why:'Перевод на '+addr.slice(0,6)+'…'+addr.slice(-4), at:Date.now() });
+  if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+  vsTonSave();
+  closeSheet();
+  toast('Отправлено · '+vsTonFmt(amt)+' TON');
+  VS_SEND_AMT = 1;
+  vsTonBurst();
+  vsRenderTon();
+}
+
+/* --- приём: адрес + декоративный бренд-код --- */
+function vsOpenRecv(){ vsRenderRecv(); openSheet('vs-ton-recv'); }
+function vsAddrCode(addr, cells){
+  /* детерминированная бренд-матрица из адреса (декоративная, не сканируемый QR) */
+  const n = cells || 15;
+  let seed = 0; for(let i=0;i<addr.length;i++){ seed = (seed*31 + addr.charCodeAt(i)) >>> 0; }
+  const rnd = ()=>{ seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const cx = (n-1)/2, gem = 3; /* центральный вырез под знак */
+  let rects = '';
+  for(let y=0;y<n;y++) for(let x=0; x<=Math.floor(n/2); x++){
+    if(Math.abs(x-cx)<=gem && Math.abs(y-cx)<=gem) continue; /* центр под лого */
+    if(rnd() > .52){
+      const px = 4 + x*6.2, py = 4 + y*6.2, mx = 4 + (n-1-x)*6.2;
+      rects += `<rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="4.6" height="4.6" rx="1.4"/>`;
+      if(x !== n-1-x) rects += `<rect x="${mx.toFixed(1)}" y="${py.toFixed(1)}" width="4.6" height="4.6" rx="1.4"/>`;
+    }
+  }
+  const corner = (x,y)=>`<rect x="${x}" y="${y}" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="3.4"/><rect x="${x+5}" y="${y+5}" width="7" height="7" rx="2" fill="currentColor"/>`;
+  return `<svg viewBox="0 0 100 100" class="vs-qr-svg" aria-hidden="true">
+    <g fill="currentColor">${rects}</g>
+    ${corner(4,4)}${corner(79,4)}${corner(4,79)}
+  </svg>`;
+}
+function vsRenderRecv(){
+  const v = document.getElementById('vsRecvView'); if(!v) return;
+  const a = VS_TON.addr || '';
+  v.innerHTML = `
+    <div class="vs-qr-wrap">
+      <div class="vs-qr">
+        <div class="vs-qr-code">${vsAddrCode(a)}</div>
+        <div class="vs-qr-gem">${vsGiftSvg('crystal',44)}</div>
+      </div>
+    </div>
+    <div class="vs-recv-title">Твой TON-адрес</div>
+    <div class="vs-recv-addr" id="vsRecvAddr">${esc(a)}</div>
+    <div class="vs-recv-acts">
+      <button class="btn" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
+      <button class="btn ghost" style="flex:1" onclick="vsShareAddr()"><svg class="i"><use href="#i-share"/></svg> Поделиться</button>
+    </div>
+    <div class="vs-buy-note" style="margin-top:12px"><svg class="i"><use href="#i-lock"/></svg> Отправь этот адрес отправителю, чтобы принять TON. В прототипе входящие переводы приходят через «Пополнить». Реальный приём в сети TON — в релизе.</div>`;
+}
+function vsShareAddr(){
+  const a = VS_TON.addr || '';
+  try{
+    if(navigator.share){ navigator.share({ title:'Мой TON-адрес OKO', text:a }).catch(()=>{}); return; }
+  }catch(e){}
+  try{ navigator.clipboard && navigator.clipboard.writeText(a); }catch(e){}
+  toast('Адрес скопирован — можно отправить другу');
 }
 
 /* ---------- ЭКРАН TON ПОДАРКИ ---------- */
@@ -582,9 +721,10 @@ function vsRenderTon(){
       <div class="vs-ton-rub">≈ ${rub}</div>
       <button class="vs-ton-addr" onclick="vsCopyAddr()">${vsTonAddrShort()} <svg class="i"><use href="#i-copy"/></svg></button>
       <div class="vs-ton-acts">
-        <button class="vs-ton-act" onclick="vsOpenTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить</button>
-        <button class="vs-ton-act ghost" onclick="vsTonTab('mine')"><svg class="i"><use href="#i-star"/></svg> Коллекция</button>
-        <button class="vs-ton-act ghost" onclick="vsOpenHistory()"><svg class="i"><use href="#i-clock"/></svg> История</button>
+        <button class="vs-ton-act" onclick="vsOpenSendTon()"><svg class="i"><use href="#i-send"/></svg><span>Отправить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenRecv()"><svg class="i"><use href="#i-vs-recv"/></svg><span>Получить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenTopup()"><svg class="i"><use href="#i-plus"/></svg><span>Пополнить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenHistory()"><svg class="i"><use href="#i-clock"/></svg><span>История</span></button>
       </div>
     </div>
     <div class="vs-ton-tabs">
@@ -599,8 +739,8 @@ function vsTonTab(t){ VS_TON_TAB = t; vsRenderTon(); }
 function vsShopCard(g){
   const locked = g.premium && !vsPremiumOk();
   const own = VS_TON.owned[g.id] || 0;
-  return `<button class="vs-gcard${locked?' vs-locked':''}" onclick="vsOpenBuy('${g.id}')">
-    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
+  return `<button class="vs-gcard${locked?' vs-locked':''}${g.premium?' vs-nft':''}" onclick="vsOpenBuy('${g.id}')">
+    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price">${vsGemMark(12)} ${vsTonFmt(g.price)}</div>
   </button>`;
@@ -627,7 +767,7 @@ function vsOpenBuy(id){
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
     : `<button class="btn" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
   v.innerHTML = `
-    <div class="vs-buy-art">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
     <div class="vs-buy-price">${vsGemMark(20)}<b>${vsTonFmt(g.price)}</b> TON <small>≈ ${rub}</small></div>
     <div class="vs-buy-supply"><div class="vs-buy-sbar"><i style="width:${pct}%"></i></div><span>Выпущено ${g.sold.toLocaleString('ru-RU')} · осталось ${left.toLocaleString('ru-RU')} из ${g.supply.toLocaleString('ru-RU')}</span></div>

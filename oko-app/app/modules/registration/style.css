@@ -9,9 +9,11 @@
 
 .reg-body{flex:1;overflow-y:auto;padding:26px 20px calc(30px + env(safe-area-inset-bottom));max-width:520px;width:100%;margin:0 auto}
 .reg-step{display:none}
-.reg-step.active{display:block;animation:regIn .32s ease}
-@keyframes regIn{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.reg-step.active{animation:none}}
+.reg-step.active{display:block;animation:regIn .34s cubic-bezier(.22,1,.32,1)}
+.reg-step.active.reg-back{animation:regInBack .34s cubic-bezier(.22,1,.32,1)}
+@keyframes regIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes regInBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-step.active,.reg-step.active.reg-back{animation:none}}
 
 .reg-h{font-size:32px;margin-bottom:6px}
 .reg-sub{color:var(--dim);font-size:13.5px;line-height:1.5;margin-bottom:20px}

@@ -20,6 +20,13 @@
     s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
     defs.appendChild(s);
   }
+  /* кубик (категория «Игры») */
+  if(!document.getElementById('i-dice')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-dice'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<rect x="20" y="20" width="60" height="60" rx="14" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="37" cy="37" r="5.5" fill="currentColor"/><circle cx="63" cy="37" r="5.5" fill="currentColor"/><circle cx="50" cy="50" r="5.5" fill="currentColor"/><circle cx="37" cy="63" r="5.5" fill="currentColor"/><circle cx="63" cy="63" r="5.5" fill="currentColor"/>';
+    defs.appendChild(s);
+  }
 })();
 
 /* ---------- демо-наполнение леджера (один раз, реалистичные операции) ---------- */
@@ -105,15 +112,35 @@ function walDMY(ts){ const d = new Date(ts); return String(d.getDate()).padStart
 function walDMYT(ts){ const d = new Date(ts); return walDMY(ts)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function walCopy(txt, msg){ try{ navigator.clipboard.writeText(txt); }catch(e){} toast(msg||'Скопировано'); }
 
-/* ---------- категории расходов ---------- */
+/* ---------- категории операций (расход и доход) ---------- */
 function walCat(why){
   if(/продвижен/i.test(why)) return 'Продвижение';
   if(/бирж/i.test(why)) return 'Биржа';
-  if(/игр|рулетк|ставк|дорог/i.test(why)) return 'Игры';
-  if(/тариф|автопродлен/i.test(why)) return 'Тарифы';
+  if(/игр|рулетк|ставк|дорог|кости/i.test(why)) return 'Игры';
+  if(/тариф|автопродлен|подписк/i.test(why)) return 'Тарифы';
   if(/вывод/i.test(why)) return 'Вывод средств';
+  if(/пополнен/i.test(why)) return 'Пополнение';
+  if(/партнёр|партнер|реф(ерал|\b)/i.test(why)) return 'Партнёрка';
+  if(/стикер/i.test(why)) return 'Стикеры';
   if(/перевод/i.test(why)) return 'Переводы';
   return 'Прочее';
+}
+/* иконка категории для строки истории */
+const WAL_CAT_IC = {
+  'Продвижение':'rocket', 'Биржа':'briefcase', 'Игры':'dice', 'Тарифы':'crown',
+  'Вывод средств':'card', 'Пополнение':'plus', 'Партнёрка':'users',
+  'Стикеры':'sticker', 'Переводы':'send', 'Прочее':'money'
+};
+function walCatIc(why){ return WAL_CAT_IC[walCat(why)] || 'money'; }
+/* заголовок дня для группировки истории */
+const WAL_MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+function walDayKey(at){ return new Date(at).toDateString(); }
+function walDayLabel(at){
+  const d = new Date(at), n = new Date();
+  if(d.toDateString() === n.toDateString()) return 'Сегодня';
+  const y = new Date(n - 864e5);
+  if(d.toDateString() === y.toDateString()) return 'Вчера';
+  return d.getDate() + ' ' + WAL_MONTHS[d.getMonth()] + (d.getFullYear() !== n.getFullYear() ? ' ' + d.getFullYear() : '');
 }
 function walWhen(at){
   const d = new Date(at), n = new Date();
@@ -150,12 +177,63 @@ function renderWallet(){
     hold.style.display = WALLET.hold > 0 ? 'inline-flex' : 'none';
     hold.querySelector('span').innerHTML = 'В холде (эскроу): <b>' + fmtMoney(WALLET.hold) + '</b>';
   }
+  walRenderStats();
   walRenderCats();
   walRenderLedger();
   walUpdateChips();
   walRenderAutopay();
   walRenderSec();
-  walDrawChart();
+  walDrawChart(true);
+}
+
+/* ---------- СТАТИСТИКА ДОХОДОВ/РАСХОДОВ за 30 дней ---------- */
+function walCountUp(el, to, dur){
+  if(!el) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){ el.textContent = fmtMoney(to); return; }
+  const from = 0, t0 = performance.now(), D = dur || 700;
+  (function step(t){
+    const k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmtMoney(Math.round(from + (to - from) * e));
+    if(k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function walRenderStats(){
+  const box = document.getElementById('walStats');
+  if(!box) return;
+  const since = Date.now() - 30 * 864e5;
+  let inc = 0, exp = 0, part = 0, incN = 0, expN = 0;
+  WALLET.ledger.forEach(o=>{
+    if(o.at < since) return;
+    if(o.t === '+'){ inc += o.sum; incN++; if(walCat(o.why) === 'Партнёрка') part += o.sum; }
+    else { exp += o.sum; expN++; }
+  });
+  const net = inc - exp, mx = Math.max(inc, exp, 1);
+  const wIn = (inc / mx * 100).toFixed(1), wOut = (exp / mx * 100).toFixed(1);
+  const netUp = net >= 0;
+  box.innerHTML = `
+    <div class="card wal-stat-card">
+      <div class="wal-stat-net">
+        <div class="wal-stat-net-l"><span>Чистыми за 30 дней</span><b class="${netUp?'in':'out'}" id="walStatNet">0 ₽</b></div>
+        <span class="wal-stat-net-chip ${netUp?'in':'out'}">${netUp?'прибыль':'минус'}</span>
+      </div>
+      <div class="wal-stat-rows">
+        <div class="wal-stat-row">
+          <div class="wal-stat-top"><span class="wal-stat-k"><i class="wal-stat-dot in"></i>Доходы<em>${incN}</em></span><b class="in" id="walStatIn">0 ₽</b></div>
+          <div class="wal-stat-track"><i class="in" style="width:${wIn}%"></i></div>
+        </div>
+        <div class="wal-stat-row">
+          <div class="wal-stat-top"><span class="wal-stat-k"><i class="wal-stat-dot out"></i>Расходы<em>${expN}</em></span><b class="out" id="walStatOut">0 ₽</b></div>
+          <div class="wal-stat-track"><i class="out" style="width:${wOut}%"></i></div>
+        </div>
+      </div>
+      ${part > 0 ? `<div class="wal-stat-part">${I('users')}<span>Партнёрские начисления</span><b>+ ${fmtMoney(part)}</b></div>` : ''}
+    </div>`;
+  requestAnimationFrame(()=>{
+    walCountUp(document.getElementById('walStatNet'), net, 800);
+    walCountUp(document.getElementById('walStatIn'), inc, 800);
+    walCountUp(document.getElementById('walStatOut'), exp, 800);
+  });
 }
 
 /* ---------- ГРАФИК БАЛАНСА за 30 дней (восстановление по леджеру) ---------- */
@@ -171,56 +249,79 @@ function walSeries(days){
   }
   return pts;
 }
-function walDrawChart(){
+let walChartRAF = 0;
+function walDrawChart(animate){
   const cv = document.getElementById('walChart');
   if(!cv) return;
+  if(walChartRAF){ cancelAnimationFrame(walChartRAF); walChartRAF = 0; }
   requestAnimationFrame(()=>{
     const W = cv.clientWidth, H = 66;
     if(!W) return;
     const dpr = window.devicePixelRatio || 1;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pts = walSeries(30), n = pts.length;
     const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
     const span = (max - min) || Math.max(Math.abs(max), 100) * 0.25;
     const lo = min - span * 0.12, hi = max + span * 0.12;
     const X = i => 3 + i / (n - 1) * (W - 6);
-    const Y = v => H - 5 - (v - lo) / (hi - lo) * (H - 12);
+    const base = H - 5;                         // ось для «роста»
+    const Yfull = v => base - (v - lo) / (hi - lo) * (H - 12);
     const light = document.documentElement.dataset.theme === 'light';
     const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#9AFF00';
-    /* сетка */
-    ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
-    ctx.lineWidth = 1; ctx.setLineDash([3,5]);
-    [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
-    ctx.setLineDash([]);
-    /* плавная линия по средним точкам */
-    const path = ()=>{
-      ctx.beginPath();
-      ctx.moveTo(X(0), Y(pts[0]));
-      for(let i = 1; i < n - 1; i++)
-        ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
-      ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
-    };
-    /* градиент-заливка */
-    path();
-    ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, light ? 'rgba(83,168,0,.28)' : 'rgba(154,255,0,.30)');
-    g.addColorStop(1, 'rgba(154,255,0,0)');
-    ctx.fillStyle = g; ctx.fill();
-    /* линия */
-    path();
-    ctx.strokeStyle = accent; ctx.lineWidth = 2;
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    /* точка «сейчас» */
-    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
-    ctx.fillStyle = accent; ctx.fill();
-    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
-    ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+    function frame(prog){
+      // растём от оси вверх: Y интерполируется от base к финальному
+      const Y = v => base + (Yfull(v) - base) * prog;
+      ctx.clearRect(0, 0, W, H);
+      /* сетка */
+      ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1; ctx.setLineDash([3,5]);
+      [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
+      ctx.setLineDash([]);
+      const path = ()=>{
+        ctx.beginPath();
+        ctx.moveTo(X(0), Y(pts[0]));
+        for(let i = 1; i < n - 1; i++)
+          ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
+        ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
+      };
+      /* градиент-заливка */
+      path();
+      ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, light ? `rgba(83,168,0,${.28*prog})` : `rgba(154,255,0,${.30*prog})`);
+      g.addColorStop(1, 'rgba(154,255,0,0)');
+      ctx.fillStyle = g; ctx.fill();
+      /* линия */
+      path();
+      ctx.strokeStyle = accent; ctx.lineWidth = 2;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      /* точка «сейчас» */
+      ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
+      ctx.fillStyle = accent; ctx.fill();
+      if(prog > 0.98){
+        ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
+        ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+      }
+    }
+
+    if(animate && !reduce){
+      const t0 = performance.now(), D = 780;
+      (function run(t){
+        const k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3);
+        frame(e);
+        if(k < 1) walChartRAF = requestAnimationFrame(run); else walChartRAF = 0;
+      })(t0);
+    } else {
+      frame(1);
+    }
+
     /* чип динамики */
     const dEl = document.getElementById('walDelta');
     if(dEl){
@@ -253,25 +354,53 @@ function walRenderCats(){
     return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="opacity:${(1 - i*0.16).toFixed(2)}"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
   }).join('');
 }
+function walOpTime(at){
+  const d = new Date(at);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
 function walRenderLedger(){
   const box = document.getElementById('walLedger');
   if(!box) return;
-  const list = WALLET.ledger.filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'));
+  const list = WALLET.ledger
+    .filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'))
+    .slice().sort((a,b)=>b.at-a.at)
+    .slice(0, 80);
   if(!list.length){
     box.innerHTML = `<div class="wal-empty">${I('file')}${walFilter==='in' ? 'Пополнений пока нет' : walFilter==='out' ? 'Списаний пока нет' : 'Операций пока нет'}</div>`;
     return;
   }
-  const arrIn  = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M72 28 30 70"/><path d="M30 38v32h32"/></svg>';
-  const arrOut = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M28 72 70 30"/><path d="M38 30h32v32"/></svg>';
-  box.innerHTML = list.slice(0, 60).map((op,i)=>`
-    <div class="wal-op" style="animation-delay:${Math.min(i,10)*45}ms">
-      <div class="wal-op-ic ${op.t==='+'?'in':'out'}">${op.t==='+'?arrIn:arrOut}</div>
-      <div class="wal-op-b">
-        <div class="wal-op-why">${esc(op.why)}</div>
-        <div class="wal-op-t">${walWhen(op.at)}</div>
-      </div>
-      <div class="wal-op-sum ${op.t==='+'?'in':'out'}">${op.t==='+'?'+':'−'} ${fmtMoney(op.sum)}</div>
-    </div>`).join('');
+  /* корневой значок направления поверх иконки категории */
+  const badgeIn  = '<svg class="wal-op-dir" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M70 34 34 70"/><path d="M36 40v30h30"/></svg>';
+  const badgeOut = '<svg class="wal-op-dir" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M32 68 68 32"/><path d="M40 32h28v28"/></svg>';
+  /* группировка по дням */
+  const groups = [];
+  let cur = null;
+  list.forEach(op=>{
+    const k = walDayKey(op.at);
+    if(!cur || cur.k !== k){ cur = {k, at: op.at, ops: [], net: 0}; groups.push(cur); }
+    cur.ops.push(op);
+    cur.net += op.t==='+' ? op.sum : -op.sum;
+  });
+  let idx = 0;
+  box.innerHTML = groups.map(g=>{
+    const netUp = g.net >= 0;
+    const rows = g.ops.map(op=>{
+      const d = idx++; const dir = op.t==='+';
+      return `
+      <div class="wal-op" style="animation-delay:${Math.min(d,12)*42}ms">
+        <div class="wal-op-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg>${dir?badgeIn:badgeOut}</div>
+        <div class="wal-op-b">
+          <div class="wal-op-why">${esc(op.why)}</div>
+          <div class="wal-op-t"><span class="wal-op-cat">${walCat(op.why)}</span> · ${walOpTime(op.at)}</div>
+        </div>
+        <div class="wal-op-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="wal-day">
+      <div class="wal-day-h"><span class="wal-day-l">${walDayLabel(g.at)}</span><span class="wal-day-net ${netUp?'in':'out'}">${netUp?'+':'−'} ${fmtMoney(Math.abs(g.net))}</span></div>
+      ${rows}
+    </div>`;
+  }).join('');
 }
 function walSetFilter(f){
   walFilter = f;

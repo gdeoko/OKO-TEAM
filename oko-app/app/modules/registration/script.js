@@ -56,11 +56,12 @@ function regBack(){
   if(REG.step === 2) regCodeFocus(0);
 }
 function regShowStep(n){
+  const back = (typeof REG.step === 'number' && n < REG.step); // направление перехода
   REG.step = n;
   [1,2,3].forEach(i=>{
     const el = document.getElementById('regStep'+i);
-    el.classList.remove('active');
-    if(i === n){ void el.offsetWidth; el.classList.add('active'); } // рестарт анимации
+    el.classList.remove('active','reg-back');
+    if(i === n){ void el.offsetWidth; if(back) el.classList.add('reg-back'); el.classList.add('active'); } // рестарт + направление
   });
   document.getElementById('regBar').style.width = (n/3*100).toFixed(1) + '%';
   document.getElementById('regStepNum').textContent = 'Шаг ' + n + ' из 3';

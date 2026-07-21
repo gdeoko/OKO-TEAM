@@ -231,20 +231,26 @@ function faDecorate(){
     merged.forEach(el=>list.appendChild(el));
   }
 
-  /* один аккуратный чип «почему показано» + галочка verified — DOM-проходом, без дублей */
+  /* метки «Канал»/«В тренде»/«Реклама» + чип «почему показано» + галочка verified — без дублей */
   list.querySelectorAll('article.post').forEach(art=>{
     const p = postById(faIdOf(art)); if(!p) return;
-    /* у рекламы уже есть бейдж «Реклама» в имени, у топ-поста — «В тренде»:
-       второй чип «почему» был бы дублем-шумом → показываем только осмысленный */
-    const nameChip = art.querySelector('.head .name .chip');
     const head = art.querySelector('.head');
+    const nameEl = art.querySelector('.head .name');
+    /* у рекламы уже есть бейдж «Реклама», у топ-поста — «В тренде» (ядро) */
+    let nameChip = nameEl && nameEl.querySelector('.chip');
+    const w = faWhy(p);
+    /* «Канал» — информ-метка для органических каналов без своего чипа и без персонального сигнала
+       (заменяет собой безликое «Популярно», а не дублирует его) */
+    if(nameEl && !nameChip && !p.promoted && w.cls === 'hot' && /канал/i.test(p.sub || '')){
+      nameEl.insertAdjacentHTML('beforeend', ' <span class="chip fa-chan">Канал</span>');
+      nameChip = nameEl.querySelector('.fa-chan');
+    }
+    /* второй чип «почему» был бы дублем-шумом при наличии метки → показываем только осмысленный */
     if(head && !art.querySelector('.fa-why') && !p.promoted){
-      const w = faWhy(p);
       if(!(w.cls === 'hot' && nameChip)){
         head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
       }
     }
-    const nameEl = art.querySelector('.head .name');
     /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
        поставить .vs-badge — не дорисовываем вторую галочку поверх (устраняет дубль в rec) */
     if(nameEl && !nameEl.querySelector('.fa-vb, .vs-badge') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
