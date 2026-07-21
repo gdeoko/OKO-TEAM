@@ -747,13 +747,15 @@ function acNextLesson(){
   return -1;
 }
 
-let acView = 'home';            // 'home' | 'lesson'
-let acL = 0;                    // индекс текущего урока
+let acView = 'home';            // 'home' (каталог) | 'course' (уроки курса) | 'lesson'
+let acL = 0;                    // глобальный индекс текущего урока
+let acCourse = 0;               // индекс текущего курса (для страницы курса)
 let acQuiz = null;              // сессия теста (не персистится)
 let acG = null;                 // сессия мини-игры
 let acTaskChecking = false;     // «Проверяется ИИ-куратором»
 let acCertUrl = null;           // кэш PNG сертификата
 let acCertShownNo = null;
+let acBadgeNewIds = [];         // бейджи, открытые в этом ре-рендере (для pop-анимации)
 
 function acCur(){ return AC_COURSE[acL]; }
 function acLS(i){
@@ -783,14 +785,110 @@ function acLessonDone(i){
   const ls = acS.lessons[i];
   return !!(ls && ls.cert) || acLessonPct(i) === 100;
 }
-function acUnlocked(i){ return i === 0 || acLessonDone(i-1); }
+function acUnlocked(i){
+  const ci = acCourseOf(i);
+  if(!acCourseAccessible(ci)) return false;              // курс не оплачен/не по подписке
+  return i === acCourseFirst(ci) || acLessonDone(i-1);   // первый урок курса или сдан предыдущий
+}
 function acCertEligible(){ const ls = acLS(); return ls.video && ls.testScore >= AC_PASS; }
+
+/* ================= ДОСТУП К ПРЕМИУМ-КУРСУ (подписка / покупка) ================= */
+function acFmtPrice(n){ return (typeof fmtRub==='function') ? fmtRub(n) : (n.toLocaleString('ru-RU')+' ₽'); }
+/* открыть курс: если доступен — на страницу курса, иначе гейт */
+function acOpenCourse(ci){
+  if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
+  acCourse = ci; acView = 'course'; acQuiz = null; acG = null; acTaskChecking = false;
+  acRender();
+  const m = document.querySelector('main'); if(m) m.scrollTop = 0;
+}
+/* продающий гейт премиум-курса: подписка ИЛИ разовая покупка */
+function acCourseGate(ci){
+  const c = AC_COURSES[ci];
+  if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
+  if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
+  showPopup({ico:'star', title:'Курс «'+c.title+'»',
+    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.',
+    actions:[
+      {label:'Открыть по подписке '+c.minTier, onclick:()=>{
+        if(typeof okoRequireSub === 'function'){
+          okoRequireSub(c.minTier, 'Курс «'+c.title+'» входит в подписку '+c.minTier+'. Оформи её — и получишь этот курс и десятки других возможностей.', ()=>acOpenCourse(ci));
+        } else { toast('Подписка временно недоступна'); }
+      }},
+      {label:'Купить за '+acFmtPrice(c.price), onclick:()=>acBuyCourse(ci)},
+      {label:'Позже', ghost:true}
+    ]});
+}
+/* разовая покупка курса за баланс (комиссия — доход владельца) */
+function acBuyCourse(ci){
+  const c = AC_COURSES[ci];
+  if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
+  if(typeof walletCharge !== 'function'){ toast('Кошелёк недоступен'); return; }
+  if(walletCharge(c.price, 'Академия · курс «'+c.title+'»')){
+    acS.owned = acS.owned || {};
+    acS.owned[c.id] = true; acSave();
+    if(typeof okoEarn === 'function') okoEarn(c.price, 'Академия · продажа курса «'+c.title+'»');
+    toast('Курс открыт: «'+c.title+'»');
+    acBadgeSync();
+    acOpenCourse(ci);
+  } else {
+    toast('Недостаточно средств — пополни счёт');
+  }
+}
+
+/* ================= БЕЙДЖИ ДОСТИЖЕНИЙ ================= */
+function acAnyLessonTest100(){ for(const k in acS.lessons){ if((acS.lessons[k].testScore||0) >= 100) return true; } return false; }
+function acTasksDone(){ let n=0; for(const k in acS.lessons){ if(acS.lessons[k].task) n++; } return n; }
+function acBadgeDefs(){
+  const st = acStreak();
+  return [
+    {id:'first',  ic:'bolt',     t:'Первый шаг',     d:'Пройти первый урок',                on: AC_COURSE.some((_,i)=>acLessonPct(i)>=100) || acS.certs.length>0},
+    {id:'cert1',  ic:'star',     t:'Сертификат',     d:'Получить первый сертификат',        on: acS.certs.length >= 1},
+    {id:'ace',    ic:'poll',     t:'Отличник',       d:'Сдать тест на 100%',                on: acAnyLessonTest100()},
+    {id:'prac',   ic:'edit',     t:'Практик',        d:'Зачесть 3 практики',                on: acTasksDone() >= 3},
+    {id:'streak3',ic:'fire',     t:'В огне',         d:'3 дня подряд в учёбе',              on: (st.best||0) >= 3},
+    {id:'ai',     ic:'crown',    t:'Знаток ИИ',      d:'Завершить курс «Нейросети 2026»',   on: acCourseDone(0)},
+    {id:'invest', ic:'money',    t:'Инвестор в себя',d:'Открыть премиум-курс',              on: (typeof okoHasSub==='function'&&okoHasSub('PRO')) || (acS.owned && Object.keys(acS.owned).length>0)},
+    {id:'reels',  ic:'rocket',   t:'Мастер Reels',   d:'Завершить курс «Контент и Reels»',  on: AC_COURSES.length>1 && acCourseDone(1)},
+    {id:'coll',   ic:'verified', t:'Коллекционер',   d:'Собрать 5 сертификатов',            on: acS.certs.length >= 5},
+  ];
+}
+/* при первом заходе — «засчитать» уже заслуженные молча, чтобы не спамить тостами */
+function acBadgeSync(){
+  const defs = acBadgeDefs();
+  if(!Array.isArray(acS.badgeSeen)){
+    acS.badgeSeen = defs.filter(b=>b.on).map(b=>b.id);
+    acBadgeNewIds = []; acSave(); return;
+  }
+  const fresh = defs.filter(b=>b.on && acS.badgeSeen.indexOf(b.id) < 0);
+  acBadgeNewIds = fresh.map(b=>b.id);
+  if(fresh.length){
+    fresh.forEach(b=>acS.badgeSeen.push(b.id));
+    acSave();
+    fresh.forEach((b,k)=>setTimeout(()=>toast('Награда открыта: «'+b.t+'»'), 260*(k+1)));
+  }
+}
+function acBadgesGridHtml(){
+  const defs = acBadgeDefs();
+  const earned = defs.filter(b=>b.on).length;
+  return `
+    <div class="ac-badges-head">
+      <span class="ico">${I('verified')}</span>
+      <div class="meta"><b>Достижения</b><span>Открыто ${earned} из ${defs.length} — учись и собирай награды</span></div>
+    </div>
+    <div class="ac-badges">${defs.map((b,i)=>`
+      <div class="ac-badge ${b.on?'on':''} ${acBadgeNewIds.indexOf(b.id)>=0?'new':''}" style="animation-delay:${(i*0.045).toFixed(2)}s" title="${b.d}">
+        <span class="ic">${I(b.ic)}</span>
+        <span class="t">${b.t}</span>
+        <span class="d">${b.on?'получено':b.d}</span>
+      </div>`).join('')}</div>`;
+}
 
 /* ================= РЕНДЕР ================= */
 function acRender(){
   const root = document.getElementById('acRoot');
   if(!root) return;
-  root.innerHTML = acView === 'home' ? acHomeHtml() : acLessonHtml();
+  acBadgeSync();  // до построения HTML — чтобы pop-анимация новых наград попала в разметку
+  root.innerHTML = acView === 'lesson' ? acLessonHtml() : acView === 'course' ? acCourseHtml() : acHomeHtml();
   root.classList.remove('fade-in'); void root.offsetWidth; root.classList.add('fade-in');
   if(acView === 'lesson'){
     acRenderVideoBox(); acBindSlides(); acRenderTestBox();
@@ -809,35 +907,59 @@ function acAnimRings(){
   }));
 }
 
-/* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
+/* обложка курса (inline-SVG, самодостаточная, тёмная арт-панель в обеих темах) */
+function acCourseCover(ci){
+  const c = AC_COURSES[ci];
+  return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="320" height="190" fill="#070a04"/>
+    <g stroke="rgba(154,255,0,.10)" stroke-width="1">
+      ${[40,80,120,160,200,240,280].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="190"/>`).join('')}
+      ${[38,76,114,152].map(y=>`<line x1="0" y1="${y}" x2="320" y2="${y}"/>`).join('')}
+    </g>
+    <circle cx="266" cy="44" r="70" fill="rgba(154,255,0,.09)"/>
+    <use href="#i-logo" x="238" y="16" width="64" height="64"/>
+    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
+    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="36" fill="#9AFF00" letter-spacing="2">${esc(c.c2)}</text>
+    <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>
+  </svg>`;
+}
+
+/* карточка курса в каталоге */
+function acCourseCardHtml(ci){
+  const c = AC_COURSES[ci];
+  const acc = acCourseAccessible(ci);
+  const pct = acCoursePctOf(ci);
+  const done = acCourseDone(ci);
+  const CR = 2*Math.PI*15;
+  const badge = c.free
+    ? `<span class="ac-cc-tag free">${I('bolt')} Бесплатно</span>`
+    : acc
+      ? `<span class="ac-cc-tag open">${I('check2')} Открыт</span>`
+      : `<span class="ac-cc-tag lock">${I('lock')} ${c.minTier}</span>`;
+  const ring = acc
+    ? `<span class="ac-mini-ring lg" title="Курс пройден на ${pct}%">
+        <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+        <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-pct/100)).toFixed(1)}"/></svg>
+        <b>${done?I('check2'):pct}</b></span>`
+    : `<span class="ac-cc-price">${acFmtPrice(c.price)}</span>`;
+  const cta = acc
+    ? (done ? `Открыть курс` : (pct>0 ? `Продолжить · ${pct}%` : `Начать курс`))
+    : `Открыть доступ`;
+  return `
+    <div class="card ac-cc ${acc?'':'locked'}" style="animation-delay:${(ci*0.06).toFixed(2)}s" onclick="acCourseCardClick(${ci})">
+      <div class="ac-cc-cover">${acCourseCover(ci)}${acc?'':`<span class="ac-cc-veil">${I('lock')}</span>`}</div>
+      <div class="ac-cc-body">
+        <div class="ac-cc-top">${badge}<span class="ac-cc-meta">${c.count} ${acPlural(c.count,['урок','урока','уроков'])}</span></div>
+        <h3>${esc(c.title)}</h3>
+        <p>${esc(c.sub)}</p>
+        <div class="ac-cc-foot">${ring}<button class="btn sm ${acc?'':'ghost'} ac-cc-go" onclick="event.stopPropagation();acCourseCardClick(${ci})">${cta}</button></div>
+      </div>
+    </div>`;
+}
+function acCourseCardClick(ci){ acOpenCourse(ci); }
+
+/* ---------- ГЛАВНАЯ АКАДЕМИИ: КАТАЛОГ КУРСОВ ---------- */
 function acHomeHtml(){
-  const pct = acCoursePct(), C = 2*Math.PI*33, CR = 2*Math.PI*15;
-  const rows = AC_COURSE.map((l,i)=>{
-    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после сертификата урока ${i}')">
-      <span class="ac-num">${i+1}</span>
-      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
-      <svg class="i"><use href="#i-lock"/></svg></button>`;
-    const ls = acS.lessons[i], p = acLessonPct(i);
-    const st = (ls && ls.cert)
-      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
-      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
-          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
-          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
-          <b>${p}</b></span>` : '');
-    return `<button class="ac-lesson-row" onclick="acOpenLesson(${i})">
-      <span class="ac-num">${i+1}</span>
-      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
-      ${st}
-      <svg class="i go"><use href="#i-chev"/></svg></button>`;
-  }).join('');
-  const certs = acS.certs.length ? acS.certs.map((c,i)=>`
-    <div class="ac-cert-item" style="animation-delay:${i*.05}s">
-      <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
-      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
-      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
-      <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
-    </div>`).join('')
-    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
   const st = acStreak();
   const hot = st.days >= 3;
   const streak = `
@@ -849,11 +971,84 @@ function acHomeHtml(){
     </div>`;
   const nx = acNextLesson();
   const nextRow = nx >= 0
-    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Следующий: <b>урок ${nx+1} — ${AC_COURSE[nx].title}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
-    : `<div class="ac-next-row done">${I('check2')}<span>Все уроки курса пройдены — сертификаты у тебя</span></div>`;
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Продолжить: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Доступные уроки пройдены — открой премиум-курс</span></div>`;
+  const courses = AC_COURSES.map((_,ci)=>acCourseCardHtml(ci)).join('');
+  const certs = acS.certs.length ? acS.certs.map((c,i)=>`
+    <div class="ac-cert-item" style="animation-delay:${i*.05}s">
+      <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
+      <span class="meta"><span class="t">${esc(acCertLabel(c))}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
+      <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
+    </div>`).join('')
+    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
   return `
-    <div class="ac-hero"><h2>Академия OKO</h2><p>Уроки полного формата · официальные сертификаты</p></div>
+    <div class="ac-hero"><h2>Академия OKO</h2><p>Курсы полного формата · официальные сертификаты</p></div>
     ${streak}
+    ${nextRow}
+    <h2 class="section-h" style="margin:20px 0 10px;font-size:21px">Каталог курсов</h2>
+    <div class="ac-catalog">${courses}</div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Достижения</h2>
+    <div class="card ac-badges-card">${acBadgesGridHtml()}</div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои сертификаты</h2>
+    <div class="card" style="padding:6px 14px">${certs}</div>
+    <div style="height:14px"></div>`;
+}
+
+/* подпись сертификата: «Курс · Урок N · Название» */
+function acCertLabel(c){
+  const gi = (typeof c.lesson === 'number') ? c.lesson : 0;
+  const ci = acCourseOf(gi);
+  const ctitle = c.courseTitle || AC_COURSES[ci].title;
+  return ctitle + ' · Урок ' + acLocalNo(gi) + ' · ' + (c.lessonTitle || AC_COURSE[gi].title);
+}
+
+/* ---------- СТРАНИЦА КУРСА (список уроков) ---------- */
+function acCourseHtml(){
+  const ci = acCourse, c = AC_COURSES[ci];
+  const pct = acCoursePctOf(ci), C = 2*Math.PI*33, CR = 2*Math.PI*15;
+  const idx = acCourseIdx(ci);
+  const done = acCourseDone(ci);
+  const rows = idx.map((i,k)=>{
+    const local = k+1;
+    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="toast('Урок ${local} откроется после урока ${local-1}')">
+      <span class="ac-num">${local}</span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      <svg class="i"><use href="#i-lock"/></svg></button>`;
+    const ls = acS.lessons[i], p = acLessonPct(i);
+    const stg = (ls && ls.cert)
+      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
+      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
+          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
+          <b>${p}</b></span>` : '');
+    return `<button class="ac-lesson-row ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="acOpenLesson(${i})">
+      <span class="ac-num">${local}</span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      ${stg}
+      <svg class="i go"><use href="#i-chev"/></svg></button>`;
+  }).join('');
+  const nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
+  const nextRow = (nx!==undefined)
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>${acLessonPct(nx)>0?'Продолжить':'Начать'}: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Курс пройден — сертификаты за уроки у тебя</span></div>`;
+  const certN = acCourseCertCount(ci);
+  const finale = done
+    ? `<div class="card ac-course-finale"><span class="ico">${I('crown')}</span>
+        <div><h3>Курс завершён</h3><p>Ты прошёл все ${c.count} ${acPlural(c.count,['урок','урока','уроков'])} и получил ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])}. Так держать!</p></div></div>`
+    : '';
+  return `
+    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Каталог</button>
+    <div class="ac-course-hero">
+      <div class="ac-course-hero-cover">${acCourseCover(ci)}</div>
+      <div class="ac-course-hero-cap">
+        <span class="chip">${c.free?'Базовый курс':'Премиум · открыт'}</span>
+        <h2>${esc(c.title)}</h2>
+        <p>${esc(c.sub)}</p>
+      </div>
+    </div>
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">
@@ -861,41 +1056,42 @@ function acHomeHtml(){
           <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C*(1-pct/100)).toFixed(1)}"/></svg>
           <b>${pct}%</b>
         </span>
-        <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
+        <div><h3>Прогресс курса</h3><p class="dim">${c.count} ${acPlural(c.count,['урок','урока','уроков'])} · ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])} получено</p></div>
       </div>
       ${nextRow}
       <div>${rows}</div>
     </div>
-
-    <div class="card ac-soon" style="margin-top:12px" onclick="toast('Курс «Контент и Reels» уже в производстве')">
-      <span class="ico"><svg class="i"><use href="#i-camera"/></svg></span>
-      <div style="flex:1"><h3>Контент и Reels</h3><p>Сценарии, монтаж и вирусные форматы</p></div>
-      <span class="chip">скоро</span>
-    </div>
-
-    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои сертификаты</h2>
-    <div class="card" style="padding:6px 14px">${certs}</div>
-    <div style="height:14px"></div>`;
+    ${finale}
+    <div style="height:16px"></div>`;
 }
 
 /* ---------- СТРАНИЦА УРОКА ---------- */
 function acOpenLesson(i){
   const k = (typeof i === 'number') ? i : 0;
-  if(!acUnlocked(k)){ toast('Урок '+(k+1)+' откроется после сертификата урока '+k); return; }
-  acL = k;
+  const ci = acCourseOf(k);
+  if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
+  if(!acUnlocked(k)){ toast('Урок '+acLocalNo(k)+' откроется после предыдущего'); return; }
+  acL = k; acCourse = ci;
   acView = 'lesson'; acQuiz = null; acG = null; acTaskChecking = false;
   acRender();
   const m = document.querySelector('main'); if(m) m.scrollTop = 0;
 }
-function acBackHome(){ acView='home'; acRender(); }
+/* назад: из урока → на страницу курса, со страницы курса → в каталог */
+function acBackHome(){
+  if(acView === 'lesson'){ acView = 'course'; acCourse = acCourseOf(acL); }
+  else acView = 'home';
+  acRender();
+  const m = document.querySelector('main'); if(m) m.scrollTop = 0;
+}
 
 function acLessonHtml(){
   const L = acCur();
+  const ci = acCourseOf(acL);
   const durLabel = L.videoUrl ? `${L.dur} видео` : 'видео в производстве';
   return `
-    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Академия</button>
+    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> ${esc(AC_COURSES[ci].title)}</button>
     <div class="ac-lesson-head">
-      <span class="chip">Урок ${acL+1} из ${AC_COURSE.length}</span>
+      <span class="chip">Урок ${acLocalNo(acL)} из ${AC_COURSES[ci].count}</span>
       <h2>${L.title}</h2>
       <div class="m"><span>${I('clock')} ${durLabel}</span><span>·</span><span>${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
     </div>
@@ -1409,23 +1605,52 @@ function acRenderCertBox(){
 
 function acIssueCert(){
   const ls = acLS();
+  const ci = acCourseOf(acL);
   const cert = {
     no: 'OKO-CERT-' + String(Math.floor(1e5 + Math.random()*9e5)),
     date: new Date().toLocaleDateString('ru-RU'),
     score: ls.testScore,
     name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии',
     lesson: acL,
-    lessonTitle: acCur().title
+    lessonTitle: acCur().title,
+    courseTitle: AC_COURSES[ci].title,
+    localNo: acLocalNo(acL)
   };
   ls.cert = cert;
   acS.certs.unshift(cert);
   acSave();
   acCertUrl = null;
-  toast(acL < AC_COURSE.length-1
-    ? 'Сертификат выдан · урок ' + (acL+2) + ' открыт'
-    : 'Сертификат выдан: ' + cert.no);
+  const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+  toast(lastInCourse ? 'Сертификат выдан: ' + cert.no : 'Сертификат выдан · урок ' + (acLocalNo(acL)+1) + ' открыт');
+  acBadgeSync();
   acRenderCertBox(); acRenderProgressBox();
-  acCertShow();
+  acCertCelebrate(()=>acCertShow());
+}
+
+/* эффект выдачи сертификата: вспышка лаймовых лучей + печать, затем показ */
+function acCertCelebrate(cb){
+  try{
+    const old = document.getElementById('acBurst'); if(old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'acBurst'; el.className = 'ac-burst';
+    let rays = '';
+    for(let i=0;i<14;i++) rays += `<i style="--a:${(i*360/14)}deg;--d:${(i%3)*0.04}s"></i>`;
+    let conf = '';
+    for(let i=0;i<22;i++){
+      const x = (Math.random()*100).toFixed(1), dl = (Math.random()*0.35).toFixed(2),
+            rot = (Math.random()*360).toFixed(0), sx = (Math.random()*0.7+0.6).toFixed(2);
+      conf += `<b style="left:${x}%;--dl:${dl}s;--rot:${rot}deg;--sx:${sx}"></b>`;
+    }
+    el.innerHTML = `<div class="ac-burst-core">
+        <span class="ac-burst-rays">${rays}</span>
+        <span class="ac-burst-seal">${I('star')}</span>
+      </div>
+      <div class="ac-burst-txt">Сертификат выдан</div>
+      <div class="ac-burst-conf">${conf}</div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} if(typeof cb==='function') cb(); }, 1250);
+  }catch(e){ if(typeof cb==='function') cb(); }
 }
 
 /* --- отрисовка canvas 1600×1131 --- */
