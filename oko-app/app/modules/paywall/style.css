@@ -160,3 +160,72 @@
 .pw-live-cell .v{font-family:var(--font-display);font-size:23px;letter-spacing:.01em;color:var(--accent);
   transition:color .3s}
 .pw-live-cell .l{font-size:10px;color:var(--dim);line-height:1.3;margin-top:2px}
+
+/* ---- Инфографика-кольца в продающем попапе ---- */
+.pw-info{display:flex;gap:10px;margin:0 0 15px}
+.pw-info-cell{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pw-ring{--pwp:0;position:relative;width:58px;height:58px;border-radius:50%;
+  background:conic-gradient(var(--lime) calc(var(--pwp)*1%),var(--border) 0);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .1s;filter:drop-shadow(0 0 8px rgba(154,255,0,.18))}
+.pw-anim .pw-ring{animation:pwRingSpin .9s cubic-bezier(.3,1,.4,1) both}
+@keyframes pwRingSpin{from{transform:rotate(-24deg) scale(.85);opacity:.3}to{transform:none;opacity:1}}
+.pw-ring::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--surface)}
+.pw-ring b{position:relative;z-index:1;font-family:var(--font-display);font-size:16px;color:var(--text);letter-spacing:.01em}
+.pw-info-cell small{font-size:10px;color:var(--dim);text-align:center;line-height:1.25}
+:root[data-theme="light"] .pw-ring::after{background:var(--surface)}
+
+/* ---- Кнопка «Что входит» на карточке тарифа ---- */
+.pw-tier-more{width:calc(100% - 28px);margin:0 14px 13px;padding:9px;border-radius:var(--r-md);
+  display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:700;
+  color:var(--accent);background:var(--lime-dim);border:1px solid transparent;
+  transition:background .18s,border-color .18s,transform .12s}
+.pw-tier-more:hover{border-color:rgba(154,255,0,.4)}
+.pw-tier-more:active{transform:scale(.98)}
+.pw-tier-more svg{width:13px;height:13px;color:var(--accent)}
+
+/* ---- Тариф MAX: премиальный акцент ---- */
+.pw-flag-max{background:linear-gradient(90deg,var(--lime),#d8ff7a);color:#0a0a0a}
+.pw-tier-max.on{box-shadow:0 0 0 1px var(--lime),0 12px 40px rgba(154,255,0,.22)}
+.pw-tier-max .pw-tier-cap .n{background:linear-gradient(90deg,#fff,#dfffb0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ---- Реклама: доступна на любом тарифе ---- */
+.pw-ads-note{display:flex;gap:12px;align-items:center;background:var(--raised);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin:0 0 12px}
+.pw-ads-ic{flex:none;width:38px;height:38px;border-radius:10px;background:var(--lime-dim);
+  display:flex;align-items:center;justify-content:center}
+.pw-ads-ic svg{width:19px;height:19px;color:var(--accent)}
+.pw-ads-note b{font-size:13px;font-weight:700;display:block}
+.pw-ads-note small{font-size:11.5px;color:var(--dim);line-height:1.4;display:block;margin-top:2px}
+
+/* ---- Партнёрская программа (отдельный блок) ---- */
+.pw-partner{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:15px 15px 14px;margin:0 0 18px;position:relative;overflow:hidden}
+.pw-partner::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 100% 0%,rgba(154,255,0,.1),transparent 60%)}
+.pw-partner-h{display:flex;gap:11px;align-items:center;margin-bottom:12px;position:relative}
+.pw-partner-ic{flex:none;width:40px;height:40px;border-radius:11px;background:var(--lime-dim);
+  display:flex;align-items:center;justify-content:center}
+.pw-partner-ic svg{width:20px;height:20px;color:var(--accent)}
+.pw-partner-h b{font-size:14px;font-weight:800;display:block}
+.pw-partner-h small{font-size:11px;color:var(--dim);line-height:1.35;display:block;margin-top:2px}
+.pw-partner-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:13px;position:relative}
+.pw-pr{display:flex;align-items:baseline;gap:11px;padding:9px 12px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--border)}
+.pw-pr b{flex:none;min-width:52px;font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:.01em}
+.pw-pr span{font-size:12px;color:var(--text);line-height:1.35}
+.pw-pr-max{border-color:rgba(154,255,0,.5);box-shadow:0 0 0 1px rgba(154,255,0,.14)}
+.pw-partner-cta{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px;border-radius:99px;font-size:13px;font-weight:800;color:#0a0a0a;
+  background:var(--lime);box-shadow:var(--glow);position:relative;transition:transform .12s,filter .18s}
+.pw-partner-cta:hover{filter:brightness(1.05)}
+.pw-partner-cta:active{transform:scale(.98)}
+.pw-partner-cta svg{width:15px;height:15px;color:#0a0a0a}
+
+/* партнёрка внутри showPopup */
+.pw-partner-pop .pw-pr{margin-top:8px}
+.pw-partner-pop p{font-size:13px;line-height:1.5}
+
+/* ---- Сравнительная таблица: колонка MAX ---- */
+.pw-cmp{min-width:540px}
+.pw-cmp thead th.pw-c-max{color:var(--accent)}

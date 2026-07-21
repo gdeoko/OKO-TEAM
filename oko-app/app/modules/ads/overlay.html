@@ -13,6 +13,17 @@
 
   <!-- ШАГ 2: объявление -->
   <div class="ads-step" id="adsStep2" style="display:none">
+    <label class="ads-lbl">Медиа креатива <span class="ads-lbl-hint">· фото, картинка или видео</span></label>
+    <div class="ads-media empty" id="adsMediaZone"></div>
+    <div class="ads-media-btns">
+      <button type="button" class="ads-media-btn" onclick="adsPickMedia('photo')"><svg class="i"><use href="#i-camera"/></svg>Фото</button>
+      <button type="button" class="ads-media-btn" onclick="adsPickMedia('image')"><svg class="i"><use href="#i-photo"/></svg>Картинка</button>
+      <button type="button" class="ads-media-btn" onclick="adsPickMedia('video')"><svg class="i"><use href="#i-circle-play"/></svg>Видео</button>
+    </div>
+    <input type="file" id="adsFilePhoto" accept="image/*" capture="environment" style="display:none" onchange="adsMediaChosen(this,'image')">
+    <input type="file" id="adsFileImage" accept="image/*" style="display:none" onchange="adsMediaChosen(this,'image')">
+    <input type="file" id="adsFileVideo" accept="video/*" style="display:none" onchange="adsMediaChosen(this,'video')">
+
     <label class="ads-lbl">Заголовок</label>
     <input id="adsInpTitle" maxlength="60" placeholder="Контент-завод за 7 дней">
     <div class="ads-ab-opt">

@@ -48,18 +48,36 @@ let ADS = {
     {id:1, name:'OKO Академия — поток №4', text:'Контент-завод за 7 дней: 30 роликов в месяц на автомате. Старт 20 июля, осталось 14 мест из 50.',
      cta:'Подписаться', link:'https://oko.app/academy', fmt:'post', model:'CPM', bid:32,
      geo:'РФ', sex:'any', cities:['Москва','Санкт-Петербург'], interests:['контент','маркетинг'], ages:['18-24','25-34'], devs:['ios','android'], times:[],
-     budget:3000, spent:1268.4, imps:45320, clicks:1121, status:'act',
+     budget:3000, spent:1268.4, imps:45320, clicks:1121, status:'act', demo:true,
      ab:{tb:'30 роликов в месяц без монтажёра и съёмок', ka:.019, kb:.031, a:{i:22660,c:427}, b:{i:22660,c:694}},
      hist:[120,180,150,240,210,320,280,360,300,410,380,460,420,510,470,560,530,610], created: Date.now()-2*864e5},
     {id:2, name:'Партнёрка OKO — 15% с оборота', text:'Приводи авторов и получай 15% с их подписки + 5% со второй линии. Выплаты сразу на лицевой счёт.',
      cta:'Подробнее', link:'https://oko.app/partners', fmt:'channel', model:'CPC', bid:14,
      geo:'СНГ', sex:'any', cities:[], interests:['бизнес','маркетинг'], ages:['25-34','35-44'], devs:[], times:[],
-     budget:1500, spent:1500, imps:53570, clicks:1547, status:'done',
+     budget:1500, spent:1500, imps:53570, clicks:1547, status:'done', demo:true,
      hist:[520,610,580,660,700,640,720,690,750,710,680,730,700,660,610,540,420,260], created: Date.now()-9*864e5},
   ]
 };
 
-function adsSave(){ try{ localStorage.setItem(ADS_LS, JSON.stringify(ADS)); }catch(e){} }
+/* медиа сериализуем аккуратно: картинки — сжатые data-URL (влезают в localStorage),
+   видео / слишком большие картинки — только дескриптор {type,name} (blob-URL после
+   перезагрузки невалиден), чтобы не переполнить квоту и не хранить мусор. */
+function adsMediaStore(m){
+  if(!m) return null;
+  if(m.type==='image' && typeof m.src==='string' && m.src.length < 380000)
+    return {type:'image', src:m.src, name:m.name||'', w:m.w||0, h:m.h||0};
+  return {type:m.type||'image', name:m.name||''};
+}
+function adsSave(){
+  try{
+    const out = {
+      seq: ADS.seq, audSeq: ADS.audSeq,
+      bill: ADS.bill, auds: ADS.auds,
+      camps: ADS.camps.map(c=>Object.assign({}, c, {media: adsMediaStore(c.media)}))
+    };
+    localStorage.setItem(ADS_LS, JSON.stringify(out));
+  }catch(e){}
+}
 function adsLoad(){
   try{
     const raw = localStorage.getItem(ADS_LS);
@@ -105,6 +123,7 @@ function adsMigrate(){
     if(!Array.isArray(c.times)) c.times = [];
     if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
     if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
+    if(c.demo && !c.media) c.media = adsBrandPoster(c);
     adsRollDays(c);
   });
 }
@@ -395,10 +414,125 @@ function adsTickUI(){
 /* ---------- создание кампании ---------- */
 let adsDraft = {};
 function adsDraftReset(){
-  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[], ab:false, reach:0};
+  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[], ab:false, reach:0, media:null};
+}
+
+/* ---------- медиа креатива (фото / картинка / видео) ---------- */
+/* фирменный постер-заглушка для демо-кампаний (самодостаточный SVG data-URL) */
+function adsBrandPoster(c){
+  const f = ADS_FORMATS[c.fmt] || ADS_FORMATS.post;
+  const label = (f.l || 'OKO').toUpperCase();
+  const svg =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'>"+
+    "<defs><radialGradient id='g' cx='28%' cy='24%' r='90%'>"+
+    "<stop offset='0' stop-color='#1c2a0c'/><stop offset='55%' stop-color='#0d1207'/><stop offset='1' stop-color='#050705'/>"+
+    "</radialGradient><linearGradient id='l' x1='0' y1='0' x2='1' y2='1'>"+
+    "<stop offset='0' stop-color='#9AFF00'/><stop offset='1' stop-color='#6fbf00'/></linearGradient></defs>"+
+    "<rect width='640' height='360' fill='url(#g)'/>"+
+    "<circle cx='120' cy='300' r='190' fill='#9AFF00' opacity='.06'/>"+
+    "<circle cx='540' cy='70' r='140' fill='#9AFF00' opacity='.05'/>"+
+    "<g transform='translate(320 150)'><ellipse rx='58' ry='38' fill='none' stroke='url(#l)' stroke-width='9'/>"+
+    "<circle r='17' fill='url(#l)'/></g>"+
+    "<text x='320' y='250' fill='#9AFF00' font-family='Arial,Helvetica,sans-serif' font-size='24' font-weight='700' letter-spacing='6' text-anchor='middle'>"+label+"</text>"+
+    "<text x='320' y='284' fill='#ffffff' opacity='.5' font-family='Arial,Helvetica,sans-serif' font-size='13' letter-spacing='2' text-anchor='middle'>OKO ADS</text>"+
+    "</svg>";
+  return {type:'image', src:'data:image/svg+xml;utf8,'+encodeURIComponent(svg), name:'Креатив OKO', w:640, h:360};
+}
+
+/* HTML медиа для превью и ленты; после перезагрузки без src — аккуратная заглушка */
+function adsMediaHtml(m, cls){
+  if(!m) return '';
+  cls = cls || 'ads-post-media';
+  if(m.type==='image' && m.src)
+    return `<div class="${cls}"><img src="${m.src}" alt="" loading="lazy"></div>`;
+  if(m.type==='video' && m.src)
+    return `<div class="${cls} vid"><video src="${m.src}" muted loop autoplay playsinline></video><span class="ads-media-play">${I('play')}</span></div>`;
+  const ic = m.type==='video' ? 'circle-play' : 'photo';
+  const lbl = m.type==='video' ? 'видео' : 'изображение';
+  return `<div class="${cls} ph">${I(ic)}<em>${esc(m.name||lbl)}</em></div>`;
+}
+
+function adsRenderMediaZone(){
+  const z = document.getElementById('adsMediaZone'); if(!z) return;
+  const m = adsDraft.media;
+  if(!m){
+    z.className = 'ads-media empty';
+    z.innerHTML = `<span class="ads-media-ic">${I('photo')}</span>
+      <b>Добавьте креатив</b>
+      <small>фото, картинка или видео — с медиа CTR выше в 2–3 раза. До 900px, 10 МБ.</small>`;
+    return;
+  }
+  z.className = 'ads-media has';
+  z.innerHTML = `${adsMediaHtml(m, 'ads-media-prev')}
+    <div class="ads-media-meta"><b>${esc(m.name || (m.type==='video'?'Видео':'Изображение'))}</b>
+      <small>${m.type==='video'?'видео':'изображение'}${m.w?` · ${m.w}×${m.h}`:''}</small></div>
+    <button type="button" class="ads-media-x" onclick="adsClearMedia()" title="Убрать">${I('trash')}</button>`;
+}
+
+function adsPickMedia(kind){
+  const id = kind==='photo' ? 'adsFilePhoto' : kind==='video' ? 'adsFileVideo' : 'adsFileImage';
+  const inp = document.getElementById(id);
+  if(inp){ try{ inp.value=''; }catch(e){} inp.click(); }
+}
+
+function adsRevokeDraftMedia(){
+  const m = adsDraft.media;
+  if(m && m._obj && m.src){ try{ URL.revokeObjectURL(m.src); }catch(e){} }
+}
+
+/* сжатие картинки в небольшой data-URL через canvas (влезает в localStorage) */
+function adsCompressImage(file, cb){
+  let url;
+  try{ url = URL.createObjectURL(file); }catch(e){ cb(null); return; }
+  const img = new Image();
+  img.onload = function(){
+    const max = 900;
+    let w = img.naturalWidth || 900, h = img.naturalHeight || 600;
+    if(Math.max(w,h) > max){ const k = max/Math.max(w,h); w = Math.round(w*k); h = Math.round(h*k); }
+    let out = null;
+    try{
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h);
+      out = cv.toDataURL('image/webp', 0.72);
+      if(!out || out.indexOf('data:image/webp')!==0) out = cv.toDataURL('image/jpeg', 0.74);
+    }catch(e){ out = null; }
+    try{ URL.revokeObjectURL(url); }catch(e){}
+    cb(out, w, h);
+  };
+  img.onerror = function(){ try{ URL.revokeObjectURL(url); }catch(e){} cb(null); };
+  img.src = url;
+}
+
+function adsMediaChosen(input, kind){
+  const file = input && input.files && input.files[0]; if(!file) return;
+  const maxMb = kind==='video' ? 10 : 8;
+  if(file.size > maxMb*1048576){ toast('Файл больше '+maxMb+' МБ — выберите поменьше'); return; }
+  adsRevokeDraftMedia();
+  if(kind==='video'){
+    let url;
+    try{ url = URL.createObjectURL(file); }catch(e){ toast('Не удалось прочитать видео'); return; }
+    adsDraft.media = {type:'video', src:url, name:file.name, _obj:true};
+    adsRenderMediaZone(); adsRenderPreview();
+    toast('Видео прикреплено к креативу');
+  }else{
+    toast('Обрабатываю изображение…');
+    adsCompressImage(file, (src, w, h)=>{
+      if(!src){ toast('Не удалось прочитать изображение'); return; }
+      adsDraft.media = {type:'image', src, name:file.name, w, h};
+      adsRenderMediaZone(); adsRenderPreview();
+      toast('Изображение прикреплено к креативу');
+    });
+  }
+}
+
+function adsClearMedia(){
+  adsRevokeDraftMedia();
+  adsDraft.media = null;
+  adsRenderMediaZone(); adsRenderPreview();
 }
 
 function adsOpenCreate(){
+  adsRevokeDraftMedia();
   adsDraftReset();
   ['adsInpTitle','adsInpText','adsInpLink','adsInpTitleB'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
   const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.remove('on');
@@ -412,6 +546,7 @@ function adsOpenCreate(){
   adsRenderFmts();
   adsRenderCities();
   adsRenderSaved();
+  adsRenderMediaZone();
   adsSyncModelUI();
   adsStep(1); openSheet('ads-create');
 }
@@ -571,6 +706,7 @@ function adsRenderPreview(){
         <div><b>${esc(PROFILE.name)}</b><small>${esc(f.tag)}</small></div></div>
       <div class="ads-prev-title">${esc(title)}</div>
       <div class="ads-prev-text">${esc(text)}</div>
+      ${adsMediaHtml(adsDraft.media, 'ads-prev-media')}
       <button class="ads-prev-cta">${esc(adsDraft.cta)} ${I('chev')}</button>
     </div>`;
 }
@@ -702,9 +838,11 @@ function adsLaunch(){
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
     interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
     devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips'),
+    media: adsDraft.media ? Object.assign({}, adsDraft.media) : null,
     budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now(),
     days: [...Array(7)].map(()=>({i:0,c:0})), dstamp: adsDayKey()
   };
+  adsDraft.media = null;   /* креатив передан кампании — не отзываем blob-URL видео */
   const tb = adsDraft.ab ? document.getElementById('adsInpTitleB').value.trim() : '';
   if(tb) camp.ab = {tb, ka: .012+Math.random()*.025, kb: .012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}};
   ADS.camps.unshift(camp);
@@ -773,7 +911,7 @@ function adsPushToFeed(c){
   const tag = (ADS_FORMATS[c.fmt]||ADS_FORMATS.post).tag;
   POSTS.rec.unshift({
     id: pid, ava: (PROFILE.name[0]||'O').toUpperCase(), name: PROFILE.name, sub: tag,
-    body: `<b>${esc(c.name)}</b><br>${esc(c.text)}<div class="ads-post-cta"><button onclick="event.stopPropagation();adsCtaClick(${c.id})">${esc(c.cta)} ${I('chev')}</button></div>`,
+    body: `<b>${esc(c.name)}</b><br>${esc(c.text)}${adsMediaHtml(c.media, 'ads-post-media')}<div class="ads-post-cta"><button onclick="event.stopPropagation();adsCtaClick(${c.id})">${esc(c.cta)} ${I('chev')}</button></div>`,
     media: null, likes: 0, views: c.imps, liked: false, saved: false, reposts: 0,
     promoted: true, comments: []
   });

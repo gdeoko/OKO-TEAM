@@ -370,8 +370,8 @@ window.chCreateChannel = function(){
   if(!name){ toast('Введите название канала'); return; }
   CH.seq = (CH.seq||0)+1;
   const c = {
-    id:'ch-my-'+CH.seq, name, desc:chDraft.desc.trim()||'Добро пожаловать в канал!',
-    icon: chDraft.useIcon ? chDraft.icon : null, bg:chDraft.bg,
+    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:chDraft.desc.trim()||'Добро пожаловать в канал!',
+    icon: chDraft.useIcon ? chDraft.icon : null, bg:chDraft.bg, cover:null, avatar:null,
     type:chDraft.type, price: chDraft.type==='free'?0:(chDraft.price||0),
     verified:false, subs:1, reactions:true, discussions:chDraft.type!=='course',
     admins:[], gross:0, members:[{name:PROFILE.name, nick:PROFILE.nick, joined:'сейчас'}], black:[],
@@ -603,6 +603,119 @@ window.chToggleLesson = function(cid, lid){
   chSave(); chRender();
 };
 
+/* ================= СТРАНИЦА: ПУБЛИКАЦИЯ ПОСТА (владелец) ================= */
+const chCompose = {txt:'', media:null, img:null, poll:''};
+function chPageCompose(id){
+  const c = chChannel(id);
+  if(!c || !chIsMine(c)) return {title:'Публикация', html:'<div class="ch-empty">Нет доступа</div>'};
+  const kinds = [
+    ['none','feed','Текст'],
+    ['photo','photo','Фото'],
+    ['circle-play','circle-play','Видео'],
+    ['poll','poll','Опрос'],
+  ];
+  const html = `
+    <div class="ch-compose-head">${chAvInner(c,'mini')}<div><b>${chEsc(c.name)}</b><small>@${chEsc(chNick(c))} · публикация от вас</small></div></div>
+    <textarea class="ch-ta" id="chCompTxt" rows="4" maxlength="600" placeholder="Что нового? Поделись пользой с подписчиками…" oninput="chCompose.txt=this.value;chCompSync()">${chEsc(chCompose.txt)}</textarea>
+    <div class="ch-compose-kinds">${kinds.map(([m,ic,lab])=>`
+      <button class="ch-ck ${((chCompose.media||'none')===m)?'on':''}" onclick="chCompKind('${m}')">${chI(ic)}<span>${lab}</span></button>`).join('')}</div>
+    ${chCompose.media==='photo'?`
+      <div class="ch-compose-photo" onclick="chCompPickPhoto('${id}')" style="${chCompose.img?`background-image:url(${chCompose.img})`:''}">
+        ${chCompose.img?`<span class="ch-cp-change">${chI('camera')} Заменить</span>`:`${chI('camera')}<small>Загрузить фото поста</small>`}
+      </div>`:''}
+    ${chCompose.media==='poll'?`
+      <label class="ch-lab">Варианты ответа (через запятую)</label>
+      <input class="ch-input" id="chCompPoll" placeholder="Уже применяю, Возьму в работу" value="${chEsc(chCompose.poll)}" oninput="chCompose.poll=this.value">`:''}
+    <div style="height:16px"></div>
+    <button class="btn" id="chCompBtn" onclick="chPublishPost('${id}')" ${chCompose.txt.trim()||chCompose.img?'':'disabled style="opacity:.5"'}>${chI('send')} Опубликовать</button>
+    <div class="ch-owner-note">Пост появится в канале и в ленте рекомендаций OKO — алгоритм покажет его новой аудитории.</div>`;
+  return {title:'Новый пост', html};
+}
+window.chCompKind = function(m){ chCompose.media = (m==='none'?null:m); if(m!=='photo') chCompose.img=null; chRender(); };
+window.chCompSync = function(){
+  const b=document.getElementById('chCompBtn'); if(!b) return;
+  const ok = chCompose.txt.trim().length>0 || !!chCompose.img;
+  b.disabled=!ok; b.style.opacity=ok?'':'0.5';
+};
+window.chCompPickPhoto = function(id){
+  chPickFile(f=>chReadImage(f, 1000, 0.72, url=>{ chCompose.img=url; chRender(); }));
+};
+window.chPublishPost = function(id){
+  const c = chChannel(id); if(!c || !chIsMine(c)) return;
+  const txt = chCompose.txt.trim();
+  if(!txt && !chCompose.img){ toast('Добавьте текст или фото'); return; }
+  const post = { txt, likes:0, views:1, when:'сейчас' };
+  if(chCompose.media==='photo' && chCompose.img) post.img = chCompose.img;
+  else if(chCompose.media==='circle-play') post.media='circle-play';
+  else if(chCompose.media==='poll'){
+    post.media='poll';
+    const opts = chCompose.poll.split(',').map(s=>s.trim()).filter(Boolean);
+    if(opts.length>=2) post.poll = {q:txt||'А ты как?', opts:opts.slice(0,4)};
+  }
+  c.posts = c.posts||[]; c.posts.unshift(post);
+  chPushToFeed(c, post);
+  chSave();
+  chCompose.txt=''; chCompose.media=null; chCompose.img=null; chCompose.poll='';
+  toast('Пост опубликован — он уже в ленте рекомендаций');
+  chStep();  // назад к каналу
+};
+
+/* ================= СТРАНИЦА: ДОБАВИТЬ УРОК (владелец курса) ================= */
+const chLessonDraft = {title:'', dur:'5:00'};
+function chPageAddLesson(id){
+  const c = chChannel(id);
+  if(!c || !chIsMine(c)) return {title:'Урок', html:'<div class="ch-empty">Нет доступа</div>'};
+  if(!c.lessons) c.lessons=[];
+  const html = `
+    <div class="ch-owner-note" style="margin-bottom:10px">Урок №${c.lessons.length+1} курса «${chEsc(c.name)}». Видео подключится из Академии OKO.</div>
+    <label class="ch-lab">Название урока</label>
+    <input class="ch-input" id="chLsTitle" maxlength="80" placeholder="Например: Хук за 3 секунды" value="${chEsc(chLessonDraft.title)}" oninput="chLessonDraft.title=this.value;chLsSync()">
+    <label class="ch-lab">Длительность</label>
+    <div class="ch-price-row">
+      <input class="ch-input" id="chLsDur" placeholder="8:30" value="${chEsc(chLessonDraft.dur)}" oninput="chLessonDraft.dur=this.value" style="max-width:120px">
+      <span class="ch-unit">мин:сек</span>
+    </div>
+    <div style="height:16px"></div>
+    <button class="btn" id="chLsBtn" onclick="chAddLesson('${id}')" ${chLessonDraft.title.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Добавить урок</button>
+    ${c.lessons.length?`<div class="ch-sec-h">${chI('circle-play')} Уроки курса (${c.lessons.length})</div>
+      ${c.lessons.map((l,i)=>`<div class="ch-lesson" style="cursor:default"><span class="ch-ls-n">${i+1}</span><span class="ch-ls-b"><b>${chEsc(l.title)}</b><small>${chI('clock')} ${l.dur}</small></span><button class="ch-m-act" onclick="chDelLesson('${id}','${l.id}')" title="Удалить">${chI('trash')}</button></div>`).join('')}`:''}`;
+  return {title:'Новый урок', html};
+}
+window.chLsSync = function(){ const b=document.getElementById('chLsBtn'); if(!b) return; const ok=chLessonDraft.title.trim().length>0; b.disabled=!ok; b.style.opacity=ok?'':'0.5'; };
+window.chAddLesson = function(id){
+  const c = chChannel(id); if(!c) return;
+  const title = chLessonDraft.title.trim(); if(!title){ toast('Введите название урока'); return; }
+  c.lessons = c.lessons||[];
+  c.lessons.push({ id:'l'+(Date.now()), title, dur:(chLessonDraft.dur||'5:00').trim() });
+  chSave(); chLessonDraft.title=''; chLessonDraft.dur='5:00';
+  toast('Урок добавлен'); chRender();
+};
+window.chDelLesson = function(id,lid){
+  const c = chChannel(id); if(!c||!c.lessons) return;
+  c.lessons = c.lessons.filter(l=>l.id!==lid);
+  if(CH.prog[id]) CH.prog[id] = CH.prog[id].filter(x=>x!==lid);
+  chSave(); chRender();
+};
+
+/* ================= ЛИЧНЫЕ СООБЩЕНИЯ (написать человеку, как в Telegram) ================= */
+window.chDM = function(name,nick){
+  if(typeof CHATS==='undefined' || typeof openConv!=='function'){ toast('Мессенджер недоступен'); return; }
+  let chat = CHATS.find(x=>x.kind==='direct' && x.dmNick===nick);
+  if(!chat){
+    chat = {
+      id:'dm_'+nick+'_'+Date.now(), dmNick:nick, ava:(name[0]||'U').toUpperCase(), name,
+      kind:'direct', kindIcon:null, managed:false, writeAll:true,
+      preview:'Личный чат', time:(typeof nowT==='function'?nowT():'сейчас'), unread:0, online:true,
+      msgs:[{kind:'sys', body:'Начните личную переписку с '+name}]
+    };
+    CHATS.unshift(chat);
+    if(typeof renderChatList==='function') try{ renderChatList(); }catch(e){}
+  }
+  chClose();
+  if(typeof showTab==='function') showTab('chats');
+  try{ openConv(chat.id); }catch(e){ toast('Открываю чаты'); }
+};
+
 /* ================= СТРАНИЦА: УПРАВЛЕНИЕ (хаб) ================= */
 function chPageManage(id){
   const c = chChannel(id);
@@ -714,6 +827,7 @@ window.chSetPrice = function(id,v){
   const c = chChannel(id); if(!c) return;
   c.price = +String(v).replace(/\D/g,'')||0; chSave();
   const hint = document.querySelector('#chBody .ch-owner-note b'); // мягко, без перерисовки инпута
+  if(hint) hint.textContent = chNet(c.price)+' ₽';
 };
 
 /* ---------- Подписчики ---------- */
@@ -731,7 +845,8 @@ function chPageMSubs(id){
       <div class="ch-member">
         <div class="ch-av mini" style="background:${CH_AV_BGS[(p.nick||'x').length%CH_AV_BGS.length]}">${chEsc((p.name[0]||'U').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(p.name)}${p.name===PROFILE.name?' <span class="ch-m-role owner">вы</span>':''}</b><small>@${chEsc(p.nick)} · вступил ${p.joined||'недавно'}</small></div>
-        ${p.name!==PROFILE.name?`<button class="ch-m-act" title="В чёрный список" onclick="chBanMember('${id}','${chEsc(p.nick)}')">${chI('lock')}</button>`:''}
+        ${p.name!==PROFILE.name?`<button class="ch-m-act send" title="Написать" onclick="chDM('${chEsc(p.name)}','${chEsc(p.nick)}')">${chI('send')}</button>
+        <button class="ch-m-act" title="В чёрный список" onclick="chBanMember('${id}','${chEsc(p.nick)}')">${chI('lock')}</button>`:''}
       </div>`).join('') : '<div class="ch-empty" style="border:none">Список участников пуст</div>'}
     </div>
     <div class="ch-owner-note">Показаны активные участники. Полный список синхронизируется с бэкендом при подключении Supabase.</div>`;
@@ -934,28 +1049,68 @@ function chDrawStats(c, subs, reach){
 
 /* ---------- Фон и аватар ---------- */
 function chPageMAppear(id){
-  const c = chChannel(id); if(!c) return {title:'Оформление', html:''};
+  const c = chChannel(id); if(!c || !chIsMine(c)) return {title:'Оформление', html:'<div class="ch-empty">Нет доступа</div>'};
+  const prevBg = c.cover
+    ? `background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.45)),url(${c.cover});background-size:cover;background-position:center`
+    : `background:${CH_BGS[c.bg||0]}`;
+  const avStyle = c.avatar
+    ? `background-image:url(${c.avatar});background-size:cover;background-position:center`
+    : `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}${CH_AV_BGS[c.bg||0]==='#0a0a0a'?';color:#9AFF00':''}`;
   const html = `
-    <div class="ch-appear-prev" style="background:${CH_BGS[c.bg||0]}">
-      <div class="ch-ap-ava" style="background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}${CH_AV_BGS[c.bg||0]==='#0a0a0a'?';color:#9AFF00':''}">${c.icon?chI(c.icon):(c.name[0]||'K').toUpperCase()}</div>
-      <div class="ch-ap-name">${chEsc(c.name)}</div>
+    <div class="ch-appear-prev" style="${prevBg}">
+      <div class="ch-ap-ava" style="${avStyle}">${c.avatar?'':(c.icon?chI(c.icon):(c.name[0]||'K').toUpperCase())}</div>
+      <div class="ch-ap-name">${chEsc(c.name)}<span class="ch-ap-id">@${chEsc(chNick(c))}</span></div>
     </div>
-    <label class="ch-lab">Фон канала</label>
+
+    <div class="ch-photo-row">
+      <button class="ch-photo-btn" onclick="chUploadCover('${id}')">${chI('photo')} ${c.cover?'Сменить обложку':'Загрузить обложку'}</button>
+      ${c.cover?`<button class="ch-photo-btn del" onclick="chClearCover('${id}')" title="Убрать">${chI('trash')}</button>`:''}
+    </div>
+    <div class="ch-photo-row">
+      <button class="ch-photo-btn" onclick="chUploadAvatar('${id}')">${chI('camera')} ${c.avatar?'Сменить аватар':'Загрузить аватар'}</button>
+      ${c.avatar?`<button class="ch-photo-btn del" onclick="chClearAvatar('${id}')" title="Убрать">${chI('trash')}</button>`:''}
+    </div>
+
+    <label class="ch-lab">Название канала</label>
+    <input class="ch-input" id="chNameEdit" maxlength="42" value="${chEsc(c.name)}" oninput="chSetName('${id}',this.value)">
+    <label class="ch-lab">Адрес канала (@id)</label>
+    <div class="ch-price-row">
+      <span class="ch-unit" style="font-size:15px">@</span>
+      <input class="ch-input" id="chNickEdit" maxlength="18" value="${chEsc(chNick(c))}" oninput="chSetNick('${id}',this.value)" style="flex:1">
+    </div>
+
+    <label class="ch-lab">Фон-градиент${c.cover?' (под обложкой)':''}</label>
     <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${c.bg===i?'on':''}" style="background:${g}" onclick="chSetBg('${id}',${i})"></div>`).join('')}</div>
-    <label class="ch-lab">Значок</label>
+    <label class="ch-lab">Значок (если без фото-аватара)</label>
     <div class="ch-letter-row">
       <button class="ch-lt ${!c.icon?'on':''}" onclick="chSetIcon('${id}','')" title="Первая буква"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">${(c.name[0]||'K').toUpperCase()}</span></button>
       ${CH_ICONS.map(ic=>`<button class="ch-lt ${c.icon===ic?'on':''}" onclick="chSetIcon('${id}','${ic}')">${chI(ic)}</button>`).join('')}
     </div>
-    <div class="ch-owner-note">Фон отображается на обложке канала и в его карточке. Изменения сохраняются сразу.</div>`;
-  return {title:'Фон и аватар', html};
+    <div class="ch-owner-note">Обложка, аватар, название и адрес отображаются на странице канала, в карточке и в мессенджере. Всё сохраняется сразу.</div>`;
+  return {title:'Оформление', html};
 }
 window.chSetBg = function(id,i){ const c=chChannel(id); if(!c) return; c.bg=i; chSave(); chSyncMirror(c); chRender(); };
 window.chSetIcon = function(id,ic){ const c=chChannel(id); if(!c) return; c.icon=ic||null; chSave(); chSyncMirror(c); chRender(); };
+window.chSetName = function(id,v){
+  const c=chChannel(id); if(!c) return;
+  c.name = String(v).slice(0,42) || 'Канал'; chSave(); chSyncMirror(c);
+  const pn=document.querySelector('#chBody .ch-ap-name'); if(pn && pn.childNodes[0]){ pn.childNodes[0].nodeValue = c.name; }
+};
+window.chSetNick = function(id,v){
+  const c=chChannel(id); if(!c) return;
+  c.nick = chSlug(v); chSave(); chSyncMirror(c);
+  const el=document.getElementById('chNickEdit'); if(el && el.value!==c.nick) el.value=c.nick;
+  const pid=document.querySelector('#chBody .ch-ap-id'); if(pid) pid.textContent='@'+c.nick;
+};
+window.chUploadCover = function(id){ const c=chChannel(id); if(!c) return; chPickFile(f=>chReadImage(f,1000,0.7,url=>{ c.cover=url; chSave(); chRender(); toast('Обложка обновлена'); })); };
+window.chClearCover = function(id){ const c=chChannel(id); if(!c) return; c.cover=null; chSave(); chRender(); };
+window.chUploadAvatar = function(id){ const c=chChannel(id); if(!c) return; chPickFile(f=>chReadImage(f,300,0.8,url=>{ c.avatar=url; chSave(); chSyncMirror(c); chRender(); toast('Аватар обновлён'); })); };
+window.chClearAvatar = function(id){ const c=chChannel(id); if(!c) return; c.avatar=null; chSave(); chSyncMirror(c); chRender(); };
 function chSyncMirror(c){
   if(typeof CHATS==='undefined') return;
   const x = CHATS.find(k=>k.chId===c.id); if(!x) return;
   x.avaIcon = c.icon||null; x.ava=(c.name[0]||'K').toUpperCase();
+  x.name = c.name; x.avaImg = c.avatar||null; x.nick = chNick(c);
   if(typeof renderChatList==='function') try{ renderChatList(); }catch(e){}
 }
 
@@ -1041,6 +1196,16 @@ if(typeof renderMyProfile==='function'){
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 (function chInit(){
+  // недостающий символ шестерёнки (в ядре нет i-gear) — добавляем в стиле бренда
+  try{
+    const defs = document.querySelector('svg defs');
+    if(defs && !document.getElementById('i-gear')){
+      const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      s.setAttribute('id','i-gear'); s.setAttribute('viewBox','0 0 100 100');
+      s.innerHTML = '<circle cx="50" cy="50" r="12"/><path d="M50 20V32M50 68V80M20 50H32M68 50H80M29 29l8.5 8.5M62.5 62.5 71 71M71 29l-8.5 8.5M37.5 62.5 29 71"/>';
+      defs.appendChild(s);
+    }
+  }catch(e){}
   chInsertProfileRow();
   // зеркалим существующие свои каналы в мессенджер (после перезагрузки)
   CH.mine.forEach(c=>chMirrorToChats(c));

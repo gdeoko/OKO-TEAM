@@ -1,8 +1,13 @@
-/* ===== GAMES: игровой центр OKO — рулетка + «Дорога» + «Кости» (префикс gm-) =====
-   Ставки ТОЛЬКО с кошелька (walletCharge/walletAdd), доход OKO — okoEarn.
-   Механика рулетки перенесена из Mortis: CSS-колесо (conic-gradient) +
-   страховочный setTimeout — результат обрабатывается ровно один раз.
-   Плюс: таблица лидеров недели (персист) и ежедневный бонус (колесо подарков). */
+/* ===== GAMES: Рулетка OKO — единая призовая рулетка (префикс gm-) =====
+   Один призовой опыт: колесо призов (SVG-иконки) — деньги, билеты, скидки на
+   тариф, сам тариф, проверки видео, услуги OKO и бусты.
+   • 1 бесплатная крутка в день (подарок — каждый сектор в плюс).
+   • Платные крутки: пользователь выбирает ставку (100/300/1000 ₽ или билеты) —
+     чем крупнее ставка, тем богаче пул. Каждая крутка ГАРАНТИРОВАННО даёт приз
+     (нет «сгораний»). EV прозрачен — средний приз показан заранее.
+   Никакого денежного гэмблинга (множителей ×N на ставку) — только фикс-призы.
+   Списание — walletCharge, начисление — walletAdd, доход OKO — okoEarn.
+   Всё оборачивается в function-declaration/патчи; каждый доступ к DOM защищён. */
 
 /* ---------- SVG-иконки модуля (штрих 7, скруглённые концы) ---------- */
 (function gmIcons(){
@@ -14,12 +19,6 @@
     s.setAttribute('id', id); s.setAttribute('viewBox','0 0 100 100');
     s.innerHTML = inner; defs.appendChild(s);
   };
-  /* фишка казино */
-  mk('i-gm-chip','<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="50" cy="50" r="19" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 12v13M50 75v13M12 50h13M75 50h13M23 23l9 9M68 68l9 9M77 23l-9 9M32 68l-9 9" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
-  /* дорога с разметкой */
-  mk('i-gm-road','<path d="M16 88C32 62 32 38 24 12M84 88C68 62 68 38 76 12" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 14v13M50 44v13M50 74v13" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
-  /* игральная кость (5 точек) */
-  mk('i-gm-dice','<rect x="14" y="14" width="72" height="72" rx="16" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="34" cy="34" r="6.5" fill="currentColor" stroke="none"/><circle cx="66" cy="34" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="34" cy="66" r="6.5" fill="currentColor" stroke="none"/><circle cx="66" cy="66" r="6.5" fill="currentColor" stroke="none"/>');
   /* подарок с лентой */
   mk('i-gm-gift','<path d="M20 46v34a8 8 0 008 8h44a8 8 0 008-8V46" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><rect x="14" y="30" width="72" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 30v58" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M50 30C39 30 30 22 32 13c9-2 16 7 18 17zM50 30c11 0 20-8 18-17-9-2-16 7-18 17z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
   /* кубок чемпиона */
@@ -34,28 +33,11 @@
   mk('i-gm-checkvid','<rect x="14" y="22" width="72" height="56" rx="12" fill="none" stroke="currentColor" stroke-width="7"/><path d="M34 50l10 11 22-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
 })();
 
-/* ---------- общее состояние ---------- */
-const GM_LIMIT_MAX = 10000; /* дневной лимит ставок, ₽ */
-const GM_HIST = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games'))||[]; }catch(e){ return []; } })();
-const GM_GAME_NAMES = {wheel:'Рулетка OKO', road:'Дорога OKO', dice:'Кости OKO'};
-const GM_GAME_ICONS = {wheel:'gm-chip', road:'gm-road', dice:'gm-dice'};
-
-function gmFmtMult(m){ return '×' + String(m).replace('.', ','); }
-
+/* ---------- общее состояние + хелперы ---------- */
 function gmUpdateBalance(){
   const el = document.getElementById('gmBalance');
   if(el) el.textContent = fmtMoney(WALLET.balance);
 }
-
-/* ============================================================
-   ПРИЗОВОЙ ПУЛ OKO — билеты (валюта), призы, проверки видео, бусты
-   Призы НЕ только деньги: скидки на тариф, тариф на месяц, проверки,
-   билеты, бусты и деньги. Всё персистится, статусы отслеживаются.
-   ============================================================ */
-
-/* ---------- билеты: внутренняя валюта круток ---------- */
-let GM_TICKETS = (()=>{ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-tickets'),10) || 0); }catch(e){ return 0; } })();
-function gmTicketsSave(){ try{ localStorage.setItem('oko-games-tickets', String(GM_TICKETS)); }catch(e){} }
 function gmPluralTk(n){
   const a = Math.abs(n) % 100, b = a % 10;
   if(a > 10 && a < 20) return 'билетов';
@@ -63,12 +45,40 @@ function gmPluralTk(n){
   if(b === 1) return 'билет';
   return 'билетов';
 }
+function gmPluralCheck(n){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return 'проверок';
+  if(b > 1 && b < 5) return 'проверки';
+  if(b === 1) return 'проверка';
+  return 'проверок';
+}
+function gmPluralPrize(n){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return 'призов';
+  if(b > 1 && b < 5) return 'приза';
+  if(b === 1) return 'приз';
+  return 'призов';
+}
+
+/* услуги OKO — призы-купоны (код в «Мои призы») */
+const GM_SERVICES = {
+  promo:    {s:'Промо',    label:'Промо-пост в ленте OKO',        ic:'megaphone'},
+  listing:  {s:'Буст',     label:'Буст объявления · 3 дня',        ic:'rocket'},
+  priority: {s:'Топ',      label:'Приоритет в ленте · 7 дней',     ic:'fire'},
+  campaign: {s:'Кампания', label:'Рекламная кампания OKO',         ic:'megaphone'}
+};
+
+/* ============================================================
+   ПРИЗОВОЙ ПУЛ: билеты (валюта), проверки видео, бусты, сундук призов
+   ============================================================ */
+
+/* ---------- билеты: внутренняя валюта круток ---------- */
+let GM_TICKETS = (()=>{ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-tickets'),10) || 0); }catch(e){ return 0; } })();
+function gmTicketsSave(){ try{ localStorage.setItem('oko-games-tickets', String(GM_TICKETS)); }catch(e){} }
 function gmTicketsRender(){
   document.querySelectorAll('.gm-tk-val').forEach(e=>{ e.textContent = GM_TICKETS; });
-  const modeBtn = document.getElementById('gmSpinTk');
-  if(modeBtn) modeBtn.classList.toggle('off', GM_TICKETS < 1);
 }
-function gmTicketsAdd(n, why){
+function gmTicketsAdd(n){
   if(n <= 0) return;
   GM_TICKETS += n; gmTicketsSave(); gmTicketsRender();
 }
@@ -78,13 +88,13 @@ function gmTicketsSpend(n){
   return true;
 }
 
-/* ---------- счётчик бонусных проверок видео ---------- */
+/* ---------- бонусные проверки видео ---------- */
 function gmChecksGet(){ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-checks'),10) || 0); }catch(e){ return 0; } }
 function gmChecksAdd(n){ try{ localStorage.setItem('oko-games-checks', String(gmChecksGet() + n)); }catch(e){} }
 /* другим модулям (напр. paywall) — сколько бонусных проверок доступно */
 window.okoBonusChecks = gmChecksGet;
 
-/* ---------- буст: ×множитель к следующему выигрышу в играх ---------- */
+/* ---------- буст: ×множитель к следующему ДЕНЕЖНОМУ призу ---------- */
 function gmBoostGet(){ try{ return parseInt(localStorage.getItem('oko-games-boost'),10) || 0; }catch(e){ return 0; } }
 function gmBoostSet(v){ try{ if(v > 1) localStorage.setItem('oko-games-boost', String(v)); else localStorage.removeItem('oko-games-boost'); }catch(e){} gmBoostBadge(); }
 function gmBoostBadge(){
@@ -93,13 +103,13 @@ function gmBoostBadge(){
   const b = gmBoostGet();
   if(b > 1){
     el.style.display = '';
-    el.innerHTML = `${I('gm-boost')}<span>Активен буст <b>×${b}</b> — умножит следующий выигрыш в любой игре</span>`;
+    el.innerHTML = `${I('gm-boost')}<span>Активен буст <b>×${b}</b> — умножит следующий денежный приз в рулетке</span>`;
   }else{
     el.style.display = 'none';
     el.innerHTML = '';
   }
 }
-/* применить (и погасить) буст к выигрышу; вернуть итоговую выплату */
+/* применить (и погасить) буст к денежному призу; вернуть итоговую выплату */
 function gmApplyBoost(base){
   const b = gmBoostGet();
   if(b > 1 && base > 0){
@@ -141,202 +151,354 @@ function gmActiveDiscount(){
 }
 function gmPrizesActiveCount(){ return GM_PRIZES.filter(p=>p.status === 'active').length; }
 
-/* ---------- лояльность: за каждые 1000 ₽ ставок — 1 билет ----------
-   Связывает три денежные игры с призовым пулом, НЕ трогая их RTP. */
-const GM_TK_STEP = 1000;
-function gmWager(bet){
-  let w = 0;
-  try{ w = parseFloat(localStorage.getItem('oko-games-wager')) || 0; }catch(e){}
-  w += bet;
-  let earned = 0;
-  while(w >= GM_TK_STEP){ w -= GM_TK_STEP; earned++; }
-  try{ localStorage.setItem('oko-games-wager', String(w)); }catch(e){}
-  if(earned > 0){
-    gmTicketsAdd(earned);
-    toast(`+${earned} ${gmPluralTk(earned)} за активность — крути призовое колесо`);
-  }
-}
-
-/* блокировка ставок на время раунда: input + чипы + выбор исхода */
-function gmLockBets(hostId, on){
-  const el = document.getElementById(hostId);
-  if(el) el.classList.toggle('gm-locked', !!on);
-}
-
-/* ---------- дневной лимит (ответственная игра) ---------- */
-function gmLimitState(){
-  let s = null;
-  try{ s = JSON.parse(localStorage.getItem('oko-games-limit')); }catch(e){}
-  const today = new Date().toISOString().slice(0,10);
-  if(!s || s.date !== today) s = {date: today, spent: 0};
-  return s;
-}
-function gmLimitCheck(bet){
-  const s = gmLimitState();
-  if(s.spent + bet > GM_LIMIT_MAX){
-    showPopup({
-      ico:'lock', title:'Дневной лимит ставок',
-      body:`Ответственная игра: лимит — <b>${fmtMoney(GM_LIMIT_MAX)}</b> ставок в день. Сегодня уже поставлено <b>${fmtMoney(s.spent)}</b>. Новые ставки откроются завтра.`,
-      actions:[{label:'Понятно'},{label:'В кошелёк', ghost:true, onclick:()=>showTab('wallet')}]
-    });
-    return false;
-  }
-  return true;
-}
-function gmLimitSpend(bet){
-  const s = gmLimitState();
-  s.spent += bet;
-  try{ localStorage.setItem('oko-games-limit', JSON.stringify(s)); }catch(e){}
-  gmRenderLimit();
-}
-function gmRenderLimit(){
-  const s = gmLimitState();
-  const txt = document.getElementById('gmLimitTxt');
-  const bar = document.getElementById('gmLimitBar');
-  const box = document.getElementById('gmLimit');
-  if(!txt || !bar || !box) return;
-  txt.textContent = fmtMoney(s.spent) + ' из ' + fmtMoney(GM_LIMIT_MAX);
-  bar.style.width = Math.min(100, s.spent / GM_LIMIT_MAX * 100) + '%';
-  box.classList.toggle('full', s.spent >= GM_LIMIT_MAX);
-}
-
-/* ---------- ставка: инпут + чипы ---------- */
-function gmBet(inputId){
-  const v = Math.floor(Number(document.getElementById(inputId).value) || 0);
-  if(v < 10){ toast('Минимальная ставка — 10 ₽'); return 0; }
-  return v;
-}
-function gmChip(inputId, v, btn){
-  document.getElementById(inputId).value = v;
-  if(inputId === 'gmRoadBet') gmRoadBetVal = v;
-  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b === btn));
-}
-function gmChipClear(inp){
-  const box = inp.closest('.gm-bet') && inp.closest('.gm-bet').nextElementSibling;
-  if(box && box.classList.contains('gm-chips')) box.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
-}
-
-/* ---------- переключение игр ---------- */
-function gmShowGame(g){
-  ['wheel','road','dice'].forEach(k=>{
-    document.getElementById('gmGame-'+k).style.display = (k===g ? '' : 'none');
-    document.getElementById('gmTab-'+k).classList.toggle('on', k===g);
-  });
-  if(g === 'road') requestAnimationFrame(()=>gmSyncEye(true));
-}
-
-/* ================= РУЛЕТКА OKO =================
-   12 секторов: x0 ×4, x1.2 ×3, x1.5 ×2, x2 ×1, x3 ×1, x10 ×1.
-   Итог раунда выбирается взвешенно (RTP ≈ 90%), колесо доезжает
-   до соответствующего сектора. */
-const GM_SECTORS = [10, 0, 1.2, 0, 2, 0, 1.5, 1.2, 0, 3, 1.2, 1.5];
-/* палитра колеса зависит от темы: [фон сектора, цвет подписи] */
-const GM_COLORS_DARK = {
-  0:  ['#141a0e', '#6f7d5e'],
-  1.2:['#1e3305', '#c9ff70'],
-  1.5:['#2e4d06', '#dbff9e'],
-  2:  ['#487a08', '#f0ffd8'],
-  3:  ['#6fb50d', '#0c1400'],
-  10: ['#9AFF00', '#0a1400']
+/* ============================================================
+   ПРИЗОВЫЕ ПУЛЫ — каждый ровно 12 секторов (30° на сектор)
+   c — «редкость» (0..4) для палитры; s — короткая подпись сектора
+   ============================================================ */
+const GM_POOLS = {
+  /* бесплатный подарок дня — каждый сектор в плюс */
+  free: [
+    {t:'money',   v:50,        w:220, c:0, s:'50 ₽'},
+    {t:'ticket',  v:1,         w:190, c:1, s:'1 бил'},
+    {t:'money',   v:100,       w:150, c:1, s:'100 ₽'},
+    {t:'check',   v:1,         w:120, c:2, s:'1 пров'},
+    {t:'disc',    v:10,        w:95,  c:2, s:'−10%'},
+    {t:'ticket',  v:2,         w:80,  c:2, s:'2 бил'},
+    {t:'boost',   v:2,         w:55,  c:3, s:'×2'},
+    {t:'money',   v:300,       w:40,  c:3, s:'300 ₽'},
+    {t:'disc',    v:20,        w:28,  c:3, s:'−20%'},
+    {t:'ticket',  v:5,         w:14,  c:4, s:'5 бил'},
+    {t:'service', v:'promo',   w:6,   c:4, s:'Промо'},
+    {t:'tier',    v:'PRO',     w:2,   c:4, s:'PRO'}
+  ],
+  /* крутка за 100 ₽ */
+  p100: [
+    {t:'ticket',  v:2,         w:210, c:1, s:'2 бил'},
+    {t:'money',   v:50,        w:200, c:1, s:'50 ₽'},
+    {t:'money',   v:100,       w:150, c:1, s:'100 ₽'},
+    {t:'check',   v:2,         w:110, c:2, s:'2 пров'},
+    {t:'disc',    v:10,        w:95,  c:2, s:'−10%'},
+    {t:'money',   v:200,       w:70,  c:2, s:'200 ₽'},
+    {t:'boost',   v:2,         w:55,  c:3, s:'×2'},
+    {t:'disc',    v:20,        w:40,  c:3, s:'−20%'},
+    {t:'money',   v:500,       w:40,  c:3, s:'500 ₽'},
+    {t:'ticket',  v:5,         w:20,  c:4, s:'5 бил'},
+    {t:'service', v:'listing', w:8,   c:4, s:'Буст'},
+    {t:'tier',    v:'PRO',     w:2,   c:4, s:'PRO'}
+  ],
+  /* крутка за 300 ₽ */
+  p300: [
+    {t:'money',   v:200,       w:200, c:1, s:'200 ₽'},
+    {t:'ticket',  v:5,         w:170, c:1, s:'5 бил'},
+    {t:'money',   v:300,       w:140, c:2, s:'300 ₽'},
+    {t:'check',   v:3,         w:100, c:2, s:'3 пров'},
+    {t:'disc',    v:20,        w:95,  c:2, s:'−20%'},
+    {t:'money',   v:500,       w:70,  c:3, s:'500 ₽'},
+    {t:'boost',   v:3,         w:55,  c:3, s:'×3'},
+    {t:'disc',    v:30,        w:40,  c:3, s:'−30%'},
+    {t:'money',   v:1000,      w:35,  c:4, s:'1000 ₽'},
+    {t:'service', v:'priority',w:22,  c:4, s:'Топ'},
+    {t:'tier',    v:'PRO',     w:15,  c:4, s:'PRO'},
+    {t:'disc',    v:50,        w:8,   c:4, s:'−50%'}
+  ],
+  /* крутка за 1000 ₽ */
+  p1000: [
+    {t:'money',   v:500,       w:190, c:1, s:'500 ₽'},
+    {t:'ticket',  v:10,        w:150, c:1, s:'10 бил'},
+    {t:'money',   v:1000,      w:130, c:2, s:'1000 ₽'},
+    {t:'disc',    v:30,        w:95,  c:2, s:'−30%'},
+    {t:'check',   v:5,         w:85,  c:2, s:'5 пров'},
+    {t:'boost',   v:5,         w:60,  c:3, s:'×5'},
+    {t:'money',   v:2000,      w:55,  c:3, s:'2000 ₽'},
+    {t:'disc',    v:50,        w:45,  c:3, s:'−50%'},
+    {t:'service', v:'campaign',w:40,  c:4, s:'Кампания'},
+    {t:'tier',    v:'PRO',     w:30,  c:4, s:'PRO'},
+    {t:'tier',    v:'BUSINESS',w:12,  c:4, s:'BIZ'},
+    {t:'money',   v:5000,      w:8,   c:4, s:'5000 ₽'}
+  ]
 };
-const GM_COLORS_LIGHT = {
-  0:  ['#eef2e6', '#98a58c'],  /* светлый нейтральный сектор */
-  1.2:['#dcedb6', '#4e6d16'],
-  1.5:['#c3e488', '#3a5c0f'],
-  2:  ['#a6d94f', '#1f3f08'],
-  3:  ['#7ec81c', '#0d2200'],
-  10: ['#9AFF00', '#0a1400']
+const GM_STAKES = {
+  p100:  {cost:100,  tk:1},
+  p300:  {cost:300,  tk:3},
+  p1000: {cost:1000, tk:10}
 };
+
+/* палитра секторов по «редкости», зависит от темы: [фон, подпись] */
+const GM_POOL_COLS_DARK = [
+  ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#9AFF00','#0a1400']
+];
+const GM_POOL_COLS_LIGHT = [
+  ['#e9f2d8','#5f7a3c'], ['#d8e9ac','#456314'], ['#bfe07f','#294709'], ['#8ccf2a','#0d2200'], ['#9AFF00','#0a1400']
+];
 function gmIsLight(){ return document.documentElement.dataset.theme === 'light'; }
-function gmColors(){ return gmIsLight() ? GM_COLORS_LIGHT : GM_COLORS_DARK; }
-const GM_WEIGHTS = [[0,530],[1.2,230],[1.5,120],[2,60],[3,40],[10,20]]; /* из 1000, RTP ≈ 89.6% */
+function gmPoolCols(){ return gmIsLight() ? GM_POOL_COLS_LIGHT : GM_POOL_COLS_DARK; }
 
-let gmWheelAngle = 0;
-let gmSpinning = false;   /* флаг из Mortis: результат ровно один раз */
+/* номинальная ₽-ценность приза — для прозрачного EV и таблицы лидеров */
+function gmNominal(p){
+  switch(p.t){
+    case 'money':   return p.v;
+    case 'ticket':  return p.v * 50;
+    case 'check':   return p.v * 100;
+    case 'disc':    return ({10:200, 20:450, 30:800, 50:1600})[p.v] || p.v * 20;
+    case 'boost':   return ({2:120, 3:220, 5:400})[p.v] || 100;
+    case 'tier':    return ({PRO:990, BUSINESS:2490})[p.v] || 990;
+    case 'service': return ({promo:300, listing:450, priority:700, campaign:1600})[p.v] || 400;
+  }
+  return 0;
+}
+function gmPrizeIcon(p){
+  switch(p.t){
+    case 'money':   return 'money';
+    case 'ticket':  return 'gm-ticket';
+    case 'check':   return 'gm-checkvid';
+    case 'disc':    return 'gm-pct';
+    case 'boost':   return 'gm-boost';
+    case 'tier':    return 'crown';
+    case 'service': return (GM_SERVICES[p.v] || {}).ic || 'gm-gift';
+  }
+  return 'gm-gift';
+}
+
+/* ============================================================
+   БЕСПЛАТНАЯ ЕЖЕДНЕВНАЯ КРУТКА — таймер до полуночи
+   ============================================================ */
+function gmBonusStamp(){ try{ return Number(localStorage.getItem('oko-games-bonus')) || 0; }catch(e){ return 0; } }
+function gmBonusClaimedToday(){
+  const ts = gmBonusStamp();
+  if(!ts) return false;
+  const a = new Date(ts), b = new Date();
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function gmBonusLeftMs(){
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n;
+}
+function gmFmtCd(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const p = n => String(n).padStart(2, '0');
+  return p(Math.floor(s/3600)) + ':' + p(Math.floor(s%3600/60)) + ':' + p(s%60);
+}
+
+/* ============================================================
+   КОЛЕСО — построение, режимы, кручение, выдача приза
+   ============================================================ */
+let gmMode = 'free';                 /* free | p100 | p300 | p1000 */
+let gmSpinning = false;
 let gmSpinToken = 0;
+let gmWheelAngle = 0;
+let gmPaidCost = 0;
 
+function gmCurrentPool(){ return GM_POOLS[gmMode] || GM_POOLS.free; }
+
+function gmSecLabel(p){
+  return `${I(gmPrizeIcon(p))}<b>${p.s}</b>`;
+}
 function gmBuildWheel(){
   const w = document.getElementById('gmWheel');
   if(!w) return;
-  const C = gmColors();
-  const stops = GM_SECTORS.map((m,i)=>`${C[m][0]} ${i*30}deg ${(i+1)*30}deg`).join(',');
-  w.style.background = `conic-gradient(from -15deg, ${stops})`;
-  w.innerHTML = GM_SECTORS.map((m,i)=>
-    `<span class="gm-sec" style="color:${C[m][1]};transform:translate(-50%,-50%) rotate(${i*30}deg) translateY(-96px)">${gmFmtMult(m)}</span>`
+  const pool = gmCurrentPool(), C = gmPoolCols();
+  const N = pool.length, seg = 360 / N;
+  const stops = pool.map((p,i)=>`${C[p.c][0]} ${i*seg}deg ${(i+1)*seg}deg`).join(',');
+  w.style.background = `conic-gradient(from -${seg/2}deg, ${stops})`;
+  w.innerHTML = pool.map((p,i)=>
+    `<span class="gm-sec" style="color:${C[p.c][1]};transform:translate(-50%,-50%) rotate(${i*seg}deg) translateY(-90px)">${gmSecLabel(p)}</span>`
   ).join('');
 }
-
 function gmSetResult(html){
   const el = document.getElementById('gmWheelResult');
   if(el) el.innerHTML = html;
 }
 
-function gmSpin(){
-  if(gmSpinning){ toast('Колесо ещё крутится'); return; }
-  const bet = gmBet('gmWheelBet');
-  if(!bet) return;
-  if(!gmLimitCheck(bet)) return;
-  if(!walletCharge(bet, 'Ставка в рулетке')) return;
-  gmLimitSpend(bet);
-  gmWager(bet);
-  gmUpdateBalance();
+/* --- режимы (пилюли ставок + EV + кнопка запуска) --- */
+function gmModeSub(m){
+  if(m === 'free') return gmBonusClaimedToday() ? 'через ' + gmFmtCd(gmBonusLeftMs()) : 'подарок дня';
+  return 'призы крупнее';
+}
+function gmEvText(m){
+  const pool = GM_POOLS[m], tot = pool.reduce((a,p)=>a + p.w, 0);
+  const avg = Math.round(pool.reduce((a,p)=>a + p.w * gmNominal(p), 0) / tot);
+  const tierW = pool.filter(p=>p.t === 'tier').reduce((a,p)=>a + p.w, 0);
+  const pct = Math.round(tierW / tot * 1000) / 10;
+  if(m === 'free') return `Подарок дня — каждый сектор в плюс, деньги сразу на кошелёк. Средний приз ≈ ${fmtMoney(avg)}`;
+  return `Средний приз ≈ ${fmtMoney(avg)} · приз гарантирован каждую крутку · шанс тарифа ${String(pct).replace('.', ',')}%`;
+}
+function gmRenderModes(){
+  const el = document.getElementById('gmModes');
+  if(!el) return;
+  const order = ['free','p100','p300','p1000'];
+  const label = {free:'Бесплатно', p100:'100 ₽', p300:'300 ₽', p1000:'1000 ₽'};
+  const pills = order.map(m=>{
+    const on = m === gmMode;
+    const claimed = m === 'free' && gmBonusClaimedToday();
+    return `<button class="gm-mpill ${on ? 'on' : ''} ${claimed ? 'claimed' : ''}" ${gmSpinning ? 'disabled' : ''} onclick="gmSelectMode('${m}')">
+      <span class="gm-mpill-ic">${I(m === 'free' ? 'gm-gift' : 'money')}</span>
+      <b>${label[m]}</b>
+      <small ${claimed ? 'id="gmFreeCd"' : ''}>${gmModeSub(m)}</small>
+    </button>`;
+  }).join('');
 
+  let action = '';
+  if(gmMode === 'free'){
+    const claimed = gmBonusClaimedToday();
+    action = `<button class="gm-spin ${claimed || gmSpinning ? 'off' : ''}" onclick="gmDoSpin(false)">${I('gm-gift')}${
+      claimed ? `<span class="gm-spin-cd">Бесплатно через <b id="gmFreeCd2">${gmFmtCd(gmBonusLeftMs())}</b></span>` : 'Крутить бесплатно'
+    }</button>`;
+  }else{
+    const st = GM_STAKES[gmMode], canTk = GM_TICKETS >= st.tk;
+    action = `<div class="gm-spin-row">
+      <button class="gm-spin ${gmSpinning ? 'off' : ''}" onclick="gmDoSpin(false)">${I('bolt')}Крутить · ${fmtMoney(st.cost)}</button>
+      <button class="gm-spin ghost ${canTk && !gmSpinning ? '' : 'off'}" onclick="gmDoSpin(true)">${I('gm-ticket')}${st.tk} ${gmPluralTk(st.tk)}</button>
+    </div>`;
+  }
+  el.innerHTML = `
+    <div class="gm-mode-pills">${pills}</div>
+    <div class="gm-ev" id="gmEv">${gmEvText(gmMode)}</div>
+    ${action}`;
+}
+function gmSelectMode(m){
+  if(gmSpinning || !GM_POOLS[m]) return;
+  gmMode = m;
+  gmBuildWheel();
+  gmRenderModes();
+}
+
+/* --- запуск крутки --- */
+function gmDoSpin(payTicket){
+  if(gmSpinning){ toast('Колесо ещё крутится'); return; }
+  const m = gmMode;
+  if(m === 'free'){
+    if(gmBonusClaimedToday()){ toast('Бесплатная крутка сегодня уже была — выбери платную ставку'); return; }
+    gmPaidCost = 0;
+  }else{
+    const st = GM_STAKES[m];
+    if(payTicket){
+      if(!gmTicketsSpend(st.tk)){ toast(`Нужно ${st.tk} ${gmPluralTk(st.tk)} — заработай их в рулетке`); return; }
+      gmPaidCost = 0;
+    }else{
+      if(!walletCharge(st.cost, 'Крутка рулетки OKO')) return;
+      gmPaidCost = st.cost;
+      gmUpdateBalance();
+    }
+  }
+  gmSpinRun(m, !!payTicket);
+}
+function gmSpinRun(mode, payTicket){
   gmSpinning = true;
   const token = ++gmSpinToken;
-  document.getElementById('gmSpinBtn').classList.add('off');
-  gmLockBets('gmGame-wheel', true);
-  gmSetResult(`<span class="gm-run">Ставка ${fmtMoney(bet)} принята — колесо крутится…</span>`);
+  gmRenderModes(); /* заблокировать пилюли/кнопки на время раунда */
+  gmSetResult(`<span class="gm-run">Колесо крутится…</span>`);
+  const rev = document.getElementById('gmReveal');
+  if(rev){ rev.className = 'gm-reveal'; rev.innerHTML = ''; }
 
-  /* взвешенный исход, затем случайный сектор с этим множителем */
-  let r = Math.random() * 1000, mult = 0;
-  for(const [m, wt] of GM_WEIGHTS){ if(r < wt){ mult = m; break; } r -= wt; }
-  const opts = GM_SECTORS.map((m,i)=>m===mult ? i : -1).filter(i=>i>=0);
-  const idx = opts[Math.floor(Math.random() * opts.length)];
+  const pool = gmCurrentPool();
+  const total = pool.reduce((a,p)=>a + p.w, 0);
+  let r = Math.random() * total, idx = 0;
+  for(let i = 0; i < pool.length; i++){ if(r < pool[i].w){ idx = i; break; } r -= pool[i].w; }
+  const seg = 360 / pool.length;
 
   const wheel = document.getElementById('gmWheel');
+  if(!wheel){ gmSpinning = false; gmGrant(pool[idx], mode, payTicket); return; }
   const cur = ((gmWheelAngle % 360) + 360) % 360;
   wheel.style.transition = 'none';
   wheel.style.transform = `rotate(${cur}deg)`;
   void wheel.offsetWidth; /* форс-рефлоу перед новым переходом */
 
-  const turns = 5 + Math.floor(Math.random() * 3);        /* 5–7 оборотов */
-  const jitter = Math.random() * 22 - 11;                 /* внутри сектора (±11° < 15°) */
-  const delta = ((360 - idx * 30) - cur + 720) % 360;
+  const turns = 5 + Math.floor(Math.random() * 3);
+  const jitter = Math.random() * (seg * 0.5) - seg * 0.25; /* внутри сектора */
+  const delta = ((360 - idx * seg) - cur + 720) % 360;
   const target = cur + turns * 360 + delta + jitter;
   gmWheelAngle = target;
-  wheel.style.transition = 'transform 8s cubic-bezier(0.12,0.65,0.13,1)';
+  wheel.style.transition = 'transform 6.2s cubic-bezier(0.12,0.65,0.13,1)';
   wheel.style.transform = `rotate(${target}deg)`;
 
-  /* КРИТИЧНО (фикс из Mortis): transitionend может потеряться (смена вкладки,
-     reduced-motion) — страховочный таймер 8200мс; token гарантирует один вызов */
+  /* transitionend может потеряться (смена вкладки/reduced-motion) —
+     страховочный таймер; token гарантирует ровно один вызов */
   const settle = ()=>{
     if(token !== gmSpinToken || !gmSpinning) return;
     gmSpinning = false;
-    gmWheelFinish(bet, mult);
+    gmGrant(pool[idx], mode, payTicket);
   };
   wheel.addEventListener('transitionend', settle, {once:true});
-  setTimeout(settle, 8200);
+  setTimeout(settle, 6500);
+}
+function gmPrizeSub(p){
+  switch(p.t){
+    case 'money':   return 'зачислено на кошелёк';
+    case 'ticket':  return 'билеты — валюта круток';
+    case 'check':   return 'бонусные проверки видео — в «Мои призы»';
+    case 'disc':    return 'промокод в «Мои призы» — применится при оплате тарифа';
+    case 'boost':   return 'умножит следующий денежный приз в рулетке';
+    case 'tier':    return 'тариф активирован на месяц';
+    case 'service': return 'услуга активна — код в «Мои призы»';
+  }
+  return '';
+}
+function gmGrant(p, mode, payTicket){
+  if(mode === 'free'){ try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){} }
+  const icon = gmPrizeIcon(p);
+  let title = '', prize = null;
+  switch(p.t){
+    case 'money':{
+      const amt = gmApplyBoost(p.v);
+      walletAdd(amt, 'Приз рулетки OKO');
+      prize = {type:'money', val:amt, status:'done'};
+      title = `+ ${fmtMoney(amt)}`; break;
+    }
+    case 'ticket':
+      gmTicketsAdd(p.v); prize = {type:'ticket', val:p.v, status:'done'};
+      title = `+ ${p.v} ${gmPluralTk(p.v)}`; break;
+    case 'check':
+      gmChecksAdd(p.v); prize = {type:'check', val:p.v, status:'active'};
+      title = `+ ${p.v} ${gmPluralCheck(p.v)} видео`; break;
+    case 'disc':
+      prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'};
+      title = `Скидка −${p.v}% на тариф`; break;
+    case 'boost':
+      gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'};
+      title = `Буст ×${p.v} к призу`; break;
+    case 'tier':
+      if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
+      prize = {type:'tier', val:p.v, status:'active'};
+      title = `Тариф ${p.v} на месяц`; break;
+    case 'service':{
+      const sv = GM_SERVICES[p.v] || {};
+      prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'};
+      title = sv.label || 'Услуга OKO'; break;
+    }
+  }
+  /* доход OKO — маржа платной крутки (за вычетом денежного приза) */
+  if(mode !== 'free' && !payTicket && gmPaidCost > 0){
+    const moneyOut = p.t === 'money' ? prize.val : 0;
+    const net = gmPaidCost - moneyOut;
+    if(net > 0) okoEarn(net, 'Игры: рулетка OKO');
+  }
+  gmPrizeAdd(prize);
+  gmPrizeReveal(icon, title);
+  gmConfetti(document.querySelector('.gm-wheel-card'));
+  gmSetResult(`<b class="gm-win">${title}</b><span>${gmPrizeSub(p)}</span>`);
+  const val = gmNominal(p);
+  if(val > 0) gmLbAddWin(val);
+
+  /* бесплатная крутка израсходована — перевести выбор на платный пул */
+  if(mode === 'free'){ gmMode = 'p100'; gmBuildWheel(); }
+  gmRenderModes();
+  gmPrizesBtnRender();
+  gmUpdateBalance();
+  gmTicketsRender();
+  gmBoostBadge();
 }
 
-function gmWheelFinish(bet, mult){
-  document.getElementById('gmSpinBtn').classList.remove('off');
-  gmLockBets('gmGame-wheel', false);
-  const base = Math.round(bet * mult * 100) / 100;
-  const win = gmApplyBoost(base);
-  if(win > 0){
-    walletAdd(win, 'Выигрыш в рулетке');
-    gmConfetti(document.querySelector('.gm-wheel-card'));
-    gmLbAddWin(win);
-    gmSetResult(`<b class="gm-win">+ ${fmtMoney(win)}</b><span>Сектор ${gmFmtMult(mult)} — выплата уже на кошельке</span>`);
-  }else{
-    const wrap = document.getElementById('gmWheelWrap');
-    wrap.classList.remove('gm-shake'); void wrap.offsetWidth; wrap.classList.add('gm-shake');
-    gmSetResult(`<b class="gm-lose">×0</b><span>Ставка сгорела — колесо ждёт реванша</span>`);
-  }
-  const net = bet - base;
-  if(net > 0) okoEarn(net, 'Игры: рулетка');
-  gmHistPush({g:'wheel', bet, win, mult, at: Date.now()});
-  gmUpdateBalance();
+/* красивая анимация выпадения приза — карточка в центре колеса */
+function gmPrizeReveal(icon, title){
+  const rev = document.getElementById('gmReveal');
+  if(!rev) return;
+  rev.innerHTML = `
+    <div class="gm-reveal-rays"></div>
+    <div class="gm-reveal-card">
+      <span class="gm-reveal-ic">${I(icon)}</span>
+      <b>${title}</b>
+    </div>`;
+  rev.classList.remove('show'); void rev.offsetWidth; rev.classList.add('show');
 }
 
 /* лаймовое конфетти */
@@ -354,285 +516,9 @@ function gmConfetti(host){
   setTimeout(()=>box.remove(), 2200);
 }
 
-/* ================= ДОРОГА OKO =================
-   5 плит, шансы на шаг [92,84,74,60,45]%, множители [1.2,1.6,2.4,4,8].
-   Ставка списывается на старте; «Забрать» — walletAdd(bet*множитель). */
-const GM_ROAD_MULTS = [1.2, 1.6, 2.4, 4, 8];
-const GM_ROAD_ODDS  = [92, 84, 74, 60, 45];
-let gmRoad = {active:false, step:0, bet:0, busy:false};
-let gmRoadBetVal = 100;
-
-function gmRoadMultsRender(){
-  const el = document.getElementById('gmRoadMults');
-  if(!el) return;
-  el.innerHTML = GM_ROAD_MULTS.map((m,i)=>{
-    let cls = '';
-    if(gmRoad.active && i < gmRoad.step) cls = 'done';
-    else if(gmRoad.active && i === gmRoad.step) cls = 'cur';
-    return `<span class="gm-rm ${cls}">${gmFmtMult(m)}</span>`;
-  }).join('');
-}
-
-function gmRoadTiles(){ return document.querySelectorAll('#gmTrack .gm-tile'); }
-function gmRoadClearTiles(){ gmRoadTiles().forEach(t=>t.classList.remove('ok','bad','next')); }
-/* подсветить плиту, на которую сейчас шагнёт глаз */
-function gmRoadMarkNext(){
-  const tiles = gmRoadTiles();
-  tiles.forEach(t=>t.classList.remove('next'));
-  if(gmRoad.active && !gmRoad.busy && gmRoad.step < tiles.length) tiles[gmRoad.step].classList.add('next');
-}
-/* искры из плиты при удачном шаге */
-function gmSpark(tile){
-  if(!tile) return;
-  const box = document.createElement('div');
-  box.className = 'gm-spark';
-  let h = '';
-  for(let i=0;i<8;i++){
-    const a = (i/8)*Math.PI*2 + Math.random()*0.5;
-    const d = 26 + Math.random()*20;
-    h += `<i style="--dx:${(Math.cos(a)*d).toFixed(0)}px;--dy:${(Math.sin(a)*d).toFixed(0)}px;animation-delay:${(Math.random()*0.08).toFixed(2)}s"></i>`;
-  }
-  box.innerHTML = h;
-  tile.appendChild(box);
-  setTimeout(()=>box.remove(), 800);
-}
-
-/* позиция глаза: i = индекс плиты, -1 = старт */
-function gmMoveEye(i, noHop){
-  const eye = document.getElementById('gmEye');
-  const el = i < 0 ? document.getElementById('gmStartCell') : gmRoadTiles()[i];
-  if(!eye || !el) return;
-  eye.style.left = (el.offsetLeft + el.offsetWidth / 2) + 'px';
-  eye.classList.remove('gm-fall');
-  if(!noHop){ eye.classList.remove('gm-hop'); void eye.offsetWidth; eye.classList.add('gm-hop'); }
-}
-function gmSyncEye(noHop){
-  gmMoveEye(gmRoad.active && gmRoad.step > 0 ? gmRoad.step - 1 : -1, noHop);
-}
-
-function gmRoadCtrl(msg){
-  const el = document.getElementById('gmRoadCtrl');
-  if(!el) return;
-  el.classList.remove('gm-locked');
-  if(!gmRoad.active){
-    el.innerHTML = `
-      ${msg ? `<div class="gm-road-msg">${msg}</div>` : ''}
-      <div class="gm-bet"><input id="gmRoadBet" type="number" inputmode="numeric" min="10" step="10" value="${gmRoadBetVal}" placeholder="Ставка, ₽" oninput="gmRoadBetVal=this.value;gmChipClear(this)"></div>
-      <div class="gm-chips">
-        <button ${gmRoadBetVal==50?'class="on"':''} onclick="gmChip('gmRoadBet',50,this)">50 ₽</button>
-        <button ${gmRoadBetVal==100?'class="on"':''} onclick="gmChip('gmRoadBet',100,this)">100 ₽</button>
-        <button ${gmRoadBetVal==500?'class="on"':''} onclick="gmChip('gmRoadBet',500,this)">500 ₽</button>
-        <button ${gmRoadBetVal==1000?'class="on"':''} onclick="gmChip('gmRoadBet',1000,this)">1000 ₽</button>
-      </div>
-      <button class="gm-spin" onclick="gmRoadStart()">${I('play')}Старт — выйти на дорогу</button>`;
-  }else{
-    const s = gmRoad.step;
-    const curMult = s > 0 ? GM_ROAD_MULTS[s-1] : 0;
-    const cash = s > 0 ? Math.round(gmRoad.bet * curMult * 100) / 100 : 0;
-    el.innerHTML = `
-      <div class="gm-road-stat">
-        <span>Ставка <b>${fmtMoney(gmRoad.bet)}</b></span>
-        <span>Шанс шага <b>${GM_ROAD_ODDS[s]}%</b></span>
-        <span>Сейчас <b>${s > 0 ? gmFmtMult(curMult) : '—'}</b></span>
-      </div>
-      <div class="gm-road-btns">
-        <button class="gm-spin" onclick="gmRoadStep()">${I('bolt')}Шаг</button>
-        <button class="gm-spin ghost ${s > 0 ? '' : 'off'}" onclick="gmRoadCash()">${I('money')}Забрать ${s > 0 ? fmtMoney(cash) : ''}</button>
-      </div>`;
-  }
-}
-
-function gmRoadStart(){
-  if(gmRoad.active) return;
-  const bet = gmBet('gmRoadBet');
-  if(!bet) return;
-  if(!gmLimitCheck(bet)) return;
-  if(!walletCharge(bet, 'Ставка: Дорога OKO')) return;
-  gmLimitSpend(bet);
-  gmWager(bet);
-  gmRoad = {active:true, step:0, bet, busy:false};
-  gmRoadClearTiles();
-  gmSyncEye(true);
-  gmRoadMultsRender();
-  gmRoadCtrl();
-  gmRoadMarkNext();
-  gmUpdateBalance();
-}
-
-function gmRoadStep(){
-  if(!gmRoad.active || gmRoad.busy) return;
-  gmRoad.busy = true;
-  gmLockBets('gmRoadCtrl', true); /* кнопки Шаг/Забрать не жмутся во время прыжка */
-  const i = gmRoad.step;
-  const tile = gmRoadTiles()[i];
-  tile.classList.remove('next');
-  gmMoveEye(i); /* прыжок на плиту */
-  setTimeout(()=>{
-    const ok = Math.random() * 100 < GM_ROAD_ODDS[i];
-    if(ok){
-      tile.classList.add('ok');
-      gmSpark(tile);
-      gmRoad.step++;
-      gmRoad.busy = false;
-      gmRoadMultsRender();
-      if(gmRoad.step === GM_ROAD_MULTS.length){
-        gmRoadCash(); /* дошёл до конца — авто-выплата ×8 */
-      }else{
-        gmRoadCtrl();
-        gmRoadMarkNext();
-      }
-    }else{
-      tile.classList.add('bad');
-      document.getElementById('gmEye').classList.add('gm-fall'); /* глаз падает */
-      okoEarn(gmRoad.bet, 'Игры: дорога');
-      gmHistPush({g:'road', bet:gmRoad.bet, win:0, mult:0, at: Date.now()});
-      const lostBet = gmRoad.bet, lostStep = i + 1;
-      gmRoad.active = false;
-      setTimeout(()=>{
-        gmRoad.busy = false;
-        gmRoadClearTiles();
-        gmSyncEye(true);
-        gmRoadMultsRender();
-        gmRoadCtrl(`<b class="gm-lose">Провал</b>плита ${lostStep} не выдержала — ставка ${fmtMoney(lostBet)} сгорела`);
-      }, 950);
-    }
-  }, 520);
-}
-
-function gmRoadCash(){
-  if(!gmRoad.active || gmRoad.step < 1 || gmRoad.busy) return;
-  const mult = GM_ROAD_MULTS[gmRoad.step - 1];
-  const base = Math.round(gmRoad.bet * mult * 100) / 100;
-  const win = gmApplyBoost(base);
-  walletAdd(win, 'Выигрыш: Дорога OKO');
-  const net = gmRoad.bet - base;
-  if(net > 0) okoEarn(net, 'Игры: дорога');
-  gmHistPush({g:'road', bet:gmRoad.bet, win, mult, at: Date.now()});
-  gmConfetti(document.querySelector('.gm-road-card'));
-  gmLbAddWin(win);
-  gmRoad.active = false;
-  gmRoadClearTiles();
-  gmSyncEye(true);
-  gmRoadMultsRender();
-  gmRoadCtrl(`<b class="gm-win">+ ${fmtMoney(win)}</b>забрал на ${gmFmtMult(mult)} — выплата на кошельке`);
-  gmUpdateBalance();
-}
-
-/* ================= КОСТИ OKO =================
-   Две 3D-кости (CSS-кубы), ставка на сумму: меньше 7 (×1,9), ровно 7 (×5),
-   больше 7 (×1,9). Честный бросок 2d6; RTP: 15/36×1.9 ≈ 79%, 6/36×5 ≈ 83%. */
-const GM_DICE_BETS = {under:{m:1.9, t:'меньше 7'}, seven:{m:5, t:'ровно 7'}, over:{m:1.9, t:'больше 7'}};
-const GM_PIPS = {1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]};
-/* грань -> значение (противоположные в сумме дают 7) и её позиция на кубе */
-const GM_FACES = [
-  ['translateZ(32px)', 1], ['rotateY(180deg) translateZ(32px)', 6],
-  ['rotateY(90deg) translateZ(32px)', 3], ['rotateY(-90deg) translateZ(32px)', 4],
-  ['rotateX(90deg) translateZ(32px)', 5], ['rotateX(-90deg) translateZ(32px)', 2]
-];
-/* какой поворот куба показывает значение зрителю */
-const GM_DICE_ROT = {1:[0,0], 2:[90,0], 3:[0,-90], 4:[0,90], 5:[-90,0], 6:[0,180]};
-let gmDice = {rolling:false, pick:'under', token:0};
-let gmDiceTurns = {gmDie1:0, gmDie2:0};
-
-function gmBuildDice(){
-  ['gmDie1','gmDie2'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.innerHTML = '<div class="gm-cube">' + GM_FACES.map(([tf, v])=>
-      `<div class="gm-face" style="transform:${tf}">${Array.from({length:9},(_,i)=>`<i class="${GM_PIPS[v].includes(i)?'on':''}"></i>`).join('')}</div>`
-    ).join('') + '</div>';
-  });
-  gmDiceSet('gmDie1', 3, true);
-  gmDiceSet('gmDie2', 4, true);
-}
-/* повернуть куб на значение v; при броске — с накопленными кувырками по двум осям */
-function gmDiceSet(id, v, instant){
-  const cube = document.querySelector('#'+id+' .gm-cube');
-  if(!cube) return;
-  const [rx, ry] = GM_DICE_ROT[v];
-  if(instant){
-    cube.style.transition = 'none';
-    gmDiceTurns[id] = 0;
-    cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
-    void cube.offsetWidth;
-    return;
-  }
-  gmDiceTurns[id] += 2 + Math.floor(Math.random()*3); /* +2–4 полных оборота */
-  const k = gmDiceTurns[id] * 360;
-  cube.style.transition = 'transform 1.5s cubic-bezier(.18,.72,.24,1)';
-  cube.style.transform = `rotateX(${rx + k}deg) rotateY(${ry + k}deg)`;
-}
-function gmDicePick(k, btn){
-  if(gmDice.rolling) return;
-  gmDice.pick = k;
-  document.querySelectorAll('#gmDicePicks button').forEach(b=>b.classList.toggle('on', b === btn));
-}
-function gmDiceSetResult(html){
-  const el = document.getElementById('gmDiceResult');
-  if(el) el.innerHTML = html;
-}
-function gmDiceRoll(){
-  if(gmDice.rolling){ toast('Кости ещё в воздухе'); return; }
-  const bet = gmBet('gmDiceBet');
-  if(!bet) return;
-  if(!gmLimitCheck(bet)) return;
-  if(!walletCharge(bet, 'Ставка: Кости OKO')) return;
-  gmLimitSpend(bet);
-  gmWager(bet);
-  gmUpdateBalance();
-
-  gmDice.rolling = true;
-  const token = ++gmDice.token;
-  document.getElementById('gmDiceBtn').classList.add('off');
-  gmLockBets('gmGame-dice', true);
-  gmDiceSetResult(`<span class="gm-run">Ставка ${fmtMoney(bet)} на «${GM_DICE_BETS[gmDice.pick].t}» — кости в воздухе…</span>`);
-
-  const d1 = 1 + Math.floor(Math.random()*6);
-  const d2 = 1 + Math.floor(Math.random()*6);
-  gmDiceSet('gmDie1', d1);
-  gmDiceSet('gmDie2', d2);
-
-  /* transitionend + страховочный таймер (паттерн рулетки), token = один вызов */
-  const settle = ()=>{
-    if(token !== gmDice.token || !gmDice.rolling) return;
-    gmDice.rolling = false;
-    gmDiceFinish(bet, d1, d2);
-  };
-  const cube = document.querySelector('#gmDie1 .gm-cube');
-  if(cube) cube.addEventListener('transitionend', settle, {once:true});
-  setTimeout(settle, 1700);
-}
-function gmDiceFinish(bet, d1, d2){
-  document.getElementById('gmDiceBtn').classList.remove('off');
-  gmLockBets('gmGame-dice', false);
-  const sum = d1 + d2;
-  const out = sum < 7 ? 'under' : (sum > 7 ? 'over' : 'seven');
-  const cfg = GM_DICE_BETS[gmDice.pick];
-  const hit = out === gmDice.pick;
-  const base = hit ? Math.round(bet * cfg.m * 100) / 100 : 0;
-  const win = gmApplyBoost(base);
-  /* подсветить фактический исход на кнопках */
-  const ob = document.querySelector(`#gmDicePicks button[data-pick="${out}"]`);
-  if(ob){ ob.classList.add('hit'); setTimeout(()=>ob.classList.remove('hit'), 1500); }
-  if(win > 0){
-    walletAdd(win, 'Выигрыш: Кости OKO');
-    gmConfetti(document.querySelector('.gm-dice-card'));
-    gmLbAddWin(win);
-    gmDiceSetResult(`<b class="gm-win">+ ${fmtMoney(win)}</b><span>Выпало ${d1} + ${d2} = ${sum} — ставка «${cfg.t}» ${gmFmtMult(cfg.m)} сыграла</span>`);
-  }else{
-    const card = document.querySelector('.gm-dice-card');
-    card.classList.remove('gm-shake'); void card.offsetWidth; card.classList.add('gm-shake');
-    gmDiceSetResult(`<b class="gm-lose">×0</b><span>Выпало ${d1} + ${d2} = ${sum} (${GM_DICE_BETS[out].t}) — ставка «${cfg.t}» не сыграла</span>`);
-  }
-  const net = bet - base;
-  if(net > 0) okoEarn(net, 'Игры: кости');
-  gmHistPush({g:'dice', bet, win, mult: hit ? cfg.m : 0, d: sum, at: Date.now()});
-  gmUpdateBalance();
-}
-
 /* ================= ТАБЛИЦА ЛИДЕРОВ НЕДЕЛИ =================
-   Топ-10: мок-игроки + свой ник. Свои выигрыши реально суммируются и двигают
-   позицию. Персист под 'oko-games-lb', сброс каждую неделю. */
+   Топ-10: мок-игроки + свой ник. Свои призы реально суммируются (номинал ₽)
+   и двигают позицию. Персист под 'oko-games-lb', сброс каждую неделю. */
 const GM_LB_NAMES = ['Марат К.','nastya.vibe','Кирилл Т.','ZONA_51','Полина М.','deniska_pro',
                      'Артём В.','lera.moon','Саид А.','mr_fortuna','Ольга Ж.','tigran.dice'];
 let GM_LB = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games-lb'))||null; }catch(e){ return null; } })();
@@ -687,11 +573,6 @@ function gmLbDrift(){
     gmLbSave();
   }
 }
-function gmPluralWins(n){
-  if(n % 10 === 1 && n % 100 !== 11) return 'выигрыш';
-  if(n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return 'выигрыша';
-  return 'выигрышей';
-}
 function gmLbRow(r, pos){
   const mv = r.me && GM_LB.move ? `<svg class="i gm-lb-mv ${GM_LB.move}"><use href="#i-chev"/></svg>` : '';
   const posHtml = pos === 1 ? `<b class="gm-lb-pos p1">${I('gm-cup')}</b>` : `<b class="gm-lb-pos ${pos<=3?'p'+pos:''}">${pos}</b>`;
@@ -700,7 +581,7 @@ function gmLbRow(r, pos){
     <span class="gm-lb-ava">${esc((r.n[0]||'?').toUpperCase())}</span>
     <div class="gm-lb-b">
       <span class="gm-lb-n">${esc(r.n)}${r.me ? vBadge(r.n) : ''}${r.me ? '<i class="gm-lb-you">ты</i>' : ''}${mv}</span>
-      <small>${r.w} ${gmPluralWins(r.w)} за неделю</small>
+      <small>${r.w} ${gmPluralPrize(r.w)} за неделю</small>
     </div>
     <b class="gm-lb-sum">${fmtMoney(r.s)}</b>
   </div>`;
@@ -711,262 +592,44 @@ function gmLbRender(){
   const rows = gmLbRank();
   const myIdx = rows.findIndex(r=>r.me);
   const days = 7 - ((new Date().getDay() + 6) % 7);
-  let html = `<div class="gm-lb-head"><span>${I('gm-cup')}Выигрыши за эту неделю</span><small>сброс через ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}</small></div>`;
+  let html = `<div class="gm-lb-head"><span>${I('gm-cup')}Призы за эту неделю</span><small>сброс через ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}</small></div>`;
   html += rows.slice(0, 10).map((r,i)=>gmLbRow(r, i+1)).join('');
   if(myIdx >= 10) html += `<div class="gm-lb-gap">···</div>` + gmLbRow(rows[myIdx], myIdx + 1);
   el.innerHTML = html;
 }
 
-/* ================= ПРИЗОВАЯ КРУТКА =================
-   Колесо призового пула: деньги, билеты, скидки на тариф (−10/−20/−50%),
-   тариф на месяц, бонусные проверки видео и бусты. Один бесплатный спин
-   в сутки ('oko-games-bonus'), далее — за 100 ₽ или за 1 билет.
-   Денежные призы = расход OKO (маркетинг), okoEarn не трогаем;
-   платная крутка 100 ₽ — доход (okoEarn в gmSpinMode). */
-const GM_POOL = [
-  {t:'money',  v:100,   w:210, s:'100 ₽',  c:0},
-  {t:'ticket', v:1,     w:200, s:'1 бил',  c:1},
-  {t:'money',  v:250,   w:150, s:'250 ₽',  c:0},
-  {t:'check',  v:3,     w:120, s:'3 пров', c:2},
-  {t:'ticket', v:2,     w:105, s:'2 бил',  c:1},
-  {t:'disc',   v:10,    w:95,  s:'−10%',   c:2},
-  {t:'boost',  v:2,     w:60,  s:'×2',     c:3},
-  {t:'ticket', v:5,     w:45,  s:'5 бил',  c:3},
-  {t:'disc',   v:20,    w:34,  s:'−20%',   c:3},
-  {t:'money',  v:1000,  w:18,  s:'1000 ₽', c:4},
-  {t:'disc',   v:50,    w:7,   s:'−50%',   c:4},
-  {t:'tier',   v:'PRO', w:6,   s:'PRO',    c:4}
-];
-/* палитра секторов по «редкости», зависит от темы: [фон, подпись] */
-const GM_POOL_COLS_DARK = [
-  ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#9AFF00','#0a1400']
-];
-const GM_POOL_COLS_LIGHT = [
-  ['#e9f2d8','#5f7a3c'], ['#d8e9ac','#456314'], ['#bfe07f','#294709'], ['#8ccf2a','#0d2200'], ['#9AFF00','#0a1400']
-];
-function gmPoolCols(){ return gmIsLight() ? GM_POOL_COLS_LIGHT : GM_POOL_COLS_DARK; }
-let gmBonus = {spinning:false, token:0, angle:0};
-
-function gmPluralPrize(n){
-  const a = Math.abs(n) % 100, b = a % 10;
-  if(a > 10 && a < 20) return 'призов';
-  if(b > 1 && b < 5) return 'приза';
-  if(b === 1) return 'приз';
-  return 'призов';
-}
-
-function gmBonusStamp(){ try{ return Number(localStorage.getItem('oko-games-bonus')) || 0; }catch(e){ return 0; } }
-function gmBonusClaimedToday(){
-  const ts = gmBonusStamp();
-  if(!ts) return false;
-  const a = new Date(ts), b = new Date();
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-function gmBonusLeftMs(){
-  const n = new Date();
-  return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n;
-}
-function gmFmtCd(ms){
-  const s = Math.max(0, Math.floor(ms / 1000));
-  const p = n => String(n).padStart(2, '0');
-  return p(Math.floor(s/3600)) + ':' + p(Math.floor(s%3600/60)) + ':' + p(s%60);
-}
-
-/* баннер входа на экране игр */
-function gmBonusBtnRender(){
-  const b = document.getElementById('gmBonusBtn');
-  if(!b) return;
-  const free = !gmBonusClaimedToday();
-  b.classList.toggle('done', !free);
-  if(free){
-    b.innerHTML = `${I('gm-gift')}<div class="gm-bonus-t"><span>Призовая крутка</span><small>бесплатный спин сегодня — билеты, скидки, проверки, ₽</small></div>${I('chev','gm-bonus-chev')}`;
-  }else{
-    b.innerHTML = `${I('gm-gift')}<div class="gm-bonus-t"><span>Призовая крутка</span><small>бесплатно через <b id="gmBonusCd">${gmFmtCd(gmBonusLeftMs())}</b> · или за 100 ₽ / 1 билет</small></div>${I('chev','gm-bonus-chev')}`;
-  }
-}
-/* баннер «Мои призы» */
+/* ---------- баннер «Мои призы» ---------- */
 function gmPrizesBtnRender(){
   const b = document.getElementById('gmPrizesBtn');
   if(b){
     const n = GM_PRIZES.length, act = gmPrizesActiveCount();
-    b.innerHTML = `${I('gm-cup')}<div class="gm-bonus-t"><span>Мои призы</span><small>${n ? `${n} ${gmPluralPrize(n)} · ${act} к использованию` : 'ещё нет — крути призовое колесо'}</small></div>${I('chev','gm-bonus-chev')}`;
+    b.innerHTML = `${I('gm-cup')}<div class="gm-bonus-t"><span>Мои призы</span><small>${n ? `${n} ${gmPluralPrize(n)} · ${act} к использованию` : 'ещё нет — крути рулетку'}</small></div>${I('chev','gm-bonus-chev')}`;
   }
   document.querySelectorAll('.gm-prizes-cnt').forEach(e=>{ e.textContent = GM_PRIZES.length; });
-}
-
-function gmBonusOpen(){
-  openSheet('gmBonus'); /* navstack сам ведёт back по патчу openSheet/closeSheet */
-  gmBonusRender();
-}
-/* три режима запуска: бесплатно / 100 ₽ / 1 билет */
-function gmSpinModesHtml(){
-  const free = !gmBonusClaimedToday();
-  return `
-    <button class="gm-spin ${free ? '' : 'off'}" id="gmSpinFree" onclick="gmSpinMode('free')">${I('gm-gift')}${
-      free ? 'Бесплатно сегодня' : `<span class="gm-spin-cd">Бесплатно через <b id="gmFreeCd">${gmFmtCd(gmBonusLeftMs())}</b></span>`
-    }</button>
-    <div class="gm-spin-alt">
-      <button class="gm-spin ghost" id="gmSpinPay" onclick="gmSpinMode('pay')">${I('money')}100 ₽</button>
-      <button class="gm-spin ghost ${GM_TICKETS >= 1 ? '' : 'off'}" id="gmSpinTk" onclick="gmSpinMode('ticket')">${I('gm-ticket')}1 билет</button>
-    </div>`;
-}
-function gmBonusRender(){
-  const el = document.getElementById('gmBonusBody');
-  if(!el) return;
-  const COLS = gmPoolCols();
-  const N = GM_POOL.length, seg = 360 / N;
-  const stops = GM_POOL.map((p,i)=>`${COLS[p.c][0]} ${i*seg}deg ${(i+1)*seg}deg`).join(',');
-  const secs = GM_POOL.map((p,i)=>
-    `<span class="gm-bsec" style="color:${COLS[p.c][1]};transform:translate(-50%,-50%) rotate(${i*seg + seg/2 - 15}deg) translateY(-80px)">${p.s}</span>`
-  ).join('');
-  el.innerHTML = `
-    <p class="gm-spin-intro">Один бесплатный спин в день. В пуле — деньги, билеты, скидки на тариф, месяц PRO, проверки видео и бусты.</p>
-    <div class="gm-bonus-stage">
-      <div class="gm-pointer"><svg width="30" height="26" viewBox="0 0 30 26"><path d="M15 26L2 2h26z" fill="#9AFF00" stroke="#0a0a0a" stroke-width="2" stroke-linejoin="round"/></svg></div>
-      <div class="gm-bwheel-wrap">
-        <div class="gm-bwheel" id="gmBWheel" style="background:conic-gradient(from -15deg, ${stops})">${secs}</div>
-        <div class="gm-bwheel-hub">${I('gm-gift')}</div>
-        <div class="gm-reveal" id="gmReveal"></div>
-      </div>
-    </div>
-    <div class="gm-result" id="gmBonusRes"><span class="gm-hint">Крути — приз мгновенно попадёт в «Мои призы»</span></div>
-    <div class="gm-spin-modes" id="gmSpinModes">${gmSpinModesHtml()}</div>
-    <button class="gm-prizes-link" onclick="gmPrizesOpen()">${I('gm-cup')}<span>Мои призы</span><b class="gm-prizes-cnt">${GM_PRIZES.length}</b></button>`;
-  gmBonus.angle = 0;
-}
-function gmSpinMode(mode){
-  if(gmBonus.spinning) return;
-  if(mode === 'free'){
-    if(gmBonusClaimedToday()){ toast('Бесплатная крутка сегодня уже была — за 100 ₽ или билет'); return; }
-  }else if(mode === 'pay'){
-    if(!walletCharge(100, 'Призовая крутка OKO')) return;
-    okoEarn(100, 'Игры: призовая крутка');
-    gmUpdateBalance();
-  }else if(mode === 'ticket'){
-    if(!gmTicketsSpend(1)){ toast('Нужен 1 билет — заработай ставками или на колесе'); return; }
-  }
-  gmPrizeSpin(mode);
-}
-function gmPrizeSpin(mode){
-  gmBonus.spinning = true;
-  const token = ++gmBonus.token;
-  document.querySelectorAll('#gmSpinModes .gm-spin').forEach(b=>b.classList.add('off'));
-  const res = document.getElementById('gmBonusRes');
-  if(res) res.innerHTML = `<span class="gm-run">Призовое колесо крутится…</span>`;
-  const rev = document.getElementById('gmReveal');
-  if(rev){ rev.className = 'gm-reveal'; rev.innerHTML = ''; }
-
-  /* взвешенный приз */
-  const total = GM_POOL.reduce((a,p)=>a + p.w, 0);
-  let r = Math.random() * total, idx = 0;
-  for(let i = 0; i < GM_POOL.length; i++){ if(r < GM_POOL[i].w){ idx = i; break; } r -= GM_POOL[i].w; }
-  const seg = 360 / GM_POOL.length;
-
-  const wheel = document.getElementById('gmBWheel');
-  const cur = ((gmBonus.angle % 360) + 360) % 360;
-  wheel.style.transition = 'none';
-  wheel.style.transform = `rotate(${cur}deg)`;
-  void wheel.offsetWidth;
-  const turns = 5 + Math.floor(Math.random() * 3);
-  const jitter = Math.random() * (seg * 0.5) - seg * 0.25; /* внутри сектора */
-  const delta = ((360 - idx * seg) - cur + 720) % 360;
-  const target = cur + turns * 360 + delta + jitter;
-  gmBonus.angle = target;
-  wheel.style.transition = 'transform 5.4s cubic-bezier(0.12,0.65,0.13,1)';
-  wheel.style.transform = `rotate(${target}deg)`;
-
-  const settle = ()=>{
-    if(token !== gmBonus.token || !gmBonus.spinning) return;
-    gmBonus.spinning = false;
-    gmPrizeGrant(GM_POOL[idx], mode);
-  };
-  wheel.addEventListener('transitionend', settle, {once:true});
-  setTimeout(settle, 5700);
-}
-function gmPrizeSub(p){
-  switch(p.t){
-    case 'money':  return 'уже зачислено на кошелёк';
-    case 'ticket': return 'билеты — валюта круток и «Мои призы»';
-    case 'check':  return 'бонусные проверки видео — в «Мои призы»';
-    case 'disc':   return 'промокод в «Мои призы» — применится при оплате тарифа';
-    case 'boost':  return 'сработает на следующий выигрыш в любой игре';
-    case 'tier':   return 'активирован на месяц — лимиты обновлены';
-  }
-  return '';
-}
-function gmPrizeGrant(p, mode){
-  if(mode === 'free'){ try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){} }
-  let title = '', icon = 'gm-gift', prize = null;
-  switch(p.t){
-    case 'money':
-      walletAdd(p.v, 'Приз: призовое колесо'); prize = {type:'money', val:p.v, status:'done'};
-      icon = 'money'; title = `+ ${fmtMoney(p.v)}`; break;
-    case 'ticket':
-      gmTicketsAdd(p.v); prize = {type:'ticket', val:p.v, status:'done'};
-      icon = 'gm-ticket'; title = `+ ${p.v} ${gmPluralTk(p.v)}`; break;
-    case 'check':
-      gmChecksAdd(p.v); prize = {type:'check', val:p.v, status:'active'};
-      icon = 'gm-checkvid'; title = `+ ${p.v} проверки видео`; break;
-    case 'disc':
-      prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'};
-      icon = 'gm-pct'; title = `Скидка −${p.v}% на тариф`; break;
-    case 'boost':
-      gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'};
-      icon = 'gm-boost'; title = `Буст ×${p.v} к выигрышу`; break;
-    case 'tier':
-      if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
-      prize = {type:'tier', val:p.v, status:'active'};
-      icon = 'crown'; title = `Тариф ${p.v} на месяц`; break;
-  }
-  gmPrizeAdd(prize);
-  gmPrizeReveal(icon, title);
-  gmConfetti(document.getElementById('sheet-gmBonus'));
-  const res = document.getElementById('gmBonusRes');
-  if(res) res.innerHTML = `<b class="gm-win">${title}</b><span>${gmPrizeSub(p)}</span>`;
-  gmBonusBtnRender();
-  gmPrizesBtnRender();
-  gmUpdateBalance();
-  gmTicketsRender();
-  const modes = document.getElementById('gmSpinModes');
-  if(modes) modes.innerHTML = gmSpinModesHtml();
-}
-/* красивая анимация выпадения приза — карточка в центре колеса */
-function gmPrizeReveal(icon, title){
-  const rev = document.getElementById('gmReveal');
-  if(!rev) return;
-  rev.innerHTML = `
-    <div class="gm-reveal-rays"></div>
-    <div class="gm-reveal-card">
-      <span class="gm-reveal-ic">${I(icon)}</span>
-      <b>${title}</b>
-    </div>`;
-  rev.classList.remove('show'); void rev.offsetWidth; rev.classList.add('show');
 }
 
 /* ---------- «Мои призы»: шит выпавших призов ---------- */
 function gmPrizesOpen(){ openSheet('gmPrizes'); gmPrizesRender(); }
 function gmPrizeRow(p){
-  const map = {
-    money:   ['money',       'Деньги'],
-    ticket:  ['gm-ticket',   'Билеты'],
-    check:   ['gm-checkvid',  'Проверки видео'],
-    discount:['gm-pct',       'Скидка на тариф'],
-    boost:   ['gm-boost',     'Буст к выигрышу'],
-    tier:    ['crown',        'Тариф на месяц']
-  };
-  const [ic, cat] = map[p.type] || ['gm-gift', 'Приз'];
-  let title = '', extra = '', badge = '', bcls = 'active';
+  let ic = 'gm-gift', cat = 'Приз', title = '', extra = '', badge = '', bcls = 'active';
   switch(p.type){
-    case 'money':  title = `+ ${fmtMoney(p.val)}`; badge = 'Начислено'; bcls = 'done'; break;
-    case 'ticket': title = `+ ${p.val} ${gmPluralTk(p.val)}`; badge = 'Начислено'; bcls = 'done'; break;
-    case 'check':  title = `${p.val} проверки видео`; badge = p.status === 'used' ? 'Использовано' : 'Доступно'; bcls = p.status === 'used' ? 'used' : 'active'; break;
+    case 'money':  ic='money';       cat='Деньги';         title=`+ ${fmtMoney(p.val)}`;            badge='Начислено'; bcls='done'; break;
+    case 'ticket': ic='gm-ticket';   cat='Билеты';         title=`+ ${p.val} ${gmPluralTk(p.val)}`; badge='Начислено'; bcls='done'; break;
+    case 'check':  ic='gm-checkvid'; cat='Проверки видео'; title=`${p.val} ${gmPluralCheck(p.val)}`; badge=p.status==='used'?'Использовано':'Доступно'; bcls=p.status==='used'?'used':'active'; break;
     case 'discount':
-      title = `Скидка −${p.val}% на тариф`;
-      if(p.status === 'active'){ badge = 'Активен'; bcls = 'active'; extra = `<button class="gm-code" onclick="gmCopyCode('${p.code}')">${p.code}${I('copy')}</button>`; }
-      else { badge = 'Использован'; bcls = 'used'; extra = `<span class="gm-code used">${p.code}</span>`; }
+      ic='gm-pct'; cat='Скидка на тариф'; title=`Скидка −${p.val}% на тариф`;
+      if(p.status==='active'){ badge='Активна'; bcls='active'; extra=`<button class="gm-code" onclick="gmCopyCode('${p.code}')">${p.code}${I('copy')}</button>`; }
+      else { badge='Использована'; bcls='used'; extra=`<span class="gm-code used">${p.code}</span>`; }
       break;
-    case 'boost':  title = `Буст ×${p.val} к выигрышу`; badge = p.status === 'used' ? 'Использован' : 'Активен'; bcls = p.status === 'used' ? 'used' : 'active'; break;
-    case 'tier':   title = `Тариф ${p.val} на месяц`; badge = 'Активен'; bcls = 'active'; break;
+    case 'boost':  ic='gm-boost'; cat='Буст к призу'; title=`Буст ×${p.val} к призу`; badge=p.status==='used'?'Использован':'Активен'; bcls=p.status==='used'?'used':'active'; break;
+    case 'tier':   ic='crown';    cat='Тариф на месяц'; title=`Тариф ${p.val} на месяц`; badge='Активен'; bcls='active'; break;
+    case 'service':{
+      const sv = GM_SERVICES[p.val] || {};
+      ic = sv.ic || 'gm-gift'; cat = 'Услуга OKO'; title = sv.label || 'Услуга OKO';
+      if(p.status==='active'){ badge='Активна'; bcls='active'; extra=`<button class="gm-code" onclick="gmCopyCode('${p.code}')">${p.code}${I('copy')}</button>`; }
+      else { badge='Использована'; bcls='used'; extra=`<span class="gm-code used">${p.code}</span>`; }
+      break;
+    }
   }
   const d = new Date(p.at);
   const time = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) + ' ' +
@@ -993,60 +656,26 @@ function gmPrizesRender(){
   </div>`;
   if(!GM_PRIZES.length){
     el.innerHTML = head +
-      `<div class="gm-empty">${I('gm-gift')}<span>Призов пока нет — крути призовое колесо: выпадают билеты, скидки на тариф, проверки видео, бусты и деньги</span></div>
-       <button class="gm-spin" onclick="closeSheet();gmBonusOpen()">${I('gm-gift')}К призовому колесу</button>`;
+      `<div class="gm-empty">${I('gm-gift')}<span>Призов пока нет — крути рулетку: выпадают билеты, скидки на тариф, проверки видео, услуги OKO, бусты и деньги</span></div>
+       <button class="gm-spin" onclick="closeSheet();showTab('games')">${I('gm-gift')}К рулетке</button>`;
     return;
   }
   el.innerHTML = head + `<div class="gm-prz-list">${GM_PRIZES.map(gmPrizeRow).join('')}</div>`;
 }
 function gmCopyCode(code){
-  const done = ()=>toast('Промокод ' + code + ' скопирован — вставь при оплате тарифа');
+  const done = ()=>toast('Код ' + code + ' скопирован — вставь при оплате тарифа');
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(code).then(done, done); return; }
   }catch(e){}
   done();
 }
 
-/* живой обратный отсчёт до полуночи (баннер + кнопка «Бесплатно») */
+/* живой обратный отсчёт до полуночи (пилюля + кнопка «Бесплатно») */
 setInterval(()=>{
   if(!gmBonusClaimedToday()) return;
   const cd = gmFmtCd(gmBonusLeftMs());
-  const a = document.getElementById('gmBonusCd');
-  const f = document.getElementById('gmFreeCd');
-  if(a) a.textContent = cd;
-  if(f) f.textContent = cd;
+  ['gmFreeCd','gmFreeCd2'].forEach(id=>{ const e = document.getElementById(id); if(e) e.textContent = cd; });
 }, 1000);
-
-/* ---------- история игр (последние 20) ---------- */
-function gmHistPush(e){
-  GM_HIST.unshift(e);
-  if(GM_HIST.length > 20) GM_HIST.length = 20;
-  try{ localStorage.setItem('oko-games', JSON.stringify(GM_HIST)); }catch(err){}
-  gmRenderHistory();
-}
-function gmRenderHistory(){
-  const el = document.getElementById('gmHistory');
-  if(!el) return;
-  if(!GM_HIST.length){
-    el.innerHTML = `<div class="gm-empty">${I('clock')}<span>Ещё нет сыгранных раундов — сделай первую ставку</span></div>`;
-    return;
-  }
-  el.innerHTML = GM_HIST.map(h=>{
-    const win = h.win > 0;
-    const name = GM_GAME_NAMES[h.g] || h.g;
-    const d = new Date(h.at);
-    const time = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'}) + ' ' +
-                 d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
-    let detail;
-    if(h.g === 'dice') detail = `выпало ${h.d != null ? h.d : '—'} · ` + (win ? gmFmtMult(h.mult) : 'проигрыш');
-    else detail = win ? (h.g === 'wheel' ? 'сектор ' : 'забрал на ') + gmFmtMult(h.mult) : 'проигрыш';
-    return `<div class="gm-op">
-      <span class="gm-op-ic ${win ? 'in' : 'out'}">${I(GM_GAME_ICONS[h.g] || 'gm-chip')}</span>
-      <div class="gm-op-b"><span class="gm-op-t1">${name} · ставка ${fmtMoney(h.bet)}</span><span class="gm-op-t2">${detail} · ${time}</span></div>
-      <b class="gm-op-sum ${win ? 'in' : 'out'}">${win ? '+' : '−'} ${fmtMoney(win ? h.win : h.bet)}</b>
-    </div>`;
-  }).join('');
-}
 
 /* ---------- патчи ядра (прежние версии сохранены и вызываются) ---------- */
 const _prevWalletAddGm = walletAdd;
@@ -1060,13 +689,13 @@ walletCharge = function(sum, why){
   gmUpdateBalance();
   return ok;
 };
-/* пересобрать колёса под новую тему (палитра секторов задаётся из JS) */
+/* пересобрать колесо под новую тему (палитра секторов задаётся из JS) */
 if(typeof applyTheme === 'function'){
   const _prevApplyThemeGm = applyTheme;
   applyTheme = function(t){
     _prevApplyThemeGm(t);
-    gmBuildWheel();
-    if(document.getElementById('gmBWheel') && !gmBonus.spinning) gmBonusRender();
+    if(!gmSpinning) gmBuildWheel();
+    if(document.getElementById('sheet-gmPrizes') && document.getElementById('sheet-gmPrizes').classList.contains('open')) gmPrizesRender();
   };
 }
 
@@ -1075,38 +704,31 @@ showTab = function(t){
   _prevShowTabGm(t);
   if(t === 'games'){
     gmUpdateBalance();
-    gmRenderLimit();
-    gmRenderHistory();
     gmLbDrift();      /* таблица лидеров живёт: мок-игроки тоже выигрывают */
     gmLbRender();
-    gmBonusBtnRender();
     gmPrizesBtnRender();
     gmTicketsRender();
     gmBoostBadge();
-    requestAnimationFrame(()=>gmSyncEye(true)); /* позиция глаза после показа экрана */
+    if(!gmSpinning){
+      if(gmMode === 'free' && gmBonusClaimedToday()) gmMode = 'p100';
+      gmBuildWheel();
+      gmRenderModes();
+    }
   }
 };
 
 /* ---------- самоинициализация ---------- */
-regTitle('games', 'Игры');
-addSvcTile({id:'games', label:'Игры OKO', ico:'fire', first:true, onclick:()=>showTab('games')});
+regTitle('games', 'Рулетка OKO');
+addSvcTile({id:'games', label:'Рулетка OKO', ico:'gm-gift', first:true, onclick:()=>showTab('games')});
+gmMode = gmBonusClaimedToday() ? 'p100' : 'free';
 gmBuildWheel();
-gmBuildDice();
-gmRoadMultsRender();
-gmRoadCtrl();
-gmRenderHistory();
-gmRenderLimit();
+gmRenderModes();
 gmLbEnsure();
 gmLbRender();
-gmBonusBtnRender();
 gmPrizesBtnRender();
 gmTicketsRender();
 gmBoostBadge();
 gmUpdateBalance();
-window.addEventListener('resize', ()=>{
-  const sc = document.getElementById('screen-games');
-  if(sc && sc.classList.contains('active')) gmSyncEye(true);
-});
 
 /* ---------- подхват призовой скидки в оплате тарифа ----------
    paywall грузится ПОСЛЕ games и полностью заменяет renderPay (pwRenderPay),
@@ -1130,7 +752,7 @@ function gmApplyDiscountToPay(){
   if(total && total.parentNode){
     const badge = document.createElement('div');
     badge.className = 'gm-pay-promo';
-    badge.innerHTML = `${I('gm-pct')}<span>Промокод из игр <b>${d.code}</b> · дополнительно −${d.val}%</span>`;
+    badge.innerHTML = `${I('gm-pct')}<span>Промокод из рулетки <b>${d.code}</b> · дополнительно −${d.val}%</span>`;
     total.parentNode.insertBefore(badge, total);
   }
 }
