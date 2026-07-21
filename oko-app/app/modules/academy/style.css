@@ -270,3 +270,106 @@
 .ac-cert-close svg.i{width:18px;height:18px;transform:rotate(45deg)}
 .ac-cert-full-actions{display:flex;gap:10px}
 .ac-cert-full-actions .btn{width:auto}
+
+/* ===== КАТАЛОГ КУРСОВ ===== */
+.ac-catalog{display:flex;flex-direction:column;gap:12px}
+.ac-cc{padding:0;overflow:hidden;cursor:pointer;transition:border-color .18s,transform .14s,box-shadow .3s;animation:acRise .45s cubic-bezier(.3,1,.4,1) both}
+.ac-cc:hover{border-color:rgba(154,255,0,.4);box-shadow:0 0 26px rgba(154,255,0,.08)}
+.ac-cc:active{transform:scale(.99)}
+.ac-cc-cover{position:relative;aspect-ratio:16/7;overflow:hidden;background:#070a04}
+.ac-cover-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ac-cc.locked .ac-cc-cover .ac-cover-svg{filter:grayscale(.5) brightness(.7)}
+.ac-cc-veil{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(3px)}
+.ac-cc-veil svg.i{width:16px;height:16px}
+.ac-cc-body{padding:13px 15px 14px}
+.ac-cc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.ac-cc-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:4px 10px;text-transform:uppercase}
+.ac-cc-tag svg.i{width:12px;height:12px}
+.ac-cc-tag.free{color:#000;background:var(--lime)}
+.ac-cc-tag.open{color:var(--accent);background:var(--lime-dim)}
+.ac-cc-tag.lock{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+.ac-cc-meta{font-size:11px;color:var(--dim);font-weight:600;flex-shrink:0}
+.ac-cc-body h3{font-size:22px;line-height:1;margin-bottom:5px}
+.ac-cc-body p{font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:12px}
+.ac-cc-foot{display:flex;align-items:center;gap:12px}
+.ac-cc-go{flex:1}
+.ac-cc-price{font-family:var(--font-display);font-size:21px;color:var(--accent);letter-spacing:.02em;flex-shrink:0}
+.ac-mini-ring.lg{width:44px;height:44px}
+.ac-mini-ring.lg .bg{stroke-width:3.4}
+.ac-mini-ring.lg .val{stroke-width:3.4}
+.ac-mini-ring.lg b{font-size:13px}
+.ac-mini-ring.lg b svg.i{width:15px;height:15px;color:var(--accent)}
+
+/* ===== СТРАНИЦА КУРСА ===== */
+.ac-course-hero{position:relative;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
+.ac-course-hero-cover{position:relative;aspect-ratio:16/6;background:#070a04}
+.ac-course-hero-cover .ac-cover-svg{position:absolute;inset:0;width:100%;height:100%}
+.ac-course-hero-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,10,4,0) 30%,rgba(7,10,4,.92))}
+.ac-course-hero-cap{position:relative;margin-top:-46px;padding:0 16px 15px;z-index:1}
+.ac-course-hero-cap .chip{margin-bottom:7px}
+.ac-course-hero-cap h2{font-size:29px;line-height:1;margin-bottom:5px;color:#fff}
+.ac-course-hero-cap p{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.4}
+.ac-course-finale{display:flex;align-items:center;gap:14px;margin-top:12px;border-color:rgba(154,255,0,.4);background:radial-gradient(120% 160% at 90% 0,rgba(154,255,0,.14),transparent 60%)}
+:root[data-theme="light"] .ac-course-finale{background:radial-gradient(120% 160% at 90% 0,rgba(110,200,0,.14),transparent 60%)}
+.ac-course-finale .ico{width:48px;height:48px;border-radius:14px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 18px rgba(154,255,0,.3)}
+:root[data-theme="light"] .ac-course-finale .ico{box-shadow:none}
+.ac-course-finale .ico svg.i{width:24px;height:24px}
+.ac-course-finale h3{font-size:20px;margin-bottom:3px}
+.ac-course-finale p{font-size:12px;color:var(--dim);line-height:1.45}
+
+/* каскадное появление уроков */
+@keyframes acRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+.ac-lesson-row.ac-rise{animation:acRise .42s cubic-bezier(.3,1,.4,1) both}
+
+/* ===== БЕЙДЖИ ДОСТИЖЕНИЙ ===== */
+.ac-badges-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ac-badges-head .ico{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-badges-head .ico svg.i{width:20px;height:20px}
+.ac-badges-head .meta b{font-size:15px;display:block;line-height:1.25}
+.ac-badges-head .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px}
+.ac-badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ac-badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:13px 7px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);animation:acRise .4s cubic-bezier(.3,1,.4,1) both;transition:border-color .2s,transform .15s}
+.ac-badge .ic{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--dim);display:flex;align-items:center;justify-content:center;transition:all .3s}
+.ac-badge .ic svg.i{width:20px;height:20px}
+.ac-badge .t{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--dim)}
+.ac-badge .d{font-size:9.5px;color:var(--dim);line-height:1.25;opacity:.75}
+.ac-badge.on{border-color:rgba(154,255,0,.4)}
+.ac-badge.on .ic{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:0 0 16px rgba(154,255,0,.32)}
+:root[data-theme="light"] .ac-badge.on .ic{box-shadow:0 0 12px rgba(110,200,0,.28)}
+.ac-badge.on .t{color:var(--text)}
+.ac-badge.on .d{color:var(--accent);opacity:1;font-weight:600}
+.ac-badge.new .ic{animation:acBadgePop .7s cubic-bezier(.3,1.4,.5,1)}
+.ac-badge.new::after{content:'NEW';position:absolute;font-size:8px;font-weight:800;letter-spacing:.08em;color:#000;background:var(--lime);border-radius:99px;padding:2px 6px;transform:translate(28px,-30px);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.ac-badge{position:relative}
+@keyframes acBadgePop{0%{transform:scale(.4) rotate(-18deg);opacity:0}55%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+
+/* бейджи в профиле (компактная полоса) */
+.ac-pbadges{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 4px}
+.ac-pbadge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:5px 10px}
+.ac-pbadge svg.i{width:13px;height:13px}
+
+/* ===== ЭФФЕКТ ВЫДАЧИ СЕРТИФИКАТА ===== */
+.ac-burst{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(154,255,0,.16),rgba(0,0,0,.72) 62%);opacity:0;transition:opacity .25s ease}
+.ac-burst.go{opacity:1}
+.ac-burst-core{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.ac-burst-rays{position:absolute;inset:0}
+.ac-burst-rays i{position:absolute;left:50%;top:50%;width:3px;height:64px;margin-left:-1.5px;background:linear-gradient(var(--lime),transparent);border-radius:2px;transform-origin:50% 0;transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}
+.ac-burst.go .ac-burst-rays i{animation:acRayOut .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:var(--d)}
+@keyframes acRayOut{0%{transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}45%{opacity:1}100%{transform:rotate(var(--a)) translateY(30px) scaleY(1);opacity:0}}
+.ac-burst-seal{width:96px;height:96px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 44px rgba(154,255,0,.6);transform:scale(0) rotate(-40deg)}
+.ac-burst.go .ac-burst-seal{animation:acSealStamp .6s cubic-bezier(.3,1.5,.4,1) .12s forwards}
+.ac-burst-seal svg.i{width:48px;height:48px}
+@keyframes acSealStamp{0%{transform:scale(0) rotate(-40deg)}60%{transform:scale(1.16) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+.ac-burst-txt{font-family:var(--font-display);font-size:34px;letter-spacing:.06em;color:#fff;text-shadow:0 0 22px rgba(154,255,0,.45);transform:translateY(12px);opacity:0}
+.ac-burst.go .ac-burst-txt{animation:acBurstTxt .5s ease .32s forwards}
+@keyframes acBurstTxt{to{transform:translateY(0);opacity:1}}
+.ac-burst-conf{position:absolute;inset:0;overflow:hidden}
+.ac-burst-conf b{position:absolute;top:-16px;width:9px;height:14px;background:var(--lime);border-radius:2px;transform:scale(var(--sx)) rotate(var(--rot));opacity:0}
+.ac-burst-conf b:nth-child(even){background:#fff}
+.ac-burst-conf b:nth-child(3n){background:var(--accent);border-radius:50%}
+.ac-burst.go .ac-burst-conf b{animation:acConf 1s ease-in var(--dl) forwards}
+@keyframes acConf{0%{opacity:0;top:-16px}12%{opacity:1}100%{opacity:0;top:104%}}
+@media (prefers-reduced-motion:reduce){
+  .ac-burst-rays i,.ac-burst-conf b{animation:none!important}
+  .ac-burst.go .ac-burst-seal{animation:acSealStamp .3s ease forwards}
+}

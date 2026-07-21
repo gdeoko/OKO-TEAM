@@ -907,9 +907,14 @@ function acAnimRings(){
   }));
 }
 
-/* обложка курса (inline-SVG, самодостаточная, тёмная арт-панель в обеих темах) */
-function acCourseCover(ci){
+/* обложка курса (inline-SVG, самодостаточная, тёмная арт-панель в обеих темах).
+   hero=true → без крупного текста (его дублирует заголовок-капшн под обложкой). */
+function acCourseCover(ci, hero){
   const c = AC_COURSES[ci];
+  const bigText = hero ? '' : `
+    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
+    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="36" fill="#9AFF00" letter-spacing="2">${esc(c.c2)}</text>
+    <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>`;
   return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <rect width="320" height="190" fill="#070a04"/>
     <g stroke="rgba(154,255,0,.10)" stroke-width="1">
@@ -917,10 +922,7 @@ function acCourseCover(ci){
       ${[38,76,114,152].map(y=>`<line x1="0" y1="${y}" x2="320" y2="${y}"/>`).join('')}
     </g>
     <circle cx="266" cy="44" r="70" fill="rgba(154,255,0,.09)"/>
-    <use href="#i-logo" x="238" y="16" width="64" height="64"/>
-    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
-    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="36" fill="#9AFF00" letter-spacing="2">${esc(c.c2)}</text>
-    <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>
+    <use href="#i-logo" x="238" y="16" width="64" height="64"/>${bigText}
   </svg>`;
 }
 
@@ -1030,7 +1032,8 @@ function acCourseHtml(){
       ${stg}
       <svg class="i go"><use href="#i-chev"/></svg></button>`;
   }).join('');
-  const nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
+  let nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
+  if(nx===undefined && !done) nx = idx[0];   // защита: если курс не пройден, всегда есть куда вести
   const nextRow = (nx!==undefined)
     ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>${acLessonPct(nx)>0?'Продолжить':'Начать'}: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
     : `<div class="ac-next-row done">${I('check2')}<span>Курс пройден — сертификаты за уроки у тебя</span></div>`;
@@ -1042,7 +1045,7 @@ function acCourseHtml(){
   return `
     <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Каталог</button>
     <div class="ac-course-hero">
-      <div class="ac-course-hero-cover">${acCourseCover(ci)}</div>
+      <div class="ac-course-hero-cover">${acCourseCover(ci, true)}</div>
       <div class="ac-course-hero-cap">
         <span class="chip">${c.free?'Базовый курс':'Премиум · открыт'}</span>
         <h2>${esc(c.title)}</h2>
@@ -1152,7 +1155,7 @@ function acRenderVideoBox(){
         <use href="#i-logo" x="472" y="34" width="120" height="120"/>
         <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
         <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
-        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acL+1}</text>
+        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
       </svg>
       <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
       <span class="dur">${L.dur || 'скоро'}</span>
@@ -1279,7 +1282,7 @@ function acAnswer(i){
         toast('Тест сдан · +20% к уроку');
       }
       acSave();
-      acRenderProgressBox(); acRenderCertBox();
+      acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
     }
     acRenderTestBox();
   }, right ? 700 : 1100);
@@ -1333,7 +1336,7 @@ function acTaskSend(){
     acTaskChecking = false;
     ls.task = true; acSave();
     toast('Практика зачтена · +20% к уроку');
-    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox();
+    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
   }, 4000);
 }
 
@@ -1394,7 +1397,7 @@ function acGMatch(i){
         ls.gameWrong = wrong;
         if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
         acSave();
-        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
       } else acRenderGameBox();
     }, 560);
   } else {
@@ -1414,8 +1417,10 @@ function acRenderProgressBox(){
   const box = document.getElementById('acProgressBox');
   if(!box) return;
   const pct = acLessonPct(acL);
-  const next = (acL < AC_COURSE.length-1 && acLessonDone(acL))
-    ? `<p class="dim" style="font-size:12px;text-align:center;margin-top:4px">Урок ${acL+2} «${AC_COURSE[acL+1].title}» открыт</p>` : '';
+  const ci = acCourseOf(acL);
+  const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+  const next = (!lastInCourse && acLessonDone(acL))
+    ? `<p class="dim" style="font-size:12px;text-align:center;margin-top:4px">Урок ${acLocalNo(acL)+1} «${esc(AC_COURSE[acL+1].title)}» открыт</p>` : '';
   box.innerHTML = acItems(acL).map(([label,done])=>`
     <div class="ac-check-row ${done?'done':''}">
       <span class="ac-check-ic"><svg class="i"><use href="#i-check2"/></svg></span>
@@ -1510,13 +1515,13 @@ function acRemindCheck(){
     const nx = acNextLesson();
     if(nx < 0) return;                                       // всё пройдено — не беспокоим
     if(acRemindBusy()){ setTimeout(acRemindCheck, 20000); return; }  // занят — отложить
-    const pct = acLessonPct(nx), title = esc(AC_COURSE[nx].title);
+    const pct = acLessonPct(nx), title = esc(AC_COURSE[nx].title), lno = acLocalNo(nx);
     let body, label;
     if(pct <= 0){
-      body = 'Начни урок ' + (nx+1) + ' «' + title + '» — тебя ждёт разбор темы, слайды, тест и практика.';
+      body = 'Начни урок ' + lno + ' «' + title + '» — тебя ждёт разбор темы, слайды, тест и практика.';
       label = 'Начать урок';
     } else {
-      body = 'Продолжи урок ' + (nx+1) + ' «' + title + '» — пройдено '
+      body = 'Продолжи урок ' + lno + ' «' + title + '» — пройдено '
            + '<b style="color:var(--accent)">' + pct + '%</b>, осталось ' + (100 - pct) + '%.';
       label = 'Продолжить урок';
     }
@@ -1548,8 +1553,8 @@ function acCertShare(i){
   const c = (typeof i === 'number') ? acS.certs[i] : acCertRec();
   if(!c){ toast('Сертификат ещё не выдан'); return; }
   const text = 'Официальный сертификат Академии OKO ' + c.no
-    + ' — урок ' + ((c.lesson||0)+1) + ' «' + (c.lessonTitle || AC_COURSE[c.lesson||0].title)
-    + '» пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
+    + ' — ' + acCertLabel(c)
+    + ' пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
   if(navigator.share){
     navigator.share({title:'Сертификат Академии OKO', text:text}).catch(()=>{});
   } else {
@@ -1766,7 +1771,9 @@ function acMakeCert(cert, cb){
     ctx.strokeStyle = 'rgba(154,255,0,.5)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W/2-260, 512); ctx.lineTo(W/2+260, 512); ctx.stroke();
     // курс / урок
-    const lessonNo = (typeof cert.lesson === 'number' ? cert.lesson : 0) + 1;
+    const gi = (typeof cert.lesson === 'number' ? cert.lesson : 0);
+    const lessonNo = cert.localNo || (acLocalNo ? acLocalNo(gi) : gi+1);
+    const courseTitle = cert.courseTitle || AC_COURSES[acCourseOf(gi)].title;
     const lessonTitle = '«' + (cert.lessonTitle || AC_COURSE[0].title).toUpperCase() + '»';
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 26px Montserrat, Arial';
@@ -1781,7 +1788,7 @@ function acMakeCert(cert, cb){
     ctx.fillText(lessonTitle, W/2, 646);
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 24px Montserrat, Arial';
-    ctx.fillText('курса «Нейросети 2026» Академии OKO', W/2, 696);
+    ctx.fillText('курса «' + courseTitle + '» Академии OKO', W/2, 696);
     // чип результата
     const chipT = 'Результат теста: ' + cert.score + '%';
     ctx.font = '700 26px Montserrat, Arial';
@@ -1885,21 +1892,27 @@ function acProfileCertsHtml(){
       <button class="btn sm ghost" onclick="showTab('academy')">${n?'Все':'В Академию'}</button>
     </div>`;
   if(!n){
-    return `<div class="card ac-pcerts empty" id="acProfCerts">${head}
+    return `<div class="card ac-pcerts empty" id="acProfCerts">${head}${acProfileBadgesHtml()}
       <p class="ac-pcerts-invite">Сдай тест урока на ${AC_PASS}%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».</p></div>`;
   }
   const show = acS.certs.slice(0, 3).map((c)=>{
     const gi = acS.certs.indexOf(c);
     return `<div class="ac-pcert-row">
       <span class="ico">${I('file')}</span>
-      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span>
+      <span class="meta"><span class="t">${esc(acCertLabel(c))}</span>
       <span class="s">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
       <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${gi})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
       <button class="btn sm ghost" onclick="acCertShow(${gi})">Показать</button>
     </div>`;
   }).join('');
   const more = n > 3 ? `<button class="ac-pcerts-more" onclick="showTab('academy')">и ещё ${n-3} ${acPlural(n-3,['сертификат','сертификата','сертификатов'])} — в Академии ${I('chev')}</button>` : '';
-  return `<div class="card ac-pcerts" id="acProfCerts">${head}<div class="ac-pcert-list">${show}</div>${more}</div>`;
+  return `<div class="card ac-pcerts" id="acProfCerts">${head}${acProfileBadgesHtml()}<div class="ac-pcert-list">${show}</div>${more}</div>`;
+}
+/* компактная полоса заслуженных бейджей для профиля */
+function acProfileBadgesHtml(){
+  const on = acBadgeDefs().filter(b=>b.on);
+  if(!on.length) return '';
+  return `<div class="ac-pbadges">${on.map(b=>`<span class="ac-pbadge" title="${b.d}">${I(b.ic)}<span>${b.t}</span></span>`).join('')}</div>`;
 }
 function acPlural(n, forms){
   const a = Math.abs(n) % 100, b = a % 10;

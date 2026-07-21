@@ -949,9 +949,11 @@ main>.screen{position:relative;z-index:1}
 
 .reg-body{flex:1;overflow-y:auto;padding:26px 20px calc(30px + env(safe-area-inset-bottom));max-width:520px;width:100%;margin:0 auto}
 .reg-step{display:none}
-.reg-step.active{display:block;animation:regIn .32s ease}
-@keyframes regIn{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.reg-step.active{animation:none}}
+.reg-step.active{display:block;animation:regIn .34s cubic-bezier(.22,1,.32,1)}
+.reg-step.active.reg-back{animation:regInBack .34s cubic-bezier(.22,1,.32,1)}
+@keyframes regIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes regInBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-step.active,.reg-step.active.reg-back{animation:none}}
 
 .reg-h{font-size:32px;margin-bottom:6px}
 .reg-sub{color:var(--dim);font-size:13.5px;line-height:1.5;margin-bottom:20px}
@@ -1268,6 +1270,36 @@ main>.screen{position:relative;z-index:1}
 .wal-stmt-btn:active{transform:scale(.95)}
 .wal-stmt-btn svg.i{width:14px;height:14px}
 
+/* статистика доходов/расходов за 30 дней (мини-график с ростом баров) */
+.wal-stat-card{padding:16px 16px 14px;animation:fade .3s ease both}
+.wal-stat-net{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.wal-stat-net-l>span{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.wal-stat-net-l b{display:block;font-family:var(--font-display);font-size:31px;line-height:1;letter-spacing:.02em;margin-top:6px}
+.wal-stat-net-l b.in{color:var(--accent)}
+.wal-stat-net-l b.out{color:var(--danger)}
+.wal-stat-net-chip{flex-shrink:0;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:99px}
+.wal-stat-net-chip.in{color:var(--accent);background:var(--lime-dim)}
+.wal-stat-net-chip.out{color:var(--danger);background:rgba(255,77,77,.12)}
+.wal-stat-rows{display:flex;flex-direction:column;gap:13px;margin-top:16px}
+.wal-stat-top{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;margin-bottom:7px}
+.wal-stat-k{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--text)}
+.wal-stat-k em{font-style:normal;font-size:10px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:1px 7px;margin-left:3px}
+.wal-stat-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.wal-stat-dot.in{background:var(--lime);box-shadow:0 0 6px rgba(154,255,0,.55)}
+.wal-stat-dot.out{background:var(--danger)}
+:root[data-theme="light"] .wal-stat-dot.in{box-shadow:none}
+.wal-stat-top b{font-weight:800}
+.wal-stat-top b.in{color:var(--accent)}
+.wal-stat-top b.out{color:var(--danger)}
+.wal-stat-track{height:8px;border-radius:4px;background:var(--raised);border:1px solid var(--border);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.22)}
+.wal-stat-track i{display:block;height:100%;border-radius:4px;transform-origin:left;animation:walBarIn .8s cubic-bezier(.3,1,.4,1) both}
+.wal-stat-track i.in{background:linear-gradient(90deg,color-mix(in srgb,var(--lime) 78%,#fff),var(--lime))}
+.wal-stat-track i.out{background:linear-gradient(90deg,color-mix(in srgb,var(--danger) 82%,#fff),var(--danger))}
+.wal-stat-part{display:flex;align-items:center;gap:9px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);font-size:12px}
+.wal-stat-part svg.i{width:16px;height:16px;color:var(--accent);flex-shrink:0}
+.wal-stat-part span{flex:1;color:var(--dim);font-weight:600}
+.wal-stat-part b{color:var(--accent);font-weight:800;white-space:nowrap}
+
 /* распределение расходов */
 .wal-cat-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--raised);border:1px solid var(--border);margin-bottom:13px;box-shadow:inset 0 1px 3px rgba(0,0,0,.25)}
 .wal-cat-bar i{display:block;height:100%;background:var(--lime);background:linear-gradient(180deg,color-mix(in srgb,var(--lime) 92%,#fff),var(--lime));transform-origin:left;animation:walBarIn .65s cubic-bezier(.3,1,.4,1) both}
@@ -1287,15 +1319,29 @@ main>.screen{position:relative;z-index:1}
 .wal-filters button{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:700;color:var(--dim);transition:all .18s}
 .wal-filters button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
 .wal-filters button:active{transform:scale(.96)}
-.wal-op{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+/* группировка истории по дням */
+.wal-day{animation:fade .3s ease both}
+.wal-day-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 2px 5px}
+.wal-day:first-child .wal-day-h{padding-top:6px}
+.wal-day-l{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+.wal-day-net{font-size:11.5px;font-weight:800;letter-spacing:.01em}
+.wal-day-net.in{color:var(--accent)}
+.wal-day-net.out{color:var(--danger)}
+
+.wal-op{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);animation:walOpIn .34s cubic-bezier(.25,1,.4,1) both}
 .wal-op:last-child{border-bottom:none}
-.wal-op-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+@keyframes walOpIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.wal-op-ic{position:relative;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:visible}
 .wal-op-ic.in{background:var(--lime-dim);color:var(--accent)}
 .wal-op-ic.out{background:rgba(255,77,77,.12);color:var(--danger)}
-.wal-op-ic svg{width:17px;height:17px}
+.wal-op-ic svg.i{width:18px;height:18px}
+.wal-op-dir{position:absolute;right:-4px;bottom:-4px;width:16px;height:16px;border-radius:50%;padding:3px;box-sizing:border-box;border:2px solid var(--surface)}
+.wal-op-ic.in .wal-op-dir{background:var(--lime);color:#000}
+.wal-op-ic.out .wal-op-dir{background:var(--danger);color:#fff}
 .wal-op-b{flex:1;min-width:0}
 .wal-op-why{font-size:13.5px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wal-op-t{font-size:11px;color:var(--dim);margin-top:2px}
+.wal-op-t{font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-op-cat{color:var(--text);opacity:.7;font-weight:700}
 .wal-op-sum{font-size:14.5px;font-weight:800;flex-shrink:0;white-space:nowrap}
 .wal-op-sum.in{color:var(--accent)}
 .wal-op-sum.out{color:var(--danger)}
@@ -1913,6 +1959,109 @@ main>.screen{position:relative;z-index:1}
 .ac-cert-close svg.i{width:18px;height:18px;transform:rotate(45deg)}
 .ac-cert-full-actions{display:flex;gap:10px}
 .ac-cert-full-actions .btn{width:auto}
+
+/* ===== КАТАЛОГ КУРСОВ ===== */
+.ac-catalog{display:flex;flex-direction:column;gap:12px}
+.ac-cc{padding:0;overflow:hidden;cursor:pointer;transition:border-color .18s,transform .14s,box-shadow .3s;animation:acRise .45s cubic-bezier(.3,1,.4,1) both}
+.ac-cc:hover{border-color:rgba(154,255,0,.4);box-shadow:0 0 26px rgba(154,255,0,.08)}
+.ac-cc:active{transform:scale(.99)}
+.ac-cc-cover{position:relative;aspect-ratio:16/7;overflow:hidden;background:#070a04}
+.ac-cover-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ac-cc.locked .ac-cc-cover .ac-cover-svg{filter:grayscale(.5) brightness(.7)}
+.ac-cc-veil{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(3px)}
+.ac-cc-veil svg.i{width:16px;height:16px}
+.ac-cc-body{padding:13px 15px 14px}
+.ac-cc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.ac-cc-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:4px 10px;text-transform:uppercase}
+.ac-cc-tag svg.i{width:12px;height:12px}
+.ac-cc-tag.free{color:#000;background:var(--lime)}
+.ac-cc-tag.open{color:var(--accent);background:var(--lime-dim)}
+.ac-cc-tag.lock{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+.ac-cc-meta{font-size:11px;color:var(--dim);font-weight:600;flex-shrink:0}
+.ac-cc-body h3{font-size:22px;line-height:1;margin-bottom:5px}
+.ac-cc-body p{font-size:12px;color:var(--dim);line-height:1.45;margin-bottom:12px}
+.ac-cc-foot{display:flex;align-items:center;gap:12px}
+.ac-cc-go{flex:1}
+.ac-cc-price{font-family:var(--font-display);font-size:21px;color:var(--accent);letter-spacing:.02em;flex-shrink:0}
+.ac-mini-ring.lg{width:44px;height:44px}
+.ac-mini-ring.lg .bg{stroke-width:3.4}
+.ac-mini-ring.lg .val{stroke-width:3.4}
+.ac-mini-ring.lg b{font-size:13px}
+.ac-mini-ring.lg b svg.i{width:15px;height:15px;color:var(--accent)}
+
+/* ===== СТРАНИЦА КУРСА ===== */
+.ac-course-hero{position:relative;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
+.ac-course-hero-cover{position:relative;aspect-ratio:16/6;background:#070a04}
+.ac-course-hero-cover .ac-cover-svg{position:absolute;inset:0;width:100%;height:100%}
+.ac-course-hero-cover::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,10,4,0) 30%,rgba(7,10,4,.92))}
+.ac-course-hero-cap{position:relative;margin-top:-46px;padding:0 16px 15px;z-index:1}
+.ac-course-hero-cap .chip{margin-bottom:7px}
+.ac-course-hero-cap h2{font-size:29px;line-height:1;margin-bottom:5px;color:#fff}
+.ac-course-hero-cap p{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.4}
+.ac-course-finale{display:flex;align-items:center;gap:14px;margin-top:12px;border-color:rgba(154,255,0,.4);background:radial-gradient(120% 160% at 90% 0,rgba(154,255,0,.14),transparent 60%)}
+:root[data-theme="light"] .ac-course-finale{background:radial-gradient(120% 160% at 90% 0,rgba(110,200,0,.14),transparent 60%)}
+.ac-course-finale .ico{width:48px;height:48px;border-radius:14px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 18px rgba(154,255,0,.3)}
+:root[data-theme="light"] .ac-course-finale .ico{box-shadow:none}
+.ac-course-finale .ico svg.i{width:24px;height:24px}
+.ac-course-finale h3{font-size:20px;margin-bottom:3px}
+.ac-course-finale p{font-size:12px;color:var(--dim);line-height:1.45}
+
+/* каскадное появление уроков */
+@keyframes acRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+.ac-lesson-row.ac-rise{animation:acRise .42s cubic-bezier(.3,1,.4,1) both}
+
+/* ===== БЕЙДЖИ ДОСТИЖЕНИЙ ===== */
+.ac-badges-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ac-badges-head .ico{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-badges-head .ico svg.i{width:20px;height:20px}
+.ac-badges-head .meta b{font-size:15px;display:block;line-height:1.25}
+.ac-badges-head .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px}
+.ac-badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ac-badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;padding:13px 7px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);animation:acRise .4s cubic-bezier(.3,1,.4,1) both;transition:border-color .2s,transform .15s}
+.ac-badge .ic{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--dim);display:flex;align-items:center;justify-content:center;transition:all .3s}
+.ac-badge .ic svg.i{width:20px;height:20px}
+.ac-badge .t{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--dim)}
+.ac-badge .d{font-size:9.5px;color:var(--dim);line-height:1.25;opacity:.75}
+.ac-badge.on{border-color:rgba(154,255,0,.4)}
+.ac-badge.on .ic{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:0 0 16px rgba(154,255,0,.32)}
+:root[data-theme="light"] .ac-badge.on .ic{box-shadow:0 0 12px rgba(110,200,0,.28)}
+.ac-badge.on .t{color:var(--text)}
+.ac-badge.on .d{color:var(--accent);opacity:1;font-weight:600}
+.ac-badge.new .ic{animation:acBadgePop .7s cubic-bezier(.3,1.4,.5,1)}
+.ac-badge.new::after{content:'NEW';position:absolute;font-size:8px;font-weight:800;letter-spacing:.08em;color:#000;background:var(--lime);border-radius:99px;padding:2px 6px;transform:translate(28px,-30px);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.ac-badge{position:relative}
+@keyframes acBadgePop{0%{transform:scale(.4) rotate(-18deg);opacity:0}55%{transform:scale(1.18) rotate(6deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+
+/* бейджи в профиле (компактная полоса) */
+.ac-pbadges{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 4px}
+.ac-pbadge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:5px 10px}
+.ac-pbadge svg.i{width:13px;height:13px}
+
+/* ===== ЭФФЕКТ ВЫДАЧИ СЕРТИФИКАТА ===== */
+.ac-burst{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(154,255,0,.16),rgba(0,0,0,.72) 62%);opacity:0;transition:opacity .25s ease}
+.ac-burst.go{opacity:1}
+.ac-burst-core{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.ac-burst-rays{position:absolute;inset:0}
+.ac-burst-rays i{position:absolute;left:50%;top:50%;width:3px;height:64px;margin-left:-1.5px;background:linear-gradient(var(--lime),transparent);border-radius:2px;transform-origin:50% 0;transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}
+.ac-burst.go .ac-burst-rays i{animation:acRayOut .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:var(--d)}
+@keyframes acRayOut{0%{transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}45%{opacity:1}100%{transform:rotate(var(--a)) translateY(30px) scaleY(1);opacity:0}}
+.ac-burst-seal{width:96px;height:96px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 44px rgba(154,255,0,.6);transform:scale(0) rotate(-40deg)}
+.ac-burst.go .ac-burst-seal{animation:acSealStamp .6s cubic-bezier(.3,1.5,.4,1) .12s forwards}
+.ac-burst-seal svg.i{width:48px;height:48px}
+@keyframes acSealStamp{0%{transform:scale(0) rotate(-40deg)}60%{transform:scale(1.16) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+.ac-burst-txt{font-family:var(--font-display);font-size:34px;letter-spacing:.06em;color:#fff;text-shadow:0 0 22px rgba(154,255,0,.45);transform:translateY(12px);opacity:0}
+.ac-burst.go .ac-burst-txt{animation:acBurstTxt .5s ease .32s forwards}
+@keyframes acBurstTxt{to{transform:translateY(0);opacity:1}}
+.ac-burst-conf{position:absolute;inset:0;overflow:hidden}
+.ac-burst-conf b{position:absolute;top:-16px;width:9px;height:14px;background:var(--lime);border-radius:2px;transform:scale(var(--sx)) rotate(var(--rot));opacity:0}
+.ac-burst-conf b:nth-child(even){background:#fff}
+.ac-burst-conf b:nth-child(3n){background:var(--accent);border-radius:50%}
+.ac-burst.go .ac-burst-conf b{animation:acConf 1s ease-in var(--dl) forwards}
+@keyframes acConf{0%{opacity:0;top:-16px}12%{opacity:1}100%{opacity:0;top:104%}}
+@media (prefers-reduced-motion:reduce){
+  .ac-burst-rays i,.ac-burst-conf b{animation:none!important}
+  .ac-burst.go .ac-burst-seal{animation:acSealStamp .3s ease forwards}
+}
 
 /* ===== module: ads ===== */
 /* ===== ADS: рекламный кабинет (префикс ads-) ===== */
@@ -2589,6 +2738,60 @@ main>.screen{position:relative;z-index:1}
 .vs-giftmsg-cap b{display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font-display);letter-spacing:1.5px;font-size:12px;color:#3fb6ff}
 .vs-giftmsg-cap span{display:block;font-size:12px;font-weight:600;color:var(--text);margin-top:1px}
 
+/* --- герой-действия: 4-в-ряд, иконка над подписью (стиль TON-кошелька) --- */
+.vs-ton-act{flex-direction:column;gap:5px;padding:11px 4px;line-height:1}
+.vs-ton-act svg{width:17px;height:17px}
+.vs-ton-act span{font-size:10.5px;font-weight:700;letter-spacing:.2px}
+
+/* --- отправка TON: поля ввода --- */
+.vs-sendton-bal{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;color:var(--dim);margin:2px 0 14px}
+.vs-sendton-bal b{color:var(--text);font-weight:800}
+.vs-field-lbl{display:block;text-align:left;font-size:11.5px;font-weight:700;color:var(--dim);margin:0 0 6px 2px;text-transform:uppercase;letter-spacing:.5px}
+.vs-addr-input{position:relative;display:flex}
+.vs-addr-input input{width:100%;font-family:var(--font-body);font-size:13.5px;font-weight:600;color:var(--text);
+  background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);padding:13px 46px 13px 14px;
+  outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.vs-addr-input input::placeholder{color:var(--dim);font-weight:500}
+.vs-addr-input input:focus{border-color:#3fb6ff;box-shadow:0 0 0 3px rgba(0,152,234,.16)}
+.vs-addr-paste{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;background:rgba(0,152,234,.12);border:1px solid rgba(0,152,234,.3);
+  color:#3fb6ff;transition:background .18s,transform .12s}
+.vs-addr-paste:hover{background:rgba(0,152,234,.22)}
+.vs-addr-paste:active{transform:translateY(-50%) scale(.9)}
+.vs-addr-paste svg{width:15px;height:15px}
+.vs-addr-err{display:none;text-align:left;font-size:11.5px;font-weight:600;color:var(--danger);margin:7px 2px 0;line-height:1.4;animation:vs-fadein .25s ease}
+.vs-btn-off{opacity:.5;box-shadow:none;filter:grayscale(.25)}
+
+/* --- приём TON: бренд-код адреса --- */
+.vs-qr-wrap{display:flex;justify-content:center;margin:4px 0 16px}
+.vs-qr{position:relative;width:200px;height:200px;padding:16px;border-radius:22px;
+  background:linear-gradient(158deg,#f4fbff,#e7f5ff);border:1px solid rgba(0,152,234,.28);
+  box-shadow:0 14px 34px rgba(0,60,110,.22),inset 0 1px 0 rgba(255,255,255,.8);animation:vs-stk-in .45s cubic-bezier(.34,1.56,.44,1)}
+.vs-qr-code{width:100%;height:100%;color:#06263f}
+.vs-qr-svg{width:100%;height:100%;display:block}
+.vs-qr-gem{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;background:#fff;border-radius:14px;
+  box-shadow:0 4px 12px rgba(0,60,110,.28),0 0 0 4px #f4fbff;animation:vs-float 3.4s ease-in-out infinite}
+.vs-qr-gem .vs-stk-art{width:40px!important;height:40px!important}
+.vs-recv-title{font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.vs-recv-addr{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;font-weight:600;color:var(--text);
+  word-break:break-all;line-height:1.5;padding:12px 14px;border-radius:var(--r-md);background:var(--surface);
+  border:1px solid var(--border);margin-bottom:14px}
+.vs-recv-acts{display:flex;gap:10px}
+
+/* --- блеск NFT: диагональный проблеск на коллекционных подарках --- */
+.vs-nft-shine{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:1}
+.vs-nft-shine::before{content:"";position:absolute;top:-45%;left:-70%;width:45%;height:190%;transform:rotate(18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),rgba(190,238,255,.5),transparent);
+  animation:vs-shine 3.4s ease-in-out infinite}
+.vs-gcard.vs-nft:nth-child(2n) .vs-nft-shine::before{animation-delay:1.2s}
+.vs-gcard.vs-nft:nth-child(3n) .vs-nft-shine::before{animation-delay:2.2s}
+.vs-buy-art.vs-nft .vs-nft-shine::before{animation-duration:2.8s}
+@keyframes vs-shine{0%{left:-70%}55%{left:135%}100%{left:135%}}
+.vs-gcard.vs-nft{border-color:rgba(255,193,30,.34)}
+.vs-gcard.vs-nft:hover{border-color:#ffc21e;box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(255,193,30,.34)}
+:root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(255,193,30,.28)}
+
 /* ===== module: i18n-settings ===== */
 /* ===== I18N-SETTINGS: язык интерфейса + авто-перевод чатов (префикс st-) ===== */
 
@@ -3180,6 +3383,63 @@ main>.screen{position:relative;z-index:1}
 .mp-gal-t:active{transform:scale(.93)}
 :root[data-theme="light"] .mp-gal-t.on{box-shadow:0 2px 8px rgba(83,168,0,.22)}
 
+/* ================= КАСКАД КАРТОЧЕК СПИСКА (без моргания при поиске) ================= */
+#mkResults.mp-cascade .lst-card{animation:mpCardIn .34s cubic-bezier(.2,.8,.25,1) both}
+@keyframes mpCardIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+#mkResults.mp-cascade .lst-card:nth-child(1){animation-delay:.02s}
+#mkResults.mp-cascade .lst-card:nth-child(2){animation-delay:.06s}
+#mkResults.mp-cascade .lst-card:nth-child(3){animation-delay:.10s}
+#mkResults.mp-cascade .lst-card:nth-child(4){animation-delay:.14s}
+#mkResults.mp-cascade .lst-card:nth-child(5){animation-delay:.18s}
+#mkResults.mp-cascade .lst-card:nth-child(6){animation-delay:.22s}
+#mkResults.mp-cascade .lst-card:nth-child(7){animation-delay:.26s}
+#mkResults.mp-cascade .lst-card:nth-child(8){animation-delay:.30s}
+#mkResults.mp-cascade .lst-card:nth-child(9){animation-delay:.34s}
+#mkResults.mp-cascade .lst-card:nth-child(n+10){animation-delay:.38s}
+/* сердечко избранного — микро-интеракция */
+.lst-card .fav{transition:transform .18s cubic-bezier(.3,1.5,.5,1),color .2s}
+.lst-card .fav:active{transform:scale(.82)}
+.lst-card .fav.on svg.i{fill:var(--lime);color:var(--lime);animation:mpHeart .42s cubic-bezier(.3,1.5,.5,1)}
+@keyframes mpHeart{0%{transform:scale(.6)}55%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* ================= ФИЛЬТР ГОРОДА ================= */
+.mp-city-row{flex-wrap:wrap;gap:7px}
+.mp-city-row .f-chip{display:inline-flex;align-items:center;gap:5px}
+.mp-city-row .f-chip svg.i{width:12px;height:12px}
+
+/* ================= СТАТУСЫ СДЕЛКИ (новый / спор / отмена) ================= */
+.mp-st.new{background:rgba(154,255,0,.14);color:var(--accent)}
+.mp-st.dispute{background:rgba(255,77,77,.14);color:var(--danger)}
+.mp-st.cancel{background:var(--raised);color:var(--dim)}
+:root[data-theme="light"] .mp-st.dispute{background:rgba(214,48,48,.12);color:#c0392b}
+.mp-dir.in{color:var(--accent);border-color:rgba(154,255,0,.3)}
+.mp-dir.out{color:var(--text)}
+.mp-h-badge{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.03em;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;padding:3px 9px;text-transform:none}
+.mp-h-badge.hold{margin-left:6px;display:inline-flex;align-items:center;gap:4px;color:#ffb400;background:rgba(255,180,0,.12);border-color:rgba(255,180,0,.3)}
+.mp-h-badge.hold svg.i{width:10px;height:10px}
+:root[data-theme="light"] .mp-h-badge.hold{color:#a86e00;background:rgba(200,130,0,.1)}
+/* карточка сделки в особых состояниях */
+.mp-deal.dispute{border-color:rgba(255,77,77,.4);background:radial-gradient(120% 130% at 100% 0%,rgba(255,77,77,.06),transparent 55%),var(--surface)}
+.mp-deal.cancelled{opacity:.72}
+.mp-deal.cancelled .mp-deal-sum{text-decoration:line-through;color:var(--dim)}
+/* плоские уведомления трекера (спор / отмена) */
+.mp-esc-flat{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;line-height:1.35;border-radius:var(--r-sm);padding:9px 11px;margin-top:9px}
+.mp-esc-flat svg.i{width:13px;height:13px;flex-shrink:0}
+.mp-esc-flat.cancel{background:var(--raised);color:var(--dim);border:1px solid var(--border)}
+.mp-esc-flat.dispute{background:rgba(255,77,77,.09);color:var(--danger);border:1px solid rgba(255,77,77,.28)}
+.mp-esc-flat.dispute svg.i{fill:currentColor}
+:root[data-theme="light"] .mp-esc-flat.dispute{background:rgba(214,48,48,.08)}
+/* трекер в состоянии спора — заливка красная */
+.mp-esc-track.dispute .mp-esc-fill{background:linear-gradient(90deg,var(--danger),rgba(255,77,77,.6));box-shadow:0 0 8px rgba(255,77,77,.35)}
+.mp-esc-track.dispute .mp-esc-node.cur .mp-esc-dot{border-color:var(--danger);animation:none;box-shadow:0 0 0 3px rgba(255,77,77,.15)}
+.mp-esc-track.dispute .mp-esc-node.cur small{color:var(--danger)}
+/* действия сделки — несколько кнопок в ряд, вариант «warn» */
+.mp-deal-act{flex-wrap:wrap}
+.mp-deal-act button{min-width:0}
+.mp-deal-act button.warn{background:rgba(255,77,77,.1);color:var(--danger);border-color:rgba(255,77,77,.32)}
+.mp-deal-act button.warn:hover{border-color:var(--danger)}
+:root[data-theme="light"] .mp-deal-act button.warn{background:rgba(214,48,48,.09);color:#c0392b}
+
 /* ===== module: feed-algo ===== */
 /* feed-algo: алгоритмическая лента рекомендаций */
 
@@ -3244,6 +3504,9 @@ main>.screen{position:relative;z-index:1}
 #feedList .post .head .name .chip{font-size:9px;line-height:1;padding:3.5px 8px;letter-spacing:.05em;
   vertical-align:middle;border:1px solid rgba(154,255,0,.28)}
 :root[data-theme="light"] #feedList .post .head .name .chip{border-color:rgba(83,168,0,.3)}
+/* «Канал» — информ-метка, нейтральнее лаймовых «В тренде»/«Реклама» (не перетягивает внимание) */
+#feedList .post .head .name .chip.fa-chan{color:var(--dim);background:var(--surface);
+  border-color:var(--border);letter-spacing:.07em}
 
 /* медиа-плейсхолдер: красивый «видео-кадр» с glow-кнопкой и бейджем длительности */
 #feedList .post .media{position:relative;overflow:hidden;gap:0;letter-spacing:0;
@@ -3312,6 +3575,22 @@ main>.screen{position:relative;z-index:1}
 .fa-sentinel{height:2px}
 .fa-end{padding:18px;text-align:center;font-size:11.5px;color:var(--dim)}
 
+/* ======================= ПУСТОЕ СОСТОЯНИЕ ЛЕНТЫ ======================= */
+.fa-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;
+  padding:56px 28px 72px;animation:fa-fade .4s ease}
+.fa-empty-art{width:118px;height:118px;color:var(--dim);margin-bottom:4px}
+.fa-empty-wave{transform-origin:86px 37px;animation:fa-emit 2.4s ease-in-out infinite}
+@keyframes fa-emit{0%,100%{opacity:.45}50%{opacity:1}}
+.fa-empty b{font-family:var(--font-display);letter-spacing:.05em;text-transform:uppercase;
+  font-size:22px;line-height:1.05;color:var(--text)}
+.fa-empty span{font-size:13px;line-height:1.55;color:var(--dim);max-width:290px}
+.fa-empty-cta{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:11px 22px;
+  font-size:13.5px;font-weight:700;color:#000;background:var(--lime);border:1px solid var(--lime);
+  border-radius:99px;box-shadow:var(--glow);transition:transform .12s,box-shadow .2s}
+.fa-empty-cta svg.i{width:16px;height:16px}
+.fa-empty-cta:hover{box-shadow:0 8px 26px rgba(154,255,0,.5)}
+.fa-empty-cta:active{transform:scale(.95)}
+
 /* ======================= КОММЕНТАРИИ-ТРЕДЫ ======================= */
 #sheet-comments h3{display:flex;align-items:center;gap:9px}
 .fac-count{font-family:var(--font-body);font-size:12px;font-weight:700;line-height:1;color:var(--accent);
@@ -3377,6 +3656,16 @@ main>.screen{position:relative;z-index:1}
   transition:max-height .36s cubic-bezier(.22,.9,.36,1),opacity .3s,margin-top .3s}
 .fac-replies.open{max-height:2600px;opacity:1;margin-top:8px}
 
+/* «показать ещё N комментариев» */
+.fac-more{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:8px;padding:12px;
+  font-size:12.5px;font-weight:700;letter-spacing:.01em;color:var(--accent);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  transition:background .16s,border-color .16s,transform .12s}
+.fac-more svg.i{width:13px;height:13px}
+.fac-more:hover{background:var(--raised);border-color:rgba(154,255,0,.35)}
+.fac-more:active{transform:scale(.99)}
+:root[data-theme="light"] .fac-more:hover{border-color:rgba(83,168,0,.35)}
+
 /* новый коммент — подсветка */
 .fac-new{animation:fac-flash 1.4s ease}
 @keyframes fac-flash{0%{background:var(--lime-dim)}100%{background:transparent}}
@@ -3403,7 +3692,7 @@ main>.screen{position:relative;z-index:1}
 .fac-rc-x:hover{color:var(--text);background:var(--surface)}
 
 @media(prefers-reduced-motion:reduce){
-  .fa-dot,.fa-refresh:hover svg.i,#feedList .post .acts button.liked svg.i{animation:none!important}
+  .fa-dot,.fa-refresh:hover svg.i,#feedList .post .acts button.liked svg.i,.fa-empty-wave{animation:none!important}
   .fa-explain{transition:none}
   .fac-item,.fac-new,.fac-like.fac-burst svg.i,.fac-reply-chip{animation:none!important}
   .fac-replies{transition:none}
@@ -5665,7 +5954,10 @@ img,video,canvas,svg{max-width:100%}
       <span class="switch" id="walAutoSw"><i></i></span>
     </div>
 
-    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Расходы по категориям</h2>
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Статистика · 30 дней</h2>
+    <div class="wal-stats" id="walStats"></div>
+
+    <h2 class="section-h" style="margin:24px 0 12px;font-size:21px">Расходы по категориям</h2>
     <div class="wal-cat-bar" id="walCatBar"></div>
     <div class="wal-cats" id="walCats"></div>
 
@@ -5897,7 +6189,7 @@ img,video,canvas,svg{max-width:100%}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.63</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.64</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -6243,6 +6535,18 @@ img,video,canvas,svg{max-width:100%}
 <div class="sheet" id="sheet-vs-send">
   <h3>Подарить другу</h3>
   <div id="vsSendView"></div>
+</div>
+
+<!-- TON: отправка TON на адрес -->
+<div class="sheet" id="sheet-vs-ton-sendton">
+  <h3>Отправить TON</h3>
+  <div id="vsSendTonView" class="vs-sheet-body"></div>
+</div>
+
+<!-- TON: приём (адрес кошелька + код) -->
+<div class="sheet" id="sheet-vs-ton-recv">
+  <h3>Получить TON</h3>
+  <div id="vsRecvView" class="vs-sheet-body"></div>
 </div>
 
 <!-- TON: история операций -->
@@ -8900,11 +9204,12 @@ function regBack(){
   if(REG.step === 2) regCodeFocus(0);
 }
 function regShowStep(n){
+  const back = (typeof REG.step === 'number' && n < REG.step); // направление перехода
   REG.step = n;
   [1,2,3].forEach(i=>{
     const el = document.getElementById('regStep'+i);
-    el.classList.remove('active');
-    if(i === n){ void el.offsetWidth; el.classList.add('active'); } // рестарт анимации
+    el.classList.remove('active','reg-back');
+    if(i === n){ void el.offsetWidth; if(back) el.classList.add('reg-back'); el.classList.add('active'); } // рестарт + направление
   });
   document.getElementById('regBar').style.width = (n/3*100).toFixed(1) + '%';
   document.getElementById('regStepNum').textContent = 'Шаг ' + n + ' из 3';
@@ -9316,6 +9621,13 @@ doLogin = function(method){
     s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
     defs.appendChild(s);
   }
+  /* кубик (категория «Игры») */
+  if(!document.getElementById('i-dice')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-dice'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<rect x="20" y="20" width="60" height="60" rx="14" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="37" cy="37" r="5.5" fill="currentColor"/><circle cx="63" cy="37" r="5.5" fill="currentColor"/><circle cx="50" cy="50" r="5.5" fill="currentColor"/><circle cx="37" cy="63" r="5.5" fill="currentColor"/><circle cx="63" cy="63" r="5.5" fill="currentColor"/>';
+    defs.appendChild(s);
+  }
 })();
 
 /* ---------- демо-наполнение леджера (один раз, реалистичные операции) ---------- */
@@ -9401,15 +9713,35 @@ function walDMY(ts){ const d = new Date(ts); return String(d.getDate()).padStart
 function walDMYT(ts){ const d = new Date(ts); return walDMY(ts)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function walCopy(txt, msg){ try{ navigator.clipboard.writeText(txt); }catch(e){} toast(msg||'Скопировано'); }
 
-/* ---------- категории расходов ---------- */
+/* ---------- категории операций (расход и доход) ---------- */
 function walCat(why){
   if(/продвижен/i.test(why)) return 'Продвижение';
   if(/бирж/i.test(why)) return 'Биржа';
-  if(/игр|рулетк|ставк|дорог/i.test(why)) return 'Игры';
-  if(/тариф|автопродлен/i.test(why)) return 'Тарифы';
+  if(/игр|рулетк|ставк|дорог|кости/i.test(why)) return 'Игры';
+  if(/тариф|автопродлен|подписк/i.test(why)) return 'Тарифы';
   if(/вывод/i.test(why)) return 'Вывод средств';
+  if(/пополнен/i.test(why)) return 'Пополнение';
+  if(/партнёр|партнер|реф(ерал|\b)/i.test(why)) return 'Партнёрка';
+  if(/стикер/i.test(why)) return 'Стикеры';
   if(/перевод/i.test(why)) return 'Переводы';
   return 'Прочее';
+}
+/* иконка категории для строки истории */
+const WAL_CAT_IC = {
+  'Продвижение':'rocket', 'Биржа':'briefcase', 'Игры':'dice', 'Тарифы':'crown',
+  'Вывод средств':'card', 'Пополнение':'plus', 'Партнёрка':'users',
+  'Стикеры':'sticker', 'Переводы':'send', 'Прочее':'money'
+};
+function walCatIc(why){ return WAL_CAT_IC[walCat(why)] || 'money'; }
+/* заголовок дня для группировки истории */
+const WAL_MONTHS = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+function walDayKey(at){ return new Date(at).toDateString(); }
+function walDayLabel(at){
+  const d = new Date(at), n = new Date();
+  if(d.toDateString() === n.toDateString()) return 'Сегодня';
+  const y = new Date(n - 864e5);
+  if(d.toDateString() === y.toDateString()) return 'Вчера';
+  return d.getDate() + ' ' + WAL_MONTHS[d.getMonth()] + (d.getFullYear() !== n.getFullYear() ? ' ' + d.getFullYear() : '');
 }
 function walWhen(at){
   const d = new Date(at), n = new Date();
@@ -9446,12 +9778,63 @@ function renderWallet(){
     hold.style.display = WALLET.hold > 0 ? 'inline-flex' : 'none';
     hold.querySelector('span').innerHTML = 'В холде (эскроу): <b>' + fmtMoney(WALLET.hold) + '</b>';
   }
+  walRenderStats();
   walRenderCats();
   walRenderLedger();
   walUpdateChips();
   walRenderAutopay();
   walRenderSec();
-  walDrawChart();
+  walDrawChart(true);
+}
+
+/* ---------- СТАТИСТИКА ДОХОДОВ/РАСХОДОВ за 30 дней ---------- */
+function walCountUp(el, to, dur){
+  if(!el) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce){ el.textContent = fmtMoney(to); return; }
+  const from = 0, t0 = performance.now(), D = dur || 700;
+  (function step(t){
+    const k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmtMoney(Math.round(from + (to - from) * e));
+    if(k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function walRenderStats(){
+  const box = document.getElementById('walStats');
+  if(!box) return;
+  const since = Date.now() - 30 * 864e5;
+  let inc = 0, exp = 0, part = 0, incN = 0, expN = 0;
+  WALLET.ledger.forEach(o=>{
+    if(o.at < since) return;
+    if(o.t === '+'){ inc += o.sum; incN++; if(walCat(o.why) === 'Партнёрка') part += o.sum; }
+    else { exp += o.sum; expN++; }
+  });
+  const net = inc - exp, mx = Math.max(inc, exp, 1);
+  const wIn = (inc / mx * 100).toFixed(1), wOut = (exp / mx * 100).toFixed(1);
+  const netUp = net >= 0;
+  box.innerHTML = `
+    <div class="card wal-stat-card">
+      <div class="wal-stat-net">
+        <div class="wal-stat-net-l"><span>Чистыми за 30 дней</span><b class="${netUp?'in':'out'}" id="walStatNet">0 ₽</b></div>
+        <span class="wal-stat-net-chip ${netUp?'in':'out'}">${netUp?'прибыль':'минус'}</span>
+      </div>
+      <div class="wal-stat-rows">
+        <div class="wal-stat-row">
+          <div class="wal-stat-top"><span class="wal-stat-k"><i class="wal-stat-dot in"></i>Доходы<em>${incN}</em></span><b class="in" id="walStatIn">0 ₽</b></div>
+          <div class="wal-stat-track"><i class="in" style="width:${wIn}%"></i></div>
+        </div>
+        <div class="wal-stat-row">
+          <div class="wal-stat-top"><span class="wal-stat-k"><i class="wal-stat-dot out"></i>Расходы<em>${expN}</em></span><b class="out" id="walStatOut">0 ₽</b></div>
+          <div class="wal-stat-track"><i class="out" style="width:${wOut}%"></i></div>
+        </div>
+      </div>
+      ${part > 0 ? `<div class="wal-stat-part">${I('users')}<span>Партнёрские начисления</span><b>+ ${fmtMoney(part)}</b></div>` : ''}
+    </div>`;
+  requestAnimationFrame(()=>{
+    walCountUp(document.getElementById('walStatNet'), net, 800);
+    walCountUp(document.getElementById('walStatIn'), inc, 800);
+    walCountUp(document.getElementById('walStatOut'), exp, 800);
+  });
 }
 
 /* ---------- ГРАФИК БАЛАНСА за 30 дней (восстановление по леджеру) ---------- */
@@ -9467,56 +9850,79 @@ function walSeries(days){
   }
   return pts;
 }
-function walDrawChart(){
+let walChartRAF = 0;
+function walDrawChart(animate){
   const cv = document.getElementById('walChart');
   if(!cv) return;
+  if(walChartRAF){ cancelAnimationFrame(walChartRAF); walChartRAF = 0; }
   requestAnimationFrame(()=>{
     const W = cv.clientWidth, H = 66;
     if(!W) return;
     const dpr = window.devicePixelRatio || 1;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const pts = walSeries(30), n = pts.length;
     const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
     const span = (max - min) || Math.max(Math.abs(max), 100) * 0.25;
     const lo = min - span * 0.12, hi = max + span * 0.12;
     const X = i => 3 + i / (n - 1) * (W - 6);
-    const Y = v => H - 5 - (v - lo) / (hi - lo) * (H - 12);
+    const base = H - 5;                         // ось для «роста»
+    const Yfull = v => base - (v - lo) / (hi - lo) * (H - 12);
     const light = document.documentElement.dataset.theme === 'light';
     const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#9AFF00';
-    /* сетка */
-    ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
-    ctx.lineWidth = 1; ctx.setLineDash([3,5]);
-    [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
-    ctx.setLineDash([]);
-    /* плавная линия по средним точкам */
-    const path = ()=>{
-      ctx.beginPath();
-      ctx.moveTo(X(0), Y(pts[0]));
-      for(let i = 1; i < n - 1; i++)
-        ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
-      ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
-    };
-    /* градиент-заливка */
-    path();
-    ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, light ? 'rgba(83,168,0,.28)' : 'rgba(154,255,0,.30)');
-    g.addColorStop(1, 'rgba(154,255,0,0)');
-    ctx.fillStyle = g; ctx.fill();
-    /* линия */
-    path();
-    ctx.strokeStyle = accent; ctx.lineWidth = 2;
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-    /* точка «сейчас» */
-    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
-    ctx.fillStyle = accent; ctx.fill();
-    ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
-    ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+    function frame(prog){
+      // растём от оси вверх: Y интерполируется от base к финальному
+      const Y = v => base + (Yfull(v) - base) * prog;
+      ctx.clearRect(0, 0, W, H);
+      /* сетка */
+      ctx.strokeStyle = light ? 'rgba(0,0,0,.09)' : 'rgba(255,255,255,.08)';
+      ctx.lineWidth = 1; ctx.setLineDash([3,5]);
+      [0.22, 0.78].forEach(k=>{ ctx.beginPath(); ctx.moveTo(2, H*k); ctx.lineTo(W-2, H*k); ctx.stroke(); });
+      ctx.setLineDash([]);
+      const path = ()=>{
+        ctx.beginPath();
+        ctx.moveTo(X(0), Y(pts[0]));
+        for(let i = 1; i < n - 1; i++)
+          ctx.quadraticCurveTo(X(i), Y(pts[i]), (X(i)+X(i+1))/2, (Y(pts[i])+Y(pts[i+1]))/2);
+        ctx.quadraticCurveTo(X(n-1), Y(pts[n-1]), X(n-1), Y(pts[n-1]));
+      };
+      /* градиент-заливка */
+      path();
+      ctx.lineTo(X(n-1), H); ctx.lineTo(X(0), H); ctx.closePath();
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, light ? `rgba(83,168,0,${.28*prog})` : `rgba(154,255,0,${.30*prog})`);
+      g.addColorStop(1, 'rgba(154,255,0,0)');
+      ctx.fillStyle = g; ctx.fill();
+      /* линия */
+      path();
+      ctx.strokeStyle = accent; ctx.lineWidth = 2;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if(!light){ ctx.shadowColor = 'rgba(154,255,0,.55)'; ctx.shadowBlur = 7; }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      /* точка «сейчас» */
+      ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 3.2, 0, Math.PI*2);
+      ctx.fillStyle = accent; ctx.fill();
+      if(prog > 0.98){
+        ctx.beginPath(); ctx.arc(X(n-1), Y(pts[n-1]), 5.6, 0, Math.PI*2);
+        ctx.strokeStyle = light ? 'rgba(83,168,0,.35)' : 'rgba(154,255,0,.35)'; ctx.lineWidth = 1.4; ctx.stroke();
+      }
+    }
+
+    if(animate && !reduce){
+      const t0 = performance.now(), D = 780;
+      (function run(t){
+        const k = Math.min(1, (t - t0) / D), e = 1 - Math.pow(1 - k, 3);
+        frame(e);
+        if(k < 1) walChartRAF = requestAnimationFrame(run); else walChartRAF = 0;
+      })(t0);
+    } else {
+      frame(1);
+    }
+
     /* чип динамики */
     const dEl = document.getElementById('walDelta');
     if(dEl){
@@ -9549,25 +9955,53 @@ function walRenderCats(){
     return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="opacity:${(1 - i*0.16).toFixed(2)}"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
   }).join('');
 }
+function walOpTime(at){
+  const d = new Date(at);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
 function walRenderLedger(){
   const box = document.getElementById('walLedger');
   if(!box) return;
-  const list = WALLET.ledger.filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'));
+  const list = WALLET.ledger
+    .filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'))
+    .slice().sort((a,b)=>b.at-a.at)
+    .slice(0, 80);
   if(!list.length){
     box.innerHTML = `<div class="wal-empty">${I('file')}${walFilter==='in' ? 'Пополнений пока нет' : walFilter==='out' ? 'Списаний пока нет' : 'Операций пока нет'}</div>`;
     return;
   }
-  const arrIn  = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M72 28 30 70"/><path d="M30 38v32h32"/></svg>';
-  const arrOut = '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M28 72 70 30"/><path d="M38 30h32v32"/></svg>';
-  box.innerHTML = list.slice(0, 60).map((op,i)=>`
-    <div class="wal-op" style="animation-delay:${Math.min(i,10)*45}ms">
-      <div class="wal-op-ic ${op.t==='+'?'in':'out'}">${op.t==='+'?arrIn:arrOut}</div>
-      <div class="wal-op-b">
-        <div class="wal-op-why">${esc(op.why)}</div>
-        <div class="wal-op-t">${walWhen(op.at)}</div>
-      </div>
-      <div class="wal-op-sum ${op.t==='+'?'in':'out'}">${op.t==='+'?'+':'−'} ${fmtMoney(op.sum)}</div>
-    </div>`).join('');
+  /* корневой значок направления поверх иконки категории */
+  const badgeIn  = '<svg class="wal-op-dir" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M70 34 34 70"/><path d="M36 40v30h30"/></svg>';
+  const badgeOut = '<svg class="wal-op-dir" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><path d="M32 68 68 32"/><path d="M40 32h28v28"/></svg>';
+  /* группировка по дням */
+  const groups = [];
+  let cur = null;
+  list.forEach(op=>{
+    const k = walDayKey(op.at);
+    if(!cur || cur.k !== k){ cur = {k, at: op.at, ops: [], net: 0}; groups.push(cur); }
+    cur.ops.push(op);
+    cur.net += op.t==='+' ? op.sum : -op.sum;
+  });
+  let idx = 0;
+  box.innerHTML = groups.map(g=>{
+    const netUp = g.net >= 0;
+    const rows = g.ops.map(op=>{
+      const d = idx++; const dir = op.t==='+';
+      return `
+      <div class="wal-op" style="animation-delay:${Math.min(d,12)*42}ms">
+        <div class="wal-op-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg>${dir?badgeIn:badgeOut}</div>
+        <div class="wal-op-b">
+          <div class="wal-op-why">${esc(op.why)}</div>
+          <div class="wal-op-t"><span class="wal-op-cat">${walCat(op.why)}</span> · ${walOpTime(op.at)}</div>
+        </div>
+        <div class="wal-op-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="wal-day">
+      <div class="wal-day-h"><span class="wal-day-l">${walDayLabel(g.at)}</span><span class="wal-day-net ${netUp?'in':'out'}">${netUp?'+':'−'} ${fmtMoney(Math.abs(g.net))}</span></div>
+      ${rows}
+    </div>`;
+  }).join('');
 }
 function walSetFilter(f){
   walFilter = f;
@@ -11328,6 +11762,293 @@ const AC_COURSE = [
 },
 ];
 
+/* ================= КУРС 2 (ПРЕМИУМ): «КОНТЕНТ И REELS» =================
+   3 полноценных урока со слайдами, тестом, практикой и мини-игрой.
+   Гейт: подписка PRO+ ИЛИ разовая покупка. */
+const AC_COURSE_REELS = [
+
+/* ---------- УРОК: Вирусный сценарий за 15 минут ---------- */
+{
+  title:'Вирусный сценарий за 15 минут',
+  sub:'хук · удержание · триггеры репостов',
+  dur:'', videoUrl:'',
+  c1:'ВИРУСНЫЙ', c2:'СЦЕНАРИЙ',
+  slides:[
+  {t:'Анатомия вирусного ролика', pts:[
+    'Сначала <b>структура</b>, потом съёмка — не наоборот',
+    'Четыре блока: <b>хук → удержание → развязка → CTA</b>',
+    'Один ролик — одна мысль, всё лишнее режь',
+    'Длина под смысл: чаще 7–40 секунд'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="14" width="18" height="42" rx="4" fill="currentColor" fill-opacity=".18"/><rect x="34" y="14" width="18" height="42" rx="4"/><rect x="58" y="14" width="18" height="42" rx="4"/><rect x="82" y="14" width="18" height="42" rx="4"/><path d="M19 24v22M43 24v22M67 24v22M91 24v22" opacity=".6"/><path d="M104 20v30" opacity=".5"/><path d="M14 62h92" opacity=".4"/></svg>'},
+  {t:'Хук: первые 2 секунды', pts:[
+    'В первые 2 секунды — <b>обещание выгоды</b> или интрига',
+    'Хук-текст на экране <b>плюс</b> голос — работают вместе',
+    'Заходит: вопрос, цифра, конфликт, «не делай это»',
+    'Никаких длинных заставок — сразу к сути'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 46 20 12l30 20-14 4 10 20z" fill="currentColor" stroke="none" opacity=".9"/><path d="M64 20h40M64 32h32M64 44h40" opacity=".75"/><circle cx="58" cy="20" r="2" fill="currentColor" stroke="none"/><circle cx="58" cy="32" r="2" fill="currentColor" stroke="none"/><circle cx="58" cy="44" r="2" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Удержание: петли внимания', pts:[
+    'Микро-обещания: «дальше покажу, как…» — тянут дальше',
+    'Смена плана каждые <b>2–3 секунды</b> — глазу не скучно',
+    'Показывай визуальный прогресс к развязке',
+    'Убирай паузы и «воздух» — плотность держит досмотр'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 40c14-30 30 30 44 0s30-30 44 0" opacity=".85"/><circle cx="12" cy="40" r="3" fill="currentColor" stroke="none"/><circle cx="34" cy="28" r="3" fill="currentColor" stroke="none"/><circle cx="56" cy="40" r="3" fill="currentColor" stroke="none"/><circle cx="78" cy="52" r="3" fill="currentColor" stroke="none"/><circle cx="100" cy="40" r="3" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Сторителлинг за 20 секунд', pts:[
+    'Схемы, что цепляют: <b>было → стало</b>, ошибка → решение',
+    'Конфликт в начале держит до самой развязки',
+    'Эмоция важнее фактов — сначала прочувствовать',
+    'Герой = зритель: он должен узнать себя'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="18" width="38" height="34" rx="6"/><path d="M18 44l10-9 7 6 5-5" opacity=".6"/><rect x="72" y="18" width="38" height="34" rx="6" fill="currentColor" fill-opacity=".15"/><path d="M80 44l9-12 7 8 6-6"/><path d="M52 35h16M62 30l6 5-6 5"/></svg>'},
+  {t:'Триггеры репостов', pts:[
+    'Люди делятся ради <b>пользы, статуса, эмоции, узнавания</b>',
+    '«Сохрани, чтобы не потерять» — двигает в сохранения',
+    'Спорное, но честное мнение = комментарии и споры',
+    'Дай зрителю повод сказать: «это про меня»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="26" cy="35" r="9"/><circle cx="90" cy="18" r="8"/><circle cx="90" cy="52" r="8"/><path d="M34 31l48-10M34 39l48 8"/><path d="M22 35l3 3 6-7" opacity=".7"/></svg>'},
+  {t:'CTA без впаривания', pts:[
+    'Один призыв на ролик — не распыляй внимание',
+    'Мягко: «подпишись, если было полезно»',
+    'Вопрос в конце — запускает комментарии',
+    'Закреплённый комментарий продолжает воронку'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="24" y="24" width="72" height="26" rx="13" fill="currentColor" fill-opacity=".16"/><path d="M40 37h30" /><path d="M66 31l7 6-7 6"/><path d="M60 12v6M84 16l-4 5M36 16l4 5" opacity=".6"/></svg>'},
+  {t:'Форматы, что залетают', pts:[
+    'Обучалка, разбор, реакция, POV, листикл-подборка',
+    'Бери тренд и <b>адаптируй под свою нишу</b>, а не копируй',
+    'Серийность: «часть 1 из 3» — зритель ждёт продолжения',
+    'Свой повторяемый формат = стабильные охваты'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="26" height="42" rx="5"/><rect x="47" y="14" width="26" height="42" rx="5" fill="currentColor" fill-opacity=".15"/><rect x="82" y="14" width="26" height="42" rx="5"/><path d="M20 26v18M55 26v18M90 26v18" opacity=".5"/><path d="M57 35l6-5v10z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Чек-лист сценария', pts:[
+    'Хук ≤ 2 секунд и одна ясная мысль',
+    'Петли удержания и смена планов',
+    'Эмоция и узнавание для репоста',
+    'CTA-вопрос + караоке-субтитры'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="26" y="6" width="68" height="58" rx="8"/><path d="M36 20l4 4 7-8M36 36l4 4 7-8M36 52l4 4 7-8" stroke-width="2.8"/><path d="M54 21h28M54 37h28M54 53h20"/></svg>'},
+  ],
+  quiz:[
+  {q:'С чего начинается вирусный ролик по уроку?', o:['Со съёмки красивых кадров','Со структуры: хук → удержание → развязка → CTA','С подбора музыки','С покупки рекламы'], a:1},
+  {q:'Задача хука в первые 2 секунды —', o:['Показать логотип','Дать обещание выгоды или интригу','Перечислить регалии автора','Поставить длинную заставку'], a:1},
+  {q:'Что удерживает зрителя до конца?', o:['Длинные паузы','Микро-обещания и смена планов каждые 2–3 с','Один статичный кадр','Отсутствие субтитров'], a:1},
+  {q:'Фраза «сохрани, чтобы не потерять» работает на…', o:['Лайки','Сохранения','Отписки','Рекламу'], a:1},
+  {q:'Сколько призывов (CTA) стоит давать в одном ролике?', o:['Как можно больше','Один чёткий','Ни одного','Ровно пять'], a:1},
+  {q:'Правильная работа с трендом —', o:['Скопировать один в один','Адаптировать под свою нишу','Игнорировать тренды','Ждать, пока тренд умрёт'], a:1},
+  ],
+  pairs:[
+  ['Хук','Первые 2 секунды: выгода или интрига'],
+  ['Петля удержания','«Дальше покажу, как…»'],
+  ['Триггер репоста','«Это же про меня»'],
+  ['CTA','Один вопрос в конце ролика'],
+  ['Серийность','«Часть 1 из 3»'],
+  ],
+  task:{
+    intro:'Собери каркас вирусного ролика для своей ниши по структуре урока:',
+    chips:['Хук','Удержание','Развязка','CTA'],
+    ph:'Пример: Хук — «Три ошибки убивают ваши Reels» (текст + голос, 2 с). Удержание — разбираю каждую ошибку с примером, смена плана каждые 2 с. Развязка — как сделать правильно. CTA — «Какая ошибка была у тебя? Пиши в комментах».',
+    verdict:'Структура собрана верно: сильный хук, петли удержания и один чёткий CTA. Совет куратора: вынеси хук-текст на экран крупно — так он сработает даже без звука.'
+  }
+},
+
+/* ---------- УРОК: Монтаж Reels, который держит ---------- */
+{
+  title:'Монтаж Reels, который держит',
+  sub:'ритм · караоке-субтитры · звук и цвет',
+  dur:'', videoUrl:'',
+  c1:'МОНТАЖ', c2:'REELS',
+  slides:[
+  {t:'Ритм решает всё', pts:[
+    'Режь <b>по музыке и речи</b> — склейки на битах и словах',
+    'Удаляй «воздух»: вдохи, паузы, запинки',
+    'Средний план держи <b>1,5–2,5 секунды</b>',
+    'Плотный ритм = высокий досмотр'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M10 35h8M22 22v26M30 30v10M38 16v38M46 26v18M54 20v30M62 32v6M70 18v34M78 28v14M86 22v26M94 30v10M102 24v22M110 35h0"/></svg>'},
+  {t:'Джамп-каты и динамика', pts:[
+    'Склейка на слове убирает лишнее и ускоряет темп',
+    '<b>Zoom-панч</b> на акценте добавляет энергии',
+    'Никаких «мёртвых» кадров, где ничего не происходит',
+    'Движение в кадре — постоянно, под темп'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="20" width="40" height="30" rx="5"/><rect x="66" y="14" width="40" height="42" rx="5"/><path d="M78 26l16 18M94 26L78 44" opacity=".7"/><path d="M56 35h10M62 31l5 4-5 4"/></svg>'},
+  {t:'Караоке-субтитры', pts:[
+    '<b>90% смотрят без звука</b> — субтитры обязательны',
+    'Крупно, с контрастом, читаемо на любом фоне',
+    'Подсветка <b>по слову</b> в бренд-цвете держит взгляд',
+    'Не перекрывай интерфейс площадки снизу'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="44" y="6" width="32" height="58" rx="8"/><rect x="50" y="40" width="12" height="7" rx="2" fill="currentColor" stroke="none"/><path d="M64 43h6" opacity=".7"/><path d="M50 50h20" opacity=".6"/><path d="M22 30c4 6 4 12 0 18M104 30c-4 6-4 12 0 18" opacity=".5"/></svg>'},
+  {t:'Звук: музыка и SFX', pts:[
+    'Музыка — <b>под смысл</b> сцены, а не просто фоном',
+    'SFX под каждое движение — свуши, клики, удары',
+    '<b>Дакинг</b>: приглушай музыку под голос',
+    'Звук-хук в первую секунду цепляет ухо'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 28v14M22 22v26M30 32v6M38 18v34M46 26v18" stroke-width="2.8"/><path d="M70 46V18l22-6v28" stroke-linejoin="round"/><circle cx="64" cy="46" r="6"/><circle cx="86" cy="40" r="6"/></svg>'},
+  {t:'Цвет и единый стиль', pts:[
+    'Единый <b>пресет/LUT</b> на весь ролик — картинка «дорогая»',
+    'Держи бренд-палитру: акцентный цвет узнаётся',
+    'Контраст текста и фона — читаемость прежде всего',
+    'Одинаковый стиль в серии = сильный бренд'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="40" cy="35" r="22"/><path d="M40 13a22 22 0 0 1 0 44z" fill="currentColor" stroke="none" opacity=".85"/><circle cx="86" cy="24" r="6" fill="currentColor" stroke="none" opacity=".9"/><circle cx="100" cy="38" r="6"/><circle cx="86" cy="50" r="6" fill="currentColor" stroke="none" opacity=".5"/></svg>'},
+  {t:'B-roll и перебивки', pts:[
+    'Иллюстрируй слова кадрами — «показывай, не рассказывай»',
+    'Сток <b>4K</b> — уникальный, не заезженный',
+    'Перебивка прячет склейку и держит темп',
+    'Не повторяй один и тот же кадр в ролике'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="16" width="46" height="34" rx="5"/><circle cx="24" cy="28" r="5"/><path d="M14 46l14-12 10 8 8-7 10 9" opacity=".7"/><rect x="66" y="24" width="44" height="30" rx="5" fill="currentColor" fill-opacity=".14"/><path d="M82 32v14l12-7z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Темп, длина, формат', pts:[
+    'Держи плотность до конца — обрезай хвост',
+    'Формат <b>1080×1920</b>, вертикаль 9:16',
+    'Учитывай safe-зоны под интерфейс площадки',
+    'Финал не тяни: закончил мысль — руби'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="46" y="6" width="28" height="58" rx="7"/><path d="M46 16h28M46 54h28" opacity=".45" stroke-dasharray="3 4"/><path d="M55 30v10l10-5z" fill="currentColor" stroke="none"/><path d="M20 24v22M100 24v22" opacity=".5"/></svg>'},
+  {t:'Экспорт и превью', pts:[
+    'Высокий битрейт — без «мыла» и артефактов',
+    '<b>Первый кадр</b> = мини-хук: он же обложка',
+    'Обложка с крупным текстом ловит на пролистывании',
+    'Проверь ролик <b>на телефоне</b> — смотреть будут там'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="44" height="34" rx="5"/><path d="M20 42l12-10 8 7 6-6 10 9" opacity=".7"/><path d="M34 54v6M24 60h20" opacity=".6"/><path d="M70 31h30M86 20l14 11-14 11" /></svg>'},
+  ],
+  quiz:[
+  {q:'По чему в первую очередь режут вирусный ролик?', o:['По таймеру каждые 10 с','По музыке и речи — на битах и словах','Наугад','По длине исходников'], a:1},
+  {q:'Караоке-субтитры обязательны, потому что…', o:['Так требует закон','Большинство смотрит без звука','Иначе видео не загрузится','Это дешевле музыки'], a:1},
+  {q:'«Дакинг» звука — это…', o:['Замена музыки на тишину','Приглушение музыки под голос','Ускорение трека','Добавление эха'], a:1},
+  {q:'Зачем единый пресет/LUT на весь ролик?', o:['Чтобы файл был меньше','Чтобы картинка выглядела дорого и в едином стиле','Чтобы убрать субтитры','Чтобы ускорить экспорт'], a:1},
+  {q:'Первый кадр ролика важен, потому что он…', o:['Не виден зрителю','Служит обложкой и мини-хуком','Задаёт длину видео','Отвечает за звук'], a:1},
+  {q:'Где обязательно проверить готовый Reels?', o:['Только на большом мониторе','На телефоне — там его и смотрят','В распечатке','Нигде, и так сойдёт'], a:1},
+  ],
+  pairs:[
+  ['Джамп-кат','Склейка на слове, ускоряет темп'],
+  ['Караоке-субтитры','Подсветка по слову без звука'],
+  ['Дакинг','Музыка тише под голос'],
+  ['LUT/пресет','Единый «дорогой» цвет'],
+  ['B-roll','Перебивка прячет склейку'],
+  ],
+  task:{
+    intro:'Опиши монтажный план своего Reels по приёмам урока:',
+    chips:['Ритм','Джамп-каты','Субтитры','Звук','Цвет'],
+    ph:'Пример: Ритм — режу по биту трека, планы по 2 с. Джамп-каты на ключевых словах + zoom-панч на выводе. Субтитры караоке, лаймовый акцент. Звук — трек под энергию + свуш на переходах, дакинг под голос. Цвет — единый пресет, бренд-палитра.',
+    verdict:'Монтажный план плотный: ритм по звуку, караоке-сабы и единый цвет. Совет куратора: заложи звук-хук в первую секунду — ухо цепляется раньше, чем глаз.'
+  }
+},
+
+/* ---------- УРОК: Дистрибуция и алгоритмы 2026 ---------- */
+{
+  title:'Дистрибуция и алгоритмы 2026',
+  sub:'удержание · A/B хуков · масштаб',
+  dur:'', videoUrl:'',
+  c1:'ДИСТРИБУЦИЯ', c2:'АЛГОРИТМЫ',
+  slides:[
+  {t:'Как думает алгоритм', pts:[
+    'Главное — <b>удержание и досмотры</b>, а не лайки',
+    'Репосты и сохранения весят больше лайков',
+    'Первые часы после публикации решают судьбу ролика',
+    'Алгоритм тестирует видео на малой аудитории'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="60" cy="35" r="12"/><path d="M55 35a5 5 0 0 1 10 0" opacity=".7"/><path d="M60 23V10M60 47v13M48 32 24 22M72 32l24-10M48 38 24 48M72 38l24 10"/><circle cx="20" cy="20" r="4"/><circle cx="100" cy="20" r="4"/><circle cx="20" cy="50" r="4"/><circle cx="100" cy="50" r="4"/></svg>'},
+  {t:'Время и частота', pts:[
+    '<b>Стабильность</b> важнее редких всплесков',
+    'Публикуй регулярно — алгоритм любит ритм',
+    'Тестируй окна времени под свою аудиторию',
+    'Серия форматов приучает зрителя возвращаться'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="34" cy="35" r="20"/><path d="M34 22v13l9 6"/><path d="M70 20h34M70 32h28M70 44h34" opacity=".7"/><circle cx="64" cy="20" r="1.8" fill="currentColor" stroke="none"/><circle cx="64" cy="32" r="1.8" fill="currentColor" stroke="none"/><circle cx="64" cy="44" r="1.8" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Метрики, что смотреть', pts:[
+    '<b>Удержание %</b> и среднее время просмотра — главное',
+    'Дочитывания до CTA показывают силу концовки',
+    'Репосты и сохранения — сигнал ценности',
+    'Читай воронку ролика: где зритель уходит'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v52h96"/><rect x="24" y="20" width="12" height="40" rx="3" fill="currentColor" fill-opacity=".18"/><rect x="46" y="30" width="12" height="30" rx="3"/><rect x="68" y="26" width="12" height="34" rx="3"/><rect x="90" y="40" width="12" height="20" rx="3"/><path d="M24 18l22 6 22-2 22 12" opacity=".55" stroke-dasharray="3 4"/></svg>'},
+  {t:'A/B хуков и обложек', pts:[
+    'Готовь <b>3 варианта хука</b> на один ролик',
+    'Меняй за раз только одно — иначе не понять причину',
+    'Тестируй обложки: первый кадр решает клик',
+    'Решай данными, а не «мне так больше нравится»'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="12" width="34" height="22" rx="5"/><rect x="14" y="38" width="34" height="22" rx="5" fill="currentColor" fill-opacity=".15"/><path d="M52 23h14M62 19l5 4-5 4M52 49h14M62 45l5 4-5 4" opacity=".7"/><rect x="72" y="24" width="34" height="22" rx="5"/><path d="M80 42l4 4 6-8" stroke-width="2.8"/></svg>'},
+  {t:'Мультиплатформа', pts:[
+    'Один сценарий → <b>Reels, Shorts, TikTok</b>',
+    'Адаптируй под площадку, а не тупо копируй',
+    'Убирай чужие водяные знаки — их душат алгоритмы',
+    'Каждая площадка = дополнительный охват бесплатно'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="16" width="24" height="38" rx="5"/><rect x="48" y="16" width="24" height="38" rx="5" fill="currentColor" fill-opacity=".15"/><rect x="86" y="16" width="24" height="38" rx="5"/><path d="M18 30l6-4v8zM56 30l6-4v8zM94 30l6-4v8z" fill="currentColor" stroke="none"/></svg>'},
+  {t:'Работа с комментариями', pts:[
+    'Закрепляй лучший комментарий — продолжает воронку',
+    'Отвечай <b>ролик-ответом</b> на частые вопросы',
+    'Вовлечение в комментах поднимает охваты',
+    'Комьюнити возвращается за новыми видео'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16h54a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8H40l-14 10V48h-2a8 8 0 0 1-8-8V16z"/><path d="M28 28h30M28 38h20" opacity=".7"/><circle cx="96" cy="30" r="10"/><path d="M92 30l3 3 6-7" opacity=".8"/></svg>'},
+  {t:'Масштаб: контент-завод', pts:[
+    'Снимай <b>пачками</b> — один съёмочный день на неделю',
+    'Копи шаблоны приёмов, но <b>без повторов</b> в ленте',
+    'Аналитика ежедневно — усиливай залетевшее',
+    'Система важнее вдохновения: конвейер стабильнее'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="14" width="20" height="16" rx="3"/><rect x="10" y="40" width="20" height="16" rx="3"/><rect x="50" y="27" width="20" height="16" rx="3" fill="currentColor" fill-opacity=".16"/><rect x="90" y="14" width="20" height="16" rx="3"/><rect x="90" y="40" width="20" height="16" rx="3"/><path d="M30 22h10l10 9M30 48h10l10-9M70 35h20" opacity=".7"/></svg>'},
+  {t:'Чек-лист роста', pts:[
+    'Тестируй 3 хука на каждый ролик',
+    'Держи удержание выше 50%',
+    'CTA-вопрос + триггер репоста',
+    'Каждый день — разбор метрик и выводы'],
+   svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 54l22-18 16 10 30-30"/><path d="M74 16h16v16" /><circle cx="16" cy="54" r="3" fill="currentColor" stroke="none"/><circle cx="38" cy="36" r="3" fill="currentColor" stroke="none"/><circle cx="54" cy="46" r="3" fill="currentColor" stroke="none"/></svg>'},
+  ],
+  quiz:[
+  {q:'Что для алгоритма важнее всего?', o:['Число лайков','Удержание и досмотры','Длина описания','Количество хэштегов'], a:1},
+  {q:'Какие сигналы весят больше лайков?', o:['Просмотры профиля','Репосты и сохранения','Время публикации','Число подписок автора'], a:1},
+  {q:'Как правильно проводить A/B-тест хука?', o:['Менять всё сразу','Менять за раз только одно','Не тестировать вовсе','Смотреть только на лайки'], a:1},
+  {q:'Что даёт публикация на нескольких площадках?', o:['Штраф от алгоритма','Дополнительный охват бесплатно','Потерю качества','Ничего'], a:1},
+  {q:'Зачем закреплять комментарий?', o:['Для красоты','Продолжить воронку и вовлечение','Скрыть критику','Ускорить загрузку'], a:1},
+  {q:'Что важнее для стабильного роста?', o:['Ждать вдохновения','Система и ежедневная аналитика','Один вирусный ролик','Больше хэштегов'], a:1},
+  ],
+  pairs:[
+  ['Удержание %','Главная метрика алгоритма'],
+  ['Сохранения','Сигнал ценности контента'],
+  ['A/B хука','3 варианта, меняем одно'],
+  ['Мультиплатформа','Один сценарий на 3 площадки'],
+  ['Контент-завод','Съёмка пачками + аналитика'],
+  ],
+  task:{
+    intro:'Составь план дистрибуции и роста для своего аккаунта:',
+    chips:['Частота','Метрика','A/B','Площадки','Разбор'],
+    ph:'Пример: Частота — 1 ролик в день, окно 19:00. Метрика — удержание, цель >55%. A/B — 3 хука на ролик, меняю только первый кадр. Площадки — Reels + Shorts + TikTok. Разбор — каждый вечер смотрю воронку и усиливаю залетевший формат.',
+    verdict:'План рабочий: стабильная частота, ясная метрика и ежедневный разбор. Совет куратора: заведи таблицу форматов — так быстро увидишь, какой приём стабильно даёт удержание.'
+  }
+},
+];
+/* приклеиваем премиум-уроки к общему плоскому списку (глобальные индексы сохраняются) */
+AC_COURSE.push.apply(AC_COURSE, AC_COURSE_REELS);
+
+/* ================= КАТАЛОГ КУРСОВ =================
+   Плоский AC_COURSE — источник состояния (per глобальный индекс урока).
+   AC_COURSES — метаданные курсов поверх диапазонов [from .. from+count-1]. */
+const AC_COURSES = [
+  { id:'ai', title:'Нейросети 2026', tag:'Базовый курс',
+    sub:'5 уроков · тесты и практика · сертификат за каждый урок',
+    from:0, count:5, free:true, minTier:'PRO', price:0,
+    c1:'НЕЙРОСЕТИ', c2:'2026' },
+  { id:'reels', title:'Контент и Reels', tag:'Премиум',
+    sub:'3 урока · вирусные видео от сценария до алгоритмов',
+    from:5, count:3, free:false, minTier:'PRO', price:2900,
+    c1:'КОНТЕНТ', c2:'И REELS' },
+];
+
+/* индекс курса по глобальному номеру урока */
+function acCourseOf(i){
+  for(let c=0;c<AC_COURSES.length;c++){
+    const m=AC_COURSES[c];
+    if(i>=m.from && i<m.from+m.count) return c;
+  }
+  return 0;
+}
+function acLocalNo(i){ return i - AC_COURSES[acCourseOf(i)].from + 1; }        // номер урока внутри курса (с 1)
+function acCourseLen(ci){ return AC_COURSES[ci].count; }
+function acCourseFirst(ci){ return AC_COURSES[ci].from; }
+function acCourseIdx(ci){ const m=AC_COURSES[ci], a=[]; for(let i=0;i<m.count;i++) a.push(m.from+i); return a; }
+/* доступ к курсу: бесплатный / куплен / открыт подпиской */
+function acOwnsCourse(ci){ try{ return !!(acS.owned && acS.owned[AC_COURSES[ci].id]); }catch(e){ return false; } }
+function acCourseAccessible(ci){
+  const m=AC_COURSES[ci];
+  if(m.free) return true;
+  if(acOwnsCourse(ci)) return true;
+  return (typeof okoHasSub==='function') ? okoHasSub(m.minTier) : false;
+}
+function acCoursePctOf(ci){
+  const idx=acCourseIdx(ci); if(!idx.length) return 0;
+  let s=0; idx.forEach(i=>s+=acLessonPct(i));
+  return Math.round(s/idx.length);
+}
+function acCourseDone(ci){ return acCourseIdx(ci).every(i=>acLessonDone(i)); }
+function acCourseCertCount(ci){ return acCourseIdx(ci).filter(i=>{ const ls=acS.lessons[i]; return ls&&ls.cert; }).length; }
+
 /* ---------- состояние (localStorage oko-academy, per-урок) ---------- */
 function acNewLS(){
   return {video:false, slides:false, test:false, testScore:0, task:false, taskText:'',
@@ -11381,13 +12102,15 @@ function acNextLesson(){
   return -1;
 }
 
-let acView = 'home';            // 'home' | 'lesson'
-let acL = 0;                    // индекс текущего урока
+let acView = 'home';            // 'home' (каталог) | 'course' (уроки курса) | 'lesson'
+let acL = 0;                    // глобальный индекс текущего урока
+let acCourse = 0;               // индекс текущего курса (для страницы курса)
 let acQuiz = null;              // сессия теста (не персистится)
 let acG = null;                 // сессия мини-игры
 let acTaskChecking = false;     // «Проверяется ИИ-куратором»
 let acCertUrl = null;           // кэш PNG сертификата
 let acCertShownNo = null;
+let acBadgeNewIds = [];         // бейджи, открытые в этом ре-рендере (для pop-анимации)
 
 function acCur(){ return AC_COURSE[acL]; }
 function acLS(i){
@@ -11417,14 +12140,110 @@ function acLessonDone(i){
   const ls = acS.lessons[i];
   return !!(ls && ls.cert) || acLessonPct(i) === 100;
 }
-function acUnlocked(i){ return i === 0 || acLessonDone(i-1); }
+function acUnlocked(i){
+  const ci = acCourseOf(i);
+  if(!acCourseAccessible(ci)) return false;              // курс не оплачен/не по подписке
+  return i === acCourseFirst(ci) || acLessonDone(i-1);   // первый урок курса или сдан предыдущий
+}
 function acCertEligible(){ const ls = acLS(); return ls.video && ls.testScore >= AC_PASS; }
+
+/* ================= ДОСТУП К ПРЕМИУМ-КУРСУ (подписка / покупка) ================= */
+function acFmtPrice(n){ return (typeof fmtRub==='function') ? fmtRub(n) : (n.toLocaleString('ru-RU')+' ₽'); }
+/* открыть курс: если доступен — на страницу курса, иначе гейт */
+function acOpenCourse(ci){
+  if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
+  acCourse = ci; acView = 'course'; acQuiz = null; acG = null; acTaskChecking = false;
+  acRender();
+  const m = document.querySelector('main'); if(m) m.scrollTop = 0;
+}
+/* продающий гейт премиум-курса: подписка ИЛИ разовая покупка */
+function acCourseGate(ci){
+  const c = AC_COURSES[ci];
+  if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
+  if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
+  showPopup({ico:'star', title:'Курс «'+c.title+'»',
+    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.',
+    actions:[
+      {label:'Открыть по подписке '+c.minTier, onclick:()=>{
+        if(typeof okoRequireSub === 'function'){
+          okoRequireSub(c.minTier, 'Курс «'+c.title+'» входит в подписку '+c.minTier+'. Оформи её — и получишь этот курс и десятки других возможностей.', ()=>acOpenCourse(ci));
+        } else { toast('Подписка временно недоступна'); }
+      }},
+      {label:'Купить за '+acFmtPrice(c.price), onclick:()=>acBuyCourse(ci)},
+      {label:'Позже', ghost:true}
+    ]});
+}
+/* разовая покупка курса за баланс (комиссия — доход владельца) */
+function acBuyCourse(ci){
+  const c = AC_COURSES[ci];
+  if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
+  if(typeof walletCharge !== 'function'){ toast('Кошелёк недоступен'); return; }
+  if(walletCharge(c.price, 'Академия · курс «'+c.title+'»')){
+    acS.owned = acS.owned || {};
+    acS.owned[c.id] = true; acSave();
+    if(typeof okoEarn === 'function') okoEarn(c.price, 'Академия · продажа курса «'+c.title+'»');
+    toast('Курс открыт: «'+c.title+'»');
+    acBadgeSync();
+    acOpenCourse(ci);
+  } else {
+    toast('Недостаточно средств — пополни счёт');
+  }
+}
+
+/* ================= БЕЙДЖИ ДОСТИЖЕНИЙ ================= */
+function acAnyLessonTest100(){ for(const k in acS.lessons){ if((acS.lessons[k].testScore||0) >= 100) return true; } return false; }
+function acTasksDone(){ let n=0; for(const k in acS.lessons){ if(acS.lessons[k].task) n++; } return n; }
+function acBadgeDefs(){
+  const st = acStreak();
+  return [
+    {id:'first',  ic:'bolt',     t:'Первый шаг',     d:'Пройти первый урок',                on: AC_COURSE.some((_,i)=>acLessonPct(i)>=100) || acS.certs.length>0},
+    {id:'cert1',  ic:'star',     t:'Сертификат',     d:'Получить первый сертификат',        on: acS.certs.length >= 1},
+    {id:'ace',    ic:'poll',     t:'Отличник',       d:'Сдать тест на 100%',                on: acAnyLessonTest100()},
+    {id:'prac',   ic:'edit',     t:'Практик',        d:'Зачесть 3 практики',                on: acTasksDone() >= 3},
+    {id:'streak3',ic:'fire',     t:'В огне',         d:'3 дня подряд в учёбе',              on: (st.best||0) >= 3},
+    {id:'ai',     ic:'crown',    t:'Знаток ИИ',      d:'Завершить курс «Нейросети 2026»',   on: acCourseDone(0)},
+    {id:'invest', ic:'money',    t:'Инвестор в себя',d:'Открыть премиум-курс',              on: (typeof okoHasSub==='function'&&okoHasSub('PRO')) || (acS.owned && Object.keys(acS.owned).length>0)},
+    {id:'reels',  ic:'rocket',   t:'Мастер Reels',   d:'Завершить курс «Контент и Reels»',  on: AC_COURSES.length>1 && acCourseDone(1)},
+    {id:'coll',   ic:'verified', t:'Коллекционер',   d:'Собрать 5 сертификатов',            on: acS.certs.length >= 5},
+  ];
+}
+/* при первом заходе — «засчитать» уже заслуженные молча, чтобы не спамить тостами */
+function acBadgeSync(){
+  const defs = acBadgeDefs();
+  if(!Array.isArray(acS.badgeSeen)){
+    acS.badgeSeen = defs.filter(b=>b.on).map(b=>b.id);
+    acBadgeNewIds = []; acSave(); return;
+  }
+  const fresh = defs.filter(b=>b.on && acS.badgeSeen.indexOf(b.id) < 0);
+  acBadgeNewIds = fresh.map(b=>b.id);
+  if(fresh.length){
+    fresh.forEach(b=>acS.badgeSeen.push(b.id));
+    acSave();
+    fresh.forEach((b,k)=>setTimeout(()=>toast('Награда открыта: «'+b.t+'»'), 260*(k+1)));
+  }
+}
+function acBadgesGridHtml(){
+  const defs = acBadgeDefs();
+  const earned = defs.filter(b=>b.on).length;
+  return `
+    <div class="ac-badges-head">
+      <span class="ico">${I('verified')}</span>
+      <div class="meta"><b>Достижения</b><span>Открыто ${earned} из ${defs.length} — учись и собирай награды</span></div>
+    </div>
+    <div class="ac-badges">${defs.map((b,i)=>`
+      <div class="ac-badge ${b.on?'on':''} ${acBadgeNewIds.indexOf(b.id)>=0?'new':''}" style="animation-delay:${(i*0.045).toFixed(2)}s" title="${b.d}">
+        <span class="ic">${I(b.ic)}</span>
+        <span class="t">${b.t}</span>
+        <span class="d">${b.on?'получено':b.d}</span>
+      </div>`).join('')}</div>`;
+}
 
 /* ================= РЕНДЕР ================= */
 function acRender(){
   const root = document.getElementById('acRoot');
   if(!root) return;
-  root.innerHTML = acView === 'home' ? acHomeHtml() : acLessonHtml();
+  acBadgeSync();  // до построения HTML — чтобы pop-анимация новых наград попала в разметку
+  root.innerHTML = acView === 'lesson' ? acLessonHtml() : acView === 'course' ? acCourseHtml() : acHomeHtml();
   root.classList.remove('fade-in'); void root.offsetWidth; root.classList.add('fade-in');
   if(acView === 'lesson'){
     acRenderVideoBox(); acBindSlides(); acRenderTestBox();
@@ -11443,35 +12262,61 @@ function acAnimRings(){
   }));
 }
 
-/* ---------- ГЛАВНАЯ АКАДЕМИИ ---------- */
+/* обложка курса (inline-SVG, самодостаточная, тёмная арт-панель в обеих темах).
+   hero=true → без крупного текста (его дублирует заголовок-капшн под обложкой). */
+function acCourseCover(ci, hero){
+  const c = AC_COURSES[ci];
+  const bigText = hero ? '' : `
+    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
+    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="36" fill="#9AFF00" letter-spacing="2">${esc(c.c2)}</text>
+    <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>`;
+  return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="320" height="190" fill="#070a04"/>
+    <g stroke="rgba(154,255,0,.10)" stroke-width="1">
+      ${[40,80,120,160,200,240,280].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="190"/>`).join('')}
+      ${[38,76,114,152].map(y=>`<line x1="0" y1="${y}" x2="320" y2="${y}"/>`).join('')}
+    </g>
+    <circle cx="266" cy="44" r="70" fill="rgba(154,255,0,.09)"/>
+    <use href="#i-logo" x="238" y="16" width="64" height="64"/>${bigText}
+  </svg>`;
+}
+
+/* карточка курса в каталоге */
+function acCourseCardHtml(ci){
+  const c = AC_COURSES[ci];
+  const acc = acCourseAccessible(ci);
+  const pct = acCoursePctOf(ci);
+  const done = acCourseDone(ci);
+  const CR = 2*Math.PI*15;
+  const badge = c.free
+    ? `<span class="ac-cc-tag free">${I('bolt')} Бесплатно</span>`
+    : acc
+      ? `<span class="ac-cc-tag open">${I('check2')} Открыт</span>`
+      : `<span class="ac-cc-tag lock">${I('lock')} ${c.minTier}</span>`;
+  const ring = acc
+    ? `<span class="ac-mini-ring lg" title="Курс пройден на ${pct}%">
+        <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+        <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-pct/100)).toFixed(1)}"/></svg>
+        <b>${done?I('check2'):pct}</b></span>`
+    : `<span class="ac-cc-price">${acFmtPrice(c.price)}</span>`;
+  const cta = acc
+    ? (done ? `Открыть курс` : (pct>0 ? `Продолжить · ${pct}%` : `Начать курс`))
+    : `Открыть доступ`;
+  return `
+    <div class="card ac-cc ${acc?'':'locked'}" style="animation-delay:${(ci*0.06).toFixed(2)}s" onclick="acCourseCardClick(${ci})">
+      <div class="ac-cc-cover">${acCourseCover(ci)}${acc?'':`<span class="ac-cc-veil">${I('lock')}</span>`}</div>
+      <div class="ac-cc-body">
+        <div class="ac-cc-top">${badge}<span class="ac-cc-meta">${c.count} ${acPlural(c.count,['урок','урока','уроков'])}</span></div>
+        <h3>${esc(c.title)}</h3>
+        <p>${esc(c.sub)}</p>
+        <div class="ac-cc-foot">${ring}<button class="btn sm ${acc?'':'ghost'} ac-cc-go" onclick="event.stopPropagation();acCourseCardClick(${ci})">${cta}</button></div>
+      </div>
+    </div>`;
+}
+function acCourseCardClick(ci){ acOpenCourse(ci); }
+
+/* ---------- ГЛАВНАЯ АКАДЕМИИ: КАТАЛОГ КУРСОВ ---------- */
 function acHomeHtml(){
-  const pct = acCoursePct(), C = 2*Math.PI*33, CR = 2*Math.PI*15;
-  const rows = AC_COURSE.map((l,i)=>{
-    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked" onclick="toast('Урок ${i+1} откроется после сертификата урока ${i}')">
-      <span class="ac-num">${i+1}</span>
-      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
-      <svg class="i"><use href="#i-lock"/></svg></button>`;
-    const ls = acS.lessons[i], p = acLessonPct(i);
-    const st = (ls && ls.cert)
-      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
-      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
-          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
-          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
-          <b>${p}</b></span>` : '');
-    return `<button class="ac-lesson-row" onclick="acOpenLesson(${i})">
-      <span class="ac-num">${i+1}</span>
-      <span class="meta"><span class="t">${l.title}</span><span class="s" style="display:block">${l.sub}</span></span>
-      ${st}
-      <svg class="i go"><use href="#i-chev"/></svg></button>`;
-  }).join('');
-  const certs = acS.certs.length ? acS.certs.map((c,i)=>`
-    <div class="ac-cert-item" style="animation-delay:${i*.05}s">
-      <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
-      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
-      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
-      <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
-    </div>`).join('')
-    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
   const st = acStreak();
   const hot = st.days >= 3;
   const streak = `
@@ -11483,11 +12328,85 @@ function acHomeHtml(){
     </div>`;
   const nx = acNextLesson();
   const nextRow = nx >= 0
-    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Следующий: <b>урок ${nx+1} — ${AC_COURSE[nx].title}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
-    : `<div class="ac-next-row done">${I('check2')}<span>Все уроки курса пройдены — сертификаты у тебя</span></div>`;
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Продолжить: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Доступные уроки пройдены — открой премиум-курс</span></div>`;
+  const courses = AC_COURSES.map((_,ci)=>acCourseCardHtml(ci)).join('');
+  const certs = acS.certs.length ? acS.certs.map((c,i)=>`
+    <div class="ac-cert-item" style="animation-delay:${i*.05}s">
+      <span class="ico"><svg class="i"><use href="#i-file"/></svg></span>
+      <span class="meta"><span class="t">${esc(acCertLabel(c))}</span><span class="s" style="display:block">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
+      <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
+    </div>`).join('')
+    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
   return `
-    <div class="ac-hero"><h2>Академия OKO</h2><p>Уроки полного формата · официальные сертификаты</p></div>
+    <div class="ac-hero"><h2>Академия OKO</h2><p>Курсы полного формата · официальные сертификаты</p></div>
     ${streak}
+    ${nextRow}
+    <h2 class="section-h" style="margin:20px 0 10px;font-size:21px">Каталог курсов</h2>
+    <div class="ac-catalog">${courses}</div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Достижения</h2>
+    <div class="card ac-badges-card">${acBadgesGridHtml()}</div>
+
+    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои сертификаты</h2>
+    <div class="card" style="padding:6px 14px">${certs}</div>
+    <div style="height:14px"></div>`;
+}
+
+/* подпись сертификата: «Курс · Урок N · Название» */
+function acCertLabel(c){
+  const gi = (typeof c.lesson === 'number') ? c.lesson : 0;
+  const ci = acCourseOf(gi);
+  const ctitle = c.courseTitle || AC_COURSES[ci].title;
+  return ctitle + ' · Урок ' + acLocalNo(gi) + ' · ' + (c.lessonTitle || AC_COURSE[gi].title);
+}
+
+/* ---------- СТРАНИЦА КУРСА (список уроков) ---------- */
+function acCourseHtml(){
+  const ci = acCourse, c = AC_COURSES[ci];
+  const pct = acCoursePctOf(ci), C = 2*Math.PI*33, CR = 2*Math.PI*15;
+  const idx = acCourseIdx(ci);
+  const done = acCourseDone(ci);
+  const rows = idx.map((i,k)=>{
+    const local = k+1;
+    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="toast('Урок ${local} откроется после урока ${local-1}')">
+      <span class="ac-num">${local}</span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      <svg class="i"><use href="#i-lock"/></svg></button>`;
+    const ls = acS.lessons[i], p = acLessonPct(i);
+    const stg = (ls && ls.cert)
+      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
+      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
+          <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
+          <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
+          <b>${p}</b></span>` : '');
+    return `<button class="ac-lesson-row ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="acOpenLesson(${i})">
+      <span class="ac-num">${local}</span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      ${stg}
+      <svg class="i go"><use href="#i-chev"/></svg></button>`;
+  }).join('');
+  let nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
+  if(nx===undefined && !done) nx = idx[0];   // защита: если курс не пройден, всегда есть куда вести
+  const nextRow = (nx!==undefined)
+    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>${acLessonPct(nx)>0?'Продолжить':'Начать'}: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
+    : `<div class="ac-next-row done">${I('check2')}<span>Курс пройден — сертификаты за уроки у тебя</span></div>`;
+  const certN = acCourseCertCount(ci);
+  const finale = done
+    ? `<div class="card ac-course-finale"><span class="ico">${I('crown')}</span>
+        <div><h3>Курс завершён</h3><p>Ты прошёл все ${c.count} ${acPlural(c.count,['урок','урока','уроков'])} и получил ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])}. Так держать!</p></div></div>`
+    : '';
+  return `
+    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Каталог</button>
+    <div class="ac-course-hero">
+      <div class="ac-course-hero-cover">${acCourseCover(ci, true)}</div>
+      <div class="ac-course-hero-cap">
+        <span class="chip">${c.free?'Базовый курс':'Премиум · открыт'}</span>
+        <h2>${esc(c.title)}</h2>
+        <p>${esc(c.sub)}</p>
+      </div>
+    </div>
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">
@@ -11495,41 +12414,42 @@ function acHomeHtml(){
           <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C*(1-pct/100)).toFixed(1)}"/></svg>
           <b>${pct}%</b>
         </span>
-        <div><h3>Нейросети 2026</h3><p class="dim">5 уроков · тесты и практика · сертификат за каждый урок</p></div>
+        <div><h3>Прогресс курса</h3><p class="dim">${c.count} ${acPlural(c.count,['урок','урока','уроков'])} · ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])} получено</p></div>
       </div>
       ${nextRow}
       <div>${rows}</div>
     </div>
-
-    <div class="card ac-soon" style="margin-top:12px" onclick="toast('Курс «Контент и Reels» уже в производстве')">
-      <span class="ico"><svg class="i"><use href="#i-camera"/></svg></span>
-      <div style="flex:1"><h3>Контент и Reels</h3><p>Сценарии, монтаж и вирусные форматы</p></div>
-      <span class="chip">скоро</span>
-    </div>
-
-    <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои сертификаты</h2>
-    <div class="card" style="padding:6px 14px">${certs}</div>
-    <div style="height:14px"></div>`;
+    ${finale}
+    <div style="height:16px"></div>`;
 }
 
 /* ---------- СТРАНИЦА УРОКА ---------- */
 function acOpenLesson(i){
   const k = (typeof i === 'number') ? i : 0;
-  if(!acUnlocked(k)){ toast('Урок '+(k+1)+' откроется после сертификата урока '+k); return; }
-  acL = k;
+  const ci = acCourseOf(k);
+  if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
+  if(!acUnlocked(k)){ toast('Урок '+acLocalNo(k)+' откроется после предыдущего'); return; }
+  acL = k; acCourse = ci;
   acView = 'lesson'; acQuiz = null; acG = null; acTaskChecking = false;
   acRender();
   const m = document.querySelector('main'); if(m) m.scrollTop = 0;
 }
-function acBackHome(){ acView='home'; acRender(); }
+/* назад: из урока → на страницу курса, со страницы курса → в каталог */
+function acBackHome(){
+  if(acView === 'lesson'){ acView = 'course'; acCourse = acCourseOf(acL); }
+  else acView = 'home';
+  acRender();
+  const m = document.querySelector('main'); if(m) m.scrollTop = 0;
+}
 
 function acLessonHtml(){
   const L = acCur();
+  const ci = acCourseOf(acL);
   const durLabel = L.videoUrl ? `${L.dur} видео` : 'видео в производстве';
   return `
-    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> Академия</button>
+    <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> ${esc(AC_COURSES[ci].title)}</button>
     <div class="ac-lesson-head">
-      <span class="chip">Урок ${acL+1} из ${AC_COURSE.length}</span>
+      <span class="chip">Урок ${acLocalNo(acL)} из ${AC_COURSES[ci].count}</span>
       <h2>${L.title}</h2>
       <div class="m"><span>${I('clock')} ${durLabel}</span><span>·</span><span>${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
     </div>
@@ -11590,7 +12510,7 @@ function acRenderVideoBox(){
         <use href="#i-logo" x="472" y="34" width="120" height="120"/>
         <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
         <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
-        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acL+1}</text>
+        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
       </svg>
       <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
       <span class="dur">${L.dur || 'скоро'}</span>
@@ -11717,7 +12637,7 @@ function acAnswer(i){
         toast('Тест сдан · +20% к уроку');
       }
       acSave();
-      acRenderProgressBox(); acRenderCertBox();
+      acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
     }
     acRenderTestBox();
   }, right ? 700 : 1100);
@@ -11771,7 +12691,7 @@ function acTaskSend(){
     acTaskChecking = false;
     ls.task = true; acSave();
     toast('Практика зачтена · +20% к уроку');
-    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox();
+    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
   }, 4000);
 }
 
@@ -11832,7 +12752,7 @@ function acGMatch(i){
         ls.gameWrong = wrong;
         if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
         acSave();
-        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox();
+        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
       } else acRenderGameBox();
     }, 560);
   } else {
@@ -11852,8 +12772,10 @@ function acRenderProgressBox(){
   const box = document.getElementById('acProgressBox');
   if(!box) return;
   const pct = acLessonPct(acL);
-  const next = (acL < AC_COURSE.length-1 && acLessonDone(acL))
-    ? `<p class="dim" style="font-size:12px;text-align:center;margin-top:4px">Урок ${acL+2} «${AC_COURSE[acL+1].title}» открыт</p>` : '';
+  const ci = acCourseOf(acL);
+  const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+  const next = (!lastInCourse && acLessonDone(acL))
+    ? `<p class="dim" style="font-size:12px;text-align:center;margin-top:4px">Урок ${acLocalNo(acL)+1} «${esc(AC_COURSE[acL+1].title)}» открыт</p>` : '';
   box.innerHTML = acItems(acL).map(([label,done])=>`
     <div class="ac-check-row ${done?'done':''}">
       <span class="ac-check-ic"><svg class="i"><use href="#i-check2"/></svg></span>
@@ -11948,13 +12870,13 @@ function acRemindCheck(){
     const nx = acNextLesson();
     if(nx < 0) return;                                       // всё пройдено — не беспокоим
     if(acRemindBusy()){ setTimeout(acRemindCheck, 20000); return; }  // занят — отложить
-    const pct = acLessonPct(nx), title = esc(AC_COURSE[nx].title);
+    const pct = acLessonPct(nx), title = esc(AC_COURSE[nx].title), lno = acLocalNo(nx);
     let body, label;
     if(pct <= 0){
-      body = 'Начни урок ' + (nx+1) + ' «' + title + '» — тебя ждёт разбор темы, слайды, тест и практика.';
+      body = 'Начни урок ' + lno + ' «' + title + '» — тебя ждёт разбор темы, слайды, тест и практика.';
       label = 'Начать урок';
     } else {
-      body = 'Продолжи урок ' + (nx+1) + ' «' + title + '» — пройдено '
+      body = 'Продолжи урок ' + lno + ' «' + title + '» — пройдено '
            + '<b style="color:var(--accent)">' + pct + '%</b>, осталось ' + (100 - pct) + '%.';
       label = 'Продолжить урок';
     }
@@ -11986,8 +12908,8 @@ function acCertShare(i){
   const c = (typeof i === 'number') ? acS.certs[i] : acCertRec();
   if(!c){ toast('Сертификат ещё не выдан'); return; }
   const text = 'Официальный сертификат Академии OKO ' + c.no
-    + ' — урок ' + ((c.lesson||0)+1) + ' «' + (c.lessonTitle || AC_COURSE[c.lesson||0].title)
-    + '» пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
+    + ' — ' + acCertLabel(c)
+    + ' пройден, тест ' + c.score + '%. Учись со мной в OKO: https://true-journey-418.higgsfield.app';
   if(navigator.share){
     navigator.share({title:'Сертификат Академии OKO', text:text}).catch(()=>{});
   } else {
@@ -12043,23 +12965,52 @@ function acRenderCertBox(){
 
 function acIssueCert(){
   const ls = acLS();
+  const ci = acCourseOf(acL);
   const cert = {
     no: 'OKO-CERT-' + String(Math.floor(1e5 + Math.random()*9e5)),
     date: new Date().toLocaleDateString('ru-RU'),
     score: ls.testScore,
     name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии',
     lesson: acL,
-    lessonTitle: acCur().title
+    lessonTitle: acCur().title,
+    courseTitle: AC_COURSES[ci].title,
+    localNo: acLocalNo(acL)
   };
   ls.cert = cert;
   acS.certs.unshift(cert);
   acSave();
   acCertUrl = null;
-  toast(acL < AC_COURSE.length-1
-    ? 'Сертификат выдан · урок ' + (acL+2) + ' открыт'
-    : 'Сертификат выдан: ' + cert.no);
+  const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+  toast(lastInCourse ? 'Сертификат выдан: ' + cert.no : 'Сертификат выдан · урок ' + (acLocalNo(acL)+1) + ' открыт');
+  acBadgeSync();
   acRenderCertBox(); acRenderProgressBox();
-  acCertShow();
+  acCertCelebrate(()=>acCertShow());
+}
+
+/* эффект выдачи сертификата: вспышка лаймовых лучей + печать, затем показ */
+function acCertCelebrate(cb){
+  try{
+    const old = document.getElementById('acBurst'); if(old) old.remove();
+    const el = document.createElement('div');
+    el.id = 'acBurst'; el.className = 'ac-burst';
+    let rays = '';
+    for(let i=0;i<14;i++) rays += `<i style="--a:${(i*360/14)}deg;--d:${(i%3)*0.04}s"></i>`;
+    let conf = '';
+    for(let i=0;i<22;i++){
+      const x = (Math.random()*100).toFixed(1), dl = (Math.random()*0.35).toFixed(2),
+            rot = (Math.random()*360).toFixed(0), sx = (Math.random()*0.7+0.6).toFixed(2);
+      conf += `<b style="left:${x}%;--dl:${dl}s;--rot:${rot}deg;--sx:${sx}"></b>`;
+    }
+    el.innerHTML = `<div class="ac-burst-core">
+        <span class="ac-burst-rays">${rays}</span>
+        <span class="ac-burst-seal">${I('star')}</span>
+      </div>
+      <div class="ac-burst-txt">Сертификат выдан</div>
+      <div class="ac-burst-conf">${conf}</div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} if(typeof cb==='function') cb(); }, 1250);
+  }catch(e){ if(typeof cb==='function') cb(); }
 }
 
 /* --- отрисовка canvas 1600×1131 --- */
@@ -12175,7 +13126,9 @@ function acMakeCert(cert, cb){
     ctx.strokeStyle = 'rgba(154,255,0,.5)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W/2-260, 512); ctx.lineTo(W/2+260, 512); ctx.stroke();
     // курс / урок
-    const lessonNo = (typeof cert.lesson === 'number' ? cert.lesson : 0) + 1;
+    const gi = (typeof cert.lesson === 'number' ? cert.lesson : 0);
+    const lessonNo = cert.localNo || (acLocalNo ? acLocalNo(gi) : gi+1);
+    const courseTitle = cert.courseTitle || AC_COURSES[acCourseOf(gi)].title;
     const lessonTitle = '«' + (cert.lessonTitle || AC_COURSE[0].title).toUpperCase() + '»';
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 26px Montserrat, Arial';
@@ -12190,7 +13143,7 @@ function acMakeCert(cert, cb){
     ctx.fillText(lessonTitle, W/2, 646);
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 24px Montserrat, Arial';
-    ctx.fillText('курса «Нейросети 2026» Академии OKO', W/2, 696);
+    ctx.fillText('курса «' + courseTitle + '» Академии OKO', W/2, 696);
     // чип результата
     const chipT = 'Результат теста: ' + cert.score + '%';
     ctx.font = '700 26px Montserrat, Arial';
@@ -12294,21 +13247,27 @@ function acProfileCertsHtml(){
       <button class="btn sm ghost" onclick="showTab('academy')">${n?'Все':'В Академию'}</button>
     </div>`;
   if(!n){
-    return `<div class="card ac-pcerts empty" id="acProfCerts">${head}
+    return `<div class="card ac-pcerts empty" id="acProfCerts">${head}${acProfileBadgesHtml()}
       <p class="ac-pcerts-invite">Сдай тест урока на ${AC_PASS}%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».</p></div>`;
   }
   const show = acS.certs.slice(0, 3).map((c)=>{
     const gi = acS.certs.indexOf(c);
     return `<div class="ac-pcert-row">
       <span class="ico">${I('file')}</span>
-      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span>
+      <span class="meta"><span class="t">${esc(acCertLabel(c))}</span>
       <span class="s">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
       <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${gi})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
       <button class="btn sm ghost" onclick="acCertShow(${gi})">Показать</button>
     </div>`;
   }).join('');
   const more = n > 3 ? `<button class="ac-pcerts-more" onclick="showTab('academy')">и ещё ${n-3} ${acPlural(n-3,['сертификат','сертификата','сертификатов'])} — в Академии ${I('chev')}</button>` : '';
-  return `<div class="card ac-pcerts" id="acProfCerts">${head}<div class="ac-pcert-list">${show}</div>${more}</div>`;
+  return `<div class="card ac-pcerts" id="acProfCerts">${head}${acProfileBadgesHtml()}<div class="ac-pcert-list">${show}</div>${more}</div>`;
+}
+/* компактная полоса заслуженных бейджей для профиля */
+function acProfileBadgesHtml(){
+  const on = acBadgeDefs().filter(b=>b.on);
+  if(!on.length) return '';
+  return `<div class="ac-pbadges">${on.map(b=>`<span class="ac-pbadge" title="${b.d}">${I(b.ic)}<span>${b.t}</span></span>`).join('')}</div>`;
 }
 function acPlural(n, forms){
   const a = Math.abs(n) % 100, b = a % 10;
@@ -14334,8 +15293,8 @@ function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON
   if(!Array.isArray(VS_TON.tx)) VS_TON.tx = [];
   if(typeof VS_TON.balance !== 'number' || isNaN(VS_TON.balance)) VS_TON.balance = 0;
   if(!VS_TON.addr){
-    const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
-    let s = 'UQ'; for(let i=0;i<44;i++) s += al[Math.floor(Math.random()*al.length)];
+    const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789-_';
+    let s = 'UQ'; for(let i=0;i<46;i++) s += al[Math.floor(Math.random()*al.length)];
     VS_TON.addr = s;
     /* честный приветственный баланс прототипа, чтобы механика покупки работала */
     if(VS_TON.balance === 0 && (!VS_TON.tx || !VS_TON.tx.length)){
@@ -14426,7 +15385,149 @@ function vsInjectTonSymbol(){
     s.setAttribute('id','i-vs-gem'); s.setAttribute('viewBox','0 0 100 100');
     s.innerHTML = '<path d="M50 12 L82 40 L50 90 L18 40 Z M18 40 H82 M38 40 L50 90 M62 40 L50 90 M50 12 L38 40 M50 12 L62 40" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
     defs.appendChild(s);
+    /* стрелка «получить» (вниз в лоток) — единый бренд-штрих stroke 7, round */
+    if(!document.getElementById('i-vs-recv')){
+      const r = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      r.setAttribute('id','i-vs-recv'); r.setAttribute('viewBox','0 0 100 100');
+      r.innerHTML = '<path d="M50 14 V64 M30 44 L50 66 L70 44 M20 78 H80" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
+      defs.appendChild(r);
+    }
   }catch(e){}
+}
+
+/* ---------- ОТПРАВКА / ПРИЁМ TON (адрес↔адрес) ---------- */
+let VS_SEND_AMT = 1, VS_SEND_ADDR = '';
+function vsAddrValid(a){
+  a = String(a||'').trim();
+  /* user-friendly (UQ/EQ/kQ/0Q + base64url, 48) или raw 0:hex64 */
+  if(/^[UEk0]Q[A-Za-z0-9_-]{46}$/.test(a)) return true;
+  if(/^-?[0-9]:[0-9a-fA-F]{64}$/.test(a)) return true;
+  return false;
+}
+function vsOpenSendTon(){ if(!(VS_SEND_AMT>0)) VS_SEND_AMT = 1; VS_SEND_ADDR = ''; vsRenderSendTon(); openSheet('vs-ton-sendton'); }
+function vsRenderSendTon(){
+  const v = document.getElementById('vsSendTonView'); if(!v) return;
+  const bal = vsTonFmt(VS_TON.balance);
+  const amt = VS_SEND_AMT;
+  const rub = Math.round(amt*VS_TON_RATE);
+  const rubStr = (typeof fmtMoney==='function') ? fmtMoney(rub) : rub+' ₽';
+  const maxv = Math.round(VS_TON.balance*100)/100;
+  const raw = [0.5, 1, 5, maxv > 0 ? maxv : 10];
+  const seen = {};
+  const chips = raw.filter(a=> a>0 && !seen[a] && (seen[a]=1));
+  const chipsH = chips.map(a=>
+    `<button class="${amt===a?'on':''}" onclick="vsSetSendAmt(${a})">${a===maxv && maxv>0 ? 'МАКС' : vsTonFmt(a)+' TON'}</button>`).join('');
+  v.innerHTML = `
+    <div class="vs-sendton-bal">${vsGemMark(16)} Баланс <b>${bal} TON</b></div>
+    <label class="vs-field-lbl" for="vsSendAddr">Адрес получателя</label>
+    <div class="vs-addr-input">
+      <input id="vsSendAddr" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="UQ… адрес TON-кошелька" value="${esc(VS_SEND_ADDR)}" oninput="vsSendValidate()">
+      <button type="button" class="vs-addr-paste" onclick="vsPasteAddr()" title="Вставить">${I('copy')}</button>
+    </div>
+    <div class="vs-addr-err" id="vsSendErr"></div>
+    <div class="vs-topup-big" style="margin-top:6px">${vsGemMark(28)}<b>${vsTonFmt(amt)}</b> TON</div>
+    <div class="vs-topup-rub">≈ ${rubStr}</div>
+    <div class="vs-topup-chips">${chipsH}</div>
+    <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.</div>
+    <button class="btn" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
+  vsSendValidate();
+}
+function vsSetSendAmt(a){ VS_SEND_AMT = Math.round((+a||0)*100)/100; vsRenderSendTon(); }
+function vsPasteAddr(){
+  try{
+    if(navigator.clipboard && navigator.clipboard.readText){
+      navigator.clipboard.readText().then(txt=>{
+        const inp = document.getElementById('vsSendAddr');
+        if(inp && txt){ inp.value = String(txt).trim(); vsSendValidate(); }
+      }).catch(()=>toast('Разреши доступ к буферу обмена'));
+    } else toast('Вставь адрес вручную');
+  }catch(e){ toast('Вставь адрес вручную'); }
+}
+function vsSendValidate(){
+  const inp = document.getElementById('vsSendAddr');
+  const err = document.getElementById('vsSendErr');
+  const btn = document.getElementById('vsSendBtn');
+  if(!inp || !btn) return true;
+  const a = inp.value.trim();
+  VS_SEND_ADDR = a;
+  let msg = '';
+  if(a && !vsAddrValid(a)) msg = 'Похоже, адрес неполный — формат TON: UQ… (48 символов)';
+  else if(a && a === VS_TON.addr) msg = 'Это адрес твоего же кошелька';
+  else if(VS_SEND_AMT > VS_TON.balance) msg = 'Недостаточно TON — пополни кошелёк';
+  else if(!(VS_SEND_AMT > 0)) msg = 'Укажи сумму больше нуля';
+  if(err){ err.textContent = msg; err.style.display = msg ? 'block' : 'none'; }
+  const ok = !!a && vsAddrValid(a) && a !== VS_TON.addr && VS_SEND_AMT > 0 && VS_SEND_AMT <= VS_TON.balance;
+  btn.disabled = !ok; btn.classList.toggle('vs-btn-off', !ok);
+  return ok;
+}
+function vsDoSendTon(){
+  if(!vsSendValidate()){
+    const a = (document.getElementById('vsSendAddr')||{}).value || '';
+    if(!a.trim()){ toast('Введи адрес получателя'); }
+    return;
+  }
+  const inp = document.getElementById('vsSendAddr');
+  const addr = inp.value.trim();
+  const amt = VS_SEND_AMT;
+  VS_TON.balance = Math.round((VS_TON.balance - amt)*100)/100;
+  VS_TON.tx.unshift({ t:'-', ton:amt, why:'Перевод на '+addr.slice(0,6)+'…'+addr.slice(-4), at:Date.now() });
+  if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+  vsTonSave();
+  closeSheet();
+  toast('Отправлено · '+vsTonFmt(amt)+' TON');
+  VS_SEND_AMT = 1; VS_SEND_ADDR = '';
+  vsTonBurst();
+  vsRenderTon();
+}
+
+/* --- приём: адрес + декоративный бренд-код --- */
+function vsOpenRecv(){ vsRenderRecv(); openSheet('vs-ton-recv'); }
+function vsAddrCode(addr, cells){
+  /* детерминированная бренд-матрица из адреса (декоративная, не сканируемый QR) */
+  const n = cells || 15;
+  let seed = 0; for(let i=0;i<addr.length;i++){ seed = (seed*31 + addr.charCodeAt(i)) >>> 0; }
+  const rnd = ()=>{ seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const cx = (n-1)/2, gem = 3; /* центральный вырез под знак */
+  let rects = '';
+  for(let y=0;y<n;y++) for(let x=0; x<=Math.floor(n/2); x++){
+    if(Math.abs(x-cx)<=gem && Math.abs(y-cx)<=gem) continue; /* центр под лого */
+    if(rnd() > .52){
+      const px = 4 + x*6.2, py = 4 + y*6.2, mx = 4 + (n-1-x)*6.2;
+      rects += `<rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="4.6" height="4.6" rx="1.4"/>`;
+      if(x !== n-1-x) rects += `<rect x="${mx.toFixed(1)}" y="${py.toFixed(1)}" width="4.6" height="4.6" rx="1.4"/>`;
+    }
+  }
+  const corner = (x,y)=>`<rect x="${x}" y="${y}" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="3.4"/><rect x="${x+5}" y="${y+5}" width="7" height="7" rx="2" fill="currentColor"/>`;
+  return `<svg viewBox="0 0 100 100" class="vs-qr-svg" aria-hidden="true">
+    <g fill="currentColor">${rects}</g>
+    ${corner(4,4)}${corner(79,4)}${corner(4,79)}
+  </svg>`;
+}
+function vsRenderRecv(){
+  const v = document.getElementById('vsRecvView'); if(!v) return;
+  const a = VS_TON.addr || '';
+  v.innerHTML = `
+    <div class="vs-qr-wrap">
+      <div class="vs-qr">
+        <div class="vs-qr-code">${vsAddrCode(a)}</div>
+        <div class="vs-qr-gem">${vsGiftSvg('crystal',44)}</div>
+      </div>
+    </div>
+    <div class="vs-recv-title">Твой TON-адрес</div>
+    <div class="vs-recv-addr" id="vsRecvAddr">${esc(a)}</div>
+    <div class="vs-recv-acts">
+      <button class="btn" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
+      <button class="btn ghost" style="flex:1" onclick="vsShareAddr()"><svg class="i"><use href="#i-share"/></svg> Поделиться</button>
+    </div>
+    <div class="vs-buy-note" style="margin-top:12px"><svg class="i"><use href="#i-lock"/></svg> Отправь этот адрес отправителю, чтобы принять TON. В прототипе входящие переводы приходят через «Пополнить». Реальный приём в сети TON — в релизе.</div>`;
+}
+function vsShareAddr(){
+  const a = VS_TON.addr || '';
+  try{
+    if(navigator.share){ navigator.share({ title:'Мой TON-адрес OKO', text:a }).catch(()=>{}); return; }
+  }catch(e){}
+  try{ navigator.clipboard && navigator.clipboard.writeText(a); }catch(e){}
+  toast('Адрес скопирован — можно отправить другу');
 }
 
 /* ---------- ЭКРАН TON ПОДАРКИ ---------- */
@@ -14455,9 +15556,10 @@ function vsRenderTon(){
       <div class="vs-ton-rub">≈ ${rub}</div>
       <button class="vs-ton-addr" onclick="vsCopyAddr()">${vsTonAddrShort()} <svg class="i"><use href="#i-copy"/></svg></button>
       <div class="vs-ton-acts">
-        <button class="vs-ton-act" onclick="vsOpenTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить</button>
-        <button class="vs-ton-act ghost" onclick="vsTonTab('mine')"><svg class="i"><use href="#i-star"/></svg> Коллекция</button>
-        <button class="vs-ton-act ghost" onclick="vsOpenHistory()"><svg class="i"><use href="#i-clock"/></svg> История</button>
+        <button class="vs-ton-act" onclick="vsOpenSendTon()"><svg class="i"><use href="#i-send"/></svg><span>Отправить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenRecv()"><svg class="i"><use href="#i-vs-recv"/></svg><span>Получить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenTopup()"><svg class="i"><use href="#i-plus"/></svg><span>Пополнить</span></button>
+        <button class="vs-ton-act ghost" onclick="vsOpenHistory()"><svg class="i"><use href="#i-clock"/></svg><span>История</span></button>
       </div>
     </div>
     <div class="vs-ton-tabs">
@@ -14472,8 +15574,8 @@ function vsTonTab(t){ VS_TON_TAB = t; vsRenderTon(); }
 function vsShopCard(g){
   const locked = g.premium && !vsPremiumOk();
   const own = VS_TON.owned[g.id] || 0;
-  return `<button class="vs-gcard${locked?' vs-locked':''}" onclick="vsOpenBuy('${g.id}')">
-    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
+  return `<button class="vs-gcard${locked?' vs-locked':''}${g.premium?' vs-nft':''}" onclick="vsOpenBuy('${g.id}')">
+    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price">${vsGemMark(12)} ${vsTonFmt(g.price)}</div>
   </button>`;
@@ -14500,7 +15602,7 @@ function vsOpenBuy(id){
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
     : `<button class="btn" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
   v.innerHTML = `
-    <div class="vs-buy-art">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
     <div class="vs-buy-price">${vsGemMark(20)}<b>${vsTonFmt(g.price)}</b> TON <small>≈ ${rub}</small></div>
     <div class="vs-buy-supply"><div class="vs-buy-sbar"><i style="width:${pct}%"></i></div><span>Выпущено ${g.sold.toLocaleString('ru-RU')} · осталось ${left.toLocaleString('ru-RU')} из ${g.supply.toLocaleString('ru-RU')}</span></div>
@@ -16222,10 +17324,14 @@ const MP_BRANCHES = [
   ['Отчёты',   'аналитика, метрики, еженедельные итоги'],
 ];
 const MP_ST = {
-  work: {t:'В работе',               ic:'clock'},
-  wait: {t:'Ожидает подтверждения',  ic:'eye'},
-  done: {t:'Завершена',              ic:'check'},
+  new:     {t:'Новый заказ',            ic:'bolt'},
+  work:    {t:'В работе',               ic:'clock'},
+  wait:    {t:'На холде · проверка',    ic:'lock'},
+  done:    {t:'Завершена',              ic:'check'},
+  dispute: {t:'Спор',                   ic:'flag'},
+  cancel:  {t:'Отменена · возврат',     ic:'back'},
 };
+const MP_ST_OPEN = st => st!=='done' && st!=='cancel'; // сделка «живая» (эскроу активен)
 
 /* ---------- пакеты услуг ---------- */
 const MP_PACKS = {
@@ -16252,16 +17358,28 @@ const MP_PACKS = {
 /* ---------- состояние (персист) ---------- */
 let MP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-market-pro'))||null; }catch(e){ return null; } })();
 function mpSave(){ try{ localStorage.setItem('oko-market-pro', JSON.stringify(MP)); }catch(e){} }
+const MP_H = 3600e3;
+function mpSeedDeals(){
+  const now = Date.now(), H = MP_H;
+  return [
+    {id:'d0', t:'Пакет: 15 Shorts для запуска',       n:'Тимур Н.',   sum:12000, st:'new',  dir:'in',  at:now-40*60e3, lid:901},
+    {id:'d1', t:'Контент-завод: 30 роликов в месяц',  n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
+    {id:'d2', t:'Лендинг под ключ за 5 дней',         n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
+    {id:'d3', t:'Разбор и стратегия роста канала',    n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903, rev:5},
+    {id:'d4', t:'Дизайн обложек и карточек товара',   n:'Лиза Кот',   sum:300,   st:'wait', dir:'out', at:now-9*H,  lid:2, held:false},
+  ];
+}
 if(!MP || !MP.v){
-  const H = 3600e3, now = Date.now();
-  MP = { v:1, seq:0, gross:58000, customChatId:null, orders:[],
+  MP = { v:2, seq:0, gross:58000, customChatId:null, orders:[],
     stats:{901:{orders:9, rev:405000}, 902:{orders:6, rev:114000}, 903:{orders:8, rev:64000}},
-    deals:[
-      {id:'d1', t:'Контент-завод: 30 роликов в месяц', n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
-      {id:'d2', t:'Лендинг под ключ за 5 дней',        n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
-      {id:'d3', t:'Разбор и стратегия роста канала',   n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903},
-    ]};
+    deals: mpSeedDeals() };
   mpSave();
+}
+/* миграция v1 -> v2: не стираем сохранённые данные, лишь добираем демо-статусы «новый» и «покупка» */
+if(MP.v < 2){
+  const have = new Set(MP.deals.map(d=>d.id));
+  mpSeedDeals().forEach(d=>{ if((d.id==='d0'||d.id==='d4') && !have.has(d.id)) MP.deals.push(d); });
+  MP.v = 2; mpSave();
 }
 MP.myRevs  = MP.myRevs  || [];  // отзывы, добавленные после сделок (реплей после перезагрузки)
 MP.reports = MP.reports || [];  // локальный лог жалоб на объявления
@@ -16408,18 +17526,22 @@ function mpAnalytics(revenue, views, contacts, orders){
 }
 /* ---------- эскроу-трекер стадий сделки ---------- */
 function mpEscrowStep(d){
+  if(d.st==='cancel')
+    return `<div class="mp-esc-flat cancel">${I('back')} Сделка отменена · ${fmtMoney(d.sum)} возвращены на кошелёк</div>`;
   const nodes = d.dir==='in'
-    ? ['Оплата','В работе','Сдача','Выплата']
+    ? ['Заказ','В работе','Сдача','Выплата']
     : ['Оплата','В работе','Проверка','Получено'];
-  const cur = d.st==='work' ? 1 : d.st==='wait' ? 2 : nodes.length; // done -> все стадии закрыты
+  const dispute = d.st==='dispute';
+  // new:0  work:1  wait/dispute:2  done:all
+  const cur = d.st==='new' ? 0 : d.st==='work' ? 1 : (d.st==='wait'||dispute) ? 2 : nodes.length;
   const fill = Math.min(100, Math.round(cur/(nodes.length-1)*100));
-  return `<div class="mp-esc-track" style="--fill:${fill}%">
+  return `<div class="mp-esc-track${dispute?' dispute':''}" style="--fill:${fill}%">
     <div class="mp-esc-line"></div><div class="mp-esc-fill"></div>
     ${nodes.map((n,i)=>{
       const cls = i<cur ? 'done' : i===cur ? 'cur' : '';
       return `<div class="mp-esc-node ${cls}"><span class="mp-esc-dot">${i<cur?I('check'):''}</span><small>${n}</small></div>`;
     }).join('')}
-  </div>`;
+  </div>${dispute?`<div class="mp-esc-flat dispute">${I('flag')} Спор открыт · модерация OKO проверяет сделку, деньги заморожены</div>`:''}`;
 }
 
 /* ================= ЧАСТЬ 1 · КАБИНЕТ ПРОДАВЦА ================= */
@@ -16436,7 +17558,10 @@ function mpRenderCab(){
   const avg = revs.length ? revs.reduce((s,r)=>s+r.r,0)/revs.length : 0;
   const fee = MP.gross - mpBal();
   const badge = (typeof vBadge==='function') ? vBadge(PROFILE.name) : '';
-  const deals = MP.deals.slice().sort((a,b)=>(a.st==='done')-(b.st==='done') || b.at-a.at);
+  const term = d => (d.st==='done'||d.st==='cancel');
+  const deals = MP.deals.slice().sort((a,b)=>(term(a)-term(b)) || (a.st==='dispute'?-1:0)-(b.st==='dispute'?-1:0) || b.at-a.at);
+  const openN = MP.deals.filter(d=>MP_ST_OPEN(d.st)).length;
+  const holdSum = MP.deals.filter(d=>MP_ST_OPEN(d.st)).reduce((s,d)=>s+d.sum,0);
   box.innerHTML = `
     <div class="mp-cab-head">
       <div class="mp-cab-ava">${esc(PROFILE.name[0])}</div>
@@ -16480,25 +17605,21 @@ function mpRenderCab(){
         <span class="mp-lst-rev">${fmtN(s.rev)} ₽</span></div>`;
     }).join('') : '<div class="mp-empty">Объявлений нет — размести первое на Бирже</div>'}
 
-    <div class="mp-h">${I('lock')} Активные сделки · эскроу</div>
+    <div class="mp-h">${I('lock')} Сделки · эскроу
+      ${openN?`<span class="mp-h-badge">${openN} активн.</span>`:''}
+      ${holdSum?`<span class="mp-h-badge hold">${I('lock')}${fmtMoney(holdSum)} в холде</span>`:''}
+    </div>
     ${deals.map(d=>{
       const st = MP_ST[d.st];
-      const act = d.dir==='in'
-        ? (d.st==='work' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button></div>`
-         : mpRevBtn(d))
-        : (d.st==='work' ? `<div class="mp-deal-act"><button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button></div>`
-         : d.st==='wait' ? `<div class="mp-deal-act"><button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button></div>`
-         : mpRevBtn(d));
-      return `<div class="mp-deal">
+      return `<div class="mp-deal${d.st==='dispute'?' dispute':''}${d.st==='cancel'?' cancelled':''}">
         <div class="mp-deal-top"><b>${esc(d.t)}</b><span class="mp-deal-sum">${fmtMoney(d.sum)}</span></div>
         <div class="mp-deal-meta">
           <span class="mp-st ${d.st}">${I(st.ic)}${st.t}</span>
-          <span class="mp-dir">${d.dir==='in'?'Продажа':'Покупка'}</span>
+          <span class="mp-dir ${d.dir}">${d.dir==='in'?'Продажа':'Покупка'}</span>
           <small>${esc(d.n)} · ${mpWhen(d.at)}</small>
-          ${d.st!=='done'?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
+          ${MP_ST_OPEN(d.st)?`<small class="mp-esc">${I('lock')}деньги в холде</small>`:''}
         </div>
-        ${mpEscrowStep(d)}${act}</div>`;
+        ${mpEscrowStep(d)}${mpDealActions(d)}</div>`;
     }).join('')}
 
     <div class="mp-h">${I('star')} Рейтинг и отзывы</div>
@@ -16511,29 +17632,142 @@ function mpRenderCab(){
     <div style="height:6px"></div>`;
   mpCountUp();
 }
+/* ---------- набор действий под каждой сделкой (зависит от направления и статуса) ---------- */
+function mpDealActions(d){
+  if(d.st==='cancel') return ''; // отменённая сделка — терминальна, действий нет
+  const chat = MP_ST_OPEN(d.st)
+    ? `<button class="ghost" onclick="mpOpenDealChat('${d.id}')">${I('chat')} Чат по сделке</button>` : '';
+  let main = '';
+  if(d.dir==='in'){                                   // ПРОДАЖА (пользователь — продавец)
+    if(d.st==='new')        main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Принять заказ</button>`;
+    else if(d.st==='work')  main = `<button onclick="mpDealNext('${d.id}')">${I('send')} Сдать работу</button>`;
+    else if(d.st==='wait')  main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Завершить сделку</button>`;
+    else if(d.st==='dispute') main = `<button onclick="mpDealResolve('${d.id}','refund')">${I('back')} Вернуть деньги</button>
+                                      <button onclick="mpDealResolve('${d.id}','done')">${I('check')} Завершить</button>`;
+    else return mpRevBtn(d);                           // done / cancel
+  } else {                                             // ПОКУПКА (пользователь — покупатель)
+    if(d.st==='new' || d.st==='work'){
+      main = `<button class="ghost" onclick="mpDealPoke('${d.id}')">${I('eye')} Запросить статус</button>
+              <button class="warn" onclick="mpDealCancel('${d.id}')">${I('back')} Отменить · возврат</button>`;
+    } else if(d.st==='wait'){
+      main = `<button onclick="mpDealNext('${d.id}')">${I('check')} Подтвердить получение</button>
+              <button class="warn" onclick="mpDealDispute('${d.id}')">${I('flag')} Открыть спор</button>`;
+    } else if(d.st==='dispute'){
+      main = `<button onclick="mpDealResolve('${d.id}','refund')">${I('back')} Вернуть деньги</button>
+              <button class="ghost" onclick="mpDealResolve('${d.id}','done')">${I('check')} Всё ок, завершить</button>`;
+    } else return mpRevBtn(d);                          // done / cancel
+  }
+  return `<div class="mp-deal-act">${main}${chat}</div>`;
+}
 function mpDealNext(id){
   const d = MP.deals.find(x=>x.id===id);
   if(!d) return;
-  if(d.st==='work'){ d.st='wait'; toast('Работа сдана — ждём подтверждения покупателя'); }
-  else if(d.st==='wait'){
-    d.st = 'done';
-    if(d.dir==='in'){
-      MP.gross += d.sum;
-      toast('Сделка завершена · +'+fmtMoney(Math.round(d.sum*(1-MP_FEE)))+' в баланс продаж');
-    } else {
-      WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
-      toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
-      setTimeout(()=>mpOpenReview(d.id), 500); // сразу предложим оценить исполнителя
-    }
+  if(d.st==='new'){ d.st='work'; toast('Заказ принят — сделка в работе'); mpDealChatNote(d,'Продавец принял заказ. Работа началась.'); }
+  else if(d.st==='work'){ d.st='wait'; toast('Работа сдана — деньги на холде до подтверждения'); mpDealChatNote(d, d.dir==='in'?'Продавец сдал работу. Проверьте и подтвердите — эскроу снимется.':'Работа сдана исполнителем.'); }
+  else if(d.st==='wait'){ mpDealComplete(d); return; }
+  mpSave(); mpRenderCab();
+}
+function mpDealComplete(d){
+  d.st = 'done';
+  if(d.dir==='in'){                                   // продажа: выручка в баланс продаж, комиссия при выводе
+    MP.gross += d.sum;
+    toast('Сделка завершена · +'+fmtMoney(Math.round(d.sum*(1-MP_FEE)))+' в баланс продаж');
+  } else {                                            // покупка: снимаем холд — деньги ушли исполнителю
+    mpReleaseHold(d);
+    toast('Получение подтверждено — эскроу снят, деньги ушли исполнителю');
+    setTimeout(()=>mpOpenReview(d.id), 500);
   }
+  mpDealChatNote(d, 'Сделка успешно завершена. Спасибо!');
   mpSave(); mpRenderCab();
 }
 function mpDealPoke(id){
   const d = MP.deals.find(x=>x.id===id);
-  if(!d || d.dir!=='out' || d.st!=='work') return;
+  if(!d || d.dir!=='out' || (d.st!=='work' && d.st!=='new')) return;
   d.st = 'wait'; mpSave();
   toast('Исполнитель сдал работу — проверь и подтверди получение');
+  mpDealChatNote(d, 'Исполнитель отметил работу как сданную — на проверке у покупателя.');
   mpRenderCab();
+}
+/* снять эскроу-холд (реальные деньги только если сделка их реально держит) */
+function mpReleaseHold(d){
+  if(d.held){ WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave(); d.held = false; }
+}
+/* возврат покупателю: холд -> баланс, откат комиссии */
+function mpRefundBuyer(d){
+  if(d.held){
+    WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
+    walletAdd(d.sum, 'Возврат по сделке Биржи');
+    okoEarn(-Math.round(d.sum*MP_FEE*100)/100, 'Возврат комиссии Биржи');
+    d.held = false;
+  }
+}
+function mpDealCancel(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.dir!=='out' || !MP_ST_OPEN(d.st)) return;
+  showPopup({ico:'back', title:'Отменить сделку?', body:'Сделка «'+esc(d.t)+'» будет отменена, а '+fmtMoney(d.sum)+' из эскроу вернутся на кошелёк.',
+    actions:[
+      {label:'Оставить', ghost:true, onclick:()=>closePopup()},
+      {label:'Отменить и вернуть', onclick:()=>{ closePopup(); mpRefundBuyer(d); d.st='cancel'; mpSave();
+        toast('Сделка отменена · '+fmtMoney(d.sum)+' возвращены на кошелёк');
+        mpDealChatNote(d,'Покупатель отменил сделку. Эскроу возвращён на кошелёк.'); mpRenderCab(); }}
+    ]});
+}
+function mpDealDispute(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='wait') return;
+  d.st = 'dispute'; mpSave();
+  if(typeof ADMIN!=='undefined' && ADMIN.moder){
+    ADMIN.moder.unshift({t:'Спор по сделке: «'+d.t+'» — '+fmtMoney(d.sum), by:'@'+(PROFILE.nick||'user'), kind:'Биржа'});
+    if(ADMIN.kpi) ADMIN.kpi.moder = ADMIN.moder.length;
+  }
+  toast('Спор открыт — деньги заморожены, модерация OKO подключится');
+  mpDealChatNote(d,'Открыт спор. Средства заморожены до решения модерации OKO.');
+  mpRenderCab();
+}
+function mpDealResolve(id, outcome){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d || d.st!=='dispute') return;
+  if(outcome==='refund'){
+    if(d.dir==='out') mpRefundBuyer(d);
+    d.st = 'cancel'; toast('Спор решён в пользу возврата · '+fmtMoney(d.sum)+' вернулись');
+    mpDealChatNote(d,'Спор решён: средства возвращены покупателю.');
+    mpSave(); mpRenderCab();
+  } else {
+    mpDealComplete(d); // завершение с обычной логикой (выручка/снятие холда)
+  }
+}
+
+/* ---------- чат по сделке: связка эскроу с мессенджером ---------- */
+function mpDealChat(d){
+  let chat = (d.chatId && CHATS.find(c=>c.id===d.chatId)) || CHATS.find(c=>c.name===d.n);
+  if(!chat){
+    const id = 'deal-'+d.id;
+    chat = {id, ava:(d.n||'?')[0], name:d.n, kind:'direct', nick:(d.n||'user').toLowerCase().replace(/\s/g,'_'),
+      kindIcon:null, preview:'Сделка: '+d.t, time:nowT(), unread:0, online:true,
+      msgs:[{kind:'sys', body:'Сделка по объявлению «'+d.t+'» · '+fmtMoney(d.sum)+' · '+(d.dir==='in'?'вы продавец':'вы покупатель')},
+            {kind:'sys', body:'Эскроу OKO: деньги под защитой до подтверждения выполнения'}]};
+    CHATS.unshift(chat);
+  }
+  d.chatId = chat.id;
+  return chat;
+}
+function mpDealChatNote(d, text){
+  const chat = (d.chatId && CHATS.find(c=>c.id===d.chatId)) || CHATS.find(c=>c.name===d.n);
+  if(!chat) return;
+  chat.msgs.push({kind:'sys', body:'Сделка · '+MP_ST[d.st].t+': '+text});
+  chat.preview = text; chat.time = nowT();
+  if(typeof currentChat!=='undefined' && currentChat===chat && typeof openConv==='function') openConv(chat.id);
+  if(typeof renderChatList==='function' && document.getElementById('screen-chats')) renderChatList();
+}
+function mpOpenDealChat(id){
+  const d = MP.deals.find(x=>x.id===id);
+  if(!d) return;
+  const chat = mpDealChat(d);
+  mpSave();
+  closeSheet();
+  showTab('chats');
+  if(typeof renderChatList==='function') renderChatList();
+  openConv(chat.id);
 }
 
 /* ================= ОТЗЫВЫ ПОСЛЕ СДЕЛКИ ================= */
@@ -16776,7 +18010,7 @@ function mpInjectMarket(){
   if(!root) return;
   const quick = root.querySelector('.mk-quick');
   if(!quick || document.getElementById('mpCabRow')) return;
-  const active = MP.deals.filter(d=>d.st!=='done').length;
+  const active = MP.deals.filter(d=>MP_ST_OPEN(d.st)).length;
   const row = document.createElement('button');
   row.id = 'mpCabRow'; row.className = 'mp-cab-row'; row.onclick = mpOpenCabinet;
   row.innerHTML = `<span class="mp-cab-ic">${I('crown')}</span>
@@ -16821,7 +18055,21 @@ function mpDecorateCards(){
 }
 if(typeof renderMarketListSoft==='function'){
   const _prevRMLS = renderMarketListSoft;
-  renderMarketListSoft = function(){ _prevRMLS.apply(this, arguments); mpDecorateCards(); };
+  renderMarketListSoft = function(){
+    const box = document.getElementById('mkResults');
+    if(box) box.classList.remove('mp-cascade'); // печать в поиске не должна каждый раз анимировать заново
+    _prevRMLS.apply(this, arguments);
+    mpDecorateCards();
+  };
+}
+/* каскадное появление карточек — только при полном входе в список (не на каждый символ поиска) */
+if(typeof renderMarketList==='function'){
+  const _prevRML = renderMarketList;
+  renderMarketList = function(){
+    _prevRML.apply(this, arguments);
+    const box = document.getElementById('mkResults');
+    if(box){ void box.offsetWidth; box.classList.add('mp-cascade'); }
+  };
 }
 
 /* заказ на бирже: покупка уже патчена wallet (эскроу+комиссия) — только читаем результат */
@@ -16832,8 +18080,16 @@ orderListing = function(id){
   if(WALLET.hold <= holdBefore) return; // оплата не прошла — сделку не регистрируем
   const l = LISTINGS.find(x=>x.id===id);
   if(!l) return;
-  MP.deals.unshift({id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id});
+  const d = {id:'d'+Date.now(), t:l.t, n:l.n, sum:l.p, st:'work', dir:'out', at:Date.now(), lid:l.id, held:true, chatId:'seller-'+id};
+  MP.deals.unshift(d);
   mpSave();
+  // связка с мессенджером: в диалоге продавца отмечаем эскроу-защиту
+  const chat = CHATS.find(c=>c.id==='seller-'+id) || CHATS.find(c=>c.name===l.n);
+  if(chat){ d.chatId = chat.id;
+    chat.msgs.push({kind:'sys', body:'Заказ оформлен · '+fmtMoney(l.p)+' в эскроу OKO до подтверждения выполнения'});
+    chat.preview = 'Эскроу: '+fmtMoney(l.p)+' в холде'; chat.time = nowT();
+    if(typeof renderChatList==='function' && document.getElementById('screen-chats')) renderChatList();
+  }
   const sheet = document.getElementById('sheet-mpCab');
   if(sheet && sheet.classList.contains('open')) mpRenderCab();
 };
@@ -16991,39 +18247,50 @@ if(typeof admModer==='function'){
   };
 }
 
-/* ================= ФИЛЬТР «ТОЛЬКО ПРОВЕРЕННЫЕ» ================= */
+/* ================= ФИЛЬТРЫ: город + «только проверенные» ================= */
 if(typeof mkFilters.mpVerif==='undefined') mkFilters.mpVerif = false;
+if(typeof mkFilters.city==='undefined')    mkFilters.city   = '';
+function mpCities(){
+  const seen = [];
+  LISTINGS.forEach(l=>{ if(!l.my && l.city && seen.indexOf(l.city)<0) seen.push(l.city); });
+  return seen;
+}
 const _prevMkApplyFiltersMp = mkApplyFilters;
 mkApplyFilters = function(arr){
   arr = _prevMkApplyFiltersMp(arr);
+  if(mkFilters.city)   arr = arr.filter(l=>l.city===mkFilters.city);
   if(mkFilters.mpVerif) arr = arr.filter(mpIsVerified);
   return arr;
 };
 const _prevActiveFilterCountMp = activeFilterCount;
-activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0); };
+activeFilterCount = function(){ return _prevActiveFilterCountMp() + (mkFilters.mpVerif?1:0) + (mkFilters.city?1:0); };
 const _prevResetFiltersMp = resetFilters;
-resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; };
+resetFilters = function(){ _prevResetFiltersMp(); mkFilters.mpVerif = false; mkFilters.city = ''; };
 const _prevRenderFiltersMp = renderFilters;
 renderFilters = function(){
   _prevRenderFiltersMp();
   const v = document.getElementById('filtersView');
   if(!v || v.querySelector('.mp-fver-wrap')) return;
   const btnRow = v.lastElementChild; // строка «Сбросить / Показать»
+  const cities = mpCities();
+  const cityChips = [['','Любой']].concat(cities.map(c=>[c,c]))
+    .map(([val,lab])=>`<button class="f-chip ${mkFilters.city===val?'on':''}" onclick="mpSetCity('${val.replace(/'/g,"\\'")}')">${val?I('pos'):''}${lab}</button>`).join('');
   const w = document.createElement('div');
   w.className = 'mp-fver-wrap';
-  w.innerHTML = `<p class="f-lab">Продавец</p>
+  w.innerHTML = `<p class="f-lab">${I('pos')} Город</p>
+    <div class="f-row mp-city-row">${cityChips}</div>
+    <p class="f-lab">Продавец</p>
     <button class="f-chip mp-fver ${mkFilters.mpVerif?'on':''}" onclick="mpToggleVerif()">${I('verified')} Только проверенные</button>
     <small>значок OKO или рейтинг продавца 4.8+</small>`;
   v.insertBefore(w, btnRow);
 };
-function mpToggleVerif(){
-  // сохраняем введённую цену — перерисовка фильтров её не съест
+function mpKeepPrice(){
   const mn = document.getElementById('fMin'), mx = document.getElementById('fMax');
   if(mn) mkFilters.min = (mn.value||'').replace(/\D/g,'');
   if(mx) mkFilters.max = (mx.value||'').replace(/\D/g,'');
-  mkFilters.mpVerif = !mkFilters.mpVerif;
-  renderFilters();
 }
+function mpToggleVerif(){ mpKeepPrice(); mkFilters.mpVerif = !mkFilters.mpVerif; renderFilters(); }
+function mpSetCity(city){ mpKeepPrice(); mkFilters.city = city; renderFilters(); }
 
 /* ================= ФОТО В ОБЪЯВЛЕНИИ (реальная загрузка, downscale, галерея) =================
    База отдаёт .lf-photo как заглушку-тост и не поддерживает фото. Здесь — рабочая загрузка
@@ -17399,20 +18666,26 @@ function faDecorate(){
     merged.forEach(el=>list.appendChild(el));
   }
 
-  /* один аккуратный чип «почему показано» + галочка verified — DOM-проходом, без дублей */
+  /* метки «Канал»/«В тренде»/«Реклама» + чип «почему показано» + галочка verified — без дублей */
   list.querySelectorAll('article.post').forEach(art=>{
     const p = postById(faIdOf(art)); if(!p) return;
-    /* у рекламы уже есть бейдж «Реклама» в имени, у топ-поста — «В тренде»:
-       второй чип «почему» был бы дублем-шумом → показываем только осмысленный */
-    const nameChip = art.querySelector('.head .name .chip');
     const head = art.querySelector('.head');
+    const nameEl = art.querySelector('.head .name');
+    /* у рекламы уже есть бейдж «Реклама», у топ-поста — «В тренде» (ядро) */
+    let nameChip = nameEl && nameEl.querySelector('.chip');
+    const w = faWhy(p);
+    /* «Канал» — информ-метка для органических каналов без своего чипа и без персонального сигнала
+       (заменяет собой безликое «Популярно», а не дублирует его) */
+    if(nameEl && !nameChip && !p.promoted && w.cls === 'hot' && /канал/i.test(p.sub || '')){
+      nameEl.insertAdjacentHTML('beforeend', ' <span class="chip fa-chan">Канал</span>');
+      nameChip = nameEl.querySelector('.fa-chan');
+    }
+    /* второй чип «почему» был бы дублем-шумом при наличии метки → показываем только осмысленный */
     if(head && !art.querySelector('.fa-why') && !p.promoted){
-      const w = faWhy(p);
       if(!(w.cls === 'hot' && nameChip)){
         head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
       }
     }
-    const nameEl = art.querySelector('.head .name');
     /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
        поставить .vs-badge — не дорисовываем вторую галочку поверх (устраняет дубль в rec) */
     if(nameEl && !nameEl.querySelector('.fa-vb, .vs-badge') && typeof vBadge === 'function' && VERIFIED.has(p.name)){
@@ -17433,10 +18706,43 @@ function faDecorate(){
   }
 }
 
+/* ---------- красивое пустое состояние ленты (иллюстрация + CTA) ---------- */
+function faEmptyArt(){
+  return `<svg class="fa-empty-art" viewBox="0 0 120 120" fill="none" aria-hidden="true">`+
+    `<rect x="22" y="30" width="76" height="62" rx="13" stroke="currentColor" stroke-width="4" opacity=".32"/>`+
+    `<circle cx="40" cy="49" r="7.5" fill="var(--lime)"/>`+
+    `<rect x="55" y="44" width="33" height="5" rx="2.5" fill="currentColor" opacity=".42"/>`+
+    `<rect x="55" y="54" width="21" height="5" rx="2.5" fill="currentColor" opacity=".26"/>`+
+    `<rect x="34" y="70" width="52" height="5" rx="2.5" fill="currentColor" opacity=".24"/>`+
+    `<rect x="34" y="80" width="36" height="5" rx="2.5" fill="currentColor" opacity=".16"/>`+
+    `<g class="fa-empty-wave" stroke="var(--lime)" stroke-width="4.4" stroke-linecap="round" fill="none">`+
+      `<path d="M90 24a18 18 0 0 1 0 26"/>`+
+      `<path d="M98 16a30 30 0 0 1 0 42" opacity=".55"/>`+
+    `</g></svg>`;
+}
+function faGoRec(){
+  const b = [...document.querySelectorAll('#screen-feed .feed-tabs button')]
+    .find(x => /'rec'/.test(x.getAttribute('onclick') || ''));
+  if(b) b.click();
+}
+function faRenderEmpty(list, kind){
+  const rec = kind === 'rec';
+  const title = rec ? 'Пока пусто' : 'Тут появятся посты';
+  const text  = rec
+    ? 'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.'
+    : 'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.';
+  const cta = rec
+    ? `<button class="fa-empty-cta" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`
+    : `<button class="fa-empty-cta" type="button" onclick="faGoRec()">${I('compass')}<span>Открыть рекомендации</span></button>`;
+  list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span>${cta}</div>`;
+}
+
 const _faPrevRenderFeed = renderFeed;
 renderFeed = function(kind){
   kind = kind || curFeedKind || 'sub';
   _faPrevRenderFeed(kind);           /* «Подписки» не трогаем — декор только для rec */
+  const list = document.getElementById('feedList');
+  if(list && !list.querySelector('article.post')){ faRenderEmpty(list, kind); return; }
   if(kind === 'rec') faDecorate();
 };
 
@@ -17539,6 +18845,7 @@ function faLoadMore(){
    поле ввода с аватаром и контекстом «Ответ …». Модель дополняется на лету, session-only. */
 FA.cidSeq = 900000;
 FA.replyTo = null;
+const FA_CMT_PAGE = 6;   /* сколько корневых комментариев показываем до «показать ещё» */
 
 function faPlural(n, one, few, many){
   const m10 = n % 10, m100 = n % 100;
@@ -17636,7 +18943,19 @@ function faRenderComments(id){
     list.innerHTML = `<div class="fac-empty">${I('comment')}<b>Пока тихо</b><span>Стань первым, кто оставит комментарий</span></div>`;
     return;
   }
-  list.innerHTML = `<div class="fac-wrap">${p.comments.map(c => faCommentHTML(id, c, false)).join('')}</div>`;
+  const shown = Math.min(p.comments.length, p._cmtShown || FA_CMT_PAGE);
+  const items = p.comments.slice(0, shown).map(c => faCommentHTML(id, c, false)).join('');
+  const rest = p.comments.length - shown;
+  const more = rest > 0
+    ? `<button class="fac-more" type="button" onclick="faMoreComments(${id})">`+
+        `<span>Показать ещё ${rest} ${faPlural(rest, 'комментарий', 'комментария', 'комментариев')}</span>${I('chev')}</button>`
+    : '';
+  list.innerHTML = `<div class="fac-wrap">${items}</div>${more}`;
+}
+function faMoreComments(id){
+  const p = postById(id); if(!p) return;
+  p._cmtShown = (p._cmtShown || FA_CMT_PAGE) + FA_CMT_PAGE;
+  faRenderComments(id);
 }
 function faUpdateCardCount(p){
   if(!p) return;
@@ -17692,6 +19011,7 @@ function faClearReply(){
 openComments = function(id){
   const p = postById(id); if(!p) return;
   commentsFor = id;
+  p._cmtShown = FA_CMT_PAGE;          /* каждое открытие — с первой «страницы» */
   faClearReply();
   faRenderComments(id);
   openSheet('comments');
@@ -17715,6 +19035,7 @@ addComment = function(){
   inp.value = '';
   faClearReply();
   if(p.topic) faSignal(p.topic, 0.7);
+  p._cmtShown = Math.max(p._cmtShown || FA_CMT_PAGE, p.comments.length);  /* свой коммент всегда виден */
   faRenderComments(commentsFor);
   faUpdateCardCount(p);
   const list = document.getElementById('cmtList');
@@ -17753,6 +19074,12 @@ addComment = function(){
       'Ответить':'Reply','Скрыть ответы':'Hide replies','Пока тихо':'No comments yet',
       'Стань первым, кто оставит комментарий':'Be the first to comment',
       'Написать комментарий…':'Write a comment…','Комментарий добавлен':'Comment added',
+      'Канал':'Channel','Открыть рекомендации':'Open recommendations',
+      'Пока пусто':'Nothing here yet','Тут появятся посты':'Posts will appear here',
+      'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.':
+        'No fresh posts found. Refresh and the algorithm will build a new feed for you.',
+      'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.':
+        'Follow channels and authors — their posts show up here. Meanwhile, check the recommendations.',
     };
     for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
   }
