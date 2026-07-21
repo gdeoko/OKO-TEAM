@@ -142,11 +142,11 @@ function hm_hex_points(float $cx, float $cy, float $r): string {
     return implode(' ', $pts);
 }
 
-/** Цвет заливки по интенсивности 0..1 (пергамент → золото → тёмная бронза). */
+/** Цвет заливки по интенсивности 0..1 (тёмная панель → золото → тёмная бронза). */
 function hm_heat_color(float $t): string {
     $t = max(0.0, min(1.0, $t));
     $stops = [
-        [0.00, [246, 238, 219]],
+        [0.00, [43, 36, 20]],
         [0.55, [216, 188, 99]],
         [1.00, [139, 111, 31]],
     ];
@@ -196,7 +196,7 @@ function render_regions_heatmap(array $opts = []): string {
             <?php foreach ($layout as $key => [$cx, $cy]):
                 $cnt = $stats['by_district'][$key] ?? 0;
                 $t = $isEmpty ? 0 : $cnt / $max;
-                $fill = $isEmpty ? '#F3EEE0' : hm_heat_color($t);
+                $fill = $isEmpty ? '#2b2414' : hm_heat_color($t);
                 $textColor = hm_is_dark($fill) ? '#FFF8E1' : '#3a2e10';
                 [$label, $full] = $districts[$key];
             ?>
@@ -249,14 +249,14 @@ function render_regions_heatmap(array $opts = []): string {
     .hm-hex:hover polygon,.hm-hex:focus polygon{transform:scale(1.06);filter:drop-shadow(0 6px 14px rgba(139,111,31,.35))}
     .hm-scale{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:10px;font-size:.78rem;color:var(--muted)}
     .hm-scale i{display:block;width:120px;height:8px;border-radius:6px}
-    .hm-top h4{margin:0 0 14px;font-family:var(--ff-head,serif);font-size:1.15rem;color:var(--gold-dark)}
+    .hm-top h4{margin:0 0 14px;font-family:var(--ff-serif,serif);font-size:1.15rem;color:var(--gold-2)}
     .hm-empty{color:var(--muted);font-size:.92rem}
     .hm-city-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
     .hm-city-list li{display:grid;grid-template-columns:1fr 2fr auto;align-items:center;gap:10px}
-    .hm-city-name{font-weight:600;font-size:.92rem;color:var(--ink)}
-    .hm-city-bar{display:block;height:8px;background:rgba(139,111,31,.12);border-radius:6px;overflow:hidden}
+    .hm-city-name{font-weight:600;font-size:.92rem;color:var(--text)}
+    .hm-city-bar{display:block;height:8px;background:var(--gold-soft);border-radius:6px;overflow:hidden}
     .hm-city-bar i{display:block;height:100%;background:var(--grad-gold,linear-gradient(90deg,#D8BC63,#8B6F1F));border-radius:6px}
-    .hm-city-cnt{font-size:.86rem;color:var(--gold-dark);font-weight:700;min-width:22px;text-align:right}
+    .hm-city-cnt{font-size:.86rem;color:var(--gold-2);font-weight:700;min-width:22px;text-align:right}
     .hm-note{margin-top:16px;font-size:.82rem;color:var(--muted)}
     @media (max-width:860px){.hm-grid{grid-template-columns:1fr}}
     </style>

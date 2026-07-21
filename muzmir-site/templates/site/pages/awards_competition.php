@@ -55,7 +55,7 @@ ob_start(); ?>
     <div class="grid grid-3">
       <?php foreach ($byItem as $item => $kinds): $ic = awards_page_icon_key($item); ?>
         <div class="card reveal">
-          <div style="width:56px;height:56px;border-radius:50%;background:var(--gold-light);color:var(--gold-dark);
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--gold-soft);color:var(--gold);border:1px solid var(--glass-brd);
                       display:flex;align-items:center;justify-content:center;margin-bottom:16px">
             <span style="width:28px;height:28px"><?= $icons[$ic] ?></span>
           </div>
@@ -64,7 +64,7 @@ ob_start(); ?>
             <?php foreach ($kinds as $kind => $price): ?>
               <li style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)">
                 <span style="color:var(--muted)"><?= h($kindLabel[$kind] ?? $kind) ?></span>
-                <b style="color:var(--gold-dark)"><?= $price > 0 ? h(money($price)) : 'Бесплатно' ?></b>
+                <b style="color:var(--gold-2)"><?= $price > 0 ? h(money($price)) : 'Бесплатно' ?></b>
               </li>
             <?php endforeach; ?>
           </ul>

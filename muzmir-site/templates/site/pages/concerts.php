@@ -68,7 +68,7 @@ ob_start(); ?>
 })();
 </script>
 <style>
-.concert-embed{position:relative;width:100%;aspect-ratio:16/9;background:var(--navy)}
+.concert-embed{position:relative;width:100%;aspect-ratio:16/9;background:#0e0c10}
 .concert-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .concert-embed-stub{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5)}
 </style>
@@ -76,7 +76,7 @@ ob_start(); ?>
 <section class="section">
   <div class="container" style="text-align:center;max-width:520px">
     <div class="reveal">
-      <div style="width:74px;height:74px;margin:0 auto 20px;border-radius:50%;background:var(--gold-light);color:var(--gold-dark);
+      <div style="width:74px;height:74px;margin:0 auto 20px;border-radius:50%;background:var(--gold-soft);color:var(--gold);border:1px solid var(--glass-brd);
                   display:flex;align-items:center;justify-content:center"><span style="width:34px;height:34px"><?= $icoSoon ?></span></div>
       <h2>Скоро</h2>
       <p style="color:var(--muted)">Видеозаписи концертных программ появятся здесь в ближайшее время.</p>

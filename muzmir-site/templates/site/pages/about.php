@@ -13,8 +13,8 @@ $partners = [
 <?php ob_start(); ?>
 <style>
 .article-cap p:first-of-type::first-letter{
-  font-family:var(--ff-head);font-size:3.4em;line-height:.78;float:left;
-  padding:.04em .1em 0 0;color:var(--gold-dark);font-weight:700;
+  font-family:var(--ff-serif);font-size:3.4em;line-height:.78;float:left;
+  padding:.04em .1em 0 0;color:var(--gold-2);font-weight:700;
 }
 </style>
 
@@ -42,7 +42,7 @@ $partners = [
       <?php foreach ($partners as [$name, $descr]): ?>
         <div class="card reveal">
           <h3>«<?= h($name) ?>»</h3>
-          <p style="color:var(--ink)"><?= h($descr) ?></p>
+          <p style="color:var(--text-dim)"><?= h($descr) ?></p>
         </div>
       <?php endforeach; ?>
     </div>
@@ -56,7 +56,7 @@ $partners = [
       <h2>Оргкомитет</h2>
       <div class="gold-rule"></div>
     </div>
-    <div class="reveal" style="color:var(--ink)">
+    <div class="reveal" style="color:var(--text-dim)">
       <p>Работу Культурного центра «Музыкальный Мир» организует Оргкомитет. Он формирует положения конкурсов, утверждает состав жюри и следит за соблюдением правил на каждом этапе - от приёма заявок до выдачи наградных документов.</p>
       <p>Оргкомитет возглавляет Председатель Оргкомитета, который утверждает итоговые решения и представляет центр во взаимодействии с партнёрами и учреждениями культуры.</p>
       <p>В состав жюри входят педагоги, деятели культуры и искусства с профильным образованием и опытом работы. Члены жюри оценивают конкурсные работы по утверждённым критериям и формируют результаты независимо друг от друга.</p>

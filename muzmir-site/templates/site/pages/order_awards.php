@@ -111,16 +111,16 @@ ob_start(); ?>
         </div>
       </div>
 
-      <div class="card" style="background:var(--gold-light);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+      <div class="card" style="background:var(--gold-soft);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px">
         <span style="font-weight:700">Сумма к оплате</span>
-        <b id="totalDisplay" style="font-family:var(--ff-head);font-size:1.6rem;color:var(--gold-dark)">0 ₽</b>
+        <b id="totalDisplay" style="font-family:var(--ff-display);font-size:1.6rem;color:var(--gold-2)">0 ₽</b>
       </div>
 
       <div class="field">
         <label>Способ оплаты</label>
         <label class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer">
           <input type="radio" name="pay_method" value="yukassa" checked style="width:auto;flex:none">
-          <span style="width:30px;height:30px;color:var(--gold-dark);flex:none"><?= $icoCard ?></span>
+          <span style="width:30px;height:30px;color:var(--gold-2);flex:none"><?= $icoCard ?></span>
           <span>
             <b>ЮKassa</b> - банковской картой<br>
             <span class="hint">Приём платежей подключается. После оформления заказа с Вами свяжется Оргкомитет.</span>

@@ -21,8 +21,8 @@ $tasks = [
 ob_start(); ?>
 <style>
 .article-cap p:first-of-type::first-letter{
-  font-family:var(--ff-head);font-size:3.4em;line-height:.78;float:left;
-  padding:.04em .1em 0 0;color:var(--gold-dark);font-weight:700;
+  font-family:var(--ff-serif);font-size:3.4em;line-height:.78;float:left;
+  padding:.04em .1em 0 0;color:var(--gold-2);font-weight:700;
 }
 </style>
 
@@ -44,13 +44,13 @@ ob_start(); ?>
     <div class="grid grid-2">
       <div class="card reveal">
         <h3>Цели</h3>
-        <ul style="padding-left:20px;color:var(--ink)">
+        <ul style="padding-left:20px;color:var(--text-dim)">
           <?php foreach ($goals as $g): ?><li style="margin-bottom:10px"><?= h($g) ?></li><?php endforeach; ?>
         </ul>
       </div>
       <div class="card reveal">
         <h3>Задачи</h3>
-        <ul style="padding-left:20px;color:var(--ink)">
+        <ul style="padding-left:20px;color:var(--text-dim)">
           <?php foreach ($tasks as $t): ?><li style="margin-bottom:10px"><?= h($t) ?></li><?php endforeach; ?>
         </ul>
       </div>
@@ -68,11 +68,11 @@ ob_start(); ?>
     <div class="grid grid-2">
       <div class="card reveal">
         <h3>Глава 57 ГК РФ «Публичный конкурс»</h3>
-        <p style="color:var(--ink)">Проведение конкурсов регулируется главой 57 Гражданского кодекса Российской Федерации (статьи 1057-1061). Она определяет порядок объявления конкурса, права и обязанности организатора и участников, условия выдачи наградных материалов, а также порядок разрешения споров.</p>
+        <p style="color:var(--text-dim)">Проведение конкурсов регулируется главой 57 Гражданского кодекса Российской Федерации (статьи 1057-1061). Она определяет порядок объявления конкурса, права и обязанности организатора и участников, условия выдачи наградных материалов, а также порядок разрешения споров.</p>
       </div>
       <div class="card reveal">
         <h3>Указ Президента РФ №808 от 24.12.2014</h3>
-        <p style="color:var(--ink)">Указ утверждает Основы государственной культурной политики. Деятельность Культурного центра «Музыкальный Мир» соответствует заложенным в документе принципам поддержки творческой самореализации граждан, сохранения культурного наследия и укрепления единого культурного пространства страны.</p>
+        <p style="color:var(--text-dim)">Указ утверждает Основы государственной культурной политики. Деятельность Культурного центра «Музыкальный Мир» соответствует заложенным в документе принципам поддержки творческой самореализации граждан, сохранения культурного наследия и укрепления единого культурного пространства страны.</p>
       </div>
     </div>
   </div>

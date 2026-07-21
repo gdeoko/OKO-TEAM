@@ -29,7 +29,7 @@ ob_start(); ?>
             <span class="badge badge--<?= $c['status']==='open' ? 'open' : 'closed' ?>"><?= $c['status']==='open' ? 'Приём открыт' : ($c['status']==='judging' ? 'Идёт оценка' : 'Завершён') ?></span>
             <span class="badge badge--intl"><?= $c['type']==='international' ? 'Международный' : 'Всероссийский' ?></span>
             <h3 style="margin-top:12px;display:flex;align-items:center;gap:10px">
-              <span style="width:26px;height:26px;color:var(--gold-dark);flex:none"><?= $icoAward ?></span>
+              <span style="width:26px;height:26px;color:var(--gold-2);flex:none"><?= $icoAward ?></span>
               <?= h($c['name']) ?>
             </h3>
             <p style="color:var(--muted)">Образцы наградного материала и прайс на оригиналы дипломов, кубков и медалей.</p>

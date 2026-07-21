@@ -223,34 +223,34 @@ ob_start(); ?>
 <style>
 .cal-yearbar{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px;flex-wrap:wrap}
 .cal-yearnav{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;
-  border:1.5px solid var(--gold);color:var(--gold-dark);flex:none}
-.cal-yearnav:hover{background:var(--grad-gold);color:#fff;border-color:transparent}
+  border:1.5px solid var(--gold);color:var(--gold-2);flex:none}
+.cal-yearnav:hover{background:var(--grad-gold);color:#1a1206;border-color:transparent}
 .cal-yearnav svg{width:18px;height:18px}
 .cal-years{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.cal-year-chip{padding:9px 18px;border-radius:999px;border:1.5px solid var(--gold);font-weight:700;color:var(--gold-dark)}
-.cal-year-chip.is-active{background:var(--grad-gold);color:#fff;border-color:transparent;box-shadow:var(--shadow-btn)}
+.cal-year-chip{padding:9px 18px;border-radius:999px;border:1.5px solid var(--gold);font-weight:700;color:var(--gold-2)}
+.cal-year-chip.is-active{background:var(--grad-gold);color:#1a1206;border-color:transparent;box-shadow:var(--shadow-btn)}
 .cal-months{align-items:start}
 .cal-month{padding:22px}
 .cal-month.is-empty{opacity:.6}
 .cal-month-title{display:flex;align-items:center;gap:9px;font-size:1.05rem;margin:0 0 16px}
-.cal-month-title svg{width:20px;height:20px;color:var(--gold-dark);flex:none}
+.cal-month-title svg{width:20px;height:20px;color:var(--gold-2);flex:none}
 .cal-empty{color:var(--muted);font-size:.9rem;margin:0}
 .cal-events{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px}
 .cal-event{display:flex;gap:12px;scroll-margin-top:100px}
-.cal-day{flex:none;width:40px;height:40px;border-radius:10px;background:var(--gold-light);color:var(--gold-dark);
-  font-weight:700;font-family:var(--ff-head);display:flex;align-items:center;justify-content:center;font-size:1.05rem}
-.cal-event--results .cal-day{background:rgba(90,122,158,.15);color:var(--info)}
-.cal-event--end .cal-day{background:rgba(200,87,87,.12);color:var(--error)}
+.cal-day{flex:none;width:40px;height:40px;border-radius:10px;background:var(--gold-soft);color:var(--gold);
+  font-weight:700;font-family:var(--ff-display);display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+.cal-event--results .cal-day{background:rgba(143,188,148,.15);color:var(--mint)}
+.cal-event--end .cal-day{background:rgba(226,123,123,.14);color:var(--error)}
 .cal-event-body{display:flex;flex-direction:column;gap:4px;min-width:0}
 .cal-event-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
-.cal-event-name{font-weight:700;color:var(--ink);font-family:var(--ff-head);line-height:1.25}
-.cal-event-name:hover{color:var(--gold-dark)}
+.cal-event-name{font-weight:700;color:var(--text);font-family:var(--ff-serif);line-height:1.25}
+.cal-event-name:hover{color:var(--gold-2)}
 .cal-remind{margin-top:6px}
 .cal-remind summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px;
   font-size:.82rem;padding:7px 14px}
 .cal-remind summary::-webkit-details-marker{display:none}
 .cal-remind summary svg{width:15px;height:15px}
-.cal-remind-form{margin-top:12px;padding:14px;background:var(--parchment);border-radius:var(--radius-sm)}
+.cal-remind-form{margin-top:12px;padding:14px;background:var(--glass);border:1px solid var(--glass-brd);border-radius:var(--radius-sm)}
 .cal-remind-form .field{margin-bottom:10px}
 @media (max-width:1080px){.cal-months{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:640px){.cal-months{grid-template-columns:1fr}}
