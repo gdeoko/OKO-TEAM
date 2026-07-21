@@ -7,10 +7,12 @@
   /* СИНХРОНИЗАЦИЯ ВЫСОТЫ: убирает «пустоту» при скролле — высота приложения
      жёстко равна видимой области (visualViewport), а не 100dvh, который
      в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
+  let _okoLastH = 0;
   function okoSyncVh(){
     try{
       const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
-      if(!h) return;
+      if(!h || h === _okoLastH) return;   // не трогаем DOM, если высота не изменилась — убирает лишние reflow/моргание
+      _okoLastH = h;
       document.documentElement.style.height = h + 'px';
       document.body.style.height = h + 'px';
       const app = document.getElementById('app');

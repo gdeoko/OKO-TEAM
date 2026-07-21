@@ -238,6 +238,9 @@ nav#tabs .nav-logo{display:none}
 .post .acts button svg.i{width:18px;height:18px}
 .post .acts button.liked{color:var(--accent)}
 .post .acts button.liked svg.i{fill:currentColor}
+.post .acts button.pop svg.i{animation:likePop .32s cubic-bezier(.34,1.56,.55,1)}
+@keyframes likePop{0%{transform:scale(1)}35%{transform:scale(1.32)}70%{transform:scale(.92)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.post .acts button.pop svg.i{animation:none}}
 
 /* ============ MINIAPPS ============ */
 .ma-grid{display:grid;grid-template-columns:1fr;gap:12px}
@@ -4758,8 +4761,8 @@ img,video,canvas,svg{max-width:100%}
           <div class="msgs" id="msgs"></div>
           <div class="compose-bar" id="composeBar"></div>
           <div class="composer">
-            <button class="tool" onclick="openSheet('attach')" title="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <input id="msgInput" placeholder="Сообщение" autocomplete="off">
+            <button class="tool tool-clip" onclick="openSheet('attach')" title="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <video id="recPreview" playsinline muted style="display:none"></video>
             <div class="rec-timer" id="recTimer"><span class="dot"></span><span id="recTime">0:00</span></div>
             <button class="send" id="sendBtn"><svg class="i" id="sendIco"><use href="#i-mic"/></svg></button>
@@ -5248,7 +5251,7 @@ img,video,canvas,svg{max-width:100%}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.59</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.60</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -5998,7 +6001,7 @@ function msgHtml(m, idx){
   const ed = m.edited ? '<span class="edited">изм.</span>' : '';
   return `<div class="msg ${m.in?'in':'out'}" ${tap}>${m.who?`<div class=\"mwho\">${m.who}</div>`:''}${quote}${m.body}${ed}${time}${rx}</div>`;
 }
-function votePoll(mi, oi){ const m = currentChat.msgs[mi]; if(m.voted) return; m.voted = oi+1; renderMsgs(); }
+function votePoll(mi, oi){ const m = currentChat.msgs[mi]; if(m.voted) return; m.voted = oi+1; refreshMsg(mi); }
 function createPoll(){
   const q = document.getElementById('pollQ').value.trim();
   const opts = ['pollO1','pollO2','pollO3'].map(id=>document.getElementById(id).value.trim()).filter(Boolean);
@@ -6015,13 +6018,26 @@ function sendMoney(){
 }
 function renderMsgs(){
   const el = document.getElementById('msgs');
+  const msgs = currentChat.msgs;
   const sameChat = renderMsgs._chat === currentChat.id;
-  const prev = sameChat ? (renderMsgs._n || 0) : currentChat.msgs.length; // при открытии чата — без влёта
-  el.innerHTML = currentChat.msgs.map(msgHtml).join('');
-  const kids = el.children;
-  for(let i = prev; i < kids.length; i++) kids[i].classList.add('msg-enter');
-  const added = kids.length - prev;
-  renderMsgs._n = currentChat.msgs.length;
+  const prev = sameChat ? (renderMsgs._n || 0) : 0;
+  // ТОЛЬКО ДОЗАПИСЬ в конец (отправка/приём) — добавляем новые узлы, старые не трогаем:
+  // никакого моргания/пересборки/сброса проигрывания голосовых.
+  const pureAppend = sameChat && el.children.length === prev && msgs.length > prev;
+  let added = 0;
+  if(pureAppend){
+    const frag = document.createElement('div');
+    frag.innerHTML = msgs.slice(prev).map((m,i)=>msgHtml(m, prev + i)).join('');
+    while(frag.firstElementChild){ const n = frag.firstElementChild; n.classList.add('msg-enter'); el.appendChild(n); }
+    added = msgs.length - prev;
+  } else {
+    // открытие чата / удаление / полная перерисовка
+    el.innerHTML = msgs.map(msgHtml).join('');
+    const start = sameChat ? prev : msgs.length;   // при открытии чата — без влёта
+    for(let i = start; i < el.children.length; i++) el.children[i].classList.add('msg-enter');
+    added = Math.max(0, el.children.length - start);
+  }
+  renderMsgs._n = msgs.length;
   renderMsgs._chat = currentChat.id;
   // плавный доскролл при новых сообщениях, мгновенный — при открытии чата
   if(sameChat && added > 0 && el.scrollHeight - el.scrollTop - el.clientHeight < 400){
@@ -6029,6 +6045,15 @@ function renderMsgs(){
   } else {
     el.scrollTop = el.scrollHeight;
   }
+}
+/* точечная перерисовка ОДНОГО сообщения (реакция/голос/правка) — без пересборки треда */
+function refreshMsg(idx){
+  const el = document.getElementById('msgs'); if(!el) return;
+  const node = el.children[idx]; const m = currentChat.msgs[idx];
+  if(!node || !m) { renderMsgs(); return; }
+  const tmp = document.createElement('div'); tmp.innerHTML = msgHtml(m, idx);
+  const fresh = tmp.firstElementChild;
+  if(fresh) el.replaceChild(fresh, node);
 }
 /* ===== Контекстное меню сообщения (Telegram-уровень) ===== */
 const REACTIONS = ['heart','fire','thumb','laugh','wow','sad','star','crown'];
@@ -6059,7 +6084,7 @@ function closeMsgMenu(){ document.getElementById('msgMenu').classList.remove('op
 function pickReact(idx,r){
   const m=currentChat.msgs[idx]; m.reacts=m.reacts||{};
   m.reacts[r]=(m.reacts[r]||0)===0?1:0;
-  closeMsgMenu(); renderMsgs();
+  closeMsgMenu(); refreshMsg(idx);
   // в живом чате — транслируем реакцию всем участникам
   if(currentChat.cid && m.sid && window.liveChannel){
     try{ liveChannel.send({ type:'broadcast', event:'reaction', payload:{ user:myId, sid:m.sid, r } }); }catch(e){}
@@ -6071,7 +6096,7 @@ function applyLiveReaction(sid, r){
     if(!c.cid || !c.msgs) continue;
     const m = c.msgs.find(x=>x.sid===sid);
     if(m){ m.reacts=m.reacts||{}; m.reacts[r]=(m.reacts[r]||0)+1;
-      if(currentChat && currentChat.id===c.id) renderMsgs();
+      if(currentChat && currentChat.id===c.id){ const i=c.msgs.indexOf(m); refreshMsg(i); }
       return;
     }
   }
@@ -6415,9 +6440,10 @@ function sendText(){
   const text = inp.value.trim();
   if(!text || !currentChat) return;
   if(editState){ // редактирование существующего сообщения
-    const m = currentChat.msgs[editState.idx];
+    const ei = editState.idx;
+    const m = currentChat.msgs[ei];
     if(m){ m.body = text; m.edited = true; }
-    editState = null; inp.value=''; showComposeBar(); syncSendIcon(); renderMsgs();
+    editState = null; inp.value=''; showComposeBar(); syncSendIcon(); refreshMsg(ei);
     return;
   }
   const msg = {in:0, t:nowT(), kind:'text', body:text};
@@ -6519,10 +6545,47 @@ function openSheet(id){
   document.getElementById('sheet-'+id).classList.add('open');
 }
 function closeSheet(){
-  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+  document.querySelectorAll('.sheet').forEach(s=>{ s.classList.remove('open'); s.style.transform=''; s.style.transition=''; });
   document.getElementById('sheetOverlay').classList.remove('open');
   document.getElementById('newChatForm').style.display='none';
 }
+/* ===== BOTTOM-SHEET: перетаскивание вниз для закрытия (ручка как в Telegram/iOS) ===== */
+(function sheetDrag(){
+  let cur=null, startY=0, dy=0, dragging=false, mouse=false;
+  function pointY(e){ return e.touches ? e.touches[0].clientY : e.clientY; }
+  function onStart(e, isMouse){
+    const t = e.target;
+    if(t.closest && t.closest('input,textarea,select,button,a,.switch,.stickers-grid,.cp-emoji-grid')) { if(isMouse) return; }
+    const sheet = t.closest && t.closest('.sheet.open');
+    if(!sheet) return;
+    const rect = sheet.getBoundingClientRect();
+    const y = pointY(e);
+    const fromHandle = (y - rect.top) < 44;                 // зона ручки
+    if(!fromHandle && (isMouse || sheet.scrollTop > 4)) return;
+    cur=sheet; startY=y; dy=0; dragging=true; mouse=!!isMouse;
+    sheet.style.transition='none';
+  }
+  function onMove(e){
+    if(!dragging||!cur) return;
+    dy = pointY(e) - startY;
+    if(dy<0) dy = dy*0.22;
+    cur.style.transform = 'translateX(-50%) translateY('+Math.max(0,dy)+'px)';
+    if(dy>2 && e.cancelable) e.preventDefault();
+  }
+  function onEnd(){
+    if(!dragging||!cur) return;
+    const sheet=cur; dragging=false; cur=null;
+    sheet.style.transition='';
+    if(dy>96){ sheet.style.transform='translateX(-50%) translateY(105%)'; setTimeout(closeSheet,180); }
+    else sheet.style.transform='translateX(-50%) translateY(0)';
+  }
+  document.addEventListener('touchstart', e=>onStart(e,false), {passive:true});
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('touchend', onEnd, {passive:true});
+  document.addEventListener('mousedown', e=>onStart(e,true));
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+})();
 let toastTimer = null;
 function toast(msg){
   let t = document.getElementById('toast');
@@ -6574,22 +6637,26 @@ function renderFeed(kind){
   if(kind==='rec') arr.sort((a,b)=>feedScore(b)-feedScore(a));
   else arr.sort((a,b)=>(b.promoted?1:0)-(a.promoted?1:0)); // продвинутые чуть выше и в подписках
   const note = kind==='rec' ? `<div style="padding:10px 18px 0"><span class="dim" style="font-size:11.5px">Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram</span></div>` : '';
+  const firstPaint = document.getElementById('feedList')._pid !== kind;
+  document.getElementById('feedList')._pid = kind;
   document.getElementById('feedList').innerHTML = note + arr.map((p,pi)=>`
-    <article class="post fade-in">
+    <article class="post${firstPaint?' fade-in':''}" data-pid="${p.id}">
       <div class="head"><div class="ava">${p.ava}</div>
         <div style="flex:1;min-width:0"><div class="name">${p.name}${p.promoted?' <span class="chip promo-chip">Реклама</span>':(kind==='rec'&&pi===0?' <span class="chip" style="font-size:9px">В тренде</span>':'')}</div><div class="sub">${p.sub}</div></div>
         <button class="post-more" onclick="openPostMenu(${p.id})">${I('more')}</button></div>
       <div class="body">${p.body}</div>
       ${p.media?`<div class="media">${I('circle-play')}<span>${p.media}</span></div>`:''}
       <div class="acts">
-        <button class="${p.liked?'liked':''}" onclick="likePost(${p.id})">${I('heart')}<i style="font-style:normal">${p.likes}</i></button>
-        <button onclick="openComments(${p.id})">${I('comment')}${p.comments.length}</button>
-        <button class="${p.reposted?'liked':''}" onclick="repost(${p.id})">${I('share')}${p.reposts}</button>
+        <button class="act-like ${p.liked?'liked':''}" onclick="likePost(${p.id})">${I('heart')}<i style="font-style:normal">${p.likes}</i></button>
+        <button onclick="openComments(${p.id})">${I('comment')}<i class="act-cmt" style="font-style:normal">${p.comments.length}</i></button>
+        <button class="act-share ${p.reposted?'liked':''}" onclick="repost(${p.id})">${I('share')}<i style="font-style:normal">${p.reposts}</i></button>
         <span style="margin-left:auto;display:inline-flex;gap:5px;align-items:center">${I('eye')}${fmtN(p.views||0)}</span>
-        <button class="${p.saved?'liked':''}" onclick="toggleSave(${p.id})">${I('bookmark')}</button>
+        <button class="act-save ${p.saved?'liked':''}" onclick="toggleSave(${p.id})">${I('bookmark')}</button>
       </div>
     </article>`).join('');
 }
+/* точечное обновление карточки поста — БЕЗ пересборки ленты (убирает моргание) */
+function feedCardEl(id){ return document.querySelector('#feedList .post[data-pid="'+id+'"]'); }
 /* меню поста: своё → продвинуть/удалить, чужое → пожаловаться/скрыть */
 function openPostMenu(id){
   const p = postById(id); if(!p) return;
@@ -6631,17 +6698,24 @@ function buyPostPromo(i){
 function likePost(id){
   const p = postById(id); if(!p) return;
   p.liked = !p.liked; p.likes += p.liked ? 1 : -1;
-  renderFeed(curFeedKind);
+  const card = feedCardEl(id); const b = card && card.querySelector('.act-like');
+  if(b){ b.classList.toggle('liked', p.liked); const n=b.querySelector('i'); if(n) n.textContent=p.likes; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  else renderFeed(curFeedKind);
 }
 function repost(id){
   const p = postById(id); if(!p) return;
   p.reposted = !p.reposted; p.reposts += p.reposted ? 1 : -1;
-  renderFeed(curFeedKind);
+  const card = feedCardEl(id); const b = card && card.querySelector('.act-share');
+  if(b){ b.classList.toggle('liked', p.reposted); const n=b.querySelector('i'); if(n) n.textContent=p.reposts; }
+  else renderFeed(curFeedKind);
   if(p.reposted) toast('Репост в твою ленту');
 }
 function toggleSave(id){
   const p = postById(id); if(!p) return;
-  p.saved = !p.saved; renderFeed(curFeedKind);
+  p.saved = !p.saved;
+  const card = feedCardEl(id); const b = card && card.querySelector('.act-save');
+  if(b) b.classList.toggle('liked', p.saved);
+  else renderFeed(curFeedKind);
   toast(p.saved ? 'Сохранено в закладки' : 'Убрано из закладок');
 }
 function openComments(id){
@@ -6660,7 +6734,9 @@ function addComment(){
   const p = postById(commentsFor); if(!p) return;
   p.comments.push({a: PROFILE.name[0], n: PROFILE.name, t});
   inp.value = '';
-  openComments(commentsFor); renderFeed(curFeedKind);
+  openComments(commentsFor);
+  const card = feedCardEl(commentsFor); const cc = card && card.querySelector('.act-cmt');
+  if(cc) cc.textContent = p.comments.length; else renderFeed(curFeedKind);
 }
 function feedTab(btn, kind){
   document.querySelectorAll('.feed-tabs button').forEach(b=>b.classList.remove('on'));
@@ -14884,7 +14960,8 @@ function hqHqView(){
       <div class="hq-head-b">
         <h3>OKO HQ — командный центр</h3>
         <small>10 агентов · 8 отделов · аптайм 99.98%<br>мозг синхронизирован ${hqHM(new Date())}</small>
-        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('eye')} Открыть 3D-штаб</button>
+        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('share')} Открыть 3D-штаб · новая вкладка</button>
+        <small class="hq-3d-note">Тяжёлый 3D вынесен из приложения — открывается отдельной страницей, чтобы не лагало.</small>
       </div>
     </div>
     ${hqOnlineBlock()}
@@ -14938,66 +15015,15 @@ function hqEmbedFallback(reason){
   if(typeof toast === 'function') toast('Штаб открыт в новой вкладке');
 }
 
+/* 3D-штаб НЕ встраивается в приложение (тяжёлый WebGL лагает внутри Telegram-webview).
+   По требованию владельца — открываем полноценный штаб отдельной вкладкой (ссылкой). */
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
-  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){} // владелец уже авторизован в приложении
-  let v = document.getElementById('hqEmbed');
-  if(!v){
-    v = document.createElement('div');
-    v.id = 'hqEmbed';
-    v.innerHTML = `
-      <div class="hq-emb-head">
-        <button class="hq-emb-back" onclick="hqCloseEmbed()">${I('back')} Назад</button>
-        <b>OKO HQ · ШТАБ</b>
-        <button class="hq-emb-ext" onclick="hqOpenExternal()" title="Открыть в новой вкладке">${I('share')}</button>
-      </div>
-      <div class="hq-emb-stage">
-        <iframe id="hqFrame" allow="autoplay; fullscreen" referrerpolicy="no-referrer" src="about:blank"></iframe>
-        <div class="hq-emb-load" id="hqEmbLoad">
-          <span class="hq-emb-spin" aria-hidden="true"></span>
-          <span>Загружаю 3D-штаб…</span>
-        </div>
-        <div class="hq-emb-fail">
-          <b>Штаб открылся в новой вкладке</b>
-          <small>Встроить не удалось — публичный штаб живёт отдельной страницей.</small>
-          <button class="btn sm" onclick="hqOpenExternal()">${I('share')} Открыть 3D-штаб</button>
-        </div>
-      </div>`;
-    document.body.appendChild(v);
-  }
-  const fr = document.getElementById('hqFrame');
-  const src = hqEmbedSrc();
-  // сброс состояния перед новой попыткой
-  hqLoadHandled = false;
-  v.classList.remove('hq-emb-failed');
-  v.classList.add('open', 'hq-emb-busy');
-  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-
-  fr.onload = function(){
-    if(hqLoadHandled) return;
-    // тот же origin (http/https + /hq.html) → проверяем, что кадр не пустой
-    try{
-      const doc = fr.contentDocument;
-      if(doc){
-        const body = doc.body;
-        const txt = (body && body.innerText || '').trim();
-        const kids = body ? body.children.length : 0;
-        if(kids === 0 && txt.length < 4){ hqEmbedFallback('empty'); return; }
-      }
-      // doc === null при кросс-origin — это норм (кадр реально загрузился с внешнего origin)
-    }catch(e){ /* SecurityError = кросс-origin = кадр загрузился, всё ок */ }
-    hqLoadHandled = true;
-    if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-    v.classList.remove('hq-emb-busy'); // прячем спиннер, показываем кадр
-  };
-  fr.onerror = function(){ hqEmbedFallback('error'); };
-
-  // сторож: ~4с нет onload → считаем, что не загрузилось, уходим в фолбэк
-  hqLoadTimer = setTimeout(function(){ hqEmbedFallback('timeout'); }, 4000);
-
-  fr.setAttribute('src', src);
-  if(typeof nvPush === 'function') nvPush('hq-embed', hqCloseEmbed);
+  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){}
+  const ok = hqOpenExternal();
+  if(typeof toast === 'function') toast(ok ? 'Открываю 3D-штаб в новой вкладке' : 'Штаб: ' + HQ_URL_ABS);
 }
+function hqCloseEmbed(){ const v = document.getElementById('hqEmbed'); if(v) v.classList.remove('open'); }
 function hqCloseEmbed(){
   if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
   hqLoadHandled = true;
@@ -19315,10 +19341,12 @@ if(typeof mpOpenPackages === 'function'){
   /* СИНХРОНИЗАЦИЯ ВЫСОТЫ: убирает «пустоту» при скролле — высота приложения
      жёстко равна видимой области (visualViewport), а не 100dvh, который
      в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
+  let _okoLastH = 0;
   function okoSyncVh(){
     try{
       const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
-      if(!h) return;
+      if(!h || h === _okoLastH) return;   // не трогаем DOM, если высота не изменилась — убирает лишние reflow/моргание
+      _okoLastH = h;
       document.documentElement.style.height = h + 'px';
       document.body.style.height = h + 'px';
       const app = document.getElementById('app');

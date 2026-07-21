@@ -479,7 +479,8 @@ function hqHqView(){
       <div class="hq-head-b">
         <h3>OKO HQ — командный центр</h3>
         <small>10 агентов · 8 отделов · аптайм 99.98%<br>мозг синхронизирован ${hqHM(new Date())}</small>
-        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('eye')} Открыть 3D-штаб</button>
+        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('share')} Открыть 3D-штаб · новая вкладка</button>
+        <small class="hq-3d-note">Тяжёлый 3D вынесен из приложения — открывается отдельной страницей, чтобы не лагало.</small>
       </div>
     </div>
     ${hqOnlineBlock()}
@@ -533,66 +534,15 @@ function hqEmbedFallback(reason){
   if(typeof toast === 'function') toast('Штаб открыт в новой вкладке');
 }
 
+/* 3D-штаб НЕ встраивается в приложение (тяжёлый WebGL лагает внутри Telegram-webview).
+   По требованию владельца — открываем полноценный штаб отдельной вкладкой (ссылкой). */
 function hqOpen3d(){
   if(typeof isOwner === 'function' && !isOwner()){ hqShowGate(); return; }
-  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){} // владелец уже авторизован в приложении
-  let v = document.getElementById('hqEmbed');
-  if(!v){
-    v = document.createElement('div');
-    v.id = 'hqEmbed';
-    v.innerHTML = `
-      <div class="hq-emb-head">
-        <button class="hq-emb-back" onclick="hqCloseEmbed()">${I('back')} Назад</button>
-        <b>OKO HQ · ШТАБ</b>
-        <button class="hq-emb-ext" onclick="hqOpenExternal()" title="Открыть в новой вкладке">${I('share')}</button>
-      </div>
-      <div class="hq-emb-stage">
-        <iframe id="hqFrame" allow="autoplay; fullscreen" referrerpolicy="no-referrer" src="about:blank"></iframe>
-        <div class="hq-emb-load" id="hqEmbLoad">
-          <span class="hq-emb-spin" aria-hidden="true"></span>
-          <span>Загружаю 3D-штаб…</span>
-        </div>
-        <div class="hq-emb-fail">
-          <b>Штаб открылся в новой вкладке</b>
-          <small>Встроить не удалось — публичный штаб живёт отдельной страницей.</small>
-          <button class="btn sm" onclick="hqOpenExternal()">${I('share')} Открыть 3D-штаб</button>
-        </div>
-      </div>`;
-    document.body.appendChild(v);
-  }
-  const fr = document.getElementById('hqFrame');
-  const src = hqEmbedSrc();
-  // сброс состояния перед новой попыткой
-  hqLoadHandled = false;
-  v.classList.remove('hq-emb-failed');
-  v.classList.add('open', 'hq-emb-busy');
-  if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-
-  fr.onload = function(){
-    if(hqLoadHandled) return;
-    // тот же origin (http/https + /hq.html) → проверяем, что кадр не пустой
-    try{
-      const doc = fr.contentDocument;
-      if(doc){
-        const body = doc.body;
-        const txt = (body && body.innerText || '').trim();
-        const kids = body ? body.children.length : 0;
-        if(kids === 0 && txt.length < 4){ hqEmbedFallback('empty'); return; }
-      }
-      // doc === null при кросс-origin — это норм (кадр реально загрузился с внешнего origin)
-    }catch(e){ /* SecurityError = кросс-origin = кадр загрузился, всё ок */ }
-    hqLoadHandled = true;
-    if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
-    v.classList.remove('hq-emb-busy'); // прячем спиннер, показываем кадр
-  };
-  fr.onerror = function(){ hqEmbedFallback('error'); };
-
-  // сторож: ~4с нет onload → считаем, что не загрузилось, уходим в фолбэк
-  hqLoadTimer = setTimeout(function(){ hqEmbedFallback('timeout'); }, 4000);
-
-  fr.setAttribute('src', src);
-  if(typeof nvPush === 'function') nvPush('hq-embed', hqCloseEmbed);
+  try{ localStorage.setItem('oko-hq-auth','1'); }catch(e){}
+  const ok = hqOpenExternal();
+  if(typeof toast === 'function') toast(ok ? 'Открываю 3D-штаб в новой вкладке' : 'Штаб: ' + HQ_URL_ABS);
 }
+function hqCloseEmbed(){ const v = document.getElementById('hqEmbed'); if(v) v.classList.remove('open'); }
 function hqCloseEmbed(){
   if(hqLoadTimer){ clearTimeout(hqLoadTimer); hqLoadTimer = null; }
   hqLoadHandled = true;
