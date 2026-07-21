@@ -51,3 +51,6 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
    Держать в голове набор ПРОШЛОГО ролика и брать другой. OVL_STYLE тоже другой каждый раз.
 2. ОБЛОЖКА: COVER держится теперь 1.8с (было 1.0 — мелькала). TODO: ставить cover.jpg кастомным thumbnail в YouTube (yt thumbnails.set).
 3. ГОЛОС: перейти на премиум HF (Higgs Audio v3, ZeroGPU/PRO). Сейчас Space отдаёт RuntimeError — автономный ретрай поставлен.
+
+## 21.07 — ролик #7 СКУТЕР (стиль 0, ротация механик)
+Городские скутеры из Китая. Механики: vs/bigstat/ring/iconrow/sidebars/ticks/route/stamp/lowerthird/chips/badge — стиль 0 (стекло-тёплый), рекуррентные биты через другие механики, чем у мото. YT R9TWA3N_4qY, TikTok+IG. Обложка 1.8с.
