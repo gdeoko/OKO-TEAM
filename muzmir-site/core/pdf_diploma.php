@@ -110,8 +110,8 @@ function _dip_herbs(\GdImage $img, string $dir): void {
     $put = function (string $f, int $x, int $y, ?int $ww, ?int $hh) use ($img, $dir) {
         if (is_file($dir . $f)) pl_image($img, $dir . $f, $x, $y, $ww, $hh, 100);
     };
-    // центр — лого КЦ (крупно)
-    $ms = 208; $put('logo_muzmir_main.png', (int)($w / 2 - $ms / 2), 150, $ms, $ms);
+    // центр — лого КЦ (крупно); опущено ниже правовых строк, чтобы не налазило
+    $ms = 200; $put('logo_muzmir_main.png', (int)($w / 2 - $ms / 2), 168, $ms, $ms);
     // орлы по бокам от центра
     $put('emblem_minobrazovaniya.png', 330, 185, null, 150);
     $put('emblem_roskomnadzor.png', $w - 330 - 138, 185, null, 150);
@@ -194,12 +194,21 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         // номер + дата
         $number = (string)($application['number'] ?? '');
         if ($number === '') $number = 'MM-' . date('Y') . '-' . str_pad((string)(($application['id'] ?? random_int(1, 999999))), 6, '0', STR_PAD_LEFT);
-        $suffix = ['main' => '', 'extra' => '-D', 'named' => '-N', 'thanks' => '-T'][$type] ?? '';
+        $suffix = ['main' => '', 'extra' => '-D', 'named' => '-N', 'thanks' => '-T'][$type] ?? '-S';
         $dipNumber = $number . $suffix;
         $year = (int)date('Y', strtotime((string)($application['created_at'] ?? 'now')) ?: time());
 
-        // спец-награда
-        $special = mb_strtoupper((string)($application['special_award'] ?? 'За артистизм'), 'UTF-8');
+        // Типы: known = main|named|extra|thanks. Всё остальное трактуем как СПЕЦ-НАГРАДУ.
+        $knownTypes = ['main', 'named', 'extra', 'thanks'];
+        $isSpecial  = ($type === 'extra') || !in_array($type, $knownTypes, true);
+        // Титул спец-награды: явный special_award → переданный result → сам $type → дефолт.
+        $specialSrc = (string)($application['special_award'] ?? '');
+        if ($specialSrc === '') {
+            if (!in_array($type, $knownTypes, true) && $type !== '') $specialSrc = $type;
+            elseif ($result !== '')                                  $specialSrc = $result;
+            else                                                     $specialSrc = 'За артистизм';
+        }
+        $special = mb_strtoupper($specialSrc, 'UTF-8');
 
         // --- холст + тема ---
         $img = imagecreatetruecolor($W, $H);
@@ -273,7 +282,12 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             pl_text_gold($img, $cX, $y, 78, $fSerB, 'БЛАГОДАРНОСТЬ', 'center', ['sparkle' => true]);
             $y += 46;
             $who = $teacher !== '' ? $teacher : $recipient;
-            pl_text_hand($img, $cX, $y + 40, 50, [30, 58, 150], $fSerB, $who, 'center');
+            // ФИО — синим рукописным: истинный курсив-serif если есть (shear=0), иначе эмуляция наклоном.
+            $handFont  = pl_font_hand();
+            $handShear = pl_font_hand_is_italic() ? 0.0 : 0.20;
+            $hs = 56;
+            while ($hs > 30 && pl_text_w($hs, $handFont, $who) > $contentW - 20) $hs--;
+            pl_text_hand($img, $cX, $y + 40, $hs, [28, 56, 150], $handFont, $who, 'center', $handShear);
             $y += 84;
             $bless = 'Культурный центр «Музыкальный Мир» и оргкомитет международного многожанрового '
                 . 'конкурса культуры и искусства «' . $competition . '» при информационной поддержке '
@@ -294,13 +308,13 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             pl_text_gold($img, $cX, $y, 100, $fSerB, 'ДИПЛОМ', 'center', ['sparkle' => true]);
             $y += 30;
 
-            // степень / спец-награда
-            if ($type === 'extra') {
-                $y += 58;
-                pl_text_gold($img, $cX, $y, 58, $fSerB, $special, 'center', ['sparkle' => true]);
-            } elseif ($result !== '') {
-                $y += 58;
-                pl_text_gold($img, $cX, $y, 58, $fSerB, mb_strtoupper($result, 'UTF-8'), 'center', ['sparkle' => true]);
+            // степень / спец-награда (авто-подгон кегля под ширину контента)
+            $titleStr = $isSpecial ? $special : ($result !== '' ? mb_strtoupper($result, 'UTF-8') : '');
+            if ($titleStr !== '') {
+                $ts = 58;
+                while ($ts > 34 && pl_text_w($ts, $fSerB, $titleStr) > $contentW - 20) $ts--;
+                $y += $ts;
+                pl_text_gold($img, $cX, $y, $ts, $fSerB, $titleStr, 'center', ['sparkle' => true]);
             }
             $y += 44;
 
@@ -315,7 +329,9 @@ function pdf_diploma(array $application, string $type = 'main'): string {
 
             // блок данных
             $rows = [];
-            if ($groupNm)    $rows[] = ['Название коллектива: ', $groupNm];
+            // Название коллектива — как в референсе; не дублируем, если оно уже в «награждается».
+            if ($groupNm !== '' && mb_strtolower(trim($groupNm), 'UTF-8') !== mb_strtolower(trim($recipient), 'UTF-8'))
+                $rows[] = ['Название коллектива: ', $groupNm];
             if ($ageCat)     $rows[] = ['Возрастная категория: ', $ageCat];
             if ($nomination) $rows[] = ['Номинация: ', $nomination];
             if ($teacher)    $rows[] = ['Преподаватель: ', $teacher];

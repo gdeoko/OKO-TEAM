@@ -28,6 +28,28 @@ function pl_font(string $weight = 'regular'): string {
     return $base . 'DejaVuSans.ttf';
 }
 
+/**
+ * Рукописный/курсивный шрифт для ФИО на благодарностях (полная кириллица).
+ * Ищем истинный italic-serif в системе; фолбэк — DejaVu Serif Bold (эмуляция
+ * наклоном через pl_text_hand). Можно положить свой script-TTF в public/assets/fonts/.
+ */
+function pl_font_hand(): string {
+    $candidates = [
+        BASE_PATH . '/public/assets/fonts/handwriting.ttf',
+        BASE_PATH . '/public/assets/fonts/script.ttf',
+        '/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf',
+        '/usr/share/fonts/truetype/freefont/FreeSerifItalic.ttf',
+    ];
+    foreach ($candidates as $f) if (is_file($f)) return $f;
+    return pl_font('serif-bold');
+}
+/** true, если pl_font_hand() вернул уже наклонный (italic) шрифт — тогда shear меньше. */
+function pl_font_hand_is_italic(): bool {
+    $f = pl_font_hand();
+    return stripos($f, 'italic') !== false || stripos($f, 'script') !== false
+        || stripos($f, 'handwriting') !== false;
+}
+
 /* --------------------------- Изображения ---------------------------------- */
 /** Безопасно грузит PNG/JPG в GD-ресурс (или null). */
 function pl_load(string $path) {
@@ -339,13 +361,23 @@ function pl_text_gold($img, int $cx, int $y, int $size, string $font, string $te
  * Синий «рукописный» текст (для ФИО на благодарностях). Эмуляция каллиграфии:
  * серифный курсив со сдвигом-наклоном (shear). Возвращает ничего.
  */
-function pl_text_hand($img, int $cx, int $y, int $size, array $rgb, string $font, string $text, string $align = 'center'): void {
+function pl_text_hand($img, int $cx, int $y, int $size, array $rgb, string $font, string $text, string $align = 'center', float $shear = 0.22): void {
     if ($text === '') return;
     $bbox = imagettfbbox($size, 0, $font, $text);
     $tw = (int) round(abs($bbox[2] - $bbox[0]));
     $th = (int) round(abs($bbox[1] - $bbox[7]));
     if ($tw <= 0 || $th <= 0) return;
-    $shear = 0.22;
+    $shear = max(0.0, $shear);
+    if ($shear < 0.001) {
+        // истинно наклонный шрифт — без искусственного скоса, просто рисуем
+        $c = imagecolorallocate($img, $rgb[0], $rgb[1], $rgb[2]);
+        if ($align === 'center')    $left = (int) round($cx - $tw / 2);
+        elseif ($align === 'right') $left = (int) round($cx - $tw);
+        else                        $left = (int) $cx;
+        imagealphablending($img, true);
+        imagettftext($img, $size, 0, $left - $bbox[0], $y, $c, $font, $text);
+        return;
+    }
     $pad = (int) ceil($th * $shear) + 6;
     $mw = $tw + 2 * $pad; $mh = $th + 6;
     $mask = imagecreatetruecolor($mw, $mh);
