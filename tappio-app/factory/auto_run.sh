@@ -60,6 +60,21 @@ if [ -n "$ALREADY" ]; then
   IG="IG:already($ALREADY)"; log "IG уже публиковали ($ALREADY) — пропуск, дубль не создаём"
   STATUS="$STATUS $IG"
 else
+# БЫСТРЫЙ ЧЕК IG-СЕССИИ: если аккаунт разлогинен (лента пуста), не тратим время на
+# доставку+постер — TikTok+YouTube уже прошли. Как только вернётся вход — IG сам подхватится.
+IGPROBE=$(vexec "cd /opt/oko-poster && IG_N=1 node ig_list.mjs 2>/dev/null" 70)
+if ! echo "$IGPROBE" | grep -q '"code"'; then
+  IG="IG:session_expired"; log "IG сессия протухла — пропуск IG (нужен ре-логин), TikTok+YouTube ок"
+  STATUS="$STATUS $IG"
+  # разовый алерт в бота (раз в день) — маркер по дате
+  MARK="work/.ig_alert_$(date +%F 2>/dev/null)"
+  if [ ! -f "$MARK" ]; then
+    curl -s --cacert $CA -m 20 "https://api.telegram.org/bot$TAPPIO_ANALYTICS_BOT_TOKEN/sendMessage" \
+      --data-urlencode "chat_id=${TAPPIO_ANALYTICS_CHAT_ID:-1966985736}" \
+      --data-urlencode "text=⚠️ TAPPIO: IG-сессия протухла, нужен ручной вход в @tappio.app.pro. TikTok+YouTube работают. Как войдёшь — IG-постинг восстановится сам." >/dev/null 2>&1
+    touch "$MARK" 2>/dev/null
+  fi
+else
 # git-raw на GitHub CDN обновляется не мгновенно после push — ретраим до 6 раз
 DL=0
 for att in 1 2 3 4 5 6; do
@@ -95,6 +110,7 @@ print("registry",rid,code)
 PY
   log "IG code записан: ${NEWCODE:-?}"
 fi
+fi   # конец IGPROBE-гарда (жива ли сессия)
 fi   # конец блока ЗАЩИТЫ ОТ ДУБЛЕЙ
 
 # 6) ОТЧЁТ в бот
