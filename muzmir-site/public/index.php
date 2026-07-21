@@ -39,8 +39,10 @@ $pagesDir = BASE_PATH . '/templates/site/pages';
 /** Запуск файла-страницы: он должен вызвать render_page(...). */
 function serve(string $file, array $vars = []): void {
     global $pagesDir;
+    $path = $pagesDir . '/' . $file . '.php';
+    if (!is_file($path)) return;   // страница ещё не создана — пусть отработает 404 ниже
     extract($vars);
-    require $pagesDir . '/' . $file . '.php';
+    require $path;
     exit;
 }
 
@@ -49,6 +51,8 @@ if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('ve
 if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) serve('competition', ['slug' => $m[1]]);
 if (preg_match('#^/awards/([a-z0-9\-]+)$#', $route, $m)) serve('awards_competition', ['slug' => $m[1]]);
 if (preg_match('#^/artist/([a-z0-9\-]+)$#', $route, $m)) serve('artist', ['slug' => $m[1]]);
+if (preg_match('#^/pedagog/([a-z0-9\-]+)$#', $route, $m)) serve('teacher_profile', ['slug' => $m[1]]);
+if (preg_match('#^/results/([a-z0-9\-]+)$#', $route, $m)) serve('results', ['slug' => $m[1]]);
 
 // Статические маршруты → файл страницы
 $map = [
@@ -69,7 +73,16 @@ $map = [
     '/login' => 'login',
     '/register' => 'register',
     '/logout' => 'logout',
+    '/forgot' => 'forgot',
+    '/reset-password' => 'reset_password',
+    '/verify-email' => 'verify_email',
     '/cabinet' => 'cabinet',
+    '/teacher' => 'teacher',
+    '/calendar' => 'calendar',
+    '/gala' => 'gala',
+    '/partner' => 'partner',
+    '/club' => 'club',
+    '/widget' => 'widget',
     '/tma' => 'tma',
 ];
 
