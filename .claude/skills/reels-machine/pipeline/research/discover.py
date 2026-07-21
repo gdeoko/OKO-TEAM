@@ -58,6 +58,37 @@ def _vtt_text(path):
         if ln and (not out or out[-1]!=ln): out.append(ln)
     return " ".join(out)[:3000]
 
+def _storyboard_from_sb(vid, url, base, cookie):
+    """Раскадровка БЕЗ скачивания видео и cookies: YouTube storyboard-спрайты (sb0)
+    на i.ytimg.com. mhtml -> JPEG-сетки -> одна раскадровка."""
+    mh=os.path.join(base,"sb.mhtml")
+    try:
+        subprocess.run(["yt-dlp","--no-warnings"]+cookie+["-f","sb0/sb1/sb2","-o",mh,url],
+            capture_output=True,timeout=120)
+    except Exception: return None
+    if not os.path.exists(mh): return None
+    try:
+        from email import policy as _pol
+        from email.parser import BytesParser as _BP
+        from PIL import Image as _I
+        msg=_BP(policy=_pol.default).parse(open(mh,"rb"))
+        ims=[]
+        for i,part in enumerate(msg.walk()):
+            if part.get_content_type().startswith("image/"):
+                d=part.get_payload(decode=True)
+                if d and len(d)>800:
+                    sp=os.path.join(base,f"sb_{i}.jpg"); open(sp,"wb").write(d)
+                    try: ims.append(_I.open(sp).convert("RGB"))
+                    except Exception: pass
+        if not ims: return None
+        W=max(i.width for i in ims); tot=sum(i.height for i in ims)
+        canvas=_I.new("RGB",(W,tot),"black"); y=0
+        for im in ims: canvas.paste(im,(0,y)); y+=im.height
+        if canvas.width>1500: canvas=canvas.resize((1500,int(canvas.height*1500/canvas.width)))
+        out=os.path.join(base,"storyboard.jpg"); canvas.save(out,quality=85); return out
+    except Exception as e:
+        sys.stderr.write(f"[sb parse {vid}: {e}]\n"); return None
+
 def enrich(item, outdir):
     """БЕЗ cookies: метрики + субтитры(транскрипт) + обложка-кадр.
     Полное видео/раскадровка — только если задан YT_COOKIES (path к cookies.txt)."""
@@ -91,8 +122,8 @@ def enrich(item, outdir):
             if os.path.exists(thumb) and os.path.getsize(thumb)>5000: break
         except Exception: pass
     item["thumbnail"]=thumb if os.path.exists(thumb) and os.path.getsize(thumb)>5000 else None
-    # опционально: полное видео + раскадровка (нужны cookies)
-    item["storyboard"]=None
+    # раскадровка из storyboard-спрайтов (без cookies!) — всегда
+    item["storyboard"]=_storyboard_from_sb(vid, item["url"], base, cookie)
     if cookie:
         mp4=os.path.join(base,"v.mp4")
         subprocess.run(["yt-dlp","--no-warnings"]+cookie+["-f","best[height<=1080]/best","-o",mp4,item["url"]],
