@@ -68,8 +68,14 @@ return [
 
     // Telegram
     'tg_bot_token'   => cfg('MUZMIR_TG_BOT_TOKEN', ''),
-    'tg_bot_user'    => 'kc_muz_mir_bot',
+    'tg_bot_user'    => cfg('MUZMIR_TG_BOT_USER', 'kc_muz_mir_bot'),
     'tg_admin_chat'  => cfg('MUZMIR_TG_ADMIN_CHAT', ''),
+
+    // OAuth (вход через соцсети) — секреты только из окружения/local
+    'google_client_id'     => cfg('MUZMIR_GOOGLE_CLIENT_ID', ''),
+    'google_client_secret' => cfg('MUZMIR_GOOGLE_CLIENT_SECRET', ''),
+    'vk_client_id'         => cfg('MUZMIR_VK_CLIENT_ID', ''),
+    'vk_client_secret'     => cfg('MUZMIR_VK_CLIENT_SECRET', ''),
 
     // ЮKassa (включается после верификации магазина)
     'yukassa_shop'   => cfg('MUZMIR_YUKASSA_SHOP', ''),
