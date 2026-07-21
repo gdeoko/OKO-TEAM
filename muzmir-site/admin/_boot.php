@@ -15,6 +15,7 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
+if (is_file(BASE_PATH . '/core/telegram.php')) require_once BASE_PATH . '/core/telegram.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 db(); // инициализация/миграции
@@ -108,4 +109,91 @@ function app_status_ru(string $s): string {
 }
 function comp_status_ru(string $s): string {
     return ['draft'=>'Черновик','open'=>'Открыт','closed'=>'Закрыт','judging'=>'Оценивание','finished'=>'Завершён'][$s] ?? $s;
+}
+
+/* ---------- Шаблон диплома: темы, превью, гейт подтверждения ---------- */
+
+/** Допустимые темы фона диплома. */
+function diploma_themes(): array {
+    return [
+        'black_gold'    => 'Чёрный с золотом',
+        'white_baroque' => 'Белое барокко',
+        'patriotic'     => 'Патриотическая',
+    ];
+}
+function diploma_theme_label(string $key): string {
+    return diploma_themes()[$key] ?? 'По умолчанию';
+}
+
+/** Абсолютный путь к фону-подложке из относительного пути/URL, если это локальный файл. */
+function diploma_bg_path(string $ref): string {
+    $ref = trim($ref);
+    if ($ref === '' || str_starts_with($ref, 'http')) return $ref;
+    if (is_file($ref)) return $ref;
+    $abs = BASE_PATH . '/public/' . ltrim($ref, '/');
+    return is_file($abs) ? $abs : $ref;
+}
+
+/**
+ * Генерирует тестовый диплом по данным конкурса на фейковом участнике.
+ * Возвращает ['ok'=>bool,'pdf_url'=>string,'png_url'=>string,'error'=>string].
+ * PDF→PNG — через pdftoppm, если доступен; иначе показываем сам PDF.
+ */
+function diploma_preview_generate(array $comp): array {
+    $out = ['ok' => false, 'pdf_url' => '', 'png_url' => '', 'error' => ''];
+    if (is_file(BASE_PATH . '/core/pdf_diploma.php')) require_once BASE_PATH . '/core/pdf_diploma.php';
+    if (!function_exists('pdf_diploma')) {
+        $out['error'] = 'Генератор диплома пока не подключён.';
+        return $out;
+    }
+    $bg = trim((string)($comp['diploma_bg'] ?: $comp['diploma_template']));
+    $fake = [
+        'is_group'     => 0,
+        'full_name'    => 'Иванова Анна Сергеевна',
+        'result'       => 'Лауреат I степени',
+        'score'        => 9.2,
+        'nomination'   => 'Вокальное искусство',
+        'subgroup'     => 'Эстрадный вокал',
+        'age_category' => '13-15 лет',
+        'teacher'      => 'Петрова Мария Ивановна',
+        'institution'  => 'Детская школа искусств №1',
+        'city'         => 'Москва',
+        'competition_id'   => (int)$comp['id'],
+        'competition'      => (string)$comp['name'],
+        'number'           => 'PREVIEW-' . date('Y') . '-' . str_pad((string)$comp['id'], 5, '0', STR_PAD_LEFT),
+        'created_at'       => date('Y-m-d'),
+        'diploma_theme'    => (string)$comp['diploma_theme'],
+        'diploma_bg'       => $bg ? diploma_bg_path($bg) : '',
+        'diploma_template' => $bg ? diploma_bg_path($bg) : '',
+    ];
+    try {
+        $pdf = pdf_diploma($fake, 'main');
+    } catch (\Throwable $e) {
+        $out['error'] = 'Не удалось собрать превью: ' . $e->getMessage();
+        return $out;
+    }
+    if (!$pdf || !is_file($pdf)) {
+        $out['error'] = 'Генератор вернул пустой результат.';
+        return $out;
+    }
+    $rel = str_replace(BASE_PATH . '/public', '', $pdf);
+    $out['ok'] = true;
+    $out['pdf_url'] = url($rel);
+
+    // PDF → PNG, если доступен растеризатор (не обязателен).
+    $bin = trim((string)@shell_exec('command -v pdftoppm 2>/dev/null'));
+    if ($bin !== '') {
+        $pngBase = preg_replace('/\.pdf$/i', '', $pdf);
+        @shell_exec(escapeshellarg($bin) . ' -png -singlefile -r 110 '
+            . escapeshellarg($pdf) . ' ' . escapeshellarg($pngBase) . ' 2>/dev/null');
+        if (is_file($pngBase . '.png')) {
+            $out['png_url'] = url(str_replace(BASE_PATH . '/public', '', $pngBase . '.png'));
+        }
+    }
+    return $out;
+}
+
+/** true, если у конкурса подтверждён шаблон диплома. */
+function diploma_is_approved(int $cid): bool {
+    return (int) scalar("SELECT diploma_approved FROM competitions WHERE id=?", [$cid]) === 1;
 }

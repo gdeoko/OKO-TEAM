@@ -4,19 +4,131 @@ declare(strict_types=1);
 
 $comp = (int) input('competition');
 
-/* ---------- Шаблон конкурса ---------- */
+/* ---------- Шаблон конкурса: тема, фон, сохранение (сбрасывает подтверждение) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_template') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
     $cid = (int) input('competition');
-    update('competitions', ['diploma_template' => trim(input('diploma_template'))], 'id=:wid', ['wid' => $cid]);
-    audit('diploma_template', 'competition', $cid);
-    flash('Шаблон диплома сохранён.', 'success');
+
+    $theme = input('diploma_theme');
+    if (!array_key_exists($theme, diploma_themes())) $theme = '';
+    $bg = trim(input('diploma_bg'));
+
+    // Загрузка своего фона (png/jpg). Кладём в public/uploads/diplomas/.
+    if (isset($_FILES['diploma_bg_file']) && is_uploaded_file($_FILES['diploma_bg_file']['tmp_name'] ?? '')) {
+        $f = $_FILES['diploma_bg_file'];
+        $ext = strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION));
+        $mime = function_exists('mime_content_type') ? (string) mime_content_type($f['tmp_name']) : '';
+        $okExt  = in_array($ext, ['png','jpg','jpeg','webp'], true);
+        $okMime = $mime === '' || str_starts_with($mime, 'image/');
+        if ($okExt && $okMime && (int)$f['size'] <= 8 * 1024 * 1024) {
+            $dir = BASE_PATH . '/public/uploads/diplomas/';
+            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            $name = 'bg_' . $cid . '_' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $ext;
+            if (@move_uploaded_file($f['tmp_name'], $dir . $name)) {
+                $bg = 'uploads/diplomas/' . $name;
+            } else {
+                flash('Не удалось сохранить файл фона.', 'error');
+            }
+        } else {
+            flash('Фон должен быть изображением (png, jpg, webp) до 8 МБ.', 'error');
+        }
+    }
+
+    update('competitions', [
+        'diploma_theme'    => $theme,
+        'diploma_bg'       => $bg,
+        'diploma_template' => trim(input('diploma_template')),
+        'diploma_approved' => 0, // любое изменение шаблона снимает подтверждение
+    ], 'id=:wid', ['wid' => $cid]);
+    unset($_SESSION['diploma_preview'][$cid]);
+    audit('diploma_template', 'competition', $cid, ['theme' => $theme, 'bg' => $bg]);
+    flash('Шаблон сохранён. Подтверждение снято - проверьте предпросмотр и подтвердите заново.', 'success');
+    admin_redirect('diplomas', ['competition' => $cid]);
+}
+
+/* ---------- Предпросмотр шаблона (тестовый диплом на фейковых данных) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'preview_template') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    $c = one("SELECT * FROM competitions WHERE id=?", [$cid]);
+    if ($c) {
+        $pv = diploma_preview_generate($c);
+        if ($pv['ok']) {
+            $_SESSION['diploma_preview'][$cid] = $pv;
+            audit('diploma_preview', 'competition', $cid);
+            flash('Предпросмотр готов. Проверьте макет ниже.', 'success');
+        } else {
+            flash($pv['error'] ?: 'Не удалось собрать предпросмотр.', 'error');
+        }
+    }
+    admin_redirect('diplomas', ['competition' => $cid]);
+}
+
+/* ---------- Подтверждение шаблона в админке ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'approve_template') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    update('competitions', ['diploma_approved' => 1], 'id=:wid', ['wid' => $cid]);
+    audit('diploma_approve', 'competition', $cid, ['via' => 'admin']);
+    flash('Шаблон диплома подтверждён. Массовая генерация разблокирована.', 'success');
+    admin_redirect('diplomas', ['competition' => $cid]);
+}
+
+/* ---------- Снять подтверждение вручную ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'unapprove_template') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    update('competitions', ['diploma_approved' => 0], 'id=:wid', ['wid' => $cid]);
+    audit('diploma_unapprove', 'competition', $cid);
+    flash('Подтверждение снято.', 'info');
+    admin_redirect('diplomas', ['competition' => $cid]);
+}
+
+/* ---------- Отправить шаблон на подтверждение в Telegram-бот ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'notify_template') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    $c = one("SELECT * FROM competitions WHERE id=?", [$cid]);
+    if ($c) {
+        // Гарантируем свежий предпросмотр со ссылкой для бота.
+        $pv = $_SESSION['diploma_preview'][$cid] ?? null;
+        if (!$pv || empty($pv['pdf_url'])) {
+            $pv = diploma_preview_generate($c);
+            if ($pv['ok']) $_SESSION['diploma_preview'][$cid] = $pv;
+        }
+        $link = $pv['pdf_url'] ?? '';
+        $admin = (string) cfgv('tg_admin_chat', '');
+        if (!function_exists('tg_send') || $admin === '') {
+            flash('Telegram-бот не настроен (нет chat администратора).', 'warning');
+        } else {
+            $text = "Подтверждение шаблона диплома\n"
+                  . "Конкурс: " . strip_tags((string)$c['name']) . "\n"
+                  . "Тема: " . diploma_theme_label((string)$c['diploma_theme']) . "\n"
+                  . ($link ? "Предпросмотр: " . $link . "\n" : '')
+                  . "\nПодтвердите шаблон, чтобы разрешить массовую генерацию дипломов.";
+            $res = tg_send($admin, $text, [
+                'no_preview' => true,
+                'keyboard'   => [[
+                    ['text' => 'Подтвердить', 'callback_data' => 'approve_diploma_' . $cid],
+                    ['text' => 'Отклонить',  'callback_data' => 'reject_diploma_'  . $cid],
+                ]],
+            ]);
+            audit('diploma_notify_tg', 'competition', $cid, ['ok' => !empty($res['ok'])]);
+            if (!empty($res['ok'])) flash('Отправлено в бот на подтверждение.', 'success');
+            else flash('Не удалось отправить в бот. Проверьте токен и chat администратора.', 'error');
+        }
+    }
     admin_redirect('diplomas', ['competition' => $cid]);
 }
 
 /* ---------- Массовая генерация дипломов ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    if (!diploma_is_approved($cid)) {
+        flash('Сначала подтвердите шаблон диплома.', 'error');
+        admin_redirect('diplomas', array_filter(['competition' => $cid]));
+    }
     $ids = array_map('intval', $_POST['ids'] ?? []);
     $made = 0; $pdfok = 0;
     foreach ($ids as $appId) {
@@ -40,6 +152,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
 /* ---------- Массовая отправка на email ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    if (!diploma_is_approved($cid)) {
+        flash('Сначала подтвердите шаблон диплома.', 'error');
+        admin_redirect('diplomas', array_filter(['competition' => $cid, 'tab' => 'sent']));
+    }
     $ids = array_map('intval', $_POST['dids'] ?? []);
     $queued = 0;
     foreach ($ids as $did) {
@@ -98,13 +215,79 @@ ob_start(); ?>
   <div class="card empty"><?= admin_icon('diplomas') ?><p class="muted">Выберите конкурс, чтобы работать с дипломами.</p></div>
 <?php else: ?>
 
+  <?php
+    $approved = (int)($current['diploma_approved'] ?? 0) === 1;
+    $preview  = $_SESSION['diploma_preview'][$comp] ?? null;
+    $hasTpl   = trim((string)($current['diploma_theme'] ?: $current['diploma_bg'] ?: $current['diploma_template'])) !== '';
+  ?>
   <div class="card" style="margin-bottom:18px">
-    <form method="post" action="<?= url('/admin/') ?>" class="field--inline" style="align-items:flex-end;gap:12px">
+    <div class="section-title" style="margin-bottom:8px"><h3>Шаблон диплома</h3>
+      <span class="badge <?= $approved ? 'badge--open' : 'badge--muted' ?>"><?= $approved ? 'Шаблон подтверждён' : 'Не подтверждён' ?></span>
+    </div>
+
+    <?php if (!$approved): ?>
+      <div class="flash flash--warning" style="margin:0 0 14px">Пока шаблон не подтверждён, массовая генерация и рассылка дипломов заблокированы. Настройте тему и фон, проверьте предпросмотр и подтвердите шаблон - здесь или через Telegram-бот.</div>
+    <?php endif; ?>
+
+    <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data">
       <?= csrf_field() ?><input type="hidden" name="do" value="save_template"><input type="hidden" name="competition" value="<?= $comp ?>">
-      <div class="field" style="flex:1;margin:0"><label>Шаблон диплома (URL или путь к фону/макету)</label>
-        <input name="diploma_template" value="<?= h($current['diploma_template']) ?>" placeholder="assets/img/diploma_bg.png"></div>
-      <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить шаблон</button>
+      <div class="form-row">
+        <div class="field"><label>Тема оформления</label>
+          <select name="diploma_theme">
+            <option value="">По умолчанию</option>
+            <?php foreach (diploma_themes() as $key => $label): ?>
+              <option value="<?= h($key) ?>" <?= ($current['diploma_theme']??'')===$key?'selected':'' ?>><?= h($label) ?></option>
+            <?php endforeach; ?>
+          </select></div>
+        <div class="field"><label>Свой фон (png, jpg, webp — до 8 МБ)</label>
+          <input type="file" name="diploma_bg_file" accept="image/*">
+          <?php if (!empty($current['diploma_bg'])): ?><span class="small muted">Текущий: <?= h(basename((string)$current['diploma_bg'])) ?></span><?php endif; ?>
+        </div>
+      </div>
+      <div class="field"><label>Путь/URL макета вручную (необязательно)</label>
+        <input name="diploma_template" value="<?= h((string)$current['diploma_template']) ?>" placeholder="assets/img/diploma_bg.png"></div>
+      <div class="toolbar" style="margin-top:6px">
+        <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить шаблон</button>
+        <button class="btn btn--ghost btn--sm" form="tplPreview"><?= admin_icon('eye') ?>Предпросмотр шаблона</button>
+      </div>
     </form>
+
+    <!-- Отдельные формы для действий (вне формы сохранения) -->
+    <form method="post" action="<?= url('/admin/') ?>" id="tplPreview" style="display:none">
+      <?= csrf_field() ?><input type="hidden" name="do" value="preview_template"><input type="hidden" name="competition" value="<?= $comp ?>">
+    </form>
+
+    <?php if ($preview && !empty($preview['pdf_url'])): ?>
+      <div style="margin-top:16px;border-top:1px solid rgba(0,0,0,.08);padding-top:14px">
+        <p class="small muted" style="margin:0 0 8px">Предпросмотр на тестовом участнике</p>
+        <?php if (!empty($preview['png_url'])): ?>
+          <img src="<?= h($preview['png_url']) ?>" alt="Предпросмотр диплома" style="max-width:100%;border:1px solid rgba(0,0,0,.1);border-radius:8px">
+        <?php else: ?>
+          <object data="<?= h($preview['pdf_url']) ?>" type="application/pdf" style="width:100%;height:520px;border:1px solid rgba(0,0,0,.1);border-radius:8px">
+            <p class="small muted">Встроенный просмотр недоступен.</p>
+          </object>
+        <?php endif; ?>
+        <p class="small" style="margin-top:8px"><a href="<?= h($preview['pdf_url']) ?>" target="_blank" rel="noopener">Открыть PDF в новой вкладке</a></p>
+      </div>
+    <?php endif; ?>
+
+    <div class="toolbar" style="margin-top:16px;border-top:1px solid rgba(0,0,0,.08);padding-top:14px">
+      <?php if (!$approved): ?>
+        <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
+          <?= csrf_field() ?><input type="hidden" name="do" value="approve_template"><input type="hidden" name="competition" value="<?= $comp ?>">
+          <button class="btn btn--primary btn--sm" onclick="return confirm('Подтвердить шаблон диплома? После этого станет доступна массовая генерация.')" <?= $hasTpl?'':'disabled title="Сначала настройте тему или фон"' ?>><?= admin_icon('check') ?>Подтвердить шаблон</button>
+        </form>
+        <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
+          <?= csrf_field() ?><input type="hidden" name="do" value="notify_template"><input type="hidden" name="competition" value="<?= $comp ?>">
+          <button class="btn btn--navy btn--sm"><?= admin_icon('send') ?>Отправить на подтверждение в бот</button>
+        </form>
+      <?php else: ?>
+        <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
+          <?= csrf_field() ?><input type="hidden" name="do" value="unapprove_template"><input type="hidden" name="competition" value="<?= $comp ?>">
+          <button class="btn btn--ghost btn--sm" onclick="return confirm('Снять подтверждение шаблона?')"><?= admin_icon('x') ?>Снять подтверждение</button>
+        </form>
+      <?php endif; ?>
+    </div>
   </div>
 
   <div class="tabs">
@@ -119,8 +302,13 @@ ob_start(); ?>
       <?= csrf_field() ?><input type="hidden" name="do" value="generate"><input type="hidden" name="competition" value="<?= $comp ?>">
       <div class="toolbar">
         <span class="small muted">Оценённых без диплома: <?= count($ready) ?></span>
-        <button class="btn btn--primary btn--sm" onclick="return confirm('Сгенерировать дипломы для выбранных?')"><?= admin_icon('diplomas') ?>Сгенерировать выбранные</button>
+        <?php if ($approved): ?>
+          <button class="btn btn--primary btn--sm" onclick="return confirm('Сгенерировать дипломы для выбранных?')"><?= admin_icon('diplomas') ?>Сгенерировать выбранные</button>
+        <?php else: ?>
+          <button class="btn btn--primary btn--sm" disabled title="Сначала подтвердите шаблон диплома"><?= admin_icon('diplomas') ?>Сгенерировать выбранные</button>
+        <?php endif; ?>
       </div>
+      <?php if (!$approved): ?><p class="small muted" style="margin:0 0 12px">Сначала подтвердите шаблон диплома в блоке выше.</p><?php endif; ?>
       <div class="table-wrap"><table class="tbl">
         <thead><tr><th class="checkbox-cell"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th>
           <th>Участник</th><th>Номинация</th><th>Балл</th><th>Результат</th></tr></thead>
@@ -145,8 +333,13 @@ ob_start(); ?>
       <?= csrf_field() ?><input type="hidden" name="do" value="send"><input type="hidden" name="competition" value="<?= $comp ?>">
       <div class="toolbar">
         <span class="small muted">Всего дипломов: <?= count($dips) ?></span>
-        <button class="btn btn--navy btn--sm" onclick="return confirm('Поставить письма с дипломами в очередь?')"><?= admin_icon('send') ?>Отправить выбранные на email</button>
+        <?php if ($approved): ?>
+          <button class="btn btn--navy btn--sm" onclick="return confirm('Поставить письма с дипломами в очередь?')"><?= admin_icon('send') ?>Отправить выбранные на email</button>
+        <?php else: ?>
+          <button class="btn btn--navy btn--sm" disabled title="Сначала подтвердите шаблон диплома"><?= admin_icon('send') ?>Отправить выбранные на email</button>
+        <?php endif; ?>
       </div>
+      <?php if (!$approved): ?><p class="small muted" style="margin:0 0 12px">Сначала подтвердите шаблон диплома в блоке выше.</p><?php endif; ?>
       <div class="table-wrap"><table class="tbl">
         <thead><tr><th class="checkbox-cell"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th>
           <th>Номер</th><th>Участник</th><th>Результат</th><th>PDF</th><th>Отправлен</th><th></th></tr></thead>

@@ -193,12 +193,44 @@ function tg_handle_callback(array $cb): void {
     $id     = (string) ($cb['id'] ?? '');
     $chatId = (string) ($cb['message']['chat']['id'] ?? '');
     $data   = (string) ($cb['data'] ?? '');
+
+    // Подтверждение/отклонение шаблона диплома: approve_diploma_{id} / reject_diploma_{id}.
+    if (preg_match('/^(approve|reject)_diploma_(\d+)$/', $data, $m)) {
+        tg_diploma_decision($id, $chatId, $m[1] === 'approve', (int) $m[2]);
+        return;
+    }
+
     tg_answer_callback($id);
     if ($chatId === '') return;
     switch ($data) {
         case 'help':  tg_cmd_help($chatId);  break;
         case 'apply': tg_cmd_apply($chatId); break;
         default: /* no-op */ break;
+    }
+}
+
+/** Подтвердить или отклонить шаблон диплома из inline-кнопки бота. */
+function tg_diploma_decision(string $callbackId, string $chatId, bool $approve, int $cid): void {
+    if (!function_exists('one') || !function_exists('update')) {
+        tg_answer_callback($callbackId, 'База недоступна.', true);
+        return;
+    }
+    $c = one("SELECT id,name FROM competitions WHERE id=?", [$cid]);
+    if (!$c) {
+        tg_answer_callback($callbackId, 'Конкурс не найден.', true);
+        return;
+    }
+    update('competitions', ['diploma_approved' => $approve ? 1 : 0], 'id=:wid', ['wid' => $cid]);
+    if (function_exists('audit')) {
+        audit($approve ? 'diploma_approve' : 'diploma_unapprove', 'competition', $cid, ['via' => 'telegram']);
+    }
+    $name = strip_tags((string) $c['name']);
+    tg_answer_callback($callbackId, $approve ? 'Шаблон подтверждён.' : 'Шаблон отклонён.', true);
+    if ($chatId !== '') {
+        $text = $approve
+            ? ('Шаблон диплома подтверждён для конкурса «' . h($name) . '». Массовая генерация разблокирована.')
+            : ('Шаблон диплома отклонён для конкурса «' . h($name) . '». Массовая генерация заблокирована.');
+        tg_send($chatId, $text, ['no_preview' => true]);
     }
 }
 
