@@ -59,6 +59,14 @@
 .wal-limit-bar{height:6px;border-radius:3px;background:var(--raised);border:1px solid var(--border);margin-top:8px;overflow:hidden}
 .wal-limit-bar i{display:block;height:100%;width:0;border-radius:3px;background:var(--lime);transition:width .6s cubic-bezier(.3,1,.4,1)}
 .wal-sec-row .switch{flex-shrink:0}
+.wal-tier-tag{color:var(--accent);font-weight:800;letter-spacing:.02em}
+/* апселл лимита вывода по тарифу */
+.wal-upsell{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:9px 11px;border-radius:10px;background:var(--lime-dim);border:1px solid transparent;color:var(--accent);font-size:11.5px;font-weight:700;text-align:left;transition:transform .12s,border-color .18s,background .18s}
+.wal-upsell:hover{border-color:var(--lime)}
+.wal-upsell:active{transform:scale(.98)}
+.wal-upsell>span{flex:1;line-height:1.35}
+.wal-upsell svg.i{width:15px;height:15px;flex-shrink:0}
+.wal-upsell svg.i:last-child{width:13px;height:13px;opacity:.7}
 
 /* шапка истории + кнопка «Выписка» */
 .wal-hist-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 4px}

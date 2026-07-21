@@ -118,6 +118,26 @@ const FA_POOL = [
     if(!p.ts){ const s = stamp[p.id]; p.ts = FA_NOW - ((s ? s.h : 24 + (p.id % 7) * 4)) * 36e5; }
     if(!p.topic && stamp[p.id]) p.topic = stamp[p.id].t;
   });
+
+  /* демо-треды: показать, что ответы и лайки комментариев реально работают */
+  const seedReplies = (pid, idx, likes, reps) => {
+    const pp = POSTS.rec.find(x => x.id === pid);
+    if(pp && pp.comments && pp.comments[idx]){
+      if(likes != null) pp.comments[idx].likes = likes;
+      if(reps) pp.comments[idx].replies = reps;
+    }
+  };
+  seedReplies(777004, 0, 24, [
+    {a:'РМ', n:'Reels-мастерская', t:'Соня, топ! Скинь пример в личку — добавим в подборку недели', likes:14},
+    {a:'В',  n:'Влад', t:'+1, тоже хочу глянуть на экспертном контенте'}]);
+  seedReplies(777004, 1, 8, [
+    {a:'РМ', n:'Reels-мастерская', t:'Для экспертного работает мягче: вопрос-провокация вместо движения', likes:11}]);
+  seedReplies(777007, 0, 31, [
+    {a:'ББ', n:'Бизнес без воды', t:'Пётр, ниша — онлайн-образование. В доставке заявка правда дороже', likes:19},
+    {a:'Р',  n:'Рома', t:'У нас в услугах вышло 520 ₽ — близко к вашим цифрам'}]);
+  seedReplies(777001, 0, 17);
+  seedReplies(777013, 0, 22, [
+    {a:'TR', n:'TON Radar', t:'Лев, разбор стейкинга уже в работе — выйдет на неделе', likes:9}]);
 })();
 
 /* ================= 2. СКОРИНГ (chain поверх ядра) ================= */
@@ -155,14 +175,8 @@ if(typeof repost === 'function'){
     if(p && p.topic) faSignal(p.topic, (p.reposted && !was) ? 3 : ((!p.reposted && was) ? -3 : 0));
   };
 }
-if(typeof openComments === 'function'){
-  const _faPrevOpenComments = openComments;
-  openComments = function(id){
-    const p = postById(id);
-    _faPrevOpenComments(id);
-    if(p && p.topic) faSignal(p.topic, 0.5);
-  };
-}
+/* openComments/addComment полностью переопределены ниже (секция 6: комментарии-треды) —
+   сигнал интереса от открытия/написания коммента учитывается там же. */
 
 /* ================= 4. UI: «почему показано», реклама каждые 4-5, обновление ================= */
 function faIdOf(art){
@@ -351,6 +365,195 @@ function faLoadMore(){
   }, 500);
 }
 
+/* ================= 6. КОММЕНТАРИИ-ТРЕДЫ (аватар, ник, время, лайки, ответы) =================
+   Ядро рендерит плоский список {a,n,t} в #cmtList. Здесь — красивый тред: аватар,
+   имя+verified, относительное время, лайк коммента с анимацией, ответы (1 уровень),
+   поле ввода с аватаром и контекстом «Ответ …». Модель дополняется на лету, session-only. */
+FA.cidSeq = 900000;
+FA.replyTo = null;
+
+function faPlural(n, one, few, many){
+  const m10 = n % 10, m100 = n % 100;
+  if(m10 === 1 && m100 !== 11) return one;
+  if(m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+function faTimeAgo(ts){
+  if(!ts) return 'сейчас';
+  const d = Math.max(0, Date.now() - ts), min = d / 60000;
+  if(min < 1) return 'сейчас';
+  if(min < 60){ const n = Math.floor(min); return n + ' ' + faPlural(n, 'минуту', 'минуты', 'минут') + ' назад'; }
+  const h = min / 60;
+  if(h < 24){ const n = Math.floor(h); return n + ' ' + faPlural(n, 'час', 'часа', 'часов') + ' назад'; }
+  const days = h / 24;
+  if(days < 7){ const n = Math.floor(days); return n + ' ' + faPlural(n, 'день', 'дня', 'дней') + ' назад'; }
+  try{ return new Date(ts).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}); }catch(e){ return Math.floor(days) + ' д'; }
+}
+function faPrepOne(c, p, i, isReply){
+  if(!c || typeof c !== 'object') return;
+  if(c.cid == null) c.cid = FA.cidSeq++;
+  if(c.ts == null){
+    const base = (p && p.ts) ? Math.min(Date.now() - i * 60000, p.ts + (i + 1) * faRndInt(3, 55) * 60000)
+                             : Date.now() - faRndInt(2, 3200) * 60000;
+    c.ts = Math.min(base, Date.now() - 30000);
+  }
+  if(c.likes == null) c.likes = faRndInt(0, isReply ? 12 : 54);
+  if(c.liked == null) c.liked = false;
+  if(!Array.isArray(c.replies)) c.replies = [];
+  c.replies.forEach((r, j) => faPrepOne(r, p, j, true));
+}
+function faPrepComments(p){
+  if(!p) return;
+  if(!Array.isArray(p.comments)) p.comments = [];
+  p.comments.forEach((c, i) => faPrepOne(c, p, i, false));
+}
+function faFindComment(p, cid){
+  if(!p || !Array.isArray(p.comments)) return null;
+  for(const c of p.comments){
+    if(c.cid === cid) return c;
+    if(Array.isArray(c.replies)) for(const r of c.replies) if(r.cid === cid) return r;
+  }
+  return null;
+}
+function faCount(p){
+  if(!p || !Array.isArray(p.comments)) return 0;
+  let n = p.comments.length;
+  p.comments.forEach(c => { if(Array.isArray(c.replies)) n += c.replies.length; });
+  return n;
+}
+function faVerified(name){
+  try{ if(typeof VERIFIED !== 'undefined' && typeof vBadge === 'function' && VERIFIED.has(name)) return vBadge(name); }catch(e){}
+  return '';
+}
+function faCommentHTML(postId, c, isReply){
+  const meCls    = c.me ? ' fac-me' : '';
+  const likeCls  = c.liked ? ' on' : '';
+  const likeCnt  = c.likes > 0 ? `<i>${c.likes}</i>` : '';
+  const badge    = faVerified(c.n);
+  const initial  = esc(String(c.a || (c.n ? c.n[0] : '?')).slice(0, 2).toUpperCase());
+  let thread = '';
+  if(!isReply && Array.isArray(c.replies) && c.replies.length){
+    const open  = c._open ? ' open' : '';
+    const label = c._open ? 'Скрыть ответы'
+      : 'Показать ' + c.replies.length + ' ' + faPlural(c.replies.length, 'ответ', 'ответа', 'ответов');
+    thread =
+      `<button class="fac-toggle${open}" type="button" onclick="faToggleReplies(this,${postId},${c.cid})">`+
+        `<span class="fac-tline"></span><span class="fac-tl">${label}</span>${I('chev')}</button>`+
+      `<div class="fac-replies${open}">${c.replies.map(r => faCommentHTML(postId, r, true)).join('')}</div>`;
+  }
+  return (
+    `<div class="fac-item${isReply ? ' fac-r' : ''}" data-cid="${c.cid}">`+
+      `<div class="fac-ava${meCls}">${initial}</div>`+
+      `<div class="fac-main">`+
+        `<div class="fac-row"><span class="fac-name">${esc(c.n || 'Гость')}</span>${badge}`+
+          `<span class="fac-time">${faTimeAgo(c.ts)}</span></div>`+
+        `<div class="fac-text">${esc(c.t || '')}</div>`+
+        `<div class="fac-acts">`+
+          `<button class="fac-like${likeCls}" type="button" aria-label="Нравится" onclick="faLikeComment(${postId},${c.cid})">${I('heart')}${likeCnt}</button>`+
+          (isReply ? '' : `<button class="fac-reply" type="button" onclick="faReplyTo(${postId},${c.cid})">${I('reply')}<span>Ответить</span></button>`)+
+        `</div>`+
+        thread +
+      `</div>`+
+    `</div>`
+  );
+}
+function faRenderComments(id){
+  const p = postById(id), list = document.getElementById('cmtList');
+  if(!p || !list) return;
+  faPrepComments(p);
+  const n = faCount(p);
+  const h3 = document.querySelector('#sheet-comments h3');
+  if(h3) h3.innerHTML = 'Комментарии' + (n ? ` <span class="fac-count">${n}</span>` : '');
+  if(!p.comments.length){
+    list.innerHTML = `<div class="fac-empty">${I('comment')}<b>Пока тихо</b><span>Стань первым, кто оставит комментарий</span></div>`;
+    return;
+  }
+  list.innerHTML = `<div class="fac-wrap">${p.comments.map(c => faCommentHTML(id, c, false)).join('')}</div>`;
+}
+function faUpdateCardCount(p){
+  if(!p) return;
+  try{
+    const card = feedCardEl(p.id), cc = card && card.querySelector('.act-cmt');
+    if(cc) cc.textContent = faCount(p);
+  }catch(e){}
+}
+function faLikeComment(postId, cid){
+  const p = postById(postId); if(!p) return;
+  const c = faFindComment(p, cid); if(!c) return;
+  c.liked = !c.liked;
+  c.likes = Math.max(0, (c.likes || 0) + (c.liked ? 1 : -1));
+  if(p.topic) faSignal(p.topic, c.liked ? 0.4 : -0.4);
+  const btn = document.querySelector('#cmtList .fac-item[data-cid="' + cid + '"] .fac-like');
+  if(btn){
+    btn.classList.toggle('on', c.liked);
+    let i = btn.querySelector('i');
+    if(c.likes > 0){ if(!i){ i = document.createElement('i'); btn.appendChild(i); } i.textContent = c.likes; }
+    else if(i){ i.remove(); }
+    btn.classList.remove('fac-burst'); void btn.offsetWidth;
+    if(c.liked) btn.classList.add('fac-burst');
+  }
+}
+function faToggleReplies(btn, postId, cid){
+  if(!btn) return;
+  const wrap = btn.nextElementSibling;
+  const p = postById(postId), c = p ? faFindComment(p, cid) : null;
+  if(!wrap || !c) return;
+  const open = wrap.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  c._open = open;
+  const lbl = btn.querySelector('.fac-tl');
+  if(lbl) lbl.textContent = open ? 'Скрыть ответы'
+    : 'Показать ' + c.replies.length + ' ' + faPlural(c.replies.length, 'ответ', 'ответа', 'ответов');
+}
+function faReplyTo(postId, cid){
+  const p = postById(postId); if(!p) return;
+  const c = faFindComment(p, cid); if(!c) return;
+  FA.replyTo = {postId: postId, cid: cid, name: c.n};
+  const chip = document.getElementById('facReplyChip');
+  if(chip){ chip.hidden = false; const nm = chip.querySelector('.fac-rc-name'); if(nm) nm.textContent = c.n || 'комментарий'; }
+  const inp = document.getElementById('cmtInput');
+  if(inp){ inp.placeholder = 'Ответить ' + (c.n || '') + '…'; inp.focus(); }
+}
+function faClearReply(){
+  FA.replyTo = null;
+  const chip = document.getElementById('facReplyChip'); if(chip) chip.hidden = true;
+  const inp = document.getElementById('cmtInput'); if(inp) inp.placeholder = 'Написать комментарий…';
+}
+
+/* полное переопределение ядра */
+openComments = function(id){
+  const p = postById(id); if(!p) return;
+  commentsFor = id;
+  faClearReply();
+  faRenderComments(id);
+  openSheet('comments');
+  if(p.topic) faSignal(p.topic, 0.5);
+};
+addComment = function(){
+  const inp = document.getElementById('cmtInput'); if(!inp) return;
+  const t = inp.value.trim();
+  if(!t || commentsFor == null) return;
+  const p = postById(commentsFor); if(!p) return;
+  const meName = (typeof PROFILE !== 'undefined' && PROFILE && PROFILE.name) ? PROFILE.name : 'Ты';
+  const node = {a: meName[0], n: meName, t: t, ts: Date.now(), likes: 0, liked: false,
+    cid: FA.cidSeq++, replies: [], me: true};
+  if(FA.replyTo && FA.replyTo.postId === commentsFor){
+    const parent = faFindComment(p, FA.replyTo.cid);
+    if(parent){ if(!Array.isArray(parent.replies)) parent.replies = []; parent.replies.push(node); parent._open = true; }
+    else p.comments.push(node);
+  }else{
+    p.comments.push(node);
+  }
+  inp.value = '';
+  faClearReply();
+  if(p.topic) faSignal(p.topic, 0.7);
+  faRenderComments(commentsFor);
+  faUpdateCardCount(p);
+  const list = document.getElementById('cmtList');
+  const el = list && list.querySelector('.fac-item[data-cid="' + node.cid + '"]');
+  if(el){ el.classList.add('fac-new'); el.scrollIntoView({block:'nearest', behavior:'smooth'}); }
+};
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 (function faInit(){
   /* svg-иконка «обновить» в общие defs */
@@ -364,6 +567,7 @@ function faLoadMore(){
   };
   addSym('i-fa-refresh', '<path d="M84 50a34 34 0 1 1-10-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><polyline points="76 10 76 27 59 26" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
   addSym('i-fa-info', '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><line x1="50" y1="45" x2="50" y2="70" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="31" r="4.6" fill="currentColor"/>');
+  addSym('i-fa-x', '<line x1="28" y1="28" x2="72" y2="72" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><line x1="72" y1="28" x2="28" y2="72" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>');
   /* i18n: чтобы EN-режим не оставлял русские строки шапки (авто-переводчик по ST_DICT) */
   if(typeof ST_DICT !== 'undefined'){
     const add = {
@@ -378,11 +582,36 @@ function faLoadMore(){
       'Твой интерес: Нейросети':'Your interest: AI','Твой интерес: Контент':'Your interest: Content',
       'Твой интерес: Бизнес':'Your interest: Business','Твой интерес: Маркетинг':'Your interest: Marketing',
       'Твой интерес: Игры':'Your interest: Games','Твой интерес: Крипта':'Your interest: Crypto',
+      'Ответить':'Reply','Скрыть ответы':'Hide replies','Пока тихо':'No comments yet',
+      'Стань первым, кто оставит комментарий':'Be the first to comment',
+      'Написать комментарий…':'Write a comment…','Комментарий добавлен':'Comment added',
     };
     for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
   }
   try{ FA.infoOpen = localStorage.getItem('oko-feed-info') === '1'; }catch(e){}
   faLoadSignals();
+
+  /* обогащение composer'а комментариев: аватар автора + плашка «Ответ …» (base.html не трогаем) */
+  (function faWireCompose(){
+    const compose = document.querySelector('#sheet-comments .cmt-compose');
+    if(!compose) return;
+    compose.classList.add('fac-compose');
+    if(!compose.querySelector('.fac-compose-ava')){
+      const me = document.createElement('div');
+      me.className = 'fac-ava fac-me fac-compose-ava';
+      me.textContent = (typeof PROFILE !== 'undefined' && PROFILE && PROFILE.name) ? PROFILE.name[0] : 'Я';
+      compose.insertBefore(me, compose.firstChild);
+    }
+    if(!document.getElementById('facReplyChip') && compose.parentNode){
+      const chip = document.createElement('div');
+      chip.id = 'facReplyChip';
+      chip.className = 'fac-reply-chip';
+      chip.hidden = true;
+      chip.innerHTML = I('reply') + '<span>Ответ <b class="fac-rc-name"></b></span>' +
+        '<button type="button" class="fac-rc-x" aria-label="Отменить ответ" onclick="faClearReply()">' + I('fa-x') + '</button>';
+      compose.parentNode.insertBefore(chip, compose);
+    }
+  })();
   if('IntersectionObserver' in window){
     FA.io = new IntersectionObserver(es=>{
       es.forEach(e=>{

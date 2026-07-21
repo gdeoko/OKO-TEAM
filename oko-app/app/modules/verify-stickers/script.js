@@ -440,6 +440,370 @@ createPost = function(){
   }
 };
 
+/* ============================================================
+   5. TON ПОДАРКИ — крипта в стиле Telegram (честная заглушка):
+      кошелёк-прототип (адрес+баланс), эмодзи-подарки/кристаллы,
+      покупка за TON (пополнение за рубли), владение (коллекция),
+      отправка подарка другу в чат, премиум-гейт коллекционных.
+   ============================================================ */
+const VS_TON_RATE = 320;            /* ₽ за 1 TON — курс прототипа */
+let   VS_TON_TAB  = 'shop';         /* shop | mine */
+let   VS_TON_TOPUP = 5;             /* выбранное пополнение, TON */
+let   vsGiftDetailId = null, vsSendGiftId = null;
+
+let VS_TON = { addr:null, balance:0, connected:false, owned:{}, tx:[] };
+function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON)); }catch(e){} }
+(function vsTonRestore(){
+  try{ const d = JSON.parse(localStorage.getItem('oko-ton') || 'null');
+    if(d && typeof d === 'object') VS_TON = Object.assign(VS_TON, d);
+  }catch(e){}
+  if(!VS_TON.owned || typeof VS_TON.owned !== 'object') VS_TON.owned = {};
+  if(!Array.isArray(VS_TON.tx)) VS_TON.tx = [];
+  if(typeof VS_TON.balance !== 'number' || isNaN(VS_TON.balance)) VS_TON.balance = 0;
+  if(!VS_TON.addr){
+    const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    let s = 'UQ'; for(let i=0;i<44;i++) s += al[Math.floor(Math.random()*al.length)];
+    VS_TON.addr = s;
+    /* честный приветственный баланс прототипа, чтобы механика покупки работала */
+    if(VS_TON.balance === 0 && (!VS_TON.tx || !VS_TON.tx.length)){
+      VS_TON.balance = 3.5;
+      VS_TON.tx = [{ t:'+', ton:3.5, why:'Приветственный TON прототипа', at:Date.now() }];
+    }
+  }
+  vsTonSave();
+})();
+
+/* --- каталог подарков (эмодзи-подарки/кристаллы, часть — коллекционные PRO) --- */
+const VS_GIFTS = [
+  { id:'crystal', name:'Кристалл OKO',   art:'crystal', price:1.2, supply:15000, sold:8420 },
+  { id:'star',    name:'Звезда',         art:'star',    price:1.8, supply:20000, sold:14210 },
+  { id:'heart',   name:'Сердце-алмаз',   art:'heart',   price:2.4, supply:12000, sold:9310 },
+  { id:'potion',  name:'Эликсир',        art:'potion',  price:2.9, supply:9000,  sold:4700 },
+  { id:'ring',    name:'Кольцо',         art:'ring',    price:3.5, supply:8000,  sold:5210 },
+  { id:'rocket',  name:'Ракета',         art:'rocket',  price:4.2, supply:6000,  sold:3100 },
+  { id:'trophy',  name:'Кубок',          art:'trophy',  price:5,   supply:5000,  sold:2980 },
+  { id:'medal',   name:'Медальон OKO',   art:'medal',   price:8,   supply:2000,  sold:640,  premium:true },
+  { id:'crown',   name:'Корона',         art:'crown',   price:12,  supply:1000,  sold:210,  premium:true },
+];
+function vsGiftById(id){ for(let i=0;i<VS_GIFTS.length;i++) if(VS_GIFTS[i].id===id) return VS_GIFTS[i]; return null; }
+function vsOwnedTotal(){ let n=0; for(const k in VS_TON.owned) n += VS_TON.owned[k]||0; return n; }
+
+/* --- художественный SVG подарка (переиспользуем премиум-арт + свои) --- */
+function vsGiftArt(a, u){
+  if(a==='crystal') return vsTonArt('vs-gem', u);
+  if(a==='heart')   return vsBaseArt('heart', u);
+  if(a==='rocket')  return vsBaseArt('rocket', u);
+  if(a==='star')    return vsBaseArt('star', u);
+  if(a==='crown')   return vsBaseArt('crown', u);
+  if(a==='ring') return `<defs>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#d98800"/></linearGradient>
+    <linearGradient id="${u}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8f6ff"/><stop offset=".5" stop-color="#7fd8ff"/><stop offset="1" stop-color="#2b9fe0"/></linearGradient></defs>
+    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="url(#${u}g)" stroke-width="10"/>
+    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#fff6d0" stroke-width="2" opacity=".5"/>
+    <path d="M34 30 L50 8 L66 30 L50 44 Z" fill="url(#${u}d)" stroke="#eafaff" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M34 30 H66 M50 8 L42 30 M50 8 L58 30 M42 30 L50 44 M58 30 L50 44" stroke="#eafaff" stroke-width="1.4" opacity=".8" fill="none"/>
+    <path d="M40 32 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#fff" opacity=".9"/>`;
+  if(a==='trophy') return `<defs>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#cf8400"/></linearGradient></defs>
+    <rect x="38" y="72" width="24" height="10" rx="3" fill="#b8790a"/>
+    <rect x="30" y="82" width="40" height="10" rx="4" fill="#e0920a"/>
+    <rect x="30" y="82" width="40" height="4" rx="2" fill="#fff" opacity=".25"/>
+    <path d="M28 16 H72 V38 C72 55 62 66 50 66 C38 66 28 55 28 38 Z" fill="url(#${u}g)" stroke="#fff2b8" stroke-width="2"/>
+    <path d="M28 22 H16 V30 C16 40 22 46 30 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
+    <path d="M72 22 H84 V30 C84 40 78 46 70 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
+    <path d="M50 26 L55 37 L67 38 L58 46 L61 58 L50 51 L39 58 L42 46 L33 38 L45 37 Z" fill="#fff" opacity=".85"/>`;
+  if(a==='medal') return `<defs>
+    <linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c6ff70"/><stop offset="1" stop-color="#6cba12"/></linearGradient>
+    <radialGradient id="${u}m" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <path d="M36 8 L30 44 L50 34 Z" fill="url(#${u}r)"/>
+    <path d="M64 8 L70 44 L50 34 Z" fill="#7ec81a"/>
+    <circle cx="50" cy="64" r="27" fill="url(#${u}m)" stroke="#eaffb8" stroke-width="3"/>
+    <circle cx="50" cy="64" r="20" fill="#0a1403"/>
+    <path d="M32 64 Q50 50 68 64 Q50 78 32 64 Z" fill="none" stroke="#c6ff70" stroke-width="3"/>
+    <circle cx="50" cy="64" r="7" fill="#9AFF00"/><circle cx="47" cy="61" r="2.4" fill="#0a1403"/>`;
+  /* potion */
+  return `<defs>
+    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a6ff"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b21b6"/></linearGradient></defs>
+    <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(180,150,235,.16)" stroke="#e9d8ff" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M35 56 L65 56 L73 76 C76 84 70 88 63 88 H37 C30 88 24 84 27 76 Z" fill="url(#${u}p)"/>
+    <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c9a6ff" opacity=".7"/>
+    <circle cx="44" cy="72" r="4" fill="#fff" opacity=".55"/><circle cx="57" cy="78" r="3" fill="#fff" opacity=".45"/><circle cx="50" cy="68" r="2.4" fill="#fff" opacity=".6"/>
+    <rect x="40" y="6" width="20" height="9" rx="3" fill="#b59adf"/>
+    <path d="M70 20 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#fff" opacity=".85"/>`;
+}
+function vsGiftSvg(art, size){
+  const u = 'vsgf' + (vsUid++);
+  return `<span class="vs-stk-art" style="width:${size}px;height:${size}px"><svg viewBox="0 0 100 100" aria-hidden="true">${vsGiftArt(art, u)}</svg></span>`;
+}
+/* маленький значок TON-кристалла (для цен и баланса) */
+function vsGemMark(size){
+  const s = size || 14;
+  return `<span class="vs-gem-mk" style="width:${s}px;height:${s}px"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 L86 42 L50 92 L14 42 Z" fill="#2fb3f2" stroke="#bfeaff" stroke-width="5"/><path d="M50 8 L64 42 L50 92 L36 42 Z" fill="#eafaff" opacity=".5"/></svg></span>`;
+}
+function vsTonFmt(n){ n = Math.round((+n||0)*100)/100; return n.toLocaleString('ru-RU', {maximumFractionDigits:2}); }
+function vsTonAddrShort(){ const a = VS_TON.addr||''; return a.length>12 ? a.slice(0,6)+'…'+a.slice(-4) : a; }
+function vsWhen(ts){ try{ const d = new Date(ts); return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+
+/* --- символ иконки для тайла хаба (диаманд в бренд-штрихе) --- */
+function vsInjectTonSymbol(){
+  try{
+    if(document.getElementById('i-vs-gem')) return;
+    const defs = document.querySelector('svg defs'); if(!defs) return;
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-vs-gem'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<path d="M50 12 L82 40 L50 90 L18 40 Z M18 40 H82 M38 40 L50 90 M62 40 L50 90 M50 12 L38 40 M50 12 L62 40" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }catch(e){}
+}
+
+/* ---------- ЭКРАН TON ПОДАРКИ ---------- */
+function vsRenderTon(){
+  const root = document.getElementById('vsTonRoot'); if(!root) return;
+  const bal = vsTonFmt(VS_TON.balance);
+  const rub = (typeof fmtMoney==='function') ? fmtMoney(Math.round(VS_TON.balance*VS_TON_RATE)) : Math.round(VS_TON.balance*VS_TON_RATE)+' ₽';
+  const owned = Object.keys(VS_TON.owned).filter(k=>VS_TON.owned[k]>0);
+  const totalOwned = vsOwnedTotal();
+  let body;
+  if(VS_TON_TAB === 'shop'){
+    body = `<div class="vs-gshop">${VS_GIFTS.map(vsShopCard).join('')}</div>`;
+  } else {
+    body = owned.length
+      ? `<div class="vs-gshop">${owned.map(k=>vsMineCard(k, VS_TON.owned[k])).join('')}</div>`
+      : `<div class="vs-mine-empty">${vsGiftSvg('crystal',64)}<b>Коллекция пуста</b><span>Купи подарок в магазине — и подари другу прямо в чат</span><button class="btn" style="margin-top:12px" onclick="vsTonTab('shop')"><svg class="i"><use href="#i-plus"/></svg> В магазин</button></div>`;
+  }
+  root.innerHTML = `
+    <div class="vs-ton-hero">
+      <span class="vs-ton-hero-glow"></span>
+      <div class="vs-ton-top">
+        <span class="vs-ton-badge">${vsGemMark(14)} TON · прототип</span>
+        <button class="vs-ton-conn" onclick="vsConnectWallet()"><svg class="i"><use href="#i-lock"/></svg> Кошелёк</button>
+      </div>
+      <div class="vs-ton-bal">${vsGemMark(28)}<span>${bal}</span></div>
+      <div class="vs-ton-rub">≈ ${rub}</div>
+      <button class="vs-ton-addr" onclick="vsCopyAddr()">${vsTonAddrShort()} <svg class="i"><use href="#i-copy"/></svg></button>
+      <div class="vs-ton-acts">
+        <button class="vs-ton-act" onclick="vsOpenTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить</button>
+        <button class="vs-ton-act ghost" onclick="vsTonTab('mine')"><svg class="i"><use href="#i-star"/></svg> Коллекция</button>
+        <button class="vs-ton-act ghost" onclick="vsOpenHistory()"><svg class="i"><use href="#i-clock"/></svg> История</button>
+      </div>
+    </div>
+    <div class="vs-ton-tabs">
+      <button class="${VS_TON_TAB==='shop'?'on':''}" onclick="vsTonTab('shop')">Магазин</button>
+      <button class="${VS_TON_TAB==='mine'?'on':''}" onclick="vsTonTab('mine')">Мои подарки${totalOwned?` <i>${totalOwned}</i>`:''}</button>
+    </div>
+    ${body}
+    <div class="vs-ton-foot"><svg class="i"><use href="#i-lock"/></svg> Честная заглушка: настоящие переводы TON и NFT-подарки подключатся в релизе через TON Connect. Баланс и коллекция хранятся локально на устройстве.</div>`;
+}
+function vsTonTab(t){ VS_TON_TAB = t; vsRenderTon(); }
+
+function vsShopCard(g){
+  const locked = g.premium && !vsPremiumOk();
+  const own = VS_TON.owned[g.id] || 0;
+  return `<button class="vs-gcard${locked?' vs-locked':''}" onclick="vsOpenBuy('${g.id}')">
+    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
+    <div class="vs-gcard-name">${esc(g.name)}</div>
+    <div class="vs-gcard-price">${vsGemMark(12)} ${vsTonFmt(g.price)}</div>
+  </button>`;
+}
+function vsMineCard(id, n){
+  const g = vsGiftById(id); if(!g) return '';
+  return `<button class="vs-gcard" onclick="vsOpenGift('${id}')">
+    <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}<span class="vs-gcard-own">×${n}</span></div>
+    <div class="vs-gcard-name">${esc(g.name)}</div>
+    <div class="vs-gcard-price vs-mine-send"><svg class="i"><use href="#i-send"/></svg> Отправить</div>
+  </button>`;
+}
+
+/* --- покупка --- */
+function vsOpenBuy(id){
+  const g = vsGiftById(id); if(!g) return;
+  const v = document.getElementById('vsBuyView'); if(!v) return;
+  const locked = g.premium && !vsPremiumOk();
+  const rub = (typeof fmtMoney==='function') ? fmtMoney(Math.round(g.price*VS_TON_RATE)) : Math.round(g.price*VS_TON_RATE)+' ₽';
+  const left = Math.max(0, g.supply - g.sold);
+  const pct = Math.min(100, Math.round(g.sold*100/g.supply));
+  const own = VS_TON.owned[g.id] || 0;
+  const act = locked
+    ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
+    : `<button class="btn" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
+  v.innerHTML = `
+    <div class="vs-buy-art">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
+    <div class="vs-buy-price">${vsGemMark(20)}<b>${vsTonFmt(g.price)}</b> TON <small>≈ ${rub}</small></div>
+    <div class="vs-buy-supply"><div class="vs-buy-sbar"><i style="width:${pct}%"></i></div><span>Выпущено ${g.sold.toLocaleString('ru-RU')} · осталось ${left.toLocaleString('ru-RU')} из ${g.supply.toLocaleString('ru-RU')}</span></div>
+    <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: покупка списывает TON с локального кошелька. Настоящие NFT-подарки TON — в релизе.</div>
+    ${act}`;
+  openSheet('vs-ton-buy');
+}
+function vsGiftLock(){
+  showPopup({ ico:'crown', title:'Коллекционный подарок',
+    body:'Подарки с короной — эксклюзив тарифов PRO и BUSINESS. Оформи PRO, и коллекция откроется полностью.',
+    actions:[{label:'Оформить PRO', onclick:()=>{ if(typeof openPay==='function') openPay('PRO'); }},{label:'Позже', ghost:true}] });
+}
+function vsBuyGift(id){
+  const g = vsGiftById(id); if(!g) return;
+  if(g.premium && !vsPremiumOk()){ closeSheet(); vsGiftLock(); return; }
+  if(VS_TON.balance < g.price){
+    closeSheet();
+    showPopup({ ico:'money', title:'Не хватает TON',
+      body:`Для «${esc(g.name)}» нужно ${vsTonFmt(g.price)} TON. Пополни кошелёк TON за рубли — быстро и без комиссии.`,
+      actions:[{label:'Пополнить TON', onclick:()=>{ if(typeof closePopup==='function') closePopup(); vsOpenTopup(); }},{label:'Позже', ghost:true}] });
+    return;
+  }
+  VS_TON.balance = Math.round((VS_TON.balance - g.price)*100)/100;
+  VS_TON.owned[id] = (VS_TON.owned[id]||0) + 1;
+  g.sold = Math.min(g.supply, g.sold + 1);
+  VS_TON.tx.unshift({ t:'-', ton:g.price, why:'Покупка · '+g.name, at:Date.now() });
+  if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+  vsTonSave();
+  /* комиссия площадки OKO 5% — доход владельца */
+  if(typeof okoEarn==='function') okoEarn(Math.round(g.price*VS_TON_RATE*0.05), 'TON-подарки: комиссия');
+  closeSheet();
+  toast('Подарок в коллекции');
+  vsTonBurst();
+  vsRenderTon();
+}
+
+/* --- пополнение TON за рубли --- */
+function vsOpenTopup(){ if(!VS_TON_TOPUP) VS_TON_TOPUP = 5; vsRenderTopup(); openSheet('vs-ton-topup'); }
+function vsRenderTopup(){
+  const v = document.getElementById('vsTopupView'); if(!v) return;
+  const amts = [1,5,10,25];
+  const rub = Math.round(VS_TON_TOPUP*VS_TON_RATE);
+  const rubStr = (typeof fmtMoney==='function') ? fmtMoney(rub) : rub+' ₽';
+  const rateStr = (typeof fmtMoney==='function') ? fmtMoney(VS_TON_RATE) : VS_TON_RATE+' ₽';
+  v.innerHTML = `
+    <div class="vs-topup-big">${vsGemMark(30)}<b>${vsTonFmt(VS_TON_TOPUP)}</b> TON</div>
+    <div class="vs-topup-rub">спишем ${rubStr} с кошелька OKO</div>
+    <div class="vs-topup-chips">${amts.map(a=>`<button class="${VS_TON_TOPUP===a?'on':''}" onclick="vsSetTopup(${a})">${a} TON</button>`).join('')}</div>
+    <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Курс прототипа: 1 TON ≈ ${rateStr}. Настоящий обмен на TON — в релизе.</div>
+    <button class="btn" style="width:100%;margin-top:6px" onclick="vsDoTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить на ${vsTonFmt(VS_TON_TOPUP)} TON</button>`;
+}
+function vsSetTopup(a){ VS_TON_TOPUP = a; vsRenderTopup(); }
+function vsDoTopup(){
+  const rub = Math.round(VS_TON_TOPUP*VS_TON_RATE);
+  if(typeof walletCharge === 'function' && walletCharge(rub, 'Покупка TON · '+vsTonFmt(VS_TON_TOPUP)+' TON')){
+    VS_TON.balance = Math.round((VS_TON.balance + VS_TON_TOPUP)*100)/100;
+    VS_TON.tx.unshift({ t:'+', ton:VS_TON_TOPUP, why:'Пополнение TON', at:Date.now() });
+    if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+    vsTonSave();
+    closeSheet();
+    toast('Кошелёк TON пополнен');
+    vsRenderTon();
+  }
+  /* при нехватке рублей walletCharge сам покажет тост и уведёт в кошелёк */
+}
+
+/* --- деталь подарка из коллекции --- */
+function vsOpenGift(id){ vsGiftDetailId = id; vsRenderGift(); openSheet('vs-gift'); }
+function vsRenderGift(){
+  const v = document.getElementById('vsGiftView'); if(!v) return;
+  const g = vsGiftById(vsGiftDetailId); if(!g) return;
+  const n = VS_TON.owned[g.id] || 0;
+  v.innerHTML = `
+    <div class="vs-buy-art">${vsGiftSvg(g.art,120)}</div>
+    <h2 class="vs-buy-name">${esc(g.name)}</h2>
+    <div class="vs-gift-own"><svg class="i"><use href="#i-check2"/></svg> В коллекции: <b>${n}</b></div>
+    <button class="btn" style="width:100%" ${n<=0?'disabled':''} onclick="vsOpenSend('${g.id}')"><svg class="i"><use href="#i-send"/></svg> Подарить другу</button>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="vsOpenBuy('${g.id}')"><svg class="i"><use href="#i-plus"/></svg> Купить ещё</button>`;
+}
+
+/* --- отправка подарка в чат --- */
+function vsOpenSend(id){ vsSendGiftId = id; vsRenderSend(); openSheet('vs-send'); }
+function vsRenderSend(){
+  const v = document.getElementById('vsSendView'); if(!v) return;
+  const g = vsGiftById(vsSendGiftId);
+  const chats = (typeof CHATS !== 'undefined' ? CHATS : []).filter(c=>c && c.name && c.kind !== 'channel');
+  v.innerHTML = `
+    <div class="vs-send-head">${vsGiftSvg(g?g.art:'crystal',44)}<div><b>Кому подарить</b><small>${g?esc(g.name):''} · выбери чат</small></div></div>
+    <div class="vs-send-list">${chats.map(c=>{
+      const ava = c.avaIcon ? `<svg class="i"><use href="#i-${c.avaIcon}"/></svg>` : esc(String(c.ava||c.name[0]||'O'));
+      const cid = String(c.id).replace(/[^A-Za-z0-9_-]/g,'');
+      return `<button class="vs-send-row" onclick="vsSendGift('${vsSendGiftId}','${cid}')"><span class="vs-send-ava">${ava}</span><span class="vs-send-name">${esc(c.name)}</span><svg class="i vs-send-go"><use href="#i-send"/></svg></button>`;
+    }).join('')}</div>`;
+}
+function vsSendGift(giftId, chatId){
+  const g = vsGiftById(giftId);
+  if(!g || (VS_TON.owned[giftId]||0) <= 0){ toast('Подарка нет в коллекции'); return; }
+  const c = (typeof CHATS !== 'undefined' ? CHATS : []).find(x=>String(x.id).replace(/[^A-Za-z0-9_-]/g,'')===String(chatId));
+  if(!c){ toast('Чат не найден'); return; }
+  VS_TON.owned[giftId]--; if(VS_TON.owned[giftId] <= 0) delete VS_TON.owned[giftId];
+  VS_TON.tx.unshift({ t:'send', ton:0, why:'Подарок «'+g.name+'» → '+c.name, at:Date.now() });
+  if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+  vsTonSave();
+  const tm = (typeof nowT === 'function') ? nowT() : '';
+  c.msgs = c.msgs || [];
+  c.msgs.push({ in:0, t:tm, kind:'gift', gift:giftId });
+  c.preview = 'Ты: Подарок · ' + g.name; c.time = tm;
+  closeSheet();
+  if(typeof showTab === 'function') showTab('chats');
+  if(typeof openConv === 'function') openConv(c.id);
+  if(typeof renderChatList === 'function'){ const s = document.getElementById('chatSearch'); renderChatList(s ? s.value : ''); }
+  toast('Подарок отправлен: ' + c.name);
+}
+
+/* --- история операций TON --- */
+function vsOpenHistory(){ vsRenderHist(); openSheet('vs-ton-hist'); }
+function vsRenderHist(){
+  const v = document.getElementById('vsHistView'); if(!v) return;
+  const tx = VS_TON.tx || [];
+  v.innerHTML = tx.length
+    ? `<div class="vs-hist-list">${tx.map(x=>{
+        const cls = x.t==='+' ? 'in' : x.t==='-' ? 'out' : 'send';
+        const val = x.t==='send' ? `<svg class="i"><use href="#i-send"/></svg>` : `${x.t==='+'?'+':'−'}${vsTonFmt(x.ton)} TON`;
+        return `<div class="vs-hist-row"><div class="vs-hist-why">${esc(x.why)}<small>${vsWhen(x.at)}</small></div><div class="vs-hist-val ${cls}">${val}</div></div>`;
+      }).join('')}</div>`
+    : `<div class="vs-mine-empty"><b>Пока нет операций</b><span>Пополни кошелёк или купи подарок</span></div>`;
+}
+
+function vsCopyAddr(){ try{ navigator.clipboard && navigator.clipboard.writeText(VS_TON.addr||''); }catch(e){} toast('Адрес кошелька скопирован'); }
+function vsConnectWallet(){
+  showPopup({ ico:'lock', title:'TON Connect',
+    body:'Честный прототип: в релизе подключишь Tonkeeper или Wallet в один тап, и подарки станут настоящими NFT в сети TON. Сейчас баланс и коллекция хранятся локально — безопасно и бесплатно.',
+    actions:[{label:'Понятно'}] });
+}
+
+/* праздничный дождь кристаллов поверх экрана TON при покупке */
+function vsTonBurst(){
+  const host = document.getElementById('screen-ton'); if(!host) return;
+  const r = host.getBoundingClientRect();
+  if(r.width < 10 || r.height < 10) return;
+  const box = document.createElement('div');
+  box.className = 'vs-rain';
+  box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;--fy:${Math.round(r.height + 60)}px`;
+  const n = 12 + Math.floor(Math.random() * 6);
+  let h = '';
+  for(let k = 0; k < n; k++){
+    const sz = Math.round(11 + Math.random() * 13);
+    const x = (Math.random() * 94).toFixed(1);
+    const dur = (1.1 + Math.random() * 0.5).toFixed(2);
+    const dl = (Math.random() * 0.4).toFixed(2);
+    h += `<i style="left:${x}%;width:${sz}px;height:${sz}px;animation-duration:${dur}s;animation-delay:${dl}s"><svg viewBox="0 0 100 100"><path d="M50 8 L86 42 L50 92 L14 42 Z" fill="#2fb3f2" stroke="#bfeaff" stroke-width="5"/><path d="M50 8 L64 42 L50 92 L36 42 Z" fill="#eafaff" opacity=".55"/></svg></i>`;
+  }
+  box.innerHTML = h;
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(), 2300);
+}
+
+/* сообщение-подарок в чате */
+const _prevMsgHtmlVs = msgHtml;
+msgHtml = function(m, idx){
+  if(m && m.kind === 'gift'){
+    const g = vsGiftById(m.gift) || VS_GIFTS[0];
+    const checks = m.in ? '' : (typeof I==='function' ? I('check2') : '');
+    const time = `<span class="t">${m.t||''}${checks}</span>`;
+    return `<div class="msg gift-msg ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}"><div class="vs-giftmsg">${vsGiftSvg(g.art,88)}<div class="vs-giftmsg-cap"><b>${vsGemMark(11)} Подарок</b><span>${esc(g.name)}</span></div></div>${time}</div>`;
+  }
+  return _prevMsgHtmlVs(m, idx);
+};
+
+/* рендер экрана TON при переходе на вкладку */
+const _prevShowTabVs = showTab;
+showTab = function(t){
+  _prevShowTabVs(t);
+  if(t === 'ton') vsRenderTon();
+};
+
 /* ---------- САМОИНИЦИАЛИЗАЦИЯ ---------- */
 (function vsInit(){
   /* демо: официальный канал OKO в ленте тоже с галочкой */
@@ -448,4 +812,10 @@ createPost = function(){
   vsInitNpost();
   /* первые рендеры ядра прошли до патчей — дорисовать бейджи в текущем DOM */
   vsDecorateAll();
+  /* TON подарки: иконка-символ, заголовок, тайл в хабе, первый рендер */
+  vsInjectTonSymbol();
+  try{ if(typeof regTitle === 'function') regTitle('ton', 'TON Подарки'); }catch(e){}
+  try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', bg:'rgba(0,152,234,.16)', fg:'#3fb6ff', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
+  const scr = document.getElementById('screen-ton');
+  if(scr && scr.classList.contains('active')) vsRenderTon();
 })();

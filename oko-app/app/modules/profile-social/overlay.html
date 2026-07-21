@@ -7,3 +7,24 @@
   </div>
   <div class="sv-body" id="psBody"></div>
 </div>
+
+<!-- ===== PROFILE-SOCIAL: соцграф (подписчики / подписки) ===== -->
+<div class="sheet" id="sheet-ps-graph">
+  <h3 id="psGraphName">Люди</h3>
+  <div class="ps-graph-tabs" id="psGraphTabs">
+    <button data-gt="followers" class="on" onclick="psGraphTab('followers')">Подписчики</button>
+    <button data-gt="following" onclick="psGraphTab('following')">Подписки</button>
+  </div>
+  <div class="ps-graph-list" id="psGraphList"></div>
+</div>
+
+<!-- ===== PROFILE-SOCIAL: быстрый переключатель аккаунтов (Telegram/Instagram) =====
+     единый источник — settings-plus (ST2). Здесь только быстрый доступ из профиля. -->
+<div class="sheet" id="sheet-ps-acc">
+  <h3>Аккаунты</h3>
+  <div class="ps-acc-list" id="psAccList"></div>
+  <button class="ps-acc-add" onclick="psAccAdd()">
+    <span class="ps-acc-add-ic"><svg class="i"><use href="#i-plus"/></svg></span>
+    <span>Добавить аккаунт</span>
+  </button>
+</div>

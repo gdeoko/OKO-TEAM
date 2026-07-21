@@ -136,3 +136,84 @@
 #feedList .post .head .ava{transition:transform .15s,box-shadow .2s}
 #feedList .post .head .ava:hover{transform:scale(1.06);box-shadow:var(--glow)}
 #convAva{cursor:pointer}
+
+/* ---------- статы-кнопки (соцграф) ---------- */
+button.ps-stat-btn{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.ps-stat-btn:active{transform:scale(.96)}
+/* компактная кнопка «Поделиться» рядом с действиями */
+.ps-actions .ps-share-btn{flex:0 0 auto;width:46px;padding:12px 0;display:inline-flex;align-items:center;justify-content:center}
+.ps-actions .ps-share-btn svg.i{width:17px;height:17px;margin:0}
+.ps-sharelink{display:flex;align-items:center;gap:8px;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 11px;font-size:12px;color:var(--text);word-break:break-all;text-align:left}
+.ps-sharelink svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+
+/* соцграф-шит и переключатель аккаунтов должны быть ВЫШЕ fullscreen-профиля (#psView z66),
+   но НИЖЕ попапов/тоста (z70). Бэкдроп поднимаем только когда открыт над профилем. */
+#sheet-ps-graph,#sheet-ps-acc{z-index:68}
+body.ps-over-view #sheetOverlay.open{z-index:67}
+
+/* ---------- соцграф: сет-лист людей ---------- */
+.ps-graph-tabs{display:flex;gap:6px;background:var(--raised);border-radius:var(--r-md);padding:4px;margin:4px 0 12px}
+.ps-graph-tabs button{flex:1;padding:9px 8px;border-radius:calc(var(--r-md) - 4px);font-size:13px;font-weight:700;color:var(--dim);background:transparent;transition:color .2s,background .2s;cursor:pointer}
+.ps-graph-tabs button.on{color:var(--accent);background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+:root[data-theme="light"] .ps-graph-tabs button.on{box-shadow:0 1px 4px rgba(60,90,10,.1)}
+.ps-graph-list{max-height:min(58vh,460px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+.ps-graph-note{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:2px 2px 8px}
+.ps-person{display:flex;align-items:center;gap:11px;padding:9px 8px;border-radius:var(--r-md);cursor:pointer;transition:background .15s}
+.ps-person:hover{background:var(--surface)}
+.ps-person.me{cursor:default}
+.ps-person.me:hover{background:transparent}
+.ps-person-ava{position:relative;width:42px;height:42px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--accent)}
+.ps-person-ava svg.i{width:52%;height:52%}
+.ps-person-on{position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#3ddc5a;border:2.5px solid var(--bg)}
+.ps-person-b{flex:1;min-width:0}
+.ps-person-n{display:flex;align-items:center;gap:3px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-person-b small{display:block;font-size:11.5px;color:var(--dim);margin-top:1px}
+.ps-you{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:2px 7px}
+.ps-follow-mini{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:99px;background:var(--accent);color:#06210a;border:1px solid var(--accent);transition:transform .12s,background .2s,color .2s,border-color .2s;cursor:pointer}
+.ps-follow-mini svg.i{width:12px;height:12px}
+.ps-follow-mini:active{transform:scale(.93)}
+.ps-follow-mini.on{background:transparent;color:var(--dim);border-color:var(--border)}
+.ps-follow-mini.on svg.i{color:var(--accent)}
+:root[data-theme="light"] .ps-follow-mini{color:#0a2a00}
+
+/* ---------- «Мои подписки» на своём профиле ---------- */
+.ps-myfollows{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 14px;margin:12px 0 2px;cursor:pointer;transition:border-color .2s,transform .12s;text-align:left}
+.ps-myfollows:hover{border-color:var(--accent)}
+.ps-myfollows:active{transform:scale(.99)}
+.ps-mf-avas{display:flex;flex-shrink:0}
+.ps-mf-ava{width:30px;height:30px;border-radius:50%;background:var(--lime-dim);border:2px solid var(--surface);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);margin-left:-10px}
+.ps-mf-ava:first-child{margin-left:0}
+.ps-mf-txt{flex:1;font-size:13.5px;color:var(--text)}
+.ps-mf-txt b{color:var(--accent);font-weight:800}
+.ps-mf-chev{color:var(--dim);display:inline-flex}
+.ps-mf-chev svg.i{width:16px;height:16px}
+
+/* ---------- переключатель аккаунтов ---------- */
+.profile-top.ps-acc-clickable{position:relative;cursor:pointer;border-radius:var(--r-md);transition:background .15s;padding-right:34px;margin-right:-6px}
+.profile-top.ps-acc-clickable:hover{background:var(--surface)}
+.ps-acc-switch{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);border-radius:50%;transition:color .2s,background .2s;cursor:pointer}
+.ps-acc-switch svg.i{width:15px;height:15px;transform:rotate(90deg)}
+.ps-acc-switch:hover{color:var(--accent);background:var(--lime-dim)}
+.ps-acc-switch.multi::after{content:"";position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--bg)}
+
+.ps-acc-list{display:flex;flex-direction:column;gap:4px;margin:2px 0 10px}
+.ps-acc-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-md);cursor:pointer;transition:background .15s;border:1px solid transparent}
+.ps-acc-row:hover{background:var(--surface)}
+.ps-acc-row.active{background:var(--surface);border-color:var(--border)}
+.ps-acc-ava{width:44px;height:44px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);letter-spacing:.03em;font-size:17px;color:#fff;background:linear-gradient(135deg,hsl(var(--h,90) 68% 44%),hsl(var(--h,90) 70% 30%));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.ps-acc-info{flex:1;min-width:0}
+.ps-acc-name{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-acc-info small{display:block;font-size:12px;color:var(--dim);margin-top:1px}
+.ps-acc-badge{display:inline-flex;color:#ffcb3a}
+.ps-acc-badge svg.i{width:13px;height:13px}
+.ps-acc-tier{font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:2px 7px}
+.ps-acc-check{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#06210a;display:inline-flex;align-items:center;justify-content:center;animation:psBadgeIn .3s both}
+.ps-acc-check svg.i{width:15px;height:15px}
+.ps-acc-del{flex-shrink:0;width:32px;height:32px;border-radius:50%;color:var(--dim);display:inline-flex;align-items:center;justify-content:center;transition:color .2s,background .2s;cursor:pointer}
+.ps-acc-del svg.i{width:15px;height:15px}
+.ps-acc-del:hover{color:var(--danger);background:rgba(255,90,90,.12)}
+.ps-acc-add{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:var(--r-md);background:transparent;border:1px dashed var(--border);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:border-color .2s,color .2s}
+.ps-acc-add:hover{border-color:var(--accent);color:var(--accent)}
+.ps-acc-add-ic{width:44px;height:44px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}
+.ps-acc-add-ic svg.i{width:18px;height:18px}
+@media(prefers-reduced-motion:reduce){.ps-acc-check{animation:none}}

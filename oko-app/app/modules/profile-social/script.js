@@ -7,8 +7,10 @@
    пересортировка POSTS.sub) и дают буст в рекомендациях (chain feedScore). */
 
 const PS = {
-  cur: null,      /* имя автора, чей профиль открыт */
-  follow: {},     /* {имя: ts подписки} — персист в oko-social */
+  cur: null,        /* имя автора, чей профиль открыт */
+  follow: {},       /* {имя: ts подписки} — персист в oko-social */
+  graphName: null,  /* автор, чей соцграф открыт */
+  graphTab: 'followers',
 };
 
 /* ---------- персист ---------- */
@@ -234,12 +236,13 @@ function psRender(name){
       ${psAchHtml(a)}
       <div class="ps-stats">
         <div class="ps-stat"><b data-to="${a.posts.length}">${a.posts.length}</b><small>постов</small></div>
-        <div class="ps-stat"><b id="psFollowers" data-to="${a.followers + (f ? 1 : 0)}">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></div>
-        <div class="ps-stat"><b data-to="${a.followingN}">${psFmt(a.followingN)}</b><small>подписок</small></div>
+        <button class="ps-stat ps-stat-btn" onclick="psOpenGraph('followers')" aria-label="Показать подписчиков"><b id="psFollowers" data-to="${a.followers + (f ? 1 : 0)}">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></button>
+        <button class="ps-stat ps-stat-btn" onclick="psOpenGraph('following')" aria-label="Показать подписки"><b data-to="${a.followingN}">${psFmt(a.followingN)}</b><small>подписок</small></button>
       </div>
       <div class="ps-actions">
         <button class="btn ${f ? 'ghost' : ''}" id="psFollowBtn" onclick="psToggleFollow()">${I(f ? 'check' : 'plus')} ${f ? 'Отписаться' : 'Подписаться'}</button>
         <button class="btn ghost" onclick="psMessage()">${I('chat')} Написать</button>
+        <button class="btn ghost ps-share-btn" onclick="psShare()" aria-label="Поделиться профилем" title="Поделиться">${I('share')}</button>
       </div>
     </div>
     <div class="ps-sec">Посты автора <span class="ps-cnt">${a.posts.length}</span></div>
@@ -276,6 +279,17 @@ function psGoSubFeed(){
   const btn = document.querySelector('.feed-tabs button');
   if(btn && typeof feedTab === 'function') feedTab(btn, 'sub');
   else if(typeof renderFeed === 'function') renderFeed('sub');
+}
+/* переключить подписку на произвольное имя (без привязки к открытому профилю) */
+function psSetFollow(name, want){
+  if(!name) return false;
+  const f = (typeof want === 'boolean') ? want : !psIsFollowing(name);
+  if(f) PS.follow[name] = Date.now(); else delete PS.follow[name];
+  psSaveState();
+  if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined' && curFeedKind === 'sub'){
+    try{ renderFeed('sub'); }catch(e){}
+  }
+  return f;
 }
 function psToggleFollow(){
   const name = PS.cur;
@@ -338,6 +352,260 @@ function psLike(id){
   if(typeof likePost === 'function') likePost(id);
   const wrap = document.getElementById('psPosts');
   if(wrap && PS.cur) wrap.innerHTML = psPostsHtml(psAuthor(PS.cur));
+}
+
+/* ---------- «Поделиться» профилем: ссылка + копирование ---------- */
+function psProfileLink(name){
+  const a = psAuthor(name);
+  return 'https://oko.app/@' + a.nick;
+}
+function psCopy(text){
+  try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text); return true; } }catch(e){}
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    return true;
+  }catch(e){ return false; }
+}
+function psShare(){
+  const name = PS.cur;
+  if(!name) return;
+  const link = psProfileLink(name);
+  const doCopy = () => { const ok = psCopy(link); if(typeof toast === 'function') toast(ok ? 'Ссылка скопирована' : 'Не удалось скопировать'); };
+  /* нативный шэринг телефона, если доступен */
+  if(navigator.share){
+    navigator.share({title: name + ' в OKO', text: 'Профиль ' + name + ' в OKO', url: link}).catch(()=>{});
+    return;
+  }
+  if(typeof showPopup === 'function'){
+    showPopup({ico:'share', title:'Поделиться профилем',
+      body:`Профиль <b>${esc(name)}</b> в OKO.<div class="ps-sharelink">${I('globe')}<span>${esc(link)}</span></div>`,
+      actions:[{label:'Скопировать ссылку', onclick: doCopy}, {label:'Закрыть', ghost:true}]});
+  } else { doCopy(); }
+}
+
+/* ================= СОЦГРАФ: подписчики / подписки ================= */
+/* пул реальных людей приложения (чаты + авторы ленты + известные каналы) */
+function psPeoplePool(){
+  const seen = new Set(); const out = [];
+  const push = (name, ava, avaIcon, nick, online) => {
+    if(!name || seen.has(name)) return; seen.add(name);
+    if(typeof PROFILE !== 'undefined' && name === PROFILE.name) return;
+    out.push({name, ava: ava || psInitials(name), avaIcon: avaIcon || null,
+      nick: nick || psNick(name), online: !!online});
+  };
+  try{
+    if(typeof CHATS !== 'undefined') CHATS.forEach(c => {
+      if(c.kind === 'direct' && c.id !== 'live') push(c.name, c.ava, c.avaIcon, c.nick, c.online);
+    });
+  }catch(e){}
+  try{
+    [...POSTS.sub, ...POSTS.rec].forEach(p => { if(p.name) push(p.name, p.ava, null, null, false); });
+  }catch(e){}
+  try{ Object.keys(PS_BIOS).forEach(n => push(n)); }catch(e){}
+  return out;
+}
+/* детерминированный подсписок людей для (автор, вкладка) */
+function psGraphPeople(name, tab){
+  const pool = psPeoplePool().filter(p => p.name !== name);
+  if(!pool.length) return [];
+  const salt = psHash(name + ':' + tab);
+  /* сортировка по «весу» — псевдослучайно, но стабильно */
+  const ranked = pool.map(p => ({p, w: psHash(p.name + '#' + salt)}))
+    .sort((x, y) => x.w - y.w).map(x => x.p);
+  /* сколько показать: от stat, но не больше пула */
+  const a = psAuthor(name);
+  const want = tab === 'followers' ? a.followers : a.followingN;
+  const n = Math.max(3, Math.min(ranked.length, 6 + (salt % 7)));
+  const list = ranked.slice(0, n);
+  /* если это подписчики автора, на которого подписан ТЫ — добавить себя первым */
+  if(tab === 'followers' && psIsFollowing(name) && typeof PROFILE !== 'undefined'){
+    list.unshift({name: PROFILE.name, ava: (PROFILE.name[0]||'O').toUpperCase(), avaIcon: null,
+      nick: PROFILE.nick, online: true, isMe: true});
+  }
+  return {list, total: want};
+}
+function psPersonRowHtml(p){
+  const f = psIsFollowing(p.name);
+  const me = !!p.isMe;
+  return `<div class="ps-person${me ? ' me' : ''}" ${me ? '' : `onclick="psGraphOpenPerson('${psAttr(p.name)}')"`}>
+    <div class="ps-person-ava">${p.avaIcon ? I(p.avaIcon) : esc(p.ava)}${p.online ? '<span class="ps-person-on"></span>' : ''}</div>
+    <div class="ps-person-b">
+      <span class="ps-person-n">${esc(p.name)}${me ? ' <span class="ps-you">это ты</span>' : (typeof vBadge === 'function' ? vBadge(p.name) : '')}</span>
+      <small>@${esc(p.nick)}</small>
+    </div>
+    ${me ? '' : `<button class="ps-follow-mini${f ? ' on' : ''}" onclick="event.stopPropagation();psFollowMini(this,'${psAttr(p.name)}')">${I(f ? 'check' : 'plus')}<span>${f ? 'Вы подписаны' : 'Подписаться'}</span></button>`}
+  </div>`;
+}
+function psFollowMini(btn, name){
+  const f = psSetFollow(name);
+  if(btn){
+    btn.classList.toggle('on', f);
+    btn.innerHTML = I(f ? 'check' : 'plus') + '<span>' + (f ? 'Вы подписаны' : 'Подписаться') + '</span>';
+    btn.classList.remove('ps-bump'); void btn.offsetWidth; btn.classList.add('ps-bump');
+  }
+}
+function psGraphRender(){
+  const name = PS.graphName, tab = PS.graphTab || 'followers';
+  const wrap = document.getElementById('psGraphList');
+  const th = document.getElementById('psGraphTabs');
+  if(th) th.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.gt === tab));
+  if(!wrap) return;
+  const res = psGraphPeople(name, tab);
+  const list = res.list || [];
+  const total = res.total || list.length;
+  if(!list.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Пока никого</p></div>`; return; }
+  wrap.innerHTML = `<div class="ps-graph-note">Показаны ${list.length} из ${psFmt(total)}</div>` +
+    list.map((p, i) => `<div class="fade-in" style="animation-delay:${i * 30}ms">${psPersonRowHtml(p)}</div>`).join('');
+}
+function psGraphTab(tab){ PS.graphTab = tab; psGraphRender(); }
+function psOpenGraph(tab){
+  if(!PS.cur) return;
+  PS.graphName = PS.cur; PS.graphTab = tab || 'followers';
+  const head = document.getElementById('psGraphName');
+  if(head) head.textContent = PS.graphName;
+  const th = document.getElementById('psGraphTabs');
+  if(th) th.style.display = '';
+  psGraphRender();
+  /* сет-лист открыт поверх fullscreen-профиля → поднять бэкдроп над #psView */
+  try{ document.body.classList.add('ps-over-view'); }catch(e){}
+  if(typeof openSheet === 'function') openSheet('ps-graph');
+}
+function psGraphOpenPerson(name){
+  if(typeof closeSheet === 'function') closeSheet();
+  setTimeout(() => psOpenProfile(name), 60);
+}
+
+/* ================= НЕСКОЛЬКО АККАУНТОВ (Telegram/Instagram) =================
+   ЕДИНЫЙ источник правды — settings-plus (ST2.accounts / st2SwitchAccount /
+   st2AddAccount / st2RemoveAccount, персист в oko-settings2). Здесь — только
+   быстрый переключатель в шапке своего профиля (settings-plus грузится ПОЗЖЕ
+   нашего модуля, поэтому к его API обращаемся строго в рантайме, по клику). */
+function psAccAvailable(){ return typeof ST2 !== 'undefined' && Array.isArray(ST2.accounts); }
+function psAccList(){ return psAccAvailable() ? ST2.accounts : []; }
+function psAccActiveId(){ return psAccAvailable() ? ST2.activeAcc : null; }
+function psAccInit(name){
+  return (typeof st2AccInit === 'function') ? st2AccInit(name) : psInitials(name);
+}
+function psAccHue(a){
+  const key = (a && (a.nick || a.name)) || 'user';
+  return (typeof st2Hue === 'function') ? st2Hue(key) : (psHash(key) % 360);
+}
+function psAccSwitch(id){
+  if(id === psAccActiveId()){ if(typeof closeSheet === 'function') closeSheet(); return; }
+  if(typeof closeSheet === 'function') closeSheet();
+  if(typeof st2SwitchAccount === 'function') st2SwitchAccount(id); /* сам зовёт renderMyProfile + toast + persist */
+  /* лента зависит от PROFILE.name («мои посты») — освежить, если открыта */
+  try{ if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined') renderFeed(curFeedKind); }catch(e){}
+}
+function psAccAdd(){
+  if(typeof closeSheet === 'function') closeSheet();
+  if(typeof st2AddAccount === 'function') st2AddAccount();
+  else if(typeof toast === 'function') toast('Управление аккаунтами — в настройках');
+}
+function psAccRemove(id){
+  if(typeof closeSheet === 'function') closeSheet();
+  if(typeof st2RemoveAccount === 'function') st2RemoveAccount(id);
+}
+function psAccAvaHtml(a){
+  const h = psAccHue(a);
+  return `<span class="ps-acc-ava" style="--h:${h}">${esc(psAccInit(a.name))}</span>`;
+}
+function psAccRenderSheet(){
+  const wrap = document.getElementById('psAccList');
+  if(!wrap) return;
+  const arr = psAccList();
+  const activeId = psAccActiveId();
+  if(!arr.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Аккаунты недоступны</p></div>`; return; }
+  wrap.innerHTML = arr.map(a => {
+    const active = a.id === activeId;
+    const owner = a.role === 'owner';
+    const tierChip = a.tier && a.tier !== 'FREE' ? `<span class="ps-acc-tier">${esc(a.tier)}</span>` : '';
+    return `<div class="ps-acc-row${active ? ' active' : ''}" onclick="psAccSwitch('${a.id}')">
+      ${psAccAvaHtml(a)}
+      <div class="ps-acc-info">
+        <span class="ps-acc-name">${esc(a.name)}${typeof vBadge === 'function' ? vBadge(a.name) : ''}${owner ? ` <span class="ps-acc-badge" title="владелец">${I('crown')}</span>` : ''}${tierChip}</span>
+        <small>@${esc(a.nick)}</small>
+      </div>
+      ${active ? `<span class="ps-acc-check">${I('check2')}</span>`
+               : (owner ? '' : `<button class="ps-acc-del" onclick="event.stopPropagation();psAccRemove('${a.id}')" aria-label="Убрать аккаунт">${I('trash')}</button>`)}
+    </div>`;
+  }).join('');
+}
+function psOpenAccounts(){
+  if(!psAccAvailable()){ if(typeof toast === 'function') toast('Аккаунты недоступны'); return; }
+  psAccRenderSheet();
+  if(typeof openSheet === 'function') openSheet('ps-acc');
+}
+/* инъекция переключателя аккаунтов в шапку своего профиля */
+function psInjectAccSwitch(){
+  const top = document.querySelector('#screen-profile .profile-top');
+  if(!top) return;
+  top.classList.add('ps-acc-clickable');
+  if(!top._psAccBound){
+    top.addEventListener('click', function(e){
+      if(e.target.closest && e.target.closest('.ps-acc-switch')){ psOpenAccounts(); return; }
+      psOpenAccounts();
+    });
+    top._psAccBound = true;
+  }
+  if(!top.querySelector('.ps-acc-switch')){
+    const btn = document.createElement('button');
+    btn.className = 'ps-acc-switch';
+    btn.setAttribute('aria-label', 'Сменить аккаунт');
+    btn.innerHTML = I('chev');
+    top.appendChild(btn);
+  }
+  /* count-бейдж, если аккаунтов > 1 */
+  const badge = top.querySelector('.ps-acc-switch');
+  if(badge){
+    const n = psAccList().length;
+    badge.classList.toggle('multi', n > 1);
+  }
+}
+/* доступ к «Моим подпискам» (реальные подписки из PS.follow) на своём профиле */
+function psMyFollows(){
+  return Object.keys(PS.follow || {}).sort((a, b) => (PS.follow[b] || 0) - (PS.follow[a] || 0));
+}
+function psInjectMyFollows(){
+  const stats = document.getElementById('profStats');
+  if(!stats) return;
+  let row = document.getElementById('psMyFollowsRow');
+  const names = psMyFollows();
+  if(!names.length){ if(row) row.remove(); return; }
+  if(!row){
+    row = document.createElement('button');
+    row.id = 'psMyFollowsRow'; row.className = 'ps-myfollows';
+    stats.insertAdjacentElement('afterend', row);
+    row.addEventListener('click', psOpenMyFollows);
+  }
+  const avas = names.slice(0, 4).map(n => `<span class="ps-mf-ava">${esc(psInitials(n))}</span>`).join('');
+  row.innerHTML = `<span class="ps-mf-avas">${avas}</span>
+    <span class="ps-mf-txt"><b>${names.length}</b> ${names.length === 1 ? 'подписка' : (names.length < 5 ? 'подписки' : 'подписок')}</span>
+    <span class="ps-mf-chev">${I('chev')}</span>`;
+}
+function psOpenMyFollows(){
+  const names = psMyFollows();
+  PS.graphName = (typeof PROFILE !== 'undefined') ? PROFILE.name : '';
+  PS.graphTab = 'myfollows';
+  const head = document.getElementById('psGraphName');
+  if(head) head.textContent = 'Мои подписки';
+  const th = document.getElementById('psGraphTabs');
+  if(th) th.style.display = 'none';
+  const wrap = document.getElementById('psGraphList');
+  if(wrap){
+    if(!names.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Ты пока ни на кого не подписан</p><span>Открой профиль автора и нажми «Подписаться»</span></div>`; }
+    else{
+      const pool = psPeoplePool();
+      const byName = {}; pool.forEach(p => byName[p.name] = p);
+      wrap.innerHTML = names.map((n, i) => {
+        const p = byName[n] || {name: n, ava: psInitials(n), nick: psNick(n), online: false};
+        return `<div class="fade-in" style="animation-delay:${i * 30}ms">${psPersonRowHtml(p)}</div>`;
+      }).join('');
+    }
+  }
+  if(typeof openSheet === 'function') openSheet('ps-graph');
 }
 
 /* ================= ТОЧКА ВХОДА 1: лента (делегирование на #feedList) ================= */
@@ -441,6 +709,47 @@ function psDecorateSub(){
 (function psInit(){
   psLoadState();
 
+  /* chain renderMyProfile: переключатель аккаунтов + «Мои подписки» + гейт админ-строки */
+  if(typeof renderMyProfile === 'function'){
+    const _psPrevRenderMyProfile = renderMyProfile;
+    renderMyProfile = function(){
+      _psPrevRenderMyProfile.apply(this, arguments);
+      try{ psInjectAccSwitch(); }catch(e){}
+      try{ psInjectMyFollows(); }catch(e){}
+      /* админ-строка видна только владельцу активного аккаунта */
+      const owner = (typeof isOwner === 'function') ? isOwner() : (PROFILE.role === 'owner');
+      try{
+        const adm = document.getElementById('prowAdmin');
+        if(adm) adm.style.display = owner ? '' : 'none';
+      }catch(e){}
+      /* чип тарифа: у не-владельца показываем реальный tier аккаунта; владельцу —
+         сохранённый «богатый» чип (с датой/покупкой) не трогаем без нужды */
+      try{
+        const tierEl = document.getElementById('profTier');
+        if(tierEl){
+          if(!owner){
+            if(PS._tierOrig === undefined) PS._tierOrig = tierEl.textContent;
+            tierEl.textContent = (PROFILE.tier && PROFILE.tier !== 'FREE') ? PROFILE.tier : 'FREE';
+            PS._tierOv = true;
+          } else if(PS._tierOv){
+            tierEl.textContent = (PROFILE.tier && PROFILE.tier !== 'FREE')
+              ? (PS._tierOrig || PROFILE.tier) : 'FREE';
+            PS._tierOv = false;
+          }
+        }
+      }catch(e){}
+    };
+  }
+
+  /* chain closeSheet: снять подъём бэкдропа над профилем */
+  if(typeof closeSheet === 'function'){
+    const _psPrevCloseSheet = closeSheet;
+    closeSheet = function(){
+      _psPrevCloseSheet.apply(this, arguments);
+      try{ document.body.classList.remove('ps-over-view'); }catch(e){}
+    };
+  }
+
   /* chain renderFeed: сортировка «Подписок» перед рендером ядра + декор после */
   if(typeof renderFeed === 'function'){
     const _psPrevRenderFeed = renderFeed;
@@ -480,5 +789,12 @@ function psDecorateSub(){
   try{
     if(typeof curFeedKind !== 'undefined' && curFeedKind === 'sub' && document.getElementById('feedList'))
       renderFeed('sub');
+  }catch(e){}
+
+  /* если профиль уже отрисован ядром до установки чейна — переинъекция */
+  try{
+    const sp = document.getElementById('screen-profile');
+    if(sp && sp.classList.contains('active') && typeof renderMyProfile === 'function') renderMyProfile();
+    else { psInjectAccSwitch(); psInjectMyFollows(); }
   }catch(e){}
 })();

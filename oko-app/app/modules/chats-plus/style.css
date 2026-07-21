@@ -168,7 +168,21 @@
 .cp-rec-trash svg.i{width:24px;height:24px}
 .cp-rec-arm .cp-rec-cancel{background:var(--danger);color:#fff;transform:scale(1.18)}
 .cp-rec-arm .cp-rec-bubble{border-color:var(--danger);box-shadow:0 0 42px rgba(255,77,77,.5)}
-@media(prefers-reduced-motion:reduce){.cp-rec-ring,.cp-rec-arrow svg.i,.cp-rec-dot{animation:none}}
+/* живая волна микрофона (реальная амплитуда через Web Audio) */
+.cp-rec-wave{display:flex;align-items:center;justify-content:center;gap:3px;height:46px;width:min(78%,300px);pointer-events:none;transform:translateX(var(--cp-cx,0))}
+.cp-rec-video .cp-rec-wave{display:none}
+.cp-rec-wave i{flex:1;max-width:5px;min-width:2px;height:100%;border-radius:99px;background:linear-gradient(180deg,var(--lime),#5fb000);transform:scaleY(.12);transform-origin:center;opacity:.9;box-shadow:0 0 6px rgba(154,255,0,.35)}
+:root[data-theme="light"] .cp-rec-wave i{background:linear-gradient(180deg,#7ACC00,#4e9400);box-shadow:none}
+/* пока микрофон не подключён — мягкое «дыхание», не статика */
+.cp-rec-wave:not(.cp-rec-wave-live) i{animation:cpRecIdle 1.4s ease-in-out infinite}
+.cp-rec-wave:not(.cp-rec-wave-live) i:nth-child(3n){animation-delay:.18s}
+.cp-rec-wave:not(.cp-rec-wave-live) i:nth-child(3n+1){animation-delay:.36s}
+.cp-rec-wave:not(.cp-rec-wave-live) i:nth-child(4n){animation-delay:.52s}
+@keyframes cpRecIdle{0%,100%{transform:scaleY(.14)}50%{transform:scaleY(.4)}}
+/* live-режим: JS выставляет scaleY, добавляем короткий сглаживающий transition */
+.cp-rec-wave-live i{transition:transform .08s linear;animation:none}
+.cp-rec-arm .cp-rec-wave i{background:linear-gradient(180deg,var(--danger),#a11)}
+@media(prefers-reduced-motion:reduce){.cp-rec-ring,.cp-rec-arrow svg.i,.cp-rec-dot,.cp-rec-wave:not(.cp-rec-wave-live) i{animation:none}}
 
 /* --- 10. Экран звонка (богатый, обе темы) --- */
 :root[data-theme="light"] #callScreen{background:radial-gradient(circle at 50% 26%,#e8f7cf,#cfe8a8 78%)}

@@ -549,6 +549,57 @@ function cpDecorateVnotes(){
 
 /* ================= 9. ЗАПИСЬ: кружок/пульс/таймер + отмена свайпом ================= */
 let cpRecMoveH = null, cpRecStartX = null, cpRecArmed = false, cpRecPvTry = null;
+const CP_REC_BARS = 34;
+/* живая волна записи: реальная амплитуда микрофона через Web Audio (как в Telegram) */
+let cpRecAC = null, cpRecAn = null, cpRecRAF = 0, cpRecStreamHooked = null;
+function cpRecWaveStart(stream){
+  if(!stream || cpRecStreamHooked === stream) return;
+  const wave = document.getElementById('cpRecWave'); if(!wave) return;
+  const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+  try{
+    cpRecWaveStop();
+    cpRecStreamHooked = stream;
+    cpRecAC = new AC();
+    if(cpRecAC.state === 'suspended') cpRecAC.resume().catch(()=>{});
+    const src = cpRecAC.createMediaStreamSource(stream);
+    cpRecAn = cpRecAC.createAnalyser();
+    cpRecAn.fftSize = 128; cpRecAn.smoothingTimeConstant = 0.72;
+    src.connect(cpRecAn);
+    const bins = new Uint8Array(cpRecAn.frequencyBinCount);
+    const bars = Array.prototype.slice.call(wave.children);
+    wave.classList.add('cp-rec-wave-live');
+    const half = bars.length / 2;
+    /* голос живёт в нижних/средних бинах — растягиваем полезный диапазон на пол-волны */
+    const usable = Math.max(4, Math.min(cpRecAn.frequencyBinCount - 1, 30));
+    const span = Math.ceil(half);
+    const loop = ()=>{
+      if(!cpRecAn){ return; }
+      cpRecAn.getByteFrequencyData(bins);
+      for(let i=0; i<bars.length; i++){
+        /* симметрично зеркалим спектр от центра наружу: центр — низ/середина (громче) */
+        const d = Math.abs(i + 0.5 - half);
+        const b0 = 1 + Math.floor(d / span * usable);
+        /* берём максимум по окну из 2 бинов — без «мёртвых» полос на чистых тонах */
+        const raw = Math.max(bins[b0] || 0, bins[b0 + 1] || 0) / 255;
+        const h = Math.max(0.12, Math.min(1, Math.pow(raw, 0.7) * 1.4));
+        bars[i].style.transform = 'scaleY(' + h.toFixed(3) + ')';
+      }
+      cpRecRAF = requestAnimationFrame(loop);
+    };
+    cpRecRAF = requestAnimationFrame(loop);
+  }catch(_){ cpRecStreamHooked = null; }
+}
+function cpRecWaveStop(){
+  if(cpRecRAF){ cancelAnimationFrame(cpRecRAF); cpRecRAF = 0; }
+  cpRecAn = null;
+  if(cpRecAC){ try{ cpRecAC.close(); }catch(_){} cpRecAC = null; }
+  cpRecStreamHooked = null;
+  const wave = document.getElementById('cpRecWave');
+  if(wave){
+    wave.classList.remove('cp-rec-wave-live');
+    Array.prototype.forEach.call(wave.children, b=>{ b.style.transform = ''; });
+  }
+}
 function cpRecOverlay(){
   let o = document.getElementById('cpRec');
   if(o) return o;
@@ -562,6 +613,8 @@ function cpRecOverlay(){
          <span class="cp-rec-mic">${I('mic')}</span>
        </div>
      </div>
+     <div class="cp-rec-wave" id="cpRecWave">${
+        Array.from({length: CP_REC_BARS}, ()=>'<i></i>').join('')}</div>
      <div class="cp-rec-info"><span class="cp-rec-dot"></span><span id="cpRecTime">0:00</span>
        <span class="cp-rec-hint"><span class="cp-rec-arrow">${I('chev')}</span>Смахните для отмены</span></div>`;
   document.body.appendChild(o);
@@ -574,17 +627,21 @@ function cpRecShow(){
   o.classList.add('on'); cpRecArmed = false; cpRecStartX = null;
   const vid = document.getElementById('cpRecVid');
   if(vid){ vid.srcObject = null; vid.style.display = isV ? 'block' : 'none'; }
-  /* привязать живое превью камеры (recStream появляется асинхронно после getUserMedia) */
+  /* сброс волны в холостой режим (пока микрофон не подключился / нет доступа) */
+  cpRecWaveStop();
+  /* recStream появляется асинхронно после getUserMedia — ждём и цепляем:
+     video-режим -> живое превью камеры; voice-режим -> живая волна микрофона */
   clearInterval(cpRecPvTry);
-  if(isV){
+  {
     let tries = 0;
     cpRecPvTry = setInterval(()=>{
       tries++;
-      if(typeof recStream!=='undefined' && recStream && vid){
-        try{ vid.srcObject = recStream; vid.play&&vid.play().catch(()=>{}); }catch(_){}
+      if(typeof recStream!=='undefined' && recStream){
+        if(isV && vid){ try{ vid.srcObject = recStream; vid.play&&vid.play().catch(()=>{}); }catch(_){} }
+        else if(!isV){ cpRecWaveStart(recStream); }
         clearInterval(cpRecPvTry);
       }
-      if(tries>40) clearInterval(cpRecPvTry);
+      if(tries>50) clearInterval(cpRecPvTry);
     }, 60);
   }
   /* таймер зеркалим из ядрового #recTime */
@@ -617,6 +674,7 @@ function cpRecTick(){
 function cpRecHide(){
   const o = document.getElementById('cpRec'); if(o){ o.classList.remove('on','cp-rec-arm'); o.style.removeProperty('--cp-cx'); }
   clearInterval(cpRecTimeInt); clearInterval(cpRecPvTry);
+  cpRecWaveStop();
   const vid = document.getElementById('cpRecVid'); if(vid){ try{ vid.pause(); }catch(_){} vid.srcObject = null; }
   const sb = document.getElementById('sendBtn');
   if(sb && cpRecMoveH){ sb.removeEventListener('pointermove', cpRecMoveH); cpRecMoveH = null; }

@@ -59,7 +59,8 @@ regT({
   'st.opt.enSub':     {ru:'Интерфейс на английском', en:'English interface'},
   'st.badge':         {ru:'Переведено · OKO AI',   en:'Translated · OKO AI'},
   'st.toast.autoOn':  {ru:'Авто-перевод включён — входящие переводит OKO AI', en:'Auto-translation on — incoming messages translated by OKO AI'},
-  'st.toast.autoOff': {ru:'Авто-перевод выключен', en:'Auto-translation off'}
+  'st.toast.autoOff': {ru:'Авто-перевод выключен', en:'Auto-translation off'},
+  'st.doc.title':     {ru:'OKO — приложение',        en:'OKO — the app'}
 });
 
 /* ключи TITLES, которые модуль умеет переводить (обновляются только если экран существует) */
@@ -100,6 +101,8 @@ function stSetText(el, txt){
 
 /* ---------- обработчик смены языка (регистрируется в onLangChange) ---------- */
 function stApplyLang(l){
+  /* 0. заголовок документа/вкладки браузера */
+  try{ document.title = t('st.doc.title'); }catch(e){}
   /* 1. подписи вкладок нижней навигации (текстовый узел после svg) */
   document.querySelectorAll('#tabs>button[data-t]').forEach(b=>{
     const key = 'st.nav.' + b.dataset.t;
@@ -497,12 +500,54 @@ const ST_DICT = {
   'Монтаж Reels и Shorts под ключ':'Turnkey Reels & Shorts editing','Сайт-визитка и лендинг за 3 дня':'Business card site & landing in 3 days',
   'Дизайн обложек и карточек товара':'Cover & product card design','3D-графика и анимация логотипа':'3D graphics & logo animation',
   'Монтаж Reels под ключ':'Turnkey Reels editing','Лендинг под ключ за 5 дней':'Turnkey landing page in 5 days',
-  'Разбор и стратегия роста канала':'Channel audit & growth strategy'
+  'Разбор и стратегия роста канала':'Channel audit & growth strategy',
+  /* --- шелл / базовый хром (шапка, паволл-баннеры, партнёрка) --- */
+  'OKO · экосистема медийности и бизнеса':'OKO · media & business ecosystem',
+  'Контент-завод, система и команда OKO':'Content factory, system and the OKO team',
+  'Партнёрка 15% + 5%':'Partner program 15% + 5%',
+  'Приглашай — получай с каждой продажи':'Invite and earn on every sale',
+  'Разблокируй всё — тариф MAX':'Unlock everything — MAX plan',
+  /* --- рекламный кабинет (ads) --- */
+  'A/B тест':'A/B test','· фото, картинка или видео':'· photo, image or video','Аудитории':'Audiences',
+  'Биллинг':'Billing','Биллинг рекламы':'Ad billing','Бюджет кампании, ₽':'Campaign budget, ₽',
+  'Вечер':'Evening','Видео':'Video','Время показа':'Time of day','Города':'Cities','День':'Day',
+  'Женский':'Female','Картинка':'Image','Любой':'Any','Медиа креатива':'Creative media',
+  'Модель оплаты':'Pricing model','Мужской':'Male','Ночь':'Night','Открыть':'Open','ПК':'Desktop',
+  'Пол':'Gender','Прогноз кампании':'Campaign forecast','Сохранить аудиторию':'Save audience',
+  'Устройства':'Devices','Утро':'Morning','Формат рекламы':'Ad format','Фото':'Photo',
+  'Цена 1000 показов (CPM)':'Cost per 1000 impressions (CPM)','Цена клика (CPC)':'Cost per click (CPC)',
+  'агрессивнее':'more aggressive',
+  'второй вариант заголовка — OKO покажет оба и найдёт лучший по CTR':'a second headline variant — OKO shows both and picks the best by CTR',
+  'дешевле':'cheaper','за 1000 показов':'per 1000 impressions','за клик':'per click',
+  'образование':'education','рекомендуемая':'recommended','узкая':'narrow','финансы':'finance','широкая':'broad',
+  /* --- кошелёк (лимиты, выписка, ПИН) --- */
+  'Выключен — включи для защиты вывода':'Off — enable to protect withdrawals','Выписка':'Statement',
+  'Выписка по счёту':'Account statement',
+  'До 5 000 ₽ — мгновенно, выше — с подтверждением операции':'Up to 5,000 ₽ instantly, above that with confirmation',
+  'Лимиты и безопасность':'Limits & security','ПИН-код на вывод':'Withdrawal PIN',
+  'Покупки без подтверждения':'Purchases without confirmation','Скачать выписку (.txt)':'Download statement (.txt)',
+  'Суточный лимит вывода':'Daily withdrawal limit',
+  /* --- регистрация (баннеры шагов) --- */
+  'Бесплатный старт':'Free start',
+  'Тебе меньше 18 — разделы 18+ (казино-игры, часть биржи и рекламы) будут ограничены до совершеннолетия.':'You are under 18 — 18+ sections (casino games, part of the marketplace and ads) will be limited until you come of age.',
+  /* --- профиль / соцграф --- */
+  'Аккаунты':'Accounts','Добавить аккаунт':'Add account','Люди':'People','Подписчики':'Followers',
+  /* --- игры (колесо призов) --- */
+  'Выбери крутку и запусти колесо — приз попадёт в «Мои призы»':'Pick a spin and launch the wheel — the prize lands in "My prizes"',
+  'Крути колесо — каждая крутка даёт приз':'Spin the wheel — every spin gives a prize',
+  'Лидеры недели':'Weekly leaders','Мои призы':'My prizes','Честная механика.':'Fair mechanics.',
+  'Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.':'Prizes drop at random by weighted odds, but every spin is guaranteed to win — no burned bets. The average spin prize is shown up front. Spin for fun.',
+  /* --- каналы / настройки / академия / сторис --- */
+  'Мои каналы':'My channels','Настройки':'Settings','Поделиться':'Share',
+  'Опубликовать историю':'Publish story','Просмотры':'Views',
+  /* --- TON / подарки (verify-stickers) --- */
+  'История TON':'TON history','Мой подарок':'My gift','Подарить другу':'Gift to a friend',
+  'Подарок':'Gift','Пополнить TON':'Top up TON'
 };
 
 /* --- шаблоны для строк с числами (применяются, если точного совпадения нет) --- */
 const ST_RX = [
-  [/^([\d\s.,]+) ?₽ из ([\d\s.,]+) ?₽$/, '$1 ₽ of $2 ₽'],
+  [/^([\d\s.,]*\d) ?₽ из ([\d\s.,]*\d) ?₽$/, '$1 ₽ of $2 ₽'],
   [/^Урок (\d+) из (\d+)$/, 'Lesson $1 of $2'],
   [/^Урок (\d+) · (.+)$/, (m,a,b)=>'Lesson '+a+' · '+(ST_DICT[b]||b)],
   [/^Урок (\d+)$/, 'Lesson $1'],
@@ -553,7 +598,15 @@ const ST_RX = [
   [/^из ([\d.,]+)к₽$/, 'of $1k ₽'],
   [/^из ([\d\s.,]+ ?₽)$/, 'of $1'],
   [/^(\d+) агентов$/, '$1 agents'],
-  [/^([\d.,]+) · Онлайн$/, '$1 · Online']
+  [/^([\d.,]+) · Онлайн$/, '$1 · Online'],
+  [/^([\d\s.,]*\d) ?₽ за сегодня$/, '$1 ₽ today'],
+  [/^([\d\s.,]*\d) ?₽ бонус$/, '$1 ₽ bonus'],
+  [/^(\d+) минут[аоуы]?$/, '$1 min'],
+  [/^(\d+) объявлений$/, '$1 listings'],
+  [/^(\d+) аккаунтов$/, '$1 accounts'],
+  [/^(\d+) каналов$/, '$1 channels'],
+  [/^(\d+) просмотров$/, '$1 views'],
+  [/^(\d+) призов$/, '$1 prizes']
 ];
 
 /* --- что НЕ переводим: контент пользователей + свои переключатели --- */

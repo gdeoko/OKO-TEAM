@@ -827,5 +827,142 @@ function mpToggleVerif(){
   renderFilters();
 }
 
+/* ================= ФОТО В ОБЪЯВЛЕНИИ (реальная загрузка, downscale, галерея) =================
+   База отдаёт .lf-photo как заглушку-тост и не поддерживает фото. Здесь — рабочая загрузка
+   с телефона/ПК: FileReader -> canvas-downscale -> dataURL, до 6 фото, превью с удалением,
+   рендер на карточках/в детальной, свайп-галерея в карточке. Всё в памяти сессии (LISTINGS
+   не персистится в базе — это ок, лишнего в localStorage не пишем). Патчи: openListingForm,
+   saveListing, lstPhoto, openListing (галерея). */
+const MP_PHOTO_MAX = 6, MP_PHOTO_DIM = 1100;
+let mpFormPhotos = [];
+
+/* уменьшаем картинку до MP_PHOTO_DIM по большей стороне -> лёгкий jpeg dataURL */
+function mpDownscale(dataUrl){
+  return new Promise(res=>{
+    const img = new Image();
+    img.onload = function(){
+      let {width:w, height:h} = img;
+      if(!w || !h){ res(dataUrl); return; }
+      const k = Math.min(1, MP_PHOTO_DIM/Math.max(w,h));
+      w = Math.round(w*k); h = Math.round(h*k);
+      try{
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+        res(cv.toDataURL('image/jpeg', 0.82));
+      }catch(e){ res(dataUrl); }
+    };
+    img.onerror = ()=>res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+function mpReadFile(file){
+  return new Promise(res=>{
+    if(!file || !/^image\//.test(file.type||'')){ res(null); return; }
+    const fr = new FileReader();
+    fr.onload = ()=>mpDownscale(fr.result).then(res);
+    fr.onerror = ()=>res(null);
+    fr.readAsDataURL(file);
+  });
+}
+function mpAddPhotoFiles(files){
+  const list = Array.prototype.slice.call(files||[]);
+  if(!list.length) return;
+  const free = MP_PHOTO_MAX - mpFormPhotos.length;
+  if(free<=0){ toast('Можно до '+MP_PHOTO_MAX+' фото'); return; }
+  const take = list.slice(0, free);
+  if(list.length>free) toast('Добавлено '+free+' — лимит '+MP_PHOTO_MAX+' фото');
+  Promise.all(take.map(mpReadFile)).then(arr=>{
+    arr.filter(Boolean).forEach(u=>mpFormPhotos.push(u));
+    mpRenderFormPhotos();
+  });
+}
+function mpRemoveFormPhoto(i){ mpFormPhotos.splice(i,1); mpRenderFormPhotos(); }
+function mpRenderFormPhotos(){
+  const grid = document.getElementById('mpFormPhotos');
+  if(!grid) return;
+  const full = mpFormPhotos.length>=MP_PHOTO_MAX;
+  grid.innerHTML = mpFormPhotos.map((u,i)=>`
+    <div class="mp-fp-thumb"${i===0?' data-cover="1"':''}>
+      <img src="${u}" alt="">
+      ${i===0?'<span class="mp-fp-cover">Обложка</span>':''}
+      <button type="button" class="mp-fp-del" onclick="mpRemoveFormPhoto(${i})" aria-label="Удалить">${I('trash')}</button>
+    </div>`).join('') +
+    (full ? '' : `<button type="button" class="mp-fp-add" onclick="document.getElementById('mpPhotoInput').click()">
+      ${I('camera')}<span>${mpFormPhotos.length?'Ещё':'Добавить фото'}</span></button>`);
+}
+function mpMountPhotoUploader(){
+  const v = document.getElementById('listingFormView');
+  if(!v) return;
+  const tile = v.querySelector('.lf-photo');
+  if(!tile || document.getElementById('mpFormPhotos')) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'mp-fp-wrap';
+  wrap.innerHTML = `
+    <label class="f-lab" style="margin-top:0">Фото объявления <small class="mp-fp-hint">до ${MP_PHOTO_MAX} · первое станет обложкой</small></label>
+    <input type="file" id="mpPhotoInput" accept="image/*" multiple hidden>
+    <div class="mp-fp-grid" id="mpFormPhotos"></div>`;
+  tile.replaceWith(wrap);
+  const input = document.getElementById('mpPhotoInput');
+  if(input) input.addEventListener('change', function(){ mpAddPhotoFiles(this.files); this.value=''; });
+  mpRenderFormPhotos();
+}
+const _prevOpenListingFormMp = openListingForm;
+openListingForm = function(id){
+  _prevOpenListingFormMp(id);
+  const l = id ? LISTINGS.find(x=>x.id===id) : null;
+  mpFormPhotos = (l && Array.isArray(l.photos)) ? l.photos.slice() : [];
+  mpMountPhotoUploader();
+};
+const _prevSaveListingMp = saveListing;
+saveListing = function(){
+  const wasEditing = (typeof editingListing!=='undefined') ? editingListing : null;
+  const before = LISTINGS.length;
+  const photos = mpFormPhotos.slice();
+  _prevSaveListingMp();
+  let target = null;
+  if(wasEditing){ target = LISTINGS.find(x=>x.id===wasEditing) || null; }
+  else if(LISTINGS.length>before){ target = LISTINGS[0]; } // база unshift-ит новое объявление
+  if(target){
+    target.photos = photos;
+    if(document.getElementById('marketRoot') && typeof openMyListings==='function') openMyListings();
+  }
+};
+
+/* рендер медиа: если у объявления есть фото — показываем реальную картинку вместо плейсхолдера */
+const _prevLstPhotoMp = lstPhoto;
+lstPhoto = function(l, big){
+  if(l && Array.isArray(l.photos) && l.photos.length){
+    const extra = (big && l.photos.length>1) ? `<span class="mp-photo-count">${I('photo')}${l.photos.length}</span>` : '';
+    return `<div class="lst-photo${big?' big':''} mp-has-photo"><img src="${l.photos[0]}" alt="" loading="lazy">${extra}</div>`;
+  }
+  return _prevLstPhotoMp(l, big);
+};
+
+/* детальная карточка: свайп-галерея по фото (тап по миниатюре меняет обложку) */
+const _prevOpenListingGal = openListing;
+openListing = function(id){
+  _prevOpenListingGal(id);
+  const l = LISTINGS.find(x=>x.id===id);
+  const v = document.getElementById('lstView');
+  if(!l || !v || !Array.isArray(l.photos) || l.photos.length<2) return;
+  const hero = v.querySelector('.lst-photo.big');
+  if(!hero || v.querySelector('.mp-gal')) return;
+  const strip = document.createElement('div');
+  strip.className = 'mp-gal';
+  strip.innerHTML = l.photos.map((u,i)=>
+    `<button type="button" class="mp-gal-t${i===0?' on':''}" onclick="mpSwapHero(this,'${'i'+id}',${i})"><img src="${u}" alt=""></button>`).join('');
+  hero.insertAdjacentElement('afterend', strip);
+  strip.dataset.for = id;
+};
+function mpSwapHero(btn, _tag, i){
+  const v = document.getElementById('lstView'); if(!v) return;
+  const strip = v.querySelector('.mp-gal'); if(!strip) return;
+  const l = LISTINGS.find(x=>x.id=== +strip.dataset.for); if(!l || !l.photos[i]) return;
+  const heroImg = v.querySelector('.lst-photo.big img');
+  if(heroImg){ heroImg.style.opacity = '0'; setTimeout(()=>{ heroImg.src = l.photos[i]; heroImg.style.opacity=''; }, 120); }
+  strip.querySelectorAll('.mp-gal-t').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();

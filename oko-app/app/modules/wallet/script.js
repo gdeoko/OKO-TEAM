@@ -77,7 +77,21 @@ const WAL_METHODS = [
 ];
 const WAL_M_LABEL = {card:'Карта РФ', usdt:'Крипта USDT', lava:'Lava.top', ton:'TON'};
 const WAL_USD_RATE = 90; // курс прототипа для партнёрских выплат в $
-const WAL_WD_DAY_LIMIT = 100000;        // суточный лимит вывода
+/* суточный лимит вывода зависит от тарифа (лимиты по тарифу) */
+const WAL_WD_LIMITS = {FREE:50000, START:100000, PRO:300000, BUSINESS:1000000, MAX:5000000};
+const WAL_WD_DAY_LIMIT = 100000;        // дефолт (fallback без paywall-API)
+function walTier(){
+  if(typeof window.okoHasSub === 'function'){
+    if(window.okoHasSub('MAX')) return 'MAX';
+    if(window.okoHasSub('BUSINESS')) return 'BUSINESS';
+    if(window.okoHasSub('PRO')) return 'PRO';
+    if(window.okoHasSub('START')) return 'START';
+    return 'FREE';
+  }
+  const t = (typeof PROFILE!=='undefined' && PROFILE.tier) ? String(PROFILE.tier).toUpperCase() : 'FREE';
+  return WAL_WD_LIMITS[t] ? t : 'FREE';
+}
+function walWdLimit(){ return WAL_WD_LIMITS[walTier()] || WAL_WD_DAY_LIMIT; }
 const WAL_NOCONF_LIMIT = 5000;          // покупки без подтверждения
 const WAL_CARD_NUM = '2200 7007 1234 5566';
 const WAL_USDT_ADDR = 'TQoKo4fHFYyeJtsDdD7TgKLxAV1mFJnEok';
@@ -319,12 +333,36 @@ function walWdUsedToday(){
 }
 function walRenderSec(){
   const sub = document.getElementById('walSecWdSub'), bar = document.getElementById('walSecWdBar');
-  const used = walWdUsedToday();
-  if(sub) sub.textContent = fmtMoney(used) + ' из ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' за сегодня';
-  if(bar) bar.style.width = Math.min(100, used / WAL_WD_DAY_LIMIT * 100).toFixed(1) + '%';
+  const used = walWdUsedToday(), lim = walWdLimit(), tier = walTier();
+  if(sub) sub.innerHTML = fmtMoney(used) + ' из ' + fmtMoney(lim) + ' за сегодня · <b class="wal-tier-tag">тариф ' + tier + '</b>';
+  if(bar) bar.style.width = Math.min(100, used / lim * 100).toFixed(1) + '%';
+  /* апселл лимита — если не максимальный тариф */
+  const secB = sub ? sub.parentElement : null;
+  let up = document.getElementById('walWdUpsell');
+  if(secB){
+    if(tier !== 'MAX'){
+      if(!up){
+        up = document.createElement('button');
+        up.id = 'walWdUpsell'; up.type = 'button'; up.className = 'wal-upsell';
+        up.onclick = walWdUpsell;
+        secB.appendChild(up);
+      }
+      const nextTier = tier==='FREE'?'START':tier==='START'?'PRO':tier==='PRO'?'BUSINESS':'MAX';
+      up.innerHTML = I('crown') + '<span>Лимит ' + fmtMoney(WAL_WD_LIMITS[nextTier]) + '/сутки на ' + nextTier + '</span>' + I('chev');
+    } else if(up){ up.remove(); }
+  }
   const psw = document.getElementById('walPinSw'), psub = document.getElementById('walPinSub');
   if(psw) psw.classList.toggle('on', !!WAL_X.pin);
   if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен — включи для защиты вывода';
+}
+function walWdUpsell(){
+  const tier = walTier();
+  const nextTier = tier==='FREE'?'START':tier==='START'?'PRO':tier==='PRO'?'BUSINESS':'MAX';
+  if(typeof window.okoRequireSub === 'function'){
+    window.okoRequireSub(nextTier, 'Выше тариф — выше суточный лимит вывода средств', ()=>{ renderWallet(); });
+  } else if(typeof openPay === 'function'){
+    openPay(nextTier==='MAX'?'BUSINESS':nextTier);
+  }
 }
 function walTogglePin(){
   if(WAL_X.pin) walPinOpen('off', 'walPinView');
@@ -549,7 +587,7 @@ function walRenderWithdraw(){
   const s = walWdState;
   document.getElementById('walWdView').innerHTML = `
     <h3>Вывод средств</h3>
-    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b> · лимит на сегодня: ${fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - walWdUsedToday()))}</p>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b> · лимит на сегодня: ${fmtMoney(Math.max(0, walWdLimit() - walWdUsedToday()))}</p>
     <input id="walWdSum" type="number" min="1" max="${WALLET.balance}" placeholder="Сумма вывода, ₽" value="${s.sum||''}"
       oninput="walWdState.sum=Math.max(0,Number(this.value)||0);walSyncWdCalc()">
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Куда вывести</p>
@@ -574,9 +612,9 @@ function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
   if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
-  const used = walWdUsedToday();
-  if(used + s.sum > WAL_WD_DAY_LIMIT){
-    toast('Суточный лимит вывода ' + fmtMoney(WAL_WD_DAY_LIMIT) + ' — сегодня доступно ' + fmtMoney(Math.max(0, WAL_WD_DAY_LIMIT - used)));
+  const used = walWdUsedToday(), lim = walWdLimit();
+  if(used + s.sum > lim){
+    toast('Суточный лимит вывода ' + fmtMoney(lim) + ' (тариф ' + walTier() + ') — сегодня доступно ' + fmtMoney(Math.max(0, lim - used)) + '. Выше тариф — выше лимит.');
     return;
   }
   if(WAL_X.pin){ walPinOpen('confirm', 'walWdView', walExecWithdraw); return; }

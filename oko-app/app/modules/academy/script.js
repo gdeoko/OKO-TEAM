@@ -1358,6 +1358,59 @@ function acCertDownload(){
   acMakeCert(cert, url=>{ acCertUrl = url; acCertShownNo = cert.no; dl(url); });
 }
 
+/* ================= СЕРТИФИКАТЫ В ПРОФИЛЕ =================
+   Именные сертификаты Академии показываем прямо в профиле (карточка после
+   ачивок). Инъекция через chain-патч renderMyProfile: на каждый ре-рендер
+   профиля пере-вставляем свежую карточку (старую удаляем — без дублей). */
+function acProfileCertsHtml(){
+  const n = acS.certs.length;
+  const head = `
+    <div class="ac-pcerts-head">
+      <span class="ico">${I('star')}</span>
+      <div class="meta"><b>Сертификаты Академии</b><span>${n
+        ? n + ' ' + acPlural(n, ['официальный','официальных','официальных']) + ' · печать и подпись'
+        : 'Пройди урок — получи именной документ'}</span></div>
+      <button class="btn sm ghost" onclick="showTab('academy')">${n?'Все':'В Академию'}</button>
+    </div>`;
+  if(!n){
+    return `<div class="card ac-pcerts empty" id="acProfCerts">${head}
+      <p class="ac-pcerts-invite">Сдай тест урока на ${AC_PASS}%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».</p></div>`;
+  }
+  const show = acS.certs.slice(0, 3).map((c)=>{
+    const gi = acS.certs.indexOf(c);
+    return `<div class="ac-pcert-row">
+      <span class="ico">${I('file')}</span>
+      <span class="meta"><span class="t">Урок ${(c.lesson||0)+1} · ${esc(c.lessonTitle||AC_COURSE[c.lesson||0].title)}</span>
+      <span class="s">${esc(c.no)} · ${esc(c.date)} · тест ${c.score}%</span></span>
+      <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${gi})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
+      <button class="btn sm ghost" onclick="acCertShow(${gi})">Показать</button>
+    </div>`;
+  }).join('');
+  const more = n > 3 ? `<button class="ac-pcerts-more" onclick="showTab('academy')">и ещё ${n-3} ${acPlural(n-3,['сертификат','сертификата','сертификатов'])} — в Академии ${I('chev')}</button>` : '';
+  return `<div class="card ac-pcerts" id="acProfCerts">${head}<div class="ac-pcert-list">${show}</div>${more}</div>`;
+}
+function acPlural(n, forms){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return forms[2];
+  if(b > 1 && b < 5) return forms[1];
+  if(b === 1) return forms[0];
+  return forms[2];
+}
+function acProfileInject(){
+  try{
+    const anchor = document.getElementById('profAch');
+    if(!anchor || !anchor.parentNode) return;
+    const old = document.getElementById('acProfCerts');
+    if(old) old.remove();
+    const wrap = document.createElement('div');
+    wrap.innerHTML = acProfileCertsHtml();
+    const node = wrap.firstElementChild;
+    if(!node) return;
+    node.style.marginTop = '14px';
+    anchor.parentNode.insertBefore(node, anchor.nextSibling);
+  }catch(e){}
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 (function acInit(){
   regTitle('academy', 'Академия');
@@ -1367,7 +1420,18 @@ function acCertDownload(){
     _prevShowTabAc(t);
     if(t === 'academy'){ acStreakTouch(); acRender(); }
   };
+  /* сертификаты в профиле: chain-патч renderMyProfile */
+  if(typeof renderMyProfile === 'function'){
+    const _acPrevRenderProfile = renderMyProfile;
+    renderMyProfile = function(){
+      _acPrevRenderProfile.apply(this, arguments);
+      acProfileInject();
+    };
+  }
   const scr = document.getElementById('screen-academy');
   if(scr && scr.classList.contains('active')){ acStreakTouch(); acRender(); }
+  /* если профиль уже открыт при инициализации — сразу вставим сертификаты */
+  const sp = document.getElementById('screen-profile');
+  if(sp && sp.classList.contains('active')) acProfileInject();
   setTimeout(acRemindCheck, 2200);           // напоминание об уроке — раз в сутки
 })();

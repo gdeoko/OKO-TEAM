@@ -1,6 +1,7 @@
 /* ===== SETTINGS-PLUS (st2-): «Настройки» как полноценный раздел =====
    Строка в профиле (шестерёнка) -> fullscreen #st2View (nvPush):
-   Аккаунт / Уведомления / Приватность / Данные / Сессии / Опасная зона.
+   Аккаунты / Аккаунт / Уведомления / Приватность / Безопасность /
+   Оформление / Данные / Сессии / Опасная зона.
    Всё персистится в localStorage 'oko-settings2'. */
 
 /* ---------- состояние + персист ---------- */
@@ -9,7 +10,12 @@ const ST2 = {
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
   notif: {msg:true, feed:true, market:true, academy:true, marketing:false},
-  priv:  {write:'all', online:true, read:true},   /* write: all|contacts */
+  /* приватность: write/phone/photo — сегменты (all|contacts|nobody), online/read — тумблеры */
+  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all'},
+  sec:   {twofa:false, passcode:false, pin:null, secret:null},
+  theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
+  accounts: [],                     /* [{id,name,nick,tier,role,bio}] */
+  activeAcc: null,                  /* id активного аккаунта */
   killed: [],                       /* id завершённых мок-сессий */
   lastClear: 0,                     /* ts последней очистки кэша */
 };
@@ -19,8 +25,10 @@ const ST2 = {
     if(!s) return;
     if(s.notif) Object.assign(ST2.notif, s.notif);
     if(s.priv)  Object.assign(ST2.priv,  s.priv);
-    ['nick','email','phone','lastClear'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
-    if(Array.isArray(s.killed)) ST2.killed = s.killed;
+    if(s.sec)   Object.assign(ST2.sec,   s.sec);
+    ['nick','email','phone','lastClear','theme','activeAcc'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
+    if(Array.isArray(s.killed))   ST2.killed   = s.killed;
+    if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
   }catch(e){}
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }
@@ -74,9 +82,56 @@ function st2CacheSize(){
   return Math.min(217, hrs * 2.3) + ls / 1048576 * 8;
 }
 
+/* ---------- аккаунты: утилиты ---------- */
+function st2AccInit(name){
+  return String(name || 'U').trim().split(/\s+/).slice(0, 2).map(w => (w[0]||'').toUpperCase()).join('') || 'U';
+}
+function st2Hue(s){ let h = 0; s = String(s); for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+function st2ActiveAcc(){ return ST2.accounts.find(a => a.id === ST2.activeAcc) || null; }
+function st2SyncActiveFromProfile(){
+  const a = st2ActiveAcc();
+  if(a && typeof PROFILE !== 'undefined'){
+    a.name = PROFILE.name; a.nick = PROFILE.nick; a.tier = PROFILE.tier; a.role = PROFILE.role; a.bio = PROFILE.bio;
+  }
+}
+
 /* ---------- рендер вьюхи ---------- */
 function st2Nick(){ return (typeof PROFILE !== 'undefined' && PROFILE.nick) ? PROFILE.nick : (ST2.nick || 'ktodaniel'); }
 function st2Sw(on){ return `<span class="switch ${on ? 'on' : ''}"><i></i></span>`; }
+
+/* сегмент-переключатель N вариантов (data-vis-группа) */
+function st2Seg(group, key, opts){
+  const cur = ST2[group][key];
+  return `<span class="st2-seg st2-seg3" data-seg="${group}.${key}">` +
+    opts.map(o => `<button data-v="${o[0]}" class="${cur === o[0] ? 'on' : ''}" onclick="st2SetSeg('${group}','${key}','${o[0]}')">${esc(o[1])}</button>`).join('') +
+    `</span>`;
+}
+function st2SetSeg(group, key, val){
+  ST2[group][key] = val; st2Save(); st2PushCore();
+  const seg = document.querySelector(`.st2-seg[data-seg="${group}.${key}"]`);
+  if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === val));
+  const M = {
+    'priv.write':    {all:'Писать могут все', contacts:'Писать могут только контакты'},
+    'priv.phone':    {all:'Телефон виден всем', contacts:'Телефон виден контактам', nobody:'Телефон скрыт'},
+    'priv.photo':    {all:'Фото видно всем', contacts:'Фото видно контактам', nobody:'Фото профиля скрыто'},
+  };
+  const m = M[group + '.' + key]; if(m && m[val]) toast(m[val]);
+}
+
+function st2AccHtml(a){
+  const active = a.id === ST2.activeAcc;
+  const removable = !active && a.role !== 'owner';
+  return `<div class="st2-acc ${active ? 'st2-acc-on' : ''}" data-acc="${a.id}">
+    <span class="st2-acc-av" style="--h:${st2Hue(a.nick || a.name)}">${esc(st2AccInit(a.name))}</span>
+    <div class="st2-acc-b">
+      <b>${esc(a.name)}${vBadge ? vBadge(a.name) : ''}</b>
+      <small>@${esc(a.nick)} · ${esc(a.tier || 'FREE')}</small>
+    </div>
+    ${active ? `<span class="chip st2-chip st2-chip-on">${I('check')} активен</span>`
+             : `<button class="st2-acc-sw" onclick="st2SwitchAccount('${a.id}')">Войти</button>`}
+    ${removable ? `<button class="st2-acc-rm" onclick="st2RemoveAccount('${a.id}')" aria-label="Убрать аккаунт">${I('trash')}</button>` : ''}
+  </div>`;
+}
 
 function st2SesHtml(s){
   return `<div class="st2-ses" data-st2ses="${s.id}">
@@ -101,7 +156,17 @@ function st2Render(){
     ['academy',   'Академия: новые уроки',       'star'],
     ['marketing', 'Новости и предложения OKO',   'megaphone'],
   ];
+  const VIS = [['all','Все'],['contacts','Контакты'],['nobody','Никто']];
+  const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+  const lang = (typeof LANG !== 'undefined') ? LANG : 'ru';
   body.innerHTML = `
+  <div class="st2-sec">
+    <div class="st2-h">${I('users')} Аккаунты</div>
+    <div class="st2-card" id="st2AccList">
+      ${ST2.accounts.map(st2AccHtml).join('')}
+      <button class="prow st2-add-acc" onclick="st2AddAccount()">${I('plus')} Добавить аккаунт<span class="chev">${I('chev')}</span></button>
+    </div>
+  </div>
   <div class="st2-sec">
     <div class="st2-h">${I('user')} Аккаунт</div>
     <div class="st2-card">
@@ -122,13 +187,45 @@ function st2Render(){
   <div class="st2-sec">
     <div class="st2-h">${I('lock')} Приватность</div>
     <div class="st2-card">
-      <div class="prow" style="cursor:default">Кто может писать
-        <span class="st2-seg" id="st2Seg">
-          <button class="${ST2.priv.write === 'all' ? 'on' : ''}" onclick="st2SetWrite('all')">Все</button>
-          <button class="${ST2.priv.write === 'contacts' ? 'on' : ''}" onclick="st2SetWrite('contacts')">Контакты</button>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('send')} Кто может писать</span>
+        ${st2Seg('priv','write',[['all','Все'],['contacts','Контакты']])}</div>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('phone')} Кто видит телефон</span>
+        ${st2Seg('priv','phone',VIS)}</div>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('photo')} Кто видит фото профиля</span>
+        ${st2Seg('priv','photo',VIS)}</div>
+      <button class="prow" onclick="st2Tgl('priv','online',this)">${I('eye')} Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
+      <button class="prow" onclick="st2Tgl('priv','read',this)">${I('check2')} Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
+    </div>
+  </div>
+  <div class="st2-sec">
+    <div class="st2-h">${I('st2-shield')} Безопасность</div>
+    <div class="st2-card">
+      <button class="prow" onclick="st2TwoFA()">${I('st2-shield')} Двухфакторная защита
+        <span class="chip st2-chip ${ST2.sec.twofa ? 'st2-chip-on' : ''}">${ST2.sec.twofa ? I('check') + ' включена' : 'выключена'}</span>
+        <span class="chev">${I('chev')}</span></button>
+      <button class="prow" onclick="st2Passcode(this)">${I('lock')} Код-пароль при входе ${st2Sw(ST2.sec.passcode)}</button>
+      <button class="prow" onclick="st2ChangePass()">${I('st2-key')} Сменить пароль<span class="chev">${I('chev')}</span></button>
+    </div>
+  </div>
+  <div class="st2-sec">
+    <div class="st2-h">${I('sun')} Оформление</div>
+    <div class="st2-card">
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('moon')} Тема</span>
+        <span class="st2-seg st2-seg3" id="st2ThemeSeg">
+          <button data-v="dark"   class="${themeMode==='dark'?'on':''}"   onclick="st2SetTheme('dark')">Тёмная</button>
+          <button data-v="light"  class="${themeMode==='light'?'on':''}"  onclick="st2SetTheme('light')">Светлая</button>
+          <button data-v="system" class="${themeMode==='system'?'on':''}" onclick="st2SetTheme('system')">Система</button>
         </span></div>
-      <button class="prow" onclick="st2Tgl('priv','online',this)">Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
-      <button class="prow" onclick="st2Tgl('priv','read',this)">Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('globe')} Язык</span>
+        <span class="st2-seg st2-seg3" id="st2LangSeg">
+          <button data-v="ru" class="${lang==='ru'?'on':''}" onclick="st2SetLang('ru')">Русский</button>
+          <button data-v="en" class="${lang==='en'?'on':''}" onclick="st2SetLang('en')">English</button>
+        </span></div>
     </div>
   </div>
   <div class="st2-sec">
@@ -174,29 +271,42 @@ function st2Close(){
   if(typeof nvPop === 'function') nvPop('view:st2');
 }
 
-/* ---------- switch-и и сегмент ---------- */
+/* ---------- тумблеры ---------- */
 function st2Tgl(group, k, btn){
   ST2[group][k] = !ST2[group][k];
   st2Save(); st2PushCore();
   const sw = btn && btn.querySelector('.switch');
   if(sw) sw.classList.toggle('on', ST2[group][k]);
 }
-function st2SetWrite(v){
-  ST2.priv.write = v;
-  st2Save(); st2PushCore();
-  const seg = document.getElementById('st2Seg');
-  if(seg){
-    const b = seg.querySelectorAll('button');
-    b[0].classList.toggle('on', v === 'all');
-    b[1].classList.toggle('on', v === 'contacts');
+
+/* ---------- Оформление: тема / язык ---------- */
+function st2ApplyTheme(mode){
+  let t = mode;
+  if(mode === 'system'){
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
   }
-  toast(v === 'all' ? 'Писать могут все' : 'Писать могут только контакты');
+  if(typeof applyTheme === 'function') applyTheme(t);
+  else document.documentElement.dataset.theme = t;
+}
+function st2SetTheme(mode){
+  ST2.theme = mode; st2Save();
+  st2ApplyTheme(mode);
+  const seg = document.getElementById('st2ThemeSeg');
+  if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === mode));
+  toast(mode === 'system' ? 'Тема: как в системе' : (mode === 'light' ? 'Тема: светлая' : 'Тема: тёмная'));
+}
+function st2SetLang(l){
+  if(typeof setLang === 'function') setLang(l);           /* сам покажет toast + прогонит хуки */
+  else { try{ localStorage.setItem('oko-lang', l); }catch(e){} }
+  const seg = document.getElementById('st2LangSeg');
+  if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === l));
 }
 
 /* ---------- попап с инпутом (значение читаем из замыкания: popup закрывается ДО onclick) ---------- */
 function st2Attr(t){ return esc(t).replace(/"/g, '&quot;'); }
 let _st2Inp = null;
-function st2Prompt(o){ /* {ico,title,note,val,ph,saveLabel,danger,err,save(v)} */
+let st2_pwOld = null, st2_pwNew = null;
+function st2Prompt(o){ /* {ico,title,note,val,ph,saveLabel,danger,err,mode,save(v)} */
   showPopup({
     ico: o.ico, title: o.title,
     body: `${o.note ? `<p style="margin-bottom:12px">${o.note}</p>` : ''}
@@ -211,12 +321,13 @@ function st2Prompt(o){ /* {ico,title,note,val,ph,saveLabel,danger,err,save(v)} *
   const ok = document.querySelector('#okoPopup [data-pa="1"]');
   if(o.danger && ok) ok.classList.add('st2-btn-danger');
   if(_st2Inp){
+    if(o.mode === 'num'){ _st2Inp.setAttribute('inputmode', 'numeric'); _st2Inp.setAttribute('maxlength', String(o.max || 6)); }
     setTimeout(()=>{ try{ _st2Inp.focus(); _st2Inp.select(); }catch(e){} }, 60);
     _st2Inp.addEventListener('keydown', e => { if(e.key === 'Enter' && ok) ok.click(); });
   }
 }
 
-/* ---------- Аккаунт: ник (синк PROFILE), почта, телефон ---------- */
+/* ---------- Аккаунт: ник (синк PROFILE + активный аккаунт), почта, телефон ---------- */
 function st2EditNick(err){
   st2Prompt({
     ico:'edit', title:'Смена ника', err: err,
@@ -225,11 +336,12 @@ function st2EditNick(err){
     save(v){
       v = v.replace(/^@/, '');
       if(!/^[a-z0-9_]{3,16}$/i.test(v)) return st2EditNick('Недопустимый ник — проверь формат');
-      ST2.nick = v; st2Save();
+      ST2.nick = v;
       if(typeof PROFILE !== 'undefined'){
         PROFILE.nick = v;
         if(typeof renderMyProfile === 'function') renderMyProfile();
       }
+      st2SyncActiveFromProfile(); st2Save();
       st2Render(); toast('Ник обновлён: @' + v);
     },
   });
@@ -259,6 +371,169 @@ function st2EditPhone(err){
   });
 }
 
+/* ---------- Аккаунты: переключение / добавление / удаление ---------- */
+function st2SwitchAccount(id){
+  if(id === ST2.activeAcc) return;
+  const a = ST2.accounts.find(x => x.id === id);
+  if(!a) return;
+  st2SyncActiveFromProfile();          /* сохранить текущий стейт перед уходом */
+  ST2.activeAcc = id; ST2.nick = a.nick;
+  if(typeof PROFILE !== 'undefined'){
+    PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
+    if(a.bio !== undefined) PROFILE.bio = a.bio;
+    if(typeof renderMyProfile === 'function') renderMyProfile();
+  }
+  st2Save();
+  const el = document.querySelector(`[data-acc="${id}"]`);
+  if(el){ el.classList.add('st2-acc-flash'); setTimeout(()=> st2Render(), 220); }
+  else st2Render();
+  toast('Аккаунт: ' + a.name);
+}
+function st2AddAccount(err){
+  st2Prompt({
+    ico:'plus', title:'Добавить аккаунт', err: err,
+    note:'Войдите в другой аккаунт OKO — введите его ник, данные подтянутся автоматически.',
+    ph:'nickname', saveLabel:'Войти',
+    save(v){
+      v = v.replace(/^@/, '');
+      if(!/^[a-z0-9_]{3,16}$/i.test(v)) return st2AddAccount('Недопустимый ник — проверь формат');
+      if(ST2.accounts.some(a => (a.nick || '').toLowerCase() === v.toLowerCase()))
+        return st2AddAccount('Этот аккаунт уже добавлен');
+      const name = v.charAt(0).toUpperCase() + v.slice(1);
+      const id = 'acc' + Date.now();
+      ST2.accounts.push({id, name, nick:v, tier:'FREE', role:'user', bio:''});
+      st2Save();
+      st2SwitchAccount(id);
+      toast('Вошли как @' + v);
+    },
+  });
+}
+function st2RemoveAccount(id){
+  const a = ST2.accounts.find(x => x.id === id);
+  if(!a || a.id === ST2.activeAcc || a.role === 'owner') return;
+  showPopup({
+    ico:'trash', title:'Убрать аккаунт?',
+    body:`Аккаунт «${esc(a.name)}» (@${esc(a.nick)}) исчезнет из списка на этом устройстве. Сам аккаунт не удаляется — вы сможете войти снова.`,
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Убрать', onclick(){
+        ST2.accounts = ST2.accounts.filter(x => x.id !== id);
+        st2Save(); st2Render(); toast('Аккаунт убран');
+      }},
+    ],
+  });
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(ok) ok.classList.add('st2-btn-danger');
+}
+
+/* ---------- Безопасность: 2FA (честная демо-заглушка), код-пароль, смена пароля ---------- */
+function st2GenSecret(){
+  const A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let s = '';
+  for(let i = 0; i < 16; i++){ if(i && i % 4 === 0) s += ' '; s += A[Math.floor(Math.random() * 32)]; }
+  return s;
+}
+function st2TwoFA(){
+  if(ST2.sec.twofa){
+    showPopup({
+      ico:'st2-shield', title:'Отключить 2FA?',
+      body:'Вход снова будет защищён только паролем. Рекомендуем держать двухфакторную защиту включённой.',
+      actions:[
+        {label:'Отмена', ghost:true},
+        {label:'Отключить', onclick(){ ST2.sec.twofa = false; ST2.sec.secret = null; st2Save(); st2Render(); toast('2FA отключена'); }},
+      ],
+    });
+    const ok = document.querySelector('#okoPopup [data-pa="1"]');
+    if(ok) ok.classList.add('st2-btn-danger');
+    return;
+  }
+  const secret = st2GenSecret();
+  ST2.sec.secret = secret;
+  showPopup({
+    ico:'st2-shield', title:'Двухфакторная защита',
+    body:`<p style="margin-bottom:10px">Откройте приложение-аутентификатор (Google Authenticator, 1Password, OKO&nbsp;Key) и добавьте ключ вручную:</p>
+      <div class="st2-2fa-key">${esc(secret)}</div>
+      <div class="st2-note"><b>Честно:</b> в этой сборке код подтверждения не сверяется с сервером — рабочая проверка TOTP подключается на боевом бэкенде. Введите любые 6&nbsp;цифр, чтобы завершить демонстрацию.</div>`,
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Ввести код', onclick: ()=> st2TwoFACode()},
+    ],
+  });
+}
+function st2TwoFACode(err){
+  st2Prompt({
+    ico:'st2-shield', title:'Код из приложения', err: err, mode:'num',
+    note:'Введите 6-значный код из аутентификатора.',
+    ph:'000000', saveLabel:'Включить',
+    save(v){
+      if(!/^\d{6}$/.test(v)) return st2TwoFACode('Нужно ровно 6 цифр');
+      ST2.sec.twofa = true; st2Save(); st2Render();
+      toast('Двухфакторная защита включена');
+    },
+  });
+}
+function st2Passcode(){
+  if(ST2.sec.passcode){
+    showPopup({
+      ico:'lock', title:'Отключить код-пароль?',
+      body:'Приложение перестанет запрашивать код при входе.',
+      actions:[
+        {label:'Отмена', ghost:true},
+        {label:'Отключить', onclick(){ ST2.sec.passcode = false; ST2.sec.pin = null; st2Save(); st2Render(); toast('Код-пароль отключён'); }},
+      ],
+    });
+    const ok = document.querySelector('#okoPopup [data-pa="1"]');
+    if(ok) ok.classList.add('st2-btn-danger');
+    return;
+  }
+  st2PinSet1();
+}
+function st2PinSet1(err){
+  st2Prompt({
+    ico:'lock', title:'Код-пароль', err: err, mode:'num', max:4,
+    note:'Придумайте 4-значный код — он будет запрашиваться при входе в приложение.',
+    ph:'4 цифры', saveLabel:'Далее',
+    save(v){ if(!/^\d{4}$/.test(v)) return st2PinSet1('Нужно ровно 4 цифры'); st2PinSet2(v); },
+  });
+}
+function st2PinSet2(first, err){
+  st2Prompt({
+    ico:'lock', title:'Повторите код', err: err, mode:'num', max:4,
+    note:'Введите код ещё раз для подтверждения.',
+    ph:'4 цифры', saveLabel:'Включить',
+    save(v){
+      if(v !== first) return st2PinSet2(first, 'Коды не совпадают');
+      ST2.sec.passcode = true; ST2.sec.pin = first; st2Save(); st2Render();
+      toast('Код-пароль включён');
+    },
+  });
+}
+function st2ChangePass(err){
+  showPopup({
+    ico:'st2-key', title:'Сменить пароль',
+    body:`<div class="st2-pin"><input id="st2PwOld" type="password" placeholder="Текущий пароль" autocomplete="off"></div>
+      <div class="st2-pin" style="margin-top:10px"><input id="st2PwNew" type="password" placeholder="Новый пароль — минимум 8 символов" autocomplete="off"></div>
+      ${err ? `<div class="st2-perr">${esc(err)}</div>` : ''}`,
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Сохранить', onclick: st2ChangePassSave},
+    ],
+  });
+  st2_pwOld = document.getElementById('st2PwOld');
+  st2_pwNew = document.getElementById('st2PwNew');
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(st2_pwOld) setTimeout(()=>{ try{ st2_pwOld.focus(); }catch(e){} }, 60);
+  if(st2_pwNew && ok) st2_pwNew.addEventListener('keydown', e => { if(e.key === 'Enter') ok.click(); });
+}
+function st2ChangePassSave(){
+  const oldv = st2_pwOld ? st2_pwOld.value : '';
+  const nv   = st2_pwNew ? st2_pwNew.value : '';
+  if(!oldv)          return st2ChangePass('Введите текущий пароль');
+  if(nv.length < 8)  return st2ChangePass('Новый пароль слишком короткий — минимум 8 символов');
+  if(nv === oldv)    return st2ChangePass('Новый пароль совпадает со старым');
+  toast('Пароль изменён');
+}
+
 /* ---------- Данные: очистка кэша с подсчётом + выгрузка .txt ---------- */
 let st2Clearing = false;
 function st2ClearCache(){
@@ -281,12 +556,20 @@ function st2ClearCache(){
 }
 function st2Download(){
   const p = (typeof PROFILE !== 'undefined') ? PROFILE : {name:'—', nick: st2Nick(), tier:'—', bio:''};
+  const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
   const L = ['OKO — выгрузка данных аккаунта', 'Дата: ' + new Date().toLocaleString('ru-RU'), ''];
   L.push('=== ПРОФИЛЬ ===', 'Имя: ' + p.name, 'Ник: @' + p.nick, 'Тариф: ' + p.tier,
          'Почта: ' + ST2.email, 'Телефон: ' + ST2.phone, 'О себе: ' + (p.bio || '—'), '');
   L.push('=== НАСТРОЙКИ ===',
          'Уведомления: ' + JSON.stringify(ST2.notif),
-         'Приватность: ' + JSON.stringify(ST2.priv), '');
+         'Приватность: ' + JSON.stringify(ST2.priv),
+         'Тема: ' + themeMode + ' · Язык: ' + ((typeof LANG !== 'undefined') ? LANG : 'ru'),
+         'Двухфакторная защита: ' + (ST2.sec.twofa ? 'вкл' : 'выкл') + ' · Код-пароль: ' + (ST2.sec.passcode ? 'вкл' : 'выкл'), '');
+  if(ST2.accounts.length){
+    L.push('=== АККАУНТЫ НА УСТРОЙСТВЕ ===');
+    ST2.accounts.forEach(a => L.push('  ' + a.name + ' · @' + a.nick + ' · ' + (a.tier || 'FREE') + (a.id === ST2.activeAcc ? ' (активен)' : '')));
+    L.push('');
+  }
   if(typeof WALLET !== 'undefined'){
     L.push('=== КОШЕЛЁК ===', 'Счёт: ' + WALLET.acc, 'Баланс: ' + WALLET.balance + ' ₽', 'В холде: ' + WALLET.hold + ' ₽');
     (WALLET.ledger || []).slice(0, 30).forEach(e =>
@@ -402,6 +685,13 @@ function st2AddIcons(){
     '<ellipse cx="50" cy="24" rx="30" ry="11"/>' +
     '<path d="M20 24 v26 c0 6 13.4 11 30 11 s30-5 30-11 V24"/>' +
     '<path d="M20 50 v26 c0 6 13.4 11 30 11 s30-5 30-11 V50"/></g>');
+  /* щит с галочкой (безопасность / 2FA) */
+  mk('i-st2-shield', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M50 9 L83 21 V47 C83 68 69 83 50 91 C31 83 17 68 17 47 V21 Z"/>' +
+    '<path d="M37 49 l9 10 18-22"/></g>');
+  /* ключ (смена пароля) */
+  mk('i-st2-key', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="35" cy="37" r="17"/><path d="M47 49 L86 88"/><path d="M76 78 l9 -9"/><path d="M65 67 l9 -9"/></g>');
 }
 
 /* ---------- строка «Настройки» в профиле ---------- */
@@ -423,10 +713,30 @@ function st2InsertRow(){
   st2AddIcons();
   st2InsertRow();
 
-  /* персистентный ник -> PROFILE (обратный синк при загрузке) */
-  if(ST2.nick && typeof PROFILE !== 'undefined' && PROFILE.nick !== ST2.nick){
-    PROFILE.nick = ST2.nick;
-    if(typeof renderMyProfile === 'function') renderMyProfile();
+  /* аккаунты: сид из PROFILE при первом запуске; иначе — применить активный аккаунт */
+  if(typeof PROFILE !== 'undefined'){
+    /* миграция: сохранённый ранее override ника -> PROFILE (до сида аккаунтов) */
+    if(ST2.nick && !ST2.accounts.length && PROFILE.nick !== ST2.nick){
+      PROFILE.nick = ST2.nick;
+      if(typeof renderMyProfile === 'function') renderMyProfile();
+    }
+    if(!ST2.accounts.length){
+      ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio}];
+      ST2.activeAcc = 'owner';
+      st2Save();
+    } else {
+      if(!ST2.activeAcc || !ST2.accounts.some(a => a.id === ST2.activeAcc)) ST2.activeAcc = ST2.accounts[0].id;
+      const a = st2ActiveAcc();
+      if(a && (PROFILE.nick !== a.nick || PROFILE.name !== a.name)){
+        PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
+        if(a.bio !== undefined) PROFILE.bio = a.bio;
+        ST2.nick = a.nick;
+        if(typeof renderMyProfile === 'function') renderMyProfile();
+        st2Save();
+      }
+    }
+  } else if(ST2.nick){
+    /* PROFILE ещё не готов — ничего не делаем, применится при рендере */
   }
 
   /* мои настройки -> старые sheet-ы ядра; и chain-обратный синк из них */
@@ -439,5 +749,24 @@ function st2InsertRow(){
       const v = document.getElementById('st2View');
       if(v && v.classList.contains('open')) st2Render();
     };
+  }
+
+  /* тема «Система»: применить и слушать смену системной темы */
+  if(ST2.theme === 'system') st2ApplyTheme('system');
+  try{
+    const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    if(mq){
+      const h = ()=>{ if(ST2.theme === 'system') st2ApplyTheme('system'); };
+      if(mq.addEventListener) mq.addEventListener('change', h);
+      else if(mq.addListener) mq.addListener(h);
+    }
+  }catch(e){}
+
+  /* при смене языка — перерисовать открытую вьюху (обновить активную кнопку) */
+  if(typeof onLangChange === 'function'){
+    onLangChange(function(){
+      const v = document.getElementById('st2View');
+      if(v && v.classList.contains('open')) st2Render();
+    });
   }
 })();

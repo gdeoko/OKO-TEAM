@@ -129,7 +129,99 @@
 .fa-sentinel{height:2px}
 .fa-end{padding:18px;text-align:center;font-size:11.5px;color:var(--dim)}
 
+/* ======================= КОММЕНТАРИИ-ТРЕДЫ ======================= */
+#sheet-comments h3{display:flex;align-items:center;gap:9px}
+.fac-count{font-family:var(--font-body);font-size:12px;font-weight:700;line-height:1;color:var(--accent);
+  background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;padding:4px 9px}
+:root[data-theme="light"] .fac-count{border-color:rgba(83,168,0,.32)}
+
+#sheet-comments .cmt-list{max-height:56vh;margin-bottom:0;padding-right:2px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin}
+#sheet-comments .cmt-list::-webkit-scrollbar{width:6px}
+#sheet-comments .cmt-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+.fac-wrap{display:flex;flex-direction:column}
+.fac-item{display:flex;gap:11px;align-items:flex-start;padding:11px 2px;position:relative;
+  animation:fac-in .32s cubic-bezier(.22,.9,.36,1) both}
+.fac-item+.fac-item{border-top:1px solid var(--border)}
+.fac-replies .fac-item+.fac-item{border-top:1px solid color-mix(in srgb,var(--border) 60%,transparent)}
+@keyframes fac-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* аватар */
+.fac-ava{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-body);font-weight:700;font-size:14px;letter-spacing:.01em;
+  color:var(--accent);background:var(--raised);border:1px solid var(--border);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.fac-ava.fac-me{color:#000;background:var(--lime);border-color:transparent;
+  box-shadow:0 2px 10px rgba(154,255,0,.28)}
+.fac-r .fac-ava{width:30px;height:30px;font-size:12px}
+
+.fac-main{flex:1;min-width:0}
+.fac-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;line-height:1.2}
+.fac-name{font-size:13px;font-weight:700;color:var(--text)}
+.fac-row svg.i,.fac-row .vs-badge,.fac-row .fa-vb{width:13px;height:13px}
+.fac-time{font-size:11px;color:var(--dim);margin-left:auto;white-space:nowrap;flex:none}
+.fac-text{font-size:13.5px;line-height:1.5;color:var(--text);margin-top:3px;
+  word-break:break-word;overflow-wrap:anywhere}
+
+/* действия под комментом */
+.fac-acts{display:flex;align-items:center;gap:6px;margin-top:7px}
+.fac-acts button{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:5px 10px;
+  font-size:11.5px;font-weight:600;color:var(--dim);background:transparent;border:1px solid transparent;
+  transition:color .16s,background .16s,border-color .16s,transform .12s}
+.fac-acts button svg.i{width:14px;height:14px;transition:transform .16s}
+.fac-acts button:hover{color:var(--text);background:var(--raised)}
+.fac-acts button:active{transform:scale(.93)}
+.fac-like i{font-style:normal;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.fac-like.on{color:var(--accent)}
+.fac-like.on svg.i{fill:var(--accent);color:var(--accent)}
+.fac-like:hover svg.i{transform:scale(1.15)}
+.fac-like.fac-burst svg.i{animation:fac-heart .42s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes fac-heart{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+.fac-reply:hover{color:var(--accent)}
+
+/* переключатель веток */
+.fac-toggle{display:inline-flex;align-items:center;gap:8px;margin-top:9px;padding:2px 0;
+  font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--accent);background:transparent}
+.fac-toggle .fac-tline{width:22px;height:1px;background:var(--border);flex:none}
+.fac-toggle svg.i{width:12px;height:12px;transition:transform .25s}
+.fac-toggle.open svg.i{transform:rotate(180deg)}
+.fac-toggle:hover .fac-tl{text-decoration:underline}
+
+/* ветка ответов */
+.fac-replies{max-height:0;overflow:hidden;opacity:0;margin-top:0;padding-left:14px;
+  border-left:1.5px solid var(--border);
+  transition:max-height .36s cubic-bezier(.22,.9,.36,1),opacity .3s,margin-top .3s}
+.fac-replies.open{max-height:2600px;opacity:1;margin-top:8px}
+
+/* новый коммент — подсветка */
+.fac-new{animation:fac-flash 1.4s ease}
+@keyframes fac-flash{0%{background:var(--lime-dim)}100%{background:transparent}}
+
+/* пусто */
+.fac-empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;
+  padding:44px 16px 40px;color:var(--dim)}
+.fac-empty svg.i{width:34px;height:34px;color:var(--border);margin-bottom:2px}
+.fac-empty b{font-size:15px;color:var(--text);font-weight:700}
+.fac-empty span{font-size:12.5px}
+
+/* composer: аватар слева + плашка «Ответ …» */
+.fac-compose{align-items:center}
+.fac-compose-ava{width:36px;height:36px;font-size:13px}
+.fac-reply-chip{display:flex;align-items:center;gap:8px;margin:2px 0 8px;padding:7px 10px 7px 12px;
+  font-size:12px;color:var(--dim);background:var(--raised);border:1px solid var(--border);
+  border-left:2px solid var(--lime);border-radius:var(--r-sm);animation:fa-fade .22s ease}
+.fac-reply-chip svg.i{width:14px;height:14px;color:var(--accent);flex:none}
+.fac-reply-chip>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fac-reply-chip b{color:var(--text);font-weight:700}
+.fac-rc-x{width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:50%;color:var(--dim);background:transparent;transition:color .16s,background .16s}
+.fac-rc-x svg.i{width:11px;height:11px}
+.fac-rc-x:hover{color:var(--text);background:var(--surface)}
+
 @media(prefers-reduced-motion:reduce){
   .fa-dot,.fa-refresh:hover svg.i,#feedList .post .acts button.liked svg.i{animation:none!important}
   .fa-explain{transition:none}
+  .fac-item,.fac-new,.fac-like.fac-burst svg.i,.fac-reply-chip{animation:none!important}
+  .fac-replies{transition:none}
 }

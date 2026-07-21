@@ -31,6 +31,7 @@ function regSave(data){ try{ localStorage.setItem('oko-registration', JSON.strin
 
 /* ---------- открытие / закрытие / навигация ---------- */
 function regOpen(){
+  if(!document.getElementById('regView')) return;
   REG.step = 1; REG.code = ''; REG.nickState = null; REG.interests.clear(); REG.adult = true;
   ['regContact','regPass','regName','regNick','regBirth'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('regTerms').checked = false;
@@ -258,10 +259,15 @@ function regToggleInt(id){
 }
 function regUpdateFinish(){
   regErrHide('regErr3');
-  const ok = document.getElementById('regTerms').checked
-    && document.getElementById('regName').value.trim().length > 0
-    && REG.nickState === 'ok';
-  document.getElementById('regFinishBtn').disabled = !ok;
+  const terms = document.getElementById('regTerms');
+  const name = document.getElementById('regName');
+  const btn = document.getElementById('regFinishBtn');
+  if(!terms || !name || !btn) return;
+  const ok = terms.checked
+    && name.value.trim().length > 0
+    && REG.nickState === 'ok'
+    && REG.interests.size > 0;
+  btn.disabled = !ok;
 }
 function regLegal(kind){
   if(typeof openLegalDoc === 'function'){ openLegalDoc(kind); return; }
@@ -290,14 +296,15 @@ function regFinish(){
   regClose();
   _regPrevDoLogin(REG.method); /* оригинальный вход: oko-auth, скрыть auth, initLive, онбординг */
 
-  /* welcome-попап — один раз после первой регистрации */
+  /* welcome-попап + реальное начисление бонуса — один раз после первой регистрации */
   if(!regPopupsSeen().welcome){
     regPopupMark('welcome');
+    try{ if(typeof walletAdd === 'function') walletAdd(2500, 'Приветственный бонус'); }catch(e){}
     setTimeout(()=>{
       showPopup({ico:'logo', title:'Добро пожаловать в OKO',
         body: regWelcomeBody(name),
         actions:[
-          {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('Бонус на лицевом счёте — кошелёк уже в сборке'); }},
+          {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('2 500 ₽ зачислены на лицевой счёт'); }},
           {label:'Позже', ghost:true},
         ]});
     }, 700);
@@ -435,6 +442,9 @@ doLogin = function(method){
     });
   });
   regRenderInts();
+  /* дата рождения не может быть в будущем */
+  const bd = document.getElementById('regBirth');
+  if(bd){ try{ bd.max = new Date().toISOString().slice(0, 10); }catch(e){} }
   /* если уже вошли (перезагрузка) — планируем одноразовые попапы */
   if(typeof authed === 'function' && authed()) regSchedulePopups();
 })();

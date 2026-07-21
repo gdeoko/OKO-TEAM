@@ -95,3 +95,161 @@
 .vs-np-strip button.vs-locked{opacity:.45}
 .vs-post-stk{display:inline-flex;align-items:center;gap:7px;margin-top:6px;padding:5px 12px 5px 6px;border:1px solid rgba(0,152,234,.4);border-radius:999px;background:var(--raised);font-size:11.5px;font-weight:600;animation:vs-pop .35s cubic-bezier(.45,1.6,.4,1)}
 .vs-post-stk b{color:#3fb6ff;font-weight:700}
+
+/* ================= TON ПОДАРКИ ================= */
+.vs-gem-mk{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:0;vertical-align:-0.14em}
+.vs-gem-mk svg{width:100%;height:100%;display:block;filter:drop-shadow(0 0 3px rgba(0,152,234,.55))}
+
+/* --- герой-кошелёк --- */
+.vs-ton-hero{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:16px 16px 18px;margin-bottom:14px;
+  background:linear-gradient(158deg,#0a1a2a,#06101c 60%,#050a12);border:1px solid rgba(0,152,234,.34);
+  box-shadow:0 16px 40px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.05)}
+:root[data-theme="light"] .vs-ton-hero{background:linear-gradient(158deg,#eaf6ff,#dcefff 60%,#f4faff);border-color:rgba(0,152,234,.3);box-shadow:0 14px 34px rgba(20,60,110,.14),inset 0 1px 0 rgba(255,255,255,.7)}
+.vs-ton-hero-glow{position:absolute;top:-40%;right:-20%;width:70%;height:120%;pointer-events:none;
+  background:radial-gradient(circle,rgba(47,179,242,.34),transparent 62%);animation:vs-glowmove 6s ease-in-out infinite}
+.vs-ton-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.vs-ton-badge{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  color:#7fd8ff;background:rgba(0,152,234,.16);border:1px solid rgba(0,152,234,.4);padding:5px 11px;border-radius:999px}
+.vs-ton-conn{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#bfe6ff;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);padding:6px 12px;border-radius:999px;transition:background .2s,border-color .2s}
+.vs-ton-conn:hover{background:rgba(0,152,234,.2);border-color:rgba(0,152,234,.5)}
+.vs-ton-conn svg{width:12px;height:12px}
+:root[data-theme="light"] .vs-ton-conn{color:#0a5a92;background:rgba(0,152,234,.1);border-color:rgba(0,152,234,.28)}
+.vs-ton-bal{position:relative;z-index:1;display:flex;align-items:center;gap:10px;font-family:var(--font-display);letter-spacing:1px;
+  font-size:46px;line-height:1;color:#fff;text-shadow:0 2px 18px rgba(0,152,234,.4)}
+.vs-ton-bal .vs-gem-mk{width:32px;height:32px}
+:root[data-theme="light"] .vs-ton-bal{color:#062a45;text-shadow:0 2px 14px rgba(0,152,234,.22)}
+.vs-ton-rub{position:relative;z-index:1;color:#7fb8dd;font-size:13px;font-weight:600;margin:4px 0 12px}
+:root[data-theme="light"] .vs-ton-rub{color:#3d78a3}
+.vs-ton-addr{position:relative;z-index:1;display:inline-flex;align-items:center;gap:7px;font-family:var(--font-body);font-size:12px;font-weight:600;
+  color:#9fd4f5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:999px;margin-bottom:14px;transition:background .2s}
+.vs-ton-addr:hover{background:rgba(0,152,234,.16)}
+.vs-ton-addr svg{width:12px;height:12px;opacity:.8}
+:root[data-theme="light"] .vs-ton-addr{color:#0a5a92;background:rgba(0,152,234,.08);border-color:rgba(0,152,234,.24)}
+.vs-ton-acts{position:relative;z-index:1;display:flex;gap:8px}
+.vs-ton-act{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:11px 4px;border-radius:var(--r-md);
+  font-size:11.5px;font-weight:700;white-space:nowrap;color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border:none;
+  box-shadow:0 6px 16px rgba(0,152,234,.32);transition:transform .16s cubic-bezier(.34,1.4,.5,1),box-shadow .2s}
+.vs-ton-act:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,152,234,.42)}
+.vs-ton-act:active{transform:scale(.95)}
+.vs-ton-act svg{width:14px;height:14px;flex-shrink:0}
+.vs-ton-act.ghost{color:#bfe6ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);box-shadow:none}
+.vs-ton-act.ghost:hover{background:rgba(0,152,234,.18);border-color:rgba(0,152,234,.45);box-shadow:none}
+:root[data-theme="light"] .vs-ton-act.ghost{color:#0a5a92;background:rgba(0,152,234,.09);border-color:rgba(0,152,234,.26)}
+
+/* --- вкладки магазин/коллекция --- */
+.vs-ton-tabs{display:flex;gap:8px;margin-bottom:12px}
+.vs-ton-tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 6px;border-radius:var(--r-md);
+  font-size:13px;font-weight:700;color:var(--dim);background:var(--surface);border:1px solid var(--border);transition:all .2s}
+.vs-ton-tabs button:hover{color:var(--text);border-color:var(--dim)}
+.vs-ton-tabs button.on{color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border-color:transparent;box-shadow:0 4px 14px rgba(0,152,234,.3)}
+.vs-ton-tabs button i{font-style:normal;font-size:10px;font-weight:800;min-width:18px;padding:1px 5px;border-radius:999px;background:rgba(4,18,31,.22);color:inherit}
+.vs-ton-tabs button:not(.on) i{background:var(--lime);color:#0a0a0a}
+
+/* --- сетка подарков --- */
+.vs-gshop{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:560px){.vs-gshop{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:820px){.vs-gshop{grid-template-columns:repeat(5,1fr)}}
+.vs-gcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px 11px;border-radius:var(--r-md);
+  background:linear-gradient(158deg,var(--raised),var(--surface));border:1px solid var(--border);
+  transition:transform .18s cubic-bezier(.34,1.4,.5,1),box-shadow .22s,border-color .22s}
+.vs-gcard:hover{transform:translateY(-3px);border-color:#3fb6ff;box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 16px rgba(0,152,234,.32)}
+.vs-gcard:active{transform:scale(.94)}
+:root[data-theme="light"] .vs-gcard:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 16px rgba(0,152,234,.24)}
+.vs-gcard-art{position:relative;transition:transform .2s cubic-bezier(.34,1.6,.5,1)}
+.vs-gcard:hover .vs-gcard-art{transform:scale(1.08) rotate(-3deg)}
+.vs-gcard-name{font-size:11.5px;font-weight:600;color:var(--text);text-align:center;line-height:1.2}
+.vs-gcard-price{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#3fb6ff}
+.vs-gcard-pro{position:absolute;top:-6px;right:-8px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#ffd21e,#ff9800);box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.vs-gcard-pro svg{width:12px;height:12px;color:#3a2400}
+.vs-gcard-own{position:absolute;bottom:-4px;right:-6px;font-size:9.5px;font-weight:800;color:#0a0a0a;background:var(--lime);
+  padding:2px 7px;border-radius:999px;box-shadow:var(--glow)}
+.vs-gcard-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(6,12,20,.28)}
+.vs-gcard-lock svg{width:20px;height:20px;color:#7fd8ff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.vs-gcard.vs-locked .vs-stk-art{opacity:.5;filter:grayscale(.35)}
+.vs-mine-send{color:var(--accent)!important}
+.vs-mine-send svg{width:12px;height:12px}
+
+/* --- пустая коллекция --- */
+.vs-mine-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:36px 20px;color:var(--dim)}
+.vs-mine-empty .vs-stk-art{margin-bottom:6px;animation:vs-float 3.2s ease-in-out infinite}
+@keyframes vs-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.vs-mine-empty b{font-size:16px;color:var(--text);font-family:var(--font-display);letter-spacing:1px}
+.vs-mine-empty span{font-size:12.5px;max-width:240px;line-height:1.5}
+
+/* --- подвал-дисклеймер --- */
+.vs-ton-foot{display:flex;gap:8px;align-items:flex-start;margin-top:16px;padding:12px 14px;border-radius:var(--r-md);
+  background:var(--surface);border:1px dashed var(--border);font-size:11px;line-height:1.5;color:var(--dim)}
+.vs-ton-foot svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:#3fb6ff}
+
+/* --- содержимое sheet покупки/деталей --- */
+.vs-sheet-body{text-align:center}
+.vs-buy-art{position:relative;display:inline-flex;margin:6px auto 10px}
+.vs-buy-art .vs-stk-art{animation:vs-stk-in .45s cubic-bezier(.34,1.56,.44,1)}
+.vs-buy-pro{position:absolute;top:0;right:-12px;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.5px;
+  color:#3a2400;background:linear-gradient(135deg,#ffd21e,#ff9800);padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.vs-buy-pro svg{width:11px;height:11px}
+.vs-buy-name{font-family:var(--font-display);letter-spacing:1px;font-size:22px;margin:0 0 4px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.vs-buy-owned{font-family:var(--font-body);letter-spacing:0;font-size:10.5px;font-weight:700;color:#0a0a0a;background:var(--lime);padding:2px 9px;border-radius:999px}
+.vs-buy-price{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--text);margin-bottom:12px}
+.vs-buy-price b{font-size:22px;font-weight:800;color:#3fb6ff}
+.vs-buy-price small{color:var(--dim);font-size:12px;font-weight:600}
+.vs-buy-supply{margin:0 0 12px}
+.vs-buy-sbar{height:5px;border-radius:999px;background:var(--raised);overflow:hidden;margin-bottom:6px}
+.vs-buy-sbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#0098EA,#4fd0ff)}
+.vs-buy-supply span{font-size:11px;color:var(--dim)}
+.vs-buy-note{display:flex;gap:7px;align-items:flex-start;text-align:left;padding:10px 12px;margin-bottom:6px;border-radius:var(--r-sm);
+  background:rgba(0,152,234,.08);border:1px solid rgba(0,152,234,.24);font-size:11px;line-height:1.45;color:var(--dim)}
+.vs-buy-note svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;color:#3fb6ff}
+.vs-gift-own{font-size:13px;color:var(--text);margin:2px 0 14px;display:flex;align-items:center;justify-content:center;gap:6px}
+.vs-gift-own svg{width:16px;height:16px;color:var(--accent)}
+.vs-gift-own b{color:var(--accent)}
+
+/* --- пополнение --- */
+.vs-topup-big{display:flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-display);letter-spacing:1px;font-size:34px;margin:6px 0 2px;color:var(--text)}
+.vs-topup-big b{color:#3fb6ff}
+.vs-topup-rub{text-align:center;font-size:12.5px;color:var(--dim);margin-bottom:14px}
+.vs-topup-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.vs-topup-chips button{padding:11px 4px;border-radius:var(--r-md);font-size:13px;font-weight:700;color:var(--dim);
+  background:var(--surface);border:1px solid var(--border);transition:all .18s}
+.vs-topup-chips button:hover{color:var(--text);border-color:var(--dim)}
+.vs-topup-chips button.on{color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border-color:transparent;box-shadow:0 4px 12px rgba(0,152,234,.3)}
+
+/* --- список получателей --- */
+.vs-send-head{display:flex;align-items:center;gap:12px;padding:6px 2px 14px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.vs-send-head b{display:block;font-size:15px}
+.vs-send-head small{color:var(--dim);font-size:12px}
+.vs-send-list{display:flex;flex-direction:column;gap:2px;max-height:52vh;overflow-y:auto}
+.vs-send-row{display:flex;align-items:center;gap:12px;width:100%;padding:11px 8px;border-radius:var(--r-md);
+  background:transparent;border:none;text-align:left;transition:background .16s}
+.vs-send-row:hover{background:var(--raised)}
+.vs-send-row:active{transform:scale(.98)}
+.vs-send-ava{width:40px;height:40px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--lime-dim);color:var(--accent);font-weight:800;font-size:15px}
+.vs-send-ava svg{width:20px;height:20px}
+.vs-send-name{flex:1;font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs-send-go{width:17px;height:17px;color:#3fb6ff;flex-shrink:0}
+
+/* --- история --- */
+.vs-hist-list{display:flex;flex-direction:column}
+.vs-hist-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px;border-bottom:1px solid var(--border)}
+.vs-hist-row:last-child{border-bottom:none}
+.vs-hist-why{font-size:13px;font-weight:600;color:var(--text)}
+.vs-hist-why small{display:block;font-weight:400;color:var(--dim);font-size:11px;margin-top:2px}
+.vs-hist-val{font-size:14px;font-weight:800;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.vs-hist-val.in{color:var(--lime)}
+.vs-hist-val.out{color:#ff9db0}
+.vs-hist-val.send{color:#3fb6ff}
+.vs-hist-val.send svg{width:16px;height:16px}
+
+/* --- сообщение-подарок в чате --- */
+.gift-msg{padding:0!important;background:transparent!important;border:none!important}
+.vs-giftmsg{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 20px 12px;border-radius:20px;
+  background:linear-gradient(158deg,rgba(0,152,234,.16),rgba(0,152,234,.05));border:1px solid rgba(0,152,234,.4);
+  box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 18px rgba(0,152,234,.18)}
+:root[data-theme="light"] .vs-giftmsg{background:linear-gradient(158deg,rgba(0,152,234,.12),rgba(0,152,234,.03));box-shadow:0 6px 16px rgba(20,50,90,.14),0 0 16px rgba(0,152,234,.14)}
+.vs-giftmsg .vs-stk-art{animation:vs-stk-in .5s cubic-bezier(.34,1.56,.44,1)}
+.vs-giftmsg-cap{text-align:center}
+.vs-giftmsg-cap b{display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--font-display);letter-spacing:1.5px;font-size:12px;color:#3fb6ff}
+.vs-giftmsg-cap span{display:block;font-size:12px;font-weight:600;color:var(--text);margin-top:1px}
