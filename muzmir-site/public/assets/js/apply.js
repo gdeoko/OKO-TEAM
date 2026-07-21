@@ -105,7 +105,7 @@
       hint.style.color = 'var(--error)';
     } else {
       hint.textContent = 'Возраст участника: ' + age + '. Категория подходит.';
-      hint.style.color = '#3f7a4a';
+      hint.style.color = 'var(--mint)';
     }
   }
 

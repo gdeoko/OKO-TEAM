@@ -137,14 +137,14 @@ ob_start(); ?>
 .cf-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .cf-chip{position:relative;cursor:pointer}
 .cf-chip input{position:absolute;opacity:0;width:0;height:0}
-.cf-chip span{display:inline-block;padding:9px 20px;border-radius:999px;border:1.5px solid var(--gold);
-  background:rgba(255,255,255,.7);color:var(--gold-dark);font-weight:700;font-size:.92rem;transition:background .18s,color .18s,transform .18s}
-.cf-chip:hover span{transform:translateY(-2px)}
-.cf-chip.is-active span{background:var(--grad-gold);color:#fff;border-color:transparent;box-shadow:var(--shadow-btn)}
+.cf-chip span{display:inline-block;padding:9px 20px;border-radius:999px;border:1.5px solid var(--glass-brd);
+  background:var(--glass);color:var(--gold);font-weight:700;font-size:.92rem;backdrop-filter:blur(8px);transition:background .18s,color .18s,border-color .18s,transform .18s}
+.cf-chip:hover span{transform:translateY(-2px);border-color:var(--gold)}
+.cf-chip.is-active span{background:var(--grad-gold);color:#1a1206;border-color:transparent;box-shadow:var(--shadow-btn)}
 .cf-selects{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
 .cf-select{display:flex;flex-direction:column;gap:6px;min-width:190px}
 .cf-select>span{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
-.cf-select>span svg{width:16px;height:16px;color:var(--gold-dark)}
+.cf-select>span svg{width:16px;height:16px;color:var(--gold)}
 .cc-badges{display:flex;flex-wrap:wrap;gap:8px}
 .cf-count{color:var(--muted);font-size:.9rem;margin-bottom:18px}
 </style>

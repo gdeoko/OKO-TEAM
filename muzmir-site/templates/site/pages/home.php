@@ -19,6 +19,7 @@ $icons = [
 ob_start(); ?>
 <section class="hero">
   <div class="hero-notes"></div>
+  <div class="hero-glow"></div>
   <div class="container">
     <div class="reveal">
       <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»">
@@ -119,7 +120,7 @@ ob_start(); ?>
     <div class="section-head reveal"><p class="eyebrow">Нам доверяют</p><h2>Отзывы участников</h2></div>
     <div class="grid grid-3">
       <?php foreach ($reviews as $r): ?>
-        <div class="card reveal"><p style="font-family:var(--ff-head);font-size:1.05rem">«<?= h($r['text']) ?>»</p><p style="color:var(--gold-dark);font-weight:700;margin:0"><?= h($r['author']) ?></p></div>
+        <div class="card reveal"><p style="font-family:var(--ff-serif);font-size:1.15rem;color:var(--text)">«<?= h($r['text']) ?>»</p><p style="color:var(--gold);font-weight:700;margin:0"><?= h($r['author']) ?></p></div>
       <?php endforeach; ?>
     </div>
   </div>
