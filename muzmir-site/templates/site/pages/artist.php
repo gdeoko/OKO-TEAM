@@ -89,23 +89,23 @@ ob_start(); ?>
 <style>
 .art-card{max-width:960px;margin:0 auto}
 .art-hero{text-align:center;max-width:640px;margin:0 auto 40px}
-.art-ava{width:104px;height:104px;border-radius:50%;background:var(--grad-gold);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-family:var(--ff-head);font-size:2.4rem;margin:0 auto 16px;box-shadow:var(--shadow-hover)}
+.art-ava{width:104px;height:104px;border-radius:50%;background:var(--grad-gold);color:#1a1206;
+  display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);letter-spacing:.02em;font-size:2.4rem;margin:0 auto 16px;box-shadow:var(--shadow-glow)}
 .art-quickstats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:18px}
 .art-quickstats div{text-align:center}
-.art-quickstats b{display:block;font-family:var(--ff-head);font-size:1.7rem;color:var(--gold-dark)}
+.art-quickstats b{display:block;font-family:var(--ff-display);letter-spacing:.02em;font-size:1.7rem;color:var(--gold-2)}
 .art-quickstats span{color:var(--muted);font-size:.84rem}
 
 .honeycomb{display:flex;flex-wrap:wrap;justify-content:center;margin:0 auto 8px;max-width:900px}
 .hex{width:206px;margin:10px 8px 38px;position:relative}
 .hex:nth-child(even){margin-top:46px}
 .hex-inner{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
-  background:linear-gradient(160deg,#fff,var(--gold-light));border:1px solid var(--line);
+  background:linear-gradient(160deg,var(--panel-solid),var(--gold-soft));border:1px solid var(--glass-brd);
   padding:34px 22px;aspect-ratio:.92;display:flex;flex-direction:column;justify-content:center;gap:6px;
   text-align:center;box-shadow:var(--shadow-card);transition:transform .25s,box-shadow .25s;color:inherit}
-.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-hover)}
-.hex-result{font-family:var(--ff-head);color:var(--gold-dark);font-size:1.05rem;line-height:1.15}
-.hex-comp{font-size:.82rem;color:var(--navy);font-weight:600}
+.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-glow)}
+.hex-result{font-family:var(--ff-display);letter-spacing:.02em;color:var(--gold-2);font-size:1.05rem;line-height:1.15}
+.hex-comp{font-size:.82rem;color:var(--text);font-weight:600}
 .hex-date{font-size:.74rem;color:var(--muted)}
 @media (max-width:720px){
   .honeycomb{flex-direction:column;align-items:center}
@@ -115,12 +115,12 @@ ob_start(); ?>
 }
 
 .dip-item{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;
-  background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow-card);margin-bottom:14px}
+  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:14px}
 .dip-item .actions{display:flex;gap:10px;flex-wrap:wrap}
 .art-chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
-.art-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:#fff;
-  border:1px solid var(--line);color:var(--navy);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card)}
-.art-chip:hover{border-color:var(--gold);color:var(--gold-dark)}
+.art-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:var(--panel);
+  border:1px solid var(--glass-brd);color:var(--text);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.art-chip:hover{border-color:var(--gold);color:var(--gold-2)}
 </style>
 
 <section class="section">
@@ -157,7 +157,7 @@ ob_start(); ?>
       <?php foreach ($items as $it): ?>
         <div class="dip-item reveal">
           <div>
-            <strong style="font-family:var(--ff-head);font-size:1.15rem;color:var(--gold-dark)"><?= h($it['d_result'] ?: $it['a_result'] ?: 'Диплом') ?></strong>
+            <strong style="font-family:var(--ff-display);letter-spacing:.02em;font-size:1.15rem;color:var(--gold-2)"><?= h($it['d_result'] ?: $it['a_result'] ?: 'Диплом') ?></strong>
             <p style="color:var(--muted);margin:4px 0 0;font-size:.92rem">
               <?= h($it['comp_name'] ?: 'Конкурс') ?>
               <?php if ($it['nomination']): ?> · <?= h($it['nomination']) ?><?php endif; ?>
@@ -198,7 +198,7 @@ ob_start(); ?>
 
     <?php else:
       http_response_code(404); ?>
-      <div class="reveal" style="text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
+      <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
         <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">Портфолио пока не опубликовано</h1>
         <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичная страница участника появляется, когда его работы получают оценку жюри и наградные документы. Проверьте ссылку или посмотрите действующие конкурсы.</p>

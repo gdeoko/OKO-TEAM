@@ -18,7 +18,7 @@ $benefits = [
 ob_start(); ?>
 <style>
 .club-price-card{max-width:420px;margin:0 auto;text-align:center;padding:36px 30px}
-.club-price{font-family:var(--ff-head);font-size:2.8rem;color:var(--gold-dark);margin:6px 0}
+.club-price{font-family:var(--ff-display);letter-spacing:.02em;font-size:2.8rem;color:var(--gold-2);margin:6px 0}
 .club-price span{font-size:1.1rem;color:var(--muted);font-family:var(--ff-body)}
 .club-form .field{text-align:left}
 .club-note{font-size:.82rem;color:var(--muted);margin-top:14px}
@@ -28,7 +28,7 @@ ob_start(); ?>
   <div class="container" style="max-width:760px;text-align:center">
     <div class="reveal">
       <p class="eyebrow">Для постоянных участников</p>
-      <h1 style="font-family:var(--ff-head);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Клуб постоянных участников</h1>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Клуб постоянных участников</h1>
       <p>Годовая подписка для тех, кто регулярно подаёт заявки на конкурсы Культурного центра «Музыкальный Мир»:
         скидки, приоритет и закрытое сообщество.</p>
     </div>
@@ -41,8 +41,8 @@ ob_start(); ?>
     <div class="grid grid-4">
       <?php foreach ($benefits as $b): ?>
         <div class="card reveal" style="text-align:center;padding:26px 20px">
-          <div class="step ic" style="width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:var(--gold-light);
-            display:flex;align-items:center;justify-content:center;color:var(--gold-dark)"><span style="width:30px;height:30px"><?= $b['ic'] ?></span></div>
+          <div class="step ic" style="width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:var(--gold-soft);
+            display:flex;align-items:center;justify-content:center;color:var(--gold)"><span style="width:30px;height:30px"><?= $b['ic'] ?></span></div>
           <h3><?= h($b['t']) ?></h3>
           <p style="color:var(--muted);font-size:.92rem"><?= h($b['d']) ?></p>
         </div>

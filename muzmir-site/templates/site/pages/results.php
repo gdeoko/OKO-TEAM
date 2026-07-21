@@ -122,21 +122,21 @@ ob_start(); ?>
 .res-card{max-width:1020px;margin:0 auto}
 .res-hero{text-align:center;max-width:720px;margin:0 auto 32px}
 .res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:44px}
-.res-stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px;text-align:center;box-shadow:var(--shadow-card)}
-.res-stat b{display:block;font-family:var(--ff-head);font-size:2rem;color:var(--gold-dark)}
+.res-stat{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:22px;text-align:center;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
+.res-stat b{display:block;font-family:var(--ff-display);letter-spacing:.02em;font-size:2rem;color:var(--gold-2)}
 .res-stat span{color:var(--muted);font-size:.88rem}
 .res-nom{margin-bottom:36px}
-.res-nom h3{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+.res-nom h3{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;color:var(--text)}
 .res-row{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;
-  background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 18px;box-shadow:var(--shadow-card);margin-bottom:10px}
-.res-row b{font-family:var(--ff-head);color:var(--navy)}
-.res-row .res-result{font-weight:700;color:var(--gold-dark);white-space:nowrap}
+  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:14px 18px;box-shadow:var(--shadow-card);backdrop-filter:blur(10px);margin-bottom:10px}
+.res-row b{font-family:var(--ff-display);letter-spacing:.02em;color:var(--text)}
+.res-row .res-result{font-weight:700;color:var(--gold-2);white-space:nowrap}
 .res-media{display:flex;flex-wrap:wrap;gap:12px}
-.res-poster{width:150px;border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow-card)}
+.res-poster{width:150px;border:1px solid var(--glass-brd);border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow-card)}
 .res-poster img{width:100%;display:block}
-.res-video-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:#fff;
-  border:1px solid var(--line);color:var(--navy);font-size:.86rem;font-weight:600;box-shadow:var(--shadow-card)}
-.res-video-chip:hover{border-color:var(--gold);color:var(--gold-dark)}
+.res-video-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--panel);
+  border:1px solid var(--glass-brd);color:var(--text);font-size:.86rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.res-video-chip:hover{border-color:var(--gold);color:var(--gold-2)}
 @media(max-width:860px){.res-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 
@@ -153,7 +153,7 @@ ob_start(); ?>
     </div>
 
     <?php if (!$results): ?>
-      <div class="reveal" style="text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
+      <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
         <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>
         <h2>Результаты готовятся к публикации</h2>
         <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Конкурс завершён, наградные документы формируются. Итоги появятся на этой странице в ближайшее время.</p>

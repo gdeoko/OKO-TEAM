@@ -79,7 +79,7 @@ ob_start(); ?>
   <div class="container" style="max-width:760px;text-align:center">
     <div class="reveal">
       <p class="eyebrow">Для блогеров и авторов</p>
-      <h1 style="font-family:var(--ff-head);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Партнёрская программа</h1>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Партнёрская программа</h1>
       <p>Рассказывайте своей аудитории о конкурсах Культурного центра «Музыкальный Мир» и получайте вознаграждение
         с каждой оплаты по Вашему промокоду.</p>
       <a class="btn btn--primary btn--lg" href="#partnerForm" style="margin-top:18px">Оставить заявку</a>
@@ -109,7 +109,7 @@ ob_start(); ?>
       <p class="eyebrow">Вознаграждение</p>
       <h2>Как начисляется процент</h2>
       <p style="color:var(--muted);max-width:560px;margin:0 auto">
-        Партнёр получает <b style="color:var(--gold-dark)"><?= (int) $percent ?>%</b> от суммы каждого оплаченного
+        Партнёр получает <b style="color:var(--gold-2)"><?= (int) $percent ?>%</b> от суммы каждого оплаченного
         организационного взноса участников, которые указали Ваш промокод при подаче заявки. Начисление отражается
         в отчёте, который Оргкомитет присылает партнёру ежемесячно. Минимальной суммы для выплаты нет.
       </p>

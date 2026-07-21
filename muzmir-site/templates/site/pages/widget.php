@@ -77,11 +77,11 @@ $icoCopy = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 
 ob_start(); ?>
 <style>
-.embed-preview{border:1.5px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);background:#fff}
-.embed-preview iframe{width:100%;height:420px;border:0;display:block}
+.embed-preview{border:1.5px solid var(--glass-brd);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);background:var(--panel);backdrop-filter:blur(12px)}
+.embed-preview iframe{width:100%;height:420px;border:0;display:block;background:#FFFCF5}
 .code-box{position:relative;margin-top:14px}
 .code-box textarea{width:100%;min-height:110px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:.84rem;line-height:1.5;background:var(--navy);color:#e8e5db;border:none;border-radius:var(--radius-sm);
+  font-size:.84rem;line-height:1.5;background:#14110d;color:#e8e5db;border:1px solid var(--glass-brd);border-radius:var(--radius-sm);
   padding:16px 50px 16px 16px;resize:vertical}
 .code-copy{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.12);border:none;color:#fff;
   border-radius:8px;padding:8px;cursor:pointer;transition:background .15s}
@@ -94,7 +94,7 @@ ob_start(); ?>
   <div class="container" style="max-width:760px;text-align:center">
     <div class="reveal">
       <p class="eyebrow">Для партнёрских сайтов</p>
-      <h1 style="font-family:var(--ff-head);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Виджет «Конкурсы КЦ»</h1>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Виджет «Конкурсы КЦ»</h1>
       <p>Разместите компактный список действующих конкурсов Культурного центра «Музыкальный Мир» на своём сайте.
         Виджет обновляется автоматически - ничего дорабатывать не нужно.</p>
     </div>

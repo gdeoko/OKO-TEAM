@@ -105,20 +105,20 @@ ob_start(); ?>
 <style>
 .tp-card{max-width:960px;margin:0 auto}
 .tp-hero{text-align:center;max-width:640px;margin:0 auto 36px}
-.tp-ava{width:104px;height:104px;border-radius:50%;background:var(--grad-gold);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-family:var(--ff-head);font-size:2.4rem;margin:0 auto 16px;box-shadow:var(--shadow-hover)}
+.tp-ava{width:104px;height:104px;border-radius:50%;background:var(--grad-gold);color:#1a1206;
+  display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);letter-spacing:.02em;font-size:2.4rem;margin:0 auto 16px;box-shadow:var(--shadow-glow)}
 .tp-stats{display:flex;justify-content:center;gap:26px;flex-wrap:wrap;margin-top:18px}
 .tp-stats div{text-align:center}
-.tp-stats b{display:block;font-family:var(--ff-head);font-size:1.7rem;color:var(--gold-dark)}
+.tp-stats b{display:block;font-family:var(--ff-display);letter-spacing:.02em;font-size:1.7rem;color:var(--gold-2)}
 .tp-stats span{color:var(--muted);font-size:.84rem}
 .tp-student{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;
-  background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow-card);margin-bottom:12px}
-.tp-student b{font-family:var(--ff-head);color:var(--navy);font-size:1.02rem}
+  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:12px}
+.tp-student b{font-family:var(--ff-display);letter-spacing:.02em;color:var(--text);font-size:1.02rem}
 .tp-chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
-.tp-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:#fff;
-  border:1px solid var(--line);color:var(--navy);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card)}
-.tp-chip:hover{border-color:var(--gold);color:var(--gold-dark)}
-.tp-rv{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-card);margin-bottom:14px}
+.tp-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:var(--panel);
+  border:1px solid var(--glass-brd);color:var(--text);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.tp-chip:hover{border-color:var(--gold);color:var(--gold-2)}
+.tp-rv{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:14px}
 .tp-rv .stars{color:var(--gold);letter-spacing:2px}
 </style>
 
@@ -166,15 +166,15 @@ ob_start(); ?>
         <?php foreach ($reviews as $r): ?>
           <div class="tp-rv reveal">
             <div class="stars"><?= str_repeat('&#9733;', max(1, min(5, (int) $r['rating']))) ?><?= str_repeat('&#9734;', 5 - max(1, min(5, (int) $r['rating']))) ?></div>
-            <p style="font-family:var(--ff-head);font-size:1.02rem;margin-top:8px">«<?= h($r['text']) ?>»</p>
-            <p style="color:var(--gold-dark);font-weight:700;margin:0"><?= h($r['author'] ?: 'Участник конкурса') ?></p>
+            <p style="font-family:var(--ff-serif);font-weight:700;color:var(--text);font-size:1.05rem;margin-top:8px">«<?= h($r['text']) ?>»</p>
+            <p style="color:var(--gold-2);font-weight:700;margin:0"><?= h($r['author'] ?: 'Участник конкурса') ?></p>
           </div>
         <?php endforeach; ?>
       <?php endif; ?>
 
     <?php else:
       http_response_code(404); ?>
-      <div class="reveal" style="text-align:center;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
+      <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
         <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2M16 11l2 2 4-4"/></svg>
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">Профиль пока не опубликован</h1>
         <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичный профиль педагога появляется, когда его ученики получают наградные документы по итогам конкурсов. Проверьте ссылку или посмотрите действующие конкурсы.</p>

@@ -72,37 +72,37 @@ $icoDone = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 
 ob_start(); ?>
 <style>
-.gala-embed{position:relative;width:100%;aspect-ratio:16/9;background:var(--navy);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card)}
+.gala-embed{position:relative;width:100%;aspect-ratio:16/9;background:var(--bg-2);border:1px solid var(--glass-brd);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card)}
 .gala-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.gala-embed-stub{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,.75);text-align:center;padding:20px}
-.gala-embed-stub span{width:44px;height:44px}
+.gala-embed-stub{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-dim);text-align:center;padding:20px}
+.gala-embed-stub span{width:44px;height:44px;color:var(--gold)}
 .gala-live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#e05353;margin-right:7px;vertical-align:middle;animation:galaPulse 1.6s infinite}
 @keyframes galaPulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 .vote-grid{display:grid;gap:16px}
-.vote-card{background:#fff;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:18px 20px;transition:border .2s,box-shadow .2s}
-.vote-card.voted{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.14)}
+.vote-card{background:var(--panel);border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:18px 20px;backdrop-filter:blur(12px);box-shadow:var(--shadow-card);transition:border .2s,box-shadow .2s}
+.vote-card.voted{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
 .vote-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
-.vote-head b{font-family:var(--ff-head);font-size:1.1rem;color:var(--navy)}
-.vote-head p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
-.vote-bar-wrap{margin-top:12px;height:8px;border-radius:6px;background:var(--gold-light);overflow:hidden}
+.vote-head b{font-family:var(--ff-display);letter-spacing:.02em;font-size:1.1rem;color:var(--text)}
+.vote-head p{margin:4px 0 0;color:var(--text-dim);font-size:.92rem}
+.vote-bar-wrap{margin-top:12px;height:8px;border-radius:6px;background:var(--gold-soft);overflow:hidden}
 .vote-bar{height:100%;background:var(--grad-gold);border-radius:6px;width:0;transition:width .5s ease}
 .vote-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:.82rem;color:var(--muted)}
 .vote-btn{margin-top:14px;min-width:150px;justify-content:center}
-.vote-mark{display:none;align-items:center;gap:6px;color:var(--gold-dark);font-weight:700;font-size:.9rem;margin-top:14px}
+.vote-mark{display:none;align-items:center;gap:6px;color:var(--gold-2);font-weight:700;font-size:.9rem;margin-top:14px}
 .vote-mark svg{width:18px;height:18px}
 .vote-card.voted .vote-mark{display:inline-flex}
 .vote-card.voted .vote-btn{display:none}
 .vote-total{text-align:center;color:var(--muted);margin-top:20px;font-size:.94rem}
-.vote-total b{color:var(--gold-dark)}
-.vote-note{font-size:.84rem;color:var(--muted);text-align:center;margin-top:6px}
+.vote-total b{color:var(--gold-2)}
+.vote-note{font-size:.84rem;color:var(--error);text-align:center;margin-top:6px}
 </style>
 
 <section class="section section--parchment">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Прямой эфир</p>
-      <h1 style="font-family:var(--ff-head);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em"><?= h($title) ?></h1>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em"><?= h($title) ?></h1>
       <p><?= h($subtitle) ?></p>
       <div style="margin-top:10px">
         <span class="badge <?= h($statusBadge) ?>"><?php if ($status === 'live'): ?><span class="gala-live-dot"></span><?php endif; ?><?= h($statusLabel) ?></span>
@@ -117,7 +117,7 @@ ob_start(); ?>
         <?php else: ?>
           <div class="gala-embed-stub">
             <span><?= $icoPlay ?></span>
-            <b style="font-family:var(--ff-head);font-size:1.15rem"><?= $status === 'finished' ? 'Запись готовится к публикации' : 'Трансляция скоро начнётся' ?></b>
+            <b style="font-family:var(--ff-display);font-size:1.15rem;color:var(--text)"><?= $status === 'finished' ? 'Запись готовится к публикации' : 'Трансляция скоро начнётся' ?></b>
             <?php if ($date): ?><span><?= h(ru_date($date)) ?></span><?php endif; ?>
           </div>
         <?php endif; ?>
