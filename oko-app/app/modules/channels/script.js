@@ -184,7 +184,7 @@ function chBadges(c){
   if(c.access==='closed') h+=`<span class="ch-tag closed">${chI('lock')}Закрытый</span>`;
   if(c.kind==='course') h+=`<span class="ch-tag course">${chI('circle-play')}Курс</span>`;
   else if(c.kind==='club') h+=`<span class="ch-tag club">${chI('crown')}Клуб</span>`;
-  if(chPaid(c)) h+=`<span class="ch-tag paid">${c.price} ₽${chPriceUnit(c)}</span>`;
+  if(chPaid(c)) h+=`<span class="ch-tag paid">${c.kind==='course'?c.price+' ₽':'Платно '+c.price+' ₽'+chPriceUnit(c)}</span>`;
   else if(c.access==='closed') h+=`<span class="ch-tag free">Бесплатно</span>`;
   return h;
 }

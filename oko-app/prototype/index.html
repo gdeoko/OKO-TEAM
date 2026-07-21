@@ -3642,6 +3642,66 @@ main>.screen{position:relative;z-index:1}
 .cp-callpill-open svg.i{width:16px;height:16px;transform:rotate(90deg)}
 @media(prefers-reduced-motion:reduce){.cp-call-aura,.cp-callpill-ic{animation:none}}
 
+/* --- 9b. Блокировка записи (свайп вверх) + локед-режим --- */
+.cp-rec-lock{position:absolute;left:50%;bottom:calc(210px + env(safe-area-inset-bottom));transform:translateX(-50%);width:46px;height:78px;border-radius:26px;background:var(--raised);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;padding-top:9px;color:var(--dim);pointer-events:none;opacity:calc(.35 + var(--cp-lk,0)*.65);transition:opacity .15s,transform .15s,background .2s,color .2s}
+.cp-rec-lock-ic svg.i{width:19px;height:19px}
+.cp-rec-lock-ch{position:absolute;bottom:8px}
+.cp-rec-lock-ch svg.i{width:15px;height:15px;transform:rotate(180deg);animation:cpRecUp 1.3s ease-in-out infinite}
+@keyframes cpRecUp{0%,100%{transform:rotate(180deg) translateY(0);opacity:.5}50%{transform:rotate(180deg) translateY(-4px);opacity:1}}
+.cp-rec[style*="--cp-lk"] .cp-rec-lock{border-color:var(--lime)}
+.cp-rec-locked .cp-rec-lock{background:var(--lime);border-color:var(--lime);color:#000;height:46px;transform:translateX(-50%) scale(1)}
+.cp-rec-locked .cp-rec-lock-ch{display:none}
+.cp-rec-send{position:absolute;right:26px;bottom:calc(96px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:none;align-items:center;justify-content:center;box-shadow:0 8px 26px rgba(154,255,0,.4);transition:transform .14s;pointer-events:none}
+.cp-rec-send svg.i{width:24px;height:24px}
+.cp-rec-send:active{transform:scale(.9)}
+.cp-rec-hint-locked{display:none}
+.cp-rec-locked .cp-rec-send{display:flex;pointer-events:auto;animation:cpRecSendIn .2s ease}
+@keyframes cpRecSendIn{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.cp-rec-locked .cp-rec-cancel{pointer-events:auto}
+.cp-rec-locked .cp-rec-hint:not(.cp-rec-hint-locked),.cp-rec-locked .cp-rec-arrow{display:none}
+.cp-rec-locked .cp-rec-hint-locked{display:inline-flex;color:var(--accent);font-weight:700}
+@media(prefers-reduced-motion:reduce){.cp-rec-lock-ch svg.i{animation:none}}
+
+/* --- 11. Открытые / приватные / платные чаты --- */
+/* значок на аватарке в списке */
+.chat-item .ava{position:relative;overflow:visible}
+.cp-ci-badge{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.cp-ci-badge svg.i{width:10px;height:10px;stroke-width:9}
+.cp-ci-lock{background:#0a0a0a;color:var(--lime)}
+:root[data-theme="light"] .cp-ci-lock{background:#1a2a05;color:var(--lime)}
+.cp-ci-private{background:var(--raised);color:var(--dim)}
+.cp-ci-ok{background:var(--lime);color:#000}
+.cp-ci-pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;padding:2px 8px;white-space:nowrap;flex-shrink:0;box-shadow:0 0 10px rgba(154,255,0,.3)}
+.cp-ci-pill svg.i{width:10px;height:10px;stroke-width:9}
+.cp-ci-locked .preview{opacity:.65}
+/* бейдж типа в шапке чата */
+.cp-conv-badge{display:inline-flex;align-items:center;gap:4px;margin-left:7px;font-size:10.5px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:2px 8px;vertical-align:middle;white-space:nowrap}
+.cp-conv-badge svg.i{width:11px;height:11px;stroke-width:9}
+.cp-cb-paid{color:#000;background:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.3)}
+.cp-cb-private{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+/* окно управления доступом (владелец) */
+.cp-mg{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
+.cp-mg-opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--raised);color:var(--text);transition:border-color .16s,background .16s}
+.cp-mg-opt svg.i{width:22px;height:22px;flex-shrink:0;color:var(--dim)}
+.cp-mg-opt .cp-mg-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cp-mg-opt b{font-size:14px;font-weight:700}
+.cp-mg-opt small{font-size:11.5px;color:var(--dim)}
+.cp-mg-opt.on{border-color:var(--lime);background:var(--lime-dim)}
+.cp-mg-opt.on svg.i{color:var(--accent)}
+.cp-mg-opt.on>svg.i:last-child{width:18px;height:18px;color:var(--accent)}
+.cp-mg-price{padding:11px 13px;border-radius:var(--r-md);background:var(--raised);border:1px solid var(--border)}
+.cp-mg-price label{font-size:12px;font-weight:700;color:var(--dim);display:block;margin-bottom:7px}
+.cp-mg-prow{display:flex;align-items:center;gap:8px}
+.cp-mg-prow input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:16px;font-weight:700;font-family:var(--font-body);outline:none}
+.cp-mg-prow input:focus{border-color:var(--lime)}
+.cp-mg-prow span{font-size:15px;font-weight:700;color:var(--dim)}
+.cp-mg-net{font-size:12px;color:var(--dim);margin-top:8px}
+.cp-mg-net b{color:var(--accent)}
+/* ссылка-приглашение */
+.cp-invite{display:flex;gap:8px;margin-top:12px;align-items:center}
+.cp-invite input{flex:1;min-width:0;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:12.5px;outline:none;font-family:var(--font-body)}
+.cp-invite .btn.sm{flex-shrink:0}
+
 /* ===== module: profile-social ===== */
 /* ===== PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ===== */
 
@@ -3862,6 +3922,15 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .ps-acc-add-ic{width:44px;height:44px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}
 .ps-acc-add-ic svg.i{width:18px;height:18px}
 @media(prefers-reduced-motion:reduce){.ps-acc-check{animation:none}}
+/* аватар аккаунта с загруженным фото */
+.ps-acc-ava.has{background-size:cover!important;background-position:center!important;background-repeat:no-repeat;color:transparent;font-size:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+
+/* ---------- кебаб-меню в шапке чужого профиля ---------- */
+.ps-more-btn{flex-shrink:0;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);border-radius:50%;transition:color .2s,background .2s}
+.ps-more-btn svg.i{width:22px;height:22px}
+.ps-more-btn:hover{color:var(--accent);background:var(--lime-dim)}
+.ps-more-btn:active{transform:scale(.92)}
+#okoPopup .btn.ps-btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
 
 /* ===== module: stories-plus ===== */
 /* ===== STORIES-PLUS (sp-): редактор сторис, просмотры, реакции, мультисторис ===== */
@@ -4106,6 +4175,88 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 
 /* подпись внизу вьюхи */
 .st2-foot{text-align:center;color:var(--dim);font-size:10.5px;letter-spacing:.04em;padding:2px 0 8px;opacity:.75}
+
+/* ---------- выход из аккаунта ---------- */
+.st2-logout-acc{color:var(--danger)}
+.st2-logout-acc>svg.i:first-child{color:var(--danger)}
+#st2View .st2-logout-acc[onclick]:hover{background:color-mix(in srgb,var(--danger) 9%,transparent)}
+
+/* ================= ПРОФИЛЬ: аватар-фото + обложка ================= */
+/* аватар с загруженным фото (ядро #profAva / #epAva и account-аватары) */
+.ava.st2-has-photo,#profAva.st2-has-photo,#epAva.st2-has-photo{background-size:cover!important;background-position:center!important;background-repeat:no-repeat;color:transparent}
+#epAva.st2-has-photo{box-shadow:0 6px 22px rgba(0,0,0,.4),var(--glow)}
+:root[data-theme="light"] #epAva.st2-has-photo{box-shadow:0 6px 18px rgba(60,90,10,.16)}
+.st2-acc-av.has{background-image:none}
+.st2-acc-av.has[style*="background-image"]{background-size:cover;background-position:center}
+.st2-acc-av.has{color:transparent;font-size:0}
+
+/* собственная обложка над profile-top (#screen-profile) */
+.st2-mycover{position:relative;display:block;width:100%;height:120px;margin:0 0 -30px;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);background:var(--surface);background-size:cover;background-position:center;cursor:pointer;transition:border-color .2s,transform .12s;isolation:isolate}
+.st2-mycover:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.st2-mycover:active{transform:scale(.995)}
+.st2-mycover::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.30),transparent 55%),radial-gradient(90% 120% at 100% 100%,rgba(154,255,0,.14),transparent 60%),linear-gradient(160deg,#0e1305,#070a03)}
+.st2-mycover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.42))}
+:root[data-theme="light"] .st2-mycover::before{background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.34),transparent 55%),radial-gradient(90% 120% at 100% 100%,rgba(120,210,0,.18),transparent 60%),linear-gradient(160deg,#eef7dd,#dcecc6)}
+:root[data-theme="light"] .st2-mycover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.28))}
+.st2-mycover-grid{position:absolute;inset:0;z-index:1;opacity:.5;mix-blend-mode:screen;background-image:linear-gradient(rgba(154,255,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(154,255,0,.08) 1px,transparent 1px);background-size:26px 26px;-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent);pointer-events:none}
+.st2-mycover.has .st2-mycover-grid{opacity:0}
+:root[data-theme="light"] .st2-mycover-grid{mix-blend-mode:multiply;opacity:.32}
+.st2-mycover-mark{position:absolute;left:14px;top:11px;z-index:2;width:30px;height:30px;color:var(--lime);opacity:.24;filter:drop-shadow(0 0 8px rgba(154,255,0,.4));pointer-events:none}
+.st2-mycover.has .st2-mycover-mark{color:#fff;opacity:.85;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5))}
+.st2-mycover-mark svg.i{width:100%;height:100%}
+.st2-mycover-edit{position:absolute;right:12px;bottom:11px;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text);background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--border);border-radius:99px;padding:5px 11px;backdrop-filter:blur(6px);transition:color .2s,border-color .2s}
+.st2-mycover.has .st2-mycover-edit{color:#fff;background:rgba(0,0,0,.42);border-color:rgba(255,255,255,.22)}
+.st2-mycover:hover .st2-mycover-edit{color:var(--accent);border-color:var(--accent)}
+.st2-mycover.has:hover .st2-mycover-edit{color:var(--lime)}
+.st2-mycover-edit svg.i{width:13px;height:13px}
+/* аватар в profile-top поднимается над обложкой */
+#screen-profile .st2-mycover~.profile-top{position:relative;z-index:1}
+#screen-profile .st2-mycover~.profile-top .ava{border:3px solid var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-theme="light"] #screen-profile .st2-mycover~.profile-top .ava{box-shadow:0 4px 14px rgba(60,90,10,.14)}
+
+/* контрол обложки в редакторе профиля (#editProfile) */
+.ep-cover{position:relative;display:block;width:100%;height:104px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);background:var(--surface);background-size:cover;background-position:center;cursor:pointer;transition:border-color .2s;isolation:isolate}
+.ep-cover:hover{border-color:var(--accent)}
+.ep-cover::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.28),transparent 55%),linear-gradient(160deg,#0e1305,#070a03)}
+.ep-cover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.4))}
+:root[data-theme="light"] .ep-cover::before{background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.32),transparent 55%),linear-gradient(160deg,#eef7dd,#dcecc6)}
+.ep-cover-mark{position:absolute;left:12px;top:10px;z-index:2;width:26px;height:26px;color:var(--lime);opacity:.24;pointer-events:none}
+.ep-cover.has .ep-cover-mark{color:#fff;opacity:.8}
+.ep-cover-mark svg.i{width:100%;height:100%}
+.ep-cover-hint{position:absolute;right:11px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text);background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--border);border-radius:99px;padding:5px 11px}
+.ep-cover.has .ep-cover-hint{color:#fff;background:rgba(0,0,0,.42);border-color:rgba(255,255,255,.22)}
+.ep-cover-hint svg.i{width:13px;height:13px;color:var(--accent)}
+.ep-cover.has .ep-cover-hint svg.i{color:var(--lime)}
+
+/* ================= ЧЁРНЫЙ СПИСОК (шит) ================= */
+/* над #st2View (z66), но ниже попапов/тоста (z70) */
+#sheet-st2-blocked{z-index:68}
+body.st2-over #sheetOverlay.open{z-index:67}
+.st2-bl-body{max-height:min(64vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:2px -4px 0;padding:0 4px}
+.st2-bl-cap{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:4px 2px 8px}
+.st2-bl-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.st2-bl-row{display:flex;align-items:center;gap:11px;padding:8px 8px;border-radius:var(--r-md);transition:background .15s}
+.st2-bl-row:hover{background:var(--surface)}
+.st2-bl-av{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--accent)}
+.st2-bl-av svg.i{width:52%;height:52%;color:var(--accent)}
+.st2-bl-b{flex:1;min-width:0}
+.st2-bl-b b{display:block;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st2-bl-b small{display:block;font-size:11.5px;color:var(--dim);margin-top:1px}
+.st2-bl-un{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--accent);padding:7px 13px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));border-radius:99px;transition:all .2s}
+.st2-bl-un:hover{background:var(--lime);color:#000;border-color:var(--lime)}
+.st2-bl-un:active{transform:scale(.94)}
+.st2-bl-do{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--danger);padding:7px 12px;border:1px solid rgba(255,80,80,.4);border-radius:99px;transition:all .2s}
+.st2-bl-do svg.i{width:12px;height:12px}
+.st2-bl-do:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.st2-bl-do:hover svg.i{color:#fff}
+.st2-bl-do:active{transform:scale(.94)}
+.st2-bl-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1px dashed var(--border);border-radius:var(--r-md);color:var(--accent);font-size:13.5px;font-weight:700;margin:2px 0 8px;transition:border-color .2s,background .2s}
+.st2-bl-add svg.i{width:15px;height:15px;color:var(--accent)}
+.st2-bl-add:hover{border-color:var(--accent);background:var(--lime-dim)}
+.st2-bl-empty{text-align:center;color:var(--dim);padding:26px 14px 20px}
+.st2-bl-empty svg.i{width:38px;height:38px;opacity:.5;margin-bottom:10px;color:var(--danger)}
+.st2-bl-empty p{font-weight:700;color:var(--text);font-size:14px}
+.st2-bl-empty span{font-size:12px;display:block;margin-top:4px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.5}
 
 /* ===== module: tour ===== */
 /* ===== TOUR (tr-) — интерактивный тур: мягкий спотлайт + карточки-подсказки ===== */
@@ -4767,6 +4918,51 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 
 /* DM-кнопка у участника */
 .ch-member .ch-m-act.send:hover{color:var(--lime)}
+
+/* ===== оси ДОСТУП (открытый/закрытый) + ОПЛАТА (бесплатно/платно) ===== */
+.ch-tag{display:inline-flex;align-items:center;gap:4px}
+.ch-tag svg.i{width:11px;height:11px}
+.ch-tag.closed{background:var(--raised);color:var(--text);border:1px solid var(--border)}
+.ch-tag.closed svg.i{color:var(--lime)}
+.ch-tag.club{background:linear-gradient(120deg,#b98cff,#7d4dff);color:#0a0a0a}
+.ch-tag.club svg.i{color:#0a0a0a}
+.ch-tag.course svg.i{color:#0a0a0a}
+.ch-cbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.ch-cbadges:empty{display:none}
+.ch-price-pill.dim-pill{color:var(--dim);display:inline-flex;align-items:center;gap:4px;font-size:12px}
+.ch-price-pill.dim-pill svg.i{width:13px;height:13px}
+
+/* сегмент из двух вариантов (доступ / оплата) */
+.ch-choice2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:4px}
+.ch-choice2.locked{opacity:.7}
+.ch-ch2{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 13px;border-radius:var(--r-md);
+  background:var(--surface);border:1.5px solid var(--border);cursor:pointer;text-align:left;transition:all .18s;color:var(--text)}
+.ch-ch2:hover:not(:disabled){border-color:var(--lime-dim)}
+.ch-ch2.on{border-color:var(--lime);background:var(--raised);box-shadow:0 0 0 3px rgba(154,255,0,.1)}
+.ch-ch2:disabled{cursor:not-allowed}
+.ch-ch2 svg.i{width:20px;height:20px;color:var(--lime);margin-bottom:4px}
+.ch-ch2 b{font-size:13.5px;font-weight:800}
+.ch-ch2 small{color:var(--dim);font-size:10.5px;line-height:1.3}
+
+/* бейджи на обложке канала */
+.ch-cv-badges{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:9px}
+.ch-cv-badges:empty{display:none}
+.ch-cv-badges .ch-tag{box-shadow:0 2px 8px rgba(0,0,0,.35)}
+
+/* свотч «без фона» */
+.ch-sw.ch-sw-none{background:var(--surface);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center}
+.ch-sw.ch-sw-none svg.i{width:20px;height:20px;color:var(--dim)}
+.ch-sw.ch-sw-none.on{border-color:var(--lime)}
+.ch-sw.ch-sw-none.on svg.i{color:var(--lime)}
+
+/* фон-«обои» за постами канала */
+.ch-feed{border-radius:var(--r-md);padding:12px 12px 2px;margin-top:2px}
+.ch-feed .ch-post{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+
+/* метка источника-канала в общей ленте (ядро) */
+.ch-src-chip{display:inline-flex!important;align-items:center;gap:4px;background:var(--lime-dim)!important;color:var(--accent)!important;font-size:9px!important}
+.ch-src-chip svg.i{width:11px;height:11px}
+.ava.ch-feed-ava svg.i{width:22px;height:22px;color:#0a0a0a}
 
 /* адаптив десктоп */
 @media(min-width:900px){
@@ -5701,7 +5897,7 @@ img,video,canvas,svg{max-width:100%}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.62</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.63</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -6077,7 +6273,7 @@ img,video,canvas,svg{max-width:100%}
   <div class="sv-head">
     <button class="ep-cancel" onclick="psClose()"><svg class="i"><use href="#i-back"/></svg></button>
     <b id="psHeadName">Профиль</b>
-    <span style="width:24px"></span>
+    <button class="ps-more-btn" onclick="psMore()" aria-label="Ещё"><svg class="i"><use href="#i-more"/></svg></button>
   </div>
   <div class="sv-body" id="psBody"></div>
 </div>
@@ -6152,6 +6348,12 @@ img,video,canvas,svg{max-width:100%}
     <span style="width:24px"></span>
   </div>
   <div class="sv-body" id="st2Body"></div>
+</div>
+
+<!-- ===== SETTINGS-PLUS: чёрный список / блокировки ===== -->
+<div class="sheet" id="sheet-st2-blocked">
+  <h3>Чёрный список</h3>
+  <div class="st2-bl-body" id="st2BlockedBody"></div>
 </div>
 
 <!-- ===== module: channels ===== -->
@@ -17813,8 +18015,11 @@ const CP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-chats-plus'))
 if(CP.speed!==1.5 && CP.speed!==2) CP.speed = 1;
 if(!Array.isArray(CP.recentEmoji)) CP.recentEmoji = [];
 if(!CP.panelTab) CP.panelTab = 'emoji';
-function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab})); }catch(e){} }
+if(!CP.access || typeof CP.access!=='object') CP.access = {};     /* {chatId:{type,price}} — овнерские настройки доступа */
+if(!CP.unlocked || typeof CP.unlocked!=='object') CP.unlocked = {}; /* {chatId:1} — купленный доступ к платному чату */
+function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
 const cpMsgsEl = () => document.getElementById('msgs');
+const cpEsc = t => (typeof esc==='function' ? esc(t) : String(t==null?'':t));
 
 /* ================= 1. СТАТУСЫ СООБЩЕНИЙ ================= */
 const CP_ST_TITLE = {sent:'Отправлено', delivered:'Доставлено', read:'Прочитано'};
@@ -18348,8 +18553,9 @@ function cpDecorateVnotes(){
 }
 
 /* ================= 9. ЗАПИСЬ: кружок/пульс/таймер + отмена свайпом ================= */
-let cpRecMoveH = null, cpRecStartX = null, cpRecArmed = false, cpRecPvTry = null;
+let cpRecMoveH = null, cpRecStartX = null, cpRecStartY = null, cpRecArmed = false, cpRecPvTry = null, cpRecLocked = false;
 const CP_REC_BARS = 34;
+const CP_LOCK_DIST = 96;   /* свайп вверх до блокировки записи (как в Telegram) */
 /* живая волна записи: реальная амплитуда микрофона через Web Audio (как в Telegram) */
 let cpRecAC = null, cpRecAn = null, cpRecRAF = 0, cpRecStreamHooked = null;
 function cpRecWaveStart(stream){
@@ -18405,7 +18611,9 @@ function cpRecOverlay(){
   if(o) return o;
   o = document.createElement('div'); o.id = 'cpRec'; o.className = 'cp-rec';
   o.innerHTML =
-    `<div class="cp-rec-cancel" id="cpRecCancel"><span class="cp-rec-trash">${I('trash')}</span></div>
+    `<div class="cp-rec-lock" id="cpRecLock"><span class="cp-rec-lock-ch">${I('chev')}</span><span class="cp-rec-lock-ic">${I('lock')}</span></div>
+     <div class="cp-rec-cancel" id="cpRecCancel"><span class="cp-rec-trash">${I('trash')}</span></div>
+     <button class="cp-rec-send" id="cpRecSend" title="Отправить">${I('send')}</button>
      <div class="cp-rec-stage">
        <div class="cp-rec-ring"></div><div class="cp-rec-ring cp-rec-ring2"></div>
        <div class="cp-rec-bubble" id="cpRecBubble">
@@ -18416,15 +18624,22 @@ function cpRecOverlay(){
      <div class="cp-rec-wave" id="cpRecWave">${
         Array.from({length: CP_REC_BARS}, ()=>'<i></i>').join('')}</div>
      <div class="cp-rec-info"><span class="cp-rec-dot"></span><span id="cpRecTime">0:00</span>
-       <span class="cp-rec-hint"><span class="cp-rec-arrow">${I('chev')}</span>Смахните для отмены</span></div>`;
+       <span class="cp-rec-hint"><span class="cp-rec-arrow">${I('chev')}</span>Смахните влево — отмена, вверх — закрепить</span>
+       <span class="cp-rec-hint cp-rec-hint-locked">Запись закреплена</span></div>`;
   document.body.appendChild(o);
+  const cancelBtn = o.querySelector('#cpRecCancel');
+  if(cancelBtn) cancelBtn.onclick = ()=>{ cpCancelRec(); };
+  const sendBtn = o.querySelector('#cpRecSend');
+  if(sendBtn) sendBtn.onclick = ()=>{ cpRecSendLocked(); };
   return o;
 }
 function cpRecShow(){
   const isV = (typeof recMode!=='undefined' && recMode==='vnote');
   const o = cpRecOverlay();
   o.classList.toggle('cp-rec-video', isV);
-  o.classList.add('on'); cpRecArmed = false; cpRecStartX = null;
+  o.classList.remove('cp-rec-locked','cp-rec-arm');
+  o.style.removeProperty('--cp-cx'); o.style.removeProperty('--cp-lk');
+  o.classList.add('on'); cpRecArmed = false; cpRecLocked = false; cpRecStartX = null; cpRecStartY = null;
   const vid = document.getElementById('cpRecVid');
   if(vid){ vid.srcObject = null; vid.style.display = isV ? 'block' : 'none'; }
   /* сброс волны в холостой режим (пока микрофон не подключился / нет доступа) */
@@ -18452,12 +18667,24 @@ function cpRecShow(){
   const sb = document.getElementById('sendBtn');
   if(sb && !cpRecMoveH){
     cpRecMoveH = e=>{
+      if(cpRecLocked) return;
       if(typeof recStart==='undefined' || !recStart) return;
-      if(cpRecStartX===null) cpRecStartX = e.clientX;
+      if(cpRecStartX===null){ cpRecStartX = e.clientX; cpRecStartY = e.clientY; }
       const dx = e.clientX - cpRecStartX;
+      const dy = e.clientY - cpRecStartY;
+      /* вверх — закрепление записи (руки свободны); влево — отмена. Ведущая ось решает жест. */
+      if(dy < -18 && -dy > Math.abs(dx)){
+        const t = Math.min(1, -dy / CP_LOCK_DIST);
+        o.style.setProperty('--cp-lk', t.toFixed(3));
+        o.style.removeProperty('--cp-cx');
+        o.classList.remove('cp-rec-arm'); cpRecArmed = false;
+        if(t >= 1) cpRecLock();
+        return;
+      }
       if(dx < 0){
         const t = Math.min(1, -dx/120);
         o.style.setProperty('--cp-cx', (-dx*0.35)+'px');
+        o.style.setProperty('--cp-lk', '0');
         o.classList.toggle('cp-rec-arm', t>=1);
         cpRecArmed = t>=1;
         if(cpRecArmed) cpCancelRec();
@@ -18472,18 +18699,39 @@ function cpRecTick(){
   if(src && dst) dst.textContent = src.textContent || '0:00';
 }
 function cpRecHide(){
-  const o = document.getElementById('cpRec'); if(o){ o.classList.remove('on','cp-rec-arm'); o.style.removeProperty('--cp-cx'); }
+  const o = document.getElementById('cpRec'); if(o){ o.classList.remove('on','cp-rec-arm','cp-rec-locked'); o.style.removeProperty('--cp-cx'); o.style.removeProperty('--cp-lk'); }
   clearInterval(cpRecTimeInt); clearInterval(cpRecPvTry);
   cpRecWaveStop();
   const vid = document.getElementById('cpRecVid'); if(vid){ try{ vid.pause(); }catch(_){} vid.srcObject = null; }
   const sb = document.getElementById('sendBtn');
   if(sb && cpRecMoveH){ sb.removeEventListener('pointermove', cpRecMoveH); cpRecMoveH = null; }
-  cpRecStartX = null; cpRecArmed = false;
+  cpRecStartX = null; cpRecStartY = null; cpRecArmed = false; cpRecLocked = false;
+}
+/* блокировка записи (свайп вверх): запись продолжается без удержания пальца.
+   Ядровой pointerup на #sendBtn перехватываем в capture-фазе, чтобы он не вызвал stopRec. */
+function cpRecLock(){
+  if(cpRecLocked) return;
+  cpRecLocked = true;
+  const o = document.getElementById('cpRec');
+  if(o){ o.classList.add('cp-rec-locked'); o.classList.remove('cp-rec-arm'); o.style.removeProperty('--cp-cx'); o.style.setProperty('--cp-lk','1'); }
+  if(typeof toast==='function') toast('Запись закреплена — можно отпустить');
+}
+function cpRecSendLocked(){
+  if(!cpRecLocked) return;
+  cpRecLocked = false;
+  if(typeof recStart!=='undefined' && recStart && typeof stopRec==='function') stopRec(); /* ядро сформирует и отправит голосовое/кружок */
+  else cpRecHide();
+}
+/* один глобальный перехватчик: пока запись закреплена — гасим ядровой pointerup, чтобы не остановил запись */
+if(!window._cpRecUpHook){
+  window._cpRecUpHook = 1;
+  document.addEventListener('pointerup', e=>{ if(cpRecLocked) e.stopImmediatePropagation(); }, true);
 }
 /* аккуратная отмена без правки ядра: сбрасываем recStart -> ядровой pointerup
    не вызовет stopRec (там `if(recStart) stopRec()`), а хвосты чистим сами. */
 function cpCancelRec(){
-  if(typeof recStart==='undefined' || !recStart) return;
+  cpRecLocked = false;
+  if(typeof recStart==='undefined' || !recStart){ cpRecHide(); return; }
   try{ if(typeof recInt!=='undefined') clearInterval(recInt); }catch(_){}
   try{
     if(typeof mediaRec!=='undefined' && mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
@@ -18623,6 +18871,223 @@ if(typeof sendText === 'function'){
   cpBuildCall();
   cpInitMenuAnchor();
   if(typeof currentChat !== 'undefined' && currentChat) cpDecorateVnotes();
+})();
+
+/* =======================================================================
+   ЧАСТЬ 3 — ОТКРЫТЫЕ / ПРИВАТНЫЕ / ПЛАТНЫЕ ЧАТЫ (префикс cp-)
+   Тип чата: public (открыт, виден в поиске) | private (по ссылке-приглашению) |
+   paid (доступ по подписке). Бейджи/замки в списке и шапке, paywall через
+   walletCharge, комиссия OKO 10% через okoEarn, персист в localStorage.
+   ======================================================================= */
+const CP_FEE = 0.10;
+
+function cpAcc(c){
+  if(!c) return {type:'public', price:0};
+  const ov = CP.access[c.id];
+  const type  = ov && ov.type ? ov.type : (c.cpType || 'public');
+  const price = ov ? (ov.price||0) : (c.cpPrice||0);
+  return {type, price};
+}
+function cpCanManage(){ return typeof isOwner==='function' && isOwner(); }
+function cpChatUnlocked(c){ return !!(c && CP.unlocked[c.id]); }
+function cpChatLocked(c){ const a = cpAcc(c); return a.type==='paid' && !cpChatUnlocked(c); }
+function cpChatSlug(c){ return String((c&&(c.nick||c.name))||'chat').toLowerCase().replace(/[^a-zа-я0-9_]/gi,'').replace(/ё/g,'е').slice(0,18) || 'chat'; }
+
+/* демо-чаты: закрытый платный клуб + приватная комната (реальные данные, не заглушки) */
+function cpSeedChats(){
+  if(typeof CHATS==='undefined' || !Array.isArray(CHATS)) return;
+  if(CHATS.some(c=>c.id==='cp-paid')) return;
+  CHATS.push({
+    id:'cp-paid', ava:'PRO', name:'OKO PRO · Закрытый клуб', kind:'channel', kindIcon:'crown',
+    nick:'okopro', cpType:'paid', cpPrice:490, online:true, time:'', unread:0,
+    preview:'Доступ по подписке · инсайды и разборы',
+    msgs:[
+      {kind:'sys', body:'Закрытый клуб OKO PRO — доступ открывается после оплаты'},
+      {in:1, t:'09:00', kind:'text', who:'Даниэль', body:'Внутри клуба: живые разборы кейсов, приватные стратегии продвижения и ранний доступ к новым фичам OKO.'},
+      {in:1, t:'09:02', kind:'voice', dur:'0:38', seed:5},
+      {in:1, t:'09:05', kind:'text', who:'Даниэль', body:'Каждую неделю — новый разбор канала участника с планом роста на 30 дней.'},
+    ]});
+  CHATS.push({
+    id:'cp-priv', ava:'VIP', name:'Приватная комната', kind:'group', kindIcon:'lock',
+    nick:'viproom', cpType:'private', online:false, time:'', unread:0,
+    preview:'Только по ссылке-приглашению',
+    msgs:[
+      {kind:'sys', body:'Приватный чат — попасть можно только по ссылке-приглашению'},
+      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Скинула инвайт троим, остальным дам ссылку вручную.'},
+      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Тут обсуждаем закрытые запуски — ничего наружу.'},
+    ]});
+}
+
+/* ---- бейджи/замки в списке чатов ---- */
+function cpPaintChatBadges(){
+  const list = document.getElementById('chatList'); if(!list) return;
+  (typeof CHATS!=='undefined'?CHATS:[]).forEach(c=>{
+    const a = cpAcc(c);
+    if(a.type==='public') return;
+    const sel = (typeof c.id==='number') ? 'openConv('+c.id+')' : "openConv('"+c.id+"')";
+    const item = list.querySelector('.chat-item[onclick="'+sel+'"]'); if(!item) return;
+    const locked = a.type==='paid' && !cpChatUnlocked(c);
+    item.classList.toggle('cp-ci-locked', locked);
+    /* угловой значок на аватарке */
+    const ava = item.querySelector('.ava');
+    if(ava){
+      let badge = ava.querySelector('.cp-ci-badge');
+      if(!badge){ badge = document.createElement('span'); badge.className='cp-ci-badge'; ava.appendChild(badge); }
+      badge.className = 'cp-ci-badge cp-ci-'+(locked?'lock':(a.type==='paid'?'ok':a.type));
+      badge.innerHTML = a.type==='paid' ? (cpChatUnlocked(c)?I('check'):I('lock')) : I('lock');
+    }
+    /* ценовой пилл в строке превью */
+    const rows = item.querySelectorAll('.row1');
+    const row2 = rows[1];
+    if(row2){
+      let pill = row2.querySelector('.cp-ci-pill');
+      if(a.type==='paid' && !cpChatUnlocked(c)){
+        if(!pill){ pill = document.createElement('span'); pill.className='cp-ci-pill'; row2.appendChild(pill); }
+        pill.innerHTML = I('lock') + (a.price?a.price+' ₽':'PRO');
+      } else if(pill){ pill.remove(); }
+    }
+  });
+}
+
+/* ---- paywall для платного чата ---- */
+function cpPaywall(c){
+  const a = cpAcc(c);
+  const fee = Math.round(a.price*CP_FEE), net = a.price - fee;
+  if(typeof showPopup!=='function'){ if(typeof toast==='function') toast('Нужен платный доступ'); return; }
+  showPopup({ico:'lock', title:'Закрытый чат',
+    body:`«${cpEsc(c.name)}» — доступ по подписке.<br><br>Спишется <b>${a.price} ₽</b> с кошелька. Автору — ${net} ₽, комиссия OKO 10% (${fee} ₽). Доступ останется навсегда.`,
+    actions:[
+      {label:'Оплатить '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
+      {label:'Позже', ghost:true}
+    ]});
+}
+function cpBuyAccess(c){
+  const a = cpAcc(c);
+  if(typeof walletCharge!=='function'){ if(typeof toast==='function') toast('Кошелёк недоступен'); return; }
+  if(!walletCharge(a.price, 'Доступ к чату: '+c.name)) return; /* сам покажет «недостаточно средств» */
+  if(typeof okoEarn==='function') okoEarn(a.price*CP_FEE, 'Комиссия платных чатов 10%');
+  CP.unlocked[c.id] = 1; cpSave();
+  if(typeof toast==='function') toast('Доступ открыт');
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  if(typeof openConv==='function') openConv(c.id);
+}
+
+/* ---- шапка чата: бейдж типа + кнопка «доступ» ---- */
+function cpDecorateConvAccess(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  const head = document.querySelector('#convBody .conv-head'); if(!head || !c) return;
+  const a = cpAcc(c);
+  /* кнопка доступа в шапке */
+  let btn = document.getElementById('cpAccessBtn');
+  if(!btn){
+    btn = document.createElement('button'); btn.className='ch-call'; btn.id='cpAccessBtn';
+    btn.onclick = cpAccessMenu;
+    const anchor = document.getElementById('cpSearchBtn') || head.querySelector('.ch-call');
+    head.insertBefore(btn, anchor);
+  }
+  const showBtn = a.type!=='public' || cpCanManage();
+  btn.style.display = showBtn ? 'flex' : 'none';
+  btn.title = 'Доступ к чату';
+  btn.innerHTML = a.type==='paid' ? I('crown') : a.type==='private' ? I('lock') : I('users');
+  /* инлайн-бейдж рядом с именем */
+  const nameEl = document.getElementById('convName');
+  if(nameEl){
+    let badge = document.getElementById('cpConvBadge');
+    if(a.type==='public'){ if(badge) badge.remove(); }
+    else {
+      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; nameEl.appendChild(badge); }
+      const label = a.type==='paid' ? (cpChatUnlocked(c) ? 'PRO · доступ открыт' : (a.price?a.price+' ₽':'PRO')) : 'Приватный';
+      badge.className = 'cp-conv-badge cp-cb-'+a.type;
+      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + '<span>'+label+'</span>';
+    }
+  }
+}
+function cpAccessMenu(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null; if(!c) return;
+  if(cpCanManage()) cpManage(c); else cpShareInvite(c);
+}
+
+/* ---- ссылка-приглашение (приватные/платные) ---- */
+function cpShareInvite(c){
+  if(typeof showPopup!=='function') return;
+  const link = 'https://oko.app/join/'+cpChatSlug(c);
+  showPopup({ico:'share', title:'Ссылка-приглашение',
+    body:`Отправь ссылку — по ней откроется доступ к «${cpEsc(c.name)}».<div class="cp-invite"><input id="cpInviteInp" readonly value="${link}"><button class="btn sm" onclick="cpCopyInvite()">${I('copy')} Копировать</button></div>`,
+    actions:[{label:'Готово'}]});
+}
+window.cpCopyInvite = function(){
+  const i = document.getElementById('cpInviteInp');
+  if(i){ i.select && i.select(); try{ navigator.clipboard && navigator.clipboard.writeText(i.value); }catch(e){} }
+  if(typeof toast==='function') toast('Ссылка скопирована');
+};
+
+/* ---- управление доступом (владелец) ---- */
+let cpMg = null;
+function cpManage(c){
+  const a = cpAcc(c);
+  cpMg = {id:c.id, type:a.type, price:a.price||490};
+  cpManageRender();
+}
+function cpMgReadPrice(){
+  if(!cpMg) return;
+  const p = document.getElementById('cpMgPrice');
+  if(p){ const v = +String(p.value).replace(/\D/g,''); if(v) cpMg.price = v; }
+}
+function cpManageRender(){
+  const d = cpMg; if(!d || typeof showPopup!=='function') return;
+  const opt = (t,ic,l,s)=>`<button class="cp-mg-opt ${d.type===t?'on':''}" onclick="cpMgSet('${t}')">${I(ic)}<span class="cp-mg-t"><b>${l}</b><small>${s}</small></span>${d.type===t?I('check'):''}</button>`;
+  const body = `<div class="cp-mg">
+    ${opt('public','users','Открытый','Виден всем и в поиске')}
+    ${opt('private','lock','Приватный','Только по ссылке-приглашению')}
+    ${opt('paid','crown','Платный','Доступ по подписке, комиссия OKO 10%')}
+    ${d.type==='paid' ? `<div class="cp-mg-price"><label>Цена доступа</label><div class="cp-mg-prow"><input id="cpMgPrice" inputmode="numeric" value="${d.price}" oninput="cpMgPriceInput()"><span>₽</span></div><div class="cp-mg-net">Тебе — <b id="cpMgNet">${d.price-Math.round(d.price*CP_FEE)} ₽</b> с каждой продажи, OKO удержит 10%</div></div>` : ''}
+  </div>`;
+  showPopup({ico:'lock', title:'Доступ к чату', body, actions:[
+    {label:'Сохранить', onclick:cpMgSave},
+    {label:'Отмена', ghost:true, onclick:()=>{ cpMg=null; }}
+  ]});
+}
+window.cpMgSet = function(t){ cpMgReadPrice(); if(cpMg){ cpMg.type = t; cpManageRender(); } };
+window.cpMgPriceInput = function(){
+  const p = document.getElementById('cpMgPrice'); if(!p || !cpMg) return;
+  const v = +String(p.value).replace(/\D/g,'')||0; cpMg.price = v;
+  const net = document.getElementById('cpMgNet'); if(net) net.textContent = (v-Math.round(v*CP_FEE))+' ₽';
+};
+function cpMgSave(){
+  if(!cpMg) return;
+  cpMgReadPrice();
+  const d = cpMg;
+  CP.access[d.id] = {type:d.type, price:d.type==='paid' ? (d.price||0) : 0};
+  if(d.type==='paid' && cpCanManage()) CP.unlocked[d.id] = 1; /* владелец не платит за свой чат */
+  cpSave(); cpMg = null;
+  if(typeof toast==='function') toast('Настройки доступа сохранены');
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  cpDecorateConvAccess();
+}
+
+/* ---- патчи: гейт входа + перерисовка списка ---- */
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv3 = openConv;
+  openConv = function(id){
+    const c = (typeof CHATS!=='undefined') ? CHATS.find(x=>x.id===id) : null;
+    if(c && cpChatLocked(c)){ cpPaywall(c); return; }
+    _cpPrevOpenConv3.apply(this, arguments);
+    cpDecorateConvAccess();
+  };
+}
+if(typeof renderChatList === 'function'){
+  const _cpPrevRenderChatList = renderChatList;
+  renderChatList = function(){ _cpPrevRenderChatList.apply(this, arguments); cpPaintChatBadges(); };
+}
+if(typeof closeConv === 'function'){
+  const _cpPrevCloseConv3 = closeConv;
+  closeConv = function(){ if(cpRecLocked) cpCancelRec(); _cpPrevCloseConv3.apply(this, arguments); };
+}
+
+(function cpInit3(){
+  cpSeedChats();
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  if(typeof currentChat!=='undefined' && currentChat) cpDecorateConvAccess();
 })();
 
 /* ===== module: profile-social ===== */
@@ -18955,6 +19420,10 @@ function psToggleFollow(){
 function psMessage(){
   const name = PS.cur;
   if(!name || typeof CHATS === 'undefined') return;
+  if(typeof st2IsBlocked === 'function' && st2IsBlocked(name)){
+    if(typeof toast === 'function') toast('Разблокируйте пользователя, чтобы написать');
+    return;
+  }
   const a = psAuthor(name);
   let c = CHATS.find(x => x.kind === 'direct' && x.name === name);
   if(!c){
@@ -19011,6 +19480,37 @@ function psShare(){
       body:`Профиль <b>${esc(name)}</b> в OKO.<div class="ps-sharelink">${I('globe')}<span>${esc(link)}</span></div>`,
       actions:[{label:'Скопировать ссылку', onclick: doCopy}, {label:'Закрыть', ghost:true}]});
   } else { doCopy(); }
+}
+
+/* ---------- меню профиля: поделиться / блокировка / жалоба ---------- */
+function psRefreshFollowBtn(){
+  const name = PS.cur;
+  if(!name) return;
+  const f = psIsFollowing(name);
+  const btn = document.getElementById('psFollowBtn');
+  if(btn){ btn.classList.toggle('ghost', f); btn.innerHTML = I(f ? 'check' : 'plus') + ' ' + (f ? 'Отписаться' : 'Подписаться'); }
+}
+function psBlock(name){
+  if(typeof st2Block !== 'function'){ if(typeof toast === 'function') toast('Блокировки недоступны'); return; }
+  st2Block(name);                 /* сам снимает подписку + чистит ленту + персист */
+  psRefreshFollowBtn();
+  if(typeof toast === 'function') toast('Вы заблокировали ' + name);
+}
+function psUnblock(name){
+  if(typeof st2Unblock === 'function'){ st2Unblock(name); if(typeof toast === 'function') toast('Вы разблокировали ' + name); }
+}
+function psReport(name){ if(typeof toast === 'function') toast('Жалоба на ' + name + ' отправлена на модерацию'); }
+function psMore(){
+  const name = PS.cur;
+  if(!name) return;
+  const blocked = (typeof st2IsBlocked === 'function') && st2IsBlocked(name);
+  const actions = [{label:'Поделиться профилем', onclick: psShare}];
+  if(blocked) actions.push({label:'Разблокировать', onclick: () => psUnblock(name)});
+  else        actions.push({label:'Заблокировать', onclick: () => psBlock(name)});
+  actions.push({label:'Пожаловаться', ghost:true, onclick: () => psReport(name)});
+  if(typeof showPopup === 'function') showPopup({ico:'more', title: name, body:'Действия с профилем', actions});
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(ok && !blocked) ok.classList.add('ps-btn-danger');
 }
 
 /* ================= СОЦГРАФ: подписчики / подписки ================= */
@@ -19138,6 +19638,7 @@ function psAccRemove(id){
 }
 function psAccAvaHtml(a){
   const h = psAccHue(a);
+  if(a && a.avatar) return `<span class="ps-acc-ava has" style="background-image:url(${a.avatar})"></span>`;
   return `<span class="ps-acc-ava" style="--h:${h}">${esc(psAccInit(a.name))}</span>`;
 }
 function psAccRenderSheet(){
@@ -19813,13 +20314,14 @@ const ST2 = {
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
   notif: {msg:true, feed:true, market:true, academy:true, marketing:false},
-  /* приватность: write/phone/photo — сегменты (all|contacts|nobody), online/read — тумблеры */
-  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all'},
+  /* приватность: write (all|following|nobody), phone/photo/status (all|contacts|nobody), online/read — тумблеры */
+  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all'},
   sec:   {twofa:false, passcode:false, pin:null, secret:null},
   theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
-  accounts: [],                     /* [{id,name,nick,tier,role,bio}] */
+  accounts: [],                     /* [{id,name,nick,tier,role,bio,status,avatar,cover}] */
   activeAcc: null,                  /* id активного аккаунта */
   killed: [],                       /* id завершённых мок-сессий */
+  blocked: [],                      /* [имя] — чёрный список (реальный персист) */
   lastClear: 0,                     /* ts последней очистки кэша */
 };
 (function st2Load(){
@@ -19832,6 +20334,7 @@ const ST2 = {
     ['nick','email','phone','lastClear','theme','activeAcc'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
     if(Array.isArray(s.killed))   ST2.killed   = s.killed;
     if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
+    if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }
@@ -19843,7 +20346,7 @@ function st2PushCore(){
   SETTINGS.notif.news    = ST2.notif.marketing;
   SETTINGS.privacy.online = ST2.priv.online;
   SETTINGS.privacy.read   = ST2.priv.read;
-  SETTINGS.privacy.dm     = ST2.priv.write === 'contacts';
+  SETTINGS.privacy.dm     = ST2.priv.write !== 'all';
 }
 function st2PullCore(){
   if(typeof SETTINGS === 'undefined') return;
@@ -19851,7 +20354,8 @@ function st2PullCore(){
   ST2.notif.marketing = SETTINGS.notif.news;
   ST2.priv.online     = SETTINGS.privacy.online;
   ST2.priv.read       = SETTINGS.privacy.read;
-  ST2.priv.write      = SETTINGS.privacy.dm ? 'contacts' : 'all';
+  if(SETTINGS.privacy.dm && ST2.priv.write === 'all') ST2.priv.write = 'following';
+  else if(!SETTINGS.privacy.dm) ST2.priv.write = 'all';
   st2Save();
 }
 
@@ -19895,7 +20399,19 @@ function st2SyncActiveFromProfile(){
   const a = st2ActiveAcc();
   if(a && typeof PROFILE !== 'undefined'){
     a.name = PROFILE.name; a.nick = PROFILE.nick; a.tier = PROFILE.tier; a.role = PROFILE.role; a.bio = PROFILE.bio;
+    a.status = PROFILE.status || null;
+    a.avatar = PROFILE.avatar || null;
+    a.cover  = PROFILE.cover  || null;
   }
+}
+/* применить профиль аккаунта на ядро PROFILE (при переключении/инициализации) */
+function st2ApplyAccToProfile(a){
+  if(!a || typeof PROFILE === 'undefined') return;
+  PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
+  if(a.bio    !== undefined) PROFILE.bio    = a.bio;
+  PROFILE.status = a.status || null;
+  PROFILE.avatar = a.avatar || null;
+  PROFILE.cover  = a.cover  || null;
 }
 
 /* ---------- рендер вьюхи ---------- */
@@ -19914,9 +20430,10 @@ function st2SetSeg(group, key, val){
   const seg = document.querySelector(`.st2-seg[data-seg="${group}.${key}"]`);
   if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === val));
   const M = {
-    'priv.write':    {all:'Писать могут все', contacts:'Писать могут только контакты'},
+    'priv.write':    {all:'Писать могут все', following:'Писать могут только подписки', nobody:'Никто не может писать первым'},
     'priv.phone':    {all:'Телефон виден всем', contacts:'Телефон виден контактам', nobody:'Телефон скрыт'},
     'priv.photo':    {all:'Фото видно всем', contacts:'Фото видно контактам', nobody:'Фото профиля скрыто'},
+    'priv.status':   {all:'Статус виден всем', contacts:'Статус виден контактам', nobody:'Статус скрыт'},
   };
   const m = M[group + '.' + key]; if(m && m[val]) toast(m[val]);
 }
@@ -19925,7 +20442,7 @@ function st2AccHtml(a){
   const active = a.id === ST2.activeAcc;
   const removable = !active && a.role !== 'owner';
   return `<div class="st2-acc ${active ? 'st2-acc-on' : ''}" data-acc="${a.id}">
-    <span class="st2-acc-av" style="--h:${st2Hue(a.nick || a.name)}">${esc(st2AccInit(a.name))}</span>
+    <span class="st2-acc-av${a.avatar ? ' has' : ''}" style="--h:${st2Hue(a.nick || a.name)}${a.avatar ? ';background-image:url(' + a.avatar + ')' : ''}">${a.avatar ? '' : esc(st2AccInit(a.name))}</span>
     <div class="st2-acc-b">
       <b>${esc(a.name)}${vBadge ? vBadge(a.name) : ''}</b>
       <small>@${esc(a.nick)} · ${esc(a.tier || 'FREE')}</small>
@@ -19968,6 +20485,7 @@ function st2Render(){
     <div class="st2-card" id="st2AccList">
       ${ST2.accounts.map(st2AccHtml).join('')}
       <button class="prow st2-add-acc" onclick="st2AddAccount()">${I('plus')} Добавить аккаунт<span class="chev">${I('chev')}</span></button>
+      <button class="prow st2-logout-acc" onclick="st2LogoutAccount()">${I('logout')} Выйти из аккаунта<span class="chev">${I('chev')}</span></button>
     </div>
   </div>
   <div class="st2-sec">
@@ -19992,15 +20510,20 @@ function st2Render(){
     <div class="st2-card">
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('send')} Кто может писать</span>
-        ${st2Seg('priv','write',[['all','Все'],['contacts','Контакты']])}</div>
+        ${st2Seg('priv','write',[['all','Все'],['following','Подписки'],['nobody','Никто']])}</div>
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('phone')} Кто видит телефон</span>
         ${st2Seg('priv','phone',VIS)}</div>
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('photo')} Кто видит фото профиля</span>
         ${st2Seg('priv','photo',VIS)}</div>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('star')} Кто видит статус</span>
+        ${st2Seg('priv','status',VIS)}</div>
       <button class="prow" onclick="st2Tgl('priv','online',this)">${I('eye')} Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
       <button class="prow" onclick="st2Tgl('priv','read',this)">${I('check2')} Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
+      <button class="prow" onclick="st2OpenBlocked()">${I('st2-ban')} Чёрный список
+        <span class="st2-val" id="st2BlockedVal">${ST2.blocked.length ? ST2.blocked.length + (ST2.blocked.length===1?' человек':(ST2.blocked.length<5?' человека':' человек')) : 'пусто'}</span><span class="chev">${I('chev')}</span></button>
     </div>
   </div>
   <div class="st2-sec">
@@ -20182,8 +20705,7 @@ function st2SwitchAccount(id){
   st2SyncActiveFromProfile();          /* сохранить текущий стейт перед уходом */
   ST2.activeAcc = id; ST2.nick = a.nick;
   if(typeof PROFILE !== 'undefined'){
-    PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
-    if(a.bio !== undefined) PROFILE.bio = a.bio;
+    st2ApplyAccToProfile(a);
     if(typeof renderMyProfile === 'function') renderMyProfile();
   }
   st2Save();
@@ -20461,6 +20983,306 @@ function st2DoDelete(){
   setTimeout(()=> location.reload(), 650); /* oko-auth стёрт -> загрузка на экран входа */
 }
 
+/* ================= ПРОФИЛЬ: аватар + обложка (реальная загрузка, canvas-сжатие, персист) ================= */
+/* хранилище — в PROFILE.avatar / PROFILE.cover (dataURL) + per-account в ST2.accounts.
+   Единый источник аккаунтов — ST2, поэтому фото переключается вместе с аккаунтом. */
+
+/* cover-fit сжатие файла в dataURL нужного размера */
+function st2FitImage(file, cw, ch, quality, cb){
+  if(!file || !/^image\//.test(file.type)){ toast('Нужен файл изображения'); return; }
+  const rd = new FileReader();
+  rd.onload = function(){
+    const img = new Image();
+    img.onload = function(){
+      const sw = img.naturalWidth, sh = img.naturalHeight;
+      if(!sw || !sh){ toast('Пустое изображение'); return; }
+      let cv;
+      try{
+        cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        const ctx = cv.getContext('2d');
+        const scale = Math.max(cw / sw, ch / sh);          /* cover-fit */
+        const dw = sw * scale, dh = sh * scale;
+        ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+        cb(cv.toDataURL('image/jpeg', quality));
+      }catch(e){ toast('Не удалось обработать фото'); }
+    };
+    img.onerror = function(){ toast('Не удалось открыть изображение'); };
+    img.src = rd.result;
+  };
+  rd.onerror = function(){ toast('Ошибка чтения файла'); };
+  rd.readAsDataURL(file);
+}
+/* системный выбор файла (переиспользуемый скрытый input) */
+let _st2FileCb = null;
+function st2PickFile(cb){
+  _st2FileCb = cb;
+  let inp = document.getElementById('st2FileInput');
+  if(!inp){
+    inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'st2FileInput'; inp.style.display = 'none';
+    inp.addEventListener('change', function(){
+      const f = inp.files && inp.files[0]; inp.value = '';
+      if(f && _st2FileCb) _st2FileCb(f);
+    });
+    document.body.appendChild(inp);
+  }
+  inp.click();
+}
+
+/* аватар */
+function st2SetAvatar(){
+  st2PickFile(f => st2FitImage(f, 512, 512, 0.84, url => {
+    if(typeof PROFILE !== 'undefined') PROFILE.avatar = url;
+    st2SyncActiveFromProfile(); st2Save();
+    st2PaintEditAva(); st2PaintProfile();
+    toast('Фото профиля обновлено');
+  }));
+}
+function st2RemoveAvatar(){
+  if(typeof PROFILE !== 'undefined') PROFILE.avatar = null;
+  st2SyncActiveFromProfile(); st2Save();
+  st2PaintEditAva(); st2PaintProfile();
+  toast('Фото профиля удалено');
+}
+function st2AvatarMenu(){
+  const has = typeof PROFILE !== 'undefined' && !!PROFILE.avatar;
+  showPopup({
+    ico:'camera', title:'Фото профиля',
+    body:'Загрузите фото с устройства — оно сожмётся и сохранится на этом устройстве. Фото привязано к активному аккаунту.',
+    actions: has
+      ? [{label:'Загрузить новое', onclick: st2SetAvatar}, {label:'Удалить фото', ghost:true, onclick: st2RemoveAvatar}]
+      : [{label:'Загрузить фото', onclick: st2SetAvatar}, {label:'Отмена', ghost:true}],
+  });
+}
+/* обложка */
+function st2SetCover(){
+  st2PickFile(f => st2FitImage(f, 1080, 420, 0.82, url => {
+    if(typeof PROFILE !== 'undefined') PROFILE.cover = url;
+    st2SyncActiveFromProfile(); st2Save();
+    st2PaintEditCover(); st2PaintProfile();
+    toast('Обложка обновлена');
+  }));
+}
+function st2RemoveCover(){
+  if(typeof PROFILE !== 'undefined') PROFILE.cover = null;
+  st2SyncActiveFromProfile(); st2Save();
+  st2PaintEditCover(); st2PaintProfile();
+  toast('Обложка удалена');
+}
+function st2CoverMenu(){
+  const has = typeof PROFILE !== 'undefined' && !!PROFILE.cover;
+  showPopup({
+    ico:'st2-image', title:'Обложка профиля',
+    body:'Широкое фото-полотно в шапке профиля. Загрузите изображение — оно сожмётся и сохранится локально.',
+    actions: has
+      ? [{label:'Загрузить новую', onclick: st2SetCover}, {label:'Убрать обложку', ghost:true, onclick: st2RemoveCover}]
+      : [{label:'Загрузить обложку', onclick: st2SetCover}, {label:'Отмена', ghost:true}],
+  });
+}
+
+/* ---------- покраска аватаров/обложек ---------- */
+function st2PaintAvaEl(el, url, letter){
+  if(!el) return;
+  if(url){
+    el.style.backgroundImage = 'url("' + url + '")';
+    el.textContent = '';
+    el.classList.add('st2-has-photo');
+  } else {
+    el.style.backgroundImage = '';
+    el.classList.remove('st2-has-photo');
+    if(letter !== undefined && letter !== null) el.textContent = letter;
+  }
+}
+function st2ProfLetter(){ return (typeof PROFILE !== 'undefined' && PROFILE.name ? PROFILE.name[0] : 'O').toUpperCase(); }
+/* профиль (ядро): #profAva + собственная обложка над profile-top */
+function st2PaintProfile(){
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null;
+  st2PaintAvaEl(document.getElementById('profAva'), url, st2ProfLetter());
+  st2PaintMyCover();
+}
+function st2PaintMyCover(){
+  const pad = document.querySelector('#screen-profile .pad');
+  if(!pad) return;
+  const top = pad.querySelector('.profile-top');
+  if(!top) return;
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.cover) || null;
+  let cov = document.getElementById('st2MyCover');
+  if(!cov){
+    cov = document.createElement('button');
+    cov.id = 'st2MyCover'; cov.className = 'st2-mycover';
+    cov.setAttribute('aria-label', 'Обложка профиля');
+    cov.onclick = st2CoverMenu;
+    pad.insertBefore(cov, top);
+  }
+  cov.classList.toggle('has', !!url);
+  cov.style.backgroundImage = url ? 'url("' + url + '")' : '';
+  cov.innerHTML = `<span class="st2-mycover-grid"></span>
+    <span class="st2-mycover-mark">${I('logo')}</span>
+    <span class="st2-mycover-edit">${I('camera')}${url ? 'Сменить обложку' : 'Добавить обложку'}</span>`;
+}
+/* экран редактирования (ядро #editProfile) */
+function st2PaintEditAva(){
+  st2PaintAvaEl(document.getElementById('epAva'), (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null, st2ProfLetter());
+}
+function st2PaintEditCover(){
+  const el = document.getElementById('st2EpCover');
+  if(!el) return;
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.cover) || null;
+  el.classList.toggle('has', !!url);
+  el.style.backgroundImage = url ? 'url("' + url + '")' : '';
+  el.innerHTML = `<span class="ep-cover-mark">${I('logo')}</span>
+    <span class="ep-cover-hint">${I('st2-image')}${url ? 'Сменить обложку' : 'Добавить обложку'}</span>`;
+}
+/* рерайринг кнопок фото ядра + инъекция контрола обложки в #editProfile (один раз) */
+function st2WireEditProfile(){
+  const avBtn = document.querySelector('#editProfile .ep-avabtn');
+  const avLink = document.querySelector('#editProfile .ep-photolink');
+  if(avBtn){ avBtn.removeAttribute('onclick'); avBtn.onclick = st2AvatarMenu; }
+  if(avLink){ avLink.removeAttribute('onclick'); avLink.onclick = st2AvatarMenu; avLink.textContent = 'Изменить фото'; }
+  if(avLink && !document.getElementById('st2EpCover')){
+    const lab = document.createElement('label'); lab.className = 'ep-lab'; lab.textContent = 'Обложка профиля'; lab.id = 'st2EpCoverLab';
+    const cov = document.createElement('button'); cov.type = 'button'; cov.className = 'ep-cover'; cov.id = 'st2EpCover';
+    cov.onclick = st2CoverMenu;
+    avLink.insertAdjacentElement('afterend', cov);
+    avLink.insertAdjacentElement('afterend', lab);
+  }
+}
+
+/* ================= ЧЁРНЫЙ СПИСОК / БЛОКИРОВКИ (реальный персист в oko-settings2) ================= */
+function st2IsBlocked(name){ return ST2.blocked.indexOf(name) > -1; }
+function st2Block(name){
+  if(!name || st2IsBlocked(name)) return false;
+  ST2.blocked.push(name); st2Save();
+  try{ if(typeof psSetFollow === 'function') psSetFollow(name, false); }catch(e){}  /* блок = отписка */
+  try{ if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined') renderFeed(curFeedKind); }catch(e){}
+  st2SyncBlockedVal();
+  return true;
+}
+function st2Unblock(name){
+  const i = ST2.blocked.indexOf(name);
+  if(i < 0) return false;
+  ST2.blocked.splice(i, 1); st2Save();
+  try{ if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined') renderFeed(curFeedKind); }catch(e){}
+  st2SyncBlockedVal();
+  return true;
+}
+function st2SyncBlockedVal(){
+  const el = document.getElementById('st2BlockedVal');
+  if(el) el.textContent = ST2.blocked.length
+    ? ST2.blocked.length + (ST2.blocked.length === 1 ? ' человек' : (ST2.blocked.length < 5 ? ' человека' : ' человек'))
+    : 'пусто';
+}
+/* убрать посты заблокированных из ленты */
+function st2FilterBlockedFeed(){
+  if(!ST2.blocked.length) return;
+  const list = document.getElementById('feedList');
+  if(!list) return;
+  list.querySelectorAll('article.post').forEach(art => {
+    const b = art.querySelector('.post-more');
+    const m = b && (b.getAttribute('onclick') || '').match(/openPostMenu\((\d+)/);
+    const p = (m && typeof postById === 'function') ? postById(+m[1]) : null;
+    if(p && p.name && st2IsBlocked(p.name)) art.remove();
+  });
+}
+/* кандидаты на блокировку — реальные люди приложения (из profile-social пула) */
+function st2BlockablePeople(){
+  let pool = [];
+  try{ if(typeof psPeoplePool === 'function') pool = psPeoplePool(); }catch(e){}
+  return pool.filter(p => p && p.name && !st2IsBlocked(p.name));
+}
+function st2BlAva(p){
+  if(p && p.avaIcon) return I(p.avaIcon);
+  if(p && p.ava && p.ava.length <= 3) return esc(p.ava);
+  return esc(st2AccInit((p && p.name) || 'U'));
+}
+function st2UnblockUI(enc){ const n = decodeURIComponent(enc); if(st2Unblock(n)){ st2RenderBlocked(); toast('Разблокирован: ' + n); } }
+function st2BlockUI(enc){ const n = decodeURIComponent(enc); if(st2Block(n)){ st2RenderBlocked(); toast('Заблокирован: ' + n); } }
+function st2RenderBlocked(){
+  const wrap = document.getElementById('st2BlockedBody');
+  if(!wrap) return;
+  const blocked = ST2.blocked.slice();
+  const pool = st2BlockablePeople();
+  const byName = {}; pool.forEach(p => byName[p.name] = p);
+  const suggest = pool.slice(0, 16);
+  const blRow = name => {
+    const p = byName[name] || {name};
+    return `<div class="st2-bl-row">
+      <span class="st2-bl-av">${st2BlAva(p)}</span>
+      <div class="st2-bl-b"><b>${esc(name)}</b><small>в чёрном списке</small></div>
+      <button class="st2-bl-un" onclick="st2UnblockUI('${encodeURIComponent(name)}')">Разблокировать</button>
+    </div>`;
+  };
+  const sgRow = p =>
+    `<div class="st2-bl-row st2-bl-sg">
+      <span class="st2-bl-av">${st2BlAva(p)}</span>
+      <div class="st2-bl-b"><b>${esc(p.name)}</b><small>@${esc(p.nick || st2AccInit(p.name).toLowerCase())}</small></div>
+      <button class="st2-bl-do" onclick="st2BlockUI('${encodeURIComponent(p.name)}')">${I('st2-ban')} Заблокировать</button>
+    </div>`;
+  wrap.innerHTML =
+    (blocked.length
+      ? `<div class="st2-bl-cap">В чёрном списке · ${blocked.length}</div><div class="st2-bl-list">${blocked.map(blRow).join('')}</div>`
+      : `<div class="st2-bl-empty">${I('st2-ban')}<p>Чёрный список пуст</p><span>Заблокированные не смогут вам писать и исчезнут из вашей ленты</span></div>`) +
+    `<button class="st2-bl-add" onclick="st2BlockManual()">${I('plus')} Заблокировать по @нику</button>` +
+    (suggest.length ? `<div class="st2-bl-cap" style="margin-top:6px">Люди из приложения</div><div class="st2-bl-list">${suggest.map(sgRow).join('')}</div>` : '');
+}
+function st2BlockManual(err){
+  st2Prompt({
+    ico:'st2-ban', title:'Заблокировать', err: err,
+    note:'Введите имя или @ник — пользователь попадёт в чёрный список.',
+    ph:'@nickname или Имя', saveLabel:'Заблокировать', danger:true,
+    save(v){
+      v = v.replace(/^@/, '').trim();
+      if(v.length < 2) return st2BlockManual('Слишком короткое имя');
+      /* попробуем сопоставить с реальным человеком из пула по нику/имени */
+      let match = v;
+      try{
+        const pool = (typeof psPeoplePool === 'function') ? psPeoplePool() : [];
+        const hit = pool.find(p => (p.nick || '').toLowerCase() === v.toLowerCase() || p.name.toLowerCase() === v.toLowerCase());
+        if(hit) match = hit.name;
+      }catch(e){}
+      if(st2IsBlocked(match)) return st2BlockManual('Уже в чёрном списке');
+      st2Block(match); st2RenderBlocked(); toast('Заблокирован: ' + match);
+    },
+  });
+}
+function st2OpenBlocked(){
+  st2RenderBlocked();
+  try{ document.body.classList.add('st2-over'); }catch(e){}   /* поднять шит над #st2View */
+  if(typeof openSheet === 'function') openSheet('st2-blocked');
+}
+
+/* ================= ВЫХОД ИЗ АККАУНТА ================= */
+function st2LogoutAccount(){
+  const others = ST2.accounts.filter(a => a.id !== ST2.activeAcc);
+  const cur = st2ActiveAcc();
+  showPopup({
+    ico:'logout', title:'Выйти из аккаунта?',
+    body: others.length
+      ? `Вы выйдете из <b>${esc(cur ? cur.name : 'текущего аккаунта')}</b> на этом устройстве и переключитесь на «${esc(others[0].name)}».`
+      : 'Вы выйдете из аккаунта и вернётесь на экран входа.',
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Выйти', onclick: st2DoLogoutAccount},
+    ],
+  });
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(ok) ok.classList.add('st2-btn-danger');
+}
+function st2DoLogoutAccount(){
+  const goneId = ST2.activeAcc;
+  const others = ST2.accounts.filter(a => a.id !== goneId);
+  if(!others.length){
+    if(typeof doLogout === 'function') doLogout();
+    else { try{ localStorage.removeItem('oko-auth'); }catch(e){} location.reload(); }
+    return;
+  }
+  ST2.accounts = ST2.accounts.filter(a => a.id !== goneId);
+  st2Save();
+  st2SwitchAccount(others[0].id);   /* применит профиль + renderMyProfile + persist + toast */
+  st2Render();
+  toast('Вы вышли из аккаунта');
+}
+
 /* ---------- свои SVG-иконки (штрих ядра: stroke 7, округлые концы) ---------- */
 function st2AddIcons(){
   const defs = document.querySelector('svg defs');
@@ -20495,6 +21317,13 @@ function st2AddIcons(){
   /* ключ (смена пароля) */
   mk('i-st2-key', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
     '<circle cx="35" cy="37" r="17"/><path d="M47 49 L86 88"/><path d="M76 78 l9 -9"/><path d="M65 67 l9 -9"/></g>');
+  /* запрет / бан (чёрный список) */
+  mk('i-st2-ban', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="38"/><path d="M24 24 L76 76"/></g>');
+  /* картинка / обложка */
+  mk('i-st2-image', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="14" y="20" width="72" height="60" rx="9"/><circle cx="36" cy="41" r="7"/>' +
+    '<path d="M20 74 L42 52 L58 66 L72 54 L84 64"/></g>');
 }
 
 /* ---------- строка «Настройки» в профиле ---------- */
@@ -20515,6 +21344,48 @@ function st2InsertRow(){
 (function st2Init(){
   st2AddIcons();
   st2InsertRow();
+  st2WireEditProfile();
+
+  /* chain renderMyProfile: покрасить свой аватар + собственную обложку (внешний слой) */
+  if(typeof renderMyProfile === 'function'){
+    const _st2PrevRMP = renderMyProfile;
+    renderMyProfile = function(){
+      _st2PrevRMP.apply(this, arguments);
+      try{ st2PaintProfile(); }catch(e){}
+    };
+  }
+  /* chain openEdit: показать текущее фото/обложку в редакторе */
+  if(typeof openEdit === 'function'){
+    const _st2PrevOpenEdit = openEdit;
+    openEdit = function(){
+      _st2PrevOpenEdit.apply(this, arguments);
+      try{ st2WireEditProfile(); st2PaintEditAva(); st2PaintEditCover(); }catch(e){}
+    };
+  }
+  /* chain saveProfile: персист профиля (имя/ник/био/статус/фото/обложка) в активный аккаунт */
+  if(typeof saveProfile === 'function'){
+    const _st2PrevSaveProfile = saveProfile;
+    saveProfile = function(){
+      _st2PrevSaveProfile.apply(this, arguments);   /* ядро уже обновило PROFILE + вызвало renderMyProfile */
+      try{ st2SyncActiveFromProfile(); st2Save(); st2PaintProfile(); }catch(e){}
+    };
+  }
+  /* chain renderFeed: убрать посты заблокированных (внешний слой — после декора profile-social) */
+  if(typeof renderFeed === 'function'){
+    const _st2PrevRenderFeed = renderFeed;
+    renderFeed = function(){
+      _st2PrevRenderFeed.apply(this, arguments);
+      try{ st2FilterBlockedFeed(); }catch(e){}
+    };
+  }
+  /* chain closeSheet: снять подъём шита чёрного списка над #st2View */
+  if(typeof closeSheet === 'function'){
+    const _st2PrevCloseSheet = closeSheet;
+    closeSheet = function(){
+      _st2PrevCloseSheet.apply(this, arguments);
+      try{ document.body.classList.remove('st2-over'); }catch(e){}
+    };
+  }
 
   /* аккаунты: сид из PROFILE при первом запуске; иначе — применить активный аккаунт */
   if(typeof PROFILE !== 'undefined'){
@@ -20524,15 +21395,15 @@ function st2InsertRow(){
       if(typeof renderMyProfile === 'function') renderMyProfile();
     }
     if(!ST2.accounts.length){
-      ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio}];
+      ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio,
+                       status:PROFILE.status||null, avatar:PROFILE.avatar||null, cover:PROFILE.cover||null}];
       ST2.activeAcc = 'owner';
       st2Save();
     } else {
       if(!ST2.activeAcc || !ST2.accounts.some(a => a.id === ST2.activeAcc)) ST2.activeAcc = ST2.accounts[0].id;
       const a = st2ActiveAcc();
-      if(a && (PROFILE.nick !== a.nick || PROFILE.name !== a.name)){
-        PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
-        if(a.bio !== undefined) PROFILE.bio = a.bio;
+      if(a){
+        st2ApplyAccToProfile(a);
         ST2.nick = a.nick;
         if(typeof renderMyProfile === 'function') renderMyProfile();
         st2Save();
@@ -20572,6 +21443,9 @@ function st2InsertRow(){
       if(v && v.classList.contains('open')) st2Render();
     });
   }
+
+  /* стартовая покраска аватара/обложки (ядро могло отрисовать профиль до установки чейна) */
+  try{ st2PaintProfile(); }catch(e){}
 })();
 
 /* ===== module: tour ===== */
@@ -21906,7 +22780,7 @@ function chSeed(){
         {txt:'Правило, которое изменило мой контент: снимай не «что умеешь», а «что у аудитории болит».', likes:97, views:3040, when:'вчера'},
       ]},
     { id:'ch-own-2', name:'Клуб роста · PRO', desc:'Закрытый платный клуб: ежедневные задания, живые разборы, чат участников и доступ к базе шаблонов. Первые 100 участников — по спец-цене.',
-      icon:'crown', bg:5, type:'paid', price:299, verified:true, subs:342, reactions:true, discussions:true,
+      icon:'crown', bg:5, kind:'club', access:'closed', type:'paid', price:299, verified:true, subs:342, reactions:true, discussions:true,
       admins:[{name:'Игорь В.',nick:'igor_v'},{name:'Алина Р.',nick:'alina_r'}], gross:61200,
       members:chMockMembers(9), black:[{name:'Спам-бот 24',nick:'spam24'}],
       posts:[
@@ -21959,16 +22833,36 @@ function chSeed(){
       ],
       posts:[]},
     { id:'ch-disc-4', name:'OKO Новости', desc:'Официальный канал обновлений OKO: релизы, фичи, розыгрыши. Бесплатно для всех.',
-      icon:'megaphone', bg:6, type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда OKO', ownerNick:'okonews',
+      icon:'megaphone', bg:6, kind:'channel', access:'open', type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда OKO', ownerNick:'okonews',
       posts:[
         {txt:'Вышли платные каналы и курсы: создавай, продавай, зарабатывай. Комиссия OKO всего 10%.', likes:1240, views:41000, when:'1 ч', media:'circle-play'},
         {txt:'Розыгрыш PRO-подписки среди активных авторов недели. Условия внутри.', likes:820, views:33000, when:'вчера'},
       ]},
+    { id:'ch-disc-5', name:'Инсайдеры OKO', desc:'Закрытый бесплатный канал для активных участников: ранний доступ к новым фичам, закрытые созвоны с командой и прямое влияние на дорожную карту. Вступление — по заявке, бесплатно.',
+      icon:'star', bg:2, kind:'channel', access:'closed', type:'free', price:0, verified:true, subs:1870, reactions:true, discussions:true, owner:'Команда OKO', ownerNick:'oko_insiders',
+      posts:[
+        {txt:'Открыли ранний доступ к рекламному кабинету для инсайдеров. Тестируйте и пишите фидбек в обсуждениях.', likes:0, views:0, when:'2 ч', media:'photo'},
+        {txt:'Созвон с командой в пятницу 19:00 МСК. Разберём дорожную карту и ответим на вопросы.', likes:0, views:0, when:'вчера'},
+      ]},
   ];
-  return { v:1, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
+  return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
 CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{};
+/* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
+(function chMigrate(){
+  try{
+    (CH.mine||[]).forEach(chNormalize);
+    (CH.disc||[]).forEach(chNormalize);
+    if((CH.v||1) < 2){
+      // добавляем витринные примеры новых осей, если их ещё нет
+      const seed = chSeed();
+      (seed.disc||[]).forEach(s=>{ if(!CH.disc.some(x=>x.id===s.id)) CH.disc.push(chNormalize(s)); });
+      CH.v = 2;
+    }
+    chSave();
+  }catch(e){}
+})();
 
 function chMockMembers(n){
   const pool = [
@@ -21986,21 +22880,58 @@ function chEsc(t){ return (typeof esc==='function') ? esc(t) : String(t==null?''
 function chFmtN(n){ return (typeof fmtN==='function') ? fmtN(n) : (n>=1000?(n/1000).toFixed(1).replace('.0','')+'к':n); }
 function chChannel(id){ return CH.mine.find(c=>c.id===id) || CH.disc.find(c=>c.id===id) || null; }
 function chIsMine(c){ return CH.mine.some(x=>x.id===c.id); }
-function chIsSubbed(c){ return chIsMine(c) || c.type==='free' || !!CH.sub[c.id]; }
-function chTypeLabel(t){ return t==='paid'?'Платный':t==='course'?'Курс':'Обычный'; }
+
+/* ---- две независимые оси: ДОСТУП (открытый/закрытый) + ОПЛАТА (бесплатно/платно) ----
+   плюс вид продукта kind: channel | club | course. gated = нужна витрина для не-участника. */
+function chNormalize(c){
+  if(!c) return c;
+  if(c.kind==null) c.kind = (c.type==='course') ? 'course' : (c.club ? 'club' : 'channel');
+  if(c.price==null) c.price = (c.type==='free') ? 0 : (c.price||0);
+  if(c.access==null) c.access = (c.type==='paid' || c.type==='course' || c.kind!=='channel' || (c.price||0)>0) ? 'closed' : 'open';
+  if(c.reactions==null) c.reactions = true;
+  if(c.discussions==null) c.discussions = (c.kind!=='course');
+  if(c.kind==='course' && !c.lessons) c.lessons = [{id:'l1',title:'Вводный урок',dur:'5:00'}];
+  // legacy-поле type держим синхронным — вдруг читает внешний код
+  c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
+  return c;
+}
+function chGated(c){ return !!c && (c.kind==='course' || c.access==='closed' || (c.price||0)>0); }
+function chPaid(c){ return (c.price||0)>0; }
+function chKindLabel(c){ return c.kind==='course'?'Курс':c.kind==='club'?'Клуб':'Канал'; }
+function chPriceUnit(c){ return c.kind==='course'?'':'/мес'; }
+function chIsSubbed(c){ return chIsMine(c) || !!CH.sub[c.id] || !chGated(c); }
+/* краткая подпись типа: «Закрытый · Платно 299 ₽/мес» */
+function chTypeLabel(t){ return t==='paid'?'Платный':t==='course'?'Курс':'Обычный'; } // legacy
+function chAccessLine(c){
+  const parts = [c.access==='closed'?'Закрытый':'Открытый'];
+  if(c.kind==='course') parts.push(chPaid(c)?c.price+' ₽':'бесплатно');
+  else parts.push(chPaid(c)?('Платно '+c.price+' ₽'+chPriceUnit(c)):'Бесплатно');
+  return parts.join(' · ');
+}
+/* SVG-бейджи для карточки/витрины */
+function chBadges(c){
+  let h='';
+  if(c.access==='closed') h+=`<span class="ch-tag closed">${chI('lock')}Закрытый</span>`;
+  if(c.kind==='course') h+=`<span class="ch-tag course">${chI('circle-play')}Курс</span>`;
+  else if(c.kind==='club') h+=`<span class="ch-tag club">${chI('crown')}Клуб</span>`;
+  if(chPaid(c)) h+=`<span class="ch-tag paid">${c.kind==='course'?c.price+' ₽':'Платно '+c.price+' ₽'+chPriceUnit(c)}</span>`;
+  else if(c.access==='closed') h+=`<span class="ch-tag free">Бесплатно</span>`;
+  return h;
+}
 function chAvStyle(c){ return `background:${CH_BGS[c.bg||0]};`; }
 function chAvColor(c){ return CH_AV_BGS[c.bg||0]==='#0a0a0a' ? 'color:#9AFF00' : ''; }
-function chAvInner(c,cls){
+function chAvInner(c,cls,lock){
+  const lk = lock ? `<span class="ch-avlock">${chI('lock')}</span>` : '';
   if(c.avatar){
-    return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}"></div>`;
+    return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}">${lk}</div>`;
   }
   const style = `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}`;
   const dark = (CH_AV_BGS[c.bg||0]==='#0a0a0a');
   const content = c.icon ? chI(c.icon) : chEsc((c.name[0]||'K').toUpperCase());
-  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}</div>`;
+  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}${lk}</div>`;
 }
 function chCourseProg(c){
-  if(c.type!=='course' || !c.lessons) return 0;
+  if(c.kind!=='course' || !c.lessons) return 0;
   const done = (CH.prog[c.id]||[]).length;
   return Math.round(done/c.lessons.length*100);
 }
@@ -22018,10 +22949,10 @@ function chPushToFeed(c, post){
   post._feedId = id;
   POSTS.rec.unshift({
     id, ava:(c.name[0]||'K').toUpperCase(), avaIcon:c.icon||null, avaImg:c.avatar||null,
-    name:c.name, sub:'канал · '+chFmtN(c.subs||0), body:post.txt||'',
+    name:c.name, sub:(c.kind==='club'?'клуб':c.kind==='course'?'курс':'канал')+' · '+chFmtN(c.subs||0), body:post.txt||'',
     media: post.img ? null : (post.media==='circle-play'?'0:30':post.media==='poll'?'опрос':null),
     img: post.img||null, likes:post.likes||0, views:post.views||1,
-    liked:false, saved:false, reposts:0, comments:[], chOrigin:c.id
+    liked:false, saved:false, reposts:0, comments:[], chOrigin:c.id, chKind:c.kind||'channel'
   });
   if(typeof renderFeed==='function' && typeof curFeedKind!=='undefined' && curFeedKind==='rec'){ try{ renderFeed('rec'); }catch(e){} }
 }
@@ -22116,25 +23047,30 @@ function chPageList(){
   const subbed = CH.disc.filter(c=>CH.sub[c.id]);
   const discover = CH.disc.filter(c=>!CH.sub[c.id]);
   const card = (c,ctx)=>{
-    const prog = c.type==='course' ? chCourseProg(c) : null;
-    const sub = c.type==='course'
-      ? `${chI('circle-play')} ${c.lessons?c.lessons.length:0} уроков${prog!=null&&chIsSubbed(c)?` · ${prog}%`:''}`
+    const subbed = chIsSubbed(c);
+    const prog = c.kind==='course' ? chCourseProg(c) : null;
+    const sub = c.kind==='course'
+      ? `${chI('circle-play')} ${c.lessons?c.lessons.length:0} уроков${prog!=null&&subbed?` · ${prog}%`:''}`
       : `${chI('users')} ${chFmtN(c.subs||0)} подписчиков`;
+    const locked = chGated(c) && !subbed;
     let right = '';
-    if(ctx==='mine') right = `<span class="ch-tag ${c.type}">${chTypeLabel(c.type)}</span>`;
-    else if(!chIsSubbed(c)) right = `<span class="ch-price-pill">${c.price} ₽${c.type==='paid'?'/мес':''}</span>`;
-    else right = `<span class="ch-tag free">${chI('check')} доступ</span>`;
+    if(ctx!=='mine'){
+      if(subbed) right = `<span class="ch-tag free">${chI('check')}доступ</span>`;
+      else if(chPaid(c)) right = `<span class="ch-price-pill">${c.price} ₽${chPriceUnit(c)}</span>`;
+      else if(c.access==='closed') right = `<span class="ch-price-pill dim-pill">${chI('lock')}заявка</span>`;
+    }
     return `<div class="ch-card" onclick="chGo('channel','${c.id}')">
-      ${chAvInner(c,'')}
+      ${chAvInner(c, locked?'locked':'', locked)}
       <div class="ch-cbody">
         <div class="ch-cname"><span style="overflow:hidden;text-overflow:ellipsis">${chEsc(c.name)}</span>${chBadge(c)}</div>
         <div class="ch-csub">${sub}</div>
+        <div class="ch-cbadges">${chBadges(c)}</div>
       </div>
       ${right}</div>`;
   };
   let html = `<button class="ch-create-cta" onclick="chGo('create')">
       <span class="ch-cc-ic">${chI('plus')}</span>
-      <span><b>Создать канал</b><small>Обычный, платный или видео-курс — с монетизацией</small></span>
+      <span><b>Создать канал</b><small>Канал, клуб или видео-курс · открытый/закрытый, платный/бесплатный</small></span>
     </button>`;
   html += `<div class="ch-sec-h">${chI('crown')} Мои каналы</div>`;
   html += CH.mine.length ? CH.mine.map(c=>card(c,'mine')).join('')
@@ -22143,71 +23079,102 @@ function chPageList(){
     html += `<div class="ch-sec-h">${chI('bookmark')} Мои подписки</div>`;
     html += subbed.map(c=>card(c,'sub')).join('');
   }
-  html += `<div class="ch-sec-h">${chI('compass')} Рекомендуем · платные и курсы</div>`;
+  html += `<div class="ch-sec-h">${chI('compass')} Рекомендуем · каналы, клубы и курсы</div>`;
   html += discover.map(c=>card(c,'disc')).join('');
   return {title:'Каналы', html};
 }
 
 /* ================= СТРАНИЦА: СОЗДАНИЕ ================= */
-const chDraft = {type:'free', name:'', desc:'', price:299, bg:0, icon:'megaphone', useIcon:false, letter:''};
+const chDraft = {kind:'channel', access:'open', name:'', desc:'', price:0, bg:0, chatBg:null, icon:'megaphone', useIcon:false};
 function chPageCreate(){
-  const types = [
-    ['free','megaphone','Обычный канал','Публикуй посты для подписчиков бесплатно — как в Telegram.'],
-    ['paid','lock','Платный канал','Доступ по подписке N ₽/мес. Комиссия OKO 10%, остальное — тебе.'],
-    ['course','circle-play','Видео-курс','Уроки внутри канала + прогресс. Продавай за фикс-цену, комиссия 10%.'],
+  const d = chDraft;
+  const kinds = [
+    ['channel','megaphone','Канал','Лента постов для аудитории — как в Telegram/Instagram.'],
+    ['club','crown','Клуб','Закрытое комьюнити по подписке: посты, чат и бонусы участникам.'],
+    ['course','circle-play','Видео-курс','Уроки с прогрессом. Продажа за фикс-цену, доступ навсегда.'],
   ];
+  const lockAccess = d.kind==='course';   // курс всегда закрытый
+  const lockPaid = d.kind==='course';     // курс всегда платный
+  const paid = (d.price||0)>0;
+  const kl = chKindLabel(d).toLowerCase();
   const html = `
-    <div class="ch-sec-h">${chI('bolt')} Тип канала</div>
-    <div class="ch-type-grid">${types.map(([t,ic,tt,d])=>`
-      <button class="ch-type-card ${chDraft.type===t?'on':''}" onclick="chPickType('${t}')">
+    <div class="ch-sec-h">${chI('bolt')} Что создаём</div>
+    <div class="ch-type-grid">${kinds.map(([t,ic,tt,ds])=>`
+      <button class="ch-type-card ${d.kind===t?'on':''}" onclick="chPickKind('${t}')">
         <span class="ch-tc-ic">${chI(ic)}</span>
-        <span style="flex:1;min-width:0"><b>${tt}</b><small>${d}</small></span>
+        <span style="flex:1;min-width:0"><b>${tt}</b><small>${ds}</small></span>
         <span class="ch-tc-check">${chI('check')}</span>
       </button>`).join('')}</div>
 
-    <label class="ch-lab">Название канала</label>
-    <input class="ch-input" id="chDName" maxlength="42" placeholder="Например: Клуб роста PRO" value="${chEsc(chDraft.name)}" oninput="chDraft.name=this.value;chSyncCreateBtn()">
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    <div class="ch-choice2${lockAccess?' locked':''}">
+      <button class="ch-ch2 ${d.access==='open'?'on':''}" ${lockAccess?'disabled':''} onclick="chDraftAccess('open')">${chI('globe')}<b>Открытый</b><small>Виден и читается всем</small></button>
+      <button class="ch-ch2 ${d.access==='closed'?'on':''}" ${lockAccess?'disabled':''} onclick="chDraftAccess('closed')">${chI('lock')}<b>Закрытый</b><small>Доступ по подписке/оплате</small></button>
+    </div>
+    ${lockAccess?`<div class="ch-owner-note">Курс всегда закрытый — уроки открываются после покупки.</div>`:''}
 
-    <label class="ch-lab">Описание</label>
-    <textarea class="ch-ta" id="chDDesc" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chDraft.desc=this.value">${chEsc(chDraft.desc)}</textarea>
+    <div class="ch-sec-h">${chI('money')} Оплата</div>
+    <div class="ch-choice2${lockPaid?' locked':''}">
+      <button class="ch-ch2 ${!paid?'on':''}" ${lockPaid?'disabled':''} onclick="chDraftPaid(false)">${chI('check')}<b>Бесплатно</b><small>Без платы за доступ</small></button>
+      <button class="ch-ch2 ${paid?'on':''}" ${lockPaid?'disabled':''} onclick="chDraftPaid(true)">${chI('card')}<b>Платно</b><small>${d.kind==='course'?'Разовая цена':'Подписка ₽/мес'}</small></button>
+    </div>
 
-    <div id="chPriceBlock" style="display:${chDraft.type==='free'?'none':'block'}">
-      <label class="ch-lab">${chDraft.type==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
+    <label class="ch-lab">Название · ${kl}</label>
+    <input class="ch-input" id="chDName" maxlength="42" placeholder="Например: Клуб роста PRO" value="${chEsc(d.name)}" oninput="chDraft.name=this.value;chSyncCreateBtn()">
+
+    <label class="ch-lab">Описание${(d.access==='closed'||paid)?' — видно на витрине':''}</label>
+    <textarea class="ch-ta" id="chDDesc" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chDraft.desc=this.value">${chEsc(d.desc)}</textarea>
+
+    <div id="chPriceBlock" style="display:${paid?'block':'none'}">
+      <label class="ch-lab">${d.kind==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
       <div class="ch-price-row">
-        <input class="ch-input" id="chDPrice" inputmode="numeric" value="${chDraft.price}" oninput="chDraft.price=+this.value.replace(/\\D/g,'')||0;chSyncPriceChips()">
-        <span class="ch-unit">₽${chDraft.type==='paid'?' / мес':''}</span>
+        <input class="ch-input" id="chDPrice" inputmode="numeric" value="${d.price}" oninput="chDraft.price=+this.value.replace(/\\D/g,'')||0;chSyncPriceChips()">
+        <span class="ch-unit">₽${chPriceUnit(d)}</span>
       </div>
       <div class="ch-price-chips" id="chPriceChips">${chPriceChips()}</div>
-      <div class="ch-owner-note">Ты получишь <b id="chNetHint">${chNet(chDraft.price)} ₽</b> с каждой продажи, OKO удержит комиссию 10%.</div>
+      <div class="ch-owner-note">Ты получишь <b id="chNetHint">${chNet(d.price)} ₽</b> с каждой продажи, OKO удержит комиссию 10%.</div>
     </div>
 
-    <label class="ch-lab">Значок канала</label>
+    <label class="ch-lab">Значок</label>
     <div class="ch-letter-row" id="chIconRow">
-      <button class="ch-lt ${!chDraft.useIcon?'on':''}" onclick="chDraft.useIcon=false;chRender()" title="Первая буква названия"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">A</span></button>
-      ${CH_ICONS.map(ic=>`<button class="ch-lt ${chDraft.useIcon&&chDraft.icon===ic?'on':''}" onclick="chDraft.useIcon=true;chDraft.icon='${ic}';chRender()">${chI(ic)}</button>`).join('')}
+      <button class="ch-lt ${!d.useIcon?'on':''}" onclick="chDraft.useIcon=false;chRender()" title="Первая буква названия"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">A</span></button>
+      ${CH_ICONS.map(ic=>`<button class="ch-lt ${d.useIcon&&d.icon===ic?'on':''}" onclick="chDraft.useIcon=true;chDraft.icon='${ic}';chRender()">${chI(ic)}</button>`).join('')}
     </div>
 
-    <label class="ch-lab">Фон канала</label>
-    <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[chDraft.bg]}">
-      <div class="ch-ap-ava" style="background:${CH_AV_BGS[chDraft.bg]||'#9AFF00'}${CH_AV_BGS[chDraft.bg]==='#0a0a0a'?';color:#9AFF00':''}">${chDraft.useIcon?chI(chDraft.icon):(chDraft.name[0]||'K').toUpperCase()}</div>
-      <div class="ch-ap-name">${chEsc(chDraft.name||'Новый канал')}</div>
+    <label class="ch-lab">Обложка / фон</label>
+    <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[d.bg]}">
+      <div class="ch-ap-ava" style="background:${CH_AV_BGS[d.bg]||'#9AFF00'}${CH_AV_BGS[d.bg]==='#0a0a0a'?';color:#9AFF00':''}">${d.useIcon?chI(d.icon):(d.name[0]||'K').toUpperCase()}</div>
+      <div class="ch-ap-name">${chEsc(d.name||'Новый канал')}</div>
     </div>
-    <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${chDraft.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+    <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+
+    <label class="ch-lab">Фон чата <span style="font-weight:400;color:var(--dim)">— за постами канала</span></label>
+    <div class="ch-swatches">
+      <div class="ch-sw ch-sw-none ${d.chatBg==null?'on':''}" onclick="chDraft.chatBg=null;chRender()" title="Без фона">${chI('check2')}</div>
+      ${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.chatBg===i?'on':''}" style="background:${g}" onclick="chDraft.chatBg=${i};chRender()"></div>`).join('')}
+    </div>
 
     <div style="height:18px"></div>
-    <button class="btn" id="chCreateBtn" onclick="chCreateChannel()" ${chDraft.name.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Создать канал</button>
+    <button class="btn" id="chCreateBtn" onclick="chCreateChannel()" ${d.name.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Создать ${kl}</button>
     <div style="height:10px"></div>`;
-  return {title:'Новый канал', html};
+  return {title:'Новый '+kl, html};
 }
 function chPriceChips(){
-  const opts = chDraft.type==='course' ? [490,990,1490,2900] : [99,199,299,499];
+  const opts = chDraft.kind==='course' ? [490,990,1490,2900] : [99,199,299,499];
   return opts.map(p=>`<button class="${chDraft.price===p?'on':''}" onclick="chDraft.price=${p};chSyncPriceChips();chSyncPriceInput()">${p} ₽</button>`).join('');
 }
 function chNet(p){ return Math.round((p||0)*(1-CH_FEE)); }
-window.chPickType = function(t){
-  chDraft.type = t;
-  if(t==='course' && chDraft.price<490) chDraft.price = 990;
-  if(t==='paid' && chDraft.price>499) chDraft.price = 299;
+window.chPickKind = function(k){
+  chDraft.kind = k;
+  if(k==='channel'){ chDraft.access='open'; }
+  else if(k==='club'){ chDraft.access='closed'; if(!chDraft.price) chDraft.price=299; }
+  else if(k==='course'){ chDraft.access='closed'; if(!chDraft.price || chDraft.price<490) chDraft.price=990; }
+  chRender();
+};
+window.chDraftAccess = function(a){ chDraft.access=a; chRender(); };
+window.chDraftPaid = function(p){
+  if(p){ if(!chDraft.price) chDraft.price = chDraft.kind==='course'?990:299; if(chDraft.access==='open') chDraft.access='closed'; }
+  else { chDraft.price = 0; }
   chRender();
 };
 window.chSyncPriceChips = function(){
@@ -22222,27 +23189,28 @@ window.chSyncCreateBtn = function(){
   const prev = document.querySelector('#chBgPrev .ch-ap-name'); if(prev) prev.textContent = chDraft.name||'Новый канал';
 };
 window.chCreateChannel = function(){
-  const name = chDraft.name.trim();
-  if(!name){ toast('Введите название канала'); return; }
+  const d = chDraft, name = d.name.trim();
+  if(!name){ toast('Введите название'); return; }
   CH.seq = (CH.seq||0)+1;
-  const c = {
-    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:chDraft.desc.trim()||'Добро пожаловать в канал!',
-    icon: chDraft.useIcon ? chDraft.icon : null, bg:chDraft.bg, cover:null, avatar:null,
-    type:chDraft.type, price: chDraft.type==='free'?0:(chDraft.price||0),
-    verified:false, subs:1, reactions:true, discussions:chDraft.type!=='course',
+  const c = chNormalize({
+    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:d.desc.trim()||'Добро пожаловать!',
+    icon: d.useIcon ? d.icon : null, bg:d.bg, chatBg:(d.chatBg==null?null:d.chatBg), cover:null, avatar:null,
+    kind:d.kind, access:d.access, price:(d.price||0),
+    verified:false, subs:1, reactions:true, discussions:d.kind!=='course',
     admins:[], gross:0, members:[{name:PROFILE.name, nick:PROFILE.nick, joined:'сейчас'}], black:[],
     posts:[{txt:'Канал создан. Первый пост задаёт тон — расскажи, что будет полезного для подписчиков.', likes:0, views:1, when:'сейчас'}],
-    lessons: chDraft.type==='course' ? [{id:'l1', title:'Вводный урок', dur:'5:00'}] : undefined,
-  };
+    lessons: d.kind==='course' ? [{id:'l1', title:'Вводный урок', dur:'5:00'}] : undefined,
+  });
   CH.mine.unshift(c);
   chSave();
   chMirrorToChats(c);  // канал появляется и в мессенджере (реальный, как в TG)
   // сброс черновика
-  chDraft.name=''; chDraft.desc=''; chDraft.type='free'; chDraft.price=299; chDraft.bg=0; chDraft.useIcon=false; chDraft.icon='megaphone';
+  chDraft.kind='channel'; chDraft.access='open'; chDraft.name=''; chDraft.desc=''; chDraft.price=0; chDraft.bg=0; chDraft.chatBg=null; chDraft.useIcon=false; chDraft.icon='megaphone';
+  const kl = chKindLabel(c).toLowerCase();
   if(typeof showPopup==='function'){
-    showPopup({ico:'check', title:'Канал создан',
-      body:`«${chEsc(c.name)}» готов. ${c.type!=='free'?'Настрой доступ и приглашай первых подписчиков — они платят, ты зарабатываешь.':'Публикуй посты и расти аудиторию.'}`,
-      actions:[{label:'Открыть канал', onclick:()=>{ chNav=[{page:'list'}]; chGo('channel',c.id); }},{label:'К списку', ghost:true, onclick:()=>{ chNav=[{page:'list'}]; chRender(); }}]});
+    showPopup({ico:'check', title:chKindLabel(c)+' создан',
+      body:`«${chEsc(c.name)}» готов. ${chPaid(c)?'Настрой доступ и приглашай первых подписчиков — они платят, ты зарабатываешь.':c.access==='closed'?'Закрытый доступ включён — принимай заявки на вступление.':'Публикуй посты и расти аудиторию.'}`,
+      actions:[{label:'Открыть', onclick:()=>{ chNav=[{page:'list'}]; chGo('channel',c.id); }},{label:'К списку', ghost:true, onclick:()=>{ chNav=[{page:'list'}]; chRender(); }}]});
   } else { chNav=[{page:'list'}]; chGo('channel',c.id); }
 };
 
@@ -22253,7 +23221,7 @@ function chMirrorToChats(c){
   CHATS.unshift({
     id:'chan_'+c.id, chId:c.id, name:c.name, kind:'channel', managed:true, writeAll:false,
     ava:(c.name[0]||'K').toUpperCase(), avaIcon: c.icon||null, kindIcon:'megaphone',
-    subs:chFmtN(c.subs||0), nick:c.nick, preview:c.type==='course'?'Видео-курс':c.type==='paid'?'Платный канал':'Канал создан',
+    subs:chFmtN(c.subs||0), nick:c.nick, preview:c.kind==='course'?'Видео-курс':c.kind==='club'?'Закрытый клуб':chPaid(c)?'Платный канал':c.access==='closed'?'Закрытый канал':'Канал создан',
     time:(typeof nowT==='function'?nowT():'сейчас'), unread:0, online:false,
     msgs:[{kind:'sys', body:`Канал «${c.name}» — открой в разделе «Мои каналы» для управления`}],
     openChannel:c.id
@@ -22276,45 +23244,59 @@ function chPageChannel(id){
       ${chAvInner(c,'big')}
       <div class="ch-cv-name">${chEsc(c.name)}${chBadge(c)}</div>
       <div class="ch-cv-id">@${chEsc(chNick(c))}</div>
-      <div class="ch-cv-sub">${chTypeLabel(c.type)}${c.type!=='free'?` · ${c.price} ₽${c.type==='paid'?'/мес':''}`:''}${mine?' · вы владелец':''}</div>
+      <div class="ch-cv-badges">${chBadges(c)}</div>
+      <div class="ch-cv-sub">${chAccessLine(c)}${mine?' · вы владелец':''}</div>
       <div class="ch-cv-stats">
         <div><b>${chFmtN(c.subs||0)}</b><small>подписчиков</small></div>
-        ${c.type==='course'?`<div><b>${c.lessons?c.lessons.length:0}</b><small>уроков</small></div>`:`<div><b>${c.posts?c.posts.length:0}</b><small>постов</small></div>`}
-        <div><b>${c.reactions?'вкл':'выкл'}</b><small>реакции</small></div>
+        ${c.kind==='course'?`<div><b>${c.lessons?c.lessons.length:0}</b><small>уроков</small></div>`:`<div><b>${c.posts?c.posts.length:0}</b><small>постов</small></div>`}
+        <div><b>${c.access==='closed'?'закрытый':'открытый'}</b><small>доступ</small></div>
       </div>
     </div>`;
 
-  // не подписан на платный/курс → paywall
+  // не участник закрытого/платного/курса → ВИТРИНА (paywall / gate)
   if(!subbed){
-    const benefits = c.type==='course'
+    const paid = chPaid(c);
+    const benefits = c.kind==='course'
       ? ['Полный доступ ко всем '+(c.lessons?c.lessons.length:0)+' видео-урокам','Практика и разбор твоих работ','Доступ навсегда, смотри в своём темпе','Чат поддержки с автором']
-      : ['Все закрытые посты и разборы','Новые материалы каждую неделю','Доступ в чат подписчиков','Отмена подписки в любой момент'];
+      : c.kind==='club'
+      ? ['Закрытые посты, разборы и материалы клуба','Живое комьюнити и чат участников','Еженедельные задания и обратная связь','Отмена подписки в любой момент']
+      : ['Все закрытые посты и разборы','Новые материалы регулярно','Доступ в закрытое обсуждение','Отмена доступа в любой момент'];
+    const gTitle = c.kind==='course'?'Открой доступ к курсу': c.kind==='club'?'Вступи в клуб': 'Закрытый канал';
+    const priceHtml = paid
+      ? `<div class="ch-pw-price">${c.price} ₽<span>${c.kind==='course'?' разово':' / мес'}</span></div>`
+      : `<div class="ch-pw-price">Бесплатно<span> · по заявке</span></div>`;
+    const ctaLabel = c.kind==='course' ? `Купить курс за ${c.price} ₽`
+      : paid ? `Оформить доступ · ${c.price} ₽/мес`
+      : `Оформить доступ бесплатно`;
+    const note = paid
+      ? 'Оплата с кошелька OKO · безопасно · комиссия сервиса 10%'
+      : 'Бесплатное вступление — доступ откроется сразу';
     return {title:c.name, html: cover + `
       <div class="ch-desc">${chEsc(c.desc)}</div>
       <div class="ch-paywall">
         <div class="ch-pw-blur">
-          ${(c.posts&&c.posts.length?c.posts:[{txt:'Закрытый материал для подписчиков…'}]).slice(0,2).map(p=>
+          ${(c.posts&&c.posts.length?c.posts:[{txt:'Закрытый материал для участников…'},{txt:'Здесь публикуются приватные разборы и бонусы.'}]).slice(0,2).map(p=>
             `<div class="ch-post"><div class="ch-post-txt">${chEsc(p.txt)}</div></div>`).join('')}
         </div>
         <div class="ch-pw-body">
           <div class="ch-pw-lock">${chI('lock')}</div>
-          <h3>${c.type==='course'?'Открой доступ к курсу':'Контент только для подписчиков'}</h3>
+          <h3>${gTitle}</h3>
           <p>${chEsc(c.owner?('Автор: '+c.owner):'Оформи доступ, чтобы видеть все материалы')}</p>
-          <div class="ch-pw-price">${c.price} ₽<span>${c.type==='paid'?' / мес':' разово'}</span></div>
+          ${priceHtml}
           <ul class="ch-pw-benefits">${benefits.map(b=>`<li>${chI('check')}<span>${b}</span></li>`).join('')}</ul>
-          <button class="btn" onclick="chSubscribe('${c.id}')">${chI(c.type==='course'?'circle-play':'lock')} ${c.type==='course'?'Купить курс за '+c.price+' ₽':'Подписаться за '+c.price+' ₽/мес'}</button>
-          <p style="font-size:11px;color:var(--dim);margin-top:9px">Оплата с кошелька OKO · безопасно · комиссия сервиса 10%</p>
+          <button class="btn" onclick="chSubscribe('${c.id}')">${chI(c.kind==='course'?'circle-play':paid?'card':'check')} ${ctaLabel}</button>
+          <p style="font-size:11px;color:var(--dim);margin-top:9px">${note}</p>
         </div>
       </div>`};
   }
 
-  // подписан / владелец / бесплатный
+  // участник / владелец / открытый бесплатный
   let html = cover;
   html += `<div class="ch-desc">${chEsc(c.desc)}</div>`;
 
   if(mine){
     html += `<div class="ch-owner-bar">
-      <button class="btn" onclick="chGo('${c.type==='course'?'addLesson':'compose'}','${c.id}')">${chI('plus')} ${c.type==='course'?'Добавить урок':'Опубликовать пост'}</button>
+      <button class="btn" onclick="chGo('${c.kind==='course'?'addLesson':'compose'}','${c.id}')">${chI('plus')} ${c.kind==='course'?'Добавить урок':'Опубликовать пост'}</button>
       <button class="btn ghost" onclick="chGo('manage','${c.id}')">${chI('bolt')} Управление</button>
     </div>`;
   } else {
@@ -22322,11 +23304,11 @@ function chPageChannel(id){
     const authorNick = c.ownerNick || chNick(c);
     html += `<div class="ch-owner-bar">
       <button class="btn ghost" onclick="chDM('${chEsc(authorName)}','${chEsc(authorNick)}')">${chI('send')} Написать автору</button>
-      ${c.type!=='free'?`<button class="btn ghost" onclick="chUnsub('${c.id}')">${chI('check')} Подписка</button>`:''}
+      ${chGated(c)?`<button class="btn ghost" onclick="chUnsub('${c.id}')">${chI('check')} ${chPaid(c)?'Подписка':'Доступ'}</button>`:''}
     </div>`;
   }
 
-  if(c.type==='course'){
+  if(c.kind==='course'){
     const prog = chCourseProg(c);
     const done = (CH.prog[c.id]||[]).length;
     html += `<div class="ch-prog-top">
@@ -22344,9 +23326,12 @@ function chPageChannel(id){
       </div>`;
     }).join('');
   } else {
-    html += `<div class="ch-sec-h">${chI('feed')} Посты</div>`;
-    html += (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
+    html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
+    const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
       : `<div class="ch-empty">Постов пока нет</div>`;
+    html += (c.chatBg!=null)
+      ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
+      : posts;
   }
   html += `<div style="height:8px"></div>`;
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
@@ -22404,18 +23389,27 @@ window.chLike = function(id,i){
 /* ---------- подписка / покупка (деньги) ---------- */
 window.chSubscribe = function(id){
   const c = chChannel(id); if(!c) return;
-  if(c.type==='free'){ CH.sub[id]=1; chSave(); toast('Вы подписались на канал'); chRender(); return; }
+  // бесплатный закрытый (или открытый) → вступление без оплаты
+  if(!chPaid(c)){
+    CH.sub[id]=1; c.subs=(c.subs||0)+1; chSave();
+    if(typeof showPopup==='function'){
+      showPopup({ico:'check', title:'Доступ открыт',
+        body:`Ты вступил в «${chEsc(c.name)}» бесплатно. Все материалы теперь доступны.`,
+        actions:[{label:'Открыть', onclick:()=>chRender()}]});
+    } else toast('Вы вступили в канал');
+    chRender(); return;
+  }
   const price = c.price||0;
   if(typeof walletCharge!=='function'){ toast('Кошелёк недоступен'); return; }
-  const why = (c.type==='course'?'Покупка курса: ':'Подписка на канал: ')+c.name;
+  const why = (c.kind==='course'?'Покупка курса: ':c.kind==='club'?'Подписка на клуб: ':'Подписка на канал: ')+c.name;
   if(!walletCharge(price, why)) return;              // сам покажет «недостаточно средств»
   if(typeof okoEarn==='function') okoEarn(price*CH_FEE, 'Комиссия каналов 10%');
-  CH.sub[id]=1; c.subs=(c.subs||0)+1; chSave();
+  CH.sub[id]=1; c.subs=(c.subs||0)+1; c.gross=(c.gross||0)+price; chSave();
   const net = Math.round(price*(1-CH_FEE));
   if(typeof showPopup==='function'){
-    showPopup({ico:'check', title: c.type==='course'?'Курс открыт':'Подписка оформлена',
-      body:`Списано ${price} ₽ с кошелька. Автору начислено ${net} ₽, комиссия OKO 10% (${Math.round(price*CH_FEE)} ₽). ${c.type==='course'?'Все уроки доступны навсегда.':'Доступ активен на месяц.'}`,
-      actions:[{label:c.type==='course'?'К урокам':'Читать канал', onclick:()=>chRender()}]});
+    showPopup({ico:'check', title: c.kind==='course'?'Курс открыт':'Доступ оформлен',
+      body:`Списано ${price} ₽ с кошелька. Автору начислено ${net} ₽, комиссия OKO 10% (${Math.round(price*CH_FEE)} ₽). ${c.kind==='course'?'Все уроки доступны навсегда.':'Доступ активен на месяц.'}`,
+      actions:[{label:c.kind==='course'?'К урокам':'Открыть', onclick:()=>chRender()}]});
   } else { toast('Доступ открыт'); }
   chRender();
 };
@@ -22423,7 +23417,7 @@ window.chUnsub = function(id){
   const c = chChannel(id); if(!c) return;
   if(typeof showPopup!=='function'){ delete CH.sub[id]; if(c.subs)c.subs--; chSave(); chRender(); return; }
   showPopup({ico:'flag', title:'Отменить доступ?',
-    body:`Ты потеряешь доступ к «${chEsc(c.name)}». ${c.type==='paid'?'Подписку можно оформить снова в любой момент.':''}`,
+    body:`Ты потеряешь доступ к «${chEsc(c.name)}». ${chPaid(c)?'Подписку можно оформить снова в любой момент.':'Вступить снова можно в любой момент.'}`,
     actions:[{label:'Отменить доступ', onclick:()=>{ delete CH.sub[id]; if(c.subs)c.subs--; chSave(); toast('Доступ отменён'); chRender(); }},{label:'Оставить', ghost:true}]});
 };
 
@@ -22577,30 +23571,30 @@ function chPageManage(id){
   const c = chChannel(id);
   if(!c || !chIsMine(c)) return {title:'Управление', html:'<div class="ch-empty">Нет доступа</div>'};
   const rows = [
-    ['megaphone','Тип канала', chTypeLabel(c.type)+(c.type!=='free'?` · ${c.price} ₽`:''), `chGo('mType','${id}')`],
+    ['megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`],
     ['comment','Обсуждения', c.discussions?'включены':'выключены', `chGo('mSettings','${id}')`],
     ['heart','Реакции', c.reactions?'включены':'выключены', `chGo('mSettings','${id}')`],
     ['users','Администраторы', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`],
     ['user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`],
     ['poll','Статистика', 'графики', `chGo('mStats','${id}')`],
     ['lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`],
-    ['photo','Фон и аватар', 'оформление', `chGo('mAppear','${id}')`],
+    ['photo','Оформление и фон', 'аватар · обложка · фон', `chGo('mAppear','${id}')`],
     ['gear','Настройки', '', `chGo('mSettings','${id}')`],
   ];
   let html = `<div class="ch-manage-hub">${chAvInner(c,'big')}
     <div style="text-align:center;margin-bottom:16px">
       <div style="font:800 18px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
-      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chTypeLabel(c.type)} · ${chFmtN(c.subs||0)} подписчиков</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chAccessLine(c)} · ${chFmtN(c.subs||0)} подписчиков</div>
     </div></div>`;
 
   // доход владельца (платный/курс)
-  if(c.type!=='free'){
+  if(chPaid(c)){
     const gross = c.gross||0, net = Math.round(gross*(1-CH_FEE)), fee = gross-net;
     html += `<div class="ch-earn">
       <small class="ch-earn-lab">Доход канала к выводу</small>
       <div class="ch-earn-sum">${net.toLocaleString('ru-RU').replace(/,/g,' ')} <span>₽</span></div>
       <div class="ch-earn-calc">
-        <div><span>Продажи ${c.type==='course'?'курса':'подписок'}</span><b>${gross.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
+        <div><span>Продажи ${c.kind==='course'?'курса':'подписок'}</span><b>${gross.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
         <div class="fee"><span>Комиссия OKO 10%</span><b>− ${fee.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
         <div class="total"><span>К выводу</span><b>${net.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
       </div>
@@ -22645,43 +23639,73 @@ window.chDeleteChannel = function(id){
   else act();
 };
 
-/* ---------- Тип канала ---------- */
+/* ---------- Тип, доступ и цена ---------- */
 function chPageMType(id){
   const c = chChannel(id); if(!c) return {title:'Тип', html:''};
-  const opts = [
-    ['free','megaphone','Обычный','Бесплатный доступ для всех подписчиков'],
-    ['paid','lock','Платный','Доступ по подписке за ежемесячную плату'],
-    ['course','circle-play','Курс','Видео-уроки внутри канала за фикс-цену'],
+  const kinds = [
+    ['channel','megaphone','Канал','Лента постов для аудитории'],
+    ['club','crown','Клуб','Закрытое комьюнити по подписке'],
+    ['course','circle-play','Курс','Видео-уроки внутри с прогрессом'],
   ];
+  const lockAccess = c.kind==='course';
+  const lockPaid = c.kind==='course';
+  const paid = chPaid(c);
   const html = `
-    <div class="ch-owner-note" style="margin-bottom:12px">Смена типа мгновенно меняет способ доступа к каналу. При переходе на платный подписчики продолжат платить, новые — по новой цене.</div>
-    <div class="ch-seg">${opts.map(([t,ic,tt,d])=>`
-      <button class="ch-type-card ${c.type===t?'on':''}" onclick="chSetType('${id}','${t}')">
+    <div class="ch-owner-note" style="margin-bottom:10px">Настрой продукт и доступ. Две независимые оси: <b>доступ</b> (открытый/закрытый) и <b>оплата</b> (бесплатно/платно). Изменения применяются сразу.</div>
+
+    <div class="ch-sec-h">${chI('bolt')} Вид</div>
+    <div class="ch-seg">${kinds.map(([t,ic,tt,d])=>`
+      <button class="ch-type-card ${c.kind===t?'on':''}" onclick="chSetKind('${id}','${t}')">
         <span class="ch-tc-ic">${chI(ic)}</span>
         <span style="flex:1;min-width:0"><b>${tt}</b><small>${d}</small></span>
         <span class="ch-tc-check">${chI('check')}</span>
       </button>`).join('')}</div>
-    ${c.type!=='free'?`
-      <label class="ch-lab">${c.type==='course'?'Цена курса':'Цена подписки в месяц'}</label>
+
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    <div class="ch-choice2${lockAccess?' locked':''}">
+      <button class="ch-ch2 ${c.access==='open'?'on':''}" ${lockAccess?'disabled':''} onclick="chSetAccess('${id}','open')">${chI('globe')}<b>Открытый</b><small>Виден и читается всем</small></button>
+      <button class="ch-ch2 ${c.access==='closed'?'on':''}" ${lockAccess?'disabled':''} onclick="chSetAccess('${id}','closed')">${chI('lock')}<b>Закрытый</b><small>Витрина + доступ по заявке/оплате</small></button>
+    </div>
+    ${lockAccess?`<div class="ch-owner-note">Курс всегда закрытый.</div>`:''}
+
+    <div class="ch-sec-h">${chI('money')} Оплата</div>
+    <div class="ch-choice2${lockPaid?' locked':''}">
+      <button class="ch-ch2 ${!paid?'on':''}" ${lockPaid?'disabled':''} onclick="chSetPaid('${id}',false)">${chI('check')}<b>Бесплатно</b><small>Без платы за доступ</small></button>
+      <button class="ch-ch2 ${paid?'on':''}" ${lockPaid?'disabled':''} onclick="chSetPaid('${id}',true)">${chI('card')}<b>Платно</b><small>${c.kind==='course'?'Разовая цена':'Подписка ₽/мес'}</small></button>
+    </div>
+    ${paid?`
+      <label class="ch-lab">${c.kind==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
       <div class="ch-price-row">
         <input class="ch-input" id="chTPrice" inputmode="numeric" value="${c.price}" oninput="chSetPrice('${id}',this.value)">
-        <span class="ch-unit">₽${c.type==='paid'?' / мес':''}</span>
+        <span class="ch-unit">₽${chPriceUnit(c)}</span>
       </div>
+      <div class="ch-price-chips" id="chPriceChips2">${[c.kind==='course'?[490,990,1490,2900]:[99,199,299,499]][0].map(p=>`<button class="${c.price===p?'on':''}" onclick="chSetPrice('${id}',${p});chRender()">${p} ₽</button>`).join('')}</div>
       <div class="ch-owner-note">С каждой продажи ты получаешь <b>${chNet(c.price)} ₽</b>, OKO — 10% (${Math.round(c.price*CH_FEE)} ₽).</div>`:''}`;
-  return {title:'Тип канала', html};
+  return {title:'Тип и доступ', html};
 }
-window.chSetType = function(id,t){
+window.chSetKind = function(id,t){
   const c = chChannel(id); if(!c) return;
-  c.type = t;
-  if(t==='free') c.price = 0;
-  else if(!c.price){ c.price = t==='course'?990:299; }
-  if(t==='course' && !c.lessons) c.lessons=[{id:'l1',title:'Вводный урок',dur:'5:00'}];
-  chSave(); chRender();
-  toast('Тип изменён на «'+chTypeLabel(t)+'»');
+  c.kind = t;
+  if(t==='course'){ c.access='closed'; if(!chPaid(c)) c.price = c.price||990; if(!c.lessons) c.lessons=[{id:'l1',title:'Вводный урок',dur:'5:00'}]; c.discussions=false; }
+  else if(t==='club'){ c.access='closed'; if(!chPaid(c)) c.price = c.price||299; }
+  chNormalize(c); chSave(); chRender();
+  toast('Вид изменён на «'+chKindLabel(c)+'»');
+};
+window.chSetAccess = function(id,a){
+  const c = chChannel(id); if(!c) return;
+  c.access = a; chNormalize(c); chSave(); chRender();
+  toast(a==='closed'?'Канал закрыт — включена витрина':'Канал открыт для всех');
+};
+window.chSetPaid = function(id,p){
+  const c = chChannel(id); if(!c) return;
+  if(p){ if(!c.price) c.price = c.kind==='course'?990:299; if(c.access==='open') c.access='closed'; }
+  else { c.price = 0; }
+  chNormalize(c); chSave(); chRender();
+  toast(p?'Платный доступ включён':'Доступ теперь бесплатный');
 };
 window.chSetPrice = function(id,v){
   const c = chChannel(id); if(!c) return;
-  c.price = +String(v).replace(/\D/g,'')||0; chSave();
+  c.price = +String(v).replace(/\D/g,'')||0; chNormalize(c); chSave();
   const hint = document.querySelector('#chBody .ch-owner-note b'); // мягко, без перерисовки инпута
   if(hint) hint.textContent = chNet(c.price)+' ₽';
 };
@@ -22811,7 +23835,7 @@ function chPageMStats(id){
         <div><i style="background:var(--border)"></i>Другое<b>8%</b></div>
       </div>
     </div>
-    ${c.type!=='free'?`<div class="ch-canvas-wrap"><div class="ch-cw-h">Выручка · 6 мес <span>${(c.gross||0).toLocaleString('ru-RU').replace(/,/g,' ')} ₽</span></div><canvas id="chStatRev" width="600" height="260"></canvas></div>`:''}
+    ${chPaid(c)?`<div class="ch-canvas-wrap"><div class="ch-cw-h">Выручка · 6 мес <span>${(c.gross||0).toLocaleString('ru-RU').replace(/,/g,' ')} ₽</span></div><canvas id="chStatRev" width="600" height="260"></canvas></div>`:''}
     <div class="ch-owner-note">Данные прототипа сгенерированы детерминированно по параметрам канала. С подключением Supabase — реальная аналитика.</div>`;
   return {title:'Статистика', html, after:()=>chDrawStats(c, subs, reach)};
 }
@@ -22934,17 +23958,28 @@ function chPageMAppear(id){
       <span class="ch-unit" style="font-size:15px">@</span>
       <input class="ch-input" id="chNickEdit" maxlength="18" value="${chEsc(chNick(c))}" oninput="chSetNick('${id}',this.value)" style="flex:1">
     </div>
+    <label class="ch-lab">Описание</label>
+    <textarea class="ch-ta" id="chDescEdit" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chSetDesc('${id}',this.value)">${chEsc(c.desc||'')}</textarea>
 
     <label class="ch-lab">Фон-градиент${c.cover?' (под обложкой)':''}</label>
     <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${c.bg===i?'on':''}" style="background:${g}" onclick="chSetBg('${id}',${i})"></div>`).join('')}</div>
+
+    <label class="ch-lab">Фон чата <span style="font-weight:400;color:var(--dim)">— за постами канала</span></label>
+    <div class="ch-swatches">
+      <div class="ch-sw ch-sw-none ${c.chatBg==null?'on':''}" onclick="chSetChatBg('${id}',null)" title="Без фона">${chI('check2')}</div>
+      ${CH_BGS.map((g,i)=>`<div class="ch-sw ${c.chatBg===i?'on':''}" style="background:${g}" onclick="chSetChatBg('${id}',${i})"></div>`).join('')}
+    </div>
+
     <label class="ch-lab">Значок (если без фото-аватара)</label>
     <div class="ch-letter-row">
       <button class="ch-lt ${!c.icon?'on':''}" onclick="chSetIcon('${id}','')" title="Первая буква"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">${(c.name[0]||'K').toUpperCase()}</span></button>
       ${CH_ICONS.map(ic=>`<button class="ch-lt ${c.icon===ic?'on':''}" onclick="chSetIcon('${id}','${ic}')">${chI(ic)}</button>`).join('')}
     </div>
-    <div class="ch-owner-note">Обложка, аватар, название и адрес отображаются на странице канала, в карточке и в мессенджере. Всё сохраняется сразу.</div>`;
+    <div class="ch-owner-note">Обложка, аватар, фон чата, название, адрес и описание отображаются на странице канала, в карточке и в мессенджере. Всё сохраняется сразу.</div>`;
   return {title:'Оформление', html};
 }
+window.chSetDesc = function(id,v){ const c=chChannel(id); if(!c) return; c.desc = String(v).slice(0,240); chSave(); };
+window.chSetChatBg = function(id,i){ const c=chChannel(id); if(!c) return; c.chatBg = (i==null?null:+i); chSave(); chRender(); };
 window.chSetBg = function(id,i){ const c=chChannel(id); if(!c) return; c.bg=i; chSave(); chSyncMirror(c); chRender(); };
 window.chSetIcon = function(id,ic){ const c=chChannel(id); if(!c) return; c.icon=ic||null; chSave(); chSyncMirror(c); chRender(); };
 window.chSetName = function(id,v){
@@ -22979,25 +24014,44 @@ function chPageMSettings(id){
       <span class="ch-tr-b"><b>${t}</b><small>${d}</small></span>
       <span class="switch ${on?'on':''}"><i></i></span>
     </button>`;
+  const lockAccess = c.kind==='course';
   const html = `
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    ${row('lock','Закрытый доступ', lockAccess?'Курс всегда закрытый':'Витрина и вход по заявке/оплате', c.access==='closed', lockAccess?`toast('Курс всегда закрытый')`:`chToggleAccess('${id}')`)}
+    ${row('card','Платный доступ', chPaid(c)?('Цена '+c.price+' ₽'+chPriceUnit(c)):'Включи и задай цену', chPaid(c), `chToggleAccess('${id}','paid')`)}
+    <div class="ch-sec-h">${chI('comment')} Взаимодействие</div>
     ${row('comment','Обсуждения','Подписчики комментируют посты канала', c.discussions, `chToggle('${id}','discussions')`)}
     ${row('heart','Реакции','Лайки и эмодзи под постами', c.reactions, `chToggle('${id}','reactions')`)}
+    <div class="ch-sec-h">${chI('megaphone')} Тип и цена</div>
+    <button class="ch-mrow" onclick="chGo('mType','${id}')">
+      <span class="ch-mr-ic">${chI('bolt')}</span>
+      <span class="ch-mr-b"><b>Тип, доступ и цена</b><small>${chAccessLine(c)}</small></span>
+      <span class="ch-mr-val">${chI('chev')}</span>
+    </button>
     <div class="ch-sec-h">${chI('share')} Ссылка на канал</div>
     <button class="ch-mrow" onclick="chCopyLink('${id}')">
       <span class="ch-mr-ic">${chI('globe')}</span>
       <span class="ch-mr-b"><b>oko.app/c/${chEsc((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel')}</b><small>Публичная ссылка-приглашение</small></span>
       <span class="ch-mr-val">${chI('copy')}</span>
-    </button>
-    <button class="ch-mrow" onclick="chGo('mType','${id}')">
-      <span class="ch-mr-ic">${chI('megaphone')}</span>
-      <span class="ch-mr-b"><b>Тип и цена</b><small>${chTypeLabel(c.type)}${c.type!=='free'?' · '+c.price+' ₽':''}</small></span>
-      <span class="ch-mr-val">${chI('chev')}</span>
     </button>`;
   return {title:'Настройки', html};
 }
 window.chToggle = function(id,key){
   const c = chChannel(id); if(!c) return; c[key]=!c[key]; chSave(); chRender();
   toast((key==='discussions'?'Обсуждения ':'Реакции ')+(c[key]?'включены':'выключены'));
+};
+/* быстрый тумблер доступа/оплаты прямо из настроек */
+window.chToggleAccess = function(id, which){
+  const c = chChannel(id); if(!c) return;
+  if(which==='paid'){
+    if(c.kind==='course'){ toast('Курс всегда платный'); return; }
+    if(chPaid(c)){ c.price = 0; }
+    else { c.price = c.kind==='course'?990:299; c.access='closed'; toast('Задай цену в «Тип и доступ»'); }
+  } else {
+    if(c.kind==='course'){ toast('Курс всегда закрытый'); return; }
+    c.access = (c.access==='closed') ? 'open' : 'closed';
+  }
+  chNormalize(c); chSave(); chRender();
 };
 window.chCopyLink = function(id){
   const c = chChannel(id); if(!c) return;
@@ -23048,6 +24102,38 @@ if(typeof openConv==='function'){
 if(typeof renderMyProfile==='function'){
   const _prevRMPch = renderMyProfile;
   renderMyProfile = function(){ _prevRMPch.apply(this, arguments); chInsertProfileRow(); chUpdateProwCount(); };
+}
+
+/* 4) посты каналов в ленте рекомендаций: помечаем источником-каналом + открываем канал по тапу.
+   Ранжирование по активности уже делает ядро (feedScore: лайки/комменты/репосты/просмотры). */
+function chDecorateFeed(){
+  const list = document.getElementById('feedList'); if(!list || typeof POSTS==='undefined') return;
+  const map = {};
+  (POSTS.rec||[]).concat(POSTS.sub||[]).forEach(p=>{ if(p && p.chOrigin) map[String(p.id)] = p; });
+  list.querySelectorAll('.post[data-pid]').forEach(card=>{
+    const p = map[card.getAttribute('data-pid')]; if(!p) return;
+    const ava = card.querySelector('.ava');
+    if(ava && !ava.dataset.chDone){
+      ava.dataset.chDone = '1';
+      if(p.avaImg){ ava.style.backgroundImage='url('+p.avaImg+')'; ava.style.backgroundSize='cover'; ava.style.backgroundPosition='center'; ava.textContent=''; }
+      else if(p.avaIcon){ ava.innerHTML = chI(p.avaIcon); ava.classList.add('ch-feed-ava'); }
+      ava.style.cursor='pointer';
+      ava.addEventListener('click', function(e){ e.stopPropagation(); chOpen('channel', p.chOrigin); });
+    }
+    const nameEl = card.querySelector('.name');
+    if(nameEl && !nameEl.querySelector('.ch-src-chip')){
+      const chip = document.createElement('span');
+      chip.className = 'chip ch-src-chip';
+      chip.innerHTML = chI(p.chKind==='course'?'circle-play':p.chKind==='club'?'crown':'megaphone') + (p.chKind==='course'?'Курс':p.chKind==='club'?'Клуб':'Канал');
+      chip.style.cursor='pointer';
+      chip.addEventListener('click', function(e){ e.stopPropagation(); chOpen('channel', p.chOrigin); });
+      nameEl.appendChild(chip);
+    }
+  });
+}
+if(typeof renderFeed==='function'){
+  const _prevRenderFeedCh = renderFeed;
+  renderFeed = function(){ const r=_prevRenderFeedCh.apply(this, arguments); try{ chDecorateFeed(); }catch(e){} return r; };
 }
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
