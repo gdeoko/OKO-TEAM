@@ -41,6 +41,17 @@ def rng_for(rid):
     seed = int(hashlib.md5(rid.encode()).hexdigest()[:12], 16)
     return random.Random(seed)
 
+
+def trend_for(app):
+    """Свежие хуки/ключи из разведки конкурентов (recon.py -> analysis/latest_<app>.json).
+    Кормит сценарии актуальными трендовыми словами. Пусто, если разведка ещё не прошла."""
+    try:
+        d = json.load(open(os.path.join(HERE, "analysis", f"latest_{app}.json")))
+        hooks = [h for h in d.get("hooks", []) if h.isalpha()][:8]
+        return hooks
+    except Exception:
+        return []
+
 # ------------------------------------------------------------------ БРЕНДЫ
 BRAND = {
     "spy": dict(voice="en-US-AndrewNeural", rate="+6%", grade="cold_cyan",
@@ -461,6 +472,13 @@ def make_one(app, state):
         "caption": "%s Comment %s for the app. %s" % (ang["cap"], meta["brand"]["code"], meta["hashtags"]),
         "yt_title": ang["yt"],
     }
+    # ТРЕНД из разведки конкурентов: свежие ключи-хуки в хэштеги (SEO/дискавери) + маркер
+    trend = trend_for(app)
+    if trend:
+        rng.shuffle(trend)
+        tags = " ".join("#" + t for t in trend[:4])
+        d["caption"] = d["caption"] + " " + tags
+        d["trend_keys"] = trend[:8]
     # журнал механик — след «отпечаток» набора наложений, чтобы контролировать неповторяемость
     fp = "|".join(sorted(o["type"] for o in d["overlays"]))
     state.setdefault("ov_fp", {}).setdefault(app, [])
