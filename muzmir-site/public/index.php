@@ -21,6 +21,19 @@ if ($base && $base !== '/' && str_starts_with($uri, $base)) $uri = substr($uri, 
 $route = '/' . trim($uri, '/');
 $route = $route === '' ? '/' : $route;
 
+// REST API и админ-панель обслуживаются через фронт-контроллер
+// (в проде nginx try_files отдаёт эти пути в index.php, т.к. web-root = public/).
+if (preg_match('#^/api/v1/([a-z0-9_]+)(?:\.php)?$#', $route, $m)) {
+    $f = BASE_PATH . '/api/v1/' . $m[1] . '.php';
+    if (is_file($f)) { require $f; exit; }
+    json_out(['ok' => false, 'error' => 'not_found'], 404);
+}
+if ($route === '/admin' || str_starts_with($route, '/admin/')) {
+    $_GET['__route'] = $route;
+    require BASE_PATH . '/admin/index.php';
+    exit;
+}
+
 $pagesDir = BASE_PATH . '/templates/site/pages';
 
 /** Запуск файла-страницы: он должен вызвать render_page(...). */
