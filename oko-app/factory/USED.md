@@ -54,3 +54,6 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 
 ## 21.07 — ролик #7 СКУТЕР (стиль 0, ротация механик)
 Городские скутеры из Китая. Механики: vs/bigstat/ring/iconrow/sidebars/ticks/route/stamp/lowerthird/chips/badge — стиль 0 (стекло-тёплый), рекуррентные биты через другие механики, чем у мото. YT R9TWA3N_4qY, TikTok+IG. Обложка 1.8с.
+
+## 21.07 — ролик #8 СНЕГОХОД (стиль 2 контур) — норма 3/день выполнена
+Снегоходы из Китая, зима. Механики: badge/speedo/linechart/iconrow/donut/chips/route/stamp/lowerthird/badge — стиль 2 (контур-амбер). YT HXlZsm3jSwI, TikTok+IG. День 21.07: мото+скутер+снегоход = 3/3.
