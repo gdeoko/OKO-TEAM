@@ -16,12 +16,12 @@ $u = current_user();
 ?><!doctype html>
 <html lang="ru">
 <head>
-<script>document.documentElement.className+=' js';</script>
+<script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'dark';}catch(e){document.documentElement.dataset.theme='dark';}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title><?= h($title) ?> — <?= h(cfgv('org_name')) ?></title>
 <meta name="description" content="<?= h($meta_description) ?>">
-<meta name="theme-color" content="#FFFCF5">
+<meta name="theme-color" content="#0b0a0d">
 <meta property="og:title" content="<?= h($title) ?> — <?= h(cfgv('org_name')) ?>">
 <meta property="og:description" content="<?= h($meta_description) ?>">
 <meta property="og:image" content="<?= h($og_image) ?>">
@@ -31,7 +31,7 @@ $u = current_user();
 <link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=Marck+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
 </head>
 <body>
@@ -60,6 +60,9 @@ $u = current_user();
     </div>
   </nav>
   <div class="nav-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Сменить тему" title="Сменить тему">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
     <?php if ($u): ?>
       <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
       <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Админка</a><?php endif; ?>
@@ -124,6 +127,21 @@ $u = current_user();
     <span>При информационной поддержке Министерств культуры и образования субъектов Российской Федерации</span>
   </div>
 </div></footer>
+
+<nav class="appnav">
+  <div class="appnav-inner">
+    <a href="<?= url('/') ?>" class="<?= $active==='/'?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Главная</a>
+    <a href="<?= url('/competitions') ?>" class="<?= in_array($active,['/competitions'])?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Конкурсы</a>
+    <a href="<?= url('/apply') ?>" class="appnav-cta">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Заявка</a>
+    <a href="<?= url('/awards') ?>" class="<?= $active==='/awards'?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>Награды</a>
+    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login'])?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Кабинет':'Вход' ?></a>
+  </div>
+</nav>
 
 <button class="chat-fab" id="chatFab" aria-label="Поддержка">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>

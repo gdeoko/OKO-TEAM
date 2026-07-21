@@ -8,6 +8,17 @@
   var burger = $('#burger'), nav = $('#nav');
   if (burger && nav) burger.addEventListener('click', function () { nav.classList.toggle('open'); });
 
+  // Переключатель темы
+  var themeBtn = $('#themeToggle');
+  if (themeBtn) themeBtn.addEventListener('click', function () {
+    var cur = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    var next = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('muzmir-theme', next); } catch (e) {}
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', next === 'light' ? '#FFFCF5' : '#0b0a0d');
+  });
+
   // Появление секций при скролле
   if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
