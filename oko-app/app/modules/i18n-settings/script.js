@@ -303,6 +303,34 @@ const ST_DICT = {
   'Посты в ленте':'Posts in feed','Алгоритмы OKO':'OKO algorithms','участников':'members','участники':'members',
   'сообщений':'messages','антиспам':'anti-spam','Написать':'Message','Продвижение канала':'Channel promotion',
   'Продвинуть канал':'Promote channel','Показываем целевой аудитории по нише канала':'Shown to a target audience in your channel niche',
+  /* --- каналы: создание, доступ, управление (channels) --- */
+  'Создать канал':'Create channel','Удалить канал':'Delete channel','Действие необратимо':'This action is irreversible',
+  'Канал, клуб или видео-курс · открытый/закрытый, платный/бесплатный':'Channel, club or video course · public/private, paid/free',
+  'Тип, доступ и цена':'Type, access and price','Тип и доступ':'Type and access','Видео-курс':'Video course',
+  'Открытый':'Public','Виден и читается всем':'Visible and readable to everyone',
+  'Закрытый':'Private','Витрина + доступ по заявке/оплате':'Showcase + access by request/payment',
+  'Бесплатно':'Free','Без платы за доступ':'No access fee','Платно':'Paid','Доступ по подписке/оплате':'Access by subscription/payment',
+  'Прогресс курса':'Course progress','Публичная ссылка-приглашение':'Public invite link','Загрузить фото поста':'Upload post photo',
+  'Написать автору':'Message the author','Постов пока нет':'No posts yet','Обсудить':'Discuss','Нажми, чтобы проголосовать':'Tap to vote',
+  'Бесплатное вступление — доступ откроется сразу':'Free to join — access opens right away','· по заявке':'· by request',
+  'Оформи доступ, чтобы видеть все материалы':'Get access to see all materials',
+  'аватар · обложка · фон':'avatar · cover · background','Обсуждения':'Discussions','Реакции':'Reactions','Статистика':'Statistics',
+  'включены':'on','выключены':'off','графики':'charts','всего':'total','доступ':'access','оплата':'payment',
+  'за неделю':'per week','прирост/нед':'growth/wk','подписок':'subscriptions','пик: сб':'peak: Sat','опрос':'poll','видео':'video',
+  /* --- каналы: тосты и уведомления --- */
+  'Аватар обновлён':'Avatar updated','Обложка обновлена':'Cover updated','Администратор разжалован':'Admin demoted',
+  'Введите название урока':'Enter a lesson title','Введите название':'Enter a title','Урок добавлен':'Lesson added',
+  'Видео-плеер урока — подключается к Академии OKO':'Lesson video player — connects to OKO Academy',
+  'Вы вступили в канал':'You joined the channel','Выберите изображение':'Choose an image','Добавьте текст или фото':'Add text or a photo',
+  'Доступ открыт':'Access granted','Доступ отменён':'Access revoked','Задай цену в «Тип и доступ»':'Set a price in "Type and access"',
+  'Канал удалён':'Channel deleted','Кошелёк недоступен':'Wallet unavailable','Курс всегда закрытый':'A course is always private',
+  'Курс всегда платный':'A course is always paid','Курс всегда закрытый — уроки открываются после покупки.':'A course is always private — lessons open after purchase.',
+  'Мессенджер недоступен':'Messenger unavailable','Не удалось прочитать изображение':'Could not read the image',
+  'Нет участников для назначения':'No members to assign','Открываю чаты':'Opening chats','Ошибка чтения файла':'File read error',
+  'Обсуждения включены — комментарии подключатся с бэкендом':'Discussions enabled — comments will connect with the backend',
+  'Пока нечего выводить — продаж не было':'Nothing to withdraw yet — no sales',
+  'Пост опубликован — он уже в ленте рекомендаций':'Post published — it is already in the recommendations feed',
+  'Урок пройден — прогресс обновлён':'Lesson completed — progress updated',
   /* --- проверка видео --- */
   'Видео-премодератор':'Video pre-moderator',
   'Ролик до 10 ГБ. Исходник автоудаляется через 24 часа после анализа.':'Video up to 10 GB. The source auto-deletes 24 hours after analysis.',
@@ -542,7 +570,7 @@ const ST_DICT = {
   'Опубликовать историю':'Publish story','Просмотры':'Views',
   /* --- TON / подарки (verify-stickers) --- */
   'История TON':'TON history','Мой подарок':'My gift','Подарить другу':'Gift to a friend',
-  'Подарок':'Gift','Пополнить TON':'Top up TON','Отправить':'Send','Получить':'Receive',
+  'Подарок':'Gift','Пополнить TON':'Top up TON','Получить':'Receive',
   'Баланс':'Balance','Адрес получателя':'Recipient address','UQ… адрес TON-кошелька':'UQ… TON wallet address',
   'Вставить':'Paste','Купить ещё':'Buy more','В коллекции:':'In collection:','МАКС':'MAX',
   'Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.':'Prototype: the transfer deducts TON from your local wallet and lands in history. Real TON network transfers will connect at release via TON Connect.',
@@ -612,8 +640,7 @@ const ST_RX = [
   [/^(\d+) просмотров$/, '$1 views'],
   [/^(\d+) призов$/, '$1 prizes'],
   [/^Отправить ([\d\s.,]+) TON$/, 'Send $1 TON'],
-  [/^Пополнить TON на ([\d\s.,]+ ?₽)$/, 'Top up TON by $1'],
-  [/^(\d+) TON$/, '$1 TON']
+  [/^Пополнить TON на ([\d\s.,]+ ?₽)$/, 'Top up TON by $1']
 ];
 
 /* --- что НЕ переводим: контент пользователей + свои переключатели --- */

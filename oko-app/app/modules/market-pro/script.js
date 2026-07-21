@@ -390,14 +390,18 @@ function mpDealPoke(id){
 }
 /* снять эскроу-холд (реальные деньги только если сделка их реально держит) */
 function mpReleaseHold(d){
-  if(d.held){ WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave(); d.held = false; }
+  if(d.held){
+    WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
+    // комиссия OKO признаётся ТОЛЬКО здесь — при завершении сделки (деньги ушли из эскроу продавцу)
+    okoEarn(Math.round(d.sum*MP_FEE*100)/100, 'Комиссия Биржи 10%');
+    d.held = false;
+  }
 }
-/* возврат покупателю: холд -> баланс, откат комиссии */
+/* возврат покупателю: холд -> баланс (комиссия не признавалась — откатывать нечего) */
 function mpRefundBuyer(d){
   if(d.held){
     WALLET.hold = Math.max(0, WALLET.hold - d.sum); walletSave();
     walletAdd(d.sum, 'Возврат по сделке Биржи');
-    okoEarn(-Math.round(d.sum*MP_FEE*100)/100, 'Возврат комиссии Биржи');
     d.held = false;
   }
 }

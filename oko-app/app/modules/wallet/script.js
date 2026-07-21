@@ -946,7 +946,7 @@ const _prevOrderListingWal = orderListing;
 orderListing = function(id){
   const l = LISTINGS.find(x=>x.id===id);
   if(!walletCharge(l.p, 'Покупка на Бирже: ' + l.t)){ closeSheet(); return; }
-  okoEarn(l.p * 0.10, 'Комиссия Биржи 10%');
+  // комиссия НЕ признаётся сейчас — только при снятии эскроу (mpReleaseHold), когда сделка реально завершена
   WALLET.hold += l.p; walletSave();
   _prevOrderListingWal(id);
   toast('Эскроу-защита: ' + fmtMoney(l.p) + ' в холде до выполнения заказа');
