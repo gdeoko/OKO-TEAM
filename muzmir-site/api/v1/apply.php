@@ -2,6 +2,7 @@
 /** POST заявки на конкурс: серверная валидация, номер CODE-ГГГГ-NNNNN, письмо в очередь, уведомление админу. */
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
+require_once BASE_PATH . '/core/loyalty.php';
 require_post();
 
 $ip = client_ip();
@@ -93,6 +94,62 @@ $appId = insert('applications', [
 ]);
 audit('apply', 'applications', $appId, ['number' => $number, 'competition' => $comp['slug']]);
 
+// --- оплата оргвзноса (для платного конкурса) ---
+$payment = null;
+$confirmationUrl = null;
+$priceInfo = null;
+if ((int) $comp['is_paid']) {
+    $basePrice = (int) $comp['price'];
+
+    // Скидка лояльности за число состоявшихся участий.
+    $loyaltyPct = loyalty_discount($uid, $email);
+
+    // Промокод педагога: доп. скидка участнику + метка реферала.
+    $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper(input('promo_code'))));
+    $ref = $promoCode !== '' ? referral_lookup($promoCode) : null;
+    // Свой код применять нельзя.
+    if ($ref && $uid && (int) $ref['teacher_user_id'] === (int) $uid) $ref = null;
+    $refPct = $ref ? (int) $ref['percent'] : 0;
+
+    // Итоговая скидка суммируется, но не более 40%.
+    $totalPct = min(40, $loyaltyPct + $refPct);
+    $amount = loyalty_apply($basePrice, $totalPct);
+
+    $priceInfo = [
+        'base_price'     => $basePrice,
+        'loyalty_pct'    => $loyaltyPct,
+        'referral_pct'   => $refPct,
+        'promo_applied'  => (bool) $ref,
+        'discount_pct'   => $totalPct,
+        'amount'         => $amount,
+    ];
+
+    if ($amount > 0) {
+        $payment = yukassa_create_payment(
+            $amount,
+            'Оргвзнос за участие - ' . $comp['name'] . ' (' . $number . ')',
+            ['application_id' => $appId, 'number' => $number, 'email' => $email, 'promo' => $ref['code'] ?? '']
+        );
+        if ($payment && !empty($payment['id']) && tbl_exists('payments')) {
+            insert('payments', [
+                'application_id' => $appId,
+                'amount'         => $amount,
+                'method'         => 'yukassa',
+                'status'         => $payment['status'] ?? 'pending',
+                'yukassa_id'     => $payment['id'],
+                'purpose'        => 'application',
+            ]);
+        }
+        $confirmationUrl = $payment['confirmation_url'] ?? null;
+
+        // Начисление вознаграждения педагогу по его коду.
+        if ($ref) {
+            $reward = referral_record_use($ref, $appId, $uid, $email, $amount);
+            audit('referral_use', 'applications', $appId, ['code' => $ref['code'], 'reward' => $reward, 'amount' => $amount]);
+        }
+    }
+}
+
 // --- письмо-подтверждение в очередь ---
 $subject = 'Заявка ' . $number . ' принята - ' . $comp['name'];
 $html = function_exists('mail_template')
@@ -114,4 +171,14 @@ if (function_exists('tg_notify_admin')) {
     tg_notify_admin("Новая заявка {$number}\n{$comp['name']}\n{$full_name}\n{$nomination}");
 }
 
-json_out(['ok' => true, 'number' => $number]);
+$resp = ['ok' => true, 'number' => $number];
+if ($priceInfo !== null) $resp['price'] = $priceInfo;
+if ($payment !== null) {
+    $resp['payment'] = [
+        'id'               => $payment['id'] ?? null,
+        'status'           => $payment['status'] ?? 'pending',
+        'confirmation_url' => $confirmationUrl,
+    ];
+}
+if ($confirmationUrl) $resp['confirmation_url'] = $confirmationUrl;
+json_out($resp);

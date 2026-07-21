@@ -358,13 +358,20 @@ ob_start(); ?>
           <div class="pay-box">
             <p style="color:var(--muted)">Организационный взнос за участие</p>
             <div class="pay-amount" data-pay-amount>-</div>
-            <p style="color:var(--muted);max-width:440px;margin:0 auto 8px">
-              Онлайн-оплата подключается на этапе публикации конкурса. Заявку можно оформить сейчас,
-              оплата станет доступна в личном кабинете.</p>
+            <p style="color:var(--muted);max-width:460px;margin:0 auto 8px">
+              Оплата оргвзноса пройдёт онлайн через защищённую форму ЮKassa сразу после отправки заявки.
+              Постоянным участникам начисляется скидка за число участий, а по промокоду педагога Вы
+              получаете дополнительную скидку.</p>
+          </div>
+          <div class="field" style="max-width:320px;margin:0 auto 6px">
+            <label for="promo_code">Промокод педагога (если есть)</label>
+            <input type="text" id="promo_code" name="promo_code" placeholder="Например, ABCD1234"
+              autocomplete="off" maxlength="16" style="text-transform:uppercase">
+            <div class="hint">Даёт дополнительную скидку на оргвзнос. Можно оставить пустым.</div>
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>
-            <button type="submit" class="btn btn--primary" data-submit>Отправить заявку</button>
+            <button type="submit" class="btn btn--primary" data-submit>Перейти к оплате</button>
           </div>
         </section>
 
@@ -402,6 +409,29 @@ ob_start(); ?>
 
 <?php if ($comps): ?>
 <script>window.APPLY_CONFIG = <?= json_encode($jsCfg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;</script>
+<script>
+/* Редирект на онлайн-оплату: если ответ формы заявки содержит confirmation_url ЮKassa. */
+(function () {
+  var CFG = window.APPLY_CONFIG || {};
+  if (!CFG.apiUrl || !window.fetch) return;
+  var _fetch = window.fetch;
+  window.fetch = function (url, opts) {
+    var res = _fetch.apply(this, arguments);
+    var u = (typeof url === 'string') ? url : (url && url.url) || '';
+    if (u && u.indexOf(CFG.apiUrl) === 0) {
+      return res.then(function (r) {
+        try {
+          r.clone().json().then(function (d) {
+            if (d && d.confirmation_url) window.location.href = d.confirmation_url;
+          }).catch(function () {});
+        } catch (e) {}
+        return r;
+      });
+    }
+    return res;
+  };
+})();
+</script>
 <script src="<?= asset('js/apply.js') ?>" defer></script>
 <?php endif; ?>
 <?php
