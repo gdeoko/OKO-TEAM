@@ -1,0 +1,14 @@
+{
+  "name": "КЦ «Музыкальный Мир»",
+  "short_name": "Музыкальный Мир",
+  "description": "Международные и всероссийские онлайн-конкурсы и фестивали",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFCF5",
+  "theme_color": "#FFFCF5",
+  "lang": "ru",
+  "icons": [
+    { "src": "/assets/img/logo_muzmir_256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/logo_muzmir_main.png", "sizes": "640x640", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

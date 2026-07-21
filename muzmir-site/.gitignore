@@ -1,0 +1,13 @@
+config.local.php
+data/*.sqlite
+data/*.sqlite-*
+data/backups/*
+data/logs/*
+data/import/*.txt
+public/uploads/*
+public/diplomas/*
+public/posters/*
+!.gitkeep
+*.log
+node_modules/
+.DS_Store

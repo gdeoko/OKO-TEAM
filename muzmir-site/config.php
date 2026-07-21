@@ -1,0 +1,87 @@
+<?php
+/**
+ * КЦ «Музыкальный Мир» — конфигурация.
+ * Секреты НЕ хранятся в git. Значения берутся из переменных окружения,
+ * либо из config.local.php (в .gitignore). Здесь только безопасные дефолты.
+ */
+declare(strict_types=1);
+
+date_default_timezone_set('Europe/Moscow');
+mb_internal_encoding('UTF-8');
+
+if (!defined('BASE_PATH')) define('BASE_PATH', __DIR__);
+
+/** Достаёт значение из окружения с дефолтом. */
+function env(string $key, $default = null) {
+    $v = getenv($key);
+    if ($v === false || $v === '') return $default;
+    return $v;
+}
+
+// Локальные секреты (не в git) переопределяют окружение.
+$localCfg = [];
+if (is_file(__DIR__ . '/config.local.php')) {
+    $localCfg = require __DIR__ . '/config.local.php';
+}
+function cfg(string $key, $default = null) {
+    global $localCfg;
+    if (array_key_exists($key, $localCfg)) return $localCfg[$key];
+    return env($key, $default);
+}
+
+return [
+    // Организация
+    'org_name'       => 'КЦ «Музыкальный Мир»',
+    'org_full'       => 'Культурный центр «Музыкальный Мир»',
+    'org_short'      => 'Музыкальный Мир',
+    'org_reg'        => 'Роскомнадзор №094084 от 24.06.2025',
+    'org_address'    => '109240, г. Москва, ул. Солянка, д.14, стр.7',
+    'org_phone'      => '+7 (950) 945-99-00',
+    'org_phone_raw'  => '+79509459900',
+    'org_email'      => 'kulturniy.centr.mir@mail.ru',
+    'org_hours'      => 'Пн-Пт 09:00-18:00, Сб 10:00-16:00, Вс выходной',
+    'org_vk'         => 'https://vk.com/music_world.online',
+    'org_tg_channel' => 'https://t.me/kc_mus_mir',
+
+    // Домен
+    'domain'         => 'музыкальный-мир.рф',
+    'domain_puny'    => 'xn----7sbugdeiegh1b0a9hen.xn--p1ai',
+    'base_url'       => cfg('MUZMIR_BASE_URL', 'http://localhost:8080'),
+
+    // База данных
+    'db_path'        => BASE_PATH . '/data/muzmir.sqlite',
+
+    // Почта (Gmail SMTP через cURL) — секреты из окружения
+    'smtp_host'      => 'smtp.gmail.com',
+    'smtp_port'      => 465,
+    'smtp_user'      => cfg('MUZMIR_SMTP_USER', 'kulturniy.centr.mir@gmail.com'),
+    'smtp_pass'      => cfg('MUZMIR_SMTP_PASS', ''),   // App Password — только env/local
+    'mail_from_name' => 'КЦ «Музыкальный Мир»',
+    'mail_reply_to'  => 'kulturniy.centr.mir@mail.ru',
+    // Дневной лимит Gmail — рассылки идут очередью батчами
+    'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
+    'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),
+
+    // Telegram
+    'tg_bot_token'   => cfg('MUZMIR_TG_BOT_TOKEN', ''),
+    'tg_bot_user'    => 'kc_muz_mir_bot',
+    'tg_admin_chat'  => cfg('MUZMIR_TG_ADMIN_CHAT', ''),
+
+    // ЮKassa (включается после верификации магазина)
+    'yukassa_shop'   => cfg('MUZMIR_YUKASSA_SHOP', ''),
+    'yukassa_secret' => cfg('MUZMIR_YUKASSA_SECRET', ''),
+
+    // Внешние сервисы
+    'dadata_token'   => cfg('MUZMIR_DADATA_TOKEN', ''),
+    'dadata_secret'  => cfg('MUZMIR_DADATA_SECRET', ''),
+    'recaptcha_site' => cfg('MUZMIR_RECAPTCHA_SITE', ''),
+    'recaptcha_secret' => cfg('MUZMIR_RECAPTCHA_SECRET', ''),
+    'metrika_id'     => cfg('MUZMIR_METRIKA_ID', ''),
+
+    // Агент-мозг (внешний агент соцсетей Музмира)
+    'agent_url'      => cfg('MUZMIR_AGENT_URL', ''),
+    'agent_token'    => cfg('MUZMIR_AGENT_TOKEN', ''),
+
+    'debug'          => (bool) cfg('MUZMIR_DEBUG', true),
+    'year'           => (int) date('Y'),
+];
