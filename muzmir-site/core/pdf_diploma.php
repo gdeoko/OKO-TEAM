@@ -37,8 +37,8 @@ function _dip_frame(\GdImage $img, array $gold): void {
     imagerectangle($img, 52, 52, $w - 52, $h - 52, $g2);
     pl_corner_gold($img, 70, 70, 46, $gold, 'tl');
     pl_corner_gold($img, $w - 70, 70, 46, $gold, 'tr');
-    pl_corner_gold($img, 70, $h - 70, 46, $gold, 'bl');
-    pl_corner_gold($img, $w - 70, $h - 70, 46, $gold, 'br');
+    pl_corner_gold($img, 60, $h - 92, 30, $gold, 'bl');
+    pl_corner_gold($img, $w - 60, $h - 92, 30, $gold, 'br');
 }
 
 /** Тема «чёрное золото» (основной диплом лауреата). */
@@ -257,10 +257,12 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         }
         $y += 26;
 
-        // при инф. поддержке
+        // при инф. поддержке — авто-подгон кегля под ширину контента
         foreach (['При информационной поддержке Министерства культуры и образования',
                   'субъектов Российской Федерации и государственного портала «Pro Культура»'] as $l) {
-            pl_text($img, 0, $y, 21, $head, $fBold, $l, 'center', $W);
+            $fs = 21;
+            while ($fs > 13 && pl_text_w($fs, $fBold, $l) > $contentW) $fs--;
+            pl_text($img, 0, $y, $fs, $head, $fBold, $l, 'center', $W);
             $y += 28;
         }
         $y += 16;
@@ -371,9 +373,9 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         // --- футер ---
         if ($isLight && is_file($dir . 'prokultura_full_horizontal.png')) {
             pl_image($img, $dir . 'prokultura_full_horizontal.png', $cX - 150, $H - 108, 300, null, 100);
-            pl_text($img, 0, $H - 44, 24, $head, $fBold, 'Российская Федерация, город Москва - ' . $year, 'center', $W);
+            pl_text($img, 120, $H - 44, 24, $head, $fBold, 'Российская Федерация, город Москва - ' . $year, 'center', $W - 120);
         } else {
-            pl_text($img, 0, $H - 60, 27, $head, $fBold, 'Российская Федерация, город Москва - ' . $year, 'center', $W);
+            pl_text($img, 120, $H - 56, 26, $head, $fBold, 'Российская Федерация, город Москва - ' . $year, 'center', $W - 120);
         }
 
         // --- сохранение ---
