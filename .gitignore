@@ -19,3 +19,7 @@ metanoia-app/config/.env
 
 # ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env
+
+# Python bytecode cache
+__pycache__/
+*.pyc
