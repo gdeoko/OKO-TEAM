@@ -13,8 +13,11 @@ const CP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-chats-plus'))
 if(CP.speed!==1.5 && CP.speed!==2) CP.speed = 1;
 if(!Array.isArray(CP.recentEmoji)) CP.recentEmoji = [];
 if(!CP.panelTab) CP.panelTab = 'emoji';
-function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab})); }catch(e){} }
+if(!CP.access || typeof CP.access!=='object') CP.access = {};     /* {chatId:{type,price}} — овнерские настройки доступа */
+if(!CP.unlocked || typeof CP.unlocked!=='object') CP.unlocked = {}; /* {chatId:1} — купленный доступ к платному чату */
+function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
 const cpMsgsEl = () => document.getElementById('msgs');
+const cpEsc = t => (typeof esc==='function' ? esc(t) : String(t==null?'':t));
 
 /* ================= 1. СТАТУСЫ СООБЩЕНИЙ ================= */
 const CP_ST_TITLE = {sent:'Отправлено', delivered:'Доставлено', read:'Прочитано'};
@@ -548,8 +551,9 @@ function cpDecorateVnotes(){
 }
 
 /* ================= 9. ЗАПИСЬ: кружок/пульс/таймер + отмена свайпом ================= */
-let cpRecMoveH = null, cpRecStartX = null, cpRecArmed = false, cpRecPvTry = null;
+let cpRecMoveH = null, cpRecStartX = null, cpRecStartY = null, cpRecArmed = false, cpRecPvTry = null, cpRecLocked = false;
 const CP_REC_BARS = 34;
+const CP_LOCK_DIST = 96;   /* свайп вверх до блокировки записи (как в Telegram) */
 /* живая волна записи: реальная амплитуда микрофона через Web Audio (как в Telegram) */
 let cpRecAC = null, cpRecAn = null, cpRecRAF = 0, cpRecStreamHooked = null;
 function cpRecWaveStart(stream){
@@ -605,7 +609,9 @@ function cpRecOverlay(){
   if(o) return o;
   o = document.createElement('div'); o.id = 'cpRec'; o.className = 'cp-rec';
   o.innerHTML =
-    `<div class="cp-rec-cancel" id="cpRecCancel"><span class="cp-rec-trash">${I('trash')}</span></div>
+    `<div class="cp-rec-lock" id="cpRecLock"><span class="cp-rec-lock-ch">${I('chev')}</span><span class="cp-rec-lock-ic">${I('lock')}</span></div>
+     <div class="cp-rec-cancel" id="cpRecCancel"><span class="cp-rec-trash">${I('trash')}</span></div>
+     <button class="cp-rec-send" id="cpRecSend" title="Отправить">${I('send')}</button>
      <div class="cp-rec-stage">
        <div class="cp-rec-ring"></div><div class="cp-rec-ring cp-rec-ring2"></div>
        <div class="cp-rec-bubble" id="cpRecBubble">
@@ -616,15 +622,22 @@ function cpRecOverlay(){
      <div class="cp-rec-wave" id="cpRecWave">${
         Array.from({length: CP_REC_BARS}, ()=>'<i></i>').join('')}</div>
      <div class="cp-rec-info"><span class="cp-rec-dot"></span><span id="cpRecTime">0:00</span>
-       <span class="cp-rec-hint"><span class="cp-rec-arrow">${I('chev')}</span>Смахните для отмены</span></div>`;
+       <span class="cp-rec-hint"><span class="cp-rec-arrow">${I('chev')}</span>Смахните влево — отмена, вверх — закрепить</span>
+       <span class="cp-rec-hint cp-rec-hint-locked">Запись закреплена</span></div>`;
   document.body.appendChild(o);
+  const cancelBtn = o.querySelector('#cpRecCancel');
+  if(cancelBtn) cancelBtn.onclick = ()=>{ cpCancelRec(); };
+  const sendBtn = o.querySelector('#cpRecSend');
+  if(sendBtn) sendBtn.onclick = ()=>{ cpRecSendLocked(); };
   return o;
 }
 function cpRecShow(){
   const isV = (typeof recMode!=='undefined' && recMode==='vnote');
   const o = cpRecOverlay();
   o.classList.toggle('cp-rec-video', isV);
-  o.classList.add('on'); cpRecArmed = false; cpRecStartX = null;
+  o.classList.remove('cp-rec-locked','cp-rec-arm');
+  o.style.removeProperty('--cp-cx'); o.style.removeProperty('--cp-lk');
+  o.classList.add('on'); cpRecArmed = false; cpRecLocked = false; cpRecStartX = null; cpRecStartY = null;
   const vid = document.getElementById('cpRecVid');
   if(vid){ vid.srcObject = null; vid.style.display = isV ? 'block' : 'none'; }
   /* сброс волны в холостой режим (пока микрофон не подключился / нет доступа) */
@@ -652,12 +665,24 @@ function cpRecShow(){
   const sb = document.getElementById('sendBtn');
   if(sb && !cpRecMoveH){
     cpRecMoveH = e=>{
+      if(cpRecLocked) return;
       if(typeof recStart==='undefined' || !recStart) return;
-      if(cpRecStartX===null) cpRecStartX = e.clientX;
+      if(cpRecStartX===null){ cpRecStartX = e.clientX; cpRecStartY = e.clientY; }
       const dx = e.clientX - cpRecStartX;
+      const dy = e.clientY - cpRecStartY;
+      /* вверх — закрепление записи (руки свободны); влево — отмена. Ведущая ось решает жест. */
+      if(dy < -18 && -dy > Math.abs(dx)){
+        const t = Math.min(1, -dy / CP_LOCK_DIST);
+        o.style.setProperty('--cp-lk', t.toFixed(3));
+        o.style.removeProperty('--cp-cx');
+        o.classList.remove('cp-rec-arm'); cpRecArmed = false;
+        if(t >= 1) cpRecLock();
+        return;
+      }
       if(dx < 0){
         const t = Math.min(1, -dx/120);
         o.style.setProperty('--cp-cx', (-dx*0.35)+'px');
+        o.style.setProperty('--cp-lk', '0');
         o.classList.toggle('cp-rec-arm', t>=1);
         cpRecArmed = t>=1;
         if(cpRecArmed) cpCancelRec();
@@ -672,18 +697,39 @@ function cpRecTick(){
   if(src && dst) dst.textContent = src.textContent || '0:00';
 }
 function cpRecHide(){
-  const o = document.getElementById('cpRec'); if(o){ o.classList.remove('on','cp-rec-arm'); o.style.removeProperty('--cp-cx'); }
+  const o = document.getElementById('cpRec'); if(o){ o.classList.remove('on','cp-rec-arm','cp-rec-locked'); o.style.removeProperty('--cp-cx'); o.style.removeProperty('--cp-lk'); }
   clearInterval(cpRecTimeInt); clearInterval(cpRecPvTry);
   cpRecWaveStop();
   const vid = document.getElementById('cpRecVid'); if(vid){ try{ vid.pause(); }catch(_){} vid.srcObject = null; }
   const sb = document.getElementById('sendBtn');
   if(sb && cpRecMoveH){ sb.removeEventListener('pointermove', cpRecMoveH); cpRecMoveH = null; }
-  cpRecStartX = null; cpRecArmed = false;
+  cpRecStartX = null; cpRecStartY = null; cpRecArmed = false; cpRecLocked = false;
+}
+/* блокировка записи (свайп вверх): запись продолжается без удержания пальца.
+   Ядровой pointerup на #sendBtn перехватываем в capture-фазе, чтобы он не вызвал stopRec. */
+function cpRecLock(){
+  if(cpRecLocked) return;
+  cpRecLocked = true;
+  const o = document.getElementById('cpRec');
+  if(o){ o.classList.add('cp-rec-locked'); o.classList.remove('cp-rec-arm'); o.style.removeProperty('--cp-cx'); o.style.setProperty('--cp-lk','1'); }
+  if(typeof toast==='function') toast('Запись закреплена — можно отпустить');
+}
+function cpRecSendLocked(){
+  if(!cpRecLocked) return;
+  cpRecLocked = false;
+  if(typeof recStart!=='undefined' && recStart && typeof stopRec==='function') stopRec(); /* ядро сформирует и отправит голосовое/кружок */
+  else cpRecHide();
+}
+/* один глобальный перехватчик: пока запись закреплена — гасим ядровой pointerup, чтобы не остановил запись */
+if(!window._cpRecUpHook){
+  window._cpRecUpHook = 1;
+  document.addEventListener('pointerup', e=>{ if(cpRecLocked) e.stopImmediatePropagation(); }, true);
 }
 /* аккуратная отмена без правки ядра: сбрасываем recStart -> ядровой pointerup
    не вызовет stopRec (там `if(recStart) stopRec()`), а хвосты чистим сами. */
 function cpCancelRec(){
-  if(typeof recStart==='undefined' || !recStart) return;
+  cpRecLocked = false;
+  if(typeof recStart==='undefined' || !recStart){ cpRecHide(); return; }
   try{ if(typeof recInt!=='undefined') clearInterval(recInt); }catch(_){}
   try{
     if(typeof mediaRec!=='undefined' && mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
@@ -823,4 +869,221 @@ if(typeof sendText === 'function'){
   cpBuildCall();
   cpInitMenuAnchor();
   if(typeof currentChat !== 'undefined' && currentChat) cpDecorateVnotes();
+})();
+
+/* =======================================================================
+   ЧАСТЬ 3 — ОТКРЫТЫЕ / ПРИВАТНЫЕ / ПЛАТНЫЕ ЧАТЫ (префикс cp-)
+   Тип чата: public (открыт, виден в поиске) | private (по ссылке-приглашению) |
+   paid (доступ по подписке). Бейджи/замки в списке и шапке, paywall через
+   walletCharge, комиссия OKO 10% через okoEarn, персист в localStorage.
+   ======================================================================= */
+const CP_FEE = 0.10;
+
+function cpAcc(c){
+  if(!c) return {type:'public', price:0};
+  const ov = CP.access[c.id];
+  const type  = ov && ov.type ? ov.type : (c.cpType || 'public');
+  const price = ov ? (ov.price||0) : (c.cpPrice||0);
+  return {type, price};
+}
+function cpCanManage(){ return typeof isOwner==='function' && isOwner(); }
+function cpChatUnlocked(c){ return !!(c && CP.unlocked[c.id]); }
+function cpChatLocked(c){ const a = cpAcc(c); return a.type==='paid' && !cpChatUnlocked(c); }
+function cpChatSlug(c){ return String((c&&(c.nick||c.name))||'chat').toLowerCase().replace(/[^a-zа-я0-9_]/gi,'').replace(/ё/g,'е').slice(0,18) || 'chat'; }
+
+/* демо-чаты: закрытый платный клуб + приватная комната (реальные данные, не заглушки) */
+function cpSeedChats(){
+  if(typeof CHATS==='undefined' || !Array.isArray(CHATS)) return;
+  if(CHATS.some(c=>c.id==='cp-paid')) return;
+  CHATS.push({
+    id:'cp-paid', ava:'PRO', name:'OKO PRO · Закрытый клуб', kind:'channel', kindIcon:'crown',
+    nick:'okopro', cpType:'paid', cpPrice:490, online:true, time:'', unread:0,
+    preview:'Доступ по подписке · инсайды и разборы',
+    msgs:[
+      {kind:'sys', body:'Закрытый клуб OKO PRO — доступ открывается после оплаты'},
+      {in:1, t:'09:00', kind:'text', who:'Даниэль', body:'Внутри клуба: живые разборы кейсов, приватные стратегии продвижения и ранний доступ к новым фичам OKO.'},
+      {in:1, t:'09:02', kind:'voice', dur:'0:38', seed:5},
+      {in:1, t:'09:05', kind:'text', who:'Даниэль', body:'Каждую неделю — новый разбор канала участника с планом роста на 30 дней.'},
+    ]});
+  CHATS.push({
+    id:'cp-priv', ava:'VIP', name:'Приватная комната', kind:'group', kindIcon:'lock',
+    nick:'viproom', cpType:'private', online:false, time:'', unread:0,
+    preview:'Только по ссылке-приглашению',
+    msgs:[
+      {kind:'sys', body:'Приватный чат — попасть можно только по ссылке-приглашению'},
+      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Скинула инвайт троим, остальным дам ссылку вручную.'},
+      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Тут обсуждаем закрытые запуски — ничего наружу.'},
+    ]});
+}
+
+/* ---- бейджи/замки в списке чатов ---- */
+function cpPaintChatBadges(){
+  const list = document.getElementById('chatList'); if(!list) return;
+  (typeof CHATS!=='undefined'?CHATS:[]).forEach(c=>{
+    const a = cpAcc(c);
+    if(a.type==='public') return;
+    const sel = (typeof c.id==='number') ? 'openConv('+c.id+')' : "openConv('"+c.id+"')";
+    const item = list.querySelector('.chat-item[onclick="'+sel+'"]'); if(!item) return;
+    const locked = a.type==='paid' && !cpChatUnlocked(c);
+    item.classList.toggle('cp-ci-locked', locked);
+    /* угловой значок на аватарке */
+    const ava = item.querySelector('.ava');
+    if(ava){
+      let badge = ava.querySelector('.cp-ci-badge');
+      if(!badge){ badge = document.createElement('span'); badge.className='cp-ci-badge'; ava.appendChild(badge); }
+      badge.className = 'cp-ci-badge cp-ci-'+(locked?'lock':(a.type==='paid'?'ok':a.type));
+      badge.innerHTML = a.type==='paid' ? (cpChatUnlocked(c)?I('check'):I('lock')) : I('lock');
+    }
+    /* ценовой пилл в строке превью */
+    const rows = item.querySelectorAll('.row1');
+    const row2 = rows[1];
+    if(row2){
+      let pill = row2.querySelector('.cp-ci-pill');
+      if(a.type==='paid' && !cpChatUnlocked(c)){
+        if(!pill){ pill = document.createElement('span'); pill.className='cp-ci-pill'; row2.appendChild(pill); }
+        pill.innerHTML = I('lock') + (a.price?a.price+' ₽':'PRO');
+      } else if(pill){ pill.remove(); }
+    }
+  });
+}
+
+/* ---- paywall для платного чата ---- */
+function cpPaywall(c){
+  const a = cpAcc(c);
+  const fee = Math.round(a.price*CP_FEE), net = a.price - fee;
+  if(typeof showPopup!=='function'){ if(typeof toast==='function') toast('Нужен платный доступ'); return; }
+  showPopup({ico:'lock', title:'Закрытый чат',
+    body:`«${cpEsc(c.name)}» — доступ по подписке.<br><br>Спишется <b>${a.price} ₽</b> с кошелька. Автору — ${net} ₽, комиссия OKO 10% (${fee} ₽). Доступ останется навсегда.`,
+    actions:[
+      {label:'Оплатить '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
+      {label:'Позже', ghost:true}
+    ]});
+}
+function cpBuyAccess(c){
+  const a = cpAcc(c);
+  if(typeof walletCharge!=='function'){ if(typeof toast==='function') toast('Кошелёк недоступен'); return; }
+  if(!walletCharge(a.price, 'Доступ к чату: '+c.name)) return; /* сам покажет «недостаточно средств» */
+  if(typeof okoEarn==='function') okoEarn(a.price*CP_FEE, 'Комиссия платных чатов 10%');
+  CP.unlocked[c.id] = 1; cpSave();
+  if(typeof toast==='function') toast('Доступ открыт');
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  if(typeof openConv==='function') openConv(c.id);
+}
+
+/* ---- шапка чата: бейдж типа + кнопка «доступ» ---- */
+function cpDecorateConvAccess(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  const head = document.querySelector('#convBody .conv-head'); if(!head || !c) return;
+  const a = cpAcc(c);
+  /* кнопка доступа в шапке */
+  let btn = document.getElementById('cpAccessBtn');
+  if(!btn){
+    btn = document.createElement('button'); btn.className='ch-call'; btn.id='cpAccessBtn';
+    btn.onclick = cpAccessMenu;
+    const anchor = document.getElementById('cpSearchBtn') || head.querySelector('.ch-call');
+    head.insertBefore(btn, anchor);
+  }
+  const showBtn = a.type!=='public' || cpCanManage();
+  btn.style.display = showBtn ? 'flex' : 'none';
+  btn.title = 'Доступ к чату';
+  btn.innerHTML = a.type==='paid' ? I('crown') : a.type==='private' ? I('lock') : I('users');
+  /* инлайн-бейдж рядом с именем */
+  const nameEl = document.getElementById('convName');
+  if(nameEl){
+    let badge = document.getElementById('cpConvBadge');
+    if(a.type==='public'){ if(badge) badge.remove(); }
+    else {
+      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; nameEl.appendChild(badge); }
+      const label = a.type==='paid' ? (cpChatUnlocked(c) ? 'PRO · доступ открыт' : (a.price?a.price+' ₽':'PRO')) : 'Приватный';
+      badge.className = 'cp-conv-badge cp-cb-'+a.type;
+      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + '<span>'+label+'</span>';
+    }
+  }
+}
+function cpAccessMenu(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null; if(!c) return;
+  if(cpCanManage()) cpManage(c); else cpShareInvite(c);
+}
+
+/* ---- ссылка-приглашение (приватные/платные) ---- */
+function cpShareInvite(c){
+  if(typeof showPopup!=='function') return;
+  const link = 'https://oko.app/join/'+cpChatSlug(c);
+  showPopup({ico:'share', title:'Ссылка-приглашение',
+    body:`Отправь ссылку — по ней откроется доступ к «${cpEsc(c.name)}».<div class="cp-invite"><input id="cpInviteInp" readonly value="${link}"><button class="btn sm" onclick="cpCopyInvite()">${I('copy')} Копировать</button></div>`,
+    actions:[{label:'Готово'}]});
+}
+window.cpCopyInvite = function(){
+  const i = document.getElementById('cpInviteInp');
+  if(i){ i.select && i.select(); try{ navigator.clipboard && navigator.clipboard.writeText(i.value); }catch(e){} }
+  if(typeof toast==='function') toast('Ссылка скопирована');
+};
+
+/* ---- управление доступом (владелец) ---- */
+let cpMg = null;
+function cpManage(c){
+  const a = cpAcc(c);
+  cpMg = {id:c.id, type:a.type, price:a.price||490};
+  cpManageRender();
+}
+function cpMgReadPrice(){
+  if(!cpMg) return;
+  const p = document.getElementById('cpMgPrice');
+  if(p){ const v = +String(p.value).replace(/\D/g,''); if(v) cpMg.price = v; }
+}
+function cpManageRender(){
+  const d = cpMg; if(!d || typeof showPopup!=='function') return;
+  const opt = (t,ic,l,s)=>`<button class="cp-mg-opt ${d.type===t?'on':''}" onclick="cpMgSet('${t}')">${I(ic)}<span class="cp-mg-t"><b>${l}</b><small>${s}</small></span>${d.type===t?I('check'):''}</button>`;
+  const body = `<div class="cp-mg">
+    ${opt('public','users','Открытый','Виден всем и в поиске')}
+    ${opt('private','lock','Приватный','Только по ссылке-приглашению')}
+    ${opt('paid','crown','Платный','Доступ по подписке, комиссия OKO 10%')}
+    ${d.type==='paid' ? `<div class="cp-mg-price"><label>Цена доступа</label><div class="cp-mg-prow"><input id="cpMgPrice" inputmode="numeric" value="${d.price}" oninput="cpMgPriceInput()"><span>₽</span></div><div class="cp-mg-net">Тебе — <b id="cpMgNet">${d.price-Math.round(d.price*CP_FEE)} ₽</b> с каждой продажи, OKO удержит 10%</div></div>` : ''}
+  </div>`;
+  showPopup({ico:'lock', title:'Доступ к чату', body, actions:[
+    {label:'Сохранить', onclick:cpMgSave},
+    {label:'Отмена', ghost:true, onclick:()=>{ cpMg=null; }}
+  ]});
+}
+window.cpMgSet = function(t){ cpMgReadPrice(); if(cpMg){ cpMg.type = t; cpManageRender(); } };
+window.cpMgPriceInput = function(){
+  const p = document.getElementById('cpMgPrice'); if(!p || !cpMg) return;
+  const v = +String(p.value).replace(/\D/g,'')||0; cpMg.price = v;
+  const net = document.getElementById('cpMgNet'); if(net) net.textContent = (v-Math.round(v*CP_FEE))+' ₽';
+};
+function cpMgSave(){
+  if(!cpMg) return;
+  cpMgReadPrice();
+  const d = cpMg;
+  CP.access[d.id] = {type:d.type, price:d.type==='paid' ? (d.price||0) : 0};
+  if(d.type==='paid' && cpCanManage()) CP.unlocked[d.id] = 1; /* владелец не платит за свой чат */
+  cpSave(); cpMg = null;
+  if(typeof toast==='function') toast('Настройки доступа сохранены');
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  cpDecorateConvAccess();
+}
+
+/* ---- патчи: гейт входа + перерисовка списка ---- */
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv3 = openConv;
+  openConv = function(id){
+    const c = (typeof CHATS!=='undefined') ? CHATS.find(x=>x.id===id) : null;
+    if(c && cpChatLocked(c)){ cpPaywall(c); return; }
+    _cpPrevOpenConv3.apply(this, arguments);
+    cpDecorateConvAccess();
+  };
+}
+if(typeof renderChatList === 'function'){
+  const _cpPrevRenderChatList = renderChatList;
+  renderChatList = function(){ _cpPrevRenderChatList.apply(this, arguments); cpPaintChatBadges(); };
+}
+if(typeof closeConv === 'function'){
+  const _cpPrevCloseConv3 = closeConv;
+  closeConv = function(){ if(cpRecLocked) cpCancelRec(); _cpPrevCloseConv3.apply(this, arguments); };
+}
+
+(function cpInit3(){
+  cpSeedChats();
+  if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
+  if(typeof currentChat!=='undefined' && currentChat) cpDecorateConvAccess();
 })();

@@ -10,13 +10,14 @@ const ST2 = {
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
   notif: {msg:true, feed:true, market:true, academy:true, marketing:false},
-  /* приватность: write/phone/photo — сегменты (all|contacts|nobody), online/read — тумблеры */
-  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all'},
+  /* приватность: write (all|following|nobody), phone/photo/status (all|contacts|nobody), online/read — тумблеры */
+  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all'},
   sec:   {twofa:false, passcode:false, pin:null, secret:null},
   theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
-  accounts: [],                     /* [{id,name,nick,tier,role,bio}] */
+  accounts: [],                     /* [{id,name,nick,tier,role,bio,status,avatar,cover}] */
   activeAcc: null,                  /* id активного аккаунта */
   killed: [],                       /* id завершённых мок-сессий */
+  blocked: [],                      /* [имя] — чёрный список (реальный персист) */
   lastClear: 0,                     /* ts последней очистки кэша */
 };
 (function st2Load(){
@@ -29,6 +30,7 @@ const ST2 = {
     ['nick','email','phone','lastClear','theme','activeAcc'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
     if(Array.isArray(s.killed))   ST2.killed   = s.killed;
     if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
+    if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }
@@ -40,7 +42,7 @@ function st2PushCore(){
   SETTINGS.notif.news    = ST2.notif.marketing;
   SETTINGS.privacy.online = ST2.priv.online;
   SETTINGS.privacy.read   = ST2.priv.read;
-  SETTINGS.privacy.dm     = ST2.priv.write === 'contacts';
+  SETTINGS.privacy.dm     = ST2.priv.write !== 'all';
 }
 function st2PullCore(){
   if(typeof SETTINGS === 'undefined') return;
@@ -48,7 +50,8 @@ function st2PullCore(){
   ST2.notif.marketing = SETTINGS.notif.news;
   ST2.priv.online     = SETTINGS.privacy.online;
   ST2.priv.read       = SETTINGS.privacy.read;
-  ST2.priv.write      = SETTINGS.privacy.dm ? 'contacts' : 'all';
+  if(SETTINGS.privacy.dm && ST2.priv.write === 'all') ST2.priv.write = 'following';
+  else if(!SETTINGS.privacy.dm) ST2.priv.write = 'all';
   st2Save();
 }
 
@@ -92,7 +95,19 @@ function st2SyncActiveFromProfile(){
   const a = st2ActiveAcc();
   if(a && typeof PROFILE !== 'undefined'){
     a.name = PROFILE.name; a.nick = PROFILE.nick; a.tier = PROFILE.tier; a.role = PROFILE.role; a.bio = PROFILE.bio;
+    a.status = PROFILE.status || null;
+    a.avatar = PROFILE.avatar || null;
+    a.cover  = PROFILE.cover  || null;
   }
+}
+/* применить профиль аккаунта на ядро PROFILE (при переключении/инициализации) */
+function st2ApplyAccToProfile(a){
+  if(!a || typeof PROFILE === 'undefined') return;
+  PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
+  if(a.bio    !== undefined) PROFILE.bio    = a.bio;
+  PROFILE.status = a.status || null;
+  PROFILE.avatar = a.avatar || null;
+  PROFILE.cover  = a.cover  || null;
 }
 
 /* ---------- рендер вьюхи ---------- */
@@ -111,9 +126,10 @@ function st2SetSeg(group, key, val){
   const seg = document.querySelector(`.st2-seg[data-seg="${group}.${key}"]`);
   if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === val));
   const M = {
-    'priv.write':    {all:'Писать могут все', contacts:'Писать могут только контакты'},
+    'priv.write':    {all:'Писать могут все', following:'Писать могут только подписки', nobody:'Никто не может писать первым'},
     'priv.phone':    {all:'Телефон виден всем', contacts:'Телефон виден контактам', nobody:'Телефон скрыт'},
     'priv.photo':    {all:'Фото видно всем', contacts:'Фото видно контактам', nobody:'Фото профиля скрыто'},
+    'priv.status':   {all:'Статус виден всем', contacts:'Статус виден контактам', nobody:'Статус скрыт'},
   };
   const m = M[group + '.' + key]; if(m && m[val]) toast(m[val]);
 }
@@ -122,7 +138,7 @@ function st2AccHtml(a){
   const active = a.id === ST2.activeAcc;
   const removable = !active && a.role !== 'owner';
   return `<div class="st2-acc ${active ? 'st2-acc-on' : ''}" data-acc="${a.id}">
-    <span class="st2-acc-av" style="--h:${st2Hue(a.nick || a.name)}">${esc(st2AccInit(a.name))}</span>
+    <span class="st2-acc-av${a.avatar ? ' has' : ''}" style="--h:${st2Hue(a.nick || a.name)}${a.avatar ? ';background-image:url(' + a.avatar + ')' : ''}">${a.avatar ? '' : esc(st2AccInit(a.name))}</span>
     <div class="st2-acc-b">
       <b>${esc(a.name)}${vBadge ? vBadge(a.name) : ''}</b>
       <small>@${esc(a.nick)} · ${esc(a.tier || 'FREE')}</small>
@@ -165,6 +181,7 @@ function st2Render(){
     <div class="st2-card" id="st2AccList">
       ${ST2.accounts.map(st2AccHtml).join('')}
       <button class="prow st2-add-acc" onclick="st2AddAccount()">${I('plus')} Добавить аккаунт<span class="chev">${I('chev')}</span></button>
+      <button class="prow st2-logout-acc" onclick="st2LogoutAccount()">${I('logout')} Выйти из аккаунта<span class="chev">${I('chev')}</span></button>
     </div>
   </div>
   <div class="st2-sec">
@@ -189,15 +206,20 @@ function st2Render(){
     <div class="st2-card">
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('send')} Кто может писать</span>
-        ${st2Seg('priv','write',[['all','Все'],['contacts','Контакты']])}</div>
+        ${st2Seg('priv','write',[['all','Все'],['following','Подписки'],['nobody','Никто']])}</div>
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('phone')} Кто видит телефон</span>
         ${st2Seg('priv','phone',VIS)}</div>
       <div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('photo')} Кто видит фото профиля</span>
         ${st2Seg('priv','photo',VIS)}</div>
+      <div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('star')} Кто видит статус</span>
+        ${st2Seg('priv','status',VIS)}</div>
       <button class="prow" onclick="st2Tgl('priv','online',this)">${I('eye')} Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
       <button class="prow" onclick="st2Tgl('priv','read',this)">${I('check2')} Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
+      <button class="prow" onclick="st2OpenBlocked()">${I('st2-ban')} Чёрный список
+        <span class="st2-val" id="st2BlockedVal">${ST2.blocked.length ? ST2.blocked.length + (ST2.blocked.length===1?' человек':(ST2.blocked.length<5?' человека':' человек')) : 'пусто'}</span><span class="chev">${I('chev')}</span></button>
     </div>
   </div>
   <div class="st2-sec">
@@ -379,8 +401,7 @@ function st2SwitchAccount(id){
   st2SyncActiveFromProfile();          /* сохранить текущий стейт перед уходом */
   ST2.activeAcc = id; ST2.nick = a.nick;
   if(typeof PROFILE !== 'undefined'){
-    PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
-    if(a.bio !== undefined) PROFILE.bio = a.bio;
+    st2ApplyAccToProfile(a);
     if(typeof renderMyProfile === 'function') renderMyProfile();
   }
   st2Save();
@@ -658,6 +679,306 @@ function st2DoDelete(){
   setTimeout(()=> location.reload(), 650); /* oko-auth стёрт -> загрузка на экран входа */
 }
 
+/* ================= ПРОФИЛЬ: аватар + обложка (реальная загрузка, canvas-сжатие, персист) ================= */
+/* хранилище — в PROFILE.avatar / PROFILE.cover (dataURL) + per-account в ST2.accounts.
+   Единый источник аккаунтов — ST2, поэтому фото переключается вместе с аккаунтом. */
+
+/* cover-fit сжатие файла в dataURL нужного размера */
+function st2FitImage(file, cw, ch, quality, cb){
+  if(!file || !/^image\//.test(file.type)){ toast('Нужен файл изображения'); return; }
+  const rd = new FileReader();
+  rd.onload = function(){
+    const img = new Image();
+    img.onload = function(){
+      const sw = img.naturalWidth, sh = img.naturalHeight;
+      if(!sw || !sh){ toast('Пустое изображение'); return; }
+      let cv;
+      try{
+        cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        const ctx = cv.getContext('2d');
+        const scale = Math.max(cw / sw, ch / sh);          /* cover-fit */
+        const dw = sw * scale, dh = sh * scale;
+        ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+        cb(cv.toDataURL('image/jpeg', quality));
+      }catch(e){ toast('Не удалось обработать фото'); }
+    };
+    img.onerror = function(){ toast('Не удалось открыть изображение'); };
+    img.src = rd.result;
+  };
+  rd.onerror = function(){ toast('Ошибка чтения файла'); };
+  rd.readAsDataURL(file);
+}
+/* системный выбор файла (переиспользуемый скрытый input) */
+let _st2FileCb = null;
+function st2PickFile(cb){
+  _st2FileCb = cb;
+  let inp = document.getElementById('st2FileInput');
+  if(!inp){
+    inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'st2FileInput'; inp.style.display = 'none';
+    inp.addEventListener('change', function(){
+      const f = inp.files && inp.files[0]; inp.value = '';
+      if(f && _st2FileCb) _st2FileCb(f);
+    });
+    document.body.appendChild(inp);
+  }
+  inp.click();
+}
+
+/* аватар */
+function st2SetAvatar(){
+  st2PickFile(f => st2FitImage(f, 512, 512, 0.84, url => {
+    if(typeof PROFILE !== 'undefined') PROFILE.avatar = url;
+    st2SyncActiveFromProfile(); st2Save();
+    st2PaintEditAva(); st2PaintProfile();
+    toast('Фото профиля обновлено');
+  }));
+}
+function st2RemoveAvatar(){
+  if(typeof PROFILE !== 'undefined') PROFILE.avatar = null;
+  st2SyncActiveFromProfile(); st2Save();
+  st2PaintEditAva(); st2PaintProfile();
+  toast('Фото профиля удалено');
+}
+function st2AvatarMenu(){
+  const has = typeof PROFILE !== 'undefined' && !!PROFILE.avatar;
+  showPopup({
+    ico:'camera', title:'Фото профиля',
+    body:'Загрузите фото с устройства — оно сожмётся и сохранится на этом устройстве. Фото привязано к активному аккаунту.',
+    actions: has
+      ? [{label:'Загрузить новое', onclick: st2SetAvatar}, {label:'Удалить фото', ghost:true, onclick: st2RemoveAvatar}]
+      : [{label:'Загрузить фото', onclick: st2SetAvatar}, {label:'Отмена', ghost:true}],
+  });
+}
+/* обложка */
+function st2SetCover(){
+  st2PickFile(f => st2FitImage(f, 1080, 420, 0.82, url => {
+    if(typeof PROFILE !== 'undefined') PROFILE.cover = url;
+    st2SyncActiveFromProfile(); st2Save();
+    st2PaintEditCover(); st2PaintProfile();
+    toast('Обложка обновлена');
+  }));
+}
+function st2RemoveCover(){
+  if(typeof PROFILE !== 'undefined') PROFILE.cover = null;
+  st2SyncActiveFromProfile(); st2Save();
+  st2PaintEditCover(); st2PaintProfile();
+  toast('Обложка удалена');
+}
+function st2CoverMenu(){
+  const has = typeof PROFILE !== 'undefined' && !!PROFILE.cover;
+  showPopup({
+    ico:'st2-image', title:'Обложка профиля',
+    body:'Широкое фото-полотно в шапке профиля. Загрузите изображение — оно сожмётся и сохранится локально.',
+    actions: has
+      ? [{label:'Загрузить новую', onclick: st2SetCover}, {label:'Убрать обложку', ghost:true, onclick: st2RemoveCover}]
+      : [{label:'Загрузить обложку', onclick: st2SetCover}, {label:'Отмена', ghost:true}],
+  });
+}
+
+/* ---------- покраска аватаров/обложек ---------- */
+function st2PaintAvaEl(el, url, letter){
+  if(!el) return;
+  if(url){
+    el.style.backgroundImage = 'url("' + url + '")';
+    el.textContent = '';
+    el.classList.add('st2-has-photo');
+  } else {
+    el.style.backgroundImage = '';
+    el.classList.remove('st2-has-photo');
+    if(letter !== undefined && letter !== null) el.textContent = letter;
+  }
+}
+function st2ProfLetter(){ return (typeof PROFILE !== 'undefined' && PROFILE.name ? PROFILE.name[0] : 'O').toUpperCase(); }
+/* профиль (ядро): #profAva + собственная обложка над profile-top */
+function st2PaintProfile(){
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null;
+  st2PaintAvaEl(document.getElementById('profAva'), url, st2ProfLetter());
+  st2PaintMyCover();
+}
+function st2PaintMyCover(){
+  const pad = document.querySelector('#screen-profile .pad');
+  if(!pad) return;
+  const top = pad.querySelector('.profile-top');
+  if(!top) return;
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.cover) || null;
+  let cov = document.getElementById('st2MyCover');
+  if(!cov){
+    cov = document.createElement('button');
+    cov.id = 'st2MyCover'; cov.className = 'st2-mycover';
+    cov.setAttribute('aria-label', 'Обложка профиля');
+    cov.onclick = st2CoverMenu;
+    pad.insertBefore(cov, top);
+  }
+  cov.classList.toggle('has', !!url);
+  cov.style.backgroundImage = url ? 'url("' + url + '")' : '';
+  cov.innerHTML = `<span class="st2-mycover-grid"></span>
+    <span class="st2-mycover-mark">${I('logo')}</span>
+    <span class="st2-mycover-edit">${I('camera')}${url ? 'Сменить обложку' : 'Добавить обложку'}</span>`;
+}
+/* экран редактирования (ядро #editProfile) */
+function st2PaintEditAva(){
+  st2PaintAvaEl(document.getElementById('epAva'), (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null, st2ProfLetter());
+}
+function st2PaintEditCover(){
+  const el = document.getElementById('st2EpCover');
+  if(!el) return;
+  const url = (typeof PROFILE !== 'undefined' && PROFILE.cover) || null;
+  el.classList.toggle('has', !!url);
+  el.style.backgroundImage = url ? 'url("' + url + '")' : '';
+  el.innerHTML = `<span class="ep-cover-mark">${I('logo')}</span>
+    <span class="ep-cover-hint">${I('st2-image')}${url ? 'Сменить обложку' : 'Добавить обложку'}</span>`;
+}
+/* рерайринг кнопок фото ядра + инъекция контрола обложки в #editProfile (один раз) */
+function st2WireEditProfile(){
+  const avBtn = document.querySelector('#editProfile .ep-avabtn');
+  const avLink = document.querySelector('#editProfile .ep-photolink');
+  if(avBtn){ avBtn.removeAttribute('onclick'); avBtn.onclick = st2AvatarMenu; }
+  if(avLink){ avLink.removeAttribute('onclick'); avLink.onclick = st2AvatarMenu; avLink.textContent = 'Изменить фото'; }
+  if(avLink && !document.getElementById('st2EpCover')){
+    const lab = document.createElement('label'); lab.className = 'ep-lab'; lab.textContent = 'Обложка профиля'; lab.id = 'st2EpCoverLab';
+    const cov = document.createElement('button'); cov.type = 'button'; cov.className = 'ep-cover'; cov.id = 'st2EpCover';
+    cov.onclick = st2CoverMenu;
+    avLink.insertAdjacentElement('afterend', cov);
+    avLink.insertAdjacentElement('afterend', lab);
+  }
+}
+
+/* ================= ЧЁРНЫЙ СПИСОК / БЛОКИРОВКИ (реальный персист в oko-settings2) ================= */
+function st2IsBlocked(name){ return ST2.blocked.indexOf(name) > -1; }
+function st2Block(name){
+  if(!name || st2IsBlocked(name)) return false;
+  ST2.blocked.push(name); st2Save();
+  try{ if(typeof psSetFollow === 'function') psSetFollow(name, false); }catch(e){}  /* блок = отписка */
+  try{ if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined') renderFeed(curFeedKind); }catch(e){}
+  st2SyncBlockedVal();
+  return true;
+}
+function st2Unblock(name){
+  const i = ST2.blocked.indexOf(name);
+  if(i < 0) return false;
+  ST2.blocked.splice(i, 1); st2Save();
+  try{ if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined') renderFeed(curFeedKind); }catch(e){}
+  st2SyncBlockedVal();
+  return true;
+}
+function st2SyncBlockedVal(){
+  const el = document.getElementById('st2BlockedVal');
+  if(el) el.textContent = ST2.blocked.length
+    ? ST2.blocked.length + (ST2.blocked.length === 1 ? ' человек' : (ST2.blocked.length < 5 ? ' человека' : ' человек'))
+    : 'пусто';
+}
+/* убрать посты заблокированных из ленты */
+function st2FilterBlockedFeed(){
+  if(!ST2.blocked.length) return;
+  const list = document.getElementById('feedList');
+  if(!list) return;
+  list.querySelectorAll('article.post').forEach(art => {
+    const b = art.querySelector('.post-more');
+    const m = b && (b.getAttribute('onclick') || '').match(/openPostMenu\((\d+)/);
+    const p = (m && typeof postById === 'function') ? postById(+m[1]) : null;
+    if(p && p.name && st2IsBlocked(p.name)) art.remove();
+  });
+}
+/* кандидаты на блокировку — реальные люди приложения (из profile-social пула) */
+function st2BlockablePeople(){
+  let pool = [];
+  try{ if(typeof psPeoplePool === 'function') pool = psPeoplePool(); }catch(e){}
+  return pool.filter(p => p && p.name && !st2IsBlocked(p.name));
+}
+function st2BlAva(p){
+  if(p && p.avaIcon) return I(p.avaIcon);
+  if(p && p.ava && p.ava.length <= 3) return esc(p.ava);
+  return esc(st2AccInit((p && p.name) || 'U'));
+}
+function st2UnblockUI(enc){ const n = decodeURIComponent(enc); if(st2Unblock(n)){ st2RenderBlocked(); toast('Разблокирован: ' + n); } }
+function st2BlockUI(enc){ const n = decodeURIComponent(enc); if(st2Block(n)){ st2RenderBlocked(); toast('Заблокирован: ' + n); } }
+function st2RenderBlocked(){
+  const wrap = document.getElementById('st2BlockedBody');
+  if(!wrap) return;
+  const blocked = ST2.blocked.slice();
+  const pool = st2BlockablePeople();
+  const byName = {}; pool.forEach(p => byName[p.name] = p);
+  const suggest = pool.slice(0, 16);
+  const blRow = name => {
+    const p = byName[name] || {name};
+    return `<div class="st2-bl-row">
+      <span class="st2-bl-av">${st2BlAva(p)}</span>
+      <div class="st2-bl-b"><b>${esc(name)}</b><small>в чёрном списке</small></div>
+      <button class="st2-bl-un" onclick="st2UnblockUI('${encodeURIComponent(name)}')">Разблокировать</button>
+    </div>`;
+  };
+  const sgRow = p =>
+    `<div class="st2-bl-row st2-bl-sg">
+      <span class="st2-bl-av">${st2BlAva(p)}</span>
+      <div class="st2-bl-b"><b>${esc(p.name)}</b><small>@${esc(p.nick || st2AccInit(p.name).toLowerCase())}</small></div>
+      <button class="st2-bl-do" onclick="st2BlockUI('${encodeURIComponent(p.name)}')">${I('st2-ban')} Заблокировать</button>
+    </div>`;
+  wrap.innerHTML =
+    (blocked.length
+      ? `<div class="st2-bl-cap">В чёрном списке · ${blocked.length}</div><div class="st2-bl-list">${blocked.map(blRow).join('')}</div>`
+      : `<div class="st2-bl-empty">${I('st2-ban')}<p>Чёрный список пуст</p><span>Заблокированные не смогут вам писать и исчезнут из вашей ленты</span></div>`) +
+    `<button class="st2-bl-add" onclick="st2BlockManual()">${I('plus')} Заблокировать по @нику</button>` +
+    (suggest.length ? `<div class="st2-bl-cap" style="margin-top:6px">Люди из приложения</div><div class="st2-bl-list">${suggest.map(sgRow).join('')}</div>` : '');
+}
+function st2BlockManual(err){
+  st2Prompt({
+    ico:'st2-ban', title:'Заблокировать', err: err,
+    note:'Введите имя или @ник — пользователь попадёт в чёрный список.',
+    ph:'@nickname или Имя', saveLabel:'Заблокировать', danger:true,
+    save(v){
+      v = v.replace(/^@/, '').trim();
+      if(v.length < 2) return st2BlockManual('Слишком короткое имя');
+      /* попробуем сопоставить с реальным человеком из пула по нику/имени */
+      let match = v;
+      try{
+        const pool = (typeof psPeoplePool === 'function') ? psPeoplePool() : [];
+        const hit = pool.find(p => (p.nick || '').toLowerCase() === v.toLowerCase() || p.name.toLowerCase() === v.toLowerCase());
+        if(hit) match = hit.name;
+      }catch(e){}
+      if(st2IsBlocked(match)) return st2BlockManual('Уже в чёрном списке');
+      st2Block(match); st2RenderBlocked(); toast('Заблокирован: ' + match);
+    },
+  });
+}
+function st2OpenBlocked(){
+  st2RenderBlocked();
+  try{ document.body.classList.add('st2-over'); }catch(e){}   /* поднять шит над #st2View */
+  if(typeof openSheet === 'function') openSheet('st2-blocked');
+}
+
+/* ================= ВЫХОД ИЗ АККАУНТА ================= */
+function st2LogoutAccount(){
+  const others = ST2.accounts.filter(a => a.id !== ST2.activeAcc);
+  const cur = st2ActiveAcc();
+  showPopup({
+    ico:'logout', title:'Выйти из аккаунта?',
+    body: others.length
+      ? `Вы выйдете из <b>${esc(cur ? cur.name : 'текущего аккаунта')}</b> на этом устройстве и переключитесь на «${esc(others[0].name)}».`
+      : 'Вы выйдете из аккаунта и вернётесь на экран входа.',
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Выйти', onclick: st2DoLogoutAccount},
+    ],
+  });
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(ok) ok.classList.add('st2-btn-danger');
+}
+function st2DoLogoutAccount(){
+  const goneId = ST2.activeAcc;
+  const others = ST2.accounts.filter(a => a.id !== goneId);
+  if(!others.length){
+    if(typeof doLogout === 'function') doLogout();
+    else { try{ localStorage.removeItem('oko-auth'); }catch(e){} location.reload(); }
+    return;
+  }
+  ST2.accounts = ST2.accounts.filter(a => a.id !== goneId);
+  st2Save();
+  st2SwitchAccount(others[0].id);   /* применит профиль + renderMyProfile + persist + toast */
+  st2Render();
+  toast('Вы вышли из аккаунта');
+}
+
 /* ---------- свои SVG-иконки (штрих ядра: stroke 7, округлые концы) ---------- */
 function st2AddIcons(){
   const defs = document.querySelector('svg defs');
@@ -692,6 +1013,13 @@ function st2AddIcons(){
   /* ключ (смена пароля) */
   mk('i-st2-key', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
     '<circle cx="35" cy="37" r="17"/><path d="M47 49 L86 88"/><path d="M76 78 l9 -9"/><path d="M65 67 l9 -9"/></g>');
+  /* запрет / бан (чёрный список) */
+  mk('i-st2-ban', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="38"/><path d="M24 24 L76 76"/></g>');
+  /* картинка / обложка */
+  mk('i-st2-image', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="14" y="20" width="72" height="60" rx="9"/><circle cx="36" cy="41" r="7"/>' +
+    '<path d="M20 74 L42 52 L58 66 L72 54 L84 64"/></g>');
 }
 
 /* ---------- строка «Настройки» в профиле ---------- */
@@ -712,6 +1040,48 @@ function st2InsertRow(){
 (function st2Init(){
   st2AddIcons();
   st2InsertRow();
+  st2WireEditProfile();
+
+  /* chain renderMyProfile: покрасить свой аватар + собственную обложку (внешний слой) */
+  if(typeof renderMyProfile === 'function'){
+    const _st2PrevRMP = renderMyProfile;
+    renderMyProfile = function(){
+      _st2PrevRMP.apply(this, arguments);
+      try{ st2PaintProfile(); }catch(e){}
+    };
+  }
+  /* chain openEdit: показать текущее фото/обложку в редакторе */
+  if(typeof openEdit === 'function'){
+    const _st2PrevOpenEdit = openEdit;
+    openEdit = function(){
+      _st2PrevOpenEdit.apply(this, arguments);
+      try{ st2WireEditProfile(); st2PaintEditAva(); st2PaintEditCover(); }catch(e){}
+    };
+  }
+  /* chain saveProfile: персист профиля (имя/ник/био/статус/фото/обложка) в активный аккаунт */
+  if(typeof saveProfile === 'function'){
+    const _st2PrevSaveProfile = saveProfile;
+    saveProfile = function(){
+      _st2PrevSaveProfile.apply(this, arguments);   /* ядро уже обновило PROFILE + вызвало renderMyProfile */
+      try{ st2SyncActiveFromProfile(); st2Save(); st2PaintProfile(); }catch(e){}
+    };
+  }
+  /* chain renderFeed: убрать посты заблокированных (внешний слой — после декора profile-social) */
+  if(typeof renderFeed === 'function'){
+    const _st2PrevRenderFeed = renderFeed;
+    renderFeed = function(){
+      _st2PrevRenderFeed.apply(this, arguments);
+      try{ st2FilterBlockedFeed(); }catch(e){}
+    };
+  }
+  /* chain closeSheet: снять подъём шита чёрного списка над #st2View */
+  if(typeof closeSheet === 'function'){
+    const _st2PrevCloseSheet = closeSheet;
+    closeSheet = function(){
+      _st2PrevCloseSheet.apply(this, arguments);
+      try{ document.body.classList.remove('st2-over'); }catch(e){}
+    };
+  }
 
   /* аккаунты: сид из PROFILE при первом запуске; иначе — применить активный аккаунт */
   if(typeof PROFILE !== 'undefined'){
@@ -721,15 +1091,15 @@ function st2InsertRow(){
       if(typeof renderMyProfile === 'function') renderMyProfile();
     }
     if(!ST2.accounts.length){
-      ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio}];
+      ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio,
+                       status:PROFILE.status||null, avatar:PROFILE.avatar||null, cover:PROFILE.cover||null}];
       ST2.activeAcc = 'owner';
       st2Save();
     } else {
       if(!ST2.activeAcc || !ST2.accounts.some(a => a.id === ST2.activeAcc)) ST2.activeAcc = ST2.accounts[0].id;
       const a = st2ActiveAcc();
-      if(a && (PROFILE.nick !== a.nick || PROFILE.name !== a.name)){
-        PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
-        if(a.bio !== undefined) PROFILE.bio = a.bio;
+      if(a){
+        st2ApplyAccToProfile(a);
         ST2.nick = a.nick;
         if(typeof renderMyProfile === 'function') renderMyProfile();
         st2Save();
@@ -769,4 +1139,7 @@ function st2InsertRow(){
       if(v && v.classList.contains('open')) st2Render();
     });
   }
+
+  /* стартовая покраска аватара/обложки (ядро могло отрисовать профиль до установки чейна) */
+  try{ st2PaintProfile(); }catch(e){}
 })();

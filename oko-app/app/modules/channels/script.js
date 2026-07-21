@@ -50,7 +50,7 @@ function chSeed(){
         {txt:'Правило, которое изменило мой контент: снимай не «что умеешь», а «что у аудитории болит».', likes:97, views:3040, when:'вчера'},
       ]},
     { id:'ch-own-2', name:'Клуб роста · PRO', desc:'Закрытый платный клуб: ежедневные задания, живые разборы, чат участников и доступ к базе шаблонов. Первые 100 участников — по спец-цене.',
-      icon:'crown', bg:5, type:'paid', price:299, verified:true, subs:342, reactions:true, discussions:true,
+      icon:'crown', bg:5, kind:'club', access:'closed', type:'paid', price:299, verified:true, subs:342, reactions:true, discussions:true,
       admins:[{name:'Игорь В.',nick:'igor_v'},{name:'Алина Р.',nick:'alina_r'}], gross:61200,
       members:chMockMembers(9), black:[{name:'Спам-бот 24',nick:'spam24'}],
       posts:[
@@ -103,16 +103,36 @@ function chSeed(){
       ],
       posts:[]},
     { id:'ch-disc-4', name:'OKO Новости', desc:'Официальный канал обновлений OKO: релизы, фичи, розыгрыши. Бесплатно для всех.',
-      icon:'megaphone', bg:6, type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда OKO', ownerNick:'okonews',
+      icon:'megaphone', bg:6, kind:'channel', access:'open', type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда OKO', ownerNick:'okonews',
       posts:[
         {txt:'Вышли платные каналы и курсы: создавай, продавай, зарабатывай. Комиссия OKO всего 10%.', likes:1240, views:41000, when:'1 ч', media:'circle-play'},
         {txt:'Розыгрыш PRO-подписки среди активных авторов недели. Условия внутри.', likes:820, views:33000, when:'вчера'},
       ]},
+    { id:'ch-disc-5', name:'Инсайдеры OKO', desc:'Закрытый бесплатный канал для активных участников: ранний доступ к новым фичам, закрытые созвоны с командой и прямое влияние на дорожную карту. Вступление — по заявке, бесплатно.',
+      icon:'star', bg:2, kind:'channel', access:'closed', type:'free', price:0, verified:true, subs:1870, reactions:true, discussions:true, owner:'Команда OKO', ownerNick:'oko_insiders',
+      posts:[
+        {txt:'Открыли ранний доступ к рекламному кабинету для инсайдеров. Тестируйте и пишите фидбек в обсуждениях.', likes:0, views:0, when:'2 ч', media:'photo'},
+        {txt:'Созвон с командой в пятницу 19:00 МСК. Разберём дорожную карту и ответим на вопросы.', likes:0, views:0, when:'вчера'},
+      ]},
   ];
-  return { v:1, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
+  return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
 CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{};
+/* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
+(function chMigrate(){
+  try{
+    (CH.mine||[]).forEach(chNormalize);
+    (CH.disc||[]).forEach(chNormalize);
+    if((CH.v||1) < 2){
+      // добавляем витринные примеры новых осей, если их ещё нет
+      const seed = chSeed();
+      (seed.disc||[]).forEach(s=>{ if(!CH.disc.some(x=>x.id===s.id)) CH.disc.push(chNormalize(s)); });
+      CH.v = 2;
+    }
+    chSave();
+  }catch(e){}
+})();
 
 function chMockMembers(n){
   const pool = [
@@ -130,21 +150,58 @@ function chEsc(t){ return (typeof esc==='function') ? esc(t) : String(t==null?''
 function chFmtN(n){ return (typeof fmtN==='function') ? fmtN(n) : (n>=1000?(n/1000).toFixed(1).replace('.0','')+'к':n); }
 function chChannel(id){ return CH.mine.find(c=>c.id===id) || CH.disc.find(c=>c.id===id) || null; }
 function chIsMine(c){ return CH.mine.some(x=>x.id===c.id); }
-function chIsSubbed(c){ return chIsMine(c) || c.type==='free' || !!CH.sub[c.id]; }
-function chTypeLabel(t){ return t==='paid'?'Платный':t==='course'?'Курс':'Обычный'; }
+
+/* ---- две независимые оси: ДОСТУП (открытый/закрытый) + ОПЛАТА (бесплатно/платно) ----
+   плюс вид продукта kind: channel | club | course. gated = нужна витрина для не-участника. */
+function chNormalize(c){
+  if(!c) return c;
+  if(c.kind==null) c.kind = (c.type==='course') ? 'course' : (c.club ? 'club' : 'channel');
+  if(c.price==null) c.price = (c.type==='free') ? 0 : (c.price||0);
+  if(c.access==null) c.access = (c.type==='paid' || c.type==='course' || c.kind!=='channel' || (c.price||0)>0) ? 'closed' : 'open';
+  if(c.reactions==null) c.reactions = true;
+  if(c.discussions==null) c.discussions = (c.kind!=='course');
+  if(c.kind==='course' && !c.lessons) c.lessons = [{id:'l1',title:'Вводный урок',dur:'5:00'}];
+  // legacy-поле type держим синхронным — вдруг читает внешний код
+  c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
+  return c;
+}
+function chGated(c){ return !!c && (c.kind==='course' || c.access==='closed' || (c.price||0)>0); }
+function chPaid(c){ return (c.price||0)>0; }
+function chKindLabel(c){ return c.kind==='course'?'Курс':c.kind==='club'?'Клуб':'Канал'; }
+function chPriceUnit(c){ return c.kind==='course'?'':'/мес'; }
+function chIsSubbed(c){ return chIsMine(c) || !!CH.sub[c.id] || !chGated(c); }
+/* краткая подпись типа: «Закрытый · Платно 299 ₽/мес» */
+function chTypeLabel(t){ return t==='paid'?'Платный':t==='course'?'Курс':'Обычный'; } // legacy
+function chAccessLine(c){
+  const parts = [c.access==='closed'?'Закрытый':'Открытый'];
+  if(c.kind==='course') parts.push(chPaid(c)?c.price+' ₽':'бесплатно');
+  else parts.push(chPaid(c)?('Платно '+c.price+' ₽'+chPriceUnit(c)):'Бесплатно');
+  return parts.join(' · ');
+}
+/* SVG-бейджи для карточки/витрины */
+function chBadges(c){
+  let h='';
+  if(c.access==='closed') h+=`<span class="ch-tag closed">${chI('lock')}Закрытый</span>`;
+  if(c.kind==='course') h+=`<span class="ch-tag course">${chI('circle-play')}Курс</span>`;
+  else if(c.kind==='club') h+=`<span class="ch-tag club">${chI('crown')}Клуб</span>`;
+  if(chPaid(c)) h+=`<span class="ch-tag paid">${c.price} ₽${chPriceUnit(c)}</span>`;
+  else if(c.access==='closed') h+=`<span class="ch-tag free">Бесплатно</span>`;
+  return h;
+}
 function chAvStyle(c){ return `background:${CH_BGS[c.bg||0]};`; }
 function chAvColor(c){ return CH_AV_BGS[c.bg||0]==='#0a0a0a' ? 'color:#9AFF00' : ''; }
-function chAvInner(c,cls){
+function chAvInner(c,cls,lock){
+  const lk = lock ? `<span class="ch-avlock">${chI('lock')}</span>` : '';
   if(c.avatar){
-    return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}"></div>`;
+    return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}">${lk}</div>`;
   }
   const style = `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}`;
   const dark = (CH_AV_BGS[c.bg||0]==='#0a0a0a');
   const content = c.icon ? chI(c.icon) : chEsc((c.name[0]||'K').toUpperCase());
-  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}</div>`;
+  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}${lk}</div>`;
 }
 function chCourseProg(c){
-  if(c.type!=='course' || !c.lessons) return 0;
+  if(c.kind!=='course' || !c.lessons) return 0;
   const done = (CH.prog[c.id]||[]).length;
   return Math.round(done/c.lessons.length*100);
 }
@@ -162,10 +219,10 @@ function chPushToFeed(c, post){
   post._feedId = id;
   POSTS.rec.unshift({
     id, ava:(c.name[0]||'K').toUpperCase(), avaIcon:c.icon||null, avaImg:c.avatar||null,
-    name:c.name, sub:'канал · '+chFmtN(c.subs||0), body:post.txt||'',
+    name:c.name, sub:(c.kind==='club'?'клуб':c.kind==='course'?'курс':'канал')+' · '+chFmtN(c.subs||0), body:post.txt||'',
     media: post.img ? null : (post.media==='circle-play'?'0:30':post.media==='poll'?'опрос':null),
     img: post.img||null, likes:post.likes||0, views:post.views||1,
-    liked:false, saved:false, reposts:0, comments:[], chOrigin:c.id
+    liked:false, saved:false, reposts:0, comments:[], chOrigin:c.id, chKind:c.kind||'channel'
   });
   if(typeof renderFeed==='function' && typeof curFeedKind!=='undefined' && curFeedKind==='rec'){ try{ renderFeed('rec'); }catch(e){} }
 }
@@ -260,25 +317,30 @@ function chPageList(){
   const subbed = CH.disc.filter(c=>CH.sub[c.id]);
   const discover = CH.disc.filter(c=>!CH.sub[c.id]);
   const card = (c,ctx)=>{
-    const prog = c.type==='course' ? chCourseProg(c) : null;
-    const sub = c.type==='course'
-      ? `${chI('circle-play')} ${c.lessons?c.lessons.length:0} уроков${prog!=null&&chIsSubbed(c)?` · ${prog}%`:''}`
+    const subbed = chIsSubbed(c);
+    const prog = c.kind==='course' ? chCourseProg(c) : null;
+    const sub = c.kind==='course'
+      ? `${chI('circle-play')} ${c.lessons?c.lessons.length:0} уроков${prog!=null&&subbed?` · ${prog}%`:''}`
       : `${chI('users')} ${chFmtN(c.subs||0)} подписчиков`;
+    const locked = chGated(c) && !subbed;
     let right = '';
-    if(ctx==='mine') right = `<span class="ch-tag ${c.type}">${chTypeLabel(c.type)}</span>`;
-    else if(!chIsSubbed(c)) right = `<span class="ch-price-pill">${c.price} ₽${c.type==='paid'?'/мес':''}</span>`;
-    else right = `<span class="ch-tag free">${chI('check')} доступ</span>`;
+    if(ctx!=='mine'){
+      if(subbed) right = `<span class="ch-tag free">${chI('check')}доступ</span>`;
+      else if(chPaid(c)) right = `<span class="ch-price-pill">${c.price} ₽${chPriceUnit(c)}</span>`;
+      else if(c.access==='closed') right = `<span class="ch-price-pill dim-pill">${chI('lock')}заявка</span>`;
+    }
     return `<div class="ch-card" onclick="chGo('channel','${c.id}')">
-      ${chAvInner(c,'')}
+      ${chAvInner(c, locked?'locked':'', locked)}
       <div class="ch-cbody">
         <div class="ch-cname"><span style="overflow:hidden;text-overflow:ellipsis">${chEsc(c.name)}</span>${chBadge(c)}</div>
         <div class="ch-csub">${sub}</div>
+        <div class="ch-cbadges">${chBadges(c)}</div>
       </div>
       ${right}</div>`;
   };
   let html = `<button class="ch-create-cta" onclick="chGo('create')">
       <span class="ch-cc-ic">${chI('plus')}</span>
-      <span><b>Создать канал</b><small>Обычный, платный или видео-курс — с монетизацией</small></span>
+      <span><b>Создать канал</b><small>Канал, клуб или видео-курс · открытый/закрытый, платный/бесплатный</small></span>
     </button>`;
   html += `<div class="ch-sec-h">${chI('crown')} Мои каналы</div>`;
   html += CH.mine.length ? CH.mine.map(c=>card(c,'mine')).join('')
@@ -293,65 +355,96 @@ function chPageList(){
 }
 
 /* ================= СТРАНИЦА: СОЗДАНИЕ ================= */
-const chDraft = {type:'free', name:'', desc:'', price:299, bg:0, icon:'megaphone', useIcon:false, letter:''};
+const chDraft = {kind:'channel', access:'open', name:'', desc:'', price:0, bg:0, chatBg:null, icon:'megaphone', useIcon:false};
 function chPageCreate(){
-  const types = [
-    ['free','megaphone','Обычный канал','Публикуй посты для подписчиков бесплатно — как в Telegram.'],
-    ['paid','lock','Платный канал','Доступ по подписке N ₽/мес. Комиссия OKO 10%, остальное — тебе.'],
-    ['course','circle-play','Видео-курс','Уроки внутри канала + прогресс. Продавай за фикс-цену, комиссия 10%.'],
+  const d = chDraft;
+  const kinds = [
+    ['channel','megaphone','Канал','Лента постов для аудитории — как в Telegram/Instagram.'],
+    ['club','crown','Клуб','Закрытое комьюнити по подписке: посты, чат и бонусы участникам.'],
+    ['course','circle-play','Видео-курс','Уроки с прогрессом. Продажа за фикс-цену, доступ навсегда.'],
   ];
+  const lockAccess = d.kind==='course';   // курс всегда закрытый
+  const lockPaid = d.kind==='course';     // курс всегда платный
+  const paid = (d.price||0)>0;
+  const kl = chKindLabel(d).toLowerCase();
   const html = `
-    <div class="ch-sec-h">${chI('bolt')} Тип канала</div>
-    <div class="ch-type-grid">${types.map(([t,ic,tt,d])=>`
-      <button class="ch-type-card ${chDraft.type===t?'on':''}" onclick="chPickType('${t}')">
+    <div class="ch-sec-h">${chI('bolt')} Что создаём</div>
+    <div class="ch-type-grid">${kinds.map(([t,ic,tt,ds])=>`
+      <button class="ch-type-card ${d.kind===t?'on':''}" onclick="chPickKind('${t}')">
         <span class="ch-tc-ic">${chI(ic)}</span>
-        <span style="flex:1;min-width:0"><b>${tt}</b><small>${d}</small></span>
+        <span style="flex:1;min-width:0"><b>${tt}</b><small>${ds}</small></span>
         <span class="ch-tc-check">${chI('check')}</span>
       </button>`).join('')}</div>
 
-    <label class="ch-lab">Название канала</label>
-    <input class="ch-input" id="chDName" maxlength="42" placeholder="Например: Клуб роста PRO" value="${chEsc(chDraft.name)}" oninput="chDraft.name=this.value;chSyncCreateBtn()">
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    <div class="ch-choice2${lockAccess?' locked':''}">
+      <button class="ch-ch2 ${d.access==='open'?'on':''}" ${lockAccess?'disabled':''} onclick="chDraftAccess('open')">${chI('globe')}<b>Открытый</b><small>Виден и читается всем</small></button>
+      <button class="ch-ch2 ${d.access==='closed'?'on':''}" ${lockAccess?'disabled':''} onclick="chDraftAccess('closed')">${chI('lock')}<b>Закрытый</b><small>Доступ по подписке/оплате</small></button>
+    </div>
+    ${lockAccess?`<div class="ch-owner-note">Курс всегда закрытый — уроки открываются после покупки.</div>`:''}
 
-    <label class="ch-lab">Описание</label>
-    <textarea class="ch-ta" id="chDDesc" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chDraft.desc=this.value">${chEsc(chDraft.desc)}</textarea>
+    <div class="ch-sec-h">${chI('money')} Оплата</div>
+    <div class="ch-choice2${lockPaid?' locked':''}">
+      <button class="ch-ch2 ${!paid?'on':''}" ${lockPaid?'disabled':''} onclick="chDraftPaid(false)">${chI('check')}<b>Бесплатно</b><small>Без платы за доступ</small></button>
+      <button class="ch-ch2 ${paid?'on':''}" ${lockPaid?'disabled':''} onclick="chDraftPaid(true)">${chI('card')}<b>Платно</b><small>${d.kind==='course'?'Разовая цена':'Подписка ₽/мес'}</small></button>
+    </div>
 
-    <div id="chPriceBlock" style="display:${chDraft.type==='free'?'none':'block'}">
-      <label class="ch-lab">${chDraft.type==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
+    <label class="ch-lab">Название · ${kl}</label>
+    <input class="ch-input" id="chDName" maxlength="42" placeholder="Например: Клуб роста PRO" value="${chEsc(d.name)}" oninput="chDraft.name=this.value;chSyncCreateBtn()">
+
+    <label class="ch-lab">Описание${(d.access==='closed'||paid)?' — видно на витрине':''}</label>
+    <textarea class="ch-ta" id="chDDesc" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chDraft.desc=this.value">${chEsc(d.desc)}</textarea>
+
+    <div id="chPriceBlock" style="display:${paid?'block':'none'}">
+      <label class="ch-lab">${d.kind==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
       <div class="ch-price-row">
-        <input class="ch-input" id="chDPrice" inputmode="numeric" value="${chDraft.price}" oninput="chDraft.price=+this.value.replace(/\\D/g,'')||0;chSyncPriceChips()">
-        <span class="ch-unit">₽${chDraft.type==='paid'?' / мес':''}</span>
+        <input class="ch-input" id="chDPrice" inputmode="numeric" value="${d.price}" oninput="chDraft.price=+this.value.replace(/\\D/g,'')||0;chSyncPriceChips()">
+        <span class="ch-unit">₽${chPriceUnit(d)}</span>
       </div>
       <div class="ch-price-chips" id="chPriceChips">${chPriceChips()}</div>
-      <div class="ch-owner-note">Ты получишь <b id="chNetHint">${chNet(chDraft.price)} ₽</b> с каждой продажи, OKO удержит комиссию 10%.</div>
+      <div class="ch-owner-note">Ты получишь <b id="chNetHint">${chNet(d.price)} ₽</b> с каждой продажи, OKO удержит комиссию 10%.</div>
     </div>
 
-    <label class="ch-lab">Значок канала</label>
+    <label class="ch-lab">Значок</label>
     <div class="ch-letter-row" id="chIconRow">
-      <button class="ch-lt ${!chDraft.useIcon?'on':''}" onclick="chDraft.useIcon=false;chRender()" title="Первая буква названия"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">A</span></button>
-      ${CH_ICONS.map(ic=>`<button class="ch-lt ${chDraft.useIcon&&chDraft.icon===ic?'on':''}" onclick="chDraft.useIcon=true;chDraft.icon='${ic}';chRender()">${chI(ic)}</button>`).join('')}
+      <button class="ch-lt ${!d.useIcon?'on':''}" onclick="chDraft.useIcon=false;chRender()" title="Первая буква названия"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">A</span></button>
+      ${CH_ICONS.map(ic=>`<button class="ch-lt ${d.useIcon&&d.icon===ic?'on':''}" onclick="chDraft.useIcon=true;chDraft.icon='${ic}';chRender()">${chI(ic)}</button>`).join('')}
     </div>
 
-    <label class="ch-lab">Фон канала</label>
-    <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[chDraft.bg]}">
-      <div class="ch-ap-ava" style="background:${CH_AV_BGS[chDraft.bg]||'#9AFF00'}${CH_AV_BGS[chDraft.bg]==='#0a0a0a'?';color:#9AFF00':''}">${chDraft.useIcon?chI(chDraft.icon):(chDraft.name[0]||'K').toUpperCase()}</div>
-      <div class="ch-ap-name">${chEsc(chDraft.name||'Новый канал')}</div>
+    <label class="ch-lab">Обложка / фон</label>
+    <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[d.bg]}">
+      <div class="ch-ap-ava" style="background:${CH_AV_BGS[d.bg]||'#9AFF00'}${CH_AV_BGS[d.bg]==='#0a0a0a'?';color:#9AFF00':''}">${d.useIcon?chI(d.icon):(d.name[0]||'K').toUpperCase()}</div>
+      <div class="ch-ap-name">${chEsc(d.name||'Новый канал')}</div>
     </div>
-    <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${chDraft.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+    <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+
+    <label class="ch-lab">Фон чата <span style="font-weight:400;color:var(--dim)">— за постами канала</span></label>
+    <div class="ch-swatches">
+      <div class="ch-sw ch-sw-none ${d.chatBg==null?'on':''}" onclick="chDraft.chatBg=null;chRender()" title="Без фона">${chI('check2')}</div>
+      ${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.chatBg===i?'on':''}" style="background:${g}" onclick="chDraft.chatBg=${i};chRender()"></div>`).join('')}
+    </div>
 
     <div style="height:18px"></div>
-    <button class="btn" id="chCreateBtn" onclick="chCreateChannel()" ${chDraft.name.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Создать канал</button>
+    <button class="btn" id="chCreateBtn" onclick="chCreateChannel()" ${d.name.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Создать ${kl}</button>
     <div style="height:10px"></div>`;
-  return {title:'Новый канал', html};
+  return {title:'Новый '+kl, html};
 }
 function chPriceChips(){
-  const opts = chDraft.type==='course' ? [490,990,1490,2900] : [99,199,299,499];
+  const opts = chDraft.kind==='course' ? [490,990,1490,2900] : [99,199,299,499];
   return opts.map(p=>`<button class="${chDraft.price===p?'on':''}" onclick="chDraft.price=${p};chSyncPriceChips();chSyncPriceInput()">${p} ₽</button>`).join('');
 }
 function chNet(p){ return Math.round((p||0)*(1-CH_FEE)); }
-window.chPickType = function(t){
-  chDraft.type = t;
-  if(t==='course' && chDraft.price<490) chDraft.price = 990;
-  if(t==='paid' && chDraft.price>499) chDraft.price = 299;
+window.chPickKind = function(k){
+  chDraft.kind = k;
+  if(k==='channel'){ chDraft.access='open'; }
+  else if(k==='club'){ chDraft.access='closed'; if(!chDraft.price) chDraft.price=299; }
+  else if(k==='course'){ chDraft.access='closed'; if(!chDraft.price || chDraft.price<490) chDraft.price=990; }
+  chRender();
+};
+window.chDraftAccess = function(a){ chDraft.access=a; chRender(); };
+window.chDraftPaid = function(p){
+  if(p){ if(!chDraft.price) chDraft.price = chDraft.kind==='course'?990:299; if(chDraft.access==='open') chDraft.access='closed'; }
+  else { chDraft.price = 0; }
   chRender();
 };
 window.chSyncPriceChips = function(){
@@ -366,27 +459,28 @@ window.chSyncCreateBtn = function(){
   const prev = document.querySelector('#chBgPrev .ch-ap-name'); if(prev) prev.textContent = chDraft.name||'Новый канал';
 };
 window.chCreateChannel = function(){
-  const name = chDraft.name.trim();
-  if(!name){ toast('Введите название канала'); return; }
+  const d = chDraft, name = d.name.trim();
+  if(!name){ toast('Введите название'); return; }
   CH.seq = (CH.seq||0)+1;
-  const c = {
-    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:chDraft.desc.trim()||'Добро пожаловать в канал!',
-    icon: chDraft.useIcon ? chDraft.icon : null, bg:chDraft.bg, cover:null, avatar:null,
-    type:chDraft.type, price: chDraft.type==='free'?0:(chDraft.price||0),
-    verified:false, subs:1, reactions:true, discussions:chDraft.type!=='course',
+  const c = chNormalize({
+    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:d.desc.trim()||'Добро пожаловать!',
+    icon: d.useIcon ? d.icon : null, bg:d.bg, chatBg:(d.chatBg==null?null:d.chatBg), cover:null, avatar:null,
+    kind:d.kind, access:d.access, price:(d.price||0),
+    verified:false, subs:1, reactions:true, discussions:d.kind!=='course',
     admins:[], gross:0, members:[{name:PROFILE.name, nick:PROFILE.nick, joined:'сейчас'}], black:[],
     posts:[{txt:'Канал создан. Первый пост задаёт тон — расскажи, что будет полезного для подписчиков.', likes:0, views:1, when:'сейчас'}],
-    lessons: chDraft.type==='course' ? [{id:'l1', title:'Вводный урок', dur:'5:00'}] : undefined,
-  };
+    lessons: d.kind==='course' ? [{id:'l1', title:'Вводный урок', dur:'5:00'}] : undefined,
+  });
   CH.mine.unshift(c);
   chSave();
   chMirrorToChats(c);  // канал появляется и в мессенджере (реальный, как в TG)
   // сброс черновика
-  chDraft.name=''; chDraft.desc=''; chDraft.type='free'; chDraft.price=299; chDraft.bg=0; chDraft.useIcon=false; chDraft.icon='megaphone';
+  chDraft.kind='channel'; chDraft.access='open'; chDraft.name=''; chDraft.desc=''; chDraft.price=0; chDraft.bg=0; chDraft.chatBg=null; chDraft.useIcon=false; chDraft.icon='megaphone';
+  const kl = chKindLabel(c).toLowerCase();
   if(typeof showPopup==='function'){
-    showPopup({ico:'check', title:'Канал создан',
-      body:`«${chEsc(c.name)}» готов. ${c.type!=='free'?'Настрой доступ и приглашай первых подписчиков — они платят, ты зарабатываешь.':'Публикуй посты и расти аудиторию.'}`,
-      actions:[{label:'Открыть канал', onclick:()=>{ chNav=[{page:'list'}]; chGo('channel',c.id); }},{label:'К списку', ghost:true, onclick:()=>{ chNav=[{page:'list'}]; chRender(); }}]});
+    showPopup({ico:'check', title:chKindLabel(c)+' создан',
+      body:`«${chEsc(c.name)}» готов. ${chPaid(c)?'Настрой доступ и приглашай первых подписчиков — они платят, ты зарабатываешь.':c.access==='closed'?'Закрытый доступ включён — принимай заявки на вступление.':'Публикуй посты и расти аудиторию.'}`,
+      actions:[{label:'Открыть', onclick:()=>{ chNav=[{page:'list'}]; chGo('channel',c.id); }},{label:'К списку', ghost:true, onclick:()=>{ chNav=[{page:'list'}]; chRender(); }}]});
   } else { chNav=[{page:'list'}]; chGo('channel',c.id); }
 };
 
@@ -397,7 +491,7 @@ function chMirrorToChats(c){
   CHATS.unshift({
     id:'chan_'+c.id, chId:c.id, name:c.name, kind:'channel', managed:true, writeAll:false,
     ava:(c.name[0]||'K').toUpperCase(), avaIcon: c.icon||null, kindIcon:'megaphone',
-    subs:chFmtN(c.subs||0), nick:c.nick, preview:c.type==='course'?'Видео-курс':c.type==='paid'?'Платный канал':'Канал создан',
+    subs:chFmtN(c.subs||0), nick:c.nick, preview:c.kind==='course'?'Видео-курс':c.kind==='club'?'Закрытый клуб':chPaid(c)?'Платный канал':c.access==='closed'?'Закрытый канал':'Канал создан',
     time:(typeof nowT==='function'?nowT():'сейчас'), unread:0, online:false,
     msgs:[{kind:'sys', body:`Канал «${c.name}» — открой в разделе «Мои каналы» для управления`}],
     openChannel:c.id
@@ -420,45 +514,59 @@ function chPageChannel(id){
       ${chAvInner(c,'big')}
       <div class="ch-cv-name">${chEsc(c.name)}${chBadge(c)}</div>
       <div class="ch-cv-id">@${chEsc(chNick(c))}</div>
-      <div class="ch-cv-sub">${chTypeLabel(c.type)}${c.type!=='free'?` · ${c.price} ₽${c.type==='paid'?'/мес':''}`:''}${mine?' · вы владелец':''}</div>
+      <div class="ch-cv-badges">${chBadges(c)}</div>
+      <div class="ch-cv-sub">${chAccessLine(c)}${mine?' · вы владелец':''}</div>
       <div class="ch-cv-stats">
         <div><b>${chFmtN(c.subs||0)}</b><small>подписчиков</small></div>
-        ${c.type==='course'?`<div><b>${c.lessons?c.lessons.length:0}</b><small>уроков</small></div>`:`<div><b>${c.posts?c.posts.length:0}</b><small>постов</small></div>`}
-        <div><b>${c.reactions?'вкл':'выкл'}</b><small>реакции</small></div>
+        ${c.kind==='course'?`<div><b>${c.lessons?c.lessons.length:0}</b><small>уроков</small></div>`:`<div><b>${c.posts?c.posts.length:0}</b><small>постов</small></div>`}
+        <div><b>${c.access==='closed'?'закрытый':'открытый'}</b><small>доступ</small></div>
       </div>
     </div>`;
 
-  // не подписан на платный/курс → paywall
+  // не участник закрытого/платного/курса → ВИТРИНА (paywall / gate)
   if(!subbed){
-    const benefits = c.type==='course'
+    const paid = chPaid(c);
+    const benefits = c.kind==='course'
       ? ['Полный доступ ко всем '+(c.lessons?c.lessons.length:0)+' видео-урокам','Практика и разбор твоих работ','Доступ навсегда, смотри в своём темпе','Чат поддержки с автором']
-      : ['Все закрытые посты и разборы','Новые материалы каждую неделю','Доступ в чат подписчиков','Отмена подписки в любой момент'];
+      : c.kind==='club'
+      ? ['Закрытые посты, разборы и материалы клуба','Живое комьюнити и чат участников','Еженедельные задания и обратная связь','Отмена подписки в любой момент']
+      : ['Все закрытые посты и разборы','Новые материалы регулярно','Доступ в закрытое обсуждение','Отмена доступа в любой момент'];
+    const gTitle = c.kind==='course'?'Открой доступ к курсу': c.kind==='club'?'Вступи в клуб': 'Закрытый канал';
+    const priceHtml = paid
+      ? `<div class="ch-pw-price">${c.price} ₽<span>${c.kind==='course'?' разово':' / мес'}</span></div>`
+      : `<div class="ch-pw-price">Бесплатно<span> · по заявке</span></div>`;
+    const ctaLabel = c.kind==='course' ? `Купить курс за ${c.price} ₽`
+      : paid ? `Оформить доступ · ${c.price} ₽/мес`
+      : `Оформить доступ бесплатно`;
+    const note = paid
+      ? 'Оплата с кошелька OKO · безопасно · комиссия сервиса 10%'
+      : 'Бесплатное вступление — доступ откроется сразу';
     return {title:c.name, html: cover + `
       <div class="ch-desc">${chEsc(c.desc)}</div>
       <div class="ch-paywall">
         <div class="ch-pw-blur">
-          ${(c.posts&&c.posts.length?c.posts:[{txt:'Закрытый материал для подписчиков…'}]).slice(0,2).map(p=>
+          ${(c.posts&&c.posts.length?c.posts:[{txt:'Закрытый материал для участников…'},{txt:'Здесь публикуются приватные разборы и бонусы.'}]).slice(0,2).map(p=>
             `<div class="ch-post"><div class="ch-post-txt">${chEsc(p.txt)}</div></div>`).join('')}
         </div>
         <div class="ch-pw-body">
           <div class="ch-pw-lock">${chI('lock')}</div>
-          <h3>${c.type==='course'?'Открой доступ к курсу':'Контент только для подписчиков'}</h3>
+          <h3>${gTitle}</h3>
           <p>${chEsc(c.owner?('Автор: '+c.owner):'Оформи доступ, чтобы видеть все материалы')}</p>
-          <div class="ch-pw-price">${c.price} ₽<span>${c.type==='paid'?' / мес':' разово'}</span></div>
+          ${priceHtml}
           <ul class="ch-pw-benefits">${benefits.map(b=>`<li>${chI('check')}<span>${b}</span></li>`).join('')}</ul>
-          <button class="btn" onclick="chSubscribe('${c.id}')">${chI(c.type==='course'?'circle-play':'lock')} ${c.type==='course'?'Купить курс за '+c.price+' ₽':'Подписаться за '+c.price+' ₽/мес'}</button>
-          <p style="font-size:11px;color:var(--dim);margin-top:9px">Оплата с кошелька OKO · безопасно · комиссия сервиса 10%</p>
+          <button class="btn" onclick="chSubscribe('${c.id}')">${chI(c.kind==='course'?'circle-play':paid?'card':'check')} ${ctaLabel}</button>
+          <p style="font-size:11px;color:var(--dim);margin-top:9px">${note}</p>
         </div>
       </div>`};
   }
 
-  // подписан / владелец / бесплатный
+  // участник / владелец / открытый бесплатный
   let html = cover;
   html += `<div class="ch-desc">${chEsc(c.desc)}</div>`;
 
   if(mine){
     html += `<div class="ch-owner-bar">
-      <button class="btn" onclick="chGo('${c.type==='course'?'addLesson':'compose'}','${c.id}')">${chI('plus')} ${c.type==='course'?'Добавить урок':'Опубликовать пост'}</button>
+      <button class="btn" onclick="chGo('${c.kind==='course'?'addLesson':'compose'}','${c.id}')">${chI('plus')} ${c.kind==='course'?'Добавить урок':'Опубликовать пост'}</button>
       <button class="btn ghost" onclick="chGo('manage','${c.id}')">${chI('bolt')} Управление</button>
     </div>`;
   } else {
@@ -466,11 +574,11 @@ function chPageChannel(id){
     const authorNick = c.ownerNick || chNick(c);
     html += `<div class="ch-owner-bar">
       <button class="btn ghost" onclick="chDM('${chEsc(authorName)}','${chEsc(authorNick)}')">${chI('send')} Написать автору</button>
-      ${c.type!=='free'?`<button class="btn ghost" onclick="chUnsub('${c.id}')">${chI('check')} Подписка</button>`:''}
+      ${chGated(c)?`<button class="btn ghost" onclick="chUnsub('${c.id}')">${chI('check')} ${chPaid(c)?'Подписка':'Доступ'}</button>`:''}
     </div>`;
   }
 
-  if(c.type==='course'){
+  if(c.kind==='course'){
     const prog = chCourseProg(c);
     const done = (CH.prog[c.id]||[]).length;
     html += `<div class="ch-prog-top">
@@ -488,9 +596,12 @@ function chPageChannel(id){
       </div>`;
     }).join('');
   } else {
-    html += `<div class="ch-sec-h">${chI('feed')} Посты</div>`;
-    html += (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
+    html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
+    const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
       : `<div class="ch-empty">Постов пока нет</div>`;
+    html += (c.chatBg!=null)
+      ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
+      : posts;
   }
   html += `<div style="height:8px"></div>`;
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
@@ -548,18 +659,27 @@ window.chLike = function(id,i){
 /* ---------- подписка / покупка (деньги) ---------- */
 window.chSubscribe = function(id){
   const c = chChannel(id); if(!c) return;
-  if(c.type==='free'){ CH.sub[id]=1; chSave(); toast('Вы подписались на канал'); chRender(); return; }
+  // бесплатный закрытый (или открытый) → вступление без оплаты
+  if(!chPaid(c)){
+    CH.sub[id]=1; c.subs=(c.subs||0)+1; chSave();
+    if(typeof showPopup==='function'){
+      showPopup({ico:'check', title:'Доступ открыт',
+        body:`Ты вступил в «${chEsc(c.name)}» бесплатно. Все материалы теперь доступны.`,
+        actions:[{label:'Открыть', onclick:()=>chRender()}]});
+    } else toast('Вы вступили в канал');
+    chRender(); return;
+  }
   const price = c.price||0;
   if(typeof walletCharge!=='function'){ toast('Кошелёк недоступен'); return; }
-  const why = (c.type==='course'?'Покупка курса: ':'Подписка на канал: ')+c.name;
+  const why = (c.kind==='course'?'Покупка курса: ':c.kind==='club'?'Подписка на клуб: ':'Подписка на канал: ')+c.name;
   if(!walletCharge(price, why)) return;              // сам покажет «недостаточно средств»
   if(typeof okoEarn==='function') okoEarn(price*CH_FEE, 'Комиссия каналов 10%');
-  CH.sub[id]=1; c.subs=(c.subs||0)+1; chSave();
+  CH.sub[id]=1; c.subs=(c.subs||0)+1; c.gross=(c.gross||0)+price; chSave();
   const net = Math.round(price*(1-CH_FEE));
   if(typeof showPopup==='function'){
-    showPopup({ico:'check', title: c.type==='course'?'Курс открыт':'Подписка оформлена',
-      body:`Списано ${price} ₽ с кошелька. Автору начислено ${net} ₽, комиссия OKO 10% (${Math.round(price*CH_FEE)} ₽). ${c.type==='course'?'Все уроки доступны навсегда.':'Доступ активен на месяц.'}`,
-      actions:[{label:c.type==='course'?'К урокам':'Читать канал', onclick:()=>chRender()}]});
+    showPopup({ico:'check', title: c.kind==='course'?'Курс открыт':'Доступ оформлен',
+      body:`Списано ${price} ₽ с кошелька. Автору начислено ${net} ₽, комиссия OKO 10% (${Math.round(price*CH_FEE)} ₽). ${c.kind==='course'?'Все уроки доступны навсегда.':'Доступ активен на месяц.'}`,
+      actions:[{label:c.kind==='course'?'К урокам':'Открыть', onclick:()=>chRender()}]});
   } else { toast('Доступ открыт'); }
   chRender();
 };
@@ -567,7 +687,7 @@ window.chUnsub = function(id){
   const c = chChannel(id); if(!c) return;
   if(typeof showPopup!=='function'){ delete CH.sub[id]; if(c.subs)c.subs--; chSave(); chRender(); return; }
   showPopup({ico:'flag', title:'Отменить доступ?',
-    body:`Ты потеряешь доступ к «${chEsc(c.name)}». ${c.type==='paid'?'Подписку можно оформить снова в любой момент.':''}`,
+    body:`Ты потеряешь доступ к «${chEsc(c.name)}». ${chPaid(c)?'Подписку можно оформить снова в любой момент.':'Вступить снова можно в любой момент.'}`,
     actions:[{label:'Отменить доступ', onclick:()=>{ delete CH.sub[id]; if(c.subs)c.subs--; chSave(); toast('Доступ отменён'); chRender(); }},{label:'Оставить', ghost:true}]});
 };
 
@@ -721,30 +841,30 @@ function chPageManage(id){
   const c = chChannel(id);
   if(!c || !chIsMine(c)) return {title:'Управление', html:'<div class="ch-empty">Нет доступа</div>'};
   const rows = [
-    ['megaphone','Тип канала', chTypeLabel(c.type)+(c.type!=='free'?` · ${c.price} ₽`:''), `chGo('mType','${id}')`],
+    ['megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`],
     ['comment','Обсуждения', c.discussions?'включены':'выключены', `chGo('mSettings','${id}')`],
     ['heart','Реакции', c.reactions?'включены':'выключены', `chGo('mSettings','${id}')`],
     ['users','Администраторы', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`],
     ['user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`],
     ['poll','Статистика', 'графики', `chGo('mStats','${id}')`],
     ['lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`],
-    ['photo','Фон и аватар', 'оформление', `chGo('mAppear','${id}')`],
+    ['photo','Оформление и фон', 'аватар · обложка · фон', `chGo('mAppear','${id}')`],
     ['gear','Настройки', '', `chGo('mSettings','${id}')`],
   ];
   let html = `<div class="ch-manage-hub">${chAvInner(c,'big')}
     <div style="text-align:center;margin-bottom:16px">
       <div style="font:800 18px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
-      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chTypeLabel(c.type)} · ${chFmtN(c.subs||0)} подписчиков</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chAccessLine(c)} · ${chFmtN(c.subs||0)} подписчиков</div>
     </div></div>`;
 
   // доход владельца (платный/курс)
-  if(c.type!=='free'){
+  if(chPaid(c)){
     const gross = c.gross||0, net = Math.round(gross*(1-CH_FEE)), fee = gross-net;
     html += `<div class="ch-earn">
       <small class="ch-earn-lab">Доход канала к выводу</small>
       <div class="ch-earn-sum">${net.toLocaleString('ru-RU').replace(/,/g,' ')} <span>₽</span></div>
       <div class="ch-earn-calc">
-        <div><span>Продажи ${c.type==='course'?'курса':'подписок'}</span><b>${gross.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
+        <div><span>Продажи ${c.kind==='course'?'курса':'подписок'}</span><b>${gross.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
         <div class="fee"><span>Комиссия OKO 10%</span><b>− ${fee.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
         <div class="total"><span>К выводу</span><b>${net.toLocaleString('ru-RU').replace(/,/g,' ')} ₽</b></div>
       </div>
@@ -789,43 +909,73 @@ window.chDeleteChannel = function(id){
   else act();
 };
 
-/* ---------- Тип канала ---------- */
+/* ---------- Тип, доступ и цена ---------- */
 function chPageMType(id){
   const c = chChannel(id); if(!c) return {title:'Тип', html:''};
-  const opts = [
-    ['free','megaphone','Обычный','Бесплатный доступ для всех подписчиков'],
-    ['paid','lock','Платный','Доступ по подписке за ежемесячную плату'],
-    ['course','circle-play','Курс','Видео-уроки внутри канала за фикс-цену'],
+  const kinds = [
+    ['channel','megaphone','Канал','Лента постов для аудитории'],
+    ['club','crown','Клуб','Закрытое комьюнити по подписке'],
+    ['course','circle-play','Курс','Видео-уроки внутри с прогрессом'],
   ];
+  const lockAccess = c.kind==='course';
+  const lockPaid = c.kind==='course';
+  const paid = chPaid(c);
   const html = `
-    <div class="ch-owner-note" style="margin-bottom:12px">Смена типа мгновенно меняет способ доступа к каналу. При переходе на платный подписчики продолжат платить, новые — по новой цене.</div>
-    <div class="ch-seg">${opts.map(([t,ic,tt,d])=>`
-      <button class="ch-type-card ${c.type===t?'on':''}" onclick="chSetType('${id}','${t}')">
+    <div class="ch-owner-note" style="margin-bottom:10px">Настрой продукт и доступ. Две независимые оси: <b>доступ</b> (открытый/закрытый) и <b>оплата</b> (бесплатно/платно). Изменения применяются сразу.</div>
+
+    <div class="ch-sec-h">${chI('bolt')} Вид</div>
+    <div class="ch-seg">${kinds.map(([t,ic,tt,d])=>`
+      <button class="ch-type-card ${c.kind===t?'on':''}" onclick="chSetKind('${id}','${t}')">
         <span class="ch-tc-ic">${chI(ic)}</span>
         <span style="flex:1;min-width:0"><b>${tt}</b><small>${d}</small></span>
         <span class="ch-tc-check">${chI('check')}</span>
       </button>`).join('')}</div>
-    ${c.type!=='free'?`
-      <label class="ch-lab">${c.type==='course'?'Цена курса':'Цена подписки в месяц'}</label>
+
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    <div class="ch-choice2${lockAccess?' locked':''}">
+      <button class="ch-ch2 ${c.access==='open'?'on':''}" ${lockAccess?'disabled':''} onclick="chSetAccess('${id}','open')">${chI('globe')}<b>Открытый</b><small>Виден и читается всем</small></button>
+      <button class="ch-ch2 ${c.access==='closed'?'on':''}" ${lockAccess?'disabled':''} onclick="chSetAccess('${id}','closed')">${chI('lock')}<b>Закрытый</b><small>Витрина + доступ по заявке/оплате</small></button>
+    </div>
+    ${lockAccess?`<div class="ch-owner-note">Курс всегда закрытый.</div>`:''}
+
+    <div class="ch-sec-h">${chI('money')} Оплата</div>
+    <div class="ch-choice2${lockPaid?' locked':''}">
+      <button class="ch-ch2 ${!paid?'on':''}" ${lockPaid?'disabled':''} onclick="chSetPaid('${id}',false)">${chI('check')}<b>Бесплатно</b><small>Без платы за доступ</small></button>
+      <button class="ch-ch2 ${paid?'on':''}" ${lockPaid?'disabled':''} onclick="chSetPaid('${id}',true)">${chI('card')}<b>Платно</b><small>${c.kind==='course'?'Разовая цена':'Подписка ₽/мес'}</small></button>
+    </div>
+    ${paid?`
+      <label class="ch-lab">${c.kind==='course'?'Цена курса (разовая)':'Цена подписки в месяц'}</label>
       <div class="ch-price-row">
         <input class="ch-input" id="chTPrice" inputmode="numeric" value="${c.price}" oninput="chSetPrice('${id}',this.value)">
-        <span class="ch-unit">₽${c.type==='paid'?' / мес':''}</span>
+        <span class="ch-unit">₽${chPriceUnit(c)}</span>
       </div>
+      <div class="ch-price-chips" id="chPriceChips2">${[c.kind==='course'?[490,990,1490,2900]:[99,199,299,499]][0].map(p=>`<button class="${c.price===p?'on':''}" onclick="chSetPrice('${id}',${p});chRender()">${p} ₽</button>`).join('')}</div>
       <div class="ch-owner-note">С каждой продажи ты получаешь <b>${chNet(c.price)} ₽</b>, OKO — 10% (${Math.round(c.price*CH_FEE)} ₽).</div>`:''}`;
-  return {title:'Тип канала', html};
+  return {title:'Тип и доступ', html};
 }
-window.chSetType = function(id,t){
+window.chSetKind = function(id,t){
   const c = chChannel(id); if(!c) return;
-  c.type = t;
-  if(t==='free') c.price = 0;
-  else if(!c.price){ c.price = t==='course'?990:299; }
-  if(t==='course' && !c.lessons) c.lessons=[{id:'l1',title:'Вводный урок',dur:'5:00'}];
-  chSave(); chRender();
-  toast('Тип изменён на «'+chTypeLabel(t)+'»');
+  c.kind = t;
+  if(t==='course'){ c.access='closed'; if(!chPaid(c)) c.price = c.price||990; if(!c.lessons) c.lessons=[{id:'l1',title:'Вводный урок',dur:'5:00'}]; c.discussions=false; }
+  else if(t==='club'){ c.access='closed'; if(!chPaid(c)) c.price = c.price||299; }
+  chNormalize(c); chSave(); chRender();
+  toast('Вид изменён на «'+chKindLabel(c)+'»');
+};
+window.chSetAccess = function(id,a){
+  const c = chChannel(id); if(!c) return;
+  c.access = a; chNormalize(c); chSave(); chRender();
+  toast(a==='closed'?'Канал закрыт — включена витрина':'Канал открыт для всех');
+};
+window.chSetPaid = function(id,p){
+  const c = chChannel(id); if(!c) return;
+  if(p){ if(!c.price) c.price = c.kind==='course'?990:299; if(c.access==='open') c.access='closed'; }
+  else { c.price = 0; }
+  chNormalize(c); chSave(); chRender();
+  toast(p?'Платный доступ включён':'Доступ теперь бесплатный');
 };
 window.chSetPrice = function(id,v){
   const c = chChannel(id); if(!c) return;
-  c.price = +String(v).replace(/\D/g,'')||0; chSave();
+  c.price = +String(v).replace(/\D/g,'')||0; chNormalize(c); chSave();
   const hint = document.querySelector('#chBody .ch-owner-note b'); // мягко, без перерисовки инпута
   if(hint) hint.textContent = chNet(c.price)+' ₽';
 };
@@ -955,7 +1105,7 @@ function chPageMStats(id){
         <div><i style="background:var(--border)"></i>Другое<b>8%</b></div>
       </div>
     </div>
-    ${c.type!=='free'?`<div class="ch-canvas-wrap"><div class="ch-cw-h">Выручка · 6 мес <span>${(c.gross||0).toLocaleString('ru-RU').replace(/,/g,' ')} ₽</span></div><canvas id="chStatRev" width="600" height="260"></canvas></div>`:''}
+    ${chPaid(c)?`<div class="ch-canvas-wrap"><div class="ch-cw-h">Выручка · 6 мес <span>${(c.gross||0).toLocaleString('ru-RU').replace(/,/g,' ')} ₽</span></div><canvas id="chStatRev" width="600" height="260"></canvas></div>`:''}
     <div class="ch-owner-note">Данные прототипа сгенерированы детерминированно по параметрам канала. С подключением Supabase — реальная аналитика.</div>`;
   return {title:'Статистика', html, after:()=>chDrawStats(c, subs, reach)};
 }
@@ -1078,17 +1228,28 @@ function chPageMAppear(id){
       <span class="ch-unit" style="font-size:15px">@</span>
       <input class="ch-input" id="chNickEdit" maxlength="18" value="${chEsc(chNick(c))}" oninput="chSetNick('${id}',this.value)" style="flex:1">
     </div>
+    <label class="ch-lab">Описание</label>
+    <textarea class="ch-ta" id="chDescEdit" rows="3" maxlength="240" placeholder="О чём канал, что получит подписчик…" oninput="chSetDesc('${id}',this.value)">${chEsc(c.desc||'')}</textarea>
 
     <label class="ch-lab">Фон-градиент${c.cover?' (под обложкой)':''}</label>
     <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${c.bg===i?'on':''}" style="background:${g}" onclick="chSetBg('${id}',${i})"></div>`).join('')}</div>
+
+    <label class="ch-lab">Фон чата <span style="font-weight:400;color:var(--dim)">— за постами канала</span></label>
+    <div class="ch-swatches">
+      <div class="ch-sw ch-sw-none ${c.chatBg==null?'on':''}" onclick="chSetChatBg('${id}',null)" title="Без фона">${chI('check2')}</div>
+      ${CH_BGS.map((g,i)=>`<div class="ch-sw ${c.chatBg===i?'on':''}" style="background:${g}" onclick="chSetChatBg('${id}',${i})"></div>`).join('')}
+    </div>
+
     <label class="ch-lab">Значок (если без фото-аватара)</label>
     <div class="ch-letter-row">
       <button class="ch-lt ${!c.icon?'on':''}" onclick="chSetIcon('${id}','')" title="Первая буква"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">${(c.name[0]||'K').toUpperCase()}</span></button>
       ${CH_ICONS.map(ic=>`<button class="ch-lt ${c.icon===ic?'on':''}" onclick="chSetIcon('${id}','${ic}')">${chI(ic)}</button>`).join('')}
     </div>
-    <div class="ch-owner-note">Обложка, аватар, название и адрес отображаются на странице канала, в карточке и в мессенджере. Всё сохраняется сразу.</div>`;
+    <div class="ch-owner-note">Обложка, аватар, фон чата, название, адрес и описание отображаются на странице канала, в карточке и в мессенджере. Всё сохраняется сразу.</div>`;
   return {title:'Оформление', html};
 }
+window.chSetDesc = function(id,v){ const c=chChannel(id); if(!c) return; c.desc = String(v).slice(0,240); chSave(); };
+window.chSetChatBg = function(id,i){ const c=chChannel(id); if(!c) return; c.chatBg = (i==null?null:+i); chSave(); chRender(); };
 window.chSetBg = function(id,i){ const c=chChannel(id); if(!c) return; c.bg=i; chSave(); chSyncMirror(c); chRender(); };
 window.chSetIcon = function(id,ic){ const c=chChannel(id); if(!c) return; c.icon=ic||null; chSave(); chSyncMirror(c); chRender(); };
 window.chSetName = function(id,v){
@@ -1123,25 +1284,44 @@ function chPageMSettings(id){
       <span class="ch-tr-b"><b>${t}</b><small>${d}</small></span>
       <span class="switch ${on?'on':''}"><i></i></span>
     </button>`;
+  const lockAccess = c.kind==='course';
   const html = `
+    <div class="ch-sec-h">${chI('lock')} Доступ</div>
+    ${row('lock','Закрытый доступ', lockAccess?'Курс всегда закрытый':'Витрина и вход по заявке/оплате', c.access==='closed', lockAccess?`toast('Курс всегда закрытый')`:`chToggleAccess('${id}')`)}
+    ${row('card','Платный доступ', chPaid(c)?('Цена '+c.price+' ₽'+chPriceUnit(c)):'Включи и задай цену', chPaid(c), `chToggleAccess('${id}','paid')`)}
+    <div class="ch-sec-h">${chI('comment')} Взаимодействие</div>
     ${row('comment','Обсуждения','Подписчики комментируют посты канала', c.discussions, `chToggle('${id}','discussions')`)}
     ${row('heart','Реакции','Лайки и эмодзи под постами', c.reactions, `chToggle('${id}','reactions')`)}
+    <div class="ch-sec-h">${chI('megaphone')} Тип и цена</div>
+    <button class="ch-mrow" onclick="chGo('mType','${id}')">
+      <span class="ch-mr-ic">${chI('bolt')}</span>
+      <span class="ch-mr-b"><b>Тип, доступ и цена</b><small>${chAccessLine(c)}</small></span>
+      <span class="ch-mr-val">${chI('chev')}</span>
+    </button>
     <div class="ch-sec-h">${chI('share')} Ссылка на канал</div>
     <button class="ch-mrow" onclick="chCopyLink('${id}')">
       <span class="ch-mr-ic">${chI('globe')}</span>
       <span class="ch-mr-b"><b>oko.app/c/${chEsc((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel')}</b><small>Публичная ссылка-приглашение</small></span>
       <span class="ch-mr-val">${chI('copy')}</span>
-    </button>
-    <button class="ch-mrow" onclick="chGo('mType','${id}')">
-      <span class="ch-mr-ic">${chI('megaphone')}</span>
-      <span class="ch-mr-b"><b>Тип и цена</b><small>${chTypeLabel(c.type)}${c.type!=='free'?' · '+c.price+' ₽':''}</small></span>
-      <span class="ch-mr-val">${chI('chev')}</span>
     </button>`;
   return {title:'Настройки', html};
 }
 window.chToggle = function(id,key){
   const c = chChannel(id); if(!c) return; c[key]=!c[key]; chSave(); chRender();
   toast((key==='discussions'?'Обсуждения ':'Реакции ')+(c[key]?'включены':'выключены'));
+};
+/* быстрый тумблер доступа/оплаты прямо из настроек */
+window.chToggleAccess = function(id, which){
+  const c = chChannel(id); if(!c) return;
+  if(which==='paid'){
+    if(c.kind==='course'){ toast('Курс всегда платный'); return; }
+    if(chPaid(c)){ c.price = 0; }
+    else { c.price = c.kind==='course'?990:299; c.access='closed'; toast('Задай цену в «Тип и доступ»'); }
+  } else {
+    if(c.kind==='course'){ toast('Курс всегда закрытый'); return; }
+    c.access = (c.access==='closed') ? 'open' : 'closed';
+  }
+  chNormalize(c); chSave(); chRender();
 };
 window.chCopyLink = function(id){
   const c = chChannel(id); if(!c) return;
@@ -1192,6 +1372,38 @@ if(typeof openConv==='function'){
 if(typeof renderMyProfile==='function'){
   const _prevRMPch = renderMyProfile;
   renderMyProfile = function(){ _prevRMPch.apply(this, arguments); chInsertProfileRow(); chUpdateProwCount(); };
+}
+
+/* 4) посты каналов в ленте рекомендаций: помечаем источником-каналом + открываем канал по тапу.
+   Ранжирование по активности уже делает ядро (feedScore: лайки/комменты/репосты/просмотры). */
+function chDecorateFeed(){
+  const list = document.getElementById('feedList'); if(!list || typeof POSTS==='undefined') return;
+  const map = {};
+  (POSTS.rec||[]).concat(POSTS.sub||[]).forEach(p=>{ if(p && p.chOrigin) map[String(p.id)] = p; });
+  list.querySelectorAll('.post[data-pid]').forEach(card=>{
+    const p = map[card.getAttribute('data-pid')]; if(!p) return;
+    const ava = card.querySelector('.ava');
+    if(ava && !ava.dataset.chDone){
+      ava.dataset.chDone = '1';
+      if(p.avaImg){ ava.style.backgroundImage='url('+p.avaImg+')'; ava.style.backgroundSize='cover'; ava.style.backgroundPosition='center'; ava.textContent=''; }
+      else if(p.avaIcon){ ava.innerHTML = chI(p.avaIcon); ava.classList.add('ch-feed-ava'); }
+      ava.style.cursor='pointer';
+      ava.addEventListener('click', function(e){ e.stopPropagation(); chOpen('channel', p.chOrigin); });
+    }
+    const nameEl = card.querySelector('.name');
+    if(nameEl && !nameEl.querySelector('.ch-src-chip')){
+      const chip = document.createElement('span');
+      chip.className = 'chip ch-src-chip';
+      chip.innerHTML = chI(p.chKind==='course'?'circle-play':p.chKind==='club'?'crown':'megaphone') + (p.chKind==='course'?'Курс':p.chKind==='club'?'Клуб':'Канал');
+      chip.style.cursor='pointer';
+      chip.addEventListener('click', function(e){ e.stopPropagation(); chOpen('channel', p.chOrigin); });
+      nameEl.appendChild(chip);
+    }
+  });
+}
+if(typeof renderFeed==='function'){
+  const _prevRenderFeedCh = renderFeed;
+  renderFeed = function(){ const r=_prevRenderFeedCh.apply(this, arguments); try{ chDecorateFeed(); }catch(e){} return r; };
 }
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */

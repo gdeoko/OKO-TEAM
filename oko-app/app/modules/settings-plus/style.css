@@ -128,3 +128,85 @@
 
 /* подпись внизу вьюхи */
 .st2-foot{text-align:center;color:var(--dim);font-size:10.5px;letter-spacing:.04em;padding:2px 0 8px;opacity:.75}
+
+/* ---------- выход из аккаунта ---------- */
+.st2-logout-acc{color:var(--danger)}
+.st2-logout-acc>svg.i:first-child{color:var(--danger)}
+#st2View .st2-logout-acc[onclick]:hover{background:color-mix(in srgb,var(--danger) 9%,transparent)}
+
+/* ================= ПРОФИЛЬ: аватар-фото + обложка ================= */
+/* аватар с загруженным фото (ядро #profAva / #epAva и account-аватары) */
+.ava.st2-has-photo,#profAva.st2-has-photo,#epAva.st2-has-photo{background-size:cover!important;background-position:center!important;background-repeat:no-repeat;color:transparent}
+#epAva.st2-has-photo{box-shadow:0 6px 22px rgba(0,0,0,.4),var(--glow)}
+:root[data-theme="light"] #epAva.st2-has-photo{box-shadow:0 6px 18px rgba(60,90,10,.16)}
+.st2-acc-av.has{background-image:none}
+.st2-acc-av.has[style*="background-image"]{background-size:cover;background-position:center}
+.st2-acc-av.has{color:transparent;font-size:0}
+
+/* собственная обложка над profile-top (#screen-profile) */
+.st2-mycover{position:relative;display:block;width:100%;height:120px;margin:0 0 -30px;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--border);background:var(--surface);background-size:cover;background-position:center;cursor:pointer;transition:border-color .2s,transform .12s;isolation:isolate}
+.st2-mycover:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.st2-mycover:active{transform:scale(.995)}
+.st2-mycover::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.30),transparent 55%),radial-gradient(90% 120% at 100% 100%,rgba(154,255,0,.14),transparent 60%),linear-gradient(160deg,#0e1305,#070a03)}
+.st2-mycover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.42))}
+:root[data-theme="light"] .st2-mycover::before{background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.34),transparent 55%),radial-gradient(90% 120% at 100% 100%,rgba(120,210,0,.18),transparent 60%),linear-gradient(160deg,#eef7dd,#dcecc6)}
+:root[data-theme="light"] .st2-mycover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.28))}
+.st2-mycover-grid{position:absolute;inset:0;z-index:1;opacity:.5;mix-blend-mode:screen;background-image:linear-gradient(rgba(154,255,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(154,255,0,.08) 1px,transparent 1px);background-size:26px 26px;-webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent);pointer-events:none}
+.st2-mycover.has .st2-mycover-grid{opacity:0}
+:root[data-theme="light"] .st2-mycover-grid{mix-blend-mode:multiply;opacity:.32}
+.st2-mycover-mark{position:absolute;left:14px;top:11px;z-index:2;width:30px;height:30px;color:var(--lime);opacity:.24;filter:drop-shadow(0 0 8px rgba(154,255,0,.4));pointer-events:none}
+.st2-mycover.has .st2-mycover-mark{color:#fff;opacity:.85;filter:drop-shadow(0 1px 4px rgba(0,0,0,.5))}
+.st2-mycover-mark svg.i{width:100%;height:100%}
+.st2-mycover-edit{position:absolute;right:12px;bottom:11px;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text);background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--border);border-radius:99px;padding:5px 11px;backdrop-filter:blur(6px);transition:color .2s,border-color .2s}
+.st2-mycover.has .st2-mycover-edit{color:#fff;background:rgba(0,0,0,.42);border-color:rgba(255,255,255,.22)}
+.st2-mycover:hover .st2-mycover-edit{color:var(--accent);border-color:var(--accent)}
+.st2-mycover.has:hover .st2-mycover-edit{color:var(--lime)}
+.st2-mycover-edit svg.i{width:13px;height:13px}
+/* аватар в profile-top поднимается над обложкой */
+#screen-profile .st2-mycover~.profile-top{position:relative;z-index:1}
+#screen-profile .st2-mycover~.profile-top .ava{border:3px solid var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-theme="light"] #screen-profile .st2-mycover~.profile-top .ava{box-shadow:0 4px 14px rgba(60,90,10,.14)}
+
+/* контрол обложки в редакторе профиля (#editProfile) */
+.ep-cover{position:relative;display:block;width:100%;height:104px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--border);background:var(--surface);background-size:cover;background-position:center;cursor:pointer;transition:border-color .2s;isolation:isolate}
+.ep-cover:hover{border-color:var(--accent)}
+.ep-cover::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.28),transparent 55%),linear-gradient(160deg,#0e1305,#070a03)}
+.ep-cover.has::before{background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.4))}
+:root[data-theme="light"] .ep-cover::before{background:radial-gradient(120% 140% at 12% 0%,rgba(154,255,0,.32),transparent 55%),linear-gradient(160deg,#eef7dd,#dcecc6)}
+.ep-cover-mark{position:absolute;left:12px;top:10px;z-index:2;width:26px;height:26px;color:var(--lime);opacity:.24;pointer-events:none}
+.ep-cover.has .ep-cover-mark{color:#fff;opacity:.8}
+.ep-cover-mark svg.i{width:100%;height:100%}
+.ep-cover-hint{position:absolute;right:11px;bottom:10px;z-index:2;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--text);background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--border);border-radius:99px;padding:5px 11px}
+.ep-cover.has .ep-cover-hint{color:#fff;background:rgba(0,0,0,.42);border-color:rgba(255,255,255,.22)}
+.ep-cover-hint svg.i{width:13px;height:13px;color:var(--accent)}
+.ep-cover.has .ep-cover-hint svg.i{color:var(--lime)}
+
+/* ================= ЧЁРНЫЙ СПИСОК (шит) ================= */
+/* над #st2View (z66), но ниже попапов/тоста (z70) */
+#sheet-st2-blocked{z-index:68}
+body.st2-over #sheetOverlay.open{z-index:67}
+.st2-bl-body{max-height:min(64vh,520px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:2px -4px 0;padding:0 4px}
+.st2-bl-cap{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin:4px 2px 8px}
+.st2-bl-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.st2-bl-row{display:flex;align-items:center;gap:11px;padding:8px 8px;border-radius:var(--r-md);transition:background .15s}
+.st2-bl-row:hover{background:var(--surface)}
+.st2-bl-av{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--accent)}
+.st2-bl-av svg.i{width:52%;height:52%;color:var(--accent)}
+.st2-bl-b{flex:1;min-width:0}
+.st2-bl-b b{display:block;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st2-bl-b small{display:block;font-size:11.5px;color:var(--dim);margin-top:1px}
+.st2-bl-un{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--accent);padding:7px 13px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));border-radius:99px;transition:all .2s}
+.st2-bl-un:hover{background:var(--lime);color:#000;border-color:var(--lime)}
+.st2-bl-un:active{transform:scale(.94)}
+.st2-bl-do{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--danger);padding:7px 12px;border:1px solid rgba(255,80,80,.4);border-radius:99px;transition:all .2s}
+.st2-bl-do svg.i{width:12px;height:12px}
+.st2-bl-do:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.st2-bl-do:hover svg.i{color:#fff}
+.st2-bl-do:active{transform:scale(.94)}
+.st2-bl-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1px dashed var(--border);border-radius:var(--r-md);color:var(--accent);font-size:13.5px;font-weight:700;margin:2px 0 8px;transition:border-color .2s,background .2s}
+.st2-bl-add svg.i{width:15px;height:15px;color:var(--accent)}
+.st2-bl-add:hover{border-color:var(--accent);background:var(--lime-dim)}
+.st2-bl-empty{text-align:center;color:var(--dim);padding:26px 14px 20px}
+.st2-bl-empty svg.i{width:38px;height:38px;opacity:.5;margin-bottom:10px;color:var(--danger)}
+.st2-bl-empty p{font-weight:700;color:var(--text);font-size:14px}
+.st2-bl-empty span{font-size:12px;display:block;margin-top:4px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.5}

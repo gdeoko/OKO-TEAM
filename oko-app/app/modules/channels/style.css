@@ -347,6 +347,51 @@
 /* DM-кнопка у участника */
 .ch-member .ch-m-act.send:hover{color:var(--lime)}
 
+/* ===== оси ДОСТУП (открытый/закрытый) + ОПЛАТА (бесплатно/платно) ===== */
+.ch-tag{display:inline-flex;align-items:center;gap:4px}
+.ch-tag svg.i{width:11px;height:11px}
+.ch-tag.closed{background:var(--raised);color:var(--text);border:1px solid var(--border)}
+.ch-tag.closed svg.i{color:var(--lime)}
+.ch-tag.club{background:linear-gradient(120deg,#b98cff,#7d4dff);color:#0a0a0a}
+.ch-tag.club svg.i{color:#0a0a0a}
+.ch-tag.course svg.i{color:#0a0a0a}
+.ch-cbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.ch-cbadges:empty{display:none}
+.ch-price-pill.dim-pill{color:var(--dim);display:inline-flex;align-items:center;gap:4px;font-size:12px}
+.ch-price-pill.dim-pill svg.i{width:13px;height:13px}
+
+/* сегмент из двух вариантов (доступ / оплата) */
+.ch-choice2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:4px}
+.ch-choice2.locked{opacity:.7}
+.ch-ch2{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 13px;border-radius:var(--r-md);
+  background:var(--surface);border:1.5px solid var(--border);cursor:pointer;text-align:left;transition:all .18s;color:var(--text)}
+.ch-ch2:hover:not(:disabled){border-color:var(--lime-dim)}
+.ch-ch2.on{border-color:var(--lime);background:var(--raised);box-shadow:0 0 0 3px rgba(154,255,0,.1)}
+.ch-ch2:disabled{cursor:not-allowed}
+.ch-ch2 svg.i{width:20px;height:20px;color:var(--lime);margin-bottom:4px}
+.ch-ch2 b{font-size:13.5px;font-weight:800}
+.ch-ch2 small{color:var(--dim);font-size:10.5px;line-height:1.3}
+
+/* бейджи на обложке канала */
+.ch-cv-badges{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:9px}
+.ch-cv-badges:empty{display:none}
+.ch-cv-badges .ch-tag{box-shadow:0 2px 8px rgba(0,0,0,.35)}
+
+/* свотч «без фона» */
+.ch-sw.ch-sw-none{background:var(--surface);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center}
+.ch-sw.ch-sw-none svg.i{width:20px;height:20px;color:var(--dim)}
+.ch-sw.ch-sw-none.on{border-color:var(--lime)}
+.ch-sw.ch-sw-none.on svg.i{color:var(--lime)}
+
+/* фон-«обои» за постами канала */
+.ch-feed{border-radius:var(--r-md);padding:12px 12px 2px;margin-top:2px}
+.ch-feed .ch-post{box-shadow:0 4px 14px rgba(0,0,0,.18)}
+
+/* метка источника-канала в общей ленте (ядро) */
+.ch-src-chip{display:inline-flex!important;align-items:center;gap:4px;background:var(--lime-dim)!important;color:var(--accent)!important;font-size:9px!important}
+.ch-src-chip svg.i{width:11px;height:11px}
+.ava.ch-feed-ava svg.i{width:22px;height:22px;color:#0a0a0a}
+
 /* адаптив десктоп */
 @media(min-width:900px){
   .ch-kpi{grid-template-columns:repeat(4,1fr)}

@@ -327,6 +327,10 @@ function psToggleFollow(){
 function psMessage(){
   const name = PS.cur;
   if(!name || typeof CHATS === 'undefined') return;
+  if(typeof st2IsBlocked === 'function' && st2IsBlocked(name)){
+    if(typeof toast === 'function') toast('Разблокируйте пользователя, чтобы написать');
+    return;
+  }
   const a = psAuthor(name);
   let c = CHATS.find(x => x.kind === 'direct' && x.name === name);
   if(!c){
@@ -383,6 +387,37 @@ function psShare(){
       body:`Профиль <b>${esc(name)}</b> в OKO.<div class="ps-sharelink">${I('globe')}<span>${esc(link)}</span></div>`,
       actions:[{label:'Скопировать ссылку', onclick: doCopy}, {label:'Закрыть', ghost:true}]});
   } else { doCopy(); }
+}
+
+/* ---------- меню профиля: поделиться / блокировка / жалоба ---------- */
+function psRefreshFollowBtn(){
+  const name = PS.cur;
+  if(!name) return;
+  const f = psIsFollowing(name);
+  const btn = document.getElementById('psFollowBtn');
+  if(btn){ btn.classList.toggle('ghost', f); btn.innerHTML = I(f ? 'check' : 'plus') + ' ' + (f ? 'Отписаться' : 'Подписаться'); }
+}
+function psBlock(name){
+  if(typeof st2Block !== 'function'){ if(typeof toast === 'function') toast('Блокировки недоступны'); return; }
+  st2Block(name);                 /* сам снимает подписку + чистит ленту + персист */
+  psRefreshFollowBtn();
+  if(typeof toast === 'function') toast('Вы заблокировали ' + name);
+}
+function psUnblock(name){
+  if(typeof st2Unblock === 'function'){ st2Unblock(name); if(typeof toast === 'function') toast('Вы разблокировали ' + name); }
+}
+function psReport(name){ if(typeof toast === 'function') toast('Жалоба на ' + name + ' отправлена на модерацию'); }
+function psMore(){
+  const name = PS.cur;
+  if(!name) return;
+  const blocked = (typeof st2IsBlocked === 'function') && st2IsBlocked(name);
+  const actions = [{label:'Поделиться профилем', onclick: psShare}];
+  if(blocked) actions.push({label:'Разблокировать', onclick: () => psUnblock(name)});
+  else        actions.push({label:'Заблокировать', onclick: () => psBlock(name)});
+  actions.push({label:'Пожаловаться', ghost:true, onclick: () => psReport(name)});
+  if(typeof showPopup === 'function') showPopup({ico:'more', title: name, body:'Действия с профилем', actions});
+  const ok = document.querySelector('#okoPopup [data-pa="1"]');
+  if(ok && !blocked) ok.classList.add('ps-btn-danger');
 }
 
 /* ================= СОЦГРАФ: подписчики / подписки ================= */
@@ -510,6 +545,7 @@ function psAccRemove(id){
 }
 function psAccAvaHtml(a){
   const h = psAccHue(a);
+  if(a && a.avatar) return `<span class="ps-acc-ava has" style="background-image:url(${a.avatar})"></span>`;
   return `<span class="ps-acc-ava" style="--h:${h}">${esc(psAccInit(a.name))}</span>`;
 }
 function psAccRenderSheet(){

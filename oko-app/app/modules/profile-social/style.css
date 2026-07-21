@@ -217,3 +217,12 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .ps-acc-add-ic{width:44px;height:44px;flex-shrink:0;border-radius:50%;background:var(--lime-dim);display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}
 .ps-acc-add-ic svg.i{width:18px;height:18px}
 @media(prefers-reduced-motion:reduce){.ps-acc-check{animation:none}}
+/* аватар аккаунта с загруженным фото */
+.ps-acc-ava.has{background-size:cover!important;background-position:center!important;background-repeat:no-repeat;color:transparent;font-size:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+
+/* ---------- кебаб-меню в шапке чужого профиля ---------- */
+.ps-more-btn{flex-shrink:0;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);border-radius:50%;transition:color .2s,background .2s}
+.ps-more-btn svg.i{width:22px;height:22px}
+.ps-more-btn:hover{color:var(--accent);background:var(--lime-dim)}
+.ps-more-btn:active{transform:scale(.92)}
+#okoPopup .btn.ps-btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}

@@ -229,3 +229,63 @@
 .cp-callpill-open{width:22px;height:22px;color:var(--accent);display:flex;align-items:center;justify-content:center}
 .cp-callpill-open svg.i{width:16px;height:16px;transform:rotate(90deg)}
 @media(prefers-reduced-motion:reduce){.cp-call-aura,.cp-callpill-ic{animation:none}}
+
+/* --- 9b. Блокировка записи (свайп вверх) + локед-режим --- */
+.cp-rec-lock{position:absolute;left:50%;bottom:calc(210px + env(safe-area-inset-bottom));transform:translateX(-50%);width:46px;height:78px;border-radius:26px;background:var(--raised);border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;padding-top:9px;color:var(--dim);pointer-events:none;opacity:calc(.35 + var(--cp-lk,0)*.65);transition:opacity .15s,transform .15s,background .2s,color .2s}
+.cp-rec-lock-ic svg.i{width:19px;height:19px}
+.cp-rec-lock-ch{position:absolute;bottom:8px}
+.cp-rec-lock-ch svg.i{width:15px;height:15px;transform:rotate(180deg);animation:cpRecUp 1.3s ease-in-out infinite}
+@keyframes cpRecUp{0%,100%{transform:rotate(180deg) translateY(0);opacity:.5}50%{transform:rotate(180deg) translateY(-4px);opacity:1}}
+.cp-rec[style*="--cp-lk"] .cp-rec-lock{border-color:var(--lime)}
+.cp-rec-locked .cp-rec-lock{background:var(--lime);border-color:var(--lime);color:#000;height:46px;transform:translateX(-50%) scale(1)}
+.cp-rec-locked .cp-rec-lock-ch{display:none}
+.cp-rec-send{position:absolute;right:26px;bottom:calc(96px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:none;align-items:center;justify-content:center;box-shadow:0 8px 26px rgba(154,255,0,.4);transition:transform .14s;pointer-events:none}
+.cp-rec-send svg.i{width:24px;height:24px}
+.cp-rec-send:active{transform:scale(.9)}
+.cp-rec-hint-locked{display:none}
+.cp-rec-locked .cp-rec-send{display:flex;pointer-events:auto;animation:cpRecSendIn .2s ease}
+@keyframes cpRecSendIn{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.cp-rec-locked .cp-rec-cancel{pointer-events:auto}
+.cp-rec-locked .cp-rec-hint:not(.cp-rec-hint-locked),.cp-rec-locked .cp-rec-arrow{display:none}
+.cp-rec-locked .cp-rec-hint-locked{display:inline-flex;color:var(--accent);font-weight:700}
+@media(prefers-reduced-motion:reduce){.cp-rec-lock-ch svg.i{animation:none}}
+
+/* --- 11. Открытые / приватные / платные чаты --- */
+/* значок на аватарке в списке */
+.chat-item .ava{position:relative;overflow:visible}
+.cp-ci-badge{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.cp-ci-badge svg.i{width:10px;height:10px;stroke-width:9}
+.cp-ci-lock{background:#0a0a0a;color:var(--lime)}
+:root[data-theme="light"] .cp-ci-lock{background:#1a2a05;color:var(--lime)}
+.cp-ci-private{background:var(--raised);color:var(--dim)}
+.cp-ci-ok{background:var(--lime);color:#000}
+.cp-ci-pill{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;padding:2px 8px;white-space:nowrap;flex-shrink:0;box-shadow:0 0 10px rgba(154,255,0,.3)}
+.cp-ci-pill svg.i{width:10px;height:10px;stroke-width:9}
+.cp-ci-locked .preview{opacity:.65}
+/* бейдж типа в шапке чата */
+.cp-conv-badge{display:inline-flex;align-items:center;gap:4px;margin-left:7px;font-size:10.5px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:2px 8px;vertical-align:middle;white-space:nowrap}
+.cp-conv-badge svg.i{width:11px;height:11px;stroke-width:9}
+.cp-cb-paid{color:#000;background:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.3)}
+.cp-cb-private{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+/* окно управления доступом (владелец) */
+.cp-mg{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
+.cp-mg-opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--raised);color:var(--text);transition:border-color .16s,background .16s}
+.cp-mg-opt svg.i{width:22px;height:22px;flex-shrink:0;color:var(--dim)}
+.cp-mg-opt .cp-mg-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cp-mg-opt b{font-size:14px;font-weight:700}
+.cp-mg-opt small{font-size:11.5px;color:var(--dim)}
+.cp-mg-opt.on{border-color:var(--lime);background:var(--lime-dim)}
+.cp-mg-opt.on svg.i{color:var(--accent)}
+.cp-mg-opt.on>svg.i:last-child{width:18px;height:18px;color:var(--accent)}
+.cp-mg-price{padding:11px 13px;border-radius:var(--r-md);background:var(--raised);border:1px solid var(--border)}
+.cp-mg-price label{font-size:12px;font-weight:700;color:var(--dim);display:block;margin-bottom:7px}
+.cp-mg-prow{display:flex;align-items:center;gap:8px}
+.cp-mg-prow input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:16px;font-weight:700;font-family:var(--font-body);outline:none}
+.cp-mg-prow input:focus{border-color:var(--lime)}
+.cp-mg-prow span{font-size:15px;font-weight:700;color:var(--dim)}
+.cp-mg-net{font-size:12px;color:var(--dim);margin-top:8px}
+.cp-mg-net b{color:var(--accent)}
+/* ссылка-приглашение */
+.cp-invite{display:flex;gap:8px;margin-top:12px;align-items:center}
+.cp-invite input{flex:1;min-width:0;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:12.5px;outline:none;font-family:var(--font-body)}
+.cp-invite .btn.sm{flex-shrink:0}
