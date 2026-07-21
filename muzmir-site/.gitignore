@@ -15,3 +15,5 @@ node_modules/
 public/polozhenie_*.pdf
 public/posters/*.png
 public/diplomas/*.pdf
+public/godovoy_otchet_*.pdf
+public/*.pdf
