@@ -84,6 +84,8 @@ subprocess.run(["split","-b","1500000","-d","-a","3",W+"/reel.mp4",W+"/part_"])
 for f in sorted(glob.glob(W+"/part_*")):
   requests.post(URL+"/deploy",headers=H,json={"path":f"queue/{nn}/parts/"+os.path.basename(f),"content_b64":base64.b64encode(open(f,'rb').read()).decode()},timeout=120)
 requests.post(URL+"/deploy",headers=H,json={"path":f"queue/{nn}/meta.json","content_b64":base64.b64encode(open(W+"/meta.json",'rb').read()).decode()},timeout=30)
+# ОБЯЗАТЕЛЬНО: обложка в очередь (станет превью на YT/IG)
+requests.post(URL+"/deploy",headers=H,json={"path":f"queue/{nn}/cover.jpg","content_b64":base64.b64encode(open(W+"/cover.jpg",'rb').read()).decode()},timeout=60)
 loc=hashlib.md5(open(W+"/reel.mp4",'rb').read()).hexdigest()
 rr=requests.post(URL+"/exec",headers=H,json={"cmd":f"cd /opt/oko-poster/queue/{nn}&&cat parts/part_*>reel.mp4&&rm -rf parts&&md5sum reel.mp4"},timeout=60)
 print("QUEUED",nn,"MATCH",loc in rr.json()['stdout'])
