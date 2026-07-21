@@ -10,7 +10,8 @@ if (!rate_ok('apply:' . $ip, 10, 3600)) {
 }
 
 // --- конкурс: по slug / id / коду ---
-$compRef = input('competition');
+$compRef = input('competition_id');
+if ($compRef === '') $compRef = input('competition');
 if ($compRef === '') $compRef = input('slug');
 $comp = one(
     "SELECT * FROM competitions WHERE slug=? OR code=? OR id=?",

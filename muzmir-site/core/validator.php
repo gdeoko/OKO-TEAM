@@ -125,9 +125,10 @@ function v_url_alive(string $url): bool {
     if ($errno === CURLE_COULDNT_RESOLVE_HOST || $errno === CURLE_COULDNT_CONNECT || $errno === CURLE_OPERATION_TIMEDOUT) {
         return true;
     }
-    if ($code === 0) return true;              // неоднозначно — пропускаем
-    if ($code === 405) return true;            // HEAD запрещён, но ресурс есть
-    return $code >= 200 && $code < 400;
+    // Реджектим только явно «мёртвые» ссылки (404/410).
+    // 403/401/405/5xx и код 0 — платформа блокирует ботов или прокси-помеха: пропускаем.
+    if (in_array($code, [404, 410], true)) return false;
+    return true;
 }
 
 /** ФИО: только кириллица и дефис, «Первая Заглавная Каждого Слова». */
