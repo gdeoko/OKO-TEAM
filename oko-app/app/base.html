@@ -3728,6 +3728,55 @@ renderMyProfile();
 renderChatList();
 updateNotifDot();
 renderFeed('sub');
+/* ===== ПРОЦЕДУРНЫЕ БРЕНД-АВАТАРЫ: детерминированный градиент по монограмме (без картинок/кредитов) =====
+   Красит только буквенные .ava (не трогает фото, иконки-аватары и сторис-фоны). Работает везде через MutationObserver. */
+(function okoAvatars(){
+  const G = [
+    ['linear-gradient(135deg,#B9FF4D,#5f9e00)','#0a1400'],
+    ['linear-gradient(135deg,#9AFF00,#3d6b00)','#0a1400'],
+    ['linear-gradient(135deg,#7CE7B0,#166b45)','#04160e'],
+    ['linear-gradient(135deg,#5fe0d0,#0f5a52)','#03110f'],
+    ['linear-gradient(135deg,#c8f560,#6b8f10)','#141a00'],
+    ['linear-gradient(135deg,#8fd14f,#2f5e12)','#0a1400'],
+    ['linear-gradient(135deg,#3fae7a,#0c3a28)','#eafff2'],
+    ['linear-gradient(135deg,#2b3a12,#0c1406)','#9AFF00'],
+    ['linear-gradient(135deg,#4a5a2a,#1a2210)','#c8f560'],
+    ['linear-gradient(135deg,#a0e85a,#4a7a0f)','#0a1400'],
+  ];
+  function hash(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))>>>0; } return h; }
+  function decorate(el){
+    try{
+      if(!el || el.nodeType!==1 || el.__okoAva) return;
+      if(el.querySelector('img,svg')) return;                 // фото/иконка-аватар — не трогаем
+      const bg = el.style && el.style.backgroundImage;
+      if(bg && bg!=='none') return;                            // фон-картинка (сторис/фото) — не трогаем
+      const txt = (el.textContent||'').trim();
+      if(!txt) return;
+      const g = G[hash(el.getAttribute('data-ava') || txt) % G.length];
+      el.style.background = g[0]; el.style.color = g[1];
+      el.style.borderColor = 'transparent';
+      el.style.textShadow = '0 1px 2px rgba(0,0,0,.18)';
+      el.__okoAva = true;
+    }catch(e){}
+  }
+  function sweep(root){ try{ (root||document).querySelectorAll('.ava').forEach(decorate); }catch(e){} }
+  try{
+    const mo = new MutationObserver(muts=>{
+      for(const m of muts){
+        m.addedNodes && m.addedNodes.forEach(n=>{
+          if(n.nodeType!==1) return;
+          if(n.classList && n.classList.contains('ava')) decorate(n);
+          if(n.querySelectorAll) n.querySelectorAll('.ava').forEach(decorate);
+        });
+        if(m.type==='childList' && m.target && m.target.classList && m.target.classList.contains('ava')){ m.target.__okoAva=false; decorate(m.target); }
+      }
+    });
+    const start=()=>{ sweep(document); if(document.body) mo.observe(document.body,{childList:true,subtree:true}); };
+    if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+    setTimeout(()=>sweep(document), 500);
+    window.okoAvaSweep = sweep;
+  }catch(e){}
+})();
 /* @MODULES:JS */
 </script>
 </body>
