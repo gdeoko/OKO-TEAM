@@ -61,6 +61,7 @@ node outro_gen.mjs                                              # анимиро
 ## 6. Субтитры (синхрон по голосу!)
 ```
 python3 align.py            # faster-whisper → work/words.json (word timestamps)
+#   ГРАБЛЯ: transcribe(..., vad_filter=False) — с VAD склеенная озвучка режется до пары слов!
 python3 subs_karaoke.py     # Союз Гротеск, 2 слова, караоке \kf, РЕЗКИЕ (без \blur), без обводки,
                             # MarginV~610, НЕ на обложке (<2.4с skip). fontsdir=fonts/
 ```
