@@ -22,8 +22,25 @@ if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.
 # автодозаливка очереди (без LLM) — генератор держит >=12 сценариев
 python3 gen_scripts.py topup 12 >/dev/null 2>&1 || true
 
-# следующий сценарий из очереди
-NEXT=$(ls scripts/queue/*.json 2>/dev/null | sort | head -1)
+# следующий сценарий из очереди — РОТАЦИЯ приложений spy->brain->tape (разнообразие ленты)
+NEXT=$(python3 -c "
+import glob,os
+order=['spy','brain','tape']
+last=open('.last_app').read().strip() if os.path.exists('.last_app') else ''
+files=sorted(glob.glob('scripts/queue/*.json'))
+byapp={}
+for f in files:
+    b=os.path.basename(f)
+    for a in order:
+        if b.startswith('g'+a): byapp.setdefault(a,[]).append(f); break
+start=(order.index(last)+1)%3 if last in order else 0
+pick=''
+for i in range(3):
+    a=order[(start+i)%3]
+    if byapp.get(a): pick=byapp[a][0]; break
+if not pick and files: pick=files[0]
+print(pick)
+" 2>/dev/null)
 [ -z "$NEXT" ] && { echo "QUEUE_EMPTY — генератор не дал сценариев (см. gen_scripts.py)"; exit 0; }
 ID=$(basename "$NEXT" .json)
 cp "$NEXT" "scripts/$ID.json"
@@ -35,6 +52,8 @@ OUT=$(bash auto_run.sh "$ID" "$CAP" "$YT" 2>&1 | tail -3)
 echo "$OUT"
 if echo "$OUT" | grep -q "AUTO_DONE"; then
   python3 quota.py inc >/dev/null 2>&1
+  # запомнить приложение для ротации следующего тика
+  echo "$ID" | sed -E 's/^g?(spy|brain|tape).*/\1/' > .last_app 2>/dev/null
   git rm -q "$NEXT" 2>/dev/null; git add -A 2>/dev/null
   git commit -q -m "autopilot: собран+опубликован $ID, снят с очереди" 2>/dev/null
   for i in 1 2 3; do git push -q origin tappio.app 2>&1 && break || sleep $((2**i)); done
