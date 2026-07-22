@@ -23,16 +23,17 @@
   "big": "EVERY\nNAME",
   "q": [
    "runner morning sunrise energy"
-  ]
+  ],
+  "ai": "work/gbrain_002/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "You just met them and the name is already gone."
+   "text": "Stop scrolling. You just met them and the name is already gone."
   },
   {
    "id": "b2",
-   "text": "It is not age. It is attention and encoding."
+   "text": "it's not age. it's attention and encoding."
   },
   {
    "id": "b3",
@@ -219,6 +220,30 @@
   "text": "Comment FOCUS for the app.",
   "code": "FOCUS"
  },
- "caption": "Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning",
- "yt_title": "Why you forget every name #shorts"
+ "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #mental #binaural #test #concentration",
+ "yt_title": "Memory Test How Good is Your #shorts",
+ "trend_keys": [
+  "mental",
+  "binaural",
+  "test",
+  "concentration",
+  "memory",
+  "focus",
+  "music",
+  "beats"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "Memory Test : How Good is Your Memory? A 2-Minute Test",
+  "views": 454787,
+  "channel": "HowWhatWhy - Quizzes, Tests & Riddles"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-454k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You just met them and the name is already gone."
+ }
 }
