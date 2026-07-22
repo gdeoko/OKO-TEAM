@@ -76,28 +76,50 @@ def why_viral(v):
 def build(at):
     seen=seen_ids()
     vids=collect(at, seen)
-    top=sorted(vids.values(), key=lambda x:-x["views"])[:5]
-    if len(top)<5:  # если 1M+ свежих мало — добираем без учёта дедупа (но помечаем)
+    top=sorted(vids.values(), key=lambda x:-x["views"])[:10]
+    if len(top)<10:  # если 1M+ свежих мало — добираем без учёта дедупа (но помечаем)
         extra=sorted(collect(at,set()).values(), key=lambda x:-x["views"])
         for v in extra:
             if v["id"] not in {t["id"] for t in top}: top.append(v)
-            if len(top)>=5: break
+            if len(top)>=10: break
     subs=subs_for(at, {v["chid"] for v in top})
     for v in top:
         v["subs"]=subs.get(v["chid"],0); v["er"]=(v["likes"]+v["comments"])/max(1,v["views"])*100
         v["url"]=f"https://youtu.be/{v['id']}"; v["why"]=why_viral(v)
     return top
 
+def hook_type(t):
+    t=t.lower()
+    if re.search(r"\d",t): return "цифра/список в заголовке"
+    if any(w in t for w in ["ошибка","нельзя","никогда","хватит","перестань","не говори"]): return "запрет/ошибка (страх упустить)"
+    if any(w in t for w in ["как","почему","что делать","секрет","этому"]): return "вопрос/обещание пользы"
+    if "?" in t: return "прямой вопрос зрителю"
+    return "любопытство/интрига"
+
+def borrow(v):
+    er=v["er"]
+    tips=[]
+    tips.append(f"хук-приём: {hook_type(v['title'])} — адаптируй под веру/воспитание")
+    if v["dur"]<=30: tips.append("держи ролик коротким (≤30с), одна мысль")
+    if er>=3: tips.append("сильная эмоция/спор — заложи эмоциональный разворот и вопрос в конце")
+    if v["comments"]/max(1,v["views"])>0.001: tips.append("тема провоцирует комменты — задай вопрос под ролик")
+    return tips
+
 def md_brief(top, day, reel_nn):
     L=[f"# БРИФ КОНКУРЕНТОВ — МЕТАНОЙА · ролик {reel_nn}",
-       f"_{day} · YouTube Data API · только 1M+ · всегда разные ролики_\n",
-       "Собери НОВЫЙ ролик, опираясь на приёмы ниже (НЕ копируя): свой хук в первые 2с, одна мысль, эмоция, сохраняемость, тёплый христианский разворот, воронка в описании.\n"]
+       f"_{day} · YouTube Data API · ТОП-{len(top)} · только 1M+ · всегда разные ролики (дедуп)_\n",
+       "На ОСНОВЕ этого брифа собери НОВЫЙ уникальный ролик (НЕ копируя): свой хук в первые 2с, одна мысль, эмоция, сохраняемость, тёплый христианский разворот, воронка в описании. Разнообразие по DIVERSITY_LEDGER.\n",
+       "---\n"]
     for i,v in enumerate(top,1):
         L.append(f"## {i}. {v['title']}")
-        L.append(f"- Канал: **{v['ch']}** ({num(v['subs'])} подп.) · {v['date']} · {v['dur']}с")
-        L.append(f"- 👁 {num(v['views'])} · ❤ {num(v['likes'])} · 💬 {num(v['comments'])} · ER {v['er']:.1f}% (репосты/сохранения — YouTube API не отдаёт)")
-        L.append(f"- Ссылка: {v['url']}")
-        L.append(f"- Почему залетел: {'; '.join(v['why'])}")
+        L.append(f"- **Канал:** {v['ch']} — {num(v['subs'])} подписчиков · опубл. {v['date']} · длит. {v['dur']}с")
+        L.append(f"- **Метрики:** 👁 {v['views']:,} просмотров · ❤ {v['likes']:,} лайков · 💬 {v['comments']:,} комментариев · ER {v['er']:.2f}%".replace(","," "))
+        L.append(f"  (репосты/сохранения — YouTube Data API не отдаёт; смотрим просмотры/лайки/комменты)")
+        L.append(f"- **Ссылка:** {v['url']}")
+        L.append(f"- **Тип хука:** {hook_type(v['title'])}")
+        L.append(f"- **Почему залетел:** {'; '.join(v['why'])}")
+        if v.get("desc"): L.append(f"- **Из описания:** {v['desc'][:160].strip()}...")
+        L.append(f"- **Что взять нам:** {'; '.join(borrow(v))}")
         L.append("")
     # сводные приёмы
     words=re.findall(r"[а-яёa-z]{4,}"," ".join(v["title"].lower() for v in top))
@@ -158,6 +180,15 @@ def tg_photo(png, caption):
         subprocess.run(["curl","-s","--cacert",ca,"-F",f"chat_id={c}","-F",f"caption={caption}","-F",f"photo=@{png}",
                         f"https://api.telegram.org/bot{tok}/sendPhoto"],capture_output=True)
 
+def tg_document(path, caption):
+    tok=os.environ.get("CLIENT_EKAT_ANALYTICS_BOT_TOKEN"); ca=os.environ.get("SSL_CERT_FILE","/root/.ccr/ca-bundle.crt")
+    chats=[]
+    try: chats=open("/opt/oko-poster/cfg/metanoia_recipients.txt").read().split()
+    except: chats=os.environ.get("METANOIA_TG_CHATS","").split(",")
+    for c in filter(None,chats):
+        subprocess.run(["curl","-s","--cacert",ca,"-F",f"chat_id={c}","-F",f"caption={caption}","-F",f"document=@{path}",
+                        f"https://api.telegram.org/bot{tok}/sendDocument"],capture_output=True)
+
 def main():
     reel_nn=sys.argv[1] if len(sys.argv)>1 else "next"
     day=datetime.date.today().strftime("%d.%m.%Y")
@@ -167,9 +198,9 @@ def main():
     bp=f"{BRIEFS}/brief_{reel_nn}.md"; open(bp,"w").write(brief)
     # дедуп: записать показанные id
     open(STATE,"a").write("".join(v["id"]+"\n" for v in top))
-    try:
-        png=render_png(top,day,reel_nn); tg_photo(png,f"📊 МЕТАНОЙА · бриф конкурентов для ролика {reel_nn} (1M+, реальные цифры)")
-    except Exception as e: sys.stderr.write(f"png/send fail {e}\n")
-    print(json.dumps({"brief":bp,"videos":[{"t":v["title"][:40],"views":v["views"],"url":v["url"]} for v in top]},ensure_ascii=False))
+    # ОТПРАВКА ФАЙЛОМ (Даниэль: не картинка, а полноценный файл-отчёт)
+    try: tg_document(bp, f"📄 МЕТАНОЙА · бриф конкурентов (ТОП-{len(top)} роликов 1M+, детальный анализ) — основа для ролика {reel_nn}")
+    except Exception as e: sys.stderr.write(f"send fail {e}\n")
+    print(json.dumps({"brief":bp,"count":len(top),"videos":[{"t":v["title"][:40],"views":v["views"],"url":v["url"]} for v in top]},ensure_ascii=False))
 
 if __name__=="__main__": main()
