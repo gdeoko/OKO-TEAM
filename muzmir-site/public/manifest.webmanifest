@@ -11,9 +11,10 @@
   "theme_color": "#0b0a0d",
   "lang": "ru",
   "icons": [
-    { "src": "/assets/img/logo_muzmir_256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/img/logo_muzmir_256.png", "sizes": "256x256", "type": "image/png", "purpose": "maskable" },
-    { "src": "/assets/img/logo_muzmir_main.png", "sizes": "640x640", "type": "image/png", "purpose": "any" },
-    { "src": "/assets/img/logo_muzmir_main.png", "sizes": "640x640", "type": "image/png", "purpose": "maskable" }
+    { "src": "/assets/img/logo_muzmir_192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/logo_muzmir_192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/img/logo_muzmir_512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/img/logo_muzmir_512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/img/logo_muzmir_256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" }
   ]
 }

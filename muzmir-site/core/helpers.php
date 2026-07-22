@@ -29,7 +29,7 @@ function normalize_text(string $t): string {
 /** Рендер публичной страницы в общий лейаут. */
 function render_page(string $title, string $content, array $opts = []): void {
     $meta_description = $opts['meta'] ?? 'Международные и всероссийские онлайн-конкурсы и фестивали культуры и искусства. КЦ «Музыкальный Мир».';
-    $og_image = $opts['og_image'] ?? asset('img/logo_muzmir_main.png');
+    $og_image = $opts['og_image'] ?? asset('img/og_muzmir.png');
     $active = $opts['active'] ?? '';
     $wide = $opts['wide'] ?? false;
     // Per-page JSON-LD: массив (schema.org объект) или массив таких массивов, либо готовая строка.

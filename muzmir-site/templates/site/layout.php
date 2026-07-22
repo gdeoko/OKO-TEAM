@@ -30,6 +30,8 @@ $u = current_user();
 <meta property="og:title" content="<?= h($full_title) ?>">
 <meta property="og:description" content="<?= h($meta_description) ?>">
 <meta property="og:image" content="<?= h($og_image) ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:type" content="website">
 <meta property="og:url" content="<?= h($canon) ?>">
 <meta property="og:site_name" content="<?= h(cfgv('org_name')) ?>">
