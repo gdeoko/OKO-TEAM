@@ -346,6 +346,12 @@ ob_start(); ?>
               <a href="<?= url('/privacy') ?>" target="_blank" rel="noopener">Политике конфиденциальности</a>
               и принимаю <a href="<?= url('/agreement') ?>" target="_blank" rel="noopener">Пользовательское соглашение</a>.</label>
           </div>
+          <div class="consent-row">
+            <input type="checkbox" id="agree_rules" name="agree_rules" value="1">
+            <label for="agree_rules">Подтверждаю, что конкурсный материал соответствует требованиям положения:
+              видео без монтажа и склеек, качество не ниже 480p, запись не старше одного года,
+              а ссылка открыта для просмотра вплоть до оглашения результатов.</label>
+          </div>
 
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>

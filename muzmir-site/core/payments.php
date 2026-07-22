@@ -43,6 +43,26 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
     if ($paymentId === '' || !function_exists('tbl_exists') || !tbl_exists('payments')) return false;
 
     $pay = one("SELECT * FROM payments WHERE yukassa_id=?", [$paymentId]);
+
+    // --- Сверка суммы ПЕРЕД любыми изменениями (защита от подмены суммы в вебхуке) ---
+    // Сравниваем object.amount.value (руб.) с сохранённой payments.amount. При расхождении —
+    // НЕ помечаем оплаченным, логируем и выходим. Если суммы в объекте нет (напр. pull без
+    // amount) — полагаемся на совпадение payment_id (существование строки payments).
+    if ($status === 'succeeded' && $pay) {
+        $objVal = $obj['amount']['value'] ?? null;
+        if ($objVal !== null && $objVal !== '') {
+            $paidRub  = (int) round((float) $objVal);
+            $expected = (int) ($pay['amount'] ?? 0);
+            if ($expected > 0 && $paidRub !== $expected) {
+                if (function_exists('audit')) {
+                    audit('payment_amount_mismatch', 'payments', (int) ($pay['id'] ?? 0),
+                          ['yukassa_id' => $paymentId, 'expected' => $expected, 'paid' => $paidRub]);
+                }
+                return false;
+            }
+        }
+    }
+
     $prev = (string) ($pay['status'] ?? '');
     if ($pay && $prev !== $status) {
         update('payments', ['status' => $status], 'yukassa_id=:pid', ['pid' => $paymentId]);
@@ -61,6 +81,18 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         update('applications', ['is_paid' => 1, 'status' => 'paid'], 'id=:id', ['id' => (int) $appId]);
         $app = one("SELECT * FROM applications WHERE id=?", [(int) $appId]);
         if ($app) { $email = (string) ($app['email'] ?? ''); $name = (string) ($app['full_name'] ?? ''); }
+
+        // Реф-бонус педагогу подтверждаем ТОЛЬКО сейчас (при оплате): переводим pending→paid
+        // и инкрементируем uses. loyalty.php может быть ещё не подключён (напр. в вебхуке).
+        if (!function_exists('referral_confirm_payment') && is_file(__DIR__ . '/loyalty.php')) {
+            require_once __DIR__ . '/loyalty.php';
+        }
+        if (function_exists('referral_confirm_payment')) {
+            $refReward = referral_confirm_payment((int) $appId);
+            if ($refReward > 0 && function_exists('audit')) {
+                audit('referral_paid', 'applications', (int) $appId, ['reward' => $refReward, 'payment_id' => $paymentId]);
+            }
+        }
     }
     if ($orderId) {
         update('awards_orders', ['status' => 'paid'], 'id=:id', ['id' => (int) $orderId]);

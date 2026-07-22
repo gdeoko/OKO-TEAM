@@ -5,6 +5,11 @@ require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/loyalty.php';
 require_post();
 
+// --- Строгая проверка источника (Origin/Referer принадлежит своему домену) ---
+if (!apply_same_origin()) {
+    json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+}
+
 $ip = client_ip();
 if (!rate_ok('apply:' . $ip, 10, 3600)) {
     json_out(['ok' => false, 'error' => 'Слишком много заявок с одного адреса, попробуйте позже'], 429);
@@ -55,9 +60,50 @@ if ($video !== '') {
     $platform = $vv['platform'] ?? '';
 }
 
-// Номинация
+// Номинация — строго по справочнику NOMINATIONS().
 $nomination = input('nomination');
-if ($nomination === '') $errors['nomination'] = 'Выберите номинацию';
+$nomList = array_keys(NOMINATIONS());
+if ($nomination === '') {
+    $errors['nomination'] = 'Выберите номинацию';
+} elseif (!in_array($nomination, $nomList, true)) {
+    $errors['nomination'] = 'Выберите номинацию из списка';
+}
+
+// Возрастная категория — по справочнику AGE_CATEGORIES() (если указана).
+$ageCategory = input('age_category');
+if ($ageCategory !== '' && !in_array($ageCategory, AGE_CATEGORIES(), true)) {
+    $errors['age_category'] = 'Выберите возрастную категорию из списка';
+}
+
+// Дата рождения — формат ГГГГ-ММ-ДД, не в будущем (если указана).
+$birthDate = input('birth_date');
+if ($birthDate !== '') {
+    $dt = DateTime::createFromFormat('Y-m-d', $birthDate);
+    if (!$dt || $dt->format('Y-m-d') !== $birthDate) {
+        $errors['birth_date'] = 'Проверьте дату рождения (ГГГГ-ММ-ДД)';
+    } elseif ($birthDate > date('Y-m-d')) {
+        $errors['birth_date'] = 'Дата рождения не может быть в будущем';
+    }
+}
+
+// --- Конкурсная работа обязательна для исполнительских/видео- и ИЗО/фото-номинаций ---
+// Исполнительские/видео: обязательна конкурсная ВИДЕО-ссылка. ИЗО/фото: допускается фото-ссылка.
+$performingNoms = [
+    'Вокальное искусство', 'Инструментальное исполнительство', 'Театральное искусство',
+    'Художественное слово', 'Хореография', 'Цирковое искусство',
+];
+$imageNoms = ['Изобразительное искусство', 'Фото- и видеоискусство'];
+$needsMedia = in_array($nomination, $performingNoms, true) || in_array($nomination, $imageNoms, true);
+if ($needsMedia && $video === '' && empty($errors['video_url'])) {
+    $errors['video_url'] = in_array($nomination, $performingNoms, true)
+        ? 'Для этой номинации нужна ссылка на конкурсное видео выступления'
+        : 'Приложите ссылку на конкурсную работу (фото или изображение)';
+}
+
+// Подтверждение конкурсных требований (без монтажа, ≥480p, не старше года, ссылка открыта).
+if ($needsMedia && !input('agree_rules')) {
+    $errors['agree_rules'] = 'Подтвердите соответствие материала конкурсным требованиям';
+}
 
 if ($errors) {
     json_out(['ok' => false, 'error' => 'Проверьте заполнение формы', 'fields' => $errors], 422);
@@ -182,3 +228,18 @@ if ($payment !== null) {
 }
 if ($confirmationUrl) $resp['confirmation_url'] = $confirmationUrl;
 json_out($resp);
+
+/** Проверка принадлежности Origin/Referer своему домену (строгая, для POST). */
+function apply_same_origin(): bool {
+    $hosts = [];
+    if ($bu = cfgv('base_url')) { $h = parse_url((string) $bu, PHP_URL_HOST); if ($h) $hosts[] = strtolower($h); }
+    foreach (['domain', 'domain_puny'] as $k) {
+        if ($d = cfgv($k)) $hosts[] = strtolower((string) $d);
+    }
+    $hosts = array_values(array_unique(array_filter($hosts)));
+    if (!$hosts) return true; // домены не сконфигурированы — не блокируем (dev)
+    $src = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
+    if ($src === '') return false;
+    $srcHost = strtolower((string) parse_url($src, PHP_URL_HOST));
+    return $srcHost !== '' && in_array($srcHost, $hosts, true);
+}

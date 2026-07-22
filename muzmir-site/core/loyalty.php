@@ -82,9 +82,11 @@ function referral_lookup(string $code): ?array {
 }
 
 /**
- * Начисление вознаграждения педагогу при оплате по его коду.
- * Пишет строку в promo_uses и увеличивает счётчик применений.
- * $amount - итоговая сумма к оплате (со скидками). Возвращает начисленное вознаграждение, руб.
+ * Регистрация ОЖИДАЮЩЕГО применения промокода педагога при подаче заявки.
+ * Пишет строку promo_uses со status='pending'. Счётчик применений (referrals.uses)
+ * и подтверждение вознаграждения выполняются ТОЛЬКО при успешной оплате —
+ * см. referral_confirm_payment(), вызываемый из core/payments.php при succeeded.
+ * $amount - итоговая сумма к оплате (со скидками). Возвращает расчётное вознаграждение, руб.
  */
 function referral_record_use(array $ref, ?int $applicationId, ?int $userId, string $email, int $amount): int {
     loyalty_boot();
@@ -99,8 +101,28 @@ function referral_record_use(array $ref, ?int $applicationId, ?int $userId, stri
         'reward'         => $reward,
         'status'         => 'pending',
     ]);
-    q("UPDATE referrals SET uses = uses + 1 WHERE id=?", [(int) $ref['id']]);
+    // ВНИМАНИЕ: uses НЕ инкрементируем здесь — только при оплате (referral_confirm_payment).
     return $reward;
+}
+
+/**
+ * Подтверждение реферального вознаграждения при УСПЕШНОЙ ОПЛАТЕ заявки.
+ * Переводит ожидающие строки promo_uses (по application_id) в status='paid'
+ * и увеличивает счётчик оплаченных применений referrals.uses. Идемпотентна:
+ * повторный вызов не найдёт pending-строк и ничего не сделает.
+ * Возвращает суммарно подтверждённое вознаграждение, руб.
+ */
+function referral_confirm_payment(?int $applicationId): int {
+    loyalty_boot();
+    if (!$applicationId) return 0;
+    $rows = all("SELECT * FROM promo_uses WHERE application_id=? AND status='pending'", [(int) $applicationId]);
+    $total = 0;
+    foreach ($rows as $r) {
+        update('promo_uses', ['status' => 'paid'], 'id=:id', ['id' => (int) $r['id']]);
+        q("UPDATE referrals SET uses = uses + 1 WHERE id=?", [(int) $r['referral_id']]);
+        $total += (int) $r['reward'];
+    }
+    return $total;
 }
 
 /** Создание промокода педагога. Возвращает строку referrals. */
@@ -139,9 +161,10 @@ function referral_stats(int $teacherId): array {
     $codes = all("SELECT * FROM referrals WHERE teacher_user_id=? ORDER BY created DESC", [$teacherId]);
     $out = [];
     foreach ($codes as $r) {
+        // Считаем ТОЛЬКО оплаченные применения — педагог видит подтверждённые начисления.
         $agg = one(
             "SELECT COUNT(*) c, COALESCE(SUM(reward),0) reward, COALESCE(SUM(amount),0) amount
-             FROM promo_uses WHERE referral_id=?",
+             FROM promo_uses WHERE referral_id=? AND status='paid'",
             [(int) $r['id']]
         ) ?: ['c' => 0, 'reward' => 0, 'amount' => 0];
         $out[] = [
