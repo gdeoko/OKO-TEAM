@@ -91,3 +91,8 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 Механики(9): bigstat(3)→chips→vs→bigstat(2)→lowerthird→vs→ticks→badge→stamp. Стиль 4 frost-white (≠ 0/1/2/3 — все 5 стилей теперь пройдены).
 Стоки: 12 Pexels мото-детали/двигатель/тормоза (≤2K). Обложка FLUX ok + в очередь. Публикация A НАПРЯМУЮ (publish_next висел из-за застрявшего playwright install): YT XWtj-Om1CEI · TikTok 2350915. IG cargo — checkpoint (пропущен). 22.07 posted_A=2/5.
 ФИКС: publish_next IG-вызов теперь с PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 (батч A на checkpoint больше не вешает публикатор закачкой chromium).
+
+## 22.07 — ролик #14 (batch B) КВАДРО-UTILITY «рабочая лошадка» — стиль 0 (стекло-тёплый)
+Тема: квадроцикл из Китая для дела (охота/ферма/снег/стройка), ≠ спорт-квадро #9. Хук: заменяет трактор+руки. Микс польза+продажи.
+Механики(10): badge→iconrow→vs→chips→lowerthird→sidebars→route→chips→badge→stamp. Стиль 0 стекло-тёплый (не в последних 4: 3/1/2/4).
+Стоки: 12 Pexels utility-atv (ферма/охота/груз, ≤2K). Обложка FLUX ok + в очередь. Публикация B НАПРЯМУЮ (post_direct.py): YT I2jrcjLLzoQ · TikTok 2363201 · IG kitay SHARED. 22.07 posted_B=2/5.

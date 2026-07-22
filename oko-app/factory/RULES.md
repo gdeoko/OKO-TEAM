@@ -112,3 +112,7 @@ Bebas Neue + Montserrat. Голос ru-RU-DmitryNeural. Снегоходы НЕ 
 ## ⚠️ ПУБЛИКАЦИЯ — ТОЛЬКО ОДИН publish_next.py ЗА РАЗ
 Не запускать несколько publish_next.py параллельно (гонка за очередь → риск дубля на YT/TikTok).
 Перед запуском: `pkill -9 -f publish_next.py; sleep 2`, затем один прогон. Публикатор берёт ОДИН элемент очереди за вызов — для следующего запускать снова после того, как предыдущий ушёл в published.
+
+## ⚠️ publish_next.py ЗАВИСАЕТ — ИСПОЛЬЗУЙ post_direct.py
+22.07: publish_next.py стабильно виснет ДО первого лога (среда попорчена застрявшими root-процессами `playwright install` ~14ч, диск тесный). Надёжный путь публикации: `python3 post_direct.py NNN` — читает meta.batch, постит YT+TikTok+IG нужной пачки НАПРЯМУЮ (yt_upload/hooppy/ig_reel_post), помечает _done, двигает в published. IG best-effort (checkpoint пропускает). Дубль-защита: проверяет _done.
+ПРИМЕЧАНИЕ: 2 root-процесса `playwright install` висят с ENOSPC-инцидента — okoposter их не убьёт, нужен root/ребут VPS (Даниэлю). Пока не мешают (idle), постинг идёт через post_direct.
