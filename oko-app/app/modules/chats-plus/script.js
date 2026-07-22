@@ -291,15 +291,25 @@ function cpSwipeInit(){
 }
 
 /* ================= UI-ИНЖЕКЦИЯ (шапка конва, пин-бар, строка поиска) ================= */
+/* Шапка «телеграм-стайл»: аватар+имя+статус | аудио | видео | ⋮ (меню).
+   Поиск, участники и доступ спрятаны в ⋮-меню — шапка не теснится, имя дышит. */
 function cpBuildUi(){
   const head = document.querySelector('#convBody .conv-head');
-  if(!head || document.getElementById('cpSearchBtn')) return;
-  /* лупа в шапке — перед кнопками звонков */
+  if(!head || document.getElementById('cpMoreBtn')) return;
+  /* единственная новая кнопка в шапке — «ещё» (⋮) в самом конце */
   const btn = document.createElement('button');
-  btn.className = 'ch-call'; btn.id = 'cpSearchBtn'; btn.title = 'Поиск по сообщениям';
-  btn.innerHTML = I('search');
-  btn.onclick = cpOpenSearch;
-  head.insertBefore(btn, head.querySelector('.ch-call'));
+  btn.className = 'ch-call cp-more-btn'; btn.id = 'cpMoreBtn'; btn.title = 'Ещё';
+  btn.innerHTML = I('more');
+  btn.onclick = cpOpenMore;
+  head.appendChild(btn);
+  /* выпадающее меню действий (поиск / профиль / доступ) */
+  if(!document.getElementById('cpMore')){
+    const wrap = document.createElement('div');
+    wrap.className = 'cp-more'; wrap.id = 'cpMore';
+    wrap.innerHTML = `<div class="cp-more-menu" id="cpMoreMenu" role="menu"></div>`;
+    wrap.addEventListener('click', e=>{ if(e.target===wrap) cpCloseMore(); });
+    document.body.appendChild(wrap);
+  }
   /* пин-бар */
   const pin = document.createElement('div');
   pin.className = 'cp-pinbar'; pin.id = 'cpPinBar';
@@ -325,6 +335,53 @@ function cpBuildUi(){
   });
 }
 
+/* ---- ⋮-меню шапки: поиск / профиль / доступ (контекстно) ---- */
+function cpMoreItems(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  const items = [];
+  items.push({ic:'search', label:'Поиск по сообщениям', act:cpOpenSearch});
+  if(typeof openProfile==='function'){
+    const grp = c && (c.kind==='group' || c.kind==='channel');
+    items.push({ic: grp?'users':'user', label: grp?'Участники и профиль':'Профиль чата', act:()=>{ try{ openProfile(); }catch(e){} }});
+  }
+  if(c){
+    const a = cpAcc(c);
+    if(a.type!=='public' || (typeof cpCanManage==='function' && cpCanManage())){
+      const own = (typeof cpCanManage==='function' && cpCanManage());
+      const ic = a.type==='paid' ? 'crown' : a.type==='private' ? 'lock' : 'users';
+      const label = own ? 'Управление доступом' : (a.type==='paid' ? 'Доступ к клубу' : 'Ссылка-приглашение');
+      items.push({ic, label, act:cpAccessMenu});
+    }
+  }
+  return items;
+}
+function cpOpenMore(){
+  const wrap = document.getElementById('cpMore'), menu = document.getElementById('cpMoreMenu');
+  const btn = document.getElementById('cpMoreBtn');
+  if(!wrap || !menu || !btn) return;
+  if(wrap.classList.contains('on')){ cpCloseMore(); return; }
+  menu.innerHTML = cpMoreItems().map((it,i)=>
+    `<button class="cp-more-item" style="--cp-i:${i}" role="menuitem">${I(it.ic)}<span>${cpEsc(it.label)}</span></button>`).join('');
+  [...menu.children].forEach((el,i)=>{ const it = cpMoreItems()[i]; el.onclick = ()=>{ cpCloseMore(); if(it && it.act) try{ it.act(); }catch(e){} }; });
+  /* якорим меню под кнопкой, справа */
+  const r = btn.getBoundingClientRect();
+  menu.style.top = Math.round(r.bottom + 6) + 'px';
+  menu.style.right = Math.round(window.innerWidth - r.right) + 'px';
+  wrap.classList.add('on');
+  requestAnimationFrame(()=>menu.classList.add('on'));
+  btn.classList.add('on');
+  if(typeof nvPush==='function') nvPush('cp:more', ()=>cpCloseMore(true));
+}
+function cpCloseMore(fromNav){
+  const wrap = document.getElementById('cpMore'), menu = document.getElementById('cpMoreMenu');
+  const btn = document.getElementById('cpMoreBtn');
+  if(!wrap || !wrap.classList.contains('on')) return;
+  menu && menu.classList.remove('on');
+  wrap.classList.remove('on');
+  btn && btn.classList.remove('on');
+  if(!fromNav && typeof nvPop==='function') nvPop('cp:more');
+}
+
 /* ================= CHAIN-ПАТЧИ РЕНДЕРА И НАВИГАЦИИ КОНВА ================= */
 if(typeof renderMsgs === 'function'){
   const _cpPrevRenderMsgs = renderMsgs;
@@ -339,14 +396,14 @@ if(typeof renderMsgs === 'function'){
 if(typeof openConv === 'function'){
   const _cpPrevOpenConv = openConv;
   openConv = function(){
-    cpCloseSearch(); /* поиск не тащим между чатами */
+    cpCloseSearch(); cpCloseMore(); /* поиск/меню не тащим между чатами */
     _cpPrevOpenConv.apply(this, arguments);
   };
 }
 if(typeof closeConv === 'function'){
   const _cpPrevCloseConv = closeConv;
   closeConv = function(){
-    cpCloseSearch();
+    cpCloseSearch(); cpCloseMore();
     _cpPrevCloseConv.apply(this, arguments);
   };
 }
@@ -1078,19 +1135,8 @@ function cpDecorateConvAccess(){
   const c = (typeof currentChat!=='undefined') ? currentChat : null;
   const head = document.querySelector('#convBody .conv-head'); if(!head || !c) return;
   const a = cpAcc(c);
-  /* кнопка доступа в шапке */
-  let btn = document.getElementById('cpAccessBtn');
-  if(!btn){
-    btn = document.createElement('button'); btn.className='ch-call'; btn.id='cpAccessBtn';
-    btn.onclick = cpAccessMenu;
-    const anchor = document.getElementById('cpSearchBtn') || head.querySelector('.ch-call');
-    head.insertBefore(btn, anchor);
-  }
-  const showBtn = a.type!=='public' || cpCanManage();
-  btn.style.display = showBtn ? 'flex' : 'none';
-  btn.title = 'Доступ к чату';
-  btn.innerHTML = a.type==='paid' ? I('crown') : a.type==='private' ? I('lock') : I('users');
-  /* инлайн-бейдж рядом с именем */
+  /* доступ к чату живёт в ⋮-меню (см. cpMoreItems) — отдельной кнопки в шапке нет,
+     чтобы не тесать имя. Здесь — только инлайн-бейдж типа рядом с именем. */
   const nameEl = document.getElementById('convName');
   if(nameEl){
     let badge = document.getElementById('cpConvBadge');
