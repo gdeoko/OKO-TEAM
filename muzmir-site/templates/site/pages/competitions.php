@@ -1,8 +1,8 @@
 <?php
-/** Каталог конкурсов: фильтры, сортировка, сетка карточек. */
+/** Каталог конкурсов: JS-табы статуса, серверные фильтры, премиум-сетка карточек. */
 
 /* --- Справочники значений фильтров --- */
-$STATUS_FILTERS = ['active' => 'Активные', 'finished' => 'Завершённые', 'all' => 'Все'];
+$STATUS_FILTERS = ['active' => 'Открытые', 'all' => 'Все'];
 $TYPE_FILTERS   = ['all' => 'Все', 'international' => 'Международные', 'national' => 'Всероссийские'];
 $DIR_FILTERS    = ['all' => 'Любая', 'multi' => 'Многожанровые', 'patriotic' => 'Патриотические', 'thematic' => 'Тематические'];
 $SORT_FILTERS   = ['default' => 'По порядку', 'soon' => 'Скоро завершатся', 'name' => 'По названию'];
@@ -15,11 +15,10 @@ $fType   = input('type', 'all');      if (!isset($TYPE_FILTERS[$fType]))     $fT
 $fDir    = input('dir', 'all');       if (!isset($DIR_FILTERS[$fDir]))       $fDir    = 'all';
 $fSort   = input('sort', 'default');  if (!isset($SORT_FILTERS[$fSort]))     $fSort   = 'default';
 
-/* --- Сборка запроса --- */
+/* --- Серверная выборка из БД (type/dir/sort фильтруют на сервере; статус -
+   таб на JS-хуках поверх полной выборки, с noscript-фолбэком через CSS/ссылку). --- */
 $where = ["status <> 'draft'"];
 $args  = [];
-if ($fStatus === 'active')   $where[] = "status IN ('open','judging')";
-if ($fStatus === 'finished') $where[] = "status IN ('closed','finished')";
 if ($fType !== 'all') { $where[] = "type = ?";      $args[] = $fType; }
 if ($fDir !== 'all')  { $where[] = "direction = ?"; $args[] = $fDir; }
 
@@ -33,15 +32,34 @@ $comps = all("SELECT * FROM competitions WHERE " . implode(' AND ', $where) . " 
 
 /* --- Хелпер статуса карточки --- */
 $statusView = static function (string $s): array {
+    // [класс бейджа, подпись, признак завершённости]
     return match ($s) {
-        'open'    => ['open', 'Приём открыт'],
-        'judging' => ['intl', 'Идёт оценка'],
-        default   => ['closed', 'Завершён'],
+        'open'    => ['open', 'Приём открыт', 0],
+        'judging' => ['judging', 'Идёт оценка', 0],
+        default   => ['closed', 'Завершён', 1],
     };
 };
 
+/* Счётчик открытых - для подписи под табами. */
+$openCount = 0;
+foreach ($comps as $c) { if (in_array($c['status'], ['open', 'judging'], true)) $openCount++; }
+
+/* Начальный вид (noscript и до инициализации JS): открытые или все. */
+$viewClass = $fStatus === 'all' ? 'cf-grid--all' : 'cf-grid--open';
+
 $icoFilter = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"/></svg>';
 $icoArrow  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+$icoCal    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>';
+$icoCoin   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.6-2.5 1.6-2.5.7-2.5 1.7 1 1.7 2.5 1.7 2.5-.7 2.5-1.7"/></svg>';
+
+/* Ссылка табов - серверный фолбэк без JS (сохраняет остальные фильтры). */
+$tabHref = static function (string $status) use ($fType, $fDir, $fSort): string {
+    $q = http_build_query(array_filter([
+        'status' => $status, 'type' => $fType !== 'all' ? $fType : '',
+        'dir' => $fDir !== 'all' ? $fDir : '', 'sort' => $fSort !== 'default' ? $fSort : '',
+    ]));
+    return url('/competitions') . ($q ? '?' . $q : '');
+};
 
 ob_start(); ?>
 <section class="section section--tint">
@@ -53,16 +71,20 @@ ob_start(); ?>
       <p>Выберите конкурс, ознакомьтесь с положением и подайте заявку. Работы оценивает компетентное жюри, результаты приходят на Вашу почту.</p>
     </div>
 
-    <form class="comp-filters reveal" method="get" action="<?= url('/competitions') ?>">
-      <div class="cf-chips" role="group" aria-label="Статус конкурса">
+    <div class="comp-filters reveal">
+      <div class="cf-tabs" role="tablist" aria-label="Статус конкурса">
         <?php foreach ($STATUS_FILTERS as $val => $label): ?>
-          <label class="cf-chip<?= $fStatus === $val ? ' is-active' : '' ?>">
-            <input type="radio" name="status" value="<?= h($val) ?>" <?= $fStatus === $val ? 'checked' : '' ?> onchange="this.form.submit()">
+          <a class="cf-tab<?= $fStatus === $val ? ' is-active' : '' ?>"
+             href="<?= h($tabHref($val)) ?>"
+             role="tab" aria-selected="<?= $fStatus === $val ? 'true' : 'false' ?>"
+             data-status-tab="<?= h($val) ?>">
             <span><?= h($label) ?></span>
-          </label>
+          </a>
         <?php endforeach; ?>
       </div>
-      <div class="cf-selects">
+
+      <form class="cf-selects" method="get" action="<?= url('/competitions') ?>">
+        <input type="hidden" name="status" value="<?= h($fStatus) ?>" data-status-field>
         <label class="cf-select">
           <span><?= $icoFilter ?>Тип</span>
           <select name="type" onchange="this.form.submit()">
@@ -88,8 +110,8 @@ ob_start(); ?>
           </select>
         </label>
         <noscript><button class="btn btn--ghost" type="submit">Показать</button></noscript>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -98,59 +120,163 @@ ob_start(); ?>
     <?php if (!$comps): ?>
       <div class="card reveal" style="text-align:center">
         <h3>Ничего не найдено</h3>
-        <p style="color:var(--muted)">По выбранным условиям конкурсов нет. Измените фильтры или посмотрите <a href="<?= url('/competitions') ?>">все конкурсы</a>.</p>
+        <p style="color:var(--muted)">По выбранным условиям конкурсов нет. Измените фильтры или посмотрите <a href="<?= h($tabHref('all')) ?>">все конкурсы</a>.</p>
       </div>
     <?php else: ?>
-      <p class="cf-count reveal"><?= count($comps) ?> <?= (count($comps) % 10 === 1 && count($comps) % 100 !== 11) ? 'конкурс' : ((count($comps) % 10 >= 2 && count($comps) % 10 <= 4 && (count($comps) % 100 < 10 || count($comps) % 100 >= 20)) ? 'конкурса' : 'конкурсов') ?></p>
-      <div class="grid grid-3">
-        <?php foreach ($comps as $c): [$badgeClass, $badgeLabel] = $statusView($c['status']); ?>
-          <a class="card comp-card reveal" href="<?= url('/competition/' . $c['slug']) ?>">
+      <p class="cf-count reveal" data-count-all="<?= count($comps) ?>" data-count-open="<?= $openCount ?>">
+        <span data-count-label></span>
+      </p>
+      <div class="grid grid-3 cf-grid <?= $viewClass ?>" data-comp-grid>
+        <?php foreach ($comps as $c):
+          [$badgeClass, $badgeLabel, $isFin] = $statusView($c['status']);
+          $isPaid = !empty($c['is_paid']) && (int) $c['price'] > 0;
+        ?>
+          <a class="card comp-card card--3d reveal" data-fin="<?= $isFin ?>" href="<?= url('/competition/' . $c['slug']) ?>">
             <div class="cc-cover">
               <?php if (!empty($c['cover'])): ?>
-                <img src="<?= h($c['cover']) ?>" alt="<?= h($c['name']) ?>" loading="lazy" style="width:100%;height:100%;object-fit:cover">
+                <img src="<?= h($c['cover']) ?>" alt="<?= h($c['name']) ?>" loading="lazy">
               <?php else: ?>
-                <?= h($c['name']) ?>
+                <span class="cc-cover-title"><?= h($c['name']) ?></span>
               <?php endif; ?>
+              <span class="cc-cover-badge badge badge--<?= $badgeClass ?>"><?= h($badgeLabel) ?></span>
             </div>
             <div class="cc-body">
               <div class="cc-badges">
-                <span class="badge badge--<?= $badgeClass ?>"><?= h($badgeLabel) ?></span>
                 <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
+                <span class="cc-fee<?= $isPaid ? '' : ' cc-fee--free' ?>">
+                  <?= $icoCoin ?><?= $isPaid ? 'Взнос ' . (int) $c['price'] . ' ₽' : 'Участие бесплатное' ?>
+                </span>
               </div>
-              <h3 style="margin-top:12px"><?= h($c['name']) ?></h3>
+              <h3 class="cc-title"><?= h($c['name']) ?></h3>
               <div class="cc-meta">
                 <span><?= h($dirLabel[$c['direction']] ?? 'Многожанровый') ?></span>
-                <?php if (!empty($c['start_date'])): ?><span>· приём с <?= h(ru_date($c['start_date'])) ?></span><?php endif; ?>
-                <?php if (!empty($c['end_date'])): ?><span>· до <?= h(ru_date($c['end_date'])) ?></span><?php endif; ?>
+                <?php if (!empty($c['end_date'])): ?>
+                  <span class="cc-date"><?= $icoCal ?><?= $isFin ? 'приём завершён ' : 'приём до ' ?><?= h(ru_date($c['end_date'])) ?></span>
+                <?php elseif (!empty($c['start_date'])): ?>
+                  <span class="cc-date"><?= $icoCal ?>приём с <?= h(ru_date($c['start_date'])) ?></span>
+                <?php endif; ?>
               </div>
               <span class="btn btn--ghost btn--block">Подробнее <?= $icoArrow ?></span>
             </div>
           </a>
         <?php endforeach; ?>
       </div>
+      <div class="cf-empty reveal" data-comp-empty hidden>
+        <p style="color:var(--muted);text-align:center">Сейчас нет открытых конкурсов по выбранным условиям. Посмотрите <a href="#" data-show-all>все конкурсы</a>.</p>
+      </div>
     <?php endif; ?>
   </div>
 </section>
 
 <style>
-.comp-filters{display:flex;flex-direction:column;gap:18px;margin-top:8px}
-.cf-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.cf-chip{position:relative;cursor:pointer}
-.cf-chip input{position:absolute;opacity:0;width:0;height:0}
-.cf-chip span{display:inline-block;padding:9px 20px;border-radius:999px;border:1.5px solid var(--glass-brd);
-  background:var(--glass);color:var(--gold);font-weight:700;font-size:.92rem;backdrop-filter:blur(8px);transition:background .18s,color .18s,border-color .18s,transform .18s}
-.cf-chip:hover span{transform:translateY(-2px);border-color:var(--gold)}
-.cf-chip.is-active span{background:var(--grad-gold);color:#1a1206;border-color:transparent;box-shadow:var(--shadow-btn)}
+.comp-filters{display:flex;flex-direction:column;gap:20px;margin-top:8px}
+.cf-tabs{display:inline-flex;align-self:center;gap:4px;padding:5px;border-radius:999px;
+  border:1.5px solid var(--glass-brd);background:var(--glass);backdrop-filter:blur(10px);max-width:100%}
+.cf-tab{display:inline-flex;align-items:center;justify-content:center;padding:10px 26px;min-height:44px;
+  border-radius:999px;font-weight:800;font-size:.92rem;color:var(--muted);white-space:nowrap;
+  transition:color .2s,background .2s,box-shadow .2s;text-decoration:none}
+.cf-tab:hover{color:var(--gold)}
+.cf-tab.is-active{background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
 .cf-selects{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
 .cf-select{display:flex;flex-direction:column;gap:6px;min-width:190px}
 .cf-select>span{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
 .cf-select>span svg{width:16px;height:16px;color:var(--gold)}
-.cc-badges{display:flex;flex-wrap:wrap;gap:8px}
 .cf-count{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+
+.comp-card{padding:0;display:flex;flex-direction:column}
+.cc-cover{position:relative}
+.cc-cover img{display:block}
+.cc-cover-title{overflow-wrap:anywhere}
+.cc-cover-badge{position:absolute;top:12px;left:12px;z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.28);backdrop-filter:blur(6px)}
+.cc-body{display:flex;flex-direction:column;gap:12px;flex:1}
+.cc-badges{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cc-fee{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;padding:5px 12px;border-radius:999px;color:var(--gold-deep);
+  background:var(--gold-soft);border:1px solid var(--glass-brd)}
+.cc-fee svg{color:var(--gold)}
+.cc-fee--free{color:#5f8a63;background:rgba(143,188,148,.14);border-color:rgba(143,188,148,.3)}
+.cc-fee--free svg{color:#8FBC94}
+.cc-title{margin:2px 0 0;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
+.cc-date{display:inline-flex;align-items:center;gap:6px}
+.cc-date svg{color:var(--gold);flex:none}
+.comp-card .btn{margin-top:auto}
+
+/* Табы статуса: без JS фильтрует серверный класс, с JS - мгновенно. */
+.cf-grid--open .comp-card[data-fin="1"]{display:none}
+
+@media (max-width:640px){
+  .cf-tab{padding:10px 20px;flex:1}
+  .cf-select{min-width:0;width:100%}
+}
 </style>
+
+<script>
+(function () {
+  var grid = document.querySelector('[data-comp-grid]');
+  if (!grid) return;
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-status-tab]'));
+  var field = document.querySelector('[data-status-field]');
+  var count = document.querySelector('[data-count-label]');
+  var countBox = count ? count.closest('.cf-count') : null;
+  var empty = document.querySelector('[data-comp-empty]');
+  var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  function plural(n, forms) {
+    var n10 = n % 10, n100 = n % 100;
+    if (n10 === 1 && n100 !== 11) return forms[0];
+    if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return forms[1];
+    return forms[2];
+  }
+
+  function apply(status) {
+    var open = status !== 'all';
+    grid.classList.toggle('cf-grid--open', open);
+    grid.classList.toggle('cf-grid--all', !open);
+    tabs.forEach(function (t) {
+      var on = t.getAttribute('data-status-tab') === status;
+      t.classList.toggle('is-active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if (field) field.value = status;
+
+    // Каскад заново по видимым карточкам.
+    var visible = Array.prototype.filter.call(grid.children, function (el) {
+      return el.offsetParent !== null || getComputedStyle(el).display !== 'none';
+    });
+    visible.forEach(function (el, i) {
+      if (!reduce) el.style.transitionDelay = (i * 60) + 'ms';
+      el.classList.remove('in');
+    });
+    // reflow, затем показать
+    void grid.offsetWidth;
+    visible.forEach(function (el) { el.classList.add('in'); });
+
+    // Счётчик и пустое состояние.
+    var all = parseInt(countBox && countBox.getAttribute('data-count-all') || '0', 10);
+    var op = parseInt(countBox && countBox.getAttribute('data-count-open') || '0', 10);
+    var n = open ? op : all;
+    if (count) count.textContent = n + ' ' + plural(n, ['конкурс', 'конкурса', 'конкурсов']);
+    if (empty) empty.hidden = !(open && op === 0);
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function (e) {
+      e.preventDefault();
+      apply(t.getAttribute('data-status-tab'));
+      history.replaceState(null, '', t.getAttribute('href'));
+    });
+  });
+
+  var showAll = document.querySelector('[data-show-all]');
+  if (showAll) showAll.addEventListener('click', function (e) { e.preventDefault(); apply('all'); });
+
+  // Начальная синхронизация подписи по серверному классу.
+  apply(grid.classList.contains('cf-grid--all') ? 'all' : 'active');
+})();
+</script>
 <?php
 $content = ob_get_clean();
 render_page('Конкурсы', $content, [
     'active' => '/competitions',
-    'meta' => 'Каталог международных и всероссийских онлайн-конкурсов и фестивалей культуры и искусства КЦ «Музыкальный Мир». Активные и завершённые конкурсы, подача заявок онлайн.',
+    'meta' => 'Каталог международных и всероссийских онлайн-конкурсов и фестивалей культуры и искусства КЦ «Музыкальный Мир». Открытые и завершённые конкурсы, подача заявок онлайн.',
 ]);
