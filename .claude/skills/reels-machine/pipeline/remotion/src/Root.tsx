@@ -5,7 +5,7 @@ export const RemotionRoot: React.FC = () => (
   <Composition
     id="OkoReel"
     component={OkoReel}
-    durationInFrames={285}
+    durationInFrames={440}
     fps={30}
     width={1080}
     height={1920}
