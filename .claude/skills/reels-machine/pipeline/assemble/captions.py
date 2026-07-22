@@ -8,7 +8,7 @@
   или CLI: python captions.py words.json out.ass
 """
 import sys, json
-FONT="Soyuz Grotesk"; SIZE=82; ACTIVE="&H002059EA&"; REST="&H00FFFFFF"; POSY=1560  # фикс низ
+FONT="Soyuz Grotesk"; SIZE=94; ACTIVE="&H002059EA&"; REST="&H00FFFFFF"; POSY=1560  # фикс низ
 
 HEAD=f"""[Script Info]
 ScriptType: v4.00+
@@ -18,7 +18,7 @@ WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Sub,{FONT},{SIZE},{ACTIVE},{REST},&H00101010,&H64000000,-1,0,0,0,100,100,1,0,1,0,2,5,80,80,0,204
+Style: Sub,{FONT},{SIZE},{ACTIVE},{REST},&H00000000,&H00000000,-1,0,0,0,100,100,1,0,1,0,0,4,5,60,60,0,204
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
