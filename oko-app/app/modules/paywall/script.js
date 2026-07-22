@@ -22,7 +22,7 @@ var PW_ASSET = {
 
   /* ---- цены/мес (fallback если PLANS нет), спец-годовая цена ---- */
   var PW_MO = {START:1490, PRO:4890, BUSINESS:19900, MAX:27000};   // MAX ~ $300/мес
-  var PW_YR = {MAX:90000};                                          // MAX ~ $999/год (годовая выгода)
+  var PW_YR = {MAX:259200};   // MAX год = −20% (27000×12×0.8) — единая скидка со всеми тарифами, лестница не инвертируется
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;
     return PW_MO[tier] || 0;
@@ -147,7 +147,7 @@ var PW_ASSET = {
       ? ('<div class="pw-p-v">'+pwRub(mo)+'<small> /мес</small></div>')
       : ('<div class="pw-p-v">'+pwRub(mo)+'<small> /мес</small></div>');
     var priceNote = (tier==='MAX')
-      ? ('год '+pwRub(PW_YR.MAX)+'<br>выгода до −72%')
+      ? ('год '+pwRub(PW_YR.MAX)+'<br>выгода −20%')
       : ('всего '+pwRub(perDay)+'/день<br>−до 20% на год');
     el.innerHTML =
       '<div class="pw-card">'+
@@ -439,7 +439,7 @@ var PW_ASSET = {
 
   /* ---- FAQ / снятие возражений (native <details>, без JS-таймеров) ---- */
   var PW_FAQ = [
-    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 90 000 ₽, ни копейкой больше.'},
+    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 259 200 ₽ (−20%), ни копейкой больше.'},
     {q:'Можно отменить подписку?', a:'В один клик в настройках. Автопродление выключается сразу, а доступ остаётся до конца оплаченного периода.'},
     {q:'Почему OKO не полностью бесплатный?', a:'ИИ-проверки, автопостинг и контент-завод — это реальные вычисления. Базовый уровень бесплатен навсегда: лента, кошелёк, партнёрка и первые проверки видео.'},
     {q:'А если тариф не подойдёт?', a:'Понизь уровень или вернись на FREE когда угодно. Подписчики, ролики и баланс остаются с тобой.'}
@@ -552,6 +552,7 @@ var PW_ASSET = {
     var cmpHtml = '';
     if(pwCmpOpen){
       cmpHtml =
+      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: BUSINESS, MAX</div>'+
       '<div class="pw-cmp-wrap"><table class="pw-cmp">'+
         '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th class="pw-c-max">MAX</th></tr></thead>'+
         '<tbody>'+ PW_CMP_ROWS.map(function(r){

@@ -138,8 +138,13 @@
 .pw-cmp-toggle svg{width:14px;height:14px;transition:transform .25s}
 .pw-cmp-toggle.on svg{transform:rotate(180deg)}
 .pw-cmp-wrap{overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch;
-  border:1px solid var(--border);border-radius:var(--r-md)}
-.pw-cmp{border-collapse:collapse;width:100%;min-width:420px;font-size:12px}
+  border:1px solid var(--border);border-radius:var(--r-md);
+  /* правый край подтаивает — сигнал «листай, есть ещё BUSINESS и MAX» */
+  -webkit-mask-image:linear-gradient(90deg,#000 89%,rgba(0,0,0,.35) 100%);
+          mask-image:linear-gradient(90deg,#000 89%,rgba(0,0,0,.35) 100%)}
+/* подпись-подсказка над таблицей */
+.pw-cmp-hint{font-size:11px;color:var(--dim);text-align:right;margin:-6px 2px 6px;letter-spacing:.02em}
+.pw-cmp{border-collapse:collapse;width:100%;min-width:452px;font-size:12px}
 .pw-cmp th,.pw-cmp td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--border)}
 .pw-cmp thead th{position:sticky;top:0;background:var(--surface);font-family:var(--font-display);font-size:15px;
   letter-spacing:.03em;font-weight:400}

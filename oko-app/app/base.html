@@ -1263,7 +1263,7 @@ main>.screen{position:relative;z-index:1}
           <div class="ava lime" id="profAva">Д</div>
           <div>
             <h2 class="name-status" id="profName">Даниэль</h2>
-            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">PRO до 15.08</span></div>
+            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">MAX · владелец</span></div>
           </div>
         </div>
         <p class="prof-bio" id="profBio"></p>
@@ -3182,7 +3182,7 @@ async function liveSend(text){
 }
 
 /* ================= МОЙ ПРОФИЛЬ ================= */
-const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'PRO', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
+const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'MAX', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
 const STATUS_ICONS = ['fire','star','bolt','heart','thumb','crown'];
 let editStatus = null;
 function renderMyProfile(){
@@ -3205,7 +3205,7 @@ function renderMyProfile(){
     `<div class="pstat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('');
   const ach = [
     {ic:'bolt', t:'Ранний', on:true},
-    {ic:'crown', t:'PRO', on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'},
+    {ic:'crown', t:(PROFILE.tier==='MAX'?'MAX':'PRO'), on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'||PROFILE.tier==='MAX'},
     {ic:'users', t:'Партнёр', on:true},
     {ic:'fire', t:'100+ реакций', on:reacts>=100},
     {ic:'star', t:'Автор', on:myPosts.length>0},
