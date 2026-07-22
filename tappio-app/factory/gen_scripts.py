@@ -484,6 +484,14 @@ def make_one(app, state):
     MIX = ["viral","viral","useful","viral","sales","viral","useful","viral","useful","sales"]
     ctype = MIX[seq % 10]
     d["content_type"] = ctype
+    # МУЗЫКА под тип контента (+ уникальность даёт глобальный дедуп в fetch_music)
+    MUSIC_BY_TYPE = {
+        "viral":  ["energetic upbeat", "hype trap beat", "driving electronic", "punchy pop energy", "cinematic tension build"],
+        "useful": ["calm focus ambient", "clean corporate underscore", "soft piano thoughtful", "minimal tech ambient", "warm inspiring"],
+        "sales":  ["uplifting confident", "motivational corporate", "positive success anthem", "bright optimistic pop", "epic inspiring rise"],
+    }
+    tm = rng.choice(MUSIC_BY_TYPE[ctype])
+    d["music"]["queries"] = [tm] + d["music"].get("queries", [])
     code = meta["brand"]["code"]
     if ctype == "sales":
         # усиленная воронка: сильный CTA + кодовое слово + ссылка
