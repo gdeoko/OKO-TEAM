@@ -114,9 +114,11 @@
 .cp-emoji-svg svg{width:28px;height:28px;display:block}
 .cp-emoji-svg:hover{background:var(--lime-dim);color:var(--accent)}
 .cp-emoji-svg:active{color:var(--accent);transform:scale(.86)}
-/* инлайн-эмодзи внутри отрендеренного сообщения */
+/* инлайн-эмодзи внутри отрендеренного сообщения: в чужих пузырях — фирменный лайм
+   (тёмная тема) / читаемый тёмно-лайм (светлая), в своих (лаймовый пузырь) — тёмный */
 .cp-oko-emoji{display:inline-flex;vertical-align:-.28em;color:var(--accent);margin:0 .5px}
 .cp-oko-emoji svg{width:20px;height:20px;display:block}
+.msg.out .cp-oko-emoji{color:#0a0a0a}
 .cp-stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
 .cp-stk{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;transition:transform .12s,background .16s}
 .cp-stk:hover{background:var(--lime-dim)}
