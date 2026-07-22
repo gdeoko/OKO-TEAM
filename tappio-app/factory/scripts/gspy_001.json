@@ -23,16 +23,17 @@
   "big": "IS ON THE\nNETWORK",
   "q": [
    "surveillance concept eye lens"
-  ]
+  ],
+  "ai": "work/gspy_001/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Checked into a rental? A hidden lens could be watching."
+   "text": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
   },
   {
    "id": "b2",
-   "text": "Most spy cams need Wi-Fi. That is their weak spot."
+   "text": "Most spy cams need Wi-Fi. that's their weak spot."
   },
   {
    "id": "b3",
@@ -241,6 +242,30 @@
   "text": "Comment PRIVACY for the app.",
   "code": "PRIVACY"
  },
- "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips",
- "yt_title": "Find hidden cameras with a Wi-Fi scan #shorts"
+ "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #tested #hotels #airbnb #way",
+ "yt_title": "Best GPS Tracker Detector Find Hidden #shorts",
+ "trend_keys": [
+  "tested",
+  "hotels",
+  "airbnb",
+  "way",
+  "find",
+  "five",
+  "cameras",
+  "hidden"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Best GPS Tracker Detector - Find Hidden GPS Devices & Hidden Cameras!",
+  "views": 15038,
+  "channel": "GPS Tracker Shop"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-15k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
+ }
 }
