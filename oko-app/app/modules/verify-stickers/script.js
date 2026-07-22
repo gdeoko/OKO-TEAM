@@ -233,8 +233,11 @@ function vsTonArt(k, u){
 }
 
 /* ---------- ПРЕМИУМ-АРТ БАЗОВЫХ СТИКЕРОВ (замена плоских кружков-иконок) ---------- */
-/* Каждый стикер — самодостаточная многоцветная SVG-иллюстрация уровня emoji-пака:
-   градиенты, блики, глубина; плавает прозрачно (в сообщении) и на тайле (в гриде). */
+/* Каждый стикер — самодостаточная SVG-иллюстрация в фирменном языке OKO:
+   строго чёрный + лайм #9AFF00 (никаких системных «цветных» эмодзи), градиенты,
+   белые блики, тёмный кейлайн (читается в тёмной И светлой теме), сигнатурная искра.
+   Плавает прозрачно (в сообщении) и на тайле (в гриде). Реакции — компактная
+   штриховая версия того же набора (I('heart') …); стикеры — премиум-заливка. */
 const VS_BASE_ICS = new Set(['logo','fire','heart','thumb','laugh','wow','star','crown','rocket','bolt','sad','check']);
 function vsBaseSvg(ic, size){
   const u = 'vsb' + (vsUid++);
@@ -313,19 +316,20 @@ function vsBaseArt(ic, u){
     <path d="M58 4 L24 55 L45 55 L40 96 L78 41 L54 41 Z" fill="url(#${u}z)" stroke="#efffcf" stroke-width="2.2" stroke-linejoin="round"/>
     <path d="M55 14 L34 50 L48 50 L44 78" stroke="#fff" stroke-width="2.4" opacity=".55" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
   case 'sad': return `<defs>
-    <radialGradient id="${u}j" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#dcecff"/><stop offset=".55" stop-color="#7fb0f5"/><stop offset="1" stop-color="#3f6fd0"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}j)"/>
-    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
-    <path d="M24 40 Q33 46 41 41" stroke="#274a86" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-    <path d="M59 41 Q67 46 76 40" stroke="#274a86" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-    <circle cx="35" cy="52" r="4.5" fill="#12345f"/><circle cx="65" cy="52" r="4.5" fill="#12345f"/>
-    <path d="M34 76 Q50 64 66 76" stroke="#12345f" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M34 58 q-5 8 0 13 q5 -5 0 -13 z" fill="#4fd0ff"/>`;
+    <radialGradient id="${u}j" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}j)" stroke="#0a1403" stroke-width="1.4"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".28"/>
+    <path d="M24 40 Q33 46 41 41" stroke="#0a1403" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M59 41 Q67 46 76 40" stroke="#0a1403" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <circle cx="35" cy="52" r="4.5" fill="#0a1403"/><circle cx="65" cy="52" r="4.5" fill="#0a1403"/>
+    <path d="M34 76 Q50 64 66 76" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M34 58 q-5 8 0 13 q5 -5 0 -13 z" fill="#c6ff70"/>`;
   case 'check': return `<defs>
-    <radialGradient id="${u}v" cx=".4" cy=".33" r=".82"><stop offset="0" stop-color="#c7f7a0"/><stop offset=".55" stop-color="#35c759"/><stop offset="1" stop-color="#178a3c"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}v)"/>
+    <radialGradient id="${u}v" cx=".4" cy=".33" r=".82"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}v)" stroke="#0a1403" stroke-width="1.4"/>
     <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
-    <path d="M28 52 L44 68 L74 34" stroke="#fff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+    <path d="M28 53 L44 69 L74 35" stroke="#f4ffd6" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
+    <path d="M28 52 L44 68 L74 34" stroke="#0a1403" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
   default: return '';
   }
 }
@@ -377,7 +381,37 @@ sendSticker = function(i){
   if(s && s.pack === 'ton' && !vsPremiumOk()){ closeSheet(); vsLockedTap(); return; }
   _prevSendStickerVs(i);
   if(s && s.pack === 'ton') vsCrystalRain();
+  else if(s) vsStickerSpark(); /* лёгкий лайм-салют для бренд-стикеров (без лагов) */
 };
+
+/* WOW при отправке бренд-стикера: короткий залп лайм-искр у нижнего края ленты.
+   Только transform/opacity (GPU), считанные частицы, авто-удаление — не тормозит. */
+function vsStickerSpark(){
+  try{
+    const host = document.getElementById('msgs'); if(!host) return;
+    const r = host.getBoundingClientRect();
+    if(r.width < 10 || r.height < 10) return;
+    const box = document.createElement('div');
+    box.className = 'vs-spark';
+    /* эпицентр — где появляется отправленный стикер (низ, ближе к правому краю) */
+    const cx = r.left + r.width * 0.72, cy = r.top + r.height - 66;
+    box.style.cssText = `left:${cx}px;top:${cy}px`;
+    const n = 7, star = '<svg viewBox="0 0 100 100"><path d="M50 8 L60 40 L92 50 L60 60 L50 92 L40 60 L8 50 L40 40 Z" fill="#9AFF00"/></svg>';
+    let h = '';
+    for(let k = 0; k < n; k++){
+      const ang = (k / n) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 34 + Math.random() * 30;
+      const dx = Math.round(Math.cos(ang) * dist);
+      const dy = Math.round(Math.sin(ang) * dist) - 10; /* лёгкий подъём вверх */
+      const sz = Math.round(7 + Math.random() * 7);
+      const dur = (0.5 + Math.random() * 0.25).toFixed(2);
+      h += `<i style="--dx:${dx}px;--dy:${dy}px;width:${sz}px;height:${sz}px;animation-duration:${dur}s">${star}</i>`;
+    }
+    box.innerHTML = h;
+    document.body.appendChild(box);
+    setTimeout(()=>box.remove(), 900);
+  }catch(e){}
+}
 
 function vsCrystalRain(){
   const host = document.getElementById('msgs'); if(!host) return;
