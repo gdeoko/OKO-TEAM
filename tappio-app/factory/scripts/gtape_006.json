@@ -1,0 +1,245 @@
+{
+ "id": "gtape_006",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "positive corporate light groove",
+   "happy ukulele diy",
+   "cheerful folk clap"
+  ]
+ },
+ "cover": {
+  "kicker": "MOVING DAY",
+  "top": "WILL THE SOFA",
+  "big": "FIT THROUGH\nTHE DOOR?",
+  "q": [
+   "hands arranging shelf wall decor"
+  ],
+  "ai": "work/gtape_006/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the door frame with your phone first."
+  },
+  {
+   "id": "b3",
+   "text": "Then measure the sofa the same way."
+  },
+  {
+   "id": "b4",
+   "text": "The app compares both in real time."
+  },
+  {
+   "id": "b5",
+   "text": "Green means go, red means turn it sideways."
+  },
+  {
+   "id": "b6",
+   "text": "Never get stuck on the stairs again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.126,
+   "dur": 2.11,
+   "type": "kicker",
+   "text": "AR MEASURE"
+  },
+  {
+   "at": 0.213,
+   "dur": 1.97,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.29,
+   "dur": 1.63,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  },
+  {
+   "at": 0.59,
+   "dur": 2.38,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  },
+  {
+   "at": 0.602,
+   "dur": 1.82,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.639,
+   "dur": 2.29,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #furniture #measure #tape #demo",
+ "yt_title": "How To Measure Without Measuring Tape #shorts",
+ "trend_keys": [
+  "furniture",
+  "measure",
+  "tape",
+  "demo",
+  "delivery",
+  "interior",
+  "app",
+  "without"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "How To Measure Without Measuring Tape",
+  "views": 8397,
+  "channel": "HouseCalls"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-8k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+ }
+}
