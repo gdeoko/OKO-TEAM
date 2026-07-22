@@ -6,24 +6,7 @@ import {
 
 export const LIME = "#9AFF00";
 export const MONT = "MontLocal", BEBAS = "BebasLocal", CAVEAT = "CaveatLocal", OSWALD = "OswaldLocal";
-
-// офлайн-шрифты
-if (typeof window !== "undefined" && (window as any).FontFace) {
-  const h = delayRender("fonts", { timeoutInMilliseconds: 60000 });
-  const defs: [string, string][] = [
-    [MONT, "fonts/Montserrat.ttf"], [BEBAS, "fonts/Bebas.ttf"],
-    [CAVEAT, "fonts/Caveat.ttf"], [OSWALD, "fonts/Oswald.ttf"],
-  ];
-  const load = (async () => {
-    try {
-      await Promise.all(defs.map(async ([fam, url]) => {
-        const f = new FontFace(fam, `url(${staticFile(url)})`);
-        await f.load(); (document as any).fonts.add(f);
-      }));
-    } catch {}
-  })();
-  Promise.race([load, new Promise((r) => setTimeout(r, 9000))]).finally(() => continueRender(h));
-}
+// шрифты встроены base64 (src/fonts.ts) и подключаются <style> в композиции
 
 // ---- анимированное тёмное поле частиц (× и +) ----
 export const ParticleField: React.FC<{ tint?: string }> = ({ tint = LIME }) => {

@@ -1,88 +1,78 @@
 import React from "react";
-import { AbsoluteFill, OffthreadVideo, Sequence, staticFile, useCurrentFrame, interpolate, spring, useVideoConfig, Img } from "remotion";
-import {
-  LIME, MONT, BEBAS, ParticleField, RadialGlow, LightLeak, KineticWords,
-  ScriptAccent, StatCard, BarChart, SocialIcons, LogoHeader,
-} from "./mograph";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, staticFile, Img } from "remotion";
+import { LIME, MONT, BEBAS, ParticleField, RadialGlow, LightLeak, SocialIcons, LogoHeader } from "./mograph";
+import { Blob, RingBg, Karaoke, Shield, Checks, ClickPhone } from "./mograph2";
+import { FONT_CSS } from "./fonts";
 
-const Scene: React.FC<{ from: number; dur: number; children: React.ReactNode }> = ({ from, dur, children }) => {
-  const f = useCurrentFrame();
-  const local = f - from;
-  const inn = interpolate(local, [0, 10], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const out = interpolate(local, [dur - 8, dur], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return <Sequence from={from} durationInFrames={dur}><AbsoluteFill style={{ opacity: Math.min(inn, out) }}>{children}</AbsoluteFill></Sequence>;
-};
+const CAPS = [
+  { t: "Представь", s: 0, e: 0.78 },
+  { t: "одно приложение,", s: 0.78, e: 2.08 },
+  { t: "где есть ВСЁ", s: 2.08, e: 2.95, lime: true },
+  { t: "мессенджер", s: 2.95, e: 3.82, lime: true },
+  { t: "нейросети", s: 3.82, e: 4.6, lime: true },
+  { t: "продвижение", s: 4.6, e: 5.55, lime: true },
+  { t: "и заработок", s: 5.55, e: 6.42, lime: true },
+  { t: "без ВПН", s: 6.42, e: 6.94, lime: true },
+  { t: "без блокировок", s: 6.94, e: 8.07 },
+  { t: "полностью безопасно", s: 8.07, e: 9.63, lime: true },
+  { t: "контент", s: 9.63, e: 10.23, lime: true },
+  { t: "в один клик", s: 10.23, e: 11.02, lime: true },
+  { t: "без подписок", s: 11.02, e: 11.97 },
+  { t: "и команд", s: 11.97, e: 12.58 },
+  { t: "бесплатное обучение", s: 12.58, e: 14.14, lime: true },
+  { t: "сертификат", s: 14.14, e: 15.01, lime: true },
+  { t: "и доход с 1-го дня", s: 15.01, e: 16.48, lime: true },
+];
+const BLOBPATH = [
+  { f: 0, x: 30, y: 30 }, { f: 90, x: 70, y: 25 }, { f: 195, x: 25, y: 40 },
+  { f: 290, x: 75, y: 45 }, { f: 380, x: 35, y: 30 }, { f: 500, x: 50, y: 45 }, { f: 570, x: 50, y: 45 },
+];
 
 export const OkoReel: React.FC = () => {
-  const f = useCurrentFrame();
-  return (
-    <AbsoluteFill style={{ backgroundColor: "#080808" }}>
-      {/* Постоянный анимированный фон */}
-      <ParticleField />
-      <RadialGlow x={50} y={38} />
-
-      {/* Сцена A — интро (кинетика + скрипт) */}
-      <Scene from={0} dur={82}>
-        <KineticWords words={[{ t: "ТВОЙ" }, { t: "КОНТЕНТ", lime: true }]} start={8} step={7} size={150} top={640} />
-        <ScriptAccent text="под ключ" start={40} top={900} />
-        <div style={{ position: "absolute", top: 1120, width: "100%", textAlign: "center", fontFamily: MONT, fontWeight: 700, fontSize: 40, color: "#cfcfcf", letterSpacing: 1 }}>дизайн · продвижение · нейросети</div>
-      </Scene>
-
-      {/* Сцена B — стата (3D-карточка + мини-сток) */}
-      <Scene from={82} dur={92}>
-        <KineticWords words={[{ t: "РЕЗУЛЬТАТ," }, { t: "КОТОРЫЙ", lime: true }, { t: "ВИДНО" }]} start={6} step={5} size={70} font={MONT} top={360} />
-        <StatCard start={14} value="1200000" label="просмотров за месяц" thumb="stock1.mp4" />
-      </Scene>
-
-      {/* Сцена C — инфографика (сток-текстура + бары) */}
-      <Scene from={174} dur={92}>
-        <AbsoluteFill style={{ opacity: 0.28 }}>
-          <OffthreadVideo src={staticFile("stock2.mp4")} muted style={{ width: "100%", height: "100%", objectFit: "cover", filter: "blur(6px) saturate(0.6)" }} />
-        </AbsoluteFill>
-        <AbsoluteFill style={{ background: "linear-gradient(180deg,#080808cc,#08080899,#080808ee)" }} />
-        <KineticWords words={[{ t: "РОСТ" }, { t: "ПО ВСЕМ" }, { t: "СЕТЯМ", lime: true }]} start={6} step={5} size={78} top={360} />
-        <BarChart start={16} bars={[{ l: "охваты", v: 42 }, { l: "вовлечение", v: 68 }, { l: "продажи", v: 94 }]} />
-      </Scene>
-
-      {/* Сцена D — соцсети (иконки + скрипт) */}
-      <Scene from={266} dur={92}>
-        <KineticWords words={[{ t: "ВЕЗДЕ," }, { t: "ГДЕ ТВОЯ" }, { t: "АУДИТОРИЯ", lime: true }]} start={6} step={5} size={72} font={MONT} top={380} />
-        <SocialIcons start={16} top={860} />
-        <ScriptAccent text="в соцсетях" start={40} top={1120} />
-      </Scene>
-
-      {/* Сцена E — финал (лого + CTA) */}
-      <Scene from={358} dur={82}>
-        <RadialGlow x={50} y={44} />
-        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
-          <EndCard />
-        </AbsoluteFill>
-      </Scene>
-
-      {/* Хедер поверх всего */}
-      <LogoHeader />
-
-      {/* Лайт-лик переходы на стыках сцен */}
-      <LightLeak at={82} />
-      <LightLeak at={174} />
-      <LightLeak at={266} />
-      <LightLeak at={358} />
-
-      {/* Прогресс-бар */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, height: 7, width: `${interpolate(f, [0, 440], [0, 100])}%`, background: LIME, boxShadow: `0 0 16px ${LIME}` }} />
-    </AbsoluteFill>
-  );
-};
-
-const EndCard: React.FC = () => {
   const f = useCurrentFrame(); const { fps } = useVideoConfig();
-  const sp = spring({ frame: f - 4, fps, config: { damping: 13 } });
+  const endSp = spring({ frame: f - 500, fps, config: { damping: 13 } });
   const pulse = 1 + Math.sin(f / 10) * 0.03;
   return (
-    <div style={{ textAlign: "center" }}>
-      <Img src={staticFile("logo.png")} style={{ width: 230, transform: `scale(${(0.6 + sp * 0.4) * pulse})`, filter: `drop-shadow(0 0 50px ${LIME})` }} />
-      <div style={{ fontFamily: BEBAS, color: "#fff", fontSize: 180, letterSpacing: 6, marginTop: 10, opacity: sp, transform: `translateY(${(1 - sp) * 40}px)` }}>OKO</div>
-      <div style={{ fontFamily: MONT, fontWeight: 800, color: LIME, fontSize: 46, letterSpacing: 8, opacity: sp, textShadow: `0 0 30px ${LIME}88` }}>СКОРО ПРИЛОЖЕНИЕ</div>
-    </div>
+    <AbsoluteFill style={{ backgroundColor: "#070707" }}>
+      <style dangerouslySetInnerHTML={{ __html: FONT_CSS }} />
+      <ParticleField />
+      <Blob path={BLOBPATH} />
+      <RadialGlow x={50} y={40} />
+      {f < 500 && <RingBg />}
+
+      {/* HERO по секциям (верхняя зона) */}
+      {f >= 88 && f < 192 && <SocialIcons start={92} top={420} />}
+      {f >= 192 && f < 288 && <Shield start={196} />}
+      {f >= 288 && f < 380 && <ClickPhone start={292} />}
+      {f >= 380 && f < 500 && <Checks start={384} items={["Бесплатное обучение", "Сертификат", "Доход с первого дня"]} />}
+
+      {/* интро-заголовок */}
+      {f < 92 && (() => {
+        const sp = spring({ frame: f - 6, fps, config: { damping: 14 } });
+        return <div style={{ position: "absolute", top: 430, width: "100%", textAlign: "center", opacity: interpolate(f, [78, 92], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) }}>
+          <div style={{ fontFamily: BEBAS, fontSize: 150, color: "#fff", letterSpacing: 3, opacity: sp, transform: `translateY(${(1 - sp) * 40}px)` }}>ОДНО<span style={{ color: LIME }}>.</span></div>
+          <div style={{ fontFamily: BEBAS, fontSize: 96, color: LIME, letterSpacing: 6, textShadow: `0 0 40px ${LIME}66` }}>ПРИЛОЖЕНИЕ</div>
+        </div>;
+      })()}
+
+      {/* КАРАОКЕ поверх */}
+      {f < 500 && <Karaoke caps={CAPS} />}
+
+      <LogoHeader />
+
+      {/* переходы */}
+      <LightLeak at={90} /><LightLeak at={192} /><LightLeak at={288} /><LightLeak at={380} /><LightLeak at={500} />
+
+      {/* финальная карточка */}
+      {f >= 500 && (
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", background: "rgba(7,7,7,0.4)" }}>
+          <Img src={staticFile("logo.png")} style={{ width: 240, transform: `scale(${(0.6 + endSp * 0.4) * pulse})`, filter: `drop-shadow(0 0 60px ${LIME})` }} />
+          <div style={{ fontFamily: BEBAS, color: "#fff", fontSize: 190, letterSpacing: 8, marginTop: 8, opacity: endSp, transform: `translateY(${(1 - endSp) * 40}px)` }}>OKO</div>
+          <div style={{ fontFamily: MONT, fontWeight: 800, color: LIME, fontSize: 48, letterSpacing: 8, opacity: endSp, textShadow: `0 0 30px ${LIME}88` }}>СКОРО · ПЕРЕХОДИ ПО ССЫЛКЕ</div>
+        </AbsoluteFill>
+      )}
+
+      <div style={{ position: "absolute", bottom: 0, left: 0, height: 7, width: `${interpolate(f, [0, 570], [0, 100])}%`, background: LIME, boxShadow: `0 0 16px ${LIME}` }} />
+    </AbsoluteFill>
   );
 };
