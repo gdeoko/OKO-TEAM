@@ -28,8 +28,8 @@ function db_seed(PDO $pdo): void {
 
     // --- Прайс наград (общий шаблон, редактируется по конкурсу в админке) ---
     $prices = [
-        ['Кубок Гран-при','original',1000],
-        ['Статуэтка лауреата','original',800],
+        ['Кубок Гран-при','original',1500],
+        ['Статуэтка лауреата','original',1000],
         ['Медаль дипломанта','original',500],
         ['Основной диплом','digital',400], ['Основной диплом','original',500],
         ['Дополнительный диплом','digital',350], ['Дополнительный диплом','original',450],
@@ -100,8 +100,8 @@ function db_seed(PDO $pdo): void {
     // --- Настройки счётчиков главной ---
     $now = date('Y-m-d H:i:s');
     foreach ([
-        'stat_competitions'=>'120','stat_participants'=>'15000','stat_regions'=>'85',
-        'stat_countries'=>'12','stat_diplomas'=>'37000',
+        'stat_competitions'=>'95','stat_participants'=>'30621','stat_regions'=>'85',
+        'stat_countries'=>'10','stat_diplomas'=>'30000',
         'hero_title'=>'Культурный центр «Музыкальный Мир»',
         'hero_subtitle'=>'Международные и всероссийские онлайн-конкурсы и фестивали',
     ] as $k=>$v) {

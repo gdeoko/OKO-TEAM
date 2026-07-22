@@ -381,8 +381,8 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         }
 
         // --- подписанты / печать / подписи ---
-        $s1n = _dip_setting('sign1_name', 'Председатель оргкомитета');
-        $s1d = _dip_setting('sign1_desc', 'Оргкомитет международного конкурса культуры и искусства «' . $competition . '»');
+        $s1n = _dip_setting('sign1_name', 'Галиулин Данил Дамирович');
+        $s1d = _dip_setting('sign1_desc', 'Председатель Оргкомитета');
         $s2n = _dip_setting('sign2_name', 'Ильясов Альберт Ильясович');
         $s2d = _dip_setting('sign2_desc', 'Генеральный директор Культурного центра «Музыкальный Мир», заслуженный деятель культуры');
 
