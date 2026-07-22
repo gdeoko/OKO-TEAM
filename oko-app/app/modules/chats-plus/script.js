@@ -12,10 +12,11 @@
 const CP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-chats-plus'))||{}; }catch(e){ return {}; } })();
 if(CP.speed!==1.5 && CP.speed!==2) CP.speed = 1;
 if(!Array.isArray(CP.recentEmoji)) CP.recentEmoji = [];
+if(!Array.isArray(CP.recentOko)) CP.recentOko = [];   /* недавние фирменные OKO-эмодзи (ключи) */
 if(!CP.panelTab) CP.panelTab = 'emoji';
 if(!CP.access || typeof CP.access!=='object') CP.access = {};     /* {chatId:{type,price}} — овнерские настройки доступа */
 if(!CP.unlocked || typeof CP.unlocked!=='object') CP.unlocked = {}; /* {chatId:1} — купленный доступ к платному чату */
-function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
+function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), recentOko:CP.recentOko.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
 const cpMsgsEl = () => document.getElementById('msgs');
 const cpEsc = t => (typeof esc==='function' ? esc(t) : String(t==null?'':t));
 
@@ -417,6 +418,71 @@ const CP_EMOJI = ['😀','😁','😂','🤣','😊','😍','😘','😎','🤩'
   '🤔','🤨','😐','😴','😜','😝','🤗','🤭','🙃','😏','😒','😞','😢','😭','😤','😠','😡','🤬','😱','😨',
   '👍','👎','👏','🙏','🤝','💪','🔥','✨','⭐','🌟','💯','✅','❌','⚡','🎉','🎊','🏆','🥇','💎','💰',
   '❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','💥','👀','🚀','🌈','☀️','🌙','⚽'];
+/* CP_EMOJI выше — устаревший системный набор (оставлен как fallback, НЕ рендерится).
+   Ниже — фирменный набор OKO: моно-SVG в стиле бренда (line + минимальная заливка,
+   currentColor). Каждый эмодзи = сырой inner-markup, база стиля задаётся на <svg>
+   (fill:none stroke:currentColor width:1.8). Заливка через fill=currentColor stroke=none.
+   Вставляются в текст как шорткод :oko-KEY: и рендерятся обратно фирменным SVG. */
+const CP_OKO_EMOJI = {
+  /* --- Смайлы --- */
+  happy:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M8 14.4q4 2.7 8 0"/>',
+  laugh:'<circle cx="12" cy="12" r="9"/><path d="M7.4 10.6q1.2-1.3 2.5 0"/><path d="M14.1 10.6q1.2-1.3 2.5 0"/><path d="M7.4 13.4h9.2a4.6 4.6 0 0 1-9.2 0z" fill="currentColor" stroke="none"/>',
+  love:'<circle cx="12" cy="12" r="9"/><path d="M9 11.9c-1.5-1.1-2.4-1.9-2.4-2.9 0-.75.6-1.25 1.35-1.25.55 0 1 .3 1.05.6.05-.3.5-.6 1.05-.6.75 0 1.35.5 1.35 1.25 0 1-.9 1.8-2.4 2.9z" fill="currentColor" stroke="none"/><path d="M15 11.9c-1.5-1.1-2.4-1.9-2.4-2.9 0-.75.6-1.25 1.35-1.25.55 0 1 .3 1.05.6.05-.3.5-.6 1.05-.6.75 0 1.35.5 1.35 1.25 0 1-.9 1.8-2.4 2.9z" fill="currentColor" stroke="none"/><path d="M8.3 14.6q3.7 2.6 7.4 0"/>',
+  cool:'<circle cx="12" cy="12" r="9"/><rect x="5.6" y="8.8" width="4.7" height="3.3" rx="1.3" fill="currentColor" stroke="none"/><rect x="13.7" y="8.8" width="4.7" height="3.3" rx="1.3" fill="currentColor" stroke="none"/><path d="M10.3 9.6h3.4"/><path d="M8.5 15.2q3.5 1.8 6.4-.4"/>',
+  wink:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M13.7 10.5q1.2-1.1 2.6 0"/><path d="M8 14.4q4 2.7 8 0"/>',
+  tongue:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M8 14.2q4 2.5 8 0"/><path d="M11 15.6h2.6v1c0 1.3-2.6 1.3-2.6 0z" fill="currentColor" stroke="none"/>',
+  think:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M13.6 8.2q1.4-.8 2.6.2"/><path d="M9.2 15.4q2-.9 4 0"/>',
+  neutral:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M8.8 15.2h6.4"/>',
+  sad:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M8.2 16q3.8-2.6 7.6 0"/>',
+  cry:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><path d="M8.4 16.2q3.6-2.4 7.2 0"/><path d="M8.2 12.4q-1.3 1.9-1.3 2.9a1.05 1.05 0 0 0 2.1 0q0-1-.8-2.9z" fill="currentColor" stroke="none"/><path d="M15.8 12.4q1.3 1.9 1.3 2.9a1.05 1.05 0 0 1-2.1 0q0-1 .8-2.9z" fill="currentColor" stroke="none"/>',
+  angry:'<circle cx="12" cy="12" r="9"/><path d="M7.3 9.5l2.6 1.1"/><path d="M16.7 9.5l-2.6 1.1"/><circle cx="9.2" cy="11.8" r="1" fill="currentColor" stroke="none"/><circle cx="14.8" cy="11.8" r="1" fill="currentColor" stroke="none"/><path d="M8.6 16.2q3.4-2.4 6.8 0"/>',
+  sleepy:'<circle cx="12" cy="12" r="9"/><path d="M7.6 10.6h2.6"/><path d="M13.8 10.6h2.6"/><circle cx="12" cy="15.4" r="1.2"/><path d="M15.6 5.2h2.9l-2.9 2.9h2.9"/>',
+  party:'<circle cx="12" cy="12" r="9"/><path d="M7.6 10.8q1.2-1.2 2.4 0"/><path d="M14 10.8q1.2-1.2 2.4 0"/><path d="M8.4 14.4q3.6 2.6 7.2 0"/><path d="M15.5 3.4l3 4.6-4.7-1.7z" fill="currentColor" stroke="none"/><circle cx="6" cy="5.5" r=".7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r=".7" fill="currentColor" stroke="none"/><circle cx="4.5" cy="10" r=".6" fill="currentColor" stroke="none"/>',
+  wow:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.35"/><circle cx="15" cy="10.4" r="1.35"/><ellipse cx="12" cy="15.2" rx="1.7" ry="2.2"/>',
+  kiss:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.05" fill="currentColor" stroke="none"/><path d="M13.8 10.6q1.2-1 2.5 0"/><path d="M10.8 15.1c0-1.1 2.2-1.1 2.2 0s-2.2 1.5-2.2 0z"/><path d="M16 6.5c-.6-.8-1.9-.4-1.9.6 0 .9 1.9 2 1.9 2s1.9-1.1 1.9-2c0-1-1.3-1.4-1.9-.6z" fill="currentColor" stroke="none"/>',
+  /* --- Жесты --- */
+  'thumb-up':'<path d="M8 19.2h8.3a1.7 1.7 0 0 0 1.7-1.35l1.1-5.5a1.5 1.5 0 0 0-1.5-1.85H13l.95-3.7a1.75 1.75 0 0 0-3.3-1.15L8 10.9z"/><rect x="4.6" y="10.9" width="3.4" height="8.3" rx=".9"/>',
+  'thumb-down':'<path d="M8 4.8h8.3a1.7 1.7 0 0 1 1.7 1.35l1.1 5.5a1.5 1.5 0 0 1-1.5 1.85H13l.95 3.7a1.75 1.75 0 0 1-3.3 1.15L8 13.1z"/><rect x="4.6" y="4.8" width="3.4" height="8.3" rx=".9"/>',
+  clap:'<path d="M11.4 20l-4.3-4.3a1.35 1.35 0 0 1 1.9-1.9l2.4 2.4"/><path d="M12.6 20l4.3-4.3a1.35 1.35 0 0 0-1.9-1.9l-2.4 2.4"/><path d="M12 5.5v2.2"/><path d="M8 6.6l1.1 1.9"/><path d="M16 6.6l-1.1 1.9"/>',
+  pray:'<path d="M12 3.4c-1.25 2.7-2.7 4.7-2.7 7.4V17a2.05 2.05 0 0 0 5.4 0v-6.2c0-2.7-1.45-4.7-2.7-7.4z"/><path d="M12 4.6V17"/>',
+  fist:'<path d="M7.6 12.6h8.6a1.35 1.35 0 0 1 1.35 1.35v2.5a1.35 1.35 0 0 1-1.35 1.35H7.6z"/><path d="M7.6 13.4H6a1.15 1.15 0 0 0 0 2.3h1.6"/><path d="M10 12.6v-1.5"/><path d="M12.3 12.6v-1.9"/><path d="M14.6 12.6v-1.5"/>',
+  muscle:'<path d="M5.2 8v2.6h3.3a4.2 4.2 0 0 1 4.2 4.2v.3a2.6 2.6 0 0 1-2.6 2.6H7a2 2 0 0 1-2-2v-1.4"/><path d="M8.5 10.6a5.2 5.2 0 0 1 5 4.6"/>',
+  ok:'<circle cx="9" cy="14" r="3.1"/><path d="M11.2 11.9l3-2.9"/><path d="M12.4 13.2l3.2-1.8"/><path d="M12.8 14.8l3.1-.5"/>',
+  wave:'<path d="M9 20.2a4 4 0 0 1-4-4v-2.8a1 1 0 0 1 2 0V15"/><path d="M7 13.7V8.4a1 1 0 0 1 2 0V14"/><path d="M9 14V6.7a1 1 0 0 1 2 0V14"/><path d="M11 14V7.6a1 1 0 0 1 2 0V15"/><path d="M13 15v-3.1a1 1 0 0 1 2 0v3.7a4 4 0 0 1-4 4"/><path d="M16.3 7.4q1.3 1.1 0 3.1"/>',
+  'point-up':'<path d="M12 3.6a1.3 1.3 0 0 1 1.35 1.3V12"/><path d="M9 12.5h5.6a1.9 1.9 0 0 1 1.9 1.9v2.3a3 3 0 0 1-3 3h-2.7A3.8 3.8 0 0 1 8 15.9v-1.6a1.3 1.3 0 0 1 1-1.3"/>',
+  /* --- Символы --- */
+  fire:'<path d="M12 3c1 3.2 4.2 4.3 4.2 8.2a4.2 4.2 0 0 1-8.4 0c0-1.6.75-2.7 1.6-3.2.2 1.05 1.05 1.6 1.6 1.6-1.05-2.1.5-4.8 1-6.4z"/><path d="M12 18a2 2 0 0 1-2-2c0-1 1-1.7 1.2-2.6.4.9 1.1 1.2 1.4 2 .3-.5.6-.8.6-1.4.5.5.8 1.3.8 2a2 2 0 0 1-2 2z" fill="currentColor" stroke="none"/>',
+  spark:'<path d="M12 4l1.6 5.4 5.4 1.6-5.4 1.6L12 18l-1.6-5.4L5 11l5.4-1.6z" fill="currentColor" stroke="none"/><path d="M18.6 4.4v2.8"/><path d="M17.2 5.8h2.8"/><path d="M5.6 16v2.6"/><path d="M4.3 17.3h2.6"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9z"/>',
+  hundred:'<path d="M4.8 10.2l1.7-1.1v6.1"/><rect x="8" y="9.1" width="3.9" height="6.1" rx="1.95"/><rect x="13.4" y="9.1" width="3.9" height="6.1" rx="1.95"/><path d="M3.7 17.2h14.8"/><path d="M4.6 18.7h13"/>',
+  check:'<path d="M4.8 12.4l4.6 4.6L19.2 6.6"/>',
+  cross:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+  bolt:'<path d="M13 3l-7 10.4h5l-1 7.6 7-11.2h-5z" fill="currentColor" stroke="none"/>',
+  popper:'<path d="M3.8 20.2l4.6-1.8-2.8-2.8z" fill="currentColor" stroke="none"/><path d="M8.4 18.4q3.2-1.7 4.8-5"/><path d="M13.5 6.6l1.4-2.2"/><path d="M16.3 9l2.4-1"/><path d="M15.6 13.2l2.6.4"/><path d="M11.4 5.3l.4-2.3"/><circle cx="18.4" cy="15.4" r=".7" fill="currentColor" stroke="none"/><circle cx="19.4" cy="11.2" r=".6" fill="currentColor" stroke="none"/>',
+  trophy:'<path d="M8 4h8v3.2a4 4 0 0 1-8 0z"/><path d="M8 5.2H6a2 2 0 0 0 2 2"/><path d="M16 5.2h2a2 2 0 0 1-2 2"/><path d="M12 11.2v2.6"/><path d="M10 13.8h4v3.2h-4z"/><path d="M8.8 20h6.4"/>',
+  medal:'<path d="M9.2 3.2l2.2 5.2"/><path d="M14.8 3.2l-2.2 5.2"/><circle cx="12" cy="15" r="5"/><path d="M12 12.4l.9 1.9 2.1.3-1.5 1.5.35 2.1L12 17.3l-1.85 1-.35-2.1L8.5 14.6l2.1-.3z" fill="currentColor" stroke="none"/>',
+  gem:'<path d="M6 5h12l3 4-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 5L6.6 9 12 20"/><path d="M15 5l2.4 4L12 20"/>',
+  money:'<path d="M9.2 6h5.6l-1.4 2.4a6 6 0 1 1-2.8 0z"/><path d="M12 12v5"/><path d="M13.7 12.9a2 2 0 0 0-3.1.5c0 1.9 3.1.8 3.1 2.7a2 2 0 0 1-3.1.5"/>',
+  rocket:'<path d="M12 3c2.5 2.1 4 5.1 4 8.2l-2 2h-4l-2-2C8 8.1 9.5 5.1 12 3z"/><circle cx="12" cy="9" r="1.5"/><path d="M8 13.4l-2.2 3 3.2-1"/><path d="M16 13.4l2.2 3-3.2-1"/><path d="M10.4 16.2c0 2 1.6 3.4 1.6 3.4s1.6-1.4 1.6-3.4"/>',
+  heart:'<path d="M12 20.2S4 14.6 4 9A3.9 3.9 0 0 1 12 6.2 3.9 3.9 0 0 1 20 9c0 5.6-8 11.2-8 11.2z" fill="currentColor" stroke="none"/>',
+  'heart-broken':'<path d="M12 20.2S4 14.6 4 9A3.9 3.9 0 0 1 12 6.2 3.9 3.9 0 0 1 20 9c0 5.6-8 11.2-8 11.2z"/><path d="M12 6.4l-1.9 3.1 2.5 2.1-2.1 2.7 1.2 2.4"/>',
+  eyes:'<path d="M2.8 11c1.4-1.9 3.2-2.85 4.5-2.85S10.4 9.1 11.8 11c-1.4 1.9-3.2 2.85-4.5 2.85S4.2 12.9 2.8 11z"/><circle cx="7.3" cy="11" r="1.45" fill="currentColor" stroke="none"/><path d="M12.2 11c1.4-1.9 3.2-2.85 4.5-2.85S20.4 9.1 21.8 11c-1.4 1.9-3.2 2.85-4.5 2.85S13.6 12.9 12.2 11z"/><circle cx="16.7" cy="11" r="1.45" fill="currentColor" stroke="none"/>',
+  rainbow:'<path d="M3.5 18a8.5 8.5 0 0 1 17 0"/><path d="M6.3 18a5.7 5.7 0 0 1 11.4 0"/><path d="M9.1 18a2.9 2.9 0 0 1 5.8 0"/>',
+  sun:'<circle cx="12" cy="12" r="3.9"/><path d="M12 3v2.4"/><path d="M12 18.6V21"/><path d="M3 12h2.4"/><path d="M18.6 12H21"/><path d="M5.6 5.6l1.7 1.7"/><path d="M16.7 16.7l1.7 1.7"/><path d="M18.4 5.6l-1.7 1.7"/><path d="M7.3 16.7l-1.7 1.7"/>',
+  moon:'<path d="M18.2 13.6A7 7 0 0 1 9 5.1a7 7 0 1 0 9.2 8.5z"/>',
+  crown:'<path d="M4 17l1.6-9 4.1 4.1L12 6l2.3 6.1L18.4 8 20 17z"/><path d="M4.4 17.2h15.2v2.6H4.4z"/>'
+};
+/* Порядок и группировка для рендера пикера */
+const CP_OKO_GROUPS = [
+  ['Смайлы', ['happy','laugh','love','cool','wink','tongue','think','neutral','sad','cry','angry','sleepy','party','wow','kiss']],
+  ['Жесты', ['thumb-up','thumb-down','clap','pray','fist','muscle','ok','wave','point-up']],
+  ['Символы', ['fire','spark','star','hundred','check','cross','bolt','popper','trophy','medal','gem','money','rocket','heart','heart-broken','eyes','rainbow','sun','moon','crown']]
+];
+/* Единый рендер фирменного SVG-эмодзи (пикер + сообщение). База стиля — на <svg>. */
+function cpOkoSvg(key, size){
+  const inner = CP_OKO_EMOJI[key]; if(!inner) return '';
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
 let cpPanelOpen = false;
 function cpBuildPanel(){
   const composer = document.querySelector('#convBody .composer');
@@ -462,11 +528,16 @@ function cpPanelTab(tab){
   const body = document.getElementById('cpPanelBody'); if(!body) return;
   body.scrollTop = 0;
   if(tab==='emoji'){
-    const recent = CP.recentEmoji.length
-      ? `<div class="cp-emoji-sec">Недавние</div><div class="cp-emoji-grid">${CP.recentEmoji.map(e=>
-          `<button class="cp-emoji" onclick="cpInsertEmoji('${e}')">${e}</button>`).join('')}</div>` : '';
-    body.innerHTML = recent + `<div class="cp-emoji-sec">Смайлы и символы</div><div class="cp-emoji-grid">${
-      CP_EMOJI.map(e=>`<button class="cp-emoji" onclick="cpInsertEmoji('${e}')">${e}</button>`).join('')}</div>`;
+    try{
+      const btn = k => `<button class="cp-emoji cp-emoji-svg" title="${k}" onclick="cpInsertOko('${k}')">${cpOkoSvg(k,28)}</button>`;
+      /* недавние (только валидные ключи фирменного набора) */
+      const rec = CP.recentOko.filter(k=>CP_OKO_EMOJI[k]);
+      const recent = rec.length
+        ? `<div class="cp-emoji-sec">Недавние</div><div class="cp-emoji-grid">${rec.map(btn).join('')}</div>` : '';
+      const groups = CP_OKO_GROUPS.map(([label,keys])=>
+        `<div class="cp-emoji-sec">${label}</div><div class="cp-emoji-grid">${keys.map(btn).join('')}</div>`).join('');
+      body.innerHTML = recent + groups;
+    }catch(e){ body.innerHTML = `<div class="cp-panel-empty">Эмодзи скоро появятся</div>`; }
     return;
   }
   /* стикер-вкладки: используем ядровые STICKERS/sendSticker/stickerSvg (verify-stickers их расширяет) */
@@ -486,13 +557,45 @@ function cpPanelTab(tab){
       locked?`<span class="cp-stk-lockic">${I('lock')}</span>`:''}<small>${s.label}</small></button>`;
   }).join('')}</div>`;
 }
+/* Вставка фирменного эмодзи: в поле уходит шорткод :oko-KEY:, который при рендере
+   сообщения превращается обратно в брендовый SVG (переживает отправку/приём). */
+function cpInsertOko(key){
+  try{
+    if(!CP_OKO_EMOJI[key]) return;
+    const inp = document.getElementById('msgInput'); if(!inp) return;
+    const token = ':oko-'+key+':';
+    const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+    inp.value = inp.value.slice(0,s) + token + inp.value.slice(en);
+    const pos = s + token.length; try{ inp.setSelectionRange(pos,pos); inp.focus(); }catch(_){}
+    CP.recentOko = [key, ...CP.recentOko.filter(x=>x!==key)].slice(0,24); cpSave();
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }catch(e){}
+}
+/* Замена шорткодов :oko-KEY: на инлайн-SVG в готовом HTML сообщения. */
+function cpRenderOkoTokens(html){
+  if(typeof html!=='string' || html.indexOf(':oko-')<0) return html;
+  return html.replace(/:oko-([a-z0-9-]+):/g, (m,k)=>
+    CP_OKO_EMOJI[k] ? `<span class="cp-oko-emoji" title="${k}">${cpOkoSvg(k,20)}</span>` : m);
+}
+/* Chain-патч ядрового msgHtml: прогоняем результат через замену шорткодов. */
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml = msgHtml;
+  msgHtml = function(){
+    let out = _cpPrevMsgHtml.apply(this, arguments);
+    try{ out = cpRenderOkoTokens(out); }catch(e){}
+    return out;
+  };
+}
+/* Обратная совместимость: старый вызов из ядра/др. модулей не должен падать. */
 function cpInsertEmoji(e){
-  const inp = document.getElementById('msgInput'); if(!inp) return;
-  const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
-  inp.value = inp.value.slice(0,s) + e + inp.value.slice(en);
-  const pos = s + e.length; try{ inp.setSelectionRange(pos,pos); }catch(_){}
-  CP.recentEmoji = [e, ...CP.recentEmoji.filter(x=>x!==e)].slice(0,24); cpSave();
-  if(typeof syncSendIcon==='function') syncSendIcon();
+  try{
+    const inp = document.getElementById('msgInput'); if(!inp) return;
+    const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+    inp.value = inp.value.slice(0,s) + e + inp.value.slice(en);
+    const pos = s + e.length; try{ inp.setSelectionRange(pos,pos); }catch(_){}
+    CP.recentEmoji = [e, ...CP.recentEmoji.filter(x=>x!==e)].slice(0,24); cpSave();
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }catch(_){}
 }
 function cpSendStk(i){
   if(typeof sendSticker==='function') sendSticker(i); /* verify-stickers сам гейтит TON + дождь кристаллов */

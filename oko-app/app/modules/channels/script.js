@@ -118,7 +118,7 @@ function chSeed(){
   return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
-CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{};
+CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{}; CH.notify = CH.notify||{};
 /* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
 (function chMigrate(){
   try{
@@ -161,6 +161,15 @@ function chNormalize(c){
   if(c.reactions==null) c.reactions = true;
   if(c.discussions==null) c.discussions = (c.kind!=='course');
   if(c.kind==='course' && !c.lessons) c.lessons = [{id:'l1',title:'Вводный урок',dur:'5:00'}];
+  // --- расширенные настройки управления (глубина Telegram) ---
+  if(c.autopost==null)    c.autopost    = true;                               // авто-постинг новых постов в ленту рекомендаций
+  if(c.slowmode==null)    c.slowmode    = 0;                                  // медленный режим, сек (0 = выкл)
+  if(c.whoPost==null)     c.whoPost     = 'admins';                           // кто может писать: admins | subs
+  if(c.privSubs==null)    c.privSubs    = (c.access==='closed'?'admins':'all'); // кто видит список подписчиков: all | subs | admins
+  if(c.privFwd==null)     c.privFwd     = true;                               // разрешить пересылку/сохранение постов
+  if(c.privHistory==null) c.privHistory = 'visible';                          // история для новых: visible | hidden
+  if(c.archived==null)    c.archived    = false;                             // канал в архиве
+  if(!Array.isArray(c.invites)) c.invites = [];                              // пригласительные ссылки
   // legacy-поле type держим синхронным — вдруг читает внешний код
   c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
   return c;
@@ -210,6 +219,124 @@ function chSlug(s){ return String(s||'').toLowerCase().replace(/[^a-zа-я0-9_]/
 function chNick(c){ if(!c.nick) c.nick = chSlug(c.name); return c.nick; }
 /* url(...) для фото-аватара/обложки, если владелец загрузил картинку */
 function chAvPhoto(c){ return c.avatar ? `background-image:url(${c.avatar});background-size:cover;background-position:center;color:transparent` : ''; }
+
+/* ===== Telegram-grade управление: сгруппированные списки, строки-контролы, пикеры ===== */
+/* группа строк в одной карточке с разделителями (как настройки Telegram/iOS) */
+function chList(rows){ return `<div class="ch-list">${(rows||[]).filter(Boolean).join('')}</div>`; }
+function chLF(txt){ return `<div class="ch-lf">${txt}</div>`; }
+/* строка-переход: иконка + заголовок(+подпись) + значение справа + шеврон/копи */
+function chNavRow(ic, label, val, onclick, o){
+  o = o||{};
+  const rv = (val!=null && val!=='') ? `<span class="ch-rv-t${o.lime?' lime':''}">${val}</span>` : '';
+  const tail = o.copy ? chI('copy') : (o.noChev ? '' : chI('chev'));
+  return `<button class="ch-row${o.danger?' danger':''}" onclick="${onclick}">
+    ${ic?`<span class="ch-row-ic${o.danger?' danger':''}">${chI(ic)}</span>`:''}
+    <span class="ch-row-main"><b>${label}</b>${o.sub?`<small>${o.sub}</small>`:''}</span>
+    <span class="ch-row-val">${rv}${tail}</span>
+  </button>`;
+}
+/* строка-тумблер: клик переключает состояние (surgical, без полного ре-рендера) */
+function chTglRow(ic, label, sub, on, onclick){
+  return `<button class="ch-row" onclick="${onclick}">
+    ${ic?`<span class="ch-row-ic">${chI(ic)}</span>`:''}
+    <span class="ch-row-main"><b>${label}</b>${sub?`<small>${sub}</small>`:''}</span>
+    <span class="switch ${on?'on':''}"><i></i></span>
+  </button>`;
+}
+/* значение-подписи для настроек */
+function chNotifyOn(c){ return CH.notify[c.id]!==false; }
+function chSlowLabel(s){ s=+s||0; return s===0?'выкл':(s<60?s+' сек':(s/60)+' мин'); }
+function chWhoPostLabel(c){ return c.whoPost==='subs'?'Все подписчики':'Только админы'; }
+function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='subs'?'Подписчики':'Только админы'; }
+function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
+function chPublicLink(c){ return 'oko.app/'+chNick(c); }
+
+/* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
+window.chTgl = function(id, key, el){
+  const c = chChannel(id); if(!c) return;
+  c[key] = !c[key]; chSave();
+  if(el){ const sw = el.querySelector('.switch'); if(sw) sw.classList.toggle('on', !!c[key]); }
+  if(key==='discussions') toast(c[key]?'Обсуждения включены':'Обсуждения выключены');
+  else if(key==='reactions') toast(c[key]?'Реакции включены':'Реакции выключены');
+  else if(key==='autopost') toast(c[key]?'Авто-постинг включён':'Авто-постинг выключен');
+  else if(key==='archived') toast(c[key]?'Канал в архиве':'Канал возвращён из архива');
+};
+/* уведомления подписчика (по-канальная тишина) */
+window.chToggleNotify = function(id, el){
+  const c = chChannel(id); if(!c) return;
+  const nowOn = CH.notify[id]!==false;
+  CH.notify[id] = nowOn ? false : true; chSave();
+  if(el){
+    const sw = el.querySelector('.switch');
+    if(sw){ sw.classList.toggle('on', !nowOn); }
+    else { el.classList.toggle('on', !nowOn); const sp = el.querySelector('span'); if(sp) sp.textContent = (!nowOn)?'Уведомления':'Без звука'; }
+  }
+  toast(nowOn?'Уведомления выключены':'Уведомления включены');
+};
+
+/* универсальный выбор из вариантов (как action sheet Telegram) */
+function chChooser(title, body, options){
+  if(typeof showPopup!=='function'){ return; }
+  showPopup({ title, body, actions: options.concat([{label:'Отмена', ghost:true}]) });
+}
+window.chPickSlow = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Медленный режим', 'Минимальный интервал между сообщениями участников', [0,10,30,60,300,900].map(s=>({
+    label: chSlowLabel(s), onclick:()=>{ c.slowmode=s; chSave(); chRender(); toast('Медленный режим: '+chSlowLabel(s)); }
+  })));
+};
+window.chPickWhoPost = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Кто может писать', 'Кому разрешено публиковать в канале', [
+    {label:'Только админы', onclick:()=>{ c.whoPost='admins'; chSave(); chRender(); }},
+    {label:'Все подписчики', onclick:()=>{ c.whoPost='subs'; chSave(); chRender(); }},
+  ]);
+};
+window.chPickPrivSubs = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Кто видит подписчиков', 'Видимость списка участников канала', [
+    {label:'Все', onclick:()=>{ c.privSubs='all'; chSave(); chRender(); }},
+    {label:'Подписчики', onclick:()=>{ c.privSubs='subs'; chSave(); chRender(); }},
+    {label:'Только админы', onclick:()=>{ c.privSubs='admins'; chSave(); chRender(); }},
+  ]);
+};
+window.chPickPrivHist = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('История для новых', 'Что видят только что вступившие подписчики', [
+    {label:'Видна вся история', onclick:()=>{ c.privHistory='visible'; chSave(); chRender(); }},
+    {label:'Скрыта до вступления', onclick:()=>{ c.privHistory='hidden'; chSave(); chRender(); }},
+  ]);
+};
+
+/* поделиться каналом (нативный share → иначе копирование ссылки) */
+window.chShareChannel = function(id){
+  const c = chChannel(id); if(!c) return;
+  const link = chPublicLink(c);
+  try{
+    if(navigator.share){ navigator.share({title:c.name, text:'Канал в OKO', url:'https://'+link}).catch(()=>{}); }
+    else if(navigator.clipboard){ navigator.clipboard.writeText(link); }
+  }catch(e){}
+  toast('Ссылка на канал скопирована');
+};
+/* меню «Ещё» — action sheet для владельца и подписчика */
+window.chMoreMenu = function(id){
+  const c = chChannel(id); if(!c) return;
+  const mine = chIsMine(c);
+  const acts = [
+    {label:'Поделиться', onclick:()=>chShareChannel(id)},
+    {label:'Скопировать ссылку', onclick:()=>chCopyLink(id)},
+  ];
+  if(mine){
+    acts.push({label:'Управление каналом', onclick:()=>chGo('manage',id)});
+    acts.push({label:'Статистика', onclick:()=>chGo('mStats',id)});
+  } else {
+    acts.push({label: chNotifyOn(c)?'Выключить уведомления':'Включить уведомления', onclick:()=>chToggleNotify(id)});
+    acts.push({label:'Пожаловаться', onclick:()=>toast('Жалоба отправлена на модерацию')});
+    if(chGated(c)) acts.push({label: chPaid(c)?'Отменить подписку':'Покинуть канал', ghost:true, onclick:()=>chUnsub(id)});
+  }
+  acts.push({label:'Закрыть', ghost:true});
+  if(typeof showPopup==='function') showPopup({ico:'more', title:chEsc(c.name), body:'@'+chEsc(chNick(c)), actions:acts});
+};
 
 /* канал публикует пост → он попадает и в ленту рекомендаций (как Instagram) */
 let CH_FEED_SEQ = 900000;
@@ -308,6 +435,7 @@ function chRender(){
     case 'mStats':  out = chPageMStats(top.arg); break;
     case 'mAppear': out = chPageMAppear(top.arg); break;
     case 'mSettings': out = chPageMSettings(top.arg); break;
+    case 'mInvites': out = chPageMInvites(top.arg); break;
     default: out = chPageList();
   }
   titleEl.textContent = out.title;
@@ -584,6 +712,13 @@ function chPageChannel(id){
     </div>`;
   }
 
+  /* ряд быстрых действий (как шапка канала в Telegram): уведомления · поделиться · ещё */
+  html += `<div class="ch-actrow">
+    <button class="ch-act ${chNotifyOn(c)?'on':''}" onclick="chToggleNotify('${c.id}',this)">${chI('bell')}<span>${chNotifyOn(c)?'Уведомления':'Без звука'}</span></button>
+    <button class="ch-act" onclick="chShareChannel('${c.id}')">${chI('share')}<span>Поделиться</span></button>
+    <button class="ch-act" onclick="chMoreMenu('${c.id}')">${chI('more')}<span>Ещё</span></button>
+  </div>`;
+
   if(c.kind==='course'){
     const prog = chCourseProg(c);
     const done = (CH.prog[c.id]||[]).length;
@@ -846,22 +981,21 @@ window.chDM = function(name,nick){
 function chPageManage(id){
   const c = chChannel(id);
   if(!c || !chIsMine(c)) return {title:'Управление', html:'<div class="ch-empty">Нет доступа</div>'};
-  const rows = [
-    ['megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`],
-    ['comment','Обсуждения', c.discussions?'включены':'выключены', `chGo('mSettings','${id}')`],
-    ['heart','Реакции', c.reactions?'включены':'выключены', `chGo('mSettings','${id}')`],
-    ['users','Администраторы', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`],
-    ['user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`],
-    ['poll','Статистика', 'графики', `chGo('mStats','${id}')`],
-    ['lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`],
-    ['photo','Оформление и фон', 'аватар · обложка · фон', `chGo('mAppear','${id}')`],
-    ['gear','Настройки', '', `chGo('mSettings','${id}')`],
-  ];
+  const course = c.kind==='course';
+
+  // шапка: аватар, имя, @id, счётчики
   let html = `<div class="ch-manage-hub">${chAvInner(c,'big')}
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font:800 18px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
-      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chAccessLine(c)} · ${chFmtN(c.subs||0)} подписчиков</div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font:800 19px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">@${chEsc(chNick(c))} · ${chFmtN(c.subs||0)} подписчиков</div>
     </div></div>`;
+
+  // быстрые действия
+  html += `<div class="ch-actrow" style="margin-bottom:16px">
+    <button class="ch-act" onclick="chGo('${course?'addLesson':'compose'}','${id}')">${chI('plus')}<span>${course?'Урок':'Пост'}</span></button>
+    <button class="ch-act" onclick="chShareChannel('${id}')">${chI('share')}<span>Поделиться</span></button>
+    <button class="ch-act" onclick="chGo('mStats','${id}')">${chI('poll')}<span>Статистика</span></button>
+  </div>`;
 
   // доход владельца (платный/курс)
   if(chPaid(c)){
@@ -878,17 +1012,81 @@ function chPageManage(id){
     </div>`;
   }
 
-  html += rows.map(([ic,t,val,fn])=>`
-    <button class="ch-mrow" onclick="${fn}">
-      <span class="ch-mr-ic">${chI(ic)}</span>
-      <span class="ch-mr-b"><b>${t}</b></span>
-      <span class="ch-mr-val">${val}${chI('chev')}</span>
-    </button>`).join('');
-  html += `<div style="height:8px"></div>
-    <button class="ch-mrow danger" onclick="chDeleteChannel('${id}')">
-      <span class="ch-mr-ic">${chI('trash')}</span>
-      <span class="ch-mr-b"><b>Удалить канал</b><small>Действие необратимо</small></span>
-    </button>`;
+  // ---- ОСНОВНОЕ ----
+  html += `<div class="ch-sec-h">${chI('bolt')} Основное</div>`;
+  html += chList([
+    chNavRow('megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`),
+    chNavRow('photo','Оформление', 'аватар · обложка · описание', `chGo('mAppear','${id}')`),
+  ]);
+
+  // ---- ССЫЛКА И ПРИГЛАШЕНИЯ ----
+  html += `<div class="ch-sec-h">${chI('globe')} Ссылка и приглашения</div>`;
+  html += chList([
+    chNavRow('globe','Публичная ссылка', chPublicLink(c), `chCopyLink('${id}')`, {copy:true, lime:true}),
+    chNavRow('share','Пригласительные ссылки', (c.invites.length?c.invites.length+'':'создать'), `chGo('mInvites','${id}')`),
+  ]);
+
+  // ---- МОНЕТИЗАЦИЯ ----
+  html += `<div class="ch-sec-h">${chI('money')} Монетизация</div>`;
+  const monRows = [
+    chTglRow('card','Платный доступ',
+      course?'Курс всегда платный':(chPaid(c)?('Цена '+c.price+' ₽'+chPriceUnit(c)):'Включить и задать цену'),
+      chPaid(c), course?`toast('Курс всегда платный')`:`chToggleAccess('${id}','paid')`)
+  ];
+  if(chPaid(c)){
+    monRows.push(chNavRow('bolt','Цена и комиссия', c.price+' ₽'+chPriceUnit(c), `chGo('mType','${id}')`, {sub:'вам '+chNet(c.price)+' ₽ · OKO 10%'}));
+  }
+  html += chList(monRows);
+  html += chLF('OKO удерживает комиссию 10% с каждой продажи. Остальное — ваш доход к выводу на кошелёк.');
+
+  // ---- ПУБЛИКАЦИИ ----
+  html += `<div class="ch-sec-h">${chI('feed')} Публикации</div>`;
+  const pubRows = [
+    chTglRow('rocket','Авто-постинг в рекомендации','Новые посты попадают в ленту OKO', c.autopost, `chTgl('${id}','autopost',this)`),
+    chTglRow('heart','Реакции','Лайки под постами', c.reactions, `chTgl('${id}','reactions',this)`),
+  ];
+  if(!course){
+    pubRows.push(chTglRow('comment','Обсуждения','Комментарии к постам', c.discussions, `chTgl('${id}','discussions',this)`));
+    pubRows.push(chNavRow('clock','Медленный режим', chSlowLabel(c.slowmode), `chPickSlow('${id}')`));
+    pubRows.push(chNavRow('user','Кто может писать', chWhoPostLabel(c), `chPickWhoPost('${id}')`));
+  }
+  html += chList(pubRows);
+
+  // ---- УЧАСТНИКИ ----
+  html += `<div class="ch-sec-h">${chI('users')} Участники</div>`;
+  html += chList([
+    chNavRow('crown','Администраторы и права', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`),
+    chNavRow('user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`),
+    chNavRow('lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`),
+  ]);
+
+  // ---- ПРИВАТНОСТЬ ----
+  html += `<div class="ch-sec-h">${chI('lock')} Приватность</div>`;
+  html += chList([
+    chNavRow('users','Кто видит подписчиков', chPrivSubsLabel(c), `chPickPrivSubs('${id}')`),
+    chTglRow('forward','Пересылка и сохранение', c.privFwd?'Разрешены':'Запрещены', c.privFwd, `chTgl('${id}','privFwd',this)`),
+    chNavRow('feed','История для новых', chPrivHistLabel(c), `chPickPrivHist('${id}')`),
+  ]);
+
+  // ---- УВЕДОМЛЕНИЯ ----
+  html += `<div class="ch-sec-h">${chI('bell')} Уведомления</div>`;
+  html += chList([
+    chTglRow('bell','Уведомления о канале', chNotifyOn(c)?'Звук включён':'Без звука', chNotifyOn(c), `chToggleNotify('${id}',this)`),
+  ]);
+
+  // ---- СТАТИСТИКА ----
+  html += `<div class="ch-sec-h">${chI('poll')} Статистика</div>`;
+  html += chList([
+    chNavRow('poll','Аналитика канала','охваты · подписки · вовлечённость', `chGo('mStats','${id}')`),
+  ]);
+
+  // ---- ОПАСНАЯ ЗОНА ----
+  html += `<div class="ch-sec-h">${chI('flag')} Опасная зона</div>`;
+  html += chList([
+    chTglRow('bookmark', c.archived?'В архиве':'Архивировать', 'Скрыть из списков, не удаляя', c.archived, `chTgl('${id}','archived',this)`),
+    chNavRow('trash','Удалить канал','Действие необратимо', `chDeleteChannel('${id}')`, {danger:true, noChev:true}),
+  ]);
+  html += `<div style="height:10px"></div>`;
   return {title:'Управление', html};
 }
 window.chWithdraw = function(id){
@@ -1331,9 +1529,40 @@ window.chToggleAccess = function(id, which){
 };
 window.chCopyLink = function(id){
   const c = chChannel(id); if(!c) return;
-  const link = 'oko.app/c/'+((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel');
+  const link = chPublicLink(c);
   try{ navigator.clipboard && navigator.clipboard.writeText(link); }catch(e){}
   toast('Ссылка скопирована: '+link);
+};
+
+/* ---------- Приглашения / ссылки-инвайты ---------- */
+function chPageMInvites(id){
+  const c = chChannel(id); if(!c || !chIsMine(c)) return {title:'Приглашения', html:'<div class="ch-empty">Нет доступа</div>'};
+  let html = `<div class="ch-sec-h">${chI('globe')} Публичная ссылка</div>`;
+  html += chList([
+    chNavRow('globe', chPublicLink(c), '', `chCopyLink('${id}')`, {copy:true, lime:true, sub:'Любой откроет канал по этой ссылке'})
+  ]);
+  html += `<div class="ch-sec-h">${chI('share')} Пригласительные ссылки</div>`;
+  const rows = (c.invites||[]).map((v,i)=>
+    chNavRow('forward', v.link, '', `chCopyInvite('${id}',${i})`, {copy:true, sub:(v.limit?('лимит '+v.limit+' входов · '):'')+'создана '+(v.when||'недавно')}));
+  rows.push(`<button class="ch-row" onclick="chNewInvite('${id}')">
+    <span class="ch-row-ic">${chI('plus')}</span>
+    <span class="ch-row-main"><b style="color:var(--lime)">Создать новую ссылку</b></span>
+  </button>`);
+  html += chList(rows);
+  html += chLF('Пригласительные ссылки работают даже для закрытого канала — делись ими где угодно. Каждая ведёт напрямую в канал.');
+  return {title:'Приглашения', html};
+}
+window.chNewInvite = function(id){
+  const c = chChannel(id); if(!c) return;
+  c.invites = c.invites||[];
+  const code = Math.random().toString(36).slice(2,10);
+  c.invites.unshift({ link:'oko.app/+'+code, when:'сейчас', limit:0 });
+  chSave(); chRender(); toast('Пригласительная ссылка создана');
+};
+window.chCopyInvite = function(id,i){
+  const c = chChannel(id); if(!c || !c.invites || !c.invites[i]) return;
+  try{ navigator.clipboard && navigator.clipboard.writeText(c.invites[i].link); }catch(e){}
+  toast('Ссылка скопирована: '+c.invites[i].link);
 };
 
 /* ================= ВХОДЫ ================= */

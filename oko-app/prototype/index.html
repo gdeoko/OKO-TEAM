@@ -3910,6 +3910,14 @@ main>.screen{position:relative;z-index:1}
 .cp-emoji{height:42px;font-size:25px;line-height:1;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:transform .1s,background .16s}
 .cp-emoji:hover{background:var(--lime-dim)}
 .cp-emoji:active{transform:scale(1.35)}
+/* фирменные SVG-эмодзи в пикере: прозрачная кнопка, dim по умолчанию, лайм на hover/press */
+.cp-emoji-svg{background:transparent;color:var(--dim);transition:transform .12s cubic-bezier(.3,1.4,.5,1),background .16s,color .16s}
+.cp-emoji-svg svg{width:28px;height:28px;display:block}
+.cp-emoji-svg:hover{background:var(--lime-dim);color:var(--accent)}
+.cp-emoji-svg:active{color:var(--accent);transform:scale(.86)}
+/* инлайн-эмодзи внутри отрендеренного сообщения */
+.cp-oko-emoji{display:inline-flex;vertical-align:-.28em;color:var(--accent);margin:0 .5px}
+.cp-oko-emoji svg{width:20px;height:20px;display:block}
 .cp-stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
 .cp-stk{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;transition:transform .12s,background .16s}
 .cp-stk:hover{background:var(--lime-dim)}
@@ -5355,6 +5363,45 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .ch-src-chip{display:inline-flex!important;align-items:center;gap:4px;background:var(--lime-dim)!important;color:var(--accent)!important;font-size:9px!important}
 .ch-src-chip svg.i{width:11px;height:11px}
 .ava.ch-feed-ava svg.i{width:22px;height:22px;color:#0a0a0a}
+
+/* ===== Telegram-grade управление: сгруппированные списки-настройки ===== */
+/* карточка-группа: несколько строк с внутренними разделителями (как настройки Telegram/iOS) */
+.ch-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;margin-bottom:6px}
+.ch-lf{font-size:11.5px;color:var(--dim);line-height:1.5;padding:8px 6px 2px;margin-bottom:16px}
+/* строка списка (переход/тумблер/копи) */
+.ch-row{display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;background:transparent;border:none;
+  border-top:1px solid var(--border);text-align:left;cursor:pointer;color:var(--text);transition:background .14s;-webkit-tap-highlight-color:transparent}
+.ch-row:first-child{border-top:none}
+.ch-row:hover{background:var(--raised)}
+.ch-row:active{background:var(--raised)}
+.ch-row .ch-row-ic{width:32px;height:32px;border-radius:9px;background:var(--raised);color:var(--lime);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .14s}
+.ch-row:hover .ch-row-ic{background:var(--lime-dim)}
+.ch-row .ch-row-ic svg.i{width:18px;height:18px}
+.ch-row .ch-row-ic.danger{color:var(--danger);background:rgba(212,58,58,.1)}
+.ch-row .ch-row-main{flex:1;min-width:0}
+.ch-row .ch-row-main b{font-size:14px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-row .ch-row-main small{color:var(--dim);font-size:11.5px;display:block;margin-top:1px;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-row.danger .ch-row-main b{color:var(--danger)}
+.ch-row .ch-row-val{color:var(--dim);font-size:12.5px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:5px;
+  max-width:54%;justify-content:flex-end}
+.ch-row .ch-row-val .ch-rv-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-row .ch-row-val .ch-rv-t.lime{color:var(--lime)}
+.ch-row .ch-row-val svg.i{width:16px;height:16px;flex-shrink:0;color:var(--dim)}
+.ch-row .switch{flex-shrink:0;margin-left:0}
+
+/* ряд быстрых действий (шапка канала / управление): иконка сверху, подпись снизу */
+.ch-actrow{display:flex;gap:9px;margin-bottom:14px}
+.ch-act{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:11px 6px;
+  border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;transition:all .16s;-webkit-tap-highlight-color:transparent}
+.ch-act:hover{border-color:var(--lime-dim);background:var(--raised)}
+.ch-act:active{transform:scale(.97)}
+.ch-act svg.i{width:21px;height:21px;color:var(--lime)}
+.ch-act span{font-size:11.5px;font-weight:600;line-height:1;white-space:nowrap}
+.ch-act.on{border-color:var(--lime);background:var(--lime-dim)}
+.ch-act.on svg.i{color:var(--accent)}
 
 /* адаптив десктоп */
 @media(min-width:900px){
@@ -20258,10 +20305,11 @@ function dcRenderAll(){
 const CP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-chats-plus'))||{}; }catch(e){ return {}; } })();
 if(CP.speed!==1.5 && CP.speed!==2) CP.speed = 1;
 if(!Array.isArray(CP.recentEmoji)) CP.recentEmoji = [];
+if(!Array.isArray(CP.recentOko)) CP.recentOko = [];   /* недавние фирменные OKO-эмодзи (ключи) */
 if(!CP.panelTab) CP.panelTab = 'emoji';
 if(!CP.access || typeof CP.access!=='object') CP.access = {};     /* {chatId:{type,price}} — овнерские настройки доступа */
 if(!CP.unlocked || typeof CP.unlocked!=='object') CP.unlocked = {}; /* {chatId:1} — купленный доступ к платному чату */
-function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
+function cpSave(){ try{ localStorage.setItem('oko-chats-plus', JSON.stringify({speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), recentOko:CP.recentOko.slice(0,24), panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked})); }catch(e){} }
 const cpMsgsEl = () => document.getElementById('msgs');
 const cpEsc = t => (typeof esc==='function' ? esc(t) : String(t==null?'':t));
 
@@ -20663,6 +20711,71 @@ const CP_EMOJI = ['😀','😁','😂','🤣','😊','😍','😘','😎','🤩'
   '🤔','🤨','😐','😴','😜','😝','🤗','🤭','🙃','😏','😒','😞','😢','😭','😤','😠','😡','🤬','😱','😨',
   '👍','👎','👏','🙏','🤝','💪','🔥','✨','⭐','🌟','💯','✅','❌','⚡','🎉','🎊','🏆','🥇','💎','💰',
   '❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','💥','👀','🚀','🌈','☀️','🌙','⚽'];
+/* CP_EMOJI выше — устаревший системный набор (оставлен как fallback, НЕ рендерится).
+   Ниже — фирменный набор OKO: моно-SVG в стиле бренда (line + минимальная заливка,
+   currentColor). Каждый эмодзи = сырой inner-markup, база стиля задаётся на <svg>
+   (fill:none stroke:currentColor width:1.8). Заливка через fill=currentColor stroke=none.
+   Вставляются в текст как шорткод :oko-KEY: и рендерятся обратно фирменным SVG. */
+const CP_OKO_EMOJI = {
+  /* --- Смайлы --- */
+  happy:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M8 14.4q4 2.7 8 0"/>',
+  laugh:'<circle cx="12" cy="12" r="9"/><path d="M7.4 10.6q1.2-1.3 2.5 0"/><path d="M14.1 10.6q1.2-1.3 2.5 0"/><path d="M7.4 13.4h9.2a4.6 4.6 0 0 1-9.2 0z" fill="currentColor" stroke="none"/>',
+  love:'<circle cx="12" cy="12" r="9"/><path d="M9 11.9c-1.5-1.1-2.4-1.9-2.4-2.9 0-.75.6-1.25 1.35-1.25.55 0 1 .3 1.05.6.05-.3.5-.6 1.05-.6.75 0 1.35.5 1.35 1.25 0 1-.9 1.8-2.4 2.9z" fill="currentColor" stroke="none"/><path d="M15 11.9c-1.5-1.1-2.4-1.9-2.4-2.9 0-.75.6-1.25 1.35-1.25.55 0 1 .3 1.05.6.05-.3.5-.6 1.05-.6.75 0 1.35.5 1.35 1.25 0 1-.9 1.8-2.4 2.9z" fill="currentColor" stroke="none"/><path d="M8.3 14.6q3.7 2.6 7.4 0"/>',
+  cool:'<circle cx="12" cy="12" r="9"/><rect x="5.6" y="8.8" width="4.7" height="3.3" rx="1.3" fill="currentColor" stroke="none"/><rect x="13.7" y="8.8" width="4.7" height="3.3" rx="1.3" fill="currentColor" stroke="none"/><path d="M10.3 9.6h3.4"/><path d="M8.5 15.2q3.5 1.8 6.4-.4"/>',
+  wink:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M13.7 10.5q1.2-1.1 2.6 0"/><path d="M8 14.4q4 2.7 8 0"/>',
+  tongue:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.1" fill="currentColor" stroke="none"/><path d="M8 14.2q4 2.5 8 0"/><path d="M11 15.6h2.6v1c0 1.3-2.6 1.3-2.6 0z" fill="currentColor" stroke="none"/>',
+  think:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M13.6 8.2q1.4-.8 2.6.2"/><path d="M9.2 15.4q2-.9 4 0"/>',
+  neutral:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M8.8 15.2h6.4"/>',
+  sad:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10.6" r="1.1" fill="currentColor" stroke="none"/><path d="M8.2 16q3.8-2.6 7.6 0"/>',
+  cry:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><circle cx="15" cy="10.4" r="1.05" fill="currentColor" stroke="none"/><path d="M8.4 16.2q3.6-2.4 7.2 0"/><path d="M8.2 12.4q-1.3 1.9-1.3 2.9a1.05 1.05 0 0 0 2.1 0q0-1-.8-2.9z" fill="currentColor" stroke="none"/><path d="M15.8 12.4q1.3 1.9 1.3 2.9a1.05 1.05 0 0 1-2.1 0q0-1 .8-2.9z" fill="currentColor" stroke="none"/>',
+  angry:'<circle cx="12" cy="12" r="9"/><path d="M7.3 9.5l2.6 1.1"/><path d="M16.7 9.5l-2.6 1.1"/><circle cx="9.2" cy="11.8" r="1" fill="currentColor" stroke="none"/><circle cx="14.8" cy="11.8" r="1" fill="currentColor" stroke="none"/><path d="M8.6 16.2q3.4-2.4 6.8 0"/>',
+  sleepy:'<circle cx="12" cy="12" r="9"/><path d="M7.6 10.6h2.6"/><path d="M13.8 10.6h2.6"/><circle cx="12" cy="15.4" r="1.2"/><path d="M15.6 5.2h2.9l-2.9 2.9h2.9"/>',
+  party:'<circle cx="12" cy="12" r="9"/><path d="M7.6 10.8q1.2-1.2 2.4 0"/><path d="M14 10.8q1.2-1.2 2.4 0"/><path d="M8.4 14.4q3.6 2.6 7.2 0"/><path d="M15.5 3.4l3 4.6-4.7-1.7z" fill="currentColor" stroke="none"/><circle cx="6" cy="5.5" r=".7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r=".7" fill="currentColor" stroke="none"/><circle cx="4.5" cy="10" r=".6" fill="currentColor" stroke="none"/>',
+  wow:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.4" r="1.35"/><circle cx="15" cy="10.4" r="1.35"/><ellipse cx="12" cy="15.2" rx="1.7" ry="2.2"/>',
+  kiss:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.6" r="1.05" fill="currentColor" stroke="none"/><path d="M13.8 10.6q1.2-1 2.5 0"/><path d="M10.8 15.1c0-1.1 2.2-1.1 2.2 0s-2.2 1.5-2.2 0z"/><path d="M16 6.5c-.6-.8-1.9-.4-1.9.6 0 .9 1.9 2 1.9 2s1.9-1.1 1.9-2c0-1-1.3-1.4-1.9-.6z" fill="currentColor" stroke="none"/>',
+  /* --- Жесты --- */
+  'thumb-up':'<path d="M8 19.2h8.3a1.7 1.7 0 0 0 1.7-1.35l1.1-5.5a1.5 1.5 0 0 0-1.5-1.85H13l.95-3.7a1.75 1.75 0 0 0-3.3-1.15L8 10.9z"/><rect x="4.6" y="10.9" width="3.4" height="8.3" rx=".9"/>',
+  'thumb-down':'<path d="M8 4.8h8.3a1.7 1.7 0 0 1 1.7 1.35l1.1 5.5a1.5 1.5 0 0 1-1.5 1.85H13l.95 3.7a1.75 1.75 0 0 1-3.3 1.15L8 13.1z"/><rect x="4.6" y="4.8" width="3.4" height="8.3" rx=".9"/>',
+  clap:'<path d="M11.4 20l-4.3-4.3a1.35 1.35 0 0 1 1.9-1.9l2.4 2.4"/><path d="M12.6 20l4.3-4.3a1.35 1.35 0 0 0-1.9-1.9l-2.4 2.4"/><path d="M12 5.5v2.2"/><path d="M8 6.6l1.1 1.9"/><path d="M16 6.6l-1.1 1.9"/>',
+  pray:'<path d="M12 3.4c-1.25 2.7-2.7 4.7-2.7 7.4V17a2.05 2.05 0 0 0 5.4 0v-6.2c0-2.7-1.45-4.7-2.7-7.4z"/><path d="M12 4.6V17"/>',
+  fist:'<path d="M7.6 12.6h8.6a1.35 1.35 0 0 1 1.35 1.35v2.5a1.35 1.35 0 0 1-1.35 1.35H7.6z"/><path d="M7.6 13.4H6a1.15 1.15 0 0 0 0 2.3h1.6"/><path d="M10 12.6v-1.5"/><path d="M12.3 12.6v-1.9"/><path d="M14.6 12.6v-1.5"/>',
+  muscle:'<path d="M5.2 8v2.6h3.3a4.2 4.2 0 0 1 4.2 4.2v.3a2.6 2.6 0 0 1-2.6 2.6H7a2 2 0 0 1-2-2v-1.4"/><path d="M8.5 10.6a5.2 5.2 0 0 1 5 4.6"/>',
+  ok:'<circle cx="9" cy="14" r="3.1"/><path d="M11.2 11.9l3-2.9"/><path d="M12.4 13.2l3.2-1.8"/><path d="M12.8 14.8l3.1-.5"/>',
+  wave:'<path d="M9 20.2a4 4 0 0 1-4-4v-2.8a1 1 0 0 1 2 0V15"/><path d="M7 13.7V8.4a1 1 0 0 1 2 0V14"/><path d="M9 14V6.7a1 1 0 0 1 2 0V14"/><path d="M11 14V7.6a1 1 0 0 1 2 0V15"/><path d="M13 15v-3.1a1 1 0 0 1 2 0v3.7a4 4 0 0 1-4 4"/><path d="M16.3 7.4q1.3 1.1 0 3.1"/>',
+  'point-up':'<path d="M12 3.6a1.3 1.3 0 0 1 1.35 1.3V12"/><path d="M9 12.5h5.6a1.9 1.9 0 0 1 1.9 1.9v2.3a3 3 0 0 1-3 3h-2.7A3.8 3.8 0 0 1 8 15.9v-1.6a1.3 1.3 0 0 1 1-1.3"/>',
+  /* --- Символы --- */
+  fire:'<path d="M12 3c1 3.2 4.2 4.3 4.2 8.2a4.2 4.2 0 0 1-8.4 0c0-1.6.75-2.7 1.6-3.2.2 1.05 1.05 1.6 1.6 1.6-1.05-2.1.5-4.8 1-6.4z"/><path d="M12 18a2 2 0 0 1-2-2c0-1 1-1.7 1.2-2.6.4.9 1.1 1.2 1.4 2 .3-.5.6-.8.6-1.4.5.5.8 1.3.8 2a2 2 0 0 1-2 2z" fill="currentColor" stroke="none"/>',
+  spark:'<path d="M12 4l1.6 5.4 5.4 1.6-5.4 1.6L12 18l-1.6-5.4L5 11l5.4-1.6z" fill="currentColor" stroke="none"/><path d="M18.6 4.4v2.8"/><path d="M17.2 5.8h2.8"/><path d="M5.6 16v2.6"/><path d="M4.3 17.3h2.6"/>',
+  star:'<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9z"/>',
+  hundred:'<path d="M4.8 10.2l1.7-1.1v6.1"/><rect x="8" y="9.1" width="3.9" height="6.1" rx="1.95"/><rect x="13.4" y="9.1" width="3.9" height="6.1" rx="1.95"/><path d="M3.7 17.2h14.8"/><path d="M4.6 18.7h13"/>',
+  check:'<path d="M4.8 12.4l4.6 4.6L19.2 6.6"/>',
+  cross:'<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
+  bolt:'<path d="M13 3l-7 10.4h5l-1 7.6 7-11.2h-5z" fill="currentColor" stroke="none"/>',
+  popper:'<path d="M3.8 20.2l4.6-1.8-2.8-2.8z" fill="currentColor" stroke="none"/><path d="M8.4 18.4q3.2-1.7 4.8-5"/><path d="M13.5 6.6l1.4-2.2"/><path d="M16.3 9l2.4-1"/><path d="M15.6 13.2l2.6.4"/><path d="M11.4 5.3l.4-2.3"/><circle cx="18.4" cy="15.4" r=".7" fill="currentColor" stroke="none"/><circle cx="19.4" cy="11.2" r=".6" fill="currentColor" stroke="none"/>',
+  trophy:'<path d="M8 4h8v3.2a4 4 0 0 1-8 0z"/><path d="M8 5.2H6a2 2 0 0 0 2 2"/><path d="M16 5.2h2a2 2 0 0 1-2 2"/><path d="M12 11.2v2.6"/><path d="M10 13.8h4v3.2h-4z"/><path d="M8.8 20h6.4"/>',
+  medal:'<path d="M9.2 3.2l2.2 5.2"/><path d="M14.8 3.2l-2.2 5.2"/><circle cx="12" cy="15" r="5"/><path d="M12 12.4l.9 1.9 2.1.3-1.5 1.5.35 2.1L12 17.3l-1.85 1-.35-2.1L8.5 14.6l2.1-.3z" fill="currentColor" stroke="none"/>',
+  gem:'<path d="M6 5h12l3 4-9 11L3 9z"/><path d="M3 9h18"/><path d="M9 5L6.6 9 12 20"/><path d="M15 5l2.4 4L12 20"/>',
+  money:'<path d="M9.2 6h5.6l-1.4 2.4a6 6 0 1 1-2.8 0z"/><path d="M12 12v5"/><path d="M13.7 12.9a2 2 0 0 0-3.1.5c0 1.9 3.1.8 3.1 2.7a2 2 0 0 1-3.1.5"/>',
+  rocket:'<path d="M12 3c2.5 2.1 4 5.1 4 8.2l-2 2h-4l-2-2C8 8.1 9.5 5.1 12 3z"/><circle cx="12" cy="9" r="1.5"/><path d="M8 13.4l-2.2 3 3.2-1"/><path d="M16 13.4l2.2 3-3.2-1"/><path d="M10.4 16.2c0 2 1.6 3.4 1.6 3.4s1.6-1.4 1.6-3.4"/>',
+  heart:'<path d="M12 20.2S4 14.6 4 9A3.9 3.9 0 0 1 12 6.2 3.9 3.9 0 0 1 20 9c0 5.6-8 11.2-8 11.2z" fill="currentColor" stroke="none"/>',
+  'heart-broken':'<path d="M12 20.2S4 14.6 4 9A3.9 3.9 0 0 1 12 6.2 3.9 3.9 0 0 1 20 9c0 5.6-8 11.2-8 11.2z"/><path d="M12 6.4l-1.9 3.1 2.5 2.1-2.1 2.7 1.2 2.4"/>',
+  eyes:'<path d="M2.8 11c1.4-1.9 3.2-2.85 4.5-2.85S10.4 9.1 11.8 11c-1.4 1.9-3.2 2.85-4.5 2.85S4.2 12.9 2.8 11z"/><circle cx="7.3" cy="11" r="1.45" fill="currentColor" stroke="none"/><path d="M12.2 11c1.4-1.9 3.2-2.85 4.5-2.85S20.4 9.1 21.8 11c-1.4 1.9-3.2 2.85-4.5 2.85S13.6 12.9 12.2 11z"/><circle cx="16.7" cy="11" r="1.45" fill="currentColor" stroke="none"/>',
+  rainbow:'<path d="M3.5 18a8.5 8.5 0 0 1 17 0"/><path d="M6.3 18a5.7 5.7 0 0 1 11.4 0"/><path d="M9.1 18a2.9 2.9 0 0 1 5.8 0"/>',
+  sun:'<circle cx="12" cy="12" r="3.9"/><path d="M12 3v2.4"/><path d="M12 18.6V21"/><path d="M3 12h2.4"/><path d="M18.6 12H21"/><path d="M5.6 5.6l1.7 1.7"/><path d="M16.7 16.7l1.7 1.7"/><path d="M18.4 5.6l-1.7 1.7"/><path d="M7.3 16.7l-1.7 1.7"/>',
+  moon:'<path d="M18.2 13.6A7 7 0 0 1 9 5.1a7 7 0 1 0 9.2 8.5z"/>',
+  crown:'<path d="M4 17l1.6-9 4.1 4.1L12 6l2.3 6.1L18.4 8 20 17z"/><path d="M4.4 17.2h15.2v2.6H4.4z"/>'
+};
+/* Порядок и группировка для рендера пикера */
+const CP_OKO_GROUPS = [
+  ['Смайлы', ['happy','laugh','love','cool','wink','tongue','think','neutral','sad','cry','angry','sleepy','party','wow','kiss']],
+  ['Жесты', ['thumb-up','thumb-down','clap','pray','fist','muscle','ok','wave','point-up']],
+  ['Символы', ['fire','spark','star','hundred','check','cross','bolt','popper','trophy','medal','gem','money','rocket','heart','heart-broken','eyes','rainbow','sun','moon','crown']]
+];
+/* Единый рендер фирменного SVG-эмодзи (пикер + сообщение). База стиля — на <svg>. */
+function cpOkoSvg(key, size){
+  const inner = CP_OKO_EMOJI[key]; if(!inner) return '';
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+}
 let cpPanelOpen = false;
 function cpBuildPanel(){
   const composer = document.querySelector('#convBody .composer');
@@ -20708,11 +20821,16 @@ function cpPanelTab(tab){
   const body = document.getElementById('cpPanelBody'); if(!body) return;
   body.scrollTop = 0;
   if(tab==='emoji'){
-    const recent = CP.recentEmoji.length
-      ? `<div class="cp-emoji-sec">Недавние</div><div class="cp-emoji-grid">${CP.recentEmoji.map(e=>
-          `<button class="cp-emoji" onclick="cpInsertEmoji('${e}')">${e}</button>`).join('')}</div>` : '';
-    body.innerHTML = recent + `<div class="cp-emoji-sec">Смайлы и символы</div><div class="cp-emoji-grid">${
-      CP_EMOJI.map(e=>`<button class="cp-emoji" onclick="cpInsertEmoji('${e}')">${e}</button>`).join('')}</div>`;
+    try{
+      const btn = k => `<button class="cp-emoji cp-emoji-svg" title="${k}" onclick="cpInsertOko('${k}')">${cpOkoSvg(k,28)}</button>`;
+      /* недавние (только валидные ключи фирменного набора) */
+      const rec = CP.recentOko.filter(k=>CP_OKO_EMOJI[k]);
+      const recent = rec.length
+        ? `<div class="cp-emoji-sec">Недавние</div><div class="cp-emoji-grid">${rec.map(btn).join('')}</div>` : '';
+      const groups = CP_OKO_GROUPS.map(([label,keys])=>
+        `<div class="cp-emoji-sec">${label}</div><div class="cp-emoji-grid">${keys.map(btn).join('')}</div>`).join('');
+      body.innerHTML = recent + groups;
+    }catch(e){ body.innerHTML = `<div class="cp-panel-empty">Эмодзи скоро появятся</div>`; }
     return;
   }
   /* стикер-вкладки: используем ядровые STICKERS/sendSticker/stickerSvg (verify-stickers их расширяет) */
@@ -20732,13 +20850,45 @@ function cpPanelTab(tab){
       locked?`<span class="cp-stk-lockic">${I('lock')}</span>`:''}<small>${s.label}</small></button>`;
   }).join('')}</div>`;
 }
+/* Вставка фирменного эмодзи: в поле уходит шорткод :oko-KEY:, который при рендере
+   сообщения превращается обратно в брендовый SVG (переживает отправку/приём). */
+function cpInsertOko(key){
+  try{
+    if(!CP_OKO_EMOJI[key]) return;
+    const inp = document.getElementById('msgInput'); if(!inp) return;
+    const token = ':oko-'+key+':';
+    const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+    inp.value = inp.value.slice(0,s) + token + inp.value.slice(en);
+    const pos = s + token.length; try{ inp.setSelectionRange(pos,pos); inp.focus(); }catch(_){}
+    CP.recentOko = [key, ...CP.recentOko.filter(x=>x!==key)].slice(0,24); cpSave();
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }catch(e){}
+}
+/* Замена шорткодов :oko-KEY: на инлайн-SVG в готовом HTML сообщения. */
+function cpRenderOkoTokens(html){
+  if(typeof html!=='string' || html.indexOf(':oko-')<0) return html;
+  return html.replace(/:oko-([a-z0-9-]+):/g, (m,k)=>
+    CP_OKO_EMOJI[k] ? `<span class="cp-oko-emoji" title="${k}">${cpOkoSvg(k,20)}</span>` : m);
+}
+/* Chain-патч ядрового msgHtml: прогоняем результат через замену шорткодов. */
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml = msgHtml;
+  msgHtml = function(){
+    let out = _cpPrevMsgHtml.apply(this, arguments);
+    try{ out = cpRenderOkoTokens(out); }catch(e){}
+    return out;
+  };
+}
+/* Обратная совместимость: старый вызов из ядра/др. модулей не должен падать. */
 function cpInsertEmoji(e){
-  const inp = document.getElementById('msgInput'); if(!inp) return;
-  const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
-  inp.value = inp.value.slice(0,s) + e + inp.value.slice(en);
-  const pos = s + e.length; try{ inp.setSelectionRange(pos,pos); }catch(_){}
-  CP.recentEmoji = [e, ...CP.recentEmoji.filter(x=>x!==e)].slice(0,24); cpSave();
-  if(typeof syncSendIcon==='function') syncSendIcon();
+  try{
+    const inp = document.getElementById('msgInput'); if(!inp) return;
+    const s = inp.selectionStart ?? inp.value.length, en = inp.selectionEnd ?? inp.value.length;
+    inp.value = inp.value.slice(0,s) + e + inp.value.slice(en);
+    const pos = s + e.length; try{ inp.setSelectionRange(pos,pos); }catch(_){}
+    CP.recentEmoji = [e, ...CP.recentEmoji.filter(x=>x!==e)].slice(0,24); cpSave();
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }catch(_){}
 }
 function cpSendStk(i){
   if(typeof sendSticker==='function') sendSticker(i); /* verify-stickers сам гейтит TON + дождь кристаллов */
@@ -25128,7 +25278,7 @@ function chSeed(){
   return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
-CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{};
+CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{}; CH.notify = CH.notify||{};
 /* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
 (function chMigrate(){
   try{
@@ -25171,6 +25321,15 @@ function chNormalize(c){
   if(c.reactions==null) c.reactions = true;
   if(c.discussions==null) c.discussions = (c.kind!=='course');
   if(c.kind==='course' && !c.lessons) c.lessons = [{id:'l1',title:'Вводный урок',dur:'5:00'}];
+  // --- расширенные настройки управления (глубина Telegram) ---
+  if(c.autopost==null)    c.autopost    = true;                               // авто-постинг новых постов в ленту рекомендаций
+  if(c.slowmode==null)    c.slowmode    = 0;                                  // медленный режим, сек (0 = выкл)
+  if(c.whoPost==null)     c.whoPost     = 'admins';                           // кто может писать: admins | subs
+  if(c.privSubs==null)    c.privSubs    = (c.access==='closed'?'admins':'all'); // кто видит список подписчиков: all | subs | admins
+  if(c.privFwd==null)     c.privFwd     = true;                               // разрешить пересылку/сохранение постов
+  if(c.privHistory==null) c.privHistory = 'visible';                          // история для новых: visible | hidden
+  if(c.archived==null)    c.archived    = false;                             // канал в архиве
+  if(!Array.isArray(c.invites)) c.invites = [];                              // пригласительные ссылки
   // legacy-поле type держим синхронным — вдруг читает внешний код
   c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
   return c;
@@ -25220,6 +25379,124 @@ function chSlug(s){ return String(s||'').toLowerCase().replace(/[^a-zа-я0-9_]/
 function chNick(c){ if(!c.nick) c.nick = chSlug(c.name); return c.nick; }
 /* url(...) для фото-аватара/обложки, если владелец загрузил картинку */
 function chAvPhoto(c){ return c.avatar ? `background-image:url(${c.avatar});background-size:cover;background-position:center;color:transparent` : ''; }
+
+/* ===== Telegram-grade управление: сгруппированные списки, строки-контролы, пикеры ===== */
+/* группа строк в одной карточке с разделителями (как настройки Telegram/iOS) */
+function chList(rows){ return `<div class="ch-list">${(rows||[]).filter(Boolean).join('')}</div>`; }
+function chLF(txt){ return `<div class="ch-lf">${txt}</div>`; }
+/* строка-переход: иконка + заголовок(+подпись) + значение справа + шеврон/копи */
+function chNavRow(ic, label, val, onclick, o){
+  o = o||{};
+  const rv = (val!=null && val!=='') ? `<span class="ch-rv-t${o.lime?' lime':''}">${val}</span>` : '';
+  const tail = o.copy ? chI('copy') : (o.noChev ? '' : chI('chev'));
+  return `<button class="ch-row${o.danger?' danger':''}" onclick="${onclick}">
+    ${ic?`<span class="ch-row-ic${o.danger?' danger':''}">${chI(ic)}</span>`:''}
+    <span class="ch-row-main"><b>${label}</b>${o.sub?`<small>${o.sub}</small>`:''}</span>
+    <span class="ch-row-val">${rv}${tail}</span>
+  </button>`;
+}
+/* строка-тумблер: клик переключает состояние (surgical, без полного ре-рендера) */
+function chTglRow(ic, label, sub, on, onclick){
+  return `<button class="ch-row" onclick="${onclick}">
+    ${ic?`<span class="ch-row-ic">${chI(ic)}</span>`:''}
+    <span class="ch-row-main"><b>${label}</b>${sub?`<small>${sub}</small>`:''}</span>
+    <span class="switch ${on?'on':''}"><i></i></span>
+  </button>`;
+}
+/* значение-подписи для настроек */
+function chNotifyOn(c){ return CH.notify[c.id]!==false; }
+function chSlowLabel(s){ s=+s||0; return s===0?'выкл':(s<60?s+' сек':(s/60)+' мин'); }
+function chWhoPostLabel(c){ return c.whoPost==='subs'?'Все подписчики':'Только админы'; }
+function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='subs'?'Подписчики':'Только админы'; }
+function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
+function chPublicLink(c){ return 'oko.app/'+chNick(c); }
+
+/* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
+window.chTgl = function(id, key, el){
+  const c = chChannel(id); if(!c) return;
+  c[key] = !c[key]; chSave();
+  if(el){ const sw = el.querySelector('.switch'); if(sw) sw.classList.toggle('on', !!c[key]); }
+  if(key==='discussions') toast(c[key]?'Обсуждения включены':'Обсуждения выключены');
+  else if(key==='reactions') toast(c[key]?'Реакции включены':'Реакции выключены');
+  else if(key==='autopost') toast(c[key]?'Авто-постинг включён':'Авто-постинг выключен');
+  else if(key==='archived') toast(c[key]?'Канал в архиве':'Канал возвращён из архива');
+};
+/* уведомления подписчика (по-канальная тишина) */
+window.chToggleNotify = function(id, el){
+  const c = chChannel(id); if(!c) return;
+  const nowOn = CH.notify[id]!==false;
+  CH.notify[id] = nowOn ? false : true; chSave();
+  if(el){
+    const sw = el.querySelector('.switch');
+    if(sw){ sw.classList.toggle('on', !nowOn); }
+    else { el.classList.toggle('on', !nowOn); const sp = el.querySelector('span'); if(sp) sp.textContent = (!nowOn)?'Уведомления':'Без звука'; }
+  }
+  toast(nowOn?'Уведомления выключены':'Уведомления включены');
+};
+
+/* универсальный выбор из вариантов (как action sheet Telegram) */
+function chChooser(title, body, options){
+  if(typeof showPopup!=='function'){ return; }
+  showPopup({ title, body, actions: options.concat([{label:'Отмена', ghost:true}]) });
+}
+window.chPickSlow = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Медленный режим', 'Минимальный интервал между сообщениями участников', [0,10,30,60,300,900].map(s=>({
+    label: chSlowLabel(s), onclick:()=>{ c.slowmode=s; chSave(); chRender(); toast('Медленный режим: '+chSlowLabel(s)); }
+  })));
+};
+window.chPickWhoPost = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Кто может писать', 'Кому разрешено публиковать в канале', [
+    {label:'Только админы', onclick:()=>{ c.whoPost='admins'; chSave(); chRender(); }},
+    {label:'Все подписчики', onclick:()=>{ c.whoPost='subs'; chSave(); chRender(); }},
+  ]);
+};
+window.chPickPrivSubs = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('Кто видит подписчиков', 'Видимость списка участников канала', [
+    {label:'Все', onclick:()=>{ c.privSubs='all'; chSave(); chRender(); }},
+    {label:'Подписчики', onclick:()=>{ c.privSubs='subs'; chSave(); chRender(); }},
+    {label:'Только админы', onclick:()=>{ c.privSubs='admins'; chSave(); chRender(); }},
+  ]);
+};
+window.chPickPrivHist = function(id){
+  const c = chChannel(id); if(!c) return;
+  chChooser('История для новых', 'Что видят только что вступившие подписчики', [
+    {label:'Видна вся история', onclick:()=>{ c.privHistory='visible'; chSave(); chRender(); }},
+    {label:'Скрыта до вступления', onclick:()=>{ c.privHistory='hidden'; chSave(); chRender(); }},
+  ]);
+};
+
+/* поделиться каналом (нативный share → иначе копирование ссылки) */
+window.chShareChannel = function(id){
+  const c = chChannel(id); if(!c) return;
+  const link = chPublicLink(c);
+  try{
+    if(navigator.share){ navigator.share({title:c.name, text:'Канал в OKO', url:'https://'+link}).catch(()=>{}); }
+    else if(navigator.clipboard){ navigator.clipboard.writeText(link); }
+  }catch(e){}
+  toast('Ссылка на канал скопирована');
+};
+/* меню «Ещё» — action sheet для владельца и подписчика */
+window.chMoreMenu = function(id){
+  const c = chChannel(id); if(!c) return;
+  const mine = chIsMine(c);
+  const acts = [
+    {label:'Поделиться', onclick:()=>chShareChannel(id)},
+    {label:'Скопировать ссылку', onclick:()=>chCopyLink(id)},
+  ];
+  if(mine){
+    acts.push({label:'Управление каналом', onclick:()=>chGo('manage',id)});
+    acts.push({label:'Статистика', onclick:()=>chGo('mStats',id)});
+  } else {
+    acts.push({label: chNotifyOn(c)?'Выключить уведомления':'Включить уведомления', onclick:()=>chToggleNotify(id)});
+    acts.push({label:'Пожаловаться', onclick:()=>toast('Жалоба отправлена на модерацию')});
+    if(chGated(c)) acts.push({label: chPaid(c)?'Отменить подписку':'Покинуть канал', ghost:true, onclick:()=>chUnsub(id)});
+  }
+  acts.push({label:'Закрыть', ghost:true});
+  if(typeof showPopup==='function') showPopup({ico:'more', title:chEsc(c.name), body:'@'+chEsc(chNick(c)), actions:acts});
+};
 
 /* канал публикует пост → он попадает и в ленту рекомендаций (как Instagram) */
 let CH_FEED_SEQ = 900000;
@@ -25318,6 +25595,7 @@ function chRender(){
     case 'mStats':  out = chPageMStats(top.arg); break;
     case 'mAppear': out = chPageMAppear(top.arg); break;
     case 'mSettings': out = chPageMSettings(top.arg); break;
+    case 'mInvites': out = chPageMInvites(top.arg); break;
     default: out = chPageList();
   }
   titleEl.textContent = out.title;
@@ -25594,6 +25872,13 @@ function chPageChannel(id){
     </div>`;
   }
 
+  /* ряд быстрых действий (как шапка канала в Telegram): уведомления · поделиться · ещё */
+  html += `<div class="ch-actrow">
+    <button class="ch-act ${chNotifyOn(c)?'on':''}" onclick="chToggleNotify('${c.id}',this)">${chI('bell')}<span>${chNotifyOn(c)?'Уведомления':'Без звука'}</span></button>
+    <button class="ch-act" onclick="chShareChannel('${c.id}')">${chI('share')}<span>Поделиться</span></button>
+    <button class="ch-act" onclick="chMoreMenu('${c.id}')">${chI('more')}<span>Ещё</span></button>
+  </div>`;
+
   if(c.kind==='course'){
     const prog = chCourseProg(c);
     const done = (CH.prog[c.id]||[]).length;
@@ -25856,22 +26141,21 @@ window.chDM = function(name,nick){
 function chPageManage(id){
   const c = chChannel(id);
   if(!c || !chIsMine(c)) return {title:'Управление', html:'<div class="ch-empty">Нет доступа</div>'};
-  const rows = [
-    ['megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`],
-    ['comment','Обсуждения', c.discussions?'включены':'выключены', `chGo('mSettings','${id}')`],
-    ['heart','Реакции', c.reactions?'включены':'выключены', `chGo('mSettings','${id}')`],
-    ['users','Администраторы', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`],
-    ['user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`],
-    ['poll','Статистика', 'графики', `chGo('mStats','${id}')`],
-    ['lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`],
-    ['photo','Оформление и фон', 'аватар · обложка · фон', `chGo('mAppear','${id}')`],
-    ['gear','Настройки', '', `chGo('mSettings','${id}')`],
-  ];
+  const course = c.kind==='course';
+
+  // шапка: аватар, имя, @id, счётчики
   let html = `<div class="ch-manage-hub">${chAvInner(c,'big')}
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font:800 18px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
-      <div style="color:var(--dim);font-size:12px;margin-top:4px">${chAccessLine(c)} · ${chFmtN(c.subs||0)} подписчиков</div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font:800 19px/1.1 var(--font-display);display:flex;align-items:center;gap:6px;justify-content:center">${chEsc(c.name)}${chBadge(c)}</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">@${chEsc(chNick(c))} · ${chFmtN(c.subs||0)} подписчиков</div>
     </div></div>`;
+
+  // быстрые действия
+  html += `<div class="ch-actrow" style="margin-bottom:16px">
+    <button class="ch-act" onclick="chGo('${course?'addLesson':'compose'}','${id}')">${chI('plus')}<span>${course?'Урок':'Пост'}</span></button>
+    <button class="ch-act" onclick="chShareChannel('${id}')">${chI('share')}<span>Поделиться</span></button>
+    <button class="ch-act" onclick="chGo('mStats','${id}')">${chI('poll')}<span>Статистика</span></button>
+  </div>`;
 
   // доход владельца (платный/курс)
   if(chPaid(c)){
@@ -25888,17 +26172,81 @@ function chPageManage(id){
     </div>`;
   }
 
-  html += rows.map(([ic,t,val,fn])=>`
-    <button class="ch-mrow" onclick="${fn}">
-      <span class="ch-mr-ic">${chI(ic)}</span>
-      <span class="ch-mr-b"><b>${t}</b></span>
-      <span class="ch-mr-val">${val}${chI('chev')}</span>
-    </button>`).join('');
-  html += `<div style="height:8px"></div>
-    <button class="ch-mrow danger" onclick="chDeleteChannel('${id}')">
-      <span class="ch-mr-ic">${chI('trash')}</span>
-      <span class="ch-mr-b"><b>Удалить канал</b><small>Действие необратимо</small></span>
-    </button>`;
+  // ---- ОСНОВНОЕ ----
+  html += `<div class="ch-sec-h">${chI('bolt')} Основное</div>`;
+  html += chList([
+    chNavRow('megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`),
+    chNavRow('photo','Оформление', 'аватар · обложка · описание', `chGo('mAppear','${id}')`),
+  ]);
+
+  // ---- ССЫЛКА И ПРИГЛАШЕНИЯ ----
+  html += `<div class="ch-sec-h">${chI('globe')} Ссылка и приглашения</div>`;
+  html += chList([
+    chNavRow('globe','Публичная ссылка', chPublicLink(c), `chCopyLink('${id}')`, {copy:true, lime:true}),
+    chNavRow('share','Пригласительные ссылки', (c.invites.length?c.invites.length+'':'создать'), `chGo('mInvites','${id}')`),
+  ]);
+
+  // ---- МОНЕТИЗАЦИЯ ----
+  html += `<div class="ch-sec-h">${chI('money')} Монетизация</div>`;
+  const monRows = [
+    chTglRow('card','Платный доступ',
+      course?'Курс всегда платный':(chPaid(c)?('Цена '+c.price+' ₽'+chPriceUnit(c)):'Включить и задать цену'),
+      chPaid(c), course?`toast('Курс всегда платный')`:`chToggleAccess('${id}','paid')`)
+  ];
+  if(chPaid(c)){
+    monRows.push(chNavRow('bolt','Цена и комиссия', c.price+' ₽'+chPriceUnit(c), `chGo('mType','${id}')`, {sub:'вам '+chNet(c.price)+' ₽ · OKO 10%'}));
+  }
+  html += chList(monRows);
+  html += chLF('OKO удерживает комиссию 10% с каждой продажи. Остальное — ваш доход к выводу на кошелёк.');
+
+  // ---- ПУБЛИКАЦИИ ----
+  html += `<div class="ch-sec-h">${chI('feed')} Публикации</div>`;
+  const pubRows = [
+    chTglRow('rocket','Авто-постинг в рекомендации','Новые посты попадают в ленту OKO', c.autopost, `chTgl('${id}','autopost',this)`),
+    chTglRow('heart','Реакции','Лайки под постами', c.reactions, `chTgl('${id}','reactions',this)`),
+  ];
+  if(!course){
+    pubRows.push(chTglRow('comment','Обсуждения','Комментарии к постам', c.discussions, `chTgl('${id}','discussions',this)`));
+    pubRows.push(chNavRow('clock','Медленный режим', chSlowLabel(c.slowmode), `chPickSlow('${id}')`));
+    pubRows.push(chNavRow('user','Кто может писать', chWhoPostLabel(c), `chPickWhoPost('${id}')`));
+  }
+  html += chList(pubRows);
+
+  // ---- УЧАСТНИКИ ----
+  html += `<div class="ch-sec-h">${chI('users')} Участники</div>`;
+  html += chList([
+    chNavRow('crown','Администраторы и права', (c.admins?c.admins.length:0)+'', `chGo('mAdmins','${id}')`),
+    chNavRow('user','Подписчики', chFmtN(c.subs||0), `chGo('mSubs','${id}')`),
+    chNavRow('lock','Чёрный список', (c.black?c.black.length:0)+'', `chGo('mBlack','${id}')`),
+  ]);
+
+  // ---- ПРИВАТНОСТЬ ----
+  html += `<div class="ch-sec-h">${chI('lock')} Приватность</div>`;
+  html += chList([
+    chNavRow('users','Кто видит подписчиков', chPrivSubsLabel(c), `chPickPrivSubs('${id}')`),
+    chTglRow('forward','Пересылка и сохранение', c.privFwd?'Разрешены':'Запрещены', c.privFwd, `chTgl('${id}','privFwd',this)`),
+    chNavRow('feed','История для новых', chPrivHistLabel(c), `chPickPrivHist('${id}')`),
+  ]);
+
+  // ---- УВЕДОМЛЕНИЯ ----
+  html += `<div class="ch-sec-h">${chI('bell')} Уведомления</div>`;
+  html += chList([
+    chTglRow('bell','Уведомления о канале', chNotifyOn(c)?'Звук включён':'Без звука', chNotifyOn(c), `chToggleNotify('${id}',this)`),
+  ]);
+
+  // ---- СТАТИСТИКА ----
+  html += `<div class="ch-sec-h">${chI('poll')} Статистика</div>`;
+  html += chList([
+    chNavRow('poll','Аналитика канала','охваты · подписки · вовлечённость', `chGo('mStats','${id}')`),
+  ]);
+
+  // ---- ОПАСНАЯ ЗОНА ----
+  html += `<div class="ch-sec-h">${chI('flag')} Опасная зона</div>`;
+  html += chList([
+    chTglRow('bookmark', c.archived?'В архиве':'Архивировать', 'Скрыть из списков, не удаляя', c.archived, `chTgl('${id}','archived',this)`),
+    chNavRow('trash','Удалить канал','Действие необратимо', `chDeleteChannel('${id}')`, {danger:true, noChev:true}),
+  ]);
+  html += `<div style="height:10px"></div>`;
   return {title:'Управление', html};
 }
 window.chWithdraw = function(id){
@@ -26341,9 +26689,40 @@ window.chToggleAccess = function(id, which){
 };
 window.chCopyLink = function(id){
   const c = chChannel(id); if(!c) return;
-  const link = 'oko.app/c/'+((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel');
+  const link = chPublicLink(c);
   try{ navigator.clipboard && navigator.clipboard.writeText(link); }catch(e){}
   toast('Ссылка скопирована: '+link);
+};
+
+/* ---------- Приглашения / ссылки-инвайты ---------- */
+function chPageMInvites(id){
+  const c = chChannel(id); if(!c || !chIsMine(c)) return {title:'Приглашения', html:'<div class="ch-empty">Нет доступа</div>'};
+  let html = `<div class="ch-sec-h">${chI('globe')} Публичная ссылка</div>`;
+  html += chList([
+    chNavRow('globe', chPublicLink(c), '', `chCopyLink('${id}')`, {copy:true, lime:true, sub:'Любой откроет канал по этой ссылке'})
+  ]);
+  html += `<div class="ch-sec-h">${chI('share')} Пригласительные ссылки</div>`;
+  const rows = (c.invites||[]).map((v,i)=>
+    chNavRow('forward', v.link, '', `chCopyInvite('${id}',${i})`, {copy:true, sub:(v.limit?('лимит '+v.limit+' входов · '):'')+'создана '+(v.when||'недавно')}));
+  rows.push(`<button class="ch-row" onclick="chNewInvite('${id}')">
+    <span class="ch-row-ic">${chI('plus')}</span>
+    <span class="ch-row-main"><b style="color:var(--lime)">Создать новую ссылку</b></span>
+  </button>`);
+  html += chList(rows);
+  html += chLF('Пригласительные ссылки работают даже для закрытого канала — делись ими где угодно. Каждая ведёт напрямую в канал.');
+  return {title:'Приглашения', html};
+}
+window.chNewInvite = function(id){
+  const c = chChannel(id); if(!c) return;
+  c.invites = c.invites||[];
+  const code = Math.random().toString(36).slice(2,10);
+  c.invites.unshift({ link:'oko.app/+'+code, when:'сейчас', limit:0 });
+  chSave(); chRender(); toast('Пригласительная ссылка создана');
+};
+window.chCopyInvite = function(id,i){
+  const c = chChannel(id); if(!c || !c.invites || !c.invites[i]) return;
+  try{ navigator.clipboard && navigator.clipboard.writeText(c.invites[i].link); }catch(e){}
+  toast('Ссылка скопирована: '+c.invites[i].link);
 };
 
 /* ================= ВХОДЫ ================= */

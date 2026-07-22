@@ -109,6 +109,14 @@
 .cp-emoji{height:42px;font-size:25px;line-height:1;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:transform .1s,background .16s}
 .cp-emoji:hover{background:var(--lime-dim)}
 .cp-emoji:active{transform:scale(1.35)}
+/* фирменные SVG-эмодзи в пикере: прозрачная кнопка, dim по умолчанию, лайм на hover/press */
+.cp-emoji-svg{background:transparent;color:var(--dim);transition:transform .12s cubic-bezier(.3,1.4,.5,1),background .16s,color .16s}
+.cp-emoji-svg svg{width:28px;height:28px;display:block}
+.cp-emoji-svg:hover{background:var(--lime-dim);color:var(--accent)}
+.cp-emoji-svg:active{color:var(--accent);transform:scale(.86)}
+/* инлайн-эмодзи внутри отрендеренного сообщения */
+.cp-oko-emoji{display:inline-flex;vertical-align:-.28em;color:var(--accent);margin:0 .5px}
+.cp-oko-emoji svg{width:20px;height:20px;display:block}
 .cp-stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
 .cp-stk{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 4px;border-radius:14px;transition:transform .12s,background .16s}
 .cp-stk:hover{background:var(--lime-dim)}
