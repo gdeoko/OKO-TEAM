@@ -42,6 +42,25 @@
       });
     }catch(e){}
   }
+  /* цвета Telegram-хрома (шапка, фон, нижний бар/home-indicator) — строго под тему приложения,
+     чтобы в светлой теме снизу/сверху НЕ было чёрных полос («тёмная тень снизу»). */
+  function okoTgColors(tg){
+    try{
+      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      const surf = light ? '#f7f9f4' : '#0d0d0d';
+      const bg   = light ? '#ffffff' : '#0a0a0a';
+      if(tg.setHeaderColor) tg.setHeaderColor(surf);
+      if(tg.setBackgroundColor) tg.setBackgroundColor(bg);
+      if(tg.setBottomBarColor){ try{ tg.setBottomBarColor(surf); }catch(e){} }
+    }catch(e){}
+  }
+  /* перекрашивать хром Telegram при переключении темы в приложении */
+  try{
+    new MutationObserver(()=>{
+      const tg = window.Telegram && window.Telegram.WebApp;
+      if(tg && tg.initData) okoTgColors(tg);
+    }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  }catch(e){}
   function apply(){
     const tg = window.Telegram && window.Telegram.WebApp;
     if(!tg || !tg.initData) return; // не в Telegram
@@ -49,8 +68,7 @@
       tg.ready();
       tg.expand();
       if(tg.requestFullscreen){ try{ tg.requestFullscreen(); }catch(e){} }
-      if(tg.setHeaderColor) tg.setHeaderColor('#000000');
-      if(tg.setBackgroundColor) tg.setBackgroundColor('#000000');
+      okoTgColors(tg);  // цвета Telegram-хрома под тему приложения (иначе в светлой теме снизу чёрная полоса)
       if(tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       if(tg.lockOrientation){ try{ tg.lockOrientation('portrait'); }catch(e){} }
       applySafeArea(tg);

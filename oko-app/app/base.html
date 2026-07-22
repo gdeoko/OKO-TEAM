@@ -43,6 +43,8 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow-x:hidden}
 @supports(height:100dvh){html,body{height:100dvh}}
+/* фон корня строго под тему — чтобы ни сверху, ни снизу (safe-area/PWA/webview) не было тёмной полосы */
+html{background:var(--bg)}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;overflow:hidden;transition:background .25s,color .25s}
 h1,h2,h3,.display{font-family:var(--font-display);font-weight:400;letter-spacing:.04em}
 button{font-family:var(--font-body);cursor:pointer;border:none;background:none;color:inherit}

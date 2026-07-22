@@ -43,6 +43,8 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow-x:hidden}
 @supports(height:100dvh){html,body{height:100dvh}}
+/* фон корня строго под тему — чтобы ни сверху, ни снизу (safe-area/PWA/webview) не было тёмной полосы */
+html{background:var(--bg)}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;overflow:hidden;transition:background .25s,color .25s}
 h1,h2,h3,.display{font-family:var(--font-display);font-weight:400;letter-spacing:.04em}
 button{font-family:var(--font-body);cursor:pointer;border:none;background:none;color:inherit}
@@ -6242,7 +6244,7 @@ img,video,canvas,svg{max-width:100%}
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.66</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.67</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -23958,6 +23960,25 @@ if(typeof mpOpenPackages === 'function'){
       });
     }catch(e){}
   }
+  /* цвета Telegram-хрома (шапка, фон, нижний бар/home-indicator) — строго под тему приложения,
+     чтобы в светлой теме снизу/сверху НЕ было чёрных полос («тёмная тень снизу»). */
+  function okoTgColors(tg){
+    try{
+      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      const surf = light ? '#f7f9f4' : '#0d0d0d';
+      const bg   = light ? '#ffffff' : '#0a0a0a';
+      if(tg.setHeaderColor) tg.setHeaderColor(surf);
+      if(tg.setBackgroundColor) tg.setBackgroundColor(bg);
+      if(tg.setBottomBarColor){ try{ tg.setBottomBarColor(surf); }catch(e){} }
+    }catch(e){}
+  }
+  /* перекрашивать хром Telegram при переключении темы в приложении */
+  try{
+    new MutationObserver(()=>{
+      const tg = window.Telegram && window.Telegram.WebApp;
+      if(tg && tg.initData) okoTgColors(tg);
+    }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  }catch(e){}
   function apply(){
     const tg = window.Telegram && window.Telegram.WebApp;
     if(!tg || !tg.initData) return; // не в Telegram
@@ -23965,8 +23986,7 @@ if(typeof mpOpenPackages === 'function'){
       tg.ready();
       tg.expand();
       if(tg.requestFullscreen){ try{ tg.requestFullscreen(); }catch(e){} }
-      if(tg.setHeaderColor) tg.setHeaderColor('#000000');
-      if(tg.setBackgroundColor) tg.setBackgroundColor('#000000');
+      okoTgColors(tg);  // цвета Telegram-хрома под тему приложения (иначе в светлой теме снизу чёрная полоса)
       if(tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       if(tg.lockOrientation){ try{ tg.lockOrientation('portrait'); }catch(e){} }
       applySafeArea(tg);
