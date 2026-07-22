@@ -77,3 +77,44 @@
     }
   }catch(e){ /* тихо: перф-моушен не критичен */ }
 })();
+
+/* ============================================================
+   UI-CHROME · script.js — класс-хук быстрого доступа поиска (ПК-полировка)
+   Ставит .uic-qa на #searchView, когда запрос пуст (режим «Быстрый доступ»),
+   чтобы CSS раскладывал карточную сетку. Аддитивно, ядро не патчим:
+   слушаем перерисовки #searchBody (renderSearch меняет innerHTML при открытии
+   и на каждый ввод) через MutationObserver — CSS-эффект только на ≥900px,
+   на мобайле класс ни на что не влияет. Всё в try/catch, префикс uic*.
+   ============================================================ */
+(function uicSearchQaHook(){
+  'use strict';
+  try{
+    function uicSyncQa(){
+      try{
+        var view = document.getElementById('searchView');
+        if(!view) return;
+        var inp = document.getElementById('gSearchInput');
+        var empty = !inp || !((inp.value||'').trim());
+        view.classList.toggle('uic-qa', empty);
+      }catch(e){}
+    }
+    function uicBind(){
+      try{
+        var body = document.getElementById('searchBody');
+        if(body && 'MutationObserver' in window){
+          var mo = new MutationObserver(uicSyncQa);
+          mo.observe(body, {childList:true});
+        }
+        // подстраховка: реагируем и на прямой ввод, и на первичное состояние
+        var inp = document.getElementById('gSearchInput');
+        if(inp) inp.addEventListener('input', uicSyncQa, {passive:true});
+        uicSyncQa();
+      }catch(e){}
+    }
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', uicBind, {once:true});
+    } else {
+      uicBind();
+    }
+  }catch(e){ /* тихо: полировка поиска не критична */ }
+})();

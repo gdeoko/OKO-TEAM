@@ -368,3 +368,94 @@ html.oko-scrolling #screen-mini .ma-hero::before{animation-play-state:paused}
   #screen-mini .ma-hero-logo,#screen-mini .ma-hero-txt{transition:none;transform:none}
   #splash .eye::before{animation:none;opacity:0}
 }
+
+/* ============================================================
+   UI-CHROME · ДЕСКТОП-ПОЛИРОВКА ОВЕРЛЕЙ-ПАНЕЛЕЙ (только ПК)
+   Аудит на ПК: панели Поиск / Уведомления / Система на широких
+   экранах выглядели «пустотой» — тонкая колонка 640 в чёрной панели
+   1280 с большими боковыми и вертикальными провалами; края шапки и
+   списка чуть расходились. Здесь всё лечим, НЕ трогая мобайл: каждое
+   правило строго внутри @media(min-width:900px) / (min-width:1200px).
+   Функциональность не меняется — только раскладка/CSS. Класс uic-qa
+   на #searchView ставит ui-chrome/script.js (пустой запрос = быстрый
+   доступ). Перф-слой не задет: без анимаций на скролле, лёгкие тени.
+   ============================================================ */
+
+/* ---------- ПОИСК ≥900: единая колонка + карточная сетка быстрого доступа ---------- */
+@media(min-width:900px){
+  /* и поле-шапка, и тело поиска делят ОДНИ левый/правый края (колонка 720).
+     Переопределяет общий cap 640 из блока выше (тот же/выше приоритет + позже в файле) */
+  #searchView .sv-body>*{max-width:720px}
+  #searchView .search-head{
+    padding-left:max(18px,calc((100% - 720px)/2));
+    padding-right:max(18px,calc((100% - 720px)/2));
+  }
+  /* быстрый доступ (пустой запрос) → карточная сетка, привязанная к ВЕРХУ:
+     заполняет колонку с воздухом, не висит в центре чёрной пустоты.
+     Центрируем сетку ПЭДДИНГОМ (не max-width+margin-auto: у flex-элемента,
+     ставшего grid, авто-margin по кроссоси отключает stretch и колонка
+     схлопывается до содержимого). Формула паддинга = формула шапки → края
+     сетки и поля поиска совпадают в пиксель. */
+  #searchView.uic-qa .sv-body{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    padding-left:max(18px,calc((100% - 720px)/2));
+    padding-right:max(18px,calc((100% - 720px)/2));
+    align-content:start;
+  }
+  /* в режиме сетки снимаем общий cap 640/центрирование у прямых детей */
+  #searchView.uic-qa .sv-body>*{max-width:none;margin:0}
+  /* заголовок группы — во всю строку сетки */
+  #searchView.uic-qa .sv-body .nt-group{grid-column:1 / -1;margin:2px 0 2px 2px}
+  /* элементы быстрого доступа → брендовые карточки (вертикальная раскладка) */
+  #searchView.uic-qa .sv-body .nt-item{
+    flex-direction:column;align-items:flex-start;gap:14px;
+    padding:20px 18px;
+    border:1px solid var(--border);border-radius:var(--r-md);
+    background:linear-gradient(158deg,color-mix(in srgb,var(--surface) 88%,transparent),transparent);
+    transition:border-color .2s ease,transform .14s ease,box-shadow .22s ease;
+  }
+  #searchView.uic-qa .sv-body .nt-item:hover{
+    border-color:color-mix(in srgb,var(--border) 45%,var(--accent));
+    transform:translateY(-2px);
+    box-shadow:0 12px 26px rgba(0,0,0,.28);
+  }
+  #searchView.uic-qa .sv-body .nt-item:active{transform:translateY(0) scale(.99)}
+  :root[data-theme="light"] #searchView.uic-qa .sv-body .nt-item:hover{box-shadow:0 10px 22px rgba(60,90,20,.12)}
+  /* иконка крупнее и в лайм-подсветке — карточка читается как «сервис» */
+  #searchView.uic-qa .sv-body .nt-item .nt-ic{
+    width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(158deg,rgba(154,255,0,.16),rgba(154,255,0,.04));
+    border-color:rgba(154,255,0,.22);color:var(--accent);
+  }
+  :root[data-theme="light"] #searchView.uic-qa .sv-body .nt-item .nt-ic{
+    background:linear-gradient(158deg,rgba(110,200,0,.14),rgba(110,200,0,.04));
+    border-color:rgba(110,200,0,.24);
+  }
+  #searchView.uic-qa .sv-body .nt-item .nt-b span{font-size:15px;font-weight:600}
+}
+
+/* ---------- УВЕДОМЛЕНИЯ / СИСТЕМА ≥1200: шире колонка + края шапки=список ---------- */
+@media(min-width:1200px){
+  /* колонка чтения 800 вместо 640 — меньше боковых провалов на ≥1280 */
+  #systemView .sv-body>*,
+  #notifsView .sv-body>*{max-width:800px}
+  /* шапка («Прочитать» и т.п.) центрируется по ТОЙ ЖЕ колонке 800 — един. края */
+  #systemView .sv-head,
+  #notifsView .sv-head{
+    padding-left:max(18px,calc((100% - 800px)/2));
+    padding-right:max(18px,calc((100% - 800px)/2));
+  }
+  /* поиск на больших мониторах: колонка ~880, быстрый доступ в 3 колонки */
+  #searchView .sv-body>*{max-width:880px}
+  #searchView .search-head{
+    padding-left:max(18px,calc((100% - 880px)/2));
+    padding-right:max(18px,calc((100% - 880px)/2));
+  }
+  #searchView.uic-qa .sv-body{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    padding-left:max(18px,calc((100% - 880px)/2));
+    padding-right:max(18px,calc((100% - 880px)/2));
+  }
+}
