@@ -46,19 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $valid = reset_lookup($token) !== null;
 
 ob_start(); ?>
-<section class="section">
-  <div class="container" style="max-width:460px">
-    <div class="section-head reveal" style="margin-bottom:28px">
-      <p class="eyebrow">Личный кабинет</p>
-      <h2>Новый пароль</h2>
-      <div class="gold-rule"></div>
-      <?php if ($valid): ?><p>Придумайте новый пароль для входа в кабинет.</p><?php endif; ?>
-    </div>
+<section class="section auth-page">
+  <div class="container" style="max-width:440px">
+    <div class="card reveal auth-shell" style="padding:34px 26px 30px">
+      <div class="auth-head" style="text-align:center;margin-bottom:22px">
+        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="64" height="64"
+             style="width:64px;height:64px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 12px;display:block">
+        <p class="eyebrow" style="margin-bottom:2px">Личный кабинет</p>
+        <h1 style="font-size:1.7rem;margin:0 0 6px">Новый пароль</h1>
+        <?php if ($valid): ?><p style="color:var(--muted);font-size:.9rem;margin:0">Придумайте новый пароль для входа в кабинет.</p><?php endif; ?>
+      </div>
 
-    <div class="card reveal" style="padding:28px">
       <?php if (!$valid): ?>
-        <p style="margin:0 0 8px">Ссылка для смены пароля устарела или недействительна.</p>
-        <p style="margin:0 0 22px;color:var(--muted)">Запросите новую - она придёт на Вашу почту.</p>
+        <p style="margin:0 0 8px;text-align:center">Ссылка для смены пароля устарела или недействительна.</p>
+        <p style="margin:0 0 22px;color:var(--muted);text-align:center">Запросите новую - она придёт на Вашу почту.</p>
         <a class="btn btn--primary btn--block" href="<?= url('/forgot') ?>">Запросить ссылку</a>
       <?php else: ?>
         <form method="post" action="<?= url('/reset-password') ?>" novalidate>
