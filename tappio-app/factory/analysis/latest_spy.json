@@ -1,102 +1,28 @@
 {
  "app": "spy",
  "niche": "Spy Camera Finder / приватность",
+ "brand_name": "SPY CAMERA FINDER",
+ "code": "PRIVACY",
  "top": [
   {
-   "views": 522725,
-   "likes": 2909,
-   "comments": 216,
-   "channel": "News On 6/KOTV",
-   "followers": 82300,
-   "dur": 273,
-   "id": "n1VymE2Zu3Q",
-   "title": "Are Hidden Camera Detectors Effective? We put them to the test"
-  },
-  {
-   "views": 274784,
-   "likes": 3230,
-   "comments": 29,
-   "channel": "TechLoop ",
-   "followers": 1310,
-   "dur": 180,
-   "id": "tkqXWJYqfnQ",
-   "title": "How to Detect Hidden Cameras with Your Smartphone! | Tech Assistance"
-  },
-  {
-   "views": 224258,
-   "likes": 8814,
-   "comments": 620,
-   "channel": "Business Reform",
-   "followers": 261000,
-   "dur": 1162,
-   "id": "ysBb_VXdh6M",
-   "title": "Finding Hidden Cameras: I Tested 3 Detectors Against Real Spy Devices"
-  },
-  {
-   "views": 176440,
-   "likes": 1998,
-   "comments": 172,
-   "channel": "Privacy X",
-   "followers": 130000,
-   "dur": 684,
-   "id": "Ionl2aSekLI",
-   "title": "How To Find Hidden Spy Cameras And Listening Devices"
-  },
-  {
-   "views": 52275,
-   "likes": 640,
-   "comments": 15,
-   "channel": "BRIGHT SIDE",
-   "followers": 44600000,
-   "dur": 505,
-   "id": "40NSKZus85s",
-   "title": "Stay Safe While Traveling: Detect Cameras in Your Hotel Room"
-  },
-  {
-   "views": 25398,
-   "likes": 54,
-   "comments": 4,
-   "channel": "ProTechs",
-   "followers": 80,
-   "dur": 31,
-   "id": "-dFDdVak3Ig",
-   "title": "Hidden Camera Detector App For Android Free /Hidden Camera Finder /Spy Camera Detector/SpyCam App"
-  },
-  {
-   "views": 1926,
-   "likes": 17,
-   "comments": 0,
-   "channel": "Team Kandy",
-   "followers": 362,
-   "dur": 241,
-   "id": "i8l2VjmAnD0",
-   "title": "Hidden Cameras Are Everywhere… But This Device Finds Them Instantly!"
-  },
-  {
-   "views": 827,
-   "likes": 6,
-   "comments": 4,
-   "channel": "ClickCrate",
-   "followers": 60,
-   "dur": 113,
-   "id": "9fXfGUSWZsc",
-   "title": "How to Detect Hidden Cameras | Hidden Camera Detector  Review 🔍📸"
+   "views": 103958,
+   "likes": 319,
+   "comments": 21,
+   "channel": "KNOW IT FAST",
+   "followers": 14200,
+   "dur": 97,
+   "id": "U8RwAj2LWhw",
+   "title": "How To Detect Spy Camera With Your Mobile"
   }
  ],
+ "millions_list": [],
  "millions": 0,
  "hooks": [
-  "hidden",
-  "cameras",
-  "camera",
   "detect",
   "spy",
-  "detector",
-  "detectors",
-  "them",
-  "devices",
-  "app",
-  "effective",
-  "put"
+  "camera",
+  "mobile"
  ],
- "avg_views": 159829
+ "ts": "2026-07-22 11:06 UTC",
+ "avg_views": 103958
 }
