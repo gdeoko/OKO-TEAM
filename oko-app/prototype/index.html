@@ -6581,7 +6581,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
           <p style="font-weight:600;font-size:14px">Твоя реф-ссылка</p>
           <p class="dim" style="font-size:12.5px;margin-top:4px">15% с оплат твоих клиентов (первые 6 мес, далее 5%) + 5% со второго уровня</p>
           <div class="reflink">
-            <input value="oko.app/r/daniel7x" readonly id="refInput">
+            <input value="okoteam.top/r/daniel7x" readonly id="refInput">
             <button class="btn sm" onclick="copyRef()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
           </div>
         </div>
@@ -9315,7 +9315,7 @@ function openProfile(){
       <div class="dim" style="font-size:11.5px;padding:2px 4px 10px" id="writeHint">${c.writeAll?'Пишут все участники':'Публикуют только владелец и админы'}</div>
       <button class="prow" onclick="toast('Управление админами подключится с бэкендом')">${I('users')} Администраторы <span class="chev">${I('chev')}</span></button>
       <button class="prow" onclick="toast('Закреплённые посты')">${I('pin')} Закреплённые посты <span class="chev">${I('chev')}</span></button>
-      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} oko.app/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
+      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} okoteam.top/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
     } else {
       extra = `<div class="pv-stats"><span class="chip">Посты в ленте</span><span class="chip">Алгоритмы OKO</span></div>`;
     }
@@ -9365,7 +9365,7 @@ function toggleWrite(){
   document.getElementById('writeHint').textContent = currentChat.writeAll ? 'Пишут все участники' : 'Публикуют только владелец и админы';
 }
 function copyInvite(){
-  const link = 'oko.app/c/' + (currentChat.nick || 'invite');
+  const link = 'okoteam.top/c/' + (currentChat.nick || 'invite');
   try{ navigator.clipboard.writeText('https://'+link); }catch(e){}
   toast('Ссылка-приглашение скопирована');
 }
@@ -14382,13 +14382,13 @@ let ADS = {
   ],
   camps: [
     {id:1, name:'OKO Академия — поток №4', text:'Контент-завод за 7 дней: 30 роликов в месяц на автомате. Старт 20 июля, осталось 14 мест из 50.',
-     cta:'Подписаться', link:'https://oko.app/academy', fmt:'post', model:'CPM', bid:32,
+     cta:'Подписаться', link:'https://okoteam.top/academy', fmt:'post', model:'CPM', bid:32,
      geo:'РФ', sex:'any', cities:['Москва','Санкт-Петербург'], interests:['контент','маркетинг'], ages:['18-24','25-34'], devs:['ios','android'], times:[],
      budget:3000, spent:1268.4, imps:45320, clicks:1121, status:'act', demo:true,
      ab:{tb:'30 роликов в месяц без монтажёра и съёмок', ka:.019, kb:.031, a:{i:22660,c:427}, b:{i:22660,c:694}},
      hist:[120,180,150,240,210,320,280,360,300,410,380,460,420,510,470,560,530,610], created: Date.now()-2*864e5},
     {id:2, name:'Партнёрка OKO — 15% с оборота', text:'Приводи авторов и получай 15% с их подписки + 5% со второй линии. Выплаты сразу на лицевой счёт.',
-     cta:'Подробнее', link:'https://oko.app/partners', fmt:'channel', model:'CPC', bid:14,
+     cta:'Подробнее', link:'https://okoteam.top/partners', fmt:'channel', model:'CPC', bid:14,
      geo:'СНГ', sex:'any', cities:[], interests:['бизнес','маркетинг'], ages:['25-34','35-44'], devs:[], times:[],
      budget:1500, spent:1500, imps:53570, clicks:1547, status:'done', demo:true,
      hist:[520,610,580,660,700,640,720,690,750,710,680,730,700,660,610,540,420,260], created: Date.now()-9*864e5},
@@ -22273,7 +22273,7 @@ function cpAccessMenu(){
 /* ---- ссылка-приглашение (приватные/платные) ---- */
 function cpShareInvite(c){
   if(typeof showPopup!=='function') return;
-  const link = 'https://oko.app/join/'+cpChatSlug(c);
+  const link = 'https://okoteam.top/join/'+cpChatSlug(c);
   showPopup({ico:'share', title:'Ссылка-приглашение',
     body:`Отправь ссылку — по ней откроется доступ к «${cpEsc(c.name)}».<div class="cp-invite"><input id="cpInviteInp" readonly value="${link}"><button class="btn sm" onclick="cpCopyInvite()">${I('copy')} Копировать</button></div>`,
     actions:[{label:'Готово'}]});
@@ -22717,7 +22717,7 @@ function psLike(id){
 /* ---------- «Поделиться» профилем: ссылка + копирование ---------- */
 function psProfileLink(name){
   const a = psAuthor(name);
-  return 'https://oko.app/@' + a.nick;
+  return 'https://okoteam.top/@' + a.nick;
 }
 function psCopy(text){
   try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text); return true; } }catch(e){}
@@ -25866,7 +25866,7 @@ var PW_ASSET = {
           '<p class="dim" style="font-size:12px;margin-top:10px">Выплаты — на лицевой счёт OKO. Статистика переходов и начислений — в реальном времени.</p>'+
         '</div>',
         actions:[{label:'Скопировать ссылку', onclick:function(){
-          var link = 'https://oko.app/i/'+((typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref');
+          var link = 'https://okoteam.top/i/'+((typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref');
           try{ if(navigator.clipboard) navigator.clipboard.writeText(link); }catch(e){}
           if(typeof toast==='function') toast('Ссылка скопирована: '+link);
         }},{label:'Понятно', ghost:true}]
