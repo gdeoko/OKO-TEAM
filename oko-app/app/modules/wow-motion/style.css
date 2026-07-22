@@ -57,6 +57,27 @@ header .logo{ text-shadow:0 0 16px rgba(154,255,0,.28); }
    ========================================================================= */
 .btn{ transition:transform .14s var(--wm-spring), box-shadow .28s ease, filter .2s ease; }
 .btn:active{ transform:scale(.965); }
+/* Первичная CTA — чуть более «дорогой» тактильный отклик (только transform, без сдвига layout) */
+.btn:not(.ghost):not(.sm):active{ transform:scale(.955) translateY(1px); }
+
+/* Лаймовый фокус-ринг на полях ввода — box-shadow, поэтому БЕЗ сдвига layout. Обе темы. */
+input:focus-visible,textarea:focus-visible,select:focus-visible,[contenteditable="true"]:focus-visible{
+  outline:none;
+  box-shadow:0 0 0 2px var(--bg), 0 0 0 3px var(--accent), 0 0 14px rgba(154,255,0,.24);
+  border-color:var(--accent);
+}
+:root[data-theme="light"] input:focus-visible,
+:root[data-theme="light"] textarea:focus-visible,
+:root[data-theme="light"] select:focus-visible,
+:root[data-theme="light"] [contenteditable="true"]:focus-visible{
+  box-shadow:0 0 0 2px var(--bg), 0 0 0 3px var(--accent), 0 0 12px rgba(110,200,0,.20);
+}
+
+/* Стат-цифры (для count-up) — моноширинные цифры, чтобы ширина не «прыгала» при счёте */
+.pay-sum,.stat .v,.pstat .v,.ch-stat .v,.pw-live-cell .v,.adm-kpi b,.gm-prz-stat b{
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum" 1,"kern" 1;
+}
 
 /* Ровное лаймовое свечение на первичной CTA (не ghost, не мелкой) */
 .btn:not(.ghost):not(.sm){ box-shadow:var(--wm-glow-soft); }
@@ -124,12 +145,12 @@ nav#tabs>button.active::before{
 /* БЕЗОПАСНО: контент НИКОГДА не прячется (opacity всегда 1). Reveal — только лёгкий
    доводочный сдвиг, который не может оставить блок невидимым (убрало «пустой кошелёк»). */
 html.wm-on .wm-r{
-  opacity:1;
-  transform:translateY(8px);
+  opacity:1;                              /* контент ВСЕГДА виден — не прячем никогда */
+  transform:translateY(8px) scale(.994);  /* доводочный сдвиг + едва заметный масштаб */
 }
 html.wm-on .wm-r.wm-in{
   transform:none;
-  transition:transform .5s var(--wm-ease-io);
+  transition:transform .52s var(--wm-ease-io);
   transition-delay:var(--wm-d,0ms);
 }
 
