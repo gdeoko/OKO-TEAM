@@ -2488,3 +2488,36 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 .menu-item--invite .menu-item__tag { background: rgba(201,112,100,.16); color: var(--terracotta); }
 [data-theme="dark"] .menu-item--invite { color: #e79b90; }
 [data-theme="dark"] .menu-item--invite [data-icon] { color: #e79b90; }
+
+/* ══════════ О ШКОЛЕ (миссия/маркетинг) ══════════ */
+.about-hero { position: relative; border-radius: var(--radius-modal); overflow: hidden; aspect-ratio: 16/10;
+  margin-bottom: 16px; box-shadow: 0 10px 26px rgba(26,58,82,.18); }
+.about-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.about-hero__scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,58,82,.86), rgba(26,58,82,.25) 60%, rgba(26,58,82,.15)); }
+.about-hero__inner { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 20px; color: #fff; }
+.about-hero__eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #ffe0a0; }
+.about-hero__title { font-family: var(--font-head); font-size: 30px; font-weight: 800; margin: 4px 0 2px; letter-spacing: .04em; }
+.about-hero__sub { font-family: var(--font-head); font-style: italic; font-size: 14px; opacity: .92; }
+.about-mission { display: flex; gap: 14px; align-items: flex-start; }
+.about-mission__ic { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(160deg, var(--gold), var(--terracotta)); box-shadow: 0 6px 16px rgba(201,112,100,.3); }
+.about-mission p { font-size: 14.5px; line-height: 1.6; color: var(--navy); margin: 0; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+.about-item { background: #fff; border: 1px solid rgba(212,165,116,.3); border-radius: 16px; padding: 14px;
+  box-shadow: 0 2px 8px rgba(26,58,82,.05); }
+.about-item__ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 8px;
+  color: #fff; background: linear-gradient(160deg, #E6A15C, #C97064); }
+.about-item:nth-child(2n) .about-item__ic { background: linear-gradient(160deg, #E6C079, #D4A574); }
+.about-item:nth-child(3n) .about-item__ic { background: linear-gradient(160deg, #7AAED4, #4d7ea3); }
+.about-item__t { font-weight: 700; font-size: 14px; color: var(--navy); margin-bottom: 3px; }
+.about-item__d { font-size: 12px; line-height: 1.45; color: var(--gray); }
+.about-founder { display: flex; gap: 14px; align-items: center; margin-top: 16px;
+  background: linear-gradient(135deg, #FFF6E9, #FBEBD6); border: 1.5px solid var(--gold); }
+.about-founder__img { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; border: 2px solid #fff; box-shadow: 0 3px 8px rgba(26,58,82,.15); }
+.about-founder__name { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--navy); }
+.about-founder__role { font-size: 12px; color: var(--terracotta); font-weight: 600; margin-bottom: 5px; }
+.about-founder__body p { font-size: 13px; line-height: 1.5; font-style: italic; color: var(--navy); margin: 0; }
+[data-theme="dark"] .about-mission p, [data-theme="dark"] .about-item__t { color: var(--cream); }
+[data-theme="dark"] .about-item { background: #232a33; border-color: rgba(212,165,116,.25); }
+[data-theme="dark"] .about-founder { background: linear-gradient(135deg,#2a2118,#241c14); }
+[data-theme="dark"] .about-founder__name, [data-theme="dark"] .about-founder__body p { color: #f4ead6; }

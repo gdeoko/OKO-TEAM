@@ -2993,6 +2993,50 @@ const SET_DEFAULTS = { theme: 'light', n_lessons: true, n_msgs: true, n_calls: t
 function setGet(k) { const v = localStorage.getItem('mt_set_' + k); return v === null ? SET_DEFAULTS[k] : v === '1'; }
 function setPut(k, v) { localStorage.setItem('mt_set_' + k, v ? '1' : '0'); }
 
+function openAbout() {
+  $('#aboutBody').innerHTML = `
+    <div class="about-hero">
+      <img class="about-hero__bg" src="assets/img/covers/lesson-1.jpg" alt="">
+      <div class="about-hero__scrim"></div>
+      <div class="about-hero__inner">
+        <div class="about-hero__eyebrow">Христианская онлайн-школа</div>
+        <h1 class="about-hero__title">МЕТАНОЙА</h1>
+        <p class="about-hero__sub">«Слово Твоё — светильник ноге моей»</p>
+      </div>
+    </div>
+    <div class="about-mission card">
+      <div class="about-mission__ic">${ICON('dove', 26)}</div>
+      <p>Мы помогаем детям 5–14 лет узнать Бога сердцем — через тёплые уроки, добрые игры и живое общение. Как маяк ведёт корабли сквозь туман, так Слово мягко ведёт детское сердце к свету.</p>
+    </div>
+    <h2 class="section-title">Что получает ребёнок</h2>
+    <div class="about-grid">
+      ${aboutCard('book', '105 уроков', 'Три главы: жизнь Господа, Ветхий Завет, путь Израиля — по возрасту и с любовью')}
+      ${aboutCard('star', '19 добрых игр', 'Библейские истории оживают в играх — учиться радостно, а не скучно')}
+      ${aboutCard('church', 'Мой храм и путь', 'Каждый урок строит храм веры и ведёт по карте библейского путешествия')}
+      ${aboutCard('comment', 'Тёплое сообщество', 'Педагог рядом, семьи поддерживают друг друга, детям — безопасно')}
+      ${aboutCard('crown', 'Награды и рост', 'Баллы, значки, именные сертификаты — виден каждый шаг ребёнка')}
+      ${aboutCard('shield', 'Спокойствие родителей', 'Родительская зона под PIN, бережный контроль, чистое содержание')}
+    </div>
+    <div class="about-founder card">
+      <img class="about-founder__img" src="assets/img/avatars/ekaterina.jpg" alt="Екатерина Павленко">
+      <div class="about-founder__body">
+        <div class="about-founder__name">Екатерина Павленко</div>
+        <div class="about-founder__role">Основатель и педагог</div>
+        <p>«Я мечтаю, чтобы каждый ребёнок узнал, как сильно он любим Богом. Эта школа — мой ответ на эту любовь».</p>
+      </div>
+    </div>
+    <button class="btn btn--outline" id="aboutInvite" style="margin-top:16px">${ICON('heart', 17)} Пригласить семью в школу</button>
+  `;
+  $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'about'));
+  $('#nav').style.display = 'none';
+  hydrateIcons();
+  $('#aboutInvite')?.addEventListener('click', shareInvite);
+  window.scrollTo({ top: 0 });
+}
+function aboutCard(icon, title, text) {
+  return `<div class="about-item"><div class="about-item__ic">${ICON(icon, 20)}</div><div class="about-item__t">${title}</div><div class="about-item__d">${text}</div></div>`;
+}
+
 function openSettingsScreen() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   $('#setAppearance').innerHTML = switchRow('swTheme', dark ? 'moon' : 'sun', 'Тёмная тема', 'Мягкие тёмные тона для вечернего чтения', dark);
@@ -3998,6 +4042,8 @@ function initGrowth() {
     setTimeout(openSubscribeScreen, 300);
   });
   $('#mInvite')?.addEventListener('click', shareInvite);
+  $('#mAbout')?.addEventListener('click', openAbout);
+  $('#aboutBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#mSettings')?.addEventListener('click', openSettingsScreen);
   $('#mNotify')?.addEventListener('click', openSettingsScreen);
   $('#mParental')?.addEventListener('click', openSettingsScreen);
