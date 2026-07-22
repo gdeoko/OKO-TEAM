@@ -18380,8 +18380,61 @@ const ST_DICT = {
   'Баланс':'Balance','Адрес получателя':'Recipient address','UQ… адрес TON-кошелька':'UQ… TON wallet address',
   'Вставить':'Paste','Купить ещё':'Buy more','В коллекции:':'In collection:','МАКС':'MAX',
   'Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.':'Prototype: the transfer deducts TON from your local wallet and lands in history. Real TON network transfers will connect at release via TON Connect.',
-  'Честная заглушка: настоящие переводы TON и NFT-подарки подключатся в релизе через TON Connect. Баланс и коллекция хранятся локально на устройстве.':'Honest placeholder: real TON transfers and NFT gifts will connect at release via TON Connect. Balance and collection are stored locally on your device.'
+  'Честная заглушка: настоящие переводы TON и NFT-подарки подключатся в релизе через TON Connect. Баланс и коллекция хранятся локально на устройстве.':'Honest placeholder: real TON transfers and NFT gifts will connect at release via TON Connect. Balance and collection are stored locally on your device.',
+  /* --- аудит-добивка v0.78: полный EN по всему хрому (найдено обходом DOM в EN) --- */
+  /* экран звонка + редактор обложки (глобальные оверлеи) */
+  'Звонок':'Call','Микро':'Mic','Сброс':'End','Обложка профиля':'Profile cover',
+  'OKO · Официальный':'OKO · Official',
+  /* чаты: сегменты фильтра + вложения + закреп */
+  'Личные':'Direct','Группы':'Groups','Каналы':'Channels','Управление':'Manage',
+  'Закреплённое сообщение':'Pinned message','Эмодзи':'Emoji','Стикеры':'Stickers',
+  /* мини-аппы / хаб */
+  'TON Подарки':'TON Gifts','Загрузить 4K-ролик (420 МБ)':'Upload 4K video (420 MB)',
+  /* кошелёк: сводка + строки операций (сид-контент лицевого счёта) */
+  'Чистыми за 30 дней':'Net over 30 days','прибыль':'profit','Расходы':'Expenses',
+  'Партнёрские начисления':'Partner accruals','Пополнение':'Top-up','тариф MAX':'MAX plan',
+  'Продажа на Бирже: обложка канала':'Marketplace sale: channel cover',
+  'Стикеры OKO · набор «Неон»':'OKO Stickers · Neon pack','Партнёрская программа · выплата':'Partner program · payout',
+  'Продвижение объявления · Старт':'Listing promotion · Start','Игра «Дорога» · ставка':'Road game · bet',
+  'Пополнение · USDT':'Top-up · USDT','Возврат по спору · Биржа':'Dispute refund · Marketplace',
+  'Перевод в чате · Аня Соколова':'Chat transfer · Anya Sokolova',
+  /* реклама: паволл-баннер + карточки кампаний */
+  'Тариф MAX · −30% на всю рекламу':'MAX plan · −30% on all ads',
+  'Скидка уже применяется: за тот же бюджет — больше показов и кликов.':'The discount is already applied: more impressions and clicks for the same budget.',
+  'Стоп':'Stop','Дублировать':'Duplicate','Реклама платного канала':'Paid channel ad',
+  /* игры: колесо призов (секторы, промо, лидеры) */
+  'Промо':'Promo','подарок дня':'gift of the day','призы крупнее':'bigger prizes',
+  'Крутить бесплатно':'Spin for free','ещё нет — крути рулетку':'none yet — spin the wheel',
+  'Призы за эту неделю':'Prizes this week',
+  'Подарок дня — каждый сектор в плюс, деньги сразу на кошелёк. Средний приз ≈ 117 ₽':'Gift of the day — every sector wins, money straight to your wallet. Average prize ≈ 117 ₽',
+  /* академия: серия, каталог, обложки курсов, достижения */
+  'Курсы полного формата · официальные сертификаты':'Full-format courses · official certificates',
+  'Заходи каждый день, чтобы разжечь серию':'Come back daily to build your streak',
+  'Продолжить:':'Continue:','Каталог курсов':'Course catalog','Начать курс':'Start course',
+  'Открыт':'Available','Достижения':'Achievements',
+  'НЕЙРОСЕТИ':'NEURAL AI','АКАДЕМИЯ OKO':'OKO ACADEMY','КОНТЕНТ':'CONTENT','И REELS':'& REELS',
+  '3 урока · вирусные видео от сценария до алгоритмов':'3 lessons · viral videos from script to algorithms',
+  'Первый шаг':'First step','Пройти первый урок':'Complete your first lesson',
+  'Сертификат':'Certificate','Получить первый сертификат':'Earn your first certificate',
+  'Отличник':'Top student','Сдать тест на 100%':'Score 100% on a quiz',
+  'Практик':'Practitioner','Зачесть 3 практики':'Complete 3 practices',
+  'В огне':'On fire','3 дня подряд в учёбе':'3 days studying in a row',
+  'Знаток ИИ':'AI expert','Завершить курс «Нейросети 2026»':'Finish the Neural Networks 2026 course',
+  'Инвестор в себя':'Investor in yourself','получено':'earned',
+  'Мастер Reels':'Reels master','Завершить курс «Контент и Reels»':'Finish the Content & Reels course',
+  'Коллекционер':'Collector','Собрать 5 сертификатов':'Collect 5 certificates',
+  /* профиль: обложка, карточка сертификатов, био основателя */
+  'Добавить обложку':'Add cover','Сертификаты Академии':'Academy Certificates',
+  'Пройди урок — получи именной документ':'Complete a lesson — get a personalized document',
+  'В Академию':'Open Academy',
+  'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.':'OKO founder. Media, content, marketing — in one app.',
+  'Сдай тест урока на 70%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».':'Score 70%+ on the lesson quiz and get an official OKO certificate with a seal and the Academy head’s signature. It appears here and in the Academy section.'
 };
+
+/* месяцы (родительный падеж) для дат операций/выплат */
+const ST_MONTHS = {'января':'January','февраля':'February','марта':'March','апреля':'April',
+  'мая':'May','июня':'June','июля':'July','августа':'August','сентября':'September',
+  'октября':'October','ноября':'November','декабря':'December'};
 
 /* --- шаблоны для строк с числами (применяются, если точного совпадения нет) --- */
 const ST_RX = [
@@ -18446,7 +18499,25 @@ const ST_RX = [
   [/^(\d+) просмотров$/, '$1 views'],
   [/^(\d+) призов$/, '$1 prizes'],
   [/^Отправить ([\d\s.,]+) TON$/, 'Send $1 TON'],
-  [/^Пополнить TON на ([\d\s.,]+ ?₽)$/, 'Top up TON by $1']
+  [/^Пополнить TON на ([\d\s.,]+ ?₽)$/, 'Top up TON by $1'],
+  /* --- аудит-добивка v0.78: байлайны ленты, даты, счётчики игр/академии/рекламы --- */
+  [/^канал · ([\d.,]+)к$/, 'channel · $1k'],
+  [/^сообщество · ([\d.,]+)к$/, 'community · $1k'],
+  [/^монтаж · ([\d.,]+)к$/, 'editing · $1k'],
+  [/^· (\d+) ч$/, '· $1 h'],
+  [/^· (\d+) д$/, '· $1 d'],
+  [/^([\d\s.,]*\d) ?₽ из ([\d\s.,]*\d) ?₽ за сегодня ·$/, '$1 ₽ of $2 ₽ today ·'],
+  [/^(\d+) (января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)$/, (m,d,mo)=>d+' '+ST_MONTHS[mo]],
+  [/^из ([\d.,]+)к$/, 'of $1k'],
+  [/^([\d.,]+)к ₽$/, '$1k ₽'],
+  [/^(\d+) бил$/, '$1 tkt'],
+  [/^(\d+) пров$/, '$1 chk'],
+  [/^сброс через (\d+) дней$/, 'resets in $1 days'],
+  [/^(\d+) приз(?:а|ов)? за неделю$/, '$1 prizes this week'],
+  [/^(\d+) урок(?:а|ов)?$/, '$1 lessons'],
+  [/^Дней подряд в учёбе: (\d+)$/, 'Days in a row studying: $1'],
+  [/^урок (\d+) — (.+)$/, (m,a,b)=>'lesson '+a+' — '+(ST_DICT[b]||b)],
+  [/^Открыто (\d+) из (\d+) — учись и собирай награды$/, 'Unlocked $1 of $2 — study and collect rewards']
 ];
 
 /* --- что НЕ переводим: контент пользователей + свои переключатели --- */
