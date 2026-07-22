@@ -75,21 +75,44 @@ $icoStep3 = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 $icoStep4 = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v20M17 5.5c0-1.9-2.2-3.5-5-3.5S7 3.6 7 5.5 9.2 9 12 9s5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5"/></svg>';
 
 ob_start(); ?>
-<section class="section section--parchment">
-  <div class="container" style="max-width:760px;text-align:center">
+<style>
+.pn-hero{position:relative;overflow:hidden}
+.pn-hero .ribbon{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink);font-weight:700;
+  font-size:.86rem;letter-spacing:.02em;margin-bottom:16px}
+.pn-hero .ribbon svg{width:15px;height:15px;stroke:var(--gold-2)}
+
+.pn-reward{display:flex;align-items:center;gap:34px;flex-wrap:wrap;justify-content:center;text-align:left}
+.pn-reward .ring-num b{font-family:var(--ff-display);font-weight:800;font-size:2rem;color:var(--gold-2)}
+.pn-reward .txt{flex:1 1 320px;min-width:280px}
+.pn-reward .txt h2{margin-top:0}
+@media(max-width:640px){.pn-reward{flex-direction:column;text-align:center;gap:22px}}
+
+.pn-perks{margin-top:22px}
+.pn-perks .perk{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.pn-perks .perk svg{flex:0 0 auto;width:22px;height:22px;stroke:var(--gold-2);margin-top:1px}
+.pn-perks .perk b{color:var(--text)}
+.pn-perks .perk p{color:var(--muted);margin:2px 0 0;font-size:.92rem}
+</style>
+
+<section class="section section--parchment pn-hero">
+  <div class="container" style="max-width:780px;text-align:center">
     <div class="reveal">
-      <p class="eyebrow">Для блогеров и авторов</p>
-      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Партнёрская программа</h1>
-      <p>Рассказывайте своей аудитории о конкурсах Культурного центра «Музыкальный Мир» и получайте вознаграждение
-        с каждой оплаты по Вашему промокоду.</p>
-      <a class="btn btn--primary btn--lg" href="#partnerForm" style="margin-top:18px">Оставить заявку</a>
+      <span class="ribbon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="m12 2 2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17l-6.2 3.6 1.6-6.7L2.2 8.9l6.9-.6L12 2Z"/></svg>Для блогеров и авторов</span>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.7rem);margin-bottom:.3em">Партнёрская программа</h1>
+      <p style="max-width:620px;margin:0 auto">Рассказывайте своей аудитории о конкурсах Культурного центра «Музыкальный Мир»
+        и получайте <b style="color:var(--gold-2)"><?= (int) $percent ?>%</b> с каждой оплаты по Вашему персональному промокоду.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px">
+        <a class="btn btn--primary btn--lg" href="#partnerForm">Оставить заявку</a>
+        <a class="btn btn--ghost btn--lg" href="#howto">Как это работает</a>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="section">
+<section class="section" id="howto">
   <div class="container">
-    <div class="section-head reveal"><p class="eyebrow">Как это работает</p><h2>Четыре простых шага</h2></div>
+    <div class="section-head reveal"><p class="eyebrow">Как это работает</p><h2>Четыре простых шага</h2><div class="gold-rule"></div></div>
     <div class="steps">
       <?php foreach ([
           [$icoStep1, 'Заявка', 'Заполните форму ниже: имя, соцсеть, охват аудитории и контакты'],
@@ -104,15 +127,30 @@ ob_start(); ?>
 </section>
 
 <section class="section section--tint">
-  <div class="container" style="max-width:760px">
-    <div class="card reveal" style="padding:32px;text-align:center">
-      <p class="eyebrow">Вознаграждение</p>
-      <h2>Как начисляется процент</h2>
-      <p style="color:var(--muted);max-width:560px;margin:0 auto">
-        Партнёр получает <b style="color:var(--gold-2)"><?= (int) $percent ?>%</b> от суммы каждого оплаченного
-        организационного взноса участников, которые указали Ваш промокод при подаче заявки. Начисление отражается
-        в отчёте, который Оргкомитет присылает партнёру ежемесячно. Минимальной суммы для выплаты нет.
-      </p>
+  <div class="container" style="max-width:860px">
+    <div class="card reveal" style="padding:34px">
+      <div class="pn-reward">
+        <div class="stat-ring" data-value="<?= (int) $percent ?>" aria-hidden="true">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="ring-val" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="ring-num"><b><?= (int) $percent ?>%</b></div>
+        </div>
+        <div class="txt">
+          <p class="eyebrow">Вознаграждение</p>
+          <h2>Как начисляется процент</h2>
+          <p style="color:var(--muted)">
+            Партнёр получает <b style="color:var(--gold-2)"><?= (int) $percent ?>%</b> от суммы каждого оплаченного
+            организационного взноса участников, которые указали Ваш промокод при подаче заявки.
+          </p>
+          <div class="pn-perks">
+            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Ежемесячный отчёт</b><p>Начисления отражаются в отчёте, который Оргкомитет присылает партнёру каждый месяц.</p></div></div>
+            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Без минимальной суммы</b><p>Минимального порога для выплаты нет - Вы получаете вознаграждение с первой же оплаты.</p></div></div>
+            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Персональный промокод</b><p>Отдельный код и ссылка закрепляются за Вами - все оплаты по ним учитываются автоматически.</p></div></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -162,5 +200,5 @@ ob_start(); ?>
 $content = ob_get_clean();
 render_page('Партнёрская программа', $content, [
     'active' => '/partner',
-    'meta'   => 'Партнёрская программа КЦ «Музыкальный Мир» для блогеров: персональный промокод и процент с оплат участников.',
+    'meta'   => 'Партнёрская программа КЦ «Музыкальный Мир» для блогеров: персональный промокод и ' . (int) $percent . '% с оплат участников.',
 ]);
