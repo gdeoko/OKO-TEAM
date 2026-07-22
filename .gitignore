@@ -23,3 +23,4 @@ pandago-order/logs/*.log
 # ключи: plaintext только локально, в git лежит secrets.env.b64
 secrets.env
 oko-app/factory/models/
+oko-app/factory/models/
