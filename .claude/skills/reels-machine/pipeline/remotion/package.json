@@ -1,12 +1,18 @@
 {
   "name": "oko-reel",
   "version": "1.0.0",
-  "scripts": { "render": "remotion render", "studio": "remotion studio" },
+  "scripts": {
+    "render": "remotion render",
+    "studio": "remotion studio"
+  },
   "dependencies": {
     "@remotion/cli": "4.0.496",
     "@remotion/google-fonts": "4.0.496",
-    "remotion": "4.0.496",
+    "@remotion/media": "^4.0.496",
+    "@remotion/motion-blur": "^4.0.496",
+    "@remotion/transitions": "^4.0.496",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "remotion": "4.0.496"
   }
 }
