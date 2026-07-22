@@ -241,6 +241,23 @@ function renderStories() {
     el.addEventListener('click', () => svOpen(i)));
 }
 
+/* ───────── ПРИГЛАСИТЬ СЕМЬЮ (шеринг) ───────── */
+
+function shareInvite() {
+  const url = (location && location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'https://metanoya.online';
+  const text = 'Мы учимся в христианской онлайн-школе «Метанойя» — уроки, добрые игры и тёплое сообщество для детей. Присоединяйтесь всей семьёй! 🕊';
+  const data = { title: 'МЕТАНОЙА — школа для детей', text, url };
+  if (navigator.share) {
+    navigator.share(data).then(() => toast('Спасибо, что делитесь! 💛')).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text + '\n' + url)
+      .then(() => toast('Приглашение скопировано — отправьте друзьям 💛'))
+      .catch(() => toast('Ссылка: ' + url));
+  } else {
+    toast('Ссылка: ' + url);
+  }
+}
+
 /* ───────── РЕНДЕР: ЛЕНТА ───────── */
 
 function feedCard(item, idx) {
@@ -286,7 +303,7 @@ function renderFeed() {
   $$('#feed [data-act="comment"]').forEach((el) =>
     el.addEventListener('click', () => openComments(Number(el.dataset.post))));
   $$('#feed [data-act="share"]').forEach((el) =>
-    el.addEventListener('click', () => toast('Поделиться можно будет после запуска')));
+    el.addEventListener('click', shareInvite));
   $$('#feed [data-act="watch"]').forEach((el) =>
     el.addEventListener('click', () => openLesson(1)));
   $$('#feed [data-act="join"]').forEach((el) =>
@@ -3980,6 +3997,7 @@ function initGrowth() {
     else toast('Метанойя+ активирована');
     setTimeout(openSubscribeScreen, 300);
   });
+  $('#mInvite')?.addEventListener('click', shareInvite);
   $('#mSettings')?.addEventListener('click', openSettingsScreen);
   $('#mNotify')?.addEventListener('click', openSettingsScreen);
   $('#mParental')?.addEventListener('click', openSettingsScreen);

@@ -2481,3 +2481,10 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   background: rgba(212,165,116,.9); color: var(--navy);
 }
 .cert-view__voice [data-icon] { color: var(--navy); }
+
+/* «Пригласить семью» — тёплый акцент (маркетинг/виральность) */
+.menu-item--invite { color: var(--terracotta); font-weight: 600; }
+.menu-item--invite [data-icon] { color: var(--terracotta); }
+.menu-item--invite .menu-item__tag { background: rgba(201,112,100,.16); color: var(--terracotta); }
+[data-theme="dark"] .menu-item--invite { color: #e79b90; }
+[data-theme="dark"] .menu-item--invite [data-icon] { color: #e79b90; }
