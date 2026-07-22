@@ -16,20 +16,22 @@ $u = current_user();
 ?><!doctype html>
 <html lang="ru">
 <head>
-<script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'dark';}catch(e){document.documentElement.dataset.theme='dark';}</script>
+<script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <?php
   $canon = rtrim(cfgv('base_url'), '/') . (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
   $full_title = $title . ' — ' . cfgv('org_name');
+  $og_img = !empty($og_image) ? $og_image : asset('img/og_muzmir.png');
 ?>
 <title><?= h($full_title) ?></title>
 <meta name="description" content="<?= h($meta_description) ?>">
-<meta name="theme-color" content="#0b0a0d">
+<meta name="theme-color" content="#FFFCF5" id="metaThemeColor">
+<script>try{if(document.documentElement.dataset.theme==='dark'){document.getElementById('metaThemeColor').setAttribute('content','#0b0a0d');}}catch(e){}</script>
 <link rel="canonical" href="<?= h($canon) ?>">
 <meta property="og:title" content="<?= h($full_title) ?>">
 <meta property="og:description" content="<?= h($meta_description) ?>">
-<meta property="og:image" content="<?= h($og_image) ?>">
+<meta property="og:image" content="<?= h($og_img) ?>">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:type" content="website">
@@ -39,17 +41,22 @@ $u = current_user();
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="<?= h($full_title) ?>">
 <meta name="twitter:description" content="<?= h($meta_description) ?>">
-<meta name="twitter:image" content="<?= h($og_image) ?>">
+<meta name="twitter:image" content="<?= h($og_img) ?>">
 <link rel="icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
 <link rel="apple-touch-icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
 <link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Marck+Script&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="preload" as="style" href="<?= asset('css/style.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+<style>
+.header{padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
+.appnav{padding-bottom:env(safe-area-inset-bottom,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
+</style>
 </head>
 <body>
+<div class="bg-fx" aria-hidden="true"></div>
 <div class="topbar"><div class="container">
   <a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a>
   <span><?= h(cfgv('org_reg')) ?></span>
@@ -69,7 +76,7 @@ $u = current_user();
         <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
         <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Панель управления</a><?php endif; ?>
       <?php else: ?>
-        <a class="btn btn--ghost" href="<?= url('/login') ?>">Войти</a>
+        <button type="button" class="btn btn--ghost" data-auth-open aria-haspopup="dialog" aria-controls="authModal">Войти</button>
         <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
       <?php endif; ?>
     </div>
@@ -82,7 +89,7 @@ $u = current_user();
       <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
       <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Админка</a><?php endif; ?>
     <?php else: ?>
-      <a class="btn btn--ghost" href="<?= url('/login') ?>">Войти</a>
+      <button type="button" class="btn btn--ghost" data-auth-open aria-haspopup="dialog" aria-controls="authModal">Войти</button>
       <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
     <?php endif; ?>
     <button class="burger" id="burger" aria-label="Меню" aria-controls="nav" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -145,6 +152,7 @@ $u = current_user();
 
 <nav class="appnav">
   <div class="appnav-inner">
+    <span class="appnav-ind" aria-hidden="true"></span>
     <a href="<?= url('/') ?>" class="<?= $active==='/'?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Главная</a>
     <a href="<?= url('/competitions') ?>" class="<?= in_array($active,['/competitions'])?'active':'' ?>">
@@ -161,6 +169,72 @@ $u = current_user();
 <button class="chat-fab" id="chatFab" aria-label="Поддержка">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
 </button>
+
+<?php if (!$u): ?>
+<div class="auth-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-overlay" data-auth-close></div>
+  <div class="auth-card" role="document">
+    <button type="button" class="auth-close" data-auth-close aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="auth-head">
+      <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="" width="48" height="48">
+      <h2 id="authTitle">Вход в личный кабинет</h2>
+      <p>Войдите удобным способом - мы сохраним Ваши заявки и награды.</p>
+    </div>
+
+    <div class="auth-social">
+      <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk.php') ?>" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.8 16.9c-5.4 0-8.9-3.8-9-10h2.8c.1 4.5 2.1 6.4 3.6 6.8V6.9h2.6v3.9c1.5-.2 3-1.9 3.6-3.9h2.6c-.4 2.4-2 4.1-3.2 4.8 1.2.6 3 2.1 3.7 4.2h-2.9c-.5-1.6-1.9-2.9-3.8-3.1v3.1h-.6z"/></svg>
+        <span>Войти через ВКонтакте</span>
+      </a>
+      <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max.php') ?>" rel="nofollow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V6l8 6 8-6v13"/></svg>
+        <span>Войти через MAX</span>
+      </a>
+    </div>
+
+    <div class="auth-sep"><span>или</span></div>
+
+    <div class="auth-methods">
+      <button type="button" class="auth-btn auth-btn--email" data-auth-method="email" aria-expanded="false" aria-controls="authFormEmail">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        <span>Почта</span>
+      </button>
+      <button type="button" class="auth-btn auth-btn--phone" data-auth-method="phone" aria-expanded="false" aria-controls="authFormPhone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>
+        <span>Телефон</span>
+      </button>
+    </div>
+
+    <form class="auth-form" id="authFormEmail" method="post" action="<?= url('/login') ?>" hidden>
+      <div class="field">
+        <input type="email" name="email" id="authEmail" placeholder=" " autocomplete="email" required>
+        <label for="authEmail">Электронная почта</label>
+      </div>
+      <div class="field">
+        <input type="password" name="password" id="authPass" placeholder=" " autocomplete="current-password" required>
+        <label for="authPass">Пароль</label>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">Войти</button>
+    </form>
+
+    <form class="auth-form" id="authFormPhone" method="post" action="<?= url('/login/phone') ?>" hidden>
+      <div class="field">
+        <input type="tel" name="phone" id="authPhone" placeholder=" " autocomplete="tel" inputmode="tel" required>
+        <label for="authPhone">Номер телефона</label>
+      </div>
+      <div class="field auth-otp" hidden>
+        <input type="text" name="code" id="authOtp" placeholder=" " inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        <label for="authOtp">Код из сообщения</label>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">Получить код</button>
+    </form>
+
+    <p class="auth-note">Нажимая кнопку, Вы принимаете <a href="<?= url('/agreement') ?>">пользовательское соглашение</a> и <a href="<?= url('/privacy') ?>">политику конфиденциальности</a>.</p>
+  </div>
+</div>
+<?php endif; ?>
 
 <?php
   // JSON-LD: организация (глобально) из cfgv().

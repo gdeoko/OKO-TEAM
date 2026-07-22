@@ -34,11 +34,20 @@ if ($route === '/admin' || str_starts_with($route, '/admin/')) {
     exit;
 }
 
-// Алиасы из официальных положений конкурсов → 301 на канонические URL.
+// Алиасы русских слагов старого сайта → 301 на канонические URL.
 $aliases = [
-    '/obrazci'    => '/awards',        // образцы наград
-    '/oplata-sayt'=> '/order-awards',  // оплата наградного материала
-    '/voprosi'    => '/faq',           // справка/вопросы
+    '/obrazci'     => '/awards',           // образцы наград
+    '/oplata-sayt' => '/order-awards',     // оплата наградного материала
+    '/voprosi'     => '/faq',              // справка/вопросы
+    '/konkursi'    => '/competitions',     // список конкурсов
+    '/podderjka'   => '/ministry-support', // поддержка Минкультуры
+    '/comment'     => '/reviews',          // отзывы
+    '/documents'   => '/competitions',     // положения конкурсов
+    '/video'       => '/concerts',         // онлайн-концерты
+    '/onas'        => '/about',            // о нас
+    '/instrukciya' => '/order-awards',     // инструкция по заказу наград
+    '/zadachi'     => '/goals',            // цели/задачи центра
+    '/prays'       => '/order-awards',     // прайс наградного материала
 ];
 if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
 
@@ -87,8 +96,13 @@ if (preg_match('#^/pedagog/([a-z0-9\-]+)$#', $route, $m)) serve('teacher_profile
 if (preg_match('#^/results/([a-z0-9\-]+)$#', $route, $m)) serve('results', ['slug' => $m[1]]);
 
 // Статические маршруты → файл страницы
+// Прим.: параметр возврата после OAuth (?auth=ok) не требует маршрута —
+// роутер работает только по PATH, query-строка проходит на любой маршрут
+// (напр. /cabinet?auth=ok). /welcome — необязательная точка входа: рендерит
+// главную, где срабатывает глобальная модалка входа .auth-modal.
 $map = [
     '/' => 'home',
+    '/welcome' => 'home',
     '/competitions' => 'competitions',
     '/apply' => 'apply',
     '/goals' => 'page_goals',
