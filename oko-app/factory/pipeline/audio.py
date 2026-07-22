@@ -7,8 +7,14 @@ ORDER=["s1","s2","s3","s4","s5","s6"]
 # --- inputs ---
 inp=[]; f=[]; amix_labels=[]
 def add(path): inp.extend(["-i",path]); return len(inp)//2-1
-# music input 0
-mi=add(f"{SFX}/music.mp3")
+# music input 0 — PER-REEL unique track (env MUSIC_TRACK), never the single shared bed.
+# ЗАКОН РАЗНООБРАЗИЯ: музыка выбирается pick_music.py под тему/сценарий/бакет и НЕ повторяется
+# (реестр USED_MUSIC.md). Плюс лёгкая пер-ролик обработка (сдвиг секции/темп/EQ) в build_music().
+_mtrack=os.environ.get("MUSIC_TRACK","").strip()
+if not _mtrack or not os.path.exists(_mtrack):
+    raise SystemExit("AUDIO ABORT: MUSIC_TRACK env not set/missing — каждый ролик берёт свой трек "
+                     "через pick_music.py (никаких повторов одного бэда). Задай MUSIC_TRACK=<path>.")
+mi=add(_mtrack)
 # VO segment inputs
 voi={s:add(f"{VO}/{s}.mp3") for s in ORDER}
 # SFX inputs (logical, varied). (file, offset, gain)
@@ -40,9 +46,21 @@ sfxi=[]
 for name,off,g in SFXPLAN:
     sfxi.append((add(f"{SFX}/{name}.mp3"),off,g))
 # --- filters ---
-# music: loop-safe trim, fade in/out, base volume
-f.append(f"[{mi}]atrim=0:{TOTAL},asetpts=N/SR/TB,"
-         f"volume=0.16,afade=t=in:st=0:d=1.3,afade=t=out:st={TOTAL-1.6:.2f}:d=1.6[mus]")
+# music: PER-REEL treatment so даже близкие треки звучат по-разному.
+# seed -> section start offset, tempo, EQ-наклон, база громкости (детерминированно на ролик).
+_seed=int(os.environ.get("MUSIC_SEED") or abs(hash(_mtrack))%997)
+_mdur=float(subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",_mtrack],
+            capture_output=True,text=True).stdout.strip() or TOTAL+30)
+_start=round((_seed*7.3)% max(1.0,_mdur-TOTAL-2),2) if _mdur>TOTAL+4 else 0.0   # разная секция трека
+_tempo=round(0.95+((_seed%9)*0.0125),3)                                          # 0.95..1.05
+_lo=round(-2+((_seed//3)%5),1); _hi=round(-2+((_seed//7)%5),1)                    # EQ-наклон низ/верх дБ
+_vol=round(0.145+((_seed%4)*0.006),3)                                             # 0.145..0.163
+f.append(f"[{mi}]atrim=start={_start}:end={_start+ (TOTAL/_tempo)+2:.2f},asetpts=N/SR/TB,"
+         f"atempo={_tempo},"
+         f"equalizer=f=110:width_type=o:width=2:g={_lo},equalizer=f=7000:width_type=o:width=2:g={_hi},"
+         f"atrim=0:{TOTAL},asetpts=N/SR/TB,"
+         f"volume={_vol},afade=t=in:st=0:d=1.3,afade=t=out:st={TOTAL-1.6:.2f}:d=1.6[mus]")
+print(f"MUSIC treat: {os.path.basename(_mtrack)} seed={_seed} start={_start}s tempo={_tempo} eq({_lo}/{_hi}) vol={_vol}")
 # VO: delay each to its start, mix
 volabels=[]
 for s in ORDER:
