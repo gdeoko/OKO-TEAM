@@ -256,6 +256,7 @@ function chPickFile(onFile){
 
 /* ================= НАВИГАЦИЯ ВЬЮХИ (внутренний стек страниц) ================= */
 let chNav = [];   // [{page, arg}]
+let chListFilter = {q:'', kind:'all'};   // поиск+фильтр по списку каналов
 
 function chOpen(page, arg){
   const v = document.getElementById('chView');
@@ -287,6 +288,10 @@ function chRender(){
   const tools = document.getElementById('chHeadTools');
   if(!body) return;
   tools.innerHTML = '';
+  /* сохраняем позицию прокрутки при повторном рендере той же страницы (лайк/голос/фильтр) */
+  const sig = top.page+':'+(top.arg && typeof top.arg==='object' ? JSON.stringify(top.arg) : (top.arg==null?'':top.arg));
+  const keepScroll = (chRender._sig === sig);
+  const prevScroll = keepScroll ? body.scrollTop : 0;
   let out = {title:'Каналы', html:''};
   switch(top.page){
     case 'list':    out = chPageList(); break;
@@ -308,7 +313,8 @@ function chRender(){
   titleEl.textContent = out.title;
   if(out.tools) tools.innerHTML = out.tools;
   body.innerHTML = out.html;
-  body.scrollTop = 0;
+  body.scrollTop = keepScroll ? prevScroll : 0;
+  chRender._sig = sig;
   if(out.after) try{ out.after(); }catch(e){}
 }
 

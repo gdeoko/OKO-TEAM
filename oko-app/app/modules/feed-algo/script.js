@@ -608,6 +608,44 @@ addComment = function(){
   if(el){ el.classList.add('fac-new'); el.scrollIntoView({block:'nearest', behavior:'smooth'}); }
 };
 
+/* ================= 7. ДВОЙНОЙ ТАП ПО КАРТОЧКЕ — ЛАЙК (как в Instagram) =================
+   Двойной тап/клик по телу поста ставит лайк (никогда не снимает) и рисует
+   всплывающее сердце в точке нажатия. Лайк точечный (likePost — без пересборки),
+   поэтому моргания нет. Интерактив (кнопки/меню/чипы) исключён. */
+function faHeartBurst(art, x, y){
+  if(!art) return;
+  const r = art.getBoundingClientRect();
+  const h = document.createElement('span');
+  h.className = 'fa-dtap-heart';
+  h.innerHTML = I('heart');
+  h.style.left = Math.round((x != null ? x : r.left + r.width / 2) - r.left) + 'px';
+  h.style.top  = Math.round((y != null ? y : r.top + r.height / 2) - r.top) + 'px';
+  art.appendChild(h);
+  setTimeout(() => h.remove(), 760);
+}
+function faDoubleTapLike(){
+  const list = document.getElementById('feedList');
+  if(!list || list._faDtap) return; list._faDtap = 1;
+  let lastT = 0, lastEl = null;
+  const fire = (art, x, y) => {
+    const pid = faIdOf(art); if(pid == null) return;
+    const p = postById(pid); if(!p) return;
+    if(!p.liked && typeof likePost === 'function') likePost(pid);  /* double-tap только ставит лайк */
+    faHeartBurst(art, x, y);
+    if(navigator.vibrate) try{ navigator.vibrate(12); }catch(e){}
+  };
+  list.addEventListener('click', e => {
+    /* не мешаем интерактивным элементам и выделению текста */
+    if(e.target.closest('button,a,input,textarea,.acts,.post-more,.fa-why,.fa-bar,.fa-explain,.fa-empty')) return;
+    const sel = window.getSelection && window.getSelection();
+    if(sel && String(sel).length > 1) return;
+    const art = e.target.closest('article.post'); if(!art) return;
+    const now = Date.now();
+    if(now - lastT < 330 && lastEl === art){ lastT = 0; lastEl = null; fire(art, e.clientX, e.clientY); }
+    else { lastT = now; lastEl = art; }
+  });
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 (function faInit(){
   /* svg-иконка «обновить» в общие defs */
@@ -680,6 +718,7 @@ addComment = function(){
       });
     }, {rootMargin:'240px'});
   }
+  faDoubleTapLike();
   /* если лента уже открыта на рекомендациях — декорировать сразу */
   const feed = document.getElementById('screen-feed');
   if(feed && feed.classList.contains('active') && curFeedKind === 'rec') faDecorate();

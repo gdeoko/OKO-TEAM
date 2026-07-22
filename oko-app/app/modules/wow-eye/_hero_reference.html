@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><script>window.__hfAuthOrigin="https://auth.higgsfield.app";/**
+ * Approval client SDK — the browser half of the approval flow (paired with
+ * approve.html), injected into every app page. A real file, imported as text and
+ * bundled at deploy (see injected-sdk.ts + the router wrangler). Runs in the
+ * untrusted app page: plain ES5, idempotent (window.__hfPatched), fully
+ * try/catch-wrapped, installed inline+synchronous at <head> so it's present
+ * before any app code runs.
+ *
+ * There is exactly ONE approval trigger: window.hf.requestGeneration(model,
+ * params, opts). The app calls it on the user's Generate action; the modal is
+ * visible exactly while the returned promise is pending. Approve resolves the
+ * minted single-use intent id, which the app threads to its server function and
+ * the fnf SDK adapter sends as the submit body's confirmation_token; cancel
+ * rejects with a DOMException named AbortError (a user choice, not a failure).
+ * Enforcement is entirely server-side: the outbound spend gate 403s any
+ * POST /jobs/submit that doesn't carry a matching minted approval (see
+ * outbound-worker/src/spend-gate.ts), so an app that skips the call gets a
+ * self-describing failed submit, never a silent spend. This SDK never inspects
+ * request bodies and never opens a modal on its own.
+ */
+(function () {
+  try {
+    if (window.__hfPatched) return;
+    window.__hfPatched = true;
+    var of = window.fetch;
+    if (typeof of !== "function") return;
+    // Approval surface origin (auth.<zone>, serving the consent page at
+    // /approve). Preferred source: the origin the router stamps ahead of this
+    // script (injected-sdk.ts) — apps can be served on CUSTOM DOMAINS, where
+    // deriving from the page host would fabricate a non-existent
+    // auth.<customdomain>. Host derivation stays as the fallback for stale
+    // cached HTML that predates the stamp.
+    var APPROVE =
+      typeof window.__hfAuthOrigin === "string" && window.__hfAuthOrigin.indexOf("https://") === 0
+        ? window.__hfAuthOrigin
+        : "https://auth." + location.host.split(".").slice(1).join(".");
+    window.__hfFetches = window.__hfFetches || [];
+
+    // Single-flight: at most ONE approval modal at a time. A fast double-click (or
+    // an app firing two requests) would otherwise open a second scrim+iframe stacked
+    // on the first — so a second approve() while one is open returns the in-flight
+    // promise instead of opening another modal.
+    var openModal = null;
+
+    // The modal is a cross-origin iframe of auth.<zone>/approve: the app cannot
+    // read or script it, and WHO may frame the page is pinned server-side by its
+    // frame-ancestors. The page itself obtains the authoritative price from fnf
+    // before enabling Generate; app-supplied display prices are intentionally
+    // ignored. (The app DOM could still overlay the iframe — the spend gate's
+    // server-side job binding is what makes a spoofed click worthless.)
+    function approve(job) {
+      if (openModal) return openModal;
+      openModal = new Promise(function (resolve, reject) {
+        var grant = null;
+        var ready = false;
+        var done = false;
+        var openedAt = Date.now();
+
+        // Three parent layers so the iframe body can stay fully TRANSPARENT and
+        // still show no white edge:
+        //  - scrim: full-screen div carrying the blur (backdrop-filter samples the
+        //    real app behind it) + a dark tint.
+        //  - wrap: a rounded, overflow:hidden div that CLIPS the iframe. The iframe
+        //    overlaps the backdrop-filter scrim, so Chromium backs its layer
+        //    opaquely; the iframe's OWN border-radius doesn't reliably clip that
+        //    layer (leaving white corners), but a parent clip does. So the corners
+        //    outside the radius are clipped away → the blurred scrim shows through,
+        //    no white ring.
+        //  - frame: the iframe, fully transparent, filling wrap. Its page paints
+        //    only the card (edge-to-edge, no radius — wrap provides the rounding).
+        var scrim = document.createElement("div");
+        scrim.style.cssText =
+          "position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,0.28);" +
+          "-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)";
+        var wrap = document.createElement("div");
+        // opacity:0 until the page reports its height so the modal fades in at its
+        // final size (no empty-frame flash, no height re-center / layout shift).
+        // Round with clip-path (not just border-radius + overflow): clip-path is
+        // applied in the COMPOSITOR, so it clips the cross-origin iframe's own
+        // layer edge cleanly. border-radius/overflow only clip the shape and leave
+        // the iframe's opaque WHITE base fringing at the rounded corners (the white
+        // peek). background = card color as a second line of defense. Both the wrap
+        // and the iframe carry the clip; keep 24px in sync with the card radius.
+        wrap.style.cssText =
+          "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);" +
+          "width:min(400px,calc(100vw - 32px));height:188px;border-radius:24px;overflow:hidden;" +
+          "-webkit-clip-path:inset(0 round 24px);clip-path:inset(0 round 24px);" +
+          "background:#23262a;opacity:0;transition:opacity 0.12s ease;z-index:2147483647";
+        var frame = document.createElement("iframe");
+        // referrerPolicy="origin": the page's frame-ancestors admits a registered
+        // CUSTOM DOMAIN only when this origin arrives as the Referer (approve.ts).
+        frame.referrerPolicy = "origin";
+        frame.src = APPROVE + "/approve";
+        frame.allowTransparency = "true";
+        frame.style.cssText =
+          "display:block;width:100%;height:100%;border:0;border-radius:24px;" +
+          "-webkit-clip-path:inset(0 round 24px);clip-path:inset(0 round 24px);background:#23262a";
+        wrap.appendChild(frame);
+        var revealTimer = null;
+
+        function cleanup() {
+          if (done) return;
+          done = true;
+          clearTimeout(revealTimer);
+          window.removeEventListener("message", onMessage);
+          document.removeEventListener("keydown", onKey, true);
+          wrap.remove();
+          scrim.remove();
+        }
+
+        function beacon(outcome) {
+          if (!grant) return;
+          try {
+            var payload = JSON.stringify({
+              grant: grant,
+              outcome: outcome,
+              ms_open: Date.now() - openedAt,
+            });
+            var url = APPROVE + "/approve/outcome";
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(url, new Blob([payload], { type: "text/plain" }));
+            } else {
+              of(url, { method: "POST", body: payload, mode: "no-cors", keepalive: true }).catch(
+                function () {},
+              );
+            }
+          } catch (e) {}
+        }
+
+        // Dismiss = the same "denied" path as the modal's Cancel button, so the
+        // caller turns it into an AbortError (a cancel, not a failure).
+        function dismiss() {
+          if (done) return;
+          cleanup();
+          beacon("denied");
+          var error = new Error("hf: denied");
+          error.hfReason = "denied";
+          reject(error);
+        }
+
+        function onKey(event) {
+          if (event.key === "Escape" || event.keyCode === 27) dismiss();
+        }
+
+        function sendRequest() {
+          if (!ready || !grant || done) return;
+          frame.contentWindow.postMessage(
+            { source: "hf-approve", type: "request", grant: grant, job: job },
+            APPROVE,
+          );
+        }
+
+        function onMessage(event) {
+          if (event.origin !== APPROVE || event.source !== frame.contentWindow) return;
+          var data = event.data || {};
+          if (data.source !== "hf-approve") return;
+          // Size the clip wrapper to the page's reported card height, and reveal
+          // ONLY once sized — modal fades in at its final height (no shift/flash).
+          if (typeof data.h === "number" && data.h > 0) {
+            wrap.style.height = data.h + "px";
+            clearTimeout(revealTimer);
+            wrap.style.opacity = "1";
+          }
+          if (data.type === "ready") {
+            ready = true;
+            sendRequest();
+            return;
+          }
+          if (data.type !== "result") return;
+          cleanup();
+          if (data.ok && typeof data.intentId === "string") {
+            resolve(data.intentId);
+            return;
+          }
+          beacon("denied");
+          var error = new Error("hf: " + (data.reason || "denied"));
+          error.hfReason = data.reason || "denied";
+          reject(error);
+        }
+
+        window.addEventListener("message", onMessage);
+        // Close on background (scrim) click and on Escape. The scrim sits behind
+        // the card (wrap), so a click on it is a click OUTSIDE the modal. Escape
+        // is captured on the parent; the page also handles Escape when focus is
+        // inside the iframe (see approve-ui).
+        scrim.addEventListener("click", dismiss);
+        document.addEventListener("keydown", onKey, true);
+        document.documentElement.appendChild(scrim);
+        document.documentElement.appendChild(wrap);
+        // Fallback: reveal at the default height if the page never reports its
+        // size, so the modal is never stuck hidden.
+        revealTimer = setTimeout(function () {
+          wrap.style.opacity = "1";
+        }, 500);
+
+        of("/__auth/approval-grant", { method: "POST" })
+          .then(function (r) {
+            return r
+              .json()
+              .catch(function () {
+                return {};
+              })
+              .then(function (b) {
+                return { s: r.status, b: b };
+              });
+          })
+          .then(function (x) {
+            if (!x.b || !x.b.grant) {
+              cleanup();
+              reject(
+                new Error(
+                  x.s === 401 ? "hf: not signed in" : "hf: approval unavailable (" + x.s + ")",
+                ),
+              );
+              return;
+            }
+            grant = x.b.grant;
+            sendRequest();
+          })
+          .catch(function (error) {
+            cleanup();
+            reject(error);
+          });
+
+        setTimeout(function () {
+          if (!done) {
+            cleanup();
+            beacon("timeout");
+            reject(new Error("hf: approval timeout"));
+          }
+        }, 120000);
+      });
+      // Release the single-flight lock once this approval settles, so the next
+      // genuine generation can open a fresh modal.
+      var release = function () {
+        openModal = null;
+      };
+      openModal.then(release, release);
+      return openModal;
+    }
+
+    // Observability-only fetch patch: request log for debugging (__hfFetches +
+    // console). No interception, no body inspection, no classification — the
+    // approval flow is driven solely by window.hf.requestGeneration.
+    window.fetch = function (input, init) {
+      try {
+        var url = typeof input === "string" ? input : (input && input.url) || String(input);
+        var method = (init && init.method) || (input && input.method) || "GET";
+        window.__hfFetches.push({ url: url, method: method, ts: Date.now() });
+        console.log("[hf-fetch]", method, url);
+      } catch (e) {}
+      return of.apply(this, arguments);
+    };
+
+    // Public SDK. The app contract (see the builder instructions and
+    // docs/generation-approval): call this on the Generate action with the SDK
+    // WIRE shape of the exact submission (wire.jobSetType + wire.params — the
+    // approval is bound server-side to the hash of {job_set_type, params} of the
+    // actual submit body), thread the resolved intent id to the server as the
+    // confirmation token, and render a cancel quietly. opts.credits is an
+    // optional display-only estimate shown in the modal. The id is a token:
+    // never logged here, and apps must not log it either.
+    window.hf = {
+      requestGeneration: function (model, params, opts) {
+        // Fail fast on a bad job identity, BEFORE any UI. The approve page
+        // (protocol.ts) silently ignores a request whose job_set_type isn't a
+        // non-empty string or whose params don't survive structured clone —
+        // which would leave the modal stuck on "Waiting for the app…" with no
+        // way to reply. A typed rejection shows the app its own bug instead.
+        if (typeof model !== "string" || !model) {
+          return Promise.reject(
+            new TypeError("hf: requestGeneration(model, params) — model must be a non-empty string"),
+          );
+        }
+        if (typeof structuredClone === "function") {
+          try {
+            structuredClone(params);
+          } catch (e) {
+            return Promise.reject(
+              new TypeError("hf: requestGeneration params must be structured-cloneable (plain JSON)"),
+            );
+          }
+        }
+        return approve({ job_set_type: model, params: params }).then(
+          function (id) {
+            console.log("[hf] approved");
+            return id;
+          },
+          // Cancel → AbortError, per the app contract ("render a quiet cancelled
+          // state"). Other failures (not signed in, unavailable, timeout) bubble
+          // as-is — those ARE failures.
+          function (e) {
+            if (e && e.hfReason === "denied") {
+              console.log("[hf] cancelled");
+              throw new DOMException("Generation cancelled", "AbortError");
+            }
+            throw e;
+          },
+        );
+      },
+    };
+  } catch (e) {}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>OKO — весь бизнес под одним взглядом</title>
+<meta name="description" content="OKO — супер-приложение в Telegram: чаты, лента, биржа услуг, кошелёк и ИИ-конвейеры продвижения. Один поток вместо десяти вкладок.">
+<meta name="theme-color" content="#060706">
+<meta property="og:title" content="OKO — весь бизнес под одним взглядом">
+<meta property="og:description" content="Супер-приложение в Telegram: медийность, контент, маркетинг и бизнес — в одном окне.">
+<meta property="og:image" content="https://true-journey-418.higgsfield.app/media/oko-logo.png">
+<link rel="icon" href="../media/oko-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lime:#9AFF00; --lime-dim:#7FCC00; --bg:#060706; --bg2:#0a0c09;
+    --ink:#f2f5ee; --mut:#9aa39a; --line:#1c201a; --card:#0d0f0c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:auto}
+  html.lenis,html.lenis body{height:auto}
+  .lenis.lenis-smooth{scroll-behavior:auto!important}
+  body{
+    background:var(--bg);color:var(--ink);font-family:'Montserrat',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  ::selection{background:var(--lime);color:#060706}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  .bebas{font-family:'Bebas Neue',sans-serif;font-weight:400}
+
+  /* ===== фоновая атмосфера всей страницы ===== */
+  .atmo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .atmo .g1,.atmo .g2,.atmo .g3{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+  .atmo .g1{width:56vw;height:56vw;right:-18vw;top:-22vw;background:radial-gradient(circle,rgba(154,255,0,.13),transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
+  .atmo .g2{width:44vw;height:44vw;left:-16vw;top:32vh;background:radial-gradient(circle,rgba(60,140,10,.12),transparent 65%);animation:drift2 32s ease-in-out infinite alternate}
+  .atmo .g3{width:40vw;height:40vw;right:-10vw;bottom:-14vw;background:radial-gradient(circle,rgba(154,255,0,.07),transparent 65%);animation:drift1 38s ease-in-out infinite alternate-reverse}
+  @keyframes drift1{to{transform:translate(-6vw,5vh) scale(1.12)}}
+  @keyframes drift2{to{transform:translate(5vw,-6vh) scale(1.08)}}
+  body::after{ /* плёночное зерно */
+    content:"";position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grain 7s steps(8) infinite;
+  }
+  @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-4%,3%)}50%{transform:translate(3%,-4%)}75%{transform:translate(-2%,-2%)}100%{transform:translate(0,0)}}
+
+  main{position:relative;z-index:1}
+  section{position:relative}
+  .wrap{width:min(1180px,92vw);margin:0 auto}
+
+  /* ===== шапка ===== */
+  header{position:fixed;top:0;left:0;right:0;z-index:50;pointer-events:none}
+  .bar{width:min(1180px,92vw);margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding-top:max(18px,env(safe-area-inset-top));pointer-events:auto}
+  .brandmark{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.14em;color:#fff;line-height:1}
+  .brandmark b{color:var(--lime)}
+  .topnav{display:flex;gap:26px;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a938a}
+  .topnav a{transition:color .2s;cursor:pointer}
+  .topnav a:hover{color:#fff}
+  .topcta{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:#060706;background:var(--lime);padding:10px 18px;border-radius:99px;font-weight:700;transition:transform .2s,box-shadow .2s}
+  .topcta:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(154,255,0,.35)}
+  .scrolled .bar{background:rgba(6,7,6,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:16px;padding:10px 16px;margin-top:10px}
+  @media(max-width:900px){.topnav{display:none}}
+
+  /* ===== HERO ===== */
+  .hero{height:100svh;min-height:600px;overflow:hidden}
+  #eyeLayer{position:absolute;inset:0;z-index:2;pointer-events:none}
+  #eyeLayer canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+  .hero-inner{position:absolute;left:0;bottom:0;z-index:5;padding:0 0 max(40px,env(safe-area-inset-bottom)) 0;width:100%}
+  .hero-box{width:min(1180px,92vw);margin:0 auto}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(154,255,0,.25);padding:7px 14px;border-radius:99px;background:rgba(154,255,0,.06);margin-bottom:22px}
+  .kicker i{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 10px var(--lime);animation:blink 2.2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,9vw,128px);line-height:.92;letter-spacing:.01em;color:#fff;text-shadow:0 4px 40px rgba(0,0,0,.7)}
+  .hero h1 span{color:var(--lime)}
+  .hero .sub{margin-top:16px;font-size:clamp(15px,2.2vw,21px);font-weight:300;color:#e4e9de;max-width:34ch;text-shadow:0 2px 20px rgba(0,0,0,.7)}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+  .btn{display:inline-flex;align-items:center;gap:10px;padding:16px 26px;border-radius:99px;font-size:13.5px;font-weight:700;letter-spacing:.04em;transition:transform .2s,box-shadow .2s,background .2s;cursor:pointer;border:1px solid transparent}
+  .btn svg{width:17px;height:17px;flex:none}
+  .btn-lime{background:var(--lime);color:#060706}
+  .btn-lime:hover{transform:translateY(-2px);box-shadow:0 10px 34px rgba(154,255,0,.4)}
+  .btn-ghost{border-color:#2a3027;color:#e8ece4;background:rgba(10,12,9,.5);backdrop-filter:blur(8px)}
+  .btn-ghost:hover{border-color:var(--lime);color:#fff;transform:translateY(-2px)}
+  .stores{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6d766d}
+  .stores span{border:1px dashed #262b23;padding:8px 14px;border-radius:99px;white-space:nowrap}
+  .stores b{color:#a9b3a8;font-weight:500}
+  .scrollhint{position:absolute;bottom:26px;right:max(24px,4vw);z-index:5;display:flex;flex-direction:column;align-items:center;gap:8px;color:#5c655c;font-size:10px;letter-spacing:.3em;text-transform:uppercase;writing-mode:vertical-rl}
+  .scrollhint i{width:1px;height:52px;background:linear-gradient(var(--lime),transparent);animation:drop 1.8s ease-in-out infinite}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+  @media(max-aspect-ratio:1/1){.hero-box{padding-bottom:8px}}
+  @media(max-width:640px){.scrollhint{display:none}}
+
+  /* ===== общий стиль секций ===== */
+  .sec{padding:clamp(90px,12vh,150px) 0}
+  .sec-tag{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--lime);margin-bottom:18px;display:flex;align-items:center;gap:12px}
+  .sec-tag::before{content:"";width:34px;height:1px;background:var(--lime)}
+  .sec-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(38px,5.6vw,72px);line-height:.95;letter-spacing:.01em;color:#fff}
+  .sec-h span{color:var(--lime)}
+  .sec-p{margin-top:18px;font-size:15.5px;font-weight:300;color:var(--mut);line-height:1.65;max-width:56ch}
+
+  /* ===== манифест ===== */
+  .manifesto{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(154,255,0,.03),transparent)}
+  .manifesto .wrap{padding:clamp(70px,9vh,110px) 0}
+  .manifesto p{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,4.6vw,58px);line-height:1.06;color:#fff;max-width:22ch}
+  .manifesto p em{font-style:normal;color:var(--lime)}
+  .manifesto small{display:block;margin-top:22px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#6d766d}
+
+  /* ===== проблема → решение ===== */
+  .vs{display:grid;grid-template-columns:1fr auto 1fr;gap:26px;align-items:stretch;margin-top:54px}
+  .vs-col{border:1px solid var(--line);border-radius:24px;padding:30px;background:var(--card);position:relative;overflow:hidden}
+  .vs-col h3{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em;color:#c9cec6;margin-bottom:20px}
+  .chaos{display:flex;flex-wrap:wrap;gap:10px}
+  .chaos span{font-size:12px;color:#8a938a;border:1px solid #232823;background:#10130f;padding:9px 14px;border-radius:12px;transform:rotate(var(--r,0deg));transition:transform .25s,border-color .25s}
+  .chaos span:hover{transform:rotate(0) scale(1.05);border-color:#3a4236}
+  .vs-mid{display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:34px;color:#4a5347;padding:0 6px}
+  .vs-one{border-color:rgba(154,255,0,.35);background:radial-gradient(120% 120% at 50% 0%,rgba(154,255,0,.09),var(--card) 60%)}
+  .vs-one h3{color:var(--lime)}
+  .vs-one .oko-badge{display:flex;align-items:center;gap:16px}
+  .vs-one .oko-badge img{width:64px;height:64px;filter:drop-shadow(0 0 18px rgba(154,255,0,.45))}
+  .vs-one .oko-badge b{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:.1em;color:#fff;font-weight:400}
+  .vs-one p{margin-top:14px;font-size:13.5px;color:#a9b3a8;line-height:1.6;font-weight:300}
+  @media(max-width:860px){.vs{grid-template-columns:1fr}.vs-mid{padding:4px 0}}
+
+  /* ===== модули (диорамы) ===== */
+  .mod{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,70px);align-items:center;padding:clamp(48px,7vh,84px) 0;border-top:1px solid var(--line)}
+  .mod:first-of-type{border-top:none}
+  .mod:nth-child(even) .mod-media{order:2}
+  .mod-media{position:relative;border-radius:26px;overflow:hidden;border:1px solid var(--line);background:#090b08;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .mod-media img{width:100%;height:auto;transform:scale(1.06);transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
+  .mod-media::after{content:"";position:absolute;inset:0;background:linear-gradient(200deg,rgba(154,255,0,.08),transparent 40%);opacity:0;transition:opacity .6s}
+  .mod:hover .mod-media img{transform:scale(1.01)}
+  .mod:hover .mod-media::after{opacity:1}
+  .mod-num{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.3em;color:var(--lime)}
+  .mod h3{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,4vw,52px);line-height:.95;color:#fff;margin-top:12px}
+  .mod p{margin-top:16px;font-size:15px;font-weight:300;color:var(--mut);line-height:1.7;max-width:46ch}
+  .mod ul{margin-top:18px;list-style:none;display:flex;flex-direction:column;gap:9px}
+  .mod li{font-size:13.5px;color:#c3cabd;font-weight:400;display:flex;gap:10px;align-items:baseline}
+  .mod li::before{content:"";width:10px;height:2px;background:var(--lime);flex:none;transform:translateY(-3px)}
+  @media(max-width:860px){.mod{grid-template-columns:1fr;gap:32px}.mod:nth-child(even) .mod-media{order:0}}
+  @media(max-width:640px){
+    .sec-h{line-height:1.04}
+    .mod h3{line-height:1.02}
+    .hero h1{line-height:1}
+    .mod p,.sec-p,.step p,.aud-card p{color:#b0b8ad}
+    .stores{font-size:10px;letter-spacing:.1em}
+    .cta-row .btn{padding:15px 22px;font-size:13px}
+    .qr-card{padding:24px 26px}
+  }
+
+  /* ===== скриншоты приложения ===== */
+  .screens{background:linear-gradient(180deg,transparent,rgba(154,255,0,.03) 40%,transparent)}
+  .phones{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(18px,3vw,36px);margin-top:56px;align-items:start}
+  .phone{border:1px solid var(--line);border-radius:30px;overflow:hidden;background:#090b08;box-shadow:0 30px 80px rgba(0,0,0,.55);position:relative}
+  .phone img{width:100%;height:auto;transition:transform .8s cubic-bezier(.16,1,.3,1)}
+  .phone:hover img{transform:scale(1.03)}
+  .phone figcaption{padding:14px 18px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8a938a;border-top:1px solid var(--line)}
+  .phone.mid{transform:translateY(-22px)}
+  @media(max-width:860px){.phones{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:14px;margin-left:-4vw;margin-right:-4vw;padding-left:4vw}
+    .phone{flex:0 0 68vw;scroll-snap-align:center}.phone.mid{transform:none}}
+
+  /* ===== как это работает ===== */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+  .step{border:1px solid var(--line);border-radius:22px;padding:30px 26px;background:var(--card);position:relative;transition:border-color .3s,transform .3s}
+  .step:hover{border-color:rgba(154,255,0,.4);transform:translateY(-4px)}
+  .step b{font-family:'Bebas Neue',sans-serif;font-size:54px;line-height:1;color:transparent;-webkit-text-stroke:1.5px var(--lime);font-weight:400}
+  .step h4{font-size:17px;font-weight:600;color:#fff;margin:18px 0 10px}
+  .step p{font-size:13.5px;font-weight:300;color:var(--mut);line-height:1.65}
+  @media(max-width:860px){.steps{grid-template-columns:1fr}}
+
+  /* ===== для кого ===== */
+  .aud{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:56px}
+  .aud-card{border:1px solid var(--line);border-radius:22px;padding:30px 26px;background:linear-gradient(180deg,#0c0e0b,#090b08);transition:border-color .3s,transform .3s}
+  .aud-card:hover{border-color:rgba(154,255,0,.4);transform:translateY(-4px)}
+  .aud-card svg{width:34px;height:34px;color:var(--lime);margin-bottom:20px}
+  .aud-card h4{font-size:17px;font-weight:600;color:#fff;margin-bottom:10px}
+  .aud-card p{font-size:13.5px;font-weight:300;color:var(--mut);line-height:1.65}
+  @media(max-width:860px){.aud{grid-template-columns:1fr}}
+
+  /* ===== финальный CTA ===== */
+  .final{border-top:1px solid var(--line);background:radial-gradient(90% 120% at 50% 110%,rgba(154,255,0,.12),transparent 60%)}
+  .final .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:50px;align-items:center;padding:clamp(90px,13vh,160px) 0}
+  .final h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,6.4vw,84px);line-height:.92;color:#fff}
+  .final h2 span{color:var(--lime)}
+  .final p{margin-top:18px;font-size:15.5px;font-weight:300;color:var(--mut);line-height:1.65;max-width:44ch}
+  .final .cta-row{margin-top:32px}
+  .qr-card{justify-self:center;text-align:center;border:1px solid var(--line);border-radius:26px;padding:30px 34px;background:rgba(10,12,9,.6);backdrop-filter:blur(8px)}
+  .qr-card img{width:190px;height:190px;margin:0 auto}
+  .qr-card div{margin-top:16px;font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:#8a938a}
+  .qr-card b{display:block;color:var(--lime);font-weight:600;letter-spacing:.1em;margin-top:4px;font-size:13px}
+  @media(max-width:860px){.final .wrap{grid-template-columns:1fr;gap:40px}}
+
+  /* ===== футер ===== */
+  footer{border-top:1px solid var(--line);padding:44px 0 54px;position:relative;z-index:1}
+  .foot{display:flex;flex-wrap:wrap;gap:26px;align-items:center;justify-content:space-between}
+  .foot .links{display:flex;flex-wrap:wrap;gap:22px;font-size:12.5px;color:#8a938a}
+  .foot .links a{transition:color .2s}
+  .foot .links a:hover{color:var(--lime)}
+  .foot small{width:100%;font-size:11px;color:#555e55;letter-spacing:.06em;margin-top:6px}
+
+  /* ===== появление ===== */
+  .fade{opacity:0;transform:translateY(16px);animation:up .9s cubic-bezier(.16,1,.3,1) forwards}
+  .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}.d4{animation-delay:.75s}
+  @keyframes up{to{opacity:1;transform:none}}
+  .rv{opacity:0}
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}
+    .rv{opacity:1!important}
+  }
+
+  /* ===== лоадер ===== */
+  .loader{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:99;transition:opacity .6s;pointer-events:none}
+  .loader.hide{opacity:0}
+  .loader i{width:34px;height:34px;border:2px solid #223022;border-top-color:var(--lime);border-radius:50%;animation:spin 1s linear infinite;display:block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="atmo"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
+
+<header id="hdr">
+  <div class="bar">
+    <a class="brandmark" href="#top">ОКО<b>.</b></a>
+    <nav class="topnav">
+      <a data-to="#modules">Модули</a>
+      <a data-to="#screens">Приложение</a>
+      <a data-to="#how">Как это работает</a>
+      <a data-to="#aud">Для кого</a>
+    </nav>
+    <a class="topcta" href="https://t.me/gdeoko" target="_blank" rel="noopener">Открыть в Telegram</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div id="eyeLayer"></div>
+    <div class="hero-inner">
+      <div class="hero-box">
+        <div class="kicker fade"><i></i>Супер-приложение в Telegram</div>
+        <h1 class="fade d1">ВИДИМ<br>ВСЁ <span>ГЛАВНОЕ</span></h1>
+        <p class="sub fade d2">Медийность, контент, маркетинг и бизнес — в одном приложении.</p>
+        <div class="cta-row fade d3">
+          <a class="btn btn-lime" href="https://t.me/gdeoko" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.6c.2-1.1-.8-2-1.9-1.6L2.7 9.1c-1.2.5-1.1 2.2.1 2.6l4.4 1.4 1.7 5.3c.4 1.1 1.8 1.4 2.6.6l2.4-2.4 4.6 3.4c.9.7 2.2.2 2.5-.9l2.9-14.5zM8.2 12.6l9.8-6.1c.2-.1.4.2.2.3l-8 7.3-.3 3-1.7-4.5z"/></svg>
+            Открыть в Telegram
+          </a>
+          <a class="btn btn-ghost" href="/">Веб-версия</a>
+        </div>
+        <div class="stores fade d4"><span><b>Play Market</b> — скоро</span><span><b>RuStore</b> — скоро</span></div>
+      </div>
+    </div>
+    <div class="scrollhint">скролл<i></i></div>
+  </section>
+
+  <!-- ================= МАНИФЕСТ ================= -->
+  <section class="manifesto">
+    <div class="wrap">
+      <p class="rv">Один взгляд — всё твоё дело. <em>Один поток</em> вместо десяти вкладок.</p>
+      <small class="rv">OKO · операционная система твоего дела внутри Telegram</small>
+    </div>
+  </section>
+
+  <!-- ================= ПРОБЛЕМА → РЕШЕНИЕ ================= -->
+  <section class="sec" id="problem">
+    <div class="wrap">
+      <div class="sec-tag rv">Проблема → решение</div>
+      <h2 class="sec-h rv">ДЕСЯТЬ СЕРВИСОВ.<br><span>ОДИН OKO.</span></h2>
+      <p class="sec-p rv">Медийность сегодня — это десяток подписок, чатов и кабинетов. OKO собирает всё в один поток: не нужно прыгать между вкладками, чтобы вести дело.</p>
+      <div class="vs">
+        <div class="vs-col rv">
+          <h3>Как обычно</h3>
+          <div class="chaos">
+            <span style="--r:-2deg">мессенджер</span><span style="--r:1.5deg">каналы</span><span style="--r:-1deg">биржа фриланса</span><span style="--r:2deg">банк</span><span style="--r:-1.5deg">курсы</span><span style="--r:1deg">рекламный кабинет</span><span style="--r:-2deg">аналитика</span><span style="--r:1.5deg">календарь публикаций</span><span style="--r:-1deg">модерация контента</span><span style="--r:2deg">партнёрская программа</span>
+          </div>
+        </div>
+        <div class="vs-mid rv">VS</div>
+        <div class="vs-col vs-one rv">
+          <h3>Как в OKO</h3>
+          <div class="oko-badge">
+            <img src="../media/oko-logo.png" alt="Логотип OKO">
+            <b>ОКО</b>
+          </div>
+          <p>Чаты, лента, биржа услуг, кошелёк, академия, реклама и партнёрка — в одном окне Telegram. Всё связано между собой и работает на твоё дело.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= МОДУЛИ ================= -->
+  <section class="sec" id="modules" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-tag rv">Модули OKO</div>
+      <h2 class="sec-h rv">КОМАНДА ИЗ 15 СПЕЦИАЛИСТОВ<br><span>В ОДНОМ ПРИЛОЖЕНИИ</span></h2>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/1-hq.webp" alt="Штаб OKO — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">01 / ШТАБ</div>
+          <h3 class="rv">ЛИЧНЫЙ ШТАБ<br>В КАРМАНЕ</h3>
+          <p class="rv">3D-кабинет руководителя: ИИ-агенты, аналитика и контроль всех процессов — под одним взглядом, без десяти дашбордов.</p>
+          <ul class="rv"><li>ИИ-агенты под задачи дела</li><li>Вся аналитика в одном штабе</li><li>Контроль команды и процессов</li></ul>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/2-factory.webp" alt="Контент-завод — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">02 / КОНТЕНТ-ЗАВОД</div>
+          <h3 class="rv">КОНТЕНТ,<br>КОТОРЫЙ НЕ ЖДЁТ</h3>
+          <p class="rv">Идеи, сценарии, ролики и публикации по расписанию. Конвейер, который выдаёт контент системно — без «вдохновения» и простоев.</p>
+          <ul class="rv"><li>Генерация идей и сценариев</li><li>План публикаций на месяц</li><li>Разбор алгоритмов площадок</li></ul>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/3-premod.webp" alt="Пре-модерация — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">03 / ПРЕ-МОДЕРАЦИЯ</div>
+          <h3 class="rv">ПРОВЕРКА РОЛИКА<br>ДО ПУБЛИКАЦИИ</h3>
+          <p class="rv">Видео-премодератор оценивает силу хука первых секунд и риски по авторским правам. Проверка занимает около 40 секунд.</p>
+          <ul class="rv"><li>Оценка хука первых 3 секунд</li><li>Риски по авторским правам</li><li>Рекомендации до выхода ролика</li></ul>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/4-market.webp" alt="Маркет OKO — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">04 / МАРКЕТ</div>
+          <h3 class="rv">БИРЖА УСЛУГ<br>ВНУТРИ OKO</h3>
+          <p class="rv">Продавай свою экспертность и находи проверенных подрядчиков, не выходя из приложения. Заказы, оплата и рейтинг — в одном месте.</p>
+          <ul class="rv"><li>Витрина услуг и портфолио</li><li>Безопасные сделки внутри</li><li>Рейтинг и отзывы</li></ul>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/5-partner.webp" alt="Партнёрка OKO — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">05 / ПАРТНЁРКА</div>
+          <h3 class="rv">15% С КАЖДОЙ<br>ОПЛАТЫ</h3>
+          <p class="rv">Приглашай в OKO и получай процент с каждой оплаты приглашённых. Кабинет партнёра с прозрачной статистикой и выплатами.</p>
+          <ul class="rv"><li>Личная реферальная ссылка</li><li>Прозрачная статистика</li><li>Выплаты на кошелёк OKO</li></ul>
+        </div>
+      </div>
+
+      <div class="mod">
+        <div class="mod-media rv"><img src="../media/world/6-phone.webp" alt="Приложение OKO — 3D-диорама" loading="lazy"></div>
+        <div class="mod-txt">
+          <div class="mod-num rv">06 / ПРИЛОЖЕНИЕ</div>
+          <h3 class="rv">ВСЁ ДЕЛО<br>В ОДНОМ ОКНЕ</h3>
+          <p class="rv">Чаты, лента, кошелёк, игры и академия с сертификатами. Супер-приложение, которое заменяет команду — и живёт прямо в Telegram.</p>
+          <ul class="rv"><li>Чаты, каналы и лента</li><li>Кошелёк и переводы без комиссии</li><li>Академия с сертификатами</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= СКРИНШОТЫ ================= -->
+  <section class="sec screens" id="screens">
+    <div class="wrap">
+      <div class="sec-tag rv">Приложение</div>
+      <h2 class="sec-h rv">ТАК ВЫГЛЯДИТ<br><span>ТВОЙ ЛИЧНЫЙ ШТАБ</span></h2>
+      <div class="phones">
+        <figure class="phone rv"><img src="../media/scr-feed.webp" alt="Лента OKO" loading="lazy"><figcaption>Лента</figcaption></figure>
+        <figure class="phone mid rv"><img src="../media/scr-apps.webp" alt="Мини-приложения OKO" loading="lazy"><figcaption>Мини-приложения</figcaption></figure>
+        <figure class="phone rv"><img src="../media/scr-partner.webp" alt="Партнёрский кабинет OKO" loading="lazy"><figcaption>Партнёрский кабинет</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= КАК ЭТО РАБОТАЕТ ================= -->
+  <section class="sec" id="how">
+    <div class="wrap">
+      <div class="sec-tag rv">Как это работает</div>
+      <h2 class="sec-h rv">ТРИ ШАГА —<br><span>И ТЫ В СИСТЕМЕ</span></h2>
+      <div class="steps">
+        <div class="step rv"><b>01</b><h4>Открой OKO в Telegram</h4><p>Бот @okoappbot или канал t.me/gdeoko. Устанавливать ничего не нужно — всё работает внутри Telegram.</p></div>
+        <div class="step rv"><b>02</b><h4>Заполни профиль</h4><p>Система роста по анкете подберёт шаги под твою нишу: контент, форматы, первые задачи.</p></div>
+        <div class="step rv"><b>03</b><h4>Веди дело из одного окна</h4><p>Контент, заказы, деньги и команда — в одном потоке. Десять вкладок больше не нужны.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ДЛЯ КОГО ================= -->
+  <section class="sec" id="aud" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-tag rv">Для кого</div>
+      <h2 class="sec-h rv">ДЛЯ ТЕХ, У КОГО ЕСТЬ ЭКСПЕРТИЗА —<br><span>НО НЕТ СИСТЕМЫ</span></h2>
+      <div class="aud">
+        <div class="aud-card rv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+          <h4>Эксперты и блогеры</h4><p>Системная медийность без команды из 15 специалистов: контент-завод, премодерация и рост по анкете.</p>
+        </div>
+        <div class="aud-card rv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9z"/><path d="M9 21V12h6v9"/></svg>
+          <h4>Малый бизнес</h4><p>Заявки и продажи из одного приложения: биржа, рекламный кабинет и кошелёк уже связаны между собой.</p>
+        </div>
+        <div class="aud-card rv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M2 21c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/><path d="M17 8a3.5 3.5 0 1 1 0 7"/><path d="M18.5 15.5c2 .7 3.5 2.3 3.5 5.5"/></svg>
+          <h4>Команды и агентства</h4><p>Общий штаб: задачи, контент и аналитика в одном потоке. Видно всё главное — без созвонов-статусов.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ФИНАЛЬНЫЙ CTA ================= -->
+  <section class="final">
+    <div class="wrap">
+      <div>
+        <h2 class="rv">ПОПРОБУЙ OKO<br><span>БЕСПЛАТНО</span></h2>
+        <p class="rv">Открой в Telegram — и посмотри на своё дело одним взглядом. Первые шаги и базовые функции доступны сразу.</p>
+        <div class="cta-row rv">
+          <a class="btn btn-lime" href="https://t.me/gdeoko" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.6c.2-1.1-.8-2-1.9-1.6L2.7 9.1c-1.2.5-1.1 2.2.1 2.6l4.4 1.4 1.7 5.3c.4 1.1 1.8 1.4 2.6.6l2.4-2.4 4.6 3.4c.9.7 2.2.2 2.5-.9l2.9-14.5zM8.2 12.6l9.8-6.1c.2-.1.4.2.2.3l-8 7.3-.3 3-1.7-4.5z"/></svg>
+            Открыть в Telegram
+          </a>
+          <a class="btn btn-ghost" href="/">Веб-версия</a>
+        </div>
+      </div>
+      <div class="qr-card rv">
+        <img src="../media/qr-oko-tg.png" alt="QR-код на канал OKO в Telegram">
+        <div>Наведи камеру<b>t.me/gdeoko</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ФУТЕР ================= -->
+  <footer>
+    <div class="wrap foot">
+      <a class="brandmark" href="#top">ОКО<b>.</b></a>
+      <div class="links">
+        <a href="https://t.me/gdeoko" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://www.tiktok.com/@okoteam.ru" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.youtube.com/@okoteam_ru" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://okoteam.top" target="_blank" rel="noopener">okoteam.top</a>
+      </div>
+      <small>© 2026 OKO TEAM · Один взгляд — всё твоё дело.</small>
+    </div>
+  </footer>
+
+</main>
+
+<div class="loader" id="loader"><i></i></div>
+
+<script src="../js/vendor/gsap.min.js"></script>
+<script src="../js/vendor/ScrollTrigger.min.js"></script>
+<script src="../js/vendor/lenis.min.js"></script>
+<script>
+/* ===== плавный скролл + reveals ===== */
+(function(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  gsap.registerPlugin(ScrollTrigger);
+  let lenis = null;
+  if(!reduce && window.Lenis){
+    lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(t => lenis.raf(t * 1000));
+    gsap.ticker.lagSmoothing(0);
+  }
+  // якорная навигация
+  document.querySelectorAll('[data-to]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      e.preventDefault();
+      const el = document.querySelector(a.dataset.to);
+      if(!el) return;
+      if(lenis) lenis.scrollTo(el, {offset:-70}); else el.scrollIntoView({behavior:'smooth'});
+    });
+  });
+  // шапка при скролле
+  const hdr = document.getElementById('hdr');
+  const onScroll = ()=> hdr.classList.toggle('scrolled', (window.scrollY||0) > 40);
+  addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+  if(reduce){ document.querySelectorAll('.rv').forEach(el=>el.style.opacity=1); return; }
+  // reveal-анимации
+  document.querySelectorAll('.rv').forEach(el=>{
+    gsap.fromTo(el, {opacity:0, y:34}, {
+      opacity:1, y:0, duration:1, ease:'power3.out',
+      scrollTrigger:{ trigger:el, start:'top 88%', once:true }
+    });
+  });
+  // лёгкий параллакс диорам
+  document.querySelectorAll('.mod-media img').forEach(img=>{
+    gsap.fromTo(img, {yPercent:-4}, { yPercent:4, ease:'none',
+      scrollTrigger:{ trigger:img.closest('.mod'), start:'top bottom', end:'bottom top', scrub:true }});
+  });
+})();
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "../js/vendor/three.module.min.js",
+  "three/addons/": "../js/vendor/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const app = document.getElementById('eyeLayer');
+const eyeDPR = Math.min(window.devicePixelRatio || 1, 2.5);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'});
+renderer.setPixelRatio(eyeDPR);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.98;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+app.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const DIST = 16;
+const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 100);
+camera.position.set(0,0,DIST);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+scene.add(new THREE.AmbientLight(0x556655, 0.7));
+const key = new THREE.DirectionalLight(0xecfff0, 1.0); key.position.set(4,6,6); scene.add(key);
+const rim = new THREE.DirectionalLight(0x22DD00, 0.55); rim.position.set(-4,-2,3); scene.add(rim);
+const eyeLight = new THREE.PointLight(0xd6ffcf, 4.5, 24, 2); scene.add(eyeLight);
+
+const haloTex=(()=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');
+  const rg=g.createRadialGradient(128,128,0,128,128,128);
+  rg.addColorStop(0,'rgba(60,230,20,.8)');rg.addColorStop(.35,'rgba(34,221,0,.4)');rg.addColorStop(1,'rgba(34,221,0,0)');
+  g.fillStyle=rg;g.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);})();
+const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:haloTex,color:0x22DD00,blending:THREE.AdditiveBlending,transparent:true,opacity:.38,depthWrite:false,depthTest:false}));
+
+let eye=null, eyeGroup=new THREE.Group(); scene.add(eyeGroup);
+let eyeW0=1.9, eyeH0=1.32, eyeMats=[];
+new GLTFLoader().load('../assets/oko-eye.glb', gltf=>{
+  eye=gltf.scene;
+  const box=new THREE.Box3().setFromObject(eye); const size=box.getSize(new THREE.Vector3()), c=box.getCenter(new THREE.Vector3());
+  eye.position.sub(c); eyeW0=size.x; eyeH0=size.y;
+  eye.traverse(n=>{ if(n.isMesh){ const old=n.material;
+    const m=new THREE.MeshPhysicalMaterial({ map:old.map||null, color:0x0c110c, roughness:0.09, metalness:0.0,
+      clearcoat:1.0, clearcoatRoughness:0.04, envMapIntensity:2.2, ior:1.5,
+      emissive:0x22DD00, emissiveMap:old.map||null, emissiveIntensity:0.55,
+      iridescence:0.3, iridescenceIOR:1.3, iridescenceThicknessRange:[220,540] });
+    n.material=m; eyeMats.push(m);
+  }});
+  halo.position.set(0,0,-0.25); halo.scale.set(3.6,3.6,1); eyeGroup.add(halo);
+  eyeGroup.add(eye); layout();
+  document.getElementById('loader').classList.add('hide'); window.__eyeReady=true;
+});
+// фолбэк: даже если GLB не доехал — гасим лоадер
+setTimeout(()=>document.getElementById('loader').classList.add('hide'), 5000);
+
+let target={scale:1,x:0,y:0};
+function viewSize(){ const vH=2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*DIST; return {vW:vH*camera.aspect,vH}; }
+function layout(){ const {vW,vH}=viewSize(); const a=camera.aspect; let maxW,maxH,x,y;
+  if(a<0.85){ maxW=vW*0.74; maxH=vH*0.32; x=0; y=vH*0.22; }
+  else if(a>1.5){ maxW=vW*0.42; maxH=vH*0.74; x=vW*0.18; y=vH*0.02; }
+  else { maxW=vW*0.62; maxH=vH*0.60; x=vW*0.14; y=vH*0.06; }
+  target={scale:Math.min(maxW/eyeW0,maxH/eyeH0), x, y}; }
+function resize(){ const w=innerWidth,h=innerHeight; renderer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix(); layout(); }
+addEventListener('resize',resize); resize();
+
+const pointer=new THREE.Vector2(0,0);
+let pulse=0, hidden=false, heroVisible=true;
+const clock=new THREE.Clock();
+let lastMove=-99, released=true;
+function setPtr(e){ pointer.x=(e.clientX/innerWidth)*2-1; pointer.y=-(e.clientY/innerHeight)*2+1; lastMove=clock.getElapsedTime(); released=false; }
+addEventListener('pointermove',setPtr,{passive:true});
+addEventListener('pointerdown',e=>{ setPtr(e); pulse=1; });
+addEventListener('pointerup',()=>{ released=true; });
+addEventListener('pointercancel',()=>{ released=true; });
+addEventListener('pointerleave',()=>{ released=true; });
+addEventListener('blur',()=>{ released=true; });
+document.addEventListener('visibilitychange',()=>{hidden=document.hidden; if(hidden) released=true;});
+// глаз рендерится, только когда hero на экране
+new IntersectionObserver(en=>{ heroVisible = en[0].isIntersecting; }, {threshold:0}).observe(document.querySelector('.hero'));
+
+function frame(){
+  requestAnimationFrame(frame);
+  if(hidden || !heroVisible) return;
+  const t=clock.getElapsedTime();
+  pulse*=0.92;
+  if(eye){
+    const br=1+Math.sin(t*0.9)*0.03;
+    eyeGroup.scale.lerp(new THREE.Vector3(target.scale*br,target.scale*br,target.scale*br),0.1);
+    eyeGroup.position.x += (target.x-eyeGroup.position.x)*0.1;
+    eyeGroup.position.y += ((target.y+Math.sin(t*0.8)*0.12)-eyeGroup.position.y)*0.1;
+    const idle = released || (t - lastMove > 1.1);
+    const lx = idle ? 0 : pointer.x, ly = idle ? 0 : pointer.y;
+    eyeGroup.rotation.y += ( lx*0.46 - eyeGroup.rotation.y)*0.06;
+    eyeGroup.rotation.x += (-ly*0.36 + Math.sin(t*0.6)*0.012 - eyeGroup.rotation.x)*0.06;
+    eyeGroup.rotation.z += (0 - eyeGroup.rotation.z)*0.05;
+    eyeLight.position.set(eyeGroup.position.x+Math.cos(t*0.55)*3.2, eyeGroup.position.y+Math.sin(t*0.5)*2.2+0.6, 4.2);
+    halo.material.opacity += ((0.5+pulse*0.5)-halo.material.opacity)*0.1;
+    for(const m of eyeMats){ m.emissiveIntensity = 0.5 + Math.sin(t*1.4)*0.1 + pulse*0.35; }
+  }
+  renderer.render(scene,camera);
+}
+frame();
+window.__ready=true;
+</script>
+</body>
+</html>
