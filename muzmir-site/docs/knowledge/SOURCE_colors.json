@@ -1,0 +1,81 @@
+{
+  "brand": {
+    "cream": {
+      "hex": "#FFFCF5",
+      "rgb": "255, 252, 245",
+      "usage": "Основной фон страниц"
+    },
+    "gold_light": {
+      "hex": "#FFF8E1",
+      "rgb": "255, 248, 225",
+      "usage": "Светло-золотистый акцентный фон"
+    },
+    "parchment": {
+      "hex": "#F9F2E4",
+      "rgb": "249, 242, 228",
+      "usage": "Пергаментный оттенок карточек"
+    },
+    "gold": {
+      "hex": "#C9A84C",
+      "rgb": "201, 168, 76",
+      "usage": "Золотой акцент (кнопки, рамки)"
+    },
+    "gold_dark": {
+      "hex": "#8B6F1F",
+      "rgb": "139, 111, 31",
+      "usage": "Тёмно-золотой (заголовки)"
+    },
+    "navy": {
+      "hex": "#1B2340",
+      "rgb": "27, 35, 64",
+      "usage": "Тёмно-синий (основной текст)"
+    }
+  },
+  "supporting": {
+    "mint": {
+      "hex": "#8FBC94",
+      "rgb": "143, 188, 148",
+      "usage": "Успех, положительные статусы"
+    },
+    "peach": {
+      "hex": "#F5C89C",
+      "rgb": "245, 200, 156",
+      "usage": "Тёплые акценты"
+    },
+    "error": {
+      "hex": "#C85757",
+      "rgb": "200, 87, 87",
+      "usage": "Ошибки, отклонения"
+    },
+    "warning": {
+      "hex": "#E0A946",
+      "rgb": "224, 169, 70",
+      "usage": "Предупреждения"
+    },
+    "info": {
+      "hex": "#5A7A9E",
+      "rgb": "90, 122, 158",
+      "usage": "Информационные блоки"
+    }
+  },
+  "neutral": {
+    "white": "#FFFFFF",
+    "black": "#000000",
+    "grey_100": "#F5F5F5",
+    "grey_200": "#E8E8E8",
+    "grey_400": "#B0B0B0",
+    "grey_600": "#7A7A7A",
+    "grey_800": "#3A3A3A"
+  },
+  "gradients": {
+    "hero_bg": "linear-gradient(135deg, #FFFCF5 0%, #FFF8E1 50%, #F9F2E4 100%)",
+    "gold_button": "linear-gradient(135deg, #C9A84C 0%, #8B6F1F 100%)",
+    "card_hover": "linear-gradient(180deg, rgba(201,168,76,0.05) 0%, rgba(201,168,76,0.15) 100%)"
+  },
+  "shadows": {
+    "card_default": "0 4px 20px rgba(139, 111, 31, 0.08)",
+    "card_hover": "0 8px 32px rgba(139, 111, 31, 0.15)",
+    "button": "0 4px 12px rgba(201, 168, 76, 0.3)",
+    "modal": "0 20px 60px rgba(0, 0, 0, 0.15)"
+  }
+}
