@@ -36,9 +36,9 @@
   --gm-lime-ink:#3f8a00;
   --gm-lime-soft:rgba(110,200,0,.16);
   --gm-lime-strong:rgba(90,170,0,.5);
-  --gm-wheel-ring:#cfe0b2;
-  --gm-wheel-shadow:0 0 0 6px #ffffff,0 12px 30px rgba(80,120,20,.22),0 0 22px rgba(110,200,0,.24),inset 0 0 18px rgba(120,170,60,.16);
-  --gm-spoke:rgba(255,255,255,.65);
+  --gm-wheel-ring:#8fb257;
+  --gm-wheel-shadow:0 0 0 5px #eaf3d8,0 0 0 6px #9ec066,0 12px 30px rgba(70,110,15,.26),0 0 22px rgba(110,200,0,.2),inset 0 0 20px rgba(80,130,30,.22);
+  --gm-spoke:rgba(35,60,12,.26);
   --gm-hub-bg:#ffffff;
   --gm-hub-ink:#3f8a00;
 }

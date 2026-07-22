@@ -2,7 +2,7 @@
 
 /* --- синяя галочка у имён --- */
 .vs-badge{display:inline-flex;vertical-align:-0.12em;margin-left:4px;flex-shrink:0;animation:vs-pop .38s cubic-bezier(.45,1.6,.4,1)}
-.vs-badge svg{width:.95em;height:.95em;min-width:12px;min-height:12px;display:block;filter:drop-shadow(0 0 5px rgba(29,155,240,.55))}
+.vs-badge svg{width:.95em;height:.95em;min-width:12px;min-height:12px;display:block;filter:drop-shadow(0 0 5px rgba(154,255,0,.55))}
 @keyframes vs-pop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
 
 /* --- реакции: премиум-ховер в бренд-лайме, консистентно со стикер-набором --- */
@@ -153,6 +153,16 @@
 .vs-ton-act.ghost{color:#bfe6ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);box-shadow:none}
 .vs-ton-act.ghost:hover{background:rgba(0,152,234,.18);border-color:rgba(0,152,234,.45);box-shadow:none}
 :root[data-theme="light"] .vs-ton-act.ghost{color:#0a5a92;background:rgba(0,152,234,.09);border-color:rgba(0,152,234,.26)}
+
+/* --- TON-синяя primary-CTA: чтобы лайм-кнопка .btn не «протекала» внутрь TON-подприложения --- */
+/* применяется к send / пополнить / купить / копировать адрес / подарить внутри TON-шитов; обе темы */
+.btn.vs-ton{color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border:none;
+  box-shadow:0 6px 18px rgba(0,152,234,.34)}
+.btn.vs-ton:hover{box-shadow:0 11px 26px rgba(0,152,234,.46)}
+.btn.vs-ton svg,.btn.vs-ton svg.i{color:#04121f}
+.btn.vs-ton:disabled,.btn.vs-ton[disabled]{opacity:.45;box-shadow:none;transform:none}
+:root[data-theme="light"] .btn.vs-ton{box-shadow:0 8px 22px rgba(0,152,234,.28)}
+:root[data-theme="light"] .btn.vs-ton:hover{box-shadow:0 12px 28px rgba(0,152,234,.34)}
 
 /* --- вкладки магазин/коллекция --- */
 .vs-ton-tabs{display:flex;gap:8px;margin-bottom:12px}

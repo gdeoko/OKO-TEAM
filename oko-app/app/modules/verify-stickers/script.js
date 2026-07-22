@@ -630,7 +630,7 @@ function vsRenderSendTon(){
     <div class="vs-topup-rub">≈ ${rubStr}</div>
     <div class="vs-topup-chips">${chipsH}</div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.</div>
-    <button class="btn" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
+    <button class="btn vs-ton" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
   vsSendValidate();
 }
 function vsSetSendAmt(a){ VS_SEND_AMT = Math.round((+a||0)*100)/100; vsRenderSendTon(); }
@@ -717,7 +717,7 @@ function vsRenderRecv(){
     <div class="vs-recv-title">Твой TON-адрес</div>
     <div class="vs-recv-addr" id="vsRecvAddr">${esc(a)}</div>
     <div class="vs-recv-acts">
-      <button class="btn" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
+      <button class="btn vs-ton" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
       <button class="btn ghost" style="flex:1" onclick="vsShareAddr()"><svg class="i"><use href="#i-share"/></svg> Поделиться</button>
     </div>
     <div class="vs-buy-note" style="margin-top:12px"><svg class="i"><use href="#i-lock"/></svg> Отправь этот адрес отправителю, чтобы принять TON. В прототипе входящие переводы приходят через «Пополнить». Реальный приём в сети TON — в релизе.</div>`;
@@ -744,7 +744,7 @@ function vsRenderTon(){
   } else {
     body = owned.length
       ? `<div class="vs-gshop">${owned.map(k=>vsMineCard(k, VS_TON.owned[k])).join('')}</div>`
-      : `<div class="vs-mine-empty">${vsGiftSvg('crystal',64)}<b>Коллекция пуста</b><span>Купи подарок в магазине — и подари другу прямо в чат</span><button class="btn" style="margin-top:12px" onclick="vsTonTab('shop')"><svg class="i"><use href="#i-plus"/></svg> В магазин</button></div>`;
+      : `<div class="vs-mine-empty">${vsGiftSvg('crystal',64)}<b>Коллекция пуста</b><span>Купи подарок в магазине — и подари другу прямо в чат</span><button class="btn vs-ton" style="margin-top:12px" onclick="vsTonTab('shop')"><svg class="i"><use href="#i-plus"/></svg> В магазин</button></div>`;
   }
   root.innerHTML = `
     <div class="vs-ton-hero">
@@ -801,7 +801,7 @@ function vsOpenBuy(id){
   const own = VS_TON.owned[g.id] || 0;
   const act = locked
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
-    : `<button class="btn" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
+    : `<button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
   v.innerHTML = `
     <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
@@ -853,7 +853,7 @@ function vsRenderTopup(){
     <div class="vs-topup-rub">спишем ${rubStr} с кошелька OKO</div>
     <div class="vs-topup-chips">${amts.map(a=>`<button class="${VS_TON_TOPUP===a?'on':''}" onclick="vsSetTopup(${a})">${a} TON</button>`).join('')}</div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Курс прототипа: 1 TON ≈ ${rateStr}. Настоящий обмен на TON — в релизе.</div>
-    <button class="btn" style="width:100%;margin-top:6px" onclick="vsDoTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить на ${vsTonFmt(VS_TON_TOPUP)} TON</button>`;
+    <button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsDoTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить на ${vsTonFmt(VS_TON_TOPUP)} TON</button>`;
 }
 function vsSetTopup(a){ VS_TON_TOPUP = a; vsRenderTopup(); }
 function vsDoTopup(){
@@ -880,7 +880,7 @@ function vsRenderGift(){
     <div class="vs-buy-art">${vsGiftSvg(g.art,120)}</div>
     <h2 class="vs-buy-name">${esc(g.name)}</h2>
     <div class="vs-gift-own"><svg class="i"><use href="#i-check2"/></svg> В коллекции: <b>${n}</b></div>
-    <button class="btn" style="width:100%" ${n<=0?'disabled':''} onclick="vsOpenSend('${g.id}')"><svg class="i"><use href="#i-send"/></svg> Подарить другу</button>
+    <button class="btn vs-ton" style="width:100%" ${n<=0?'disabled':''} onclick="vsOpenSend('${g.id}')"><svg class="i"><use href="#i-send"/></svg> Подарить другу</button>
     <button class="btn ghost" style="width:100%;margin-top:8px" onclick="vsOpenBuy('${g.id}')"><svg class="i"><use href="#i-plus"/></svg> Купить ещё</button>`;
 }
 

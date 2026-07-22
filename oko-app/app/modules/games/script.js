@@ -227,8 +227,9 @@ const GM_STAKES = {
 const GM_POOL_COLS_DARK = [
   ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#9AFF00','#0a1400']
 ];
+/* светлая тема: секторы углублены, чтобы колесо не «выцветало» на почти-белом столе, при этом подписи тёмные и читаемые */
 const GM_POOL_COLS_LIGHT = [
-  ['#e9f2d8','#5f7a3c'], ['#d8e9ac','#456314'], ['#bfe07f','#294709'], ['#8ccf2a','#0d2200'], ['#9AFF00','#0a1400']
+  ['#cfe39a','#2c4708'], ['#b2d76e','#22400a'], ['#8fc23a','#15330a'], ['#6bac16','#0c2000'], ['#9AFF00','#0a1400']
 ];
 function gmIsLight(){ return document.documentElement.dataset.theme === 'light'; }
 function gmPoolCols(){ return gmIsLight() ? GM_POOL_COLS_LIGHT : GM_POOL_COLS_DARK; }

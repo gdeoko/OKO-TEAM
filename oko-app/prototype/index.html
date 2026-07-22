@@ -78,6 +78,7 @@ nav#tabs .nav-logo{display:none}
 
 #app.conv-open header{display:none}
 #app.conv-open nav#tabs{display:none}
+#app.conv-open .fab{display:none}   /* FAB нового чата не должен просвечивать в открытом диалоге */
 @media(max-width:899px){#app.conv-open .conv{animation:convIn .28s cubic-bezier(.3,1,.4,1)}}
 @keyframes convIn{from{transform:translateX(16%);opacity:.3}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){#app.conv-open .conv{animation:none}}
@@ -137,7 +138,7 @@ nav#tabs .nav-logo{display:none}
 .searchbar input::placeholder{color:rgba(255,255,255,.4)}
 :root[data-theme="light"] .searchbar input::placeholder{color:var(--dim)}
 .searchbar svg.i{width:17px;height:17px}
-.chat-list{flex:1;overflow-y:auto}
+.chat-list{flex:1;overflow-y:auto;padding-bottom:84px}   /* чтобы последний чат не прятался под FAB */
 .chat-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
 .chat-item:hover{background:var(--surface)}
 .chat-item .meta{flex:1;min-width:0}
@@ -229,6 +230,11 @@ nav#tabs .nav-logo{display:none}
   .conv{display:flex}
   .conv .empty-hint{display:flex}
   #screen-feed{max-width:820px;margin:0 auto;width:100%}
+}
+/* последний пост/чат не должен прятаться под плавающей кнопкой */
+#feedList{padding-bottom:84px}
+@media(min-width:900px){
+  #feedList{padding-bottom:24px}
 }
 
 /* ============ FEED ============ */
@@ -1790,9 +1796,9 @@ main>.screen{position:relative;z-index:1}
   --gm-lime-ink:#3f8a00;
   --gm-lime-soft:rgba(110,200,0,.16);
   --gm-lime-strong:rgba(90,170,0,.5);
-  --gm-wheel-ring:#cfe0b2;
-  --gm-wheel-shadow:0 0 0 6px #ffffff,0 12px 30px rgba(80,120,20,.22),0 0 22px rgba(110,200,0,.24),inset 0 0 18px rgba(120,170,60,.16);
-  --gm-spoke:rgba(255,255,255,.65);
+  --gm-wheel-ring:#8fb257;
+  --gm-wheel-shadow:0 0 0 5px #eaf3d8,0 0 0 6px #9ec066,0 12px 30px rgba(70,110,15,.26),0 0 22px rgba(110,200,0,.2),inset 0 0 20px rgba(80,130,30,.22);
+  --gm-spoke:rgba(35,60,12,.26);
   --gm-hub-bg:#ffffff;
   --gm-hub-ink:#3f8a00;
 }
@@ -3095,6 +3101,16 @@ main>.screen{position:relative;z-index:1}
 .vs-ton-act.ghost{color:#bfe6ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);box-shadow:none}
 .vs-ton-act.ghost:hover{background:rgba(0,152,234,.18);border-color:rgba(0,152,234,.45);box-shadow:none}
 :root[data-theme="light"] .vs-ton-act.ghost{color:#0a5a92;background:rgba(0,152,234,.09);border-color:rgba(0,152,234,.26)}
+
+/* --- TON-синяя primary-CTA: чтобы лайм-кнопка .btn не «протекала» внутрь TON-подприложения --- */
+/* применяется к send / пополнить / купить / копировать адрес / подарить внутри TON-шитов; обе темы */
+.btn.vs-ton{color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border:none;
+  box-shadow:0 6px 18px rgba(0,152,234,.34)}
+.btn.vs-ton:hover{box-shadow:0 11px 26px rgba(0,152,234,.46)}
+.btn.vs-ton svg,.btn.vs-ton svg.i{color:#04121f}
+.btn.vs-ton:disabled,.btn.vs-ton[disabled]{opacity:.45;box-shadow:none;transform:none}
+:root[data-theme="light"] .btn.vs-ton{box-shadow:0 8px 22px rgba(0,152,234,.28)}
+:root[data-theme="light"] .btn.vs-ton:hover{box-shadow:0 12px 28px rgba(0,152,234,.34)}
 
 /* --- вкладки магазин/коллекция --- */
 .vs-ton-tabs{display:flex;gap:8px;margin-bottom:12px}
@@ -8413,7 +8429,7 @@ let NOTIFS = [
   {ic:'briefcase',who:'Биржа OKO',    t:'новая заявка по объявлению «Монтаж Reels»', time:'40 мин', g:'Сегодня', unread:true, act:()=>{showTab('mini');openMa('market')}},
   {ic:'users',   who:'+3 подписчика', t:'подписались на твой канал', time:'1 ч', g:'Сегодня', unread:false, act:()=>{}},
   {ic:'money',   who:'Партнёрка',     t:'начисление +$70.35 за оплату PRO', time:'3 ч', g:'Сегодня', unread:false, act:()=>{showTab('partner')}},
-  {ic:'star',    who:'Сергей Дан',    t:'оставил отзыв 5★ по твоей услуге', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
+  {ic:'star',    who:'Сергей Дан',    t:'поставил 5 звёзд за твою услугу', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
   {ic:'rocket',  who:'OKO',           t:'твой пост в топе рекомендаций — охват вырос', time:'вчера', g:'Ранее', unread:false, act:()=>{showTab('feed')}},
 ];
 function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
@@ -8564,9 +8580,22 @@ function admToggleFlag(i){
   renderAdmin();
 }
 function markAllRead(){ NOTIFS.forEach(n=>n.unread=false); renderNotifs(); updateNotifDot(); }
+function notifMins(t){
+  t=(t||'').trim();
+  if(/только что|сейчас/i.test(t)) return 0;
+  let m=t.match(/(\d+)\s*мин/); if(m) return +m[1];
+  let h=t.match(/(\d+)\s*ч/); if(h) return +h[1]*60;
+  let d=t.match(/(\d+)\s*д/); if(d) return +d[1]*1440;
+  if(/вчера/i.test(t)) return 1440;
+  if(/недел/i.test(t)) return 10080;
+  return 99999;
+}
 function renderNotifs(){
   const groups = {};
   NOTIFS.forEach((n,i)=>{ (groups[n.g]=groups[n.g]||[]).push({...n,i}); });
+  /* сортируем внутри каждой группы по свежести (мин ↑) — иначе после дозасева демо
+     порядок скачет (4м, 27м, 3ч, потом снова 2м) и выглядит сломанным */
+  Object.keys(groups).forEach(g=>groups[g].sort((a,b)=>notifMins(a.time)-notifMins(b.time)));
   document.getElementById('notifsBody').innerHTML = Object.keys(groups).map(g=>`
     <p class="nt-group">${g}</p>
     ${groups[g].map(n=>`<button class="nt-item ${n.unread?'unread':''}" onclick="notifTap(${n.i})">
@@ -12389,8 +12418,9 @@ const GM_STAKES = {
 const GM_POOL_COLS_DARK = [
   ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#9AFF00','#0a1400']
 ];
+/* светлая тема: секторы углублены, чтобы колесо не «выцветало» на почти-белом столе, при этом подписи тёмные и читаемые */
 const GM_POOL_COLS_LIGHT = [
-  ['#e9f2d8','#5f7a3c'], ['#d8e9ac','#456314'], ['#bfe07f','#294709'], ['#8ccf2a','#0d2200'], ['#9AFF00','#0a1400']
+  ['#cfe39a','#2c4708'], ['#b2d76e','#22400a'], ['#8fc23a','#15330a'], ['#6bac16','#0c2000'], ['#9AFF00','#0a1400']
 ];
 function gmIsLight(){ return document.documentElement.dataset.theme === 'light'; }
 function gmPoolCols(){ return gmIsLight() ? GM_POOL_COLS_LIGHT : GM_POOL_COLS_DARK; }
@@ -14155,6 +14185,13 @@ function acLessonHtml(){
 function acVpCover(L){
   return `
       <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="acPosterScrim" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#04060a" stop-opacity="0"/>
+            <stop offset=".5" stop-color="#04060a" stop-opacity="0"/>
+            <stop offset="1" stop-color="#000" stop-opacity=".84"/>
+          </linearGradient>
+        </defs>
         <rect width="640" height="360" fill="#070a04"/>
         <g stroke="rgba(154,255,0,.09)" stroke-width="1">
           ${[80,160,240,320,400,480,560].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="360"/>`).join('')}
@@ -14162,9 +14199,12 @@ function acVpCover(L){
         </g>
         <circle cx="530" cy="80" r="120" fill="rgba(154,255,0,.07)"/>
         <use href="#i-logo" x="472" y="34" width="120" height="120"/>
-        <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
-        <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
-        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
+        <!-- нижний скрим: держит центр постера чистым под кнопку play, а заголовок внизу — читаемым в обеих темах -->
+        <rect x="0" y="150" width="640" height="210" fill="url(#acPosterScrim)"/>
+        <!-- заголовок вынесен в НИЖНЮЮ треть постера: не пересекается с центральной кнопкой play (она в чистом поле выше) -->
+        <text x="48" y="272" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="44" fill="#fff" letter-spacing="1">${L.c1}</text>
+        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
+        <text x="48" y="346" font-family="Montserrat,sans-serif" font-size="14" font-weight="600" fill="rgba(255,255,255,.6)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
       </svg>`;
 }
 function acRenderVideoBox(){
@@ -14650,8 +14690,15 @@ function acRemindBusy(){
 function acRemindCheck(){
   try{
     if(!localStorage.getItem('oko-auth')) return;            // ещё не в приложении
+    /* контекст-осознанность: не чаще одного раза за сессию — постоянный флаг */
+    try{ if(sessionStorage.getItem('oko-ac-nudge-shown')) return; }catch(e){}
     const scr = document.getElementById('screen-academy');
     if(scr && scr.classList.contains('active')) return;      // уже в академии — напоминать незачем
+    /* показываем ТОЛЬКО на Ленте (или в Академии) — НИКОГДА поверх Кошелька / TON /
+       Чатов / Рекламы / Игр / Настроек, чтобы не прерывать денежные и чат-задачи.
+       Если пользователь на другом экране — тихо ждём перехода на Ленту, ничего не показывая. */
+    const act = document.querySelector('.screen.active');
+    if(!act || !/^screen-(feed|academy)$/.test(act.id)){ setTimeout(acRemindCheck, 15000); return; }
     const today = acDayStr();
     if(acS.remindDay === today) return;                      // раз в сутки
     const nx = acNextLesson();
@@ -14668,6 +14715,7 @@ function acRemindCheck(){
       label = 'Продолжить урок';
     }
     acS.remindDay = today; acSave();
+    try{ sessionStorage.setItem('oko-ac-nudge-shown','1'); }catch(e){}  // максимум один раз за сессию
     showPopup({ico:'star', title:'Академия OKO', body:body,
       actions:[
         {label:label, onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
@@ -17758,7 +17806,7 @@ function vsRenderSendTon(){
     <div class="vs-topup-rub">≈ ${rubStr}</div>
     <div class="vs-topup-chips">${chipsH}</div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: перевод списывает TON с локального кошелька и попадает в историю. Реальные переводы в сети TON подключатся в релизе через TON Connect.</div>
-    <button class="btn" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
+    <button class="btn vs-ton" id="vsSendBtn" style="width:100%;margin-top:6px" onclick="vsDoSendTon()"><svg class="i"><use href="#i-send"/></svg> Отправить ${vsTonFmt(amt)} TON</button>`;
   vsSendValidate();
 }
 function vsSetSendAmt(a){ VS_SEND_AMT = Math.round((+a||0)*100)/100; vsRenderSendTon(); }
@@ -17845,7 +17893,7 @@ function vsRenderRecv(){
     <div class="vs-recv-title">Твой TON-адрес</div>
     <div class="vs-recv-addr" id="vsRecvAddr">${esc(a)}</div>
     <div class="vs-recv-acts">
-      <button class="btn" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
+      <button class="btn vs-ton" style="flex:1" onclick="vsCopyAddr()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
       <button class="btn ghost" style="flex:1" onclick="vsShareAddr()"><svg class="i"><use href="#i-share"/></svg> Поделиться</button>
     </div>
     <div class="vs-buy-note" style="margin-top:12px"><svg class="i"><use href="#i-lock"/></svg> Отправь этот адрес отправителю, чтобы принять TON. В прототипе входящие переводы приходят через «Пополнить». Реальный приём в сети TON — в релизе.</div>`;
@@ -17872,7 +17920,7 @@ function vsRenderTon(){
   } else {
     body = owned.length
       ? `<div class="vs-gshop">${owned.map(k=>vsMineCard(k, VS_TON.owned[k])).join('')}</div>`
-      : `<div class="vs-mine-empty">${vsGiftSvg('crystal',64)}<b>Коллекция пуста</b><span>Купи подарок в магазине — и подари другу прямо в чат</span><button class="btn" style="margin-top:12px" onclick="vsTonTab('shop')"><svg class="i"><use href="#i-plus"/></svg> В магазин</button></div>`;
+      : `<div class="vs-mine-empty">${vsGiftSvg('crystal',64)}<b>Коллекция пуста</b><span>Купи подарок в магазине — и подари другу прямо в чат</span><button class="btn vs-ton" style="margin-top:12px" onclick="vsTonTab('shop')"><svg class="i"><use href="#i-plus"/></svg> В магазин</button></div>`;
   }
   root.innerHTML = `
     <div class="vs-ton-hero">
@@ -17929,7 +17977,7 @@ function vsOpenBuy(id){
   const own = VS_TON.owned[g.id] || 0;
   const act = locked
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
-    : `<button class="btn" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
+    : `<button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
   v.innerHTML = `
     <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
@@ -17981,7 +18029,7 @@ function vsRenderTopup(){
     <div class="vs-topup-rub">спишем ${rubStr} с кошелька OKO</div>
     <div class="vs-topup-chips">${amts.map(a=>`<button class="${VS_TON_TOPUP===a?'on':''}" onclick="vsSetTopup(${a})">${a} TON</button>`).join('')}</div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Курс прототипа: 1 TON ≈ ${rateStr}. Настоящий обмен на TON — в релизе.</div>
-    <button class="btn" style="width:100%;margin-top:6px" onclick="vsDoTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить на ${vsTonFmt(VS_TON_TOPUP)} TON</button>`;
+    <button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsDoTopup()"><svg class="i"><use href="#i-plus"/></svg> Пополнить на ${vsTonFmt(VS_TON_TOPUP)} TON</button>`;
 }
 function vsSetTopup(a){ VS_TON_TOPUP = a; vsRenderTopup(); }
 function vsDoTopup(){
@@ -18008,7 +18056,7 @@ function vsRenderGift(){
     <div class="vs-buy-art">${vsGiftSvg(g.art,120)}</div>
     <h2 class="vs-buy-name">${esc(g.name)}</h2>
     <div class="vs-gift-own"><svg class="i"><use href="#i-check2"/></svg> В коллекции: <b>${n}</b></div>
-    <button class="btn" style="width:100%" ${n<=0?'disabled':''} onclick="vsOpenSend('${g.id}')"><svg class="i"><use href="#i-send"/></svg> Подарить другу</button>
+    <button class="btn vs-ton" style="width:100%" ${n<=0?'disabled':''} onclick="vsOpenSend('${g.id}')"><svg class="i"><use href="#i-send"/></svg> Подарить другу</button>
     <button class="btn ghost" style="width:100%;margin-top:8px" onclick="vsOpenBuy('${g.id}')"><svg class="i"><use href="#i-plus"/></svg> Купить ещё</button>`;
 }
 

@@ -1202,6 +1202,13 @@ function acLessonHtml(){
 function acVpCover(L){
   return `
       <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="acPosterScrim" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#04060a" stop-opacity="0"/>
+            <stop offset=".5" stop-color="#04060a" stop-opacity="0"/>
+            <stop offset="1" stop-color="#000" stop-opacity=".84"/>
+          </linearGradient>
+        </defs>
         <rect width="640" height="360" fill="#070a04"/>
         <g stroke="rgba(154,255,0,.09)" stroke-width="1">
           ${[80,160,240,320,400,480,560].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="360"/>`).join('')}
@@ -1209,9 +1216,12 @@ function acVpCover(L){
         </g>
         <circle cx="530" cy="80" r="120" fill="rgba(154,255,0,.07)"/>
         <use href="#i-logo" x="472" y="34" width="120" height="120"/>
-        <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
-        <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
-        <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
+        <!-- нижний скрим: держит центр постера чистым под кнопку play, а заголовок внизу — читаемым в обеих темах -->
+        <rect x="0" y="150" width="640" height="210" fill="url(#acPosterScrim)"/>
+        <!-- заголовок вынесен в НИЖНЮЮ треть постера: не пересекается с центральной кнопкой play (она в чистом поле выше) -->
+        <text x="48" y="272" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="44" fill="#fff" letter-spacing="1">${L.c1}</text>
+        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
+        <text x="48" y="346" font-family="Montserrat,sans-serif" font-size="14" font-weight="600" fill="rgba(255,255,255,.6)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
       </svg>`;
 }
 function acRenderVideoBox(){
@@ -1697,8 +1707,15 @@ function acRemindBusy(){
 function acRemindCheck(){
   try{
     if(!localStorage.getItem('oko-auth')) return;            // ещё не в приложении
+    /* контекст-осознанность: не чаще одного раза за сессию — постоянный флаг */
+    try{ if(sessionStorage.getItem('oko-ac-nudge-shown')) return; }catch(e){}
     const scr = document.getElementById('screen-academy');
     if(scr && scr.classList.contains('active')) return;      // уже в академии — напоминать незачем
+    /* показываем ТОЛЬКО на Ленте (или в Академии) — НИКОГДА поверх Кошелька / TON /
+       Чатов / Рекламы / Игр / Настроек, чтобы не прерывать денежные и чат-задачи.
+       Если пользователь на другом экране — тихо ждём перехода на Ленту, ничего не показывая. */
+    const act = document.querySelector('.screen.active');
+    if(!act || !/^screen-(feed|academy)$/.test(act.id)){ setTimeout(acRemindCheck, 15000); return; }
     const today = acDayStr();
     if(acS.remindDay === today) return;                      // раз в сутки
     const nx = acNextLesson();
@@ -1715,6 +1732,7 @@ function acRemindCheck(){
       label = 'Продолжить урок';
     }
     acS.remindDay = today; acSave();
+    try{ sessionStorage.setItem('oko-ac-nudge-shown','1'); }catch(e){}  // максимум один раз за сессию
     showPopup({ico:'star', title:'Академия OKO', body:body,
       actions:[
         {label:label, onclick:()=>{ showTab('academy'); acOpenLesson(nx); }},
