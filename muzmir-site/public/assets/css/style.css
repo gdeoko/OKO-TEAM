@@ -107,7 +107,7 @@ p{margin:0 0 1em}
 /* ══════════════════════════════ КНОПКИ ══════════════════════════════ */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:var(--ff-body);font-weight:700;
   font-size:.98rem;padding:14px 30px;border-radius:999px;border:none;cursor:pointer;line-height:1;min-height:48px;
-  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background .2s,border-color .2s,filter .2s;text-align:center;position:relative}
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background .2s,border-color .2s,filter .2s;text-align:center;position:relative;overflow:hidden;isolation:isolate}
 .btn--primary{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn);font-weight:800}
 .btn--ghost{background:var(--glass);color:var(--gold-ink);border:1.5px solid var(--glass-brd);backdrop-filter:blur(8px)}
 [data-theme="dark"] .btn--ghost{color:var(--gold)}
@@ -463,6 +463,99 @@ body>.header,body>main,body>.footer,body>.topbar,body>.appnav{position:relative;
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes authIn{from{opacity:0;transform:translateY(24px) scale(.96)}to{opacity:1;transform:none}}
 
+/* ══════════════════════════════ МИКРО-ВЗАИМОДЕЙСТВИЯ / ПОЛИРОВКА v3.1 ══════════════════════════════ */
+/* Золотой блик-свип по primary-кнопкам на hover */
+.btn--primary::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);
+  transform:translateX(-135%);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+@media(hover:hover){.btn--primary:hover::after{transform:translateX(135%)}}
+.btn.is-loading::after{display:none}
+/* Свечение при фокусе (поверх outline-кольца) */
+.btn:focus-visible{box-shadow:var(--shadow-btn),0 0 0 4px var(--gold-soft)}
+.btn--primary:focus-visible,.btn--ghost:focus-visible{outline-offset:3px}
+.theme-toggle:focus-visible,.auth-btn:focus-visible{box-shadow:0 0 0 4px var(--gold-soft)}
+
+/* Magnetic-CTA (лёгкое притяжение к курсору, только hover:hover; JS задаёт transform) */
+@media(hover:hover){.btn--magnetic,[data-magnetic],.hero-cta .btn--primary{will-change:transform}}
+.magnetic-return{transition:transform .45s cubic-bezier(.34,1.56,.64,1)!important}
+
+/* Морф иконки темы + плавная кросс-фейд смена темы (View Transitions, JS: startViewTransition) */
+.theme-toggle.theme-morph{animation:themeMorph .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes themeMorph{0%{transform:rotate(0) scale(1)}45%{transform:rotate(160deg) scale(.72)}100%{transform:rotate(360deg) scale(1)}}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.4s;mix-blend-mode:normal}
+
+/* Bounce активной иконки нижнего меню */
+.appnav-bounce{animation:appnavBounce .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes appnavBounce{0%{transform:translateY(0)}42%{transform:translateY(-5px)}100%{transform:translateY(0)}}
+
+/* Тонкий подъём метрик/статов/значков на hover */
+@media(hover:hover){
+  .kpi{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+  .kpi:hover{transform:translateY(-4px);box-shadow:var(--shadow-card)}
+  .stat{transition:transform .2s,box-shadow .2s}
+  .stat:hover{transform:translateY(-3px);box-shadow:var(--shadow-soft)}
+  .partners a img{will-change:transform}
+}
+
+/* Стекируемые, плавные тосты (JS кладёт .toast в #toastHost.toast-host) */
+.toast-host{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:200;display:flex;flex-direction:column;gap:10px;align-items:center;width:min(92vw,420px);pointer-events:none}
+.toast-host .toast{position:static;left:auto;right:auto;bottom:auto;transform:none;width:100%;max-width:100%;pointer-events:auto;
+  animation:toastStackIn .32s cubic-bezier(.2,.8,.2,1)}
+.toast-host .toast.is-hiding{animation:toastStackOut .28s cubic-bezier(.4,0,1,1) forwards}
+@keyframes toastStackIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes toastStackOut{to{opacity:0;transform:translateY(10px) scale(.97)}}
+@media(min-width:721px){
+  .toast-host{left:auto;right:24px;bottom:24px;transform:none;align-items:stretch}
+  .toast-host .toast{animation:toastStackInDesk .32s cubic-bezier(.2,.8,.2,1)}
+  .toast-host .toast.is-hiding{animation:toastStackOutDesk .28s cubic-bezier(.4,0,1,1) forwards}
+}
+@keyframes toastStackInDesk{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+@keyframes toastStackOutDesk{to{opacity:0;transform:translateX(30px)}}
+
+/* Скелетон-варианты (плавный shimmer) */
+.skeleton--text{height:.85em;margin:.4em 0;border-radius:6px}
+.skeleton--title{height:1.4em;width:60%;border-radius:8px}
+.skeleton--block{min-height:120px;border-radius:var(--radius-sm)}
+.skeleton--circle{border-radius:50%;aspect-ratio:1}
+.skeleton--line{height:12px;border-radius:999px}
+
+/* Модалка входа — раскладка соц/альт кнопок и форм (доп. классы из app.js) */
+.auth-overlay{position:absolute;inset:0;cursor:pointer}
+.auth-card{z-index:1}
+.auth-head{text-align:center;margin-bottom:20px}
+.auth-title{text-align:center;font-family:var(--ff-display);font-weight:800;margin:0 0 4px;overflow-wrap:anywhere}
+.auth-social{display:flex;flex-direction:column;gap:12px}
+.auth-alt{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auth-alt .auth-btn{margin-bottom:0}
+.auth-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--muted);font-size:.78rem;
+  text-transform:uppercase;letter-spacing:.08em}
+.auth-or span{flex:none}
+.auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.auth-form{margin-top:16px;display:block}
+.auth-form .field{display:block;margin-bottom:16px}
+.auth-form .field>span{display:block;font-weight:600;margin-bottom:7px;font-size:.9rem;color:var(--text-dim)}
+.auth-link{display:block;width:100%;background:none;border:none;color:var(--gold-ink);font-family:var(--ff-body);
+  font-weight:600;font-size:.9rem;cursor:pointer;padding:10px;margin-top:8px;text-align:center;min-height:44px;border-radius:10px;transition:background .18s}
+[data-theme="dark"] .auth-link{color:var(--gold)}
+@media(hover:hover){.auth-link:hover{background:var(--gold-soft)}}
+.auth-otp-row{margin-top:4px}
+.auth-legal{font-size:.74rem;color:var(--muted);text-align:center;margin:16px 0 0;line-height:1.5}
+.auth-close{width:44px;height:44px} /* QA: тап-таргет ≥44px */
+
+/* View Transitions для навигации между страницами (прогрессивно) */
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .3s cubic-bezier(.4,0,1,1) both}
+::view-transition-new(root){animation:vtIn .38s cubic-bezier(.2,.8,.2,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* QA-адаптив: без переполнений, безопасные переносы, медиа не выходит за вьюпорт */
+img,svg,video,canvas{max-width:100%}
+pre,code{overflow-wrap:anywhere;white-space:pre-wrap}
+.kpi b,.stat b,.card,.acc-q,.timeline-item p,.hero .lead,.section-head p,td,th{overflow-wrap:anywhere}
+.field label,.field .hint,.err-msg{overflow-wrap:anywhere}
+
 /* ══════════════════════════════ REDUCED MOTION (kill-switch) ══════════════════════════════ */
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -470,6 +563,10 @@ body>.header,body>main,body>.footer,body>.topbar,body>.appnav{position:relative;
   .check-draw{stroke-dashoffset:0}
   .stat-ring .ring-val{stroke-dashoffset:var(--dash,0)}
   .cascade>*{opacity:1;transform:none}
+  .skeleton{background:var(--gold-soft)}
+  .btn--magnetic,[data-magnetic],.hero-cta .btn--primary{transform:none!important}
+  /* View Transitions: мгновенно, без анимации (псевдоэлементы не ловятся * выше) */
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
 }
 
 /* ══════════════════════════════ АДАПТАЦИЯ ══════════════════════════════ */
@@ -512,4 +609,19 @@ body>.header,body>main,body>.footer,body>.topbar,body>.appnav{position:relative;
   .stats{grid-template-columns:1fr 1fr;gap:12px}
   .stat b{font-size:1.9rem}
   .auth-card{padding:24px 18px}
+  .brand span{font-size:1rem}
+}
+/* QA: нижний appnav перекрывает футер — резерв под панель + safe-area */
+@media (max-width:1280px){
+  .footer{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+}
+/* QA: самые узкие экраны (320-360) — компактнее, без переполнений */
+@media (max-width:360px){
+  .container{padding:0 14px}
+  .header .container{gap:10px}
+  .btn{padding:12px 18px;font-size:.94rem}
+  h1{font-size:clamp(2rem,9vw,2.7rem)}
+  .stat b{font-size:1.7rem}
+  .auth-alt{grid-template-columns:1fr}
+  .toast-host{width:calc(100vw - 20px)}
 }

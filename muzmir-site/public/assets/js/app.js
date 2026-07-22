@@ -6,6 +6,8 @@
   var reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function isReduced() { return reduced.matches; }
   var hoverCapable = matchMedia('(hover: hover)');
+  // Включает JS-моушен (.reveal стартует скрытым только при наличии .js — иначе контент виден всегда).
+  document.documentElement.classList.add('js');
 
   /* ---------- Тост-уведомления ---------- */
   // window.toast(msg, type) — type: 'success' | 'error' | '' . Автоскрытие ~3.5с.
@@ -29,8 +31,8 @@
     var closed = false;
     function close() {
       if (closed) return; closed = true;
-      t.classList.add('toastOut');
-      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 400);
+      t.classList.add('is-hiding');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 320);
     }
     setTimeout(close, life);
     t.addEventListener('click', close);
@@ -318,6 +320,33 @@
       card.addEventListener('pointerleave', function () {
         card.style.transform = '';
         card.style.willChange = 'auto';
+      });
+    });
+  }
+
+  /* ---------- Magnetic-CTA (лёгкое притяжение к курсору) ---------- */
+  // Только hover:hover и не reduced. Кнопка мягко тянется к курсору, на уход — пружинит назад.
+  if (hoverCapable.matches && !isReduced()) {
+    $$('.btn--magnetic, [data-magnetic], .hero-cta .btn--primary').forEach(function (btn) {
+      var STRENGTH = 0.3, MAX = 10, raf = 0;
+      function onMove(e) {
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = 0;
+          var r = btn.getBoundingClientRect();
+          var x = (e.clientX - r.left - r.width / 2) * STRENGTH;
+          var y = (e.clientY - r.top - r.height / 2) * STRENGTH;
+          x = Math.max(-MAX, Math.min(MAX, x));
+          y = Math.max(-MAX, Math.min(MAX, y));
+          btn.classList.remove('magnetic-return');
+          btn.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+        });
+      }
+      btn.addEventListener('pointermove', onMove);
+      btn.addEventListener('pointerleave', function () {
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        btn.classList.add('magnetic-return');
+        btn.style.transform = '';
       });
     });
   }
