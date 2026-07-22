@@ -176,6 +176,15 @@ p{margin:0 0 1em}
 .theme-toggle svg{width:20px;height:20px}
 .burger{display:none;background:none;border:none;cursor:pointer;padding:10px;min-width:44px;min-height:44px}
 .burger span{display:block;width:26px;height:2px;background:var(--gold);margin:5px 0;transition:.25s;border-radius:2px}
+/* Фикс шапки: бренд и кнопки не сжимаются и не рвутся по буквам */
+.brand{flex:0 0 auto}
+.brand span{white-space:nowrap}
+.nav{flex:0 1 auto;justify-content:flex-end;gap:14px;min-width:0}
+.header .container{max-width:1360px}
+.nav a{font-size:.88rem}
+.nav-actions{flex:0 0 auto}
+.nav-actions>.btn{white-space:nowrap;flex:0 0 auto}
+.theme-toggle{flex:0 0 auto}
 
 /* ══════════════════════════════ HERO ══════════════════════════════ */
 .hero{position:relative;background:var(--grad-hero);overflow:hidden;padding:70px 0 90px}
@@ -391,7 +400,7 @@ select{color:var(--text)} option{background:var(--panel-solid);color:var(--text)
 .chat-fab{position:fixed;right:20px;bottom:88px;width:58px;height:58px;border-radius:50%;background:var(--grad-gold);
   box-shadow:var(--shadow-btn);border:none;cursor:pointer;z-index:59;display:flex;align-items:center;justify-content:center;color:var(--gold-fg)}
 .chat-fab svg{width:26px;height:26px}
-@media (min-width:1181px){.chat-fab{bottom:22px}}
+@media (min-width:1281px){.chat-fab{bottom:22px}}
 
 /* ══════════════════════════════ МОДАЛКА ВХОДА ══════════════════════════════ */
 .auth-modal{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
@@ -464,7 +473,7 @@ body>.header,body>main,body>.footer,body>.topbar,body>.appnav{position:relative;
 }
 
 /* ══════════════════════════════ АДАПТАЦИЯ ══════════════════════════════ */
-@media (max-width:1180px){
+@media (max-width:1280px){
   .nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-2);flex-direction:column;align-items:stretch;
     padding:14px 20px;gap:4px;border-bottom:1px solid var(--line);box-shadow:var(--shadow-card);max-height:calc(100dvh - 120px);overflow:auto}
   .nav.open{display:flex}

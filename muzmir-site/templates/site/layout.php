@@ -1,7 +1,7 @@
 <?php
 /** Базовый лейаут публичного сайта. Переменные: $title,$content,$meta_description,$og_image,$active. */
 $nav = [
-  '/' => 'Главная', '/competitions' => 'Конкурсы', '/apply' => 'Подать заявку',
+  '/' => 'Главная', '/competitions' => 'Конкурсы',
   '/awards' => 'Награды', '/concerts' => 'Концерты', '/about' => 'О нас',
   '/faq' => 'Вопросы', '/contacts' => 'Контакты',
 ];
