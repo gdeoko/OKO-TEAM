@@ -21,6 +21,12 @@
   var current = 'comp';
   var isPaid = false;
 
+  // Тост: используем глобальный window.toast (app.js), c fallback на alert.
+  function notify(msg, type) {
+    if (typeof window.toast === 'function') window.toast(msg, type);
+    else alert(msg);
+  }
+
   /* ---------- Утилиты текста ---------- */
   function fixFio(v) {
     if (!v) return v;
@@ -354,7 +360,16 @@
     // honeypot: если заполнен — тихо прерываем
     if ((form.website && form.website.value)) return;
     submitting = true;
-    $$('[data-submit]').forEach(function (b) { b.disabled = true; b.textContent = 'Отправляем...'; });
+    $$('[data-submit]').forEach(function (b) {
+      b.disabled = true;
+      b.classList.add('is-loading');
+      if (!b.querySelector('.spinner')) {
+        var sp = document.createElement('span');
+        sp.className = 'spinner';
+        sp.setAttribute('aria-hidden', 'true');
+        b.insertBefore(sp, b.firstChild);
+      }
+    });
     flashFormError('');
     var fd = new FormData(form);
     fetch(CFG.apiUrl, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch' } })
@@ -365,16 +380,44 @@
           var num = d.number || d.application_number;
           var el = $('[data-app-number]'); if (el) el.textContent = num;
           clearDraft();
+          clearSubmitLoading();
           show('done');
+          renderSuccessCheck();
+          notify('Заявка отправлена. Номер: ' + num, 'success');
         } else {
           throw new Error(d.message || d.error || 'Не удалось отправить заявку.');
         }
       })
       .catch(function (err) {
-        flashFormError(err.message || 'Сбой отправки. Попробуйте ещё раз.');
+        var msg = err.message || 'Сбой отправки. Попробуйте ещё раз.';
+        flashFormError(msg);
+        notify(msg, 'error');
         submitting = false;
-        $$('[data-submit]').forEach(function (b) { b.disabled = false; b.textContent = 'Отправить заявку'; });
+        clearSubmitLoading();
       });
+  }
+  function clearSubmitLoading() {
+    $$('[data-submit]').forEach(function (b) {
+      b.disabled = false;
+      b.classList.remove('is-loading');
+      var sp = b.querySelector('.spinner'); if (sp) sp.parentNode.removeChild(sp);
+    });
+  }
+  // Draw-on SVG-галочка + пружинный scale на экране «done».
+  function renderSuccessCheck() {
+    var panel = panels['done'];
+    if (!panel) return;
+    var slot = panel.querySelector('[data-check-slot]') || panel.querySelector('.ap-done-icon') || panel;
+    if (slot.querySelector('.check-draw')) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'check-draw';
+    wrap.innerHTML =
+      '<svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true">' +
+      '<circle class="check-draw-circle" cx="26" cy="26" r="24" fill="none"/>' +
+      '<path class="check-draw-mark" fill="none" d="M14 27 l8 8 l16 -18"/>' +
+      '</svg>';
+    if (slot === panel) panel.insertBefore(wrap, panel.firstChild);
+    else slot.appendChild(wrap);
   }
 
   /* ---------- Слушатели ---------- */
