@@ -18,7 +18,7 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
 
 // Опциональные сервисы фундамента — подключаем, если файлы уже собраны.
-foreach (['mailer', 'validator', 'telegram'] as $svc) {
+foreach (['mailer', 'validator', 'telegram', 'payments'] as $svc) {
     $f = BASE_PATH . '/core/' . $svc . '.php';
     if (is_file($f)) require_once $f;
 }
