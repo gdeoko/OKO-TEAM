@@ -1745,5 +1745,7 @@ if(typeof renderFeed==='function'){
 /* экспорт в глобальную область (onclick в разметке) */
 window.chOpen = chOpen; window.chGo = chGo; window.chBack = chBack; window.chClose = chClose;
 window.chDraft = chDraft; window.chRender = chRender;
+/* черновики композера/урока используются в inline-обработчиках (глобальная область) — экспортируем */
+window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
 
 })();

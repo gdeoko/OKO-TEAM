@@ -353,8 +353,8 @@
 .ch-tag svg.i{width:11px;height:11px}
 .ch-tag.closed{background:var(--raised);color:var(--text);border:1px solid var(--border)}
 .ch-tag.closed svg.i{color:var(--lime)}
-.ch-tag.club{background:linear-gradient(120deg,#b98cff,#7d4dff);color:#0a0a0a}
-.ch-tag.club svg.i{color:#0a0a0a}
+.ch-tag.club{background:var(--lime-dim);color:var(--accent);border:1px solid var(--lime-dim)}
+.ch-tag.club svg.i{color:var(--accent)}
 .ch-tag.course svg.i{color:#0a0a0a}
 .ch-cbadges{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .ch-cbadges:empty{display:none}
