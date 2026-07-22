@@ -201,13 +201,12 @@ var PW_ASSET = {
           '<div class="pw-pr"><b>15%</b><span>с каждой продажи по твоей ссылке</span></div>'+
           '<div class="pw-pr"><b>+5%</b><span>с дохода приглашённого партнёра</span></div>'+
           '<div class="pw-pr pw-pr-max"><b>до 20%</b><span>максимальная суммарная комиссия</span></div>'+
+          '<div class="pw-pr-eg">'+I('money')+' Пример: друг оформил PRO 4 890 ₽ → <b>+734 ₽</b> тебе на счёт</div>'+
+          '<p class="dim" style="font-size:12px;margin:10px 0 4px">Твоя ссылка и готовый текст — поделись в один тап:</p>'+
+          pwShareKitHtml()+
           '<p class="dim" style="font-size:12px;margin-top:10px">Выплаты — на лицевой счёт OKO. Статистика переходов и начислений — в реальном времени.</p>'+
         '</div>',
-        actions:[{label:'Скопировать ссылку', onclick:function(){
-          var link = 'https://okoteam.top/i/'+((typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref');
-          try{ if(navigator.clipboard) navigator.clipboard.writeText(link); }catch(e){}
-          if(typeof toast==='function') toast('Ссылка скопирована: '+link);
-        }},{label:'Понятно', ghost:true}]
+        actions:[{label:'Скопировать ссылку', onclick:function(){ window.pwCopyRef(); }},{label:'Понятно', ghost:true}]
       });
     } else if(typeof toast==='function'){
       toast('Партнёрка: 15% с продаж + 5% с партнёра (до 20%)');
@@ -389,6 +388,99 @@ var PW_ASSET = {
     ];
   }
 
+  /* ---- лента недавней активности: правдоподобно, спокойно, БЕЗ фейк-срочности ---- */
+  var PW_TICKER = [
+    ['Артём','оформил PRO'],
+    ['Студия Nova','продлила BUSINESS'],
+    ['Ирина','перешла на PRO'],
+    ['Максим','подключил START'],
+    ['MediaHub','взяли MAX · команда 5'],
+    ['Ольга','продлила PRO'],
+    ['Дамир','оформил PRO'],
+    ['Контент-цех','перешёл на BUSINESS'],
+    ['Настя','подключила START'],
+    ['Кирилл','продлил PRO']
+  ];
+  function pwTickerHtml(){
+    /* дублируем список для бесшовной CSS-прокрутки (translateY -50%) */
+    var rows = PW_TICKER.concat(PW_TICKER).map(function(x){
+      return '<div class="pw-tick-row"><span class="pw-tick-dot"></span>'+
+        '<b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>';
+    }).join('');
+    return '<div class="pw-tick"><div class="pw-tick-h">'+I('bolt')+' Недавно в OKO</div>'+
+      '<div class="pw-tick-view"><div class="pw-tick-track">'+rows+'</div></div></div>';
+  }
+
+  /* ---- ЧЕСТНЫЙ обратный отсчёт годовой скидки: реальный дедлайн — конец текущего месяца ---- */
+  var pwCountTimer = 0;
+  function pwPromoEnd(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth()+1, 0, 23,59,59,0).getTime(); }
+  function pwCountStr(ms){ if(ms<0)ms=0; var s=Math.floor(ms/1000);
+    var d=Math.floor(s/86400);s-=d*86400; var h=Math.floor(s/3600);s-=h*3600; var m=Math.floor(s/60);s-=m*60;
+    return [d,h,m,s]; }
+  function pwCountHtml(){
+    return '<div class="pw-count" id="pwCount">'+
+      '<div class="pw-count-t">'+I('clock')+' Годовая скидка держится до конца месяца</div>'+
+      '<div class="pw-count-segs">'+
+        ['дн','час','мин','сек'].map(function(l){ return '<div class="pw-count-seg"><b>0</b><i>'+l+'</i></div>'; }).join('<span class="pw-count-sep">:</span>')+
+      '</div></div>';
+  }
+  function pwStartCountdown(){
+    if(pwCountTimer){ try{ clearInterval(pwCountTimer); }catch(e){} pwCountTimer=0; }
+    function tick(){
+      var el=document.getElementById('pwCount');
+      if(!el || el.offsetParent===null){ if(pwCountTimer){ try{clearInterval(pwCountTimer);}catch(e){} pwCountTimer=0; } return; }
+      var c=pwCountStr(pwPromoEnd()-Date.now());
+      var b=el.querySelectorAll('.pw-count-seg b');
+      if(b.length===4){ b[0].textContent=c[0]; b[1].textContent=('0'+c[1]).slice(-2); b[2].textContent=('0'+c[2]).slice(-2); b[3].textContent=('0'+c[3]).slice(-2); }
+    }
+    tick();
+    try{ pwCountTimer=setInterval(tick,1000); }catch(e){}
+  }
+
+  /* ---- FAQ / снятие возражений (native <details>, без JS-таймеров) ---- */
+  var PW_FAQ = [
+    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 90 000 ₽, ни копейкой больше.'},
+    {q:'Можно отменить подписку?', a:'В один клик в настройках. Автопродление выключается сразу, а доступ остаётся до конца оплаченного периода.'},
+    {q:'Почему OKO не полностью бесплатный?', a:'ИИ-проверки, автопостинг и контент-завод — это реальные вычисления. Базовый уровень бесплатен навсегда: лента, кошелёк, партнёрка и первые проверки видео.'},
+    {q:'А если тариф не подойдёт?', a:'Понизь уровень или вернись на FREE когда угодно. Подписчики, ролики и баланс остаются с тобой.'}
+  ];
+  function pwFaqHtml(){
+    return '<div class="pw-faq"><div class="pw-faq-h">'+I('comment')+' Частые вопросы</div>'+
+      PW_FAQ.map(function(f){
+        return '<details class="pw-faq-i"><summary>'+esc(f.q)+'<span class="pw-faq-x">'+I('chev')+'</span></summary>'+
+          '<p>'+esc(f.a)+'</p></details>';
+      }).join('')+'</div>';
+  }
+
+  /* =================== ПАРТНЁРСКИЙ ШЭР-КИТ (растущая петля роста) =================== */
+  window.pwRefLink = function(){ var n=(typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref'; return 'https://okoteam.top/i/'+n; };
+  window.pwShareText = function(){ return 'Веду соцсети через OKO: ИИ проверяет ролики, автопостинг во все сети и система роста. Заходи по моей ссылке — '+window.pwRefLink(); };
+  window.pwCopyRef = function(){ var l=window.pwRefLink();
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(l); }catch(e){}
+    if(typeof toast==='function') toast('Партнёрская ссылка скопирована'); };
+  window.pwCopyShareText = function(){ var s=window.pwShareText();
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(s); }catch(e){}
+    if(typeof toast==='function') toast('Готовый текст для поста скопирован'); };
+  window.pwShare = function(net){
+    var link=window.pwRefLink(), txt=window.pwShareText();
+    if(net==='native'){ try{ if(navigator.share){ navigator.share({title:'OKO',text:txt,url:link}); return; } }catch(e){} }
+    var u = net==='tg' ? 'https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(txt)
+          : net==='vk' ? 'https://vk.com/share.php?url='+encodeURIComponent(link)+'&title='+encodeURIComponent(txt)
+          : link;
+    try{ window.open(u,'_blank','noopener'); }catch(e){}
+  };
+  function pwShareKitHtml(){
+    var link=window.pwRefLink();
+    return '<div class="pw-share">'+
+      '<div class="pw-share-link"><span>'+esc(link)+'</span>'+
+        '<button class="pw-share-copy" onclick="pwCopyRef()" aria-label="Скопировать ссылку">'+I('copy')+'</button></div>'+
+      '<div class="pw-share-row">'+
+        '<button class="pw-share-btn" onclick="pwShare(\'tg\')">'+I('send')+' Telegram</button>'+
+        '<button class="pw-share-btn" onclick="pwShare(\'vk\')">'+I('globe')+' VK</button>'+
+        '<button class="pw-share-btn" onclick="pwCopyShareText()">'+I('file')+' Текст поста</button>'+
+      '</div></div>';
+  }
+
   function pwRenderPay(){
     var view = document.getElementById('payView');
     if(!view) return;
@@ -412,7 +504,7 @@ var PW_ASSET = {
       var flag = isPro ? '<span class="pw-flag">Флагман</span>'
                : isMax ? '<span class="pw-flag pw-flag-max">MAX</span>' : '';
       return ''+
-      '<div class="pw-tier'+(on?' on':'')+(isMax?' pw-tier-max':'')+'" onclick="pwSelectTier(\''+tier+'\')">'+
+      '<div class="pw-tier'+(on?' on':'')+(isMax?' pw-tier-max':'')+(isPro?' pw-tier-rec':'')+'" onclick="pwSelectTier(\''+tier+'\')">'+
         '<div class="pw-tier-bg">'+ media + flag +
           '<span class="pw-tier-sel">'+I('check2')+'</span>'+
           '<div class="pw-tier-cap"><div class="n">'+tier+'</div><div class="s">'+(PW_TAG[tier]||'')+'</div></div>'+
@@ -441,6 +533,17 @@ var PW_ASSET = {
     }
     var effDisc = full>0 ? Math.round((1 - total/full)*100) : 0;
 
+    /* ---- ценностное обрамление: экономия, цена/день, ROI ---- */
+    var save = Math.max(0, full - total);
+    var periodDays = Math.max(30, per[0]*30);
+    var perDayTotal = Math.max(1, Math.round(total/periodDays));
+    var valueHtml = '<div class="pw-value">'+
+      (save>0 ? '<div class="pw-value-i"><span>'+I('check2')+'</span>Экономия '+pwRub(save)+' против помесячной оплаты</div>' : '')+
+      '<div class="pw-value-i"><span>'+I('bolt')+'</span>Это ≈ '+pwRub(perDayTotal)+' в день</div>'+
+      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке</div>'+
+    '</div>';
+    var countHtml = (payState.period===12) ? pwCountHtml() : '';
+
     var live = pwLiveNumbers();
     var liveHtml = '<div class="pw-live">'+live.map(function(c){
       return '<div class="pw-live-cell"><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div></div>';
@@ -450,7 +553,7 @@ var PW_ASSET = {
     if(pwCmpOpen){
       cmpHtml =
       '<div class="pw-cmp-wrap"><table class="pw-cmp">'+
-        '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO</th><th>BUSINESS</th><th class="pw-c-max">MAX</th></tr></thead>'+
+        '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th class="pw-c-max">MAX</th></tr></thead>'+
         '<tbody>'+ PW_CMP_ROWS.map(function(r){
           return '<tr><th>'+r.k+'</th>'+
             pwCmpCell(r.vals[0],false)+pwCmpCell(r.vals[1],false)+pwCmpCell(r.vals[2],true)+pwCmpCell(r.vals[3],false)+pwCmpCell(r.vals[4],false)+
@@ -469,7 +572,9 @@ var PW_ASSET = {
           '<div class="pw-pr"><b>+5%</b><span>с дохода приглашённого партнёра</span></div>'+
           '<div class="pw-pr pw-pr-max"><b>до 20%</b><span>максимальная суммарная комиссия</span></div>'+
         '</div>'+
-        '<button class="pw-partner-cta" onclick="pwPartnerInfo()">'+I('rocket')+' Стать партнёром</button>'+
+        '<div class="pw-pr-eg">'+I('money')+' Пример: друг оформил PRO 4 890 ₽ → <b>+734 ₽</b> тебе на счёт</div>'+
+        pwShareKitHtml()+
+        '<button class="pw-partner-cta" onclick="pwPartnerInfo()">'+I('rocket')+' Как это работает</button>'+
       '</div>';
 
     var adsHtml =
@@ -482,6 +587,7 @@ var PW_ASSET = {
     view.innerHTML =
       '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень — активация мгновенно</p></div>'+
       liveHtml +
+      pwTickerHtml() +
       '<div class="pw-tiers">'+ tiersHtml +'</div>'+
       '<button class="pw-cmp-toggle'+(pwCmpOpen?' on':'')+'" onclick="pwToggleCmp(this)">'+I('poll')+' Сравнить тарифы '+I('chev')+'</button>'+
       cmpHtml +
@@ -489,16 +595,24 @@ var PW_ASSET = {
       partnerHtml +
       '<p style="font-weight:700;font-size:13px;margin:2px 0 8px">Период оплаты</p>'+
       '<div class="pay-periods">'+ periodsHtml +'</div>'+
+      countHtml +
       '<div class="pay-total"><div><div class="dim" style="font-size:12px">К оплате · '+sel+'</div>'+
         '<div class="pay-sum">'+pwRub(total)+'</div></div>'+
         (effDisc>0?'<div class="pay-old">'+pwRub(full)+'</div>':'')+'</div>'+
+      valueHtml +
       '<p style="font-weight:600;font-size:13px;margin:14px 0 8px">Способ оплаты</p>'+
       '<div class="pay-methods">'+ (typeof PAY_METHODS!=='undefined'?PAY_METHODS:[['card','Карта РФ','card']]).map(function(pm){
         return '<button class="pay-m'+(payState.method===pm[0]?' on':'')+'" onclick="payState.method=\''+pm[0]+'\';renderPay()">'+I(pm[2])+'<span>'+pm[1]+'</span></button>';
       }).join('') +'</div>'+
       '<div style="height:16px"></div>'+
       '<button class="btn" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
-      '<p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>';
+      '<div class="pw-guar-band">'+I('check')+' Отключишь в 1 клик · спишется ровно как показано · данные остаются с тобой</div>'+
+      pwFaqHtml() +
+      '<p class="dim" style="font-size:11px;text-align:center;margin-top:12px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>';
+
+    /* реальный тик обратного отсчёта — только для годового периода */
+    if(payState.period===12){ pwStartCountdown(); }
+    else if(pwCountTimer){ try{ clearInterval(pwCountTimer); }catch(e){} pwCountTimer=0; }
   }
 
   if(_pwPrevRenderPay){

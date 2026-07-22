@@ -8,7 +8,9 @@ const FA_RU2ID = {'нейросети':'ai','ии':'ai','контент':'conten
 
 const FA = {
   seed: ((Date.now() % 2147483647) ^ 0x9AFF00) >>> 0, /* сессионный seed шума */
-  signals: {},      /* {topic: вес} — накопленные реакции пользователя */
+  signals: {},      /* {topic: вес} — накопленные реакции пользователя по темам */
+  authors: {},      /* {автор: вес} — аффинность: кого ты реально читаешь/лайкаешь */
+  _ints: null,      /* кэш Set интересов из регистрации (парсим localStorage один раз) */
   page: 0,          /* сколько партий бесконечной ленты подгружено */
   maxPages: 8,
   loading: false,
@@ -34,8 +36,25 @@ function faSignal(topic, w){
   faSaveSignals();
 }
 
-/* ---------- интересы из регистрации ---------- */
+/* ---------- персист аффинности авторов (с кем ты взаимодействуешь) ---------- */
+function faLoadAuthors(){
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-feed-authors') || 'null');
+    if(s && typeof s.authors === 'object' && s.authors) FA.authors = s.authors;
+  }catch(e){}
+}
+function faSaveAuthors(){
+  try{ localStorage.setItem('oko-feed-authors', JSON.stringify({authors:FA.authors, at:Date.now()})); }catch(e){}
+}
+function faAuthor(name, w){
+  if(!name || !w) return;
+  FA.authors[name] = Math.min(30, Math.max(0, Math.round(((FA.authors[name]||0) + w)*10)/10));
+  faSaveAuthors();
+}
+
+/* ---------- интересы из регистрации (кэш: не парсим localStorage на каждый пост при сортировке) ---------- */
 function faInterests(){
+  if(FA._ints) return FA._ints;
   const out = new Set();
   try{
     const reg = JSON.parse(localStorage.getItem('oko-registration') || 'null');
@@ -45,6 +64,7 @@ function faInterests(){
       if(FA_TOPICS[k]) out.add(k); else if(FA_RU2ID[k]) out.add(FA_RU2ID[k]);
     });
   }catch(e){}
+  FA._ints = out;
   return out;
 }
 
@@ -54,6 +74,27 @@ function faRand(id){
   h = Math.imul(h ^ (h >>> 15), h | 1);
   h ^= h + Math.imul(h ^ (h >>> 7), h | 61);
   return ((h ^ (h >>> 14)) >>> 0) / 4294967296;
+}
+
+/* ---------- сигналы поста: возраст, взвешенные реакции, скорость набора, watch-time ----------
+   Все производные детерминированы от данных поста → порядок ленты стабилен между рендерами. */
+function faAgeH(p){                       /* возраст в часах; пол 0.5ч, чтобы свежак не делил на ~0 */
+  if(!p.ts) return p.promoted ? 2 : 96;
+  return Math.max((Date.now() - p.ts) / 36e5, 0.5);
+}
+function faReactions(p){                  /* взвешенная вовлечённость: коммент/репост весомее лайка */
+  return (p.likes||0) + (Array.isArray(p.comments) ? p.comments.length : 0)*3 + (p.reposts||0)*2;
+}
+function faVelocity(p){                   /* engagement velocity — реакций в час (ядро тренда/виральности) */
+  return faReactions(p) / faAgeH(p);
+}
+function faMediaSec(m){                   /* '1:12' -> секунды (watch-time прокси для видео) */
+  if(!m) return 0;
+  const a = String(m).split(':').map(x => parseInt(x, 10) || 0);
+  return a.length === 2 ? a[0]*60 + a[1] : a[0];
+}
+function faIsTrending(p){                 /* виральный порог: быстро набирает и уже заметен */
+  return !p.promoted && faVelocity(p) >= 100 && faReactions(p) >= 150;
 }
 
 /* ================= 1. ПУЛ КОНТЕНТА (12-15 демо-постов по интересам) ================= */
