@@ -452,7 +452,7 @@ ob_start(); ?>
         <!-- Импорт из Excel/CSV -->
         <div class="tch-panel" id="ttab-import">
           <div class="section-head" style="margin-bottom:16px"><h2 style="margin:0">Импорт из Excel/CSV</h2>
-            <p>Загрузите файл со списком учеников. Каждая строка — ФИО, возрастная категория, номинация, ссылка на выступление.
+            <p>Загрузите файл со списком учеников. Каждая строка - ФИО, возрастная категория, номинация, ссылка на выступление.
                Сначала покажем превью, заявки создаются только после подтверждения.</p>
           </div>
 
@@ -482,7 +482,7 @@ ob_start(); ?>
               <div class="field">
                 <label style="display:flex;gap:10px;align-items:center;margin-top:30px">
                   <input type="checkbox" name="has_header" value="1" checked style="width:auto">
-                  Первая строка файла — заголовки столбцов
+                  Первая строка файла - заголовки столбцов
                 </label>
               </div>
             </div>
