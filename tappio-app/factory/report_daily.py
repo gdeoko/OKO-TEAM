@@ -25,10 +25,16 @@ def load(p, d):
 def yt_stats(vid):
     fmt = "%(view_count)s\t%(like_count)s\t%(comment_count)s\t%(title)s"
     try:
-        out = subprocess.run(["yt-dlp","--skip-download","--no-warnings","--print",fmt,
-                              f"https://www.youtube.com/shorts/{vid}"],
-                             capture_output=True, text=True, timeout=60).stdout.strip()
+        r = subprocess.run(["yt-dlp","--skip-download","--no-warnings","--print",fmt,
+                            f"https://www.youtube.com/shorts/{vid}"],
+                           capture_output=True, text=True, timeout=60)
+        out = (r.stdout or "").strip()
+        # провал/бот-блок YouTube -> НЕ 0 просмотров, а «нет данных» (None), чтобы не давать ложных сигналов
+        if not out or "ERROR" in (r.stderr or "") or "Sign in to confirm" in (r.stderr or ""):
+            return None
         p = out.split("\t")
+        if not p or not p[0].isdigit():
+            return None
         def num(x):
             try: return int(x)
             except: return 0
@@ -46,24 +52,25 @@ def main():
     for rid, e in yt_items:
         st = yt_stats(e["yt_id"])
         time.sleep(0.6)
-        if not st: continue
+        if not st: continue                       # провал fetch/бот-блок -> нет данных, НЕ считаем 0
+        had_prev = e["yt_id"] in snap              # был ли замерен раньше (не новый ролик)
         prev = snap.get(e["yt_id"], {}).get("views", 0)
         dv = st["views"] - prev
-        rows.append((rid, e["yt_id"], st, dv, e.get("app","")))
+        rows.append((rid, e["yt_id"], st, dv, e.get("app",""), had_prev))
         tot_v += st["views"]; tot_l += st["likes"]; tot_c += st["comments"]
         snap[e["yt_id"]] = {"views": st["views"], "likes": st["likes"]}
-    # АДАПТИВ: ролик, который был в снапшоте (не новый) и всё ещё почти без просмотров — просадка
+    # АДАПТИВ: только НЕ новые ролики (были в снапшоте) без роста и <50 просмотров = просадка.
+    # Флаг ставим лишь при ВАЛИДНЫХ данных (rows) — если YouTube заблокил метрики, rows пусто -> не трогаем.
     from datetime import date, timedelta
-    sagging = [rid for rid, vid, st, dv, app in rows
-               if snap.get(vid) is not None and st["views"] < 50]
-    # (snap уже обновлён выше; берём тех, у кого был предыдущий замер и всё равно мёртвый рост)
     flagp = os.path.join(HERE, "analysis", "perf_flag.json")
     try:
-        if len([r for r in rows if r[3] == 0 and r[2]["views"] < 50]) >= 1 and len(rows) >= 3:
+        sagging = [r for r in rows if r[5] and r[3] <= 0 and r[2]["views"] < 50]
+        tracked_old = [r for r in rows if r[5]]
+        if len(tracked_old) >= 3 and len(sagging) >= 1:
             until = (date.today() + timedelta(days=3)).isoformat()
             json.dump({"cap": 5, "until": until, "reason": "просмотры проседают/0"}, open(flagp, "w"))
-        else:
-            if os.path.exists(flagp): os.remove(flagp)   # рост есть — снимаем ограничение, рамп продолжается
+        elif len(tracked_old) >= 3 and not sagging:
+            if os.path.exists(flagp): os.remove(flagp)   # рост есть — снимаем ограничение
     except Exception: pass
 
     total_reels = len(reg)
@@ -76,7 +83,7 @@ def main():
     L.append(f"Прогресс к 100M просмотров: <b>{tot_v/1_000_000:.2f}M</b>")
     L.append("")
     rows.sort(key=lambda r: -r[2]["views"])
-    for rid, vid, st, dv, app in rows[:12]:
+    for rid, vid, st, dv, app, _hp in rows[:12]:
         arrow = f"(+{dv:,})".replace(",", " ") if dv > 0 else ""
         L.append(f"• {app} {rid}: <b>{st['views']:,}</b>👁 {arrow} · {st['likes']}❤ · {st['comments']}💬 · youtu.be/{vid}".replace(",", " "))
     if not rows:
