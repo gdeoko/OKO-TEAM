@@ -10,7 +10,7 @@ VOICE=os.path.join(os.path.dirname(HERE),"voice")
 REF=os.path.join(VOICE,"ekat_ref.mp3")
 REF_TXT=open(os.path.join(VOICE,"ekat_ref_text.txt")).read().strip()
 STUDIO="highpass=f=75,equalizer=f=3500:t=q:w=1.5:g=1.5,treble=g=1.5:f=9000,loudnorm=I=-14:TP=-1.2:LRA=10"
-MAXLEN=220  # символов на кусок (Higgs надёжно тянет ~<250)
+MAXLEN=150  # символов на кусок (Higgs надёжно тянет ~<250)
 
 def chunks(text):
     sents=re.split(r'(?<=[.!?])\s+', text.strip())
