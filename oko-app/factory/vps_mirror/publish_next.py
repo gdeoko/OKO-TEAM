@@ -36,7 +36,7 @@ open(it+"/ytdesc","w",encoding="utf-8").write(ytd)
 ytcf=BASE+"/"+B["yt"]
 if not done.get("youtube"):
     if os.path.exists(ytcf) and channel_of(ytcf):
-        rc,so,se=run(f"cd {BASE} && YT_CREDS_FILE={ytcf} python3 yt_upload.py {video} {json.dumps(title)} {it}/ytdesc")
+        rc,so,se=run(f"cd {BASE} && YT_CREDS_FILE={ytcf} python3 yt_upload.py {video} {json.dumps(title)} {it}/ytdesc {it}/cover.jpg")
         yid=next((l.split()[1] for l in (so or "").splitlines() if l.startswith("VIDEO_ID")),"")
         if yid: done["youtube"]="https://youtube.com/shorts/"+yid; save(meta,mp)
         log("  YT(%s):"%batch, done.get("youtube","FAIL"))
@@ -55,7 +55,7 @@ prof=BASE+"/"+B["ig"]
 if not done.get("instagram"):
     meta["_ig_attempts"]+=1; save(meta,mp)
     if os.path.isdir(prof):
-        rc,so,se=run(f"cd {BASE} && CAPB64={capb64} IG_VIDEO={video} IG_PROFILE={prof} PLAYWRIGHT_BROWSERS_PATH={BASE}/pw-browsers node ig_reel_post.mjs")
+        rc,so,se=run(f"cd {BASE} && CAPB64={capb64} IG_VIDEO={video} IG_COVER={it}/cover.jpg IG_PROFILE={prof} PLAYWRIGHT_BROWSERS_PATH={BASE}/pw-browsers PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node ig_reel_post.mjs")
         if rc==0 and "SHARED_CONFIRMED" in (so or ""): done["instagram"]="SHARED"; save(meta,mp)
         log("  IG(%s):"%B["igname"], done.get("instagram","FAIL try#%s"%meta["_ig_attempts"]))
     else:

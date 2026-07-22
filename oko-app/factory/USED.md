@@ -85,3 +85,9 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 Тема: эндуро (внедорожный мото) из Китая, ≠ дорожного #10. Хук: проедет там, где встанет внедорожник. Микс польза+вирал.
 Механики(11): badge→chips→vs→lowerthird→sidebars→iconrow→donut(67→готов)→route→chips→badge→stamp. Стиль 2 outline-амбер (≠ #9/0, #10/3, #11/1).
 Стоки: 12 Pexels enduro/motocross (≤2K для скорости, новые). Обложка FLUX ok + в очередь. Публикация B: YT AUUAjkSg-UU · TikTok 2363201 · IG kitay SHARED. 22.07 posted_B=1/5.
+
+## 22.07 — ролик #13 (batch A) МОТО-ГАЙД «3 вещи при выборе» — стиль 4 (frost-white)
+Тема: как выбрать мотоцикл из Китая (двигатель/тормоза/происхождение). Формат listicle (польза-бакет 30%). Хук: как не купить хлам.
+Механики(9): bigstat(3)→chips→vs→bigstat(2)→lowerthird→vs→ticks→badge→stamp. Стиль 4 frost-white (≠ 0/1/2/3 — все 5 стилей теперь пройдены).
+Стоки: 12 Pexels мото-детали/двигатель/тормоза (≤2K). Обложка FLUX ok + в очередь. Публикация A НАПРЯМУЮ (publish_next висел из-за застрявшего playwright install): YT XWtj-Om1CEI · TikTok 2350915. IG cargo — checkpoint (пропущен). 22.07 posted_A=2/5.
+ФИКС: publish_next IG-вызов теперь с PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 (батч A на checkpoint больше не вешает публикатор закачкой chromium).
