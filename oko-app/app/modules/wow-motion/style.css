@@ -121,15 +121,15 @@ nav#tabs>button.active::before{
    и НЕ при reduced-motion. Без JS/при reduced-motion — контент виден сразу
    (ничего не прячем «навсегда»).
    ========================================================================= */
+/* БЕЗОПАСНО: контент НИКОГДА не прячется (opacity всегда 1). Reveal — только лёгкий
+   доводочный сдвиг, который не может оставить блок невидимым (убрало «пустой кошелёк»). */
 html.wm-on .wm-r{
-  opacity:0;
-  transform:translateY(16px);
-  will-change:opacity,transform;
+  opacity:1;
+  transform:translateY(8px);
 }
 html.wm-on .wm-r.wm-in{
-  opacity:1;
   transform:none;
-  transition:opacity .62s var(--wm-ease-io), transform .62s var(--wm-ease-io);
+  transition:transform .5s var(--wm-ease-io);
   transition-delay:var(--wm-d,0ms);
 }
 

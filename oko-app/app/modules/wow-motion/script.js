@@ -114,17 +114,9 @@
         }
       }, true);
 
-      // Динамический контент (ре-рендер ленты, подгрузка чатов, sheets и т.д.).
-      if('MutationObserver' in window){
-        var mo = new MutationObserver(function(muts){
-          for(var i=0;i<muts.length;i++){
-            if(muts[i].addedNodes && muts[i].addedNodes.length){ wmScanSoon(); return; }
-          }
-        });
-        try {
-          mo.observe(document.body, { childList:true, subtree:true });
-        } catch(e){ /* no-op */ }
-      }
+      // Глобальный MutationObserver УБРАН — он вызывал лаги на каждом ре-рендере.
+      // Reveal переинициализируется при смене таба (wmOnTabSwitch) — этого достаточно,
+      // и контент теперь всегда видим (opacity:1), так что «прятать» нечего.
 
       // Подстраховка: после полной загрузки ещё раз раскрыть видимое.
       window.addEventListener('load', function(){ wmScan(document); wmRevealVisible(document); }, { once:true });
