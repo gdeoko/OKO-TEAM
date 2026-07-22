@@ -387,13 +387,14 @@ function walRenderLedger(){
     const rows = g.ops.map(op=>{
       const d = idx++; const dir = op.t==='+';
       return `
-      <div class="wal-op" style="animation-delay:${Math.min(d,12)*42}ms">
+      <div class="wal-op" role="button" tabindex="0" onclick="walOpenTx(${op.at})" style="animation-delay:${Math.min(d,12)*42}ms">
         <div class="wal-op-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg>${dir?badgeIn:badgeOut}</div>
         <div class="wal-op-b">
           <div class="wal-op-why">${esc(op.why)}</div>
           <div class="wal-op-t"><span class="wal-op-cat">${walCat(op.why)}</span> · ${walOpTime(op.at)}</div>
         </div>
         <div class="wal-op-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+        <svg class="i wal-op-chev"><use href="#i-chev"/></svg>
       </div>`;
     }).join('');
     return `<div class="wal-day">
@@ -646,6 +647,7 @@ function walTopReqHtml(m){
       <p class="wal-req-warn">Отправляй только USDT в сети TRC20 — перевод в другой сети будет потерян. Курс фиксируется в момент зачисления.</p>
     </div>`;
   if(m === 'ton') return `
+    ${walTonSurface('topup')}
     <div class="wal-req fade-in">
       <div class="wal-req-h">${I('ton')}<span>Адрес кошелька <b>TON</b></span></div>
       <button class="wal-addr" onclick="walCopy(WAL_TON_ADDR,'Адрес TON скопирован')"><span>${WAL_TON_ADDR}</span>${I('copy')}</button>
@@ -701,6 +703,7 @@ function walDoTopup(){
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
     renderWallet();
+    walFlash('in');
     toast('Кошелёк пополнен на ' + fmtMoney(s.sum));
   }, 1100);
 }
@@ -722,6 +725,7 @@ function walRenderWithdraw(){
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Куда вывести</p>
     <div class="wal-methods">${WAL_METHODS.map(([k,l,ic])=>`
       <button class="wal-m ${s.method===k?'on':''}" onclick="walWdState.method='${k}';walRenderWithdraw()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+    ${s.method==='ton' ? walTonSurface('withdraw') : ''}
     <div class="wal-fee" id="walWdCalc"></div>
     <button class="btn" onclick="walDoWithdraw()"><svg class="i"><use href="#i-card"/></svg> <span id="walWdBtn">Вывести</span></button>
     <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.${WAL_X.pin ? ' Защищено ПИН-кодом.' : ''}</p>`;
@@ -741,6 +745,7 @@ function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
   if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
+  if(s.method === 'ton' && !WAL_X.ton){ toast('Сначала подключи TON-кошелёк'); return; }
   const used = walWdUsedToday(), lim = walWdLimit();
   if(used + s.sum > lim){
     toast('Суточный лимит вывода ' + fmtMoney(lim) + ' (тариф ' + walTier() + ') — сегодня доступно ' + fmtMoney(Math.max(0, lim - used)) + '. Выше тариф — выше лимит.');
@@ -768,6 +773,7 @@ function walExecWithdraw(){
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet()">Готово</button></div>`;
     renderWallet();
+    walFlash('out');
     toast('Вывод ' + fmtMoney(s.sum) + ' оформлен');
   }, 900);
 }
@@ -870,6 +876,110 @@ function walDownloadStatement(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
   toast('Выписка сохранена: ' + name);
+}
+
+/* ---------- WOW: вспышка-свечение баланса при денежной операции ---------- */
+function walFlash(kind){
+  const h = document.querySelector('#screen-wallet .wal-hero');
+  if(!h) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce) return;
+  h.classList.remove('wal-flash-in','wal-flash-out');
+  void h.offsetWidth;                       // рефлоу — рестарт анимации
+  h.classList.add(kind === 'out' ? 'wal-flash-out' : 'wal-flash-in');
+  setTimeout(()=>h.classList.remove('wal-flash-in','wal-flash-out'), 900);
+}
+
+/* ---------- TON CONNECT: подключение внешнего TON-кошелька (персист) ---------- */
+/* мок-адрес пользовательского кошелька (детерминированный от лицевого счёта) */
+function walTonMyAddr(){
+  let h = 2166136261; const seed = 'ton-' + WALLET.acc;
+  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  let s = '';
+  for(let i = 0; i < 34; i++){ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0;
+    s += 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz'[h % 56]; }
+  return 'UQ' + s;
+}
+function walTonReRender(){
+  const tv = document.getElementById('sheet-walTopup');
+  if(tv && tv.classList.contains('open')){ const r = document.getElementById('walTopReq'); if(r) r.innerHTML = walTopReqHtml(walTopupState.method); }
+  const wv = document.getElementById('sheet-walWithdraw');
+  if(wv && wv.classList.contains('open')) walRenderWithdraw();
+}
+function walTonConnect(){
+  const btn = event && event.currentTarget;
+  if(btn){ btn.innerHTML = '<span class="spin" style="width:20px;height:20px"></span><span><b>Подключаем…</b><em>TON Connect · подтверди в кошельке</em></span>'; }
+  setTimeout(()=>{
+    WAL_X.ton = walTonMyAddr(); walXSave();
+    walTonReRender();
+    toast('TON-кошелёк подключён');
+  }, 700);
+}
+function walTonDisconnect(){
+  WAL_X.ton = null; walXSave();
+  walTonReRender();
+  toast('TON-кошелёк отключён');
+}
+function walTonSurface(ctx){
+  if(WAL_X.ton){
+    const a = WAL_X.ton;
+    return `<div class="wal-ton-conn fade-in">
+      <div class="wal-ton-badge">${I('ton')}</div>
+      <div class="wal-ton-b"><b>TON-кошелёк подключён</b><span>${a.slice(0,6)}…${a.slice(-6)}</span></div>
+      <button class="wal-ton-x" onclick="walTonDisconnect()">Отключить</button>
+    </div>`;
+  }
+  const sub = ctx === 'withdraw' ? 'Нужен для вывода Toncoin — Tonkeeper · Wallet · MyTonWallet'
+                                 : 'Пополняй в один тап — Tonkeeper · Wallet · MyTonWallet';
+  return `<button class="wal-ton-connect fade-in" type="button" onclick="walTonConnect()">${I('ton')}<span><b>Подключить TON-кошелёк</b><em>${sub}</em></span>${I('chev')}</button>`;
+}
+
+/* ---------- ДЕТАЛИ ОПЕРАЦИИ (bottom-sheet, читает персист-леджер) ---------- */
+function walOpId(at){ return 'OP-' + Number(at).toString(36).toUpperCase().slice(-8).padStart(8,'0'); }
+function walBalanceAfter(op){
+  let after = WALLET.balance;
+  for(const o of WALLET.ledger){ if(o.at > op.at) after -= (o.t === '+' ? o.sum : -o.sum); }
+  return after;
+}
+let walTxCur = null;
+function walOpenTx(at){
+  const op = WALLET.ledger.find(o => o.at === at);
+  if(!op) return;
+  walTxCur = op;
+  walRenderTx(op);
+  openSheet('walTx');
+}
+function walRenderTx(op){
+  const box = document.getElementById('walTxView');
+  if(!box) return;
+  const dir = op.t === '+', cat = walCat(op.why), isTop = cat === 'Пополнение';
+  const after = walBalanceAfter(op);
+  box.innerHTML = `
+  <div class="wal-tx">
+    <div class="wal-tx-hero">
+      <div class="wal-tx-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg></div>
+      <div class="wal-tx-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+      <div class="wal-tx-why">${esc(op.why)}</div>
+      <span class="wal-tx-status">${I('check')}Выполнено</span>
+    </div>
+    <div class="wal-tx-rows">
+      <div class="wal-tx-row"><span>Категория</span><b class="wal-tx-cat">${I(walCatIc(op.why))}${cat}</b></div>
+      <div class="wal-tx-row"><span>Тип</span><b class="${dir?'':'out'}" style="color:${dir?'var(--accent)':'var(--text)'}">${dir?'Пополнение':'Списание'}</b></div>
+      <div class="wal-tx-row"><span>Дата и время</span><b>${walDMYT(op.at)}</b></div>
+      <div class="wal-tx-row"><span>Баланс после</span><b>${fmtMoney(after)}</b></div>
+      <div class="wal-tx-row"><span>Номер операции</span><button class="wal-tx-id" onclick="walCopy('${walOpId(op.at)}','Номер операции скопирован')">${walOpId(op.at)}${I('copy')}</button></div>
+    </div>
+    <div class="wal-tx-acts">
+      ${isTop ? `<button class="prim" onclick="closeSheet();walOpenTopup(${op.sum})"><svg class="i"><use href="#i-plus"/></svg>Повторить</button>` : ''}
+      <button class="sec" onclick="walTxCopy()"><svg class="i"><use href="#i-copy"/></svg>Скопировать</button>
+    </div>
+  </div>`;
+}
+function walTxCopy(){
+  const op = walTxCur; if(!op) return;
+  const txt = 'OKO · операция ' + walOpId(op.at) + '\n' + (op.t==='+'?'+ ':'− ') + fmtMoney(op.sum) +
+    '\n' + op.why + '\n' + walCat(op.why) + ' · ' + walDMYT(op.at) + '\nСчёт ' + WALLET.acc;
+  walCopy(txt, 'Детали операции скопированы');
 }
 
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */

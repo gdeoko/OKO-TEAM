@@ -252,3 +252,59 @@
 .wal-st-sign{display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;gap:12px}
 .wal-st-sig span{display:block;font-size:10px;color:#556;margin-top:4px}
 .wal-st-note{font-size:9.5px;color:#98a;max-width:50%;line-height:1.55;text-align:right}
+
+/* ===== WOW: вспышка-свечение баланса при пополнении/выводе (одноразовая, cheap) ===== */
+@keyframes walFlashIn{0%{box-shadow:0 0 0 0 rgba(154,255,0,0)}22%{box-shadow:0 0 34px 4px rgba(154,255,0,.55)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0)}}
+@keyframes walFlashOut{0%{box-shadow:0 0 0 0 rgba(255,77,77,0)}22%{box-shadow:0 0 30px 3px rgba(255,77,77,.42)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
+.wal-hero.wal-flash-in{animation:walFlashIn .85s ease}
+.wal-hero.wal-flash-out{animation:walFlashOut .85s ease}
+@media (prefers-reduced-motion:reduce){.wal-hero.wal-flash-in,.wal-hero.wal-flash-out{animation:none}}
+
+/* ===== ДЕТАЛИ ОПЕРАЦИИ (bottom-sheet) ===== */
+.wal-tx{animation:fade .25s ease}
+.wal-tx-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 6px}
+.wal-tx-ic{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:13px;animation:walPop .4s cubic-bezier(.3,1.5,.5,1) both}
+.wal-tx-ic.in{background:var(--lime-dim);color:var(--accent)}
+.wal-tx-ic.out{background:rgba(255,77,77,.12);color:var(--danger)}
+.wal-tx-ic svg.i{width:27px;height:27px}
+.wal-tx-sum{font-family:var(--font-display);font-size:40px;line-height:1;letter-spacing:.02em}
+.wal-tx-sum.in{color:var(--accent)}
+.wal-tx-sum.out{color:var(--text)}
+.wal-tx-why{font-size:14px;font-weight:600;margin-top:10px;line-height:1.35;max-width:280px}
+.wal-tx-status{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 12px}
+.wal-tx-status svg.i{width:13px;height:13px}
+.wal-tx-rows{margin-top:18px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);overflow:hidden}
+.wal-tx-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.wal-tx-row:last-child{border-bottom:none}
+.wal-tx-row>span{color:var(--dim);flex-shrink:0;font-weight:600}
+.wal-tx-row>b{font-weight:700;text-align:right;min-width:0;overflow-wrap:anywhere}
+.wal-tx-row .wal-tx-cat{display:inline-flex;align-items:center;gap:7px}
+.wal-tx-row .wal-tx-cat svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+.wal-tx-id{display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--accent);letter-spacing:.02em}
+.wal-tx-id svg.i{width:13px;height:13px;flex-shrink:0}
+.wal-tx-acts{display:flex;gap:9px;margin-top:15px}
+.wal-tx-acts button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 6px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;transition:transform .12s}
+.wal-tx-acts button:active{transform:scale(.96)}
+.wal-tx-acts .prim{background:var(--lime);color:#000}
+.wal-tx-acts .prim:first-child{box-shadow:var(--glow)}
+.wal-tx-acts .sec{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.wal-tx-acts button svg.i{width:16px;height:16px}
+
+/* ===== TON CONNECT (подключение кошелька — surface для пополнения и вывода) ===== */
+.wal-ton-connect{display:flex;align-items:center;gap:11px;width:100%;margin-top:12px;padding:13px 14px;border-radius:var(--r-md);text-align:left;background:linear-gradient(135deg,rgba(0,136,204,.16),rgba(154,255,0,.06));border:1px solid rgba(0,136,204,.4);transition:transform .12s,border-color .18s}
+.wal-ton-connect:active{transform:scale(.985)}
+.wal-ton-connect:hover{border-color:#0098EA}
+.wal-ton-connect>svg.i:first-child{width:26px;height:26px;color:#0098EA;flex-shrink:0}
+.wal-ton-connect span{flex:1;min-width:0}
+.wal-ton-connect b{display:block;font-size:13.5px}
+.wal-ton-connect em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.4}
+.wal-ton-connect>svg.i:last-child{width:15px;height:15px;color:var(--dim);flex-shrink:0}
+.wal-ton-conn{display:flex;align-items:center;gap:11px;margin-top:12px;padding:12px 14px;border-radius:var(--r-md);background:var(--raised);border:1px solid rgba(0,152,234,.45)}
+.wal-ton-badge{width:38px;height:38px;border-radius:11px;background:rgba(0,152,234,.14);color:#0098EA;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-ton-badge svg.i{width:20px;height:20px}
+.wal-ton-b{flex:1;min-width:0}
+.wal-ton-b b{display:flex;align-items:center;gap:6px;font-size:13px}
+.wal-ton-b b::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px rgba(154,255,0,.7)}
+.wal-ton-b span{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--dim);margin-top:3px}
+.wal-ton-x{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--danger);background:rgba(255,77,77,.1);border-radius:99px;padding:7px 12px;transition:transform .12s}
+.wal-ton-x:active{transform:scale(.94)}

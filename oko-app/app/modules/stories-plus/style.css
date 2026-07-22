@@ -33,6 +33,13 @@
 .sp-sw:hover{transform:scale(1.08)}
 .sp-sw.on{border-color:var(--lime);transform:scale(1.14);box-shadow:var(--glow)}
 :root[data-theme="light"] .sp-sw.on{box-shadow:0 0 12px rgba(110,200,0,.4)}
+/* выбор бренд-стикера */
+.sp-ed-stickers{display:flex;gap:8px;justify-content:center;align-items:center;padding:0 16px 10px;flex-wrap:wrap}
+.sp-stk-pick{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);transition:transform .15s,border-color .15s,color .15s;flex-shrink:0}
+.sp-stk-pick:hover{transform:scale(1.08);border-color:var(--accent)}
+.sp-stk-pick.on{color:var(--accent);border-color:var(--lime);box-shadow:var(--glow)}
+:root[data-theme="light"] .sp-stk-pick.on{box-shadow:0 0 10px rgba(110,200,0,.35)}
+.sp-stk-pick svg.i{width:19px;height:19px}
 .sp-ed-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:0 16px 12px;flex-wrap:wrap}
 .sp-seg-group{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px;gap:2px}
 .sp-seg-group button{width:38px;height:32px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-weight:800;transition:background .15s,color .15s}
@@ -44,33 +51,44 @@
 .sp-stk-toggle svg.i{width:20px;height:20px}
 .sp-ed-pub{margin:0 16px calc(16px + env(safe-area-inset-bottom));padding:14px;font-size:15px}
 
-/* ---------- вьювер: прогресс-сегменты мультисторис ---------- */
-/* и одиночный бар ядра: держим фон-колонку сторис как «телефон» по центру на широких экранах */
-#storyViewer .sv-bar,.sp-bars{left:50%;right:auto;transform:translateX(-50%);width:min(calc(100% - 32px),460px)}
-.sp-bars{position:absolute;top:10px;display:flex;gap:5px;z-index:3;pointer-events:none}
-#storyViewer.sp-multi > .sv-bar{display:none}
+/* ---------- вьювер: прогресс-сегменты (всегда через модуль → transform-based) ---------- */
+/* бар ядра гасим — модуль рисует свой сегментный бар для любого числа историй */
+#storyViewer .sv-bar{display:none}
+.sp-bars{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),460px);display:flex;gap:5px;z-index:3;pointer-events:none}
 .sp-seg{flex:1;height:16px;display:flex;align-items:center;cursor:pointer;background:none;padding:0;pointer-events:auto}
 .sp-seg i{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
-.sp-seg i b{display:block;height:100%;width:0;background:#9AFF00;border-radius:2px}
-.sp-seg.done i b{width:100%}
-.sp-seg.act i b{animation:svbar 4s linear forwards}
+/* заливка — transform:scaleX (не layout): плавно и без reflow */
+.sp-seg i b{display:block;height:100%;width:100%;background:#9AFF00;border-radius:2px;transform:scaleX(0);transform-origin:left center;will-change:transform}
+.sp-seg.done i b{transform:scaleX(1)}
+.sp-seg.act i b{animation:spFill var(--sp-dur,4s) linear forwards}
+@keyframes spFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 #storyViewer.sp-paused .sp-seg.act i b{animation-play-state:paused}
-#storyViewer.sp-paused .sv-bar i{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.sp-seg.act i b{animation-duration:.01s}}
 
-/* ---------- вьювер: низ (счётчик просмотров / реакции) ---------- */
-.sp-foot{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:3;pointer-events:none}
+/* ---------- вьювер: низ (строка ответа + реакции / счётчик просмотров) ---------- */
+.sp-foot{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:3;pointer-events:none;padding:0 14px}
 .sp-eye{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:99px;padding:9px 16px;font-size:13.5px;font-weight:700;backdrop-filter:blur(6px);pointer-events:auto;transition:transform .15s,border-color .15s;animation:spPop .25s ease}
 .sp-eye:hover{border-color:#9AFF00}
 .sp-eye:active{transform:scale(.95)}
 .sp-eye svg.i{width:17px;height:17px;color:#9AFF00}
 .sp-eye svg.i:last-child{width:13px;height:13px;color:#bbb;transform:rotate(90deg)}
-.sp-reacts{display:flex;gap:14px;pointer-events:auto}
-.sp-react{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s;animation:spPop .25s ease}
+/* строка ответа + быстрые реакции (чужие сторис) */
+.sp-foot-bar{display:flex;align-items:center;gap:10px;width:min(100%,460px);pointer-events:auto;animation:spPop .25s ease}
+.sp-reply{flex:1;display:flex;align-items:center;gap:6px;min-width:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:4px 4px 4px 16px;backdrop-filter:blur(8px);transition:border-color .18s,box-shadow .18s}
+.sp-reply:focus-within{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.4)}
+.sp-reply-in{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-size:14px;font-family:var(--font-body);padding:8px 0}
+.sp-reply-in::placeholder{color:rgba(255,255,255,.6)}
+.sp-reply-send{width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0b1400;background:#9AFF00;transition:transform .15s,opacity .15s}
+.sp-reply-send:active{transform:scale(.9)}
+.sp-reply-send svg.i{width:17px;height:17px}
+.sp-reacts{display:flex;gap:8px;pointer-events:auto;flex-shrink:0}
+.sp-react{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s}
 .sp-react:hover{border-color:#9AFF00}
 .sp-react:active{transform:scale(1.18)}
 .sp-react.on{background:rgba(154,255,0,.18);border-color:#9AFF00;color:#9AFF00}
-.sp-react svg.i{width:21px;height:21px}
-@media(prefers-reduced-motion:reduce){.sp-eye,.sp-react{animation:none}}
+.sp-react svg.i{width:20px;height:20px}
+@media(max-width:360px){.sp-react{width:40px;height:40px}.sp-reacts{gap:6px}}
+@media(prefers-reduced-motion:reduce){.sp-eye,.sp-foot-bar{animation:none}}
 
 /* летящая реакция */
 .sp-fly{position:fixed;z-index:79;color:#9AFF00;pointer-events:none;opacity:0;animation:spFly 1s ease-out forwards}

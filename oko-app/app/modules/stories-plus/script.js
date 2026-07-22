@@ -1,17 +1,22 @@
-/* ===== STORIES-PLUS (sp-): сторис-редактор, просмотры, реакции, мультисторис =====
+/* ===== STORIES-PLUS (sp-): сторис уровня Instagram/Telegram =====
    base.html не тронут — только chain-патчи ядра (openStoryCreate / createTextStory /
-   addStory / showStory / closeStory / renderStories) + свои вьюхи из overlay.html.
-   1) Полноценный редактор текст-сторис: 6 бренд-градиентов свотчами, размер и
-      выравнивание текста, live-предпросмотр 9:16, стикер-глаз OKO по углам.
-   2) Просмотры своих сторис: счётчик-глаз в вьювере + шторка «кто посмотрел»
-      (мок-имена в духе демо-контента, список растёт со временем).
-   3) Быстрые реакции на чужие сторис (сердце/огонь/палец) с летящей анимацией.
-   4) Прогресс-сегменты мультисторис: у автора с >1 историей — полоски сверху с
-      тап-переключением; кружки в ленте группируются по автору (бейдж-счётчик). */
+   addStory / showStory / closeStory / renderStories / storyNav) + свои вьюхи из overlay.html.
 
-/* ---------- состояние (персист только настроек редактора) ---------- */
+   Возможности:
+   1) Вьювер: transform-based сегментные полоски (без layout), тап-переключение,
+      удержание-пауза, свайп между авторами, строка ответа, быстрые реакции,
+      счётчик просмотров, «кто посмотрел», состояние «просмотрено», закрытие.
+   2) Редактор: текст/фото, 6 бренд-градиентов, размер/выравнивание текста,
+      набор бренд-стикеров (SVG) с выбором и позицией, live-предпросмотр 9:16.
+   3) Персист своих текст-сторис в localStorage (переживают перезагрузку).
+   4) Кружки в ленте группируются по автору, бейдж-счётчик, состояние ring.
+
+   Тайминг слайда полностью на модуле (spTimer) — это даёт точную паузу-по-удержанию,
+   синхронную с CSS-анимацией полоски (класс sp-paused ставит animation-play-state). */
+
+/* ---------- состояние (персист настроек редактора + своих сторис) ---------- */
 const SP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-stories-plus'))||{}; }catch(e){ return {}; } })();
-SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br'}, SP.ed||{});
+SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br', stk:'logo'}, SP.ed||{});
 function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed})); }catch(e){} }
 
 /* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
@@ -23,6 +28,11 @@ const SP_BGS = [
   {bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)', fg:'#fff'},
   {bg:'linear-gradient(145deg,#1c1c1c 0%,#000 60%,#131f04 100%)',    fg:'#fff'},
 ];
+/* набор бренд-стикеров (существующие символы ядра) */
+const SP_STK = ['logo','star','fire','heart','bolt','crown'];
+
+/* длительность слайда, мс — единая точка для полоски и таймера */
+const SP_DUR = 4000;
 
 /* ---------- свои SVG-иконки выравнивания (штрих как у ядра) ---------- */
 (function spIcons(){
@@ -76,6 +86,7 @@ function spGroups(){
   });
   return groups;
 }
+function spGroupOf(idx){ return spGroups().find(x=>!x.add && x.idx.indexOf(idx) >= 0); }
 function spOpenGroup(keyEnc){
   const key = decodeURIComponent(keyEnc||'');
   const g = spGroups().find(x=>!x.add && x.key === key);
@@ -102,7 +113,7 @@ if(typeof renderStories === 'function'){
   };
 }
 
-/* ---------- декор вьювера: сегменты, счётчик, реакции, стили редактора ---------- */
+/* ---------- вьювер: элементы-декораторы + жесты ---------- */
 let spLastIdx = -1;
 
 function spViewerEls(){
@@ -113,34 +124,119 @@ function spViewerEls(){
     v.appendChild(bars);
     const foot = document.createElement('div'); foot.id = 'spFoot'; foot.className = 'sp-foot';
     v.appendChild(foot);
+    spBindGestures(v);          /* жесты вешаем один раз */
+    v.style.setProperty('--sp-dur', (SP_DUR/1000) + 's');
   }
   return {v, bars, foot: document.getElementById('spFoot')};
 }
 
+/* ---------- тайминг слайда с поддержкой паузы ---------- */
+let spTimer = null, spStart = 0, spRemain = SP_DUR, spPaused = false;
+function spStartTimer(){
+  clearTimeout(spTimer);
+  try{ clearTimeout(storyTimer); }catch(e){}   /* ядро тоже ставит таймер — гасим его */
+  spRemain = SP_DUR; spStart = Date.now(); spPaused = false;
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.remove('sp-paused');
+  spTimer = setTimeout(spAdvance, spRemain);
+}
+function spPause(){
+  if(spPaused) return; spPaused = true;
+  clearTimeout(spTimer);
+  spRemain = Math.max(0, spRemain - (Date.now() - spStart));
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.add('sp-paused');
+}
+function spResume(){
+  if(!spPaused) return; spPaused = false;
+  spStart = Date.now();
+  clearTimeout(spTimer);
+  spTimer = setTimeout(spAdvance, spRemain);
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.remove('sp-paused');
+}
+function spStopTimer(){ clearTimeout(spTimer); spPaused = false; }
+function spAdvance(){ if(typeof nextStory === 'function') nextStory(); }
+
+/* ---------- жесты: тап-переключение / удержание-пауза / свайп по авторам ---------- */
+let spReplyLock = false;   /* строка ответа в фокусе — жесты и авто-листание стоят */
+function spBindGestures(v){
+  let sx=0, sy=0, downT=0, hold=null, isHold=false, moved=false, navHandled=false;
+  const inUI = (t)=> !!(t && t.closest && t.closest('.sp-foot, .sv-close, #spBars'));
+
+  v.addEventListener('pointerdown', (e)=>{
+    if(spReplyLock || inUI(e.target)) return;
+    sx = e.clientX; sy = e.clientY; downT = Date.now();
+    isHold = false; moved = false; navHandled = false;
+    clearTimeout(hold);
+    hold = setTimeout(()=>{ isHold = true; spPause(); }, 250);   /* удержание → пауза */
+  });
+  v.addEventListener('pointermove', (e)=>{
+    if(!downT) return;
+    if(Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10){ moved = true; clearTimeout(hold); }
+  });
+  const finish = (e)=>{
+    if(!downT) return;
+    clearTimeout(hold);
+    const dt = Date.now() - downT, dx = e.clientX - sx, dy = e.clientY - sy;
+    downT = 0;
+    if(spReplyLock || inUI(e.target)) return;
+    if(isHold){ spResume(); navHandled = true; return; }
+    if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3){   /* свайп → смена автора */
+      navHandled = true;
+      if(dx < 0) spNextAuthor(); else spPrevAuthor();
+      return;
+    }
+    if(dt < 350 && !moved){                                       /* тап → prev/next история */
+      navHandled = true;
+      if(e.clientX < window.innerWidth * 0.32){ if(typeof prevStory === 'function') prevStory(); }
+      else { if(typeof nextStory === 'function') nextStory(); }
+    }
+  };
+  v.addEventListener('pointerup', finish);
+  v.addEventListener('pointercancel', ()=>{ clearTimeout(hold); if(isHold) spResume(); downT = 0; });
+  /* гасим клик ядра (onclick=storyNav) — навигацию делаем сами в pointerup */
+  v.addEventListener('click', (e)=>{ if(navHandled){ navHandled = false; e.stopPropagation(); } }, true);
+}
+
+function spNextAuthor(){
+  const g = spGroupOf(curStory); if(!g) return;
+  const groups = spGroups().filter(x=>!x.add);
+  const pos = groups.indexOf(g);
+  const nx = groups[pos + 1];
+  if(nx){ const t = nx.idx.find(i=>!STORIES[i].seen); curStory = (t===undefined?nx.idx[0]:t); showStory(); }
+  else if(typeof closeStory === 'function') closeStory();
+}
+function spPrevAuthor(){
+  const g = spGroupOf(curStory); if(!g) return;
+  const groups = spGroups().filter(x=>!x.add);
+  const pos = groups.indexOf(g);
+  const pv = groups[pos - 1];
+  if(pv){ curStory = pv.idx[0]; showStory(); }
+  else { curStory = g.idx[0]; showStory(); }   /* уже первый автор — рестарт */
+}
+
+/* ---------- декор вьювера: сегменты, низ (ответ/реакции/просмотры), стили ---------- */
 function spDecorate(){
   const els = spViewerEls(); if(!els) return;
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
-  if(!st || st.add) return;
-  els.v.classList.remove('sp-paused');
+  if(!st || st.add){ spStopTimer(); return; }
 
-  /* 4. прогресс-сегменты мультисторис (у автора >1 истории) */
-  const g = spGroups().find(x=>!x.add && x.key === spKey(st));
-  if(g && g.idx.length > 1){
-    els.v.classList.add('sp-multi');
-    const cur = g.idx.indexOf(curStory);
-    els.bars.innerHTML = g.idx.map((idx, k)=>
-      `<button class="sp-seg ${k < cur ? 'done' : k === cur ? 'act' : ''}" onclick="spJump(${idx},event)" title="История ${k+1}"><i><b></b></i></button>`).join('');
-  } else {
-    els.v.classList.remove('sp-multi');
-    els.bars.innerHTML = '';
-  }
+  /* сегментные полоски автора (всегда через модуль → transform-based) */
+  const g = spGroupOf(curStory);
+  const seg = g ? g.idx : [curStory];
+  const cur = seg.indexOf(curStory);
+  els.v.classList.toggle('sp-multi', seg.length > 1);
+  els.bars.innerHTML = seg.map((idx, k)=>
+    `<button class="sp-seg ${k < cur ? 'done' : k === cur ? 'act' : ''}" onclick="spJump(${idx},event)" title="История ${k+1}"><i><b></b></i></button>`).join('');
+
   /* дожать «просмотрено» на сгруппированном кружке */
   if(g){
     const ring = document.getElementById('story-'+g.idx[0]);
     if(ring && g.idx.every(i=>STORIES[i].seen)) ring.classList.add('seen');
   }
 
-  /* 1. стили из редактора: цвет текста, размер, выравнивание, стикер */
+  /* стили из редактора: цвет текста, размер, выравнивание, стикер */
   const card = document.getElementById('svCard');
   if(card){
     card.style.color = (st.sp && st.sp.fg) ? st.sp.fg : '';
@@ -156,20 +252,28 @@ function spDecorate(){
       const tm = card.querySelector('.sv-time');
       if(tm && st.sp.fg){ tm.style.color = st.sp.fg; tm.style.opacity = '.62'; }
       if(st.sp.sticker && !card.querySelector('.sp-sticker'))
-        card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I('logo')}</div>`);
+        card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I(st.sp.stk||'logo')}</div>`);
     }
   }
 
-  /* 2/3. низ вьювера: свои — счётчик глаз, чужие — быстрые реакции */
+  /* низ вьювера: свои — счётчик глаз; чужие — строка ответа + быстрые реакции */
   const grow = spLastIdx !== curStory;
   spLastIdx = curStory;
   if(st.my){
     const n = spEnsureViews(st, grow);
     els.foot.innerHTML = `<button class="sp-eye" onclick="spOpenViewers(event)">${I('eye')}<span>${n}</span>${I('chev')}</button>`;
   } else {
-    els.foot.innerHTML = `<div class="sp-reacts">` + ['heart','fire','thumb'].map(ic=>
-      `<button class="sp-react ${st.spReacted===ic?'on':''}" onclick="spReact('${ic}',event)" title="Отправить реакцию">${I(ic)}</button>`).join('') + `</div>`;
+    els.foot.innerHTML = `<div class="sp-foot-bar">
+      <form class="sp-reply" onsubmit="return spSendReply(event)">
+        <input id="spReplyIn" class="sp-reply-in" placeholder="Ответить ${esc((st.name||'').split(' ')[0]||'автору')}…" autocomplete="off" onfocus="spReplyFocus()" onblur="spReplyBlur()">
+        <button type="submit" class="sp-reply-send" title="Отправить">${I('send')}</button>
+      </form>
+      <div class="sp-reacts">` + ['heart','fire','thumb'].map(ic=>
+        `<button class="sp-react ${st.spReacted===ic?'on':''}" onclick="spReact('${ic}',event)" title="Реакция">${I(ic)}</button>`).join('') + `</div>
+    </div>`;
   }
+
+  spStartTimer();   /* запускаем слайд под управлением модуля */
 }
 
 function spJump(idx, ev){
@@ -178,7 +282,21 @@ function spJump(idx, ev){
   curStory = idx; showStory();
 }
 
-/* 3. реакция на чужую сторис: подсветка + летящая анимация + тост */
+/* ---------- строка ответа ---------- */
+function spReplyFocus(){ spReplyLock = true; spPause(); }
+function spReplyBlur(){ spReplyLock = false; spResume(); }
+function spSendReply(ev){
+  if(ev) ev.preventDefault();
+  const inp = document.getElementById('spReplyIn');
+  const val = inp ? inp.value.trim() : '';
+  if(!val){ if(inp) inp.blur(); return false; }
+  if(inp){ inp.value = ''; inp.blur(); }
+  if(typeof toast === 'function') toast('Ответ отправлен');
+  spFlyBurst(document.querySelector('.sp-reply-send'), 'heart', 3);
+  return false;
+}
+
+/* ---------- реакция на чужую сторис: подсветка + летящая анимация + тост ---------- */
 function spReact(ic, ev){
   if(ev) ev.stopPropagation();
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
@@ -187,26 +305,29 @@ function spReact(ic, ev){
   document.querySelectorAll('#spFoot .sp-react').forEach(b=>b.classList.remove('on'));
   const btn = ev && ev.currentTarget;
   if(btn) btn.classList.add('on');
-  if(btn && !matchMedia('(prefers-reduced-motion: reduce)').matches){
-    const r = btn.getBoundingClientRect();
-    for(let k = 0; k < 5; k++){
-      const f = document.createElement('div');
-      f.className = 'sp-fly';
-      f.style.left = (r.left + r.width/2 - 13 + (Math.random()*28 - 14)) + 'px';
-      f.style.top = (r.top - 8) + 'px';
-      f.style.setProperty('--dx', (Math.random()*76 - 38) + 'px');
-      f.style.animationDelay = (k*90) + 'ms';
-      f.style.animationDuration = (0.85 + Math.random()*0.5) + 's';
-      f.innerHTML = I(ic, 'fill');
-      document.body.appendChild(f);
-      f.addEventListener('animationend', ()=>f.remove());
-      setTimeout(()=>f.remove(), 2400); /* страховка */
-    }
+  spFlyBurst(btn, ic, 5);
+  if(typeof toast === 'function') toast('Реакция отправлена');
+}
+/* летящие частицы от кнопки (реакция / ответ) */
+function spFlyBurst(btn, ic, count){
+  if(!btn || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = btn.getBoundingClientRect();
+  for(let k = 0; k < count; k++){
+    const f = document.createElement('div');
+    f.className = 'sp-fly';
+    f.style.left = (r.left + r.width/2 - 13 + (Math.random()*28 - 14)) + 'px';
+    f.style.top = (r.top - 8) + 'px';
+    f.style.setProperty('--dx', (Math.random()*76 - 38) + 'px');
+    f.style.animationDelay = (k*90) + 'ms';
+    f.style.animationDuration = (0.85 + Math.random()*0.5) + 's';
+    f.innerHTML = I(ic, 'fill');
+    document.body.appendChild(f);
+    f.addEventListener('animationend', ()=>f.remove());
+    setTimeout(()=>f.remove(), 2400); /* страховка */
   }
-  toast('Реакция отправлена');
 }
 
-/* 2. шторка «кто посмотрел» (сторис на паузе, поверх вьювера) */
+/* ---------- шторка «кто посмотрел» (сторис на паузе, поверх вьювера) ---------- */
 function spOpenViewers(ev){
   if(ev) ev.stopPropagation();
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
@@ -224,9 +345,7 @@ function spOpenViewers(ev){
     </div>`;
   }).join('') : '<div class="sp-vw-empty">Пока никто не посмотрел</div>';
   wrap.classList.add('open');
-  try{ clearTimeout(storyTimer); }catch(e){}
-  const v = document.getElementById('storyViewer');
-  if(v) v.classList.add('sp-paused');
+  spPause();
   if(typeof nvPush === 'function') nvPush('view:sp-viewers', spCloseViewers);
 }
 function spCloseViewers(){
@@ -235,10 +354,10 @@ function spCloseViewers(){
   wrap.classList.remove('open');
   if(typeof nvPop === 'function') nvPop('view:sp-viewers');
   const v = document.getElementById('storyViewer');
-  if(v && v.classList.contains('open')) showStory(); /* продолжить текущий слайд заново */
+  if(v && v.classList.contains('open')) spResume();
 }
 
-/* ---------- 1. редактор текст-сторис ---------- */
+/* ---------- редактор текст-сторис ---------- */
 function spOpenEditor(){
   const ed = document.getElementById('spEditor'); if(!ed) return;
   const txt = document.getElementById('spEdText');
@@ -261,11 +380,20 @@ function spEdApply(){
   card.style.color = cfg.fg;
   card.className = 'sp-ed-card sp-sz-' + SP.ed.size + ' sp-al-' + SP.ed.align + (SP.ed.sticker ? ' sp-stk' : '');
   const stk = document.getElementById('spEdSticker');
-  if(stk) stk.className = 'sp-ed-sticker sp-pos-' + (SP.ed.pos || 'br');
+  if(stk){
+    stk.className = 'sp-ed-sticker sp-pos-' + (SP.ed.pos || 'br');
+    stk.innerHTML = `<svg class="i"><use href="#i-${SP.ed.stk||'logo'}"/></svg>`;
+  }
+  /* свотчи фонов (одноразовая отрисовка) */
   const sw = document.getElementById('spEdSwatches');
   if(sw && !sw.children.length)
     sw.innerHTML = SP_BGS.map((b, i)=>`<button class="sp-sw" style="background:${b.bg}" onclick="spEdBg(${i})" title="Фон ${i+1}"></button>`).join('');
   if(sw) Array.from(sw.children).forEach((b, i)=>b.classList.toggle('on', i === SP.ed.bg));
+  /* выбор стикера (одноразовая отрисовка) */
+  const sk = document.getElementById('spEdStickers');
+  if(sk && !sk.children.length)
+    sk.innerHTML = SP_STK.map(id=>`<button class="sp-stk-pick" data-v="${id}" onclick="spPickSticker('${id}')" title="Стикер"><svg class="i"><use href="#i-${id}"/></svg></button>`).join('');
+  if(sk) Array.from(sk.children).forEach(b=>b.classList.toggle('on', SP.ed.sticker && b.dataset.v === SP.ed.stk));
   document.querySelectorAll('#spEdSizes button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.size));
   document.querySelectorAll('#spEdAligns button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.align));
   const tb = document.getElementById('spEdStkBtn');
@@ -275,6 +403,7 @@ function spEdBg(i){ SP.ed.bg = i; spSave(); spEdApply(); }
 function spEdSize(v){ SP.ed.size = v; spSave(); spEdApply(); }
 function spEdAlign(v){ SP.ed.align = v; spSave(); spEdApply(); }
 function spToggleSticker(){ SP.ed.sticker = !SP.ed.sticker; spSave(); spEdApply(); }
+function spPickSticker(id){ SP.ed.stk = id; SP.ed.sticker = true; spSave(); spEdApply(); }
 function spCycleSticker(ev){
   if(ev) ev.stopPropagation();
   const order = ['br','bl','tl','tr'];
@@ -290,16 +419,40 @@ function spEdSync(){
 function spPickPhoto(){
   spEdSync();
   const inp = document.getElementById('storyPhotoInput');
-  if(inp) inp.click(); else toast('Фото недоступно');
+  if(inp) inp.click(); else if(typeof toast === 'function') toast('Фото недоступно');
 }
 function spPublish(){
   const el = document.getElementById('spEdText');
   const txt = (el ? el.innerText : '').replace(/\s+/g,' ').trim();
-  if(!txt){ toast('Напиши текст истории'); return; }
+  if(!txt){ if(typeof toast === 'function') toast('Напиши текст истории'); return; }
   if(typeof addStory !== 'function') return;
   const cfg = SP_BGS[SP.ed.bg] || SP_BGS[1];
   addStory({text:txt, bg:cfg.bg,
-    sp:{size:SP.ed.size, align:SP.ed.align, sticker:!!SP.ed.sticker, pos:SP.ed.pos, fg:cfg.fg}});
+    sp:{size:SP.ed.size, align:SP.ed.align, sticker:!!SP.ed.sticker, pos:SP.ed.pos, stk:SP.ed.stk, fg:cfg.fg}});
+}
+
+/* ---------- персист своих текст-сторис ---------- */
+const SP_STORE = 'oko-sp-mystories';
+function spPersist(){
+  try{
+    if(typeof STORIES === 'undefined') return;
+    const mine = STORIES.filter(s=> s.my && !s.spRestored && (!s.src || String(s.src).startsWith('data:')))
+      .map(s=>({text:s.text||'', bg:s.bg||'', src:(s.src&&String(s.src).startsWith('data:'))?s.src:'', sp:s.sp||null, ts:s.spTs||Date.now()}))
+      .slice(0, 12);
+    localStorage.setItem(SP_STORE, JSON.stringify(mine));
+  }catch(e){}
+}
+function spRestore(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SP_STORE) || '[]');
+    if(!Array.isArray(saved) || !saved.length || typeof STORIES === 'undefined') return;
+    const nm = (typeof PROFILE !== 'undefined' && PROFILE.name) ? PROFILE.name : 'Ты';
+    /* восстанавливаем в исходном порядке (новые — ближе к началу) */
+    saved.slice().reverse().forEach(d=>{
+      STORIES.splice(1, 0, {my:true, spRestored:true, spTs:d.ts, name:nm, ava:nm[0],
+        text:d.text, bg:d.bg||undefined, src:d.src||undefined, sp:d.sp||undefined});
+    });
+  }catch(e){}
 }
 
 /* ---------- chain-патчи ядра ---------- */
@@ -321,7 +474,9 @@ if(typeof createTextStory === 'function'){
 if(typeof addStory === 'function'){
   const _spPrevAddStory = addStory;
   addStory = function(data){
-    _spPrevAddStory(data);   /* splice + closeSheet + renderStories (уже сгруппированный) + toast */
+    _spPrevAddStory(data);   /* splice + closeSheet + renderStories (сгруппированный) + toast */
+    try{ if(STORIES[1] && STORIES[1].my) STORIES[1].spTs = Date.now(); }catch(e){}
+    spPersist();
     spCloseEditor();
   };
 }
@@ -335,8 +490,9 @@ if(typeof showStory === 'function'){
 if(typeof closeStory === 'function'){
   const _spPrevCloseStory = closeStory;
   closeStory = function(){
+    spStopTimer();
     _spPrevCloseStory();
-    spLastIdx = -1;
+    spLastIdx = -1; spReplyLock = false;
     const wrap = document.getElementById('spVwWrap');
     if(wrap && wrap.classList.contains('open')){
       wrap.classList.remove('open');
@@ -353,9 +509,9 @@ function spSeed(){
     if(i >= 0) STORIES.splice(i + 1, 0, story);
   };
   put('OKO', {spSeed:true, avaIcon:'logo', name:'OKO',
-    text:'Сторис-редактор уже здесь: градиенты бренда, размер текста и стикер-глаз. Жми плюс в ленте.',
+    text:'Сторис-редактор уже здесь: градиенты бренда, размер текста и стикеры. Жми плюс в ленте.',
     bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)',
-    sp:{size:'m', align:'center', sticker:true, pos:'br', fg:'#fff'}});
+    sp:{size:'m', align:'center', sticker:true, pos:'br', stk:'logo', fg:'#fff'}});
   put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
     text:'Вторая часть кейса кофейни: до и после цветокора. Исходник против финала — разница в один вечер работы.',
     bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'});
@@ -365,6 +521,7 @@ function spSeed(){
 (function spInit(){
   try{
     spSeed();
+    spRestore();
     if(typeof renderStories === 'function' && document.getElementById('storiesRow')) renderStories();
     spEdApply(); /* свотчи и состояние контролов готовы до первого открытия */
   }catch(e){ console.warn('stories-plus init:', e); }

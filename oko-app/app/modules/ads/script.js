@@ -4,11 +4,30 @@ const ADS_LS = 'oko-ads';
 const ADS_POST_BASE = 9000;       /* id постов рекламы в ленте */
 const ADS_STATUS = {
   mod:  {l:'Модерация'},
+  sched:{l:'Запланирована'},
   act:  {l:'Активна'},
   pause:{l:'Пауза'},
   rej:  {l:'Отклонена'},
   done: {l:'Завершена'}
 };
+
+/* скидка на продвижение по тарифу подписки: выше тариф — дешевле реклама (до −30% на MAX).
+   Скидка = больше показов/кликов за тот же бюджет (ниже стоимость результата), сам бюджет не режется. */
+function adsDisc(){
+  if(typeof okoHasSub!=='function') return 0;
+  if(okoHasSub('MAX'))      return 0.30;
+  if(okoHasSub('BUSINESS')) return 0.20;
+  if(okoHasSub('PRO'))      return 0.10;
+  return 0;
+}
+function adsTierLabel(){
+  if(typeof okoHasSub!=='function') return 'FREE';
+  if(okoHasSub('MAX'))      return 'MAX';
+  if(okoHasSub('BUSINESS')) return 'BUSINESS';
+  if(okoHasSub('PRO'))      return 'PRO';
+  if(okoHasSub('START'))    return 'START';
+  return 'FREE';
+}
 
 /* форматы рекламы: модель по умолчанию, базовые CPM/CPC, метка в ленте */
 const ADS_FORMATS = {
@@ -122,6 +141,11 @@ function adsMigrate(){
     if(!Array.isArray(c.devs)) c.devs = [];
     if(!Array.isArray(c.times)) c.times = [];
     if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
+    if(c.disc==null) c.disc = 0;                 /* скидка тарифа, зафиксированная при запуске */
+    if(c.pace==null) c.pace = 0;                 /* дней равномерной открутки (0 = максимум) */
+    if(c.dailyCap==null) c.dailyCap = 0;         /* дневной лимит бюджета, ₽ (0 = без лимита) */
+    if(c.spentToday==null) c.spentToday = 0;     /* потрачено сегодня (для дневного лимита) */
+    if(c.spentDay==null) c.spentDay = adsDayKey();
     if(!c.cvr) c.cvr = +(0.16 + Math.random()*0.18).toFixed(3);   /* доля кликов → целевое действие */
     if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
     if(c.demo && !c.media) c.media = adsBrandPoster(c);
@@ -182,25 +206,50 @@ function adsRenderSummary(){
   const qa = document.getElementById('adsQuickAud'); if(qa) qa.textContent = ADS.auds.length;
 }
 
+/* вторичный ряд: Изменить + Дублировать (двухколоночная сетка, не переполняет 390px) */
+function adsEditDup(c){
+  return `<div class="ads-camp-acts2 two">
+      <button class="btn sm ghost dup" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
+      <button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button></div>`;
+}
 function adsCampActs(c){
   if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
-  const dup = `<div class="ads-camp-acts2"><button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать кампанию</button></div>`;
+  if(c.status==='sched')return `<div class="ads-camp-acts">
+      <button class="btn sm" onclick="adsStartNow(${c.id})">${I('rocket')}Запустить сейчас</button>
+      <button class="btn sm ghost stop" onclick="adsCancelSched(${c.id})">${I('flag')}Отменить</button></div>`+adsEditDup(c);
   if(c.status==='act')  return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsTopup(${c.id})">${I('plus')}Пополнить</button>
       <button class="btn sm ghost" onclick="adsPause(${c.id})">${I('pause')}Пауза</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+adsEditDup(c);
   if(c.status==='pause')return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsResume(${c.id})">${I('play')}Возобновить</button>
       <button class="btn sm ghost" onclick="adsTopup(${c.id})">${I('plus')}Бюджет</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+adsEditDup(c);
   return `<div class="ads-camp-acts">
+      <button class="btn sm ghost" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
       <button class="btn sm ghost" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button>
       <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
 }
 
 function adsFmtBadge(c){
   const f = ADS_FORMATS[c.fmt] || ADS_FORMATS.post;
-  return `<span class="ads-fmt-badge">${I(f.ico)}${esc(f.l)}</span><span class="ads-model-badge">${c.model} · ${fmtN(c.bid)} ₽</span>`;
+  let out = `<span class="ads-fmt-badge">${I(f.ico)}${esc(f.l)}</span><span class="ads-model-badge">${c.model} · ${fmtN(c.bid)} ₽</span>`;
+  if(c.disc>0) out += `<span class="ads-disc-badge">${I('fire')}−${Math.round(c.disc*100)}%</span>`;
+  if(c.dailyCap>0) out += `<span class="ads-model-badge">${I('clock')}${fmtN(c.dailyCap)} ₽/день</span>`;
+  return out;
+}
+/* дата/время старта запланированной кампании + сколько осталось */
+function adsSchedLine(c){
+  const at = c.startTs || Date.now();
+  const d = new Date(at);
+  const dt = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const left = at - Date.now();
+  let rel = 'скоро';
+  if(left > 0){
+    const h = Math.floor(left/36e5), m = Math.round(left%36e5/6e4);
+    rel = h>=24 ? 'через '+Math.round(h/24)+' дн.' : h>=1 ? 'через '+h+' ч '+m+' мин' : 'через '+Math.max(1,m)+' мин';
+  }
+  return `<div class="ads-sched-line">${I('clock')}<span>Старт <b>${dt}</b> · ${rel}</span></div>`;
 }
 
 function adsRenderList(){
@@ -216,6 +265,7 @@ function adsRenderList(){
         <span class="ads-st ${c.status}">${ADS_STATUS[c.status].l}</span>
       </div>
       <div class="ads-camp-tags">${adsFmtBadge(c)}</div>
+      ${c.status==='sched' ? adsSchedLine(c) : ''}
       <div class="ads-camp-txt">${esc(c.text)}</div>
       <div class="ads-metrics">
         <div class="ads-m"><b data-m="imps">${fmtN(c.imps)}</b><span>показы</span></div>
@@ -448,7 +498,30 @@ function adsDrawSpark(c){
   x.fillStyle = '#9AFF00'; x.shadowColor = 'rgba(154,255,0,.8)'; x.shadowBlur = 6; x.fill();
 }
 
-function adsRender(){ adsRenderSummary(); adsRenderList(); }
+/* баннер тарифной скидки на рекламу (или апселл, если тариф низкий) */
+function adsRenderTier(){
+  const box = document.getElementById('adsTier'); if(!box) return;
+  const disc = adsDisc(), tier = adsTierLabel();
+  if(disc>0){
+    box.className = 'ads-tier on';
+    box.onclick = null; box.removeAttribute('role');
+    box.innerHTML = `<span class="ads-tier-ic">${I('fire')}</span>
+      <div class="ads-tier-mid"><b>Тариф ${tier} · −${Math.round(disc*100)}% на всю рекламу</b>
+        <small>Скидка уже применяется: за тот же бюджет — больше показов и кликов.</small></div>`;
+  }else{
+    box.className = 'ads-tier up';
+    box.onclick = adsTierUpsell; box.setAttribute('role','button');
+    box.innerHTML = `<span class="ads-tier-ic">${I('crown')}</span>
+      <div class="ads-tier-mid"><b>Реклама дешевле на высоких тарифах</b>
+        <small>PRO −10% · BUSINESS −20% · MAX −30% на стоимость показов и кликов.</small></div>
+      <span class="ads-tier-cta">Открыть${I('chev')}</span>`;
+  }
+}
+function adsTierUpsell(){
+  if(typeof okoRequireSub==='function') okoRequireSub('MAX','Реклама дешевле — до −30% на MAX');
+}
+
+function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); }
 
 function adsTickUI(){
   adsRenderSummary();
@@ -473,8 +546,39 @@ function adsTickUI(){
 
 /* ---------- создание кампании ---------- */
 let adsDraft = {};
+let adsEditId = 0;   /* 0 — создание новой; иначе id редактируемой кампании */
 function adsDraftReset(){
-  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[], ab:false, reach:0, media:null};
+  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[],
+    ab:false, reach:0, media:null, pace:0, start:'now', startAt:0};
+}
+/* темп открутки: 0 — максимум, N — равномерно за N дней (дневной лимит = бюджет/N) */
+function adsPickPace(btn){
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.pace = parseInt(btn.dataset.v,10) || 0;
+  adsCalcForecast();
+}
+/* старт: сейчас или запланировать на дату/время */
+function adsPickStart(btn){
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.start = btn.dataset.v;
+  const inp = document.getElementById('adsSchedAt');
+  if(inp){
+    inp.style.display = adsDraft.start==='sched' ? '' : 'none';
+    if(adsDraft.start==='sched' && !inp.value){
+      const t = new Date(Date.now()+864e5);        /* по умолчанию — завтра, ровный час */
+      t.setMinutes(0,0,0);
+      inp.value = new Date(t.getTime()-t.getTimezoneOffset()*6e4).toISOString().slice(0,16);
+    }
+  }
+  adsSyncLaunchBtn();
+}
+function adsLaunchLabel(){
+  if(adsEditId) return 'Сохранить';
+  return adsDraft.start==='sched' ? 'Запланировать' : 'Запустить';
+}
+function adsSyncLaunchBtn(){
+  const b = document.getElementById('adsLaunchBtn'); if(!b) return;
+  const s = b.querySelector('span'); if(s) s.textContent = adsLaunchLabel();
 }
 
 /* ---------- медиа креатива (фото / картинка / видео) ---------- */
@@ -593,8 +697,13 @@ function adsClearMedia(){
 
 function adsOpenCreate(){
   adsRevokeDraftMedia();
+  adsEditId = 0;
   adsDraftReset();
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания';
   ['adsInpTitle','adsInpText','adsInpLink','adsInpTitleB'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  const sa = document.getElementById('adsSchedAt'); if(sa){ sa.style.display='none'; sa.value=''; }
   const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.remove('on');
   const abInp = document.getElementById('adsInpTitleB'); if(abInp) abInp.style.display = 'none';
   document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
@@ -608,6 +717,7 @@ function adsOpenCreate(){
   adsRenderSaved();
   adsRenderMediaZone();
   adsSyncModelUI();
+  adsSyncLaunchBtn();
   adsStep(1); openSheet('ads-create');
 }
 
@@ -856,20 +966,30 @@ function adsCalcForecast(){
   const bid = Math.max(1, parseInt(document.getElementById('adsInpBid').value,10) || adsRecBid());
   adsBidBar();
   const ctrEst = 0.022 + (bid/adsRecBid()-1)*0.006;   /* выше ставка → чуть выше приоритет/CTR */
+  const disc = adsDisc();                             /* скидка тарифа → эффективная ставка ниже */
+  const effBid = Math.max(1, bid*(1-disc));           /* за тот же бюджет — больше показов/кликов */
   let imps, cLo, cHi, cpm;
   if(adsDraft.model==='CPC'){
-    const clicks = Math.round(b/bid);
+    const clicks = Math.round(b/effBid);
     imps = Math.round(clicks/Math.max(.008, ctrEst));
     cLo = Math.max(1, Math.round(clicks*.85)); cHi = Math.max(1, Math.round(clicks*1.15));
     cpm = imps ? b/imps*1000 : 0;
   }else{
-    imps = Math.round(b/bid*1000);
+    imps = Math.round(b/effBid*1000);
     cLo = Math.max(1, Math.round(imps*.01)); cHi = Math.max(1, Math.round(imps*.04));
-    cpm = bid;
+    cpm = imps ? b/imps*1000 : effBid;
   }
   if(adsDraft.reach){ const cap = Math.round(adsDraft.reach*2.5); if(imps>cap){ imps = cap; } }
   const cpc = ((cLo+cHi)/2) ? b/((cLo+cHi)/2) : 0;
   const set = (id,v)=>{ const e = document.getElementById(id); if(e) e.innerHTML = v; };
+  /* строка скидки тарифа + подсказка дневного лимита */
+  const discRow = document.getElementById('adsFDiscRow');
+  if(discRow){
+    discRow.style.display = disc>0 ? '' : 'none';
+    if(disc>0) set('adsFDisc', `−${Math.round(disc*100)}% · ${adsTierLabel()}`);
+  }
+  const paceHint = document.getElementById('adsPaceHint');
+  if(paceHint) paceHint.textContent = adsDraft.pace>0 ? '· ≈ '+fmtN(Math.max(1,Math.round(b/adsDraft.pace)))+' ₽/день' : '· без ограничения скорости';
   set('adsFImps',  imps ? `~ ${fmtN(Math.round(imps*.85))} – ${fmtN(Math.round(imps*1.15))}` : '—');
   set('adsFClicks',imps ? `~ ${fmtN(cLo)} – ${fmtN(cHi)}` : '—');
   set('adsFCpc',   cpc ? `~ ${cpc<10 ? cpc.toFixed(1) : fmtN(Math.round(cpc))} ₽` : '—');
@@ -880,6 +1000,7 @@ function adsCalcForecast(){
 }
 
 function adsLaunch(){
+  if(adsEditId) return adsSaveEdit();
   const name = document.getElementById('adsInpTitle').value.trim();
   const text = document.getElementById('adsInpText').value.trim();
   let link  = document.getElementById('adsInpLink').value.trim();
@@ -888,6 +1009,13 @@ function adsLaunch(){
   if(!name || !text){ adsStep(2); return; }
   if(budget < 100){ toast('Минимальный бюджет — 100 ₽'); return; }
   if(link && !/^https?:\/\//i.test(link)) link = 'https://'+link;
+  /* запланированный старт: дата/время из поля */
+  let startTs = 0, sched = false;
+  if(adsDraft.start==='sched'){
+    const raw = (document.getElementById('adsSchedAt')||{}).value;
+    const t = raw ? new Date(raw).getTime() : 0;
+    if(t && t > Date.now()+3e4){ startTs = t; sched = true; }
+  }
   if(!walletCharge(budget, 'Реклама: '+name)) return;
   okoEarn(budget, 'Рекламный кабинет');
   adsBill(budget, name, ADS_FORMATS[adsDraft.fmt].l);
@@ -896,11 +1024,14 @@ function adsLaunch(){
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
     fmt: adsDraft.fmt, model: adsDraft.model, bid, ctrEst: Math.max(.008, ctrEst),
     cvr: +(0.16 + Math.random()*0.18).toFixed(3),
+    disc: adsDisc(), pace: adsDraft.pace||0, dailyCap: adsDraft.pace>0 ? Math.max(1,Math.round(budget/adsDraft.pace)) : 0,
+    spentToday: 0, spentDay: adsDayKey(),
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
     interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
     devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips'),
     media: adsDraft.media ? Object.assign({}, adsDraft.media) : null,
-    budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now(),
+    budget, spent: 0, imps: 0, clicks: 0, status: sched ? 'sched' : 'mod', startTs,
+    hist: [], created: Date.now(),
     days: [...Array(7)].map(()=>({i:0,c:0})), dstamp: adsDayKey()
   };
   adsDraft.media = null;   /* креатив передан кампании — не отзываем blob-URL видео */
@@ -908,8 +1039,54 @@ function adsLaunch(){
   if(tb) camp.ab = {tb, ka: .012+Math.random()*.025, kb: .012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}};
   ADS.camps.unshift(camp);
   adsSave(); closeSheet(); adsRender();
-  toast('Кампания отправлена на модерацию ИИ-агенту');
-  setTimeout(()=>adsModerate(camp.id), 3000);
+  if(sched){
+    toast('Кампания запланирована на '+new Date(startTs).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}));
+  }else{
+    toast('Кампания отправлена на модерацию ИИ-агенту');
+    setTimeout(()=>adsModerate(camp.id), 3000);
+  }
+}
+
+/* ---------- сохранение изменений существующей кампании ---------- */
+function adsSaveEdit(){
+  const c = ADS.camps.find(x=>x.id===adsEditId); if(!c){ adsEditId=0; closeSheet(); return; }
+  const name = document.getElementById('adsInpTitle').value.trim();
+  const text = document.getElementById('adsInpText').value.trim();
+  let link  = document.getElementById('adsInpLink').value.trim();
+  let budget = Math.max(0, parseInt(document.getElementById('adsInpBudget').value,10) || 0);
+  const bid = Math.max(1, parseInt(document.getElementById('adsInpBid').value,10) || adsRecBid());
+  if(!name || !text){ adsStep(2); return; }
+  if(budget < 100){ toast('Минимальный бюджет — 100 ₽'); return; }
+  if(link && !/^https?:\/\//i.test(link)) link = 'https://'+link;
+  /* бюджет не может быть ниже уже потраченного; разницу списываем/возвращаем на счёт */
+  if(budget < c.spent) budget = Math.ceil(c.spent);
+  const d = budget - c.budget;
+  if(d > 0){ if(!walletCharge(d, 'Изменение бюджета: '+name)) return; okoEarn(d,'Рекламный кабинет'); adsBill(d, name, 'Пополнение бюджета'); }
+  else if(d < 0){ walletAdd(-d, 'Возврат: бюджет кампании уменьшен — '+name); adsBill(d, name, 'Возврат бюджета'); }
+  /* применяем поля креатива и таргетинга */
+  c.name = name; c.text = text; c.cta = adsDraft.cta; c.link = link || '';
+  c.fmt = adsDraft.fmt; c.model = adsDraft.model; c.bid = bid;
+  c.ctrEst = Math.max(.008, 0.022 + (bid/adsRecBid()-1)*0.006);
+  c.sex = adsDraft.sex; c.geo = adsDraft.geo; c.cities = [...adsDraft.cities];
+  c.interests = adsPicked('adsIntChips'); c.ages = adsPicked('adsAgeChips');
+  c.devs = adsPicked('adsDevChips'); c.times = adsPicked('adsTimeChips');
+  c.budget = budget;
+  c.pace = adsDraft.pace||0; c.dailyCap = c.pace>0 ? Math.max(1,Math.round(budget/c.pace)) : 0;
+  if(adsDraft.media !== c.media){
+    if(c.media && c.media._obj && c.media.src){ try{ URL.revokeObjectURL(c.media.src); }catch(e){} }
+    c.media = adsDraft.media ? Object.assign({}, adsDraft.media) : null;
+    adsDraft.media = null;
+  }
+  const tb = adsDraft.ab ? (document.getElementById('adsInpTitleB').value.trim()) : '';
+  if(tb && c.ab){ c.ab.tb = tb; }
+  else if(tb && !c.ab){ c.ab = {tb, ka:.012+Math.random()*.025, kb:.012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}}; }
+  else if(!adsDraft.ab){ c.ab = null; }
+  /* если завершённой кампании подняли бюджет — снова в открутку */
+  if(c.status==='done' && c.spent < c.budget){ c.status = 'act'; adsPushToFeed(c); }
+  adsSyncFeedPost(c);
+  adsEditId = 0;
+  adsSave(); closeSheet(); adsRender();
+  toast('Кампания обновлена');
 }
 
 /* ---------- ИИ-модерация ---------- */
@@ -1042,8 +1219,12 @@ function adsPrefillFromCamp(c){
     geo: ADS_CITIES[c.geo] || c.geo==='Весь мир' ? c.geo : 'РФ',
     cities: Array.isArray(c.cities) ? [...c.cities] : [],
     ab: !!c.ab, reach: 0,
+    pace: c.pace||0, start: 'now', startAt: 0,
     media: c.media ? Object.assign({}, c.media) : null
   };
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach(b=>b.classList.toggle('on', (parseInt(b.dataset.v,10)||0)===(c.pace||0)));
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  const sa = document.getElementById('adsSchedAt'); if(sa){ sa.style.display='none'; sa.value=''; }
   const setVal = (id,v)=>{ const e = document.getElementById(id); if(e) e.value = v==null?'':v; };
   setVal('adsInpTitle', c.name);
   setVal('adsInpText', c.text);
@@ -1078,17 +1259,75 @@ function adsPrefillFromCamp(c){
 }
 function adsDuplicate(id){
   const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsEditId = 0;
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания';
   adsPrefillFromCamp(c);
+  adsSyncLaunchBtn();
   adsStep(1);
   openSheet('ads-create');
   toast('Копия «'+c.name+'» — проверьте и запустите');
 }
 
+/* ---------- редактирование существующей кампании (тот же мастер) ---------- */
+function adsEdit(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsEditId = id;
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Редактирование';
+  adsPrefillFromCamp(c);
+  adsSyncLaunchBtn();
+  adsStep(2);   /* сразу к креативу — таргетинг/бюджет уже проставлены */
+  openSheet('ads-create');
+  toast('Редактирование «'+c.name+'»');
+}
+
+/* обновить пост объявления в ленте после правок (если он там есть) */
+function adsSyncFeedPost(c){
+  const pid = adsPostId(c.id);
+  const post = POSTS.rec.find(p=>p.id===pid);
+  if(!post) return;
+  const tag = (ADS_FORMATS[c.fmt]||ADS_FORMATS.post).tag;
+  post.sub = tag;
+  post.body = `<b>${esc(c.name)}</b><br>${esc(c.text)}${adsMediaHtml(c.media, 'ads-post-media')}<div class="ads-post-cta"><button onclick="event.stopPropagation();adsCtaClick(${c.id})">${esc(c.cta)} ${I('chev')}</button></div>`;
+  const feedOn = document.getElementById('screen-feed');
+  if(feedOn && feedOn.classList.contains('active') && typeof renderFeed==='function') renderFeed(curFeedKind);
+}
+
+/* ---------- запланированные кампании ---------- */
+function adsStartNow(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='sched') return;
+  c.status = 'mod'; c.startTs = 0;
+  adsSave(); adsRender();
+  toast('Кампания «'+c.name+'» отправлена на модерацию');
+  setTimeout(()=>adsModerate(id), 2000);
+}
+function adsCancelSched(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='sched') return;
+  showPopup({ico:'flag', title:'Отменить запуск?',
+    body:`«${esc(c.name)}» ещё не стартовала. Бюджет ${fmtMoney(c.budget)} вернётся на лицевой счёт.`,
+    actions:[
+      {label:'Отменить кампанию', onclick:()=>{
+        walletAdd(c.budget, 'Возврат: запуск рекламы отменён — '+c.name);
+        adsBill(-c.budget, c.name, 'Возврат (отмена запуска)');
+        ADS.camps = ADS.camps.filter(x=>x.id!==id);
+        adsSave(); adsRender(); toast('Запуск отменён, бюджет возвращён');
+      }},
+      {label:'Оставить', ghost:true}
+    ]});
+}
+
 /* ---------- живая статистика: тикер раз в 5 секунд ---------- */
 function adsTick(){
   let changed = false;
+  /* запланированные кампании: наступило время старта — на модерацию, затем в ленту */
+  const due = ADS.camps.filter(c=>c.status==='sched' && c.startTs && Date.now()>=c.startTs);
+  due.forEach(c=>{ c.status='mod'; c.startTs=0; adsModerate(c.id); });
+  if(due.length){ changed = true; adsSave(); if(document.getElementById('screen-ads').classList.contains('active')) adsRender(); }
   ADS.camps.forEach(c=>{
     if(c.status!=='act') return;
+    /* дневной лимит бюджета (равномерная открутка): сброс на новых сутках */
+    const dk = adsDayKey();
+    if(c.spentDay!==dk){ c.spentDay = dk; c.spentToday = 0; }
+    if(c.dailyCap>0 && c.spentToday>=c.dailyCap) return;   /* на сегодня открутка исчерпана */
     changed = true;
     const dImps = 70 + Math.floor(Math.random()*180);
     let dClicks;
@@ -1102,9 +1341,11 @@ function adsTick(){
       const ctr = c.ctrEst || 0.022;
       dClicks = Math.round(dImps*(ctr*(.6+Math.random()*.9)));
     }
-    const dSpend = c.model==='CPC' ? dClicks*c.bid : dImps/1000*adsCampCpm(c);
+    const gross = c.model==='CPC' ? dClicks*c.bid : dImps/1000*adsCampCpm(c);
+    const dSpend = gross * (1 - (c.disc||0));   /* скидка тарифа: тот же охват — дешевле */
     c.imps += dImps; c.clicks += dClicks;
     c.spent = Math.min(c.budget, c.spent + dSpend);
+    c.spentToday = (c.spentToday||0) + dSpend;
     c.hist.push(dImps); if(c.hist.length>24) c.hist.shift();
     adsRollDays(c); c.days[6].i += dImps; c.days[6].c += dClicks;
     const post = POSTS.rec.find(p=>p.id===adsPostId(c.id));

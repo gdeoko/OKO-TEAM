@@ -37,6 +37,9 @@
 .ads-st.pause{color:#4da6ff;background:rgba(77,166,255,.12);border-color:rgba(77,166,255,.3)}
 .ads-st.rej{color:var(--danger);background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.3)}
 .ads-st.done{color:#b48cff;background:rgba(180,140,255,.12);border-color:rgba(180,140,255,.3)}
+.ads-st.sched{color:#3ad0c0;background:rgba(58,208,192,.12);border-color:rgba(58,208,192,.32)}
+.ads-st.sched::before{animation:adsPulse 1.8s infinite}
+:root[data-theme="light"] .ads-st.sched{color:#0f9c8d;background:rgba(58,208,192,.16)}
 
 .ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
@@ -72,6 +75,36 @@
 .ads-camp-acts2 .btn.sm.dup{color:var(--dim);border-style:dashed}
 .ads-camp-acts2 .btn.sm.dup:hover{color:var(--accent);border-color:rgba(154,255,0,.45)}
 .ads-camp-acts2 .btn.sm.dup svg.i{width:14px;height:14px}
+.ads-camp-acts2.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ads-camp-acts2.two .btn.sm{width:100%}
+
+/* тарифная скидка на рекламу / апселл */
+.ads-tier{display:flex;align-items:center;gap:11px;border-radius:var(--r-md);padding:12px 13px;margin:0 0 14px;line-height:1.35;animation:fade .3s ease both}
+.ads-tier:empty{display:none}
+.ads-tier.on{background:radial-gradient(140% 160% at 0% 0%,rgba(154,255,0,.16),transparent 62%),var(--surface);border:1px solid rgba(154,255,0,.34)}
+.ads-tier.up{background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:border-color .18s,transform .12s}
+.ads-tier.up:active{transform:scale(.99)}
+@media(hover:hover){.ads-tier.up:hover{border-color:rgba(154,255,0,.4)}}
+.ads-tier-ic{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.ads-tier-ic svg.i{width:19px;height:19px}
+.ads-tier.on .ads-tier-ic svg.i{animation:adsBolt 2.4s ease-in-out infinite}
+.ads-tier-mid{flex:1;min-width:0}
+.ads-tier-mid b{display:block;font-size:13px;font-weight:700;color:var(--text)}
+.ads-tier-mid small{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.ads-tier-cta{flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--accent)}
+.ads-tier-cta svg.i{width:13px;height:13px}
+
+/* бейдж скидки на карточке кампании */
+.ads-disc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;color:#000;background:var(--lime);border:1px solid var(--lime);border-radius:99px;padding:3px 8px 3px 7px}
+.ads-disc-badge svg.i{width:11px;height:11px;stroke:currentColor}
+.ads-model-badge svg.i{width:11px;height:11px;margin-right:3px;vertical-align:-1px}
+
+/* строка запланированного старта */
+.ads-sched-line{display:flex;align-items:center;gap:7px;font-size:11px;color:#3ad0c0;background:rgba(58,208,192,.09);border:1px solid rgba(58,208,192,.22);border-radius:var(--r-sm);padding:8px 10px;margin:0 0 9px;line-height:1.35}
+.ads-sched-line svg.i{width:13px;height:13px;flex-shrink:0}
+.ads-sched-line b{color:var(--text);font-weight:700}
+:root[data-theme="light"] .ads-sched-line{color:#0f9c8d}
+:root[data-theme="light"] .ads-sched-line b{color:var(--text)}
 
 /* ===== воронка конверсии ===== */
 .ads-fn{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px 12px;margin-top:8px}
@@ -300,6 +333,13 @@
 .ads-bid-scale span:nth-child(2){color:var(--accent)}
 #adsInpBid,#adsInpBudget{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:15px;font-weight:700;font-family:var(--font-body);outline:none;margin:10px 0 2px}
 #adsInpBid:focus,#adsInpBudget:focus{border-color:var(--lime)}
+/* дата/время запланированного старта */
+#adsSchedAt{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font-size:14px;font-weight:600;font-family:var(--font-body);outline:none;margin:0 0 4px;color-scheme:dark}
+#adsSchedAt:focus{border-color:var(--lime)}
+:root[data-theme="light"] #adsSchedAt{color-scheme:light}
+/* строка скидки в прогнозе — акцентная */
+.ads-f-row.ads-f-disc b{color:var(--accent)}
+.ads-f-row.ads-f-disc span svg.i{color:var(--accent)}
 
 /* ===== биллинг sheet ===== */
 .ads-bill-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}

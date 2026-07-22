@@ -269,3 +269,102 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
 /* ---------- ГЛОБАЛЬНО: ничего не выпирает по горизонтали ---------- */
 img,video,canvas,svg{max-width:100%}
 .pad,.card,.sheet{overflow-wrap:anywhere}
+
+/* ============================================================
+   UI-CHROME · FLAGSHIP-ПОЛИРОВКА ХАБА (super-app home) + splash
+   Только #screen-mini (мой хиро/плитки) и #splash. Все движения —
+   GPU/transform. Пауза: html.oko-scrolling (перф-слой) + .uic-hero-off
+   (хиро ушёл из вьюпорта, IntersectionObserver в script.js) + reduced-motion.
+   ============================================================ */
+
+/* ---------- ХИРО: диагональный блик-«свет» плавно скользит (WOW #1) ---------- */
+/* ::before свободен (base занимает только .ma-hero::after). z-index:1 — под текстом
+   (.ma-hero-txt z2), но над сеткой; screen-blend + низкая альфа не мешают читаемости. */
+#screen-mini .ma-hero::before{
+  content:'';position:absolute;top:-45%;left:0;width:40%;height:190%;z-index:1;
+  pointer-events:none;will-change:transform;
+  background:linear-gradient(105deg,transparent,rgba(154,255,0,.10) 42%,rgba(255,255,255,.16) 50%,rgba(154,255,0,.10) 58%,transparent);
+  mix-blend-mode:screen;transform:translateX(-160%) rotate(9deg);
+  animation:uicHeroSheen 7.5s cubic-bezier(.5,0,.3,1) infinite;
+}
+@keyframes uicHeroSheen{
+  0%{transform:translateX(-160%) rotate(9deg)}
+  48%,100%{transform:translateX(360%) rotate(9deg)}
+}
+
+/* ---------- ХИРО: параллакс-слои (WOW #2, управляется script.js) ---------- */
+/* JS кладёт --uic-lx/--uic-ly (глаз) и --uic-tx/--uic-ty (текст). Трансформ
+   аддитивен к позиции base (глаз позиционируется right/top; текст position:relative).
+   Свечение глаза в base анимирует только filter/opacity — конфликта нет. */
+#screen-mini .ma-hero-logo{
+  transform:translate(var(--uic-lx,0px),var(--uic-ly,0px));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+#screen-mini .ma-hero-txt{
+  transform:translate(var(--uic-tx,0px),var(--uic-ty,0px));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+/* хиро ушёл из вьюпорта или идёт скролл → замораживаем всё движение хиро */
+#screen-mini .ma-hero.uic-hero-off::before,
+html.oko-scrolling #screen-mini .ma-hero::before{animation-play-state:paused}
+
+/* ---------- ХИРО: баланс-чип премиальнее (сам чип принадлежит core-ext,
+   здесь только контекст хиро) ---------- */
+#screen-mini .ma-hero .balance-chip{
+  margin-top:11px;padding:7px 14px;
+  background:linear-gradient(135deg,rgba(154,255,0,.20),rgba(154,255,0,.08));
+  border:1px solid rgba(154,255,0,.28);
+  box-shadow:0 4px 16px rgba(0,0,0,.35),0 0 0 3px rgba(154,255,0,.05);
+  backdrop-filter:blur(3px);transition:transform .14s ease,box-shadow .2s ease;
+}
+#screen-mini .ma-hero .balance-chip:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(154,255,0,.22)}
+#screen-mini .ma-hero .balance-chip:active{transform:scale(.97)}
+
+/* ---------- ПЛИТКИ СЕРВИСОВ: чётче, глубже, живой ховер ---------- */
+/* тёмная: убираем «мутность», добавляем rim-light сверху и чистый градиент */
+#screen-mini .svc-ic{
+  background:linear-gradient(158deg,#1d3510 0%,#0b1205 76%);
+  border-color:rgba(154,255,0,.15);
+  box-shadow:0 10px 22px rgba(0,0,0,.5),0 1px 0 rgba(154,255,0,.12) inset;
+}
+#screen-mini .svc-ic::before{background:radial-gradient(circle at 50% 20%,rgba(154,255,0,.24),transparent 68%)}
+#screen-mini .svc:hover .svc-ic{
+  transform:translateY(-3px);
+  box-shadow:0 16px 30px rgba(0,0,0,.55),0 0 0 1px rgba(154,255,0,.42),0 6px 22px rgba(154,255,0,.20);
+}
+#screen-mini .svc:active .svc-ic{transform:scale(.93)}
+/* светлая: аккуратная глубина вместо плоской заливки */
+:root[data-theme="light"] #screen-mini .svc-ic{
+  background:linear-gradient(158deg,#ecfcd6,#d7f2b2);
+  border-color:rgba(110,200,0,.30);
+  box-shadow:0 6px 16px rgba(60,90,20,.12),0 1px 0 rgba(255,255,255,.65) inset;
+}
+:root[data-theme="light"] #screen-mini .svc:hover .svc-ic{
+  transform:translateY(-3px);
+  box-shadow:0 12px 24px rgba(60,90,20,.18),0 0 0 1px rgba(110,200,0,.4);
+}
+/* ПОДПИСИ: максимум 2 строки, аккуратный перенос, без обрезки букв и переполнения */
+#screen-mini .svc-label{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;hyphens:auto;
+}
+
+/* ---------- SPLASH: добавляем расходящееся кольцо к halo (тактичный reveal) ---------- */
+/* base: #splash .eye — filter+splashBlink; ui-chrome ::after — halo; ::before свободен */
+#splash .eye::before{
+  content:'';position:absolute;inset:-8%;border-radius:50%;
+  border:1.5px solid rgba(154,255,0,.5);pointer-events:none;will-change:transform,opacity;
+  animation:uicSplashRing 2.6s ease-out infinite;animation-delay:.4s;
+}
+@keyframes uicSplashRing{
+  0%{transform:scale(.7);opacity:0}
+  18%{opacity:.75}
+  70%,100%{transform:scale(1.55);opacity:0}
+}
+
+/* ---------- reduced-motion: гасим всё добавленное движение ---------- */
+@media(prefers-reduced-motion:reduce){
+  #screen-mini .ma-hero::before{animation:none;opacity:.5}
+  #screen-mini .ma-hero-logo,#screen-mini .ma-hero-txt{transition:none;transform:none}
+  #splash .eye::before{animation:none;opacity:0}
+}

@@ -33,7 +33,7 @@
 .ch-card:active{transform:scale(.985)}
 .ch-av{width:52px;height:52px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
   font:800 21px/1 var(--font-display);letter-spacing:.02em;color:#0a0a0a;position:relative;overflow:hidden}
-.ch-av svg.i{width:26px;height:26px;color:#0a0a0a}
+.ch-av svg.i{width:26px;height:26px;color:inherit}
 .ch-av.mini{width:40px;height:40px;border-radius:12px;font-size:16px}
 .ch-av.big{width:84px;height:84px;border-radius:24px;font-size:34px}
 .ch-av .ch-avlock{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;border-radius:50%;
@@ -149,7 +149,8 @@
 .ch-post-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .ch-post-h .ch-av.mini{border-radius:11px}
 .ch-post-h b{font-size:13px;font-weight:700}
-.ch-post-h small{color:var(--dim);font-size:11px;margin-left:auto}
+.ch-post-h b.ch-ph-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-post-h small{color:var(--dim);font-size:11px;margin-left:auto;flex-shrink:0;padding-left:8px}
 .ch-post-txt{font-size:13.5px;line-height:1.55;color:var(--text)}
 .ch-post-media{margin-top:10px;border-radius:var(--r-sm);height:150px;display:flex;align-items:center;justify-content:center;
   color:var(--lime);position:relative;overflow:hidden}

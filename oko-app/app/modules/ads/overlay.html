@@ -1,6 +1,6 @@
 <!-- ADS: создание кампании (4 шага) -->
 <div class="sheet" id="sheet-ads-create">
-  <h3>Новая кампания</h3>
+  <h3 id="adsSheetTitle">Новая кампания</h3>
   <div class="ads-steps" id="adsSteps"><i class="on"></i><i></i><i></i><i></i></div>
 
   <!-- ШАГ 1: формат -->
@@ -147,18 +147,34 @@
       <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
     </div>
 
+    <label class="ads-lbl">Старт кампании</label>
+    <div class="ads-chips" id="adsStartChips">
+      <button class="ads-chip on" data-v="now" onclick="adsPickStart(this)"><svg class="i"><use href="#i-rocket"/></svg>Сейчас</button>
+      <button class="ads-chip" data-v="sched" onclick="adsPickStart(this)"><svg class="i"><use href="#i-clock"/></svg>Запланировать</button>
+    </div>
+    <input type="datetime-local" id="adsSchedAt" style="display:none">
+
+    <label class="ads-lbl">Темп открутки <span class="ads-lbl-hint" id="adsPaceHint"></span></label>
+    <div class="ads-chips" id="adsPaceChips">
+      <button class="ads-chip on" data-v="0" onclick="adsPickPace(this)">Максимум</button>
+      <button class="ads-chip" data-v="3" onclick="adsPickPace(this)">3 дня</button>
+      <button class="ads-chip" data-v="7" onclick="adsPickPace(this)">7 дней</button>
+      <button class="ads-chip" data-v="14" onclick="adsPickPace(this)">14 дней</button>
+    </div>
+
     <div class="card ads-forecast">
       <div class="ads-f-head"><svg class="i"><use href="#i-poll"/></svg>Прогноз кампании</div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-money"/></svg>Цена клика (CPC)</span><b id="adsFCpc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Цена 1000 показов (CPM)</span><b id="adsFCpm">—</b></div>
+      <div class="ads-f-row ads-f-disc" id="adsFDiscRow" style="display:none"><span><svg class="i"><use href="#i-fire"/></svg>Скидка тарифа</span><b id="adsFDisc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
     </div>
     <div class="ads-balance" id="adsBalanceNote"></div>
     <div class="ads-nav">
       <button class="btn ghost" onclick="adsStep(3)">Назад</button>
-      <button class="btn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg>Запустить</button>
+      <button class="btn" id="adsLaunchBtn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg><span>Запустить</span></button>
     </div>
   </div>
 </div>

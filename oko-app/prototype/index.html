@@ -1451,6 +1451,62 @@ main>.screen{position:relative;z-index:1}
 .wal-st-sig span{display:block;font-size:10px;color:#556;margin-top:4px}
 .wal-st-note{font-size:9.5px;color:#98a;max-width:50%;line-height:1.55;text-align:right}
 
+/* ===== WOW: вспышка-свечение баланса при пополнении/выводе (одноразовая, cheap) ===== */
+@keyframes walFlashIn{0%{box-shadow:0 0 0 0 rgba(154,255,0,0)}22%{box-shadow:0 0 34px 4px rgba(154,255,0,.55)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0)}}
+@keyframes walFlashOut{0%{box-shadow:0 0 0 0 rgba(255,77,77,0)}22%{box-shadow:0 0 30px 3px rgba(255,77,77,.42)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
+.wal-hero.wal-flash-in{animation:walFlashIn .85s ease}
+.wal-hero.wal-flash-out{animation:walFlashOut .85s ease}
+@media (prefers-reduced-motion:reduce){.wal-hero.wal-flash-in,.wal-hero.wal-flash-out{animation:none}}
+
+/* ===== ДЕТАЛИ ОПЕРАЦИИ (bottom-sheet) ===== */
+.wal-tx{animation:fade .25s ease}
+.wal-tx-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:4px 0 6px}
+.wal-tx-ic{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;margin-bottom:13px;animation:walPop .4s cubic-bezier(.3,1.5,.5,1) both}
+.wal-tx-ic.in{background:var(--lime-dim);color:var(--accent)}
+.wal-tx-ic.out{background:rgba(255,77,77,.12);color:var(--danger)}
+.wal-tx-ic svg.i{width:27px;height:27px}
+.wal-tx-sum{font-family:var(--font-display);font-size:40px;line-height:1;letter-spacing:.02em}
+.wal-tx-sum.in{color:var(--accent)}
+.wal-tx-sum.out{color:var(--text)}
+.wal-tx-why{font-size:14px;font-weight:600;margin-top:10px;line-height:1.35;max-width:280px}
+.wal-tx-status{display:inline-flex;align-items:center;gap:6px;margin-top:11px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 12px}
+.wal-tx-status svg.i{width:13px;height:13px}
+.wal-tx-rows{margin-top:18px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);overflow:hidden}
+.wal-tx-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.wal-tx-row:last-child{border-bottom:none}
+.wal-tx-row>span{color:var(--dim);flex-shrink:0;font-weight:600}
+.wal-tx-row>b{font-weight:700;text-align:right;min-width:0;overflow-wrap:anywhere}
+.wal-tx-row .wal-tx-cat{display:inline-flex;align-items:center;gap:7px}
+.wal-tx-row .wal-tx-cat svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+.wal-tx-id{display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--accent);letter-spacing:.02em}
+.wal-tx-id svg.i{width:13px;height:13px;flex-shrink:0}
+.wal-tx-acts{display:flex;gap:9px;margin-top:15px}
+.wal-tx-acts button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 6px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;transition:transform .12s}
+.wal-tx-acts button:active{transform:scale(.96)}
+.wal-tx-acts .prim{background:var(--lime);color:#000}
+.wal-tx-acts .prim:first-child{box-shadow:var(--glow)}
+.wal-tx-acts .sec{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.wal-tx-acts button svg.i{width:16px;height:16px}
+
+/* ===== TON CONNECT (подключение кошелька — surface для пополнения и вывода) ===== */
+.wal-ton-connect{display:flex;align-items:center;gap:11px;width:100%;margin-top:12px;padding:13px 14px;border-radius:var(--r-md);text-align:left;background:linear-gradient(135deg,rgba(0,136,204,.16),rgba(154,255,0,.06));border:1px solid rgba(0,136,204,.4);transition:transform .12s,border-color .18s}
+.wal-ton-connect:active{transform:scale(.985)}
+.wal-ton-connect:hover{border-color:#0098EA}
+.wal-ton-connect>svg.i:first-child{width:26px;height:26px;color:#0098EA;flex-shrink:0}
+.wal-ton-connect span{flex:1;min-width:0}
+.wal-ton-connect b{display:block;font-size:13.5px}
+.wal-ton-connect em{display:block;font-style:normal;font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.4}
+.wal-ton-connect>svg.i:last-child{width:15px;height:15px;color:var(--dim);flex-shrink:0}
+.wal-ton-conn{display:flex;align-items:center;gap:11px;margin-top:12px;padding:12px 14px;border-radius:var(--r-md);background:var(--raised);border:1px solid rgba(0,152,234,.45)}
+.wal-ton-badge{width:38px;height:38px;border-radius:11px;background:rgba(0,152,234,.14);color:#0098EA;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-ton-badge svg.i{width:20px;height:20px}
+.wal-ton-b{flex:1;min-width:0}
+.wal-ton-b b{display:flex;align-items:center;gap:6px;font-size:13px}
+.wal-ton-b b::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px rgba(154,255,0,.7)}
+.wal-ton-b span{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--dim);margin-top:3px}
+.wal-ton-x{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--danger);background:rgba(255,77,77,.1);border-radius:99px;padding:7px 12px;transition:transform .12s}
+.wal-ton-x:active{transform:scale(.94)}
+
 /* ===== module: games ===== */
 /* ===== GAMES: Рулетка OKO — единая призовая рулетка (префикс gm-) =====
    Тема-переменные: тёмная = премиум-стол, светлая = светлый премиум-стол
@@ -2133,6 +2189,9 @@ main>.screen{position:relative;z-index:1}
 .ads-st.pause{color:#4da6ff;background:rgba(77,166,255,.12);border-color:rgba(77,166,255,.3)}
 .ads-st.rej{color:var(--danger);background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.3)}
 .ads-st.done{color:#b48cff;background:rgba(180,140,255,.12);border-color:rgba(180,140,255,.3)}
+.ads-st.sched{color:#3ad0c0;background:rgba(58,208,192,.12);border-color:rgba(58,208,192,.32)}
+.ads-st.sched::before{animation:adsPulse 1.8s infinite}
+:root[data-theme="light"] .ads-st.sched{color:#0f9c8d;background:rgba(58,208,192,.16)}
 
 .ads-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
 .ads-m{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 6px;text-align:center}
@@ -2168,6 +2227,36 @@ main>.screen{position:relative;z-index:1}
 .ads-camp-acts2 .btn.sm.dup{color:var(--dim);border-style:dashed}
 .ads-camp-acts2 .btn.sm.dup:hover{color:var(--accent);border-color:rgba(154,255,0,.45)}
 .ads-camp-acts2 .btn.sm.dup svg.i{width:14px;height:14px}
+.ads-camp-acts2.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ads-camp-acts2.two .btn.sm{width:100%}
+
+/* тарифная скидка на рекламу / апселл */
+.ads-tier{display:flex;align-items:center;gap:11px;border-radius:var(--r-md);padding:12px 13px;margin:0 0 14px;line-height:1.35;animation:fade .3s ease both}
+.ads-tier:empty{display:none}
+.ads-tier.on{background:radial-gradient(140% 160% at 0% 0%,rgba(154,255,0,.16),transparent 62%),var(--surface);border:1px solid rgba(154,255,0,.34)}
+.ads-tier.up{background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:border-color .18s,transform .12s}
+.ads-tier.up:active{transform:scale(.99)}
+@media(hover:hover){.ads-tier.up:hover{border-color:rgba(154,255,0,.4)}}
+.ads-tier-ic{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.ads-tier-ic svg.i{width:19px;height:19px}
+.ads-tier.on .ads-tier-ic svg.i{animation:adsBolt 2.4s ease-in-out infinite}
+.ads-tier-mid{flex:1;min-width:0}
+.ads-tier-mid b{display:block;font-size:13px;font-weight:700;color:var(--text)}
+.ads-tier-mid small{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.ads-tier-cta{flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;color:var(--accent)}
+.ads-tier-cta svg.i{width:13px;height:13px}
+
+/* бейдж скидки на карточке кампании */
+.ads-disc-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;letter-spacing:.03em;color:#000;background:var(--lime);border:1px solid var(--lime);border-radius:99px;padding:3px 8px 3px 7px}
+.ads-disc-badge svg.i{width:11px;height:11px;stroke:currentColor}
+.ads-model-badge svg.i{width:11px;height:11px;margin-right:3px;vertical-align:-1px}
+
+/* строка запланированного старта */
+.ads-sched-line{display:flex;align-items:center;gap:7px;font-size:11px;color:#3ad0c0;background:rgba(58,208,192,.09);border:1px solid rgba(58,208,192,.22);border-radius:var(--r-sm);padding:8px 10px;margin:0 0 9px;line-height:1.35}
+.ads-sched-line svg.i{width:13px;height:13px;flex-shrink:0}
+.ads-sched-line b{color:var(--text);font-weight:700}
+:root[data-theme="light"] .ads-sched-line{color:#0f9c8d}
+:root[data-theme="light"] .ads-sched-line b{color:var(--text)}
 
 /* ===== воронка конверсии ===== */
 .ads-fn{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px 12px;margin-top:8px}
@@ -2396,6 +2485,13 @@ main>.screen{position:relative;z-index:1}
 .ads-bid-scale span:nth-child(2){color:var(--accent)}
 #adsInpBid,#adsInpBudget{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:15px;font-weight:700;font-family:var(--font-body);outline:none;margin:10px 0 2px}
 #adsInpBid:focus,#adsInpBudget:focus{border-color:var(--lime)}
+/* дата/время запланированного старта */
+#adsSchedAt{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font-size:14px;font-weight:600;font-family:var(--font-body);outline:none;margin:0 0 4px;color-scheme:dark}
+#adsSchedAt:focus{border-color:var(--lime)}
+:root[data-theme="light"] #adsSchedAt{color-scheme:light}
+/* строка скидки в прогнозе — акцентная */
+.ads-f-row.ads-f-disc b{color:var(--accent)}
+.ads-f-row.ads-f-disc span svg.i{color:var(--accent)}
 
 /* ===== биллинг sheet ===== */
 .ads-bill-sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
@@ -4466,6 +4562,13 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .sp-sw:hover{transform:scale(1.08)}
 .sp-sw.on{border-color:var(--lime);transform:scale(1.14);box-shadow:var(--glow)}
 :root[data-theme="light"] .sp-sw.on{box-shadow:0 0 12px rgba(110,200,0,.4)}
+/* выбор бренд-стикера */
+.sp-ed-stickers{display:flex;gap:8px;justify-content:center;align-items:center;padding:0 16px 10px;flex-wrap:wrap}
+.sp-stk-pick{width:38px;height:38px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--dim);transition:transform .15s,border-color .15s,color .15s;flex-shrink:0}
+.sp-stk-pick:hover{transform:scale(1.08);border-color:var(--accent)}
+.sp-stk-pick.on{color:var(--accent);border-color:var(--lime);box-shadow:var(--glow)}
+:root[data-theme="light"] .sp-stk-pick.on{box-shadow:0 0 10px rgba(110,200,0,.35)}
+.sp-stk-pick svg.i{width:19px;height:19px}
 .sp-ed-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:0 16px 12px;flex-wrap:wrap}
 .sp-seg-group{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px;gap:2px}
 .sp-seg-group button{width:38px;height:32px;border-radius:99px;display:flex;align-items:center;justify-content:center;color:var(--dim);font-weight:800;transition:background .15s,color .15s}
@@ -4477,33 +4580,44 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .sp-stk-toggle svg.i{width:20px;height:20px}
 .sp-ed-pub{margin:0 16px calc(16px + env(safe-area-inset-bottom));padding:14px;font-size:15px}
 
-/* ---------- вьювер: прогресс-сегменты мультисторис ---------- */
-/* и одиночный бар ядра: держим фон-колонку сторис как «телефон» по центру на широких экранах */
-#storyViewer .sv-bar,.sp-bars{left:50%;right:auto;transform:translateX(-50%);width:min(calc(100% - 32px),460px)}
-.sp-bars{position:absolute;top:10px;display:flex;gap:5px;z-index:3;pointer-events:none}
-#storyViewer.sp-multi > .sv-bar{display:none}
+/* ---------- вьювер: прогресс-сегменты (всегда через модуль → transform-based) ---------- */
+/* бар ядра гасим — модуль рисует свой сегментный бар для любого числа историй */
+#storyViewer .sv-bar{display:none}
+.sp-bars{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:min(calc(100% - 32px),460px);display:flex;gap:5px;z-index:3;pointer-events:none}
 .sp-seg{flex:1;height:16px;display:flex;align-items:center;cursor:pointer;background:none;padding:0;pointer-events:auto}
 .sp-seg i{display:block;width:100%;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
-.sp-seg i b{display:block;height:100%;width:0;background:#9AFF00;border-radius:2px}
-.sp-seg.done i b{width:100%}
-.sp-seg.act i b{animation:svbar 4s linear forwards}
+/* заливка — transform:scaleX (не layout): плавно и без reflow */
+.sp-seg i b{display:block;height:100%;width:100%;background:#9AFF00;border-radius:2px;transform:scaleX(0);transform-origin:left center;will-change:transform}
+.sp-seg.done i b{transform:scaleX(1)}
+.sp-seg.act i b{animation:spFill var(--sp-dur,4s) linear forwards}
+@keyframes spFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 #storyViewer.sp-paused .sp-seg.act i b{animation-play-state:paused}
-#storyViewer.sp-paused .sv-bar i{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.sp-seg.act i b{animation-duration:.01s}}
 
-/* ---------- вьювер: низ (счётчик просмотров / реакции) ---------- */
-.sp-foot{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:3;pointer-events:none}
+/* ---------- вьювер: низ (строка ответа + реакции / счётчик просмотров) ---------- */
+.sp-foot{position:absolute;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));display:flex;justify-content:center;z-index:3;pointer-events:none;padding:0 14px}
 .sp-eye{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:99px;padding:9px 16px;font-size:13.5px;font-weight:700;backdrop-filter:blur(6px);pointer-events:auto;transition:transform .15s,border-color .15s;animation:spPop .25s ease}
 .sp-eye:hover{border-color:#9AFF00}
 .sp-eye:active{transform:scale(.95)}
 .sp-eye svg.i{width:17px;height:17px;color:#9AFF00}
 .sp-eye svg.i:last-child{width:13px;height:13px;color:#bbb;transform:rotate(90deg)}
-.sp-reacts{display:flex;gap:14px;pointer-events:auto}
-.sp-react{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s;animation:spPop .25s ease}
+/* строка ответа + быстрые реакции (чужие сторис) */
+.sp-foot-bar{display:flex;align-items:center;gap:10px;width:min(100%,460px);pointer-events:auto;animation:spPop .25s ease}
+.sp-reply{flex:1;display:flex;align-items:center;gap:6px;min-width:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:4px 4px 4px 16px;backdrop-filter:blur(8px);transition:border-color .18s,box-shadow .18s}
+.sp-reply:focus-within{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.4)}
+.sp-reply-in{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-size:14px;font-family:var(--font-body);padding:8px 0}
+.sp-reply-in::placeholder{color:rgba(255,255,255,.6)}
+.sp-reply-send{width:36px;height:36px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#0b1400;background:#9AFF00;transition:transform .15s,opacity .15s}
+.sp-reply-send:active{transform:scale(.9)}
+.sp-reply-send svg.i{width:17px;height:17px}
+.sp-reacts{display:flex;gap:8px;pointer-events:auto;flex-shrink:0}
+.sp-react{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s}
 .sp-react:hover{border-color:#9AFF00}
 .sp-react:active{transform:scale(1.18)}
 .sp-react.on{background:rgba(154,255,0,.18);border-color:#9AFF00;color:#9AFF00}
-.sp-react svg.i{width:21px;height:21px}
-@media(prefers-reduced-motion:reduce){.sp-eye,.sp-react{animation:none}}
+.sp-react svg.i{width:20px;height:20px}
+@media(max-width:360px){.sp-react{width:40px;height:40px}.sp-reacts{gap:6px}}
+@media(prefers-reduced-motion:reduce){.sp-eye,.sp-foot-bar{animation:none}}
 
 /* летящая реакция */
 .sp-fly{position:fixed;z-index:79;color:#9AFF00;pointer-events:none;opacity:0;animation:spFly 1s ease-out forwards}
@@ -5780,6 +5894,105 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
 img,video,canvas,svg{max-width:100%}
 .pad,.card,.sheet{overflow-wrap:anywhere}
 
+/* ============================================================
+   UI-CHROME · FLAGSHIP-ПОЛИРОВКА ХАБА (super-app home) + splash
+   Только #screen-mini (мой хиро/плитки) и #splash. Все движения —
+   GPU/transform. Пауза: html.oko-scrolling (перф-слой) + .uic-hero-off
+   (хиро ушёл из вьюпорта, IntersectionObserver в script.js) + reduced-motion.
+   ============================================================ */
+
+/* ---------- ХИРО: диагональный блик-«свет» плавно скользит (WOW #1) ---------- */
+/* ::before свободен (base занимает только .ma-hero::after). z-index:1 — под текстом
+   (.ma-hero-txt z2), но над сеткой; screen-blend + низкая альфа не мешают читаемости. */
+#screen-mini .ma-hero::before{
+  content:'';position:absolute;top:-45%;left:0;width:40%;height:190%;z-index:1;
+  pointer-events:none;will-change:transform;
+  background:linear-gradient(105deg,transparent,rgba(154,255,0,.10) 42%,rgba(255,255,255,.16) 50%,rgba(154,255,0,.10) 58%,transparent);
+  mix-blend-mode:screen;transform:translateX(-160%) rotate(9deg);
+  animation:uicHeroSheen 7.5s cubic-bezier(.5,0,.3,1) infinite;
+}
+@keyframes uicHeroSheen{
+  0%{transform:translateX(-160%) rotate(9deg)}
+  48%,100%{transform:translateX(360%) rotate(9deg)}
+}
+
+/* ---------- ХИРО: параллакс-слои (WOW #2, управляется script.js) ---------- */
+/* JS кладёт --uic-lx/--uic-ly (глаз) и --uic-tx/--uic-ty (текст). Трансформ
+   аддитивен к позиции base (глаз позиционируется right/top; текст position:relative).
+   Свечение глаза в base анимирует только filter/opacity — конфликта нет. */
+#screen-mini .ma-hero-logo{
+  transform:translate(var(--uic-lx,0px),var(--uic-ly,0px));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+#screen-mini .ma-hero-txt{
+  transform:translate(var(--uic-tx,0px),var(--uic-ty,0px));
+  transition:transform .35s cubic-bezier(.2,.8,.2,1);
+}
+/* хиро ушёл из вьюпорта или идёт скролл → замораживаем всё движение хиро */
+#screen-mini .ma-hero.uic-hero-off::before,
+html.oko-scrolling #screen-mini .ma-hero::before{animation-play-state:paused}
+
+/* ---------- ХИРО: баланс-чип премиальнее (сам чип принадлежит core-ext,
+   здесь только контекст хиро) ---------- */
+#screen-mini .ma-hero .balance-chip{
+  margin-top:11px;padding:7px 14px;
+  background:linear-gradient(135deg,rgba(154,255,0,.20),rgba(154,255,0,.08));
+  border:1px solid rgba(154,255,0,.28);
+  box-shadow:0 4px 16px rgba(0,0,0,.35),0 0 0 3px rgba(154,255,0,.05);
+  backdrop-filter:blur(3px);transition:transform .14s ease,box-shadow .2s ease;
+}
+#screen-mini .ma-hero .balance-chip:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(154,255,0,.22)}
+#screen-mini .ma-hero .balance-chip:active{transform:scale(.97)}
+
+/* ---------- ПЛИТКИ СЕРВИСОВ: чётче, глубже, живой ховер ---------- */
+/* тёмная: убираем «мутность», добавляем rim-light сверху и чистый градиент */
+#screen-mini .svc-ic{
+  background:linear-gradient(158deg,#1d3510 0%,#0b1205 76%);
+  border-color:rgba(154,255,0,.15);
+  box-shadow:0 10px 22px rgba(0,0,0,.5),0 1px 0 rgba(154,255,0,.12) inset;
+}
+#screen-mini .svc-ic::before{background:radial-gradient(circle at 50% 20%,rgba(154,255,0,.24),transparent 68%)}
+#screen-mini .svc:hover .svc-ic{
+  transform:translateY(-3px);
+  box-shadow:0 16px 30px rgba(0,0,0,.55),0 0 0 1px rgba(154,255,0,.42),0 6px 22px rgba(154,255,0,.20);
+}
+#screen-mini .svc:active .svc-ic{transform:scale(.93)}
+/* светлая: аккуратная глубина вместо плоской заливки */
+:root[data-theme="light"] #screen-mini .svc-ic{
+  background:linear-gradient(158deg,#ecfcd6,#d7f2b2);
+  border-color:rgba(110,200,0,.30);
+  box-shadow:0 6px 16px rgba(60,90,20,.12),0 1px 0 rgba(255,255,255,.65) inset;
+}
+:root[data-theme="light"] #screen-mini .svc:hover .svc-ic{
+  transform:translateY(-3px);
+  box-shadow:0 12px 24px rgba(60,90,20,.18),0 0 0 1px rgba(110,200,0,.4);
+}
+/* ПОДПИСИ: максимум 2 строки, аккуратный перенос, без обрезки букв и переполнения */
+#screen-mini .svc-label{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;hyphens:auto;
+}
+
+/* ---------- SPLASH: добавляем расходящееся кольцо к halo (тактичный reveal) ---------- */
+/* base: #splash .eye — filter+splashBlink; ui-chrome ::after — halo; ::before свободен */
+#splash .eye::before{
+  content:'';position:absolute;inset:-8%;border-radius:50%;
+  border:1.5px solid rgba(154,255,0,.5);pointer-events:none;will-change:transform,opacity;
+  animation:uicSplashRing 2.6s ease-out infinite;animation-delay:.4s;
+}
+@keyframes uicSplashRing{
+  0%{transform:scale(.7);opacity:0}
+  18%{opacity:.75}
+  70%,100%{transform:scale(1.55);opacity:0}
+}
+
+/* ---------- reduced-motion: гасим всё добавленное движение ---------- */
+@media(prefers-reduced-motion:reduce){
+  #screen-mini .ma-hero::before{animation:none;opacity:.5}
+  #screen-mini .ma-hero-logo,#screen-mini .ma-hero-txt{transition:none;transform:none}
+  #splash .eye::before{animation:none;opacity:0}
+}
+
 /* ===== module: wow-eye ===== */
 /* ============ WOW-EYE · интерактивный стеклянный глаз OKO (экран входа) ============ */
 /* Прячем старый логотип со «кривым» свечением/морганием — заменяем своим ровным глазом.
@@ -6544,6 +6757,8 @@ html.oko-hidden *{ animation-play-state:paused !important; }
     </div>
     <div class="stat-grid ads-summary" id="adsSummary"></div>
 
+    <div class="ads-tier up" id="adsTier"></div>
+
     <button class="btn ads-create-btn" onclick="adsOpenCreate()"><svg class="i"><use href="#i-megaphone"/></svg>Создать кампанию</button>
     <div class="ads-quick" id="adsQuick">
       <button class="ads-quick-b" onclick="adsOpenBilling()"><svg class="i"><use href="#i-card"/></svg><span>Биллинг</span><em id="adsQuickSpent">0 ₽</em></button>
@@ -6768,6 +6983,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
 <div class="sheet" id="sheet-walTopup"><div id="walTopupView"></div></div>
 <div class="sheet" id="sheet-walWithdraw"><div id="walWdView"></div></div>
 <div class="sheet" id="sheet-walPin"><div id="walPinView"></div></div>
+<div class="sheet" id="sheet-walTx"><div id="walTxView"></div></div>
 
 <!-- КОШЕЛЁК: выписка по счёту (fullscreen-документ) -->
 <div class="wal-stmt" id="walStmt">
@@ -6802,7 +7018,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
 <!-- ===== module: ads ===== -->
 <!-- ADS: создание кампании (4 шага) -->
 <div class="sheet" id="sheet-ads-create">
-  <h3>Новая кампания</h3>
+  <h3 id="adsSheetTitle">Новая кампания</h3>
   <div class="ads-steps" id="adsSteps"><i class="on"></i><i></i><i></i><i></i></div>
 
   <!-- ШАГ 1: формат -->
@@ -6949,18 +7165,34 @@ html.oko-hidden *{ animation-play-state:paused !important; }
       <button class="ads-chip" onclick="adsSetBudget(5000)">5 000 ₽</button>
     </div>
 
+    <label class="ads-lbl">Старт кампании</label>
+    <div class="ads-chips" id="adsStartChips">
+      <button class="ads-chip on" data-v="now" onclick="adsPickStart(this)"><svg class="i"><use href="#i-rocket"/></svg>Сейчас</button>
+      <button class="ads-chip" data-v="sched" onclick="adsPickStart(this)"><svg class="i"><use href="#i-clock"/></svg>Запланировать</button>
+    </div>
+    <input type="datetime-local" id="adsSchedAt" style="display:none">
+
+    <label class="ads-lbl">Темп открутки <span class="ads-lbl-hint" id="adsPaceHint"></span></label>
+    <div class="ads-chips" id="adsPaceChips">
+      <button class="ads-chip on" data-v="0" onclick="adsPickPace(this)">Максимум</button>
+      <button class="ads-chip" data-v="3" onclick="adsPickPace(this)">3 дня</button>
+      <button class="ads-chip" data-v="7" onclick="adsPickPace(this)">7 дней</button>
+      <button class="ads-chip" data-v="14" onclick="adsPickPace(this)">14 дней</button>
+    </div>
+
     <div class="card ads-forecast">
       <div class="ads-f-head"><svg class="i"><use href="#i-poll"/></svg>Прогноз кампании</div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Показы</span><b id="adsFImps">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-bolt"/></svg>Клики (CTR 1–4%)</span><b id="adsFClicks">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-money"/></svg>Цена клика (CPC)</span><b id="adsFCpc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-eye"/></svg>Цена 1000 показов (CPM)</span><b id="adsFCpm">—</b></div>
+      <div class="ads-f-row ads-f-disc" id="adsFDiscRow" style="display:none"><span><svg class="i"><use href="#i-fire"/></svg>Скидка тарифа</span><b id="adsFDisc">—</b></div>
       <div class="ads-f-row"><span><svg class="i"><use href="#i-card"/></svg>Списание с лицевого счёта</span><b id="adsFCharge">—</b></div>
     </div>
     <div class="ads-balance" id="adsBalanceNote"></div>
     <div class="ads-nav">
       <button class="btn ghost" onclick="adsStep(3)">Назад</button>
-      <button class="btn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg>Запустить</button>
+      <button class="btn" id="adsLaunchBtn" onclick="adsLaunch()"><svg class="i"><use href="#i-rocket"/></svg><span>Запустить</span></button>
     </div>
   </div>
 </div>
@@ -7099,6 +7331,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
   <div class="sp-ed-tools">
     <div class="sp-ed-swatches" id="spEdSwatches"></div>
+    <div class="sp-ed-stickers" id="spEdStickers"></div>
     <div class="sp-ed-row">
       <div class="sp-seg-group" id="spEdSizes">
         <button data-v="s" onclick="spEdSize('s')" title="Мелкий текст"><span style="font-size:11px">А</span></button>
@@ -10533,13 +10766,14 @@ function walRenderLedger(){
     const rows = g.ops.map(op=>{
       const d = idx++; const dir = op.t==='+';
       return `
-      <div class="wal-op" style="animation-delay:${Math.min(d,12)*42}ms">
+      <div class="wal-op" role="button" tabindex="0" onclick="walOpenTx(${op.at})" style="animation-delay:${Math.min(d,12)*42}ms">
         <div class="wal-op-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg>${dir?badgeIn:badgeOut}</div>
         <div class="wal-op-b">
           <div class="wal-op-why">${esc(op.why)}</div>
           <div class="wal-op-t"><span class="wal-op-cat">${walCat(op.why)}</span> · ${walOpTime(op.at)}</div>
         </div>
         <div class="wal-op-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+        <svg class="i wal-op-chev"><use href="#i-chev"/></svg>
       </div>`;
     }).join('');
     return `<div class="wal-day">
@@ -10792,6 +11026,7 @@ function walTopReqHtml(m){
       <p class="wal-req-warn">Отправляй только USDT в сети TRC20 — перевод в другой сети будет потерян. Курс фиксируется в момент зачисления.</p>
     </div>`;
   if(m === 'ton') return `
+    ${walTonSurface('topup')}
     <div class="wal-req fade-in">
       <div class="wal-req-h">${I('ton')}<span>Адрес кошелька <b>TON</b></span></div>
       <button class="wal-addr" onclick="walCopy(WAL_TON_ADDR,'Адрес TON скопирован')"><span>${WAL_TON_ADDR}</span>${I('copy')}</button>
@@ -10847,6 +11082,7 @@ function walDoTopup(){
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
     renderWallet();
+    walFlash('in');
     toast('Кошелёк пополнен на ' + fmtMoney(s.sum));
   }, 1100);
 }
@@ -10868,6 +11104,7 @@ function walRenderWithdraw(){
     <p style="font-weight:600;font-size:13px;margin:2px 0 8px">Куда вывести</p>
     <div class="wal-methods">${WAL_METHODS.map(([k,l,ic])=>`
       <button class="wal-m ${s.method===k?'on':''}" onclick="walWdState.method='${k}';walRenderWithdraw()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+    ${s.method==='ton' ? walTonSurface('withdraw') : ''}
     <div class="wal-fee" id="walWdCalc"></div>
     <button class="btn" onclick="walDoWithdraw()"><svg class="i"><use href="#i-card"/></svg> <span id="walWdBtn">Вывести</span></button>
     <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Комиссия вывода 2%. Поступление 1–3 рабочих дня.${WAL_X.pin ? ' Защищено ПИН-кодом.' : ''}</p>`;
@@ -10887,6 +11124,7 @@ function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
   if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
+  if(s.method === 'ton' && !WAL_X.ton){ toast('Сначала подключи TON-кошелёк'); return; }
   const used = walWdUsedToday(), lim = walWdLimit();
   if(used + s.sum > lim){
     toast('Суточный лимит вывода ' + fmtMoney(lim) + ' (тариф ' + walTier() + ') — сегодня доступно ' + fmtMoney(Math.max(0, lim - used)) + '. Выше тариф — выше лимит.');
@@ -10914,6 +11152,7 @@ function walExecWithdraw(){
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet()">Готово</button></div>`;
     renderWallet();
+    walFlash('out');
     toast('Вывод ' + fmtMoney(s.sum) + ' оформлен');
   }, 900);
 }
@@ -11016,6 +11255,110 @@ function walDownloadStatement(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
   toast('Выписка сохранена: ' + name);
+}
+
+/* ---------- WOW: вспышка-свечение баланса при денежной операции ---------- */
+function walFlash(kind){
+  const h = document.querySelector('#screen-wallet .wal-hero');
+  if(!h) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(reduce) return;
+  h.classList.remove('wal-flash-in','wal-flash-out');
+  void h.offsetWidth;                       // рефлоу — рестарт анимации
+  h.classList.add(kind === 'out' ? 'wal-flash-out' : 'wal-flash-in');
+  setTimeout(()=>h.classList.remove('wal-flash-in','wal-flash-out'), 900);
+}
+
+/* ---------- TON CONNECT: подключение внешнего TON-кошелька (персист) ---------- */
+/* мок-адрес пользовательского кошелька (детерминированный от лицевого счёта) */
+function walTonMyAddr(){
+  let h = 2166136261; const seed = 'ton-' + WALLET.acc;
+  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  let s = '';
+  for(let i = 0; i < 34; i++){ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0;
+    s += 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz'[h % 56]; }
+  return 'UQ' + s;
+}
+function walTonReRender(){
+  const tv = document.getElementById('sheet-walTopup');
+  if(tv && tv.classList.contains('open')){ const r = document.getElementById('walTopReq'); if(r) r.innerHTML = walTopReqHtml(walTopupState.method); }
+  const wv = document.getElementById('sheet-walWithdraw');
+  if(wv && wv.classList.contains('open')) walRenderWithdraw();
+}
+function walTonConnect(){
+  const btn = event && event.currentTarget;
+  if(btn){ btn.innerHTML = '<span class="spin" style="width:20px;height:20px"></span><span><b>Подключаем…</b><em>TON Connect · подтверди в кошельке</em></span>'; }
+  setTimeout(()=>{
+    WAL_X.ton = walTonMyAddr(); walXSave();
+    walTonReRender();
+    toast('TON-кошелёк подключён');
+  }, 700);
+}
+function walTonDisconnect(){
+  WAL_X.ton = null; walXSave();
+  walTonReRender();
+  toast('TON-кошелёк отключён');
+}
+function walTonSurface(ctx){
+  if(WAL_X.ton){
+    const a = WAL_X.ton;
+    return `<div class="wal-ton-conn fade-in">
+      <div class="wal-ton-badge">${I('ton')}</div>
+      <div class="wal-ton-b"><b>TON-кошелёк подключён</b><span>${a.slice(0,6)}…${a.slice(-6)}</span></div>
+      <button class="wal-ton-x" onclick="walTonDisconnect()">Отключить</button>
+    </div>`;
+  }
+  const sub = ctx === 'withdraw' ? 'Нужен для вывода Toncoin — Tonkeeper · Wallet · MyTonWallet'
+                                 : 'Пополняй в один тап — Tonkeeper · Wallet · MyTonWallet';
+  return `<button class="wal-ton-connect fade-in" type="button" onclick="walTonConnect()">${I('ton')}<span><b>Подключить TON-кошелёк</b><em>${sub}</em></span>${I('chev')}</button>`;
+}
+
+/* ---------- ДЕТАЛИ ОПЕРАЦИИ (bottom-sheet, читает персист-леджер) ---------- */
+function walOpId(at){ return 'OP-' + Number(at).toString(36).toUpperCase().slice(-8).padStart(8,'0'); }
+function walBalanceAfter(op){
+  let after = WALLET.balance;
+  for(const o of WALLET.ledger){ if(o.at > op.at) after -= (o.t === '+' ? o.sum : -o.sum); }
+  return after;
+}
+let walTxCur = null;
+function walOpenTx(at){
+  const op = WALLET.ledger.find(o => o.at === at);
+  if(!op) return;
+  walTxCur = op;
+  walRenderTx(op);
+  openSheet('walTx');
+}
+function walRenderTx(op){
+  const box = document.getElementById('walTxView');
+  if(!box) return;
+  const dir = op.t === '+', cat = walCat(op.why), isTop = cat === 'Пополнение';
+  const after = walBalanceAfter(op);
+  box.innerHTML = `
+  <div class="wal-tx">
+    <div class="wal-tx-hero">
+      <div class="wal-tx-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg></div>
+      <div class="wal-tx-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
+      <div class="wal-tx-why">${esc(op.why)}</div>
+      <span class="wal-tx-status">${I('check')}Выполнено</span>
+    </div>
+    <div class="wal-tx-rows">
+      <div class="wal-tx-row"><span>Категория</span><b class="wal-tx-cat">${I(walCatIc(op.why))}${cat}</b></div>
+      <div class="wal-tx-row"><span>Тип</span><b class="${dir?'':'out'}" style="color:${dir?'var(--accent)':'var(--text)'}">${dir?'Пополнение':'Списание'}</b></div>
+      <div class="wal-tx-row"><span>Дата и время</span><b>${walDMYT(op.at)}</b></div>
+      <div class="wal-tx-row"><span>Баланс после</span><b>${fmtMoney(after)}</b></div>
+      <div class="wal-tx-row"><span>Номер операции</span><button class="wal-tx-id" onclick="walCopy('${walOpId(op.at)}','Номер операции скопирован')">${walOpId(op.at)}${I('copy')}</button></div>
+    </div>
+    <div class="wal-tx-acts">
+      ${isTop ? `<button class="prim" onclick="closeSheet();walOpenTopup(${op.sum})"><svg class="i"><use href="#i-plus"/></svg>Повторить</button>` : ''}
+      <button class="sec" onclick="walTxCopy()"><svg class="i"><use href="#i-copy"/></svg>Скопировать</button>
+    </div>
+  </div>`;
+}
+function walTxCopy(){
+  const op = walTxCur; if(!op) return;
+  const txt = 'OKO · операция ' + walOpId(op.at) + '\n' + (op.t==='+'?'+ ':'− ') + fmtMoney(op.sum) +
+    '\n' + op.why + '\n' + walCat(op.why) + ' · ' + walDMYT(op.at) + '\nСчёт ' + WALLET.acc;
+  walCopy(txt, 'Детали операции скопированы');
 }
 
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */
@@ -13944,11 +14287,30 @@ const ADS_LS = 'oko-ads';
 const ADS_POST_BASE = 9000;       /* id постов рекламы в ленте */
 const ADS_STATUS = {
   mod:  {l:'Модерация'},
+  sched:{l:'Запланирована'},
   act:  {l:'Активна'},
   pause:{l:'Пауза'},
   rej:  {l:'Отклонена'},
   done: {l:'Завершена'}
 };
+
+/* скидка на продвижение по тарифу подписки: выше тариф — дешевле реклама (до −30% на MAX).
+   Скидка = больше показов/кликов за тот же бюджет (ниже стоимость результата), сам бюджет не режется. */
+function adsDisc(){
+  if(typeof okoHasSub!=='function') return 0;
+  if(okoHasSub('MAX'))      return 0.30;
+  if(okoHasSub('BUSINESS')) return 0.20;
+  if(okoHasSub('PRO'))      return 0.10;
+  return 0;
+}
+function adsTierLabel(){
+  if(typeof okoHasSub!=='function') return 'FREE';
+  if(okoHasSub('MAX'))      return 'MAX';
+  if(okoHasSub('BUSINESS')) return 'BUSINESS';
+  if(okoHasSub('PRO'))      return 'PRO';
+  if(okoHasSub('START'))    return 'START';
+  return 'FREE';
+}
 
 /* форматы рекламы: модель по умолчанию, базовые CPM/CPC, метка в ленте */
 const ADS_FORMATS = {
@@ -14062,6 +14424,11 @@ function adsMigrate(){
     if(!Array.isArray(c.devs)) c.devs = [];
     if(!Array.isArray(c.times)) c.times = [];
     if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
+    if(c.disc==null) c.disc = 0;                 /* скидка тарифа, зафиксированная при запуске */
+    if(c.pace==null) c.pace = 0;                 /* дней равномерной открутки (0 = максимум) */
+    if(c.dailyCap==null) c.dailyCap = 0;         /* дневной лимит бюджета, ₽ (0 = без лимита) */
+    if(c.spentToday==null) c.spentToday = 0;     /* потрачено сегодня (для дневного лимита) */
+    if(c.spentDay==null) c.spentDay = adsDayKey();
     if(!c.cvr) c.cvr = +(0.16 + Math.random()*0.18).toFixed(3);   /* доля кликов → целевое действие */
     if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
     if(c.demo && !c.media) c.media = adsBrandPoster(c);
@@ -14122,25 +14489,50 @@ function adsRenderSummary(){
   const qa = document.getElementById('adsQuickAud'); if(qa) qa.textContent = ADS.auds.length;
 }
 
+/* вторичный ряд: Изменить + Дублировать (двухколоночная сетка, не переполняет 390px) */
+function adsEditDup(c){
+  return `<div class="ads-camp-acts2 two">
+      <button class="btn sm ghost dup" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
+      <button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button></div>`;
+}
 function adsCampActs(c){
   if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
-  const dup = `<div class="ads-camp-acts2"><button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать кампанию</button></div>`;
+  if(c.status==='sched')return `<div class="ads-camp-acts">
+      <button class="btn sm" onclick="adsStartNow(${c.id})">${I('rocket')}Запустить сейчас</button>
+      <button class="btn sm ghost stop" onclick="adsCancelSched(${c.id})">${I('flag')}Отменить</button></div>`+adsEditDup(c);
   if(c.status==='act')  return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsTopup(${c.id})">${I('plus')}Пополнить</button>
       <button class="btn sm ghost" onclick="adsPause(${c.id})">${I('pause')}Пауза</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+adsEditDup(c);
   if(c.status==='pause')return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsResume(${c.id})">${I('play')}Возобновить</button>
       <button class="btn sm ghost" onclick="adsTopup(${c.id})">${I('plus')}Бюджет</button>
-      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+dup;
+      <button class="btn sm ghost stop" onclick="adsStop(${c.id})">${I('flag')}Стоп</button></div>`+adsEditDup(c);
   return `<div class="ads-camp-acts">
+      <button class="btn sm ghost" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
       <button class="btn sm ghost" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button>
       <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
 }
 
 function adsFmtBadge(c){
   const f = ADS_FORMATS[c.fmt] || ADS_FORMATS.post;
-  return `<span class="ads-fmt-badge">${I(f.ico)}${esc(f.l)}</span><span class="ads-model-badge">${c.model} · ${fmtN(c.bid)} ₽</span>`;
+  let out = `<span class="ads-fmt-badge">${I(f.ico)}${esc(f.l)}</span><span class="ads-model-badge">${c.model} · ${fmtN(c.bid)} ₽</span>`;
+  if(c.disc>0) out += `<span class="ads-disc-badge">${I('fire')}−${Math.round(c.disc*100)}%</span>`;
+  if(c.dailyCap>0) out += `<span class="ads-model-badge">${I('clock')}${fmtN(c.dailyCap)} ₽/день</span>`;
+  return out;
+}
+/* дата/время старта запланированной кампании + сколько осталось */
+function adsSchedLine(c){
+  const at = c.startTs || Date.now();
+  const d = new Date(at);
+  const dt = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+  const left = at - Date.now();
+  let rel = 'скоро';
+  if(left > 0){
+    const h = Math.floor(left/36e5), m = Math.round(left%36e5/6e4);
+    rel = h>=24 ? 'через '+Math.round(h/24)+' дн.' : h>=1 ? 'через '+h+' ч '+m+' мин' : 'через '+Math.max(1,m)+' мин';
+  }
+  return `<div class="ads-sched-line">${I('clock')}<span>Старт <b>${dt}</b> · ${rel}</span></div>`;
 }
 
 function adsRenderList(){
@@ -14156,6 +14548,7 @@ function adsRenderList(){
         <span class="ads-st ${c.status}">${ADS_STATUS[c.status].l}</span>
       </div>
       <div class="ads-camp-tags">${adsFmtBadge(c)}</div>
+      ${c.status==='sched' ? adsSchedLine(c) : ''}
       <div class="ads-camp-txt">${esc(c.text)}</div>
       <div class="ads-metrics">
         <div class="ads-m"><b data-m="imps">${fmtN(c.imps)}</b><span>показы</span></div>
@@ -14388,7 +14781,30 @@ function adsDrawSpark(c){
   x.fillStyle = '#9AFF00'; x.shadowColor = 'rgba(154,255,0,.8)'; x.shadowBlur = 6; x.fill();
 }
 
-function adsRender(){ adsRenderSummary(); adsRenderList(); }
+/* баннер тарифной скидки на рекламу (или апселл, если тариф низкий) */
+function adsRenderTier(){
+  const box = document.getElementById('adsTier'); if(!box) return;
+  const disc = adsDisc(), tier = adsTierLabel();
+  if(disc>0){
+    box.className = 'ads-tier on';
+    box.onclick = null; box.removeAttribute('role');
+    box.innerHTML = `<span class="ads-tier-ic">${I('fire')}</span>
+      <div class="ads-tier-mid"><b>Тариф ${tier} · −${Math.round(disc*100)}% на всю рекламу</b>
+        <small>Скидка уже применяется: за тот же бюджет — больше показов и кликов.</small></div>`;
+  }else{
+    box.className = 'ads-tier up';
+    box.onclick = adsTierUpsell; box.setAttribute('role','button');
+    box.innerHTML = `<span class="ads-tier-ic">${I('crown')}</span>
+      <div class="ads-tier-mid"><b>Реклама дешевле на высоких тарифах</b>
+        <small>PRO −10% · BUSINESS −20% · MAX −30% на стоимость показов и кликов.</small></div>
+      <span class="ads-tier-cta">Открыть${I('chev')}</span>`;
+  }
+}
+function adsTierUpsell(){
+  if(typeof okoRequireSub==='function') okoRequireSub('MAX','Реклама дешевле — до −30% на MAX');
+}
+
+function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); }
 
 function adsTickUI(){
   adsRenderSummary();
@@ -14413,8 +14829,39 @@ function adsTickUI(){
 
 /* ---------- создание кампании ---------- */
 let adsDraft = {};
+let adsEditId = 0;   /* 0 — создание новой; иначе id редактируемой кампании */
 function adsDraftReset(){
-  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[], ab:false, reach:0, media:null};
+  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[],
+    ab:false, reach:0, media:null, pace:0, start:'now', startAt:0};
+}
+/* темп открутки: 0 — максимум, N — равномерно за N дней (дневной лимит = бюджет/N) */
+function adsPickPace(btn){
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.pace = parseInt(btn.dataset.v,10) || 0;
+  adsCalcForecast();
+}
+/* старт: сейчас или запланировать на дату/время */
+function adsPickStart(btn){
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); adsDraft.start = btn.dataset.v;
+  const inp = document.getElementById('adsSchedAt');
+  if(inp){
+    inp.style.display = adsDraft.start==='sched' ? '' : 'none';
+    if(adsDraft.start==='sched' && !inp.value){
+      const t = new Date(Date.now()+864e5);        /* по умолчанию — завтра, ровный час */
+      t.setMinutes(0,0,0);
+      inp.value = new Date(t.getTime()-t.getTimezoneOffset()*6e4).toISOString().slice(0,16);
+    }
+  }
+  adsSyncLaunchBtn();
+}
+function adsLaunchLabel(){
+  if(adsEditId) return 'Сохранить';
+  return adsDraft.start==='sched' ? 'Запланировать' : 'Запустить';
+}
+function adsSyncLaunchBtn(){
+  const b = document.getElementById('adsLaunchBtn'); if(!b) return;
+  const s = b.querySelector('span'); if(s) s.textContent = adsLaunchLabel();
 }
 
 /* ---------- медиа креатива (фото / картинка / видео) ---------- */
@@ -14533,8 +14980,13 @@ function adsClearMedia(){
 
 function adsOpenCreate(){
   adsRevokeDraftMedia();
+  adsEditId = 0;
   adsDraftReset();
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания';
   ['adsInpTitle','adsInpText','adsInpLink','adsInpTitleB'].forEach(id=>{ const e = document.getElementById(id); if(e) e.value=''; });
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  const sa = document.getElementById('adsSchedAt'); if(sa){ sa.style.display='none'; sa.value=''; }
   const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.remove('on');
   const abInp = document.getElementById('adsInpTitleB'); if(abInp) abInp.style.display = 'none';
   document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
@@ -14548,6 +15000,7 @@ function adsOpenCreate(){
   adsRenderSaved();
   adsRenderMediaZone();
   adsSyncModelUI();
+  adsSyncLaunchBtn();
   adsStep(1); openSheet('ads-create');
 }
 
@@ -14796,20 +15249,30 @@ function adsCalcForecast(){
   const bid = Math.max(1, parseInt(document.getElementById('adsInpBid').value,10) || adsRecBid());
   adsBidBar();
   const ctrEst = 0.022 + (bid/adsRecBid()-1)*0.006;   /* выше ставка → чуть выше приоритет/CTR */
+  const disc = adsDisc();                             /* скидка тарифа → эффективная ставка ниже */
+  const effBid = Math.max(1, bid*(1-disc));           /* за тот же бюджет — больше показов/кликов */
   let imps, cLo, cHi, cpm;
   if(adsDraft.model==='CPC'){
-    const clicks = Math.round(b/bid);
+    const clicks = Math.round(b/effBid);
     imps = Math.round(clicks/Math.max(.008, ctrEst));
     cLo = Math.max(1, Math.round(clicks*.85)); cHi = Math.max(1, Math.round(clicks*1.15));
     cpm = imps ? b/imps*1000 : 0;
   }else{
-    imps = Math.round(b/bid*1000);
+    imps = Math.round(b/effBid*1000);
     cLo = Math.max(1, Math.round(imps*.01)); cHi = Math.max(1, Math.round(imps*.04));
-    cpm = bid;
+    cpm = imps ? b/imps*1000 : effBid;
   }
   if(adsDraft.reach){ const cap = Math.round(adsDraft.reach*2.5); if(imps>cap){ imps = cap; } }
   const cpc = ((cLo+cHi)/2) ? b/((cLo+cHi)/2) : 0;
   const set = (id,v)=>{ const e = document.getElementById(id); if(e) e.innerHTML = v; };
+  /* строка скидки тарифа + подсказка дневного лимита */
+  const discRow = document.getElementById('adsFDiscRow');
+  if(discRow){
+    discRow.style.display = disc>0 ? '' : 'none';
+    if(disc>0) set('adsFDisc', `−${Math.round(disc*100)}% · ${adsTierLabel()}`);
+  }
+  const paceHint = document.getElementById('adsPaceHint');
+  if(paceHint) paceHint.textContent = adsDraft.pace>0 ? '· ≈ '+fmtN(Math.max(1,Math.round(b/adsDraft.pace)))+' ₽/день' : '· без ограничения скорости';
   set('adsFImps',  imps ? `~ ${fmtN(Math.round(imps*.85))} – ${fmtN(Math.round(imps*1.15))}` : '—');
   set('adsFClicks',imps ? `~ ${fmtN(cLo)} – ${fmtN(cHi)}` : '—');
   set('adsFCpc',   cpc ? `~ ${cpc<10 ? cpc.toFixed(1) : fmtN(Math.round(cpc))} ₽` : '—');
@@ -14820,6 +15283,7 @@ function adsCalcForecast(){
 }
 
 function adsLaunch(){
+  if(adsEditId) return adsSaveEdit();
   const name = document.getElementById('adsInpTitle').value.trim();
   const text = document.getElementById('adsInpText').value.trim();
   let link  = document.getElementById('adsInpLink').value.trim();
@@ -14828,6 +15292,13 @@ function adsLaunch(){
   if(!name || !text){ adsStep(2); return; }
   if(budget < 100){ toast('Минимальный бюджет — 100 ₽'); return; }
   if(link && !/^https?:\/\//i.test(link)) link = 'https://'+link;
+  /* запланированный старт: дата/время из поля */
+  let startTs = 0, sched = false;
+  if(adsDraft.start==='sched'){
+    const raw = (document.getElementById('adsSchedAt')||{}).value;
+    const t = raw ? new Date(raw).getTime() : 0;
+    if(t && t > Date.now()+3e4){ startTs = t; sched = true; }
+  }
   if(!walletCharge(budget, 'Реклама: '+name)) return;
   okoEarn(budget, 'Рекламный кабинет');
   adsBill(budget, name, ADS_FORMATS[adsDraft.fmt].l);
@@ -14836,11 +15307,14 @@ function adsLaunch(){
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
     fmt: adsDraft.fmt, model: adsDraft.model, bid, ctrEst: Math.max(.008, ctrEst),
     cvr: +(0.16 + Math.random()*0.18).toFixed(3),
+    disc: adsDisc(), pace: adsDraft.pace||0, dailyCap: adsDraft.pace>0 ? Math.max(1,Math.round(budget/adsDraft.pace)) : 0,
+    spentToday: 0, spentDay: adsDayKey(),
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
     interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
     devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips'),
     media: adsDraft.media ? Object.assign({}, adsDraft.media) : null,
-    budget, spent: 0, imps: 0, clicks: 0, status: 'mod', hist: [], created: Date.now(),
+    budget, spent: 0, imps: 0, clicks: 0, status: sched ? 'sched' : 'mod', startTs,
+    hist: [], created: Date.now(),
     days: [...Array(7)].map(()=>({i:0,c:0})), dstamp: adsDayKey()
   };
   adsDraft.media = null;   /* креатив передан кампании — не отзываем blob-URL видео */
@@ -14848,8 +15322,54 @@ function adsLaunch(){
   if(tb) camp.ab = {tb, ka: .012+Math.random()*.025, kb: .012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}};
   ADS.camps.unshift(camp);
   adsSave(); closeSheet(); adsRender();
-  toast('Кампания отправлена на модерацию ИИ-агенту');
-  setTimeout(()=>adsModerate(camp.id), 3000);
+  if(sched){
+    toast('Кампания запланирована на '+new Date(startTs).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}));
+  }else{
+    toast('Кампания отправлена на модерацию ИИ-агенту');
+    setTimeout(()=>adsModerate(camp.id), 3000);
+  }
+}
+
+/* ---------- сохранение изменений существующей кампании ---------- */
+function adsSaveEdit(){
+  const c = ADS.camps.find(x=>x.id===adsEditId); if(!c){ adsEditId=0; closeSheet(); return; }
+  const name = document.getElementById('adsInpTitle').value.trim();
+  const text = document.getElementById('adsInpText').value.trim();
+  let link  = document.getElementById('adsInpLink').value.trim();
+  let budget = Math.max(0, parseInt(document.getElementById('adsInpBudget').value,10) || 0);
+  const bid = Math.max(1, parseInt(document.getElementById('adsInpBid').value,10) || adsRecBid());
+  if(!name || !text){ adsStep(2); return; }
+  if(budget < 100){ toast('Минимальный бюджет — 100 ₽'); return; }
+  if(link && !/^https?:\/\//i.test(link)) link = 'https://'+link;
+  /* бюджет не может быть ниже уже потраченного; разницу списываем/возвращаем на счёт */
+  if(budget < c.spent) budget = Math.ceil(c.spent);
+  const d = budget - c.budget;
+  if(d > 0){ if(!walletCharge(d, 'Изменение бюджета: '+name)) return; okoEarn(d,'Рекламный кабинет'); adsBill(d, name, 'Пополнение бюджета'); }
+  else if(d < 0){ walletAdd(-d, 'Возврат: бюджет кампании уменьшен — '+name); adsBill(d, name, 'Возврат бюджета'); }
+  /* применяем поля креатива и таргетинга */
+  c.name = name; c.text = text; c.cta = adsDraft.cta; c.link = link || '';
+  c.fmt = adsDraft.fmt; c.model = adsDraft.model; c.bid = bid;
+  c.ctrEst = Math.max(.008, 0.022 + (bid/adsRecBid()-1)*0.006);
+  c.sex = adsDraft.sex; c.geo = adsDraft.geo; c.cities = [...adsDraft.cities];
+  c.interests = adsPicked('adsIntChips'); c.ages = adsPicked('adsAgeChips');
+  c.devs = adsPicked('adsDevChips'); c.times = adsPicked('adsTimeChips');
+  c.budget = budget;
+  c.pace = adsDraft.pace||0; c.dailyCap = c.pace>0 ? Math.max(1,Math.round(budget/c.pace)) : 0;
+  if(adsDraft.media !== c.media){
+    if(c.media && c.media._obj && c.media.src){ try{ URL.revokeObjectURL(c.media.src); }catch(e){} }
+    c.media = adsDraft.media ? Object.assign({}, adsDraft.media) : null;
+    adsDraft.media = null;
+  }
+  const tb = adsDraft.ab ? (document.getElementById('adsInpTitleB').value.trim()) : '';
+  if(tb && c.ab){ c.ab.tb = tb; }
+  else if(tb && !c.ab){ c.ab = {tb, ka:.012+Math.random()*.025, kb:.012+Math.random()*.025, a:{i:0,c:0}, b:{i:0,c:0}}; }
+  else if(!adsDraft.ab){ c.ab = null; }
+  /* если завершённой кампании подняли бюджет — снова в открутку */
+  if(c.status==='done' && c.spent < c.budget){ c.status = 'act'; adsPushToFeed(c); }
+  adsSyncFeedPost(c);
+  adsEditId = 0;
+  adsSave(); closeSheet(); adsRender();
+  toast('Кампания обновлена');
 }
 
 /* ---------- ИИ-модерация ---------- */
@@ -14982,8 +15502,12 @@ function adsPrefillFromCamp(c){
     geo: ADS_CITIES[c.geo] || c.geo==='Весь мир' ? c.geo : 'РФ',
     cities: Array.isArray(c.cities) ? [...c.cities] : [],
     ab: !!c.ab, reach: 0,
+    pace: c.pace||0, start: 'now', startAt: 0,
     media: c.media ? Object.assign({}, c.media) : null
   };
+  document.querySelectorAll('#adsPaceChips .ads-chip').forEach(b=>b.classList.toggle('on', (parseInt(b.dataset.v,10)||0)===(c.pace||0)));
+  document.querySelectorAll('#adsStartChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  const sa = document.getElementById('adsSchedAt'); if(sa){ sa.style.display='none'; sa.value=''; }
   const setVal = (id,v)=>{ const e = document.getElementById(id); if(e) e.value = v==null?'':v; };
   setVal('adsInpTitle', c.name);
   setVal('adsInpText', c.text);
@@ -15018,17 +15542,75 @@ function adsPrefillFromCamp(c){
 }
 function adsDuplicate(id){
   const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsEditId = 0;
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания';
   adsPrefillFromCamp(c);
+  adsSyncLaunchBtn();
   adsStep(1);
   openSheet('ads-create');
   toast('Копия «'+c.name+'» — проверьте и запустите');
 }
 
+/* ---------- редактирование существующей кампании (тот же мастер) ---------- */
+function adsEdit(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  adsEditId = id;
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Редактирование';
+  adsPrefillFromCamp(c);
+  adsSyncLaunchBtn();
+  adsStep(2);   /* сразу к креативу — таргетинг/бюджет уже проставлены */
+  openSheet('ads-create');
+  toast('Редактирование «'+c.name+'»');
+}
+
+/* обновить пост объявления в ленте после правок (если он там есть) */
+function adsSyncFeedPost(c){
+  const pid = adsPostId(c.id);
+  const post = POSTS.rec.find(p=>p.id===pid);
+  if(!post) return;
+  const tag = (ADS_FORMATS[c.fmt]||ADS_FORMATS.post).tag;
+  post.sub = tag;
+  post.body = `<b>${esc(c.name)}</b><br>${esc(c.text)}${adsMediaHtml(c.media, 'ads-post-media')}<div class="ads-post-cta"><button onclick="event.stopPropagation();adsCtaClick(${c.id})">${esc(c.cta)} ${I('chev')}</button></div>`;
+  const feedOn = document.getElementById('screen-feed');
+  if(feedOn && feedOn.classList.contains('active') && typeof renderFeed==='function') renderFeed(curFeedKind);
+}
+
+/* ---------- запланированные кампании ---------- */
+function adsStartNow(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='sched') return;
+  c.status = 'mod'; c.startTs = 0;
+  adsSave(); adsRender();
+  toast('Кампания «'+c.name+'» отправлена на модерацию');
+  setTimeout(()=>adsModerate(id), 2000);
+}
+function adsCancelSched(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || c.status!=='sched') return;
+  showPopup({ico:'flag', title:'Отменить запуск?',
+    body:`«${esc(c.name)}» ещё не стартовала. Бюджет ${fmtMoney(c.budget)} вернётся на лицевой счёт.`,
+    actions:[
+      {label:'Отменить кампанию', onclick:()=>{
+        walletAdd(c.budget, 'Возврат: запуск рекламы отменён — '+c.name);
+        adsBill(-c.budget, c.name, 'Возврат (отмена запуска)');
+        ADS.camps = ADS.camps.filter(x=>x.id!==id);
+        adsSave(); adsRender(); toast('Запуск отменён, бюджет возвращён');
+      }},
+      {label:'Оставить', ghost:true}
+    ]});
+}
+
 /* ---------- живая статистика: тикер раз в 5 секунд ---------- */
 function adsTick(){
   let changed = false;
+  /* запланированные кампании: наступило время старта — на модерацию, затем в ленту */
+  const due = ADS.camps.filter(c=>c.status==='sched' && c.startTs && Date.now()>=c.startTs);
+  due.forEach(c=>{ c.status='mod'; c.startTs=0; adsModerate(c.id); });
+  if(due.length){ changed = true; adsSave(); if(document.getElementById('screen-ads').classList.contains('active')) adsRender(); }
   ADS.camps.forEach(c=>{
     if(c.status!=='act') return;
+    /* дневной лимит бюджета (равномерная открутка): сброс на новых сутках */
+    const dk = adsDayKey();
+    if(c.spentDay!==dk){ c.spentDay = dk; c.spentToday = 0; }
+    if(c.dailyCap>0 && c.spentToday>=c.dailyCap) return;   /* на сегодня открутка исчерпана */
     changed = true;
     const dImps = 70 + Math.floor(Math.random()*180);
     let dClicks;
@@ -15042,9 +15624,11 @@ function adsTick(){
       const ctr = c.ctrEst || 0.022;
       dClicks = Math.round(dImps*(ctr*(.6+Math.random()*.9)));
     }
-    const dSpend = c.model==='CPC' ? dClicks*c.bid : dImps/1000*adsCampCpm(c);
+    const gross = c.model==='CPC' ? dClicks*c.bid : dImps/1000*adsCampCpm(c);
+    const dSpend = gross * (1 - (c.disc||0));   /* скидка тарифа: тот же охват — дешевле */
     c.imps += dImps; c.clicks += dClicks;
     c.spent = Math.min(c.budget, c.spent + dSpend);
+    c.spentToday = (c.spentToday||0) + dSpend;
     c.hist.push(dImps); if(c.hist.length>24) c.hist.shift();
     adsRollDays(c); c.days[6].i += dImps; c.days[6].c += dClicks;
     const post = POSTS.rec.find(p=>p.id===adsPostId(c.id));
@@ -22574,20 +23158,25 @@ function psDecorateSub(){
 })();
 
 /* ===== module: stories-plus ===== */
-/* ===== STORIES-PLUS (sp-): сторис-редактор, просмотры, реакции, мультисторис =====
+/* ===== STORIES-PLUS (sp-): сторис уровня Instagram/Telegram =====
    base.html не тронут — только chain-патчи ядра (openStoryCreate / createTextStory /
-   addStory / showStory / closeStory / renderStories) + свои вьюхи из overlay.html.
-   1) Полноценный редактор текст-сторис: 6 бренд-градиентов свотчами, размер и
-      выравнивание текста, live-предпросмотр 9:16, стикер-глаз OKO по углам.
-   2) Просмотры своих сторис: счётчик-глаз в вьювере + шторка «кто посмотрел»
-      (мок-имена в духе демо-контента, список растёт со временем).
-   3) Быстрые реакции на чужие сторис (сердце/огонь/палец) с летящей анимацией.
-   4) Прогресс-сегменты мультисторис: у автора с >1 историей — полоски сверху с
-      тап-переключением; кружки в ленте группируются по автору (бейдж-счётчик). */
+   addStory / showStory / closeStory / renderStories / storyNav) + свои вьюхи из overlay.html.
 
-/* ---------- состояние (персист только настроек редактора) ---------- */
+   Возможности:
+   1) Вьювер: transform-based сегментные полоски (без layout), тап-переключение,
+      удержание-пауза, свайп между авторами, строка ответа, быстрые реакции,
+      счётчик просмотров, «кто посмотрел», состояние «просмотрено», закрытие.
+   2) Редактор: текст/фото, 6 бренд-градиентов, размер/выравнивание текста,
+      набор бренд-стикеров (SVG) с выбором и позицией, live-предпросмотр 9:16.
+   3) Персист своих текст-сторис в localStorage (переживают перезагрузку).
+   4) Кружки в ленте группируются по автору, бейдж-счётчик, состояние ring.
+
+   Тайминг слайда полностью на модуле (spTimer) — это даёт точную паузу-по-удержанию,
+   синхронную с CSS-анимацией полоски (класс sp-paused ставит animation-play-state). */
+
+/* ---------- состояние (персист настроек редактора + своих сторис) ---------- */
 const SP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-stories-plus'))||{}; }catch(e){ return {}; } })();
-SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br'}, SP.ed||{});
+SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br', stk:'logo'}, SP.ed||{});
 function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed})); }catch(e){} }
 
 /* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
@@ -22599,6 +23188,11 @@ const SP_BGS = [
   {bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)', fg:'#fff'},
   {bg:'linear-gradient(145deg,#1c1c1c 0%,#000 60%,#131f04 100%)',    fg:'#fff'},
 ];
+/* набор бренд-стикеров (существующие символы ядра) */
+const SP_STK = ['logo','star','fire','heart','bolt','crown'];
+
+/* длительность слайда, мс — единая точка для полоски и таймера */
+const SP_DUR = 4000;
 
 /* ---------- свои SVG-иконки выравнивания (штрих как у ядра) ---------- */
 (function spIcons(){
@@ -22652,6 +23246,7 @@ function spGroups(){
   });
   return groups;
 }
+function spGroupOf(idx){ return spGroups().find(x=>!x.add && x.idx.indexOf(idx) >= 0); }
 function spOpenGroup(keyEnc){
   const key = decodeURIComponent(keyEnc||'');
   const g = spGroups().find(x=>!x.add && x.key === key);
@@ -22678,7 +23273,7 @@ if(typeof renderStories === 'function'){
   };
 }
 
-/* ---------- декор вьювера: сегменты, счётчик, реакции, стили редактора ---------- */
+/* ---------- вьювер: элементы-декораторы + жесты ---------- */
 let spLastIdx = -1;
 
 function spViewerEls(){
@@ -22689,34 +23284,119 @@ function spViewerEls(){
     v.appendChild(bars);
     const foot = document.createElement('div'); foot.id = 'spFoot'; foot.className = 'sp-foot';
     v.appendChild(foot);
+    spBindGestures(v);          /* жесты вешаем один раз */
+    v.style.setProperty('--sp-dur', (SP_DUR/1000) + 's');
   }
   return {v, bars, foot: document.getElementById('spFoot')};
 }
 
+/* ---------- тайминг слайда с поддержкой паузы ---------- */
+let spTimer = null, spStart = 0, spRemain = SP_DUR, spPaused = false;
+function spStartTimer(){
+  clearTimeout(spTimer);
+  try{ clearTimeout(storyTimer); }catch(e){}   /* ядро тоже ставит таймер — гасим его */
+  spRemain = SP_DUR; spStart = Date.now(); spPaused = false;
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.remove('sp-paused');
+  spTimer = setTimeout(spAdvance, spRemain);
+}
+function spPause(){
+  if(spPaused) return; spPaused = true;
+  clearTimeout(spTimer);
+  spRemain = Math.max(0, spRemain - (Date.now() - spStart));
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.add('sp-paused');
+}
+function spResume(){
+  if(!spPaused) return; spPaused = false;
+  spStart = Date.now();
+  clearTimeout(spTimer);
+  spTimer = setTimeout(spAdvance, spRemain);
+  const v = document.getElementById('storyViewer');
+  if(v) v.classList.remove('sp-paused');
+}
+function spStopTimer(){ clearTimeout(spTimer); spPaused = false; }
+function spAdvance(){ if(typeof nextStory === 'function') nextStory(); }
+
+/* ---------- жесты: тап-переключение / удержание-пауза / свайп по авторам ---------- */
+let spReplyLock = false;   /* строка ответа в фокусе — жесты и авто-листание стоят */
+function spBindGestures(v){
+  let sx=0, sy=0, downT=0, hold=null, isHold=false, moved=false, navHandled=false;
+  const inUI = (t)=> !!(t && t.closest && t.closest('.sp-foot, .sv-close, #spBars'));
+
+  v.addEventListener('pointerdown', (e)=>{
+    if(spReplyLock || inUI(e.target)) return;
+    sx = e.clientX; sy = e.clientY; downT = Date.now();
+    isHold = false; moved = false; navHandled = false;
+    clearTimeout(hold);
+    hold = setTimeout(()=>{ isHold = true; spPause(); }, 250);   /* удержание → пауза */
+  });
+  v.addEventListener('pointermove', (e)=>{
+    if(!downT) return;
+    if(Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10){ moved = true; clearTimeout(hold); }
+  });
+  const finish = (e)=>{
+    if(!downT) return;
+    clearTimeout(hold);
+    const dt = Date.now() - downT, dx = e.clientX - sx, dy = e.clientY - sy;
+    downT = 0;
+    if(spReplyLock || inUI(e.target)) return;
+    if(isHold){ spResume(); navHandled = true; return; }
+    if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3){   /* свайп → смена автора */
+      navHandled = true;
+      if(dx < 0) spNextAuthor(); else spPrevAuthor();
+      return;
+    }
+    if(dt < 350 && !moved){                                       /* тап → prev/next история */
+      navHandled = true;
+      if(e.clientX < window.innerWidth * 0.32){ if(typeof prevStory === 'function') prevStory(); }
+      else { if(typeof nextStory === 'function') nextStory(); }
+    }
+  };
+  v.addEventListener('pointerup', finish);
+  v.addEventListener('pointercancel', ()=>{ clearTimeout(hold); if(isHold) spResume(); downT = 0; });
+  /* гасим клик ядра (onclick=storyNav) — навигацию делаем сами в pointerup */
+  v.addEventListener('click', (e)=>{ if(navHandled){ navHandled = false; e.stopPropagation(); } }, true);
+}
+
+function spNextAuthor(){
+  const g = spGroupOf(curStory); if(!g) return;
+  const groups = spGroups().filter(x=>!x.add);
+  const pos = groups.indexOf(g);
+  const nx = groups[pos + 1];
+  if(nx){ const t = nx.idx.find(i=>!STORIES[i].seen); curStory = (t===undefined?nx.idx[0]:t); showStory(); }
+  else if(typeof closeStory === 'function') closeStory();
+}
+function spPrevAuthor(){
+  const g = spGroupOf(curStory); if(!g) return;
+  const groups = spGroups().filter(x=>!x.add);
+  const pos = groups.indexOf(g);
+  const pv = groups[pos - 1];
+  if(pv){ curStory = pv.idx[0]; showStory(); }
+  else { curStory = g.idx[0]; showStory(); }   /* уже первый автор — рестарт */
+}
+
+/* ---------- декор вьювера: сегменты, низ (ответ/реакции/просмотры), стили ---------- */
 function spDecorate(){
   const els = spViewerEls(); if(!els) return;
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
-  if(!st || st.add) return;
-  els.v.classList.remove('sp-paused');
+  if(!st || st.add){ spStopTimer(); return; }
 
-  /* 4. прогресс-сегменты мультисторис (у автора >1 истории) */
-  const g = spGroups().find(x=>!x.add && x.key === spKey(st));
-  if(g && g.idx.length > 1){
-    els.v.classList.add('sp-multi');
-    const cur = g.idx.indexOf(curStory);
-    els.bars.innerHTML = g.idx.map((idx, k)=>
-      `<button class="sp-seg ${k < cur ? 'done' : k === cur ? 'act' : ''}" onclick="spJump(${idx},event)" title="История ${k+1}"><i><b></b></i></button>`).join('');
-  } else {
-    els.v.classList.remove('sp-multi');
-    els.bars.innerHTML = '';
-  }
+  /* сегментные полоски автора (всегда через модуль → transform-based) */
+  const g = spGroupOf(curStory);
+  const seg = g ? g.idx : [curStory];
+  const cur = seg.indexOf(curStory);
+  els.v.classList.toggle('sp-multi', seg.length > 1);
+  els.bars.innerHTML = seg.map((idx, k)=>
+    `<button class="sp-seg ${k < cur ? 'done' : k === cur ? 'act' : ''}" onclick="spJump(${idx},event)" title="История ${k+1}"><i><b></b></i></button>`).join('');
+
   /* дожать «просмотрено» на сгруппированном кружке */
   if(g){
     const ring = document.getElementById('story-'+g.idx[0]);
     if(ring && g.idx.every(i=>STORIES[i].seen)) ring.classList.add('seen');
   }
 
-  /* 1. стили из редактора: цвет текста, размер, выравнивание, стикер */
+  /* стили из редактора: цвет текста, размер, выравнивание, стикер */
   const card = document.getElementById('svCard');
   if(card){
     card.style.color = (st.sp && st.sp.fg) ? st.sp.fg : '';
@@ -22732,20 +23412,28 @@ function spDecorate(){
       const tm = card.querySelector('.sv-time');
       if(tm && st.sp.fg){ tm.style.color = st.sp.fg; tm.style.opacity = '.62'; }
       if(st.sp.sticker && !card.querySelector('.sp-sticker'))
-        card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I('logo')}</div>`);
+        card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I(st.sp.stk||'logo')}</div>`);
     }
   }
 
-  /* 2/3. низ вьювера: свои — счётчик глаз, чужие — быстрые реакции */
+  /* низ вьювера: свои — счётчик глаз; чужие — строка ответа + быстрые реакции */
   const grow = spLastIdx !== curStory;
   spLastIdx = curStory;
   if(st.my){
     const n = spEnsureViews(st, grow);
     els.foot.innerHTML = `<button class="sp-eye" onclick="spOpenViewers(event)">${I('eye')}<span>${n}</span>${I('chev')}</button>`;
   } else {
-    els.foot.innerHTML = `<div class="sp-reacts">` + ['heart','fire','thumb'].map(ic=>
-      `<button class="sp-react ${st.spReacted===ic?'on':''}" onclick="spReact('${ic}',event)" title="Отправить реакцию">${I(ic)}</button>`).join('') + `</div>`;
+    els.foot.innerHTML = `<div class="sp-foot-bar">
+      <form class="sp-reply" onsubmit="return spSendReply(event)">
+        <input id="spReplyIn" class="sp-reply-in" placeholder="Ответить ${esc((st.name||'').split(' ')[0]||'автору')}…" autocomplete="off" onfocus="spReplyFocus()" onblur="spReplyBlur()">
+        <button type="submit" class="sp-reply-send" title="Отправить">${I('send')}</button>
+      </form>
+      <div class="sp-reacts">` + ['heart','fire','thumb'].map(ic=>
+        `<button class="sp-react ${st.spReacted===ic?'on':''}" onclick="spReact('${ic}',event)" title="Реакция">${I(ic)}</button>`).join('') + `</div>
+    </div>`;
   }
+
+  spStartTimer();   /* запускаем слайд под управлением модуля */
 }
 
 function spJump(idx, ev){
@@ -22754,7 +23442,21 @@ function spJump(idx, ev){
   curStory = idx; showStory();
 }
 
-/* 3. реакция на чужую сторис: подсветка + летящая анимация + тост */
+/* ---------- строка ответа ---------- */
+function spReplyFocus(){ spReplyLock = true; spPause(); }
+function spReplyBlur(){ spReplyLock = false; spResume(); }
+function spSendReply(ev){
+  if(ev) ev.preventDefault();
+  const inp = document.getElementById('spReplyIn');
+  const val = inp ? inp.value.trim() : '';
+  if(!val){ if(inp) inp.blur(); return false; }
+  if(inp){ inp.value = ''; inp.blur(); }
+  if(typeof toast === 'function') toast('Ответ отправлен');
+  spFlyBurst(document.querySelector('.sp-reply-send'), 'heart', 3);
+  return false;
+}
+
+/* ---------- реакция на чужую сторис: подсветка + летящая анимация + тост ---------- */
 function spReact(ic, ev){
   if(ev) ev.stopPropagation();
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
@@ -22763,26 +23465,29 @@ function spReact(ic, ev){
   document.querySelectorAll('#spFoot .sp-react').forEach(b=>b.classList.remove('on'));
   const btn = ev && ev.currentTarget;
   if(btn) btn.classList.add('on');
-  if(btn && !matchMedia('(prefers-reduced-motion: reduce)').matches){
-    const r = btn.getBoundingClientRect();
-    for(let k = 0; k < 5; k++){
-      const f = document.createElement('div');
-      f.className = 'sp-fly';
-      f.style.left = (r.left + r.width/2 - 13 + (Math.random()*28 - 14)) + 'px';
-      f.style.top = (r.top - 8) + 'px';
-      f.style.setProperty('--dx', (Math.random()*76 - 38) + 'px');
-      f.style.animationDelay = (k*90) + 'ms';
-      f.style.animationDuration = (0.85 + Math.random()*0.5) + 's';
-      f.innerHTML = I(ic, 'fill');
-      document.body.appendChild(f);
-      f.addEventListener('animationend', ()=>f.remove());
-      setTimeout(()=>f.remove(), 2400); /* страховка */
-    }
+  spFlyBurst(btn, ic, 5);
+  if(typeof toast === 'function') toast('Реакция отправлена');
+}
+/* летящие частицы от кнопки (реакция / ответ) */
+function spFlyBurst(btn, ic, count){
+  if(!btn || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const r = btn.getBoundingClientRect();
+  for(let k = 0; k < count; k++){
+    const f = document.createElement('div');
+    f.className = 'sp-fly';
+    f.style.left = (r.left + r.width/2 - 13 + (Math.random()*28 - 14)) + 'px';
+    f.style.top = (r.top - 8) + 'px';
+    f.style.setProperty('--dx', (Math.random()*76 - 38) + 'px');
+    f.style.animationDelay = (k*90) + 'ms';
+    f.style.animationDuration = (0.85 + Math.random()*0.5) + 's';
+    f.innerHTML = I(ic, 'fill');
+    document.body.appendChild(f);
+    f.addEventListener('animationend', ()=>f.remove());
+    setTimeout(()=>f.remove(), 2400); /* страховка */
   }
-  toast('Реакция отправлена');
 }
 
-/* 2. шторка «кто посмотрел» (сторис на паузе, поверх вьювера) */
+/* ---------- шторка «кто посмотрел» (сторис на паузе, поверх вьювера) ---------- */
 function spOpenViewers(ev){
   if(ev) ev.stopPropagation();
   const st = typeof STORIES !== 'undefined' && STORIES[curStory];
@@ -22800,9 +23505,7 @@ function spOpenViewers(ev){
     </div>`;
   }).join('') : '<div class="sp-vw-empty">Пока никто не посмотрел</div>';
   wrap.classList.add('open');
-  try{ clearTimeout(storyTimer); }catch(e){}
-  const v = document.getElementById('storyViewer');
-  if(v) v.classList.add('sp-paused');
+  spPause();
   if(typeof nvPush === 'function') nvPush('view:sp-viewers', spCloseViewers);
 }
 function spCloseViewers(){
@@ -22811,10 +23514,10 @@ function spCloseViewers(){
   wrap.classList.remove('open');
   if(typeof nvPop === 'function') nvPop('view:sp-viewers');
   const v = document.getElementById('storyViewer');
-  if(v && v.classList.contains('open')) showStory(); /* продолжить текущий слайд заново */
+  if(v && v.classList.contains('open')) spResume();
 }
 
-/* ---------- 1. редактор текст-сторис ---------- */
+/* ---------- редактор текст-сторис ---------- */
 function spOpenEditor(){
   const ed = document.getElementById('spEditor'); if(!ed) return;
   const txt = document.getElementById('spEdText');
@@ -22837,11 +23540,20 @@ function spEdApply(){
   card.style.color = cfg.fg;
   card.className = 'sp-ed-card sp-sz-' + SP.ed.size + ' sp-al-' + SP.ed.align + (SP.ed.sticker ? ' sp-stk' : '');
   const stk = document.getElementById('spEdSticker');
-  if(stk) stk.className = 'sp-ed-sticker sp-pos-' + (SP.ed.pos || 'br');
+  if(stk){
+    stk.className = 'sp-ed-sticker sp-pos-' + (SP.ed.pos || 'br');
+    stk.innerHTML = `<svg class="i"><use href="#i-${SP.ed.stk||'logo'}"/></svg>`;
+  }
+  /* свотчи фонов (одноразовая отрисовка) */
   const sw = document.getElementById('spEdSwatches');
   if(sw && !sw.children.length)
     sw.innerHTML = SP_BGS.map((b, i)=>`<button class="sp-sw" style="background:${b.bg}" onclick="spEdBg(${i})" title="Фон ${i+1}"></button>`).join('');
   if(sw) Array.from(sw.children).forEach((b, i)=>b.classList.toggle('on', i === SP.ed.bg));
+  /* выбор стикера (одноразовая отрисовка) */
+  const sk = document.getElementById('spEdStickers');
+  if(sk && !sk.children.length)
+    sk.innerHTML = SP_STK.map(id=>`<button class="sp-stk-pick" data-v="${id}" onclick="spPickSticker('${id}')" title="Стикер"><svg class="i"><use href="#i-${id}"/></svg></button>`).join('');
+  if(sk) Array.from(sk.children).forEach(b=>b.classList.toggle('on', SP.ed.sticker && b.dataset.v === SP.ed.stk));
   document.querySelectorAll('#spEdSizes button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.size));
   document.querySelectorAll('#spEdAligns button').forEach(b=>b.classList.toggle('on', b.dataset.v === SP.ed.align));
   const tb = document.getElementById('spEdStkBtn');
@@ -22851,6 +23563,7 @@ function spEdBg(i){ SP.ed.bg = i; spSave(); spEdApply(); }
 function spEdSize(v){ SP.ed.size = v; spSave(); spEdApply(); }
 function spEdAlign(v){ SP.ed.align = v; spSave(); spEdApply(); }
 function spToggleSticker(){ SP.ed.sticker = !SP.ed.sticker; spSave(); spEdApply(); }
+function spPickSticker(id){ SP.ed.stk = id; SP.ed.sticker = true; spSave(); spEdApply(); }
 function spCycleSticker(ev){
   if(ev) ev.stopPropagation();
   const order = ['br','bl','tl','tr'];
@@ -22866,16 +23579,40 @@ function spEdSync(){
 function spPickPhoto(){
   spEdSync();
   const inp = document.getElementById('storyPhotoInput');
-  if(inp) inp.click(); else toast('Фото недоступно');
+  if(inp) inp.click(); else if(typeof toast === 'function') toast('Фото недоступно');
 }
 function spPublish(){
   const el = document.getElementById('spEdText');
   const txt = (el ? el.innerText : '').replace(/\s+/g,' ').trim();
-  if(!txt){ toast('Напиши текст истории'); return; }
+  if(!txt){ if(typeof toast === 'function') toast('Напиши текст истории'); return; }
   if(typeof addStory !== 'function') return;
   const cfg = SP_BGS[SP.ed.bg] || SP_BGS[1];
   addStory({text:txt, bg:cfg.bg,
-    sp:{size:SP.ed.size, align:SP.ed.align, sticker:!!SP.ed.sticker, pos:SP.ed.pos, fg:cfg.fg}});
+    sp:{size:SP.ed.size, align:SP.ed.align, sticker:!!SP.ed.sticker, pos:SP.ed.pos, stk:SP.ed.stk, fg:cfg.fg}});
+}
+
+/* ---------- персист своих текст-сторис ---------- */
+const SP_STORE = 'oko-sp-mystories';
+function spPersist(){
+  try{
+    if(typeof STORIES === 'undefined') return;
+    const mine = STORIES.filter(s=> s.my && !s.spRestored && (!s.src || String(s.src).startsWith('data:')))
+      .map(s=>({text:s.text||'', bg:s.bg||'', src:(s.src&&String(s.src).startsWith('data:'))?s.src:'', sp:s.sp||null, ts:s.spTs||Date.now()}))
+      .slice(0, 12);
+    localStorage.setItem(SP_STORE, JSON.stringify(mine));
+  }catch(e){}
+}
+function spRestore(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(SP_STORE) || '[]');
+    if(!Array.isArray(saved) || !saved.length || typeof STORIES === 'undefined') return;
+    const nm = (typeof PROFILE !== 'undefined' && PROFILE.name) ? PROFILE.name : 'Ты';
+    /* восстанавливаем в исходном порядке (новые — ближе к началу) */
+    saved.slice().reverse().forEach(d=>{
+      STORIES.splice(1, 0, {my:true, spRestored:true, spTs:d.ts, name:nm, ava:nm[0],
+        text:d.text, bg:d.bg||undefined, src:d.src||undefined, sp:d.sp||undefined});
+    });
+  }catch(e){}
 }
 
 /* ---------- chain-патчи ядра ---------- */
@@ -22897,7 +23634,9 @@ if(typeof createTextStory === 'function'){
 if(typeof addStory === 'function'){
   const _spPrevAddStory = addStory;
   addStory = function(data){
-    _spPrevAddStory(data);   /* splice + closeSheet + renderStories (уже сгруппированный) + toast */
+    _spPrevAddStory(data);   /* splice + closeSheet + renderStories (сгруппированный) + toast */
+    try{ if(STORIES[1] && STORIES[1].my) STORIES[1].spTs = Date.now(); }catch(e){}
+    spPersist();
     spCloseEditor();
   };
 }
@@ -22911,8 +23650,9 @@ if(typeof showStory === 'function'){
 if(typeof closeStory === 'function'){
   const _spPrevCloseStory = closeStory;
   closeStory = function(){
+    spStopTimer();
     _spPrevCloseStory();
-    spLastIdx = -1;
+    spLastIdx = -1; spReplyLock = false;
     const wrap = document.getElementById('spVwWrap');
     if(wrap && wrap.classList.contains('open')){
       wrap.classList.remove('open');
@@ -22929,9 +23669,9 @@ function spSeed(){
     if(i >= 0) STORIES.splice(i + 1, 0, story);
   };
   put('OKO', {spSeed:true, avaIcon:'logo', name:'OKO',
-    text:'Сторис-редактор уже здесь: градиенты бренда, размер текста и стикер-глаз. Жми плюс в ленте.',
+    text:'Сторис-редактор уже здесь: градиенты бренда, размер текста и стикеры. Жми плюс в ленте.',
     bg:'linear-gradient(160deg,#050505 0%,#101010 45%,#2c5000 100%)',
-    sp:{size:'m', align:'center', sticker:true, pos:'br', fg:'#fff'}});
+    sp:{size:'m', align:'center', sticker:true, pos:'br', stk:'logo', fg:'#fff'}});
   put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
     text:'Вторая часть кейса кофейни: до и после цветокора. Исходник против финала — разница в один вечер работы.',
     bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'});
@@ -22941,6 +23681,7 @@ function spSeed(){
 (function spInit(){
   try{
     spSeed();
+    spRestore();
     if(typeof renderStories === 'function' && document.getElementById('storiesRow')) renderStories();
     spEdApply(); /* свотчи и состояние контролов готовы до первого открытия */
   }catch(e){ console.warn('stories-plus init:', e); }
@@ -25475,9 +26216,28 @@ const CH_BGS = [
   'linear-gradient(135deg,#26004d,#12002b)',
   'linear-gradient(135deg,#4d2600,#1a0d00)',
 ];
-const CH_AV_BGS = [   // фон аватара под индекс фона (контрастный лайм/светлый)
+const CH_AV_BGS = [   // legacy: плоские цвета аватара (оставлены для совместимости, НЕ используются в рендере)
   '#9AFF00','#e8e8e8','#9AFF00','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#9AFF00','#b98cff','#ff9a3c'
 ];
+/* Процедурные фирменные аватары: только чёрный + лайм/зелёное семейство (никаких off-brand цветов).
+   g — градиент-фон, c — цвет глифа/буквы (контраст под фон). Индекс = bg канала или хэш ника. */
+const CH_AV_GRADS = [
+  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a'}, // яркий лайм
+  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00'}, // графит · лайм-глиф
+  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a'}, // лайм → тёмно-зелёный
+  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00'}, // бледный лайм
+  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00'}, // глубокий зелёный/чёрный
+  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf'}, // средний зелёный
+  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00'}, // чёрный · лайм-глиф
+  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a'}, // мягкий лайм
+  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a'}, // тёмная олива
+  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0'}, // зелёный · почти белый глиф
+];
+/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник) */
+function chAvGrad(i){ return CH_AV_GRADS[((+i||0)%CH_AV_GRADS.length+CH_AV_GRADS.length)%CH_AV_GRADS.length]; }
+function chHashIdx(s){ s=String(s||'x'); let h=0; for(let k=0;k<s.length;k++) h=(h*31+s.charCodeAt(k))|0; return Math.abs(h)%CH_AV_GRADS.length; }
+function chAvGradStyle(i){ const g=chAvGrad(i); return `background:${g.g};color:${g.c}`; }
+function chAvSeedStyle(s){ const g=CH_AV_GRADS[chHashIdx(s)]; return `background:${g.g};color:${g.c}`; }
 const CH_ICONS = ['megaphone','bolt','fire','rocket','star','crown','globe','compass'];
 
 /* ---------- состояние ---------- */
@@ -25560,15 +26320,19 @@ function chSeed(){
         {txt:'Созвон с командой в пятницу 19:00 МСК. Разберём дорожную карту и ответим на вопросы.', likes:0, views:0, when:'вчера'},
       ]},
   ];
-  return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
+  return { v:2, seq:0, pseq:0, mine, disc, sub:{}, prog:{}, likes:{}, cmt:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
 CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{}; CH.notify = CH.notify||{};
+CH.cmt = CH.cmt||{}; CH.pseq = CH.pseq||0;   // cmt: комментарии по стабильному id поста; pseq: счётчик id постов
+/* стабильный id поста (не зависит от позиции в массиве — лайки/голоса/комменты не «съезжают» после публикации) */
+function chPostId(p){ if(p && !p.id){ p.id = 'p'+(++CH.pseq); } return p ? p.id : ''; }
+function chEnsurePostIds(c){ (c&&c.posts||[]).forEach(chPostId); }
 /* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
 (function chMigrate(){
   try{
-    (CH.mine||[]).forEach(chNormalize);
-    (CH.disc||[]).forEach(chNormalize);
+    (CH.mine||[]).forEach(c=>{ chNormalize(c); chEnsurePostIds(c); });
+    (CH.disc||[]).forEach(c=>{ chNormalize(c); chEnsurePostIds(c); });
     if((CH.v||1) < 2){
       // добавляем витринные примеры новых осей, если их ещё нет
       const seed = chSeed();
@@ -25632,6 +26396,13 @@ function chAccessLine(c){
   else parts.push(chPaid(c)?('Платно '+c.price+' ₽'+chPriceUnit(c)):'Бесплатно');
   return parts.join(' · ');
 }
+/* компактная подпись для строк-настроек (без слова «Платно» — цена и так его подразумевает),
+   чтобы значение помещалось на 390px без обрезки */
+function chAccessLineShort(c){
+  const access = c.access==='closed'?'Закрытый':'Открытый';
+  if(c.kind==='course') return 'Курс · '+(chPaid(c)?c.price+' ₽':'бесплатно');
+  return access+' · '+(chPaid(c)?(c.price+' ₽'+chPriceUnit(c)):'бесплатно');
+}
 /* SVG-бейджи для карточки/витрины */
 function chBadges(c){
   let h='';
@@ -25643,16 +26414,13 @@ function chBadges(c){
   return h;
 }
 function chAvStyle(c){ return `background:${CH_BGS[c.bg||0]};`; }
-function chAvColor(c){ return CH_AV_BGS[c.bg||0]==='#0a0a0a' ? 'color:#9AFF00' : ''; }
 function chAvInner(c,cls,lock){
   const lk = lock ? `<span class="ch-avlock">${chI('lock')}</span>` : '';
   if(c.avatar){
     return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}">${lk}</div>`;
   }
-  const style = `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}`;
-  const dark = (CH_AV_BGS[c.bg||0]==='#0a0a0a');
   const content = c.icon ? chI(c.icon) : chEsc((c.name[0]||'K').toUpperCase());
-  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}${lk}</div>`;
+  return `<div class="ch-av ${cls||''}" style="${chAvGradStyle(c.bg||0)}">${content}${lk}</div>`;
 }
 function chCourseProg(c){
   if(c.kind!=='course' || !c.lessons) return 0;
@@ -25694,7 +26462,8 @@ function chSlowLabel(s){ s=+s||0; return s===0?'выкл':(s<60?s+' сек':(s/6
 function chWhoPostLabel(c){ return c.whoPost==='subs'?'Все подписчики':'Только админы'; }
 function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='subs'?'Подписчики':'Только админы'; }
 function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
-function chPublicLink(c){ return 'oko.app/'+chNick(c); }
+/* публичная ссылка канала — реальный домен OKO в стиле @id */
+function chPublicLink(c){ return 'okoteam.top/@'+chNick(c); }
 
 /* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
 window.chTgl = function(id, key, el){
@@ -25992,7 +26761,7 @@ function chPageCreate(){
 
     <label class="ch-lab">Обложка / фон</label>
     <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[d.bg]}">
-      <div class="ch-ap-ava" style="background:${CH_AV_BGS[d.bg]||'#9AFF00'}${CH_AV_BGS[d.bg]==='#0a0a0a'?';color:#9AFF00':''}">${d.useIcon?chI(d.icon):(d.name[0]||'K').toUpperCase()}</div>
+      <div class="ch-ap-ava" style="${chAvGradStyle(d.bg)}">${d.useIcon?chI(d.icon):chEsc((d.name[0]||'K').toUpperCase())}</div>
       <div class="ch-ap-name">${chEsc(d.name||'Новый канал')}</div>
     </div>
     <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
@@ -26182,6 +26951,8 @@ function chPageChannel(id){
       </div>`;
     }).join('');
   } else {
+    chEnsurePostIds(c);
+    if(!mine) chCountViews(c);   // просмотры тикают, когда пост читает подписчик (раз за сессию)
     html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
     const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
       : `<div class="ch-empty">Постов пока нет</div>`;
@@ -26193,26 +26964,73 @@ function chPageChannel(id){
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
   return {title:c.name, html, tools};
 }
+/* ---- просмотры: считаем один раз за сессию на каждый пост, читаемый подписчиком ---- */
+const chViewed = {};   // pid -> true (в пределах сессии)
+function chCountViews(c){
+  let ch=false;
+  (c.posts||[]).forEach(p=>{ const pid=chPostId(p); if(pid && !chViewed[pid]){ chViewed[pid]=true; p.views=(p.views||0)+1; ch=true; } });
+  if(ch) chSave();
+}
 function chPostHtml(c,p,i){
-  const liked = !!(CH.likes[c.id]&&CH.likes[c.id][i]);
+  const pid = chPostId(p);
+  const liked = !!CH.likes[pid];
   const likes = (p.likes||0)+(liked?1:0);
+  const cmts = CH.cmt[pid]||[];
+  const open = !!chOpenCmt[pid];
   return `<div class="ch-post">
-    <div class="ch-post-h">${chAvInner(c,'mini')}<b>${chEsc(c.name)}</b><small>${p.when||''}</small></div>
+    <div class="ch-post-h">${chAvInner(c,'mini')}<b class="ch-ph-name">${chEsc(c.name)}</b><small>${chEsc(p.when||'')}</small></div>
     <div class="ch-post-txt">${chEsc(p.txt)}</div>
     ${p.img?`<div class="ch-post-media photo" style="background-image:url(${p.img})"></div>`
       :p.media==='poll'?chPollHtml(c,p,i)
       :p.media?`<div class="ch-post-media" style="background:${CH_BGS[c.bg||0]}">${chI(p.media)}${p.media==='circle-play'?'<span class="ch-pm-dur">видео</span>':''}</div>`:''}
     <div class="ch-post-acts">
-      ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}',${i})">${chI('heart')}${likes}</button>`:''}
-      ${c.discussions?`<button onclick="toast('Обсуждения включены — комментарии подключатся с бэкендом')">${chI('comment')}Обсудить</button>`:''}
+      ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}','${pid}')" aria-label="Нравится">${chI('heart')}${likes}</button>`:''}
+      ${c.discussions?`<button class="${open?'on':''}" onclick="chToggleCmt('${c.id}','${pid}')" aria-label="Комментарии">${chI('comment')}${cmts.length||'Обсудить'}</button>`:''}
       <span class="ch-views">${chI('eye')}${chFmtN(p.views||0)}</span>
+    </div>
+    ${c.discussions&&open?chCommentsHtml(c,pid,cmts):''}
+  </div>`;
+}
+/* блок комментариев под постом (живой: пишем, лайкаем, сохраняется) */
+function chCommentsHtml(c,pid,cmts){
+  const rows = cmts.length ? cmts.map((m,k)=>{
+    const clk = !!(m.likedBy);
+    return `<div class="ch-cmt">
+      <div class="ch-cmt-av" style="${chAvSeedStyle(m.nick||m.name)}">${chEsc((m.name[0]||'U').toUpperCase())}</div>
+      <div class="ch-cmt-b">
+        <div class="ch-cmt-top"><b>${chEsc(m.name)}</b><small>${chEsc(m.when||'')}</small></div>
+        <div class="ch-cmt-txt">${chEsc(m.txt)}</div>
+      </div>
+      <button class="ch-cmt-like ${clk?'on':''}" onclick="chCmtLike('${c.id}','${pid}',${k})" aria-label="Нравится">${chI('heart')}<span>${(m.likes||0)+(clk?1:0)||''}</span></button>
+    </div>`;
+  }).join('') : `<div class="ch-cmt-empty">Комментариев пока нет — будь первым.</div>`;
+  return `<div class="ch-comments">
+    <div class="ch-cmt-list">${rows}</div>
+    <div class="ch-cmt-form">
+      <input class="ch-cmt-input" id="chCmt_${pid}" maxlength="300" placeholder="Комментарий…" onkeydown="if(event.key==='Enter')chSendCmt('${c.id}','${pid}')">
+      <button class="ch-cmt-send" onclick="chSendCmt('${c.id}','${pid}')" aria-label="Отправить">${chI('send')}</button>
     </div>
   </div>`;
 }
+/* состояние раскрытых комментариев (в пределах сессии, чтобы не мигало при ре-рендере) */
+const chOpenCmt = {};
+window.chToggleCmt = function(cid,pid){ chOpenCmt[pid] = !chOpenCmt[pid]; chRender(); };
+window.chSendCmt = function(cid,pid){
+  const inp = document.getElementById('chCmt_'+pid); if(!inp) return;
+  const txt = (inp.value||'').trim(); if(!txt){ return; }
+  CH.cmt[pid] = CH.cmt[pid]||[];
+  CH.cmt[pid].push({ name:PROFILE.name, nick:PROFILE.nick, txt, when:'сейчас', likes:0 });
+  chOpenCmt[pid] = true; chSave(); chRender();
+};
+window.chCmtLike = function(cid,pid,k){
+  const arr = CH.cmt[pid]; if(!arr||!arr[k]) return;
+  arr[k].likedBy = !arr[k].likedBy; chSave(); chRender();
+};
 /* живой опрос под постом (голос сохраняется) */
 function chPollHtml(c,p,i){
+  const pid = chPostId(p);
   const opts = (p.poll&&p.poll.opts) || ['Уже применяю','Возьму в работу'];
-  const key = c.id+':'+i;
+  const key = pid;
   const voted = CH.votes[key];
   const base = (p.poll&&p.poll.base) || [Math.max(3,(p.views||40)%60+12), Math.max(2,(p.views||30)%40+7)];
   const counts = opts.map((_,k)=> base[k%base.length] + (voted===k?1:0));
@@ -26222,7 +27040,7 @@ function chPollHtml(c,p,i){
     <div class="ch-poll-q">${chI('poll')} ${chEsc(q)}</div>
     ${opts.map((o,k)=>{
       const pct = Math.round(counts[k]/total*100);
-      return `<button class="ch-poll-opt${voted!=null?' voted':''}${voted===k?' mine':''}" ${voted!=null?'disabled':''} onclick="chVote('${c.id}',${i},${k})">
+      return `<button class="ch-poll-opt${voted!=null?' voted':''}${voted===k?' mine':''}" ${voted!=null?'disabled':''} onclick="chVote('${c.id}','${pid}',${k})">
         <span class="ch-po-fill" style="width:${voted!=null?pct:0}%"></span>
         <span class="ch-po-t">${chEsc(o)}</span>
         ${voted!=null?`<span class="ch-po-p">${pct}%</span>`:''}
@@ -26231,14 +27049,13 @@ function chPollHtml(c,p,i){
     <div class="ch-poll-total">${voted!=null?chFmtN(total)+' голосов':'Нажми, чтобы проголосовать'}</div>
   </div>`;
 }
-window.chVote = function(id,i,k){
+window.chVote = function(id,pid,k){
   const c = chChannel(id); if(!c) return;
-  CH.votes[id+':'+i] = k; chSave(); chRender();
+  CH.votes[pid] = k; chSave(); chRender();
 };
-window.chLike = function(id,i){
+window.chLike = function(id,pid){
   const c = chChannel(id); if(!c||!c.reactions) return;
-  CH.likes[id] = CH.likes[id]||{};
-  CH.likes[id][i] = !CH.likes[id][i];
+  CH.likes[pid] = !CH.likes[pid];
   chSave(); chRender();
 };
 
@@ -26460,8 +27277,8 @@ function chPageManage(id){
   // ---- ОСНОВНОЕ ----
   html += `<div class="ch-sec-h">${chI('bolt')} Основное</div>`;
   html += chList([
-    chNavRow('megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`),
-    chNavRow('photo','Оформление', 'аватар · обложка · описание', `chGo('mAppear','${id}')`),
+    chNavRow('megaphone','Тип и доступ', chAccessLineShort(c), `chGo('mType','${id}')`),
+    chNavRow('photo','Оформление', '', `chGo('mAppear','${id}')`, {sub:'Аватар, обложка, описание'}),
   ]);
 
   // ---- ССЫЛКА И ПРИГЛАШЕНИЯ ----
@@ -26522,7 +27339,7 @@ function chPageManage(id){
   // ---- СТАТИСТИКА ----
   html += `<div class="ch-sec-h">${chI('poll')} Статистика</div>`;
   html += chList([
-    chNavRow('poll','Аналитика канала','охваты · подписки · вовлечённость', `chGo('mStats','${id}')`),
+    chNavRow('poll','Аналитика канала','', `chGo('mStats','${id}')`, {sub:'Охваты · вовлечённость'}),
   ]);
 
   // ---- ОПАСНАЯ ЗОНА ----
@@ -26642,7 +27459,7 @@ function chPageMSubs(id){
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
     ${m.length? m.map(p=>`
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[(p.nick||'x').length%CH_AV_BGS.length]}">${chEsc((p.name[0]||'U').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'U').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(p.name)}${p.name===PROFILE.name?' <span class="ch-m-role owner">вы</span>':''}</b><small>@${chEsc(p.nick)} · вступил ${p.joined||'недавно'}</small></div>
         ${p.name!==PROFILE.name?`<button class="ch-m-act send" title="Написать" onclick="chDM('${chEsc(p.name)}','${chEsc(p.nick)}')">${chI('send')}</button>
         <button class="ch-m-act" title="В чёрный список" onclick="chBanMember('${id}','${chEsc(p.nick)}')">${chI('lock')}</button>`:''}
@@ -26671,13 +27488,13 @@ function chPageMAdmins(id){
     <div class="ch-owner-note" style="margin-bottom:12px">Администраторы могут публиковать посты, банить участников и модерировать обсуждения. Владелец — ты.</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvGradStyle(c.bg||0)}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(PROFILE.name)}</b><small>@${chEsc(PROFILE.nick)} · создатель</small></div>
         <span class="ch-m-role owner">владелец</span>
       </div>
       ${a.map(p=>`
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[(p.nick||'x').length%CH_AV_BGS.length]}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>@${chEsc(p.nick)} · администратор</small></div>
         <button class="ch-m-act" title="Разжаловать" onclick="chRemoveAdmin('${id}','${chEsc(p.nick)}')">${chI('trash')}</button>
       </div>`).join('')}
@@ -26854,10 +27671,10 @@ function chPageMAppear(id){
     : `background:${CH_BGS[c.bg||0]}`;
   const avStyle = c.avatar
     ? `background-image:url(${c.avatar});background-size:cover;background-position:center`
-    : `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}${CH_AV_BGS[c.bg||0]==='#0a0a0a'?';color:#9AFF00':''}`;
+    : chAvGradStyle(c.bg||0);
   const html = `
     <div class="ch-appear-prev" style="${prevBg}">
-      <div class="ch-ap-ava" style="${avStyle}">${c.avatar?'':(c.icon?chI(c.icon):(c.name[0]||'K').toUpperCase())}</div>
+      <div class="ch-ap-ava" style="${avStyle}">${c.avatar?'':(c.icon?chI(c.icon):chEsc((c.name[0]||'K').toUpperCase()))}</div>
       <div class="ch-ap-name">${chEsc(c.name)}<span class="ch-ap-id">@${chEsc(chNick(c))}</span></div>
     </div>
 
@@ -26950,7 +27767,7 @@ function chPageMSettings(id){
     <div class="ch-sec-h">${chI('share')} Ссылка на канал</div>
     <button class="ch-mrow" onclick="chCopyLink('${id}')">
       <span class="ch-mr-ic">${chI('globe')}</span>
-      <span class="ch-mr-b"><b>oko.app/c/${chEsc((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel')}</b><small>Публичная ссылка-приглашение</small></span>
+      <span class="ch-mr-b"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${chEsc(chPublicLink(c))}</b><small>Публичная ссылка-приглашение</small></span>
       <span class="ch-mr-val">${chI('copy')}</span>
     </button>`;
   return {title:'Настройки', html};
@@ -27001,7 +27818,7 @@ window.chNewInvite = function(id){
   const c = chChannel(id); if(!c) return;
   c.invites = c.invites||[];
   const code = Math.random().toString(36).slice(2,10);
-  c.invites.unshift({ link:'oko.app/+'+code, when:'сейчас', limit:0 });
+  c.invites.unshift({ link:'okoteam.top/+'+code, when:'сейчас', limit:0 });
   chSave(); chRender(); toast('Пригласительная ссылка создана');
 };
 window.chCopyInvite = function(id,i){
@@ -27107,6 +27924,87 @@ if(typeof renderFeed==='function'){
 window.chOpen = chOpen; window.chGo = chGo; window.chBack = chBack; window.chClose = chClose;
 window.chDraft = chDraft; window.chRender = chRender;
 
+})();
+
+/* ===== module: ui-chrome ===== */
+/* ============================================================
+   UI-CHROME · script.js — премиум-моушен хаба (перф-безопасно)
+   1) Параллакс-слои хиро (глаз + текст) по указателю — только transform,
+      rAF-троттлинг, отключён при prefers-reduced-motion и во время скролла.
+   2) IntersectionObserver: хиро ушёл из вьюпорта → .uic-hero-off (CSS
+      замораживает @keyframes хиро) — ноль работы вне экрана.
+   Префикс uic*, self-init, всё в try/catch: одна ошибка не должна ронять ядро.
+   ============================================================ */
+(function uicHubMotion(){
+  'use strict';
+  try{
+    var reduce = false;
+    try{ reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){}
+
+    function uicInit(){
+      var hero = document.getElementById('maHero');
+      if(!hero) return;
+
+      /* ---- IntersectionObserver: пауза анимаций хиро вне вьюпорта ---- */
+      try{
+        if('IntersectionObserver' in window){
+          var io = new IntersectionObserver(function(entries){
+            for(var i=0;i<entries.length;i++){
+              var vis = entries[i].isIntersecting && entries[i].intersectionRatio > 0.02;
+              hero.classList.toggle('uic-hero-off', !vis);
+            }
+          }, {threshold:[0,0.03]});
+          io.observe(hero);
+        }
+      }catch(e){}
+
+      /* ---- Параллакс по указателю (пропускаем при reduced-motion) ---- */
+      if(reduce) return;
+
+      var logo = hero.querySelector('.ma-hero-logo');
+      var txt  = hero.querySelector('.ma-hero-txt');
+      if(!logo && !txt) return;
+
+      var tx = 0, ty = 0, raf = 0;
+      function uicApply(){
+        raf = 0;
+        // не двигаем во время активного скролла (перф-слой wow-motion/tg-webapp)
+        if(document.documentElement.classList.contains('oko-scrolling')) return;
+        // глаз и текст смещаются в противоположные стороны — ощущение глубины
+        hero.style.setProperty('--uic-lx', (tx * 9).toFixed(2) + 'px');
+        hero.style.setProperty('--uic-ly', (ty * 7).toFixed(2) + 'px');
+        hero.style.setProperty('--uic-tx', (tx * -4).toFixed(2) + 'px');
+        hero.style.setProperty('--uic-ty', (ty * -3).toFixed(2) + 'px');
+      }
+      function uicMove(ev){
+        try{
+          var r = hero.getBoundingClientRect();
+          if(!r.width || !r.height) return;
+          var px = (ev.clientX - r.left) / r.width;   // 0..1
+          var py = (ev.clientY - r.top) / r.height;   // 0..1
+          tx = Math.max(-1, Math.min(1, (px - 0.5) * 2));
+          ty = Math.max(-1, Math.min(1, (py - 0.5) * 2));
+          if(!raf) raf = requestAnimationFrame(uicApply);
+        }catch(e){}
+      }
+      function uicReset(){
+        tx = 0; ty = 0;
+        try{
+          hero.style.setProperty('--uic-lx','0px'); hero.style.setProperty('--uic-ly','0px');
+          hero.style.setProperty('--uic-tx','0px'); hero.style.setProperty('--uic-ty','0px');
+        }catch(e){}
+      }
+      hero.addEventListener('pointermove', uicMove, {passive:true});
+      hero.addEventListener('pointerleave', uicReset, {passive:true});
+      hero.addEventListener('pointercancel', uicReset, {passive:true});
+    }
+
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', uicInit, {once:true});
+    } else {
+      uicInit();
+    }
+  }catch(e){ /* тихо: перф-моушен не критичен */ }
 })();
 
 /* ===== module: wow-eye ===== */

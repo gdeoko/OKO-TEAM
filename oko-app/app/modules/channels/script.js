@@ -30,9 +30,28 @@ const CH_BGS = [
   'linear-gradient(135deg,#26004d,#12002b)',
   'linear-gradient(135deg,#4d2600,#1a0d00)',
 ];
-const CH_AV_BGS = [   // фон аватара под индекс фона (контрастный лайм/светлый)
+const CH_AV_BGS = [   // legacy: плоские цвета аватара (оставлены для совместимости, НЕ используются в рендере)
   '#9AFF00','#e8e8e8','#9AFF00','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#9AFF00','#b98cff','#ff9a3c'
 ];
+/* Процедурные фирменные аватары: только чёрный + лайм/зелёное семейство (никаких off-brand цветов).
+   g — градиент-фон, c — цвет глифа/буквы (контраст под фон). Индекс = bg канала или хэш ника. */
+const CH_AV_GRADS = [
+  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a'}, // яркий лайм
+  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00'}, // графит · лайм-глиф
+  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a'}, // лайм → тёмно-зелёный
+  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00'}, // бледный лайм
+  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00'}, // глубокий зелёный/чёрный
+  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf'}, // средний зелёный
+  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00'}, // чёрный · лайм-глиф
+  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a'}, // мягкий лайм
+  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a'}, // тёмная олива
+  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0'}, // зелёный · почти белый глиф
+];
+/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник) */
+function chAvGrad(i){ return CH_AV_GRADS[((+i||0)%CH_AV_GRADS.length+CH_AV_GRADS.length)%CH_AV_GRADS.length]; }
+function chHashIdx(s){ s=String(s||'x'); let h=0; for(let k=0;k<s.length;k++) h=(h*31+s.charCodeAt(k))|0; return Math.abs(h)%CH_AV_GRADS.length; }
+function chAvGradStyle(i){ const g=chAvGrad(i); return `background:${g.g};color:${g.c}`; }
+function chAvSeedStyle(s){ const g=CH_AV_GRADS[chHashIdx(s)]; return `background:${g.g};color:${g.c}`; }
 const CH_ICONS = ['megaphone','bolt','fire','rocket','star','crown','globe','compass'];
 
 /* ---------- состояние ---------- */
@@ -115,15 +134,19 @@ function chSeed(){
         {txt:'Созвон с командой в пятницу 19:00 МСК. Разберём дорожную карту и ответим на вопросы.', likes:0, views:0, when:'вчера'},
       ]},
   ];
-  return { v:2, seq:0, mine, disc, sub:{}, prog:{}, likes:{} };
+  return { v:2, seq:0, pseq:0, mine, disc, sub:{}, prog:{}, likes:{}, cmt:{} };
 }
 if(!CH || !CH.v){ CH = chSeed(); chSave(); }
 CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{}; CH.notify = CH.notify||{};
+CH.cmt = CH.cmt||{}; CH.pseq = CH.pseq||0;   // cmt: комментарии по стабильному id поста; pseq: счётчик id постов
+/* стабильный id поста (не зависит от позиции в массиве — лайки/голоса/комменты не «съезжают» после публикации) */
+function chPostId(p){ if(p && !p.id){ p.id = 'p'+(++CH.pseq); } return p ? p.id : ''; }
+function chEnsurePostIds(c){ (c&&c.posts||[]).forEach(chPostId); }
 /* миграция v1→v2: нормализуем оси доступ/оплата, не теряя каналы пользователя */
 (function chMigrate(){
   try{
-    (CH.mine||[]).forEach(chNormalize);
-    (CH.disc||[]).forEach(chNormalize);
+    (CH.mine||[]).forEach(c=>{ chNormalize(c); chEnsurePostIds(c); });
+    (CH.disc||[]).forEach(c=>{ chNormalize(c); chEnsurePostIds(c); });
     if((CH.v||1) < 2){
       // добавляем витринные примеры новых осей, если их ещё нет
       const seed = chSeed();
@@ -187,6 +210,13 @@ function chAccessLine(c){
   else parts.push(chPaid(c)?('Платно '+c.price+' ₽'+chPriceUnit(c)):'Бесплатно');
   return parts.join(' · ');
 }
+/* компактная подпись для строк-настроек (без слова «Платно» — цена и так его подразумевает),
+   чтобы значение помещалось на 390px без обрезки */
+function chAccessLineShort(c){
+  const access = c.access==='closed'?'Закрытый':'Открытый';
+  if(c.kind==='course') return 'Курс · '+(chPaid(c)?c.price+' ₽':'бесплатно');
+  return access+' · '+(chPaid(c)?(c.price+' ₽'+chPriceUnit(c)):'бесплатно');
+}
 /* SVG-бейджи для карточки/витрины */
 function chBadges(c){
   let h='';
@@ -198,16 +228,13 @@ function chBadges(c){
   return h;
 }
 function chAvStyle(c){ return `background:${CH_BGS[c.bg||0]};`; }
-function chAvColor(c){ return CH_AV_BGS[c.bg||0]==='#0a0a0a' ? 'color:#9AFF00' : ''; }
 function chAvInner(c,cls,lock){
   const lk = lock ? `<span class="ch-avlock">${chI('lock')}</span>` : '';
   if(c.avatar){
     return `<div class="ch-av ${cls||''}" style="${chAvPhoto(c)}">${lk}</div>`;
   }
-  const style = `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}`;
-  const dark = (CH_AV_BGS[c.bg||0]==='#0a0a0a');
   const content = c.icon ? chI(c.icon) : chEsc((c.name[0]||'K').toUpperCase());
-  return `<div class="ch-av ${cls||''}" style="${style}${dark?';color:#9AFF00':''}">${content}${lk}</div>`;
+  return `<div class="ch-av ${cls||''}" style="${chAvGradStyle(c.bg||0)}">${content}${lk}</div>`;
 }
 function chCourseProg(c){
   if(c.kind!=='course' || !c.lessons) return 0;
@@ -249,7 +276,8 @@ function chSlowLabel(s){ s=+s||0; return s===0?'выкл':(s<60?s+' сек':(s/6
 function chWhoPostLabel(c){ return c.whoPost==='subs'?'Все подписчики':'Только админы'; }
 function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='subs'?'Подписчики':'Только админы'; }
 function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
-function chPublicLink(c){ return 'oko.app/'+chNick(c); }
+/* публичная ссылка канала — реальный домен OKO в стиле @id */
+function chPublicLink(c){ return 'okoteam.top/@'+chNick(c); }
 
 /* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
 window.chTgl = function(id, key, el){
@@ -547,7 +575,7 @@ function chPageCreate(){
 
     <label class="ch-lab">Обложка / фон</label>
     <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[d.bg]}">
-      <div class="ch-ap-ava" style="background:${CH_AV_BGS[d.bg]||'#9AFF00'}${CH_AV_BGS[d.bg]==='#0a0a0a'?';color:#9AFF00':''}">${d.useIcon?chI(d.icon):(d.name[0]||'K').toUpperCase()}</div>
+      <div class="ch-ap-ava" style="${chAvGradStyle(d.bg)}">${d.useIcon?chI(d.icon):chEsc((d.name[0]||'K').toUpperCase())}</div>
       <div class="ch-ap-name">${chEsc(d.name||'Новый канал')}</div>
     </div>
     <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
@@ -737,6 +765,8 @@ function chPageChannel(id){
       </div>`;
     }).join('');
   } else {
+    chEnsurePostIds(c);
+    if(!mine) chCountViews(c);   // просмотры тикают, когда пост читает подписчик (раз за сессию)
     html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
     const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
       : `<div class="ch-empty">Постов пока нет</div>`;
@@ -748,26 +778,73 @@ function chPageChannel(id){
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
   return {title:c.name, html, tools};
 }
+/* ---- просмотры: считаем один раз за сессию на каждый пост, читаемый подписчиком ---- */
+const chViewed = {};   // pid -> true (в пределах сессии)
+function chCountViews(c){
+  let ch=false;
+  (c.posts||[]).forEach(p=>{ const pid=chPostId(p); if(pid && !chViewed[pid]){ chViewed[pid]=true; p.views=(p.views||0)+1; ch=true; } });
+  if(ch) chSave();
+}
 function chPostHtml(c,p,i){
-  const liked = !!(CH.likes[c.id]&&CH.likes[c.id][i]);
+  const pid = chPostId(p);
+  const liked = !!CH.likes[pid];
   const likes = (p.likes||0)+(liked?1:0);
+  const cmts = CH.cmt[pid]||[];
+  const open = !!chOpenCmt[pid];
   return `<div class="ch-post">
-    <div class="ch-post-h">${chAvInner(c,'mini')}<b>${chEsc(c.name)}</b><small>${p.when||''}</small></div>
+    <div class="ch-post-h">${chAvInner(c,'mini')}<b class="ch-ph-name">${chEsc(c.name)}</b><small>${chEsc(p.when||'')}</small></div>
     <div class="ch-post-txt">${chEsc(p.txt)}</div>
     ${p.img?`<div class="ch-post-media photo" style="background-image:url(${p.img})"></div>`
       :p.media==='poll'?chPollHtml(c,p,i)
       :p.media?`<div class="ch-post-media" style="background:${CH_BGS[c.bg||0]}">${chI(p.media)}${p.media==='circle-play'?'<span class="ch-pm-dur">видео</span>':''}</div>`:''}
     <div class="ch-post-acts">
-      ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}',${i})">${chI('heart')}${likes}</button>`:''}
-      ${c.discussions?`<button onclick="toast('Обсуждения включены — комментарии подключатся с бэкендом')">${chI('comment')}Обсудить</button>`:''}
+      ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}','${pid}')" aria-label="Нравится">${chI('heart')}${likes}</button>`:''}
+      ${c.discussions?`<button class="${open?'on':''}" onclick="chToggleCmt('${c.id}','${pid}')" aria-label="Комментарии">${chI('comment')}${cmts.length||'Обсудить'}</button>`:''}
       <span class="ch-views">${chI('eye')}${chFmtN(p.views||0)}</span>
+    </div>
+    ${c.discussions&&open?chCommentsHtml(c,pid,cmts):''}
+  </div>`;
+}
+/* блок комментариев под постом (живой: пишем, лайкаем, сохраняется) */
+function chCommentsHtml(c,pid,cmts){
+  const rows = cmts.length ? cmts.map((m,k)=>{
+    const clk = !!(m.likedBy);
+    return `<div class="ch-cmt">
+      <div class="ch-cmt-av" style="${chAvSeedStyle(m.nick||m.name)}">${chEsc((m.name[0]||'U').toUpperCase())}</div>
+      <div class="ch-cmt-b">
+        <div class="ch-cmt-top"><b>${chEsc(m.name)}</b><small>${chEsc(m.when||'')}</small></div>
+        <div class="ch-cmt-txt">${chEsc(m.txt)}</div>
+      </div>
+      <button class="ch-cmt-like ${clk?'on':''}" onclick="chCmtLike('${c.id}','${pid}',${k})" aria-label="Нравится">${chI('heart')}<span>${(m.likes||0)+(clk?1:0)||''}</span></button>
+    </div>`;
+  }).join('') : `<div class="ch-cmt-empty">Комментариев пока нет — будь первым.</div>`;
+  return `<div class="ch-comments">
+    <div class="ch-cmt-list">${rows}</div>
+    <div class="ch-cmt-form">
+      <input class="ch-cmt-input" id="chCmt_${pid}" maxlength="300" placeholder="Комментарий…" onkeydown="if(event.key==='Enter')chSendCmt('${c.id}','${pid}')">
+      <button class="ch-cmt-send" onclick="chSendCmt('${c.id}','${pid}')" aria-label="Отправить">${chI('send')}</button>
     </div>
   </div>`;
 }
+/* состояние раскрытых комментариев (в пределах сессии, чтобы не мигало при ре-рендере) */
+const chOpenCmt = {};
+window.chToggleCmt = function(cid,pid){ chOpenCmt[pid] = !chOpenCmt[pid]; chRender(); };
+window.chSendCmt = function(cid,pid){
+  const inp = document.getElementById('chCmt_'+pid); if(!inp) return;
+  const txt = (inp.value||'').trim(); if(!txt){ return; }
+  CH.cmt[pid] = CH.cmt[pid]||[];
+  CH.cmt[pid].push({ name:PROFILE.name, nick:PROFILE.nick, txt, when:'сейчас', likes:0 });
+  chOpenCmt[pid] = true; chSave(); chRender();
+};
+window.chCmtLike = function(cid,pid,k){
+  const arr = CH.cmt[pid]; if(!arr||!arr[k]) return;
+  arr[k].likedBy = !arr[k].likedBy; chSave(); chRender();
+};
 /* живой опрос под постом (голос сохраняется) */
 function chPollHtml(c,p,i){
+  const pid = chPostId(p);
   const opts = (p.poll&&p.poll.opts) || ['Уже применяю','Возьму в работу'];
-  const key = c.id+':'+i;
+  const key = pid;
   const voted = CH.votes[key];
   const base = (p.poll&&p.poll.base) || [Math.max(3,(p.views||40)%60+12), Math.max(2,(p.views||30)%40+7)];
   const counts = opts.map((_,k)=> base[k%base.length] + (voted===k?1:0));
@@ -777,7 +854,7 @@ function chPollHtml(c,p,i){
     <div class="ch-poll-q">${chI('poll')} ${chEsc(q)}</div>
     ${opts.map((o,k)=>{
       const pct = Math.round(counts[k]/total*100);
-      return `<button class="ch-poll-opt${voted!=null?' voted':''}${voted===k?' mine':''}" ${voted!=null?'disabled':''} onclick="chVote('${c.id}',${i},${k})">
+      return `<button class="ch-poll-opt${voted!=null?' voted':''}${voted===k?' mine':''}" ${voted!=null?'disabled':''} onclick="chVote('${c.id}','${pid}',${k})">
         <span class="ch-po-fill" style="width:${voted!=null?pct:0}%"></span>
         <span class="ch-po-t">${chEsc(o)}</span>
         ${voted!=null?`<span class="ch-po-p">${pct}%</span>`:''}
@@ -786,14 +863,13 @@ function chPollHtml(c,p,i){
     <div class="ch-poll-total">${voted!=null?chFmtN(total)+' голосов':'Нажми, чтобы проголосовать'}</div>
   </div>`;
 }
-window.chVote = function(id,i,k){
+window.chVote = function(id,pid,k){
   const c = chChannel(id); if(!c) return;
-  CH.votes[id+':'+i] = k; chSave(); chRender();
+  CH.votes[pid] = k; chSave(); chRender();
 };
-window.chLike = function(id,i){
+window.chLike = function(id,pid){
   const c = chChannel(id); if(!c||!c.reactions) return;
-  CH.likes[id] = CH.likes[id]||{};
-  CH.likes[id][i] = !CH.likes[id][i];
+  CH.likes[pid] = !CH.likes[pid];
   chSave(); chRender();
 };
 
@@ -1015,8 +1091,8 @@ function chPageManage(id){
   // ---- ОСНОВНОЕ ----
   html += `<div class="ch-sec-h">${chI('bolt')} Основное</div>`;
   html += chList([
-    chNavRow('megaphone','Тип и доступ', chAccessLine(c), `chGo('mType','${id}')`),
-    chNavRow('photo','Оформление', 'аватар · обложка · описание', `chGo('mAppear','${id}')`),
+    chNavRow('megaphone','Тип и доступ', chAccessLineShort(c), `chGo('mType','${id}')`),
+    chNavRow('photo','Оформление', '', `chGo('mAppear','${id}')`, {sub:'Аватар, обложка, описание'}),
   ]);
 
   // ---- ССЫЛКА И ПРИГЛАШЕНИЯ ----
@@ -1077,7 +1153,7 @@ function chPageManage(id){
   // ---- СТАТИСТИКА ----
   html += `<div class="ch-sec-h">${chI('poll')} Статистика</div>`;
   html += chList([
-    chNavRow('poll','Аналитика канала','охваты · подписки · вовлечённость', `chGo('mStats','${id}')`),
+    chNavRow('poll','Аналитика канала','', `chGo('mStats','${id}')`, {sub:'Охваты · вовлечённость'}),
   ]);
 
   // ---- ОПАСНАЯ ЗОНА ----
@@ -1197,7 +1273,7 @@ function chPageMSubs(id){
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
     ${m.length? m.map(p=>`
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[(p.nick||'x').length%CH_AV_BGS.length]}">${chEsc((p.name[0]||'U').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'U').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(p.name)}${p.name===PROFILE.name?' <span class="ch-m-role owner">вы</span>':''}</b><small>@${chEsc(p.nick)} · вступил ${p.joined||'недавно'}</small></div>
         ${p.name!==PROFILE.name?`<button class="ch-m-act send" title="Написать" onclick="chDM('${chEsc(p.name)}','${chEsc(p.nick)}')">${chI('send')}</button>
         <button class="ch-m-act" title="В чёрный список" onclick="chBanMember('${id}','${chEsc(p.nick)}')">${chI('lock')}</button>`:''}
@@ -1226,13 +1302,13 @@ function chPageMAdmins(id){
     <div class="ch-owner-note" style="margin-bottom:12px">Администраторы могут публиковать посты, банить участников и модерировать обсуждения. Владелец — ты.</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvGradStyle(c.bg||0)}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(PROFILE.name)}</b><small>@${chEsc(PROFILE.nick)} · создатель</small></div>
         <span class="ch-m-role owner">владелец</span>
       </div>
       ${a.map(p=>`
       <div class="ch-member">
-        <div class="ch-av mini" style="background:${CH_AV_BGS[(p.nick||'x').length%CH_AV_BGS.length]}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
+        <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>@${chEsc(p.nick)} · администратор</small></div>
         <button class="ch-m-act" title="Разжаловать" onclick="chRemoveAdmin('${id}','${chEsc(p.nick)}')">${chI('trash')}</button>
       </div>`).join('')}
@@ -1409,10 +1485,10 @@ function chPageMAppear(id){
     : `background:${CH_BGS[c.bg||0]}`;
   const avStyle = c.avatar
     ? `background-image:url(${c.avatar});background-size:cover;background-position:center`
-    : `background:${CH_AV_BGS[c.bg||0]||'#9AFF00'}${CH_AV_BGS[c.bg||0]==='#0a0a0a'?';color:#9AFF00':''}`;
+    : chAvGradStyle(c.bg||0);
   const html = `
     <div class="ch-appear-prev" style="${prevBg}">
-      <div class="ch-ap-ava" style="${avStyle}">${c.avatar?'':(c.icon?chI(c.icon):(c.name[0]||'K').toUpperCase())}</div>
+      <div class="ch-ap-ava" style="${avStyle}">${c.avatar?'':(c.icon?chI(c.icon):chEsc((c.name[0]||'K').toUpperCase()))}</div>
       <div class="ch-ap-name">${chEsc(c.name)}<span class="ch-ap-id">@${chEsc(chNick(c))}</span></div>
     </div>
 
@@ -1505,7 +1581,7 @@ function chPageMSettings(id){
     <div class="ch-sec-h">${chI('share')} Ссылка на канал</div>
     <button class="ch-mrow" onclick="chCopyLink('${id}')">
       <span class="ch-mr-ic">${chI('globe')}</span>
-      <span class="ch-mr-b"><b>oko.app/c/${chEsc((c.name||'ch').toLowerCase().replace(/[^a-zа-я0-9]/gi,'').slice(0,14)||'channel')}</b><small>Публичная ссылка-приглашение</small></span>
+      <span class="ch-mr-b"><b style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${chEsc(chPublicLink(c))}</b><small>Публичная ссылка-приглашение</small></span>
       <span class="ch-mr-val">${chI('copy')}</span>
     </button>`;
   return {title:'Настройки', html};
@@ -1556,7 +1632,7 @@ window.chNewInvite = function(id){
   const c = chChannel(id); if(!c) return;
   c.invites = c.invites||[];
   const code = Math.random().toString(36).slice(2,10);
-  c.invites.unshift({ link:'oko.app/+'+code, when:'сейчас', limit:0 });
+  c.invites.unshift({ link:'okoteam.top/+'+code, when:'сейчас', limit:0 });
   chSave(); chRender(); toast('Пригласительная ссылка создана');
 };
 window.chCopyInvite = function(id,i){
