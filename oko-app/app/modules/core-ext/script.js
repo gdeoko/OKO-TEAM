@@ -59,7 +59,7 @@ function setLang(l){
   if(!defs) return;
   const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
   s.setAttribute('id','i-verified'); s.setAttribute('viewBox','0 0 100 100');
-  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#1d9bf0" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
+  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#9AFF00" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
   defs.appendChild(s);
 })();
 const VERIFIED = new Set(['Даниэль','OKO','OKO Team','Поддержка OKO']);

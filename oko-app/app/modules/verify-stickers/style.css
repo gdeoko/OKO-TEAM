@@ -31,7 +31,7 @@
 .vs-vcard.ok{border-color:rgba(29,155,240,.55);box-shadow:0 0 22px rgba(29,155,240,.16)}
 .vs-vcard.ok::after{content:"";position:absolute;inset:-45%;background:radial-gradient(circle at 20% 32%,rgba(29,155,240,.24),transparent 52%);animation:vs-glowmove 5.5s ease-in-out infinite;pointer-events:none}
 @keyframes vs-glowmove{0%,100%{transform:translate(0,0)}50%{transform:translate(14%,12%)}}
-.vs-vcard.ok .vs-vic{background:rgba(29,155,240,.16);color:#1d9bf0}
+.vs-vcard.ok .vs-vic{background:var(--lime-dim);color:var(--accent)}
 .vs-vcard.ok .vs-vic svg{width:31px;height:31px;filter:drop-shadow(0 0 6px rgba(29,155,240,.6))}
 @keyframes vs-fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 

@@ -131,8 +131,11 @@ nav#tabs .nav-logo{display:none}
 /* ============ CHATS ============ */
 #screen-chats.active{display:flex}
 .chat-col{width:100%;display:flex;flex-direction:column;position:relative}
-.searchbar{display:flex;align-items:center;gap:10px;margin:12px 16px 8px;background:var(--raised);border:1px solid var(--border);border-radius:99px;padding:9px 14px;color:var(--dim)}
+.searchbar{display:flex;align-items:center;gap:10px;margin:12px 16px 8px;background:#1a1c1e;border:1px solid rgba(255,255,255,.13);border-radius:99px;padding:9px 14px;color:rgba(255,255,255,.6)}
+:root[data-theme="light"] .searchbar{background:var(--raised);border-color:var(--border);color:var(--dim)}
 .searchbar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px}
+.searchbar input::placeholder{color:rgba(255,255,255,.4)}
+:root[data-theme="light"] .searchbar input::placeholder{color:var(--dim)}
 .searchbar svg.i{width:17px;height:17px}
 .chat-list{flex:1;overflow-y:auto}
 .chat-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
@@ -199,11 +202,17 @@ nav#tabs .nav-logo{display:none}
 .photomsg svg.i{width:34px;height:34px}
 /* composer */
 .composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + var(--oko-safe-bottom, env(safe-area-inset-bottom)));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
-.composer .tool{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
-.composer .tool:hover{color:var(--accent)}
+.composer .tool{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.66);flex-shrink:0}
+.composer .tool:hover,.composer .tool:active{color:var(--accent)}
+:root[data-theme="light"] .composer .tool{color:var(--dim)}
 .composer .tool svg.i{width:21px;height:21px}
-.composer input{flex:1;background:var(--raised);border:1px solid var(--border);border-radius:22px;padding:11px 16px;color:var(--text);font-size:14px;outline:none;min-width:0}
-.composer input:focus{border-color:var(--dim)}
+/* КРИТ-фикс тёмной темы: поле ввода было #161616 на #0d0d0d — практически невидимо.
+   Даём заметный фон и контур; светлая тема (там всё ок) сохраняет свой вид. */
+.composer input{flex:1;background:#202226;border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:11px 16px;color:var(--text);font-size:14px;outline:none;min-width:0}
+.composer input::placeholder{color:rgba(255,255,255,.46)}
+.composer input:focus{border-color:var(--accent)}
+:root[data-theme="light"] .composer input{background:#fff;border-color:var(--border)}
+:root[data-theme="light"] .composer input::placeholder{color:var(--dim)}
 .composer .send{width:44px;height:44px;border-radius:50%;background:var(--lime);color:#000;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .composer .send svg.i{width:20px;height:20px}
 .composer .send.rec{background:var(--danger);color:#fff;animation:pulse 1.2s infinite}
@@ -620,9 +629,9 @@ label.f-lab{display:block}
 .call-ava{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a3d10,#0c1204 70%);border:2px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;box-shadow:0 0 50px rgba(154,255,0,.3);animation:callPulse 2.5s ease-in-out infinite}
 @keyframes callPulse{0%,100%{box-shadow:0 0 40px rgba(154,255,0,.25)}50%{box-shadow:0 0 70px rgba(154,255,0,.5)}}
 #callScreen.video .call-ava{width:96px;height:96px;font-size:36px}
-.call-name{font-size:24px;font-weight:800;color:#fff}
+.call-name{font-size:24px;font-weight:800;color:#fff;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .call-status{font-size:14px;color:rgba(255,255,255,.65)}
-.call-self{position:absolute;top:calc(70px + env(safe-area-inset-top));right:20px;width:92px;height:130px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent)}
+.call-self{position:absolute;top:calc(20px + env(safe-area-inset-top));right:18px;width:84px;height:118px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent);z-index:3}
 .call-self svg.i{width:30px;height:30px;opacity:.6}
 .call-controls{display:flex;gap:18px;align-items:center}
 .call-btn{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,background .2s}
@@ -1117,7 +1126,7 @@ main>.screen{position:relative;z-index:1}
             <button class="back" onclick="closeConv()"><svg class="i"><use href="#i-back"/></svg></button>
             <div style="display:flex;align-items:center;gap:11px;cursor:pointer;flex:1;min-width:0" onclick="openProfile()">
               <div class="ava lime" id="convAva"></div>
-              <div style="min-width:0">
+              <div style="min-width:0;flex:1">
                 <div class="who" id="convName"></div>
                 <div class="status" id="convStatus">онлайн</div>
               </div>
