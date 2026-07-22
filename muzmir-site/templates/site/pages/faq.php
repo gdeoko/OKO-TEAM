@@ -17,13 +17,13 @@ ob_start(); ?>
       </div>
     <?php else: ?>
       <div class="reveal">
-        <?php foreach ($faqs as $f): ?>
+        <?php foreach ($faqs as $i => $f): $aid = 'faq-a-' . (int)$f['id']; ?>
           <div class="acc-item">
-            <div class="acc-q">
+            <button type="button" class="acc-q" aria-expanded="false" aria-controls="<?= $aid ?>" style="width:100%;background:none;border:0;font:inherit;text-align:left">
               <span><?= h($f['question']) ?></span>
-              <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
-            </div>
-            <div class="acc-a"><p><?= h($f['answer']) ?></p></div>
+              <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </button>
+            <div class="acc-a" id="<?= $aid ?>"><p><?= h($f['answer']) ?></p></div>
           </div>
         <?php endforeach; ?>
       </div>

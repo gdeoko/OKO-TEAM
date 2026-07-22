@@ -70,8 +70,14 @@ ob_start(); ?>
       <p>Выберите конкурс и подайте заявку. Оценивает компетентное жюри, результаты приходят на Вашу почту.</p></div>
     <div class="grid grid-3">
       <?php foreach ($comps as $c): ?>
+        <?php
+          $mono = '';
+          foreach (preg_split('/\s+/u', trim((string)$c['name'])) as $w) {
+              if ($w !== '' && mb_strlen($mono) < 2) $mono .= mb_strtoupper(mb_substr($w, 0, 1));
+          }
+        ?>
         <a class="card comp-card reveal" href="<?= url('/competition/'.$c['slug']) ?>">
-          <div class="cc-cover"><?= h($c['name']) ?></div>
+          <div class="cc-cover" aria-hidden="true"><?= h($mono) ?></div>
           <div class="cc-body">
             <span class="badge badge--<?= $c['status']==='open'?'open':'closed' ?>"><?= $c['status']==='open'?'Приём открыт':'Идёт оценка' ?></span>
             <span class="badge badge--intl"><?= $c['type']==='international'?'Международный':'Всероссийский' ?></span>
@@ -140,7 +146,7 @@ ob_start(); ?>
   </div>
 </section>
 <script>
-function muzmirSubscribe(e){e.preventDefault();var f=e.target;fetch(f.action,{method:'POST',body:new FormData(f)}).then(r=>r.json()).then(function(d){alert(d.message||'Спасибо за подписку!');f.reset();}).catch(function(){alert('Спасибо!');});return false;}
+function muzmirSubscribe(e){e.preventDefault();var f=e.target;fetch(f.action,{method:'POST',body:new FormData(f)}).then(r=>r.json()).then(function(d){window.toast(d.message||'Спасибо за подписку!','success');f.reset();}).catch(function(){window.toast('Спасибо за подписку!','success');});return false;}
 </script>
 <?php
 $content = ob_get_clean();

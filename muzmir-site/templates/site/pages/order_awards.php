@@ -51,6 +51,14 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container" style="max-width:760px">
+    <div class="card reveal" style="background:var(--gold-soft);margin-bottom:26px">
+      <h3 style="margin-top:0">Важно перед оформлением</h3>
+      <ul style="padding-left:20px;color:var(--text-dim);margin:0">
+        <li style="margin-bottom:8px">Заявка на изготовление наградного материала оформляется только после оглашения результатов конкурса — по вашему личному решению и на добровольной основе.</li>
+        <li style="margin-bottom:8px">Стоимость доставки наградного материала оплачивается отдельно заказчиком при получении (наложенный платёж).</li>
+        <li style="margin-bottom:0">Организационный взнос за аттестованный конкурсный материал возврату не подлежит. При возврате посылки по вине заказчика повторная отправка производится полностью за его счёт.</li>
+      </ul>
+    </div>
     <form id="awardsOrderForm" class="reveal" novalidate>
       <?= csrf_field() ?>
 
