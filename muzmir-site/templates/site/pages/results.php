@@ -1,6 +1,6 @@
 <?php
 /**
- * Публичная страница результатов конкурса (живёт годами — не удаляется после завершения).
+ * Публичная страница результатов конкурса (живёт годами - не удаляется после завершения).
  * Переменная $slug задана роутером и равна slug конкурса (competitions.slug).
  * Публикуется только для завершённых конкурсов (status = closed|finished).
  */
@@ -117,31 +117,94 @@ foreach ($results as $r) {
     }
 }
 
+$vkUrl = cfgv('org_vk');
+
+/* Класс звания для цветовой маркировки карточки. */
+$titleTone = function (string $res): string {
+    $r = mb_strtoupper($res);
+    if (mb_strpos($r, 'ГРАН') !== false)   return 'gp';
+    if (mb_strpos($r, 'ЛАУРЕАТ') !== false) return 'lau';
+    if (mb_strpos($r, 'ДИПЛОМАНТ') !== false) return 'dip';
+    return 'part';
+};
+
 ob_start(); ?>
 <style>
-.res-card{max-width:1020px;margin:0 auto}
-.res-hero{text-align:center;max-width:720px;margin:0 auto 32px}
-.res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:44px}
-.res-stat{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:22px;text-align:center;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
-.res-stat b{display:block;font-family:var(--ff-display);letter-spacing:.02em;font-size:2rem;color:var(--gold-2)}
-.res-stat span{color:var(--muted);font-size:.88rem}
-.res-nom{margin-bottom:36px}
-.res-nom h3{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px;color:var(--text)}
-.res-row{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;
-  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:14px 18px;box-shadow:var(--shadow-card);backdrop-filter:blur(10px);margin-bottom:10px}
-.res-row b{font-family:var(--ff-display);letter-spacing:.02em;color:var(--text)}
-.res-row .res-result{font-weight:700;color:var(--gold-2);white-space:nowrap}
+.res-wrap{max-width:1080px;margin:0 auto}
+.res-hero{text-align:center;max-width:720px;margin:0 auto 30px}
+
+.res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
+
+.res-search{position:sticky;top:74px;z-index:5;margin:0 auto 34px;max-width:560px}
+.res-search .field--float{margin:0}
+.res-search .rs-ic{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--gold-deep);pointer-events:none}
+[data-theme="dark"] .res-search .rs-ic{color:var(--gold)}
+.res-count{text-align:center;color:var(--muted);font-size:.86rem;margin:-20px 0 30px}
+
+.res-nom{margin-bottom:40px}
+.res-nom > h3{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
+  padding-bottom:12px;margin:0 0 20px;color:var(--text)}
+.res-nom > h3 .n-count{font-family:var(--ff-body);font-size:.8rem;font-weight:700;color:var(--gold-ink);
+  background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:999px;padding:3px 11px}
+[data-theme="dark"] .res-nom > h3 .n-count{color:var(--gold)}
+
+.pcard{display:flex;flex-direction:column;gap:14px;padding:22px}
+.pcard-top{display:flex;gap:16px;align-items:center}
+.pring{flex:none;width:88px;height:88px}
+.pring .ring-num{font-size:1.5rem}
+.pring .ring-num small{font-size:.62rem}
+.pcard-id{flex:none;width:88px;height:88px;border-radius:16px;display:grid;place-items:center;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-deep)}
+[data-theme="dark"] .pcard-id{color:var(--gold)}
+.pcard-id svg{width:34px;height:34px}
+.pcard-name{min-width:0}
+.pcard-name b{font-family:var(--ff-display);letter-spacing:.01em;color:var(--text);font-size:1.12rem;
+  line-height:1.15;display:block;overflow-wrap:anywhere}
+.pcard-name b a{color:inherit}
+.pcard-name .pcard-work{color:var(--muted);font-size:.9rem;margin:4px 0 0;overflow-wrap:anywhere}
+.pcard-meta{display:flex;flex-wrap:wrap;gap:7px 14px;color:var(--text-dim);font-size:.86rem;
+  border-top:1px solid var(--line);padding-top:12px}
+.pcard-meta span{display:inline-flex;align-items:center;gap:6px}
+.pcard-meta svg{width:14px;height:14px;color:var(--gold-deep);flex:none}
+[data-theme="dark"] .pcard-meta svg{color:var(--gold)}
+.pcard-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:auto}
+.res-title{display:inline-flex;align-items:center;gap:7px;font-family:var(--ff-display);font-weight:700;
+  letter-spacing:.02em;font-size:.98rem;padding:6px 14px;border-radius:999px;white-space:nowrap}
+.res-title svg{width:16px;height:16px;flex:none}
+.res-title.gp{color:#fff;background:var(--grad-gold);box-shadow:var(--shadow-glow)}
+.res-title.lau{color:var(--gold-ink);background:var(--gold-soft);border:1px solid var(--glass-brd)}
+[data-theme="dark"] .res-title.lau{color:var(--gold)}
+.res-title.dip{color:var(--text-dim);background:var(--panel);border:1px solid var(--glass-brd)}
+.res-title.part{color:var(--muted);background:var(--panel);border:1px solid var(--line)}
+.pcard .btn{padding:9px 16px;font-size:.86rem}
+.vk-link{display:inline-flex;align-items:center;gap:7px;font-size:.84rem;font-weight:700;color:var(--info);
+  padding:9px 15px;border-radius:999px;background:color-mix(in srgb,var(--info) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--info) 30%,transparent)}
+.vk-link svg{width:16px;height:16px}
+.vk-link:hover{color:var(--info);border-color:var(--info)}
+
+.res-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 20px;display:none}
+
 .res-media{display:flex;flex-wrap:wrap;gap:12px}
 .res-poster{width:150px;border:1px solid var(--glass-brd);border-radius:var(--radius-sm);overflow:hidden;box-shadow:var(--shadow-card)}
 .res-poster img{width:100%;display:block}
 .res-video-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--panel);
   border:1px solid var(--glass-brd);color:var(--text);font-size:.86rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.res-video-chip svg{color:var(--gold-deep)}
+[data-theme="dark"] .res-video-chip svg{color:var(--gold)}
 .res-video-chip:hover{border-color:var(--gold);color:var(--gold-2)}
+
 @media(max-width:860px){.res-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){
+  .res-search{top:66px}
+  .pcard-top{gap:13px}
+  .pring,.pcard-id{width:74px;height:74px}
+  .pring .ring-num{font-size:1.25rem}
+}
 </style>
 
 <section class="section">
-  <div class="container res-card">
+  <div class="container res-wrap">
     <div class="res-hero reveal">
       <p class="eyebrow"><?= h($typeLabel) ?> · Итоги</p>
       <h1><?= h($c['name']) ?></h1>
@@ -162,40 +225,94 @@ ob_start(); ?>
     <?php else: ?>
 
       <div class="res-stats reveal">
-        <div class="res-stat"><b><?= count($results) ?></b><span>Победителей и лауреатов</span></div>
-        <div class="res-stat"><b><?= $grandPrix ?></b><span>Гран-при</span></div>
-        <div class="res-stat"><b><?= $laureates ?></b><span>Лауреатов</span></div>
-        <div class="res-stat"><b><?= count($cities) ?></b><span>Городов и регионов</span></div>
+        <div class="stat"><b data-count="<?= count($results) ?>">0</b><span>Победителей и лауреатов</span></div>
+        <div class="stat"><b data-count="<?= $grandPrix ?>">0</b><span>Гран-при</span></div>
+        <div class="stat"><b data-count="<?= $laureates ?>">0</b><span>Лауреатов</span></div>
+        <div class="stat"><b data-count="<?= count($cities) ?>">0</b><span>Городов и регионов</span></div>
       </div>
 
+      <div class="res-search reveal">
+        <div class="field--float">
+          <input type="search" id="resSearch" placeholder=" " autocomplete="off" aria-label="Поиск по имени или номеру диплома">
+          <label for="resSearch">Поиск по фамилии, имени или номеру диплома</label>
+          <svg class="rs-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </div>
+      </div>
+      <p class="res-count" id="resCount" aria-live="polite"></p>
+
+      <div id="resList">
       <?php foreach ($byNomination as $nom => $rows): ?>
-        <div class="res-nom reveal">
-          <h3><?= h($nom) ?></h3>
-          <?php foreach ($rows as $r):
+        <div class="res-nom reveal" data-nom>
+          <h3>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span><?= h($nom) ?></span>
+            <span class="n-count"><?= count($rows) ?></span>
+          </h3>
+          <div class="grid grid-2">
+          <?php foreach ($rows as $i => $r):
             $displayName = $r['is_group'] && $r['group_name'] ? $r['group_name'] : $r['full_name'];
             $aslug = $artistSlugMap[mb_strtolower(trim($r['full_name']))] ?? null;
+            $tone = $titleTone((string) $r['result']);
+            $score = is_numeric($r['score']) ? (float) $r['score'] : null;
+            $ringPct = $score !== null ? max(0, min(100, $score * 10)) : 0;
+            $needle = mb_strtolower(trim($displayName . ' ' . $r['full_name'] . ' ' . $r['diploma_number'] . ' ' . $r['work_title'] . ' ' . $r['city']));
           ?>
-            <div class="res-row">
-              <div>
-                <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
-                <p style="color:var(--muted);margin:3px 0 0;font-size:.88rem">
-                  <?= h($r['age_category'] ?: '') ?><?php if ($r['age_category'] && $r['work_title']): ?> · <?php endif; ?><?php if ($r['work_title']): ?>«<?= h($r['work_title']) ?>»<?php endif; ?>
-                  <?php if ($r['city']): ?><br><?= h($r['city']) ?><?php if ($r['institution']): ?> · <?= h($r['institution']) ?><?php endif; ?><?php endif; ?>
-                </p>
+            <div class="card pcard reveal" style="--i:<?= $i ?>" data-item data-search="<?= h($needle) ?>">
+              <div class="pcard-top">
+                <?php if ($score !== null): ?>
+                  <div class="stat-ring pring" data-value="<?= $ringPct ?>">
+                    <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="52"></circle><circle class="ring-val ring-fill" cx="60" cy="60" r="52"></circle></svg>
+                    <div class="ring-num"><?= h(rtrim(rtrim(number_format($score, 1, '.', ''), '0'), '.')) ?><small>/10</small></div>
+                  </div>
+                <?php else: ?>
+                  <div class="pcard-id">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9L6.4 19.5l1.1-6L3.1 9.3l6-.8z"/></svg>
+                  </div>
+                <?php endif; ?>
+                <div class="pcard-name">
+                  <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
+                  <?php if ($r['work_title']): ?><p class="pcard-work">«<?= h($r['work_title']) ?>»</p><?php endif; ?>
+                </div>
               </div>
-              <div style="text-align:right">
-                <span class="res-result"><?= h($r['result']) ?></span>
+
+              <?php if ($r['age_category'] || $r['city'] || $r['institution']): ?>
+                <div class="pcard-meta">
+                  <?php if ($r['age_category']): ?>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= h($r['age_category']) ?></span>
+                  <?php endif; ?>
+                  <?php if ($r['city']): ?>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($r['city']) ?></span>
+                  <?php endif; ?>
+                  <?php if ($r['institution']): ?>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg><?= h($r['institution']) ?></span>
+                  <?php endif; ?>
+                </div>
+              <?php endif; ?>
+
+              <div class="pcard-foot">
+                <span class="res-title <?= $tone ?>">
+                  <?php if ($tone === 'gp'): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 21h8M12 17v4M5 4h14v3a7 7 0 0 1-14 0zM5 4H3v2a3 3 0 0 0 3 3M19 4h2v2a3 3 0 0 1-3 3"/></svg><?php endif; ?>
+                  <?= h($r['result']) ?>
+                </span>
                 <?php if (!empty($r['diploma_number'])): ?>
-                  <p style="margin:6px 0 0"><a class="btn btn--ghost" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a></p>
+                  <a class="btn btn--ghost" href="<?= url('/verify/' . $r['diploma_number']) ?>">Проверить диплом</a>
+                <?php elseif ($vkUrl): ?>
+                  <a class="vk-link" href="<?= h($vkUrl) ?>" target="_blank" rel="noopener" title="Публикация результатов ВКонтакте">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.9 16.5c-5.4 0-8.9-3.8-9-9.9h2.8c.1 4.5 2.1 6.4 3.6 6.8V6.6h2.6v3.9c1.5-.2 3-1.8 3.6-3.9h2.6c-.4 2.6-2 4.2-3.1 4.8 1.1.5 2.9 1.9 3.6 4.6h-2.9c-.5-1.8-1.9-3.2-3.7-3.4v3.4z"/></svg>
+                    Смотреть в VK
+                  </a>
                 <?php endif; ?>
               </div>
             </div>
           <?php endforeach; ?>
+          </div>
         </div>
       <?php endforeach; ?>
+      <div class="res-empty" id="resEmpty">По вашему запросу ничего не найдено. Уточните фамилию или номер диплома.</div>
+      </div>
 
       <?php if ($posters): ?>
-        <div class="section-head reveal" style="margin-bottom:16px"><p class="eyebrow">Материалы</p><h2>Афиши конкурса</h2></div>
+        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Материалы</p><h2>Афиши конкурса</h2></div>
         <div class="res-media reveal" style="margin-bottom:36px">
           <?php foreach ($posters as $p): ?>
             <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="<?= h($c['name']) ?>" loading="lazy"></a>
@@ -204,16 +321,44 @@ ob_start(); ?>
       <?php endif; ?>
 
       <?php if ($videos): ?>
-        <div class="section-head reveal" style="margin-bottom:16px"><p class="eyebrow">Смотрите</p><h2>Видео-номера победителей</h2></div>
+        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Смотрите</p><h2>Видео-номера победителей</h2></div>
         <div class="res-media reveal">
-          <?php foreach ($videos as $url => $v): ?>
-            <a class="res-video-chip" href="<?= h($url) ?>" target="_blank" rel="noopener">
+          <?php foreach ($videos as $vurl => $v): ?>
+            <a class="res-video-chip" href="<?= h($vurl) ?>" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               <?= h($v['name']) ?> · <?= h($v['platform']) ?>
             </a>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
+
+      <script>
+      (function () {
+        var inp = document.getElementById('resSearch');
+        if (!inp) return;
+        var items = [].slice.call(document.querySelectorAll('[data-item]'));
+        var noms  = [].slice.call(document.querySelectorAll('[data-nom]'));
+        var empty = document.getElementById('resEmpty');
+        var count = document.getElementById('resCount');
+        var total = items.length;
+        function apply() {
+          var q = inp.value.trim().toLowerCase();
+          var shown = 0;
+          items.forEach(function (el) {
+            var ok = !q || (el.getAttribute('data-search') || '').indexOf(q) !== -1;
+            el.style.display = ok ? '' : 'none';
+            if (ok) shown++;
+          });
+          noms.forEach(function (n) {
+            var any = n.querySelector('[data-item]:not([style*="display: none"])');
+            n.style.display = any ? '' : 'none';
+          });
+          empty.style.display = shown ? 'none' : 'block';
+          count.textContent = q ? ('Найдено: ' + shown + ' из ' + total) : '';
+        }
+        inp.addEventListener('input', apply);
+      })();
+      </script>
 
     <?php endif; ?>
   </div>

@@ -468,7 +468,7 @@
           var el = $('[data-app-number]'); if (el) el.textContent = num;
           clearDraft();
           clearSubmitLoading();
-          show('done');
+          show('done', 'next');
           renderSuccessCheck();
           notify('Заявка отправлена. Номер: ' + num, 'success');
         } else {
@@ -494,17 +494,39 @@
   function renderSuccessCheck() {
     var panel = panels['done'];
     if (!panel) return;
-    var slot = panel.querySelector('[data-check-slot]') || panel.querySelector('.ap-done-icon') || panel;
+    // Предпочитаем штатную иконку .done-ic — рисуем галочку прямо в ней.
+    var slot = panel.querySelector('[data-check-slot]') || panel.querySelector('.done-ic') || panel.querySelector('.ap-done-icon') || panel;
     if (slot.querySelector('.check-draw')) return;
     var wrap = document.createElement('div');
     wrap.className = 'check-draw';
+    wrap.setAttribute('aria-hidden', 'true');
     wrap.innerHTML =
       '<svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true">' +
       '<circle class="check-draw-circle" cx="26" cy="26" r="24" fill="none"/>' +
       '<path class="check-draw-mark" fill="none" d="M14 27 l8 8 l16 -18"/>' +
       '</svg>';
-    if (slot === panel) panel.insertBefore(wrap, panel.firstChild);
-    else slot.appendChild(wrap);
+    if (slot.classList && slot.classList.contains('done-ic')) {
+      // Заменяем статичную иконку анимированной галочкой того же размера.
+      slot.innerHTML = '';
+      wrap.style.display = 'inline-flex';
+      slot.appendChild(wrap);
+      var svg = wrap.querySelector('svg');
+      if (svg) { svg.setAttribute('width', '48'); svg.setAttribute('height', '48'); }
+    } else if (slot === panel) {
+      panel.insertBefore(wrap, panel.firstChild);
+    } else {
+      slot.appendChild(wrap);
+    }
+    // Пружинный scale-in на контейнере иконки.
+    if (!reduceMotion()) {
+      var host = (slot.classList && slot.classList.contains('done-ic')) ? slot : wrap;
+      host.style.transform = 'scale(.4)';
+      host.style.opacity = '0';
+      void host.offsetWidth;
+      host.style.transition = 'transform .55s cubic-bezier(.2,1.5,.4,1), opacity .3s ease';
+      requestAnimationFrame(function () { host.style.transform = 'scale(1)'; host.style.opacity = '1'; });
+      setTimeout(function () { host.style.transition = ''; host.style.transform = ''; host.style.opacity = ''; }, 620);
+    }
   }
 
   /* ---------- Слушатели ---------- */
@@ -581,8 +603,15 @@
   }
 
   /* ---------- Инициализация ---------- */
+  injectMotionCss();
   restoreDraft();
   bind();
+  // Пересчёт заливки степпера при ресайзе/повороте (адаптив).
+  var _rzT;
+  window.addEventListener('resize', function () {
+    clearTimeout(_rzT);
+    _rzT = setTimeout(updateProgressFill, 120);
+  });
   setupConsent();
   applyFormType();
   fillSubgroups();

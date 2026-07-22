@@ -111,6 +111,37 @@ $report = all(
     [$uid, $user['full_name']]
 );
 
+// --- Инфографика кабинета: ученики, заявки, дипломы, награды ---
+$statStudents = [];
+$statDiplomas = 0;
+$statResults  = 0;
+foreach ($report as $r) {
+    $fn = mb_strtolower(trim((string) $r['full_name']));
+    if ($fn !== '') $statStudents[$fn] = true;
+    if (!empty($r['diploma_number'])) $statDiplomas++;
+    if (!empty($r['result']))        $statResults++;
+}
+$statStudentsN = count($statStudents);
+$statAppsN     = count($report);
+$diplomaRate   = $statAppsN > 0 ? (int) round($statDiplomas / $statAppsN * 100) : 0;
+
+// --- Реферальная программа педагога ---
+require_once BASE_PATH . '/core/loyalty.php';
+$refStats       = function_exists('referral_stats') ? referral_stats($uid) : [];
+$refUsesTotal   = array_sum(array_column($refStats, 'uses'));
+$refRewardTotal = array_sum(array_column($refStats, 'reward_total'));
+
+// --- Уровень благодарности (по числу подтверждённых учеников) ---
+$thanksTiers = [
+    ['n' => 30, 'title' => 'Наставник года',        'text' => 'За выдающийся вклад в развитие юных талантов и десятки подготовленных участников.'],
+    ['n' => 15, 'title' => 'Почётный педагог',       'text' => 'За высокое мастерство и постоянную подготовку учеников к конкурсам.'],
+    ['n' => 5,  'title' => 'Благодарность педагогу',  'text' => 'За подготовку учеников и вклад в творческое воспитание.'],
+    ['n' => 1,  'title' => 'Первые шаги',            'text' => 'За первых подготовленных участников. Впереди - большой путь.'],
+    ['n' => 0,  'title' => 'Добро пожаловать',       'text' => 'Подайте первую заявку - и здесь появится Ваша именная благодарность.'],
+];
+$thanks = $thanksTiers[count($thanksTiers) - 1];
+foreach ($thanksTiers as $t) { if ($statStudentsN >= $t['n']) { $thanks = $t; break; } }
+
 $ages = AGE_CATEGORIES();
 $noms = array_keys(NOMINATIONS());
 $forms = FORMATIONS();
@@ -121,15 +152,19 @@ $badge = fn(string $label, string $type) => '<span class="badge badge--' . ($typ
 
 $icon = fn(string $p) => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none">' . $p . '</svg>';
 $icons = [
+  'overview' => $icon('<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>'),
   'students' => $icon('<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2M16 11l2 2 4-4"/>'),
   'group'    => $icon('<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20v-1a5 5 0 0 1 5-5h2M15 20v-1a5 5 0 0 1 5-5h0"/>'),
   'import'   => $icon('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 20h16"/>'),
+  'referral' => $icon('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5 15.4 17.5M15.4 6.5 8.6 10.5"/>'),
   'report'   => $icon('<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 13h6M9 17h6M9 9h2"/>'),
 ];
 $tabs = [
+  ['overview', 'Обзор'],
   ['students', 'Мои ученики и заявки'],
   ['group', 'Групповая подача'],
   ['import', 'Импорт из Excel/CSV'],
+  ['referral', 'Реферальная программа'],
   ['report', 'Отчёт для директора'],
 ];
 
@@ -165,6 +200,32 @@ ob_start(); ?>
 .discount-box b{font-family:var(--ff-serif);color:var(--gold-2);font-size:1.3rem}
 .file-drop{border:1.5px dashed var(--glass-brd);border-radius:var(--radius-sm);padding:20px;text-align:center;color:var(--muted);background:var(--glass)}
 .import-err{color:var(--error);font-size:.86rem;margin:4px 0}
+/* Инфографика обзора */
+.tch-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.tch-stats .stat{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tch-stats .stat .st-ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold-2);margin-bottom:2px}
+.tch-stats .stat .st-ic svg{width:20px;height:20px}
+@media(max-width:720px){.tch-stats{grid-template-columns:repeat(2,1fr)}}
+/* Благодарность (диплом-стиль) */
+.thanks{position:relative;overflow:hidden;text-align:center;padding:34px 26px;border-radius:var(--radius);
+  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(14px);margin-bottom:16px}
+.thanks::before{content:"";position:absolute;inset:8px;border:1px solid var(--glass-brd);border-radius:calc(var(--radius) - 6px);pointer-events:none;mask:linear-gradient(#000,#000)}
+.thanks-mark{font-family:var(--ff-script);font-size:clamp(1.3rem,4vw,1.9rem);color:var(--gold-2);line-height:1}
+.thanks h3{font-family:var(--ff-serif);font-size:clamp(1.4rem,4vw,2rem);margin:.35em 0 .1em}
+.thanks-name{font-family:var(--ff-serif);font-size:1.15rem;color:var(--gold-2);font-weight:700;margin:2px 0 10px}
+.thanks p{color:var(--text-dim);max-width:520px;margin:0 auto 14px}
+.thanks-nums{display:inline-flex;gap:26px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.thanks-nums div{text-align:center}
+.thanks-nums b{display:block;font-family:var(--ff-display);font-weight:800;font-size:1.7rem;line-height:1;color:var(--gold-2)}
+.thanks-nums span{font-size:.78rem;color:var(--muted)}
+/* Реферальный код */
+.ref-code{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:14px 18px;margin:14px 0}
+.ref-code .rc-val{font-family:var(--ff-display);font-weight:800;font-size:1.5rem;letter-spacing:.14em;color:var(--gold-2)}
+.ref-code .rc-meta{color:var(--muted);font-size:.82rem;margin-top:2px}
+.ref-copy{white-space:nowrap}
+.ref-perks{display:flex;gap:20px;flex-wrap:wrap;color:var(--text-dim);font-size:.9rem;margin:2px 0 4px}
+.ref-perks b{color:var(--gold-2)}
 @media(max-width:860px){.tch{grid-template-columns:1fr}.tch-side{position:static}
   .tch-nav{flex-direction:row;overflow-x:auto;gap:6px}.tch-nav a{white-space:nowrap;padding:9px 12px}}
 </style>
@@ -189,8 +250,62 @@ ob_start(); ?>
 
       <div class="tch-main">
 
+        <!-- Обзор -->
+        <div class="tch-panel active" id="ttab-overview">
+          <div class="section-head" style="margin-bottom:16px;text-align:left"><h2 style="margin:0">Обзор</h2>
+            <p style="margin:4px 0 0">Ваши ученики, заявки и достижения - в одном месте.</p>
+          </div>
+
+          <div class="tch-stats reveal">
+            <div class="stat">
+              <span class="st-ic"><?= $icons['students'] ?></span>
+              <b data-count="<?= $statStudentsN ?>"><?= $statStudentsN ?></b>
+              <span>Учеников</span>
+            </div>
+            <div class="stat">
+              <span class="st-ic"><?= $icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/>') ?></span>
+              <b data-count="<?= $statAppsN ?>"><?= $statAppsN ?></b>
+              <span>Заявок</span>
+            </div>
+            <div class="stat">
+              <span class="st-ic"><?= $icon('<circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/>') ?></span>
+              <b data-count="<?= $statDiplomas ?>"><?= $statDiplomas ?></b>
+              <span>Дипломов</span>
+            </div>
+            <div class="stat">
+              <span class="st-ic"><?= $icon('<path d="M6 9a6 6 0 0 0 12 0V3H6zM6 5H3v2a4 4 0 0 0 3 3.8M18 5h3v2a4 4 0 0 1-3 3.8M9 21h6M12 15v6"/>') ?></span>
+              <b data-count="<?= $statResults ?>"><?= $statResults ?></b>
+              <span>Наград</span>
+            </div>
+          </div>
+
+          <?php if ($statAppsN > 0): ?>
+          <div class="tch-card reveal">
+            <div class="bar-row">
+              <div class="bar-lbl"><span>Дипломов от числа заявок</span><span><?= $diplomaRate ?>%</span></div>
+              <div class="bar"><i style="--val:<?= $diplomaRate ?>%"></i></div>
+            </div>
+          </div>
+          <?php endif; ?>
+
+          <!-- Благодарность -->
+          <div class="thanks reveal">
+            <div class="thanks-mark">Благодарность</div>
+            <h3><?= h($thanks['title']) ?></h3>
+            <div class="thanks-name"><?= h($user['full_name'] ?: 'Педагог') ?></div>
+            <p><?= h($thanks['text']) ?></p>
+            <?php if ($statStudentsN > 0): ?>
+            <div class="thanks-nums">
+              <div><b><?= $statStudentsN ?></b><span>учеников</span></div>
+              <div><b><?= $statDiplomas ?></b><span>дипломов</span></div>
+              <div><b><?= $statResults ?></b><span>наград</span></div>
+            </div>
+            <?php endif; ?>
+          </div>
+        </div>
+
         <!-- Мои ученики и заявки -->
-        <div class="tch-panel active" id="ttab-students">
+        <div class="tch-panel" id="ttab-students">
           <div class="section-head" style="margin-bottom:16px"><h2 style="margin:0">Мои ученики и заявки</h2></div>
 
           <form method="get" action="<?= url('/teacher') ?>" class="tch-card" style="display:flex;gap:14px;flex-wrap:wrap;align-items:end">
@@ -385,6 +500,50 @@ ob_start(); ?>
             <div id="iResult" style="margin-top:18px"></div>
           </form>
           <?php endif; ?>
+        </div>
+
+        <!-- Реферальная программа -->
+        <div class="tch-panel" id="ttab-referral">
+          <div class="section-head" style="margin-bottom:16px;text-align:left"><h2 style="margin:0">Реферальная программа</h2>
+            <p style="margin:4px 0 0">Ваш промокод даёт участнику скидку, а Вам - вознаграждение при оплате заявки по коду.
+               Код вводится на странице подачи заявки в поле «Промокод педагога».</p>
+          </div>
+
+          <div class="tch-stats reveal" style="grid-template-columns:repeat(2,1fr);max-width:520px">
+            <div class="stat">
+              <span class="st-ic"><?= $icon('<circle cx="9" cy="7" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2M16 11l2 2 4-4"/>') ?></span>
+              <b data-count="<?= $refUsesTotal ?>"><?= $refUsesTotal ?></b>
+              <span>Оплаченных применений</span>
+            </div>
+            <div class="stat">
+              <span class="st-ic"><?= $icon('<circle cx="12" cy="12" r="9"/><path d="M14.5 9.3c-.6-.7-1.5-1.1-2.5-1.1-1.7 0-3 1-3 2.4 0 3 5.5 1.6 5.5 4.6 0 1.5-1.4 2.5-3 2.5-1.1 0-2.1-.4-2.7-1.2M12 6.5v11"/>') ?></span>
+              <b data-count="<?= $refRewardTotal ?>"><?= number_format($refRewardTotal, 0, '', ' ') ?></b>
+              <span>Начислено, ₽</span>
+            </div>
+          </div>
+
+          <div class="tch-card reveal" id="refBox">
+            <?php if (!$refStats): ?>
+              <p class="tch-meta" style="margin:0 0 12px">У Вас пока нет промокода. Создайте свой - и делитесь им с учениками и их родителями.</p>
+              <button class="btn btn--primary" type="button" id="refCreateBtn">Создать промокод</button>
+              <p id="refMsg" style="margin-top:12px"></p>
+            <?php else: foreach ($refStats as $rc): ?>
+              <div class="ref-code">
+                <div>
+                  <span class="rc-val"><?= h($rc['code']) ?></span>
+                  <div class="rc-meta">Применений: <?= (int) $rc['uses'] ?> · начислено: <?= number_format((int) $rc['reward_total'], 0, '', ' ') ?> ₽<?= $rc['active'] ? '' : ' · выключен' ?></div>
+                </div>
+                <button class="btn btn--ghost ref-copy" type="button" data-copy="<?= h($rc['code']) ?>">Скопировать код</button>
+              </div>
+              <div class="ref-perks">
+                <span>Скидка участнику: <b><?= (int) $rc['percent'] ?>%</b></span>
+                <span>Ваше вознаграждение: <b><?= (int) $rc['reward_percent'] ?>%</b> от оплаты</span>
+              </div>
+            <?php endforeach; ?>
+              <button class="btn btn--ghost" type="button" id="refCreateBtn" style="margin-top:8px">Создать ещё код</button>
+              <p id="refMsg" style="margin-top:12px"></p>
+            <?php endif; ?>
+          </div>
         </div>
 
         <!-- Единый отчёт для директора -->
@@ -590,6 +749,43 @@ ob_start(); ?>
         commitBtn.disabled = false; commitBtn.textContent = 'Создать заявки';
         resultBox.innerHTML = '<p class="import-err">Не удалось отправить данные. Проверьте соединение.</p>';
       });
+  });
+})();
+
+// --- Реферальная программа: копирование кода и создание ---
+(function () {
+  var box = document.getElementById('refBox');
+  if (!box) return;
+  var msg = document.getElementById('refMsg');
+
+  box.addEventListener('click', function (e) {
+    var cp = e.target.closest('[data-copy]');
+    if (cp) {
+      var code = cp.getAttribute('data-copy');
+      var done = function () { var t = cp.textContent; cp.textContent = 'Код скопирован'; setTimeout(function () { cp.textContent = t; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(done).catch(done);
+      } else { done(); }
+      return;
+    }
+    if (e.target.id === 'refCreateBtn') {
+      var btn = e.target;
+      btn.disabled = true; btn.textContent = 'Создаём...';
+      if (msg) { msg.textContent = ''; }
+      var fd = new FormData();
+      fd.append('_csrf', '<?= h(csrf_token()) ?>');
+      fetch('<?= url('/api/v1/referral') ?>', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          btn.disabled = false; btn.textContent = 'Создать промокод';
+          if (d && d.ok) { location.reload(); }
+          else if (msg) { msg.style.color = 'var(--error)'; msg.textContent = (d && d.error) || 'Не удалось создать промокод.'; }
+        })
+        .catch(function () {
+          btn.disabled = false; btn.textContent = 'Создать промокод';
+          if (msg) { msg.style.color = 'var(--error)'; msg.textContent = 'Не удалось отправить запрос. Проверьте соединение.'; }
+        });
+    }
   });
 })();
 </script>
