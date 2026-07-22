@@ -236,8 +236,9 @@
       ok = markRequired($('#phone'), phoneComplete($('#phone').value)) && ok;
     }
     if (step === 'consent') {
-      ok = $('#agree_reg').checked && $('#agree_pd').checked;
-      if (!ok) flashFormError('Отметьте согласие с положением и обработкой персональных данных.');
+      var arc = $('#agree_rules');
+      ok = $('#agree_reg').checked && $('#agree_pd').checked && (!arc || arc.checked);
+      if (!ok) flashFormError('Отметьте согласие с положением, обработкой данных и требованиями к работе.');
     }
     if (!ok && step !== 'consent') flashFormError('Проверьте выделенные поля.');
     else if (ok) flashFormError('');
@@ -291,6 +292,8 @@
     if (link) link.addEventListener('click', startConsentTimer);
     $('#agree_reg').addEventListener('change', refreshConsentBtn);
     $('#agree_pd').addEventListener('change', refreshConsentBtn);
+    var arCb = $('#agree_rules');
+    if (arCb) arCb.addEventListener('change', refreshConsentBtn);
   }
   function startConsentTimer() {
     if (timerStarted) return;
@@ -312,7 +315,8 @@
     }, 1000);
   }
   function refreshConsentBtn() {
-    var ok = $('#agree_reg').checked && $('#agree_pd').checked;
+    var ar = $('#agree_rules');
+    var ok = $('#agree_reg').checked && $('#agree_pd').checked && (!ar || ar.checked);
     var btn = document.getElementById('consentNext');
     if (btn) btn.disabled = !ok;
     // Кнопки отправки (обе панели)
