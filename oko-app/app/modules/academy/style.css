@@ -92,6 +92,31 @@
 .ac-play-btn svg.i{width:26px;height:26px;margin-left:3px}
 @keyframes acPlayPulse{0%{box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5)}70%{box-shadow:0 0 0 18px rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}}
 .ac-player .dur{position:absolute;right:10px;bottom:10px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:99px;padding:3px 10px;z-index:2}
+/* --- кастомный бренд-плеер (свой хром вместо нативного <video controls>) --- */
+.ac-vp{cursor:default}
+.ac-vp .ac-vp-video{position:absolute;inset:0;width:100%;height:100%;background:#000;display:block;object-fit:cover;cursor:pointer}
+/* Постер поверх видео до старта / когда источник не загрузился */
+.ac-vp-poster{position:absolute;inset:0;z-index:3;cursor:pointer;transition:opacity .35s ease}
+.ac-vp.started .ac-vp-poster{opacity:0;visibility:hidden;pointer-events:none}
+.ac-vp-big{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border:0;padding:0;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5);animation:acPlayPulse 2s ease-out infinite;transition:transform .15s;z-index:4}
+.ac-vp-big:hover{transform:translate(-50%,-50%) scale(1.08)}
+.ac-vp-big svg.i{width:27px;height:27px;margin-left:3px}
+/* Центральная кнопка пуск/пауза во время проигрывания (появляется вместе с панелью) */
+.ac-vp-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);width:60px;height:60px;border:0;padding:0;border-radius:50%;background:rgba(154,255,0,.94);color:#000;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:4;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .2s,transform .2s}
+.ac-vp-center svg.i{width:24px;height:24px}
+.ac-vp.started.controls-on .ac-vp-center{display:flex;opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* Нижняя панель управления */
+.ac-vp-bar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:8px;padding:9px 10px;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.2) 68%,transparent);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s,transform .25s}
+.ac-vp.controls-on .ac-vp-bar{opacity:1;transform:none;pointer-events:auto}
+.ac-vp-btn{width:40px;height:40px;flex-shrink:0;border:0;padding:0;border-radius:11px;background:rgba(255,255,255,.09);color:var(--lime);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s}
+.ac-vp-btn:hover{background:rgba(154,255,0,.18)}
+.ac-vp-btn.off{color:rgba(255,255,255,.5)}
+.ac-vp-btn svg.i{width:20px;height:20px}
+/* Слим-скраббер (перемотка, transform:scaleX — дёшево) */
+.ac-vp-scrub{position:relative;flex:1;height:40px;min-width:40px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.ac-vp-scrub .trk{position:relative;width:100%;height:4px;border-radius:99px;background:rgba(255,255,255,.24);overflow:hidden}
+.ac-vp-fill{position:absolute;inset:0;transform-origin:left center;transform:scaleX(0);background:var(--lime);border-radius:99px;box-shadow:0 0 6px rgba(154,255,0,.6);will-change:transform}
+.ac-vp-time{font-size:11px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;min-width:78px;text-align:center}
 .ac-video-actions{display:flex;gap:8px;margin-top:10px}
 .ac-video-actions .btn{flex:1}
 .ac-done-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:8px 14px}

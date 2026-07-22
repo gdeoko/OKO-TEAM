@@ -529,19 +529,19 @@ function vsGiftArt(a, u){
   if(a==='star')    return vsBaseArt('star', u);
   if(a==='crown')   return vsBaseArt('crown', u);
   if(a==='ring') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#d98800"/></linearGradient>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
     <linearGradient id="${u}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8f6ff"/><stop offset=".5" stop-color="#7fd8ff"/><stop offset="1" stop-color="#2b9fe0"/></linearGradient></defs>
     <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="url(#${u}g)" stroke-width="10"/>
-    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#fff6d0" stroke-width="2" opacity=".5"/>
+    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#eaffb8" stroke-width="2" opacity=".5"/>
     <path d="M34 30 L50 8 L66 30 L50 44 Z" fill="url(#${u}d)" stroke="#eafaff" stroke-width="2" stroke-linejoin="round"/>
     <path d="M34 30 H66 M50 8 L42 30 M50 8 L58 30 M42 30 L50 44 M58 30 L50 44" stroke="#eafaff" stroke-width="1.4" opacity=".8" fill="none"/>
     <path d="M40 32 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#fff" opacity=".9"/>`;
   if(a==='trophy') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#cf8400"/></linearGradient></defs>
-    <rect x="38" y="72" width="24" height="10" rx="3" fill="#b8790a"/>
-    <rect x="30" y="82" width="40" height="10" rx="4" fill="#e0920a"/>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <rect x="38" y="72" width="24" height="10" rx="3" fill="#4f8f00"/>
+    <rect x="30" y="82" width="40" height="10" rx="4" fill="#6cba12"/>
     <rect x="30" y="82" width="40" height="4" rx="2" fill="#fff" opacity=".25"/>
-    <path d="M28 16 H72 V38 C72 55 62 66 50 66 C38 66 28 55 28 38 Z" fill="url(#${u}g)" stroke="#fff2b8" stroke-width="2"/>
+    <path d="M28 16 H72 V38 C72 55 62 66 50 66 C38 66 28 55 28 38 Z" fill="url(#${u}g)" stroke="#eaffb8" stroke-width="2"/>
     <path d="M28 22 H16 V30 C16 40 22 46 30 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
     <path d="M72 22 H84 V30 C84 40 78 46 70 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
     <path d="M50 26 L55 37 L67 38 L58 46 L61 58 L50 51 L39 58 L42 46 L33 38 L45 37 Z" fill="#fff" opacity=".85"/>`;
@@ -556,12 +556,12 @@ function vsGiftArt(a, u){
     <circle cx="50" cy="64" r="7" fill="#9AFF00"/><circle cx="47" cy="61" r="2.4" fill="#0a1403"/>`;
   /* potion */
   return `<defs>
-    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a6ff"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b21b6"/></linearGradient></defs>
-    <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(180,150,235,.16)" stroke="#e9d8ff" stroke-width="3" stroke-linejoin="round"/>
+    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(154,255,0,.14)" stroke="#eaffc0" stroke-width="3" stroke-linejoin="round"/>
     <path d="M35 56 L65 56 L73 76 C76 84 70 88 63 88 H37 C30 88 24 84 27 76 Z" fill="url(#${u}p)"/>
-    <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c9a6ff" opacity=".7"/>
+    <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c6ff70" opacity=".7"/>
     <circle cx="44" cy="72" r="4" fill="#fff" opacity=".55"/><circle cx="57" cy="78" r="3" fill="#fff" opacity=".45"/><circle cx="50" cy="68" r="2.4" fill="#fff" opacity=".6"/>
-    <rect x="40" y="6" width="20" height="9" rx="3" fill="#b59adf"/>
+    <rect x="40" y="6" width="20" height="9" rx="3" fill="#6cba12"/>
     <path d="M70 20 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#fff" opacity=".85"/>`;
 }
 function vsGiftSvg(art, size){
@@ -990,8 +990,11 @@ showTab = function(t){
   vsDecorateAll();
   /* TON подарки: иконка-символ, заголовок, тайл в хабе, первый рендер */
   vsInjectTonSymbol();
-  try{ if(typeof regTitle === 'function') regTitle('ton', 'TON Подарки'); }catch(e){}
-  try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', bg:'rgba(0,152,234,.16)', fg:'#3fb6ff', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
+  /* короткий заголовок «TON» — не режется на 390px (было «TON Подарки» → «TON Подар…») */
+  try{ if(typeof regTitle === 'function') regTitle('ton', 'TON'); }catch(e){}
+  /* тайл хаба — фирменный лайм как у всех тайлов (bg/fg по умолчанию: var(--lime-dim)/var(--accent)).
+     Синяя айдентика TON остаётся ВНУТРИ экрана TON, но плитка хаба единообразна с сеткой. */
+  try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
   const scr = document.getElementById('screen-ton');
   if(scr && scr.classList.contains('active')) vsRenderTon();
 })();

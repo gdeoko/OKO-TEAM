@@ -2080,6 +2080,31 @@ main>.screen{position:relative;z-index:1}
 .ac-play-btn svg.i{width:26px;height:26px;margin-left:3px}
 @keyframes acPlayPulse{0%{box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5)}70%{box-shadow:0 0 0 18px rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0),0 10px 30px rgba(0,0,0,.5)}}
 .ac-player .dur{position:absolute;right:10px;bottom:10px;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:99px;padding:3px 10px;z-index:2}
+/* --- кастомный бренд-плеер (свой хром вместо нативного <video controls>) --- */
+.ac-vp{cursor:default}
+.ac-vp .ac-vp-video{position:absolute;inset:0;width:100%;height:100%;background:#000;display:block;object-fit:cover;cursor:pointer}
+/* Постер поверх видео до старта / когда источник не загрузился */
+.ac-vp-poster{position:absolute;inset:0;z-index:3;cursor:pointer;transition:opacity .35s ease}
+.ac-vp.started .ac-vp-poster{opacity:0;visibility:hidden;pointer-events:none}
+.ac-vp-big{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:66px;height:66px;border:0;padding:0;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 0 rgba(154,255,0,.45),0 10px 30px rgba(0,0,0,.5);animation:acPlayPulse 2s ease-out infinite;transition:transform .15s;z-index:4}
+.ac-vp-big:hover{transform:translate(-50%,-50%) scale(1.08)}
+.ac-vp-big svg.i{width:27px;height:27px;margin-left:3px}
+/* Центральная кнопка пуск/пауза во время проигрывания (появляется вместе с панелью) */
+.ac-vp-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);width:60px;height:60px;border:0;padding:0;border-radius:50%;background:rgba(154,255,0,.94);color:#000;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:4;box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .2s,transform .2s}
+.ac-vp-center svg.i{width:24px;height:24px}
+.ac-vp.started.controls-on .ac-vp-center{display:flex;opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* Нижняя панель управления */
+.ac-vp-bar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:8px;padding:9px 10px;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.2) 68%,transparent);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .25s,transform .25s}
+.ac-vp.controls-on .ac-vp-bar{opacity:1;transform:none;pointer-events:auto}
+.ac-vp-btn{width:40px;height:40px;flex-shrink:0;border:0;padding:0;border-radius:11px;background:rgba(255,255,255,.09);color:var(--lime);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s}
+.ac-vp-btn:hover{background:rgba(154,255,0,.18)}
+.ac-vp-btn.off{color:rgba(255,255,255,.5)}
+.ac-vp-btn svg.i{width:20px;height:20px}
+/* Слим-скраббер (перемотка, transform:scaleX — дёшево) */
+.ac-vp-scrub{position:relative;flex:1;height:40px;min-width:40px;display:flex;align-items:center;cursor:pointer;touch-action:none}
+.ac-vp-scrub .trk{position:relative;width:100%;height:4px;border-radius:99px;background:rgba(255,255,255,.24);overflow:hidden}
+.ac-vp-fill{position:absolute;inset:0;transform-origin:left center;transform:scaleX(0);background:var(--lime);border-radius:99px;box-shadow:0 0 6px rgba(154,255,0,.6);will-change:transform}
+.ac-vp-time{font-size:11px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.02em;flex-shrink:0;min-width:78px;text-align:center}
 .ac-video-actions{display:flex;gap:8px;margin-top:10px}
 .ac-video-actions .btn{flex:1}
 .ac-done-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:8px 14px}
@@ -3086,8 +3111,8 @@ main>.screen{position:relative;z-index:1}
 .vs-gcard-name{font-size:11.5px;font-weight:600;color:var(--text);text-align:center;line-height:1.2}
 .vs-gcard-price{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#3fb6ff}
 .vs-gcard-pro{position:absolute;top:-6px;right:-8px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#ffd21e,#ff9800);box-shadow:0 3px 8px rgba(0,0,0,.3)}
-.vs-gcard-pro svg{width:12px;height:12px;color:#3a2400}
+  background:linear-gradient(135deg,#c6ff70,#9AFF00);box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.vs-gcard-pro svg{width:12px;height:12px;color:#12240a}
 .vs-gcard-own{position:absolute;bottom:-4px;right:-6px;font-size:9.5px;font-weight:800;color:#0a0a0a;background:var(--lime);
   padding:2px 7px;border-radius:999px;box-shadow:var(--glow)}
 .vs-gcard-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(6,12,20,.28)}
@@ -3113,7 +3138,7 @@ main>.screen{position:relative;z-index:1}
 .vs-buy-art{position:relative;display:inline-flex;margin:6px auto 10px}
 .vs-buy-art .vs-stk-art{animation:vs-stk-in .45s cubic-bezier(.34,1.56,.44,1)}
 .vs-buy-pro{position:absolute;top:0;right:-12px;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.5px;
-  color:#3a2400;background:linear-gradient(135deg,#ffd21e,#ff9800);padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  color:#12240a;background:linear-gradient(135deg,#c6ff70,#9AFF00);padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
 .vs-buy-pro svg{width:11px;height:11px}
 .vs-buy-name{font-family:var(--font-display);letter-spacing:1px;font-size:22px;margin:0 0 4px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 .vs-buy-owned{font-family:var(--font-body);letter-spacing:0;font-size:10.5px;font-weight:700;color:#0a0a0a;background:var(--lime);padding:2px 9px;border-radius:999px}
@@ -3229,9 +3254,10 @@ main>.screen{position:relative;z-index:1}
 .vs-gcard.vs-nft:nth-child(3n) .vs-nft-shine::before{animation-delay:2.2s}
 .vs-buy-art.vs-nft .vs-nft-shine::before{animation-duration:2.8s}
 @keyframes vs-shine{0%{left:-70%}55%{left:135%}100%{left:135%}}
-.vs-gcard.vs-nft{border-color:rgba(255,193,30,.34)}
-.vs-gcard.vs-nft:hover{border-color:#ffc21e;box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(255,193,30,.34)}
-:root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(255,193,30,.28)}
+/* премиум-NFT-карточки — фирменный лайм-акцент (было золото #ffc21e — off-brand) */
+.vs-gcard.vs-nft{border-color:rgba(154,255,0,.34)}
+.vs-gcard.vs-nft:hover{border-color:var(--accent);box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(154,255,0,.34)}
+:root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(154,255,0,.28)}
 
 /* ===== module: i18n-settings ===== */
 /* ===== I18N-SETTINGS: язык интерфейса + авто-перевод чатов (префикс st-) ===== */
@@ -5402,8 +5428,13 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .pw-cmp-toggle svg{width:14px;height:14px;transition:transform .25s}
 .pw-cmp-toggle.on svg{transform:rotate(180deg)}
 .pw-cmp-wrap{overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch;
-  border:1px solid var(--border);border-radius:var(--r-md)}
-.pw-cmp{border-collapse:collapse;width:100%;min-width:420px;font-size:12px}
+  border:1px solid var(--border);border-radius:var(--r-md);
+  /* правый край подтаивает — сигнал «листай, есть ещё BUSINESS и MAX» */
+  -webkit-mask-image:linear-gradient(90deg,#000 89%,rgba(0,0,0,.35) 100%);
+          mask-image:linear-gradient(90deg,#000 89%,rgba(0,0,0,.35) 100%)}
+/* подпись-подсказка над таблицей */
+.pw-cmp-hint{font-size:11px;color:var(--dim);text-align:right;margin:-6px 2px 6px;letter-spacing:.02em}
+.pw-cmp{border-collapse:collapse;width:100%;min-width:452px;font-size:12px}
 .pw-cmp th,.pw-cmp td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--border)}
 .pw-cmp thead th{position:sticky;top:0;background:var(--surface);font-family:var(--font-display);font-size:15px;
   letter-spacing:.03em;font-weight:400}
@@ -7005,7 +7036,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
           <div class="ava lime" id="profAva">Д</div>
           <div>
             <h2 class="name-status" id="profName">Даниэль</h2>
-            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">PRO до 15.08</span></div>
+            <div class="u"><span id="profNick">@ktodaniel</span> · <span class="chip" style="font-size:9.5px" id="profTier">MAX · владелец</span></div>
           </div>
         </div>
         <p class="prof-bio" id="profBio"></p>
@@ -9596,7 +9627,7 @@ async function liveSend(text){
 }
 
 /* ================= МОЙ ПРОФИЛЬ ================= */
-const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'PRO', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
+const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'MAX', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
 const STATUS_ICONS = ['fire','star','bolt','heart','thumb','crown'];
 let editStatus = null;
 function renderMyProfile(){
@@ -9619,7 +9650,7 @@ function renderMyProfile(){
     `<div class="pstat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('');
   const ach = [
     {ic:'bolt', t:'Ранний', on:true},
-    {ic:'crown', t:'PRO', on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'},
+    {ic:'crown', t:(PROFILE.tier==='MAX'?'MAX':'PRO'), on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'||PROFILE.tier==='MAX'},
     {ic:'users', t:'Партнёр', on:true},
     {ic:'fire', t:'100+ реакций', on:reacts>=100},
     {ic:'star', t:'Автор', on:myPosts.length>0},
@@ -10110,7 +10141,7 @@ const PROGRESS = [
   {s:'done', t:'Прототип интерфейса', d:'Чаты (голосовые, кружочки, файлы), лента, мини-аппы, тарифы. SVG-иконки, две темы, mobile-first.'},
   {s:'done', t:'Каркас сервера и БД', d:'API-модули, схема Postgres (28 таблиц в Supabase), тарифные лимиты, партнёрские начисления 15%/5%.'},
   {s:'done', t:'Кошелёк и лицевой счёт', d:'Баланс на всё: тарифы, продвижение, переводы. Биржа с комиссией 10% и эскроу, вывод средств, история операций.'},
-  {s:'done', t:'Игры OKO', d:'Рулетка (12 секторов, до ×10) и «Дорога OKO». Ставки только с кошелька, дневной лимит, 18+.'},
+  {s:'done', t:'Игры OKO', d:'Призовая рулетка: 1 бесплатный спин в день + платные спины на выбранную сумму. Призы — бонусы, скидки, билеты (не деньги).'},
   {s:'done', t:'Академия: урок 1 полного формата', d:'Видео + слайды + тест + задание + мини-игра. Официальный сертификат с печатью и подписью.'},
   {s:'done', t:'Рекламный кабинет', d:'Кампании с таргетом и бюджетом с лицевого счёта, ИИ-модерация объявлений, реклама в ленте, живая статистика.'},
   {s:'done', t:'Регистрация, верификация, стикеры', d:'Полная регистрация с кодом и интересами, синяя галочка верификации, премиум-пак TON Crystal.'},
@@ -11051,7 +11082,7 @@ if(typeof renderOb === 'function'){
     {t:'-', sum:150,  why:'Стикеры OKO · набор «Неон»',         at: now - 4*D},
     {t:'+', sum:900,  why:'Партнёрская программа · выплата',    at: now - 6*D},
     {t:'-', sum:349,  why:'Продвижение объявления · Старт',     at: now - 8*D},
-    {t:'-', sum:600,  why:'Игра «Дорога» · ставка',             at: now - 11*D},
+    {t:'-', sum:600,  why:'Рулетка OKO · платный спин',          at: now - 11*D},
     {t:'+', sum:800,  why:'Пополнение · USDT',                  at: now - 13*D},
     {t:'-', sum:1490, why:'Тариф START · 1 мес',                at: now - 19*D},
     {t:'+', sum:700,  why:'Возврат по спору · Биржа',           at: now - 22*D},
@@ -14071,12 +14102,9 @@ function acLessonHtml(){
 }
 
 /* ---------- а) ВИДЕО ---------- */
-function acRenderVideoBox(){
-  const box = document.getElementById('acVideoBox');
-  if(!box) return;
-  const L = acCur(), ls = acLS();
-  const cover = `
-    <div class="ac-player" onclick="acPlay()" id="acPlayer">
+/* Бренд-обложка урока (SVG) — общий макет постера и заглушки «скоро» */
+function acVpCover(L){
+  return `
       <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
         <rect width="640" height="360" fill="#070a04"/>
         <g stroke="rgba(154,255,0,.09)" stroke-width="1">
@@ -14088,24 +14116,157 @@ function acRenderVideoBox(){
         <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
         <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
         <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
-      </svg>
+      </svg>`;
+}
+function acRenderVideoBox(){
+  const box = document.getElementById('acVideoBox');
+  if(!box) return;
+  const L = acCur(), ls = acLS();
+  // Заглушка «видео в производстве» (у урока пока нет ролика)
+  const cover = `
+    <div class="ac-player" onclick="acPlay()" id="acPlayer">
+      ${acVpCover(L)}
       <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
       <span class="dur">${L.dur || 'скоро'}</span>
     </div>`;
-  const player = L.videoUrl
-    ? `<div class="ac-player" style="cursor:default"><video controls playsinline src="${L.videoUrl}"></video></div>`
-    : cover;
+  // Кастомный бренд-плеер (без нативного <video controls>) — свой чёрно-лаймовый хром
+  const player = L.videoUrl ? `
+    <div class="ac-player ac-vp" id="acPlayer">
+      <video class="ac-vp-video" id="acVpVideo" playsinline preload="metadata" src="${L.videoUrl}" onclick="acVpTapArea(event)"></video>
+      <div class="ac-vp-poster" id="acVpPoster" onclick="acVpBig(event)">
+        ${acVpCover(L)}
+        <button class="ac-vp-big" type="button" onclick="acVpBig(event)" aria-label="Смотреть урок">${I('play')}</button>
+        <span class="dur">${L.dur || 'видео'}</span>
+      </div>
+      <button class="ac-vp-center" id="acVpCenter" type="button" onclick="acVpToggle(event)" aria-label="Пауза/пуск">${I('pause')}</button>
+      <div class="ac-vp-bar" id="acVpBar" onclick="acVpBarStop(event)">
+        <button class="ac-vp-btn" id="acVpPlay" type="button" onclick="acVpToggle(event)" aria-label="Пауза/пуск">${I('play')}</button>
+        <div class="ac-vp-scrub" id="acVpScrub" onclick="acVpSeek(event)" role="slider" aria-label="Перемотка"><span class="trk"><i class="ac-vp-fill" id="acVpFill"></i></span></div>
+        <span class="ac-vp-time" id="acVpTime">0:00 / ${L.dur || '0:00'}</span>
+        <button class="ac-vp-btn" id="acVpMute" type="button" onclick="acVpMute(event)" aria-label="Звук">${I('megaphone')}</button>
+        <button class="ac-vp-btn" type="button" onclick="acVpFull(event)" aria-label="На весь экран">${I('device')}</button>
+      </div>
+    </div>` : cover;
   box.innerHTML = player + `
     <div class="ac-video-actions">${ls.video
       ? `<span class="ac-done-chip">${I('check2')} Видео просмотрено</span>`
       : `<button class="btn" onclick="acMarkVideo()">${I('check2')} Отметить просмотренным</button>`}
     </div>`;
+  if(L.videoUrl) acVpInit();
 }
 function acPlay(){
   if(acCur().videoUrl) return;
   showPopup({ico:'circle-play', title:'Видео урока в производстве',
     body:'Ролик урока «'+acCur().title+'» сейчас монтируется: озвучка, анимации и караоке-субтитры по стандарту Академии. Совсем скоро он появится прямо здесь. Пока изучи слайды ниже — в них весь материал урока.',
     actions:[{label:'Понятно'}]});
+}
+
+/* ---------- бренд-плеер: кастомный хром (без нативных controls) ---------- */
+let acVpTimer = null;                       // таймер авто-скрытия панели
+function acVpEl(){ return document.getElementById('acPlayer'); }
+function acVpVid(){ return document.getElementById('acVpVideo'); }
+function acVpFmt(s){                          // секунды -> m:ss
+  if(!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s/60), z = Math.floor(s%60);
+  return m + ':' + (z<10?'0':'') + z;
+}
+/* Привязка событий к видео после рендера. Всё в try/catch — оффлайн-источник не должен ломать хром */
+function acVpInit(){
+  try{
+    const v = acVpVid(), p = acVpEl();
+    if(!v || !p) return;
+    v.addEventListener('loadedmetadata', acVpSync);
+    v.addEventListener('durationchange', acVpSync);
+    v.addEventListener('timeupdate', acVpSync);           // дёшево (~4/сек), без перерасчёта layout
+    v.addEventListener('play',  ()=>{ p.classList.add('started','playing'); acVpSyncIcons(); acVpShow(false); });
+    v.addEventListener('pause', ()=>{ p.classList.remove('playing'); acVpSyncIcons(); acVpShow(true); });
+    v.addEventListener('ended', ()=>{ p.classList.remove('playing','started'); acVpSyncIcons(); acVpShow(true); });
+    v.addEventListener('error', ()=>{ p.classList.remove('started','playing'); }); // источник не доступен — постер остаётся
+    acVpSyncIcons();
+  }catch(_){}
+}
+/* Показать панель управления; при проигрывании прячем сама через пару секунд */
+function acVpShow(sticky){
+  const p = acVpEl(); if(!p) return;
+  p.classList.add('controls-on');
+  clearTimeout(acVpTimer);
+  if(!sticky && p.classList.contains('playing')){
+    acVpTimer = setTimeout(()=>{ const q=acVpEl(); if(q) q.classList.remove('controls-on'); }, 2500);
+  }
+}
+function acVpHide(){ const p=acVpEl(); if(p) p.classList.remove('controls-on'); clearTimeout(acVpTimer); }
+/* Тап по области видео во время проигрывания — показать/скрыть управление */
+function acVpTapArea(e){
+  if(e) e.stopPropagation();
+  const p = acVpEl(); if(!p || !p.classList.contains('started')) return;
+  if(p.classList.contains('controls-on')) acVpHide(); else acVpShow(false);
+}
+function acVpBarStop(e){ if(e) e.stopPropagation(); acVpShow(false); } // клики по панели не сворачивают её
+/* Большая лаймовая кнопка на постере — старт */
+function acVpBig(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(); if(!v) return;
+  try{ const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }catch(_){} // оффлайн: play отклонится — постер остаётся
+}
+/* Пуск/пауза (центр + нижняя панель) */
+function acVpToggle(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(); if(!v) return;
+  try{
+    if(v.paused){ const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }
+    else v.pause();
+  }catch(_){}
+  acVpShow(false);
+}
+/* Перемотка по клику на слим-скраббер */
+function acVpSeek(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(), s = document.getElementById('acVpScrub');
+  if(!v || !s) return;
+  try{
+    const r = s.getBoundingClientRect();
+    const x = (e.clientX != null) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : r.left);
+    let p = (x - r.left) / r.width; p = Math.max(0, Math.min(1, p));
+    if(isFinite(v.duration) && v.duration > 0){ v.currentTime = p * v.duration; acVpSync(); }
+  }catch(_){}
+  acVpShow(false);
+}
+/* Тумблер звука */
+function acVpMute(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(), b = document.getElementById('acVpMute');
+  if(!v) return;
+  try{ v.muted = !v.muted; if(b) b.classList.toggle('off', v.muted); }catch(_){}
+  acVpShow(false);
+}
+/* На весь экран (fullscreen контейнера, iOS — самого видео) */
+function acVpFull(e){
+  if(e) e.stopPropagation();
+  const p = acVpEl(), v = acVpVid();
+  try{
+    if(document.fullscreenElement){ if(document.exitFullscreen) document.exitFullscreen(); return; }
+    if(p && p.requestFullscreen) p.requestFullscreen();
+    else if(p && p.webkitRequestFullscreen) p.webkitRequestFullscreen();
+    else if(v && v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+  }catch(_){}
+  acVpShow(false);
+}
+/* Обновление скраббера и таймкода (transform:scaleX — без layout-thrash) */
+function acVpSync(){
+  const v = acVpVid(); if(!v) return;
+  const fill = document.getElementById('acVpFill'), t = document.getElementById('acVpTime');
+  const dur = (isFinite(v.duration) && v.duration > 0) ? v.duration : 0;
+  const p = dur ? Math.max(0, Math.min(1, v.currentTime / dur)) : 0;
+  if(fill) fill.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+  if(t){ let d; try{ d = acCur().dur; }catch(_){ d = ''; } t.textContent = acVpFmt(v.currentTime) + ' / ' + (dur ? acVpFmt(dur) : (d || '0:00')); }
+}
+/* Синхронизация иконок play/pause по состоянию видео */
+function acVpSyncIcons(){
+  const v = acVpVid(); if(!v) return;
+  const ico = v.paused ? I('play') : I('pause');
+  const b = document.getElementById('acVpPlay'), c = document.getElementById('acVpCenter');
+  if(b) b.innerHTML = ico;
+  if(c) c.innerHTML = ico;
 }
 function acMarkVideo(){
   acLS().video = true; acSave();
@@ -17447,19 +17608,19 @@ function vsGiftArt(a, u){
   if(a==='star')    return vsBaseArt('star', u);
   if(a==='crown')   return vsBaseArt('crown', u);
   if(a==='ring') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#d98800"/></linearGradient>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
     <linearGradient id="${u}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8f6ff"/><stop offset=".5" stop-color="#7fd8ff"/><stop offset="1" stop-color="#2b9fe0"/></linearGradient></defs>
     <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="url(#${u}g)" stroke-width="10"/>
-    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#fff6d0" stroke-width="2" opacity=".5"/>
+    <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#eaffb8" stroke-width="2" opacity=".5"/>
     <path d="M34 30 L50 8 L66 30 L50 44 Z" fill="url(#${u}d)" stroke="#eafaff" stroke-width="2" stroke-linejoin="round"/>
     <path d="M34 30 H66 M50 8 L42 30 M50 8 L58 30 M42 30 L50 44 M58 30 L50 44" stroke="#eafaff" stroke-width="1.4" opacity=".8" fill="none"/>
     <path d="M40 32 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#fff" opacity=".9"/>`;
   if(a==='trophy') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#cf8400"/></linearGradient></defs>
-    <rect x="38" y="72" width="24" height="10" rx="3" fill="#b8790a"/>
-    <rect x="30" y="82" width="40" height="10" rx="4" fill="#e0920a"/>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <rect x="38" y="72" width="24" height="10" rx="3" fill="#4f8f00"/>
+    <rect x="30" y="82" width="40" height="10" rx="4" fill="#6cba12"/>
     <rect x="30" y="82" width="40" height="4" rx="2" fill="#fff" opacity=".25"/>
-    <path d="M28 16 H72 V38 C72 55 62 66 50 66 C38 66 28 55 28 38 Z" fill="url(#${u}g)" stroke="#fff2b8" stroke-width="2"/>
+    <path d="M28 16 H72 V38 C72 55 62 66 50 66 C38 66 28 55 28 38 Z" fill="url(#${u}g)" stroke="#eaffb8" stroke-width="2"/>
     <path d="M28 22 H16 V30 C16 40 22 46 30 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
     <path d="M72 22 H84 V30 C84 40 78 46 70 46" fill="none" stroke="url(#${u}g)" stroke-width="6"/>
     <path d="M50 26 L55 37 L67 38 L58 46 L61 58 L50 51 L39 58 L42 46 L33 38 L45 37 Z" fill="#fff" opacity=".85"/>`;
@@ -17474,12 +17635,12 @@ function vsGiftArt(a, u){
     <circle cx="50" cy="64" r="7" fill="#9AFF00"/><circle cx="47" cy="61" r="2.4" fill="#0a1403"/>`;
   /* potion */
   return `<defs>
-    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a6ff"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b21b6"/></linearGradient></defs>
-    <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(180,150,235,.16)" stroke="#e9d8ff" stroke-width="3" stroke-linejoin="round"/>
+    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(154,255,0,.14)" stroke="#eaffc0" stroke-width="3" stroke-linejoin="round"/>
     <path d="M35 56 L65 56 L73 76 C76 84 70 88 63 88 H37 C30 88 24 84 27 76 Z" fill="url(#${u}p)"/>
-    <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c9a6ff" opacity=".7"/>
+    <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c6ff70" opacity=".7"/>
     <circle cx="44" cy="72" r="4" fill="#fff" opacity=".55"/><circle cx="57" cy="78" r="3" fill="#fff" opacity=".45"/><circle cx="50" cy="68" r="2.4" fill="#fff" opacity=".6"/>
-    <rect x="40" y="6" width="20" height="9" rx="3" fill="#b59adf"/>
+    <rect x="40" y="6" width="20" height="9" rx="3" fill="#6cba12"/>
     <path d="M70 20 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#fff" opacity=".85"/>`;
 }
 function vsGiftSvg(art, size){
@@ -17908,8 +18069,11 @@ showTab = function(t){
   vsDecorateAll();
   /* TON подарки: иконка-символ, заголовок, тайл в хабе, первый рендер */
   vsInjectTonSymbol();
-  try{ if(typeof regTitle === 'function') regTitle('ton', 'TON Подарки'); }catch(e){}
-  try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', bg:'rgba(0,152,234,.16)', fg:'#3fb6ff', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
+  /* короткий заголовок «TON» — не режется на 390px (было «TON Подарки» → «TON Подар…») */
+  try{ if(typeof regTitle === 'function') regTitle('ton', 'TON'); }catch(e){}
+  /* тайл хаба — фирменный лайм как у всех тайлов (bg/fg по умолчанию: var(--lime-dim)/var(--accent)).
+     Синяя айдентика TON остаётся ВНУТРИ экрана TON, но плитка хаба единообразна с сеткой. */
+  try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
   const scr = document.getElementById('screen-ton');
   if(scr && scr.classList.contains('active')) vsRenderTon();
 })();
@@ -26689,7 +26853,7 @@ var PW_ASSET = {
 
   /* ---- цены/мес (fallback если PLANS нет), спец-годовая цена ---- */
   var PW_MO = {START:1490, PRO:4890, BUSINESS:19900, MAX:27000};   // MAX ~ $300/мес
-  var PW_YR = {MAX:90000};                                          // MAX ~ $999/год (годовая выгода)
+  var PW_YR = {MAX:259200};   // MAX год = −20% (27000×12×0.8) — единая скидка со всеми тарифами, лестница не инвертируется
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;
     return PW_MO[tier] || 0;
@@ -26814,7 +26978,7 @@ var PW_ASSET = {
       ? ('<div class="pw-p-v">'+pwRub(mo)+'<small> /мес</small></div>')
       : ('<div class="pw-p-v">'+pwRub(mo)+'<small> /мес</small></div>');
     var priceNote = (tier==='MAX')
-      ? ('год '+pwRub(PW_YR.MAX)+'<br>выгода до −72%')
+      ? ('год '+pwRub(PW_YR.MAX)+'<br>выгода −20%')
       : ('всего '+pwRub(perDay)+'/день<br>−до 20% на год');
     el.innerHTML =
       '<div class="pw-card">'+
@@ -27106,7 +27270,7 @@ var PW_ASSET = {
 
   /* ---- FAQ / снятие возражений (native <details>, без JS-таймеров) ---- */
   var PW_FAQ = [
-    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 90 000 ₽, ни копейкой больше.'},
+    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 259 200 ₽ (−20%), ни копейкой больше.'},
     {q:'Можно отменить подписку?', a:'В один клик в настройках. Автопродление выключается сразу, а доступ остаётся до конца оплаченного периода.'},
     {q:'Почему OKO не полностью бесплатный?', a:'ИИ-проверки, автопостинг и контент-завод — это реальные вычисления. Базовый уровень бесплатен навсегда: лента, кошелёк, партнёрка и первые проверки видео.'},
     {q:'А если тариф не подойдёт?', a:'Понизь уровень или вернись на FREE когда угодно. Подписчики, ролики и баланс остаются с тобой.'}
@@ -27219,6 +27383,7 @@ var PW_ASSET = {
     var cmpHtml = '';
     if(pwCmpOpen){
       cmpHtml =
+      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: BUSINESS, MAX</div>'+
       '<div class="pw-cmp-wrap"><table class="pw-cmp">'+
         '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th class="pw-c-max">MAX</th></tr></thead>'+
         '<tbody>'+ PW_CMP_ROWS.map(function(r){

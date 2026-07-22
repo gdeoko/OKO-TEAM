@@ -178,8 +178,8 @@
 .vs-gcard-name{font-size:11.5px;font-weight:600;color:var(--text);text-align:center;line-height:1.2}
 .vs-gcard-price{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;color:#3fb6ff}
 .vs-gcard-pro{position:absolute;top:-6px;right:-8px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#ffd21e,#ff9800);box-shadow:0 3px 8px rgba(0,0,0,.3)}
-.vs-gcard-pro svg{width:12px;height:12px;color:#3a2400}
+  background:linear-gradient(135deg,#c6ff70,#9AFF00);box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.vs-gcard-pro svg{width:12px;height:12px;color:#12240a}
 .vs-gcard-own{position:absolute;bottom:-4px;right:-6px;font-size:9.5px;font-weight:800;color:#0a0a0a;background:var(--lime);
   padding:2px 7px;border-radius:999px;box-shadow:var(--glow)}
 .vs-gcard-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(6,12,20,.28)}
@@ -205,7 +205,7 @@
 .vs-buy-art{position:relative;display:inline-flex;margin:6px auto 10px}
 .vs-buy-art .vs-stk-art{animation:vs-stk-in .45s cubic-bezier(.34,1.56,.44,1)}
 .vs-buy-pro{position:absolute;top:0;right:-12px;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.5px;
-  color:#3a2400;background:linear-gradient(135deg,#ffd21e,#ff9800);padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+  color:#12240a;background:linear-gradient(135deg,#c6ff70,#9AFF00);padding:3px 9px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
 .vs-buy-pro svg{width:11px;height:11px}
 .vs-buy-name{font-family:var(--font-display);letter-spacing:1px;font-size:22px;margin:0 0 4px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
 .vs-buy-owned{font-family:var(--font-body);letter-spacing:0;font-size:10.5px;font-weight:700;color:#0a0a0a;background:var(--lime);padding:2px 9px;border-radius:999px}
@@ -321,6 +321,7 @@
 .vs-gcard.vs-nft:nth-child(3n) .vs-nft-shine::before{animation-delay:2.2s}
 .vs-buy-art.vs-nft .vs-nft-shine::before{animation-duration:2.8s}
 @keyframes vs-shine{0%{left:-70%}55%{left:135%}100%{left:135%}}
-.vs-gcard.vs-nft{border-color:rgba(255,193,30,.34)}
-.vs-gcard.vs-nft:hover{border-color:#ffc21e;box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(255,193,30,.34)}
-:root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(255,193,30,.28)}
+/* премиум-NFT-карточки — фирменный лайм-акцент (было золото #ffc21e — off-brand) */
+.vs-gcard.vs-nft{border-color:rgba(154,255,0,.34)}
+.vs-gcard.vs-nft:hover{border-color:var(--accent);box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(154,255,0,.34)}
+:root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(154,255,0,.28)}

@@ -1198,12 +1198,9 @@ function acLessonHtml(){
 }
 
 /* ---------- а) ВИДЕО ---------- */
-function acRenderVideoBox(){
-  const box = document.getElementById('acVideoBox');
-  if(!box) return;
-  const L = acCur(), ls = acLS();
-  const cover = `
-    <div class="ac-player" onclick="acPlay()" id="acPlayer">
+/* Бренд-обложка урока (SVG) — общий макет постера и заглушки «скоро» */
+function acVpCover(L){
+  return `
       <svg class="ac-cover" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice">
         <rect width="640" height="360" fill="#070a04"/>
         <g stroke="rgba(154,255,0,.09)" stroke-width="1">
@@ -1215,24 +1212,157 @@ function acRenderVideoBox(){
         <text x="48" y="238" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="47" fill="#fff" letter-spacing="1">${L.c1}</text>
         <text x="48" y="302" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="58" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
         <text x="48" y="330" font-family="Montserrat,sans-serif" font-size="15" font-weight="600" fill="rgba(255,255,255,.55)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
-      </svg>
+      </svg>`;
+}
+function acRenderVideoBox(){
+  const box = document.getElementById('acVideoBox');
+  if(!box) return;
+  const L = acCur(), ls = acLS();
+  // Заглушка «видео в производстве» (у урока пока нет ролика)
+  const cover = `
+    <div class="ac-player" onclick="acPlay()" id="acPlayer">
+      ${acVpCover(L)}
       <div class="ac-play-btn"><svg class="i"><use href="#i-play"/></svg></div>
       <span class="dur">${L.dur || 'скоро'}</span>
     </div>`;
-  const player = L.videoUrl
-    ? `<div class="ac-player" style="cursor:default"><video controls playsinline src="${L.videoUrl}"></video></div>`
-    : cover;
+  // Кастомный бренд-плеер (без нативного <video controls>) — свой чёрно-лаймовый хром
+  const player = L.videoUrl ? `
+    <div class="ac-player ac-vp" id="acPlayer">
+      <video class="ac-vp-video" id="acVpVideo" playsinline preload="metadata" src="${L.videoUrl}" onclick="acVpTapArea(event)"></video>
+      <div class="ac-vp-poster" id="acVpPoster" onclick="acVpBig(event)">
+        ${acVpCover(L)}
+        <button class="ac-vp-big" type="button" onclick="acVpBig(event)" aria-label="Смотреть урок">${I('play')}</button>
+        <span class="dur">${L.dur || 'видео'}</span>
+      </div>
+      <button class="ac-vp-center" id="acVpCenter" type="button" onclick="acVpToggle(event)" aria-label="Пауза/пуск">${I('pause')}</button>
+      <div class="ac-vp-bar" id="acVpBar" onclick="acVpBarStop(event)">
+        <button class="ac-vp-btn" id="acVpPlay" type="button" onclick="acVpToggle(event)" aria-label="Пауза/пуск">${I('play')}</button>
+        <div class="ac-vp-scrub" id="acVpScrub" onclick="acVpSeek(event)" role="slider" aria-label="Перемотка"><span class="trk"><i class="ac-vp-fill" id="acVpFill"></i></span></div>
+        <span class="ac-vp-time" id="acVpTime">0:00 / ${L.dur || '0:00'}</span>
+        <button class="ac-vp-btn" id="acVpMute" type="button" onclick="acVpMute(event)" aria-label="Звук">${I('megaphone')}</button>
+        <button class="ac-vp-btn" type="button" onclick="acVpFull(event)" aria-label="На весь экран">${I('device')}</button>
+      </div>
+    </div>` : cover;
   box.innerHTML = player + `
     <div class="ac-video-actions">${ls.video
       ? `<span class="ac-done-chip">${I('check2')} Видео просмотрено</span>`
       : `<button class="btn" onclick="acMarkVideo()">${I('check2')} Отметить просмотренным</button>`}
     </div>`;
+  if(L.videoUrl) acVpInit();
 }
 function acPlay(){
   if(acCur().videoUrl) return;
   showPopup({ico:'circle-play', title:'Видео урока в производстве',
     body:'Ролик урока «'+acCur().title+'» сейчас монтируется: озвучка, анимации и караоке-субтитры по стандарту Академии. Совсем скоро он появится прямо здесь. Пока изучи слайды ниже — в них весь материал урока.',
     actions:[{label:'Понятно'}]});
+}
+
+/* ---------- бренд-плеер: кастомный хром (без нативных controls) ---------- */
+let acVpTimer = null;                       // таймер авто-скрытия панели
+function acVpEl(){ return document.getElementById('acPlayer'); }
+function acVpVid(){ return document.getElementById('acVpVideo'); }
+function acVpFmt(s){                          // секунды -> m:ss
+  if(!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s/60), z = Math.floor(s%60);
+  return m + ':' + (z<10?'0':'') + z;
+}
+/* Привязка событий к видео после рендера. Всё в try/catch — оффлайн-источник не должен ломать хром */
+function acVpInit(){
+  try{
+    const v = acVpVid(), p = acVpEl();
+    if(!v || !p) return;
+    v.addEventListener('loadedmetadata', acVpSync);
+    v.addEventListener('durationchange', acVpSync);
+    v.addEventListener('timeupdate', acVpSync);           // дёшево (~4/сек), без перерасчёта layout
+    v.addEventListener('play',  ()=>{ p.classList.add('started','playing'); acVpSyncIcons(); acVpShow(false); });
+    v.addEventListener('pause', ()=>{ p.classList.remove('playing'); acVpSyncIcons(); acVpShow(true); });
+    v.addEventListener('ended', ()=>{ p.classList.remove('playing','started'); acVpSyncIcons(); acVpShow(true); });
+    v.addEventListener('error', ()=>{ p.classList.remove('started','playing'); }); // источник не доступен — постер остаётся
+    acVpSyncIcons();
+  }catch(_){}
+}
+/* Показать панель управления; при проигрывании прячем сама через пару секунд */
+function acVpShow(sticky){
+  const p = acVpEl(); if(!p) return;
+  p.classList.add('controls-on');
+  clearTimeout(acVpTimer);
+  if(!sticky && p.classList.contains('playing')){
+    acVpTimer = setTimeout(()=>{ const q=acVpEl(); if(q) q.classList.remove('controls-on'); }, 2500);
+  }
+}
+function acVpHide(){ const p=acVpEl(); if(p) p.classList.remove('controls-on'); clearTimeout(acVpTimer); }
+/* Тап по области видео во время проигрывания — показать/скрыть управление */
+function acVpTapArea(e){
+  if(e) e.stopPropagation();
+  const p = acVpEl(); if(!p || !p.classList.contains('started')) return;
+  if(p.classList.contains('controls-on')) acVpHide(); else acVpShow(false);
+}
+function acVpBarStop(e){ if(e) e.stopPropagation(); acVpShow(false); } // клики по панели не сворачивают её
+/* Большая лаймовая кнопка на постере — старт */
+function acVpBig(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(); if(!v) return;
+  try{ const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }catch(_){} // оффлайн: play отклонится — постер остаётся
+}
+/* Пуск/пауза (центр + нижняя панель) */
+function acVpToggle(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(); if(!v) return;
+  try{
+    if(v.paused){ const pr = v.play(); if(pr && pr.catch) pr.catch(()=>{}); }
+    else v.pause();
+  }catch(_){}
+  acVpShow(false);
+}
+/* Перемотка по клику на слим-скраббер */
+function acVpSeek(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(), s = document.getElementById('acVpScrub');
+  if(!v || !s) return;
+  try{
+    const r = s.getBoundingClientRect();
+    const x = (e.clientX != null) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : r.left);
+    let p = (x - r.left) / r.width; p = Math.max(0, Math.min(1, p));
+    if(isFinite(v.duration) && v.duration > 0){ v.currentTime = p * v.duration; acVpSync(); }
+  }catch(_){}
+  acVpShow(false);
+}
+/* Тумблер звука */
+function acVpMute(e){
+  if(e) e.stopPropagation();
+  const v = acVpVid(), b = document.getElementById('acVpMute');
+  if(!v) return;
+  try{ v.muted = !v.muted; if(b) b.classList.toggle('off', v.muted); }catch(_){}
+  acVpShow(false);
+}
+/* На весь экран (fullscreen контейнера, iOS — самого видео) */
+function acVpFull(e){
+  if(e) e.stopPropagation();
+  const p = acVpEl(), v = acVpVid();
+  try{
+    if(document.fullscreenElement){ if(document.exitFullscreen) document.exitFullscreen(); return; }
+    if(p && p.requestFullscreen) p.requestFullscreen();
+    else if(p && p.webkitRequestFullscreen) p.webkitRequestFullscreen();
+    else if(v && v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+  }catch(_){}
+  acVpShow(false);
+}
+/* Обновление скраббера и таймкода (transform:scaleX — без layout-thrash) */
+function acVpSync(){
+  const v = acVpVid(); if(!v) return;
+  const fill = document.getElementById('acVpFill'), t = document.getElementById('acVpTime');
+  const dur = (isFinite(v.duration) && v.duration > 0) ? v.duration : 0;
+  const p = dur ? Math.max(0, Math.min(1, v.currentTime / dur)) : 0;
+  if(fill) fill.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+  if(t){ let d; try{ d = acCur().dur; }catch(_){ d = ''; } t.textContent = acVpFmt(v.currentTime) + ' / ' + (dur ? acVpFmt(dur) : (d || '0:00')); }
+}
+/* Синхронизация иконок play/pause по состоянию видео */
+function acVpSyncIcons(){
+  const v = acVpVid(); if(!v) return;
+  const ico = v.paused ? I('play') : I('pause');
+  const b = document.getElementById('acVpPlay'), c = document.getElementById('acVpCenter');
+  if(b) b.innerHTML = ico;
+  if(c) c.innerHTML = ico;
 }
 function acMarkVideo(){
   acLS().video = true; acSave();
