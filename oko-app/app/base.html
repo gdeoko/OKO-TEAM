@@ -3763,15 +3763,29 @@ renderFeed('sub');
   }
   function sweep(root){ try{ (root||document).querySelectorAll('.ava').forEach(decorate); }catch(e){} }
   try{
-    const mo = new MutationObserver(muts=>{
-      for(const m of muts){
-        m.addedNodes && m.addedNodes.forEach(n=>{
-          if(n.nodeType!==1) return;
-          if(n.classList && n.classList.contains('ava')) decorate(n);
-          if(n.querySelectorAll) n.querySelectorAll('.ava').forEach(decorate);
-        });
-        if(m.type==='childList' && m.target && m.target.classList && m.target.classList.contains('ava')){ m.target.__okoAva=false; decorate(m.target); }
+    /* rAF-дебаунс: мутации только КОПЯТ кандидатов в Set, а красим один раз за кадр —
+       это убирает лаг «декорируем на каждую пересборку ленты/чатов». */
+    const pending = new Set();
+    let raf = 0;
+    function flush(){
+      raf = 0;
+      const batch = pending; if(!batch.size){ return; }
+      // новый набор на следующий кадр, текущий обрабатываем
+      const nodes = Array.from(batch); batch.clear();
+      for(const n of nodes){
+        if(!n || n.nodeType!==1 || !n.isConnected) continue;
+        if(n.classList && n.classList.contains('ava')) decorate(n);
+        if(n.querySelectorAll){ const inner=n.querySelectorAll('.ava'); for(let i=0;i<inner.length;i++) decorate(inner[i]); }
       }
+    }
+    function schedule(){ if(raf) return; raf = (window.requestAnimationFrame||window.setTimeout)(flush, 16); }
+    const mo = new MutationObserver(muts=>{
+      for(let i=0;i<muts.length;i++){
+        const m = muts[i];
+        if(m.addedNodes) for(let j=0;j<m.addedNodes.length;j++){ const n=m.addedNodes[j]; if(n && n.nodeType===1) pending.add(n); }
+        if(m.type==='childList' && m.target && m.target.classList && m.target.classList.contains('ava')){ m.target.__okoAva=false; pending.add(m.target); }
+      }
+      if(pending.size) schedule();
     });
     const start=()=>{ sweep(document); if(document.body) mo.observe(document.body,{childList:true,subtree:true}); };
     if(document.body) start(); else document.addEventListener('DOMContentLoaded', start);

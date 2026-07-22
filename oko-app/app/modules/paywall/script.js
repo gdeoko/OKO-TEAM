@@ -505,6 +505,24 @@ var PW_ASSET = {
     renderPay = pwRenderPay;
   }
 
+  /* ФИКС ДЕНЕГ (B1): годовой MAX списывается по спец-цене PW_YR.MAX (как в витрине),
+     а НЕ full×0.8. Раньше витрина показывала 90 000 ₽, а payPrice()/кошелёк списывали
+     27 000×12×0.8 = 259 200 ₽. Оборачиваем ядровой payPrice единственным источником правды. */
+  if(typeof payPrice==='function'){
+    var _pwPrevPayPrice = payPrice;
+    payPrice = function(){
+      try{
+        if(typeof payState!=='undefined' && payState && payState.plan==='MAX' && payState.period===12){
+          var full = pwMonthly('MAX')*12;
+          var total = PW_YR.MAX;
+          var disc = full>0 ? Math.round((1 - total/full)*100) : 0;
+          return {full:full, total:total, disc:disc, mo:12};
+        }
+      }catch(e){}
+      return _pwPrevPayPrice.apply(this, arguments);
+    };
+  }
+
   /* =================== САМОИНИЦИАЛИЗАЦИЯ =================== */
   function pwInit(){
     pwDecorateTiles();
