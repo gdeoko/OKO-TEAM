@@ -1,0 +1,235 @@
+{
+ "id": "gspy_010",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+5%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "neon night synth",
+   "minimal techno tension"
+  ]
+ },
+ "cover": {
+  "kicker": "CHECKOUT LIST",
+  "top": "30-SECOND",
+  "big": "ROOM\nSWEEP",
+  "q": [
+   "smoke detector ceiling closeup"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "New room? Run this thirty-second sweep first."
+  },
+  {
+   "id": "b2",
+   "text": "One: scan the Wi-Fi for unknown devices."
+  },
+  {
+   "id": "b3",
+   "text": "Two: kill the lights and pan for lens glints."
+  },
+  {
+   "id": "b4",
+   "text": "Three: check anything aimed at the bed."
+  },
+  {
+   "id": "b5",
+   "text": "Four: unplug what you can't explain."
+  },
+  {
+   "id": "b6",
+   "text": "Do it once, then actually relax."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.1,
+   "dur": 1.77,
+   "type": "kicker",
+   "text": "PRIVACY 101"
+  },
+  {
+   "at": 0.109,
+   "dur": 2.0,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.477,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.494,
+   "dur": 2.27,
+   "type": "ticker",
+   "to": 100,
+   "suffix": "%",
+   "label": "PRIVACY BACK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.626,
+   "dur": 1.85,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.833,
+   "dur": 1.74,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  },
+  {
+   "at": 0.897,
+   "dur": 2.3,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #spy #mobile #camera #detect",
+ "yt_title": "30-second hidden camera room sweep #shorts",
+ "trend_keys": [
+  "spy",
+  "mobile",
+  "camera",
+  "detect"
+ ],
+ "content_type": "viral"
+}

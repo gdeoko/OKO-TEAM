@@ -1,0 +1,264 @@
+{
+ "id": "gtape_012",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "cheerful folk clap",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "ONLINE SHOPPING",
+  "top": "BUY FURNITURE",
+  "big": "THAT ACTUALLY\nFITS",
+  "q": [
+   "hand pointing phone at wall measuring"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "That online sofa looks perfect on screen."
+  },
+  {
+   "id": "b2",
+   "text": "But will it swallow your whole living room?"
+  },
+  {
+   "id": "b3",
+   "text": "Measure the real space with your phone first."
+  },
+  {
+   "id": "b4",
+   "text": "Compare it to the product dimensions."
+  },
+  {
+   "id": "b5",
+   "text": "Order only what genuinely fits."
+  },
+  {
+   "id": "b6",
+   "text": "Fewer returns, zero regret."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panr"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.101,
+   "dur": 1.72,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.166,
+   "dur": 1.61,
+   "type": "kinetic",
+   "top": "FIT",
+   "big": "CHECK"
+  },
+  {
+   "at": 0.224,
+   "dur": 1.97,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.228,
+   "dur": 1.62,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.253,
+   "dur": 2.02,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.462,
+   "dur": 1.61,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.622,
+   "dur": 1.96,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.716,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.742,
+   "dur": 1.63,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.829,
+   "dur": 1.83,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #furniture #fatmax #without #plan",
+ "yt_title": "Buy furniture that actually fits #shorts",
+ "trend_keys": [
+  "furniture",
+  "fatmax",
+  "without",
+  "plan",
+  "measure",
+  "tape",
+  "stanley",
+  "digital"
+ ],
+ "content_type": "useful"
+}
