@@ -1,0 +1,4 @@
+node_modules/
+public/stock*.mp4
+out/
+*.log
