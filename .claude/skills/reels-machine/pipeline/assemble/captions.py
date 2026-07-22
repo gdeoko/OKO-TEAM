@@ -29,17 +29,21 @@ def fmt(t):
 
 def build_ass(words, out_ass):
     """words = плоский список [{w,t,d}] (t абсолютное). Группируем по 2 слова, фикс \\pos(540,POSY)."""
-    ev=[]; i=0
+    ev=[]; groups=[]; i=0
     while i<len(words):
-        grp=words[i:i+2]
-        st=grp[0]["t"]; en=grp[-1]["t"]+grp[-1]["d"]+0.10
+        groups.append(words[i:i+2]); i+=2
+    for gi,grp in enumerate(groups):
+        st=grp[0]["t"]
+        nat=grp[-1]["t"]+grp[-1]["d"]+0.10
+        nxt_start=groups[gi+1][0]["t"] if gi+1<len(groups) else nat
+        en=min(nat, nxt_start-0.02)                      # НЕ накладывать на следующую пару
+        if en<=st: en=st+0.25
         parts=[]
         for j,w in enumerate(grp):
-            nxt=grp[j+1]["t"] if j+1<len(grp) else (w["t"]+w["d"])
-            k=max(6,int(round((nxt-w["t"])*100)))
+            nw=grp[j+1]["t"] if j+1<len(grp) else min(en, w["t"]+w["d"])
+            k=max(6,int(round((nw-w["t"])*100)))
             parts.append(r"{\k"+str(k)+"}"+w["w"].upper().strip(".,!?»«"))
-        ev.append(f"Dialogue: 0,{fmt(st)},{fmt(en)},Sub,,0,0,0,,{{\\an5\\pos(540,{POSY})\\fad(60,60)}}{' '.join(parts)}")
-        i+=2
+        ev.append(f"Dialogue: 0,{fmt(st)},{fmt(en)},Sub,,0,0,0,,{{\\an5\\pos(540,{POSY})\\fad(50,40)}}{' '.join(parts)}")
     open(out_ass,"w",encoding="utf-8").write(HEAD+"\n".join(ev)+"\n")
     return out_ass
 
