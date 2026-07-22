@@ -18,13 +18,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 AN = os.path.join(HERE, "analysis"); os.makedirs(AN, exist_ok=True)
 SEEN = os.path.join(AN, "recon_seen.json")
 
+BRANDNAME = {"spy":"SPY CAMERA FINDER","brain":"BRAINOVA","tape":"3D TAPE MEASURE"}
+CODE = {"spy":"PRIVACY","brain":"FOCUS","tape":"MEASURE"}
+
 QUERIES = {
  "spy": ["hidden camera detector airbnb","find hidden cameras hotel","spy camera finder app",
-         "hidden camera in rental","how to detect hidden cameras travel","privacy hidden camera check"],
- "brain": ["improve memory fast","brain training app","memory test brain age",
-           "focus concentration tips","remember names trick","brain exercises memory"],
- "tape": ["measure room with phone ar","ar measuring app","measure without tape",
-          "will furniture fit room","phone tape measure","ar ruler app diy"],
+         "hidden camera in rental","how to detect hidden cameras travel","privacy hidden camera check",
+         "hidden camera caught","hidden cameras in hotel rooms","spy gadgets hidden camera",
+         "how to find spy camera phone","airbnb hidden camera scandal","detect hidden camera dark"],
+ "brain": ["improve memory fast","brain training app","memory test brain age","focus concentration tips",
+           "remember names trick","brain exercises memory","how to focus better","boost brain power",
+           "memory hack study","brain games adults","increase concentration","train your brain"],
+ "tape": ["measure room with phone ar","ar measuring app","measure without tape","will furniture fit room",
+          "phone tape measure","ar ruler app diy","measure furniture app","home renovation measure app",
+          "iphone measure app","interior design measuring","diy measuring hack","ar tape measure demo"],
 }
 NICHE = {"spy":"Spy Camera Finder / приватность","brain":"Brainova / память-фокус","tape":"3D Tape Measure / замеры-DIY"}
 
@@ -64,41 +71,69 @@ def hook_words(titles):
 
 def recon_app(app):
     seen = load(SEEN, {})
-    seen_ids = set(seen.get(app, []))
+    cnt = seen.get("_cnt", {}).get(app, 0)          # ротационный счётчик (разные ролики каждый раз)
+    qs = QUERIES[app]
+    start = (cnt * 3) % len(qs)                      # ротируем окно запросов -> всплывают разные 1M+
+    use = [qs[(start + i) % len(qs)] for i in range(min(6, len(qs)))]
     pool=[]
-    for q in QUERIES[app]:
+    for q in use:
         pool += ytsearch(q, 8)
         time.sleep(1)
-    # дедуп по id, сорт по просмотрам
     uniq={}
     for r in pool:
         if r["id"] and r["id"] not in uniq: uniq[r["id"]]=r
     ranked=sorted(uniq.values(), key=lambda r:-r["views"])
-    # предпочитаем НОВЫЕ (не показанные ранее), добираем топом
-    fresh=[r for r in ranked if r["id"] not in seen_ids]
-    top=(fresh or ranked)[:10]
+    millions_all=[r for r in ranked if r["views"]>=1_000_000]
+    # ПРИОРИТЕТ всегда 1M+; ротируем окно -> разные миллионники каждый раз; добираем топом если мало
+    if millions_all:
+        off=(cnt*2) % len(millions_all)
+        rot=millions_all[off:]+millions_all[:off]
+        top=rot[:10]
+        if len(top)<5: top=(top+[r for r in ranked if r["id"] not in {x["id"] for x in top}])[:10]
+    else:
+        top=ranked[:10]
     millions=[r for r in top if r["views"]>=1_000_000]
-    # обновляем seen (последние 200)
-    seen[app]=list(dict.fromkeys(list(seen_ids)+[r["id"] for r in top]))[-200:]
+    seen.setdefault("_cnt", {})[app]=cnt+1
+    seen[app]=list(dict.fromkeys(list(seen.get(app,[]))+[r["id"] for r in top]))[-200:]
     json.dump(seen, open(SEEN,"w"))
     hooks=hook_words([r["title"] for r in top])
-    res=dict(app=app, niche=NICHE[app], top=top, millions=len(millions), hooks=hooks,
+    res=dict(app=app, niche=NICHE[app], brand_name=BRANDNAME.get(app,app.upper()), code=CODE.get(app,""),
+             top=top, millions_list=millions, millions=len(millions), hooks=hooks,
+             ts=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
              avg_views=int(sum(r["views"] for r in top)/max(1,len(top))))
     json.dump(res, open(os.path.join(AN,f"latest_{app}.json"),"w"), ensure_ascii=False, indent=1)
     return res
 
-def fmt_doc(res):
-    a=res["app"]; L=[]
-    L.append(f"<b>🔎 TAPPIO · разведка конкурентов — {res['niche']}</b>")
-    L.append(f"Топ-{len(res['top'])} по просмотрам · роликов 1M+: <b>{res['millions']}</b> · средние просмотры: <b>{res['avg_views']:,}</b>".replace(","," "))
-    L.append("")
-    for i,r in enumerate(res["top"][:10],1):
-        L.append(f"{i}. <b>{r['views']:,}</b> просм · {r['likes']:,}❤ · {r['comments']:,}💬".replace(","," "))
-        L.append(f"   <i>{r['title'][:90]}</i>")
-        L.append(f"   @{r['channel']} · youtu.be/{r['id']}")
-    L.append("")
-    L.append("<b>Паттерн хуков (частые слова в топе):</b> "+", ".join(res["hooks"]))
-    L.append("<i>Выводы записаны — кормят генератор сценариев следующих роликов.</i>")
+def _er(r):
+    v=max(1,r.get("views",0)); return round((r.get("likes",0)+r.get("comments",0))/v*100,2)
+
+def conclusion(res):
+    """ВЫВОД для наших роликов на основе паттернов топ-миллионников."""
+    hk=res["hooks"][:6]
+    return (f"хук через конкретную выгоду/цифру + сильное слово ниши ({', '.join(hk[:3])}) в первые 2 сек; "
+            f"формат демонстрация/сравнение «до-после»; плотная динамика, инфографика цифрами; "
+            f"CTA на кодовое слово {res.get('code','')} и ссылку. Тянуть за счёт узнаваемой боли и честного результата.")
+
+def fmt_doc(res, reel_id=None):
+    L=[]
+    head=f"АНАЛИЗ КОНКУРЕНТОВ {res['brand_name']} — YouTube, ролики 1M+"
+    L.append(f"<b>{head}</b>")
+    sub=f"{res['ts']} · ниша: {res['niche']}" + (f" · для ролика {reel_id}" if reel_id else "")
+    L.append(sub)
+    L.append("="*44)
+    shown = res["millions_list"] or res["top"]     # приоритет — ролики 1M+
+    for i,r in enumerate(shown[:10],1):
+        subs=r.get("followers",0)
+        L.append(f"{i}. {r['title'][:80]}")
+        L.append(f"   канал: {r['channel']} ({subs/1000:.1f}K подп.)".replace(".0K","K"))
+        L.append(f"   <b>{r['views']:,}</b> · {r['likes']:,}❤ · {r['comments']:,}💬 · ER {_er(r)}% · ⏱ {r.get('dur',0)}с".replace(","," "))
+        L.append(f"   https://youtu.be/{r['id']}")
+    L.append("="*44)
+    L.append("<b>РАЗБОР ХУКОВ (что заходит):</b>")
+    L.append("частые слова в заголовках-миллионниках: "+", ".join(res["hooks"][:8]))
+    L.append("паттерны: цифры/топы, конкретная боль, демонстрация, до/после, честная выгода.")
+    L.append(f"<b>ВЫВОД для наших роликов:</b> {conclusion(res)}")
+    L.append(f"<i>Средние по топу: {res['avg_views']:,} просм · роликов 1M+: {res['millions']}. Файл-основа ролика.</i>".replace(","," "))
     return "\n".join(L)
 
 def send_bot(text):
@@ -116,7 +151,20 @@ def send_bot(text):
 
 def main():
     which = sys.argv[1] if len(sys.argv)>1 else "all"
-    quiet = (len(sys.argv)>2 and sys.argv[2]=="quiet")   # обновить анализ БЕЗ документа в бота (per-reel)
+    mode = sys.argv[2] if len(sys.argv)>2 else ""
+    # brief <reel_id>: свежий анализ ПОД КОНКРЕТНЫЙ РОЛИК — файл-основа + документ в бота
+    if mode == "brief":
+        reel_id = sys.argv[3] if len(sys.argv)>3 else which
+        res = recon_app(which)
+        doc = fmt_doc(res, reel_id=reel_id)
+        # файл-основа ролика (по нему строится ролик)
+        briefs = os.path.join(AN, "briefs"); os.makedirs(briefs, exist_ok=True)
+        plain = doc.replace("<b>","").replace("</b>","").replace("<i>","").replace("</i>","")
+        open(os.path.join(briefs, f"{reel_id}.txt"), "w").write(plain)
+        send_bot(doc)
+        print(f"BRIEF {reel_id} ({which}): 1M+={res['millions']} avg={res['avg_views']} -> analysis/briefs/{reel_id}.txt + бот")
+        return
+    quiet = (mode == "quiet")   # обновить анализ БЕЗ документа в бота
     apps = ["spy","brain","tape"] if which=="all" else [which]
     for app in apps:
         res=recon_app(app)

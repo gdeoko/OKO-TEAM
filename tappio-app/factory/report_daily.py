@@ -79,8 +79,11 @@ def main():
     L.append(f"Роликов опубликовано всего: <b>{total_reels}</b> · цель к 31.08: 500")
     L.append("")
     L.append("<b>YouTube (живые метрики):</b>")
-    L.append(f"Сумма: <b>{tot_v:,}</b> просм · {tot_l:,} лайк · {tot_c:,} комм".replace(",", " "))
-    L.append(f"Прогресс к 100M просмотров: <b>{tot_v/1_000_000:.2f}M</b>")
+    if not rows:
+        L.append("<i>метрики временно недоступны — YouTube лимитирует запросы с сервера (не 0 просмотров). Повторю в следующий отчёт.</i>")
+    else:
+        L.append(f"Сумма: <b>{tot_v:,}</b> просм · {tot_l:,} лайк · {tot_c:,} комм".replace(",", " "))
+        L.append(f"Прогресс к 100M просмотров: <b>{tot_v/1_000_000:.2f}M</b>")
     L.append("")
     rows.sort(key=lambda r: -r[2]["views"])
     for rid, vid, st, dv, app, _hp in rows[:12]:

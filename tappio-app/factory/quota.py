@@ -5,10 +5,20 @@
 #   python3 quota.py check   -> печатает СКОЛЬКО ЕЩЁ надо собрать сегодня (0 = хватит)
 #   python3 quota.py inc      -> +1 к сегодняшнему счётчику
 #   python3 quota.py status   -> квота/сделано/осталось
-import json, sys, os
-from datetime import date
+import json, sys, os, math
+from datetime import date, datetime
 STATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "daily_state.json")
 START = date(2026, 7, 17)
+# Окно постинга (UTC): 06:00–19:00 UTC = 09:00–22:00 МСК. Ролики равномерно по окну.
+WSTART_H, WEND_H = 6, 19
+
+def due_by_now():
+    """Сколько роликов ДОЛЖНО быть готово к текущему моменту (равномерно по окну дня)."""
+    q = quota_for(date.today())
+    now = datetime.utcnow(); h = now.hour + now.minute/60.0
+    if h <= WSTART_H: return 0
+    if h >= WEND_H: return q
+    return min(q, math.ceil(q * (h - WSTART_H) / (WEND_H - WSTART_H)))
 
 def _perf_cap():
     """Адаптив: если аналитика зафиксировала просадку (perf_flag.json cap) — режем до неё."""
@@ -52,7 +62,10 @@ def main():
         print(s["count"])
     elif cmd == "check":
         print(max(0, q - s.get("count", 0)))
+    elif cmd == "slot":
+        # сколько можно собрать ПРЯМО СЕЙЧАС с учётом равномерного пейсинга по дню
+        print(max(0, min(q - s.get("count", 0), due_by_now() - s.get("count", 0))))
     else:
-        print(f"date={s['date']} quota={q} done={s.get('count',0)} remaining={max(0,q-s.get('count',0))}")
+        print(f"date={s['date']} quota={q} done={s.get('count',0)} remaining={max(0,q-s.get('count',0))} due_by_now={due_by_now()}")
 
 main()

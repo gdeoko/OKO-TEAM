@@ -19,9 +19,11 @@ grep -q "ENV READY" work/_setup.log || { echo "ENV_NOT_READY"; tail -3 work/_set
 HMARK="work/.health_$(date -u +%Y%m%d%H 2>/dev/null)"
 if [ ! -f "$HMARK" ]; then bash health.sh > work/_health.log 2>&1 || true; touch "$HMARK" 2>/dev/null; echo "[health] $(tail -1 work/_health.log)"; fi
 
-# квота
+# квота + ПЕЙСИНГ по дню (равномерные перерывы, не всё разом)
 REMAIN=$(python3 quota.py check 2>/dev/null || echo 0)
 if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.py status))"; exit 0; fi
+SLOT=$(python3 quota.py slot 2>/dev/null || echo 0)
+if [ "${SLOT:-0}" -le 0 ] 2>/dev/null; then echo "PACED_WAIT — не время слота ($(python3 quota.py status))"; exit 0; fi
 
 # автодозаливка очереди (без LLM) — генератор держит >=12 сценариев
 python3 gen_scripts.py topup 12 >/dev/null 2>&1 || true
@@ -49,8 +51,8 @@ print(pick)
 ID=$(basename "$NEXT" .json)
 cp "$NEXT" "scripts/$ID.json"
 APP=$(python3 -c "import json;print(json.load(open('scripts/$ID.json')).get('app','spy'))" 2>/dev/null)
-# АНАЛИЗ ПЕРЕД РОЛИКОМ: свежая разведка конкурентов именно этого app (тихо, без дубля документа)
-timeout 150 python3 recon.py "$APP" quiet 2>&1 | tail -1 || true
+# АНАЛИЗ ПЕРЕД КАЖДЫМ РОЛИКОМ: полный разбор конкурентов 1M+ → файл-основа + документ в бота
+timeout 200 python3 recon.py "$APP" brief "$ID" 2>&1 | tail -1 || true
 # ПОЛИРОВКА СЦЕНАРИЯ: humanizer + усиление хука по конкурентам + оценка виральности
 python3 script_polish.py "scripts/$ID.json" 2>&1 | tail -1 || true
 CAP=$(python3 -c "import json;d=json.load(open('scripts/$ID.json'));print(d.get('caption') or (d['cta']['text']))" 2>/dev/null)
