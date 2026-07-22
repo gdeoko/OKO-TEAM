@@ -27,6 +27,27 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def fmt(t):
     h=int(t//3600); m=int((t%3600)//60); s=t%60; return f"{h}:{m:02d}:{s:05.2f}"
 
+
+import difflib as _dl
+def align_to_audio(script_words, whisper_words):
+    """script_words: [str] из сценария; whisper_words: [{w,t,d}] с реального 1.8x аудио.
+    Возвращает [{w,t,d}] — ТЕКСТ из сценария, ВРЕМЯ из аудио (difflib), несопоставленные — интерполяция."""
+    def nm(x): return re.sub(r"[^а-яёa-z0-9]","",x.lower())
+    wt=[nm(x["w"]) for x in whisper_words]; st=[nm(x) for x in script_words]
+    sm=_dl.SequenceMatcher(None, wt, st, autojunk=False)
+    timed=[None]*len(script_words)
+    for a,b,size in sm.get_matching_blocks():
+        for k in range(size): timed[b+k]={"w":script_words[b+k],"t":whisper_words[a+k]["t"],"d":whisper_words[a+k]["d"]}
+    last=0.0
+    for i in range(len(script_words)):
+        if timed[i] is None:
+            nxt=next((timed[j]["t"] for j in range(i+1,len(script_words)) if timed[j]), last+0.35)
+            timed[i]={"w":script_words[i],"t":round((last+nxt)/2,3),"d":round(max(0.18,(nxt-last)/2),3)}
+        last=timed[i]["t"]+timed[i]["d"]
+    for i in range(1,len(timed)):
+        if timed[i]["t"]<timed[i-1]["t"]: timed[i]["t"]=timed[i-1]["t"]+0.05
+    return timed
+
 def build_ass(words, out_ass):
     """words = плоский список [{w,t,d}] (t абсолютное). Группируем по 2 слова, фикс \\pos(540,POSY)."""
     ev=[]; groups=[]; i=0
