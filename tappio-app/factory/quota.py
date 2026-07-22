@@ -5,12 +5,13 @@
 #   python3 quota.py check   -> печатает СКОЛЬКО ЕЩЁ надо собрать сегодня (0 = хватит)
 #   python3 quota.py inc      -> +1 к сегодняшнему счётчику
 #   python3 quota.py status   -> квота/сделано/осталось
-import json, sys, os, math
+import json, sys, os, math, time
 from datetime import date, datetime
 STATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "daily_state.json")
 START = date(2026, 7, 17)
-# Окно постинга (UTC): 06:00–19:00 UTC = 09:00–22:00 МСК. Ролики равномерно по окну.
-WSTART_H, WEND_H = 6, 19
+# Окно постинга (UTC): 04:00–23:00 UTC = 07:00–02:00 МСК (широкое, чтобы уместить ролики с паузой ≥1.5ч).
+WSTART_H, WEND_H = 4, 23
+MIN_GAP_S = 5400   # ЖЁСТКИЙ минимум между роликами — 1.5 часа
 
 def due_by_now():
     """Сколько роликов ДОЛЖНО быть готово к текущему моменту (равномерно по окну дня)."""
@@ -58,14 +59,23 @@ def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "status"
     s = today_state(); q = quota_for(date.today())
     if cmd == "inc":
-        s["count"] = s.get("count", 0) + 1; json.dump(s, open(STATE, "w"))
+        s["count"] = s.get("count", 0) + 1
+        s["last_ts"] = time.time()          # метка времени сборки — для минимального промежутка 1.5ч
+        json.dump(s, open(STATE, "w"))
         print(s["count"])
     elif cmd == "check":
         print(max(0, q - s.get("count", 0)))
     elif cmd == "slot":
-        # сколько можно собрать ПРЯМО СЕЙЧАС с учётом равномерного пейсинга по дню
-        print(max(0, min(q - s.get("count", 0), due_by_now() - s.get("count", 0))))
+        # можно ли собрать ПРЯМО СЕЙЧАС: есть остаток + подошёл слот по дню + прошло ≥1.5ч с прошлой сборки
+        remaining = q - s.get("count", 0)
+        gap_ok = (time.time() - s.get("last_ts", 0)) >= MIN_GAP_S
+        paced = s.get("count", 0) < due_by_now()
+        print(1 if (remaining > 0 and gap_ok and paced) else 0)
+    elif cmd == "gap":
+        left = max(0, MIN_GAP_S - (time.time() - s.get("last_ts", 0)))
+        print(int(left))
     else:
-        print(f"date={s['date']} quota={q} done={s.get('count',0)} remaining={max(0,q-s.get('count',0))} due_by_now={due_by_now()}")
+        gapmin = max(0, MIN_GAP_S - (time.time() - s.get("last_ts", 0)))/60
+        print(f"date={s['date']} quota={q} done={s.get('count',0)} remaining={max(0,q-s.get('count',0))} due_by_now={due_by_now()} до_след_слота={gapmin:.0f}мин")
 
 main()
