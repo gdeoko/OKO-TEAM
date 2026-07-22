@@ -42,8 +42,12 @@ python3 КОНТЕНТ-ЗАВОД/factory/pipeline/tts_free.py "<VO текст>"
 python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "<storybook prompt, no text>" work/cover_base.jpg 1080 1920 <seed>
 #   затем композитить заголовок Playfair+Soyuz + ПРОЗРАЧНЫЙ лого brand/metanoia/png (без квадрата).
 
-# МУЗЫКА: sonilo_music у Higgsfield платный. Бесплатно — Pixabay/Freesound (ключи в secrets:
-#   PIXABAY_API_KEY, FREESOUND_API_KEY) или тихий эмбиент-луп из библиотеки. Не тратить Higgsfield.
+# МУЗЫКА (бесплатно, РАЗНАЯ каждый раз по НАСТРОЕНИЮ темы) — pipeline/music_free.py
+python3 КОНТЕНТ-ЗАВОД/factory/pipeline/music_free.py "<mood под тему: warm tender / hopeful / reflective / serious>" work/music.m4a <dur> NN
+#   Freesound CC0/CC-BY, дедуп по used_music.txt, нормализовано под фон, фолбэк — синтез-пад. НЕ Higgsfield.
+#   Настроение выбирай ПОД тему/сценарий/анализ конкурентов (грустная тема → мягкое пиано; сильная → струнные и т.д.).
+#   Если лицензия CC-BY (by/by-nc) — добавь короткий credit автора трека в описание ролика.
+# Затем audio-mix: VO(delay 0.4) + music (ducking под голос, тихо ~0.2, fade). Музыка НЕ повторяется между роликами.
 ```
 
 ## 4. Монтаж база
