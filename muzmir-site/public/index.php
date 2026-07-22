@@ -96,6 +96,7 @@ if (preg_match('#^/awards/([a-z0-9\-]+)$#', $route, $m)) serve('awards_competiti
 if (preg_match('#^/artist/([a-z0-9\-]+)$#', $route, $m)) serve('artist', ['slug' => $m[1]]);
 if (preg_match('#^/pedagog/([a-z0-9\-]+)$#', $route, $m)) serve('teacher_profile', ['slug' => $m[1]]);
 if (preg_match('#^/results/([a-z0-9\-]+)$#', $route, $m)) serve('results', ['slug' => $m[1]]);
+if (preg_match('#^/blog/([a-z0-9\-]+)$#', $route, $m)) serve('blog', ['slug' => $m[1]]);
 
 // Статические маршруты → файл страницы
 // Прим.: параметр возврата после OAuth (?auth=ok) не требует маршрута —
