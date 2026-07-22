@@ -96,3 +96,9 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 Тема: квадроцикл из Китая для дела (охота/ферма/снег/стройка), ≠ спорт-квадро #9. Хук: заменяет трактор+руки. Микс польза+продажи.
 Механики(10): badge→iconrow→vs→chips→lowerthird→sidebars→route→chips→badge→stamp. Стиль 0 стекло-тёплый (не в последних 4: 3/1/2/4).
 Стоки: 12 Pexels utility-atv (ферма/охота/груз, ≤2K). Обложка FLUX ok + в очередь. Публикация B НАПРЯМУЮ (post_direct.py): YT I2jrcjLLzoQ · TikTok 2363201 · IG kitay SHARED. 22.07 posted_B=2/5.
+
+## 22.07 — ролик #15 (batch A) МОТО «китайский мото уже не тот» — стиль 3 (градиент-амбер)
+Тема: миф о китайских мотоциклах развеян (те же линии/комплектующие что премиум). Виральный хук (50%-бакет). ≠ мото-гайда #13.
+Механики(11): badge→chips→vs→iconrow→bigstat(STD)→lowerthird→chips→ticks→route→badge→stamp. Стиль 3 градиент (не в последних 4: 2/4/0/1).
+Стоки: 12 Pexels sport/road-moto (новые). Обложка FLUX ok + в очередь. Публикация A через post_direct: YT uKhRVAEv8js · TikTok 2350915(92307348) · IG cargo SHARED (checkpoint СНЯТ Даниэлем!). 22.07 posted_A=3/5.
+ФИКС: post_direct.py теперь сам грузит cfg/post_creds.env (HOOPPY_API_TOKEN) — TikTok больше не отваливается.
