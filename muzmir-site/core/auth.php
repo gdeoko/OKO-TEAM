@@ -70,3 +70,185 @@ function attempt_login(string $email, string $password): ?array {
     if ($u && $u['password_hash'] && password_verify($password, $u['password_hash'])) return $u;
     return null;
 }
+
+/* =====================================================================
+ *  Расширение: соц-вход, подписчики, OTP/magic-коды, геттеры профиля.
+ *  Добавлено для мгновенной регистрации (VK / MAX / email / телефон).
+ * ===================================================================== */
+
+/** Геттеры профиля текущего пользователя (для шапки/кабинета). */
+function current_user_name(): string {
+    $u = current_user();
+    return $u ? trim((string)($u['full_name'] ?? '')) : '';
+}
+function current_user_avatar(): string {
+    $u = current_user();
+    return $u ? (string)($u['avatar'] ?? '') : '';
+}
+
+/**
+ * Идемпотентно добавляет столбец в таблицу users (SQLite ALTER TABLE ADD COLUMN).
+ * Нужно для внешних ID соц-провайдеров, которых нет в исходной схеме (vk_id, max_id).
+ */
+function ensure_user_column(string $col, string $decl = "TEXT DEFAULT ''"): void {
+    static $cache = [];
+    if (isset($cache[$col])) return;
+    $cols = all("PRAGMA table_info(users)");
+    foreach ($cols as $c) {
+        if (($c['name'] ?? '') === $col) { $cache[$col] = true; return; }
+    }
+    // Имя столбца строго валидируем (не пользовательский ввод, но на всякий случай).
+    if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $col)) return;
+    try { db()->exec("ALTER TABLE users ADD COLUMN $col $decl"); } catch (\Throwable $e) { /* уже есть */ }
+    $cache[$col] = true;
+}
+
+/** Провайдер → имя столбца внешнего ID в users. */
+function auth_provider_column(string $provider): string {
+    $map = ['google' => 'google_id', 'tg' => 'tg_id', 'telegram' => 'tg_id', 'vk' => 'vk_id', 'max' => 'max_id'];
+    return $map[$provider] ?? (preg_replace('/[^a-z0-9]/', '', strtolower($provider)) . '_id');
+}
+
+/**
+ * Находит/создаёт пользователя по внешнему ID соц-провайдера, пишет имя/аватар.
+ * Порядок связки: по <provider>_id → по email (если задан) → создание нового.
+ * Возвращает user_id. Роль новичка — 'user' (участник).
+ */
+function auth_upsert_social(string $provider, string $extId, string $name = '', string $email = '', string $avatar = ''): int {
+    $col   = auth_provider_column($provider);
+    ensure_user_column($col);
+    $extId = trim($extId);
+    $email = mb_strtolower(trim($email));
+    $name  = trim($name);
+
+    $user = null;
+    if ($extId !== '') {
+        $user = one("SELECT * FROM users WHERE $col = ? AND $col <> ''", [$extId]);
+    }
+    if (!$user && $email !== '') {
+        $user = one("SELECT * FROM users WHERE email = ?", [$email]);
+    }
+
+    if ($user) {
+        $upd = [];
+        if ($extId !== '' && (string)($user[$col] ?? '') === '')        $upd[$col] = $extId;
+        if ($email !== '' && (string)($user['email'] ?? '') === '')     $upd['email'] = $email;
+        if ($email !== '' && (int)($user['email_verified'] ?? 0) !== 1) $upd['email_verified'] = 1;
+        if ($name  !== '' && (string)($user['full_name'] ?? '') === '') $upd['full_name'] = $name;
+        if ($avatar !== '' && (string)($user['avatar'] ?? '') === '')   $upd['avatar'] = $avatar;
+        if ($upd) update('users', $upd, 'id=:id', ['id' => (int)$user['id']]);
+        return (int)$user['id'];
+    }
+
+    $data = [
+        'full_name'      => $name !== '' ? $name : ('Гость ' . $provider),
+        'avatar'         => $avatar,
+        'role'           => 'user',
+    ];
+    if ($email !== '') { $data['email'] = $email; $data['email_verified'] = 1; }
+    if ($extId !== '') $data[$col] = $extId;
+    return (int) insert('users', $data);
+}
+
+/**
+ * Добавляет адрес в subscribers (для рассылок). Идемпотентно, реактивирует отписанных.
+ * В схеме subscribers статус хранится в столбце active (1 = confirmed). Пустой email — no-op.
+ */
+function auth_add_subscriber(string $email, string $name = '', string $source = 'site'): void {
+    $email = mb_strtolower(trim($email));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
+    $row = one("SELECT id, active FROM subscribers WHERE email=?", [$email]);
+    if ($row) {
+        if (!(int)$row['active']) update('subscribers', ['active' => 1], 'id=:id', ['id' => (int)$row['id']]);
+        return;
+    }
+    try {
+        insert('subscribers', [
+            'email'       => $email,
+            'name'        => $name,
+            'source'      => $source,
+            'unsub_token' => bin2hex(random_bytes(16)),
+            'active'      => 1,
+        ]);
+    } catch (\Throwable $e) { /* гонка по UNIQUE(email) — ок */ }
+}
+
+/** Проверка Origin/Referer запроса против своих доменов (защита от чужих форм). */
+function auth_origin_ok(): bool {
+    $allowed = [];
+    if ($bu = cfgv('base_url')) $allowed[] = rtrim($bu, '/');
+    foreach (['domain', 'domain_puny'] as $k) {
+        if ($d = cfgv($k)) { $allowed[] = 'https://' . $d; $allowed[] = 'http://' . $d; }
+    }
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin === '') {
+        // Нет Origin (не-CORS POST) — сверяем по Referer, иначе пропускаем (same-origin форма).
+        $ref = $_SERVER['HTTP_REFERER'] ?? '';
+        if ($ref === '') return true;
+        $origin = preg_replace('#^(https?://[^/]+).*#', '$1', $ref);
+    }
+    return in_array(rtrim($origin, '/'), $allowed, true);
+}
+
+/* ---- Одноразовые коды (OTP e-mail / SMS) поверх таблицы settings ---- */
+
+/** Сгенерировать числовой код заданной длины (по умолчанию 6 знаков). */
+function auth_gen_code(int $len = 6): string {
+    $len = max(4, min(8, $len));
+    $code = '';
+    for ($i = 0; $i < $len; $i++) $code .= (string) random_int(0, 9);
+    return $code;
+}
+
+/** Сохранить хэш кода с TTL. scope: 'email'|'phone'. ident — нормализованный адрес/телефон. */
+function auth_store_code(string $scope, string $ident, string $code, int $ttl = 900): void {
+    set_setting('otp:' . $scope . ':' . $ident, json_encode([
+        'h'     => hash('sha256', $code),
+        'exp'   => time() + $ttl,
+        'tries' => 0,
+    ], JSON_UNESCAPED_UNICODE));
+}
+
+/** Сверить код. Ограничение попыток (5). Успех/просрочка удаляют запись. */
+function auth_check_code(string $scope, string $ident, string $code): bool {
+    $key = 'otp:' . $scope . ':' . $ident;
+    $raw = setting($key);
+    if (!$raw) return false;
+    $d = json_decode((string)$raw, true);
+    if (!is_array($d)) { q("DELETE FROM settings WHERE key=?", [$key]); return false; }
+    if ((int)($d['exp'] ?? 0) < time()) { q("DELETE FROM settings WHERE key=?", [$key]); return false; }
+    if ((int)($d['tries'] ?? 0) >= 5)   { q("DELETE FROM settings WHERE key=?", [$key]); return false; }
+    if (hash_equals((string)($d['h'] ?? ''), hash('sha256', trim($code)))) {
+        q("DELETE FROM settings WHERE key=?", [$key]);
+        return true;
+    }
+    $d['tries'] = (int)($d['tries'] ?? 0) + 1;
+    set_setting($key, json_encode($d, JSON_UNESCAPED_UNICODE));
+    return false;
+}
+
+/**
+ * Отправка SMS с кодом. Возвращает true при успехе провайдера.
+ * Провайдер по умолчанию — SMS.RU (api_id). Без ключа — false (dev-режим у вызывающего).
+ * Все ошибки cURL — тихий false.
+ */
+function auth_send_sms(string $phoneDigits, string $text): bool {
+    $provider = (string) cfgv('sms_provider', 'smsru');
+    $apiId    = (string) cfgv('sms_api_id', '');
+    if ($apiId === '' || $phoneDigits === '') return false;
+
+    if ($provider === 'smsru') {
+        $params = ['api_id' => $apiId, 'to' => $phoneDigits, 'msg' => $text, 'json' => 1];
+        if ($from = (string) cfgv('sms_from', '')) $params['from'] = $from;
+        $ch = curl_init('https://sms.ru/sms/send?' . http_build_query($params));
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12]);
+        $resp = curl_exec($ch);
+        $err  = curl_errno($ch);
+        curl_close($ch);
+        if ($err || !$resp) return false;
+        $d = json_decode((string)$resp, true);
+        return is_array($d) && (int)($d['status_code'] ?? 0) === 100;
+    }
+    // Неизвестный провайдер — считаем не настроенным.
+    return false;
+}

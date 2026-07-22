@@ -76,6 +76,22 @@ return [
     'google_client_secret' => cfg('MUZMIR_GOOGLE_CLIENT_SECRET', ''),
     'vk_client_id'         => cfg('MUZMIR_VK_CLIENT_ID', ''),
     'vk_client_secret'     => cfg('MUZMIR_VK_CLIENT_SECRET', ''),
+    'vk_redirect'          => cfg('MUZMIR_VK_REDIRECT', ''),      // необязательно: переопределить callback URL
+
+    // MAX (мессенджер Max, max.ru / Max ID OAuth) — секреты только из окружения/local
+    'max_client_id'        => cfg('MUZMIR_MAX_CLIENT_ID', ''),
+    'max_client_secret'    => cfg('MUZMIR_MAX_CLIENT_SECRET', ''),
+    'max_redirect'         => cfg('MUZMIR_MAX_REDIRECT', ''),     // необязательно: переопределить callback URL
+    // Точки OAuth MAX (переопределяемы, если провайдер сменит адреса)
+    'max_authorize_url'    => cfg('MUZMIR_MAX_AUTHORIZE_URL', 'https://oauth.max.ru/authorize'),
+    'max_token_url'        => cfg('MUZMIR_MAX_TOKEN_URL', 'https://oauth.max.ru/token'),
+    'max_profile_url'      => cfg('MUZMIR_MAX_PROFILE_URL', 'https://oauth.max.ru/userinfo'),
+    'max_scope'            => cfg('MUZMIR_MAX_SCOPE', 'openid profile email'),
+
+    // SMS-провайдер для OTP входа по телефону (по умолчанию SMS.RU). Без ключа — dev-режим.
+    'sms_provider'         => cfg('MUZMIR_SMS_PROVIDER', 'smsru'),
+    'sms_api_id'           => cfg('MUZMIR_SMS_API_ID', ''),        // api_id SMS.RU (или ключ провайдера)
+    'sms_from'             => cfg('MUZMIR_SMS_FROM', ''),          // имя отправителя (если одобрено)
 
     // ЮKassa (включается после верификации магазина)
     'yukassa_shop'   => cfg('MUZMIR_YUKASSA_SHOP', ''),

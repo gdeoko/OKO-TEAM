@@ -27,6 +27,84 @@
     else alert(msg);
   }
 
+  /* ---------- Моушен (свой файл; CSS страницы не трогаем) ---------- */
+  var RM = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function reduceMotion() { return !!(RM && RM.matches); }
+
+  // Одноразовая инъекция стилей для степпер-заливки и пульса точки.
+  function injectMotionCss() {
+    if (document.getElementById('applyMotionCss')) return;
+    var st = document.createElement('style');
+    st.id = 'applyMotionCss';
+    st.textContent =
+      '.ap-fill{position:absolute;height:2px;background:var(--grad-gold);z-index:0;border-radius:2px;width:0;' +
+      'transition:width .5s cubic-bezier(.2,.8,.2,1),left .5s cubic-bezier(.2,.8,.2,1)}' +
+      '.ap-dot.pulse{animation:apDotPulse .55s ease}' +
+      '@keyframes apDotPulse{0%{transform:scale(1)}45%{transform:scale(1.16)}100%{transform:scale(1)}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+
+  // Направленный fade/slide входящей панели (transform/opacity, rAF, GPU).
+  function animateIn(panel, dir) {
+    if (!panel || reduceMotion()) return;
+    var dx = dir === 'back' ? -26 : 26;
+    panel.style.animation = 'none';            // отключаем CSS apIn, ведём вручную
+    panel.style.willChange = 'opacity, transform';
+    panel.style.opacity = '0';
+    panel.style.transform = 'translateX(' + dx + 'px)';
+    void panel.offsetWidth;                    // reflow, чтобы старт зафиксировался
+    panel.style.transition = 'opacity .36s cubic-bezier(.2,.8,.2,1), transform .36s cubic-bezier(.2,.8,.2,1)';
+    requestAnimationFrame(function () {
+      panel.style.opacity = '1';
+      panel.style.transform = 'translateX(0)';
+    });
+    var done = false;
+    function clear() {
+      if (done) return; done = true;
+      panel.style.transition = ''; panel.style.transform = '';
+      panel.style.opacity = ''; panel.style.willChange = ''; panel.style.animation = '';
+      panel.removeEventListener('transitionend', clear);
+    }
+    panel.addEventListener('transitionend', clear);
+    setTimeout(clear, 520);
+  }
+
+  // Заливка линии степпера + пульс активной точки. Меряем реальные центры точек.
+  var prevActiveKey = null;
+  function updateProgressFill() {
+    var cont = document.getElementById('apProgress');
+    if (!cont) return;
+    var fill = cont.querySelector('.ap-fill');
+    if (!fill) { fill = document.createElement('div'); fill.className = 'ap-fill'; cont.insertBefore(fill, cont.firstChild); }
+    var nodes = Array.prototype.slice.call(cont.querySelectorAll('.ap-node')).filter(function (n) { return n.style.display !== 'none'; });
+    if (!nodes.length) { fill.style.width = '0'; return; }
+    var reached = cont.querySelector('.ap-node.active');
+    if (!reached) {
+      var dn = cont.querySelectorAll('.ap-node.done');
+      reached = dn.length ? dn[dn.length - 1] : nodes[0];
+    }
+    var cRect = cont.getBoundingClientRect();
+    var firstDot = nodes[0].querySelector('.ap-dot').getBoundingClientRect();
+    var reachedDot = reached.querySelector('.ap-dot').getBoundingClientRect();
+    var left = (firstDot.left + firstDot.width / 2) - cRect.left;
+    var right = (reachedDot.left + reachedDot.width / 2) - cRect.left;
+    fill.style.left = left + 'px';
+    fill.style.top = ((firstDot.top + firstDot.height / 2) - cRect.top - 1) + 'px';
+    fill.style.width = Math.max(0, right - left) + 'px';
+  }
+  function pulseActiveDot() {
+    if (reduceMotion()) return;
+    var cont = document.getElementById('apProgress');
+    if (!cont) return;
+    var activeNode = cont.querySelector('.ap-node.active');
+    var key = activeNode ? activeNode.getAttribute('data-node') : null;
+    if (key && key !== prevActiveKey) {
+      var dot = activeNode.querySelector('.ap-dot');
+      if (dot) { dot.classList.remove('pulse'); void dot.offsetWidth; dot.classList.add('pulse'); }
+    }
+    prevActiveKey = key;
+  }
+
   /* ---------- Утилиты текста ---------- */
   function fixFio(v) {
     if (!v) return v;
@@ -171,11 +249,16 @@
       if (key === cur) node.classList.add('active');
       else if (idx !== -1 && curIdx !== -1 && idx < curIdx) node.classList.add('done');
     });
+    updateProgressFill();
+    pulseActiveDot();
   }
-  function show(step) {
+  function show(step, dir) {
     current = step;
     for (var k in panels) if (panels.hasOwnProperty(k)) panels[k].classList.remove('active');
-    if (panels[step]) panels[step].classList.add('active');
+    if (panels[step]) {
+      panels[step].classList.add('active');
+      animateIn(panels[step], dir || 'next');
+    }
     // Кнопка отправки для бесплатного конкурса живёт в отдельной панели.
     if (step === 'consent' && !isPaid) {
       // после согласия у бесплатного — сразу submit-free
@@ -184,20 +267,20 @@
     if (step === 'consent') buildSummary();
     if (step === 'pay') fillPayAmount();
     var top = form.getBoundingClientRect().top + window.pageYOffset - 90;
-    window.scrollTo({ top: top, behavior: 'smooth' });
+    window.scrollTo({ top: top, behavior: reduceMotion() ? 'auto' : 'smooth' });
   }
   function goNext() {
     if (!validateStep(current)) return;
     var steps = activeSteps();
     var idx = steps.indexOf(current);
-    if (current === 'consent' && !isPaid) { show('submit-free'); return; }
-    if (idx !== -1 && idx < steps.length - 1) show(steps[idx + 1]);
+    if (current === 'consent' && !isPaid) { show('submit-free', 'next'); return; }
+    if (idx !== -1 && idx < steps.length - 1) show(steps[idx + 1], 'next');
   }
   function goBack() {
-    if (current === 'submit-free') { show('consent'); return; }
+    if (current === 'submit-free') { show('consent', 'back'); return; }
     var steps = activeSteps();
     var idx = steps.indexOf(current);
-    if (idx > 0) show(steps[idx - 1]);
+    if (idx > 0) show(steps[idx - 1], 'back');
   }
 
   /* ---------- Валидация шага ---------- */
