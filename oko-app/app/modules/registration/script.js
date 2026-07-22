@@ -12,7 +12,18 @@ const REG = {
   nickTimer: null,
   interests: new Set(),
   adult: true,
+  avaIdx: 0,                // выбранный акцент аватара
 };
+/* палитра аватара: строго бренд (чёрный + лайм), но с разнообразием тона.
+   fg — цвет инициала, подобран под читаемость на каждом фоне. */
+const REG_AVA = [
+  {bg:'linear-gradient(135deg,#B9FF4D,#7ACC00)', fg:'#001400'},
+  {bg:'linear-gradient(135deg,#EAFF9C,#9AFF00)', fg:'#1a2a00'},
+  {bg:'linear-gradient(135deg,#9AFF00,#4d9c00)', fg:'#04140a'},
+  {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#9AFF00'},
+  {bg:'linear-gradient(135deg,#38471f,#12180b)',  fg:'#B9FF4D'},
+  {bg:'linear-gradient(135deg,#f2f6ec,#cfe3b3)',  fg:'#3d7a00'},
+];
 const REG_OWNER_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'okoteam.top@gmail.com';
 const REG_TAKEN = ['oko','okoteam','oko_official','daniel','ktodaniel','admin','support','team','ceo','help'];
 const REG_INTERESTS = [
@@ -32,7 +43,7 @@ function regSave(data){ try{ localStorage.setItem('oko-registration', JSON.strin
 /* ---------- открытие / закрытие / навигация ---------- */
 function regOpen(){
   if(!document.getElementById('regView')) return;
-  REG.step = 1; REG.code = ''; REG.nickState = null; REG.interests.clear(); REG.adult = true;
+  REG.step = 1; REG.code = ''; REG.nickState = null; REG.interests.clear(); REG.adult = true; REG.avaIdx = 0;
   ['regContact','regPass','regName','regNick','regBirth'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('regTerms').checked = false;
   document.getElementById('regAgeWarn').classList.remove('show');
@@ -41,6 +52,7 @@ function regOpen(){
   regMethodSet(REG.method);
   regPassMeter();
   regRenderInts();
+  regAvaRender();
   regUpdateFinish();
   regShowStep(1);
   document.getElementById('regView').classList.add('open');
@@ -258,8 +270,35 @@ function regToggleInt(id){
   if(REG.interests.has(id)) REG.interests.delete(id); else REG.interests.add(id);
   regRenderInts(); regUpdateFinish();
 }
+/* ---------- аватар: превью инициала + выбор акцента ---------- */
+function regAvaRender(){
+  const sw = document.getElementById('regAvaSw');
+  if(sw) sw.innerHTML = REG_AVA.map((a,i)=>
+    `<button type="button" class="reg-ava-sw ${i===REG.avaIdx?'on':''}" style="background:${a.bg}" aria-label="Акцент аватара ${i+1}" onclick="regAvaPick(${i})"></button>`
+  ).join('');
+  regAvaSync();
+}
+function regAvaPick(i){ REG.avaIdx = i; regAvaRender(); }
+function regAvaSync(){
+  const p = document.getElementById('regAvaPrev');
+  if(!p) return;
+  const a = REG_AVA[REG.avaIdx] || REG_AVA[0];
+  const nm = (document.getElementById('regName')||{}).value || '';
+  p.textContent = (nm.trim()[0] || 'O').toUpperCase();
+  p.style.background = a.bg; p.style.color = a.fg;
+  p.classList.add('set');
+}
+/* применить выбранный аватар к профилю ядра (#profAva правит только textContent —
+   инлайновые стили сохраняются между renderMyProfile) */
+function regApplyAva(){
+  const a = REG_AVA[REG.avaIdx] || REG_AVA[0];
+  const el = document.getElementById('profAva');
+  if(el){ el.style.background = a.bg; el.style.color = a.fg; }
+  try{ if(typeof PROFILE !== 'undefined'){ PROFILE.avaBg = a.bg; PROFILE.avaFg = a.fg; } }catch(e){}
+}
 function regUpdateFinish(){
   regErrHide('regErr3');
+  regAvaSync();
   const terms = document.getElementById('regTerms');
   const name = document.getElementById('regName');
   const btn = document.getElementById('regFinishBtn');
@@ -290,9 +329,15 @@ function regFinish(){
     birth: document.getElementById('regBirth').value || null,
     adult: REG.adult,
     interests: [...REG.interests],
+    avaIdx: REG.avaIdx,
     at: Date.now(),
   });
   if(typeof renderMyProfile === 'function') try{ renderMyProfile(); }catch(e){}
+  regApplyAva();
+  /* реально засеять алгоритм ленты: интересы дают стартовый вес сигналов
+     (feed-algo и так читает oko-registration.interests, но это делает
+     персонализацию видимой сразу с первой сессии) */
+  try{ if(typeof faSignal === 'function') REG.interests.forEach(t=>faSignal(t, 8)); }catch(e){}
 
   regClose();
   _regPrevDoLogin(REG.method); /* оригинальный вход: oko-auth, скрыть auth, initLive, онбординг */
@@ -417,6 +462,121 @@ doLogin = function(method){
   regSchedulePopups();
 };
 
+/* ============================================================
+   ПРЕМИУМ-ОНБОРДИНГ — брендовая воронка активации.
+   Оболочка (#onboard, obShow/obNext/obFinish, ONBOARD, obStep)
+   живёт в base.html. Мы доводим её цепочкой: пересобираем данные
+   слайдов (ONBOARD) и переопределяем renderOb на богатые сцены.
+   Ничего в base.html не редактируем.
+   ============================================================ */
+const REG_OB = [
+  {scene:'brand',   tag:'OKO',              t:'Один глаз на всё',          d:'Мессенджер, лента, биржа, ИИ-инструменты, академия и заработок — в одном приложении. Добро пожаловать в OKO.'},
+  {scene:'chat',    tag:'Мессенджер',       t:'Общение без границ',        d:'Личные чаты, группы и каналы в реальном времени. Голосовые, файлы и переводы денег — прямо в переписке.'},
+  {scene:'feed',    tag:'Умная лента',      t:'Лента, которая знает тебя',  d:'Настоящие алгоритмы рекомендаций подстраивают ленту под твои интересы — и продвигают твои посты к новой аудитории.'},
+  {scene:'market',  tag:'Биржа',            t:'Зарабатывай на навыках',     d:'Услуги и заказы с эскроу-защитой: деньги замораживаются и уходят исполнителю только после результата.'},
+  {scene:'ai',      tag:'Нейро-инструменты',t:'ИИ берёт рутину на себя',    d:'Генерация постов, роликов, картинок и озвучки. Идея превращается в готовый контент за секунды.'},
+  {scene:'academy', tag:'Академия',         t:'Учись и получай сертификат', d:'Видео-уроки, тесты и практика. За каждый пройденный курс — официальный сертификат OKO с печатью.'},
+  {scene:'earn',    tag:'Партнёрка',        t:'Расти вместе с OKO',         d:'Партнёрская программа, рекламный кабинет и контент-завод. Приводи людей и клиентов — доход сразу в приложении.'},
+];
+
+/* уникальная сцена под каждый слайд — ни один приём не повторяется */
+function regObScene(key){
+  switch(key){
+    case 'brand':
+      return `<div class="reg-ob-scene reg-ob-scene--brand">
+        <span class="reg-ob-ring"></span><span class="reg-ob-ring d2"></span><span class="reg-ob-ring d3"></span>
+        <span class="reg-ob-orb o1"></span><span class="reg-ob-orb o2"></span><span class="reg-ob-orb o3"></span>
+        <span class="reg-ob-logo">${I('logo')}</span>
+      </div>`;
+    case 'chat':
+      return `<div class="reg-ob-scene reg-ob-scene--chat">
+        <div class="reg-ob-bub in b1">Видел новую биржу OKO?</div>
+        <div class="reg-ob-bub out b2">Да, уже беру первый заказ</div>
+        <div class="reg-ob-bub in b3"><span class="reg-ob-typing"><i></i><i></i><i></i></span></div>
+      </div>`;
+    case 'feed':
+      return `<div class="reg-ob-scene reg-ob-scene--feed">
+        <div class="reg-ob-card">
+          <div class="reg-ob-card-h">
+            <span class="reg-ob-mini-ava">Н</span>
+            <div><b>Нейро-дайджест</b><span class="reg-ob-rec">${I('compass')} рекомендовано вам</span></div>
+          </div>
+          <div class="reg-ob-lines"><i></i><i></i><i></i></div>
+          <div class="reg-ob-react"><span>${I('heart')} 512</span><span>${I('comment')} 64</span><span>${I('share')}</span></div>
+        </div>
+      </div>`;
+    case 'market':
+      return `<div class="reg-ob-scene reg-ob-scene--market">
+        <div class="reg-ob-list">
+          <div class="reg-ob-list-img">${I('briefcase')}</div>
+          <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small><span class="reg-ob-price">2 500 ₽</span></div>
+          <span class="reg-ob-escrow">${I('lock')} Сделка защищена</span>
+        </div>
+      </div>`;
+    case 'ai':
+      return `<div class="reg-ob-scene reg-ob-scene--ai">
+        <span class="reg-ob-spark s1"></span><span class="reg-ob-spark s2"></span><span class="reg-ob-spark s3"></span>
+        <div class="reg-ob-prompt">${I('bolt')}<span>Сделай ролик из статьи…</span></div>
+        <div class="reg-ob-gen"><i></i><i></i><i></i></div>
+      </div>`;
+    case 'academy':
+      return `<div class="reg-ob-scene reg-ob-scene--academy">
+        <div class="reg-ob-cert">
+          <div class="reg-ob-cert-h">${I('star')} Сертификат OKO</div>
+          <div class="reg-ob-cert-name">Мастер контента</div>
+          <div class="reg-ob-cert-lines"><i></i><i></i></div>
+          <div class="reg-ob-seal">${I('check2')}</div>
+        </div>
+      </div>`;
+    case 'earn':
+      return `<div class="reg-ob-scene reg-ob-scene--earn">
+        <div class="reg-ob-earn-sum"><span class="reg-ob-coin">${I('money')}</span><b>2 500 ₽</b></div>
+        <div class="reg-ob-bars"><i></i><i></i><i></i><i></i></div>
+      </div>`;
+    default:
+      return `<div class="reg-ob-scene reg-ob-scene--brand"><span class="reg-ob-logo">${I('logo')}</span></div>`;
+  }
+}
+
+/* пересобрать данные онбординга ядра под наши 7 слайдов (ONBOARD — const-массив,
+   мутируем содержимое, не переназначаем ссылку) */
+try{
+  if(typeof ONBOARD !== 'undefined' && Array.isArray(ONBOARD)){
+    ONBOARD.length = 0;
+    REG_OB.forEach(function(x){ ONBOARD.push(x); });
+  }
+}catch(e){}
+
+/* переопределяем рендер онбординга на премиум-версию */
+if(typeof renderOb === 'function'){
+  renderOb = function(){
+    const list = (typeof ONBOARD !== 'undefined' && ONBOARD.length) ? ONBOARD : REG_OB;
+    const n = list.length;
+    if(typeof obStep !== 'number' || obStep < 0) obStep = 0;
+    if(obStep > n - 1) obStep = n - 1;
+    const s = list[obStep] || REG_OB[obStep] || REG_OB[0];
+    const stage = document.getElementById('obStage');
+    if(!stage) return;
+    stage.innerHTML =
+      `<div class="reg-ob-top">
+         <span class="reg-ob-count-chip">Шаг ${obStep + 1} / ${n}</span>
+         <div class="reg-ob-track"><i style="width:${((obStep + 1) / n * 100).toFixed(1)}%"></i></div>
+       </div>
+       <div class="reg-ob-center">
+         <div class="reg-ob" data-step="${obStep}">
+           ${regObScene(s.scene)}
+           <span class="reg-ob-tag">${esc(s.tag || '')}</span>
+           <h2 class="reg-ob-title">${esc(s.t || '')}</h2>
+           <p class="reg-ob-desc">${esc(s.d || '')}</p>
+         </div>
+       </div>`;
+    const dots = document.getElementById('obDots');
+    if(dots) dots.innerHTML = list.map((_, i)=>`<span class="${i === obStep ? 'on' : ''}"></span>`).join('');
+    const nx = document.getElementById('obNext');
+    if(nx) nx.innerHTML = (obStep === n - 1 ? 'Начать в OKO' : 'Далее') + I('chev');
+  };
+}
+
 /* ---------- самоинициализация ---------- */
 (function regInit(){
   /* ввод кода: автофокус-цепочка, backspace, вставка всего кода разом */
@@ -448,4 +608,11 @@ doLogin = function(method){
   if(bd){ try{ bd.max = new Date().toISOString().slice(0, 10); }catch(e){} }
   /* если уже вошли (перезагрузка) — планируем одноразовые попапы */
   if(typeof authed === 'function' && authed()) regSchedulePopups();
+  /* восстановить выбранный аватар после перезагрузки */
+  try{
+    const reg = JSON.parse(localStorage.getItem('oko-registration') || 'null');
+    if(reg && typeof reg.avaIdx === 'number' && REG_AVA[reg.avaIdx]){
+      REG.avaIdx = reg.avaIdx; regApplyAva();
+    }
+  }catch(e){}
 })();

@@ -1195,6 +1195,240 @@ main>.screen{position:relative;z-index:1}
 .reg-pop-price > div small{font-size:11px;color:var(--dim);margin-top:2px}
 .reg-pop-save{margin-left:auto;font-size:11px;font-weight:700;color:var(--accent);text-align:right;max-width:140px;line-height:1.3}
 
+/* ============================================================
+   ПРЕМИУМ-ОНБОРДИНГ (reg-ob-) — воронка активации: брендовые
+   слайды-сцены (мессенджер/лента/биржа/ИИ/академия/партнёрка),
+   прогресс, плавные переходы. Оболочка #onboard живёт в base.html —
+   мы её только доводим цепочкой (chain-patch), не редактируя базу.
+   ============================================================ */
+/* — контейнер: доводим до премиум-раскладки, фикс safe-area, без переполнения — */
+#onboard{gap:0;justify-content:flex-start;padding-top:calc(20px + env(safe-area-inset-top))}
+#onboard::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background:
+    radial-gradient(620px 460px at 50% -6%, rgba(154,255,0,.16), transparent 60%),
+    radial-gradient(520px 520px at 12% 112%, rgba(154,255,0,.08), transparent 62%);
+  animation:regObAmbient 16s ease-in-out infinite alternate}
+:root[data-theme="light"] #onboard::before{opacity:.7;
+  background:
+    radial-gradient(620px 460px at 50% -6%, rgba(122,204,0,.2), transparent 60%),
+    radial-gradient(520px 520px at 12% 112%, rgba(122,204,0,.1), transparent 62%)}
+@keyframes regObAmbient{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(2%,-1.6%,0) scale(1.05)}}
+@media(prefers-reduced-motion:reduce){#onboard::before{animation:none}}
+#onboard .ob-skip,#onboard .ob-stage,#onboard .ob-dots,#onboard #obNext,#onboard .reg-ob-top{position:relative;z-index:1}
+/* верхняя зона: степ-каунтер + тонкий прогресс-бар */
+.reg-ob-top{width:100%;max-width:440px;margin:6px auto 0;display:flex;flex-direction:column;gap:9px}
+.reg-ob-count-chip{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:4px 11px}
+.reg-ob-track{height:3px;border-radius:2px;background:var(--border);overflow:hidden}
+.reg-ob-track i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#B9FF4D,var(--lime));
+  box-shadow:var(--glow);transition:width .5s cubic-bezier(.3,1,.4,1)}
+/* центрирование сцены и копирайта в оставшемся пространстве */
+#onboard .ob-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  width:100%;margin:0 auto;min-height:0}
+.reg-ob-center{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0}
+.reg-ob{display:flex;flex-direction:column;align-items:center;text-align:center;width:100%;max-width:440px}
+.reg-ob-scene{position:relative;width:100%;height:186px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:26px;overflow:hidden;animation:regObSceneIn .5s cubic-bezier(.2,1,.32,1) both}
+@keyframes regObSceneIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.reg-ob-tag{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);
+  background:var(--lime-dim);border-radius:99px;padding:5px 12px;margin-bottom:12px;
+  animation:regObUp .5s .06s both}
+.reg-ob-title{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.02;letter-spacing:.02em;
+  color:var(--text);margin-bottom:11px;animation:regObUp .5s .12s both;
+  background:linear-gradient(96deg,var(--text) 62%,var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+:root[data-theme="light"] .reg-ob-title{background:linear-gradient(96deg,var(--text) 70%,#4d9000);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.reg-ob-desc{font-size:14px;line-height:1.6;color:var(--dim);max-width:340px;animation:regObUp .5s .18s both}
+@keyframes regObUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-ob-scene,.reg-ob-tag,.reg-ob-title,.reg-ob-desc{animation:none}}
+/* дотсы: премиум-пилюли */
+#onboard .ob-dots{margin:22px auto 18px}
+#onboard .ob-dots span{background:var(--border)}
+#onboard .ob-dots span.on{background:var(--lime);box-shadow:var(--glow)}
+/* кнопка «далее/начать»: лайм-подсветка + стрелка */
+#onboard #obNext{width:100%;box-shadow:0 12px 34px -12px rgba(154,255,0,.6)}
+#onboard #obNext .i{width:17px;height:17px;vertical-align:-3px;margin-left:4px;transition:transform .2s}
+#onboard #obNext:hover .i{transform:translateX(3px)}
+
+/* ---------- СЦЕНА 1: брендовый глаз OKO (reveal) ---------- */
+.reg-ob-scene--brand{height:196px}
+.reg-ob-logo{position:relative;z-index:2;width:96px;height:96px;color:var(--lime);
+  filter:drop-shadow(0 0 26px rgba(154,255,0,.55));animation:regObBlink 5.5s 1.2s ease-in-out infinite,regObFloat 4s ease-in-out infinite}
+.reg-ob-logo .i{width:100%;height:100%}
+@keyframes regObBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}98%{transform:scaleY(1)}}
+@keyframes regObFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.reg-ob-ring{position:absolute;top:50%;left:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;
+  border:1.5px solid rgba(154,255,0,.4);animation:regObPulse 2.6s ease-out infinite}
+.reg-ob-ring.d2{animation-delay:.85s}
+.reg-ob-ring.d3{animation-delay:1.7s}
+@keyframes regObPulse{0%{transform:scale(.55);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+.reg-ob-orb{position:absolute;top:50%;left:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:var(--lime);
+  box-shadow:0 0 10px rgba(154,255,0,.8);animation:regObOrbit 7s linear infinite}
+.reg-ob-orb.o2{animation-duration:9s;animation-direction:reverse;width:5px;height:5px;opacity:.75}
+.reg-ob-orb.o3{animation-duration:11s;width:4px;height:4px;opacity:.6}
+@keyframes regObOrbit{from{transform:rotate(0) translateX(78px) rotate(0)}to{transform:rotate(360deg) translateX(78px) rotate(-360deg)}}
+@media(prefers-reduced-motion:reduce){.reg-ob-logo,.reg-ob-ring,.reg-ob-orb{animation:none}.reg-ob-ring{opacity:0}}
+
+/* ---------- СЦЕНА 2: мессенджер (каскад пузырей) ---------- */
+.reg-ob-scene--chat{flex-direction:column;justify-content:center;gap:10px;padding:0 8px}
+.reg-ob-bub{max-width:74%;font-size:13px;font-weight:500;line-height:1.4;padding:10px 13px;border-radius:16px;
+  animation:regObBubIn .5s cubic-bezier(.2,1.2,.3,1) both}
+.reg-ob-bub.in{align-self:flex-start;background:var(--bubble-in);color:var(--bubble-in-text);border-bottom-left-radius:5px}
+.reg-ob-bub.out{align-self:flex-end;background:var(--lime);color:#000;font-weight:600;border-bottom-right-radius:5px;box-shadow:0 6px 18px -8px rgba(154,255,0,.7)}
+.reg-ob-bub.b1{animation-delay:.15s}
+.reg-ob-bub.b2{animation-delay:.5s}
+.reg-ob-bub.b3{animation-delay:.9s}
+@keyframes regObBubIn{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:none}}
+.reg-ob-typing{display:flex;gap:4px;align-items:center;padding:13px}
+.reg-ob-typing i{width:7px;height:7px;border-radius:50%;background:var(--dim);animation:regObType 1.2s ease-in-out infinite}
+.reg-ob-typing i:nth-child(2){animation-delay:.15s}
+.reg-ob-typing i:nth-child(3){animation-delay:.3s}
+@keyframes regObType{0%,60%,100%{opacity:.35;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+@media(prefers-reduced-motion:reduce){.reg-ob-bub,.reg-ob-typing i{animation:none}}
+
+/* ---------- СЦЕНА 3: лента (карточка поста + реакции) ---------- */
+.reg-ob-card{width:min(320px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:14px;text-align:left;box-shadow:0 20px 50px -24px rgba(0,0,0,.7);animation:regObCardIn .55s cubic-bezier(.2,1,.32,1) both}
+:root[data-theme="light"] .reg-ob-card{box-shadow:0 20px 46px -26px rgba(60,90,20,.35)}
+@keyframes regObCardIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+.reg-ob-card-h{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.reg-ob-mini-ava{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:16px;color:#000;background:linear-gradient(135deg,#B9FF4D,#7ACC00)}
+.reg-ob-card-h b{font-size:13px;font-weight:700;color:var(--text);display:block;line-height:1.2}
+.reg-ob-rec{font-size:10px;font-weight:700;color:var(--accent);display:inline-flex;align-items:center;gap:4px;margin-top:2px}
+.reg-ob-rec .i{width:11px;height:11px}
+.reg-ob-lines{display:flex;flex-direction:column;gap:7px;margin-bottom:13px}
+.reg-ob-lines i{height:8px;border-radius:4px;background:var(--raised)}
+.reg-ob-lines i:nth-child(1){width:100%}
+.reg-ob-lines i:nth-child(2){width:88%}
+.reg-ob-lines i:nth-child(3){width:56%;background:var(--lime-dim)}
+.reg-ob-react{display:flex;gap:16px}
+.reg-ob-react span{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--dim);
+  animation:regObPop .4s both}
+.reg-ob-react span:nth-child(1){color:var(--accent);animation-delay:.5s}
+.reg-ob-react span:nth-child(2){animation-delay:.62s}
+.reg-ob-react span:nth-child(3){animation-delay:.74s}
+.reg-ob-react .i{width:15px;height:15px}
+.reg-ob-react span:nth-child(1) .i{animation:regObHeart 2.4s .9s ease-in-out infinite}
+@keyframes regObHeart{0%,88%,100%{transform:scale(1)}92%{transform:scale(1.35)}96%{transform:scale(.95)}}
+@keyframes regObPop{from{opacity:0;transform:translateY(6px) scale(.8)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-ob-card,.reg-ob-react span,.reg-ob-react span:nth-child(1) .i{animation:none}}
+
+/* ---------- СЦЕНА 4: биржа (лот + эскроу-защита) ---------- */
+.reg-ob-list{width:min(320px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:13px;display:flex;align-items:center;gap:13px;text-align:left;position:relative;
+  box-shadow:0 20px 50px -24px rgba(0,0,0,.7);animation:regObCardIn .55s cubic-bezier(.2,1,.32,1) both}
+:root[data-theme="light"] .reg-ob-list{box-shadow:0 20px 46px -26px rgba(60,90,20,.35)}
+.reg-ob-list-img{width:60px;height:60px;flex-shrink:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;
+  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.25)}
+.reg-ob-list-img .i{width:28px;height:28px}
+.reg-ob-list-b{flex:1;min-width:0}
+.reg-ob-list-b b{font-size:14px;font-weight:700;color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-ob-list-b small{font-size:11.5px;color:var(--dim)}
+.reg-ob-price{font-family:var(--font-display);font-size:24px;color:var(--accent);letter-spacing:.01em;margin-top:4px;display:block}
+.reg-ob-escrow{position:absolute;top:11px;right:11px;display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;
+  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;padding:4px 9px;
+  animation:regObPop .4s .5s both}
+.reg-ob-escrow .i{width:11px;height:11px}
+.reg-ob-escrow::after{content:'';position:absolute;inset:0;border-radius:99px;border:1px solid rgba(154,255,0,.5);
+  animation:regObHalo 2.4s ease-out infinite}
+@keyframes regObHalo{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.25);opacity:0}}
+@media(prefers-reduced-motion:reduce){.reg-ob-list,.reg-ob-escrow,.reg-ob-escrow::after{animation:none}.reg-ob-escrow::after{opacity:0}}
+
+/* ---------- СЦЕНА 5: ИИ-инструменты (промпт → генерация) ---------- */
+.reg-ob-scene--ai{flex-direction:column;gap:12px;padding:0 6px}
+.reg-ob-prompt{width:min(320px,100%);display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:12px 14px;text-align:left;box-shadow:0 14px 40px -22px rgba(154,255,0,.5)}
+.reg-ob-prompt .i{width:17px;height:17px;color:var(--accent);flex-shrink:0}
+.reg-ob-prompt span{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;
+  border-right:2px solid var(--lime);width:0;animation:regObType2 3.4s steps(24) infinite}
+@keyframes regObType2{0%{width:0}45%,60%{width:14.5em}100%{width:0}}
+.reg-ob-gen{width:min(320px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.reg-ob-gen i{height:44px;border-radius:12px;background:linear-gradient(110deg,var(--raised) 30%,var(--lime-dim) 50%,var(--raised) 70%);
+  background-size:220% 100%;animation:regObShimmer 1.8s ease-in-out infinite}
+.reg-ob-gen i:nth-child(2){animation-delay:.25s}
+.reg-ob-gen i:nth-child(3){animation-delay:.5s}
+@keyframes regObShimmer{0%{background-position:180% 0}100%{background-position:-80% 0}}
+.reg-ob-spark{position:absolute;width:9px;height:9px;color:var(--lime);opacity:0;
+  background:radial-gradient(circle,var(--lime) 0 40%,transparent 45%);border-radius:50%;animation:regObSpark 2.4s ease-in-out infinite}
+.reg-ob-spark.s1{top:20%;left:16%;animation-delay:.2s}
+.reg-ob-spark.s2{top:66%;right:14%;animation-delay:1.1s}
+.reg-ob-spark.s3{top:30%;right:24%;animation-delay:1.7s}
+@keyframes regObSpark{0%,100%{opacity:0;transform:scale(.4)}45%{opacity:1;transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){.reg-ob-prompt span,.reg-ob-gen i,.reg-ob-spark{animation:none}.reg-ob-prompt span{width:14.5em;border-right:none}}
+
+/* ---------- СЦЕНА 6: академия (сертификат + печать) ---------- */
+.reg-ob-cert{width:min(300px,100%);background:linear-gradient(160deg,var(--surface),var(--raised));border:1px solid var(--border);
+  border-radius:var(--r-md);padding:16px 16px 18px;text-align:left;position:relative;
+  box-shadow:0 22px 54px -26px rgba(0,0,0,.75);animation:regObCertIn .6s cubic-bezier(.2,1,.32,1) both}
+:root[data-theme="light"] .reg-ob-cert{box-shadow:0 22px 48px -28px rgba(60,90,20,.4)}
+@keyframes regObCertIn{from{opacity:0;transform:perspective(700px) rotateX(12deg) translateY(14px)}to{opacity:1;transform:none}}
+.reg-ob-cert::before{content:'';position:absolute;inset:5px;border:1px solid rgba(154,255,0,.18);border-radius:10px;pointer-events:none}
+.reg-ob-cert-h{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:12px}
+.reg-ob-cert-h .i{width:14px;height:14px}
+.reg-ob-cert-name{font-family:var(--font-display);font-size:22px;color:var(--text);letter-spacing:.03em;margin-bottom:12px}
+.reg-ob-cert-lines{display:flex;flex-direction:column;gap:6px}
+.reg-ob-cert-lines i{height:6px;border-radius:3px;background:var(--border)}
+.reg-ob-cert-lines i:nth-child(1){width:78%}
+.reg-ob-cert-lines i:nth-child(2){width:60%}
+.reg-ob-seal{position:absolute;right:14px;bottom:14px;width:46px;height:46px;border-radius:50%;background:var(--lime);color:#000;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px -8px rgba(154,255,0,.8);
+  animation:regObSeal .7s .5s cubic-bezier(.2,1.5,.3,1) both}
+.reg-ob-seal .i{width:22px;height:22px}
+@keyframes regObSeal{from{opacity:0;transform:scale(0) rotate(-40deg)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.reg-ob-cert,.reg-ob-seal{animation:none}}
+
+/* ---------- СЦЕНА 7: заработок (счётчик + рост столбцов) ---------- */
+.reg-ob-scene--earn{flex-direction:column;gap:16px}
+.reg-ob-earn-sum{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--lime-dim),rgba(154,255,0,.04));
+  border:1px solid rgba(154,255,0,.28);border-radius:16px;padding:12px 18px;position:relative;overflow:hidden;
+  animation:regObPop .5s both}
+.reg-ob-earn-sum::after{content:'';position:absolute;top:-60%;left:-30%;width:50%;height:220%;transform:rotate(18deg);
+  background:linear-gradient(90deg,transparent,rgba(154,255,0,.22),transparent);animation:regObSheen 3s ease-in-out infinite}
+@keyframes regObSheen{0%{left:-40%}55%,100%{left:130%}}
+.reg-ob-earn-sum .reg-ob-coin{width:34px;height:34px;border-radius:10px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.reg-ob-earn-sum .reg-ob-coin .i{width:19px;height:19px}
+.reg-ob-earn-sum b{font-family:var(--font-display);font-size:30px;color:var(--text);letter-spacing:.02em;position:relative;z-index:1}
+.reg-ob-bars{display:flex;align-items:flex-end;gap:9px;height:66px}
+.reg-ob-bars i{width:22px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--lime),#7ACC00);
+  height:0;box-shadow:0 6px 16px -8px rgba(154,255,0,.7);transform-origin:bottom;animation:regObBar .8s cubic-bezier(.2,1,.32,1) forwards}
+.reg-ob-bars i:nth-child(1){--h:36%;animation-delay:.15s}
+.reg-ob-bars i:nth-child(2){--h:58%;animation-delay:.28s}
+.reg-ob-bars i:nth-child(3){--h:78%;animation-delay:.41s}
+.reg-ob-bars i:nth-child(4){--h:100%;animation-delay:.54s;background:linear-gradient(180deg,#B9FF4D,var(--lime))}
+@keyframes regObBar{from{height:0}to{height:var(--h)}}
+@media(prefers-reduced-motion:reduce){.reg-ob-earn-sum,.reg-ob-earn-sum::after{animation:none}.reg-ob-bars i{animation:none;height:var(--h)}}
+
+/* высота под маленькие экраны — сцена и заголовок компактнее */
+@media(max-height:720px){
+  .reg-ob-scene,.reg-ob-scene--brand{height:150px;margin-bottom:18px}
+  .reg-ob-title{font-size:29px}
+  .reg-ob-logo{width:78px;height:78px}
+}
+@media(max-width:380px){
+  .reg-ob-title{font-size:30px}
+  .reg-ob-desc{font-size:13px}
+  .reg-ob-bub{font-size:12px}
+}
+
+/* ============================================================
+   АВАТАР В РЕГИСТРАЦИИ (reg-ava-) — превью инициалов на брендовом
+   градиенте + выбор акцента; персистится и применяется к профилю.
+   ============================================================ */
+.reg-ava-row{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.reg-ava-prev{width:58px;height:58px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:26px;letter-spacing:.02em;color:#000;position:relative;
+  box-shadow:0 8px 22px -10px rgba(154,255,0,.6);transition:background .3s ease}
+.reg-ava-prev::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(154,255,0,.35);
+  opacity:0;transition:opacity .3s}
+.reg-ava-prev.set::after{opacity:1;animation:regObHalo 2.4s ease-out infinite}
+.reg-ava-swatches{display:flex;gap:9px;flex-wrap:wrap}
+.reg-ava-sw{width:30px;height:30px;border-radius:50%;position:relative;transition:transform .14s;flex-shrink:0}
+.reg-ava-sw:active{transform:scale(.9)}
+.reg-ava-sw.on{transform:scale(1.08)}
+.reg-ava-sw.on::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--text)}
+:root[data-theme="light"] .reg-ava-sw.on::after{border-color:var(--accent)}
+
 /* ===== module: wallet ===== */
 /* ===== WALLET: кошелёк / лицевой счёт (префикс wal-) ===== */
 .wal-hero{position:relative;overflow:hidden;background:radial-gradient(120% 160% at 88% 0%,rgba(154,255,0,.16),transparent 55%),linear-gradient(140deg,#101708,#070a04 70%);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 18px 16px}
@@ -7043,6 +7277,13 @@ html.oko-hidden *{ animation-play-state:paused !important; }
     <section class="reg-step" id="regStep3">
       <h2 class="reg-h">Твой профиль</h2>
       <p class="reg-sub">Как тебя показывать в OKO и что тебе интересно.</p>
+      <div class="reg-ava-row">
+        <div class="reg-ava-prev" id="regAvaPrev">O</div>
+        <div style="flex:1;min-width:0">
+          <label class="ep-lab" style="margin-top:0">Аватар</label>
+          <div class="reg-ava-swatches" id="regAvaSw"></div>
+        </div>
+      </div>
       <label class="ep-lab">Имя</label>
       <input id="regName" placeholder="Как к тебе обращаться" autocomplete="name" oninput="regUpdateFinish()">
       <label class="ep-lab">Никнейм</label>
@@ -10032,7 +10273,18 @@ const REG = {
   nickTimer: null,
   interests: new Set(),
   adult: true,
+  avaIdx: 0,                // выбранный акцент аватара
 };
+/* палитра аватара: строго бренд (чёрный + лайм), но с разнообразием тона.
+   fg — цвет инициала, подобран под читаемость на каждом фоне. */
+const REG_AVA = [
+  {bg:'linear-gradient(135deg,#B9FF4D,#7ACC00)', fg:'#001400'},
+  {bg:'linear-gradient(135deg,#EAFF9C,#9AFF00)', fg:'#1a2a00'},
+  {bg:'linear-gradient(135deg,#9AFF00,#4d9c00)', fg:'#04140a'},
+  {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#9AFF00'},
+  {bg:'linear-gradient(135deg,#38471f,#12180b)',  fg:'#B9FF4D'},
+  {bg:'linear-gradient(135deg,#f2f6ec,#cfe3b3)',  fg:'#3d7a00'},
+];
 const REG_OWNER_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'okoteam.top@gmail.com';
 const REG_TAKEN = ['oko','okoteam','oko_official','daniel','ktodaniel','admin','support','team','ceo','help'];
 const REG_INTERESTS = [
@@ -10052,7 +10304,7 @@ function regSave(data){ try{ localStorage.setItem('oko-registration', JSON.strin
 /* ---------- открытие / закрытие / навигация ---------- */
 function regOpen(){
   if(!document.getElementById('regView')) return;
-  REG.step = 1; REG.code = ''; REG.nickState = null; REG.interests.clear(); REG.adult = true;
+  REG.step = 1; REG.code = ''; REG.nickState = null; REG.interests.clear(); REG.adult = true; REG.avaIdx = 0;
   ['regContact','regPass','regName','regNick','regBirth'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('regTerms').checked = false;
   document.getElementById('regAgeWarn').classList.remove('show');
@@ -10061,6 +10313,7 @@ function regOpen(){
   regMethodSet(REG.method);
   regPassMeter();
   regRenderInts();
+  regAvaRender();
   regUpdateFinish();
   regShowStep(1);
   document.getElementById('regView').classList.add('open');
@@ -10278,8 +10531,35 @@ function regToggleInt(id){
   if(REG.interests.has(id)) REG.interests.delete(id); else REG.interests.add(id);
   regRenderInts(); regUpdateFinish();
 }
+/* ---------- аватар: превью инициала + выбор акцента ---------- */
+function regAvaRender(){
+  const sw = document.getElementById('regAvaSw');
+  if(sw) sw.innerHTML = REG_AVA.map((a,i)=>
+    `<button type="button" class="reg-ava-sw ${i===REG.avaIdx?'on':''}" style="background:${a.bg}" aria-label="Акцент аватара ${i+1}" onclick="regAvaPick(${i})"></button>`
+  ).join('');
+  regAvaSync();
+}
+function regAvaPick(i){ REG.avaIdx = i; regAvaRender(); }
+function regAvaSync(){
+  const p = document.getElementById('regAvaPrev');
+  if(!p) return;
+  const a = REG_AVA[REG.avaIdx] || REG_AVA[0];
+  const nm = (document.getElementById('regName')||{}).value || '';
+  p.textContent = (nm.trim()[0] || 'O').toUpperCase();
+  p.style.background = a.bg; p.style.color = a.fg;
+  p.classList.add('set');
+}
+/* применить выбранный аватар к профилю ядра (#profAva правит только textContent —
+   инлайновые стили сохраняются между renderMyProfile) */
+function regApplyAva(){
+  const a = REG_AVA[REG.avaIdx] || REG_AVA[0];
+  const el = document.getElementById('profAva');
+  if(el){ el.style.background = a.bg; el.style.color = a.fg; }
+  try{ if(typeof PROFILE !== 'undefined'){ PROFILE.avaBg = a.bg; PROFILE.avaFg = a.fg; } }catch(e){}
+}
 function regUpdateFinish(){
   regErrHide('regErr3');
+  regAvaSync();
   const terms = document.getElementById('regTerms');
   const name = document.getElementById('regName');
   const btn = document.getElementById('regFinishBtn');
@@ -10310,9 +10590,15 @@ function regFinish(){
     birth: document.getElementById('regBirth').value || null,
     adult: REG.adult,
     interests: [...REG.interests],
+    avaIdx: REG.avaIdx,
     at: Date.now(),
   });
   if(typeof renderMyProfile === 'function') try{ renderMyProfile(); }catch(e){}
+  regApplyAva();
+  /* реально засеять алгоритм ленты: интересы дают стартовый вес сигналов
+     (feed-algo и так читает oko-registration.interests, но это делает
+     персонализацию видимой сразу с первой сессии) */
+  try{ if(typeof faSignal === 'function') REG.interests.forEach(t=>faSignal(t, 8)); }catch(e){}
 
   regClose();
   _regPrevDoLogin(REG.method); /* оригинальный вход: oko-auth, скрыть auth, initLive, онбординг */
@@ -10437,6 +10723,121 @@ doLogin = function(method){
   regSchedulePopups();
 };
 
+/* ============================================================
+   ПРЕМИУМ-ОНБОРДИНГ — брендовая воронка активации.
+   Оболочка (#onboard, obShow/obNext/obFinish, ONBOARD, obStep)
+   живёт в base.html. Мы доводим её цепочкой: пересобираем данные
+   слайдов (ONBOARD) и переопределяем renderOb на богатые сцены.
+   Ничего в base.html не редактируем.
+   ============================================================ */
+const REG_OB = [
+  {scene:'brand',   tag:'OKO',              t:'Один глаз на всё',          d:'Мессенджер, лента, биржа, ИИ-инструменты, академия и заработок — в одном приложении. Добро пожаловать в OKO.'},
+  {scene:'chat',    tag:'Мессенджер',       t:'Общение без границ',        d:'Личные чаты, группы и каналы в реальном времени. Голосовые, файлы и переводы денег — прямо в переписке.'},
+  {scene:'feed',    tag:'Умная лента',      t:'Лента, которая знает тебя',  d:'Настоящие алгоритмы рекомендаций подстраивают ленту под твои интересы — и продвигают твои посты к новой аудитории.'},
+  {scene:'market',  tag:'Биржа',            t:'Зарабатывай на навыках',     d:'Услуги и заказы с эскроу-защитой: деньги замораживаются и уходят исполнителю только после результата.'},
+  {scene:'ai',      tag:'Нейро-инструменты',t:'ИИ берёт рутину на себя',    d:'Генерация постов, роликов, картинок и озвучки. Идея превращается в готовый контент за секунды.'},
+  {scene:'academy', tag:'Академия',         t:'Учись и получай сертификат', d:'Видео-уроки, тесты и практика. За каждый пройденный курс — официальный сертификат OKO с печатью.'},
+  {scene:'earn',    tag:'Партнёрка',        t:'Расти вместе с OKO',         d:'Партнёрская программа, рекламный кабинет и контент-завод. Приводи людей и клиентов — доход сразу в приложении.'},
+];
+
+/* уникальная сцена под каждый слайд — ни один приём не повторяется */
+function regObScene(key){
+  switch(key){
+    case 'brand':
+      return `<div class="reg-ob-scene reg-ob-scene--brand">
+        <span class="reg-ob-ring"></span><span class="reg-ob-ring d2"></span><span class="reg-ob-ring d3"></span>
+        <span class="reg-ob-orb o1"></span><span class="reg-ob-orb o2"></span><span class="reg-ob-orb o3"></span>
+        <span class="reg-ob-logo">${I('logo')}</span>
+      </div>`;
+    case 'chat':
+      return `<div class="reg-ob-scene reg-ob-scene--chat">
+        <div class="reg-ob-bub in b1">Видел новую биржу OKO?</div>
+        <div class="reg-ob-bub out b2">Да, уже беру первый заказ</div>
+        <div class="reg-ob-bub in b3"><span class="reg-ob-typing"><i></i><i></i><i></i></span></div>
+      </div>`;
+    case 'feed':
+      return `<div class="reg-ob-scene reg-ob-scene--feed">
+        <div class="reg-ob-card">
+          <div class="reg-ob-card-h">
+            <span class="reg-ob-mini-ava">Н</span>
+            <div><b>Нейро-дайджест</b><span class="reg-ob-rec">${I('compass')} рекомендовано вам</span></div>
+          </div>
+          <div class="reg-ob-lines"><i></i><i></i><i></i></div>
+          <div class="reg-ob-react"><span>${I('heart')} 512</span><span>${I('comment')} 64</span><span>${I('share')}</span></div>
+        </div>
+      </div>`;
+    case 'market':
+      return `<div class="reg-ob-scene reg-ob-scene--market">
+        <div class="reg-ob-list">
+          <div class="reg-ob-list-img">${I('briefcase')}</div>
+          <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small><span class="reg-ob-price">2 500 ₽</span></div>
+          <span class="reg-ob-escrow">${I('lock')} Сделка защищена</span>
+        </div>
+      </div>`;
+    case 'ai':
+      return `<div class="reg-ob-scene reg-ob-scene--ai">
+        <span class="reg-ob-spark s1"></span><span class="reg-ob-spark s2"></span><span class="reg-ob-spark s3"></span>
+        <div class="reg-ob-prompt">${I('bolt')}<span>Сделай ролик из статьи…</span></div>
+        <div class="reg-ob-gen"><i></i><i></i><i></i></div>
+      </div>`;
+    case 'academy':
+      return `<div class="reg-ob-scene reg-ob-scene--academy">
+        <div class="reg-ob-cert">
+          <div class="reg-ob-cert-h">${I('star')} Сертификат OKO</div>
+          <div class="reg-ob-cert-name">Мастер контента</div>
+          <div class="reg-ob-cert-lines"><i></i><i></i></div>
+          <div class="reg-ob-seal">${I('check2')}</div>
+        </div>
+      </div>`;
+    case 'earn':
+      return `<div class="reg-ob-scene reg-ob-scene--earn">
+        <div class="reg-ob-earn-sum"><span class="reg-ob-coin">${I('money')}</span><b>2 500 ₽</b></div>
+        <div class="reg-ob-bars"><i></i><i></i><i></i><i></i></div>
+      </div>`;
+    default:
+      return `<div class="reg-ob-scene reg-ob-scene--brand"><span class="reg-ob-logo">${I('logo')}</span></div>`;
+  }
+}
+
+/* пересобрать данные онбординга ядра под наши 7 слайдов (ONBOARD — const-массив,
+   мутируем содержимое, не переназначаем ссылку) */
+try{
+  if(typeof ONBOARD !== 'undefined' && Array.isArray(ONBOARD)){
+    ONBOARD.length = 0;
+    REG_OB.forEach(function(x){ ONBOARD.push(x); });
+  }
+}catch(e){}
+
+/* переопределяем рендер онбординга на премиум-версию */
+if(typeof renderOb === 'function'){
+  renderOb = function(){
+    const list = (typeof ONBOARD !== 'undefined' && ONBOARD.length) ? ONBOARD : REG_OB;
+    const n = list.length;
+    if(typeof obStep !== 'number' || obStep < 0) obStep = 0;
+    if(obStep > n - 1) obStep = n - 1;
+    const s = list[obStep] || REG_OB[obStep] || REG_OB[0];
+    const stage = document.getElementById('obStage');
+    if(!stage) return;
+    stage.innerHTML =
+      `<div class="reg-ob-top">
+         <span class="reg-ob-count-chip">Шаг ${obStep + 1} / ${n}</span>
+         <div class="reg-ob-track"><i style="width:${((obStep + 1) / n * 100).toFixed(1)}%"></i></div>
+       </div>
+       <div class="reg-ob-center">
+         <div class="reg-ob" data-step="${obStep}">
+           ${regObScene(s.scene)}
+           <span class="reg-ob-tag">${esc(s.tag || '')}</span>
+           <h2 class="reg-ob-title">${esc(s.t || '')}</h2>
+           <p class="reg-ob-desc">${esc(s.d || '')}</p>
+         </div>
+       </div>`;
+    const dots = document.getElementById('obDots');
+    if(dots) dots.innerHTML = list.map((_, i)=>`<span class="${i === obStep ? 'on' : ''}"></span>`).join('');
+    const nx = document.getElementById('obNext');
+    if(nx) nx.innerHTML = (obStep === n - 1 ? 'Начать в OKO' : 'Далее') + I('chev');
+  };
+}
+
 /* ---------- самоинициализация ---------- */
 (function regInit(){
   /* ввод кода: автофокус-цепочка, backspace, вставка всего кода разом */
@@ -10468,6 +10869,13 @@ doLogin = function(method){
   if(bd){ try{ bd.max = new Date().toISOString().slice(0, 10); }catch(e){} }
   /* если уже вошли (перезагрузка) — планируем одноразовые попапы */
   if(typeof authed === 'function' && authed()) regSchedulePopups();
+  /* восстановить выбранный аватар после перезагрузки */
+  try{
+    const reg = JSON.parse(localStorage.getItem('oko-registration') || 'null');
+    if(reg && typeof reg.avaIdx === 'number' && REG_AVA[reg.avaIdx]){
+      REG.avaIdx = reg.avaIdx; regApplyAva();
+    }
+  }catch(e){}
 })();
 
 /* ===== module: wallet ===== */
@@ -21115,6 +21523,84 @@ const DC_CHATS = [
      {in:1, who:'Модератор', t:'вчера', kind:'text', body:'Комиссия 10% и только с закрытой сделки: пока заказ в работе, деньги лежат на холде кошелька. Отменился заказ — вернётся вся сумма.', reacts:{thumb:6}},
      {in:1, who:'Кирилл', t:'вчера', kind:'text', body:'Понял, спасибо. Тогда переношу все сделки из личных переписок сюда — с холдом спокойнее.'},
    ]},
+  /* --- канал академии: курсы, потоки, сертификаты --- */
+  {id:9009, avaIcon:'crown', name:'OKO Академия', kind:'channel', nick:'okoacademy', subs:'33.5к',
+   writeAll:false, kindIcon:'megaphone', preview:'Поток «Контент-завод» стартовал — 64 места заняты', time:'16:10', unread:2, online:false,
+   msgs:[
+     {in:1, t:'12 июля', kind:'text', body:'Открыт набор на поток «Контент-завод под ключ». За 7 модулей собираешь личный конвейер: сценарий, монтаж, озвучка, публикация, аналитика. Домашки проверяем лично, в финале — именной сертификат с печатью.', reacts:{fire:118}},
+     {in:1, t:'14 июля', kind:'text', body:'Урок 3 «Хук за 2 секунды» вышел. Разобрали 12 приёмов удержания и шаблон раскадровки. Средний балл теста по потоку — 87%, это рекорд Академии.', reacts:{heart:74}},
+     {in:1, t:'вчера', kind:'text', body:'Внутри урока теперь караоке-субтитры и живая нейроозвучка — учиться можно без звука в метро и со звуком дома. Прогресс синхронизируется между устройствами.'},
+     {in:1, t:'16:10', kind:'text', body:'Поток «Контент-завод» стартовал: 64 места из 80 заняты. Первые работы студентов уже на проверке. Следующий набор — через две недели, цена поднимется.', reacts:{wow:41}},
+   ]},
+  /* --- канал биржи: живой поток заказов маркетплейса --- */
+  {id:9010, avaIcon:'briefcase', name:'Биржа OKO · Заказы', kind:'channel', nick:'okomarket', subs:'27.1к',
+   writeAll:false, kindIcon:'megaphone', preview:'За сутки 218 новых заказов, средний чек 6 400 ₽', time:'15:33', unread:3, online:false,
+   msgs:[
+     {in:1, t:'вчера', kind:'text', body:'Свежие заказы на бирже: монтаж Reels — 34 отклика, обложки для канала — 21, озвучка урока — 12, лендинг под ключ — 7. Отвечай первым: у ранних откликов конверсия в сделку выше в 2 раза.', reacts:{fire:52}},
+     {in:1, t:'вчера', kind:'text', body:'Совет дня: заполни портфолио и включи мгновенный ответ — исполнители с обоими значками получают на 40% больше приглашений. Значки видны заказчику прямо в выдаче.'},
+     {in:1, t:'12:05', kind:'text', body:'Холд кошелька теперь и для крупных сделок: сумма замораживается при старте, разблокируется по приёмке. Ни исполнитель, ни заказчик не рискуют.', reacts:{thumb:33}},
+     {in:1, t:'15:33', kind:'text', body:'Итоги суток: 218 новых заказов, средний чек 6 400 ₽, топ-категории — монтаж и упаковка каналов. Заходи в раздел «Биржа» и забирай отклики.', reacts:{wow:27}},
+   ]},
+  /* --- прямой заказчик: контент-завод под ключ --- */
+  {id:9011, ava:'ДЛ', name:'Дарья Лунёва', kind:'direct', nick:'daria.beauty', kindIcon:null,
+   preview:'Тогда запускаем контент-завод с понедельника', time:'13:47', unread:1, online:true,
+   msgs:[
+     {in:1, t:'вчера', kind:'text', body:'Добрый день! У меня сеть студий красоты, четыре точки. Хочу отдать соцсети полностью под ключ: съёмки есть, нужен человек, который ведёт всё сам — сценарии, монтаж, публикации, отчёты.'},
+     {in:0, t:'вчера', kind:'text', body:'Здравствуйте, Дарья! Это как раз формат контент-завода OKO. Беру нишу и бренд-паспорт, дальше сам: анализ конкурентов, 30 роликов в месяц, публикация по расписанию и аналитика каждый день. Вы только согласовываете.'},
+     {in:1, t:'вчера', kind:'text', body:'Звучит как то, что нужно. Сколько выходит в месяц и что по отчётности?'},
+     {in:0, t:'09:20', kind:'text', body:'Пакет «30 роликов + ведение» — 48 000 ₽ в месяц, оплата через кошелёк OKO с холдом по неделям. Отчёт по метрикам — каждый день в 10:00, разбор залетевших форматов — раз в неделю. Счёт и договор пришлю в чат.'},
+     {in:1, t:'13:46', kind:'money', amount:'48 000'},
+     {in:1, t:'13:47', kind:'text', body:'Тогда запускаем контент-завод с понедельника!', reacts:{fire:1}},
+   ]},
+  /* --- группа-поток академии: живое обучение --- */
+  {id:9012, ava:'КЗ', name:'Поток «Контент-завод»', kind:'group', members:64, kindIcon:'crown',
+   preview:'Куратор: домашку урока 4 проверю до вечера', time:'14:55', unread:5, online:true,
+   msgs:[
+     {kind:'sys', body:'Учебный поток Академии OKO · 64 участника'},
+     {in:1, who:'Куратор', t:'10:30', kind:'text', body:'Доброе утро, поток! Сегодня разбираем урок 4 «Монтаж под бит». Задание: собрать 15-секундный ролик из 6 планов, склейка строго по музыке. Сдаём сюда файлом до 20:00.', reacts:{fire:12}},
+     {in:1, who:'Настя', t:'11:12', kind:'text', body:'Собрала первый вариант, но на припеве склейка чуть плывёт. Это норм для черновика или переделывать?'},
+     {in:1, who:'Куратор', t:'11:40', kind:'text', body:'Переделай только стык на припеве — режь ровно на удар, а не за кадр до. Остальное отлично, чувство ритма есть.', reacts:{thumb:9}},
+     {in:1, who:'Олег', t:'13:20', kind:'file', fname:'homework-4-oleg.mp4', fsize:'22.7 МБ'},
+     {in:1, who:'Куратор', t:'14:55', kind:'text', body:'Домашку урока 4 проверю до вечера, разбор лучших работ — завтра в эфире. Кто ещё не сдал — время до 20:00.', reacts:{heart:6}},
+   ]},
+  /* --- группа партнёрки: заработок на рефералах --- */
+  {id:9013, ava:'ПО', name:'Партнёры OKO', kind:'group', members:890, kindIcon:'users',
+   preview:'Топ-партнёр июля закрыл $1 240 за месяц', time:'11:18', unread:0, online:true,
+   msgs:[
+     {kind:'sys', body:'Партнёрская программа OKO · 890 участников · 15% и 5%'},
+     {in:1, who:'Партнёры OKO', t:'вчера', kind:'text', body:'Итоги месяца: суммарные выплаты партнёрам — 1,8 млн ₽. Топ-партнёр закрыл $1 240 на одной реф-ссылке и сторис раз в день. Механика простая и повторяемая.', reacts:{fire:44}},
+     {in:1, who:'Вадим', t:'вчера', kind:'text', body:'Подскажите: 15% — это только с первой оплаты подписки или со всех продлений?'},
+     {in:1, who:'Партнёры OKO', t:'вчера', kind:'text', body:'Со всех: 15% с каждой оплаты приглашённого и 5% со второй линии, пожизненно. Начисления падают на лицевой счёт кошелька сразу после оплаты.', reacts:{thumb:18}},
+     {in:1, who:'Вадим', t:'11:18', kind:'text', body:'Огонь. Тогда ставлю реф-ссылку в шапку канала и в закреп.'},
+   ]},
+  /* --- прямой чат: дизайнер обложек --- */
+  {id:9014, ava:'ВС', name:'Вера Соболь', kind:'direct', nick:'vera.design', kindIcon:null,
+   preview:'Финальные обложки закинула, забирай', time:'вчера', unread:0, online:false,
+   msgs:[
+     {in:1, t:'вчера', kind:'text', body:'Привет! Сделала три варианта обложки для твоего курса: тёмная с лаймовым акцентом, минимализм и постер с крупной типографикой. Какой ближе по духу бренда?'},
+     {in:1, t:'вчера', kind:'photo'},
+     {in:0, t:'вчера', kind:'text', body:'Первая — прямо в точку: чёрный фон и лайм читаются даже в мелком превью ленты. Давай её финалим, вторую оставим как запасную под сторис.'},
+     {in:1, t:'вчера', kind:'poll', q:'Формат подписи на обложке?', opts:['Крупный заголовок','Заголовок + подзаголовок','Только знак бренда'], votes:[8,5,2], voted:0},
+     {in:1, t:'вчера', kind:'file', fname:'oko-course-covers-final.zip', fsize:'14.2 МБ'},
+   ]},
+  /* --- канал трендов: аналитика форматов --- */
+  {id:9015, ava:'ТР', name:'Тренды Reels', kind:'channel', nick:'reelstrends', subs:'19.3к',
+   writeAll:false, kindIcon:'megaphone', preview:'Формат «до/после» снова в топе досмотров', time:'10:05', unread:0, online:false,
+   msgs:[
+     {in:1, t:'13 июля', kind:'text', body:'Тренд недели: вертикальные «микро-туториалы» на 12–18 секунд. Один приём — один ролик, без воды. Средний досмотр по нише — 71%, репостов вдвое больше обычного.', reacts:{fire:63}},
+     {in:1, t:'14 июля', kind:'text', body:'Звук решает: ролики под текущий трендовый бит получают +30% к охвату в первые сутки. Держим библиотеку из 10 актуальных треков и меняем каждую неделю.'},
+     {in:1, t:'вчера', kind:'text', body:'Наблюдение: «сохранения» стали весить в алгоритме больше лайков. Делай контент, который хочется вернуть и пересмотреть — чек-листы, разборы, шаблоны.', reacts:{heart:38}},
+     {in:1, t:'10:05', kind:'text', body:'Формат «до/после» снова в топе досмотров: показывай результат в первом кадре, процесс — следом. Работает и для монтажа, и для бизнеса заказчика.', reacts:{wow:22}},
+   ]},
+  /* --- прямой чат: коллаборация авторов --- */
+  {id:9016, ava:'РГ', name:'Роман Гейко', kind:'direct', nick:'roman.motion', kindIcon:null,
+   preview:'Голосовое сообщение', time:'12:30', unread:2, online:true,
+   msgs:[
+     {in:1, t:'вчера', kind:'text', body:'Слушай, предлагаю коллаб: ты берёшь монтаж, я — 3D-графику и моушен. Заказов на упаковку каналов сейчас вал, вдвоём закроем в два раза больше и чек выше.'},
+     {in:0, t:'вчера', kind:'text', body:'Идея топ. Давай оформим как совместную услугу на бирже OKO — сделку ведём через холд, комиссию и выплаты делим 50/50 автоматически.'},
+     {in:1, t:'12:28', kind:'voice', dur:'0:38', seed:6},
+     {in:1, t:'12:30', kind:'text', body:'Договорились. Скидываю первый заказ на упаковку — клиент уже ждёт смету.', reacts:{fire:1}},
+   ]},
 ];
 
 /* Поддержка OKO — только если её ещё нет в CHATS (в базе есть, id:1) */
@@ -21127,6 +21613,11 @@ const DC_STORIES = [
   {ava:'МВ', name:'Марк Волков', text:'Забрал шесть роликов для кофейни за три дня. Заказ, правки и оплата — всё внутри OKO.', bg:'linear-gradient(160deg,#0a1a10 0%,#050505 60%,#08240e 100%)'},
   {ava:'АК', name:'Алина Крид', text:'Тестирую три формата Reels на этой неделе. Цифры и выводы — здесь в пятницу.', bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'},
   {ava:'КЛ', name:'Клуб OKO', text:'В четверг открытый разбор: первые заказы на бирже OKO за неделю. Вход свободный, вопросы — в сообщество.', bg:'linear-gradient(165deg,#0d2003 0%,#060606 50%,#141f05 100%)'},
+  {avaIcon:'crown', name:'OKO Академия', text:'Поток «Контент-завод» стартовал: 64 студента, первые работы уже на проверке. Следующий набор — через две недели.', bg:'linear-gradient(150deg,#101c05 0%,#050505 55%,#132000 100%)'},
+  {avaIcon:'briefcase', name:'Биржа OKO', text:'За сутки 218 новых заказов, средний чек 6 400 ₽. Монтаж и упаковка каналов — в топе. Забирай отклики первым.', bg:'linear-gradient(160deg,#08160c 0%,#050505 58%,#0a2210 100%)'},
+  {ava:'ДЛ', name:'Дарья Лунёва', text:'Отдала соцсети сети студий на контент-завод OKO: 30 роликов в месяц, я только согласовываю. Свободного времени стало вдвое больше.', bg:'linear-gradient(155deg,#141d09 0%,#060606 55%,#0d1c12 100%)'},
+  {ava:'ВС', name:'Вера Соболь', text:'Три обложки для курса за вечер: чёрный фон, лайм, крупная типографика. Финал забрали в первую же итерацию.', bg:'linear-gradient(165deg,#0b1e04 0%,#050505 52%,#151f06 100%)'},
+  {ava:'РГ', name:'Роман Гейко', text:'Запустили с напарником совместную услугу на бирже: монтаж плюс 3D-моушен. Первый заказ на упаковку канала уже в работе.', bg:'linear-gradient(150deg,#0a1a10 0%,#050505 56%,#10210a 100%)'},
 ];
 
 const DC_POSTS = [
@@ -21146,12 +21637,43 @@ const DC_POSTS = [
    body:'В четверг открытый разбор в клубе: как получить первые заказы на бирже OKO за неделю — профиль, портфолио, отклики, цены. Приходи с вопросами, самые сильные кейсы разберём в прямом эфире. Вход свободный для участников приложения.',
    media:null, likes:97, views:5400, liked:false, saved:false, reposts:23,
    comments:[{a:'Н', n:'Настя', t:'Буду, тема — боль'}]},
+  {id:9105, ava:'ДЛ', name:'Дарья Лунёва', sub:'бизнес · 1.9к',
+   body:'Три месяца веду соцсети сети студий через контент-завод OKO. Итог: 90 роликов, +3 400 подписчиков, записи расписаны на две недели вперёд. Я не сняла ни одного ролика сама — только согласовываю по утрам. Это и есть система вместо хаоса.',
+   media:'0:38', likes:203, views:9700, liked:false, saved:false, reposts:31,
+   comments:[{a:'М', n:'Марина', t:'А сколько точек ведёте одновременно?'},{a:'ДЛ', n:'Дарья Лунёва', t:'Четыре, и это не предел'}]},
+  {id:9106, ava:'O', name:'OKO Академия', sub:'канал · 33.5к',
+   body:'Разбор урока «Хук за 2 секунды»: первый кадр должен отвечать на вопрос «зачем смотреть дальше». Три рабочих приёма — обещание результата, разрыв шаблона, вопрос в лоб. Студенты потока подняли средний досмотр с 41% до 63% за одно занятие.',
+   media:'1:12', likes:287, views:16200, liked:false, saved:false, reposts:58,
+   comments:[{a:'И', n:'Игорь', t:'63% на холодном трафике — сильно'},{a:'Л', n:'Лера', t:'Забрала все три приёма в работу'}]},
+  {id:9107, ava:'РГ', name:'Роман Гейко', sub:'моушен · 4.1к',
+   body:'Упаковка канала под ключ: интро, плашки, переходы и анимированный логотип в едином стиле за два дня. Собрал вдвоём с монтажёром через совместную услугу на бирже — холд, комиссия и выплаты делятся автоматически, клиент платит один раз. Показываю до/после.',
+   media:'0:54', likes:164, views:8100, liked:false, saved:false, reposts:22,
+   comments:[{a:'В', n:'Вера', t:'Анимация лого — чистая работа'}]},
+  {id:9108, ava:'П', name:'OKO Партнёрам', sub:'канал · 7.4к',
+   body:'Партнёрам месяца выплатили 1,8 млн ₽. Механика не изменилась: реф-ссылка в шапке, одна сторис в день, 15% с каждой оплаты приглашённого и 5% со второй линии — пожизненно. Начисления падают на лицевой счёт сразу. Пример топ-партнёра — в комментариях.',
+   media:null, likes:176, views:10400, liked:false, saved:false, reposts:39,
+   comments:[{a:'В', n:'Вадим', t:'Поставил ссылку в закреп — за неделю уже три оплаты'}]},
+];
+
+/* лента «Рекомендации»: посты ранжирует алгоритм OKO (feed-algo).
+   Отдельный id-диапазон 92xx — не пересекается с ads (9000+) и feed-algo (777xxx). */
+const DC_POSTS_REC = [
+  {id:9201, ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'Локальная кофейня без бюджета на продакшн: контент-завод OKO собрал 24 ролика за месяц из исходников с телефона. Два залетели в рекомендации, +610 подписчиков, очередь по выходным. Секрет — стабильность выхода, а не гонка за вирусом.', media:'0:41', likes:214, views:24800, liked:false, saved:false, reposts:37, comments:[{a:'С', n:'Стас', t:'Стабильность реально решает, проверено'}]},
+  {id:9202, ava:'НД', name:'Нейросети Daily', sub:'рекомендация', body:'Сравнили озвучку урока: локальная нейромодель против диктора с биржи. Слепой тест на 40 слушателях — разницу поймали двое. При этом локальная озвучка бесплатна и без лимитов. Для потокового контента это минус целая статья расходов.', media:null, likes:189, views:14100, liked:false, saved:false, reposts:44, comments:[{a:'А', n:'Антон', t:'Паузы и интонация — вот что раньше выдавало робота'}]},
+  {id:9203, ava:'МР', name:'Монтажёры RU', sub:'рекомендация', body:'Чек-лист монтажа, который экономит час на ролике: режь на пике движения, моушен-блюр последним слоем, свет и палитру описывай одинаково для всей серии кадров. Сохрани — пригодится на каждом проекте. В карусели разобрали каждый пункт на примере.', media:'1/6', likes:341, views:19600, liked:false, saved:false, reposts:71, comments:[{a:'О', n:'Оля', t:'Пункт про пик движения — маст'}]},
+  {id:9204, ava:'БК', name:'Бизнес-клуб', sub:'рекомендация', body:'Как эксперт закрыл 47 заявок с одного канала за 3 недели: контент-завод давал по ролику в день, биржа OKO закрывала продакшн, кошелёк держал оплаты на холде. Ноль хаоса в личных переписках — всё в одном приложении. Разбор воронки внутри.', media:'2:04', likes:158, views:11200, liked:false, saved:false, reposts:29, comments:[{a:'Д', n:'Денис', t:'Всё в одном окне — вот чего не хватало'}]},
+  {id:9205, ava:'ТР', name:'Тренды Reels', sub:'рекомендация', body:'Микро-туториалы 12–18 секунд — формат месяца. Один приём, один ролик, без воды. Средний досмотр по нише 71%, репостов вдвое больше обычного. Собрали 20 идей под этот формат — забирай в закладки и выкладывай по одной в день.', media:null, likes:267, views:17300, liked:false, saved:false, reposts:63, comments:[{a:'К', n:'Ксюша', t:'Уже сняла три по вашей структуре'}]},
 ];
 
 const DC_NOTIFS = [
-  {ic:'user',    who:'Марк Волков', t:'подписался на твои обновления', time:'4 мин',  g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
-  {ic:'comment', who:'Алина Крид',  t:'прокомментировала кейс: «Забираю формулу хука себе»', time:'19 мин', g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
-  {ic:'money',   who:'Партнёрка',   t:'начисление +$24.90 за оплату PRO по твоей ссылке', time:'27 мин', g:'Сегодня', unread:true, act:()=>{ showTab('partner'); }},
+  {ic:'user',      who:'Марк Волков', t:'подписался на твои обновления', time:'4 мин',  g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
+  {ic:'comment',   who:'Алина Крид',  t:'прокомментировала кейс: «Забираю формулу хука себе»', time:'19 мин', g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
+  {ic:'money',     who:'Партнёрка',   t:'начисление +$24.90 за оплату PRO по твоей ссылке', time:'27 мин', g:'Сегодня', unread:true, act:()=>{ showTab('partner'); }},
+  {ic:'briefcase', who:'Биржа OKO',   t:'новый отклик на заказ «Упаковка канала под ключ»', time:'38 мин', g:'Сегодня', unread:true, act:()=>{ showTab('mini'); if(typeof openMa==='function') openMa('market'); }},
+  {ic:'star',      who:'Дарья Лунёва',t:'оставила отзыв 5★: «Контент-завод ведёт всё сам»', time:'1 ч',    g:'Сегодня', unread:false, act:()=>{}},
+  {ic:'crown',     who:'OKO Академия',t:'урок 4 «Монтаж под бит» готов — продолжи поток', time:'2 ч',    g:'Сегодня', unread:false, act:()=>{ showTab('mini'); }},
+  {ic:'users',     who:'+12 подписчиков', t:'подписались на твой канал за сегодня', time:'3 ч',  g:'Сегодня', unread:false, act:()=>{}},
+  {ic:'rocket',    who:'OKO',         t:'твой кейс вышел в топ рекомендаций — охват +40%', time:'вчера', g:'Ранее', unread:false, act:()=>{ showTab('feed'); }},
 ];
 
 /* ---------- закреплённые чаты: сортировка + иконка булавки ---------- */
@@ -21214,6 +21736,10 @@ function dcSeed(){
   /* лента «Подписки» — свежие посты сверху */
   if(typeof POSTS !== 'undefined' && POSTS.sub && !POSTS.sub.some(p=>p.id===9101))
     POSTS.sub.unshift(...DC_POSTS);
+
+  /* лента «Рекомендации» — добавляем в пул, ранжирование делает алгоритм OKO */
+  if(typeof POSTS !== 'undefined' && POSTS.rec && !POSTS.rec.some(p=>p.id===9201))
+    POSTS.rec.push(...DC_POSTS_REC);
 
   /* уведомления — непрочитанные, в начало */
   if(typeof NOTIFS !== 'undefined' && !NOTIFS.some(n=>n.who==='Марк Волков'))
