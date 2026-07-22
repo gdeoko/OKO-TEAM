@@ -3868,7 +3868,10 @@ main>.screen{position:relative;z-index:1}
    ======================================================================= */
 
 /* --- 6. Контекст-меню сообщения (стекло + стаггер + прокрутка) --- */
-#msgMenu{background:rgba(0,0,0,.62);backdrop-filter:blur(9px) saturate(1.15);-webkit-backdrop-filter:blur(9px) saturate(1.15)}
+/* PERF: убран backdrop-filter с полноэкранного оверлея (самый дорогой слой —
+   блюрил весь вьюпорт). Тёмная подложка и так читается; фрост оставлен только
+   на маленьких панелях меню (.mm-reacts/.mm-actions) — там он дёшев. */
+#msgMenu{background:rgba(0,0,0,.72);backdrop-filter:none;-webkit-backdrop-filter:none}
 .mm-inner.cp-mm{max-height:calc(100dvh - 40px);overflow-y:auto;scrollbar-width:none;padding:4px 0}
 .mm-inner.cp-mm::-webkit-scrollbar{display:none}
 .mm-reacts{background:rgba(22,24,20,.82);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);border-color:rgba(255,255,255,.09);box-shadow:0 16px 46px rgba(0,0,0,.55)}
@@ -5848,6 +5851,21 @@ html.wm-on .plan.hot{ animation:wmHotPulse 3.6s var(--wm-ease) infinite; }
   .btn,.chip,.prow,.card,.svc-ic,nav#tabs>button{ transition:none !important; }
 }
 
+/* =========================================================================
+   6. PERF-СЛОЙ (борьба с лагами) — глушим декоративные @keyframes там, где они
+   не нужны, освобождая компоновщик под плавный скролл и отклик интерфейса.
+   Это НЕ трогает transitions (микро-press/hover остаются) — только бесконечные
+   анимации, которые крутятся вхолостую и жрут GPU/CPU.
+   ========================================================================= */
+/* a) Экраны не в фокусе не анимируются вовсе (даже если не display:none). */
+.screen:not(.active) *{ animation-play-state:paused !important; }
+/* b) Во время активного скролла ставим на паузу все бесконечные анимации —
+      это главный источник «дёрганого» скролла на слабых телефонах. Класс
+      снимается через ~160 мс после остановки скролла (JS ниже). */
+html.oko-scrolling *{ animation-play-state:paused !important; }
+/* c) Когда вкладка/мини-апп в фоне — тоже пауза (не греем телефон впустую). */
+html.oko-hidden *{ animation-play-state:paused !important; }
+
 
 </style>
 </head>
@@ -6505,7 +6523,7 @@ html.wm-on .plan.hot{ animation:wmHotPulse 3.6s var(--wm-ease) infinite; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.70</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.71</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -27111,6 +27129,23 @@ window.chDraft = chDraft; window.chRender = chRender;
 
       // Подстраховка: после полной загрузки ещё раз раскрыть видимое.
       window.addEventListener('load', function(){ wmScan(document); wmRevealVisible(document); }, { once:true });
+
+      // ---- PERF-слой: пауза декоративных @keyframes во время скролла и в фоне ----
+      // (главная борьба с «лагает при скролле» — освобождаем компоновщик).
+      var scrollOff = 0;
+      function onScroll(){
+        if(!root.classList.contains('oko-scrolling')) root.classList.add('oko-scrolling');
+        if(scrollOff) clearTimeout(scrollOff);
+        scrollOff = setTimeout(function(){ scrollOff = 0; root.classList.remove('oko-scrolling'); }, 160);
+      }
+      // capture:true ловит скролл ЛЮБОГО внутреннего контейнера (main, .screen, списки).
+      window.addEventListener('scroll', onScroll, { capture:true, passive:true });
+      document.addEventListener('touchmove', onScroll, { capture:true, passive:true });
+
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden) root.classList.add('oko-hidden');
+        else root.classList.remove('oko-hidden');
+      });
     }
 
     if(document.readyState === 'loading'){

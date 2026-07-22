@@ -67,7 +67,10 @@
    ======================================================================= */
 
 /* --- 6. Контекст-меню сообщения (стекло + стаггер + прокрутка) --- */
-#msgMenu{background:rgba(0,0,0,.62);backdrop-filter:blur(9px) saturate(1.15);-webkit-backdrop-filter:blur(9px) saturate(1.15)}
+/* PERF: убран backdrop-filter с полноэкранного оверлея (самый дорогой слой —
+   блюрил весь вьюпорт). Тёмная подложка и так читается; фрост оставлен только
+   на маленьких панелях меню (.mm-reacts/.mm-actions) — там он дёшев. */
+#msgMenu{background:rgba(0,0,0,.72);backdrop-filter:none;-webkit-backdrop-filter:none}
 .mm-inner.cp-mm{max-height:calc(100dvh - 40px);overflow-y:auto;scrollbar-width:none;padding:4px 0}
 .mm-inner.cp-mm::-webkit-scrollbar{display:none}
 .mm-reacts{background:rgba(22,24,20,.82);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);border-color:rgba(255,255,255,.09);box-shadow:0 16px 46px rgba(0,0,0,.55)}

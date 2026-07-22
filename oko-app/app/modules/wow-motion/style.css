@@ -158,3 +158,18 @@ html.wm-on .plan.hot{ animation:wmHotPulse 3.6s var(--wm-ease) infinite; }
   html.wm-on .plan.hot{ animation:none !important; }
   .btn,.chip,.prow,.card,.svc-ic,nav#tabs>button{ transition:none !important; }
 }
+
+/* =========================================================================
+   6. PERF-СЛОЙ (борьба с лагами) — глушим декоративные @keyframes там, где они
+   не нужны, освобождая компоновщик под плавный скролл и отклик интерфейса.
+   Это НЕ трогает transitions (микро-press/hover остаются) — только бесконечные
+   анимации, которые крутятся вхолостую и жрут GPU/CPU.
+   ========================================================================= */
+/* a) Экраны не в фокусе не анимируются вовсе (даже если не display:none). */
+.screen:not(.active) *{ animation-play-state:paused !important; }
+/* b) Во время активного скролла ставим на паузу все бесконечные анимации —
+      это главный источник «дёрганого» скролла на слабых телефонах. Класс
+      снимается через ~160 мс после остановки скролла (JS ниже). */
+html.oko-scrolling *{ animation-play-state:paused !important; }
+/* c) Когда вкладка/мини-апп в фоне — тоже пауза (не греем телефон впустую). */
+html.oko-hidden *{ animation-play-state:paused !important; }

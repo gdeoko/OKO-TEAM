@@ -120,6 +120,23 @@
 
       // Подстраховка: после полной загрузки ещё раз раскрыть видимое.
       window.addEventListener('load', function(){ wmScan(document); wmRevealVisible(document); }, { once:true });
+
+      // ---- PERF-слой: пауза декоративных @keyframes во время скролла и в фоне ----
+      // (главная борьба с «лагает при скролле» — освобождаем компоновщик).
+      var scrollOff = 0;
+      function onScroll(){
+        if(!root.classList.contains('oko-scrolling')) root.classList.add('oko-scrolling');
+        if(scrollOff) clearTimeout(scrollOff);
+        scrollOff = setTimeout(function(){ scrollOff = 0; root.classList.remove('oko-scrolling'); }, 160);
+      }
+      // capture:true ловит скролл ЛЮБОГО внутреннего контейнера (main, .screen, списки).
+      window.addEventListener('scroll', onScroll, { capture:true, passive:true });
+      document.addEventListener('touchmove', onScroll, { capture:true, passive:true });
+
+      document.addEventListener('visibilitychange', function(){
+        if(document.hidden) root.classList.add('oko-hidden');
+        else root.classList.remove('oko-hidden');
+      });
     }
 
     if(document.readyState === 'loading'){
