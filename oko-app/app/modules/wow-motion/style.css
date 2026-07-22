@@ -1,0 +1,160 @@
+/* ==========================================================================
+   wow-motion — финальный вау-слой OKO: премиальная типографика, брендовый
+   моушен, микро-интеракции и ровное лаймовое свечение. Грузится последним,
+   поэтому аккуратно переопределяет глобальное. Обе темы. prefers-reduced-motion.
+   Префикс собственных классов/анимаций: wm* / .wm-*
+   ========================================================================== */
+
+:root{
+  --wm-ease:cubic-bezier(.22,1,.36,1);      /* мягкий «дорогой» out */
+  --wm-ease-io:cubic-bezier(.16,1,.3,1);
+  --wm-spring:cubic-bezier(.34,1.56,.64,1); /* лёгкий overshoot для press */
+  --wm-glow:0 0 22px rgba(154,255,0,.30);
+  --wm-glow-soft:0 6px 20px rgba(154,255,0,.16);
+}
+
+/* =========================================================================
+   1. ТИПОГРАФИКА — «дорого», без изменения layout
+   Правим только рендер/трекинг/межстрочные/вес/цвет на существующих классах.
+   ========================================================================= */
+body{
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"kern" 1,"liga" 1;
+  letter-spacing:.003em;
+}
+/* Bebas-заголовки: чуть плотнее по вертикали + выверенный трекинг = designed look */
+h1,h2,h3,.display{
+  letter-spacing:.055em;
+  line-height:.98;
+  font-feature-settings:"kern" 1;
+}
+.section-h{
+  font-size:25px;
+  letter-spacing:.06em;
+  line-height:1.02;
+}
+/* Лого в шапке — ровное свечение только в тёмной теме */
+header .logo{ text-shadow:0 0 16px rgba(154,255,0,.28); }
+:root[data-theme="light"] header .logo{ text-shadow:none; }
+
+/* Крупные цифры-акценты (счётчики/статы) — премиальный лаймовый ореол в тёмной */
+.stat .v{ letter-spacing:.01em; text-shadow:0 0 20px rgba(154,255,0,.22); }
+:root[data-theme="light"] .stat .v{ text-shadow:none; }
+
+/* Читабельный body-текст в описаниях/подписях */
+.dim,.svc-note,.stat .l,.sheet-item small{ line-height:1.5; }
+.stat .l{ letter-spacing:.11em; }
+
+/* Кнопки/чипы — ровный трекинг для «набора», без ломки размеров */
+.btn{ letter-spacing:.015em; }
+.chip{ letter-spacing:.07em; }
+
+/* =========================================================================
+   2. МИКРО-ИНТЕРАКЦИИ — pressed / hover / плавные переходы (обе темы)
+   Работают всегда (не завязаны на wm-on), т.к. не создают «прыжков».
+   ========================================================================= */
+.btn{ transition:transform .14s var(--wm-spring), box-shadow .28s ease, filter .2s ease; }
+.btn:active{ transform:scale(.965); }
+
+/* Ровное лаймовое свечение на первичной CTA (не ghost, не мелкой) */
+.btn:not(.ghost):not(.sm){ box-shadow:var(--wm-glow-soft); }
+:root[data-theme="light"] .btn:not(.ghost):not(.sm){ box-shadow:0 6px 16px rgba(110,200,0,.20); }
+
+.chip{ transition:transform .14s var(--wm-spring), background .2s ease, color .2s ease; }
+.chip:active{ transform:scale(.93); }
+
+.prow{ transition:background .2s ease, transform .14s ease; border-radius:12px; }
+.prow:active{ background:var(--lime-dim); transform:scale(.99); }
+
+.sheet-item{ transition:background .18s ease; border-radius:10px; }
+.sheet-item:active{ background:var(--lime-dim); }
+
+.card{ transition:transform .2s var(--wm-ease), box-shadow .28s ease, border-color .25s ease; }
+
+/* Тайлы мини-аппов: press уже есть в ядре — добавим свечение */
+.svc-ic{ transition:transform .18s var(--wm-spring), box-shadow .28s ease; }
+
+/* Нижняя навигация — плавность + микро-press */
+nav#tabs>button{ transition:color .2s ease, transform .14s var(--wm-spring); position:relative; }
+nav#tabs>button:active{ transform:scale(.9); }
+nav#tabs>button.active svg.i{ filter:drop-shadow(0 0 7px rgba(154,255,0,.55)); }
+:root[data-theme="light"] nav#tabs>button.active svg.i{ filter:drop-shadow(0 0 5px rgba(83,168,0,.45)); }
+
+/* Активный таб — ровный лаймовый индикатор (мобайл: сверху) */
+nav#tabs>button.active::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:24px;height:2px;border-radius:2px;background:var(--lime);
+  box-shadow:0 0 8px var(--lime);
+}
+/* Десктоп: навигация — левый рельс, индикатор слева */
+@media(min-width:900px){
+  nav#tabs>button.active::before{
+    top:50%;left:0;transform:translateY(-50%);
+    width:3px;height:22px;
+  }
+}
+
+/* Hover — только на устройствах с реальным ховером (ПК), не ломает тач */
+@media(hover:hover){
+  .btn:not(.ghost):hover{ box-shadow:var(--wm-glow); transform:translateY(-1px); }
+  .btn.ghost:hover{ box-shadow:0 0 0 1px var(--accent), 0 0 16px rgba(154,255,0,.20); }
+  .svc:hover .svc-ic{ transform:translateY(-3px) scale(1.03); box-shadow:0 14px 28px rgba(0,0,0,.5), 0 0 18px rgba(154,255,0,.18); }
+  :root[data-theme="light"] .svc:hover .svc-ic{ box-shadow:0 10px 22px rgba(60,90,20,.16); }
+  .card:hover{ border-color:rgba(154,255,0,.22); box-shadow:0 10px 30px rgba(0,0,0,.28); }
+  :root[data-theme="light"] .card:hover{ border-color:rgba(110,200,0,.4); box-shadow:0 10px 24px rgba(60,90,20,.10); }
+  .prow:hover{ background:var(--lime-dim); }
+  .chip:hover{ background:var(--lime); color:#000; }
+  .theme-btn:hover{ transform:rotate(-12deg); }
+  nav#tabs>button:hover{ color:var(--accent); }
+}
+
+/* =========================================================================
+   3. АКЦЕНТНЫЕ ПОВЕРХНОСТИ — «горячий» тариф, живой лаймовый ореол
+   ========================================================================= */
+.plan.hot{ box-shadow:0 0 0 1px var(--accent), 0 12px 34px rgba(154,255,0,.12); }
+:root[data-theme="light"] .plan.hot{ box-shadow:0 0 0 1px var(--accent), 0 10px 26px rgba(110,200,0,.14); }
+
+/* =========================================================================
+   4. МОУШЕН ПОЯВЛЕНИЯ (reveal) — включается ТОЛЬКО когда JS добавил html.wm-on
+   и НЕ при reduced-motion. Без JS/при reduced-motion — контент виден сразу
+   (ничего не прячем «навсегда»).
+   ========================================================================= */
+html.wm-on .wm-r{
+  opacity:0;
+  transform:translateY(16px);
+  will-change:opacity,transform;
+}
+html.wm-on .wm-r.wm-in{
+  opacity:1;
+  transform:none;
+  transition:opacity .62s var(--wm-ease-io), transform .62s var(--wm-ease-io);
+  transition-delay:var(--wm-d,0ms);
+}
+
+/* Плавный вход экрана при переключении табов (тонко, opacity+микросдвиг) */
+html.wm-on .screen.active{ animation:wmScreenIn .34s var(--wm-ease-io) both; }
+@keyframes wmScreenIn{
+  from{ opacity:.35; transform:translateY(7px) scale(.997); }
+  to{ opacity:1; transform:none; }
+}
+
+/* Мягкая пульсация ровного свечения — только на «горячем» тарифе, деликатно */
+html.wm-on .plan.hot{ animation:wmHotPulse 3.6s var(--wm-ease) infinite; }
+@keyframes wmHotPulse{
+  0%,100%{ box-shadow:0 0 0 1px var(--accent), 0 12px 34px rgba(154,255,0,.10); }
+  50%{ box-shadow:0 0 0 1px var(--accent), 0 12px 40px rgba(154,255,0,.22); }
+}
+:root[data-theme="light"] html.wm-on .plan.hot{ animation:none; }
+
+/* =========================================================================
+   5. RESPECT prefers-reduced-motion — глушим весь собственный моушен
+   (html.wm-on JS не добавляет при reduced, но подстрахуемся и здесь).
+   ========================================================================= */
+@media(prefers-reduced-motion:reduce){
+  html.wm-on .wm-r{ opacity:1 !important; transform:none !important; transition:none !important; }
+  html.wm-on .screen.active{ animation:none !important; }
+  html.wm-on .plan.hot{ animation:none !important; }
+  .btn,.chip,.prow,.card,.svc-ic,nav#tabs>button{ transition:none !important; }
+}
