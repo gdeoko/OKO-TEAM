@@ -43,7 +43,7 @@ python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "<storybook pro
 #   затем композитить заголовок Playfair+Soyuz + ПРОЗРАЧНЫЙ лого brand/metanoia/png (без квадрата).
 
 # МУЗЫКА (бесплатно, РАЗНАЯ каждый раз по НАСТРОЕНИЮ темы) — pipeline/music_free.py
-python3 КОНТЕНТ-ЗАВОД/factory/pipeline/music_free.py "<mood под тему: warm tender / hopeful / reflective / serious>" work/music.m4a <dur> NN
+python3 КОНТЕНТ-ЗАВОД/factory/pipeline/music_free.py "<mood ВЫВЕДИ из темы/эмоции ЭТОГО ролика — не из списка>" work/music.m4a <dur> NN
 #   Freesound CC0/CC-BY, дедуп по used_music.txt, нормализовано под фон, фолбэк — синтез-пад. НЕ Higgsfield.
 #   Настроение выбирай ПОД тему/сценарий/анализ конкурентов (грустная тема → мягкое пиано; сильная → струнные и т.д.).
 #   Если лицензия CC-BY (by/by-nc) — добавь короткий credit автора трека в описание ролика.
