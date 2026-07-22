@@ -25,6 +25,12 @@ if (!$c) {
 /* --- Метаданные и справочники --- */
 $dirLabel = ['multi' => 'Многожанровый', 'patriotic' => 'Патриотический', 'thematic' => 'Тематический'];
 $typeLabel = $c['type'] === 'international' ? 'Международный конкурс' : 'Всероссийский конкурс';
+$typeShort = $c['type'] === 'international' ? 'Международный' : 'Всероссийский';
+$thematics = match ($c['direction']) {
+    'patriotic' => 'Патриотическая',
+    'thematic'  => 'Тематическая',
+    default     => 'Свободная',
+};
 
 $statusMap = match ($c['status']) {
     'open'    => ['open', 'Приём заявок открыт'],
@@ -41,8 +47,9 @@ if (!empty($c['nominations'])) {
 }
 if (!$noms) $noms = array_keys(NOMINATIONS());
 
-$ages = AGE_CATEGORIES();
-$forms = FORMATIONS();
+$nomMap = NOMINATIONS();
+$ages   = AGE_CATEGORIES();
+$forms  = FORMATIONS();
 
 /* Награды: индивидуальный прайс конкурса или общий шаблон (competition_id IS NULL). */
 $awards = all("SELECT * FROM awards_prices WHERE competition_id = ?", [$c['id']]);
@@ -67,6 +74,14 @@ if ($about === '') {
         . 'Работы принимаются по видеозаписи, конкурс проходит по номинациям и возрастным категориям. Итоги оценивает компетентное жюри, наградные документы направляются на электронную почту участника.';
 }
 
+/* Цели конкурса (по официальному положению, п. «Цели и задачи»). */
+$goals = [
+    'Выявление и поддержка талантливой молодёжи, открытие новых имён в области искусств.',
+    'Популяризация искусства в его исполнительском и педагогическом аспектах.',
+    'Сохранение и развитие традиций многонациональной культуры, знакомство с наследием народов.',
+    'Повышение профессионального уровня руководителей коллективов, обмен опытом и репертуаром.',
+];
+
 /* --- Иконки --- */
 $ic = [
   'cal'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
@@ -75,6 +90,15 @@ $ic = [
   'list'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
   'pdf'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg>',
   'award'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>',
+  'globe'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.6 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.6-3.8-9S9.5 5.5 12 3z"/></svg>',
+  'star'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.8 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg>',
+  'users'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11"/></svg>',
+  'video'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+  'check'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
+  'ban'    => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>',
+  'scale'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 0 0 6 0zM17 7l-3 6a3 3 0 0 0 6 0z"/></svg>',
+  'medal'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="15" r="6"/><path d="M8.5 10 5 2M15.5 10 19 2M12 12v3l2 1"/></svg>',
+  'gavel'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4l6 6M9 9l6 6M11 6l3-3 7 7-3 3zM3 21l7-7M3 21h7"/></svg>',
 ];
 
 /* Инфо-строки для сводки. */
@@ -113,11 +137,28 @@ $materialReq = [
     'Видео принимается без монтажа, склеек, стоп-кадров и наложения видеоэффектов; остановка камеры во время записи не допускается.',
     'Качество записи не ниже 480 пикселей; аудио-трек, сопровождение и вокал должны хорошо прослушиваться.',
     'Конкурсный материал не старше 1 года с момента исполнения; ссылка должна быть актуальна вплоть до оглашения результатов.',
-    'Допустимые площадки для ссылок: RuTube, Google Диск, Яндекс Диск, ОК видео, ВК видео, Дзен видео.',
-    'Запрещены ссылки на Instagram, Facebook (принадлежит Meta, признана в России экстремистской), TikTok, YouTube и любые мессенджеры.',
-    'Для ИЗО и фото: чёткое фото или скан под прямым углом, при хорошем освещении, без бликов, теней и фотофильтров — в кадре только само полотно.',
+    'В кадре чётко видны руки, ноги и лицо исполнителя - в соответствии с номинацией.',
+    'Для ИЗО и фото: чёткое фото или скан под прямым углом, при хорошем освещении, без бликов, теней и фотофильтров - в кадре только само полотно.',
 ];
+$platformsOk = ['RuTube','ВК Видео','ОК Видео','Дзен Видео','Яндекс Диск','Google Диск'];
+$platformsNo = ['YouTube','Instagram','Facebook (Meta - экстремистская в РФ)','TikTok','Иностранные мессенджеры'];
 $extraDiplomas = ['За патриотизм','За лучший образ','Лучший коллектив','Лучший дуэт','За артистизм','За лучшее исполнение','За лучшую постановку','За оригинальное исполнение'];
+
+/* Состав жюри (по официальному положению, п.6). */
+$juryIntro = [
+    'Председатель жюри' => 'Народный или заслуженный артист, видный деятель искусств, ректор или профессор ведущего профильного вуза.',
+    'Почётные члены жюри' => 'Представители министерств и ведомств культуры, директора международных фестивалей, международные арт-менеджеры и продюсеры.',
+];
+$juryPanels = [
+    'Вокальное искусство' => ['профессора и доценты кафедр вокала консерваторий и институтов культуры','действующие солисты оперных театров и филармоний','известные эстрадные и джазовые исполнители','хормейстеры, дирижёры, музыкальные продюсеры'],
+    'Хореографическое искусство' => ['главные балетмейстеры и постановщики театров танца и балета','заслуженные артисты балета','ведущие педагоги-хореографы академий и институтов культуры','руководители известных ансамблей народного танца'],
+    'Инструментальное исполнительство' => ['солисты-виртуозы филармоний и концертных объединений','дирижёры симфонических, камерных и духовых оркестров','профессора и преподаватели по классу инструментов','руководители ансамблей народных инструментов'],
+    'Театр и художественное слово' => ['театральные режиссёры-постановщики','заслуженные и народные артисты театра и кино','педагоги по сценической речи и актёрскому мастерству','театральные критики и драматурги'],
+    'ИЗО, ДПИ и фотоискусство' => ['члены национальных и международных Союзов художников','профессора художественных академий, искусствоведы и кураторы','профессиональные фотографы, члены международных фотосоюзов (FIAP)','фоторедакторы крупных изданий и медиа-агентств'],
+    'Видеоискусство и клипмейкинг' => ['режиссёры кино и телевидения, режиссёры клипов','кинооператоры-постановщики (DOP), режиссёры монтажа','преподаватели институтов кинематографии','кинокритики, киноведы и продюсеры медиапроектов'],
+    'Цирковое искусство' => ['заслуженные артисты-акробаты и воздушные гимнасты','виртуозы-эквилибристы, мастера жонглирования','известные клоуны, режиссёры пантомимы','профессиональные иллюзионисты, династийные дрессировщики'],
+];
+
 $chev = '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>';
 
 ob_start(); ?>
@@ -146,149 +187,211 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container">
+
+    <!-- Ключевые факты — инфографика -->
     <div class="comp-info reveal">
       <div class="comp-info__item">
-        <span class="comp-info__ic"><?= $ic['cal'] ?></span>
-        <div><b>Приём заявок</b><span><?= $dateRange !== '' ? h($dateRange) : 'Уточняется в положении' ?></span></div>
-      </div>
-      <div class="comp-info__item">
-        <span class="comp-info__ic"><?= $ic['flag'] ?></span>
-        <div><b>Срок аттестации</b><span><?= !empty($c['results_date']) ? h(ru_date($c['results_date'])) : 'По окончании приёма заявок' ?></span></div>
+        <span class="comp-info__ic"><?= $ic['globe'] ?></span>
+        <div><b>Тип конкурса</b><span><?= h($typeShort) ?>, многожанровый</span></div>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['wallet'] ?></span>
         <div><b>Участие</b><span><?= $c['is_paid'] ? h(money((int)$c['price'])) . ' за заявку' : 'Бесплатно' ?></span></div>
       </div>
       <div class="comp-info__item">
+        <span class="comp-info__ic"><?= $ic['cal'] ?></span>
+        <div><b>Приём заявок</b><span><?= $dateRange !== '' ? h($dateRange) : 'Уточняется в положении' ?></span></div>
+      </div>
+      <div class="comp-info__item">
+        <span class="comp-info__ic"><?= $ic['star'] ?></span>
+        <div><b>Тематика</b><span><?= h($thematics) ?></span></div>
+      </div>
+      <div class="comp-info__item">
+        <span class="comp-info__ic"><?= $ic['flag'] ?></span>
+        <div><b>Срок аттестации</b><span><?= !empty($c['results_date']) ? h(ru_date($c['results_date'])) : 'В течение 5 рабочих дней' ?></span></div>
+      </div>
+      <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['list'] ?></span>
-        <div><b>Номинаций</b><span><?= count($noms) ?> · <?= count($ages) ?> возрастных категорий</span></div>
+        <div><b>Программа</b><span><?= count($noms) ?> номинаций · <?= count($ages) ?> категорий</span></div>
       </div>
     </div>
 
+    <!-- Мини-статистика (счётчики) -->
+    <div class="comp-stats reveal">
+      <div class="comp-stat"><b data-count="<?= count($noms) ?>">0</b><span>Номинаций</span></div>
+      <div class="comp-stat"><b data-count="<?= count($ages) ?>">0</b><span>Возрастных категорий</span></div>
+      <div class="comp-stat"><b data-count="<?= count($extraDiplomas) ?>">0</b><span>Доп. дипломов</span></div>
+      <div class="comp-stat">
+        <div class="stat-ring" data-value="100" aria-hidden="true">
+          <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/></svg>
+          <span class="stat-ring__num">10</span>
+        </div>
+        <span>Балльная шкала оценки</span>
+      </div>
+    </div>
+
+    <!-- Вкладки -->
     <div class="comp-tabs reveal" id="compTabs">
       <div class="comp-tabs__nav" role="tablist">
         <button class="comp-tab is-active" role="tab" aria-selected="true" data-tab="about">О конкурсе</button>
-        <button class="comp-tab" role="tab" aria-selected="false" data-tab="reg">Положение</button>
-        <button class="comp-tab" role="tab" aria-selected="false" data-tab="criteria">Критерии и правила</button>
-        <button class="comp-tab" role="tab" aria-selected="false" data-tab="awards">Образцы наград</button>
+        <button class="comp-tab" role="tab" aria-selected="false" data-tab="program">Программа</button>
+        <button class="comp-tab" role="tab" aria-selected="false" data-tab="material">Требования к материалу</button>
+        <button class="comp-tab" role="tab" aria-selected="false" data-tab="criteria">Оценка и критерии</button>
+        <button class="comp-tab" role="tab" aria-selected="false" data-tab="participation">Участие и награды</button>
+        <button class="comp-tab" role="tab" aria-selected="false" data-tab="jury">Жюри</button>
         <button class="comp-tab" role="tab" aria-selected="false" data-tab="results">Результаты</button>
       </div>
 
+      <!-- О конкурсе -->
       <div class="comp-panel is-active" data-panel="about">
         <p><?= nl2br(h(normalize_text($about))) ?></p>
-        <h3 style="margin-top:28px">Возрастные категории</h3>
+        <h3 style="margin-top:26px">Цели и задачи</h3>
+        <ul class="comp-goals">
+          <?php foreach ($goals as $g): ?>
+            <li><span class="comp-goals__ic"><?= $ic['check'] ?></span><?= h($g) ?></li>
+          <?php endforeach; ?>
+        </ul>
+        <div class="comp-callout">
+          <span class="comp-callout__ic"><?= $ic['globe'] ?></span>
+          <p>Формат конкурса - дистанционный. Работы принимаются по видеозаписи, итоги подводит компетентное жюри, наградные документы направляются на электронную почту участника.</p>
+        </div>
+      </div>
+
+      <!-- Программа: номинации, возрастные категории, формы -->
+      <div class="comp-panel" data-panel="program">
+        <h3>Номинации <span class="comp-count"><?= count($noms) ?></span></h3>
+        <p>Конкурс проходит по следующим номинациям. Раскройте направление, чтобы увидеть жанры внутри него.</p>
+        <?php foreach ($noms as $n): $subs = $nomMap[$n] ?? []; ?>
+          <div class="acc-item">
+            <button class="acc-q" type="button" aria-expanded="false"><span><?= h($n) ?></span><?= $chev ?></button>
+            <div class="acc-a">
+              <?php if ($subs): ?>
+                <div class="comp-chips" style="margin-top:14px">
+                  <?php foreach ($subs as $s): ?><span class="comp-chip"><?= h($s) ?></span><?php endforeach; ?>
+                </div>
+              <?php else: ?>
+                <p style="margin:14px 0 0">Направление указывается участником в заявке.</p>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endforeach; ?>
+
+        <h3 style="margin-top:30px">Возрастные категории <span class="comp-count"><?= count($ages) ?></span></h3>
         <div class="comp-chips">
           <?php foreach ($ages as $a): ?><span class="comp-chip"><?= h($a) ?></span><?php endforeach; ?>
         </div>
-        <h3 style="margin-top:28px">Формы исполнения</h3>
+
+        <h3 style="margin-top:30px">Формы исполнения</h3>
         <div class="comp-chips">
           <?php foreach ($forms as $f): ?><span class="comp-chip"><?= h($f) ?></span><?php endforeach; ?>
         </div>
+        <p class="comp-note">Без ограничений по времени номера, языку исполнения, количеству участников и месту нахождения. 1 заявка = 1 конкурсный номер.</p>
       </div>
 
-      <div class="comp-panel" data-panel="reg">
-        <p>Положение конкурса определяет порядок подачи заявок, требования к конкурсным работам, номинации, возрастные категории и критерии оценки. Просим ознакомиться с положением до подачи заявки.</p>
-        <?php if (!empty($c['regulation_pdf'])): ?>
-          <p><a class="btn btn--primary" href="<?= h($c['regulation_pdf']) ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение (PDF)</a></p>
-        <?php else: ?>
-          <p style="color:var(--muted)">Документ положения готовится к публикации. По вопросам участия обратитесь в Оргкомитет по контактам, указанным в разделе «Контакты».</p>
-        <?php endif; ?>
-        <h3 style="margin-top:28px">Номинации</h3>
-        <div class="comp-chips">
-          <?php foreach ($noms as $n): ?><span class="comp-chip"><?= h($n) ?></span><?php endforeach; ?>
+      <!-- Требования к материалу -->
+      <div class="comp-panel" data-panel="material">
+        <div class="comp-callout">
+          <span class="comp-callout__ic"><?= $ic['video'] ?></span>
+          <p>Видео снимается на статичную камеру или мобильный телефон, на сцене или в домашних условиях. Главное - «живое» исполнение без монтажа.</p>
         </div>
-      </div>
+        <ul class="comp-reqs">
+          <?php foreach ($materialReq as $r): ?>
+            <li><span class="comp-reqs__ic"><?= $ic['check'] ?></span><?= h($r) ?></li>
+          <?php endforeach; ?>
+        </ul>
 
-      <div class="comp-panel" data-panel="criteria">
-        <p>Конкурсные работы оценивает компетентное жюри по единым критериям. Ниже — требования к материалу, система оценивания и критерии по номинациям согласно официальному положению конкурса.</p>
-
-        <div class="acc-item">
-          <div class="acc-q"><span>Требования к конкурсному материалу</span><?= $chev ?></div>
-          <div class="acc-a"><ul style="padding-left:20px;margin:0">
-            <?php foreach ($materialReq as $r): ?><li style="margin-bottom:8px"><?= h($r) ?></li><?php endforeach; ?>
-          </ul></div>
-        </div>
-
-        <div class="acc-item">
-          <div class="acc-q"><span>Система оценивания и звания</span><?= $chev ?></div>
-          <div class="acc-a">
-            <p style="margin:0 0 12px">Аттестация проводится по 10-балльной шкале. Итоговый балл определяет присуждаемое звание:</p>
-            <div class="comp-awards"><table class="comp-table" style="min-width:320px">
-              <thead><tr><th>Баллы</th><th>Звание</th></tr></thead>
-              <tbody>
-                <?php foreach (GRADE_SCALE() as [$lo, $hi, $title]): ?>
-                  <tr><td><?= (int)$lo ?>–<?= (int)$hi ?></td><td><b style="color:var(--gold)"><?= h($title) ?></b></td></tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table></div>
-            <p style="margin:12px 0 0">Жюри вправе присуждать и не присуждать звания «Гран-при», «Лауреат», «Дипломант», «Участник». Решения жюри окончательны и пересмотру не подлежат.</p>
+        <h3 style="margin-top:28px">Где размещать видео</h3>
+        <div class="comp-platforms">
+          <div class="comp-plat comp-plat--ok">
+            <div class="comp-plat__head"><?= $ic['check'] ?> Разрешённые площадки</div>
+            <div class="comp-chips">
+              <?php foreach ($platformsOk as $p): ?><span class="comp-chip comp-chip--ok"><?= h($p) ?></span><?php endforeach; ?>
+            </div>
+          </div>
+          <div class="comp-plat comp-plat--no">
+            <div class="comp-plat__head"><?= $ic['ban'] ?> Запрещённые площадки</div>
+            <div class="comp-chips">
+              <?php foreach ($platformsNo as $p): ?><span class="comp-chip comp-chip--no"><?= h($p) ?></span><?php endforeach; ?>
+            </div>
           </div>
         </div>
+        <p class="comp-note">Ссылка на конкурсный материал должна оставаться доступной вплоть до оглашения результатов.</p>
+      </div>
 
+      <!-- Оценка и критерии -->
+      <div class="comp-panel" data-panel="criteria">
+        <p>Конкурсные работы оценивает компетентное жюри по 10-балльной шкале. Итоговый балл определяет присуждаемое звание.</p>
+
+        <h3 style="margin-top:22px"><span class="comp-h3ic"><?= $ic['scale'] ?></span>Система оценивания и звания</h3>
+        <div class="comp-grades">
+          <?php foreach (GRADE_SCALE() as [$lo, $hi, $title]): $pct = (int)round($hi / 10 * 100); ?>
+            <div class="grade-row">
+              <span class="grade-row__title"><?= h($title) ?></span>
+              <div class="bar" data-value="<?= $pct ?>"><span class="bar-fill"></span></div>
+              <span class="grade-row__num"><?= (int)$lo ?>–<?= (int)$hi ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <p class="comp-note">Жюри вправе присуждать и не присуждать звания «Гран-при», «Лауреат», «Дипломант», «Участник». Решения жюри окончательны и пересмотру не подлежат.</p>
+
+        <h3 style="margin-top:30px">Критерии оценки</h3>
         <div class="acc-item">
-          <div class="acc-q"><span>Общие критерии оценки</span><?= $chev ?></div>
-          <div class="acc-a"><ul style="padding-left:20px;margin:0">
-            <?php foreach ($generalCriteria as $g): ?><li style="margin-bottom:7px"><?= h($g) ?></li><?php endforeach; ?>
+          <button class="acc-q" type="button" aria-expanded="false"><span>Общие критерии оценки</span><?= $chev ?></button>
+          <div class="acc-a"><ul class="comp-ul">
+            <?php foreach ($generalCriteria as $g): ?><li><?= h($g) ?></li><?php endforeach; ?>
           </ul></div>
         </div>
-
         <?php foreach ($nominationCriteria as $nomName => $items): ?>
           <div class="acc-item">
-            <div class="acc-q"><span>Критерии: <?= h($nomName) ?></span><?= $chev ?></div>
-            <div class="acc-a"><ul style="padding-left:20px;margin:0">
-              <?php foreach ($items as $it): ?><li style="margin-bottom:7px"><?= h($it) ?></li><?php endforeach; ?>
+            <button class="acc-q" type="button" aria-expanded="false"><span><?= h($nomName) ?></span><?= $chev ?></button>
+            <div class="acc-a"><ul class="comp-ul">
+              <?php foreach ($items as $it): ?><li><?= h($it) ?></li><?php endforeach; ?>
             </ul></div>
           </div>
         <?php endforeach; ?>
 
-        <div class="acc-item">
-          <div class="acc-q"><span>Дополнительные наградные дипломы</span><?= $chev ?></div>
-          <div class="acc-a">
-            <p style="margin:0 0 10px">По решению жюри участникам могут присуждаться дополнительные наградные дипломы:</p>
-            <div class="comp-chips">
-              <?php foreach ($extraDiplomas as $d): ?><span class="comp-chip"><?= h($d) ?></span><?php endforeach; ?>
-            </div>
-          </div>
+        <h3 style="margin-top:30px"><span class="comp-h3ic"><?= $ic['medal'] ?></span>Дополнительные наградные дипломы <span class="comp-count"><?= count($extraDiplomas) ?></span></h3>
+        <p>Сверх основного звания жюри вправе присуждать дополнительные дипломы:</p>
+        <div class="comp-chips">
+          <?php foreach ($extraDiplomas as $d): ?><span class="comp-chip"><?= h($d) ?></span><?php endforeach; ?>
         </div>
-
-        <?php if ($c['is_paid']): ?>
-          <div class="acc-item">
-            <div class="acc-q"><span>Финансовые условия</span><?= $chev ?></div>
-            <div class="acc-a">
-              <p style="margin:0 0 10px">Организационный взнос — <b><?= h(money((int)$c['price'])) ?></b> за заявку. В стоимость участия входит:</p>
-              <ul style="padding-left:20px;margin:0 0 12px">
-                <li style="margin-bottom:7px">приём, сортировка и регистрация заявки;</li>
-                <li style="margin-bottom:7px">отправка конкурсного номера на аттестацию компетентному жюри;</li>
-                <li style="margin-bottom:7px">аттестация конкурсного номера;</li>
-                <li style="margin-bottom:7px">рассылка и (или) публикация аттестационных результатов;</li>
-                <li style="margin-bottom:7px">изготовление и рассылка основного электронного диплома (и дополнительного при наличии) на электронную почту в течение 5 рабочих дней.</li>
-              </ul>
-              <p style="margin:0 0 8px">Дополнительный наградной материал (кубок, статуэтка, медаль, благодарственное письмо, именные дипломы) оформляется только после оглашения результатов, по личному решению и на добровольной основе.</p>
-              <p style="margin:0 0 8px">Стоимость доставки наградного материала оплачивается отдельно при получении (наложенный платёж).</p>
-              <p style="margin:0">Организационный взнос за аттестованный конкурсный материал возврату не подлежит. При возврате посылки по вине заказчика повторная отправка производится за его счёт.</p>
-            </div>
-          </div>
-        <?php else: ?>
-          <div class="acc-item">
-            <div class="acc-q"><span>Что входит в бесплатное участие</span><?= $chev ?></div>
-            <div class="acc-a">
-              <p style="margin:0 0 10px">Участие в конкурсе бесплатное. В бесплатное участие входит:</p>
-              <ul style="padding-left:20px;margin:0 0 12px">
-                <li style="margin-bottom:7px">приём, сортировка и регистрация заявки;</li>
-                <li style="margin-bottom:7px">отправка конкурсного номера на аттестацию компетентному жюри;</li>
-                <li style="margin-bottom:7px">аттестация конкурсного номера;</li>
-                <li style="margin-bottom:7px">рассылка и (или) публикация аттестационных результатов.</li>
-              </ul>
-              <p style="margin:0">Аттестационные результаты публикуются на официальной странице сообщества <a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">ВКонтакте</a>. Наградной материал (диплом с печатью, кубки, медали, доставка) оформляется отдельно по желанию — доставка оплачивается при получении наложенным платежом.</p>
-            </div>
-          </div>
-        <?php endif; ?>
       </div>
 
-      <div class="comp-panel" data-panel="awards">
+      <!-- Участие и награды -->
+      <div class="comp-panel" data-panel="participation">
+        <?php if ($c['is_paid']): ?>
+          <h3><span class="comp-h3ic"><?= $ic['wallet'] ?></span>Финансовые условия</h3>
+          <p>Организационный взнос - <b style="color:var(--gold)"><?= h(money((int)$c['price'])) ?></b> за заявку. В стоимость участия входит:</p>
+          <ul class="comp-ul">
+            <li>приём, сортировка и регистрация заявки;</li>
+            <li>отправка конкурсного номера на аттестацию компетентному жюри;</li>
+            <li>аттестация конкурсного номера;</li>
+            <li>рассылка и (или) публикация аттестационных результатов;</li>
+            <li>изготовление и рассылка основного электронного диплома (и дополнительного при наличии) на электронную почту в течение 5 рабочих дней.</li>
+          </ul>
+          <div class="comp-callout">
+            <span class="comp-callout__ic"><?= $ic['award'] ?></span>
+            <p>Дополнительный наградной материал (кубок, статуэтка, медаль, благодарственное письмо, именные дипломы) оформляется по желанию после оглашения результатов. Доставка оплачивается отдельно при получении (наложенный платёж). Оргвзнос за аттестованный материал возврату не подлежит.</p>
+          </div>
+        <?php else: ?>
+          <h3><span class="comp-h3ic"><?= $ic['check'] ?></span>Что входит в бесплатное участие</h3>
+          <p>Участие в конкурсе бесплатное. В бесплатное участие входит:</p>
+          <ul class="comp-ul">
+            <li>приём, сортировка и регистрация заявки;</li>
+            <li>отправка конкурсного номера на аттестацию компетентному жюри;</li>
+            <li>аттестация конкурсного номера;</li>
+            <li>рассылка и (или) публикация аттестационных результатов.</li>
+          </ul>
+          <div class="comp-callout">
+            <span class="comp-callout__ic"><?= $ic['award'] ?></span>
+            <p>Аттестационные результаты публикуются на официальной странице сообщества <a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">ВКонтакте</a>. Наградной материал (диплом с печатью, кубки, медали, доставка) оформляется отдельно по желанию - доставка оплачивается при получении наложенным платежом.</p>
+          </div>
+        <?php endif; ?>
+
+        <h3 style="margin-top:30px"><span class="comp-h3ic"><?= $ic['award'] ?></span>Наградной материал и образцы</h3>
         <p>По итогам конкурса участники получают наградные документы в электронном виде. Оригиналы дипломов, кубки, медали и статуэтки можно заказать дополнительно.</p>
         <?php if ($awards): ?>
-          <div class="comp-awards">
+          <div class="scroll-x">
             <table class="comp-table">
               <thead><tr><th>Наградной материал</th><th>Вид</th><th>Стоимость</th></tr></thead>
               <tbody>
@@ -308,10 +411,35 @@ ob_start(); ?>
         <?php endif; ?>
       </div>
 
+      <!-- Жюри -->
+      <div class="comp-panel" data-panel="jury">
+        <p>Чтобы конкурс имел высокий, в том числе международный статус, в состав жюри входят эксперты из разных стран (минимум 3-4 страны) с педагогическим стажем не менее 10 лет и без конфликта интересов.</p>
+        <div class="comp-jury-lead">
+          <?php foreach ($juryIntro as $role => $desc): ?>
+            <div class="card comp-jury-card">
+              <div class="comp-jury-card__ic"><?= $ic['gavel'] ?></div>
+              <b><?= h($role) ?></b>
+              <span><?= h($desc) ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <h3 style="margin-top:26px">Эксперты по направлениям</h3>
+        <?php foreach ($juryPanels as $panel => $items): ?>
+          <div class="acc-item">
+            <button class="acc-q" type="button" aria-expanded="false"><span><?= h($panel) ?></span><?= $chev ?></button>
+            <div class="acc-a"><ul class="comp-ul">
+              <?php foreach ($items as $it): ?><li><?= h($it) ?></li><?php endforeach; ?>
+            </ul></div>
+          </div>
+        <?php endforeach; ?>
+        <p class="comp-note">Персональные данные членов жюри и протоколы аттестации не публикуются и третьим лицам не передаются (ФЗ №149-ФЗ, №152-ФЗ).</p>
+      </div>
+
+      <!-- Результаты -->
       <div class="comp-panel" data-panel="results">
         <?php if ($results): ?>
           <p>Итоги конкурса. Наградные документы направлены на электронную почту участников.</p>
-          <div class="comp-awards">
+          <div class="scroll-x">
             <table class="comp-table">
               <thead><tr><th>Участник</th><th>Номинация</th><th>Результат</th></tr></thead>
               <tbody>
@@ -354,42 +482,132 @@ ob_start(); ?>
 .comp-banner .badge--open{background:rgba(143,188,148,.95);color:#173a1e}
 .comp-banner .badge--closed{background:rgba(255,252,245,.9);color:#8a2e2e}
 
-.comp-info{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:44px}
+/* Ключевые факты */
+.comp-info{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:26px}
 .comp-info__item{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--glass-brd);
-  border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
+  border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
 .comp-info__ic{flex:0 0 auto;width:46px;height:46px;border-radius:12px;background:var(--gold-soft);
   display:flex;align-items:center;justify-content:center;color:var(--gold)}
 .comp-info__ic svg{width:24px;height:24px}
-.comp-info__item b{display:block;font-family:var(--ff-serif);color:var(--text);font-size:1.08rem}
-.comp-info__item span{color:var(--muted);font-size:.92rem}
+.comp-info__item b{display:block;font-family:var(--ff-serif);color:var(--text);font-size:1.05rem;line-height:1.2}
+.comp-info__item span{color:var(--muted);font-size:.9rem}
 
-.comp-tabs__nav{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line);margin-bottom:28px}
-.comp-tab{background:none;border:none;padding:14px 22px;font-family:var(--ff-body);font-weight:700;font-size:1rem;
-  color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .18s,border-color .18s}
+/* Мини-статистика */
+.comp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:44px}
+.comp-stat{text-align:center;padding:22px 12px;border-radius:var(--radius-sm);background:var(--panel);
+  border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.comp-stat b{display:block;font-family:var(--ff-display);font-size:clamp(2rem,5vw,3rem);line-height:1;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.comp-stat span{display:block;margin-top:8px;color:var(--muted);font-size:.86rem}
+.stat-ring{position:relative;width:96px;height:96px;margin:0 auto}
+.stat-ring svg{width:100%;height:100%;transform:rotate(0)}
+.stat-ring .ring-track{fill:none;stroke:var(--gold-soft);stroke-width:9}
+.stat-ring .ring-fill{fill:none;stroke:var(--gold);stroke-width:9;stroke-linecap:round}
+.stat-ring__num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-display);font-size:2rem;color:var(--text)}
+
+/* Вкладки */
+.comp-tabs__nav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:28px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.comp-tabs__nav::-webkit-scrollbar{display:none}
+.comp-tab{background:none;border:none;padding:14px 20px;font-family:var(--ff-body);font-weight:700;font-size:1rem;
+  color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;
+  transition:color .18s,border-color .18s}
 .comp-tab:hover{color:var(--gold)}
 .comp-tab.is-active{color:var(--text);border-bottom-color:var(--gold)}
 .comp-panel{display:none;animation:fadeUp .35s ease}
 .comp-panel.is-active{display:block}
 .comp-panel p{color:var(--text-dim)}
+.comp-panel h3{margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.comp-h3ic{width:26px;height:26px;color:var(--gold);flex:0 0 auto}
+.comp-h3ic svg{width:26px;height:26px}
+.comp-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;
+  border-radius:999px;background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold);
+  font-family:var(--ff-body);font-size:.82rem;font-weight:800}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
+/* Чипы */
 .comp-chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
 .comp-chip{display:inline-block;padding:7px 15px;border-radius:999px;background:var(--gold-soft);
   border:1px solid var(--glass-brd);color:var(--gold);font-size:.9rem;font-weight:600}
+.comp-chip--ok{background:rgba(143,188,148,.16);border-color:rgba(143,188,148,.4);color:var(--mint,#5f9c67)}
+.comp-chip--no{background:rgba(200,87,87,.12);border-color:rgba(200,87,87,.35);color:#c85757}
+.comp-note{margin-top:16px;padding:12px 16px;border-left:3px solid var(--gold);background:var(--gold-soft);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-dim);font-size:.92rem}
 
-.comp-awards{overflow-x:auto}
+/* Списки */
+.comp-ul{padding-left:20px;margin:14px 0 0}
+.comp-ul li{margin-bottom:8px;color:var(--text-dim)}
+.comp-goals,.comp-reqs{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:12px}
+.comp-goals li,.comp-reqs li{display:flex;gap:12px;align-items:flex-start;color:var(--text-dim)}
+.comp-goals__ic,.comp-reqs__ic{flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:var(--gold-soft);
+  color:var(--gold);display:flex;align-items:center;justify-content:center}
+.comp-goals__ic svg,.comp-reqs__ic svg{width:16px;height:16px}
+
+/* Callout */
+.comp-callout{display:flex;gap:14px;align-items:flex-start;margin-top:20px;padding:18px 20px;border-radius:var(--radius-sm);
+  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
+.comp-callout__ic{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:var(--gold-soft);color:var(--gold);
+  display:flex;align-items:center;justify-content:center}
+.comp-callout__ic svg{width:22px;height:22px}
+.comp-callout p{margin:0;color:var(--text-dim)}
+
+/* Площадки */
+.comp-platforms{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.comp-plat{padding:16px 18px;border-radius:var(--radius-sm);background:var(--panel);border:1px solid var(--glass-brd);backdrop-filter:blur(10px)}
+.comp-plat__head{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text);margin-bottom:10px}
+.comp-plat__head svg{width:20px;height:20px}
+.comp-plat--ok .comp-plat__head svg{color:var(--mint,#5f9c67)}
+.comp-plat--no .comp-plat__head svg{color:#c85757}
+
+/* Оценивание — полосы */
+.comp-grades{display:grid;gap:12px;margin-top:14px}
+.grade-row{display:grid;grid-template-columns:180px 1fr 56px;align-items:center;gap:14px}
+.grade-row__title{font-weight:700;color:var(--text);font-size:.92rem}
+.grade-row__num{text-align:right;color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums}
+.bar{position:relative;height:14px;border-radius:999px;background:var(--gold-soft);border:1px solid var(--glass-brd);overflow:hidden}
+.bar-fill{display:block;height:100%;width:100%;border-radius:999px;background:var(--grad-gold);
+  transform:scaleX(0);transform-origin:left center;transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}
+
+/* Жюри */
+.comp-jury-lead{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.comp-jury-card{display:flex;flex-direction:column;gap:8px}
+.comp-jury-card__ic{width:44px;height:44px;border-radius:12px;background:var(--gold-soft);color:var(--gold);
+  display:flex;align-items:center;justify-content:center}
+.comp-jury-card__ic svg{width:24px;height:24px}
+.comp-jury-card b{font-family:var(--ff-serif);color:var(--text);font-size:1.1rem}
+.comp-jury-card span{color:var(--text-dim);font-size:.92rem}
+
+/* Таблицы */
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm)}
 .comp-table{width:100%;border-collapse:collapse;min-width:480px}
 .comp-table th,.comp-table td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text)}
 .comp-table th{font-family:var(--ff-body);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .comp-table tbody tr:hover{background:var(--gold-soft)}
 
+/* Аккордеон: снять глобальный лимит высоты для длинного контента */
+.comp-tabs .acc-q{width:100%;background:none;border:none;text-align:left;font-family:var(--ff-body);font-size:1rem}
+.comp-tabs .acc-item.open .acc-a{max-height:1400px}
+
+/* Финал */
 .comp-final{margin-top:48px;text-align:center;background:var(--panel);border:1px solid var(--glass-brd);
   border-radius:var(--radius);padding:44px 24px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
 .comp-final h2{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
 .comp-final p{color:var(--text-dim);max-width:520px;margin:0 auto 22px}
 
-@media (max-width:960px){.comp-info{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:640px){.comp-info{grid-template-columns:1fr}.comp-banner{padding:44px 0}}
+@media (max-width:960px){
+  .comp-info{grid-template-columns:repeat(2,1fr)}
+  .comp-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .comp-banner{padding:44px 0}
+  .comp-info{grid-template-columns:1fr}
+  .comp-platforms{grid-template-columns:1fr}
+  .comp-jury-lead{grid-template-columns:1fr}
+  .grade-row{grid-template-columns:1fr;gap:6px}
+  .grade-row__num{text-align:left}
+  .comp-tab{padding:12px 15px;font-size:.94rem}
+}
 </style>
 <script>
 (function(){
