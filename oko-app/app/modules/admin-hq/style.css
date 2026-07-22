@@ -118,13 +118,43 @@
 .hq-head-b{flex:1;min-width:0}
 .hq-head-b h3{font-size:21px;line-height:1;margin-bottom:4px}
 .hq-head-b small{font-size:11px;color:var(--dim);display:block;line-height:1.45}
-.hq-3d-btn{margin-top:11px;position:relative;overflow:hidden;border:none;color:#08160a;background:linear-gradient(120deg,#c8ff5e,#9AFF00 46%,#5cae00);box-shadow:0 6px 20px rgba(154,255,0,.34),inset 0 1px 0 rgba(255,255,255,.35);letter-spacing:.02em}
-.hq-3d-btn svg.i{width:15px;height:15px}
-.hq-3d-btn::after{content:"";position:absolute;top:0;left:-70%;width:48%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-18deg);pointer-events:none;animation:hq3dShine 3.8s ease-in-out infinite}
-@keyframes hq3dShine{0%,18%{left:-70%}62%,100%{left:150%}}
-.hq-3d-btn:active{transform:scale(.97)}
-:root[data-theme="light"] .hq-3d-btn{box-shadow:0 5px 16px rgba(110,200,0,.42),inset 0 1px 0 rgba(255,255,255,.4)}
-@media(prefers-reduced-motion:reduce){.hq-3d-btn::after{animation:none;display:none}}
+/* ---------- 3D-портал: превью-тумбнейл + CTA (кликается вся карточка) ---------- */
+.hq-portal{display:block;width:100%;padding:0;overflow:hidden;text-align:left;cursor:pointer;border:1px solid var(--border);border-radius:16px;margin-bottom:6px;transition:transform .18s cubic-bezier(.2,.8,.3,1),border-color .18s,box-shadow .18s;animation:fade .45s ease both}
+@media(hover:hover){.hq-portal:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.4),0 0 0 1px var(--lime-dim) inset}}
+:root[data-theme="light"] .hq-portal{box-shadow:0 6px 18px rgba(20,30,0,.06)}
+@media(hover:hover){:root[data-theme="light"] .hq-portal:hover{box-shadow:0 14px 30px rgba(110,200,0,.2)}}
+.hq-portal:active{transform:scale(.985)}
+/* сцена-превью: намеренно тёмная в обеих темах (это «экран»/вьюпорт 3D-штаба) */
+.hq-portal-scene{position:relative;height:158px;overflow:hidden;background:radial-gradient(120% 130% at 50% 8%,#0c1608,#050805 62%,#000);transform:translateZ(0)}
+.hq-portal-grid{position:absolute;left:-30%;right:-30%;bottom:-14%;height:82%;background-image:linear-gradient(rgba(154,255,0,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(154,255,0,.16) 1px,transparent 1px);background-size:28px 28px;transform:perspective(230px) rotateX(61deg);transform-origin:bottom center;-webkit-mask-image:linear-gradient(transparent,#000 55%,#000);mask-image:linear-gradient(transparent,#000 55%,#000);animation:hqPortalGrid 5.5s linear infinite}
+@keyframes hqPortalGrid{to{background-position:0 28px}}
+.hq-portal-glow{position:absolute;left:50%;top:52%;width:150px;height:150px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.28),transparent 66%);pointer-events:none;animation:hqPortalGlow 4.5s ease-in-out infinite}
+@keyframes hqPortalGlow{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}}
+.hq-portal-orbit{position:absolute;inset:0;display:grid;place-items:center;perspective:420px}
+.hq-portal-ring{position:relative;width:150px;height:150px;transform:rotateX(63deg);transform-style:preserve-3d;animation:hqPortalSpin 15s linear infinite}
+.hq-portal-ring::before{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(154,255,0,.22)}
+.hq-portal-ring i{position:absolute;top:50%;left:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:var(--c);box-shadow:0 0 9px var(--c),0 0 3px var(--c);transform:rotate(var(--a)) translateX(70px);animation:hqPortalNode 3.2s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes hqPortalSpin{to{transform:rotateX(63deg) rotateZ(360deg)}}
+@keyframes hqPortalNode{0%,100%{opacity:.7}50%{opacity:1}}
+.hq-portal-eye{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,rgba(154,255,0,.34),rgba(154,255,0,.05) 70%);z-index:3}
+.hq-portal-eye svg{width:36px;height:36px;color:var(--lime);filter:drop-shadow(0 0 10px rgba(154,255,0,.65));animation:hqPortalEye 5.5s ease-in-out infinite}
+@keyframes hqPortalEye{0%,90%,100%{transform:translateY(0) scaleY(1)}94%{transform:translateY(0) scaleY(.1)}97%{transform:translateY(0) scaleY(1)}45%{transform:translateY(-3px) scaleY(1)}}
+.hq-portal-scan{position:absolute;left:0;right:0;top:0;height:36%;background:linear-gradient(180deg,rgba(154,255,0,.16),transparent);pointer-events:none;animation:hqPortalScan 5s ease-in-out infinite}
+@keyframes hqPortalScan{0%{transform:translateY(-30%);opacity:0}18%{opacity:1}78%{opacity:1}100%{transform:translateY(310%);opacity:0}}
+.hq-portal-badge{position:absolute;top:11px;left:11px;display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--lime);background:rgba(3,8,2,.6);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:4px 10px;backdrop-filter:blur(3px);z-index:4}
+.hq-portal-chip{position:absolute;bottom:11px;left:11px;font-size:9.5px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.82);background:rgba(3,8,2,.55);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:4px 10px;backdrop-filter:blur(3px);z-index:4}
+.hq-portal-play{position:absolute;top:11px;right:11px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#08160a;background:linear-gradient(135deg,#c8ff5e,#9AFF00 50%,#5cae00);box-shadow:0 6px 18px rgba(154,255,0,.4),inset 0 1px 0 rgba(255,255,255,.4);z-index:4}
+.hq-portal-play svg.i{width:17px;height:17px}
+.hq-portal-cta{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--surface)}
+.hq-portal-t{flex:1;min-width:0}
+.hq-portal-t b{display:block;font-size:15.5px;letter-spacing:.01em}
+.hq-portal-t small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-portal-go{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--lime-dim);color:var(--accent);transition:transform .18s}
+.hq-portal-go svg.i{width:15px;height:15px}
+@media(hover:hover){.hq-portal:hover .hq-portal-go{transform:translateX(3px)}}
+.hq-3d-note{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--dim);line-height:1.45;margin:0 2px 4px;padding:0 1px}
+.hq-3d-note svg.i{width:13px;height:13px;color:var(--accent);flex-shrink:0;margin-top:1px}
+@media(prefers-reduced-motion:reduce){.hq-portal-grid,.hq-portal-glow,.hq-portal-ring,.hq-portal-ring i,.hq-portal-eye svg,.hq-portal-scan{animation:none}}
 
 .hq-rooms{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(min-width:760px){.hq-rooms{grid-template-columns:repeat(4,1fr)}}

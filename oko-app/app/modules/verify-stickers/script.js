@@ -251,14 +251,14 @@ function vsBaseArt(ic, u){
     <circle cx="44" cy="44" r="3.4" fill="#f4ffd6"/>
     <path d="M78 24 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 z" fill="#eaffb0"/>`;
   case 'fire': return `<defs>
-    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".5" stop-color="#ff8a00"/><stop offset="1" stop-color="#ffd21e"/></linearGradient>
-    <linearGradient id="${u}c" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffe985"/><stop offset="1" stop-color="#fff6cf"/></linearGradient></defs>
-    <path d="M52 5 C61 26 84 34 79 61 C75 85 61 96 50 96 C37 96 21 87 21 63 C21 49 31 45 33 34 C43 43 45 31 40 22 C51 27 54 16 52 5 Z" fill="url(#${u}o)"/>
+    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#e4ff9e"/></linearGradient>
+    <linearGradient id="${u}c" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c6ff70"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+    <path d="M52 5 C61 26 84 34 79 61 C75 85 61 96 50 96 C37 96 21 87 21 63 C21 49 31 45 33 34 C43 43 45 31 40 22 C51 27 54 16 52 5 Z" fill="url(#${u}o)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
     <path d="M51 46 C58 56 62 62 58 74 C55 86 47 88 43 82 C38 74 43 67 45 61 C47 56 51 54 51 46 Z" fill="url(#${u}c)"/>`;
   case 'heart': return `<defs>
-    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7d97"/><stop offset=".5" stop-color="#ff2d55"/><stop offset="1" stop-color="#c00f38"/></linearGradient></defs>
-    <path d="M50 88 C16 63 6 45 6 29 C6 15 18 7 31 7 C41 7 47 13 50 20 C53 13 59 7 69 7 C82 7 94 15 94 29 C94 45 84 63 50 88 Z" fill="url(#${u}r)"/>
-    <path d="M27 19 C21 22 16 28 16 36" stroke="#ffd3dc" stroke-width="6" fill="none" stroke-linecap="round" opacity=".85"/>`;
+    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ff8f"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <path d="M50 88 C16 63 6 45 6 29 C6 15 18 7 31 7 C41 7 47 13 50 20 C53 13 59 7 69 7 C82 7 94 15 94 29 C94 45 84 63 50 88 Z" fill="url(#${u}r)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M27 19 C21 22 16 28 16 36" stroke="#f4ffd6" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>`;
   case 'thumb': return `<defs>
     <linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#5fa800"/></linearGradient></defs>
     <rect x="20" y="46" width="16" height="40" rx="4.5" fill="#6cba12"/>
@@ -266,49 +266,48 @@ function vsBaseArt(ic, u){
     <path d="M40 46 C40 46 46 44 49 38 C52 32 51 24 54 18 C56 14 63 14 64 21 C65 28 61 38 61 42 H80 C86 42 88 48 85 53 C88 56 87 62 83 64 C86 68 83 74 79 75 C81 80 77 86 71 86 H50 C44 86 40 82 40 76 Z" fill="url(#${u}t)"/>
     <path d="M46 50 C48 47 51 43 53 38" stroke="#eaffc0" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".7"/>`;
   case 'laugh': return `<defs>
-    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#fff3ab"/><stop offset=".55" stop-color="#ffcf3a"/><stop offset="1" stop-color="#e79600"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}f)"/>
-    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
-    <path d="M22 43 Q31 31 41 43" stroke="#7a4a00" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M59 43 Q69 31 78 43" stroke="#7a4a00" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M25 57 Q50 90 75 57 Z" fill="#7a2600"/>
-    <path d="M27 57 Q50 66 73 57 Z" fill="#fff"/>
-    <ellipse cx="50" cy="79" rx="10.5" ry="6.5" fill="#ff5a6a"/>
-    <path d="M15 50 q-6 9 0 15 q6 -6 0 -15 z" fill="#7ad0ff"/>
-    <path d="M85 50 q6 9 0 15 q-6 -6 0 -15 z" fill="#7ad0ff"/>`;
+    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}f)" stroke="#0a1403" stroke-width="1.4"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".28"/>
+    <path d="M22 43 Q31 32 41 43" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M59 43 Q69 32 78 43" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M25 57 Q50 90 75 57 Z" fill="#0a1403"/>
+    <path d="M28 58 Q50 68 72 58 Z" fill="#eaffc0"/>
+    <path d="M13 52 q-5 8 0 14 q5 -5 0 -14 z" fill="#c6ff70"/>
+    <path d="M87 52 q5 8 0 14 q-5 -5 0 -14 z" fill="#c6ff70"/>`;
   case 'wow': return `<defs>
-    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#e9fbff"/><stop offset=".55" stop-color="#5ecdf0"/><stop offset="1" stop-color="#1f8fbf"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}w)"/>
-    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".35"/>
-    <path d="M24 34 Q33 28 42 33" stroke="#0d5a78" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M58 33 Q67 28 76 34" stroke="#0d5a78" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <ellipse cx="34" cy="47" rx="7" ry="9" fill="#0a2a38"/>
-    <ellipse cx="66" cy="47" rx="7" ry="9" fill="#0a2a38"/>
-    <circle cx="31.5" cy="44" r="2.4" fill="#fff"/><circle cx="63.5" cy="44" r="2.4" fill="#fff"/>
-    <ellipse cx="50" cy="72" rx="9.5" ry="12.5" fill="#0a2a38"/>`;
+    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}w)" stroke="#0a1403" stroke-width="1.4"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
+    <path d="M24 34 Q33 28 42 33" stroke="#0a1403" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M58 33 Q67 28 76 34" stroke="#0a1403" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="34" cy="47" rx="7" ry="9" fill="#0a1403"/>
+    <ellipse cx="66" cy="47" rx="7" ry="9" fill="#0a1403"/>
+    <circle cx="31.5" cy="44" r="2.4" fill="#eaffc0"/><circle cx="63.5" cy="44" r="2.4" fill="#eaffc0"/>
+    <ellipse cx="50" cy="72" rx="9.5" ry="12.5" fill="#0a1403"/>`;
   case 'star': return `<defs>
-    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1a6"/><stop offset=".5" stop-color="#ffcb2e"/><stop offset="1" stop-color="#e08c00"/></linearGradient></defs>
-    <path d="M50 5 L62 37 L96 38 L69 59 L79 92 L50 72 L21 92 L31 59 L4 38 L38 37 Z" fill="url(#${u}s)" stroke="#fff3c0" stroke-width="2" stroke-linejoin="round"/>
+    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <path d="M50 5 L62 37 L96 38 L69 59 L79 92 L50 72 L21 92 L31 59 L4 38 L38 37 Z" fill="url(#${u}s)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M50 16 L58 39 L46 39 Z" fill="#fff" opacity=".4"/>
-    <path d="M81 20 l1.9 4.8 4.8 1.9 -4.8 1.9 -1.9 4.8 -1.9 -4.8 -4.8 -1.9 4.8 -1.9 z" fill="#fff" opacity=".9"/>`;
+    <path d="M81 20 l1.9 4.8 4.8 1.9 -4.8 1.9 -1.9 4.8 -1.9 -4.8 -4.8 -1.9 4.8 -1.9 z" fill="#f4ffd6" opacity=".95"/>`;
   case 'crown': return `<defs>
-    <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#d98800"/></linearGradient></defs>
-    <path d="M13 76 L18 32 L37 55 L50 24 L63 55 L82 32 L87 76 Z" fill="url(#${u}k)" stroke="#fff2b8" stroke-width="2" stroke-linejoin="round"/>
-    <rect x="15" y="76" width="70" height="14" rx="4" fill="#e0920a"/>
-    <rect x="15" y="76" width="70" height="5" rx="2.5" fill="#fff" opacity=".25"/>
-    <circle cx="18" cy="30" r="5" fill="#ff5a6a"/><circle cx="82" cy="30" r="5" fill="#ff5a6a"/><circle cx="50" cy="22" r="5.5" fill="#5ad0ff"/>
-    <circle cx="30" cy="83" r="4" fill="#ff3b5c"/><circle cx="50" cy="83" r="4.5" fill="#4fd0ff"/><circle cx="70" cy="83" r="4" fill="#9AFF00"/>`;
+    <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <path d="M13 76 L18 32 L37 55 L50 24 L63 55 L82 32 L87 76 Z" fill="url(#${u}k)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>
+    <rect x="15" y="76" width="70" height="14" rx="4" fill="#4f8f00"/>
+    <rect x="15" y="76" width="70" height="5" rx="2.5" fill="#fff" opacity=".28"/>
+    <circle cx="18" cy="30" r="5" fill="#f4ffd6"/><circle cx="82" cy="30" r="5" fill="#f4ffd6"/><circle cx="50" cy="22" r="5.5" fill="#f4ffd6"/>
+    <circle cx="30" cy="83" r="4" fill="#0a1403"/><circle cx="50" cy="83" r="4.5" fill="#0a1403"/><circle cx="70" cy="83" r="4" fill="#0a1403"/>`;
   case 'rocket': return `<defs>
-    <linearGradient id="${u}q" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9a6ff"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b21b6"/></linearGradient>
-    <linearGradient id="${u}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd21e"/><stop offset="1" stop-color="#ff5a00"/></linearGradient></defs>
-    <path d="M40 66 L28 84 L40 78 Z" fill="#7c3aed"/>
-    <path d="M60 66 L72 84 L60 78 Z" fill="#7c3aed"/>
+    <linearGradient id="${u}q" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
+    <linearGradient id="${u}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#9AFF00"/></linearGradient></defs>
+    <path d="M40 66 L28 84 L40 78 Z" fill="#4f8f00"/>
+    <path d="M60 66 L72 84 L60 78 Z" fill="#4f8f00"/>
     <path d="M44 72 Q50 96 50 96 Q50 96 56 72 Z" fill="url(#${u}m)"/>
-    <path d="M50 6 C64 22 68 44 64 70 L36 70 C32 44 36 22 50 6 Z" fill="url(#${u}q)"/>
-    <path d="M50 6 C57 22 59 44 57 70 L50 70 Z" fill="#fff" opacity=".16"/>
-    <circle cx="50" cy="38" r="10" fill="#0a0a1e" stroke="#e9d8ff" stroke-width="2.6"/>
-    <circle cx="50" cy="38" r="5" fill="#5ad0ff"/>
-    <path d="M39 22 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#fff" opacity=".85"/>`;
+    <path d="M50 6 C64 22 68 44 64 70 L36 70 C32 44 36 22 50 6 Z" fill="url(#${u}q)" stroke="#0a1403" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M50 6 C57 22 59 44 57 70 L50 70 Z" fill="#fff" opacity=".18"/>
+    <circle cx="50" cy="38" r="10" fill="#0a1403" stroke="#eaffb8" stroke-width="2.6"/>
+    <circle cx="50" cy="38" r="5" fill="#c6ff70"/>
+    <path d="M39 22 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#f4ffd6" opacity=".85"/>`;
   case 'bolt': return `<defs>
     <linearGradient id="${u}z" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
     <path d="M58 4 L24 55 L45 55 L40 96 L78 41 L54 41 Z" fill="url(#${u}z)" stroke="#efffcf" stroke-width="2.2" stroke-linejoin="round"/>

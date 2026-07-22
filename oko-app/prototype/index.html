@@ -2598,10 +2598,13 @@ main>.screen{position:relative;z-index:1}
 @keyframes lgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.lg-doc{animation:none}}
 .lg-doc-head{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:22px}
+/* текстовая колонка шапки: min-width:0 позволяет длинным заголовкам переноситься, а не рвать вёрстку */
+.lg-doc-head>div{min-width:0;flex:1}
 .lg-doc-logo{width:46px;height:46px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
 :root[data-theme="light"] .lg-doc-logo{filter:none}
-.lg-doc-head h1{font-family:var(--font-display);font-size:29px;line-height:1.05;letter-spacing:.05em;margin-bottom:6px}
-.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+/* заголовок документа: адаптивный кегль + аккуратный перенос длинных слов («конфиденциальности») */
+.lg-doc-head h1{font-family:var(--font-display);font-size:clamp(24px,6.8vw,30px);line-height:1.04;letter-spacing:.04em;margin-bottom:6px;overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
+.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em;overflow-wrap:break-word}
 .lg-doc-meta b{color:var(--text);font-weight:700}
 
 /* оглавление / якоря */
@@ -2611,10 +2614,15 @@ main>.screen{position:relative;z-index:1}
 .lg-toc-h svg.i{width:15px;height:15px;color:var(--accent)}
 .lg-toc-h b{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;color:var(--text)}
 .lg-toc ol{list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:none}
-.lg-toc-a{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:7px 8px;border-radius:var(--r-sm);background:none;border:none;color:var(--dim);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s,color .15s;cursor:pointer}
+/* align-items:flex-start — номер держится у первой строки, когда пункт переносится на 2 строки */
+.lg-toc-a{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;padding:7px 8px;border-radius:var(--r-sm);background:none;border:none;color:var(--dim);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s,color .15s;cursor:pointer}
+.lg-toc-a>span:last-child{padding-top:2px}
 .lg-toc-a:hover{background:var(--raised);color:var(--accent)}
 .lg-toc-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);transition:all .15s}
 .lg-toc-a:hover .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+/* активный пункт оглавления (scroll-spy) — подсветка текущей секции при прокрутке */
+.lg-toc-a.on{color:var(--accent);background:var(--lime-dim)}
+.lg-toc-a.on .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
 
 /* секции */
 .lg-sec{margin-bottom:22px;scroll-margin-top:14px}
@@ -2635,6 +2643,10 @@ main>.screen{position:relative;z-index:1}
 
 /* таблица тарифов */
 .lg-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 10px}
+/* колонки «состав» получают максимум места; тариф/цена — компактные; перенос длинных слов — защита от overflow */
+.lg-table td,.lg-table th{overflow-wrap:break-word;word-break:break-word}
+.lg-table th:first-child,.lg-table td:first-child{width:22%}
+.lg-table th:nth-child(2),.lg-table td:nth-child(2){width:18%}
 .lg-table th,.lg-table td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
 .lg-table th{background:var(--raised);color:var(--accent);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
 .lg-table td:first-child{font-weight:800;white-space:nowrap}
@@ -2646,7 +2658,8 @@ main>.screen{position:relative;z-index:1}
 .lg-req-h{font-family:var(--font-display);font-size:14px;letter-spacing:.08em;color:var(--accent);margin-bottom:7px}
 
 /* блок печати и подписи (базовый .doc-sign-block — в core-ext) */
-.lg-doc .doc-sign-block{padding:6px 2px 0}
+/* «заверено»: пунктирный разделитель отделяет реквизиты от печати/подписи — премиальный официальный вид */
+.lg-doc .doc-sign-block{padding:22px 2px 0;margin-top:26px;border-top:1px dashed var(--border)}
 .lg-seal{flex-shrink:0}
 :root:not([data-theme="light"]) .lg-seal{filter:brightness(1.85) saturate(.85)}
 .lg-sig-wrap{display:flex;flex-direction:column;min-width:200px}
@@ -3114,13 +3127,43 @@ main>.screen{position:relative;z-index:1}
 .hq-head-b{flex:1;min-width:0}
 .hq-head-b h3{font-size:21px;line-height:1;margin-bottom:4px}
 .hq-head-b small{font-size:11px;color:var(--dim);display:block;line-height:1.45}
-.hq-3d-btn{margin-top:11px;position:relative;overflow:hidden;border:none;color:#08160a;background:linear-gradient(120deg,#c8ff5e,#9AFF00 46%,#5cae00);box-shadow:0 6px 20px rgba(154,255,0,.34),inset 0 1px 0 rgba(255,255,255,.35);letter-spacing:.02em}
-.hq-3d-btn svg.i{width:15px;height:15px}
-.hq-3d-btn::after{content:"";position:absolute;top:0;left:-70%;width:48%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-18deg);pointer-events:none;animation:hq3dShine 3.8s ease-in-out infinite}
-@keyframes hq3dShine{0%,18%{left:-70%}62%,100%{left:150%}}
-.hq-3d-btn:active{transform:scale(.97)}
-:root[data-theme="light"] .hq-3d-btn{box-shadow:0 5px 16px rgba(110,200,0,.42),inset 0 1px 0 rgba(255,255,255,.4)}
-@media(prefers-reduced-motion:reduce){.hq-3d-btn::after{animation:none;display:none}}
+/* ---------- 3D-портал: превью-тумбнейл + CTA (кликается вся карточка) ---------- */
+.hq-portal{display:block;width:100%;padding:0;overflow:hidden;text-align:left;cursor:pointer;border:1px solid var(--border);border-radius:16px;margin-bottom:6px;transition:transform .18s cubic-bezier(.2,.8,.3,1),border-color .18s,box-shadow .18s;animation:fade .45s ease both}
+@media(hover:hover){.hq-portal:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.4),0 0 0 1px var(--lime-dim) inset}}
+:root[data-theme="light"] .hq-portal{box-shadow:0 6px 18px rgba(20,30,0,.06)}
+@media(hover:hover){:root[data-theme="light"] .hq-portal:hover{box-shadow:0 14px 30px rgba(110,200,0,.2)}}
+.hq-portal:active{transform:scale(.985)}
+/* сцена-превью: намеренно тёмная в обеих темах (это «экран»/вьюпорт 3D-штаба) */
+.hq-portal-scene{position:relative;height:158px;overflow:hidden;background:radial-gradient(120% 130% at 50% 8%,#0c1608,#050805 62%,#000);transform:translateZ(0)}
+.hq-portal-grid{position:absolute;left:-30%;right:-30%;bottom:-14%;height:82%;background-image:linear-gradient(rgba(154,255,0,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(154,255,0,.16) 1px,transparent 1px);background-size:28px 28px;transform:perspective(230px) rotateX(61deg);transform-origin:bottom center;-webkit-mask-image:linear-gradient(transparent,#000 55%,#000);mask-image:linear-gradient(transparent,#000 55%,#000);animation:hqPortalGrid 5.5s linear infinite}
+@keyframes hqPortalGrid{to{background-position:0 28px}}
+.hq-portal-glow{position:absolute;left:50%;top:52%;width:150px;height:150px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.28),transparent 66%);pointer-events:none;animation:hqPortalGlow 4.5s ease-in-out infinite}
+@keyframes hqPortalGlow{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}}
+.hq-portal-orbit{position:absolute;inset:0;display:grid;place-items:center;perspective:420px}
+.hq-portal-ring{position:relative;width:150px;height:150px;transform:rotateX(63deg);transform-style:preserve-3d;animation:hqPortalSpin 15s linear infinite}
+.hq-portal-ring::before{content:"";position:absolute;inset:0;border-radius:50%;border:1px solid rgba(154,255,0,.22)}
+.hq-portal-ring i{position:absolute;top:50%;left:50%;width:9px;height:9px;margin:-4.5px;border-radius:50%;background:var(--c);box-shadow:0 0 9px var(--c),0 0 3px var(--c);transform:rotate(var(--a)) translateX(70px);animation:hqPortalNode 3.2s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes hqPortalSpin{to{transform:rotateX(63deg) rotateZ(360deg)}}
+@keyframes hqPortalNode{0%,100%{opacity:.7}50%{opacity:1}}
+.hq-portal-eye{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,rgba(154,255,0,.34),rgba(154,255,0,.05) 70%);z-index:3}
+.hq-portal-eye svg{width:36px;height:36px;color:var(--lime);filter:drop-shadow(0 0 10px rgba(154,255,0,.65));animation:hqPortalEye 5.5s ease-in-out infinite}
+@keyframes hqPortalEye{0%,90%,100%{transform:translateY(0) scaleY(1)}94%{transform:translateY(0) scaleY(.1)}97%{transform:translateY(0) scaleY(1)}45%{transform:translateY(-3px) scaleY(1)}}
+.hq-portal-scan{position:absolute;left:0;right:0;top:0;height:36%;background:linear-gradient(180deg,rgba(154,255,0,.16),transparent);pointer-events:none;animation:hqPortalScan 5s ease-in-out infinite}
+@keyframes hqPortalScan{0%{transform:translateY(-30%);opacity:0}18%{opacity:1}78%{opacity:1}100%{transform:translateY(310%);opacity:0}}
+.hq-portal-badge{position:absolute;top:11px;left:11px;display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.09em;color:var(--lime);background:rgba(3,8,2,.6);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:4px 10px;backdrop-filter:blur(3px);z-index:4}
+.hq-portal-chip{position:absolute;bottom:11px;left:11px;font-size:9.5px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.82);background:rgba(3,8,2,.55);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:4px 10px;backdrop-filter:blur(3px);z-index:4}
+.hq-portal-play{position:absolute;top:11px;right:11px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#08160a;background:linear-gradient(135deg,#c8ff5e,#9AFF00 50%,#5cae00);box-shadow:0 6px 18px rgba(154,255,0,.4),inset 0 1px 0 rgba(255,255,255,.4);z-index:4}
+.hq-portal-play svg.i{width:17px;height:17px}
+.hq-portal-cta{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--surface)}
+.hq-portal-t{flex:1;min-width:0}
+.hq-portal-t b{display:block;font-size:15.5px;letter-spacing:.01em}
+.hq-portal-t small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-portal-go{flex-shrink:0;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--lime-dim);color:var(--accent);transition:transform .18s}
+.hq-portal-go svg.i{width:15px;height:15px}
+@media(hover:hover){.hq-portal:hover .hq-portal-go{transform:translateX(3px)}}
+.hq-3d-note{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--dim);line-height:1.45;margin:0 2px 4px;padding:0 1px}
+.hq-3d-note svg.i{width:13px;height:13px;color:var(--accent);flex-shrink:0;margin-top:1px}
+@media(prefers-reduced-motion:reduce){.hq-portal-grid,.hq-portal-glow,.hq-portal-ring,.hq-portal-ring i,.hq-portal-eye svg,.hq-portal-scan{animation:none}}
 
 .hq-rooms{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 @media(min-width:760px){.hq-rooms{grid-template-columns:repeat(4,1fr)}}
@@ -16222,6 +16265,34 @@ function lgJump(id){
   setTimeout(()=>el.classList.remove('lg-flash'), 900);
 }
 
+/* ---------- scroll-spy: подсветка активного пункта оглавления при прокрутке ----------
+   Лёгкий, пассивный, throttle через rAF — не создаёт лага и не мешает перф-слою. */
+let _lgSpyBound = false;
+function lgSpyUpdate(){
+  try{
+    const box = document.getElementById('lgBody');
+    const doc = document.getElementById('lgDoc');
+    if(!box || !doc) return;
+    const secs = doc.querySelectorAll('.lg-sec');
+    const links = doc.querySelectorAll('.lg-toc-a');
+    if(!secs.length || !links.length) return;
+    const bt = box.getBoundingClientRect().top;
+    let cur = 0;
+    secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top - bt <= 90) cur = i; });
+    links.forEach((a,i)=>a.classList.toggle('on', i===cur));
+  }catch(e){}
+}
+function lgBindSpy(){
+  const box = document.getElementById('lgBody');
+  if(!box || _lgSpyBound) return;
+  _lgSpyBound = true;
+  let tick = false;
+  box.addEventListener('scroll', ()=>{
+    if(tick) return; tick = true;
+    requestAnimationFrame(()=>{ lgSpyUpdate(); tick = false; });
+  }, {passive:true});
+}
+
 function lgRender(){
   const head = document.getElementById('lgHeadTitle');
   if(head) head.textContent = lgS.lang==='en' ? 'OKO Legal' : 'Документы OKO';
@@ -16233,6 +16304,8 @@ function lgRender(){
     `<button class="lg-tab ${t0.k===lgKind?'on':''}" onclick="lgGo('${t0.k}')">${I('file')} ${t0[lgS.lang]||t0.ru}</button>`).join('');
   const body = document.getElementById('lgBody');
   if(body){ body.innerHTML = lgDocHtml(lgKind, lgS.lang); body.scrollTop = 0; }
+  /* привязать scroll-spy (единожды) и подсветить первый пункт оглавления */
+  lgBindSpy(); lgSpyUpdate();
 }
 
 /* ---------- публичное API ---------- */
@@ -16560,14 +16633,14 @@ function vsBaseArt(ic, u){
     <circle cx="44" cy="44" r="3.4" fill="#f4ffd6"/>
     <path d="M78 24 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 z" fill="#eaffb0"/>`;
   case 'fire': return `<defs>
-    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff3d00"/><stop offset=".5" stop-color="#ff8a00"/><stop offset="1" stop-color="#ffd21e"/></linearGradient>
-    <linearGradient id="${u}c" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffe985"/><stop offset="1" stop-color="#fff6cf"/></linearGradient></defs>
-    <path d="M52 5 C61 26 84 34 79 61 C75 85 61 96 50 96 C37 96 21 87 21 63 C21 49 31 45 33 34 C43 43 45 31 40 22 C51 27 54 16 52 5 Z" fill="url(#${u}o)"/>
+    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#e4ff9e"/></linearGradient>
+    <linearGradient id="${u}c" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c6ff70"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+    <path d="M52 5 C61 26 84 34 79 61 C75 85 61 96 50 96 C37 96 21 87 21 63 C21 49 31 45 33 34 C43 43 45 31 40 22 C51 27 54 16 52 5 Z" fill="url(#${u}o)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
     <path d="M51 46 C58 56 62 62 58 74 C55 86 47 88 43 82 C38 74 43 67 45 61 C47 56 51 54 51 46 Z" fill="url(#${u}c)"/>`;
   case 'heart': return `<defs>
-    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7d97"/><stop offset=".5" stop-color="#ff2d55"/><stop offset="1" stop-color="#c00f38"/></linearGradient></defs>
-    <path d="M50 88 C16 63 6 45 6 29 C6 15 18 7 31 7 C41 7 47 13 50 20 C53 13 59 7 69 7 C82 7 94 15 94 29 C94 45 84 63 50 88 Z" fill="url(#${u}r)"/>
-    <path d="M27 19 C21 22 16 28 16 36" stroke="#ffd3dc" stroke-width="6" fill="none" stroke-linecap="round" opacity=".85"/>`;
+    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ff8f"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <path d="M50 88 C16 63 6 45 6 29 C6 15 18 7 31 7 C41 7 47 13 50 20 C53 13 59 7 69 7 C82 7 94 15 94 29 C94 45 84 63 50 88 Z" fill="url(#${u}r)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M27 19 C21 22 16 28 16 36" stroke="#f4ffd6" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>`;
   case 'thumb': return `<defs>
     <linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#5fa800"/></linearGradient></defs>
     <rect x="20" y="46" width="16" height="40" rx="4.5" fill="#6cba12"/>
@@ -16575,31 +16648,30 @@ function vsBaseArt(ic, u){
     <path d="M40 46 C40 46 46 44 49 38 C52 32 51 24 54 18 C56 14 63 14 64 21 C65 28 61 38 61 42 H80 C86 42 88 48 85 53 C88 56 87 62 83 64 C86 68 83 74 79 75 C81 80 77 86 71 86 H50 C44 86 40 82 40 76 Z" fill="url(#${u}t)"/>
     <path d="M46 50 C48 47 51 43 53 38" stroke="#eaffc0" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".7"/>`;
   case 'laugh': return `<defs>
-    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#fff3ab"/><stop offset=".55" stop-color="#ffcf3a"/><stop offset="1" stop-color="#e79600"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}f)"/>
-    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
-    <path d="M22 43 Q31 31 41 43" stroke="#7a4a00" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M59 43 Q69 31 78 43" stroke="#7a4a00" stroke-width="5" fill="none" stroke-linecap="round"/>
-    <path d="M25 57 Q50 90 75 57 Z" fill="#7a2600"/>
-    <path d="M27 57 Q50 66 73 57 Z" fill="#fff"/>
-    <ellipse cx="50" cy="79" rx="10.5" ry="6.5" fill="#ff5a6a"/>
-    <path d="M15 50 q-6 9 0 15 q6 -6 0 -15 z" fill="#7ad0ff"/>
-    <path d="M85 50 q6 9 0 15 q-6 -6 0 -15 z" fill="#7ad0ff"/>`;
+    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}f)" stroke="#0a1403" stroke-width="1.4"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".28"/>
+    <path d="M22 43 Q31 32 41 43" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M59 43 Q69 32 78 43" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M25 57 Q50 90 75 57 Z" fill="#0a1403"/>
+    <path d="M28 58 Q50 68 72 58 Z" fill="#eaffc0"/>
+    <path d="M13 52 q-5 8 0 14 q5 -5 0 -14 z" fill="#c6ff70"/>
+    <path d="M87 52 q5 8 0 14 q-5 -5 0 -14 z" fill="#c6ff70"/>`;
   case 'wow': return `<defs>
-    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#e9fbff"/><stop offset=".55" stop-color="#5ecdf0"/><stop offset="1" stop-color="#1f8fbf"/></radialGradient></defs>
-    <circle cx="50" cy="50" r="43" fill="url(#${u}w)"/>
-    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".35"/>
-    <path d="M24 34 Q33 28 42 33" stroke="#0d5a78" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M58 33 Q67 28 76 34" stroke="#0d5a78" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <ellipse cx="34" cy="47" rx="7" ry="9" fill="#0a2a38"/>
-    <ellipse cx="66" cy="47" rx="7" ry="9" fill="#0a2a38"/>
-    <circle cx="31.5" cy="44" r="2.4" fill="#fff"/><circle cx="63.5" cy="44" r="2.4" fill="#fff"/>
-    <ellipse cx="50" cy="72" rx="9.5" ry="12.5" fill="#0a2a38"/>`;
+    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="43" fill="url(#${u}w)" stroke="#0a1403" stroke-width="1.4"/>
+    <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
+    <path d="M24 34 Q33 28 42 33" stroke="#0a1403" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M58 33 Q67 28 76 34" stroke="#0a1403" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="34" cy="47" rx="7" ry="9" fill="#0a1403"/>
+    <ellipse cx="66" cy="47" rx="7" ry="9" fill="#0a1403"/>
+    <circle cx="31.5" cy="44" r="2.4" fill="#eaffc0"/><circle cx="63.5" cy="44" r="2.4" fill="#eaffc0"/>
+    <ellipse cx="50" cy="72" rx="9.5" ry="12.5" fill="#0a1403"/>`;
   case 'star': return `<defs>
-    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1a6"/><stop offset=".5" stop-color="#ffcb2e"/><stop offset="1" stop-color="#e08c00"/></linearGradient></defs>
-    <path d="M50 5 L62 37 L96 38 L69 59 L79 92 L50 72 L21 92 L31 59 L4 38 L38 37 Z" fill="url(#${u}s)" stroke="#fff3c0" stroke-width="2" stroke-linejoin="round"/>
+    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <path d="M50 5 L62 37 L96 38 L69 59 L79 92 L50 72 L21 92 L31 59 L4 38 L38 37 Z" fill="url(#${u}s)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M50 16 L58 39 L46 39 Z" fill="#fff" opacity=".4"/>
-    <path d="M81 20 l1.9 4.8 4.8 1.9 -4.8 1.9 -1.9 4.8 -1.9 -4.8 -4.8 -1.9 4.8 -1.9 z" fill="#fff" opacity=".9"/>`;
+    <path d="M81 20 l1.9 4.8 4.8 1.9 -4.8 1.9 -1.9 4.8 -1.9 -4.8 -4.8 -1.9 4.8 -1.9 z" fill="#f4ffd6" opacity=".95"/>`;
   case 'crown': return `<defs>
     <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe97a"/><stop offset=".5" stop-color="#ffc21e"/><stop offset="1" stop-color="#d98800"/></linearGradient></defs>
     <path d="M13 76 L18 32 L37 55 L50 24 L63 55 L82 32 L87 76 Z" fill="url(#${u}k)" stroke="#fff2b8" stroke-width="2" stroke-linejoin="round"/>
@@ -18652,10 +18724,9 @@ function hqHqView(){
       <div class="hq-head-b">
         <h3>OKO HQ — командный центр</h3>
         <small>10 агентов · 8 отделов · аптайм 99.98%<br>мозг синхронизирован ${hqHM(new Date())}</small>
-        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('share')} Открыть 3D-штаб · новая вкладка</button>
-        <small class="hq-3d-note">Тяжёлый 3D вынесен из приложения — открывается отдельной страницей, чтобы не лагало.</small>
       </div>
     </div>
+    ${hqPortalCard()}
     ${hqOnlineBlock()}
     <div class="adm-sec-h">Отделы</div>
     <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
@@ -18668,6 +18739,32 @@ function hqHqView(){
     <div class="hq-agents" id="hqAgents">${HQ_AGENTS.map(hqAgentCard).join('')}</div>
     <div class="adm-sec-h">Живой лог штаба</div>
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
+}
+/* Гля-портал в 3D-штаб: самодостаточный превью-тумбнейл (SVG/CSS, без внешних картинок —
+   офлайн/CSP-safe) + понятный CTA. Клик по всей карточке открывает внешнюю вкладку hq.html
+   через hqOpen3d() (тяжёлый WebGL намеренно НЕ встраивается — лагает в webview). */
+function hqPortalCard(){
+  /* агенты-орбиты вокруг знака OKO — цвета берём из палитры отделов/агентов */
+  const nodes = ['#9AFF00','#4aa0ff','#a855f7','#ff7a3c','#22d3ee','#facc15','#ff6bad','#34d399']
+    .map((c,i,arr)=>`<i style="--a:${Math.round(i*360/arr.length)}deg;--c:${c};--d:${(i*0.28).toFixed(2)}s"></i>`).join('');
+  return `
+    <button class="hq-portal card" type="button" onclick="hqOpen3d()" aria-label="Открыть 3D-штаб OKO в новой вкладке">
+      <div class="hq-portal-scene" aria-hidden="true">
+        <div class="hq-portal-grid"></div>
+        <div class="hq-portal-glow"></div>
+        <div class="hq-portal-orbit"><div class="hq-portal-ring">${nodes}</div></div>
+        <span class="hq-portal-eye"><svg class="i"><use href="#i-logo"/></svg></span>
+        <span class="hq-portal-scan"></span>
+        <span class="hq-portal-badge"><i class="hq-dot work"></i>LIVE · 3D</span>
+        <span class="hq-portal-chip">WebGL-штаб · ${HQ_AGENTS.length} агентов</span>
+        <span class="hq-portal-play">${I('share')}</span>
+      </div>
+      <div class="hq-portal-cta">
+        <span class="hq-portal-t"><b>Открыть 3D-штаб</b><small>отдельная вкладка · true-journey-418.higgsfield.app</small></span>
+        <span class="hq-portal-go">${I('chev')}</span>
+      </div>
+    </button>
+    <small class="hq-3d-note">${I('bolt')} Тяжёлый WebGL вынесен из приложения — открывается отдельной страницей, чтобы Telegram-webview не лагал.</small>`;
 }
 /* детальный дашборд отдела: реальные KPI вместо заглушки-тоста */
 function hqRoomOpen(i){

@@ -22,10 +22,13 @@
 @keyframes lgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.lg-doc{animation:none}}
 .lg-doc-head{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:22px}
+/* текстовая колонка шапки: min-width:0 позволяет длинным заголовкам переноситься, а не рвать вёрстку */
+.lg-doc-head>div{min-width:0;flex:1}
 .lg-doc-logo{width:46px;height:46px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
 :root[data-theme="light"] .lg-doc-logo{filter:none}
-.lg-doc-head h1{font-family:var(--font-display);font-size:29px;line-height:1.05;letter-spacing:.05em;margin-bottom:6px}
-.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
+/* заголовок документа: адаптивный кегль + аккуратный перенос длинных слов («конфиденциальности») */
+.lg-doc-head h1{font-family:var(--font-display);font-size:clamp(24px,6.8vw,30px);line-height:1.04;letter-spacing:.04em;margin-bottom:6px;overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
+.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em;overflow-wrap:break-word}
 .lg-doc-meta b{color:var(--text);font-weight:700}
 
 /* оглавление / якоря */
@@ -35,10 +38,15 @@
 .lg-toc-h svg.i{width:15px;height:15px;color:var(--accent)}
 .lg-toc-h b{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;color:var(--text)}
 .lg-toc ol{list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:none}
-.lg-toc-a{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:7px 8px;border-radius:var(--r-sm);background:none;border:none;color:var(--dim);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s,color .15s;cursor:pointer}
+/* align-items:flex-start — номер держится у первой строки, когда пункт переносится на 2 строки */
+.lg-toc-a{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;padding:7px 8px;border-radius:var(--r-sm);background:none;border:none;color:var(--dim);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s,color .15s;cursor:pointer}
+.lg-toc-a>span:last-child{padding-top:2px}
 .lg-toc-a:hover{background:var(--raised);color:var(--accent)}
 .lg-toc-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);transition:all .15s}
 .lg-toc-a:hover .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+/* активный пункт оглавления (scroll-spy) — подсветка текущей секции при прокрутке */
+.lg-toc-a.on{color:var(--accent);background:var(--lime-dim)}
+.lg-toc-a.on .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
 
 /* секции */
 .lg-sec{margin-bottom:22px;scroll-margin-top:14px}
@@ -59,6 +67,10 @@
 
 /* таблица тарифов */
 .lg-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 10px}
+/* колонки «состав» получают максимум места; тариф/цена — компактные; перенос длинных слов — защита от overflow */
+.lg-table td,.lg-table th{overflow-wrap:break-word;word-break:break-word}
+.lg-table th:first-child,.lg-table td:first-child{width:22%}
+.lg-table th:nth-child(2),.lg-table td:nth-child(2){width:18%}
 .lg-table th,.lg-table td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}
 .lg-table th{background:var(--raised);color:var(--accent);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
 .lg-table td:first-child{font-weight:800;white-space:nowrap}
@@ -70,7 +82,8 @@
 .lg-req-h{font-family:var(--font-display);font-size:14px;letter-spacing:.08em;color:var(--accent);margin-bottom:7px}
 
 /* блок печати и подписи (базовый .doc-sign-block — в core-ext) */
-.lg-doc .doc-sign-block{padding:6px 2px 0}
+/* «заверено»: пунктирный разделитель отделяет реквизиты от печати/подписи — премиальный официальный вид */
+.lg-doc .doc-sign-block{padding:22px 2px 0;margin-top:26px;border-top:1px dashed var(--border)}
 .lg-seal{flex-shrink:0}
 :root:not([data-theme="light"]) .lg-seal{filter:brightness(1.85) saturate(.85)}
 .lg-sig-wrap{display:flex;flex-direction:column;min-width:200px}

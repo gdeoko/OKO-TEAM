@@ -554,10 +554,9 @@ function hqHqView(){
       <div class="hq-head-b">
         <h3>OKO HQ — командный центр</h3>
         <small>10 агентов · 8 отделов · аптайм 99.98%<br>мозг синхронизирован ${hqHM(new Date())}</small>
-        <button class="btn sm hq-3d-btn" onclick="hqOpen3d()">${I('share')} Открыть 3D-штаб · новая вкладка</button>
-        <small class="hq-3d-note">Тяжёлый 3D вынесен из приложения — открывается отдельной страницей, чтобы не лагало.</small>
       </div>
     </div>
+    ${hqPortalCard()}
     ${hqOnlineBlock()}
     <div class="adm-sec-h">Отделы</div>
     <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
@@ -570,6 +569,32 @@ function hqHqView(){
     <div class="hq-agents" id="hqAgents">${HQ_AGENTS.map(hqAgentCard).join('')}</div>
     <div class="adm-sec-h">Живой лог штаба</div>
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
+}
+/* Гля-портал в 3D-штаб: самодостаточный превью-тумбнейл (SVG/CSS, без внешних картинок —
+   офлайн/CSP-safe) + понятный CTA. Клик по всей карточке открывает внешнюю вкладку hq.html
+   через hqOpen3d() (тяжёлый WebGL намеренно НЕ встраивается — лагает в webview). */
+function hqPortalCard(){
+  /* агенты-орбиты вокруг знака OKO — цвета берём из палитры отделов/агентов */
+  const nodes = ['#9AFF00','#4aa0ff','#a855f7','#ff7a3c','#22d3ee','#facc15','#ff6bad','#34d399']
+    .map((c,i,arr)=>`<i style="--a:${Math.round(i*360/arr.length)}deg;--c:${c};--d:${(i*0.28).toFixed(2)}s"></i>`).join('');
+  return `
+    <button class="hq-portal card" type="button" onclick="hqOpen3d()" aria-label="Открыть 3D-штаб OKO в новой вкладке">
+      <div class="hq-portal-scene" aria-hidden="true">
+        <div class="hq-portal-grid"></div>
+        <div class="hq-portal-glow"></div>
+        <div class="hq-portal-orbit"><div class="hq-portal-ring">${nodes}</div></div>
+        <span class="hq-portal-eye"><svg class="i"><use href="#i-logo"/></svg></span>
+        <span class="hq-portal-scan"></span>
+        <span class="hq-portal-badge"><i class="hq-dot work"></i>LIVE · 3D</span>
+        <span class="hq-portal-chip">WebGL-штаб · ${HQ_AGENTS.length} агентов</span>
+        <span class="hq-portal-play">${I('share')}</span>
+      </div>
+      <div class="hq-portal-cta">
+        <span class="hq-portal-t"><b>Открыть 3D-штаб</b><small>отдельная вкладка · true-journey-418.higgsfield.app</small></span>
+        <span class="hq-portal-go">${I('chev')}</span>
+      </div>
+    </button>
+    <small class="hq-3d-note">${I('bolt')} Тяжёлый WebGL вынесен из приложения — открывается отдельной страницей, чтобы Telegram-webview не лагал.</small>`;
 }
 /* детальный дашборд отдела: реальные KPI вместо заглушки-тоста */
 function hqRoomOpen(i){

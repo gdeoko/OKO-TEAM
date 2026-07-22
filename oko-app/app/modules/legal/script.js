@@ -513,6 +513,34 @@ function lgJump(id){
   setTimeout(()=>el.classList.remove('lg-flash'), 900);
 }
 
+/* ---------- scroll-spy: подсветка активного пункта оглавления при прокрутке ----------
+   Лёгкий, пассивный, throttle через rAF — не создаёт лага и не мешает перф-слою. */
+let _lgSpyBound = false;
+function lgSpyUpdate(){
+  try{
+    const box = document.getElementById('lgBody');
+    const doc = document.getElementById('lgDoc');
+    if(!box || !doc) return;
+    const secs = doc.querySelectorAll('.lg-sec');
+    const links = doc.querySelectorAll('.lg-toc-a');
+    if(!secs.length || !links.length) return;
+    const bt = box.getBoundingClientRect().top;
+    let cur = 0;
+    secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top - bt <= 90) cur = i; });
+    links.forEach((a,i)=>a.classList.toggle('on', i===cur));
+  }catch(e){}
+}
+function lgBindSpy(){
+  const box = document.getElementById('lgBody');
+  if(!box || _lgSpyBound) return;
+  _lgSpyBound = true;
+  let tick = false;
+  box.addEventListener('scroll', ()=>{
+    if(tick) return; tick = true;
+    requestAnimationFrame(()=>{ lgSpyUpdate(); tick = false; });
+  }, {passive:true});
+}
+
 function lgRender(){
   const head = document.getElementById('lgHeadTitle');
   if(head) head.textContent = lgS.lang==='en' ? 'OKO Legal' : 'Документы OKO';
@@ -524,6 +552,8 @@ function lgRender(){
     `<button class="lg-tab ${t0.k===lgKind?'on':''}" onclick="lgGo('${t0.k}')">${I('file')} ${t0[lgS.lang]||t0.ru}</button>`).join('');
   const body = document.getElementById('lgBody');
   if(body){ body.innerHTML = lgDocHtml(lgKind, lgS.lang); body.scrollTop = 0; }
+  /* привязать scroll-spy (единожды) и подсветить первый пункт оглавления */
+  lgBindSpy(); lgSpyUpdate();
 }
 
 /* ---------- публичное API ---------- */
