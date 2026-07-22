@@ -4,15 +4,24 @@
   fetch(query, out_mp3)  -> путь трека
   mix(video, voice, music, out, vol=0.11) -> видео с озвучкой+музыкой"""
 import os,sys,json,subprocess,urllib.request,urllib.parse
+_REG=os.path.join(os.path.dirname(__file__),"..","reference","USED_MUSIC.md")
+def _used():
+    try: return set(l.strip() for l in open(_REG) if l.strip())
+    except Exception: return set()
 def fetch(query, out_mp3):
-    K=os.environ["FREESOUND_API_KEY"]
-    for q in [query,"electronic background music","upbeat loop","energetic beat"]:
-        p={"query":q,"fields":"id,name,previews,duration","page_size":"8","token":K}
-        try: d=json.loads(urllib.request.urlopen("https://freesound.org/apiv2/search/text/?"+urllib.parse.urlencode(p),timeout=30).read())
+    """query — ПОД ТЕМУ/настроение ролика (каждый раз своя). Дедуп по id — трек не повторять."""
+    K=os.environ["FREESOUND_API_KEY"]; used=_used()
+    for q in [query,query+" music","electronic loop","cinematic beat","energetic background"]:
+        pp={"query":q,"filter":"duration:[15 TO 180]","sort":"rating_desc","fields":"id,name,previews,duration","page_size":"15","token":K}
+        try: d=json.loads(urllib.request.urlopen("https://freesound.org/apiv2/search/text/?"+urllib.parse.urlencode(pp),timeout=30).read())
         except Exception: continue
         for r in d.get("results",[]):
+            if str(r["id"]) in used: continue
             if 15<=r.get("duration",0)<=180 and r["previews"].get("preview-hq-mp3"):
-                urllib.request.urlretrieve(r["previews"]["preview-hq-mp3"],out_mp3); return out_mp3
+                urllib.request.urlretrieve(r["previews"]["preview-hq-mp3"],out_mp3)
+                try: open(_REG,"a").write(str(r["id"])+"\n")
+                except Exception: pass
+                return out_mp3
     return None
 def mix(video, voice, music, out, vol=0.11):
     vlen=float(subprocess.check_output(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",video]).strip())
