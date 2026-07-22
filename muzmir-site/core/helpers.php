@@ -32,6 +32,8 @@ function render_page(string $title, string $content, array $opts = []): void {
     $og_image = $opts['og_image'] ?? asset('img/logo_muzmir_main.png');
     $active = $opts['active'] ?? '';
     $wide = $opts['wide'] ?? false;
+    // Per-page JSON-LD: массив (schema.org объект) или массив таких массивов, либо готовая строка.
+    $jsonld = $opts['jsonld'] ?? null;
     require BASE_PATH . '/templates/site/layout.php';
 }
 
@@ -63,12 +65,21 @@ function input(string $key, $default = ''): string {
     return isset($_POST[$key]) ? trim((string)$_POST[$key]) : (isset($_GET[$key]) ? trim((string)$_GET[$key]) : $default);
 }
 
-/** Простой rate-limit по ключу. */
+/**
+ * Rate-limit по ключу со СКОЛЬЗЯЩИМ окном (без всплеска 2× на стыке фиксированных окон).
+ * Хиты пишутся в посекундные бакеты (window_start = unix-время), лимит считается как
+ * сумма за последние $window секунд. Сигнатура сохранена.
+ */
 function rate_ok(string $key, int $limit, int $window = 3600): bool {
-    $ws = (int) floor(time() / $window) * $window;
+    $now = time();
     q("INSERT INTO rate_limit(k,window_start,hits) VALUES(?,?,1)
-       ON CONFLICT(k,window_start) DO UPDATE SET hits = hits + 1", [$key, $ws]);
-    $hits = (int) scalar("SELECT hits FROM rate_limit WHERE k=? AND window_start=?", [$key, $ws]);
+       ON CONFLICT(k,window_start) DO UPDATE SET hits = hits + 1", [$key, $now]);
+    $hits = (int) scalar(
+        "SELECT COALESCE(SUM(hits),0) FROM rate_limit WHERE k=? AND window_start > ?",
+        [$key, $now - $window]
+    );
+    // Опортунистическая уборка устаревших бакетов (без крона).
+    if (mt_rand(1, 50) === 1) q("DELETE FROM rate_limit WHERE window_start < ?", [$now - $window]);
     return $hits <= $limit;
 }
 

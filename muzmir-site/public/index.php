@@ -34,6 +34,38 @@ if ($route === '/admin' || str_starts_with($route, '/admin/')) {
     exit;
 }
 
+// Алиасы из официальных положений конкурсов → 301 на канонические URL.
+$aliases = [
+    '/obrazci'    => '/awards',        // образцы наград
+    '/oplata-sayt'=> '/order-awards',  // оплата наградного материала
+    '/voprosi'    => '/faq',           // справка/вопросы
+];
+if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
+
+// Карта сайта: статические маршруты + конкурсы по slug.
+if ($route === '/sitemap.xml') {
+    header('Content-Type: application/xml; charset=utf-8');
+    $baseUrl = rtrim($CFG['base_url'], '/');
+    $static = ['/', '/competitions', '/apply', '/awards', '/order-awards', '/concerts',
+        '/about', '/goals', '/ministry-support', '/faq', '/contacts', '/reviews',
+        '/privacy', '/agreement'];
+    echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($static as $p) {
+        echo '  <url><loc>' . htmlspecialchars($baseUrl . $p, ENT_XML1) . '</loc></url>' . "\n";
+    }
+    $slugs = [];
+    try { $slugs = all("SELECT slug FROM competitions"); } catch (\Throwable $e) { $slugs = []; }
+    foreach ($slugs as $row) {
+        $s = is_array($row) ? ($row['slug'] ?? '') : (string) $row;
+        if ($s === '') continue;
+        echo '  <url><loc>' . htmlspecialchars($baseUrl . '/competition/' . $s, ENT_XML1) . '</loc></url>' . "\n";
+        echo '  <url><loc>' . htmlspecialchars($baseUrl . '/awards/' . $s, ENT_XML1) . '</loc></url>' . "\n";
+    }
+    echo '</urlset>';
+    exit;
+}
+
 $pagesDir = BASE_PATH . '/templates/site/pages';
 
 /** Запуск файла-страницы: он должен вызвать render_page(...). */

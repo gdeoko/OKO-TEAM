@@ -19,19 +19,32 @@ $u = current_user();
 <script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'dark';}catch(e){document.documentElement.dataset.theme='dark';}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title><?= h($title) ?> — <?= h(cfgv('org_name')) ?></title>
+<?php
+  $canon = rtrim(cfgv('base_url'), '/') . (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
+  $full_title = $title . ' — ' . cfgv('org_name');
+?>
+<title><?= h($full_title) ?></title>
 <meta name="description" content="<?= h($meta_description) ?>">
 <meta name="theme-color" content="#0b0a0d">
-<meta property="og:title" content="<?= h($title) ?> — <?= h(cfgv('org_name')) ?>">
+<link rel="canonical" href="<?= h($canon) ?>">
+<meta property="og:title" content="<?= h($full_title) ?>">
 <meta property="og:description" content="<?= h($meta_description) ?>">
 <meta property="og:image" content="<?= h($og_image) ?>">
 <meta property="og:type" content="website">
+<meta property="og:url" content="<?= h($canon) ?>">
+<meta property="og:site_name" content="<?= h(cfgv('org_name')) ?>">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?= h($full_title) ?>">
+<meta name="twitter:description" content="<?= h($meta_description) ?>">
+<meta name="twitter:image" content="<?= h($og_image) ?>">
 <link rel="icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
 <link rel="apple-touch-icon" href="<?= asset('img/logo_muzmir_256.png') ?>">
 <link rel="manifest" href="<?= url('manifest.webmanifest') ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="<?= asset('css/style.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
 </head>
 <body>
@@ -42,7 +55,7 @@ $u = current_user();
 
 <header class="header"><div class="container">
   <a class="brand" href="<?= url('/') ?>">
-    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»">
+    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="44" height="44">
     <span>Музыкальный<br>Мир</span>
   </a>
   <nav class="nav" id="nav">
@@ -70,7 +83,7 @@ $u = current_user();
       <a class="btn btn--ghost" href="<?= url('/login') ?>">Войти</a>
       <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
     <?php endif; ?>
-    <button class="burger" id="burger" aria-label="Меню"><span></span><span></span><span></span></button>
+    <button class="burger" id="burger" aria-label="Меню" aria-controls="nav" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </div></header>
 
@@ -84,7 +97,7 @@ $u = current_user();
 <footer class="footer"><div class="container">
   <div class="footer-grid">
     <div class="footer-brand">
-      <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип">
+      <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип" width="56" height="56">
       <p><?= h(cfgv('org_full')) ?></p>
       <p style="opacity:.7;font-size:.85rem"><?= h(cfgv('org_reg')) ?></p>
     </div>
@@ -146,6 +159,45 @@ $u = current_user();
 <button class="chat-fab" id="chatFab" aria-label="Поддержка">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
 </button>
+
+<?php
+  // JSON-LD: организация (глобально) из cfgv().
+  $addrParts = array_map('trim', explode(',', (string) cfgv('org_address')));
+  $postal    = (isset($addrParts[0]) && ctype_digit($addrParts[0])) ? $addrParts[0] : '125009';
+  $locality  = isset($addrParts[1]) ? preg_replace('/^г\.?\s*/u', '', $addrParts[1]) : 'Москва';
+  $street    = trim(implode(', ', array_slice($addrParts, (isset($addrParts[0]) && ctype_digit($addrParts[0])) ? 2 : 1)));
+  $org_ld = [
+    '@context'   => 'https://schema.org',
+    '@type'      => 'Organization',
+    'name'       => cfgv('org_name'),
+    'legalName'  => 'Культурный центр «Музыкальный Мир»',
+    'url'        => rtrim(cfgv('base_url'), '/') . '/',
+    'logo'       => asset('img/logo_muzmir_main.png'),
+    'telephone'  => cfgv('org_phone_raw'),
+    'email'      => cfgv('org_email'),
+    'address'    => [
+      '@type'           => 'PostalAddress',
+      'postalCode'      => $postal,
+      'addressLocality' => $locality,
+      'streetAddress'   => $street !== '' ? $street : 'ул. Солянка, д.14, стр.7',
+      'addressCountry'  => 'RU',
+    ],
+    'sameAs'     => array_values(array_filter([cfgv('org_vk'), cfgv('org_tg_channel')])),
+  ];
+?>
+<script type="application/ld+json"><?= json_encode($org_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<?php if (!empty($jsonld)): ?>
+  <?php if (is_string($jsonld)): ?>
+<script type="application/ld+json"><?= $jsonld ?></script>
+  <?php else: ?>
+    <?php
+      $ld_items = (isset($jsonld['@context']) || isset($jsonld['@type'])) ? [$jsonld] : $jsonld;
+      foreach ($ld_items as $ld_obj):
+        if (!is_array($ld_obj)) continue; ?>
+<script type="application/ld+json"><?= json_encode($ld_obj, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+    <?php endforeach; ?>
+  <?php endif; ?>
+<?php endif; ?>
 
 <?php if (cfgv('metrika_id')): ?>
 <script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");ym(<?= (int)cfgv('metrika_id') ?>,"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true});</script>
