@@ -262,6 +262,14 @@ function chNavRow(ic, label, val, onclick, o){
     <span class="ch-row-val">${rv}${tail}</span>
   </button>`;
 }
+/* строка-ссылка: URL занимает всю ширину под заголовком (не обрезается на 390px как боковое значение) */
+function chLinkRow(ic, label, url, onclick){
+  return `<button class="ch-row" onclick="${onclick}">
+    ${ic?`<span class="ch-row-ic">${chI(ic)}</span>`:''}
+    <span class="ch-row-main"><b>${label}</b><small class="ch-url">${chEsc(url)}</small></span>
+    <span class="ch-row-val">${chI('copy')}</span>
+  </button>`;
+}
 /* строка-тумблер: клик переключает состояние (surgical, без полного ре-рендера) */
 function chTglRow(ic, label, sub, on, onclick){
   return `<button class="ch-row" onclick="${onclick}">
@@ -1098,7 +1106,7 @@ function chPageManage(id){
   // ---- ССЫЛКА И ПРИГЛАШЕНИЯ ----
   html += `<div class="ch-sec-h">${chI('globe')} Ссылка и приглашения</div>`;
   html += chList([
-    chNavRow('globe','Публичная ссылка', chPublicLink(c), `chCopyLink('${id}')`, {copy:true, lime:true}),
+    chLinkRow('globe','Публичная ссылка', chPublicLink(c), `chCopyLink('${id}')`),
     chNavRow('share','Пригласительные ссылки', (c.invites.length?c.invites.length+'':'создать'), `chGo('mInvites','${id}')`),
   ]);
 
