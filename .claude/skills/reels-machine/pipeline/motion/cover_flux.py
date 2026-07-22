@@ -40,14 +40,25 @@ def compose(title, out_jpg, accent, font_path, scene):
     im=Image.alpha_composite(im.convert("RGBA"),ov).convert("RGB")
     d=ImageDraw.Draw(im)
     ac=tuple(int(accent[i:i+2],16) for i in (0,2,4))
-    lines=title.split("|"); y=int(H*0.36)
+    lines=title.split("|"); y=int(H*0.34); MAXW=W-120
     for k,ln in enumerate(lines):
-        f=ImageFont.truetype(font_path, 132 if k==0 else 150)
+        sz=140
+        while sz>60:
+            f=ImageFont.truetype(font_path, sz)
+            if d.textbbox((0,0),ln,font=f)[2]<=MAXW: break
+            sz-=6
         w=d.textbbox((0,0),ln,font=f)[2]
         col=(255,255,255) if k==0 else ac
-        d.text(((W-w)//2,y),ln,font=f,fill=col); y+=int((132 if k==0 else 150)*1.15)
-    fb=ImageFont.truetype(font_path,64)
-    d.text(((W-d.textbbox((0,0),"V.CODE",font=fb)[2])//2,H-190),"V.CODE",font=fb,fill=ac)
+        d.text(((W-w)//2,y),ln,font=f,fill=col); y+=int(sz*1.18)
+    # РЕАЛЬНЫЙ логотип (композит), а не PIL-текст
+    logo=os.environ.get("BRAND_LOGO") or "/home/user/OKO-TEAM/.claude/skills/reels-machine/logo_hd.png"
+    if os.path.exists(logo):
+        lg=Image.open(logo).convert("RGBA")
+        lw=460; lh=int(lg.height*lw/lg.width); lg=lg.resize((lw,lh))
+        im=im.convert("RGBA"); im.alpha_composite(lg,((W-lw)//2,H-lh-120)); im=im.convert("RGB")
+    else:
+        fb=ImageFont.truetype(font_path,64)
+        d=ImageDraw.Draw(im); d.text(((W-d.textbbox((0,0),"V.CODE",font=fb)[2])//2,H-190),"V.CODE",font=fb,fill=ac)
     im.save(out_jpg,quality=92)
     return out_jpg
 

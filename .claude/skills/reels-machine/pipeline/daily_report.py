@@ -24,7 +24,7 @@ def main():
     # 1) свежий разбор конкурентов (разные — дедуп внутри discover)
     sh([sys.executable, os.path.join(RES,"discover.py"), niche,
         "--queries", "нейросети|chatgpt|ии для бизнеса|midjourney|автоматизация",
-        "--n","5","--min-views","1000000","--outdir",out], t=700)
+        "--n","6","--min-views","1000000","--outdir",out], t=700)
     rj=os.path.join(out,"research.json")
     R=json.load(open(rj)) if os.path.exists(rj) else []
     # 2) авто-анализ + документ
@@ -37,9 +37,9 @@ def main():
             "borrow":"Разобрать хук/ритм под наш дев/ИИ-контент."}
     A["synthesis"]=f"Утренний разбор {len(R)} свежих конкурентов ниши на {date}. Форматы и хуки — основа сценариев дня."
     aj=os.path.join(out,"analysis.json"); json.dump(A,open(aj,"w"),ensure_ascii=False)
-    html=os.path.join(out,"daily.html"); pdf=os.path.join(out,"daily.pdf")
-    sh([sys.executable, os.path.join(RES,"report.py"), rj, aj, html, "--pdf", pdf,
-        "--accent","#EA5920","--niche",f"{niche} · утро {date}"], t=180)
+    txt=os.path.join(out,"analiz.txt"); pdf=os.path.join(out,"analiz.pdf")
+    sh([sys.executable, os.path.join(RES,"report_full.py"), rj, aj, txt, "--pdf", pdf,
+        "--niche",f"{niche} · {date}"], t=180)
     # 3) в бота: сводка-текст + документ
     tok=os.environ.get("TELEGRAM_BOT_TOKEN"); chat=os.environ.get("TELEGRAM_CHAT_ID")
     if not tok or not chat: print("нет токенов бота"); return
@@ -53,7 +53,7 @@ def main():
     urllib.request.urlopen(urllib.request.Request(
         f"https://api.telegram.org/bot{tok}/sendMessage",
         data=urllib.parse.urlencode({"chat_id":chat,"text":txt}).encode()), timeout=60)
-    doc=pdf if os.path.exists(pdf) else (html if os.path.exists(html) else None)
+    doc=pdf if os.path.exists(pdf) else (txt if os.path.exists(txt) else None)
     if doc:
         sh([sys.executable, os.path.join(RES,"send_to_bot.py"),"doc",doc,f"Аналитика конкурентов — {date}"], t=180)
     print(f"отчёт отправлен: {len(R)} конкурентов, doc={bool(doc)}")

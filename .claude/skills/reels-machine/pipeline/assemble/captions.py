@@ -8,7 +8,7 @@
   или CLI: python captions.py words.json out.ass
 """
 import sys, json
-FONT="Soyuz Grotesk"; SIZE=82; ACTIVE="&H002059EA&"; REST="&H00FFFFFF"; POSY=1560  # фикс низ
+FONT="Soyuz Grotesk"; SIZE=94; ACTIVE="&H002059EA&"; REST="&H00FFFFFF"; POSY=1560  # фикс низ
 
 HEAD=f"""[Script Info]
 ScriptType: v4.00+
@@ -18,7 +18,7 @@ WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Sub,{FONT},{SIZE},{ACTIVE},{REST},&H00101010,&H64000000,-1,0,0,0,100,100,1,0,1,0,2,5,80,80,0,204
+Style: Sub,{FONT},{SIZE},{ACTIVE},{REST},&H00000000,&H00000000,-1,0,0,0,100,100,1,0,1,0,0,4,5,60,60,0,204
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -27,19 +27,44 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 def fmt(t):
     h=int(t//3600); m=int((t%3600)//60); s=t%60; return f"{h}:{m:02d}:{s:05.2f}"
 
+
+import difflib as _dl
+def align_to_audio(script_words, whisper_words):
+    """script_words: [str] из сценария; whisper_words: [{w,t,d}] с реального 1.8x аудио.
+    Возвращает [{w,t,d}] — ТЕКСТ из сценария, ВРЕМЯ из аудио (difflib), несопоставленные — интерполяция."""
+    def nm(x): return re.sub(r"[^а-яёa-z0-9]","",x.lower())
+    wt=[nm(x["w"]) for x in whisper_words]; st=[nm(x) for x in script_words]
+    sm=_dl.SequenceMatcher(None, wt, st, autojunk=False)
+    timed=[None]*len(script_words)
+    for a,b,size in sm.get_matching_blocks():
+        for k in range(size): timed[b+k]={"w":script_words[b+k],"t":whisper_words[a+k]["t"],"d":whisper_words[a+k]["d"]}
+    last=0.0
+    for i in range(len(script_words)):
+        if timed[i] is None:
+            nxt=next((timed[j]["t"] for j in range(i+1,len(script_words)) if timed[j]), last+0.35)
+            timed[i]={"w":script_words[i],"t":round((last+nxt)/2,3),"d":round(max(0.18,(nxt-last)/2),3)}
+        last=timed[i]["t"]+timed[i]["d"]
+    for i in range(1,len(timed)):
+        if timed[i]["t"]<timed[i-1]["t"]: timed[i]["t"]=timed[i-1]["t"]+0.05
+    return timed
+
 def build_ass(words, out_ass):
     """words = плоский список [{w,t,d}] (t абсолютное). Группируем по 2 слова, фикс \\pos(540,POSY)."""
-    ev=[]; i=0
+    ev=[]; groups=[]; i=0
     while i<len(words):
-        grp=words[i:i+2]
-        st=grp[0]["t"]; en=grp[-1]["t"]+grp[-1]["d"]+0.10
+        groups.append(words[i:i+2]); i+=2
+    for gi,grp in enumerate(groups):
+        st=grp[0]["t"]
+        nat=grp[-1]["t"]+grp[-1]["d"]+0.10
+        nxt_start=groups[gi+1][0]["t"] if gi+1<len(groups) else nat
+        en=min(nat, nxt_start-0.02)                      # НЕ накладывать на следующую пару
+        if en<=st: en=st+0.25
         parts=[]
         for j,w in enumerate(grp):
-            nxt=grp[j+1]["t"] if j+1<len(grp) else (w["t"]+w["d"])
-            k=max(6,int(round((nxt-w["t"])*100)))
+            nw=grp[j+1]["t"] if j+1<len(grp) else min(en, w["t"]+w["d"])
+            k=max(6,int(round((nw-w["t"])*100)))
             parts.append(r"{\k"+str(k)+"}"+w["w"].upper().strip(".,!?»«"))
-        ev.append(f"Dialogue: 0,{fmt(st)},{fmt(en)},Sub,,0,0,0,,{{\\an5\\pos(540,{POSY})\\fad(60,60)}}{' '.join(parts)}")
-        i+=2
+        ev.append(f"Dialogue: 0,{fmt(st)},{fmt(en)},Sub,,0,0,0,,{{\\an5\\pos(540,{POSY})\\fad(50,40)}}{' '.join(parts)}")
     open(out_ass,"w",encoding="utf-8").write(HEAD+"\n".join(ev)+"\n")
     return out_ass
 
