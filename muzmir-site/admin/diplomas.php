@@ -121,6 +121,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'notify_template') 
     admin_redirect('diplomas', ['competition' => $cid]);
 }
 
+/* ---------- Справочник спец-наград (8): функция data.php, фолбэк — локальный массив ---------- */
+function diplomas_extra_awards(): array {
+    if (function_exists('EXTRA_AWARDS')) {
+        $a = EXTRA_AWARDS();
+        if (is_array($a) && $a) return array_values($a);
+    }
+    return ['ЗА ПАТРИОТИЗМ','ЗА ЛУЧШИЙ ОБРАЗ','ЛУЧШИЙ КОЛЛЕКТИВ','ЛУЧШИЙ ДУЭТ',
+            'ЗА АРТИСТИЗМ','ЗА ЛУЧШЕЕ ИСПОЛНЕНИЕ','ЗА ЛУЧШУЮ ПОСТАНОВКУ','ЗА ОРИГИНАЛЬНОЕ ИСПОЛНЕНИЕ'];
+}
+
 /* ---------- Массовая генерация дипломов ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
@@ -129,24 +139,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
         flash('Сначала подтвердите шаблон диплома.', 'error');
         admin_redirect('diplomas', array_filter(['competition' => $cid]));
     }
+    // Тип диплома (гейтинг подтверждённого шаблона сохранён для ВСЕХ типов).
+    $dtype = input('dtype') ?: 'main';
+    if (!in_array($dtype, ['main','named','extra','thanks'], true)) $dtype = 'main';
+    // Спец-награда (только для extra): индекс из справочника 8 наград.
+    $awards   = diplomas_extra_awards();
+    $awardIdx = (int) input('special_award_idx');
+    if ($dtype === 'extra' && !isset($awards[$awardIdx])) {
+        flash('Выберите спец-награду из списка.', 'error');
+        admin_redirect('diplomas', array_filter(['competition' => $cid, 'dtype' => $dtype]));
+    }
+    $special = $dtype === 'extra' ? (string)$awards[$awardIdx] : '';
+
     $ids = array_map('intval', $_POST['ids'] ?? []);
-    $made = 0; $pdfok = 0;
+    $made = 0; $pdfok = 0; $skip = 0;
     foreach ($ids as $appId) {
         $app = one("SELECT a.*, c.code FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appId]);
-        if (!$app || !$app['result']) continue;
-        if (one("SELECT id FROM diplomas WHERE application_id=? AND type='main'", [$appId])) continue;
-        $number = strtoupper($app['code'] ?: 'D') . '-' . date('Y') . '-' . str_pad((string)$appId, 5, '0', STR_PAD_LEFT);
+        if (!$app) { continue; }
+        // Для благодарности педагогу звание не требуется; для остальных — нужен результат.
+        if ($dtype !== 'thanks' && !$app['result']) { continue; }
+
+        // Базовый номер — канонический номер заявки (CODE-ГГГГ-NNNNN). Фолбэк, если пусто.
+        $base = trim((string)($app['number'] ?? ''));
+        if ($base === '') $base = strtoupper($app['code'] ?: 'D') . '-' . date('Y') . '-' . str_pad((string)$appId, 5, '0', STR_PAD_LEFT);
+
+        // Единый номер диплома: его же кодирует QR, его же пишем в diplomas.number.
+        $number = function_exists('diploma_make_number')
+            ? diploma_make_number($base, $dtype, $awardIdx + 1)
+            : $base . ['main'=>'','named'=>'-N','thanks'=>'-T','extra'=>'-E'.($awardIdx+1)][$dtype];
+
+        // Дедуп по итоговому номеру (позволяет одной заявке иметь main + именной + спец-награды).
+        if (one("SELECT id FROM diplomas WHERE number=?", [$number])) { $skip++; continue; }
+
+        // Результат/звание записи: для спец-награды — название награды.
+        $recResult = $dtype === 'extra' ? $special : (string)$app['result'];
+
+        // Данные для генератора: канонический номер + тип + спец-награда.
+        $app['diploma_number'] = $number;
+        if ($special !== '') $app['special_award'] = $special;
+
         $pdfPath = '';
         if (function_exists('pdf_diploma')) {
-            try { $pdfPath = pdf_diploma($app, 'main'); $pdfok++; } catch (Throwable $e) { $pdfPath = ''; }
+            try { $pdfPath = pdf_diploma($app, $dtype); if ($pdfPath) $pdfok++; } catch (Throwable $e) { $pdfPath = ''; }
         }
-        insert('diplomas', ['number'=>$number,'application_id'=>$appId,'type'=>'main','result'=>$app['result'],'pdf_path'=>$pdfPath]);
+        insert('diplomas', ['number'=>$number,'application_id'=>$appId,'type'=>$dtype,'result'=>$recResult,'pdf_path'=>$pdfPath]);
         $made++;
     }
-    audit('diplomas_generate', 'diploma', null, ['made'=>$made,'pdf'=>$pdfok]);
+    audit('diplomas_generate', 'diploma', null, ['made'=>$made,'pdf'=>$pdfok,'type'=>$dtype,'award'=>$special,'skip'=>$skip]);
     if (!function_exists('pdf_diploma')) flash("Создано записей: $made. Генератор pdf_diploma пока не подключён — PDF добавятся позже.", 'warning');
-    else flash("Сгенерировано дипломов: $made (PDF: $pdfok).", 'success');
-    admin_redirect('diplomas', array_filter(['competition'=>$comp]));
+    else flash("Сгенерировано дипломов: $made (PDF: $pdfok" . ($skip ? ", пропущено дублей: $skip" : '') . ").", 'success');
+    admin_redirect('diplomas', array_filter(['competition'=>$comp,'dtype'=>$dtype]));
 }
 
 /* ---------- Массовая отправка на email ---------- */
@@ -296,12 +338,51 @@ ob_start(); ?>
   </div>
 
   <?php if ($tab === 'ready'):
-    $ready = all("SELECT a.* FROM applications a WHERE a.competition_id=? AND a.result<>''
-                  AND a.id NOT IN (SELECT application_id FROM diplomas WHERE type='main') ORDER BY a.id", [$comp]); ?>
+    // Тип диплома для генерации (GET-параметр). От него зависит и список кандидатов.
+    $dtype = input('dtype') ?: 'main';
+    if (!in_array($dtype, ['main','named','extra','thanks'], true)) $dtype = 'main';
+    $dtypeLabels = ['main'=>'Основной','named'=>'Именной','extra'=>'Спец-награда','thanks'=>'Благодарность педагогу'];
+    $awards = diplomas_extra_awards();
+
+    if ($dtype === 'main') {
+      // Основной: оценённые заявки, у которых ещё нет основного диплома.
+      $ready = all("SELECT a.* FROM applications a WHERE a.competition_id=? AND a.result<>''
+                    AND a.id NOT IN (SELECT application_id FROM diplomas WHERE type='main') ORDER BY a.id", [$comp]);
+    } elseif ($dtype === 'thanks') {
+      // Благодарность педагогу: любые заявки с указанным педагогом.
+      $ready = all("SELECT a.* FROM applications a WHERE a.competition_id=? AND a.teacher<>'' ORDER BY a.id", [$comp]);
+    } else {
+      // Именной / спец-награда: любые оценённые заявки (можно выдать поверх основного).
+      $ready = all("SELECT a.* FROM applications a WHERE a.competition_id=? AND a.result<>'' ORDER BY a.id", [$comp]);
+    }
+  ?>
+    <div class="card" style="margin-bottom:14px">
+      <div class="section-title" style="margin-bottom:8px"><h3>Тип диплома</h3></div>
+      <div class="tabs" style="margin-bottom:0">
+        <?php foreach ($dtypeLabels as $k => $lbl): ?>
+          <a href="<?= a_link('diplomas', ['competition'=>$comp,'tab'=>'ready','dtype'=>$k]) ?>" class="<?= $dtype===$k?'active':'' ?>"><?= h($lbl) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <?php if ($dtype === 'extra'): ?>
+        <p class="small muted" style="margin:10px 0 0">Спец-награда присуждается сверх основного звания. Выберите награду ниже — она будет выдана всем отмеченным участникам.</p>
+      <?php elseif ($dtype === 'named'): ?>
+        <p class="small muted" style="margin:10px 0 0">Именной диплом — дополнительный к основному, с сохранённым званием участника.</p>
+      <?php elseif ($dtype === 'thanks'): ?>
+        <p class="small muted" style="margin:10px 0 0">Благодарность оформляется на педагога заявки (бело-барочная тема).</p>
+      <?php endif; ?>
+    </div>
     <form method="post" action="<?= url('/admin/') ?>">
       <?= csrf_field() ?><input type="hidden" name="do" value="generate"><input type="hidden" name="competition" value="<?= $comp ?>">
+      <input type="hidden" name="dtype" value="<?= h($dtype) ?>">
+      <?php if ($dtype === 'extra'): ?>
+        <div class="field" style="max-width:420px"><label>Спец-награда</label>
+          <select name="special_award_idx" required>
+            <?php foreach ($awards as $i => $aw): ?><option value="<?= $i ?>"><?= h($aw) ?></option><?php endforeach; ?>
+          </select>
+        </div>
+      <?php endif; ?>
       <div class="toolbar">
-        <span class="small muted">Оценённых без диплома: <?= count($ready) ?></span>
+        <span class="small muted">Кандидатов (<?= h($dtypeLabels[$dtype]) ?>): <?= count($ready) ?></span>
         <?php if ($approved): ?>
           <button class="btn btn--primary btn--sm" onclick="return confirm('Сгенерировать дипломы для выбранных?')"><?= admin_icon('diplomas') ?>Сгенерировать выбранные</button>
         <?php else: ?>

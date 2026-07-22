@@ -11,7 +11,8 @@ if (!rate_ok('verify:' . client_ip(), 60, 3600)) {
 }
 
 $d = one(
-    "SELECT d.*, a.full_name, a.nomination, a.work_title, a.city, a.age_category,
+    "SELECT d.*, a.full_name, a.group_name, a.is_group, a.nomination, a.work_title,
+            a.city, a.age_category, a.teacher,
             c.name AS competition_name
        FROM diplomas d
        LEFT JOIN applications a ON a.id = d.application_id
@@ -30,14 +31,23 @@ if (!$d) {
 
 update('diplomas', ['verified_count' => (int) $d['verified_count'] + 1], 'id=:id', ['id' => $d['id']]);
 
+// Отображаемое имя: для коллектива — название коллектива, иначе ФИО.
+$recipient = ((int)($d['is_group'] ?? 0) === 1 && trim((string)($d['group_name'] ?? '')) !== '')
+    ? (string) $d['group_name']
+    : (string) ($d['full_name'] ?? '');
+
+$typeLabels = ['main'=>'Диплом','named'=>'Именной диплом','extra'=>'Спец-награда','thanks'=>'Благодарность'];
+
 json_out([
     'ok'      => true,
     'valid'   => true,
     'diploma' => [
         'number'       => $d['number'],
         'type'         => $d['type'],
+        'type_label'   => $typeLabels[$d['type']] ?? 'Диплом',
         'result'       => $d['result'],
-        'full_name'    => $d['full_name'],
+        'full_name'    => $recipient,
+        'teacher'      => $d['teacher'] ?? '',
         'nomination'   => $d['nomination'],
         'work_title'   => $d['work_title'],
         'city'         => $d['city'],

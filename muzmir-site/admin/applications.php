@@ -76,6 +76,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'set_status') {
     admin_redirect('applications', ['id' => $id]);
 }
 
+/* ---------- Редактирование полей заявки (перед печатью диплома) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
+    $id = (int) input('id');
+    $cur = one("SELECT * FROM applications WHERE id=?", [$id]);
+    if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('applications'); }
+
+    $data = [
+        'full_name'    => trim((string) input('full_name')),
+        'group_name'   => trim((string) input('group_name')),
+        'teacher'      => trim((string) input('teacher')),
+        'nomination'   => trim((string) input('nomination')),
+        'work_title'   => trim((string) input('work_title')),
+        'institution'  => trim((string) input('institution')),
+        'city'         => trim((string) input('city')),
+        'age_category' => trim((string) input('age_category')),
+    ];
+
+    // Валидация по справочникам (если доступны). Пустое значение допустимо.
+    if ($data['nomination'] !== '' && function_exists('NOMINATIONS')
+        && !array_key_exists($data['nomination'], NOMINATIONS())) {
+        flash('Недопустимая номинация — выберите из списка.', 'error');
+        admin_redirect('applications', ['id' => $id]);
+    }
+    if ($data['age_category'] !== '' && function_exists('AGE_CATEGORIES')
+        && !in_array($data['age_category'], AGE_CATEGORIES(), true)) {
+        flash('Недопустимая возрастная категория — выберите из списка.', 'error');
+        admin_redirect('applications', ['id' => $id]);
+    }
+
+    update('applications', $data, 'id=:id', ['id' => $id]);
+    // Аудит только реально изменившихся полей.
+    $changed = [];
+    foreach ($data as $k => $v) if ((string)($cur[$k] ?? '') !== (string)$v) $changed[$k] = $v;
+    audit('application_edit', 'application', $id, ['changed' => array_keys($changed)]);
+    flash($changed ? 'Данные заявки обновлены (' . count($changed) . ').' : 'Изменений нет.', $changed ? 'success' : 'info');
+    admin_redirect('applications', ['id' => $id]);
+}
+
 /* ================= КАРТОЧКА ЗАЯВКИ ================= */
 if ($id = (int) input('id')) {
     $a = one("SELECT a.*, c.name comp, c.slug comp_slug FROM applications a
@@ -130,6 +169,44 @@ if ($id = (int) input('id')) {
               <?php endforeach; ?>
             </select>
             <button class="btn btn--primary btn--sm">Применить</button>
+          </form>
+        </div>
+        <div class="card" style="margin-bottom:18px">
+          <h3>Редактировать данные заявки</h3>
+          <p class="small muted" style="margin:-4px 0 12px">Скорректируйте поля перед печатью диплома — они попадут в PDF и верификацию.</p>
+          <form method="post" action="<?= url('/admin/') ?>">
+            <?= csrf_field() ?><input type="hidden" name="do" value="edit_app"><input type="hidden" name="id" value="<?= $id ?>">
+            <div class="field"><label><?= $a['is_group'] ? 'Контактное лицо (ФИО)' : 'ФИО участника' ?></label>
+              <input name="full_name" value="<?= h((string)$a['full_name']) ?>"></div>
+            <?php if ($a['is_group']): ?>
+              <div class="field"><label>Название коллектива</label>
+                <input name="group_name" value="<?= h((string)$a['group_name']) ?>"></div>
+            <?php else: ?>
+              <input type="hidden" name="group_name" value="<?= h((string)$a['group_name']) ?>">
+            <?php endif; ?>
+            <div class="field"><label>Педагог</label>
+              <input name="teacher" value="<?= h((string)$a['teacher']) ?>"></div>
+            <div class="field"><label>Номинация</label>
+              <select name="nomination">
+                <option value="">— не указана —</option>
+                <?php foreach (array_keys(NOMINATIONS()) as $n): ?>
+                  <option value="<?= h($n) ?>" <?= (string)$a['nomination']===$n?'selected':'' ?>><?= h($n) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <div class="field"><label>Возрастная категория</label>
+              <select name="age_category">
+                <option value="">— не указана —</option>
+                <?php foreach (AGE_CATEGORIES() as $cat): ?>
+                  <option value="<?= h($cat) ?>" <?= (string)$a['age_category']===$cat?'selected':'' ?>><?= h($cat) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <div class="field"><label>Произведение</label>
+              <input name="work_title" value="<?= h((string)$a['work_title']) ?>"></div>
+            <div class="field"><label>Учреждение</label>
+              <input name="institution" value="<?= h((string)$a['institution']) ?>"></div>
+            <div class="field"><label>Город</label>
+              <input name="city" value="<?= h((string)$a['city']) ?>"></div>
+            <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить данные</button>
           </form>
         </div>
         <div class="card">

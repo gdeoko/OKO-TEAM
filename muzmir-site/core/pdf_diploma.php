@@ -133,6 +133,34 @@ function _dip_setting(string $key, string $default): string {
     return $default;
 }
 
+/**
+ * Канонический номер диплома по базовому номеру заявки (CODE-ГГГГ-NNNNN) и типу.
+ * Именно эту строку кодирует QR И записывает admin/diplomas.php в diplomas.number,
+ * поэтому verify.php всегда находит запись. Спец-награды получают уникальный суффикс
+ * -E{N} (N — позиция награды в справочнике), чтобы 8 наград одной заявки не конфликтовали.
+ */
+function diploma_make_number(string $base, string $type = 'main', int $extraIndex = 0): string {
+    $base = trim($base);
+    if ($base === '') {
+        $base = 'MM-' . date('Y') . '-' . str_pad((string)random_int(1, 999999), 6, '0', STR_PAD_LEFT);
+    }
+    switch ($type) {
+        case 'named':  return $base . '-N';
+        case 'thanks': return $base . '-T';
+        case 'extra':  return $base . '-E' . ($extraIndex > 0 ? $extraIndex : 1);
+        case 'main':   return $base;
+        default:       return $base . '-S';
+    }
+}
+
+/** Арабские номера степеней → римские (ЛАУРЕАТ 1 степени → ЛАУРЕАТ I степени). */
+function _dip_roman(string $s): string {
+    $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];
+    return (string)preg_replace_callback('/(?<!\d)([1-5])(?!\d)/u', static function ($m) use ($map) {
+        return $map[(int)$m[1]] ?? $m[1];
+    }, $s);
+}
+
 function pdf_diploma(array $application, string $type = 'main'): string {
     $tmpQr = '';
     try {
@@ -194,8 +222,15 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         // номер + дата
         $number = (string)($application['number'] ?? '');
         if ($number === '') $number = 'MM-' . date('Y') . '-' . str_pad((string)(($application['id'] ?? random_int(1, 999999))), 6, '0', STR_PAD_LEFT);
-        $suffix = ['main' => '', 'extra' => '-D', 'named' => '-N', 'thanks' => '-T'][$type] ?? '-S';
-        $dipNumber = $number . $suffix;
+        // Канонический номер: если админка передала diploma_number — используем ровно его
+        // (он же записан в diplomas.number, его же кодирует QR → verify находит запись).
+        $explicit = trim((string)($application['diploma_number'] ?? ''));
+        if ($explicit !== '') {
+            $dipNumber = $explicit;
+        } else {
+            $suffix = ['main' => '', 'extra' => '-D', 'named' => '-N', 'thanks' => '-T'][$type] ?? '-S';
+            $dipNumber = $number . $suffix;
+        }
         $year = (int)date('Y', strtotime((string)($application['created_at'] ?? 'now')) ?: time());
 
         // Типы: known = main|named|extra|thanks. Всё остальное трактуем как СПЕЦ-НАГРАДУ.
@@ -309,7 +344,7 @@ function pdf_diploma(array $application, string $type = 'main'): string {
             $y += 30;
 
             // степень / спец-награда (авто-подгон кегля под ширину контента)
-            $titleStr = $isSpecial ? $special : ($result !== '' ? mb_strtoupper($result, 'UTF-8') : '');
+            $titleStr = $isSpecial ? $special : ($result !== '' ? _dip_roman(mb_strtoupper($result, 'UTF-8')) : '');
             if ($titleStr !== '') {
                 $ts = 58;
                 while ($ts > 34 && pl_text_w($ts, $fSerB, $titleStr) > $contentW - 20) $ts--;
@@ -346,10 +381,10 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         }
 
         // --- подписанты / печать / подписи ---
-        $s1n = _dip_setting('sign1_name', 'Галиулин Данил Дамирович');
-        $s1d = _dip_setting('sign1_desc', 'Лауреат международных и всероссийских конкурсов и фестивалей, председатель оргкомитета международного конкурса культуры и искусства «' . $competition . '»');
+        $s1n = _dip_setting('sign1_name', 'Председатель оргкомитета');
+        $s1d = _dip_setting('sign1_desc', 'Оргкомитет международного конкурса культуры и искусства «' . $competition . '»');
         $s2n = _dip_setting('sign2_name', 'Ильясов Альберт Ильясович');
-        $s2d = _dip_setting('sign2_desc', 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»');
+        $s2d = _dip_setting('sign2_desc', 'Генеральный директор Культурного центра «Музыкальный Мир», заслуженный деятель культуры');
 
         $sigTop = 1408;
         $descW = 430;
