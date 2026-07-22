@@ -13,7 +13,7 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:#f6ecdb;border-radius:14px;">
   <tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#5a4632;">
-    <div style="font-weight:600;color:#7a2e1e;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Ваш диплom</div>
+    <div style="font-weight:600;color:#7a2e1e;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Ваш диплом</div>
     <?php if ($result !== ''): ?><div><span style="color:#8a7658;">Результат:</span> <b style="color:#7a2e1e;">«<?= h($result) ?>»</b></div><?php endif; ?>
     <?php if ($dnumber !== ''): ?><div><span style="color:#8a7658;">Номер диплома:</span> <?= h($dnumber) ?></div><?php endif; ?>
     <div><span style="color:#8a7658;">Формат:</span> PDF, во вложении</div>
