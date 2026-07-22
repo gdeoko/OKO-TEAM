@@ -164,13 +164,28 @@ renderAdmin = function(){
       `<button class="adm-tab ${admTab===t.k?'on':''}" onclick="admGo('${t.k}')">${t.t}</button>`).join('');
     document.getElementById('admBody').innerHTML = admTab==='revenue' ? hqRevenueView() : hqHqView();
     if(admTab === 'hq') hqStartLog(); else hqStopLog();
+    if(admTab === 'revenue' && !hqRevHeroDone){ hqRevHeroDone = true; hqAnimateRevHero(); }
     return;
   }
   hqStopLog();
   _prevRenderAdminHq();
 };
 const _prevCloseAdminHq = closeAdmin;
-closeAdmin = function(){ hqStopLog(); _prevCloseAdminHq(); };
+closeAdmin = function(){ hqStopLog(); hqRevHeroDone = false; _prevCloseAdminHq(); };
+
+/* count-up дохода при первом открытии вкладки «Доходы» (не повторяется при смене фильтра) */
+let hqRevHeroDone = false;
+function hqAnimateRevHero(){
+  const el = document.querySelector('.hq-rev-total'); if(!el) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const target = Math.round(okoRevenueTotal()), t0 = performance.now(), dur = 900;
+  const step = now=>{
+    const k = Math.min(1, (now-t0)/dur), e = 1-Math.pow(1-k,3);
+    el.textContent = fmtMoney(Math.round(target*e));
+    if(k<1) requestAnimationFrame(step); else el.textContent = fmtMoney(target);
+  };
+  requestAnimationFrame(step);
+}
 
 /* ---------- вкладка «Доходы» ---------- */
 const HQ_SRC_ICO = {
@@ -395,14 +410,30 @@ function hqUserMsg(i){
 
 /* ---------- вкладка «Штаб HQ» ---------- */
 const HQ_ROOMS = [
-  {n:'Финансы',      ic:'money',     c:'#d4af37', s:'КУДиР ведётся · налог отложен', live:1},
-  {n:'Юридический',  ic:'file',      c:'#ef4444', s:'договор №14 на проверке 161-ФЗ', live:1},
-  {n:'Безопасность', ic:'shield',    c:'#9AFF00', s:'аптайм 99.98% · 0 инцидентов', live:1},
-  {n:'Research Lab', ic:'search',    c:'#4aa0ff', s:'разбор ниши · 2 отчёта в мозг', live:1},
-  {n:'War-room',     ic:'fire',      c:'#ff7a3c', s:'1 горячий лид · планёрка 16:00', live:1},
-  {n:'Comms',        ic:'megaphone', c:'#22d3ee', s:'3 канала · автоответы вкл', live:0},
-  {n:'Publishing',   ic:'rocket',    c:'#a855f7', s:'очередь: 3 ролика · пост 18:00', live:1},
-  {n:'HR / Найм',    ic:'users',     c:'#ff6bad', s:'прогрев 2 новых аккаунтов', live:0},
+  {n:'Финансы',      ic:'money',     c:'#d4af37', s:'КУДиР ведётся · налог отложен', live:1,
+    d:'Учёт доходов и расходов, резерв под налог УСН, сверка эквайринга и выплат партнёрам.',
+    k:[['выручка·мес','+184к ₽'],['налог отложен','11 040 ₽'],['на выплаты','$213'],['сверка','ОК']]},
+  {n:'Юридический',  ic:'file',      c:'#ef4444', s:'договор №14 на проверке 161-ФЗ', live:1,
+    d:'Договоры, оферты, проверка по 152-ФЗ и 161-ФЗ, контроль реквизитов в диалогах.',
+    k:[['в работе','3 док.'],['проверка 161-ФЗ','1'],['оферты','актуальны'],['риски','0']]},
+  {n:'Безопасность', ic:'shield',    c:'#9AFF00', s:'аптайм 99.98% · 0 инцидентов', live:1,
+    d:'Мониторинг аптайма, антифрод, автоблок скам-реквизитов, защита аккаунтов от угона.',
+    k:[['аптайм·30д','99.98%'],['инциденты','0'],['автоблоков','46'],['2FA','вкл']]},
+  {n:'Research Lab', ic:'search',    c:'#4aa0ff', s:'разбор ниши · 2 отчёта в мозг', live:1,
+    d:'Разбор ниш и конкурентов от 1М просмотров, тренды форматов, отчёты в общий мозг.',
+    k:[['разобрано','14 конк.'],['отчётов·нед','2'],['трендов','6'],['в мозг','сохр.']]},
+  {n:'War-room',     ic:'fire',      c:'#ff7a3c', s:'1 горячий лид · планёрка 16:00', live:1,
+    d:'Оперативный штаб по горячим сделкам: разбор лидов, дожим, эскалация продаж.',
+    k:[['горячих лидов','1'],['в воронке','12'],['планёрка','16:00'],['конверсия','23%']]},
+  {n:'Comms',        ic:'megaphone', c:'#22d3ee', s:'3 канала · автоответы вкл', live:0,
+    d:'Внешние коммуникации, автоответы в каналах, модерация комментариев и заявок.',
+    k:[['каналов','3'],['автоответы','вкл'],['ответ·ср','41 сек'],['очередь','0']]},
+  {n:'Publishing',   ic:'rocket',    c:'#a855f7', s:'очередь: 3 ролика · пост 18:00', live:1,
+    d:'Конвейер контента: сборка роликов, календарь автопостинга, контроль расписания.',
+    k:[['в очереди','3 ролика'],['пост сегодня','18:00'],['за неделю','19'],['статус','по плану']]},
+  {n:'HR / Найм',    ic:'users',     c:'#ff6bad', s:'прогрев 2 новых аккаунтов', live:0,
+    d:'Прогрев и распределение аккаунтов, онбординг новых агентов и ролей штаба.',
+    k:[['прогрев','2 акк.'],['агентов','10'],['ролей','8'],['резерв','2']]},
 ];
 const HQ_AGENTS = [
   {id:'ceo',      role:'Гендиректор', c:'#9AFF00', st:'work',  p:72, task:'аппрув КП для MedCraft',
@@ -530,7 +561,7 @@ function hqHqView(){
     ${hqOnlineBlock()}
     <div class="adm-sec-h">Отделы</div>
     <div class="hq-rooms">${HQ_ROOMS.map((r,i)=>`
-      <button class="hq-room" style="animation-delay:${i*0.04}s" onclick="toast('Отдел «${r.n}»: детальный дашборд — этап 2')">
+      <button class="hq-room" style="animation-delay:${i*0.04}s" onclick="hqRoomOpen(${i})">
         <span class="hq-room-ic" style="color:${r.c};background:${r.c}1e">${I(r.ic)}</span>
         <b>${esc(r.n)} ${r.live?'<i class="hq-dot work"></i>':''}</b>
         <small>${esc(r.s)}</small>
@@ -540,6 +571,23 @@ function hqHqView(){
     <div class="adm-sec-h">Живой лог штаба</div>
     <div class="hq-log" id="hqLog">${HQ_LOG.map(e=>hqLogLine(e)).join('')}</div>`;
 }
+/* детальный дашборд отдела: реальные KPI вместо заглушки-тоста */
+function hqRoomOpen(i){
+  const r = HQ_ROOMS[i]; if(!r) return;
+  const kpis = (r.k||[]).map(([l,v])=>
+    `<div class="hq-room-kpi"><b>${esc(v)}</b><small>${esc(l)}</small></div>`).join('');
+  showPopup({
+    ico:r.ic, title:'Отдел · '+r.n,
+    body:`<div class="hq-room-pop">
+      <div class="hq-room-pop-st"><i class="hq-dot ${r.live?'work':'wait'}"></i>${r.live?'на смене · агент активен':'в резерве · включается по расписанию'}</div>
+      ${r.d?`<p class="hq-room-pop-d">${esc(r.d)}</p>`:''}
+      <div class="hq-room-kpis">${kpis}</div>
+      <div class="hq-room-pop-s">${I('bolt')}<span>${esc(r.s)}</span></div>
+    </div>`,
+    actions:[{label:'Закрыть'}]
+  });
+}
+
 /* Абсолютный публичный адрес 3D-штаба. По требованию владельца тяжёлый WebGL НЕ встраивается
    в приложение (лагает в Telegram-webview) — штаб открывается отдельной вкладкой (ссылкой). */
 const HQ_URL_ABS = 'https://true-journey-418.higgsfield.app/hq.html';

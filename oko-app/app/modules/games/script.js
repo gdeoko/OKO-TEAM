@@ -164,7 +164,7 @@ const GM_POOLS = {
     {t:'check',   v:1,         w:120, c:2, s:'1 пров'},
     {t:'disc',    v:10,        w:95,  c:2, s:'−10%'},
     {t:'ticket',  v:2,         w:80,  c:2, s:'2 бил'},
-    {t:'boost',   v:2,         w:55,  c:3, s:'×2'},
+    {t:'money',   v:200,       w:55,  c:3, s:'200 ₽'},
     {t:'money',   v:300,       w:40,  c:3, s:'300 ₽'},
     {t:'disc',    v:20,        w:28,  c:3, s:'−20%'},
     {t:'ticket',  v:5,         w:14,  c:4, s:'5 бил'},
@@ -403,12 +403,17 @@ function gmSpinRun(mode, payTicket){
   wheel.style.transform = `rotate(${cur}deg)`;
   void wheel.offsetWidth; /* форс-рефлоу перед новым переходом */
 
-  const turns = 5 + Math.floor(Math.random() * 3);
-  const jitter = Math.random() * (seg * 0.5) - seg * 0.25; /* внутри сектора */
+  /* стрелка «щёлкает» по секторам, пока колесо крутится */
+  const ptr = document.querySelector('#screen-games .gm-pointer');
+  if(ptr) ptr.classList.add('ticking');
+
+  const turns = 6 + Math.floor(Math.random() * 3);
+  const jitter = Math.random() * (seg * 0.44) - seg * 0.22; /* внутри сектора, с запасом от границ */
   const delta = ((360 - idx * seg) - cur + 720) % 360;
   const target = cur + turns * 360 + delta + jitter;
   gmWheelAngle = target;
-  wheel.style.transition = 'transform 6.2s cubic-bezier(0.12,0.65,0.13,1)';
+  /* длинный инерционный хвост: быстрый старт, долгое мягкое торможение */
+  wheel.style.transition = 'transform 6.4s cubic-bezier(0.16,0.84,0.16,1)';
   wheel.style.transform = `rotate(${target}deg)`;
 
   /* transitionend может потеряться (смена вкладки/reduced-motion) —
@@ -416,10 +421,11 @@ function gmSpinRun(mode, payTicket){
   const settle = ()=>{
     if(token !== gmSpinToken || !gmSpinning) return;
     gmSpinning = false;
+    if(ptr) ptr.classList.remove('ticking');
     gmGrant(pool[idx], mode, payTicket);
   };
   wheel.addEventListener('transitionend', settle, {once:true});
-  setTimeout(settle, 6500);
+  setTimeout(settle, 6700);
 }
 function gmPrizeSub(p){
   switch(p.t){
@@ -489,6 +495,7 @@ function gmGrant(p, mode, payTicket){
 }
 
 /* красивая анимация выпадения приза — карточка в центре колеса */
+let gmRevHideT = 0;
 function gmPrizeReveal(icon, title){
   const rev = document.getElementById('gmReveal');
   if(!rev) return;
@@ -499,6 +506,16 @@ function gmPrizeReveal(icon, title){
       <b>${title}</b>
     </div>`;
   rev.classList.remove('show'); void rev.offsetWidth; rev.classList.add('show');
+  /* лёгкая вибрация выигрыша на телефоне (звука нет) */
+  try{ if(navigator.vibrate) navigator.vibrate([12, 40, 22]); }catch(e){}
+  /* показать праздник, затем плавно вернуть колесо готовым к следующей крутке */
+  const tok = gmSpinToken;
+  clearTimeout(gmRevHideT);
+  gmRevHideT = setTimeout(()=>{
+    if(tok !== gmSpinToken || gmSpinning) return; /* уже крутят снова — не мешаем */
+    const r = document.getElementById('gmReveal');
+    if(r) r.classList.remove('show');
+  }, 3200);
 }
 
 /* лаймовое конфетти */

@@ -131,6 +131,10 @@ function adsMigrate(){
 
 /* ---------- метрики / рендер ---------- */
 function adsCtr(c){ return c.imps ? (c.clicks / c.imps * 100) : 0; }
+/* класс-подсказка заполнения бюджета: >=90% — критично, >=75% — на исходе */
+function adsBudgetCls(c){ const r = c.budget ? c.spent/c.budget : 0; return r>=0.9 ? 'crit' : r>=0.75 ? 'warn' : ''; }
+/* короткая подсветка числа при живом обновлении (ощущение «метрики дышат») */
+function adsFlashEl(el){ if(!el) return; el.classList.remove('tick'); void el.offsetWidth; el.classList.add('tick'); }
 function adsCpcTxt(c){
   const cpc = c.clicks ? c.spent/c.clicks : 0;
   return cpc ? (cpc<10 ? cpc.toFixed(2) : fmtN(Math.round(cpc)))+' ₽' : '—';
@@ -219,7 +223,7 @@ function adsRenderList(){
         <div class="ads-m hot"><b data-m="ctr">${adsCtr(c).toFixed(1)}%</b><span>ctr</span></div>
         <div class="ads-m"><b data-m="spent">${fmtN(Math.round(c.spent))}<i class="ads-cur">₽</i></b><span>из ${fmtN(c.budget)}<i class="ads-cur">₽</i></span></div>
       </div>
-      <div class="ads-budget-bar"><i data-m="bar" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
+      <div class="ads-budget-bar"><i data-m="bar" class="${adsBudgetCls(c)}" style="width:${Math.min(100, c.spent/c.budget*100)}%"></i></div>
       <canvas class="ads-spark" id="adsSpark${c.id}"></canvas>
       <button class="ads-stats-toggle ${adsOpenStats.has(c.id)?'open':''}" onclick="adsToggleStats(${c.id})">
         ${I('poll')}Статистика${c.ab?`<em class="ads-abmark">A/B</em>`:''}<i>${I('chev')}</i></button>
@@ -451,10 +455,12 @@ function adsTickUI(){
   ADS.camps.forEach(c=>{
     const el = document.querySelector(`.ads-camp[data-cid="${c.id}"]`); if(!el) return;
     const set = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n) n.textContent = v; };
-    set('imps', fmtN(c.imps)); set('clicks', fmtN(c.clicks));
+    /* растущие метрики — с короткой подсветкой при реальном изменении */
+    const setLive = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n && n.textContent!==v){ n.textContent = v; if(c.status==='act') adsFlashEl(n); } };
+    setLive('imps', fmtN(c.imps)); setLive('clicks', fmtN(c.clicks));
     set('ctr', adsCtr(c).toFixed(1)+'%');
     const sp = el.querySelector('[data-m="spent"]'); if(sp) sp.innerHTML = fmtN(Math.round(c.spent))+'<i class="ads-cur">₽</i>';
-    const bar = el.querySelector('[data-m="bar"]'); if(bar) bar.style.width = Math.min(100, c.spent/c.budget*100)+'%';
+    const bar = el.querySelector('[data-m="bar"]'); if(bar){ bar.style.width = Math.min(100, c.spent/c.budget*100)+'%'; bar.className = adsBudgetCls(c); }
     adsDrawSpark(c);
     if(adsOpenStats.has(c.id)){
       adsDrawDays(c);

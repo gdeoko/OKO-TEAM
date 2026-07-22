@@ -29,8 +29,15 @@ function vsSave(){ try{ localStorage.setItem('oko-verify', JSON.stringify(VS_VER
   }
 })();
 
+/* Синяя галочка: самодостаточный SOLID-бейдж (не зависит от #i-verified и от .i-стилей ядра).
+   Скалопированная печать-звезда + белая галочка — читаемо даже на 13px в ленте/чатах/профиле. */
+const VS_SEAL_D = 'M50 6L59.1 16.2L72 11.9L74.7 25.3L88.1 28L83.8 40.9L94 50L83.8 59.1L88.1 72L74.7 74.7L72 88.1L59.1 83.8L50 94L40.9 83.8L28 88.1L25.3 74.7L11.9 72L16.2 59.1L6 50L16.2 40.9L11.9 28L25.3 25.3L28 11.9L40.9 16.2Z';
+function vsBadgeSvg(){
+  const u = 'vsvb' + (vsUid++);
+  return `<svg viewBox="0 0 100 100" aria-hidden="true" class="vs-badge-svg"><defs><linearGradient id="${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5bbcf6"/><stop offset=".55" stop-color="#1d9bf0"/><stop offset="1" stop-color="#0a76d6"/></linearGradient></defs><path d="${VS_SEAL_D}" fill="url(#${u})"/><path d="${VS_SEAL_D}" fill="none" stroke="#dff1ff" stroke-width="2" opacity=".45"/><path d="M34 51 L45 62 L67 38" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
 function vsBadgeHtml(){
-  return `<span class="vs-badge" title="Верифицированный аккаунт"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#i-verified"/></svg></span>`;
+  return `<span class="vs-badge" title="Верифицированный аккаунт">${vsBadgeSvg()}</span>`;
 }
 function vsPremiumOk(){
   return /PRO|BUSINESS/.test(PROFILE.tier || '') || (typeof isOwner === 'function' && isOwner());
@@ -129,7 +136,7 @@ function vsDecorateFeed(){
     if(VERIFIED.has(tn.textContent.trim())){
       const sp = document.createElement('span');
       sp.className = 'vs-badge'; sp.title = 'Верифицированный аккаунт';
-      sp.innerHTML = '<svg viewBox="0 0 100 100" aria-hidden="true"><use href="#i-verified"/></svg>';
+      sp.innerHTML = vsBadgeSvg();
       el.insertBefore(sp, tn.nextSibling); /* галочка сразу после имени, до чипов «Реклама/В тренде» */
     }
   });
@@ -547,8 +554,17 @@ function vsWhen(ts){ try{ const d = new Date(ts); return d.toLocaleDateString('r
 /* --- символ иконки для тайла хаба (диаманд в бренд-штрихе) --- */
 function vsInjectTonSymbol(){
   try{
-    if(document.getElementById('i-vs-gem')) return;
     const defs = document.querySelector('svg defs'); if(!defs) return;
+    /* #i-verified — печать-звезда + галочка (штрих currentColor), для .i-контекстов
+       (строка «Верификация» в профиле и кнопка «Подать заявку»). Бейджи у имён
+       рисуются solid-версией vsBadgeSvg() и от этого символа не зависят. */
+    if(!document.getElementById('i-verified')){
+      const v = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      v.setAttribute('id','i-verified'); v.setAttribute('viewBox','0 0 100 100');
+      v.innerHTML = '<path d="'+VS_SEAL_D+'" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M35 51 L45 62 L66 39" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>';
+      defs.appendChild(v);
+    }
+    if(document.getElementById('i-vs-gem')) return;
     const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
     s.setAttribute('id','i-vs-gem'); s.setAttribute('viewBox','0 0 100 100');
     s.innerHTML = '<path d="M50 12 L82 40 L50 90 L18 40 Z M18 40 H82 M38 40 L50 90 M62 40 L50 90 M50 12 L38 40 M50 12 L62 40" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -949,14 +965,15 @@ showTab = function(t){
 
 /* ---------- САМОИНИЦИАЛИЗАЦИЯ ---------- */
 (function vsInit(){
+  /* символы (#i-verified, #i-vs-gem, #i-vs-recv) — до первых рендеров, чтобы
+     строка «Верификация» и кнопки сразу нашли иконку */
+  vsInjectTonSymbol();
   /* демо: официальный канал OKO в ленте тоже с галочкой */
   try{ if(typeof VERIFIED !== 'undefined') VERIFIED.add('OKO · Официальный'); }catch(e){}
   vsInsertProw();
   vsInitNpost();
   /* первые рендеры ядра прошли до патчей — дорисовать бейджи в текущем DOM */
   vsDecorateAll();
-  /* TON подарки: иконка-символ, заголовок, тайл в хабе, первый рендер */
-  vsInjectTonSymbol();
   try{ if(typeof regTitle === 'function') regTitle('ton', 'TON Подарки'); }catch(e){}
   try{ if(typeof addSvcTile === 'function') addSvcTile({ id:'ton', label:'TON Подарки', ico:'vs-gem', bg:'rgba(0,152,234,.16)', fg:'#3fb6ff', onclick:()=>{ if(typeof showTab==='function') showTab('ton'); } }); }catch(e){}
   const scr = document.getElementById('screen-ton');

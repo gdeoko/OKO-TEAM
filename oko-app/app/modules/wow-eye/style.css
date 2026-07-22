@@ -3,18 +3,28 @@
    Слои .auth-logo (blur+drop-shadow+logoBreath/logoBlink) больше не участвуют. */
 #authScreen .auth-logo{display:none!important}
 
-/* Контейнер занимает ровно место прежнего лого (132×132), держит вертикальную раскладку. */
+/* Контейнер занимает ровно место прежнего лого (132×132), держит вертикальную раскладку.
+   overflow:visible — halo/свечение (2D-фолбэк ~224px, three ~236px) свободно выходит за знак. */
 #we-wrap{
   position:relative;
   width:132px;height:132px;
   flex:0 0 auto;
   margin:0 auto;
   display:block;
+  overflow:visible;
   perspective:680px;
   transform-style:preserve-3d;
   pointer-events:none;          /* не перехватывает тапы по кнопкам */
   opacity:0;
   animation:we-in .9s .15s cubic-bezier(.2,1.15,.3,1) forwards;
+}
+
+/* WebGL-холст реального 3D-глаза (three.js). Центрирован по центру знака → glow симметричен. */
+#we-gl{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  -webkit-backface-visibility:hidden;backface-visibility:hidden;
 }
 @keyframes we-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
 
