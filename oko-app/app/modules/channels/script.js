@@ -494,7 +494,7 @@ function chPageList(){
     return `<div class="ch-card" onclick="chGo('channel','${c.id}')">
       ${chAvInner(c, locked?'locked':'', locked)}
       <div class="ch-cbody">
-        <div class="ch-cname"><span style="overflow:hidden;text-overflow:ellipsis">${chEsc(c.name)}</span>${chBadge(c)}</div>
+        <div class="ch-cname"><span style="min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${chEsc(c.name)}</span>${chBadge(c)}</div>
         <div class="ch-csub">${sub}</div>
         <div class="ch-cbadges">${chBadges(c)}</div>
       </div>
