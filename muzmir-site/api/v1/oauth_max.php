@@ -105,9 +105,17 @@ $avatar = (string)($profile['picture'] ?? $profile['avatar'] ?? $profile['photo'
 if ($extId === '') { flash('MAX не вернул идентификатор аккаунта.', 'error'); redirect('/login'); }
 
 // upsert users (по max_id / email), сохранение имени + аватара, вход.
+// Фиксируем максимальный id до upsert: если после вернётся больший id — это новый пользователь.
+$maxIdBefore = (int) (one("SELECT MAX(id) AS m FROM users")['m'] ?? 0);
 $uid = auth_upsert_social('max', $extId, $name, $email, $avatar);
+$isNewUser = $uid > $maxIdBefore;
 
 login_user($uid);
 auth_add_subscriber($email, $name, 'max');   // email может отсутствовать — тогда no-op
 audit('login_max', 'user', $uid, ['max_id' => $extId]);
+
+// Приветственное письмо — один раз, только новым пользователям и при наличии email.
+if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
+    mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
+}
 redirect('/cabinet?auth=ok');

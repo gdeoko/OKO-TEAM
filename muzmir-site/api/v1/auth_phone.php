@@ -90,10 +90,18 @@ if ($action === 'verify') {
         ]);
     }
 
+    $isNewUser = !$user;   // запись не найдена → создан новый пользователь
+
     login_user($uid);
     // В subscribers попадёт только при наличии валидного email (ключ рассылок — email).
     auth_add_subscriber($email, $name, 'phone');
     audit('auth_phone_otp', 'user', $uid, ['phone' => $formatted]);
+
+    // Приветственное письмо — один раз, только новым пользователям и при наличии email.
+    if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
+        mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
+    }
+
     json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
 }
 

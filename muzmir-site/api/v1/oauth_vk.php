@@ -99,9 +99,17 @@ if ($pr) {
 }
 
 // upsert users (по vk_id / email), сохранение имени + аватара, вход.
+// Фиксируем максимальный id до upsert: если после вернётся больший id — это новый пользователь.
+$maxIdBefore = (int) (one("SELECT MAX(id) AS m FROM users")['m'] ?? 0);
 $uid = auth_upsert_social('vk', $vkUserId, $name, $email, $avatar);
+$isNewUser = $uid > $maxIdBefore;
 
 login_user($uid);
 auth_add_subscriber($email, $name, 'vk');   // email может отсутствовать — тогда no-op
 audit('login_vk', 'user', $uid, ['vk_user_id' => $vkUserId]);
+
+// Приветственное письмо — один раз, только новым пользователям и при наличии email.
+if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
+    mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
+}
 redirect('/cabinet?auth=ok');

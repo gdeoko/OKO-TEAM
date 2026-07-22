@@ -73,9 +73,17 @@ if ($action === 'request') {
             ]);
         }
 
+        $isNewUser = !$user;   // запись не найдена → создан новый пользователь
+
         login_user($uid);
         auth_add_subscriber($email, input('name'), 'email');
         audit('auth_email_password', 'user', $uid, []);
+
+        // Приветственное письмо — один раз, только новым пользователям и при наличии email.
+        if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
+            mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
+        }
+
         json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
     }
 
@@ -123,9 +131,18 @@ if ($action === 'verify') {
         ]);
     }
 
+    $isNewUser = !$user;   // запись не найдена → создан новый пользователь
+
     login_user($uid);
     auth_add_subscriber($email, input('name'), 'email');
     audit('auth_email_magic', 'user', $uid, []);
+
+    // Приветственное письмо — один раз, только новым пользователям и при наличии email.
+    if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
+        $welcomeName = (string) input('name');
+        mail_queue($email, $welcomeName, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $welcomeName]));
+    }
+
     json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
 }
 
