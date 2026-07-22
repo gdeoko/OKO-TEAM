@@ -1330,8 +1330,11 @@ main>.screen{position:relative;z-index:1}
 .wal-day-net.in{color:var(--accent)}
 .wal-day-net.out{color:var(--danger)}
 
-.wal-op{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);animation:walOpIn .34s cubic-bezier(.25,1,.4,1) both}
+.wal-op{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);animation:walOpIn .34s cubic-bezier(.25,1,.4,1) both;cursor:pointer;border-radius:10px;transition:background .15s}
+.wal-op:active{background:var(--lime-dim)}
+:root[data-theme="light"] .wal-op:active{background:var(--raised)}
 .wal-op:last-child{border-bottom:none}
+.wal-op-chev{flex-shrink:0;width:14px;height:14px;color:var(--dim);opacity:.5;margin-left:-2px}
 @keyframes walOpIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .wal-op-ic{position:relative;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:visible}
 .wal-op-ic.in{background:var(--lime-dim);color:var(--accent)}
@@ -6666,7 +6669,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.74</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.76</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
