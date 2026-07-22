@@ -18,6 +18,8 @@ const FA = {
   usedCombos: {},   /* защита от повторов шаблон+автор в генераторе */
   io: null,
   infoOpen: false,  /* раскрыто ли пояснение «как работает лента» */
+  now: Date.now(),  /* «замороженное сейчас» скоринга: одинаковый epoch на все ре-рендеры →
+                       детерминированный порядок (нет дребезга). Обновляется на refresh/подгрузке. */
 };
 
 /* ---------- персист сигналов ---------- */
@@ -80,7 +82,7 @@ function faRand(id){
    Все производные детерминированы от данных поста → порядок ленты стабилен между рендерами. */
 function faAgeH(p){                       /* возраст в часах; пол 0.5ч, чтобы свежак не делил на ~0 */
   if(!p.ts) return p.promoted ? 2 : 96;
-  return Math.max((Date.now() - p.ts) / 36e5, 0.5);
+  return Math.max((FA.now - p.ts) / 36e5, 0.5);  /* FA.now заморожен → скор стабилен между рендерами */
 }
 function faReactions(p){                  /* взвешенная вовлечённость: коммент/репост весомее лайка */
   return (p.likes||0) + (Array.isArray(p.comments) ? p.comments.length : 0)*3 + (p.reposts||0)*2;
@@ -222,8 +224,11 @@ if(typeof likePost === 'function'){
   const _faPrevLikePost = likePost;
   likePost = function(id){
     const p = postById(id); const was = p ? !!p.liked : false;
-    _faPrevLikePost(id);
-    if(p && p.topic) faSignal(p.topic, (p.liked && !was) ? 2 : ((!p.liked && was) ? -2 : 0));
+    _faPrevLikePost(id);                          /* точечное обновление карточки — БЕЗ пересборки ленты */
+    if(p && p.liked !== was){
+      if(p.topic) faSignal(p.topic, p.liked ? 2 : -2);
+      faAuthor(p.name, p.liked ? 1.5 : -1.5);     /* лайк усиливает аффинность к автору */
+    }
   };
 }
 if(typeof repost === 'function'){
@@ -231,7 +236,10 @@ if(typeof repost === 'function'){
   repost = function(id){
     const p = postById(id); const was = p ? !!p.reposted : false;
     _faPrevRepost(id);
-    if(p && p.topic) faSignal(p.topic, (p.reposted && !was) ? 3 : ((!p.reposted && was) ? -3 : 0));
+    if(p && p.reposted !== was){
+      if(p.topic) faSignal(p.topic, p.reposted ? 3 : -3);
+      faAuthor(p.name, p.reposted ? 2 : -2);      /* репост — самый сильный сигнал доверия автору */
+    }
   };
 }
 /* openComments/addComment полностью переопределены ниже (секция 6: комментарии-треды) —
@@ -243,12 +251,43 @@ function faIdOf(art){
   const m = b && (b.getAttribute('onclick')||'').match(/openPostMenu\((\d+)/);
   return m ? +m[1] : null;
 }
-function faWhy(p){
-  if(p.promoted) return {cls:'ad', ico:'megaphone', txt:'Реклама'};
+/* многосигнальное «почему рекомендовано»: до 2 честных, человекочитаемых причин.
+   Разные сигналы → своя иконка и подпись; порядок = приоритет прозрачности. */
+function faReasons(p){
+  if(p.promoted) return {cls:'ad', ico:'megaphone', parts:['Реклама']};
   const ints = faInterests();
-  if(p.topic && ints.has(p.topic)) return {cls:'int', ico:'star', txt:'Твой интерес: ' + FA_TOPICS[p.topic]};
-  if(p.topic && (FA.signals[p.topic]||0) >= 2) return {cls:'like', ico:'heart', txt:'Похоже на то, что ты лайкал'};
-  return {cls:'hot', ico:'fire', txt:'Популярно сейчас'};
+  const parts = [];
+  let cls = 'hot', ico = 'fire';
+  /* 1 — интерес из регистрации (самый честный «почему») */
+  if(p.topic && ints.has(p.topic)){ parts.push('Твой интерес: ' + FA_TOPICS[p.topic]); cls = 'int'; ico = 'star'; }
+  /* 2 — скорость набора (виральность), в реакциях/час */
+  const vel = Math.round(faVelocity(p));
+  if(vel >= 40 && parts.length < 2){ parts.push('Набирает ' + vel + ' реакций/час'); if(cls === 'hot'){ cls = 'vel'; ico = 'bolt'; } }
+  /* 3 — похоже на лайкнутое (накопленный интерес к теме) */
+  if((FA.signals[p.topic]||0) >= 2 && parts.length < 2){ parts.push('Похоже на лайкнутое'); if(cls === 'hot'){ cls = 'like'; ico = 'heart'; } }
+  /* 4 — автор, которого ты читаешь (аффинность) */
+  if((FA.authors[p.name]||0) >= 3 && parts.length < 2){ parts.push('Автор, которого ты читаешь'); if(cls === 'hot'){ cls = 'aff'; ico = 'user'; } }
+  if(!parts.length) parts.push('Популярно сейчас');
+  return {cls, ico, parts};
+}
+
+/* диверсификация ленты: не более 2 постов одного автора подряд (как в TikTok/Instagram).
+   Жадно и детерминированно переставляет уже отранжированные узлы → без «дребезга» при ре-рендере.
+   items: [{el, name}] в порядке ранга; возвращает [el] в разнообразном порядке. */
+function faDiversify(items){
+  const remaining = items.slice(), out = [];
+  while(remaining.length){
+    let idx = 0;
+    const n = out.length;
+    if(n >= 2 && out[n-1]._n && out[n-1]._n === out[n-2]._n){
+      const alt = remaining.findIndex(x => x.name !== out[n-1]._n);
+      if(alt > -1) idx = alt;         /* если все оставшиеся того же автора — оставляем как есть */
+    }
+    const pick = remaining.splice(idx, 1)[0];
+    pick.el._n = pick.name;           /* пометка автора для проверки соседей */
+    out.push(pick.el);
+  }
+  return out;
 }
 
 function faDecorate(){
@@ -277,37 +316,53 @@ function faDecorate(){
       `</div>`);
   }
 
-  /* реклама: вынуть из органики и вставить каждые 4-5 позиций (первая — не топ-1) */
+  /* разбор карточек на органику и рекламу */
   const arts = [...list.querySelectorAll('article.post')];
   const ads = [], org = [];
-  arts.forEach(a=>{ const p = postById(faIdOf(a)); (p && p.promoted ? ads : org).push(a); });
+  arts.forEach(a=>{ const p = postById(faIdOf(a)); if(p && p.promoted) ads.push(a); else org.push({el:a, name:(p && p.name)||''}); });
+
+  /* диверсификация органики (без 3 подряд одного автора), затем вставка рекламы каждые 4-5 позиций.
+     appendChild перемещает существующие узлы — это точечная перестановка, а не пересборка ленты. */
+  let seq = faDiversify(org);
   if(ads.length && arts.length > 3){
-    const merged = org.slice(); let pos = 2;
+    let pos = 2;
     ads.forEach((ad,i)=>{
-      merged.splice(Math.min(pos, merged.length), 0, ad);
+      seq.splice(Math.min(pos, seq.length), 0, ad);
       pos += 5 + (faRand(9100 + i) < 0.5 ? 0 : 1);
     });
-    merged.forEach(el=>list.appendChild(el));
   }
+  seq.forEach(el=>list.appendChild(el));
 
-  /* метки «Канал»/«В тренде»/«Реклама» + чип «почему показано» + галочка verified — без дублей */
+  /* метки «Канал»/«В тренде»/«Реклама» + чип «почему показано» + «растёт» + галочка verified — без дублей */
   list.querySelectorAll('article.post').forEach(art=>{
     const p = postById(faIdOf(art)); if(!p) return;
     const head = art.querySelector('.head');
     const nameEl = art.querySelector('.head .name');
     /* у рекламы уже есть бейдж «Реклама», у топ-поста — «В тренде» (ядро) */
     let nameChip = nameEl && nameEl.querySelector('.chip');
-    const w = faWhy(p);
+    const w = faReasons(p);
+    const vel = faVelocity(p);
+    /* «В тренде» — виральный бейдж по скорости набора (если у карточки ещё нет чипа) */
+    if(nameEl && !nameChip && faIsTrending(p)){
+      nameEl.insertAdjacentHTML('beforeend', ` <span class="chip fa-trend">${I('fa-trend')}<span>В тренде</span></span>`);
+      nameChip = nameEl.querySelector('.fa-trend');
+    }
     /* «Канал» — информ-метка для органических каналов без своего чипа и без персонального сигнала
        (заменяет собой безликое «Популярно», а не дублирует его) */
     if(nameEl && !nameChip && !p.promoted && w.cls === 'hot' && /канал/i.test(p.sub || '')){
       nameEl.insertAdjacentHTML('beforeend', ' <span class="chip fa-chan">Канал</span>');
       nameChip = nameEl.querySelector('.fa-chan');
     }
-    /* второй чип «почему» был бы дублем-шумом при наличии метки → показываем только осмысленный */
+    /* «растёт» — тонкий индикатор восходящей вовлечённости (для набирающих, но ещё не топ-трендов) */
+    const sub = art.querySelector('.head .sub');
+    if(sub && !sub.querySelector('.fa-rise') && !p.promoted && !faIsTrending(p) && vel >= 45){
+      sub.insertAdjacentHTML('beforeend', ` <span class="fa-rise">${I('fa-trend')}растёт</span>`);
+    }
+    /* чип «почему»: до 2 честных причин через · ; при наличии осмысленной метки «Популярно» не дублируем */
     if(head && !art.querySelector('.fa-why') && !p.promoted){
       if(!(w.cls === 'hot' && nameChip)){
-        head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}<span>${w.txt}</span></div>`);
+        const inner = w.parts.map((t,i)=> (i ? '<b class="fa-sep">·</b>' : '') + '<span>' + esc(t) + '</span>').join('');
+        head.insertAdjacentHTML('afterend', `<div class="fa-why ${w.cls}">${I(w.ico)}${inner}</div>`);
       }
     }
     /* verify-stickers (vsDecorateFeed) выполняется в цепочке рендера РАНЬШЕ и уже могла
@@ -411,7 +466,9 @@ function faToggleInfo(btn){
 }
 
 function faRefresh(){
-  FA.seed = (Math.random() * 4294967295) >>> 0;   /* новый шум */
+  FA.seed = (Math.random() * 4294967295) >>> 0;   /* новый шум → пересборка порядка */
+  FA.now = Date.now();                             /* обновляем epoch свежести только по явному действию */
+  FA._ints = null;                                 /* перечитать интересы регистрации (сид персонализации) */
   renderFeed('rec');
   const list = document.getElementById('feedList');
   if(list){ list.classList.remove('fa-anim'); void list.offsetWidth; list.classList.add('fa-anim');
@@ -484,6 +541,7 @@ function faLoadMore(){
   setTimeout(()=>{
     list.querySelectorAll('.fa-skel').forEach(x=>x.remove());
     FA.page++;
+    FA.now = Date.now();               /* свежесть/скорость пересчитываются на новом epoch при подгрузке */
     faGenerate(5, FA.page).forEach(p=>POSTS.rec.push(p));
     const m = document.querySelector('main');
     const st = m ? m.scrollTop : 0;
@@ -624,6 +682,7 @@ function faLikeComment(postId, cid){
   c.liked = !c.liked;
   c.likes = Math.max(0, (c.likes || 0) + (c.liked ? 1 : -1));
   if(p.topic) faSignal(p.topic, c.liked ? 0.4 : -0.4);
+  faAuthor(p.name, c.liked ? 0.3 : -0.3);
   const btn = document.querySelector('#cmtList .fac-item[data-cid="' + cid + '"] .fac-like');
   if(btn){
     btn.classList.toggle('on', c.liked);
@@ -670,6 +729,7 @@ openComments = function(id){
   faRenderComments(id);
   openSheet('comments');
   if(p.topic) faSignal(p.topic, 0.5);
+  faAuthor(p.name, 0.6);                 /* открыл обсуждение — интерес к автору */
 };
 addComment = function(){
   const inp = document.getElementById('cmtInput'); if(!inp) return;
@@ -689,6 +749,7 @@ addComment = function(){
   inp.value = '';
   faClearReply();
   if(p.topic) faSignal(p.topic, 0.7);
+  faAuthor(p.name, 1);                   /* написал коммент — сильный сигнал интереса к автору */
   p._cmtShown = Math.max(p._cmtShown || FA_CMT_PAGE, p.comments.length);  /* свой коммент всегда виден */
   faRenderComments(commentsFor);
   faUpdateCardCount(p);
@@ -749,6 +810,8 @@ function faDoubleTapLike(){
   addSym('i-fa-refresh', '<path d="M84 50a34 34 0 1 1-10-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><polyline points="76 10 76 27 59 26" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
   addSym('i-fa-info', '<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><line x1="50" y1="45" x2="50" y2="70" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="31" r="4.6" fill="currentColor"/>');
   addSym('i-fa-x', '<line x1="28" y1="28" x2="72" y2="72" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><line x1="72" y1="28" x2="28" y2="72" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>');
+  /* восходящий график — для бейджа «В тренде» и индикатора «растёт» */
+  addSym('i-fa-trend', '<polyline points="16 64 40 42 56 56 84 26" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="64 26 84 26 84 46" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>');
   /* i18n: чтобы EN-режим не оставлял русские строки шапки (авто-переводчик по ST_DICT) */
   if(typeof ST_DICT !== 'undefined'){
     const add = {
@@ -757,6 +820,9 @@ function faDoubleTapLike(){
       'Ранжирует алгоритм OKO: вовлечённость и свежесть — как в Instagram, в отличие от Telegram. Реагируй на посты — лента точнее подстроится под тебя.':
         'Ranked by the OKO algorithm: engagement and recency — like Instagram, unlike Telegram. React to posts and the feed tunes to you.',
       'Похоже на то, что ты лайкал':'Similar to what you liked',
+      'Похоже на лайкнутое':'Similar to what you liked',
+      'Автор, которого ты читаешь':'An author you follow',
+      'В тренде':'Trending','растёт':'rising',
       'Популярно сейчас':'Trending now',
       'Подборка пересобрана':'Feed rebuilt',
       'Ты посмотрел всю подборку — нажми «Обновить подборку» сверху':'You have seen the whole feed — tap “Refresh feed” at the top',
@@ -777,6 +843,7 @@ function faDoubleTapLike(){
   }
   try{ FA.infoOpen = localStorage.getItem('oko-feed-info') === '1'; }catch(e){}
   faLoadSignals();
+  faLoadAuthors();
 
   /* обогащение composer'а комментариев: аватар автора + плашка «Ответ …» (base.html не трогаем) */
   (function faWireCompose(){

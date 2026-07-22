@@ -229,3 +229,92 @@
 /* ---- Сравнительная таблица: колонка MAX ---- */
 .pw-cmp{min-width:540px}
 .pw-cmp thead th.pw-c-max{color:var(--accent)}
+
+/* ---- Рекомендованный тариф (PRO): якорь выбора ---- */
+.pw-tier-rec{border-color:rgba(154,255,0,.42)}
+.pw-tier-rec:not(.on){box-shadow:0 6px 26px rgba(154,255,0,.09)}
+
+/* ---- «хит» над колонкой PRO в сравнении ---- */
+.pw-c-tag{display:block;font-style:normal;font-family:var(--font-body);font-size:8px;font-weight:800;
+  letter-spacing:.08em;text-transform:uppercase;color:#000;background:var(--lime);border-radius:99px;
+  padding:1px 5px;margin:3px auto 0;width:fit-content}
+
+/* ---- Лента недавней активности (соц-доказательство) ---- */
+.pw-tick{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 12px 8px;margin:0 0 16px}
+.pw-tick-h{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.pw-tick-h svg{width:12px;height:12px;color:var(--accent)}
+.pw-tick-view{height:38px;overflow:hidden;position:relative;
+  -webkit-mask:linear-gradient(180deg,transparent,#000 24%,#000 76%,transparent);
+  mask:linear-gradient(180deg,transparent,#000 24%,#000 76%,transparent)}
+.pw-tick-track{display:flex;flex-direction:column;animation:pwTickScroll 22s linear infinite;will-change:transform}
+@keyframes pwTickScroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.pw-tick-row{height:19px;display:flex;align-items:center;gap:7px;font-size:12px;line-height:19px}
+.pw-tick-row b{font-weight:700;color:var(--text)}
+.pw-tick-row>span:not(.pw-tick-dot){color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pw-tick-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--lime);
+  box-shadow:0 0 6px var(--lime);animation:pwDotPulse 1.6s ease-in-out infinite}
+@keyframes pwDotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ---- Честный обратный отсчёт годовой скидки ---- */
+.pw-count{border:1px solid rgba(154,255,0,.4);border-radius:var(--r-md);padding:11px 12px;margin:0 0 12px;text-align:center;
+  background:radial-gradient(120% 120% at 50% 0%,rgba(154,255,0,.1),transparent 70%),var(--raised)}
+.pw-count-t{font-size:11px;font-weight:700;color:var(--accent);display:flex;align-items:center;
+  justify-content:center;gap:6px;margin-bottom:8px}
+.pw-count-t svg{width:13px;height:13px}
+.pw-count-segs{display:flex;align-items:center;justify-content:center;gap:5px}
+.pw-count-seg{min-width:46px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 4px}
+.pw-count-seg b{font-family:var(--font-display);font-size:22px;line-height:1;color:var(--text);
+  letter-spacing:.01em;display:block;font-variant-numeric:tabular-nums}
+.pw-count-seg i{font-style:normal;font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.pw-count-sep{font-family:var(--font-display);font-size:18px;color:var(--dim);opacity:.6}
+
+/* ---- Ценностное обрамление (экономия / цена-в-день / ROI) ---- */
+.pw-value{display:flex;flex-direction:column;gap:7px;margin:0 0 4px}
+.pw-value-i{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text);font-weight:600;line-height:1.35}
+.pw-value-i span{flex:none;width:20px;height:20px;border-radius:6px;background:var(--lime-dim);
+  display:flex;align-items:center;justify-content:center}
+.pw-value-i span svg{width:12px;height:12px;color:var(--accent)}
+
+/* ---- Гарантия / снятие риска ---- */
+.pw-guar-band{display:flex;align-items:center;gap:8px;justify-content:center;text-align:center;
+  font-size:11px;color:var(--dim);background:var(--raised);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:10px 12px;margin-top:10px;line-height:1.4}
+.pw-guar-band svg{flex:none;width:14px;height:14px;color:var(--accent)}
+
+/* ---- FAQ / возражения ---- */
+.pw-faq{margin:16px 0 4px}
+.pw-faq-h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;margin-bottom:9px}
+.pw-faq-h svg{width:15px;height:15px;color:var(--accent)}
+.pw-faq-i{border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:8px;background:var(--raised);overflow:hidden}
+.pw-faq-i summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pw-faq-i summary::-webkit-details-marker{display:none}
+.pw-faq-x{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:transform .22s}
+.pw-faq-x svg{width:13px;height:13px;color:var(--dim)}
+.pw-faq-i[open] .pw-faq-x{transform:rotate(180deg)}
+.pw-faq-i[open] .pw-faq-x svg{color:var(--accent)}
+.pw-faq-i p{padding:0 14px 13px;font-size:12.5px;line-height:1.55;color:var(--dim)}
+
+/* ---- Партнёрский пример начисления ---- */
+.pw-pr-eg{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--dim);margin:2px 2px 0;line-height:1.35;position:relative}
+.pw-pr-eg svg{flex:none;width:13px;height:13px;color:var(--accent)}
+.pw-pr-eg b{color:var(--accent);font-weight:800}
+
+/* ---- Партнёрский шэр-кит (ссылка + кнопки шэра) ---- */
+.pw-share{margin-top:12px;display:flex;flex-direction:column;gap:9px;position:relative}
+.pw-share-link{display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px dashed rgba(154,255,0,.5);border-radius:var(--r-md);padding:8px 8px 8px 11px}
+.pw-share-link span{flex:1;min-width:0;font-size:12px;color:var(--text);font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pw-share-copy{flex:none;width:32px;height:32px;border-radius:8px;background:var(--lime-dim);
+  display:flex;align-items:center;justify-content:center;transition:filter .18s,transform .12s}
+.pw-share-copy:active{transform:scale(.92)}
+.pw-share-copy svg{width:15px;height:15px;color:var(--accent)}
+.pw-share-row{display:flex;gap:8px}
+.pw-share-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 4px;
+  border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border);
+  font-size:12px;font-weight:700;color:var(--text);transition:border-color .18s,transform .12s}
+.pw-share-btn:hover{border-color:rgba(154,255,0,.45)}
+.pw-share-btn:active{transform:scale(.97)}
+.pw-share-btn svg{flex:none;width:14px;height:14px;color:var(--accent)}

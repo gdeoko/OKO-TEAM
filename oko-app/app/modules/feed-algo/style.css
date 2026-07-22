@@ -35,17 +35,33 @@
 @keyframes fa-pulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.5)}50%{box-shadow:0 0 0 5px rgba(154,255,0,0)}}
 @keyframes fa-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 
-/* ======================= ЧИП «ПОЧЕМУ ПОКАЗАНО» ======================= */
-.fa-why{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;letter-spacing:.02em;
-  color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:99px;
+/* ======================= ЧИП «ПОЧЕМУ ПОКАЗАНО» (многосигнальный) ======================= */
+/* до 2 причин через · ; перенос по словам — никакой обрезки/ellipsis (правило zero-truncation) */
+.fa-why{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;row-gap:3px;
+  font-size:10.5px;font-weight:600;letter-spacing:.02em;
+  color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:12px;
   padding:4px 10px 4px 8px;margin:-2px 0 10px;max-width:100%;animation:fa-fade .3s ease;vertical-align:middle}
 .fa-why svg.i{width:12px;height:12px;flex:none;opacity:.9}
-.fa-why span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-why span{min-width:0;white-space:normal;word-break:break-word}
+.fa-why .fa-sep{font-weight:400;opacity:.4;line-height:1;font-style:normal}
 .fa-why.int{color:var(--accent);background:var(--lime-dim);border-color:rgba(154,255,0,.25)}
 :root[data-theme="light"] .fa-why.int{border-color:rgba(83,168,0,.3)}
+.fa-why.int .fa-sep,.fa-why.vel .fa-sep,.fa-why.like .fa-sep,.fa-why.aff .fa-sep{opacity:.55}
 .fa-why.like{color:var(--accent)}
 .fa-why.like svg.i{fill:currentColor;opacity:1}
+.fa-why.vel{color:var(--accent)}
+.fa-why.vel svg.i{color:var(--accent);opacity:1}
+.fa-why.aff svg.i{opacity:1}
 .fa-why.hot svg.i{color:#ff8a3d}
+
+/* «В тренде» — виральный бейдж по скорости набора (лаймовый, читается сразу) */
+#feedList .post .head .name .chip.fa-trend{display:inline-flex;align-items:center;gap:4px;color:#000;
+  background:var(--lime);border-color:var(--lime)}
+#feedList .post .head .name .chip.fa-trend svg.i{width:9px;height:9px;color:#000}
+/* «растёт» — тонкий индикатор восходящей вовлечённости в мете карточки */
+#feedList .post .head .sub .fa-rise{display:inline-flex;align-items:center;gap:3px;flex:none;
+  color:var(--accent);font-weight:600;white-space:nowrap;opacity:.95}
+#feedList .post .head .sub .fa-rise svg.i{width:11px;height:11px}
 
 /* ======================= ПРЕМИУМ-ПОЛИШ КАРТОЧКИ ПОСТА ======================= */
 #feedList .post{position:relative;transition:background .2s}
