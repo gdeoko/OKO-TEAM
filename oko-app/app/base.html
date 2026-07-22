@@ -1544,6 +1544,9 @@ let curFeedKind = 'sub';
 /* ================= НАВИГАЦИЯ ================= */
 const TITLES = {chats:'Чаты', feed:'Лента', mini:'Мини-аппы', partner:'Партнёрка', profile:'Профиль'};
 function showTab(t){
+  /* закрываем всплывающие оверлеи, чтобы контекст-меню поста/сообщения не «залипало»
+     при переходе между вкладками (правка по аудиту) */
+  try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+t).classList.add('active');
   document.querySelectorAll('#tabs>button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
