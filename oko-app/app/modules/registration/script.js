@@ -508,9 +508,12 @@ function regObScene(key){
     case 'market':
       return `<div class="reg-ob-scene reg-ob-scene--market">
         <div class="reg-ob-list">
-          <div class="reg-ob-list-img">${I('briefcase')}</div>
-          <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small><span class="reg-ob-price">2 500 ₽</span></div>
-          <span class="reg-ob-escrow">${I('lock')} Сделка защищена</span>
+          <div class="reg-ob-list-top">
+            <div class="reg-ob-list-img">${I('briefcase')}</div>
+            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small></div>
+            <span class="reg-ob-price">2 500 ₽</span>
+          </div>
+          <span class="reg-ob-escrow">${I('lock')} Сделка защищена эскроу</span>
         </div>
       </div>`;
     case 'ai':

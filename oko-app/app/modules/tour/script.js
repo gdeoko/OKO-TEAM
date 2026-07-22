@@ -8,26 +8,45 @@
 
 const TR_KEY = 'oko-tour';
 
+/* ---------- двуязычие тура: EN, когда язык интерфейса английский ---------- */
+/* берём язык из i18n-ядра (LANG); helper — на каждый видимый текст тура */
+function trT(ru, en){ return (typeof LANG !== 'undefined' && LANG === 'en') ? en : ru; }
+
+/* Каждый шаг двуязычен: title/text — {ru,en}. Рендер выбирает язык по LANG. */
 const TR_STEPS = [
-  {tab:'feed', sel:'nav#tabs', ico:'compass', title:'Нижняя навигация',
-   text:'Пять разделов всегда под рукой: Лента, Чаты, Мини-аппы, Кошелёк и Профиль. Переключайся одним касанием — всё OKO живёт здесь.',
+  {tab:'feed', sel:'nav#tabs', ico:'compass',
+   title:{ru:'Нижняя навигация', en:'Bottom navigation'},
+   text:{ru:'Пять разделов всегда под рукой: Лента, Чаты, Мини-аппы, Кошелёк и Профиль. Переключайся одним касанием — всё OKO живёт здесь.',
+         en:'Five sections always within reach: Feed, Chats, Hub, Wallet and Profile. Switch with a single tap — all of OKO lives here.'},
    pad:4, round:'14px'},
-  {tab:'feed', sel:'#screen-feed .feed-tabs', ico:'feed', title:'Лента и алгоритмы',
-   text:'«Подписки» — посты твоих авторов, «Рекомендации» — умный подбор по интересам. Чем больше реакций ставишь, тем точнее лента подстраивается под тебя.',
+  {tab:'feed', sel:'#screen-feed .feed-tabs', ico:'feed',
+   title:{ru:'Лента и алгоритмы', en:'Feed & algorithms'},
+   text:{ru:'«Подписки» — посты твоих авторов, «Рекомендации» — умный подбор по интересам. Чем больше реакций ставишь, тем точнее лента подстраивается под тебя.',
+         en:'“Following” shows posts from your authors, “For you” is a smart pick by interest. The more you react, the better the feed tunes to you.'},
    pad:6, round:'16px'},
-  {tab:'wallet', sel:'#screen-wallet .wal-hero', ico:'money', title:'Кошелёк — баланс на всё',
-   text:'Один лицевой счёт на всё: тарифы, продвижение, биржа с эскроу-защитой, игры и переводы в чатах. Пополняй картой или криптой, выводи заработанное.',
+  {tab:'wallet', sel:'#screen-wallet .wal-hero', ico:'money',
+   title:{ru:'Кошелёк — баланс на всё', en:'Wallet — one balance for everything'},
+   text:{ru:'Один лицевой счёт на всё: тарифы, продвижение, биржа с эскроу-защитой, игры и переводы в чатах. Пополняй картой или криптой, выводи заработанное.',
+         en:'One account for it all: plans, promotion, the escrow-protected marketplace, games and chat transfers. Top up by card or crypto, withdraw what you earn.'},
    pad:6, round:'18px', clamp:true},
-  {tab:'mini', sel:'#maGrid .svc-grid', ico:'bolt', title:'Мини-аппы',
-   text:'Сервисы как приложения — без установки: Академия с сертификатами, Игры, Биржа услуг, реклама и проверка видео. Всё открывается в один тап.',
+  {tab:'mini', sel:'#maGrid .svc-grid', ico:'bolt',
+   title:{ru:'Мини-аппы', en:'Mini-apps'},
+   text:{ru:'Сервисы как приложения — без установки: Академия с сертификатами, Игры, Биржа услуг, реклама и проверка видео. Всё открывается в один тап.',
+         en:'Services like apps — no install: Academy with certificates, Games, the services marketplace, ads and video checks. Everything opens in one tap.'},
    pad:6, round:'18px', clamp:true},
-  {tab:'feed', sel:'#screen-feed .fab', ico:'plus', title:'Создавай посты',
-   text:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй и сразу продвинь его за счёт стартового бонуса на счёте.',
+  {tab:'feed', sel:'#screen-feed .fab', ico:'plus',
+   title:{ru:'Создавай посты', en:'Create posts'},
+   text:{ru:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй и сразу продвинь его за счёт стартового бонуса на счёте.',
+         en:'The lime button starts a new post: text, photo, video or poll. Publish and promote it right away with your starter bonus.'},
    pad:8, round:'50%'},
-  {tab:'profile', sel:'#screen-profile .profile-top', ico:'user', title:'Профиль и настройки',
-   text:'Твоя страница: тариф, статистика и достижения. Ниже — темы, уведомления, конфиденциальность и строка «Тур по OKO», если захочешь повторить подсказки.',
+  {tab:'profile', sel:'#screen-profile .profile-top', ico:'user',
+   title:{ru:'Профиль и настройки', en:'Profile & settings'},
+   text:{ru:'Твоя страница: тариф, статистика и достижения. Ниже — темы, уведомления, конфиденциальность и строка «Тур по OKO», если захочешь повторить подсказки.',
+         en:'Your page: plan, stats and achievements. Below — themes, notifications, privacy and the “OKO tour” row if you want to replay these tips.'},
    pad:6, round:'18px'},
 ];
+/* безопасно достать текст шага в текущем языке (совместимо со строкой, если вдруг) */
+function trStepStr(v){ return (v && typeof v === 'object') ? trT(v.ru, v.en) : (v || ''); }
 
 let trIdx = 0, trOpen = false, trFirstPlace = true, trRzT = null;
 
@@ -47,8 +66,8 @@ function trBuild(){
       <div class="tr-foot">
         <div class="tr-dots" id="trDots"></div>
         <div class="tr-btns">
-          <button class="tr-skip" id="trSkip" onclick="trSkip()">Пропустить</button>
-          <button class="btn tr-next" id="trNext" onclick="trNext()">Далее</button>
+          <button class="tr-skip" id="trSkip" onclick="trSkip()">${trT('Пропустить','Skip')}</button>
+          <button class="btn tr-next" id="trNext" onclick="trNext()">${trT('Далее','Next')}</button>
         </div>
       </div>
     </div>`;
@@ -95,7 +114,7 @@ function trFlushQ(){
   if(typeof showPopup === 'function') showPopup(o);
   if(trPopupQ.length) setTimeout(trFlushQ, 6000);
 }
-function trSkip(){ trClose(); if(typeof toast === 'function') toast('Тур можно вернуть: Профиль → «Тур по OKO»'); }
+function trSkip(){ trClose(); if(typeof toast === 'function') toast(trT('Тур можно вернуть: Профиль → «Тур по OKO»','You can reopen the tour: Profile → “OKO tour”')); }
 function trNext(){ if(trIdx < TR_STEPS.length - 1) trGo(trIdx + 1); else trFinish(); }
 function trFinish(){
   trClose();
@@ -103,16 +122,17 @@ function trFinish(){
 }
 function trDonePopup(){
   const bal = (typeof WALLET !== 'undefined' && WALLET && typeof fmtMoney === 'function')
-    ? ` Сейчас на балансе — ${fmtMoney(WALLET.balance)}.` : '';
-  if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast('Тур завершён'); return; }
-  showPopup({ico:'rocket', title:'Готово!',
-    body:`2 500 ₽ уже на счёте — попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.${bal}`,
+    ? trT(` Сейчас на балансе — ${fmtMoney(WALLET.balance)}.`, ` Your balance is now ${fmtMoney(WALLET.balance)}.`) : '';
+  if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast(trT('Тур завершён','Tour complete')); return; }
+  showPopup({ico:'rocket', title:trT('Готово!','All set!'),
+    body:trT('2 500 ₽ уже на счёте — попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.',
+             '2,500 ₽ is already in your account — try promotion: launch your first campaign in Ads Manager or boost a post from the feed.') + bal,
     actions:[
-      {label:'Попробовать продвижение', onclick:()=>{
+      {label:trT('Попробовать продвижение','Try promotion'), onclick:()=>{
         if(typeof showTab !== 'function') return;
         if(document.getElementById('screen-ads')) showTab('ads'); else showTab('wallet');
       }},
-      {label:'Позже', ghost:true},
+      {label:trT('Позже','Later'), ghost:true},
     ]});
 }
 
@@ -166,15 +186,15 @@ function trPlace(el, st){
   const body = document.getElementById('trBody');
   body.style.animation = 'none'; void body.offsetWidth; body.style.animation = '';
   body.innerHTML = `
-    <div class="tr-step-chip">${typeof I === 'function' ? I(st.ico) : ''} шаг ${trIdx + 1} из ${TR_STEPS.length}</div>
-    <h3>${st.title}</h3>
-    <p>${st.text}</p>`;
+    <div class="tr-step-chip">${typeof I === 'function' ? I(st.ico) : ''} ${trT('шаг','step')} ${trIdx + 1} ${trT('из','of')} ${TR_STEPS.length}</div>
+    <h3>${trStepStr(st.title)}</h3>
+    <p>${trStepStr(st.text)}</p>`;
   document.getElementById('trDots').innerHTML = TR_STEPS.map((_, k) =>
     `<span class="${k === trIdx ? 'on' : ''}" onclick="trGo(${k})"></span>`).join('');
   const next = document.getElementById('trNext');
   next.innerHTML = trIdx === TR_STEPS.length - 1
-    ? `Готово ${typeof I === 'function' ? I('check2') : ''}`
-    : `Далее ${typeof I === 'function' ? I('chev') : ''}`;
+    ? `${trT('Готово','Done')} ${typeof I === 'function' ? I('check2') : ''}`
+    : `${trT('Далее','Next')} ${typeof I === 'function' ? I('chev') : ''}`;
 
   /* вертикаль: под дырой, если не влезает — над, иначе по центру свободной зоны */
   const ch = card.offsetHeight, gap = 16;
@@ -244,7 +264,7 @@ function trAddRow(){
     if(!logoutRow || document.getElementById('trProwTour')) return;
     const b = document.createElement('button');
     b.className = 'prow'; b.id = 'trProwTour';
-    b.innerHTML = `${I('compass')} <span id="trRowLabel">Тур по OKO</span> <span class="chev">${I('chev')}</span>`;
+    b.innerHTML = `${I('compass')} <span id="trRowLabel">${trT('Тур по OKO','OKO tour')}</span> <span class="chev">${I('chev')}</span>`;
     b.onclick = ()=>trStart(true);
     logoutRow.parentNode.insertBefore(b, logoutRow);
   }catch(e){}

@@ -1315,24 +1315,23 @@ main>.screen{position:relative;z-index:1}
 
 /* ---------- СЦЕНА 4: биржа (лот + эскроу-защита) ---------- */
 .reg-ob-list{width:min(320px,100%);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);
-  padding:13px;display:flex;align-items:center;gap:13px;text-align:left;position:relative;
+  padding:13px;display:flex;flex-direction:column;gap:11px;text-align:left;
   box-shadow:0 20px 50px -24px rgba(0,0,0,.7);animation:regObCardIn .55s cubic-bezier(.2,1,.32,1) both}
 :root[data-theme="light"] .reg-ob-list{box-shadow:0 20px 46px -26px rgba(60,90,20,.35)}
-.reg-ob-list-img{width:60px;height:60px;flex-shrink:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;
+.reg-ob-list-top{display:flex;align-items:center;gap:13px;width:100%}
+.reg-ob-list-img{width:56px;height:56px;flex-shrink:0;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;
   color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.25)}
-.reg-ob-list-img .i{width:28px;height:28px}
+.reg-ob-list-img .i{width:26px;height:26px}
 .reg-ob-list-b{flex:1;min-width:0}
-.reg-ob-list-b b{font-size:14px;font-weight:700;color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-ob-list-b b{font-size:14px;font-weight:700;color:var(--text);display:block;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .reg-ob-list-b small{font-size:11.5px;color:var(--dim)}
-.reg-ob-price{font-family:var(--font-display);font-size:24px;color:var(--accent);letter-spacing:.01em;margin-top:4px;display:block}
-.reg-ob-escrow{position:absolute;top:11px;right:11px;display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;
-  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;padding:4px 9px;
+.reg-ob-price{font-family:var(--font-display);font-size:23px;color:var(--accent);letter-spacing:.01em;flex-shrink:0;white-space:nowrap}
+.reg-ob-escrow{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;font-size:11px;font-weight:700;
+  color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.24);border-radius:11px;padding:9px;
   animation:regObPop .4s .5s both}
-.reg-ob-escrow .i{width:11px;height:11px}
-.reg-ob-escrow::after{content:'';position:absolute;inset:0;border-radius:99px;border:1px solid rgba(154,255,0,.5);
-  animation:regObHalo 2.4s ease-out infinite}
-@keyframes regObHalo{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.25);opacity:0}}
-@media(prefers-reduced-motion:reduce){.reg-ob-list,.reg-ob-escrow,.reg-ob-escrow::after{animation:none}.reg-ob-escrow::after{opacity:0}}
+.reg-ob-escrow .i{width:13px;height:13px}
+@media(prefers-reduced-motion:reduce){.reg-ob-list,.reg-ob-escrow{animation:none}}
 
 /* ---------- СЦЕНА 5: ИИ-инструменты (промпт → генерация) ---------- */
 .reg-ob-scene--ai{flex-direction:column;gap:12px;padding:0 6px}
@@ -1422,6 +1421,8 @@ main>.screen{position:relative;z-index:1}
 .reg-ava-prev::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px solid rgba(154,255,0,.35);
   opacity:0;transition:opacity .3s}
 .reg-ava-prev.set::after{opacity:1;animation:regObHalo 2.4s ease-out infinite}
+@keyframes regObHalo{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.22);opacity:0}}
+@media(prefers-reduced-motion:reduce){.reg-ava-prev.set::after{animation:none;opacity:.4}}
 .reg-ava-swatches{display:flex;gap:9px;flex-wrap:wrap}
 .reg-ava-sw{width:30px;height:30px;border-radius:50%;position:relative;transition:transform .14s;flex-shrink:0}
 .reg-ava-sw:active{transform:scale(.9)}
@@ -5171,28 +5172,30 @@ body.st2-over #sheetOverlay.open{z-index:67}
 #trOverlay.tr-on{opacity:1}
 
 /* --- мягкий спотлайт: прозрачная «дыра», тьма — гигантским РАЗМЫТЫМ box-shadow --- */
-/* blur-радиус 30px даёт feather-край (плавный переход тьма→элемент), а не резкий вырез */
+/* blur-радиус 26px даёт feather-край (плавный переход тьма→элемент), а не резкий вырез.
+   translateZ(0) изолирует слой компоновки: дыра репейнтится в свой слой, а не всю страницу. */
 .tr-hole{position:absolute;border-radius:16px;pointer-events:none;
-  box-shadow:0 0 30px 200vmax rgba(0,0,0,.76);
+  box-shadow:0 0 26px 200vmax rgba(0,0,0,.76);
+  transform:translateZ(0);
   will-change:top,left,width,height;
   transition:top .5s cubic-bezier(.4,.82,.24,1),left .5s cubic-bezier(.4,.82,.24,1),
              width .5s cubic-bezier(.4,.82,.24,1),height .5s cubic-bezier(.4,.82,.24,1),
              border-radius .5s ease}
 .tr-hole.tr-jump{transition:none}
-/* мягкая лаймовая аура вокруг спотлайта — глубина, бренд-акцент */
+/* мягкая лаймовая аура вокруг спотлайта — глубина, бренд-акцент (статична, без анимации) */
 .tr-hole::before{content:'';position:absolute;inset:-10px;border-radius:inherit;pointer-events:none;
   box-shadow:0 0 44px 4px rgba(154,255,0,.12)}
-/* точный лаймовый контур + дышащая пульсация */
+/* точный лаймовый контур + дышащая пульсация.
+   ВАЖНО (перф): пульсируем ТОЛЬКО opacity (композитится на GPU, ноль per-frame repaint),
+   box-shadow/border статичны — прежняя анимация box-shadow репейнтила контур каждый кадр. */
 .tr-hole::after{content:'';position:absolute;inset:-3px;border:2px solid var(--lime);
   border-radius:inherit;pointer-events:none;
   box-shadow:0 0 22px rgba(154,255,0,.55),inset 0 0 14px rgba(154,255,0,.2);
-  animation:trPulse 2.4s ease-in-out infinite}
-@keyframes trPulse{
-  0%,100%{opacity:1;box-shadow:0 0 22px rgba(154,255,0,.55),inset 0 0 14px rgba(154,255,0,.2)}
-  50%{opacity:.5;box-shadow:0 0 9px rgba(154,255,0,.28),inset 0 0 7px rgba(154,255,0,.1)}}
+  will-change:opacity;animation:trPulse 2.4s ease-in-out infinite}
+@keyframes trPulse{0%,100%{opacity:1}50%{opacity:.45}}
 
 /* --- карточка шага --- */
-.tr-card{position:absolute;left:50%;transform:translateX(-50%);width:calc(100% - 28px);
+.tr-card{position:absolute;left:50%;transform:translateX(-50%) translateZ(0);width:calc(100% - 28px);
   max-width:352px;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r-lg);padding:16px 16px 13px;overflow:hidden;
   box-shadow:0 20px 64px rgba(0,0,0,.58),0 0 0 1px rgba(154,255,0,.06);
@@ -5212,8 +5215,8 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .tr-step-chip{display:inline-flex;align-items:center;gap:7px;font-size:9.5px;font-weight:700;
   letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin-bottom:7px}
 .tr-step-chip svg.i{width:13px;height:13px}
-.tr-card h3{font-family:var(--font-display);font-size:23px;letter-spacing:.02em;line-height:1;margin:0 0 6px}
-.tr-card p{color:var(--dim);font-size:12.8px;line-height:1.55;margin:0}
+.tr-card h3{font-family:var(--font-display);font-size:23px;letter-spacing:.02em;line-height:1;margin:0 0 6px;overflow-wrap:break-word}
+.tr-card p{color:var(--dim);font-size:12.8px;line-height:1.55;margin:0;overflow-wrap:break-word}
 
 .tr-foot{display:flex;align-items:center;gap:10px;margin-top:14px}
 /* точки-прогресс: активная вытягивается в пилюлю */
@@ -10769,9 +10772,12 @@ function regObScene(key){
     case 'market':
       return `<div class="reg-ob-scene reg-ob-scene--market">
         <div class="reg-ob-list">
-          <div class="reg-ob-list-img">${I('briefcase')}</div>
-          <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small><span class="reg-ob-price">2 500 ₽</span></div>
-          <span class="reg-ob-escrow">${I('lock')} Сделка защищена</span>
+          <div class="reg-ob-list-top">
+            <div class="reg-ob-list-img">${I('briefcase')}</div>
+            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small></div>
+            <span class="reg-ob-price">2 500 ₽</span>
+          </div>
+          <span class="reg-ob-escrow">${I('lock')} Сделка защищена эскроу</span>
         </div>
       </div>`;
     case 'ai':
@@ -18385,6 +18391,7 @@ const ST_DICT = {
   /* экран звонка + редактор обложки (глобальные оверлеи) */
   'Звонок':'Call','Микро':'Mic','Сброс':'End','Обложка профиля':'Profile cover',
   'OKO · Официальный':'OKO · Official',
+  'Аватар':'Avatar','ты':'you',
   /* чаты: сегменты фильтра + вложения + закреп */
   'Личные':'Direct','Группы':'Groups','Каналы':'Channels','Управление':'Manage',
   'Закреплённое сообщение':'Pinned message','Эмодзи':'Emoji','Стикеры':'Stickers',
@@ -18504,6 +18511,8 @@ const ST_RX = [
   [/^канал · ([\d.,]+)к$/, 'channel · $1k'],
   [/^сообщество · ([\d.,]+)к$/, 'community · $1k'],
   [/^монтаж · ([\d.,]+)к$/, 'editing · $1k'],
+  [/^бизнес · ([\d.,]+)к$/, 'business · $1k'],
+  [/^моушен · ([\d.,]+)к$/, 'motion · $1k'],
   [/^· (\d+) ч$/, '· $1 h'],
   [/^· (\d+) д$/, '· $1 d'],
   [/^([\d\s.,]*\d) ?₽ из ([\d\s.,]*\d) ?₽ за сегодня ·$/, '$1 ₽ of $2 ₽ today ·'],
@@ -25624,26 +25633,45 @@ function st2InsertRow(){
 
 const TR_KEY = 'oko-tour';
 
+/* ---------- двуязычие тура: EN, когда язык интерфейса английский ---------- */
+/* берём язык из i18n-ядра (LANG); helper — на каждый видимый текст тура */
+function trT(ru, en){ return (typeof LANG !== 'undefined' && LANG === 'en') ? en : ru; }
+
+/* Каждый шаг двуязычен: title/text — {ru,en}. Рендер выбирает язык по LANG. */
 const TR_STEPS = [
-  {tab:'feed', sel:'nav#tabs', ico:'compass', title:'Нижняя навигация',
-   text:'Пять разделов всегда под рукой: Лента, Чаты, Мини-аппы, Кошелёк и Профиль. Переключайся одним касанием — всё OKO живёт здесь.',
+  {tab:'feed', sel:'nav#tabs', ico:'compass',
+   title:{ru:'Нижняя навигация', en:'Bottom navigation'},
+   text:{ru:'Пять разделов всегда под рукой: Лента, Чаты, Мини-аппы, Кошелёк и Профиль. Переключайся одним касанием — всё OKO живёт здесь.',
+         en:'Five sections always within reach: Feed, Chats, Hub, Wallet and Profile. Switch with a single tap — all of OKO lives here.'},
    pad:4, round:'14px'},
-  {tab:'feed', sel:'#screen-feed .feed-tabs', ico:'feed', title:'Лента и алгоритмы',
-   text:'«Подписки» — посты твоих авторов, «Рекомендации» — умный подбор по интересам. Чем больше реакций ставишь, тем точнее лента подстраивается под тебя.',
+  {tab:'feed', sel:'#screen-feed .feed-tabs', ico:'feed',
+   title:{ru:'Лента и алгоритмы', en:'Feed & algorithms'},
+   text:{ru:'«Подписки» — посты твоих авторов, «Рекомендации» — умный подбор по интересам. Чем больше реакций ставишь, тем точнее лента подстраивается под тебя.',
+         en:'“Following” shows posts from your authors, “For you” is a smart pick by interest. The more you react, the better the feed tunes to you.'},
    pad:6, round:'16px'},
-  {tab:'wallet', sel:'#screen-wallet .wal-hero', ico:'money', title:'Кошелёк — баланс на всё',
-   text:'Один лицевой счёт на всё: тарифы, продвижение, биржа с эскроу-защитой, игры и переводы в чатах. Пополняй картой или криптой, выводи заработанное.',
+  {tab:'wallet', sel:'#screen-wallet .wal-hero', ico:'money',
+   title:{ru:'Кошелёк — баланс на всё', en:'Wallet — one balance for everything'},
+   text:{ru:'Один лицевой счёт на всё: тарифы, продвижение, биржа с эскроу-защитой, игры и переводы в чатах. Пополняй картой или криптой, выводи заработанное.',
+         en:'One account for it all: plans, promotion, the escrow-protected marketplace, games and chat transfers. Top up by card or crypto, withdraw what you earn.'},
    pad:6, round:'18px', clamp:true},
-  {tab:'mini', sel:'#maGrid .svc-grid', ico:'bolt', title:'Мини-аппы',
-   text:'Сервисы как приложения — без установки: Академия с сертификатами, Игры, Биржа услуг, реклама и проверка видео. Всё открывается в один тап.',
+  {tab:'mini', sel:'#maGrid .svc-grid', ico:'bolt',
+   title:{ru:'Мини-аппы', en:'Mini-apps'},
+   text:{ru:'Сервисы как приложения — без установки: Академия с сертификатами, Игры, Биржа услуг, реклама и проверка видео. Всё открывается в один тап.',
+         en:'Services like apps — no install: Academy with certificates, Games, the services marketplace, ads and video checks. Everything opens in one tap.'},
    pad:6, round:'18px', clamp:true},
-  {tab:'feed', sel:'#screen-feed .fab', ico:'plus', title:'Создавай посты',
-   text:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй и сразу продвинь его за счёт стартового бонуса на счёте.',
+  {tab:'feed', sel:'#screen-feed .fab', ico:'plus',
+   title:{ru:'Создавай посты', en:'Create posts'},
+   text:{ru:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй и сразу продвинь его за счёт стартового бонуса на счёте.',
+         en:'The lime button starts a new post: text, photo, video or poll. Publish and promote it right away with your starter bonus.'},
    pad:8, round:'50%'},
-  {tab:'profile', sel:'#screen-profile .profile-top', ico:'user', title:'Профиль и настройки',
-   text:'Твоя страница: тариф, статистика и достижения. Ниже — темы, уведомления, конфиденциальность и строка «Тур по OKO», если захочешь повторить подсказки.',
+  {tab:'profile', sel:'#screen-profile .profile-top', ico:'user',
+   title:{ru:'Профиль и настройки', en:'Profile & settings'},
+   text:{ru:'Твоя страница: тариф, статистика и достижения. Ниже — темы, уведомления, конфиденциальность и строка «Тур по OKO», если захочешь повторить подсказки.',
+         en:'Your page: plan, stats and achievements. Below — themes, notifications, privacy and the “OKO tour” row if you want to replay these tips.'},
    pad:6, round:'18px'},
 ];
+/* безопасно достать текст шага в текущем языке (совместимо со строкой, если вдруг) */
+function trStepStr(v){ return (v && typeof v === 'object') ? trT(v.ru, v.en) : (v || ''); }
 
 let trIdx = 0, trOpen = false, trFirstPlace = true, trRzT = null;
 
@@ -25663,8 +25691,8 @@ function trBuild(){
       <div class="tr-foot">
         <div class="tr-dots" id="trDots"></div>
         <div class="tr-btns">
-          <button class="tr-skip" id="trSkip" onclick="trSkip()">Пропустить</button>
-          <button class="btn tr-next" id="trNext" onclick="trNext()">Далее</button>
+          <button class="tr-skip" id="trSkip" onclick="trSkip()">${trT('Пропустить','Skip')}</button>
+          <button class="btn tr-next" id="trNext" onclick="trNext()">${trT('Далее','Next')}</button>
         </div>
       </div>
     </div>`;
@@ -25711,7 +25739,7 @@ function trFlushQ(){
   if(typeof showPopup === 'function') showPopup(o);
   if(trPopupQ.length) setTimeout(trFlushQ, 6000);
 }
-function trSkip(){ trClose(); if(typeof toast === 'function') toast('Тур можно вернуть: Профиль → «Тур по OKO»'); }
+function trSkip(){ trClose(); if(typeof toast === 'function') toast(trT('Тур можно вернуть: Профиль → «Тур по OKO»','You can reopen the tour: Profile → “OKO tour”')); }
 function trNext(){ if(trIdx < TR_STEPS.length - 1) trGo(trIdx + 1); else trFinish(); }
 function trFinish(){
   trClose();
@@ -25719,16 +25747,17 @@ function trFinish(){
 }
 function trDonePopup(){
   const bal = (typeof WALLET !== 'undefined' && WALLET && typeof fmtMoney === 'function')
-    ? ` Сейчас на балансе — ${fmtMoney(WALLET.balance)}.` : '';
-  if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast('Тур завершён'); return; }
-  showPopup({ico:'rocket', title:'Готово!',
-    body:`2 500 ₽ уже на счёте — попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.${bal}`,
+    ? trT(` Сейчас на балансе — ${fmtMoney(WALLET.balance)}.`, ` Your balance is now ${fmtMoney(WALLET.balance)}.`) : '';
+  if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast(trT('Тур завершён','Tour complete')); return; }
+  showPopup({ico:'rocket', title:trT('Готово!','All set!'),
+    body:trT('2 500 ₽ уже на счёте — попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.',
+             '2,500 ₽ is already in your account — try promotion: launch your first campaign in Ads Manager or boost a post from the feed.') + bal,
     actions:[
-      {label:'Попробовать продвижение', onclick:()=>{
+      {label:trT('Попробовать продвижение','Try promotion'), onclick:()=>{
         if(typeof showTab !== 'function') return;
         if(document.getElementById('screen-ads')) showTab('ads'); else showTab('wallet');
       }},
-      {label:'Позже', ghost:true},
+      {label:trT('Позже','Later'), ghost:true},
     ]});
 }
 
@@ -25782,15 +25811,15 @@ function trPlace(el, st){
   const body = document.getElementById('trBody');
   body.style.animation = 'none'; void body.offsetWidth; body.style.animation = '';
   body.innerHTML = `
-    <div class="tr-step-chip">${typeof I === 'function' ? I(st.ico) : ''} шаг ${trIdx + 1} из ${TR_STEPS.length}</div>
-    <h3>${st.title}</h3>
-    <p>${st.text}</p>`;
+    <div class="tr-step-chip">${typeof I === 'function' ? I(st.ico) : ''} ${trT('шаг','step')} ${trIdx + 1} ${trT('из','of')} ${TR_STEPS.length}</div>
+    <h3>${trStepStr(st.title)}</h3>
+    <p>${trStepStr(st.text)}</p>`;
   document.getElementById('trDots').innerHTML = TR_STEPS.map((_, k) =>
     `<span class="${k === trIdx ? 'on' : ''}" onclick="trGo(${k})"></span>`).join('');
   const next = document.getElementById('trNext');
   next.innerHTML = trIdx === TR_STEPS.length - 1
-    ? `Готово ${typeof I === 'function' ? I('check2') : ''}`
-    : `Далее ${typeof I === 'function' ? I('chev') : ''}`;
+    ? `${trT('Готово','Done')} ${typeof I === 'function' ? I('check2') : ''}`
+    : `${trT('Далее','Next')} ${typeof I === 'function' ? I('chev') : ''}`;
 
   /* вертикаль: под дырой, если не влезает — над, иначе по центру свободной зоны */
   const ch = card.offsetHeight, gap = 16;
@@ -25860,7 +25889,7 @@ function trAddRow(){
     if(!logoutRow || document.getElementById('trProwTour')) return;
     const b = document.createElement('button');
     b.className = 'prow'; b.id = 'trProwTour';
-    b.innerHTML = `${I('compass')} <span id="trRowLabel">Тур по OKO</span> <span class="chev">${I('chev')}</span>`;
+    b.innerHTML = `${I('compass')} <span id="trRowLabel">${trT('Тур по OKO','OKO tour')}</span> <span class="chev">${I('chev')}</span>`;
     b.onclick = ()=>trStart(true);
     logoutRow.parentNode.insertBefore(b, logoutRow);
   }catch(e){}
