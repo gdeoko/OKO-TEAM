@@ -1,0 +1,168 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #18 (batch A, КВАДРО проходимость). New forms, none reused:
+// terrain-flip cycle · incline-horizon · padlock-unlock · map-pins-drop · 4x4-powergrid · dust-trail lockup.
+const TOTAL=47.856;
+const AMB="#EA5920",AMB2="#FF7A3C",TAN="#C9A66B",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+const bounce=x=>{const n=7.5625,d=2.75;if(x<1/d)return n*x*x;if(x<2/d){x-=1.5/d;return n*x*x+.75;}if(x<2.5/d){x-=2.25/d;return n*x*x+.9375;}x-=2.625/d;return n*x*x+.984375;};
+function win(ts,a,b){if(ts<a-0.25||ts>b+0.35)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.4,(b-ts)/0.4));}
+
+// A1 — TERRAIN-FLIP CYCLE: карточки грязь/песок/подъём/камни по очереди, каждая с ✓ПРОЙДЕНО
+function a1(ts){const a=1.9,b=9.3;const p=win(ts,a,b);if(p<0)return'';
+  const terr=["ГРЯЗЬ","ПЕСОК","ПОДЪЁМ","КАМНИ"];const n=terr.length;
+  const cx=540,cy=820;const slot=1/n;const idx=Math.min(n-1,Math.floor(p/slot));const lp=(p-idx*slot)/slot;
+  const flip=easeOut(clamp(lp/0.45));const rot=(1-flip)*90;const op=clamp(lp/0.2)*(1-clamp((lp-0.82)/0.18));
+  const stamp=clamp((lp-0.4)/0.3);
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px;perspective:1200px">';
+  s+='<div style="position:absolute;top:'+(cy-150)+'px;left:0;width:1080px;text-align:center;font-family:man8;font-size:40px;letter-spacing:6px;color:'+DIM+'">ПРОЕДЕТ ВЕЗДЕ</div>';
+  s+='<div style="position:absolute;left:'+(cx-260)+'px;top:'+cy+'px;width:520px;height:200px;'
+    +'background:linear-gradient(150deg,rgba(20,14,10,.94),rgba(40,26,14,.9));border:3px solid '+AMB+';border-radius:22px;'
+    +'display:flex;align-items:center;justify-content:center;opacity:'+op+';transform:rotateY('+rot+'deg);transform-style:preserve-3d">'
+    +'<div style="font-family:soyuz;font-size:104px;color:'+WHT+'">'+terr[idx]+'</div></div>';
+  // ✓ ПРОЙДЕНО stamp
+  s+='<div style="position:absolute;left:'+(cx+80)+'px;top:'+(cy+120)+'px;font-family:soyuz;font-size:56px;color:'+GRN+';opacity:'+clamp(stamp*1.4)+';transform:rotate(-8deg) scale('+(0.6+0.4*back(clamp(stamp)))+')">✓ ПРОЙДЕНО</div>';
+  // progress dots
+  let dots='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center">';
+  for(let i=0;i<n;i++)dots+='<span style="display:inline-block;width:'+(i<=idx?40:16)+'px;height:10px;border-radius:5px;margin:0 6px;background:'+(i<=idx?AMB2:'rgba(255,255,255,.25)')+'"></span>';
+  s+=dots+'</div></div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — INCLINE HORIZON: горизонт наклоняется = подъём, стрелка-квадро карабкается, градусы
+function a2(ts){const a=9.6,b=15.5;const p=win(ts,a,b);if(p<0)return'';
+  const deg=lerp(0,38,easeInOut(clamp((p-0.1)/0.6)));
+  const cx=540,cy=940;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-330)+'" text-anchor="middle" font-family="man8" font-size="44" letter-spacing="3" fill="'+DIM+'">ТЯНЕТ В ГОРУ</text>';
+  s+='<g transform="rotate('+(-deg)+' '+cx+' '+cy+')">'
+    +'<line x1="'+(cx-460)+'" y1="'+cy+'" x2="'+(cx+460)+'" y2="'+cy+'" stroke="'+TAN+'" stroke-width="10" stroke-linecap="round"/>'
+    // hatch ground
+    +Array.from({length:12},(_,i)=>'<line x1="'+(cx-420+i*80)+'" y1="'+cy+'" x2="'+(cx-460+i*80)+'" y2="'+(cy+46)+'" stroke="rgba(201,166,107,.5)" stroke-width="5"/>').join('')
+    // quad marker climbing along the slope
+    +'<g transform="translate('+(cx-320+ easeOut(clamp((p-0.15)/0.7))*640)+','+(cy-46)+')">'
+    +'<rect x="-46" y="-30" width="92" height="46" rx="10" fill="'+AMB+'"/><circle cx="-30" cy="20" r="16" fill="#111"/><circle cx="30" cy="20" r="16" fill="#111"/></g>'
+    +'</g>';
+  // degree readout
+  s+='<g transform="translate('+(cx+300)+','+(cy-180)+')">'
+    +'<path d="M0 60 L120 60 M0 60 L104 26" stroke="'+AMB2+'" stroke-width="6" fill="none" stroke-linecap="round"/>'
+    +'<text x="0" y="0" font-family="mont9" font-size="88" fill="'+WHT+'">'+Math.round(deg)+'°</text></g>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — PADLOCK-UNLOCK: 3 узла раскрываются замком «С ЗАВОДА»
+function a3(ts){const a=15.8,b=21.8;const p=win(ts,a,b);if(p<0)return'';
+  const rows=["БЛОКИРОВКИ","ПОНИЖЕННАЯ","ЗАЩИТА ДНИЩА"];
+  const X=110,top=760,rh=150,gap=24;
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px">';
+  s+='<div style="position:absolute;left:'+X+'px;top:'+(top-90)+'px;font-family:man8;font-size:44px;letter-spacing:3px;color:'+DIM+'">ВСЁ С ЗАВОДА — НЕ ЗА ДОПЛАТУ</div>';
+  rows.forEach((r,i)=>{
+    const lp=clamp((p-(0.1+i*0.2))/0.35);const op=clamp(lp*1.6);const y=top+i*(rh+gap);
+    const shackle=easeOut(clamp((lp-0.25)/0.4)); // 0 closed -> 1 open (shackle rotates up)
+    s+='<div style="position:absolute;left:'+X+'px;top:'+y+'px;width:820px;height:'+rh+'px;opacity:'+op+';'
+      +'background:linear-gradient(90deg,rgba(20,14,10,.94),rgba(30,20,12,.7));border-left:8px solid '+AMB+';border-radius:0 16px 16px 0;display:flex;align-items:center;padding-left:40px">'
+      +'<svg width="90" height="110" viewBox="0 0 90 110" style="margin-right:30px">'
+        +'<g transform="rotate('+(shackle*-32)+' 30 46)"><path d="M27 46 V32 a18 18 0 0 1 36 0 V46" fill="none" stroke="'+GRN+'" stroke-width="9"/></g>'
+        +'<rect x="14" y="46" width="62" height="52" rx="9" fill="'+AMB+'"/><circle cx="45" cy="70" r="7" fill="#111"/></svg>'
+      +'<div style="font-family:soyuz;font-size:58px;color:'+WHT+'">'+r+'</div>'
+      +'<div style="font-family:man8;font-size:30px;color:'+GRN+';margin-left:auto;margin-right:36px;opacity:'+clamp((lp-0.5)/0.3)+'">С ЗАВОДА</div>'
+      +'</div>';
+  });
+  s+='</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — MAP-PINS DROP: 4 сценария падают булавками на карту-местность
+function a4(ts){const a=22.1,b=31.0;const p=win(ts,a,b);if(p<0)return'';
+  const pins=[["ОХОТА",300,760],["РЫБАЛКА",760,860],["СНЕГ",320,1080],["СТРОЙКА",740,1160]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="640" text-anchor="middle" font-family="man8" font-size="44" letter-spacing="3" fill="'+DIM+'">ОДНА МАШИНА — ЛЮБАЯ ЗАДАЧА</text>';
+  // terrain contour map (stylized)
+  s+='<g opacity="0.5" stroke="rgba(201,166,107,.55)" fill="none" stroke-width="3">'
+    +'<path d="M180 900 q160 -80 340 -20 t380 30"/><path d="M180 1000 q200 -60 380 0 t340 20"/>'
+    +'<path d="M180 1100 q160 -50 360 10 t360 0"/></g>';
+  // dotted trail linking pins in order
+  const order=[0,1,3,2];let prev=null;
+  order.forEach((oi,k)=>{const drop=clamp((p-(0.12+k*0.18))/0.3);const[lbl,px,py]=pins[oi];
+    if(prev&&drop>0.3){const t2=clamp((drop-0.3)/0.5);
+      s+='<line x1="'+prev[0]+'" y1="'+prev[1]+'" x2="'+lerp(prev[0],px,t2)+'" y2="'+lerp(prev[1],py,t2)+'" stroke="'+AMB2+'" stroke-width="4" stroke-dasharray="4 12"/>';}
+    prev=[px,py];});
+  order.forEach((oi,k)=>{const drop=clamp((p-(0.12+k*0.18))/0.3);if(drop<=0)return;const[lbl,px,py]=pins[oi];
+    const fall=bounce(clamp(drop));const y=py- (1-fall)*260;const op=clamp(drop*2);
+    s+='<g opacity="'+op+'" transform="translate('+px+','+y+')">'
+      +'<path d="M0 0 C-34 -46 -34 -84 0 -84 C34 -84 34 -46 0 0 Z" fill="'+AMB+'"/><circle cx="0" cy="-58" r="15" fill="#0c0a08"/>'
+      +'<text x="0" y="44" text-anchor="middle" font-family="soyuz" font-size="40" fill="'+WHT+'">'+lbl+'</text></g>';
+    // ripple on landing
+    if(drop>0.85)s+='<circle cx="'+px+'" cy="'+py+'" r="'+((drop-0.85)/0.15*50)+'" fill="none" stroke="'+AMB2+'" stroke-width="'+(4*(1-(drop-0.85)/0.15))+'"/>';
+  });
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — 4x4 POWER-GRID: вид сверху, 4 колеса пульсируют тягой, ТЯГА 100%
+function a5(ts){const a=31.3,b=38.2;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;
+  const wheels=[[-150,-230],[150,-230],[-150,230],[150,230]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-360)+'" text-anchor="middle" font-family="man8" font-size="44" letter-spacing="3" fill="'+DIM+'">НАСТОЯЩИЙ ПОЛНЫЙ ПРИВОД</text>';
+  // chassis top-view
+  s+='<rect x="'+(cx-120)+'" y="'+(cy-200)+'" width="240" height="400" rx="40" fill="rgba(20,14,10,.9)" stroke="'+DIM+'" stroke-width="3"/>';
+  s+='<text x="'+cx+'" y="'+(cy+22)+'" text-anchor="middle" font-family="soyuz" font-size="90" fill="'+AMB2+'">4×4</text>';
+  wheels.forEach((w,i)=>{const wx=cx+w[0],wy=cy+w[1];
+    const pulse=Math.max(0,Math.sin((p*TOTAL*3 - i*0.6)));const app=clamp((p-(0.1+i*0.08))/0.3);
+    s+='<g opacity="'+clamp(app*1.5)+'">'
+      +'<rect x="'+(wx-46)+'" y="'+(wy-70)+'" width="92" height="140" rx="20" fill="#161210" stroke="'+AMB+'" stroke-width="'+(3+pulse*5)+'"/>'
+      // torque arrow
+      +'<path d="M'+wx+' '+(wy-30)+' v60 M'+(wx-14)+' '+(wy+16)+' l14 16 l14 -16" stroke="'+AMB2+'" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="'+(0.4+0.6*pulse)+'"/></g>';
+  });
+  // traction bar
+  const tr=easeOut(clamp((p-0.2)/0.6));
+  s+='<g transform="translate('+(cx-230)+','+(cy+300)+')">'
+    +'<rect x="0" y="0" width="460" height="34" rx="17" fill="rgba(255,255,255,.14)"/>'
+    +'<rect x="0" y="0" width="'+(460*tr)+'" height="34" rx="17" fill="'+AMB+'"/>'
+    +'<text x="0" y="-18" font-family="man8" font-size="34" fill="'+WHT+'">ТЯГА '+Math.round(tr*100)+'%</text></g>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A6 — DUST-TRAIL LOCKUP: пыльный след прочерчивает экран, за ним проявляется лого
+function a6(ts){const a=38.5,b=45.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;
+  const sweep=easeInOut(clamp(p/0.5)); // trail sweeps L->R
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  // dust particles trailing the sweep front
+  const front=lerp(-100,1180,sweep);
+  for(let i=0;i<60;i++){const bx=front-(i*14)*(0.6+ (i%5)*0.1);if(bx<-40||bx>1120)continue;
+    const spread=(i%9)*10*(i%2?1:-1);const y=cy+spread + Math.sin(i)*30;
+    const op=clamp((1-(front-bx)/380))*(1-clamp((p-0.55)/0.25))*0.9;
+    s+='<circle cx="'+bx+'" cy="'+y+'" r="'+lerp(3,10,(i%6)/6)+'" fill="'+(i%3?TAN:'rgba(201,166,107,.7)')+'" opacity="'+op+'"/>';}
+  s+='</svg>';
+  const lp=clamp((p-0.42)/0.28),e=back(lp);
+  // logo revealed by a clip that follows the sweep
+  let lock='<div style="position:absolute;left:0;top:'+(cy-140)+'px;width:1080px;text-align:center;opacity:'+clamp(lp*1.5)+';transform:scale('+(0.72+0.28*e)+')">'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+WHT+'">DIESEL</div>'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+AMB2+'">CARGO</div></div>';
+  const up=clamp((p-0.72)/0.22);
+  lock+='<div style="position:absolute;left:'+(cx-260)+'px;top:'+(cy+130)+'px;width:'+(520*easeOut(up))+'px;height:8px;background:'+AMB+';border-radius:4px"></div>';
+  lock+='<div style="position:absolute;left:0;top:'+(cy+160)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+lock+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>

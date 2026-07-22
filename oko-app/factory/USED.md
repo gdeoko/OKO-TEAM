@@ -115,3 +115,10 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 МУЗЫКА: fs_viral_264081 (Freesound CC0, первый показ, seed 878, обработка секция/темп/EQ) — уникальная, дедуп used_music.json.
 Стоки: 12 Pexels jet-ski/water/wake (b01-b12, новые). Обложка: своя «ВСЁ ЛЕТО НА ВОДЕ» = первый кадр + превью. Голос Dmitry +6%.
 Публикация batch B: YT ytnew_b + TikTok 2363201 (@diesel_official11). IG @diesel_kitay — checkpoint (пропущен). Очередь VPS 010. 22.07 posted_B→4/5.
+
+## 22.07 — ролик #18 (batch A) КВАДРО «проедет везде» — авторские анимации + HF-голос + уникальная музыка
+Тема: проходимость квадроцикла из Китая (грязь/песок/подъёмы, полный привод с завода). Виральный хук (50%). ≠ прошлых A.
+АНИМАЦИИ: `pipeline/overlay_18.html` — 6 новых форм (terrain-flip, incline-horizon, padlock-unlock, map-pins, 4x4-powergrid, dust-trail). Разбор — USED_ANIM.md #18.
+ГОЛОС: Qwen3-TTS (HF PRO, Dylan) — первый ролик на новом голосе вместо edge-tts. Музыка fs_viral_395037 (CC0, уникальная, seed 376).
+Стоки: 12 Pexels atv/quad offroad/mud (b01-b12, новые). Обложка «ПРОЕДЕТ ВЕЗДЕ» = первый кадр + превью.
+Публикация batch A: YT main GEJheINGb2w + TikTok 2365299 (@diesel_kitay новый) 92319622. IG @diesel_cargo — checkpoint (пропущен). Очередь VPS 011. 22.07 posted_A→5/5 (цель A выполнена).
