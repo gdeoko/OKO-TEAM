@@ -108,3 +108,10 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 АНИМАЦИИ: НЕ библиотека build_accents.py, а свой `pipeline/overlay_16.html` — 6 новых форм/моушенов (кинетический шрифт, жидкостный бак, весы-балансир, гармошка+часы, блоки под аркой аренды, сборка лого из искр). Полный разбор — USED_ANIM.md #16.
 Стоки: 12 Pexels atv/quad/offroad (b01-b12, новые, портрет ≤2200). Обложка: своя дизайн-обложка (footage+бренд «дорого?→миф.») = первый кадр + превью. Голос Dmitry +6%.
 Публикация batch A: TikTok НОВЫЙ @diesel_kitay page 2365299 (старый @diesel.cargo 2350915 удалён Даниэлем) + YouTube main + IG @diesel_cargo. Очередь VPS 009. 22.07 posted_A→4/5.
+
+## 22.07 — ролик #17 (batch B) ГИДРО «всё лето на воде» — АВТОРСКИЕ анимации С НУЛЯ + УНИКАЛЬНАЯ музыка
+Тема: гидроцикл из Китая под ключ (та же начинка что у брендов, весь сезон на воде). Микс вирал+продажи. Ротация гидро (изредка). ≠ прошлых B (#14 квадро-utility, B#15 мото).
+АНИМАЦИИ: свой `pipeline/overlay_17.html` — 6 новых форм (water-shatter, exploded modules, speed-осциллограф, radial fan, conveyor, splash lockup). Разбор — USED_ANIM.md #17.
+МУЗЫКА: fs_viral_264081 (Freesound CC0, первый показ, seed 878, обработка секция/темп/EQ) — уникальная, дедуп used_music.json.
+Стоки: 12 Pexels jet-ski/water/wake (b01-b12, новые). Обложка: своя «ВСЁ ЛЕТО НА ВОДЕ» = первый кадр + превью. Голос Dmitry +6%.
+Публикация batch B: YT ytnew_b + TikTok 2363201 (@diesel_official11). IG @diesel_kitay — checkpoint (пропущен). Очередь VPS 010. 22.07 posted_B→4/5.
