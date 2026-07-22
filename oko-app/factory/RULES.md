@@ -108,3 +108,7 @@ Bebas Neue + Montserrat. Голос ru-RU-DmitryNeural. Снегоходы НЕ 
 - Публикатор `publish_next.py` — batch-aware, retry-safe, IG не блокирует очередь.
 - Реестры разнообразия: `USED.md`. Состояние рампа: `cfg/ramp_state.json`.
 - Ветка разработки: `claude/new-session-xxozd5`.
+
+## ⚠️ ПУБЛИКАЦИЯ — ТОЛЬКО ОДИН publish_next.py ЗА РАЗ
+Не запускать несколько publish_next.py параллельно (гонка за очередь → риск дубля на YT/TikTok).
+Перед запуском: `pkill -9 -f publish_next.py; sleep 2`, затем один прогон. Публикатор берёт ОДИН элемент очереди за вызов — для следующего запускать снова после того, как предыдущий ушёл в published.

@@ -80,3 +80,8 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 Тема: гидроцикл из Китая напрямую с завода. Хук: свой гидроцикл — не роскошь. Микс вирал+польза. НОВЫЕ механики: ticks(чек-лист узлов), ring(83%→готовность) — не было в #9/#10.
 Механики(11): ticks→iconrow→vs→lowerthird→ticks→bigstat(READY)→ring→route→iconrow→badge→stamp. Стиль 1 solid-dark (≠#9 стиль0, ≠#10 стиль3).
 Стоки: 12 Pexels jet-ski/гидро (новые). Обложка FLUX ok + в очередь (превью). Публикация A: YT WOd4664YgsM · TikTok 2350915 · IG cargo=checkpoint(ретрай). 22.07 posted_A=1/5.
+
+## 22.07 — ролик #12 (batch B) ЭНДУРО «едет там, где все стоят» — стиль 2 (outline-амбер)
+Тема: эндуро (внедорожный мото) из Китая, ≠ дорожного #10. Хук: проедет там, где встанет внедорожник. Микс польза+вирал.
+Механики(11): badge→chips→vs→lowerthird→sidebars→iconrow→donut(67→готов)→route→chips→badge→stamp. Стиль 2 outline-амбер (≠ #9/0, #10/3, #11/1).
+Стоки: 12 Pexels enduro/motocross (≤2K для скорости, новые). Обложка FLUX ok + в очередь. Публикация B: YT AUUAjkSg-UU · TikTok 2363201 · IG kitay SHARED. 22.07 posted_B=1/5.
