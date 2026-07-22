@@ -19,39 +19,44 @@ const CH_LESSON_URL = null;          // видео-уроки — заглушк
 
 /* фирменные градиенты-фоны (сменяемый фон канала) */
 const CH_BGS = [
-  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#9AFF00 140%)',
-  'linear-gradient(135deg,#141414,#2a2a2a)',
-  'linear-gradient(135deg,#0d2818,#0a0a0a 70%)',
-  'linear-gradient(135deg,#1a1200,#3a2600)',
-  'linear-gradient(135deg,#001a2b,#003a4d)',
-  'linear-gradient(135deg,#2b0018,#4d0033)',
-  'linear-gradient(135deg,#6fd400,#3a7a00)',
-  'linear-gradient(135deg,#111,#000)',
-  'linear-gradient(135deg,#26004d,#12002b)',
-  'linear-gradient(135deg,#4d2600,#1a0d00)',
+  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#9AFF00 140%)', // чёрный → лайм
+  'linear-gradient(135deg,#141414,#2a2a2a)',                     // графит
+  'linear-gradient(135deg,#0d2818,#0a0a0a 70%)',                 // тёмно-зелёный → чёрный
+  'linear-gradient(135deg,#12240a,#050a02)',                     // глубокий лист-зелёный → почти чёрный
+  'linear-gradient(135deg,#043024,#07160f)',                     // тёмный изумруд (замена off-brand синего/тиловый)
+  'linear-gradient(135deg,#1a2b00,#000)',                        // лайм-тон → чёрный (замена off-brand пурпура)
+  'linear-gradient(135deg,#6fd400,#3a7a00)',                     // яркий зелёный
+  'linear-gradient(135deg,#111,#000)',                           // почти чёрный
+  'linear-gradient(135deg,#2e4d0a,#0d1a00)',                     // олива (замена off-brand фиолетового)
+  'linear-gradient(135deg,#1a1a1a,#0a1400)',                     // уголь → тёмно-зелёный (замена off-brand коричневого)
 ];
 const CH_AV_BGS = [   // legacy: плоские цвета аватара (оставлены для совместимости, НЕ используются в рендере)
   '#9AFF00','#e8e8e8','#9AFF00','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#9AFF00','#b98cff','#ff9a3c'
 ];
 /* Процедурные фирменные аватары: только чёрный + лайм/зелёное семейство (никаких off-brand цветов).
-   g — градиент-фон, c — цвет глифа/буквы (контраст под фон). Индекс = bg канала или хэш ника. */
+   g/c — тёмная тема (градиент-фон / цвет глифа), gl/cl — светлая тема (тайлы не должны быть
+   чёрными кляксами на белых карточках → в светлой теме все тайлы светлые/лаймовые).
+   Индекс = bg канала или хэш ника. */
 const CH_AV_GRADS = [
-  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a'}, // яркий лайм
-  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00'}, // графит · лайм-глиф
-  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a'}, // лайм → тёмно-зелёный
-  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00'}, // бледный лайм
-  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00'}, // глубокий зелёный/чёрный
-  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf'}, // средний зелёный
-  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00'}, // чёрный · лайм-глиф
-  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a'}, // мягкий лайм
-  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a'}, // тёмная олива
-  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0'}, // зелёный · почти белый глиф
+  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a', gl:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#7ad400)', cl:'#0a1400'}, // яркий лайм
+  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00', gl:'linear-gradient(135deg,#e9f5d2,#cfe9a4)',            cl:'#2e4d00'}, // графит → светлый лайм
+  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#b6f56a,#6fc400)',            cl:'#0a1400'}, // лайм → зелёный
+  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00', gl:'linear-gradient(135deg,#f2ffe0,#d3f2a6)',            cl:'#2e4d00'}, // бледный лайм
+  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#d9efb5,#add86e)',            cl:'#274500'}, // тёмн.зелёный → светлый
+  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf', gl:'linear-gradient(135deg,#9ee84a,#5fae10)',            cl:'#0a1400'}, // средний зелёный
+  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#eef8db,#c6e792)',            cl:'#2b4a00'}, // чёрный → светлый лайм
+  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#c6f584,#8fd82e)',            cl:'#0a1400'}, // мягкий лайм
+  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a', gl:'linear-gradient(135deg,#dcefb0,#b3da70)',            cl:'#2a4700'}, // тёмная олива → светлая
+  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0', gl:'linear-gradient(135deg,#a9e85a,#5fa614)',            cl:'#0f2600'}, // зелёный
 ];
-/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник) */
+/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник).
+   Отдаём CSS-переменные (--av-g/--av-c тёмная, --av-gl/--av-cl светлая); фон рисует CSS
+   через var() → тема переключается чисто в CSS, без ре-рендера. */
 function chAvGrad(i){ return CH_AV_GRADS[((+i||0)%CH_AV_GRADS.length+CH_AV_GRADS.length)%CH_AV_GRADS.length]; }
 function chHashIdx(s){ s=String(s||'x'); let h=0; for(let k=0;k<s.length;k++) h=(h*31+s.charCodeAt(k))|0; return Math.abs(h)%CH_AV_GRADS.length; }
-function chAvGradStyle(i){ const g=chAvGrad(i); return `background:${g.g};color:${g.c}`; }
-function chAvSeedStyle(s){ const g=CH_AV_GRADS[chHashIdx(s)]; return `background:${g.g};color:${g.c}`; }
+function chAvVars(g){ return `--av-g:${g.g};--av-c:${g.c};--av-gl:${g.gl};--av-cl:${g.cl}`; }
+function chAvGradStyle(i){ return chAvVars(chAvGrad(i)); }
+function chAvSeedStyle(s){ return chAvVars(CH_AV_GRADS[chHashIdx(s)]); }
 const CH_ICONS = ['megaphone','bolt','fire','rocket','star','crown','globe','compass'];
 
 /* ---------- состояние ---------- */

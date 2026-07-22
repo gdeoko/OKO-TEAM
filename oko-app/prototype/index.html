@@ -4421,15 +4421,37 @@ main>.screen{position:relative;z-index:1}
    лаймовое кольцо прогресса (cp-vn-ring) становится единственным ярким акцентом */
 .msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.26);border-width:1px;border-color:rgba(154,255,0,.22)}
 :root[data-theme="light"] .msg.has-vnote .vnote{border-color:rgba(110,180,0,.3)}
+/* постер видео-заметки без реального видео — чистый чёрно-лаймовый бренд-фон вместо
+   мутного оливкового радиала базы (виден только на плейсхолдере: видео перекрывает фон) */
+.vnote.cp-vn-poster{background:radial-gradient(120% 120% at 34% 26%,rgba(154,255,0,.14),transparent 52%),radial-gradient(circle at 50% 54%,#141d09,#0a0d05 74%)}
+:root[data-theme="light"] .vnote.cp-vn-poster{background:radial-gradient(120% 120% at 34% 26%,rgba(110,200,0,.22),transparent 52%),radial-gradient(circle at 50% 54%,#eaf6d5,#d7ecb6 78%)}
+/* тонкая анимированная лаймовая дуга, медленно обходящая кольцо — «живой», не пустой */
+.vnote.cp-vn-poster::before{content:'';position:absolute;inset:4px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 60%,rgba(154,255,0,.55) 76%,rgba(154,255,0,0) 92%);-webkit-mask:radial-gradient(circle,transparent 61%,#000 63%);mask:radial-gradient(circle,transparent 61%,#000 63%);opacity:.55;z-index:2;pointer-events:none;animation:cpVnSweep 4.6s linear infinite}
+:root[data-theme="light"] .vnote.cp-vn-poster::before{background:conic-gradient(from 0deg,transparent 0 60%,rgba(110,200,0,.6) 76%,rgba(110,200,0,0) 92%)}
+@keyframes cpVnSweep{to{transform:rotate(360deg)}}
 .cp-vn-ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg);pointer-events:none;z-index:3}
 .cp-vn-tr{fill:none;stroke:rgba(255,255,255,.16);stroke-width:2}
 :root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.12)}
 .cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:2.5;stroke-linecap:round;filter:drop-shadow(0 0 2px rgba(154,255,0,.4));transition:stroke-dashoffset .2s linear}
-.cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
+.cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.46);backdrop-filter:blur(3px);border:1.5px solid rgba(154,255,0,.5);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 0 4px rgba(154,255,0,.08);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
+:root[data-theme="light"] .cp-vn-play{background:rgba(255,255,255,.82);color:#2f6600;border-color:rgba(110,200,0,.6);box-shadow:0 4px 14px rgba(40,70,0,.25),0 0 0 4px rgba(110,200,0,.12)}
 .cp-vn-play svg.i{width:20px;height:20px;margin-left:2px}
 .vnote.cp-vn-playing .cp-vn-play{opacity:0;transform:translate(-50%,-50%) scale(.6)}
-.cp-vn-speed{position:absolute;bottom:12px;right:12px;z-index:4;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:3px 8px;background:rgba(0,0,0,.5);color:#fff;font-family:var(--font-body);transition:transform .12s}
+.cp-vn-speed{position:absolute;bottom:12px;right:12px;z-index:4;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:3px 8px;background:rgba(0,0,0,.55);color:#fff;font-family:var(--font-body);transition:transform .12s}
+:root[data-theme="light"] .cp-vn-speed{background:rgba(255,255,255,.82);color:#2f6600}
 .cp-vn-speed:active{transform:scale(.88)}
+/* дюрейшн-пилюля видео-кружка: единый стиль с пилюлей скорости, слева-снизу */
+.msg.has-vnote .vnote .dur{left:12px;bottom:12px;font-weight:700;background:rgba(0,0,0,.55)}
+:root[data-theme="light"] .msg.has-vnote .vnote .dur{background:rgba(255,255,255,.82);color:#2f6600}
+@media(prefers-reduced-motion:reduce){.vnote.cp-vn-poster::before{animation:none}}
+/* --- 8c. Плейсхолдер фото-сообщения: угольный фон + мягкий лаймовый акцент вместо
+   мутного оливкового градиента базы (реальное фото перекрывает фон объектом cover) --- */
+.msg.has-vnote .photomsg{background:radial-gradient(120% 130% at 80% 8%,rgba(154,255,0,.12),transparent 52%),linear-gradient(150deg,#171717,#0b0b0b 74%);border-color:rgba(154,255,0,.16);color:var(--accent)}
+:root[data-theme="light"] .msg.has-vnote .photomsg{background:radial-gradient(120% 130% at 80% 8%,rgba(110,200,0,.2),transparent 52%),linear-gradient(150deg,#f3f7ed,#e7efd9 74%);border-color:rgba(110,200,0,.26);color:#53a800}
+.msg.has-vnote .photomsg svg.i{width:38px;height:38px;opacity:.9;filter:drop-shadow(0 2px 8px rgba(0,0,0,.35))}
+:root[data-theme="light"] .msg.has-vnote .photomsg svg.i{filter:none}
+/* реальное фото поверх — снимаем декоративный фон/акцент, чтобы не просвечивал по краям */
+.msg.has-vnote .photomsg:has(img){background:#0b0b0b;border-color:var(--border)}
 
 /* --- 9. Запись голоса/кружка: оверлей, пульс, отмена свайпом --- */
 .cp-rec{position:fixed;left:0;right:0;bottom:0;z-index:70;display:none;flex-direction:column;align-items:center;gap:18px;padding:26px 20px calc(88px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,rgba(0,0,0,.55)45%);pointer-events:none;max-width:1280px;margin:0 auto}
@@ -4490,13 +4512,19 @@ main>.screen{position:relative;z-index:1}
 .call-ava{position:relative;z-index:1;overflow:hidden}
 .call-controls{gap:20px;position:relative;padding-bottom:14px}
 .call-btn{position:relative;box-shadow:0 6px 20px rgba(0,0,0,.28)}
-.call-btn::after{content:'';position:absolute;left:50%;top:50%;width:2px;height:0;background:currentColor;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);transition:height .18s}
-.call-btn.off::after{height:30px}
+/* OFF = единый «приглушённо-перечёркнутый» вид для всех тумблеров (микро/камера/динамик):
+   база инвертировала OFF в БЕЛЫЙ фон — он читался как ВКЛ. Гасим фон и иконку, добавляем
+   косую черту, чтобы выключенное выглядело выключенным одинаково во всех кнопках */
+.call-btn.off{background:rgba(255,255,255,.06);color:rgba(255,255,255,.42);box-shadow:0 4px 14px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.1)}
+:root[data-theme="light"] .call-btn.off{background:rgba(20,30,5,.1);color:rgba(20,30,5,.4);box-shadow:0 4px 14px rgba(0,0,0,.12),inset 0 0 0 1px rgba(20,30,5,.12)}
+.call-btn::after{content:'';position:absolute;left:50%;top:50%;width:2.5px;height:0;background:currentColor;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);transition:height .18s;opacity:.85}
+.call-btn.off::after{height:32px}
 .call-btn.end::after{display:none}
 .cp-cl{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,.62);white-space:nowrap;letter-spacing:.01em}
 :root[data-theme="light"] .cp-cl{color:rgba(20,30,5,.6)}
-.call-btn.off .cp-cl{color:#fff}
-:root[data-theme="light"] .call-btn.off .cp-cl{color:#0d110a}
+/* подпись OFF — тоже приглушаем (не подсвечиваем), чтобы «выкл» читался как «выкл» */
+.call-btn.off .cp-cl{color:rgba(255,255,255,.4)}
+:root[data-theme="light"] .call-btn.off .cp-cl{color:rgba(20,30,5,.4)}
 /* красная кнопка сброса: не крутим саму кнопку (иначе подпись «Сброс» встаёт боком),
    разворачиваем только иконку трубки — подпись остаётся ровной снизу */
 .call-btn.end{transform:none}
@@ -5658,7 +5686,8 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .ch-card:hover{border-color:var(--lime-dim);background:var(--raised);transform:translateY(-1px)}
 .ch-card:active{transform:scale(.985)}
 .ch-av{width:52px;height:52px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font:800 21px/1 var(--font-display);letter-spacing:.02em;color:#0a0a0a;position:relative;overflow:hidden}
+  font:800 21px/1 var(--font-display);letter-spacing:.02em;position:relative;overflow:hidden;
+  background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a)}
 .ch-av svg.i{width:26px;height:26px;color:inherit}
 .ch-av.mini{width:40px;height:40px;border-radius:12px;font-size:16px}
 .ch-av.big{width:84px;height:84px;border-radius:24px;font-size:34px}
@@ -5724,7 +5753,8 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .ch-appear-prev{border-radius:var(--r-md);overflow:hidden;position:relative;height:130px;display:flex;align-items:flex-end;
   padding:14px;margin-bottom:14px;border:1px solid var(--border)}
 .ch-appear-prev .ch-ap-ava{width:64px;height:64px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-  font:800 26px/1 var(--font-display);color:#0a0a0a;box-shadow:0 6px 18px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.85)}
+  font:800 26px/1 var(--font-display);background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a);
+  box-shadow:0 6px 18px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.85)}
 .ch-appear-prev .ch-ap-name{color:#fff;font-weight:800;font-size:16px;margin-left:12px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .ch-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:9px}
 .ch-sw{aspect-ratio:1;border-radius:14px;cursor:pointer;border:2.5px solid transparent;transition:transform .14s,border-color .16s;position:relative}
@@ -6068,7 +6098,14 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .ch-cmt-list:empty{margin-bottom:0}
 .ch-cmt{display:flex;gap:9px;align-items:flex-start}
 .ch-cmt-av{width:30px;height:30px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font:800 12px/1 var(--font-display)}
+  font:800 12px/1 var(--font-display);background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a)}
+/* Светлая тема: процедурные аватары не должны быть чёрными кляксами на белых карточках.
+   Фото-аватары задают inline background-image (перебивает CSS без !important) → их не трогаем. */
+:root[data-theme="light"] .ch-av,
+:root[data-theme="light"] .ch-appear-prev .ch-ap-ava,
+:root[data-theme="light"] .ch-cmt-av{
+  background:var(--av-gl,var(--av-g,linear-gradient(135deg,#e9f5d2,#cfe9a4)));
+  color:var(--av-cl,var(--av-c,#2e4d00))}
 .ch-cmt-b{flex:1;min-width:0}
 .ch-cmt-top{display:flex;align-items:baseline;gap:7px}
 .ch-cmt-top b{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -7989,6 +8026,9 @@ let curFeedKind = 'sub';
 /* ================= НАВИГАЦИЯ ================= */
 const TITLES = {chats:'Чаты', feed:'Лента', mini:'Мини-аппы', partner:'Партнёрка', profile:'Профиль'};
 function showTab(t){
+  /* закрываем всплывающие оверлеи, чтобы контекст-меню поста/сообщения не «залипало»
+     при переходе между вкладками (правка по аудиту) */
+  try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+t).classList.add('active');
   document.querySelectorAll('#tabs>button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
@@ -22953,13 +22993,16 @@ function cpDecorateVnotes(){
     const vid = v.querySelector('video');
     const fl = v.querySelector('.cp-vn-fl'); const C = 2*Math.PI*47.5;
     if(fl){ fl.style.strokeDasharray = C; fl.style.strokeDashoffset = C; }
+    /* без реального видео — это премиум-постер (анимированное лаймовое кольцо), а не пустышка */
+    if(!vid) v.classList.add('cp-vn-poster');
     if(!v.querySelector('.cp-vn-play')) v.insertAdjacentHTML('beforeend', `<span class="cp-vn-play">${I('play')}</span>`);
+    /* пилюля скорости — на любом кружке (и на постере): читается как готовый элемент */
+    if(!v.querySelector('.cp-vn-speed')){
+      const b = document.createElement('button'); b.className = 'cp-vn-speed'; b.textContent = cpSpeedLabel();
+      b.onclick = e=>{ e.stopPropagation(); cpCycleSpeed(e); };
+      v.appendChild(b);
+    }
     if(vid){
-      if(!v.querySelector('.cp-vn-speed')){
-        const b = document.createElement('button'); b.className = 'cp-vn-speed'; b.textContent = cpSpeedLabel();
-        b.onclick = e=>{ e.stopPropagation(); cpCycleSpeed(e); };
-        v.appendChild(b);
-      }
       vid.addEventListener('timeupdate', ()=>{ if(fl){ const p = vid.currentTime/(vid.duration||1); fl.style.strokeDashoffset = C*(1-p); } });
       vid.addEventListener('play',  ()=>{ try{ vid.playbackRate = CP.speed; }catch(_){} v.classList.add('cp-vn-playing'); });
       vid.addEventListener('pause', ()=>v.classList.remove('cp-vn-playing'));
@@ -23192,7 +23235,7 @@ function cpBuildCall(){
     v.playsInline = true; v.muted = true; self.insertBefore(v, self.firstChild);
   }
   /* подписи под контролами */
-  const labels = {callMic:'Микро', callCam:'Камера', callSpk:'Динамик'};
+  const labels = {callMic:'Микрофон', callCam:'Камера', callSpk:'Динамик'};
   Object.entries(labels).forEach(([id,l])=>{
     const b = document.getElementById(id);
     if(b && !b.querySelector('.cp-cl')){ const s = document.createElement('span'); s.className = 'cp-cl'; s.textContent = l; b.appendChild(s); }
@@ -27532,39 +27575,44 @@ const CH_LESSON_URL = null;          // видео-уроки — заглушк
 
 /* фирменные градиенты-фоны (сменяемый фон канала) */
 const CH_BGS = [
-  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#9AFF00 140%)',
-  'linear-gradient(135deg,#141414,#2a2a2a)',
-  'linear-gradient(135deg,#0d2818,#0a0a0a 70%)',
-  'linear-gradient(135deg,#1a1200,#3a2600)',
-  'linear-gradient(135deg,#001a2b,#003a4d)',
-  'linear-gradient(135deg,#2b0018,#4d0033)',
-  'linear-gradient(135deg,#6fd400,#3a7a00)',
-  'linear-gradient(135deg,#111,#000)',
-  'linear-gradient(135deg,#26004d,#12002b)',
-  'linear-gradient(135deg,#4d2600,#1a0d00)',
+  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#9AFF00 140%)', // чёрный → лайм
+  'linear-gradient(135deg,#141414,#2a2a2a)',                     // графит
+  'linear-gradient(135deg,#0d2818,#0a0a0a 70%)',                 // тёмно-зелёный → чёрный
+  'linear-gradient(135deg,#12240a,#050a02)',                     // глубокий лист-зелёный → почти чёрный
+  'linear-gradient(135deg,#043024,#07160f)',                     // тёмный изумруд (замена off-brand синего/тиловый)
+  'linear-gradient(135deg,#1a2b00,#000)',                        // лайм-тон → чёрный (замена off-brand пурпура)
+  'linear-gradient(135deg,#6fd400,#3a7a00)',                     // яркий зелёный
+  'linear-gradient(135deg,#111,#000)',                           // почти чёрный
+  'linear-gradient(135deg,#2e4d0a,#0d1a00)',                     // олива (замена off-brand фиолетового)
+  'linear-gradient(135deg,#1a1a1a,#0a1400)',                     // уголь → тёмно-зелёный (замена off-brand коричневого)
 ];
 const CH_AV_BGS = [   // legacy: плоские цвета аватара (оставлены для совместимости, НЕ используются в рендере)
   '#9AFF00','#e8e8e8','#9AFF00','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#9AFF00','#b98cff','#ff9a3c'
 ];
 /* Процедурные фирменные аватары: только чёрный + лайм/зелёное семейство (никаких off-brand цветов).
-   g — градиент-фон, c — цвет глифа/буквы (контраст под фон). Индекс = bg канала или хэш ника. */
+   g/c — тёмная тема (градиент-фон / цвет глифа), gl/cl — светлая тема (тайлы не должны быть
+   чёрными кляксами на белых карточках → в светлой теме все тайлы светлые/лаймовые).
+   Индекс = bg канала или хэш ника. */
 const CH_AV_GRADS = [
-  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a'}, // яркий лайм
-  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00'}, // графит · лайм-глиф
-  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a'}, // лайм → тёмно-зелёный
-  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00'}, // бледный лайм
-  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00'}, // глубокий зелёный/чёрный
-  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf'}, // средний зелёный
-  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00'}, // чёрный · лайм-глиф
-  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a'}, // мягкий лайм
-  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a'}, // тёмная олива
-  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0'}, // зелёный · почти белый глиф
+  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a', gl:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#7ad400)', cl:'#0a1400'}, // яркий лайм
+  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00', gl:'linear-gradient(135deg,#e9f5d2,#cfe9a4)',            cl:'#2e4d00'}, // графит → светлый лайм
+  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#b6f56a,#6fc400)',            cl:'#0a1400'}, // лайм → зелёный
+  {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00', gl:'linear-gradient(135deg,#f2ffe0,#d3f2a6)',            cl:'#2e4d00'}, // бледный лайм
+  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#d9efb5,#add86e)',            cl:'#274500'}, // тёмн.зелёный → светлый
+  {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf', gl:'linear-gradient(135deg,#9ee84a,#5fae10)',            cl:'#0a1400'}, // средний зелёный
+  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#eef8db,#c6e792)',            cl:'#2b4a00'}, // чёрный → светлый лайм
+  {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#c6f584,#8fd82e)',            cl:'#0a1400'}, // мягкий лайм
+  {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a', gl:'linear-gradient(135deg,#dcefb0,#b3da70)',            cl:'#2a4700'}, // тёмная олива → светлая
+  {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0', gl:'linear-gradient(135deg,#a9e85a,#5fa614)',            cl:'#0f2600'}, // зелёный
 ];
-/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник) */
+/* стиль процедурного аватара по индексу (bg канала) или по хэшу строки (участник).
+   Отдаём CSS-переменные (--av-g/--av-c тёмная, --av-gl/--av-cl светлая); фон рисует CSS
+   через var() → тема переключается чисто в CSS, без ре-рендера. */
 function chAvGrad(i){ return CH_AV_GRADS[((+i||0)%CH_AV_GRADS.length+CH_AV_GRADS.length)%CH_AV_GRADS.length]; }
 function chHashIdx(s){ s=String(s||'x'); let h=0; for(let k=0;k<s.length;k++) h=(h*31+s.charCodeAt(k))|0; return Math.abs(h)%CH_AV_GRADS.length; }
-function chAvGradStyle(i){ const g=chAvGrad(i); return `background:${g.g};color:${g.c}`; }
-function chAvSeedStyle(s){ const g=CH_AV_GRADS[chHashIdx(s)]; return `background:${g.g};color:${g.c}`; }
+function chAvVars(g){ return `--av-g:${g.g};--av-c:${g.c};--av-gl:${g.gl};--av-cl:${g.cl}`; }
+function chAvGradStyle(i){ return chAvVars(chAvGrad(i)); }
+function chAvSeedStyle(s){ return chAvVars(CH_AV_GRADS[chHashIdx(s)]); }
 const CH_ICONS = ['megaphone','bolt','fire','rocket','star','crown','globe','compass'];
 
 /* ---------- состояние ---------- */

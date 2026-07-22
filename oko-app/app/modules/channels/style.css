@@ -32,7 +32,8 @@
 .ch-card:hover{border-color:var(--lime-dim);background:var(--raised);transform:translateY(-1px)}
 .ch-card:active{transform:scale(.985)}
 .ch-av{width:52px;height:52px;border-radius:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font:800 21px/1 var(--font-display);letter-spacing:.02em;color:#0a0a0a;position:relative;overflow:hidden}
+  font:800 21px/1 var(--font-display);letter-spacing:.02em;position:relative;overflow:hidden;
+  background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a)}
 .ch-av svg.i{width:26px;height:26px;color:inherit}
 .ch-av.mini{width:40px;height:40px;border-radius:12px;font-size:16px}
 .ch-av.big{width:84px;height:84px;border-radius:24px;font-size:34px}
@@ -98,7 +99,8 @@
 .ch-appear-prev{border-radius:var(--r-md);overflow:hidden;position:relative;height:130px;display:flex;align-items:flex-end;
   padding:14px;margin-bottom:14px;border:1px solid var(--border)}
 .ch-appear-prev .ch-ap-ava{width:64px;height:64px;border-radius:19px;display:flex;align-items:center;justify-content:center;
-  font:800 26px/1 var(--font-display);color:#0a0a0a;box-shadow:0 6px 18px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.85)}
+  font:800 26px/1 var(--font-display);background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a);
+  box-shadow:0 6px 18px rgba(0,0,0,.35);border:2.5px solid rgba(255,255,255,.85)}
 .ch-appear-prev .ch-ap-name{color:#fff;font-weight:800;font-size:16px;margin-left:12px;text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .ch-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:9px}
 .ch-sw{aspect-ratio:1;border-radius:14px;cursor:pointer;border:2.5px solid transparent;transition:transform .14s,border-color .16s;position:relative}
@@ -442,7 +444,14 @@
 .ch-cmt-list:empty{margin-bottom:0}
 .ch-cmt{display:flex;gap:9px;align-items:flex-start}
 .ch-cmt-av{width:30px;height:30px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  font:800 12px/1 var(--font-display)}
+  font:800 12px/1 var(--font-display);background:var(--av-g,linear-gradient(135deg,#141414,#2a2a2a));color:var(--av-c,#0a0a0a)}
+/* Светлая тема: процедурные аватары не должны быть чёрными кляксами на белых карточках.
+   Фото-аватары задают inline background-image (перебивает CSS без !important) → их не трогаем. */
+:root[data-theme="light"] .ch-av,
+:root[data-theme="light"] .ch-appear-prev .ch-ap-ava,
+:root[data-theme="light"] .ch-cmt-av{
+  background:var(--av-gl,var(--av-g,linear-gradient(135deg,#e9f5d2,#cfe9a4)));
+  color:var(--av-cl,var(--av-c,#2e4d00))}
 .ch-cmt-b{flex:1;min-width:0}
 .ch-cmt-top{display:flex;align-items:baseline;gap:7px}
 .ch-cmt-top b{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}

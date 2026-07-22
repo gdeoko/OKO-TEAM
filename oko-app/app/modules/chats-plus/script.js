@@ -696,13 +696,16 @@ function cpDecorateVnotes(){
     const vid = v.querySelector('video');
     const fl = v.querySelector('.cp-vn-fl'); const C = 2*Math.PI*47.5;
     if(fl){ fl.style.strokeDasharray = C; fl.style.strokeDashoffset = C; }
+    /* без реального видео — это премиум-постер (анимированное лаймовое кольцо), а не пустышка */
+    if(!vid) v.classList.add('cp-vn-poster');
     if(!v.querySelector('.cp-vn-play')) v.insertAdjacentHTML('beforeend', `<span class="cp-vn-play">${I('play')}</span>`);
+    /* пилюля скорости — на любом кружке (и на постере): читается как готовый элемент */
+    if(!v.querySelector('.cp-vn-speed')){
+      const b = document.createElement('button'); b.className = 'cp-vn-speed'; b.textContent = cpSpeedLabel();
+      b.onclick = e=>{ e.stopPropagation(); cpCycleSpeed(e); };
+      v.appendChild(b);
+    }
     if(vid){
-      if(!v.querySelector('.cp-vn-speed')){
-        const b = document.createElement('button'); b.className = 'cp-vn-speed'; b.textContent = cpSpeedLabel();
-        b.onclick = e=>{ e.stopPropagation(); cpCycleSpeed(e); };
-        v.appendChild(b);
-      }
       vid.addEventListener('timeupdate', ()=>{ if(fl){ const p = vid.currentTime/(vid.duration||1); fl.style.strokeDashoffset = C*(1-p); } });
       vid.addEventListener('play',  ()=>{ try{ vid.playbackRate = CP.speed; }catch(_){} v.classList.add('cp-vn-playing'); });
       vid.addEventListener('pause', ()=>v.classList.remove('cp-vn-playing'));
@@ -935,7 +938,7 @@ function cpBuildCall(){
     v.playsInline = true; v.muted = true; self.insertBefore(v, self.firstChild);
   }
   /* подписи под контролами */
-  const labels = {callMic:'Микро', callCam:'Камера', callSpk:'Динамик'};
+  const labels = {callMic:'Микрофон', callCam:'Камера', callSpk:'Динамик'};
   Object.entries(labels).forEach(([id,l])=>{
     const b = document.getElementById(id);
     if(b && !b.querySelector('.cp-cl')){ const s = document.createElement('span'); s.className = 'cp-cl'; s.textContent = l; b.appendChild(s); }

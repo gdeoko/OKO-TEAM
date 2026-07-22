@@ -148,15 +148,37 @@
    лаймовое кольцо прогресса (cp-vn-ring) становится единственным ярким акцентом */
 .msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.26);border-width:1px;border-color:rgba(154,255,0,.22)}
 :root[data-theme="light"] .msg.has-vnote .vnote{border-color:rgba(110,180,0,.3)}
+/* постер видео-заметки без реального видео — чистый чёрно-лаймовый бренд-фон вместо
+   мутного оливкового радиала базы (виден только на плейсхолдере: видео перекрывает фон) */
+.vnote.cp-vn-poster{background:radial-gradient(120% 120% at 34% 26%,rgba(154,255,0,.14),transparent 52%),radial-gradient(circle at 50% 54%,#141d09,#0a0d05 74%)}
+:root[data-theme="light"] .vnote.cp-vn-poster{background:radial-gradient(120% 120% at 34% 26%,rgba(110,200,0,.22),transparent 52%),radial-gradient(circle at 50% 54%,#eaf6d5,#d7ecb6 78%)}
+/* тонкая анимированная лаймовая дуга, медленно обходящая кольцо — «живой», не пустой */
+.vnote.cp-vn-poster::before{content:'';position:absolute;inset:4px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 60%,rgba(154,255,0,.55) 76%,rgba(154,255,0,0) 92%);-webkit-mask:radial-gradient(circle,transparent 61%,#000 63%);mask:radial-gradient(circle,transparent 61%,#000 63%);opacity:.55;z-index:2;pointer-events:none;animation:cpVnSweep 4.6s linear infinite}
+:root[data-theme="light"] .vnote.cp-vn-poster::before{background:conic-gradient(from 0deg,transparent 0 60%,rgba(110,200,0,.6) 76%,rgba(110,200,0,0) 92%)}
+@keyframes cpVnSweep{to{transform:rotate(360deg)}}
 .cp-vn-ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg);pointer-events:none;z-index:3}
 .cp-vn-tr{fill:none;stroke:rgba(255,255,255,.16);stroke-width:2}
 :root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.12)}
 .cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:2.5;stroke-linecap:round;filter:drop-shadow(0 0 2px rgba(154,255,0,.4));transition:stroke-dashoffset .2s linear}
-.cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
+.cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.46);backdrop-filter:blur(3px);border:1.5px solid rgba(154,255,0,.5);box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 0 4px rgba(154,255,0,.08);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
+:root[data-theme="light"] .cp-vn-play{background:rgba(255,255,255,.82);color:#2f6600;border-color:rgba(110,200,0,.6);box-shadow:0 4px 14px rgba(40,70,0,.25),0 0 0 4px rgba(110,200,0,.12)}
 .cp-vn-play svg.i{width:20px;height:20px;margin-left:2px}
 .vnote.cp-vn-playing .cp-vn-play{opacity:0;transform:translate(-50%,-50%) scale(.6)}
-.cp-vn-speed{position:absolute;bottom:12px;right:12px;z-index:4;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:3px 8px;background:rgba(0,0,0,.5);color:#fff;font-family:var(--font-body);transition:transform .12s}
+.cp-vn-speed{position:absolute;bottom:12px;right:12px;z-index:4;font-size:10px;font-weight:800;letter-spacing:.02em;border-radius:99px;padding:3px 8px;background:rgba(0,0,0,.55);color:#fff;font-family:var(--font-body);transition:transform .12s}
+:root[data-theme="light"] .cp-vn-speed{background:rgba(255,255,255,.82);color:#2f6600}
 .cp-vn-speed:active{transform:scale(.88)}
+/* дюрейшн-пилюля видео-кружка: единый стиль с пилюлей скорости, слева-снизу */
+.msg.has-vnote .vnote .dur{left:12px;bottom:12px;font-weight:700;background:rgba(0,0,0,.55)}
+:root[data-theme="light"] .msg.has-vnote .vnote .dur{background:rgba(255,255,255,.82);color:#2f6600}
+@media(prefers-reduced-motion:reduce){.vnote.cp-vn-poster::before{animation:none}}
+/* --- 8c. Плейсхолдер фото-сообщения: угольный фон + мягкий лаймовый акцент вместо
+   мутного оливкового градиента базы (реальное фото перекрывает фон объектом cover) --- */
+.msg.has-vnote .photomsg{background:radial-gradient(120% 130% at 80% 8%,rgba(154,255,0,.12),transparent 52%),linear-gradient(150deg,#171717,#0b0b0b 74%);border-color:rgba(154,255,0,.16);color:var(--accent)}
+:root[data-theme="light"] .msg.has-vnote .photomsg{background:radial-gradient(120% 130% at 80% 8%,rgba(110,200,0,.2),transparent 52%),linear-gradient(150deg,#f3f7ed,#e7efd9 74%);border-color:rgba(110,200,0,.26);color:#53a800}
+.msg.has-vnote .photomsg svg.i{width:38px;height:38px;opacity:.9;filter:drop-shadow(0 2px 8px rgba(0,0,0,.35))}
+:root[data-theme="light"] .msg.has-vnote .photomsg svg.i{filter:none}
+/* реальное фото поверх — снимаем декоративный фон/акцент, чтобы не просвечивал по краям */
+.msg.has-vnote .photomsg:has(img){background:#0b0b0b;border-color:var(--border)}
 
 /* --- 9. Запись голоса/кружка: оверлей, пульс, отмена свайпом --- */
 .cp-rec{position:fixed;left:0;right:0;bottom:0;z-index:70;display:none;flex-direction:column;align-items:center;gap:18px;padding:26px 20px calc(88px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,rgba(0,0,0,.55)45%);pointer-events:none;max-width:1280px;margin:0 auto}
@@ -217,13 +239,19 @@
 .call-ava{position:relative;z-index:1;overflow:hidden}
 .call-controls{gap:20px;position:relative;padding-bottom:14px}
 .call-btn{position:relative;box-shadow:0 6px 20px rgba(0,0,0,.28)}
-.call-btn::after{content:'';position:absolute;left:50%;top:50%;width:2px;height:0;background:currentColor;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);transition:height .18s}
-.call-btn.off::after{height:30px}
+/* OFF = единый «приглушённо-перечёркнутый» вид для всех тумблеров (микро/камера/динамик):
+   база инвертировала OFF в БЕЛЫЙ фон — он читался как ВКЛ. Гасим фон и иконку, добавляем
+   косую черту, чтобы выключенное выглядело выключенным одинаково во всех кнопках */
+.call-btn.off{background:rgba(255,255,255,.06);color:rgba(255,255,255,.42);box-shadow:0 4px 14px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.1)}
+:root[data-theme="light"] .call-btn.off{background:rgba(20,30,5,.1);color:rgba(20,30,5,.4);box-shadow:0 4px 14px rgba(0,0,0,.12),inset 0 0 0 1px rgba(20,30,5,.12)}
+.call-btn::after{content:'';position:absolute;left:50%;top:50%;width:2.5px;height:0;background:currentColor;border-radius:2px;transform:translate(-50%,-50%) rotate(45deg);transition:height .18s;opacity:.85}
+.call-btn.off::after{height:32px}
 .call-btn.end::after{display:none}
 .cp-cl{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:rgba(255,255,255,.62);white-space:nowrap;letter-spacing:.01em}
 :root[data-theme="light"] .cp-cl{color:rgba(20,30,5,.6)}
-.call-btn.off .cp-cl{color:#fff}
-:root[data-theme="light"] .call-btn.off .cp-cl{color:#0d110a}
+/* подпись OFF — тоже приглушаем (не подсвечиваем), чтобы «выкл» читался как «выкл» */
+.call-btn.off .cp-cl{color:rgba(255,255,255,.4)}
+:root[data-theme="light"] .call-btn.off .cp-cl{color:rgba(20,30,5,.4)}
 /* красная кнопка сброса: не крутим саму кнопку (иначе подпись «Сброс» встаёт боком),
    разворачиваем только иконку трубки — подпись остаётся ровной снизу */
 .call-btn.end{transform:none}
