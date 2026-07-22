@@ -122,3 +122,10 @@ per-reel OVL_STYLE (5 стилей боксов). Выбор механики П
 ГОЛОС: Qwen3-TTS (HF PRO, Dylan) — первый ролик на новом голосе вместо edge-tts. Музыка fs_viral_395037 (CC0, уникальная, seed 376).
 Стоки: 12 Pexels atv/quad offroad/mud (b01-b12, новые). Обложка «ПРОЕДЕТ ВЕЗДЕ» = первый кадр + превью.
 Публикация batch A: YT main GEJheINGb2w + TikTok 2365299 (@diesel_kitay новый) 92319622. IG @diesel_cargo — checkpoint (пропущен). Очередь VPS 011. 22.07 posted_A→5/5 (цель A выполнена).
+
+## 22.07 — ролик #19 (batch B) МОТО «городской: мимо пробок» — авторские анимации + Silero-голос + уник. музыка
+Тема: городской мотоцикл из Китая (экономно/юрко/стильно, мимо пробок). Микс вирал+польза. ≠ прошлых B.
+АНИМАЦИИ: `pipeline/overlay_19.html` — 6 новых форм (traffic-weave, fuel-drops, parking-fit, km-milestones, model-carousel, headlight-reveal). Разбор — USED_ANIM.md #19.
+ГОЛОС: Silero v4_ru eugene (нативный русский, без ошибок в словах) — замена Qwen. Музыка fs_useful_117358 (CC0, уник, seed 562).
+Стоки: 12 Pexels city/urban motorcycle (b01-b12, новые). Обложка «МИМО ПРОБОК» = первый кадр + превью.
+Публикация batch B: YT ytnew_b YXHOlQelQfA + TikTok 2363201 92323511 + IG @diesel_kitay SHARED. Очередь VPS 012. 22.07 posted_B→5/5 (цель B выполнена; день 10/10).

@@ -1,0 +1,145 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #19 (batch B, МОТО городской). New forms, none reused:
+// traffic-weave · fuel-drop counter · parking-fit frame · km-milestones · model-carousel · headlight-reveal.
+const TOTAL=31.56;
+const AMB="#EA5920",AMB2="#FF7A3C",CYAN="#4FD1C5",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// A1 — TRAFFIC-WEAVE: авто-блоки стоят, мото змейкой проезжает между ними
+function a1(ts){const a=1.9,b=6.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-330)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПОКА ВСЕ СТОЯТ</text>';
+  // frozen car blocks in 2 lanes
+  const cars=[[400,700],[680,760],[400,1000],[680,1060],[400,300],[680,360]];
+  cars.forEach(c=>{s+='<rect x="'+(c[0]-70)+'" y="'+(c[1]-46)+'" width="140" height="92" rx="16" fill="rgba(40,40,46,.9)" stroke="'+DIM+'" stroke-width="2"/>';});
+  // moto weaving path (sine) between lanes
+  const prog=easeInOut(clamp(p/0.85));const topY=cy-380,botY=cy+380;
+  const my=lerp(botY,topY,prog);const mx=cx+Math.sin(prog*Math.PI*2.5)*110;
+  // trail
+  let d='';for(let t2=Math.max(0,prog-0.35);t2<=prog;t2+=0.03){const y=lerp(botY,topY,t2);const x=cx+Math.sin(t2*Math.PI*2.5)*110;d+=(d?'L':'M')+x+' '+y+' ';}
+  s+='<path d="'+d+'" fill="none" stroke="'+AMB+'" stroke-width="8" stroke-linecap="round" opacity="0.8"/>';
+  s+='<g transform="translate('+mx+','+my+')"><circle r="26" fill="'+AMB2+'"/><circle r="12" fill="#111"/></g>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — FUEL-DROP COUNTER: капли падают в бак, «бак = неделя»
+function a2(ts){const a=6.2,b=9.95;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,tankY=880;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(tankY-180)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">РАСХОД КАК У СКУТЕРА</text>';
+  // few drops falling (discrete, economical) into a small tank
+  const ndrops=4;
+  for(let i=0;i<ndrops;i++){const dp=clamp((p-(0.1+i*0.14))/0.4);if(dp<=0)continue;
+    const y=lerp(tankY-160,tankY-20,easeIn(dp));const op=dp<1?1:clamp((1.15-dp)/0.15);
+    s+='<path d="M'+cx+' '+(y-22)+' C'+(cx-16)+' '+(y-4)+' '+(cx-16)+' '+(y+14)+' '+cx+' '+(y+14)+' C'+(cx+16)+' '+(y+14)+' '+(cx+16)+' '+(y-4)+' '+cx+' '+(y-22)+' Z" fill="'+CYAN+'" opacity="'+op+'"/>';
+  }
+  function easeIn(x){return x*x;}
+  // tank fills a little
+  const fill=clamp(p/0.85)*0.28;
+  s+='<rect x="'+(cx-160)+'" y="'+(tankY-10)+'" width="320" height="150" rx="26" fill="rgba(12,16,18,.6)" stroke="'+AMB+'" stroke-width="3"/>';
+  s+='<rect x="'+(cx-160)+'" y="'+(tankY-10+150*(1-fill))+'" width="320" height="'+(150*fill)+'" rx="0" fill="'+CYAN+'" opacity="0.85"/>';
+  s+='<text x="'+cx+'" y="'+(tankY+230)+'" text-anchor="middle" font-family="soyuz" font-size="66" fill="'+WHT+'">БАК = НЕДЕЛЯ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — PARKING-FIT: рамка парковки сжимается вокруг мото, «1 место = 3 мото»
+function a3(ts){const a=10.2,b=14.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const shrink=easeInOut(clamp((p-0.1)/0.6));
+  const w=lerp(760,300,shrink),h=lerp(520,360,shrink);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-330)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПАРКУЕШЬСЯ ВЕЗДЕ</text>';
+  // dashed parking frame (corner brackets)
+  const x0=cx-w/2,y0=cy-h/2,cl=70;
+  const br=(x,y,dx,dy)=>'<path d="M'+(x+dx*cl)+' '+y+' L'+x+' '+y+' L'+x+' '+(y+dy*cl)+'" fill="none" stroke="'+AMB2+'" stroke-width="8" stroke-linecap="round"/>';
+  s+=br(x0,y0,1,1)+br(x0+w,y0,-1,1)+br(x0,y0+h,1,-1)+br(x0+w,y0+h,-1,-1);
+  // 3 mini moto icons appear when fully shrunk
+  const app=clamp((shrink-0.7)/0.3);
+  if(app>0)for(let i=0;i<3;i++)s+='<g opacity="'+clamp(app*1.5)+'" transform="translate('+(cx-70+i*70)+','+cy+')"><circle r="16" fill="'+AMB+'"/></g>';
+  s+='<text x="'+cx+'" y="'+(cy+h/2+70)+'" text-anchor="middle" font-family="soyuz" font-size="60" fill="'+WHT+'" opacity="'+app+'">1 МЕСТО = 3 МОТО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — KM-MILESTONES: верстовые столбы пролетают, ресурс тысячи км
+function a4(ts){const a=14.55,b=19.2;const p=win(ts,a,b);if(p<0)return'';
+  const cy=1000;const marks=["10 000","30 000","50 000+"];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-330)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">РЕСУРС БЕЗ КАПРИЗОВ</text>';
+  // road line with perspective
+  s+='<line x1="120" y1="'+(cy+120)+'" x2="960" y2="'+(cy+120)+'" stroke="rgba(255,255,255,.2)" stroke-width="4"/>';
+  // dashes moving
+  for(let i=0;i<10;i++){const dx=(120+((i*100 - p*TOTAL*90)%840+840)%840);s+='<rect x="'+dx+'" y="'+(cy+114)+'" width="40" height="10" fill="'+AMB+'"/>';}
+  // milestones pass one by one
+  marks.forEach((m,i)=>{const mp=clamp((p-(0.12+i*0.24))/0.3);if(mp<=0||mp>1.25)return;
+    const x=lerp(1050,120,easeOut(clamp(mp)));const sc=lerp(0.6,1.25,clamp(mp));const op=clamp(mp*2)*clamp((1.2-mp)/0.2);
+    s+='<g opacity="'+op+'" transform="translate('+x+','+cy+') scale('+sc+')">'
+      +'<rect x="-100" y="-70" width="200" height="120" rx="14" fill="rgba(12,16,18,.94)" stroke="'+AMB+'" stroke-width="3"/>'
+      +'<text x="0" y="6" text-anchor="middle" font-family="mont9" font-size="52" fill="'+WHT+'">'+m+'</text>'
+      +'<text x="0" y="40" text-anchor="middle" font-family="man8" font-size="26" fill="'+CYAN+'">км</text></g>';
+  });
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — MODEL-CAROUSEL: 3 силуэта (город/спорт/классика) свайпаются
+function a5(ts){const a=19.45,b=24.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const items=["ГОРОД","СПОРТ","КЛАССИКА"];const n=items.length;
+  const pos=p*(n-0.001);const idx=Math.min(n-1,Math.floor(pos));
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px">';
+  s+='<div style="position:absolute;top:'+(cy-330)+'px;left:0;width:1080px;text-align:center;font-family:man8;font-size:42px;letter-spacing:4px;color:'+DIM+'">ВЫБИРАЙ ПОД СЕБЯ</div>';
+  items.forEach((it,i)=>{const off=(i-pos);const x=cx+off*560;const op=clamp(1-Math.abs(off)*0.9);const sc=lerp(0.8,1.1,clamp(1-Math.abs(off)));
+    s+='<div style="position:absolute;left:'+(x-260)+'px;top:'+(cy-110)+'px;width:520px;height:280px;opacity:'+op+';transform:scale('+sc+');'
+      +'background:linear-gradient(150deg,rgba(18,16,14,.95),rgba(36,24,14,.9));border:3px solid '+(i===idx?AMB:'rgba(234,89,32,.4)')+';border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center">'
+      +'<div style="font-family:soyuz;font-size:90px;color:'+WHT+'">'+it+'</div>'
+      +'<div style="width:180px;height:8px;background:'+AMB2+';border-radius:4px;margin-top:16px;opacity:'+(i===idx?1:0.3)+'"></div></div>';
+  });
+  // dots
+  let d='<div style="position:absolute;left:0;top:'+(cy+230)+'px;width:1080px;text-align:center">';
+  for(let i=0;i<n;i++)d+='<span style="display:inline-block;width:'+(i===idx?40:14)+'px;height:12px;border-radius:6px;margin:0 6px;background:'+(i===idx?AMB2:'rgba(255,255,255,.3)')+'"></span>';
+  s+=d+'</div></div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A6 — HEADLIGHT-REVEAL: луч фары проходит по экрану и открывает лого
+function a6(ts){const a=24.7,b=29.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;
+  const sweep=easeInOut(clamp(p/0.5));
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  // headlight cone sweeping from left
+  const hx=lerp(-200,1080,sweep);
+  s+='<defs><radialGradient id="hl" cx="0" cy="0.5" r="1"><stop offset="0" stop-color="rgba(255,240,210,.5)"/><stop offset="1" stop-color="rgba(255,240,210,0)"/></radialGradient></defs>';
+  s+='<path d="M'+(hx-260)+' '+(cy-260)+' L'+(hx+140)+' '+cy+' L'+(hx-260)+' '+(cy+260)+' Z" fill="url(#hl)" opacity="'+(1-clamp((p-0.5)/0.3))+'"/>';
+  s+='<circle cx="'+(hx-240)+'" cy="'+cy+'" r="14" fill="#FFF0D2" opacity="'+(1-clamp((p-0.5)/0.3))+'"/>';
+  s+='</svg>';
+  const lp=clamp((p-0.4)/0.28),e=back(lp);
+  let lock='<div style="position:absolute;left:0;top:'+(cy-140)+'px;width:1080px;text-align:center;opacity:'+clamp(lp*1.5)+';transform:scale('+(0.74+0.26*e)+')">'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+WHT+'">DIESEL</div>'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+AMB2+'">CARGO</div></div>';
+  const up=clamp((p-0.72)/0.22);
+  lock+='<div style="position:absolute;left:'+(cx-260)+'px;top:'+(cy+130)+'px;width:'+(520*easeOut(up))+'px;height:8px;background:'+AMB+';border-radius:4px"></div>';
+  lock+='<div style="position:absolute;left:0;top:'+(cy+160)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+lock+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>
