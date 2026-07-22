@@ -415,3 +415,18 @@
 .mp-deal-act button.warn{background:rgba(255,77,77,.1);color:var(--danger);border-color:rgba(255,77,77,.32)}
 .mp-deal-act button.warn:hover{border-color:var(--danger)}
 :root[data-theme="light"] .mp-deal-act button.warn{background:rgba(214,48,48,.09);color:#c0392b}
+
+/* ================= DESKTOP-ONLY POLISH (аудит: карточки категорий полупустые) =================
+   Плитки категорий биржи .mk-cat (в base 2-col при любом размере) на широких экранах
+   растягиваются на пол-панели и выглядят полупустыми: иконка + 2 строки, низ пустой.
+   ЧИНИМ ТОЛЬКО ≥1000/≥1200px — сетку плотнее (3→4 колонки) и чуть меньше паддинг,
+   чтобы карточки были пропорциональными. Мобайл (<900px) НЕ трогаем (byte-for-byte). */
+@media(min-width:1000px){
+  .mk-cats{grid-template-columns:repeat(3,1fr);gap:10px}   /* денсер: 3 колонки вместо 2 */
+  .mk-cat{padding:12px 13px;gap:7px}                        /* компактнее по вертикали */
+  .mk-cat-ic{width:36px;height:36px;border-radius:11px}     /* иконка чуть меньше — пропорция */
+  .mk-cat-ic svg.i{width:20px;height:20px}
+}
+@media(min-width:1200px){
+  .mk-cats{grid-template-columns:repeat(4,1fr)}             /* на очень широких — 4 колонки */
+}

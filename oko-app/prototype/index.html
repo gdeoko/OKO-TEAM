@@ -3572,6 +3572,17 @@ main>.screen{position:relative;z-index:1}
 .hq-room-pop-s{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--dim);background:var(--lime-dim);border:1px solid rgba(154,255,0,.22);border-radius:var(--r-sm);padding:9px 11px;line-height:1.4}
 .hq-room-pop-s svg.i{width:14px;height:14px;color:var(--accent);flex-shrink:0}
 
+/* ================= DESKTOP-ONLY POLISH (аудит: KPI-плитки обзора слишком высокие) =================
+   Ряд KPI обзора .adm-kpis (в base 2-col) в широкой админ-панели (~1040px) даёт очень
+   высокие плитки с тяжёлым паддингом — читается как крупные блоки, а не компактный ряд KPI.
+   ЧИНИМ ТОЛЬКО ≥1000px — 3 колонки + меньше паддинг/размер числа, чтобы это был плотный
+   KPI-ряд. Данные/числа не трогаем, только раскладка. Мобайл (<900px) НЕ меняем. */
+@media(min-width:1000px){
+  .adm-kpis{grid-template-columns:repeat(3,1fr);gap:9px}    /* 3-колоночный компактный ряд */
+  .adm-kpi{padding:11px 13px}                                /* легче паддинг */
+  .adm-kpi b{font-size:26px}                                 /* число чуть компактнее (Bebas) */
+}
+
 /* ===== module: market-pro ===== */
 /* ===== MARKET-PRO: кабинет продавца + пакеты OKO Production (префикс mp-) ===== */
 @keyframes mpFade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
@@ -3990,6 +4001,21 @@ main>.screen{position:relative;z-index:1}
 .mp-deal-act button.warn{background:rgba(255,77,77,.1);color:var(--danger);border-color:rgba(255,77,77,.32)}
 .mp-deal-act button.warn:hover{border-color:var(--danger)}
 :root[data-theme="light"] .mp-deal-act button.warn{background:rgba(214,48,48,.09);color:#c0392b}
+
+/* ================= DESKTOP-ONLY POLISH (аудит: карточки категорий полупустые) =================
+   Плитки категорий биржи .mk-cat (в base 2-col при любом размере) на широких экранах
+   растягиваются на пол-панели и выглядят полупустыми: иконка + 2 строки, низ пустой.
+   ЧИНИМ ТОЛЬКО ≥1000/≥1200px — сетку плотнее (3→4 колонки) и чуть меньше паддинг,
+   чтобы карточки были пропорциональными. Мобайл (<900px) НЕ трогаем (byte-for-byte). */
+@media(min-width:1000px){
+  .mk-cats{grid-template-columns:repeat(3,1fr);gap:10px}   /* денсер: 3 колонки вместо 2 */
+  .mk-cat{padding:12px 13px;gap:7px}                        /* компактнее по вертикали */
+  .mk-cat-ic{width:36px;height:36px;border-radius:11px}     /* иконка чуть меньше — пропорция */
+  .mk-cat-ic svg.i{width:20px;height:20px}
+}
+@media(min-width:1200px){
+  .mk-cats{grid-template-columns:repeat(4,1fr)}             /* на очень широких — 4 колонки */
+}
 
 /* ===== module: feed-algo ===== */
 /* feed-algo: алгоритмическая лента рекомендаций */
@@ -7529,7 +7555,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.85</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.86</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
