@@ -16,7 +16,7 @@ def main():
     canvas=Image.new("RGBA",(W,H),(10,10,12,255)); canvas.alpha_composite(lg,((W-lw)//2,(H-lh)//2-60)); canvas.convert("RGB").save(tmp)
     # лёгкий зум + CTA снизу
     subprocess.run(["ffmpeg","-y","-v","error","-loop","1","-t",f"{a.dur}","-i",tmp,
-        "-vf",f"scale={W}:{H},zoompan=z='min(zoom+0.0009,1.06)':d={int(a.dur*30)}:s={W}x{H},"
+        "-vf",f"scale={W}:{H},fps=30,"
         f"drawtext=fontfile={a.font}:text='{a.cta}':fontcolor=0xEA5920:fontsize=60:x=(w-tw)/2:y=h-360",
         "-c:v","libx264","-pix_fmt","yuv420p","-r","30",a.out],check=True,timeout=60)
     print(a.out)
