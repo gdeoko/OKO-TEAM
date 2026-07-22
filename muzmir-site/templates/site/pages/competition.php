@@ -626,8 +626,55 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $metaBase = $about !== '' ? mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags($about))), 0, 155) : '';
+
+/* --- SEO: schema.org разметка конкурса (EducationEvent) + хлебные крошки --- */
+$compUrl  = url('/competitions/' . rawurlencode($c['slug']));
+$ldDesc   = $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - КЦ «Музыкальный Мир».');
+$ldPrice  = $c['is_paid'] ? (int) $c['price'] : 0;
+
+$event_ld = [
+    '@context'             => 'https://schema.org',
+    '@type'                => 'EducationEvent',
+    'name'                 => $c['name'],
+    'description'          => $ldDesc,
+    'url'                  => $compUrl,
+    'eventAttendanceMode'  => 'https://schema.org/OnlineEventAttendanceMode',
+    'eventStatus'          => 'https://schema.org/EventScheduled',
+    'location'             => [
+        '@type' => 'VirtualLocation',
+        'url'   => $compUrl,
+    ],
+    'organizer'            => [
+        '@type' => 'Organization',
+        'name'  => cfgv('org_name'),
+        'url'   => rtrim(cfgv('base_url'), '/') . '/',
+    ],
+    'offers'               => [
+        '@type'         => 'Offer',
+        'price'         => $ldPrice,
+        'priceCurrency' => 'RUB',
+        'availability'  => $isOpen ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+        'url'           => $isOpen ? $applyUrl : $compUrl,
+    ],
+];
+if (!empty($c['start_date'])) $event_ld['startDate'] = $c['start_date'];
+if (!empty($c['end_date']))   $event_ld['endDate']   = $c['end_date'];
+if (!empty($c['cover']))      $event_ld['image']     = $c['cover'];
+if (!empty($c['start_date'])) $event_ld['offers']['validFrom'] = $c['start_date'];
+
+$breadcrumb_ld = [
+    '@context'        => 'https://schema.org',
+    '@type'           => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => 'Главная',  'item' => url('/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => 'Конкурсы', 'item' => url('/competitions')],
+        ['@type' => 'ListItem', 'position' => 3, 'name' => $c['name'], 'item' => $compUrl],
+    ],
+];
+
 render_page($c['name'], $content, [
     'active'   => '/competitions',
     'meta'     => $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - КЦ «Музыкальный Мир». Подача заявки онлайн, номинации, возрастные категории, наградные документы.'),
     'og_image' => !empty($c['cover']) ? $c['cover'] : asset('img/logo_muzmir_main.png'),
+    'jsonld'   => [$event_ld, $breadcrumb_ld],
 ]);
