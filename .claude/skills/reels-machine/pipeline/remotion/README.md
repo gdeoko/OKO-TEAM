@@ -18,3 +18,11 @@
 - OffthreadVideo (не Video) — chromium не декодит H.264 сам.
 - Шрифты — ТОЛЬКО офлайн (FontFace+staticFile): прокси-CA рушит fonts.gstatic.
 - Статичный Montserrat (не variable) — variable подвешивал delayRender.
+
+## Премиум-стек (подключён 22.07, проверен)
+- @remotion/three (Three.js) — реальный 3D (хром-текст/объекты/3D-графики). GL: --gl=angle.
+- FLUX.1 через HF (gradio_client) — бесплатные AI-3D-ассеты/иллюстрации.
+- d3 + visx + react-simple-maps — анимированная дата-виз и карты.
+- @remotion/effects (WebGL: glow/zoomBlur/chroma), @remotion/lottie, transitions, motion-blur.
+- faster-whisper — форс-алайн субтитров по словам.
+- Турбо (платно, дёшево): fal.ai (ключ есть), Higgsfield Ultra.

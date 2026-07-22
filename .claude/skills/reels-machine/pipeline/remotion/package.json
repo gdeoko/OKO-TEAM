@@ -6,13 +6,21 @@
     "studio": "remotion studio"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.6.1",
     "@remotion/cli": "4.0.496",
+    "@remotion/effects": "^4.0.496",
     "@remotion/google-fonts": "4.0.496",
+    "@remotion/lottie": "^4.0.496",
     "@remotion/media": "^4.0.496",
     "@remotion/motion-blur": "^4.0.496",
+    "@remotion/three": "^4.0.496",
     "@remotion/transitions": "^4.0.496",
+    "d3": "^7.9.0",
+    "d3-geo": "^3.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "remotion": "4.0.496"
+    "react-simple-maps": "^3.0.0",
+    "remotion": "4.0.496",
+    "three": "^0.185.1"
   }
 }
