@@ -32,6 +32,20 @@ function grading_queue(int $comp = 0): array {
     return all("SELECT a.id FROM applications a WHERE $w ORDER BY a.id", $a);
 }
 
+/** Сколько заявок текущей очереди жюри уже оценило (для прогресс-бара). */
+function grading_done_count(string $mode, int $jid, int $comp = 0): int {
+    if ($mode === 'mine') {
+        return (int) scalar(
+            "SELECT COUNT(*) FROM jury_assignments ja JOIN applications a ON a.id=ja.application_id
+             WHERE ja.jury_id=? AND ja.done=1" . ($comp ? " AND a.competition_id=?" : ""),
+            $comp ? [$jid, $comp] : [$jid]);
+    }
+    return (int) scalar(
+        "SELECT COUNT(*) FROM applications a JOIN jury_grades g ON g.application_id=a.id AND g.jury_id=?
+         WHERE a.status IN ('paid','judging')" . ($comp ? " AND a.competition_id=?" : ""),
+        $comp ? [$jid, $comp] : [$jid]);
+}
+
 $comp = (int) input('competition');
 $mode = input('mode') === 'mine' ? 'mine' : '';
 
@@ -104,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk_grade') {
     admin_redirect('grading', array_filter(['competition'=>$comp,'mode'=>$mode]));
 }
 
-/* ================= РЕЖИМ ОДНОЙ ЗАЯВКИ ================= */
+/* ================= РЕЖИМ ОДНОЙ ЗАЯВКИ (быстрый жюри-режим) ================= */
 if ($id = (int) input('id')) {
     $a = one("SELECT a.*, c.name comp FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
@@ -114,14 +128,72 @@ if ($id = (int) input('id')) {
     $embed = $a['video_url'] ? grading_embed($a['video_url']) : null;
 
     $queue = $mode === 'mine' ? jury_assigned_queue($jid, $comp) : grading_queue($comp);
-    $pos = 0; $total = count($queue); $nextId = null;
-    foreach ($queue as $i => $row) { if ((int)$row['id'] === $id) { $pos = $i + 1; $nextId = isset($queue[$i+1]) ? (int)$queue[$i+1]['id'] : null; } }
+    $pos = 0; $total = count($queue); $nextId = null; $prevId = null;
+    foreach ($queue as $i => $row) {
+        if ((int)$row['id'] === $id) {
+            $pos = $i + 1;
+            $nextId = isset($queue[$i+1]) ? (int)$queue[$i+1]['id'] : null;
+            $prevId = isset($queue[$i-1]) ? (int)$queue[$i-1]['id'] : null;
+        }
+    }
+    // Прогресс очереди
+    $doneCount = grading_done_count($mode, $jid, $comp);
+    $remaining = max(0, $total - $doneCount);
+    $pct = $total ? (int) round($doneCount / $total * 100) : 0;
+
+    // Легенда «балл → звание» (строим из score_to_result, группируем одинаковые звания в диапазоны)
+    $legend = []; for ($n = 1; $n <= 10; $n++) $legend[$n] = score_to_result((float)$n);
+    $legendGroups = []; $prevTitle = null;
+    for ($n = 1; $n <= 10; $n++) {
+        $t = $legend[$n];
+        if ($t !== $prevTitle) { $legendGroups[] = ['from'=>$n,'to'=>$n,'title'=>$t]; $prevTitle = $t; }
+        else { $legendGroups[count($legendGroups)-1]['to'] = $n; }
+    }
+
+    $nextUrl = $nextId ? a_link('grading', array_filter(['id'=>$nextId,'competition'=>$comp,'mode'=>$mode])) : '';
+    $prevUrl = $prevId ? a_link('grading', array_filter(['id'=>$prevId,'competition'=>$comp,'mode'=>$mode])) : '';
 
     ob_start(); ?>
-    <div class="toolbar">
+    <style>
+    .jury-fast .jf-topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+    .jury-fast .jf-progress{flex:1;min-width:200px}
+    .jury-fast .jf-progress .jf-labels{display:flex;justify-content:space-between;font-size:.82rem;color:var(--a-muted);margin-bottom:5px;gap:10px;flex-wrap:wrap}
+    .jury-fast .jf-progress .jf-labels b{color:var(--a-ink)}
+    .jury-fast .jf-track{height:9px;border-radius:6px;background:var(--a-line);overflow:hidden}
+    .jury-fast .jf-fill{height:100%;background:var(--grad-gold);border-radius:6px;transition:width .35s ease}
+    .jury-fast .pill-scale button{width:56px;height:56px;font-size:1.35rem;font-weight:800}
+    .jury-fast .jf-verdict{margin-top:14px;min-height:30px;font-family:var(--ff-display,Georgia,serif);font-size:1.15rem;font-weight:800;
+      color:var(--a-gold,#8B6F1F);opacity:0;transform:translateY(4px);transition:.18s}
+    .jury-fast .jf-verdict.show{opacity:1;transform:none}
+    .jury-fast .jf-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+    .jury-fast .jf-legend .lg{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;padding:4px 9px;border-radius:999px;
+      background:#faf6ea;border:1px solid var(--a-line);color:var(--a-ink)}
+    .jury-fast .jf-legend .lg i{font-style:normal;font-weight:800;color:var(--a-gold,#8B6F1F);min-width:30px;text-align:center}
+    .jury-fast .jf-hotkeys{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);font-size:.8rem;color:var(--a-muted)}
+    .jury-fast .jf-hotkeys span{display:inline-flex;align-items:center;gap:6px}
+    .jury-fast kbd{font-family:ui-monospace,Menlo,monospace;font-size:.72rem;line-height:1;padding:4px 7px;border-radius:6px;
+      background:#fff;border:1px solid var(--a-line);box-shadow:0 1px 0 var(--a-line);color:var(--a-ink);min-width:16px;text-align:center}
+    .jury-fast .jf-overlay{position:fixed;inset:0;background:rgba(12,10,13,.55);display:none;align-items:center;justify-content:center;z-index:120}
+    .jury-fast .jf-overlay.show{display:flex}
+    .jury-fast .jf-overlay .box{background:#fff;border-radius:18px;padding:26px 34px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);min-width:220px}
+    .jury-fast .jf-overlay .num{font-family:var(--ff-display,Georgia,serif);font-size:3.4rem;font-weight:900;line-height:1;color:var(--a-gold,#8B6F1F)}
+    .jury-fast .jf-overlay .ttl{margin-top:6px;font-weight:800;color:var(--a-ink)}
+    .jury-fast .jf-overlay .hint{margin-top:10px;font-size:.78rem;color:var(--a-muted)}
+    @media (max-width:640px){ .jury-fast .pill-scale button{width:48px;height:48px;font-size:1.2rem} }
+    @media (prefers-reduced-motion:reduce){ .jury-fast .jf-fill,.jury-fast .jf-verdict{transition:none} }
+    </style>
+    <div class="jury-fast">
+    <div class="jf-topbar">
       <a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'mode'=>$mode])) ?>"><?= admin_icon('back') ?>К очереди</a>
-      <?php if ($pos): ?><span class="badge badge--gold">В очереди: <?= $pos ?> из <?= $total ?></span><?php endif; ?>
-      <?php if ($nextId): ?><a class="btn btn--navy btn--sm" href="<?= a_link('grading', array_filter(['id'=>$nextId,'competition'=>$comp,'mode'=>$mode])) ?>">Пропустить →</a><?php endif; ?>
+      <div class="jf-progress">
+        <div class="jf-labels">
+          <span>Оценено <b><?= $doneCount ?></b> · осталось <b><?= $remaining ?></b> из <?= $total ?></span>
+          <?php if ($pos): ?><span>Позиция <b><?= $pos ?></b>/<?= $total ?> · <?= $pct ?>%</span><?php endif; ?>
+        </div>
+        <div class="jf-track"><div class="jf-fill" style="width:<?= $pct ?>%"></div></div>
+      </div>
+      <?php if ($prevId): ?><a class="btn btn--ghost btn--sm" href="<?= $prevUrl ?>">← Назад</a><?php endif; ?>
+      <?php if ($nextId): ?><a class="btn btn--navy btn--sm" href="<?= $nextUrl ?>">Пропустить →</a><?php endif; ?>
     </div>
 
     <div class="grid grid-2">
@@ -142,22 +214,36 @@ if ($id = (int) input('id')) {
 
       <div class="card">
         <h3>Оценка</h3>
-        <p class="small muted">Нажмите кнопку или клавишу 1-9, 0 = 10 баллов.</p>
+        <p class="small muted">Нажмите клавишу <kbd>1</kbd>–<kbd>9</kbd> (<kbd>0</kbd> = 10) — балл сохранится и откроется следующая заявка автоматически.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>" id="gradeForm">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade"><input type="hidden" name="id" value="<?= $id ?>">
           <input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="mode" value="<?= h($mode) ?>"><input type="hidden" name="score" id="scoreInput" value="<?= h((string)($my['score'] ?? '')) ?>">
           <div class="pill-scale" id="scale">
             <?php for ($n=1;$n<=10;$n++): ?>
-              <button type="button" class="<?= ($my && (float)$my['score']==$n)?'on':'' ?>" data-score="<?= $n ?>"><?= $n ?></button>
+              <button type="button" class="<?= ($my && (float)$my['score']==$n)?'on':'' ?>" data-score="<?= $n ?>" title="<?= h($legend[$n]) ?>"><?= $n ?></button>
             <?php endfor; ?>
           </div>
+          <div class="jf-verdict" id="jfVerdict" aria-live="polite"></div>
+          <div class="jf-legend">
+            <?php foreach ($legendGroups as $g): ?>
+              <span class="lg"><i><?= $g['from']===$g['to'] ? $g['from'] : $g['from'].'-'.$g['to'] ?></i><?= h($g['title']) ?></span>
+            <?php endforeach; ?>
+          </div>
           <div class="field" style="margin-top:16px">
-            <label>Приватная заметка (видит только жюри)</label>
+            <label>Приватная заметка (видит только жюри) — клавиша <kbd>N</kbd></label>
             <textarea name="note" placeholder="Комментарий для внутренней работы"><?= h($my['note'] ?? '') ?></textarea>
           </div>
           <div class="field--inline">
             <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить и далее</button>
             <?php if ($my): ?><span class="badge badge--gold">Ваша оценка: <?= h((string)$my['score']) ?> → <?= h(score_to_result((float)$my['score'])) ?></span><?php endif; ?>
+          </div>
+          <div class="jf-hotkeys">
+            <span><kbd>1</kbd>–<kbd>9</kbd>,<kbd>0</kbd> балл</span>
+            <span><kbd>Enter</kbd> сохранить</span>
+            <span><kbd>Esc</kbd> отмена</span>
+            <span><kbd>→</kbd>/<kbd>Space</kbd> пропустить</span>
+            <span><kbd>←</kbd> назад</span>
+            <span><kbd>N</kbd> заметка</span>
           </div>
         </form>
         <hr>
@@ -166,6 +252,14 @@ if ($id = (int) input('id')) {
           <dt>Средний балл</dt><dd><?= $a['score']!==null ? '<b>'.h((string)$a['score']).'</b>' : '—' ?></dd>
           <dt>Результат</dt><dd><?= $a['result'] ? '<span class="badge badge--gold">'.h($a['result']).'</span>' : '—' ?></dd>
         </div>
+      </div>
+    </div>
+
+    <div class="jf-overlay" id="jfOverlay">
+      <div class="box">
+        <div class="num" id="jfOvNum">–</div>
+        <div class="ttl" id="jfOvTitle">Сохранение…</div>
+        <div class="hint"><kbd>Esc</kbd> — отменить</div>
       </div>
     </div>
 
@@ -203,6 +297,7 @@ if ($id = (int) input('id')) {
         </ul>
       <?php endif; ?>
     </div>
+    </div><!-- /.jury-fast -->
     <script>
     (function(){
       var vform=document.getElementById('videoReviewForm');
@@ -226,19 +321,53 @@ if ($id = (int) input('id')) {
     <script>
     (function(){
       var input=document.getElementById('scoreInput'), form=document.getElementById('gradeForm');
+      var verdict=document.getElementById('jfVerdict');
+      var overlay=document.getElementById('jfOverlay'), ovNum=document.getElementById('jfOvNum'), ovTitle=document.getElementById('jfOvTitle');
+      var note=form ? form.querySelector('textarea') : null;
+      var legend=<?= json_encode($legend, JSON_UNESCAPED_UNICODE) ?>;
+      var nextUrl=<?= json_encode($nextUrl) ?>, prevUrl=<?= json_encode($prevUrl) ?>;
+      var pending=null;
+
+      function showVerdict(n){
+        if(!verdict) return;
+        verdict.textContent = n + ' - ' + (legend[n] || '');
+        verdict.classList.add('show');
+      }
+      function select(n){
+        document.querySelectorAll('#scale button').forEach(function(x){ x.classList.toggle('on', x.dataset.score===String(n)); });
+        input.value=n; showVerdict(n);
+      }
+      function cancelPending(){
+        if(pending){ clearTimeout(pending); pending=null; }
+        if(overlay) overlay.classList.remove('show');
+      }
+      // Балл → выбор + мгновенный автопереход (короткое окно на отмену клавишей Esc).
+      function grade(n){
+        select(n);
+        cancelPending();
+        if(overlay){ ovNum.textContent=n; ovTitle.textContent=legend[n]||'Сохранение…'; overlay.classList.add('show'); }
+        pending=setTimeout(function(){ form.submit(); }, 300);
+      }
+
       document.querySelectorAll('#scale button').forEach(function(b){
-        b.addEventListener('click',function(){
-          document.querySelectorAll('#scale button').forEach(x=>x.classList.remove('on'));
-          b.classList.add('on'); input.value=b.dataset.score;
-        });
+        b.addEventListener('click', function(){ grade(b.dataset.score); });
+        b.addEventListener('mouseenter', function(){ showVerdict(b.dataset.score); });
       });
-      document.addEventListener('keydown',function(e){
-        if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;
+
+      document.addEventListener('keydown', function(e){
+        if(e.key==='Escape'){ cancelPending(); if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
+        var typing = e.target.tagName==='TEXTAREA' || e.target.tagName==='INPUT';
+        if(typing) return;
         var n=null;
-        if(e.key>='1'&&e.key<='9')n=e.key; else if(e.key==='0')n='10';
-        if(n){var btn=document.querySelector('#scale button[data-score="'+n+'"]');if(btn)btn.click();}
-        if(e.key==='Enter'&&input.value)form.submit();
+        if(e.key>='1' && e.key<='9') n=e.key; else if(e.key==='0') n='10';
+        if(n){ e.preventDefault(); grade(n); return; }
+        if(e.key==='Enter'){ if(input.value){ e.preventDefault(); cancelPending(); form.submit(); } return; }
+        if((e.key==='n'||e.key==='N'||e.key==='т'||e.key==='Т') && note){ e.preventDefault(); note.focus(); return; }
+        if((e.key===' '||e.key==='ArrowRight') && nextUrl){ e.preventDefault(); location.href=nextUrl; return; }
+        if(e.key==='ArrowLeft' && prevUrl){ e.preventDefault(); location.href=prevUrl; return; }
       });
+
+      <?php if ($my): ?>showVerdict('<?= h((string)(int)$my['score']) ?>');<?php endif; ?>
     })();
     </script>
     <?php
@@ -271,14 +400,36 @@ if ($mode === 'mine') {
 
 $juryStats = ($comp && user_can('moderator')) ? jury_competition_stats($comp) : [];
 
+// Прогресс очереди: сколько уже оценено этим жюри.
+$qTotal = count($rows);
+$qDone = 0; foreach ($rows as $r) { if ((int)$r['mine'] > 0) $qDone++; }
+$qLeft = $qTotal - $qDone;
+$qPct = $qTotal ? (int) round($qDone / $qTotal * 100) : 0;
+$firstUngraded = null;
+foreach ($rows as $r) { if ((int)$r['mine'] === 0) { $firstUngraded = (int)$r['id']; break; } }
+
 ob_start(); ?>
 <div class="section-title">
-  <h2>Оценивание <span class="small muted">(в очереди: <?= count($rows) ?>)</span></h2>
+  <h2>Оценивание <span class="small muted">(в очереди: <?= $qTotal ?>)</span></h2>
 </div>
 
 <div class="tabs">
   <a href="<?= a_link('grading', array_filter(['competition'=>$comp])) ?>" class="<?= $mode===''?'active':'' ?>">Общая очередь</a>
   <a href="<?= a_link('grading', array_filter(['competition'=>$comp,'mode'=>'mine'])) ?>" class="<?= $mode==='mine'?'active':'' ?>">Мои назначенные</a>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+    <div class="small">Оценено <b><?= $qDone ?></b> · осталось <b><?= $qLeft ?></b> из <?= $qTotal ?> <span class="muted">(<?= $qPct ?>%)</span></div>
+    <?php if ($firstUngraded): ?>
+      <a class="btn btn--primary btn--sm" href="<?= a_link('grading', array_filter(['id'=>$firstUngraded,'competition'=>$comp,'mode'=>$mode])) ?>"><?= admin_icon('grading') ?>Начать оценку (клавишами)</a>
+    <?php elseif ($qTotal): ?>
+      <span class="badge badge--paid">Все заявки очереди оценены</span>
+    <?php endif; ?>
+  </div>
+  <div style="height:9px;border-radius:6px;background:var(--a-line);overflow:hidden;margin-top:10px">
+    <div style="height:100%;width:<?= $qPct ?>%;background:var(--grad-gold);border-radius:6px"></div>
+  </div>
 </div>
 
 <form method="get" class="filters">
