@@ -58,7 +58,7 @@ cp -r $ROOT/pipeline/sfx $W/sfx; cp $ROOT/pipeline/endcard.mp4 $W/endcard.mp4
 (build_accents/новые code-инфографики) под конкретный ролик, а не просто меняешь данные.
 
 ## ЭТАП 2 — Сборка
-- Озвучка **Silero v4_ru (нативный русский)**: `python3 pipeline/tts_silero.py $W/vo $VOICE_SPEAKER` (eugene/aidar, ударения авто) → `$W/vo/s1..s6.mp3`. Модель качается сама в models/v4_ru.pt. (edge-tts и Qwen3-TTS заменены — плохие/с ошибками.)
+- Озвучка **Piper Ruslan + RUAccent (студийный русский, авто-ударения)**: `VOICE_PIPER=ruslan python3 pipeline/tts_piper.py $W/vo ruslan`. Резерв Silero: `pipeline/tts_silero.py` (eugene/aidar, ударения авто) → `$W/vo/s1..s6.mp3`. Модель качается сама в models/v4_ru.pt. (edge-tts и Qwen3-TTS заменены — плохие/с ошибками.)
 - `python3 $W/plan.py` (timing/subs/words).
 - 10–14 УНИКАЛЬНЫХ вертикальных клипов под сценарий (мото/квадро/гидро — Pexels/Pixabay/Shutterstock;
   для гидро: jet ski, для квадро: atv/quad bike, для мото: motorcycle ride). Проверить соответствие озвучке.
