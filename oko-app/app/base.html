@@ -235,6 +235,10 @@ nav#tabs .nav-logo{display:none}
 #feedList{padding-bottom:84px}
 @media(min-width:900px){
   #feedList{padding-bottom:24px}
+  /* сторис на десктопе: правый край подтаивает — видно, что ряд листается (не «обрезан») */
+  .stories{-webkit-mask-image:linear-gradient(90deg,#000 93%,transparent);mask-image:linear-gradient(90deg,#000 93%,transparent)}
+  /* больше нижнего запаса, чтобы последний диалог не прятался под FAB */
+  .chat-list{padding-bottom:96px}
 }
 
 /* ============ FEED ============ */
