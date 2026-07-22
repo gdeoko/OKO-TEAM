@@ -360,9 +360,10 @@ function cpOpenMore(){
   const btn = document.getElementById('cpMoreBtn');
   if(!wrap || !menu || !btn) return;
   if(wrap.classList.contains('on')){ cpCloseMore(); return; }
-  menu.innerHTML = cpMoreItems().map((it,i)=>
+  const its = cpMoreItems();
+  menu.innerHTML = its.map((it,i)=>
     `<button class="cp-more-item" style="--cp-i:${i}" role="menuitem">${I(it.ic)}<span>${cpEsc(it.label)}</span></button>`).join('');
-  [...menu.children].forEach((el,i)=>{ const it = cpMoreItems()[i]; el.onclick = ()=>{ cpCloseMore(); if(it && it.act) try{ it.act(); }catch(e){} }; });
+  [...menu.children].forEach((el,i)=>{ const it = its[i]; el.onclick = ()=>{ cpCloseMore(); if(it && it.act) try{ it.act(); }catch(e){} }; });
   /* якорим меню под кнопкой, справа */
   const r = btn.getBoundingClientRect();
   menu.style.top = Math.round(r.bottom + 6) + 'px';
@@ -1140,12 +1141,28 @@ function cpDecorateConvAccess(){
   const nameEl = document.getElementById('convName');
   if(nameEl){
     let badge = document.getElementById('cpConvBadge');
-    if(a.type==='public'){ if(badge) badge.remove(); }
-    else {
-      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; nameEl.appendChild(badge); }
-      const label = a.type==='paid' ? (cpChatUnlocked(c) ? 'PRO · доступ открыт' : (a.price?a.price+' ₽':'PRO')) : 'Приватный';
-      badge.className = 'cp-conv-badge cp-cb-'+a.type;
-      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + '<span>'+label+'</span>';
+    if(a.type==='public'){
+      /* публичный чат: без бейджа — возвращаем чистое имя (нативный ellipsis .who) */
+      if(badge) badge.remove();
+      nameEl.classList.remove('cp-has-badge');
+      const tx = nameEl.querySelector('.cp-name-txt');
+      if(tx){ nameEl.textContent = tx.textContent; } /* разворачиваем обёртку обратно в текст */
+    } else {
+      /* имя оборачиваем в span, чтобы ellipsis работал рядом с несжимаемым бейджем */
+      let tx = nameEl.querySelector('.cp-name-txt');
+      if(!tx){
+        const name = c.name || nameEl.textContent || '';
+        nameEl.textContent = '';
+        tx = document.createElement('span'); tx.className = 'cp-name-txt'; tx.textContent = name;
+        nameEl.appendChild(tx);
+      } else if(tx.textContent !== (c.name||tx.textContent)){ tx.textContent = c.name; }
+      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; }
+      if(badge.parentNode !== nameEl) nameEl.appendChild(badge);
+      nameEl.classList.add('cp-has-badge');
+      /* компактный бейдж в шапке: платный-закрытый — цена; открытый/приватный — только иконка */
+      const label = a.type==='paid' ? (cpChatUnlocked(c) ? '' : (a.price?a.price+' ₽':'PRO')) : '';
+      badge.className = 'cp-conv-badge cp-cb-'+a.type + (label?'':' cp-cb-ico');
+      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + (label?'<span>'+label+'</span>':'');
     }
   }
 }

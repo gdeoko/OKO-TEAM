@@ -659,12 +659,25 @@ const AC_COURSES = [
   { id:'ai', title:'Нейросети 2026', tag:'Базовый курс',
     sub:'5 уроков · тесты и практика · сертификат за каждый урок',
     from:0, count:5, free:true, minTier:'PRO', price:0,
+    author:'Команда OKO',
+    outcomes:[
+      'Выбирать нейросеть под задачу за секунды по карте 2026',
+      'Собирать сильные промпты по формуле: роль, задача, контекст, формат',
+      'Генерировать картинки и видео уровня продакшн — дёшево',
+      'Запустить своего ИИ-агента для бизнеса в Telegram'],
     c1:'НЕЙРОСЕТИ', c2:'2026' },
   { id:'reels', title:'Контент и Reels', tag:'Премиум',
     sub:'3 урока · вирусные видео от сценария до алгоритмов',
     from:5, count:3, free:false, minTier:'PRO', price:2900,
+    author:'Команда OKO',
+    outcomes:[
+      'Писать вирусные сценарии: хук, удержание, триггеры репостов',
+      'Монтировать Reels, которые досматривают до конца',
+      'Разгонять охваты через алгоритмы и A/B-тесты хуков',
+      'Ставить контент на поток без выгорания'],
     c1:'КОНТЕНТ', c2:'И REELS' },
 ];
+const AC_FEE = 0.10;   // комиссия платформы OKO с продажи курса (как в каналах)
 
 /* индекс курса по глобальному номеру урока */
 function acCourseOf(i){
@@ -693,6 +706,22 @@ function acCoursePctOf(ci){
 }
 function acCourseDone(ci){ return acCourseIdx(ci).every(i=>acLessonDone(i)); }
 function acCourseCertCount(ci){ return acCourseIdx(ci).filter(i=>{ const ls=acS.lessons[i]; return ls&&ls.cert; }).length; }
+
+/* агрегаты по курсу: сколько всего слайдов, вопросов, игр, видео, минут */
+function acCourseStats(ci){
+  const idx = acCourseIdx(ci);
+  let slides=0, quiz=0, games=0, vids=0, mins=0;
+  idx.forEach(i=>{
+    const L = AC_COURSE[i];
+    slides += L.slides.length;
+    quiz   += L.quiz.length;
+    if(L.pairs && L.pairs.length) games++;
+    if(L.videoUrl) vids++;
+    const m = /^(\d+):(\d+)$/.exec(L.dur||'');
+    if(m) mins += (+m[1]) + (+m[2])/60;
+  });
+  return {lessons:idx.length, slides, quiz, games, vids, mins:Math.max(1,Math.round(mins))};
+}
 
 /* ---------- состояние (localStorage oko-academy, per-урок) ---------- */
 function acNewLS(){
@@ -806,8 +835,9 @@ function acCourseGate(ci){
   const c = AC_COURSES[ci];
   if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
   if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
+  const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
   showPopup({ico:'star', title:'Курс «'+c.title+'»',
-    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.',
+    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы OKO — 10% ('+acFmtPrice(fee)+').</span>',
     actions:[
       {label:'Открыть по подписке '+c.minTier, onclick:()=>{
         if(typeof okoRequireSub === 'function'){
@@ -826,10 +856,14 @@ function acBuyCourse(ci){
   if(walletCharge(c.price, 'Академия · курс «'+c.title+'»')){
     acS.owned = acS.owned || {};
     acS.owned[c.id] = true; acSave();
+    const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
     if(typeof okoEarn === 'function') okoEarn(c.price, 'Академия · продажа курса «'+c.title+'»');
-    toast('Курс открыт: «'+c.title+'»');
     acBadgeSync();
-    acOpenCourse(ci);
+    if(typeof showPopup === 'function'){
+      showPopup({ico:'check2', title:'Курс открыт',
+        body:'Курс «'+esc(c.title)+'» теперь твой навсегда. Списано <b>'+acFmtPrice(c.price)+'</b>: автору начислено '+acFmtPrice(net)+', комиссия платформы OKO 10% — '+acFmtPrice(fee)+'.',
+        actions:[{label:'Начать курс', onclick:()=>acOpenCourse(ci)}]});
+    } else { toast('Курс открыт: «'+c.title+'»'); acOpenCourse(ci); }
   } else {
     toast('Недостаточно средств — пополни счёт');
   }
@@ -1007,6 +1041,30 @@ function acCertLabel(c){
   return ctitle + ' · Урок ' + acLocalNo(gi) + ' · ' + (c.lessonTitle || AC_COURSE[gi].title);
 }
 
+/* ---------- «ЧТО ВНУТРИ КУРСА»: состав + чему научишься ---------- */
+function acCourseInsideHtml(ci){
+  const c = AC_COURSES[ci], st = acCourseStats(ci);
+  const feats = [
+    ['circle-play', (st.vids || st.lessons) + ' видео-' + acPlural(st.vids||st.lessons,['урок','урока','уроков']), st.mins>1 ? '~'+st.mins+' мин · озвучка' : 'озвучка + караоке'],
+    ['file',  st.slides + ' ' + acPlural(st.slides,['слайд','слайда','слайдов']), 'наглядно и по делу'],
+    ['poll',  'Тесты · ' + st.quiz + ' ' + acPlural(st.quiz,['вопрос','вопроса','вопросов']), 'порог зачёта ' + AC_PASS + '%'],
+    ['edit',  'Практика', 'проверка ИИ-куратором'],
+    ['bolt',  st.games + ' мини-' + acPlural(st.games,['игра','игры','игр']), 'закрепление на связках'],
+    ['star',  'Сертификат', 'именной — за каждый урок'],
+  ];
+  const outcomes = (c.outcomes||[]).map(o=>`<li>${I('check2')}<span>${esc(o)}</span></li>`).join('');
+  return `
+  <div class="card ac-inside" id="acWhatsIn">
+    <div class="ac-inside-head">
+      <span class="ico">${I('bolt')}</span>
+      <div class="meta"><b>Что внутри курса</b><span>${c.author?('Автор — '+esc(c.author)+' · '):''}${st.lessons} ${acPlural(st.lessons,['урок','урока','уроков'])} полного формата</span></div>
+    </div>
+    <div class="ac-inside-grid">${feats.map(f=>`
+      <div class="ac-inside-cell"><span class="ic">${I(f[0])}</span><b>${f[1]}</b><span>${f[2]}</span></div>`).join('')}</div>
+    ${outcomes?`<div class="ac-inside-out"><div class="h">${I('flag')} Чему научишься</div><ul>${outcomes}</ul></div>`:''}
+  </div>`;
+}
+
 /* ---------- СТРАНИЦА КУРСА (список уроков) ---------- */
 function acCourseHtml(){
   const ci = acCourse, c = AC_COURSES[ci];
@@ -1052,6 +1110,7 @@ function acCourseHtml(){
         <p>${esc(c.sub)}</p>
       </div>
     </div>
+    ${acCourseInsideHtml(ci)}
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">

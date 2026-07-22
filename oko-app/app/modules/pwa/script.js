@@ -2,7 +2,18 @@
 (function pwaInit(){
   if(location.protocol !== 'https:') return; // локальный file:// — пропуск
   if('serviceWorker' in navigator){
-    try{ navigator.serviceWorker.register('/sw.js'); }catch(e){}
+    try{
+      navigator.serviceWorker.register('/sw.js').then(function(reg){
+        try{ reg.update(); }catch(e){}
+      }).catch(function(){});
+      /* когда активируется НОВЫЙ воркер (после деплоя) — один раз перезагружаем страницу,
+         чтобы пользователь сразу получил свежую сборку, а не залипшую в кэше. */
+      var _okoReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(_okoReloaded) return; _okoReloaded = true;
+        try{ location.reload(); }catch(e){}
+      });
+    }catch(e){}
   }
   let deferred = null;
   window.addEventListener('beforeinstallprompt', ev => {

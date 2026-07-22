@@ -143,12 +143,15 @@
 @keyframes cpEq{0%,100%{transform:scaleY(.8)}50%{transform:scaleY(1.18)}}
 @media(prefers-reduced-motion:reduce){.voice.cp-playing .wave i{animation:none}}
 
-/* --- 8b. Кружок-плеер видео-заметки: кольцо прогресса --- */
-.msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.28)}
-.cp-vn-ring{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);transform:rotate(-90deg);pointer-events:none;z-index:3}
-.cp-vn-tr{fill:none;stroke:rgba(255,255,255,.18);stroke-width:2.5}
-:root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.14)}
-.cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 3px rgba(154,255,0,.6));transition:stroke-dashoffset .2s linear}
+/* --- 8b. Кружок-плеер видео-заметки: тонкое кольцо прогресса --- */
+/* база даёт .vnote{border:2px solid lime} — гасим его в мягкий ободок, а тонкое
+   лаймовое кольцо прогресса (cp-vn-ring) становится единственным ярким акцентом */
+.msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.26);border-width:1px;border-color:rgba(154,255,0,.22)}
+:root[data-theme="light"] .msg.has-vnote .vnote{border-color:rgba(110,180,0,.3)}
+.cp-vn-ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg);pointer-events:none;z-index:3}
+.cp-vn-tr{fill:none;stroke:rgba(255,255,255,.16);stroke-width:2}
+:root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.12)}
+.cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:2.5;stroke-linecap:round;filter:drop-shadow(0 0 2px rgba(154,255,0,.4));transition:stroke-dashoffset .2s linear}
 .cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
 .cp-vn-play svg.i{width:20px;height:20px;margin-left:2px}
 .vnote.cp-vn-playing .cp-vn-play{opacity:0;transform:translate(-50%,-50%) scale(.6)}
@@ -280,6 +283,9 @@
 .cp-conv-badge svg.i{width:11px;height:11px;stroke-width:9}
 .cp-cb-paid{color:#000;background:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.3)}
 .cp-cb-private{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+/* icon-only компактный бейдж в шапке (круглый) */
+.cp-conv-badge.cp-cb-ico{padding:0;width:22px;height:22px;justify-content:center;border-radius:50%}
+.cp-conv-badge.cp-cb-ico svg.i{width:12px;height:12px}
 /* окно управления доступом (владелец) */
 .cp-mg{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
 .cp-mg-opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--raised);color:var(--text);transition:border-color .16s,background .16s}
@@ -302,3 +308,61 @@
 .cp-invite{display:flex;gap:8px;margin-top:12px;align-items:center}
 .cp-invite input{flex:1;min-width:0;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:12.5px;outline:none;font-family:var(--font-body)}
 .cp-invite .btn.sm{flex-shrink:0}
+
+/* =======================================================================
+   ЧАСТЬ 4 — ПОЛИРОВКА: шапка без тесноты, ⋮-меню, адаптация, обе темы.
+   ======================================================================= */
+
+/* --- 12. Шапка конва: телеграм-раскладка, крупные тап-таргеты, имя дышит --- */
+.conv-head{gap:6px;padding:9px 8px 9px 6px}
+.conv-head>div[onclick]{gap:10px!important;padding-right:4px}
+.conv-head .ch-call{width:40px;height:40px}
+.conv-head .who{font-size:15.5px;font-weight:700;letter-spacing:.005em}
+.conv-head .status{font-size:11.5px}
+/* инлайн-бейдж рядом с именем: имя ellipsis-ится, бейдж не сжимается.
+   flex включаем ТОЛЬКО когда есть бейдж — иначе нативный .who ellipsis */
+#convName{min-width:0}
+#convName.cp-has-badge{display:flex;align-items:center;gap:6px}
+#convName .cp-name-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#convName .cp-conv-badge{flex-shrink:0}
+.cp-more-btn.on{background:var(--lime-dim);color:var(--accent)}
+
+/* --- 13. Выпадающее ⋮-меню шапки (поиск / профиль / доступ) --- */
+.cp-more{position:fixed;inset:0;z-index:60;display:none}
+.cp-more.on{display:block}
+.cp-more-menu{position:fixed;min-width:216px;max-width:min(78vw,300px);padding:6px;border-radius:16px;
+  background:rgba(20,22,18,.92);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 50px rgba(0,0,0,.55);
+  transform-origin:top right;transform:scale(.9);opacity:0;transition:transform .16s cubic-bezier(.3,1.3,.5,1),opacity .14s}
+:root[data-theme="light"] .cp-more-menu{background:rgba(255,255,255,.94);border-color:rgba(0,0,0,.07);box-shadow:0 18px 50px rgba(60,90,10,.16)}
+.cp-more-menu.on{transform:scale(1);opacity:1}
+.cp-more-item{display:flex;align-items:center;gap:13px;width:100%;padding:12px 14px;border-radius:11px;
+  color:var(--text);font-size:14px;font-weight:600;font-family:var(--font-body);text-align:left;
+  animation:cpReactIn .26s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--cp-i,0)*36ms);transition:background .14s}
+.cp-more-item svg.i{width:20px;height:20px;color:var(--dim);flex-shrink:0}
+.cp-more-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cp-more-item:hover{background:var(--lime-dim)}
+.cp-more-item:hover svg.i{color:var(--accent)}
+.cp-more-item:active{background:var(--raised)}
+@media(prefers-reduced-motion:reduce){.cp-more-item{animation:none}}
+
+/* --- 14. Адаптация: никакого overflow, длинные слова/имена/превью аккуратно --- */
+.msg{overflow-wrap:break-word;word-break:break-word;hyphens:auto}
+.msg .t.cp-t{flex-wrap:nowrap}
+.cp-conv-badge>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+/* превью-строка в списке: ценовой пилл не толкает текст, обрезаем превью */
+.chat-item .preview{min-width:0}
+.chat-item .preview .ci-txt{flex:1}
+.cp-ci-pill{margin-left:auto}
+/* панель эмодзи/меню на узких экранах не должна вылезать */
+.cp-panel-body{overscroll-behavior:contain}
+.cp-more-menu{overscroll-behavior:contain}
+
+/* --- 15. Общая красота: мягкие акценты, читаемость статусов в обеих темах --- */
+.cp-st svg.i{width:13px;height:13px}
+:root[data-theme="light"] .msg .t.cp-t{color:rgba(0,0,0,.5)}
+/* закреп/поиск бары — чуть премиальнее */
+.cp-pinbar,.cp-msearch{padding-left:14px;padding-right:12px}
+.cp-pin-txt b{letter-spacing:.01em}
+/* композер-смайл: ровный размер как у clip */
+.cp-smile svg.i{width:23px;height:23px}

@@ -70,7 +70,7 @@ header .screen-title::before{content:'';position:absolute;left:0;top:50%;transfo
 .theme-btn:hover{color:var(--accent);background:var(--lime-dim)}
 .theme-btn:active{transform:scale(.9)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;position:relative}
-nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:env(safe-area-inset-bottom)}
+nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:var(--oko-safe-bottom, env(safe-area-inset-bottom))}
 nav#tabs>button{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--dim);font-size:10.5px;letter-spacing:.02em;transition:color .18s}
 nav#tabs>button.active{color:var(--accent)}
 nav#tabs svg.i{width:21px;height:21px}
@@ -198,7 +198,7 @@ nav#tabs .nav-logo{display:none}
 :root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#eaf6d9,#dcefc2) !important}
 .photomsg svg.i{width:34px;height:34px}
 /* composer */
-.composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
+.composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + var(--oko-safe-bottom, env(safe-area-inset-bottom)));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
 .composer .tool{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
 .composer .tool:hover{color:var(--accent)}
 .composer .tool svg.i{width:21px;height:21px}
@@ -762,7 +762,7 @@ label.f-lab{display:block}
 .prof-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 12px}
 .pstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 6px;text-align:center}
 .pstat .v{font-weight:800;font-size:17px;letter-spacing:-.01em}
-.pstat .l{font-size:10.5px;color:var(--dim);margin-top:2px}
+.pstat .l{font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.02em}
 .prof-ach{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
 .ach{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;width:74px;padding:11px 6px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);opacity:.4;filter:grayscale(1)}
 .ach.on{opacity:1;filter:none;border-color:var(--lime-dim2,rgba(154,255,0,.35))}
@@ -1573,10 +1573,10 @@ main>.screen{position:relative;z-index:1}
    ============================================================ */
 .gm-modes{margin-bottom:14px}
 .gm-mode-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px}
-.gm-mpill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 9px;min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text);transition:transform .15s,border-color .18s,background .18s,box-shadow .18s}
+.gm-mpill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 3px 9px;min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text);transition:transform .15s,border-color .18s,background .18s,box-shadow .18s}
 .gm-mpill-ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--raised);color:var(--dim);transition:background .18s,color .18s}
 .gm-mpill-ic svg.i{width:15px;height:15px}
-.gm-mpill b{font-family:var(--font-display);font-size:15px;letter-spacing:.02em;white-space:nowrap;max-width:100%}
+.gm-mpill b{font-family:var(--font-display);font-size:13px;letter-spacing:0;white-space:nowrap;max-width:100%}
 .gm-mpill small{font-size:9.5px;color:var(--dim);text-align:center;line-height:1.15;font-variant-numeric:tabular-nums}
 .gm-mpill.on{border-color:var(--lime);background:var(--lime-dim);box-shadow:var(--glow)}
 .gm-mpill.on .gm-mpill-ic{background:var(--lime);color:#0a0a0a}
@@ -2010,6 +2010,28 @@ main>.screen{position:relative;z-index:1}
 .ac-course-finale .ico svg.i{width:24px;height:24px}
 .ac-course-finale h3{font-size:20px;margin-bottom:3px}
 .ac-course-finale p{font-size:12px;color:var(--dim);line-height:1.45}
+
+/* --- «что внутри курса»: состав + чему научишься --- */
+.ac-inside{margin-bottom:14px;animation:fade .3s ease both}
+.ac-inside-head{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.ac-inside-head .ico{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-inside-head .ico svg.i{width:20px;height:20px}
+.ac-inside-head .meta{flex:1;min-width:0}
+.ac-inside-head .meta b{font-size:16px;display:block;line-height:1.2}
+.ac-inside-head .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px;line-height:1.4}
+.ac-inside-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ac-inside-cell{display:flex;flex-direction:column;gap:3px;padding:12px 12px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);min-width:0;transition:border-color .18s}
+.ac-inside-cell:hover{border-color:rgba(154,255,0,.35)}
+.ac-inside-cell .ic{width:30px;height:30px;border-radius:9px;background:var(--surface);border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:5px}
+.ac-inside-cell .ic svg.i{width:16px;height:16px}
+.ac-inside-cell b{font-size:12.5px;font-weight:700;line-height:1.25;word-break:break-word}
+.ac-inside-cell>span{font-size:10.5px;color:var(--dim);line-height:1.3}
+.ac-inside-out{margin-top:14px;padding-top:13px;border-top:1px solid var(--border)}
+.ac-inside-out .h{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+.ac-inside-out .h svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-inside-out ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.ac-inside-out li{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.4}
+.ac-inside-out li svg.i{width:16px;height:16px;color:var(--accent);flex-shrink:0;margin-top:1px;stroke-width:8}
 
 /* каскадное появление уроков */
 @keyframes acRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
@@ -3577,7 +3599,9 @@ main>.screen{position:relative;z-index:1}
 #feedList .post .head{align-items:center}
 #feedList .post .head .ava{box-shadow:inset 0 0 0 1px rgba(154,255,0,.08)}
 #feedList .post .head .name{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
-#feedList .post .head .sub{margin-top:2px}
+#feedList .post .head .sub{margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
+/* время публикации в мете карточки: приглушённое, как в Telegram/Instagram, отдельной точкой */
+#feedList .post .head .sub .fa-age{color:var(--dim);opacity:.78;white-space:nowrap;flex:none}
 #feedList .post .body{color:var(--text)}
 
 /* бейджи «В тренде» / «Реклама» — ровные, вертикально по центру имени */
@@ -3775,6 +3799,9 @@ main>.screen{position:relative;z-index:1}
 .fac-reply-chip{display:flex;align-items:center;gap:8px;margin:2px 0 8px;padding:7px 10px 7px 12px;
   font-size:12px;color:var(--dim);background:var(--raised);border:1px solid var(--border);
   border-left:2px solid var(--lime);border-radius:var(--r-sm);animation:fa-fade .22s ease}
+/* [hidden] должен реально скрывать плашку: авторский display:flex перебивает UA-правило
+   [hidden]{display:none}, поэтому гасим её явно — иначе «Ответ …» висит всегда */
+.fac-reply-chip[hidden]{display:none}
 .fac-reply-chip svg.i{width:14px;height:14px;color:var(--accent);flex:none}
 .fac-reply-chip>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fac-reply-chip b{color:var(--text);font-weight:700}
@@ -3944,12 +3971,15 @@ main>.screen{position:relative;z-index:1}
 @keyframes cpEq{0%,100%{transform:scaleY(.8)}50%{transform:scaleY(1.18)}}
 @media(prefers-reduced-motion:reduce){.voice.cp-playing .wave i{animation:none}}
 
-/* --- 8b. Кружок-плеер видео-заметки: кольцо прогресса --- */
-.msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.28)}
-.cp-vn-ring{position:absolute;inset:-2px;width:calc(100% + 4px);height:calc(100% + 4px);transform:rotate(-90deg);pointer-events:none;z-index:3}
-.cp-vn-tr{fill:none;stroke:rgba(255,255,255,.18);stroke-width:2.5}
-:root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.14)}
-.cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 3px rgba(154,255,0,.6));transition:stroke-dashoffset .2s linear}
+/* --- 8b. Кружок-плеер видео-заметки: тонкое кольцо прогресса --- */
+/* база даёт .vnote{border:2px solid lime} — гасим его в мягкий ободок, а тонкое
+   лаймовое кольцо прогресса (cp-vn-ring) становится единственным ярким акцентом */
+.msg.has-vnote .vnote{box-shadow:0 6px 22px rgba(0,0,0,.26);border-width:1px;border-color:rgba(154,255,0,.22)}
+:root[data-theme="light"] .msg.has-vnote .vnote{border-color:rgba(110,180,0,.3)}
+.cp-vn-ring{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);transform:rotate(-90deg);pointer-events:none;z-index:3}
+.cp-vn-tr{fill:none;stroke:rgba(255,255,255,.16);stroke-width:2}
+:root[data-theme="light"] .cp-vn-tr{stroke:rgba(0,0,0,.12)}
+.cp-vn-fl{fill:none;stroke:var(--lime);stroke-width:2.5;stroke-linecap:round;filter:drop-shadow(0 0 2px rgba(154,255,0,.4));transition:stroke-dashoffset .2s linear}
 .cp-vn-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;color:#fff;z-index:4;transition:opacity .2s,transform .2s;pointer-events:none}
 .cp-vn-play svg.i{width:20px;height:20px;margin-left:2px}
 .vnote.cp-vn-playing .cp-vn-play{opacity:0;transform:translate(-50%,-50%) scale(.6)}
@@ -4081,6 +4111,9 @@ main>.screen{position:relative;z-index:1}
 .cp-conv-badge svg.i{width:11px;height:11px;stroke-width:9}
 .cp-cb-paid{color:#000;background:var(--lime);box-shadow:0 0 10px rgba(154,255,0,.3)}
 .cp-cb-private{color:var(--dim);background:var(--raised);border:1px solid var(--border)}
+/* icon-only компактный бейдж в шапке (круглый) */
+.cp-conv-badge.cp-cb-ico{padding:0;width:22px;height:22px;justify-content:center;border-radius:50%}
+.cp-conv-badge.cp-cb-ico svg.i{width:12px;height:12px}
 /* окно управления доступом (владелец) */
 .cp-mg{display:flex;flex-direction:column;gap:9px;text-align:left;margin-top:4px}
 .cp-mg-opt{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--raised);color:var(--text);transition:border-color .16s,background .16s}
@@ -4103,6 +4136,64 @@ main>.screen{position:relative;z-index:1}
 .cp-invite{display:flex;gap:8px;margin-top:12px;align-items:center}
 .cp-invite input{flex:1;min-width:0;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-size:12.5px;outline:none;font-family:var(--font-body)}
 .cp-invite .btn.sm{flex-shrink:0}
+
+/* =======================================================================
+   ЧАСТЬ 4 — ПОЛИРОВКА: шапка без тесноты, ⋮-меню, адаптация, обе темы.
+   ======================================================================= */
+
+/* --- 12. Шапка конва: телеграм-раскладка, крупные тап-таргеты, имя дышит --- */
+.conv-head{gap:6px;padding:9px 8px 9px 6px}
+.conv-head>div[onclick]{gap:10px!important;padding-right:4px}
+.conv-head .ch-call{width:40px;height:40px}
+.conv-head .who{font-size:15.5px;font-weight:700;letter-spacing:.005em}
+.conv-head .status{font-size:11.5px}
+/* инлайн-бейдж рядом с именем: имя ellipsis-ится, бейдж не сжимается.
+   flex включаем ТОЛЬКО когда есть бейдж — иначе нативный .who ellipsis */
+#convName{min-width:0}
+#convName.cp-has-badge{display:flex;align-items:center;gap:6px}
+#convName .cp-name-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#convName .cp-conv-badge{flex-shrink:0}
+.cp-more-btn.on{background:var(--lime-dim);color:var(--accent)}
+
+/* --- 13. Выпадающее ⋮-меню шапки (поиск / профиль / доступ) --- */
+.cp-more{position:fixed;inset:0;z-index:60;display:none}
+.cp-more.on{display:block}
+.cp-more-menu{position:fixed;min-width:216px;max-width:min(78vw,300px);padding:6px;border-radius:16px;
+  background:rgba(20,22,18,.92);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2);
+  border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 50px rgba(0,0,0,.55);
+  transform-origin:top right;transform:scale(.9);opacity:0;transition:transform .16s cubic-bezier(.3,1.3,.5,1),opacity .14s}
+:root[data-theme="light"] .cp-more-menu{background:rgba(255,255,255,.94);border-color:rgba(0,0,0,.07);box-shadow:0 18px 50px rgba(60,90,10,.16)}
+.cp-more-menu.on{transform:scale(1);opacity:1}
+.cp-more-item{display:flex;align-items:center;gap:13px;width:100%;padding:12px 14px;border-radius:11px;
+  color:var(--text);font-size:14px;font-weight:600;font-family:var(--font-body);text-align:left;
+  animation:cpReactIn .26s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--cp-i,0)*36ms);transition:background .14s}
+.cp-more-item svg.i{width:20px;height:20px;color:var(--dim);flex-shrink:0}
+.cp-more-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cp-more-item:hover{background:var(--lime-dim)}
+.cp-more-item:hover svg.i{color:var(--accent)}
+.cp-more-item:active{background:var(--raised)}
+@media(prefers-reduced-motion:reduce){.cp-more-item{animation:none}}
+
+/* --- 14. Адаптация: никакого overflow, длинные слова/имена/превью аккуратно --- */
+.msg{overflow-wrap:break-word;word-break:break-word;hyphens:auto}
+.msg .t.cp-t{flex-wrap:nowrap}
+.cp-conv-badge>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+/* превью-строка в списке: ценовой пилл не толкает текст, обрезаем превью */
+.chat-item .preview{min-width:0}
+.chat-item .preview .ci-txt{flex:1}
+.cp-ci-pill{margin-left:auto}
+/* панель эмодзи/меню на узких экранах не должна вылезать */
+.cp-panel-body{overscroll-behavior:contain}
+.cp-more-menu{overscroll-behavior:contain}
+
+/* --- 15. Общая красота: мягкие акценты, читаемость статусов в обеих темах --- */
+.cp-st svg.i{width:13px;height:13px}
+:root[data-theme="light"] .msg .t.cp-t{color:rgba(0,0,0,.5)}
+/* закреп/поиск бары — чуть премиальнее */
+.cp-pinbar,.cp-msearch{padding-left:14px;padding-right:12px}
+.cp-pin-txt b{letter-spacing:.01em}
+/* композер-смайл: ровный размер как у clip */
+.cp-smile svg.i{width:23px;height:23px}
 
 /* ===== module: profile-social ===== */
 /* ===== PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ===== */
@@ -4273,7 +4364,9 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .ps-person-ava svg.i{width:52%;height:52%}
 .ps-person-on{position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#3ddc5a;border:2.5px solid var(--bg)}
 .ps-person-b{flex:1;min-width:0}
-.ps-person-n{display:flex;align-items:center;gap:3px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-person-n{display:flex;align-items:center;gap:4px;font-weight:700;font-size:14px;min-width:0}
+.ps-person-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-person-n>svg.i,.ps-person-n .ps-you{flex-shrink:0}
 .ps-person-b small{display:block;font-size:11.5px;color:var(--dim);margin-top:1px}
 .ps-you{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:2px 7px}
 .ps-follow-mini{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:99px;background:var(--accent);color:#06210a;border:1px solid var(--accent);transition:transform .12s,background .2s,color .2s,border-color .2s;cursor:pointer}
@@ -12480,12 +12573,25 @@ const AC_COURSES = [
   { id:'ai', title:'Нейросети 2026', tag:'Базовый курс',
     sub:'5 уроков · тесты и практика · сертификат за каждый урок',
     from:0, count:5, free:true, minTier:'PRO', price:0,
+    author:'Команда OKO',
+    outcomes:[
+      'Выбирать нейросеть под задачу за секунды по карте 2026',
+      'Собирать сильные промпты по формуле: роль, задача, контекст, формат',
+      'Генерировать картинки и видео уровня продакшн — дёшево',
+      'Запустить своего ИИ-агента для бизнеса в Telegram'],
     c1:'НЕЙРОСЕТИ', c2:'2026' },
   { id:'reels', title:'Контент и Reels', tag:'Премиум',
     sub:'3 урока · вирусные видео от сценария до алгоритмов',
     from:5, count:3, free:false, minTier:'PRO', price:2900,
+    author:'Команда OKO',
+    outcomes:[
+      'Писать вирусные сценарии: хук, удержание, триггеры репостов',
+      'Монтировать Reels, которые досматривают до конца',
+      'Разгонять охваты через алгоритмы и A/B-тесты хуков',
+      'Ставить контент на поток без выгорания'],
     c1:'КОНТЕНТ', c2:'И REELS' },
 ];
+const AC_FEE = 0.10;   // комиссия платформы OKO с продажи курса (как в каналах)
 
 /* индекс курса по глобальному номеру урока */
 function acCourseOf(i){
@@ -12514,6 +12620,22 @@ function acCoursePctOf(ci){
 }
 function acCourseDone(ci){ return acCourseIdx(ci).every(i=>acLessonDone(i)); }
 function acCourseCertCount(ci){ return acCourseIdx(ci).filter(i=>{ const ls=acS.lessons[i]; return ls&&ls.cert; }).length; }
+
+/* агрегаты по курсу: сколько всего слайдов, вопросов, игр, видео, минут */
+function acCourseStats(ci){
+  const idx = acCourseIdx(ci);
+  let slides=0, quiz=0, games=0, vids=0, mins=0;
+  idx.forEach(i=>{
+    const L = AC_COURSE[i];
+    slides += L.slides.length;
+    quiz   += L.quiz.length;
+    if(L.pairs && L.pairs.length) games++;
+    if(L.videoUrl) vids++;
+    const m = /^(\d+):(\d+)$/.exec(L.dur||'');
+    if(m) mins += (+m[1]) + (+m[2])/60;
+  });
+  return {lessons:idx.length, slides, quiz, games, vids, mins:Math.max(1,Math.round(mins))};
+}
 
 /* ---------- состояние (localStorage oko-academy, per-урок) ---------- */
 function acNewLS(){
@@ -12627,8 +12749,9 @@ function acCourseGate(ci){
   const c = AC_COURSES[ci];
   if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
   if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
+  const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
   showPopup({ico:'star', title:'Курс «'+c.title+'»',
-    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.',
+    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы OKO — 10% ('+acFmtPrice(fee)+').</span>',
     actions:[
       {label:'Открыть по подписке '+c.minTier, onclick:()=>{
         if(typeof okoRequireSub === 'function'){
@@ -12647,10 +12770,14 @@ function acBuyCourse(ci){
   if(walletCharge(c.price, 'Академия · курс «'+c.title+'»')){
     acS.owned = acS.owned || {};
     acS.owned[c.id] = true; acSave();
+    const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
     if(typeof okoEarn === 'function') okoEarn(c.price, 'Академия · продажа курса «'+c.title+'»');
-    toast('Курс открыт: «'+c.title+'»');
     acBadgeSync();
-    acOpenCourse(ci);
+    if(typeof showPopup === 'function'){
+      showPopup({ico:'check2', title:'Курс открыт',
+        body:'Курс «'+esc(c.title)+'» теперь твой навсегда. Списано <b>'+acFmtPrice(c.price)+'</b>: автору начислено '+acFmtPrice(net)+', комиссия платформы OKO 10% — '+acFmtPrice(fee)+'.',
+        actions:[{label:'Начать курс', onclick:()=>acOpenCourse(ci)}]});
+    } else { toast('Курс открыт: «'+c.title+'»'); acOpenCourse(ci); }
   } else {
     toast('Недостаточно средств — пополни счёт');
   }
@@ -12828,6 +12955,30 @@ function acCertLabel(c){
   return ctitle + ' · Урок ' + acLocalNo(gi) + ' · ' + (c.lessonTitle || AC_COURSE[gi].title);
 }
 
+/* ---------- «ЧТО ВНУТРИ КУРСА»: состав + чему научишься ---------- */
+function acCourseInsideHtml(ci){
+  const c = AC_COURSES[ci], st = acCourseStats(ci);
+  const feats = [
+    ['circle-play', (st.vids || st.lessons) + ' видео-' + acPlural(st.vids||st.lessons,['урок','урока','уроков']), st.mins>1 ? '~'+st.mins+' мин · озвучка' : 'озвучка + караоке'],
+    ['file',  st.slides + ' ' + acPlural(st.slides,['слайд','слайда','слайдов']), 'наглядно и по делу'],
+    ['poll',  'Тесты · ' + st.quiz + ' ' + acPlural(st.quiz,['вопрос','вопроса','вопросов']), 'порог зачёта ' + AC_PASS + '%'],
+    ['edit',  'Практика', 'проверка ИИ-куратором'],
+    ['bolt',  st.games + ' мини-' + acPlural(st.games,['игра','игры','игр']), 'закрепление на связках'],
+    ['star',  'Сертификат', 'именной — за каждый урок'],
+  ];
+  const outcomes = (c.outcomes||[]).map(o=>`<li>${I('check2')}<span>${esc(o)}</span></li>`).join('');
+  return `
+  <div class="card ac-inside" id="acWhatsIn">
+    <div class="ac-inside-head">
+      <span class="ico">${I('bolt')}</span>
+      <div class="meta"><b>Что внутри курса</b><span>${c.author?('Автор — '+esc(c.author)+' · '):''}${st.lessons} ${acPlural(st.lessons,['урок','урока','уроков'])} полного формата</span></div>
+    </div>
+    <div class="ac-inside-grid">${feats.map(f=>`
+      <div class="ac-inside-cell"><span class="ic">${I(f[0])}</span><b>${f[1]}</b><span>${f[2]}</span></div>`).join('')}</div>
+    ${outcomes?`<div class="ac-inside-out"><div class="h">${I('flag')} Чему научишься</div><ul>${outcomes}</ul></div>`:''}
+  </div>`;
+}
+
 /* ---------- СТРАНИЦА КУРСА (список уроков) ---------- */
 function acCourseHtml(){
   const ci = acCourse, c = AC_COURSES[ci];
@@ -12873,6 +13024,7 @@ function acCourseHtml(){
         <p>${esc(c.sub)}</p>
       </div>
     </div>
+    ${acCourseInsideHtml(ci)}
     <div class="card">
       <div class="ac-course-top">
         <span class="ac-ring">
@@ -19665,12 +19817,42 @@ function faRenderEmpty(list, kind){
   list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span>${cta}</div>`;
 }
 
+/* ---------- время публикации на карточке (короткий формат: «3 ч», «2 д») ---------- */
+function faShortAge(ts){
+  if(!ts) return '';
+  const min = Math.max(0, Date.now() - ts) / 60000;
+  if(min < 1) return 'сейчас';
+  if(min < 60) return Math.floor(min) + ' мин';
+  const h = min / 60;
+  if(h < 24) return Math.floor(h) + ' ч';
+  const days = h / 24;
+  if(days < 7) return Math.floor(days) + ' д';
+  try{ return new Date(ts).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}); }
+  catch(e){ return Math.floor(days) + ' д'; }
+}
+/* дорисовать метку времени в .sub каждой карточки (обе вкладки, без дублей).
+   Посты поздних модулей (demo-content и т.п.) грузятся после faSeedContent и не имеют ts —
+   проставляем детерминированный возраст по id (стабилен между рендерами, без «прыжков»). */
+function faStampTimes(list){
+  if(!list) return;
+  list.querySelectorAll('article.post').forEach(art=>{
+    const sub = art.querySelector('.head .sub');
+    if(!sub || sub.querySelector('.fa-age')) return;
+    const p = postById(faIdOf(art));
+    if(!p) return;
+    if(!p.ts) p.ts = Date.now() - (1 + Math.floor(faRand(p.id) * 47)) * 36e5;  /* 1–48 ч, стабильно */
+    const a = faShortAge(p.ts);
+    if(a) sub.insertAdjacentHTML('beforeend', `<span class="fa-age">· ${a}</span>`);
+  });
+}
+
 const _faPrevRenderFeed = renderFeed;
 renderFeed = function(kind){
   kind = kind || curFeedKind || 'sub';
-  _faPrevRenderFeed(kind);           /* «Подписки» не трогаем — декор только для rec */
+  _faPrevRenderFeed(kind);           /* декор-«почему показано» — только для rec */
   const list = document.getElementById('feedList');
   if(list && !list.querySelector('article.post')){ faRenderEmpty(list, kind); return; }
+  faStampTimes(list);                /* время публикации — на обеих вкладках */
   if(kind === 'rec') faDecorate();
 };
 
@@ -20587,15 +20769,25 @@ function cpSwipeInit(){
 }
 
 /* ================= UI-ИНЖЕКЦИЯ (шапка конва, пин-бар, строка поиска) ================= */
+/* Шапка «телеграм-стайл»: аватар+имя+статус | аудио | видео | ⋮ (меню).
+   Поиск, участники и доступ спрятаны в ⋮-меню — шапка не теснится, имя дышит. */
 function cpBuildUi(){
   const head = document.querySelector('#convBody .conv-head');
-  if(!head || document.getElementById('cpSearchBtn')) return;
-  /* лупа в шапке — перед кнопками звонков */
+  if(!head || document.getElementById('cpMoreBtn')) return;
+  /* единственная новая кнопка в шапке — «ещё» (⋮) в самом конце */
   const btn = document.createElement('button');
-  btn.className = 'ch-call'; btn.id = 'cpSearchBtn'; btn.title = 'Поиск по сообщениям';
-  btn.innerHTML = I('search');
-  btn.onclick = cpOpenSearch;
-  head.insertBefore(btn, head.querySelector('.ch-call'));
+  btn.className = 'ch-call cp-more-btn'; btn.id = 'cpMoreBtn'; btn.title = 'Ещё';
+  btn.innerHTML = I('more');
+  btn.onclick = cpOpenMore;
+  head.appendChild(btn);
+  /* выпадающее меню действий (поиск / профиль / доступ) */
+  if(!document.getElementById('cpMore')){
+    const wrap = document.createElement('div');
+    wrap.className = 'cp-more'; wrap.id = 'cpMore';
+    wrap.innerHTML = `<div class="cp-more-menu" id="cpMoreMenu" role="menu"></div>`;
+    wrap.addEventListener('click', e=>{ if(e.target===wrap) cpCloseMore(); });
+    document.body.appendChild(wrap);
+  }
   /* пин-бар */
   const pin = document.createElement('div');
   pin.className = 'cp-pinbar'; pin.id = 'cpPinBar';
@@ -20621,6 +20813,54 @@ function cpBuildUi(){
   });
 }
 
+/* ---- ⋮-меню шапки: поиск / профиль / доступ (контекстно) ---- */
+function cpMoreItems(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  const items = [];
+  items.push({ic:'search', label:'Поиск по сообщениям', act:cpOpenSearch});
+  if(typeof openProfile==='function'){
+    const grp = c && (c.kind==='group' || c.kind==='channel');
+    items.push({ic: grp?'users':'user', label: grp?'Участники и профиль':'Профиль чата', act:()=>{ try{ openProfile(); }catch(e){} }});
+  }
+  if(c){
+    const a = cpAcc(c);
+    if(a.type!=='public' || (typeof cpCanManage==='function' && cpCanManage())){
+      const own = (typeof cpCanManage==='function' && cpCanManage());
+      const ic = a.type==='paid' ? 'crown' : a.type==='private' ? 'lock' : 'users';
+      const label = own ? 'Управление доступом' : (a.type==='paid' ? 'Доступ к клубу' : 'Ссылка-приглашение');
+      items.push({ic, label, act:cpAccessMenu});
+    }
+  }
+  return items;
+}
+function cpOpenMore(){
+  const wrap = document.getElementById('cpMore'), menu = document.getElementById('cpMoreMenu');
+  const btn = document.getElementById('cpMoreBtn');
+  if(!wrap || !menu || !btn) return;
+  if(wrap.classList.contains('on')){ cpCloseMore(); return; }
+  const its = cpMoreItems();
+  menu.innerHTML = its.map((it,i)=>
+    `<button class="cp-more-item" style="--cp-i:${i}" role="menuitem">${I(it.ic)}<span>${cpEsc(it.label)}</span></button>`).join('');
+  [...menu.children].forEach((el,i)=>{ const it = its[i]; el.onclick = ()=>{ cpCloseMore(); if(it && it.act) try{ it.act(); }catch(e){} }; });
+  /* якорим меню под кнопкой, справа */
+  const r = btn.getBoundingClientRect();
+  menu.style.top = Math.round(r.bottom + 6) + 'px';
+  menu.style.right = Math.round(window.innerWidth - r.right) + 'px';
+  wrap.classList.add('on');
+  requestAnimationFrame(()=>menu.classList.add('on'));
+  btn.classList.add('on');
+  if(typeof nvPush==='function') nvPush('cp:more', ()=>cpCloseMore(true));
+}
+function cpCloseMore(fromNav){
+  const wrap = document.getElementById('cpMore'), menu = document.getElementById('cpMoreMenu');
+  const btn = document.getElementById('cpMoreBtn');
+  if(!wrap || !wrap.classList.contains('on')) return;
+  menu && menu.classList.remove('on');
+  wrap.classList.remove('on');
+  btn && btn.classList.remove('on');
+  if(!fromNav && typeof nvPop==='function') nvPop('cp:more');
+}
+
 /* ================= CHAIN-ПАТЧИ РЕНДЕРА И НАВИГАЦИИ КОНВА ================= */
 if(typeof renderMsgs === 'function'){
   const _cpPrevRenderMsgs = renderMsgs;
@@ -20635,14 +20875,14 @@ if(typeof renderMsgs === 'function'){
 if(typeof openConv === 'function'){
   const _cpPrevOpenConv = openConv;
   openConv = function(){
-    cpCloseSearch(); /* поиск не тащим между чатами */
+    cpCloseSearch(); cpCloseMore(); /* поиск/меню не тащим между чатами */
     _cpPrevOpenConv.apply(this, arguments);
   };
 }
 if(typeof closeConv === 'function'){
   const _cpPrevCloseConv = closeConv;
   closeConv = function(){
-    cpCloseSearch();
+    cpCloseSearch(); cpCloseMore();
     _cpPrevCloseConv.apply(this, arguments);
   };
 }
@@ -21374,28 +21614,33 @@ function cpDecorateConvAccess(){
   const c = (typeof currentChat!=='undefined') ? currentChat : null;
   const head = document.querySelector('#convBody .conv-head'); if(!head || !c) return;
   const a = cpAcc(c);
-  /* кнопка доступа в шапке */
-  let btn = document.getElementById('cpAccessBtn');
-  if(!btn){
-    btn = document.createElement('button'); btn.className='ch-call'; btn.id='cpAccessBtn';
-    btn.onclick = cpAccessMenu;
-    const anchor = document.getElementById('cpSearchBtn') || head.querySelector('.ch-call');
-    head.insertBefore(btn, anchor);
-  }
-  const showBtn = a.type!=='public' || cpCanManage();
-  btn.style.display = showBtn ? 'flex' : 'none';
-  btn.title = 'Доступ к чату';
-  btn.innerHTML = a.type==='paid' ? I('crown') : a.type==='private' ? I('lock') : I('users');
-  /* инлайн-бейдж рядом с именем */
+  /* доступ к чату живёт в ⋮-меню (см. cpMoreItems) — отдельной кнопки в шапке нет,
+     чтобы не тесать имя. Здесь — только инлайн-бейдж типа рядом с именем. */
   const nameEl = document.getElementById('convName');
   if(nameEl){
     let badge = document.getElementById('cpConvBadge');
-    if(a.type==='public'){ if(badge) badge.remove(); }
-    else {
-      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; nameEl.appendChild(badge); }
-      const label = a.type==='paid' ? (cpChatUnlocked(c) ? 'PRO · доступ открыт' : (a.price?a.price+' ₽':'PRO')) : 'Приватный';
-      badge.className = 'cp-conv-badge cp-cb-'+a.type;
-      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + '<span>'+label+'</span>';
+    if(a.type==='public'){
+      /* публичный чат: без бейджа — возвращаем чистое имя (нативный ellipsis .who) */
+      if(badge) badge.remove();
+      nameEl.classList.remove('cp-has-badge');
+      const tx = nameEl.querySelector('.cp-name-txt');
+      if(tx){ nameEl.textContent = tx.textContent; } /* разворачиваем обёртку обратно в текст */
+    } else {
+      /* имя оборачиваем в span, чтобы ellipsis работал рядом с несжимаемым бейджем */
+      let tx = nameEl.querySelector('.cp-name-txt');
+      if(!tx){
+        const name = c.name || nameEl.textContent || '';
+        nameEl.textContent = '';
+        tx = document.createElement('span'); tx.className = 'cp-name-txt'; tx.textContent = name;
+        nameEl.appendChild(tx);
+      } else if(tx.textContent !== (c.name||tx.textContent)){ tx.textContent = c.name; }
+      if(!badge){ badge = document.createElement('span'); badge.id='cpConvBadge'; }
+      if(badge.parentNode !== nameEl) nameEl.appendChild(badge);
+      nameEl.classList.add('cp-has-badge');
+      /* компактный бейдж в шапке: платный-закрытый — цена; открытый/приватный — только иконка */
+      const label = a.type==='paid' ? (cpChatUnlocked(c) ? '' : (a.price?a.price+' ₽':'PRO')) : '';
+      badge.className = 'cp-conv-badge cp-cb-'+a.type + (label?'':' cp-cb-ico');
+      badge.innerHTML = (a.type==='paid'?I('crown'):I('lock')) + (label?'<span>'+label+'</span>':'');
     }
   }
 }
@@ -21957,7 +22202,7 @@ function psPersonRowHtml(p){
   return `<div class="ps-person${me ? ' me' : ''}" ${me ? '' : `onclick="psGraphOpenPerson('${psAttr(p.name)}')"`}>
     <div class="ps-person-ava">${p.avaIcon ? I(p.avaIcon) : esc(p.ava)}${p.online ? '<span class="ps-person-on"></span>' : ''}</div>
     <div class="ps-person-b">
-      <span class="ps-person-n">${esc(p.name)}${me ? ' <span class="ps-you">это ты</span>' : (typeof vBadge === 'function' ? vBadge(p.name) : '')}</span>
+      <span class="ps-person-n"><span class="ps-person-nm">${esc(p.name)}</span>${me ? '<span class="ps-you">это ты</span>' : (typeof vBadge === 'function' ? vBadge(p.name) : '')}</span>
       <small>@${esc(p.nick)}</small>
     </div>
     ${me ? '' : `<button class="ps-follow-mini${f ? ' on' : ''}" onclick="event.stopPropagation();psFollowMini(this,'${psAttr(p.name)}')">${I(f ? 'check' : 'plus')}<span>${f ? 'Вы подписаны' : 'Подписаться'}</span></button>`}
@@ -24524,8 +24769,13 @@ if(typeof mpOpenPackages === 'function'){
       const app = document.getElementById('app');
       if(app){
         app.style.paddingTop = top + 'px';
-        app.style.paddingBottom = bottom + 'px';
+        /* НИЖНИЙ safe-area НЕ пихаем в #app — иначе его паддинг показывает #000
+           между composer/nav (--surface) и нижним баром Telegram => «тень снизу».
+           Отдаём инсет в CSS-переменную, а её используют nav и composer (оба --surface),
+           так низ становится сплошным --surface до самого бара Telegram. */
+        app.style.paddingBottom = '0px';
       }
+      try{ document.documentElement.style.setProperty('--oko-safe-bottom', bottom + 'px'); }catch(_){}
       ['authScreen','onboard','splash'].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.style.paddingTop = top + 'px';
@@ -24595,7 +24845,18 @@ if(typeof mpOpenPackages === 'function'){
 (function pwaInit(){
   if(location.protocol !== 'https:') return; // локальный file:// — пропуск
   if('serviceWorker' in navigator){
-    try{ navigator.serviceWorker.register('/sw.js'); }catch(e){}
+    try{
+      navigator.serviceWorker.register('/sw.js').then(function(reg){
+        try{ reg.update(); }catch(e){}
+      }).catch(function(){});
+      /* когда активируется НОВЫЙ воркер (после деплоя) — один раз перезагружаем страницу,
+         чтобы пользователь сразу получил свежую сборку, а не залипшую в кэше. */
+      var _okoReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(_okoReloaded) return; _okoReloaded = true;
+        try{ location.reload(); }catch(e){}
+      });
+    }catch(e){}
   }
   let deferred = null;
   window.addEventListener('beforeinstallprompt', ev => {

@@ -54,7 +54,9 @@
 #feedList .post .head{align-items:center}
 #feedList .post .head .ava{box-shadow:inset 0 0 0 1px rgba(154,255,0,.08)}
 #feedList .post .head .name{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
-#feedList .post .head .sub{margin-top:2px}
+#feedList .post .head .sub{margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
+/* время публикации в мете карточки: приглушённое, как в Telegram/Instagram, отдельной точкой */
+#feedList .post .head .sub .fa-age{color:var(--dim);opacity:.78;white-space:nowrap;flex:none}
 #feedList .post .body{color:var(--text)}
 
 /* бейджи «В тренде» / «Реклама» — ровные, вертикально по центру имени */
@@ -252,6 +254,9 @@
 .fac-reply-chip{display:flex;align-items:center;gap:8px;margin:2px 0 8px;padding:7px 10px 7px 12px;
   font-size:12px;color:var(--dim);background:var(--raised);border:1px solid var(--border);
   border-left:2px solid var(--lime);border-radius:var(--r-sm);animation:fa-fade .22s ease}
+/* [hidden] должен реально скрывать плашку: авторский display:flex перебивает UA-правило
+   [hidden]{display:none}, поэтому гасим её явно — иначе «Ответ …» висит всегда */
+.fac-reply-chip[hidden]{display:none}
 .fac-reply-chip svg.i{width:14px;height:14px;color:var(--accent);flex:none}
 .fac-reply-chip>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fac-reply-chip b{color:var(--text);font-weight:700}

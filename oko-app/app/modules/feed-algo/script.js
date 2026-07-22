@@ -302,12 +302,42 @@ function faRenderEmpty(list, kind){
   list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span>${cta}</div>`;
 }
 
+/* ---------- время публикации на карточке (короткий формат: «3 ч», «2 д») ---------- */
+function faShortAge(ts){
+  if(!ts) return '';
+  const min = Math.max(0, Date.now() - ts) / 60000;
+  if(min < 1) return 'сейчас';
+  if(min < 60) return Math.floor(min) + ' мин';
+  const h = min / 60;
+  if(h < 24) return Math.floor(h) + ' ч';
+  const days = h / 24;
+  if(days < 7) return Math.floor(days) + ' д';
+  try{ return new Date(ts).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}); }
+  catch(e){ return Math.floor(days) + ' д'; }
+}
+/* дорисовать метку времени в .sub каждой карточки (обе вкладки, без дублей).
+   Посты поздних модулей (demo-content и т.п.) грузятся после faSeedContent и не имеют ts —
+   проставляем детерминированный возраст по id (стабилен между рендерами, без «прыжков»). */
+function faStampTimes(list){
+  if(!list) return;
+  list.querySelectorAll('article.post').forEach(art=>{
+    const sub = art.querySelector('.head .sub');
+    if(!sub || sub.querySelector('.fa-age')) return;
+    const p = postById(faIdOf(art));
+    if(!p) return;
+    if(!p.ts) p.ts = Date.now() - (1 + Math.floor(faRand(p.id) * 47)) * 36e5;  /* 1–48 ч, стабильно */
+    const a = faShortAge(p.ts);
+    if(a) sub.insertAdjacentHTML('beforeend', `<span class="fa-age">· ${a}</span>`);
+  });
+}
+
 const _faPrevRenderFeed = renderFeed;
 renderFeed = function(kind){
   kind = kind || curFeedKind || 'sub';
-  _faPrevRenderFeed(kind);           /* «Подписки» не трогаем — декор только для rec */
+  _faPrevRenderFeed(kind);           /* декор-«почему показано» — только для rec */
   const list = document.getElementById('feedList');
   if(list && !list.querySelector('article.post')){ faRenderEmpty(list, kind); return; }
+  faStampTimes(list);                /* время публикации — на обеих вкладках */
   if(kind === 'rec') faDecorate();
 };
 

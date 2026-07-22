@@ -317,6 +317,28 @@
 .ac-course-finale h3{font-size:20px;margin-bottom:3px}
 .ac-course-finale p{font-size:12px;color:var(--dim);line-height:1.45}
 
+/* --- «что внутри курса»: состав + чему научишься --- */
+.ac-inside{margin-bottom:14px;animation:fade .3s ease both}
+.ac-inside-head{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.ac-inside-head .ico{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ac-inside-head .ico svg.i{width:20px;height:20px}
+.ac-inside-head .meta{flex:1;min-width:0}
+.ac-inside-head .meta b{font-size:16px;display:block;line-height:1.2}
+.ac-inside-head .meta span{font-size:11.5px;color:var(--dim);display:block;margin-top:2px;line-height:1.4}
+.ac-inside-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ac-inside-cell{display:flex;flex-direction:column;gap:3px;padding:12px 12px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);min-width:0;transition:border-color .18s}
+.ac-inside-cell:hover{border-color:rgba(154,255,0,.35)}
+.ac-inside-cell .ic{width:30px;height:30px;border-radius:9px;background:var(--surface);border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:5px}
+.ac-inside-cell .ic svg.i{width:16px;height:16px}
+.ac-inside-cell b{font-size:12.5px;font-weight:700;line-height:1.25;word-break:break-word}
+.ac-inside-cell>span{font-size:10.5px;color:var(--dim);line-height:1.3}
+.ac-inside-out{margin-top:14px;padding-top:13px;border-top:1px solid var(--border)}
+.ac-inside-out .h{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+.ac-inside-out .h svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-inside-out ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.ac-inside-out li{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.4}
+.ac-inside-out li svg.i{width:16px;height:16px;color:var(--accent);flex-shrink:0;margin-top:1px;stroke-width:8}
+
 /* каскадное появление уроков */
 @keyframes acRise{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 .ac-lesson-row.ac-rise{animation:acRise .42s cubic-bezier(.3,1,.4,1) both}

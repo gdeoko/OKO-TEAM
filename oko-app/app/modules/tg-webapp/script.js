@@ -48,8 +48,13 @@
       const app = document.getElementById('app');
       if(app){
         app.style.paddingTop = top + 'px';
-        app.style.paddingBottom = bottom + 'px';
+        /* НИЖНИЙ safe-area НЕ пихаем в #app — иначе его паддинг показывает #000
+           между composer/nav (--surface) и нижним баром Telegram => «тень снизу».
+           Отдаём инсет в CSS-переменную, а её используют nav и composer (оба --surface),
+           так низ становится сплошным --surface до самого бара Telegram. */
+        app.style.paddingBottom = '0px';
       }
+      try{ document.documentElement.style.setProperty('--oko-safe-bottom', bottom + 'px'); }catch(_){}
       ['authScreen','onboard','splash'].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.style.paddingTop = top + 'px';

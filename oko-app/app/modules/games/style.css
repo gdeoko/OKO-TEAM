@@ -122,10 +122,10 @@
    ============================================================ */
 .gm-modes{margin-bottom:14px}
 .gm-mode-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:11px}
-.gm-mpill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 9px;min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text);transition:transform .15s,border-color .18s,background .18s,box-shadow .18s}
+.gm-mpill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 3px 9px;min-width:0;overflow:hidden;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text);transition:transform .15s,border-color .18s,background .18s,box-shadow .18s}
 .gm-mpill-ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--raised);color:var(--dim);transition:background .18s,color .18s}
 .gm-mpill-ic svg.i{width:15px;height:15px}
-.gm-mpill b{font-family:var(--font-display);font-size:15px;letter-spacing:.02em;white-space:nowrap;max-width:100%}
+.gm-mpill b{font-family:var(--font-display);font-size:13px;letter-spacing:0;white-space:nowrap;max-width:100%}
 .gm-mpill small{font-size:9.5px;color:var(--dim);text-align:center;line-height:1.15;font-variant-numeric:tabular-nums}
 .gm-mpill.on{border-color:var(--lime);background:var(--lime-dim);box-shadow:var(--glow)}
 .gm-mpill.on .gm-mpill-ic{background:var(--lime);color:#0a0a0a}

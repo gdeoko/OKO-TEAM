@@ -467,7 +467,7 @@ function psPersonRowHtml(p){
   return `<div class="ps-person${me ? ' me' : ''}" ${me ? '' : `onclick="psGraphOpenPerson('${psAttr(p.name)}')"`}>
     <div class="ps-person-ava">${p.avaIcon ? I(p.avaIcon) : esc(p.ava)}${p.online ? '<span class="ps-person-on"></span>' : ''}</div>
     <div class="ps-person-b">
-      <span class="ps-person-n">${esc(p.name)}${me ? ' <span class="ps-you">это ты</span>' : (typeof vBadge === 'function' ? vBadge(p.name) : '')}</span>
+      <span class="ps-person-n"><span class="ps-person-nm">${esc(p.name)}</span>${me ? '<span class="ps-you">это ты</span>' : (typeof vBadge === 'function' ? vBadge(p.name) : '')}</span>
       <small>@${esc(p.nick)}</small>
     </div>
     ${me ? '' : `<button class="ps-follow-mini${f ? ' on' : ''}" onclick="event.stopPropagation();psFollowMini(this,'${psAttr(p.name)}')">${I(f ? 'check' : 'plus')}<span>${f ? 'Вы подписаны' : 'Подписаться'}</span></button>`}
