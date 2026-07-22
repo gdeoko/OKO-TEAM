@@ -2900,17 +2900,19 @@ function startParticles(){
     'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}',
     'float noise(vec2 p){vec2 i=floor(p),f=fract(p);float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));vec2 u=f*f*(3.-2.*f);return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}',
     'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=.5;}return v;}',
+    /* ПОДЛОЖКА-АТМОСФЕРА: строго симметрична и центрирована в (0,0) — никакого
+       смещённого кольца/блоба (раньше вызывали «кривое свечение»). Яркий глаз и
+       ровный ореол теперь рисует модуль wow-eye; шейдер даёт лишь тонкий живой дым. */
     'void main(){vec2 uv=(gl_FragCoord.xy-.5*u_res)/u_res.y;float t=u_t*.04;',
-    'vec2 c=vec2(0.,.34);vec2 d=uv-c;float r=length(d);',
+    'float r=length(uv);',
     'vec2 q=vec2(fbm(uv*1.3+t),fbm(uv*1.3-t+5.));float f=fbm(uv*1.8+q*1.4+t);',
-    'float glow=smoothstep(.85,0.,r);float dust=pow(f,2.2)*glow;',
+    'float glow=smoothstep(1.05,0.,r);float dust=pow(f,2.3)*glow;',
     'vec3 lime=vec3(.55,1.,0.);',
-    'vec3 col=lime*dust*.55;',
-    'col+=lime*smoothstep(.11,0.,r)*.32;',
-    'col+=lime*smoothstep(.02,0.,abs(r-.17-.01*sin(u_t*.6)))*.12;',
-    'col+=lime*.02*hash(uv+t);',
-    'col*=smoothstep(1.15,.08,r);',
-    'gl_FragColor=vec4(col*.92,1.);}'
+    'vec3 col=lime*dust*.34;',
+    'col+=lime*smoothstep(.55,0.,r)*.05;',
+    'col+=lime*.015*hash(uv+t);',
+    'col*=smoothstep(1.2,.05,r);',
+    'gl_FragColor=vec4(col*.9,1.);}'
   ].join('\n');
   const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;};
   const prog=gl.createProgram();
