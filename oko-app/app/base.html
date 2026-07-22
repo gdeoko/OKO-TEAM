@@ -1241,7 +1241,7 @@ main>.screen{position:relative;z-index:1}
           <p style="font-weight:600;font-size:14px">Твоя реф-ссылка</p>
           <p class="dim" style="font-size:12.5px;margin-top:4px">15% с оплат твоих клиентов (первые 6 мес, далее 5%) + 5% со второго уровня</p>
           <div class="reflink">
-            <input value="oko.app/r/daniel7x" readonly id="refInput">
+            <input value="okoteam.top/r/daniel7x" readonly id="refInput">
             <button class="btn sm" onclick="copyRef()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
           </div>
         </div>
@@ -3310,7 +3310,7 @@ function openProfile(){
       <div class="dim" style="font-size:11.5px;padding:2px 4px 10px" id="writeHint">${c.writeAll?'Пишут все участники':'Публикуют только владелец и админы'}</div>
       <button class="prow" onclick="toast('Управление админами подключится с бэкендом')">${I('users')} Администраторы <span class="chev">${I('chev')}</span></button>
       <button class="prow" onclick="toast('Закреплённые посты')">${I('pin')} Закреплённые посты <span class="chev">${I('chev')}</span></button>
-      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} oko.app/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
+      <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} okoteam.top/c/${c.nick||'club'} <span class="chev">${I('copy')}</span></button>`;
     } else {
       extra = `<div class="pv-stats"><span class="chip">Посты в ленте</span><span class="chip">Алгоритмы OKO</span></div>`;
     }
@@ -3360,7 +3360,7 @@ function toggleWrite(){
   document.getElementById('writeHint').textContent = currentChat.writeAll ? 'Пишут все участники' : 'Публикуют только владелец и админы';
 }
 function copyInvite(){
-  const link = 'oko.app/c/' + (currentChat.nick || 'invite');
+  const link = 'okoteam.top/c/' + (currentChat.nick || 'invite');
   try{ navigator.clipboard.writeText('https://'+link); }catch(e){}
   toast('Ссылка-приглашение скопирована');
 }

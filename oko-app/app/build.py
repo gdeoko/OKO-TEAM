@@ -58,6 +58,7 @@ def collect(kind):
     return ''.join(parts)
 
 def main():
+    out_path = sys.argv[1] if len(sys.argv) > 1 else OUT
     base = read(os.path.join(HERE, 'base.html'))
     css = collect('style.css')
     screens = collect('screen.html')
@@ -73,9 +74,9 @@ def main():
     ver = read(os.path.join(HERE, 'VERSION')).strip()
     out = re.sub(r'сборка v[0-9.]+', f'сборка v{ver}', out)
 
-    with open(OUT, 'w', encoding='utf-8') as f:
+    with open(out_path, 'w', encoding='utf-8') as f:
         f.write(out)
-    print(f'OK -> {os.path.relpath(OUT, HERE)}  v{ver}  ({len(out)//1024} KB)')
+    print(f'OK -> {out_path}  v{ver}  ({len(out)//1024} KB)')
 
 if __name__ == '__main__':
     main()

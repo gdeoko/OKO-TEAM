@@ -204,7 +204,7 @@ var PW_ASSET = {
           '<p class="dim" style="font-size:12px;margin-top:10px">Выплаты — на лицевой счёт OKO. Статистика переходов и начислений — в реальном времени.</p>'+
         '</div>',
         actions:[{label:'Скопировать ссылку', onclick:function(){
-          var link = 'https://oko.app/i/'+((typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref');
+          var link = 'https://okoteam.top/i/'+((typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref');
           try{ if(navigator.clipboard) navigator.clipboard.writeText(link); }catch(e){}
           if(typeof toast==='function') toast('Ссылка скопирована: '+link);
         }},{label:'Понятно', ghost:true}]

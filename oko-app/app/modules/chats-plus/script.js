@@ -1174,7 +1174,7 @@ function cpAccessMenu(){
 /* ---- ссылка-приглашение (приватные/платные) ---- */
 function cpShareInvite(c){
   if(typeof showPopup!=='function') return;
-  const link = 'https://oko.app/join/'+cpChatSlug(c);
+  const link = 'https://okoteam.top/join/'+cpChatSlug(c);
   showPopup({ico:'share', title:'Ссылка-приглашение',
     body:`Отправь ссылку — по ней откроется доступ к «${cpEsc(c.name)}».<div class="cp-invite"><input id="cpInviteInp" readonly value="${link}"><button class="btn sm" onclick="cpCopyInvite()">${I('copy')} Копировать</button></div>`,
     actions:[{label:'Готово'}]});

@@ -361,7 +361,7 @@ function psLike(id){
 /* ---------- «Поделиться» профилем: ссылка + копирование ---------- */
 function psProfileLink(name){
   const a = psAuthor(name);
-  return 'https://oko.app/@' + a.nick;
+  return 'https://okoteam.top/@' + a.nick;
 }
 function psCopy(text){
   try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text); return true; } }catch(e){}
