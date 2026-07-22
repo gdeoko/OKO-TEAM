@@ -5,13 +5,13 @@ BASE="/opt/oko-poster"; nn=sys.argv[1]
 d=f"{BASE}/queue/{nn}"; mp=f"{d}/meta.json"
 m=json.load(open(mp)); done=m.setdefault("_done",{})
 batch=str(m.get("batch","A")).upper()
-BAT={"A":{"yt":"cfg/yt_creds.env","tt":"2350915","ig":"cfg/ig_diesel_profile","ign":"cargo"},
+BAT={"A":{"yt":"cfg/yt_creds.env","tt":"2365299","ig":"cfg/ig_diesel_profile","ign":"cargo"},
      "B":{"yt":"cfg/ytnew_b.env","tt":"2363201","ig":"cfg/ig_kitay_profile","ign":"kitay"}}[batch]
 # load hooppy/tiktok creds
 try:
     for _l in open(f"{BASE}/cfg/post_creds.env"):
         _l=_l.strip()
-        if _l and "=" in _l and not _l.startswith("#"): _k,_v=_l.split("=",1); os.environ.setdefault(_k,_v.strip().strip(chr(34)))
+        if _l and "=" in _l and not _l.startswith("#"): _k,_v=_l.split("=",1); _k=_k.strip(); _k=_k[7:].strip() if _k.startswith("export ") else _k; os.environ.setdefault(_k,_v.strip().strip(chr(34)))
 except: pass
 def run(cmd,to=200,env=None):
     e=dict(os.environ); e.update(env or {})
@@ -26,6 +26,8 @@ if not done.get("youtube"):
     if vid: done["youtube"]=vid; json.dump(m,open(mp,"w"),ensure_ascii=False); print("YT",batch,vid)
     else: print("YT FAIL",o[-150:])
 # TikTok
+if not done.get("tiktok") and not BAT["tt"]:
+    done["tiktok"]="disabled"; json.dump(m,open(mp,"w"),ensure_ascii=False); print("TT disabled for batch",batch)
 if not done.get("tiktok"):
     o=run(f'python3 hooppy_post_api.py {BAT["tt"]} {d}/reel.mp4 ""',190,{"CAPB64":capb64})
     tid=next((l.split(":")[-1].strip().rstrip("}") for l in o.splitlines() if '"id"' in l),"")

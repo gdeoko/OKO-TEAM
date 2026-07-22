@@ -12,8 +12,13 @@ Bebas Neue + Montserrat. Голос ru-RU-DmitryNeural. Снегоходы НЕ 
 
 ## ОБЪЁМ, ТЕМП, РАМП
 - **2 пачки × 3 сети**, каждая пачка — РАЗНЫЕ ролики и РАЗНЫЕ аккаунты (ноль пересечений).
-- Пачка A: YouTube main · TikTok 2350915 (cargo.pandago) · Instagram @diesel_cargo.
-- Пачка B: YouTube ytnew_b · TikTok 2363201 (diesel_official11) · Instagram @diesel_kitay.
+- Пачка A: YouTube main · TikTok **2365299 (@diesel_kitay «DIESEL CARGO»)** · Instagram @diesel_cargo.
+- Пачка B: YouTube ytnew_b · TikTok 2363201 (@diesel_official11) · Instagram @diesel_kitay.
+- 22.07: старый TikTok пачки A @diesel.cargo (page 2350915) УДАЛЁН Даниэлем («туда больше не платим»),
+  заменён на новый @diesel_kitay (page 2365299). Hooppy: page_id стабилен, account_id меняется при
+  переподключении — брать page_id из `GET api.hooppy.ru/api/accounts/pages`, НЕ account_id.
+- ⛔ НЕ-DIESEL Hooppy-страницы (НИКОГДА не постить): 2356602 @daniel.oko.app, 2352065 @mama.s.bogom,
+  2350868 @tappio.app. Наши только: 2365299 (A) и 2363201 (B).
 - В `meta.json` каждого ролика — `"batch":"A"` или `"batch":"B"`. `publish_next.py`
   постит ролик ТОЛЬКО в аккаунты своей пачки.
 - **Старт 5 роликов/день на пачку (=10/день).** Через 3 дня ровного выпуска — плавно

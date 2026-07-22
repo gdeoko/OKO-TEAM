@@ -1,0 +1,235 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// ============================================================================
+// BESPOKE overlays for reel #16 (batch A, КВАДРО — стоимость владения).
+// Hand-authored per-segment motion. NOT the build_accents.py preset library.
+// 6 NEW forms: kinetic-type · liquid-tank · balance-scale · accordion-clock ·
+// stacked-blocks-under-arc · converging-spark-lockup.  render(t): t in [0,1].
+// ============================================================================
+const TOTAL = 43.632;
+const AMB="#EA5920", AMB2="#FF7A3C", INK="#0c0a08", WHT="#F6F4F1", DIM="#8a8178";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+// easings
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.2;return 1+ (c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+const elastic=x=>x===0?0:x===1?1:Math.pow(2,-9*x)*Math.sin((x*8-0.75)*2.094)+1;
+// window helper: returns local progress [0..1] with 0 before / 1 after, or -1 if outside padded window
+function win(ts,a,b){ if(ts<a-0.25||ts>b+0.35) return -1; return clamp((ts-a)/(b-a)); }
+// global fade for a whole overlay block (in/out)
+function blockFade(ts,a,b){ const fi=clamp((ts-a)/0.4), fo=clamp((b-ts)/0.4); return clamp(Math.min(fi,fo)); }
+
+// ---------- A1  KINETIC TYPE  «ДОРОГО» → strike → «МИФ» -----------------------
+function a1(ts){
+  const a=1.9,b=8.6; const p=win(ts,a,b); if(p<0) return '';
+  const word="ДОРОГО".split(''); const cx=540, baseY=760;
+  const totalW=word.length*118; let x0=cx-totalW/2+59;
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px">';
+  // small kicker
+  const kf=clamp((p-0.02)/0.12);
+  s+='<div style="position:absolute;top:'+(baseY-150)+'px;left:0;width:1080px;text-align:center;font-family:man8;font-size:40px;letter-spacing:6px;color:'+DIM+';opacity:'+kf+'">ГОВОРЯТ, ЧТО ЭТО</div>';
+  // per-letter kinetic entrance (staggered drop + rotate settle)
+  word.forEach((ch,i)=>{
+    const lp=clamp((p-(0.05+i*0.05))/0.28);
+    const e=back(lp);
+    const y=baseY + (1-e)*-220;              // drops down into place
+    const rot=(1-easeOut(lp))*(i%2?18:-18);  // small settle rotation
+    const op=clamp(lp*1.5);
+    // strike phase desaturates the word to grey
+    const strike=clamp((p-0.52)/0.16);
+    const col = strike>0 ? 'mix' : WHT;
+    const grey = 'rgb('+Math.round(lerp(246,110,strike))+','+Math.round(lerp(244,102,strike))+','+Math.round(lerp(241,94,strike))+')';
+    s+='<div style="position:absolute;left:'+(x0+i*118-59)+'px;top:'+y+'px;width:118px;text-align:center;'
+      +'font-family:soyuz;font-size:150px;line-height:1;color:'+grey+';opacity:'+op+';transform:rotate('+rot+'deg)">'+ch+'</div>';
+  });
+  // strike-through sweep line
+  const sw=clamp((p-0.5)/0.2);
+  if(sw>0){ const w=totalW*easeOut(sw);
+    s+='<svg style="position:absolute;left:'+(cx-totalW/2)+'px;top:'+(baseY+78)+'px" width="'+totalW+'" height="30">'
+      +'<line x1="0" y1="15" x2="'+w+'" y2="15" stroke="'+AMB+'" stroke-width="14" stroke-linecap="round"/></svg>';
+  }
+  // «— МИФ» stamps in after strike
+  const mp=clamp((p-0.66)/0.24);
+  if(mp>0){ const e=back(mp);
+    s+='<div style="position:absolute;top:'+(baseY+150)+'px;left:0;width:1080px;text-align:center;'
+      +'font-family:soyuz;font-size:132px;color:'+AMB2+';opacity:'+clamp(mp*1.5)+';transform:scale('+(0.6+0.4*e)+')">— МИФ</div>';
+  }
+  s+='</div>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+'</div>';
+}
+
+// ---------- A2  LIQUID FUEL TANK (wave surface) -------------------------------
+function a2(ts){
+  const a=9.1,b=14.9; const p=win(ts,a,b); if(p<0) return '';
+  const fill=lerp(0.06,0.32,easeInOut(clamp(p/0.7)));   // fills to ~32% = экономно
+  const TW=760,TH=300,TX=(1080-TW)/2,TY=720;            // tank box
+  const surfY=TH*(1-fill);
+  // build wave path across the tank interior
+  const amp=14*Math.max(0,1-Math.abs(p-0.7)/0.7), k=2*Math.PI/380, ph=p*TOTAL*3.2;
+  let d='M0 '+surfY.toFixed(1);
+  for(let x=0;x<=TW;x+=20){ const y=surfY+Math.sin(x*k+ph)*amp; d+=' L'+x+' '+y.toFixed(1); }
+  d+=' L'+TW+' '+TH+' L0 '+TH+' Z';
+  // droplet gauge marks
+  let ticks='';
+  for(let i=0;i<=4;i++){ const yy=TH*i/4; ticks+='<line x1="-4" y1="'+yy+'" x2="18" y2="'+yy+'" stroke="'+DIM+'" stroke-width="3"/>'; }
+  const s='<div style="position:absolute;left:'+TX+'px;top:'+TY+'px;width:'+TW+'px">'
+    +'<div style="font-family:man8;font-size:40px;letter-spacing:4px;color:'+DIM+';margin-bottom:14px">РАСХОД ТОПЛИВА</div>'
+    +'<svg width="'+TW+'" height="'+TH+'" viewBox="0 0 '+TW+' '+TH+'">'
+    +'<defs><clipPath id="tk"><rect x="0" y="0" width="'+TW+'" height="'+TH+'" rx="34"/></clipPath>'
+    +'<linearGradient id="liq" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+AMB2+'"/><stop offset="1" stop-color="'+AMB+'"/></linearGradient></defs>'
+    +'<rect x="2" y="2" width="'+(TW-4)+'" height="'+(TH-4)+'" rx="34" fill="rgba(12,10,8,.55)" stroke="rgba(234,89,32,.5)" stroke-width="3"/>'
+    +'<g clip-path="url(#tk)"><path d="'+d+'" fill="url(#liq)" opacity="0.92"/></g>'
+    +'<g transform="translate(16,0)">'+ticks+'</g>'
+    +'</svg>'
+    +'<div style="position:absolute;left:34px;top:'+(60+surfY)+'px;font-family:mont9;font-size:72px;color:'+WHT+';text-shadow:0 2px 10px #000">'+Math.round(fill*100)+'<span style="font-size:32px;color:'+WHT+'"> %/бак</span></div>'
+    +'<div style="font-family:man8;font-size:38px;color:'+AMB2+';margin-top:16px">хватает на выходные</div>'
+    +'</div>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+'</div>';
+}
+
+// ---------- A3  BALANCE SCALE (parts price EU vs China) -----------------------
+function a3(ts){
+  const a=15.3,b=21.1; const p=win(ts,a,b); if(p<0) return '';
+  // tilt: EU pan heavy → dips (positive angle), settles with slight bounce
+  const drive=easeInOut(clamp((p-0.1)/0.55));
+  const ang=lerp(0,15,drive) + (p>0.55? Math.sin((p-0.55)*18)*2*Math.max(0,1-(p-0.55)/0.3):0); // bounce
+  const cx=540, pivotY=780, beam=560, panDrop=120;
+  const rad=ang*Math.PI/180;
+  const lx=cx-beam/2*Math.cos(rad), ly=pivotY+beam/2*Math.sin(rad);   // EU (left) goes DOWN
+  const rx=cx+beam/2*Math.cos(rad), ry=pivotY-beam/2*Math.sin(rad);   // China (right) goes UP
+  function pan(x,y,label,val,heavy){
+    const sway=Math.sin(p*TOTAL*2.5)* (heavy?3:6) * clamp(1-p*1.2); // pendulum sway settling
+    return '<g transform="translate('+(x+sway)+','+(y+panDrop)+')">'
+      +'<line x1="'+(-(x-cx))+'" y1="'+(-(panDrop))+'" x2="0" y2="0" stroke="'+DIM+'" stroke-width="3" transform="translate(0,0)"/>'
+      +'<rect x="-120" y="0" width="240" height="96" rx="16" fill="'+(heavy?'rgba(60,20,8,.9)':'rgba(12,30,14,.9)')+'" stroke="'+(heavy?AMB:'#7CCB4B')+'" stroke-width="3"/>'
+      +'<text x="0" y="40" text-anchor="middle" font-family="man8" font-size="34" fill="'+WHT+'">'+label+'</text>'
+      +'<text x="0" y="80" text-anchor="middle" font-family="mont9" font-size="40" fill="'+(heavy?AMB2:'#8FE05A')+'">'+val+'</text></g>';
+  }
+  const s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">'
+    +'<text x="540" y="560" text-anchor="middle" font-family="man8" font-size="44" letter-spacing="3" fill="'+DIM+'">ЦЕНА ОДНОГО УЗЛА</text>'
+    // stand
+    +'<rect x="524" y="'+pivotY+'" width="32" height="360" fill="'+DIM+'" opacity="0.5"/>'
+    +'<polygon points="440,1150 640,1150 600,1100 480,1100" fill="'+DIM+'" opacity="0.5"/>'
+    // beam
+    +'<line x1="'+lx+'" y1="'+ly+'" x2="'+rx+'" y2="'+ry+'" stroke="'+WHT+'" stroke-width="12" stroke-linecap="round"/>'
+    +'<circle cx="540" cy="'+pivotY+'" r="20" fill="'+AMB+'"/>'
+    +pan(lx,ly,'ЕВРОПА','×3')
+    +pan(rx,ry,'КИТАЙ','×1',false).replace('heavy','')
+    +'</svg>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+'</div>';
+}
+
+// ---------- A4  ACCORDION SERVICE TIMELINE + sweeping clock --------------------
+function a4(ts){
+  const a=21.5,b=27.0; const p=win(ts,a,b); if(p<0) return '';
+  const items=[['МАСЛО','10 мин'],['ФИЛЬТР','10 мин'],['ЦЕПЬ','10 мин']];
+  const CX=140, top=780, cardH=150, gap=26, fullW=740;
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px">';
+  s+='<div style="position:absolute;left:'+CX+'px;top:'+(top-175)+'px;font-family:man8;font-size:44px;letter-spacing:3px;color:'+DIM+'">РЕГЛАМЕНТ СВОИМИ РУКАМИ</div>';
+  items.forEach((it,i)=>{
+    const lp=clamp((p-(0.12+i*0.22))/0.3);
+    const w=fullW*back(clamp(lp));                 // accordion opens width
+    const op=clamp(lp*1.6);
+    const y=top+i*(cardH+gap);
+    s+='<div style="position:absolute;left:'+CX+'px;top:'+y+'px;height:'+cardH+'px;width:'+Math.max(0,w)+'px;'
+      +'background:linear-gradient(90deg,rgba(234,89,32,.95),rgba(180,60,18,.30));border-radius:0 20px 20px 0;'
+      +'overflow:hidden;opacity:'+op+';display:flex;align-items:center;padding-left:34px">'
+      +'<div style="font-family:soyuz;font-size:70px;color:'+INK+'">'+it[0]+'</div>'
+      +'<div style="font-family:mont9;font-size:44px;color:'+WHT+';margin-left:auto;margin-right:40px;opacity:'+clamp((lp-0.5)/0.4)+'">'+it[1]+'</div>'
+      +'</div>';
+  });
+  // sweeping clock (top-right) hand goes ~0 → 30 min as cards open
+  const clk=clamp(p/0.85); const R=100, ccx=930, ccy=top+70;
+  const ang=-Math.PI/2 + clk*Math.PI*2*0.5;  // half turn = 30 min
+  const hx=ccx+Math.cos(ang)*R*0.8, hy=ccy+Math.sin(ang)*R*0.8;
+  const arcEnd=[ccx+Math.cos(ang)*R, ccy+Math.sin(ang)*R];
+  const large=clk*0.5>0.5?1:0;
+  s+='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">'
+    +'<circle cx="'+ccx+'" cy="'+ccy+'" r="'+R+'" fill="rgba(12,10,8,.6)" stroke="'+DIM+'" stroke-width="4"/>'
+    +'<path d="M'+ccx+' '+ccy+' L'+ccx+' '+(ccy-R)+' A'+R+' '+R+' 0 '+large+' 1 '+arcEnd[0]+' '+arcEnd[1]+' Z" fill="rgba(234,89,32,.35)"/>'
+    +'<line x1="'+ccx+'" y1="'+ccy+'" x2="'+hx+'" y2="'+hy+'" stroke="'+AMB2+'" stroke-width="8" stroke-linecap="round"/>'
+    +'<circle cx="'+ccx+'" cy="'+ccy+'" r="10" fill="'+AMB2+'"/>'
+    +'<text x="'+ccx+'" y="'+(ccy+R+50)+'" text-anchor="middle" font-family="mont9" font-size="40" fill="'+WHT+'">'+Math.round(clk*30)+' мин</text>'
+    +'</svg>';
+  s+='</div>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+'</div>';
+}
+
+// ---------- A5  STACKED COST BLOCKS under a big RENTAL ARC ---------------------
+function a5(ts){
+  const a=27.4,b=34.2; const p=win(ts,a,b); if(p<0) return '';
+  const baseY=1180, colX=280, bw=180, bh=54, gap=10, N=3;   // ownership = 3 low blocks
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="600" text-anchor="middle" font-family="man8" font-size="44" letter-spacing="3" fill="'+DIM+'">ЗА ГОД ПРОТИВ СЕЗОНА</text>';
+  // big rental arc (parabola) drawing over the top
+  const ap=easeOut(clamp(p/0.6));
+  const x0=colX, x1=820, peakY=560, botY=baseY;
+  // sample parabola, draw partial by ap
+  let pts=[]; const steps=40;
+  for(let i=0;i<=steps*ap;i++){ const tt=i/steps; const x=lerp(x0,x1,tt);
+    const y=botY-(4*(botY-peakY))*tt*(1-tt); pts.push([x,y]); }
+  if(pts.length>1){ let d='M'+pts[0][0]+' '+pts[0][1]; pts.slice(1).forEach(q=>d+=' L'+q[0]+' '+q[1]);
+    s+='<path d="'+d+'" fill="none" stroke="'+AMB+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="6 14"/>';
+    const last=pts[pts.length-1];
+    s+='<circle cx="'+last[0]+'" cy="'+last[1]+'" r="13" fill="'+AMB2+'"/>';
+  }
+  s+='<text x="'+((x0+x1)/2)+'" y="'+(peakY-30)+'" text-anchor="middle" font-family="soyuz" font-size="58" fill="'+AMB2+'" opacity="'+clamp((ap-0.5)/0.4)+'">АРЕНДА · СЕЗОН</text>';
+  // ownership blocks stack up low
+  for(let i=0;i<N;i++){ const lp=clamp((p-(0.2+i*0.14))/0.3); const e=back(lp);
+    const y=baseY-(i+1)*(bh+gap)*e; const op=clamp(lp*1.6);
+    s+='<rect x="'+colX+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="10" fill="rgba(120,200,90,.9)" opacity="'+op+'"/>';
+  }
+  s+='<text x="'+(colX+bw/2)+'" y="'+(baseY+56)+'" text-anchor="middle" font-family="man8" font-size="38" fill="#8FE05A">ВЛАДЕНИЕ · ГОД</text>';
+  s+='<text x="'+(colX+bw/2)+'" y="'+(baseY-3*(bh+gap)-40)+'" text-anchor="middle" font-family="mont9" font-size="44" fill="#8FE05A" opacity="'+clamp((p-0.6)/0.3)+'">дешевле</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+'</div>';
+}
+
+// ---------- A6  CONVERGING SPARK LOCKUP (brand) -------------------------------
+function a6(ts){
+  const a=34.6,b=41.0; const p=win(ts,a,b); if(p<0) return '';
+  const cx=540, cy=900;
+  const conv=easeOut(clamp(p/0.5));           // particles converge
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  // 44 deterministic particles fly from edges to center
+  for(let i=0;i<44;i++){
+    const a2=(i*137.5)*Math.PI/180;           // golden-angle spread
+    const rad=520+ (i%7)*40;
+    const sx=cx+Math.cos(a2)*rad, sy=cy+Math.sin(a2)*rad*1.4;
+    const x=lerp(sx,cx+Math.cos(a2)*22,conv), y=lerp(sy,cy+Math.sin(a2)*22,conv);
+    const op=clamp(conv*1.4)*(1-clamp((p-0.55)/0.2));  // fade as they land
+    const r=lerp(2,5,(i%5)/5);
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+(i%3?AMB2:WHT)+'" opacity="'+op+'"/>';
+  }
+  // flash ring on convergence
+  const fl=clamp((p-0.42)/0.12)*(1-clamp((p-0.54)/0.14));
+  if(fl>0) s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(60+fl*120)+'" fill="none" stroke="'+AMB2+'" stroke-width="'+(10*(1-fl))+'" opacity="'+(fl*0.8)+'"/>';
+  s+='</svg>';
+  // lockup appears after convergence
+  const lp=clamp((p-0.5)/0.25); const e=back(lp);
+  let lock='<div style="position:absolute;left:0;top:'+(cy-130)+'px;width:1080px;text-align:center;opacity:'+clamp(lp*1.5)+';transform:scale('+(0.7+0.3*e)+')">'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+WHT+'">DIESEL</div>'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+AMB2+'">CARGO</div></div>';
+  // underline wipe + CTA
+  const up=clamp((p-0.72)/0.22);
+  lock+='<div style="position:absolute;left:'+(cx-260)+'px;top:'+(cy+120)+'px;width:'+(520*easeOut(up))+'px;height:8px;background:'+AMB+';border-radius:4px"></div>';
+  lock+='<div style="position:absolute;left:0;top:'+(cy+150)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">ПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  return '<div style="opacity:'+blockFade(ts,a,b)+'">'+s+lock+'</div>';
+}
+
+window.render=function(t){
+  const ts=t*TOTAL;
+  stage.innerHTML = a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);
+};
+window.render(0);
+</script></body></html>
