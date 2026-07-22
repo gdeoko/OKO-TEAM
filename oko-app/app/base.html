@@ -78,6 +78,7 @@ nav#tabs .nav-logo{display:none}
 
 #app.conv-open header{display:none}
 #app.conv-open nav#tabs{display:none}
+#app.conv-open .fab{display:none}   /* FAB нового чата не должен просвечивать в открытом диалоге */
 @media(max-width:899px){#app.conv-open .conv{animation:convIn .28s cubic-bezier(.3,1,.4,1)}}
 @keyframes convIn{from{transform:translateX(16%);opacity:.3}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){#app.conv-open .conv{animation:none}}
@@ -137,7 +138,7 @@ nav#tabs .nav-logo{display:none}
 .searchbar input::placeholder{color:rgba(255,255,255,.4)}
 :root[data-theme="light"] .searchbar input::placeholder{color:var(--dim)}
 .searchbar svg.i{width:17px;height:17px}
-.chat-list{flex:1;overflow-y:auto}
+.chat-list{flex:1;overflow-y:auto;padding-bottom:84px}   /* чтобы последний чат не прятался под FAB */
 .chat-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
 .chat-item:hover{background:var(--surface)}
 .chat-item .meta{flex:1;min-width:0}
@@ -229,6 +230,11 @@ nav#tabs .nav-logo{display:none}
   .conv{display:flex}
   .conv .empty-hint{display:flex}
   #screen-feed{max-width:820px;margin:0 auto;width:100%}
+}
+/* последний пост/чат не должен прятаться под плавающей кнопкой */
+#feedList{padding-bottom:84px}
+@media(min-width:900px){
+  #feedList{padding-bottom:24px}
 }
 
 /* ============ FEED ============ */
@@ -1931,7 +1937,7 @@ let NOTIFS = [
   {ic:'briefcase',who:'Биржа OKO',    t:'новая заявка по объявлению «Монтаж Reels»', time:'40 мин', g:'Сегодня', unread:true, act:()=>{showTab('mini');openMa('market')}},
   {ic:'users',   who:'+3 подписчика', t:'подписались на твой канал', time:'1 ч', g:'Сегодня', unread:false, act:()=>{}},
   {ic:'money',   who:'Партнёрка',     t:'начисление +$70.35 за оплату PRO', time:'3 ч', g:'Сегодня', unread:false, act:()=>{showTab('partner')}},
-  {ic:'star',    who:'Сергей Дан',    t:'оставил отзыв 5★ по твоей услуге', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
+  {ic:'star',    who:'Сергей Дан',    t:'поставил 5 звёзд за твою услугу', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
   {ic:'rocket',  who:'OKO',           t:'твой пост в топе рекомендаций — охват вырос', time:'вчера', g:'Ранее', unread:false, act:()=>{showTab('feed')}},
 ];
 function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
@@ -2082,9 +2088,22 @@ function admToggleFlag(i){
   renderAdmin();
 }
 function markAllRead(){ NOTIFS.forEach(n=>n.unread=false); renderNotifs(); updateNotifDot(); }
+function notifMins(t){
+  t=(t||'').trim();
+  if(/только что|сейчас/i.test(t)) return 0;
+  let m=t.match(/(\d+)\s*мин/); if(m) return +m[1];
+  let h=t.match(/(\d+)\s*ч/); if(h) return +h[1]*60;
+  let d=t.match(/(\d+)\s*д/); if(d) return +d[1]*1440;
+  if(/вчера/i.test(t)) return 1440;
+  if(/недел/i.test(t)) return 10080;
+  return 99999;
+}
 function renderNotifs(){
   const groups = {};
   NOTIFS.forEach((n,i)=>{ (groups[n.g]=groups[n.g]||[]).push({...n,i}); });
+  /* сортируем внутри каждой группы по свежести (мин ↑) — иначе после дозасева демо
+     порядок скачет (4м, 27м, 3ч, потом снова 2м) и выглядит сломанным */
+  Object.keys(groups).forEach(g=>groups[g].sort((a,b)=>notifMins(a.time)-notifMins(b.time)));
   document.getElementById('notifsBody').innerHTML = Object.keys(groups).map(g=>`
     <p class="nt-group">${g}</p>
     ${groups[g].map(n=>`<button class="nt-item ${n.unread?'unread':''}" onclick="notifTap(${n.i})">
