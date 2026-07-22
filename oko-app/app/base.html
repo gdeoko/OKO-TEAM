@@ -153,8 +153,8 @@ nav#tabs .nav-logo{display:none}
 .conv-head{display:flex;align-items:center;gap:11px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
 .conv-head .back{color:var(--accent);padding:4px 8px 4px 0}
 .conv-head .back svg.i{width:22px;height:22px}
-.conv-head .who{font-weight:600;font-size:15px}
-.conv-head .status{font-size:11.5px;color:var(--accent)}
+.conv-head .who{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.conv-head .status{font-size:11.5px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
 .msg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45}
 .msg-enter{animation:msgIn .3s cubic-bezier(.3,1,.4,1)}
@@ -198,7 +198,7 @@ nav#tabs .nav-logo{display:none}
 :root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#eaf6d9,#dcefc2) !important}
 .photomsg svg.i{width:34px;height:34px}
 /* composer */
-.composer{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0;align-items:center}
+.composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
 .composer .tool{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
 .composer .tool:hover{color:var(--accent)}
 .composer .tool svg.i{width:21px;height:21px}
@@ -612,7 +612,7 @@ label.f-lab{display:block}
 .ch-call{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
 .ch-call:active{background:var(--lime-dim)}
 .ch-call svg.i{width:20px;height:20px}
-#callScreen{position:fixed;inset:0;z-index:78;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%);display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
+#callScreen{position:fixed;inset:0;z-index:95;background:#000;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%),#000;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
 #callScreen.open{display:flex;animation:fade .3s}
 .call-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a3310,#050505 70%);opacity:0;transition:opacity .3s;z-index:-1}
 #callScreen.video .call-bg{opacity:1;background:linear-gradient(160deg,#152608,#0a0f04)}
@@ -968,7 +968,8 @@ main>.screen{position:relative;z-index:1}
     <symbol id="i-thumb" viewBox="0 0 100 100"><path d="M34 46v38H18V46zM34 50l14-30c6 0 10 4 10 10l-2 14h20c6 0 10 5 8 11l-8 24c-2 5-6 7-11 7H34"/></symbol>
     <symbol id="i-google" viewBox="0 0 100 100"><path d="M82 50a32 32 0 1 1-9-22" fill="none"/><path d="M82 50H52" stroke-width="10"/></symbol>
     <symbol id="i-apple" viewBox="0 0 100 100"><path d="M63 26c-6 0-9 4-13 4s-8-4-13-4C27 26 18 36 18 51c0 16 11 33 19 33 4 0 7-3 12-3s8 3 12 3c8 0 19-16 19-24-8-3-13-9-13-17 0-6 3-11 8-14-3-2-7-3-12-3z" fill="currentColor" stroke="none"/><path d="M58 20c3-4 3-9 2-12-4 1-8 4-10 8-2 3-3 8-2 11 4 0 8-3 10-7z" fill="currentColor" stroke="none"/></symbol>
-    <symbol id="i-phone" viewBox="0 0 100 100"><path d="M30 14h40a6 6 0 0 1 6 6v60a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"/><path d="M42 74h16"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 100 100"><path d="M85 71v11a9 9 0 0 1-10 9C44 88 16 60 13 29a9 9 0 0 1 9-10h11a9 9 0 0 1 9 8c.6 5 1.7 9 3.3 13a9 9 0 0 1-2 9l-5 5a68 68 0 0 0 24 24l5-5a9 9 0 0 1 9-2c4 1.6 8.5 2.7 13 3.3a9 9 0 0 1 8 9z"/></symbol>
+    <symbol id="i-device" viewBox="0 0 100 100"><path d="M30 14h40a6 6 0 0 1 6 6v60a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"/><path d="M42 74h16"/></symbol>
     <symbol id="i-logout" viewBox="0 0 100 100"><path d="M40 20H22a6 6 0 0 0-6 6v48a6 6 0 0 0 6 6h18M62 32l20 18-20 18M82 50H38"/></symbol>
     <symbol id="i-crown" viewBox="0 0 100 100"><path d="M18 72V36l16 14 16-24 16 24 16-14v36a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z"/></symbol>
     <symbol id="i-poll" viewBox="0 0 100 100"><path d="M26 82V50M50 82V22M74 82V60"/><path d="M14 88h72"/></symbol>

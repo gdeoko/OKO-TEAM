@@ -7,8 +7,9 @@
   /* СИНХРОНИЗАЦИЯ ВЫСОТЫ: убирает «пустоту» при скролле — высота приложения
      жёстко равна видимой области (visualViewport), а не 100dvh, который
      в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
-  let _okoLastH = 0;
-  function okoSyncVh(){
+  let _okoLastH = 0, _okoVhRaf = 0, _okoResizeOff = 0;
+  function _okoApplyVh(){
+    _okoVhRaf = 0;
     try{
       const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
       if(!h || h === _okoLastH) return;   // не трогаем DOM, если высота не изменилась — убирает лишние reflow/моргание
@@ -19,11 +20,24 @@
       if(app) app.style.height = h + 'px';
     }catch(e){}
   }
+  /* rAF-троттлинг: при открытии клавиатуры visualViewport шлёт десятки resize/сек —
+     раньше каждый писал высоту в 3 элемента => лаг/дёрганье. Теперь один пересчёт за кадр.
+     На время всплеска ресайза ставим декоративные анимации на паузу (класс перф-слоя). */
+  function okoSyncVh(){
+    try{
+      const root = document.documentElement;
+      if(root && !root.classList.contains('oko-scrolling')) root.classList.add('oko-scrolling');
+      if(_okoResizeOff) clearTimeout(_okoResizeOff);
+      _okoResizeOff = setTimeout(function(){ _okoResizeOff = 0; try{ document.documentElement.classList.remove('oko-scrolling'); }catch(e){} }, 180);
+    }catch(e){}
+    if(_okoVhRaf) return;
+    _okoVhRaf = (window.requestAnimationFrame || window.setTimeout)(_okoApplyVh, 16);
+  }
   window.addEventListener('resize', okoSyncVh);
   window.addEventListener('orientationchange', ()=>setTimeout(okoSyncVh, 120));
   if(window.visualViewport) window.visualViewport.addEventListener('resize', okoSyncVh);
-  okoSyncVh();
-  setTimeout(okoSyncVh, 400); setTimeout(okoSyncVh, 1500);
+  _okoApplyVh();
+  setTimeout(_okoApplyVh, 400); setTimeout(_okoApplyVh, 1500);
 
   function applySafeArea(tg){
     try{
@@ -47,9 +61,13 @@
   function okoTgColors(tg){
     try{
       const light = document.documentElement.getAttribute('data-theme') === 'light';
+      /* ТОЧНОЕ соответствие CSS-токенам (иначе шов/«тень» сверху и снизу):
+         dark  --bg:#000  --surface:#0d0d0d ; light --bg:#fff --surface:#f7f9f4.
+         Хедер и общий фон = --bg (шапка приложения лежит на --bg);
+         нижний бар = --surface (на вкладках это nav, в чате — композер, оба --surface). */
       const surf = light ? '#f7f9f4' : '#0d0d0d';
-      const bg   = light ? '#ffffff' : '#0a0a0a';
-      if(tg.setHeaderColor) tg.setHeaderColor(surf);
+      const bg   = light ? '#ffffff' : '#000000';
+      if(tg.setHeaderColor) tg.setHeaderColor(bg);
       if(tg.setBackgroundColor) tg.setBackgroundColor(bg);
       if(tg.setBottomBarColor){ try{ tg.setBottomBarColor(surf); }catch(e){} }
     }catch(e){}
