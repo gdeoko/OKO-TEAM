@@ -38,7 +38,6 @@ $maxReady = (bool) (cfgv('max_client_id') && cfgv('max_client_secret'));
 // SVG-иконки (без эмодзи, в стиле бренда).
 $svgVk    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>';
 $svgMax   = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V6l8 7 8-7v13"/></svg>';
-$svgMail  = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
 $svgPhone = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
 
 ob_start(); ?>
@@ -54,7 +53,7 @@ ob_start(); ?>
         <p style="color:var(--muted);font-size:.9rem;margin:0">Войдите в один клик - мы сохраним Ваши заявки, результаты и наградные документы.</p>
       </div>
 
-      <form method="post" action="<?= url('/api/v1/oauth_vk') ?>" style="display:grid;gap:12px;margin-bottom:4px">
+      <div class="auth-social" style="display:grid;gap:12px">
         <?php if ($vkReady): ?>
           <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk') ?>" rel="nofollow"><?= $svgVk ?><span>Войти через ВКонтакте</span></a>
         <?php else: ?>
@@ -65,7 +64,7 @@ ob_start(); ?>
         <?php else: ?>
           <button type="button" class="auth-btn auth-btn--max" disabled style="opacity:.55;cursor:not-allowed"><?= $svgMax ?><span>Вход через MAX</span></button>
         <?php endif; ?>
-      </form>
+      </div>
 
       <div class="auth-sep"><span>или по почте</span></div>
 
@@ -115,7 +114,107 @@ ob_start(); ?>
 </section>
 
 <script>
-<?php require __DIR__ . '/_auth_client.php'; ?>
+(function () {
+  'use strict';
+  var origin = location.origin;
+  function toast(m, t) { if (window.toast) window.toast(m, t || ''); }
+  function api(path, body) {
+    return fetch(origin + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, data: d }; });
+    });
+  }
+  function done(res) {
+    toast('Вход выполнен.', 'success');
+    var to = (res.data && res.data.redirect) || '/cabinet';
+    setTimeout(function () { location.href = to; }, 500);
+  }
+  function fail(res, fb) { toast((res && res.data && (res.data.error || res.data.message)) || fb || 'Не удалось выполнить вход.', 'error'); }
+  function load(btn, on) { if (!btn) return; btn.classList.toggle('is-loading', on); btn.disabled = on; }
+
+  // --- Почта: пароль (1 клик) или код из письма ---
+  var ef = document.getElementById('authEmailForm');
+  if (ef) {
+    var codeMode = false;
+    var pf = ef.querySelector('[data-pass-field]');
+    var pass = document.getElementById('password');
+    var codeBtn = ef.querySelector('[data-code-login]');
+    if (codeBtn) codeBtn.addEventListener('click', function () {
+      var em = ef.email.value.trim();
+      if (!em) { toast('Введите почту, чтобы получить код.', 'error'); return; }
+      this.disabled = true; this.textContent = 'Отправляем код…';
+      var self = this;
+      api('/api/v1/auth_email', { action: 'request', email: em }).then(function (res) {
+        self.disabled = false;
+        if (res.ok && res.data && res.data.ok !== false) {
+          codeMode = true;
+          pf.querySelector('label').textContent = 'Код из письма';
+          pass.type = 'text'; pass.value = ''; pass.name = 'code'; pass.required = false;
+          pass.setAttribute('inputmode', 'numeric'); pass.placeholder = '6-значный код'; pass.focus();
+          var hint = pf.querySelector('.hint'); if (hint) hint.remove();
+          self.textContent = 'Отправить код повторно';
+          toast('Код отправлен на почту.', 'success');
+        } else { self.textContent = 'Войти по коду из письма'; fail(res, 'Не удалось отправить код.'); }
+      }).catch(function () { self.disabled = false; self.textContent = 'Войти по коду из письма'; toast('Сеть недоступна.', 'error'); });
+    });
+    ef.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var em = ef.email.value.trim();
+      if (!em) { toast('Укажите почту.', 'error'); return; }
+      var btn = ef.querySelector('button[type="submit"]');
+      var body = codeMode
+        ? { action: 'verify', email: em, code: pass.value.trim() }
+        : { action: 'request', email: em, password: pass.value };
+      load(btn, true);
+      api('/api/v1/auth_email', body).then(function (res) {
+        load(btn, false);
+        if (res.ok && res.data && res.data.ok === true) done(res);
+        else fail(res);
+      }).catch(function () { load(btn, false); ef.submit(); }); // сеть/JSON недоступны - обычный серверный вход
+    });
+  }
+
+  // --- Телефон: раскрытие + OTP ---
+  var toggle = document.querySelector('[data-phone-toggle]');
+  var pff = document.getElementById('authPhoneForm');
+  if (toggle && pff) {
+    toggle.addEventListener('click', function () {
+      var open = pff.hidden;
+      pff.hidden = !open;
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { var i = pff.querySelector('#phone'); if (i) i.focus(); }
+    });
+    var otp = pff.querySelector('[data-otp-field]');
+    var pbtn = pff.querySelector('button[type="submit"]');
+    pff.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var ph = pff.phone.value.trim();
+      if (!ph) { toast('Введите номер телефона.', 'error'); return; }
+      var phase = pbtn.getAttribute('data-phase');
+      if (phase === 'request') {
+        load(pbtn, true);
+        api('/api/v1/auth_phone', { action: 'request', phone: ph }).then(function (res) {
+          load(pbtn, false);
+          if (res.ok && res.data && res.data.ok !== false && !res.data.sms_unavailable) {
+            otp.hidden = false; pbtn.setAttribute('data-phase', 'verify'); pbtn.textContent = 'Подтвердить и войти';
+            var c = document.getElementById('phoneCode'); if (c) c.focus();
+            toast('Код отправлен по SMS.', 'success');
+          } else if (res.data && res.data.sms_unavailable) {
+            toast(res.data.message || 'SMS-вход временно недоступен. Войдите через ВК, MAX или почту.', 'error');
+          } else { fail(res, 'Не удалось отправить код.'); }
+        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
+      } else {
+        load(pbtn, true);
+        api('/api/v1/auth_phone', { action: 'verify', phone: ph, code: document.getElementById('phoneCode').value.trim() }).then(function (res) {
+          load(pbtn, false);
+          if (res.ok && res.data && res.data.ok === true) done(res); else fail(res);
+        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
+      }
+    });
+  }
+})();
 </script>
 <?php
 $content = ob_get_clean();
