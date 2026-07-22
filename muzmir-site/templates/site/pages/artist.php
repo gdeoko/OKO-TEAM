@@ -66,6 +66,8 @@ foreach ($groups as $g) {
 
 /** Сводные данные найденного участника. */
 $competitions = []; $teachers = []; $videos = []; $grandPrixCount = 0;
+$wins = ['Гран-при' => 0, 'Лауреат' => 0, 'Дипломант' => 0, 'Участник' => 0];
+$hasIntl = false; $awardsList = [];
 if ($artist) {
     $artist['city'] = $items[0]['city'] ?? '';
     $artist['institution'] = $items[0]['institution'] ?? '';
@@ -73,6 +75,7 @@ if ($artist) {
         if (!empty($it['comp_slug']) && !isset($competitions[$it['comp_slug']])) {
             $competitions[$it['comp_slug']] = ['name' => $it['comp_name'], 'slug' => $it['comp_slug'], 'type' => $it['comp_type']];
         }
+        if (mb_stripos((string) $it['comp_type'], 'международ') !== false) $hasIntl = true;
         $tname = trim((string) $it['teacher']);
         if ($tname !== '' && !isset($teachers[$tname])) {
             $teachers[$tname] = $slugify($tname) . '-' . $teacherCanonicalId($tname);
@@ -81,66 +84,129 @@ if ($artist) {
             $videos[$it['video_url']] = $it['video_platform'] ?: 'Видео';
         }
         $res = (string) ($it['d_result'] ?: $it['a_result']);
-        if (mb_stripos($res, 'ГРАН-ПРИ') !== false) $grandPrixCount++;
+        if ($res !== '') $awardsList[$res] = true;
+        if (mb_stripos($res, 'ГРАН-ПРИ') !== false)      { $grandPrixCount++; $wins['Гран-при']++; }
+        elseif (mb_stripos($res, 'ЛАУРЕАТ') !== false)    { $wins['Лауреат']++; }
+        elseif (mb_stripos($res, 'ДИПЛОМАНТ') !== false)  { $wins['Дипломант']++; }
+        else                                               { $wins['Участник']++; }
     }
 }
+$total = max(1, count($items));
+$laureateTotal = $wins['Гран-при'] + $wins['Лауреат'];
 
 ob_start(); ?>
 <style>
-.art-card{max-width:960px;margin:0 auto}
-.art-hero{text-align:center;max-width:640px;margin:0 auto 40px}
-.art-ava{width:104px;height:104px;border-radius:50%;background:var(--grad-gold);color:#1a1206;
-  display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);letter-spacing:.02em;font-size:2.4rem;margin:0 auto 16px;box-shadow:var(--shadow-glow)}
-.art-quickstats{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:18px}
-.art-quickstats div{text-align:center}
-.art-quickstats b{display:block;font-family:var(--ff-display);letter-spacing:.02em;font-size:1.7rem;color:var(--gold-2)}
-.art-quickstats span{color:var(--muted);font-size:.84rem}
+.pro{max-width:1000px;margin:0 auto}
 
-.honeycomb{display:flex;flex-wrap:wrap;justify-content:center;margin:0 auto 8px;max-width:900px}
+/* Шапка профиля */
+.pro-head{position:relative;overflow:hidden;display:flex;gap:28px;align-items:center;
+  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);
+  padding:32px 34px;box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
+.pro-head::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 150% at 8% -20%,var(--gold-soft),transparent 55%)}
+.pro-ava{position:relative;flex:0 0 auto;width:118px;height:118px;border-radius:50%;
+  background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-glow)}
+.pro-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--glass-brd)}
+.pro-id{position:relative;min-width:0}
+.pro-id .eyebrow{margin-bottom:2px}
+.pro-id h1{margin:.06em 0;font-size:clamp(1.55rem,4.4vw,2.5rem);line-height:1.06;overflow-wrap:anywhere}
+.pro-loc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;color:var(--muted);font-size:.95rem;margin-top:4px}
+.pro-loc svg{width:15px;height:15px;stroke:var(--gold-2);vertical-align:-2px;margin-right:4px}
+.pro-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+@media(max-width:640px){
+  .pro-head{flex-direction:column;text-align:center;padding:28px 20px}
+  .pro-loc,.pro-badges{justify-content:center}
+}
+
+/* Инфографика достижений */
+.pro-stats{margin-top:26px}
+.pro-stats .stat b{cursor:default}
+.medal-panel{margin-top:14px}
+.medal-panel .bar-fill{display:block;height:100%;width:100%;transform-origin:left center;
+  background:var(--grad-gold);box-shadow:0 0 12px rgba(201,168,76,.4);border-radius:inherit;
+  transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}
+.medal-panel .bar-lbl b{color:var(--gold-2);font-family:var(--ff-display);letter-spacing:.02em}
+
+/* Сота достижений */
+.honeycomb{display:flex;flex-wrap:wrap;justify-content:center;margin:0 auto 8px;max-width:920px}
 .hex{width:206px;margin:10px 8px 38px;position:relative}
 .hex:nth-child(even){margin-top:46px}
 .hex-inner{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
   background:linear-gradient(160deg,var(--panel-solid),var(--gold-soft));border:1px solid var(--glass-brd);
   padding:34px 22px;aspect-ratio:.92;display:flex;flex-direction:column;justify-content:center;gap:6px;
   text-align:center;box-shadow:var(--shadow-card);transition:transform .25s,box-shadow .25s;color:inherit}
-.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-glow)}
+@media(hover:hover){.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-glow)}}
 .hex-result{font-family:var(--ff-display);letter-spacing:.02em;color:var(--gold-2);font-size:1.05rem;line-height:1.15}
-.hex-comp{font-size:.82rem;color:var(--text);font-weight:600}
+.hex-comp{font-size:.82rem;color:var(--text);font-weight:600;overflow-wrap:anywhere}
 .hex-date{font-size:.74rem;color:var(--muted)}
 @media (max-width:720px){
   .honeycomb{flex-direction:column;align-items:center}
-  .hex{width:100%;max-width:320px;margin:8px 0}
+  .hex{width:100%;max-width:340px;margin:8px 0}
   .hex:nth-child(even){margin-top:8px}
   .hex-inner{clip-path:none;border-radius:var(--radius);aspect-ratio:auto;padding:20px 22px}
 }
 
-.dip-item{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;
-  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:14px}
+/* Хронология дипломов */
+.dip-item{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.dip-item h4{font-family:var(--ff-display);letter-spacing:.02em;font-size:1.14rem;color:var(--gold-2);margin:0}
 .dip-item .actions{display:flex;gap:10px;flex-wrap:wrap}
+
 .art-chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
 .art-chip{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:999px;background:var(--panel);
-  border:1px solid var(--glass-brd);color:var(--text);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
-.art-chip:hover{border-color:var(--gold);color:var(--gold-2)}
+  border:1px solid var(--glass-brd);color:var(--text);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card);
+  backdrop-filter:blur(10px);transition:border-color .2s,color .2s,transform .2s}
+@media(hover:hover){.art-chip:hover{border-color:var(--gold);color:var(--gold-2);transform:translateY(-2px)}}
 </style>
 
 <section class="section">
-  <div class="container art-card">
+  <div class="container pro">
     <?php if ($artist): ?>
-      <div class="art-hero reveal">
-        <div class="art-ava"><?= h(mb_strtoupper(mb_substr($artist['name'], 0, 1))) ?></div>
-        <p class="eyebrow">Портфолио участника</p>
-        <h1 style="margin:.1em 0"><?= h($artist['name']) ?></h1>
-        <p style="color:var(--muted)">
-          <?= h($artist['city'] ?: '') ?><?php if ($artist['city'] && $artist['institution']): ?> · <?php endif; ?><?= h($artist['institution'] ?: '') ?>
-        </p>
-        <div class="art-quickstats">
-          <div><b><?= count($items) ?></b><span>Дипломов</span></div>
-          <div><b><?= $grandPrixCount ?></b><span>Гран-при</span></div>
-          <div><b><?= count($competitions) ?></b><span>Конкурсов</span></div>
+      <!-- Шапка профиля -->
+      <div class="pro-head reveal">
+        <div class="pro-ava" aria-hidden="true"><?= h(mb_strtoupper(mb_substr($artist['name'], 0, 1))) ?></div>
+        <div class="pro-id">
+          <p class="eyebrow">Портфолио участника</p>
+          <h1><?= h($artist['name']) ?></h1>
+          <?php if ($artist['city'] || $artist['institution']): ?>
+            <p class="pro-loc">
+              <?php if ($artist['city']): ?>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($artist['city']) ?></span>
+              <?php endif; ?>
+              <?php if ($artist['institution']): ?>
+                <span><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg><?= h($artist['institution']) ?></span>
+              <?php endif; ?>
+            </p>
+          <?php endif; ?>
+          <div class="pro-badges">
+            <?php if ($grandPrixCount > 0): ?><span class="badge badge--judging">Обладатель Гран-при</span><?php endif; ?>
+            <?php if ($hasIntl): ?><span class="badge badge--intl">Международный уровень</span><?php endif; ?>
+            <span class="badge badge--open">В реестре наград</span>
+          </div>
         </div>
       </div>
 
-      <div class="section-head reveal" style="margin-bottom:12px"><p class="eyebrow">Сота достижений</p><h2>Награды и результаты</h2><div class="gold-rule"></div></div>
+      <!-- Быстрые показатели -->
+      <div class="stats grid grid-4 pro-stats reveal" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat"><b data-count="<?= count($items) ?>">0</b><span>Наградных документов</span></div>
+        <div class="stat"><b data-count="<?= $laureateTotal ?>">0</b><span>Лауреатских званий</span></div>
+        <div class="stat"><b data-count="<?= $grandPrixCount ?>">0</b><span>Гран-при</span></div>
+        <div class="stat"><b data-count="<?= count($competitions) ?>">0</b><span>Конкурсов</span></div>
+      </div>
+
+      <!-- Достижения инфографикой -->
+      <div class="section-head reveal" style="margin-bottom:14px;margin-top:44px"><p class="eyebrow">Структура наград</p><h2>Достижения</h2><div class="gold-rule"></div></div>
+      <div class="card reveal medal-panel">
+        <?php foreach ($wins as $label => $cnt): if ($cnt === 0) continue; $pct = round($cnt / $total * 100); ?>
+          <div class="bar-row">
+            <div class="bar-lbl"><span><?= h($label) ?></span><b><?= (int) $cnt ?></b></div>
+            <div class="bar" data-value="<?= $pct ?>"><i class="bar-fill"></i></div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+      <!-- Сота наград -->
+      <div class="section-head reveal" style="margin-bottom:12px;margin-top:44px"><p class="eyebrow">Награды и результаты</p><h2>Стена достижений</h2><div class="gold-rule"></div></div>
       <div class="honeycomb reveal">
         <?php foreach ($items as $it): ?>
           <div class="hex">
@@ -153,33 +219,38 @@ ob_start(); ?>
         <?php endforeach; ?>
       </div>
 
-      <div class="section-head reveal" style="margin-bottom:24px;margin-top:36px"><p class="eyebrow">Подробно</p><h2>Дипломы и результаты</h2><div class="gold-rule"></div></div>
-      <?php foreach ($items as $it): ?>
-        <div class="dip-item reveal">
-          <div>
-            <strong style="font-family:var(--ff-display);letter-spacing:.02em;font-size:1.15rem;color:var(--gold-2)"><?= h($it['d_result'] ?: $it['a_result'] ?: 'Диплом') ?></strong>
-            <p style="color:var(--muted);margin:4px 0 0;font-size:.92rem">
-              <?= h($it['comp_name'] ?: 'Конкурс') ?>
-              <?php if ($it['nomination']): ?> · <?= h($it['nomination']) ?><?php endif; ?>
-              <?php if ($it['formation']): ?> · <?= h($it['formation']) ?><?php endif; ?>
-              <?php if ($it['work_title']): ?> · «<?= h($it['work_title']) ?>»<?php endif; ?>
-            </p>
-            <p style="color:var(--muted);margin:2px 0 0;font-size:.85rem">
-              <?= h(ru_date(substr((string) $it['d_created'], 0, 10))) ?>
-              <?php if ($it['teacher']): ?> · педагог <?= h($it['teacher']) ?><?php endif; ?>
-            </p>
+      <!-- Подробная хронология -->
+      <div class="section-head reveal" style="margin-bottom:24px;margin-top:44px"><p class="eyebrow">Подробно</p><h2>Дипломы и результаты</h2><div class="gold-rule"></div></div>
+      <div class="timeline reveal">
+        <?php foreach ($items as $it): ?>
+          <div class="timeline-item">
+            <div class="tl-date"><?= h(ru_date(substr((string) $it['d_created'], 0, 10))) ?></div>
+            <div class="dip-item">
+              <div>
+                <h4><?= h($it['d_result'] ?: $it['a_result'] ?: 'Диплом') ?></h4>
+                <p style="color:var(--text-dim);margin:6px 0 0;font-size:.94rem">
+                  <?= h($it['comp_name'] ?: 'Конкурс') ?>
+                  <?php if ($it['nomination']): ?> - <?= h($it['nomination']) ?><?php endif; ?>
+                  <?php if ($it['formation']): ?> - <?= h($it['formation']) ?><?php endif; ?>
+                  <?php if ($it['work_title']): ?> - «<?= h($it['work_title']) ?>»<?php endif; ?>
+                </p>
+                <?php if ($it['teacher']): ?>
+                  <p style="color:var(--muted);margin:3px 0 0;font-size:.86rem">Педагог - <?= h($it['teacher']) ?></p>
+                <?php endif; ?>
+              </div>
+              <div class="actions">
+                <?php if (!empty($it['video_url'])): ?>
+                  <a class="btn btn--ghost" href="<?= h($it['video_url']) ?>" target="_blank" rel="noopener"><?= h($it['video_platform'] ?: 'Видео') ?></a>
+                <?php endif; ?>
+                <a class="btn btn--ghost" href="<?= url('/verify/' . $it['number']) ?>">Проверить</a>
+              </div>
+            </div>
           </div>
-          <div class="actions">
-            <?php if (!empty($it['video_url'])): ?>
-              <a class="btn btn--ghost" href="<?= h($it['video_url']) ?>" target="_blank" rel="noopener"><?= h($it['video_platform'] ?: 'Видео') ?></a>
-            <?php endif; ?>
-            <a class="btn btn--ghost" href="<?= url('/verify/' . $it['number']) ?>">Проверить</a>
-          </div>
-        </div>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
+      </div>
 
       <?php if ($competitions): ?>
-        <div class="section-head reveal" style="margin-bottom:14px;margin-top:36px"><p class="eyebrow">География побед</p><h2>Конкурсы</h2></div>
+        <div class="section-head reveal" style="margin-bottom:14px;margin-top:44px"><p class="eyebrow">География побед</p><h2>Конкурсы</h2></div>
         <div class="art-chips reveal">
           <?php foreach ($competitions as $c): ?>
             <a class="art-chip" href="<?= url('/competition/' . $c['slug']) ?>"><?= h($c['name']) ?></a>
@@ -213,4 +284,19 @@ $ttl = $artist ? $artist['name'] : 'Портфолио участника';
 $metaDesc = $artist
     ? 'Портфолио участника ' . $artist['name'] . ': ' . count($items) . ' наградных документов, ' . count($competitions) . ' конкурсов КЦ «Музыкальный Мир». Проверка подлинности дипломов онлайн.'
     : 'Портфолио участника конкурсов КЦ «Музыкальный Мир».';
-render_page($ttl, $content, ['active' => '', 'meta' => $metaDesc]);
+
+// JSON-LD Person — для индексации персональной страницы участника.
+$opts = ['active' => '', 'meta' => $metaDesc];
+if ($artist) {
+    $personLd = [
+        '@context' => 'https://schema.org',
+        '@type'    => 'Person',
+        'name'     => $artist['name'],
+        'url'      => rtrim(cfgv('base_url'), '/') . '/artist/' . $artist['slug'],
+    ];
+    if ($artist['city'])        $personLd['homeLocation'] = ['@type' => 'Place', 'name' => $artist['city']];
+    if ($artist['institution']) $personLd['affiliation']  = ['@type' => 'Organization', 'name' => $artist['institution']];
+    if ($awardsList)            $personLd['award']        = array_values(array_keys($awardsList));
+    $opts['jsonld'] = $personLd;
+}
+render_page($ttl, $content, $opts);
