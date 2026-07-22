@@ -48,6 +48,8 @@ $aliases = [
     '/instrukciya' => '/order-awards',     // инструкция по заказу наград
     '/zadachi'     => '/goals',            // цели/задачи центра
     '/prays'       => '/order-awards',     // прайс наградного материала
+    '/alleya-slavy' => '/hall-of-fame',    // Аллея Славы (русский слаг)
+    '/novosti'      => '/blog',            // Блог/Новости (русский слаг)
 ];
 if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
 
@@ -57,7 +59,7 @@ if ($route === '/sitemap.xml') {
     $baseUrl = rtrim($CFG['base_url'], '/');
     $static = ['/', '/competitions', '/apply', '/awards', '/order-awards', '/concerts',
         '/about', '/goals', '/ministry-support', '/faq', '/contacts', '/reviews',
-        '/privacy', '/agreement'];
+        '/hall-of-fame', '/blog', '/privacy', '/agreement'];
     echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
     foreach ($static as $p) {
@@ -110,6 +112,8 @@ $map = [
     '/awards' => 'awards',
     '/order-awards' => 'order_awards',
     '/concerts' => 'concerts',
+    '/hall-of-fame' => 'hall_of_fame',
+    '/blog' => 'blog',
     '/about' => 'about',
     '/reviews' => 'reviews',
     '/faq' => 'faq',

@@ -187,7 +187,7 @@ ob_start(); ?>
       </div>
 
       <!-- Быстрые показатели -->
-      <div class="stats grid grid-4 pro-stats reveal" style="grid-template-columns:repeat(4,1fr)">
+      <div class="grid grid-4 pro-stats reveal">
         <div class="stat"><b data-count="<?= count($items) ?>">0</b><span>Наградных документов</span></div>
         <div class="stat"><b data-count="<?= $laureateTotal ?>">0</b><span>Лауреатских званий</span></div>
         <div class="stat"><b data-count="<?= $grandPrixCount ?>">0</b><span>Гран-при</span></div>

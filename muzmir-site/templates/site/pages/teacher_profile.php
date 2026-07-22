@@ -174,7 +174,7 @@ ob_start(); ?>
       </div>
 
       <!-- Быстрые показатели -->
-      <div class="stats grid grid-4 tp-stats reveal" style="grid-template-columns:repeat(4,1fr)">
+      <div class="grid grid-4 tp-stats reveal">
         <div class="stat"><b data-count="<?= count($students) ?>">0</b><span>Учеников</span></div>
         <div class="stat"><b data-count="<?= count($items) ?>">0</b><span>Наградных документов</span></div>
         <div class="stat"><b data-count="<?= $laureateTotal ?>">0</b><span>Лауреатских званий</span></div>
