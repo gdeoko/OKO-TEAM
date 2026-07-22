@@ -235,3 +235,169 @@ table.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
   .filters{padding:13px 14px}
   .card{padding:16px}
 }
+
+/* ============================================================
+   ПРЕМИУМ-СЛОЙ (добавления, существующую разметку не ломают)
+   ============================================================ */
+
+/* ----- Полировка: выделение, скроллбары, фокус, пресс ----- */
+::selection{background:rgba(201,168,76,.28);color:var(--a-navy-2)}
+.sidebar__nav::-webkit-scrollbar,.table-wrap::-webkit-scrollbar{width:9px;height:9px}
+.sidebar__nav::-webkit-scrollbar-thumb{background:rgba(201,168,76,.32);border-radius:9px}
+.sidebar__nav::-webkit-scrollbar-track{background:transparent}
+.table-wrap::-webkit-scrollbar-thumb{background:rgba(139,111,31,.28);border-radius:9px}
+.table-wrap::-webkit-scrollbar-track{background:var(--a-parchment)}
+.sidebar__nav{scrollbar-width:thin;scrollbar-color:rgba(201,168,76,.32) transparent}
+:focus-visible{outline:2px solid var(--a-gold);outline-offset:2px;border-radius:4px}
+.btn:focus-visible{outline-offset:3px}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.is-loading{color:transparent!important;pointer-events:none;position:relative}
+.btn.is-loading .spinner,.btn.is-loading::after{content:"";position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+  border:2px solid currentColor;border-top-color:transparent;border-radius:50%;color:#1a1400;animation:a-spin .7s linear infinite}
+@keyframes a-spin{to{transform:rotate(360deg)}}
+
+/* Тонкая золотая линия-акцент активного пункта сайдбара */
+.sidebar__nav a{position:relative}
+.sidebar__nav a.active::before{content:"";position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+  width:3px;height:22px;border-radius:0 3px 3px 0;background:var(--a-gold-2)}
+
+/* Карточка с интерактивным подъёмом */
+.card--hover{transition:transform .18s,box-shadow .18s}
+.card--hover:hover{transform:translateY(-3px);box-shadow:var(--a-shadow-lg)}
+
+/* ----- KPI-карточки (согласованы с основным сайтом) ----- */
+.kpi{background:#fff;border:1px solid var(--a-line);border-radius:var(--a-radius);padding:20px 22px;box-shadow:var(--a-shadow);
+  position:relative;overflow:hidden;display:flex;flex-direction:column;gap:4px}
+.kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,168,76,.14),transparent 70%);pointer-events:none}
+.kpi .label{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--a-muted);font-weight:700}
+.kpi b{display:block;font-family:var(--ff-head);font-weight:800;font-size:2rem;line-height:1.05;margin:6px 0 4px;color:var(--a-navy-2)}
+.kpi .delta{display:inline-flex;align-items:center;gap:4px;font-size:.82rem;font-weight:700;padding:3px 9px;border-radius:999px;width:max-content}
+.kpi .delta svg{width:13px;height:13px}
+.kpi .delta--up{color:#2e7d4f;background:rgba(63,158,106,.14)}
+.kpi .delta--down{color:var(--a-err);background:rgba(200,87,87,.13)}
+.kpi .delta--flat{color:var(--a-muted);background:rgba(107,106,99,.12)}
+
+/* ----- Горизонтальный прогресс .bar (вне .chart-bars) ----- */
+.bar-row{display:grid;gap:6px;margin-bottom:14px}
+.bar-row .bar-lbl{display:flex;justify-content:space-between;font-size:.86rem;color:var(--a-ink);font-weight:600}
+.bar-row .bar-lbl span:last-child{color:var(--a-gold-dark);font-variant-numeric:tabular-nums}
+.bar-row .bar,.bar--h{height:12px;background:rgba(201,168,76,.14);border:1px solid var(--a-line);
+  border-radius:999px;overflow:hidden;position:relative;flex:none}
+.bar-row .bar>i,.bar--h>i{display:block;height:100%;width:var(--val,0%);background:var(--grad-gold);
+  border-radius:inherit;transition:width .8s cubic-bezier(.22,1,.36,1)}
+
+/* ----- Кольцо прогресса .stat-ring (SVG) ----- */
+.stat-ring{position:relative;width:132px;height:132px;margin:0 auto;display:grid;place-items:center}
+.stat-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.stat-ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.stat-ring .ring-track{stroke:var(--a-line)}
+.stat-ring .ring-val{stroke:var(--a-gold);filter:drop-shadow(0 0 5px rgba(201,168,76,.4));
+  stroke-dasharray:var(--circ,314);stroke-dashoffset:var(--dash,0);transition:stroke-dashoffset 1s cubic-bezier(.22,1,.36,1)}
+.stat-ring .ring-num{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--ff-head);
+  font-weight:800;font-size:1.5rem;color:var(--a-navy-2)}
+.stat-ring .ring-num small{font-size:.85rem;color:var(--a-muted);font-weight:600}
+
+/* ----- Пончик .donut (SVG) ----- */
+.donut{position:relative;width:160px;height:160px;margin:0 auto;display:grid;place-items:center}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.donut circle{fill:none;stroke-width:22}
+.donut .donut-track{stroke:var(--a-line)}
+.donut .donut-seg{stroke-linecap:round;stroke-dasharray:var(--seg,0) var(--rest,999);
+  stroke-dashoffset:var(--off,0);transition:stroke-dasharray .9s cubic-bezier(.22,1,.36,1)}
+.donut .donut-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  font-family:var(--ff-head);font-weight:800;font-size:1.5rem;color:var(--a-navy-2)}
+.donut .donut-center small{display:block;font-family:var(--ff-body);font-size:.74rem;color:var(--a-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.donut-legend{display:flex;flex-wrap:wrap;gap:8px 18px;justify-content:center;margin-top:16px;font-size:.85rem;color:var(--a-ink)}
+.donut-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* ----- Таймлайн (вертикальные вехи) ----- */
+.timeline{position:relative;padding-left:34px;margin:0}
+.timeline::before{content:"";position:absolute;left:11px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--a-gold),var(--a-line))}
+.timeline-item{position:relative;padding-bottom:22px}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-item::before{content:"";position:absolute;left:-28px;top:4px;width:13px;height:13px;border-radius:50%;
+  background:var(--grad-gold);box-shadow:0 0 0 3px var(--a-parchment),0 0 0 4px var(--a-line)}
+.timeline-item .tl-date{font-size:.8rem;color:var(--a-gold-dark);font-weight:700;letter-spacing:.02em}
+.timeline-item h4{margin:.15em 0 .3em}
+.timeline-item p{color:var(--a-muted);margin:0;font-size:.9rem}
+
+/* ----- Таблицы: сортировка, зебра, скролл-вариант ----- */
+table.tbl th.sortable,table.tbl th[data-sort]{cursor:pointer;user-select:none;padding-right:26px;position:sticky;top:0}
+table.tbl th.sortable:hover,table.tbl th[data-sort]:hover{color:var(--a-gold-dark)}
+table.tbl th.sortable::after,table.tbl th[data-sort]::after{content:"";position:absolute;right:11px;top:50%;
+  margin-top:-3px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;
+  border-top:5px solid currentColor;opacity:.28;transition:.15s}
+table.tbl th.sort-asc::after{transform:rotate(180deg);opacity:.9}
+table.tbl th.sort-desc::after{opacity:.9}
+table.tbl.tbl--zebra tbody tr:nth-child(even){background:rgba(246,241,230,.5)}
+table.tbl.tbl--zebra tbody tr:hover{background:var(--a-cream)}
+.table-wrap--scroll{max-height:min(62vh,560px);overflow-y:auto}
+.table-wrap--scroll table.tbl th{box-shadow:0 1px 0 var(--a-line)}
+
+/* ----- Дополнительные бейджи статусов ----- */
+.badge--shipped{background:#e6f7f3;color:#1c8a72}
+.badge--delivered{background:#e9f6ee;color:#2e7d4f}
+.badge--confirmed{background:#e9f6ee;color:#2e7d4f}
+.badge--sending{background:#fef4e2;color:#9a6b12}
+.badge--scheduled{background:#eef3fb;color:#3a5f8f}
+.badge--error{background:#fdeceb;color:#b3403f}
+.badge--archive,.badge--archived{background:#eceae4;color:#6b6a63}
+.badge--pending{background:#fef4e2;color:#9a6b12}
+.badge--intl,.badge--dot{position:relative}
+.badge--open::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;
+  animation:a-pulse 1.8s ease-in-out infinite}
+@keyframes a-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ----- Модальные окна ----- */
+.modal-overlay{position:fixed;inset:0;z-index:120;background:rgba(20,26,51,.55);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:.2s}
+.modal-overlay.is-open,.modal-overlay[open]{opacity:1;visibility:visible}
+.modal{background:#fff;border-radius:18px;box-shadow:var(--a-shadow-lg);width:100%;max-width:560px;
+  max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--a-line);
+  transform:translateY(14px) scale(.98);transition:transform .22s cubic-bezier(.22,1,.36,1)}
+.modal-overlay.is-open .modal,.modal-overlay[open] .modal{transform:none}
+.modal--lg{max-width:820px}
+.modal--sm{max-width:420px}
+.modal__head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;
+  border-bottom:1px solid var(--a-line);background:linear-gradient(180deg,var(--a-parchment),#fff)}
+.modal__head h3{margin:0;font-size:1.18rem}
+.modal__close{background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;line-height:0;color:var(--a-muted);transition:.15s}
+.modal__close:hover{background:var(--a-parchment);color:var(--a-navy-2)}
+.modal__close svg{width:20px;height:20px;stroke:currentColor}
+.modal__body{padding:22px;overflow-y:auto}
+.modal__foot{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:16px 22px;
+  border-top:1px solid var(--a-line);background:var(--a-parchment)}
+
+/* Нативный <dialog> — та же премиум-подача */
+dialog.modal{padding:0;border:1px solid var(--a-line);position:fixed;inset:0;margin:auto}
+dialog.modal::backdrop{background:rgba(20,26,51,.55);backdrop-filter:blur(4px)}
+
+/* ----- Тосты ----- */
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:140;display:flex;flex-direction:column;gap:10px;max-width:340px}
+.toast{background:#fff;border:1px solid var(--a-line);border-left:4px solid var(--a-gold);border-radius:var(--a-radius-sm);
+  box-shadow:var(--a-shadow-lg);padding:12px 16px;font-size:.9rem;font-weight:600;color:var(--a-ink);
+  display:flex;gap:10px;align-items:center;animation:a-toast .3s cubic-bezier(.22,1,.36,1)}
+.toast--success{border-left-color:var(--a-ok)}
+.toast--error{border-left-color:var(--a-err)}
+.toast--warning{border-left-color:var(--a-warn)}
+@keyframes a-toast{from{transform:translateX(20px);opacity:0}to{transform:none;opacity:1}}
+
+/* ----- Скелетон-загрузка ----- */
+.skeleton{background:linear-gradient(100deg,var(--a-parchment) 30%,#fff 50%,var(--a-parchment) 70%);
+  background-size:200% 100%;animation:a-shimmer 1.3s infinite;border-radius:var(--a-radius-sm);min-height:14px}
+@keyframes a-shimmer{to{background-position:-200% 0}}
+
+/* ----- Адаптив для премиум-слоя ----- */
+@media (max-width:960px){
+  .stat-ring{width:118px;height:118px}
+  .donut{width:140px;height:140px}
+}
+@media (max-width:820px){
+  .toast-wrap{left:14px;right:14px;bottom:14px;max-width:none}
+  .modal{max-width:100%;border-radius:16px}
+  .modal__foot .btn{flex:1;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
