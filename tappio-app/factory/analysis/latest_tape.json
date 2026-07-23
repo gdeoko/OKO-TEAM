@@ -5,28 +5,8 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 1541101,
-   "likes": 32090,
-   "comments": 807,
-   "channel": "WoodWorkWeb",
-   "followers": 676000,
-   "dur": 403,
-   "id": "TOve6oVPKVw",
-   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
-  },
-  {
-   "views": 1014021,
-   "likes": 2281,
-   "comments": 219,
-   "channel": "laanlabs",
-   "followers": 6280,
-   "dur": 45,
-   "id": "z7DYC_zbZCM",
-   "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 46622829,
-   "likes": 282343,
+   "views": 46623728,
+   "likes": 282352,
    "comments": 3900,
    "channel": "The Maker",
    "followers": 1200000,
@@ -35,80 +15,90 @@
    "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
   },
   {
-   "views": 972064,
-   "likes": 1035,
-   "comments": 10,
+   "views": 6659573,
+   "likes": 147022,
+   "comments": 9500,
+   "channel": "seejanedrill",
+   "followers": 1080000,
+   "dur": 461,
+   "id": "Cd2LY857oTY",
+   "title": "Tick Sticking, a Carpentry HACK (few people know)"
+  },
+  {
+   "views": 2315362,
+   "likes": 470,
+   "comments": 13,
    "channel": "GRYMALA",
    "followers": 2000,
-   "dur": 29,
-   "id": "xtwFdG68QIY",
-   "title": "ARuler - Measure anything with Augmented Reality and your phone"
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
   },
   {
-   "views": 292257,
-   "likes": 1200,
-   "comments": 62,
-   "channel": "DailyZeck",
-   "followers": 23000,
-   "dur": 75,
-   "id": "h8Tx-ykllK4",
-   "title": "How to Use The Measure App on iPhone"
+   "views": 1541103,
+   "likes": 32089,
+   "comments": 807,
+   "channel": "WoodWorkWeb",
+   "followers": 676000,
+   "dur": 403,
+   "id": "TOve6oVPKVw",
+   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
   },
   {
-   "views": 190026,
-   "likes": 4339,
-   "comments": 78,
-   "channel": "Sketch Design Craft",
-   "followers": 39000,
-   "dur": 483,
-   "id": "K8BL_APoga0",
-   "title": "5 apps I use to DESIGN any space - Cabin Renovation - iPad for Architects"
+   "views": 1057557,
+   "likes": 23808,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
   },
   {
-   "views": 176759,
-   "likes": 3138,
-   "comments": 90,
-   "channel": "SketchUp School",
-   "followers": 310000,
-   "dur": 1135,
-   "id": "eC64TxPq_QA",
-   "title": "SketchUp Interior Design Tutorial – How to Measure & Model a Room (9 EASY steps)"
-  },
-  {
-   "views": 169753,
-   "likes": 1543,
-   "comments": 108,
-   "channel": "magicplan",
-   "followers": 24000,
-   "dur": 190,
-   "id": "-9mXkK1eV1s",
-   "title": "How to Get the Most Out of Your Laser Measure | magicplan"
-  },
-  {
-   "views": 139988,
-   "likes": 1356,
-   "comments": 90,
-   "channel": "TheSketchUpEssentials",
-   "followers": 605000,
-   "dur": 313,
-   "id": "HplrHVqeL-8",
-   "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)"
-  },
-  {
-   "views": 86418,
-   "likes": 4756,
-   "comments": 346,
-   "channel": "DIYForKnuckleheads",
-   "followers": 449000,
-   "dur": 592,
-   "id": "hlLFkDlN2ok",
-   "title": "5 LIFE Changing Measuring Hacks!"
+   "views": 1014062,
+   "likes": 2281,
+   "comments": 219,
+   "channel": "laanlabs",
+   "followers": 6280,
+   "dur": 45,
+   "id": "z7DYC_zbZCM",
+   "title": "Air Measure App Demo - Augmented reality tape measure"
   }
  ],
  "millions_list": [
   {
-   "views": 1541101,
-   "likes": 32090,
+   "views": 46623728,
+   "likes": 282352,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+  },
+  {
+   "views": 6659573,
+   "likes": 147022,
+   "comments": 9500,
+   "channel": "seejanedrill",
+   "followers": 1080000,
+   "dur": 461,
+   "id": "Cd2LY857oTY",
+   "title": "Tick Sticking, a Carpentry HACK (few people know)"
+  },
+  {
+   "views": 2315362,
+   "likes": 470,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2000,
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
+  },
+  {
+   "views": 1541103,
+   "likes": 32089,
    "comments": 807,
    "channel": "WoodWorkWeb",
    "followers": 676000,
@@ -117,7 +107,17 @@
    "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
   },
   {
-   "views": 1014021,
+   "views": 1057557,
+   "likes": 23808,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
+  },
+  {
+   "views": 1014062,
    "likes": 2281,
    "comments": 219,
    "channel": "laanlabs",
@@ -125,33 +125,23 @@
    "dur": 45,
    "id": "z7DYC_zbZCM",
    "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 46622829,
-   "likes": 282343,
-   "comments": 3900,
-   "channel": "The Maker",
-   "followers": 1200000,
-   "dur": 191,
-   "id": "R1sQLwLi96c",
-   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
   }
  ],
- "millions": 3,
+ "millions": 6,
  "hooks": [
   "measure",
-  "app",
   "tape",
-  "measuring",
-  "hacks",
-  "augmented",
-  "reality",
-  "phone",
-  "use",
-  "design",
-  "room",
-  "quick"
+  "few",
+  "people",
+  "know",
+  "plan",
+  "about",
+  "feature",
+  "hidden",
+  "features",
+  "tick",
+  "sticking"
  ],
- "ts": "2026-07-23 08:19 UTC",
- "avg_views": 5120521
+ "ts": "2026-07-23 20:09 UTC",
+ "avg_views": 9868564
 }
