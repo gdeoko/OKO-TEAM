@@ -164,6 +164,15 @@ if ((int) $comp['is_paid']) {
     // Скидка лояльности за число состоявшихся участий.
     $loyaltyPct = loyalty_discount($uid, $email);
 
+    // Скидка члена Клуба постоянных участников (годовая подписка).
+    $clubPct = 0;
+    if ($uid && is_file(BASE_PATH . '/core/club.php')) {
+        require_once BASE_PATH . '/core/club.php';
+        if (function_exists('club_is_active') && club_is_active((int) $uid)) {
+            $clubPct = club_discount_percent((int) $uid);
+        }
+    }
+
     // Промокод педагога: доп. скидка участнику + метка реферала.
     $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper(input('promo_code'))));
     $ref = $promoCode !== '' ? referral_lookup($promoCode) : null;
@@ -171,8 +180,8 @@ if ((int) $comp['is_paid']) {
     if ($ref && $uid && (int) $ref['teacher_user_id'] === (int) $uid) $ref = null;
     $refPct = $ref ? (int) $ref['percent'] : 0;
 
-    // Итоговая скидка суммируется, но не более 40%.
-    $totalPct = min(40, $loyaltyPct + $refPct);
+    // Итоговая скидка: лучшая из «лояльность/клуб» + промокод педагога, но не более 40%.
+    $totalPct = min(40, max($loyaltyPct, $clubPct) + $refPct);
     $amount = loyalty_apply($basePrice, $totalPct);
 
     $priceInfo = [

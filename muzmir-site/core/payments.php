@@ -100,6 +100,17 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
             $ord = one("SELECT * FROM awards_orders WHERE id=?", [(int) $orderId]);
             if ($ord) { $email = (string) ($ord['email'] ?? ''); $name = (string) ($ord['full_name'] ?? ''); }
         }
+        // Клубное членство — активируем при успешной оплате (годовая подписка).
+        $ordRow = one("SELECT user_id, email, items FROM awards_orders WHERE id=?", [(int) $orderId]);
+        if ($ordRow && strpos((string) ($ordRow['items'] ?? ''), '"kind":"club"') !== false) {
+            if (!function_exists('club_grant') && is_file(__DIR__ . '/club.php')) require_once __DIR__ . '/club.php';
+            $cuid = (int) ($ordRow['user_id'] ?? 0);
+            if (!$cuid && !empty($ordRow['email'])) {
+                $cu = one("SELECT id FROM users WHERE email=?", [mb_strtolower((string) $ordRow['email'])]);
+                $cuid = (int) ($cu['id'] ?? 0);
+            }
+            if ($cuid > 0 && function_exists('club_grant')) { club_grant($cuid, 12, 'payment'); }
+        }
     }
 
     $amount = $pay['amount'] ?? ($obj['amount']['value'] ?? '');

@@ -43,6 +43,14 @@ foreach ($items as $it) {
     if ($itemName === '') continue;
     if ($kind === '') $kind = 'original';
 
+    // Клубное членство — цена из настроек (не из awards_prices), активируется при оплате.
+    if ($kind === 'club') {
+        $price = (int) setting('club_price', '500');
+        $serverAmount += $price;
+        $normItems[] = ['item' => $itemName, 'kind' => 'club', 'price' => $price];
+        continue;
+    }
+
     // Персональный прайс конкурса имеет приоритет над общим (competition_id IS NULL).
     $price = null;
     if ($compId !== null) {

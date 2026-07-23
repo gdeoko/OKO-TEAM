@@ -189,7 +189,8 @@ ob_start(); ?>
     body.set('phone', form.phone.value.trim());
     body.set('competition', 'Клуб постоянных участников');
     body.set('amount', String(price));
-    body.set('items', JSON.stringify([{ name: 'Клуб постоянных участников - годовая подписка', price: price }]));
+    body.set('_csrf', <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>);
+    body.set('items', JSON.stringify([{ item: 'Клуб постоянных участников - годовая подписка', kind: 'club' }]));
     fetch(<?= json_encode(url('/api/v1/order'), JSON_UNESCAPED_SLASHES) ?>, { method: 'POST', body: body })
       .then(function (r) { return r.json(); })
       .then(function (d) {
