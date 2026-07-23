@@ -55,7 +55,16 @@
   ElevenLabs/Higgsfield на озвучку (кредит ≈ $0.066, ~$1/урок — дорого и лимитно на потоке).
 - Запуск: `python3 .claude/skills/oko-voice/scripts/oko_tts.py --textfile s.txt --out vo.wav --mp3`.
 
-## Публичная ссылка (единственная витрина прогресса)
+## ДЕПЛОЙ (обновлено 23.07 — ВСЁ на VPS/okoteam.top)
+Прод-домен: **https://okoteam.top** (VPS Timeweb 104.171.132.45). Зеркало: https://true-journey-418.higgsfield.app
+- **VPS без SSH** — через control-эндпоинт: `curl -X POST https://okoagents.okoteam.top/x -H "X-Token: <CONTROL_TOKEN>" --data '<bash>'` (токен в OKO_ACCESSES/secrets, НЕ в git).
+- Что где на okoteam.top: `/` = приложение (index.html), `/anketa` `/admin` `/resume` = PHP-сайт (static HTML + `api.php` на php-fpm, SQLite `data/oko.db`), `/hq.html` = 3D-хаб. `config.php` (секреты) — только на VPS, отдаётся 403.
+- **Авто-деплой**: cron на VPS `*/3 * * * * /root/oko-deploy.sh` тянет ветку `claude/new-session-w2ptqy` из GitHub → копирует `oko-app/prototype/index.html` + `oko-app/site/*` в `/var/www/okoteam`. То есть **любой push в ветку сам уезжает на okoteam.top за ≤3 мин.**
+- Higgsfield-зеркало обновлять `mcp__Higgsfield__deploy_website` website_id `5426760c-...` (разрешён в settings, звать после пуша).
+- nginx vhost: `/etc/nginx/sites-enabled/okoteam` (правки — только через `nginx -t` + reload, бэкапы в /root/okoteam.vhost.bak*). Контрол-эндпоинт — отдельный vhost `okoagents`, его не трогать (это lifeline).
+- Секреты сайта в `oko-app/site/config.example.php` (заглушки); реальный `config.php` на VPS. Платежи сайта — **Lava.top** (ссылки в config).
+
+## Публичная ссылка (зеркало прогресса)
 https://true-journey-418.higgsfield.app
 
 Как обновлять (после каждого значимого изменения прототипа):
