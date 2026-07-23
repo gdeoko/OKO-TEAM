@@ -7863,7 +7863,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.90</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.91</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -10461,6 +10461,27 @@ let LISTINGS = [
     reviews:[rv('Лена',5,'Голос как у диктора')]},
   {id:8, cat:'3d', type:'service', t:'3D-графика и анимация логотипа', p:3000, pt:'от 3 000 ₽', ds:'3D-логотип, интро, продуктовая визуализация, motion-графика.', a:'Н', n:'Ник 3D', r:5.0, deals:37, city:'Онлайн', term:'от 2 дней', views:640, favs:27, contacts:19, promo:'vip', fav:false, my:false, st:'act', seed:27,
     reviews:[rv('Стас',5,'Интро — космос')]},
+  /* ---- глубина каталога: 2-3 объявления в каждой категории (ощущение живой биржи) ---- */
+  {id:9, cat:'video', type:'service', t:'Вертикальные ролики для Reels пачкой', p:1200, pt:'от 1 200 ₽/ролик', ds:'Серия роликов под ключ: сценарий, стоки 4K, караоке-субтитры, звук. Скидка от 10 штук.', a:'Т', n:'Тимур Кадр', r:4.8, deals:203, city:'Онлайн', term:'2 дня', views:3010, favs:96, contacts:120, promo:'up', fav:false, my:false, st:'act', seed:52,
+    reviews:[rv('Марина',5,'Взяла пакет на месяц — удобно'),rv('Влад',5,'Стабильно вывозит объём')]},
+  {id:10, cat:'design', type:'service', t:'Брендбук и фирменный стиль', p:12000, pt:'от 12 000 ₽', ds:'Логотип, палитра, шрифты, гайд по применению. Исходники в подарок.', a:'Ю', n:'Юля Бренд', r:4.9, deals:54, city:'Москва', term:'от 5 дней', views:1140, favs:47, contacts:33, promo:null, fav:false, my:false, st:'act', seed:63,
+    reviews:[rv('Кирилл',5,'Стиль узнают с первого кадра')]},
+  {id:11, cat:'ads', type:'service', t:'Реклама у блогеров и посевы', p:8000, pt:'от 8 000 ₽', ds:'Подбор каналов под нишу, закуп, контроль выходов и отчёт по охватам.', a:'Р', n:'Роман Трафик', r:4.7, deals:81, city:'Онлайн', term:'от 4 дней', views:1260, favs:29, contacts:44, promo:'up', fav:false, my:false, st:'act', seed:71,
+    reviews:[rv('Настя',5,'Посевы окупились с первого')]},
+  {id:12, cat:'sites', type:'service', t:'Telegram-бот и мини-приложение', p:25000, pt:'от 25 000 ₽', ds:'Бот с оплатой, CRM и рассылками. Мини-апп на React под ваш бренд.', a:'Д', n:'Дмитрий Код', r:5.0, deals:33, city:'Онлайн', term:'от 7 дней', views:970, favs:41, contacts:26, promo:'vip', fav:false, my:false, st:'act', seed:82,
+    reviews:[rv('Олег',5,'Бот сам продаёт, красота')]},
+  {id:13, cat:'text', type:'service', t:'SEO-статьи и наполнение сайта', p:600, pt:'от 600 ₽/текст', ds:'Тексты под поиск, карточки, описания. Уникальность и структура под ТЗ.', a:'Е', n:'Елена Слово', r:4.8, deals:167, city:'Онлайн', term:'1 день', views:1420, favs:36, contacts:58, promo:null, fav:false, my:false, st:'act', seed:93,
+    reviews:[rv('Гриша',5,'Тексты в топе за месяц')]},
+  {id:14, cat:'smm', type:'service', t:'Контент-план на месяц + рубрики', p:4000, pt:'от 4 000 ₽', ds:'Стратегия, 30 идей, рубрикатор, сетка постинга под вашу нишу.', a:'В', n:'Вера План', r:4.9, deals:98, city:'Онлайн', term:'2 дня', views:1080, favs:39, contacts:47, promo:'up', fav:false, my:false, st:'act', seed:104,
+    reviews:[rv('Тоня',5,'Наконец-то система, а не хаос')]},
+  {id:15, cat:'audio', type:'service', t:'Клон голоса и озвучка от диктора', p:900, pt:'от 900 ₽', ds:'Живая озвучка или клон вашего голоса. Расстановка ударений, паузы, интонация.', a:'Г', n:'Глеб Голос', r:5.0, deals:44, city:'Онлайн', term:'1 день', views:690, favs:24, contacts:20, promo:'vip', fav:false, my:false, st:'act', seed:115,
+    reviews:[rv('Соня',5,'Не отличить от живого')]},
+  {id:16, cat:'3d', type:'service', t:'Товар в 3D для маркетплейса', p:2500, pt:'от 2 500 ₽', ds:'Фотореалистичный рендер товара, поворотное видео, инфографика для карточки.', a:'П', n:'Павел Рендер', r:4.8, deals:61, city:'Онлайн', term:'от 2 дней', views:820, favs:30, contacts:23, promo:null, fav:false, my:false, st:'act', seed:126,
+    reviews:[rv('Инна',5,'Карточка ожила, конверсия вверх')]},
+  {id:17, cat:'consult', type:'service', t:'Стратегия запуска с нуля до заявок', p:10000, pt:'от 10 000 ₽', ds:'Разбор ниши, воронка, контент-система и план на 30 дней. Личное сопровождение.', a:'Д', n:'Даниэль Р.', r:5.0, deals:76, city:'Онлайн', term:'от 3 дней', views:1650, favs:71, contacts:63, promo:'turbo', fav:false, my:false, st:'act', seed:137,
+    reviews:[rv('Максим',5,'За месяц вышел на первые продажи'),rv('Оля',5,'Разложил всё по полочкам')]},
+  {id:18, cat:'consult', type:'service', t:'Наставник по нейросетям и автоматизации', p:6000, pt:'от 6 000 ₽', ds:'Внедрю ИИ в ваши задачи: генерация, автоответы, контент-конвейер. Практика на ваших кейсах.', a:'А', n:'Алекс ИИ', r:4.9, deals:52, city:'Онлайн', term:'помесячно', views:1210, favs:48, contacts:37, promo:'up', fav:false, my:false, st:'act', seed:148,
+    reviews:[rv('Женя',5,'Автоматизировал полдня работы')]},
 ];
 let mkView = 'cats';      // cats | list | fav
 let mkCat = null;
