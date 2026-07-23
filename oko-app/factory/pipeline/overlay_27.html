@@ -1,0 +1,147 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #27 (batch B, КВАДРО «работяга для дачи»). New forms, none reused:
+// mask-wipe-reveal · hitch-load-meter · season-task-strip · mud-zone-crossing · utility-cost-quadrant · gear-mesh lockup.
+// Свериться с USED_ANIM.md #16-26 — нет пересечений. Окна (a,b) под РЕАЛЬНЫЙ timing.json после VO.
+const TOTAL=33.72;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",CYAN="#4FD1C5",TAN="#C9A66B",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// B1 — MASK-WIPE-REVEAL: «ИГРУШКА?» стирается амбер-шторкой слева-направо, открывая «РАБОЧАЯ ЛОШАДКА».
+// (новая форма: горизонтальный маск-вайп подмены текста; ≠ kinetic #16, ≠ glitch-strike #26)
+function b1(ts){const a=1.9,b=6.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const wipe=easeInOut(clamp((p-0.2)/0.5));
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<defs><clipPath id="left"><rect x="0" y="0" width="'+(1080*(1-wipe))+'" height="1920"/></clipPath>'
+    +'<clipPath id="right"><rect x="'+(1080*(1-wipe))+'" y="0" width="'+(1080*wipe)+'" height="1920"/></clipPath></defs>';
+  s+='<g clip-path="url(#left)"><text x="'+cx+'" y="'+cy+'" text-anchor="middle" font-family="soyuz" font-size="120" fill="'+DIM+'">ИГРУШКА?</text></g>';
+  s+='<g clip-path="url(#right)"><text x="'+cx+'" y="'+(cy-40)+'" text-anchor="middle" font-family="soyuz" font-size="110" fill="'+WHT+'">РАБОЧАЯ</text>'
+    +'<text x="'+cx+'" y="'+(cy+80)+'" text-anchor="middle" font-family="soyuz" font-size="110" fill="'+AMB2+'">ЛОШАДКА</text></g>';
+  // амбер-шторка
+  if(wipe>0.02&&wipe<0.98)s+='<rect x="'+(1080*(1-wipe)-10)+'" y="'+(cy-220)+'" width="10" height="440" fill="'+AMB+'"/>';
+  s+='<text x="540" y="'+(cy+280)+'" text-anchor="middle" font-family="man8" font-size="40" fill="'+DIM+'" opacity="'+clamp((wipe-0.7)/0.3)+'">ДЛЯ ДАЧИ И ХОЗЯЙСТВА</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B2 — HITCH-LOAD-METER: прицеп подцепляется, бар нагрузки растёт в кг, задок «приседает» (тяга).
+// (новая форма: сцепка прицепа + метр тяги/приседания; ≠ rack-stack #23, ≠ fuel-bar #25)
+function b2(ts){const a=7.0,b=11.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940;const hitch=easeOut(clamp(p/0.35));const load=easeInOut(clamp((p-0.35)/0.5));
+  const squat=8*load;const kg=Math.round(load*350);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-220)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ЦЕПЛЯЕШЬ ПРИЦЕП</text>';
+  // квадро (упрощ.) слева
+  s+='<g transform="translate('+(cx-160)+','+(cy+squat)+')"><rect x="-70" y="-40" width="150" height="54" rx="12" fill="'+AMB+'"/><circle cx="-46" cy="26" r="30" fill="#100c0a" stroke="'+WHT+'" stroke-width="4"/><circle cx="52" cy="26" r="30" fill="#100c0a" stroke="'+WHT+'" stroke-width="4"/></g>';
+  // дышло + прицеп справа (въезжает)
+  const tx=cx+120+ (1-hitch)*300;
+  s+='<line x1="'+(cx-80)+'" y1="'+(cy+squat)+'" x2="'+(tx-90)+'" y2="'+cy+'" stroke="'+DIM+'" stroke-width="8" opacity="'+hitch+'"/>';
+  s+='<g transform="translate('+tx+','+cy+')" opacity="'+hitch+'"><rect x="-90" y="-56" width="200" height="70" rx="10" fill="none" stroke="'+WHT+'" stroke-width="4"/>'
+    +'<rect x="-84" y="'+(-50+70*(1-load))+'" width="188" height="'+(64*load)+'" rx="6" fill="'+TAN+'"/>'
+    +'<circle cx="-40" cy="34" r="26" fill="#100c0a" stroke="'+WHT+'" stroke-width="4"/><circle cx="60" cy="34" r="26" fill="#100c0a" stroke="'+WHT+'" stroke-width="4"/></g>';
+  // бар нагрузки
+  s+='<rect x="'+(cx-220)+'" y="'+(cy+160)+'" width="440" height="22" rx="11" fill="rgba(255,255,255,.12)"/>';
+  s+='<rect x="'+(cx-220)+'" y="'+(cy+160)+'" width="'+(440*load)+'" height="22" rx="11" fill="'+GRN+'"/>';
+  s+='<text x="540" y="'+(cy+240)+'" text-anchor="middle" font-family="soyuz" font-size="58" fill="'+WHT+'">ТЯНЕТ '+kg+'+ КГ · ДРОВА · УРОЖАЙ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B3 — SEASON-TASK-STRIP: горизонтальная лента ЗИМА/ВЕСНА/ЛЕТО/ОСЕНЬ, панели проезжают с задачей.
+// (новая форма: сезонный горизонтальный фильмстрип; ≠ triptych вертик. #24, ≠ calendar-grid #25)
+function b3(ts){const a=11.8,b=17.5;const p=win(ts,a,b);if(p<0)return'';
+  const cy=930,pw=300,gap=24;const items=[["ЗИМА","ОТВАЛ · СНЕГ",CYAN],["ЛЕТО","ОПРЫСКИВАТЕЛЬ",GRN],["ОСЕНЬ","ПРИЦЕП · УРОЖАЙ",TAN],["КРУГЛЫЙ ГОД","ЛЕБЁДКА",AMB2]];
+  const shift=easeInOut(clamp(p/0.85))*(items.length-1)*(pw+gap);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ОДИН АППАРАТ — ДЕСЯТОК ЗАДАЧ</text>';
+  s+='<g transform="translate('+(540-pw/2 - shift + (pw+gap)*1)+',0)">';
+  items.forEach((it,i)=>{const x=i*(pw+gap);const active=Math.abs((x - shift + (pw+gap))-(pw/2)) < pw;
+    s+='<g transform="translate('+x+',0)"><rect x="0" y="'+(cy-140)+'" width="'+pw+'" height="280" rx="16" fill="'+CARD+'" stroke="'+it[2]+'" stroke-width="3"/>'
+     +'<text x="'+(pw/2)+'" y="'+(cy-40)+'" text-anchor="middle" font-family="soyuz" font-size="46" fill="'+it[2]+'">'+it[0]+'</text>'
+     +'<text x="'+(pw/2)+'" y="'+(cy+40)+'" text-anchor="middle" font-family="man8" font-size="28" fill="'+WHT+'">'+it[1]+'</text></g>';});
+  s+='</g>';
+  s+='<text x="540" y="'+(cy+250)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">РАБОТАЕТ В ЛЮБОЙ СЕЗОН</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B4 — MUD-ZONE-CROSSING: разрезанный профиль с зонами грязь/снег/распутица, квадро-маркер продавливает трек.
+// (новая форма: многозонный траверс с треком; ≠ topo #23, ≠ incline #18, ≠ ford #23)
+function b4(ts){const a=17.8,b=21.9;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940,W=860,base=cy+60;const prog=clamp(p*1.05);
+  const zones=[["ГРЯЗЬ",TAN],["СНЕГ","#cfe6ee"],["РАСПУТИЦА","#8a6d4b"]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-220)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ГДЕ МАШИНА ЗАСТРЯНЕТ</text>';
+  const zw=W/zones.length;
+  zones.forEach((z,i)=>{const x=cx-W/2+i*zw;s+='<rect x="'+x+'" y="'+base+'" width="'+zw+'" height="80" fill="'+z[1]+'" opacity="0.5"/>'
+    +'<text x="'+(x+zw/2)+'" y="'+(base+50)+'" text-anchor="middle" font-family="man8" font-size="26" fill="#100c0a">'+z[0]+'</text>';});
+  // трек (продавленная колея)
+  s+='<line x1="'+(cx-W/2)+'" y1="'+(base-6)+'" x2="'+(cx-W/2+W*prog)+'" y2="'+(base-6)+'" stroke="'+AMB2+'" stroke-width="6" stroke-dasharray="4 8"/>';
+  // квадро-маркер
+  const qx=cx-W/2+W*prog;
+  s+='<g transform="translate('+qx+','+(base-40)+')"><rect x="-40" y="-26" width="86" height="36" rx="10" fill="'+AMB+'"/><circle cx="-26" cy="18" r="18" fill="#100c0a" stroke="'+WHT+'" stroke-width="3"/><circle cx="30" cy="18" r="18" fill="#100c0a" stroke="'+WHT+'" stroke-width="3"/></g>';
+  s+='<text x="540" y="'+(base+180)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+GRN+'" opacity="'+clamp((prog-0.6)/0.3)+'">ДОЕДЕТ И ПРИВЕЗЁТ ГРУЗ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B5 — UTILITY-COST-QUADRANT: 2-осевой график, квадро в углу «дёшево/полезно», мини-трактор «дорого».
+// (новая форма: квадрант-скаттер; ≠ balance-scale #16, ≠ twin-gauge #26, ≠ linechart)
+function b5(ts){const a=22.2,b=26.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=950,W=560,H=420;const x0=cx-W/2,y0=cy-H/2;const app=easeOut(clamp(p/0.6));
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(y0-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПОЛЬЗА vs ЦЕНА</text>';
+  s+='<line x1="'+x0+'" y1="'+(y0+H)+'" x2="'+(x0+W)+'" y2="'+(y0+H)+'" stroke="rgba(246,244,241,.25)" stroke-width="2"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0+H)+'" stroke="rgba(246,244,241,.25)" stroke-width="2"/>';
+  s+='<text x="'+(x0+W)+'" y="'+(y0+H+40)+'" text-anchor="end" font-family="man8" font-size="24" fill="'+DIM+'">ЦЕНА →</text>';
+  s+='<text x="'+(x0-16)+'" y="'+y0+'" text-anchor="end" font-family="man8" font-size="24" fill="'+DIM+'">ПОЛЬЗА ↑</text>';
+  // мини-трактор: дорого, польза высокая
+  const tx=x0+W*0.8,ty=y0+H*0.2;
+  s+='<circle cx="'+tx+'" cy="'+ty+'" r="'+(30*app)+'" fill="rgba(138,138,138,.3)" stroke="'+DIM+'" stroke-width="3"/><text x="'+tx+'" y="'+(ty+50)+'" text-anchor="middle" font-family="man8" font-size="26" fill="'+DIM+'">МИНИ-ТРАКТОР</text>';
+  // квадро: дёшево, польза высокая (левый верх) — целевой угол
+  const qx=x0+W*0.22,qy=y0+H*0.16;
+  s+='<circle cx="'+qx+'" cy="'+qy+'" r="'+(34*app)+'" fill="rgba(234,89,32,.25)" stroke="'+AMB+'" stroke-width="4"/><text x="'+qx+'" y="'+(qy+54)+'" text-anchor="middle" font-family="soyuz" font-size="30" fill="'+AMB2+'">КВАДРО</text>';
+  s+='<text x="540" y="'+(y0+H+130)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((app-0.7)/0.3)+'">ДЕШЕВЛЕ · ПОЛЬЗЫ НЕ МЕНЬШЕ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B6 — GEAR-MESH LOCKUP: две шестерни крутятся и входят в зацепление, из точки меша проявляется лого.
+// (новый лок-ап: зацепление шестерён; ≠ puzzle #26, ≠ spark/splash/ignition/sun-flare/reticle/streaks/droplet/liquid)
+function b6(ts){const a=26.8,b=33.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;const mesh=easeInOut(clamp(p/0.5));const bloom=clamp((p-0.5)/0.5);
+  function gear(gx,gy,R,rot,col){let g='<g transform="translate('+gx+','+gy+') rotate('+rot+')">';
+    const teeth=10;for(let i=0;i<teeth;i++){const th=i/teeth*360;g+='<rect x="-9" y="'+(-R-14)+'" width="18" height="20" fill="'+col+'" transform="rotate('+th+')"/>';}
+    g+='<circle r="'+R+'" fill="none" stroke="'+col+'" stroke-width="10"/><circle r="14" fill="'+col+'"/></g>';return g;}
+  const gap=(1-mesh)*160;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+=gear(cx-90-gap,cy,72,p*TOTAL*80,AMB)+gear(cx+90+gap,cy,72,-p*TOTAL*80+18,AMB2);
+  if(mesh>0.9&&bloom<0.4)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(20+150*bloom)+'" fill="none" stroke="'+WHT+'" stroke-width="'+(6*(1-bloom*2.5))+'" opacity="'+clamp(1-bloom*2.5)+'"/>';
+  const sc=lerp(0.5,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="122" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="116" text-anchor="middle" font-family="soyuz" font-size="122" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=b1(ts)+b2(ts)+b3(ts)+b4(ts)+b5(ts)+b6(ts);};
+window.render(0);
+</script></body></html>
