@@ -11,7 +11,7 @@ def _ensure(mod,pkg):
 _ensure("edge_tts","edge-tts")
 VO=sys.argv[1] if len(sys.argv)>1 else "vo"
 VOICE=(sys.argv[2] if len(sys.argv)>2 else os.environ.get("VOICE_EDGE","ru-RU-DmitryNeural"))
-RATE=os.environ.get("EDGE_RATE","+0%")
+RATE=os.environ.get("EDGE_RATE","+8%")  # дефолт для рилс — живее (Даниэль: «если молчу, +8%»); студийный = EDGE_RATE=+0%
 seg=json.load(open(os.path.join(VO,"script_src.json")))
 keys=sorted([k for k in seg if k.startswith("s")], key=lambda k:int(k[1:]))
 ok=0
