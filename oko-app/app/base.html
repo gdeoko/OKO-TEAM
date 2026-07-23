@@ -140,6 +140,10 @@ nav#tabs .nav-logo{display:none}
 .searchbar svg.i{width:17px;height:17px}
 .chat-list{flex:1;overflow-y:auto;padding-bottom:84px}   /* чтобы последний чат не прятался под FAB */
 .chat-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+/* индикатор «в сети» на аватаре списка чатов (как в Telegram) — только для личных онлайн-контактов */
+.ci-ava{position:relative;flex-shrink:0}
+.ci-online{position:absolute;right:1px;bottom:1px;width:13px;height:13px;border-radius:50%;background:var(--lime);border:2.5px solid var(--bg);box-shadow:0 0 6px rgba(154,255,0,.5)}
+:root[data-theme="light"] .ci-online{background:#5fbf00;box-shadow:0 0 5px rgba(95,191,0,.45)}
 .chat-item:hover{background:var(--surface)}
 .chat-item .meta{flex:1;min-width:0}
 .chat-item .row1{display:flex;justify-content:space-between;gap:8px;align-items:center}
@@ -1698,7 +1702,7 @@ function renderChatList(filter=''){
       const pi = last && kindIco(last.kind);
       return `
       <div class="chat-item" onclick="openConv(${typeof c.id==='number' ? c.id : `'${c.id}'`})">
-        ${avaHtml(c)}
+        <div class="ci-ava">${avaHtml(c)}${(c.kind==='direct' && c.online)?'<span class="ci-online" title="в сети"></span>':''}</div>
         <div class="meta">
           <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span></span><span class="time">${c.time}</span></div>
           <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${c.preview}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
