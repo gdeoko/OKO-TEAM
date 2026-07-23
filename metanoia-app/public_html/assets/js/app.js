@@ -2802,6 +2802,11 @@ function showApp(name) {
   $('#avatarBtn').textContent = stored[0].toUpperCase();
   $('.profile-head__avatar').textContent = stored[0].toUpperCase();
   $('.profile-head__name').textContent = stored;
+  // Оживим числа на главной после входа (но не за сплэшем при загрузке)
+  const splash = document.getElementById('splash');
+  if (splash && splash.classList.contains('splash--hide') && typeof animateHomeStats === 'function') {
+    animateHomeStats();
+  }
 }
 
 function initOnboarding() {
@@ -4130,6 +4135,29 @@ function initGrowth() {
   });
 }
 
+// Плавный «счётчик» для чисел на главной (стрик, XP) — маленькая радость для детей.
+// Уважает prefers-reduced-motion: при выключенной анимации просто оставляет итог.
+function countUp(el, dur = 900) {
+  if (!el) return;
+  const target = parseInt(el.textContent, 10);
+  if (!Number.isFinite(target)) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const start = performance.now();
+  el.textContent = '0';
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+    el.textContent = Math.round(target * eased);
+    if (t < 1) requestAnimationFrame(step);
+    else el.textContent = target;
+  };
+  requestAnimationFrame(step);
+}
+function animateHomeStats() {
+  countUp(document.getElementById('streakDays'), 800);
+  countUp(document.getElementById('xpToday'), 1000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   applyTheme(resolveTheme());
   initSystemTheme();
@@ -4222,6 +4250,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (!localStorage.getItem('mt_auth')) {
       $('#auth').hidden = false;
       hydrateIcons();
+    } else {
+      animateHomeStats(); // вернувшийся пользователь сразу на главной — оживим числа
     }
   }, 2400);
 });
