@@ -1,0 +1,274 @@
+{
+ "id": "gspy_007",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "cinematic underscore tech",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "TOP 5 SPOTS",
+  "top": "WHERE CAMS",
+  "big": "ALWAYS\nHIDE",
+  "q": [
+   "bookshelf decor living room"
+  ],
+  "ai": "work/gspy_007/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Smoke detectors: the number one hiding spot."
+  },
+  {
+   "id": "b2",
+   "text": "Alarm clocks pointed straight at the bed."
+  },
+  {
+   "id": "b3",
+   "text": "Air vents with a suspicious little hole."
+  },
+  {
+   "id": "b4",
+   "text": "TV frames and power outlets facing the room."
+  },
+  {
+   "id": "b5",
+   "text": "Check each one: line of sight to the bed is the clue."
+  },
+  {
+   "id": "b6",
+   "text": "Scan first, relax second. Every trip."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.038,
+   "dur": 1.8,
+   "type": "kicker",
+   "text": "PRIVACY 101"
+  },
+  {
+   "at": 0.176,
+   "dur": 2.19,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.283,
+   "dur": 1.9,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.45,
+   "dur": 2.22,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.613,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.691,
+   "dur": 1.94,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  },
+  {
+   "at": 0.708,
+   "dur": 1.95,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.751,
+   "dur": 2.26,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.823,
+   "dur": 1.66,
+   "type": "lowerthird",
+   "title": "UNPLUG UNKNOWNS",
+   "sub": "30 seconds, total"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Smoke detectors, alarm clocks, vents, TV frames, outlets — the five spots cams love. Check anything with a clear line of sight to the bed. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #camera #detect #spy #mobile",
+ "yt_title": "DIY hidden spy camera at home #shorts",
+ "trend_keys": [
+  "camera",
+  "detect",
+  "spy",
+  "mobile"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "DIY hidden spy camera at home - using old phone camera",
+  "views": 1167190,
+  "channel": "i maker Official"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-1167k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Smoke detectors: the number one hiding spot."
+ }
+}
