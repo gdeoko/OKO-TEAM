@@ -109,7 +109,7 @@ ob_start(); ?>
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
 
 /* Способ оплаты */
-.pay-method{display:flex;align-items:center;gap:14px;cursor:pointer;padding:16px 18px;border:1.5px solid var(--gold);
+.pay-method{display:flex!important;align-items:center;gap:14px;cursor:pointer;padding:16px 18px;border:1.5px solid var(--gold);
   border-radius:var(--radius-sm);background:var(--panel);backdrop-filter:blur(10px);box-shadow:0 0 0 3px var(--gold-soft)}
 .pay-method input{width:auto!important;min-height:0!important;flex:none;accent-color:var(--gold);width:20px!important;height:20px!important}
 .pay-method .pay-ic{width:34px;height:34px;flex:none;color:var(--gold-ink);display:flex;align-items:center;justify-content:center}
