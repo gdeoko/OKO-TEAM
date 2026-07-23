@@ -141,12 +141,12 @@ ob_start(); ?>
       <!-- Полосы: самые массовые конкурсы -->
       <div class="card">
         <h3>Самые массовые конкурсы</h3>
-        <div class="bars">
+        <div class="mz-bars">
           <?php foreach ($topComps as [$cName, $cCnt]): $w = max(8, round($cCnt / $topMax * 100)); ?>
-            <div class="bar">
-              <span class="bar-label"><?= h($cName) ?></span>
-              <span class="bar-track"><i style="width:<?= $w ?>%"></i></span>
-              <b class="bar-val"><?= number_format($cCnt, 0, '.', ' ') ?></b>
+            <div class="mz-bar">
+              <span class="mz-bar-name"><?= h($cName) ?></span>
+              <b class="mz-bar-val"><?= number_format($cCnt, 0, '.', ' ') ?></b>
+              <span class="mz-bar-track"><i style="width:<?= $w ?>%"></i></span>
             </div>
           <?php endforeach; ?>
         </div>
@@ -392,6 +392,56 @@ ob_start(); ?>
   .hero-media .hero-ring{animation:none}
   .comp-card .cc-img,.partners a,.hero-trust li{transition:none}
   .comp-card:hover .cc-img,.partners a:hover,.hero-trust li:hover{transform:none}
+}
+
+/* ── Аудит-фиксы (scoped) ─────────────────────────────────────────── */
+
+/* 1. «Самые массовые конкурсы»: в общем style.css класс .bar (и .bar-label/
+   .bar-track/.bar-val) определён под ДРУГОЙ компонент — .bar-label получал
+   золотую заливку и прятал текст, обёртка схлопывалась, заливка рисовалась
+   через scaleX(var(--val,0))=0. Ушли от конфликта: своя разметка .mz-bar*. */
+.mz-bars{display:flex;flex-direction:column;gap:16px;margin-top:6px}
+.mz-bar{display:grid;grid-template-columns:1fr auto;align-items:baseline;
+  column-gap:12px;row-gap:7px}
+.mz-bar-name{grid-column:1;grid-row:1;font-size:.9rem;color:var(--text-dim);
+  overflow-wrap:anywhere}
+.mz-bar-val{grid-column:2;grid-row:1;text-align:right;white-space:nowrap;
+  font-weight:700;color:var(--gold-deep);font-variant-numeric:tabular-nums}
+[data-theme="dark"] .mz-bar-val{color:var(--gold)}
+.mz-bar-track{grid-column:1 / -1;grid-row:2;height:12px;border-radius:999px;
+  background:var(--gold-soft,rgba(201,168,76,.16));overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(139,111,31,.14)}
+.mz-bar-track>i{display:block;height:100%;border-radius:999px;
+  background:var(--grad-gold);box-shadow:0 0 12px rgba(201,168,76,.4)}
+
+/* 2. Легенда пончика: длинная подпись «Инструментальное исполнительство»
+   ломала строку, а «16%» разрывалось на «16» / «%». Делаем ровные строки-ряды. */
+.card .legend{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.card .legend li{display:grid;grid-template-columns:auto 1fr auto;align-items:start;
+  gap:9px;font-size:.86rem}
+.card .legend li i{margin-top:3px;flex:none}
+.card .legend li span{overflow-wrap:anywhere}
+.card .legend li b{white-space:nowrap;color:var(--gold-deep);font-weight:700}
+[data-theme="dark"] .card .legend li b{color:var(--gold)}
+
+/* 3. Бейдж статуса на обложке конкурса («Приём открыт» / «Идёт оценка») был
+   почти нечитаем: полупрозрачный мятный/жёлтый текст поверх золотой обложки.
+   Даём плотную тёмную «стеклянную» подложку — текст читается на любой обложке. */
+.cc-cover-badge.badge{-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.cc-cover-badge.badge--open{background:rgba(16,26,14,.66);color:#e8ffef;
+  border-color:rgba(150,255,170,.55);animation:none}
+.cc-cover-badge.badge--judging{background:rgba(34,22,4,.66);color:#ffe6ac;
+  border-color:rgba(255,206,110,.55)}
+
+/* 4. Логотипы партнёров: широкий «PRO.Культура.РФ» доминировал, «Нацпроекты»
+   оставался крошечным на отдельной строке. Нормализуем размеры и центрируем. */
+.partners{gap:26px 40px}
+.partners a{display:inline-flex;align-items:center;justify-content:center;height:60px}
+.partners img{height:auto;max-height:52px;width:auto;max-width:210px;object-fit:contain}
+@media (max-width:560px){
+  .partners{gap:22px 30px}
+  .partners a{height:48px}
+  .partners img{max-height:44px;max-width:160px}
 }
 </style>
 <script>

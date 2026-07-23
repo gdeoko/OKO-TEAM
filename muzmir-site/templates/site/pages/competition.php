@@ -174,9 +174,14 @@ $juryPanels = [
 
 $chev = '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>';
 
+/* Обложка для баннера: тот же нормализатор хоста, что и в каталоге (competitions.php) -
+   снимаем dev-хост localhost/127.0.0.1, чтобы постер грузился с текущего домена. */
+$coverBg = trim((string) ($c['cover'] ?? ''));
+if ($coverBg !== '') $coverBg = preg_replace('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?~i', '', $coverBg);
+
 ob_start(); ?>
 <section class="comp-banner">
-  <div class="comp-banner__bg" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?><?= !empty($c['cover']) ? ';background-image:url(\'' . h($c['cover']) . '\')' : '' ?>"></div>
+  <div class="comp-banner__bg" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?><?= $coverBg !== '' ? ';background-image:url(\'' . h($coverBg) . '\')' : '' ?>"></div>
   <div class="container comp-banner__inner reveal">
     <div class="comp-banner__badges">
       <span class="badge badge--<?= $statusMap[0] ?>"><?= h($statusMap[1]) ?></span>
@@ -512,8 +517,12 @@ ob_start(); ?>
 
 <style>
 .comp-banner{position:relative;background:var(--grad-gold);color:var(--gold-fg);overflow:hidden;padding:64px 0}
-.comp-banner__bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.32}
-.comp-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,14,3,.32),rgba(20,14,3,.6))}
+/* Постер конкурса как атмосферная фактура: лёгкий blur+scale, чтобы «зашитый» в афишу
+   текст не дублировал H1, а работал фоном. Оверлей держит контраст заголовка. */
+.comp-banner__bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.42;
+  filter:blur(22px) saturate(1.15);transform:scale(1.25)}
+.comp-banner::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(20,14,3,.34) 0,rgba(20,14,3,.46) 55%,rgba(20,14,3,.66) 100%)}
 .comp-banner__inner{position:relative;z-index:1;max-width:820px}
 .comp-banner__badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .comp-banner__inner h1{color:#fff;margin-bottom:.3em}
@@ -551,7 +560,7 @@ ob_start(); ?>
 .comp-tabs__nav{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:28px;overflow-x:auto;
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 .comp-tabs__nav::-webkit-scrollbar{display:none}
-.comp-tab{background:none;border:none;padding:14px 20px;font-family:var(--ff-body);font-weight:700;font-size:1rem;
+.comp-tab{background:none;border:none;padding:14px clamp(13px,1.35vw,20px);font-family:var(--ff-body);font-weight:700;font-size:1rem;
   color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;
   transition:color .18s,border-color .18s}
 .comp-tab:hover{color:var(--gold)}
