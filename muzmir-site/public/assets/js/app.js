@@ -165,19 +165,25 @@
     var cio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
-        countUp(e.target); cio.unobserve(e.target);
+        try { countUp(e.target); } catch (err) {} e.target.dataset.counted = '1'; cio.unobserve(e.target);
       });
-    }, { threshold: 0.5 });
+    }, { threshold: 0.35 });
     $$('[data-count]').forEach(function (el) { cio.observe(el); });
 
     // Инфографика: SVG-кольца (.stat-ring/.donut, dasharray) и .bar (scaleX)
     var pio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
-        animateProgress(e.target); pio.unobserve(e.target);
+        try { animateProgress(e.target); } catch (err) {} e.target.dataset.progressed = '1'; pio.unobserve(e.target);
       });
-    }, { threshold: 0.4 });
+    }, { threshold: 0.3 });
     $$('.stat-ring, .donut, .bar').forEach(function (el) { pio.observe(el); });
+
+    // Гарантия: числа и графики никогда не застревают на 0 (failsafe через 3с)
+    setTimeout(function () {
+      $$('[data-count]').forEach(function (el) { if (!el.dataset.counted) { try { countUp(el); } catch (err) {} el.dataset.counted = '1'; cio.unobserve(el); } });
+      $$('.stat-ring, .donut, .bar').forEach(function (el) { if (!el.dataset.progressed) { try { animateProgress(el); } catch (err) {} el.dataset.progressed = '1'; pio.unobserve(el); } });
+    }, 3200);
   } else {
     $$('.reveal').forEach(function (el) { revealEl(el); });
     $$('.stat-ring, .donut, .bar').forEach(function (el) { animateProgress(el); });
