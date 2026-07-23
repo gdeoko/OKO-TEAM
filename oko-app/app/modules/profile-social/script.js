@@ -305,7 +305,7 @@ function psMediaList(a){
 }
 function psMediaHtml(a){
   const list = psMediaList(a);
-  if(!list.length) return `<div class="ps-empty">${I('grid')}<p>Пока нет медиа</p><span>Работы автора появятся здесь</span></div>`;
+  if(!list.length) return `<div class="ps-empty">${I('grid')}<p>Медиа пока нет</p><span>Кейсы, ролики и работы автора появятся здесь</span></div>`;
   const nf = v => (typeof fmtN === 'function' ? fmtN(v) : v);
   return `<div class="ps-grid">` + list.map((t, i) => `
     <button class="ps-mtile ${t.g} fade-in" style="animation-delay:${i * 35}ms" onclick="psOpenMedia(${i})" aria-label="${psAttr(t.title)}">
@@ -371,7 +371,7 @@ function psAnimateStats(){
 
 /* ---------- рендер профиля ---------- */
 function psPostsHtml(a){
-  if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Пока нет постов</p><span>Публикации автора появятся здесь</span></div>`;
+  if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Здесь скоро будут посты</p><span>Подпишись — и не пропустишь первую публикацию автора</span></div>`;
   return a.posts.map(p => `
     <article class="ps-post fade-in">
       <div class="ps-post-time">${psAgo(p)}${p.promoted ? ' · реклама' : ''}</div>
@@ -494,7 +494,7 @@ function psToggleFollow(){
   }
   if(f && typeof showPopup === 'function'){
     showPopup({ico:'users', title:'Подписка оформлена',
-      body:`Теперь его посты — выше в твоей ленте «Подписки». Ты подписан на <b>${esc(name)}</b>.`,
+      body:`Готово. Лучшие посты <b>${esc(name)}</b> теперь поднимаются выше в ленте «Подписки» — ничего важного не пропустишь.`,
       actions:[{label:'В ленту', onclick: psGoSubFeed}, {label:'Понятно', ghost:true}]});
   } else if(!f && typeof toast === 'function'){
     toast('Ты отписался от ' + name);
@@ -809,7 +809,7 @@ function psOpenMyFollows(){
   if(th) th.style.display = 'none';
   const wrap = document.getElementById('psGraphList');
   if(wrap){
-    if(!names.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Ты пока ни на кого не подписан</p><span>Открой профиль автора и нажми «Подписаться»</span></div>`; }
+    if(!names.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Твоя лента подписок пуста</p><span>Подпишись на авторов — их лучшие посты будут первыми у тебя</span></div>`; }
     else{
       const pool = psPeoplePool();
       const byName = {}; pool.forEach(p => byName[p.name] = p);
@@ -880,7 +880,7 @@ function psDecorateSearch(){
     const html = `<p class="nt-group">Авторы</p>` + authors.slice(0, 5).map(p =>
       `<button class="nt-item" onclick="closeSearch();psOpenProfile('${psAttr(p.name)}')">
         <span class="nt-ic">${esc(p.ava || p.name[0])}</span>
-        <div class="nt-b"><span><b>${esc(p.name)}</b>${typeof vBadge === 'function' ? vBadge(p.name) : ''}</span><small>${esc(p.sub || 'автор в OKO')}</small></div>
+        <div class="nt-b"><span><b>${esc(p.name)}</b>${typeof vBadge === 'function' ? vBadge(p.name) : ''}</span><small>${esc(p.sub || 'Автор в OKO · открыть профиль')}</small></div>
       </button>`).join('');
     const empty = body.querySelector('.empty-state');
     if(empty) body.innerHTML = html;

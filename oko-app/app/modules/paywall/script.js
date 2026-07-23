@@ -176,7 +176,7 @@ var PW_ASSET = {
             '<div class="pw-p-note">'+priceNote+'</div></div>'+
           '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+tier+'</button>'+
           '<button class="btn ghost pw-later">Может позже</button>'+
-          '<div class="pw-guarant">'+I('check')+' Отмена в любой момент · безопасная оплата</div>'+
+          '<div class="pw-guarant">'+I('check')+' Отмена в 1 клик · без скрытых списаний · безопасная оплата</div>'+
         '</div>'+
       '</div>';
     el.addEventListener('click', function(e){ if(e.target===el) pwClose(); });
@@ -242,7 +242,7 @@ var PW_ASSET = {
     n.innerHTML =
       '<span class="pw-n-ic">'+I('crown')+'</span>'+
       '<div class="pw-n-tx"><b>'+(o.title||'Открой больше с '+(o.minTier||'PRO'))+'</b><small>'+(o.text||'')+'</small></div>'+
-      '<button class="pw-n-go">'+(o.cta||'Смотреть')+'</button>'+
+      '<button class="pw-n-go">'+(o.cta||'Открыть доступ')+'</button>'+
       '<button class="pw-n-x" aria-label="Скрыть">'+I('plus')+'</button>';
     document.body.appendChild(n);
     function drop(){ n.classList.add('pw-out'); setTimeout(function(){ if(n.parentNode) n.remove(); },300); }
@@ -547,7 +547,7 @@ var PW_ASSET = {
     var valueHtml = '<div class="pw-value">'+
       (save>0 ? '<div class="pw-value-i"><span>'+I('check2')+'</span>Экономия '+pwRub(save)+' против помесячной оплаты</div>' : '')+
       '<div class="pw-value-i"><span>'+I('bolt')+'</span>Это ≈ '+pwRub(perDayTotal)+' в день</div>'+
-      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке</div>'+
+      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке — дальше только в плюс — дальше только в плюс</div>'+
     '</div>';
     var countHtml = (payState.period===12) ? pwCountHtml() : '';
 
@@ -608,7 +608,7 @@ var PW_ASSET = {
       '</div>';
 
     view.innerHTML =
-      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень — активация мгновенно</p></div>'+
+      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень — один тариф заменяет целую команду, доступ открывается сразу</p></div>'+
       liveHtml +
       pwTickerHtml() +
       '<div class="pw-tiers">'+ tiersHtml +'</div>'+

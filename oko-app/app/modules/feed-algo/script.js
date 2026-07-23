@@ -145,7 +145,7 @@ const FA_POOL = [
    body:'Чек-лист перед покупкой любого токена: команда, разлоки, ликвидность, аудит. 4 пункта отсеивают 90% мусора. Сохрани — пригодится.',
    likes:211, views:9700, reposts:38, comments:[]},
   {id:777015, topic:'business', ageH:2, ava:'БО', name:'Биржа OKO', sub:'сервис OKO', media:null, promoted:true,
-   body:'Нужен монтажёр, сценарист или таргетолог под проект? На бирже OKO — исполнители с рейтингом и безопасной сделкой: оплата уходит после приёмки.',
+   body:'Нужен монтажёр, сценарист или таргетолог? На бирже OKO — 2 400+ проверенных исполнителей с рейтингом и отзывами. Сделка защищена: деньги переводятся только после приёмки работы. Первые отклики — за 15 минут.',
    likes:44, views:8100, reposts:6, comments:[]},
 ];
 
@@ -381,7 +381,7 @@ function faDecorate(){
     const s = document.createElement('div'); s.className = 'fa-sentinel'; list.appendChild(s);
     if(FA.io){ FA.io.disconnect(); FA.io.observe(s); }
   }else{
-    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Ты посмотрел всю подборку — нажми «Обновить подборку» сверху</div>`);
+    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Это вся подборка на сейчас. Жми «Обновить подборку» сверху — алгоритм найдёт свежее под тебя</div>`);
   }
 }
 
@@ -408,7 +408,7 @@ function faRenderEmpty(list, kind){
   const rec = kind === 'rec';
   const title = rec ? 'Пока пусто' : 'Тут появятся посты';
   const text  = rec
-    ? 'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.'
+    ? 'Свежие посты закончились. Обнови подборку — алгоритм за секунду соберёт новую ленту под твои интересы.'
     : 'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.';
   const cta = rec
     ? `<button class="fa-empty-cta" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`
@@ -825,7 +825,7 @@ function faDoubleTapLike(){
       'В тренде':'Trending','растёт':'rising',
       'Популярно сейчас':'Trending now',
       'Подборка пересобрана':'Feed rebuilt',
-      'Ты посмотрел всю подборку — нажми «Обновить подборку» сверху':'You have seen the whole feed — tap “Refresh feed” at the top',
+      'Это вся подборка на сейчас. Жми «Обновить подборку» сверху — алгоритм найдёт свежее под тебя':'That is the whole feed for now. Tap “Refresh feed” above — the algorithm finds fresh posts for you',
       'Твой интерес: Нейросети':'Your interest: AI','Твой интерес: Контент':'Your interest: Content',
       'Твой интерес: Бизнес':'Your interest: Business','Твой интерес: Маркетинг':'Your interest: Marketing',
       'Твой интерес: Игры':'Your interest: Games','Твой интерес: Крипта':'Your interest: Crypto',
@@ -834,7 +834,7 @@ function faDoubleTapLike(){
       'Написать комментарий…':'Write a comment…','Комментарий добавлен':'Comment added',
       'Канал':'Channel','Открыть рекомендации':'Open recommendations',
       'Пока пусто':'Nothing here yet','Тут появятся посты':'Posts will appear here',
-      'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.':
+      'Свежие посты закончились. Обнови подборку — алгоритм за секунду соберёт новую ленту под твои интересы.':
         'No fresh posts found. Refresh and the algorithm will build a new feed for you.',
       'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.':
         'Follow channels and authors — their posts show up here. Meanwhile, check the recommendations.',

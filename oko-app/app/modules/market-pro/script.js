@@ -560,7 +560,7 @@ function mpOpenPackages(){
         ${p.weeks.map((w,i)=>`<div class="mp-week"><span class="mp-week-n">${i+1}</span>
           <div class="mp-week-b"><b>Неделя ${i+1} · ${w[0]}</b><small>${w[1]}</small></div></div>`).join('')}</div>
       <button class="btn" onclick="mpOrderPackage('${p.k}')">${I('rocket')} Заказать пакет · ${fmtN(p.usd*MP_USD)} ₽</button>
-      <div class="mp-pack-note">Оплата с кошелька OKO · рабочий чат с командой сразу после оплаты</div>
+      <div class="mp-pack-note">Оплата с кошелька OKO · команда и рабочий чат сразу, старт брифа в день оплаты</div>
     </div>`;
   wrap.innerHTML = `
     <button class="mk-back" onclick="mkView='cats';mkCat=null;renderMarket()">${I('back')} Биржа</button>
@@ -726,7 +726,7 @@ function mpInjectMarket(){
   bn.innerHTML = `<span class="mp-banner-logo"><svg><use href="#i-logo"/></svg></span>
     <span class="mp-banner-b">
       <span class="mp-banner-t">OKO <b>PRODUCTION</b> — под ключ</span>
-      <span class="mp-banner-s">Контент-завод, дизайн, сайт и реклама командой OKO</span>
+      <span class="mp-banner-s">Полный цикл роста под ключ: контент, дизайн, сайт, реклама</span>
     </span>
     <span class="mp-banner-cta"><span class="mp-banner-chip">от $1500</span>${I('chev')}</span>`;
   row.insertAdjacentElement('afterend', bn);
@@ -1320,7 +1320,7 @@ function mpInjectSaveBtn(){
   w.id = 'mpSaveBar'; w.className = 'mp-savebar';
   w.innerHTML = `<button id="mpSaveBtn" class="mp-savebar-btn${saved?' saved':''}" onclick="mpSaveSearch()">
       ${saved ? I('check')+' Поиск сохранён' : I('bookmark')+' Сохранить поиск'}</button>
-    <span class="mp-savebar-hint">${saved?'Уведомим о новых':'Следите за новыми предложениями'}</span>`;
+    <span class="mp-savebar-hint">${saved?'Уведомим о новых':'Сохраните — пришлём новые раньше всех'}</span>`;
   bar.insertAdjacentElement('afterend', w);
 }
 
@@ -1389,7 +1389,7 @@ function mpRichSellerEmpty(){
   empty.outerHTML = `<div class="mp-emp seller">
     ${mpEmpBadge('briefcase')}
     <b>У тебя ещё нет объявлений</b>
-    <p>Размести первую услугу или товар — покупатели с Биржи найдут тебя, а сделки защитит эскроу OKO.</p>
+    <p>Размести первую услугу или товар бесплатно — покупатели с Биржи найдут тебя сами, а сделки защитит эскроу OKO.</p>
     <button class="btn" onclick="openListingForm()">${I('plus')} Разместить объявление</button>
   </div>`;
   if(trailing && trailing.tagName==='BUTTON') trailing.remove();

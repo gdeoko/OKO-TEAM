@@ -33,7 +33,7 @@ function adsTierLabel(){
 const ADS_FORMATS = {
   post:    {l:'Продвижение поста',       ico:'megaphone', model:'CPM', cpm:28, cpc:9,  tag:'спонсировано',       aov:490,  desc:'Ваш пост в ленте рекомендаций OKO — со ссылкой и кнопкой действия'},
   channel: {l:'Реклама платного канала', ico:'crown',     model:'CPC', cpm:34, cpc:12, tag:'реклама канала',     aov:590,  desc:'Карточка платного канала с кнопкой «Подписаться» в ленте и поиске'},
-  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO в ленте рекомендаций и результатах поиска'},
+  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO — показ горячей аудитории в ленте и поиске'},
   banner:  {l:'Баннер',                  ico:'photo',     model:'CPM', cpm:22, cpc:7,  tag:'баннер',             aov:690,  desc:'Широкий баннер в шапке ленты и тематических разделов — максимальный охват'},
 };
 const ADS_MODELS = {
@@ -257,7 +257,7 @@ function adsSchedLine(c){
 function adsRenderList(){
   const box = document.getElementById('adsList'); if(!box) return;
   if(!ADS.camps.length){
-    box.innerHTML = `<div class="card ads-empty">${I('megaphone')}Кампаний пока нет — создай первую, объявление попадёт в ленту OKO</div>`;
+    box.innerHTML = `<div class="card ads-empty">${I('megaphone')}Ни одной кампании. Запусти первую — и уже сегодня объявление увидят тысячи людей в ленте OKO</div>`;
     return;
   }
   box.innerHTML = ADS.camps.map((c,i)=>`
@@ -594,8 +594,8 @@ function adsRenderTier(){
     box.className = 'ads-tier up';
     box.onclick = adsTierUpsell; box.setAttribute('role','button');
     box.innerHTML = `<span class="ads-tier-ic">${I('crown')}</span>
-      <div class="ads-tier-mid"><b>Реклама дешевле на высоких тарифах</b>
-        <small>PRO −10% · BUSINESS −20% · MAX −30% на стоимость показов и кликов.</small></div>
+      <div class="ads-tier-mid"><b>Больше показов за те же деньги</b>
+        <small>PRO −10% · BUSINESS −20% · MAX −30% — бюджет тот же, результат больше.</small></div>
       <span class="ads-tier-cta">Открыть${I('chev')}</span>`;
   }
 }

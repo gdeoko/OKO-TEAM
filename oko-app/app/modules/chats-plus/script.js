@@ -605,7 +605,7 @@ function cpPanelTab(tab){
   if(tab==='stickers') items = list.map((s,i)=>({s,i})).filter(x=>!x.s.pack && ['fire','heart','thumb','laugh','wow','sad'].includes(x.s.ic));
   else if(tab==='oko')  items = list.map((s,i)=>({s,i})).filter(x=>!x.s.pack && !['fire','heart','thumb','laugh','wow','sad'].includes(x.s.ic));
   else if(tab==='ton')  items = list.map((s,i)=>({s,i})).filter(x=>x.s.pack==='ton');
-  if(!items.length){ body.innerHTML = `<div class="cp-panel-empty">Набор скоро появится</div>`; return; }
+  if(!items.length){ body.innerHTML = `<div class="cp-panel-empty">Готовим новый набор — скоро будет здесь</div>`; return; }
   const head = tab==='ton'
     ? `<div class="cp-emoji-sec cp-ton-sec">TON Crystal${(typeof vsPremiumOk==='function' && !vsPremiumOk())?' <b>PRO</b>':''}</div>`
     : tab==='oko' ? `<div class="cp-emoji-sec">Фирменные OKO</div>` : `<div class="cp-emoji-sec">Стикеры</div>`;
@@ -1116,10 +1116,10 @@ function cpPaywall(c){
   const a = cpAcc(c);
   const fee = Math.round(a.price*CP_FEE), net = a.price - fee;
   if(typeof showPopup!=='function'){ if(typeof toast==='function') toast('Нужен платный доступ'); return; }
-  showPopup({ico:'lock', title:'Закрытый чат',
-    body:`«${cpEsc(c.name)}» — доступ по подписке.<br><br>Спишется <b>${a.price} ₽</b> с кошелька. Автору — ${net} ₽, комиссия OKO 10% (${fee} ₽). Доступ останется навсегда.`,
+  showPopup({ico:'lock', title:'Доступ для своих',
+    body:`Внутри «${cpEsc(c.name)}» — контент только для своих.<br><br>Разовый платёж <b>${a.price} ₽</b> открывает доступ навсегда — без подписок и продлений. Автору — ${net} ₽, комиссия OKO всего 10% (${fee} ₽).`,
     actions:[
-      {label:'Оплатить '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
+      {label:'Открыть доступ · '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
       {label:'Позже', ghost:true}
     ]});
 }
@@ -1206,7 +1206,7 @@ function cpManageRender(){
   const body = `<div class="cp-mg">
     ${opt('public','users','Открытый','Виден всем и в поиске')}
     ${opt('private','lock','Приватный','Только по ссылке-приглашению')}
-    ${opt('paid','crown','Платный','Доступ по подписке, комиссия OKO 10%')}
+    ${opt('paid','crown','Платный','Зарабатывай на закрытом доступе, комиссия OKO 10%')}
     ${d.type==='paid' ? `<div class="cp-mg-price"><label>Цена доступа</label><div class="cp-mg-prow"><input id="cpMgPrice" inputmode="numeric" value="${d.price}" oninput="cpMgPriceInput()"><span>₽</span></div><div class="cp-mg-net">Тебе — <b id="cpMgNet">${d.price-Math.round(d.price*CP_FEE)} ₽</b> с каждой продажи, OKO удержит 10%</div></div>` : ''}
   </div>`;
   showPopup({ico:'lock', title:'Доступ к чату', body, actions:[

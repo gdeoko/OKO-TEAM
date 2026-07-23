@@ -8428,7 +8428,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.06</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.07</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -22197,7 +22197,7 @@ function adsTierLabel(){
 const ADS_FORMATS = {
   post:    {l:'Продвижение поста',       ico:'megaphone', model:'CPM', cpm:28, cpc:9,  tag:'спонсировано',       aov:490,  desc:'Ваш пост в ленте рекомендаций OKO — со ссылкой и кнопкой действия'},
   channel: {l:'Реклама платного канала', ico:'crown',     model:'CPC', cpm:34, cpc:12, tag:'реклама канала',     aov:590,  desc:'Карточка платного канала с кнопкой «Подписаться» в ленте и поиске'},
-  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO в ленте рекомендаций и результатах поиска'},
+  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO — показ горячей аудитории в ленте и поиске'},
   banner:  {l:'Баннер',                  ico:'photo',     model:'CPM', cpm:22, cpc:7,  tag:'баннер',             aov:690,  desc:'Широкий баннер в шапке ленты и тематических разделов — максимальный охват'},
 };
 const ADS_MODELS = {
@@ -22421,7 +22421,7 @@ function adsSchedLine(c){
 function adsRenderList(){
   const box = document.getElementById('adsList'); if(!box) return;
   if(!ADS.camps.length){
-    box.innerHTML = `<div class="card ads-empty">${I('megaphone')}Кампаний пока нет — создай первую, объявление попадёт в ленту OKO</div>`;
+    box.innerHTML = `<div class="card ads-empty">${I('megaphone')}Ни одной кампании. Запусти первую — и уже сегодня объявление увидят тысячи людей в ленте OKO</div>`;
     return;
   }
   box.innerHTML = ADS.camps.map((c,i)=>`
@@ -22758,8 +22758,8 @@ function adsRenderTier(){
     box.className = 'ads-tier up';
     box.onclick = adsTierUpsell; box.setAttribute('role','button');
     box.innerHTML = `<span class="ads-tier-ic">${I('crown')}</span>
-      <div class="ads-tier-mid"><b>Реклама дешевле на высоких тарифах</b>
-        <small>PRO −10% · BUSINESS −20% · MAX −30% на стоимость показов и кликов.</small></div>
+      <div class="ads-tier-mid"><b>Больше показов за те же деньги</b>
+        <small>PRO −10% · BUSINESS −20% · MAX −30% — бюджет тот же, результат больше.</small></div>
       <span class="ads-tier-cta">Открыть${I('chev')}</span>`;
   }
 }
@@ -25746,12 +25746,12 @@ const ST_DICT = {
   'Пакеты услуг':'Service packages','СТАРТ':'START','БИЗНЕС':'BUSINESS','ФЛАГМАН':'FLAGSHIP',
   'Контент-завод на месяц':'Content factory for a month','30 роликов в месяц под ключ':'30 turnkey videos a month',
   'Что получаешь по неделям':'What you get week by week',
-  'Оплата с кошелька OKO · рабочий чат с командой сразу после оплаты':'Paid from your OKO wallet · a team work chat right after payment',
+  'Оплата с кошелька OKO · команда и рабочий чат сразу, старт брифа в день оплаты':'Paid from your OKO wallet · team and work chat right away, brief starts the day you pay',
   'Индивидуальный':'Custom','Нестандартная задача или другой масштаб — соберём пакет под тебя.':'A custom task or different scale — we will build a package for you.',
   'Обсудим задачу':'Let us discuss','К оплате с кошелька':'Due from wallet','Баланс кошелька':'Wallet balance',
   'Вернуться к пакетам':'Back to packages',
   'После оплаты создадим рабочий чат: личный ассистент, бриф и ветки работ.':'After payment we create a work chat: personal assistant, brief and work threads.',
-  'Личный ассистент OKO':'OKO personal assistant','Контент-завод, дизайн, сайт и реклама командой OKO':'Content factory, design, website and ads by the OKO team',
+  'Личный ассистент OKO':'OKO personal assistant','Полный цикл роста под ключ: контент, дизайн, сайт, реклама':'Full growth cycle turnkey: content, design, website, ads',
   'Дизайн':'Design','Сайт':'Website','Отчёты':'Reports','сценарии, съёмка, монтаж, автопостинг':'scripts, shooting, editing, auto-posting',
   'обложки, оформление профиля, креативы':'covers, profile design, creatives','лендинг, домен, воронка продаж':'landing page, domain, sales funnel',
   'кампании, таргет, ретаргет, трафик':'campaigns, targeting, retargeting, traffic',
@@ -27809,7 +27809,7 @@ function mpOpenPackages(){
         ${p.weeks.map((w,i)=>`<div class="mp-week"><span class="mp-week-n">${i+1}</span>
           <div class="mp-week-b"><b>Неделя ${i+1} · ${w[0]}</b><small>${w[1]}</small></div></div>`).join('')}</div>
       <button class="btn" onclick="mpOrderPackage('${p.k}')">${I('rocket')} Заказать пакет · ${fmtN(p.usd*MP_USD)} ₽</button>
-      <div class="mp-pack-note">Оплата с кошелька OKO · рабочий чат с командой сразу после оплаты</div>
+      <div class="mp-pack-note">Оплата с кошелька OKO · команда и рабочий чат сразу, старт брифа в день оплаты</div>
     </div>`;
   wrap.innerHTML = `
     <button class="mk-back" onclick="mkView='cats';mkCat=null;renderMarket()">${I('back')} Биржа</button>
@@ -27975,7 +27975,7 @@ function mpInjectMarket(){
   bn.innerHTML = `<span class="mp-banner-logo"><svg><use href="#i-logo"/></svg></span>
     <span class="mp-banner-b">
       <span class="mp-banner-t">OKO <b>PRODUCTION</b> — под ключ</span>
-      <span class="mp-banner-s">Контент-завод, дизайн, сайт и реклама командой OKO</span>
+      <span class="mp-banner-s">Полный цикл роста под ключ: контент, дизайн, сайт, реклама</span>
     </span>
     <span class="mp-banner-cta"><span class="mp-banner-chip">от $1500</span>${I('chev')}</span>`;
   row.insertAdjacentElement('afterend', bn);
@@ -28569,7 +28569,7 @@ function mpInjectSaveBtn(){
   w.id = 'mpSaveBar'; w.className = 'mp-savebar';
   w.innerHTML = `<button id="mpSaveBtn" class="mp-savebar-btn${saved?' saved':''}" onclick="mpSaveSearch()">
       ${saved ? I('check')+' Поиск сохранён' : I('bookmark')+' Сохранить поиск'}</button>
-    <span class="mp-savebar-hint">${saved?'Уведомим о новых':'Следите за новыми предложениями'}</span>`;
+    <span class="mp-savebar-hint">${saved?'Уведомим о новых':'Сохраните — пришлём новые раньше всех'}</span>`;
   bar.insertAdjacentElement('afterend', w);
 }
 
@@ -28638,7 +28638,7 @@ function mpRichSellerEmpty(){
   empty.outerHTML = `<div class="mp-emp seller">
     ${mpEmpBadge('briefcase')}
     <b>У тебя ещё нет объявлений</b>
-    <p>Размести первую услугу или товар — покупатели с Биржи найдут тебя, а сделки защитит эскроу OKO.</p>
+    <p>Размести первую услугу или товар бесплатно — покупатели с Биржи найдут тебя сами, а сделки защитит эскроу OKO.</p>
     <button class="btn" onclick="openListingForm()">${I('plus')} Разместить объявление</button>
   </div>`;
   if(trailing && trailing.tagName==='BUTTON') trailing.remove();
@@ -28911,7 +28911,7 @@ const FA_POOL = [
    body:'Чек-лист перед покупкой любого токена: команда, разлоки, ликвидность, аудит. 4 пункта отсеивают 90% мусора. Сохрани — пригодится.',
    likes:211, views:9700, reposts:38, comments:[]},
   {id:777015, topic:'business', ageH:2, ava:'БО', name:'Биржа OKO', sub:'сервис OKO', media:null, promoted:true,
-   body:'Нужен монтажёр, сценарист или таргетолог под проект? На бирже OKO — исполнители с рейтингом и безопасной сделкой: оплата уходит после приёмки.',
+   body:'Нужен монтажёр, сценарист или таргетолог? На бирже OKO — 2 400+ проверенных исполнителей с рейтингом и отзывами. Сделка защищена: деньги переводятся только после приёмки работы. Первые отклики — за 15 минут.',
    likes:44, views:8100, reposts:6, comments:[]},
 ];
 
@@ -29147,7 +29147,7 @@ function faDecorate(){
     const s = document.createElement('div'); s.className = 'fa-sentinel'; list.appendChild(s);
     if(FA.io){ FA.io.disconnect(); FA.io.observe(s); }
   }else{
-    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Ты посмотрел всю подборку — нажми «Обновить подборку» сверху</div>`);
+    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Это вся подборка на сейчас. Жми «Обновить подборку» сверху — алгоритм найдёт свежее под тебя</div>`);
   }
 }
 
@@ -29174,7 +29174,7 @@ function faRenderEmpty(list, kind){
   const rec = kind === 'rec';
   const title = rec ? 'Пока пусто' : 'Тут появятся посты';
   const text  = rec
-    ? 'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.'
+    ? 'Свежие посты закончились. Обнови подборку — алгоритм за секунду соберёт новую ленту под твои интересы.'
     : 'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.';
   const cta = rec
     ? `<button class="fa-empty-cta" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`
@@ -29591,7 +29591,7 @@ function faDoubleTapLike(){
       'В тренде':'Trending','растёт':'rising',
       'Популярно сейчас':'Trending now',
       'Подборка пересобрана':'Feed rebuilt',
-      'Ты посмотрел всю подборку — нажми «Обновить подборку» сверху':'You have seen the whole feed — tap “Refresh feed” at the top',
+      'Это вся подборка на сейчас. Жми «Обновить подборку» сверху — алгоритм найдёт свежее под тебя':'That is the whole feed for now. Tap “Refresh feed” above — the algorithm finds fresh posts for you',
       'Твой интерес: Нейросети':'Your interest: AI','Твой интерес: Контент':'Your interest: Content',
       'Твой интерес: Бизнес':'Your interest: Business','Твой интерес: Маркетинг':'Your interest: Marketing',
       'Твой интерес: Игры':'Your interest: Games','Твой интерес: Крипта':'Your interest: Crypto',
@@ -29600,7 +29600,7 @@ function faDoubleTapLike(){
       'Написать комментарий…':'Write a comment…','Комментарий добавлен':'Comment added',
       'Канал':'Channel','Открыть рекомендации':'Open recommendations',
       'Пока пусто':'Nothing here yet','Тут появятся посты':'Posts will appear here',
-      'Мы не нашли свежих постов. Обнови подборку — алгоритм соберёт новую ленту под тебя.':
+      'Свежие посты закончились. Обнови подборку — алгоритм за секунду соберёт новую ленту под твои интересы.':
         'No fresh posts found. Refresh and the algorithm will build a new feed for you.',
       'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.':
         'Follow channels and authors — their posts show up here. Meanwhile, check the recommendations.',
@@ -31180,7 +31180,7 @@ function cpPanelTab(tab){
   if(tab==='stickers') items = list.map((s,i)=>({s,i})).filter(x=>!x.s.pack && ['fire','heart','thumb','laugh','wow','sad'].includes(x.s.ic));
   else if(tab==='oko')  items = list.map((s,i)=>({s,i})).filter(x=>!x.s.pack && !['fire','heart','thumb','laugh','wow','sad'].includes(x.s.ic));
   else if(tab==='ton')  items = list.map((s,i)=>({s,i})).filter(x=>x.s.pack==='ton');
-  if(!items.length){ body.innerHTML = `<div class="cp-panel-empty">Набор скоро появится</div>`; return; }
+  if(!items.length){ body.innerHTML = `<div class="cp-panel-empty">Готовим новый набор — скоро будет здесь</div>`; return; }
   const head = tab==='ton'
     ? `<div class="cp-emoji-sec cp-ton-sec">TON Crystal${(typeof vsPremiumOk==='function' && !vsPremiumOk())?' <b>PRO</b>':''}</div>`
     : tab==='oko' ? `<div class="cp-emoji-sec">Фирменные OKO</div>` : `<div class="cp-emoji-sec">Стикеры</div>`;
@@ -31691,10 +31691,10 @@ function cpPaywall(c){
   const a = cpAcc(c);
   const fee = Math.round(a.price*CP_FEE), net = a.price - fee;
   if(typeof showPopup!=='function'){ if(typeof toast==='function') toast('Нужен платный доступ'); return; }
-  showPopup({ico:'lock', title:'Закрытый чат',
-    body:`«${cpEsc(c.name)}» — доступ по подписке.<br><br>Спишется <b>${a.price} ₽</b> с кошелька. Автору — ${net} ₽, комиссия OKO 10% (${fee} ₽). Доступ останется навсегда.`,
+  showPopup({ico:'lock', title:'Доступ для своих',
+    body:`Внутри «${cpEsc(c.name)}» — контент только для своих.<br><br>Разовый платёж <b>${a.price} ₽</b> открывает доступ навсегда — без подписок и продлений. Автору — ${net} ₽, комиссия OKO всего 10% (${fee} ₽).`,
     actions:[
-      {label:'Оплатить '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
+      {label:'Открыть доступ · '+a.price+' ₽', onclick:()=>cpBuyAccess(c)},
       {label:'Позже', ghost:true}
     ]});
 }
@@ -31781,7 +31781,7 @@ function cpManageRender(){
   const body = `<div class="cp-mg">
     ${opt('public','users','Открытый','Виден всем и в поиске')}
     ${opt('private','lock','Приватный','Только по ссылке-приглашению')}
-    ${opt('paid','crown','Платный','Доступ по подписке, комиссия OKO 10%')}
+    ${opt('paid','crown','Платный','Зарабатывай на закрытом доступе, комиссия OKO 10%')}
     ${d.type==='paid' ? `<div class="cp-mg-price"><label>Цена доступа</label><div class="cp-mg-prow"><input id="cpMgPrice" inputmode="numeric" value="${d.price}" oninput="cpMgPriceInput()"><span>₽</span></div><div class="cp-mg-net">Тебе — <b id="cpMgNet">${d.price-Math.round(d.price*CP_FEE)} ₽</b> с каждой продажи, OKO удержит 10%</div></div>` : ''}
   </div>`;
   showPopup({ico:'lock', title:'Доступ к чату', body, actions:[
@@ -32140,7 +32140,7 @@ function psMediaList(a){
 }
 function psMediaHtml(a){
   const list = psMediaList(a);
-  if(!list.length) return `<div class="ps-empty">${I('grid')}<p>Пока нет медиа</p><span>Работы автора появятся здесь</span></div>`;
+  if(!list.length) return `<div class="ps-empty">${I('grid')}<p>Медиа пока нет</p><span>Кейсы, ролики и работы автора появятся здесь</span></div>`;
   const nf = v => (typeof fmtN === 'function' ? fmtN(v) : v);
   return `<div class="ps-grid">` + list.map((t, i) => `
     <button class="ps-mtile ${t.g} fade-in" style="animation-delay:${i * 35}ms" onclick="psOpenMedia(${i})" aria-label="${psAttr(t.title)}">
@@ -32206,7 +32206,7 @@ function psAnimateStats(){
 
 /* ---------- рендер профиля ---------- */
 function psPostsHtml(a){
-  if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Пока нет постов</p><span>Публикации автора появятся здесь</span></div>`;
+  if(!a.posts.length) return `<div class="ps-empty">${I('feed')}<p>Здесь скоро будут посты</p><span>Подпишись — и не пропустишь первую публикацию автора</span></div>`;
   return a.posts.map(p => `
     <article class="ps-post fade-in">
       <div class="ps-post-time">${psAgo(p)}${p.promoted ? ' · реклама' : ''}</div>
@@ -32329,7 +32329,7 @@ function psToggleFollow(){
   }
   if(f && typeof showPopup === 'function'){
     showPopup({ico:'users', title:'Подписка оформлена',
-      body:`Теперь его посты — выше в твоей ленте «Подписки». Ты подписан на <b>${esc(name)}</b>.`,
+      body:`Готово. Лучшие посты <b>${esc(name)}</b> теперь поднимаются выше в ленте «Подписки» — ничего важного не пропустишь.`,
       actions:[{label:'В ленту', onclick: psGoSubFeed}, {label:'Понятно', ghost:true}]});
   } else if(!f && typeof toast === 'function'){
     toast('Ты отписался от ' + name);
@@ -32644,7 +32644,7 @@ function psOpenMyFollows(){
   if(th) th.style.display = 'none';
   const wrap = document.getElementById('psGraphList');
   if(wrap){
-    if(!names.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Ты пока ни на кого не подписан</p><span>Открой профиль автора и нажми «Подписаться»</span></div>`; }
+    if(!names.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Твоя лента подписок пуста</p><span>Подпишись на авторов — их лучшие посты будут первыми у тебя</span></div>`; }
     else{
       const pool = psPeoplePool();
       const byName = {}; pool.forEach(p => byName[p.name] = p);
@@ -32715,7 +32715,7 @@ function psDecorateSearch(){
     const html = `<p class="nt-group">Авторы</p>` + authors.slice(0, 5).map(p =>
       `<button class="nt-item" onclick="closeSearch();psOpenProfile('${psAttr(p.name)}')">
         <span class="nt-ic">${esc(p.ava || p.name[0])}</span>
-        <div class="nt-b"><span><b>${esc(p.name)}</b>${typeof vBadge === 'function' ? vBadge(p.name) : ''}</span><small>${esc(p.sub || 'автор в OKO')}</small></div>
+        <div class="nt-b"><span><b>${esc(p.name)}</b>${typeof vBadge === 'function' ? vBadge(p.name) : ''}</span><small>${esc(p.sub || 'Автор в OKO · открыть профиль')}</small></div>
       </button>`).join('');
     const empty = body.querySelector('.empty-state');
     if(empty) body.innerHTML = html;
@@ -35723,7 +35723,7 @@ var PW_ASSET = {
             '<div class="pw-p-note">'+priceNote+'</div></div>'+
           '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+tier+'</button>'+
           '<button class="btn ghost pw-later">Может позже</button>'+
-          '<div class="pw-guarant">'+I('check')+' Отмена в любой момент · безопасная оплата</div>'+
+          '<div class="pw-guarant">'+I('check')+' Отмена в 1 клик · без скрытых списаний · безопасная оплата</div>'+
         '</div>'+
       '</div>';
     el.addEventListener('click', function(e){ if(e.target===el) pwClose(); });
@@ -35789,7 +35789,7 @@ var PW_ASSET = {
     n.innerHTML =
       '<span class="pw-n-ic">'+I('crown')+'</span>'+
       '<div class="pw-n-tx"><b>'+(o.title||'Открой больше с '+(o.minTier||'PRO'))+'</b><small>'+(o.text||'')+'</small></div>'+
-      '<button class="pw-n-go">'+(o.cta||'Смотреть')+'</button>'+
+      '<button class="pw-n-go">'+(o.cta||'Открыть доступ')+'</button>'+
       '<button class="pw-n-x" aria-label="Скрыть">'+I('plus')+'</button>';
     document.body.appendChild(n);
     function drop(){ n.classList.add('pw-out'); setTimeout(function(){ if(n.parentNode) n.remove(); },300); }
@@ -36094,7 +36094,7 @@ var PW_ASSET = {
     var valueHtml = '<div class="pw-value">'+
       (save>0 ? '<div class="pw-value-i"><span>'+I('check2')+'</span>Экономия '+pwRub(save)+' против помесячной оплаты</div>' : '')+
       '<div class="pw-value-i"><span>'+I('bolt')+'</span>Это ≈ '+pwRub(perDayTotal)+' в день</div>'+
-      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке</div>'+
+      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке — дальше только в плюс — дальше только в плюс</div>'+
     '</div>';
     var countHtml = (payState.period===12) ? pwCountHtml() : '';
 
@@ -36155,7 +36155,7 @@ var PW_ASSET = {
       '</div>';
 
     view.innerHTML =
-      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень — активация мгновенно</p></div>'+
+      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень — один тариф заменяет целую команду, доступ открывается сразу</p></div>'+
       liveHtml +
       pwTickerHtml() +
       '<div class="pw-tiers">'+ tiersHtml +'</div>'+
