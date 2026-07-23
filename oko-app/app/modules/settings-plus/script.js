@@ -9,10 +9,10 @@ const ST2 = {
   nick: null,                       /* override ника (синк с PROFILE) */
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
-  notif: {msg:true, feed:true, market:true, academy:true, marketing:false},
+  notif: {msg:true, feed:true, market:true, academy:true, marketing:false, quiet:{on:false, from:'23:00', to:'08:00'}},
   /* приватность: write (all|following|nobody), phone/photo/status (all|contacts|nobody), online/read — тумблеры */
   priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all'},
-  sec:   {twofa:false, passcode:false, pin:null, secret:null},
+  sec:   {twofa:false, passcode:false, pin:null, secret:null, autolock:'5m'},
   theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
   accounts: [],                     /* [{id,name,nick,tier,role,bio,status,avatar,cover}] */
   activeAcc: null,                  /* id активного аккаунта */
@@ -175,7 +175,13 @@ function st2Render(){
   const VIS = [['all','Все'],['contacts','Контакты'],['nobody','Никто']];
   const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
   const lang = (typeof LANG !== 'undefined') ? LANG : 'ru';
+  const q = ST2.notif.quiet || (ST2.notif.quiet = {on:false, from:'23:00', to:'08:00'});
   body.innerHTML = `
+  <label class="st2-search" id="st2Search">
+    <span class="st2-search-ic">${I('st2-search')}</span>
+    <input id="st2SearchInp" type="search" placeholder="Поиск по настройкам" autocomplete="off" enterkeyhint="search" oninput="st2Search(this.value)">
+    <button type="button" class="st2-search-x" onclick="st2SearchClear()" aria-label="Очистить">${I('st2-x')}</button>
+  </label>
   <div class="st2-sec">
     <div class="st2-h">${I('users')} Аккаунты</div>
     <div class="st2-card" id="st2AccList">
@@ -199,6 +205,15 @@ function st2Render(){
     <div class="st2-h">${I('bell')} Уведомления</div>
     <div class="st2-card">${N.map(([k, l, ico]) =>
       `<button class="prow" onclick="st2Tgl('notif','${k}',this)">${I(ico)} ${l} ${st2Sw(ST2.notif[k])}</button>`).join('')}
+      <button class="prow" onclick="st2QuietTgl(this)">${I('moon')} Тихие часы${st2QuietChip()}${st2Sw(q.on)}</button>
+      <div class="st2-quiet${q.on ? ' open' : ''}" id="st2Quiet"><div class="st2-quiet-in">
+        <div class="st2-quiet-times">
+          <label class="st2-time"><span>с</span><input type="time" value="${esc(q.from)}" onchange="st2QuietTime('from',this.value)"></label>
+          <span class="st2-quiet-arrow">${I('chev')}</span>
+          <label class="st2-time"><span>до</span><input type="time" value="${esc(q.to)}" onchange="st2QuietTime('to',this.value)"></label>
+        </div>
+        <p class="st2-quiet-note">${I('moon')} В эти часы уведомления приходят без звука и вибрации. Режим повторяется каждый день автоматически.</p>
+      </div></div>
     </div>
   </div>
   <div class="st2-sec">
@@ -229,6 +244,10 @@ function st2Render(){
         <span class="chip st2-chip ${ST2.sec.twofa ? 'st2-chip-on' : ''}">${ST2.sec.twofa ? I('check') + ' включена' : 'выключена'}</span>
         <span class="chev">${I('chev')}</span></button>
       <button class="prow" onclick="st2Passcode(this)">${I('lock')} Код-пароль при входе ${st2Sw(ST2.sec.passcode)}</button>
+      ${ST2.sec.passcode ? `<div class="prow st2-prow-col" style="cursor:default">
+        <span class="st2-prow-lbl">${I('st2-clock')} Автоблокировка</span>
+        <span class="st2-seg st2-seg3" id="st2LockSeg">${[['now','Сразу'],['1m','1 мин'],['5m','5 мин'],['1h','1 час']].map(o =>
+          `<button data-v="${o[0]}" class="${(ST2.sec.autolock || '5m') === o[0] ? 'on' : ''}" onclick="st2SetAutolock('${o[0]}')">${o[1]}</button>`).join('')}</span></div>` : ''}
       <button class="prow" onclick="st2ChangePass()">${I('st2-key')} Сменить пароль<span class="chev">${I('chev')}</span></button>
     </div>
   </div>
@@ -275,6 +294,7 @@ function st2Render(){
       <button class="st2-del" onclick="st2DeleteAsk()">Удалить аккаунт</button>
     </div>
   </div>
+  <div class="st2-search-empty" id="st2SearchEmpty">${I('st2-search')}<p>Ничего не найдено</p><span>Попробуйте другой запрос</span></div>
   <div class="st2-foot">OKO · настройки хранятся локально на устройстве</div>`;
 }
 
@@ -299,6 +319,101 @@ function st2Tgl(group, k, btn){
   st2Save(); st2PushCore();
   const sw = btn && btn.querySelector('.switch');
   if(sw) sw.classList.toggle('on', ST2[group][k]);
+}
+
+/* ---------- живой поиск по настройкам (мгновенный фильтр секций/строк) ---------- */
+function st2Search(qv){
+  const body = document.getElementById('st2Body');
+  if(!body) return;
+  const lab = document.getElementById('st2Search');
+  const raw = String(qv || '');
+  if(lab) lab.classList.toggle('has', !!raw.trim());
+  const q = raw.trim().toLowerCase();
+  let any = false;
+  body.querySelectorAll('.st2-sec').forEach(sec => {
+    const rows = sec.querySelectorAll('.st2-card>.prow,.st2-card>.st2-acc,.st2-card>.st2-ses');
+    const hEl = sec.querySelector('.st2-h');
+    const title = (hEl ? hEl.textContent : '').toLowerCase();
+    if(!q){
+      sec.style.display = '';
+      rows.forEach(r => { r.style.display = ''; });
+      any = true; return;
+    }
+    let hit = false;
+    if(rows.length){
+      const tHit = title.indexOf(q) > -1;
+      rows.forEach(r => {
+        const rh = tHit || r.textContent.toLowerCase().indexOf(q) > -1;
+        r.style.display = rh ? '' : 'none';
+        if(rh) hit = true;
+      });
+    } else {
+      hit = sec.textContent.toLowerCase().indexOf(q) > -1;
+    }
+    sec.style.display = hit ? '' : 'none';
+    if(hit) any = true;
+  });
+  const foot = body.querySelector('.st2-foot');
+  if(foot) foot.style.display = q ? 'none' : '';
+  const empty = document.getElementById('st2SearchEmpty');
+  if(empty) empty.style.display = (q && !any) ? '' : 'none';
+}
+function st2SearchClear(){
+  const inp = document.getElementById('st2SearchInp');
+  if(inp) inp.value = '';
+  st2Search('');
+  if(inp) try{ inp.focus(); }catch(e){}
+}
+
+/* ---------- тихие часы / не беспокоить (расписание беззвучных уведомлений) ---------- */
+function st2QuietMin(t){ const m = /^(\d\d):(\d\d)$/.exec(t || ''); return m ? (+m[1] * 60 + +m[2]) : 0; }
+function st2QuietActive(){
+  const qq = ST2.notif.quiet;
+  if(!qq || !qq.on) return false;
+  const f = st2QuietMin(qq.from), t = st2QuietMin(qq.to);
+  if(f === t) return false;
+  const d = new Date(), now = d.getHours() * 60 + d.getMinutes();
+  return f < t ? (now >= f && now < t) : (now >= f || now < t);
+}
+function st2QuietChip(){
+  const qq = ST2.notif.quiet;
+  if(!qq || !qq.on) return '';
+  return st2QuietActive()
+    ? `<span class="chip st2-chip st2-chip-on">${I('moon')} сейчас тихо</span>`
+    : `<span class="chip st2-chip">${esc(qq.from)}–${esc(qq.to)}</span>`;
+}
+function st2QuietRefreshChip(){
+  const prow = document.querySelector('.prow[onclick="st2QuietTgl(this)"]');
+  if(!prow) return;
+  const old = prow.querySelector('.chip');
+  if(old) old.remove();
+  const html = st2QuietChip();
+  const sw = prow.querySelector('.switch');
+  if(html && sw) sw.insertAdjacentHTML('beforebegin', html);
+}
+function st2QuietTgl(btn){
+  const qq = ST2.notif.quiet;
+  qq.on = !qq.on; st2Save();
+  const sw = btn && btn.querySelector('.switch');
+  if(sw) sw.classList.toggle('on', qq.on);
+  const box = document.getElementById('st2Quiet');
+  if(box) box.classList.toggle('open', qq.on);
+  st2QuietRefreshChip();
+  toast(qq.on ? 'Тихие часы: с ' + qq.from + ' до ' + qq.to : 'Тихие часы выключены');
+}
+function st2QuietTime(which, val){
+  if(!/^\d\d:\d\d$/.test(val || '')) return;
+  ST2.notif.quiet[which] = val; st2Save();
+  st2QuietRefreshChip();
+}
+
+/* ---------- автоблокировка (запрос код-пароля после простоя) ---------- */
+function st2SetAutolock(v){
+  ST2.sec.autolock = v; st2Save();
+  const seg = document.getElementById('st2LockSeg');
+  if(seg) seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === v));
+  const M = {now:'сразу', '1m':'через 1 минуту', '5m':'через 5 минут', '1h':'через час'};
+  toast('Автоблокировка: ' + (M[v] || v));
 }
 
 /* ---------- Оформление: тема / язык ---------- */
@@ -1020,6 +1135,15 @@ function st2AddIcons(){
   mk('i-st2-image', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
     '<rect x="14" y="20" width="72" height="60" rx="9"/><circle cx="36" cy="41" r="7"/>' +
     '<path d="M20 74 L42 52 L58 66 L72 54 L84 64"/></g>');
+  /* лупа (поиск по настройкам) */
+  mk('i-st2-search', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="43" cy="43" r="27"/><path d="M63 63 L86 86"/></g>');
+  /* крестик (очистить поиск) */
+  mk('i-st2-x', '<g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M28 28 L72 72 M72 28 L28 72"/></g>');
+  /* часы (автоблокировка) */
+  mk('i-st2-clock', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="38"/><path d="M50 28 V50 L66 60"/></g>');
 }
 
 /* ---------- строка «Настройки» в профиле ---------- */

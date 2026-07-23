@@ -119,7 +119,13 @@
 .wal-cats-empty{font-size:12.5px;color:var(--dim);padding:6px 2px}
 
 /* история */
-.wal-filters{display:flex;gap:8px;margin:12px 0 12px}
+.wal-search-wrap{position:relative;margin:12px 0 0}
+.wal-search-ic{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--dim);pointer-events:none}
+.wal-search{width:100%;padding:11px 16px 11px 40px;border:1px solid var(--border);border-radius:99px;background:var(--surface);font-size:13px;font-weight:600;color:var(--text);transition:border-color .18s,box-shadow .18s}
+.wal-search::placeholder{color:var(--dim);font-weight:500}
+.wal-search:focus{outline:none;border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+.wal-search::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:15px;height:15px;background:var(--dim);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;cursor:pointer}
+.wal-filters{display:flex;gap:8px;margin:10px 0 12px}
 .wal-filters button{flex:1;padding:9px 4px;border:1px solid var(--border);border-radius:99px;font-size:12px;font-weight:700;color:var(--dim);transition:all .18s}
 .wal-filters button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
 .wal-filters button:active{transform:scale(.96)}
@@ -289,6 +295,28 @@
 .wal-tx-acts .prim:first-child{box-shadow:var(--glow)}
 .wal-tx-acts .sec{background:var(--surface);border:1px solid var(--border);color:var(--text)}
 .wal-tx-acts button svg.i{width:16px;height:16px}
+/* статус «в обработке» для незавершённого вывода */
+.wal-tx-status.proc{color:var(--text);background:var(--raised);border:1px solid var(--border)}
+.wal-tx-status.proc svg.i{color:var(--dim)}
+
+/* ===== СТАТУС ВЫВОДА: таймлайн ===== */
+.wal-tx-tl-h{display:flex;align-items:center;gap:8px;margin:18px 0 4px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.wal-tx-tl-h svg.i{width:14px;height:14px;color:var(--accent)}
+.wal-tl{margin-top:10px}
+.wal-tl-step{position:relative;display:flex;align-items:flex-start;gap:12px;padding-bottom:16px;animation:fade .3s ease both}
+.wal-tl-step:last-child{padding-bottom:0}
+.wal-tl-step:not(:last-child)::before{content:'';position:absolute;left:11px;top:24px;bottom:0;width:2px;background:var(--border)}
+.wal-tl-step.done:not(:last-child)::before{background:var(--lime)}
+.wal-tl-dot{position:relative;z-index:1;width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--raised);border:2px solid var(--border);color:var(--dim)}
+.wal-tl-dot svg.i{width:12px;height:12px}
+.wal-tl-step.done .wal-tl-dot{background:var(--lime);border-color:var(--lime);color:#000}
+.wal-tl-step.active .wal-tl-dot{background:var(--lime-dim);border-color:var(--lime);color:var(--accent)}
+.wal-tl-step.active .wal-tl-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--lime);opacity:0;animation:walRing 1.4s ease infinite}
+.wal-tl-b{padding-top:2px;min-width:0}
+.wal-tl-b b{display:block;font-size:13px;font-weight:700;color:var(--dim);line-height:1.25}
+.wal-tl-step.done .wal-tl-b b,.wal-tl-step.active .wal-tl-b b{color:var(--text)}
+.wal-tl-b span{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.4}
+@media (prefers-reduced-motion:reduce){.wal-tl-step.active .wal-tl-dot::after{animation:none}}
 
 /* ===== TON CONNECT (подключение кошелька — surface для пополнения и вывода) ===== */
 .wal-ton-connect{display:flex;align-items:center;gap:11px;width:100%;margin-top:12px;padding:13px 14px;border-radius:var(--r-md);text-align:left;background:linear-gradient(135deg,rgba(0,136,204,.16),rgba(154,255,0,.06));border:1px solid rgba(0,136,204,.4);transition:transform .12s,border-color .18s}

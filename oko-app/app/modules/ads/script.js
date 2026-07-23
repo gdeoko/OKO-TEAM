@@ -31,10 +31,10 @@ function adsTierLabel(){
 
 /* форматы рекламы: модель по умолчанию, базовые CPM/CPC, метка в ленте */
 const ADS_FORMATS = {
-  post:    {l:'Продвижение поста',       ico:'megaphone', model:'CPM', cpm:28, cpc:9,  tag:'спонсировано',       desc:'Ваш пост в ленте рекомендаций OKO — со ссылкой и кнопкой действия'},
-  channel: {l:'Реклама платного канала', ico:'crown',     model:'CPC', cpm:34, cpc:12, tag:'реклама канала',     desc:'Карточка платного канала с кнопкой «Подписаться» в ленте и поиске'},
-  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    desc:'Товар или услуга с Биржи OKO в ленте рекомендаций и результатах поиска'},
-  banner:  {l:'Баннер',                  ico:'photo',     model:'CPM', cpm:22, cpc:7,  tag:'баннер',             desc:'Широкий баннер в шапке ленты и тематических разделов — максимальный охват'},
+  post:    {l:'Продвижение поста',       ico:'megaphone', model:'CPM', cpm:28, cpc:9,  tag:'спонсировано',       aov:490,  desc:'Ваш пост в ленте рекомендаций OKO — со ссылкой и кнопкой действия'},
+  channel: {l:'Реклама платного канала', ico:'crown',     model:'CPC', cpm:34, cpc:12, tag:'реклама канала',     aov:590,  desc:'Карточка платного канала с кнопкой «Подписаться» в ленте и поиске'},
+  listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO в ленте рекомендаций и результатах поиска'},
+  banner:  {l:'Баннер',                  ico:'photo',     model:'CPM', cpm:22, cpc:7,  tag:'баннер',             aov:690,  desc:'Широкий баннер в шапке ленты и тематических разделов — максимальный охват'},
 };
 const ADS_MODELS = {
   CPM: {unit:'₽ / 1000 показов', min:12, rec:1, max:3.2},   /* rec/max — множители к базовому cpm формата */
@@ -147,6 +147,8 @@ function adsMigrate(){
     if(c.spentToday==null) c.spentToday = 0;     /* потрачено сегодня (для дневного лимита) */
     if(c.spentDay==null) c.spentDay = adsDayKey();
     if(!c.cvr) c.cvr = +(0.16 + Math.random()*0.18).toFixed(3);   /* доля кликов → целевое действие */
+    if(c.aov==null) c.aov = (ADS_FORMATS[c.fmt] && ADS_FORMATS[c.fmt].aov) || 690;   /* средний чек продажи, ₽ */
+    if(c.salesRate==null) c.salesRate = +(0.006 + Math.random()*0.007).toFixed(4);   /* доля кликов → оплаченная продажа */
     if(c.ab){ c.ab.a = c.ab.a || {i:0,c:0}; c.ab.b = c.ab.b || {i:0,c:0}; }
     if(c.demo && !c.media) c.media = adsBrandPoster(c);
     adsRollDays(c);
@@ -309,6 +311,7 @@ function adsAudLine(c){
 }
 function adsStatsBlock(c){
   return `<div class="ads-stats">
+    ${adsAdviceBlock(c)}
     <div class="ads-aud-line">${I('users')}${esc(adsAudLine(c))}</div>
     <canvas class="ads-days" id="adsDays${c.id}"></canvas>
     <div class="ads-legend">
@@ -318,6 +321,7 @@ function adsStatsBlock(c){
     </div>
     <div class="ads-stats-sub" data-m="sub7">${adsSub7(c)}</div>
     ${adsFunnel(c)}
+    ${adsRoasStrip(c)}
     ${c.ab ? `<div class="ads-ab" data-m="ab">${adsAbInner(c)}</div>` : ''}
   </div>`;
 }
@@ -398,6 +402,84 @@ function adsSyncFunnel(c, animate){
     if(el.dataset.dr==='ctr') el.textContent = (imps ? clk/imps*100 : 0).toFixed(1)+'%';
     else el.textContent = (clk ? cv/clk*100 : 0).toFixed(0)+'%';
   });
+}
+
+/* ---------- продажи / окупаемость (ROAS): деньги, которые приносит реклама ---------- */
+function adsAov(c){ return c.aov || (ADS_FORMATS[c.fmt] && ADS_FORMATS[c.fmt].aov) || 690; }
+function adsSalesRate(c){ return c.salesRate || 0.009; }
+function adsSales(c){ return Math.round((c.clicks||0) * adsSalesRate(c)); }
+function adsRevenue(c){ return adsSales(c) * adsAov(c); }
+function adsRoas(c){ return c.spent>0 ? adsRevenue(c)/c.spent : 0; }
+function adsRoasTxt(r){ return r ? '×'+(r>=10 ? Math.round(r) : r.toFixed(1)) : '×0'; }
+function adsRoasCls(c){ const r = adsRoas(c); return r>=2 ? 'good' : (r>0 && r<1 && adsSales(c)>0 ? 'low' : ''); }
+function adsRoasStrip(c){
+  const sales = adsSales(c), rev = adsRevenue(c), roas = adsRoas(c);
+  const w = Math.max(4, Math.min(100, roas/4*100));   /* шкала 0..×4+, отметка безубыточности на ×1 */
+  return `<div class="ads-roas ${adsRoasCls(c)}">
+    <div class="ads-roas-h">${I('money')}Продажи и окупаемость<span class="ads-roas-aov">средний чек ${fmtN(adsAov(c))} ₽</span></div>
+    <div class="ads-roas-grid">
+      <div class="ads-roas-c"><b data-r="sales">${fmtN(sales)}</b><span>продажи</span></div>
+      <div class="ads-roas-c"><b data-r="rev">${fmtN(rev)}<i class="ads-cur">₽</i></b><span>выручка</span></div>
+      <div class="ads-roas-c roas"><b data-r="roas">${adsRoasTxt(roas)}</b><span>окупаемость</span></div>
+    </div>
+    <div class="ads-roas-bar"><i data-r="bar" style="width:${w}%"></i><em class="ads-roas-be"></em></div>
+    <div class="ads-roas-scale"><span>0</span><span>×1 окуп.</span><span>×4+</span></div>
+  </div>`;
+}
+function adsSyncRoas(c){
+  const rw = document.querySelector(`.ads-camp[data-cid="${c.id}"] .ads-roas`); if(!rw) return;
+  const sales = adsSales(c), rev = adsRevenue(c), roas = adsRoas(c);
+  const set = (k,v)=>{ const n = rw.querySelector(`[data-r="${k}"]`); if(n) n.innerHTML = v; };
+  set('sales', fmtN(sales)); set('rev', fmtN(rev)+'<i class="ads-cur">₽</i>'); set('roas', adsRoasTxt(roas));
+  const bar = rw.querySelector('[data-r="bar"]'); if(bar) bar.style.width = Math.max(4, Math.min(100, roas/4*100))+'%';
+  rw.className = 'ads-roas '+adsRoasCls(c);
+}
+
+/* ---------- ИИ-оптимизатор: разбирает метрики кампании и даёт действия в один тап ---------- */
+function adsAdvice(c){
+  if(c.status==='mod' || c.status==='sched' || c.status==='rej') return [];
+  const out = [], ctr = adsCtr(c), roas = adsRoas(c), bpct = c.budget ? c.spent/c.budget*100 : 0;
+  const win = adsAbWinner(c), noMedia = !c.media || !c.media.src;
+  if(win) out.push({tone:'good', ic:'crown', p:2,
+    text:`Победил вариант <b>${win.toUpperCase()}</b> A/B-теста. Оставьте только его — весь показ на лидере.`,
+    label:'Оставить '+win.toUpperCase(), act:`adsApplyAbWinner(${c.id})`});
+  if(roas>=2 && c.status==='act') out.push({tone:'good', ic:'fire', p:1,
+    text:`Окупаемость <b>${adsRoasTxt(roas)}</b> — реклама в плюсе. Масштабируйте бюджет, пока держится.`,
+    label:'Масштабировать', act:`adsTopup(${c.id})`});
+  if(noMedia) out.push({tone:'warn', ic:'photo', p:1,
+    text:'Без креатива CTR ниже в 2–3 раза. Добавьте фото или видео к объявлению.',
+    label:'Добавить креатив', act:`adsEdit(${c.id})`});
+  if(c.imps>2000 && ctr<1) out.push({tone:'warn', ic:'bolt', p:0,
+    text:`Низкий CTR <b>${ctr.toFixed(1)}%</b> — обновите заголовок или включите A/B-тест.`,
+    label:'Изменить', act:`adsEdit(${c.id})`});
+  if(ctr>=3 && bpct>=80 && c.status==='act') out.push({tone:'good', ic:'eye', p:0,
+    text:`Сильный CTR <b>${ctr.toFixed(1)}%</b>, а бюджет почти израсходован. Пополните, пока идёт открутка.`,
+    label:'Пополнить', act:`adsTopup(${c.id})`});
+  if(roas>0 && roas<1 && adsSales(c)>0) out.push({tone:'warn', ic:'poll', p:0,
+    text:`Окупаемость ниже <b>×1</b> — расход выше выручки. Снизьте ставку или уточните аудиторию.`,
+    label:'Изменить', act:`adsEdit(${c.id})`});
+  return out.sort((a,b)=>b.p-a.p).slice(0,3);
+}
+function adsAdviceBlock(c){
+  const list = adsAdvice(c);
+  if(!list.length) return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}ИИ-оптимизатор</div>
+    <div class="ads-advice-empty">${I('check')}Кампания настроена оптимально — критичных улучшений нет.</div></div>`;
+  return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}ИИ-оптимизатор<span class="ads-advice-n">${list.length}</span></div>`+
+    list.map(a=>`<div class="ads-advice-row ${a.tone}">
+      <span class="ads-advice-ic">${I(a.ic)}</span>
+      <div class="ads-advice-mid"><p>${a.text}</p>
+        ${a.act ? `<button class="ads-advice-btn" onclick="event.stopPropagation();${a.act}">${a.label}${I('chev')}</button>` : ''}</div>
+    </div>`).join('')+`</div>`;
+}
+function adsApplyAbWinner(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c || !c.ab) return;
+  const win = adsAbWinner(c);
+  if(!win){ toast('Победитель ещё не определён — тесту нужно больше показов'); return; }
+  if(win==='b') c.name = c.ab.tb;
+  c.ab = null;
+  adsSyncFeedPost(c);
+  adsSave(); adsRender();
+  toast('Оставили победивший вариант — весь показ теперь на нём');
 }
 
 function adsRRect(x, px, py, pw, ph, r){
@@ -538,8 +620,10 @@ function adsTickUI(){
     if(adsOpenStats.has(c.id)){
       adsDrawDays(c);
       adsSyncFunnel(c, false);
+      adsSyncRoas(c);
       const sub = el.querySelector('[data-m="sub7"]'); if(sub) sub.innerHTML = adsSub7(c);
       const ab = el.querySelector('[data-m="ab"]'); if(ab) ab.innerHTML = adsAbInner(c);
+      const adv = el.querySelector('.ads-advice'); if(adv) adv.outerHTML = adsAdviceBlock(c);
     }
   });
 }
@@ -1024,6 +1108,8 @@ function adsLaunch(){
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
     fmt: adsDraft.fmt, model: adsDraft.model, bid, ctrEst: Math.max(.008, ctrEst),
     cvr: +(0.16 + Math.random()*0.18).toFixed(3),
+    aov: (ADS_FORMATS[adsDraft.fmt] && ADS_FORMATS[adsDraft.fmt].aov) || 690,
+    salesRate: +(0.006 + Math.random()*0.007).toFixed(4),
     disc: adsDisc(), pace: adsDraft.pace||0, dailyCap: adsDraft.pace>0 ? Math.max(1,Math.round(budget/adsDraft.pace)) : 0,
     spentToday: 0, spentDay: adsDayKey(),
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
@@ -1066,6 +1152,7 @@ function adsSaveEdit(){
   /* применяем поля креатива и таргетинга */
   c.name = name; c.text = text; c.cta = adsDraft.cta; c.link = link || '';
   c.fmt = adsDraft.fmt; c.model = adsDraft.model; c.bid = bid;
+  c.aov = (ADS_FORMATS[adsDraft.fmt] && ADS_FORMATS[adsDraft.fmt].aov) || c.aov || 690;
   c.ctrEst = Math.max(.008, 0.022 + (bid/adsRecBid()-1)*0.006);
   c.sex = adsDraft.sex; c.geo = adsDraft.geo; c.cities = [...adsDraft.cities];
   c.interests = adsPicked('adsIntChips'); c.ages = adsPicked('adsAgeChips');

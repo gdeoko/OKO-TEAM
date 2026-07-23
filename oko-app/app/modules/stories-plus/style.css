@@ -95,6 +95,24 @@
 .sp-fly svg.i{width:26px;height:26px}
 @keyframes spFly{0%{opacity:0;transform:translate(0,10px) scale(.55)}18%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0px),-140px) scale(1.3)}}
 
+/* двойной-тап → крупное сердце в точке касания */
+.sp-biglike{position:fixed;z-index:81;transform:translate(-50%,-50%);pointer-events:none;color:#9AFF00;filter:drop-shadow(0 0 16px rgba(154,255,0,.55));animation:spBigLike 1s cubic-bezier(.2,1.2,.4,1) forwards}
+.sp-biglike svg.i{width:96px;height:96px}
+@keyframes spBigLike{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-12deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.16) rotate(5deg)}42%{transform:translate(-50%,-50%) scale(.94) rotate(0)}70%{opacity:1;transform:translate(-50%,-55%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05) translateY(-72px)}}
+
+/* вау-открытие вьювера: подсветка фона + вылет карточки */
+#storyViewer.sp-open-anim{animation:spViewerIn .34s ease}
+#storyViewer.sp-open-anim .sv-card{animation:spCardIn .46s cubic-bezier(.25,1.1,.4,1)}
+@keyframes spViewerIn{from{opacity:.25}to{opacity:1}}
+@keyframes spCardIn{0%{opacity:0;transform:translateY(16px) scale(.85)}55%{opacity:1}100%{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#storyViewer.sp-open-anim,#storyViewer.sp-open-anim .sv-card,.sp-biglike{animation:none}}
+
+/* потяни-вниз-закрыть: чрому вьювера гасим по мере протяжки, карточка едет за пальцем */
+#storyViewer.sp-dragging .sv-card{will-change:transform}
+#storyViewer.sp-dragging .sp-bars,
+#storyViewer.sp-dragging .sp-foot,
+#storyViewer.sp-dragging .sv-close{opacity:var(--sp-fade,1)}
+
 /* стикер-глаз OKO в карточке сторис */
 .sp-sticker{position:absolute;width:44px;height:44px;border-radius:12px;background:rgba(0,0,0,.42);border:1px solid rgba(154,255,0,.6);display:flex;align-items:center;justify-content:center;color:#9AFF00;box-shadow:0 0 18px rgba(154,255,0,.3);z-index:2;animation:spPop .3s ease}
 .sp-sticker svg.i{width:26px;height:26px}

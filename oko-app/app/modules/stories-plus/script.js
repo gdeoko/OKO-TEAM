@@ -158,28 +158,64 @@ function spResume(){
 function spStopTimer(){ clearTimeout(spTimer); spPaused = false; }
 function spAdvance(){ if(typeof nextStory === 'function') nextStory(); }
 
-/* ---------- жесты: тап-переключение / удержание-пауза / свайп по авторам ---------- */
+/* ---------- жесты: тап/двойной-тап-лайк / удержание-пауза / свайп по авторам /
+   потяни-вниз-закрыть (карточка едет за пальцем, как в Instagram/Telegram) ---------- */
 let spReplyLock = false;   /* строка ответа в фокусе — жесты и авто-листание стоят */
 function spBindGestures(v){
   let sx=0, sy=0, downT=0, hold=null, isHold=false, moved=false, navHandled=false;
+  let dragging=false, decided=false, pendingNav=null, lastTap=0, lastTapX=0;
   const inUI = (t)=> !!(t && t.closest && t.closest('.sp-foot, .sv-close, #spBars'));
+  const card = ()=> document.getElementById('svCard');
+  const clearPending = ()=>{ if(pendingNav){ clearTimeout(pendingNav); pendingNav = null; } };
+  function endDrag(dismiss){
+    dragging = false;
+    v.classList.remove('sp-dragging');
+    v.style.removeProperty('--sp-fade');
+    const c = card();
+    if(!c) return;
+    if(dismiss){ c.style.transform = ''; return; }
+    c.style.transition = 'transform .26s cubic-bezier(.3,1,.4,1)';   /* пружинка назад */
+    c.style.transform = '';
+    setTimeout(()=>{ const cc = card(); if(cc) cc.style.transition = ''; }, 300);
+  }
 
   v.addEventListener('pointerdown', (e)=>{
+    clearPending();                                   /* новый жест отменяет отложенное листание */
     if(spReplyLock || inUI(e.target)) return;
     sx = e.clientX; sy = e.clientY; downT = Date.now();
-    isHold = false; moved = false; navHandled = false;
+    isHold = false; moved = false; navHandled = false; dragging = false; decided = false;
     clearTimeout(hold);
-    hold = setTimeout(()=>{ isHold = true; spPause(); }, 250);   /* удержание → пауза */
+    hold = setTimeout(()=>{ if(!dragging){ isHold = true; spPause(); } }, 250);   /* удержание → пауза */
   });
   v.addEventListener('pointermove', (e)=>{
     if(!downT) return;
-    if(Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10){ moved = true; clearTimeout(hold); }
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if(dragging){                                     /* тянем карточку вниз */
+      const d = Math.max(0, dy);
+      const c = card();
+      if(c) c.style.transform = 'translateY(' + d + 'px) scale(' + (1 - Math.min(d/1300, .12)) + ')';
+      v.style.setProperty('--sp-fade', String(Math.max(.28, 1 - d/520)));
+      return;
+    }
+    if(!decided && (Math.abs(dx) > 10 || Math.abs(dy) > 10)){
+      moved = true; clearTimeout(hold); decided = true;
+      if(dy > 12 && Math.abs(dy) > Math.abs(dx) * 1.2){          /* вниз-вертикально → закрытие-перетаскиванием */
+        dragging = true; isHold = false; v.classList.add('sp-dragging'); spPause();
+      }
+    }
   });
   const finish = (e)=>{
     if(!downT) return;
     clearTimeout(hold);
     const dt = Date.now() - downT, dx = e.clientX - sx, dy = e.clientY - sy;
     downT = 0;
+    if(dragging){                                     /* отпустили после перетаскивания */
+      navHandled = true;
+      const dismiss = dy > 110;
+      endDrag(dismiss);
+      if(dismiss && typeof closeStory === 'function') closeStory(); else spResume();
+      return;
+    }
     if(spReplyLock || inUI(e.target)) return;
     if(isHold){ spResume(); navHandled = true; return; }
     if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3){   /* свайп → смена автора */
@@ -187,16 +223,52 @@ function spBindGestures(v){
       if(dx < 0) spNextAuthor(); else spPrevAuthor();
       return;
     }
-    if(dt < 350 && !moved){                                       /* тап → prev/next история */
+    if(dt < 350 && !moved){                                       /* тап или двойной тап */
       navHandled = true;
-      if(e.clientX < window.innerWidth * 0.32){ if(typeof prevStory === 'function') prevStory(); }
-      else { if(typeof nextStory === 'function') nextStory(); }
+      const x = e.clientX, y = e.clientY, now = Date.now();
+      if(now - lastTap < 300 && Math.abs(x - lastTapX) < 48){     /* двойной тап → лайк, без листания */
+        clearPending(); lastTap = 0;
+        spDoubleLike(x, y);
+        return;
+      }
+      lastTap = now; lastTapX = x;
+      const goPrev = x < window.innerWidth * 0.32;                /* листание отложено — вдруг это первый тап дабл-тапа */
+      clearPending();
+      pendingNav = setTimeout(()=>{
+        pendingNav = null;
+        if(goPrev){ if(typeof prevStory === 'function') prevStory(); }
+        else { if(typeof nextStory === 'function') nextStory(); }
+      }, 230);
     }
   };
   v.addEventListener('pointerup', finish);
-  v.addEventListener('pointercancel', ()=>{ clearTimeout(hold); if(isHold) spResume(); downT = 0; });
-  /* гасим клик ядра (onclick=storyNav) — навигацию делаем сами в pointerup */
+  v.addEventListener('pointercancel', ()=>{ clearTimeout(hold); if(dragging) endDrag(false); if(isHold || dragging) spResume(); downT = 0; });
+  /* гасим клик ядра (onclick=storyNav) — навигацию делаем сами */
   v.addEventListener('click', (e)=>{ if(navHandled){ navHandled = false; e.stopPropagation(); } }, true);
+}
+
+/* двойной тап → лайк: крупное лаймовое сердце в точке касания + отметка реакции */
+function spDoubleLike(x, y){
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add) return;
+  try{ navigator.vibrate && navigator.vibrate(14); }catch(e){}
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce){
+    const h = document.createElement('div');
+    h.className = 'sp-biglike';
+    h.style.left = x + 'px'; h.style.top = y + 'px';
+    h.innerHTML = I('heart', 'fill');
+    document.body.appendChild(h);
+    h.addEventListener('animationend', ()=>h.remove());
+    setTimeout(()=>h.remove(), 1300);
+  }
+  if(!st.my){                                         /* чужая сторис — фиксируем реакцию «сердце» */
+    st.spReacted = 'heart';
+    const btns = document.querySelectorAll('#spFoot .sp-react');
+    btns.forEach(b=>b.classList.remove('on'));
+    const heartBtn = btns[0];                          /* порядок ['heart','fire','thumb'] → сердце первое */
+    if(heartBtn){ heartBtn.classList.add('on'); if(!reduce) spFlyBurst(heartBtn, 'heart', 4); }
+  }
 }
 
 function spNextAuthor(){
@@ -456,6 +528,18 @@ function spRestore(){
 }
 
 /* ---------- chain-патчи ядра ---------- */
+/* вау-открытие: карточка вылетает с масштабом, фон подсвечивается (только на открытии) */
+if(typeof openStory === 'function'){
+  const _spPrevOpenStory = openStory;
+  openStory = function(i){
+    _spPrevOpenStory(i);   /* ядро: curStory=i → showStory() → .open; поверх — spDecorate из showStory-патча */
+    const v = document.getElementById('storyViewer');
+    if(v && v.classList.contains('open') && !matchMedia('(prefers-reduced-motion: reduce)').matches){
+      v.classList.remove('sp-open-anim'); void v.offsetWidth; v.classList.add('sp-open-anim');
+      setTimeout(()=>v.classList.remove('sp-open-anim'), 560);
+    }
+  };
+}
 if(typeof openStoryCreate === 'function'){
   const _spPrevOpenStoryCreate = openStoryCreate;
   openStoryCreate = function(){

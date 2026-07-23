@@ -222,6 +222,103 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 /* аватар аккаунта с загруженным фото */
 .ps-acc-ava.has{background-size:cover!important;background-position:center!important;background-repeat:no-repeat;color:transparent;font-size:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 
+/* ========== СОЦ-ДОКАЗАТЕЛЬСТВО: «Читают …» ========== */
+.ps-social-proof{display:inline-flex;align-items:center;gap:9px;margin:12px auto 0;max-width:100%;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:5px 13px 5px 6px;cursor:pointer;transition:border-color .2s,transform .12s;animation:psChipIn .35s ease}
+.ps-social-proof:hover{border-color:var(--accent)}
+.ps-social-proof:active{transform:scale(.97)}
+.ps-sp-avas{display:inline-flex;flex-shrink:0}
+.ps-sp-ava{position:relative;width:24px;height:24px;border-radius:50%;background:var(--lime-dim);border:2px solid var(--surface);display:inline-flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:var(--accent);margin-left:-9px}
+.ps-sp-ava:first-child{margin-left:0}
+.ps-sp-ava svg.i{width:12px;height:12px}
+.ps-sp-txt{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-sp-txt b{color:var(--text);font-weight:700}
+
+/* ========== «АКТУАЛЬНОЕ»: сторис-кружки ========== */
+.ps-hls{display:flex;gap:15px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:20px 4px 6px;margin:0 -18px;scroll-snap-type:x proximity}
+.ps-hls::-webkit-scrollbar{display:none}
+.ps-hls::before,.ps-hls::after{content:"";flex:0 0 14px}
+.ps-hl{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:7px;width:66px;cursor:pointer;scroll-snap-align:start;background:none;animation:psBadgeIn .4s both}
+.ps-hl-ring{width:62px;height:62px;border-radius:50%;padding:2.5px;background:conic-gradient(from 140deg,#9AFF00,#c8ff6e,#6bbf00,#9AFF00);display:flex;box-shadow:0 4px 14px rgba(154,255,0,.14);transition:transform .18s,box-shadow .2s}
+.ps-hl:hover .ps-hl-ring{transform:translateY(-3px) scale(1.04);box-shadow:0 8px 20px rgba(154,255,0,.28)}
+.ps-hl:active .ps-hl-ring{transform:scale(.95)}
+.ps-hl-in{flex:1;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.ps-hl-in svg.i{width:24px;height:24px;color:var(--accent)}
+.ps-hl-lb{font-size:11px;color:var(--text);font-weight:600;max-width:66px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+:root[data-theme="light"] .ps-hl-in{background:#fff;border-color:#fff}
+:root[data-theme="light"] .ps-hl-ring{box-shadow:0 4px 12px rgba(120,180,0,.2)}
+@media(prefers-reduced-motion:reduce){.ps-hl{animation:none}.ps-hl:hover .ps-hl-ring{transform:none}}
+
+/* ========== ВКЛАДКИ: Посты / Медиа ========== */
+.ps-tabs{display:flex;gap:4px;margin:22px 0 12px;border-bottom:1px solid var(--border);padding-bottom:0}
+.ps-tabs button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;font-family:var(--font-display);font-size:15px;letter-spacing:.06em;color:var(--dim);background:none;cursor:pointer;position:relative;transition:color .2s}
+.ps-tabs button svg.i{width:16px;height:16px;transition:transform .18s}
+.ps-tabs button .ps-tab-cnt{font-family:var(--font-body);font-size:10px;font-weight:700;letter-spacing:0;background:var(--raised);color:var(--dim);border-radius:99px;padding:2px 7px;transition:background .2s,color .2s}
+.ps-tabs button::after{content:"";position:absolute;left:12%;right:12%;bottom:-1px;height:2px;border-radius:2px;background:var(--accent);transform:scaleX(0);transform-origin:center;transition:transform .25s cubic-bezier(.3,1,.4,1)}
+.ps-tabs button.on{color:var(--accent)}
+.ps-tabs button.on::after{transform:scaleX(1)}
+.ps-tabs button.on svg.i{transform:translateY(-1px)}
+.ps-tabs button.on .ps-tab-cnt{background:var(--lime-dim);color:var(--accent)}
+@media(prefers-reduced-motion:reduce){.ps-tabs button::after,.ps-tabs button svg.i{transition:none}}
+
+/* ========== МЕДИА-СЕТКА (Instagram grid) ========== */
+.ps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ps-mtile{position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;background:#0a0d04;border:1px solid var(--border);transition:transform .16s,box-shadow .2s;isolation:isolate}
+.ps-mtile:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.ps-mtile:active{transform:scale(.97)}
+.ps-mtile::before{content:"";position:absolute;inset:0;z-index:-1}
+.ps-mtile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55));z-index:0}
+.ps-mt-ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1}
+.ps-mt-ic svg.i{width:30px;height:30px;color:rgba(255,255,255,.92);filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));transition:transform .2s}
+.ps-mtile:hover .ps-mt-ic svg.i{transform:scale(1.14)}
+.ps-mt-dur{position:absolute;top:7px;right:7px;z-index:2;display:inline-flex;align-items:center;gap:3px;background:rgba(0,0,0,.55);color:#fff;font-size:9.5px;font-weight:700;border-radius:99px;padding:2px 7px 2px 5px;backdrop-filter:blur(3px)}
+.ps-mt-dur svg.i{width:10px;height:10px;color:var(--accent)}
+.ps-mt-stat{position:absolute;left:7px;bottom:7px;z-index:2;display:inline-flex;align-items:center;gap:4px;color:#fff;font-size:10px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.ps-mt-stat svg.i{width:12px;height:12px}
+/* бренд-градиенты плиток g0..g5 */
+.ps-mtile.g0::before{background:radial-gradient(120% 120% at 20% 0%,rgba(154,255,0,.42),transparent 60%),linear-gradient(150deg,#101706,#070a03)}
+.ps-mtile.g1::before{background:conic-gradient(from 200deg at 70% 20%,rgba(154,255,0,.4),transparent 45%,rgba(154,255,0,.14)),linear-gradient(160deg,#0d1305,#060803)}
+.ps-mtile.g2::before{background:linear-gradient(120deg,rgba(154,255,0,.34) 0%,transparent 55%),linear-gradient(180deg,#0e1305,#080b03)}
+.ps-mtile.g3::before{background:radial-gradient(80% 90% at 80% 90%,rgba(154,255,0,.4),transparent 62%),linear-gradient(140deg,#0c1104,#060903)}
+.ps-mtile.g4::before{background:radial-gradient(70% 70% at 50% 30%,rgba(154,255,0,.36),transparent 60%),linear-gradient(200deg,#0e1405,#070a03)}
+.ps-mtile.g5::before{background:repeating-linear-gradient(125deg,rgba(154,255,0,.16) 0 3px,transparent 3px 15px),linear-gradient(160deg,#0d1204,#070a03)}
+:root[data-theme="light"] .ps-mtile{background:#eef7dd}
+:root[data-theme="light"] .ps-mtile::after{background:linear-gradient(180deg,transparent 40%,rgba(20,40,0,.4))}
+:root[data-theme="light"] .ps-mtile.g0::before{background:radial-gradient(120% 120% at 20% 0%,rgba(120,200,0,.55),transparent 62%),linear-gradient(150deg,#dcefbf,#c8e39c)}
+:root[data-theme="light"] .ps-mtile.g1::before{background:conic-gradient(from 200deg at 70% 20%,rgba(120,200,0,.5),transparent 46%,rgba(154,255,0,.2)),linear-gradient(160deg,#dcefbf,#cbe49f)}
+:root[data-theme="light"] .ps-mtile.g2::before{background:linear-gradient(120deg,rgba(120,200,0,.5) 0%,transparent 56%),linear-gradient(180deg,#e0f1c6,#cde59f)}
+:root[data-theme="light"] .ps-mtile.g3::before{background:radial-gradient(80% 90% at 80% 90%,rgba(120,200,0,.5),transparent 62%),linear-gradient(140deg,#ddefc0,#cae49b)}
+:root[data-theme="light"] .ps-mtile.g4::before{background:radial-gradient(70% 70% at 50% 30%,rgba(120,200,0,.48),transparent 62%),linear-gradient(200deg,#dfeec2,#cce49d)}
+:root[data-theme="light"] .ps-mtile.g5::before{background:repeating-linear-gradient(125deg,rgba(120,200,0,.28) 0 3px,transparent 3px 15px),linear-gradient(160deg,#ddefc0,#cbe49f)}
+:root[data-theme="light"] .ps-mt-ic svg.i{color:#2a4a00}
+:root[data-theme="light"] .ps-mt-dur{background:rgba(20,40,0,.6)}
+
+/* ========== ЛАЙТБОКС / СТОРИС-КАРТА (в попапе) ========== */
+.ps-story{position:relative;height:150px;border-radius:var(--r-md);overflow:hidden;margin:2px 0 2px;display:flex;align-items:center;justify-content:center;isolation:isolate}
+.ps-story::before{content:"";position:absolute;inset:0;z-index:-1}
+.ps-story.g0::before{background:radial-gradient(120% 120% at 20% 0%,rgba(154,255,0,.42),transparent 60%),linear-gradient(150deg,#101706,#070a03)}
+.ps-story.g1::before{background:conic-gradient(from 200deg at 70% 20%,rgba(154,255,0,.4),transparent 45%,rgba(154,255,0,.14)),linear-gradient(160deg,#0d1305,#060803)}
+.ps-story.g2::before{background:linear-gradient(120deg,rgba(154,255,0,.34) 0%,transparent 55%),linear-gradient(180deg,#0e1305,#080b03)}
+.ps-story.g3::before{background:radial-gradient(80% 90% at 80% 90%,rgba(154,255,0,.4),transparent 62%),linear-gradient(140deg,#0c1104,#060903)}
+.ps-story.g4::before{background:radial-gradient(70% 70% at 50% 30%,rgba(154,255,0,.36),transparent 60%),linear-gradient(200deg,#0e1405,#070a03)}
+.ps-story.g5::before{background:repeating-linear-gradient(125deg,rgba(154,255,0,.16) 0 3px,transparent 3px 15px),linear-gradient(160deg,#0d1204,#070a03)}
+.ps-story-ic{width:60px;height:60px;border-radius:50%;background:rgba(0,0,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:var(--glow)}
+.ps-story-ic svg.i{width:30px;height:30px;color:var(--lime)}
+.ps-story-tag{position:absolute;top:10px;left:10px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.4);border-radius:99px;padding:3px 9px;backdrop-filter:blur(3px)}
+.ps-lb-meta{position:absolute;bottom:10px;left:10px;display:flex;gap:12px;color:#fff;font-size:12px;font-weight:700}
+.ps-lb-meta span{display:inline-flex;align-items:center;gap:4px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.ps-lb-meta svg.i{width:14px;height:14px;color:var(--lime)}
+.ps-story-txt{font-size:13px;line-height:1.55;color:var(--text);opacity:.92;margin-top:11px;text-align:left}
+:root[data-theme="light"] .ps-story.g0::before{background:radial-gradient(120% 120% at 20% 0%,rgba(120,200,0,.5),transparent 62%),linear-gradient(150deg,#dcefbf,#c8e39c)}
+:root[data-theme="light"] .ps-story.g1::before{background:conic-gradient(from 200deg at 70% 20%,rgba(120,200,0,.46),transparent 46%,rgba(154,255,0,.2)),linear-gradient(160deg,#dcefbf,#cbe49f)}
+:root[data-theme="light"] .ps-story.g2::before{background:linear-gradient(120deg,rgba(120,200,0,.46) 0%,transparent 56%),linear-gradient(180deg,#e0f1c6,#cde59f)}
+:root[data-theme="light"] .ps-story.g3::before{background:radial-gradient(80% 90% at 80% 90%,rgba(120,200,0,.46),transparent 62%),linear-gradient(140deg,#ddefc0,#cae49b)}
+:root[data-theme="light"] .ps-story.g4::before{background:radial-gradient(70% 70% at 50% 30%,rgba(120,200,0,.44),transparent 62%),linear-gradient(200deg,#dfeec2,#cce49d)}
+:root[data-theme="light"] .ps-story.g5::before{background:repeating-linear-gradient(125deg,rgba(120,200,0,.26) 0 3px,transparent 3px 15px),linear-gradient(160deg,#ddefc0,#cbe49f)}
+:root[data-theme="light"] .ps-story-ic{background:rgba(255,255,255,.5)}
+:root[data-theme="light"] .ps-story-ic svg.i{color:#3c6b00}
+:root[data-theme="light"] .ps-lb-meta{color:#1a3300}
+:root[data-theme="light"] .ps-lb-meta svg.i{color:#4a8500}
+
 /* ---------- кебаб-меню в шапке чужого профиля ---------- */
 .ps-more-btn{flex-shrink:0;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);border-radius:50%;transition:color .2s,background .2s}
 .ps-more-btn svg.i{width:22px;height:22px}

@@ -124,6 +124,53 @@
 .ads-fn-arw svg.i{width:12px;height:12px;transform:rotate(90deg)}
 .ads-fn-drop b{font-family:var(--font-display);font-size:13px;letter-spacing:.03em;color:var(--accent);font-weight:400}
 
+/* ===== ИИ-оптимизатор кампании ===== */
+.ads-advice{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px;margin-bottom:9px}
+.ads-advice-h{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+.ads-advice-h svg.i{width:13px;height:13px;color:var(--accent);animation:adsBolt 2.4s ease-in-out infinite}
+.ads-advice-n{margin-left:auto;font-family:var(--font-body);font-size:10px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;letter-spacing:0}
+.ads-advice-row{display:flex;gap:10px;align-items:flex-start;padding:9px 0 4px}
+.ads-advice-row+.ads-advice-row{border-top:1px dashed var(--border)}
+.ads-advice-ic{width:28px;height:28px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid;margin-top:2px}
+.ads-advice-ic svg.i{width:14px;height:14px}
+.ads-advice-row.good .ads-advice-ic{color:var(--accent);background:var(--lime-dim);border-color:rgba(154,255,0,.3)}
+.ads-advice-row.warn .ads-advice-ic{color:#ffb020;background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.3)}
+.ads-advice-mid{flex:1;min-width:0}
+.ads-advice-mid p{font-size:11.5px;line-height:1.4;color:var(--text);margin:2px 0 0}
+.ads-advice-mid p b{color:var(--accent);font-weight:800}
+.ads-advice-row.warn .ads-advice-mid p b{color:#ffb020}
+.ads-advice-btn{display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.35);border-radius:99px;padding:6px 12px;transition:transform .12s,border-color .18s}
+.ads-advice-btn:active{transform:scale(.95)}
+.ads-advice-btn svg.i{width:12px;height:12px}
+.ads-advice-row.warn .ads-advice-btn{color:#ffb020;background:rgba(255,176,32,.1);border-color:rgba(255,176,32,.32)}
+.ads-advice-empty{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--dim);line-height:1.4;padding:5px 0 2px}
+.ads-advice-empty svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0}
+:root[data-theme="light"] .ads-advice-row.warn .ads-advice-ic{color:#b07400}
+:root[data-theme="light"] .ads-advice-row.warn .ads-advice-mid p b,
+:root[data-theme="light"] .ads-advice-row.warn .ads-advice-btn{color:#b07400}
+
+/* ===== продажи и окупаемость (ROAS) ===== */
+.ads-roas{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 12px 12px;margin-top:8px;transition:border-color .3s,background .3s}
+.ads-roas.good{border-color:rgba(154,255,0,.34);background:radial-gradient(130% 170% at 100% 0%,rgba(154,255,0,.1),transparent 60%),var(--raised)}
+.ads-roas.low{border-color:rgba(255,176,32,.34)}
+.ads-roas-h{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:11px}
+.ads-roas-h svg.i{width:13px;height:13px;color:var(--accent)}
+.ads-roas-aov{margin-left:auto;font-size:9.5px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--dim)}
+.ads-roas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:11px}
+.ads-roas-c{text-align:center}
+.ads-roas-c b{display:block;font-family:var(--font-display);font-size:19px;letter-spacing:.03em;color:var(--text);line-height:1}
+.ads-roas-c b .ads-cur{font-family:var(--font-body);font-size:.6em;font-weight:700;color:var(--dim);letter-spacing:0;margin-left:2px;vertical-align:.05em;font-style:normal}
+.ads-roas-c span{display:block;font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;margin-top:5px}
+.ads-roas-c.roas b{color:var(--accent)}
+.ads-roas.low .ads-roas-c.roas b{color:#ffb020}
+.ads-roas-bar{position:relative;height:6px;border-radius:3px;background:var(--surface);border:1px solid var(--border);margin-bottom:6px}
+.ads-roas-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--lime-dim),var(--lime));transition:width .6s cubic-bezier(.3,1,.4,1)}
+.ads-roas.low .ads-roas-bar i{background:linear-gradient(90deg,rgba(255,176,32,.4),#ffb020)}
+.ads-roas-be{position:absolute;top:-3px;left:25%;width:2px;height:12px;background:var(--text);opacity:.5;border-radius:1px}
+.ads-roas-scale{display:flex;justify-content:space-between;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+.ads-roas-scale span:nth-child(2){color:var(--accent)}
+:root[data-theme="light"] .ads-roas.good{background:var(--raised)}
+
 /* ===== разворот «Статистика»: бар-чарт по дням + CTR + A/B ===== */
 .ads-stats-toggle{display:flex;align-items:center;gap:8px;width:100%;font-size:12px;font-weight:700;color:var(--dim);background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:10px;transition:all .18s;cursor:pointer}
 .ads-stats-toggle svg.i{width:14px;height:14px;color:var(--accent)}

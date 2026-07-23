@@ -20,6 +20,13 @@
     s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
     defs.appendChild(s);
   }
+  /* лупа (поиск по истории) */
+  if(!document.getElementById('i-search')){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+    s.setAttribute('id','i-search'); s.setAttribute('viewBox','0 0 100 100');
+    s.innerHTML = '<circle cx="43" cy="43" r="27" fill="none" stroke="currentColor" stroke-width="8"/><path d="M63 63 84 84" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>';
+    defs.appendChild(s);
+  }
   /* кубик (категория «Игры») */
   if(!document.getElementById('i-dice')){
     const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
@@ -74,6 +81,7 @@
 
 /* ---------- состояние модуля ---------- */
 let walFilter = 'all';
+let walSearch = '';
 let walTopupState = {sum:1000, method:'card'};
 let walWdState = {sum:0, method:'card'};
 const WAL_METHODS = [
@@ -361,12 +369,15 @@ function walOpTime(at){
 function walRenderLedger(){
   const box = document.getElementById('walLedger');
   if(!box) return;
+  const q = walSearch;
   const list = WALLET.ledger
     .filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'))
+    .filter(op => !q || (op.why + ' ' + walCat(op.why)).toLowerCase().includes(q))
     .slice().sort((a,b)=>b.at-a.at)
     .slice(0, 80);
   if(!list.length){
-    box.innerHTML = `<div class="wal-empty">${I('file')}${walFilter==='in' ? 'Пополнений пока нет' : walFilter==='out' ? 'Списаний пока нет' : 'Операций пока нет'}</div>`;
+    const emptyMsg = q ? 'Ничего не найдено' : walFilter==='in' ? 'Пополнений пока нет' : walFilter==='out' ? 'Списаний пока нет' : 'Операций пока нет';
+    box.innerHTML = `<div class="wal-empty">${I(q ? 'search' : 'file')}${emptyMsg}</div>`;
     return;
   }
   /* корневой значок направления поверх иконки категории */
@@ -406,6 +417,10 @@ function walRenderLedger(){
 function walSetFilter(f){
   walFilter = f;
   document.querySelectorAll('#walFilters button').forEach(b=>b.classList.toggle('on', b.dataset.f===f));
+  walRenderLedger();
+}
+function walSetSearch(v){
+  walSearch = (v || '').trim().toLowerCase();
   walRenderLedger();
 }
 function walCopyAcc(){
@@ -770,7 +785,9 @@ function walExecWithdraw(){
       <div class="wal-ok">${I('check')}</div>
       <p style="font-weight:800;font-size:19px;margin-top:14px">Заявка на вывод создана</p>
       <p class="dim" style="font-size:13px;margin-top:6px">${fmtMoney(get)} придут на ${WAL_M_LABEL[s.method]} в течение 1–3 дней.<br>Комиссия 2%: ${fmtMoney(fee)}</p>
-      <div style="height:16px"></div>
+      <div class="wal-tx-tl-h" style="justify-content:center">${I('clock')}<span>Статус вывода</span></div>
+      <div style="text-align:left;max-width:300px;margin:0 auto">${walWdTimelineHtml(Date.now())}</div>
+      <div style="height:14px"></div>
       <button class="btn" onclick="closeSheet()">Готово</button></div>`;
     renderWallet();
     walFlash('out');
@@ -934,6 +951,38 @@ function walTonSurface(ctx){
   return `<button class="wal-ton-connect fade-in" type="button" onclick="walTonConnect()">${I('ton')}<span><b>Подключить TON-кошелёк</b><em>${sub}</em></span>${I('chev')}</button>`;
 }
 
+/* ---------- СТАТУС ВЫВОДА: живой таймлайн (мок реального процессинга) ---------- */
+const WAL_WD_STAGES = [
+  ['file', 'Заявка создана',        'Вывод оформлен в OKO'],
+  ['lock', 'Проверка безопасности', 'Антифрод и сверка реквизитов'],
+  ['card', 'Отправлено в банк',     'Платёж передан в платёжную систему'],
+  ['check','Зачислено',             'Деньги у получателя'],
+];
+/* индекс текущего этапа: <этого done, ==active; 3 = полностью завершено */
+function walWdStage(at){
+  const el = Date.now() - at, M = 60000, H = 3600000, D = 864e5;
+  if(el >= D) return 3;        // зачислено
+  if(el >= 10 * M) return 2;   // отправлено в банк
+  return 1;                    // проверка безопасности
+}
+function walWdDone(at){ return walWdStage(at) >= 3; }
+function walWdTimelineHtml(at){
+  const cur = walWdStage(at);
+  const steps = WAL_WD_STAGES.map((s,i)=>{
+    const isDone = i < cur || (i === 3 && cur === 3);
+    const isActive = i === cur && cur < 3;
+    const cls = isDone ? 'done' : isActive ? 'active' : '';
+    const ic = isDone ? 'check' : s[0];
+    let sub = s[2];
+    if(i === 3 && !isDone) sub = 'Ожидается до ' + walDMY(at + 3 * 864e5);
+    return `<div class="wal-tl-step ${cls}" style="animation-delay:${i*60}ms">
+      <span class="wal-tl-dot"><svg class="i"><use href="#i-${ic}"/></svg></span>
+      <span class="wal-tl-b"><b>${s[1]}</b><span>${sub}</span></span>
+    </div>`;
+  }).join('');
+  return `<div class="wal-tl">${steps}</div>`;
+}
+
 /* ---------- ДЕТАЛИ ОПЕРАЦИИ (bottom-sheet, читает персист-леджер) ---------- */
 function walOpId(at){ return 'OP-' + Number(at).toString(36).toUpperCase().slice(-8).padStart(8,'0'); }
 function walBalanceAfter(op){
@@ -953,15 +1002,21 @@ function walRenderTx(op){
   const box = document.getElementById('walTxView');
   if(!box) return;
   const dir = op.t === '+', cat = walCat(op.why), isTop = cat === 'Пополнение';
+  const isWd = cat === 'Вывод средств';
+  const wdDone = isWd ? walWdDone(op.at) : true;
   const after = walBalanceAfter(op);
+  const statusHtml = isWd && !wdDone
+    ? `<span class="wal-tx-status proc">${I('clock')}В обработке</span>`
+    : `<span class="wal-tx-status">${I('check')}${isWd ? 'Зачислено' : 'Выполнено'}</span>`;
   box.innerHTML = `
   <div class="wal-tx">
     <div class="wal-tx-hero">
       <div class="wal-tx-ic ${dir?'in':'out'}"><svg class="i"><use href="#i-${walCatIc(op.why)}"/></svg></div>
       <div class="wal-tx-sum ${dir?'in':'out'}">${dir?'+':'−'} ${fmtMoney(op.sum)}</div>
       <div class="wal-tx-why">${esc(op.why)}</div>
-      <span class="wal-tx-status">${I('check')}Выполнено</span>
+      ${statusHtml}
     </div>
+    ${isWd ? `<div class="wal-tx-tl-h">${I('clock')}<span>Статус вывода</span></div>${walWdTimelineHtml(op.at)}` : ''}
     <div class="wal-tx-rows">
       <div class="wal-tx-row"><span>Категория</span><b class="wal-tx-cat">${I(walCatIc(op.why))}${cat}</b></div>
       <div class="wal-tx-row"><span>Тип</span><b class="${dir?'':'out'}" style="color:${dir?'var(--accent)':'var(--text)'}">${dir?'Пополнение':'Списание'}</b></div>

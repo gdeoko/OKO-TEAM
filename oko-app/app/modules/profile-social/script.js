@@ -11,6 +11,7 @@ const PS = {
   follow: {},       /* {имя: ts подписки} — персист в oko-social */
   graphName: null,  /* автор, чей соцграф открыт */
   graphTab: 'followers',
+  tab: 'posts',     /* активная вкладка профиля: posts | media */
 };
 
 /* ---------- персист ---------- */
@@ -95,6 +96,35 @@ function psBio(name, topic, sub){
   if(s.indexOf('сообщество') > -1) return 'Живое сообщество в OKO: обсуждения, разборы и взаимопомощь участников.';
   return PS_BIO_POOL[psHash(name) % PS_BIO_POOL.length];
 }
+
+/* ---------- «Актуальное»: сторис-кружки (Instagram highlights) ----------
+   Каталог рубрик: label → иконка + текст мини-«истории». Набор для автора —
+   детерминированный (команда/тема влияют на состав). */
+const PS_HL = {
+  'Анонсы':   {ic:'megaphone',   txt:'Свежие анонсы сборок и новых разделов OKO — что уже вышло и что дальше в работе.'},
+  'Фичи':     {ic:'bolt',        txt:'Разборы новых возможностей приложения: как включить, где найти и зачем оно нужно.'},
+  'Ответы':   {ic:'chat',        txt:'Частые вопросы и быстрые ответы. Сложные случаи передаём живой команде.'},
+  'Кейсы':    {ic:'fire',        txt:'Живые кейсы с цифрами: было / стало, воронка и что именно сработало.'},
+  'Отзывы':   {ic:'heart',       txt:'Реальные отклики подписчиков и клиентов — без накрутки и постановки.'},
+  'Услуги':   {ic:'briefcase',   txt:'Чем помогаю, форматы работы, сроки и как считается результат.'},
+  'Гайды':    {ic:'compass',     txt:'Пошаговые гайды и чек-листы из практики. Открой и сохрани себе.'},
+  'Процесс':  {ic:'circle-play', txt:'Как всё устроено изнутри: инструменты, этапы и рабочий процесс.'},
+  'Лучшее':   {ic:'star',        txt:'Подборка самых полезных публикаций автора в одном месте.'},
+  'Нейросети':{ic:'rocket',      txt:'Пайплайны, промпты и локальные модели в деле — без магии и воды.'},
+  'Монтаж':   {ic:'circle-play', txt:'Приёмы монтажа вертикалок: хук, ритм, караоке-субтитры, удержание.'},
+  'Рост':     {ic:'rocket',      txt:'Метрики, воронки и что двигает рост. Цифры вместо вдохновения.'},
+};
+/* «портфолио» для медиа-сетки — детерминированные плитки-работы автора */
+const PS_PORTFOLIO = [
+  {ic:'circle-play', title:'Reels-кейс',  txt:'Вертикальный ролик с сильным хуком и караоке-субтитрами — досмотры выше среднего по нише.'},
+  {ic:'rocket',      title:'Запуск',      txt:'Разбор запуска от связки креатив → лид → продажа. Что тестировали и что оставили.'},
+  {ic:'fire',        title:'Залетевшее',  txt:'Формат, который собрал больше всего охватов за месяц. Почему он сработал.'},
+  {ic:'briefcase',   title:'Услуга',      txt:'Что входит в работу, сроки и как измеряется результат для клиента.'},
+  {ic:'compass',     title:'Гайд',        txt:'Пошаговый разбор приёма из практики — бери и повторяй у себя.'},
+  {ic:'star',        title:'Избранное',   txt:'Подборка сильных работ автора, отобранных вручную.'},
+  {ic:'megaphone',   title:'Промо',       txt:'Промо-материал в фирменном стиле бренда: чёрный + лайм.'},
+  {ic:'bolt',        title:'Процесс',     txt:'Как устроен процесс изнутри: инструменты и этапы сборки.'},
+];
 
 /* ---------- модель автора: посты + чаты + детерминированная статистика ---------- */
 function psAuthor(name){
@@ -181,6 +211,148 @@ function psAchHtml(a){
      </span>`).join('') + `</div>`;
 }
 
+/* ================= СОЦ-ДОКАЗАТЕЛЬСТВО: «Читают …» (Instagram-style) ================= */
+/* «Читают Марк, Алина и ещё N» — 2 знакомых человека из пула + остаток.
+   Тап ведёт в соцграф подписчиков. Показывается только если есть кого показать. */
+function psSocialProofHtml(a){
+  let pool = [];
+  try{ pool = psPeoplePool().filter(p => p.name !== a.name); }catch(e){}
+  if(!pool.length) return '';
+  const salt = psHash('proof:' + a.name);
+  const ranked = pool.map(p => ({p, w: psHash(p.name + '~' + salt)})).sort((x, y) => x.w - y.w).map(x => x.p);
+  const show = ranked.slice(0, Math.min(3, ranked.length));
+  const rest = Math.max(0, a.followers - show.length);
+  const avas = show.map((p, i) =>
+    `<span class="ps-sp-ava" style="z-index:${show.length - i}">${p.avaIcon ? I(p.avaIcon) : esc(p.ava || psInitials(p.name))}</span>`).join('');
+  const names = show.slice(0, 2).map(p => `<b>${esc(p.name)}</b>`).join(', ');
+  const tail = rest > 0 ? ` и ещё ${psFmt(rest)}` : '';
+  return `<button class="ps-social-proof" onclick="psOpenGraph('followers')" aria-label="Показать подписчиков">
+    <span class="ps-sp-avas">${avas}</span>
+    <span class="ps-sp-txt">Читают ${names}${tail}</span>
+  </button>`;
+}
+
+/* ================= «АКТУАЛЬНОЕ»: сторис-кружки ================= */
+function psHighlights(a){
+  const out = [];
+  const seen = new Set();
+  const add = (label) => { if(label && PS_HL[label] && !seen.has(label)){ seen.add(label); out.push(label); } };
+  const team = /OKO|Клуб|Поддержка|Партнёрам|Биржа/.test(a.name);
+  if(team){ add('Анонсы'); add('Фичи'); add('Ответы'); }
+  const topicHl = {ai:'Нейросети', content:'Монтаж', business:'Рост', marketing:'Рост', games:'Процесс', crypto:'Рост'}[a.topic];
+  add(topicHl);
+  /* добор из общего пула детерминированно */
+  const pool = ['Кейсы', 'Отзывы', 'Услуги', 'Гайды', 'Лучшее', 'Процесс'];
+  const start = psHash('hl:' + a.name) % pool.length;
+  for(let i = 0; out.length < 5 && i < pool.length; i++) add(pool[(start + i) % pool.length]);
+  return out.slice(0, 6);
+}
+function psHlHtml(a){
+  const list = psHighlights(a);
+  if(!list.length) return '';
+  return `<div class="ps-hls" role="list">` + list.map((label, i) => {
+    const h = PS_HL[label];
+    return `<button class="ps-hl" role="listitem" style="animation-delay:${60 + i * 45}ms"
+        onclick="psOpenHighlight('${psAttr(label)}')" aria-label="Актуальное: ${psAttr(label)}">
+      <span class="ps-hl-ring"><span class="ps-hl-in">${I(h.ic)}</span></span>
+      <span class="ps-hl-lb">${esc(label)}</span>
+    </button>`;
+  }).join('') + `</div>`;
+}
+function psOpenHighlight(label){
+  const h = PS_HL[label];
+  if(!h || typeof showPopup !== 'function') return;
+  const name = PS.cur || '';
+  const g = 'g' + (psHash('hl:' + label + name) % 6);
+  showPopup({
+    title: label,
+    body: `<div class="ps-story ${g}">
+        <span class="ps-story-ic">${I(h.ic)}</span>
+        <span class="ps-story-tag">Актуальное</span>
+      </div>
+      <p class="ps-story-txt">${esc(h.txt)}</p>`,
+    actions: [{label:'Понятно'}]
+  });
+}
+
+/* ================= МЕДИА-СЕТКА (Instagram grid) ================= */
+/* детерминированный список плиток: реальные посты автора + «портфолио»-добор */
+function psMediaList(a){
+  const tiles = [];
+  a.posts.forEach(p => {
+    tiles.push({
+      real: true, id: p.id,
+      ic: p.media ? 'circle-play' : 'txt',
+      dur: (p.media && /:/.test(String(p.media))) ? p.media : null,
+      views: p.views || 0, likes: p.likes || 0,
+      title: (String(p.body || '').split(/[.!?\n]/)[0] || 'Пост').slice(0, 48),
+      txt: String(p.body || ''),
+      g: 'g' + (psHash('mt:' + p.id) % 6)
+    });
+  });
+  const base = psHash('media:' + a.name);
+  for(let i = 0; tiles.length < 6 && i < PS_PORTFOLIO.length; i++){
+    const pt = PS_PORTFOLIO[(base + i) % PS_PORTFOLIO.length];
+    if(tiles.some(t => t.title === pt.title)) continue;
+    tiles.push({
+      real: false, ic: pt.ic, title: pt.title, txt: pt.txt, dur: null,
+      views: 800 + psHash(a.name + pt.title) % 42000,
+      likes: 30 + psHash(pt.title + a.name) % 1900,
+      g: 'g' + ((base + i) % 6)
+    });
+  }
+  return tiles.slice(0, 9);
+}
+function psMediaHtml(a){
+  const list = psMediaList(a);
+  if(!list.length) return `<div class="ps-empty">${I('grid')}<p>Пока нет медиа</p><span>Работы автора появятся здесь</span></div>`;
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : v);
+  return `<div class="ps-grid">` + list.map((t, i) => `
+    <button class="ps-mtile ${t.g} fade-in" style="animation-delay:${i * 35}ms" onclick="psOpenMedia(${i})" aria-label="${psAttr(t.title)}">
+      <span class="ps-mt-ic">${I(t.ic)}</span>
+      ${t.dur ? `<span class="ps-mt-dur">${I('circle-play')}${esc(t.dur)}</span>` : ''}
+      <span class="ps-mt-stat">${I('eye')}${nf(t.views)}</span>
+    </button>`).join('') + `</div>`;
+}
+function psOpenMedia(i){
+  if(!PS.cur || typeof showPopup !== 'function') return;
+  const a = psAuthor(PS.cur);
+  const t = psMediaList(a)[i];
+  if(!t) return;
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : v);
+  const actions = [];
+  if(t.real) actions.push({label:'Открыть в постах', onclick: () => {
+    psTab('posts');
+    try{ const el = document.getElementById('psPosts'); if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){}
+  }});
+  actions.push({label:'Закрыть', ghost:true});
+  showPopup({
+    title: t.title,
+    body: `<div class="ps-story ${t.g}">
+        <span class="ps-story-ic">${I(t.ic)}</span>
+        <span class="ps-lb-meta"><span>${I('eye')}${nf(t.views)}</span><span>${I('heart')}${nf(t.likes)}</span></span>
+      </div>
+      <p class="ps-story-txt">${esc(t.txt)}</p>`,
+    actions
+  });
+}
+
+/* ================= ВКЛАДКИ: Посты / Медиа ================= */
+function psTabHtml(a, tab){
+  if(tab === 'media') return psMediaHtml(a);
+  return `<div id="psPosts">${psPostsHtml(a)}</div>`;
+}
+function psTab(tab){
+  tab = (tab === 'media') ? 'media' : 'posts';
+  PS.tab = tab;
+  if(!PS.cur) return;
+  const a = psAuthor(PS.cur);
+  const body = document.getElementById('psTabBody');
+  if(body) body.innerHTML = psTabHtml(a, tab);
+  const tabs = document.getElementById('psTabs');
+  if(tabs) tabs.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.pt === tab));
+}
+
 /* ---------- count-up статистики при открытии профиля ---------- */
 function psAnimateStats(){
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -216,6 +388,7 @@ function psPostsHtml(a){
 function psRender(name){
   const a = psAuthor(name);
   const f = psIsFollowing(name);
+  PS.tab = 'posts';
   const head = document.getElementById('psHeadName');
   if(head) head.textContent = '@' + a.nick;
   const body = document.getElementById('psBody');
@@ -234,6 +407,7 @@ function psRender(name){
       <div class="ps-nick">@${esc(a.nick)}${a.online ? '<span class="ps-dot">·</span><span class="ps-on">в сети</span>' : ''}</div>
       <p class="ps-bio">${esc(psBio(a.name, a.topic, a.sub))}</p>
       ${psAchHtml(a)}
+      ${psSocialProofHtml(a)}
       <div class="ps-stats">
         <div class="ps-stat"><b data-to="${a.posts.length}">${a.posts.length}</b><small>постов</small></div>
         <button class="ps-stat ps-stat-btn" onclick="psOpenGraph('followers')" aria-label="Показать подписчиков"><b id="psFollowers" data-to="${a.followers + (f ? 1 : 0)}">${psFmt(a.followers + (f ? 1 : 0))}</b><small>подписчиков</small></button>
@@ -245,8 +419,12 @@ function psRender(name){
         <button class="btn ghost ps-share-btn" onclick="psShare()" aria-label="Поделиться профилем" title="Поделиться">${I('share')}</button>
       </div>
     </div>
-    <div class="ps-sec">Посты автора <span class="ps-cnt">${a.posts.length}</span></div>
-    <div id="psPosts">${psPostsHtml(a)}</div>`;
+    ${psHlHtml(a)}
+    <div class="ps-tabs" id="psTabs" role="tablist">
+      <button class="on" data-pt="posts" role="tab" aria-selected="true" onclick="psTab('posts')">${I('feed')}<span>Посты</span><small class="ps-tab-cnt">${a.posts.length}</small></button>
+      <button data-pt="media" role="tab" aria-selected="false" onclick="psTab('media')">${I('grid')}<span>Медиа</span></button>
+    </div>
+    <div id="psTabBody">${psTabHtml(a, 'posts')}</div>`;
 }
 
 /* ---------- открыть/закрыть вьюху ---------- */

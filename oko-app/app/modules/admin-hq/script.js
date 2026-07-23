@@ -879,6 +879,159 @@ function hqDoResetDemo(){
   setTimeout(()=>location.reload(), 700);
 }
 
+/* ==================== 4c. ПЛАТЕЖИ: сводка + фильтр + карточка транзакции + возврат/подтверждение ==================== */
+HQ_STATE.payOv = HQ_STATE.payOv || {};   /* переопределения статуса по индексу (персист) */
+hqSave();
+function hqPayNum(s){ return parseInt(String(s).replace(/[^0-9]/g,'')) || 0; }
+function hqPaySt(i){ return HQ_STATE.payOv[i] || (ADMIN.pay[i] ? ADMIN.pay[i].st : 'wait'); }
+function hqPayTier(p){ return String(p.plan||'').split(/\s|·/)[0].trim().toUpperCase(); }
+const HQ_PAY_METHOD = {
+  BUSINESS:'Карта Visa ····4417', PRO:'Карта Mastercard ····8820',
+  START:'СБП · Сбербанк', FREE:'—'
+};
+const HQ_PAY_ST = {ok:{l:'проведён', cls:'ok'}, wait:{l:'ожидает', cls:'wait'}, refunded:{l:'возврат', cls:'no'}};
+let hqPayFilter = 'all';
+const HQ_PAY_FILTERS = [{k:'all',l:'Все'},{k:'ok',l:'Проведённые'},{k:'wait',l:'Ожидают'},{k:'refunded',l:'Возвраты'}];
+function hqPaySetFilter(k){ hqPayFilter = k; renderAdmin(); }
+function hqPayTxn(p, i){
+  let h = 0; const s = (p.n||'')+(p.plan||'');
+  for(let j=0;j<s.length;j++) h = (h*31 + s.charCodeAt(j)) >>> 0;
+  return 'OKO-'+new Date().getFullYear()+'-'+String(100000 + (h + i*4177) % 899999);
+}
+function hqPayOpen(i){
+  const p = ADMIN.pay[i]; if(!p) return;
+  const st = hqPaySt(i), sm = hqPayNum(p.sum), fee = Math.round(sm*3.5)/100, net = Math.round((sm - fee)*100)/100;
+  const tier = hqPayTier(p), meta = HQ_PAY_ST[st] || HQ_PAY_ST.wait;
+  const det = `<div class="hq-pay-det">
+      <div class="hq-pay-drow"><span>Транзакция</span><b>${hqPayTxn(p,i)}</b></div>
+      <div class="hq-pay-drow"><span>Плательщик</span><b>${esc(p.n)}</b></div>
+      <div class="hq-pay-drow"><span>Тариф</span><b>${esc(p.plan)}</b></div>
+      <div class="hq-pay-drow"><span>Метод</span><b>${esc(HQ_PAY_METHOD[tier]||'Карта')}</b></div>
+      <div class="hq-pay-drow"><span>Дата</span><b>${esc(p.when)}</b></div>
+      <div class="hq-pay-drow"><span>Статус</span><b><span class="adm-tag ${meta.cls}">${meta.l}</span></b></div>
+    </div>
+    <div class="hq-pay-det hq-pay-break">
+      <div class="hq-pay-drow"><span>Сумма платежа</span><b>$${sm}</b></div>
+      <div class="hq-pay-drow"><span>Эквайринг · 3.5%</span><b class="neg">−$${fee.toFixed(2)}</b></div>
+      <div class="hq-pay-drow total"><span>К зачислению</span><b>$${net.toFixed(2)}</b></div>
+    </div>`;
+  const actions = [];
+  if(st === 'wait'){
+    actions.push({label:'Подтвердить платёж', onclick:()=>hqPayConfirm(i)});
+    actions.push({label:'Отклонить', ghost:true, onclick:()=>hqPayRefund(i)});
+  } else if(st === 'ok'){
+    actions.push({label:'Оформить возврат', onclick:()=>hqPayRefund(i)});
+    actions.push({label:'Закрыть', ghost:true});
+  } else {
+    actions.push({label:'Закрыть'});
+  }
+  showPopup({ico:'card', title:'Платёж · $'+sm, body:det, actions});
+}
+function hqPayConfirm(i){
+  if(!ADMIN.pay[i]) return;
+  HQ_STATE.payOv[i] = 'ok'; hqSave();
+  renderAdmin(); toast('Платёж подтверждён · тариф активирован');
+}
+function hqPayRefund(i){
+  if(!ADMIN.pay[i]) return;
+  HQ_STATE.payOv[i] = 'refunded'; hqSave();
+  renderAdmin(); toast('Возврат оформлен · $'+hqPayNum(ADMIN.pay[i].sum)+' возвращены плательщику');
+}
+const _prevAdmPayHq = admPay;
+admPay = function(){
+  const okSum   = ADMIN.pay.reduce((s,p,i)=> hqPaySt(i)==='ok'   ? s+hqPayNum(p.sum) : s, 0);
+  const waitN   = ADMIN.pay.filter((p,i)=> hqPaySt(i)==='wait').length;
+  const refSum  = ADMIN.pay.reduce((s,p,i)=> hqPaySt(i)==='refunded' ? s+hqPayNum(p.sum) : s, 0);
+  const okCount = ADMIN.pay.filter((p,i)=> hqPaySt(i)==='ok').length;
+  const avg     = okCount ? Math.round(okSum/okCount) : 0;
+  const chips = HQ_PAY_FILTERS.map(f=>
+    `<button class="hq-chip ${hqPayFilter===f.k?'on':''}" onclick="hqPaySetFilter('${f.k}')">${f.l}</button>`).join('');
+  const idx = ADMIN.pay.map((p,i)=>i).filter(i=> hqPayFilter==='all' ? true : hqPaySt(i)===hqPayFilter);
+  const rows = idx.map(i=>{
+    const p = ADMIN.pay[i], st = hqPaySt(i), meta = HQ_PAY_ST[st] || HQ_PAY_ST.wait, tier = hqPayTier(p);
+    return `<div class="adm-row hq-pay ${st}" onclick="hqPayOpen(${i})">
+      <span class="hq-pay-ic">${I('card')}</span>
+      <span class="adm-main"><b>${esc(p.n)} · ${esc(p.sum)}</b><small>${esc(p.plan)} · ${esc(HQ_PAY_METHOD[tier]||'Карта')} · ${esc(p.when)}</small></span>
+      <span class="adm-tag ${meta.cls}">${meta.l}</span>
+      <span class="hq-pay-go">${I('chev')}</span>
+    </div>`;
+  }).join('');
+  const waitBanner = waitN
+    ? `<div class="hq-alert" onclick="hqPaySetFilter('wait')">${I('bolt')}<span><b>${waitN}</b> ${waitN===1?'платёж ждёт':'платежа ждут'} подтверждения — нажми, чтобы обработать</span>${I('chev')}</div>`
+    : '';
+  return `
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>$${okSum.toLocaleString('ru')}</b><small>проведено</small></div>
+      <div class="hq-part-s"><b>$${avg}</b><small>средний чек</small></div>
+      <div class="hq-part-s"><b>${refSum?'$'+refSum:'0'}</b><small>возвраты</small></div>
+    </div>
+    ${waitBanner}
+    <div class="hq-chips">${chips}</div>
+    <div class="adm-sec-h">Платежи · ${idx.length} из ${ADMIN.pay.length}</div>
+    ${rows || '<p class="dim" style="font-size:13px;padding:6px 2px">Нет платежей по этому фильтру.</p>'}
+    <div class="adm-acts"><button class="adm-btn" onclick="hqExportReport()">${I('file')} Выгрузить отчёт (.txt)</button></div>`;
+};
+
+/* ==================== 4d. ИИ-АГЕНТЫ: панель систем (вкл/выкл) + разбор эскалаций ==================== */
+HQ_STATE.aiOff = HQ_STATE.aiOff || {};      /* выключенные системы (персист) */
+HQ_STATE.escDone = HQ_STATE.escDone || {};  /* закрытые эскалации по индексу (персист) */
+hqSave();
+const HQ_AISYS = [
+  {k:'support', n:'Поддержка',   ic:'chat',      c:'#9AFF00', load:81, m:'214 ответов/сут · ответ 41 сек'},
+  {k:'assist',  n:'Ассистент',   ic:'bolt',      c:'#4aa0ff', load:44, m:'12 отчётов · сводки 09:00'},
+  {k:'moder',   n:'Модератор',   ic:'shield',    c:'#a855f7', load:63, m:'68 автоблоков · очередь 0'},
+  {k:'fraud',   n:'Антифрод',    ic:'lock',      c:'#ff7a3c', load:37, m:'1.2к проверок · 46 стопов'},
+  {k:'sales',   n:'Продажи',     ic:'briefcase', c:'#22d3ee', load:52, m:'34 лида · дожим 12'},
+  {k:'copy',    n:'Копирайтер',  ic:'edit',      c:'#facc15', load:29, m:'19 текстов · A/B на завтра'},
+];
+function hqAiOn(k){ return !HQ_STATE.aiOff[k]; }
+function hqAiToggle(k){
+  if(HQ_STATE.aiOff[k]) delete HQ_STATE.aiOff[k]; else HQ_STATE.aiOff[k] = 1;
+  hqSave(); renderAdmin();
+  toast('ИИ-'+(HQ_AISYS.find(a=>a.k===k)||{}).n+': '+(hqAiOn(k)?'включён':'выключен'));
+}
+function hqEscResolve(i){ HQ_STATE.escDone[i] = 1; hqSave(); renderAdmin(); toast('Эскалация закрыта · пользователю отправлен ответ'); }
+function hqAiCard(a){
+  const on = hqAiOn(a.k);
+  return `<div class="hq-ai ${on?'':'off'}">
+    <div class="hq-ai-top">
+      <span class="hq-ai-ic" style="color:${a.c};background:${a.c}1e">${I(a.ic)}</span>
+      <span class="hq-ai-n"><b>${esc(a.n)}</b>
+        <span class="hq-ai-st"><i class="hq-dot ${on?'work':'wait'}"></i>${on?'активен':'выключен'}</span></span>
+      <span class="switch ${on?'on':''}" onclick="hqAiToggle('${a.k}')"><i></i></span>
+    </div>
+    <div class="hq-ai-m">${esc(a.m)}</div>
+    <div class="hq-bar"><i style="width:${on?a.load:0}%;background:linear-gradient(90deg,${a.c},${a.c}99);transition:width .5s"></i></div>
+  </div>`;
+}
+const _prevAdmAgentsHq = admAgents;
+admAgents = function(){
+  const onN = HQ_AISYS.filter(a=>hqAiOn(a.k)).length;
+  const openEsc = ADMIN.agents.filter((a,i)=>a.esc && !HQ_STATE.escDone[i]).length;
+  const board = `
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${onN}/${HQ_AISYS.length}</b><small>систем активно</small></div>
+      <div class="hq-part-s"><b>24/7</b><small>режим работы</small></div>
+      <div class="hq-part-s"><b class="${openEsc?'warn':''}">${openEsc}</b><small>эскалаций</small></div>
+    </div>
+    <div class="adm-sec-h">ИИ-системы · вкл/выкл</div>
+    <div class="hq-ai-grid">${HQ_AISYS.map(hqAiCard).join('')}</div>`;
+  const escRows = ADMIN.agents.map((a,i)=>{
+    const done = !!HQ_STATE.escDone[i];
+    const tag = a.esc
+      ? (done ? '<span class="adm-tag ok">решено</span>' : '<span class="adm-tag no">эскалация</span>')
+      : '<span class="adm-tag ok">отвечено</span>';
+    const act = (a.esc && !done)
+      ? `<div class="adm-acts"><button class="adm-btn pri" onclick="hqEscResolve(${i})">Закрыть эскалацию</button></div>`
+      : '';
+    return `<div class="adm-log hq-esc ${a.esc&&!done?'hot':''}">
+      <div class="lt"><b>${esc(a.a)}</b><span>${esc(a.when)}</span></div>
+      «${esc(a.q)}» ${tag}${act}
+    </div>`;
+  }).join('');
+  return board + `<div class="adm-sec-h">Диалоги и эскалации${openEsc?' · '+openEsc+' в работе':''}</div>` + escRows;
+};
+
 /* ==================== 5. ПРОФИЛЬ: чип CEO + строка «Штаб OKO HQ» ==================== */
 function hqOpenHqTab(){
   if(typeof isOwner === 'function' && !isOwner()){ hqPendingTab='hq'; hqShowGate(); return; }

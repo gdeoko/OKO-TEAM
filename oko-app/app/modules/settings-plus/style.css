@@ -8,14 +8,14 @@
 
 /* секции-карточки со стаггер-появлением */
 .st2-sec{margin-bottom:22px;animation:st2In .45s ease both}
-.st2-sec:nth-child(2){animation-delay:.045s}
-.st2-sec:nth-child(3){animation-delay:.09s}
-.st2-sec:nth-child(4){animation-delay:.135s}
-.st2-sec:nth-child(5){animation-delay:.18s}
-.st2-sec:nth-child(6){animation-delay:.225s}
-.st2-sec:nth-child(7){animation-delay:.27s}
-.st2-sec:nth-child(8){animation-delay:.315s}
-.st2-sec:nth-child(9){animation-delay:.36s}
+.st2-sec:nth-of-type(2){animation-delay:.045s}
+.st2-sec:nth-of-type(3){animation-delay:.09s}
+.st2-sec:nth-of-type(4){animation-delay:.135s}
+.st2-sec:nth-of-type(5){animation-delay:.18s}
+.st2-sec:nth-of-type(6){animation-delay:.225s}
+.st2-sec:nth-of-type(7){animation-delay:.27s}
+.st2-sec:nth-of-type(8){animation-delay:.315s}
+.st2-sec:nth-of-type(9){animation-delay:.36s}
 @keyframes st2In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.st2-sec{animation:none}}
 .st2-h{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:16px;letter-spacing:.09em;color:var(--dim);margin:0 2px 8px;text-transform:uppercase}
@@ -210,3 +210,46 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .st2-bl-empty svg.i{width:38px;height:38px;opacity:.5;margin-bottom:10px;color:var(--danger)}
 .st2-bl-empty p{font-weight:700;color:var(--text);font-size:14px}
 .st2-bl-empty span{font-size:12px;display:block;margin-top:4px;max-width:280px;margin-left:auto;margin-right:auto;line-height:1.5}
+
+/* ================= ЖИВОЙ ПОИСК ПО НАСТРОЙКАМ ================= */
+/* липкая строка поиска: моментально фильтрует секции/строки по названию */
+.st2-search{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:0 6px 0 15px;height:44px;margin:0 0 18px;transition:border-color .2s,box-shadow .2s}
+/* капот: закрывает контент, уезжающий под липкую строку (padding sv-body) */
+.st2-search::before{content:"";position:absolute;left:-18px;right:-18px;top:-22px;height:22px;background:var(--bg);pointer-events:none}
+.st2-search:focus-within{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime),0 0 14px rgba(154,255,0,.20)}
+:root[data-theme="light"] .st2-search:focus-within{box-shadow:0 0 0 1px var(--lime),0 2px 8px rgba(90,150,10,.16)}
+.st2-search-ic{display:flex;flex-shrink:0;color:var(--dim);transition:color .2s}
+.st2-search:focus-within .st2-search-ic{color:var(--accent)}
+.st2-search-ic svg.i{width:17px;height:17px}
+.st2-search input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:14.5px;height:100%;padding:0}
+.st2-search input::placeholder{color:var(--dim)}
+.st2-search input::-webkit-search-cancel-button,.st2-search input::-webkit-search-decoration{-webkit-appearance:none;display:none}
+.st2-search-x{flex-shrink:0;width:32px;height:32px;border-radius:50%;display:none;align-items:center;justify-content:center;color:var(--dim);transition:color .2s,background .2s}
+.st2-search.has .st2-search-x{display:flex}
+.st2-search-x:hover{color:var(--text);background:var(--raised)}
+.st2-search-x:active{transform:scale(.9)}
+.st2-search-x svg.i{width:12px;height:12px}
+.st2-search-empty{display:none;text-align:center;color:var(--dim);padding:34px 14px 10px}
+.st2-search-empty svg.i{width:34px;height:34px;opacity:.5;margin-bottom:10px;color:var(--accent)}
+.st2-search-empty p{font-weight:700;color:var(--text);font-size:14px}
+.st2-search-empty span{display:block;font-size:12px;margin-top:4px}
+
+/* ================= ТИХИЕ ЧАСЫ / НЕ БЕСПОКОИТЬ ================= */
+/* плавно раскрывающийся блок с двумя тайм-пикерами (grid 0fr->1fr) */
+.st2-quiet{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.3,1,.4,1)}
+.st2-quiet.open{grid-template-rows:1fr}
+.st2-quiet>.st2-quiet-in{overflow:hidden;min-height:0}
+@media(prefers-reduced-motion:reduce){.st2-quiet{transition:none}}
+.st2-quiet-times{display:flex;align-items:center;gap:10px;padding:6px 2px 2px}
+.st2-time{flex:1;display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 13px;transition:border-color .2s}
+.st2-time:focus-within{border-color:var(--lime)}
+.st2-time>span{font-size:10.5px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.st2-time input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text);font-family:var(--font-display);font-size:20px;letter-spacing:.04em;color-scheme:dark}
+:root[data-theme="light"] .st2-time input{color-scheme:light}
+.st2-time input::-webkit-calendar-picker-indicator{opacity:.45;cursor:pointer;transition:opacity .2s;filter:invert(1)}
+.st2-time input::-webkit-calendar-picker-indicator:hover{opacity:.9}
+:root[data-theme="light"] .st2-time input::-webkit-calendar-picker-indicator{filter:none}
+.st2-quiet-arrow{flex-shrink:0;color:var(--dim);opacity:.55;display:flex}
+.st2-quiet-arrow svg.i{width:16px;height:16px}
+.st2-quiet-note{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--dim);line-height:1.5;padding:9px 4px 11px}
+.st2-quiet-note svg.i{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:var(--accent)}
