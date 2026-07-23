@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>МЕТАНОЙА · Глава 2 — Как Бог создал мир</title>
+<!--
+  МЕТАНОЙА — христианская онлайн-школа для детей.
+  Глава 2 — «Как Бог создал мир» (Семь дней творения)
+  Подготовлено командой OKO TEAM.
+-->
+<style>
+  :root{
+    --navy:#1A3A52; --terra:#C97064; --gold:#D4A574; --gold-soft:#E6C079;
+    --cream:#FAF8F5; --parch:#F3EBDD; --gray:#6B7B8A; --blue:#7AAED4;
+    --ink:#2E3B45;
+    --serif:'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans:'Montserrat', system-ui, 'Segoe UI', Roboto, sans-serif;
+    --shadow:0 18px 40px -18px rgba(26,58,82,.34), 0 4px 14px -6px rgba(26,58,82,.16);
+    --footer-h:clamp(46px, 8vh, 60px);
+    --safe-b:calc(var(--footer-h) + clamp(30px, 5.5vh, 46px)); /* footer + dots clearance */
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--parch);
+    font-family:var(--sans);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+    user-select:none;
+  }
+
+  /* ---------- Deck / slides: true full-screen ---------- */
+  #deck{position:fixed; inset:0; width:100vw; height:100vh; width:100dvw; height:100dvh;}
+  .slide{
+    position:absolute; inset:0;
+    width:100vw; height:100vh; width:100dvw; height:100dvh;
+    background:radial-gradient(140% 120% at 15% 0%, #FFFDFB 0%, var(--cream) 44%, var(--parch) 100%);
+    opacity:0; visibility:hidden;
+    transition:opacity .55s ease;
+    overflow:hidden;
+  }
+  .slide.active{opacity:1; visibility:visible; z-index:2;}
+  .slide::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 18% 24%, rgba(212,165,116,.06) 0, transparent 40%),
+      radial-gradient(circle at 84% 78%, rgba(122,174,212,.06) 0, transparent 42%),
+      repeating-linear-gradient(0deg, rgba(120,100,70,.016) 0 2px, transparent 2px 4px);
+    mix-blend-mode:multiply;
+  }
+
+  /* ---------- Content wrap (mobile-first single column) ---------- */
+  .wrap{
+    position:relative; z-index:1;
+    height:100%;
+    display:flex; flex-direction:column; justify-content:center;
+    gap:clamp(12px, 2.2vh, 22px);
+    padding:clamp(48px,7vw,72px) clamp(20px,6vw,84px) var(--safe-b);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .head{display:flex; flex-direction:column; gap:clamp(10px,1.8vh,16px);}
+  .body{display:flex; flex-direction:column; gap:clamp(12px,2vh,20px);}
+
+  /* ---------- Typography (all clamp) ---------- */
+  .kicker{
+    font-weight:700; font-size:clamp(11px,3vw,14px); letter-spacing:.26em;
+    text-transform:uppercase; color:var(--gold);
+    display:flex; align-items:center; gap:10px;
+  }
+  .kicker::before{content:""; width:clamp(20px,6vw,30px); height:2px; background:var(--gold); border-radius:2px; flex:0 0 auto;}
+  .title{
+    font-family:var(--serif); font-weight:700; color:var(--navy);
+    line-height:1.08; letter-spacing:-.01em;
+    font-size:clamp(28px, 7.4vw, 50px);
+  }
+  .lead{font-size:clamp(15px,4.1vw,20px); line-height:1.55; color:var(--gray);}
+  .lead.sm{font-size:clamp(14px,3.7vw,18px);}
+  .em-terra{color:var(--terra); font-weight:600;}
+  .em-navy{color:var(--navy); font-weight:600;}
+
+  /* image */
+  .media{border-radius:clamp(14px,3.5vw,22px); overflow:hidden; box-shadow:var(--shadow);
+    background:#fff; border:clamp(3px,1vw,5px) solid #fff; position:relative;}
+  .media img{display:block; width:100%; height:100%; object-fit:cover;
+    max-height:34vh; min-height:120px;}
+
+  /* star bullets */
+  .stars{list-style:none; display:flex; flex-direction:column; gap:clamp(9px,1.6vh,15px);}
+  .stars li{position:relative; padding-left:clamp(28px,7vw,36px);
+    font-size:clamp(14px,3.8vw,18px); line-height:1.45; color:var(--ink);}
+  .stars li::before{content:"★"; position:absolute; left:0; top:0; color:var(--gold);
+    font-size:clamp(15px,4vw,19px); filter:drop-shadow(0 1px 1px rgba(212,165,116,.5));}
+
+  /* reflective question */
+  .reflect{
+    padding:clamp(13px,3.4vw,20px) clamp(15px,4vw,26px);
+    border-radius:clamp(12px,3vw,16px);
+    background:linear-gradient(120deg, rgba(122,174,212,.11), rgba(212,165,116,.09));
+    border-left:4px solid var(--blue);
+    font-style:italic; color:var(--gray); font-size:clamp(14px,3.7vw,18px); line-height:1.45;
+    display:flex; gap:clamp(10px,3vw,14px); align-items:flex-start;
+  }
+  .reflect .q{font-family:var(--serif); font-size:clamp(20px,5.5vw,26px); color:var(--blue); line-height:1;}
+
+  /* character speech / rows */
+  .say{
+    display:flex; gap:clamp(12px,3.4vw,18px); align-items:center;
+    background:rgba(255,255,255,.72); border:1px solid rgba(212,165,116,.34);
+    border-radius:clamp(14px,3.6vw,20px); padding:clamp(12px,3.2vw,18px) clamp(15px,4vw,24px);
+    box-shadow:0 12px 28px -20px rgba(26,58,82,.45);
+  }
+  .say p{font-size:clamp(14px,3.7vw,17px); line-height:1.45; color:var(--ink);}
+  .say .who{color:var(--terra); font-weight:600;}
+  .badge{
+    flex:0 0 auto; width:clamp(42px,11vw,56px); height:clamp(42px,11vw,56px); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:700; font-size:clamp(19px,5vw,24px); color:#fff;
+    box-shadow:0 8px 18px -8px rgba(26,58,82,.6);
+  }
+
+  /* guide rows (intro) */
+  .guides-grid{display:flex; flex-direction:column; gap:clamp(9px,1.7vh,14px);}
+  .guide{
+    background:rgba(255,255,255,.68); border:1px solid rgba(212,165,116,.3);
+    border-radius:clamp(14px,3.4vw,20px); padding:clamp(14px,3.6vw,22px);
+    box-shadow:0 14px 30px -22px rgba(26,58,82,.45);
+    display:flex; gap:16px; align-items:center;
+  }
+  .guide h3{font-family:var(--serif); color:var(--terra); font-size:clamp(18px,4.6vw,24px); margin-bottom:4px;}
+  .guide p{font-size:clamp(13.5px,3.5vw,15.5px); line-height:1.45; color:var(--gray);}
+  .guide .gtext{display:flex; flex-direction:column;}
+  .guides-media img{max-height:26vh;}
+
+  /* ---------- Full-bleed slides (cover / verse / close) ---------- */
+  .bleed{position:absolute; inset:0;}
+  .bleed img{width:100%; height:100%; object-fit:cover;}
+  .scrim{position:absolute; inset:0;}
+  .over{
+    position:relative; z-index:2; height:100%;
+    display:flex; flex-direction:column;
+    padding:clamp(40px,7vw,72px) clamp(22px,6vw,84px) var(--safe-b);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .over.center{justify-content:center; align-items:center; text-align:center;}
+  .over.bottom{justify-content:flex-end;}
+
+  /* hint */
+  .hint{
+    position:absolute; right:clamp(18px,6vw,70px); bottom:calc(var(--footer-h) + clamp(18px,4vh,40px));
+    z-index:6; font-weight:600; font-size:clamp(14px,3.6vw,16px); color:var(--terra);
+    display:flex; align-items:center; gap:8px; letter-spacing:.02em;
+    animation:nudge 1.8s ease-in-out infinite;
+  }
+  .hint .arw{font-size:clamp(18px,5vw,22px);}
+  @keyframes nudge{0%,100%{transform:translateX(0);} 50%{transform:translateX(7px);}}
+
+  /* ---------- Footer (every slide) ---------- */
+  .footer{
+    position:absolute; left:0; right:0; bottom:0; height:var(--footer-h);
+    display:flex; align-items:center; padding:0 clamp(16px,5vw,84px);
+    pointer-events:none; z-index:6;
+  }
+  .mark{display:flex; align-items:center; gap:8px; flex:0 0 auto;}
+  .mark svg{display:block;}
+  .mark span{font-family:var(--serif); font-weight:700; font-size:clamp(12px,3.2vw,15px); color:var(--navy); letter-spacing:.03em;}
+  .verse{
+    position:absolute; left:50%; transform:translateX(-50%);
+    text-align:center; white-space:nowrap;
+    font-family:var(--serif); font-style:italic;
+    font-size:clamp(11px,3vw,15px); color:var(--gray);
+  }
+  /* on very narrow phones drop the logo word so the verse never collides */
+  @media (max-width:440px){
+    .mark span{display:none;}
+    .verse{position:static; transform:none; margin:0 auto; white-space:normal; padding:0 6px; text-align:center;}
+    .footer{justify-content:center;}
+    .mark{position:absolute; left:16px;}
+  }
+
+  /* ---------- Chrome: counter + dots ---------- */
+  #counter{position:fixed; z-index:40; top:12px; right:14px;
+    color:var(--gray); font-size:clamp(11px,3vw,13px); font-weight:600; letter-spacing:.08em;
+    background:rgba(255,255,255,.5); padding:3px 9px; border-radius:20px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
+  #dots{position:fixed; z-index:40; left:0; right:0; bottom:calc(var(--footer-h) + 6px);
+    display:flex; justify-content:center; gap:8px; pointer-events:none;}
+  .dot{width:clamp(7px,2vw,9px); height:clamp(7px,2vw,9px); border-radius:50%;
+    background:rgba(107,123,138,.32); cursor:pointer; transition:.3s; border:0; pointer-events:auto; padding:0;}
+  .dot.on{background:var(--gold); transform:scale(1.35); box-shadow:0 0 0 4px rgba(212,165,116,.18);}
+
+  /* click/tap zones */
+  .nav-zone{position:absolute; top:0; bottom:var(--footer-h); width:50%; z-index:20; cursor:pointer;}
+  .nav-zone.prev{left:0;} .nav-zone.next{right:0;}
+
+  /* =========================================================
+     WIDE / LANDSCAPE — editorial two-column layout
+     ========================================================= */
+  @media (min-width:820px) and (min-aspect-ratio:1/1){
+    .wrap{
+      display:grid; align-content:center;
+      grid-template-columns:1.05fr 1fr;
+      grid-template-areas:"head media" "body media";
+      column-gap:clamp(34px,4vw,60px); row-gap:18px;
+      padding:clamp(48px,6vh,72px) clamp(56px,7vw,90px) var(--safe-b);
+    }
+    .wrap.flip{grid-template-columns:1fr 1.05fr; grid-template-areas:"media head" "media body";}
+    .wrap.guides-wide{grid-template-columns:0.92fr 1.08fr; grid-template-areas:"media head" "media body"; max-width:1180px; margin:0 auto; align-items:center; column-gap:clamp(34px,4vw,56px);}
+    .head{grid-area:head; justify-content:flex-end;}
+    .body{grid-area:body; justify-content:flex-start;}
+    .media{grid-area:media; align-self:center;}
+    .media img{max-height:min(62vh,540px); height:100%;}
+    .guides-media img{max-height:min(66vh,560px);}
+    /* intro cards stay stacked & compact beside the illustration */
+    .wrap.guides-wide .guides-grid{display:flex; flex-direction:column; gap:clamp(10px,1.6vh,16px);}
+    .wrap.guides-wide .guide{flex-direction:row; text-align:left; align-items:center; gap:16px;}
+  }
+
+  @media print{
+    body{overflow:visible;}
+    #dots,#counter,.hint,.nav-zone{display:none !important;}
+    #deck{position:static; height:auto;}
+    .slide{position:relative; height:100vh; page-break-after:always; opacity:1 !important; visibility:visible !important;}
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ================= SLIDE 1 · COVER ================= -->
+  <section class="slide" data-i="0">
+    <div class="bleed"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJza2MiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGNkQ5QTYiLz48c3RvcCBvZmZzZXQ9IjAuNDUiIHN0b3AtY29sb3I9IiNFOUI5OEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNDOTcwNjQiLz48L2xpbmVhckdyYWRpZW50PjxyYWRpYWxHcmFkaWVudCBpZD0ic3VuIiBjeD0iMC41IiBjeT0iMC41IiByPSIwLjUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRjZFNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0YzQzY3RiIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNjQwIiBmaWxsPSJ1cmwoI3NrYykiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSIyNTAiIHI9Ijg2IiBmaWxsPSJ1cmwoI3N1bikiIG9wYWNpdHk9IjAuOTUiLz48bGluZSB4MT0iMjAwIiB5MT0iMjUwIiB4Mj0iMzIwIiB5Mj0iMjUwIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC4zNSIvPjxsaW5lIHgxPSIyMDAiIHkxPSIyNTAiIHgyPSIzMDQiIHkyPSIzMTAiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjM1Ii8+PGxpbmUgeDE9IjIwMCIgeTE9IjI1MCIgeDI9IjI2MCIgeTI9IjM1NCIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuMzUiLz48bGluZSB4MT0iMjAwIiB5MT0iMjUwIiB4Mj0iMjAwIiB5Mj0iMzcwIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC4zNSIvPjxsaW5lIHgxPSIyMDAiIHkxPSIyNTAiIHgyPSIxNDAiIHkyPSIzNTQiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjM1Ii8+PGxpbmUgeDE9IjIwMCIgeTE9IjI1MCIgeDI9Ijk2IiB5Mj0iMzEwIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC4zNSIvPjxsaW5lIHgxPSIyMDAiIHkxPSIyNTAiIHgyPSI4MCIgeTI9IjI1MCIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuMzUiLz48bGluZSB4MT0iMjAwIiB5MT0iMjUwIiB4Mj0iOTYiIHkyPSIxOTAiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjM1Ii8+PGxpbmUgeDE9IjIwMCIgeTE9IjI1MCIgeDI9IjE0MCIgeTI9IjE0NiIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuMzUiLz48bGluZSB4MT0iMjAwIiB5MT0iMjUwIiB4Mj0iMjAwIiB5Mj0iMTMwIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC4zNSIvPjxsaW5lIHgxPSIyMDAiIHkxPSIyNTAiIHgyPSIyNjAiIHkyPSIxNDYiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjM1Ii8+PGxpbmUgeDE9IjIwMCIgeTE9IjI1MCIgeDI9IjMwNCIgeTI9IjE5MCIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuMzUiLz48cGF0aCBkPSJNMCA0MzAgSDQwMCBWNjQwIEgwIFoiIGZpbGw9IiMxQTNBNTIiIG9wYWNpdHk9IjAuOSIvPjxwYXRoIGQ9Ik0wIDQzMCBRMjAwIDQxMCA0MDAgNDMwIFY0NzAgSDAgWiIgZmlsbD0iIzdBQUVENCIgb3BhY2l0eT0iMC41NSIvPjxwYXRoIGQ9Ik0wIDUwMCBRMTAwIDQ5MiAyMDAgNTAwIFQ0MDAgNTAwIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxwYXRoIGQ9Ik0wIDU0MCBRMTAwIDUzMiAyMDAgNTQwIFQ0MDAgNTQwIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxwYXRoIGQ9Ik0wIDU4MCBRMTAwIDU3MiAyMDAgNTgwIFQ0MDAgNTgwIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxwYXRoIGQ9Ik0wIDYxNSBRMTAwIDYwNyAyMDAgNjE1IFQ0MDAgNjE1IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxyZWN0IHg9IjE4MiIgeT0iMzMwIiB3aWR0aD0iMzYiIGhlaWdodD0iMTEwIiByeD0iNCIgZmlsbD0iI0ZBRjhGNSIvPjxwYXRoIGQ9Ik0xODIgMzYwIGgzNiBNMTgyIDM5MCBoMzYgTTE4MiA0MjAgaDM2IiBzdHJva2U9IiNDOTcwNjQiIHN0cm9rZS13aWR0aD0iNiIgb3BhY2l0eT0iMC41Ii8+PHJlY3QgeD0iMTc2IiB5PSIzMTAiIHdpZHRoPSI0OCIgaGVpZ2h0PSIxNCIgcng9IjMiIGZpbGw9IiMxQTNBNTIiLz48cmVjdCB4PSIxODgiIHk9IjI5MiIgd2lkdGg9IjI0IiBoZWlnaHQ9IjIyIiByeD0iMyIgZmlsbD0iI0U2QzA3OSIvPjxwb2x5Z29uIHBvaW50cz0iMjAwLDI3MiAyMTQsMjkyIDE4NiwyOTIiIGZpbGw9IiNDOTcwNjQiLz48cG9seWdvbiBwb2ludHM9IjIxMiwzMDAgNDAwLDI1MCA0MDAsMzYwIiBmaWxsPSIjRkZGM0Q2IiBvcGFjaXR5PSIwLjI4Ii8+PC9zdmc+" alt=""></div>
+    <div class="scrim" style="background:linear-gradient(180deg, rgba(250,248,245,.42) 0%, rgba(250,248,245,.66) 55%, rgba(250,248,245,.92) 100%), linear-gradient(90deg, rgba(250,248,245,.82) 0%, rgba(250,248,245,.32) 60%, rgba(250,248,245,0) 100%);"></div>
+    <div class="over bottom">
+      <div class="kicker" style="margin-bottom:clamp(14px,3vh,26px);">Экспедиция по Писанию · Глава&nbsp;2</div>
+      <h1 class="title" style="font-size:clamp(40px,12vw,80px); margin-bottom:clamp(12px,2.4vh,22px);">Как Бог<br>создал мир</h1>
+      <p class="lead" style="max-width:580px; color:var(--navy); opacity:.9;">
+        Помнишь тёплый свет в конце первого пути? Тот самый маяк в тумане снова зовёт нас в дорогу — к самому началу всех начал, когда не было ещё ничего, кроме Бога.
+      </p>
+    </div>
+    <div class="hint"><span>Дальше</span><span class="arw">→</span></div>
+  </section>
+
+  <!-- ================= SLIDE 2 · В начале ================= -->
+  <section class="slide" data-i="1">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Снова в дорогу</div>
+        <h2 class="title">В начале<br>сотворил Бог</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iMC41IiBjeT0iMC40IiByPSIwLjU1Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNFNkMwNzkiIHN0b3Atb3BhY2l0eT0iMC45Ii8+PHN0b3Agb2Zmc2V0PSIwLjUiIHN0b3AtY29sb3I9IiM3QUFFRDQiIHN0b3Atb3BhY2l0eT0iMC4yNSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzFBM0E1MiIgc3RvcC1vcGFjaXR5PSIwIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyODAiIGZpbGw9IiMxQTNBNTIiLz48Y2lyY2xlIGN4PSI3NCIgY3k9IjIyIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTAiLz48Y2lyY2xlIGN4PSIyMzYiIGN5PSIxMjYiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44MCIvPjxjaXJjbGUgY3g9IjU0IiBjeT0iMTMwIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODUiLz48Y2lyY2xlIGN4PSIyMDUiIGN5PSIxMTYiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43NiIvPjxjaXJjbGUgY3g9IjE0MiIgY3k9IjY0IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODYiLz48Y2lyY2xlIGN4PSIyMSIgY3k9IjExIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzQiLz48Y2lyY2xlIGN4PSIxMCIgY3k9IjEwMyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg5Ii8+PGNpcmNsZSBjeD0iMzc3IiBjeT0iMTMiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43OSIvPjxjaXJjbGUgY3g9IjI1OSIgY3k9IjE0NyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYxIi8+PGNpcmNsZSBjeD0iMzUyIiBjeT0iNjIiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44OCIvPjxjaXJjbGUgY3g9IjE3IiBjeT0iMTEyIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTMiLz48Y2lyY2xlIGN4PSIzNzYiIGN5PSI4MSIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc4Ii8+PGNpcmNsZSBjeD0iMzc1IiBjeT0iMTM0IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjgiLz48Y2lyY2xlIGN4PSIzNDkiIGN5PSI1NCIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU4Ii8+PGNpcmNsZSBjeD0iMjYxIiBjeT0iMTM1IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzIiLz48Y2lyY2xlIGN4PSIyMyIgY3k9IjEyOCIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc4Ii8+PGNpcmNsZSBjeD0iMjEyIiBjeT0iMTEyIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIzNjUiIGN5PSIxMDEiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NSIvPjxjaXJjbGUgY3g9IjI2NiIgY3k9IjMzIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjgiLz48Y2lyY2xlIGN4PSIyMDciIGN5PSIxMDAiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43OCIvPjxjaXJjbGUgY3g9IjI0NiIgY3k9IjE3IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzciLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIxMDYiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MyIvPjxjaXJjbGUgY3g9IjEyMiIgY3k9IjkiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OSIvPjxjaXJjbGUgY3g9IjI4NiIgY3k9IjY1IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjgiLz48Y2lyY2xlIGN4PSIzMDEiIGN5PSI5NiIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg2Ii8+PGNpcmNsZSBjeD0iMzQzIiBjeT0iMTQ2IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIzODUiIGN5PSIxMzciIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjI5MyIgY3k9IjU4IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODgiLz48Y2lyY2xlIGN4PSIyNTIiIGN5PSI5OSIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg3Ii8+PGNpcmNsZSBjeD0iMjE3IiBjeT0iMTMwIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjQiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMTQzIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjYiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjY0IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzAiLz48Y2lyY2xlIGN4PSI5OCIgY3k9IjI5IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSIzNTAiIGN5PSIyNCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg0Ii8+PGNpcmNsZSBjeD0iMjM3IiBjeT0iOSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU2Ii8+PGNpcmNsZSBjeD0iNjIiIGN5PSI1MyIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU4Ii8+PGNpcmNsZSBjeD0iOTEiIGN5PSI0NiIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY5Ii8+PGNpcmNsZSBjeD0iOTIiIGN5PSI3NSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY1Ii8+PGNpcmNsZSBjeD0iMTcwIiBjeT0iMTMzIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTAiLz48Y2lyY2xlIGN4PSIxNjUiIGN5PSIxMDQiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NCIvPjxjaXJjbGUgY3g9IjEwMiIgY3k9IjcyIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIzNzkiIGN5PSIxMzYiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44OCIvPjxjaXJjbGUgY3g9IjIyNyIgY3k9IjExIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSI4MCIgY3k9IjE1IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIyNjUiIGN5PSIxMTUiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44OSIvPjxjaXJjbGUgY3g9IjMyOCIgY3k9IjEzOCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU1Ii8+PGNpcmNsZSBjeD0iMzM4IiBjeT0iMTMiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43NSIvPjxjaXJjbGUgY3g9IjE3MCIgY3k9IjExNSIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc4Ii8+PGNpcmNsZSBjeD0iNzAiIGN5PSI2MCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU5Ii8+PGNpcmNsZSBjeD0iNDUiIGN5PSI4NSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc4Ii8+PGNpcmNsZSBjeD0iMjE5IiBjeT0iMTUwIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSIyOTMiIGN5PSIxNSIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg4Ii8+PGNpcmNsZSBjeD0iMjk3IiBjeT0iMTIzIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODIiLz48Y2lyY2xlIGN4PSIzNjYiIGN5PSIxMzYiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MiIvPjxjaXJjbGUgY3g9IjE4MyIgY3k9IjMxIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzEiLz48Y2lyY2xlIGN4PSIyMjciIGN5PSI1NSIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjUwIi8+PGNpcmNsZSBjeD0iMzQ2IiBjeT0iMTA1IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjgiLz48Y2lyY2xlIGN4PSIxNCIgY3k9Ijg5IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODUiLz48Y2lyY2xlIGN4PSIxNSIgY3k9IjQ2IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODQiLz48Y2lyY2xlIGN4PSIyOTQiIGN5PSI0MCIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMTQyIiBjeT0iMzAiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44NyIvPjxjaXJjbGUgY3g9IjE4MiIgY3k9IjE0MiIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjgwIi8+PGNpcmNsZSBjeD0iMjc4IiBjeT0iNjYiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43OCIvPjxjaXJjbGUgY3g9IjQ5IiBjeT0iNDAiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjI4MSIgY3k9IjYwIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzkiLz48Y2lyY2xlIGN4PSIzMTMiIGN5PSIxMzUiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MiIvPjxjaXJjbGUgY3g9IjE4MCIgY3k9IjM1IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIzMTUiIGN5PSIxMzEiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43MSIvPjxjaXJjbGUgY3g9IjU5IiBjeT0iODgiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MyIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjQzIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjAiLz48ZWxsaXBzZSBjeD0iMjAwIiBjeT0iMTIwIiByeD0iMTUwIiByeT0iOTAiIGZpbGw9InVybCgjZ2xvdykiLz48cGF0aCBkPSJNMCAyMDAgSDQwMCBWMjgwIEgwIFoiIGZpbGw9IiMwRTI1MzYiLz48cGF0aCBkPSJNMCAyMTAgUTEwMCAyMDQgMjAwIDIxMCBUNDAwIDIxMCIgc3Ryb2tlPSIjN0FBRUQ0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuMjUiLz48cGF0aCBkPSJNMCAyMzIgUTEwMCAyMjYgMjAwIDIzMiBUNDAwIDIzMiIgc3Ryb2tlPSIjN0FBRUQ0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuMTgiLz48cGF0aCBkPSJNMCAyNTYgUTEwMCAyNTAgMjAwIDI1NiBUNDAwIDI1NiIgc3Ryb2tlPSIjN0FBRUQ0IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuMTIiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSIxMTIiIHI9IjYiIGZpbGw9IiNGRkY2RTQiLz48L3N2Zz4=" alt="Тёмный мир в самом начале, свет над водою"></figure>
+      <div class="body">
+        <p class="lead sm">Милана, Еммануил и Эван снова разворачивают карту. Стрелка ведёт в самое-самое начало — туда, где ещё не было ни солнца, ни земли, ни единой звезды.</p>
+        <p class="lead sm"><span class="em-navy">«В начале сотворил Бог небо и землю»</span> (Быт.&nbsp;1:1). Земля была пустой и тёмной, и только Дух Божий тихо носился над водою — как тёплый свет над спящим морем.</p>
+        <div class="reflect"><span class="q">?</span><span>Можешь представить мир, в котором нет совсем-совсем ничего?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 3 · День первый ================= -->
+  <section class="slide" data-i="2">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">День первый</div>
+        <h2 class="title">Да будет свет</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkMSIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjAiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzEyMjkzQiIvPjxzdG9wIG9mZnNldD0iMC41IiBzdG9wLWNvbG9yPSIjNkI3QjhBIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjZEOUE2Ii8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9ImQxcyIgY3g9IjAuNzIiIGN5PSIwLjUiIHI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGREY2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjNDNjdGIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI4MCIgZmlsbD0idXJsKCNkMSkiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjUyIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDgiLz48Y2lyY2xlIGN4PSI0OSIgY3k9IjE2MyIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU2Ii8+PGNpcmNsZSBjeD0iMTUiIGN5PSI4NyIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU3Ii8+PGNpcmNsZSBjeD0iMTM2IiBjeT0iMTk2IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTMiLz48Y2lyY2xlIGN4PSIxNSIgY3k9IjIwIiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSI4NyIgY3k9IjIwMCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY2Ii8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iOTAiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40MyIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iOTYiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40MSIvPjxjaXJjbGUgY3g9IjEzNiIgY3k9IjI2NyIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjcwIi8+PGNpcmNsZSBjeD0iNTIiIGN5PSIyMzQiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MSIvPjxjaXJjbGUgY3g9Ijk5IiBjeT0iMTg3IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjkiLz48Y2lyY2xlIGN4PSIxMjAiIGN5PSI4OCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYwIi8+PGNpcmNsZSBjeD0iMTI0IiBjeT0iMTMzIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDUiLz48Y2lyY2xlIGN4PSIxMzMiIGN5PSIyNjIiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41OCIvPjxjaXJjbGUgY3g9IjEyMiIgY3k9IjI0MiIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU1Ii8+PGNpcmNsZSBjeD0iMTIyIiBjeT0iMjU1IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjgiLz48Y2lyY2xlIGN4PSI0OCIgY3k9IjE0MyIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjQ2Ii8+PGNpcmNsZSBjeD0iMTM1IiBjeT0iMjcxIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSI1OSIgY3k9IjI1NiIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY4Ii8+PGNpcmNsZSBjeD0iMjUiIGN5PSIxODAiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NyIvPjxjaXJjbGUgY3g9IjU0IiBjeT0iNjAiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41NSIvPjxjaXJjbGUgY3g9IjE4IiBjeT0iMTQ1IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTkiLz48Y2lyY2xlIGN4PSIzMyIgY3k9IjI3MyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY1Ii8+PGNpcmNsZSBjeD0iNjgiIGN5PSIxMTMiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MCIvPjxjaXJjbGUgY3g9IjE0IiBjeT0iMzUiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40OCIvPjxjaXJjbGUgY3g9IjY5IiBjeT0iMTgiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC4zOSIvPjxsaW5lIHgxPSIyODgiIHkxPSIxNDAiIHgyPSIzNzciIHkyPSItMTA0IiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iNCIgb3BhY2l0eT0iMC40Ii8+PGxpbmUgeDE9IjI4OCIgeTE9IjE0MCIgeDI9IjQzMyIgeTI9Ii03NiIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuNCIvPjxsaW5lIHgxPSIyODgiIHkxPSIxNDAiIHgyPSI0ODEiIHkyPSItMzQiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjQiLz48bGluZSB4MT0iMjg4IiB5MT0iMTQwIiB4Mj0iNTE4IiB5Mj0iMTgiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjQiLz48bGluZSB4MT0iMjg4IiB5MT0iMTQwIiB4Mj0iNTQwIiB5Mj0iNzciIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjQiLz48bGluZSB4MT0iMjg4IiB5MT0iMTQwIiB4Mj0iNTQ4IiB5Mj0iMTQwIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iNCIgb3BhY2l0eT0iMC40Ii8+PGxpbmUgeDE9IjI4OCIgeTE9IjE0MCIgeDI9IjU0MCIgeTI9IjIwMyIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuNCIvPjxsaW5lIHgxPSIyODgiIHkxPSIxNDAiIHgyPSI1MTgiIHkyPSIyNjIiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjQiLz48bGluZSB4MT0iMjg4IiB5MT0iMTQwIiB4Mj0iNDgxIiB5Mj0iMzE0IiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iNCIgb3BhY2l0eT0iMC40Ii8+PGxpbmUgeDE9IjI4OCIgeTE9IjE0MCIgeDI9IjQzMyIgeTI9IjM1NiIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuNCIvPjxsaW5lIHgxPSIyODgiIHkxPSIxNDAiIHgyPSIzNzciIHkyPSIzODQiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSI0IiBvcGFjaXR5PSIwLjQiLz48Y2lyY2xlIGN4PSIyODgiIGN5PSIxNDAiIHI9IjEyMCIgZmlsbD0idXJsKCNkMXMpIi8+PGNpcmNsZSBjeD0iMjg4IiBjeT0iMTQwIiByPSI0NiIgZmlsbD0iI0ZGRjhFNyIvPjwvc3ZnPg==" alt="Первый свет разгоняет тьму"></figure>
+      <div class="body">
+        <p class="lead sm">И сказал Бог: <span class="em-terra">«Да будет свет»</span>. И стал свет (Быт.&nbsp;1:3).</p>
+        <ul class="stars">
+          <li>Бог назвал свет днём, а тьму — ночью.</li>
+          <li>Свет был добрым и тёплым — самый первый подарок миру.</li>
+          <li>Так появились утро и вечер — день первый.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 4 · День второй ================= -->
+  <section class="slide" data-i="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">День второй</div>
+        <h2 class="title">Небо над нами</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkMnMiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNCRkUwRjIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QUFFRDQiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0iZDJ3IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEU3RkE1Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMUEzQTUyIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyODAiIGZpbGw9InVybCgjZDJzKSIvPjxyZWN0IHk9IjE2OCIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIxMTIiIGZpbGw9InVybCgjZDJ3KSIvPjxnIG9wYWNpdHk9IjAuODUiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkwIDcwKSBzY2FsZSgxLjAwKSI+PGVsbGlwc2UgY3g9IjAiIGN5PSIwIiByeD0iMzQiIHJ5PSIxNiIgZmlsbD0iI0ZGRkZGRiIvPjxlbGxpcHNlIGN4PSIyNiIgY3k9IjYiIHJ4PSIyNCIgcnk9IjEzIiBmaWxsPSIjRkZGRkZGIi8+PGVsbGlwc2UgY3g9Ii0yNCIgY3k9IjYiIHJ4PSIyMiIgcnk9IjEyIiBmaWxsPSIjRkZGRkZGIi8+PC9nPjxnIG9wYWNpdHk9IjAuODAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMwMCA1MCkgc2NhbGUoMS4zMCkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iMCIgcng9IjM0IiByeT0iMTYiIGZpbGw9IiNGRkZGRkYiLz48ZWxsaXBzZSBjeD0iMjYiIGN5PSI2IiByeD0iMjQiIHJ5PSIxMyIgZmlsbD0iI0ZGRkZGRiIvPjxlbGxpcHNlIGN4PSItMjQiIGN5PSI2IiByeD0iMjIiIHJ5PSIxMiIgZmlsbD0iI0ZGRkZGRiIvPjwvZz48ZyBvcGFjaXR5PSIwLjcwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMTAgMTEwKSBzY2FsZSgwLjgwKSI+PGVsbGlwc2UgY3g9IjAiIGN5PSIwIiByeD0iMzQiIHJ5PSIxNiIgZmlsbD0iI0ZGRkZGRiIvPjxlbGxpcHNlIGN4PSIyNiIgY3k9IjYiIHJ4PSIyNCIgcnk9IjEzIiBmaWxsPSIjRkZGRkZGIi8+PGVsbGlwc2UgY3g9Ii0yNCIgY3k9IjYiIHJ4PSIyMiIgcnk9IjEyIiBmaWxsPSIjRkZGRkZGIi8+PC9nPjxwYXRoIGQ9Ik0wIDE5NiBRMTAwIDE4OSAyMDAgMTk2IFQ0MDAgMTk2IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxwYXRoIGQ9Ik0wIDIyMiBRMTAwIDIxNSAyMDAgMjIyIFQ0MDAgMjIyIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjxwYXRoIGQ9Ik0wIDI1MCBRMTAwIDI0MyAyMDAgMjUwIFQ0MDAgMjUwIiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xOCIvPjwvc3ZnPg==" alt="Голубое небо над водами"></figure>
+      <div class="body">
+        <p class="lead sm">Бог поднял высоко небо и отделил воды вверху от вод внизу (Быт.&nbsp;1:6–8).</p>
+        <p class="lead sm">Теперь над миром раскинулся огромный голубой шатёр — <span class="em-navy">небо</span>, по которому потом поплывут белые облака.</p>
+        <div class="reflect"><span class="q">?</span><span>На что похожи облака, когда ты смотришь на них снизу вверх?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 5 · День третий ================= -->
+  <section class="slide" data-i="4">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">День третий</div>
+        <h2 class="title">Земля, моря<br>и первые ростки</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkM3MiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNEOEVDRjYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNCRkUwRjIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI4MCIgZmlsbD0idXJsKCNkM3MpIi8+PHBhdGggZD0iTTAgMTUwIFEyMDAgMTIwIDQwMCAxNTAgVjI4MCBIMCBaIiBmaWxsPSIjN0FBRUQ0Ii8+PHBhdGggZD0iTTAgMTc1IFExMjAgMTQwIDI2MCAxNzggVDQwMCAxNjggVjI4MCBIMCBaIiBmaWxsPSIjN0ZBODcwIi8+PHBhdGggZD0iTTAgMjE1IFExNjAgMTg1IDMwMCAyMTggVDQwMCAyMTAgVjI4MCBIMCBaIiBmaWxsPSIjNUU4QTVBIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzAgMjA1KSBzY2FsZSgxLjAwKSI+PHJlY3QgeD0iLTQiIHk9IjAiIHdpZHRoPSI4IiBoZWlnaHQ9IjI2IiByeD0iMyIgZmlsbD0iI0M5NzA2NCIvPjxjaXJjbGUgY3g9IjAiIGN5PSItNiIgcj0iMjAiIGZpbGw9IiM2RkEyNUUiLz48Y2lyY2xlIGN4PSItMTIiIGN5PSIyIiByPSIxNCIgZmlsbD0iIzdGQjI2OCIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMiIgcj0iMTQiIGZpbGw9IiM4N0I5NkYiLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzIwIDIyMikgc2NhbGUoMS4yMCkiPjxyZWN0IHg9Ii00IiB5PSIwIiB3aWR0aD0iOCIgaGVpZ2h0PSIyNiIgcng9IjMiIGZpbGw9IiNDOTcwNjQiLz48Y2lyY2xlIGN4PSIwIiBjeT0iLTYiIHI9IjIwIiBmaWxsPSIjNkZBMjVFIi8+PGNpcmNsZSBjeD0iLTEyIiBjeT0iMiIgcj0iMTQiIGZpbGw9IiM3RkIyNjgiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjIiIHI9IjE0IiBmaWxsPSIjODdCOTZGIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE4MCAyMzIpIHNjYWxlKDAuOTApIj48cmVjdCB4PSItNCIgeT0iMCIgd2lkdGg9IjgiIGhlaWdodD0iMjYiIHJ4PSIzIiBmaWxsPSIjQzk3MDY0Ii8+PGNpcmNsZSBjeD0iMCIgY3k9Ii02IiByPSIyMCIgZmlsbD0iIzZGQTI1RSIvPjxjaXJjbGUgY3g9Ii0xMiIgY3k9IjIiIHI9IjE0IiBmaWxsPSIjN0ZCMjY4Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIyIiByPSIxNCIgZmlsbD0iIzg3Qjk2RiIvPjwvZz48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNTUiIHI9IjQiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNTUiIHI9IjIiIGZpbGw9IiNGRkYzRDYiLz48Y2lyY2xlIGN4PSIyNDAiIGN5PSIyNTgiIHI9IjQiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSIyNDAiIGN5PSIyNTgiIHI9IjIiIGZpbGw9IiNGRkYzRDYiLz48Y2lyY2xlIGN4PSIzNjAiIGN5PSIyNTIiIHI9IjQiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSIzNjAiIGN5PSIyNTIiIHI9IjIiIGZpbGw9IiNGRkYzRDYiLz48Y2lyY2xlIGN4PSIzMCIgY3k9IjI1OCIgcj0iNCIgZmlsbD0iI0U2QzA3OSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMjU4IiByPSIyIiBmaWxsPSIjRkZGM0Q2Ii8+PC9zdmc+" alt="Суша, моря и зелёные растения"></figure>
+      <div class="body">
+        <p class="lead sm"><span class="em-navy">«Да соберётся вода… и да явится суша»</span> (Быт.&nbsp;1:9–11).</p>
+        <ul class="stars">
+          <li>Из воды поднялась суша — горы, холмы и долины.</li>
+          <li>Собрались вместе моря, озёра и быстрые реки.</li>
+          <li>Земля укрылась травой, цветами и деревьями с плодами.</li>
+        </ul>
+        <div class="reflect"><span class="q">?</span><span>Какое растение или дерево нравится тебе больше всего?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 6 · День четвёртый ================= -->
+  <section class="slide" data-i="5">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">День четвёртый</div>
+        <h2 class="title">Солнце, луна<br>и звёзды</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkNCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0YzQzY3RiIvPjxzdG9wIG9mZnNldD0iMC41IiBzdG9wLWNvbG9yPSIjN0FBRUQ0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMUEzQTUyIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyODAiIGZpbGw9InVybCgjZDQpIi8+PGNpcmNsZSBjeD0iMTI2IiBjeT0iMTYxIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzciLz48Y2lyY2xlIGN4PSIyNTEiIGN5PSI4NSIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjQ4Ii8+PGNpcmNsZSBjeD0iMjExIiBjeT0iMTU0IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTUiLz48Y2lyY2xlIGN4PSIyODAiIGN5PSIxOTAiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44MCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iMTQwIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODciLz48Y2lyY2xlIGN4PSIxOSIgY3k9IjEzOSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU0Ii8+PGNpcmNsZSBjeD0iMTY0IiBjeT0iMTU0IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDkiLz48Y2lyY2xlIGN4PSIzMTYiIGN5PSIxNzgiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9Ijk3IiBjeT0iMTMyIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTgiLz48Y2lyY2xlIGN4PSIyODYiIGN5PSIxNTkiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44NiIvPjxjaXJjbGUgY3g9IjI5OSIgY3k9IjE2NSIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMzEyIiBjeT0iMTUzIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIxMjUiIGN5PSIxNjIiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44MiIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iNDciIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NiIvPjxjaXJjbGUgY3g9IjE0OSIgY3k9IjI3MSIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc3Ii8+PGNpcmNsZSBjeD0iODAiIGN5PSIxMDYiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NCIvPjxjaXJjbGUgY3g9IjEwOSIgY3k9IjIzMSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjUzIi8+PGNpcmNsZSBjeD0iMjI5IiBjeT0iMTcwIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODYiLz48Y2lyY2xlIGN4PSI1NyIgY3k9IjM3IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTciLz48Y2lyY2xlIGN4PSIzMDQiIGN5PSIxMjciIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MCIvPjxjaXJjbGUgY3g9Ijk2IiBjeT0iMTU0IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSIxODgiIGN5PSI0OCIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc4Ii8+PGNpcmNsZSBjeD0iMTczIiBjeT0iMTUiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41OCIvPjxjaXJjbGUgY3g9Ijg0IiBjeT0iMjE2IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTgiLz48Y2lyY2xlIGN4PSIxMDQiIGN5PSIyMzMiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MSIvPjxjaXJjbGUgY3g9IjIwMSIgY3k9Ijg3IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzEiLz48Y2lyY2xlIGN4PSIxOTIiIGN5PSIyOCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjUzIi8+PGNpcmNsZSBjeD0iMTkxIiBjeT0iMTU0IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIxMTIiIGN5PSIyMjMiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MCIvPjxjaXJjbGUgY3g9IjM3IiBjeT0iMzQiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43MiIvPjxjaXJjbGUgY3g9IjgyIiBjeT0iMjYiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43MSIvPjxjaXJjbGUgY3g9IjE3MCIgY3k9IjI0IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODMiLz48Y2lyY2xlIGN4PSIxNTUiIGN5PSIyMTUiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NiIvPjxjaXJjbGUgY3g9IjEyOSIgY3k9IjIzMCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY3Ii8+PGNpcmNsZSBjeD0iMTE4IiBjeT0iMjIxIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIyMjUiIGN5PSIxMTYiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MyIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iMTM2IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIxMTIiIGN5PSIxMjQiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44NCIvPjxjaXJjbGUgY3g9Ijc4IiBjeT0iMTcyIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODUiLz48Y2lyY2xlIGN4PSIxNjciIGN5PSI2NSIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg4Ii8+PGNpcmNsZSBjeD0iMzQwIiBjeT0iMjYiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MiIvPjxjaXJjbGUgY3g9IjIyNiIgY3k9IjExMyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYwIi8+PGNpcmNsZSBjeD0iMzQyIiBjeT0iMjQ3IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODIiLz48Y2lyY2xlIGN4PSIyNzYiIGN5PSIxMTYiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MCIvPjxjaXJjbGUgY3g9IjIwNiIgY3k9IjI2MCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg0Ii8+PGNpcmNsZSBjeD0iMTQ5IiBjeT0iMTAzIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjMiLz48Y2lyY2xlIGN4PSIzMjMiIGN5PSI3MSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc1Ii8+PGNpcmNsZSBjeD0iMzYiIGN5PSI5MSIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjcxIi8+PGNpcmNsZSBjeD0iMzg4IiBjeT0iMjEyIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTUiLz48Y2lyY2xlIGN4PSI3IiBjeT0iMTE0IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSIxMzciIGN5PSI2NSIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjgxIi8+PGNpcmNsZSBjeD0iMjAxIiBjeT0iMTE5IiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODUiLz48Y2lyY2xlIGN4PSIxMDkiIGN5PSI4OCIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjgyIi8+PGNpcmNsZSBjeD0iMjkzIiBjeT0iMjQ3IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDYiLz48Y2lyY2xlIGN4PSIyMyIgY3k9IjYzIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzAiLz48bGluZSB4MT0iOTIiIHkxPSI5NiIgeDI9IjE1OCIgeTI9Ijk2IiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC41Ii8+PGxpbmUgeDE9IjkyIiB5MT0iOTYiIHgyPSIxNDkiIHkyPSIxMjkiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjUiLz48bGluZSB4MT0iOTIiIHkxPSI5NiIgeDI9IjEyNSIgeTI9IjE1MyIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iOTIiIHkyPSIxNjIiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjUiLz48bGluZSB4MT0iOTIiIHkxPSI5NiIgeDI9IjU5IiB5Mj0iMTUzIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC41Ii8+PGxpbmUgeDE9IjkyIiB5MT0iOTYiIHgyPSIzNSIgeTI9IjEyOSIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iMjYiIHkyPSI5NiIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iMzUiIHkyPSI2MyIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iNTkiIHkyPSIzOSIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iOTIiIHkyPSIzMCIgc3Ryb2tlPSIjRkZGM0Q2IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNSIvPjxsaW5lIHgxPSI5MiIgeTE9Ijk2IiB4Mj0iMTI1IiB5Mj0iMzkiIHN0cm9rZT0iI0ZGRjNENiIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIwLjUiLz48bGluZSB4MT0iOTIiIHkxPSI5NiIgeDI9IjE0OSIgeTI9IjYzIiBzdHJva2U9IiNGRkYzRDYiIHN0cm9rZS13aWR0aD0iMyIgb3BhY2l0eT0iMC41Ii8+PGNpcmNsZSBjeD0iOTIiIGN5PSI5NiIgcj0iNDAiIGZpbGw9IiNGRkYzRDYiLz48cGF0aCBkPSJNMzIwIDE4MCBhNDQgNDQgMCAxIDAgNiA4NCBhMzQgMzQgMCAxIDEgLTYgLTg0IFoiIGZpbGw9IiNGQUY4RjUiIG9wYWNpdHk9IjAuOTUiLz48cGF0aCBkPSJNMjUwIDcwIGwzIDggOCAzIC04IDMgLTMgOCAtMyAtOCAtOCAtMyA4IC0zIFoiIGZpbGw9IiNGRkY2RTQiLz48cGF0aCBkPSJNMTgwIDE1MCBsMyA4IDggMyAtOCAzIC0zIDggLTMgLTggLTggLTMgOCAtMyBaIiBmaWxsPSIjRkZGNkU0Ii8+PHBhdGggZD0iTTMzMCA5MCBsMyA4IDggMyAtOCAzIC0zIDggLTMgLTggLTggLTMgOCAtMyBaIiBmaWxsPSIjRkZGNkU0Ii8+PC9zdmc+" alt="Солнце, луна и звёзды на небе"></figure>
+      <div class="body">
+        <p class="lead sm">Бог зажёг светила на небе — большие и маленькие огоньки (Быт.&nbsp;1:14–16).</p>
+        <ul class="stars">
+          <li>Солнце — чтобы светить и греть нас днём.</li>
+          <li>Луна и звёзды — чтобы было светло тихой ночью.</li>
+          <li>Так появились дни, ночи и времена года.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 7 · День пятый ================= -->
+  <section class="slide" data-i="6">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">День пятый</div>
+        <h2 class="title">Рыбы в воде,<br>птицы в небе</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkNXMiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNDREU3RjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM5Q0NCRTYiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0iZDV3IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjNEU4RkI0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMUEzQTUyIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyODAiIGZpbGw9InVybCgjZDVzKSIvPjxyZWN0IHk9IjE1MCIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIxMzAiIGZpbGw9InVybCgjZDV3KSIvPjxjaXJjbGUgY3g9IjMzMCIgY3k9IjUyIiByPSIyNiIgZmlsbD0iI0ZGRjBDRSIgb3BhY2l0eT0iMC45Ii8+PHBhdGggZD0iTTgwIDYwIHE4IC05IDE2IDAgcTggLTkgMTYgMCIgc3Ryb2tlPSIjMUEzQTUyIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiIHRyYW5zZm9ybT0ic2NhbGUoMS4wMCkiIG9wYWNpdHk9IjAuODUiLz48cGF0aCBkPSJNMTc1IDU1IHE4IC05IDE2IDAgcTggLTkgMTYgMCIgc3Ryb2tlPSIjMUEzQTUyIiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiIHRyYW5zZm9ybT0ic2NhbGUoMC44MCkiIG9wYWNpdHk9IjAuODUiLz48cGF0aCBkPSJNMTcxIDEyMCBxOCAtOSAxNiAwIHE4IC05IDE2IDAiIHN0cm9rZT0iIzFBM0E1MiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiB0cmFuc2Zvcm09InNjYWxlKDAuNzApIiBvcGFjaXR5PSIwLjg1Ii8+PHBhdGggZD0iTTIyMiA2NCBxOCAtOSAxNiAwIHE4IC05IDE2IDAiIHN0cm9rZT0iIzFBM0E1MiIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIiB0cmFuc2Zvcm09InNjYWxlKDAuOTApIiBvcGFjaXR5PSIwLjg1Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTAgMjAwKSI+PGVsbGlwc2UgY3g9IjAiIGN5PSIwIiByeD0iMTgiIHJ5PSI5IiBmaWxsPSIjRTZDMDc5Ii8+PHBvbHlnb24gcG9pbnRzPSIxNiwwIDMwLC04IDMwLDgiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSItOCIgY3k9Ii0yIiByPSIxLjYiIGZpbGw9IiMxQTNBNTIiLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjMwIDIyNSkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iMCIgcng9IjE4IiByeT0iOSIgZmlsbD0iI0M5NzA2NCIvPjxwb2x5Z29uIHBvaW50cz0iMTYsMCAzMCwtOCAzMCw4IiBmaWxsPSIjQzk3MDY0Ii8+PGNpcmNsZSBjeD0iLTgiIGN5PSItMiIgcj0iMS42IiBmaWxsPSIjMUEzQTUyIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMyMCAxOTUpIj48ZWxsaXBzZSBjeD0iMCIgY3k9IjAiIHJ4PSIxOCIgcnk9IjkiIGZpbGw9IiNENEE1NzQiLz48cG9seWdvbiBwb2ludHM9IjE2LDAgMzAsLTggMzAsOCIgZmlsbD0iI0Q0QTU3NCIvPjxjaXJjbGUgY3g9Ii04IiBjeT0iLTIiIHI9IjEuNiIgZmlsbD0iIzFBM0E1MiIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNjAgMjQ1KSI+PGVsbGlwc2UgY3g9IjAiIGN5PSIwIiByeD0iMTgiIHJ5PSI5IiBmaWxsPSIjRTBCOTc4Ii8+PHBvbHlnb24gcG9pbnRzPSIxNiwwIDMwLC04IDMwLDgiIGZpbGw9IiNFMEI5NzgiLz48Y2lyY2xlIGN4PSItOCIgY3k9Ii0yIiByPSIxLjYiIGZpbGw9IiMxQTNBNTIiLz48L2c+PHBhdGggZD0iTTAgMTcwIFExMDAgMTY0IDIwMCAxNzAgVDQwMCAxNzAiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuMTQiLz48cGF0aCBkPSJNMCAyMDAgUTEwMCAxOTQgMjAwIDIwMCBUNDAwIDIwMCIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjEuNSIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC4xNCIvPjxwYXRoIGQ9Ik0wIDIzNSBRMTAwIDIyOSAyMDAgMjM1IFQ0MDAgMjM1IiBzdHJva2U9IiNGRkZGRkYiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSJub25lIiBvcGFjaXR5PSIwLjE0Ii8+PC9zdmc+" alt="Рыбы в море и птицы в небе"></figure>
+      <div class="body">
+        <p class="lead sm"><span class="em-navy">«Да произведёт вода… рыб, и птицы да полетят над землёю»</span> (Быт.&nbsp;1:20–21).</p>
+        <p class="lead sm">Моря наполнились рыбами — от крошечных серебристых рыбок до огромных китов. А небо зазвенело <span class="em-terra">птичьими песнями</span>.</p>
+        <div class="reflect"><span class="q">?</span><span>Если бы ты мог(-ла) полетать, как птица, — куда бы отправился(-ась)?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 8 · День шестой ================= -->
+  <section class="slide" data-i="7">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">День шестой</div>
+        <h2 class="title">Звери — и человек</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkNiIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZCRTdDNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0YzQzY3RiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjgwIiBmaWxsPSJ1cmwoI2Q2KSIvPjxjaXJjbGUgY3g9IjMyMCIgY3k9IjY2IiByPSIzNCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45Ii8+PHBhdGggZD0iTTAgMTkwIFEyMDAgMTU4IDQwMCAxOTAgVjI4MCBIMCBaIiBmaWxsPSIjN0ZBODcwIi8+PHBhdGggZD0iTTAgMjI0IFExNjAgMjAwIDQwMCAyMjQgVjI4MCBIMCBaIiBmaWxsPSIjNUU4QTVBIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYgMjE0KSI+PGVsbGlwc2UgY3g9IjAiIGN5PSIwIiByeD0iMjIiIHJ5PSIxNSIgZmlsbD0iI0ZBRjhGNSIvPjxjaXJjbGUgY3g9IjE4IiBjeT0iLTYiIHI9IjkiIGZpbGw9IiMxQTNBNTIiLz48cmVjdCB4PSItMTIiIHk9IjEyIiB3aWR0aD0iNCIgaGVpZ2h0PSIxMiIgZmlsbD0iIzFBM0E1MiIvPjxyZWN0IHg9IjgiIHk9IjEyIiB3aWR0aD0iNCIgaGVpZ2h0PSIxMiIgZmlsbD0iIzFBM0E1MiIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyNTAgMjAwKSI+PGNpcmNsZSBjeD0iMCIgY3k9Ii0zMCIgcj0iMTAiIGZpbGw9IiNDOTcwNjQiLz48cGF0aCBkPSJNLTkgLTE4IFEwIC0yMiA5IC0xOCBMNyAxOCBILTcgWiIgZmlsbD0iI0M5NzA2NCIvPjxyZWN0IHg9Ii04IiB5PSIxOCIgd2lkdGg9IjUiIGhlaWdodD0iMjAiIGZpbGw9IiNDOTcwNjQiLz48cmVjdCB4PSIzIiB5PSIxOCIgd2lkdGg9IjUiIGhlaWdodD0iMjAiIGZpbGw9IiNDOTcwNjQiLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjkyIDIwMCkiPjxjaXJjbGUgY3g9IjAiIGN5PSItMzAiIHI9IjEwIiBmaWxsPSIjMUEzQTUyIi8+PHBhdGggZD0iTS05IC0xOCBRMCAtMjIgOSAtMTggTDcgMTggSC03IFoiIGZpbGw9IiMxQTNBNTIiLz48cmVjdCB4PSItOCIgeT0iMTgiIHdpZHRoPSI1IiBoZWlnaHQ9IjIwIiBmaWxsPSIjMUEzQTUyIi8+PHJlY3QgeD0iMyIgeT0iMTgiIHdpZHRoPSI1IiBoZWlnaHQ9IjIwIiBmaWxsPSIjMUEzQTUyIi8+PC9nPjwvc3ZnPg==" alt="Животные и люди на земле"></figure>
+      <div class="body">
+        <p class="lead sm">Бог создал всех зверей, а потом сотворил человека <span class="em-navy">по образу Своему</span> (Быт.&nbsp;1:24–27).</p>
+        <ul class="stars">
+          <li>По земле пошли звери — большие и совсем крошечные.</li>
+          <li>Последними Бог создал людей: тебя и меня.</li>
+          <li>Он вложил в человека Свою любовь и доброту.</li>
+        </ul>
+        <div class="reflect"><span class="q">?</span><span>Как думаешь, что значит быть похожим на Бога добротой?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 9 · День седьмой ================= -->
+  <section class="slide" data-i="8">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">День седьмой</div>
+        <h2 class="title">День тихого покоя</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkNyIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iI0U5Qjk4QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0M5NzA2NCIvPjwvbGluZWFyR3JhZGllbnQ+PHJhZGlhbEdyYWRpZW50IGlkPSJkN3MiIGN4PSIwLjUiIGN5PSIxIiByPSIwLjciPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRjZFNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0YzQzY3RiIgc3RvcC1vcGFjaXR5PSIwIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSIyODAiIGZpbGw9InVybCgjZDcpIi8+PGVsbGlwc2UgY3g9IjIwMCIgY3k9IjIzMCIgcng9IjE4MCIgcnk9IjkwIiBmaWxsPSJ1cmwoI2Q3cykiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMTIiIHI9IjQ0IiBmaWxsPSIjRkZGM0Q2IiBvcGFjaXR5PSIwLjk1Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjAwIDkwKSIgb3BhY2l0eT0iMC45NSI+PHBhdGggZD0iTTAgMCBxMTAgLTE0IDI2IC04IHEtOCA2IC02IDE2IHEtMTQgNiAtMjAgLTIgWiIgZmlsbD0iI0ZBRjhGNSIvPjxwYXRoIGQ9Ik0wIDAgcS0xMCAtMTQgLTI2IC04IHE4IDYgNiAxNiBxMTQgNiAyMCAtMiBaIiBmaWxsPSIjRkFGOEY1Ii8+PGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjYiIGZpbGw9IiNGQUY4RjUiLz48L2c+PHBhdGggZD0iTTAgMjUwIFExMjAgMjMwIDI2MCAyNTIgVDQwMCAyNDQgVjI4MCBIMCBaIiBmaWxsPSIjMUEzQTUyIiBvcGFjaXR5PSIwLjUiLz48L3N2Zz4=" alt="Тихий день покоя, голубь мира"></figure>
+      <div class="body">
+        <p class="lead sm"><span class="em-navy">«И почил Бог в день седьмой от всех дел Своих»</span> (Быт.&nbsp;2:2–3).</p>
+        <p class="lead sm">Бог не устал — Он просто остановился, чтобы порадоваться всему, что создал. И <span class="em-terra">благословил этот день</span>, подарив нам время отдыхать и говорить спасибо.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 10 · У костра ================= -->
+  <section class="slide" data-i="9">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">У костра</div>
+        <h2 class="title">Друзья смотрят<br>на звёзды</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzFBM0E1MiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzNCNUU3OCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjgwIiBmaWxsPSJ1cmwoI2RnKSIvPjxjaXJjbGUgY3g9IjI0MyIgY3k9IjE2MiIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjU3Ii8+PGNpcmNsZSBjeD0iMTAxIiBjeT0iNyIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY4Ii8+PGNpcmNsZSBjeD0iMzE1IiBjeT0iMjYiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43MCIvPjxjaXJjbGUgY3g9IjMyMSIgY3k9IjE2IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTMiLz48Y2lyY2xlIGN4PSIyMzciIGN5PSIxMTQiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MyIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzQiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjMwOCIgY3k9IjIyIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODEiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjgwIiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzUiLz48Y2lyY2xlIGN4PSIzNzciIGN5PSIxMTMiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44MCIvPjxjaXJjbGUgY3g9IjExMyIgY3k9IjEwNyIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYwIi8+PGNpcmNsZSBjeD0iMjgiIGN5PSI1NyIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg1Ii8+PGNpcmNsZSBjeD0iMzQiIGN5PSIxMDIiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MSIvPjxjaXJjbGUgY3g9IjEyNyIgY3k9IjExNCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg4Ii8+PGNpcmNsZSBjeD0iNyIgY3k9IjM3IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODUiLz48Y2lyY2xlIGN4PSIxMDkiIGN5PSI5MCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg1Ii8+PGNpcmNsZSBjeD0iNzQiIGN5PSIxNDQiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjI5OSIgY3k9IjEzMyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMjA5IiBjeT0iNTUiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43NyIvPjxjaXJjbGUgY3g9IjgwIiBjeT0iNTAiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40NyIvPjxjaXJjbGUgY3g9IjI5MCIgY3k9IjE2MSIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc5Ii8+PGNpcmNsZSBjeD0iMzgzIiBjeT0iMTUzIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTAiLz48Y2lyY2xlIGN4PSIzNjciIGN5PSIxMDkiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjI2NCIgY3k9IjE3IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODMiLz48Y2lyY2xlIGN4PSIyNzMiIGN5PSIxNTciIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44NCIvPjxjaXJjbGUgY3g9IjYyIiBjeT0iMTU1IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIyMTEiIGN5PSI1NiIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYyIi8+PGNpcmNsZSBjeD0iMzE3IiBjeT0iOTAiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42NSIvPjxjaXJjbGUgY3g9IjExNSIgY3k9IjYyIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTciLz48Y2lyY2xlIGN4PSI1MSIgY3k9Ijg0IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTAiLz48Y2lyY2xlIGN4PSIzNCIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODAiLz48Y2lyY2xlIGN4PSIyMjUiIGN5PSIxMzMiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43NyIvPjxjaXJjbGUgY3g9IjEzMyIgY3k9IjE1MCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMTI0IiBjeT0iMzAiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjI5MiIgY3k9IjEwMCIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjc1Ii8+PGNpcmNsZSBjeD0iOTMiIGN5PSI3MiIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjQ3Ii8+PGNpcmNsZSBjeD0iOTQiIGN5PSI3MyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg5Ii8+PGNpcmNsZSBjeD0iMzE2IiBjeT0iNDMiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40NyIvPjxjaXJjbGUgY3g9IjIzNiIgY3k9IjU5IiByPSIxLjYiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTgiLz48Y2lyY2xlIGN4PSIxMyIgY3k9Ijk2IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSIyOTMiIGN5PSI3NyIgcj0iMS4wIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg4Ii8+PGNpcmNsZSBjeD0iMzg4IiBjeT0iMTQ4IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzYiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjExMyIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjUxIi8+PGNpcmNsZSBjeD0iMjkzIiBjeT0iMTA0IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNzUiLz48Y2lyY2xlIGN4PSIxNDYiIGN5PSIxNTgiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42MSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iNzYiIHI9IjEuMCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC41MyIvPjxjaXJjbGUgY3g9IjMyOCIgY3k9IjI3IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuODAiLz48Y2lyY2xlIGN4PSIxMTkiIGN5PSI5IiByPSIxLjAiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNTMiLz48Y2lyY2xlIGN4PSIyMzkiIGN5PSIxNTciIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC40OSIvPjxjaXJjbGUgY3g9IjI4NiIgY3k9IjEyOSIgcj0iMS4yIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjY5Ii8+PGNpcmNsZSBjeD0iMzM5IiBjeT0iMTMiIHI9IjEuNiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC42OSIvPjxjaXJjbGUgY3g9IjI3NCIgY3k9IjE0MCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg0Ii8+PGNpcmNsZSBjeD0iMjk5IiBjeT0iMTQ0IiByPSIxLjIiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNDgiLz48Y2lyY2xlIGN4PSIxMjAiIGN5PSI0MSIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjQ5Ii8+PGNpcmNsZSBjeD0iMjU3IiBjeT0iMTIyIiByPSIwLjgiIGZpbGw9IiNGRkZGRkYiIG9wYWNpdHk9IjAuNjciLz48Y2lyY2xlIGN4PSIzMzIiIGN5PSIxOSIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjYyIi8+PGNpcmNsZSBjeD0iMjQwIiBjeT0iNjUiIHI9IjEuMiIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC44MiIvPjxjaXJjbGUgY3g9IjM3OSIgY3k9IjE1MiIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjg0Ii8+PGNpcmNsZSBjeD0iMjQiIGN5PSIxNjUiIHI9IjAuOCIgZmlsbD0iI0ZGRkZGRiIgb3BhY2l0eT0iMC43MyIvPjxjaXJjbGUgY3g9IjM1MyIgY3k9IjExMCIgcj0iMS42IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjcxIi8+PGNpcmNsZSBjeD0iNDciIGN5PSI1NCIgcj0iMC44IiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIwLjcyIi8+PGNpcmNsZSBjeD0iMzMwIiBjeT0iNTQiIHI9IjIyIiBmaWxsPSIjRkFGOEY1IiBvcGFjaXR5PSIwLjkiLz48cGF0aCBkPSJNMCAyMTQgUTIwMCAxOTAgNDAwIDIxNCBWMjgwIEgwIFoiIGZpbGw9IiMxMjI5M0IiLz48cGF0aCBkPSJNMjAwIDI1MCBxLTEwIC0yMiAwIC0zNCBxOCA4IDQgMTggcTEwIC02IDggLTE4IHExMiAxNCA0IDM0IFoiIGZpbGw9IiNFNkMwNzkiLz48cGF0aCBkPSJNMjAwIDI1MCBxLTYgLTE0IDAgLTIyIHE2IDggMCAyMiBaIiBmaWxsPSIjQzk3MDY0Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTUwIDIzNikiPjxjaXJjbGUgY3g9IjAiIGN5PSItMTQiIHI9IjYiIGZpbGw9IiNFNkMwNzkiLz48cGF0aCBkPSJNLTYgLTYgUTAgLTkgNiAtNiBMNSAxMiBILTUgWiIgZmlsbD0iI0U2QzA3OSIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyMDAgMjM2KSI+PGNpcmNsZSBjeD0iMCIgY3k9Ii0xNCIgcj0iNiIgZmlsbD0iIzdBQUVENCIvPjxwYXRoIGQ9Ik0tNiAtNiBRMCAtOSA2IC02IEw1IDEyIEgtNSBaIiBmaWxsPSIjN0FBRUQ0Ii8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI1MCAyMzYpIj48Y2lyY2xlIGN4PSIwIiBjeT0iLTE0IiByPSI2IiBmaWxsPSIjRDRBNTc0Ii8+PHBhdGggZD0iTS02IC02IFEwIC05IDYgLTYgTDUgMTIgSC01IFoiIGZpbGw9IiNENEE1NzQiLz48L2c+PC9zdmc+" alt="Трое друзей у костра под звёздами"></figure>
+      <div class="body">
+        <div class="say">
+          <div class="badge" style="background:linear-gradient(150deg,#7AAED4,#1A3A52)">Е</div>
+          <p><span class="who">Еммануил:</span> Только представьте — каждая звёздочка и каждая букашка придуманы с любовью…</p>
+        </div>
+        <div class="say" style="background:linear-gradient(120deg,rgba(212,165,116,.15),rgba(255,255,255,.7));">
+          <div class="badge" style="background:linear-gradient(150deg,#E6C079,#C97064)">М</div>
+          <p><span class="who">Милана:</span> А самое удивительное — что среди всего этого Бог помнит и обо мне.</p>
+        </div>
+        <div class="say">
+          <div class="badge" style="background:linear-gradient(150deg,#D9A05B,#C97064)">Э</div>
+          <p><span class="who">Эван:</span> Значит, весь этот огромный мир — как большое письмо, в котором Бог говорит: «Я вас люблю».</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 11 · Вопрос в пути ================= -->
+  <section class="slide" data-i="10">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">Остановка · вопрос в пути</div>
+        <h2 class="title">А что удивляет<br>тебя?</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjgwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJyZiIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0NERTdGNCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjgwIiBmaWxsPSJ1cmwoI3JmKSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjcwIiByPSIzMCIgZmlsbD0iI0ZGRjNENiIgb3BhY2l0eT0iMC45Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTIwIDkwKSI+PHBhdGggZD0iTTAgMCBxLTIwIC0xOCAtMzAgMiBxMTAgMTIgMzAgNCBaIiBmaWxsPSIjQzk3MDY0Ii8+PHBhdGggZD0iTTAgMCBxMjAgLTE4IDMwIDIgcS0xMCAxMiAtMzAgNCBaIiBmaWxsPSIjRTZDMDc5Ii8+PGxpbmUgeDE9IjAiIHkxPSItNiIgeDI9IjAiIHkyPSIxMCIgc3Ryb2tlPSIjMUEzQTUyIiBzdHJva2Utd2lkdGg9IjIiLz48L2c+PHBhdGggZD0iTTAgMjAwIFEyMDAgMTcyIDQwMCAyMDAgVjI4MCBIMCBaIiBmaWxsPSIjN0ZBODcwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEwIDE5NikiPjxjaXJjbGUgY3g9IjAiIGN5PSItMzAiIHI9IjEyIiBmaWxsPSIjQzk3MDY0Ii8+PHBhdGggZD0iTS0xMSAtMTYgUTAgLTIwIDExIC0xNiBMOCAyMiBILTggWiIgZmlsbD0iIzFBM0E1MiIvPjwvZz48Y2lyY2xlIGN4PSI2MCIgY3k9IjI1MCIgcj0iNCIgZmlsbD0iI0U2QzA3OSIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjI1OCIgcj0iNCIgZmlsbD0iI0U2QzA3OSIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjI1MCIgcj0iNCIgZmlsbD0iI0U2QzA3OSIvPjwvc3ZnPg==" alt="Ребёнок любуется миром, который создал Бог"></figure>
+      <div class="body">
+        <div class="reflect"><span class="q">?</span><span>Что в созданном мире удивляет тебя больше всего?</span></div>
+        <ul class="stars">
+          <li>Может быть, огромное море или высокие снежные горы.</li>
+          <li>А может — крылья бабочки или капелька росы на листке.</li>
+          <li>За всё это можно тихо сказать Богу: «Спасибо».</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 12 · CLOSE ================= -->
+  <section class="slide" data-i="11">
+    <div class="bleed"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJjbCIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjxzdG9wIG9mZnNldD0iMC41IiBzdG9wLWNvbG9yPSIjRTlCOThBIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQzk3MDY0Ii8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9ImNscyIgY3g9IjAuNSIgY3k9IjAuNDIiIHI9IjAuNCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGREY2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjNDNjdGIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCNjbCkiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSIyNTAiIHI9IjE1MCIgZmlsbD0idXJsKCNjbHMpIi8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMjUwIiByPSI2MiIgZmlsbD0iI0ZGRjhFNyIgb3BhY2l0eT0iMC45NSIvPjxwYXRoIGQ9Ik0wIDQyMCBRMjAwIDM2MCA0MDAgNDIwIFY2NDAgSDAgWiIgZmlsbD0iIzdGQTg3MCIvPjxwYXRoIGQ9Ik0wIDQ3MCBRMjAwIDQyMCA0MDAgNDcwIFY2NDAgSDAgWiIgZmlsbD0iIzVFOEE1QSIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEyMCA0NzApIj48cmVjdCB4PSItNiIgeT0iMCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjQwIiByeD0iNCIgZmlsbD0iI0M5NzA2NCIvPjxjaXJjbGUgY3g9IjAiIGN5PSItMTAiIHI9IjMwIiBmaWxsPSIjNkZBMjVFIi8+PGNpcmNsZSBjeD0iLTIwIiBjeT0iNCIgcj0iMjAiIGZpbGw9IiM3RkIyNjgiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjQiIHI9IjIwIiBmaWxsPSIjODdCOTZGIi8+PC9nPjxjaXJjbGUgY3g9IjI1MCIgY3k9IjU0MCIgcj0iNiIgZmlsbD0iI0U2QzA3OSIvPjxjaXJjbGUgY3g9IjI1MCIgY3k9IjU0MCIgcj0iMi41IiBmaWxsPSIjRkZGM0Q2Ii8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iNTYwIiByPSI2IiBmaWxsPSIjRTZDMDc5Ii8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iNTYwIiByPSIyLjUiIGZpbGw9IiNGRkYzRDYiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSI1NzUiIHI9IjYiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSI1NzUiIHI9IjIuNSIgZmlsbD0iI0ZGRjNENiIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjUzMCIgcj0iNiIgZmlsbD0iI0U2QzA3OSIvPjxjaXJjbGUgY3g9IjM0MCIgY3k9IjUzMCIgcj0iMi41IiBmaWxsPSIjRkZGM0Q2Ii8+PGNpcmNsZSBjeD0iNjAiIGN5PSI1NjAiIHI9IjYiIGZpbGw9IiNFNkMwNzkiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjU2MCIgcj0iMi41IiBmaWxsPSIjRkZGM0Q2Ii8+PC9zdmc+" alt=""></div>
+    <div class="scrim" style="background:linear-gradient(180deg, rgba(250,248,245,.4) 0%, rgba(250,248,245,.7) 60%, rgba(250,248,245,.92) 100%), linear-gradient(90deg, rgba(250,248,245,.85) 0%, rgba(250,248,245,.4) 65%, rgba(250,248,245,.05) 100%);"></div>
+    <div class="over bottom">
+      <div class="kicker" style="margin-bottom:clamp(12px,2.4vh,22px);">Хорошо весьма</div>
+      <h2 class="title" style="margin-bottom:clamp(12px,2.2vh,20px);">До встречи<br>в Главе&nbsp;3!</h2>
+      <p class="lead" style="max-width:600px; color:var(--navy); opacity:.92; margin-bottom:clamp(12px,2vh,18px);">
+        <span class="em-navy">«И увидел Бог всё, что Он создал, и вот, хорошо весьма»</span> (Быт.&nbsp;1:31).
+      </p>
+      <div class="say" style="max-width:640px; margin-bottom:clamp(10px,1.6vh,16px);">
+        <div class="badge" style="background:linear-gradient(150deg,#E6C079,#C97064)">М</div>
+        <p><span class="who">Милана:</span> Этот прекрасный мир Бог подарил и нам — чтобы беречь его и заботиться о нём.</p>
+      </div>
+      <div class="say" style="max-width:640px;">
+        <div class="badge" style="background:linear-gradient(150deg,#D9A05B,#C97064)">Э</div>
+        <p><span class="who">Эван:</span> До новой встречи, друзья! Впереди ещё столько удивительного.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="counter">01 / 12</div>
+<div id="dots"></div>
+
+<script>
+(function(){
+  "use strict";
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var total = slides.length;
+  var i = 0;
+  var counter = document.getElementById('counter');
+  var dotsWrap = document.getElementById('dots');
+
+  var MARK = '<div class="mark"><svg width="24" height="22" viewBox="0 0 26 24" aria-hidden="true">'
+    + '<path d="M2 22 V7 L7 15 L12 7 V22" fill="none" stroke="#1A3A52" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<path d="M12 9 Q19 2 25 6 Q19 8 14 12 Z" fill="#D4A574" opacity="0.9"/>'
+    + '<circle cx="7" cy="4" r="1.6" fill="#C97064"/></svg><span>МЕТАНОЙА</span></div>';
+  var FOOTER = '<div class="footer">' + MARK + '<div class="verse">«Слово Твоё — светильник ноге моей»</div></div>';
+  var ZONES = '<div class="nav-zone prev"></div><div class="nav-zone next"></div>';
+
+  slides.forEach(function(s){
+    s.insertAdjacentHTML('beforeend', FOOTER + ZONES);
+  });
+
+  slides.forEach(function(_, idx){
+    var b = document.createElement('button');
+    b.className = 'dot'; b.setAttribute('aria-label','Слайд '+(idx+1));
+    b.addEventListener('click', function(e){ e.stopPropagation(); go(idx); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function render(){
+    slides.forEach(function(s,idx){
+      var on = idx===i;
+      s.classList.toggle('active', on);
+      var w = s.querySelector('.wrap, .over'); if(w) w.scrollTop = 0;
+    });
+    dots.forEach(function(d,idx){ d.classList.toggle('on', idx===i); });
+    counter.textContent = pad(i+1) + ' / ' + pad(total);
+  }
+  function go(n){ i = Math.max(0, Math.min(total-1, n)); render(); }
+  function next(){ if(i<total-1) go(i+1); }
+  function prev(){ if(i>0) go(i-1); }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight' || e.key==='PageDown' || e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ go(0); }
+    else if(e.key==='End'){ go(total-1); }
+  });
+
+  // tap zones via delegation (left half = prev, right half = next)
+  deck.addEventListener('click', function(e){
+    var z = e.target.closest('.nav-zone');
+    if(!z) return;
+    z.classList.contains('prev') ? prev() : next();
+  });
+
+  var tx=0, ty=0;
+  deck.addEventListener('touchstart', function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+  deck.addEventListener('touchend', function(e){
+    var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>46 && Math.abs(dx)>Math.abs(dy)){ dx<0 ? next() : prev(); }
+  }, {passive:true});
+
+  render();
+})();
+</script>
+</body>
+</html>
