@@ -921,8 +921,8 @@ const EXTRA_FEED = [
     text: 'Первый пройденный урок — начало большого пути!', likes: 31, comments: 4 },
   { type: 'quote', label: 'Цитата дня · вчера', img: 'assets/img/quote-bg.jpg',
     title: '«Начало мудрости — страх Господень»', ref: 'Притч. 1:7', likes: 27, comments: 1 },
-  { type: 'lesson', label: 'Скоро', coverImg: 'assets/img/chapters/ch1.jpg',
-    title: 'Урок 4. Поклонение волхвов', meta: 'Глава 1 «Жизнь Господа» · скоро', likes: 9, comments: 0 },
+  { type: 'lesson', label: 'Следующий урок', coverImg: 'assets/img/chapters/ch1.jpg',
+    title: 'Урок 4. Поклонение волхвов', meta: 'Глава 1 «Жизнь Господа» · откроется после урока 3', likes: 9, comments: 0 },
 ];
 let feedPage = 0;
 
