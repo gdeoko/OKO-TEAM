@@ -22,7 +22,7 @@ for k in keys:
     raw=os.path.join(VO,f"_{k}.mp3"); out=os.path.join(VO,f"{k}.mp3")
     tf=os.path.join(VO,f"_{k}.txt"); open(tf,"w",encoding="utf-8").write(txt)
     cmd=[sys.executable,"-m","edge_tts","--voice",VOICE,"--file",tf,"--write-media",raw]
-    if RATE and RATE!="+0%": cmd[4:4]=["--rate",RATE]
+    if RATE and RATE!="+0%": cmd+=["--rate",RATE]
     r=subprocess.run(cmd,capture_output=True,text=True,timeout=180)
     os.remove(tf)
     if not os.path.exists(raw) or os.path.getsize(raw)<1000:
