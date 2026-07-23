@@ -1,0 +1,159 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #24 (batch A, МОТО эндуро «три мира»). New forms, none reused:
+// triptych-split · mode-dial · suspension-travel-gauge · speed-streak-stability · tire-tread-morph · converging-streaks lockup.
+// Свериться с USED_ANIM.md #16-23 — нет пересечений. Окна (a,b) выставлены под РЕАЛЬНЫЙ timing.json A#24 после VO.
+const TOTAL=32.448;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",CYAN="#4FD1C5",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// A1 — TRIPTYCH-SPLIT: три вертикальных панели ГОРОД/ЛЕС/ТРАССА въезжают, «ОДИН МОТОЦИКЛ — ТРИ МИРА».
+// (новая форма: одновременный 3-панельный сплит с въездом; ≠ carousel свайп силуэтов #19)
+function a1(ts){const a=1.9,b=7.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940,pw=300,gap=18,H=560;const names=["ГОРОД","ЛЕС","ТРАССА"];const cols=[CYAN,GRN,AMB2];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-H/2-90)+'" text-anchor="middle" font-family="soyuz" font-size="76" fill="'+WHT+'">ОДИН МОТОЦИКЛ</text>';
+  for(let i=0;i<3;i++){const app=easeOut(clamp((p-i*0.12)/0.5));const x=cx+(i-1)*(pw+gap)-pw/2;
+    const dy=(1-app)*(i%2?260:-260);
+    s+='<g transform="translate(0,'+dy+')" opacity="'+app+'">'
+     +'<rect x="'+x+'" y="'+(cy-H/2)+'" width="'+pw+'" height="'+H+'" rx="18" fill="rgba(16,12,10,.5)" stroke="'+cols[i]+'" stroke-width="3"/>'
+     +'<text x="'+(x+pw/2)+'" y="'+(cy+H/2-34)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+cols[i]+'">'+names[i]+'</text></g>';}
+  s+='<text x="540" y="'+(cy+H/2+96)+'" text-anchor="middle" font-family="soyuz" font-size="88" fill="'+AMB2+'" opacity="'+clamp((p-0.55)/0.35)+'">ТРИ МИРА</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — MODE-DIAL: поворотный селектор режимов с детентами -> ГОРОД/ECO, читалка «расход ↓».
+// (новая форма: детентный поворотный переключатель с дугами режимов; ≠ compass свободный спин #21)
+function a2(ts){const a=7.4,b=12.1;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=930,R=210;const modes=["ECO","ГОРОД","СПОРТ"];
+  // стрелка проворачивается к «ГОРОД» (средний) с детент-отскоком
+  const targ=Math.PI*0.5; const ang=lerp(-Math.PI*0.75,targ,easeInOut(clamp(p/0.55)))+ (p>0.55?0.03*Math.sin((p-0.55)*40)*Math.exp(-(p-0.55)*8):0);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-R-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">УТРОМ — СКВОЗЬ ПРОБКИ</text>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="rgba(246,244,241,.18)" stroke-width="14"/>';
+  // дуги режимов
+  const arcCols=[GRN,CYAN,AMB2];
+  for(let i=0;i<3;i++){const a0=-Math.PI*0.75+i*Math.PI*0.75,a1=a0+Math.PI*0.6;
+    const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);
+    s+='<path d="M'+x0+' '+y0+' A'+R+' '+R+' 0 0 1 '+x1+' '+y1+'" fill="none" stroke="'+arcCols[i]+'" stroke-width="14" opacity="'+(i===1?1:0.3)+'" stroke-linecap="round"/>';
+    const lx=cx+(R+50)*Math.cos((a0+a1)/2),ly=cy+(R+50)*Math.sin((a0+a1)/2);
+    s+='<text x="'+lx+'" y="'+(ly+8)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+(i===1?WHT:DIM)+'">'+modes[i]+'</text>';}
+  // стрелка-нож
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+(R-30)*Math.cos(ang))+'" y2="'+(cy+(R-30)*Math.sin(ang))+'" stroke="'+WHT+'" stroke-width="10" stroke-linecap="round"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="20" fill="'+AMB+'"/>';
+  const q=clamp((p-0.6)/0.3);
+  s+='<text x="540" y="'+(cy+R+96)+'" text-anchor="middle" font-family="soyuz" font-size="60" fill="'+WHT+'" opacity="'+q+'">ЮРКИЙ · РАСХОД ↓</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — SUSPENSION-TRAVEL-GAUGE: амортизатор сжимается/отбивает на кочках, читалка хода в мм.
+// (новая форма: механическая пружина со сжатием+отскоком и шкалой мм; ≠ термометр-заливка #21)
+function a3(ts){const a=12.4,b=17.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=430,topY=640,len=520,coils=7;
+  // ход: серия «кочек» — быстрое сжатие + затухающий отскок
+  const bump=Math.max(0,Math.sin(p*TOTAL*3.2))*Math.exp(-((p*TOTAL*3.2)%3.14)*0.15);
+  const comp=0.18+0.5*bump; // доля сжатия
+  const curLen=len*(1-comp*0.42);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(topY-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ДНЁМ — ГРУНТ И БЕЗДОРОЖЬЕ</text>';
+  // верхнее крепление
+  s+='<rect x="'+(cx-60)+'" y="'+topY+'" width="120" height="26" rx="8" fill="'+DIM+'"/>';
+  // пружина (зигзаг)
+  let d='M'+cx+' '+(topY+26);const seg=curLen/coils;
+  for(let i=0;i<coils;i++){const yy=topY+26+seg*(i+0.5);d+=' L'+(cx+(i%2?46:-46))+' '+yy;}
+  d+=' L'+cx+' '+(topY+26+curLen);
+  s+='<path d="'+d+'" fill="none" stroke="'+AMB2+'" stroke-width="9" stroke-linecap="round"/>';
+  // шток/колесо снизу
+  s+='<circle cx="'+cx+'" cy="'+(topY+26+curLen+70)+'" r="60" fill="#100c0a" stroke="'+WHT+'" stroke-width="6"/>';
+  // шкала мм справа
+  const mm=Math.round(comp/0.68*210);
+  s+='<line x1="'+(cx+150)+'" y1="'+(topY+26)+'" x2="'+(cx+150)+'" y2="'+(topY+26+len)+'" stroke="'+DIM+'" stroke-width="3"/>';
+  for(let i=0;i<=4;i++){const yy=topY+26+len*i/4;s+='<line x1="'+(cx+150)+'" y1="'+yy+'" x2="'+(cx+180)+'" y2="'+yy+'" stroke="'+DIM+'" stroke-width="3"/><text x="'+(cx+196)+'" y="'+(yy+8)+'" font-family="man8" font-size="24" fill="'+DIM+'">'+(210-i*52)+'</text>';}
+  s+='<text x="'+(cx+120)+'" y="'+(topY+26+curLen)+'" text-anchor="end" font-family="soyuz" font-size="64" fill="'+WHT+'">'+mm+' ММ</text>';
+  s+='<text x="540" y="'+(topY+len+220)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+WHT+'" opacity="'+clamp((p-0.4)/0.4)+'">ГЛОТАЕТ ЯМЫ И КОРНИ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — SPEED-STREAK-STABILITY: байк держится ровно, горизонтальные стрик-линии + растущий счётчик км/ч.
+// (новая форма: мчащиеся стрик-линии + стабильный маркер + число; ≠ осциллограф #17, ≠ спидометр-циферблат)
+function a4(ts){const a=17.9,b=22.1;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940;const spd=Math.round(easeOut(clamp(p/0.7))*120);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ВЕЧЕРОМ — НА ТРАССУ</text>';
+  // стрик-линии, летят справа налево, длина растёт со скоростью
+  for(let i=0;i<14;i++){const yy=cy-200+i*30; const ph=(p*TOTAL*2.2+i*0.5)%1; const x=1080-ph*1200;
+    const ln=60+spd*2.2; s+='<line x1="'+x+'" y1="'+yy+'" x2="'+(x+ln)+'" y2="'+yy+'" stroke="rgba(255,138,60,'+(0.15+0.5*(1-Math.abs(yy-cy)/220))+')" stroke-width="4"/>';}
+  // стабильный маркер-байк (ровная линия горизонта)
+  s+='<line x1="'+(cx-260)+'" y1="'+cy+'" x2="'+(cx+260)+'" y2="'+cy+'" stroke="'+WHT+'" stroke-width="4"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="14" fill="'+AMB+'"/>';
+  s+='<text x="540" y="'+(cy+140)+'" text-anchor="middle" font-family="soyuz" font-size="150" fill="'+WHT+'">'+spd+'</text>';
+  s+='<text x="540" y="'+(cy+200)+'" text-anchor="middle" font-family="man8" font-size="36" fill="'+DIM+'">КМ/Ч · РОВНО, БЕЗ ТРЯСКИ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — TIRE-TREAD-MORPH: сечение шины, протектор морфится внедорожный↔шоссе, метр сцепления %.
+// (новая форма: морф рисунка протектора + grip%; ≠ любых прошлых)
+function a5(ts){const a=22.4,b=25.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=930,R=200;const m=easeInOut(clamp((p-0.1)/0.6)); // 0 внедор -> 1 шоссе
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-R-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ОДНА РЕЗИНА — ВЕЗДЕ</text>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+WHT+'" stroke-width="10"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R-46)+'" fill="none" stroke="'+DIM+'" stroke-width="4"/>';
+  // грунтозацепы -> шоссейные ламели (морф размера/угла)
+  const N=18;for(let i=0;i<N;i++){const th=i/N*2*Math.PI; const rr=R-23;
+    const w=lerp(26,8,m), h=lerp(30,12,m);
+    const x=cx+rr*Math.cos(th),y=cy+rr*Math.sin(th);
+    s+='<g transform="translate('+x+','+y+') rotate('+(th*180/Math.PI+90)+')"><rect x="'+(-w/2)+'" y="'+(-h/2)+'" width="'+w+'" height="'+h+'" rx="3" fill="'+lerp3(AMB2,CYAN,m)+'"/></g>';}
+  const grip=Math.round(lerp(96,88,m)); // сцепление держится высоким на обоих
+  s+='<text x="'+cx+'" y="'+(cy+18)+'" text-anchor="middle" font-family="soyuz" font-size="72" fill="'+WHT+'">'+grip+'%</text>';
+  s+='<text x="'+cx+'" y="'+(cy+70)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+DIM+'">СЦЕПЛЕНИЕ</text>';
+  s+='<text x="540" y="'+(cy+R+96)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+AMB2+'" opacity="'+clamp((p-0.5)/0.4)+'">ДЕШЕВЛЕ САЛОНА</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+function lerp3(c1,c2,x){function h2(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];}
+  const A=h2(c1),B=h2(c2);return 'rgb('+Math.round(lerp(A[0],B[0],x))+','+Math.round(lerp(A[1],B[1],x))+','+Math.round(lerp(A[2],B[2],x))+')';}
+
+// A6 — CONVERGING-STREAKS LOCKUP: горизонтальные скоростные стрики сходятся в лого DIESEL CARGO.
+// (новый лок-ап: сходящиеся скоростные линии; ≠ headlight-beam #19, sun-flare #21, reticle #23, spark/splash/ignition/liquid-fill)
+function a6(ts){const a=25.7,b=32.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const conv=easeInOut(clamp(p/0.5));const bloom=clamp((p-0.5)/0.5);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  for(let i=0;i<20;i++){const yy=cy-300+i*30; const fromL=i%2===0;
+    const x0=fromL?-200:1280; const xc=cx-((fromL?-1:1)*40);
+    const x=lerp(x0,xc,conv); const ln=lerp(300,20,conv);
+    s+='<line x1="'+x+'" y1="'+yy+'" x2="'+(x+(fromL?ln:-ln))+'" y2="'+yy+'" stroke="rgba(255,138,60,'+(0.5*(1-bloom))+')" stroke-width="4"/>';}
+  if(conv>0.9&&bloom<0.4)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(20+140*bloom)+'" fill="none" stroke="'+WHT+'" stroke-width="'+(6*(1-bloom*2.5))+'" opacity="'+clamp(1-bloom*2.5)+'"/>';
+  const sc=lerp(0.5,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="120" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>
