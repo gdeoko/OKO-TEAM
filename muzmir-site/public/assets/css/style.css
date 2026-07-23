@@ -796,3 +796,13 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
   .section--tint::after{width:min(180px,60%)}
   body::after{opacity:.028}
 }
+
+/* ── Scroll-linked draw-in подзаголовков (прогрессивно; деградирует до мгновенного) ── */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .section-head h2::after,.section--head h2::after{
+      animation:mzDraw linear both;animation-timeline:view();animation-range:cover 8% cover 42%;transform-origin:center}
+    .gold-rule{animation:mzDraw linear both;animation-timeline:view();animation-range:cover 10% cover 44%;transform-origin:center}
+    @keyframes mzDraw{from{transform:scaleX(0);opacity:.2}to{transform:scaleX(1);opacity:1}}
+  }
+}

@@ -688,7 +688,18 @@
       if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
     function onKey(e) {
-      if (e.key === 'Escape' || e.keyCode === 27) close();
+      if (e.key === 'Escape' || e.keyCode === 27) { close(); return; }
+      // Ловушка фокуса: Tab не выходит за пределы модалки (a11y).
+      if ((e.key === 'Tab' || e.keyCode === 9) && modal) {
+        var f = Array.prototype.filter.call(
+          modal.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'),
+          function (el) { return !el.disabled && el.offsetParent !== null; }
+        );
+        if (!f.length) return;
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     }
 
     function open() {
@@ -723,7 +734,11 @@
           '<p class="auth-legal">Продолжая, Вы соглашаетесь с <a href="/agreement">условиями</a> и <a href="/privacy">политикой конфиденциальности</a>.</p>' +
         '</div>';
       document.body.appendChild(modal);
-      requestAnimationFrame(function () { modal.classList.add('open'); });
+      requestAnimationFrame(function () {
+        modal.classList.add('open');
+        var f = modal.querySelector('.auth-btn, .auth-close');
+        if (f && f.focus) { try { f.focus(); } catch (e) {} }
+      });
       document.addEventListener('keydown', onKey);
 
       $$('[data-close]', modal).forEach(function (el) {
