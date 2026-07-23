@@ -281,6 +281,25 @@
 .fac-rc-x svg.i{width:11px;height:11px}
 .fac-rc-x:hover{color:var(--text);background:var(--surface)}
 
+/* ======================= «НОВЫЕ ПОСТЫ» — плавающая пилюля обновления ======================= */
+/* Классический паттерн Instagram/Twitter: пока ты листаешь вниз, сверху всплывает
+   лаймовая пилюля «N новых постов ↑». Тап — пересобрать подборку и уехать наверх.
+   Только transform/opacity, fixed по центру. Бренд-лайм с чёрным текстом — идеален в обеих темах. */
+.fa-newpill{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 100px);z-index:30;
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px 9px 13px;
+  font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.01em;color:#000;
+  background:var(--lime);border:1px solid var(--lime);border-radius:99px;
+  box-shadow:0 8px 26px rgba(154,255,0,.42),0 2px 10px rgba(0,0,0,.32);cursor:pointer;
+  transform:translate(-50%,-18px) scale(.9);opacity:0;pointer-events:none;will-change:transform,opacity;
+  transition:transform .34s cubic-bezier(.22,.9,.36,1),opacity .28s,box-shadow .2s}
+.fa-newpill.show{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto}
+.fa-newpill:hover{box-shadow:0 10px 30px rgba(154,255,0,.55),0 2px 10px rgba(0,0,0,.32)}
+.fa-newpill:active{transform:translate(-50%,0) scale(.94)}
+.fa-newpill svg.i{width:14px;height:14px;color:#000;flex:none}
+.fa-newpill .fa-np-ic{animation:fa-np-bob 1.9s ease-in-out infinite}
+.fa-newpill .fa-np-n{font-variant-numeric:tabular-nums}
+@keyframes fa-np-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+
 /* ======================= ДОСТУПНОСТЬ: КЛАВИАТУРНЫЙ ФОКУС ======================= */
 .fa-refresh:focus-visible,.fa-info:focus-visible,.fa-empty-cta:focus-visible,
 .fac-like:focus-visible,.fac-reply:focus-visible,.fac-toggle:focus-visible,
@@ -294,6 +313,8 @@
   .fac-replies{transition:none}
   .fa-dtap-heart{animation:fa-dtap-rm .6s ease forwards}
   @keyframes fa-dtap-rm{0%{opacity:0}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+  .fa-newpill{transition:opacity .2s}
+  .fa-newpill .fa-np-ic{animation:none}
 }
 
 /* ============================================================================
@@ -497,6 +518,17 @@
 /* доступность: клавиатурный фокус */
 .far-back:focus-visible,.far-act:focus-visible,.far-sg:focus-visible,
 .far-follow:focus-visible,.fa-clips:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+
+/* ---- зажать и держать = пауза с «чистым» кадром (TikTok/Instagram press-and-hold) ----
+   Пока палец/курсор зажат на видео-поле: замирают прогресс и бренд-движение, а хром
+   (верх/рельс/инфо) плавно уходит — остаётся только кадр. Отпустил — всё вернулось.
+   Кнопка play НЕ показывается (это не обычная пауза, а «подсмотреть кадр»). */
+.far-top,.far-rail,.far-info{transition:opacity .22s ease}
+.far.far-hold .far-top,.far.far-hold .far-rail,.far.far-hold .far-info{opacity:0}
+.far.far-hold .far-slide.is-active .far-motion,
+.far.far-hold .far-slide.is-active .far-motion.two,
+.far.far-hold .far-slide.is-active .far-eq i{animation-play-state:paused!important}
+.far.far-hold .far-sg.active .far-fill{animation-play-state:paused}
 
 /* ПЕРФ: пауза бренд-движения во время скролла ленты (глобальный флаг ядра) */
 html.oko-scrolling .far-motion,html.oko-scrolling .far-eq i{animation-play-state:paused!important}

@@ -1069,6 +1069,8 @@ function faReelsTogglePlay(){
 /* тап по центру: одиночный — play/pause, двойной — лайк с сердцем (Instagram) */
 function faReelsTapZone(ev){
   try{
+    /* если это был press-and-hold (пауза-подсмотр) — не переключаем play по клику-хвосту */
+    if(FAR.didHold){ FAR.didHold = false; return; }
     const now = Date.now();
     const x = ev && (ev.clientX != null ? ev.clientX : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientX : 0));
     const y = ev && (ev.clientY != null ? ev.clientY : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientY : 0));
@@ -1336,3 +1338,146 @@ try{
     };
   }
 }catch(e){}
+
+/* ============================================================================
+   9. «НОВЫЕ ПОСТЫ» — плавающая пилюля обновления ленты (Instagram/Twitter)
+   Пока пользователь листает рекомендации вниз, сверху всплывает лаймовая пилюля
+   «N новых постов ↑». Тап — пересобрать подборку (faRefresh уже уводит наверх).
+   Живая, «дышащая» лента: сигнал, что контент обновляется в реальном времени.
+   ПЕРФ: один лёгкий интервал + rAF-throttle на скролл; работает ТОЛЬКО на вкладке
+   рекомендаций активного экрана ленты. i18n — через ST_DICT (число и слово — разными
+   текст-узлами, чтобы авто-переводчик (MutationObserver) перевёл слово в EN-режиме). */
+(function faNewPostsPill(){
+  try{
+    /* стрелка вверх для пилюли — в общие defs */
+    const defs = document.querySelector('svg defs');
+    if(defs && !document.getElementById('i-fa-up')){
+      const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      s.setAttribute('id','i-fa-up'); s.setAttribute('viewBox','0 0 100 100');
+      s.innerHTML = '<polyline points="26 48 50 24 74 48" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><line x1="50" y1="27" x2="50" y2="78" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>';
+      defs.appendChild(s);
+    }
+    if(typeof ST_DICT !== 'undefined'){
+      const add = {'новый пост':'new post','новых поста':'new posts','новых постов':'new posts'};
+      for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
+    }
+
+    FA.newPosts = 0;
+    let pill = null;
+
+    function ensure(){
+      if(pill) return pill;
+      pill = document.createElement('button');
+      pill.type = 'button'; pill.className = 'fa-newpill';
+      pill.setAttribute('aria-live','polite');
+      pill.setAttribute('aria-label','Показать новые посты');
+      pill.addEventListener('click', onTap);
+      document.body.appendChild(pill);
+      return pill;
+    }
+    function word(n){
+      return (typeof faPlural === 'function')
+        ? faPlural(n, 'новый пост', 'новых поста', 'новых постов')
+        : 'новых постов';
+    }
+    function show(){
+      const p = ensure();
+      /* число и слово — отдельными узлами: число не трогаем, слово переведётся авто-переводчиком */
+      p.innerHTML = `<svg class="i fa-np-ic"><use href="#i-fa-up"/></svg><span class="fa-np-n">${FA.newPosts}</span> <span>${word(FA.newPosts)}</span>`;
+      requestAnimationFrame(()=>{ try{ p.classList.add('show'); }catch(e){} });
+    }
+    function hide(){ if(pill) pill.classList.remove('show'); }
+    function onTap(){
+      hide(); FA.newPosts = 0;
+      if(typeof faRefresh === 'function') faRefresh();  /* пересобирает подборку + уводит наверх */
+    }
+    function feedActive(){
+      const f = document.getElementById('screen-feed');
+      const kindOk = (typeof curFeedKind === 'undefined') || curFeedKind === 'rec';
+      return !!(f && f.classList.contains('active') && kindOk);
+    }
+
+    /* один негромкий интервал: копит «новые» посты, пока пользователь ушёл вниз по ленте */
+    setInterval(function(){
+      try{
+        const m = document.querySelector('main');
+        if(!feedActive() || FA.loading){ hide(); return; }
+        if(!m || m.scrollTop < 520){ if(FA.newPosts === 0) hide(); return; }
+        FA.newPosts = Math.min(FA.newPosts + 1 + Math.floor(Math.random()*2), 24);
+        show();
+      }catch(e){}
+    }, 13000);
+
+    /* вернулся к самому верху — «новых» больше нет, прячем */
+    const m = document.querySelector('main');
+    if(m){
+      let raf = 0;
+      m.addEventListener('scroll', function(){
+        if(raf) return;
+        raf = requestAnimationFrame(function(){
+          raf = 0;
+          try{ if(m.scrollTop < 120){ FA.newPosts = 0; hide(); } }catch(e){}
+        });
+      }, {passive:true});
+    }
+
+    /* явное «Обновить подборку» тоже гасит счётчик и пилюлю */
+    if(typeof faRefresh === 'function'){
+      const _faPrevRefresh = faRefresh;
+      faRefresh = function(){ FA.newPosts = 0; hide(); return _faPrevRefresh.apply(this, arguments); };
+    }
+  }catch(e){}
+})();
+
+/* ============================================================================
+   10. REELS: ЗАЖАТЬ И ДЕРЖАТЬ = ПАУЗА-ПОДСМОТР (TikTok/Instagram press-and-hold)
+   Зажал палец/курсор на видео-поле → прогресс и бренд-движение замирают, хром плавно
+   уходит (чистый кадр). Отпустил → всё возвращается. Быстрый тап (< порога) НЕ триггерит
+   удержание — обычные одиночный/двойной тап работают как прежде. Движение отменяет
+   удержание, чтобы не мешать свайпу листания. Всё в try/catch, additive, без сети.
+   ============================================================================ */
+(function faReelsHold(){
+  try{
+    const wrap = document.getElementById('faReels'); if(!wrap) return;
+    let timer = 0, sx = 0, sy = 0, armed = false;
+    const HOLD = 250, MOVE = 12;
+
+    function commentsOpen(){
+      const s = document.getElementById('sheet-comments');
+      return !!(s && s.classList.contains('open'));
+    }
+    function start(x, y, target){
+      if(!FAR.open || commentsOpen()) return;
+      if(!target || !target.closest || !target.closest('.far-tap')) return;  /* только центральное поле */
+      sx = x; sy = y; armed = true;
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(function(){
+        try{
+          if(!armed || !FAR.open) return;
+          FAR.didHold = true;                 /* хвостовой click от faReelsTapZone гасится */
+          wrap.classList.add('far-hold');
+          if(navigator.vibrate) try{ navigator.vibrate(8); }catch(e){}
+        }catch(e){}
+      }, HOLD);
+    }
+    function move(x, y){
+      if(!armed) return;
+      if(Math.abs(x - sx) > MOVE || Math.abs(y - sy) > MOVE) cancel();
+    }
+    function cancel(){
+      armed = false;
+      if(timer){ clearTimeout(timer); timer = 0; }
+      try{ if(wrap.classList.contains('far-hold')) wrap.classList.remove('far-hold'); }catch(e){}
+    }
+
+    if(window.PointerEvent){
+      wrap.addEventListener('pointerdown', e=>{ try{ if(e.pointerType === 'mouse' && e.button !== 0) return; start(e.clientX, e.clientY, e.target); }catch(err){} }, {passive:true});
+      wrap.addEventListener('pointermove', e=>{ try{ move(e.clientX, e.clientY); }catch(err){} }, {passive:true});
+      ['pointerup','pointercancel','pointerleave'].forEach(t=> wrap.addEventListener(t, cancel, {passive:true}));
+    }else{
+      wrap.addEventListener('touchstart', e=>{ try{ const t = e.touches && e.touches[0]; if(t) start(t.clientX, t.clientY, e.target); }catch(err){} }, {passive:true});
+      wrap.addEventListener('touchmove', e=>{ try{ const t = e.touches && e.touches[0]; if(t) move(t.clientX, t.clientY); }catch(err){} }, {passive:true});
+      ['touchend','touchcancel'].forEach(t=> wrap.addEventListener(t, cancel, {passive:true}));
+    }
+  }catch(e){}
+})();

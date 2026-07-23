@@ -197,7 +197,10 @@ function chNormalize(c){
   if(c.privFwd==null)     c.privFwd     = true;                               // разрешить пересылку/сохранение постов
   if(c.privHistory==null) c.privHistory = 'visible';                          // история для новых: visible | hidden
   if(c.archived==null)    c.archived    = false;                             // канал в архиве
+  if(c.pinned===undefined) c.pinned     = null;                              // id закреплённого поста (закреп)
   if(!Array.isArray(c.invites)) c.invites = [];                              // пригласительные ссылки
+  // гранулярные права администраторов (как в Telegram): доп-миграция старых записей
+  if(Array.isArray(c.admins)) c.admins.forEach(a=>{ if(a && !a.rights) a.rights = chDefaultRights(); });
   // legacy-поле type держим синхронным — вдруг читает внешний код
   c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
   return c;
@@ -291,6 +294,26 @@ function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='su
 function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
 /* публичная ссылка канала — реальный домен OKO в стиле @id */
 function chPublicLink(c){ return 'okoteam.top/@'+chNick(c); }
+
+/* ---- закрепы (pinned) ---- */
+/* id закреплённого поста, если он всё ещё существует (самоочистка от «висячих» ссылок) */
+function chPinnedId(c){ if(!c||!c.pinned) return null; return (c.posts||[]).some(p=>chPostId(p)===c.pinned) ? c.pinned : null; }
+
+/* ---- гранулярные права администратора (как в Telegram) ---- */
+const CH_RIGHTS = [
+  ['post','megaphone','Публикация постов','Создавать и отправлять записи в канал'],
+  ['edit','edit','Редактирование','Изменять и удалять любые посты'],
+  ['pin','pin','Закреплять сообщения','Управлять закреплённой записью'],
+  ['ban','lock','Блокировка участников','Банить и разблокировать людей'],
+  ['invite','forward','Приглашения','Создавать пригласительные ссылки'],
+  ['addAdmins','crown','Назначение админов','Добавлять новых администраторов']
+];
+function chDefaultRights(){ return {post:true, edit:true, pin:true, ban:true, invite:true, addAdmins:false}; }
+function chRightsSummary(a){
+  const r=(a&&a.rights)||{}, keys=CH_RIGHTS.map(x=>x[0]);
+  const on=keys.filter(k=>r[k]).length;
+  return on>=keys.length ? 'Полные права' : (on===0 ? 'Права ограничены' : on+' из '+keys.length+' прав');
+}
 
 /* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
 window.chTgl = function(id, key, el){
@@ -472,6 +495,7 @@ function chRender(){
     case 'mType':   out = chPageMType(top.arg); break;
     case 'mSubs':   out = chPageMSubs(top.arg); break;
     case 'mAdmins': out = chPageMAdmins(top.arg); break;
+    case 'mAdminRights': out = chPageMAdminRights(top.arg); break;
     case 'mBlack':  out = chPageMBlack(top.arg); break;
     case 'mStats':  out = chPageMStats(top.arg); break;
     case 'mAppear': out = chPageMAppear(top.arg); break;
@@ -780,10 +804,15 @@ function chPageChannel(id){
   } else {
     chEnsurePostIds(c);
     if(!mine) chCountViews(c);   // просмотры тикают, когда пост читает подписчик (раз за сессию)
+    // закреплённый пост — отдельным блоком сверху (как в Telegram), без дублирования в общей ленте
+    const pinId = chPinnedId(c);
+    const pinPost = pinId ? (c.posts||[]).find(p=>chPostId(p)===pinId) : null;
+    if(pinPost) html += chPostHtml(c, pinPost, -1, true);
     html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
-    const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
-      : `<div class="ch-empty">Постов пока нет</div>`;
-    html += (c.chatBg!=null)
+    const rest = (c.posts||[]).filter(p=>chPostId(p)!==pinId);
+    const posts = rest.length ? rest.map((p,i)=>chPostHtml(c,p,i)).join('')
+      : (pinPost ? '' : `<div class="ch-empty">Постов пока нет</div>`);
+    html += (c.chatBg!=null && posts)
       ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
       : posts;
   }
@@ -798,13 +827,15 @@ function chCountViews(c){
   (c.posts||[]).forEach(p=>{ const pid=chPostId(p); if(pid && !chViewed[pid]){ chViewed[pid]=true; p.views=(p.views||0)+1; ch=true; } });
   if(ch) chSave();
 }
-function chPostHtml(c,p,i){
+function chPostHtml(c,p,i,pinned){
   const pid = chPostId(p);
+  const mine = chIsMine(c);
   const liked = !!CH.likes[pid];
   const likes = (p.likes||0)+(liked?1:0);
   const cmts = CH.cmt[pid]||[];
   const open = !!chOpenCmt[pid];
-  return `<div class="ch-post">
+  return `<div class="ch-post${pinned?' pinned':''}">
+    ${pinned?`<div class="ch-pin-lab">${chI('pin')}<span>Закреплённое</span>${mine?`<button class="ch-pin-off" onclick="chUnpin('${c.id}')">Открепить</button>`:''}</div>`:''}
     <div class="ch-post-h">${chAvInner(c,'mini')}<b class="ch-ph-name">${chEsc(c.name)}</b><small>${chEsc(p.when||'')}</small></div>
     <div class="ch-post-txt">${chEsc(p.txt)}</div>
     ${p.img?`<div class="ch-post-media photo" style="background-image:url(${p.img})"></div>`
@@ -813,11 +844,23 @@ function chPostHtml(c,p,i){
     <div class="ch-post-acts">
       ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}','${pid}')" aria-label="Нравится">${chI('heart')}${likes}</button>`:''}
       ${c.discussions?`<button class="${open?'on':''}" onclick="chToggleCmt('${c.id}','${pid}')" aria-label="Комментарии">${chI('comment')}${cmts.length||'Обсудить'}</button>`:''}
+      ${mine&&!pinned?`<button class="ch-pin-btn" onclick="chPin('${c.id}','${pid}')" aria-label="Закрепить">${chI('pin')}<span>Закрепить</span></button>`:''}
       <span class="ch-views">${chI('eye')}${chFmtN(p.views||0)}</span>
     </div>
     ${c.discussions&&open?chCommentsHtml(c,pid,cmts):''}
   </div>`;
 }
+/* закрепить / открепить пост (доступно владельцу) */
+window.chPin = function(id,pid){
+  const c = chChannel(id); if(!c || !chIsMine(c)) return;
+  c.pinned = pid; chSave(); chRender();
+  toast('Пост закреплён вверху канала');
+};
+window.chUnpin = function(id){
+  const c = chChannel(id); if(!c) return;
+  c.pinned = null; chSave(); chRender();
+  toast('Пост откреплён');
+};
 /* блок комментариев под постом (живой: пишем, лайкаем, сохраняется) */
 function chCommentsHtml(c,pid,cmts){
   const rows = cmts.length ? cmts.map((m,k)=>{
@@ -1312,18 +1355,18 @@ function chPageMAdmins(id){
   const c = chChannel(id); if(!c) return {title:'Админы', html:''};
   const a = c.admins||[];
   const html = `
-    <div class="ch-owner-note" style="margin-bottom:12px">Администраторы могут публиковать посты, банить участников и модерировать обсуждения. Владелец — ты.</div>
+    <div class="ch-owner-note" style="margin-bottom:12px">Назначай администраторов и тонко настраивай их права — как в Telegram. Нажми на админа, чтобы открыть права. Владелец (ты) всегда имеет полный доступ.</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
       <div class="ch-member">
         <div class="ch-av mini" style="${chAvGradStyle(c.bg||0)}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(PROFILE.name)}</b><small>@${chEsc(PROFILE.nick)} · создатель</small></div>
         <span class="ch-m-role owner">владелец</span>
       </div>
-      ${a.map(p=>`
-      <div class="ch-member">
+      ${a.map((p,idx)=>`
+      <div class="ch-member ch-member-tap" onclick="chGo('mAdminRights',{c:'${id}',i:${idx}})">
         <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
-        <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>@${chEsc(p.nick)} · администратор</small></div>
-        <button class="ch-m-act" title="Разжаловать" onclick="chRemoveAdmin('${id}','${chEsc(p.nick)}')">${chI('trash')}</button>
+        <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>${chRightsSummary(p)} · @${chEsc(p.nick)}</small></div>
+        <span class="ch-m-chev">${chI('chev')}</span>
       </div>`).join('')}
     </div>
     <button class="ch-add-btn" onclick="chAddAdmin('${id}')">${chI('plus')} Назначить администратора</button>`;
@@ -1339,8 +1382,46 @@ window.chAddAdmin = function(id){
   const cand = (c.members||[]).filter(p=>p.name!==PROFILE.name && !(c.admins||[]).some(a=>a.nick===p.nick));
   if(!cand.length){ toast('Нет участников для назначения'); return; }
   const p = cand[0];
-  c.admins = c.admins||[]; c.admins.push({name:p.name, nick:p.nick}); chSave(); chRender();
+  c.admins = c.admins||[]; c.admins.push({name:p.name, nick:p.nick, rights:chDefaultRights()}); chSave();
   toast(p.name+' назначен администратором');
+  chGo('mAdminRights',{c:id, i:c.admins.length-1});   // сразу открываем настройку прав (как в Telegram)
+};
+
+/* ---------- Права конкретного администратора ---------- */
+function chPageMAdminRights(arg){
+  const c = chChannel(arg&&arg.c); if(!c || !chIsMine(c)) return {title:'Права', html:'<div class="ch-empty">Нет доступа</div>'};
+  const p = (c.admins||[])[arg&&arg.i]; if(!p) return {title:'Права', html:'<div class="ch-empty">Администратор не найден</div>'};
+  if(!p.rights) p.rights = chDefaultRights();
+  let html = `<div class="ch-manage-hub" style="text-align:center">
+      <div class="ch-av big" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
+      <div style="font:800 18px/1.1 var(--font-display);margin-top:10px">${chEsc(p.name)}</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">@${chEsc(p.nick)} · администратор</div>
+    </div>`;
+  html += `<div class="ch-sec-h">${chI('crown')} Права администратора</div>`;
+  html += chList(CH_RIGHTS.map(([k,ic,t,d])=>chTglRow(ic,t,d,!!p.rights[k],`chToggleRight('${arg.c}',${arg.i},'${k}',this)`)));
+  html += chLF('Точная настройка прав — как в Telegram. Отключённые права недоступны этому администратору; остальные модераторы не затрагиваются.');
+  html += `<div class="ch-sec-h">${chI('flag')} Управление</div>`;
+  html += chList([ chNavRow('trash','Разжаловать администратора','Снять все права', `chRemoveAdminAt('${arg.c}',${arg.i})`, {danger:true, noChev:true}) ]);
+  html += `<div style="height:10px"></div>`;
+  return {title:'Права администратора', html};
+}
+/* переключить одно право (surgical, без полного ре-рендера — как chTgl) */
+window.chToggleRight = function(id,i,key,el){
+  const c = chChannel(id); if(!c) return;
+  const p = (c.admins||[])[i]; if(!p) return;
+  p.rights = p.rights || chDefaultRights();
+  p.rights[key] = !p.rights[key]; chSave();
+  if(el){ const sw = el.querySelector('.switch'); if(sw) sw.classList.toggle('on', !!p.rights[key]); }
+  toast(p.rights[key]?'Право выдано':'Право отозвано');
+};
+window.chRemoveAdminAt = function(id,i){
+  const c = chChannel(id); if(!c) return;
+  const p = (c.admins||[])[i]; if(!p) return;
+  const act = ()=>{ c.admins.splice(i,1); chSave(); if(chNav.length>1) chNav.pop(); chRender(); toast('Администратор разжалован'); };
+  if(typeof showPopup==='function') showPopup({ico:'trash', title:'Разжаловать администратора?',
+    body:`«${chEsc(p.name)}» потеряет все права администратора канала.`,
+    actions:[{label:'Разжаловать', onclick:act},{label:'Отмена', ghost:true}]});
+  else act();
 };
 
 /* ---------- Чёрный список ---------- */

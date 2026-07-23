@@ -85,6 +85,13 @@ var PW_ASSET = {
     BUSINESS:'Конвейер контента и рекламный кабинет PRO.',
     MAX:'Контент-завод 30 видео/мес, команда и максимум системы.'
   };
+  /* что заменяет тариф (внешний рыночный якорь цены — честное «обычно от X/мес») */
+  var PW_REPLACES = {
+    START:    {who:'сервисы автопостинга и планировщик', cost:6900},
+    PRO:      {who:'SMM-специалиста и ИИ-аналитику', cost:60000},
+    BUSINESS: {who:'команду: SMM, монтажёр, таргетолог', cost:150000},
+    MAX:      {who:'продакшн-команду и агентство', cost:280000}
+  };
   /* мини-инфографика в попапе: 3 «кольца» [значение-в-центре, подпись, заливка%] */
   var PW_INFO = {
     START:[['+46%','к охватам',46],['15','проверок',80],['2','соцсети',55]],
@@ -167,7 +174,7 @@ var PW_ASSET = {
           '<div class="pw-price"><div><div class="pw-p-l">Тариф '+tier+'</div>'+
             priceLine+'</div>'+
             '<div class="pw-p-note">'+priceNote+'</div></div>'+
-          '<button class="btn pw-cta">'+I('crown')+' Оформить '+tier+'</button>'+
+          '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+tier+'</button>'+
           '<button class="btn ghost pw-later">Может позже</button>'+
           '<div class="pw-guarant">'+I('check')+' Отмена в любой момент · безопасная оплата</div>'+
         '</div>'+
@@ -544,6 +551,21 @@ var PW_ASSET = {
     '</div>';
     var countHtml = (payState.period===12) ? pwCountHtml() : '';
 
+    /* ---- ценностный якорь: сколько стоило бы то же самое «вручную» ---- */
+    var rep = PW_REPLACES[sel] || PW_REPLACES.PRO;
+    var months = Math.max(1, per[0]);
+    var perMonthEq = Math.max(1, Math.round(total/months));
+    var timesX = Math.max(2, Math.round(rep.cost/perMonthEq));
+    var anchorHtml =
+      '<div class="pw-anchor">'+
+        '<div class="pw-anchor-l">'+
+          '<div class="pw-anchor-k">'+I('users')+' Заменяет <b>'+esc(rep.who)+'</b></div>'+
+          '<div class="pw-anchor-cmp"><s>обычно от '+pwRub(rep.cost)+'/мес</s>'+
+            'с OKO — <b>'+pwRub(perMonthEq)+'/мес</b></div>'+
+        '</div>'+
+        '<div class="pw-anchor-x"><b>×'+timesX+'</b><i>дешевле</i></div>'+
+      '</div>';
+
     var live = pwLiveNumbers();
     var liveHtml = '<div class="pw-live">'+live.map(function(c){
       return '<div class="pw-live-cell"><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div></div>';
@@ -597,6 +619,7 @@ var PW_ASSET = {
       '<p style="font-weight:700;font-size:13px;margin:2px 0 8px">Период оплаты</p>'+
       '<div class="pay-periods">'+ periodsHtml +'</div>'+
       countHtml +
+      anchorHtml +
       '<div class="pay-total"><div><div class="dim" style="font-size:12px">К оплате · '+sel+'</div>'+
         '<div class="pay-sum">'+pwRub(total)+'</div></div>'+
         (effDisc>0?'<div class="pay-old">'+pwRub(full)+'</div>':'')+'</div>'+
@@ -606,7 +629,7 @@ var PW_ASSET = {
         return '<button class="pay-m'+(payState.method===pm[0]?' on':'')+'" onclick="payState.method=\''+pm[0]+'\';renderPay()">'+I(pm[2])+'<span>'+pm[1]+'</span></button>';
       }).join('') +'</div>'+
       '<div style="height:16px"></div>'+
-      '<button class="btn" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
+      '<button class="btn pw-shine" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
       '<div class="pw-guar-band">'+I('check')+' Отключишь в 1 клик · спишется ровно как показано · данные остаются с тобой</div>'+
       pwFaqHtml() +
       '<p class="dim" style="font-size:11px;text-align:center;margin-top:12px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>';

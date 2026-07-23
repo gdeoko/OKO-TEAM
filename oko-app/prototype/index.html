@@ -2010,9 +2010,68 @@ main>.screen{position:relative;z-index:1}
 .gm-pay-promo svg.i{width:17px;height:17px;color:var(--accent);flex-shrink:0}
 .gm-pay-promo b{font-family:var(--font-display);letter-spacing:.06em;color:var(--accent);font-size:14px}
 
+/* ============================================================
+   СЕРИЯ ВИЗИТОВ (СТРИК)
+   ============================================================ */
+.gm-streak-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--dim);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;transition:transform .15s,box-shadow .2s,border-color .2s,color .2s}
+.gm-streak-chip svg.i{width:16px;height:16px}
+.gm-streak-chip.lit{border-color:var(--lime);color:var(--accent)}
+.gm-streak-chip.lit svg.i{color:var(--accent);animation:gmFlame 1.7s ease-in-out infinite}
+.gm-streak-chip:active{transform:scale(.94)}
+@keyframes gmFlame{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.13) translateY(-1px)}}
+
+.gm-streak-note{display:flex;align-items:center;gap:9px;margin-top:10px;padding:9px 12px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);color:var(--dim);font-size:11.5px;line-height:1.4}
+.gm-streak-note svg.i{width:17px;height:17px;flex-shrink:0;color:var(--dim)}
+.gm-streak-note.lit{border-color:var(--lime);background:var(--lime-dim);color:var(--text)}
+.gm-streak-note.lit svg.i{color:var(--accent);animation:gmFlame 1.7s ease-in-out infinite}
+.gm-streak-note b{color:var(--accent);font-family:var(--font-display);font-size:14px;letter-spacing:.03em;margin:0 1px}
+
+/* ============================================================
+   ДЖЕКПОТ (редкий приз) — усиленный вау-момент, палитра бренда
+   ============================================================ */
+.gm-wheel-card.gm-jackpot{animation:gmJackpotFlash 1.5s ease-out}
+.gm-wheel-card.gm-jackpot::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(closest-side,rgba(154,255,0,.5),rgba(154,255,0,.16) 46%,transparent 72%);animation:gmJackpotGlow 1.5s ease-out forwards}
+@keyframes gmJackpotFlash{0%{box-shadow:var(--gm-edge-shadow)}22%{box-shadow:var(--gm-edge-shadow),0 0 0 2px var(--gm-lime-strong),0 0 46px rgba(154,255,0,.6)}100%{box-shadow:var(--gm-edge-shadow)}}
+@keyframes gmJackpotGlow{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+/* редкий приз в карточке-ревиле: ярче кайма/свечение + плашка «Редкий приз» */
+.gm-reveal.rare .gm-reveal-card{box-shadow:0 0 46px rgba(154,255,0,.75),inset 0 0 24px rgba(154,255,0,.2)}
+.gm-reveal.rare .gm-reveal-ic{background:linear-gradient(135deg,rgba(255,255,255,.28),var(--gm-lime-soft))}
+.gm-reveal-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:99px;background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;font-family:var(--font-display);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.gm-reveal-tag svg.i{width:13px;height:13px}
+.gm-confetti.rare i{width:8px;height:13px}
+
+/* ============================================================
+   ТАБЛИЦА ШАНСОВ (шит) + кнопка вызова из карточки честности
+   ============================================================ */
+.gm-resp-b{display:flex;flex-direction:column;gap:11px;flex:1;min-width:0}
+.gm-odds-open{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:99px;border:1px solid var(--lime);background:var(--lime-dim);color:var(--accent);font-weight:700;font-size:12px;transition:transform .15s,box-shadow .2s}
+.gm-odds-open svg.i{width:15px;height:15px}
+.gm-odds-open:hover{box-shadow:0 0 14px var(--lime-dim)}
+.gm-odds-open:active{transform:scale(.96)}
+
+.gm-odds-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.gm-odds-tab{padding:9px 4px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);color:var(--dim);font-family:var(--font-display);font-size:13px;letter-spacing:.02em;transition:transform .15s,border-color .18s,background .18s,color .18s}
+.gm-odds-tab.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.gm-odds-tab:active{transform:scale(.96)}
+.gm-odds-note{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;margin-bottom:12px;border-radius:var(--r-md);border:1px dashed var(--lime);background:var(--lime-dim);color:var(--text);font-size:11.5px;line-height:1.5}
+.gm-odds-note svg.i{width:18px;height:18px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.gm-odds-note b{color:var(--accent);font-variant-numeric:tabular-nums}
+.gm-odds-list{display:flex;flex-direction:column;gap:1px}
+.gm-odds-row{display:flex;align-items:center;gap:11px;padding:9px 2px;animation:gmPrizeIn .3s cubic-bezier(.2,.8,.25,1) both}
+.gm-odds-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gm-odds-ic svg.i{width:17px;height:17px}
+.gm-odds-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.gm-odds-t{font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-odds-bar{display:block;height:6px;border-radius:99px;background:var(--raised);overflow:hidden}
+.gm-odds-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd400,#9AFF00);transform-origin:left;animation:gmOddsBar .5s cubic-bezier(.2,.8,.25,1) both}
+@keyframes gmOddsBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.gm-odds-pct{font-size:14px;font-weight:800;font-family:var(--font-display);letter-spacing:.02em;color:var(--accent);white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+.gm-odds-sum{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:10.5px;color:var(--dim);line-height:1.5;text-align:center}
+
 /* уважение к reduced-motion */
 @media (prefers-reduced-motion:reduce){
-  .gm-wheel-card::before,.gm-pointer,.gm-wheel-hub,.gm-spin,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays{animation:none !important}
+  .gm-wheel-card::before,.gm-pointer,.gm-wheel-hub,.gm-spin,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays,
+  .gm-wheel-card.gm-jackpot,.gm-wheel-card.gm-jackpot::after,.gm-streak-chip svg.i,.gm-streak-note svg.i,.gm-odds-bar i{animation:none !important}
 }
 
 /* ===== module: academy ===== */
@@ -2211,6 +2270,31 @@ main>.screen{position:relative;z-index:1}
 .ac-score-sub{text-align:center;font-size:12.5px;color:var(--dim);margin:6px 0 16px;line-height:1.5}
 .ac-score-sub b{color:var(--accent)}
 .ac-score-sub .fail{color:var(--danger);font-weight:700}
+/* живая серия верных ответов + всплывающий комбо-индикатор */
+#acTestBox{position:relative}
+.ac-combo-live{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:800}
+.ac-combo-live svg.i{width:12px;height:12px;color:var(--accent);vertical-align:-.14em}
+.ac-combo-pop{position:absolute;top:8px;right:10px;z-index:4;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;padding:5px 11px;pointer-events:none;opacity:0;transform:translateY(6px) scale(.9);transition:opacity .2s,transform .3s cubic-bezier(.3,1.5,.4,1);box-shadow:0 6px 18px rgba(154,255,0,.35)}
+.ac-combo-pop.go{opacity:1;transform:translateY(0) scale(1)}
+.ac-combo-pop svg.i{width:13px;height:13px;color:#000}
+:root[data-theme="light"] .ac-combo-pop{box-shadow:0 6px 16px rgba(110,200,0,.3)}
+@media (prefers-reduced-motion:reduce){.ac-combo-pop{transition:opacity .2s}}
+/* разбор ошибок после теста */
+.ac-review{margin-top:16px;border-top:1px solid var(--border);padding-top:15px;animation:fade .35s ease}
+.ac-review-h{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.ac-review-h svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-review-item{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;margin-bottom:9px;animation:acRise .4s cubic-bezier(.3,1,.4,1) both}
+.ac-review-item:last-child{margin-bottom:0}
+.ac-review-item .rq{display:flex;gap:9px;font-size:13px;font-weight:600;line-height:1.4;margin-bottom:8px}
+.ac-review-item .rn{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--dim);font-family:var(--font-display);font-size:13px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.ac-review-item .ra{display:flex;align-items:center;gap:9px;font-size:12.5px;line-height:1.35;padding:7px 9px;border-radius:9px;margin-top:5px}
+.ac-review-item .ra .lb{width:20px;height:20px;flex-shrink:0;border-radius:6px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ac-review-item .ra.bad{background:rgba(255,77,77,.1);color:var(--text)}
+.ac-review-item .ra.bad .lb{background:var(--danger);color:#fff}
+.ac-review-item .ra.ok{background:var(--lime-dim);color:var(--text)}
+.ac-review-item .ra.ok .lb{background:var(--lime);color:#000}
+.ac-review.perfect{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;font-size:13px;font-weight:700;color:var(--accent);border-top:none;background:var(--lime-dim);border-radius:var(--r-md);padding:13px}
+.ac-review.perfect svg.i{width:16px;height:16px;color:var(--accent)}
 
 /* --- практика --- */
 .ac-task-ta{width:100%;min-height:120px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font-body);font-size:13.5px;line-height:1.5;padding:12px 14px;outline:none;resize:vertical;transition:border-color .15s}
@@ -2437,6 +2521,45 @@ main>.screen{position:relative;z-index:1}
 @media (prefers-reduced-motion:reduce){
   .ac-burst-rays i,.ac-burst-conf b{animation:none!important}
   .ac-burst.go .ac-burst-seal{animation:acSealStamp .3s ease forwards}
+}
+
+/* ===== ВАУ-МОМЕНТ: УРОК ОСВОЁН (100% всех пяти этапов) ===== */
+.ac-master{position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.18),rgba(0,0,0,.82) 64%);opacity:0;transition:opacity .28s ease}
+.ac-master.go{opacity:1}
+.ac-master-card{position:relative;z-index:2;width:100%;max-width:340px;text-align:center;background:linear-gradient(160deg,#0e1607,#060a04 72%);border:1px solid rgba(154,255,0,.4);border-radius:var(--r-lg);padding:26px 20px 20px;box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 50px rgba(154,255,0,.12);transform:translateY(18px) scale(.94);opacity:0;transition:transform .4s cubic-bezier(.3,1.4,.4,1),opacity .3s}
+.ac-master.go .ac-master-card{transform:none;opacity:1}
+:root[data-theme="light"] .ac-master-card{background:linear-gradient(160deg,#f2f8e8,#e6f0d8 72%);box-shadow:0 30px 90px rgba(0,0,0,.28)}
+.ac-master-badge{position:relative;width:96px;height:96px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+.ac-master-rays{position:absolute;inset:0}
+.ac-master-rays i{position:absolute;left:50%;top:50%;width:3px;height:44px;margin-left:-1.5px;background:linear-gradient(var(--lime),transparent);border-radius:2px;transform-origin:50% 0;transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}
+.ac-master.go .ac-master-rays i{animation:acRayOut .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:var(--d)}
+.ac-master-seal{width:70px;height:70px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 36px rgba(154,255,0,.55);transform:scale(0) rotate(-40deg)}
+.ac-master.go .ac-master-seal{animation:acSealStamp .6s cubic-bezier(.3,1.5,.4,1) .1s forwards}
+:root[data-theme="light"] .ac-master-seal{box-shadow:0 0 24px rgba(110,200,0,.4)}
+.ac-master-seal svg.i{width:34px;height:34px}
+.ac-master-kick{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.ac-master-title{font-family:var(--font-display);font-size:38px;line-height:1;letter-spacing:.03em;color:#fff;margin:5px 0 6px}
+:root[data-theme="light"] .ac-master-title{color:#1a2410}
+.ac-master-sub{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.45;margin-bottom:15px}
+:root[data-theme="light"] .ac-master-sub{color:var(--dim)}
+.ac-master-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px}
+.ac-master-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:5px 10px;opacity:0;transform:translateY(6px);animation:acRise .4s cubic-bezier(.3,1,.4,1) forwards;animation-delay:calc(.35s + var(--pd))}
+.ac-master-pill svg.i{width:12px;height:12px;color:var(--accent)}
+.ac-master-stat{font-size:12px;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px}
+:root[data-theme="light"] .ac-master-stat{color:var(--dim)}
+.ac-master-stat b{color:var(--accent)}
+.ac-master-stat svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-master-actions{display:flex;flex-direction:column;gap:8px}
+.ac-master-conf{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.ac-master-conf b{position:absolute;top:-16px;width:9px;height:14px;background:var(--lime);border-radius:2px;transform:scale(var(--sx)) rotate(var(--rot));opacity:0}
+.ac-master-conf b:nth-child(even){background:#fff}
+.ac-master-conf b:nth-child(3n){background:var(--accent);border-radius:50%}
+.ac-master.go .ac-master-conf b{animation:acConf 1.1s ease-in var(--dl) forwards}
+@media (prefers-reduced-motion:reduce){
+  .ac-master-rays i,.ac-master-conf b{animation:none!important;opacity:0!important}
+  .ac-master.go .ac-master-seal{animation:acSealStamp .3s ease forwards}
+  .ac-master-pill{animation:none!important;opacity:1!important;transform:none!important}
+  .ac-master-card{transition:opacity .2s}
 }
 
 /* ===== module: ads ===== */
@@ -4116,6 +4239,30 @@ main>.screen{position:relative;z-index:1}
 .mp-seller-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:10.5px;color:var(--dim);margin-top:6px;line-height:1.3}
 .mp-seller-meta svg.i{width:11px;height:11px;color:var(--accent);vertical-align:-1px}
 
+/* ================= ДИСКРЕТНАЯ СОРТИРОВКА: видимые чипы вместо слепого циклера =================
+   База даёт одну кнопку cycleSort (тап за тапом вслепую). Заменяем её скрытием + строкой
+   чипов со всеми режимами, активным состоянием и стрелкой направления для цены. */
+.mp-sortbar{margin:-4px 0 12px;animation:mpFade .25s ease both}
+.mp-sort-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.mp-sort-row::-webkit-scrollbar{display:none}
+.mp-sc{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--dim);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:8px 13px;white-space:nowrap;transition:color .18s,border-color .18s,background .18s,transform .12s}
+.mp-sc svg.i{width:13px;height:13px;color:var(--accent);transition:color .18s,transform .18s}
+.mp-sc.dn svg.i{transform:rotate(90deg)}
+.mp-sc.up svg.i{transform:rotate(-90deg)}
+.mp-sc:hover{border-color:var(--dim);color:var(--text)}
+.mp-sc:active{transform:scale(.96)}
+.mp-sc.on{color:#000;background:var(--lime);border-color:var(--lime);box-shadow:var(--glow)}
+.mp-sc.on svg.i{color:#000}
+:root[data-theme="light"] .mp-sc.on{color:#0a1400}
+:root[data-theme="light"] .mp-sc.on svg.i{color:#0a1400}
+
+/* ================= ПОХОЖИЕ ОБЪЯВЛЕНИЯ (детальная карточка) ================= */
+/* переиспользует строку/карточки блока «вы смотрели» (.mp-recent-row/.mp-rc) */
+.mp-sim{margin:16px 0 4px;animation:mpFade .34s ease both}
+.mp-rc-rate{position:absolute;left:6px;bottom:6px;z-index:2;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:#fff;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:99px;padding:2.5px 7px 2.5px 5px;animation:mpFade .3s ease both}
+.mp-rc-rate svg.i{width:10px;height:10px;color:var(--lime);fill:var(--lime)}
+:root[data-theme="light"] .mp-rc-rate{background:rgba(0,0,0,.44)}
+
 /* ===== module: feed-algo ===== */
 /* feed-algo: алгоритмическая лента рекомендаций */
 
@@ -4400,6 +4547,25 @@ main>.screen{position:relative;z-index:1}
 .fac-rc-x svg.i{width:11px;height:11px}
 .fac-rc-x:hover{color:var(--text);background:var(--surface)}
 
+/* ======================= «НОВЫЕ ПОСТЫ» — плавающая пилюля обновления ======================= */
+/* Классический паттерн Instagram/Twitter: пока ты листаешь вниз, сверху всплывает
+   лаймовая пилюля «N новых постов ↑». Тап — пересобрать подборку и уехать наверх.
+   Только transform/opacity, fixed по центру. Бренд-лайм с чёрным текстом — идеален в обеих темах. */
+.fa-newpill{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 100px);z-index:30;
+  display:inline-flex;align-items:center;gap:7px;padding:9px 16px 9px 13px;
+  font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.01em;color:#000;
+  background:var(--lime);border:1px solid var(--lime);border-radius:99px;
+  box-shadow:0 8px 26px rgba(154,255,0,.42),0 2px 10px rgba(0,0,0,.32);cursor:pointer;
+  transform:translate(-50%,-18px) scale(.9);opacity:0;pointer-events:none;will-change:transform,opacity;
+  transition:transform .34s cubic-bezier(.22,.9,.36,1),opacity .28s,box-shadow .2s}
+.fa-newpill.show{transform:translate(-50%,0) scale(1);opacity:1;pointer-events:auto}
+.fa-newpill:hover{box-shadow:0 10px 30px rgba(154,255,0,.55),0 2px 10px rgba(0,0,0,.32)}
+.fa-newpill:active{transform:translate(-50%,0) scale(.94)}
+.fa-newpill svg.i{width:14px;height:14px;color:#000;flex:none}
+.fa-newpill .fa-np-ic{animation:fa-np-bob 1.9s ease-in-out infinite}
+.fa-newpill .fa-np-n{font-variant-numeric:tabular-nums}
+@keyframes fa-np-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+
 /* ======================= ДОСТУПНОСТЬ: КЛАВИАТУРНЫЙ ФОКУС ======================= */
 .fa-refresh:focus-visible,.fa-info:focus-visible,.fa-empty-cta:focus-visible,
 .fac-like:focus-visible,.fac-reply:focus-visible,.fac-toggle:focus-visible,
@@ -4413,6 +4579,8 @@ main>.screen{position:relative;z-index:1}
   .fac-replies{transition:none}
   .fa-dtap-heart{animation:fa-dtap-rm .6s ease forwards}
   @keyframes fa-dtap-rm{0%{opacity:0}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+  .fa-newpill{transition:opacity .2s}
+  .fa-newpill .fa-np-ic{animation:none}
 }
 
 /* ============================================================================
@@ -4616,6 +4784,17 @@ main>.screen{position:relative;z-index:1}
 /* доступность: клавиатурный фокус */
 .far-back:focus-visible,.far-act:focus-visible,.far-sg:focus-visible,
 .far-follow:focus-visible,.fa-clips:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+
+/* ---- зажать и держать = пауза с «чистым» кадром (TikTok/Instagram press-and-hold) ----
+   Пока палец/курсор зажат на видео-поле: замирают прогресс и бренд-движение, а хром
+   (верх/рельс/инфо) плавно уходит — остаётся только кадр. Отпустил — всё вернулось.
+   Кнопка play НЕ показывается (это не обычная пауза, а «подсмотреть кадр»). */
+.far-top,.far-rail,.far-info{transition:opacity .22s ease}
+.far.far-hold .far-top,.far.far-hold .far-rail,.far.far-hold .far-info{opacity:0}
+.far.far-hold .far-slide.is-active .far-motion,
+.far.far-hold .far-slide.is-active .far-motion.two,
+.far.far-hold .far-slide.is-active .far-eq i{animation-play-state:paused!important}
+.far.far-hold .far-sg.active .far-fill{animation-play-state:paused}
 
 /* ПЕРФ: пауза бренд-движения во время скролла ленты (глобальный флаг ядра) */
 html.oko-scrolling .far-motion,html.oko-scrolling .far-eq i{animation-play-state:paused!important}
@@ -6012,6 +6191,36 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .pw-share-btn:active{transform:scale(.97)}
 .pw-share-btn svg{flex:none;width:14px;height:14px;color:var(--accent)}
 
+/* ---- Ценностный якорь: «заменяет команду за X» (anchoring, ясность выгоды) ---- */
+.pw-anchor{display:flex;align-items:center;gap:12px;background:var(--raised);
+  border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin:0 0 12px;
+  position:relative;overflow:hidden;opacity:0;transform:translateY(8px);
+  animation:pwAnchorIn .45s cubic-bezier(.25,1,.4,1) forwards}
+@keyframes pwAnchorIn{to{opacity:1;transform:translateY(0)}}
+.pw-anchor::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130% 90% at 100% 0%,rgba(154,255,0,.12),transparent 62%)}
+.pw-anchor-l{flex:1;min-width:0;position:relative}
+.pw-anchor-k{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--dim);line-height:1.3}
+.pw-anchor-k svg{flex:none;width:13px;height:13px;color:var(--accent)}
+.pw-anchor-k b{color:var(--text);font-weight:800}
+.pw-anchor-cmp{margin-top:5px;font-size:12.5px;line-height:1.4}
+.pw-anchor-cmp s{color:var(--dim);text-decoration-thickness:1.5px;margin-right:5px}
+.pw-anchor-cmp b{color:var(--accent);font-weight:800}
+.pw-anchor-x{flex:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:58px;padding:8px 6px;border-radius:12px;background:var(--lime);box-shadow:var(--glow)}
+.pw-anchor-x b{font-family:var(--font-display);font-size:24px;line-height:.9;color:#0a0a0a;letter-spacing:.01em}
+.pw-anchor-x i{font-style:normal;font-size:8.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#0a0a0a;margin-top:2px}
+:root[data-theme="light"] .pw-anchor::before{background:radial-gradient(130% 90% at 100% 0%,rgba(110,200,0,.14),transparent 62%)}
+
+/* ---- Премиальный блик на CTA-кнопке (микро-вау в момент решения) ---- */
+.pw-shine{position:relative;overflow:hidden}
+.pw-shine::after{content:'';position:absolute;top:0;bottom:0;left:0;width:38%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:translateX(-160%) skewX(-18deg);animation:pwShine 4.2s ease-in-out infinite}
+@keyframes pwShine{0%,64%{transform:translateX(-160%) skewX(-18deg)}82%,100%{transform:translateX(430%) skewX(-18deg)}}
+:root[data-theme="light"] .pw-shine::after{background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent)}
+@media(prefers-reduced-motion:reduce){.pw-shine::after{display:none}}
+
 /* ===== module: channels ===== */
 /* ================= CHANNELS: платные каналы / курсы + управление (префикс ch-) ================= */
 #chView{position:fixed;inset:0;z-index:67;background:var(--bg);display:flex;flex-direction:column;
@@ -6488,6 +6697,28 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .ch-cmt-send:hover{transform:scale(1.06)}
 .ch-cmt-send:active{transform:scale(.94)}
 .ch-cmt-send svg.i{width:18px;height:18px}
+
+/* ===== закреплённый пост (закреп, как в Telegram) ===== */
+.ch-post.pinned{border-color:var(--lime-dim);
+  background:linear-gradient(180deg,rgba(154,255,0,.07),var(--surface));box-shadow:0 4px 16px rgba(154,255,0,.08)}
+.ch-pin-lab{display:flex;align-items:center;gap:6px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid var(--border);
+  font:800 10px/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--lime)}
+.ch-pin-lab svg.i{width:14px;height:14px;color:var(--lime);flex-shrink:0}
+.ch-pin-lab span{flex:1;min-width:0}
+.ch-pin-off{flex-shrink:0;color:var(--dim);font:700 11px/1 var(--font-body);letter-spacing:.02em;text-transform:none;
+  padding:4px 9px;border-radius:20px;background:var(--raised);transition:color .16s,background .16s;-webkit-tap-highlight-color:transparent}
+.ch-pin-off:hover{color:var(--lime);background:var(--lime-dim)}
+/* кнопка «Закрепить» в ряду действий поста (наследует стиль .ch-post-acts button) */
+.ch-post-acts .ch-pin-btn span{font-size:12px}
+@media(max-width:400px){.ch-post-acts .ch-pin-btn span{display:none}}
+
+/* ===== админ-строка с переходом к правам ===== */
+.ch-member.ch-member-tap{cursor:pointer;transition:background .14s;border-radius:10px;-webkit-tap-highlight-color:transparent}
+.ch-member.ch-member-tap:hover{background:var(--raised)}
+.ch-member.ch-member-tap:active{transform:scale(.995)}
+.ch-member .ch-m-chev{color:var(--dim);flex-shrink:0;display:inline-flex;align-items:center}
+.ch-member .ch-m-chev svg.i{width:17px;height:17px}
+.ch-member.ch-member-tap:hover .ch-m-chev{color:var(--lime)}
 
 /* адаптив десктоп */
 @media(min-width:900px){
@@ -7696,6 +7927,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
         <div class="gm-sub"><small>Крути колесо — каждая крутка даёт приз</small></div>
       </div>
       <div class="gm-head-chips">
+        <button class="gm-streak-chip" id="gmStreakChip" style="display:none" onclick="gmSelectMode('free')"><svg class="i"><use href="#i-gm-flame"/></svg><span class="gm-streak-n">0</span></button>
         <button class="gm-tk-chip" onclick="gmPrizesOpen()" title="Билеты — валюта круток. Открыть «Мои призы»"><svg class="i"><use href="#i-gm-ticket"/></svg><span class="gm-tk-val">0</span></button>
         <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
       </div>
@@ -7725,7 +7957,10 @@ html.oko-hidden *{ animation-play-state:paused !important; }
 
     <div class="card gm-resp">
       <svg class="i"><use href="#i-lock"/></svg>
-      <p><b>Честная механика.</b> Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.</p>
+      <div class="gm-resp-b">
+        <p><b>Честная механика.</b> Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.</p>
+        <button class="gm-odds-open" onclick="gmOddsOpen()"><svg class="i"><use href="#i-gm-scales"/></svg>Таблица шансов</button>
+      </div>
     </div>
     <div style="height:14px"></div>
   </div>
@@ -7874,7 +8109,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.93</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.94</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -7998,6 +8233,12 @@ html.oko-hidden *{ animation-play-state:paused !important; }
 <div class="sheet" id="sheet-gmPrizes">
   <h3>Мои призы</h3>
   <div id="gmPrizesBody"></div>
+</div>
+
+<!-- РУЛЕТКА OKO: шит «Таблица шансов» — честные вероятности каждого сектора по всем пулам -->
+<div class="sheet" id="sheet-gmOdds">
+  <h3>Таблица шансов</h3>
+  <div id="gmOddsBody"></div>
 </div>
 
 <!-- ===== module: academy ===== -->
@@ -12781,6 +13022,10 @@ if(document.getElementById('screen-wallet') && document.getElementById('screen-w
   mk('i-gm-boost','<path d="M26 52l24-24 24 24M26 74l24-24 24 24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
   /* проверка видео (экран + галочка) */
   mk('i-gm-checkvid','<rect x="14" y="22" width="72" height="56" rx="12" fill="none" stroke="currentColor" stroke-width="7"/><path d="M34 50l10 11 22-24" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>');
+  /* пламя (серия визитов / стрик) */
+  mk('i-gm-flame','<path d="M53 12c2 16 18 21 18 39a21 21 0 01-42 0c0-9 5-14 5-14-11 4-18 15-18 27a34 34 0 0068 0c0-26-24-36-31-52z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M50 84a13 13 0 01-8-23c1 8 7 9 8 15 4-3 4-7 3-11 6 2 10 8 10 14a13 13 0 01-13 5z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
+  /* весы честности (таблица шансов) */
+  mk('i-gm-scales','<path d="M50 16v66M30 82h40" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28h52" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28 12 54a13 13 0 0024 0zM76 28 64 54a13 13 0 0024 0z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
 })();
 
 /* ---------- общее состояние + хелперы ---------- */
@@ -13031,6 +13276,70 @@ function gmFmtCd(ms){
 }
 
 /* ============================================================
+   СЕРИЯ ВИЗИТОВ (СТРИК) — заходи каждый день, копи серию, получай билеты.
+   Хранение 'oko-games-streak' = {n:серия, d:индекс_дня_последней_крутки}.
+   Ретеншн-петля: пропуск дня обнуляет серию; вехи 3/7/14/30 дней дают бонус-билеты.
+   ============================================================ */
+const GM_STREAK_MILE = {3:1, 7:3, 14:6, 30:15}; /* веха(дней): бонус(билетов) */
+function gmDayIdx(ts){ const d = ts ? new Date(ts) : new Date(); return Math.round(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5); }
+function gmStreakGet(){ try{ return JSON.parse(localStorage.getItem('oko-games-streak')) || {n:0, d:null}; }catch(e){ return {n:0, d:null}; } }
+function gmStreakSave(s){ try{ localStorage.setItem('oko-games-streak', JSON.stringify(s)); }catch(e){} }
+/* «живая» серия для показа: если последняя крутка сегодня или вчера — серия ещё жива */
+function gmStreakDisplay(){
+  const s = gmStreakGet(), t = gmDayIdx();
+  return (s.d === t || s.d === t - 1) ? (s.n || 0) : 0;
+}
+function gmPluralDay(n){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return 'дней';
+  if(b > 1 && b < 5) return 'дня';
+  if(b === 1) return 'день';
+  return 'дней';
+}
+/* засчитать сегодняшнюю активность в серию (зовётся при БЕСПЛАТНОЙ крутке дня) */
+function gmStreakBump(){
+  const s = gmStreakGet(), t = gmDayIdx();
+  if(s.d === t) return s;                       /* уже засчитано сегодня */
+  if(s.d === t - 1) s.n = (s.n || 0) + 1;       /* заходил вчера — серия растёт */
+  else s.n = 1;                                 /* был пропуск — серия с начала */
+  s.d = t;
+  gmStreakSave(s);
+  const bonus = GM_STREAK_MILE[s.n] || (s.n > 30 && s.n % 7 === 0 ? 5 : 0);
+  if(bonus){
+    gmTicketsAdd(bonus);
+    toast(`Серия ${s.n} ${gmPluralDay(s.n)}! Бонус +${bonus} ${gmPluralTk(bonus)}`);
+  }
+  gmStreakRender();
+  return s;
+}
+function gmStreakRender(){
+  const el = document.getElementById('gmStreakChip');
+  if(!el) return;
+  const n = gmStreakDisplay();
+  if(n > 0){
+    el.style.display = '';
+    el.classList.toggle('lit', gmBonusClaimedToday());
+    const v = el.querySelector('.gm-streak-n');
+    if(v) v.textContent = n;
+    el.setAttribute('title', `Серия ${n} ${gmPluralDay(n)} подряд — заходи каждый день за бонусными билетами`);
+  }else{
+    el.style.display = 'none';
+  }
+}
+/* контекстная подсказка серии в блоке бесплатной крутки */
+function gmStreakNote(){
+  const n = gmStreakDisplay();
+  if(n <= 0){
+    return `<div class="gm-streak-note">${I('gm-flame')}<span>Заходи каждый день — собери серию и получай бонусные билеты</span></div>`;
+  }
+  const next = [3, 7, 14, 30].find(m => m > n);
+  const tail = next
+    ? `ещё ${next - n} ${gmPluralDay(next - n)} до бонуса +${GM_STREAK_MILE[next]} ${gmPluralTk(GM_STREAK_MILE[next])}`
+    : 'ты в ударе — серия максимальная';
+  return `<div class="gm-streak-note lit">${I('gm-flame')}<span>Серия <b>${n}</b> ${gmPluralDay(n)} · ${tail}</span></div>`;
+}
+
+/* ============================================================
    КОЛЕСО — построение, режимы, кручение, выдача приза
    ============================================================ */
 let gmMode = 'free';                 /* free | p100 | p300 | p1000 */
@@ -13093,7 +13402,7 @@ function gmRenderModes(){
     const claimed = gmBonusClaimedToday();
     action = `<button class="gm-spin ${claimed || gmSpinning ? 'off' : ''}" onclick="gmDoSpin(false)">${I('gm-gift')}${
       claimed ? `<span class="gm-spin-cd">Бесплатно через <b id="gmFreeCd2">${gmFmtCd(gmBonusLeftMs())}</b></span>` : 'Крутить бесплатно'
-    }</button>`;
+    }</button>` + gmStreakNote();
   }else{
     const st = GM_STAKES[gmMode], canTk = GM_TICKETS >= st.tk;
     action = `<div class="gm-spin-row">
@@ -13191,8 +13500,9 @@ function gmPrizeSub(p){
   return '';
 }
 function gmGrant(p, mode, payTicket){
-  if(mode === 'free'){ try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){} }
+  if(mode === 'free'){ try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){} gmStreakBump(); }
   const icon = gmPrizeIcon(p);
+  const rare = p.c >= 4; /* редчайший сектор — вау-момент «джекпот» */
   let title = '', prize = null;
   switch(p.t){
     case 'money':{
@@ -13230,8 +13540,9 @@ function gmGrant(p, mode, payTicket){
     if(net > 0) okoEarn(net, 'Игры: рулетка OKO');
   }
   gmPrizeAdd(prize);
-  gmPrizeReveal(icon, title);
-  gmConfetti(document.querySelector('.gm-wheel-card'));
+  gmPrizeReveal(icon, title, rare);
+  gmConfetti(document.querySelector('.gm-wheel-card'), rare);
+  if(rare) gmJackpot();
   gmSetResult(`<b class="gm-win">${title}</b><span>${gmPrizeSub(p)}</span>`);
   const val = gmNominal(p);
   if(val > 0) gmLbAddWin(val);
@@ -13247,18 +13558,20 @@ function gmGrant(p, mode, payTicket){
 
 /* красивая анимация выпадения приза — карточка в центре колеса */
 let gmRevHideT = 0;
-function gmPrizeReveal(icon, title){
+function gmPrizeReveal(icon, title, rare){
   const rev = document.getElementById('gmReveal');
   if(!rev) return;
+  rev.classList.toggle('rare', !!rare);
   rev.innerHTML = `
     <div class="gm-reveal-rays"></div>
     <div class="gm-reveal-card">
+      ${rare ? `<span class="gm-reveal-tag">${I('gm-cup')}Редкий приз</span>` : ''}
       <span class="gm-reveal-ic">${I(icon)}</span>
       <b>${title}</b>
     </div>`;
   rev.classList.remove('show'); void rev.offsetWidth; rev.classList.add('show');
-  /* лёгкая вибрация выигрыша на телефоне (звука нет) */
-  try{ if(navigator.vibrate) navigator.vibrate([12, 40, 22]); }catch(e){}
+  /* лёгкая вибрация выигрыша на телефоне (звука нет); редкий приз — насыщеннее */
+  try{ if(navigator.vibrate) navigator.vibrate(rare ? [18, 50, 22, 50, 40] : [12, 40, 22]); }catch(e){}
   /* показать праздник, затем плавно вернуть колесо готовым к следующей крутке */
   const tok = gmSpinToken;
   clearTimeout(gmRevHideT);
@@ -13269,19 +13582,30 @@ function gmPrizeReveal(icon, title){
   }, 3200);
 }
 
-/* лаймовое конфетти */
-function gmConfetti(host){
+/* лаймовое конфетти (rare — гуще и с золотыми искрами для джекпота) */
+function gmConfetti(host, rare){
   if(!host) return;
   const box = document.createElement('div');
-  box.className = 'gm-confetti';
-  const cols = ['#9AFF00','#c9ff70','#6fb50d','#eaffcc','#ffffff'];
+  box.className = 'gm-confetti' + (rare ? ' rare' : '');
+  const cols = rare
+    ? ['#9AFF00','#c9ff70','#eaffcc','#ffe873','#ffd23f','#ffffff']
+    : ['#9AFF00','#c9ff70','#6fb50d','#eaffcc','#ffffff'];
+  const N = rare ? 46 : 28;
   let h = '';
-  for(let i=0;i<28;i++){
-    h += `<i style="left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%cols.length]};animation-delay:${(Math.random()*0.35).toFixed(2)}s;animation-duration:${(0.9+Math.random()*0.8).toFixed(2)}s"></i>`;
+  for(let i=0;i<N;i++){
+    h += `<i style="left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%cols.length]};animation-delay:${(Math.random()*0.4).toFixed(2)}s;animation-duration:${(0.9+Math.random()*0.9).toFixed(2)}s"></i>`;
   }
   box.innerHTML = h;
   host.appendChild(box);
-  setTimeout(()=>box.remove(), 2200);
+  setTimeout(()=>box.remove(), 2400);
+}
+
+/* джекпот — редкий приз: золотая вспышка стола + доп. вибрация */
+function gmJackpot(){
+  const card = document.querySelector('#screen-games .gm-wheel-card');
+  if(!card) return;
+  card.classList.remove('gm-jackpot'); void card.offsetWidth; card.classList.add('gm-jackpot');
+  setTimeout(()=>card.classList.remove('gm-jackpot'), 1500);
 }
 
 /* ================= ТАБЛИЦА ЛИДЕРОВ НЕДЕЛИ =================
@@ -13438,6 +13762,54 @@ function gmCopyCode(code){
   done();
 }
 
+/* ============================================================
+   ТАБЛИЦА ШАНСОВ — честная механика: точный % каждого сектора по каждому пулу.
+   Прозрачность уровня «provably fair»: игрок видит вероятности до крутки.
+   ============================================================ */
+let gmOddsMode = 'free';
+function gmOddsOpen(){ gmOddsMode = (gmMode && GM_POOLS[gmMode]) ? gmMode : 'free'; openSheet('gmOdds'); gmOddsRender(); }
+function gmOddsSetMode(m){ if(GM_POOLS[m]){ gmOddsMode = m; gmOddsRender(); } }
+function gmOddsRender(){
+  const el = document.getElementById('gmOddsBody');
+  if(!el) return;
+  const order = ['free','p100','p300','p1000'];
+  const label = {free:'Бесплатно', p100:'100 ₽', p300:'300 ₽', p1000:'1000 ₽'};
+  const pool = GM_POOLS[gmOddsMode] || GM_POOLS.free;
+  const total = pool.reduce((a,p)=>a + p.w, 0);
+  const avg = Math.round(pool.reduce((a,p)=>a + p.w * gmNominal(p), 0) / total);
+  const C = gmPoolCols();
+
+  const tabs = order.map(m=>
+    `<button class="gm-odds-tab ${m === gmOddsMode ? 'on' : ''}" onclick="gmOddsSetMode('${m}')">${label[m]}</button>`
+  ).join('');
+
+  /* сортировка по убыванию шанса — самые частые сверху */
+  const rows = pool.map((p,i)=>({p, pct: p.w / total * 100})).sort((a,b)=>b.pct - a.pct);
+  const maxPct = rows[0].pct || 1;
+  const body = rows.map(({p, pct})=>{
+    const shown = pct >= 9.95 ? Math.round(pct) : Math.round(pct * 10) / 10;
+    const txt = String(shown).replace('.', ',') + '%';
+    return `<div class="gm-odds-row">
+      <span class="gm-odds-ic" style="color:${C[p.c][1]};background:${C[p.c][0]}">${I(gmPrizeIcon(p))}</span>
+      <div class="gm-odds-b">
+        <span class="gm-odds-t">${p.s}</span>
+        <span class="gm-odds-bar"><i style="width:${Math.max(4, pct / maxPct * 100).toFixed(1)}%"></i></span>
+      </div>
+      <b class="gm-odds-pct">${txt}</b>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="gm-odds-tabs">${tabs}</div>
+    <div class="gm-odds-note">${I('gm-scales')}<span>${
+      gmOddsMode === 'free'
+        ? 'Подарок дня — каждый сектор в плюс. Шансы честные и неизменные.'
+        : 'Приз гарантирован каждую крутку. Шансы фиксированы и не зависят от прошлых круток.'
+    } Средний приз ≈ <b>${fmtMoney(avg)}</b>.</span></div>
+    <div class="gm-odds-list">${body}</div>
+    <div class="gm-odds-sum">Сумма всех шансов — 100%. Итог выбирается честным случайным числом на устройстве.</div>`;
+}
+
 /* живой обратный отсчёт до полуночи (пилюля + кнопка «Бесплатно») */
 setInterval(()=>{
   if(!gmBonusClaimedToday()) return;
@@ -13477,6 +13849,7 @@ showTab = function(t){
     gmPrizesBtnRender();
     gmTicketsRender();
     gmBoostBadge();
+    gmStreakRender();
     if(!gmSpinning){
       if(gmMode === 'free' && gmBonusClaimedToday()) gmMode = 'p100';
       gmBuildWheel();
@@ -13496,6 +13869,7 @@ gmLbRender();
 gmPrizesBtnRender();
 gmTicketsRender();
 gmBoostBadge();
+gmStreakRender();
 gmUpdateBalance();
 
 /* ---------- подхват призовой скидки в оплате тарифа ----------
@@ -14290,6 +14664,9 @@ function acLoadState(){
 const acS = acLoadState();
 function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
 acSave(); // сразу персистим мигрированный формат
+/* бэкфилл «освоено»: уже стопроцентные уроки не празднуем задним числом (иначе вау-оверлей
+   всплыл бы при повторном прохождении теста/игры на давно пройденном уроке) */
+try{ Object.keys(acS.lessons).forEach(k=>{ const ls=acS.lessons[k]; if(ls && !ls.mastered && acItems(+k).every(x=>x[1])) ls.mastered=true; }); acSave(); }catch(e){}
 
 /* ---------- стрик: дни подряд в учёбе ---------- */
 function acDayStr(d){
@@ -14919,7 +15296,7 @@ function acVpSyncIcons(){
 function acMarkVideo(){
   acLS().video = true; acSave();
   toast('Видео засчитано · +20% к уроку');
-  acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox();
+  acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox(); acAfterCheckpoint();
 }
 
 /* ---------- б) СЛАЙДЫ ---------- */
@@ -14950,7 +15327,7 @@ function acSlideSync(){
   if(ls.slideMax >= acCur().slides.length-1 && !ls.slides){
     ls.slides = true; acSave();
     toast('Слайды пройдены · +20% к уроку');
-    acRenderProgressBox(); acRenderCertBox();
+    acRenderProgressBox(); acRenderCertBox(); acAfterCheckpoint();
   }
 }
 function acSlideGo(d){
@@ -14979,26 +15356,50 @@ function acRenderTestBox(){
   }
   if(acQuiz.done){
     const score = acQuiz.score, pass = score >= AC_PASS;
+    const misses = acQuiz.misses || [];
+    const review = misses.length
+      ? `<div class="ac-review">
+          <div class="ac-review-h">${I('poll')} Разбор ошибок · ${misses.length} ${acPlural(misses.length,['вопрос','вопроса','вопросов'])}</div>
+          ${misses.map(m=>{ const qq=quiz[m.q]; return `
+            <div class="ac-review-item">
+              <div class="rq"><span class="rn">${m.q+1}</span><span>${qq.q}</span></div>
+              <div class="ra bad"><span class="lb">${'АБВГ'[m.chosen]}</span><span>${qq.o[m.chosen]}</span></div>
+              <div class="ra ok"><span class="lb">${'АБВГ'[qq.a]}</span><span>${qq.o[qq.a]}</span></div>
+            </div>`; }).join('')}
+        </div>`
+      : `<div class="ac-review perfect">${I('star')} Идеально — ни одной ошибки${acQuiz.best>=3?` · лучшая серия ×${acQuiz.best}`:''}</div>`;
     box.innerHTML = `
       <div class="ac-score" id="acScoreNum" ${pass?'':'style="color:var(--danger);text-shadow:none"'}>0%</div>
       <div class="ac-score-sub">${pass
         ? `Порог ${AC_PASS}% пройден — <b>тест зачтён</b>. Верных ответов: ${acQuiz.hits} из ${quiz.length}.`
         : `<span class="fail">Не хватило до порога ${AC_PASS}%.</span> Верных: ${acQuiz.hits} из ${quiz.length}. Пролистай слайды и попробуй снова.`}</div>
-      <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>`;
+      <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>
+      ${review}`;
     const el = document.getElementById('acScoreNum');
     acCountUp(el, score, '%');
     return;
   }
   const q = quiz[acQuiz.i];
   box.innerHTML = `
-    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${quiz.length}</span><span>верных: <b>${acQuiz.hits}</b></span></div>
+    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${quiz.length}</span><span>${acQuiz.combo>=2?`<span class="ac-combo-live">${I('fire')} ×${acQuiz.combo}</span> · `:''}верных: <b>${acQuiz.hits}</b></span></div>
     <div class="progress" style="margin:0 0 4px"><i style="width:${(acQuiz.i/quiz.length*100)}%"></i></div>
     <div class="ac-q">${q.q}</div>
     ${q.o.map((o,i)=>`<button class="ac-opt" id="acOpt${i}" onclick="acAnswer(${i})"><span class="lb">${'АБВГ'[i]}</span><span>${o}</span></button>`).join('')}`;
 }
 function acQuizStart(){
-  acQuiz = {i:0, hits:0, lock:false, done:false, score:0};
+  acQuiz = {i:0, hits:0, lock:false, done:false, score:0, misses:[], combo:0, best:0};
   acRenderTestBox();
+}
+/* всплывающий индикатор серии верных ответов (гейм-фидбек, не мешает потоку теста) */
+function acComboPop(n){
+  try{
+    const box = document.getElementById('acTestBox'); if(!box) return;
+    const el = document.createElement('div'); el.className = 'ac-combo-pop';
+    el.innerHTML = I('fire') + '<span>серия ×' + n + '</span>';
+    box.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 900);
+  }catch(e){}
 }
 function acAnswer(i){
   if(!acQuiz || acQuiz.lock || acQuiz.done) return;
@@ -15006,10 +15407,12 @@ function acAnswer(i){
   const quiz = acCur().quiz;
   const q = quiz[acQuiz.i];
   const right = i === q.a;
-  if(right) acQuiz.hits++;
+  if(right){ acQuiz.hits++; acQuiz.combo++; if(acQuiz.combo > acQuiz.best) acQuiz.best = acQuiz.combo; }
+  else { acQuiz.combo = 0; acQuiz.misses.push({q:acQuiz.i, chosen:i}); }
   const ok = document.getElementById('acOpt'+q.a);
   if(ok) ok.classList.add('ok');
   if(!right){ const bad = document.getElementById('acOpt'+i); if(bad) bad.classList.add('bad'); }
+  if(right && acQuiz.combo >= 3) acComboPop(acQuiz.combo);
   setTimeout(()=>{
     acQuiz.lock = false;
     acQuiz.i++;
@@ -15023,7 +15426,7 @@ function acAnswer(i){
         toast('Тест сдан · +20% к уроку');
       }
       acSave();
-      acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+      acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
     }
     acRenderTestBox();
   }, right ? 700 : 1100);
@@ -15077,7 +15480,7 @@ function acTaskSend(){
     acTaskChecking = false;
     ls.task = true; acSave();
     toast('Практика зачтена · +20% к уроку');
-    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
   }, 4000);
 }
 
@@ -15138,7 +15541,7 @@ function acGMatch(i){
         ls.gameWrong = wrong;
         if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
         acSave();
-        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
       } else acRenderGameBox();
     }, 560);
   } else {
@@ -15405,6 +15808,76 @@ function acCertCelebrate(cb){
     requestAnimationFrame(()=>el.classList.add('go'));
     setTimeout(()=>{ try{ el.remove(); }catch(e){} if(typeof cb==='function') cb(); }, 1250);
   }catch(e){ if(typeof cb==='function') cb(); }
+}
+
+/* ================= ВАУ-МОМЕНТ: УРОК ОСВОЁН (все 5 этапов на 100%) =================
+   Отдельный праздничный оверлей — срабатывает ровно один раз, когда закрыт ПОСЛЕДНИЙ
+   из пяти чек-пойнтов урока. Не путать с выдачей сертификата (там свой burst-эффект). */
+function acAfterCheckpoint(){
+  try{
+    const ls = acLS();
+    if(acLessonPct(acL) === 100 && !ls.mastered){
+      ls.mastered = true; acSave();
+      acLessonMaster();
+    }
+  }catch(e){}
+}
+function acMasterClose(){
+  const el = document.getElementById('acMaster'); if(!el) return;
+  el.classList.remove('go');
+  setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 260);
+}
+function acMasterAct(kind, idx){
+  acMasterClose();
+  setTimeout(()=>{
+    if(kind === 'cert') acIssueCert();
+    else if(kind === 'next') acOpenLesson(idx);
+  }, 180);
+}
+function acLessonMaster(){
+  try{
+    const old = document.getElementById('acMaster'); if(old) old.remove();
+    const L = acCur(), ls = acLS(), ci = acCourseOf(acL);
+    const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+    const nextIdx = acL + 1;
+    /* умный CTA: сначала — забрать сертификат, иначе — следующий урок, иначе просто закрыть */
+    let cta = '';
+    if(!ls.cert && acCertEligible())
+      cta = `<button class="btn ac-master-cta" onclick="acMasterAct('cert')">${I('star')} Получить сертификат</button>`;
+    else if(!lastInCourse && acUnlocked(nextIdx))
+      cta = `<button class="btn ac-master-cta" onclick="acMasterAct('next',${nextIdx})">${I('circle-play')} Следующий урок</button>`;
+    const pills = ['Видео','Слайды','Тест','Практика','Игра']
+      .map((t,i)=>`<span class="ac-master-pill" style="--pd:${(i*0.06).toFixed(2)}s">${I('check2')}${t}</span>`).join('');
+    let rays = ''; for(let i=0;i<12;i++) rays += `<i style="--a:${(i*360/12)}deg;--d:${(i%3)*0.05}s"></i>`;
+    let conf = '';
+    for(let i=0;i<20;i++){
+      const x=(Math.random()*100).toFixed(1), dl=(Math.random()*0.4).toFixed(2),
+            rot=(Math.random()*360).toFixed(0), sx=(Math.random()*0.7+0.6).toFixed(2);
+      conf += `<b style="left:${x}%;--dl:${dl}s;--rot:${rot}deg;--sx:${sx}"></b>`;
+    }
+    const el = document.createElement('div');
+    el.id = 'acMaster'; el.className = 'ac-master';
+    el.innerHTML = `
+      <div class="ac-master-conf">${conf}</div>
+      <div class="ac-master-card" onclick="event.stopPropagation()">
+        <div class="ac-master-badge">
+          <span class="ac-master-rays">${rays}</span>
+          <span class="ac-master-seal">${I('crown')}</span>
+        </div>
+        <div class="ac-master-kick">Урок пройден на 100%</div>
+        <h3 class="ac-master-title">Урок освоен</h3>
+        <p class="ac-master-sub">«${esc(L.title)}» — все пять этапов закрыты</p>
+        <div class="ac-master-pills">${pills}</div>
+        <div class="ac-master-stat">${I('poll')} Тест — <b>${ls.testScore||0}%</b>${(ls.cert)?` · сертификат ${esc(ls.cert.no)}`:''}</div>
+        <div class="ac-master-actions">
+          ${cta}
+          <button class="btn ${cta?'ghost':''} ac-master-dismiss" onclick="acMasterClose()">${cta?'Позже':'Отлично'}</button>
+        </div>
+      </div>`;
+    el.addEventListener('click', acMasterClose);   // тап по фону — закрыть
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+  }catch(e){}
 }
 
 /* --- отрисовка canvas 1600×1131 --- */
@@ -21996,6 +22469,79 @@ openListing = function(id){
   }catch(e){}
 };
 
+/* ================= ДИСКРЕТНАЯ СОРТИРОВКА: видимые чипы вместо слепого циклера =================
+   База показывает одну кнопку cycleSort — тап вслепую меняет режим по кругу, режимов не видно.
+   Заменяем на строку чипов со всеми режимами MK_SORTS: активный подсвечен, тап ставит режим
+   напрямую. Базовую кнопку прячем (не удаляем — она пересоздаётся в innerHTML базой). */
+const MP_SORT_IC = {pop:'fire', cheap:'chev', exp:'chev', rating:'star', new:'bolt'};
+function mpSetSort(k){
+  if(typeof mkSort==='undefined' || mkSort===k) return;
+  mkSort = k;
+  renderMarketList(document.getElementById('marketRoot'), typeof mkView!=='undefined' && mkView==='fav');
+}
+function mpInjectSortBar(){
+  const root = document.getElementById('marketRoot');
+  if(!root || typeof MK_SORTS==='undefined') return;
+  const bar = root.querySelector('.mk-toolbar');
+  if(!bar) return;
+  const cyc = bar.querySelector('.mk-tool[onclick*="cycleSort"]'); // слепой циклер базы — прячем
+  if(cyc) cyc.style.display = 'none';
+  if(document.getElementById('mpSortBar')) return;
+  const w = document.createElement('div');
+  w.id = 'mpSortBar'; w.className = 'mp-sortbar';
+  w.innerHTML = `<div class="mp-sort-row">${MK_SORTS.map(s=>{
+    const dir = s[0]==='cheap' ? ' dn' : s[0]==='exp' ? ' up' : '';
+    return `<button class="mp-sc${mkSort===s[0]?' on':''}${dir}" onclick="mpSetSort('${s[0]}')">${I(MP_SORT_IC[s[0]]||'poll')}${s[1]}</button>`;
+  }).join('')}</div>`;
+  bar.insertAdjacentElement('afterend', w); // сразу под тулбаром (перед mpSaveBar, если он есть)
+}
+if(typeof renderMarketList==='function'){
+  const _mpRMLsort = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLsort.apply(this, arguments);
+    try{ mpInjectSortBar(); }catch(e){}
+  };
+}
+
+/* ================= ПОХОЖИЕ ОБЪЯВЛЕНИЯ (кросс-продажа на детальной карточке) =================
+   Классический маркетплейс-приём: под объявлением — лента похожих. Ранжируем по близости
+   (та же категория -> тот же тип -> продвижение/рейтинг/просмотры) и расширяем по всему
+   каталогу, чтобы лента была не пустой даже когда в категории мало предложений. */
+function mpSimilar(l){
+  const rank = p => (typeof promoRank==='function' ? promoRank(p) : 0);
+  const arr = LISTINGS.filter(x=>!x.my && x.st==='act' && x.id!==l.id);
+  arr.sort((a,b)=>
+    ((b.cat===l.cat)-(a.cat===l.cat)) ||
+    ((b.type===l.type)-(a.type===l.type)) ||
+    (rank(b.promo)-rank(a.promo)) ||
+    ((b.r||0)-(a.r||0)) ||
+    ((b.views||0)-(a.views||0)));
+  return arr.slice(0,8);
+}
+function mpSimilarBlock(l){
+  const sim = mpSimilar(l);
+  if(sim.length<2) return '';
+  return `<div class="mp-sim" id="mpSim">
+    <div class="mp-strip-h">${I('grid')} Похожие объявления</div>
+    <div class="mp-recent-row">${sim.map(s=>`
+      <button class="mp-rc" onclick="openListing(${s.id})">
+        <span class="mp-rc-ph">${mpRecentThumb(s)}${s.r?`<span class="mp-rc-rate">${I('star')}${s.r.toFixed(1)}</span>`:''}</span>
+        <span class="mp-rc-p">${esc(s.pt)}</span>
+        <span class="mp-rc-t">${esc(s.t)}</span>
+      </button>`).join('')}</div>
+  </div>`;
+}
+const _mpOpenListingSim = openListing;
+openListing = function(id){
+  _mpOpenListingSim.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v || l.my || document.getElementById('mpSim')) return;
+    v.insertAdjacentHTML('beforeend', mpSimilarBlock(l));
+  }catch(e){}
+};
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();
 
@@ -23071,6 +23617,8 @@ function faReelsTogglePlay(){
 /* тап по центру: одиночный — play/pause, двойной — лайк с сердцем (Instagram) */
 function faReelsTapZone(ev){
   try{
+    /* если это был press-and-hold (пауза-подсмотр) — не переключаем play по клику-хвосту */
+    if(FAR.didHold){ FAR.didHold = false; return; }
     const now = Date.now();
     const x = ev && (ev.clientX != null ? ev.clientX : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientX : 0));
     const y = ev && (ev.clientY != null ? ev.clientY : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientY : 0));
@@ -23338,6 +23886,149 @@ try{
     };
   }
 }catch(e){}
+
+/* ============================================================================
+   9. «НОВЫЕ ПОСТЫ» — плавающая пилюля обновления ленты (Instagram/Twitter)
+   Пока пользователь листает рекомендации вниз, сверху всплывает лаймовая пилюля
+   «N новых постов ↑». Тап — пересобрать подборку (faRefresh уже уводит наверх).
+   Живая, «дышащая» лента: сигнал, что контент обновляется в реальном времени.
+   ПЕРФ: один лёгкий интервал + rAF-throttle на скролл; работает ТОЛЬКО на вкладке
+   рекомендаций активного экрана ленты. i18n — через ST_DICT (число и слово — разными
+   текст-узлами, чтобы авто-переводчик (MutationObserver) перевёл слово в EN-режиме). */
+(function faNewPostsPill(){
+  try{
+    /* стрелка вверх для пилюли — в общие defs */
+    const defs = document.querySelector('svg defs');
+    if(defs && !document.getElementById('i-fa-up')){
+      const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      s.setAttribute('id','i-fa-up'); s.setAttribute('viewBox','0 0 100 100');
+      s.innerHTML = '<polyline points="26 48 50 24 74 48" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><line x1="50" y1="27" x2="50" y2="78" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>';
+      defs.appendChild(s);
+    }
+    if(typeof ST_DICT !== 'undefined'){
+      const add = {'новый пост':'new post','новых поста':'new posts','новых постов':'new posts'};
+      for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
+    }
+
+    FA.newPosts = 0;
+    let pill = null;
+
+    function ensure(){
+      if(pill) return pill;
+      pill = document.createElement('button');
+      pill.type = 'button'; pill.className = 'fa-newpill';
+      pill.setAttribute('aria-live','polite');
+      pill.setAttribute('aria-label','Показать новые посты');
+      pill.addEventListener('click', onTap);
+      document.body.appendChild(pill);
+      return pill;
+    }
+    function word(n){
+      return (typeof faPlural === 'function')
+        ? faPlural(n, 'новый пост', 'новых поста', 'новых постов')
+        : 'новых постов';
+    }
+    function show(){
+      const p = ensure();
+      /* число и слово — отдельными узлами: число не трогаем, слово переведётся авто-переводчиком */
+      p.innerHTML = `<svg class="i fa-np-ic"><use href="#i-fa-up"/></svg><span class="fa-np-n">${FA.newPosts}</span> <span>${word(FA.newPosts)}</span>`;
+      requestAnimationFrame(()=>{ try{ p.classList.add('show'); }catch(e){} });
+    }
+    function hide(){ if(pill) pill.classList.remove('show'); }
+    function onTap(){
+      hide(); FA.newPosts = 0;
+      if(typeof faRefresh === 'function') faRefresh();  /* пересобирает подборку + уводит наверх */
+    }
+    function feedActive(){
+      const f = document.getElementById('screen-feed');
+      const kindOk = (typeof curFeedKind === 'undefined') || curFeedKind === 'rec';
+      return !!(f && f.classList.contains('active') && kindOk);
+    }
+
+    /* один негромкий интервал: копит «новые» посты, пока пользователь ушёл вниз по ленте */
+    setInterval(function(){
+      try{
+        const m = document.querySelector('main');
+        if(!feedActive() || FA.loading){ hide(); return; }
+        if(!m || m.scrollTop < 520){ if(FA.newPosts === 0) hide(); return; }
+        FA.newPosts = Math.min(FA.newPosts + 1 + Math.floor(Math.random()*2), 24);
+        show();
+      }catch(e){}
+    }, 13000);
+
+    /* вернулся к самому верху — «новых» больше нет, прячем */
+    const m = document.querySelector('main');
+    if(m){
+      let raf = 0;
+      m.addEventListener('scroll', function(){
+        if(raf) return;
+        raf = requestAnimationFrame(function(){
+          raf = 0;
+          try{ if(m.scrollTop < 120){ FA.newPosts = 0; hide(); } }catch(e){}
+        });
+      }, {passive:true});
+    }
+
+    /* явное «Обновить подборку» тоже гасит счётчик и пилюлю */
+    if(typeof faRefresh === 'function'){
+      const _faPrevRefresh = faRefresh;
+      faRefresh = function(){ FA.newPosts = 0; hide(); return _faPrevRefresh.apply(this, arguments); };
+    }
+  }catch(e){}
+})();
+
+/* ============================================================================
+   10. REELS: ЗАЖАТЬ И ДЕРЖАТЬ = ПАУЗА-ПОДСМОТР (TikTok/Instagram press-and-hold)
+   Зажал палец/курсор на видео-поле → прогресс и бренд-движение замирают, хром плавно
+   уходит (чистый кадр). Отпустил → всё возвращается. Быстрый тап (< порога) НЕ триггерит
+   удержание — обычные одиночный/двойной тап работают как прежде. Движение отменяет
+   удержание, чтобы не мешать свайпу листания. Всё в try/catch, additive, без сети.
+   ============================================================================ */
+(function faReelsHold(){
+  try{
+    const wrap = document.getElementById('faReels'); if(!wrap) return;
+    let timer = 0, sx = 0, sy = 0, armed = false;
+    const HOLD = 250, MOVE = 12;
+
+    function commentsOpen(){
+      const s = document.getElementById('sheet-comments');
+      return !!(s && s.classList.contains('open'));
+    }
+    function start(x, y, target){
+      if(!FAR.open || commentsOpen()) return;
+      if(!target || !target.closest || !target.closest('.far-tap')) return;  /* только центральное поле */
+      sx = x; sy = y; armed = true;
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(function(){
+        try{
+          if(!armed || !FAR.open) return;
+          FAR.didHold = true;                 /* хвостовой click от faReelsTapZone гасится */
+          wrap.classList.add('far-hold');
+          if(navigator.vibrate) try{ navigator.vibrate(8); }catch(e){}
+        }catch(e){}
+      }, HOLD);
+    }
+    function move(x, y){
+      if(!armed) return;
+      if(Math.abs(x - sx) > MOVE || Math.abs(y - sy) > MOVE) cancel();
+    }
+    function cancel(){
+      armed = false;
+      if(timer){ clearTimeout(timer); timer = 0; }
+      try{ if(wrap.classList.contains('far-hold')) wrap.classList.remove('far-hold'); }catch(e){}
+    }
+
+    if(window.PointerEvent){
+      wrap.addEventListener('pointerdown', e=>{ try{ if(e.pointerType === 'mouse' && e.button !== 0) return; start(e.clientX, e.clientY, e.target); }catch(err){} }, {passive:true});
+      wrap.addEventListener('pointermove', e=>{ try{ move(e.clientX, e.clientY); }catch(err){} }, {passive:true});
+      ['pointerup','pointercancel','pointerleave'].forEach(t=> wrap.addEventListener(t, cancel, {passive:true}));
+    }else{
+      wrap.addEventListener('touchstart', e=>{ try{ const t = e.touches && e.touches[0]; if(t) start(t.clientX, t.clientY, e.target); }catch(err){} }, {passive:true});
+      wrap.addEventListener('touchmove', e=>{ try{ const t = e.touches && e.touches[0]; if(t) move(t.clientX, t.clientY); }catch(err){} }, {passive:true});
+      ['touchend','touchcancel'].forEach(t=> wrap.addEventListener(t, cancel, {passive:true}));
+    }
+  }catch(e){}
+})();
 
 /* ===== module: demo-content ===== */
 /* ================= DEMO-CONTENT: живое наполнение OKO ================= */
@@ -28337,6 +29028,13 @@ var PW_ASSET = {
     BUSINESS:'Конвейер контента и рекламный кабинет PRO.',
     MAX:'Контент-завод 30 видео/мес, команда и максимум системы.'
   };
+  /* что заменяет тариф (внешний рыночный якорь цены — честное «обычно от X/мес») */
+  var PW_REPLACES = {
+    START:    {who:'сервисы автопостинга и планировщик', cost:6900},
+    PRO:      {who:'SMM-специалиста и ИИ-аналитику', cost:60000},
+    BUSINESS: {who:'команду: SMM, монтажёр, таргетолог', cost:150000},
+    MAX:      {who:'продакшн-команду и агентство', cost:280000}
+  };
   /* мини-инфографика в попапе: 3 «кольца» [значение-в-центре, подпись, заливка%] */
   var PW_INFO = {
     START:[['+46%','к охватам',46],['15','проверок',80],['2','соцсети',55]],
@@ -28419,7 +29117,7 @@ var PW_ASSET = {
           '<div class="pw-price"><div><div class="pw-p-l">Тариф '+tier+'</div>'+
             priceLine+'</div>'+
             '<div class="pw-p-note">'+priceNote+'</div></div>'+
-          '<button class="btn pw-cta">'+I('crown')+' Оформить '+tier+'</button>'+
+          '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+tier+'</button>'+
           '<button class="btn ghost pw-later">Может позже</button>'+
           '<div class="pw-guarant">'+I('check')+' Отмена в любой момент · безопасная оплата</div>'+
         '</div>'+
@@ -28796,6 +29494,21 @@ var PW_ASSET = {
     '</div>';
     var countHtml = (payState.period===12) ? pwCountHtml() : '';
 
+    /* ---- ценностный якорь: сколько стоило бы то же самое «вручную» ---- */
+    var rep = PW_REPLACES[sel] || PW_REPLACES.PRO;
+    var months = Math.max(1, per[0]);
+    var perMonthEq = Math.max(1, Math.round(total/months));
+    var timesX = Math.max(2, Math.round(rep.cost/perMonthEq));
+    var anchorHtml =
+      '<div class="pw-anchor">'+
+        '<div class="pw-anchor-l">'+
+          '<div class="pw-anchor-k">'+I('users')+' Заменяет <b>'+esc(rep.who)+'</b></div>'+
+          '<div class="pw-anchor-cmp"><s>обычно от '+pwRub(rep.cost)+'/мес</s>'+
+            'с OKO — <b>'+pwRub(perMonthEq)+'/мес</b></div>'+
+        '</div>'+
+        '<div class="pw-anchor-x"><b>×'+timesX+'</b><i>дешевле</i></div>'+
+      '</div>';
+
     var live = pwLiveNumbers();
     var liveHtml = '<div class="pw-live">'+live.map(function(c){
       return '<div class="pw-live-cell"><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div></div>';
@@ -28849,6 +29562,7 @@ var PW_ASSET = {
       '<p style="font-weight:700;font-size:13px;margin:2px 0 8px">Период оплаты</p>'+
       '<div class="pay-periods">'+ periodsHtml +'</div>'+
       countHtml +
+      anchorHtml +
       '<div class="pay-total"><div><div class="dim" style="font-size:12px">К оплате · '+sel+'</div>'+
         '<div class="pay-sum">'+pwRub(total)+'</div></div>'+
         (effDisc>0?'<div class="pay-old">'+pwRub(full)+'</div>':'')+'</div>'+
@@ -28858,7 +29572,7 @@ var PW_ASSET = {
         return '<button class="pay-m'+(payState.method===pm[0]?' on':'')+'" onclick="payState.method=\''+pm[0]+'\';renderPay()">'+I(pm[2])+'<span>'+pm[1]+'</span></button>';
       }).join('') +'</div>'+
       '<div style="height:16px"></div>'+
-      '<button class="btn" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
+      '<button class="btn pw-shine" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
       '<div class="pw-guar-band">'+I('check')+' Отключишь в 1 клик · спишется ровно как показано · данные остаются с тобой</div>'+
       pwFaqHtml() +
       '<p class="dim" style="font-size:11px;text-align:center;margin-top:12px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>';
@@ -29122,7 +29836,10 @@ function chNormalize(c){
   if(c.privFwd==null)     c.privFwd     = true;                               // разрешить пересылку/сохранение постов
   if(c.privHistory==null) c.privHistory = 'visible';                          // история для новых: visible | hidden
   if(c.archived==null)    c.archived    = false;                             // канал в архиве
+  if(c.pinned===undefined) c.pinned     = null;                              // id закреплённого поста (закреп)
   if(!Array.isArray(c.invites)) c.invites = [];                              // пригласительные ссылки
+  // гранулярные права администраторов (как в Telegram): доп-миграция старых записей
+  if(Array.isArray(c.admins)) c.admins.forEach(a=>{ if(a && !a.rights) a.rights = chDefaultRights(); });
   // legacy-поле type держим синхронным — вдруг читает внешний код
   c.type = c.kind==='course' ? 'course' : ((c.price||0)>0 ? 'paid' : 'free');
   return c;
@@ -29216,6 +29933,26 @@ function chPrivSubsLabel(c){ return c.privSubs==='all'?'Все':c.privSubs==='su
 function chPrivHistLabel(c){ return c.privHistory==='hidden'?'Скрыта':'Видна'; }
 /* публичная ссылка канала — реальный домен OKO в стиле @id */
 function chPublicLink(c){ return 'okoteam.top/@'+chNick(c); }
+
+/* ---- закрепы (pinned) ---- */
+/* id закреплённого поста, если он всё ещё существует (самоочистка от «висячих» ссылок) */
+function chPinnedId(c){ if(!c||!c.pinned) return null; return (c.posts||[]).some(p=>chPostId(p)===c.pinned) ? c.pinned : null; }
+
+/* ---- гранулярные права администратора (как в Telegram) ---- */
+const CH_RIGHTS = [
+  ['post','megaphone','Публикация постов','Создавать и отправлять записи в канал'],
+  ['edit','edit','Редактирование','Изменять и удалять любые посты'],
+  ['pin','pin','Закреплять сообщения','Управлять закреплённой записью'],
+  ['ban','lock','Блокировка участников','Банить и разблокировать людей'],
+  ['invite','forward','Приглашения','Создавать пригласительные ссылки'],
+  ['addAdmins','crown','Назначение админов','Добавлять новых администраторов']
+];
+function chDefaultRights(){ return {post:true, edit:true, pin:true, ban:true, invite:true, addAdmins:false}; }
+function chRightsSummary(a){
+  const r=(a&&a.rights)||{}, keys=CH_RIGHTS.map(x=>x[0]);
+  const on=keys.filter(k=>r[k]).length;
+  return on>=keys.length ? 'Полные права' : (on===0 ? 'Права ограничены' : on+' из '+keys.length+' прав');
+}
 
 /* быстрый тумблер булевого поля канала — переключаем класс на месте, без chRender */
 window.chTgl = function(id, key, el){
@@ -29397,6 +30134,7 @@ function chRender(){
     case 'mType':   out = chPageMType(top.arg); break;
     case 'mSubs':   out = chPageMSubs(top.arg); break;
     case 'mAdmins': out = chPageMAdmins(top.arg); break;
+    case 'mAdminRights': out = chPageMAdminRights(top.arg); break;
     case 'mBlack':  out = chPageMBlack(top.arg); break;
     case 'mStats':  out = chPageMStats(top.arg); break;
     case 'mAppear': out = chPageMAppear(top.arg); break;
@@ -29705,10 +30443,15 @@ function chPageChannel(id){
   } else {
     chEnsurePostIds(c);
     if(!mine) chCountViews(c);   // просмотры тикают, когда пост читает подписчик (раз за сессию)
+    // закреплённый пост — отдельным блоком сверху (как в Telegram), без дублирования в общей ленте
+    const pinId = chPinnedId(c);
+    const pinPost = pinId ? (c.posts||[]).find(p=>chPostId(p)===pinId) : null;
+    if(pinPost) html += chPostHtml(c, pinPost, -1, true);
     html += `<div class="ch-sec-h">${chI('feed')} ${c.kind==='club'?'Лента клуба':'Посты'}</div>`;
-    const posts = (c.posts&&c.posts.length) ? c.posts.map((p,i)=>chPostHtml(c,p,i)).join('')
-      : `<div class="ch-empty">Постов пока нет</div>`;
-    html += (c.chatBg!=null)
+    const rest = (c.posts||[]).filter(p=>chPostId(p)!==pinId);
+    const posts = rest.length ? rest.map((p,i)=>chPostHtml(c,p,i)).join('')
+      : (pinPost ? '' : `<div class="ch-empty">Постов пока нет</div>`);
+    html += (c.chatBg!=null && posts)
       ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
       : posts;
   }
@@ -29723,13 +30466,15 @@ function chCountViews(c){
   (c.posts||[]).forEach(p=>{ const pid=chPostId(p); if(pid && !chViewed[pid]){ chViewed[pid]=true; p.views=(p.views||0)+1; ch=true; } });
   if(ch) chSave();
 }
-function chPostHtml(c,p,i){
+function chPostHtml(c,p,i,pinned){
   const pid = chPostId(p);
+  const mine = chIsMine(c);
   const liked = !!CH.likes[pid];
   const likes = (p.likes||0)+(liked?1:0);
   const cmts = CH.cmt[pid]||[];
   const open = !!chOpenCmt[pid];
-  return `<div class="ch-post">
+  return `<div class="ch-post${pinned?' pinned':''}">
+    ${pinned?`<div class="ch-pin-lab">${chI('pin')}<span>Закреплённое</span>${mine?`<button class="ch-pin-off" onclick="chUnpin('${c.id}')">Открепить</button>`:''}</div>`:''}
     <div class="ch-post-h">${chAvInner(c,'mini')}<b class="ch-ph-name">${chEsc(c.name)}</b><small>${chEsc(p.when||'')}</small></div>
     <div class="ch-post-txt">${chEsc(p.txt)}</div>
     ${p.img?`<div class="ch-post-media photo" style="background-image:url(${p.img})"></div>`
@@ -29738,11 +30483,23 @@ function chPostHtml(c,p,i){
     <div class="ch-post-acts">
       ${c.reactions?`<button class="${liked?'on':''}" onclick="chLike('${c.id}','${pid}')" aria-label="Нравится">${chI('heart')}${likes}</button>`:''}
       ${c.discussions?`<button class="${open?'on':''}" onclick="chToggleCmt('${c.id}','${pid}')" aria-label="Комментарии">${chI('comment')}${cmts.length||'Обсудить'}</button>`:''}
+      ${mine&&!pinned?`<button class="ch-pin-btn" onclick="chPin('${c.id}','${pid}')" aria-label="Закрепить">${chI('pin')}<span>Закрепить</span></button>`:''}
       <span class="ch-views">${chI('eye')}${chFmtN(p.views||0)}</span>
     </div>
     ${c.discussions&&open?chCommentsHtml(c,pid,cmts):''}
   </div>`;
 }
+/* закрепить / открепить пост (доступно владельцу) */
+window.chPin = function(id,pid){
+  const c = chChannel(id); if(!c || !chIsMine(c)) return;
+  c.pinned = pid; chSave(); chRender();
+  toast('Пост закреплён вверху канала');
+};
+window.chUnpin = function(id){
+  const c = chChannel(id); if(!c) return;
+  c.pinned = null; chSave(); chRender();
+  toast('Пост откреплён');
+};
 /* блок комментариев под постом (живой: пишем, лайкаем, сохраняется) */
 function chCommentsHtml(c,pid,cmts){
   const rows = cmts.length ? cmts.map((m,k)=>{
@@ -30237,18 +30994,18 @@ function chPageMAdmins(id){
   const c = chChannel(id); if(!c) return {title:'Админы', html:''};
   const a = c.admins||[];
   const html = `
-    <div class="ch-owner-note" style="margin-bottom:12px">Администраторы могут публиковать посты, банить участников и модерировать обсуждения. Владелец — ты.</div>
+    <div class="ch-owner-note" style="margin-bottom:12px">Назначай администраторов и тонко настраивай их права — как в Telegram. Нажми на админа, чтобы открыть права. Владелец (ты) всегда имеет полный доступ.</div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:4px 13px">
       <div class="ch-member">
         <div class="ch-av mini" style="${chAvGradStyle(c.bg||0)}">${chEsc((PROFILE.name[0]||'O').toUpperCase())}</div>
         <div class="ch-m-b"><b>${chEsc(PROFILE.name)}</b><small>@${chEsc(PROFILE.nick)} · создатель</small></div>
         <span class="ch-m-role owner">владелец</span>
       </div>
-      ${a.map(p=>`
-      <div class="ch-member">
+      ${a.map((p,idx)=>`
+      <div class="ch-member ch-member-tap" onclick="chGo('mAdminRights',{c:'${id}',i:${idx}})">
         <div class="ch-av mini" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
-        <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>@${chEsc(p.nick)} · администратор</small></div>
-        <button class="ch-m-act" title="Разжаловать" onclick="chRemoveAdmin('${id}','${chEsc(p.nick)}')">${chI('trash')}</button>
+        <div class="ch-m-b"><b>${chEsc(p.name)}</b><small>${chRightsSummary(p)} · @${chEsc(p.nick)}</small></div>
+        <span class="ch-m-chev">${chI('chev')}</span>
       </div>`).join('')}
     </div>
     <button class="ch-add-btn" onclick="chAddAdmin('${id}')">${chI('plus')} Назначить администратора</button>`;
@@ -30264,8 +31021,46 @@ window.chAddAdmin = function(id){
   const cand = (c.members||[]).filter(p=>p.name!==PROFILE.name && !(c.admins||[]).some(a=>a.nick===p.nick));
   if(!cand.length){ toast('Нет участников для назначения'); return; }
   const p = cand[0];
-  c.admins = c.admins||[]; c.admins.push({name:p.name, nick:p.nick}); chSave(); chRender();
+  c.admins = c.admins||[]; c.admins.push({name:p.name, nick:p.nick, rights:chDefaultRights()}); chSave();
   toast(p.name+' назначен администратором');
+  chGo('mAdminRights',{c:id, i:c.admins.length-1});   // сразу открываем настройку прав (как в Telegram)
+};
+
+/* ---------- Права конкретного администратора ---------- */
+function chPageMAdminRights(arg){
+  const c = chChannel(arg&&arg.c); if(!c || !chIsMine(c)) return {title:'Права', html:'<div class="ch-empty">Нет доступа</div>'};
+  const p = (c.admins||[])[arg&&arg.i]; if(!p) return {title:'Права', html:'<div class="ch-empty">Администратор не найден</div>'};
+  if(!p.rights) p.rights = chDefaultRights();
+  let html = `<div class="ch-manage-hub" style="text-align:center">
+      <div class="ch-av big" style="${chAvSeedStyle(p.nick||p.name)}">${chEsc((p.name[0]||'A').toUpperCase())}</div>
+      <div style="font:800 18px/1.1 var(--font-display);margin-top:10px">${chEsc(p.name)}</div>
+      <div style="color:var(--dim);font-size:12px;margin-top:4px">@${chEsc(p.nick)} · администратор</div>
+    </div>`;
+  html += `<div class="ch-sec-h">${chI('crown')} Права администратора</div>`;
+  html += chList(CH_RIGHTS.map(([k,ic,t,d])=>chTglRow(ic,t,d,!!p.rights[k],`chToggleRight('${arg.c}',${arg.i},'${k}',this)`)));
+  html += chLF('Точная настройка прав — как в Telegram. Отключённые права недоступны этому администратору; остальные модераторы не затрагиваются.');
+  html += `<div class="ch-sec-h">${chI('flag')} Управление</div>`;
+  html += chList([ chNavRow('trash','Разжаловать администратора','Снять все права', `chRemoveAdminAt('${arg.c}',${arg.i})`, {danger:true, noChev:true}) ]);
+  html += `<div style="height:10px"></div>`;
+  return {title:'Права администратора', html};
+}
+/* переключить одно право (surgical, без полного ре-рендера — как chTgl) */
+window.chToggleRight = function(id,i,key,el){
+  const c = chChannel(id); if(!c) return;
+  const p = (c.admins||[])[i]; if(!p) return;
+  p.rights = p.rights || chDefaultRights();
+  p.rights[key] = !p.rights[key]; chSave();
+  if(el){ const sw = el.querySelector('.switch'); if(sw) sw.classList.toggle('on', !!p.rights[key]); }
+  toast(p.rights[key]?'Право выдано':'Право отозвано');
+};
+window.chRemoveAdminAt = function(id,i){
+  const c = chChannel(id); if(!c) return;
+  const p = (c.admins||[])[i]; if(!p) return;
+  const act = ()=>{ c.admins.splice(i,1); chSave(); if(chNav.length>1) chNav.pop(); chRender(); toast('Администратор разжалован'); };
+  if(typeof showPopup==='function') showPopup({ico:'trash', title:'Разжаловать администратора?',
+    body:`«${chEsc(p.name)}» потеряет все права администратора канала.`,
+    actions:[{label:'Разжаловать', onclick:act},{label:'Отмена', ghost:true}]});
+  else act();
 };
 
 /* ---------- Чёрный список ---------- */

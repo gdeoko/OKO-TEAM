@@ -1438,5 +1438,78 @@ openListing = function(id){
   }catch(e){}
 };
 
+/* ================= ДИСКРЕТНАЯ СОРТИРОВКА: видимые чипы вместо слепого циклера =================
+   База показывает одну кнопку cycleSort — тап вслепую меняет режим по кругу, режимов не видно.
+   Заменяем на строку чипов со всеми режимами MK_SORTS: активный подсвечен, тап ставит режим
+   напрямую. Базовую кнопку прячем (не удаляем — она пересоздаётся в innerHTML базой). */
+const MP_SORT_IC = {pop:'fire', cheap:'chev', exp:'chev', rating:'star', new:'bolt'};
+function mpSetSort(k){
+  if(typeof mkSort==='undefined' || mkSort===k) return;
+  mkSort = k;
+  renderMarketList(document.getElementById('marketRoot'), typeof mkView!=='undefined' && mkView==='fav');
+}
+function mpInjectSortBar(){
+  const root = document.getElementById('marketRoot');
+  if(!root || typeof MK_SORTS==='undefined') return;
+  const bar = root.querySelector('.mk-toolbar');
+  if(!bar) return;
+  const cyc = bar.querySelector('.mk-tool[onclick*="cycleSort"]'); // слепой циклер базы — прячем
+  if(cyc) cyc.style.display = 'none';
+  if(document.getElementById('mpSortBar')) return;
+  const w = document.createElement('div');
+  w.id = 'mpSortBar'; w.className = 'mp-sortbar';
+  w.innerHTML = `<div class="mp-sort-row">${MK_SORTS.map(s=>{
+    const dir = s[0]==='cheap' ? ' dn' : s[0]==='exp' ? ' up' : '';
+    return `<button class="mp-sc${mkSort===s[0]?' on':''}${dir}" onclick="mpSetSort('${s[0]}')">${I(MP_SORT_IC[s[0]]||'poll')}${s[1]}</button>`;
+  }).join('')}</div>`;
+  bar.insertAdjacentElement('afterend', w); // сразу под тулбаром (перед mpSaveBar, если он есть)
+}
+if(typeof renderMarketList==='function'){
+  const _mpRMLsort = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLsort.apply(this, arguments);
+    try{ mpInjectSortBar(); }catch(e){}
+  };
+}
+
+/* ================= ПОХОЖИЕ ОБЪЯВЛЕНИЯ (кросс-продажа на детальной карточке) =================
+   Классический маркетплейс-приём: под объявлением — лента похожих. Ранжируем по близости
+   (та же категория -> тот же тип -> продвижение/рейтинг/просмотры) и расширяем по всему
+   каталогу, чтобы лента была не пустой даже когда в категории мало предложений. */
+function mpSimilar(l){
+  const rank = p => (typeof promoRank==='function' ? promoRank(p) : 0);
+  const arr = LISTINGS.filter(x=>!x.my && x.st==='act' && x.id!==l.id);
+  arr.sort((a,b)=>
+    ((b.cat===l.cat)-(a.cat===l.cat)) ||
+    ((b.type===l.type)-(a.type===l.type)) ||
+    (rank(b.promo)-rank(a.promo)) ||
+    ((b.r||0)-(a.r||0)) ||
+    ((b.views||0)-(a.views||0)));
+  return arr.slice(0,8);
+}
+function mpSimilarBlock(l){
+  const sim = mpSimilar(l);
+  if(sim.length<2) return '';
+  return `<div class="mp-sim" id="mpSim">
+    <div class="mp-strip-h">${I('grid')} Похожие объявления</div>
+    <div class="mp-recent-row">${sim.map(s=>`
+      <button class="mp-rc" onclick="openListing(${s.id})">
+        <span class="mp-rc-ph">${mpRecentThumb(s)}${s.r?`<span class="mp-rc-rate">${I('star')}${s.r.toFixed(1)}</span>`:''}</span>
+        <span class="mp-rc-p">${esc(s.pt)}</span>
+        <span class="mp-rc-t">${esc(s.t)}</span>
+      </button>`).join('')}</div>
+  </div>`;
+}
+const _mpOpenListingSim = openListing;
+openListing = function(id){
+  _mpOpenListingSim.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v || l.my || document.getElementById('mpSim')) return;
+    v.insertAdjacentHTML('beforeend', mpSimilarBlock(l));
+  }catch(e){}
+};
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();

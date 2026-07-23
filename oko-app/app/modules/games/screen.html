@@ -8,6 +8,7 @@
         <div class="gm-sub"><small>Крути колесо — каждая крутка даёт приз</small></div>
       </div>
       <div class="gm-head-chips">
+        <button class="gm-streak-chip" id="gmStreakChip" style="display:none" onclick="gmSelectMode('free')"><svg class="i"><use href="#i-gm-flame"/></svg><span class="gm-streak-n">0</span></button>
         <button class="gm-tk-chip" onclick="gmPrizesOpen()" title="Билеты — валюта круток. Открыть «Мои призы»"><svg class="i"><use href="#i-gm-ticket"/></svg><span class="gm-tk-val">0</span></button>
         <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
       </div>
@@ -37,7 +38,10 @@
 
     <div class="card gm-resp">
       <svg class="i"><use href="#i-lock"/></svg>
-      <p><b>Честная механика.</b> Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.</p>
+      <div class="gm-resp-b">
+        <p><b>Честная механика.</b> Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.</p>
+        <button class="gm-odds-open" onclick="gmOddsOpen()"><svg class="i"><use href="#i-gm-scales"/></svg>Таблица шансов</button>
+      </div>
     </div>
     <div style="height:14px"></div>
   </div>

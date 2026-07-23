@@ -193,6 +193,31 @@
 .ac-score-sub{text-align:center;font-size:12.5px;color:var(--dim);margin:6px 0 16px;line-height:1.5}
 .ac-score-sub b{color:var(--accent)}
 .ac-score-sub .fail{color:var(--danger);font-weight:700}
+/* живая серия верных ответов + всплывающий комбо-индикатор */
+#acTestBox{position:relative}
+.ac-combo-live{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:800}
+.ac-combo-live svg.i{width:12px;height:12px;color:var(--accent);vertical-align:-.14em}
+.ac-combo-pop{position:absolute;top:8px;right:10px;z-index:4;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:#000;background:var(--lime);border-radius:99px;padding:5px 11px;pointer-events:none;opacity:0;transform:translateY(6px) scale(.9);transition:opacity .2s,transform .3s cubic-bezier(.3,1.5,.4,1);box-shadow:0 6px 18px rgba(154,255,0,.35)}
+.ac-combo-pop.go{opacity:1;transform:translateY(0) scale(1)}
+.ac-combo-pop svg.i{width:13px;height:13px;color:#000}
+:root[data-theme="light"] .ac-combo-pop{box-shadow:0 6px 16px rgba(110,200,0,.3)}
+@media (prefers-reduced-motion:reduce){.ac-combo-pop{transition:opacity .2s}}
+/* разбор ошибок после теста */
+.ac-review{margin-top:16px;border-top:1px solid var(--border);padding-top:15px;animation:fade .35s ease}
+.ac-review-h{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.ac-review-h svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-review-item{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 13px;margin-bottom:9px;animation:acRise .4s cubic-bezier(.3,1,.4,1) both}
+.ac-review-item:last-child{margin-bottom:0}
+.ac-review-item .rq{display:flex;gap:9px;font-size:13px;font-weight:600;line-height:1.4;margin-bottom:8px}
+.ac-review-item .rn{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:var(--surface);border:1px solid var(--border);color:var(--dim);font-family:var(--font-display);font-size:13px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.ac-review-item .ra{display:flex;align-items:center;gap:9px;font-size:12.5px;line-height:1.35;padding:7px 9px;border-radius:9px;margin-top:5px}
+.ac-review-item .ra .lb{width:20px;height:20px;flex-shrink:0;border-radius:6px;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.ac-review-item .ra.bad{background:rgba(255,77,77,.1);color:var(--text)}
+.ac-review-item .ra.bad .lb{background:var(--danger);color:#fff}
+.ac-review-item .ra.ok{background:var(--lime-dim);color:var(--text)}
+.ac-review-item .ra.ok .lb{background:var(--lime);color:#000}
+.ac-review.perfect{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;font-size:13px;font-weight:700;color:var(--accent);border-top:none;background:var(--lime-dim);border-radius:var(--r-md);padding:13px}
+.ac-review.perfect svg.i{width:16px;height:16px;color:var(--accent)}
 
 /* --- практика --- */
 .ac-task-ta{width:100%;min-height:120px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-family:var(--font-body);font-size:13.5px;line-height:1.5;padding:12px 14px;outline:none;resize:vertical;transition:border-color .15s}
@@ -419,4 +444,43 @@
 @media (prefers-reduced-motion:reduce){
   .ac-burst-rays i,.ac-burst-conf b{animation:none!important}
   .ac-burst.go .ac-burst-seal{animation:acSealStamp .3s ease forwards}
+}
+
+/* ===== ВАУ-МОМЕНТ: УРОК ОСВОЁН (100% всех пяти этапов) ===== */
+.ac-master{position:fixed;inset:0;z-index:96;display:flex;align-items:center;justify-content:center;padding:22px;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.18),rgba(0,0,0,.82) 64%);opacity:0;transition:opacity .28s ease}
+.ac-master.go{opacity:1}
+.ac-master-card{position:relative;z-index:2;width:100%;max-width:340px;text-align:center;background:linear-gradient(160deg,#0e1607,#060a04 72%);border:1px solid rgba(154,255,0,.4);border-radius:var(--r-lg);padding:26px 20px 20px;box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 50px rgba(154,255,0,.12);transform:translateY(18px) scale(.94);opacity:0;transition:transform .4s cubic-bezier(.3,1.4,.4,1),opacity .3s}
+.ac-master.go .ac-master-card{transform:none;opacity:1}
+:root[data-theme="light"] .ac-master-card{background:linear-gradient(160deg,#f2f8e8,#e6f0d8 72%);box-shadow:0 30px 90px rgba(0,0,0,.28)}
+.ac-master-badge{position:relative;width:96px;height:96px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+.ac-master-rays{position:absolute;inset:0}
+.ac-master-rays i{position:absolute;left:50%;top:50%;width:3px;height:44px;margin-left:-1.5px;background:linear-gradient(var(--lime),transparent);border-radius:2px;transform-origin:50% 0;transform:rotate(var(--a)) translateY(6px) scaleY(0);opacity:0}
+.ac-master.go .ac-master-rays i{animation:acRayOut .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:var(--d)}
+.ac-master-seal{width:70px;height:70px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 36px rgba(154,255,0,.55);transform:scale(0) rotate(-40deg)}
+.ac-master.go .ac-master-seal{animation:acSealStamp .6s cubic-bezier(.3,1.5,.4,1) .1s forwards}
+:root[data-theme="light"] .ac-master-seal{box-shadow:0 0 24px rgba(110,200,0,.4)}
+.ac-master-seal svg.i{width:34px;height:34px}
+.ac-master-kick{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.ac-master-title{font-family:var(--font-display);font-size:38px;line-height:1;letter-spacing:.03em;color:#fff;margin:5px 0 6px}
+:root[data-theme="light"] .ac-master-title{color:#1a2410}
+.ac-master-sub{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.45;margin-bottom:15px}
+:root[data-theme="light"] .ac-master-sub{color:var(--dim)}
+.ac-master-pills{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px}
+.ac-master-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:5px 10px;opacity:0;transform:translateY(6px);animation:acRise .4s cubic-bezier(.3,1,.4,1) forwards;animation-delay:calc(.35s + var(--pd))}
+.ac-master-pill svg.i{width:12px;height:12px;color:var(--accent)}
+.ac-master-stat{font-size:12px;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px}
+:root[data-theme="light"] .ac-master-stat{color:var(--dim)}
+.ac-master-stat b{color:var(--accent)}
+.ac-master-stat svg.i{width:14px;height:14px;color:var(--accent)}
+.ac-master-actions{display:flex;flex-direction:column;gap:8px}
+.ac-master-conf{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.ac-master-conf b{position:absolute;top:-16px;width:9px;height:14px;background:var(--lime);border-radius:2px;transform:scale(var(--sx)) rotate(var(--rot));opacity:0}
+.ac-master-conf b:nth-child(even){background:#fff}
+.ac-master-conf b:nth-child(3n){background:var(--accent);border-radius:50%}
+.ac-master.go .ac-master-conf b{animation:acConf 1.1s ease-in var(--dl) forwards}
+@media (prefers-reduced-motion:reduce){
+  .ac-master-rays i,.ac-master-conf b{animation:none!important;opacity:0!important}
+  .ac-master.go .ac-master-seal{animation:acSealStamp .3s ease forwards}
+  .ac-master-pill{animation:none!important;opacity:1!important;transform:none!important}
+  .ac-master-card{transition:opacity .2s}
 }

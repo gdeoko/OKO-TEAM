@@ -235,7 +235,66 @@
 .gm-pay-promo svg.i{width:17px;height:17px;color:var(--accent);flex-shrink:0}
 .gm-pay-promo b{font-family:var(--font-display);letter-spacing:.06em;color:var(--accent);font-size:14px}
 
+/* ============================================================
+   СЕРИЯ ВИЗИТОВ (СТРИК)
+   ============================================================ */
+.gm-streak-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--dim);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;transition:transform .15s,box-shadow .2s,border-color .2s,color .2s}
+.gm-streak-chip svg.i{width:16px;height:16px}
+.gm-streak-chip.lit{border-color:var(--lime);color:var(--accent)}
+.gm-streak-chip.lit svg.i{color:var(--accent);animation:gmFlame 1.7s ease-in-out infinite}
+.gm-streak-chip:active{transform:scale(.94)}
+@keyframes gmFlame{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.13) translateY(-1px)}}
+
+.gm-streak-note{display:flex;align-items:center;gap:9px;margin-top:10px;padding:9px 12px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);color:var(--dim);font-size:11.5px;line-height:1.4}
+.gm-streak-note svg.i{width:17px;height:17px;flex-shrink:0;color:var(--dim)}
+.gm-streak-note.lit{border-color:var(--lime);background:var(--lime-dim);color:var(--text)}
+.gm-streak-note.lit svg.i{color:var(--accent);animation:gmFlame 1.7s ease-in-out infinite}
+.gm-streak-note b{color:var(--accent);font-family:var(--font-display);font-size:14px;letter-spacing:.03em;margin:0 1px}
+
+/* ============================================================
+   ДЖЕКПОТ (редкий приз) — усиленный вау-момент, палитра бренда
+   ============================================================ */
+.gm-wheel-card.gm-jackpot{animation:gmJackpotFlash 1.5s ease-out}
+.gm-wheel-card.gm-jackpot::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(closest-side,rgba(154,255,0,.5),rgba(154,255,0,.16) 46%,transparent 72%);animation:gmJackpotGlow 1.5s ease-out forwards}
+@keyframes gmJackpotFlash{0%{box-shadow:var(--gm-edge-shadow)}22%{box-shadow:var(--gm-edge-shadow),0 0 0 2px var(--gm-lime-strong),0 0 46px rgba(154,255,0,.6)}100%{box-shadow:var(--gm-edge-shadow)}}
+@keyframes gmJackpotGlow{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+/* редкий приз в карточке-ревиле: ярче кайма/свечение + плашка «Редкий приз» */
+.gm-reveal.rare .gm-reveal-card{box-shadow:0 0 46px rgba(154,255,0,.75),inset 0 0 24px rgba(154,255,0,.2)}
+.gm-reveal.rare .gm-reveal-ic{background:linear-gradient(135deg,rgba(255,255,255,.28),var(--gm-lime-soft))}
+.gm-reveal-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:99px;background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;font-family:var(--font-display);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.gm-reveal-tag svg.i{width:13px;height:13px}
+.gm-confetti.rare i{width:8px;height:13px}
+
+/* ============================================================
+   ТАБЛИЦА ШАНСОВ (шит) + кнопка вызова из карточки честности
+   ============================================================ */
+.gm-resp-b{display:flex;flex-direction:column;gap:11px;flex:1;min-width:0}
+.gm-odds-open{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:99px;border:1px solid var(--lime);background:var(--lime-dim);color:var(--accent);font-weight:700;font-size:12px;transition:transform .15s,box-shadow .2s}
+.gm-odds-open svg.i{width:15px;height:15px}
+.gm-odds-open:hover{box-shadow:0 0 14px var(--lime-dim)}
+.gm-odds-open:active{transform:scale(.96)}
+
+.gm-odds-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.gm-odds-tab{padding:9px 4px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);color:var(--dim);font-family:var(--font-display);font-size:13px;letter-spacing:.02em;transition:transform .15s,border-color .18s,background .18s,color .18s}
+.gm-odds-tab.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.gm-odds-tab:active{transform:scale(.96)}
+.gm-odds-note{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;margin-bottom:12px;border-radius:var(--r-md);border:1px dashed var(--lime);background:var(--lime-dim);color:var(--text);font-size:11.5px;line-height:1.5}
+.gm-odds-note svg.i{width:18px;height:18px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.gm-odds-note b{color:var(--accent);font-variant-numeric:tabular-nums}
+.gm-odds-list{display:flex;flex-direction:column;gap:1px}
+.gm-odds-row{display:flex;align-items:center;gap:11px;padding:9px 2px;animation:gmPrizeIn .3s cubic-bezier(.2,.8,.25,1) both}
+.gm-odds-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gm-odds-ic svg.i{width:17px;height:17px}
+.gm-odds-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.gm-odds-t{font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm-odds-bar{display:block;height:6px;border-radius:99px;background:var(--raised);overflow:hidden}
+.gm-odds-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd400,#9AFF00);transform-origin:left;animation:gmOddsBar .5s cubic-bezier(.2,.8,.25,1) both}
+@keyframes gmOddsBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.gm-odds-pct{font-size:14px;font-weight:800;font-family:var(--font-display);letter-spacing:.02em;color:var(--accent);white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+.gm-odds-sum{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:10.5px;color:var(--dim);line-height:1.5;text-align:center}
+
 /* уважение к reduced-motion */
 @media (prefers-reduced-motion:reduce){
-  .gm-wheel-card::before,.gm-pointer,.gm-wheel-hub,.gm-spin,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays{animation:none !important}
+  .gm-wheel-card::before,.gm-pointer,.gm-wheel-hub,.gm-spin,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays,
+  .gm-wheel-card.gm-jackpot,.gm-wheel-card.gm-jackpot::after,.gm-streak-chip svg.i,.gm-streak-note svg.i,.gm-odds-bar i{animation:none !important}
 }

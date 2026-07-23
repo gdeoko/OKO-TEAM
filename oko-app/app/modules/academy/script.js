@@ -748,6 +748,9 @@ function acLoadState(){
 const acS = acLoadState();
 function acSave(){ try{ localStorage.setItem('oko-academy', JSON.stringify(acS)); }catch(e){} }
 acSave(); // сразу персистим мигрированный формат
+/* бэкфилл «освоено»: уже стопроцентные уроки не празднуем задним числом (иначе вау-оверлей
+   всплыл бы при повторном прохождении теста/игры на давно пройденном уроке) */
+try{ Object.keys(acS.lessons).forEach(k=>{ const ls=acS.lessons[k]; if(ls && !ls.mastered && acItems(+k).every(x=>x[1])) ls.mastered=true; }); acSave(); }catch(e){}
 
 /* ---------- стрик: дни подряд в учёбе ---------- */
 function acDayStr(d){
@@ -1377,7 +1380,7 @@ function acVpSyncIcons(){
 function acMarkVideo(){
   acLS().video = true; acSave();
   toast('Видео засчитано · +20% к уроку');
-  acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox();
+  acRenderVideoBox(); acRenderProgressBox(); acRenderCertBox(); acAfterCheckpoint();
 }
 
 /* ---------- б) СЛАЙДЫ ---------- */
@@ -1408,7 +1411,7 @@ function acSlideSync(){
   if(ls.slideMax >= acCur().slides.length-1 && !ls.slides){
     ls.slides = true; acSave();
     toast('Слайды пройдены · +20% к уроку');
-    acRenderProgressBox(); acRenderCertBox();
+    acRenderProgressBox(); acRenderCertBox(); acAfterCheckpoint();
   }
 }
 function acSlideGo(d){
@@ -1437,26 +1440,50 @@ function acRenderTestBox(){
   }
   if(acQuiz.done){
     const score = acQuiz.score, pass = score >= AC_PASS;
+    const misses = acQuiz.misses || [];
+    const review = misses.length
+      ? `<div class="ac-review">
+          <div class="ac-review-h">${I('poll')} Разбор ошибок · ${misses.length} ${acPlural(misses.length,['вопрос','вопроса','вопросов'])}</div>
+          ${misses.map(m=>{ const qq=quiz[m.q]; return `
+            <div class="ac-review-item">
+              <div class="rq"><span class="rn">${m.q+1}</span><span>${qq.q}</span></div>
+              <div class="ra bad"><span class="lb">${'АБВГ'[m.chosen]}</span><span>${qq.o[m.chosen]}</span></div>
+              <div class="ra ok"><span class="lb">${'АБВГ'[qq.a]}</span><span>${qq.o[qq.a]}</span></div>
+            </div>`; }).join('')}
+        </div>`
+      : `<div class="ac-review perfect">${I('star')} Идеально — ни одной ошибки${acQuiz.best>=3?` · лучшая серия ×${acQuiz.best}`:''}</div>`;
     box.innerHTML = `
       <div class="ac-score" id="acScoreNum" ${pass?'':'style="color:var(--danger);text-shadow:none"'}>0%</div>
       <div class="ac-score-sub">${pass
         ? `Порог ${AC_PASS}% пройден — <b>тест зачтён</b>. Верных ответов: ${acQuiz.hits} из ${quiz.length}.`
         : `<span class="fail">Не хватило до порога ${AC_PASS}%.</span> Верных: ${acQuiz.hits} из ${quiz.length}. Пролистай слайды и попробуй снова.`}</div>
-      <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>`;
+      <button class="btn ${pass?'ghost':''}" onclick="acQuizStart()">Пройти заново</button>
+      ${review}`;
     const el = document.getElementById('acScoreNum');
     acCountUp(el, score, '%');
     return;
   }
   const q = quiz[acQuiz.i];
   box.innerHTML = `
-    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${quiz.length}</span><span>верных: <b>${acQuiz.hits}</b></span></div>
+    <div class="ac-quiz-top"><span>Вопрос <b>${acQuiz.i+1}</b> из ${quiz.length}</span><span>${acQuiz.combo>=2?`<span class="ac-combo-live">${I('fire')} ×${acQuiz.combo}</span> · `:''}верных: <b>${acQuiz.hits}</b></span></div>
     <div class="progress" style="margin:0 0 4px"><i style="width:${(acQuiz.i/quiz.length*100)}%"></i></div>
     <div class="ac-q">${q.q}</div>
     ${q.o.map((o,i)=>`<button class="ac-opt" id="acOpt${i}" onclick="acAnswer(${i})"><span class="lb">${'АБВГ'[i]}</span><span>${o}</span></button>`).join('')}`;
 }
 function acQuizStart(){
-  acQuiz = {i:0, hits:0, lock:false, done:false, score:0};
+  acQuiz = {i:0, hits:0, lock:false, done:false, score:0, misses:[], combo:0, best:0};
   acRenderTestBox();
+}
+/* всплывающий индикатор серии верных ответов (гейм-фидбек, не мешает потоку теста) */
+function acComboPop(n){
+  try{
+    const box = document.getElementById('acTestBox'); if(!box) return;
+    const el = document.createElement('div'); el.className = 'ac-combo-pop';
+    el.innerHTML = I('fire') + '<span>серия ×' + n + '</span>';
+    box.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 900);
+  }catch(e){}
 }
 function acAnswer(i){
   if(!acQuiz || acQuiz.lock || acQuiz.done) return;
@@ -1464,10 +1491,12 @@ function acAnswer(i){
   const quiz = acCur().quiz;
   const q = quiz[acQuiz.i];
   const right = i === q.a;
-  if(right) acQuiz.hits++;
+  if(right){ acQuiz.hits++; acQuiz.combo++; if(acQuiz.combo > acQuiz.best) acQuiz.best = acQuiz.combo; }
+  else { acQuiz.combo = 0; acQuiz.misses.push({q:acQuiz.i, chosen:i}); }
   const ok = document.getElementById('acOpt'+q.a);
   if(ok) ok.classList.add('ok');
   if(!right){ const bad = document.getElementById('acOpt'+i); if(bad) bad.classList.add('bad'); }
+  if(right && acQuiz.combo >= 3) acComboPop(acQuiz.combo);
   setTimeout(()=>{
     acQuiz.lock = false;
     acQuiz.i++;
@@ -1481,7 +1510,7 @@ function acAnswer(i){
         toast('Тест сдан · +20% к уроку');
       }
       acSave();
-      acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+      acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
     }
     acRenderTestBox();
   }, right ? 700 : 1100);
@@ -1535,7 +1564,7 @@ function acTaskSend(){
     acTaskChecking = false;
     ls.task = true; acSave();
     toast('Практика зачтена · +20% к уроку');
-    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+    acRenderTaskBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
   }, 4000);
 }
 
@@ -1596,7 +1625,7 @@ function acGMatch(i){
         ls.gameWrong = wrong;
         if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
         acSave();
-        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync();
+        acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
       } else acRenderGameBox();
     }, 560);
   } else {
@@ -1863,6 +1892,76 @@ function acCertCelebrate(cb){
     requestAnimationFrame(()=>el.classList.add('go'));
     setTimeout(()=>{ try{ el.remove(); }catch(e){} if(typeof cb==='function') cb(); }, 1250);
   }catch(e){ if(typeof cb==='function') cb(); }
+}
+
+/* ================= ВАУ-МОМЕНТ: УРОК ОСВОЁН (все 5 этапов на 100%) =================
+   Отдельный праздничный оверлей — срабатывает ровно один раз, когда закрыт ПОСЛЕДНИЙ
+   из пяти чек-пойнтов урока. Не путать с выдачей сертификата (там свой burst-эффект). */
+function acAfterCheckpoint(){
+  try{
+    const ls = acLS();
+    if(acLessonPct(acL) === 100 && !ls.mastered){
+      ls.mastered = true; acSave();
+      acLessonMaster();
+    }
+  }catch(e){}
+}
+function acMasterClose(){
+  const el = document.getElementById('acMaster'); if(!el) return;
+  el.classList.remove('go');
+  setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 260);
+}
+function acMasterAct(kind, idx){
+  acMasterClose();
+  setTimeout(()=>{
+    if(kind === 'cert') acIssueCert();
+    else if(kind === 'next') acOpenLesson(idx);
+  }, 180);
+}
+function acLessonMaster(){
+  try{
+    const old = document.getElementById('acMaster'); if(old) old.remove();
+    const L = acCur(), ls = acLS(), ci = acCourseOf(acL);
+    const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
+    const nextIdx = acL + 1;
+    /* умный CTA: сначала — забрать сертификат, иначе — следующий урок, иначе просто закрыть */
+    let cta = '';
+    if(!ls.cert && acCertEligible())
+      cta = `<button class="btn ac-master-cta" onclick="acMasterAct('cert')">${I('star')} Получить сертификат</button>`;
+    else if(!lastInCourse && acUnlocked(nextIdx))
+      cta = `<button class="btn ac-master-cta" onclick="acMasterAct('next',${nextIdx})">${I('circle-play')} Следующий урок</button>`;
+    const pills = ['Видео','Слайды','Тест','Практика','Игра']
+      .map((t,i)=>`<span class="ac-master-pill" style="--pd:${(i*0.06).toFixed(2)}s">${I('check2')}${t}</span>`).join('');
+    let rays = ''; for(let i=0;i<12;i++) rays += `<i style="--a:${(i*360/12)}deg;--d:${(i%3)*0.05}s"></i>`;
+    let conf = '';
+    for(let i=0;i<20;i++){
+      const x=(Math.random()*100).toFixed(1), dl=(Math.random()*0.4).toFixed(2),
+            rot=(Math.random()*360).toFixed(0), sx=(Math.random()*0.7+0.6).toFixed(2);
+      conf += `<b style="left:${x}%;--dl:${dl}s;--rot:${rot}deg;--sx:${sx}"></b>`;
+    }
+    const el = document.createElement('div');
+    el.id = 'acMaster'; el.className = 'ac-master';
+    el.innerHTML = `
+      <div class="ac-master-conf">${conf}</div>
+      <div class="ac-master-card" onclick="event.stopPropagation()">
+        <div class="ac-master-badge">
+          <span class="ac-master-rays">${rays}</span>
+          <span class="ac-master-seal">${I('crown')}</span>
+        </div>
+        <div class="ac-master-kick">Урок пройден на 100%</div>
+        <h3 class="ac-master-title">Урок освоен</h3>
+        <p class="ac-master-sub">«${esc(L.title)}» — все пять этапов закрыты</p>
+        <div class="ac-master-pills">${pills}</div>
+        <div class="ac-master-stat">${I('poll')} Тест — <b>${ls.testScore||0}%</b>${(ls.cert)?` · сертификат ${esc(ls.cert.no)}`:''}</div>
+        <div class="ac-master-actions">
+          ${cta}
+          <button class="btn ${cta?'ghost':''} ac-master-dismiss" onclick="acMasterClose()">${cta?'Позже':'Отлично'}</button>
+        </div>
+      </div>`;
+    el.addEventListener('click', acMasterClose);   // тап по фону — закрыть
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('go'));
+  }catch(e){}
 }
 
 /* --- отрисовка canvas 1600×1131 --- */
