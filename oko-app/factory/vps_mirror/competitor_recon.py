@@ -102,3 +102,8 @@ L+=["СВОДНЫЙ РАЗБОР:",
 open(OUT,"w",encoding="utf-8").write("\n".join(L))
 seen|={r["id"] for r in rows}; json.dump(sorted(seen),open(SEEN,"w"))
 print("RECON_DONE rows",len(rows))
+try:
+    import subprocess as _sp
+    _sp.run(["python3","/opt/oko-poster/send_to_bot.py",OUT,"Анализ конкурентов перед роликом"],timeout=90)
+except Exception as _e:
+    print("recon->bot send err",str(_e)[:100])
