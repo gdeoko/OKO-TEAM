@@ -41,7 +41,7 @@ function club_boot(): void {
  * = один вызов = +$months (payment_apply_status уже защищён от повторов).
  * Возвращает актуальный статус членства (см. club_status).
  */
-function club_grant(int $userId, int $months = 12, string $source = 'payment'): array {
+function club_grant(int $userId, int $months = 1, string $source = 'payment'): array {
     club_boot();
     if ($userId <= 0) return club_status($userId);
     $months = max(1, min(120, $months));

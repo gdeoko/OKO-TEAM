@@ -34,20 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Доступность соц-входа по наличию ключей (иначе - кнопка отключается аккуратно).
 $vkReady     = (bool) (cfgv('vk_client_id') && cfgv('vk_client_secret'));
 $maxReady    = (bool) (cfgv('max_client_id') && cfgv('max_client_secret'));
-$googleReady = (bool) (cfgv('google_client_id') && cfgv('google_client_secret'));
 
 // SVG-иконки (без эмодзи, в стиле бренда).
 $svgVk     = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>';
 $svgMax    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V6l8 7 8-7v13"/></svg>';
-$svgGoogle = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 12 0 12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-5 6.7-5z"/></svg>';
 $svgPhone  = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
 
 ob_start(); ?>
 <style>
-/* Google-кнопка соц-входа: белая карточка с фирменной «G», ровная с ВК/MAX (высота из .auth-btn) */
-.auth-btn--google{background:#fff;color:#3c4043;border:1.5px solid var(--glass-brd)}
-[data-theme="dark"] .auth-btn--google{background:rgba(255,255,255,.08);color:var(--text);border-color:var(--glass-brd)}
-.auth-btn--google svg{border-radius:2px}
 /* Ровные соц-кнопки: единый ритм, аккуратный перенос длинных подписей */
 .auth-social .auth-btn{margin-bottom:0}
 .auth-btn span{overflow-wrap:anywhere}
@@ -74,11 +68,6 @@ ob_start(); ?>
           <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max') ?>" rel="nofollow"><?= $svgMax ?><span>Войти через MAX</span></a>
         <?php else: ?>
           <button type="button" class="auth-btn auth-btn--max" disabled style="opacity:.55;cursor:not-allowed"><?= $svgMax ?><span>Вход через MAX</span></button>
-        <?php endif; ?>
-        <?php if ($googleReady): ?>
-          <a class="auth-btn auth-btn--google" href="<?= url('/api/v1/oauth_google') ?>" rel="nofollow"><?= $svgGoogle ?><span>Войти через Google</span></a>
-        <?php else: ?>
-          <button type="button" class="auth-btn auth-btn--google" disabled style="opacity:.55;cursor:not-allowed"><?= $svgGoogle ?><span>Вход через Google</span></button>
         <?php endif; ?>
       </div>
 

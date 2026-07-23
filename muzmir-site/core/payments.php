@@ -109,7 +109,7 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 $cu = one("SELECT id FROM users WHERE email=?", [mb_strtolower((string) $ordRow['email'])]);
                 $cuid = (int) ($cu['id'] ?? 0);
             }
-            if ($cuid > 0 && function_exists('club_grant')) { club_grant($cuid, 12, 'payment'); }
+            if ($cuid > 0 && function_exists('club_grant')) { club_grant($cuid, 1, 'payment'); }
         }
     }
 

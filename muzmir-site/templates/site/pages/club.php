@@ -1,12 +1,12 @@
 <?php
-/** Клуб постоянных участников: платная годовая подписка с привилегиями.
+/** Клуб постоянных участников: платная ежемесячная подписка с привилегиями.
  *  Для активного члена Клуба показываем статус и выгоды, форму оплаты скрываем. */
 
 // Модуль членства подключаем лениво (глобально он не автозагружается).
 $__clubCore = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/core/club.php';
 if (!function_exists('club_is_active') && is_file($__clubCore)) require_once $__clubCore;
 
-$price = (int) setting('club_price', '500');
+$price = (int) setting('club_price', '1000');
 $u = current_user();
 $uid = (int) ($u['id'] ?? 0);
 
@@ -18,13 +18,13 @@ if ($discount <= 0) $discount = 20;
 
 $benefits = [
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12V8a2 2 0 0 0-2-2h-4l-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M14 14l6 6M20 14l-6 6"/></svg>',
-      't' => 'Скидка ' . $discount . '%', 'd' => 'На организационный взнос во всех платных конкурсах Культурного центра'],
-    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></svg>',
-      't' => 'Приоритетная модерация', 'd' => 'Заявки участников Клуба проверяются вне общей очереди'],
-    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
-      't' => 'Закрытый чат', 'd' => 'Доступ к сообществу постоянных участников и педагогов в Telegram'],
+      't' => 'Скидка ' . $discount . '% на всё', 'd' => 'На организационные взносы конкурсов, дипломы и наградные материалы — весь месяц'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>',
-      't' => 'Встречи с жюри', 'd' => 'Онлайн-встречи с членами жюри: разбор номеров и ответы на вопросы'],
+      't' => 'Эксклюзивный конкурс', 'd' => 'Отдельный конкурс только для членов Клуба — каждый месяц'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></svg>',
+      't' => 'Быстрые результаты', 'd' => 'Заявки участников Клуба проверяются приоритетно, вне общей очереди'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
+      't' => 'Закрытое сообщество', 'd' => 'Доступ к чату постоянных участников и педагогов, встречи с жюри и разборы номеров'],
 ];
 
 $expiresRu = !empty($status['expires_at']) ? ru_date(substr((string) $status['expires_at'], 0, 10)) : '';
@@ -109,8 +109,8 @@ ob_start(); ?>
         <a class="btn btn--primary" href="<?= h(url('/cabinet')) ?>">Личный кабинет</a>
         <a class="btn btn--ghost" href="<?= h(url('/competitions')) ?>">Выбрать конкурс</a>
       </div>
-      <p class="club-note">Членство продлевается раз в 12 месяцев. Скидка <?= (int) $discount ?>%
-        применяется к организационному взносу автоматически.</p>
+      <p class="club-note">Членство продлевается ежемесячно. Скидка <?= (int) $discount ?>%
+        применяется ко всем платежам автоматически.</p>
     </div>
   </div>
 </section>
@@ -121,7 +121,7 @@ ob_start(); ?>
     <div class="reveal">
       <p class="eyebrow">Для постоянных участников</p>
       <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Клуб постоянных участников</h1>
-      <p>Годовая подписка для тех, кто регулярно подаёт заявки на конкурсы Культурного центра «Музыкальный Мир»:
+      <p>Ежемесячная подписка для тех, кто регулярно подаёт заявки на конкурсы Культурного центра «Музыкальный Мир»:
         скидки, приоритет и закрытое сообщество.</p>
     </div>
   </div>
@@ -145,11 +145,11 @@ ob_start(); ?>
 
 <section class="section section--tint">
   <div class="container">
-    <div class="section-head reveal"><p class="eyebrow">Стоимость</p><h2>Одна подписка на год</h2></div>
+    <div class="section-head reveal"><p class="eyebrow">Стоимость</p><h2>Одна подписка на месяц</h2></div>
     <div class="card reveal club-price-card">
       <p style="color:var(--muted)">Членство в Клубе</p>
-      <div class="club-price"><?= h(money($price)) ?><span> / год</span></div>
-      <p style="color:var(--muted);font-size:.92rem">Продление - раз в 12 месяцев. Отменить можно в любое время в личном кабинете.</p>
+      <div class="club-price"><?= h(money($price)) ?><span> / месяц</span></div>
+      <p style="color:var(--muted);font-size:.92rem">Продление - ежемесячно. Отменить можно в любое время в личном кабинете.</p>
 
       <form class="club-form" id="clubJoinForm" style="margin-top:22px;text-align:left">
         <div class="field">
@@ -190,7 +190,7 @@ ob_start(); ?>
     body.set('competition', 'Клуб постоянных участников');
     body.set('amount', String(price));
     body.set('_csrf', <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>);
-    body.set('items', JSON.stringify([{ item: 'Клуб постоянных участников - годовая подписка', kind: 'club' }]));
+    body.set('items', JSON.stringify([{ item: 'Клуб постоянных участников - месячная подписка', kind: 'club' }]));
     fetch(<?= json_encode(url('/api/v1/order'), JSON_UNESCAPED_SLASHES) ?>, { method: 'POST', body: body })
       .then(function (r) { return r.json(); })
       .then(function (d) {
