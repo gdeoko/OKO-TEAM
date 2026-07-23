@@ -740,6 +740,13 @@ label.f-lab{display:block}
 .nt-item:active{background:var(--surface)}
 .nt-ic{width:40px;height:40px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
 .nt-ic svg.i{width:20px;height:20px}
+/* аватар автора уведомления + мини-бейдж типа (как в Instagram/Telegram) */
+.nt-ava{position:relative;width:42px;height:42px;border-radius:50%;background:var(--lime-dim);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;font-size:16px;flex-shrink:0}
+.nt-badge{position:absolute;right:-3px;bottom:-3px;width:19px;height:19px;border-radius:50%;background:var(--lime);color:#0a0a0a;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.nt-badge svg.i{width:11px;height:11px}
+.nt-badge.b-heart{background:#ff5a7a;color:#fff}
+.nt-badge.b-star{background:#ffcf33;color:#0a0a0a}
+.nt-badge.b-comment{background:#37a0ff;color:#fff}
 .nt-b{flex:1;min-width:0}
 .nt-b span{font-size:13.5px;line-height:1.4;display:block}
 .nt-b small{font-size:11px;color:var(--dim)}
@@ -7867,7 +7874,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.92</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.93</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -9077,10 +9084,17 @@ function renderNotifs(){
   Object.keys(groups).forEach(g=>groups[g].sort((a,b)=>notifMins(a.time)-notifMins(b.time)));
   document.getElementById('notifsBody').innerHTML = Object.keys(groups).map(g=>`
     <p class="nt-group">${g}</p>
-    ${groups[g].map(n=>`<button class="nt-item ${n.unread?'unread':''}" onclick="notifTap(${n.i})">
-      <span class="nt-ic">${I(n.ic)}</span>
+    ${groups[g].map(n=>{
+      const brand = /OKO|Партнёрк|Биржа|подписчик|Академ|Систем/i.test(n.who||'');
+      const badgeCls = ['heart','star','comment'].includes(n.ic) ? ' b-'+n.ic : '';
+      const icon = brand
+        ? `<span class="nt-ic">${I(n.ic)}</span>`
+        : `<span class="nt-ava">${esc((n.who||'?').trim().charAt(0).toUpperCase())}<i class="nt-badge${badgeCls}">${I(n.ic)}</i></span>`;
+      return `<button class="nt-item ${n.unread?'unread':''}" onclick="notifTap(${n.i})">
+      ${icon}
       <div class="nt-b"><span><b>${esc(n.who)}</b> ${esc(n.t)}</span><small>${n.time}</small></div>
-      ${n.unread?'<i class="nt-dot"></i>':''}</button>`).join('')}`).join('')
+      ${n.unread?'<i class="nt-dot"></i>':''}</button>`;
+    }).join('')}`).join('')
     || '<div class="empty-state"><div class="es-ico">'+I('bell')+'</div><p>Пока тихо</p><span>Тут появятся лайки, заявки и начисления</span></div>';
 }
 function notifTap(i){ const n=NOTIFS[i]; if(!n) return; n.unread=false; closeNotifs(); updateNotifDot(); if(n.act)n.act(); }
