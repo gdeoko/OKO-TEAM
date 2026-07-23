@@ -161,23 +161,33 @@
     // Гарантия: ничто не остаётся скрытым дольше 3с (защита от сбоя observer/скрытых вкладок)
     setTimeout(function () { $$('.reveal').forEach(function (el) { if (!el.classList.contains('in')) revealEl(el); }); }, 3000);
 
-    // Счётчики
+    // Счётчики — на сгибе/выше сгиба запускаем сразу (без «0»-мигания и без ожидания observer)
     var cio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
         try { countUp(e.target); } catch (err) {} e.target.dataset.counted = '1'; cio.unobserve(e.target);
       });
     }, { threshold: 0.35 });
-    $$('[data-count]').forEach(function (el) { cio.observe(el); });
+    $$('[data-count]').forEach(function (el) {
+      if (el.dataset.counted) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < vh * 0.94 && r.bottom > 0) { try { countUp(el); } catch (err) {} el.dataset.counted = '1'; }
+      else cio.observe(el);
+    });
 
-    // Инфографика: SVG-кольца (.stat-ring/.donut, dasharray) и .bar (scaleX)
+    // Инфографика: SVG-кольца (.stat-ring/.donut, dasharray) и .bar (scaleX) — так же сразу для above-the-fold
     var pio = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
         try { animateProgress(e.target); } catch (err) {} e.target.dataset.progressed = '1'; pio.unobserve(e.target);
       });
     }, { threshold: 0.3 });
-    $$('.stat-ring, .donut, .bar').forEach(function (el) { pio.observe(el); });
+    $$('.stat-ring, .donut, .bar').forEach(function (el) {
+      if (el.dataset.progressed) return;
+      var r = el.getBoundingClientRect();
+      if (r.top < vh * 0.94 && r.bottom > 0) { try { animateProgress(el); } catch (err) {} el.dataset.progressed = '1'; }
+      else pio.observe(el);
+    });
 
     // Гарантия: числа и графики никогда не застревают на 0 (failsafe через 3с)
     setTimeout(function () {
