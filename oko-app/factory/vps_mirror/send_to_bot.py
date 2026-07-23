@@ -3,7 +3,7 @@
 # Токен CLIENT_DIESEL_BOT_TOKEN, chat из cfg/diesel_bot_chat.txt. Фолбэк: sendMessage если документ не прошёл.
 import os,sys,subprocess
 TOK=(os.environ.get("CLIENT_DIESEL_BOT_TOKEN") or os.environ.get("DIESEL_BOT_TOKEN","")).replace("export ","").strip()
-CA="/root/.ccr/ca-bundle.crt"; CAF=["--cacert",CA] if os.path.exists(CA) else []
+CA="/etc/ssl/certs/ca-certificates.crt"; CAF=["--cacert",CA] if os.path.exists(CA) else []
 chat=open("/opt/oko-poster/cfg/diesel_bot_chat.txt").read().strip()
 f=sys.argv[1]; cap=sys.argv[2] if len(sys.argv)>2 else ""
 API=f"https://api.telegram.org/bot{TOK}"
