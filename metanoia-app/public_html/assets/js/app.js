@@ -2657,8 +2657,19 @@ function openReader(n) {
   const story = (c.story || []).map((p) => `<p>${p}</p>`).join('');
   const golden = c.golden ? `<div class="scripture">${c.golden}</div>` : '';
   const prayer = c.prayer ? `<p><em>${c.prayer}</em></p>` : '';
+  const listenBtn = `<button class="lesson-voice reader-listen" id="readerVoice"><span class="lesson-voice__ic">${ICON('play', 15)}</span> Послушать голосом Екатерины</button>`;
   $('#readerTitle').textContent = title;
-  $('#readerBody').innerHTML = `<h2>${title}</h2>${coverImg}${intro}${scripture}${story}${golden}${prayer}`;
+  $('#readerBody').innerHTML = `<h2>${title}</h2>${coverImg}${listenBtn}${intro}${scripture}${story}${golden}${prayer}`;
+  const rv = $('#readerVoice');
+  if (rv) {
+    let rvAudio = null;
+    rv.addEventListener('click', () => {
+      if (!rvAudio) rvAudio = new Audio('assets/audio/lesson-intro.mp3');
+      rv.classList.add('lesson-voice--playing');
+      try { rvAudio.currentTime = 0; rvAudio.play().catch(() => toast('Не удалось воспроизвести')); } catch (e) {}
+      rvAudio.onended = () => rv.classList.remove('lesson-voice--playing');
+    });
+  }
   applyReaderFs();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'reader'));
   $('#nav').style.display = 'none';
