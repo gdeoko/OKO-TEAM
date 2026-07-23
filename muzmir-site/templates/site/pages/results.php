@@ -132,7 +132,7 @@ ob_start(); ?>
 <style>
 .res-wrap{max-width:1080px;margin:0 auto;position:relative}
 .res-hero{text-align:center;max-width:720px;margin:0 auto 30px;position:relative}
-.res-hero::before{content:"";position:absolute;left:50%;top:-60px;width:min(680px,120%);height:360px;transform:translateX(-50%);
+.res-hero::before{content:"";position:absolute;left:50%;top:-60px;width:min(680px,100%);height:360px;transform:translateX(-50%);
   background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:-1}
 
 .res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}

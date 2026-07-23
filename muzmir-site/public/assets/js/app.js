@@ -242,7 +242,7 @@
     var dur = 1400, t0 = performance.now();
     function tick(now) {
       var p = Math.min(1, (now - t0) / dur);
-      var val = Math.floor((1 - Math.pow(1 - p, 3)) * target);
+      var val = p >= 1 ? target : Math.floor((1 - Math.pow(1 - p, 3)) * target); // финал точно = target (без off-by-one)
       el.textContent = val.toLocaleString('ru-RU') + suffix;
       if (p < 1) requestAnimationFrame(tick);
     }

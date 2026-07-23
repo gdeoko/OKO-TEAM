@@ -822,3 +822,6 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     @keyframes mzDraw{from{transform:scaleX(0);opacity:.2}to{transform:scaleX(1);opacity:1}}
   }
 }
+
+/* Аудит-фикс: эйброу и h2 в .section-head не слипаются в одну строку (оба были inline-block). */
+.section-head .eyebrow,.section--head .eyebrow{display:block}

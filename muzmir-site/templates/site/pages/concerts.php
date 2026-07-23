@@ -66,13 +66,15 @@ ob_start(); ?>
 /* Слой обложки с мягким зумом при наведении */
 .concert-cover{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .6s cubic-bezier(.2,.8,.2,1);z-index:0}
 /* Брендовый фасад для записей без постера (вместо пустого тёмного бокса). */
-.concert-cover--brand{background:
-  radial-gradient(130% 95% at 50% -12%,rgba(201,168,76,.26),transparent 60%),
-  linear-gradient(160deg,#251d0d 0%,#14110b 55%,#0e0c10 100%);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23c9a84c' stroke-width='1.4' opacity='0.16'%3E%3Cpath d='M28 78V40l20-4v34'/%3E%3Ccircle cx='24' cy='80' r='5'/%3E%3Ccircle cx='44' cy='74' r='5'/%3E%3Cpath d='M84 92V52l14-3v34'/%3E%3Ccircle cx='80' cy='94' r='4'/%3E%3Ccircle cx='94' cy='86' r='4'/%3E%3C/g%3E%3C/svg%3E"),
-  radial-gradient(130% 95% at 50% -12%,rgba(201,168,76,.26),transparent 60%),
-  linear-gradient(160deg,#251d0d 0%,#14110b 55%,#0e0c10 100%);
-  background-size:120px 120px,cover,cover;background-repeat:repeat,no-repeat,no-repeat}
+.concert-cover--brand{
+  background-image:
+    linear-gradient(180deg,rgba(11,10,13,.32),rgba(11,10,13,.68)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23e8c25a' stroke-width='1.4' opacity='0.14'%3E%3Cpath d='M28 78V40l20-4v34'/%3E%3Ccircle cx='24' cy='80' r='5'/%3E%3Ccircle cx='44' cy='74' r='5'/%3E%3Cpath d='M84 92V52l14-3v34'/%3E%3Ccircle cx='80' cy='94' r='4'/%3E%3Ccircle cx='94' cy='86' r='4'/%3E%3C/g%3E%3C/svg%3E"),
+    url('/assets/img/concert_hall.webp'),
+    linear-gradient(160deg,#251d0d 0%,#14110b 55%,#0e0c10 100%);
+  background-size:cover,120px 120px,cover,cover;
+  background-position:center,center,center 40%,center;
+  background-repeat:no-repeat,repeat,no-repeat,no-repeat}
 @media(hover:hover){.concert-card:hover .concert-cover{transform:scale(1.07)}}
 .concert-facade .play{z-index:2}
 .concert-facade .play span{position:relative}

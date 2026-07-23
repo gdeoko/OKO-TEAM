@@ -87,8 +87,9 @@ ob_start(); ?>
 [data-theme="dark"] .goal-ic{color:var(--gold)}
 @media(hover:hover){.goals-wrap .card:hover .goal-ic{transform:scale(1.08);box-shadow:var(--shadow-glow)}}
 .goal-card p{margin:0;color:var(--text-dim);line-height:1.5}
-.goal-n{font-family:var(--ff-display);font-weight:800;color:var(--gold-2);font-size:.9rem;
+.goal-n{font-family:var(--ff-display);font-weight:800;color:var(--gold-ink);font-size:.9rem;
   margin-bottom:2px;display:block;letter-spacing:.04em}
+[data-theme="dark"] .goal-n{color:var(--gold)}
 .title-row{display:flex;align-items:center;gap:14px;margin-bottom:12px}
 .title-row .bar{flex:1}
 .title-name{min-width:190px;font-family:var(--ff-display);font-weight:700;color:var(--text);font-size:.98rem}

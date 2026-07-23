@@ -86,7 +86,7 @@ ob_start(); ?>
 [data-theme="dark"] #faqRoot .faq-count b{color:var(--gold)}
 
 #faqRoot .faq-group{margin-bottom:30px}
-#faqRoot .faq-group-title{font-family:var(--ff-serif);font-size:1.22rem;color:var(--gold-2);margin:0 0 14px;display:flex;align-items:center;gap:12px}
+#faqRoot .faq-group-title{font-family:var(--ff-serif);font-size:1.22rem;color:var(--gold-ink);margin:0 0 14px;display:flex;align-items:center;gap:12px}
 [data-theme="dark"] #faqRoot .faq-group-title{color:var(--gold)}
 #faqRoot .faq-group-title .g-ic{flex:none;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink);box-shadow:inset 0 0 16px rgba(201,168,76,.10)}
 [data-theme="dark"] #faqRoot .faq-group-title .g-ic{color:var(--gold)}
