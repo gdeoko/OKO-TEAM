@@ -2521,3 +2521,27 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 [data-theme="dark"] .about-item { background: #232a33; border-color: rgba(212,165,116,.25); }
 [data-theme="dark"] .about-founder { background: linear-gradient(135deg,#2a2118,#241c14); }
 [data-theme="dark"] .about-founder__name, [data-theme="dark"] .about-founder__body p { color: #f4ead6; }
+
+/* ══════════ ТАКТИЛЬНОСТЬ И МЯГКОЕ ПОЯВЛЕНИЕ (премиум-ощущение) ══════════ */
+.chat-item, .lesson-item, .toc-item, .temple, .story, .menu-item, .set-card .switch-row {
+  transition: transform .13s var(--ease), box-shadow .13s var(--ease), background-color .13s var(--ease);
+}
+.chat-item:active, .lesson-item:active, .toc-item:active, .temple:active, .menu-item:active {
+  transform: scale(.985);
+}
+.story:active { transform: scale(.94); }
+.feed-card, .gcard { will-change: transform; }
+/* деликатное появление карточек ленты и игр — снизу вверх, со сдвигом по индексу */
+@keyframes cardRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+#feed > .feed-card { animation: cardRise .42s var(--ease) both; }
+#feed > .feed-card:nth-child(2) { animation-delay: .05s; }
+#feed > .feed-card:nth-child(3) { animation-delay: .1s; }
+#feed > .feed-card:nth-child(4) { animation-delay: .15s; }
+#feed > .feed-card:nth-child(n+5) { animation-delay: .18s; }
+#ghub > .gcard { animation: cardRise .4s var(--ease) both; }
+#ghub > .gcard:nth-child(2n) { animation-delay: .06s; }
+#ghub > .gcard:nth-child(2n+1) { animation-delay: .03s; }
+@media (prefers-reduced-motion: reduce) {
+  #feed > .feed-card, #ghub > .gcard { animation: none; }
+  .chat-item:active, .lesson-item:active, .toc-item:active, .temple:active, .menu-item:active, .story:active { transform: none; }
+}
