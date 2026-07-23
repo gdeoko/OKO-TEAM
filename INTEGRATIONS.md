@@ -90,6 +90,24 @@ Ultra-подписка безлимит), детальный промпт, га�
 - **Mixkit** — БЕЗ ключа; ГРАБЛЯ 08.07: прямые ссылки assets.mixkit.co/music отдают
   AccessDenied — музыку брать с Freesound; sfx/видео Mixkit проверять поштучно.
 
+### 5 БИБЛИОТЕК МОНТАЖА для Remotion (StoryReel, проверено 23.07)
+Профи-монтаж строится из РЕАЛЬНЫХ библиотек ассетов, не рисуется кодом:
+1. **LottieFiles** — GraphQL БЕЗ ключа: `POST https://graphql.lottiefiles.com/2022-08`,
+   `query{searchPublicAnimations(query,first){edges{node{name jsonUrl}}}}`. Качает
+   `dl_lottie_lib.py` → `public/lib/*.json` (конфетти, трофей, галочка-печать, стрелка-свайп,
+   колокол-subscribe, лоадер, огонь). Реестр `src/lottieLib.ts` (статический импорт).
+   ГРАБЛЯ: много плоских мультяшек — отбирать превью-сеткой (комп `LibPreview`), брать
+   иконочно-абстрактные; recolor под бренд через CSS `filter:hue-rotate()`.
+2. **@remotion/transitions** — движок ПРОФИ-переходов (slide/wipe/clockWipe/flip + springTiming).
+   `FeatureSeries` в StoryReel: блок фич через `TransitionSeries`. Ест кадры на overlap —
+   держать в фикс-окне `<Sequence>`, субтитры тайминговать от голоса отдельно.
+3. **Pixabay video** — кинематографичные переходы/оверлеи (light_streak, zoom_blur, ink,
+   paint, glitch, smoke, particles) → `public/fx/`. Накрывают стык актов = transition-пак.
+4. **Freesound** — SFX/музыка (`public/sfx2`, preview-hq-mp3).
+5. **Pexels** — портретный сток под историю (`public/s2`), качать через curl (urllib=403).
+Рантайм Lottie: **@remotion/lottie + lottie-web 5.12.2**. `LottieAsset name=… loop filter=…`
+берёт из объединённого реестра `{...LOTTIE, ...LIB}`.
+
 ### Библиотека НАЛОЖЕНИЙ для Remotion RealReel (проверено 23.07)
 Движок `pipeline/remotion` (комп. `RealReel`) — футаж-first монтаж с реальными
 ассетами наложений поверх стоковых кадров. Скачивание одной командой:

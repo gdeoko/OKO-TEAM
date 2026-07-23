@@ -1,10 +1,14 @@
 import React from "react";
 import { AbsoluteFill, OffthreadVideo, Img, staticFile, useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence, Loop } from "remotion";
+import { TransitionSeries, springTiming } from "@remotion/transitions";
+import { slide } from "@remotion/transitions/slide";
+import { wipe } from "@remotion/transitions/wipe";
+import { clockWipe } from "@remotion/transitions/clock-wipe";
 import { LIME, MONT, BEBAS } from "./mograph";
 import { FONT_CSS } from "./fonts";
 import WORDS from "./words_s.json";
 import { CostCounter, Converge, IncomeGraph } from "./fx";
-import { ScreenFX, LottieAsset } from "./fx2";
+import { ScreenFX, TransitionFX, LottieAsset } from "./fx2";
 
 const E = Easing.bezier(0.16,1,0.3,1);
 const GLOW = `0 0 10px ${LIME}, 0 0 34px ${LIME}aa`;
@@ -81,6 +85,24 @@ const FeatureStamp: React.FC<{icon:string; word:string}> = ({icon,word}) => {
   );
 };
 
+// ===== БИБЛИОТЕКА ПЕРЕХОДОВ @remotion/transitions — блок фич =====
+const FEAT:[string,number][] = [["v/c09.mp4",39],["v/c04.mp4",39],["v/c05.mp4",39],["v/c11.mp4",38]];
+const FeatureSeries: React.FC = () => {
+  const { width, height } = useVideoConfig();
+  const SP = springTiming({ config:{damping:200}, durationInFrames:8 });
+  const trs = [slide({direction:"from-right"}), wipe({direction:"from-bottom"}), clockWipe({width,height})];
+  return (
+    <TransitionSeries>
+      {FEAT.map(([clip,dur],i)=>(
+        <React.Fragment key={i}>
+          <TransitionSeries.Sequence durationInFrames={dur}><Shot clip={clip} len={dur} dir={i%2?-1:1}/></TransitionSeries.Sequence>
+          {i<FEAT.length-1 && <TransitionSeries.Transition presentation={trs[i%trs.length]} timing={SP}/>}
+        </React.Fragment>
+      ))}
+    </TransitionSeries>
+  );
+};
+
 const Header: React.FC = () => (<>
   <Img src={staticFile("logo.png")} style={{position:"absolute",top:54,left:50,width:64,filter:`drop-shadow(0 0 14px ${LIME})`}}/>
   <div style={{position:"absolute",top:66,left:126,fontFamily:MONT,color:"#fff",fontWeight:800,fontSize:26,letterSpacing:2}}>OKO<span style={{color:LIME}}>.</span></div>
@@ -103,6 +125,9 @@ const EndCard: React.FC = () => { const f=useCurrentFrame();
         <div style={{fontFamily:MONT,fontWeight:800,color:"#fff",fontSize:36,letterSpacing:2,opacity:0.85,marginTop:-4}}>ТВОЙ ШАНС НАЧАТЬ <span style={{color:LIME}}>С НУЛЯ</span></div>
         <div style={{marginTop:32,display:"inline-block",padding:"20px 52px",borderRadius:60,background:LIME,color:"#050505",fontFamily:MONT,fontWeight:900,fontSize:44,letterSpacing:2,boxShadow:`0 0 ${40*ctaGlow}px ${LIME}, 0 20px 50px #000a`}}>ПЕРЕХОДИ, ПОКА ОТКРЫТО</div>
       </div>
+      {/* LOTTIE CTA-ассеты: свайп-стрелка + колокол */}
+      <LottieAsset name="arrow1" size={200} top={1420} left={440} loop opacity={0.95} filter={`drop-shadow(0 0 10px ${LIME})`} style={{transform:"rotate(90deg)"}}/>
+      <LottieAsset name="bell1" size={150} top={150} left={860} loop opacity={0.9}/>
     </AbsoluteFill>
   );
 };
@@ -114,10 +139,7 @@ const SHOTS:[string,number,number,number][] = [
   ["v/c17.mp4",        126, 171, 1],   // я платил за 5 приложений
   ["s2/money.mp4",     171, 240,-1],   // и команду, которой не мог платить
   ["s2/phone_disc.mp4",240, 348, 1],   // открыл приложение / где оказалось всё (TURN)
-  ["v/c09.mp4",        348, 369,-1],   // мессенджер
-  ["v/c04.mp4",        369, 400, 1],   // нейросети
-  ["v/c05.mp4",        400, 430,-1],   // продвижение
-  ["v/c11.mp4",        430, 479, 1],   // заработок в одном месте
+  // 348-479 — блок фич через @remotion/transitions (FeatureSeries)
   ["s2/content.mp4",   479, 509,-1],   // свой первый контент
   ["v/c13.mp4",        509, 537, 1],   // запустил в один клик (ракета)
   ["s2/typing.mp4",    537, 586,-1],   // без вложений
@@ -140,15 +162,25 @@ export const StoryReel: React.FC = () => {
       {SHOTS.map(([clip,st,en,dir],i)=>(
         <Sequence key={i} from={st} durationInFrames={en-st}><Shot clip={clip} len={en-st} dir={dir}/></Sequence>
       ))}
+      {/* блок фич — библиотека переходов @remotion/transitions */}
+      <Sequence from={348} durationInFrames={131}><FeatureSeries/></Sequence>
+
       {f<END_START && <AbsoluteFill style={{background:"linear-gradient(180deg,rgba(5,5,5,.42),rgba(5,5,5,.26) 42%,rgba(5,5,5,.6))"}}/>}
 
-      {/* ТОЧЕЧНЫЕ ассеты по смыслу */}
-      <Sequence from={0} durationInFrames={126}><ScreenFX clip="particles_dust" opacity={0.22} loopDur={90}/></Sequence>{/* хук — пылинки */}
-      <Sequence from={716} durationInFrames={122}><ScreenFX clip="particles_gold" opacity={0.5} loopDur={60}/></Sequence>{/* деньги — золото */}
+      {/* === БИБЛИОТЕЧНЫЕ ПЕРЕХОДЫ (Pixabay video) на стыках актов — каждый разный === */}
+      <Sequence from={234} durationInFrames={18}><TransitionFX clip="light_streak"/></Sequence>{/* в перелом */}
+      <Sequence from={473} durationInFrames={16}><TransitionFX clip="zoom_blur"/></Sequence>{/* в действие */}
+      <Sequence from={610} durationInFrames={18}><TransitionFX clip="paint" grade="brightness(1.2) hue-rotate(60deg)"/></Sequence>{/* в обучение */}
+      <Sequence from={710} durationInFrames={18}><TransitionFX clip="light_streak"/></Sequence>{/* в деньги */}
+      <Sequence from={939} durationInFrames={20}><TransitionFX clip="ink"/></Sequence>{/* в финал */}
+
+      {/* точечные видео-ассеты по смыслу */}
+      <Sequence from={0} durationInFrames={126}><ScreenFX clip="particles_dust" opacity={0.22} loopDur={90}/></Sequence>
+      <Sequence from={716} durationInFrames={122}><ScreenFX clip="particles_gold" opacity={0.45} loopDur={60}/></Sequence>
 
       <Sequence from={END_START} durationInFrames={STORY_TOTAL-END_START}><EndCard/></Sequence>
 
-      {/* HERO-мограф (по одному, чисто) */}
+      {/* HERO-мограф */}
       <Sequence from={128} durationInFrames={110}><CostCounter/></Sequence>
       <Sequence from={300} durationInFrames={48}><Converge/></Sequence>
       <Sequence from={348} durationInFrames={21}><FeatureStamp icon="chat" word="МЕССЕНДЖЕР"/></Sequence>
@@ -156,7 +188,12 @@ export const StoryReel: React.FC = () => {
       <Sequence from={400} durationInFrames={30}><FeatureStamp icon="chart" word="ПРОДВИЖЕНИЕ"/></Sequence>
       <Sequence from={430} durationInFrames={49}><FeatureStamp icon="coin" word="ЗАРАБОТОК"/></Sequence>
       <Sequence from={716} durationInFrames={66}><IncomeGraph/></Sequence>
-      <Sequence from={716} durationInFrames={66}><LottieAsset name="coins" size={240} top={150} left={420} loop/></Sequence>
+
+      {/* === LOTTIE-АССЕТЫ (LottieFiles) — видимые библиотечные элементы === */}
+      <Sequence from={252} durationInFrames={50}><LottieAsset name="loader2" size={180} top={720} left={450} loop/></Sequence>{/* открытие приложения */}
+      <Sequence from={676} durationInFrames={44}><LottieAsset name="check1" size={300} top={560} left={390} loop/></Sequence>{/* сертификат — печать */}
+      <Sequence from={720} durationInFrames={80}><LottieAsset name="burst1" size={1080} top={200} left={0} loop opacity={0.95}/></Sequence>{/* деньги — конфетти */}
+      <Sequence from={720} durationInFrames={70}><LottieAsset name="coins" size={230} top={150} left={425} loop/></Sequence>
 
       <Grain/>
       {/* субтитр прячем там, где HERO-мограф несёт текст (счётчик/фичи/доход) */}

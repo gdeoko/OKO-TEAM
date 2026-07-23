@@ -3,15 +3,17 @@ import { AbsoluteFill, OffthreadVideo, staticFile, useCurrentFrame, useVideoConf
 import { Lottie } from "@remotion/lottie";
 import { LIME } from "./mograph";
 import { LOTTIE } from "./lottieData";
+import { LIB } from "./lottieLib";
 
 const E = Easing.bezier(0.16,1,0.3,1);
+const ALL:Record<string,any> = {...LOTTIE, ...LIB}; // 5 библиотек: LottieFiles + локальные Lottie
 
-// Lottie-ассет (статический импорт — без async, без пустых кадров)
-export const LottieAsset: React.FC<{name:string; size?:number; top?:number; left?:number; loop?:boolean; opacity?:number; style?:React.CSSProperties}> =
- ({name,size=300,top,left,loop=false,opacity=1,style}) => {
-  const data = LOTTIE[name];
+// Lottie-ассет из библиотеки (статический импорт — без async, без пустых кадров)
+export const LottieAsset: React.FC<{name:string; size?:number; top?:number; left?:number; loop?:boolean; opacity?:number; filter?:string; style?:React.CSSProperties}> =
+ ({name,size=300,top,left,loop=false,opacity=1,filter,style}) => {
+  const data = ALL[name];
   if(!data) return null;
-  return <div style={{position:"absolute",top,left,width:size,height:size,opacity,...style}}>
+  return <div style={{position:"absolute",top,left,width:size,height:size,opacity,filter,...style}}>
     <Lottie animationData={data} loop={loop} playbackRate={1}/>
   </div>;
 };
