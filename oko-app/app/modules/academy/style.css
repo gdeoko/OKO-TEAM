@@ -484,3 +484,19 @@
   .ac-master-pill{animation:none!important;opacity:1!important;transform:none!important}
   .ac-master-card{transition:opacity .2s}
 }
+
+/* ---- Инструменты урока: кнопки-ссылки на приложения (реф) ---- */
+.ac-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+@media(max-width:400px){.ac-tools{grid-template-columns:1fr}}
+.ac-tool{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:14px;text-decoration:none;
+  background:radial-gradient(120% 150% at 0% 0%,rgba(154,255,0,.10),transparent 60%),var(--surface);
+  border:1px solid var(--border);transition:transform .16s cubic-bezier(.34,1.4,.5,1),border-color .2s,box-shadow .2s}
+.ac-tool:active{transform:scale(.97)}
+@media(hover:hover){.ac-tool:hover{border-color:rgba(154,255,0,.4);box-shadow:0 8px 22px rgba(0,0,0,.28)}}
+.ac-tool-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ac-tool-b b{font-size:14.5px;color:var(--text)}
+.ac-tool-b small{font-size:11.5px;color:var(--dim);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-tool-go{flex-shrink:0;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--lime);color:#0a0a0a}
+.ac-tool-go svg.i{width:14px;height:14px}
+:root[data-theme="light"] .ac-tool{background:radial-gradient(120% 150% at 0% 0%,rgba(110,200,0,.12),transparent 60%),var(--surface)}

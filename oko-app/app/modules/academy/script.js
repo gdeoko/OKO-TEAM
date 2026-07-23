@@ -6,6 +6,56 @@
 const AC_VIDEO_URL = 'https://true-journey-418.higgsfield.app/media/oko_lesson1_web.mp4'; // урок 1, хостится на домене приложения
 const AC_PASS = 70;
 
+/* ================= РЕЕСТР ИНСТРУМЕНТОВ (реф-ссылки в кнопках уроков) =================
+   Кнопки «Инструменты урока» авто-подставляются по инструментам, упомянутым в слайдах.
+   url — куда ведёт кнопка. Реф-ссылки (наша выгода) добавлять сюда же в поле url:
+   как только у OKO есть партнёрская ссылка на инструмент — меняем url на неё. */
+const AC_TOOLS = {
+  'chatgpt':     {name:'ChatGPT',       url:'https://chatgpt.com',            note:'Универсальный ИИ для текста'},
+  'claude':      {name:'Claude',        url:'https://claude.ai',              note:'Король длинных текстов и кода'},
+  'claude code': {name:'Claude Code',   url:'https://claude.com/claude-code', note:'Код по описанию словами'},
+  'gemini':      {name:'Gemini',        url:'https://gemini.google.com',      note:'Свежий поиск + связка с Google'},
+  'midjourney':  {name:'Midjourney',    url:'https://midjourney.com',         note:'Лучшая эстетика картинок'},
+  'flux':        {name:'Flux',          url:'https://blackforestlabs.ai',     note:'Фотореализм почти бесплатно'},
+  'nano banana': {name:'Nano Banana',   url:'https://gemini.google.com',      note:'Правки и текст прямо на картинке'},
+  'higgsfield':  {name:'Higgsfield',    url:'https://higgsfield.ai',          note:'Все модели в одном окне'},
+  'veo':         {name:'Veo',           url:'https://deepmind.google/models/veo/', note:'Видео премиум-качества + звук'},
+  'kling':       {name:'Kling',         url:'https://klingai.com',            note:'Кино за копейки'},
+  'runway':      {name:'Runway',        url:'https://runwayml.com',           note:'Видео под маркетинг и монтаж'},
+  'elevenlabs':  {name:'ElevenLabs',    url:'https://elevenlabs.io',          note:'Премиум-озвучка'},
+  'suno':        {name:'Suno',          url:'https://suno.com',               note:'Готовый трек по запросу'},
+  'cursor':      {name:'Cursor',        url:'https://cursor.com',             note:'IDE с ИИ для кода'},
+  'lovable':     {name:'Lovable',       url:'https://lovable.dev',            note:'Приложение по описанию'},
+  'bolt':        {name:'Bolt',          url:'https://bolt.new',               note:'Сайт/приложение в браузере'},
+  'vercel':      {name:'Vercel',        url:'https://vercel.com',             note:'Бесплатный деплой'},
+  'cloudflare':  {name:'Cloudflare',    url:'https://cloudflare.com',         note:'Бесплатный хостинг/CDN'},
+  'n8n':         {name:'n8n',           url:'https://n8n.io',                 note:'Автоматизация связок'},
+  'make':        {name:'Make',          url:'https://make.com',               note:'Визуальная автоматизация'},
+  'zapier':      {name:'Zapier',        url:'https://zapier.com',             note:'Связки 9000+ сервисов'},
+};
+/* Достаём инструменты, упомянутые в слайдах урока (в <b>…</b>), уникально и по порядку. */
+function acLessonTools(L){
+  const seen = new Set(), out = [];
+  const hay = (L.slides||[]).map(s=>(s.pts||[]).join(' ')).join(' ').toLowerCase();
+  // сначала многословные ключи (higgsfield soul → higgsfield), затем одиночные
+  for(const key of Object.keys(AC_TOOLS)){
+    if(seen.has(key)) continue;
+    if(hay.includes(key)){ seen.add(key); out.push(AC_TOOLS[key]); }
+  }
+  return out;
+}
+function acToolsHtml(L){
+  const tools = acLessonTools(L);
+  if(!tools.length) return '';
+  return `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Инструменты урока</h2>
+    <p class="dim" style="font-size:12.5px;line-height:1.5;margin:-2px 0 12px">Открывай прямо из урока — пробуй на практике.</p>
+    <div class="ac-tools">${tools.map(t=>`
+      <a class="ac-tool" href="${t.url}" target="_blank" rel="noopener noreferrer">
+        <span class="ac-tool-b"><b>${esc(t.name)}</b><small>${esc(t.note)}</small></span>
+        <span class="ac-tool-go">${I('chev')}</span>
+      </a>`).join('')}</div>`;
+}
+
 /* ================= КУРС: 5 УРОКОВ ================= */
 const AC_COURSE = [
 
@@ -1182,6 +1232,8 @@ function acLessonHtml(){
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Конспект</h2>
     ${acNotesHtml()}
+
+    ${acToolsHtml(L)}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
     <div class="card" id="acTestBox"></div>
