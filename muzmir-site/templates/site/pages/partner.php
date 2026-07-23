@@ -77,20 +77,33 @@ $icoStep4 = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 ob_start(); ?>
 <style>
 .pn-hero{position:relative;overflow:hidden}
+/* мягкое золотое сияние за интро */
+.pn-hero::before{content:"";position:absolute;left:50%;top:-90px;width:min(640px,120%);height:420px;
+  transform:translateX(-50%);z-index:0;pointer-events:none;
+  background:radial-gradient(55% 55% at 50% 40%,var(--gold-soft),transparent 70%)}
+.pn-hero .container{position:relative;z-index:1}
 .pn-hero .ribbon{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;
   background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink);font-weight:700;
-  font-size:.86rem;letter-spacing:.02em;margin-bottom:16px}
+  font-size:.86rem;letter-spacing:.02em;margin-bottom:16px;box-shadow:var(--shadow-card)}
 .pn-hero .ribbon svg{width:15px;height:15px;stroke:var(--gold-2)}
+[data-theme="dark"] .pn-hero .ribbon{color:var(--gold)}
 
-.pn-reward{display:flex;align-items:center;gap:34px;flex-wrap:wrap;justify-content:center;text-align:left}
+.pn-reward{position:relative;display:flex;align-items:center;gap:34px;flex-wrap:wrap;justify-content:center;text-align:left}
+/* ореол за кольцом-процентом */
+.pn-reward .stat-ring{position:relative}
+.pn-reward .stat-ring::before{content:"";position:absolute;inset:-10px;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle,var(--gold-soft),transparent 68%)}
 .pn-reward .ring-num b{font-family:var(--ff-display);font-weight:800;font-size:2rem;color:var(--gold-2)}
 .pn-reward .txt{flex:1 1 320px;min-width:280px}
 .pn-reward .txt h2{margin-top:0}
 @media(max-width:640px){.pn-reward{flex-direction:column;text-align:center;gap:22px}}
 
 .pn-perks{margin-top:22px}
-.pn-perks .perk{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
-.pn-perks .perk svg{flex:0 0 auto;width:22px;height:22px;stroke:var(--gold-2);margin-top:1px}
+.pn-perks .perk{display:flex;gap:14px;align-items:flex-start;margin-bottom:14px}
+.pn-perks .perk .perk-ic{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.pn-perks .perk .perk-ic svg{width:20px;height:20px;stroke:var(--gold-2)}
 .pn-perks .perk b{color:var(--text)}
 .pn-perks .perk p{color:var(--muted);margin:2px 0 0;font-size:.92rem}
 </style>
@@ -145,9 +158,9 @@ ob_start(); ?>
             организационного взноса участников, которые указали Ваш промокод при подаче заявки.
           </p>
           <div class="pn-perks">
-            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Ежемесячный отчёт</b><p>Начисления отражаются в отчёте, который Оргкомитет присылает партнёру каждый месяц.</p></div></div>
-            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Без минимальной суммы</b><p>Минимального порога для выплаты нет - Вы получаете вознаграждение с первой же оплаты.</p></div></div>
-            <div class="perk"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M4 12l5 5L20 6"/></svg><div><b>Персональный промокод</b><p>Отдельный код и ссылка закрепляются за Вами - все оплаты по ним учитываются автоматически.</p></div></div>
+            <div class="perk"><span class="perk-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 12l5 5L20 6"/></svg></span><div><b>Ежемесячный отчёт</b><p>Начисления отражаются в отчёте, который Оргкомитет присылает партнёру каждый месяц.</p></div></div>
+            <div class="perk"><span class="perk-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 12l5 5L20 6"/></svg></span><div><b>Без минимальной суммы</b><p>Минимального порога для выплаты нет - Вы получаете вознаграждение с первой же оплаты.</p></div></div>
+            <div class="perk"><span class="perk-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M4 12l5 5L20 6"/></svg></span><div><b>Персональный промокод</b><p>Отдельный код и ссылка закрепляются за Вами - все оплаты по ним учитываются автоматически.</p></div></div>
           </div>
         </div>
       </div>

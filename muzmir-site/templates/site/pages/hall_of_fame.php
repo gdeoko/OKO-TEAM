@@ -109,27 +109,61 @@ $svg = [
 ob_start(); ?>
 <style>
 /* ── Аллея Славы (scoped) ── */
-.hof-hero{position:relative;text-align:center;max-width:760px;margin:0 auto}
+.hof-hero{position:relative;text-align:center;max-width:760px;margin:0 auto;z-index:1}
+/* Мягкое золотое сияние-ореол за интро */
+.hof-hero::before{content:"";position:absolute;left:50%;top:-40px;width:min(560px,120%);height:360px;
+  transform:translateX(-50%);z-index:-1;pointer-events:none;
+  background:radial-gradient(60% 60% at 50% 34%,var(--gold-soft),transparent 70%)}
 .hof-hero .eyebrow{justify-content:center}
 .hof-hero h1{font-family:var(--ff-display);font-size:clamp(2.1rem,7vw,3.4rem);line-height:1.05;margin:6px 0 0;
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hof-hero p{color:var(--text-dim);font-size:1.08rem;margin:18px auto 0;max-width:600px}
-.hof-star{width:76px;height:76px;margin:0 auto 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink)}
+.hof-star{position:relative;width:84px;height:84px;margin:0 auto 6px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%,var(--gold-soft),transparent 72%),var(--panel);
+  border:1px solid var(--glass-brd);color:var(--gold-ink);box-shadow:var(--shadow-glow)}
 [data-theme="dark"] .hof-star{color:var(--gold)}
-.hof-star svg{width:38px;height:38px}
+.hof-star svg{width:40px;height:40px;filter:drop-shadow(0 2px 6px rgba(201,168,76,.4))}
+/* дышащий ореол-звезда */
+.hof-star::before,.hof-star::after{content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--gold) 42%,transparent);animation:hofPulse 3.4s ease-out infinite}
+.hof-star::after{animation-delay:1.7s}
+@keyframes hofPulse{0%{transform:scale(.82);opacity:.75}70%,100%{transform:scale(1.4);opacity:0}}
+/* Декоративные искры вокруг интро */
+.hof-spark{position:absolute;color:var(--gold);opacity:.5;pointer-events:none;z-index:-1;
+  animation:hofTwinkle 4.6s ease-in-out infinite}
+.hof-spark svg{display:block;width:100%;height:100%}
+.hof-spark.s1{width:18px;height:18px;left:8%;top:26%;animation-delay:.2s}
+.hof-spark.s2{width:12px;height:12px;right:11%;top:16%;animation-delay:1.1s}
+.hof-spark.s3{width:22px;height:22px;right:6%;top:58%;animation-delay:2s}
+.hof-spark.s4{width:14px;height:14px;left:13%;top:70%;animation-delay:2.9s}
+@keyframes hofTwinkle{0%,100%{opacity:.16;transform:scale(.8) rotate(0)}50%{opacity:.6;transform:scale(1.1) rotate(20deg)}}
 
-/* Карточка лауреата */
-.lau-card{display:flex;flex-direction:column;gap:12px;overflow:hidden}
-.lau-top{display:flex;align-items:center;gap:12px}
-.lau-ava{width:48px;height:48px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
+/* Карточка лауреата - «звезда на Аллее» */
+.lau-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+/* верхняя золотая грань */
+.lau-card::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.65}
+/* световой блик по диагонали при наведении */
+.lau-card::before{content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;z-index:2;pointer-events:none;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--gold) 22%,transparent),transparent);
+  transform:skewX(-18deg);transition:left .7s ease}
+@media(hover:hover){.lau-card:hover::before{left:130%}}
+.lau-rank{position:absolute;top:14px;right:16px;font-family:var(--ff-display);font-weight:800;
+  font-size:1.5rem;line-height:1;color:transparent;background:var(--grad-gold-text);
+  -webkit-background-clip:text;background-clip:text;opacity:.28;letter-spacing:.02em}
+.lau-top{display:flex;align-items:center;gap:12px;padding-right:34px}
+.lau-ava{position:relative;width:52px;height:52px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+.lau-ava::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--glass-brd)}
 .lau-ava svg{width:24px;height:24px}
 .lau-name{font-family:var(--ff-serif);font-weight:700;font-size:1.14rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
-.lau-city{color:var(--muted);font-size:.82rem;margin-top:2px}
+.lau-city{color:var(--muted);font-size:.82rem;margin-top:2px;display:flex;align-items:center;gap:5px}
+.lau-city svg{width:13px;height:13px;color:var(--gold-2);flex:none}
 .lau-work{color:var(--text-dim);font-size:.95rem;margin:0;overflow-wrap:anywhere}
 .lau-work b{color:var(--gold-2);font-weight:700}
-.lau-comp{margin-top:auto;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.lau-comp{margin-top:auto;color:var(--muted);font-size:.85rem;overflow-wrap:anywhere;
+  padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}
+.lau-comp svg{width:14px;height:14px;color:var(--gold-2);flex:none}
 
 /* KPI-достижения */
 .kpi{display:flex;gap:16px;align-items:flex-start}
@@ -140,10 +174,13 @@ ob_start(); ?>
 .kpi p{margin:0;color:var(--text-dim);font-size:.95rem}
 
 /* Степени наград */
-.tier-row{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
+.tier-row{position:relative;display:flex;gap:14px;align-items:flex-start;padding:16px 6px 16px 0;border-bottom:1px solid var(--line);
+  border-radius:14px;transition:background .25s}
 .tier-row:last-child{border-bottom:0}
-.tier-ic{width:44px;height:44px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold)}
+@media(hover:hover){.tier-row:hover{background:var(--gold-soft)}}
+.tier-ic{width:46px;height:46px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);color:var(--gold);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 .tier-ic svg{width:22px;height:22px}
 .tier-row h3{margin:0 0 4px;color:var(--text);font-size:1.05rem}
 .tier-row p{margin:0;color:var(--text-dim);font-size:.94rem}
@@ -161,22 +198,38 @@ ob_start(); ?>
 /* География - чипы */
 .geo-chips{display:flex;flex-wrap:wrap;gap:10px}
 .geo-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;min-height:40px;border-radius:999px;
-  background:var(--panel);border:1.5px solid var(--glass-brd);color:var(--text-dim);font-weight:600;font-size:.9rem}
+  background:var(--panel);border:1.5px solid var(--glass-brd);color:var(--text-dim);font-weight:600;font-size:.9rem;
+  box-shadow:var(--shadow-card);backdrop-filter:blur(10px);transition:transform .2s,border-color .2s,color .2s}
 .geo-chip svg{width:16px;height:16px;color:var(--gold);flex:none}
+@media(hover:hover){.geo-chip:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold-2)}}
 
-/* Звезда навсегда - шаги */
-.star-steps{display:grid;gap:18px}
-.star-step{display:flex;gap:16px;align-items:flex-start}
-.star-num{width:46px;height:46px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
+/* Звезда навсегда - шаги (соединены золотой тропой) */
+.star-steps{position:relative;display:grid;gap:18px}
+.star-steps::before{content:"";position:absolute;left:22px;top:24px;bottom:24px;width:2px;
+  background:linear-gradient(180deg,var(--gold),var(--line));opacity:.55}
+.star-step{position:relative;display:flex;gap:16px;align-items:flex-start;z-index:1}
+.star-num{position:relative;width:46px;height:46px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
   font-family:var(--ff-display);font-size:1.35rem;background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+.star-num::after{content:"";position:absolute;inset:-4px;border-radius:16px;border:1px solid var(--glass-brd)}
 .star-step h3{margin:4px 0 6px;color:var(--text)}
 .star-step p{margin:0;color:var(--text-dim);font-size:.96rem}
 
-.hof-cta{text-align:center;max-width:620px;margin:0 auto}
+/* CTA в орнаментальной рамке */
+.hof-cta{position:relative;text-align:center;max-width:640px;margin:0 auto;padding:38px 30px;
+  border:1.5px solid var(--gold);border-radius:var(--radius);background:var(--panel);
+  box-shadow:var(--shadow-3d),var(--shadow-glow);backdrop-filter:blur(14px);overflow:hidden}
+.hof-cta::before{content:"";position:absolute;inset:8px;border:1px dashed color-mix(in srgb,var(--gold) 34%,transparent);
+  border-radius:13px;pointer-events:none}
+.hof-cta::after{content:"";position:absolute;left:50%;top:-30%;width:70%;height:80%;transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 40%,var(--gold-soft),transparent 70%);pointer-events:none}
+.hof-cta h2{position:relative}
 .hof-cta .btn{margin:6px}
+.hof-cta-star{width:44px;height:44px;margin:0 auto 8px;color:var(--gold);opacity:.85}
+.hof-cta-star svg{width:100%;height:100%;filter:drop-shadow(0 2px 6px rgba(201,168,76,.4))}
 
 @media (max-width:560px){
   .hof-hero p{font-size:1rem}
+  .hof-cta{padding:32px 20px}
 }
 </style>
 
@@ -184,6 +237,10 @@ ob_start(); ?>
 <section class="section">
   <div class="container">
     <div class="hof-hero reveal">
+      <span class="hof-spark s1" aria-hidden="true"><?= $svg['star'] ?></span>
+      <span class="hof-spark s2" aria-hidden="true"><?= $svg['star'] ?></span>
+      <span class="hof-spark s3" aria-hidden="true"><?= $svg['star'] ?></span>
+      <span class="hof-spark s4" aria-hidden="true"><?= $svg['star'] ?></span>
       <div class="hof-star"><?= $svg['star'] ?></div>
       <p class="eyebrow">Звезда навсегда</p>
       <h1>Аллея Славы</h1>
@@ -225,11 +282,12 @@ ob_start(); ?>
           $name = $l['is_group'] && !empty($l['group_name']) ? $l['group_name'] : $l['full_name'];
           $res = (string) ($l['res'] ?? ''); ?>
         <div class="card card--3d lau-card reveal" style="--i:<?= (int) $i ?>">
+          <span class="lau-rank" aria-hidden="true"><?= sprintf('%02d', $i + 1) ?></span>
           <div class="lau-top">
             <div class="lau-ava"><?= $svg[$l['is_group'] ? 'music' : 'star'] ?></div>
             <div>
               <div class="lau-name"><?= h($name ?: 'Участник конкурса') ?></div>
-              <?php if (!empty($l['city'])): ?><div class="lau-city"><?= h($l['city']) ?></div><?php endif; ?>
+              <?php if (!empty($l['city'])): ?><div class="lau-city"><?= $svg['pin'] ?><?= h($l['city']) ?></div><?php endif; ?>
             </div>
           </div>
           <?php if ($res !== ''): ?><span class="badge <?= $badgeOf($res) ?>"><?= h($res) ?></span><?php endif; ?>
@@ -240,7 +298,7 @@ ob_start(); ?>
             </p>
           <?php endif; ?>
           <?php if (!empty($l['comp_name'])): ?>
-            <div class="lau-comp"><?= h($l['comp_type'] === 'international' ? 'Международный конкурс' : 'Всероссийский конкурс') ?> «<?= h($l['comp_name']) ?>»</div>
+            <div class="lau-comp"><?= $svg['trophy'] ?><?= h($l['comp_type'] === 'international' ? 'Международный конкурс' : 'Всероссийский конкурс') ?> «<?= h($l['comp_name']) ?>»</div>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
@@ -353,6 +411,7 @@ ob_start(); ?>
 <section class="section section--tint">
   <div class="container">
     <div class="hof-cta reveal">
+      <div class="hof-cta-star" aria-hidden="true"><?= $svg['star'] ?></div>
       <h2>Ваше имя может стать следующим</h2>
       <p style="color:var(--text-dim);margin:14px auto 22px">Участие в конкурсах центра бесплатное, без ограничений по возрасту и числу номинаций. Подайте заявку - и начните путь на Аллею Славы.</p>
       <a class="btn btn--primary btn--lg" href="<?= url('/apply') ?>">Подать заявку</a>

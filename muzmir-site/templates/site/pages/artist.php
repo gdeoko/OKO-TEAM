@@ -106,8 +106,13 @@ ob_start(); ?>
   background:radial-gradient(130% 150% at 8% -20%,var(--gold-soft),transparent 55%)}
 .pro-ava{position:relative;flex:0 0 auto;width:118px;height:118px;border-radius:50%;
   background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-glow)}
-.pro-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--glass-brd)}
+  font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-btn)}
+.pro-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--gold) 42%,transparent)}
+/* вращающийся золотой ореол-медальон */
+.pro-ava::before{content:"";position:absolute;inset:-13px;border-radius:50%;z-index:-1;
+  background:conic-gradient(from 0deg,var(--gold),transparent 25%,var(--gold) 50%,transparent 75%,var(--gold));
+  opacity:.32;animation:proRing 16s linear infinite}
+@keyframes proRing{to{transform:rotate(360deg)}}
 .pro-id{position:relative;min-width:0}
 .pro-id .eyebrow{margin-bottom:2px}
 .pro-id h1{margin:.06em 0;font-size:clamp(1.55rem,4.4vw,2.5rem);line-height:1.06;overflow-wrap:anywhere}
@@ -132,11 +137,16 @@ ob_start(); ?>
 .honeycomb{display:flex;flex-wrap:wrap;justify-content:center;margin:0 auto 8px;max-width:920px}
 .hex{width:206px;margin:10px 8px 38px;position:relative}
 .hex:nth-child(even){margin-top:46px}
-.hex-inner{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
+.hex-inner{position:relative;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0% 50%);
   background:linear-gradient(160deg,var(--panel-solid),var(--gold-soft));border:1px solid var(--glass-brd);
   padding:34px 22px;aspect-ratio:.92;display:flex;flex-direction:column;justify-content:center;gap:6px;
-  text-align:center;box-shadow:var(--shadow-card);transition:transform .25s,box-shadow .25s;color:inherit}
-@media(hover:hover){.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-glow)}}
+  text-align:center;box-shadow:var(--shadow-card);transition:transform .25s,box-shadow .25s;color:inherit;overflow:hidden}
+/* верхний блик внутри соты */
+.hex-inner::before{content:"";position:absolute;left:50%;top:-30%;width:80%;height:60%;transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 50%,color-mix(in srgb,var(--gold) 20%,transparent),transparent 70%);pointer-events:none}
+@media(hover:hover){.hex-inner:hover{transform:scale(1.06);box-shadow:var(--shadow-glow);border-color:var(--gold)}}
+.hex-star{width:22px;height:22px;margin:0 auto;color:var(--gold);opacity:.85}
+.hex-star svg{width:100%;height:100%}
 .hex-result{font-family:var(--ff-display);letter-spacing:.02em;color:var(--gold-2);font-size:1.05rem;line-height:1.15}
 .hex-comp{font-size:.82rem;color:var(--text);font-weight:600;overflow-wrap:anywhere}
 .hex-date{font-size:.74rem;color:var(--muted)}
@@ -157,6 +167,7 @@ ob_start(); ?>
   border:1px solid var(--glass-brd);color:var(--text);font-size:.88rem;font-weight:600;box-shadow:var(--shadow-card);
   backdrop-filter:blur(10px);transition:border-color .2s,color .2s,transform .2s}
 @media(hover:hover){.art-chip:hover{border-color:var(--gold);color:var(--gold-2);transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.pro-ava::before{animation:none}}
 </style>
 
 <section class="section">
@@ -211,6 +222,7 @@ ob_start(); ?>
         <?php foreach ($items as $it): ?>
           <div class="hex">
             <a class="hex-inner" href="<?= url('/verify/' . $it['number']) ?>">
+              <span class="hex-star" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span>
               <span class="hex-result"><?= h($it['d_result'] ?: $it['a_result'] ?: 'Диплом') ?></span>
               <span class="hex-comp"><?= h($it['comp_name'] ?: 'Конкурс') ?></span>
               <span class="hex-date"><?= h(ru_date(substr((string) $it['d_created'], 0, 10))) ?></span>

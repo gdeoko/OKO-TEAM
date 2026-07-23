@@ -137,48 +137,83 @@ $svg = [
 ob_start(); ?>
 <style>
 /* ── Блог / Новости (scoped) ── */
+.blog-intro{position:relative;z-index:0}
+.blog-intro::before{content:"";position:absolute;left:50%;top:-30px;width:min(560px,110%);height:280px;
+  transform:translateX(-50%);z-index:0;pointer-events:none;
+  background:radial-gradient(60% 60% at 50% 30%,var(--gold-soft),transparent 70%)}
+.blog-intro>*{position:relative;z-index:1}
 .blog-lead{max-width:680px;margin:0 auto;text-align:center;color:var(--text-dim)}
 
 /* Рубрики */
-.rub-card{display:flex;flex-direction:column;gap:12px}
-.rub-ic{width:52px;height:52px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold)}
+.rub-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.rub-card::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--gold),transparent);opacity:0;transition:opacity .3s}
+@media(hover:hover){.rub-card:hover::after{opacity:.8}}
+.rub-idx{position:absolute;top:14px;right:16px;font-family:var(--ff-display);font-weight:800;font-size:1.4rem;
+  line-height:1;color:transparent;background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;opacity:.24}
+.rub-ic{width:54px;height:54px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);color:var(--gold);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s,box-shadow .3s}
 .rub-ic svg{width:26px;height:26px}
-.rub-card h3{margin:0;color:var(--text);font-size:1.1rem}
+@media(hover:hover){.rub-card:hover .rub-ic{transform:scale(1.08);box-shadow:var(--shadow-glow)}}
+.rub-card h3{margin:0;color:var(--text);font-size:1.1rem;padding-right:28px}
 .rub-card p{margin:0;color:var(--text-dim);font-size:.94rem}
 
 /* Карточка статьи */
-.post-card{display:flex;flex-direction:column;gap:12px}
+.post-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.post-card::before{content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;z-index:2;pointer-events:none;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--gold) 18%,transparent),transparent);
+  transform:skewX(-18deg);transition:left .7s ease}
+@media(hover:hover){.post-card:hover::before{left:130%}}
 .post-card h3{margin:6px 0 0;color:var(--text);overflow-wrap:anywhere}
 .post-card p{margin:0;color:var(--text-dim);font-size:.95rem;overflow-wrap:anywhere}
-.post-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:6px}
-.post-date{color:var(--muted);font-size:.84rem}
+.post-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:12px;
+  border-top:1px solid var(--line)}
+.post-date{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.84rem}
+.post-date svg{width:14px;height:14px;color:var(--gold-2);flex:none}
 .post-more{display:inline-flex;align-items:center;gap:6px;color:var(--gold-2);font-weight:700;font-size:.9rem}
-.post-more svg{width:16px;height:16px}
+.post-more svg{width:16px;height:16px;transition:transform .25s}
+@media(hover:hover){.post-card:hover .post-more svg,.feed-card:hover .post-more svg{transform:translateX(4px)}}
 
 /* Живая лента */
-.feed-card{display:flex;gap:14px;align-items:flex-start}
-.feed-ic{width:46px;height:46px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold)}
+.feed-card{position:relative;display:flex;gap:14px;align-items:flex-start;overflow:hidden}
+.feed-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--gold),transparent);opacity:.7}
+.feed-ic{width:48px;height:48px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);color:var(--gold);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
 .feed-ic svg{width:22px;height:22px}
 .feed-card h3{margin:0 0 4px;color:var(--text);font-size:1.02rem;overflow-wrap:anywhere}
 .feed-card p{margin:0;color:var(--muted);font-size:.86rem}
 .feed-card .badge{margin-top:8px}
 
 /* Заглушка «скоро» */
-.blog-soon{width:74px;height:74px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink)}
+.blog-soon{position:relative;width:80px;height:80px;margin:0 auto 20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%,var(--gold-soft),transparent 72%),var(--panel);
+  border:1px solid var(--glass-brd);color:var(--gold-ink);box-shadow:var(--shadow-glow)}
 [data-theme="dark"] .blog-soon{color:var(--gold)}
+.blog-soon::before{content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);animation:blogPulse 3s ease-out infinite}
+@keyframes blogPulse{0%{transform:scale(.85);opacity:.7}70%,100%{transform:scale(1.32);opacity:0}}
 .blog-soon svg{width:36px;height:36px}
 
 /* Подписка */
-.blog-sub{text-align:center;max-width:620px;margin:0 auto}
+.blog-sub{position:relative;text-align:center;max-width:640px;margin:0 auto;padding:38px 30px;
+  border:1.5px solid var(--gold);border-radius:var(--radius);background:var(--panel);
+  box-shadow:var(--shadow-3d),var(--shadow-glow);backdrop-filter:blur(14px);overflow:hidden}
+.blog-sub::before{content:"";position:absolute;inset:8px;border:1px dashed color-mix(in srgb,var(--gold) 34%,transparent);
+  border-radius:13px;pointer-events:none}
+.blog-sub::after{content:"";position:absolute;left:50%;top:-30%;width:70%;height:80%;transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 40%,var(--gold-soft),transparent 70%);pointer-events:none}
+.blog-sub h2,.blog-sub p{position:relative}
 .blog-sub .btn{margin:6px}
+@media(prefers-reduced-motion:reduce){.blog-soon::before{animation:none;display:none}}
+@media(max-width:560px){.blog-sub{padding:32px 20px}}
 </style>
 
 <!-- Интро -->
 <section class="section">
-  <div class="container">
+  <div class="container blog-intro">
     <div class="section-head reveal">
       <p class="eyebrow">Блог и новости</p>
       <h2>Живём искусством вместе</h2>
@@ -204,7 +239,7 @@ ob_start(); ?>
           <h3><?= h($p['title'] ?: 'Без названия') ?></h3>
           <p><?= h($excerpt($p['body'])) ?></p>
           <div class="post-meta">
-            <span class="post-date"><?= h(ru_date($p['updated_at'])) ?></span>
+            <span class="post-date"><?= $svg['calendar'] ?><?= h(ru_date($p['updated_at'])) ?></span>
             <a class="post-more" href="<?= url('/blog/' . rawurlencode($p['slug'])) ?>">Читать <?= $svg['arrow'] ?></a>
           </div>
         </article>
@@ -241,6 +276,7 @@ ob_start(); ?>
     <div class="grid grid-3">
       <?php foreach ($rubrics as $i => [$ic, $title, $descr]): ?>
         <div class="card rub-card reveal" style="--i:<?= (int) $i ?>">
+          <span class="rub-idx" aria-hidden="true"><?= sprintf('%02d', $i + 1) ?></span>
           <div class="rub-ic"><?= $svg[$ic] ?></div>
           <h3><?= h($title) ?></h3>
           <p><?= h($descr) ?></p>

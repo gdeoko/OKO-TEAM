@@ -71,6 +71,18 @@ ob_start(); ?>
   border-radius:var(--radius);padding:34px 30px 0;box-shadow:var(--shadow-3d),var(--shadow-glow);
   text-align:center;overflow:hidden}
 [data-theme="dark"] .cert{background:var(--panel);backdrop-filter:blur(14px)}
+/* тонкая гильош-текстура (защитный фон) */
+.cert-guilloche{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background:
+    repeating-radial-gradient(circle at 18% 12%,transparent 0 13px,color-mix(in srgb,var(--gold) 8%,transparent) 13px 14px),
+    repeating-radial-gradient(circle at 82% 88%,transparent 0 13px,color-mix(in srgb,var(--gold) 8%,transparent) 13px 14px)}
+[data-theme="dark"] .cert-guilloche{opacity:.35}
+/* световой блик, медленно проходит по сертификату */
+.cert::before{z-index:3}
+.cert-shine{position:absolute;top:0;left:-70%;width:55%;height:100%;z-index:1;pointer-events:none;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--gold) 16%,transparent),transparent);
+  transform:skewX(-16deg);animation:certShine 5.5s ease-in-out 1s infinite}
+@keyframes certShine{0%{left:-70%}45%,100%{left:135%}}
 .cert::before{content:"";position:absolute;inset:9px;border:1px solid var(--glass-brd);border-radius:12px;pointer-events:none;z-index:2}
 .cert::after{content:"";position:absolute;inset:13px;border:1px dashed color-mix(in srgb,var(--gold) 34%,transparent);border-radius:9px;pointer-events:none;z-index:2}
 /* водяной знак-лого */
@@ -83,11 +95,23 @@ ob_start(); ?>
 .cert-corner.tr{top:16px;right:16px;transform:scaleX(-1)}
 .cert-corner.bl{bottom:16px;left:16px;transform:scaleY(-1)}
 .cert-corner.br{bottom:16px;right:16px;transform:scale(-1)}
-.cert-inner{position:relative;z-index:1}
-.cert-logo{width:88px;height:88px;margin:0 auto 12px;border-radius:50%;
-  box-shadow:0 4px 22px rgba(201,168,76,.34);border:1.5px solid var(--glass-brd)}
+.cert-inner{position:relative;z-index:2}
+/* лого-медальон с золотым ореолом */
+.cert-medallion{position:relative;width:104px;height:104px;margin:0 auto 12px;display:grid;place-items:center}
+.cert-medallion::before{content:"";position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,var(--gold),transparent 25%,var(--gold) 50%,transparent 75%,var(--gold));
+  opacity:.28;animation:certRing 14s linear infinite}
+.cert-medallion::after{content:"";position:absolute;inset:6px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--gold) 40%,transparent)}
+@keyframes certRing{to{transform:rotate(360deg)}}
+.cert-logo{position:relative;z-index:1;width:88px;height:88px;border-radius:50%;
+  box-shadow:0 4px 22px rgba(201,168,76,.34);border:1.5px solid var(--glass-brd);background:var(--panel-solid)}
 .cert-org{font-family:var(--ff-serif);font-weight:700;color:var(--gold-ink);font-size:1.05rem;letter-spacing:.01em;margin-bottom:2px}
-.cert-sub{font-family:var(--ff-script);font-size:1.15rem;color:var(--gold-2);line-height:1;margin-bottom:16px}
+.cert-sub{font-family:var(--ff-script);font-size:1.15rem;color:var(--gold-2);line-height:1;margin-bottom:14px}
+/* лавровый разделитель */
+.cert-laurel{display:flex;align-items:center;justify-content:center;gap:12px;color:var(--gold);opacity:.7;margin:0 auto 14px}
+.cert-laurel svg{width:26px;height:26px}
+.cert-laurel .ln{width:54px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+.cert-laurel .ln.r{transform:scaleX(-1)}
 .cert-seal{display:inline-flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--mint) 15%,transparent);
   color:var(--mint);font-weight:700;padding:8px 16px;border-radius:999px;font-size:.9rem;
   border:1px solid color-mix(in srgb,var(--mint) 34%,transparent)}
@@ -128,6 +152,8 @@ ob_start(); ?>
 @media(prefers-reduced-motion:reduce){
   .vfy-ring,.vfy-tick,.vfy-cross{animation:none;stroke-dashoffset:0}
   .vfy-badge--ok::after{animation:none;display:none}
+  .cert-shine{animation:none;display:none}
+  .cert-medallion::before{animation:none}
 }
 </style>
 
@@ -175,6 +201,8 @@ ob_start(); ?>
 
       <!-- Премиум-сертификат -->
       <div class="cert reveal">
+        <div class="cert-guilloche" aria-hidden="true"></div>
+        <div class="cert-shine" aria-hidden="true"></div>
         <img class="cert-wm" src="<?= h(logo_data_uri()) ?>" alt="" aria-hidden="true">
         <svg class="cert-corner tl" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M4 40V14a10 10 0 0 1 10-10h26"/><path d="M10 40V17a7 7 0 0 1 7-7h23"/><circle cx="10" cy="40" r="2.4" fill="currentColor" stroke="none"/></svg>
         <svg class="cert-corner tr" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M4 40V14a10 10 0 0 1 10-10h26"/><path d="M10 40V17a7 7 0 0 1 7-7h23"/><circle cx="10" cy="40" r="2.4" fill="currentColor" stroke="none"/></svg>
@@ -182,9 +210,16 @@ ob_start(); ?>
         <svg class="cert-corner br" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M4 40V14a10 10 0 0 1 10-10h26"/><path d="M10 40V17a7 7 0 0 1 7-7h23"/><circle cx="10" cy="40" r="2.4" fill="currentColor" stroke="none"/></svg>
 
         <div class="cert-inner">
-          <img class="cert-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип КЦ «Музыкальный Мир»">
+          <div class="cert-medallion">
+            <img class="cert-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип КЦ «Музыкальный Мир»">
+          </div>
           <div class="cert-org">Культурный центр «Музыкальный Мир»</div>
           <div class="cert-sub">наградной документ</div>
+          <div class="cert-laurel" aria-hidden="true">
+            <span class="ln"></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5 5.4.5-4.1 3.6 1.2 5.3L12 18.9 7.1 21.4l1.2-5.3L4.2 7.5 9.6 7z"/></svg>
+            <span class="ln r"></span>
+          </div>
           <div class="cert-seal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg>
             Подтверждено реестром

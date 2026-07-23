@@ -76,10 +76,16 @@ ob_start(); ?>
   font-family:var(--ff-serif);font-size:3.4em;line-height:.78;float:left;
   padding:.04em .1em 0 0;color:var(--gold-2);font-weight:700;
 }
+.goals-wrap .card{position:relative;overflow:hidden}
+.goals-wrap .card::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--gold),transparent);opacity:0;transition:opacity .3s}
+@media(hover:hover){.goals-wrap .card:hover::after{opacity:.8}}
 .goal-card{display:flex;gap:16px;align-items:flex-start}
-.goal-ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;
-  color:var(--gold-deep);background:var(--gold-soft);border:1px solid var(--glass-brd)}
+.goal-ic{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;
+  color:var(--gold-deep);background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s,box-shadow .3s}
 [data-theme="dark"] .goal-ic{color:var(--gold)}
+@media(hover:hover){.goals-wrap .card:hover .goal-ic{transform:scale(1.08);box-shadow:var(--shadow-glow)}}
 .goal-card p{margin:0;color:var(--text-dim);line-height:1.5}
 .goal-n{font-family:var(--ff-display);font-weight:800;color:var(--gold-2);font-size:.9rem;
   margin-bottom:2px;display:block;letter-spacing:.04em}
@@ -91,12 +97,14 @@ ob_start(); ?>
 .chip-wrap{display:flex;flex-wrap:wrap;gap:10px}
 .chip{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;
   background:var(--panel);border:1px solid var(--glass-brd);color:var(--text);font-weight:600;
-  font-size:.9rem;backdrop-filter:blur(10px);box-shadow:var(--shadow-card)}
+  font-size:.9rem;backdrop-filter:blur(10px);box-shadow:var(--shadow-card);transition:transform .2s,border-color .2s,color .2s}
 .chip svg{width:16px;height:16px;color:var(--gold-deep);flex:none}
 [data-theme="dark"] .chip svg{color:var(--gold)}
+@media(hover:hover){.chip:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold-2)}}
 .legal-card{display:flex;gap:18px;align-items:flex-start}
-.legal-ic{flex:none;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;
-  color:#fff;background:var(--grad-gold);box-shadow:var(--shadow-glow)}
+.legal-ic{position:relative;flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+  color:#fff;background:var(--grad-gold);box-shadow:var(--shadow-btn)}
+.legal-ic::after{content:"";position:absolute;inset:-4px;border-radius:19px;border:1px solid var(--glass-brd)}
 .legal-card h3{margin:0 0 8px}
 .legal-card p{margin:0;color:var(--text-dim);line-height:1.55}
 @media(max-width:560px){
@@ -128,7 +136,7 @@ ob_start(); ?>
       <div class="gold-rule"></div>
       <p>Тринадцать целей из официального положения - каждая направлена на развитие и признание таланта.</p>
     </div>
-    <div class="grid grid-3">
+    <div class="grid grid-3 goals-wrap">
       <?php foreach ($goals as $i => $g): ?>
         <div class="card reveal" style="--i:<?= $i ?>">
           <div class="goal-card">

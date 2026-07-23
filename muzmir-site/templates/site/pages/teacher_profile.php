@@ -115,8 +115,12 @@ ob_start(); ?>
   background:radial-gradient(130% 150% at 8% -20%,var(--gold-soft),transparent 55%)}
 .tp-ava{position:relative;flex:0 0 auto;width:118px;height:118px;border-radius:50%;
   background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-glow)}
-.tp-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px solid var(--glass-brd)}
+  font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-btn)}
+.tp-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--gold) 42%,transparent)}
+.tp-ava::before{content:"";position:absolute;inset:-13px;border-radius:50%;z-index:-1;
+  background:conic-gradient(from 0deg,var(--gold),transparent 25%,var(--gold) 50%,transparent 75%,var(--gold));
+  opacity:.32;animation:tpRing 16s linear infinite}
+@keyframes tpRing{to{transform:rotate(360deg)}}
 .tp-id{position:relative;min-width:0}
 .tp-id .eyebrow{margin-bottom:2px}
 .tp-id h1{margin:.06em 0;font-size:clamp(1.55rem,4.4vw,2.5rem);line-height:1.06;overflow-wrap:anywhere}
@@ -133,10 +137,12 @@ ob_start(); ?>
 .medal-panel .bar-lbl b{color:var(--gold-2);font-family:var(--ff-display);letter-spacing:.02em}
 
 /* Ученики */
-.tp-student{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;
-  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:16px 20px;
-  box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:12px;transition:transform .2s,box-shadow .2s}
-@media(hover:hover){.tp-student:hover{transform:translateY(-2px);box-shadow:var(--shadow-glow)}}
+.tp-student{position:relative;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;
+  background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:16px 20px 16px 24px;
+  box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:12px;transition:transform .2s,box-shadow .2s;overflow:hidden}
+.tp-student::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--gold),transparent);opacity:.75}
+@media(hover:hover){.tp-student:hover{transform:translateY(-2px);box-shadow:var(--shadow-glow);border-color:var(--gold-2)}}
 .tp-student b{font-family:var(--ff-display);letter-spacing:.02em;color:var(--text);font-size:1.04rem}
 .tp-student .who{display:flex;align-items:center;gap:14px;min-width:0}
 .tp-student .mono{flex:0 0 auto;width:46px;height:46px;border-radius:50%;background:var(--gold-soft);
@@ -150,9 +156,12 @@ ob_start(); ?>
   backdrop-filter:blur(10px);transition:border-color .2s,color .2s,transform .2s}
 @media(hover:hover){.tp-chip:hover{border-color:var(--gold);color:var(--gold-2);transform:translateY(-2px)}}
 
-.tp-rv{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:22px;
-  box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:14px}
+.tp-rv{position:relative;background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:22px 24px 22px;
+  box-shadow:var(--shadow-card);backdrop-filter:blur(12px);margin-bottom:14px;overflow:hidden}
+.tp-rv::before{content:"\201C";position:absolute;top:-6px;right:16px;font-family:var(--ff-display);
+  font-size:5rem;line-height:1;color:var(--gold);opacity:.14;pointer-events:none}
 .tp-rv .stars{color:var(--gold);letter-spacing:2px}
+@media(prefers-reduced-motion:reduce){.tp-ava::before{animation:none}}
 </style>
 
 <section class="section">
