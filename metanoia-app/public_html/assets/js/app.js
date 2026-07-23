@@ -3134,7 +3134,11 @@ function wireSwitch(id, key, cb) {
 }
 
 function applyTheme(mode) {
-  document.documentElement.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+  const dark = mode === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  // Цвет системной панели браузера под текущую тему (светлый крем / тёмный navy)
+  const tc = document.querySelector('meta[name="theme-color"]');
+  if (tc) tc.setAttribute('content', dark ? '#14232f' : '#FAF8F5');
 }
 
 // Тема: явный выбор пользователя (mt_theme) важнее; иначе — по системе
