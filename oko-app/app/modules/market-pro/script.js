@@ -1177,7 +1177,7 @@ function mpSearchSummary(s){
   if(f.mpVerif) parts.push('проверенные');
   if(f.type && f.type!=='all') parts.push(MP_TYPE_RU[f.type]||'');
   if(f.min || f.max) parts.push(((f.min?'от '+fmtN(+f.min):'')+(f.max?' до '+fmtN(+f.max):'')).trim()+' ₽');
-  if(f.rating) parts.push(f.rating+'★+');
+  if(f.rating) parts.push('от '+f.rating+' звёзд');
   parts.push(mpMatchListings(s).length+' предлож.');
   return parts.filter(Boolean).join(' · ');
 }

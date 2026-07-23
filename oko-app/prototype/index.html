@@ -8109,7 +8109,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.94</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.95</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11788,7 +11788,7 @@ function regObScene(key){
         <div class="reg-ob-list">
           <div class="reg-ob-list-top">
             <div class="reg-ob-list-img">${I('briefcase')}</div>
-            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small></div>
+            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ${I('star')}</small></div>
             <span class="reg-ob-price">2 500 ₽</span>
           </div>
           <span class="reg-ob-escrow">${I('lock')} Сделка защищена эскроу</span>
@@ -22208,7 +22208,7 @@ function mpSearchSummary(s){
   if(f.mpVerif) parts.push('проверенные');
   if(f.type && f.type!=='all') parts.push(MP_TYPE_RU[f.type]||'');
   if(f.min || f.max) parts.push(((f.min?'от '+fmtN(+f.min):'')+(f.max?' до '+fmtN(+f.max):'')).trim()+' ₽');
-  if(f.rating) parts.push(f.rating+'★+');
+  if(f.rating) parts.push('от '+f.rating+' звёзд');
   parts.push(mpMatchListings(s).length+' предлож.');
   return parts.filter(Boolean).join(' · ');
 }
@@ -24254,7 +24254,7 @@ const DC_NOTIFS = [
   {ic:'comment',   who:'Алина Крид',  t:'прокомментировала кейс: «Забираю формулу хука себе»', time:'19 мин', g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
   {ic:'money',     who:'Партнёрка',   t:'начисление +$24.90 за оплату PRO по твоей ссылке', time:'27 мин', g:'Сегодня', unread:true, act:()=>{ showTab('partner'); }},
   {ic:'briefcase', who:'Биржа OKO',   t:'новый отклик на заказ «Упаковка канала под ключ»', time:'38 мин', g:'Сегодня', unread:true, act:()=>{ showTab('mini'); if(typeof openMa==='function') openMa('market'); }},
-  {ic:'star',      who:'Дарья Лунёва',t:'оставила отзыв 5★: «Контент-завод ведёт всё сам»', time:'1 ч',    g:'Сегодня', unread:false, act:()=>{}},
+  {ic:'star',      who:'Дарья Лунёва',t:'оставила отзыв на 5 звёзд: «Контент-завод ведёт всё сам»', time:'1 ч',    g:'Сегодня', unread:false, act:()=>{}},
   {ic:'crown',     who:'OKO Академия',t:'урок 4 «Монтаж под бит» готов — продолжи поток', time:'2 ч',    g:'Сегодня', unread:false, act:()=>{ showTab('mini'); }},
   {ic:'users',     who:'+12 подписчиков', t:'подписались на твой канал за сегодня', time:'3 ч',  g:'Сегодня', unread:false, act:()=>{}},
   {ic:'rocket',    who:'OKO',         t:'твой кейс вышел в топ рекомендаций — охват +40%', time:'вчера', g:'Ранее', unread:false, act:()=>{ showTab('feed'); }},

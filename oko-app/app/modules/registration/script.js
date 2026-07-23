@@ -510,7 +510,7 @@ function regObScene(key){
         <div class="reg-ob-list">
           <div class="reg-ob-list-top">
             <div class="reg-ob-list-img">${I('briefcase')}</div>
-            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ★</small></div>
+            <div class="reg-ob-list-b"><b>Монтаж Reels под ключ</b><small>исполнитель · 4.9 ${I('star')}</small></div>
             <span class="reg-ob-price">2 500 ₽</span>
           </div>
           <span class="reg-ob-escrow">${I('lock')} Сделка защищена эскроу</span>

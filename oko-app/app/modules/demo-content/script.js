@@ -221,7 +221,7 @@ const DC_NOTIFS = [
   {ic:'comment',   who:'Алина Крид',  t:'прокомментировала кейс: «Забираю формулу хука себе»', time:'19 мин', g:'Сегодня', unread:true, act:()=>{ showTab('feed'); }},
   {ic:'money',     who:'Партнёрка',   t:'начисление +$24.90 за оплату PRO по твоей ссылке', time:'27 мин', g:'Сегодня', unread:true, act:()=>{ showTab('partner'); }},
   {ic:'briefcase', who:'Биржа OKO',   t:'новый отклик на заказ «Упаковка канала под ключ»', time:'38 мин', g:'Сегодня', unread:true, act:()=>{ showTab('mini'); if(typeof openMa==='function') openMa('market'); }},
-  {ic:'star',      who:'Дарья Лунёва',t:'оставила отзыв 5★: «Контент-завод ведёт всё сам»', time:'1 ч',    g:'Сегодня', unread:false, act:()=>{}},
+  {ic:'star',      who:'Дарья Лунёва',t:'оставила отзыв на 5 звёзд: «Контент-завод ведёт всё сам»', time:'1 ч',    g:'Сегодня', unread:false, act:()=>{}},
   {ic:'crown',     who:'OKO Академия',t:'урок 4 «Монтаж под бит» готов — продолжи поток', time:'2 ч',    g:'Сегодня', unread:false, act:()=>{ showTab('mini'); }},
   {ic:'users',     who:'+12 подписчиков', t:'подписались на твой канал за сегодня', time:'3 ч',  g:'Сегодня', unread:false, act:()=>{}},
   {ic:'rocket',    who:'OKO',         t:'твой кейс вышел в топ рекомендаций — охват +40%', time:'вчера', g:'Ранее', unread:false, act:()=>{ showTab('feed'); }},
