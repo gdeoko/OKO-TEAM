@@ -130,10 +130,14 @@ $titleTone = function (string $res): string {
 
 ob_start(); ?>
 <style>
-.res-wrap{max-width:1080px;margin:0 auto}
-.res-hero{text-align:center;max-width:720px;margin:0 auto 30px}
+.res-wrap{max-width:1080px;margin:0 auto;position:relative}
+.res-hero{text-align:center;max-width:720px;margin:0 auto 30px;position:relative}
+.res-hero::before{content:"";position:absolute;left:50%;top:-60px;width:min(680px,120%);height:360px;transform:translateX(-50%);
+  background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:-1}
 
 .res-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
+.res-stats .stat{position:relative;overflow:hidden}
+.res-stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 
 .res-search{position:sticky;top:74px;z-index:5;margin:0 auto 34px;max-width:560px}
 .res-search .field--float{margin:0}
@@ -141,14 +145,24 @@ ob_start(); ?>
 [data-theme="dark"] .res-search .rs-ic{color:var(--gold)}
 .res-count{text-align:center;color:var(--muted);font-size:.86rem;margin:-20px 0 30px}
 
+.res-search .field--float>input{box-shadow:var(--shadow-card)}
 .res-nom{margin-bottom:40px}
 .res-nom > h3{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);
-  padding-bottom:12px;margin:0 0 20px;color:var(--text)}
+  padding-bottom:12px;margin:0 0 20px;color:var(--text);position:relative}
+.res-nom > h3::after{content:"";position:absolute;left:0;bottom:-1px;width:64px;height:2px;background:var(--grad-gold);border-radius:2px}
 .res-nom > h3 .n-count{font-family:var(--ff-body);font-size:.8rem;font-weight:700;color:var(--gold-ink);
   background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:999px;padding:3px 11px}
 [data-theme="dark"] .res-nom > h3 .n-count{color:var(--gold)}
 
-.pcard{display:flex;flex-direction:column;gap:14px;padding:22px}
+.pcard{display:flex;flex-direction:column;gap:14px;padding:22px;position:relative;overflow:hidden}
+.pcard-corner{position:absolute;top:12px;right:12px;width:16px;height:16px;pointer-events:none;
+  border-top:1.5px solid var(--gold-2);border-right:1.5px solid var(--gold-2);border-top-right-radius:5px;opacity:.4;transition:opacity .3s}
+@media(hover:hover){.pcard:hover .pcard-corner{opacity:1}}
+/* Гран-при - выделенная карточка */
+.pcard--gp{background:radial-gradient(150% 100% at 100% 0,var(--gold-soft),transparent 55%),var(--panel)}
+.pcard--gp::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-gold);opacity:.9}
+.pcard--gp .pcard-corner{opacity:.85;border-color:var(--gold)}
+.pcard--lau::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-2);opacity:.5}
 .pcard-top{display:flex;gap:16px;align-items:center}
 .pring{flex:none;width:88px;height:88px}
 .pring .ring-num{font-size:1.5rem}
@@ -257,7 +271,8 @@ ob_start(); ?>
             $ringPct = $score !== null ? max(0, min(100, $score * 10)) : 0;
             $needle = mb_strtolower(trim($displayName . ' ' . $r['full_name'] . ' ' . $r['diploma_number'] . ' ' . $r['work_title'] . ' ' . $r['city']));
           ?>
-            <div class="card pcard reveal" style="--i:<?= $i ?>" data-item data-search="<?= h($needle) ?>">
+            <div class="card pcard pcard--<?= $tone ?> reveal" style="--i:<?= $i ?>" data-item data-search="<?= h($needle) ?>">
+              <span class="pcard-corner" aria-hidden="true"></span>
               <div class="pcard-top">
                 <?php if ($score !== null): ?>
                   <div class="stat-ring pring" data-value="<?= $ringPct ?>">

@@ -269,7 +269,8 @@ ob_start(); ?>
 
     <div class="grid grid-3 calx-cards">
       <?php foreach ($cards as $i => $card): $c = $card['c']; $paid = (int) $c['is_paid'] === 1; ?>
-        <article class="card calx-card reveal" id="comp-<?= h($c['slug']) ?>" style="--i:<?= $i % 3 ?>">
+        <article class="card calx-card reveal calx-card--<?= h($card['phase']) ?>" id="comp-<?= h($c['slug']) ?>" style="--i:<?= $i % 3 ?>">
+          <span class="calx-accent" aria-hidden="true"></span>
           <div class="calx-card__head">
             <span class="badge badge--<?= $card['badgeClass'] ?>"><?= h($card['badgeLabel']) ?></span>
             <span class="calx-type"><?= h($typeLabel($c['type'])) ?></span>
@@ -377,6 +378,10 @@ ob_start(); ?>
 </section>
 
 <style>
+.calx-top{position:relative;overflow:hidden}
+.calx-top::before{content:"";position:absolute;left:50%;top:-45%;width:min(820px,130%);height:560px;transform:translateX(-50%);
+  background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:0}
+.calx-top .container{position:relative;z-index:1}
 .calx-top .cal-yearbar{margin-top:14px}
 .cal-yearbar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
 .cal-yearnav{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;
@@ -394,7 +399,18 @@ ob_start(); ?>
 .btn--sm svg{width:15px;height:15px}
 
 .calx-cards{align-items:stretch}
-.calx-card{display:flex;flex-direction:column;padding:24px;scroll-margin-top:110px}
+.calx-card{display:flex;flex-direction:column;padding:24px 24px 24px 27px;scroll-margin-top:110px;position:relative;overflow:hidden}
+/* Левая фазовая полоса-акцент (жизненный цикл конкурса) */
+.calx-accent{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);border-radius:0 3px 3px 0;opacity:.85}
+.calx-card--open .calx-accent,.calx-card--ending .calx-accent,.calx-card--last .calx-accent{background:var(--mint)}
+.calx-card--soon .calx-accent{background:var(--gold-2)}
+.calx-card--judging .calx-accent,.calx-card--awaiting .calx-accent{background:var(--warning)}
+.calx-card--results .calx-accent{background:var(--grad-gold)}
+.calx-card--done .calx-accent{background:var(--line)}
+/* Тонкая золотая засечка в верхнем правом углу */
+.calx-card::after{content:"";position:absolute;top:13px;right:13px;width:16px;height:16px;pointer-events:none;
+  border-top:1.5px solid var(--gold-2);border-right:1.5px solid var(--gold-2);border-top-right-radius:5px;opacity:.45;transition:opacity .3s}
+@media(hover:hover){.calx-card:hover::after{opacity:1}}
 .calx-card__head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .calx-type{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
 .calx-card__title{font-size:1.16rem;line-height:1.25;margin:0 0 6px}
@@ -431,6 +447,15 @@ ob_start(); ?>
 .calx-tl-ico svg{width:100%;height:100%}
 .calx-tl-item--results::before{background:var(--mint)!important;border-color:var(--mint)!important}
 .calx-tl-item--end::before{background:var(--error)!important;border-color:var(--error)!important}
+/* Глубина и орнамент таймлайна */
+.calx-tl-month{position:relative;overflow:hidden}
+.calx-tl-month::before{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;pointer-events:none;
+  background:radial-gradient(closest-side,var(--gold-soft),transparent 70%);opacity:.7}
+.calx-tl-title{position:relative;z-index:1}
+.calx-window .bar{box-shadow:inset 0 1px 3px rgba(139,111,31,.12)}
+.calx-window .bar>i{box-shadow:0 0 8px rgba(201,168,76,.5)}
+.calx-kpi .stat{position:relative;overflow:hidden}
+.calx-kpi .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 
 @media (max-width:960px){.calx-kpi{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:640px){.calx-card__actions .btn{flex:1 1 100%}}

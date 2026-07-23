@@ -88,11 +88,25 @@ ob_start(); ?>
 /* ---- Поддержка министерства ---- */
 .ms-lead{max-width:760px;margin:0 auto;color:var(--text-dim)}
 .ms-lead strong{color:var(--gold-deep);font-weight:700}
+.ms-stats-glow{position:relative}
+.ms-stats-glow::before{content:"";position:absolute;left:50%;top:-70px;width:min(700px,120%);height:340px;transform:translateX(-50%);
+  background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:0}
+.ms-stats-glow>*{position:relative;z-index:1}
+.stats .stat{position:relative;overflow:hidden}
+.stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
+.partners img{filter:grayscale(.2)}
+@media(hover:hover){.partners img:hover{filter:none}}
 
 /* Инфографика охвата */
 .ms-cover{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:stretch}
 .ms-dwrap{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);
-  padding:24px 26px;backdrop-filter:blur(10px)}
+  padding:24px 26px;backdrop-filter:blur(10px);box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.ms-dwrap::before{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;pointer-events:none;
+  background:radial-gradient(closest-side,var(--gold-soft),transparent 70%);opacity:.7}
+.ms-dwrap::after{content:"";position:absolute;bottom:14px;right:14px;width:18px;height:18px;pointer-events:none;
+  border-bottom:1.5px solid var(--gold-2);border-right:1.5px solid var(--gold-2);border-bottom-right-radius:5px;opacity:.45}
+.ms-dwrap>*{position:relative;z-index:1}
+.ms-dtrack i{box-shadow:0 0 8px rgba(201,168,76,.4)}
 .ms-dwrap h3{margin:0 0 4px;font-family:var(--ff-serif);font-size:1.12rem;color:var(--gold-2)}
 .ms-dwrap .ms-dsub{margin:0 0 18px;font-size:.84rem;color:var(--muted)}
 .ms-dbar{display:grid;gap:6px;margin-bottom:14px}
@@ -119,7 +133,11 @@ ob_start(); ?>
 }
 
 /* Карточка письма */
-.ms-item{display:flex;flex-direction:column;padding:0;overflow:hidden;cursor:pointer;text-align:left}
+.ms-item{display:flex;flex-direction:column;padding:0;overflow:hidden;cursor:pointer;text-align:left;
+  transition:transform .25s,box-shadow .25s,border-color .25s}
+@media(hover:hover){.ms-item:hover{transform:translateY(-5px);box-shadow:var(--shadow-3d);border-color:var(--gold-2)}
+  .ms-item:hover .ms-zoom{transform:scale(1.08)}}
+.ms-zoom{transition:transform .25s}
 .ms-thumb{position:relative;aspect-ratio:4/3;background:
   radial-gradient(120% 90% at 50% 0,color-mix(in srgb,var(--gold) 16%,transparent),transparent 62%),
   var(--parchment);display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line)}
@@ -201,7 +219,7 @@ ob_start(); ?>
 
 <?php if ($subjectsCount > 0): ?>
 <section class="section section--tint">
-  <div class="container">
+  <div class="container ms-stats-glow">
     <div class="section-head reveal">
       <p class="eyebrow">География поддержки</p>
       <h2>Охват по стране</h2>
