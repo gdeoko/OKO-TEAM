@@ -666,3 +666,130 @@ pre,code{overflow-wrap:anywhere;white-space:pre-wrap}
   .auth-alt{grid-template-columns:1fr}
   .toast-host{width:calc(100vw - 20px)}
 }
+
+/* ══════════════════════════════ PREMIUM DEPTH v3.2 (глубина/богатство, только CSS) ══════════════════════════════ */
+/* Текстуры-токены: нотный паттерн, золотое зерно, гильош, уголки-орнаменты — SVG data-uri / градиенты, без внешних файлов */
+:root{
+  --tex-notes:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cg fill='none' stroke='%23C9A84C' stroke-width='1.4' stroke-linecap='round'%3E%3Cellipse cx='34' cy='104' rx='7.5' ry='5.4' transform='rotate(-18 34 104)'/%3E%3Cpath d='M41 101V64'/%3E%3Cpath d='M41 64q15 4 12 22'/%3E%3Cellipse cx='104' cy='60' rx='6.5' ry='4.8' transform='rotate(-18 104 60)'/%3E%3Cpath d='M110 57V24'/%3E%3Cpath d='M110 24q13 3 10 18'/%3E%3C/g%3E%3C/svg%3E");
+  --tex-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E");
+  --tex-guilloche:repeating-radial-gradient(circle at 50% 50%,transparent 0 7px,rgba(201,168,76,.028) 7px 8px);
+  --cb-tl:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M3 13V3h10' fill='none' stroke='%23C9A84C' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  --cb-tr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M11 3h10v10' fill='none' stroke='%23C9A84C' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  --cb-br:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M21 11v10H11' fill='none' stroke='%23C9A84C' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  --cb-bl:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M13 21H3V11' fill='none' stroke='%23C9A84C' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E");
+  --shadow-inset-top:inset 0 1px 0 rgba(255,255,255,.55);
+  --shadow-inner-gold:inset 0 0 46px rgba(201,168,76,.06);
+}
+[data-theme="dark"]{
+  --tex-guilloche:repeating-radial-gradient(circle at 50% 50%,transparent 0 7px,rgba(232,194,90,.03) 7px 8px);
+  --shadow-inset-top:inset 0 1px 0 rgba(255,255,255,.06);
+  --shadow-inner-gold:inset 0 0 50px rgba(232,194,90,.05);
+}
+
+/* Плёночное золотое зерно на весь фон — убирает «пустую кремовую простыню», едва заметно, за контентом */
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:var(--tex-grain);background-size:180px 180px;opacity:.035;mix-blend-mode:soft-light}
+[data-theme="dark"] body::after{opacity:.05;mix-blend-mode:overlay}
+
+/* Секции: тонкая нотная фактура + приподнятый над ней контент */
+.section::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:var(--tex-notes);background-size:150px 150px;opacity:.045;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent)}
+.section>*{position:relative;z-index:1}
+/* Чередование фонов выразительнее: тёплое свечение сверху + фактура у тонированных/панельных */
+.section--tint{background:
+  radial-gradient(1100px 420px at 50% -8%,var(--gold-soft),transparent 62%),
+  linear-gradient(180deg,transparent,var(--bg-2) 18%,var(--bg-2) 82%,transparent)}
+.section--tint::before{opacity:.06;background-image:var(--tex-notes),var(--tex-guilloche);background-size:150px 150px,auto}
+.section--panel,.section--parchment{background:
+  radial-gradient(900px 380px at 50% -6%,var(--gold-soft),transparent 60%),var(--bg-2)}
+/* Декоративный разделитель-росчерк сверху тонированных секций */
+.section--tint::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;
+  width:min(260px,64%);height:16px;
+  background:
+    radial-gradient(circle at 50% 50%,var(--gold) 0 3px,transparent 3.5px) 50% 50%/16px 16px no-repeat,
+    linear-gradient(90deg,transparent,var(--gold-soft) 22%,var(--gold) 50%,var(--gold-soft) 78%,transparent) 50% 50%/100% 1.5px no-repeat;
+  opacity:.85;filter:drop-shadow(0 0 6px rgba(201,168,76,.4))}
+
+/* Карточки: внутренняя подсветка + верхний глянец + богаче рамка и 3D-глубина */
+.card{box-shadow:var(--shadow-card),var(--shadow-inset-top),var(--shadow-inner-gold)}
+.card::before{background:linear-gradient(135deg,var(--gold-2),transparent 40%,transparent 60%,var(--gold-soft));opacity:.9}
+@media(hover:hover){.card:hover{box-shadow:var(--shadow-3d),var(--shadow-inset-top),var(--shadow-glow);border-color:var(--gold-2)}}
+/* Ключевая карточка (.card--feature/.card--gold): двойная золотая рамка + уголки-орнаменты */
+.card--feature,.card--gold{border-color:transparent;
+  box-shadow:var(--shadow-3d),var(--shadow-inset-top),inset 0 0 0 1px var(--gold-soft),inset 0 0 70px rgba(201,168,76,.08)}
+.card--feature::before,.card--gold::before{background:var(--grad-gold);opacity:1;padding:1.5px}
+.card--feature::after,.card--gold::after{content:"";position:absolute;inset:7px;z-index:2;pointer-events:none;
+  background-image:var(--cb-tl),var(--cb-tr),var(--cb-br),var(--cb-bl);
+  background-repeat:no-repeat;background-position:top left,top right,bottom right,bottom left;background-size:22px 22px}
+@media(hover:hover){.card--feature:hover,.card--gold:hover{transform:translateY(-6px);
+  box-shadow:var(--shadow-3d),var(--shadow-glow),var(--shadow-inset-top),inset 0 0 0 1px var(--gold-2)}}
+
+/* HERO: многослойный фон — золотые лучи, ноты, усиленный ореол лого */
+.hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:repeating-conic-gradient(from 90deg at 50% -14%,rgba(201,168,76,.05) 0deg 2.6deg,transparent 2.6deg 10deg);
+  -webkit-mask-image:radial-gradient(95% 72% at 50% 0%,#000,transparent 72%);
+  mask-image:radial-gradient(95% 72% at 50% 0%,#000,transparent 72%)}
+.hero::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:var(--tex-notes);background-size:170px 170px;opacity:.06;
+  -webkit-mask-image:radial-gradient(120% 92% at 50% 42%,#000,transparent 82%);
+  mask-image:radial-gradient(120% 92% at 50% 42%,#000,transparent 82%)}
+[data-theme="dark"] .hero::before{background:repeating-conic-gradient(from 90deg at 50% -14%,rgba(232,194,90,.06) 0deg 2.6deg,transparent 2.6deg 10deg)}
+.hero-notes{background-image:var(--tex-notes);background-size:160px 160px}
+.hero-media::before{background:
+  radial-gradient(circle,var(--gold-soft),transparent 66%),
+  conic-gradient(from 0deg,transparent,var(--gold-soft) 18%,transparent 34%,var(--gold-soft) 62%,transparent 82%);
+  box-shadow:0 0 0 1px var(--glass-brd) inset,0 0 90px rgba(201,168,76,.22)}
+
+/* Типографика: буквица + золотой росчерк-подчёркивание под h2 */
+.dropcap::first-letter{float:left;font-family:var(--ff-display);font-weight:800;font-size:3.4em;line-height:.78;
+  margin:6px 14px 0 0;background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.section-head h2::after,.section--head h2::after{content:"";display:block;width:64px;height:3px;margin:14px auto 0;border-radius:999px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.75}
+/* Росчерк-разделитель богаче (двойная линия + светящийся ромб) */
+.gold-rule{width:160px;height:14px;background:linear-gradient(90deg,transparent,var(--gold-2) 40%,var(--gold-2) 60%,transparent) center/100% 1.5px no-repeat}
+.gold-rule::after{width:9px;height:9px;box-shadow:0 0 12px var(--gold),0 0 0 4px var(--bg)}
+
+/* Кнопки/бейджи/чипы/шаги: глянец, тонкая рамка, микро-тени */
+.btn--primary{border:1px solid rgba(201,168,76,.5);
+  box-shadow:var(--shadow-btn),var(--shadow-inset-top),inset 0 -2px 6px rgba(139,111,31,.22)}
+.btn--ghost{box-shadow:var(--shadow-soft),var(--shadow-inset-top)}
+.badge{box-shadow:var(--shadow-inset-top),0 2px 7px rgba(139,111,31,.12)}
+[data-theme="dark"] .badge{box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 7px rgba(0,0,0,.35)}
+.badge--intl{background:linear-gradient(135deg,var(--gold-soft),transparent 70%),var(--panel-solid)}
+.hero-trust li{box-shadow:var(--shadow-inset-top),var(--shadow-soft)}
+.step .ic{box-shadow:var(--shadow-card),var(--shadow-inset-top),inset 0 0 22px rgba(201,168,76,.1)}
+
+/* Инфографика: золотые акценты, подсветки, глубина (читаемо в обеих темах) */
+.stat{position:relative;overflow:hidden;box-shadow:var(--shadow-inset-top),var(--shadow-inner-gold)}
+.stat::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.7}
+.kpi{box-shadow:var(--shadow-soft),var(--shadow-inset-top),var(--shadow-inner-gold)}
+.kpi::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:999px;
+  background:var(--grad-gold);box-shadow:0 0 10px rgba(201,168,76,.45)}
+.stat-ring .ring-val{filter:drop-shadow(0 0 8px rgba(201,168,76,.55))}
+.donut{filter:drop-shadow(0 6px 18px rgba(139,111,31,.12))}
+[data-theme="dark"] .donut{filter:drop-shadow(0 6px 20px rgba(0,0,0,.5))}
+.bar,.bar-track{box-shadow:var(--shadow-inset-top),inset 0 1px 3px rgba(139,111,31,.14)}
+.bar>i,.bar-track>i{position:relative;overflow:hidden;box-shadow:0 0 12px rgba(201,168,76,.4),var(--shadow-inset-top)}
+.bar>i::after,.bar-track>i::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  transform:translateX(-100%);animation:barSheen 2.8s ease-in-out infinite}
+.timeline::before{background:linear-gradient(180deg,var(--gold),var(--gold-2) 40%,var(--line));box-shadow:0 0 8px rgba(201,168,76,.3)}
+.timeline-item::before{box-shadow:0 0 0 4px var(--bg),0 0 12px rgba(201,168,76,.6)}
+.map-heat .region{box-shadow:var(--shadow-inset-top);overflow:hidden}
+.map-heat .region::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
+@keyframes barSheen{0%{transform:translateX(-100%)}55%,100%{transform:translateX(200%)}}
+
+/* Обложка карточки конкурса: тонкая внутренняя рамка + мягкая нижняя виньетка для читаемости */
+.comp-card .cc-cover::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 -50px 50px -26px rgba(18,12,2,.42)}
+
+/* Мелкие экраны: облегчаем декор (без переполнений/лишней нагрузки) */
+@media (max-width:640px){
+  .section::before{opacity:.03}
+  .section--tint::after{width:min(180px,60%)}
+  body::after{opacity:.028}
+}
