@@ -1,285 +1,303 @@
 {
- "bed01_neutral.mp3": {
-  "mood": [
-   "driving",
-   "confident",
-   "steady"
-  ],
-  "energy": 0.6,
-  "bpm": 120,
-  "note": "стартовый бэд (плейсхолдер). ПУЛ РАСШИРИТЬ — см. RULES: источник музыки."
- },
- "fs_useful_140481.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 148.8,
-  "src": "freesound:140481",
-  "license": "CC0",
-  "name": "Opening Scene.wav"
- },
- "fs_useful_166748.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 42.0,
-  "src": "freesound:166748",
-  "license": "CC0",
-  "name": "Haunting Sequence in G# or Ab.wav"
- },
- "fs_useful_327575.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 61.0,
-  "src": "freesound:327575",
-  "license": "CC0",
-  "name": "Guitar Background Sample"
- },
- "fs_useful_117358.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 109.8,
-  "src": "freesound:117358",
-  "license": "CC0",
-  "name": "ambient sounds 13.mp3"
- },
- "fs_useful_671900.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 107.3,
-  "src": "freesound:671900",
-  "license": "CC0",
-  "name": "Calm background Music"
- },
- "fs_useful_670039.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 150.0,
-  "src": "freesound:670039",
-  "license": "CC0",
-  "name": "Chill Background Music"
- },
- "fs_useful_117782.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 102.9,
-  "src": "freesound:117782",
-  "license": "CC0",
-  "name": "ambient sounds 14.mp3"
- },
- "fs_useful_271187.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 63.7,
-  "src": "freesound:271187",
-  "license": "CC0",
-  "name": "Glissando Tremolo Vibes.wav"
- },
- "fs_useful_473996.mp3": {
-  "mood": [
-   "confident",
-   "clean",
-   "focused",
-   "steady"
-  ],
-  "bucket": "useful",
-  "dur": 150.8,
-  "src": "freesound:473996",
-  "license": "CC0",
-  "name": "Space Arp F Chords.wav"
- },
- "fs_viral_51239.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 54.4,
-  "src": "freesound:51239",
-  "license": "CC0",
-  "name": "8-bit ElectroHouse.wav"
- },
- "fs_viral_456121.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 98.5,
-  "src": "freesound:456121",
-  "license": "CC0",
-  "name": "Sound library for scratching (100 BPM) by Bronxio"
- },
- "fs_viral_264081.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 133.3,
-  "src": "freesound:264081",
-  "license": "CC0",
-  "name": "Hip Hop beat Chill , calm, music"
- },
- "fs_viral_51278.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 61.4,
-  "src": "freesound:51278",
-  "license": "CC0",
-  "name": "ElectroHouse Cheesy.wav"
- },
- "fs_viral_395037.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 48.5,
-  "src": "freesound:395037",
-  "license": "CC0",
-  "name": "simple relaxing guitar loop"
- },
- "fs_viral_416171.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 158.3,
-  "src": "freesound:416171",
-  "license": "CC0",
-  "name": "Anthony Baldino_Reel Sharing Project.wav"
- },
- "fs_viral_666720.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 184.7,
-  "src": "freesound:666720",
-  "license": "CC0",
-  "name": "energetic"
- },
- "fs_viral_676998.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 97.3,
-  "src": "freesound:676998",
-  "license": "CC0",
-  "name": "Fight Music Synth Tense"
- },
- "fs_viral_545459.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 74.2,
-  "src": "freesound:545459",
-  "license": "CC0",
-  "name": "Epic Synth Orchestral"
- },
- "fs_viral_524240.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 109.2,
-  "src": "freesound:524240",
-  "license": "CC0",
-  "name": "Hard Rock Loop"
- },
- "fs_viral_699618.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 53.6,
-  "src": "freesound:699618",
-  "license": "CC0",
-  "name": "energetic"
- },
- "fs_viral_560759.mp3": {
-  "mood": [
-   "energetic",
-   "driving",
-   "hype",
-   "bold"
-  ],
-  "bucket": "viral",
-  "dur": 57.5,
-  "src": "freesound:560759",
-  "license": "CC0",
-  "name": "Street action"
- }
+"bed01_neutral.mp3": {
+"mood": [
+"driving",
+"confident",
+"steady"
+],
+"energy": 0.6,
+"bpm": 120,
+"note": "стартовый бэд (плейсхолдер). ПУЛ РАСШИРИТЬ — см. RULES: источник музыки."
+},
+"fs_useful_140481.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 148.8,
+"src": "freesound:140481",
+"license": "CC0",
+"name": "Opening Scene.wav"
+},
+"fs_useful_166748.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 42.0,
+"src": "freesound:166748",
+"license": "CC0",
+"name": "Haunting Sequence in G# or Ab.wav"
+},
+"fs_useful_327575.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 61.0,
+"src": "freesound:327575",
+"license": "CC0",
+"name": "Guitar Background Sample"
+},
+"fs_useful_117358.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 109.8,
+"src": "freesound:117358",
+"license": "CC0",
+"name": "ambient sounds 13.mp3"
+},
+"fs_useful_671900.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 107.3,
+"src": "freesound:671900",
+"license": "CC0",
+"name": "Calm background Music"
+},
+"fs_useful_670039.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 150.0,
+"src": "freesound:670039",
+"license": "CC0",
+"name": "Chill Background Music"
+},
+"fs_useful_117782.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 102.9,
+"src": "freesound:117782",
+"license": "CC0",
+"name": "ambient sounds 14.mp3"
+},
+"fs_useful_271187.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 63.7,
+"src": "freesound:271187",
+"license": "CC0",
+"name": "Glissando Tremolo Vibes.wav"
+},
+"fs_useful_473996.mp3": {
+"mood": [
+"confident",
+"clean",
+"focused",
+"steady"
+],
+"bucket": "useful",
+"dur": 150.8,
+"src": "freesound:473996",
+"license": "CC0",
+"name": "Space Arp F Chords.wav"
+},
+"fs_viral_51239.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 54.4,
+"src": "freesound:51239",
+"license": "CC0",
+"name": "8-bit ElectroHouse.wav"
+},
+"fs_viral_456121.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 98.5,
+"src": "freesound:456121",
+"license": "CC0",
+"name": "Sound library for scratching (100 BPM) by Bronxio"
+},
+"fs_viral_264081.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 133.3,
+"src": "freesound:264081",
+"license": "CC0",
+"name": "Hip Hop beat Chill , calm, music"
+},
+"fs_viral_51278.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 61.4,
+"src": "freesound:51278",
+"license": "CC0",
+"name": "ElectroHouse Cheesy.wav"
+},
+"fs_viral_395037.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 48.5,
+"src": "freesound:395037",
+"license": "CC0",
+"name": "simple relaxing guitar loop"
+},
+"fs_viral_416171.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 158.3,
+"src": "freesound:416171",
+"license": "CC0",
+"name": "Anthony Baldino_Reel Sharing Project.wav"
+},
+"fs_viral_666720.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 184.7,
+"src": "freesound:666720",
+"license": "CC0",
+"name": "energetic"
+},
+"fs_viral_676998.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 97.3,
+"src": "freesound:676998",
+"license": "CC0",
+"name": "Fight Music Synth Tense"
+},
+"fs_viral_545459.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 74.2,
+"src": "freesound:545459",
+"license": "CC0",
+"name": "Epic Synth Orchestral"
+},
+"fs_viral_524240.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 109.2,
+"src": "freesound:524240",
+"license": "CC0",
+"name": "Hard Rock Loop"
+},
+"fs_viral_699618.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 53.6,
+"src": "freesound:699618",
+"license": "CC0",
+"name": "energetic"
+},
+"fs_viral_560759.mp3": {
+"mood": [
+"energetic",
+"driving",
+"hype",
+"bold"
+],
+"bucket": "viral",
+"dur": 57.5,
+"src": "freesound:560759",
+"license": "CC0",
+"name": "Street action"
+},
+"fs_viral_671962.mp3": {
+"mood": [
+"epic",
+"driving",
+"bold"
+],
+"energy": 0.8,
+"bpm": 0
+},
+"fs_viral_786566.mp3": {
+"mood": [
+"driving",
+"bold",
+"modern"
+],
+"energy": 0.8,
+"bpm": 0
+}
 }
