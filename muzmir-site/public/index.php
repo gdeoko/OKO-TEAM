@@ -102,6 +102,7 @@ function serve(string $file, array $vars = []): void {
 }
 
 // Динамические маршруты
+if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
 if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) serve('competition', ['slug' => $m[1]]);
 if (preg_match('#^/awards/([a-z0-9\-]+)$#', $route, $m)) serve('awards_competition', ['slug' => $m[1]]);
