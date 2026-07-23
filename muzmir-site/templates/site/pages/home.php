@@ -60,6 +60,8 @@ ob_start(); ?>
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="container">
     <div class="reveal hero-media">
+      <span class="hero-ring" aria-hidden="true"></span>
+      <span class="hero-ring hero-ring--2" aria-hidden="true"></span>
       <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380">
     </div>
     <div class="reveal">
@@ -172,21 +174,41 @@ ob_start(); ?>
     <div class="grid grid-3">
       <?php foreach ($comps as $c): ?>
         <?php
-          $mono = '';
-          foreach (preg_split('/\s+/u', trim((string) $c['name'])) as $w) {
-              if ($w !== '' && mb_strlen($mono) < 2) $mono .= mb_strtoupper(mb_substr($w, 0, 1));
+          $cvName = (string) $c['name'];
+          $cvMono = '';
+          foreach (preg_split('/\s+/u', trim($cvName)) as $cw) {
+              if ($cw !== '' && mb_strlen($cvMono) < 2) $cvMono .= mb_strtoupper(mb_substr($cw, 0, 1));
           }
+          $cvCode = mb_strtoupper(trim((string) ($c['code'] ?? '')));
+          $cvSeed = (int) ($c['id'] ?? 0) % 5;
+          $cvCover = trim((string) ($c['cover'] ?? ''));
+          if ($cvCover !== '') $cvCover = preg_replace('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?~i', '', $cvCover);
           $isOpen = $c['status'] === 'open';
+          $dirName = ['multi' => 'Многожанровый', 'patriotic' => 'Патриотический', 'thematic' => 'Тематический'][$c['direction'] ?? 'multi'] ?? 'Многожанровый';
         ?>
         <a class="card card--3d comp-card reveal" href="<?= url('/competition/'.$c['slug']) ?>">
-          <div class="cc-cover" aria-hidden="true"><?= h($mono) ?></div>
+          <div class="cc-cover cc-cover--s<?= $cvSeed ?>">
+            <span class="cc-fallback" aria-hidden="true">
+              <span class="cc-fallback-glow"></span>
+              <svg class="cc-fallback-pat" viewBox="0 0 200 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <g stroke="currentColor" stroke-width="1.4" fill="none" opacity=".55"><path d="M-10 42h220M-10 72h220M-10 102h220M-10 182h220M-10 212h220"/></g>
+                <g fill="currentColor" opacity=".9"><ellipse cx="46" cy="150" rx="11" ry="8" transform="rotate(-20 46 150)"/><rect x="55" y="96" width="3.2" height="57"/><path d="M58 96c15 4 21 12 16 27 3-15-6-21-16-23z"/><ellipse cx="150" cy="120" rx="9" ry="6.5" transform="rotate(-20 150 120)"/><rect x="157" y="79" width="2.8" height="43"/></g>
+              </svg>
+              <span class="cc-mono"><?= h($cvMono) ?></span>
+              <?php if ($cvCode !== ''): ?><span class="cc-code"><?= h($cvCode) ?></span><?php endif; ?>
+            </span>
+            <?php if ($cvCover !== ''): ?>
+              <img class="cc-img" src="<?= h($cvCover) ?>" alt="Афиша конкурса «<?= h($cvName) ?>»" loading="lazy" decoding="async" onerror="this.remove()">
+              <span class="cc-scrim" aria-hidden="true"></span>
+            <?php endif; ?>
+            <span class="cc-cover-badge badge badge--<?= $isOpen ? 'open' : 'judging' ?>"><?= $isOpen ? 'Приём открыт' : 'Идёт оценка' ?></span>
+          </div>
           <div class="cc-body">
             <div class="cc-badges">
-              <span class="badge badge--<?= $isOpen ? 'open' : 'judging' ?>"><?= $isOpen ? 'Приём открыт' : 'Идёт оценка' ?></span>
               <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
             </div>
-            <h3><?= h($c['name']) ?></h3>
-            <div class="cc-meta"><span>Многожанровый</span><?php if ($c['end_date']): ?><span>· до <?= h(ru_date($c['end_date'])) ?></span><?php endif; ?></div>
+            <h3><?= h($cvName) ?></h3>
+            <div class="cc-meta"><span><?= h($dirName) ?></span><?php if (!empty($c['end_date'])): ?><span>приём до <?= h(ru_date($c['end_date'])) ?></span><?php endif; ?></div>
             <span class="btn btn--ghost btn--block">Подробнее</span>
           </div>
         </a>
@@ -312,6 +334,50 @@ ob_start(); ?>
   </div>
 </section>
 
+<style>
+/* Hero: вращающиеся золотые кольца-ореолы вокруг лого (декор, поверх существующего) */
+.hero-media .hero-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;
+  width:min(430px,94%);aspect-ratio:1;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 0deg,transparent 0 62%,var(--gold) 78%,transparent 92%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));
+  opacity:.55;animation:heroSpin 16s linear infinite}
+.hero-media .hero-ring--2{width:min(360px,80%);opacity:.35;
+  background:conic-gradient(from 180deg,transparent 0 68%,var(--gold-2) 82%,transparent 96%);
+  animation-duration:22s;animation-direction:reverse}
+[data-theme="dark"] .hero-media .hero-ring{background:conic-gradient(from 0deg,transparent 0 62%,var(--gold) 78%,transparent 92%)}
+@keyframes heroSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Премиальные обложки конкурсов (реальная афиша $c['cover'] или богатый фолбэк) */
+.comp-card{padding:0;display:flex;flex-direction:column}
+.comp-card .cc-cover{aspect-ratio:4/5;background:var(--grad-gold);position:relative;overflow:hidden;border-radius:0}
+.comp-card .cc-cover .cc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2;display:block}
+.cc-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:linear-gradient(180deg,rgba(18,12,2,.42) 0,rgba(18,12,2,0) 26%,rgba(18,12,2,0) 60%,rgba(18,12,2,.34) 100%)}
+.cc-fallback{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;overflow:hidden;text-align:center;padding:18px;
+  background:radial-gradient(125% 92% at 50% -12%,rgba(255,255,255,.34),transparent 55%),
+   linear-gradient(150deg,var(--fb-a,#E6C766),var(--fb-b,#C9A84C) 46%,#8B6F1F)}
+.cc-fallback-glow{position:absolute;left:50%;top:66%;width:150%;aspect-ratio:1;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,var(--fb-glow,rgba(255,255,255,.5)),transparent 60%);opacity:.55;pointer-events:none}
+.cc-fallback-pat{position:absolute;inset:0;width:100%;height:100%;color:#fff8e6;opacity:.15;pointer-events:none}
+.cc-mono{position:relative;font-family:var(--ff-display);font-weight:800;color:#fff;line-height:.9;letter-spacing:.02em;
+  font-size:clamp(2.6rem,9vw,3.9rem);text-shadow:0 6px 26px rgba(52,34,0,.42)}
+.cc-code{position:relative;display:inline-flex;align-items:center;font-family:var(--ff-body);font-weight:800;
+  font-size:.72rem;letter-spacing:.26em;text-indent:.26em;color:#3a2a06;background:rgba(255,255,255,.9);
+  border:1px solid rgba(255,255,255,.92);padding:6px 14px;border-radius:999px;box-shadow:0 6px 18px rgba(52,34,0,.22)}
+.cc-cover-badge{position:absolute;top:12px;left:12px;z-index:4;box-shadow:0 4px 16px rgba(0,0,0,.28)}
+.cc-cover--s0{--fb-a:#E6C766;--fb-b:#C9A84C}
+.cc-cover--s1{--fb-a:#F0D488;--fb-b:#B8973B}
+.cc-cover--s2{--fb-a:#E8CE8A;--fb-b:#A98A38;--fb-glow:rgba(245,200,156,.6)}
+.cc-cover--s3{--fb-a:#DEC97E;--fb-b:#8B6F1F;--fb-glow:rgba(143,188,148,.5)}
+.cc-cover--s4{--fb-a:#EAD08A;--fb-b:#BE9C40}
+.comp-card .cc-body{display:flex;flex-direction:column;gap:12px;flex:1;padding:22px}
+.comp-card .cc-body h3{margin:2px 0 0;overflow-wrap:anywhere}
+.comp-card .cc-meta{margin:0}
+.comp-card .btn{margin-top:auto}
+@media (prefers-reduced-motion:reduce){.hero-media .hero-ring{animation:none}}
+</style>
 <script>
 function muzmirSubscribe(e){
   e.preventDefault();
