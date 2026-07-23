@@ -214,7 +214,7 @@ export const CaptionBox: React.FC<{words:{t:string;s:number;e:number}[]; isKey:(
   const pop=interpolate(local,[0,5],[0.82,1],{extrapolateRight:"clamp",easing:E});
   const key=isKey(cur.t);
   const wipe=interpolate(local,[1,7],[0,1],{extrapolateLeft:"clamp",extrapolateRight:"clamp",easing:E});
-  const txt=cur.t.replace(/[—]/g,"").toUpperCase();
+  const txt=cur.t.replace(/[—.,!?:;"«»]/g,"").toUpperCase();
   const fs=Math.min(78,Math.floor(880/(txt.length*0.58)));
   return (
     <div style={{position:"absolute",bottom,width:"100%",textAlign:"center",padding:"0 70px"}}>
