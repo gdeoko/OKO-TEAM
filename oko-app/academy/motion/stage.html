@@ -1,0 +1,165 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:'Mont';src:url('montserrat-900.ttf') format('truetype');font-weight:900}
+@font-face{font-family:'Mont';src:url('montserrat-700.ttf') format('truetype');font-weight:700}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+#stage{position:relative;width:1920px;height:1080px;background:#000;font-family:'Mont',system-ui,sans-serif;color:#fff}
+#bg{position:absolute;inset:0}
+#fg{position:absolute;inset:0}
+.layer{position:absolute;inset:0;opacity:0}
+.pad{position:absolute;left:130px;right:130px;top:120px;bottom:120px}
+.eyebrow{font-weight:900;font-size:34px;letter-spacing:.22em;color:#9AFF00;text-transform:uppercase;opacity:0}
+.title{font-weight:900;line-height:.98;letter-spacing:-.02em;text-transform:uppercase}
+.title .w{display:inline-block;opacity:0;will-change:transform,opacity}
+.lime{color:#9AFF00}
+.sub{font-weight:700;font-size:40px;line-height:1.3;color:#cfe8b0;max-width:1400px}
+.bullets{list-style:none;margin-top:20px}
+.bullets li{display:flex;align-items:flex-start;gap:26px;margin:34px 0;font-weight:700;font-size:46px;line-height:1.2;opacity:0;will-change:transform,opacity}
+.bullets li .mk{flex:none;width:30px;height:6px;border-radius:4px;background:#9AFF00;margin-top:28px;box-shadow:0 0 18px #9AFF00}
+.bullets li b{color:#9AFF00}
+.ico{width:150px;height:150px;opacity:0}
+.ico svg{width:100%;height:100%;stroke:#9AFF00;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.stat{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center}
+.stat .num{font-weight:900;font-size:340px;line-height:.9;color:#9AFF00;letter-spacing:-.03em;text-shadow:0 0 60px rgba(154,255,0,.4)}
+.stat .cap{font-weight:700;font-size:52px;color:#fff;margin-top:10px}
+.quote{font-weight:900;font-size:88px;line-height:1.12;letter-spacing:-.01em;max-width:1500px}
+.quote .q{color:#9AFF00}
+.brandbar{position:absolute;left:130px;bottom:64px;display:flex;align-items:center;gap:18px;font-weight:900;font-size:30px;letter-spacing:.12em;opacity:.9}
+.brandbar .eye{width:44px;height:30px}
+.kbar{position:absolute;left:130px;right:130px;bottom:120px;text-align:center;font-weight:900;font-size:58px;line-height:1.15}
+.kbar .kw{display:inline-block;margin:0 .18em;opacity:.28;transition:none}
+.kbar .kw.on{opacity:1;color:#9AFF00;text-shadow:0 0 24px rgba(154,255,0,.5)}
+.prog{position:absolute;left:0;bottom:0;height:8px;background:#9AFF00;box-shadow:0 0 20px #9AFF00;width:0}
+</style></head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+  <div id="fg"></div>
+  <div class="prog" id="prog"></div>
+</div>
+<script src="gsap.min.js"></script>
+<script>
+const EYE = `<svg class="eye" viewBox="0 0 64 40" fill="none"><path d="M4 22C14 4 50 4 60 22" stroke="#9AFF00" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="21" r="11" fill="#9AFF00"/><circle cx="27" cy="17" r="4" fill="#000"/></svg>`;
+/* ---- палитры (для анти-повторов: seed выбирает) ---- */
+const PALETTES = [
+  {a:'#9AFF00',b:'#0a1400',glow:'rgba(154,255,0,.20)'},
+  {a:'#9AFF00',b:'#001410',glow:'rgba(120,255,180,.18)'},
+  {a:'#B6FF3D',b:'#0d1200',glow:'rgba(180,255,60,.20)'},
+  {a:'#9AFF00',b:'#0a0f14',glow:'rgba(120,200,255,.14)'},
+  {a:'#CFff66',b:'#12100a',glow:'rgba(207,255,102,.18)'},
+];
+let SEED = 0, PAL = PALETTES[0], BGMODE = 0, DUR = 8;
+function rnd(s){ let x=Math.sin(s*99.13+SEED*7.7)*43758.5453; return x-Math.floor(x); }
+/* ---- фон: всегда в движении, детерминирован по t ---- */
+const ctx = document.getElementById('bg').getContext('2d');
+let PARTS=[];
+function initBg(){ PARTS=[]; const n=BGMODE===2?46:64; for(let i=0;i<n;i++){ PARTS.push({x:rnd(i+1),y:rnd(i+55),sp:.25+rnd(i+9)*.7,ph:rnd(i+3)*6.28,r:1.2+rnd(i+7)*2.6}); } }
+function drawBg(t){
+  const W=1920,H=1080; ctx.clearRect(0,0,W,H);
+  // базовый градиент-глоу, дышит
+  const cx=W*(0.5+0.14*Math.sin(t*0.35)), cy=H*(0.42+0.12*Math.cos(t*0.28));
+  let g=ctx.createRadialGradient(cx,cy,60,cx,cy,1200);
+  g.addColorStop(0,PAL.glow); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // подвижная сетка
+  ctx.globalAlpha=0.05; ctx.strokeStyle=PAL.a; ctx.lineWidth=1;
+  const off=(t*22)%64;
+  for(let x=-64+off;x<W;x+=64){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke(); }
+  for(let y=-64+off;y<H;y+=64){ ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke(); }
+  ctx.globalAlpha=1;
+  // частицы-сеть, всегда плывут
+  const pts=PARTS.map((p,i)=>{ const yy=((p.y + t*p.sp*0.06)%1); const xx=((p.x + 0.02*Math.sin(t*0.5+p.ph))%1); return {x:xx*W,y:yy*H,r:p.r}; });
+  ctx.strokeStyle=PAL.a;
+  for(let i=0;i<pts.length;i++){ for(let j=i+1;j<pts.length;j++){ const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y; const d=Math.hypot(dx,dy); if(d<190){ ctx.globalAlpha=(1-d/190)*0.18; ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke(); } } }
+  ctx.globalAlpha=1;
+  for(const p of pts){ ctx.beginPath();ctx.fillStyle=PAL.a;ctx.globalAlpha=0.7;ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fill(); }
+  ctx.globalAlpha=1;
+}
+/* ---- сборка сцены ---- */
+const fg=document.getElementById('fg');
+let TL=null;
+function splitWords(s){ return s.split(' ').map(w=>`<span class="w">${w}</span>`).join(' '); }
+function brandbar(){ return `<div class="brandbar">${EYE}<span>АКАДЕМИЯ OKO</span></div>`; }
+function buildScene(scene){
+  SEED=scene.seed||1; PAL=PALETTES[(scene.pal!=null?scene.pal:SEED)%PALETTES.length]; BGMODE=(scene.bg!=null?scene.bg:SEED)%3; DUR=scene.dur||8;
+  initBg();
+  fg.innerHTML=''; const segs=scene.segs||[];
+  TL=gsap.timeline({paused:true});
+  segs.forEach((sg,idx)=>{
+    const L=document.createElement('div'); L.className='layer'; fg.appendChild(L);
+    const at=sg.at, out=sg.at+sg.len;
+    TL.set(L,{opacity:1},at); TL.set(L,{opacity:0},out-0.01);
+    if(sg.type==='cover'){
+      L.innerHTML=`<div class="pad"><div class="eyebrow" style="font-size:40px">${sg.eyebrow||''}</div>
+        <div class="title" style="font-size:200px;margin-top:26px">${splitWords(sg.title||'')}</div>
+        <div class="sub" style="margin-top:40px">${sg.sub||''}</div></div>${brandbar()}`;
+      const ws=L.querySelectorAll('.title .w'), eb=L.querySelector('.eyebrow'), sub=L.querySelector('.sub');
+      TL.fromTo(eb,{opacity:0,y:-30},{opacity:1,y:0,duration:.5},at+.1);
+      TL.fromTo(ws,{opacity:0,y:120,rotationX:-60},{opacity:1,y:0,rotationX:0,stagger:.08,duration:.7,ease:'back.out(1.7)'},at+.3);
+      TL.fromTo(sub,{opacity:0,y:30},{opacity:1,y:0,duration:.6},at+.7);
+      TL.to(ws,{scale:1.02,transformOrigin:'left',duration:sg.len-1.4,ease:'sine.inOut'},at+.9);
+    } else if(sg.type==='point'){
+      L.innerHTML=`<div class="pad"><div class="eyebrow">${sg.eyebrow||''}</div>
+        <div class="ico">${sg.svg||''}</div>
+        <div class="title" style="font-size:96px;margin-top:14px">${splitWords(sg.title||'')}</div>
+        <ul class="bullets">${(sg.points||[]).map(p=>`<li><span class="mk"></span><span>${p}</span></li>`).join('')}</ul></div>${brandbar()}`;
+      const eb=L.querySelector('.eyebrow'), ico=L.querySelector('.ico'), ws=L.querySelectorAll('.title .w'), lis=L.querySelectorAll('.bullets li');
+      TL.fromTo(eb,{opacity:0,x:-40},{opacity:1,x:0,duration:.4},at+.1);
+      TL.fromTo(ico,{opacity:0,scale:.3,rotation:-30},{opacity:1,scale:1,rotation:0,duration:.6,ease:'back.out(2)'},at+.15);
+      TL.fromTo(ws,{opacity:0,y:60},{opacity:1,y:0,stagger:.05,duration:.5,ease:'power3.out'},at+.35);
+      const perGap=Math.max(.5,(sg.len-1.4)/Math.max(1,lis.length));
+      lis.forEach((li,i)=>{ TL.fromTo(li,{opacity:0,x:80},{opacity:1,x:0,duration:.5,ease:'power3.out'},at+.7+i*perGap); });
+      TL.to(ico,{y:-14,duration:1.6,yoyo:true,repeat:20,ease:'sine.inOut'},at+.8);
+    } else if(sg.type==='stat'){
+      L.innerHTML=`<div class="stat"><div class="num">0</div><div class="cap">${sg.cap||''}</div></div>${brandbar()}`;
+      const num=L.querySelector('.num'), cap=L.querySelector('.cap');
+      const target=sg.value||0, suf=sg.suffix||'';
+      const o={v:0};
+      TL.fromTo(num,{opacity:0,scale:.6},{opacity:1,scale:1,duration:.5,ease:'back.out(1.6)'},at+.2);
+      TL.to(o,{v:target,duration:Math.min(1.8,sg.len-1),ease:'power2.out',onUpdate:()=>{num.textContent=(target%1?o.v.toFixed(1):Math.round(o.v))+suf;}},at+.3);
+      TL.fromTo(cap,{opacity:0,y:30},{opacity:1,y:0,duration:.5},at+.6);
+      TL.to(num,{scale:1.06,duration:1.2,yoyo:true,repeat:10,ease:'sine.inOut'},at+1.2);
+    } else if(sg.type==='quote'){
+      L.innerHTML=`<div class="pad" style="display:flex;align-items:center"><div class="quote">${splitWords(sg.text||'')}</div></div>${brandbar()}`;
+      const ws=L.querySelectorAll('.quote .w');
+      TL.fromTo(ws,{opacity:0,y:40,filter:'blur(12px)'},{opacity:1,y:0,filter:'blur(0px)',stagger:.06,duration:.6,ease:'power2.out'},at+.2);
+    } else if(sg.type==='outro'){
+      L.innerHTML=`<div class="pad" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="eyebrow" style="font-size:40px">${sg.eyebrow||'ИТОГ'}</div>
+        <div class="title" style="font-size:150px;margin-top:20px">${splitWords(sg.title||'')}</div>
+        <div class="sub" style="margin-top:34px">${sg.sub||''}</div></div>${brandbar()}`;
+      const ws=L.querySelectorAll('.title .w'), eb=L.querySelector('.eyebrow'), sub=L.querySelector('.sub');
+      TL.fromTo(eb,{opacity:0},{opacity:1,duration:.4},at+.1);
+      TL.fromTo(ws,{opacity:0,scale:1.4,y:-20},{opacity:1,scale:1,y:0,stagger:.06,duration:.6,ease:'back.out(1.5)'},at+.3);
+      TL.fromTo(sub,{opacity:0,y:20},{opacity:1,y:0,duration:.5},at+.8);
+    }
+  });
+  // караоке-бар (опционально)
+  const kbar=document.createElement('div'); kbar.className='kbar'; kbar.id='kbar'; fg.appendChild(kbar);
+  window.__KWORDS = scene.karaoke||null;
+  TL.duration(DUR);
+  return DUR;
+}
+/* караоке рендерится по t (не через TL) */
+function drawKaraoke(t){
+  const kb=document.getElementById('kbar'); const K=window.__KWORDS; if(!kb||!K){ if(kb)kb.innerHTML=''; return; }
+  // найти активное окно 2-4 слов
+  let cur=-1; for(let i=0;i<K.length;i++){ if(t>=K[i].t){cur=i;} }
+  if(cur<0){ kb.innerHTML=''; return; }
+  const start=Math.max(0,cur-1), win=K.slice(start,start+4);
+  kb.innerHTML=win.map((w,i)=>`<span class="kw ${start+i===cur?'on':''}">${w.w}</span>`).join('');
+}
+window.OKO_build = buildScene;
+window.OKO_seek = function(t){ drawBg(t); if(TL) TL.seek(t); drawKaraoke(t); const p=document.getElementById('prog'); if(p)p.style.width=(Math.min(1,t/DUR)*1920)+'px'; };
+window.OKO_dur = function(){ return DUR; };
+/* real-time проигрывание для записи видео (recordVideo) */
+window.OKO_play = function(){
+  return new Promise(res=>{
+    const t0=performance.now();
+    function loop(){ const t=(performance.now()-t0)/1000; if(t>=DUR){ window.OKO_seek(DUR); return res(true); } window.OKO_seek(t); requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+  });
+};
+</script></body></html>
