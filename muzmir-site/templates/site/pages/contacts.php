@@ -20,13 +20,21 @@ $ico = [
 
 ob_start(); ?>
 <style>
-.contact-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
-.contact-row{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+.contact-info,.contact-form{position:relative;overflow:hidden}
+.contact-info::after{content:"";position:absolute;right:-50px;bottom:-50px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,var(--gold-soft),transparent 70%);pointer-events:none;z-index:0}
+.contact-info>*,.contact-form>*{position:relative;z-index:1}
+.contact-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.contact-row{display:flex;gap:16px;align-items:flex-start;padding:15px 10px 15px 8px;border-bottom:1px solid var(--line);border-radius:12px;transition:background .25s}
 .contact-row:last-child{border-bottom:0}
+@media(hover:hover){.contact-row:hover{background:var(--gold-soft)}.contact-row:hover .ic{background:var(--grad-gold);color:var(--gold-fg);transform:translateY(-2px)}}
 .contact-row .ic{flex:0 0 46px;width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink);box-shadow:inset 0 0 18px rgba(201,168,76,.08)}
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink);box-shadow:inset 0 0 18px rgba(201,168,76,.08);
+  transition:background .25s,color .25s,transform .25s}
 [data-theme="dark"] .contact-row .ic{color:var(--gold)}
 .contact-row .ic svg{width:22px;height:22px}
+.contact-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.contact-actions .btn{flex:1 1 auto;min-width:160px;text-align:center;justify-content:center}
 .contact-row .cr-body{min-width:0;flex:1}
 .contact-row .cr-label{display:block;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
 .contact-row .cr-value{font-family:var(--ff-serif);font-weight:700;font-size:1.08rem;color:var(--text);line-height:1.25;overflow-wrap:anywhere}
@@ -46,7 +54,21 @@ ob_start(); ?>
 [data-theme="dark"] .contact-note svg{color:var(--gold)}
 .contact-note span{font-size:.86rem;color:var(--text-dim);line-height:1.4}
 .map-frame{border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);border:1px solid var(--glass-brd)}
+.map-head{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--glass-brd);backdrop-filter:blur(10px)}
+.map-head .ic{flex:none;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold-ink)}
+[data-theme="dark"] .map-head .ic{color:var(--gold)}
+.map-head .ic svg{width:20px;height:20px}
+.map-head .m-body{min-width:0;flex:1}
+.map-head .m-label{display:block;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.map-head .m-addr{font-family:var(--ff-serif);font-weight:700;color:var(--text);line-height:1.25;overflow-wrap:anywhere}
+.map-head .m-open{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;min-height:42px;border-radius:999px;
+  border:1.5px solid var(--gold);color:var(--gold-ink);font-weight:700;font-size:.88rem;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s}
+[data-theme="dark"] .map-head .m-open{color:var(--gold)}
+.map-head .m-open:hover{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
+.map-head .m-open svg{width:16px;height:16px}
 .map-frame iframe{display:block;width:100%;height:clamp(300px,52vw,460px);border:0}
+@media(max-width:560px){.map-head{flex-wrap:wrap}.map-head .m-open{width:100%;justify-content:center}}
 </style>
 
 <section class="section">
@@ -58,7 +80,7 @@ ob_start(); ?>
     </div>
 
     <div class="grid grid-2">
-      <div class="card reveal">
+      <div class="card contact-info reveal">
         <h3 style="margin-top:0">Как с нами связаться</h3>
         <ul class="contact-list">
           <li class="contact-row">
@@ -105,6 +127,11 @@ ob_start(); ?>
           </li>
         </ul>
 
+        <div class="contact-actions">
+          <a class="btn btn--primary" href="tel:<?= h($hasTwo ? $phone2Raw : $phone1Raw) ?>"><?= $ico['phone'] ?><span>Позвонить</span></a>
+          <a class="btn btn--ghost" href="https://yandex.ru/maps/?text=<?= urlencode(cfgv('org_address')) ?>&z=16" target="_blank" rel="noopener"><?= $ico['pin'] ?><span>Проложить маршрут</span></a>
+        </div>
+
         <div class="contact-note">
           <?= $ico['shield'] ?>
           <span>Звоните с открытого номера - скрытые номера блокируются системой безопасности колл-центра. Результаты конкурсов публикуются только во «ВКонтакте».</span>
@@ -112,7 +139,7 @@ ob_start(); ?>
         <p style="opacity:.7;font-size:.85rem;margin:16px 0 0"><?= h(cfgv('org_reg')) ?></p>
       </div>
 
-      <div class="card reveal">
+      <div class="card contact-form reveal">
         <h3 style="margin-top:0">Написать нам</h3>
         <p style="color:var(--muted);margin-top:0;font-size:.94rem">Оставьте сообщение - Оргкомитет ответит Вам в рабочее время.</p>
         <form method="post" action="<?= url('/api/v1/feedback') ?>" onsubmit="return muzmirFeedback(event)" novalidate>
@@ -144,6 +171,16 @@ ob_start(); ?>
       <div class="gold-rule"></div>
     </div>
     <div class="map-frame reveal">
+      <div class="map-head">
+        <span class="ic"><?= $ico['pin'] ?></span>
+        <div class="m-body">
+          <span class="m-label">Адрес</span>
+          <div class="m-addr"><?= h(cfgv('org_address')) ?></div>
+        </div>
+        <a class="m-open" href="https://yandex.ru/maps/?text=<?= urlencode(cfgv('org_address')) ?>&z=16" target="_blank" rel="noopener">
+          <?= $ico['pin'] ?><span>Открыть в Картах</span>
+        </a>
+      </div>
       <iframe src="https://yandex.ru/map-widget/v1/?text=<?= urlencode(cfgv('org_address')) ?>&z=16"
               loading="lazy" title="Культурный центр «Музыкальный Мир» на карте, <?= h(cfgv('org_address')) ?>"></iframe>
     </div>

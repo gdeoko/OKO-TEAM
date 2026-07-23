@@ -2,8 +2,16 @@
 /** Онлайн-гала-концерты: премиум-видеогалерея (RuTube), фильтры по категориям, привязка к PRO.Культура.РФ. */
 $concerts = all("SELECT * FROM concerts ORDER BY sort DESC, date DESC");
 $categories = [];
-foreach ($concerts as $c) { if ($c['category'] !== '') $categories[$c['category']] = true; }
+$catCounts = [];
+foreach ($concerts as $c) {
+    if ($c['category'] !== '') {
+        $categories[$c['category']] = true;
+        $catCounts[$c['category']] = ($catCounts[$c['category']] ?? 0) + 1;
+    }
+}
 $categories = array_keys($categories);
+
+$icoCal = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>';
 
 $icoPlay = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 6.5v11l9-5.5z" fill="currentColor" stroke="none"/></svg>';
 $icoSoon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
@@ -33,6 +41,27 @@ ob_start(); ?>
 .concert-empty{width:74px;height:74px;margin:0 auto 20px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);
   border:1px solid var(--glass-brd);display:flex;align-items:center;justify-content:center}
 [data-theme="dark"] .concert-empty{color:var(--gold)}
+/* Слой обложки с мягким зумом при наведении */
+.concert-cover{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .6s cubic-bezier(.2,.8,.2,1);z-index:0}
+@media(hover:hover){.concert-card:hover .concert-cover{transform:scale(1.07)}}
+.concert-facade .play{z-index:2}
+.concert-facade .play span{position:relative}
+.concert-facade .play span::before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);animation:concert-pulse 2.6s ease-out infinite}
+@keyframes concert-pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
+@media(prefers-reduced-motion:reduce){.concert-facade .play span::before{animation:none}}
+/* Категория поверх обложки */
+.concert-tag{position:absolute;top:12px;left:12px;z-index:3;display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;
+  font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;
+  background:rgba(11,10,13,.5);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
+.concert-body h3{overflow-wrap:anywhere}
+.concert-date{display:flex;align-items:center;gap:7px;color:var(--muted);margin:10px 0 0;font-size:.9rem}
+.concert-date svg{width:15px;height:15px;flex:none;color:var(--gold-ink)}
+[data-theme="dark"] .concert-date svg{color:var(--gold)}
+/* Счётчик в фильтрах */
+.concert-filter .fc{margin-left:8px;font-size:.72rem;font-weight:800;padding:1px 7px;border-radius:999px;
+  background:var(--gold-soft);color:var(--gold-ink)}
+[data-theme="dark"] .concert-filter .fc{color:var(--gold)}
+.concert-filter.btn--primary .fc{background:rgba(26,18,6,.18);color:var(--gold-fg)}
 </style>
 
 <section class="section section--parchment">
@@ -53,9 +82,9 @@ ob_start(); ?>
   <div class="container">
     <?php if ($categories): ?>
     <div class="reveal" id="concertFilters" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px">
-      <button type="button" class="btn btn--primary concert-filter" data-cat="">Все</button>
+      <button type="button" class="btn btn--primary concert-filter" data-cat="">Все<span class="fc"><?= count($concerts) ?></span></button>
       <?php foreach ($categories as $cat): ?>
-        <button type="button" class="btn btn--ghost concert-filter" data-cat="<?= h($cat) ?>"><?= h($cat) ?></button>
+        <button type="button" class="btn btn--ghost concert-filter" data-cat="<?= h($cat) ?>"><?= h($cat) ?><span class="fc"><?= (int) $catCounts[$cat] ?></span></button>
       <?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -64,10 +93,11 @@ ob_start(); ?>
       <?php foreach ($concerts as $c): ?>
         <div class="card concert-card reveal" data-cat="<?= h($c['category']) ?>">
           <div class="concert-embed">
+            <?php if ($c['category']): ?><span class="concert-tag"><?= h($c['category']) ?></span><?php endif; ?>
             <?php if ($c['embed_url']): ?>
               <button type="button" class="concert-facade" data-embed="<?= h($c['embed_url']) ?>"
-                      aria-label="Смотреть: <?= h($c['title']) ?>"
-                      <?php if ($c['cover']): ?>style="background-image:url('<?= h($c['cover']) ?>')"<?php endif; ?>>
+                      aria-label="Смотреть: <?= h($c['title']) ?>">
+                <?php if ($c['cover']): ?><span class="concert-cover" style="background-image:url('<?= h($c['cover']) ?>')"></span><?php endif; ?>
                 <span class="play"><span><?= $icoPlay ?></span></span>
               </button>
             <?php else: ?>
@@ -75,9 +105,8 @@ ob_start(); ?>
             <?php endif; ?>
           </div>
           <div class="concert-body">
-            <?php if ($c['category']): ?><span class="badge badge--intl"><?= h($c['category']) ?></span><?php endif; ?>
             <h3><?= h($c['title']) ?></h3>
-            <?php if ($c['date']): ?><p style="color:var(--muted);margin:6px 0 0"><?= h(ru_date($c['date'])) ?></p><?php endif; ?>
+            <?php if ($c['date']): ?><p class="concert-date"><?= $icoCal ?><span><?= h(ru_date($c['date'])) ?></span></p><?php endif; ?>
           </div>
         </div>
       <?php endforeach; ?>

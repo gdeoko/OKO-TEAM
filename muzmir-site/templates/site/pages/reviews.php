@@ -10,6 +10,26 @@ $reviews = all("SELECT * FROM reviews WHERE status='published' ORDER BY created_
 
 $u = current_user();
 
+/* Сводная инфографика по всем опубликованным отзывам (только чтение, выборки страницы не меняем). */
+$avgRating = $total ? round((float) scalar("SELECT AVG(rating) FROM reviews WHERE status='published'"), 1) : 0.0;
+$dist = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+if ($total) {
+    foreach (all("SELECT rating, COUNT(*) AS c FROM reviews WHERE status='published' GROUP BY rating") as $dr) {
+        $rt = max(1, min(5, (int) $dr['rating']));
+        $dist[$rt] = (int) $dr['c'];
+    }
+}
+
+/* Инициалы автора для аватара-медальона. */
+$initialsOf = static function (string $name): string {
+    $name = trim($name);
+    if ($name === '') return 'У';
+    $parts = preg_split('/\s+/u', $name) ?: [];
+    $s = mb_substr($parts[0] ?? '', 0, 1, 'UTF-8');
+    if (count($parts) > 1) $s .= mb_substr($parts[count($parts) - 1], 0, 1, 'UTF-8');
+    return mb_strtoupper($s, 'UTF-8');
+};
+
 /* SVG-рейтинг: 5 звёзд, заполнено по оценке (без эмодзи, только вектор). */
 $starRow = static function (int $rating): string {
     $rating = max(1, min(5, $rating));
@@ -49,14 +69,37 @@ ob_start(); ?>
 .rv-stars{display:inline-flex;gap:2px;line-height:0}
 .rv-star{width:18px;height:18px;fill:var(--glass-brd)}
 .rv-star.is-on{fill:var(--gold)}
-.rv-card{display:flex;flex-direction:column}
-.rv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.rv-text{font-family:var(--ff-serif);font-size:1.05rem;line-height:1.55;margin:12px 0 14px;color:var(--text);overflow-wrap:anywhere}
-.rv-meta{margin-top:auto}
+/* Сводная инфографика */
+.rv-summary{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;margin-bottom:26px;position:relative;overflow:hidden}
+.rv-summary::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--gold-soft),transparent 70%);pointer-events:none}
+.rv-sum-score{text-align:center;padding-right:28px;border-right:1px solid var(--line);position:relative;z-index:1}
+.rv-sum-num{font-family:var(--ff-display);font-size:3.4rem;line-height:1;font-weight:800;background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rv-sum-score .rv-stars{margin:8px 0 6px}
+.rv-sum-total{font-size:.82rem;color:var(--muted)}
+.rv-sum-bars{display:flex;flex-direction:column;gap:7px;position:relative;z-index:1}
+.rv-bar-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
+.rv-bar-row .lbl{display:inline-flex;align-items:center;gap:3px;color:var(--muted);min-width:38px;font-weight:700}
+.rv-bar-row .lbl svg{width:12px;height:12px;fill:var(--gold)}
+.rv-bar-track{flex:1;height:9px;border-radius:999px;background:var(--gold-soft);overflow:hidden;border:1px solid var(--glass-brd)}
+.rv-bar-fill{height:100%;border-radius:999px;background:var(--grad-gold);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.rv-bar-row .val{min-width:26px;text-align:right;color:var(--text-dim);font-weight:700;font-variant-numeric:tabular-nums}
+@media(max-width:520px){
+  .rv-summary{grid-template-columns:1fr;gap:18px;text-align:center}
+  .rv-sum-score{padding-right:0;border-right:0;border-bottom:1px solid var(--line);padding-bottom:18px}
+}
+.rv-card{display:flex;flex-direction:column;position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),color-mix(in srgb,var(--panel-solid) 30%,transparent))}
+.rv-card::after{content:"\201C";position:absolute;top:-18px;right:14px;font-family:var(--ff-display);font-size:6rem;line-height:1;color:var(--gold);opacity:.10;pointer-events:none}
+.rv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.rv-text{font-family:var(--ff-serif);font-size:1.06rem;line-height:1.6;margin:14px 0 16px;color:var(--text);overflow-wrap:anywhere;position:relative;z-index:1}
+.rv-meta{margin-top:auto;display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
+.rv-avatar{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:800;font-size:1rem;color:var(--gold-fg);background:var(--grad-gold);box-shadow:var(--shadow-soft)}
+.rv-namewrap{min-width:0}
 .rv-author{color:var(--gold-2);font-weight:700;margin:0;overflow-wrap:anywhere}
+[data-theme="dark"] .rv-author{color:var(--gold)}
 .rv-date{color:var(--muted);font-size:.85rem;margin:2px 0 0}
-.rv-reply{margin-top:14px;padding:14px 16px;background:var(--gold-soft);border:1px solid var(--glass-brd);border-left:3px solid var(--gold);border-radius:var(--radius-sm)}
+.rv-reply{margin-top:14px;padding:14px 16px;background:var(--gold-soft);border:1px solid var(--glass-brd);border-left:3px solid var(--gold);border-radius:var(--radius-sm);position:relative;z-index:1}
 .rv-reply b{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.85rem;color:var(--gold-2)}
+[data-theme="dark"] .rv-reply b{color:var(--gold)}
 .rv-reply b svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;flex:none}
 .rv-reply p{margin:0;color:var(--text-dim);line-height:1.55;font-size:.94rem;overflow-wrap:anywhere}
 .rv-geo{font-size:.78rem;padding:4px 10px}
@@ -103,6 +146,22 @@ ob_start(); ?>
         <p style="color:var(--text-dim);margin:0">Отзывы участников пока готовятся к публикации. Будьте первым, кто поделится впечатлениями.</p>
       </div>
     <?php else: ?>
+      <div class="card rv-summary reveal">
+        <div class="rv-sum-score">
+          <div class="rv-sum-num"><?= h(number_format($avgRating, 1, ',', ' ')) ?></div>
+          <?= $starRow((int) round($avgRating)) ?>
+          <div class="rv-sum-total"><?= (int) $total ?> <?= (($total % 10 === 1 && $total % 100 !== 11) ? 'отзыв' : (($total % 10 >= 2 && $total % 10 <= 4 && ($total % 100 < 10 || $total % 100 >= 20)) ? 'отзыва' : 'отзывов')) ?></div>
+        </div>
+        <div class="rv-sum-bars">
+          <?php for ($s = 5; $s >= 1; $s--): $pct = $total ? round($dist[$s] / $total * 100) : 0; ?>
+            <div class="rv-bar-row">
+              <span class="lbl"><?= $s ?><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.05 6.6.86-4.85 4.55 1.24 6.54L12 17.9l-5.89 3.1 1.24-6.54L2.5 9.41l6.6-.86z"/></svg></span>
+              <span class="rv-bar-track"><span class="rv-bar-fill" style="width:<?= (int) $pct ?>%"></span></span>
+              <span class="val"><?= (int) $dist[$s] ?></span>
+            </div>
+          <?php endfor; ?>
+        </div>
+      </div>
       <div class="rv-toolbar reveal">
         <div class="rv-chips" role="group" aria-label="Фильтр отзывов">
           <button type="button" class="rv-chip is-active" data-filter="all">Все</button>
@@ -132,9 +191,13 @@ ob_start(); ?>
               <?php if ($geo !== ''): ?><span class="badge badge--intl rv-geo"><?= h($geo) ?></span><?php endif; ?>
             </div>
             <p class="rv-text">«<?= h($r['text']) ?>»</p>
+            <?php $rvName = $r['author'] ?: 'Участник конкурса'; ?>
             <div class="rv-meta">
-              <p class="rv-author"><?= h($r['author'] ?: 'Участник конкурса') ?></p>
-              <p class="rv-date"><?= h(ru_date($r['created_at'])) ?></p>
+              <span class="rv-avatar" aria-hidden="true"><?= h($initialsOf($rvName)) ?></span>
+              <div class="rv-namewrap">
+                <p class="rv-author"><?= h($rvName) ?></p>
+                <p class="rv-date"><?= h(ru_date($r['created_at'])) ?></p>
+              </div>
             </div>
             <?php if (!empty($r['admin_reply'])): ?>
               <div class="rv-reply">
