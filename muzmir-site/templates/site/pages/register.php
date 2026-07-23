@@ -51,7 +51,7 @@ $vkReady     = (bool) (cfgv('vk_client_id') && cfgv('vk_client_secret'));
 $maxReady    = (bool) (cfgv('max_client_id') && cfgv('max_client_secret'));
 
 $svgVk     = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>';
-$svgMax    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V6l8 7 8-7v13"/></svg>';
+$svgMax    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 3.2c-5.4 0-9.8 3.5-9.8 7.9 0 2.5 1.4 4.7 3.6 6.1-.2 1-.7 2.3-1.6 3.4-.3.4 0 .9.5.8 1.9-.4 3.5-1.1 4.7-1.8 .8.2 1.7.3 2.6.3 5.4 0 9.8-3.5 9.8-7.9S17.4 3.2 12 3.2z"/></svg>';
 $svgPhone  = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
 
 ob_start(); ?>

@@ -465,7 +465,7 @@ select{color:var(--text)} option{background:var(--panel-solid);color:var(--text)
 @media(hover:hover){.auth-btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-soft);filter:brightness(1.03)}}
 .auth-btn:active{transform:scale(.98)}
 .auth-btn--vk{background:#0077FF;color:#fff}
-.auth-btn--max{background:linear-gradient(135deg,#8A2BE2,#5B2BD6);color:#fff}
+.auth-btn--max{background:linear-gradient(135deg,#3D8BFF,#1A6BFF 60%,#0A57F0);color:#fff}
 .auth-btn--email{background:var(--glass);color:var(--text);border:1.5px solid var(--glass-brd)}
 .auth-btn--phone{background:var(--glass);color:var(--text);border:1.5px solid var(--glass-brd)}
 .auth-sep{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.78rem;margin:14px 0;text-transform:uppercase;letter-spacing:.08em}
