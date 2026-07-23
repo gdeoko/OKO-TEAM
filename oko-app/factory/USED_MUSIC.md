@@ -21,3 +21,4 @@
 - #24 fs_viral_51278 (energetic/driving, seed 817) — уник, дедуп used_music.json (8/22).
 - #25 fs_useful_140481 (confident/clean/steady, seed 280) — уник, дедуп used_music.json (9/22).
 - #26 fs_viral_524240 (energetic/driving, seed трактовки 429) — уник, дедуп used_music.json.
+- #27 fs_viral_560759 (energetic/driving, seed 696) — уник, дедуп used_music.json.
