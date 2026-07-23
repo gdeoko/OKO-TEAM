@@ -622,7 +622,7 @@ pre,code{overflow-wrap:anywhere;white-space:pre-wrap}
   .nav a::after{display:none}
   .nav-cta-mobile{display:flex;flex-direction:column;gap:10px;margin-top:12px}
   .nav-cta-mobile .btn{width:100%}
-  .burger{display:block}
+  .burger{display:none}                     /* бургер убран — навигация через нижний раздел «Разделы» */
   .nav-actions>.btn{display:none}
   .appnav{display:block}
   main{padding-bottom:76px}
