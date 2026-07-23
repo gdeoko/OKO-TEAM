@@ -4017,6 +4017,94 @@ main>.screen{position:relative;z-index:1}
   .mk-cats{grid-template-columns:repeat(4,1fr)}             /* на очень широких — 4 колонки */
 }
 
+/* ================= AVITO-ГЛУБИНА: сохранённые поиски, «вы смотрели», rich-пустые, доверие ================= */
+/* заголовок горизонтальной полосы (общий для «сохранённые поиски» и «вы смотрели») */
+.mp-strip-h{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin:0 0 9px}
+.mp-strip-h svg.i{width:13px;height:13px;color:var(--accent)}
+
+/* ---------- сохранённые поиски ---------- */
+.mp-saved{margin:0 0 16px;animation:mpFade .3s ease both}
+.mp-saved-row{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.mp-saved-row::-webkit-scrollbar{display:none}
+.mp-ss{position:relative;flex:0 0 auto;max-width:230px}
+.mp-ss-run{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 34px 10px 12px;transition:transform .12s,border-color .2s,box-shadow .2s}
+.mp-ss-run:hover{border-color:rgba(154,255,0,.4);box-shadow:0 0 12px rgba(154,255,0,.1)}
+.mp-ss-run:active{transform:scale(.98)}
+.mp-ss-t{display:block;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-ss-s{display:block;font-size:10px;color:var(--dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-ss-new{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;letter-spacing:.02em;color:#000;background:var(--lime);border-radius:99px;padding:2.5px 8px;margin-top:7px;box-shadow:var(--glow)}
+.mp-ss-new svg.i{width:9px;height:9px;color:#000}
+:root[data-theme="light"] .mp-ss-new{color:#0a1400}
+:root[data-theme="light"] .mp-ss-new svg.i{color:#0a1400}
+.mp-ss-x{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:var(--raised);border:1px solid var(--border);color:var(--dim);display:flex;align-items:center;justify-content:center;transition:color .18s,border-color .18s,transform .12s}
+.mp-ss-x svg.i{width:11px;height:11px}
+.mp-ss-x:hover{color:var(--danger);border-color:rgba(255,77,77,.4)}
+.mp-ss-x:active{transform:scale(.88)}
+
+/* ---------- недавно просмотренные ---------- */
+.mp-recent{margin:0 0 18px;animation:mpFade .34s ease both}
+.mp-recent-row{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.mp-recent-row::-webkit-scrollbar{display:none}
+.mp-rc{flex:0 0 124px;width:124px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;padding:0 0 9px;transition:transform .12s,border-color .2s,box-shadow .25s}
+.mp-rc:hover{transform:translateY(-2px);border-color:rgba(154,255,0,.35);box-shadow:0 6px 16px rgba(0,0,0,.28)}
+:root[data-theme="light"] .mp-rc:hover{box-shadow:0 6px 14px rgba(83,168,0,.12)}
+.mp-rc:active{transform:scale(.98)}
+.mp-rc-ph{display:block;width:100%;aspect-ratio:16/10;overflow:hidden;border-bottom:1px solid var(--border);position:relative}
+.mp-rc-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.mp-rc:hover .mp-rc-ph img{transform:scale(1.06)}
+.mp-rc-ico{display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:var(--accent);background:linear-gradient(135deg,hsl(var(--h,90deg) 40% 14%),#0b0f04 70%)}
+:root[data-theme="light"] .mp-rc-ico{background:linear-gradient(135deg,hsl(var(--h,90deg) 55% 88%),hsl(var(--h,90deg) 45% 78%) 75%)}
+.mp-rc-ico svg.i{width:26px;height:26px;opacity:.65}
+.mp-rc-p{display:block;font-size:11.5px;font-weight:800;color:var(--accent);margin:8px 10px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-rc-t{display:block;font-size:11px;color:var(--text);line-height:1.32;margin:3px 10px 0;max-height:29px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* ---------- кнопка «Сохранить поиск» под тулбаром ---------- */
+.mp-savebar{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;flex-wrap:wrap;animation:mpFade .25s ease both}
+.mp-savebar-btn{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);border-radius:99px;padding:8px 14px;transition:transform .12s,box-shadow .2s,border-color .2s}
+.mp-savebar-btn svg.i{width:14px;height:14px}
+.mp-savebar-btn:hover{border-color:var(--lime);box-shadow:0 0 12px rgba(154,255,0,.14)}
+.mp-savebar-btn:active{transform:scale(.97)}
+.mp-savebar-btn.saved{color:var(--dim);background:var(--raised);border-color:var(--border);border-style:solid}
+.mp-savebar-btn.saved svg.i{color:var(--accent)}
+.mp-savebar-hint{font-size:10.5px;color:var(--dim)}
+
+/* ---------- rich-пустые состояния ---------- */
+.mp-emp{display:flex;flex-direction:column;align-items:center;text-align:center;padding:34px 16px 18px;animation:mpFade .35s ease both}
+.mp-emp-badge{position:relative;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:radial-gradient(circle at 50% 38%,rgba(154,255,0,.22),transparent 62%),var(--surface);border:1px solid rgba(154,255,0,.28);margin-bottom:16px}
+.mp-emp-badge::before,.mp-emp-badge::after{content:'';position:absolute;border-radius:50%;border:1px solid rgba(154,255,0,.16)}
+.mp-emp-badge::before{inset:-9px}
+.mp-emp-badge::after{inset:-19px;border-color:rgba(154,255,0,.08)}
+.mp-emp-badge svg.i{width:34px;height:34px;filter:drop-shadow(0 0 8px rgba(154,255,0,.4))}
+:root[data-theme="light"] .mp-emp-badge svg.i{filter:none}
+.mp-emp b{font-family:var(--font-display);font-size:22px;letter-spacing:.04em;color:var(--text)}
+.mp-emp p{font-size:12.5px;color:var(--dim);line-height:1.5;max-width:280px;margin:8px auto 16px}
+.mp-emp .btn{width:auto;min-width:200px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.mp-emp-lab{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:18px 0 10px}
+.mp-emp-cats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:320px}
+.mp-emp-cat{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:8px 13px;transition:transform .12s,border-color .2s,color .2s}
+.mp-emp-cat svg.i{width:14px;height:14px;color:var(--accent)}
+.mp-emp-cat:hover{border-color:var(--lime);color:var(--accent)}
+.mp-emp-cat:active{transform:scale(.96)}
+.mp-emp-save{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent);background:transparent;border:1px dashed rgba(154,255,0,.4);border-radius:99px;padding:9px 15px;margin-top:18px;transition:background .2s,transform .12s}
+.mp-emp-save svg.i{width:14px;height:14px}
+.mp-emp-save:hover{background:var(--lime-dim)}
+.mp-emp-save:active{transform:scale(.97)}
+
+/* ---------- эскроу-доверие покупателю (карточка объявления) ---------- */
+.mp-trust{background:radial-gradient(120% 150% at 100% 0%,rgba(154,255,0,.1),transparent 55%),var(--surface);border:1px solid rgba(154,255,0,.28);border-radius:var(--r-md);padding:12px 13px;margin:12px 0 10px;animation:mpFade .3s ease both}
+:root[data-theme="light"] .mp-trust{background:radial-gradient(120% 150% at 100% 0%,rgba(110,200,0,.12),transparent 55%),var(--surface);border-color:#b9d788}
+.mp-trust-head{display:flex;align-items:flex-start;gap:11px}
+.mp-trust-ic{width:34px;height:34px;border-radius:11px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mp-trust-ic svg.i{width:17px;height:17px}
+.mp-trust-b b{display:block;font-size:12.5px;color:var(--text)}
+.mp-trust-b small{display:block;font-size:11px;color:var(--dim);line-height:1.45;margin-top:3px}
+.mp-trust-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.mp-trust-row span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 10px}
+.mp-trust-row svg.i{width:11px;height:11px}
+/* строка о продавце в карточке продавца */
+.mp-seller-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:10.5px;color:var(--dim);margin-top:6px;line-height:1.3}
+.mp-seller-meta svg.i{width:11px;height:11px;color:var(--accent);vertical-align:-1px}
+
 /* ===== module: feed-algo ===== */
 /* feed-algo: алгоритмическая лента рекомендаций */
 
@@ -7555,7 +7643,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.86</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.87</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -8540,14 +8628,18 @@ function cancelCompose(){ replyState=null; editState=null; document.getElementBy
 /* ===== Глобальный поиск ===== */
 function openSearch(){ document.getElementById('gSearchInput').value=''; renderSearch(); document.getElementById('searchView').classList.add('open'); setTimeout(()=>document.getElementById('gSearchInput').focus(),50); }
 function closeSearch(){ document.getElementById('searchView').classList.remove('open'); }
+function searchQuickAccess(title){
+  return `<p class="nt-group">${title||'Быстрый доступ'}</p>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market')"><span class="nt-ic">${I('briefcase')}</span><div class="nt-b"><span>Биржа услуг</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('academy')"><span class="nt-ic">${I('star')}</span><div class="nt-b"><span>Академия OKO</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('partner')"><span class="nt-ic">${I('users')}</span><div class="nt-b"><span>Партнёрка</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('system')"><span class="nt-ic">${I('compass')}</span><div class="nt-b"><span>Система роста</span></div></button>`;
+}
 function renderSearch(){
   const q=(document.getElementById('gSearchInput').value||'').trim().toLowerCase();
   const body=document.getElementById('searchBody');
   if(!q){
-    body.innerHTML = `<p class="nt-group">Быстрый доступ</p>
-      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market')"><span class="nt-ic">${I('briefcase')}</span><div class="nt-b"><span>Биржа услуг</span></div></button>
-      <button class="nt-item" onclick="closeSearch();showTab('partner')"><span class="nt-ic">${I('users')}</span><div class="nt-b"><span>Партнёрка</span></div></button>
-      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('system')"><span class="nt-ic">${I('compass')}</span><div class="nt-b"><span>Система роста</span></div></button>`;
+    body.innerHTML = searchQuickAccess();
     return;
   }
   const people = CHATS.filter(c=>c.kind==='direct' && c.name.toLowerCase().includes(q));
@@ -8561,7 +8653,7 @@ function renderSearch(){
   html += sec('Каналы и группы', channels.map(c=>`<button class="nt-item" onclick="closeSearch();showTab('chats');openConv(${cid(c)})"><span class="nt-ic">${I(c.kindIcon||'chat')}</span><div class="nt-b"><span><b>${esc(c.name)}</b></span><small>${c.subs?c.subs+' подписчиков':(c.members||'')+' участников'}</small></div></button>`));
   html += sec('Объявления', listings.map(l=>`<button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market');openListing(${l.id})"><span class="nt-ic">${I(catIco(l.cat))}</span><div class="nt-b"><span><b>${esc(l.t)}</b></span><small>${l.pt} · ${l.n}</small></div></button>`));
   html += sec('Посты', posts.map(p=>`<button class="nt-item" onclick="closeSearch();showTab('feed')"><span class="nt-ic">${I('feed')}</span><div class="nt-b"><span>${esc(p.body.slice(0,52))}…</span><small>${esc(p.name)}</small></div></button>`));
-  body.innerHTML = html || `<div class="empty-state"><div class="es-ico">${I('search')}</div><p>Ничего не нашлось</p><span>Попробуй другой запрос</span></div>`;
+  body.innerHTML = html || (`<div class="empty-state" style="padding:26px 20px 10px"><div class="es-ico">${I('search')}</div><p>Ничего не нашлось по «${esc(q)}»</p><span>Попробуй другой запрос или загляни сюда</span></div>` + searchQuickAccess('Популярное'));
 }
 
 /* ===== Центр уведомлений ===== */
@@ -21273,6 +21365,311 @@ function mpSwapHero(btn, _tag, i){
   strip.querySelectorAll('.mp-gal-t').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
 }
+
+/* ================= AVITO-ГЛУБИНА: сохранённые поиски, «вы смотрели», rich-пустые состояния, эскроу-доверие ================= */
+/* Всё аддитивно, поверх базовой Биржи. Персист — в том же MP (localStorage oko-market-pro).
+   Ничего из существующих потоков не ломаем: поиск/фильтры/избранное/продвижение/кабинет/пакеты работают как были. */
+MP.saved  = MP.saved  || [];   // сохранённые поиски: {id,q,cat,sort,filters,at}
+MP.recent = MP.recent || [];   // недавно просмотренные объявления: массив id (свежие спереди, cap 10)
+try{ mpSave(); }catch(e){}
+
+/* ---------- подпись/сводка/совпадения сохранённого поиска ---------- */
+function mpSearchLabel(s){
+  const q = (s && s.q || '').trim();
+  if(q) return q;
+  if(s && s.cat) return catName(s.cat);
+  return 'Все объявления';
+}
+const MP_TYPE_RU = {service:'услуги', work:'работа', goods:'товары'};
+/* объявления, подходящие под сохранённый поиск (read-only, не трогает глобальные mkFilters/mkSearchQ) */
+function mpMatchListings(s){
+  let arr = LISTINGS.filter(l=>!l.my && l.st==='act');
+  if(s.cat) arr = arr.filter(l=>l.cat===s.cat);
+  const q = (s.q||'').trim().toLowerCase();
+  if(q) arr = arr.filter(l=>(l.t+' '+l.ds+' '+l.n+' '+catName(l.cat)).toLowerCase().includes(q));
+  const f = s.filters||{};
+  if(f.min)    arr = arr.filter(l=>l.p >= +f.min);
+  if(f.max)    arr = arr.filter(l=>l.p <= +f.max);
+  if(f.rating) arr = arr.filter(l=>l.r >= f.rating);
+  if(f.type && f.type!=='all') arr = arr.filter(l=>l.type===f.type);
+  if(f.city)   arr = arr.filter(l=>l.city===f.city);
+  if(f.mpVerif) arr = arr.filter(mpIsVerified);
+  return arr;
+}
+/* «N новых по подписке» — стабильный псевдо-счётчик (прототип): детерминирован от поиска и числа совпадений */
+function mpSavedNew(s){
+  const m = mpMatchListings(s).length;
+  if(!m) return 0;
+  return (Math.floor((s.at||0)/1e5) + m) % 3; // 0..2, но стабильно для конкретного поиска
+}
+function mpSearchSummary(s){
+  const parts = [];
+  if(s.q && s.cat) parts.push(catName(s.cat));
+  const f = s.filters||{};
+  if(f.city)   parts.push(f.city);
+  if(f.mpVerif) parts.push('проверенные');
+  if(f.type && f.type!=='all') parts.push(MP_TYPE_RU[f.type]||'');
+  if(f.min || f.max) parts.push(((f.min?'от '+fmtN(+f.min):'')+(f.max?' до '+fmtN(+f.max):'')).trim()+' ₽');
+  if(f.rating) parts.push(f.rating+'★+');
+  parts.push(mpMatchListings(s).length+' предлож.');
+  return parts.filter(Boolean).join(' · ');
+}
+
+/* ---------- сигнатура текущего состояния поиска (для «уже сохранён»/дедуп) ---------- */
+function mpCurFilters(){
+  return {min:mkFilters.min||'', max:mkFilters.max||'', rating:mkFilters.rating||0,
+    type:mkFilters.type||'all', city:mkFilters.city||'', mpVerif:!!mkFilters.mpVerif};
+}
+function mpSig(q, cat, f){
+  return JSON.stringify([(q||'').trim(), cat||'',
+    {min:f.min||'', max:f.max||'', rating:f.rating||0, type:f.type||'all', city:f.city||'', mpVerif:!!f.mpVerif}]);
+}
+function mpSearchMeaningful(){
+  const f = mkFilters;
+  const hasF = f.min || f.max || f.rating || (f.type && f.type!=='all') || f.city || f.mpVerif;
+  return !!((mkSearchQ && mkSearchQ.trim()) || mkCat || hasF);
+}
+function mpSearchAlreadySaved(){
+  const cur = mpSig(mkSearchQ, mkCat, mpCurFilters());
+  return (MP.saved||[]).some(s=>mpSig(s.q, s.cat, s.filters||{})===cur);
+}
+
+/* ---------- сохранить / перезапустить / удалить поиск ---------- */
+function mpSaveSearch(){
+  if(!mpSearchMeaningful()){ toast('Задай запрос или фильтры, чтобы сохранить поиск'); return; }
+  if(mpSearchAlreadySaved()){ toast('Такой поиск уже сохранён'); return; }
+  MP.saved.unshift({id:'s'+Date.now(), q:(mkSearchQ||'').trim(), cat:mkCat||null,
+    sort:mkSort, filters:mpCurFilters(), at:Date.now()});
+  if(MP.saved.length>12) MP.saved.length = 12;
+  mpSave();
+  toast('Поиск сохранён — уведомим о новых предложениях');
+  const b = document.getElementById('mpSaveBtn');
+  if(b){ b.classList.add('saved'); b.innerHTML = I('check')+' Поиск сохранён'; }
+  const h = document.querySelector('#mpSaveBar .mp-savebar-hint');
+  if(h) h.textContent = 'Уведомим о новых';
+}
+function mpRunSaved(id){
+  const s = (MP.saved||[]).find(x=>x.id===id);
+  if(!s) return;
+  mkView = 'list'; mkCat = s.cat||null; mkSearchQ = s.q||'';
+  if(s.sort) mkSort = s.sort;
+  const f = s.filters||{};
+  mkFilters.min = f.min||''; mkFilters.max = f.max||''; mkFilters.rating = f.rating||0;
+  mkFilters.type = f.type||'all'; mkFilters.city = f.city||''; mkFilters.mpVerif = !!f.mpVerif;
+  renderMarket();
+}
+function mpRemoveSaved(id){
+  MP.saved = (MP.saved||[]).filter(x=>x.id!==id);
+  mpSave();
+  toast('Поиск удалён');
+  if(document.getElementById('marketRoot') && typeof mkView!=='undefined' && mkView==='cats') renderMarket();
+}
+
+/* ---------- недавно просмотренные ---------- */
+function mpTrackRecent(id){
+  const l = LISTINGS.find(x=>x.id===id);
+  if(!l || l.my) return; // свои объявления в «вы смотрели» не показываем
+  MP.recent = (MP.recent||[]).filter(x=>x!==id);
+  MP.recent.unshift(id);
+  if(MP.recent.length>10) MP.recent.length = 10;
+  mpSave();
+}
+function mpRecentListings(){
+  return (MP.recent||[]).map(id=>LISTINGS.find(l=>l.id===id)).filter(l=>l && !l.my).slice(0,10);
+}
+function mpRecentThumb(l){
+  if(Array.isArray(l.photos) && l.photos.length) return `<img src="${l.photos[0]}" alt="" loading="lazy">`;
+  const hue = (l.seed*37)%360;
+  return `<span class="mp-rc-ico" style="--h:${hue}deg">${I(catIco(l.cat))}</span>`;
+}
+
+/* ---------- инъекция «сохранённые поиски» + «вы смотрели» на домашней Бирже (cats) ---------- */
+const _mpInjectMarketPrev = mpInjectMarket;
+mpInjectMarket = function(){
+  _mpInjectMarketPrev.apply(this, arguments);
+  try{ mpInjectRecentSaved(); }catch(e){}
+};
+function mpInjectRecentSaved(){
+  const anchor = document.getElementById('mpBanner') || document.getElementById('mpCabRow');
+  if(!anchor) return;
+  let after = anchor;
+  /* сохранённые поиски */
+  if(!document.getElementById('mpSaved')){
+    const saved = MP.saved||[];
+    if(saved.length){
+      const el = document.createElement('div');
+      el.id = 'mpSaved'; el.className = 'mp-saved';
+      el.innerHTML = `<div class="mp-strip-h">${I('bookmark')} Сохранённые поиски</div>
+        <div class="mp-saved-row">${saved.map(s=>{
+          const nw = mpSavedNew(s);
+          return `<div class="mp-ss">
+            <button class="mp-ss-run" onclick="mpRunSaved('${s.id}')">
+              <span class="mp-ss-t">${esc(mpSearchLabel(s))}</span>
+              <span class="mp-ss-s">${esc(mpSearchSummary(s))}</span>
+              ${nw?`<span class="mp-ss-new">${I('bell')} +${nw} новых</span>`:''}
+            </button>
+            <button class="mp-ss-x" onclick="event.stopPropagation();mpRemoveSaved('${s.id}')" aria-label="Удалить поиск">${I('trash')}</button>
+          </div>`;
+        }).join('')}</div>`;
+      after.insertAdjacentElement('afterend', el);
+      after = el;
+    }
+  } else after = document.getElementById('mpSaved');
+  /* недавно просмотренные */
+  if(!document.getElementById('mpRecent')){
+    const rec = mpRecentListings();
+    if(rec.length){
+      const el = document.createElement('div');
+      el.id = 'mpRecent'; el.className = 'mp-recent';
+      el.innerHTML = `<div class="mp-strip-h">${I('clock')} Вы смотрели</div>
+        <div class="mp-recent-row">${rec.map(l=>`
+          <button class="mp-rc" onclick="openListing(${l.id})">
+            <span class="mp-rc-ph">${mpRecentThumb(l)}</span>
+            <span class="mp-rc-p">${esc(l.pt)}</span>
+            <span class="mp-rc-t">${esc(l.t)}</span>
+          </button>`).join('')}</div>`;
+      after.insertAdjacentElement('afterend', el);
+    }
+  }
+}
+
+/* ---------- кнопка «Сохранить поиск» под тулбаром списка ---------- */
+if(typeof renderMarketList==='function'){
+  const _mpRMLsave = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLsave.apply(this, arguments);
+    try{ mpInjectSaveBtn(); }catch(e){}
+  };
+}
+function mpInjectSaveBtn(){
+  const root = document.getElementById('marketRoot');
+  if(!root) return;
+  if(typeof mkView!=='undefined' && mkView==='fav') return; // в избранном сохранять нечего
+  if(document.getElementById('mpSaveBar')) return;
+  const bar = root.querySelector('.mk-toolbar');
+  if(!bar || !mpSearchMeaningful()) return;
+  const saved = mpSearchAlreadySaved();
+  const w = document.createElement('div');
+  w.id = 'mpSaveBar'; w.className = 'mp-savebar';
+  w.innerHTML = `<button id="mpSaveBtn" class="mp-savebar-btn${saved?' saved':''}" onclick="mpSaveSearch()">
+      ${saved ? I('check')+' Поиск сохранён' : I('bookmark')+' Сохранить поиск'}</button>
+    <span class="mp-savebar-hint">${saved?'Уведомим о новых':'Следите за новыми предложениями'}</span>`;
+  bar.insertAdjacentElement('afterend', w);
+}
+
+/* ---------- rich-пустые состояния (избранное / 0 результатов) ---------- */
+function mpEmpBadge(ic){ return `<span class="mp-emp-badge">${I(ic)}</span>`; }
+function mpRichEmpty(){
+  const box = document.getElementById('mkResults');
+  if(!box) return;
+  const empty = box.querySelector('.mk-empty');
+  if(!empty || box.querySelector('.mp-emp')) return; // либо результаты есть, либо уже нарисовано
+  const fav = (typeof mkView!=='undefined' && mkView==='fav');
+  if(fav){
+    box.innerHTML = `<div class="mp-emp">
+      ${mpEmpBadge('heart')}
+      <b>В избранном пусто</b>
+      <p>Нажимай на сердечко у объявлений — они появятся здесь, чтобы вернуться к ним позже.</p>
+      <button class="btn" onclick="mkView='list';mkCat=null;mkSearchQ='';renderMarket()">${I('search')} Смотреть объявления</button>
+    </div>`;
+    return;
+  }
+  const cats = MK_CATS.filter(c=>LISTINGS.some(l=>l.cat===c.k && !l.my && l.st==='act')).slice(0,4);
+  const hasF = (typeof activeFilterCount==='function' && activeFilterCount()>0);
+  const hasQ = !!(mkSearchQ && mkSearchQ.trim());
+  box.innerHTML = `<div class="mp-emp">
+    ${mpEmpBadge('search')}
+    <b>Ничего не найдено</b>
+    <p>${hasQ?'По запросу «'+esc(mkSearchQ.trim())+'» ничего нет. ':''}Попробуй изменить запрос${hasF?' или сбросить фильтры':''}.</p>
+    ${hasF?`<button class="btn ghost" onclick="mpEmptyReset()">${I('poll')} Сбросить фильтры</button>`:''}
+    ${cats.length?`<div class="mp-emp-lab">Популярные категории</div>
+      <div class="mp-emp-cats">${cats.map(c=>`<button class="mp-emp-cat" onclick="mpEmptyGoCat('${c.k}')">${I(c.ic)}<span>${c.name}</span></button>`).join('')}</div>`:''}
+    ${(hasQ||hasF)?`<button class="mp-emp-save" onclick="mpSaveSearch()">${I('bell')} Сохранить поиск и получать новые предложения</button>`:''}
+  </div>`;
+}
+function mpEmptyReset(){
+  if(typeof resetFilters==='function') resetFilters();
+  renderMarketList(document.getElementById('marketRoot'), typeof mkView!=='undefined' && mkView==='fav');
+}
+function mpEmptyGoCat(k){
+  if(typeof resetFilters==='function') resetFilters();
+  mkSearchQ = '';
+  if(typeof openMarketCat==='function') openMarketCat(k);
+}
+/* оборачиваем soft-рендер (уже пропатчен модулем) — дорисовываем rich-пустое после базового */
+if(typeof renderMarketListSoft==='function'){
+  const _mpRMLSempty = renderMarketListSoft;
+  renderMarketListSoft = function(){
+    _mpRMLSempty.apply(this, arguments);
+    try{ mpRichEmpty(); }catch(e){}
+  };
+}
+
+/* ---------- rich-пустое состояние «Мои объявления» ---------- */
+if(typeof openMyListings==='function'){
+  const _mpOpenMyListings = openMyListings;
+  openMyListings = function(){
+    _mpOpenMyListings.apply(this, arguments);
+    try{ mpRichSellerEmpty(); }catch(e){}
+  };
+}
+function mpRichSellerEmpty(){
+  const root = document.getElementById('marketRoot');
+  if(!root) return;
+  const empty = root.querySelector('.mk-empty');
+  if(!empty || root.querySelector('.mp-emp')) return;
+  const trailing = empty.nextElementSibling; // базовая кнопка «Разместить объявление» — убираем дубль
+  empty.outerHTML = `<div class="mp-emp seller">
+    ${mpEmpBadge('briefcase')}
+    <b>У тебя ещё нет объявлений</b>
+    <p>Размести первую услугу или товар — покупатели с Биржи найдут тебя, а сделки защитит эскроу OKO.</p>
+    <button class="btn" onclick="openListingForm()">${I('plus')} Разместить объявление</button>
+  </div>`;
+  if(trailing && trailing.tagName==='BUTTON') trailing.remove();
+}
+
+/* ---------- доверие покупателю на карточке: эскроу + «на OKO с …» / отклик ---------- */
+const MP_REPLY_RU = ['несколько минут','час','пару часов'];
+function mpSellerSince(l){ return 2019 + (l.seed%6); }        // «на OKO с 2019…2024» — стабильно от seed
+function mpSellerRate(l){ return 90 + (l.seed%9); }           // 90…98% ответов
+function mpSellerReply(l){ return MP_REPLY_RU[l.seed%3]; }
+function mpTrustBlock(l){
+  return `<div class="mp-trust" id="mpTrust">
+    <div class="mp-trust-head">
+      <span class="mp-trust-ic">${I('lock')}</span>
+      <div class="mp-trust-b"><b>Безопасная сделка через эскроу OKO</b>
+        <small>Деньги замораживаются на счёте OKO и уходят исполнителю только после того, как вы подтвердите выполнение. При споре — возврат.</small></div>
+    </div>
+    <div class="mp-trust-row">
+      <span>${I('check')} Возврат при спорах</span>
+      <span>${I('lock')} Защита платежа</span>
+    </div>
+  </div>`;
+}
+/* трекинг «вы смотрели» + блок доверия — финальная обёртка openListing (после декора/галереи) */
+const _mpOpenListingTrust = openListing;
+openListing = function(id){
+  _mpOpenListingTrust.apply(this, arguments);
+  try{ mpTrackRecent(id); }catch(e){}
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v || l.my) return; // на своей карточке эскроу-подсказки покупателю не нужны
+    /* строка о продавце в карточке продавца */
+    const seller = v.querySelector('.seller-card');
+    if(seller && !seller.querySelector('.mp-seller-meta')){
+      const info = (seller.querySelector('b') && seller.querySelector('b').parentElement) || seller;
+      info.insertAdjacentHTML('beforeend',
+        `<div class="mp-seller-meta">${I('crown')} на OKO с ${mpSellerSince(l)} · ${I('chat')} отвечает за ${mpSellerReply(l)} · ${mpSellerRate(l)}% ответов</div>`);
+    }
+    /* блок эскроу-доверия над кнопками действий */
+    if(!document.getElementById('mpTrust')){
+      const cta = v.querySelector('.lst-cta');
+      if(cta) cta.insertAdjacentHTML('beforebegin', mpTrustBlock(l));
+      else v.insertAdjacentHTML('beforeend', mpTrustBlock(l));
+    }
+  }catch(e){}
+};
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();
