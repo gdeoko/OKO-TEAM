@@ -772,11 +772,11 @@ function msgHtml(m, mine, key) {
     ${!mine && m.who ? `<div class="msg__name" style="color:${nameColor(m.who)}">${m.who}</div>` : ''}
     ${m.sticker ? `<img class="msg__sticker" src="${m.sticker}" alt="" onerror="this.closest(&quot;.msg&quot;).style.display=&quot;none&quot;">`
       : m.voice ? `<div class="msg__voice" data-voice="${m.voice.url || ''}">
-          <button class="msg__voice-play">${ICON('play', 15)}</button>
+          <button class="msg__voice-play" aria-label="Прослушать голосовое сообщение">${ICON('play', 15)}</button>
           <div class="msg__wave">${waveBars(m.voice.dur + 7)}</div>
           <span class="msg__voice-dur">${fmtDur(m.voice.dur)}</span></div>`
       : m.circle ? `<div class="msg__voice" data-voice="${m.circle.url || ''}">
-          <button class="msg__voice-play">${ICON('circle', 15)}</button>
+          <button class="msg__voice-play" aria-label="Пауза">${ICON('circle', 15)}</button>
           <div class="msg__wave">${waveBars(m.circle.dur + 3)}</div>
           <span class="msg__voice-dur">видео ${fmtDur(m.circle.dur)}</span></div>`
       : m.photo ? `<img class="msg__photo" src="${m.photo}" alt="фото">`
@@ -1037,7 +1037,7 @@ function showReplyBar() {
     $('#cvInputRow').before(bar);
   }
   bar.innerHTML = `<span data-icon-inline></span><span><b>Ответ:</b> ${replyTo.text}</span>
-    <button id="cvReplyCancel">${ICON('close', 16)}</button>`;
+    <button id="cvReplyCancel" aria-label="Отменить ответ">${ICON('close', 16)}</button>`;
   $('#cvReplyCancel').addEventListener('click', () => { replyTo = null; bar.remove(); });
 }
 
@@ -2446,8 +2446,8 @@ function renderChrono() {
       <span class="chrono-item__grip">${ICON('menu', 16)}</span>
       <div class="chrono-item__body"><div class="chrono-item__title">${c.t}</div><div class="chrono-item__ord">${c.ord}</div></div>
       <div class="chrono-item__moves">
-        <button class="chrono-move" data-mv="up" data-i="${i}" ${i === 0 ? 'disabled' : ''}>${ICON('chevron-up', 14)}</button>
-        <button class="chrono-move" data-mv="down" data-i="${i}" ${i === chronoOrder.length - 1 ? 'disabled' : ''}>${ICON('chevron-down', 14)}</button>
+        <button class="chrono-move" data-mv="up" data-i="${i}" aria-label="Переместить выше" ${i === 0 ? 'disabled' : ''}>${ICON('chevron-up', 14)}</button>
+        <button class="chrono-move" data-mv="down" data-i="${i}" aria-label="Переместить ниже" ${i === chronoOrder.length - 1 ? 'disabled' : ''}>${ICON('chevron-down', 14)}</button>
       </div>
     </div>`).join('');
   $$('#chronoList .chrono-move').forEach((el) => el.addEventListener('click', () => {
