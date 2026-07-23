@@ -18,9 +18,9 @@ if ($discount <= 0) $discount = 20;
 
 $benefits = [
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12V8a2 2 0 0 0-2-2h-4l-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M14 14l6 6M20 14l-6 6"/></svg>',
-      't' => 'Скидка ' . $discount . '% на всё', 'd' => 'На организационные взносы конкурсов, дипломы и наградные материалы — весь месяц'],
+      't' => 'Скидка ' . $discount . '% на всё', 'd' => 'На организационные взносы конкурсов, дипломы и наградные материалы - весь месяц'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>',
-      't' => 'Эксклюзивный конкурс', 'd' => 'Отдельный конкурс только для членов Клуба — каждый месяц'],
+      't' => 'Эксклюзивный конкурс', 'd' => 'Отдельный конкурс только для членов Клуба - каждый месяц'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></svg>',
       't' => 'Быстрые результаты', 'd' => 'Заявки участников Клуба проверяются приоритетно, вне общей очереди'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
@@ -32,6 +32,10 @@ $startedRu = !empty($status['started_at']) ? ru_date(substr((string) $status['st
 
 ob_start(); ?>
 <style>
+/* Скоуп-фикс: в общем style.css и .eyebrow, и .section-head h2 заданы display:inline-block,
+   поэтому при коротком заголовке (напр. «Стоимость / Одна подписка на месяц») эйброу и h2
+   встают в одну строку. Возвращаем эйброу на отдельную строку над заголовком. */
+.section-head .eyebrow{display:block}
 .club-price-card{max-width:420px;margin:0 auto;text-align:center;padding:36px 30px}
 .club-price{font-family:var(--ff-display);letter-spacing:.02em;font-size:2.8rem;color:var(--gold-2);margin:6px 0}
 .club-price span{font-size:1.1rem;color:var(--muted);font-family:var(--ff-body)}

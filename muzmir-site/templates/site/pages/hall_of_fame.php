@@ -141,6 +141,8 @@ ob_start(); ?>
 
 /* Карточка лауреата - «звезда на Аллее» */
 .lau-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+/* Значок звания хугает текст, не растягивается по ширине flex-колонки */
+.lau-card>.badge{align-self:flex-start;max-width:100%}
 /* верхняя золотая грань */
 .lau-card::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;
   background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.65}
@@ -282,7 +284,9 @@ ob_start(); ?>
     <div class="grid grid-3">
       <?php foreach ($laureates as $i => $l):
           $name = $l['is_group'] && !empty($l['group_name']) ? $l['group_name'] : $l['full_name'];
-          $res = (string) ($l['res'] ?? ''); ?>
+          $res = (string) ($l['res'] ?? '');
+          // Название работы может уже прийти в кавычках - убираем внешние кавычки, чтобы не было ««...»».
+          $work = preg_replace('/^[«»"\'\s]+|[«»"\'\s]+$/u', '', (string) ($l['work_title'] ?? '')); ?>
         <div class="card card--3d lau-card reveal" style="--i:<?= (int) $i ?>">
           <span class="lau-rank" aria-hidden="true"><?= sprintf('%02d', $i + 1) ?></span>
           <div class="lau-top">
@@ -293,10 +297,10 @@ ob_start(); ?>
             </div>
           </div>
           <?php if ($res !== ''): ?><span class="badge <?= $badgeOf($res) ?>"><?= h($res) ?></span><?php endif; ?>
-          <?php if (!empty($l['work_title']) || !empty($l['nomination'])): ?>
+          <?php if ($work !== '' || !empty($l['nomination'])): ?>
             <p class="lau-work">
               <?php if (!empty($l['nomination'])): ?><b><?= h($l['nomination']) ?></b><?php endif; ?>
-              <?php if (!empty($l['work_title'])): ?><?= !empty($l['nomination']) ? ' - ' : '' ?>«<?= h($l['work_title']) ?>»<?php endif; ?>
+              <?php if ($work !== ''): ?><?= !empty($l['nomination']) ? ' - ' : '' ?>«<?= h($work) ?>»<?php endif; ?>
             </p>
           <?php endif; ?>
           <?php if (!empty($l['comp_name'])): ?>
