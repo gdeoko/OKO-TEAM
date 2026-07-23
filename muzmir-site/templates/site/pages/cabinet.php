@@ -173,7 +173,7 @@ ob_start(); ?>
 .cab-stat::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;border-radius:2px;background:var(--grad-gold);opacity:.7}
 .cab-stat:hover{transform:translateY(-4px);box-shadow:var(--shadow-card),var(--shadow-glow)}
 .cab-stat b{display:block;font-family:var(--ff-display);font-size:clamp(1.8rem,5vw,2.5rem);line-height:1;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .cab-stat span{display:block;color:var(--muted);font-size:.76rem;letter-spacing:.04em;margin-top:6px}
 /* --- Вкладки (горизонтальный скролл на мобилке) --- */
 .cab-tabs{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
@@ -243,7 +243,7 @@ ob_start(); ?>
   border:1px solid var(--glass-brd);text-align:center;backdrop-filter:blur(10px);box-shadow:var(--shadow-soft)}
 .cab-kpi::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:var(--grad-gold);opacity:.7}
 .cab-kpi b{display:block;font-family:var(--ff-display);font-size:2.1rem;line-height:1;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .cab-kpi span{display:block;color:var(--muted);font-size:.8rem;margin-top:7px}
 .cab-code{display:inline-flex;align-items:center;gap:10px;font-family:var(--ff-body);font-weight:800;letter-spacing:.08em;
   font-size:1.05rem;padding:8px 16px;border-radius:var(--radius-sm);background:var(--gold-soft);color:var(--gold);border:1px dashed var(--glass-brd)}
@@ -251,6 +251,10 @@ ob_start(); ?>
 .cab-logout{display:inline-flex;align-items:center;gap:8px;margin-top:8px;color:var(--muted);font-size:.9rem;font-weight:600}
 .cab-logout:hover{color:var(--error)}
 .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* Контраст: золотой ТЕКСТ на светлой теме тускнеет — затемняем до gold-ink (как в style.css) */
+:root:not([data-theme="dark"]) .cab-role,
+:root:not([data-theme="dark"]) .cab-result,
+:root:not([data-theme="dark"]) .cab-code{color:var(--gold-ink)}
 /* --- Кнопка «Паспорт участника» --- */
 .cab-passport{margin-bottom:16px}
 @media(max-width:560px){

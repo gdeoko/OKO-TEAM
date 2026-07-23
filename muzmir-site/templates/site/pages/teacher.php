@@ -212,7 +212,7 @@ ob_start(); ?>
 .tch-stats .stat::before{content:"";position:absolute;left:24%;right:24%;top:0;height:2px;border-radius:2px;background:var(--grad-gold);opacity:.7}
 .tch-stats .stat:hover{transform:translateY(-4px);box-shadow:var(--shadow-card),var(--shadow-glow)}
 .tch-stats .stat b{font-family:var(--ff-display);font-size:1.9rem;line-height:1;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .tch-stats .stat .st-ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;
   background:var(--gold-soft);color:var(--gold-2);margin-bottom:2px;box-shadow:inset 0 0 14px var(--gold-soft),0 4px 12px -6px rgba(139,111,31,.4)}
 .tch-stats .stat .st-ic svg{width:20px;height:20px}
@@ -231,20 +231,20 @@ ob_start(); ?>
 .thanks-seal svg{width:26px;height:26px}
 .thanks-mark{position:relative;z-index:1;font-family:var(--ff-script);font-size:clamp(1.3rem,4vw,1.9rem);color:var(--gold-2);line-height:1}
 .thanks h3{position:relative;z-index:1;font-family:var(--ff-serif);font-size:clamp(1.5rem,4.4vw,2.1rem);margin:.3em 0 .1em;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .thanks-name{position:relative;z-index:1;font-family:var(--ff-serif);font-size:1.2rem;color:var(--gold-2);font-weight:700;margin:4px 0 12px}
 .thanks p{position:relative;z-index:1;color:var(--text-dim);max-width:520px;margin:0 auto 16px}
 .thanks-nums{position:relative;z-index:1;display:inline-flex;gap:30px;flex-wrap:wrap;justify-content:center;margin-top:4px;padding-top:16px;border-top:1px solid var(--line)}
 .thanks-nums div{text-align:center}
 .thanks-nums b{display:block;font-family:var(--ff-display);font-weight:800;font-size:1.8rem;line-height:1;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .thanks-nums span{font-size:.78rem;color:var(--muted)}
 /* Реферальный код */
 .ref-code{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
   background:radial-gradient(240px 120px at 0 0,var(--gold-soft),transparent 70%),var(--panel);
   border:1px dashed var(--glass-brd);border-radius:var(--radius-sm);padding:16px 18px;margin:14px 0;box-shadow:var(--shadow-soft)}
 .ref-code .rc-val{font-family:var(--ff-display);font-weight:800;font-size:1.55rem;letter-spacing:.14em;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .ref-code .rc-meta{color:var(--muted);font-size:.82rem;margin-top:2px}
 .ref-copy{white-space:nowrap}
 .ref-perks{display:flex;gap:20px;flex-wrap:wrap;color:var(--text-dim);font-size:.9rem;margin:2px 0 4px}
@@ -263,6 +263,16 @@ ob_start(); ?>
 }
 /* Страховка от горизонтального оверфлоу на 360/390: длинные ссылки/номера не рвут вёрстку */
 .tch-meta,.t-table td{overflow-wrap:anywhere}
+/* Контраст: золотой ТЕКСТ на светлой теме тускнеет — затемняем до gold-ink (как в style.css) */
+:root:not([data-theme="dark"]) .discount-box b,
+:root:not([data-theme="dark"]) .ref-perks b,
+:root:not([data-theme="dark"]) .thanks-mark,
+:root:not([data-theme="dark"]) .thanks-name{color:var(--gold-ink)}
+/* Адаптация: на узких экранах строка группового ученика (6 колонок) — в одну колонку, тап-таргеты не сжимаются */
+@media(max-width:520px){
+  .row-grid{grid-template-columns:1fr}
+  .row-grid .rm-row{grid-column:auto;width:100%}
+}
 </style>
 <section class="section">
   <div class="container">
@@ -373,7 +383,7 @@ ob_start(); ?>
                 </div>
                 <div style="text-align:right">
                   <?= $badge($sl, $st) ?>
-                  <?php if (!empty($a['result'])): ?><p class="tch-meta" style="color:var(--gold-2);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
+                  <?php if (!empty($a['result'])): ?><p class="tch-meta" style="color:var(--gold-ink);font-weight:700"><?= h($a['result']) ?></p><?php endif; ?>
                 </div>
               </div>
             </div>
