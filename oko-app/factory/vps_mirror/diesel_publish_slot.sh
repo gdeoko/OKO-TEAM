@@ -5,6 +5,8 @@ cd /opt/oko-poster || exit 0
 set -a; . cfg/post_creds.env 2>/dev/null; . cfg/secrets.env 2>/dev/null; set +a
 export SSL_CERT_FILE=/root/.ccr/ca-bundle.crt
 LOG=logs/diesel_slot.log
+# самолечение: до-публикуем TikTok прошлых слотов, где Hooppy отдал пусто
+python3 tiktok_sweep.py >> "$LOG" 2>&1 || true
 python3 - >> "$LOG" 2>&1 <<'PY'
 import json,os,glob,subprocess,datetime
 now=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")
