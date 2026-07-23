@@ -119,6 +119,9 @@ p{margin:0 0 1em}
   .btn--ghost:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:var(--shadow-card)}
 }
 .btn:active{transform:translateY(0) scale(.97)}
+.btn svg{width:20px;height:20px;flex:0 0 auto}
+.btn--lg svg{width:22px;height:22px}
+.btn>span{overflow-wrap:normal;word-break:normal}
 .btn.is-loading{pointer-events:none;color:transparent!important}
 .btn.is-loading .spinner{position:absolute;left:50%;top:50%;margin:-9px 0 0 -9px}
 .spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,.18);border-top-color:var(--gold-fg);

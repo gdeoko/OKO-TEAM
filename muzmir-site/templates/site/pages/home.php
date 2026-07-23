@@ -65,7 +65,7 @@ ob_start(); ?>
       <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380">
     </div>
     <div class="reveal">
-      <p class="eyebrow eyebrow--script">Культурный центр</p>
+      <p class="eyebrow eyebrow--script">Искусство объединяет мир</p>
       <h1><?= h(setting('hero_title', cfgv('org_name', 'Музыкальный Мир'))) ?></h1>
       <p class="lead"><?= h(setting('hero_subtitle', 'Международные и всероссийские онлайн-конкурсы и фестивали')) ?> культуры и искусства при информационной поддержке Министерств культуры и образования субъектов Российской Федерации.</p>
       <div class="hero-cta">
