@@ -59,8 +59,8 @@ ob_start(); ?>
   <div class="hero-notes" aria-hidden="true"></div>
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="container">
-    <div class="reveal">
-      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»">
+    <div class="reveal hero-media">
+      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380">
     </div>
     <div class="reveal">
       <p class="eyebrow eyebrow--script">Культурный центр</p>
@@ -152,8 +152,8 @@ ob_start(); ?>
       </div>
     </div>
 
-    <div class="card map-heat reveal" style="margin-top:24px">
-      <h3>География участников</h3>
+    <div class="reveal" style="margin-top:24px">
+      <h3 style="text-align:center">География участников</h3>
       <p style="color:var(--muted);margin:0 0 18px">Россия, страны СНГ и дальнее зарубежье - от Калининграда до Дальнего Востока, от Минска до Уханя.</p>
       <?= render_regions_heatmap() ?>
     </div>

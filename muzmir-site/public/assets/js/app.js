@@ -141,17 +141,25 @@
     if (container.matches && container.matches(GRID_SEL)) markStagger(container);
   }
 
+  function revealEl(el) {
+    if (!el || el.classList.contains('in')) return;
+    try { staggerChildren(el); } catch (err) {}   // никогда не блокируем показ
+    el.classList.add('in');
+  }
   if ('IntersectionObserver' in window) {
+    var vh = window.innerHeight || document.documentElement.clientHeight || 800;
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (e.isIntersecting) {
-          staggerChildren(e.target);
-          e.target.classList.add('in');
-          io.unobserve(e.target);
-        }
+        if (e.isIntersecting) { revealEl(e.target); io.unobserve(e.target); }
       });
-    }, { threshold: 0.12 });
-    $$('.reveal').forEach(function (el) { io.observe(el); });
+    }, { threshold: 0, rootMargin: '0px 0px -6% 0px' });
+    $$('.reveal').forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < vh * 0.94) { revealEl(el); }   // выше/на сгибе — сразу, без ожидания
+      else io.observe(el);
+    });
+    // Гарантия: ничто не остаётся скрытым дольше 3с (защита от сбоя observer/скрытых вкладок)
+    setTimeout(function () { $$('.reveal').forEach(function (el) { if (!el.classList.contains('in')) revealEl(el); }); }, 3000);
 
     // Счётчики
     var cio = new IntersectionObserver(function (entries) {
@@ -171,7 +179,7 @@
     }, { threshold: 0.4 });
     $$('.stat-ring, .donut, .bar').forEach(function (el) { pio.observe(el); });
   } else {
-    $$('.reveal').forEach(function (el) { staggerChildren(el); el.classList.add('in'); });
+    $$('.reveal').forEach(function (el) { revealEl(el); });
     $$('.stat-ring, .donut, .bar').forEach(function (el) { animateProgress(el); });
   }
 
