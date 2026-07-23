@@ -7,7 +7,7 @@
 
 ## КЛИЕНТ
 Импорт мото/квадро/гидро из Китая. dieselcompany.pro. Бренд чёрный+амбер #EA5920,
-Bebas Neue + Montserrat. Голос: **Piper TTS (студийный, бесплатный, БЕЗЛИМИТ, MIT/коммерч., локально быстро) — `pipeline/tts_piper.py`, ГОЛОС ВЫБРАН: **ru_RU-ruslan + авто-ударения RUAccent** (Даниэль 22.07: Ruslan лучший, RUAccent чинит ударения). env VOICE_PIPER=ruslan. Хелпер сам ставит piper-tts+ruaccent и качает модель.** Резерв: **Silero v4_ru (`pipeline/tts_silero.py`)** — мужской (eugene/aidar), ударения+ё авто (put_accent/put_yo) → БЕЗ ошибок в словах. Локально/стабильно. Заменил edge-tts И Qwen3-TTS (Даниэль 22.07: и edge, и Qwen-голоса — плохие/с ошибками). Финальный спикер — по выбору Даниэля. Снегоходы НЕ делаем.
+Bebas Neue + Montserrat. Голос: **Piper TTS (студийный, бесплатный, БЕЗЛИМИТ, MIT/коммерч., локально быстро) — `pipeline/tts_piper.py`, ГОЛОС ВЫБРАН: **ru_RU-ruslan + авто-ударения RUAccent (модель turbo3 + доменный словарь `pipeline/ru_stress_dict.py`)** (Даниэль 23.07: Ruslan студийный, но tiny косячил ударения -> turbo3+словарь = ноль ошибок на наших словах, дополнять словарь новыми словами). env VOICE_PIPER=ruslan, RUACCENT_MODEL=turbo3. Хелпер сам ставит piper-tts+ruaccent и качает модель.** Резерв: **Silero v4_ru (`pipeline/tts_silero.py`)** — мужской (eugene/aidar), ударения+ё авто (put_accent/put_yo) → БЕЗ ошибок в словах. Локально/стабильно. Заменил edge-tts И Qwen3-TTS (Даниэль 22.07: и edge, и Qwen-голоса — плохие/с ошибками). Финальный спикер — по выбору Даниэля. Снегоходы НЕ делаем.
 Контент-микс: **ОСНОВА квадро+мото, изредка гидро, реже всего спецтехника (1 из ~8).**
 
 ## ОБЪЁМ, ТЕМП, РАМП

@@ -28,7 +28,15 @@ _accent=None
 if os.environ.get("VOICE_NOACCENT","")!="1":
     try:
         from ruaccent import RUAccent
-        _accent=RUAccent(); _accent.load(omograph_model_size=os.environ.get("RUACCENT_MODEL","tiny"), use_dictionary=True)
+        # turbo3 (сильная модель омографов) + доменный словарь -> НУЛЬ ошибок на наших словах
+        # (Даниэль 23.07: tiny косячил ударения). Словарь: pipeline/ru_stress_dict.py.
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from ru_stress_dict import STRESS as _CUSTOM
+        except Exception:
+            _CUSTOM={}
+        _accent=RUAccent(); _accent.load(omograph_model_size=os.environ.get("RUACCENT_MODEL","turbo3"),
+                                          use_dictionary=True, custom_dict=_CUSTOM)
     except Exception as e:
         sys.stderr.write(f"[tts_piper] RUAccent недоступен, без авто-ударений: {str(e)[:120]}\n")
 def stress(t):
