@@ -100,16 +100,6 @@
   </div>
 </div>
 
-<!-- 4. PWA install -->
-<div class="mz-install" id="mzInstall" role="dialog" aria-label="Установить приложение">
-  <img src="<?= asset('img/logo_muzmir_192.png') ?>" alt="" width="38" height="38">
-  <div><b>Установить приложение</b><span>Быстрый доступ к конкурсам с главного экрана</span></div>
-  <div class="mz-ib">
-    <button class="btn btn--primary" type="button" id="mzInstallGo" style="padding:9px 16px;min-height:auto">Установить</button>
-    <button class="mz-ix" type="button" id="mzInstallX" aria-label="Скрыть">×</button>
-  </div>
-</div>
-
 <div class="mz-toast" id="mzToast" role="status" aria-live="polite"></div>
 
 <script>
@@ -177,18 +167,5 @@
     });
   }
 
-  /* ---- 4. PWA install ---- */
-  var deferred=null, inst=document.getElementById('mzInstall');
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault(); deferred=e;
-    if(inst && !seen('mz-install-dismissed')){ setTimeout(function(){inst.classList.add('on');}, 6000); }
-  });
-  if(inst){
-    document.getElementById('mzInstallGo').addEventListener('click', function(){
-      inst.classList.remove('on');
-      if(deferred){ deferred.prompt(); deferred.userChoice.finally(function(){ mark('mz-install-dismissed'); deferred=null; }); }
-    });
-    document.getElementById('mzInstallX').addEventListener('click', function(){ inst.classList.remove('on'); mark('mz-install-dismissed'); });
-  }
 })();
 </script>

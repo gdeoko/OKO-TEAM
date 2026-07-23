@@ -1,5 +1,5 @@
-const CACHE = 'muzmir-v3';
-const CORE = ['/', '/offline.html', '/assets/css/style.css', '/assets/js/app.js', '/assets/img/logo_muzmir_256.png'];
+const CACHE = 'muzmir-v5';
+const CORE = ['/offline.html', '/assets/img/logo_muzmir_256.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
@@ -34,12 +34,22 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Остальное — cache-first с сетевым обновлением; оффлайн-fallback:
-  // навигации → фирменная /offline.html, прочее → кэш '/'.
+  // HTML-страницы — NETWORK-FIRST (всегда свежая вёрстка; кэш только как оффлайн-фолбэк).
+  // Это чинит проблему «залипшего» старого дизайна из кэша на телефоне.
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
+        return res;
+      }).catch(() => caches.match(req).then(r => r || caches.match('/offline.html')))
+    );
+    return;
+  }
+  // Прочее (не-asset, не-HTML) — cache-first с сетевым обновлением.
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
       return res;
-    }).catch(() => caches.match(req.mode === 'navigate' ? '/offline.html' : '/').then(r => r || caches.match('/'))))
+    }).catch(() => caches.match('/offline.html')))
   );
 });
