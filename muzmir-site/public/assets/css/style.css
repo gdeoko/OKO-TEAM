@@ -313,7 +313,7 @@ p{margin:0 0 1em}
 .partners{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:center}
 .partners img{height:66px;width:auto;opacity:.72;transition:.25s;filter:grayscale(.2)}
 [data-theme="dark"] .partners img,
-[data-theme="dark"] .footer-partners img{background:rgba(243,236,218,.06);border:1px solid var(--line);border-radius:12px;padding:8px;filter:grayscale(1) brightness(1.6);opacity:.75}
+[data-theme="dark"] .footer-partners img{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:12px;padding:8px;filter:none;opacity:.96}
 [data-theme="dark"] .partners a:hover img,
 [data-theme="dark"] .footer-partners a:hover img{opacity:1}
 .partners a:hover img{transform:scale(1.06);opacity:1;filter:none}
