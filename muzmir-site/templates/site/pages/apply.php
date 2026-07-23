@@ -37,82 +37,133 @@ $ic = [
 
 ob_start(); ?>
 <style>
-/* Локальные стили формы заявки (глобальный style.css не трогаем) */
-.apply-wrap{max-width:760px;margin:0 auto}
-.apply-progress{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin:8px 0 34px;position:relative}
-.apply-progress::before{content:"";position:absolute;left:20px;right:20px;top:17px;height:2px;background:var(--line);z-index:0}
-.ap-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;min-width:0}
-.ap-dot{width:36px;height:36px;border-radius:50%;background:var(--panel-solid);border:1.5px solid var(--glass-brd);
-  display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:.9rem;transition:.25s}
-.ap-dot svg{width:18px;height:18px}
+/* ===== Премиум-стили формы заявки (глобальный style.css не трогаем) ===== */
+.apply-wrap{max-width:780px;margin:0 auto}
+
+/* Степпер прогресса (JS ведёт .ap-fill/.active/.done - классы сохранены) */
+.apply-progress{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin:6px 0 38px;position:relative;padding:0 4px}
+.apply-progress::before{content:"";position:absolute;left:24px;right:24px;top:19px;height:2px;background:var(--line);z-index:0;border-radius:2px}
+.ap-node{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:9px;flex:1;min-width:0}
+.ap-dot{width:40px;height:40px;border-radius:50%;background:var(--panel-solid);border:1.5px solid var(--glass-brd);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:.9rem;
+  transition:background .28s,border-color .28s,color .28s,box-shadow .28s,transform .28s}
+.ap-dot svg{width:19px;height:19px}
 .ap-node.done .ap-dot{background:var(--grad-gold);border-color:transparent;color:#1a1206;box-shadow:var(--shadow-btn)}
-.ap-node.active .ap-dot{background:var(--panel-solid);border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 4px var(--gold-soft)}
-.ap-label{font-size:.72rem;color:var(--muted);text-align:center;line-height:1.2}
-.ap-node.active .ap-label,.ap-node.done .ap-label{color:var(--gold);font-weight:600}
-@media(max-width:640px){.ap-label{display:none}.apply-progress::before{top:17px}}
+.ap-node.active .ap-dot{background:var(--panel-solid);border-color:var(--gold);color:var(--gold);
+  box-shadow:0 0 0 5px var(--gold-soft),var(--shadow-soft);transform:translateY(-1px)}
+.ap-label{font-size:.72rem;color:var(--muted);text-align:center;line-height:1.2;letter-spacing:.01em}
+.ap-node.active .ap-label{color:var(--gold-ink);font-weight:700}
+.ap-node.done .ap-label{color:var(--gold-ink);font-weight:600}
+[data-theme="dark"] .ap-node.active .ap-label,[data-theme="dark"] .ap-node.done .ap-label{color:var(--gold)}
+@media(max-width:640px){
+  .ap-label{display:none}
+  .apply-progress{margin-bottom:26px;gap:2px}
+  .apply-progress::before{left:20px;right:20px;top:18px}
+  .ap-dot{width:38px;height:38px}
+}
 
-.apply-card{padding:30px 30px 26px}
-@media(max-width:560px){.apply-card{padding:22px 18px}}
-.astep{display:none;animation:apIn .35s ease}
-.astep.active{display:block}
+/* Карточка формы */
+.apply-card{padding:32px 32px 28px;position:relative;overflow:hidden}
+.apply-card::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--grad-gold);opacity:.9}
+@media(max-width:560px){.apply-card{padding:24px 18px}}
+.astep{display:none}
+.astep.active{display:block;animation:apIn .35s ease}
 @keyframes apIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.astep-head{margin-bottom:20px}
-.astep-head .eyebrow{margin-bottom:6px}
-.astep-head h2{font-size:1.5rem;margin:0}
+.astep-head{margin-bottom:22px}
+.astep-head .eyebrow{margin-bottom:4px}
+.astep-head h2{font-size:clamp(1.35rem,4.4vw,1.6rem);margin:0;line-height:1.15}
 
+/* Выбор конкурса */
 .comp-list{display:grid;gap:12px}
 .comp-opt{display:block;cursor:pointer}
 .comp-opt input{position:absolute;opacity:0;pointer-events:none}
 .comp-opt .co-body{border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:16px 18px;
-  display:flex;align-items:center;gap:14px;transition:.2s;background:var(--panel);backdrop-filter:blur(10px)}
-.comp-opt:hover .co-body{border-color:var(--gold);box-shadow:var(--shadow-card)}
+  display:flex;align-items:center;gap:14px;min-height:64px;background:var(--panel);backdrop-filter:blur(10px);
+  transition:border-color .2s,background .2s,box-shadow .2s,transform .2s}
+@media(hover:hover){.comp-opt:hover .co-body{border-color:var(--gold);box-shadow:var(--shadow-card);transform:translateY(-2px)}}
 .comp-opt input:checked + .co-body{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 3px var(--gold-soft)}
-.co-mark{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s}
+.comp-opt input:focus-visible + .co-body{box-shadow:0 0 0 4px var(--gold-soft)}
+.co-mark{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s}
 .comp-opt input:checked + .co-body .co-mark{border-color:var(--gold);background:var(--grad-gold)}
-.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:6px;top:6px;width:8px;height:8px;border-radius:50%;background:#1a1206}
+.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:#1a1206}
 .co-main{flex:1;min-width:0}
-.co-main b{display:block;font-family:var(--ff-serif);font-size:1.12rem;color:var(--text)}
-.co-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.co-main b{display:block;font-family:var(--ff-serif);font-size:1.12rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
+.co-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 
-.seg{display:flex;gap:0;border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:18px}
-.seg label{flex:1;text-align:center;padding:12px;cursor:pointer;font-weight:600;color:var(--muted);transition:.18s;position:relative}
+/* Сегмент солист / коллектив */
+.seg{display:flex;gap:6px;border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:5px;margin-bottom:20px;background:var(--glass);backdrop-filter:blur(8px)}
+.seg label{flex:1;text-align:center;padding:11px 8px;min-height:44px;cursor:pointer;font-weight:700;color:var(--muted);
+  transition:background .18s,color .18s,box-shadow .18s;position:relative;border-radius:10px;
+  display:flex;align-items:center;justify-content:center}
 .seg label input{position:absolute;opacity:0}
-.seg label.on{background:var(--gold-soft);color:var(--gold)}
+.seg label.on{background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+
 .grid-2c{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
 @media(max-width:560px){.grid-2c{grid-template-columns:1fr}}
 
-.astep-nav{display:flex;gap:12px;margin-top:26px}
-.astep-nav .btn{flex:1}
-.astep-nav .back{flex:0 0 auto;min-width:52px}
+/* Навигация шагов */
+.astep-nav{display:flex;gap:12px;margin-top:28px}
+.astep-nav .btn{flex:1;min-height:52px}
+.astep-nav .back{flex:0 0 auto;min-width:120px}
+@media(max-width:400px){.astep-nav .back{min-width:92px;padding-left:14px;padding-right:14px}}
 
-.plat-live{font-size:.84rem;margin-top:6px;display:none;font-weight:600}
+/* Floating-label поля: метка плавает внутрь поля и всплывает при фокусе/вводе */
+.field.ff{position:relative}
+.field.ff>label{position:absolute;left:16px;top:15px;margin:0;padding:0 2px;pointer-events:none;z-index:2;
+  font-weight:600;font-size:.9rem;color:var(--muted);background:transparent;transform-origin:left top;
+  max-width:calc(100% - 40px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:transform .16s ease,color .16s ease}
+.field.ff>input,.field.ff>textarea{padding-top:22px;padding-bottom:8px}
+.field.ff:has(>input:focus)>label,.field.ff:has(>input:not(:placeholder-shown))>label,
+.field.ff:has(>textarea:focus)>label,.field.ff:has(>textarea:not(:placeholder-shown))>label{
+  transform:translateY(-9px) scale(.78);color:var(--gold-ink)}
+[data-theme="dark"] .field.ff:has(>input:focus)>label,
+[data-theme="dark"] .field.ff:has(>textarea:focus)>label{color:var(--gold)}
+
+/* Живая проверка ссылки на платформу */
+.plat-live{font-size:.84rem;margin-top:7px;display:none;font-weight:600;padding-left:20px;position:relative}
+.plat-live::before{content:"";position:absolute;left:0;top:3px;width:12px;height:12px;border-radius:50%;background:currentColor;opacity:.22}
 .plat-live.ok{display:block;color:var(--mint)}
 .plat-live.bad{display:block;color:var(--error)}
 
-.summary{border:1px solid var(--glass-brd);border-radius:var(--radius-sm);background:var(--glass);padding:6px 18px;margin-bottom:20px;backdrop-filter:blur(10px)}
-.summary .row{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.94rem}
+/* Живая сводка */
+.summary-head{font-family:var(--ff-serif);font-size:1.06rem;color:var(--text);margin:0 0 12px;display:flex;align-items:center;gap:9px}
+.summary-head svg{width:20px;height:20px;color:var(--gold);flex:none}
+.summary{border:1px solid var(--glass-brd);border-radius:var(--radius-sm);background:var(--glass);padding:4px 18px;margin-bottom:22px;backdrop-filter:blur(10px);box-shadow:var(--shadow-soft)}
+.summary .row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:.94rem}
 .summary .row:last-child{border-bottom:none}
-.summary .row span:first-child{color:var(--muted)}
-.summary .row span:last-child{font-weight:600;text-align:right;color:var(--text)}
+.summary .row span:first-child{color:var(--muted);flex:0 0 auto}
+.summary .row span:last-child{font-weight:700;text-align:right;color:var(--text);overflow-wrap:anywhere}
 
-.consent-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
-.consent-row input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;margin-top:2px;accent-color:var(--gold);cursor:pointer}
+/* Согласия */
+.consent-row{display:flex;gap:13px;align-items:flex-start;margin-bottom:14px;padding:12px 14px;border:1px solid var(--glass-brd);
+  border-radius:var(--radius-sm);background:var(--panel);backdrop-filter:blur(8px);transition:border-color .2s,background .2s}
+.consent-row:has(input:checked){border-color:var(--gold);background:var(--gold-soft)}
+.consent-row input[type=checkbox]{width:24px;height:24px;flex:0 0 auto;margin-top:1px;accent-color:var(--gold);cursor:pointer}
 .consent-row.locked{opacity:.55}
-.consent-row label{font-size:.92rem;line-height:1.45;cursor:pointer;color:var(--text-dim)}
-.consent-note{font-size:.84rem;color:var(--text-dim);background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:18px}
-.consent-note b{color:var(--gold)}
-.timer-badge{display:inline-block;min-width:26px;text-align:center;font-weight:700;color:var(--gold)}
+.consent-row label{font-size:.9rem;line-height:1.5;cursor:pointer;color:var(--text-dim)}
+.consent-note{font-size:.86rem;color:var(--text-dim);background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:18px;line-height:1.5}
+.consent-note b{color:var(--gold-ink)}
+.timer-badge{display:inline-block;min-width:26px;text-align:center;font-weight:800;color:var(--gold-ink)}
+[data-theme="dark"] .timer-badge,[data-theme="dark"] .consent-note b{color:var(--gold)}
 
-.pay-box{text-align:center;padding:14px 0}
-.pay-amount{font-family:var(--ff-display);font-size:3rem;letter-spacing:.02em;
-  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0}
+/* Оплата */
+.pay-box{text-align:center;padding:16px 0 6px}
+.pay-badge{display:inline-flex;align-items:center;gap:7px;font-size:.74rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--gold-ink);background:var(--gold-soft);border:1px solid var(--glass-brd);border-radius:999px;padding:6px 14px;margin-bottom:6px}
+.pay-badge svg{width:14px;height:14px}
+[data-theme="dark"] .pay-badge{color:var(--gold)}
+.pay-amount{font-family:var(--ff-display);font-size:clamp(2.6rem,10vw,3.4rem);letter-spacing:.02em;line-height:1;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;margin:8px 0}
 
+/* Готово */
 .done-box{text-align:center;padding:16px 0}
-.done-ic{width:82px;height:82px;margin:0 auto 16px;border-radius:50%;background:var(--gold-soft);border:1px solid var(--glass-brd);
-  display:flex;align-items:center;justify-content:center;color:var(--gold)}
-.done-ic svg{width:44px;height:44px}
-.done-number{display:inline-block;font-family:var(--ff-display);font-size:1.9rem;letter-spacing:.06em;color:var(--gold);
-  background:var(--panel);border:1.5px dashed var(--gold);border-radius:var(--radius-sm);padding:10px 22px;margin:10px 0;backdrop-filter:blur(8px)}
+.done-ic{width:88px;height:88px;margin:0 auto 18px;border-radius:50%;background:var(--gold-soft);border:1px solid var(--glass-brd);
+  display:flex;align-items:center;justify-content:center;color:var(--gold);box-shadow:var(--shadow-glow)}
+.done-ic svg{width:46px;height:46px}
+.done-number{display:inline-block;font-family:var(--ff-display);font-size:clamp(1.6rem,6vw,2rem);letter-spacing:.06em;color:var(--gold-ink);
+  background:var(--panel);border:1.5px dashed var(--gold);border-radius:var(--radius-sm);padding:11px 24px;margin:10px 0;backdrop-filter:blur(8px)}
+[data-theme="dark"] .done-number{color:var(--gold)}
 
 /* honeypot — скрыт для людей, виден ботам */
 .hp-field{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
@@ -191,14 +242,15 @@ ob_start(); ?>
             <label><input type="radio" name="is_group" value="1">Коллектив</label>
           </div>
 
-          <div class="field" data-when="group" style="display:none">
+          <div class="field ff" data-when="group" style="display:none">
+            <input type="text" id="group_name" name="group_name" placeholder=" ">
             <label for="group_name">Название коллектива</label>
-            <input type="text" id="group_name" name="group_name" placeholder="Образцовый ансамбль «Родник»">
+            <div class="hint">Например, образцовый ансамбль «Родник».</div>
             <div class="err-msg">Укажите название коллектива.</div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="full_name" name="full_name" placeholder=" " data-fio required>
             <label for="full_name" id="fnLabel">Фамилия, имя, отчество участника</label>
-            <input type="text" id="full_name" name="full_name" placeholder="Иванова Мария Петровна" data-fio required>
             <div class="hint">Регистр поправится автоматически.</div>
             <div class="err-msg">Укажите ФИО участника.</div>
           </div>
@@ -227,18 +279,20 @@ ob_start(); ?>
         <!-- ШАГ 3. Педагог и учреждение -->
         <section class="astep" data-step="teacher">
           <div class="astep-head"><p class="eyebrow">Шаг 3</p><h2>Педагог и учреждение</h2></div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="teacher" name="teacher" placeholder=" " data-fio>
             <label for="teacher">ФИО руководителя или педагога</label>
-            <input type="text" id="teacher" name="teacher" placeholder="Смирнов Алексей Иванович" data-fio>
             <div class="hint">Как указать в дипломе руководителя. Можно оставить пустым.</div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="institution" name="institution" placeholder=" ">
             <label for="institution">Учреждение</label>
-            <input type="text" id="institution" name="institution" placeholder="Детская школа искусств №1">
+            <div class="hint">Например, детская школа искусств №1.</div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="city" name="city" placeholder=" " required>
             <label for="city">Населённый пункт</label>
-            <input type="text" id="city" name="city" placeholder="г. Москва" required>
+            <div class="hint">Например, г. Москва.</div>
             <div class="err-msg">Укажите город или населённый пункт.</div>
           </div>
           <div class="astep-nav">
@@ -273,15 +327,15 @@ ob_start(); ?>
             </select>
             <div class="err-msg">Выберите форму исполнения.</div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="work_title" name="work_title" placeholder=" " data-title required>
             <label for="work_title">Название номера или работы</label>
-            <input type="text" id="work_title" name="work_title" placeholder="Романс «Утро»" data-title required>
-            <div class="hint">Кавычки заменятся на «ёлочки» автоматически.</div>
+            <div class="hint">Например, романс «Утро». Кавычки заменятся на «ёлочки» автоматически.</div>
             <div class="err-msg">Укажите название номера.</div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="url" id="video_url" name="video_url" placeholder=" " data-video>
             <label for="video_url">Ссылка на выступление или работу</label>
-            <input type="url" id="video_url" name="video_url" placeholder="https://rutube.ru/video/..." data-video>
             <input type="hidden" name="video_platform" id="video_platform">
             <div class="hint">RuTube, Яндекс Диск, Google Диск, Cloud Mail, VK, ОК, Дзен. Ссылка должна быть открыта для просмотра.</div>
             <div class="plat-live" data-plat-live></div>
@@ -297,26 +351,26 @@ ob_start(); ?>
         <section class="astep" data-step="contact">
           <div class="astep-head"><p class="eyebrow">Шаг 5</p><h2>Контакты и доставка</h2></div>
           <div class="grid-2c">
-            <div class="field">
+            <div class="field ff">
+              <input type="email" id="email" name="email" placeholder=" " required>
               <label for="email">Электронная почта</label>
-              <input type="email" id="email" name="email" placeholder="mail@example.ru" required>
               <div class="hint">На неё придут дипломы и результаты.</div>
               <div class="err-msg">Укажите корректную электронную почту.</div>
             </div>
-            <div class="field">
+            <div class="field ff">
+              <input type="tel" id="phone" name="phone" placeholder=" " data-phone required>
               <label for="phone">Телефон</label>
-              <input type="tel" id="phone" name="phone" placeholder="+7 (___) ___-__-__" data-phone required>
               <div class="err-msg">Укажите телефон в формате +7 (___) ___-__-__.</div>
             </div>
           </div>
-          <div class="field">
+          <div class="field ff">
+            <input type="text" id="address" name="address" placeholder=" ">
             <label for="address">Адрес доставки оригиналов</label>
-            <input type="text" id="address" name="address" placeholder="г. Москва, ул. Солянка, д.14, кв.7">
             <div class="hint">Нужен только для оригиналов наградных материалов. Дипломы приходят на почту.</div>
           </div>
-          <div class="field" style="max-width:220px">
+          <div class="field ff" style="max-width:240px">
+            <input type="text" id="postal_index" name="postal_index" placeholder=" " inputmode="numeric" maxlength="6">
             <label for="postal_index">Почтовый индекс</label>
-            <input type="text" id="postal_index" name="postal_index" placeholder="109240" inputmode="numeric" maxlength="6">
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>
@@ -328,6 +382,10 @@ ob_start(); ?>
         <section class="astep" data-step="consent">
           <div class="astep-head"><p class="eyebrow">Шаг 6</p><h2>Проверка и согласие</h2></div>
 
+          <div class="summary-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg>
+            Проверьте данные заявки
+          </div>
           <div class="summary" id="applySummary"></div>
 
           <div class="consent-note">
@@ -363,7 +421,11 @@ ob_start(); ?>
         <section class="astep" data-step="pay">
           <div class="astep-head"><p class="eyebrow">Шаг 7</p><h2>Оплата участия</h2></div>
           <div class="pay-box">
-            <p style="color:var(--muted)">Организационный взнос за участие</p>
+            <span class="pay-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>
+              Оргвзнос
+            </span>
+            <p style="color:var(--muted);margin:0">Организационный взнос за участие</p>
             <div class="pay-amount" data-pay-amount>-</div>
             <p style="color:var(--muted);max-width:460px;margin:0 auto 8px">
               Оплата оргвзноса пройдёт онлайн через защищённую форму ЮKassa сразу после отправки заявки.

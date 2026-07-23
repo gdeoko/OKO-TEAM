@@ -39,61 +39,151 @@ foreach ($comps as $c) {
 $icoCard = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
 
 ob_start(); ?>
+<style>
+/* ===== Премиум-стили формы заказа наград (глобальный style.css не трогаем) ===== */
+.order-wrap{max-width:760px;margin:0 auto}
+
+/* Памятка перед оформлением */
+.award-note{display:flex;gap:16px;align-items:flex-start;background:var(--gold-soft);margin-bottom:24px}
+.award-note-ic{width:46px;height:46px;flex:none;border-radius:14px;background:var(--panel-solid);border:1px solid var(--glass-brd);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-ink);box-shadow:var(--shadow-soft)}
+.award-note-ic svg{width:24px;height:24px}
+[data-theme="dark"] .award-note-ic{color:var(--gold)}
+.award-note h3{margin:2px 0 10px;font-size:1.1rem}
+.award-note ul{padding-left:18px;color:var(--text-dim);margin:0;line-height:1.5}
+.award-note li{margin-bottom:8px}
+.award-note li:last-child{margin-bottom:0}
+@media(max-width:480px){.award-note{gap:12px;padding:20px 16px}.award-note-ic{width:40px;height:40px}}
+
+/* Карточка формы */
+.order-card{padding:30px 30px 26px;position:relative;overflow:hidden}
+.order-card::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--grad-gold);opacity:.9}
+@media(max-width:560px){.order-card{padding:24px 18px}}
+
+/* Заголовок секции с номером */
+.order-sec-head{display:flex;align-items:center;gap:12px;margin:30px 0 18px}
+.order-sec-head:first-of-type{margin-top:4px}
+.order-sec-n{width:30px;height:30px;flex:none;border-radius:50%;background:var(--grad-gold);color:#1a1206;
+  display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:800;font-size:1rem;box-shadow:var(--shadow-btn)}
+.order-sec-head h3{margin:0;font-size:1.16rem}
+
+/* Floating-label поля */
+.field.ff{position:relative}
+.field.ff>label{position:absolute;left:16px;top:15px;margin:0;padding:0 2px;pointer-events:none;z-index:2;
+  font-weight:600;font-size:.9rem;color:var(--muted);background:transparent;transform-origin:left top;
+  max-width:calc(100% - 40px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:transform .16s ease,color .16s ease}
+.field.ff>input,.field.ff>textarea{padding-top:22px;padding-bottom:8px}
+.field.ff>textarea{padding-top:26px}
+.field.ff:has(>input:focus)>label,.field.ff:has(>input:not(:placeholder-shown))>label,
+.field.ff:has(>textarea:focus)>label,.field.ff:has(>textarea:not(:placeholder-shown))>label{
+  transform:translateY(-9px) scale(.78);color:var(--gold-ink)}
+[data-theme="dark"] .field.ff:has(>input:focus)>label,
+[data-theme="dark"] .field.ff:has(>textarea:focus)>label{color:var(--gold)}
+
+/* Позиции наградного материала (JS рисует .award-item внутри #awardItems) */
+.award-box{border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:6px 10px;background:var(--glass);backdrop-filter:blur(8px)}
+.award-box>p{color:var(--muted);margin:14px 6px!important}
+.award-box>label{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:12px!important;
+  padding:14px 12px!important;margin:2px 0!important;min-height:54px;cursor:pointer;
+  border:1px solid transparent!important;border-bottom:1px solid var(--line)!important;border-radius:12px!important;
+  transition:background .16s,border-color .16s}
+.award-box>label:last-child{border-bottom-color:transparent!important}
+@media(hover:hover){.award-box>label:hover{background:var(--gold-soft)!important;border-color:var(--glass-brd)!important}}
+.award-box>label:has(.award-item:checked){background:var(--gold-soft)!important;border-color:var(--gold)!important}
+.award-box>label>span:first-child{display:flex;align-items:center;flex:1;min-width:0;overflow-wrap:anywhere;color:var(--text)}
+.award-box .award-item{width:22px!important;height:22px!important;min-height:22px!important;margin:0 12px 0 0!important;
+  accent-color:var(--gold);cursor:pointer;flex:none}
+.award-box>label b{white-space:nowrap;font-family:var(--ff-body);font-weight:800;font-size:1rem;color:var(--gold-ink)}
+[data-theme="dark"] .award-box>label b{color:var(--gold)}
+
+/* Блок получателя */
+.recipient-hint{margin:-6px 0 16px}
+
+/* Итоговая сумма */
+.total-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
+  padding:18px 22px;margin:8px 0 22px;border:1.5px solid var(--gold);border-radius:var(--radius);
+  background:var(--gold-soft);box-shadow:var(--shadow-soft)}
+.total-bar .total-lbl{font-weight:700;color:var(--text)}
+.total-bar .total-sum{font-family:var(--ff-display);font-size:clamp(1.7rem,7vw,2.1rem);line-height:1;letter-spacing:.02em;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* Способ оплаты */
+.pay-method{display:flex;align-items:center;gap:14px;cursor:pointer;padding:16px 18px;border:1.5px solid var(--gold);
+  border-radius:var(--radius-sm);background:var(--panel);backdrop-filter:blur(10px);box-shadow:0 0 0 3px var(--gold-soft)}
+.pay-method input{width:auto!important;min-height:0!important;flex:none;accent-color:var(--gold);width:20px!important;height:20px!important}
+.pay-method .pay-ic{width:34px;height:34px;flex:none;color:var(--gold-ink)}
+[data-theme="dark"] .pay-method .pay-ic{color:var(--gold)}
+.pay-method b{color:var(--text)}
+
+#formMsg{text-align:center;margin-top:14px;font-weight:600;min-height:1.2em}
+</style>
+
 <section class="section section--parchment">
   <div class="container" style="max-width:760px">
     <div class="section-head reveal">
       <p class="eyebrow">Награды</p>
       <h2>Заказ наградного материала</h2>
       <div class="gold-rule"></div>
-      <p>Заполните форму, отметьте нужные позиции - сумма пересчитывается сразу. Заказ оформляется после оплаты.</p>
+      <p>Отметьте нужные позиции - сумма пересчитывается сразу. Заказ оформляется после оплаты.</p>
     </div>
   </div>
 </section>
 
-<section class="section">
+<section class="section" style="padding-top:0">
   <div class="container" style="max-width:760px">
-    <div class="card reveal" style="background:var(--gold-soft);margin-bottom:26px">
-      <h3 style="margin-top:0">Важно перед оформлением</h3>
-      <ul style="padding-left:20px;color:var(--text-dim);margin:0">
-        <li style="margin-bottom:8px">Заявка на изготовление наградного материала оформляется только после оглашения результатов конкурса - по Вашему личному решению и на добровольной основе.</li>
-        <li style="margin-bottom:8px">Стоимость доставки оригиналов оплачивается отдельно заказчиком при получении - наложенным платежом.</li>
-        <li style="margin-bottom:0">Организационный взнос за аттестованный конкурсный материал возврату не подлежит. При возврате посылки по вине заказчика повторная отправка производится полностью за его счёт.</li>
-      </ul>
+    <div class="order-wrap">
+
+    <div class="card reveal award-note">
+      <div class="award-note-ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+      </div>
+      <div>
+        <h3>Важно перед оформлением</h3>
+        <ul>
+          <li>Заявка на изготовление наградного материала оформляется только после оглашения результатов конкурса - по Вашему личному решению и на добровольной основе.</li>
+          <li>Стоимость доставки оригиналов оплачивается отдельно заказчиком при получении - наложенным платежом.</li>
+          <li>Организационный взнос за аттестованный конкурсный материал возврату не подлежит. При возврате посылки по вине заказчика повторная отправка производится полностью за его счёт.</li>
+        </ul>
+      </div>
     </div>
 
-    <form id="awardsOrderForm" class="reveal" novalidate>
+    <form id="awardsOrderForm" class="card reveal order-card" novalidate>
       <?= csrf_field() ?>
 
-      <h3 style="margin:0 0 16px">Данные участника</h3>
+      <div class="order-sec-head"><span class="order-sec-n">1</span><h3>Данные участника</h3></div>
 
-      <div class="field">
+      <div class="field ff">
+        <input type="text" id="fullName" name="full_name" placeholder=" " required>
         <label for="fullName">ФИО участника / название коллектива</label>
-        <input type="text" id="fullName" name="full_name" placeholder="Иванова Мария Сергеевна" required>
         <span class="err-msg">Укажите ФИО участника или название коллектива.</span>
       </div>
 
       <div class="grid grid-2">
-        <div class="field">
+        <div class="field ff">
+          <input type="text" id="ageCategory" name="age_category" placeholder=" " required>
           <label for="ageCategory">Возрастная категория</label>
-          <input type="text" id="ageCategory" name="age_category" placeholder="Например, 10-12 лет" required>
+          <span class="hint">Например, 10-12 лет.</span>
           <span class="err-msg">Укажите возрастную категорию.</span>
         </div>
-        <div class="field">
+        <div class="field ff">
+          <input type="text" id="nomination" name="nomination" placeholder=" " required>
           <label for="nomination">Номинация</label>
-          <input type="text" id="nomination" name="nomination" placeholder="Вокал, эстрадный" required>
+          <span class="hint">Например, вокал, эстрадный.</span>
           <span class="err-msg">Укажите номинацию.</span>
         </div>
       </div>
 
-      <div class="field">
+      <div class="field ff">
+        <input type="text" id="teacher" name="teacher" placeholder=" ">
         <label for="teacher">ФИО педагога / название учреждения</label>
-        <input type="text" id="teacher" name="teacher" placeholder="При необходимости">
         <span class="hint">Заполняется, если нужен именной диплом или благодарность педагогу.</span>
       </div>
 
-      <div class="field">
+      <div class="field ff">
+        <input type="text" id="actTitle" name="act_title" placeholder=" " required>
         <label for="actTitle">Название конкурсного номера</label>
-        <input type="text" id="actTitle" name="act_title" placeholder="«Аве Мария»" required>
+        <span class="hint">Например, «Аве Мария».</span>
         <span class="err-msg">Укажите название конкурсного номера.</span>
       </div>
 
@@ -120,11 +210,11 @@ ob_start(); ?>
         </div>
       </div>
 
-      <h3 style="margin:28px 0 16px">Наградной материал</h3>
+      <div class="order-sec-head"><span class="order-sec-n">2</span><h3>Наградной материал</h3></div>
 
       <div class="field">
         <label>Что нужно изготовить</label>
-        <div id="awardItems" style="border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:6px 16px;background:var(--glass)">
+        <div id="awardItems" class="award-box">
           <p style="color:var(--muted);margin:12px 0">Сначала выберите конкурс.</p>
         </div>
         <span class="hint">Можно отметить несколько позиций. Электронный основной диплом выдаётся бесплатно.</span>
@@ -132,47 +222,48 @@ ob_start(); ?>
       </div>
 
       <div id="recipientBlock" style="display:none">
-        <h3 style="margin:28px 0 16px">Получатель оригинала</h3>
-        <p class="hint" style="margin:-6px 0 16px">Заполняется при заказе оригинала - для отправки почтой.</p>
+        <div class="order-sec-head"><span class="order-sec-n">3</span><h3>Получатель оригинала</h3></div>
+        <p class="hint recipient-hint">Заполняется при заказе оригинала - для отправки почтой.</p>
 
-        <div class="field">
+        <div class="field ff">
+          <input type="text" id="recipientName" name="recipient_name" placeholder=" ">
           <label for="recipientName">ФИО получателя</label>
-          <input type="text" id="recipientName" name="recipient_name" placeholder="Иванова Мария Сергеевна">
           <span class="err-msg">Укажите ФИО получателя.</span>
         </div>
 
-        <div class="field">
+        <div class="field ff">
+          <textarea id="address" name="address" rows="3" placeholder=" "></textarea>
           <label for="address">Полный адрес с индексом</label>
-          <textarea id="address" name="address" rows="3" placeholder="123456, город, улица, дом, квартира"></textarea>
+          <span class="hint">Например, 123456, город, улица, дом, квартира.</span>
           <span class="err-msg">Укажите полный адрес с индексом.</span>
         </div>
 
-        <div class="field">
+        <div class="field ff">
+          <input type="tel" id="phone" name="phone" placeholder=" ">
           <label for="phone">Телефон получателя</label>
-          <input type="tel" id="phone" name="phone" placeholder="+7 (___) ___-__-__">
           <span class="err-msg">Укажите телефон получателя.</span>
         </div>
       </div>
 
-      <h3 style="margin:28px 0 16px">Контакты и оплата</h3>
+      <div class="order-sec-head"><span class="order-sec-n">4</span><h3>Контакты и оплата</h3></div>
 
-      <div class="field">
+      <div class="field ff">
+        <input type="email" id="email" name="email" placeholder=" " required>
         <label for="email">Электронная почта</label>
-        <input type="email" id="email" name="email" placeholder="mail@example.ru" required>
         <span class="hint">На эту почту придёт электронный наградной материал и подтверждение оплаты.</span>
         <span class="err-msg">Укажите корректную электронную почту.</span>
       </div>
 
-      <div class="card" style="background:var(--gold-soft);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px">
-        <span style="font-weight:700">Итоговая сумма</span>
-        <b id="totalDisplay" style="font-family:var(--ff-display);font-size:1.6rem;color:var(--gold-2)">0 ₽</b>
+      <div class="total-bar">
+        <span class="total-lbl">Итоговая сумма</span>
+        <b id="totalDisplay" class="total-sum">0 ₽</b>
       </div>
 
       <div class="field">
         <label>Способ оплаты</label>
-        <label class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer">
-          <input type="radio" name="pay_method" value="yukassa" checked style="width:auto;flex:none">
-          <span style="width:30px;height:30px;color:var(--gold-2);flex:none"><?= $icoCard ?></span>
+        <label class="pay-method">
+          <input type="radio" name="pay_method" value="yukassa" checked>
+          <span class="pay-ic"><?= $icoCard ?></span>
           <span>
             <b>ЮKassa</b> - банковской картой<br>
             <span class="hint">После оформления заказа откроется защищённая оплата ЮKassa. Стоимость доставки - отдельно, наложенным платежом.</span>
@@ -181,8 +272,9 @@ ob_start(); ?>
       </div>
 
       <button class="btn btn--primary btn--lg btn--block" type="submit" id="submitBtn">Оформить заказ и перейти к оплате</button>
-      <p id="formMsg" style="text-align:center;margin-top:14px"></p>
+      <p id="formMsg"></p>
     </form>
+    </div>
   </div>
 </section>
 
