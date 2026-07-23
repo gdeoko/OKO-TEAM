@@ -1,0 +1,52 @@
+Options -Indexes
+ServerSignature Off
+AddDefaultCharset UTF-8
+
+# Файлы без расширения отдавать как HTML
+<FilesMatch "^(sistema|zavod|web|anketa|sistema-anketa|sistema-primer|admin|thanks|muzmir|resume)$">
+  ForceType text/html
+</FilesMatch>
+
+# Кэш статики
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg   "access plus 1 month"
+  ExpiresByType image/png    "access plus 1 month"
+  ExpiresByType image/webp   "access plus 1 month"
+  ExpiresByType video/mp4    "access plus 1 month"
+  ExpiresByType text/css     "access plus 1 week"
+  ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# Сжатие
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Защита файлов (данные, конфиг, секреты, бэкапы)
+<FilesMatch "^(config\.php|config\.example\.php|db\.php|migrate_core\.php|anketa_download\.php|check\.php|data\.json.*|anketas\.json.*|\.env|cron\.php|polling_offset\.txt|bot_state\.json)$">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+# Базы/сессии/логи не отдавать напрямую (иначе весь oko.db можно скачать)
+<FilesMatch "\.(db|sqlite|sqlite3|session|log|db-journal|db-wal)$">
+  Order Allow,Deny
+  Deny from all
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^data/ - [F,L]
+  RewriteRule ^partials/ - [F,L]
+  RewriteRule ^uploads/.*\.(php|phtml|sh)$ - [F,L]
+</IfModule>
+
+# CORS для api.php
+<IfModule mod_headers.c>
+  <FilesMatch "api\.php$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, X-Admin-Key, X-Agent-Token"
+  </FilesMatch>
+</IfModule>

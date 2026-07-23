@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Анкета — OKO TEAM</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--lime:#9AFF00;--bg:#050505;--bg2:#0d0d0d;--b:rgba(154,255,0,.15);--w2:rgba(255,255,255,.55);--w3:rgba(255,255,255,.3)}
+body{background:var(--bg);color:#fff;font-family:'Onest',sans-serif;min-height:100vh;padding:0 0 100px}
+.top{position:sticky;top:0;z-index:10;background:rgba(5,5,5,.92);backdrop-filter:blur(10px);padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.05)}
+.logo{font-family:'Unbounded';font-size:15px;font-weight:900;letter-spacing:1px}
+.logo span{color:var(--lime)}
+.bar{height:5px;background:rgba(255,255,255,.08);border-radius:5px;margin-top:12px;overflow:hidden}
+.bar-fill{height:100%;background:var(--lime);width:0;border-radius:5px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.bar-lbl{font-size:11px;color:var(--w3);margin-top:6px;display:flex;justify-content:space-between}
+.wrap{max-width:560px;margin:0 auto;padding:28px 18px}
+.step{animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.q-num{font-size:12px;color:var(--lime);font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.q-title{font-family:'Unbounded';font-size:clamp(19px,5vw,24px);font-weight:700;line-height:1.25;margin-bottom:8px}
+.q-hint{font-size:13px;color:var(--w2);margin-bottom:20px;line-height:1.5}
+input[type=text],input[type=email],input[type=tel],textarea{width:100%;background:var(--bg2);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:15px 16px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:border .2s}
+input:focus,textarea:focus{border-color:var(--lime)}
+textarea{min-height:120px;resize:vertical;line-height:1.5}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{background:var(--bg2);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:15px 16px;font-size:15px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:12px}
+.opt:hover{border-color:rgba(154,255,0,.4)}
+.opt.sel{border-color:var(--lime);background:rgba(154,255,0,.08)}
+.opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.25);flex-shrink:0;transition:all .15s}
+.opt.sel .dot{border-color:var(--lime);background:var(--lime);box-shadow:inset 0 0 0 4px var(--bg2)}
+.opt.check .dot{border-radius:6px}
+.file-drop{border:2px dashed rgba(154,255,0,.3);border-radius:16px;padding:28px 16px;text-align:center;cursor:pointer;transition:.2s}
+.file-drop:hover{border-color:var(--lime);background:rgba(154,255,0,.04)}
+.file-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.file-item{background:var(--bg2);border:1px solid var(--b);border-radius:10px;padding:10px 12px;font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.file-item b{color:var(--lime);cursor:pointer}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(5,5,5,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.06);padding:14px 18px;display:flex;gap:10px;max-width:560px;margin:0 auto}
+.btn{flex:1;padding:15px;border-radius:14px;font-family:'Unbounded';font-size:13px;font-weight:700;border:none;cursor:pointer;transition:.2s}
+.btn-back{background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--w2);flex:0 0 90px}
+.btn-next{background:var(--lime);color:#000}
+.btn-next:disabled{opacity:.35;cursor:not-allowed}
+.err{color:#ff6b6b;font-size:13px;margin-top:10px;display:none}
+.sum-row{padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}
+.sum-row .k{color:var(--w3);font-size:12px;margin-bottom:3px}
+.sum-row .v{color:#fff}
+.done{text-align:center;padding:40px 0}
+.done .ic{width:72px;height:72px;border-radius:50%;background:rgba(154,255,0,.1);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+.chk{color:var(--w3);font-size:11px;text-align:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">ОКО<span> TEAM</span> · Анкета</div>
+  <div class="bar"><div class="bar-fill" id="bar"></div></div>
+  <div class="bar-lbl"><span id="stepLbl">Шаг 1</span><span id="pct">0%</span></div>
+</div>
+
+<div class="wrap"><div id="screen"></div></div>
+
+<div class="nav" id="nav">
+  <button class="btn btn-back" id="back" onclick="prev()">Назад</button>
+  <button class="btn btn-next" id="next" onclick="nextStep()">Далее</button>
+</div>
+
+<script>
+// ── ОПРЕДЕЛЕНИЕ 25 АДАПТИВНЫХ ВОПРОСОВ ────────────────────────
+const COMMON = [
+  {id:'nm',   t:'Как вас зовут?', type:'text', req:1, ph:'Имя'},
+  {id:'company', t:'Название компании / бренда', hint:'Если есть', type:'text', ph:'Например: OKO'},
+  {id:'tg',   t:'Telegram для связи', req:1, type:'text', ph:'@username'},
+  {id:'email',t:'Email', req:1, type:'email', ph:'you@mail.com'},
+  {id:'niche',t:'Ниша / чем занимаетесь?', req:1, type:'text', ph:'Например: юрист по банкротству'},
+  {id:'exp',  t:'Как давно в этой сфере?', type:'radio', opts:['Только начинаю','1–2 года','3–5 лет','5–10 лет','10+ лет']},
+  {id:'region',t:'Основной регион работы', type:'radio', opts:['Россия','СНГ','Запад','Глобально']},
+  {id:'service',t:'Какую услугу выбираем?', req:1, type:'radio', trigger:1,
+    opts:[['sistema','Система Роста'],['web','Сайт / Бот / Приложение'],['zavod','Контент-завод'],['complex','Комплексное продвижение']]},
+];
+const BRANCH = {
+  sistema:[
+    {id:'s_audience',t:'Целевая аудитория — одним абзацем',type:'textarea',req:1},
+    {id:'s_unique',t:'Ваша уникальность — чем отличаетесь от конкурентов?',type:'textarea',req:1},
+    {id:'s_socials',t:'Какие соцсети сейчас ведёте?',type:'text',ph:'Instagram, TG, YouTube…'},
+    {id:'s_activity',t:'Насколько активно ведёте соцсети?',type:'radio',opts:['Регулярно','Иногда','Почти не веду','С нуля']},
+    {id:'s_income',t:'Текущий доход в месяц',type:'radio',opts:['До 100к','100–300к','300к–1млн','1млн+','Не скажу']},
+    {id:'s_goal',t:'Цель по доходу через 3–6 месяцев',type:'text',req:1,ph:'Например: 1 млн/мес'},
+    {id:'s_tried',t:'Что уже пробовали для роста?',type:'textarea'},
+    {id:'s_blockers',t:'Какие блокеры видите сейчас?',type:'textarea'},
+    {id:'s_invest',t:'Сколько готовы инвестировать в месяц?',type:'text',req:1,ph:'Бюджет, ₽'},
+    {id:'s_deadline',t:'Когда нужен результат?',type:'radio',opts:['Срочно','1 месяц','2–3 месяца','Не горит']},
+    {id:'s_style',t:'Ваш стиль',type:'radio',opts:['Агрессивный','Доверительный','Экспертный','Народный']},
+    {id:'s_team',t:'Есть команда или работаете один?',type:'radio',opts:['Один','Небольшая команда','Большая команда']},
+  ],
+  web:[
+    {id:'w_type',t:'Что нужно сделать?',type:'radio',req:1,opts:['Лендинг','Многостраничный сайт','Интернет-магазин','Telegram-бот','Приложение']},
+    {id:'w_goal',t:'Основная цель',type:'radio',opts:['Продажи','Заявки','Знакомство с брендом','Информация']},
+    {id:'w_audience',t:'Целевая аудитория',type:'textarea',req:1},
+    {id:'w_refs',t:'Референсы — примеры сайтов, которые нравятся',type:'textarea',ph:'Ссылки'},
+    {id:'w_content',t:'Есть готовые тексты и фото?',type:'radio',opts:['Всё есть','Частично','Ничего нет']},
+    {id:'w_tz',t:'Готовое ТЗ есть?',type:'radio',opts:['Да','Нет, поможете составить']},
+    {id:'w_domain',t:'Домен',type:'radio',opts:['Есть','Нужен']},
+    {id:'w_integrations',t:'Интеграции нужны?',type:'checkbox',opts:['CRM','Оплаты','Рассылки','Не нужны']},
+    {id:'w_mobile',t:'Мобильная версия критична?',type:'radio',opts:['Да, обязательно','Желательно','Не важно']},
+    {id:'w_multilang',t:'Многоязычность?',type:'radio',opts:['Нет','Да']},
+    {id:'w_budget',t:'Бюджет',type:'text',req:1,ph:'₽'},
+    {id:'w_deadline',t:'Срок',type:'text',ph:'Когда нужно?'},
+  ],
+  zavod:[
+    {id:'z_niche',t:'Ниша',type:'text',req:1},
+    {id:'z_tone',t:'Тон общения с аудиторией',type:'radio',opts:['Дружеский','Экспертный','Дерзкий','Премиум']},
+    {id:'z_socials',t:'Ссылки на текущие соцсети',type:'textarea'},
+    {id:'z_refs',t:'Референсы — чей контент нравится',type:'textarea',ph:'Ссылки / имена'},
+    {id:'z_selfshoot',t:'Готовы сниматься сами или только нейро?',type:'radio',opts:['Снимаюсь сам','Только нейро','Комбинировать']},
+    {id:'z_count',t:'Сколько роликов в месяц нужно?',type:'radio',opts:['30','100','200','500+']},
+    {id:'z_platforms',t:'Куда постить?',type:'checkbox',opts:['Instagram','TikTok','YouTube','VK','Telegram']},
+    {id:'z_style',t:'Фирменный стиль',type:'radio',opts:['Есть','Собираем с нуля']},
+    {id:'z_brandtype',t:'Что продвигаем?',type:'radio',opts:['Продукт','Личный бренд']},
+    {id:'z_offer',t:'Основной оффер / продукт',type:'textarea',req:1},
+    {id:'z_budget',t:'Бюджет',type:'text',req:1,ph:'₽/мес'},
+    {id:'z_deadline',t:'Когда стартуем?',type:'text'},
+  ],
+  complex:[
+    {id:'c_services',t:'Какие услуги нужны?',type:'checkbox',req:1,opts:['Сайт','Боты','Контент','Соцсети','Реклама','Воронки']},
+    {id:'c_priority',t:'Что важнее в первую очередь?',type:'text',req:1},
+    {id:'c_state',t:'Текущее состояние',type:'radio',opts:['С нуля','Что-то есть','Нужно улучшить']},
+    {id:'c_niche',t:'Ниша и продукт',type:'textarea',req:1},
+    {id:'c_audience',t:'Целевая аудитория',type:'textarea'},
+    {id:'c_resources',t:'Ссылки на текущие ресурсы',type:'textarea'},
+    {id:'c_competitors',t:'Ключевые конкуренты (2–3)',type:'textarea'},
+    {id:'c_tried',t:'Что уже пробовали?',type:'textarea'},
+    {id:'c_goal',t:'Цель — в цифрах или свободно',type:'textarea',req:1},
+    {id:'c_process',t:'Готовы к процессу с командой?',type:'radio',opts:['Да','Нужно понять как']},
+    {id:'c_budget',t:'Бюджет на весь проект',type:'text',req:1,ph:'₽'},
+    {id:'c_deadline',t:'Срок',type:'text'},
+  ],
+};
+const FINAL = [
+  {id:'files',t:'Прикрепите файлы',hint:'Лого, скрины, ТЗ, референсы — по желанию',type:'file'},
+  {id:'extra',t:'Что-то важное, о чём мы не спросили?',type:'textarea'},
+  {id:'contact',t:'Как удобнее связаться дальше?',type:'radio',opts:['Созвон','Переписка','Встреча']},
+  {id:'calltime',t:'Когда удобно созвониться?',type:'radio',opts:['Утро','День','Вечер']},
+  {id:'consent',t:'Согласие на обработку данных',type:'consent',req:1},
+];
+
+// ── ДВИЖОК ─────────────────────────────────────────────────────
+const ANSWERS = {}; let MEDIA = []; let idx = 0;
+const anketaId = 'ank_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+
+function flow(){ // текущий список вопросов = common + branch(service) + final
+  const svc = ANSWERS.service;
+  return COMMON.concat(svc && BRANCH[svc] ? BRANCH[svc] : [], svc ? FINAL : []);
+}
+function totalSteps(){ const svc=ANSWERS.service; return 8 + (svc?12:0) + (svc?5:0) + 1; } // +1 сводка
+
+function render(){
+  const F = flow();
+  if (idx >= F.length){ return renderSummary(); }
+  const q = F[idx];
+  const val = ANSWERS[q.id];
+  let html = `<div class="step"><div class="q-num">ВОПРОС ${idx+1}</div><div class="q-title">${q.t}</div>`;
+  if (q.hint) html += `<div class="q-hint">${q.hint}</div>`;
+  if (['text','email','tel'].includes(q.type))
+    html += `<input type="${q.type==='email'?'email':'text'}" id="f" placeholder="${q.ph||''}" value="${val?esc(val):''}" oninput="onInput()">`;
+  else if (q.type==='textarea')
+    html += `<textarea id="f" placeholder="${q.ph||''}" oninput="onInput()">${val?esc(val):''}</textarea>`;
+  else if (q.type==='radio')
+    html += `<div class="opts">${q.opts.map(o=>{const[v,l]=Array.isArray(o)?o:[o,o];return `<div class="opt ${val===v?'sel':''}" onclick="pick('${q.id}','${v}',1)"><span class="dot"></span>${l}</div>`}).join('')}</div>`;
+  else if (q.type==='checkbox'){const arr=val||[];
+    html += `<div class="opts">${q.opts.map(o=>`<div class="opt check ${arr.includes(o)?'sel':''}" onclick="pickMulti('${q.id}','${o}')"><span class="dot"></span>${o}</div>`).join('')}</div>`;}
+  else if (q.type==='file')
+    html += `<div class="file-drop" onclick="document.getElementById('fi').click()">📎 Нажмите, чтобы прикрепить файлы</div><input type="file" id="fi" multiple style="display:none" onchange="addFiles(this)"><div class="file-list" id="fl"></div>`;
+  else if (q.type==='consent')
+    html += `<div class="opts"><div class="opt check ${val?'sel':''}" onclick="pick('consent',${val?'0':'1'},0)"><span class="dot"></span>Согласен на обработку персональных данных</div></div>`;
+  html += `<div class="err" id="err">Заполните поле</div></div>`;
+  document.getElementById('screen').innerHTML = html;
+  if (q.type==='file') renderFiles();
+  updateBar(); syncNav();
+  document.getElementById('back').style.display = idx===0?'none':'';
+  const f=document.getElementById('f'); if(f) f.focus();
+}
+function esc(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+function updateBar(){const p=Math.round((idx/(totalSteps()-1))*100);document.getElementById('bar').style.width=p+'%';document.getElementById('pct').textContent=p+'%';document.getElementById('stepLbl').textContent='Шаг '+(idx+1)+' из '+totalSteps();}
+function onInput(){const q=flow()[idx];ANSWERS[q.id]=document.getElementById('f').value.trim();syncNav();}
+function pick(id,v,adv){ANSWERS[id]=v;const q=flow()[idx];if(q&&q.trigger){/* сброс ветки при смене услуги */}render();if(adv&&valid())setTimeout(()=>nextStep(),180);}
+function pickMulti(id,v){const a=ANSWERS[id]||[];const i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);ANSWERS[id]=a;render();}
+function valid(){const q=flow()[idx];if(!q||!q.req)return true;const v=ANSWERS[q.id];if(q.type==='checkbox')return v&&v.length;if(q.type==='consent')return !!v;if(q.type==='email')return /.+@.+\..+/.test(v||'');return v&&String(v).trim();}
+function syncNav(){document.getElementById('next').disabled=!valid();}
+function nextStep(){if(!valid()){const e=document.getElementById('err');if(e)e.style.display='block';return;}idx++;render();window.scrollTo(0,0);}
+function prev(){if(idx>0){idx--;render();window.scrollTo(0,0);}}
+
+// ── Файлы → base64 ──
+function addFiles(input){[...input.files].forEach(file=>{if(file.size>15*1024*1024){alert('Файл '+file.name+' больше 15 МБ');return;}const r=new FileReader();r.onload=e=>{MEDIA.push({name:file.name,mimeType:file.type,dataUrl:e.target.result});renderFiles();};r.readAsDataURL(file);});input.value='';}
+function renderFiles(){const el=document.getElementById('fl');if(!el)return;el.innerHTML=MEDIA.map((m,i)=>`<div class="file-item"><span>📄 ${esc(m.name)}</span><b onclick="MEDIA.splice(${i},1);renderFiles()">удалить</b></div>`).join('');}
+
+// ── Сводка ──
+function LABELS(){const m={};COMMON.concat(...Object.values(BRANCH),FINAL).forEach(q=>m[q.id]=q.t);return m;}
+function renderSummary(){
+  const L=LABELS();let rows='';
+  for(const[k,v]of Object.entries(ANSWERS)){if(k==='consent')continue;const val=Array.isArray(v)?v.join(', '):v;if(!val)continue;const svcMap={sistema:'Система Роста',web:'Сайт',zavod:'Контент-завод',complex:'Комплекс'};rows+=`<div class="sum-row"><div class="k">${L[k]||k}</div><div class="v">${esc(k==='service'?(svcMap[val]||val):val)}</div></div>`;}
+  if(MEDIA.length)rows+=`<div class="sum-row"><div class="k">Файлы</div><div class="v">${MEDIA.length} шт.</div></div>`;
+  document.getElementById('screen').innerHTML=`<div class="step"><div class="q-num">ПОЧТИ ГОТОВО</div><div class="q-title">Проверьте данные</div><div class="q-hint">Всё верно? Отправляем.</div>${rows}</div>`;
+  document.getElementById('back').style.display='';document.getElementById('next').textContent='Отправить';document.getElementById('next').disabled=false;document.getElementById('next').onclick=submitAnketa;
+  updateBar();document.getElementById('bar').style.width='100%';document.getElementById('pct').textContent='100%';
+  window.scrollTo(0,0);
+}
+async function submitAnketa(){
+  const btn=document.getElementById('next');btn.disabled=true;btn.textContent='Отправляем…';
+  const answers={...ANSWERS};if(MEDIA.length)answers.__media__items=MEDIA;
+  try{
+    await fetch('/api.php?action=saveAnketa',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({anketa_id:anketaId,product:ANSWERS.service||'sistema',name:ANSWERS.nm||'',email:ANSWERS.email||'',
+        answers,progress:Object.keys(ANSWERS).length,total:totalSteps(),complete:true,send_notifications:true,ts:new Date().toISOString()})});
+    renderDone();
+  }catch(e){btn.disabled=false;btn.textContent='Отправить';alert('Ошибка отправки, попробуйте ещё раз');}
+}
+function renderDone(){
+  document.getElementById('nav').style.display='none';
+  document.getElementById('screen').innerHTML=`<div class="done"><div class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="q-title">Анкета отправлена!</div><div class="q-hint">Даниэль уже видит ваши ответы и скоро выйдет на связь.</div><a href="https://t.me/ktodaniel" style="display:inline-block;margin-top:16px;background:#9AFF00;color:#000;text-decoration:none;padding:14px 26px;border-radius:14px;font-family:Unbounded;font-weight:700;font-size:13px">Написать Даниэлю</a></div>`;
+  window.scrollTo(0,0);
+}
+render();
+/* Маячок визитов → аналитика админки (тихо, не мешает странице) */
+try{fetch('/api.php?action=track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'anketa',ref:document.referrer||''})}).catch(function(){});}catch(e){}
+</script>
+</body>
+</html>
