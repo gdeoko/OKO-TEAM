@@ -1,0 +1,138 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #21 (batch B, КВАДРО свобода). New forms, none reused:
+// compass-spin · terrain-constellation · gear-loadout · adrenaline-thermometer · reach-radius · sun-flare lockup.
+const TOTAL=35.856;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// A1 — COMPASS-SPIN: стрелка компаса крутится и замирает на «КУДА УГОДНО»
+function a1(ts){const a=1.9,b=7.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900,R=170;
+  const spin=easeOut(clamp(p/0.7));const ang=(spin*1440 - 45)*Math.PI/180; // multiple turns settling to NE
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-320)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">СВОБОДА БЕЗ ДОРОГ</text>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="rgba(12,10,8,.55)" stroke="'+DIM+'" stroke-width="4"/>';
+  ["N","E","S","W"].forEach((d,i)=>{const aa=(i*90-90)*Math.PI/180;s+='<text x="'+(cx+Math.cos(aa)*(R-32))+'" y="'+(cy+Math.sin(aa)*(R-32)+10)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+DIM+'">'+d+'</text>';});
+  // needle
+  const nx=cx+Math.cos(ang)*R*0.8, ny=cy+Math.sin(ang)*R*0.8;
+  s+='<polygon points="'+cx+','+cy+' '+(cx+Math.cos(ang+2.4)*24)+','+(cy+Math.sin(ang+2.4)*24)+' '+nx+','+ny+' '+(cx+Math.cos(ang-2.4)*24)+','+(cy+Math.sin(ang-2.4)*24)+'" fill="'+AMB2+'"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="12" fill="'+AMB+'"/>';
+  s+='<text x="540" y="'+(cy+R+80)+'" text-anchor="middle" font-family="soyuz" font-size="72" fill="'+WHT+'" opacity="'+clamp((spin-0.7)/0.3)+'">КУДА УГОДНО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — TERRAIN-CONSTELLATION: точки местности появляются и соединяются в сеть
+function a2(ts){const a=7.8,b=12.0;const p=win(ts,a,b);if(p<0)return'';
+  const nodes=[["ЛЕС",320,760],["ПОЛЕ",760,820],["РЕКА",330,1060],["ГОРЫ",740,1120]];
+  const links=[[0,1],[0,2],[1,3],[2,3],[1,2]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="640" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ГДЕ ВСЕ ВСТАЮТ — ТЫ НАЧИНАЕШЬ</text>';
+  // links draw after nodes appear
+  links.forEach((l,i)=>{const lp=clamp((p-(0.4+i*0.08))/0.25);if(lp<=0)return;
+    const[x1,y1]=[nodes[l[0]][1],nodes[l[0]][2]],[x2,y2]=[nodes[l[1]][1],nodes[l[1]][2]];
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+lerp(x1,x2,easeOut(clamp(lp)))+'" y2="'+lerp(y1,y2,easeOut(clamp(lp)))+'" stroke="rgba(234,89,32,.6)" stroke-width="3" stroke-dasharray="4 8"/>';});
+  nodes.forEach((n,i)=>{const lp=clamp((p-(0.05+i*0.1))/0.3);if(lp<=0)return;const e=back(clamp(lp));
+    s+='<g opacity="'+clamp(lp*1.6)+'"><circle cx="'+n[1]+'" cy="'+n[2]+'" r="'+(14*e)+'" fill="'+AMB2+'"/>'
+      +'<circle cx="'+n[1]+'" cy="'+n[2]+'" r="'+(28*e)+'" fill="none" stroke="'+AMB+'" stroke-width="2" opacity="0.5"/>'
+      +'<text x="'+n[1]+'" y="'+(n[2]-40)+'" text-anchor="middle" font-family="soyuz" font-size="40" fill="'+WHT+'">'+n[0]+'</text></g>';});
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — GEAR-LOADOUT: снаряга встаёт в слоты рига, «готов»
+function a3(ts){const a=12.3,b=16.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;const gear=["4×4","ЛЕБЁДКА","БАГАЖНИК"];
+  let s='<div style="position:absolute;left:0;top:0;width:1080px;height:1920px">';
+  s+='<div style="position:absolute;top:'+(cy-190)+'px;left:0;width:1080px;text-align:center;font-family:man8;font-size:42px;letter-spacing:4px;color:'+DIM+'">БЕРЁШЬ ВСЁ И ЕДЕШЬ</div>';
+  gear.forEach((g,i)=>{const lp=clamp((p-(0.1+i*0.2))/0.35);const e=back(clamp(lp));
+    const y=cy+i*0-0;const x=cx-360+i*360;const drop=(1-e)*-120;
+    s+='<div style="position:absolute;left:'+(x-150)+'px;top:'+(cy+drop-70)+'px;width:300px;height:140px;opacity:'+clamp(lp*1.6)+';'
+      +'background:'+CARD+';border:3px solid '+AMB+';border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center">'
+      +'<div style="font-family:soyuz;font-size:'+(g.length>6?'42':'56')+'px;color:'+WHT+'">'+g+'</div>'
+      +'<div style="width:60px;height:6px;background:'+GRN+';border-radius:3px;margin-top:10px;opacity:'+clamp((lp-0.5)/0.4)+'"></div></div>';});
+  const rdy=clamp((p-0.7)/0.25);
+  s+='<div style="position:absolute;top:'+(cy+140)+'px;left:0;width:1080px;text-align:center;font-family:soyuz;font-size:64px;color:'+AMB2+';opacity:'+rdy+'">ГОТОВ К ВЫЕЗДУ</div>';
+  s+='</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — ADRENALINE THERMOMETER: вертикальная шкала наполняется до «ДРАЙВ 100%»
+function a4(ts){const a=16.7,b=22.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,topY=700,H=460,w=90;
+  const fill=easeInOut(clamp((p-0.05)/0.7));
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(topY-60)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ЭТО ТВОИ ЭМОЦИИ</text>';
+  s+='<defs><linearGradient id="th" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+AMB+'"/><stop offset="1" stop-color="#FFD24A"/></linearGradient></defs>';
+  // tube
+  s+='<rect x="'+(cx-w/2)+'" y="'+topY+'" width="'+w+'" height="'+H+'" rx="'+(w/2)+'" fill="rgba(12,10,8,.5)" stroke="'+DIM+'" stroke-width="3"/>';
+  // bulb
+  s+='<circle cx="'+cx+'" cy="'+(topY+H+30)+'" r="66" fill="url(#th)"/>';
+  // fill
+  const fh=H*fill;
+  s+='<rect x="'+(cx-w/2+8)+'" y="'+(topY+H-fh)+'" width="'+(w-16)+'" height="'+fh+'" rx="'+((w-16)/2)+'" fill="url(#th)"/>';
+  // ticks + glow at top
+  for(let i=0;i<=5;i++){const y=topY+H*i/5;s+='<line x1="'+(cx+w/2)+'" y1="'+y+'" x2="'+(cx+w/2+18)+'" y2="'+y+'" stroke="'+DIM+'" stroke-width="3"/>';}
+  s+='<text x="'+(cx+w/2+40)+'" y="'+(topY+30)+'" font-family="mont9" font-size="70" fill="'+WHT+'">'+Math.round(fill*100)+'%</text>';
+  s+='<text x="'+(cx+w/2+40)+'" y="'+(topY+80)+'" font-family="man8" font-size="34" fill="'+AMB2+'">ДРАЙВ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — REACH-RADIUS: круг охвата расширяется от точки, «ДОСТУПНО»
+function a5(ts){const a=22.9,b=27.9;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940;const rad=easeOut(clamp((p-0.05)/0.7))*560;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-360)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ДОСТУПНЕЕ, ЧЕМ КАЖЕТСЯ</text>';
+  // expanding rings
+  for(let k=0;k<3;k++){const rr=rad-k*90;if(rr<=0)continue;s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rr+'" fill="rgba(234,89,32,'+(0.06)+')" stroke="'+AMB2+'" stroke-width="'+(3-k*0.6)+'" opacity="'+(0.8-k*0.2)+'"/>';}
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="16" fill="'+AMB+'"/>';
+  // sweep marker on outer ring
+  const sa=p*TOTAL*2;s+='<circle cx="'+(cx+Math.cos(sa)*rad)+'" cy="'+(cy+Math.sin(sa)*rad)+'" r="10" fill="'+WHT+'"/>';
+  s+='<text x="540" y="'+cy+'" text-anchor="middle" font-family="soyuz" font-size="80" fill="'+WHT+'" opacity="'+clamp((rad/560-0.5)/0.4)+'">С ЗАВОДА</text>';
+  s+='<text x="540" y="'+(cy+70)+'" text-anchor="middle" font-family="man8" font-size="38" fill="'+AMB2+'" opacity="'+clamp((rad/560-0.6)/0.3)+'">без наценки за бренд</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A6 — SUN-FLARE LOCKUP: блик проходит по экрану и открывает лого
+function a6(ts){const a=28.1,b=33.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;
+  const sweep=easeInOut(clamp(p/0.55));const fx=lerp(-100,1180,sweep);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<defs><radialGradient id="fl" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(255,220,150,0.9)"/><stop offset="0.3" stop-color="rgba(255,180,110,0.4)"/><stop offset="1" stop-color="rgba(255,180,110,0)"/></radialGradient></defs>';
+  const fade=1-clamp((p-0.55)/0.3);
+  s+='<circle cx="'+fx+'" cy="'+cy+'" r="220" fill="url(#fl)" opacity="'+fade+'"/>';
+  // streaks
+  for(let i=0;i<6;i++){const ln=lerp(80,400,(i%3)/3);s+='<line x1="'+(fx-ln)+'" y1="'+cy+'" x2="'+(fx+ln)+'" y2="'+cy+'" stroke="rgba(255,220,150,'+(0.15*fade)+')" stroke-width="'+(2+i)+'"/>';}
+  s+='<line x1="'+fx+'" y1="'+(cy-260)+'" x2="'+fx+'" y2="'+(cy+260)+'" stroke="rgba(255,220,150,'+(0.2*fade)+')" stroke-width="3"/>';
+  s+='</svg>';
+  const lp=clamp((p-0.42)/0.28),e=back(lp);
+  let lock='<div style="position:absolute;left:0;top:'+(cy-150)+'px;width:1080px;text-align:center;opacity:'+clamp(lp*1.5)+';transform:scale('+(0.72+0.28*e)+')">'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+WHT+'">DIESEL</div>'
+    +'<div style="font-family:soyuz;font-size:150px;line-height:.9;color:'+AMB2+'">CARGO</div></div>';
+  const up=clamp((p-0.72)/0.22);
+  lock+='<div style="position:absolute;left:'+(cx-260)+'px;top:'+(cy+120)+'px;width:'+(520*easeOut(up))+'px;height:8px;background:'+AMB+';border-radius:4px"></div>';
+  lock+='<div style="position:absolute;left:0;top:'+(cy+150)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+lock+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>
