@@ -4118,6 +4118,7 @@ function initGrowth() {
   });
   $('#mInvite')?.addEventListener('click', shareInvite);
   $('#mAbout')?.addEventListener('click', openAbout);
+  $('#mPresent')?.addEventListener('click', () => { window.open('/presentation/', '_blank'); });
   $('#aboutBack')?.addEventListener('click', () => { $('#nav').style.display = ''; switchTab('profile'); });
   $('#mSettings')?.addEventListener('click', openSettingsScreen);
   $('#mNotify')?.addEventListener('click', openSettingsScreen);
