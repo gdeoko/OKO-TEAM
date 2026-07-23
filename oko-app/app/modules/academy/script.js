@@ -2645,20 +2645,46 @@ function acTaskSend(){
 
 /* ---------- д) МИНИ-ИГРА ---------- */
 function acShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+/* Тип мини-игры на урок (анти-повтор: чередуется по индексу урока).
+   Движки берут данные из уже готового контента урока (pairs / slides). */
+const AC_GAMES = ['pairs','order'];
+function acGameType(){
+  const L = acCur();
+  let t = AC_GAMES[acL % AC_GAMES.length];
+  if(t==='order' && (!L.slides || L.slides.length < 3)) t = 'pairs';
+  if(t==='pairs' && (!L.pairs || !L.pairs.length)) t = (L.slides && L.slides.length>=3) ? 'order' : 'pairs';
+  return t;
+}
+function acGameFinish(wrong){
+  const ls = acLS(); ls.gameWrong = wrong;
+  if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
+  acG = null; acSave();
+  acRenderGameBox(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
+}
 function acRenderGameBox(){
   const box = document.getElementById('acGameBox');
   if(!box) return;
-  const pairs = acCur().pairs, ls = acLS();
+  const t = acGameType(), ls = acLS();
   if(!acG){
-    box.innerHTML = ls.game
-      ? `<div class="ac-game-done"><div class="big">${pairs.length} / ${pairs.length}</div>
-         <p>Все пары собраны${ls.gameWrong!==null?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
-         <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`
-      : `<p style="font-size:13.5px;line-height:1.55"><b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.</p>
-         <div style="height:12px"></div>
+    if(ls.game){
+      const label = t==='order' ? 'Порядок шагов восстановлен' : 'Все пары собраны';
+      box.innerHTML = `<div class="ac-game-done"><div class="big">${I('check2')}</div>
+         <p>${label}${ls.gameWrong!==null&&ls.gameWrong!==undefined?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
+         <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`;
+    } else {
+      const intro = t==='order'
+        ? '<b>Расставь шаги по порядку.</b> Тапай карточки в правильной последовательности урока — верный шаг встаёт на место, неверный трясётся.'
+        : '<b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.';
+      box.innerHTML = `<p style="font-size:13.5px;line-height:1.55">${intro}</p><div style="height:12px"></div>
          <button class="btn" onclick="acGameStart()">${I('play')} Играть</button>`;
+    }
     return;
   }
+  if(acG.type === 'order') return acRenderOrder(box);
+  return acRenderPairs(box);
+}
+function acRenderPairs(box){
+  const pairs = acCur().pairs;
   const left = acG.left.map(i=>`<button class="ac-tile ${acG.sel===i?'sel':''}" id="acGL${i}" onclick="acGPick(${i})">${pairs[i][0]}</button>`).join('');
   const right = acG.right.map(i=>`<button class="ac-tile" id="acGR${i}" onclick="acGMatch(${i})">${pairs[i][1]}</button>`).join('');
   box.innerHTML = `
@@ -2668,9 +2694,41 @@ function acRenderGameBox(){
       <div class="ac-game-col"><div class="h">Пара</div>${right}</div>
     </div>`;
 }
+function acRenderOrder(box){
+  const S = acCur().slides;
+  let placed = '';
+  for(let k=0;k<acG.next;k++) placed += `<div class="ac-ord-step done"><span class="n">${k+1}</span><span>${esc(S[k].t)}</span></div>`;
+  if(acG.next < S.length) placed += `<div class="ac-ord-step now"><span class="n">${acG.next+1}</span><span class="dim">Выбери следующий шаг…</span></div>`;
+  const pool = acG.pool.filter(i=>i>=acG.next)
+    .map(i=>`<button class="ac-ord-tile" id="acOrd${i}" onclick="acOrderPick(${i})">${esc(S[i].t)}</button>`).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Шаг: <b>${acG.next} / ${S.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-ord-seq">${placed}</div>
+    <div class="ac-ord-pool">${pool}</div>`;
+}
+function acOrderPick(i){
+  if(!acG || acG.lock) return;
+  const S = acCur().slides;
+  if(i === acG.next){
+    acG.next++;
+    if(acG.next >= S.length){ acGameFinish(acG.wrong); return; }
+    acRenderOrder(document.getElementById('acGameBox'));
+  } else {
+    acG.wrong++;
+    const el = document.getElementById('acOrd'+i);
+    if(el){ el.classList.add('shake'); acG.lock = true; setTimeout(()=>{ el.classList.remove('shake'); acG.lock=false; acRenderOrder(document.getElementById('acGameBox')); }, 420); }
+    else acRenderOrder(document.getElementById('acGameBox'));
+  }
+}
 function acGameStart(){
-  const idx = acCur().pairs.map((_,i)=>i);
-  acG = {left:idx.slice(), right:acShuffle(idx), sel:null, hits:0, wrong:0, lock:false};
+  const t = acGameType();
+  if(t === 'order'){
+    const idx = acCur().slides.map((_,i)=>i);
+    acG = {type:'order', pool:acShuffle(idx), next:0, wrong:0, lock:false};
+  } else {
+    const idx = acCur().pairs.map((_,i)=>i);
+    acG = {type:'pairs', left:idx.slice(), right:acShuffle(idx), sel:null, hits:0, wrong:0, lock:false};
+  }
   acRenderGameBox();
 }
 function acGPick(i){
