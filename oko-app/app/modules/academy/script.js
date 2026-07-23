@@ -2316,7 +2316,7 @@ function acRenderVideoBox(){
   // Кастомный бренд-плеер (без нативного <video controls>) — свой чёрно-лаймовый хром
   const player = L.videoUrl ? `
     <div class="ac-player ac-vp" id="acPlayer">
-      <video class="ac-vp-video" id="acVpVideo" playsinline preload="metadata" src="${L.videoUrl}" onclick="acVpTapArea(event)"></video>
+      <video class="ac-vp-video" id="acVpVideo" playsinline webkit-playsinline preload="metadata" controlsList="nodownload noremoteplayback noplaybackrate" disablePictureInPicture disableRemotePlayback oncontextmenu="return false" src="${L.videoUrl}" onclick="acVpTapArea(event)"></video>
       <div class="ac-vp-poster" id="acVpPoster" onclick="acVpBig(event)">
         ${acVpCover(L)}
         <button class="ac-vp-big" type="button" onclick="acVpBig(event)" aria-label="Смотреть урок">${I('play')}</button>
