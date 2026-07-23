@@ -1,0 +1,142 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #26 (batch A, МОТО «3 мифа»). New forms, none reused:
+// glitch-strike-headline · twin-gauge-parity · parts-orbit · document-flip-stamps · era-slider · puzzle-assemble lockup.
+// Свериться с USED_ANIM.md #16-25 — нет пересечений. Окна (a,b) под РЕАЛЬНЫЙ timing.json после VO.
+const TOTAL=34.224;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",CYAN="#4FD1C5",RED="#E5534B",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// A1 — GLITCH-STRIKE-HEADLINE: слова-мифы появляются и получают красный глитч-перечёрк, «РАЗБИРАЕМ».
+// (новая форма: RGB-глитч + перечёрк; ≠ letter-drop кинетик #16)
+function a1(ts){const a=1.9,b=6.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;const myths=["«ХЛАМ»","«НЕТ ЗАПЧАСТЕЙ»","«НЕ ОФОРМИТЬ»"];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-220)+'" text-anchor="middle" font-family="soyuz" font-size="96" fill="'+WHT+'">3 МИФА</text>';
+  myths.forEach((m,i)=>{const ap=clamp((p-0.12-i*0.16)/0.2); if(ap<=0)return;
+    const y=cy-40+i*110; const strike=clamp((p-0.2-i*0.16)/0.15);
+    const gx=strike>0&&strike<1?(Math.random ? 0:0):0; // без random: детерминизм
+    const dx=(1-strike)*6*Math.sin((p*TOTAL*20)+i); // микро-глитч сдвиг
+    s+='<g opacity="'+ap+'" transform="translate('+dx+',0)">';
+    s+='<text x="540" y="'+y+'" text-anchor="middle" font-family="man8" font-size="58" fill="'+DIM+'">'+m+'</text>';
+    if(strike>0)s+='<line x1="'+(540-260*strike)+'" y1="'+(y-16)+'" x2="'+(540+260*strike)+'" y2="'+(y-16)+'" stroke="'+RED+'" stroke-width="8"/>';
+    s+='</g>';});
+  s+='<text x="540" y="'+(cy+330)+'" text-anchor="middle" font-family="soyuz" font-size="66" fill="'+AMB2+'" opacity="'+clamp((p-0.7)/0.3)+'">РАЗБИРАЕМ ЧЕСТНО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — TWIN-GAUGE-PARITY: два круговых датчика КИТАЙ vs БРЕНД доходят до одного высокого %, «ЖЕЛЕЗО ТО ЖЕ».
+// (новая форма: парные радиальные датчики к паритету; ≠ durability-arc #22, ≠ mode-dial #24)
+function a2(ts){const a=6.4,b=11.5;const p=win(ts,a,b);if(p<0)return'';
+  const cy=920,R=150;const val=easeInOut(clamp(p/0.7));const pct=Math.round(val*94);
+  function gauge(cx,lbl,col){let g='';const a0=Math.PI*0.75,a1=a0+Math.PI*1.5*val;
+    g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="16"/>';
+    // дуга
+    const steps=40;let d='';for(let i=0;i<=steps*val;i++){const th=a0+Math.PI*1.5*(i/steps);d+=(i?' L':'M')+(cx+R*Math.cos(th)).toFixed(1)+' '+(cy+R*Math.sin(th)).toFixed(1);}
+    g+='<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="16" stroke-linecap="round"/>';
+    g+='<text x="'+cx+'" y="'+(cy+12)+'" text-anchor="middle" font-family="soyuz" font-size="60" fill="'+WHT+'">'+pct+'%</text>';
+    g+='<text x="'+cx+'" y="'+(cy+R+56)+'" text-anchor="middle" font-family="man8" font-size="32" fill="'+col+'">'+lbl+'</text>';
+    return g;}
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-R-90)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">МИФ 1: «КИТАЙ — ХЛАМ»</text>';
+  s+=gauge(320,"КИТАЙ",CYAN)+gauge(760,"БРЕНД",AMB2);
+  s+='<text x="540" y="'+(cy+R+150)+'" text-anchor="middle" font-family="soyuz" font-size="58" fill="'+GRN+'" opacity="'+clamp((val-0.8)/0.2)+'">ЖЕЛЕЗО ТО ЖЕ · ЗАВОДЫ ОБЩИЕ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — PARTS-ORBIT: расходники вращаются по орбите вокруг ступицы с тегами «✓ ВЕЗДЕ».
+// (новая форма: орбитальная раскладка; ≠ сетки/ряды/конвейеры прошлых)
+function a3(ts){const a=11.9,b=17.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=930,R=230;const parts=["МАСЛО","ФИЛЬТР","ЦЕПЬ","КОЛОДКИ","СВЕЧА"];const n=parts.length;
+  const rot=easeOut(clamp(p/0.6))*Math.PI*0.5 + p*0.6;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-R-90)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">МИФ 2: «НЕТ ЗАПЧАСТЕЙ»</text>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="2" stroke-dasharray="6 8"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="54" fill="rgba(234,89,32,.16)" stroke="'+AMB+'" stroke-width="3"/><text x="'+cx+'" y="'+(cy+8)+'" text-anchor="middle" font-family="man8" font-size="26" fill="'+WHT+'">УНИ-<tspan x="'+cx+'" dy="26">ФИКАЦ.</tspan></text>';
+  for(let i=0;i<n;i++){const ap=clamp((p-i*0.1)/0.3);if(ap<=0)continue;
+    const th=rot+i/n*2*Math.PI;const x=cx+R*Math.cos(th),y=cy+R*Math.sin(th);
+    s+='<g opacity="'+ap+'"><circle cx="'+x+'" cy="'+y+'" r="46" fill="'+CARD+'" stroke="'+GRN+'" stroke-width="3"/>'
+     +'<text x="'+x+'" y="'+(y-2)+'" text-anchor="middle" font-family="man8" font-size="22" fill="'+WHT+'">'+parts[i]+'</text>'
+     +'<text x="'+x+'" y="'+(y+24)+'" text-anchor="middle" font-family="man8" font-size="18" fill="'+GRN+'">✓ ВЕЗДЕ</text></g>';}
+  s+='<text x="540" y="'+(cy+R+130)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">РАСХОДНИКИ — В ЛЮБОМ МАГАЗИНЕ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — DOCUMENT-FLIP-STAMPS: стопка из 3 документов раскрывается по очереди, на каждый — амбер-штамп.
+// (новая форма: перелистывание страниц + штамп; ≠ leader-tags/contents-arc #20)
+function a4(ts){const a=17.7,b=23.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const docs=["ПТС · ПСМ","ГТД · ТАМОЖНЯ","УЧЁТ В ГИБДД"];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-280)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">МИФ 3: «НЕЛЬЗЯ ОФОРМИТЬ»</text>';
+  docs.forEach((dn,i)=>{const ap=clamp((p-i*0.24)/0.2);if(ap<=0)return;
+    const y=cy-140+i*150; const flip=easeOut(ap); const stamp=clamp((p-i*0.24-0.12)/0.12);
+    s+='<g opacity="'+Math.min(1,flip+0.2)+'"><rect x="'+(cx-280)+'" y="'+y+'" width="560" height="120" rx="12" fill="'+CARD+'" stroke="rgba(246,244,241,.4)" stroke-width="2" transform="scale(1,'+Math.max(0.05,flip)+')" transform-origin="'+cx+'px '+(y+60)+'px"/>'
+     +'<text x="'+(cx-250)+'" y="'+(y+72)+'" font-family="man8" font-size="40" fill="'+WHT+'" opacity="'+flip+'">'+dn+'</text>';
+    if(stamp>0)s+='<g transform="translate('+(cx+200)+','+(y+60)+') rotate(-14) scale('+lerp(1.6,1,easeOut(stamp))+')" opacity="'+stamp+'"><rect x="-70" y="-30" width="140" height="60" rx="8" fill="none" stroke="'+AMB+'" stroke-width="5"/><text x="0" y="14" text-anchor="middle" font-family="soyuz" font-size="34" fill="'+AMB+'">ЕСТЬ</text></g>';
+    s+='</g>';});
+  s+='<text x="540" y="'+(cy+340)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+GRN+'" opacity="'+clamp((p-0.7)/0.3)+'">ВЕЗЁМ С ДОКУМЕНТАМИ · ПОД КЛЮЧ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — ERA-SLIDER: ползунок года 2005 -> 2026, индикатор качества растёт, «МИФЫ ИЗ ПРОШЛОГО».
+// (новая форма: горизонтальный слайдер года + подъём; ≠ retention-curve #25)
+function a5(ts){const a=23.4,b=27.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940,W=740;const t=easeInOut(clamp(p/0.75));const year=Math.round(lerp(2005,2026,t));
+  const kx=cx-W/2+W*t;const qy=cy-120*t;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-220)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">КАЧЕСТВО ПО ГОДАМ</text>';
+  // трек
+  s+='<line x1="'+(cx-W/2)+'" y1="'+cy+'" x2="'+(cx+W/2)+'" y2="'+cy+'" stroke="rgba(255,255,255,.2)" stroke-width="6" stroke-linecap="round"/>';
+  s+='<line x1="'+(cx-W/2)+'" y1="'+cy+'" x2="'+kx+'" y2="'+cy+'" stroke="'+AMB+'" stroke-width="6" stroke-linecap="round"/>';
+  // растущая линия качества
+  let d='';for(let i=0;i<=40*t;i++){const xx=cx-W/2+W*(i/40);const yy=cy-120*(i/40);d+=(i?' L':'M')+xx.toFixed(1)+' '+yy.toFixed(1);}
+  s+='<path d="'+d+'" fill="none" stroke="'+GRN+'" stroke-width="4" stroke-dasharray="6 6"/>';
+  s+='<circle cx="'+kx+'" cy="'+cy+'" r="22" fill="'+AMB+'"/>';
+  s+='<text x="'+kx+'" y="'+(cy-40)+'" text-anchor="middle" font-family="soyuz" font-size="64" fill="'+WHT+'">'+year+'</text>';
+  s+='<text x="540" y="'+(cy+130)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+WHT+'" opacity="'+clamp((t-0.7)/0.3)+'">МИФЫ — ИЗ ПРОШЛОГО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A6 — PUZZLE-ASSEMBLE LOCKUP: куски лого влетают и защёлкиваются паззлом в DIESEL CARGO.
+// (новый лок-ап: паззл-сборка; ≠ spark/splash/ignition/sun-flare/reticle/streaks/droplet/liquid)
+function a6(ts){const a=27.7,b=34.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const asm=easeOut(clamp(p/0.55));const bloom=clamp((p-0.5)/0.5);
+  const pieces=[[-1,-1],[1,-1],[-1,1],[1,1],[0,0]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  pieces.forEach((pc,i)=>{const off=(1-asm);const x=cx+pc[0]*(180+off*400),y=cy+pc[1]*(120+off*400);
+    const sz=90;
+    s+='<rect x="'+(x-sz/2)+'" y="'+(y-sz/2)+'" width="'+sz+'" height="'+sz+'" rx="10" fill="rgba(234,89,32,'+(0.18*(1-bloom))+')" stroke="'+AMB+'" stroke-width="'+(3*(1-bloom))+'" opacity="'+(1-bloom)+'"/>';});
+  if(asm>0.9&&bloom<0.4)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(30+140*bloom)+'" fill="none" stroke="'+WHT+'" stroke-width="'+(6*(1-bloom*2.5))+'" opacity="'+clamp(1-bloom*2.5)+'"/>';
+  const sc=lerp(0.55,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="120" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>
