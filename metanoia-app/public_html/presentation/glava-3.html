@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>МЕТАНОЙА · Глава 3 — Герои веры</title>
+<!--
+  МЕТАНОЙА — христианская онлайн-школа для детей.
+  Глава 3 — «Герои веры» (История народа Божьего — Израиль)
+  Подготовлено командой OKO TEAM.
+-->
+<style>
+  :root{
+    --navy:#1A3A52; --terra:#C97064; --gold:#D4A574; --gold-soft:#E6C079;
+    --cream:#FAF8F5; --parch:#F3EBDD; --gray:#6B7B8A; --blue:#7AAED4;
+    --ink:#2E3B45;
+    --serif:'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans:'Montserrat', system-ui, 'Segoe UI', Roboto, sans-serif;
+    --shadow:0 18px 40px -18px rgba(26,58,82,.34), 0 4px 14px -6px rgba(26,58,82,.16);
+    --footer-h:clamp(46px, 8vh, 60px);
+    --safe-b:calc(var(--footer-h) + clamp(30px, 5.5vh, 46px)); /* footer + dots clearance */
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--parch);
+    font-family:var(--sans);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+    user-select:none;
+  }
+
+  /* ---------- Deck / slides: true full-screen ---------- */
+  #deck{position:fixed; inset:0; width:100vw; height:100vh; width:100dvw; height:100dvh;}
+  .slide{
+    position:absolute; inset:0;
+    width:100vw; height:100vh; width:100dvw; height:100dvh;
+    background:radial-gradient(140% 120% at 15% 0%, #FFFDFB 0%, var(--cream) 44%, var(--parch) 100%);
+    opacity:0; visibility:hidden;
+    transition:opacity .55s ease;
+    overflow:hidden;
+  }
+  .slide.active{opacity:1; visibility:visible; z-index:2;}
+  .slide::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 18% 24%, rgba(212,165,116,.06) 0, transparent 40%),
+      radial-gradient(circle at 84% 78%, rgba(122,174,212,.06) 0, transparent 42%),
+      repeating-linear-gradient(0deg, rgba(120,100,70,.016) 0 2px, transparent 2px 4px);
+    mix-blend-mode:multiply;
+  }
+
+  /* ---------- Content wrap (mobile-first single column) ---------- */
+  .wrap{
+    position:relative; z-index:1;
+    height:100%;
+    display:flex; flex-direction:column; justify-content:center;
+    gap:clamp(12px, 2.2vh, 22px);
+    padding:clamp(48px,7vw,72px) clamp(20px,6vw,84px) var(--safe-b);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .head{display:flex; flex-direction:column; gap:clamp(10px,1.8vh,16px);}
+  .body{display:flex; flex-direction:column; gap:clamp(12px,2vh,20px);}
+
+  /* ---------- Typography (all clamp) ---------- */
+  .kicker{
+    font-weight:700; font-size:clamp(11px,3vw,14px); letter-spacing:.26em;
+    text-transform:uppercase; color:var(--gold);
+    display:flex; align-items:center; gap:10px;
+  }
+  .kicker::before{content:""; width:clamp(20px,6vw,30px); height:2px; background:var(--gold); border-radius:2px; flex:0 0 auto;}
+  .title{
+    font-family:var(--serif); font-weight:700; color:var(--navy);
+    line-height:1.08; letter-spacing:-.01em;
+    font-size:clamp(28px, 7.4vw, 50px);
+  }
+  .lead{font-size:clamp(15px,4.1vw,20px); line-height:1.55; color:var(--gray);}
+  .lead.sm{font-size:clamp(14px,3.7vw,18px);}
+  .em-terra{color:var(--terra); font-weight:600;}
+  .em-navy{color:var(--navy); font-weight:600;}
+
+  /* image */
+  .media{border-radius:clamp(14px,3.5vw,22px); overflow:hidden; box-shadow:var(--shadow);
+    background:#fff; border:clamp(3px,1vw,5px) solid #fff; position:relative;}
+  .media img{display:block; width:100%; height:100%; object-fit:cover;
+    max-height:34vh; min-height:120px;}
+
+  /* star bullets */
+  .stars{list-style:none; display:flex; flex-direction:column; gap:clamp(9px,1.6vh,15px);}
+  .stars li{position:relative; padding-left:clamp(28px,7vw,36px);
+    font-size:clamp(14px,3.8vw,18px); line-height:1.45; color:var(--ink);}
+  .stars li::before{content:"★"; position:absolute; left:0; top:0; color:var(--gold);
+    font-size:clamp(15px,4vw,19px); filter:drop-shadow(0 1px 1px rgba(212,165,116,.5));}
+
+  /* reflective question */
+  .reflect{
+    padding:clamp(13px,3.4vw,20px) clamp(15px,4vw,26px);
+    border-radius:clamp(12px,3vw,16px);
+    background:linear-gradient(120deg, rgba(122,174,212,.11), rgba(212,165,116,.09));
+    border-left:4px solid var(--blue);
+    font-style:italic; color:var(--gray); font-size:clamp(14px,3.7vw,18px); line-height:1.45;
+    display:flex; gap:clamp(10px,3vw,14px); align-items:flex-start;
+  }
+  .reflect .q{font-family:var(--serif); font-size:clamp(20px,5.5vw,26px); color:var(--blue); line-height:1;}
+
+  /* character speech / rows */
+  .say{
+    display:flex; gap:clamp(12px,3.4vw,18px); align-items:center;
+    background:rgba(255,255,255,.72); border:1px solid rgba(212,165,116,.34);
+    border-radius:clamp(14px,3.6vw,20px); padding:clamp(12px,3.2vw,18px) clamp(15px,4vw,24px);
+    box-shadow:0 12px 28px -20px rgba(26,58,82,.45);
+  }
+  .say p{font-size:clamp(14px,3.7vw,17px); line-height:1.45; color:var(--ink);}
+  .say .who{color:var(--terra); font-weight:600;}
+  .badge{
+    flex:0 0 auto; width:clamp(42px,11vw,56px); height:clamp(42px,11vw,56px); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:700; font-size:clamp(19px,5vw,24px); color:#fff;
+    box-shadow:0 8px 18px -8px rgba(26,58,82,.6);
+  }
+
+  /* guide rows (intro) */
+  .guides-grid{display:flex; flex-direction:column; gap:clamp(9px,1.7vh,14px);}
+  .guide{
+    background:rgba(255,255,255,.68); border:1px solid rgba(212,165,116,.3);
+    border-radius:clamp(14px,3.4vw,20px); padding:clamp(14px,3.6vw,22px);
+    box-shadow:0 14px 30px -22px rgba(26,58,82,.45);
+    display:flex; gap:16px; align-items:center;
+  }
+  .guide h3{font-family:var(--serif); color:var(--terra); font-size:clamp(18px,4.6vw,24px); margin-bottom:4px;}
+  .guide p{font-size:clamp(13.5px,3.5vw,15.5px); line-height:1.45; color:var(--gray);}
+  .guide .gtext{display:flex; flex-direction:column;}
+  .guides-media img{max-height:26vh;}
+
+  /* ---------- Full-bleed slides (cover / verse / close) ---------- */
+  .bleed{position:absolute; inset:0;}
+  .bleed img{width:100%; height:100%; object-fit:cover;}
+  .scrim{position:absolute; inset:0;}
+  .over{
+    position:relative; z-index:2; height:100%;
+    display:flex; flex-direction:column;
+    padding:clamp(40px,7vw,72px) clamp(22px,6vw,84px) var(--safe-b);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .over.center{justify-content:center; align-items:center; text-align:center;}
+  .over.bottom{justify-content:flex-end;}
+
+  /* hint */
+  .hint{
+    position:absolute; right:clamp(18px,6vw,70px); bottom:calc(var(--footer-h) + clamp(18px,4vh,40px));
+    z-index:6; font-weight:600; font-size:clamp(14px,3.6vw,16px); color:var(--terra);
+    display:flex; align-items:center; gap:8px; letter-spacing:.02em;
+    animation:nudge 1.8s ease-in-out infinite;
+  }
+  .hint .arw{font-size:clamp(18px,5vw,22px);}
+  @keyframes nudge{0%,100%{transform:translateX(0);} 50%{transform:translateX(7px);}}
+
+  /* ---------- Footer (every slide) ---------- */
+  .footer{
+    position:absolute; left:0; right:0; bottom:0; height:var(--footer-h);
+    display:flex; align-items:center; padding:0 clamp(16px,5vw,84px);
+    pointer-events:none; z-index:6;
+  }
+  .mark{display:flex; align-items:center; gap:8px; flex:0 0 auto;}
+  .mark svg{display:block;}
+  .mark span{font-family:var(--serif); font-weight:700; font-size:clamp(12px,3.2vw,15px); color:var(--navy); letter-spacing:.03em;}
+  .verse{
+    position:absolute; left:50%; transform:translateX(-50%);
+    text-align:center; white-space:nowrap;
+    font-family:var(--serif); font-style:italic;
+    font-size:clamp(11px,3vw,15px); color:var(--gray);
+  }
+  /* on very narrow phones drop the logo word so the verse never collides */
+  @media (max-width:440px){
+    .mark span{display:none;}
+    .verse{position:static; transform:none; margin:0 auto; white-space:normal; padding:0 6px; text-align:center;}
+    .footer{justify-content:center;}
+    .mark{position:absolute; left:16px;}
+  }
+
+  /* ---------- Chrome: counter + dots ---------- */
+  #counter{position:fixed; z-index:40; top:12px; right:14px;
+    color:var(--gray); font-size:clamp(11px,3vw,13px); font-weight:600; letter-spacing:.08em;
+    background:rgba(255,255,255,.5); padding:3px 9px; border-radius:20px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);}
+  #dots{position:fixed; z-index:40; left:0; right:0; bottom:calc(var(--footer-h) + 6px);
+    display:flex; justify-content:center; gap:8px; pointer-events:none;}
+  .dot{width:clamp(7px,2vw,9px); height:clamp(7px,2vw,9px); border-radius:50%;
+    background:rgba(107,123,138,.32); cursor:pointer; transition:.3s; border:0; pointer-events:auto; padding:0;}
+  .dot.on{background:var(--gold); transform:scale(1.35); box-shadow:0 0 0 4px rgba(212,165,116,.18);}
+
+  /* click/tap zones */
+  .nav-zone{position:absolute; top:0; bottom:var(--footer-h); width:50%; z-index:20; cursor:pointer;}
+  .nav-zone.prev{left:0;} .nav-zone.next{right:0;}
+
+  /* =========================================================
+     WIDE / LANDSCAPE — editorial two-column layout
+     ========================================================= */
+  @media (min-width:820px) and (min-aspect-ratio:1/1){
+    .wrap{
+      display:grid; align-content:center;
+      grid-template-columns:1.05fr 1fr;
+      grid-template-areas:"head media" "body media";
+      column-gap:clamp(34px,4vw,60px); row-gap:18px;
+      padding:clamp(48px,6vh,72px) clamp(56px,7vw,90px) var(--safe-b);
+    }
+    .wrap.flip{grid-template-columns:1fr 1.05fr; grid-template-areas:"media head" "media body";}
+    .wrap.guides-wide{grid-template-columns:0.92fr 1.08fr; grid-template-areas:"media head" "media body"; max-width:1180px; margin:0 auto; align-items:center; column-gap:clamp(34px,4vw,56px);}
+    .head{grid-area:head; justify-content:flex-end;}
+    .body{grid-area:body; justify-content:flex-start;}
+    .media{grid-area:media; align-self:center;}
+    .media img{max-height:min(62vh,540px); height:100%;}
+    .guides-media img{max-height:min(66vh,560px);}
+    /* intro cards stay stacked & compact beside the illustration */
+    .wrap.guides-wide .guides-grid{display:flex; flex-direction:column; gap:clamp(10px,1.6vh,16px);}
+    .wrap.guides-wide .guide{flex-direction:row; text-align:left; align-items:center; gap:16px;}
+  }
+
+  @media print{
+    body{overflow:visible;}
+    #dots,#counter,.hint,.nav-zone{display:none !important;}
+    #deck{position:static; height:auto;}
+    .slide{position:relative; height:100vh; page-break-after:always; opacity:1 !important; visibility:visible !important;}
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ================= SLIDE 1 · COVER ================= -->
+  <section class="slide" data-i="0">
+    <div class="bleed"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJza3kiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGNkQ5QTYiLz48c3RvcCBvZmZzZXQ9IjAuNSIgc3RvcC1jb2xvcj0iI0U5Qjk4QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0M5NzA2NCIvPjwvbGluZWFyR3JhZGllbnQ+PHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iMC41IiBjeT0iMC40MiIgcj0iMC41NSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGNkU0IiBzdG9wLW9wYWNpdHk9IjAuOTUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRkY2RTQiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNjQwIiBmaWxsPSJ1cmwoI3NreSkiLz48Y2lyY2xlIGN4PSIyMDAiIGN5PSIyNTAiIHI9IjIwMCIgZmlsbD0idXJsKCNnbG93KSIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjI1MCIgcj0iNzAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOTIiLz48cGF0aCBkPSJNMCA0MjAgTDkwIDMwMCBMMTcwIDQwMCBMMjUwIDI5MCBMMzQwIDQxMCBMNDAwIDM1MCBMNDAwIDY0MCBMMCA2NDAgWiIgZmlsbD0iIzFBM0E1MiIgb3BhY2l0eT0iMC44NSIvPjxwYXRoIGQ9Ik0wIDQ3MCBMMTIwIDM4MCBMMjMwIDQ2MCBMMzMwIDM4NSBMNDAwIDQ0MCBMNDAwIDY0MCBMMCA2NDAgWiIgZmlsbD0iIzI0NTI3NyIgb3BhY2l0eT0iMC45Ii8+PHBhdGggZD0iTTIwMCA2NDAgUTE3MCA1NjAgMjAwIDUwMCBRMjMwIDQ1MCAyMDAgNDAwIFExNzUgMzYwIDIwMCAzMzAiIHN0cm9rZT0iI0YzRUJERCIgc3Ryb2tlLXdpZHRoPSIyNiIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41NSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTIwMCA2NDAgUTE3MCA1NjAgMjAwIDUwMCBRMjMwIDQ1MCAyMDAgNDAwIFExNzUgMzYwIDIwMCAzMzAiIHN0cm9rZT0iI0ZBRjhGNSIgc3Ryb2tlLXdpZHRoPSIxMCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1kYXNoYXJyYXk9IjIgMTYiLz48ZyBmaWxsPSIjMUEzQTUyIiBvcGFjaXR5PSIwLjkiPjxlbGxpcHNlIGN4PSIxOTIiIGN5PSI0NzAiIHJ4PSI5IiByeT0iMjAiLz48Y2lyY2xlIGN4PSIxOTIiIGN5PSI0NDYiIHI9IjYiLz48ZWxsaXBzZSBjeD0iMjEyIiBjeT0iNDc4IiByeD0iOSIgcnk9IjIwIi8+PGNpcmNsZSBjeD0iMjEyIiBjeT0iNDU0IiByPSI2Ii8+PGVsbGlwc2UgY3g9IjIwMiIgY3k9IjQ4NiIgcng9IjkiIHJ5PSIyMSIvPjxjaXJjbGUgY3g9IjIwMiIgY3k9IjQ2MSIgcj0iNiIvPjwvZz48Y2lyY2xlIGN4PSI3OCIgY3k9IjE2NSIgcj0iMS40IiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjcxIi8+PGNpcmNsZSBjeD0iMTQwIiBjeT0iNTAiIHI9IjEuMSIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC41OCIvPjxjaXJjbGUgY3g9IjM0MyIgY3k9IjExNyIgcj0iMS4zIiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjQ0Ii8+PGNpcmNsZSBjeD0iMjQiIGN5PSIxMTkiIHI9IjEuMCIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC43Ii8+PGNpcmNsZSBjeD0iMTEiIGN5PSIxMzQiIHI9IjAuOSIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC43MiIvPjxjaXJjbGUgY3g9IjMxMiIgY3k9IjQ2IiByPSIxLjQiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNDEiLz48Y2lyY2xlIGN4PSIyMyIgY3k9IjE1OCIgcj0iMC43IiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjc1Ii8+PGNpcmNsZSBjeD0iMzYxIiBjeT0iNzUiIHI9IjEuNSIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC42OSIvPjxjaXJjbGUgY3g9IjI4MCIgY3k9Ijc2IiByPSIxLjMiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNzgiLz48Y2lyY2xlIGN4PSIyOTMiIGN5PSI3OSIgcj0iMS4wIiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjY3Ii8+PGNpcmNsZSBjeD0iMjQ1IiBjeT0iOTQiIHI9IjEuNCIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC41NyIvPjxjaXJjbGUgY3g9IjI5NCIgY3k9IjQ1IiByPSIwLjgiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuOCIvPjxjaXJjbGUgY3g9IjE2MSIgY3k9IjUwIiByPSIxLjMiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNzYiLz48Y2lyY2xlIGN4PSIzNzQiIGN5PSIxNDgiIHI9IjEuNCIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC41NyIvPjxjaXJjbGUgY3g9IjM1MyIgY3k9IjY4IiByPSIwLjkiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNjQiLz48Y2lyY2xlIGN4PSIyNjUiIGN5PSIxNDkiIHI9IjEuMCIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC43NCIvPjxjaXJjbGUgY3g9IjI1NSIgY3k9IjgyIiByPSIxLjMiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIzNTAiIGN5PSI2NCIgcj0iMS4wIiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjc1Ii8+PGNpcmNsZSBjeD0iMzU1IiBjeT0iMTE1IiByPSIwLjgiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNjciLz48Y2lyY2xlIGN4PSI2NSIgY3k9IjYxIiByPSIxLjEiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIyNjAiIGN5PSIyNyIgcj0iMS4xIiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjUyIi8+PGNpcmNsZSBjeD0iMzI0IiBjeT0iMTcxIiByPSIxLjIiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNjYiLz48Y2lyY2xlIGN4PSI5NiIgY3k9IjE0OCIgcj0iMC45IiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjQiLz48Y2lyY2xlIGN4PSIxMTIiIGN5PSIxNTgiIHI9IjEuNCIgZmlsbD0iI0ZGRkRGNCIgb3BhY2l0eT0iMC42MiIvPjxjaXJjbGUgY3g9IjIxNyIgY3k9IjE1MSIgcj0iMS4wIiBmaWxsPSIjRkZGREY0IiBvcGFjaXR5PSIwLjc0Ii8+PGNpcmNsZSBjeD0iMTkwIiBjeT0iMTM3IiByPSIxLjQiIGZpbGw9IiNGRkZERjQiIG9wYWNpdHk9IjAuNjYiLz48L3N2Zz4=" alt=""></div>
+    <div class="scrim" style="background:linear-gradient(180deg, rgba(250,248,245,.42) 0%, rgba(250,248,245,.66) 55%, rgba(250,248,245,.92) 100%), linear-gradient(90deg, rgba(250,248,245,.82) 0%, rgba(250,248,245,.32) 60%, rgba(250,248,245,0) 100%);"></div>
+    <div class="over bottom">
+      <div class="kicker" style="margin-bottom:clamp(14px,3vh,26px);">Экспедиция по Писанию · Глава&nbsp;3</div>
+      <h1 class="title" style="font-size:clamp(40px,12vw,80px); margin-bottom:clamp(12px,2.4vh,22px);">Герои<br>веры</h1>
+      <p class="lead" style="max-width:600px; color:var(--navy); opacity:.9;">
+        Тёплый свет маяка вёл нас с самого начала — через рассказ о том, Кто такой Бог, и о том, как Он создал мир. Теперь тот же свет зовёт в последнюю дорогу: пойти рядом с людьми, которых вёл Сам Бог, — с настоящими героями веры.
+      </p>
+    </div>
+    <div class="hint"><span>Дальше</span><span class="arw">→</span></div>
+  </section>
+
+  <!-- ================= SLIDE 2 · АВРААМ ================= -->
+  <section class="slide" data-i="1">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Авраам · человек обещания</div>
+        <h2 class="title">Пойди в землю,<br>которую Я укажу</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJuc2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMUEzQTUyIi8+PHN0b3Agb2Zmc2V0PSIwLjYiIHN0b3AtY29sb3I9IiMyNDUyNzciLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzQzYxODIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCNuc2t5KSIvPjxjaXJjbGUgY3g9IjE3NSIgY3k9Ijg3IiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDMiLz48Y2lyY2xlIGN4PSIyODQiIGN5PSI1OCIgcj0iMS4yIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQzIi8+PGNpcmNsZSBjeD0iMjY5IiBjeT0iMTE5IiByPSIwLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjQiLz48Y2lyY2xlIGN4PSI0NSIgY3k9IjEzMyIgcj0iMC44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjYzIi8+PGNpcmNsZSBjeD0iMjk5IiBjeT0iNzMiIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43NSIvPjxjaXJjbGUgY3g9IjMwOCIgY3k9IjQxIiByPSIxLjUiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIxMjMiIGN5PSIzMyIgcj0iMS40IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ3Ii8+PGNpcmNsZSBjeD0iMjI0IiBjeT0iODMiIHI9IjEuNCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43MSIvPjxjaXJjbGUgY3g9IjI5NiIgY3k9IjM1OSIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjcyIi8+PGNpcmNsZSBjeD0iMzM3IiBjeT0iMTA2IiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNyIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iMjk4IiByPSIwLjgiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSIzNTgiIGN5PSIyODIiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41NyIvPjxjaXJjbGUgY3g9IjMwOSIgY3k9IjI0MiIgcj0iMS4yIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjU0Ii8+PGNpcmNsZSBjeD0iMTAyIiBjeT0iMzY3IiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDUiLz48Y2lyY2xlIGN4PSIxNjMiIGN5PSIyNzgiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41OSIvPjxjaXJjbGUgY3g9IjIzOSIgY3k9IjE1NyIgcj0iMS41IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ0Ii8+PGNpcmNsZSBjeD0iMjcyIiBjeT0iMjI0IiByPSIwLjkiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTkiLz48Y2lyY2xlIGN4PSIyNjAiIGN5PSIyMjUiIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43NyIvPjxjaXJjbGUgY3g9IjI5NSIgY3k9IjMwMyIgcj0iMS43IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjg1Ii8+PGNpcmNsZSBjeD0iMTg0IiBjeT0iMzY1IiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjciLz48Y2lyY2xlIGN4PSIyNDMiIGN5PSI0NSIgcj0iMS44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjkyIi8+PGNpcmNsZSBjeD0iMjUyIiBjeT0iMzY2IiByPSIxLjYiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDMiLz48Y2lyY2xlIGN4PSIzNjkiIGN5PSIxNjgiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45NSIvPjxjaXJjbGUgY3g9IjIzOCIgY3k9IjE1NSIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjg5Ii8+PGNpcmNsZSBjeD0iMTg3IiBjeT0iMjEiIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42Ii8+PGNpcmNsZSBjeD0iMzIyIiBjeT0iNjkiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjE1NyIgY3k9Ijc2IiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIyNjQiIGN5PSI1MSIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjYyIi8+PGNpcmNsZSBjeD0iMTUyIiBjeT0iODAiIHI9IjEuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC44OCIvPjxjaXJjbGUgY3g9IjE1MiIgY3k9IjM3MSIgcj0iMS4yIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjYiLz48Y2lyY2xlIGN4PSIyMDQiIGN5PSIxMjgiIHI9IjAuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41Ii8+PGNpcmNsZSBjeD0iMTI4IiBjeT0iMzQ3IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjciLz48Y2lyY2xlIGN4PSIzMTEiIGN5PSIxMDMiIHI9IjEuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40Ii8+PGNpcmNsZSBjeD0iMjI0IiBjeT0iMjgzIiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNzEiLz48Y2lyY2xlIGN4PSI3NCIgY3k9IjM2MyIgcj0iMS44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjkyIi8+PGNpcmNsZSBjeD0iMzQ1IiBjeT0iMzU2IiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIzNTgiIGN5PSI0MTgiIHI9IjEuNCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42MiIvPjxjaXJjbGUgY3g9IjIxMSIgY3k9IjYzIiByPSIxLjMiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIxMDciIGN5PSI0NCIgcj0iMi4wIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iNjYiIGN5PSIxODQiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40NiIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9Ijg3IiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOTIiLz48Y2lyY2xlIGN4PSIzMjQiIGN5PSIyMyIgcj0iMC44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjUxIi8+PGNpcmNsZSBjeD0iMjAyIiBjeT0iODYiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45MyIvPjxjaXJjbGUgY3g9IjMxOCIgY3k9IjE5NiIgcj0iMS4zIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ2Ii8+PGNpcmNsZSBjeD0iMjU5IiBjeT0iMjQ4IiByPSIxLjMiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTciLz48Y2lyY2xlIGN4PSI4MyIgY3k9IjYyIiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODEiLz48Y2lyY2xlIGN4PSIyNTUiIGN5PSIzNjQiIHI9IjAuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MSIvPjxjaXJjbGUgY3g9IjI4MCIgY3k9IjE5NSIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjciLz48Y2lyY2xlIGN4PSIyMyIgY3k9IjM5OCIgcj0iMS40IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjk0Ii8+PGNpcmNsZSBjeD0iNTYiIGN5PSIzNjYiIHI9IjEuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42OSIvPjxjaXJjbGUgY3g9Ijk1IiBjeT0iMTkyIiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjkiLz48Y2lyY2xlIGN4PSIyNjciIGN5PSIxNzgiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43NCIvPjxjaXJjbGUgY3g9IjEwOSIgY3k9IjEzMiIgcj0iMS44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjgxIi8+PGNpcmNsZSBjeD0iMTI2IiBjeT0iMTEyIiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNiIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iMjQiIHI9IjEuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42NiIvPjxjaXJjbGUgY3g9IjEwOSIgY3k9IjM2NCIgcj0iMS41IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjU5Ii8+PGNpcmNsZSBjeD0iMzgwIiBjeT0iMTg4IiByPSIxLjkiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNiIvPjxjaXJjbGUgY3g9IjEyMiIgY3k9IjYyIiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSIxMTQiIGN5PSIyNTciIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45Ii8+PGNpcmNsZSBjeD0iMTAiIGN5PSIyNTUiIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41OSIvPjxjaXJjbGUgY3g9IjMzOSIgY3k9IjUzIiByPSIxLjgiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDciLz48Y2lyY2xlIGN4PSIyMDgiIGN5PSI0MTAiIHI9IjEuNiIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MSIvPjxjaXJjbGUgY3g9IjEwMSIgY3k9IjIzMiIgcj0iMS43IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjU4Ii8+PGNpcmNsZSBjeD0iMzc5IiBjeT0iMjEyIiByPSIxLjMiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODEiLz48Y2lyY2xlIGN4PSI1MyIgY3k9IjM4MSIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjk1Ii8+PGNpcmNsZSBjeD0iMjQiIGN5PSI4NyIgcj0iMS41IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY2Ii8+PGNpcmNsZSBjeD0iMzQ1IiBjeT0iODQiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43MyIvPjxjaXJjbGUgY3g9IjI1MiIgY3k9IjM0NiIgcj0iMS45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ5Ii8+PGNpcmNsZSBjeD0iMjkwIiBjeT0iNzciIHI9IjAuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC44NCIvPjxjaXJjbGUgY3g9IjM4MSIgY3k9IjM0MiIgcj0iMC44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjgxIi8+PGNpcmNsZSBjeD0iODEiIGN5PSIyMzIiIHI9IjIuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MSIvPjxjaXJjbGUgY3g9IjExOCIgY3k9IjI0IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIxMzMiIGN5PSI0MDEiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41NCIvPjxjaXJjbGUgY3g9IjIyNCIgY3k9Ijc3IiByPSIwLjgiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODEiLz48Y2lyY2xlIGN4PSIyNDQiIGN5PSIzNDkiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45Ii8+PGNpcmNsZSBjeD0iMjI1IiBjeT0iMjY2IiByPSIwLjkiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDgiLz48Y2lyY2xlIGN4PSIyNzEiIGN5PSIxOSIgcj0iMS44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjgzIi8+PGNpcmNsZSBjeD0iMzIxIiBjeT0iMTIiIHI9IjEuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40OCIvPjxjaXJjbGUgY3g9IjgyIiBjeT0iMjUyIiByPSIxLjUiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDciLz48Y2lyY2xlIGN4PSI0MSIgY3k9IjE3NiIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY5Ii8+PGNpcmNsZSBjeD0iMjU3IiBjeT0iNDExIiByPSIxLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODkiLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEzNyIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQyIi8+PGNpcmNsZSBjeD0iNjAiIGN5PSIyNjkiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MiIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iMjM2IiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOTQiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIyNzIiIHI9IjEuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41NSIvPjxjaXJjbGUgY3g9IjI3MCIgY3k9IjI4MyIgcj0iMS43IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY4Ii8+PGNpcmNsZSBjeD0iMTM2IiBjeT0iMzY3IiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODgiLz48Y2lyY2xlIGN4PSIxNDIiIGN5PSIyOTYiIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MSIvPjxjaXJjbGUgY3g9IjIzOSIgY3k9IjgwIiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjIiLz48Y2lyY2xlIGN4PSIxNzEiIGN5PSI0NyIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMTE4IiBjeT0iMzUyIiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDciLz48Y2lyY2xlIGN4PSI4OSIgY3k9IjM3NiIgcj0iMS41IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjYiLz48Y2lyY2xlIGN4PSIxMzkiIGN5PSI4MCIgcj0iMi4wIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjUyIi8+PGNpcmNsZSBjeD0iNTgiIGN5PSIyMTMiIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40OSIvPjxjaXJjbGUgY3g9IjM1MSIgY3k9IjEyNCIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMjczIiBjeT0iMjE2IiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTEiLz48Y2lyY2xlIGN4PSIxNzMiIGN5PSI1NyIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQxIi8+PGNpcmNsZSBjeD0iMjkzIiBjeT0iMjQ0IiByPSIxLjMiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDEiLz48Y2lyY2xlIGN4PSIxNzkiIGN5PSIyNzQiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjQyIiBjeT0iNjciIHI9IjIuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC44MyIvPjxjaXJjbGUgY3g9IjYzIiBjeT0iNTMiIHI9IjEuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MiIvPjxjaXJjbGUgY3g9IjEwMiIgY3k9IjE0OCIgcj0iMS43IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjg1Ii8+PGNpcmNsZSBjeD0iMzU2IiBjeT0iMTQyIiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNyIvPjxjaXJjbGUgY3g9IjI3MyIgY3k9IjMwMiIgcj0iMS4zIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjU4Ii8+PGNpcmNsZSBjeD0iMTUyIiBjeT0iMzkiIHI9IjEuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41Ii8+PGNpcmNsZSBjeD0iNDciIGN5PSIxNDciIHI9IjEuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43NSIvPjxjaXJjbGUgY3g9IjE0MyIgY3k9IjUyIiByPSIxLjUiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTIiLz48Y2lyY2xlIGN4PSIxNDUiIGN5PSI3MiIgcj0iMS4zIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjU5Ii8+PGNpcmNsZSBjeD0iMjkzIiBjeT0iMjIzIiByPSIxLjkiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTUiLz48Y2lyY2xlIGN4PSI3NiIgY3k9IjMyIiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTMiLz48Y2lyY2xlIGN4PSI2NiIgY3k9IjkyIiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNSIvPjxjaXJjbGUgY3g9IjE2OSIgY3k9IjMzMSIgcj0iMS4xIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjgyIi8+PGNpcmNsZSBjeD0iMTU4IiBjeT0iMjM4IiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNSIvPjxjaXJjbGUgY3g9IjE4NyIgY3k9IjE5IiByPSIyLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDIiLz48Y2lyY2xlIGN4PSIxOSIgY3k9IjM4NSIgcj0iMS40IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjk0Ii8+PGNpcmNsZSBjeD0iMjczIiBjeT0iMjUzIiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjUiLz48Y2lyY2xlIGN4PSIzNDciIGN5PSIzNDIiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42NyIvPjxjaXJjbGUgY3g9IjIxMSIgY3k9IjI2OSIgcj0iMS4xIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjUyIi8+PGNpcmNsZSBjeD0iMTI3IiBjeT0iMTg1IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODkiLz48Y2lyY2xlIGN4PSIzODMiIGN5PSIzMzUiIHI9IjAuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC45NCIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjEyMCIgcj0iMzAiIGZpbGw9IiNGQUY4RjUiIG9wYWNpdHk9IjAuOSIvPjxjaXJjbGUgY3g9IjI5MCIgY3k9IjExMiIgcj0iMzAiIGZpbGw9IiMyNDUyNzciIG9wYWNpdHk9IjAuNTUiLz48cGF0aCBkPSJNMCA1MDAgUTEwMCA0NjAgMjAwIDQ5MCBUNDAwIDQ3NSBMNDAwIDY0MCBMMCA2NDAgWiIgZmlsbD0iIzE0MzA0YSIgb3BhY2l0eT0iMSIvPjxwYXRoIGQ9Ik03MCA1MDAgTDE1MCAzODAgTDIzMCA1MDAgWiIgZmlsbD0iI0M5NzA2NCIvPjxwYXRoIGQ9Ik0xNTAgMzgwIEwxNTAgNTAwIiBzdHJva2U9IiM4ZjRhNDIiIHN0cm9rZS13aWR0aD0iMyIvPjxwYXRoIGQ9Ik0xMzUgNTAwIEwxNTAgNDMwIEwxNjUgNTAwIFoiIGZpbGw9IiMxQTNBNTIiIG9wYWNpdHk9IjAuNSIvPjxnIGZpbGw9IiMxNDMwNGEiPjxlbGxpcHNlIGN4PSIzMDAiIGN5PSI0NzAiIHJ4PSIxMiIgcnk9IjMwIi8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iNDM2IiByPSI5Ii8+PHBhdGggZD0iTTMwMCA0NTAgTDMyMiA0MjAiIHN0cm9rZT0iIzE0MzA0YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PC9zdmc+" alt="Авраам смотрит на звёздное небо у своего шатра"></figure>
+      <div class="body">
+        <p class="lead sm">Милана, Еммануил и Эван снова в пути. Первым их встречает <span class="em-navy">Авраам</span>. Бог сказал ему: <span class="em-terra">«Пойди из земли твоей… в землю, которую Я укажу тебе»</span> (Быт.&nbsp;12:1).</p>
+        <p class="lead sm">Авраам не знал дороги — но доверился Богу и пошёл. А ночью Бог показал ему звёзды: «Столько будет у тебя потомков». И Авраам поверил обещанию.</p>
+        <div class="reflect"><span class="q">?</span><span>Трудно ли идти вперёд, когда не видишь всей дороги, но веришь Тому, Кто ведёт?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 3 · ИОСИФ ================= -->
+  <section class="slide" data-i="2">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">Иосиф · прощение</div>
+        <h2 class="title">Бог обратил зло<br>в добро</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJqc2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRjZEOUE2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRTlCOThBIi8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9ImpzdW4iIGN4PSIwLjUiIGN5PSIwLjUiIHI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGNkU0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjNDNjdGIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI2NDAiIGZpbGw9InVybCgjanNreSkiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIxMjAiIHI9IjU0IiBmaWxsPSJ1cmwoI2pzdW4pIi8+PHBhdGggZD0iTTAgNTAwIFExMDAgNDYwIDIwMCA0OTAgVDQwMCA0NzUgTDQwMCA2NDAgTDAgNjQwIFoiIGZpbGw9IiNDOTlBNUIiIG9wYWNpdHk9IjEiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMzAsMTUwKSI+PHBhdGggZD0iTTAgNjAgTDMwIDIwIEw3MCAyMCBMMTAwIDYwIEw4NCA5MCBMODQgMjEwIEwxNiAyMTAgTDE2IDkwIFoiIGZpbGw9IiM3QUFFRDQiLz48cmVjdCB4PSIxNiIgeT0iOTAiIHdpZHRoPSI2OCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0M5NzA2NCIvPjxyZWN0IHg9IjE2IiB5PSIxMTQiIHdpZHRoPSI2OCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0U2QzA3OSIvPjxyZWN0IHg9IjE2IiB5PSIxMzgiIHdpZHRoPSI2OCIgaGVpZ2h0PSIyNCIgZmlsbD0iIzZCOUU3QSIvPjxyZWN0IHg9IjE2IiB5PSIxNjIiIHdpZHRoPSI2OCIgaGVpZ2h0PSIyNCIgZmlsbD0iI0M5NzA2NCIvPjxyZWN0IHg9IjE2IiB5PSIxODYiIHdpZHRoPSI2OCIgaGVpZ2h0PSIyNCIgZmlsbD0iIzdBQUVENCIvPjxwYXRoIGQ9Ik0zMCAyMCBMNzAgMjAgTDYwIDQ2IEw0MCA0NiBaIiBmaWxsPSIjRkFGOEY1IiBvcGFjaXR5PSIwLjg1Ii8+PC9nPjxnIHN0cm9rZT0iI0IwN0UzQyIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik03MCA1MDAgUTYwIDQ1MCA4MCA0MzAiLz48cGF0aCBkPSJNODAgNTAwIFE3NCA0NTIgOTIgNDMyIi8+PHBhdGggZD0iTTkwIDUwMCBRODYgNDU0IDEwNCA0MzYiLz48L2c+PGcgc3Ryb2tlPSIjQjA3RTNDIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PHBhdGggZD0iTTMwMCA1MDAgUTMyMiA0NTYgMzA4IDQzMiIvPjxwYXRoIGQ9Ik0zMTIgNTAwIFEzMzIgNDYwIDMyMCA0MzYiLz48cGF0aCBkPSJNMzI0IDUwMCBRMzQyIDQ2NCAzMzIgNDQwIi8+PC9nPjwvc3ZnPg==" alt="Разноцветная одежда Иосифа и склонившиеся снопы"></figure>
+      <div class="body">
+        <p class="lead sm">У Иосифа была красивая разноцветная одежда, и братья от зависти продали его в далёкую страну. Но Бог был с ним повсюду.</p>
+        <ul class="stars">
+          <li>В чужой земле Иосиф остался честным и добрым.</li>
+          <li>Бог поставил его помогать людям в голодные годы.</li>
+          <li>Встретив братьев, Иосиф простил их от всего сердца.</li>
+        </ul>
+        <div class="reflect"><span class="q">?</span><span>«Вы умышляли зло… но Бог обратил это в добро» (Быт.&nbsp;50:20). Кого тебе хочется простить сегодня?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 4 · МОИСЕЙ ================= -->
+  <section class="slide" data-i="3">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Моисей · «Я пошлю тебя»</div>
+        <h2 class="title">Дорога через<br>море</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJtc2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRjZEOUE2Ii8+PHN0b3Agb2Zmc2V0PSIwLjYiIHN0b3AtY29sb3I9IiNFOUI5OEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNEOTlDNzIiLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0id2F0ZXIiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM5Q0M2RTQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzQzYxODIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCNtc2t5KSIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjEzMCIgcj0iNTIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOSIvPjxwYXRoIGQ9Ik0wIDY0MCBMMCAzMDAgUTYwIDI2MCAxMjAgMzIwIFExNTAgMzYwIDE1MCA2NDAgWiIgZmlsbD0idXJsKCN3YXRlcikiLz48cGF0aCBkPSJNNDAwIDY0MCBMNDAwIDMwMCBRMzQwIDI2MCAyODAgMzIwIFEyNTAgMzYwIDI1MCA2NDAgWiIgZmlsbD0idXJsKCN3YXRlcikiLz48cGF0aCBkPSJNMTIwIDMyMCBRMTUwIDM2MCAxNTAgNjQwIiBzdHJva2U9IiNFQUY0RkIiIHN0cm9rZS13aWR0aD0iNCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC42Ii8+PHBhdGggZD0iTTI4MCAzMjAgUTI1MCAzNjAgMjUwIDY0MCIgc3Ryb2tlPSIjRUFGNEZCIiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuNiIvPjxwYXRoIGQ9Ik0xNTAgNjQwIEwyNTAgNjQwIEwyMzUgMzYwIEwxNjUgMzYwIFoiIGZpbGw9IiNFOUM5OTQiLz48cGF0aCBkPSJNMTUwIDY0MCBMMjUwIDY0MCBMMjM1IDM2MCBMMTY1IDM2MCBaIiBmaWxsPSIjRDRBNTc0IiBvcGFjaXR5PSIwLjQiLz48ZyBmaWxsPSIjMTQzMDRhIj48ZWxsaXBzZSBjeD0iMTkyIiBjeT0iNTYwIiByeD0iNyIgcnk9IjE2Ii8+PGNpcmNsZSBjeD0iMTkyIiBjeT0iNTQyIiByPSI1Ii8+PGVsbGlwc2UgY3g9IjIxMCIgY3k9IjU2NiIgcng9IjciIHJ5PSIxNiIvPjxjaXJjbGUgY3g9IjIxMCIgY3k9IjU0OCIgcj0iNSIvPjwvZz48L3N2Zz4=" alt="Расступившееся море и сухая дорога посреди воды"></figure>
+      <div class="body">
+        <p class="lead sm">Из горящего, но не сгорающего куста Бог позвал <span class="em-navy">Моисея</span>: <span class="em-terra">«Я пошлю тебя»</span> вывести Мой народ на свободу (Исх.&nbsp;3).</p>
+        <p class="lead sm">И когда впереди встало море, Бог развёл воду в стороны — и народ прошёл по сухому дну, как по тёплой светлой тропинке.</p>
+        <div class="reflect"><span class="q">?</span><span>Как думаешь, что чувствовали люди, идя между двумя стенами воды?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 5 · ДЕСЯТЬ ЗАПОВЕДЕЙ ================= -->
+  <section class="slide" data-i="4">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">На горе Синай</div>
+        <h2 class="title">Десять слов<br>любви</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJzc2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRjZEOUE2Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRTRBOTdFIi8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9InRvcCIgY3g9IjAuNSIgY3k9IjAuMTUiIHI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGNkU0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGNkU0IiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCNzc2t5KSIvPjxlbGxpcHNlIGN4PSIyMDAiIGN5PSI5MCIgcng9IjE4MCIgcnk9IjEyMCIgZmlsbD0idXJsKCN0b3ApIi8+PHBhdGggZD0iTTAgNjQwIEwxMjAgMjQwIEwyMDAgMTIwIEwyODAgMjQwIEw0MDAgNjQwIFoiIGZpbGw9IiMxQTNBNTIiLz48cGF0aCBkPSJNMjAwIDEyMCBMMjgwIDI0MCBMMjQwIDMwMCBMMjAwIDI0MCBaIiBmaWxsPSIjMjQ1Mjc3Ii8+PGcgc3Ryb2tlPSIjRkZGNkU0IiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNCI+PGxpbmUgeDE9IjIwMCIgeTE9IjEyMCIgeDI9IjEyMCIgeTI9IjQwIi8+PGxpbmUgeDE9IjIwMCIgeTE9IjEyMCIgeDI9IjIwMCIgeTI9IjI0Ii8+PGxpbmUgeDE9IjIwMCIgeTE9IjEyMCIgeDI9IjI4MCIgeTI9IjQwIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDExMiw0MDApIj48cGF0aCBkPSJNMCAyMCBBMzggMzggMCAwIDEgNzYgMjAgTDc2IDE1MCBMMCAxNTAgWiIgZmlsbD0iI0YzRUJERCIgc3Ryb2tlPSIjQjc5QTZFIiBzdHJva2Utd2lkdGg9IjMiLz48cGF0aCBkPSJNOTIgMjAgQTM4IDM4IDAgMCAxIDE2OCAyMCBMMTY4IDE1MCBMOTIgMTUwIFoiIGZpbGw9IiNGM0VCREQiIHN0cm9rZT0iI0I3OUE2RSIgc3Ryb2tlLXdpZHRoPSIzIi8+PGcgc3Ryb2tlPSIjNkI3QjhBIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNyI+PGxpbmUgeDE9IjE2IiB5MT0iNDYiIHgyPSI2MCIgeTI9IjQ2Ii8+PGxpbmUgeDE9IjE2IiB5MT0iNjYiIHgyPSI2MCIgeTI9IjY2Ii8+PGxpbmUgeDE9IjE2IiB5MT0iODYiIHgyPSI2MCIgeTI9Ijg2Ii8+PGxpbmUgeDE9IjE2IiB5MT0iMTA2IiB4Mj0iNjAiIHkyPSIxMDYiLz48bGluZSB4MT0iMTYiIHkxPSIxMjYiIHgyPSI1MiIgeTI9IjEyNiIvPjxsaW5lIHgxPSIxMDgiIHkxPSI0NiIgeDI9IjE1MiIgeTI9IjQ2Ii8+PGxpbmUgeDE9IjEwOCIgeTE9IjY2IiB4Mj0iMTUyIiB5Mj0iNjYiLz48bGluZSB4MT0iMTA4IiB5MT0iODYiIHgyPSIxNTIiIHkyPSI4NiIvPjxsaW5lIHgxPSIxMDgiIHkxPSIxMDYiIHgyPSIxNTIiIHkyPSIxMDYiLz48bGluZSB4MT0iMTA4IiB5MT0iMTI2IiB4Mj0iMTQ0IiB5Mj0iMTI2Ii8+PC9nPjwvZz48L3N2Zz4=" alt="Гора Синай в сиянии и две каменные скрижали"></figure>
+      <div class="body">
+        <p class="lead sm">На горе Синай Бог дал народу <span class="em-navy">десять заповедей</span> — добрые правила, по которым хорошо и радостно жить (Исх.&nbsp;20).</p>
+        <ul class="stars">
+          <li>Люби Бога всем сердцем и доверяй только Ему.</li>
+          <li>Уважай папу и маму, говори правду, будь честным.</li>
+          <li>Радуйся тому, что есть, и не бери чужого.</li>
+        </ul>
+        <div class="reflect"><span class="q">?</span><span>Иисус сказал, что все заповеди — про любовь. Какую из них тебе легче всего исполнять?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 6 · ИИСУС НАВИН ================= -->
+  <section class="slide" data-i="5">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Иисус Навин · смелость</div>
+        <h2 class="title">Будь твёрд<br>и мужествен</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJqaHNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0U0QjM4MiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNjQwIiBmaWxsPSJ1cmwoI2poc2t5KSIvPjxjaXJjbGUgY3g9IjMyMCIgY3k9IjExMCIgcj0iNDYiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOSIvPjxwYXRoIGQ9Ik0wIDUyMCBRMTAwIDQ4MCAyMDAgNTEwIFQ0MDAgNDk1IEw0MDAgNjQwIEwwIDY0MCBaIiBmaWxsPSIjQ0JBMTYyIiBvcGFjaXR5PSIxIi8+PGcgZmlsbD0iI0I5OEE1MCIgc3Ryb2tlPSIjOWE2ZjNjIiBzdHJva2Utd2lkdGg9IjIiPjxyZWN0IHg9IjcwIiB5PSIzMzAiIHdpZHRoPSIyNjAiIGhlaWdodD0iMTkwIi8+PHJlY3QgeD0iNjAiIHk9IjMwMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjIyMCIvPjxyZWN0IHg9IjMwMCIgeT0iMzAwIiB3aWR0aD0iNDAiIGhlaWdodD0iMjIwIi8+PHJlY3QgeD0iMTgwIiB5PSIzMDAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIyMjAiLz48L2c+PGcgZmlsbD0iI0I5OEE1MCI+PHJlY3QgeD0iNjAiIHk9IjI4OCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjE2Ii8+PHJlY3QgeD0iODIiIHk9IjI4OCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjE2Ii8+PHJlY3QgeD0iMTgwIiB5PSIyODgiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxNiIvPjxyZWN0IHg9IjIwMiIgeT0iMjg4IiB3aWR0aD0iMTIiIGhlaWdodD0iMTYiLz48cmVjdCB4PSIzMDAiIHk9IjI4OCIgd2lkdGg9IjEyIiBoZWlnaHQ9IjE2Ii8+PHJlY3QgeD0iMzIyIiB5PSIyODgiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxNiIvPjwvZz48cGF0aCBkPSJNMjQwIDMzMCBMMjMwIDQwMCBMMjQ1IDQ1MCBMMjMyIDUyMCIgc3Ryb2tlPSIjN2Q1YTMwIiBzdHJva2Utd2lkdGg9IjQiIGZpbGw9Im5vbmUiLz48ZyBzdHJva2U9IiM5YTZmM2MiIHN0cm9rZS13aWR0aD0iMS41IiBvcGFjaXR5PSIwLjUiPjxsaW5lIHgxPSI3MCIgeTE9IjM3MCIgeDI9IjMzMCIgeTI9IjM3MCIvPjxsaW5lIHgxPSI3MCIgeTE9IjQxMCIgeDI9IjMzMCIgeTI9IjQxMCIvPjxsaW5lIHgxPSI3MCIgeTE9IjQ1MCIgeDI9IjMzMCIgeTI9IjQ1MCIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjAsMTgwKSI+PHBhdGggZD0iTTAgMjAgTDQ4IDEyIEw2MCAwIEw2NCAyNCBMNDggMjAgTDAgMzAgWiIgZmlsbD0iI0U2QzA3OSIgc3Ryb2tlPSIjQjc5QTRFIiBzdHJva2Utd2lkdGg9IjIiLz48L2c+PC9zdmc+" alt="Высокие стены Иерихона и труба"></figure>
+      <div class="body">
+        <p class="lead sm">Бог сказал <span class="em-navy">Иисусу Навину</span>: <span class="em-terra">«Будь твёрд и мужествен… ибо с тобою Господь, Бог твой, везде, куда ни пойдёшь»</span> (Нав.&nbsp;1:9).</p>
+        <p class="lead sm">Народ семь дней тихо обходил высокие стены Иерихона и трубил в трубы. И на седьмой день крепкие стены сами упали — потому что рядом был Бог.</p>
+        <div class="reflect"><span class="q">?</span><span>Где тебе сегодня нужно немного смелости, зная, что Бог рядом?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 7 · САМУИЛ ================= -->
+  <section class="slide" data-i="6">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">Самуил · умение слушать</div>
+        <h2 class="title">Говори, Господь,<br>я слушаю</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJ0c2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMUEzQTUyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMkU0RTY4Ii8+PC9saW5lYXJHcmFkaWVudD48cmFkaWFsR3JhZGllbnQgaWQ9ImxhbXAiIGN4PSIwLjUiIGN5PSIwLjUiIHI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGM0QwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGM0QwIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCN0c2t5KSIvPjxjaXJjbGUgY3g9IjI0MSIgY3k9IjE1MyIgcj0iMS41IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjcxIi8+PGNpcmNsZSBjeD0iMjQxIiBjeT0iMTQwIiByPSIxLjUiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDgiLz48Y2lyY2xlIGN4PSIyNzIiIGN5PSIxMzEiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43MiIvPjxjaXJjbGUgY3g9IjU4IiBjeT0iMTI0IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDQiLz48Y2lyY2xlIGN4PSIzNjUiIGN5PSIxNzIiIHI9IjAuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43OSIvPjxjaXJjbGUgY3g9IjI0MSIgY3k9IjE3NyIgcj0iMS40IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY2Ii8+PGNpcmNsZSBjeD0iMzI5IiBjeT0iMTMiIHI9IjEuNCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MyIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iNTgiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42NCIvPjxjaXJjbGUgY3g9IjI0NyIgY3k9IjkzIiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNzQiLz48Y2lyY2xlIGN4PSIyNzUiIGN5PSI2OSIgcj0iMS4zIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjYiLz48Y2lyY2xlIGN4PSIzNDkiIGN5PSIzMSIgcj0iMS4xIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjUxIi8+PGNpcmNsZSBjeD0iMjkyIiBjeT0iMzEiIHI9IjEuMyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MyIvPjxjaXJjbGUgY3g9IjEyNyIgY3k9IjE0MSIgcj0iMS4wIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQzIi8+PGNpcmNsZSBjeD0iNjUiIGN5PSIxMTIiIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjQ0IiBjeT0iMTQiIHI9IjEuNSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40Ii8+PGNpcmNsZSBjeD0iMTE3IiBjeT0iMjMiIHI9IjEuMSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC43OSIvPjxjaXJjbGUgY3g9IjIxMyIgY3k9IjExNyIgcj0iMC44IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY1Ii8+PGNpcmNsZSBjeD0iMzU1IiBjeT0iNzkiIHI9IjEuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjE3IiBjeT0iMTE0IiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDUiLz48Y2lyY2xlIGN4PSIxMzYiIGN5PSIxOTAiIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MiIvPjxjaXJjbGUgY3g9IjI1OSIgY3k9IjU1IiByPSIxLjMiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDgiLz48Y2lyY2xlIGN4PSIyNzAiIGN5PSI1OCIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjcxIi8+PGNpcmNsZSBjeD0iMjI0IiBjeT0iMTc0IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIxMTgiIGN5PSIxMCIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjc5Ii8+PGNpcmNsZSBjeD0iMzEzIiBjeT0iODciIHI9IjEuNiIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MSIvPjxjaXJjbGUgY3g9IjEwNSIgY3k9IjExMCIgcj0iMS42IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMzA1IiBjeT0iMzUiIHI9IjAuNyIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40NiIvPjxjaXJjbGUgY3g9IjIzNiIgY3k9Ijc2IiByPSIwLjciIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNjQiLz48Y2lyY2xlIGN4PSIxNjEiIGN5PSIxMDgiIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40NCIvPjxjaXJjbGUgY3g9IjMwOCIgY3k9IjE3MiIgcj0iMC45IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjY0Ii8+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTY5IiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNzgiLz48Y2lyY2xlIGN4PSIyNTciIGN5PSIxNTciIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41NSIvPjxjaXJjbGUgY3g9IjMzMSIgY3k9IjQ5IiByPSIxLjAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNDkiLz48Y2lyY2xlIGN4PSIzMjIiIGN5PSI3MyIgcj0iMS40IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ2Ii8+PGNpcmNsZSBjeD0iMzMyIiBjeT0iMTUxIiByPSIwLjkiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNzgiLz48Y2lyY2xlIGN4PSIyNTciIGN5PSIxNjQiIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40MiIvPjxjaXJjbGUgY3g9IjY1IiBjeT0iMTkiIHI9IjEuMiIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41Ii8+PGNpcmNsZSBjeD0iMzg4IiBjeT0iMTkwIiByPSIxLjEiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTciLz48Y2lyY2xlIGN4PSIzMTUiIGN5PSIxMzUiIHI9IjEuMCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC40NyIvPjxjaXJjbGUgY3g9IjM3OCIgY3k9IjI3IiByPSIwLjgiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTkiLz48cGF0aCBkPSJNMjUwIDEwMCBBNTAgNTAgMCAwIDEgMzUwIDEwMCBMMzUwIDI2MCBMMjUwIDI2MCBaIiBmaWxsPSIjMTQzMDRhIiBzdHJva2U9IiMzQzYxODIiIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjE0MiIgY3k9IjE4NCIgcj0iMS4yIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjc0Ii8+PGNpcmNsZSBjeD0iMTA1IiBjeT0iMTY5IiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODMiLz48Y2lyY2xlIGN4PSIzMzgiIGN5PSIxNTciIHI9IjAuOCIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42NyIvPjxjaXJjbGUgY3g9IjExOSIgY3k9IjE4NSIgcj0iMC43IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjQ2Ii8+PGNpcmNsZSBjeD0iMzYwIiBjeT0iMTEzIiByPSIxLjQiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODIiLz48Y2lyY2xlIGN4PSI1MyIgY3k9IjE3NyIgcj0iMS4zIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjc3Ii8+PGNpcmNsZSBjeD0iODEiIGN5PSIxNzUiIHI9IjAuOSIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC41MiIvPjxjaXJjbGUgY3g9IjI5MSIgY3k9IjIxOSIgcj0iMS4yIiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjg0Ii8+PGNpcmNsZSBjeD0iMzM2IiBjeT0iMTkwIiByPSIxLjIiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuNTciLz48Y2lyY2xlIGN4PSIzMTQiIGN5PSIxNzciIHI9IjEuMiIgZmlsbD0iI0ZGRjZFNCIgb3BhY2l0eT0iMC42OCIvPjxyZWN0IHg9IjAiIHk9IjUwMCIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIxNDAiIGZpbGw9IiMxNDMwNGEiLz48Y2lyY2xlIGN4PSIxMjAiIGN5PSIzMDAiIHI9IjEyMCIgZmlsbD0idXJsKCNsYW1wKSIvPjxyZWN0IHg9IjExNCIgeT0iMzMwIiB3aWR0aD0iMTIiIGhlaWdodD0iMTcwIiBmaWxsPSIjOGE2YTNhIi8+PGVsbGlwc2UgY3g9IjEyMCIgY3k9IjUwMCIgcng9IjM0IiByeT0iOCIgZmlsbD0iIzhhNmEzYSIvPjxwYXRoIGQ9Ik05NiAzMjAgUTEyMCAzMDAgMTQ0IDMyMCBRMTQ0IDM0MCAxMjAgMzQyIFE5NiAzNDAgOTYgMzIwIFoiIGZpbGw9IiNFNkMwNzkiLz48cGF0aCBkPSJNMTIwIDMwMCBRMTE0IDI4NCAxMjAgMjc0IFExMjYgMjg0IDEyMCAzMDAgWiIgZmlsbD0iI0ZGQ0Y3QSIvPjxnIGZpbGw9IiNDOTcwNjQiPjxlbGxpcHNlIGN4PSIyNTAiIGN5PSI0NzAiIHJ4PSIxNiIgcnk9IjM0Ii8+PGNpcmNsZSBjeD0iMjUwIiBjeT0iNDMyIiByPSIxMiIvPjwvZz48cGF0aCBkPSJNMjQwIDQ1NiBMMjI2IDQ3MCIgc3Ryb2tlPSIjQzk3MDY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==" alt="Мальчик Самуил у горящего светильника в храме ночью"></figure>
+      <div class="body">
+        <p class="lead sm">Маленький <span class="em-navy">Самуил</span> служил при храме. Однажды ночью он услышал, как его тихо зовут по имени.</p>
+        <p class="lead sm">Это звал Бог. И Самуил ответил: <span class="em-terra">«Говори, Господь, ибо слышит раб Твой»</span> (1&nbsp;Цар.&nbsp;3:10). Он научился слушать сердцем.</p>
+        <div class="reflect"><span class="q">?</span><span>Чтобы услышать Бога, нужно немного тишины. Когда тебе удаётся побыть в тишине?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 8 · ДАВИД ================= -->
+  <section class="slide" data-i="7">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Давид · пастух и царь</div>
+        <h2 class="title">Малыш Давид<br>и великан</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJkc2t5IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjQkZFMEYwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRUZFMEMwIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI2NDAiIGZpbGw9InVybCgjZHNreSkiLz48Y2lyY2xlIGN4PSIzMDAiIGN5PSIxMTAiIHI9IjQ0IiBmaWxsPSIjRkZGNkU0IiBvcGFjaXR5PSIwLjkiLz48cGF0aCBkPSJNMCA0NDAgUTEyMCA0MDAgMjQwIDQ0MCBUNDAwIDQzMCBMNDAwIDY0MCBMMCA2NDAgWiIgZmlsbD0iIzhGQjU3QyIvPjxwYXRoIGQ9Ik0wIDUyMCBRMTQwIDQ4MCAyODAgNTIwIFQ0MDAgNTEwIEw0MDAgNjQwIEwwIDY0MCBaIiBmaWxsPSIjNkU5RTYyIi8+PGcgb3BhY2l0eT0iMC4zNSIgZmlsbD0iIzFBM0E1MiI+PGVsbGlwc2UgY3g9IjMzMCIgY3k9IjQzMCIgcng9IjM0IiByeT0iODAiLz48Y2lyY2xlIGN4PSIzMzAiIGN5PSIzMzYiIHI9IjI0Ii8+PC9nPjxnIGZpbGw9IiNDOTcwNjQiPjxlbGxpcHNlIGN4PSIxMjAiIGN5PSI0NzAiIHJ4PSIxNCIgcnk9IjM0Ii8+PGNpcmNsZSBjeD0iMTIwIiBjeT0iNDM0IiByPSIxMSIvPjwvZz48cGF0aCBkPSJNMTIwIDQ1MiBMMTQ2IDQ0MCIgc3Ryb2tlPSIjQzk3MDY0IiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNDYgNDQwIEwxNjIgNDMwIiBzdHJva2U9IiM4YTVhMzAiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgZmlsbD0iI0ZBRjhGNSI+PGVsbGlwc2UgY3g9IjYwIiBjeT0iNTQwIiByeD0iMjAiIHJ5PSIxNCIvPjxjaXJjbGUgY3g9IjQ0IiBjeT0iNTM2IiByPSI3IiBmaWxsPSIjNkI3QjhBIi8+PGVsbGlwc2UgY3g9IjE4MCIgY3k9IjU2MCIgcng9IjE4IiByeT0iMTIiLz48Y2lyY2xlIGN4PSIxNjYiIGN5PSI1NTciIHI9IjYiIGZpbGw9IiM2QjdCOEEiLz48L2c+PC9zdmc+" alt="Пастушок Давид с пращой на зелёных холмах"></figure>
+      <div class="body">
+        <p class="lead sm">Пастушок <span class="em-navy">Давид</span> был совсем небольшим, а великан Голиаф — огромным. Но Давид не испугался.</p>
+        <ul class="stars">
+          <li>«Ты идёшь с мечом, а я иду во имя Господа», — сказал он.</li>
+          <li>С одним маленьким камнем и большой верой Давид победил.</li>
+          <li>Потом Бог сделал доброго пастуха мудрым царём.</li>
+        </ul>
+        <div class="reflect"><span class="q">?</span><span>Смелость Давида была не в силе, а в доверии Богу. А что придаёт смелости тебе?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 9 · СОЛОМОН ================= -->
+  <section class="slide" data-i="8">
+    <div class="wrap flip">
+      <div class="head">
+        <div class="kicker">Соломон · мудрость</div>
+        <h2 class="title">Мудрое сердце<br>дороже золота</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJjeHNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0U3QkU4NiIvPjwvbGluZWFyR3JhZGllbnQ+PHJhZGlhbEdyYWRpZW50IGlkPSJhdSIgY3g9IjAuNSIgY3k9IjAuMzUiIHI9IjAuNTUiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRjZFNCIgc3RvcC1vcGFjaXR5PSIwLjkiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRkY2RTQiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNjQwIiBmaWxsPSJ1cmwoI2N4c2t5KSIvPjxlbGxpcHNlIGN4PSIyMDAiIGN5PSIyMzAiIHJ4PSIyMDAiIHJ5PSIxODAiIGZpbGw9InVybCgjYXUpIi8+PHBhdGggZD0iTTAgNTYwIFExMDAgNTIwIDIwMCA1NTAgVDQwMCA1MzUgTDQwMCA2NDAgTDAgNjQwIFoiIGZpbGw9IiNDQkExNjIiIG9wYWNpdHk9IjEiLz48cmVjdCB4PSI4MCIgeT0iNDcwIiB3aWR0aD0iMjQwIiBoZWlnaHQ9IjkwIiBmaWxsPSIjRTlENkFFIiBzdHJva2U9IiNCNzlBNkUiIHN0cm9rZS13aWR0aD0iMiIvPjxnIGZpbGw9IiNGM0VCREQiIHN0cm9rZT0iI0M3QUU3RSIgc3Ryb2tlLXdpZHRoPSIyIj48cmVjdCB4PSIxMDAiIHk9IjMzMCIgd2lkdGg9IjI2IiBoZWlnaHQ9IjE0MCIvPjxyZWN0IHg9IjE1MCIgeT0iMzMwIiB3aWR0aD0iMjYiIGhlaWdodD0iMTQwIi8+PHJlY3QgeD0iMjI0IiB5PSIzMzAiIHdpZHRoPSIyNiIgaGVpZ2h0PSIxNDAiLz48cmVjdCB4PSIyNzQiIHk9IjMzMCIgd2lkdGg9IjI2IiBoZWlnaHQ9IjE0MCIvPjwvZz48cGF0aCBkPSJNNzAgMzMwIEwyMDAgMjUwIEwzMzAgMzMwIFoiIGZpbGw9IiNENEE1NzQiIHN0cm9rZT0iI0I3OUE2RSIgc3Ryb2tlLXdpZHRoPSIyIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTY4LDE1MCkiPjxwYXRoIGQ9Ik0wIDQwIEwwIDE0IEwxNiAzMCBMMzIgNiBMNDggMzAgTDY0IDE0IEw2NCA0MCBaIiBmaWxsPSIjRTZDMDc5IiBzdHJva2U9IiNCNzlBNEUiIHN0cm9rZS13aWR0aD0iMiIvPjxjaXJjbGUgY3g9IjYiIGN5PSIxNCIgcj0iNCIgZmlsbD0iI0M5NzA2NCIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iNiIgcj0iNCIgZmlsbD0iI0M5NzA2NCIvPjxjaXJjbGUgY3g9IjU4IiBjeT0iMTQiIHI9IjQiIGZpbGw9IiNDOTcwNjQiLz48cmVjdCB4PSIwIiB5PSI0MCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjgiIGZpbGw9IiNENEE1NzQiLz48L2c+PC9zdmc+" alt="Храм с колоннами, корона и золотой свет"></figure>
+      <div class="body">
+        <p class="lead sm">Когда Бог спросил царя <span class="em-navy">Соломона</span>: «Чего ты хочешь?», тот не попросил ни золота, ни долгой жизни.</p>
+        <p class="lead sm">Он попросил <span class="em-terra">мудрое сердце</span>, чтобы по-доброму управлять людьми (3&nbsp;Цар.&nbsp;3). Это понравилось Богу, и Соломон построил прекрасный храм.</p>
+        <div class="reflect"><span class="q">?</span><span>Если бы Бог спросил и тебя, о каком добром даре ты бы попросил(-а)?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 10 · ИЛИЯ ================= -->
+  <section class="slide" data-i="9">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">Илия · тихий голос</div>
+        <h2 class="title">Веяние тихого<br>ветра</h2>
+      </div>
+      <figure class="media"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJlbHNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzRBNkM4QSIvPjxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iIzdGQTBCQyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0U5Qzc5QSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNjQwIiBmaWxsPSJ1cmwoI2Vsc2t5KSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjEzMCIgcj0iNDAiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuODUiLz48cGF0aCBkPSJNMCA2NDAgTDAgMzAwIFExMjAgMTgwIDI0MCAyNjAgUTM0MCAzMjAgNDAwIDI4MCBMNDAwIDY0MCBaIiBmaWxsPSIjMkU0RTY4Ii8+PHBhdGggZD0iTTAgNjQwIEwwIDQyMCBRMTAwIDM0MCAyMTAgNDAwIFEzMjAgNDYwIDQwMCA0MjAgTDQwMCA2NDAgWiIgZmlsbD0iIzI0NDA1YSIvPjxwYXRoIGQ9Ik0xNTAgNjQwIFExNTAgNDcwIDIxMCA0NzAgUTI3MCA0NzAgMjcwIDY0MCBaIiBmaWxsPSIjMTQyNjNhIi8+PHBhdGggZD0iTTE3MCA2NDAgUTE3MiA1MDAgMjEwIDUwMCBRMjQ4IDUwMCAyNTAgNjQwIFoiIGZpbGw9IiMzQzYxODIiIG9wYWNpdHk9IjAuNiIvPjxwYXRoIGQ9Ik0yMTAgNTYwIFEyMDIgNTQyIDIxMCA1MjggUTIxOCA1NDIgMjEwIDU2MCBaIiBmaWxsPSIjRkZDRjdBIiBvcGFjaXR5PSIwLjkiLz48ZyBzdHJva2U9IiNGM0VCREQiIHN0cm9rZS13aWR0aD0iMyIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC41IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik02MCAyMjAgUTEyMCAyMDAgMTgwIDIyMCBRMjQwIDI0MCAzMDAgMjIwIi8+PHBhdGggZD0iTTQwIDI2MCBRMTEwIDI0MCAxODAgMjYwIFEyNTAgMjgwIDMzMCAyNTgiLz48cGF0aCBkPSJNNzAgMzAwIFExMzAgMjg0IDE5MCAzMDAgUTI1MCAzMTYgMzIwIDMwMCIvPjwvZz48L3N2Zz4=" alt="Пророк Илия у входа в пещеру на горе, лёгкий ветер"></figure>
+      <div class="body">
+        <p class="lead sm">Пророк <span class="em-navy">Илия</span> устал и спрятался в горной пещере. Мимо пронеслись сильный ветер, землетрясение и огонь — но Бога в них не было.</p>
+        <p class="lead sm">А потом настало <span class="em-terra">веяние тихого ветра</span> (3&nbsp;Цар.&nbsp;19:12) — и в этом нежном шёпоте Илия узнал Бога.</p>
+        <div class="reflect"><span class="q">?</span><span>Бог часто говорит тихо-тихо. Как ты думаешь, зачем Ему такой ласковый голос?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 11 · У КОСТРА · кто такой герой ================= -->
+  <section class="slide" data-i="10">
+    <div class="wrap">
+      <div class="head">
+        <div class="kicker">У костра · разговор о героях</div>
+        <h2 class="title">Каким бывает<br>настоящий герой?</h2>
+      </div>
+      <div class="body">
+        <div class="say">
+          <div class="badge" style="background:linear-gradient(150deg,#7AAED4,#1A3A52)">Е</div>
+          <p><span class="who">Еммануил:</span> Я думал, герой — это самый сильный. А оказалось, герои веры сильны тем, что доверяют Богу.</p>
+        </div>
+        <div class="say" style="background:linear-gradient(120deg,rgba(212,165,116,.15),rgba(255,255,255,.7));">
+          <div class="badge" style="background:linear-gradient(150deg,#E6C079,#C97064)">М</div>
+          <p><span class="who">Милана:</span> И у каждого — мягкое сердце: Иосиф простил, Самуил слушал, Соломон просил мудрости.</p>
+        </div>
+        <div class="say">
+          <div class="badge" style="background:linear-gradient(150deg,#D9A05B,#C97064)">Э</div>
+          <p><span class="who">Эван:</span> Значит, героем может стать каждый — если верит, слушается Бога и любит других.</p>
+        </div>
+        <div class="reflect"><span class="q">?</span><span>В чём ты хочешь быть смелым(-ой), как герои веры?</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SLIDE 12 · CLOSE ================= -->
+  <section class="slide" data-i="11">
+    <div class="bleed"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjQwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJjbHNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0Y2RDlBNiIvPjxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iI0VEQkU4QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0M5NzA2NCIvPjwvbGluZWFyR3JhZGllbnQ+PHJhZGlhbEdyYWRpZW50IGlkPSJyaXNlIiBjeD0iMC43MiIgY3k9IjAuNDIiIHI9IjAuNSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkZGNkU0Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGNkU0IiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjY0MCIgZmlsbD0idXJsKCNjbHNreSkiLz48Y2lyY2xlIGN4PSIyODgiIGN5PSIyNTAiIHI9IjIwMCIgZmlsbD0idXJsKCNyaXNlKSIvPjxjaXJjbGUgY3g9IjI4OCIgY3k9IjI1MCIgcj0iNTgiIGZpbGw9IiNGRkY2RTQiIG9wYWNpdHk9IjAuOSIvPjxwYXRoIGQ9Ik0wIDQ4MCBMMTIwIDQwMCBMMjQwIDQ3MCBMMzQwIDQwMCBMNDAwIDQ0MCBMNDAwIDY0MCBMMCA2NDAgWiIgZmlsbD0iIzFBM0E1MiIgb3BhY2l0eT0iMC44NSIvPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDcwLDMwMCkiPjxwYXRoIGQ9Ik0wIDIwMCBMMTAgNDAgTDM0IDQwIEw0NCAyMDAgWiIgZmlsbD0iI0ZBRjhGNSIgc3Ryb2tlPSIjQzdBRTdFIiBzdHJva2Utd2lkdGg9IjIiLz48cmVjdCB4PSI2IiB5PSI3MCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjIyIiBmaWxsPSIjQzk3MDY0Ii8+PHJlY3QgeD0iNiIgeT0iMTIwIiB3aWR0aD0iMzIiIGhlaWdodD0iMjIiIGZpbGw9IiNDOTcwNjQiLz48cmVjdCB4PSI4IiB5PSIxNiIgd2lkdGg9IjI4IiBoZWlnaHQ9IjI2IiBmaWxsPSIjMjQ1Mjc3Ii8+PGNpcmNsZSBjeD0iMjIiIGN5PSIyOCIgcj0iMTAiIGZpbGw9IiNGRkU5QTgiLz48L2c+PHBhdGggZD0iTTkyIDMyMiBMMjgwIDIwMCBMMzAwIDI1MCBMMTA4IDM1MiBaIiBmaWxsPSIjRkZGM0Q2IiBvcGFjaXR5PSIwLjM1Ii8+PHBhdGggZD0iTTIwMCA2NDAgUTE4MCA1NjAgMjEwIDUxMCBRMjQwIDQ3MCAyMjAgNDMwIiBzdHJva2U9IiNGM0VCREQiIHN0cm9rZS13aWR0aD0iMjIiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgZmlsbD0iIzE0MzA0YSIgb3BhY2l0eT0iMC45Ij48ZWxsaXBzZSBjeD0iMTk2IiBjeT0iNTIwIiByeD0iOCIgcnk9IjE4Ii8+PGNpcmNsZSBjeD0iMTk2IiBjeT0iNDk4IiByPSI1LjUiLz48ZWxsaXBzZSBjeD0iMjE0IiBjeT0iNTI2IiByeD0iOCIgcnk9IjE4Ii8+PGNpcmNsZSBjeD0iMjE0IiBjeT0iNTA0IiByPSI1LjUiLz48ZWxsaXBzZSBjeD0iMjA1IiBjeT0iNTM0IiByeD0iOCIgcnk9IjE5Ii8+PGNpcmNsZSBjeD0iMjA1IiBjeT0iNTExIiByPSI1LjUiLz48L2c+PC9zdmc+" alt=""></div>
+    <div class="scrim" style="background:linear-gradient(180deg, rgba(250,248,245,.4) 0%, rgba(250,248,245,.7) 60%, rgba(250,248,245,.92) 100%), linear-gradient(90deg, rgba(250,248,245,.85) 0%, rgba(250,248,245,.4) 65%, rgba(250,248,245,.05) 100%);"></div>
+    <div class="over bottom">
+      <div class="kicker" style="margin-bottom:clamp(12px,2.4vh,22px);">Свет, к которому вёл маяк</div>
+      <h2 class="title" style="margin-bottom:clamp(12px,2.2vh,20px);">Самый главный<br>Герой</h2>
+      <p class="lead" style="max-width:620px; color:var(--navy); opacity:.92; margin-bottom:clamp(12px,2vh,18px);">
+        Три главы вели нас за тёплым светом. И вот куда он звал всё это время: все герои веры смотрели вперёд — на Того, Кто есть Сама Любовь. <span class="em-navy">«Свергнем с себя всякое бремя… взирая на начальника и совершителя веры Иисуса»</span> (Евр.&nbsp;12:1–2).
+      </p>
+      <div class="say" style="max-width:660px; margin-bottom:clamp(10px,1.6vh,16px);">
+        <div class="badge" style="background:linear-gradient(150deg,#E6C079,#C97064)">М</div>
+        <p><span class="who">Милана:</span> Теперь и мы можем идти этой дорогой — с верой, добротой и мягким сердцем.</p>
+      </div>
+      <div class="say" style="max-width:660px;">
+        <div class="badge" style="background:linear-gradient(150deg,#D9A05B,#C97064)">Э</div>
+        <p><span class="who">Эван:</span> Спасибо, что прошли весь путь с нами. Экспедиция закончена — а путешествие продолжается в сердце.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="counter">01 / 12</div>
+<div id="dots"></div>
+
+<script>
+(function(){
+  "use strict";
+  var deck = document.getElementById('deck');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var total = slides.length;
+  var i = 0;
+  var counter = document.getElementById('counter');
+  var dotsWrap = document.getElementById('dots');
+
+  var MARK = '<div class="mark"><svg width="24" height="22" viewBox="0 0 26 24" aria-hidden="true">'
+    + '<path d="M2 22 V7 L7 15 L12 7 V22" fill="none" stroke="#1A3A52" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<path d="M12 9 Q19 2 25 6 Q19 8 14 12 Z" fill="#D4A574" opacity="0.9"/>'
+    + '<circle cx="7" cy="4" r="1.6" fill="#C97064"/></svg><span>МЕТАНОЙА</span></div>';
+  var FOOTER = '<div class="footer">' + MARK + '<div class="verse">«Слово Твоё — светильник ноге моей»</div></div>';
+  var ZONES = '<div class="nav-zone prev"></div><div class="nav-zone next"></div>';
+
+  slides.forEach(function(s){
+    s.insertAdjacentHTML('beforeend', FOOTER + ZONES);
+  });
+
+  slides.forEach(function(_, idx){
+    var b = document.createElement('button');
+    b.className = 'dot'; b.setAttribute('aria-label','Слайд '+(idx+1));
+    b.addEventListener('click', function(e){ e.stopPropagation(); go(idx); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function render(){
+    slides.forEach(function(s,idx){
+      var on = idx===i;
+      s.classList.toggle('active', on);
+      var w = s.querySelector('.wrap, .over'); if(w) w.scrollTop = 0;
+    });
+    dots.forEach(function(d,idx){ d.classList.toggle('on', idx===i); });
+    counter.textContent = pad(i+1) + ' / ' + pad(total);
+  }
+  function go(n){ i = Math.max(0, Math.min(total-1, n)); render(); }
+  function next(){ if(i<total-1) go(i+1); }
+  function prev(){ if(i>0) go(i-1); }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key==='ArrowRight' || e.key==='PageDown' || e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ go(0); }
+    else if(e.key==='End'){ go(total-1); }
+  });
+
+  // tap zones via delegation (left half = prev, right half = next)
+  deck.addEventListener('click', function(e){
+    var z = e.target.closest('.nav-zone');
+    if(!z) return;
+    z.classList.contains('prev') ? prev() : next();
+  });
+
+  var tx=0, ty=0;
+  deck.addEventListener('touchstart', function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+  deck.addEventListener('touchend', function(e){
+    var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>46 && Math.abs(dx)>Math.abs(dy)){ dx<0 ? next() : prev(); }
+  }, {passive:true});
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>МЕТАНОЙА · Экспедиция по Писанию</title>
+<!--
+  МЕТАНОЙА — христианская онлайн-школа для детей.
+  Экспедиция по Писанию — единое путешествие в трёх главах.
+  Подготовлено командой OKO TEAM.
+-->
+<style>
+  :root{
+    --navy:#1A3A52; --terra:#C97064; --gold:#D4A574; --gold-soft:#E6C079;
+    --cream:#FAF8F5; --parch:#F3EBDD; --gray:#6B7B8A; --blue:#7AAED4; --ink:#2E3B45;
+    --serif:'Playfair Display', Georgia, 'Times New Roman', serif;
+    --sans:'Montserrat', system-ui, 'Segoe UI', Roboto, sans-serif;
+    --shadow:0 18px 40px -18px rgba(26,58,82,.34), 0 4px 14px -6px rgba(26,58,82,.16);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{min-height:100%;}
+  body{
+    background:radial-gradient(140% 120% at 15% 0%, #FFFDFB 0%, var(--cream) 44%, var(--parch) 100%);
+    font-family:var(--sans); color:var(--ink);
+    -webkit-font-smoothing:antialiased; -webkit-text-size-adjust:100%;
+    min-height:100dvh; display:flex; flex-direction:column;
+  }
+  .wrap{
+    flex:1; width:100%; max-width:760px; margin:0 auto;
+    padding:clamp(40px,9vw,72px) clamp(20px,6vw,48px) clamp(28px,6vw,44px);
+    display:flex; flex-direction:column; gap:clamp(22px,4vw,34px);
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand svg{width:clamp(38px,10vw,48px); height:auto;}
+  .brand b{font-family:var(--serif); font-weight:700; color:var(--navy);
+    font-size:clamp(19px,5vw,24px); letter-spacing:.02em;}
+  .kicker{
+    font-weight:700; font-size:clamp(11px,3vw,13px); letter-spacing:.26em;
+    text-transform:uppercase; color:var(--gold);
+    display:flex; align-items:center; gap:10px;
+  }
+  .kicker::before{content:""; width:clamp(20px,6vw,30px); height:2px; background:var(--gold); border-radius:2px;}
+  .title{font-family:var(--serif); font-weight:700; color:var(--navy);
+    line-height:1.08; letter-spacing:-.01em; font-size:clamp(30px,8vw,52px);}
+  .lead{font-size:clamp(15px,4vw,19px); line-height:1.55; color:var(--gray); max-width:52ch;}
+
+  .cards{display:flex; flex-direction:column; gap:clamp(14px,3vw,20px);}
+  @media (min-width:620px){ .cards{flex-direction:row; flex-wrap:wrap;} .card{flex:1 1 0; min-width:200px;} }
+  .card{
+    display:flex; flex-direction:column; gap:12px; text-decoration:none;
+    background:rgba(255,255,255,.78); border:1px solid rgba(212,165,116,.36);
+    border-radius:clamp(16px,4vw,22px); padding:clamp(18px,4.5vw,26px);
+    box-shadow:var(--shadow); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    position:relative; overflow:hidden;
+  }
+  .card:hover,.card:focus-visible{transform:translateY(-3px);
+    box-shadow:0 24px 48px -20px rgba(26,58,82,.42); border-color:var(--gold); outline:none;}
+  .card:active{transform:translateY(0);}
+  .num{
+    width:clamp(44px,11vw,54px); height:clamp(44px,11vw,54px); border-radius:14px;
+    display:flex; align-items:center; justify-content:center; color:#fff;
+    font-family:var(--serif); font-weight:700; font-size:clamp(20px,5.4vw,26px);
+    box-shadow:0 8px 20px -8px rgba(26,58,82,.5);
+  }
+  .card:nth-child(1) .num{background:linear-gradient(135deg,var(--gold),var(--terra));}
+  .card:nth-child(2) .num{background:linear-gradient(135deg,var(--blue),var(--navy));}
+  .card:nth-child(3) .num{background:linear-gradient(135deg,var(--gold-soft),var(--terra));}
+  .card .ch{font-size:clamp(11px,3vw,12px); letter-spacing:.16em; text-transform:uppercase;
+    color:var(--gold); font-weight:700;}
+  .card .name{font-family:var(--serif); font-weight:700; color:var(--navy);
+    font-size:clamp(19px,5vw,23px); line-height:1.12;}
+  .card .desc{font-size:clamp(13px,3.6vw,15px); line-height:1.45; color:var(--gray);}
+  .card .go{margin-top:auto; color:var(--terra); font-weight:600; font-size:clamp(13px,3.6vw,15px);
+    display:flex; align-items:center; gap:6px;}
+
+  .footer{
+    border-top:1px solid rgba(120,100,70,.14); padding:clamp(16px,4vw,22px) clamp(20px,6vw,48px);
+    text-align:center; color:var(--gray); font-style:italic; font-size:clamp(12px,3.4vw,15px);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="0 0 64 48" fill="none" aria-hidden="true">
+        <path d="M32 8c-6-6-14-6-20-3 4 1 7 4 9 8-5-2-10-1-14 2 5 0 9 2 12 6 3-4 7-6 13-6 6 0 10 2 13 6 3-4 7-6 12-6-4-3-9-4-14-2 2-4 5-7 9-8-6-3-14-3-20 3z" fill="#D4A574"/>
+        <path d="M22 22v18h6V30l4 6 4-6v10h6V22h-6l-4 7-4-7h-6z" fill="#1A3A52"/>
+      </svg>
+      <b>МЕТАНОЙА</b>
+    </div>
+
+    <div>
+      <div class="kicker">Экспедиция по Писанию</div>
+      <h1 class="title" style="margin-top:12px">Единое путешествие<br>в трёх главах</h1>
+    </div>
+    <p class="lead">Тёплый свет маяка ведёт детей сквозь всю историю Писания — от вопроса «Кто такой Бог?» до героев веры. Три главы, одна дорога, одни и те же друзья-помощники: Милана, Еммануил и Эван. Выбери главу и отправляйся в путь.</p>
+
+    <div class="cards">
+      <a class="card" href="glava-1.html">
+        <div class="num">1</div>
+        <div class="ch">Глава 1 · Жизнь Господа</div>
+        <div class="name">Кто такой Бог?</div>
+        <div class="desc">Начало пути: свет маяка в тумане, пророчества и приход Спасителя на землю.</div>
+        <div class="go">Открыть главу →</div>
+      </a>
+      <a class="card" href="glava-2.html">
+        <div class="num">2</div>
+        <div class="ch">Глава 2 · Ветхий Завет</div>
+        <div class="name">Как Бог создал мир</div>
+        <div class="desc">Семь дней творения — от первого света до дня покоя. «И вот, хорошо весьма».</div>
+        <div class="go">Открыть главу →</div>
+      </a>
+      <a class="card" href="glava-3.html">
+        <div class="num">3</div>
+        <div class="ch">Глава 3 · Израиль</div>
+        <div class="name">Герои веры</div>
+        <div class="desc">Авраам, Иосиф, Моисей, Давид — люди, которых вёл Сам Бог. Куда звал маяк.</div>
+        <div class="go">Открыть главу →</div>
+      </a>
+    </div>
+  </div>
+  <div class="footer">«Слово Твоё — светильник ноге моей и свет стезе моей» · Пс. 118:105</div>
+</body>
+</html>
