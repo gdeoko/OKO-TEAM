@@ -2079,7 +2079,7 @@ function acHomeHtml(){
       <button class="btn sm ghost ac-ico-btn" onclick="acCertShare(${i})" title="Поделиться" aria-label="Поделиться">${I('share')}</button>
       <button class="btn sm ghost" onclick="acCertShow(${i})">Показать</button>
     </div>`).join('')
-    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
+    : `<p class="dim" style="font-size:12.5px;line-height:1.55">Пройди направление целиком — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.</p>`;
   return `
     <div class="ac-hero"><h2>Академия OKO</h2><p>Курсы полного формата · официальные сертификаты</p></div>
     ${streak}
@@ -3271,12 +3271,12 @@ function acProfileCertsHtml(){
       <span class="ico">${I('star')}</span>
       <div class="meta"><b>Сертификаты Академии</b><span>${n
         ? n + ' ' + acPlural(n, ['официальный','официальных','официальных']) + ' · печать и подпись'
-        : 'Пройди урок — получи именной документ'}</span></div>
+        : 'Пройди направление — получи именной документ'}</span></div>
       <button class="btn sm ghost" onclick="showTab('academy')">${n?'Все':'В Академию'}</button>
     </div>`;
   if(!n){
     return `<div class="card ac-pcerts empty" id="acProfCerts">${head}${acProfileBadgesHtml()}
-      <p class="ac-pcerts-invite">Сдай тест урока на ${AC_PASS}%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».</p></div>`;
+      <p class="ac-pcerts-invite">Пройди все уроки направления (порог теста ${AC_PASS}%+) — и получи именной сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».</p></div>`;
   }
   const show = acS.certs.slice(0, 3).map((c)=>{
     const gi = acS.certs.indexOf(c);

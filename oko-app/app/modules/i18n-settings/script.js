@@ -414,7 +414,7 @@ const ST_DICT = {
   'Нейросети 2026':'Neural Networks 2026','5 уроков · тесты и практика · сертификат за каждый урок':'5 lessons · quizzes and practice · a certificate for every lesson',
   'Контент и Reels':'Content & Reels','Сценарии, монтаж и вирусные форматы':'Scripts, editing and viral formats',
   'Мои сертификаты':'My certificates',
-  'Пройди урок — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.':'Complete a lesson to earn an official OKO certificate with seal and signature. It will appear here.',
+  'Пройди направление целиком — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.':'Complete a whole track to earn an official OKO certificate with seal and signature. It will appear here.',
   'Карта нейросетей 2026':'Neural network map 2026','Промпт-инжиниринг':'Prompt engineering',
   'Генерация картинок PRO':'Image generation PRO','Видео-нейросети':'Video neural networks','Свой ИИ-ассистент':'Your own AI assistant',
   'формула промпта · few-shot · chain-of-thought':'prompt formula · few-shot · chain-of-thought',
@@ -620,10 +620,10 @@ const ST_DICT = {
   'Коллекционер':'Collector','Собрать 5 сертификатов':'Collect 5 certificates',
   /* профиль: обложка, карточка сертификатов, био основателя */
   'Добавить обложку':'Add cover','Сертификаты Академии':'Academy Certificates',
-  'Пройди урок — получи именной документ':'Complete a lesson — get a personalized document',
+  'Пройди направление — получи именной документ':'Complete a track — get a personalized document',
   'В Академию':'Open Academy',
   'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.':'OKO founder. Media, content, marketing — in one app.',
-  'Сдай тест урока на 70%+ и получи официальный сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».':'Score 70%+ on the lesson quiz and get an official OKO certificate with a seal and the Academy head’s signature. It appears here and in the Academy section.'
+  'Пройди все уроки направления (порог теста 70%+) — и получи именной сертификат OKO с печатью и подписью руководителя Академии. Он появится здесь и в разделе «Академия».':'Complete all lessons in a track (70%+ quiz threshold) to earn a personalized OKO certificate with a seal and the Academy head’s signature. It appears here and in the Academy section.'
 };
 
 /* месяцы (родительный падеж) для дат операций/выплат */
