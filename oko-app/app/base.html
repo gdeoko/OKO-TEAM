@@ -1910,14 +1910,18 @@ function cancelCompose(){ replyState=null; editState=null; document.getElementBy
 /* ===== Глобальный поиск ===== */
 function openSearch(){ document.getElementById('gSearchInput').value=''; renderSearch(); document.getElementById('searchView').classList.add('open'); setTimeout(()=>document.getElementById('gSearchInput').focus(),50); }
 function closeSearch(){ document.getElementById('searchView').classList.remove('open'); }
+function searchQuickAccess(title){
+  return `<p class="nt-group">${title||'Быстрый доступ'}</p>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market')"><span class="nt-ic">${I('briefcase')}</span><div class="nt-b"><span>Биржа услуг</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('academy')"><span class="nt-ic">${I('star')}</span><div class="nt-b"><span>Академия OKO</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('partner')"><span class="nt-ic">${I('users')}</span><div class="nt-b"><span>Партнёрка</span></div></button>
+    <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('system')"><span class="nt-ic">${I('compass')}</span><div class="nt-b"><span>Система роста</span></div></button>`;
+}
 function renderSearch(){
   const q=(document.getElementById('gSearchInput').value||'').trim().toLowerCase();
   const body=document.getElementById('searchBody');
   if(!q){
-    body.innerHTML = `<p class="nt-group">Быстрый доступ</p>
-      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market')"><span class="nt-ic">${I('briefcase')}</span><div class="nt-b"><span>Биржа услуг</span></div></button>
-      <button class="nt-item" onclick="closeSearch();showTab('partner')"><span class="nt-ic">${I('users')}</span><div class="nt-b"><span>Партнёрка</span></div></button>
-      <button class="nt-item" onclick="closeSearch();showTab('mini');openMa('system')"><span class="nt-ic">${I('compass')}</span><div class="nt-b"><span>Система роста</span></div></button>`;
+    body.innerHTML = searchQuickAccess();
     return;
   }
   const people = CHATS.filter(c=>c.kind==='direct' && c.name.toLowerCase().includes(q));
@@ -1931,7 +1935,7 @@ function renderSearch(){
   html += sec('Каналы и группы', channels.map(c=>`<button class="nt-item" onclick="closeSearch();showTab('chats');openConv(${cid(c)})"><span class="nt-ic">${I(c.kindIcon||'chat')}</span><div class="nt-b"><span><b>${esc(c.name)}</b></span><small>${c.subs?c.subs+' подписчиков':(c.members||'')+' участников'}</small></div></button>`));
   html += sec('Объявления', listings.map(l=>`<button class="nt-item" onclick="closeSearch();showTab('mini');openMa('market');openListing(${l.id})"><span class="nt-ic">${I(catIco(l.cat))}</span><div class="nt-b"><span><b>${esc(l.t)}</b></span><small>${l.pt} · ${l.n}</small></div></button>`));
   html += sec('Посты', posts.map(p=>`<button class="nt-item" onclick="closeSearch();showTab('feed')"><span class="nt-ic">${I('feed')}</span><div class="nt-b"><span>${esc(p.body.slice(0,52))}…</span><small>${esc(p.name)}</small></div></button>`));
-  body.innerHTML = html || `<div class="empty-state"><div class="es-ico">${I('search')}</div><p>Ничего не нашлось</p><span>Попробуй другой запрос</span></div>`;
+  body.innerHTML = html || (`<div class="empty-state" style="padding:26px 20px 10px"><div class="es-ico">${I('search')}</div><p>Ничего не нашлось по «${esc(q)}»</p><span>Попробуй другой запрос или загляни сюда</span></div>` + searchQuickAccess('Популярное'));
 }
 
 /* ===== Центр уведомлений ===== */
