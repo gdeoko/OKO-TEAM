@@ -11,7 +11,7 @@ svg{overflow:visible}
 // BESPOKE overlays — reel #25 (batch B, ГИДРО «миф о дороговизне»). New forms, none reused:
 // myth-deflate-counter · fuel-flow-rate-bar · season-calendar-fill · footprint-shrink · value-retention-curve · droplet-coalesce lockup.
 // Свериться с USED_ANIM.md #16-24 — нет пересечений. Окна (a,b) выставлены под РЕАЛЬНЫЙ timing.json после VO.
-const TOTAL=32.0;
+const TOTAL=34.032;
 const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",AQUA="#39C6E6",RED="#E5534B",CARD="rgba(16,12,10,.94)";
 const stage=document.getElementById('stage');
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
@@ -24,7 +24,7 @@ function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
 
 // B1 — MYTH-DEFLATE-COUNTER: большое красное «ДОРОГО?» раздувается, влетают чипы-вычитания, число сдувается в зелёное.
 // (новая форма: раздув/сдув счётчика с чипами-вычитанием; ≠ кинетик-тайпо #16, ≠ любых счётчиков)
-function b1(ts){const a=1.9,b=7.0;const p=win(ts,a,b);if(p<0)return'';
+function b1(ts){const a=1.9,b=5.7;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=900;
   const inflate=easeOut(clamp(p/0.3)); const deflate=easeInOut(clamp((p-0.5)/0.45));
   const scale=lerp(0.6,1.35,inflate)-0.5*deflate;
@@ -44,7 +44,7 @@ function b1(ts){const a=1.9,b=7.0;const p=win(ts,a,b);if(p<0)return'';
 
 // B2 — FUEL-FLOW-RATE-BAR: горизонтальный расходомер с текущей заливкой, сравнение «как у лодки».
 // (новая форма: непрерывный бар скорости расхода; ≠ дискретные капли #19, ≠ бак-заливка #16)
-function b2(ts){const a=7.2,b=13.0;const p=win(ts,a,b);if(p<0)return'';
+function b2(ts){const a=6.0,b=10.3;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=920,W=720;
   const fill=easeInOut(clamp(p/0.6))*0.42; // умеренный расход
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
@@ -65,7 +65,7 @@ function b2(ts){const a=7.2,b=13.0;const p=win(ts,a,b);if(p<0)return'';
 
 // B3 — SEASON-CALENDAR-FILL: сетка май–сентябрь, выходные заполняются, счётчик выездов, «цена дня ↓».
 // (новая форма: календарная сетка-заливка; ≠ любых прошлых)
-function b3(ts){const a=13.2,b=19.5;const p=win(ts,a,b);if(p<0)return'';
+function b3(ts){const a=10.5,b=15.4;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=900,cols=10,rows=5,cell=64,gap=12;const gw=cols*cell+(cols-1)*gap;const x0=cx-gw/2;const y0=cy-(rows*cell+(rows-1)*gap)/2;
   const months=["МАЙ","ИЮНЬ","ИЮЛЬ","АВГ","СЕНТ"];const total=rows*cols;const shown=Math.floor(p*total*1.1);
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
@@ -83,7 +83,7 @@ function b3(ts){const a=13.2,b=19.5;const p=win(ts,a,b);if(p<0)return'';
 
 // B4 — FOOTPRINT-SHRINK: вид сверху, площадь «авто» vs «гидро+прицеп» (компактно), «МЕСТО КАК ПОД МОТО».
 // (новая форма: сравнение контуров площади сверху; ≠ parking-fit скобки #19)
-function b4(ts){const a=19.7,b=24.5;const p=win(ts,a,b);if(p<0)return'';
+function b4(ts){const a=15.7,b=20.5;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=930;const sh=easeInOut(clamp((p-0.15)/0.55)); // сжатие
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
   s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ХРАНЕНИЕ — ПРОСТОЕ</text>';
@@ -103,7 +103,7 @@ function b4(ts){const a=19.7,b=24.5;const p=win(ts,a,b);if(p<0)return'';
 
 // B5 — VALUE-RETENTION-CURVE: две кривые стоимости во времени, площадь удержания, «ДЕРЖИТ ЦЕНУ».
 // (новая форма: двойная кривая удержания с заливкой площади; ≠ линейный график библиотеки)
-function b5(ts){const a=24.7,b=29.5;const p=win(ts,a,b);if(p<0)return'';
+function b5(ts){const a=20.7,b=25.5;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=950,W=760,H=360;const x0=cx-W/2,y0=cy-H/2;
   const draw=easeInOut(clamp(p/0.7));
   function curve(dropK){let d='M'+x0+' '+(y0);const N=40;let pts=[];
@@ -129,7 +129,7 @@ function b5(ts){const a=24.7,b=29.5;const p=win(ts,a,b);if(p<0)return'';
 
 // B6 — DROPLET-COALESCE LOCKUP: разбросанные капли сползаются и сливаются в лого DIESEL CARGO.
 // (новый лок-ап: коалесценция капель; ≠ splash-crown концентрич. #17, ≠ water-shatter #17)
-function b6(ts){const a=29.7,b=34.0;const p=win(ts,a,b);if(p<0)return'';
+function b6(ts){const a=25.7,b=33.9;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=900;const merge=easeInOut(clamp(p/0.55));const bloom=clamp((p-0.55)/0.45);
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
   // капли сползаются к центру
