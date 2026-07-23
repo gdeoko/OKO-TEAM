@@ -500,3 +500,20 @@
   background:var(--lime);color:#0a0a0a}
 .ac-tool-go svg.i{width:14px;height:14px}
 :root[data-theme="light"] .ac-tool{background:radial-gradient(120% 150% at 0% 0%,rgba(110,200,0,.12),transparent 60%),var(--surface)}
+
+/* ===== БЛОКИ уроков внутри направления ===== */
+.ac-block{ margin-top:14px }
+.ac-block:first-child{ margin-top:2px }
+.ac-block-head{ display:flex; align-items:center; gap:9px; padding:11px 12px 10px; margin:0 -4px 6px;
+  border-bottom:1px solid var(--line); }
+.ac-block-n{ font:800 10.5px/1 'Montserrat',sans-serif; letter-spacing:.14em; text-transform:uppercase;
+  color:#000; background:var(--accent); padding:5px 8px; border-radius:7px; white-space:nowrap; }
+.ac-block-t{ font:800 15px/1.15 'Montserrat',sans-serif; letter-spacing:-.01em; flex:1 1 auto; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; }
+.ac-block-meta{ font:600 11px/1 'Montserrat',sans-serif; color:var(--dim); white-space:nowrap; }
+.ac-block-head.done .ac-block-n{ background:#1f7a3a; color:#fff }
+.ac-block-done{ display:inline-flex; color:var(--accent) }
+.ac-block-done svg{ width:17px; height:17px }
+.ac-block-soon{ display:flex; align-items:center; gap:9px; padding:12px 13px; border-radius:12px;
+  border:1px dashed var(--line); color:var(--dim); font:600 12.5px/1.4 'Montserrat',sans-serif; margin:2px 0 4px; }
+.ac-block-soon svg{ width:16px; height:16px; flex:none; opacity:.7 }

@@ -1661,40 +1661,82 @@ const MARKETING_LESSONS2 = [
 }
 
 ];
-const AC_COURSE = [].concat(MEDIA_LESSONS, MEDIA_LESSONS2, AC_COURSE_REELS, MARKETING_LESSONS, MARKETING_LESSONS2, AC_COURSE_AI);
+/* ================= НАПРАВЛЕНИЯ → БЛОКИ → УРОКИ =================
+   Масштаб (утв. Даниэлем): 3 направления, в каждом 5 блоков, в блоке ~9 уроков (~135).
+   Существующие уроки — сиды блоков; остальное дозаполняется пачками (файл academy/OKO_ACADEMY_BLOCK_MAP.md).
+   AC_PACK_* — массивы доп.уроков блока (наполняются волнами производства). */
+const AC_PACK = (typeof window!=='undefined' && window.AC_PACK) ? window.AC_PACK : {};
+function acPack(id){ return Array.isArray(AC_PACK[id]) ? AC_PACK[id] : []; }
 
-/* ================= КАТАЛОГ КУРСОВ =================
-   Плоский AC_COURSE — источник состояния (per глобальный индекс урока).
-   AC_COURSES — метаданные курсов поверх диапазонов [from .. from+count-1]. */
-const AC_COURSES = [
-  { id:'media', title:'Медийность', tag:'Направление · база',
-    sub:'9 уроков · личный бренд, упаковка, контент, эмоции, сторис, характер · сертификат за направление',
-    from:0, count:9, free:true, minTier:'PRO', price:0, author:'OKO · по методологии ХЛБ',
+/* блоки: сид-уроки (уже готовые объекты) + пак дозаполнения по id блока */
+const AC_DIRS = [
+  { id:'media', title:'Медийность', tag:'Направление · база', free:true, minTier:'PRO', price:0,
+    author:'OKO · по методологии ХЛБ', c1:'МЕДИЙ', c2:'НОСТЬ',
     outcomes:[
       'Упаковать профиль так, что за 3 секунды ясно — кто ты и зачем',
       'Собрать визуал и ленту, которым доверяют (51% судят по картинке)',
       'Понимать типы контента и эмоций — и попадать в свою аудиторию',
       'Вести аккаунт как полигон уже сейчас, а не «когда-нибудь»'],
-    c1:'МЕДИЙ', c2:'НОСТЬ' },
-  { id:'marketing', title:'Маркетинг', tag:'Направление · продажи',
-    sub:'6 уроков · копирайтинг, продающий пост, хуки, конкуренты, монетизация, алгоритмы · сертификат за направление',
-    from:9, count:6, free:false, minTier:'PRO', price:2900, author:'OKO · по методологии ХЛБ',
+    blocks:[
+      {id:'m1', title:'Мышление и старт',           seed:[MEDIA_LESSONS[0]]},
+      {id:'m2', title:'Упаковка профиля',           seed:[MEDIA_LESSONS[1]]},
+      {id:'m3', title:'Визуал и лента',             seed:[MEDIA_LESSONS[2], AC_COURSE_REELS[1]]},
+      {id:'m4', title:'Контент и эмоции',           seed:[MEDIA_LESSONS2[0], AC_COURSE_REELS[0]]},
+      {id:'m5', title:'Сторис, эфиры, характер',    seed:[MEDIA_LESSONS2[1], MEDIA_LESSONS2[2]]},
+    ]},
+  { id:'marketing', title:'Маркетинг', tag:'Направление · продажи', free:false, minTier:'PRO', price:2900,
+    author:'OKO · по методологии ХЛБ', c1:'МАРКЕ', c2:'ТИНГ',
     outcomes:[
       'Писать тексты, которые читают и покупают',
       'Собирать продающий пост по структуре из 7 блоков',
       'Ловить внимание хуком и усиливать 8 триггерами',
       'Превращать подписчика в клиента текстом'],
-    c1:'МАРКЕ', c2:'ТИНГ' },
-  { id:'ai', title:'Нейросети', tag:'Направление · практика',
-    sub:'5 уроков · инструменты, промптинг, деньги на ИИ · сертификат за направление',
-    from:15, count:5, free:false, minTier:'PRO', price:2900, author:'Команда OKO',
+    blocks:[
+      {id:'k1', title:'Копирайтинг',                        seed:[MARKETING_LESSONS[0]]},
+      {id:'k2', title:'Продающий пост и хуки',              seed:[MARKETING_LESSONS[1], MARKETING_LESSONS[2]]},
+      {id:'k3', title:'Триггеры (психология покупки)',      seed:[]},
+      {id:'k4', title:'Стратегия: конкуренты и монетизация',seed:[MARKETING_LESSONS2[0], MARKETING_LESSONS2[1]]},
+      {id:'k5', title:'Продвижение, продажи, деньги',       seed:[MARKETING_LESSONS2[2], AC_COURSE_REELS[2]]},
+    ]},
+  { id:'ai', title:'Нейросети', tag:'Направление · практика', free:false, minTier:'PRO', price:2900,
+    author:'Команда OKO', c1:'НЕЙРО', c2:'СЕТИ',
     outcomes:[
       'Выбирать нейросеть под задачу за секунды по карте 2026',
       'Собирать сильные промпты по формуле: роль, задача, контекст, формат',
       'Генерировать картинки и видео уровня продакшн — дёшево',
       'Запустить своего ИИ-агента для бизнеса в Telegram'],
-    c1:'НЕЙРО', c2:'СЕТИ' },
+    blocks:[
+      {id:'a1', title:'Старт и промптинг',        seed:[AC_COURSE_AI[0], AC_COURSE_AI[1]]},
+      {id:'a2', title:'Контент нейросетями',      seed:[AC_COURSE_AI[2], AC_COURSE_AI[3]]},
+      {id:'a3', title:'Вайбкодинг',               seed:[]},
+      {id:'a4', title:'Автоматизация',            seed:[]},
+      {id:'a5', title:'Бизнес и деньги на ИИ',    seed:[AC_COURSE_AI[4]]},
+    ]},
 ];
+
+/* ---- вычисляем плоский AC_COURSE, метаданные курсов AC_COURSES и границы блоков AC_BLOCKS ---- */
+const AC_COURSE = [];
+const AC_COURSES = [];
+const AC_BLOCKS = [];
+AC_DIRS.forEach(d=>{
+  const from = AC_COURSE.length;
+  d.blocks.forEach(b=>{
+    const lessons = (b.seed||[]).concat(acPack(b.id));
+    const bf = AC_COURSE.length;
+    lessons.forEach(L=>AC_COURSE.push(L));
+    AC_BLOCKS.push({dir:d.id, id:b.id, title:b.title, from:bf, count:lessons.length});
+  });
+  const count = AC_COURSE.length - from;
+  const nb = d.blocks.length;
+  AC_COURSES.push({
+    id:d.id, title:d.title, tag:d.tag, free:d.free, minTier:d.minTier, price:d.price,
+    author:d.author, outcomes:d.outcomes, c1:d.c1, c2:d.c2, from, count,
+    blocks:d.blocks.map(b=>b.id),
+    sub:`${nb} ${acPlural(nb,['блок','блока','блоков'])} · ${count} ${acPlural(count,['урок','урока','уроков'])} · сертификат за направление`,
+  });
+});
+/* блоки конкретного курса */
+function acCourseBlocks(ci){ const id=AC_COURSES[ci].id; return AC_BLOCKS.filter(b=>b.dir===id); }
 const AC_FEE = 0.10;   // комиссия платформы OKO с продажи курса (как в каналах)
 
 /* индекс курса по глобальному номеру урока */
@@ -1856,7 +1898,7 @@ function acCourseGate(ci){
   if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
   const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
   showPopup({ico:'star', title:'Курс «'+c.title+'»',
-    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за каждый урок. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы OKO — 10% ('+acFmtPrice(fee)+').</span>',
+    body:'Премиум-курс Академии OKO: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за всё направление. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы OKO — 10% ('+acFmtPrice(fee)+').</span>',
     actions:[
       {label:'Открыть по подписке '+c.minTier, onclick:()=>{
         if(typeof okoRequireSub === 'function'){
@@ -2067,7 +2109,7 @@ function acCourseInsideHtml(ci){
     ['poll',  'Тесты · ' + st.quiz + ' ' + acPlural(st.quiz,['вопрос','вопроса','вопросов']), 'порог зачёта ' + AC_PASS + '%'],
     ['edit',  'Практика', 'проверка ИИ-куратором'],
     ['bolt',  st.games + ' мини-' + acPlural(st.games,['игра','игры','игр']), 'закрепление на связках'],
-    ['star',  'Сертификат', 'именной — за каждый урок'],
+    ['star',  'Сертификат', 'именной — за всё направление'],
   ];
   const outcomes = (c.outcomes||[]).map(o=>`<li>${I('check2')}<span>${esc(o)}</span></li>`).join('');
   return `
@@ -2088,28 +2130,47 @@ function acCourseHtml(){
   const pct = acCoursePctOf(ci), C = 2*Math.PI*33, CR = 2*Math.PI*15;
   const idx = acCourseIdx(ci);
   const done = acCourseDone(ci);
-  const rows = idx.map((i,k)=>{
-    const local = k+1;
-    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="toast('Урок ${local} откроется после урока ${local-1}')">
+  /* строка урока (номер — сквозной внутри направления) */
+  const lessonRow = (i,k)=>{
+    const local = acLocalNo(i);
+    if(!acUnlocked(i)) return `<button class="ac-lesson-row locked ac-rise" style="animation-delay:${(k*0.04).toFixed(2)}s" onclick="acCourseGate(${ci})">
       <span class="ac-num">${local}</span>
       <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
       <svg class="i"><use href="#i-lock"/></svg></button>`;
-    const ls = acS.lessons[i], p = acLessonPct(i);
+    const p = acLessonPct(i);
     const stg = (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
           <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
           <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
           <b>${p}</b></span>` : '');
-    return `<button class="ac-lesson-row ac-rise" style="animation-delay:${(k*0.05).toFixed(2)}s" onclick="acOpenLesson(${i})">
+    return `<button class="ac-lesson-row ac-rise" style="animation-delay:${(k*0.04).toFixed(2)}s" onclick="acOpenLesson(${i})">
       <span class="ac-num">${local}</span>
       <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
       ${stg}
       <svg class="i go"><use href="#i-chev"/></svg></button>`;
+  };
+  /* группировка по блокам направления */
+  const blocks = acCourseBlocks(ci);
+  let rk = 0;
+  const rows = blocks.map((b, bi)=>{
+    const bIdx = []; for(let i=b.from;i<b.from+b.count;i++) bIdx.push(i);
+    const bDone = b.count>0 && bIdx.every(i=>acLessonDone(i));
+    const bPct = b.count>0 ? Math.round(bIdx.reduce((s,i)=>s+acLessonPct(i),0)/b.count) : 0;
+    const head = `<div class="ac-block-head${bDone?' done':''}">
+        <span class="ac-block-n">Блок ${bi+1}</span>
+        <span class="ac-block-t">${esc(b.title)}</span>
+        <span class="ac-block-meta">${b.count>0 ? (b.count+' '+acPlural(b.count,['урок','урока','уроков'])+(bPct>0?' · '+bPct+'%':'')) : 'готовится'}</span>
+        ${bDone?`<span class="ac-block-done">${I('check2')}</span>`:''}
+      </div>`;
+    const body = b.count>0
+      ? bIdx.map(i=>lessonRow(i, rk++)).join('')
+      : `<div class="ac-block-soon">${I('clock')}<span>Уроки блока в производстве — скоро откроются</span></div>`;
+    return `<div class="ac-block">${head}${body}</div>`;
   }).join('');
   let nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
   if(nx===undefined && !done) nx = idx[0];   // защита: если курс не пройден, всегда есть куда вести
   const nextRow = (nx!==undefined)
     ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>${acLessonPct(nx)>0?'Продолжить':'Начать'}: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
-    : `<div class="ac-next-row done">${I('check2')}<span>Курс пройден — сертификаты за уроки у тебя</span></div>`;
+    : `<div class="ac-next-row done">${I('check2')}<span>Направление пройдено — именной сертификат у тебя</span></div>`;
   const certN = acCourseCertCount(ci);
   const finale = done
     ? `<div class="card ac-course-finale"><span class="ico">${I('crown')}</span>
