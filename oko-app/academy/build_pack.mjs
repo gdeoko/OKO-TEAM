@@ -77,13 +77,15 @@ export const ICON_KEYS = Object.keys(ICONS);
 function jss(str){ return "'" + String(str).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ') + "'"; }
 function lessonJS(L){
   const dur = L.dur || '3:00';
-  const sub = L.sub || `${dur} · видео (голос Даниэля) + слайды + тест + игра`;
+  const hasVid = !!L.videoUrl;
+  const sub = L.sub || `${dur} · ${hasVid?'видео (голос Даниэля)':'слайды'} + тест + игра`;
+  const vidLine = hasVid ? `\n  videoUrl:${jss(L.videoUrl)},` : '';
   const slides = (L.slides||[]).map(s=>`  {t:${jss(s.t)}, pts:[${(s.pts||[]).map(jss).join(', ')}],\n   svg:'${svgFor(s.icon).replace(/'/g,"\\'")}'}`).join(',\n');
   const quiz = (L.quiz||[]).map(q=>`  {q:${jss(q.q)}, o:[${(q.o||[]).map(jss).join(', ')}], a:${q.a|0}}`).join(',\n');
   const pairs = (L.pairs||[]).map(p=>`  [${jss(p[0])}, ${jss(p[1])}]`).join(',\n');
   const t = L.task||{};
   const task = `{\n    intro:${jss(t.intro||'')},\n    chips:[${(t.chips||[]).map(jss).join(', ')}],\n    ph:${jss(t.ph||'')},\n    verdict:${jss(t.verdict||'')}\n  }`;
-  return `{\n  title:${jss(L.title)},\n  sub:${jss(sub)}, dur:${jss(dur)},\n  c1:${jss(L.c1||'')}, c2:${jss(L.c2||'')},\n  slides:[\n${slides}\n  ],\n  quiz:[\n${quiz}\n  ],\n  pairs:[\n${pairs}\n  ],\n  task:${task}\n}`;
+  return `{\n  title:${jss(L.title)},\n  sub:${jss(sub)}, dur:${jss(dur)},${vidLine}\n  c1:${jss(L.c1||'')}, c2:${jss(L.c2||'')},\n  slides:[\n${slides}\n  ],\n  quiz:[\n${quiz}\n  ],\n  pairs:[\n${pairs}\n  ],\n  task:${task}\n}`;
 }
 
 function main(){
