@@ -19,6 +19,9 @@ grep -q "ENV READY" work/_setup.log || { echo "ENV_NOT_READY"; tail -3 work/_set
 HMARK="work/.health_$(date -u +%Y%m%d%H 2>/dev/null)"
 if [ ! -f "$HMARK" ]; then bash health.sh > work/_health.log 2>&1 || true; touch "$HMARK" 2>/dev/null; echo "[health] $(tail -1 work/_health.log)"; fi
 
+# ДОБОР ОБЛОЖЕК YouTube (самозаживание после 429) — дёшево, каждый тик, до полной постановки
+THUMBS=$(python3 retry_thumbs.py 2>/dev/null | tail -1); [ -n "$THUMBS" ] && echo "[thumbs] $THUMBS"
+
 # квота + ПЕЙСИНГ по дню (равномерные перерывы, не всё разом)
 REMAIN=$(python3 quota.py check 2>/dev/null || echo 0)
 if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.py status))"; exit 0; fi

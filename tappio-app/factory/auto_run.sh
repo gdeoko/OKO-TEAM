@@ -57,6 +57,8 @@ if [ -n "$YT_DONE" ]; then
 elif timeout 400 python3 vps/yt_upload.py TAPPIO_YT_CLIENT_ID TAPPIO_YT_CLIENT_SECRET TAPPIO_YT_REFRESH_TOKEN "output/$ID.mp4" "$YTTITLE" "$CAP" "hidden camera,airbnb,privacy,spy camera,travel safety" "output/${ID}_cover.jpg" > work/${ID}_yt.log 2>&1; then
   YT=$(grep -oE 'shorts/[A-Za-z0-9_-]+' work/${ID}_yt.log | head -1)
   if [ -n "$YT" ]; then STATUS="$STATUS YouTube:$YT"; log "YouTube $YT"
+    # если обложка не встала при заливке (429/лимит) — в очередь добора, дотянется на следующих тиках
+    grep -q "thumb set OK" work/${ID}_yt.log || python3 -c "import json,os;p='analysis/pending_thumbs.json';os.makedirs('analysis',exist_ok=True);l=json.load(open(p)) if os.path.exists(p) else [];l=sorted(set(l+['$ID']));json.dump(l,open(p,'w'))" 2>/dev/null
     # записать YouTube-id в реестр (для ежедневного отчёта метрик)
     YID=$(echo "$YT" | sed 's#shorts/##')
     python3 - "$ID" "$YID" <<'PY' 2>/dev/null
