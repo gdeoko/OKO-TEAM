@@ -1,0 +1,145 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #28 (batch A, ГИДРО «выходные на воде»). New forms, none reused:
+// split-flap-board · eq-bars-speed · isometric-dock · particle-swarm-silhouette · marquee-ticker · liquid-morph lockup.
+// Свериться с USED_ANIM.md #16-27 — нет пересечений. Окна (a,b) под РЕАЛЬНЫЙ timing.json после VO.
+const TOTAL=28.824;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",AQUA="#39C6E6",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+const ALPH="АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ ";
+
+// A1 — SPLIT-FLAP-BOARD: буквы перещёлкиваются как на табло аэропорта, складывая слово.
+// (новая форма: сплит-флап табло; ≠ kinetic #16, ≠ glitch-strike #26, ≠ mask-wipe #27)
+function a1(ts){const a=1.9,b=6.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const word=(p<0.55?"ВЫХОДНЫЕ":"ЧИСТЫЙ ДРАЙВ");const lp=p<0.55?p/0.55:(p-0.55)/0.45;
+  const cw=Math.min(88,900/word.length);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-160)+'" text-anchor="middle" font-family="man8" font-size="40" letter-spacing="4" fill="'+DIM+'">ГИДРОЦИКЛ — ЭТО</text>';
+  const x0=cx-word.length*cw/2;
+  for(let i=0;i<word.length;i++){const settle=clamp((lp*word.length - i)/1.2);
+    const target=word[i];const idx=Math.floor(lerp(0,ALPH.indexOf(target)+ALPH.length*2,easeOut(settle)))%ALPH.length;
+    const ch=settle>=1?target:ALPH[idx];
+    const x=x0+i*cw;
+    s+='<rect x="'+(x+3)+'" y="'+(cy-52)+'" width="'+(cw-6)+'" height="96" rx="8" fill="'+CARD+'" stroke="rgba(246,244,241,.2)" stroke-width="1"/>';
+    s+='<line x1="'+(x+3)+'" y1="'+(cy-2)+'" x2="'+(x+cw-3)+'" y2="'+(cy-2)+'" stroke="#000" stroke-width="2"/>';
+    s+='<text x="'+(x+cw/2)+'" y="'+(cy+20)+'" text-anchor="middle" font-family="soyuz" font-size="'+(cw*0.7)+'" fill="'+(settle>=1?AMB2:WHT)+'">'+(ch===' '?'':ch)+'</text>';}
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A2 — EQ-BARS-SPEED: вертикальные бары-эквалайзер прыгают (энергия/рёв), пик км/ч.
+// (новая форма: бар-эквалайзер; ≠ осциллограф-волна #17, ≠ speed-streak #24)
+function a2(ts){const a=6.6,b=11.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=980,n=13,bw=46,gap=14;const W=n*bw+(n-1)*gap;const x0=cx-W/2;
+  const spd=Math.round(easeOut(clamp(p/0.7))*60);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-320)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">РАЗГОН · БРЫЗГИ · ВЕТЕР</text>';
+  for(let i=0;i<n;i++){const env=Math.sin((i/n)*Math.PI); const h=(60+180*env)*(0.5+0.5*Math.abs(Math.sin(p*TOTAL*6+i*0.7)))*clamp(p/0.3);
+    const x=x0+i*(bw+gap); s+='<rect x="'+x+'" y="'+(cy-h)+'" width="'+bw+'" height="'+h+'" rx="6" fill="url(#eqg)"/>';}
+  s+='<defs><linearGradient id="eqg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="'+AQUA+'"/><stop offset="1" stop-color="'+AMB2+'"/></linearGradient></defs>';
+  s+='<text x="540" y="'+(cy+120)+'" text-anchor="middle" font-family="soyuz" font-size="150" fill="'+WHT+'">'+spd+'</text>';
+  s+='<text x="540" y="'+(cy+180)+'" text-anchor="middle" font-family="man8" font-size="34" fill="'+DIM+'">КМ/Ч ПО ГЛАДИ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A3 — ISOMETRIC-DOCK: изометрическая сцена причал+солнце собирается блоками.
+// (новая форма: изометрия; ≠ любых прошлых)
+function a3(ts){const a=11.8,b=15.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940;const iso=(x,y,z)=>[cx+(x-y)*0.87*46,cy+((x+y)*0.5-z)*46];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-320)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ДРУЗЬЯ · ЗАЛИВ · ЗАКАТ</text>';
+  // солнце
+  const sun=clamp((p-0.1)/0.3);s+='<circle cx="'+cx+'" cy="'+(cy-220)+'" r="'+(70*sun)+'" fill="'+AMB2+'" opacity="0.85"/>';
+  // вода-платформа (ромбы)
+  for(let gx=-2;gx<=2;gx++)for(let gy=-2;gy<=2;gy++){const ap=clamp((p-0.15-(gx+gy+4)*0.03)/0.3);if(ap<=0)continue;
+    const P=[iso(gx,gy,0),iso(gx+1,gy,0),iso(gx+1,gy+1,0),iso(gx,gy+1,0)];
+    s+='<path d="M'+P.map(q=>q.join(' ')).join(' L')+' Z" fill="rgba(57,198,230,'+(0.12+0.05*((gx+gy)%2))+')" stroke="rgba(57,198,230,.4)" stroke-width="1" opacity="'+ap+'"/>';}
+  // причал (амбер брус)
+  const dk=clamp((p-0.4)/0.3);if(dk>0){const A=iso(-0.5,-0.5,0.3),B=iso(1.5,-0.5,0.3);
+    s+='<line x1="'+A[0]+'" y1="'+A[1]+'" x2="'+B[0]+'" y2="'+B[1]+'" stroke="'+AMB+'" stroke-width="'+(14*dk)+'" stroke-linecap="round"/>';}
+  // ски-маркер
+  const jm=clamp((p-0.55)/0.3);if(jm>0){const J=iso(0.5,0.5,0.25);s+='<circle cx="'+J[0]+'" cy="'+J[1]+'" r="'+(20*jm)+'" fill="'+WHT+'"/>';}
+  s+='<text x="540" y="'+(cy+300)+'" text-anchor="middle" font-family="soyuz" font-size="54" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">ЛУЧШИЙ ДЕНЬ ЛЕТА</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A4 — PARTICLE-SWARM-SILHOUETTE: частицы слетаются в силуэт гидроцикла + тир-бар «ДОСТУПНО».
+// (новая форма: рой частиц в силуэт продукта; ≠ spark-lockup #16 который в лого)
+function a4(ts){const a=15.9,b=20.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const gather=easeInOut(clamp(p/0.6));
+  // целевые точки — грубый силуэт ски (эллипс корпуса + руль)
+  const pts=[];for(let i=0;i<48;i++){const t=i/48*Math.PI*2;pts.push([cx+180*Math.cos(t),cy+60*Math.sin(t)]);}
+  for(let i=0;i<10;i++){pts.push([cx-40+i*8,cy-70-i*4]);} // руль-стойка
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-240)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">НЕ ЯХТА ЗА МИЛЛИОНЫ</text>';
+  pts.forEach((pt,i)=>{const sx=cx+(pt[0]-cx+ (((i*97)%200)-100))*(1)*(1-gather)+pt[0]*0;
+    const ang=i*2.399; const r0=340; const fromx=cx+r0*Math.cos(ang),fromy=cy+r0*Math.sin(ang);
+    const x=lerp(fromx,pt[0],gather),y=lerp(fromy,pt[1],gather);
+    s+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="'+AQUA+'" opacity="'+(0.4+0.6*gather)+'"/>';});
+  // тир-бар доступности
+  const tb=clamp((p-0.55)/0.35);
+  s+='<rect x="'+(cx-220)+'" y="'+(cy+160)+'" width="440" height="20" rx="10" fill="rgba(255,255,255,.12)"/>';
+  s+='<rect x="'+(cx-220)+'" y="'+(cy+160)+'" width="'+(150*tb)+'" height="20" rx="10" fill="'+GRN+'"/>';
+  s+='<text x="540" y="'+(cy+240)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+WHT+'" opacity="'+tb+'">ДОСТУПНЫЙ ВХОД НА ВОДУ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A5 — MARQUEE-TICKER: бегущая строка-тикер преимуществ под ключ.
+// (новая форма: маркиза-тикер; ≠ conveyor #17, ≠ любых прошлых)
+function a5(ts){const a=20.3,b=24.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=920;const msg="ДОСТАВКА · ДОКУМЕНТЫ · НА ВОДУ СРАЗУ · ЗАВОД · ТАМОЖНЯ · ПОД КЛЮЧ · ";
+  const full=msg+msg;const off=(p*TOTAL*140)% (msg.length*30);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-140)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПРИВЕЗЁМ С ЗАВОДА</text>';
+  s+='<rect x="60" y="'+(cy-60)+'" width="960" height="120" rx="14" fill="'+CARD+'" stroke="'+AMB+'" stroke-width="3"/>';
+  s+='<defs><clipPath id="mq"><rect x="70" y="'+(cy-60)+'" width="940" height="120"/></clipPath></defs>';
+  s+='<g clip-path="url(#mq)"><text x="'+(80-off)+'" y="'+(cy+18)+'" font-family="soyuz" font-size="46" fill="'+WHT+'">'+full+'</text></g>';
+  // амбер-маркеры краёв
+  s+='<rect x="60" y="'+(cy-60)+'" width="16" height="120" fill="'+AMB+'"/><rect x="1004" y="'+(cy-60)+'" width="16" height="120" fill="'+AMB+'"/>';
+  s+='<text x="540" y="'+(cy+180)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+GRN+'" opacity="'+clamp((p-0.4)/0.4)+'">НА ВОДУ — СРАЗУ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// A6 — LIQUID-MORPH LOCKUP: жидкая капля-блоб морфится и застывает в лого DIESEL CARGO.
+// (новый лок-ап: жидкий морф блоба; ≠ droplet-coalesce #25, ≠ liquid-fill #22, ≠ puzzle/gear/etc)
+function a6(ts){const a=24.3,b=28.7;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;const morph=easeInOut(clamp(p/0.55));const bloom=clamp((p-0.5)/0.5);
+  // блоб: окружность с волнистой границей, амплитуда падает по morph
+  const amp=70*(1-morph);let d='';const N=40;
+  for(let i=0;i<=N;i++){const th=i/N*2*Math.PI;const r=120+amp*Math.sin(th*3+p*TOTAL*4)+amp*0.5*Math.cos(th*5-p*TOTAL*3);
+    const x=cx+r*Math.cos(th),y=cy+r*Math.sin(th);d+=(i?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);}
+  d+=' Z';
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<path d="'+d+'" fill="rgba(234,89,32,'+(0.5*(1-bloom))+')" stroke="'+AMB2+'" stroke-width="'+(4*(1-bloom))+'" opacity="'+(1-bloom)+'"/>';
+  const sc=lerp(0.5,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="126" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="118" text-anchor="middle" font-family="soyuz" font-size="126" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=a1(ts)+a2(ts)+a3(ts)+a4(ts)+a5(ts)+a6(ts);};
+window.render(0);
+</script></body></html>
