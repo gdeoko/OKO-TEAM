@@ -2200,7 +2200,50 @@ function showTyping(){
 }
 function hideTyping(){
   document.getElementById('typingMsg')?.remove();
-  document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+  if(currentChat) document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+}
+/* ===== Живой ответ демо-собеседника (1:1 чаты без реального Supabase-пира) =====
+   Делает мессенджер «живым» на демо/у инвесторов: пишешь человеку — он видит
+   «печатает…» и отвечает по смыслу. Работает и когда чат свёрнут: приходит
+   бейдж непрочитанного и обновляется превью. Одна очередь ответа на чат. */
+const SIM_REPLY = {
+  greet:['Привет! Рад(а) тебя видеть.','Привет-привет! Как ты?','О, здравствуй! Давно не общались.'],
+  thanks:['Не за что, обращайся!','Всегда пожалуйста.','Рад(а) была помочь.'],
+  ok:['Принято.','Ок, договорились.','Супер, тогда так и делаем.','Понял(а), держим на связи.'],
+  price:['По деньгам давай в личку деталями — прикину смету.','Стоимость зависит от объёма, скину вилку сегодня.','Могу собрать расчёт, накидай вводные.'],
+  ask:['Хороший вопрос — дай пару минут, гляну и вернусь.','Сейчас уточню и напишу.','Думаю, тут два варианта. Расскажу подробнее чуть позже.'],
+  bye:['До связи!','Давай, хорошего дня!','Пока, на связи.'],
+  def:['Понял(а) тебя.','Ок, принял(а) в работу.','Звучит толково, поддерживаю.','Дай подумаю и вернусь с деталями.','Интересно, давай обсудим подробнее.','Согласен(на), так и сделаем.']
+};
+function simPick(text){
+  const t = (text||'').toLowerCase();
+  if(/привет|здоров|хай|доброе утро|добрый день|добрый веч/.test(t)) return SIM_REPLY.greet;
+  if(/спасиб|благодар|отлично, спс|thx/.test(t)) return SIM_REPLY.thanks;
+  if(/пока|до связи|до встреч|бай/.test(t)) return SIM_REPLY.bye;
+  if(/сколько|цена|стоит|стоим|бюджет|оплат|деньг|руб|₽/.test(t)) return SIM_REPLY.price;
+  if(/\?|как|почему|когда|где|что|можешь|получится|сможешь/.test(t)) return SIM_REPLY.ask;
+  if(/^(ок|окей|хорошо|давай|да|договорились|принял|понял|супер|топ|огонь)\b/.test(t)) return SIM_REPLY.ok;
+  return SIM_REPLY.def;
+}
+function simReply(chat, userText){
+  if(!chat || chat.kind!=='direct' || chat.id===1 || chat.cid) return; // не трогаем поддержку и реальные live-чаты
+  if(chat._simPending) return; chat._simPending = true;
+  const pool = simPick(userText);
+  const body = pool[Math.floor(Math.random()*pool.length)];
+  // показать «печатает…» только если этот чат сейчас открыт
+  const openNow = () => currentChat && currentChat.id===chat.id;
+  setTimeout(()=>{ if(openNow()) showTyping(); }, 650);
+  setTimeout(()=>{
+    chat._simPending = false;
+    if(openNow()){ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body}); }
+    else { // чат свёрнут — тихо докладываем в тред + бейдж + превью
+      chat.msgs.push({in:1, t:nowT(), kind:'text', body});
+      chat.unread = (chat.unread||0) + 1;
+      chat.preview = kindPreview({kind:'text', body});
+      chat.time = nowT();
+      try{ renderChatList(document.getElementById('chatSearch').value); }catch(e){}
+    }
+  }, 1500 + Math.floor(Math.random()*900));
 }
 function playVnote(el){
   const v = el.querySelector('video'); if(!v) return;
@@ -2248,6 +2291,8 @@ function sendText(){
   if(currentChat.id===1){
     setTimeout(showTyping, 500);
     setTimeout(()=>{ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @okohelp. По остальному отвечу из базы знаний.'}); }, 2100);
+  } else {
+    simReply(currentChat, text); // живой ответ демо-собеседника (1:1)
   }
 }
 let mediaRec = null, recChunks = [], recStream = null;
