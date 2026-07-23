@@ -668,7 +668,7 @@ function psGraphRender(){
   const res = psGraphPeople(name, tab);
   const list = res.list || [];
   const total = res.total || list.length;
-  if(!list.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Пока никого</p></div>`; return; }
+  if(!list.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Пока никого</p><span>Первые подписки появятся здесь — начни собирать своё комьюнити</span></div>`; return; }
   wrap.innerHTML = `<div class="ps-graph-note">Показаны ${list.length} из ${psFmt(total)}</div>` +
     list.map((p, i) => `<div class="fade-in" style="animation-delay:${i * 30}ms">${psPersonRowHtml(p)}</div>`).join('');
 }
@@ -731,7 +731,7 @@ function psAccRenderSheet(){
   if(!wrap) return;
   const arr = psAccList();
   const activeId = psAccActiveId();
-  if(!arr.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Аккаунты недоступны</p></div>`; return; }
+  if(!arr.length){ wrap.innerHTML = `<div class="ps-empty">${I('users')}<p>Пока некого показать</p><span>Загляни позже — подберём интересных авторов под тебя</span></div>`; return; }
   wrap.innerHTML = arr.map(a => {
     const active = a.id === activeId;
     const owner = a.role === 'owner';
