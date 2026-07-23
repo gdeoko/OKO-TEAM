@@ -1,0 +1,155 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #25 (batch B, ГИДРО «миф о дороговизне»). New forms, none reused:
+// myth-deflate-counter · fuel-flow-rate-bar · season-calendar-fill · footprint-shrink · value-retention-curve · droplet-coalesce lockup.
+// Свериться с USED_ANIM.md #16-24 — нет пересечений. Окна (a,b) выставлены под РЕАЛЬНЫЙ timing.json после VO.
+const TOTAL=32.0;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",AQUA="#39C6E6",RED="#E5534B",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// B1 — MYTH-DEFLATE-COUNTER: большое красное «ДОРОГО?» раздувается, влетают чипы-вычитания, число сдувается в зелёное.
+// (новая форма: раздув/сдув счётчика с чипами-вычитанием; ≠ кинетик-тайпо #16, ≠ любых счётчиков)
+function b1(ts){const a=1.9,b=7.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;
+  const inflate=easeOut(clamp(p/0.3)); const deflate=easeInOut(clamp((p-0.5)/0.45));
+  const scale=lerp(0.6,1.35,inflate)-0.5*deflate;
+  const col=deflate>0.5?GRN:RED;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ГИДРОЦИКЛ — ЭТО ДОРОГО?</text>';
+  s+='<g transform="translate('+cx+','+cy+') scale('+scale+')"><text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="150" fill="'+col+'">'+(deflate>0.5?'НЕ ОЧЕНЬ':'ДОРОГО')+'</text></g>';
+  // чипы-вычитания влетают
+  const chips=["− миф","− наценка","− слухи"];
+  chips.forEach((c,i)=>{const ap=clamp((p-0.45-i*0.08)/0.2); if(ap<=0)return;
+    const x=cx-260+i*260, y=cy+220-(1-ap)*80;
+    s+='<g opacity="'+ap+'"><rect x="'+(x-90)+'" y="'+(y-34)+'" width="180" height="60" rx="30" fill="rgba(124,203,75,.16)" stroke="'+GRN+'" stroke-width="2"/><text x="'+x+'" y="'+(y+8)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+GRN+'">'+c+'</text></g>';});
+  s+='<text x="540" y="'+(cy+340)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">ПОСЧИТАЕМ ПО-ЧЕСТНОМУ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B2 — FUEL-FLOW-RATE-BAR: горизонтальный расходомер с текущей заливкой, сравнение «как у лодки».
+// (новая форма: непрерывный бар скорости расхода; ≠ дискретные капли #19, ≠ бак-заливка #16)
+function b2(ts){const a=7.2,b=13.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=920,W=720;
+  const fill=easeInOut(clamp(p/0.6))*0.42; // умеренный расход
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-160)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">РАСХОД — КАК У МОТОРНОЙ ЛОДКИ</text>';
+  s+='<rect x="'+(cx-W/2)+'" y="'+(cy-40)+'" width="'+W+'" height="80" rx="40" fill="rgba(255,255,255,.10)"/>';
+  // бегущие штрихи-поток внутри заливки
+  s+='<defs><clipPath id="fb"><rect x="'+(cx-W/2)+'" y="'+(cy-40)+'" width="'+(W*fill)+'" height="80" rx="40"/></clipPath></defs>';
+  s+='<rect x="'+(cx-W/2)+'" y="'+(cy-40)+'" width="'+(W*fill)+'" height="80" rx="40" fill="'+AQUA+'"/>';
+  s+='<g clip-path="url(#fb)">';
+  for(let i=0;i<20;i++){const x=cx-W/2+((i*60 - p*TOTAL*80)%(W+60)); s+='<line x1="'+x+'" y1="'+(cy-40)+'" x2="'+(x+24)+'" y2="'+(cy+40)+'" stroke="rgba(255,255,255,.25)" stroke-width="6"/>';}
+  s+='</g>';
+  s+='<text x="'+(cx-W/2)+'" y="'+(cy+100)+'" font-family="man8" font-size="30" fill="'+DIM+'">ЭКОНОМНО</text>';
+  s+='<text x="'+(cx+W/2)+'" y="'+(cy+100)+'" text-anchor="end" font-family="man8" font-size="30" fill="'+DIM+'">ЖОР</text>';
+  s+='<text x="540" y="'+(cy+220)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+WHT+'" opacity="'+clamp((p-0.5)/0.4)+'">ВЫХОДНОЙ — НЕДОРОГО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B3 — SEASON-CALENDAR-FILL: сетка май–сентябрь, выходные заполняются, счётчик выездов, «цена дня ↓».
+// (новая форма: календарная сетка-заливка; ≠ любых прошлых)
+function b3(ts){const a=13.2,b=19.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900,cols=10,rows=5,cell=64,gap=12;const gw=cols*cell+(cols-1)*gap;const x0=cx-gw/2;const y0=cy-(rows*cell+(rows-1)*gap)/2;
+  const months=["МАЙ","ИЮНЬ","ИЮЛЬ","АВГ","СЕНТ"];const total=rows*cols;const shown=Math.floor(p*total*1.1);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(y0-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">СЕЗОН: МАЙ — СЕНТЯБРЬ</text>';
+  let rides=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const i=r*cols+c;const x=x0+c*(cell+gap),y=y0+r*(cell+gap);
+    const weekend=(c%5===3||c%5===4); const on=i<shown && weekend;
+    if(on)rides++;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+cell+'" height="'+cell+'" rx="10" fill="'+(on?AQUA:(i<shown?'rgba(246,244,241,.10)':'rgba(246,244,241,.04)'))+'" stroke="'+(on?AQUA:'rgba(246,244,241,.14)')+'" stroke-width="2"/>';
+    if(c===0)s+='<text x="'+(x-18)+'" y="'+(y+cell/2+8)+'" text-anchor="end" font-family="man8" font-size="24" fill="'+DIM+'">'+months[r]+'</text>';}
+  s+='<text x="540" y="'+(y0+rows*(cell+gap)+80)+'" text-anchor="middle" font-family="soyuz" font-size="60" fill="'+WHT+'">≈ '+rides+' ВЫЕЗДОВ · ЦЕНА ДНЯ ↓</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B4 — FOOTPRINT-SHRINK: вид сверху, площадь «авто» vs «гидро+прицеп» (компактно), «МЕСТО КАК ПОД МОТО».
+// (новая форма: сравнение контуров площади сверху; ≠ parking-fit скобки #19)
+function b4(ts){const a=19.7,b=24.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=930;const sh=easeInOut(clamp((p-0.15)/0.55)); // сжатие
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ХРАНЕНИЕ — ПРОСТОЕ</text>';
+  // площадь «место» — большой прямоугольник
+  s+='<rect x="'+(cx-300)+'" y="'+(cy-180)+'" width="600" height="360" rx="14" fill="none" stroke="'+DIM+'" stroke-width="3" stroke-dasharray="10 10"/>';
+  s+='<text x="'+(cx-300)+'" y="'+(cy-200)+'" font-family="man8" font-size="26" fill="'+DIM+'">1 МАШИНОМЕСТО</text>';
+  // гидро+прицеп footprint — сжимается до компактного
+  const fw=lerp(560,300,sh),fh=lerp(320,150,sh);
+  s+='<rect x="'+(cx-fw/2)+'" y="'+(cy-fh/2)+'" width="'+fw+'" height="'+fh+'" rx="12" fill="rgba(57,198,230,.16)" stroke="'+AQUA+'" stroke-width="4"/>';
+  // колёса прицепа
+  s+='<circle cx="'+(cx-fw/2+40)+'" cy="'+(cy+fh/2)+'" r="14" fill="'+WHT+'"/><circle cx="'+(cx+fw/2-40)+'" cy="'+(cy+fh/2)+'" r="14" fill="'+WHT+'"/>';
+  s+='<text x="'+cx+'" y="'+(cy+8)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+WHT+'">ГИДРО + ПРИЦЕП</text>';
+  s+='<text x="540" y="'+(cy+280)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+AQUA+'" opacity="'+clamp((sh-0.5)/0.4)+'">МЕСТО КАК ПОД МОТО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B5 — VALUE-RETENTION-CURVE: две кривые стоимости во времени, площадь удержания, «ДЕРЖИТ ЦЕНУ».
+// (новая форма: двойная кривая удержания с заливкой площади; ≠ линейный график библиотеки)
+function b5(ts){const a=24.7,b=29.5;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=950,W=760,H=360;const x0=cx-W/2,y0=cy-H/2;
+  const draw=easeInOut(clamp(p/0.7));
+  function curve(dropK){let d='M'+x0+' '+(y0);const N=40;let pts=[];
+    for(let i=0;i<=N*draw;i++){const t=i/N;const yy=y0+H*(1-Math.exp(-dropK*t));pts.push([x0+W*t,yy]);}
+    return pts;}
+  const good=curve(0.5),bad=curve(2.2); // китай держит (пологая), обычный падает круто
+  const path=pts=>pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(y0-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ЗАХОЧЕШЬ ПРОДАТЬ — ЦЕНА ДЕРЖИТСЯ</text>';
+  // оси
+  s+='<line x1="'+x0+'" y1="'+(y0+H)+'" x2="'+(x0+W)+'" y2="'+(y0+H)+'" stroke="rgba(246,244,241,.2)" stroke-width="2"/>';
+  s+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+(y0+H)+'" stroke="rgba(246,244,241,.2)" stroke-width="2"/>';
+  // площадь удержания между кривыми
+  if(good.length&&bad.length){let area=path(good)+' '+bad.slice().reverse().map(q=>'L'+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ')+' Z';
+    s+='<path d="'+area+'" fill="rgba(124,203,75,.14)"/>';}
+  s+='<path d="'+path(bad)+'" fill="none" stroke="'+DIM+'" stroke-width="4" stroke-dasharray="8 8"/>';
+  s+='<path d="'+path(good)+'" fill="none" stroke="'+GRN+'" stroke-width="6"/>';
+  s+='<text x="'+(x0+W)+'" y="'+(good.length?good[good.length-1][1]-16:y0)+'" text-anchor="end" font-family="man8" font-size="30" fill="'+GRN+'">КИТАЙ · ДЕРЖИТ</text>';
+  s+='<text x="540" y="'+(y0+H+80)+'" text-anchor="middle" font-family="soyuz" font-size="58" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">ПОТЕРЯЕШЬ НЕМНОГО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B6 — DROPLET-COALESCE LOCKUP: разбросанные капли сползаются и сливаются в лого DIESEL CARGO.
+// (новый лок-ап: коалесценция капель; ≠ splash-crown концентрич. #17, ≠ water-shatter #17)
+function b6(ts){const a=29.7,b=34.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const merge=easeInOut(clamp(p/0.55));const bloom=clamp((p-0.55)/0.45);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  // капли сползаются к центру
+  const drops=14;
+  for(let i=0;i<drops;i++){const ang=i/drops*2*Math.PI*3.0; const r0=340+((i*53)%180);
+    const x=cx+r0*Math.cos(ang)*(1-merge), y=cy+r0*Math.sin(ang)*(1-merge);
+    const rr=lerp(10,26,merge)*(1-bloom);
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+rr+'" fill="'+AQUA+'" opacity="'+(0.85*(1-bloom))+'"/>';}
+  if(merge>0.9&&bloom<0.5)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(20+150*bloom)+'" fill="none" stroke="'+AQUA+'" stroke-width="'+(6*(1-bloom*2))+'" opacity="'+clamp(1-bloom*2)+'"/>';
+  const sc=lerp(0.5,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="120" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=b1(ts)+b2(ts)+b3(ts)+b4(ts)+b5(ts)+b6(ts);};
+window.render(0);
+</script></body></html>
