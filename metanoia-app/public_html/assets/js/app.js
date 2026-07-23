@@ -607,8 +607,8 @@ function runSearch() {
   const found = SEARCH_INDEX.filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q)) && matchesFilters(it, filters));
   empty.style.display = found.length ? 'none' : '';
   if (!found.length) empty.querySelector('p').textContent = `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`;
-  box.innerHTML = found.map((it) => `
-    <button class="sr">
+  box.innerHTML = found.map((it, i) => `
+    <button class="sr" data-sr="${i}">
       <div class="sr__icon sr__icon--${it.t}">${ICON(SR_ICON[it.t], 20)}</div>
       <div>
         <div class="sr__title">${it.title}</div>
@@ -617,10 +617,26 @@ function runSearch() {
       ${it.locked ? `<div class="sr__lock">${ICON('lock', 16)}</div>` : ''}
     </button>`).join('');
   $$('#searchResults .sr').forEach((el) =>
-    el.addEventListener('click', () => {
-      if (el.querySelector('.sr__title')?.textContent === 'Собери стих') openVerse('easy');
-      else toast('Скоро откроется');
-    }));
+    el.addEventListener('click', () => openSearchResult(found[Number(el.dataset.sr)])));
+}
+
+const SR_GAME_OPEN = {
+  'Собери стих': () => openVerse('easy'), 'Библейское мемори': openMemory, 'Викторина на скорость': openQuiz,
+  'Кто это?': openWho, 'Хронология': openChrono, 'Три в ряд: Дары Духа': openMatch3,
+  'Давид и Голиаф': openDavid, 'Ноев Ковчег': openArk,
+};
+const SR_LESSON_N = {
+  'Пророчества; почему Господь родился на земле': 1, 'Рождение Иоанна Крестителя': 2,
+  'Рождение Господа': 3, 'Призвание Аврама': 71,
+};
+function openSearchResult(it) {
+  if (!it) return;
+  if (it.locked) { toast('Откроется с подпиской Метанойя+'); return; }
+  if (it.t === 'game' && SR_GAME_OPEN[it.title]) { gameOpener = 'games'; SR_GAME_OPEN[it.title](); return; }
+  if ((it.t === 'lesson' || it.t === 'test') && SR_LESSON_N[it.title]) { openLesson(SR_LESSON_N[it.title]); return; }
+  if (it.t === 'lesson' || it.t === 'test') { switchTab('lessons'); return; }
+  if (it.t === 'material') { toast('Материалы для скачивания появятся после запуска'); return; }
+  toast('Открываю…');
 }
 
 /* ───────── ДЕТСКИЙ ПРОФИЛЬ И PIN ───────── */
