@@ -38,13 +38,23 @@ for i in 1 2 3 4; do git push -q origin tappio.app 2>&1 && break || sleep $((2**
 log "pushed reel to tappio.app"
 cd "$FACT"
 
-# 3) TikTok (Hooppy)
-if timeout 240 python3 vps/hooppy_post_api.py "${HOOPPY_TT_PAGE_TAPPIO:-2350868}" "output/$ID.mp4" "$CAP" > work/${ID}_tt.log 2>&1; then
-  grep -q '"id"' work/${ID}_tt.log && { STATUS="$STATUS TikTok:submitted"; log "TikTok submitted"; } || { STATUS="$STATUS TikTok:?"; }
+# ЖЕЛЕЗНАЯ ЗАЩИТА ОТ ДУБЛЕЙ: если этот id УЖЕ публиковали — на площадку повторно НЕ заливаем.
+YT_DONE=$(python3 -c "import json,os;d=json.load(open('posted_reels.json')) if os.path.exists('posted_reels.json') else {};print(d.get('$ID',{}).get('yt_id','') or '')" 2>/dev/null)
+TT_DONE=$(python3 -c "import json,os;d=json.load(open('posted_reels.json')) if os.path.exists('posted_reels.json') else {};print(d.get('$ID',{}).get('tt_id','') or '')" 2>/dev/null)
+
+# 3) TikTok (Hooppy) — только если ещё не публиковали
+if [ -n "$TT_DONE" ]; then STATUS="$STATUS TikTok:already"; log "TikTok уже был ($TT_DONE) — пропуск дубля";
+elif timeout 240 python3 vps/hooppy_post_api.py "${HOOPPY_TT_PAGE_TAPPIO:-2350868}" "output/$ID.mp4" "$CAP" > work/${ID}_tt.log 2>&1; then
+  TTID=$(grep -oE '"id"[: ]+"?[0-9]+' work/${ID}_tt.log | grep -oE '[0-9]+' | head -1)
+  if [ -n "$TTID" ]; then STATUS="$STATUS TikTok:submitted"; log "TikTok submitted"
+    python3 -c "import json,os;p='posted_reels.json';d=json.load(open(p)) if os.path.exists(p) else {};e=d.get('$ID',{});e['tt_id']='$TTID';e.setdefault('app','$ID'.replace('g','',1).split('_')[0]);d['$ID']=e;json.dump(d,open(p,'w'),ensure_ascii=False,indent=1)" 2>/dev/null
+  else STATUS="$STATUS TikTok:?"; fi
 else STATUS="$STATUS TikTok:FAIL"; log "TikTok fail"; fi
 
-# 4) YouTube (API)
-if timeout 400 python3 vps/yt_upload.py TAPPIO_YT_CLIENT_ID TAPPIO_YT_CLIENT_SECRET TAPPIO_YT_REFRESH_TOKEN "output/$ID.mp4" "$YTTITLE" "$CAP" "hidden camera,airbnb,privacy,spy camera,travel safety" > work/${ID}_yt.log 2>&1; then
+# 4) YouTube (API) — только если ещё не публиковали
+if [ -n "$YT_DONE" ]; then
+  STATUS="$STATUS YouTube:already(shorts/$YT_DONE)"; log "YouTube уже был ($YT_DONE) — пропуск дубля"
+elif timeout 400 python3 vps/yt_upload.py TAPPIO_YT_CLIENT_ID TAPPIO_YT_CLIENT_SECRET TAPPIO_YT_REFRESH_TOKEN "output/$ID.mp4" "$YTTITLE" "$CAP" "hidden camera,airbnb,privacy,spy camera,travel safety" "output/${ID}_cover.jpg" > work/${ID}_yt.log 2>&1; then
   YT=$(grep -oE 'shorts/[A-Za-z0-9_-]+' work/${ID}_yt.log | head -1)
   if [ -n "$YT" ]; then STATUS="$STATUS YouTube:$YT"; log "YouTube $YT"
     # записать YouTube-id в реестр (для ежедневного отчёта метрик)

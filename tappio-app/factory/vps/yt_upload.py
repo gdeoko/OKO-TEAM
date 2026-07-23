@@ -36,13 +36,33 @@ def upload(tok, video, title, desc, tags):
     except Exception:
         print("upload resp:", r2.stdout[:400]); return None
 
+def set_thumbnail(tok, vid, cover):
+    """Ставим НАШУ брендовую обложку (кадр-0 дизайна) как превью ролика на YouTube."""
+    if not cover or not os.path.exists(cover):
+        print("thumb skip: no cover"); return
+    ct = 'image/png' if cover.lower().endswith('.png') else 'image/jpeg'
+    r = curl(['-X', 'POST',
+              f'https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={vid}',
+              '-H', f'Authorization: Bearer {tok}', '-H', f'Content-Type: {ct}',
+              '--data-binary', f'@{cover}'], timeout=120)
+    try:
+        d = json.loads(r.stdout)
+        print("thumb set OK" if d.get('items') else "thumb resp: " + r.stdout[:200])
+    except Exception:
+        print("thumb resp:", (r.stdout or "")[:200])
+
+
 def main():
     cid = os.environ[sys.argv[1]]; csec = os.environ[sys.argv[2]]; refresh = os.environ[sys.argv[3]]
     video, title, desc = sys.argv[4], sys.argv[5], sys.argv[6]
     tags = sys.argv[7].split(',') if len(sys.argv) > 7 else []
+    cover = sys.argv[8] if len(sys.argv) > 8 else ""
     tok = access_token(cid, csec, refresh)
     d = upload(tok, video, title, desc, tags)
     if d and d.get('id'):
+        # брендовая обложка (best-effort: не роняем публикацию, если thumbnail не встал)
+        try: set_thumbnail(tok, d['id'], cover)
+        except Exception as e: print("thumb err", e)
         print("YT OK https://youtube.com/shorts/" + d['id'])
     else:
         print("YT FAIL", json.dumps(d)[:300] if d else "none")

@@ -336,12 +336,62 @@ OVERLAY_POOLS = {
 OV_TYPE_ORDER = ["kicker","kinetic","lowerthird","chips","bars","gauge","callout","stat_count","checklist","ticker"]
 
 
+POSTED = os.path.join(HERE, "posted_reels.json")
+LEDGER = os.path.join(HERE, "gen_ledger.json")   # ВСЕ id, что генератор когда-либо выдавал (кросс-сессионно, в git)
+
+
+def _seq_of(rid):
+    """Вытащить числовой seq из id вида g<app>_<NNN> (для самолечения счётчика)."""
+    try:
+        return int(rid.rsplit("_", 1)[1])
+    except Exception:
+        return 0
+
+
+def used_ids():
+    """Все id, которые НЕЛЬЗЯ выдавать снова: опубликованные + уже в очереди + журнал генератора.
+    Это железная защита от дублей даже если gen_state.json откатится (seq сбросится)."""
+    used = set()
+    try:
+        for rid in (json.load(open(POSTED)) or {}).keys():
+            used.add(rid)
+    except Exception:
+        pass
+    try:
+        for f in os.listdir(QUEUE):
+            if f.endswith(".json"):
+                used.add(f[:-5])
+    except Exception:
+        pass
+    try:
+        for rid in json.load(open(LEDGER)):
+            used.add(rid)
+    except Exception:
+        pass
+    return used
+
+
+def ledger_add(rids):
+    try:
+        cur = json.load(open(LEDGER))
+    except Exception:
+        cur = []
+    s = list(dict.fromkeys(list(cur) + list(rids)))
+    json.dump(s, open(LEDGER, "w"))
+
+
 def load_state():
     try:
-        return json.load(open(STATE))
+        s = json.load(open(STATE))
     except Exception:
-        return {"seq": 0, "angle_idx": {"spy": 0, "brain": 0, "tape": 0}, "app_rr": 0,
-                "shot_off": {"spy": 0, "brain": 0, "tape": 0}, "ov_off": {}}
+        s = {"seq": 0, "angle_idx": {"spy": 0, "brain": 0, "tape": 0}, "app_rr": 0,
+             "shot_off": {"spy": 0, "brain": 0, "tape": 0}, "ov_off": {}}
+    # САМОЛЕЧЕНИЕ seq: никогда не идём назад — берём максимум из state и всех уже занятых id.
+    # Иначе откат gen_state.json пересоздаёт уже вышедшие id -> дубли на YouTube.
+    maxused = max([0] + [_seq_of(r) for r in used_ids()])
+    if s.get("seq", 0) < maxused:
+        s["seq"] = maxused
+    return s
 
 
 def save_state(s):
@@ -522,13 +572,22 @@ def main():
         need = int(args[0]) if args else 6
 
     made = []
+    used = used_ids()   # опубликованные + в очереди + журнал — НИКОГДА не выдаём повторно
     for _ in range(need):
         app = apps[state["app_rr"] % 3]
         state["app_rr"] += 1
-        rid, d = make_one(app, state)
+        # крутим seq, пока не получим СВЕЖИЙ id (железная защита от дублей)
+        for _guard in range(500):
+            rid, d = make_one(app, state)
+            if rid not in used:
+                break
+        else:
+            break   # не смогли за 500 попыток — крайне маловероятно, просто останавливаемся
+        used.add(rid)
         path = os.path.join(QUEUE, rid + ".json")
         json.dump(d, open(path, "w"), ensure_ascii=False, indent=1)
         made.append(rid)
+    ledger_add(made)    # фиксируем в вечном журнале, чтобы id не всплыл снова даже после чистки очереди
     save_state(state)
     print("GEN_OK made=%d -> %s | queue=%d" % (
         len(made), ",".join(made),

@@ -25,15 +25,26 @@ if [ "${REMAIN:-0}" -le 0 ] 2>/dev/null; then echo "QUOTA_DONE ($(python3 quota.
 SLOT=$(python3 quota.py slot 2>/dev/null || echo 0)
 if [ "${SLOT:-0}" -le 0 ] 2>/dev/null; then echo "PACED_WAIT — не время слота ($(python3 quota.py status))"; exit 0; fi
 
-# автодозаливка очереди (без LLM) — генератор держит >=12 сценариев
+# ЧИСТКА ОЧЕРЕДИ ОТ УЖЕ ОПУБЛИКОВАННОГО (железная защита от дублей: id, что уже вышел, из очереди убираем)
+python3 - <<'PY' 2>/dev/null
+import json,os,glob
+posted=json.load(open('posted_reels.json')) if os.path.exists('posted_reels.json') else {}
+pub=set(k for k,e in posted.items() if e.get('yt_id') or e.get('tt_id') or e.get('ig_code'))
+for f in glob.glob('scripts/queue/*.json'):
+    if os.path.basename(f)[:-5] in pub: os.remove(f)
+PY
+
+# автодозаливка очереди (без LLM) — генератор держит >=12 СВЕЖИХ сценариев (никогда не повторяет опубликованные)
 python3 gen_scripts.py topup 12 >/dev/null 2>&1 || true
 
 # следующий сценарий из очереди — РОТАЦИЯ приложений spy->brain->tape (разнообразие ленты)
 NEXT=$(python3 -c "
-import glob,os
+import glob,os,json
 order=['spy','brain','tape']
 last=open('.last_app').read().strip() if os.path.exists('.last_app') else ''
-files=sorted(glob.glob('scripts/queue/*.json'))
+posted=json.load(open('posted_reels.json')) if os.path.exists('posted_reels.json') else {}
+pub=set(k for k,e in posted.items() if e.get('yt_id') or e.get('tt_id') or e.get('ig_code'))
+files=sorted(f for f in glob.glob('scripts/queue/*.json') if os.path.basename(f)[:-5] not in pub)
 byapp={}
 for f in files:
     b=os.path.basename(f)
