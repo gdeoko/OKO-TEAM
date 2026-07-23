@@ -580,17 +580,31 @@ const SEARCH_INDEX = [
 
 const SR_ICON = { lesson: 'video', game: 'gamepad', material: 'book', test: 'check' };
 
+function activeSearchFilters() {
+  return [...document.querySelectorAll('.filter-chip--active')].map((c) => c.textContent.trim());
+}
+function matchesFilters(it, filters) {
+  const FMAP = {
+    '5–7': () => it.age && it.age.includes('5-7'), '7–10': () => it.age && it.age.includes('7-10'),
+    '10–14': () => it.age && it.age.includes('10-14'),
+    'Видео': () => it.t === 'lesson', 'Игра': () => it.t === 'game', 'Тест': () => it.t === 'test',
+    'Ветхий Завет': () => it.theme === 'ВЗ', 'Новый Завет': () => it.theme === 'НЗ',
+    'Молитва': () => /молитв/i.test(it.title), 'Притчи': () => /притч/i.test(it.title),
+  };
+  return filters.every((f) => (FMAP[f] ? FMAP[f]() : true));
+}
 function runSearch() {
   const q = $('#searchInput').value.trim().toLowerCase();
   const box = $('#searchResults');
   const empty = $('#searchEmpty');
-  if (q.length < 2) {
+  const filters = activeSearchFilters();
+  if (q.length < 2 && !filters.length) {
     box.innerHTML = '';
     empty.style.display = '';
-    empty.querySelector('p').textContent = 'Начни вводить запрос — найдём уроки, игры и материалы.';
+    empty.querySelector('p').textContent = 'Начни вводить запрос или выбери фильтр — найдём уроки, игры и материалы.';
     return;
   }
-  const found = SEARCH_INDEX.filter((it) => it.title.toLowerCase().includes(q));
+  const found = SEARCH_INDEX.filter((it) => (q.length < 2 || it.title.toLowerCase().includes(q)) && matchesFilters(it, filters));
   empty.style.display = found.length ? 'none' : '';
   if (!found.length) empty.querySelector('p').textContent = `Ничего не найдено по запросу «${$('#searchInput').value}». Попробуй другие слова.`;
   box.innerHTML = found.map((it) => `
@@ -4102,7 +4116,9 @@ document.addEventListener('DOMContentLoaded', () => {
     searchTimer = setTimeout(runSearch, 300); // debounce по ТЗ
   });
   $$('.filter-chip').forEach((el) =>
-    el.addEventListener('click', () => el.classList.toggle('filter-chip--active')));
+    el.addEventListener('click', () => { el.classList.toggle('filter-chip--active'); runSearch(); }));
+  $$('.tabs-row .tab-chip').forEach((el) =>
+    el.addEventListener('click', () => { $$('.tabs-row .tab-chip').forEach((t) => t.classList.remove('tab-chip--active')); el.classList.add('tab-chip--active'); runSearch(); }));
   $$('.tab-chip').forEach((el) =>
     el.addEventListener('click', () => {
       $$('.tab-chip').forEach((c) => c.classList.remove('tab-chip--active'));
