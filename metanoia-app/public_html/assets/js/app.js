@@ -2650,13 +2650,15 @@ function openReader(n) {
   const meta = lessonMeta(n);
   if (!c || !meta) { toast('Материал этого урока готовит педагог школы'); return; }
   const title = meta.l.title;
+  const cover = meta.l.img || `assets/img/chapters/ch${meta.bi + 1}.jpg`;
+  const coverImg = `<figure class="reader-cover"><img src="${cover}" alt="" loading="lazy" onerror="this.closest('.reader-cover').remove()"></figure>`;
   const intro = c.intro ? `<p class="drop">${c.intro}</p>` : '';
   const scripture = c.verse ? `<div class="scripture">${c.verse.text}<cite>${c.verse.ref}</cite></div>` : '';
   const story = (c.story || []).map((p) => `<p>${p}</p>`).join('');
   const golden = c.golden ? `<div class="scripture">${c.golden}</div>` : '';
   const prayer = c.prayer ? `<p><em>${c.prayer}</em></p>` : '';
   $('#readerTitle').textContent = title;
-  $('#readerBody').innerHTML = `<h2>${title}</h2>${intro}${scripture}${story}${golden}${prayer}`;
+  $('#readerBody').innerHTML = `<h2>${title}</h2>${coverImg}${intro}${scripture}${story}${golden}${prayer}`;
   applyReaderFs();
   $$('.screen').forEach((s) => s.classList.toggle('screen--active', s.dataset.screen === 'reader'));
   $('#nav').style.display = 'none';

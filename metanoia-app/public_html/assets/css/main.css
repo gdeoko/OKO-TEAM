@@ -1708,6 +1708,9 @@ body.in-chat .header { display: none; }
   padding: 20px 4px 40px; color: var(--navy);
 }
 .reader h2 { font-family: var(--font-head); font-size: calc(var(--reader-fs) + 8px); font-weight: 700; margin: 8px 0 16px; text-wrap: balance; }
+.reader-cover { margin: 0 0 20px; border-radius: 14px; overflow: hidden; aspect-ratio: 3/2; box-shadow: 0 8px 22px -12px rgba(26,58,82,.4); border: 4px solid #fff; background: var(--cream); }
+.reader-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+[data-theme="dark"] .reader-cover { border-color: #22333f; box-shadow: 0 8px 22px -12px rgba(0,0,0,.5); }
 .reader p { margin-bottom: 16px; }
 .reader .drop::first-letter { font-family: var(--font-head); font-size: 3.2em; float: left; line-height: .82; padding: 4px 10px 0 0; color: var(--terracotta); }
 .reader .scripture {
