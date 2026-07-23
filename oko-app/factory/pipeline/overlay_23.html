@@ -11,8 +11,8 @@ svg{overflow:visible}
 // BESPOKE overlays — reel #23 (batch B, КВАДРО охота/рыбалка). New forms, none reused:
 // sonar-sweep · topo-contour-morph · rack-load-stack · silencer-wave · river-ford-gauge · reticle-lockup.
 // Все 6 форм новые по геометрии И моушену, свериться с USED_ANIM.md #16-22 — нет пересечений.
-// ВНИМАНИЕ: окна (a,b) выставлены по типовой раскладке #22, ТОНКО подстроить под timing.json после VO.
-const TOTAL=32.0;
+// Окна (a,b) выставлены под РЕАЛЬНЫЙ timing.json B#23 (VO Ruslan): seg_start 1.8/8.71/17.23/26.78/32.81/38.30, content_end 50.35.
+const TOTAL=50.352;
 const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",AQUA="#39C6E6",CARD="rgba(16,12,10,.94)";
 const stage=document.getElementById('stage');
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
@@ -25,7 +25,7 @@ function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
 
 // B1 — SONAR-SWEEP: вращающийся луч эхолота по полярной сетке, «рыбные» блипы вспыхивают и гаснут.
 // (новая форма: сканирующий луч + затухающие контакты; ≠ reach-radius статичных колец #21, ≠ compass-spin)
-function b1(ts){const a=1.7,b=5.7;const p=win(ts,a,b);if(p<0)return'';
+function b1(ts){const a=1.9,b=8.5;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=940,R=300;const ang=p*TOTAL*1.35;           // луч крутится
   const blips=[[0.62,1.1],[0.4,2.4],[0.8,3.9],[0.55,5.2],[0.72,0.3]]; // [радиус-доля, фаза-угла]
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
@@ -50,7 +50,7 @@ function b1(ts){const a=1.7,b=5.7;const p=win(ts,a,b);if(p<0)return'';
 
 // B2 — TOPO-CONTOUR-MORPH: вложенные горизонтали рельефа рябят, маршрут-линия нитью проходит по низинам.
 // (новая форма: морфинг вложенных контуров + прошивка трассы; ≠ terrain-constellation точки #21, ≠ incline #18)
-function b2(ts){const a=5.9,b=11.2;const p=win(ts,a,b);if(p<0)return'';
+function b2(ts){const a=8.8,b=17.0;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=920;
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
   s+='<text x="540" y="560" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПОЛНЫЙ ПРИВОД · ПОНИЖЕННАЯ · ЛЕБЁДКА</text>';
@@ -74,7 +74,7 @@ function b2(ts){const a=5.9,b=11.2;const p=win(ts,a,b);if(p<0)return'';
 
 // B3 — RACK-LOAD-STACK: снаряга физически ложится штабелем на задний багажник, рама пружинит под весом, бар кг.
 // (новая форма: вертикальный штабель с прогибом-пружиной; ≠ gear-loadout слот-дроп #21, ≠ cost-blocks стек #16)
-function b3(ts){const a=11.4,b=17.4;const p=win(ts,a,b);if(p<0)return'';
+function b3(ts){const a=17.3,b=26.5;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,rackY=1180,rackW=520;
   const items=[["КАНИСТРЫ",70],["ПАЛАТКА",56],["СНАРЯГА",50],["УЛОВ · ДОБЫЧА",64]];
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
@@ -106,7 +106,7 @@ function b3(ts){const a=11.4,b=17.4;const p=win(ts,a,b);if(p<0)return'';
 
 // B4 — SILENCER-WAVE: две волны — громкая рваная (обычный) и приглушённая (наш), активное подавление в флэт.
 // (новая форма: сравнительный A/B демпинг волны; ≠ speed-осциллограф нарастающей амплитуды #17)
-function b4(ts){const a=17.6,b=22.0;const p=win(ts,a,b);if(p<0)return'';
+function b4(ts){const a=26.9,b=32.6;const p=win(ts,a,b);if(p<0)return'';
   const cx=540;const y1=860,y2=1120,W=760;
   const damp=easeInOut(clamp((p-0.25)/0.5)); // 0 громко → 1 тихо
   function wave(cy,amp,freq,jit){let d='';for(let x=0;x<=W;x+=8){const t=x/W;
@@ -129,7 +129,7 @@ function b4(ts){const a=17.6,b=22.0;const p=win(ts,a,b);if(p<0)return'';
 
 // B5 — RIVER-FORD-GAUGE: боковой профиль брода, линейка глубины, квадро идёт по воде, брызги на ватерлинии.
 // (новая форма: горизонтальная линейка уровня воды + вейд + частицы; ≠ liquid-tank fill #16, ≠ water-shatter #17)
-function b5(ts){const a=22.2,b=26.4;const p=win(ts,a,b);if(p<0)return'';
+function b5(ts){const a=32.9,b=38.1;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,base=1200,W=820;
   const level=base-160*easeInOut(clamp(p/0.5)); // вода поднимается до отметки
   let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
@@ -157,7 +157,7 @@ function b5(ts){const a=22.2,b=26.4;const p=win(ts,a,b);if(p<0)return'';
 
 // B6 — RETICLE-LOCKUP: кольца прицела сжимаются к центру, «фиксация», из точки распускается лого DIESEL CARGO.
 // (новый лок-ап: сведение прицела-ретикла; ≠ spark/splash/ignition/sun-flare/liquid-fill лок-апы #16-22)
-function b6(ts){const a=26.6,b=31.6;const p=win(ts,a,b);if(p<0)return'';
+function b6(ts){const a=38.4,b=50.2;const p=win(ts,a,b);if(p<0)return'';
   const cx=540,cy=880;
   const conv=easeInOut(clamp(p/0.42));            // кольца сходятся
   const bloom=clamp((p-0.5)/0.5);                 // лого распускается
