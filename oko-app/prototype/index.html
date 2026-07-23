@@ -8411,7 +8411,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.98</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.99</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -15512,7 +15512,7 @@ function acCoursePctOf(ci){
   return Math.round(s/idx.length);
 }
 function acCourseDone(ci){ return acCourseIdx(ci).every(i=>acLessonDone(i)); }
-function acCourseCertCount(ci){ return acCourseIdx(ci).filter(i=>{ const ls=acS.lessons[i]; return ls&&ls.cert; }).length; }
+function acCourseCertCount(ci){ return acDirCert(ci) ? 1 : 0; }
 
 /* агрегаты по курсу: сколько всего слайдов, вопросов, игр, видео, минут */
 function acCourseStats(ci){
@@ -15620,16 +15620,14 @@ function acCoursePct(){
   for(let i=0; i<AC_COURSE.length; i++) sum += acLessonPct(i);
   return Math.round(sum / AC_COURSE.length);
 }
-function acLessonDone(i){
-  const ls = acS.lessons[i];
-  return !!(ls && ls.cert) || acLessonPct(i) === 100;
-}
+function acLessonDone(i){ return acLessonPct(i) === 100; }
 function acUnlocked(i){
   const ci = acCourseOf(i);
-  if(!acCourseAccessible(ci)) return false;              // курс не оплачен/не по подписке
-  return i === acCourseFirst(ci) || acLessonDone(i-1);   // первый урок курса или сдан предыдущий
+  return acCourseAccessible(ci);   // уроки ПРОПУСКАЕМЫЕ — внутри доступного направления открыты все, без жёстких ограничений
 }
-function acCertEligible(){ const ls = acLS(); return ls.video && ls.testScore >= AC_PASS; }
+/* Сертификат — ЗА ВСЁ НАПРАВЛЕНИЕ (не за урок). Один именной диплом на направление. */
+function acDirCert(ci){ try{ const id=AC_COURSES[ci].id; return (acS.certs||[]).find(c=>c && c.dir===id) || null; }catch(e){ return null; } }
+function acCertEligible(){ const ci=acCourseOf(acL); return acCourseDone(ci) && !acDirCert(ci); }
 
 /* ================= ДОСТУП К ПРЕМИУМ-КУРСУ (подписка / покупка) ================= */
 function acFmtPrice(n){ return (typeof fmtRub==='function') ? fmtRub(n) : (n.toLocaleString('ru-RU')+' ₽'); }
@@ -15846,10 +15844,7 @@ function acHomeHtml(){
 
 /* подпись сертификата: «Курс · Урок N · Название» */
 function acCertLabel(c){
-  const gi = (typeof c.lesson === 'number') ? c.lesson : 0;
-  const ci = acCourseOf(gi);
-  const ctitle = c.courseTitle || AC_COURSES[ci].title;
-  return ctitle + ' · Урок ' + acLocalNo(gi) + ' · ' + (c.lessonTitle || AC_COURSE[gi].title);
+  return 'Направление «' + (c.courseTitle || 'Академия OKO') + '» · сертификат';
 }
 
 /* ---------- «ЧТО ВНУТРИ КУРСА»: состав + чему научишься ---------- */
@@ -15889,9 +15884,7 @@ function acCourseHtml(){
       <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
       <svg class="i"><use href="#i-lock"/></svg></button>`;
     const ls = acS.lessons[i], p = acLessonPct(i);
-    const stg = (ls && ls.cert)
-      ? `<span class="ac-mini-cert" title="Сертификат получен"><svg class="i"><use href="#i-star"/></svg></span>`
-      : (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
+    const stg = (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
           <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
           <circle class="val" cx="18" cy="18" r="15" stroke-dasharray="${CR.toFixed(1)}" stroke-dashoffset="${CR.toFixed(1)}" data-off="${(CR*(1-p/100)).toFixed(1)}"/></svg>
           <b>${p}</b></span>` : '');
@@ -16612,16 +16605,20 @@ function acCertShare(i){
 function acRenderCertBox(){
   const box = document.getElementById('acCertBox');
   if(!box) return;
-  const ls = acLS();
-  const okV = ls.video, okT = ls.testScore >= AC_PASS;
-  if(ls.cert){
+  const ci = acCourseOf(acL);
+  const dir = AC_COURSES[ci];
+  const cert = acDirCert(ci);
+  const idx = acCourseIdx(ci);
+  const doneCnt = idx.filter(i=>acLessonDone(i)).length;
+  const left = dir.count - doneCnt;
+  if(cert){
     box.innerHTML = `
       <div class="card ac-cert-card ready">
         <div class="ac-cert-head">
           <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
-          <div><h3>Сертификат получен</h3><p>Официальный документ Академии OKO с печатью и подписью</p></div>
+          <div><h3>Сертификат направления получен</h3><p>Официальный диплом «${esc(dir.title)}» с печатью и подписью Академии OKO</p></div>
         </div>
-        <span class="ac-cert-no">${esc(ls.cert.no)} · ${esc(ls.cert.date)} · тест ${ls.cert.score}%</span>
+        <span class="ac-cert-no">${esc(cert.no)} · ${esc(cert.date)} · тест ${cert.score}%</span>
         <div class="ac-cert-actions">
           <button class="btn" onclick="acCertDownload()">${I('file')} Скачать PNG</button>
           <button class="btn ghost" onclick="acCertShow()">${I('eye')} Показать</button>
@@ -16635,9 +16632,9 @@ function acRenderCertBox(){
       <div class="card ac-cert-card ready">
         <div class="ac-cert-head">
           <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
-          <div><h3>Сертификат готов к выдаче</h3><p>Видео просмотрено, тест сдан на ${ls.testScore}% — условия выполнены</p></div>
+          <div><h3>Сертификат направления готов</h3><p>Все ${dir.count} уроков «${esc(dir.title)}» пройдены — забирай именной диплом</p></div>
         </div>
-        <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат</button>
+        <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат направления</button>
       </div>`;
     return;
   }
@@ -16645,34 +16642,32 @@ function acRenderCertBox(){
     <div class="card ac-cert-card">
       <div class="ac-cert-head">
         <span class="ico" style="background:var(--raised);color:var(--dim)"><svg class="i"><use href="#i-lock"/></svg></span>
-        <div><h3>Сертификат урока</h3><p>Официальный документ с печатью и подписью — за реальный результат</p></div>
+        <div><h3>Сертификат за направление «${esc(dir.title)}»</h3><p>Именной документ с печатью и подписью — за прохождение ВСЕГО направления</p></div>
       </div>
       <div class="ac-cert-req">
-        <div class="${okV?'ok':''}">${I(okV?'check2':'circle-play')} Отметить видео просмотренным</div>
-        <div class="${okT?'ok':''}">${I(okT?'check2':'poll')} Сдать тест на ${AC_PASS}% и выше${ls.testScore?` (сейчас ${ls.testScore}%)`:''}</div>
+        <div class="${doneCnt>0?'ok':''}">${I(doneCnt>0?'check2':'circle-play')} Пройдено уроков: ${doneCnt} из ${dir.count}</div>
+        <div>${I('poll')} Осталось ${left} ${acPlural(left,['урок','урока','уроков'])} — уроки можно проходить в любом порядке</div>
       </div>
     </div>`;
 }
 
 function acIssueCert(){
-  const ls = acLS();
   const ci = acCourseOf(acL);
+  if(acDirCert(ci) || !acCourseDone(ci)) return;          // диплом один на направление, и только когда всё пройдено
+  const idx = acCourseIdx(ci);
+  const avg = Math.round(idx.reduce((sum,i)=>sum + ((acS.lessons[i]&&acS.lessons[i].testScore)||0), 0) / idx.length);
   const cert = {
     no: 'OKO-CERT-' + String(Math.floor(1e5 + Math.random()*9e5)),
     date: new Date().toLocaleDateString('ru-RU'),
-    score: ls.testScore,
+    score: avg,
     name: (typeof PROFILE!=='undefined' && PROFILE.name) ? PROFILE.name : 'Слушатель Академии',
-    lesson: acL,
-    lessonTitle: acCur().title,
-    courseTitle: AC_COURSES[ci].title,
-    localNo: acLocalNo(acL)
+    dir: AC_COURSES[ci].id,
+    courseTitle: AC_COURSES[ci].title
   };
-  ls.cert = cert;
   acS.certs.unshift(cert);
   acSave();
   acCertUrl = null;
-  const lastInCourse = (acL === acCourseFirst(ci) + AC_COURSES[ci].count - 1);
-  toast(lastInCourse ? 'Сертификат выдан: ' + cert.no : 'Сертификат выдан · урок ' + (acLocalNo(acL)+1) + ' открыт');
+  toast('Сертификат направления «' + AC_COURSES[ci].title + '» выдан: ' + cert.no);
   acBadgeSync();
   acRenderCertBox(); acRenderProgressBox();
   acCertCelebrate(()=>acCertShow());
@@ -16736,7 +16731,7 @@ function acLessonMaster(){
     const nextIdx = acL + 1;
     /* умный CTA: сначала — забрать сертификат, иначе — следующий урок, иначе просто закрыть */
     let cta = '';
-    if(!ls.cert && acCertEligible())
+    if(acCertEligible())
       cta = `<button class="btn ac-master-cta" onclick="acMasterAct('cert')">${I('star')} Получить сертификат</button>`;
     else if(!lastInCourse && acUnlocked(nextIdx))
       cta = `<button class="btn ac-master-cta" onclick="acMasterAct('next',${nextIdx})">${I('circle-play')} Следующий урок</button>`;
@@ -16762,7 +16757,7 @@ function acLessonMaster(){
         <h3 class="ac-master-title">Урок освоен</h3>
         <p class="ac-master-sub">«${esc(L.title)}» — все пять этапов закрыты</p>
         <div class="ac-master-pills">${pills}</div>
-        <div class="ac-master-stat">${I('poll')} Тест — <b>${ls.testScore||0}%</b>${(ls.cert)?` · сертификат ${esc(ls.cert.no)}`:''}</div>
+        <div class="ac-master-stat">${I('poll')} Тест — <b>${ls.testScore||0}%</b></div>
         <div class="ac-master-actions">
           ${cta}
           <button class="btn ${cta?'ghost':''} ac-master-dismiss" onclick="acMasterClose()">${cta?'Позже':'Отлично'}</button>
@@ -16961,10 +16956,10 @@ function acCertRec(i){
     const shown = acS.certs.find(c=>c.no===acCertShownNo);
     if(shown) return shown;
   }
-  return (acView==='lesson' ? acLS().cert : null) || acS.certs[0] || null;
+  return (acView==='lesson' ? acDirCert(acCourseOf(acL)) : null) || acS.certs[0] || null;
 }
 function acCertShow(i){
-  const cert = (typeof i === 'number') ? acS.certs[i] : (acLS().cert || acCertRec());
+  const cert = (typeof i === 'number') ? acS.certs[i] : (acDirCert(acCourseOf(acL)) || acCertRec());
   if(!cert){ toast('Сертификат ещё не выдан'); return; }
   const open = url=>{
     const full = document.getElementById('acCertFull');
