@@ -34,6 +34,19 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Видимый фокус только для клавиатуры (не мешает касанию/мыши) — доступность на планшетах/ПК */
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+[data-theme="dark"] :focus-visible { outline-color: #E6C79A; }
+/* поля ввода уже подсвечивают рамку — не дублируем внешний контур */
+.field input:focus-visible, .field select:focus-visible,
+.sheet__input input:focus-visible, .cv-input input:focus-visible,
+.cv-search input:focus-visible, .ask-input input:focus-visible,
+.addk__input:focus-visible { outline: none; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
