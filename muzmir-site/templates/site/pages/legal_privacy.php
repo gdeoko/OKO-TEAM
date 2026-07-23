@@ -28,24 +28,92 @@ $defaultBody = '<p>Настоящая Политика конфиденциал�
   . '<h3>8. Контакты по вопросам обработки данных</h3>'
   . '<p>По вопросам обработки персональных данных обращайтесь по адресу электронной почты <a href="mailto:' . cfgv('org_email') . '">' . cfgv('org_email') . '</a> или по телефону <a href="tel:' . cfgv('org_phone_raw') . '">' . cfgv('org_phone') . '</a>.</p>';
 
+// Тело статьи: из БД, если задано, иначе - редакция по умолчанию.
+$body = (string) ($page['body'] ?? $defaultBody);
+
+// Оглавление и якоря: проставляем id на разделы <h3> и собираем список ссылок.
+$toc = '';
+$secN = 0;
+$body = preg_replace_callback('/<h3(\s[^>]*)?>(.*?)<\/h3>/is', function ($m) use (&$toc, &$secN) {
+    $secN++;
+    $id = 'razdel-' . $secN;
+    $title = trim(strip_tags($m[2]));
+    $toc .= '<li><a href="#' . $id . '">' . $title . '</a></li>';
+    return '<h3 id="' . $id . '"' . ($m[1] ?? '') . '>' . $m[2] . '</h3>';
+}, $body);
+
+// Реквизиты организации (реальные - из конфигурации, с безопасными значениями по умолчанию).
+$reqOrg    = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
+$reqReg    = h((string) cfgv('org_reg', 'Роскомнадзор №094084 от 24.06.2025'));
+$reqAddr   = h((string) cfgv('org_address', '109240, г. Москва, ул. Солянка, д.14, стр.7'));
+$reqPhone  = h((string) cfgv('org_phone', '8 (950) 945-99-00'));
+$reqPhoneR = h((string) cfgv('org_phone_raw', '+79509459900'));
+$reqEmail  = h((string) cfgv('org_email', 'kulturniy.centr.mir@mail.ru'));
+$reqDir    = 'Ильясов А.И.';
+
 ob_start(); ?>
 <style>
-.article-cap p:first-of-type::first-letter{
-  font-family:var(--ff-serif);font-size:3.4em;line-height:.78;float:left;
-  padding:.04em .1em 0 0;color:var(--gold-2);font-weight:700;
+.legal{max-width:70ch;margin-inline:auto}
+.legal-article{font-family:var(--ff-body);color:var(--text-dim);line-height:1.78;font-size:1.02rem}
+.legal-article p{margin:0 0 1.15em}
+.legal-article h3{font-family:var(--ff-serif);color:var(--text);font-weight:700;
+  margin:2em 0 .55em;font-size:1.26rem;line-height:1.2;scroll-margin-top:96px}
+.legal-article a{color:var(--gold-ink);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+[data-theme="dark"] .legal-article a{color:var(--gold)}
+.legal-article p:first-of-type::first-letter{font-family:var(--ff-serif);font-size:3.4em;line-height:.78;
+  float:left;padding:.04em .12em 0 0;color:var(--gold-2);font-weight:700}
+.legal-toc{margin:0 auto 30px;padding:18px 22px;border:1px solid var(--glass-brd);border-radius:16px;
+  background:var(--glass, rgba(255,255,255,.5))}
+.legal-toc__t{font-family:var(--ff-serif);font-weight:700;color:var(--text);margin:0 0 10px;font-size:1.02rem}
+.legal-toc ol{margin:0;padding-left:1.3em;color:var(--muted)}
+.legal-toc li{margin:.34em 0}
+.legal-toc a{color:var(--gold-ink);text-decoration:none;overflow-wrap:anywhere}
+.legal-toc a:hover{text-decoration:underline}
+[data-theme="dark"] .legal-toc a{color:var(--gold)}
+.legal-reqs{margin:34px auto 0;padding:22px 24px;border:1px solid var(--glass-brd);border-radius:16px;
+  background:var(--glass, rgba(255,255,255,.5))}
+.legal-reqs__t{font-family:var(--ff-serif);font-weight:700;color:var(--text);margin:0 0 12px;font-size:1.05rem}
+.legal-reqs dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:.95rem}
+.legal-reqs dt{color:var(--muted);white-space:nowrap}
+.legal-reqs dd{margin:0;color:var(--text-dim);overflow-wrap:anywhere}
+.legal-reqs a{color:var(--gold-ink);text-decoration:none;overflow-wrap:anywhere}
+[data-theme="dark"] .legal-reqs a{color:var(--gold)}
+@media (max-width:560px){
+  .legal-reqs dl{grid-template-columns:1fr;gap:2px 0}
+  .legal-reqs dt{margin-top:10px}
+  .legal-reqs dt:first-child{margin-top:0}
 }
-.article-cap h3{margin-top:1.6em;color:var(--text)}
 </style>
 
 <section class="section">
-  <div class="container" style="max-width:820px">
+  <div class="container" style="max-width:860px">
     <div class="section-head reveal">
       <p class="eyebrow">Правовая информация</p>
       <h2>Политика конфиденциальности</h2>
       <div class="gold-rule"></div>
     </div>
-    <div class="article-cap reveal" style="color:var(--text-dim)">
-      <?= $page['body'] ?? $defaultBody ?>
+
+    <div class="legal">
+      <?php if ($toc !== ''): ?>
+        <nav class="legal-toc reveal" aria-label="Содержание">
+          <p class="legal-toc__t">Содержание</p>
+          <ol><?= $toc ?></ol>
+        </nav>
+      <?php endif; ?>
+
+      <article class="legal-article reveal"><?= $body ?></article>
+
+      <aside class="legal-reqs reveal" aria-label="Реквизиты организации">
+        <p class="legal-reqs__t">Реквизиты</p>
+        <dl>
+          <dt>Организация</dt><dd><?= $reqOrg ?></dd>
+          <dt>Регистрация</dt><dd><?= $reqReg ?></dd>
+          <dt>Генеральный директор</dt><dd><?= $reqDir ?></dd>
+          <dt>Адрес</dt><dd><?= $reqAddr ?></dd>
+          <dt>Телефон</dt><dd><a href="tel:<?= $reqPhoneR ?>"><?= $reqPhone ?></a></dd>
+          <dt>Электронная почта</dt><dd><a href="mailto:<?= $reqEmail ?>"><?= $reqEmail ?></a></dd>
+        </dl>
+      </aside>
     </div>
   </div>
 </section>

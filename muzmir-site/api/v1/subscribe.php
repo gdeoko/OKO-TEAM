@@ -4,6 +4,11 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_post();
 
+// --- Защита от CSRF: строгий same-origin + токен формы (_csrf) ---
+if (!auth_origin_ok() || !csrf_check()) {
+    json_out(['ok' => false, 'message' => 'Недопустимый источник запроса'], 403);
+}
+
 if (!rate_ok('subscribe:' . client_ip(), 20, 3600)) {
     json_out(['ok' => false, 'message' => 'Слишком много запросов, попробуйте позже'], 429);
 }

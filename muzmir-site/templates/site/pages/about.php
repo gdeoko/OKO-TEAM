@@ -1,5 +1,6 @@
 <?php
 /** О нас (slug about): история с 2020, инфографика, таймлайн, руководство (ФИО), жюри, партнёры. */
+require_once BASE_PATH . '/templates/site/partials/heatmap.php';
 $page = one("SELECT * FROM pages WHERE slug=?", ['about']);
 
 $defaultBody = '<p>Культурный центр «Музыкальный Мир» - российская организация в сфере культуры и искусства. Мы проводим международные и всероссийские онлайн-конкурсы, фестивали и концерты, объединяя талантливых людей со всей России и зарубежья через доступное дистанционное участие.</p>'
@@ -146,7 +147,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 .leader-card{display:flex;flex-direction:column;gap:14px}
 .leader-head{display:flex;gap:14px;align-items:center}
 .leader-ava{width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
 .leader-ava svg{width:28px;height:28px}
 .leader-name{font-family:var(--ff-serif);font-weight:700;font-size:1.28rem;color:var(--text);line-height:1.15}
 .leader-role{color:var(--gold);font-weight:700;font-size:.86rem;letter-spacing:.02em}
@@ -170,6 +171,18 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
   .tl-item{padding-left:46px}
   .tl-year{font-size:1.6rem}
   .donut-center b{font-size:2.1rem}
+}
+
+/* Моушен-микровзаимодействия (только transform/opacity) */
+@media (hover:hover){
+  .tl-item{transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+  .tl-item:hover{transform:translateX(5px)}
+  .req-row{transition:transform .2s ease}
+  .req-row:hover{transform:translateX(4px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .tl-item,.req-row,.bar-fill{transition:none}
+  .tl-item:hover,.req-row:hover{transform:none}
 }
 </style>
 
@@ -262,6 +275,12 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
         </div>
         <p style="color:var(--text-dim);margin:0">Вокальное искусство - самая массовая номинация конкурсов центра.</p>
       </div>
+    </div>
+
+    <div class="reveal" style="margin-top:44px">
+      <h3 style="text-align:center;margin-bottom:6px">География участников - 85 регионов России</h3>
+      <p style="color:var(--text-dim);text-align:center;max-width:640px;margin:0 auto 22px">Участники из всех федеральных округов - от Калининграда до Дальнего Востока, а также из стран СНГ и дальнего зарубежья.</p>
+      <?= render_regions_heatmap() ?>
     </div>
   </div>
 </section>

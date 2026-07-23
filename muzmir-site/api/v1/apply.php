@@ -5,9 +5,15 @@ require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/loyalty.php';
 require_post();
 
-// --- Строгая проверка источника (Origin/Referer принадлежит своему домену) ---
-if (!apply_same_origin()) {
+// --- Строгая проверка источника (Origin/Referer принадлежит своему домену) + CSRF-токен ---
+if (!apply_same_origin() || !csrf_check()) {
     json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+}
+
+// --- Honeypot: скрытое поле website должно быть пустым; бот его заполняет ---
+// Тихо возвращаем успех-заглушку, ничего не записывая в БД.
+if (input('website') !== '') {
+    json_out(['ok' => true, 'number' => 'MM-' . date('Y') . '-00000']);
 }
 
 $ip = client_ip();
@@ -103,6 +109,14 @@ if ($needsMedia && $video === '' && empty($errors['video_url'])) {
 // Подтверждение конкурсных требований (без монтажа, ≥480p, не старше года, ссылка открыта).
 if ($needsMedia && !input('agree_rules')) {
     $errors['agree_rules'] = 'Подтвердите соответствие материала конкурсным требованиям';
+}
+
+// Обязательные согласия (серверная проверка): регистрация заявки и обработка перс. данных.
+if (!input('agree_reg')) {
+    $errors['agree_reg'] = 'Необходимо согласие на регистрацию заявки на конкурс';
+}
+if (!input('agree_pd')) {
+    $errors['agree_pd'] = 'Необходимо согласие на обработку персональных данных';
 }
 
 if ($errors) {

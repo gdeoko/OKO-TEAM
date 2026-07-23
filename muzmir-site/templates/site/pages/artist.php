@@ -105,7 +105,7 @@ ob_start(); ?>
 .pro-head::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(130% 150% at 8% -20%,var(--gold-soft),transparent 55%)}
 .pro-ava{position:relative;flex:0 0 auto;width:118px;height:118px;border-radius:50%;
-  background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-btn)}
 .pro-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--gold) 42%,transparent)}
 /* вращающийся золотой ореол-медальон */
@@ -119,9 +119,12 @@ ob_start(); ?>
 .pro-loc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;color:var(--muted);font-size:.95rem;margin-top:4px}
 .pro-loc svg{width:15px;height:15px;stroke:var(--gold-2);vertical-align:-2px;margin-right:4px}
 .pro-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.pro-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.pro-actions .btn{transition:transform .2s ease,border-color .2s ease,color .2s ease}
+@media(hover:hover){.pro-actions .btn:hover{transform:translateY(-2px)}}
 @media(max-width:640px){
   .pro-head{flex-direction:column;text-align:center;padding:28px 20px}
-  .pro-loc,.pro-badges{justify-content:center}
+  .pro-loc,.pro-badges,.pro-actions{justify-content:center}
 }
 
 /* Инфографика достижений */
@@ -193,6 +196,12 @@ ob_start(); ?>
             <?php if ($grandPrixCount > 0): ?><span class="badge badge--judging">Обладатель Гран-при</span><?php endif; ?>
             <?php if ($hasIntl): ?><span class="badge badge--intl">Международный уровень</span><?php endif; ?>
             <span class="badge badge--open">В реестре наград</span>
+          </div>
+          <?php $shareUrl = rtrim(cfgv('base_url'), '/') . '/artist/' . $artist['slug']; ?>
+          <div class="pro-actions">
+            <button class="btn btn--ghost" type="button" data-share
+                    data-share-title="<?= h($artist['name']) ?> - КЦ Музыкальный Мир"
+                    data-share-url="<?= h($shareUrl) ?>">Поделиться</button>
           </div>
         </div>
       </div>
@@ -282,7 +291,7 @@ ob_start(); ?>
     <?php else:
       http_response_code(404); ?>
       <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
-        <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">Портфолио пока не опубликовано</h1>
         <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичная страница участника появляется, когда его работы получают оценку жюри и наградные документы. Проверьте ссылку или посмотрите действующие конкурсы.</p>
         <a class="btn btn--primary" href="<?= url('/competitions') ?>">Действующие конкурсы</a>

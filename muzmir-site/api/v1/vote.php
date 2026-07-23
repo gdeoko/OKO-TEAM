@@ -65,6 +65,11 @@ $already = one(
 );
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    // --- Защита от CSRF: строгий same-origin + токен формы (_csrf) ---
+    if (!auth_origin_ok() || !csrf_check()) {
+        json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+    }
+
     if (!rate_ok('gala_vote:' . $ip, 20, 3600)) {
         json_out(['ok' => false, 'error' => 'Слишком много запросов, попробуйте позже'], 429);
     }

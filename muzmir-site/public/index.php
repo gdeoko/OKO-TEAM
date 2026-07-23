@@ -10,6 +10,7 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
+require_once BASE_PATH . '/core/security.php';
 
 session_start();
 db(); // инициализация/миграции
@@ -20,6 +21,9 @@ $base = parse_url($CFG['base_url'], PHP_URL_PATH) ?: '';
 if ($base && $base !== '/' && str_starts_with($uri, $base)) $uri = substr($uri, strlen($base)) ?: '/';
 $route = '/' . trim($uri, '/');
 $route = $route === '' ? '/' : $route;
+
+// Заголовки безопасности (CSP/HSTS/anti-clickjacking) — на все ответы, кроме встраиваемого виджета.
+security_headers($route);
 
 // REST API и админ-панель обслуживаются через фронт-контроллер
 // (в проде nginx try_files отдаёт эти пути в index.php, т.к. web-root = public/).
@@ -73,6 +77,14 @@ if ($route === '/sitemap.xml') {
         echo '  <url><loc>' . htmlspecialchars($baseUrl . '/competition/' . $s, ENT_XML1) . '</loc></url>' . "\n";
         echo '  <url><loc>' . htmlspecialchars($baseUrl . '/awards/' . $s, ENT_XML1) . '</loc></url>' . "\n";
     }
+    // Статьи блога (pages со слагом blog-*).
+    try {
+        foreach (all("SELECT slug FROM pages WHERE slug LIKE 'blog-%'") as $row) {
+            $s = is_array($row) ? ($row['slug'] ?? '') : (string) $row;
+            if ($s === '') continue;
+            echo '  <url><loc>' . htmlspecialchars($baseUrl . '/blog/' . $s, ENT_XML1) . '</loc></url>' . "\n";
+        }
+    } catch (\Throwable $e) {}
     echo '</urlset>';
     exit;
 }

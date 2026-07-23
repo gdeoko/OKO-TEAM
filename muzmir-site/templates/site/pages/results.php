@@ -215,6 +215,16 @@ ob_start(); ?>
   .pring,.pcard-id{width:74px;height:74px}
   .pring .ring-num{font-size:1.25rem}
 }
+/* Узкие экраны 360/390: без горизонтального оверфлоу, звание переносится по словам */
+@media(max-width:400px){
+  .pcard{padding:18px}
+  .res-title{white-space:normal;font-size:.92rem;overflow-wrap:anywhere}
+  .pcard-foot{gap:9px}
+  .pcard .btn,.vk-link{width:100%;justify-content:center}
+}
+@media(prefers-reduced-motion:reduce){
+  .pcard-corner,.res-video-chip,.vk-link{transition:none}
+}
 </style>
 
 <section class="section">
@@ -330,7 +340,7 @@ ob_start(); ?>
         <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Материалы</p><h2>Афиши конкурса</h2></div>
         <div class="res-media reveal" style="margin-bottom:36px">
           <?php foreach ($posters as $p): ?>
-            <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="<?= h($c['name']) ?>" loading="lazy"></a>
+            <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>» - КЦ «Музыкальный Мир»" loading="lazy"></a>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>

@@ -108,6 +108,6 @@ return [
     'agent_url'      => cfg('MUZMIR_AGENT_URL', ''),
     'agent_token'    => cfg('MUZMIR_AGENT_TOKEN', ''),
 
-    'debug'          => (bool) cfg('MUZMIR_DEBUG', true),
+    'debug'          => (bool) cfg('MUZMIR_DEBUG', false),
     'year'           => (int) date('Y'),
 ];

@@ -107,12 +107,39 @@ ob_start(); ?>
 .rv-toolbar .rv-chips{display:flex;flex-wrap:wrap;gap:8px}
 .rv-chip{padding:8px 14px;min-height:40px;border-radius:999px;border:1.5px solid var(--glass-brd);background:var(--panel);color:var(--text-dim);font-weight:700;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;transition:transform .18s,border-color .18s,color .18s}
 .rv-chip:active{transform:scale(.96)}
-.rv-chip.is-active{background:var(--grad-gold);color:#1a1206;border-color:transparent}
+.rv-chip.is-active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
 .rv-sort{margin-left:auto;display:flex;align-items:center;gap:8px}
 .rv-sort label{font-size:.85rem;color:var(--muted)}
 .rv-sort select{margin:0;padding:9px 34px 9px 14px;min-height:40px;font-size:.9rem;width:auto}
-.rv-none{display:none;text-align:center;color:var(--muted);padding:26px 10px;grid-column:1/-1}
+/* Карусель отзывов (scroll-snap: свайп на мобиле, стрелки на десктопе) */
+.rv-carousel{position:relative}
+.rv-track{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  padding:4px 2px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;
+  overscroll-behavior-x:contain}
+.rv-track::-webkit-scrollbar{height:8px}
+.rv-track::-webkit-scrollbar-track{background:transparent}
+.rv-track::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:999px;border:1px solid var(--glass-brd)}
+.rv-track>.rv-card{flex:0 0 clamp(248px,86%,340px);scroll-snap-align:start}
+@media(min-width:721px){.rv-track>.rv-card{flex-basis:calc((100% - 24px)/2)}}
+@media(min-width:1000px){.rv-track>.rv-card{flex-basis:calc((100% - 48px)/3)}}
+.rv-none{display:none;flex:1 0 100%;text-align:center;color:var(--muted);padding:26px 10px}
 #rvGrid.rv-empty .rv-none{display:block}
+.rv-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:44px;height:44px;border-radius:50%;
+  border:1.5px solid var(--glass-brd);background:var(--panel-solid);color:var(--gold-2);display:none;
+  align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-soft);
+  transition:transform .18s,opacity .18s,background .18s,color .18s,border-color .18s}
+[data-theme="dark"] .rv-arrow{color:var(--gold)}
+.rv-arrow svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.rv-arrow--prev{left:0}
+.rv-arrow--next{right:0}
+.rv-arrow:hover{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
+.rv-arrow:active{transform:translateY(-50%) scale(.92)}
+.rv-arrow[disabled]{opacity:.32;cursor:default;pointer-events:none}
+@media(hover:hover) and (min-width:721px){
+  .rv-carousel{padding-inline:54px}
+  .rv-arrow{display:inline-flex}
+}
+@media(prefers-reduced-motion:reduce){.rv-track{scroll-behavior:auto}.rv-arrow{transition:none}}
 /* Каскад-звёзды в форме отзыва */
 .rv-rate{display:inline-flex;gap:6px;margin-bottom:8px}
 .rv-rate button{background:none;border:0;padding:2px;cursor:pointer;line-height:0}
@@ -130,7 +157,7 @@ ob_start(); ?>
 }
 .rv-pager{display:flex;justify-content:center;gap:8px;margin-top:36px;flex-wrap:wrap}
 .rv-pager a{padding:9px 16px;min-height:40px;display:inline-flex;align-items:center;border-radius:999px;border:1.5px solid var(--gold);font-weight:700;font-size:.92rem;color:var(--text)}
-.rv-pager a.active{background:var(--grad-gold);color:#1a1206;border-color:transparent}
+.rv-pager a.active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
 </style>
 
 <section class="section">
@@ -179,12 +206,16 @@ ob_start(); ?>
         </div>
       </div>
 
-      <div class="grid grid-3" id="rvGrid">
+      <div class="rv-carousel reveal">
+        <button type="button" class="rv-arrow rv-arrow--prev" aria-label="Предыдущие отзывы" aria-controls="rvGrid">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="rv-track" id="rvGrid" role="region" aria-label="Лента отзывов" tabindex="0">
         <?php foreach ($reviews as $i => $r):
             $rating = max(1, min(5, (int) $r['rating']));
             $geo = $geoOf($r);
             $ts = strtotime($r['created_at'] ?: 'now'); ?>
-          <div class="card rv-card reveal" style="--i:<?= (int) $i ?>"
+          <div class="card rv-card" style="--i:<?= (int) $i ?>"
                data-rating="<?= $rating ?>" data-ts="<?= (int) $ts ?>" data-geo="<?= $geo !== '' ? 'intl' : '' ?>">
             <div class="rv-head">
               <?= $starRow($rating) ?>
@@ -193,7 +224,7 @@ ob_start(); ?>
             <p class="rv-text">«<?= h($r['text']) ?>»</p>
             <?php $rvName = $r['author'] ?: 'Участник конкурса'; ?>
             <div class="rv-meta">
-              <span class="rv-avatar" aria-hidden="true"><?= h($initialsOf($rvName)) ?></span>
+              <span class="rv-avatar" role="img" aria-label="Аватар: <?= h($rvName) ?>"><?= h($initialsOf($rvName)) ?></span>
               <div class="rv-namewrap">
                 <p class="rv-author"><?= h($rvName) ?></p>
                 <p class="rv-date"><?= h(ru_date($r['created_at'])) ?></p>
@@ -208,6 +239,10 @@ ob_start(); ?>
           </div>
         <?php endforeach; ?>
         <p class="rv-none">Среди отзывов на этой странице нет подходящих под фильтр. Сбросьте фильтр или откройте другие страницы.</p>
+        </div>
+        <button type="button" class="rv-arrow rv-arrow--next" aria-label="Следующие отзывы" aria-controls="rvGrid">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       <?php if ($pagesTotal > 1): ?>
@@ -291,7 +326,29 @@ ob_start(); ?>
       if (vis) shown++;
     });
     grid.classList.toggle('rv-empty', shown === 0);
+    grid.scrollLeft = 0;
+    updateArrows();
   }
+
+  /* Стрелки карусели (десктоп); свайп на мобиле - нативный scroll-snap. */
+  var prevBtn = document.querySelector('.rv-arrow--prev');
+  var nextBtn = document.querySelector('.rv-arrow--next');
+  function updateArrows() {
+    if (!prevBtn || !nextBtn) return;
+    var max = grid.scrollWidth - grid.clientWidth - 1;
+    prevBtn.disabled = grid.scrollLeft <= 1;
+    nextBtn.disabled = max <= 0 || grid.scrollLeft >= max;
+  }
+  function step() {
+    var card = grid.querySelector('.rv-card');
+    var w = card ? card.getBoundingClientRect().width + 24 : grid.clientWidth * 0.9;
+    return Math.max(w, grid.clientWidth * 0.5);
+  }
+  if (prevBtn) prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -step(), behavior: 'smooth' }); });
+  if (nextBtn) nextBtn.addEventListener('click', function () { grid.scrollBy({ left: step(), behavior: 'smooth' }); });
+  grid.addEventListener('scroll', updateArrows, { passive: true });
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
 
   chips.forEach(function (c) {
     c.addEventListener('click', function () {

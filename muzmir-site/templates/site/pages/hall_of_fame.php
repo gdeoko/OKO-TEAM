@@ -154,9 +154,10 @@ ob_start(); ?>
   -webkit-background-clip:text;background-clip:text;opacity:.28;letter-spacing:.02em}
 .lau-top{display:flex;align-items:center;gap:12px;padding-right:34px}
 .lau-ava{position:relative;width:52px;height:52px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
 .lau-ava::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--glass-brd)}
-.lau-ava svg{width:24px;height:24px}
+.lau-ava svg{width:24px;height:24px;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+@media(hover:hover){.lau-card:hover .lau-ava{transform:scale(1.06)}.lau-card:hover .lau-ava svg{transform:rotate(10deg)}}
 .lau-name{font-family:var(--ff-serif);font-weight:700;font-size:1.14rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
 .lau-city{color:var(--muted);font-size:.82rem;margin-top:2px;display:flex;align-items:center;gap:5px}
 .lau-city svg{width:13px;height:13px;color:var(--gold-2);flex:none}
@@ -210,7 +211,7 @@ ob_start(); ?>
   background:linear-gradient(180deg,var(--gold),var(--line));opacity:.55}
 .star-step{position:relative;display:flex;gap:16px;align-items:flex-start;z-index:1}
 .star-num{position:relative;width:46px;height:46px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-display);font-size:1.35rem;background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+  font-family:var(--ff-display);font-size:1.35rem;background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
 .star-num::after{content:"";position:absolute;inset:-4px;border-radius:16px;border:1px solid var(--glass-brd)}
 .star-step h3{margin:4px 0 6px;color:var(--text)}
 .star-step p{margin:0;color:var(--text-dim);font-size:.96rem}

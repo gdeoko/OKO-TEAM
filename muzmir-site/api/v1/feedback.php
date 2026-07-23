@@ -4,6 +4,11 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_post();
 
+// --- Проверка источника (Origin/Referer принадлежит своему домену) + CSRF-токен ---
+if (!auth_origin_ok() || !csrf_check()) {
+    json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+}
+
 if (!rate_ok('feedback:' . client_ip(), 10, 3600)) {
     json_out(['ok' => false, 'error' => 'Слишком много обращений, попробуйте позже'], 429);
 }

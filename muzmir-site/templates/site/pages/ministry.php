@@ -88,14 +88,23 @@ ob_start(); ?>
 /* ---- Поддержка министерства ---- */
 .ms-lead{max-width:760px;margin:0 auto;color:var(--text-dim)}
 .ms-lead strong{color:var(--gold-deep);font-weight:700}
-.ms-stats-glow{position:relative}
-.ms-stats-glow::before{content:"";position:absolute;left:50%;top:-70px;width:min(700px,120%);height:340px;transform:translateX(-50%);
+.ms-stats-glow{position:relative;overflow:hidden}
+.ms-stats-glow::before{content:"";position:absolute;left:50%;top:-70px;width:min(700px,100%);height:340px;transform:translateX(-50%);
   background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:0}
 .ms-stats-glow>*{position:relative;z-index:1}
 .stats .stat{position:relative;overflow:hidden}
 .stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 .partners img{filter:grayscale(.2)}
-@media(hover:hover){.partners img:hover{filter:none}}
+@media(hover:hover){
+  .partners img{transition:transform .28s cubic-bezier(.2,.8,.2,1),filter .28s ease}
+  .partners img:hover{filter:none;transform:translateY(-4px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .ms-item,.ms-zoom,.partners img{transition:none}
+  .ms-item:hover{transform:none}
+  .ms-item:hover .ms-zoom{transform:none}
+  .reveal.in .ms-dtrack i{transition:none}
+}
 
 /* Инфографика охвата */
 .ms-cover{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:stretch}
@@ -123,7 +132,7 @@ ob_start(); ?>
 /* Фильтр по региону */
 .ms-filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:36px 0 28px}
 .ms-filter{padding:9px 17px;font-size:.85rem;white-space:nowrap}
-.ms-filter.active{background:var(--grad-gold);color:#1a1206;border-color:transparent;box-shadow:var(--shadow-3d)}
+.ms-filter.active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent;box-shadow:var(--shadow-3d)}
 @media(max-width:640px){
   .ms-filters{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
@@ -148,7 +157,7 @@ ob_start(); ?>
   padding:4px 9px;border-radius:999px;background:color-mix(in srgb,var(--info) 16%,var(--panel-solid));
   color:var(--info);border:1px solid color-mix(in srgb,var(--info) 30%,transparent)}
 .ms-zoom{position:absolute;bottom:12px;right:12px;width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;background:var(--grad-gold);color:#1a1206;
+  display:grid;place-items:center;background:var(--grad-gold);color:var(--gold-fg);
   box-shadow:0 6px 16px rgba(139,111,31,.4)}
 .ms-zoom svg{width:16px;height:16px}
 .ms-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}

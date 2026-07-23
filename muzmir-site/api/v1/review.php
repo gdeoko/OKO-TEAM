@@ -4,6 +4,11 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_post();
 
+// --- Защита от CSRF: строгий same-origin + токен формы (_csrf) ---
+if (!auth_origin_ok() || !csrf_check()) {
+    json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+}
+
 $u = current_user();
 if (!$u) json_out(['ok' => false, 'error' => 'Требуется вход в личный кабинет'], 401);
 

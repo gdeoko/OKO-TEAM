@@ -80,7 +80,7 @@ ob_start(); ?>
 #faqRoot .faq-chip.is-active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent;box-shadow:var(--shadow-btn)}
 #faqRoot .faq-chip .cn{font-size:.75rem;font-weight:800;min-width:22px;height:20px;padding:0 6px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:var(--gold-soft);color:var(--gold-ink)}
 [data-theme="dark"] #faqRoot .faq-chip .cn{color:var(--gold)}
-#faqRoot .faq-chip.is-active .cn{background:rgba(26,18,6,.18);color:var(--gold-fg)}
+#faqRoot .faq-chip.is-active .cn{background:color-mix(in srgb,var(--gold-fg) 18%,transparent);color:var(--gold-fg)}
 #faqRoot .faq-count{margin:0 0 22px;font-size:.86rem;color:var(--muted)}
 #faqRoot .faq-count b{color:var(--gold-ink);font-weight:800}
 [data-theme="dark"] #faqRoot .faq-count b{color:var(--gold)}
@@ -111,10 +111,15 @@ ob_start(); ?>
 #faqRoot .faq-empty{text-align:center;color:var(--muted);padding:40px 10px;display:none}
 #faqRoot .faq-empty svg{width:46px;height:46px;color:var(--gold);opacity:.5;margin-bottom:12px}
 #faqRoot.no-results .faq-empty{display:block}
+/* Мелкие подписи в чипах не должны рваться посреди слова. */
+#faqRoot .faq-chip{word-break:normal;overflow-wrap:normal}
 @media (max-width:520px){
   #faqRoot .acc-q{padding:16px}
   #faqRoot .acc-a{padding:0 16px 0 19px}
   #faqRoot .faq-group-title .g-n{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  #faqRoot .acc-item,#faqRoot .faq-chip:active{transform:none}
 }
 </style>
 

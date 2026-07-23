@@ -63,7 +63,7 @@ ob_start(); ?>
 /* Заголовок секции с номером */
 .order-sec-head{display:flex;align-items:center;gap:12px;margin:30px 0 18px}
 .order-sec-head:first-of-type{margin-top:4px}
-.order-sec-n{width:30px;height:30px;flex:none;border-radius:50%;background:var(--grad-gold);color:#1a1206;
+.order-sec-n{width:30px;height:30px;flex:none;border-radius:50%;background:var(--grad-gold);color:var(--gold-fg);
   display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:800;font-size:1rem;box-shadow:var(--shadow-btn)}
 .order-sec-head h3{margin:0;font-size:1.16rem}
 
@@ -117,6 +117,30 @@ ob_start(); ?>
 .pay-method b{color:var(--text)}
 
 #formMsg{text-align:center;margin-top:14px;font-weight:600;min-height:1.2em}
+
+/* ===== Моушен-микровзаимодействия (только transform/opacity) ===== */
+.award-box>label{transition:background .16s,border-color .16s,transform .12s!important}
+.award-box>label:active{transform:scale(.995)}
+.award-box .award-item{transition:transform .12s}
+.award-box>label:has(.award-item:checked) .award-item{transform:scale(1.08)}
+.pay-method{transition:box-shadow .2s,transform .12s}
+.pay-method:active{transform:scale(.995)}
+.order-sec-n{transition:transform .2s,box-shadow .2s}
+.total-sum{transition:transform .2s ease;will-change:transform}
+#submitBtn{transition:transform .12s,box-shadow .2s,background .2s}
+#submitBtn:active{transform:translateY(1px)}
+
+/* ===== Адаптив 360/390: без горизонтального оверфлоу и кривых переносов ===== */
+.order-card input,.order-card select,.order-card textarea{max-width:100%}
+#submitBtn{word-break:normal;overflow-wrap:normal;white-space:normal}
+.total-bar{overflow-wrap:anywhere}
+
+/* ===== Уважение к prefers-reduced-motion ===== */
+@media(prefers-reduced-motion:reduce){
+  .award-box>label,.award-item,.pay-method,.order-sec-n,.total-sum,#submitBtn{transition:none!important}
+  .award-box>label:active,.pay-method:active,#submitBtn:active,
+  .award-box>label:has(.award-item:checked) .award-item{transform:none}
+}
 </style>
 
 <section class="section section--parchment">

@@ -62,7 +62,7 @@ ob_start(); ?>
     <div class="reveal hero-media">
       <span class="hero-ring" aria-hidden="true"></span>
       <span class="hero-ring hero-ring--2" aria-hidden="true"></span>
-      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380">
+      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380" style="view-transition-name:hero-logo">
     </div>
     <div class="reveal">
       <p class="eyebrow eyebrow--script">Искусство объединяет мир</p>
@@ -198,7 +198,7 @@ ob_start(); ?>
               <?php if ($cvCode !== ''): ?><span class="cc-code"><?= h($cvCode) ?></span><?php endif; ?>
             </span>
             <?php if ($cvCover !== ''): ?>
-              <img class="cc-img" src="<?= h($cvCover) ?>" alt="Афиша конкурса «<?= h($cvName) ?>»" loading="lazy" decoding="async" onerror="this.remove()">
+              <img class="cc-img" src="<?= h($cvCover) ?>" alt="Афиша конкурса «<?= h($cvName) ?>»" loading="lazy" decoding="async" onerror="this.remove()" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?>">
               <span class="cc-scrim" aria-hidden="true"></span>
             <?php endif; ?>
             <span class="cc-cover-badge badge badge--<?= $isOpen ? 'open' : 'judging' ?>"><?= $isOpen ? 'Приём открыт' : 'Идёт оценка' ?></span>
@@ -307,6 +307,8 @@ ob_start(); ?>
       <p class="eyebrow eyebrow--script">Будьте в курсе</p>
       <h2>Узнавайте первыми о новых конкурсах</h2>
       <form method="post" action="<?= url('/api/v1/subscribe') ?>" class="subscribe-form" onsubmit="return muzmirSubscribe(event)">
+        <?= csrf_field() ?>
+        <input type="hidden" name="source" value="home_newsletter">
         <input type="email" name="email" placeholder="Ваша электронная почта" required>
         <button class="btn btn--primary" type="submit">Подписаться</button>
       </form>
@@ -376,7 +378,21 @@ ob_start(); ?>
 .comp-card .cc-body h3{margin:2px 0 0;overflow-wrap:anywhere}
 .comp-card .cc-meta{margin:0}
 .comp-card .btn{margin-top:auto}
-@media (prefers-reduced-motion:reduce){.hero-media .hero-ring{animation:none}}
+
+/* Моушен-микровзаимодействия (только transform/opacity) */
+.comp-card .cc-img{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+@media (hover:hover){
+  .comp-card:hover .cc-img{transform:scale(1.05)}
+  .partners a{transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s ease}
+  .partners a:hover{transform:translateY(-4px)}
+  .hero-trust li{transition:transform .2s ease}
+  .hero-trust li:hover{transform:translateY(-2px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-media .hero-ring{animation:none}
+  .comp-card .cc-img,.partners a,.hero-trust li{transition:none}
+  .comp-card:hover .cc-img,.partners a:hover,.hero-trust li:hover{transform:none}
+}
 </style>
 <script>
 function muzmirSubscribe(e){

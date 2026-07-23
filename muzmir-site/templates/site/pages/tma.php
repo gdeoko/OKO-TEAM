@@ -29,13 +29,17 @@ $dipCount  = count($diplomas);
 <meta name="theme-color" content="#0b0a0d">
 <title>КЦ «Музыкальный Мир»</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Marck+Script&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b0a0d;--bg-2:#121016;--panel:rgba(30,26,20,.6);--glass:rgba(28,24,18,.65);--glass-brd:rgba(201,168,76,.22);
-  --gold:#E8C25A;--gold-2:#C9A84C;--gold-soft:rgba(232,194,90,.14);
+  --gold:#E8C25A;--gold-2:#C9A84C;--gold-soft:rgba(232,194,90,.14);--gold-fg:#1a1206;
   --text:#F3ECDA;--text-dim:#b8ad93;--muted:#8b8069;--line:rgba(201,168,76,.16);
   --mint:#8FBC94;--error:#E27B7B;--radius:16px;--radius-sm:12px;
   --grad-gold:linear-gradient(135deg,#F3D57C 0%,#E8C25A 40%,#B98F2E 100%);
-  --ff-serif:"Cormorant Garamond",Georgia,serif;--ff-body:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --ff-display:"Playfair Display",Georgia,serif;--ff-serif:"Playfair Display",Georgia,serif;
+  --ff-body:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;--ff-script:"Marck Script",cursive;
   --nav-h:60px;color-scheme:dark}
 :root[data-theme="light"]{--bg:#FFFCF5;--bg-2:#FFF8E1;--panel:rgba(255,255,255,.8);--glass:rgba(255,255,255,.75);--glass-brd:rgba(201,168,76,.28);
   --gold:#C9A84C;--gold-2:#B8973B;--gold-soft:rgba(201,168,76,.1);
@@ -81,7 +85,7 @@ a{color:var(--gold-2);text-decoration:none}
 .badge.ok{background:rgba(143,188,148,.16);color:var(--mint);border-color:rgba(143,188,148,.3)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;
   padding:13px 18px;border-radius:13px;border:0;cursor:pointer;width:100%;font-size:.98rem;
-  background:var(--grad-gold);color:#1a1206;box-shadow:0 8px 24px rgba(201,168,76,.3);-webkit-tap-highlight-color:transparent}
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 8px 24px rgba(201,168,76,.3);-webkit-tap-highlight-color:transparent}
 .btn:active{transform:translateY(1px)}
 .btn svg{width:18px;height:18px}
 .btn.ghost{background:var(--glass);border:1.5px solid var(--glass-brd);color:var(--gold-2);box-shadow:none}
@@ -112,10 +116,10 @@ a{color:var(--gold-2);text-decoration:none}
 .tabbar button.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:26px;height:2px;border-radius:2px;background:var(--grad-gold)}
 .tabbar svg{width:22px;height:22px}
 .tabbar .tb-count{position:absolute;top:5px;left:calc(50% + 9px);min-width:15px;height:15px;padding:0 3px;
-  border-radius:999px;background:var(--grad-gold);color:#1a1206;font-size:.6rem;font-weight:800;display:grid;place-items:center;line-height:1}
+  border-radius:999px;background:var(--grad-gold);color:var(--gold-fg);font-size:.6rem;font-weight:800;display:grid;place-items:center;line-height:1}
 .panel{display:none;animation:fade .25s ease}.panel.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.panel,.btn,.qa button,.qa a{animation:none;transition:none}}
+@media (prefers-reduced-motion:reduce){.panel,.btn,.qa button,.qa a,.tabbar button,body{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>

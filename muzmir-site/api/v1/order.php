@@ -5,8 +5,8 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_post();
 
-// --- Строгая проверка источника (Origin/Referer принадлежит своему домену) ---
-if (!request_same_origin()) {
+// --- Строгая проверка источника (Origin/Referer принадлежит своему домену) + CSRF-токен ---
+if (!request_same_origin() || !csrf_check()) {
     json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
 }
 
@@ -110,6 +110,42 @@ if ($payment && !empty($payment['id'])) {
     }
 }
 audit('order', 'awards_orders', $orderId, ['amount' => $amount]);
+
+// --- Данные заказа для уведомлений ---
+$buyerName  = input('full_name');
+$buyerEmail = mb_strtolower(input('email'));
+$compName   = $comp['name'] ?? input('competition');
+$itemsText  = implode(', ', array_map(
+    static fn($it) => $it['item'] . ' (' . $it['kind'] . ') - ' . money((int) $it['price']),
+    $normItems
+));
+
+// --- уведомление админу (по образцу apply.php) ---
+if (function_exists('tg_notify_admin')) {
+    tg_notify_admin(
+        "Новый заказ наградных материалов №{$orderId}\n"
+        . ($compName !== '' ? $compName . "\n" : '')
+        . ($buyerName !== '' ? $buyerName . "\n" : '')
+        . $itemsText . "\n"
+        . 'Сумма: ' . money($amount)
+    );
+}
+
+// --- письмо-подтверждение покупателю в очередь ---
+if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
+    $subject = 'Заказ наградного материала принят';
+    $html = '<p>Здравствуйте' . ($buyerName !== '' ? ', ' . h($buyerName) : '') . '!</p>'
+          . '<p>Ваш заказ наградного материала <b>№' . h((string) $orderId) . '</b> принят.</p>'
+          . '<p><b>Состав заказа:</b> ' . h($itemsText) . '</p>'
+          . '<p><b>Сумма к оплате:</b> ' . h(money($amount)) . '</p>'
+          . '<p>После оплаты мы изготовим и отправим материалы, а трек-номер для отслеживания '
+          . 'пришлём на этот адрес.</p>';
+    if (function_exists('mail_queue')) {
+        mail_queue($buyerEmail, $buyerName, $subject, $html);
+    } elseif (tbl_exists('mail_queue')) {
+        insert('mail_queue', ['to_email' => $buyerEmail, 'to_name' => $buyerName, 'subject' => $subject, 'body' => $html]);
+    }
+}
 
 json_out([
     'ok'       => true,

@@ -155,7 +155,7 @@ ob_start(); ?>
 .cab-ava{width:88px;height:88px;border-radius:26px;flex:none;position:relative;overflow:hidden;
   background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff-display);font-weight:800;font-size:2.2rem;
-  box-shadow:0 12px 30px -8px rgba(139,111,31,.5),inset 0 0 24px rgba(26,18,6,.16),0 0 0 1px var(--glass-brd)}
+  box-shadow:0 12px 30px -8px rgba(139,111,31,.5),inset 0 0 24px color-mix(in srgb,var(--gold-fg) 16%,transparent),0 0 0 1px var(--glass-brd)}
 .cab-ava::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4);background:linear-gradient(160deg,rgba(255,255,255,.28),transparent 45%)}
 .cab-ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -251,10 +251,18 @@ ob_start(); ?>
 .cab-logout{display:inline-flex;align-items:center;gap:8px;margin-top:8px;color:var(--muted);font-size:.9rem;font-weight:600}
 .cab-logout:hover{color:var(--error)}
 .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+/* --- Кнопка «Паспорт участника» --- */
+.cab-passport{margin-bottom:16px}
 @media(max-width:560px){
   .cab-ava{width:66px;height:66px;border-radius:20px;font-size:1.7rem}
   .cab-stats{gap:8px}
   .cab-step small{font-size:.6rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .cab-panel.active{animation:none}
+  .cab-card,.cab-stat,.cab-step,.cab-step::before,.cab-dot,.switch-ui,.switch-ui::after{transition:none}
+  .cab-card:hover,.cab-stat:hover{transform:none}
+  .cab-bar i{transition:none}
 }
 </style>
 <section class="section">
@@ -266,7 +274,7 @@ ob_start(); ?>
         <svg class="cab-hero-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         <div class="cab-hero-top">
           <div class="cab-ava">
-            <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
+            <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Фото профиля: <?= h($user['full_name'] ?: 'участник') ?>" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
           </div>
           <div class="cab-id">
             <h1><?= h($user['full_name'] ?: 'Участник') ?></h1>
@@ -336,6 +344,9 @@ ob_start(); ?>
         <!-- Мои дипломы -->
         <div class="cab-panel" id="tab-diplomas" role="tabpanel">
           <h2>Мои дипломы</h2>
+          <?php if ($diplomas): ?>
+            <a class="btn btn--primary cab-passport" href="<?= url('/api/v1/passport') ?>" rel="nofollow"><?= $icons['dl'] ?> Скачать паспорт участника (все дипломы, PDF)</a>
+          <?php endif; ?>
           <?php if (!$diplomas): ?>
             <div class="cab-card cab-empty"><?= $icons['diploma'] ?><p>Дипломы появятся здесь после оценки Ваших работ жюри.</p></div>
           <?php else: foreach ($diplomas as $k => $d): ?>
@@ -400,7 +411,7 @@ ob_start(); ?>
               <input type="hidden" name="action" value="profile">
               <div class="cab-avaedit">
                 <div class="cab-ava">
-                  <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
+                  <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Текущее фото профиля" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
                 </div>
                 <div class="field" style="flex:1;margin:0;min-width:0">
                   <label for="p_ava">Фото профиля</label>

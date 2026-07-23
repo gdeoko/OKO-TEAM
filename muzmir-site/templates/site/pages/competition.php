@@ -64,6 +64,15 @@ $results = all(
     [$c['id']]
 );
 
+/* Призовые тиры (для читаемого «пьедестала» отдельно от плоской таблицы). */
+$podium = ['gp' => [], 'lau' => []];
+foreach ($results as $r) {
+    $res = mb_strtoupper((string)$r['result']);
+    if (mb_strpos($res, 'ГРАН') !== false)          $podium['gp'][]  = $r;
+    elseif (mb_strpos($res, 'ЛАУРЕАТ') !== false)    $podium['lau'][] = $r;
+}
+$hasPodium = $podium['gp'] || $podium['lau'];
+
 $applyUrl = url('/apply') . '?competition=' . rawurlencode($c['slug']);
 
 /* Описание конкурса. */
@@ -99,6 +108,8 @@ $ic = [
   'scale'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 0 0 6 0zM17 7l-3 6a3 3 0 0 0 6 0z"/></svg>',
   'medal'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="15" r="6"/><path d="M8.5 10 5 2M15.5 10 19 2M12 12v3l2 1"/></svg>',
   'gavel'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4l6 6M9 9l6 6M11 6l3-3 7 7-3 3zM3 21l7-7M3 21h7"/></svg>',
+  'share'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+  'crown'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7l4.5 4L12 5l4.5 6L21 7l-1.6 12H4.6z"/><path d="M4.6 19h14.8"/></svg>',
 ];
 
 /* Инфо-строки для сводки. */
@@ -163,7 +174,7 @@ $chev = '<span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="current
 
 ob_start(); ?>
 <section class="comp-banner">
-  <div class="comp-banner__bg"<?= !empty($c['cover']) ? ' style="background-image:url(\'' . h($c['cover']) . '\')"' : '' ?>></div>
+  <div class="comp-banner__bg" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?><?= !empty($c['cover']) ? ';background-image:url(\'' . h($c['cover']) . '\')' : '' ?>"></div>
   <div class="container comp-banner__inner reveal">
     <div class="comp-banner__badges">
       <span class="badge badge--<?= $statusMap[0] ?>"><?= h($statusMap[1]) ?></span>
@@ -181,6 +192,7 @@ ob_start(); ?>
       <?php if (!empty($c['regulation_pdf'])): ?>
         <a class="btn btn--ghost btn--lg" href="<?= h($c['regulation_pdf']) ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение (PDF)</a>
       <?php endif; ?>
+      <button class="btn btn--ghost btn--lg" type="button" data-share data-share-title="<?= h($c['name']) ?>" data-share-url="<?= h(url('/competition/' . $c['slug'])) ?>"><?= $ic['share'] ?> Поделиться</button>
     </div>
   </div>
 </section>
@@ -439,6 +451,33 @@ ob_start(); ?>
       <div class="comp-panel" data-panel="results">
         <?php if ($results): ?>
           <p>Итоги конкурса. Наградные документы направлены на электронную почту участников.</p>
+
+          <?php if ($hasPodium): ?>
+            <?php
+              $podiumGroups = [];
+              if ($podium['gp'])  $podiumGroups[] = ['gp',  'crown', 'Гран-при', $podium['gp']];
+              if ($podium['lau']) $podiumGroups[] = ['lau', 'medal', 'Лауреаты', $podium['lau']];
+            ?>
+            <div class="comp-podium">
+              <?php foreach ($podiumGroups as [$tone, $icoKey, $groupTitle, $rows]): ?>
+                <div class="comp-podium__group">
+                  <h3 class="comp-podium__head"><span class="comp-h3ic"><?= $ic[$icoKey] ?></span><?= h($groupTitle) ?> <span class="comp-count"><?= count($rows) ?></span></h3>
+                  <div class="comp-podium__grid">
+                    <?php foreach ($rows as $r): ?>
+                      <div class="pwin pwin--<?= $tone ?>">
+                        <span class="pwin__badge"><?= h($r['result']) ?></span>
+                        <b class="pwin__name"><?= h($r['is_group'] && $r['group_name'] !== '' ? $r['group_name'] : $r['full_name']) ?></b>
+                        <?php if (!empty($r['work_title'])): ?><span class="pwin__work"><?= h($r['work_title']) ?></span><?php endif; ?>
+                        <?php if (!empty($r['nomination'])): ?><span class="pwin__nom"><?= h($r['nomination']) ?></span><?php endif; ?>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+            <h3 class="comp-podium__all">Все участники</h3>
+          <?php endif; ?>
+
           <div class="scroll-x">
             <table class="comp-table">
               <thead><tr><th>Участник</th><th>Номинация</th><th>Результат</th></tr></thead>
@@ -470,7 +509,7 @@ ob_start(); ?>
 </section>
 
 <style>
-.comp-banner{position:relative;background:var(--grad-gold);color:#1a1206;overflow:hidden;padding:64px 0}
+.comp-banner{position:relative;background:var(--grad-gold);color:var(--gold-fg);overflow:hidden;padding:64px 0}
 .comp-banner__bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.32}
 .comp-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,14,3,.32),rgba(20,14,3,.6))}
 .comp-banner__inner{position:relative;z-index:1;max-width:820px}
@@ -478,8 +517,8 @@ ob_start(); ?>
 .comp-banner__inner h1{color:#fff;margin-bottom:.3em}
 .comp-banner__lead{font-size:1.12rem;color:rgba(255,255,255,.92);max-width:640px;margin-bottom:24px}
 .comp-banner__cta{display:flex;flex-wrap:wrap;gap:14px}
-.comp-banner .badge--intl{background:rgba(255,252,245,.94);color:#1a1206}
-.comp-banner .badge--open{background:rgba(143,188,148,.95);color:#173a1e}
+.comp-banner .badge--intl{background:rgba(255,252,245,.94);color:var(--gold-fg)}
+.comp-banner .badge--open{background:color-mix(in srgb,var(--mint) 92%,white);color:#173a1e}
 .comp-banner .badge--closed{background:rgba(255,252,245,.9);color:#8a2e2e}
 
 /* Ключевые факты */
@@ -530,7 +569,7 @@ ob_start(); ?>
 .comp-chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
 .comp-chip{display:inline-block;padding:7px 15px;border-radius:999px;background:var(--gold-soft);
   border:1px solid var(--glass-brd);color:var(--gold);font-size:.9rem;font-weight:600}
-.comp-chip--ok{background:rgba(143,188,148,.16);border-color:rgba(143,188,148,.4);color:var(--mint,#5f9c67)}
+.comp-chip--ok{background:color-mix(in srgb,var(--mint) 16%,transparent);border-color:color-mix(in srgb,var(--mint) 40%,transparent);color:var(--mint)}
 .comp-chip--no{background:rgba(200,87,87,.12);border-color:rgba(200,87,87,.35);color:#c85757}
 .comp-note{margin-top:16px;padding:12px 16px;border-left:3px solid var(--gold);background:var(--gold-soft);
   border-radius:0 var(--radius-sm) var(--radius-sm) 0;color:var(--text-dim);font-size:.92rem}
@@ -557,7 +596,7 @@ ob_start(); ?>
 .comp-plat{padding:16px 18px;border-radius:var(--radius-sm);background:var(--panel);border:1px solid var(--glass-brd);backdrop-filter:blur(10px)}
 .comp-plat__head{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--text);margin-bottom:10px}
 .comp-plat__head svg{width:20px;height:20px}
-.comp-plat--ok .comp-plat__head svg{color:var(--mint,#5f9c67)}
+.comp-plat--ok .comp-plat__head svg{color:var(--mint)}
 .comp-plat--no .comp-plat__head svg{color:#c85757}
 
 /* Оценивание — полосы */
@@ -594,6 +633,47 @@ ob_start(); ?>
   border-radius:var(--radius);padding:44px 24px;box-shadow:var(--shadow-card);backdrop-filter:blur(12px)}
 .comp-final h2{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
 .comp-final p{color:var(--text-dim);max-width:520px;margin:0 auto 22px}
+
+/* Пьедестал победителей — читаемо, отдельно от плоской таблицы */
+.comp-podium{display:grid;gap:26px;margin:20px 0 8px}
+.comp-podium__head{margin-bottom:14px}
+.comp-podium__grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.comp-podium__all{margin:30px 0 12px;color:var(--text)}
+.pwin{position:relative;display:flex;flex-direction:column;gap:6px;padding:18px 20px;border-radius:var(--radius-sm);
+  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(10px);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.pwin::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:var(--radius-sm) 0 0 var(--radius-sm);
+  background:var(--gold-2);opacity:.55}
+.pwin--gp{background:radial-gradient(150% 100% at 100% 0,var(--gold-soft),transparent 55%),var(--panel)}
+.pwin--gp::before{width:4px;background:var(--grad-gold);opacity:.95}
+.pwin__badge{display:inline-flex;align-self:flex-start;align-items:center;font-family:var(--ff-body);font-weight:800;
+  font-size:.74rem;letter-spacing:.04em;text-transform:uppercase;padding:5px 12px;border-radius:999px;
+  color:var(--gold-ink);background:var(--gold-soft);border:1px solid var(--glass-brd)}
+.pwin--gp .pwin__badge{color:var(--gold-fg);background:var(--grad-gold);border-color:transparent}
+[data-theme="dark"] .pwin__badge{color:var(--gold)}
+[data-theme="dark"] .pwin--gp .pwin__badge{color:var(--gold-fg)}
+.pwin__name{font-family:var(--ff-serif);color:var(--text);font-size:1.06rem;line-height:1.2;overflow-wrap:anywhere}
+.pwin__work{color:var(--muted);font-size:.88rem;overflow-wrap:anywhere}
+.pwin__nom{margin-top:2px;color:var(--text-dim);font-size:.82rem}
+@media (hover:hover){.pwin:hover{transform:translateY(-3px);box-shadow:var(--shadow-3d,var(--shadow-card))}}
+
+/* Моушен-микро: мягкий подъём инфо-карточек и чипов на hover */
+@media (hover:hover){
+  .comp-info__item{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+  .comp-info__item:hover{transform:translateY(-2px);box-shadow:var(--shadow-3d,var(--shadow-card))}
+  .comp-chip{transition:transform .2s ease}
+  .comp-chip:hover{transform:translateY(-1px)}
+  .comp-banner__cta [data-share]{transition:transform .2s ease}
+  .comp-banner__cta [data-share]:active{transform:scale(.97)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .comp-panel{animation:none}
+  .bar-fill{transition:none}
+  .pwin,.comp-info__item,.comp-chip,.comp-banner__cta [data-share]{transition:none}
+  .pwin:hover,.comp-info__item:hover,.comp-chip:hover{transform:none}
+  .comp-banner__bg{view-transition-name:none!important}
+}
 
 @media (max-width:960px){
   .comp-info{grid-template-columns:repeat(2,1fr)}

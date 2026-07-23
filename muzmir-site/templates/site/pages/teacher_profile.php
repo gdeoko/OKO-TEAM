@@ -114,7 +114,7 @@ ob_start(); ?>
 .tp-head::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(130% 150% at 8% -20%,var(--gold-soft),transparent 55%)}
 .tp-ava{position:relative;flex:0 0 auto;width:118px;height:118px;border-radius:50%;
-  background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
   font-family:var(--ff-display);font-weight:800;letter-spacing:.02em;font-size:2.8rem;box-shadow:var(--shadow-btn)}
 .tp-ava::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--gold) 42%,transparent)}
 .tp-ava::before{content:"";position:absolute;inset:-13px;border-radius:50%;z-index:-1;
@@ -126,7 +126,10 @@ ob_start(); ?>
 .tp-id h1{margin:.06em 0;font-size:clamp(1.55rem,4.4vw,2.5rem);line-height:1.06;overflow-wrap:anywhere}
 .tp-id p.role{color:var(--muted);font-size:.95rem;margin:4px 0 0}
 .tp-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-@media(max-width:640px){.tp-head{flex-direction:column;text-align:center;padding:28px 20px}.tp-badges{justify-content:center}}
+.tp-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tp-actions .btn{transition:transform .2s ease,border-color .2s ease,color .2s ease}
+@media(hover:hover){.tp-actions .btn:hover{transform:translateY(-2px)}}
+@media(max-width:640px){.tp-head{flex-direction:column;text-align:center;padding:28px 20px}.tp-badges,.tp-actions{justify-content:center}}
 
 /* Инфографика */
 .tp-stats{margin-top:26px}
@@ -178,6 +181,12 @@ ob_start(); ?>
             <?php if ($wins['Гран-при'] > 0): ?><span class="badge badge--judging">Подготовил обладателей Гран-при</span><?php endif; ?>
             <?php if ($hasIntl): ?><span class="badge badge--intl">Международный уровень</span><?php endif; ?>
             <span class="badge badge--open">Действующий наставник</span>
+          </div>
+          <?php $shareUrl = rtrim(cfgv('base_url'), '/') . '/pedagog/' . $teacher['slug']; ?>
+          <div class="tp-actions">
+            <button class="btn btn--ghost" type="button" data-share
+                    data-share-title="<?= h($teacher['name']) ?> - КЦ Музыкальный Мир"
+                    data-share-url="<?= h($shareUrl) ?>">Поделиться</button>
           </div>
         </div>
       </div>
@@ -242,7 +251,7 @@ ob_start(); ?>
     <?php else:
       http_response_code(404); ?>
       <div class="reveal" style="text-align:center;background:var(--panel);backdrop-filter:blur(12px);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:52px 28px;box-shadow:var(--shadow-card)">
-        <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2M16 11l2 2 4-4"/></svg>
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--gold)" stroke-width="1.4" style="margin:0 auto 14px"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2M16 11l2 2 4-4"/></svg>
         <h1 style="font-size:clamp(1.6rem,4vw,2.4rem)">Профиль пока не опубликован</h1>
         <p style="color:var(--muted);max-width:460px;margin:0 auto 22px">Публичный профиль педагога появляется, когда его ученики получают наградные документы по итогам конкурсов. Проверьте ссылку или посмотрите действующие конкурсы.</p>
         <a class="btn btn--primary" href="<?= url('/competitions') ?>">Действующие конкурсы</a>

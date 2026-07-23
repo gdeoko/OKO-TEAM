@@ -359,9 +359,25 @@ ob_start(); ?>
 .vote-note{font-size:.84rem;color:var(--error);text-align:center;margin-top:6px}
 <?php endif; ?>
 
+/* --- Моушен-микро (только transform/opacity; глушится глобальным prefers-reduced-motion) --- */
+.galx-program .timeline-item{transition:transform .25s ease}
+.galx-program .timeline-item::before{transition:transform .25s ease,box-shadow .25s ease}
+.galx-nominee__ic{transition:transform .3s ease}
+.galx-cta__ic svg{transition:transform .3s ease}
+@media(hover:hover){
+  .galx-program .timeline-item:hover{transform:translateX(4px)}
+  .galx-program .timeline-item:hover::before{transform:scale(1.18);box-shadow:0 0 0 4px var(--gold-soft),0 0 12px rgba(201,168,76,.7)}
+  .galx-nominee:hover .galx-nominee__ic{transform:scale(1.08) rotate(-4deg)}
+  .galx-cta:hover .galx-cta__ic svg{transform:scale(1.1) rotate(6deg)}
+}
+
 @media (max-width:640px){
   .galx-join__steps{grid-template-columns:1fr}
   .galx-hero__cta .btn,.galx-cta__btns .btn{flex:1 1 100%}
+}
+@media (max-width:400px){
+  .vote-btn{min-width:0;width:100%}
+  .galx-nominee{padding:20px}
 }
 </style>
 
@@ -406,7 +422,7 @@ ob_start(); ?>
     fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'nominee_key=' + encodeURIComponent(key) + '&gala_id=main'
+      body: 'nominee_key=' + encodeURIComponent(key) + '&gala_id=main&_csrf=' + encodeURIComponent(<?= json_encode(csrf_token()) ?>)
     }).then(function (r) { return r.json(); }).then(function (d) {
       if (d.counts) render(d.counts, d.total);
       if (d.ok) { markVoted(d.voted); }

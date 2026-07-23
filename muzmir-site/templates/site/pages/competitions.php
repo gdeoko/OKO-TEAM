@@ -152,7 +152,7 @@ ob_start(); ?>
                 <?php if ($cvCode !== ''): ?><span class="cc-code"><?= h($cvCode) ?></span><?php endif; ?>
               </span>
               <?php if ($cvCover !== ''): ?>
-                <img class="cc-img" src="<?= h($cvCover) ?>" alt="Афиша конкурса «<?= h($cvName) ?>»" loading="lazy" decoding="async" onerror="this.remove()">
+                <img class="cc-img" src="<?= h($cvCover) ?>" alt="Афиша конкурса «<?= h($cvName) ?>»" loading="lazy" decoding="async" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?>" onerror="this.remove()">
                 <span class="cc-scrim" aria-hidden="true"></span>
               <?php endif; ?>
               <span class="cc-cover-badge badge badge--<?= $badgeClass ?>"><?= h($badgeLabel) ?></span>
@@ -193,7 +193,7 @@ ob_start(); ?>
   border-radius:999px;font-weight:800;font-size:.92rem;color:var(--muted);white-space:nowrap;
   transition:color .2s,background .2s,box-shadow .2s;text-decoration:none}
 .cf-tab:hover{color:var(--gold)}
-.cf-tab.is-active{background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+.cf-tab.is-active{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
 .cf-selects{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
 .cf-select{display:flex;flex-direction:column;gap:6px;min-width:190px}
 .cf-select>span{display:flex;align-items:center;gap:7px;font-size:.82rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
@@ -221,7 +221,7 @@ ob_start(); ?>
 .cc-cover--s0{--fb-a:#E6C766;--fb-b:#C9A84C}
 .cc-cover--s1{--fb-a:#F0D488;--fb-b:#B8973B}
 .cc-cover--s2{--fb-a:#E8CE8A;--fb-b:#A98A38;--fb-glow:rgba(245,200,156,.6)}
-.cc-cover--s3{--fb-a:#DEC97E;--fb-b:#8B6F1F;--fb-glow:rgba(143,188,148,.5)}
+.cc-cover--s3{--fb-a:#DEC97E;--fb-b:#8B6F1F;--fb-glow:color-mix(in srgb,var(--mint) 50%,transparent)}
 .cc-cover--s4{--fb-a:#EAD08A;--fb-b:#BE9C40}
 .cc-cover-badge{position:absolute;top:12px;left:12px;z-index:4;box-shadow:0 4px 16px rgba(0,0,0,.28);backdrop-filter:blur(6px)}
 .cc-body{display:flex;flex-direction:column;gap:12px;flex:1;padding:22px}
@@ -230,8 +230,8 @@ ob_start(); ?>
   text-transform:uppercase;padding:5px 12px;border-radius:999px;color:var(--gold-deep);
   background:var(--gold-soft);border:1px solid var(--glass-brd)}
 .cc-fee svg{color:var(--gold)}
-.cc-fee--free{color:#5f8a63;background:rgba(143,188,148,.14);border-color:rgba(143,188,148,.3)}
-.cc-fee--free svg{color:#8FBC94}
+.cc-fee--free{color:var(--mint);background:color-mix(in srgb,var(--mint) 14%,transparent);border-color:color-mix(in srgb,var(--mint) 30%,transparent)}
+.cc-fee--free svg{color:var(--mint)}
 .cc-title{margin:2px 0 0;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
 .cc-date{display:inline-flex;align-items:center;gap:6px}
 .cc-date svg{color:var(--gold);flex:none}
@@ -239,6 +239,20 @@ ob_start(); ?>
 
 /* Табы статуса: без JS фильтрует серверный класс, с JS - мгновенно. */
 .cf-grid--open .comp-card[data-fin="1"]{display:none}
+
+/* Моушен-микро: обложка мягко «дышит» при наведении на карточку, стрелка едет вправо */
+@media (hover:hover){
+  .comp-card .cc-img{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+  .comp-card:hover .cc-img{transform:scale(1.04)}
+  .comp-card .btn svg{transition:transform .25s ease}
+  .comp-card:hover .btn svg{transform:translateX(3px)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .comp-card .cc-img{transition:none;view-transition-name:none!important}
+  .comp-card:hover .cc-img{transform:none}
+  .comp-card .btn svg,.comp-card:hover .btn svg{transition:none;transform:none}
+}
 
 @media (max-width:640px){
   .cf-tab{padding:10px 20px;flex:1}
@@ -312,7 +326,33 @@ ob_start(); ?>
 </script>
 <?php
 $content = ob_get_clean();
+
+/* --- SEO: schema.org ItemList по открытым конкурсам (name, url). --- */
+$listItems = [];
+$pos = 0;
+foreach ($comps as $c) {
+    if (!in_array($c['status'], ['open', 'judging'], true)) continue;
+    $listItems[] = [
+        '@type'    => 'ListItem',
+        'position' => ++$pos,
+        'name'     => $c['name'],
+        'url'      => url('/competition/' . rawurlencode($c['slug'])),
+    ];
+}
+$jsonld = [];
+if ($listItems) {
+    $jsonld[] = [
+        '@context'        => 'https://schema.org',
+        '@type'           => 'ItemList',
+        'name'            => 'Открытые конкурсы КЦ «Музыкальный Мир»',
+        'url'             => url('/competitions'),
+        'numberOfItems'   => count($listItems),
+        'itemListElement' => $listItems,
+    ];
+}
+
 render_page('Конкурсы', $content, [
     'active' => '/competitions',
     'meta' => 'Каталог международных и всероссийских онлайн-конкурсов и фестивалей культуры и искусства КЦ «Музыкальный Мир». Открытые и завершённые конкурсы, подача заявок онлайн.',
+    'jsonld' => $jsonld ?: null,
 ]);

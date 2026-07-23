@@ -107,11 +107,16 @@ ob_start(); ?>
 .legal-ic::after{content:"";position:absolute;inset:-4px;border-radius:19px;border:1px solid var(--glass-brd)}
 .legal-card h3{margin:0 0 8px}
 .legal-card p{margin:0;color:var(--text-dim);line-height:1.55}
+/* Текст в карточках-целях — min-width:0, чтобы длинные слова не давали горизонтальный скролл. */
+.goal-card p,.legal-card>div{min-width:0}
 @media(max-width:560px){
   .title-row{flex-wrap:wrap;gap:6px}
   .title-name{min-width:0;flex:1 0 100%;order:1}
   .title-row .bar{order:2;flex:1}
   .title-band{order:3;min-width:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .goals-wrap .card:hover .goal-ic,.chip:hover{transform:none}
 }
 </style>
 

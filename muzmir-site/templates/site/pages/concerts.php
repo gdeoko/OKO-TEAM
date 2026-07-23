@@ -16,6 +16,28 @@ $icoCal = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 $icoPlay = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 6.5v11l9-5.5z" fill="currentColor" stroke="none"/></svg>';
 $icoSoon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
 $icoInfo = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>';
+$icoShare = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+
+/* Нормализация ссылки в embed-URL плеера: RuTube и VK Video (vk.com/video_ext.php, vkvideo.ru). */
+$embedUrlOf = static function (string $raw): string {
+    $raw = trim($raw);
+    if ($raw === '') return '';
+    // Уже готовый VK embed.
+    if (stripos($raw, 'video_ext.php') !== false) return $raw;
+    // VK Video: vk.com/video-123_456, vkvideo.ru/video-123_456, ?z=video-123_456 (+ необяз. hash после id).
+    if (preg_match('~(?:vk\.com|vkvideo\.ru)~i', $raw) && preg_match('~video(-?\d+)_(\d+)(?:_([0-9a-f]+))?~i', $raw, $m)) {
+        $u = 'https://vk.com/video_ext.php?oid=' . $m[1] . '&id=' . $m[2] . '&hd=2';
+        if (!empty($m[3])) $u .= '&hash=' . $m[3];
+        return $u;
+    }
+    // RuTube: уже embed.
+    if (stripos($raw, 'rutube.ru/play/embed/') !== false) return $raw;
+    // RuTube: страница видео rutube.ru/video/HASH/ или /shorts/HASH/.
+    if (preg_match('~rutube\.ru/(?:video(?:/private)?|shorts)/([0-9a-f]{32})~i', $raw, $m)) {
+        return 'https://rutube.ru/play/embed/' . $m[1];
+    }
+    return $raw;
+};
 
 ob_start(); ?>
 <style>
@@ -62,6 +84,11 @@ ob_start(); ?>
   background:var(--gold-soft);color:var(--gold-ink)}
 [data-theme="dark"] .concert-filter .fc{color:var(--gold)}
 .concert-filter.btn--primary .fc{background:rgba(26,18,6,.18);color:var(--gold-fg)}
+/* Действия под концертом */
+.concert-actions{margin-top:16px}
+.concert-actions .btn{width:100%;justify-content:center;gap:8px}
+.concert-actions .btn svg{width:16px;height:16px;flex:none}
+.concert-card{scroll-margin-top:90px}
 </style>
 
 <section class="section section--parchment">
@@ -90,12 +117,15 @@ ob_start(); ?>
     <?php endif; ?>
 
     <div class="grid grid-3" id="concertGrid">
-      <?php foreach ($concerts as $c): ?>
-        <div class="card concert-card reveal" data-cat="<?= h($c['category']) ?>">
+      <?php foreach ($concerts as $c):
+          $embed = $embedUrlOf((string) ($c['embed_url'] ?? ''));
+          $anchor = 'concert-' . (int) ($c['id'] ?? 0);
+          $shareUrl = url('/concerts') . '#' . $anchor; ?>
+        <div class="card concert-card reveal" id="<?= h($anchor) ?>" data-cat="<?= h($c['category']) ?>">
           <div class="concert-embed">
             <?php if ($c['category']): ?><span class="concert-tag"><?= h($c['category']) ?></span><?php endif; ?>
-            <?php if ($c['embed_url']): ?>
-              <button type="button" class="concert-facade" data-embed="<?= h($c['embed_url']) ?>"
+            <?php if ($embed !== ''): ?>
+              <button type="button" class="concert-facade" data-embed="<?= h($embed) ?>"
                       aria-label="Смотреть: <?= h($c['title']) ?>">
                 <?php if ($c['cover']): ?><span class="concert-cover" style="background-image:url('<?= h($c['cover']) ?>')"></span><?php endif; ?>
                 <span class="play"><span><?= $icoPlay ?></span></span>
@@ -107,6 +137,9 @@ ob_start(); ?>
           <div class="concert-body">
             <h3><?= h($c['title']) ?></h3>
             <?php if ($c['date']): ?><p class="concert-date"><?= $icoCal ?><span><?= h(ru_date($c['date'])) ?></span></p><?php endif; ?>
+            <div class="concert-actions">
+              <button class="btn btn--ghost" type="button" data-share data-share-title="<?= h($c['title']) ?>" data-share-url="<?= h($shareUrl) ?>"><?= $icoShare ?>Поделиться</button>
+            </div>
           </div>
         </div>
       <?php endforeach; ?>
@@ -133,9 +166,11 @@ ob_start(); ?>
     fac.addEventListener('click', function () {
       var url = fac.getAttribute('data-embed');
       if (!url) return;
+      // Параметр автозапуска зависит от хоста: RuTube - autoStart=true, VK Video - autoplay=1.
+      var ap = /rutube\.ru/i.test(url) ? 'autoStart=true' : 'autoplay=1';
       var glue = url.indexOf('?') === -1 ? '?' : '&';
       var ifr = document.createElement('iframe');
-      ifr.src = url + glue + 'autoplay=1';
+      ifr.src = url + glue + ap;
       ifr.loading = 'lazy';
       ifr.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
       ifr.setAttribute('allowfullscreen', '');
@@ -143,6 +178,8 @@ ob_start(); ?>
       fac.parentNode.replaceChild(ifr, fac);
     });
   });
+
+  // Кнопки «Поделиться» ([data-share]) обрабатываются глобально в partials/popups.php.
 })();
 </script>
 <?php else: ?>

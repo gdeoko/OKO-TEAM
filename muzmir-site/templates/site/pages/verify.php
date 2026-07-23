@@ -136,6 +136,11 @@ ob_start(); ?>
   color:var(--muted);font-size:.86rem;margin:18px auto 4px;max-width:600px}
 .cert-meta svg{width:15px;height:15px;color:var(--mint);flex:0 0 auto}
 
+/* ── Поделиться результатом ────────────────────────────────── */
+.vfy-share{display:flex;justify-content:center;margin:20px auto 4px}
+.vfy-share .btn{display:inline-flex;align-items:center;gap:9px}
+.vfy-share .btn svg{width:17px;height:17px;flex:0 0 auto}
+
 /* ── Не найден ─────────────────────────────────────────────── */
 .notfound{text-align:center;background:var(--panel);border:1px solid var(--glass-brd);
   border-radius:var(--radius);padding:38px 26px;box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
@@ -249,6 +254,16 @@ ob_start(); ?>
       <div class="cert-meta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
         Сведения предоставлены реестром КЦ «Музыкальный Мир» и подтверждают подлинность документа<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
+      </div>
+
+      <?php $shareUrl = $verifyBase . '/' . rawurlencode((string)$d['number']); ?>
+      <div class="vfy-share reveal">
+        <button class="btn btn--ghost" type="button" data-share
+                data-share-title="Диплом № <?= h($d['number']) ?> - КЦ «Музыкальный Мир»"
+                data-share-url="<?= h($shareUrl) ?>">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Поделиться
+        </button>
       </div>
 
     <?php elseif ($searched && !$d): ?>

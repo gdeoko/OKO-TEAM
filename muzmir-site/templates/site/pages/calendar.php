@@ -209,6 +209,7 @@ $ic = [
   'arrow'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   'clock'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   'check'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>',
+  'share'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>',
 ];
 $typeIcon = ['start' => $ic['bell'], 'end' => $ic['clock'], 'results' => $ic['award']];
 
@@ -325,6 +326,10 @@ ob_start(); ?>
             <?php else: ?>
               <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug']) ?>">Подробнее <?= $ic['arrow'] ?></a>
             <?php endif; ?>
+            <button type="button" class="btn btn--ghost btn--sm cal-share"
+                    data-share="<?= h(url('/competition/' . $c['slug'])) ?>"
+                    data-title="<?= h($c['name']) ?>"
+                    aria-label="Поделиться конкурсом «<?= h($c['name']) ?>»"><?= $ic['share'] ?> Поделиться</button>
           </div>
         </article>
       <?php endforeach; ?>
@@ -457,9 +462,34 @@ ob_start(); ?>
 .calx-kpi .stat{position:relative;overflow:hidden}
 .calx-kpi .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 
+/* --- Моушен-микро (только transform/opacity; глушится глобальным prefers-reduced-motion) --- */
+.cal-yearnav{transition:background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease}
+.cal-year-chip{transition:background .2s ease,color .2s ease,transform .2s ease}
+.calx-accent{transition:width .25s ease,opacity .25s ease}
+.calx-tl-item{transition:transform .25s ease}
+.calx-tl-item::before{transition:transform .25s ease,box-shadow .25s ease}
+.calx-meta__ic{transition:transform .3s ease}
+@media(hover:hover){
+  .cal-yearnav:hover{transform:translateY(-2px)}
+  .cal-year-chip:not(.is-active):hover{background:var(--gold-soft);transform:translateY(-2px)}
+  .calx-card:hover .calx-accent{width:6px;opacity:1}
+  .calx-tl-item:hover{transform:translateX(4px)}
+  .calx-tl-item:hover::before{transform:scale(1.18)}
+  .calx-tl-item:hover .calx-meta__ic{transform:scale(1.1)}
+}
+
+/* Кнопка «Поделиться» с ненавязчивым подтверждением копирования */
+.cal-share{position:relative}
+.cal-share.is-copied::after{content:"Ссылка скопирована";position:absolute;left:50%;bottom:calc(100% + 8px);
+  transform:translateX(-50%);white-space:nowrap;background:var(--text);color:var(--bg);font-size:.72rem;font-weight:700;
+  padding:5px 10px;border-radius:8px;box-shadow:var(--shadow-3d);pointer-events:none;z-index:5}
+
 @media (max-width:960px){.calx-kpi{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:640px){.calx-card__actions .btn{flex:1 1 100%}}
+@media (max-width:400px){.calx-kpi{gap:10px}.calx-kpi .stat b{font-size:1.5rem}}
 </style>
+
+<!-- Кнопки «Поделиться» ([data-share]) обрабатываются глобально в partials/popups.php. -->
 <?php
 $content = ob_get_clean();
 render_page('Календарь конкурсов', $content, [

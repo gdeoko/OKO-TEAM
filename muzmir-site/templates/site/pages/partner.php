@@ -106,6 +106,16 @@ ob_start(); ?>
 .pn-perks .perk .perk-ic svg{width:20px;height:20px;stroke:var(--gold-2)}
 .pn-perks .perk b{color:var(--text)}
 .pn-perks .perk p{color:var(--muted);margin:2px 0 0;font-size:.92rem}
+.pn-perks .perk p{overflow-wrap:anywhere}
+/* Микро-моушен: шаги и перки. Только hover-устройства; prefers-reduced-motion гасит глобально. */
+@media(hover:hover){
+  #howto .step{transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+  #howto .step:hover{transform:translateY(-4px)}
+  .pn-perks .perk{transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+  .pn-perks .perk:hover{transform:translateX(4px)}
+  .pn-perks .perk .perk-ic{transition:transform .22s,box-shadow .22s}
+  .pn-perks .perk:hover .perk-ic{transform:scale(1.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px -8px rgba(139,111,31,.5)}
+}
 </style>
 
 <section class="section section--parchment pn-hero">

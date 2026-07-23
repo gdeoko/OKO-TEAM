@@ -68,7 +68,12 @@ ob_start(); ?>
 .map-head .m-open:hover{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
 .map-head .m-open svg{width:16px;height:16px}
 .map-frame iframe{display:block;width:100%;height:clamp(300px,52vw,460px);border:0}
+/* Подписи кнопок и ссылок-действий не переносим посреди слова. */
+.contact-actions .btn span,.map-head .m-open span,.contact-social a span{word-break:normal;overflow-wrap:normal}
 @media(max-width:560px){.map-head{flex-wrap:wrap}.map-head .m-open{width:100%;justify-content:center}}
+@media (prefers-reduced-motion:reduce){
+  .contact-row:hover .ic,.contact-social a:hover,.contact-actions .btn:hover{transform:none}
+}
 </style>
 
 <section class="section">

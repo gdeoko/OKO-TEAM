@@ -48,7 +48,7 @@ ob_start(); ?>
   display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:.9rem;
   transition:background .28s,border-color .28s,color .28s,box-shadow .28s,transform .28s}
 .ap-dot svg{width:19px;height:19px}
-.ap-node.done .ap-dot{background:var(--grad-gold);border-color:transparent;color:#1a1206;box-shadow:var(--shadow-btn)}
+.ap-node.done .ap-dot{background:var(--grad-gold);border-color:transparent;color:var(--gold-fg);box-shadow:var(--shadow-btn)}
 .ap-node.active .ap-dot{background:var(--panel-solid);border-color:var(--gold);color:var(--gold);
   box-shadow:0 0 0 5px var(--gold-soft),var(--shadow-soft);transform:translateY(-1px)}
 .ap-label{font-size:.72rem;color:var(--muted);text-align:center;line-height:1.2;letter-spacing:.01em}
@@ -85,7 +85,7 @@ ob_start(); ?>
 .comp-opt input:focus-visible + .co-body{box-shadow:0 0 0 4px var(--gold-soft)}
 .co-mark{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s}
 .comp-opt input:checked + .co-body .co-mark{border-color:var(--gold);background:var(--grad-gold)}
-.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:#1a1206}
+.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--gold-fg)}
 .co-main{flex:1;min-width:0}
 .co-main b{display:block;font-family:var(--ff-serif);font-size:1.12rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
 .co-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -96,7 +96,7 @@ ob_start(); ?>
   transition:background .18s,color .18s,box-shadow .18s;position:relative;border-radius:10px;
   display:flex;align-items:center;justify-content:center}
 .seg label input{position:absolute;opacity:0}
-.seg label.on{background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-btn)}
+.seg label.on{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
 
 .grid-2c{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
 @media(max-width:560px){.grid-2c{grid-template-columns:1fr}}
@@ -167,6 +167,43 @@ ob_start(); ?>
 
 /* honeypot — скрыт для людей, виден ботам */
 .hp-field{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* ===== Моушен-микровзаимодействия (только transform/opacity, GPU) ===== */
+/* Мягкий пульс кольца активной точки степпера */
+@keyframes apDotPulse{0%,100%{box-shadow:0 0 0 5px var(--gold-soft),var(--shadow-soft)}50%{box-shadow:0 0 0 8px var(--gold-soft),var(--shadow-soft)}}
+.ap-node.active .ap-dot{animation:apDotPulse 2.6s ease-in-out infinite}
+/* Каскадное появление карточек выбора конкурса */
+@keyframes apRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.comp-opt{animation:apRise .42s ease both}
+.comp-opt:nth-child(1){animation-delay:.04s}
+.comp-opt:nth-child(2){animation-delay:.10s}
+.comp-opt:nth-child(3){animation-delay:.16s}
+.comp-opt:nth-child(4){animation-delay:.22s}
+/* Тактильный отклик на нажатие карточек и сегмента */
+.co-body{will-change:transform}
+.comp-opt:active .co-body{transform:translateY(0) scale(.99)}
+.seg label{transition:background .18s,color .18s,box-shadow .18s,transform .12s}
+.seg label:active{transform:scale(.97)}
+.consent-row{transition:border-color .2s,background .2s,transform .12s}
+.consent-row:active{transform:scale(.995)}
+.astep-nav .btn{transition:transform .12s,box-shadow .2s,background .2s,border-color .2s}
+
+/* ===== Адаптив 360/390: без горизонтального оверфлоу и кривых переносов ===== */
+.apply-card input,.apply-card select,.apply-card textarea{max-width:100%}
+.astep-nav .btn{word-break:normal;overflow-wrap:normal;white-space:normal}
+@media(max-width:400px){
+  .astep-nav{gap:8px}
+  .astep-nav .btn{min-height:50px;padding-left:12px;padding-right:12px}
+}
+
+/* ===== Уважение к prefers-reduced-motion ===== */
+@media(prefers-reduced-motion:reduce){
+  .astep.active{animation:none}
+  .ap-node.active .ap-dot{animation:none}
+  .comp-opt{animation:none}
+  .ap-dot,.co-body,.seg label,.consent-row,.comp-opt .co-body,.astep-nav .btn{transition:none}
+  .comp-opt:active .co-body,.seg label:active,.consent-row:active{transform:none}
+}
 </style>
 
 <section class="section section--parchment">

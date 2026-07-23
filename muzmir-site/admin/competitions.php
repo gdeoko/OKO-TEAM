@@ -68,6 +68,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($newStatus === 'finished') {
                 emit_event('results_published', ['competition' => $competition]);
             }
+
+            /* Запуск конкурса -> анонсная рассылка по базе (шаблон new_competition).
+             * Только при переходе (draft|closed|новый)->open, идемпотентно:
+             * settings-флаг launch_blast_sent:{id} не даёт разослать дважды. */
+            if ($newStatus === 'open'
+                && in_array($oldStatus, ['', 'draft', 'closed'], true)
+                && (string) setting('launch_blast_sent:' . $id, '') === '') {
+                try {
+                    require_once BASE_PATH . '/core/newsletter.php';
+
+                    $typeRu = $data['type'] === 'national' ? 'Всероссийский' : 'Международный';
+                    $dirRu  = ['multi' => 'многожанровый', 'patriotic' => 'патриотический',
+                               'thematic' => 'тематический'][$data['direction']] ?? '';
+                    $applyUrl = url('/apply');
+
+                    // Внутренний фрагмент письма (обёртку добавит newsletter_enqueue -> nl_wrap_email).
+                    $vars = [
+                        'name'            => '', // массовая рассылка: обезличенное приветствие
+                        'competition'     => $data['name'],
+                        'description'     => (string) $data['description'],
+                        'start_date'      => $data['start_date'] ? ru_date($data['start_date']) : '',
+                        'end_date'        => $data['end_date'] ? ru_date($data['end_date']) : '',
+                        'competition_url' => url('/competition/' . $data['slug']),
+                    ];
+                    ob_start();
+                    include BASE_PATH . '/templates/emails/new_competition.php';
+                    $blastBody = (string) ob_get_clean();
+
+                    // Тематика конкурса + отдельный CTA на подачу заявки (/apply).
+                    $blastBody .= '<p style="margin:22px 0 4px;color:#5a4632;font-size:15px;">'
+                        . 'Формат: <b style="color:#7a2e1e;">' . h($typeRu)
+                        . ($dirRu !== '' ? ', ' . h($dirRu) . ' конкурс' : ' конкурс') . '</b>.</p>'
+                        . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0 4px;">'
+                        . '<tr><td style="border-radius:10px;border:1.5px solid #a0522d;">'
+                        . '<a href="' . h($applyUrl) . '" style="display:inline-block;padding:13px 32px;'
+                        . 'color:#7a2e1e;text-decoration:none;font-weight:600;font-size:15px;border-radius:10px;">'
+                        . 'Подать заявку</a></td></tr></table>';
+
+                    $nid = insert('newsletters', [
+                        'subject'  => 'Открыт приём заявок: ' . $data['name'],
+                        'body'     => $blastBody,
+                        'audience' => 'all',
+                        'status'   => 'draft',
+                    ]);
+                    $queued = newsletter_enqueue((int) $nid);
+
+                    // Флаг ставим всегда после успешной постановки newsletter'а —
+                    // чтобы повторный вход (в т.ч. closed->open->closed->open) не разослал снова.
+                    set_setting('launch_blast_sent:' . $id, '1');
+                    audit('competition_launch_blast', 'competition', $id,
+                        ['newsletter' => (int) $nid, 'queued' => $queued]);
+                } catch (\Throwable $e) {
+                    // Рассылка не должна ронять сохранение конкурса.
+                    if (function_exists('error_log')) {
+                        error_log('competition_launch_blast(' . $id . ') failed: ' . $e->getMessage());
+                    }
+                }
+            }
         }
 
         // Прайс наград — перезаписываем набор по конкурсу

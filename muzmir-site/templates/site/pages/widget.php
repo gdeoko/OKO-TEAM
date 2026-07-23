@@ -80,6 +80,11 @@ if ($isEmbed) {
   .w-foot svg{width:13px;height:13px}
   .w-mark{font-size:.64rem;color:var(--w-muted)}
   @media (max-width:360px){.w-vform{flex-wrap:wrap}.w-vform button{width:100%}}
+  @media (prefers-reduced-motion:reduce){
+    .w-item,.w-vform button,.w-vform input{transition:none}
+    .w-item:hover{transform:none}
+    .w-vform button:active{transform:none}
+  }
 </style>
 </head>
 <body>

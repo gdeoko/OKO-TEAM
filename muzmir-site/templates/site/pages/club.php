@@ -1,12 +1,24 @@
 <?php
-/** Клуб постоянных участников: платная годовая подписка с привилегиями. */
+/** Клуб постоянных участников: платная годовая подписка с привилегиями.
+ *  Для активного члена Клуба показываем статус и выгоды, форму оплаты скрываем. */
+
+// Модуль членства подключаем лениво (глобально он не автозагружается).
+$__clubCore = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/core/club.php';
+if (!function_exists('club_is_active') && is_file($__clubCore)) require_once $__clubCore;
 
 $price = (int) setting('club_price', '500');
 $u = current_user();
+$uid = (int) ($u['id'] ?? 0);
+
+$isMember = $uid > 0 && function_exists('club_is_active') && club_is_active($uid);
+$status   = ($uid > 0 && function_exists('club_status')) ? club_status($uid)
+                                                          : ['active' => false, 'expires_at' => null, 'started_at' => null, 'discount' => 0];
+$discount = (int) ($status['discount'] ?? 20);
+if ($discount <= 0) $discount = 20;
 
 $benefits = [
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12V8a2 2 0 0 0-2-2h-4l-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M14 14l6 6M20 14l-6 6"/></svg>',
-      't' => 'Скидка 20%', 'd' => 'На организационный взнос во всех платных конкурсах Культурного центра'],
+      't' => 'Скидка ' . $discount . '%', 'd' => 'На организационный взнос во всех платных конкурсах Культурного центра'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></svg>',
       't' => 'Приоритетная модерация', 'd' => 'Заявки участников Клуба проверяются вне общей очереди'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
@@ -15,6 +27,9 @@ $benefits = [
       't' => 'Встречи с жюри', 'd' => 'Онлайн-встречи с членами жюри: разбор номеров и ответы на вопросы'],
 ];
 
+$expiresRu = !empty($status['expires_at']) ? ru_date(substr((string) $status['expires_at'], 0, 10)) : '';
+$startedRu = !empty($status['started_at']) ? ru_date(substr((string) $status['started_at'], 0, 10)) : '';
+
 ob_start(); ?>
 <style>
 .club-price-card{max-width:420px;margin:0 auto;text-align:center;padding:36px 30px}
@@ -22,8 +37,85 @@ ob_start(); ?>
 .club-price span{font-size:1.1rem;color:var(--muted);font-family:var(--ff-body)}
 .club-form .field{text-align:left}
 .club-note{font-size:.82rem;color:var(--muted);margin-top:14px}
+
+/* --- Карточка активного члена Клуба --- */
+.club-member-card{max-width:560px;margin:0 auto;text-align:center;padding:38px 30px}
+.club-crest{width:96px;height:96px;margin:0 auto 8px;display:block;object-fit:contain}
+.club-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;
+  background:var(--grad-gold);color:var(--gold-fg);font-family:var(--ff-body);font-weight:800;
+  font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;box-shadow:var(--shadow-btn)}
+.club-badge .dot{width:9px;height:9px;border-radius:50%;background:var(--gold-fg);position:relative}
+.club-badge .dot::after{content:"";position:absolute;inset:-5px;border-radius:50%;
+  border:1.5px solid var(--gold-fg);opacity:.5;animation:clubPulse 2.2s ease-out infinite}
+@keyframes clubPulse{0%{transform:scale(.6);opacity:.6}100%{transform:scale(1.4);opacity:0}}
+.club-until{font-family:var(--ff-display);font-size:clamp(1.5rem,3.4vw,2.1rem);letter-spacing:.01em;
+  color:var(--gold-2);margin:16px 0 4px}
+.club-member-meta{color:var(--muted);font-size:.9rem;margin:0}
+.club-benefits-list{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:12px;text-align:left}
+.club-benefits-list li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;
+  background:var(--gold-soft);border:1px solid var(--line)}
+.club-benefits-list .cb-ic{flex:none;width:38px;height:38px;border-radius:50%;background:var(--grad-gold);
+  color:var(--gold-fg);display:flex;align-items:center;justify-content:center}
+.club-benefits-list .cb-ic span{width:20px;height:20px;display:block}
+.club-benefits-list .cb-ic svg{width:100%;height:100%}
+.club-benefits-list b{font-family:var(--ff-body);font-weight:800;display:block;margin-bottom:2px}
+.club-benefits-list p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.45}
+.club-actions{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+[data-theme="dark"] .club-until{color:var(--gold)}
+[data-theme="dark"] .club-benefits-list li{background:rgba(255,255,255,.03)}
+
+@media (max-width:520px){.club-benefits-list li{padding:12px 13px}}
+@media (prefers-reduced-motion:reduce){.club-badge .dot::after{animation:none}}
 </style>
 
+<?php if ($isMember): ?>
+<section class="section section--parchment">
+  <div class="container" style="max-width:760px;text-align:center">
+    <div class="reveal">
+      <p class="eyebrow">Ваше членство</p>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Клуб постоянных участников</h1>
+      <p>Спасибо, что вы с нами. Ваши привилегии активны и применяются автоматически при подаче заявок
+        на платные конкурсы Культурного центра «Музыкальный Мир».</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="card reveal club-member-card">
+      <img class="club-crest" src="<?= h(asset('img/pechat_kc_muzmir.png')) ?>"
+           alt="Печать Культурного центра «Музыкальный Мир»" width="96" height="96" loading="lazy">
+      <div><span class="club-badge"><span class="dot"></span>Участник Клуба</span></div>
+      <?php if ($expiresRu !== ''): ?>
+        <p class="club-until">Вы участник Клуба до <?= h($expiresRu) ?></p>
+      <?php else: ?>
+        <p class="club-until">Вы участник Клуба</p>
+      <?php endif; ?>
+      <?php if ($startedRu !== ''): ?>
+        <p class="club-member-meta">В Клубе с <?= h($startedRu) ?></p>
+      <?php endif; ?>
+
+      <ul class="club-benefits-list">
+        <?php foreach ($benefits as $b): ?>
+          <li>
+            <span class="cb-ic"><span><?= $b['ic'] ?></span></span>
+            <div><b><?= h($b['t']) ?></b><p><?= h($b['d']) ?></p></div>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+
+      <div class="club-actions">
+        <a class="btn btn--primary" href="<?= h(url('/cabinet')) ?>">Личный кабинет</a>
+        <a class="btn btn--ghost" href="<?= h(url('/competitions')) ?>">Выбрать конкурс</a>
+      </div>
+      <p class="club-note">Членство продлевается раз в 12 месяцев. Скидка <?= (int) $discount ?>%
+        применяется к организационному взносу автоматически.</p>
+    </div>
+  </div>
+</section>
+
+<?php else: ?>
 <section class="section section--parchment">
   <div class="container" style="max-width:760px;text-align:center">
     <div class="reveal">
@@ -114,9 +206,10 @@ ob_start(); ?>
   });
 })();
 </script>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
 render_page('Клуб постоянных участников', $content, [
     'active' => '/club',
-    'meta'   => 'Клуб постоянных участников КЦ «Музыкальный Мир»: скидка 20%, приоритетная модерация, закрытый чат и встречи с жюри.',
+    'meta'   => 'Клуб постоянных участников КЦ «Музыкальный Мир»: скидка ' . $discount . '%, приоритетная модерация, закрытый чат и встречи с жюри.',
 ]);

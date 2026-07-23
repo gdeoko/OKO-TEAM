@@ -251,6 +251,18 @@ ob_start(); ?>
 .ref-perks b{color:var(--gold-2)}
 @media(max-width:860px){.tch{grid-template-columns:1fr}.tch-side{position:static}
   .tch-nav{flex-direction:row;overflow-x:auto;gap:6px}.tch-nav a{white-space:nowrap;padding:9px 12px}}
+/* Микро-моушен: подъём карточек-заявок, реф-кода и подсветка строк таблицы.
+   Только на hover-устройствах; под prefers-reduced-motion гасится глобальным kill-switch. */
+@media(hover:hover){
+  #ttab-students .tch-card:has(.tch-row),
+  .ref-code{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s}
+  #ttab-students .tch-card:has(.tch-row):hover{transform:translateY(-3px);box-shadow:var(--shadow-3d);border-color:var(--gold-2)}
+  .ref-code:hover{transform:translateY(-2px);box-shadow:var(--shadow-card)}
+  .t-table tbody tr{transition:background .18s}
+  .t-table tbody tr:hover{background:var(--gold-soft)}
+}
+/* Страховка от горизонтального оверфлоу на 360/390: длинные ссылки/номера не рвут вёрстку */
+.tch-meta,.t-table td{overflow-wrap:anywhere}
 </style>
 <section class="section">
   <div class="container">
