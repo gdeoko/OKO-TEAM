@@ -6608,8 +6608,12 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
 :root[data-theme="light"] .ava.lime{box-shadow:0 0 0 1px rgba(110,200,0,.28)}
 
 /* ============ SHEET: чуть премиальнее ручка и подложка ============ */
-.sheet{box-shadow:0 -18px 50px rgba(0,0,0,.5)}
-:root[data-theme="light"] .sheet{box-shadow:0 -14px 40px rgba(40,60,15,.14)}
+/* Тень ТОЛЬКО у открытого листа. Закрытый лист припаркован на 12px ниже вьюпорта
+   (translateY(105%)), и его «верхняя» тень (offset -Ypx, blur 40-50) раньше
+   протекала вверх на нижнюю навигацию — это и была та самая «тень снизу»
+   в ОБЕИХ темах. Гейтим по .open — закрытый лист больше ничего не рисует. */
+.sheet.open{box-shadow:0 -18px 50px rgba(0,0,0,.5)}
+:root[data-theme="light"] .sheet.open{box-shadow:0 -14px 40px rgba(40,60,15,.14)}
 .sheet::before{transition:background .2s}
 .sheet-overlay{backdrop-filter:blur(2px)}
 .sheet-item{border-radius:10px;transition:background .16s}
@@ -7859,7 +7863,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.89</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v0.90</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
