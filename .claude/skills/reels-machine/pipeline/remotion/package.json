@@ -21,6 +21,7 @@
     "react-dom": "19.1.0",
     "react-simple-maps": "^3.0.0",
     "remotion": "4.0.496",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "lottie-web": "5.12.2"
   }
 }

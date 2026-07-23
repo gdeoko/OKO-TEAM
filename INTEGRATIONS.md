@@ -90,7 +90,25 @@ Ultra-подписка безлимит), детальный промпт, га�
 - **Mixkit** — БЕЗ ключа; ГРАБЛЯ 08.07: прямые ссылки assets.mixkit.co/music отдают
   AccessDenied — музыку брать с Freesound; sfx/видео Mixkit проверять поштучно.
 
-### Анимации и графика (все локально, без ключей)
+### Библиотека НАЛОЖЕНИЙ для Remotion RealReel (проверено 23.07)
+Движок `pipeline/remotion` (комп. `RealReel`) — футаж-first монтаж с реальными
+ассетами наложений поверх стоковых кадров. Скачивание одной командой:
+`cd pipeline/remotion && python3 dl_assets.py` (нужны PIXABAY/FREESOUND ключи).
+- **Оверлей-видео (Pixabay video API)** → `public/fx/`: light leak, lens flare,
+  gold/dust particles, bokeh, glitch, smoke, network, neon_bg, grid_bg, confetti(зелёнка),
+  film_burn. Все на ЧЁРНОМ фоне → `mixBlendMode:"screen"` через `<OffthreadVideo>`+`<Loop>`.
+  Компоненты `fx2.tsx`: `ScreenFX` (частицы/лики/дым), `TransitionFX` (глитч/дым/лик
+  накрывает стык = реальный переход-пак), `AnimBG` (аним-фон для мограф-сцен).
+- **SFX (Freesound preview-hq-mp3)** → `public/sfx/`: whoosh1/2, sweep, impact1, boom,
+  click, pop, cash, ding, glitch_sfx. Звук-дизайн кладётся ffmpeg-миксом ПОСЛЕ рендера
+  (`mux_sfx.py`-подход): события [файл, время_сек, громкость] → adelay+amix normalize=0
+  +alimiter. ГРАБЛЯ: в фильтре `duration:[0.1 TO 6]` urlencode обязателен (пробелы).
+- **Lottie (@remotion/lottie + lottie-web 5.12.2)** → `public/lottie/*.json`, статический
+  импорт в `lottieData.ts` (НЕ async fetch — иначе пустые кадры под мок-таймерами Remotion).
+  Источники БЕЗ ключа: `assets*.lottiefiles.com/packages/lf20_*.json` (200),
+  `cdn.lordicon.com/<id>.json` (200). `lottie.host` даёт 403. Рендерится в headless_shell.
+  Компонент `LottieAsset name=… loop`. ГРАБЛЯ: flat-мультик-Lottie выбивается из
+  кино-стиля — брать иконочные/лайновые (трофей, книга-морф), не иллюстрации со сценками.
 - **LottieFiles GraphQL** — БЕЗ ключа: `POST https://graphql.lottiefiles.com/2022-08`,
   query `searchPublicAnimations(query:"...", first:N){edges{node{jsonUrl}}}` →
   jsonUrl качается curl'ом. Рендер в PNG-секвенцию: lottie-web (node_modules) в

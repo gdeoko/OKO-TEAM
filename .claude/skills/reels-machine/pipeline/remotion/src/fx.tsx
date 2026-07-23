@@ -203,22 +203,27 @@ export const CertBadge: React.FC = () => {
   );
 };
 
-// ---------- НОВЫЙ стиль субтитров: highlight-box ----------
-export const CaptionBox: React.FC<{words:{t:string;s:number;e:number}[]; isKey:(w:string)=>boolean}> = ({words,isKey}) => {
+// ---------- субтитры: маркер-вайп по ключевым словам ----------
+export const CaptionBox: React.FC<{words:{t:string;s:number;e:number}[]; isKey:(w:string)=>boolean; bottom?:number}> = ({words,isKey,bottom=356}) => {
   const f=useCurrentFrame(); const {fps}=useVideoConfig(); const t=f/fps;
-  const cur=words.find(w=>t>=w.s-0.04 && t<w.e+0.12);
-  if(!cur) return null;
+  const idx=words.findIndex(w=>t>=w.s-0.04 && t<w.e+0.12);
+  if(idx<0) return null;
+  const cur=words[idx];
   const local=f-(cur.s-0.04)*fps;
-  const pop=interpolate(local,[0,4],[0.7,1],{extrapolateRight:"clamp",easing:E});
-  const rise=interpolate(local,[0,5],[22,0],{extrapolateRight:"clamp",easing:E});
+  const blur=interpolate(local,[0,4],[10,0],{extrapolateRight:"clamp",easing:E});
+  const pop=interpolate(local,[0,5],[0.82,1],{extrapolateRight:"clamp",easing:E});
   const key=isKey(cur.t);
+  const wipe=interpolate(local,[1,7],[0,1],{extrapolateLeft:"clamp",extrapolateRight:"clamp",easing:E});
   const txt=cur.t.replace(/[—]/g,"").toUpperCase();
-  const fs=Math.min(88,Math.floor(920/(txt.length*0.56)));
+  const fs=Math.min(78,Math.floor(880/(txt.length*0.58)));
   return (
-    <div style={{position:"absolute",bottom:360,width:"100%",textAlign:"center",padding:"0 60px"}}>
-      <div style={{display:"inline-block",transform:`translateY(${rise}px) scale(${pop})`,fontFamily:MONT,fontWeight:900,fontSize:fs,letterSpacing:0.5,lineHeight:1,
-        color:key?"#050505":"#fff",background:key?LIME:"transparent",padding:key?"10px 26px":"0",borderRadius:16,
-        boxShadow:key?`0 0 30px ${LIME}88, 0 14px 30px #000a`:"none",textShadow:key?"none":"0 4px 18px #000e, 0 2px 4px #000",WebkitTextStroke:key?"0":"0"}}>{txt}</div>
+    <div style={{position:"absolute",bottom,width:"100%",textAlign:"center",padding:"0 70px"}}>
+      <div style={{position:"relative",display:"inline-block",transform:`scale(${pop})`,filter:`blur(${blur}px)`}}>
+        {/* лаймовый маркер-хайлайт (вайпается слева-направо) под ключевым словом */}
+        {key && <div style={{position:"absolute",left:-14,top:"14%",height:"74%",width:`calc(${wipe*100}% + 28px)`,background:LIME,borderRadius:8,boxShadow:`0 0 24px ${LIME}88`,zIndex:0}}/>}
+        <span style={{position:"relative",zIndex:1,fontFamily:MONT,fontWeight:900,fontSize:fs,letterSpacing:0.5,lineHeight:1.05,
+          color:key?"#050505":"#fff",textShadow:key?"none":"0 4px 16px #000f, 0 1px 3px #000",WebkitTextStroke:key?"0":"0"}}>{txt}</span>
+      </div>
     </div>
   );
 };
