@@ -5,24 +5,143 @@
  "code": "PRIVACY",
  "top": [
   {
-   "views": 103958,
-   "likes": 319,
-   "comments": 21,
-   "channel": "KNOW IT FAST",
-   "followers": 14200,
-   "dur": 97,
-   "id": "U8RwAj2LWhw",
-   "title": "How To Detect Spy Camera With Your Mobile"
+   "views": 2866122,
+   "likes": 43762,
+   "comments": 2900,
+   "channel": "CNBC International",
+   "followers": 1440000,
+   "dur": 618,
+   "id": "h77un7ry5bY",
+   "title": "We tested five ways to find hidden cameras in hotels and house rentals"
+  },
+  {
+   "views": 2140953,
+   "likes": 34694,
+   "comments": 1600,
+   "channel": "Project Untethered",
+   "followers": 242000,
+   "dur": 805,
+   "id": "-b0M0jxDFuU",
+   "title": "How to Find HIDDEN CAMERAS in Airbnb & Hotel (5-Minute Scan)"
+  },
+  {
+   "views": 1945584,
+   "likes": 62759,
+   "comments": 2200,
+   "channel": "Linus Tech Tips",
+   "followers": 16900000,
+   "dur": 863,
+   "id": "0208nuGPmZw",
+   "title": "I Rented an AirBnB to Look for Hidden Cameras"
+  },
+  {
+   "views": 1737933,
+   "likes": 29078,
+   "comments": 1500,
+   "channel": "Jason Hanson",
+   "followers": 843000,
+   "dur": 540,
+   "id": "3zE8Tf9chEA",
+   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
+  },
+  {
+   "views": 1371893,
+   "likes": 17120,
+   "comments": 676,
+   "channel": "Sentel Tech",
+   "followers": 16200,
+   "dur": 195,
+   "id": "NkP7-pjzGhI",
+   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
+  },
+  {
+   "views": 1148854,
+   "likes": 31907,
+   "comments": 1600,
+   "channel": "BulletProofBabes",
+   "followers": 47800,
+   "dur": 424,
+   "id": "vKZmAZqqYHU",
+   "title": "How to Find Hidden Cameras with Your Phone"
   }
  ],
- "millions_list": [],
- "millions": 0,
- "hooks": [
-  "detect",
-  "spy",
-  "camera",
-  "mobile"
+ "millions_list": [
+  {
+   "views": 2866122,
+   "likes": 43762,
+   "comments": 2900,
+   "channel": "CNBC International",
+   "followers": 1440000,
+   "dur": 618,
+   "id": "h77un7ry5bY",
+   "title": "We tested five ways to find hidden cameras in hotels and house rentals"
+  },
+  {
+   "views": 2140953,
+   "likes": 34694,
+   "comments": 1600,
+   "channel": "Project Untethered",
+   "followers": 242000,
+   "dur": 805,
+   "id": "-b0M0jxDFuU",
+   "title": "How to Find HIDDEN CAMERAS in Airbnb & Hotel (5-Minute Scan)"
+  },
+  {
+   "views": 1945584,
+   "likes": 62759,
+   "comments": 2200,
+   "channel": "Linus Tech Tips",
+   "followers": 16900000,
+   "dur": 863,
+   "id": "0208nuGPmZw",
+   "title": "I Rented an AirBnB to Look for Hidden Cameras"
+  },
+  {
+   "views": 1737933,
+   "likes": 29078,
+   "comments": 1500,
+   "channel": "Jason Hanson",
+   "followers": 843000,
+   "dur": 540,
+   "id": "3zE8Tf9chEA",
+   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
+  },
+  {
+   "views": 1371893,
+   "likes": 17120,
+   "comments": 676,
+   "channel": "Sentel Tech",
+   "followers": 16200,
+   "dur": 195,
+   "id": "NkP7-pjzGhI",
+   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
+  },
+  {
+   "views": 1148854,
+   "likes": 31907,
+   "comments": 1600,
+   "channel": "BulletProofBabes",
+   "followers": 47800,
+   "dur": 424,
+   "id": "vKZmAZqqYHU",
+   "title": "How to Find Hidden Cameras with Your Phone"
+  }
  ],
- "ts": "2026-07-22 11:06 UTC",
- "avg_views": 103958
+ "millions": 6,
+ "hooks": [
+  "hidden",
+  "cameras",
+  "find",
+  "airbnb",
+  "tested",
+  "five",
+  "ways",
+  "hotels",
+  "house",
+  "rentals",
+  "hotel",
+  "minute"
+ ],
+ "ts": "2026-07-23 05:40 UTC",
+ "avg_views": 1868556
 }
