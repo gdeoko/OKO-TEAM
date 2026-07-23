@@ -1,0 +1,131 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #29 (batch B, МОТО «первый мотоцикл новичку»). New forms, none reused:
+// countdown-morph · gear-shift-gate · gyro-bubble-balance · step-stairs · cc-ladder · key-turn lockup.
+// Свериться с USED_ANIM.md #16-28 — нет пересечений. Окна (a,b) под РЕАЛЬНЫЙ timing.json после VO.
+const TOTAL=31.272;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",CYAN="#4FD1C5",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.4;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// B1 — COUNTDOWN-MORPH: крупные 3·2·1 отсчитываются (scale-pop), затем «ПРОЩЕ ЧЕМ КАЖЕТСЯ».
+// (новая форма: числовой обратный отсчёт с pop; ≠ counters #25/#26, ≠ kinetic #16)
+function b1(ts){const a=1.9,b=6.1;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">СТРАШНО НАЧАТЬ?</text>';
+  if(p<0.62){const step=Math.floor(p/0.62*3);const num=3-step;const lp=(p/0.62*3)%1;const sc=lerp(1.6,0.7,easeOut(lp));
+    s+='<text x="'+cx+'" y="'+(cy+60)+'" text-anchor="middle" font-family="soyuz" font-size="'+(220*sc)+'" fill="'+AMB2+'" opacity="'+(1-lp*0.4)+'">'+num+'</text>';}
+  else{const q=(p-0.62)/0.38;s+='<text x="'+cx+'" y="'+(cy-10)+'" text-anchor="middle" font-family="soyuz" font-size="'+(110*back(clamp(q/0.4)))+'" fill="'+WHT+'">ПОЕХАЛИ</text>'
+    +'<text x="'+cx+'" y="'+(cy+110)+'" text-anchor="middle" font-family="soyuz" font-size="56" fill="'+GRN+'" opacity="'+clamp((q-0.3)/0.3)+'">ПРОЩЕ ЧЕМ КАЖЕТСЯ</text>';}
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B2 — GEAR-SHIFT-GATE: кулиса передач N-1-2-3-4-5, лапка щёлкает вниз по передачам.
+// (новая форма: H-гейт переключения; ≠ любых прошлых)
+function b2(ts){const a=6.5,b=11.3;const p=win(ts,a,b);if(p<0)return'';
+  const cx=470,cy=900,gy=[cy-160,cy-90,cy-20,cy+50,cy+120,cy+190];const labels=["N","1","2","3","4","5"];
+  const cur=Math.min(5,Math.floor(p*6));
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-260)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">КОРОБКА — ПРОЩЕ ПРОСТОГО</text>';
+  s+='<line x1="'+cx+'" y1="'+(cy-180)+'" x2="'+cx+'" y2="'+(cy+210)+'" stroke="rgba(255,255,255,.18)" stroke-width="10" stroke-linecap="round"/>';
+  labels.forEach((L,i)=>{const on=i===cur;s+='<circle cx="'+cx+'" cy="'+gy[i]+'" r="'+(on?26:16)+'" fill="'+(on?AMB:'rgba(255,255,255,.2)')+'"/>'
+    +'<text x="'+(cx+60)+'" y="'+(gy[i]+10)+'" font-family="soyuz" font-size="'+(on?46:32)+'" fill="'+(on?WHT:DIM)+'">'+L+'</text>';});
+  // лапка
+  s+='<line x1="'+(cx-140)+'" y1="'+(gy[cur]+40)+'" x2="'+(cx-30)+'" y2="'+gy[cur]+'" stroke="'+AMB2+'" stroke-width="12" stroke-linecap="round"/>';
+  s+='<text x="540" y="'+(cy+300)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((p-0.6)/0.3)+'">НЕЙТРАЛЬ · ПЕРВАЯ · ПОЕХАЛ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B3 — GYRO-BUBBLE-BALANCE: пузырьковый уровень держится в центре, пока байк-иконка кренится.
+// (новая форма: пузырьковый уровень равновесия; ≠ любых прошлых)
+function b3(ts){const a=11.6,b=16.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=900;const lean=18*Math.sin(p*TOTAL*1.6);const bubble=cx - lean*2;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-240)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">РАВНОВЕСИЕ ДЕРЖИТСЯ САМО</text>';
+  // байк сзади (кренится)
+  s+='<g transform="translate('+cx+','+cy+') rotate('+lean+')"><rect x="-14" y="-120" width="28" height="200" rx="10" fill="'+AMB+'"/><circle cx="0" cy="90" r="46" fill="#100c0a" stroke="'+WHT+'" stroke-width="6"/><circle cx="0" cy="-120" r="30" fill="#100c0a" stroke="'+WHT+'" stroke-width="5"/></g>';
+  // пузырьковый уровень
+  s+='<rect x="'+(cx-220)+'" y="'+(cy+180)+'" width="440" height="56" rx="28" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>';
+  s+='<line x1="'+cx+'" y1="'+(cy+180)+'" x2="'+cx+'" y2="'+(cy+236)+'" stroke="'+GRN+'" stroke-width="2"/>';
+  s+='<circle cx="'+clamp(bubble,cx-190,cx+190)+'" cy="'+(cy+208)+'" r="22" fill="'+GRN+'"/>';
+  s+='<text x="540" y="'+(cy+320)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((p-0.5)/0.3)+'">ТЕЛО БЫСТРО ПРИВЫКАЕТ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B4 — STEP-STAIRS: 3 ступени (ПРАВА А / ПЛОЩАДКА / ГОРОД) поднимаются лесенкой, маркер шагает.
+// (новая форма: восходящая лестница-прогресс; ≠ route/nodes/constellation прошлых)
+function b4(ts){const a=16.7,b=20.7;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=1080;const steps=[["ПРАВА А",CYAN],["ПЛОЩАДКА",AMB2],["ГОРОД",GRN]];const sw=240,sh=90;
+  const climb=p*3;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-420)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ВСЁ ПО ШАГАМ, СПОКОЙНО</text>';
+  steps.forEach((st,i)=>{const ap=clamp(climb-i);if(ap<=0)return;const x=cx-sw*1.5+i*sw+sw*0.2, y=cy-i*sh;
+    s+='<rect x="'+x+'" y="'+(y-sh)+'" width="'+sw+'" height="'+(sh*ap)+'" rx="8" fill="'+CARD+'" stroke="'+st[1]+'" stroke-width="3"/>'
+     +'<text x="'+(x+sw/2)+'" y="'+(y-sh/2+8)+'" text-anchor="middle" font-family="soyuz" font-size="36" fill="'+st[1]+'" opacity="'+ap+'">'+st[0]+'</text>';});
+  // маркер-новичок
+  const mi=Math.min(2,Math.floor(climb));const mx=cx-sw*1.5+mi*sw+sw*0.7,my=cy-mi*sh-sh-20;
+  s+='<circle cx="'+mx+'" cy="'+my+'" r="20" fill="'+WHT+'"/>';
+  s+='<text x="540" y="'+(cy+120)+'" text-anchor="middle" font-family="soyuz" font-size="52" fill="'+WHT+'" opacity="'+clamp((p-0.7)/0.3)+'">ОТ НУЛЯ ДО ГОРОДА</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B5 — CC-LADDER: рунги объёма 125/250/400, селектор подсвечивает старт-250.
+// (новая форма: лестница-рунги выбора; ≠ era-slider #26 горизонт., ≠ carousel #19)
+function b5(ts){const a=21.1,b=25.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=1000;const rungs=[["125","лёгкий"],["250","старт новичку"],["400","опыт"]];
+  const sel=clamp((p-0.2)/0.4);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-320)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">С ЧЕГО НАЧАТЬ</text>';
+  // боковины лестницы
+  s+='<line x1="'+(cx-160)+'" y1="'+(cy-240)+'" x2="'+(cx-160)+'" y2="'+(cy+40)+'" stroke="rgba(255,255,255,.2)" stroke-width="6"/>';
+  s+='<line x1="'+(cx+160)+'" y1="'+(cy-240)+'" x2="'+(cx+160)+'" y2="'+(cy+40)+'" stroke="rgba(255,255,255,.2)" stroke-width="6"/>';
+  rungs.forEach((r,i)=>{const y=cy-i*120;const on=(i===1)&&sel>0.5;const ap=clamp(p*3-i);
+    s+='<rect x="'+(cx-160)+'" y="'+(y-30)+'" width="320" height="60" rx="10" fill="'+(on?'rgba(234,89,32,.2)':'rgba(255,255,255,.06)')+'" stroke="'+(on?AMB:'rgba(255,255,255,.25)')+'" stroke-width="'+(on?4:2)+'" opacity="'+ap+'"/>'
+     +'<text x="'+(cx-90)+'" y="'+(y+12)+'" text-anchor="middle" font-family="soyuz" font-size="44" fill="'+(on?WHT:DIM)+'" opacity="'+ap+'">'+r[0]+'</text>'
+     +'<text x="'+(cx+70)+'" y="'+(y+10)+'" text-anchor="middle" font-family="man8" font-size="26" fill="'+(on?AMB2:DIM)+'" opacity="'+ap+'">'+r[1]+'</text>';});
+  s+='<text x="540" y="'+(cy+160)+'" text-anchor="middle" font-family="soyuz" font-size="50" fill="'+WHT+'" opacity="'+clamp((sel-0.6)/0.3)+'">250 КУБОВ — НЕДОРОГО И НАДЁЖНО</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B6 — KEY-TURN LOCKUP: ключ поворачивается в замке, панель загорается, проявляется лого.
+// (новый лок-ап: поворот ключа зажигания; ≠ ignition-tacho #20, ≠ gear/puzzle/liquid/etc)
+function b6(ts){const a=25.7,b=31.2;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;const turn=easeInOut(clamp(p/0.45))*90;const bloom=clamp((p-0.5)/0.5);
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  if(bloom<0.6){s+='<g transform="translate('+cx+','+cy+') rotate('+turn+')" opacity="'+(1-bloom*1.6)+'">'
+    +'<circle r="60" fill="none" stroke="'+DIM+'" stroke-width="6"/><rect x="-8" y="-140" width="16" height="90" rx="6" fill="'+AMB2+'"/><circle cy="-150" r="26" fill="none" stroke="'+AMB2+'" stroke-width="8"/></g>';}
+  if(turn>80&&bloom<0.4)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(30+150*bloom)+'" fill="none" stroke="'+WHT+'" stroke-width="'+(6*(1-bloom*2.5))+'" opacity="'+clamp(1-bloom*2.5)+'"/>';
+  const sc=lerp(0.5,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="126" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="118" text-anchor="middle" font-family="soyuz" font-size="126" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД В КОММЕНТАРИЯХ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=b1(ts)+b2(ts)+b3(ts)+b4(ts)+b5(ts)+b6(ts);};
+window.render(0);
+</script></body></html>
