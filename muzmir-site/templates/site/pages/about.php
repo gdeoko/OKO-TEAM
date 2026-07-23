@@ -130,7 +130,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 .bar-row{display:grid;gap:7px}
 .bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--text)}
 .bar-top span{font-weight:600;font-size:.95rem}
-.bar-top b{font-family:var(--ff-display);font-size:1.15rem;color:var(--gold)}
+.bar-top b{font-family:var(--ff-display);font-size:1.15rem;color:var(--gold);white-space:nowrap;flex:none}
 .bar{position:relative;height:10px;border-radius:999px;background:var(--glass-brd);overflow:hidden}
 .bar-fill{display:block;height:100%;width:100%;border-radius:999px;background:var(--grad-gold);
   transform:scaleX(0);transform-origin:left center;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}

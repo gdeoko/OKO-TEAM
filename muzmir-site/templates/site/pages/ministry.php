@@ -93,6 +93,9 @@ ob_start(); ?>
   background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:0}
 .ms-stats-glow>*{position:relative;z-index:1}
 .stats .stat{position:relative;overflow:hidden}
+/* Блок «Охват по стране»: 4 колонки на десктопе, 2 на мобиле (без сжатия подписей) */
+.ms-stat4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:640px){.ms-stat4{grid-template-columns:repeat(2,1fr)}}
 .stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 .partners img{filter:grayscale(.2)}
 @media(hover:hover){
@@ -136,9 +139,13 @@ ob_start(); ?>
 @media(max-width:640px){
   .ms-filters{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;
     scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
-    margin-inline:calc(var(--gap,20px)*-1);padding-inline:var(--gap,20px);padding-bottom:6px}
+    margin-inline:-16px;padding-inline:16px;padding-bottom:6px}
   .ms-filters::-webkit-scrollbar{display:none}
   .ms-filter{flex:0 0 auto;scroll-snap-align:start}
+}
+/* Совпадение с паддингом .container на самых узких экранах — без горизонтального скролла */
+@media(max-width:360px){
+  .ms-filters{margin-inline:-14px;padding-inline:14px}
 }
 
 /* Карточка письма */
@@ -235,7 +242,7 @@ ob_start(); ?>
       <div class="gold-rule"></div>
     </div>
 
-    <div class="stats reveal" style="grid-template-columns:repeat(4,1fr);max-width:820px;margin:0 auto 40px">
+    <div class="stats reveal ms-stat4" style="max-width:820px;margin:0 auto 40px">
       <div class="stat"><b data-count="<?= $subjectsCount ?>">0</b><span>субъектов РФ</span></div>
       <div class="stat"><b data-count="<?= $districtsCount ?>">0</b><span>федеральных округов</span></div>
       <div class="stat"><b data-count="<?= $countries ?>" data-suffix="+">0</b><span>стран-участниц</span></div>
