@@ -38,9 +38,12 @@ python3 КОНТЕНТ-ЗАВОД/factory/pipeline/tts_free.py "<VO текст>"
 #   референс голоса: factory/voice/ekat_ref.mp3 (+ ekat_ref_text.txt). Требует HF_TOKEN.
 #   ВАЖНО: русский текст писать с Ё где нужно; проверить распознаванием (whisper) что слова не искажены.
 
-# ОБЛОЖКА/картинки (бесплатно, Pollinations FLUX, без ключа/квоты) — pipeline/cover_free.py
-python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "<storybook prompt, no text>" work/cover_base.jpg 1080 1920 <seed>
-#   затем композитить заголовок Playfair+Soyuz + ПРОЗРАЧНЫЙ лого brand/metanoia/png (без квадрата).
+# ОБЛОЖКА — ВСЕГДА красивая РИСОВАННАЯ (закон 0-АЛЬФА). НИКОГДА плоские CSS-карточки!
+# 1) FLUX-иллюстрация фон (тёплая акварель/gouache storybook, мама/ребёнок по теме, no text):
+python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "soft watercolor gouache children book illustration, warm cream and honey light, tender storybook, orthodox christian family, <сцена по теме>, no text, no words" work/cover_base.png 1080 1920 <seed>
+# 2) заголовок+лого+зум-интро одним скриптом (эталон): scratchpad/reel01v2/work/cover_ill.mjs
+#    config JSON: {"wd":"<WD>","rubric":"<РУБРИКА>","title":"строка1<br>слово2 <b>акцент</b>","accent":"#C4703F"}
+node cover_ill.mjs <WD>/covcfg.json   # → work/cover.jpg (обложка IG) + work/intro.mp4 (мягкий зум 2.2с)
 
 # МУЗЫКА (бесплатно, РАЗНАЯ каждый раз по НАСТРОЕНИЮ темы) — pipeline/music_free.py
 python3 КОНТЕНТ-ЗАВОД/factory/pipeline/music_free.py "<mood ВЫВЕДИ из темы/эмоции ЭТОГО ролика — не из списка>" work/music.m4a <dur> NN
@@ -69,8 +72,10 @@ node outro_gen.mjs                                              # анимиро
 ```
 python3 align.py            # faster-whisper → work/words.json (word timestamps)
 #   ГРАБЛЯ: transcribe(..., vad_filter=False) — с VAD склеенная озвучка режется до пары слов!
-python3 subs_karaoke.py     # Союз Гротеск, 2 слова, караоке \kf, РЕЗКИЕ (без \blur), без обводки,
-                            # MarginV~610, НЕ на обложке (<2.4с skip). fontsdir=fonts/
+python3 subs_std.py         # ЕДИНЫЙ ФИРМЕННЫЙ СТИЛЬ (закон 0-АЛЬФА, НЕ менять): 2 слова, НИЗ-центр
+                            # (Alignment 2, MarginV 430), Soyuz Grotesk 82, тёплое ЗОЛОТО-караоке
+                            # (Primary &H0082C8E8), чёткая тёмная обводка (Outline 3), без box.
+                            # НЕ таскать субтитры по верху/центру, НЕ менять цвет ради разнообразия.
 ```
 
 ## 7. Свод
