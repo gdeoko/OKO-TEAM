@@ -125,4 +125,4 @@
 4. **Speed-streak-stability** — мчащиеся горизонтальные стрик-линии + стабильный ровный маркер + растущий счётчик км/ч (≠ осциллограф #17, ≠ спидометр-циферблат).
 5. **Tire-tread-morph** — сечение шины, протектор морфится внедорожный↔шоссе, метр сцепления % (новая форма).
 6. **Converging-streaks lockup** — горизонтальные скоростные стрики сходятся к центру в лого DIESEL CARGO (≠ headlight-beam #19, sun-flare #21, reticle #23, spark/splash/ignition/liquid-fill).
-Акценты CYAN/GRN/AMB под три мира. ГОЛОС: Piper Ruslan + RUAccent. Музыка — pick_music (viral, уник). Окна подгоняются под timing VO.
+Акценты CYAN/GRN/AMB под три мира. ГОЛОС: Piper Ruslan + RUAccent. Музыка fs_viral_51278 (seed 817). СОБРАН, очередь VPS 017, MD5 a76fb9a14b5390efc576916ce6957181.
