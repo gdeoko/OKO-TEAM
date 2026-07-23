@@ -44,19 +44,31 @@ $dipCount  = count($diplomas);
 html,body{overflow-x:hidden}
 body{margin:0;font-family:var(--ff-body);background:var(--bg);color:var(--text);
   font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  padding-bottom:calc(var(--nav-h) + max(10px, env(safe-area-inset-bottom)));
   transition:background .3s,color .3s}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(120% 60% at 50% -10%,var(--gold-soft),transparent 60%)}
 h1,h2,h3{font-family:var(--ff-serif);font-weight:700;margin:0 0 .4em;line-height:1.15;color:var(--text)}
 a{color:var(--gold-2);text-decoration:none}
 .wrap{max-width:560px;margin:0 auto;padding:14px 14px 8px;padding-top:calc(12px + env(safe-area-inset-top))}
-.top{display:flex;align-items:center;gap:11px;padding:4px 2px 16px}
-.top img{width:42px;height:42px;border-radius:50%;box-shadow:0 2px 12px rgba(232,194,90,.32);border:1px solid var(--glass-brd);flex:none}
-.top b{font-family:var(--ff-serif);font-size:1.12rem;line-height:1.05;color:var(--text)}
+.top{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;padding:14px 15px;margin-bottom:12px;
+  background:radial-gradient(320px 180px at 100% -40%,var(--gold-soft),transparent 60%),var(--panel);
+  border:1px solid var(--glass-brd);border-radius:var(--radius);box-shadow:0 8px 26px rgba(0,0,0,.22);backdrop-filter:blur(12px)}
+.top::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--grad-gold)}
+.top img{width:48px;height:48px;border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.3),0 0 0 1px var(--glass-brd);flex:none}
+.top b{font-family:var(--ff-serif);font-size:1.15rem;line-height:1.05;color:var(--text)}
 .top small{color:var(--muted);font-size:.8rem}
-.card{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:15px 16px;
+/* Профиль-статы */
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.hero-stat{position:relative;overflow:hidden;text-align:center;padding:12px 6px;border-radius:var(--radius-sm);
+  background:linear-gradient(180deg,var(--glass),transparent);border:1px solid var(--glass-brd);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.hero-stat::before{content:"";position:absolute;left:26%;right:26%;top:0;height:2px;border-radius:2px;background:var(--grad-gold);opacity:.7}
+.hero-stat b{display:block;font-family:var(--ff-serif);font-size:1.55rem;line-height:1;font-weight:700;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat span{display:block;font-size:.7rem;color:var(--muted);margin-top:3px}
+.card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:15px 16px;
   box-shadow:0 6px 22px rgba(0,0,0,.22);margin-bottom:12px;backdrop-filter:blur(12px)}
+.card h3{padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:10px}
 .card h3{font-size:1.08rem;display:flex;align-items:center;gap:8px}
 .card h3 svg{width:18px;height:18px;color:var(--gold-2)}
 .row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -91,7 +103,8 @@ a{color:var(--gold-2);text-decoration:none}
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;
   background:color-mix(in srgb,var(--bg) 86%,transparent);border-top:1px solid var(--line);
   backdrop-filter:blur(16px);display:flex;max-width:560px;margin:0 auto;
-  padding-bottom:env(safe-area-inset-bottom)}
+  box-shadow:0 -8px 26px rgba(0,0,0,.18);
+  padding-bottom:max(10px, env(safe-area-inset-bottom))}
 .tabbar button{flex:1;background:none;border:0;padding:9px 4px;cursor:pointer;color:var(--muted);height:var(--nav-h);
   font-family:var(--ff-body);font-weight:600;font-size:.7rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   -webkit-tap-highlight-color:transparent;position:relative;transition:color .18s}
@@ -111,6 +124,14 @@ a{color:var(--gold-2);text-decoration:none}
     <img src="<?= h(logo_data_uri()) ?>" alt="Логотип">
     <div><b>Музыкальный Мир</b><br><small><?= $u ? h($u['full_name'] ?: 'Личный кабинет') : 'Личный кабинет' ?></small></div>
   </div>
+
+  <?php if ($u): ?>
+  <div class="hero-stats">
+    <div class="hero-stat"><b><?= $appsCount ?></b><span>Заявок</span></div>
+    <div class="hero-stat"><b><?= $dipCount ?></b><span>Дипломов</span></div>
+    <div class="hero-stat"><b><?= count($orders) ?></b><span>Заказов</span></div>
+  </div>
+  <?php endif; ?>
 
   <!-- Главная -->
   <div class="panel active" id="p-home">

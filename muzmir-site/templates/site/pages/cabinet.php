@@ -139,25 +139,42 @@ ob_start(); ?>
 <style>
 .cab{max-width:960px;margin:0 auto}
 /* --- Шапка профиля --- */
-.cab-hero{position:relative;overflow:hidden;border-radius:var(--radius);padding:26px;margin-bottom:22px;
-  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
-.cab-hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(600px 300px at 100% -20%,var(--gold-soft),transparent 60%)}
-.cab-hero-top{position:relative;z-index:1;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.cab-ava{width:82px;height:82px;border-radius:24px;flex:none;position:relative;overflow:hidden;
-  background:var(--grad-gold);color:#1a1206;display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-display);font-weight:800;font-size:2.1rem;box-shadow:var(--shadow-card),inset 0 0 22px rgba(26,18,6,.14)}
+.cab-hero{position:relative;overflow:hidden;border-radius:var(--radius-lg);padding:30px 30px 26px;margin-bottom:24px;
+  background:
+    radial-gradient(680px 320px at 100% -30%,var(--gold-soft),transparent 62%),
+    radial-gradient(520px 300px at -10% 130%,var(--gold-soft),transparent 60%),
+    var(--panel);
+  border:1px solid var(--glass-brd);box-shadow:var(--shadow-3d);backdrop-filter:blur(18px)}
+.cab-hero::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background:repeating-linear-gradient(180deg,transparent 0 13px,var(--line) 13px 14px);
+  -webkit-mask:radial-gradient(120% 90% at 88% -10%,#000,transparent 62%);
+  mask:radial-gradient(120% 90% at 88% -10%,#000,transparent 62%)}
+.cab-hero::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:2;background:var(--grad-gold);opacity:.9}
+.cab-hero-note{position:absolute;top:-14px;right:-6px;width:150px;height:150px;z-index:0;color:var(--gold);opacity:.09;pointer-events:none}
+.cab-hero-top{position:relative;z-index:1;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.cab-ava{width:88px;height:88px;border-radius:26px;flex:none;position:relative;overflow:hidden;
+  background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
+  font-family:var(--ff-display);font-weight:800;font-size:2.2rem;
+  box-shadow:0 12px 30px -8px rgba(139,111,31,.5),inset 0 0 24px rgba(26,18,6,.16),0 0 0 1px var(--glass-brd)}
+.cab-ava::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4);background:linear-gradient(160deg,rgba(255,255,255,.28),transparent 45%)}
 .cab-ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cab-id{min-width:0;flex:1}
-.cab-id h1{font-family:var(--ff-display);font-size:clamp(1.5rem,4.5vw,2.1rem);line-height:1.1;margin:0 0 6px;overflow-wrap:anywhere}
-.cab-role{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  padding:4px 11px;border-radius:999px;background:var(--gold-soft);color:var(--gold);border:1px solid var(--glass-brd)}
-.cab-email{display:block;color:var(--muted);font-size:.88rem;margin-top:8px;overflow-wrap:anywhere}
-.cab-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
-.cab-stat{text-align:center;padding:14px 8px;border-radius:var(--radius-sm);background:var(--glass);border:1px solid var(--glass-brd)}
-.cab-stat b{display:block;font-family:var(--ff-display);font-size:clamp(1.7rem,5vw,2.4rem);line-height:1;
+.cab-id h1{font-family:var(--ff-display);font-size:clamp(1.55rem,4.5vw,2.2rem);line-height:1.08;margin:0 0 9px;overflow-wrap:anywhere}
+.cab-role{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  padding:5px 13px;border-radius:999px;background:var(--gold-soft);color:var(--gold-2);border:1px solid var(--glass-brd);
+  box-shadow:inset 0 0 12px var(--gold-soft)}
+.cab-role::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grad-gold);box-shadow:0 0 8px var(--gold)}
+.cab-email{display:block;color:var(--muted);font-size:.88rem;margin-top:10px;overflow-wrap:anywhere}
+.cab-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
+.cab-stat{position:relative;overflow:hidden;text-align:center;padding:17px 8px 15px;border-radius:var(--radius-sm);
+  background:linear-gradient(180deg,var(--glass),transparent);border:1px solid var(--glass-brd);
+  box-shadow:var(--shadow-soft);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.cab-stat::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;border-radius:2px;background:var(--grad-gold);opacity:.7}
+.cab-stat:hover{transform:translateY(-4px);box-shadow:var(--shadow-card),var(--shadow-glow)}
+.cab-stat b{display:block;font-family:var(--ff-display);font-size:clamp(1.8rem,5vw,2.5rem);line-height:1;
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.cab-stat span{display:block;color:var(--muted);font-size:.76rem;letter-spacing:.03em;margin-top:5px}
+.cab-stat span{display:block;color:var(--muted);font-size:.76rem;letter-spacing:.04em;margin-top:6px}
 /* --- Вкладки (горизонтальный скролл на мобилке) --- */
 .cab-tabs{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
   padding:5px;scroll-snap-type:x proximity;background:var(--panel);border:1px solid var(--glass-brd);border-radius:999px;backdrop-filter:blur(10px)}
@@ -166,17 +183,20 @@ ob_start(); ?>
   padding:11px 18px;border-radius:999px;color:var(--text-dim);font-weight:700;font-size:.9rem;cursor:pointer;
   background:none;border:none;transition:color .2s,background .2s,box-shadow .2s;min-height:44px}
 .cab-tab:hover{color:var(--text)}
-.cab-tab.active{background:var(--grad-gold);color:#1a1206;box-shadow:var(--shadow-card)}
-.cab-tab.active svg{stroke:#1a1206}
+.cab-tab.active{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
+.cab-tab.active svg{stroke:var(--gold-fg)}
 .cab-tab svg{width:18px;height:18px}
 /* --- Панели / карточки --- */
 .cab-panel{display:none}
 .cab-panel.active{display:block;animation:cabFade .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes cabFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .cab-panel h2{font-family:var(--ff-display);font-size:clamp(1.4rem,4vw,1.9rem);margin:0 0 16px}
-.cab-card{background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:20px 22px;
+.cab-card{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--glass-brd);border-radius:var(--radius);padding:20px 22px;
   box-shadow:var(--shadow-card);margin-bottom:16px;backdrop-filter:blur(14px);transition:transform .25s,box-shadow .25s}
+.cab-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-gold);opacity:0;transition:opacity .25s}
 .cab-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-card),var(--shadow-glow)}
+.cab-card:hover::before{opacity:.85}
+.cab-card.cab-empty::before,.cab-card.cab-empty:hover{transform:none}
 .cab-row{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start}
 .cab-ttl{font-family:var(--ff-serif);font-size:1.12rem;font-weight:700;overflow-wrap:anywhere}
 .cab-meta{color:var(--muted);font-size:.9rem;margin:6px 0 0;overflow-wrap:anywhere}
@@ -190,10 +210,13 @@ ob_start(); ?>
 .cab-step::before{content:"";position:absolute;top:9px;left:-50%;width:100%;height:2px;background:var(--line)}
 .cab-step:first-child::before{display:none}
 .cab-step.done::before{background:var(--grad-gold)}
-.cab-dot{width:20px;height:20px;border-radius:50%;margin:0 auto;position:relative;z-index:1;
+.cab-dot{width:22px;height:22px;border-radius:50%;margin:0 auto;position:relative;z-index:1;
   background:var(--panel-solid);border:2px solid var(--line);transition:.3s}
-.cab-step.done .cab-dot{background:var(--grad-gold);border-color:transparent}
+.cab-step.done .cab-dot{background:var(--grad-gold);border-color:transparent;box-shadow:0 4px 12px -3px rgba(139,111,31,.5)}
+.cab-step.done .cab-dot::after{content:"";position:absolute;left:7px;top:4px;width:5px;height:9px;
+  border:solid var(--gold-fg);border-width:0 2px 2px 0;transform:rotate(42deg)}
 .cab-step.here .cab-dot{box-shadow:0 0 0 5px var(--gold-soft)}
+.cab-step.here .cab-dot::after{opacity:.55}
 .cab-step small{display:block;font-size:.68rem;color:var(--muted);margin-top:7px;overflow-wrap:anywhere}
 .cab-step.done small{color:var(--text-dim);font-weight:700}
 .cab-bar{height:8px;border-radius:999px;background:var(--gold-soft);overflow:hidden;margin-top:16px}
@@ -215,9 +238,13 @@ ob_start(); ?>
 .cab-avaedit .cab-ava{width:60px;height:60px;border-radius:18px;font-size:1.5rem}
 /* --- Реферальные KPI --- */
 .cab-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
-.cab-kpi{padding:18px;border-radius:var(--radius-sm);background:var(--panel);border:1px solid var(--glass-brd);text-align:center;backdrop-filter:blur(10px)}
-.cab-kpi b{display:block;font-family:var(--ff-display);font-size:2rem;line-height:1;color:var(--gold-2)}
-.cab-kpi span{display:block;color:var(--muted);font-size:.8rem;margin-top:6px}
+.cab-kpi{position:relative;overflow:hidden;padding:20px 18px;border-radius:var(--radius-sm);
+  background:radial-gradient(200px 120px at 100% 0,var(--gold-soft),transparent 70%),var(--panel);
+  border:1px solid var(--glass-brd);text-align:center;backdrop-filter:blur(10px);box-shadow:var(--shadow-soft)}
+.cab-kpi::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:var(--grad-gold);opacity:.7}
+.cab-kpi b{display:block;font-family:var(--ff-display);font-size:2.1rem;line-height:1;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cab-kpi span{display:block;color:var(--muted);font-size:.8rem;margin-top:7px}
 .cab-code{display:inline-flex;align-items:center;gap:10px;font-family:var(--ff-body);font-weight:800;letter-spacing:.08em;
   font-size:1.05rem;padding:8px 16px;border-radius:var(--radius-sm);background:var(--gold-soft);color:var(--gold);border:1px dashed var(--glass-brd)}
 .cab-copy{cursor:pointer;background:none;border:none;color:var(--gold-2);display:inline-flex;padding:4px}
@@ -236,6 +263,7 @@ ob_start(); ?>
 
       <!-- Шапка профиля -->
       <div class="cab-hero reveal">
+        <svg class="cab-hero-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         <div class="cab-hero-top">
           <div class="cab-ava">
             <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
