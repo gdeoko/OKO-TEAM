@@ -1,0 +1,189 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:'soyuz';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/SoyuzGrotesk-Bold.ttf')}
+@font-face{font-family:'man8';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/manrope-v20-cyrillic_latin-800.ttf')}
+@font-face{font-family:'mont9';src:url('file:///home/user/OKO-TEAM/oko-app/factory/fonts/montserrat-v31-cyrillic_latin-900.ttf')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1080px;height:1920px;background:transparent;overflow:hidden}
+#stage{position:absolute;inset:0;font-family:'man8';color:#F6F4F1}
+svg{overflow:visible}
+</style></head><body><div id="stage"></div>
+<script>
+// BESPOKE overlays — reel #23 (batch B, КВАДРО охота/рыбалка). New forms, none reused:
+// sonar-sweep · topo-contour-morph · rack-load-stack · silencer-wave · river-ford-gauge · reticle-lockup.
+// Все 6 форм новые по геометрии И моушену, свериться с USED_ANIM.md #16-22 — нет пересечений.
+// ВНИМАНИЕ: окна (a,b) выставлены по типовой раскладке #22, ТОНКО подстроить под timing.json после VO.
+const TOTAL=32.0;
+const AMB="#EA5920",AMB2="#FF7A3C",WHT="#F6F4F1",DIM="#8a8178",GRN="#7CCB4B",AQUA="#39C6E6",CARD="rgba(16,12,10,.94)";
+const stage=document.getElementById('stage');
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,x)=>a+(b-a)*x;
+const easeOut=x=>1-Math.pow(1-x,3);
+const easeInOut=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const back=x=>{const c=2.1;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+function win(ts,a,b){if(ts<a-0.2||ts>b+0.3)return -1;return clamp((ts-a)/(b-a));}
+function bf(ts,a,b){return clamp(Math.min((ts-a)/0.35,(b-ts)/0.35));}
+
+// B1 — SONAR-SWEEP: вращающийся луч эхолота по полярной сетке, «рыбные» блипы вспыхивают и гаснут.
+// (новая форма: сканирующий луч + затухающие контакты; ≠ reach-radius статичных колец #21, ≠ compass-spin)
+function b1(ts){const a=1.7,b=5.7;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=940,R=300;const ang=p*TOTAL*1.35;           // луч крутится
+  const blips=[[0.62,1.1],[0.4,2.4],[0.8,3.9],[0.55,5.2],[0.72,0.3]]; // [радиус-доля, фаза-угла]
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="'+(cy-R-70)+'" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ГДЕ МАШИНА ВСТАНЕТ —</text>';
+  // полярная сетка
+  for(let i=1;i<=3;i++)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R*i/3)+'" fill="none" stroke="rgba(57,198,230,0.22)" stroke-width="2"/>';
+  s+='<line x1="'+(cx-R)+'" y1="'+cy+'" x2="'+(cx+R)+'" y2="'+cy+'" stroke="rgba(57,198,230,0.18)" stroke-width="2"/>';
+  s+='<line x1="'+cx+'" y1="'+(cy-R)+'" x2="'+cx+'" y2="'+(cy+R)+'" stroke="rgba(57,198,230,0.18)" stroke-width="2"/>';
+  // сектор-хвост луча
+  s+='<defs><radialGradient id="sw" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(57,198,230,0.30)"/><stop offset="1" stop-color="rgba(57,198,230,0)"/></radialGradient></defs>';
+  const ex=cx+R*Math.cos(ang),ey=cy+R*Math.sin(ang);
+  s+='<g><path d="M'+cx+' '+cy+' L'+(cx+R*Math.cos(ang-0.5))+' '+(cy+R*Math.sin(ang-0.5))+' A'+R+' '+R+' 0 0 1 '+ex+' '+ey+' Z" fill="url(#sw)"/>';
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+ex+'" y2="'+ey+'" stroke="'+AQUA+'" stroke-width="3"/></g>';
+  // блипы: ярко, когда луч только что прошёл их угол
+  blips.forEach(([rf,ph])=>{const bx=cx+R*rf*Math.cos(ph),by=cy+R*rf*Math.sin(ph);
+    let d=(ang-ph)% (2*Math.PI); if(d<0)d+=2*Math.PI; const glow=clamp(1-d/1.2);
+    s+='<circle cx="'+bx+'" cy="'+by+'" r="'+(6+10*glow)+'" fill="'+AMB2+'" opacity="'+(0.25+0.75*glow)+'"/>';});
+  s+='<text x="540" y="'+(cy+R+90)+'" text-anchor="middle" font-family="soyuz" font-size="72" fill="'+WHT+'">ОХОТА ТОЛЬКО НАЧИНАЕТСЯ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B2 — TOPO-CONTOUR-MORPH: вложенные горизонтали рельефа рябят, маршрут-линия нитью проходит по низинам.
+// (новая форма: морфинг вложенных контуров + прошивка трассы; ≠ terrain-constellation точки #21, ≠ incline #18)
+function b2(ts){const a=5.9,b=11.2;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=920;
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="560" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">ПОЛНЫЙ ПРИВОД · ПОНИЖЕННАЯ · ЛЕБЁДКА</text>';
+  // 5 вложенных «горизонталей» — деформируемые замкнутые кривые
+  for(let k=0;k<5;k++){const rr=90+k*46;let d='';
+    for(let ai=0;ai<=36;ai++){const th=ai/36*2*Math.PI;
+      const wob=1+0.12*Math.sin(th*3+k*0.9+p*TOTAL*1.6)+0.08*Math.cos(th*2-p*TOTAL*1.1);
+      const x=cx+rr*wob*Math.cos(th),y=cy+rr*0.62*wob*Math.sin(th);
+      d+=(ai?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);}
+    d+=' Z';
+    s+='<path d="'+d+'" fill="none" stroke="rgba(124,203,75,'+(0.5-k*0.07)+')" stroke-width="2.5"/>';}
+  // маршрут-нить, прошивается слева направо по «долинам»
+  const prog=easeInOut(clamp(p/0.8));const N=60;let rd='',mx=0,my=0;
+  for(let i=0;i<=N*prog;i++){const x=cx-360+720*(i/N);const y=cy+70*Math.sin(i/N*Math.PI*2.2)+18*Math.sin(i*0.7);rd+=(i?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);mx=x;my=y;}
+  s+='<path d="'+rd+'" fill="none" stroke="'+AMB2+'" stroke-width="6" stroke-linecap="round"/>';
+  if(prog<1)s+='<circle cx="'+mx+'" cy="'+my+'" r="12" fill="'+WHT+'"/>';
+  s+='<text x="540" y="'+(cy+330)+'" text-anchor="middle" font-family="soyuz" font-size="60" fill="'+WHT+'" opacity="'+clamp((prog-0.6)/0.4)+'">ПРОЙДЁТ, ГДЕ ВСЕ ВСТАЮТ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B3 — RACK-LOAD-STACK: снаряга физически ложится штабелем на задний багажник, рама пружинит под весом, бар кг.
+// (новая форма: вертикальный штабель с прогибом-пружиной; ≠ gear-loadout слот-дроп #21, ≠ cost-blocks стек #16)
+function b3(ts){const a=11.4,b=17.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,rackY=1180,rackW=520;
+  const items=[["КАНИСТРЫ",70],["ПАЛАТКА",56],["СНАРЯГА",50],["УЛОВ · ДОБЫЧА",64]];
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="640" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">УСИЛЕННЫЙ БАГАЖНИК И РАМА</text>';
+  // сколько предметов уже уложено
+  const shown=p*items.length; const load=clamp(shown/items.length);
+  const sag=10*load*Math.abs(Math.sin(p*TOTAL*3))*(1-load*0.5); // пружинистый прогиб рамы
+  let y=rackY;
+  for(let i=items.length-1;i>=0;i--){}                        // (порядок рисуем снизу вверх ниже)
+  // рама-платформа
+  s+='<rect x="'+(cx-rackW/2)+'" y="'+(rackY+sag)+'" width="'+rackW+'" height="16" rx="6" fill="'+DIM+'"/>';
+  s+='<line x1="'+(cx-rackW/2+30)+'" y1="'+(rackY+16+sag)+'" x2="'+(cx-rackW/2+30)+'" y2="'+(rackY+70+sag)+'" stroke="'+DIM+'" stroke-width="10"/>';
+  s+='<line x1="'+(cx+rackW/2-30)+'" y1="'+(rackY+16+sag)+'" x2="'+(cx+rackW/2-30)+'" y2="'+(rackY+70+sag)+'" stroke="'+DIM+'" stroke-width="10"/>';
+  let stackTop=rackY+sag;
+  for(let i=0;i<items.length;i++){const app=clamp(shown-i);if(app<=0)continue;
+    const h=items[i][1];const drop=(1-easeOut(app))*-260; // падает сверху
+    const by=stackTop-h;
+    s+='<g transform="translate(0,'+drop+')"><rect x="'+(cx-rackW/2+24)+'" y="'+by+'" width="'+(rackW-48)+'" height="'+(h-8)+'" rx="10" fill="'+(i===items.length-1?AMB:'rgba(246,244,241,0.14)')+'" stroke="'+(i===items.length-1?AMB2:'rgba(246,244,241,0.5)')+'" stroke-width="2"/>'
+     +'<text x="'+cx+'" y="'+(by+h/2+2)+'" text-anchor="middle" font-family="man8" font-size="30" fill="'+(i===items.length-1?'#100c0a':WHT)+'">'+items[i][0]+'</text></g>';
+    if(app>=1)stackTop=by;}
+  // бар нагрузки
+  const kg=Math.round(load*180);
+  s+='<rect x="'+(cx-220)+'" y="720" width="440" height="20" rx="10" fill="rgba(255,255,255,.12)"/>';
+  s+='<rect x="'+(cx-220)+'" y="720" width="'+(440*load)+'" height="20" rx="10" fill="'+GRN+'"/>';
+  s+='<text x="540" y="790" text-anchor="middle" font-family="soyuz" font-size="48" fill="'+WHT+'">ГРУЗ ДО '+kg+' КГ · УВОЗИШЬ ВСЁ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B4 — SILENCER-WAVE: две волны — громкая рваная (обычный) и приглушённая (наш), активное подавление в флэт.
+// (новая форма: сравнительный A/B демпинг волны; ≠ speed-осциллограф нарастающей амплитуды #17)
+function b4(ts){const a=17.6,b=22.0;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540;const y1=860,y2=1120,W=760;
+  const damp=easeInOut(clamp((p-0.25)/0.5)); // 0 громко → 1 тихо
+  function wave(cy,amp,freq,jit){let d='';for(let x=0;x<=W;x+=8){const t=x/W;
+      const val=amp*Math.sin(t*freq+p*TOTAL*8)+ (jit?amp*0.4*Math.sin(t*freq*3.3+p*TOTAL*13):0);
+      d+=(x?' L':'M')+(cx-W/2+x).toFixed(1)+' '+(cy+val).toFixed(1);}return d;}
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="620" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">НЕ ПУГАЕТ ЗВЕРЯ</text>';
+  // верх: обычный (остаётся громким)
+  s+='<text x="'+(cx-W/2)+'" y="'+(y1-90)+'" font-family="man8" font-size="30" fill="'+DIM+'">ОБЫЧНЫЙ</text>';
+  s+='<path d="'+wave(y1,64,26,true)+'" fill="none" stroke="'+DIM+'" stroke-width="4"/>';
+  // низ: наш (подавляется к флэту)
+  s+='<text x="'+(cx-W/2)+'" y="'+(y2-90)+'" font-family="man8" font-size="30" fill="'+AMB2+'">DIESEL · ТИХИЙ ХОД</text>';
+  s+='<path d="'+wave(y2,64*(1-0.85*damp),26,damp<0.5)+'" fill="none" stroke="'+AMB2+'" stroke-width="5"/>';
+  // индикатор тишины
+  const q=clamp((damp-0.4)/0.6);
+  s+='<text x="540" y="1330" text-anchor="middle" font-family="soyuz" font-size="66" fill="'+WHT+'" opacity="'+q+'">ПОДЪЕДЕШЬ — НЕ СПУГНЁШЬ</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B5 — RIVER-FORD-GAUGE: боковой профиль брода, линейка глубины, квадро идёт по воде, брызги на ватерлинии.
+// (новая форма: горизонтальная линейка уровня воды + вейд + частицы; ≠ liquid-tank fill #16, ≠ water-shatter #17)
+function b5(ts){const a=22.2,b=26.4;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,base=1200,W=820;
+  const level=base-160*easeInOut(clamp(p/0.5)); // вода поднимается до отметки
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  s+='<text x="540" y="660" text-anchor="middle" font-family="man8" font-size="42" letter-spacing="4" fill="'+DIM+'">БРОДЫ · ДОЖДЬ · ХОЛОД — НЕ ПОМЕХА</text>';
+  // линейка глубины слева
+  for(let i=0;i<=4;i++){const yy=base-i*40;s+='<line x1="'+(cx-W/2-40)+'" y1="'+yy+'" x2="'+(cx-W/2-10)+'" y2="'+yy+'" stroke="'+DIM+'" stroke-width="3"/>'
+    +'<text x="'+(cx-W/2-52)+'" y="'+(yy+8)+'" text-anchor="end" font-family="man8" font-size="24" fill="'+DIM+'">'+(i*10)+'</text>';}
+  // дно
+  s+='<line x1="'+(cx-W/2)+'" y1="'+base+'" x2="'+(cx+W/2)+'" y2="'+base+'" stroke="'+DIM+'" stroke-width="4"/>';
+  // вода (волнистый верх)
+  let d='M'+(cx-W/2)+' '+base;const amp=8,k=2*Math.PI/140,ph=p*TOTAL*5;
+  for(let x=cx-W/2;x<=cx+W/2;x+=16){const yy=level+Math.sin(x*k+ph)*amp;d+=' L'+x+' '+yy.toFixed(1);}
+  d+=' L'+(cx+W/2)+' '+base+' Z';
+  s+='<path d="'+d+'" fill="rgba(57,198,230,0.28)" stroke="'+AQUA+'" stroke-width="2"/>';
+  // квадро-маркер идёт слева направо
+  const qx=cx-W/2+W*clamp(p*1.05);const qy=base-70;
+  s+='<g transform="translate('+qx+','+qy+')"><rect x="-46" y="-30" width="92" height="40" rx="10" fill="'+AMB+'"/><circle cx="-30" cy="18" r="20" fill="#100c0a" stroke="'+WHT+'" stroke-width="3"/><circle cx="30" cy="18" r="20" fill="#100c0a" stroke="'+WHT+'" stroke-width="3"/></g>';
+  // брызги на ватерлинии
+  for(let i=0;i<7;i++){const sx=qx-40+i*12;const sy=level-Math.abs(Math.sin(p*TOTAL*6+i))*26;s+='<circle cx="'+sx+'" cy="'+sy+'" r="3.5" fill="'+AQUA+'"/>';}
+  const q=clamp((p-0.55)/0.4);
+  s+='<text x="540" y="'+(base+120)+'" text-anchor="middle" font-family="soyuz" font-size="58" fill="'+WHT+'" opacity="'+q+'">ГЛУБИНА ДО 40 СМ · ВЕСЬ СЕЗОН</text>';
+  s+='</svg>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+'</div>';
+}
+
+// B6 — RETICLE-LOCKUP: кольца прицела сжимаются к центру, «фиксация», из точки распускается лого DIESEL CARGO.
+// (новый лок-ап: сведение прицела-ретикла; ≠ spark/splash/ignition/sun-flare/liquid-fill лок-апы #16-22)
+function b6(ts){const a=26.6,b=31.6;const p=win(ts,a,b);if(p<0)return'';
+  const cx=540,cy=880;
+  const conv=easeInOut(clamp(p/0.42));            // кольца сходятся
+  const bloom=clamp((p-0.5)/0.5);                 // лого распускается
+  let s='<svg style="position:absolute;left:0;top:0" width="1080" height="1920">';
+  // прицел
+  const rings=[380,300,220,150];
+  rings.forEach((r0,i)=>{const r=r0*(1-conv)+ (46+i*10)*conv;
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(234,89,32,'+(0.7-i*0.12)+')" stroke-width="'+(3-i*0.3)+'" opacity="'+(1-bloom*0.8)+'"/>';});
+  // перекрестье
+  const cl=200*(1-conv)+70;
+  ['H','V'].forEach(ax=>{const x1=ax==='H'?cx-cl:cx,x2=ax==='H'?cx+cl:cx,y1=ax==='V'?cy-cl:cy,y2=ax==='V'?cy+cl:cy;
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="rgba(234,89,32,'+(1-bloom)+')" stroke-width="2"/>';});
+  // вспышка фиксации
+  if(conv>0.9&&bloom<0.3)s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(30+120*bloom)+'" fill="none" stroke="'+WHT+'" stroke-width="'+(6*(1-bloom*3))+'" opacity="'+clamp(1-bloom*3)+'"/>';
+  // лого
+  const sc=lerp(0.4,1,easeOut(bloom));
+  s+='<g transform="translate('+cx+','+cy+') scale('+sc+')" opacity="'+bloom+'">'
+   +'<text x="0" y="0" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+WHT+'">DIESEL</text>'
+   +'<text x="0" y="120" text-anchor="middle" font-family="soyuz" font-size="128" fill="'+AMB2+'">CARGO</text></g>';
+  s+='</svg>';
+  const up=clamp((p-0.72)/0.24);
+  let cta='<div style="position:absolute;left:0;top:'+(cy+180)+'px;width:1080px;text-align:center;font-family:man8;font-size:46px;color:'+WHT+';opacity:'+up+'">НАПИШИТЕ ГОРОД · СЛОВО «ОХОТА» В ДИРЕКТ</div>';
+  cta+='<div style="position:absolute;left:0;top:'+(cy+250)+'px;width:1080px;text-align:center;font-family:man8;font-size:38px;color:'+AMB2+';opacity:'+up+'">dieselcompany.pro</div>';
+  return '<div style="opacity:'+bf(ts,a,b)+'">'+s+cta+'</div>';
+}
+
+window.render=function(t){const ts=t*TOTAL;stage.innerHTML=b1(ts)+b2(ts)+b3(ts)+b4(ts)+b5(ts)+b6(ts);};
+window.render(0);
+</script></body></html>
