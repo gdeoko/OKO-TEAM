@@ -243,6 +243,28 @@ function renderStories() {
 
 /* ───────── ПРИГЛАСИТЬ СЕМЬЮ (шеринг) ───────── */
 
+function addCallToCalendar(title, desc) {
+  // Ближайший созвон: завтра в 18:00 по местному времени, длительность 1 час
+  const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(18, 0, 0, 0);
+  const end = new Date(d.getTime() + 60 * 60 * 1000);
+  const fmt = (x) => x.getFullYear() + pad2(x.getMonth() + 1) + pad2(x.getDate()) + 'T' + pad2(x.getHours()) + pad2(x.getMinutes()) + '00';
+  const url = (location && location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'https://metanoya.online';
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Metanoya//Calls//RU', 'BEGIN:VEVENT',
+    'UID:' + fmt(d) + '-metanoya@call', 'DTSTAMP:' + fmt(new Date()), 'DTSTART:' + fmt(d), 'DTEND:' + fmt(end),
+    'SUMMARY:МЕТАНОЙА · ' + title, 'DESCRIPTION:' + desc + '\\nСсылка: ' + url, 'URL:' + url,
+    'BEGIN:VALARM', 'TRIGGER:-PT1H', 'ACTION:DISPLAY', 'DESCRIPTION:Скоро созвон в Метанойе', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  try {
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'metanoya-sozvon.ics';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast('Добавили в календарь · напомним за час 🕊');
+  } catch (e) { toast('Созвон завтра в 18:00 — ждём вас!'); }
+}
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
 function shareInvite() {
   const url = (location && location.origin && location.origin.indexOf('http') === 0) ? location.origin : 'https://metanoya.online';
   const text = 'Мы учимся в христианской онлайн-школе «Метанойя» — уроки, добрые игры и тёплое сообщество для детей. Присоединяйтесь всей семьёй! 🕊';
@@ -307,7 +329,11 @@ function renderFeed() {
   $$('#feed [data-act="watch"]').forEach((el) =>
     el.addEventListener('click', () => openLesson(1)));
   $$('#feed [data-act="join"]').forEach((el) =>
-    el.addEventListener('click', () => toast('Запись на созвон скоро откроется')));
+    el.addEventListener('click', () => {
+      const card = el.closest('.feed-card');
+      const title = card?.querySelector('.feed-card__title')?.textContent || 'Живое занятие';
+      addCallToCalendar(title, 'Живое занятие в христианской школе Метанойя');
+    }));
 }
 
 /* ───────── РЕНДЕР: ЧАТЫ ───────── */
@@ -4115,7 +4141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#dailyVerseBtn').addEventListener('click', openDailyVerse);
   const vt = $('#verseTeaser'); if (vt) vt.textContent = '«' + dailyVerse().t.split(',')[0].split(';')[0] + '…»';
-  $('#joinCall')?.addEventListener('click', () => toast('Запись на созвон скоро откроется'));
+  $('#joinCall')?.addEventListener('click', () => addCallToCalendar('Притча о блудном сыне', 'Живое занятие с Екатериной в школе Метанойя'));
   $('#avatarBtn').addEventListener('click', () => switchTab('profile'));
   $('#searchBtn')?.addEventListener('click', () => {
     $$('.nav__tab').forEach((b) => b.classList.remove('nav__tab--active'));
