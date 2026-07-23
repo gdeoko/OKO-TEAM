@@ -1,4 +1,48 @@
+# КЦ «Музыкальный Мир» — Apache fallback (боевой сервер — nginx, см. deploy/nginx-muzmir.conf).
+# Здесь дублируем ключевую защиту на случай, если сайт когда-либо отдаётся Apache.
+
 RewriteEngine On
+
+# Защита исходников: каталоги приложения лежат вне public/, но на всякий случай.
+<IfModule mod_rewrite.c>
+    RewriteRule ^(data|core|cron|templates|vendor|agent|docs|scripts)/ - [F,L]
+</IfModule>
+<FilesMatch "^(config|config\.local)\.php$">
+    Require all denied
+</FilesMatch>
+# Скрытые файлы (.git, .env и т.п.), кроме .well-known.
+RewriteCond %{REQUEST_URI} "!(^|/)\.well-known/"
+RewriteRule "(^|/)\." - [F]
+
+# Фронт-контроллер: всё несуществующее — в index.php.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [L]
+
+# Сжатие.
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/plain image/svg+xml
+</IfModule>
+
+# Кэш статики.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType font/woff2 "access plus 1 month"
+</IfModule>
+
+# Заголовки безопасности (дублируют core/security.php).
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header setifempty X-Frame-Options "SAMEORIGIN"
+    <If "%{REQUEST_URI} =~ m#^/widget#">
+        Header unset X-Frame-Options
+    </If>
+</IfModule>

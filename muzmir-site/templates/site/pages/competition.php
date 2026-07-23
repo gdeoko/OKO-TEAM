@@ -31,6 +31,8 @@ $thematics = match ($c['direction']) {
     'thematic'  => 'Тематическая',
     default     => 'Свободная',
 };
+// «Слава России» — многожанровый по составу, но патриотический по тематике (эталон данных).
+if (($c['slug'] ?? '') === 'slava-rossii') $thematics = 'Патриотическая';
 
 $statusMap = match ($c['status']) {
     'open'    => ['open', 'Приём заявок открыт'],

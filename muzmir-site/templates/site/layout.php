@@ -113,7 +113,7 @@ $u = current_user();
     <div>
       <h4>Разделы</h4>
       <ul>
-        <?php foreach (['/competitions'=>'Конкурсы','/apply'=>'Подать заявку','/awards'=>'Награды','/concerts'=>'Концерты','/about'=>'О нас'] as $hr=>$lb): ?>
+        <?php foreach (['/competitions'=>'Конкурсы','/apply'=>'Подать заявку','/awards'=>'Награды','/order-awards'=>'Заказ наград','/concerts'=>'Концерты','/hall-of-fame'=>'Аллея Славы','/blog'=>'Блог','/about'=>'О нас'] as $hr=>$lb): ?>
           <li><a href="<?= url($hr) ?>"><?= h($lb) ?></a></li>
         <?php endforeach; ?>
       </ul>
@@ -124,6 +124,7 @@ $u = current_user();
         <li><a href="<?= url('/goals') ?>">Цели и задачи</a></li>
         <li><a href="<?= url('/ministry-support') ?>">Поддержка министерства</a></li>
         <li><a href="<?= url('/faq') ?>">Вопросы и ответы</a></li>
+        <li><a href="<?= url('/reviews') ?>">Отзывы</a></li>
         <li><a href="<?= url('/agreement') ?>">Пользовательское соглашение</a></li>
         <li><a href="<?= url('/privacy') ?>">Политика конфиденциальности</a></li>
       </ul>
