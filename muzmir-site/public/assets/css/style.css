@@ -74,7 +74,7 @@ body{
 }
 img{max-width:100%;display:block}
 a{color:var(--gold-ink);text-decoration:none;transition:color .2s,opacity .2s}
-[data-theme="dark"] a{color:var(--gold)}
+[data-theme="dark"] a:not(.btn){color:var(--gold)}
 a:hover{color:var(--gold-2)}
 h1,h2,h3,h4{margin:0 0 .5em;line-height:1.06;color:var(--text);overflow-wrap:anywhere}
 h3,h4{line-height:1.2}
