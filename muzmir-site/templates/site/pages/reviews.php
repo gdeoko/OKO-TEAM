@@ -91,7 +91,7 @@ ob_start(); ?>
 .rv-card::after{content:"\201C";position:absolute;top:-18px;right:14px;font-family:var(--ff-display);font-size:6rem;line-height:1;color:var(--gold);opacity:.10;pointer-events:none}
 .rv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
 .rv-text{font-family:var(--ff-serif);font-size:1.06rem;line-height:1.6;margin:14px 0 16px;color:var(--text);overflow-wrap:anywhere;position:relative;z-index:1}
-.rv-meta{margin-top:auto;display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
+.rv-meta{margin-top:18px;display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
 .rv-avatar{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:800;font-size:1rem;color:var(--gold-fg);background:var(--grad-gold);box-shadow:var(--shadow-soft)}
 .rv-namewrap{min-width:0}
 .rv-author{color:var(--gold-2);font-weight:700;margin:0;overflow-wrap:anywhere}
