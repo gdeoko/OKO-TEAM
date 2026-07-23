@@ -295,3 +295,219 @@
   .fa-dtap-heart{animation:fa-dtap-rm .6s ease forwards}
   @keyframes fa-dtap-rm{0%{opacity:0}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
 }
+
+/* ============================================================================
+   REELS VIEWER — иммерсивный вертикальный плеер «Клипы» (Instagram/TikTok-style)
+   Тёмная поверхность в ОБЕИХ темах (стандарт для reels). Бренд: чёрный + лайм.
+   ПЕРФ: только transform/opacity, анимации живут ТОЛЬКО на активном слайде,
+   уважаем prefers-reduced-motion и html.oko-scrolling. z-index 39 — под шторкой
+   комментариев (40/41), чтобы существующий sheet открывался поверх клипа.
+   ============================================================================ */
+.far{position:fixed;inset:0;z-index:39;background:#000;overflow:hidden;
+  color:#fff;-webkit-tap-highlight-color:transparent;
+  font-family:var(--font-body);contain:strict;touch-action:none}
+.far[hidden]{display:none}
+.far.far-in{animation:far-open .28s cubic-bezier(.22,.9,.36,1)}
+@keyframes far-open{from{opacity:0;transform:scale(1.03)}to{opacity:1;transform:none}}
+
+/* трек: вертикальный стек слайдов, двигается ОДНИМ transform (GPU) */
+.far-track{position:absolute;inset:0;display:flex;flex-direction:column;
+  will-change:transform;transform:translate3d(0,0,0);
+  transition:transform .46s cubic-bezier(.22,.9,.36,1)}
+.far.far-drag .far-track{transition:none}
+
+/* один слайд = один экран */
+.far-slide{position:relative;flex:0 0 100%;height:100%;overflow:hidden;isolation:isolate}
+
+/* full-bleed «видео»-фон: бренд-градиент из --g1/--g2 (по теме поста) */
+.far-bg{position:absolute;inset:0;z-index:0;
+  background:linear-gradient(160deg,var(--g1,#16240a),var(--g2,#04060a) 72%)}
+.far-bg::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(130% 80% at 50% -10%,rgba(154,255,0,.16),transparent 55%)}
+/* тонкая бренд-сетка/скан — статична, без анимации (перф) */
+.far-bg::after{content:"";position:absolute;inset:0;opacity:.5;
+  background:repeating-linear-gradient(122deg,transparent 0,transparent 26px,rgba(154,255,0,.028) 27px,transparent 28px)}
+
+/* бренд-движение: большой мягкий лаймовый свет, медленно дрейфует. ТОЛЬКО transform.
+   Анимация запускается лишь на активном слайде — остальные paused (нулевая нагрузка). */
+.far-motion{position:absolute;left:50%;top:44%;z-index:1;width:150vw;height:150vw;
+  margin:-75vw 0 0 -75vw;pointer-events:none;opacity:.5;will-change:transform;
+  background:radial-gradient(closest-side,rgba(154,255,0,.22),rgba(154,255,0,.06) 42%,transparent 68%);
+  animation:far-drift 14s ease-in-out infinite;animation-play-state:paused}
+.far-slide.is-active .far-motion{animation-play-state:running}
+@keyframes far-drift{
+  0%{transform:translate3d(-8%,-4%,0) scale(1) rotate(0deg)}
+  50%{transform:translate3d(10%,6%,0) scale(1.14) rotate(8deg)}
+  100%{transform:translate3d(-8%,-4%,0) scale(1) rotate(0deg)}}
+/* второй, встречный слой света — глубина без нагрузки на layout */
+.far-motion.two{top:70%;width:120vw;height:120vw;margin:-60vw 0 0 -60vw;opacity:.4;
+  background:radial-gradient(closest-side,rgba(120,220,255,.10),transparent 66%);
+  animation:far-drift2 18s ease-in-out infinite;animation-play-state:paused}
+.far-slide.is-active .far-motion.two{animation-play-state:running}
+@keyframes far-drift2{
+  0%{transform:translate3d(6%,4%,0) scale(1.05)}
+  50%{transform:translate3d(-10%,-6%,0) scale(.92)}
+  100%{transform:translate3d(6%,4%,0) scale(1.05)}}
+
+/* тексты «видео» поверх фона: аккуратный крупный заголовок темы + бейдж длит. */
+.far-hero{position:absolute;left:22px;right:78px;top:0;bottom:0;z-index:2;
+  display:flex;flex-direction:column;justify-content:center;gap:14px;pointer-events:none}
+.far-topic{align-self:flex-start;display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:#000;background:var(--lime);border-radius:99px;padding:6px 13px;
+  box-shadow:0 6px 20px rgba(154,255,0,.35)}
+.far-hero h2{font-family:var(--font-display);font-weight:400;letter-spacing:.02em;
+  font-size:clamp(30px,9vw,44px);line-height:1.02;color:#fff;
+  text-shadow:0 4px 30px rgba(0,0,0,.6);max-width:11ch}
+.far-hero h2 em{font-style:normal;color:var(--lime)}
+.far-dur{position:absolute;top:calc(env(safe-area-inset-top) + 62px);right:16px;z-index:6;
+  display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;
+  color:#fff;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.14);
+  border-radius:99px;padding:5px 11px;backdrop-filter:blur(6px)}
+.far-dur .far-eye{width:11px;height:11px;opacity:.85}
+
+/* тёмный scrim снизу и сверху — читаемость текста и хрома */
+.far-scrim{position:absolute;left:0;right:0;bottom:0;height:62%;z-index:3;pointer-events:none;
+  background:linear-gradient(to top,rgba(0,0,0,.86),rgba(0,0,0,.34) 46%,transparent)}
+.far-scrim.top{top:0;bottom:auto;height:24%;
+  background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent)}
+
+/* центральная зона тапа: play/pause. Кнопка появляется только на паузе. */
+.far-tap{position:absolute;inset:0;z-index:4;background:transparent;border:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+.far-playbtn{display:flex;align-items:center;justify-content:center;
+  width:78px;height:78px;border-radius:50%;color:#fff;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.16);
+  opacity:0;transform:scale(.6);transition:opacity .2s,transform .2s;will-change:transform,opacity}
+.far-playbtn svg.i{width:34px;height:34px}
+.far.far-paused .far-slide.is-active .far-playbtn{opacity:1;transform:scale(1)}
+
+/* двойной тап — всплывающее лаймовое сердце (Instagram) */
+.far-heart{position:absolute;z-index:7;pointer-events:none;color:var(--lime);
+  transform:translate(-50%,-50%) scale(.2);will-change:transform,opacity;
+  filter:drop-shadow(0 8px 22px rgba(154,255,0,.6));
+  animation:far-heart-pop .78s cubic-bezier(.2,.9,.3,1.35) forwards}
+.far-heart svg.i{width:96px;height:96px;fill:var(--lime);stroke:none}
+@keyframes far-heart-pop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-14deg)}
+  22%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(6deg)}
+  48%{transform:translate(-50%,-50%) scale(.94)}
+  76%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.4) translateY(-14px)}}
+
+/* ---- правый рельс действий (лайк/коммент/шер/сейв/ещё) ---- */
+.far-rail{position:absolute;right:10px;z-index:6;
+  bottom:calc(env(safe-area-inset-bottom) + 26px);
+  display:flex;flex-direction:column;align-items:center;gap:20px}
+.far-act{display:flex;flex-direction:column;align-items:center;gap:5px;
+  background:transparent;border:0;color:#fff;cursor:pointer;
+  transition:transform .12s}
+.far-act:active{transform:scale(.86)}
+.far-act .far-ic{display:flex;align-items:center;justify-content:center;
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(6px);transition:background .18s,border-color .18s,transform .16s}
+.far-act .far-ic svg.i{width:24px;height:24px;transition:transform .16s}
+.far-act:hover .far-ic{border-color:rgba(154,255,0,.4)}
+.far-act:hover .far-ic svg.i{transform:scale(1.1)}
+.far-act b{font-size:12px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 8px rgba(0,0,0,.6)}
+/* лайк активен — сердце заливается лаймом */
+.far-act.on .far-ic{background:rgba(154,255,0,.16);border-color:rgba(154,255,0,.5)}
+.far-act.far-like.on .far-ic svg.i{fill:var(--lime);color:var(--lime)}
+.far-act.far-like.on b{color:var(--lime)}
+.far-act.far-save.on .far-ic svg.i{fill:var(--lime);color:var(--lime)}
+.far-act.far-like.far-burst .far-ic svg.i{animation:far-like-b .42s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes far-like-b{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+/* ---- нижняя инфо-панель (автор + подпись + звук) ---- */
+.far-info{position:absolute;left:0;right:82px;z-index:6;
+  bottom:calc(env(safe-area-inset-bottom) + 24px);padding-left:18px;
+  display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.far-info>*{pointer-events:auto}
+.far-author{display:inline-flex;align-items:center;gap:9px;max-width:100%}
+.far-ava{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-family:var(--font-body);font-weight:700;font-size:14px;color:#000;
+  background:var(--lime);box-shadow:0 3px 12px rgba(154,255,0,.3)}
+.far-name{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.far-name b{font-size:14.5px;font-weight:700;color:#fff;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+.far-name .vs-badge,.far-name .fa-vb,.far-name svg.i{width:15px;height:15px;flex:none}
+.far-sub{font-size:11.5px;color:rgba(255,255,255,.62);white-space:nowrap}
+.far-follow{margin-left:2px;flex:none;font-size:11.5px;font-weight:700;color:#000;
+  background:var(--lime);border:0;border-radius:99px;padding:5px 12px;cursor:pointer;
+  transition:transform .12s,box-shadow .18s}
+.far-follow:active{transform:scale(.92)}
+.far-follow.on{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24)}
+
+.far-caption{font-size:13px;line-height:1.5;color:rgba(255,255,255,.92);
+  max-width:100%;cursor:pointer;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.far-caption.far-cap-open{-webkit-line-clamp:unset;display:block}
+.far-caption .far-more-t{color:rgba(255,255,255,.55);font-weight:600}
+
+.far-music{display:inline-flex;align-items:center;gap:8px;max-width:100%;
+  font-size:12px;color:rgba(255,255,255,.82)}
+.far-music svg.i{width:14px;height:14px;flex:none;color:var(--lime)}
+.far-music span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* мини-эквалайзер — 3 полоски, transform:scaleY, только на активном слайде */
+.far-eq{display:inline-flex;align-items:flex-end;gap:2px;height:13px;flex:none}
+.far-eq i{width:2.5px;height:100%;border-radius:2px;background:var(--lime);
+  transform-origin:bottom;transform:scaleY(.3);animation:far-eq 1s ease-in-out infinite;animation-play-state:paused}
+.far-eq i:nth-child(2){animation-delay:.22s}
+.far-eq i:nth-child(3){animation-delay:.44s}
+.far-slide.is-active .far-eq i{animation-play-state:running}
+@keyframes far-eq{0%,100%{transform:scaleY(.28)}50%{transform:scaleY(1)}}
+
+/* ---- верхний хром: сегменты прогресса + панель ---- */
+.far-top{position:absolute;left:0;right:0;top:0;z-index:8;pointer-events:none;
+  padding:calc(env(safe-area-inset-top) + 8px) 12px 0}
+.far-seg{display:flex;gap:4px;margin-bottom:8px}
+.far-sg{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.24);
+  overflow:hidden;pointer-events:auto;cursor:pointer;border:0;padding:0}
+.far-fill{display:block;width:100%;height:100%;border-radius:3px;background:var(--lime);
+  transform-origin:left;transform:scaleX(0);will-change:transform}
+.far-sg.done .far-fill{transform:scaleX(1)}
+.far-sg.active .far-fill{animation:far-fill var(--far-dur,6000ms) linear forwards}
+.far.far-paused .far-sg.active .far-fill{animation-play-state:paused}
+@keyframes far-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+.far-topbar{display:flex;align-items:center;gap:12px;pointer-events:auto}
+.far-back{width:38px;height:38px;flex:none;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;color:#fff;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(6px);cursor:pointer;transition:background .18s,transform .12s}
+.far-back svg.i{width:20px;height:20px}
+.far-back:hover{background:rgba(0,0,0,.5)}
+.far-back:active{transform:scale(.9)}
+.far-heading{font-family:var(--font-display);letter-spacing:.1em;font-size:19px;
+  text-transform:uppercase;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.far-count{margin-left:auto;font-size:12px;font-weight:700;color:rgba(255,255,255,.7);
+  font-variant-numeric:tabular-nums}
+
+/* «Клипы» — кнопка-вход в шапке умной ленты */
+.fa-clips{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;flex:none;
+  color:#000;background:var(--lime);border:1px solid var(--lime);border-radius:99px;
+  padding:7px 13px;cursor:pointer;box-shadow:0 4px 14px rgba(154,255,0,.28);
+  transition:transform .12s,box-shadow .2s}
+.fa-clips svg.i{width:14px;height:14px}
+.fa-clips:hover{box-shadow:0 6px 20px rgba(154,255,0,.45)}
+.fa-clips:active{transform:scale(.95)}
+
+/* доступность: клавиатурный фокус */
+.far-back:focus-visible,.far-act:focus-visible,.far-sg:focus-visible,
+.far-follow:focus-visible,.fa-clips:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+
+/* ПЕРФ: пауза бренд-движения во время скролла ленты (глобальный флаг ядра) */
+html.oko-scrolling .far-motion,html.oko-scrolling .far-eq i{animation-play-state:paused!important}
+
+/* уважение к prefers-reduced-motion: гасим декоративное движение, навигация остаётся */
+@media(prefers-reduced-motion:reduce){
+  .far.far-in{animation:none}
+  .far-motion,.far-eq i{animation:none!important}
+  .far-track{transition:transform .18s linear}
+  .far-heart{animation:far-heart-rm .6s ease forwards}
+  @keyframes far-heart-rm{0%{opacity:0}20%{opacity:1;transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+  /* прогресс всё ещё нужен для автолистания — оставляем линейную заливку */
+}
+

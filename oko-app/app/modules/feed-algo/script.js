@@ -879,3 +879,460 @@ function faDoubleTapLike(){
   const feed = document.getElementById('screen-feed');
   if(feed && feed.classList.contains('active') && curFeedKind === 'rec') faDecorate();
 })();
+
+/* ============================================================================
+   8. REELS VIEWER — иммерсивный вертикальный плеер «Клипы» (Instagram/TikTok)
+   Новый ОВЕРЛЕЙ поверх ленты (список ленты НЕ трогаем). Открывается по тапу на
+   видео-область карточки. Лайк/коммент/шер/сейв переиспользуют ФУНКЦИИ И СТЕЙТ
+   ядра (likePost/openComments/repost/toggleSave) — реакция в клипе отражается на
+   карточке ленты и наоборот (общий объект поста). ПЕРФ: только transform/opacity,
+   прогресс — CSS-анимация (0 работы на кадр), бренд-движение живёт лишь на активном
+   слайде. Всё в try/catch, префикс faReels/FAR.
+   ============================================================================ */
+const FAR = {
+  open:false, idx:0, ids:[], paused:false,
+  drag:null,          /* {y0,t0} во время свайпа */
+  keyHandler:null,    /* document keydown — вешаем на открытие, снимаем на закрытие */
+  wheelLock:0,        /* дебаунс колеса мыши */
+  lastTap:0, lastX:0, lastY:0, /* распознавание двойного тапа по слайду */
+};
+
+/* бренд-градиенты фона по теме поста — все тёмные (чёрный + лайм-семья) */
+const FA_REEL_G = {
+  ai:       ['#16240a','#04060a'],
+  content:  ['#1c2708','#050703'],
+  business: ['#122011','#03060a'],
+  marketing:['#231d07','#060404'],
+  games:    ['#0d2216','#03070a'],
+  crypto:   ['#0a1f28','#04060a'],
+};
+function faReelsBg(p){
+  try{
+    const g = FA_REEL_G[p && p.topic] || ['#16240a','#04060a'];
+    return `--g1:${g[0]};--g2:${g[1]}`;
+  }catch(e){ return '--g1:#16240a;--g2:#04060a'; }
+}
+
+/* заголовок «видео»: первое ёмкое предложение подписи (визуальный акцент кадра) */
+function faReelsHeadline(p){
+  try{
+    const t = String((p && p.body) || '').split(/(?<=[.!?:])\s/)[0] || (p && p.body) || '';
+    return esc(t.length > 64 ? t.slice(0, 62).trim() + '…' : t);
+  }catch(e){ return ''; }
+}
+
+/* список видео-постов ленты: media != null, дедуп, в порядке ленты (rec-приоритет) */
+function faReelsList(){
+  try{
+    const seen = {}, out = [];
+    /* сначала — как отрисовано в текущей ленте (живой порядок ранжирования) */
+    const dom = document.querySelectorAll('#feedList article.post');
+    dom.forEach(a=>{
+      const pid = faIdOf(a), p = pid != null ? postById(pid) : null;
+      if(p && p.media && !seen[p.id]){ seen[p.id] = 1; out.push(p); }
+    });
+    /* добор из модели (посты вне текущей вкладки/непрорисованные) */
+    [...POSTS.rec, ...POSTS.sub].forEach(p=>{
+      if(p && p.media && !seen[p.id]){ seen[p.id] = 1; out.push(p); }
+    });
+    return out;
+  }catch(e){ return []; }
+}
+
+/* разметка одного слайда */
+function faReelsSlideHTML(p){
+  try{
+    const liked = !!p.liked, saved = !!p.saved, reposted = !!p.reposted;
+    const cmt = (typeof faCount === 'function') ? faCount(p) : (Array.isArray(p.comments) ? p.comments.length : 0);
+    const badge = (typeof faVerified === 'function') ? faVerified(p.name) : '';
+    const topic = (typeof FA_TOPICS !== 'undefined' && FA_TOPICS[p.topic]) ? FA_TOPICS[p.topic] : 'Клип';
+    const dur = p.media && /:/.test(String(p.media)) ? esc(p.media) : '';
+    const views = (typeof fmtN === 'function') ? fmtN(p.views || 0) : (p.views || 0);
+    return (
+      `<div class="far-slide" data-pid="${p.id}" style="${faReelsBg(p)}">`+
+        `<div class="far-bg"></div>`+
+        `<div class="far-motion"></div><div class="far-motion two"></div>`+
+        `<div class="far-hero"><span class="far-topic">${I('fire')}${esc(topic)}</span>`+
+          `<h2>${faReelsHeadline(p)}</h2></div>`+
+        (dur ? `<div class="far-dur">${I('circle-play')}<span>${dur}</span> · <svg class="i far-eye"><use href="#i-eye"/></svg>${views}</div>` : '')+
+        `<div class="far-scrim top"></div><div class="far-scrim"></div>`+
+        `<button class="far-tap" type="button" aria-label="Пауза/воспроизведение" onclick="faReelsTapZone(event)">`+
+          `<span class="far-playbtn">${I('play')}</span></button>`+
+        /* правый рельс */
+        `<div class="far-rail">`+
+          `<button class="far-act far-like${liked?' on':''}" type="button" aria-label="Нравится" onclick="faReelsLike(${p.id},event)">`+
+            `<span class="far-ic">${I('heart')}</span><b class="far-n-like">${p.likes||0}</b></button>`+
+          `<button class="far-act far-cmt" type="button" aria-label="Комментарии" onclick="faReelsComment(${p.id})">`+
+            `<span class="far-ic">${I('comment')}</span><b class="far-n-cmt">${cmt}</b></button>`+
+          `<button class="far-act far-share${reposted?' on':''}" type="button" aria-label="Поделиться" onclick="faReelsShare(${p.id})">`+
+            `<span class="far-ic">${I('share')}</span><b class="far-n-share">${p.reposts||0}</b></button>`+
+          `<button class="far-act far-save${saved?' on':''}" type="button" aria-label="Сохранить" onclick="faReelsSave(${p.id})">`+
+            `<span class="far-ic">${I('bookmark')}</span><b>Сейв</b></button>`+
+          `<button class="far-act far-more" type="button" aria-label="Ещё" onclick="faReelsMore(${p.id})">`+
+            `<span class="far-ic">${I('more')}</span></button>`+
+        `</div>`+
+        /* нижняя инфо-панель */
+        `<div class="far-info">`+
+          `<div class="far-author"><div class="far-ava">${esc(p.ava || (p.name ? p.name[0] : '?'))}</div>`+
+            `<span class="far-name"><b>${esc(p.name || 'Автор')}</b>${badge}</span>`+
+            `<span class="far-sub">${esc(p.sub || '')}</span></div>`+
+          `<div class="far-caption" onclick="faReelsCap(this)">${esc(p.body || '')}<span class="far-more-t"> ещё</span></div>`+
+          `<div class="far-music">${I('mic')}<span>Озвучка OKO · ${esc(p.name || 'Оригинальный звук')}</span>`+
+            `<span class="far-eq"><i></i><i></i><i></i></span></div>`+
+        `</div>`+
+      `</div>`
+    );
+  }catch(e){ return ''; }
+}
+
+/* сегменты прогресса по числу клипов */
+function faReelsBuildSegs(n){
+  try{
+    const seg = document.getElementById('farSeg'); if(!seg) return;
+    let h = '';
+    for(let i=0;i<n;i++) h += `<button class="far-sg" type="button" data-i="${i}" onclick="faReelsSetActive(${i})"><i class="far-fill"></i></button>`;
+    seg.innerHTML = h;
+  }catch(e){}
+}
+
+/* открыть плеер начиная с поста pid (или с первого клипа) */
+function faReelsOpen(pid){
+  try{
+    const list = faReelsList();
+    if(!list.length){ if(typeof toast === 'function') toast('Пока нет клипов'); return; }
+    FAR.ids = list.map(p=>p.id);
+    let start = FAR.ids.indexOf(+pid);
+    if(start < 0) start = 0;
+    const track = document.getElementById('farTrack');
+    const wrap = document.getElementById('faReels');
+    if(!track || !wrap) return;
+    track.innerHTML = list.map(faReelsSlideHTML).join('');
+    faReelsBuildSegs(list.length);
+    const cnt = document.getElementById('farCount'); if(cnt) cnt.textContent = (start+1) + '/' + list.length;
+    wrap.hidden = false; wrap.setAttribute('aria-hidden','false');
+    wrap.classList.remove('far-paused'); FAR.paused = false;
+    wrap.classList.add('far-in');
+    setTimeout(()=>{ try{ wrap.classList.remove('far-in'); }catch(e){} }, 320);
+    FAR.open = true;
+    document.documentElement.style.overflow = 'hidden';  /* фон не скроллится под плеером */
+    faReelsSetActive(start, true);
+    faReelsBindKeys();
+    /* интеграция с общим стеком навигации: аппаратный/TG «назад» закроет плеер */
+    if(typeof nvPush === 'function') try{ nvPush('reels', faReelsClose); }catch(e){}
+  }catch(e){}
+}
+function faReelsOpenFirst(){ try{ const l = faReelsList(); if(l.length) faReelsOpen(l[0].id); else if(typeof toast==='function') toast('Пока нет клипов'); }catch(e){} }
+
+/* активировать слайд idx: двигаем трек (один transform), пересобираем сегменты,
+   перезапускаем прогресс-анимацию, снимаем паузу */
+function faReelsSetActive(idx, instant){
+  try{
+    const n = FAR.ids.length; if(!n) return;
+    idx = Math.max(0, Math.min(n-1, idx|0));
+    FAR.idx = idx;
+    const track = document.getElementById('farTrack'), wrap = document.getElementById('faReels');
+    if(!track || !wrap) return;
+    if(instant){ track.style.transition = 'none'; }
+    track.style.transform = 'translate3d(0,' + (-idx*100) + '%,0)';
+    if(instant){ void track.offsetWidth; track.style.transition = ''; }
+    /* активный слайд — только ему бренд-движение/эквалайзер */
+    const slides = track.children;
+    for(let i=0;i<slides.length;i++) slides[i].classList.toggle('is-active', i === idx);
+    /* сегменты: пройденные — залиты, будущие — пустые, активный — заново анимируем */
+    const segs = document.querySelectorAll('#farSeg .far-sg');
+    segs.forEach((s,i)=>{
+      s.classList.remove('active','done');
+      if(i < idx) s.classList.add('done');
+      else if(i === idx) s.classList.add('active');
+      const f = s.querySelector('.far-fill');
+      if(f){ f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; }  /* рестарт заливки */
+    });
+    /* снять паузу на переходе */
+    wrap.classList.remove('far-paused'); FAR.paused = false;
+    const cnt = document.getElementById('farCount'); if(cnt) cnt.textContent = (idx+1) + '/' + n;
+    faReelsSyncCounts(FAR.ids[idx]);
+    if(navigator.vibrate) try{ navigator.vibrate(6); }catch(e){}
+  }catch(e){}
+}
+function faReelsNext(){ try{ if(FAR.idx < FAR.ids.length-1) faReelsSetActive(FAR.idx+1); else if(typeof toast==='function') toast('Это последний клип'); }catch(e){} }
+function faReelsPrev(){ try{ if(FAR.idx > 0) faReelsSetActive(FAR.idx-1); }catch(e){} }
+
+/* play/pause активного клипа (пауза замораживает прогресс и бренд-движение через CSS) */
+function faReelsTogglePlay(){
+  try{
+    const wrap = document.getElementById('faReels'); if(!wrap) return;
+    FAR.paused = !FAR.paused;
+    wrap.classList.toggle('far-paused', FAR.paused);
+  }catch(e){}
+}
+
+/* тап по центру: одиночный — play/pause, двойной — лайк с сердцем (Instagram) */
+function faReelsTapZone(ev){
+  try{
+    const now = Date.now();
+    const x = ev && (ev.clientX != null ? ev.clientX : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientX : 0));
+    const y = ev && (ev.clientY != null ? ev.clientY : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientY : 0));
+    if(now - FAR.lastTap < 320 && Math.abs(x-FAR.lastX) < 40 && Math.abs(y-FAR.lastY) < 40){
+      FAR.lastTap = 0;
+      const pid = FAR.ids[FAR.idx];
+      const p = postById(pid);
+      if(p && !p.liked && typeof likePost === 'function'){ likePost(pid); faReelsSyncCounts(pid); }
+      faReelsHeart(x, y);
+      if(navigator.vibrate) try{ navigator.vibrate(12); }catch(e){}
+      return;
+    }
+    FAR.lastTap = now; FAR.lastX = x; FAR.lastY = y;
+    /* одиночный тап отрабатываем с задержкой, чтобы не гасить play при дабл-тапе */
+    setTimeout(()=>{ try{ if(FAR.lastTap === now) faReelsTogglePlay(); }catch(e){} }, 300);
+  }catch(e){}
+}
+function faReelsHeart(x, y){
+  try{
+    const slide = document.querySelector('#farTrack .far-slide.is-active'); if(!slide) return;
+    const r = slide.getBoundingClientRect();
+    const h = document.createElement('span'); h.className = 'far-heart'; h.innerHTML = I('heart');
+    h.style.left = Math.round((x != null ? x : r.left + r.width/2) - r.left) + 'px';
+    h.style.top  = Math.round((y != null ? y : r.top + r.height/2) - r.top) + 'px';
+    slide.appendChild(h);
+    setTimeout(()=>{ try{ h.remove(); }catch(e){} }, 800);
+  }catch(e){}
+}
+
+/* раскрыть/свернуть подпись */
+function faReelsCap(el){ try{ if(el) el.classList.toggle('far-cap-open'); }catch(e){} }
+
+/* ---- действия рельса: переиспользуют функции и стейт ленты ---- */
+function faReelsLike(pid, ev){
+  try{
+    if(ev){ ev.stopPropagation(); }
+    const p = postById(pid); if(!p) return;
+    if(typeof likePost === 'function') likePost(pid);   /* общий стейт → карточка ленты обновится сама */
+    /* обновляем кнопку клипа по актуальному объекту поста */
+    const slide = document.querySelector('#farTrack .far-slide[data-pid="'+pid+'"]');
+    const btn = slide && slide.querySelector('.far-like');
+    if(btn){
+      btn.classList.toggle('on', !!p.liked);
+      const n = btn.querySelector('.far-n-like'); if(n) n.textContent = p.likes || 0;
+      btn.classList.remove('far-burst'); void btn.offsetWidth;
+      if(p.liked) btn.classList.add('far-burst');
+    }
+  }catch(e){}
+}
+function faReelsComment(pid){
+  try{ if(typeof openComments === 'function') openComments(pid); }catch(e){}  /* существующая шторка поверх плеера */
+}
+function faReelsShare(pid){
+  try{
+    const p = postById(pid); if(!p) return;
+    if(typeof repost === 'function') repost(pid);
+    const slide = document.querySelector('#farTrack .far-slide[data-pid="'+pid+'"]');
+    const btn = slide && slide.querySelector('.far-share');
+    if(btn){ btn.classList.toggle('on', !!p.reposted); const n = btn.querySelector('.far-n-share'); if(n) n.textContent = p.reposts || 0; }
+  }catch(e){}
+}
+function faReelsSave(pid){
+  try{
+    const p = postById(pid); if(!p) return;
+    if(typeof toggleSave === 'function') toggleSave(pid);
+    const slide = document.querySelector('#farTrack .far-slide[data-pid="'+pid+'"]');
+    const btn = slide && slide.querySelector('.far-save');
+    if(btn) btn.classList.toggle('on', !!p.saved);
+  }catch(e){}
+}
+function faReelsMore(pid){
+  try{ if(typeof openPostMenu === 'function') openPostMenu(pid); }catch(e){}
+}
+
+/* синхронизация счётчиков клипа с общим стейтом (лайк/коммент/шер/сейв из ленты) */
+function faReelsSyncCounts(pid){
+  try{
+    if(!FAR.open || pid == null) return;
+    const p = postById(pid); if(!p) return;
+    const slide = document.querySelector('#farTrack .far-slide[data-pid="'+pid+'"]'); if(!slide) return;
+    const like = slide.querySelector('.far-like');
+    if(like){ like.classList.toggle('on', !!p.liked); const n = like.querySelector('.far-n-like'); if(n) n.textContent = p.likes || 0; }
+    const cmtN = slide.querySelector('.far-n-cmt');
+    if(cmtN) cmtN.textContent = (typeof faCount === 'function') ? faCount(p) : (Array.isArray(p.comments) ? p.comments.length : 0);
+    const share = slide.querySelector('.far-share');
+    if(share){ share.classList.toggle('on', !!p.reposted); const n = share.querySelector('.far-n-share'); if(n) n.textContent = p.reposts || 0; }
+    const save = slide.querySelector('.far-save');
+    if(save) save.classList.toggle('on', !!p.saved);
+  }catch(e){}
+}
+
+/* закрытие плеера: чистим слайды (гасит все CSS-анимации), снимаем слушатели/стек */
+function faReelsClose(){
+  try{
+    const wrap = document.getElementById('faReels'); if(!wrap) return;
+    wrap.hidden = true; wrap.setAttribute('aria-hidden','true');
+    wrap.classList.remove('far-paused','far-in');
+    const track = document.getElementById('farTrack'); if(track){ track.innerHTML = ''; track.style.transform = 'translate3d(0,0,0)'; }
+    const seg = document.getElementById('farSeg'); if(seg) seg.innerHTML = '';
+    FAR.open = false; FAR.paused = false; FAR.drag = null;
+    document.documentElement.style.overflow = '';
+    faReelsUnbindKeys();
+    if(typeof nvPop === 'function') try{ nvPop('reels'); }catch(e){}
+  }catch(e){}
+}
+
+/* клавиатура: стрелки/space — навигация и пауза; Esc закрывает (если нет navstack) */
+function faReelsBindKeys(){
+  try{
+    if(FAR.keyHandler) return;
+    FAR.keyHandler = function(e){
+      try{
+        if(!FAR.open) return;
+        /* не мешаем печатать в шторке комментариев поверх плеера */
+        const t = e.target;
+        if(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        const sheet = document.getElementById('sheet-comments');
+        if(sheet && sheet.classList.contains('open')) return;
+        if(e.key === 'ArrowDown' || e.key === 'j'){ e.preventDefault(); faReelsNext(); }
+        else if(e.key === 'ArrowUp' || e.key === 'k'){ e.preventDefault(); faReelsPrev(); }
+        else if(e.key === ' '){ e.preventDefault(); faReelsTogglePlay(); }
+        else if(e.key === 'Escape' && typeof nvPush !== 'function'){ e.preventDefault(); faReelsClose(); }
+      }catch(err){}
+    };
+    document.addEventListener('keydown', FAR.keyHandler);
+  }catch(e){}
+}
+function faReelsUnbindKeys(){
+  try{ if(FAR.keyHandler){ document.removeEventListener('keydown', FAR.keyHandler); FAR.keyHandler = null; } }catch(e){}
+}
+
+/* автолистание по завершении прогресс-анимации активного сегмента (без JS-таймеров) */
+(function faReelsWireProgress(){
+  try{
+    const seg = document.getElementById('farSeg'); if(!seg) return;
+    seg.addEventListener('animationend', function(e){
+      try{
+        if(!FAR.open) return;
+        if(e.animationName !== 'far-fill') return;
+        const li = e.target.closest && e.target.closest('.far-sg');
+        if(li && +li.getAttribute('data-i') === FAR.idx){
+          if(FAR.idx < FAR.ids.length-1) faReelsNext(); else faReelsClose();  /* конец подборки — выходим */
+        }
+      }catch(err){}
+    });
+  }catch(e){}
+})();
+
+/* свайпы (touch) + колесо мыши по поверхности плеера */
+(function faReelsWireGestures(){
+  try{
+    const wrap = document.getElementById('faReels'); if(!wrap) return;
+    const TH = 56;  /* порог срабатывания, px */
+
+    wrap.addEventListener('touchstart', function(e){
+      try{
+        if(!FAR.open || !e.touches || !e.touches.length) return;
+        /* не перехватываем жесты рельса/инфо/хрома — только «пустое» видео-поле */
+        if(e.target.closest('.far-rail,.far-info,.far-top,.far-back')) { FAR.drag = null; return; }
+        FAR.drag = {y0:e.touches[0].clientY, t0:Date.now(), moved:0};
+        wrap.classList.add('far-drag');
+      }catch(err){}
+    }, {passive:true});
+
+    wrap.addEventListener('touchmove', function(e){
+      try{
+        if(!FAR.drag || !e.touches || !e.touches.length) return;
+        const dy = e.touches[0].clientY - FAR.drag.y0;
+        FAR.drag.moved = dy;
+        /* лёгкое сопротивление на краях */
+        let d = dy;
+        if((FAR.idx === 0 && dy > 0) || (FAR.idx === FAR.ids.length-1 && dy < 0)) d = dy * 0.35;
+        const track = document.getElementById('farTrack');
+        if(track) track.style.transform = 'translate3d(0,calc(' + (-FAR.idx*100) + '% + ' + Math.round(d) + 'px),0)';
+      }catch(err){}
+    }, {passive:true});
+
+    wrap.addEventListener('touchend', function(e){
+      try{
+        if(!FAR.drag) return;
+        wrap.classList.remove('far-drag');
+        const dy = FAR.drag.moved, dt = Date.now() - FAR.drag.t0;
+        const fast = Math.abs(dy) > 24 && dt < 220;
+        FAR.drag = null;
+        if(dy < -TH || (fast && dy < 0)) faReelsSetActive(FAR.idx+1);
+        else if((dy > TH || (fast && dy > 0))){
+          if(FAR.idx === 0) faReelsClose();          /* свайп вниз на первом клипе — закрыть */
+          else faReelsSetActive(FAR.idx-1);
+        }
+        else faReelsSetActive(FAR.idx);              /* недотянул — вернуть на место */
+      }catch(err){}
+    }, {passive:true});
+
+    wrap.addEventListener('wheel', function(e){
+      try{
+        if(!FAR.open) return;
+        if(e.target.closest('.far-info,.far-rail')) return;
+        e.preventDefault();
+        const now = Date.now();
+        if(now - FAR.wheelLock < 500) return;
+        if(Math.abs(e.deltaY) < 12) return;
+        FAR.wheelLock = now;
+        if(e.deltaY > 0) faReelsNext(); else faReelsPrev();
+      }catch(err){}
+    }, {passive:false});
+  }catch(e){}
+})();
+
+/* вход в плеер: тап по видео-области карточки ленты (делегат, additive) + кнопка «Клипы» */
+(function faReelsWireEntry(){
+  try{
+    const list = document.getElementById('feedList');
+    if(list && !list._faReels){
+      list._faReels = 1;
+      list.addEventListener('click', function(e){
+        try{
+          const media = e.target.closest('.media');
+          if(!media) return;
+          const art = media.closest('article.post'); if(!art) return;
+          const pid = faIdOf(art); if(pid == null) return;
+          const p = postById(pid);
+          if(p && p.media){ e.preventDefault(); e.stopPropagation(); faReelsOpen(pid); }
+        }catch(err){}
+      });
+    }
+    /* i18n для EN-режима */
+    if(typeof ST_DICT !== 'undefined'){
+      const add = {'Клипы':'Reels','Пока нет клипов':'No reels yet','Это последний клип':'That is the last reel','Сейв':'Save','ещё':'more'};
+      for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
+    }
+  }catch(e){}
+})();
+
+/* кнопка «Клипы» в шапке умной ленты — вставляется в fa-bar после его отрисовки.
+   Оборачиваем faDecorate, чтобы не менять его тело (additive). */
+try{
+  if(typeof faDecorate === 'function'){
+    const _faPrevDecorate = faDecorate;
+    faDecorate = function(){
+      _faPrevDecorate.apply(this, arguments);
+      try{
+        const bar = document.querySelector('#feedList .fa-bar');
+        if(bar && !bar.querySelector('.fa-clips') && faReelsList().length){
+          const b = document.createElement('button');
+          b.type = 'button'; b.className = 'fa-clips';
+          b.setAttribute('aria-label', 'Открыть клипы');
+          b.innerHTML = I('circle-play') + '<span>Клипы</span>';
+          b.onclick = faReelsOpenFirst;
+          const refresh = bar.querySelector('.fa-refresh');
+          if(refresh) bar.insertBefore(b, refresh); else bar.appendChild(b);
+        }
+      }catch(e){}
+    };
+  }
+}catch(e){}
+
+/* синхронизировать рельс клипа при изменении числа комментариев из шторки
+   (faUpdateCardCount вызывается ядром комментариев — дополняем его, не переписывая) */
+try{
+  if(typeof faUpdateCardCount === 'function'){
+    const _faPrevUpdCnt = faUpdateCardCount;
+    faUpdateCardCount = function(p){
+      _faPrevUpdCnt.apply(this, arguments);
+      try{ if(FAR.open && p) faReelsSyncCounts(p.id); }catch(e){}
+    };
+  }
+}catch(e){}

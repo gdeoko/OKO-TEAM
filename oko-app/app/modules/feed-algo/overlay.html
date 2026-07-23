@@ -1,0 +1,19 @@
+<!-- ===== REELS VIEWER (feed-algo): иммерсивный вертикальный плеер «Клипы» =====
+     Полноэкранный оверлей поверх контента, но НИЖЕ шторки комментариев (z-index 39),
+     чтобы существующий sheet «Комментарии» открывался поверх клипа. Слайды строятся
+     в JS (faReels*), здесь — только статичная оболочка: трек + верхний хром. -->
+<div id="faReels" class="far" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Клипы">
+  <div class="far-track" id="farTrack"></div>
+
+  <!-- верхний хром: сегменты прогресса + заголовок + закрыть -->
+  <div class="far-top">
+    <div class="far-seg" id="farSeg"></div>
+    <div class="far-topbar">
+      <button class="far-back" type="button" aria-label="Закрыть клипы" onclick="faReelsClose()">
+        <svg class="i"><use href="#i-back"/></svg>
+      </button>
+      <span class="far-heading">Клипы</span>
+      <span class="far-count" id="farCount" aria-hidden="true"></span>
+    </div>
+  </div>
+</div>
