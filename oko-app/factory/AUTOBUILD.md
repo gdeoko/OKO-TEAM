@@ -58,7 +58,7 @@ cp -r $ROOT/pipeline/sfx $W/sfx; cp $ROOT/pipeline/endcard.mp4 $W/endcard.mp4
 (build_accents/новые code-инфографики) под конкретный ролик, а не просто меняешь данные.
 
 ## ЭТАП 2 — Сборка
-- Озвучка **edge-tts ru-RU-DmitryNeural (нейросеть Azure, студийная, бесплатно/безлимит, без ключа — бренд-голос по ТЗ)**: `python3 pipeline/tts_edge.py $W/vo`. Темп: `EDGE_RATE="+8%"` для живее под рилс. Работает и локально (через прокси), и на VPS. Пер-сегментно → `$W/vo/s1..sN.mp3` под караоке. Правильные ударения, нет призвуков/шума/глюков. Резерв (офлайн): Piper Ruslan `VOICE_PIPER=ruslan python3 pipeline/tts_piper.py $W/vo ruslan` или Silero `pipeline/tts_silero.py`. (Piper/XTTS/Qwen — только резерв: были ошибки ударений/призвуки.)
+- Озвучка **edge-tts ru-RU-DmitryNeural (нейросеть Azure, студийная, бесплатно/безлимит, без ключа — бренд-голос по ТЗ)**: `python3 pipeline/tts_edge.py $W/vo`. **Темп 1.5х по умолчанию** (`EDGE_TEMPO`, Даниэль 23.07). Доменные ударения зашиты (цикл→ци́кл: квадроцИкл/мотоцИкл/гидроцИкл). Работает и локально (через прокси), и на VPS. Пер-сегментно → `$W/vo/s1..sN.mp3` под караоке. Нет призвуков/шума/глюков. Резерв (офлайн): Piper Ruslan `VOICE_PIPER=ruslan python3 pipeline/tts_piper.py $W/vo ruslan` или Silero `pipeline/tts_silero.py`.
 - `python3 $W/plan.py` (timing/subs/words).
 - 10–14 УНИКАЛЬНЫХ вертикальных клипов под сценарий (мото/квадро/гидро — Pexels/Pixabay/Shutterstock;
   для гидро: jet ski, для квадро: atv/quad bike, для мото: motorcycle ride). Проверить соответствие озвучке.
