@@ -2545,3 +2545,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
   #feed > .feed-card, #ghub > .gcard { animation: none; }
   .chat-item:active, .lesson-item:active, .toc-item:active, .temple:active, .menu-item:active, .story:active { transform: none; }
 }
+
+/* Уведомления кликабельны — ведут на нужный экран */
+.nf { width: 100%; text-align: left; cursor: pointer; transition: transform .12s var(--ease), background-color .12s var(--ease); }
+.nf:active { transform: scale(.99); }
+.nf:hover { background: rgba(212,165,116,.06); }

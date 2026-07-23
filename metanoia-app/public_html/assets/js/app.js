@@ -881,16 +881,26 @@ const NOTIFS = [
 function initNotifs() {
   const read = localStorage.getItem('mt_notif_read') === '1';
   if (read) { $('#bellBadge').style.display = 'none'; }
+  const notifGo = (n) => {
+    $('#notifPanel').hidden = true;
+    const s = (n.title + ' ' + n.text).toLowerCase();
+    if (n.icon === 'dove' || /екатерин|сообщени/.test(s)) { switchTab('chats'); setTimeout(() => openChatView(0), 60); }
+    else if (n.icon === 'trophy' || /значок|достижени|сертификат/.test(s)) { switchTab('profile'); }
+    else if (n.icon === 'clock' || /созвон/.test(s)) { switchTab('home'); toast('Созвон завтра в 18:00 — вы записаны 🕊'); }
+    else if (/урок|глав/.test(s)) { switchTab('lessons'); }
+    else { switchTab('home'); }
+  };
   $('#bellBtn').addEventListener('click', () => {
     $('#notifList').innerHTML = NOTIFS.map((n, i) => `
-      <div class="nf ${!read && i < 3 ? 'nf--new' : ''}">
+      <button class="nf ${!read && i < 3 ? 'nf--new' : ''}" data-nf="${i}">
         <div class="nf__icon">${ICON(n.icon, 18)}</div>
         <div>
           <div class="nf__title">${n.title}</div>
           <div class="nf__text">${n.text}</div>
           <div class="nf__time">${n.time}</div>
         </div>
-      </div>`).join('');
+      </button>`).join('');
+    $$('#notifList .nf').forEach((el) => el.addEventListener('click', () => notifGo(NOTIFS[Number(el.dataset.nf)])));
     $('#notifPanel').hidden = false;
   });
   $('#notifBack').addEventListener('click', () => { $('#notifPanel').hidden = true; });
