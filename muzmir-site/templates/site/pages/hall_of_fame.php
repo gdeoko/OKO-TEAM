@@ -111,7 +111,8 @@ ob_start(); ?>
 /* ── Аллея Славы (scoped) ── */
 .hof-hero{position:relative;text-align:center;max-width:760px;margin:0 auto;z-index:1}
 /* Мягкое золотое сияние-ореол за интро */
-.hof-hero::before{content:"";position:absolute;left:50%;top:-40px;width:min(560px,120%);height:360px;
+.hof-hero{overflow:hidden}
+.hof-hero::before{content:"";position:absolute;left:50%;top:-40px;width:min(560px,100%);height:360px;
   transform:translateX(-50%);z-index:-1;pointer-events:none;
   background:radial-gradient(60% 60% at 50% 34%,var(--gold-soft),transparent 70%)}
 .hof-hero .eyebrow{justify-content:center}

@@ -138,7 +138,8 @@ ob_start(); ?>
 <style>
 /* ── Блог / Новости (scoped) ── */
 .blog-intro{position:relative;z-index:0}
-.blog-intro::before{content:"";position:absolute;left:50%;top:-30px;width:min(560px,110%);height:280px;
+.blog-intro{overflow:hidden}
+.blog-intro::before{content:"";position:absolute;left:50%;top:-30px;width:min(560px,100%);height:280px;
   transform:translateX(-50%);z-index:0;pointer-events:none;
   background:radial-gradient(60% 60% at 50% 30%,var(--gold-soft),transparent 70%)}
 .blog-intro>*{position:relative;z-index:1}
