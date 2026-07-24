@@ -308,5 +308,37 @@
 ],
 "energy": 0.8,
 "bpm": 0
+},
+"fs_viral_235902.mp3": {
+"mood": [
+"epic",
+"bold"
+],
+"energy": 0.8,
+"bpm": 0
+},
+"fs_viral_371680.mp3": {
+"mood": [
+"driving",
+"modern"
+],
+"energy": 0.8,
+"bpm": 0
+},
+"fs_viral_271187.mp3": {
+"mood": [
+"epic",
+"driving"
+],
+"energy": 0.8,
+"bpm": 0
+},
+"fs_viral_575759.mp3": {
+"mood": [
+"upbeat",
+"energetic"
+],
+"energy": 0.8,
+"bpm": 0
 }
 }
