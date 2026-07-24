@@ -8,12 +8,14 @@
 
 Вызов: python3 retry_thumbs.py [rid ...]   # без аргументов — просто дожать pending
 """
-import os, json, subprocess, sys
+import os, json, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 AN = os.path.join(HERE, "analysis"); os.makedirs(AN, exist_ok=True)
 PEND = os.path.join(AN, "pending_thumbs.json")
+COOL = os.path.join(AN, "thumbs_cooldown.json")   # метка: раньше этого времени не пробуем (окно rate-limit остывает)
 REG = os.path.join(HERE, "posted_reels.json")
 CA = os.environ.get('CURL_CA', '/root/.ccr/ca-bundle.crt')
+COOLDOWN_S = 4 * 3600   # 4 часа между попытками — иначе окно uploadRateLimitExceeded не остывает
 
 
 def curl(a, t=90):
@@ -47,9 +49,16 @@ def cover_of(rid):
 
 def main():
     pend = set(load(PEND, []))
-    pend |= set(sys.argv[1:])          # добавить новые из аргументов
+    newargs = set(sys.argv[1:])
+    pend |= newargs                    # добавить новые из аргументов
     if not pend:
         print("thumbs: pending пусто"); return
+    # КУЛДАУН: если недавно уже пробовали и упёрлись в rate-limit — ждём, окно остывает.
+    # Новые id (из аргументов) пробуем сразу — вдруг окно уже открыто.
+    now = time.time()
+    nxt = load(COOL, {}).get("next", 0)
+    if not newargs and now < nxt:
+        print(f"thumbs: кулдаун ещё {int((nxt-now)/60)}мин (ждём остывания rate-limit), {sorted(pend)}"); return
     reg = load(REG, {})
     if not os.environ.get('TAPPIO_YT_CLIENT_ID'):
         print("thumbs: нет ключей YouTube — пропуск"); return
@@ -58,7 +67,7 @@ def main():
     except Exception as e:
         print("thumbs: токен не получен", e); return
     still = set()
-    done = 0
+    done = 0; hit_limit = False
     for rid in sorted(pend):
         vid = reg.get(rid, {}).get('yt_id')
         if not vid:
@@ -75,9 +84,15 @@ def main():
         if code == '200':
             done += 1
         else:
-            still.add(rid)              # 429/прочее — оставляем на следующий тик
+            still.add(rid)              # 429/прочее — оставляем на следующую попытку
+            if code == '429':
+                hit_limit = True
+                break                   # упёрлись в лимит — дальше не долбим, ждём кулдаун
     json.dump(sorted(still), open(PEND, "w"))
-    print(f"thumbs: поставлено={done} ещё_ждут={len(still)} {sorted(still)}")
+    # если поймали rate-limit — назначаем паузу; если что-то поставилось — тоже пауза (не частить)
+    if hit_limit or done:
+        json.dump({"next": time.time() + COOLDOWN_S}, open(COOL, "w"))
+    print(f"thumbs: поставлено={done} ещё_ждут={len(still)} лимит={hit_limit} {sorted(still)}")
 
 
 if __name__ == "__main__":
