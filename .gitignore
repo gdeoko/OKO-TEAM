@@ -20,3 +20,4 @@ PROJECT_CONTEXT.txt
 secrets.env
 __pycache__/
 tappio-app/factory/analysis/recon_seen.json
+tappio-app/factory/analysis/refs/
