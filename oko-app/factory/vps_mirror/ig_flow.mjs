@@ -27,6 +27,14 @@ try{
   await p.goto('https://www.instagram.com/accounts/login/',{waitUntil:'domcontentloaded',timeout:45000});
   await p.waitForSelector('input[name="email"],input[name="username"]',{timeout:20000}).catch(()=>{});
   await p.waitForTimeout(1500);
+  // onetap-bypass: session-resume page blocks the login form
+  if(!(await p.$('input[name="email"],input[name="username"]'))){
+    for(const t of ['Use another profile','Log into another account','Sign in with another account','Switch accounts','Войти в другой аккаунт','Использовать другой профиль']){
+      const el=await p.$(`button:has-text("${t}"), div[role="button"]:has-text("${t}"), a:has-text("${t}")`);
+      if(el){log('onetap-bypass '+t);await el.click().catch(()=>{});await p.waitForTimeout(3500);break;}
+    }
+    await p.waitForSelector('input[name="email"],input[name="username"]',{timeout:12000}).catch(()=>{});
+  }
   const eb=await p.$('input[name="email"],input[name="username"]'); const pb=await p.$('input[name="pass"],input[name="password"]');
   if(!eb||!pb){status('NO_FORM');log('no form '+p.url());await ctx.close();process.exit(0);}
   await eb.click(); await eb.type(email,{delay:55}); await pb.click(); await pb.type(pass,{delay:55});
