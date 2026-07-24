@@ -131,9 +131,11 @@ function draw(a,p){
      +'<svg width="640" height="240" viewBox="0 0 640 240"><path d="'+path+'" fill="none" stroke="'+AMB2+'" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="'+len+'" stroke-dashoffset="'+dash+'"/>'
      +'<circle cx="'+(40+(n-1)*(600/(n-1)))+'" cy="'+(220-pts[n-1]*180)+'" r="11" fill="'+AMB+'" opacity="'+clamp((g-0.85)/0.15)+'"/></svg></div>';
   } else if(t=='iconrow'){ // row of specs popping in pill-tiles (distinct from chips: tiles w/ big mono numbers)
-    w=820; pos=zoneTop('c',w); let h='<div style="display:flex;gap:20px;justify-content:center">';
+    // full-width centered container so long labels (ШНОРКЕЛЬ и т.п.) не вылезают за экран
+    pos={left:0,top:ST.topY}; const fs=d.items.length>=3?38:48;
+    let h='<div style="width:1080px;display:flex;gap:18px;justify-content:center;flex-wrap:wrap">';
     d.items.forEach((it,i)=>{const s=back(clamp((p-(0.1+i*0.14))/0.3));
-      h+='<div style="'+boxCSS('24px 20px')+'text-align:center;min-width:200px;opacity:'+clamp(s)+';transform:scale('+(0.7+0.3*clamp(s))+')"><div class="mono amb" style="font-size:52px">'+it+'</div></div>';});
+      h+='<div style="'+boxCSS('20px 22px')+'text-align:center;opacity:'+clamp(s)+';transform:scale('+(0.7+0.3*clamp(s))+')"><div class="mono amb" style="font-size:'+fs+'px;white-space:nowrap">'+it+'</div></div>';});
     b.innerHTML=h+'</div>';
   } else if(t=='sidebars'){ // vertical bar chart w/ animated columns
     w=560; pos=zoneTop('c',w); let h='<div style="'+boxCSS('30px')+'width:560px;display:flex;align-items:flex-end;gap:26px;height:300px">';
