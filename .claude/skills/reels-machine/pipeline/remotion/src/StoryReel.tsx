@@ -8,7 +8,7 @@ import { LIME, MONT, BEBAS } from "./mograph";
 import { FONT_CSS } from "./fonts";
 import WORDS from "./words_s.json";
 import { CostCounter, Converge, IncomeGraph } from "./fx";
-import { ScreenFX, TransitionFX, LottieAsset, GiphySticker, PremSticker } from "./fx2";
+import { ScreenFX, TransitionFX, LottieAsset, ChromeSticker } from "./fx2";
 
 const E = Easing.bezier(0.16,1,0.3,1);
 const GLOW = `0 0 10px ${LIME}, 0 0 34px ${LIME}aa`;
@@ -190,8 +190,17 @@ export const StoryReel: React.FC = () => {
       <Sequence from={430} durationInFrames={49}><FeatureStamp icon="coin" word="ЗАРАБОТОК"/></Sequence>
       <Sequence from={716} durationInFrames={66}><IncomeGraph/></Sequence>
 
-      {/* без стикеров-эмодзи — профессиональный слой: инфографика + VFX + кинетика */}
-      <Sequence from={945} durationInFrames={135}><LottieAsset name="arrow1" size={170} top={1450} left={455} loop filter={`drop-shadow(0 0 10px ${LIME})`} style={{transform:"rotate(90deg)"}}/></Sequence>{/* свайп-UI на CTA */}
+      {/* === ПРЕМИУМ ХРОМ/3D-ЭЛЕМЕНТЫ (FLUX-генерация под ОКО, не эмодзи) === */}
+      <Sequence from={10} durationInFrames={62}><ChromeSticker name="liquid_blob" size={200} top={150} left={800}/></Sequence>{/* хук */}
+      <Sequence from={94} durationInFrames={44}><ChromeSticker name="chrome_ring" size={300} top={560} left={390}/></Sequence>{/* всё в одном — кольцо-глаз ОКО */}
+      <Sequence from={400} durationInFrames={30}><ChromeSticker name="chrome_star" size={200} top={300} left={790}/></Sequence>{/* продвижение */}
+      <Sequence from={430} durationInFrames={49}><ChromeSticker name="chrome_coin" size={260} top={270} left={110} wobble={20}/></Sequence>{/* заработок — монета ₽ */}
+      <Sequence from={509} durationInFrames={28}><ChromeSticker name="chrome_star" size={240} top={260} left={420}/></Sequence>{/* запустил */}
+      <Sequence from={672} durationInFrames={44}><ChromeSticker name="chrome_diamond" size={240} top={520} left={420}/></Sequence>{/* сертификат */}
+      <Sequence from={716} durationInFrames={90}><ChromeSticker name="chrome_coin" size={300} top={130} left={80} wobble={22}/></Sequence>{/* первые деньги */}
+      <Sequence from={716} durationInFrames={90}><ChromeSticker name="chrome_diamond" size={240} top={160} left={720}/></Sequence>
+      <Sequence from={838} durationInFrames={70}><ChromeSticker name="chrome_star" size={170} top={240} left={110}/></Sequence>{/* сегодня */}
+      <Sequence from={950} durationInFrames={130}><ChromeSticker name="chrome_arrow" size={200} top={1400} left={440} wobble={8}/></Sequence>{/* CTA — свайп-стрелка хром */}
 
       {/* === LOTTIE-АССЕТЫ (LottieFiles) — по одному, без дублей с GIPHY === */}
       <Sequence from={252} durationInFrames={50}><LottieAsset name="loader2" size={180} top={720} left={450} loop/></Sequence>{/* открытие приложения */}

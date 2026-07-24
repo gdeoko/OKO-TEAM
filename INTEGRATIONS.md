@@ -90,6 +90,17 @@ Ultra-подписка безлимит), детальный промпт, га�
 - **Mixkit** — БЕЗ ключа; ГРАБЛЯ 08.07: прямые ссылки assets.mixkit.co/music отдают
   AccessDenied — музыку брать с Freesound; sfx/видео Mixkit проверять поштучно.
 
+### РЕШЕНИЕ ПРЕМИУМ 3D/ХРОМ-СТИКЕРОВ (CapCut Y2K уровень, бесплатно, 24.07)
+Проприетарные премиум-паки (ProductionCrate/Envato/CapCut) закрыты. РЕШЕНИЕ — генерить
+СВОИ под ОКО: `pipeline/remotion/gen_chrome.py`. FLUX.1-schnell (HF PRO ZeroGPU — БЕСПЛАТНО,
+это НЕ кредиты Higgsfield, правило №7 не трогаем) рисует хром/3D-элемент на ЧЁРНОМ фоне →
+`rembg` (u2net) вырезает в прозрачный PNG → `public/chrome/*.png` → компонент `ChromeSticker`
+(fx2.tsx) анимирует: perspective rotateY-поворот + флоат + лаймовый глинт-глоу. Набор:
+chrome_star, chrome_ring(глаз-ОКО), chrome_coin(₽), chrome_arrow, chrome_diamond, liquid_blob.
+Промпт ВСЕГДА: "single glossy chrome 3D <объект>, mirror-polished, lime green 9AFF00 reflections,
+floating centered on pure solid black background, Y2K, octane, 8k, no text". Безлимит, кастом,
+на бренд — круче генерик-CapCut. Deps: `pip install "rembg[cpu]" onnxruntime` + gradio_client + HF_TOKEN.
+
 ### ASSET ROUTER — 12+ библиотек монтажа одной точкой (подключено 24.07)
 `pipeline/remotion/asset_router.py` (класс `Router`) — по ключевому слову сцены тянет
 РАЗНЫЕ ассеты под смысл, дедуп по url. Все методы проверены боем:

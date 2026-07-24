@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig, interpolate, spring, Loop, Easing } from "remotion";
+import { AbsoluteFill, OffthreadVideo, Img, staticFile, useCurrentFrame, useVideoConfig, interpolate, spring, Loop, Easing } from "remotion";
 import { Lottie } from "@remotion/lottie";
 import { Gif } from "@remotion/gif";
 import { LIME } from "./mograph";
@@ -41,6 +41,23 @@ export const GiphySticker: React.FC<{name:string; size:number; top:number; left:
   return <div style={{position:"absolute",top:top+float,left,width:size,height:size,transform:`scale(${0.4+sp*0.6})`,opacity:Math.min(1,sp*1.2),filter:"drop-shadow(0 8px 24px #000a)"}}>
     <Gif src={staticFile(`giphy/${name}.gif`)} width={size} height={size} fit="contain"/>
   </div>;
+};
+
+// ПРЕМИУМ хром/3D-элемент (FLUX-генерация, rembg-кат) — 3D-анимация: флоат + поворот + глинт
+export const ChromeSticker: React.FC<{name:string; size:number; top:number; left:number; delay?:number; wobble?:number}> =
+ ({name,size,top,left,delay=0,wobble=14}) => {
+  const f=useCurrentFrame(); const {fps}=useVideoConfig();
+  const sp=spring({frame:f-delay,fps,config:{damping:12,stiffness:130}});
+  const float=Math.sin((f-delay)/17)*10;
+  const roty=Math.sin((f-delay)/28)*wobble;      // 3D-поворот
+  const rotz=Math.sin((f-delay)/40)*4;
+  const glint=0.4+0.4*Math.sin((f-delay)/9);
+  return (
+    <div style={{position:"absolute",top:top+float,left,width:size,height:size,opacity:Math.min(1,sp*1.3),
+      transform:`perspective(900px) rotateY(${roty}deg) rotateZ(${rotz}deg) scale(${0.4+sp*0.6})`,transformStyle:"preserve-3d"}}>
+      <Img src={staticFile(`chrome/${name}.png`)} style={{width:"100%",height:"100%",objectFit:"contain",filter:`drop-shadow(0 12px 30px #000c) drop-shadow(0 0 ${18*glint}px ${LIME}66)`}}/>
+    </div>
+  );
 };
 
 // оверлей-футаж (screen-блендинг), зациклен
