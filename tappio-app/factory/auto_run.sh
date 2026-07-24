@@ -28,7 +28,7 @@ if [ "$DUR_INT" -gt 47 ] 2>/dev/null; then log "TOO_LONG ${DUR}s (>47) — не 
 QCLINE=$(python3 qc.py "$ID" 2>/dev/null | tail -1); log "$QCLINE"
 
 # 1b) ОБЛОЖКА рила = кадр-0 (наш брендовый дизайн) в JPG для IG
-ffmpeg -y -ss 0.06 -i "output/$ID.mp4" -vframes 1 -q:v 2 "output/${ID}_cover.jpg" 2>/dev/null && log "cover jpg готов" || log "cover jpg fail"
+ffmpeg -y -i "output/$ID.mp4" -vf "select=eq(n\,0)" -vframes 1 -q:v 2 "output/${ID}_cover.jpg" 2>/dev/null && log "cover jpg готов (кадр 0 = обложка)" || log "cover jpg fail"
 
 # 2) КОММИТ ролика (нужно для git-raw доставки на VPS)
 cd "$REPO"

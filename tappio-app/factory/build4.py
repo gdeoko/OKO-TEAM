@@ -89,7 +89,10 @@ def main():
     beats=[s["id"] for s in d["segments"]]
     vo={s:probe(f"{wd}/vo/{s}.mp3") for s in beats}; cta_dur=probe(f"{wd}/vo/cta.mp3")
     words={s:json.load(open(f"{wd}/vo/{s}.json")) for s in beats}; words["cta"]=json.load(open(f"{wd}/vo/cta.json"))
-    LEAD=1.3; GAP=0.24
+    # Обложка НЕ интро: показываем её только 1 кадром в самом начале (для превью),
+    # контент и голос стартуют сразу. Как полноценное превью обложка приделывается при
+    # ПУБЛИКАЦИИ (YouTube thumbnail + IG cover), а не 2-секундным наездом в ролике.
+    LEAD=0.034; GAP=0.24     # 0.034с ≈ 1 кадр @30fps
     starts={}; t=LEAD
     for s in beats: starts[s]=t; t+=vo[s]+GAP
     cta_start=t; t_main_end=cta_start+cta_dur+0.5
@@ -137,9 +140,10 @@ def main():
     # обложка кадром 0 — ИИ (Nano Banana Pro), иначе HTML-фолбэк
     ai_cov=d.get("cover",{}).get("ai")
     cov_png=ai_cov if (ai_cov and os.path.exists(ai_cov)) else f"{wd}/cover_ov.png"
-    cov_i=N+1; inputs+=['-loop','1','-framerate','30','-t',f'{total:.2f}','-i',cov_png]
-    fc.append(f"[{cov_i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,format=rgba,fps=30,fade=out:st={LEAD-0.35:.2f}:d=0.35:alpha=1[cov]")
-    fc.append(f"[withec][cov]overlay=0:0:enable='between(t,0,{LEAD:.2f})'[base0]")
+    # обложка — ровно 1 кадр в самом начале (без наезда/фейда); дальше сразу контент
+    cov_i=N+1; inputs+=['-loop','1','-framerate','30','-t','0.2','-i',cov_png]
+    fc.append(f"[{cov_i}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,format=rgba,fps=30[cov]")
+    fc.append(f"[withec][cov]overlay=0:0:enable='between(t,0,{LEAD:.3f})'[base0]")
     # ---- анимированные наложения ----
     meta=json.load(open(f"{wd}/ovw/meta.json"))
     chain="[base0]"; ov_in_base=N+2
