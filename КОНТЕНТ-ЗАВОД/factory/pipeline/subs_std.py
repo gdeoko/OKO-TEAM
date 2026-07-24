@@ -25,8 +25,8 @@ i=0
 while i<len(words):
     grp=words[i:i+2]; st=grp[0]["a"]+OFF; en=grp[-1]["b"]+OFF
     i+=2
-    if st<2.2: continue
-    if st>=31.0: break
+    # закон 0-АЛЬФА-2: интро НЕТ, ролик с хука — субтитры с самого начала и до конца VO
+    if st<0.25: continue
     if en-st<0.2: en=st+0.4
     parts=[f"{{\\kf{max(8,round((w['b']-w['a'])*100))}}}{w['t'].upper()}" for w in grp]
     ev+=f"Dialogue: 0,{cc(st)},{cc(en)},K,,0,0,0,,{{\\fad(70,70)}}{' '.join(parts)}\n"
