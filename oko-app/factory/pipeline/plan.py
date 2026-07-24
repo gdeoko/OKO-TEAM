@@ -5,7 +5,7 @@ ORDER=["s1","s2","s3","s4","s5","s6"]
 def dur(f): return float(subprocess.run(["ffprobe","-v","error","-show_entries","format=duration","-of","csv=p=0",f],capture_output=True,text=True).stdout.strip() or 0)
 def att(s):
     h=int(s//3600); m=int(s%3600//60); sec=s%60; return f"{h}:{m:02d}:{sec:05.2f}"
-COVER=1.8; GAP=0.12  # cover holds ~1.8s so the обложка/thumbnail actually reads
+COVER=0.05; GAP=0.12  # обложка = 1 кадр в начале (Даниэль 24.07): НЕ 2-сек интро. Обложка живёт как превью-миниатюра (cover.jpg цепляется постером при публикации: YT thumbnails/set + IG_COVER); 1-й кадр видео = обложка на случай неверифиц. YT (fallback на первый кадр). Ролик стартует хуком сразу.
 durs={s:dur(f"{VO}/{s}.mp3") for s in ORDER}
 # segment start times (with small gaps)
 seg_start={}; t=COVER
