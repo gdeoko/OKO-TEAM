@@ -41,9 +41,12 @@ python3 КОНТЕНТ-ЗАВОД/factory/pipeline/tts_free.py "<VO текст>"
 # ОБЛОЖКА — ВСЕГДА красивая РИСОВАННАЯ (закон 0-АЛЬФА). НИКОГДА плоские CSS-карточки!
 # 1) FLUX-иллюстрация фон (тёплая акварель/gouache storybook, мама/ребёнок по теме, no text):
 python3 КОНТЕНТ-ЗАВОД/factory/pipeline/cover_free.py "soft watercolor gouache children book illustration, warm cream and honey light, tender storybook, orthodox christian family, <сцена по теме>, no text, no words" work/cover_base.png 1080 1920 <seed>
-# 2) заголовок+лого+зум-интро одним скриптом (эталон): scratchpad/reel01v2/work/cover_ill.mjs
+# 2) заголовок+лого одним скриптом (эталон): scratchpad/reel01v2/work/cover_ill.mjs
 #    config JSON: {"wd":"<WD>","rubric":"<РУБРИКА>","title":"строка1<br>слово2 <b>акцент</b>","accent":"#C4703F"}
-node cover_ill.mjs <WD>/covcfg.json   # → work/cover.jpg (обложка IG) + work/intro.mp4 (мягкий зум 2.2с)
+node cover_ill.mjs <WD>/covcfg.json   # → work/cover.jpg (ПОСТЕР-ПРЕВЬЮ, прикрепляется при публикации)
+# ⚠️ ЗАКОН 0-АЛЬФА-2 (24.07): intro.mp4 НЕ используем! Обложка — НЕ часть ролика, а превью.
+# Ролик стартует с 1 кадра сразу с ХУКА. cover.jpg кладём в очередь как <NN>.jpg рядом с <NN>.mp4;
+# публикатор цепляет её: IG нативно, YT thumbnails.set (нужен верифиц. канал youtube.com/verify), TT — первый кадр.
 
 # МУЗЫКА (бесплатно, РАЗНАЯ каждый раз по НАСТРОЕНИЮ темы) — pipeline/music_free.py
 python3 КОНТЕНТ-ЗАВОД/factory/pipeline/music_free.py "<mood ВЫВЕДИ из темы/эмоции ЭТОГО ролика — не из списка>" work/music.m4a <dur> NN
@@ -80,7 +83,7 @@ python3 subs_std.py         # ЕДИНЫЙ ФИРМЕННЫЙ СТИЛЬ (зак
 
 ## 7. Свод
 ```
-python3 composite.py        # intro(обложка)+montage_b+outro2 xfade → 9 оверлеев (libvpx-vp9!) →
+python3 composite.py        # БЕЗ intro! montage_b(с 0)+outro2 xfade → оверлеи (libvpx-vp9, offset БЕЗ +2с!) →
                             # прогресс-бар drawbox → субтитры → аудио36 (VO+музыка дакинг+fade). 36с.
 ```
 QA: снять 5-6 кадров, глазами проверить (видеоряд виден под инфографикой, субтитры резкие/по голосу).
