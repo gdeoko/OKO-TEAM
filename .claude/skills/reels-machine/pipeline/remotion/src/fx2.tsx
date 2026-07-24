@@ -1,6 +1,7 @@
 import React from "react";
-import { AbsoluteFill, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig, interpolate, Loop, Easing } from "remotion";
+import { AbsoluteFill, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig, interpolate, spring, Loop, Easing } from "remotion";
 import { Lottie } from "@remotion/lottie";
+import { Gif } from "@remotion/gif";
 import { LIME } from "./mograph";
 import { LOTTIE } from "./lottieData";
 import { LIB } from "./lottieLib";
@@ -15,6 +16,17 @@ export const LottieAsset: React.FC<{name:string; size?:number; top?:number; left
   if(!data) return null;
   return <div style={{position:"absolute",top,left,width:size,height:size,opacity,filter,...style}}>
     <Lottie animationData={data} loop={loop} playbackRate={1}/>
+  </div>;
+};
+
+// GIPHY-стикер (та же библиотека, что в CapCut) — прозрачный анимированный .gif с пружинным влётом
+export const GiphySticker: React.FC<{name:string; size:number; top:number; left:number; delay?:number; loopIn?:boolean}> =
+ ({name,size,top,left,delay=0,loopIn=true}) => {
+  const f=useCurrentFrame(); const {fps}=useVideoConfig();
+  const sp=spring({frame:f-delay,fps,config:{damping:11,stiffness:150}});
+  const float=Math.sin((f-delay)/16)*8;
+  return <div style={{position:"absolute",top:top+float,left,width:size,height:size,transform:`scale(${0.4+sp*0.6})`,opacity:Math.min(1,sp*1.2),filter:"drop-shadow(0 8px 24px #000a)"}}>
+    <Gif src={staticFile(`giphy/${name}.gif`)} width={size} height={size} fit="contain"/>
   </div>;
 };
 

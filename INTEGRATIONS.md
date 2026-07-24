@@ -90,6 +90,19 @@ Ultra-подписка безлимит), детальный промпт, га�
 - **Mixkit** — БЕЗ ключа; ГРАБЛЯ 08.07: прямые ссылки assets.mixkit.co/music отдают
   AccessDenied — музыку брать с Freesound; sfx/видео Mixkit проверять поштучно.
 
+### БИБЛИОТЕКИ АССЕТОВ CapCut-уровня (исследование 24.07, доступ проверен)
+Реальные бесплатные источники для контент-завода (все отдают 200 / рабочий API):
+- **GIPHY** (стикеры/GIF) — api.giphy.com, ключ GIPHY_API_KEY. Рендер через @remotion/gif `<Gif>`.
+- **Telegram Sticker API** — api.telegram.org/bot<TOKEN>/getStickerSet — МИЛЛИОНЫ анимир(.tgs=Lottie)/видео(.webm) стикеров, токен @okoappbot есть.
+- **Google Noto Animated Emoji** — fonts.gstatic.com/s/e/notoemoji/latest/<hexcode>/512.gif (живые эмодзи).
+- **Microsoft Fluent 3D Emoji** — raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/<Name>/3D/<name>_3d.png.
+- **OpenMoji** — raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/618x618/<CODE>.png.
+- **3dicons.co** — CC0 3D-иконки (Y2K/хром). **IconScout/Flaticon** — API, 3D/Lottie/webm (част. CC0).
+- **Видео VFX/оверлеи/переходы**: Mixkit, Coverr, Videvo, Videezy + Pexels/Pixabay(ключи есть).
+- **Музыка/SFX**: Freesound(ключ), Pixabay Music(ключ), Jamendo API, Free Music Archive, ccMixter.
+- **3D/WebGL**: Sketchfab/PolyPizza/PolyHaven/Quaternius (GLB) — ГРАБЛЯ: рендер требует GPU, в контейнере нет (swangle не композит модель).
+Стратегия «не повторяться»: asset-router — по ключевым словам сцены дёргать API и тянуть новые ассеты под смысл, дедуп по использованным.
+
 ### 5 БИБЛИОТЕК МОНТАЖА для Remotion (StoryReel, проверено 23.07)
 Профи-монтаж строится из РЕАЛЬНЫХ библиотек ассетов, не рисуется кодом:
 1. **LottieFiles** — GraphQL БЕЗ ключа: `POST https://graphql.lottiefiles.com/2022-08`,
