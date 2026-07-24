@@ -29,7 +29,9 @@ def run(cmd):
     if r.returncode != 0:
         sys.stderr.write(r.stderr[-2500:]); raise SystemExit(1)
 
-def timeline(vo_dir, segs, cover=0.30, lead2=0.45, gap=0.35, tail=0.9, endcard=2.2):
+def timeline(vo_dir, segs, cover=0.04, lead2=0.45, gap=0.35, tail=0.9, endcard=2.2):
+    # cover=0.04с ≈ 1 кадр: обложка НЕ интро-наезд, а превью-постер прикрепляется ПРИ ПУБЛИКАЦИИ
+    # (publish_bot.py --cover → thumbnail). Ролик стартует сразу с хука. См. PRODUCTION_BIBLE §5.4.
     """Тайминги окон сцен из длительностей озвучки."""
     durs = {s: probe(f'{vo_dir}/{s}.mp3') for s in segs}
     starts, t = {}, cover + lead2
