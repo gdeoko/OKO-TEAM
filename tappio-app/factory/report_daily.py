@@ -61,12 +61,22 @@ def main():
         snap[e["yt_id"]] = {"views": st["views"], "likes": st["likes"]}
     # АДАПТИВ: только НЕ новые ролики (были в снапшоте) без роста и <50 просмотров = просадка.
     # Флаг ставим лишь при ВАЛИДНЫХ данных (rows) — если YouTube заблокил метрики, rows пусто -> не трогаем.
+    # ЗАЩИТА ОТ ХОЛОДНОГО СТАРТА: пока канал ещё не набрал тягу (ни один ролик не пробил
+    # порог), низкие просмотры = НОРМА новичка, а не «сдулись форматы». Резать выпуск в этой фазе
+    # вредно (нужен объём, чтобы алгоритм нас нашёл) — поэтому флаг НЕ ставим, пока нет базы.
     from datetime import date, timedelta
     flagp = os.path.join(HERE, "analysis", "perf_flag.json")
+    TRACTION = 500        # хотя бы один ролик пробил 500 просмотров -> канал «ожил», можно судить о просадке
     try:
+        best = max((r[2]["views"] for r in rows), default=0)
+        cold_start = best < TRACTION
         sagging = [r for r in rows if r[5] and r[3] <= 0 and r[2]["views"] < 50]
         tracked_old = [r for r in rows if r[5]]
-        if len(tracked_old) >= 3 and len(sagging) >= 1:
+        if cold_start:
+            # холодный старт — НИКОГДА не режем квоту; наоборот, чистим ложный флаг, если был
+            if os.path.exists(flagp): os.remove(flagp)
+        elif len(tracked_old) >= 3 and len(sagging) >= 2:
+            # реальная просадка (уже была тяга, и ≥2 ранее замеренных ролика встали/поехали вниз)
             until = (date.today() + timedelta(days=3)).isoformat()
             json.dump({"cap": 5, "until": until, "reason": "просмотры проседают/0"}, open(flagp, "w"))
         elif len(tracked_old) >= 3 and not sagging:
