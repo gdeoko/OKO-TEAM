@@ -533,3 +533,17 @@
   cursor:pointer; transition:transform .12s, border-color .15s }
 .ac-ord-tile:hover{ border-color:var(--accent); transform:translateX(3px) }
 .ac-ord-tile.shake{ animation:acShake .4s; border-color:#ff5252 }
+
+/* ===== мини-игра «правда/ложь» ===== */
+.ac-tf-card{ border:1px solid var(--line); border-radius:14px; padding:20px 18px; margin:10px 0 14px;
+  background:var(--card2,rgba(255,255,255,.03)); text-align:center }
+.ac-tf-card .q{ font:700 14px/1.4 'Montserrat',sans-serif; color:var(--dim); margin-bottom:12px }
+.ac-tf-card .opt{ font:800 20px/1.3 'Montserrat',sans-serif; color:var(--text); margin-bottom:14px }
+.ac-tf-card .ask{ font:700 12.5px/1 'Montserrat',sans-serif; color:var(--accent); letter-spacing:.02em }
+.ac-tf-card.shake{ animation:acShake .45s ease; border-color:var(--danger) }
+.ac-tf-btns{ display:flex; gap:12px }
+.ac-tf-btn{ flex:1; padding:15px 0; border-radius:12px; font:800 15px/1 'Montserrat',sans-serif; cursor:pointer;
+  border:1.5px solid var(--line); background:var(--card2,rgba(255,255,255,.03)); color:var(--text); transition:transform .12s, border-color .15s, background .15s }
+.ac-tf-btn:hover{ transform:translateY(-2px) }
+.ac-tf-btn.yes:hover{ border-color:var(--accent); background:rgba(154,255,0,.12); color:var(--accent) }
+.ac-tf-btn.no:hover{ border-color:var(--danger); background:rgba(255,77,77,.1); color:var(--danger) }

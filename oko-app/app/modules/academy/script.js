@@ -2647,12 +2647,13 @@ function acTaskSend(){
 function acShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 /* Тип мини-игры на урок (анти-повтор: чередуется по индексу урока).
    Движки берут данные из уже готового контента урока (pairs / slides). */
-const AC_GAMES = ['pairs','order'];
+const AC_GAMES = ['pairs','order','truefalse'];
 function acGameType(){
   const L = acCur();
   let t = AC_GAMES[acL % AC_GAMES.length];
   if(t==='order' && (!L.slides || L.slides.length < 3)) t = 'pairs';
-  if(t==='pairs' && (!L.pairs || !L.pairs.length)) t = (L.slides && L.slides.length>=3) ? 'order' : 'pairs';
+  if(t==='truefalse' && (!L.quiz || L.quiz.length < 3)) t = (L.slides && L.slides.length>=3) ? 'order' : 'pairs';
+  if(t==='pairs' && (!L.pairs || !L.pairs.length)) t = (L.slides && L.slides.length>=3) ? 'order' : (L.quiz&&L.quiz.length>=3?'truefalse':'pairs');
   return t;
 }
 function acGameFinish(wrong){
@@ -2667,13 +2668,15 @@ function acRenderGameBox(){
   const t = acGameType(), ls = acLS();
   if(!acG){
     if(ls.game){
-      const label = t==='order' ? 'Порядок шагов восстановлен' : 'Все пары собраны';
+      const label = t==='order' ? 'Порядок шагов восстановлен' : t==='truefalse' ? 'Все утверждения разобраны' : 'Все пары собраны';
       box.innerHTML = `<div class="ac-game-done"><div class="big">${I('check2')}</div>
          <p>${label}${ls.gameWrong!==null&&ls.gameWrong!==undefined?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
          <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`;
     } else {
       const intro = t==='order'
         ? '<b>Расставь шаги по порядку.</b> Тапай карточки в правильной последовательности урока — верный шаг встаёт на место, неверный трясётся.'
+        : t==='truefalse'
+        ? '<b>Правда или ложь.</b> Для каждого утверждения реши, верный это ответ или нет. Ошибся — покажем, как на самом деле.'
         : '<b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.';
       box.innerHTML = `<p style="font-size:13.5px;line-height:1.55">${intro}</p><div style="height:12px"></div>
          <button class="btn" onclick="acGameStart()">${I('play')} Играть</button>`;
@@ -2681,6 +2684,7 @@ function acRenderGameBox(){
     return;
   }
   if(acG.type === 'order') return acRenderOrder(box);
+  if(acG.type === 'truefalse') return acRenderTF(box);
   return acRenderPairs(box);
 }
 function acRenderPairs(box){
@@ -2725,11 +2729,49 @@ function acGameStart(){
   if(t === 'order'){
     const idx = acCur().slides.map((_,i)=>i);
     acG = {type:'order', pool:acShuffle(idx), next:0, wrong:0, lock:false};
+  } else if(t === 'truefalse'){
+    const q = acCur().quiz;
+    const items = q.map(it=>{
+      const showTrue = Math.random() < 0.5;
+      if(showTrue) return {text:it.q, opt:it.o[it.a], isTrue:true};
+      const wrongs = it.o.map((o,k)=>k).filter(k=>k!==it.a);
+      const wk = wrongs[Math.floor(Math.random()*wrongs.length)];
+      return {text:it.q, opt:it.o[wk], isTrue:false};
+    });
+    const order = acShuffle(items.map((_,i)=>i));
+    acG = {type:'truefalse', items:order.map(i=>items[i]), cur:0, wrong:0, lock:false};
   } else {
     const idx = acCur().pairs.map((_,i)=>i);
     acG = {type:'pairs', left:idx.slice(), right:acShuffle(idx), sel:null, hits:0, wrong:0, lock:false};
   }
   acRenderGameBox();
+}
+function acRenderTF(box){
+  const it = acG.items[acG.cur];
+  if(!it){ acGameFinish(acG.wrong); return; }
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Утверждение: <b>${acG.cur+1} / ${acG.items.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-tf-card" id="acTFCard">
+      <div class="q">${esc(it.text)}</div>
+      <div class="opt">${esc(it.opt)}</div>
+      <div class="ask">Это верный ответ?</div>
+    </div>
+    <div class="ac-tf-btns">
+      <button class="ac-tf-btn no" onclick="acTFAnswer(false)">Ложь</button>
+      <button class="ac-tf-btn yes" onclick="acTFAnswer(true)">Правда</button>
+    </div>`;
+}
+function acTFAnswer(ans){
+  if(!acG || acG.lock) return;
+  const it = acG.items[acG.cur];
+  const nextCard = ()=>{ acG.cur++; if(acG.cur>=acG.items.length){ acGameFinish(acG.wrong); return; } acRenderTF(document.getElementById('acGameBox')); };
+  if(ans === it.isTrue){ nextCard(); }
+  else {
+    acG.wrong++; acG.lock = true;
+    const c = document.getElementById('acTFCard'); if(c) c.classList.add('shake');
+    toast(it.isTrue ? 'На самом деле это верный ответ' : 'На самом деле ответ неверный');
+    setTimeout(()=>{ acG.lock = false; nextCard(); }, 780);
+  }
 }
 function acGPick(i){
   if(!acG || acG.lock) return;
