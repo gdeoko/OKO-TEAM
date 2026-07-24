@@ -1,1 +1,1 @@
-{"date": "2026-07-24", "ramp_day": 2, "target_per_batch": 5, "posted_A": 3, "posted_B": 2, "note": "start 5/batch, ramp to 15 after 3 steady days, revert to 5 if any account views drop/0. Источник правды — VPS /opt/oko-poster/cfg/ramp_state.json (обновляет diesel_publish_slot.sh). Этот файл — зеркало для трекинга."}
+{"date": "2026-07-24", "ramp_day": 2, "target_per_batch": 5, "posted_A": 3, "posted_B": 3, "note": "start 5/batch, ramp to 15 after 3 steady days, revert to 5 if any account views drop/0. Источник правды — VPS. Зеркало."}
