@@ -8,7 +8,7 @@ import { LIME, MONT, BEBAS } from "./mograph";
 import { FONT_CSS } from "./fonts";
 import WORDS from "./words_s.json";
 import { CostCounter, Converge, IncomeGraph } from "./fx";
-import { ScreenFX, TransitionFX, LottieAsset, GiphySticker } from "./fx2";
+import { ScreenFX, TransitionFX, LottieAsset, GiphySticker, PremSticker } from "./fx2";
 
 const E = Easing.bezier(0.16,1,0.3,1);
 const GLOW = `0 0 10px ${LIME}, 0 0 34px ${LIME}aa`;
@@ -190,12 +190,8 @@ export const StoryReel: React.FC = () => {
       <Sequence from={430} durationInFrames={49}><FeatureStamp icon="coin" word="ЗАРАБОТОК"/></Sequence>
       <Sequence from={716} durationInFrames={66}><IncomeGraph/></Sequence>
 
-      {/* === GIPHY-СТИКЕРЫ (библиотека CapCut) — прозрачные анимированные, по смыслу === */}
-      <Sequence from={12} durationInFrames={60}><GiphySticker name="fire" size={220} top={150} left={800}/></Sequence>{/* хук — энергия */}
-      <Sequence from={430} durationInFrames={49}><GiphySticker name="money" size={460} top={220} left={310}/></Sequence>{/* заработок — деньги */}
-      <Sequence from={716} durationInFrames={90}><GiphySticker name="money" size={680} top={60} left={200}/></Sequence>{/* первые деньги — денежный дождь */}
-      <Sequence from={672} durationInFrames={44}><GiphySticker name="check" size={240} top={520} left={420}/></Sequence>{/* сертификат — галочка */}
-      <Sequence from={945} durationInFrames={135}><GiphySticker name="arrow" size={190} top={1440} left={445}/></Sequence>{/* CTA — свайп-стрелка */}
+      {/* без стикеров-эмодзи — профессиональный слой: инфографика + VFX + кинетика */}
+      <Sequence from={945} durationInFrames={135}><LottieAsset name="arrow1" size={170} top={1450} left={455} loop filter={`drop-shadow(0 0 10px ${LIME})`} style={{transform:"rotate(90deg)"}}/></Sequence>{/* свайп-UI на CTA */}
 
       {/* === LOTTIE-АССЕТЫ (LottieFiles) — по одному, без дублей с GIPHY === */}
       <Sequence from={252} durationInFrames={50}><LottieAsset name="loader2" size={180} top={720} left={450} loop/></Sequence>{/* открытие приложения */}

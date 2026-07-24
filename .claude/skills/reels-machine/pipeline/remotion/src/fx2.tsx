@@ -5,9 +5,22 @@ import { Gif } from "@remotion/gif";
 import { LIME } from "./mograph";
 import { LOTTIE } from "./lottieData";
 import { LIB } from "./lottieLib";
+import { CRYPTO } from "./cryptoLottie";
 
 const E = Easing.bezier(0.16,1,0.3,1);
-const ALL:Record<string,any> = {...LOTTIE, ...LIB}; // 5 библиотек: LottieFiles + локальные Lottie
+const ALL:Record<string,any> = {...LOTTIE, ...LIB, ...CRYPTO}; // LottieFiles + локальные + Telegram-крипто
+
+// Премиум-стикер: живой анимированный Noto-эмодзи (prem/noto_*.gif) с пружинным влётом+флоатом
+export const PremSticker: React.FC<{name:string; size:number; top:number; left:number; delay?:number; spin?:boolean}> =
+ ({name,size,top,left,delay=0,spin=false}) => {
+  const f=useCurrentFrame(); const {fps}=useVideoConfig();
+  const sp=spring({frame:f-delay,fps,config:{damping:10,stiffness:140}});
+  const float=Math.sin((f-delay)/15)*10;
+  const rot=spin?Math.sin((f-delay)/22)*8:0;
+  return <div style={{position:"absolute",top:top+float,left,width:size,height:size,transform:`scale(${0.3+sp*0.7}) rotate(${rot}deg)`,opacity:Math.min(1,sp*1.3),filter:"drop-shadow(0 10px 26px #000b)"}}>
+    <Gif src={staticFile(`prem/${name}.gif`)} width={size} height={size} fit="contain"/>
+  </div>;
+};
 
 // Lottie-ассет из библиотеки (статический импорт — без async, без пустых кадров)
 export const LottieAsset: React.FC<{name:string; size?:number; top?:number; left?:number; loop?:boolean; opacity?:number; filter?:string; style?:React.CSSProperties}> =
