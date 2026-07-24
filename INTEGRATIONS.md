@@ -90,6 +90,22 @@ Ultra-подписка безлимит), детальный промпт, га�
 - **Mixkit** — БЕЗ ключа; ГРАБЛЯ 08.07: прямые ссылки assets.mixkit.co/music отдают
   AccessDenied — музыку брать с Freesound; sfx/видео Mixkit проверять поштучно.
 
+### ASSET ROUTER — 12+ библиотек монтажа одной точкой (подключено 24.07)
+`pipeline/remotion/asset_router.py` (класс `Router`) — по ключевому слову сцены тянет
+РАЗНЫЕ ассеты под смысл, дедуп по url. Все методы проверены боем:
+- `video(q)` — Pexels(ключ)→Pixabay(ключ), портрет 1080x1920
+- `sticker(q)` — GIPHY(ключ, mp4) ; `telegram_pack(name)` — Telegram .tgs→Lottie (млн, токен @okoappbot)
+- `animation(q)` — LottieFiles GraphQL (без ключа)
+- `icon(q)` — **Iconify** api.iconify.design (200k SVG, БЕЗ ключа), recolor ?color=
+- `sfx(q)` — Freesound(ключ)
+- `music(q)` — **Openverse**(800М CC, без ключа)→**Internet Archive**(млн аудио, без ключа)
+- `image(q)` — **Openverse**→**Wikimedia Commons**(100М, без ключа)→Pexels
+- `emoji_anim(hex)` — Google Noto живые эмодзи gif ; `emoji_3d(Name)` — MS Fluent 3D png
+НОВЫЕ бесплатные API без ключей: Openverse, Iconify, Internet Archive, Wikimedia Commons.
+ГРАБЛИ: Unsplash-ключи okoteam невалидны (не тот сервис/не активированы); ProductionCrate/
+ActionVFX/FXElements/Envato — API НЕТ (защищают контент), только ручное скачивание.
+Jamendo — нужен валидный client_id. Всё через curl (urllib=прокси-байпас=403/400).
+
 ### БИБЛИОТЕКИ АССЕТОВ CapCut-уровня (исследование 24.07, доступ проверен)
 Реальные бесплатные источники для контент-завода (все отдают 200 / рабочий API):
 - **GIPHY** (стикеры/GIF) — api.giphy.com, ключ GIPHY_API_KEY. Рендер через @remotion/gif `<Gif>`.
