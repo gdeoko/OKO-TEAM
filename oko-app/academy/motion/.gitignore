@@ -1,2 +1,4 @@
-node_modules
+node_modules/
 work/
+etalon/*.wav
+etalon/*.mp4
