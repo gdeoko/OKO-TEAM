@@ -1,20 +1,20 @@
 {
- "seq": 23,
+ "seq": 24,
  "angle_idx": {
   "spy": 2,
   "brain": 2,
-  "tape": 1
+  "tape": 2
  },
- "app_rr": 23,
+ "app_rr": 24,
  "shot_off": {
   "spy": 0,
   "brain": 2,
-  "tape": 22
+  "tape": 2
  },
  "ov_off": {
   "spy": 24,
   "brain": 24,
-  "tape": 21
+  "tape": 24
  },
  "ov_fp": {
   "spy": [
@@ -44,7 +44,8 @@
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "chips|gauge|kicker|lowerthird|stat_count|ticker",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
-   "callout|checklist|chips|kicker|kinetic|lowerthird"
+   "callout|checklist|chips|kicker|kinetic|lowerthird",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
   ]
  }
 }
