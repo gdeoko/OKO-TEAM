@@ -167,12 +167,13 @@ export const StoryReel: React.FC = () => {
 
       {f<END_START && <AbsoluteFill style={{background:"linear-gradient(180deg,rgba(5,5,5,.42),rgba(5,5,5,.26) 42%,rgba(5,5,5,.6))"}}/>}
 
-      {/* === БИБЛИОТЕЧНЫЕ ПЕРЕХОДЫ (Pixabay video) на стыках актов — каждый разный === */}
-      <Sequence from={234} durationInFrames={18}><TransitionFX clip="light_streak"/></Sequence>{/* в перелом */}
-      <Sequence from={473} durationInFrames={16}><TransitionFX clip="zoom_blur"/></Sequence>{/* в действие */}
-      <Sequence from={610} durationInFrames={18}><TransitionFX clip="paint" grade="brightness(1.2) hue-rotate(60deg)"/></Sequence>{/* в обучение */}
-      <Sequence from={710} durationInFrames={18}><TransitionFX clip="light_streak"/></Sequence>{/* в деньги */}
-      <Sequence from={939} durationInFrames={20}><TransitionFX clip="ink"/></Sequence>{/* в финал */}
+      {/* === БИБЛИОТЕЧНЫЕ VFX-ПЕРЕХОДЫ (Pixabay/Mixkit video) — ПОЛНОЭКРАННЫЕ на КАЖДОМ стыке, все разные === */}
+      {([[45,"glitch"],[126,"smoke"],[171,"leak_warm"],[240,"light_streak"],[348,"zoom_blur"],
+         [479,"glitch"],[509,"film_burn"],[537,"light_streak"],[586,"smoke"],[616,"zoom_blur"],
+         [672,"leak_warm"],[716,"light_streak"],[782,"glitch"],[838,"bokeh"],[908,"smoke"],
+         [945,"film_burn"]] as [number,string][]).map(([c,clip],i)=>(
+        <Sequence key={i} from={c-5} durationInFrames={12}><TransitionFX clip={clip}/></Sequence>
+      ))}
 
       {/* точечные видео-ассеты по смыслу */}
       <Sequence from={0} durationInFrames={126}><ScreenFX clip="particles_dust" opacity={0.22} loopDur={90}/></Sequence>
