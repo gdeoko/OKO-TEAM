@@ -15,7 +15,8 @@
 <script type="module" src="spline/spline-viewer.js"></script>
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
-#spline-bg{position:fixed;inset:0;z-index:-3;width:100vw;height:100vh;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s ease}
+/* фон рендерится в пониженном разрешении (меньше пикселей = меньше лага), затем растягивается до 100% — сцена/физика/кадрирование не меняются, только чуть мягче */
+#spline-bg{position:fixed;top:0;left:0;width:68vw;height:68vh;transform:scale(1.5);transform-origin:0 0;z-index:-3;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s ease;backface-visibility:hidden}
 #spline-bg.ready{opacity:.62}
 #spline-bg::part(logo){display:none!important}
 .holo-anchor{pointer-events:none}
