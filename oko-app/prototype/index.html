@@ -2653,6 +2653,21 @@ main>.screen{position:relative;z-index:1}
 .ac-tf-btn.yes:hover{ border-color:var(--accent); background:rgba(154,255,0,.12); color:var(--accent) }
 .ac-tf-btn.no:hover{ border-color:var(--danger); background:rgba(255,77,77,.1); color:var(--danger) }
 
+/* ===== моушен внутри слайдов: раскрытие буллетов + плавающая иконка ===== */
+.ac-slide ul li{opacity:0;transform:translateX(16px)}
+.ac-slide.cur ul li{animation:acLiIn .5s cubic-bezier(.25,1,.4,1) both}
+.ac-slide.cur ul li:nth-child(1){animation-delay:.10s}
+.ac-slide.cur ul li:nth-child(2){animation-delay:.20s}
+.ac-slide.cur ul li:nth-child(3){animation-delay:.30s}
+.ac-slide.cur ul li:nth-child(4){animation-delay:.40s}
+.ac-slide.cur ul li:nth-child(5){animation-delay:.50s}
+.ac-slide.cur ul li:nth-child(6){animation-delay:.60s}
+@keyframes acLiIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.ac-slide.cur .pic svg{animation:acIcoFloat 3.2s ease-in-out infinite}
+@keyframes acIcoFloat{0%,100%{transform:scale(1.05) translateY(0)}50%{transform:scale(1.05) translateY(-6px)}}
+.ac-slide.cur h3{animation:acH3In .5s cubic-bezier(.25,1,.4,1) both}
+@keyframes acH3In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
 /* ===== module: ads ===== */
 /* ===== ADS: рекламный кабинет (префикс ads-) ===== */
 .ads-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -8458,7 +8473,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.27</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.28</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
