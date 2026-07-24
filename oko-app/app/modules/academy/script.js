@@ -1857,17 +1857,23 @@ function acLS(i){
 }
 
 /* ---------- прогресс ---------- */
+/* Видео-уроки временно отключены (делаем позже) — уроки текстовые: слайды/конспект/тест/практика/игра.
+   videoUrl в данных сохранён, вернём включением AC_VIDEO_ON. */
+const AC_VIDEO_ON = false;
+function acHasVideo(L){ return AC_VIDEO_ON && L && !!L.videoUrl; }
 function acItems(i){
-  const ls = acS.lessons[i===undefined?acL:i] || {};
-  return [
-    ['Видео просмотрено', !!ls.video],
-    ['Слайды пролистаны', !!ls.slides],
-    ['Тест сдан на '+AC_PASS+'%+', !!ls.test],
-    ['Практика зачтена', !!ls.task],
-    ['Мини-игра пройдена', !!ls.game],
-  ];
+  const k = (i===undefined?acL:i);
+  const ls = acS.lessons[k] || {};
+  const L = AC_COURSE[k] || {};
+  const items = [];
+  if(acHasVideo(L)) items.push(['Видео просмотрено', !!ls.video]);
+  items.push(['Слайды пролистаны', !!ls.slides]);
+  items.push(['Тест сдан на '+AC_PASS+'%+', !!ls.test]);
+  items.push(['Практика зачтена', !!ls.task]);
+  items.push(['Мини-игра пройдена', !!ls.game]);
+  return items;
 }
-function acLessonPct(i){ return acItems(i).filter(x=>x[1]).length * 20; }
+function acLessonPct(i){ const it = acItems(i); return it.length ? Math.round(it.filter(x=>x[1]).length / it.length * 100) : 0; }
 function acCoursePct(){
   let sum = 0;
   for(let i=0; i<AC_COURSE.length; i++) sum += acLessonPct(i);
@@ -2104,7 +2110,7 @@ function acCertLabel(c){
 function acCourseInsideHtml(ci){
   const c = AC_COURSES[ci], st = acCourseStats(ci);
   const feats = [
-    ['circle-play', (st.vids || st.lessons) + ' видео-' + acPlural(st.vids||st.lessons,['урок','урока','уроков']), st.mins>1 ? '~'+st.mins+' мин · озвучка' : 'озвучка + караоке'],
+    ['file', st.lessons + ' ' + acPlural(st.lessons,['урок','урока','уроков']) + ' полного формата', 'анимированные слайды + конспект'],
     ['file',  st.slides + ' ' + acPlural(st.slides,['слайд','слайда','слайдов']), 'наглядно и по делу'],
     ['poll',  'Тесты · ' + st.quiz + ' ' + acPlural(st.quiz,['вопрос','вопроса','вопросов']), 'порог зачёта ' + AC_PASS + '%'],
     ['edit',  'Практика', 'проверка ИИ-куратором'],
@@ -2225,16 +2231,16 @@ function acBackHome(){
 function acLessonHtml(){
   const L = acCur();
   const ci = acCourseOf(acL);
-  const durLabel = L.videoUrl ? `${L.dur} видео` : 'видео в производстве';
+  const vid = acHasVideo(L);
   return `
     <button class="btn ghost sm ac-back" onclick="acBackHome()"><svg class="i"><use href="#i-back"/></svg> ${esc(AC_COURSES[ci].title)}</button>
     <div class="ac-lesson-head">
       <span class="chip">Урок ${acLocalNo(acL)} из ${AC_COURSES[ci].count}</span>
       <h2>${L.title}</h2>
-      <div class="m"><span>${I('clock')} ${durLabel}</span><span>·</span><span>${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
+      <div class="m">${vid?`<span>${I('clock')} ${L.dur} видео</span><span>·</span>`:''}<span>${I('file')} ${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
     </div>
 
-    <div id="acVideoBox"></div>
+    ${vid ? '<div id="acVideoBox"></div>' : ''}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Слайды урока</h2>
     <div id="acSlidesBox">
