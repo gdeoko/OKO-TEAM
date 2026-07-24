@@ -103,8 +103,14 @@ def main():
     app = sys.argv[1] if len(sys.argv) > 1 else "spy"
     reel_id = sys.argv[2] if len(sys.argv) > 2 else app
     n = int(sys.argv[3]) if len(sys.argv) > 3 else 10
-    res = R.recon_app(app)                      # свежие 10 (дедуп по recon_seen), приоритет 1M+
-    comp = (res["millions_list"] or res["top"])[:n]
+    # без двойного поиска: берём список из свежего latest_<app>.json (его пишет recon brief),
+    # иначе — ищем сами
+    latest = os.path.join(AN, f"latest_{app}.json")
+    if os.path.exists(latest):
+        res = json.load(open(latest))
+    else:
+        res = R.recon_app(app)                  # свежие 10 (дедуп по recon_seen), приоритет 1M+
+    comp = (res.get("millions_list") or res.get("top") or [])[:n]
     refdir = os.path.join(AN, "refs", reel_id)
     os.makedirs(refdir, exist_ok=True)
     meta = {"app": app, "reel_id": reel_id, "niche": res["niche"],
