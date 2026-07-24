@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="__LOGO__">
 <link rel="preload" as="fetch" href="assets/oko-eye.glb" crossorigin>
+<link rel="preload" as="image" href="kp-media/fig/robot.webp">
 <script type="importmap">
 {"imports":{"three":"./js/vendor/three.module.min.js","three/addons/":"./js/vendor/jsm/"}}
 </script>
@@ -22,8 +23,8 @@
 .holo-anchor{pointer-events:none}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--lime:#9AFF00;--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--border-lime:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.75);--w3:rgba(255,255,255,0.45);--w4:rgba(255,255,255,0.22);--bg:#050505}
-html{overflow-x:clip;-webkit-text-size-adjust:100%}
-body{background:var(--bg);color:#fff;font-family:'Onest',sans-serif;overflow-x:clip;line-height:1.6}
+html{overflow-x:clip;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+body{background:var(--bg);color:#fff;font-family:'Onest',sans-serif;overflow-x:clip;line-height:1.6;overscroll-behavior-y:none}
 a{text-decoration:none;color:inherit}img,video{max-width:100%;display:block}
 .u{font-family:'Unbounded',sans-serif}
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
@@ -116,12 +117,11 @@ section{position:relative;z-index:1;padding:42px 0}
 .scroll-hint .m::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;background:var(--lime);border-radius:2px;transform:translateX(-50%);animation:wheel 1.6s infinite}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
 /* HAND holds title */
-.hand-hero{position:relative;min-height:70vh;display:flex;align-items:center}
-.hand-hero{position:relative;min-height:80vh;display:flex;align-items:center}
-#holoHand{position:absolute;left:-2%;top:50%;transform:translateY(-50%);width:min(620px,94vw);height:min(520px,82vw)}
-.hand-caption{position:absolute;left:-2%;top:50%;transform:translateY(-50%);width:min(620px,94vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(24px,5.4vw,58px);line-height:1.02;letter-spacing:-1px;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.7);opacity:0;transition:opacity .6s ease}
+.hand-hero{position:relative;min-height:56vh;display:flex;align-items:center;overflow:visible}
+#holoHand{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);height:min(340px,40vw)}
+.hand-caption{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(20px,4.4vw,50px);line-height:1;letter-spacing:-1px;white-space:nowrap;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.85),0 0 30px rgba(154,255,0,.25);opacity:0;transition:opacity .6s ease;pointer-events:none}
 .hand-caption.on{opacity:1}
-@media(max-width:760px){.hand-hero{min-height:72vh}#holoHand{left:50%;top:44%;transform:translate(-50%,-50%);width:96vw;height:96vw}.hand-caption{left:50%;top:44%;transform:translate(-50%,-50%);width:96vw}}
+@media(max-width:760px){.hand-hero{min-height:46vh}#holoHand{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;height:56vw}.hand-caption{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;font-size:clamp(20px,7vw,40px)}}
 /* OFFER sticky cards */
 #offer .stack{position:relative}
 .ocard{position:sticky;top:78px;margin-bottom:24px;border-radius:24px;border:1px solid var(--border-lime);background:linear-gradient(160deg,rgba(16,20,14,.97),rgba(6,8,6,.98));box-shadow:0 34px 90px -40px rgba(0,0,0,.9);overflow:hidden;padding:24px 22px 20px;backdrop-filter:blur(6px)}
@@ -165,8 +165,8 @@ section{position:relative;z-index:1;padding:42px 0}
 .acap-i{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
 .acap-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
 .acap-d{font-size:13px;color:var(--w2);line-height:1.55}
-#holoWoman{position:absolute;right:0;top:0;width:52%;height:100%;z-index:2}
-@media(max-width:760px){#holoWoman{right:0;top:0;width:100%;height:52%}}
+#holoWoman{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:42%;height:76%;z-index:2}
+@media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:3%;width:74%;height:42%}}
 .adt-dots{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:4}
 .adt-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
 .adt-dot.on{background:var(--lime);width:22px;border-radius:4px}
@@ -220,30 +220,41 @@ section{position:relative;z-index:1;padding:42px 0}
 .trev-nm{font-weight:700;font-size:13px}.trev-st{color:var(--lime);font-size:11px}
 .trev-tx{font-size:12.5px;color:var(--w2);line-height:1.6}
 .rev-more{text-align:center;margin-top:18px}
-/* GUARANTEES animated */
-.guar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:22px}
-.guar-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:18px;padding:22px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
-.guar-card:hover{border-color:var(--border-lime);transform:translateY(-4px)}
-.guar-card::after{content:'';position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(180deg,rgba(154,255,0,.06),transparent);transition:width .5s}
-.guar-card:hover::after{width:100%}
-.guar-ico{width:44px;height:44px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
-.guar-t{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px;position:relative;z-index:1}
-.guar-d{font-size:13px;color:var(--w3);line-height:1.6;position:relative;z-index:1}
-/* FAQ + robot */
-.faq-wrap{display:grid;grid-template-columns:280px 1fr;gap:24px;margin-top:24px;align-items:start}
-.faq-robot{position:sticky;top:96px;aspect-ratio:1/1;display:flex;align-items:flex-end;justify-content:center}
-#holoRobot{position:absolute;inset:0;top:-6%}
-.faq-robot .rb-say{position:relative;z-index:6;margin:0 6px;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);border:1px solid var(--border-lime);border-radius:14px;padding:11px 14px;font-size:12px;color:#fff}
-.faq-robot .rb-say b{color:var(--lime)}
-.faq{max-width:100%}
-.faq-i{border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;background:rgba(255,255,255,.02);transition:border-color .3s}
-.faq-i.open{border-color:var(--border-lime)}
-.faq-q{padding:16px 18px;font-weight:700;font-size:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+/* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
+.bankcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;perspective:1500px}
+@media(max-width:900px){.bankcards{grid-template-columns:repeat(2,1fr);gap:14px}}
+@media(max-width:560px){.bankcards{grid-template-columns:1fr;gap:14px;max-width:400px;margin-left:auto;margin-right:auto}}
+.bcard{position:relative;aspect-ratio:1.6/1;border-radius:18px;overflow:hidden;border:1px solid var(--border-lime);background:#0a0c0a;box-shadow:0 24px 60px -34px rgba(0,0,0,.95);transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;will-change:transform}
+.bcard:hover{box-shadow:0 30px 70px -30px rgba(0,0,0,.95),0 0 40px -6px rgba(154,255,0,.28)}
+.bcard video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4}
+.bc-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(125deg,rgba(5,8,3,.96),rgba(5,8,3,.72) 50%,rgba(9,15,3,.92))}
+.bc-sheen{position:absolute;inset:-40%;z-index:2;background:linear-gradient(115deg,transparent 38%,rgba(154,255,0,.14) 48%,rgba(255,255,255,.06) 50%,transparent 60%);mix-blend-mode:screen;transform:translateX(-30%);animation:bcsheen 6s ease-in-out infinite}
+@keyframes bcsheen{0%,100%{transform:translateX(-38%)}50%{transform:translateX(38%)}}
+.bc-top{position:absolute;left:18px;right:18px;top:16px;display:flex;justify-content:space-between;align-items:center;z-index:3;transform:translateZ(30px)}
+.bc-chip{width:40px;height:30px;border-radius:7px;background:linear-gradient(135deg,#d7ff86,#69ad00);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.4);position:relative}
+.bc-chip::after{content:'';position:absolute;inset:6px 8px;border:1px solid rgba(0,0,0,.35);border-radius:2px;background:linear-gradient(90deg,transparent 45%,rgba(0,0,0,.3) 45% 55%,transparent 55%)}
+.bc-ico{color:var(--lime);filter:drop-shadow(0 2px 8px rgba(154,255,0,.5))}
+.bc-body{position:absolute;left:18px;right:18px;bottom:16px;z-index:3;transform:translateZ(24px)}
+.bc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(15px,1.5vw,19px);line-height:1.05;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.bc-d{font-size:12px;color:var(--w2);line-height:1.5;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+/* FAQ — робот-сцена сверху, вопросы сеткой снизу */
+.faq-scene{position:relative;margin-top:20px}
+.faq-scene::before{content:'';position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:min(520px,90vw);height:340px;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(154,255,0,.14),transparent 70%);pointer-events:none;z-index:0}
+.faq-robot{position:sticky;top:74px;z-index:5;width:min(230px,54vw);aspect-ratio:1/1;margin:0 auto 2px}
+#holoRobot{position:absolute;inset:0}
+.faq-cap{text-align:center;margin-bottom:16px;position:relative;z-index:1}
+.rb-say{display:inline-block;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border:1px solid var(--border-lime);border-radius:30px;padding:9px 18px;font-size:12.5px;color:var(--w2)}
+.rb-say b{color:var(--lime)}
+.faq-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+@media(max-width:760px){.faq-list{grid-template-columns:1fr}}
+.faq-i{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03);backdrop-filter:blur(4px);transition:border-color .3s,background .3s;align-self:start}
+.faq-i.open{border-color:var(--border-lime);background:rgba(154,255,0,.04)}
+.faq-q{padding:15px 16px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;line-height:1.3}
 .faq-q .p{color:var(--lime);font-size:20px;transition:transform .3s;flex:0 0 auto}
 .faq-i.open .p{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w3);font-size:13px;line-height:1.65}
-.faq-a div{padding:0 18px 16px}
-@media(max-width:760px){.faq-wrap{grid-template-columns:1fr}.faq-robot{position:relative;top:0;max-width:220px;margin:0 auto 12px;aspect-ratio:1/1}}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w3);font-size:13px;line-height:1.6}
+.faq-a div{padding:0 16px 15px}
+@media(max-width:760px){.faq-robot{top:66px;width:min(190px,46vw)}}
 /* CTA loop */
 .cta-f{text-align:center;padding:72px 24px;position:relative;overflow:hidden}
 .cta-logo{width:120px;height:120px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.16),rgba(6,8,6,.9));border:1px solid var(--border-lime);box-shadow:0 0 60px -10px rgba(154,255,0,.4);animation:plfloat 5s ease-in-out infinite}
@@ -306,7 +317,7 @@ section{position:relative;z-index:1;padding:42px 0}
 <div id="top"></div>
 <!-- HERO -->
 <section class="hero" id="hero">
-  <div class="eye-wrap" id="eyeWrap"><div id="holoEye" class="holo-anchor" style="width:100%;height:100%"></div><div id="eye-fallback"><img src="__LOGO__" alt="OKO"></div></div>
+  <div class="eye-wrap" id="eyeWrap"><div id="holoEye" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge rv"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
   <h1 class="hero-title rv">ОК<span class="lime">О</span></h1>
   <div class="hero-stats rv">
@@ -324,11 +335,11 @@ section{position:relative;z-index:1;padding:42px 0}
 <!-- HAND holds title -->
 <div class="hand-hero" id="handHero">
   <div id="holoHand" class="holo-anchor"></div>
-  <div class="hand-caption" id="handCap">ЧТО МЫ<br>ПРЕДЛАГАЕМ</div>
+  <div class="hand-caption" id="handCap">ЧТО МЫ ПРЕДЛАГАЕМ</div>
 </div>
 
 <!-- OFFER -->
-<section id="offer" style="padding-top:10px">
+<section id="offer" style="padding-top:0">
 <div class="wrap">
   <div class="stack">
     <!-- 01 САЙТЫ -->
@@ -418,13 +429,25 @@ section{position:relative;z-index:1;padding:42px 0}
 <section id="guarantees">
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Гарантии</div><h2 class="sec-h creveal">Работаем <span class="lime">по-честному</span></h2></div>
-  <div class="guar-grid">
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="guar-t">Договор и акт</div><div class="guar-d">Официальный договор (самозанятый/НПД), приложение с ТЗ под тариф и акт выполненных работ — всё юридически.</div></div>
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></div><div class="guar-t">Рассрочка 50/50</div><div class="guar-d">Половина на старте, половина по готовности. Прозрачные этапы, сроки в договоре, без скрытых доплат.</div></div>
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div><div class="guar-t">Правки до результата</div><div class="guar-d">Дорабатываем, пока не будет так, как нужно вам. Правки в рамках ТЗ — без счётчика и лишних нервов.</div></div>
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></div><div class="guar-t">Сопровождение после</div><div class="guar-d">Обучаем работе с системой и агентами, остаёмся на связи и помогаем расти после запуска.</div></div>
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="guar-t">Сроки зафиксированы</div><div class="guar-d">СТАРТ — от 5–7 дней, БИЗНЕС — 2–3 недели, ИМПЕРИЯ — 3–5 недель. Срываем срок — компенсируем.</div></div>
-    <div class="guar-card rv"><div class="guar-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></div><div class="guar-t">8 лет и 150+ проектов</div><div class="guar-d">Работаем с 2018 года, команда 40+ специалистов. Реальные кейсы и отзывы — не обещания, а результат.</div></div>
+  <div class="bankcards">
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r1.mp4" poster="kp-media/reels/r1.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">Договор и акт</div><div class="bc-d">Официальный договор (самозанятый/НПД), приложение с ТЗ и акт — всё юридически.</div></div></div>
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r2.mp4" poster="kp-media/reels/r2.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">Рассрочка 50/50</div><div class="bc-d">Половина на старте, половина по готовности. Без скрытых доплат.</div></div></div>
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r3.mp4" poster="kp-media/reels/r3.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">Правки до результата</div><div class="bc-d">Дорабатываем, пока не будет так, как нужно вам — без счётчика.</div></div></div>
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r4.mp4" poster="kp-media/reels/r4.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">Сопровождение после</div><div class="bc-d">Обучаем работе с системой и агентами, помогаем расти после запуска.</div></div></div>
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r5.mp4" poster="kp-media/reels/r5.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">Сроки зафиксированы</div><div class="bc-d">СТАРТ 5–7 дней · БИЗНЕС 2–3 нед · ИМПЕРИЯ 3–5 нед. Срыв — компенсируем.</div></div></div>
+    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r6.mp4" poster="kp-media/reels/r6.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
+      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span></div>
+      <div class="bc-body"><div class="bc-t">8 лет · 150+ проектов</div><div class="bc-d">Команда 40+ специалистов с 2018 года. Реальные кейсы — не обещания.</div></div></div>
   </div>
 </div>
 </section>
@@ -433,9 +456,10 @@ section{position:relative;z-index:1;padding:42px 0}
 <section id="faq">
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Вопросы</div><h2 class="sec-h creveal">Спросите <span class="lime">ИИ-агента</span></h2></div>
-  <div class="faq-wrap">
-    <div class="faq-robot rv"><div id="holoRobot" class="holo-anchor"></div><div class="rb-say" id="rbSay"><b>Агент OKO:</b> задайте вопрос — отвечу.</div></div>
-    <div class="faq" id="faqList">
+  <div class="faq-scene">
+    <div class="faq-robot rv"><div id="holoRobot" class="holo-anchor"></div></div>
+    <div class="faq-cap"><span class="rb-say" id="rbSay"><b>Агент OKO</b> на связи — тапни вопрос</span></div>
+    <div class="faq-list" id="faqList">
       <div class="faq-i"><div class="faq-q">Чем ИИ-агент лучше живого менеджера?<span class="p">+</span></div><div class="faq-a"><div>Агент работает 24/7 без выходных и больничных, отвечает за секунды, не теряет заявки и ведёт по выверенным скриптам. Один агент заменяет отдел — а стоит в разы дешевле.</div></div></div>
       <div class="faq-i"><div class="faq-q">Агенты реально заходят в мои аккаунты?<span class="p">+</span></div><div class="faq-a"><div>Да, с вашего разрешения и под вашим контролем. Они публикуют, отвечают в директ, ведут диалоги — а вы видите каждое действие в админке и в любой момент можете вмешаться.</div></div></div>
       <div class="faq-i"><div class="faq-q">Это не выглядит как спам-бот?<span class="p">+</span></div><div class="faq-a"><div>Нет. Агенты пишут по-человечески, отвечают голосом, реагируют на контекст и возражения. Клиент общается как с живым менеджером, а не с шаблонным ботом.</div></div></div>
@@ -451,7 +475,7 @@ section{position:relative;z-index:1;padding:42px 0}
 
 <!-- HERO CLONE (бесшовный луп) -->
 <section class="hero" id="heroClone" aria-hidden="true">
-  <div class="eye-wrap"><div id="holoEye2" class="holo-anchor" style="width:100%;height:100%"></div><div class="eye-fallback2"><img src="__LOGO__" alt=""></div></div>
+  <div class="eye-wrap"><div id="holoEye2" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
   <h1 class="hero-title">ОК<span class="lime">О</span></h1>
   <div class="hero-stats">
@@ -494,7 +518,10 @@ if(gsap&&ST)gsap.registerPlugin(ST);
 (function(){var pl=document.getElementById('preloader'),fill=pl.querySelector('.pl-bar i'),pct=0,done=false;
   var iv=setInterval(function(){pct=Math.min(pct+Math.random()*11+4,92);fill.style.width=pct+'%';},170);
   function fin(){if(done)return;done=true;clearInterval(iv);fill.style.width='100%';setTimeout(function(){pl.classList.add('done');start();},420);}
-  window.addEventListener('load',function(){setTimeout(fin,650);});setTimeout(fin,4200);
+  // держим прелоадер пока не загрузится 3D-глаз (никакого плоского PNG), с жёстким лимитом
+  addEventListener('eye-ready',function(){setTimeout(fin,300);});
+  if(window.__eyeReady)setTimeout(fin,300);
+  setTimeout(fin,9000);
 })();
 /* NAV */
 var nav=document.getElementById('nav'),pb=document.getElementById('pb');
@@ -528,6 +555,13 @@ function build(){
   /* lazy video */
   var vio=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;if(e.isIntersecting){if(!v.getAttribute('src')&&v.dataset.src)v.src=v.dataset.src;var p=v.play&&v.play();p&&p.catch&&p.catch(function(){});}else{try{v.pause();}catch(x){}}});},{threshold:.02,rootMargin:'250px 0px'});
   document.querySelectorAll('video.lazyvid,video[data-lazy]').forEach(function(v){vio.observe(v);});
+  /* BANK CARDS — 3D tilt (pointer + gyro) */
+  document.querySelectorAll('[data-tilt]').forEach(function(c){
+    function set(rx,ry){c.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)';}
+    if(!TOUCH){c.addEventListener('pointermove',function(e){var r=c.getBoundingClientRect();var px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;set(-py*12,px*14);});
+      c.addEventListener('pointerleave',function(){c.style.transform='';});}
+  });
+  if(TOUCH&&window.DeviceOrientationEvent){addEventListener('deviceorientation',function(e){if(e.gamma==null)return;var ry=Math.max(-10,Math.min(10,e.gamma*.3)),rx=Math.max(-8,Math.min(8,(e.beta-40)*.16));document.querySelectorAll('[data-tilt]').forEach(function(c){c.style.transform='rotateX('+(-rx)+'deg) rotateY('+ry+'deg)';});},true);}
   /* HAND caption appears in the hand (holo renders the hand itself) */
   var cap=document.getElementById('handCap');
   if(cap)ST.create({trigger:'#handHero',start:'top 62%',end:'center 60%',onEnter:function(){cap.classList.add('on');},onLeaveBack:function(){cap.classList.remove('on');}});
@@ -590,21 +624,28 @@ function buildTariffs(){
 }
 /* ---- FAQ robot answers ---- */
 function buildFaqRobot(){
-  var say=document.getElementById('rbSay');
-  document.querySelectorAll('.faq-q').forEach(function(q){q.addEventListener('click',function(){var it=q.parentElement,a=it.querySelector('.faq-a');var open=it.classList.toggle('open');a.style.maxHeight=open?a.scrollHeight+40+'px':'0';
-    if(open&&say){var ans=it.querySelector('.faq-a div');say.innerHTML='<b>Агент OKO:</b> '+(ans?ans.textContent.slice(0,120)+(ans.textContent.length>120?'…':''):'');}});});
+  var items=Array.from(document.querySelectorAll('#faqList .faq-i'));
+  document.querySelectorAll('.faq-q').forEach(function(q){q.addEventListener('click',function(){
+    var it=q.parentElement,a=it.querySelector('.faq-a');var willOpen=!it.classList.contains('open');
+    items.forEach(function(o){o.classList.remove('open');var oa=o.querySelector('.faq-a');if(oa)oa.style.maxHeight='0';});
+    if(willOpen){it.classList.add('open');a.style.maxHeight=a.scrollHeight+40+'px';}
+    if(window.__holoClickRobot)window.__holoClickRobot();   // робот реагирует на клик
+  });});
 }
-/* ---- SEAMLESS INFINITE LOOP (clone hero) ---- */
+/* ---- SEAMLESS INFINITE LOOP (bidirectional, clone hero == real hero) ---- */
 function buildLoop(){
   var clone=document.getElementById('heroClone');if(!clone)return;
-  var locking=false;
-  function jump(y){locking=true;if(lenis)lenis.scrollTo(y,{immediate:true});else scrollTo(0,y);requestAnimationFrame(function(){requestAnimationFrame(function(){locking=false;});});}
-  // scroll DOWN into clone -> teleport to equivalent real-hero position (clone==hero => seamless)
-  addEventListener('scroll',function(){if(locking)return;var ct=clone.offsetTop;if(scrollY>=ct){jump(scrollY-ct);}},{passive:true});
-  // at top, scroll UP -> go to clone top (looks identical, continue upward through page)
-  addEventListener('wheel',function(e){if(locking)return;if(scrollY<=1&&e.deltaY<0){jump(clone.offsetTop-2);}},{passive:true});
+  var lock=false;
+  function ct(){return clone.offsetTop;}
+  function sy(){return window.scrollY||window.pageYOffset||0;}
+  function to(y){lock=true;if(lenis&&!TOUCH)lenis.scrollTo(y,{immediate:true});else window.scrollTo(0,y);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){lock=false;});});}
+  // DOWN: reach clone (== hero) -> teleport to equivalent top position (seamless)
+  addEventListener('scroll',function(){if(lock)return;var c=ct();if(c<innerHeight*2)return;var y=sy();if(y>=c){to(y-c);}},{passive:true});
+  // UP at very top -> teleport just above clone (content above == FAQ, seamless via clone==hero)
+  addEventListener('wheel',function(e){if(lock)return;var c=ct();if(c<innerHeight*2)return;if(sy()<=1&&e.deltaY<0){to(c-2);}},{passive:true});
   var ty=0;addEventListener('touchstart',function(e){ty=e.touches[0].clientY;},{passive:true});
-  addEventListener('touchmove',function(e){if(locking)return;var dy=ty-e.touches[0].clientY;if(scrollY<=1&&dy<-6){jump(clone.offsetTop-2);}},{passive:true});
+  addEventListener('touchmove',function(e){if(lock)return;var c=ct();if(c<innerHeight*2)return;var dy=ty-e.touches[0].clientY;if(sy()<=1&&dy<-6){to(c-2);}},{passive:true});
 }
 /* ---- MODALS / helpers ---- */
 window.openPay=function(){document.getElementById('payModal').classList.add('open');};
