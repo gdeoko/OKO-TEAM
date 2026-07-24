@@ -24,3 +24,7 @@ pandago-order/logs/*.log
 secrets.env
 oko-app/factory/models/
 oko-app/factory/models/
+
+# Python bytecode
+__pycache__/
+*.pyc
