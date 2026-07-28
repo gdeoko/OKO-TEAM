@@ -55,9 +55,12 @@ return [
     // База данных
     'db_path'        => BASE_PATH . '/data/muzmir.sqlite',
 
-    // Почта (Gmail SMTP через cURL) — секреты из окружения
-    'smtp_host'      => 'smtp.gmail.com',
-    'smtp_port'      => 465,
+    // Почта (SMTP через cURL) — секреты и хост из окружения/config.local.
+    // Переключение на mail.ru делается на проде через config.local.php без правки кода:
+    //   MUZMIR_SMTP_HOST=smtp.mail.ru, MUZMIR_SMTP_USER=kulturniy.centr.mir@mail.ru,
+    //   MUZMIR_SMTP_PASS=<пароль для внешних приложений mail.ru>, MUZMIR_SMTP_PORT=465 (SSL).
+    'smtp_host'      => cfg('MUZMIR_SMTP_HOST', 'smtp.gmail.com'),
+    'smtp_port'      => (int) cfg('MUZMIR_SMTP_PORT', 465),
     'smtp_user'      => cfg('MUZMIR_SMTP_USER', 'kulturniy.centr.mir@gmail.com'),
     'smtp_pass'      => cfg('MUZMIR_SMTP_PASS', ''),   // App Password — только env/local
     'mail_from_name' => 'КЦ «Музыкальный Мир»',
