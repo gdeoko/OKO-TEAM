@@ -1495,16 +1495,16 @@ main>.screen{position:relative;z-index:1}
             <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="showTab('partner')"><span class="svc-ic ic-partner"><svg class="i"><use href="#i-users"/></svg></span><span class="svc-label">Партнёрка</span></button>
           </div>
-          <p class="svc-note">Нажми на сервис — откроется внутри OKO</p>
+          <p class="svc-note">Нажми на сервис, откроется внутри OKO</p>
           <div class="ma-foot">
             <button class="ma-foot-card" onclick="showTab('partner')">
               <span class="ma-foot-ic"><svg class="i"><use href="#i-users"/></svg></span>
-              <span class="ma-foot-b"><b>Партнёрка 15% + 5%</b><small>Приглашай — получай с каждой продажи</small></span>
+              <span class="ma-foot-b"><b>Партнёрка 15% + 5%</b><small>Приглашай и получай с каждой продажи</small></span>
               <svg class="i ma-foot-ch"><use href="#i-chev"/></svg>
             </button>
             <button class="ma-foot-card" onclick="openPay('MAX')">
               <span class="ma-foot-ic gold"><svg class="i"><use href="#i-crown"/></svg></span>
-              <span class="ma-foot-b"><b>Разблокируй всё — тариф MAX</b><small>Контент-завод, система и команда OKO</small></span>
+              <span class="ma-foot-b"><b>Разблокируй всё на тарифе MAX</b><small>Контент-завод, система и команда OKO</small></span>
               <svg class="i ma-foot-ch"><use href="#i-chev"/></svg>
             </button>
             <div class="ma-foot-brand"><svg class="i"><use href="#i-logo"/></svg><span>OKO · экосистема медийности и бизнеса</span></div>
@@ -4666,7 +4666,7 @@ function renderFactory(){
     const tempos = ['2 ролика/нед','3–4 ролика/нед','Ежедневно','Конвейер 30/мес'];
     r.innerHTML = `
       <div class="card">
-        <p class="dim" style="font-size:13px;line-height:1.55">Задай нишу и площадки — команда OKO соберёт ролики под ключ: сценарист напишет текст, дикторская озвучка, монтаж, караоке-субтитры и автопостинг по расписанию. Исходники автоудаляются через 24 часа.</p>
+        <p class="dim" style="font-size:13px;line-height:1.55">Задай нишу и площадки. Команда OKO соберёт ролики под ключ: сценарист напишет текст, дикторская озвучка, монтаж, караоке-субтитры и автопостинг по расписанию. Исходники автоудаляются через 24 часа.</p>
         <div style="height:14px"></div>
         <p style="font-weight:700;font-size:13.5px;margin-bottom:7px">Ниша / тема канала</p>
         <input id="fxNiche" placeholder="Например: маркетинг для салонов красоты" value="${esc(fxState.niche)}" oninput="fxState.niche=this.value">
@@ -5706,10 +5706,10 @@ const PROGRESS = [
   {s:'done', t:'Кошелёк и лицевой счёт', d:'Баланс на всё: тарифы, продвижение, переводы. Биржа с комиссией 10% и эскроу, вывод средств, история операций.'},
   {s:'done', t:'Игры OKO', d:'Призовая рулетка: 1 бесплатный спин в день + платные спины на выбранную сумму. Призы — бонусы, скидки, билеты (не деньги).'},
   {s:'done', t:'Академия: урок 1 полного формата', d:'Видео + слайды + тест + задание + мини-игра. Официальный сертификат с печатью и подписью.'},
-  {s:'done', t:'Рекламный кабинет', d:'Кампании с таргетом и бюджетом с лицевого счёта, ИИ-модерация объявлений, реклама в ленте, живая статистика.'},
+  {s:'done', t:'Рекламный кабинет', d:'Кампании с таргетом и бюджетом с лицевого счёта, модерация объявлений командой OKO, реклама в ленте, живая статистика.'},
   {s:'done', t:'Регистрация, верификация, стикеры', d:'Полная регистрация с кодом и интересами, синяя галочка верификации, премиум-пак TON Crystal.'},
-  {s:'done', t:'Юр-документы RU/EN', d:'Оферта, конфиденциальность, соглашение — два языка, печать и подпись ИП.'},
-  {s:'done', t:'Админка владельца и штаб HQ', d:'Доходы по источникам, отделы и 10 ИИ-агентов, ИИ-модерация с логом блокировок.'},
+  {s:'done', t:'Юр-документы RU/EN', d:'Оферта, конфиденциальность, соглашение на двух языках, печать и подпись ИП.'},
+  {s:'done', t:'Админка владельца и штаб HQ', d:'Доходы по источникам, отделы и 10 команд, модерация с логом блокировок.'},
   {s:'done', t:'Telegram Mini App', d:'@okoappbot: кнопка OPEN, fullscreen, автовход по Telegram-профилю.'},
   {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime. Дальше: вход по коду на весь функционал.'},
   {s:'wip',  t:'Мультиязык', d:'RU/EN переключение интерфейса готово, авто-перевод чатов — мок. Полный перевод контента дальше.'},

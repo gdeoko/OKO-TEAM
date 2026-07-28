@@ -57,8 +57,8 @@ regT({
                        en:'The interface switches instantly. User content stays in its original language — enable chat auto-translation in your profile.'},
   'st.opt.ruSub':     {ru:'Основной язык OKO',     en:'Default OKO language'},
   'st.opt.enSub':     {ru:'Интерфейс на английском', en:'English interface'},
-  'st.badge':         {ru:'Переведено · OKO AI',   en:'Translated · OKO AI'},
-  'st.toast.autoOn':  {ru:'Авто-перевод включён — входящие переводит OKO AI', en:'Auto-translation on — incoming messages translated by OKO AI'},
+  'st.badge':         {ru:'Переведено · OKO',   en:'Translated · OKO'},
+  'st.toast.autoOn':  {ru:'Авто-перевод включён — входящие переводит OKO', en:'Auto-translation on — incoming messages translated by OKO'},
   'st.toast.autoOff': {ru:'Авто-перевод выключен', en:'Auto-translation off'},
   'st.doc.title':     {ru:'OKO — приложение',        en:'OKO — the app'}
 });
@@ -416,7 +416,7 @@ const ST_DICT = {
   'Мои сертификаты':'My certificates',
   'Пройди направление целиком — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.':'Complete a whole track to earn an official OKO certificate with seal and signature. It will appear here.',
   'Карта нейросетей 2026':'Neural network map 2026','Промпт-инжиниринг':'Prompt engineering',
-  'Генерация картинок PRO':'Image generation PRO','Видео-нейросети':'Video neural networks','Свой ИИ-ассистент':'Your own AI assistant',
+  'Генератор картинок':'Image generator','Видео-инструменты':'Video tools','Персональный помощник':'Personal assistant',
   'формула промпта · few-shot · chain-of-thought':'prompt formula · few-shot · chain-of-thought',
   'агент под бизнес · RAG · Telegram':'business agent · RAG · Telegram','Слайды урока':'Lesson slides',
   'Тест по материалу':'Knowledge quiz','Практика':'Practice','Мини-игра':'Mini-game','мини-игра':'mini-game',
@@ -506,8 +506,8 @@ const ST_DICT = {
   'По источникам':'By source','Сводка за сутки':'Daily summary','Быстрые действия':'Quick actions','Выплаты':'Payouts',
   'Логи агентов':'Agent logs','Последние пользователи':'Recent users','Экспорт CSV':'Export CSV',
   'Партнёры и выплаты':'Partners & payouts','Очередь модерации':'Moderation queue','Пусто — всё проверено.':'Empty — all reviewed.',
-  'Логи ИИ-агентов':'AI agent logs','Фича-флаги':'Feature flags','Регистрации':'Sign-ups','Выручка':'Revenue',
-  'ИИ-поддержка':'AI support','Email владельца':'Owner email','Раздел владельца':'Owner area','Проверка…':'Checking…',
+  'Логи агентов':'Agent logs','Фича-флаги':'Feature flags','Регистрации':'Sign-ups','Выручка':'Revenue',
+  'Поддержка':'Support','Email владельца':'Owner email','Раздел владельца':'Owner area','Проверка…':'Checking…',
   'Владелец подтверждён':'Owner confirmed','Доступ запрещён':'Access denied',
   'Пока нет операций — доход копится из комиссий, тарифов и рекламы.':'No transactions yet — revenue accrues from fees, plans and ads.',
   /* --- хаб / категории биржи --- */
