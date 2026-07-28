@@ -85,3 +85,12 @@
 | 2026-07-17 | auto·barbershop_week | pex | 34536744 |
 | 2026-07-17 | auto·barbershop_week | pex | 7426710 |
 | 2026-07-17 | auto·barbershop_week | pex | 7362704 |
+
+## 2026-07-28 — ролик 'джун валит собес' (Pexels, дев/IT)
+- hook: /tmp/reel28/stocks/hook.mp4
+- s1: /tmp/reel28/stocks/s1.mp4
+- s2: /tmp/reel28/stocks/s2.mp4
+- s3: /tmp/reel28/stocks/s3.mp4
+- s4: /tmp/reel28/stocks/s4.mp4
+- s5: /tmp/reel28/stocks/s5.mp4
+- cta: /tmp/reel28/stocks/cta.mp4

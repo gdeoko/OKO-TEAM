@@ -32,14 +32,14 @@ def qa(path, cover, clips, overlays, scen_score):
     if dur<12: issues.append(f"коротко ({dur:.0f}с) — минимум 12с"); score-=15
     elif dur>60: issues.append(f"длинно ({dur:.0f}с) — до 60с"); score-=8
     else: score+=8
-    # динамика: кадр каждые ~3с
+    # динамика: план не должен «застывать». Библия: меньше-но-точнее допустимо, не гонимся за числом
     if dur and clips:
         per=dur/clips
-        if per>5: issues.append(f"кадры редко (1 за {per:.1f}с) — надо 3-5с, больше уникальных клипов"); score-=10
-        elif per<=4: score+=10
-    if clips<8: issues.append(f"мало уникальных клипов ({clips}) — надо 10-14"); score-=10
-    if overlays< max(3,int(dur/5)): issues.append(f"мало наложений ({overlays}) — по одному каждые 3-5с"); score-=8
-    else: score+=8
+        if per>6: issues.append(f"план застывает (1 за {per:.1f}с) — оживить сменой/движением"); score-=8
+        elif per<=5: score+=10
+    if clips<4: issues.append(f"слишком мало кадров ({clips}) — нужна динамика"); score-=10
+    # наложения — ТОЛЬКО по смыслу (Библия §5.2): не штамп. Бонус если есть, без штрафа за осмысленное отсутствие
+    if overlays>0: score+=8
     if not (cover and os.path.exists(cover)): issues.append("нет обложки cover.jpg"); score-=10
     else: score+=6
     # учёт качества сценария
