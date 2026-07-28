@@ -395,6 +395,26 @@
     if (window.MuzmirChat) return window.MuzmirChat.toggle();
     openChat();
   });
+  /* FAB не перекрывает контент: прячем при скролле вниз, при фокусе на поле, и когда открыт чат */
+  if (fab) {
+    var lastY = window.pageYOffset || 0, fabTick = false, chatOpen = false;
+    function fabHide(v) { if (!chatOpen) fab.classList.toggle('is-hidden', v); }
+    window.addEventListener('scroll', function () {
+      if (fabTick) return; fabTick = true;
+      requestAnimationFrame(function () {
+        var y = window.pageYOffset || 0;
+        if (y > lastY + 6 && y > 160) fabHide(true);        // скролл вниз — прячем
+        else if (y < lastY - 6) fabHide(false);             // скролл вверх — показываем
+        lastY = y; fabTick = false;
+      });
+    }, { passive: true });
+    document.addEventListener('focusin', function (e) {
+      var t = e.target; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) fabHide(true);
+    });
+    document.addEventListener('focusout', function () { setTimeout(function () { fabHide(false); }, 120); });
+    document.addEventListener('muzmir-chat-open', function () { chatOpen = true; fab.classList.remove('is-hidden'); });
+    document.addEventListener('muzmir-chat-close', function () { chatOpen = false; });
+  }
   function openChat() {
     var box = document.createElement('div');
     box.id = 'muzmir-chat';
