@@ -16,8 +16,17 @@ export function initHolo(){
   const key=new THREE.DirectionalLight(0xffffff,1.4); key.position.set(2,3,5); scene.add(key);
   const lime=new THREE.PointLight(0x9AFF00,1.6,4000); lime.position.set(-300,-100,400); scene.add(lime);
   const ptr={x:0,y:0,tx:0,ty:0};
-  addEventListener('pointermove',e=>{ptr.tx=(e.clientX/innerWidth-.5)*2;ptr.ty=(e.clientY/innerHeight-.5)*2;});
-  if(window.DeviceOrientationEvent)addEventListener('deviceorientation',e=>{if(e.gamma!=null){ptr.tx=Math.max(-1,Math.min(1,e.gamma/40));ptr.ty=Math.max(-1,Math.min(1,(e.beta-42)/40));}},true);
+  function upd(cx,cy){ptr.tx=(cx/innerWidth-.5)*2;ptr.ty=(cy/innerHeight-.5)*2;}
+  addEventListener('pointermove',e=>upd(e.clientX,e.clientY),{passive:true});
+  addEventListener('touchmove',e=>{if(e.touches&&e.touches[0])upd(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  addEventListener('touchstart',e=>{if(e.touches&&e.touches[0])upd(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  function bindGyro(){if(!window.DeviceOrientationEvent)return;
+    addEventListener('deviceorientation',e=>{if(e.gamma!=null){ptr.tx=Math.max(-1,Math.min(1,e.gamma/40));ptr.ty=Math.max(-1,Math.min(1,(e.beta-42)/40));}},true);
+  }
+  // iOS: разрешение по первому тапу
+  if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
+    document.addEventListener('click',function req(){DeviceOrientationEvent.requestPermission().then(function(p){if(p==='granted')bindGyro();}).catch(function(){});document.removeEventListener('click',req);},{once:true});
+  } else bindGyro();
   const clamp=(v,a,b)=>v<a?a:v>b?b:v;
   function glowTex(){const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d');const rg=g.createRadialGradient(128,128,6,128,128,128);rg.addColorStop(0,'rgba(154,255,0,.34)');rg.addColorStop(.5,'rgba(120,220,10,.1)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,256,256);return new THREE.CanvasTexture(cv);}
   const GLOW=glowTex();

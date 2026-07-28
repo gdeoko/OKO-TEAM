@@ -14,15 +14,21 @@
 <script type="importmap">
 {"imports":{"three":"./js/vendor/three.module.min.js","three/addons/":"./js/vendor/jsm/"}}
 </script>
-<script type="module" src="spline/spline-viewer.js"></script>
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
-/* ЖИВОЙ Spline WebGL фон (кубы) — с оптимизацией, ниже — статичный fallback */
-#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505 url('kp-media/bg/cubes_land.webp') center/cover no-repeat;opacity:.85}
+/* CSS-АНИМАЦИОННЫЙ фон: статичные кубы + 3 плавающих лаймовых свечения + slow zoom-drift */
+#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505 url('kp-media/bg/cubes_land.webp') center/cover no-repeat;opacity:.9;animation:bgDrift 40s ease-in-out infinite alternate}
 @media(max-width:760px){#cubes-bg{background-image:url('kp-media/bg/cubes_port.webp')}}
-spline-viewer#spline-bg{position:fixed;top:0;left:0;width:70vw;height:70vh;transform:scale(1.5);transform-origin:0 0;z-index:-2;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s ease}
-spline-viewer#spline-bg.ready{opacity:.68}
-spline-viewer#spline-bg::part(logo){display:none!important}
+@keyframes bgDrift{0%{transform:scale(1) translate(0,0);filter:brightness(1)}50%{transform:scale(1.06) translate(-1.2%,-.8%);filter:brightness(1.08)}100%{transform:scale(1.03) translate(1%,.6%);filter:brightness(1.03)}}
+#bg-glows{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+#bg-glows i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform,opacity}
+#bg-glows .g1{width:60vmin;height:60vmin;left:-10vmin;top:5vmin;background:radial-gradient(circle,rgba(154,255,0,.18),transparent 70%);animation:glDrift1 22s ease-in-out infinite alternate}
+#bg-glows .g2{width:70vmin;height:70vmin;right:-15vmin;top:35vmin;background:radial-gradient(circle,rgba(154,255,0,.12),transparent 70%);animation:glDrift2 28s ease-in-out infinite alternate}
+#bg-glows .g3{width:50vmin;height:50vmin;left:30vmin;bottom:-10vmin;background:radial-gradient(circle,rgba(120,220,10,.14),transparent 70%);animation:glDrift3 34s ease-in-out infinite alternate}
+@keyframes glDrift1{to{transform:translate(15vw,10vh) scale(1.15)}}
+@keyframes glDrift2{to{transform:translate(-12vw,-8vh) scale(1.1)}}
+@keyframes glDrift3{to{transform:translate(8vw,-14vh) scale(1.2)}}
+@media(prefers-reduced-motion:reduce){#cubes-bg,#bg-glows i{animation:none}}
 .holo-anchor{pointer-events:none}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--lime:#9AFF00;--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--border-lime:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.75);--w3:rgba(255,255,255,0.45);--w4:rgba(255,255,255,0.22);--bg:#050505}
@@ -250,49 +256,40 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .trev-tx{font-size:12.5px;color:var(--w2);line-height:1.6}
 .rev-more{text-align:center;margin-top:18px}
 /* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
-/* GUARANTEES — 3D coverflow банковских карт (пролёт по скроллу) */
-.gcar-wrap{position:relative;height:340px;margin-top:16px;perspective:1400px;touch-action:pan-y}
-.gcar{position:absolute;inset:0;transform-style:preserve-3d}
-.gcard{position:absolute;left:50%;top:50%;width:min(300px,82vw);height:180px;border-radius:20px;padding:20px 22px;
-  background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
-  border:1px solid rgba(255,255,255,.18);
-  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.3),0 24px 60px -30px rgba(0,0,0,.9),0 0 30px -8px rgba(154,255,0,.22);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);will-change:transform,opacity;display:flex;gap:12px;transform:translate(-50%,-50%)}
-.gcard::before{content:'';position:absolute;inset:-1px;border-radius:20px;background:linear-gradient(135deg,rgba(154,255,0,.35),transparent 40%,transparent 60%,rgba(154,255,0,.2));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:1px;pointer-events:none}
-.gc-bead{flex:0 0 auto;width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
-.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:15px;color:#fff;line-height:1.15;margin-bottom:4px}
-.gc-d{font-size:12px;color:var(--w2);line-height:1.42}
-.gcar-nav{display:flex;gap:8px;justify-content:center;margin-top:10px}
-.gcar-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:all .3s}
-.gcar-dot.on{background:var(--lime);width:24px;border-radius:5px}
+/* GUARANTEES — pin+scrub горизонтальная лента: вертикальный скролл прокручивает карты вправо */
+.gcar-pin{position:relative;height:220px;overflow:hidden}
+.gcar-track{display:flex;gap:16px;padding:10px 5vw;height:100%;align-items:center;will-change:transform}
+.gcard{flex:0 0 auto;width:min(320px,78vw);height:180px;border-radius:18px;padding:20px 22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.24),0 18px 40px -20px rgba(0,0,0,.85),0 0 22px -8px rgba(154,255,0,.2);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;gap:14px;align-items:flex-start;transition:box-shadow .3s,border-color .3s}
+.gcard:hover{border-color:var(--border-lime);box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 30px -6px rgba(154,255,0,.35),0 18px 40px -18px rgba(0,0,0,.9)}
+.gc-bead{flex:0 0 auto;width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
+.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:14px;color:#fff;line-height:1.2;margin-bottom:6px}
+.gc-d{font-size:12px;color:var(--w2);line-height:1.45}
 .gcar-hint{text-align:center;font-size:11px;color:var(--w4);margin-top:8px;letter-spacing:.5px}
-/* FAQ — компактно в 1 экран: маленький робот + 4×2 стеклянные flip-плитки */
-.faq-scene{position:relative;display:grid;grid-template-columns:180px 1fr;grid-template-rows:auto 1fr;gap:14px 22px;align-items:start;margin-top:12px;min-height:520px}
-@media(max-width:760px){.faq-scene{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:8px;min-height:auto}}
-.faq-scene::before{content:'';position:absolute;left:0;top:0;width:min(420px,68vw);height:340px;background:radial-gradient(ellipse 55% 55% at 30% 40%,rgba(154,255,0,.18),transparent 70%);pointer-events:none;z-index:0;filter:blur(4px)}
-.faq-robot{grid-column:1;grid-row:1/3;position:sticky;top:80px;z-index:2;width:100%;max-width:180px;aspect-ratio:1/1;filter:drop-shadow(0 18px 40px rgba(154,255,0,.32));transition:transform .4s cubic-bezier(.2,1.4,.4,1)}
-.faq-cap{grid-column:2;grid-row:1;text-align:left;margin-bottom:2px;position:relative;z-index:2}
-.faq-list{grid-column:2;grid-row:2}
+@media(max-width:760px){.gcar-pin{height:200px}.gcard{width:78vw;height:160px}}
+/* FAQ — робот сверху со свечением, стеклянные строки-аккордеон 2 колонки */
+.faq-scene{position:relative;margin-top:12px}
+.faq-scene::before{content:'';position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:min(520px,90vw);height:280px;background:radial-gradient(ellipse 55% 55% at 50% 45%,rgba(154,255,0,.2),transparent 70%);pointer-events:none;z-index:0;filter:blur(4px)}
+.faq-robot{position:relative;z-index:2;width:min(200px,44vw);aspect-ratio:1/1;margin:0 auto -6px;filter:drop-shadow(0 18px 44px rgba(154,255,0,.35));transition:transform .4s cubic-bezier(.2,1.4,.4,1)}
 .faq-robot video{width:100%;height:100%;object-fit:contain;display:block}
 .faq-robot.react{transform:translateY(-6px) scale(1.08)}
-@media(max-width:760px){.faq-robot{position:relative;top:0;width:130px;margin:0 auto}}
-.faq-list{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:10px;position:relative;z-index:1;width:100%}
-@media(max-width:900px){.faq-list{grid-template-columns:repeat(3,1fr);gap:9px}}
-@media(max-width:600px){.faq-list{grid-template-columns:repeat(2,1fr);gap:8px}}
-.faq-i{position:relative;perspective:1000px;min-height:118px;cursor:pointer}
-.faq-flip{position:relative;width:100%;height:100%;min-height:118px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,1.2,.4,1)}
-.faq-i.open .faq-flip{transform:rotateY(180deg)}
-.faq-face,.faq-back{position:absolute;inset:0;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;
-  background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);
-  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.22),0 12px 28px -14px rgba(0,0,0,.85),0 0 20px -8px rgba(154,255,0,.15);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:box-shadow .3s,border-color .3s}
-.faq-i:hover .faq-face,.faq-i:hover .faq-back{border-color:var(--border-lime);box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 26px -6px rgba(154,255,0,.35),0 12px 28px -14px rgba(0,0,0,.9)}
-.faq-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(154,255,0,.18),rgba(154,255,0,.04));border-color:var(--border-lime)}
-.faq-face-q{font-family:'Unbounded',sans-serif;font-weight:800;font-size:12px;color:#fff;line-height:1.2;flex:1;display:flex;align-items:center}
-.faq-face-hint{font-size:10px;color:var(--lime);letter-spacing:1px;text-transform:uppercase;margin-top:4px;opacity:.7}
-.faq-back-a{font-size:11px;color:var(--w2);line-height:1.4;overflow-y:auto;max-height:100%;padding-right:2px}
-.faq-back-a::-webkit-scrollbar{width:2px}
-.faq-back-a::-webkit-scrollbar-thumb{background:rgba(154,255,0,.4)}
+.faq-cap{text-align:center;margin-bottom:16px;position:relative;z-index:2}
+.faq-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1;width:100%;align-items:start}
+@media(max-width:700px){.faq-list{grid-template-columns:1fr;gap:8px}}
+.faq-i{border-radius:14px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.2),0 8px 20px -12px rgba(0,0,0,.6);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:box-shadow .3s,border-color .3s,background .3s}
+.faq-i:hover{border-color:var(--border-lime);box-shadow:inset 0 1.5px 3px rgba(255,255,255,.24),0 0 22px -6px rgba(154,255,0,.28),0 8px 20px -12px rgba(0,0,0,.7)}
+.faq-i.open{border-color:var(--border-lime);background:linear-gradient(135deg,rgba(154,255,0,.11),rgba(154,255,0,.03))}
+.faq-q{padding:14px 16px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:12px;line-height:1.35;color:#fff}
+.faq-q .p{color:var(--lime);font-size:22px;transition:transform .3s;flex:0 0 auto;font-weight:400;line-height:1}
+.faq-i.open .p{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w2);font-size:12.5px;line-height:1.55}
+.faq-a div{padding:0 16px 14px}
 /* CTA loop */
 .cta-f{text-align:center;padding:72px 24px;position:relative;overflow:hidden}
 .cta-logo{width:120px;height:120px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.16),rgba(6,8,6,.9));border:1px solid var(--border-lime);box-shadow:0 0 60px -10px rgba(154,255,0,.4);animation:plfloat 5s ease-in-out infinite}
@@ -327,7 +324,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <div id="preloader"><div class="pl-logo"><img src="__LOGO__" alt="OKO"></div><div class="pl-word">OK<span>O</span></div><div class="pl-bar"><i></i></div></div>
 <!-- BACKGROUND -->
 <div id="cubes-bg"></div>
-<spline-viewer id="spline-bg" url="spline/scene.splinecode"></spline-viewer>
+<div id="bg-glows"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
 <div id="bg-grid"></div>
 <div id="bg-overlay"></div>
 <div id="glow-bg"><span class="g1"></span><span class="g2"></span></div>
@@ -479,16 +476,15 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <section id="guarantees">
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Гарантии</div><h2 class="sec-h creveal">Работаем <span class="lime">по-честному</span></h2></div>
-  <div class="gcar-wrap" id="gcarWrap"><div class="gcar" id="gcar">
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом. Всё юридически.</div></div></div>
+  <div class="gcar-pin" id="gcarPin"><div class="gcar-track" id="gcarTrack">
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом.</div></div></div>
     <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span><div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, без скрытых доплат.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика и лишних нервов.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем работе с системой, остаёмся на связи после запуска.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем и остаёмся на связи после запуска.</div></div></div>
     <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="gc-t">До 10 рабочих дней</div><div class="gc-d">Срок в договоре. Срываем — компенсируем.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года. Реальные кейсы.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года.</div></div></div>
   </div></div>
-  <div class="gcar-nav" id="gcarNav"></div>
-  <div class="gcar-hint">свайп · клик по точкам · авто-пролёт</div>
+  <div class="gcar-hint">скроллите вниз — карты пролетают вправо</div>
 </div>
 </section>
 <div class="sec-divider"><span class="dot"></span></div>
@@ -502,14 +498,14 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
     <div class="faq-robot rv" id="faqRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
     <div class="faq-cap"><span class="rb-say" id="rbSay"><b>Агент OKO</b> на связи — тапни вопрос</span></div>
     <div class="faq-list" id="faqList">
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Чем ИИ-агент лучше?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Работает 24/7, не теряет заявки, отвечает за секунды. Один агент заменяет отдел, стоит в разы дешевле.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Заходят в мои аккаунты?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Да, с вашего разрешения. Публикуют, ведут диалоги, вы видите каждое действие в админке и можете вмешаться.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Это не спам-бот?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Нет. Агенты пишут по-человечески, отвечают голосом, реагируют на контекст. Клиент общается как с живым.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Какие сроки?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">До 10 рабочих дней с момента старта и передачи доступов. Срываем — компенсируем. Всё в договоре.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Как платить?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Карты РФ и зарубежные, СБП, СберPay, T-Pay через Lava.top. Крипта USDT в Telegram. По каждому — чек.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Не понравится результат?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Дорабатываем в рамках ТЗ до результата. Работаем поэтапно: принимаете каждый этап, прежде чем двигаться.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Я ничего не понимаю?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Настраиваем под ключ и обучаем работе с системой. Ваша задача — принимать заявки и заниматься бизнесом.</div></div></div></div>
-      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Индивидуальный пакет?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Напишите в Telegram @ktodaniel — соберём решение под вашу нишу, задачи и бюджет.</div></div></div></div>
+      <div class="faq-i"><div class="faq-q">Чем ИИ-агент лучше живого менеджера?<span class="p">+</span></div><div class="faq-a"><div>Работает 24/7 без выходных, отвечает за секунды, не теряет заявки, ведёт по выверенным скриптам. Один агент заменяет отдел — стоит в разы дешевле.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Заходят в мои аккаунты?<span class="p">+</span></div><div class="faq-a"><div>Да, с вашего разрешения и под контролем. Публикуют, отвечают в директ, ведут диалоги — вы видите каждое действие в админке и в любой момент можете вмешаться.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Это не выглядит как спам-бот?<span class="p">+</span></div><div class="faq-a"><div>Нет. Агенты пишут по-человечески, отвечают голосом, реагируют на контекст и возражения. Клиент общается как с живым менеджером.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Какие сроки запуска?<span class="p">+</span></div><div class="faq-a"><div>Любой вариант — до 10 рабочих дней с момента старта и передачи доступов. Срываем срок — компенсируем. Сроки фиксируются в договоре.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Как происходит оплата?<span class="p">+</span></div><div class="faq-a"><div>Поэтапно по договору. Карты РФ и зарубежные, СБП, СберPay, T-Pay через Lava.top; крипта USDT через CryptoBot в Telegram. По каждому платежу — чек НПД.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Что если не понравится результат?<span class="p">+</span></div><div class="faq-a"><div>Дорабатываем в рамках ТЗ до результата. Работаем поэтапно: вы принимаете каждый этап, прежде чем двигаться дальше.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Я ничего не понимаю в digital — справлюсь?<span class="p">+</span></div><div class="faq-a"><div>Да. Всё настраиваем под ключ и обучаем работе с системой. Ваша задача — принимать заявки и заниматься бизнесом.</div></div></div>
+      <div class="faq-i"><div class="faq-q">Можно собрать пакет индивидуально?<span class="p">+</span></div><div class="faq-a"><div>Конечно. Напишите в Telegram @ktodaniel — соберём решение под вашу нишу, задачи и бюджет.</div></div></div>
     </div>
   </div>
 </div>
@@ -670,34 +666,29 @@ function buildTariffs(){
   var ru=false;try{var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';ru=/Moscow|Samara|Yekaterinburg|Kaliningrad|Volgograd|Kirov|Saratov|Simferopol|Omsk|Novosibirsk|Krasnoyarsk/i.test(tz)||/^ru\b/i.test(navigator.language||'');}catch(e){}
   document.querySelectorAll('[data-usd]').forEach(function(el){var v=el.getAttribute(ru?'data-rub':'data-usd');if(v){if(el.classList.contains('pay-btn'))el.href=v;else el.innerHTML=v;}});
 }
-/* ---- GUARANTEES 3D coverflow (auto-fly + swipe + tilt on scroll) ---- */
+/* ---- GUARANTEES: pin + scrub, вертикальный скролл → горизонтальный пролёт ---- */
 function buildGuarCoverflow(){
-  var wrap=document.getElementById('gcarWrap'),car=document.getElementById('gcar');if(!wrap||!car)return;
-  var cards=Array.from(car.querySelectorAll('.gcard')),N=cards.length,pos=0,target=0,drag=false,x0=0,y0=0,sp=0,dir=0,tilt=0,auto=true,autoT=Date.now();
-  var nav=document.getElementById('gcarNav');cards.forEach(function(_,i){var d=document.createElement('span');d.className='gcar-dot'+(i===0?' on':'');d.dataset.i=i;nav.appendChild(d);});
-  var dots=Array.from(nav.children);
-  function layout(){cards.forEach(function(c,i){var off=((i-pos)%N+N)%N;if(off>N/2)off-=N;var a=Math.abs(off);
-    var tx=off*(TOUCH?58:70),tz=-a*260,ry=-off*38+(i===Math.round(((pos%N)+N)%N)?tilt:0),sc=1-Math.min(a*.14,.35),op=a>2.1?0:1-Math.min(a*.4,.75);
-    c.style.transform='translate(-50%,-50%) translateX('+tx+'%) translateZ('+tz+'px) rotateY('+ry+'deg) scale('+sc+')';
-    c.style.opacity=op;c.style.zIndex=String(100-Math.round(a*10));c.style.pointerEvents=a<.5?'auto':'none';});
-    var ai=Math.round(((pos%N)+N)%N);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});}
-  (function raf(){pos+=(target-pos)*.11;tilt+=(0-tilt)*.1;if(auto&&Date.now()-autoT>3200){target+=1;autoT=Date.now();}layout();requestAnimationFrame(raf);})();
-  dots.forEach(function(d){d.addEventListener('click',function(){target=+d.dataset.i;auto=false;autoT=Date.now();});});
-  wrap.addEventListener('pointerdown',function(e){if(e.target.closest('a'))return;drag=true;x0=e.clientX;y0=e.clientY;sp=pos;dir=0;auto=false;});
-  wrap.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-x0,dy=e.clientY-y0;if(!dir){if(Math.abs(dx)+Math.abs(dy)<10)return;dir=Math.abs(dx)>Math.abs(dy)?'x':'y';if(dir==='y'){drag=false;return;}}target=sp-(dx/wrap.offsetWidth)*1.4;});
-  addEventListener('pointerup',function(){if(!drag)return;drag=false;if(dir==='x')target=Math.round(target);autoT=Date.now()+2000;setTimeout(function(){auto=true;},4000);});
-  if(TOUCH&&window.DeviceOrientationEvent)addEventListener('deviceorientation',function(e){if(e.gamma!=null)tilt=Math.max(-12,Math.min(12,e.gamma*.3));},true);
+  var pin=document.getElementById('gcarPin'),track=document.getElementById('gcarTrack');if(!pin||!track||!ST)return;
+  function build(){
+    var scrollDist=Math.max(0,track.scrollWidth-pin.clientWidth);
+    if(scrollDist<10)return;
+    gsap.to(track,{x:-scrollDist,ease:'none',
+      scrollTrigger:{trigger:pin,pin:true,scrub:0.6,start:'top 8%',end:'+='+scrollDist,invalidateOnRefresh:true,anticipatePin:1}});
+  }
+  // ждём загрузки шрифтов/размеров
+  setTimeout(build,300);
+  addEventListener('resize',function(){if(ST)ST.refresh();});
 }
 /* ---- FAQ robot answers ---- */
 function buildFaqRobot(){
   var items=Array.from(document.querySelectorAll('#faqList .faq-i'));
-  items.forEach(function(it){it.addEventListener('click',function(){
-    var willOpen=!it.classList.contains('open');
-    items.forEach(function(o){o.classList.remove('open');});
-    if(willOpen)it.classList.add('open');
-    var rob=document.getElementById('faqRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
-    if(window.__sfx)window.__sfx('click');
-  });});
+  items.forEach(function(it){var q=it.querySelector('.faq-q'),a=it.querySelector('.faq-a');
+    q.addEventListener('click',function(){var willOpen=!it.classList.contains('open');
+      items.forEach(function(o){o.classList.remove('open');var oa=o.querySelector('.faq-a');if(oa)oa.style.maxHeight='0';});
+      if(willOpen){it.classList.add('open');a.style.maxHeight=a.scrollHeight+40+'px';}
+      var rob=document.getElementById('faqRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
+      if(window.__sfx)window.__sfx('click');
+    });});
 }
 /* ---- SEAMLESS INFINITE LOOP (bidirectional, clone hero == real hero) ---- */
 function buildLoop(){
@@ -715,36 +706,56 @@ function buildLoop(){
   var ty=0;addEventListener('touchstart',function(e){ty=e.touches[0].clientY;},{passive:true});
   addEventListener('touchmove',function(e){if(lock)return;var c=ct();if(c<innerHeight*2)return;var dy=ty-e.touches[0].clientY;if(sy()<=1&&dy<-6){to(c-2);}},{passive:true});
 }
-/* ---- SOUND (WebAudio SFX + генеративный ambient) ---- */
+/* ---- SOUND: серьёзный ambient (D minor pad+bass+reverb) + профессиональный whoosh ---- */
 (function(){
-  var ctx=null,gain=null,ambOn=false,ambNodes=[];
-  function ensure(){if(ctx)return;try{ctx=new (window.AudioContext||window.webkitAudioContext)();gain=ctx.createGain();gain.gain.value=0.18;gain.connect(ctx.destination);}catch(e){}}
-  function beep(freq,dur,type,vol){if(!ctx)return;var o=ctx.createOscillator(),g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.value=0;g.gain.linearRampToValueAtTime(vol||0.14,ctx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.connect(g);g.connect(gain);o.start();o.stop(ctx.currentTime+dur+0.01);}
-  window.__sfx=function(kind){ensure();if(!ctx)return;
-    if(kind==='click')beep(680,0.08,'triangle',0.08);
-    else if(kind==='woosh'){for(var i=0;i<5;i++){setTimeout(function(){beep(200+Math.random()*300,0.12,'sawtooth',0.04);},i*22);}}
-    else if(kind==='open'){beep(440,0.08,'sine',0.06);setTimeout(function(){beep(660,0.14,'sine',0.07);},60);}
-    else if(kind==='switch'){beep(520,0.06,'triangle',0.06);}
+  var ctx=null,masterGain=null,reverbOut=null,ambOn=false,ambNodes=[];
+  function ensure(){if(ctx)return;try{ctx=new (window.AudioContext||window.webkitAudioContext)();
+    masterGain=ctx.createGain();masterGain.gain.value=0.28;masterGain.connect(ctx.destination);
+    // reverb через IR-swell (impulse response генерируем)
+    var conv=ctx.createConvolver();var len=ctx.sampleRate*2.5,ir=ctx.createBuffer(2,len,ctx.sampleRate);
+    for(var ch=0;ch<2;ch++){var d=ir.getChannelData(ch);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.4);}
+    conv.buffer=ir;var wet=ctx.createGain();wet.gain.value=0.5;conv.connect(wet);wet.connect(masterGain);reverbOut=conv;
+  }catch(e){}}
+  function noise(dur){var b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate);var d=b.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;var s=ctx.createBufferSource();s.buffer=b;return s;}
+  window.__sfx=function(kind){ensure();if(!ctx)return;var t=ctx.currentTime;
+    if(kind==='click'){
+      var o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.setValueAtTime(1200,t);o.frequency.exponentialRampToValueAtTime(600,t+0.06);g.gain.setValueAtTime(0.001,t);g.gain.exponentialRampToValueAtTime(0.09,t+0.005);g.gain.exponentialRampToValueAtTime(0.001,t+0.09);o.connect(g);g.connect(masterGain);o.start(t);o.stop(t+0.1);
+    } else if(kind==='woosh'){
+      // filtered white noise burst с pitch-down = глубокий кинематик woosh
+      var s=noise(0.85),f=ctx.createBiquadFilter(),g=ctx.createGain();f.type='bandpass';f.Q.value=1.4;
+      f.frequency.setValueAtTime(2400,t);f.frequency.exponentialRampToValueAtTime(320,t+0.7);
+      g.gain.setValueAtTime(0.001,t);g.gain.exponentialRampToValueAtTime(0.18,t+0.08);g.gain.exponentialRampToValueAtTime(0.001,t+0.85);
+      s.connect(f);f.connect(g);g.connect(masterGain);if(reverbOut)g.connect(reverbOut);s.start(t);s.stop(t+0.9);
+    } else if(kind==='switch'){
+      var o=ctx.createOscillator(),g=ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(320,t);o.frequency.exponentialRampToValueAtTime(560,t+0.08);g.gain.setValueAtTime(0.001,t);g.gain.exponentialRampToValueAtTime(0.11,t+0.01);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);o.connect(g);g.connect(masterGain);o.start(t);o.stop(t+0.13);
+    }
   };
+  function makePad(freq,detune,vol){
+    var o1=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),f=ctx.createBiquadFilter(),lfo=ctx.createOscillator(),lfoG=ctx.createGain();
+    o1.type='sine';o2.type='sawtooth';o1.frequency.value=freq;o2.frequency.value=freq;o2.detune.value=detune;
+    f.type='lowpass';f.frequency.value=900;f.Q.value=1;
+    lfo.frequency.value=0.05+Math.random()*0.05;lfoG.gain.value=220;lfo.connect(lfoG);lfoG.connect(f.frequency);
+    g.gain.value=0;g.gain.linearRampToValueAtTime(vol,ctx.currentTime+4);
+    o1.connect(f);o2.connect(f);f.connect(g);g.connect(masterGain);if(reverbOut)g.connect(reverbOut);
+    o1.start();o2.start();lfo.start();return [o1,o2,lfo,g,f,lfoG];
+  }
   function startAmb(){if(ambOn)return;ambOn=true;ensure();if(!ctx)return;
-    // Тихий 3-осцилляторный пэд (лайм-текстура)
-    var freqs=[110,138.6,164.8];
-    freqs.forEach(function(f,i){var o=ctx.createOscillator(),g=ctx.createGain(),lfo=ctx.createOscillator(),lfoG=ctx.createGain();
-      o.type='sine';o.frequency.value=f;g.gain.value=0;g.gain.linearRampToValueAtTime(0.028,ctx.currentTime+2);
-      lfo.frequency.value=0.08+i*0.03;lfoG.gain.value=0.011;lfo.connect(lfoG);lfoG.connect(g.gain);
-      o.connect(g);g.connect(gain);o.start();lfo.start();ambNodes.push(o,lfo,g,lfoG);
-    });}
+    // D-minor pad: D2 F2 A2 D3 F3 = глубокий кинематичный ambient
+    ambNodes=ambNodes.concat(makePad(73.42,-8,0.05));   // D2 sub
+    ambNodes=ambNodes.concat(makePad(146.83,-6,0.04));  // D3
+    ambNodes=ambNodes.concat(makePad(174.61,6,0.035));  // F3
+    ambNodes=ambNodes.concat(makePad(220,-4,0.03));     // A3
+    ambNodes=ambNodes.concat(makePad(293.66,4,0.025));  // D4
+  }
   function stopAmb(){if(!ambOn)return;ambOn=false;
-    ambNodes.forEach(function(n){try{if(n.gain)n.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.6);if(n.stop)setTimeout(function(){try{n.stop();n.disconnect();}catch(e){}},700);}catch(e){}});
+    ambNodes.forEach(function(n){try{if(n.gain)n.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.8);if(n.stop)setTimeout(function(){try{n.stop();n.disconnect();}catch(e){}},900);}catch(e){}});
     ambNodes=[];}
   var btn=document.getElementById('sound-btn');
   btn.addEventListener('click',function(){ensure();if(ctx&&ctx.state==='suspended')ctx.resume();
     if(ambOn){stopAmb();btn.classList.add('off');document.getElementById('sndOff').style.display='';document.getElementById('sndOn').style.display='none';}
     else{startAmb();btn.classList.remove('off');document.getElementById('sndOff').style.display='none';document.getElementById('sndOn').style.display='';window.__sfx('click');}
   });
-  // section-enter woosh
   document.querySelectorAll('section').forEach(function(sec){ST.create({trigger:sec,start:'top 55%',once:false,onEnter:function(){if(ambOn)window.__sfx('woosh');},onEnterBack:function(){if(ambOn)window.__sfx('woosh');}});});
-  // button click SFX
   document.addEventListener('click',function(e){var el=e.target.closest('a.btn,button.btn');if(el&&window.__sfx)window.__sfx('click');},{capture:true});
 })();
 /* ---- MODALS / helpers ---- */
@@ -760,12 +771,6 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 import { initHolo } from './js/holo.js';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
-// SPLINE bg: fade-in + remove badge
-(function(){var sv=document.getElementById('spline-bg');if(!sv)return;
-  function ready(){sv.classList.add('ready');try{var s=sv.shadowRoot;if(s){['#logo','a'].forEach(function(q){var el=s.querySelector(q);if(el)el.remove();});}}catch(e){}}
-  sv.addEventListener('load',ready);setTimeout(ready,3200);
-  var n=0,iv=setInterval(function(){n++;try{var s=sv.shadowRoot;if(s){var a=s.querySelector('a');if(a)a.remove();}}catch(e){}if(n>10)clearInterval(iv);},600);
-})();
 </script>
 </body>
 </html>
