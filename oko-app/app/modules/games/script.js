@@ -362,17 +362,34 @@ function gmStreakRender(){
     el.style.display = 'none';
   }
 }
-/* контекстная подсказка серии в блоке бесплатной крутки */
+/* контекстная подсказка серии + календарь последних 7 дней (Duolingo-style) */
 function gmStreakNote(){
   const n = gmStreakDisplay();
-  if(n <= 0){
-    return `<div class="gm-streak-note">${I('gm-flame')}<span>Заходи каждый день — собери серию и получай бонусные билеты</span></div>`;
+  const cal = gmStreakCalendar();
+  const cells = cal.map(c=>
+    `<div class="gm-cal-cell ${c.done ? 'done' : ''} ${c.isToday ? 'today' : ''}">
+      <span class="gm-cal-day">${c.name}</span>
+      <span class="gm-cal-dot">${c.done ? I('gm-flame') : c.num}</span>
+    </div>`
+  ).join('');
+
+  const extra = gmExtraFreeGet();
+  let msg;
+  if(extra > 0){
+    msg = `Бесплатных круток в копилке · <b>${extra}</b>. Жми «Крутить бесплатно»`;
+  }else if(n <= 0){
+    msg = 'Заходи каждый день · через 7 дней подряд открой +2 бесплатных крутки';
+  }else{
+    const milestones = [3, 7, 14, 30];
+    const next = milestones.find(m => m > n) || (n + (7 - n % 7));
+    const reward = next === 7 ? '+2 бесплатных крутки' : `+${GM_STREAK_MILE[next] || 5} ${gmPluralTk(GM_STREAK_MILE[next] || 5)}`;
+    msg = `Серия <b>${n}</b> ${gmPluralDay(n)} · ещё ${next - n} ${gmPluralDay(next - n)} до ${reward}`;
   }
-  const next = [3, 7, 14, 30].find(m => m > n);
-  const tail = next
-    ? `ещё ${next - n} ${gmPluralDay(next - n)} до бонуса +${GM_STREAK_MILE[next]} ${gmPluralTk(GM_STREAK_MILE[next])}`
-    : 'ты в ударе — серия максимальная';
-  return `<div class="gm-streak-note lit">${I('gm-flame')}<span>Серия <b>${n}</b> ${gmPluralDay(n)} · ${tail}</span></div>`;
+
+  return `<div class="gm-streak-block ${n > 0 ? 'lit' : ''}">
+    <div class="gm-cal">${cells}</div>
+    <div class="gm-cal-msg">${I('gm-flame')}<span>${msg}</span></div>
+  </div>`;
 }
 
 /* ============================================================
@@ -435,10 +452,18 @@ function gmRenderModes(){
 
   let action = '';
   if(gmMode === 'free'){
-    const claimed = gmBonusClaimedToday();
-    action = `<button class="gm-spin ${claimed || gmSpinning ? 'off' : ''}" onclick="gmDoSpin(false)">${I('gm-gift')}${
-      claimed ? `<span class="gm-spin-cd">Бесплатно через <b id="gmFreeCd2">${gmFmtCd(gmBonusLeftMs())}</b></span>` : 'Крутить бесплатно'
-    }</button>` + gmStreakNote();
+    const canFree = gmCanFree();
+    const extra = gmExtraFreeGet();
+    const claimedNoStash = gmBonusClaimedToday() && extra <= 0;
+    let label;
+    if(!canFree){
+      label = `<span class="gm-spin-cd">Бесплатно через <b id="gmFreeCd2">${gmFmtCd(gmBonusLeftMs())}</b></span>`;
+    }else if(extra > 0 && gmBonusClaimedToday()){
+      label = `Крутить бесплатно · копилка <b>${extra}</b>`;
+    }else{
+      label = 'Крутить бесплатно';
+    }
+    action = `<button class="gm-spin ${claimedNoStash || gmSpinning ? 'off' : ''}" onclick="gmDoSpin(false)">${I('gm-gift')}${label}</button>` + gmStreakNote();
   }else{
     const st = GM_STAKES[gmMode], canTk = GM_TICKETS >= st.tk;
     action = `<div class="gm-spin-row">
@@ -449,7 +474,9 @@ function gmRenderModes(){
   el.innerHTML = `
     <div class="gm-mode-pills">${pills}</div>
     <div class="gm-ev" id="gmEv">${gmEvText(gmMode)}</div>
-    ${action}`;
+    ${gmWheelTeaserHtml()}
+    ${action}
+    ${gmMBProgressHtml()}`;
 }
 function gmSelectMode(m){
   if(gmSpinning || !GM_POOLS[m]) return;
@@ -463,7 +490,13 @@ function gmDoSpin(payTicket){
   if(gmSpinning){ toast('Колесо ещё крутится'); return; }
   const m = gmMode;
   if(m === 'free'){
-    if(gmBonusClaimedToday()){ toast('Бесплатная крутка сегодня уже была — выбери платную ставку'); return; }
+    /* если дневной подарок уже сорван — снимаем из копилки бесплатных круток от стрика */
+    if(gmBonusClaimedToday()){
+      if(!gmExtraFreeUse()){
+        toast('Бесплатная крутка сегодня уже была — выбери платную ставку');
+        return;
+      }
+    }
     gmPaidCost = 0;
   }else{
     const st = GM_STAKES[m];
@@ -536,9 +569,23 @@ function gmPrizeSub(p){
   return '';
 }
 function gmGrant(p, mode, payTicket){
-  if(mode === 'free'){ try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){} gmStreakBump(); }
+  /* бесплатный дневной подарок засчитываем ТОЛЬКО если это была реальная дневная крутка,
+     а не расход из копилки от стрика (которая должна быть сверх лимита) */
+  if(mode === 'free' && !gmBonusClaimedToday()){
+    try{ localStorage.setItem('oko-games-bonus', String(Date.now())); }catch(e){}
+    gmStreakBump();
+  }
+  /* общая статистика круток — для Mystery Box, ретеншена и достижений */
+  gmSetLastSpin();
+  const total = gmSpinTotalInc();
+  gmMBSet(gmMBCount() + 1);
+  if(total === 1) gmAchUnlock('first');
+  if(total >= 10) gmAchUnlock('ten');
+  if(total >= 50) gmAchUnlock('fifty');
   const icon = gmPrizeIcon(p);
   const rare = p.c >= 4; /* редчайший сектор — вау-момент «джекпот» */
+  if(rare) gmAchUnlock('jackpot');
+  if(p.t === 'tier') gmAchUnlock('tier');
   let title = '', prize = null;
   switch(p.t){
     case 'money':{
@@ -583,13 +630,20 @@ function gmGrant(p, mode, payTicket){
   const val = gmNominal(p);
   if(val > 0) gmLbAddWin(val);
 
-  /* бесплатная крутка израсходована — перевести выбор на платный пул */
-  if(mode === 'free'){ gmMode = 'p100'; gmBuildWheel(); }
+  /* бесплатная крутка израсходована — перевести выбор на платный пул,
+     если больше нет доступной бесплатной крутки (ни дневной, ни из копилки) */
+  if(mode === 'free' && !gmCanFree()){ gmMode = 'p100'; gmBuildWheel(); }
   gmRenderModes();
   gmPrizesBtnRender();
   gmUpdateBalance();
   gmTicketsRender();
   gmBoostBadge();
+  gmAchRender();
+  /* MYSTERY BOX — 20 круток подряд открывают тайный сундук с гарантированно крупным призом */
+  if(gmMBCount() >= GM_MB_STEP){
+    gmMBSet(0);
+    setTimeout(gmMBAward, 900); /* даём отыграть основной ревил */
+  }
 }
 
 /* красивая анимация выпадения приза — карточка в центре колеса */

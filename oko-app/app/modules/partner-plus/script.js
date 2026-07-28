@@ -64,7 +64,7 @@
 
   const TIERS = [
     {k:'bronze', label:'Bronze', min:0,   max:50,   badge:'medal',  bonus:0, note:'Стандартная комиссия 15% с 1-й линии, 5% со 2-й.'},
-    {k:'silver', label:'Silver', min:50,  max:200,  badge:'medal',  bonus:0, note:'До Gold осталось несколько продаж — открывается +5% сверху.'},
+    {k:'silver', label:'Silver', min:50,  max:200,  badge:'medal',  bonus:0, note:'До Gold осталось несколько продаж · открывается +5% сверху.'},
     {k:'gold',   label:'Gold',   min:200, max:9999, badge:'trophy', bonus:5, note:'Максимальная комиссия: 20% с 1-й линии, 5% со 2-й.'},
   ];
 
@@ -91,32 +91,32 @@
     {
       k:'story-hook', h:'Один инструмент вместо десяти', sub:'сторис · 9:16',
       gr:'g1', fmt:'Instagram Stories 1080×1920',
-      copy:'OKO — я снёс 8 приложений и оставил одно.\n\nМессенджер + лента + мини-аппы + кошелёк + академия — всё внутри.\n\nЗабирай по ссылке в шапке, у меня −15% на PRO для подписчиков.\n#OKO #продуктивность'
+      copy:'OKO · я снёс 8 приложений и оставил одно.\n\nМессенджер + лента + мини-аппы + кошелёк + академия · всё внутри.\n\nЗабирай по ссылке в шапке, у меня −15% на PRO для подписчиков.\n#OKO #продуктивность'
     },
     {
       k:'reels-1',    h:'Как я делаю ролик за 8 минут', sub:'reels · 9:16',
       gr:'g2', fmt:'Reels / TikTok 1080×1920',
-      copy:'Раньше монтаж = 3 часа. Теперь 8 минут.\nОткрываю Контент-завод OKO, кидаю тему — получаю Reels 1080×1920 с озвучкой и субтитрами.\n\nСсылка в описании, для моих +30 дней PRO бесплатно.\n#reels #контент #OKO'
+      copy:'Раньше монтаж = 3 часа. Теперь 8 минут.\nОткрываю Контент-завод OKO, кидаю тему · получаю Reels 1080×1920 с озвучкой и субтитрами.\n\nСсылка в описании, для моих +30 дней PRO бесплатно.\n#reels #контент #OKO'
     },
     {
       k:'post-carousel', h:'5 фишек, которых нет у Telegram', sub:'пост · 1:1',
       gr:'g3', fmt:'Instagram / VK 1080×1080',
-      copy:'Что делает OKO там, где Telegram молчит:\n\n1. Партнёрка 15% / 5% прямо внутри\n2. Кошелёк с эскроу для сделок\n3. Академия с сертификатом\n4. Биржа услуг под ключ\n5. Контент-завод: ролики без монтажёра\n\nЗабирай по моей ссылке — скинут скидку.'
+      copy:'Что делает OKO там, где Telegram молчит:\n\n1. Партнёрка 15% / 5% прямо внутри\n2. Кошелёк с эскроу для сделок\n3. Академия с сертификатом\n4. Биржа услуг под ключ\n5. Контент-завод: ролики без монтажёра\n\nЗабирай по моей ссылке · скинут скидку.'
     },
     {
       k:'yt-thumb', h:'Обзор OKO: заменил 8 приложений', sub:'YouTube · 16:9',
       gr:'g4', fmt:'YouTube preview 1280×720',
-      copy:'В новом ролике разбираю OKO по косточкам: где выигрывает у связки Notion + Telegram + CapCut, где недотягивает, и почему я перевёл всю команду.\n\nПо моей реф-ссылке — месяц PRO в подарок при годовой оплате.'
+      copy:'В новом ролике разбираю OKO по косточкам: где выигрывает у связки Notion + Telegram + CapCut, где недотягивает, и почему я перевёл всю команду.\n\nПо моей реф-ссылке · месяц PRO в подарок при годовой оплате.'
     },
     {
-      k:'lp-hero', h:'OKO — приложение, где всё сразу', sub:'баннер · 16:9',
+      k:'lp-hero', h:'OKO · приложение, где всё сразу', sub:'баннер · 16:9',
       gr:'g5', fmt:'Web-баннер 1600×900',
-      copy:'Заголовок для лендинга или статьи:\n\n«OKO — одно приложение вместо восьми. Мессенджер, кошелёк, академия, биржа, контент-завод и партнёрка. Русский рынок, платит с оборота твоих клиентов.»\n\nCTA: Забрать PRO со скидкой -> {реф-ссылка}'
+      copy:'Заголовок для лендинга или статьи:\n\n«OKO · одно приложение вместо восьми. Мессенджер, кошелёк, академия, биржа, контент-завод и партнёрка. Русский рынок, платит с оборота твоих клиентов.»\n\nCTA: Забрать PRO со скидкой -> {реф-ссылка}'
     },
     {
       k:'ads-square', h:'Партнёрка OKO: 15% + 5%', sub:'реклама · 1:1',
       gr:'g6', fmt:'Ads square 1080×1080',
-      copy:'Оффер для ретаргета на подписчиков:\n\n«Приведи одного клиента в OKO — получай 15% с каждой его оплаты. Он приведёт друга — +5% сверху. Выплаты на карту РФ, USDT или Lava.top. Стартуй за 30 секунд.»'
+      copy:'Оффер для ретаргета на подписчиков:\n\n«Приведи одного клиента в OKO · получай 15% с каждой его оплаты. Он приведёт друга · +5% сверху. Выплаты на карту РФ, USDT или Lava.top. Стартуй за 30 секунд.»'
     },
   ];
 
@@ -127,7 +127,7 @@
     const pad = scr.querySelector('.pad');
     if(!pad) return;
 
-    // 1) Уровень партнёра — сразу после stat-grid
+    // 1) Уровень партнёра · сразу после stat-grid
     const statGrid = pad.querySelector('.stat-grid');
     if(statGrid && !document.getElementById('ppTier')){
       const el = document.createElement('div');
@@ -136,7 +136,7 @@
       statGrid.insertAdjacentElement('afterend', el);
     }
 
-    // 2) Дип-линки — заменяем содержимое карточки реф-ссылки на расширенное
+    // 2) Дип-линки · заменяем содержимое карточки реф-ссылки на расширенное
     const refCard = pad.querySelector('#refInput')?.closest('.card');
     if(refCard && !refCard.dataset.ppReady){
       refCard.dataset.ppReady = '1';
@@ -144,7 +144,7 @@
       wireDeep();
     }
 
-    // 3) Промо-материалы — новая карточка после реф-ссылки
+    // 3) Промо-материалы · новая карточка после реф-ссылки
     if(refCard && !document.getElementById('ppPromo')){
       const el = document.createElement('div');
       el.id = 'ppPromo'; el.className = 'card'; el.style.marginTop = '12px';
@@ -152,7 +152,7 @@
       refCard.insertAdjacentElement('afterend', el);
     }
 
-    // 4) Лидерборд — после промо
+    // 4) Лидерборд · после промо
     const promoCard = document.getElementById('ppPromo');
     if(promoCard && !document.getElementById('ppLb')){
       const el = document.createElement('div');
@@ -161,7 +161,7 @@
       promoCard.insertAdjacentElement('afterend', el);
     }
 
-    // 5) История начислений с фильтром — заменяем старую «Последние начисления»
+    // 5) История начислений с фильтром · заменяем старую «Последние начисления»
     const scoreCard = Array.from(pad.querySelectorAll('.card')).find(c => /Последние начисления/.test(c.innerText||''));
     if(scoreCard && !scoreCard.dataset.ppReady){
       scoreCard.dataset.ppReady = '1';
@@ -180,7 +180,7 @@
     const remaining = next ? Math.max(0, next.min - PP.salesTotal) : 0;
     const nextLabel = next ? next.label : '';
     const note = next
-      ? `До <b>${nextLabel}</b> осталось <b>${remaining}</b> продаж. На Gold открывается <b>+5% к комиссии</b> — итого 20% с первой линии.`
+      ? `До <b>${nextLabel}</b> осталось <b>${remaining}</b> продаж. На Gold открывается <b>+5% к комиссии</b> · итого 20% с первой линии.`
       : `Ты в топе программы: <b>+5% бонус к комиссии</b>, персональный менеджер и приоритетные выплаты.`;
     return `<div class="pp-tier">
       <div class="pp-tier-row">
@@ -327,7 +327,7 @@
         <p style="font-weight:700;font-size:15px">Готовые промо-материалы</p>
         <span class="chip">${PROMO.length} шт.</span>
       </div>
-      <p class="dim" style="font-size:12.5px;margin-bottom:10px">Мокапы для сторис, Reels, постов и рекламы. Тапни — получишь готовый текст.</p>
+      <p class="dim" style="font-size:12.5px;margin-bottom:10px">Мокапы для сторис, Reels, постов и рекламы. Тапни · получишь готовый текст.</p>
       <div class="pp-promo-grid">
         ${PROMO.map((p,i)=>`
           <div class="pp-promo-card" onclick="ppOpenPromo(${i})">
@@ -454,7 +454,7 @@
             <span class="pp-hist-st ${h.st}">${stLabel[h.st]}</span>
           </div>
         </div>
-        <div class="pp-hist-sum">${h.st==='can'?'—':'+$'+h.sum.toFixed(2)}</div>
+        <div class="pp-hist-sum">${h.st==='can'?'-':'+$'+h.sum.toFixed(2)}</div>
       </div>`).join('');
   }
   document.addEventListener('click', e=>{
@@ -487,7 +487,7 @@
       return r;
     };
   }
-  // и один раз на старте — на случай, если экран уже открыт
+  // и один раз на старте · на случай, если экран уже открыт
   document.addEventListener('DOMContentLoaded', ppRender);
   setTimeout(ppRender, 100);
   setTimeout(ppRender, 600);
