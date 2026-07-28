@@ -1,0 +1,223 @@
+{
+ "id": "gtape_027",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "upbeat indie acoustic diy",
+   "bright pop home",
+   "happy ukulele diy"
+  ]
+ },
+ "cover": {
+  "kicker": "RENTER HACK",
+  "top": "DECORATE",
+  "big": "WITHOUT\nHOLES",
+  "q": [
+   "measuring tape metal bending closeup"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Renting means no guessing and no wall damage."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the empty wall with your phone."
+  },
+  {
+   "id": "b3",
+   "text": "Drop a virtual frame to test the spot."
+  },
+  {
+   "id": "b4",
+   "text": "Line up shelves before a single nail."
+  },
+  {
+   "id": "b5",
+   "text": "Save the layout, shop with real sizes."
+  },
+  {
+   "id": "b6",
+   "text": "Decorate smart, get your deposit back."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.031,
+   "dur": 1.93,
+   "type": "kicker",
+   "text": "WILL IT FIT?"
+  },
+  {
+   "at": 0.337,
+   "dur": 1.69,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.512,
+   "dur": 1.69,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.635,
+   "dur": 1.95,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  },
+  {
+   "at": 0.828,
+   "dur": 1.87,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.837,
+   "dur": 2.15,
+   "type": "stat_count",
+   "to": 3,
+   "suffix": "%",
+   "label": "ERROR",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #reality #app #tips #augmented",
+ "yt_title": "Decorate a rental without holes #shorts",
+ "trend_keys": [
+  "reality",
+  "app",
+  "tips",
+  "augmented",
+  "measuring",
+  "measure",
+  "tricks",
+  "use"
+ ],
+ "content_type": "viral"
+}
