@@ -2477,10 +2477,114 @@ main>.screen{position:relative;z-index:1}
 .gm-odds-pct{font-size:14px;font-weight:800;font-family:var(--font-display);letter-spacing:.02em;color:var(--accent);white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
 .gm-odds-sum{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:10.5px;color:var(--dim);line-height:1.5;text-align:center}
 
+/* ============================================================
+   СТРИК-КАЛЕНДАРЬ 7 дней (Duolingo-style)
+   ============================================================ */
+.gm-streak-block{display:flex;flex-direction:column;gap:9px;margin-top:10px;padding:11px 12px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);animation:gmBoostIn .35s cubic-bezier(.2,.8,.25,1)}
+.gm-streak-block.lit{border-color:var(--lime);background:var(--lime-dim)}
+.gm-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.gm-cal-cell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 2px;border-radius:10px;background:var(--raised);transition:background .2s,transform .2s}
+.gm-cal-cell.today{outline:1.5px solid var(--lime);outline-offset:-1.5px}
+.gm-cal-cell.done{background:var(--lime-dim)}
+.gm-cal-day{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);line-height:1}
+.gm-cal-cell.done .gm-cal-day{color:var(--accent)}
+.gm-cal-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--border);font-family:var(--font-display);font-size:11.5px;color:var(--dim);line-height:1;font-variant-numeric:tabular-nums;transition:background .2s,color .2s,border-color .2s}
+.gm-cal-dot svg.i{width:13px;height:13px}
+.gm-cal-cell.done .gm-cal-dot{background:var(--lime);border-color:var(--lime);color:#0a1400;box-shadow:0 0 10px rgba(154,255,0,.35)}
+.gm-cal-cell.done .gm-cal-dot svg.i{color:#0a1400;animation:gmFlame 1.9s ease-in-out infinite}
+.gm-cal-cell.today .gm-cal-dot{color:var(--accent)}
+.gm-cal-msg{display:flex;align-items:center;gap:9px;font-size:11.5px;line-height:1.4;color:var(--dim)}
+.gm-cal-msg svg.i{width:16px;height:16px;color:var(--dim);flex-shrink:0}
+.gm-streak-block.lit .gm-cal-msg{color:var(--text)}
+.gm-streak-block.lit .gm-cal-msg svg.i{color:var(--accent);animation:gmFlame 1.7s ease-in-out infinite}
+.gm-cal-msg b{color:var(--accent);font-family:var(--font-display);font-size:14px;letter-spacing:.03em;margin:0 1px}
+
+/* ============================================================
+   WHEEL-TEASER — 3 крупных приза под кнопкой «Крутить»
+   ============================================================ */
+.gm-teaser{margin-bottom:11px;display:flex;flex-direction:column;gap:6px}
+.gm-teaser>small{font-size:10.5px;color:var(--dim);letter-spacing:.02em;text-align:center}
+.gm-teaser-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.gm-teaser-cell{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 6px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);min-width:0;transition:border-color .2s,transform .2s}
+.gm-teaser-cell:hover{border-color:var(--lime)}
+.gm-teaser-ic{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--lime-dim);color:var(--accent);flex-shrink:0}
+.gm-teaser-ic svg.i{width:13px;height:13px}
+.gm-teaser-cell b{font-family:var(--font-display);font-size:12px;letter-spacing:.02em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* ============================================================
+   MYSTERY BOX — прогресс-полоска + оверлей открытия сундука
+   ============================================================ */
+.gm-mb-progress{margin-top:11px;padding:11px 12px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.gm-mb-progress.ready{border-color:var(--lime);background:var(--lime-dim);box-shadow:0 0 22px rgba(154,255,0,.22);animation:gmBoostIn .4s cubic-bezier(.2,.8,.25,1)}
+.gm-mb-p-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--text)}
+.gm-mb-p-head span{display:inline-flex;align-items:center;gap:7px;font-weight:800}
+.gm-mb-p-head span svg.i{width:16px;height:16px;color:var(--accent)}
+.gm-mb-p-head b{font-family:var(--font-display);font-size:14px;letter-spacing:.03em;color:var(--accent);font-variant-numeric:tabular-nums}
+.gm-mb-progress.ready .gm-mb-p-head span svg.i{animation:gmBoostArrow 1.4s ease-in-out infinite}
+.gm-mb-p-bar{height:7px;border-radius:99px;background:var(--raised);overflow:hidden}
+.gm-mb-p-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd400,#9AFF00);transition:width .5s cubic-bezier(.2,.8,.25,1)}
+.gm-mb-progress small{font-size:10.5px;color:var(--dim);text-align:center}
+.gm-mb-progress.ready small{color:var(--text)}
+
+.gm-mb-overlay{position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s ease;pointer-events:none}
+.gm-mb-overlay.open{opacity:1;pointer-events:auto}
+.gm-mb-scrim{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.gm-mb-modal{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 20px 20px;width:min(340px,88vw);border-radius:var(--r-lg);background:var(--gm-hub-bg);border:2px solid var(--gm-hub-ink);box-shadow:0 0 60px var(--gm-lime-strong),inset 0 0 24px rgba(154,255,0,.14);transform:scale(.7);transition:transform .35s cubic-bezier(.2,1.5,.35,1);overflow:hidden}
+.gm-mb-overlay.open .gm-mb-modal{transform:scale(1)}
+.gm-mb-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;font-family:var(--font-display);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase}
+.gm-mb-tag svg.i{width:13px;height:13px}
+.gm-mb-crate{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.gm-mb-crate-glow{position:absolute;inset:-30%;border-radius:50%;background:conic-gradient(rgba(154,255,0,.55) 0 30deg,transparent 30deg 60deg,rgba(154,255,0,.55) 60deg 90deg,transparent 90deg 120deg,rgba(154,255,0,.55) 120deg 150deg,transparent 150deg 180deg,rgba(154,255,0,.55) 180deg 210deg,transparent 210deg 240deg,rgba(154,255,0,.55) 240deg 270deg,transparent 270deg 300deg,rgba(154,255,0,.55) 300deg 330deg,transparent 330deg 360deg);animation:gmMBSpin 4s linear infinite;filter:blur(6px);opacity:.7}
+.gm-mb-crate-ic{position:relative;width:88px;height:88px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#b6ff3a,#9AFF00 55%,#7fd400);color:#0a1400;box-shadow:0 12px 30px rgba(154,255,0,.35);animation:gmMBBounce .8s cubic-bezier(.2,1.5,.35,1)}
+.gm-mb-crate-ic svg.i{width:52px;height:52px}
+@keyframes gmMBSpin{to{transform:rotate(360deg)}}
+@keyframes gmMBBounce{0%{transform:scale(.4) rotate(-8deg)}55%{transform:scale(1.1) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+.gm-mb-prize{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r-md);background:var(--lime-dim);border:1px dashed var(--lime);width:100%;justify-content:center;animation:gmBoostIn .5s .35s cubic-bezier(.2,.8,.25,1) both}
+.gm-mb-prize-ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--lime);color:#0a1400;flex-shrink:0}
+.gm-mb-prize-ic svg.i{width:18px;height:18px}
+.gm-mb-prize b{font-family:var(--font-display);font-size:17px;letter-spacing:.03em;color:var(--accent);text-align:center;line-height:1.1}
+.gm-mb-sub{font-size:11px;color:var(--dim);text-align:center;line-height:1.4}
+
+/* ============================================================
+   RETENTION-БАННЕР «С возвращением»
+   ============================================================ */
+.gm-ret{display:flex;align-items:center;gap:11px;padding:12px 14px;margin-bottom:14px;border-radius:var(--r-md);border:1px solid var(--lime);background:linear-gradient(120deg,var(--lime-dim),transparent 80%);color:var(--text);animation:gmBoostIn .4s cubic-bezier(.2,.8,.25,1)}
+.gm-ret-ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--lime);color:#0a1400;flex-shrink:0;animation:gmBoostArrow 1.6s ease-in-out infinite}
+.gm-ret-ic svg.i{width:20px;height:20px}
+.gm-ret-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.gm-ret-b b{font-family:var(--font-display);font-size:15px;letter-spacing:.03em;color:var(--text)}
+.gm-ret-b small{font-size:11px;color:var(--dim)}
+.gm-ret-cta{padding:8px 14px;border-radius:99px;background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;font-weight:800;font-size:12px;letter-spacing:.03em;white-space:nowrap;flex-shrink:0;transition:transform .12s}
+.gm-ret-cta:active{transform:scale(.95)}
+.gm-ret-x{width:26px;height:26px;border-radius:50%;background:transparent;border:1px solid var(--border);color:var(--dim);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .12s,color .2s,border-color .2s}
+.gm-ret-x:hover{color:var(--text);border-color:var(--text)}
+.gm-ret-x:active{transform:scale(.9)}
+
+/* ============================================================
+   ДОСТИЖЕНИЯ — 8 бейджей сеткой 2 колонки на мобильном
+   ============================================================ */
+.gm-ach-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gm-ach-count{font-family:var(--font-display);font-size:13px;letter-spacing:.03em;color:var(--accent);padding:4px 11px;border-radius:99px;background:var(--lime-dim);border:1px solid var(--lime);font-variant-numeric:tabular-nums;margin:22px 0 12px}
+.gm-ach-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:6px}
+.gm-ach{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 12px 11px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--dim);transition:border-color .2s,background .2s,color .2s;overflow:hidden}
+.gm-ach::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(154,255,0,.14),transparent 65%);opacity:0;transition:opacity .3s}
+.gm-ach.on::before{opacity:1}
+.gm-ach.on{border-color:var(--lime);color:var(--text);background:var(--lime-dim)}
+.gm-ach-ic{position:relative;z-index:1;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--raised);color:var(--dim);margin-bottom:2px;transition:background .2s,color .2s}
+.gm-ach-ic svg.i{width:17px;height:17px}
+.gm-ach.on .gm-ach-ic{background:linear-gradient(135deg,#b6ff3a,#9AFF00);color:#0a1400;box-shadow:0 0 14px rgba(154,255,0,.35)}
+.gm-ach b{position:relative;z-index:1;font-family:var(--font-display);font-size:13px;letter-spacing:.03em;color:var(--text);line-height:1.1;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.gm-ach.on b{color:var(--accent)}
+.gm-ach small{position:relative;z-index:1;font-size:10.5px;color:var(--dim);line-height:1.35}
+.gm-ach-check{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--lime);color:#0a1400;display:flex;align-items:center;justify-content:center;z-index:2;animation:gmPop .35s cubic-bezier(.3,1.6,.4,1)}
+.gm-ach-check svg.i{width:12px;height:12px}
+.gm-ach:not(.on){opacity:.75;filter:grayscale(.3)}
+
 /* уважение к reduced-motion */
 @media (prefers-reduced-motion:reduce){
   .gm-wheel-card::before,.gm-pointer,.gm-wheel-hub,.gm-spin,.gm-boost-badge svg.i,.gm-reveal-ic,.gm-reveal-rays,
-  .gm-wheel-card.gm-jackpot,.gm-wheel-card.gm-jackpot::after,.gm-streak-chip svg.i,.gm-streak-note svg.i,.gm-odds-bar i{animation:none !important}
+  .gm-wheel-card.gm-jackpot,.gm-wheel-card.gm-jackpot::after,.gm-streak-chip svg.i,.gm-streak-note svg.i,.gm-odds-bar i,
+  .gm-cal-cell.done .gm-cal-dot svg.i,.gm-streak-block.lit .gm-cal-msg svg.i,.gm-mb-crate-glow,.gm-mb-crate-ic,.gm-ret-ic{animation:none !important}
 }
 
 /* ===== module: academy ===== */
@@ -9277,6 +9381,7 @@ nav#tabs>button.active svg.i{
       </div>
     </div>
 
+    <div id="gmRetention"></div>
     <div class="gm-boost-badge" id="gmBoostBadge" style="display:none"></div>
 
     <!-- ПРИЗОВОЕ КОЛЕСО -->
@@ -9298,6 +9403,12 @@ nav#tabs>button.active svg.i{
 
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Лидеры недели</h2>
     <div class="card" style="padding:4px 14px" id="gmLb"></div>
+
+    <div class="gm-ach-head">
+      <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Достижения</h2>
+      <span class="gm-ach-count" id="gmAchHead">0/8</span>
+    </div>
+    <div class="gm-ach-grid" id="gmAch"></div>
 
     <div class="card gm-resp">
       <svg class="i"><use href="#i-lock"/></svg>
@@ -9453,7 +9564,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.73</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.74</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -17475,7 +17586,7 @@ showTab = function(t){
 /* ---------- самоинициализация ---------- */
 regTitle('games', 'Рулетка OKO');
 addSvcTile({id:'games', label:'Рулетка OKO', ico:'gm-gift', first:true, onclick:()=>showTab('games')});
-gmMode = gmBonusClaimedToday() ? 'p100' : 'free';
+gmMode = gmCanFree() ? 'free' : 'p100';
 gmBuildWheel();
 gmRenderModes();
 gmLbEnsure();
@@ -17484,6 +17595,8 @@ gmPrizesBtnRender();
 gmTicketsRender();
 gmBoostBadge();
 gmStreakRender();
+gmAchRender();
+gmRetentionRender();
 gmUpdateBalance();
 
 /* ---------- подхват призовой скидки в оплате тарифа ----------
