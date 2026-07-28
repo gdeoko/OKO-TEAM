@@ -72,7 +72,7 @@
 .ads-camp-acts .btn.sm.stop{color:var(--danger);border-color:rgba(255,77,77,.45);background:transparent}
 .ads-camp-acts2{margin-top:8px}
 .ads-camp-acts2 .btn.sm{width:100%;gap:7px;padding:9px 8px;font-size:12px}
-.ads-camp-acts2 .btn.sm.dup{color:var(--dim);border-style:dashed}
+.ads-camp-acts2 .btn.sm.dup{color:var(--dim);border-style:solid}
 .ads-camp-acts2 .btn.sm.dup:hover{color:var(--accent);border-color:rgba(154,255,0,.45)}
 .ads-camp-acts2 .btn.sm.dup svg.i{width:14px;height:14px}
 .ads-camp-acts2.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
