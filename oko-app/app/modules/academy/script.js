@@ -2216,12 +2216,14 @@ function acOpenLesson(i){
   if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
   if(!acUnlocked(k)){ toast('Урок '+acLocalNo(k)+' откроется после предыдущего'); return; }
   acL = k; acCourse = ci;
+  if(typeof acSpeedStop==='function') acSpeedStop();
   acView = 'lesson'; acQuiz = null; acG = null; acTaskChecking = false;
   acRender();
   const m = document.querySelector('main'); if(m) m.scrollTop = 0;
 }
 /* назад: из урока → на страницу курса, со страницы курса → в каталог */
 function acBackHome(){
+  if(typeof acSpeedStop==='function') acSpeedStop();
   if(acView === 'lesson'){ acView = 'course'; acCourse = acCourseOf(acL); }
   else acView = 'home';
   acRender();
@@ -2653,15 +2655,50 @@ function acTaskSend(){
 function acShuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 /* Тип мини-игры на урок (анти-повтор: чередуется по индексу урока).
    Движки берут данные из уже готового контента урока (pairs / slides). */
-const AC_GAMES = ['pairs','order','truefalse'];
+/* Реестр движков (9). Порядок = порядок анти-повтора по индексу урока.
+   Каждый движок берёт данные из уже готового контента урока. */
+const AC_GAMES = ['pairs','order','truefalse','memory','flash','quizspeed','gap','bucket','oddquiz'];
+/* Достаточно ли данных урока для движка t. */
+function acGamePlayable(t, L){
+  const nS = (L.slides||[]).length, nQ = (L.quiz||[]).length, nP = (L.pairs||[]).length;
+  switch(t){
+    case 'pairs':    return nP >= 3;
+    case 'memory':   return nP >= 3 && nP <= 8;      // сетка карточек
+    case 'flash':    return nP >= 3;
+    case 'order':    return nS >= 3;
+    case 'gap':      return nS >= 3;
+    case 'truefalse':return nQ >= 3;
+    case 'quizspeed':return nQ >= 3;
+    case 'bucket':   return nQ >= 3;
+    case 'oddquiz':  return nQ >= 3 && (L.quiz||[]).every(q=>(q.o||[]).length>=3);
+    default:         return false;
+  }
+}
+/* Тип мини-игры урока: анти-повтор по индексу + фолбэк по доступности данных. */
 function acGameType(){
   const L = acCur();
-  let t = AC_GAMES[acL % AC_GAMES.length];
-  if(t==='order' && (!L.slides || L.slides.length < 3)) t = 'pairs';
-  if(t==='truefalse' && (!L.quiz || L.quiz.length < 3)) t = (L.slides && L.slides.length>=3) ? 'order' : 'pairs';
-  if(t==='pairs' && (!L.pairs || !L.pairs.length)) t = (L.slides && L.slides.length>=3) ? 'order' : (L.quiz&&L.quiz.length>=3?'truefalse':'pairs');
-  return t;
+  const start = acL % AC_GAMES.length;
+  for(let k=0;k<AC_GAMES.length;k++){
+    const t = AC_GAMES[(start + k) % AC_GAMES.length];
+    if(acGamePlayable(t, L)) return t;
+  }
+  // предельный фолбэк
+  if((L.pairs||[]).length) return 'pairs';
+  if((L.slides||[]).length>=3) return 'order';
+  return 'truefalse';
 }
+/* Заголовки-подписи под каждый движок (интро + «пройдено»). */
+const AC_GAME_META = {
+  pairs:    {done:'Все пары собраны',              intro:'<b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.'},
+  order:    {done:'Порядок шагов восстановлен',    intro:'<b>Расставь шаги по порядку.</b> Тапай карточки в правильной последовательности урока — верный шаг встаёт на место, неверный трясётся.'},
+  truefalse:{done:'Все утверждения разобраны',     intro:'<b>Правда или ложь.</b> Для каждого утверждения реши, верный это ответ или нет. Ошибся — покажем, как на самом деле.'},
+  memory:   {done:'Все карточки открыты',          intro:'<b>Мемори.</b> Открывай по две карточки и находи пары «понятие ↔ значение». Запоминай, где что лежит.'},
+  flash:    {done:'Карточки повторены',            intro:'<b>Флеш-карточки.</b> Смотри понятие, вспомни значение и переверни карточку. Отметь честно: знал или нет.'},
+  quizspeed:{done:'Блиц пройден',                  intro:'<b>Блиц на скорость.</b> На каждый вопрос — несколько секунд. Отвечай быстро и верно, пока идёт таймер.'},
+  gap:      {done:'Пропуски заполнены',            intro:'<b>Заполни пропуск.</b> В тезисе урока пропущено ключевое слово — выбери верное из вариантов.'},
+  bucket:   {done:'Всё разложено по полкам',       intro:'<b>Правда / Ложь по полкам.</b> Разложи все утверждения в две колонки, затем проверь себя разом.'},
+  oddquiz:  {done:'Лишнее убрано',                 intro:'<b>Убери неверное.</b> В каждом вопросе вычёркивай неверные варианты — пока не останется единственный правильный.'}
+};
 function acGameFinish(wrong){
   const ls = acLS(); ls.gameWrong = wrong;
   if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
@@ -2672,26 +2709,29 @@ function acRenderGameBox(){
   const box = document.getElementById('acGameBox');
   if(!box) return;
   const t = acGameType(), ls = acLS();
+  const meta = AC_GAME_META[t] || AC_GAME_META.pairs;
   if(!acG){
     if(ls.game){
-      const label = t==='order' ? 'Порядок шагов восстановлен' : t==='truefalse' ? 'Все утверждения разобраны' : 'Все пары собраны';
       box.innerHTML = `<div class="ac-game-done"><div class="big">${I('check2')}</div>
-         <p>${label}${ls.gameWrong!==null&&ls.gameWrong!==undefined?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
+         <p>${meta.done}${ls.gameWrong!==null&&ls.gameWrong!==undefined?` · ошибок: ${ls.gameWrong}`:''}. Материал урока — в связке.</p>
          <button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button></div>`;
     } else {
-      const intro = t==='order'
-        ? '<b>Расставь шаги по порядку.</b> Тапай карточки в правильной последовательности урока — верный шаг встаёт на место, неверный трясётся.'
-        : t==='truefalse'
-        ? '<b>Правда или ложь.</b> Для каждого утверждения реши, верный это ответ или нет. Ошибся — покажем, как на самом деле.'
-        : '<b>Сопоставь пары.</b> Тапни элемент слева, затем его пару справа. Верная пара улетает, неверная — трясётся.';
-      box.innerHTML = `<p style="font-size:13.5px;line-height:1.55">${intro}</p><div style="height:12px"></div>
+      box.innerHTML = `<p style="font-size:13.5px;line-height:1.55">${meta.intro}</p><div style="height:12px"></div>
          <button class="btn" onclick="acGameStart()">${I('play')} Играть</button>`;
     }
     return;
   }
-  if(acG.type === 'order') return acRenderOrder(box);
-  if(acG.type === 'truefalse') return acRenderTF(box);
-  return acRenderPairs(box);
+  switch(acG.type){
+    case 'order':     return acRenderOrder(box);
+    case 'truefalse': return acRenderTF(box);
+    case 'memory':    return acRenderMemory(box);
+    case 'flash':     return acRenderFlash(box);
+    case 'quizspeed': return acRenderSpeed(box);
+    case 'gap':       return acRenderGap(box);
+    case 'bucket':    return acRenderBucket(box);
+    case 'oddquiz':   return acRenderOdd(box);
+    default:          return acRenderPairs(box);
+  }
 }
 function acRenderPairs(box){
   const pairs = acCur().pairs;
@@ -2730,14 +2770,15 @@ function acOrderPick(i){
     else acRenderOrder(document.getElementById('acGameBox'));
   }
 }
+function acStripTags(s){ return String(s).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim(); }
 function acGameStart(){
-  const t = acGameType();
+  acSpeedStop();                                // на всякий случай гасим прошлый таймер блица
+  const L = acCur(), t = acGameType();
   if(t === 'order'){
-    const idx = acCur().slides.map((_,i)=>i);
+    const idx = L.slides.map((_,i)=>i);
     acG = {type:'order', pool:acShuffle(idx), next:0, wrong:0, lock:false};
   } else if(t === 'truefalse'){
-    const q = acCur().quiz;
-    const items = q.map(it=>{
+    const items = L.quiz.map(it=>{
       const showTrue = Math.random() < 0.5;
       if(showTrue) return {text:it.q, opt:it.o[it.a], isTrue:true};
       const wrongs = it.o.map((o,k)=>k).filter(k=>k!==it.a);
@@ -2746,11 +2787,61 @@ function acGameStart(){
     });
     const order = acShuffle(items.map((_,i)=>i));
     acG = {type:'truefalse', items:order.map(i=>items[i]), cur:0, wrong:0, lock:false};
+  } else if(t === 'memory'){
+    // карточки: по 2 на пару (понятие + значение), общий id пары
+    const cards = [];
+    L.pairs.forEach((p,pid)=>{ cards.push({pid,txt:acStripTags(p[0])}); cards.push({pid,txt:acStripTags(p[1])}); });
+    acG = {type:'memory', cards:acShuffle(cards), open:[], matched:{}, hits:0, wrong:0, lock:false};
+  } else if(t === 'flash'){
+    const order = acShuffle(L.pairs.map((_,i)=>i));
+    acG = {type:'flash', order, cur:0, flip:false, wrong:0};
+  } else if(t === 'quizspeed'){
+    const order = acShuffle(L.quiz.map((_,i)=>i));
+    acG = {type:'quizspeed', order:order.map(i=>L.quiz[i]), cur:0, wrong:0, lock:false, tl:0, per:12};
+  } else if(t === 'gap'){
+    acG = {type:'gap', items:acBuildGap(L), cur:0, wrong:0, lock:false};
+  } else if(t === 'bucket'){
+    const items = L.quiz.map(it=>{
+      const showTrue = Math.random() < 0.5;
+      const opt = showTrue ? it.o[it.a] : it.o[it.o.map((_,k)=>k).filter(k=>k!==it.a)[Math.floor(Math.random()*(it.o.length-1))]];
+      return {text:acStripTags(it.q), opt:acStripTags(opt), isTrue:showTrue, placed:null};
+    });
+    acG = {type:'bucket', items:acShuffle(items), wrong:0, done:false};
+  } else if(t === 'oddquiz'){
+    const order = acShuffle(L.quiz.map((_,i)=>i));
+    acG = {type:'oddquiz', q:order.map(i=>L.quiz[i]), cur:0, wrong:0, lock:false, dead:{}};
   } else {
-    const idx = acCur().pairs.map((_,i)=>i);
+    const idx = L.pairs.map((_,i)=>i);
     acG = {type:'pairs', left:idx.slice(), right:acShuffle(idx), sel:null, hits:0, wrong:0, lock:false};
   }
   acRenderGameBox();
+  if(acG.type === 'quizspeed') acSpeedTick(true);
+}
+/* Построение заданий «заполни пропуск» из тезисов слайдов + дистракторов из теста. */
+function acBuildGap(L){
+  const STOP = new Set(['этого','который','которые','которых','чтобы','более','менее','также','когда','только','нужно','можно','будет','через','между','каждый','любой','очень','просто','сразу','потом','затем','около']);
+  const distractPool = [];
+  (L.quiz||[]).forEach(q=>(q.o||[]).forEach(o=>{ const w=acStripTags(o).split(/\s+/).filter(x=>x.length>4&&/^[А-Яа-яA-Za-z]+$/.test(x)); distractPool.push(...w); }));
+  const items = [];
+  (L.slides||[]).forEach(s=>{
+    (s.pts||[]).forEach(pt=>{
+      const clean = acStripTags(pt);
+      const words = clean.split(/\s+/);
+      const cand = words.map((w,idx)=>({w:w.replace(/[.,:;!?«»()"]/g,''),idx})).filter(o=>o.w.length>5 && /^[А-Яа-яA-Za-z-]+$/.test(o.w) && !STOP.has(o.w.toLowerCase()));
+      if(!cand.length || words.length < 6) return;
+      const pick = cand[Math.floor(Math.random()*cand.length)];
+      const answer = pick.w;
+      const distr = acShuffle(distractPool.filter(d=>d.toLowerCase()!==answer.toLowerCase()));
+      const opts = [answer];
+      for(const d of distr){ if(opts.length>=4) break; if(!opts.some(o=>o.toLowerCase()===d.toLowerCase())) opts.push(d); }
+      // подстрахуемся: если дистракторов мало — берём слова из этого же тезиса
+      for(const o of cand){ if(opts.length>=3) break; if(o.w.toLowerCase()!==answer.toLowerCase() && !opts.some(x=>x.toLowerCase()===o.w.toLowerCase())) opts.push(o.w); }
+      if(opts.length < 3) return;
+      const shown = words.map((w,idx)=> idx===pick.idx ? '<span class="gap-blank">•••</span>' : w).join(' ');
+      items.push({html:shown, answer, opts:acShuffle(opts)});
+    });
+  });
+  return acShuffle(items).slice(0, 6);   // до 6 пропусков
 }
 function acRenderTF(box){
   const it = acG.items[acG.cur];
@@ -2818,6 +2909,207 @@ function acGMatch(i){
       acG.lock = false; acG.sel = null;
       acRenderGameBox();
     }, 460);
+  }
+}
+
+/* ---------- МЕМОРИ: открывай пары карточек ---------- */
+function acRenderMemory(box){
+  const cards = acG.cards.map((c,i)=>{
+    const open = acG.open.includes(i), done = acG.matched[i];
+    const cls = done ? 'done' : open ? 'open' : '';
+    return `<button class="ac-mem-card ${cls}" id="acMem${i}" onclick="acMemFlip(${i})">
+      <span class="face back"><svg class="i"><use href="#i-logo"/></svg></span>
+      <span class="face front">${esc(c.txt)}</span></button>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Пары: <b>${acG.hits} / ${acG.cards.length/2}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-mem-grid">${cards}</div>`;
+}
+function acMemFlip(i){
+  if(!acG || acG.lock || acG.matched[i] || acG.open.includes(i)) return;
+  acG.open.push(i);
+  acRenderMemory(document.getElementById('acGameBox'));
+  if(acG.open.length < 2) return;
+  const [a,b] = acG.open;
+  acG.lock = true;
+  if(acG.cards[a].pid === acG.cards[b].pid && a !== b){
+    setTimeout(()=>{
+      acG.matched[a] = acG.matched[b] = true; acG.open = []; acG.hits++; acG.lock = false;
+      if(acG.hits >= acG.cards.length/2){ acGameFinish(acG.wrong); return; }
+      acRenderMemory(document.getElementById('acGameBox'));
+    }, 460);
+  } else {
+    acG.wrong++;
+    const ea=document.getElementById('acMem'+a), eb=document.getElementById('acMem'+b);
+    if(ea) ea.classList.add('miss'); if(eb) eb.classList.add('miss');
+    setTimeout(()=>{ acG.open = []; acG.lock = false; acRenderMemory(document.getElementById('acGameBox')); }, 720);
+  }
+}
+/* ---------- ФЛЕШ-КАРТОЧКИ: понятие → значение, самооценка ---------- */
+function acRenderFlash(box){
+  const p = acCur().pairs[acG.order[acG.cur]];
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Карточка: <b>${acG.cur+1} / ${acG.order.length}</b></span><span>не вспомнил: <b>${acG.wrong}</b></span></div>
+    <div class="ac-flash ${acG.flip?'flip':''}" id="acFlash" onclick="acFlashFlip()">
+      <div class="ac-flash-in">
+        <div class="ac-flash-face front"><span class="tag">Понятие</span><div class="t">${esc(acStripTags(p[0]))}</div><span class="hint">Вспомни значение и переверни</span></div>
+        <div class="ac-flash-face back"><span class="tag">Значение</span><div class="t">${esc(acStripTags(p[1]))}</div></div>
+      </div>
+    </div>
+    ${acG.flip ? `<div class="ac-flash-btns">
+      <button class="ac-tf-btn no" onclick="acFlashMark(false)">Не вспомнил</button>
+      <button class="ac-tf-btn yes" onclick="acFlashMark(true)">Знал</button>
+    </div>` : `<div style="height:6px"></div><p class="dim" style="text-align:center;font-size:12px">Тапни карточку, чтобы перевернуть</p>`}`;
+}
+function acFlashFlip(){ if(!acG) return; acG.flip = !acG.flip; acRenderFlash(document.getElementById('acGameBox')); }
+function acFlashMark(known){
+  if(!acG) return;
+  if(!known) acG.wrong++;
+  acG.cur++; acG.flip = false;
+  if(acG.cur >= acG.order.length){ acGameFinish(acG.wrong); return; }
+  acRenderFlash(document.getElementById('acGameBox'));
+}
+/* ---------- БЛИЦ: тест на скорость с таймером ---------- */
+let acSpeedTimer = null;
+function acSpeedStop(){ if(acSpeedTimer){ clearInterval(acSpeedTimer); acSpeedTimer = null; } }
+function acSpeedTick(reset){
+  if(!acG || acG.type!=='quizspeed') { acSpeedStop(); return; }
+  if(reset){ acG.tl = acG.per; }
+  acSpeedStop();
+  acSpeedTimer = setInterval(()=>{
+    if(!acG || acG.type!=='quizspeed'){ acSpeedStop(); return; }
+    acG.tl -= 0.1;
+    const fill = document.getElementById('acSpeedFill');
+    if(fill) fill.style.width = Math.max(0, acG.tl/acG.per*100) + '%';
+    const tm = document.getElementById('acSpeedTime');
+    if(tm) tm.textContent = Math.max(0, Math.ceil(acG.tl)) + 'с';
+    if(acG.tl <= 0){ acSpeedStop(); acSpeedAnswer(-1); }
+  }, 100);
+}
+function acRenderSpeed(box){
+  const it = acG.order[acG.cur];
+  if(!it){ acGameFinish(acG.wrong); return; }
+  const opts = it.o.map((o,k)=>`<button class="ac-speed-opt" id="acSp${k}" onclick="acSpeedAnswer(${k})">${esc(acStripTags(o))}</button>`).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Вопрос: <b>${acG.cur+1} / ${acG.order.length}</b></span><span>ошибок: <b>${acG.wrong}</b> · <b id="acSpeedTime">${acG.per}с</b></span></div>
+    <div class="ac-speed-bar"><i id="acSpeedFill" style="width:${Math.max(0,acG.tl/acG.per*100)}%"></i></div>
+    <div class="ac-speed-q">${esc(acStripTags(it.q))}</div>
+    <div class="ac-speed-opts">${opts}</div>`;
+}
+function acSpeedAnswer(k){
+  if(!acG || acG.lock) return;
+  acSpeedStop(); acG.lock = true;
+  const it = acG.order[acG.cur], correct = it.a;
+  const ce = document.getElementById('acSp'+correct); if(ce) ce.classList.add('ok');
+  if(k !== correct){ acG.wrong++; const we = document.getElementById('acSp'+k); if(we) we.classList.add('bad'); }
+  setTimeout(()=>{
+    acG.cur++; acG.lock = false;
+    if(acG.cur >= acG.order.length){ acGameFinish(acG.wrong); return; }
+    acG.tl = acG.per; acRenderSpeed(document.getElementById('acGameBox')); acSpeedTick(true);
+  }, k===correct ? 420 : 900);
+}
+/* ---------- ЗАПОЛНИ ПРОПУСК ---------- */
+function acRenderGap(box){
+  const it = acG.items[acG.cur];
+  if(!it){ acGameFinish(acG.wrong); return; }
+  const opts = it.opts.map((o,k)=>`<button class="ac-gap-opt" id="acGap${k}" onclick="acGapPick(${k})">${esc(o)}</button>`).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Пропуск: <b>${acG.cur+1} / ${acG.items.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-gap-sent">${it.html}</div>
+    <div class="ac-gap-opts">${opts}</div>`;
+}
+function acGapPick(k){
+  if(!acG || acG.lock) return;
+  const it = acG.items[acG.cur], chosen = it.opts[k];
+  acG.lock = true;
+  const el = document.getElementById('acGap'+k);
+  if(chosen.toLowerCase() === it.answer.toLowerCase()){
+    if(el) el.classList.add('ok');
+    const blank = document.querySelector('#acGameBox .gap-blank'); if(blank){ blank.textContent = it.answer; blank.classList.add('filled'); }
+    setTimeout(()=>{ acG.cur++; acG.lock=false; if(acG.cur>=acG.items.length){ acGameFinish(acG.wrong); return; } acRenderGap(document.getElementById('acGameBox')); }, 620);
+  } else {
+    acG.wrong++;
+    if(el) el.classList.add('bad');
+    setTimeout(()=>{ if(el) el.classList.remove('bad'); acG.lock=false; }, 480);
+  }
+}
+/* ---------- ПРАВДА/ЛОЖЬ ПО ПОЛКАМ ---------- */
+function acRenderBucket(box){
+  const chips = acG.items.map((it,i)=> it.placed===null
+    ? `<button class="ac-bkt-chip" id="acBkt${i}" onclick="acBucketPick(${i})">${esc(it.text)}: <b>${esc(it.opt)}</b></button>` : '').join('');
+  const col = (val)=> acG.items.map((it,i)=> it.placed===val
+    ? `<button class="ac-bkt-item ${acG.done?(it.isTrue===(val==='t')?'ok':'bad'):''}" onclick="${acG.done?'':`acBucketUnplace(${i})`}">${esc(it.text)}: <b>${esc(it.opt)}</b></button>` : '').join('');
+  const remaining = acG.items.some(it=>it.placed===null);
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Разложи все утверждения</span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-bkt-pool">${chips || '<span class="dim" style="font-size:12px">Все разложены — проверь себя</span>'}</div>
+    <div class="ac-bkt-cols">
+      <div class="ac-bkt-col t"><div class="h">${I('check2')} Правда</div>${col('t')||'<span class="ph">выбери сюда</span>'}</div>
+      <div class="ac-bkt-col f"><div class="h">${I('flag')} Ложь</div>${col('f')||'<span class="ph">выбери сюда</span>'}</div>
+    </div>
+    ${!acG.done ? `<div style="height:10px"></div><button class="btn" ${remaining?'disabled style="opacity:.5"':''} onclick="acBucketCheck()">Проверить</button>` : `<div style="height:8px"></div><button class="btn ghost" onclick="acGameStart()">Сыграть ещё раз</button>`}`;
+}
+let acBktSel = null;
+function acBucketPick(i){
+  // тап-модель: тап по чипу выбирает, затем тап по колонке кладёт
+  acBktSel = i;
+  const chip = document.getElementById('acBkt'+i);
+  document.querySelectorAll('#acGameBox .ac-bkt-chip').forEach(c=>c.classList.remove('sel'));
+  if(chip){ chip.classList.add('sel');
+    // показать подсказку выбора колонок прямо через быстрые кнопки
+  }
+  // авто-раскладка через две кнопки-колонки: навесим обработчик на клик по колонкам
+  const cols = document.querySelectorAll('#acGameBox .ac-bkt-col');
+  cols.forEach(c=>{ c.onclick = ()=>{ if(acBktSel===null) return; acG.items[acBktSel].placed = c.classList.contains('t')?'t':'f'; acBktSel=null; acRenderBucket(document.getElementById('acGameBox')); }; });
+}
+function acBucketUnplace(i){ if(acG.done) return; acG.items[i].placed = null; acRenderBucket(document.getElementById('acGameBox')); }
+function acBucketCheck(){
+  if(acG.items.some(it=>it.placed===null)) return;
+  acG.wrong = acG.items.filter(it=> (it.placed==='t') !== it.isTrue).length;
+  acG.done = true;
+  acRenderBucket(document.getElementById('acGameBox'));
+  const ls = acLS(); ls.gameWrong = acG.wrong;
+  if(!ls.game){ ls.game = true; toast('Мини-игра пройдена · +20% к уроку'); }
+  acSave(); acRenderProgressBox(); acRenderCertBox(); acBadgeSync(); acAfterCheckpoint();
+}
+/* ---------- УБЕРИ НЕВЕРНОЕ ---------- */
+function acRenderOdd(box){
+  const it = acG.q[acG.cur];
+  if(!it){ acGameFinish(acG.wrong); return; }
+  const dead = acG.dead[acG.cur] || {};
+  const alive = it.o.map((_,k)=>k).filter(k=>!dead[k]);
+  const opts = it.o.map((o,k)=>{
+    if(dead[k]) return `<button class="ac-odd-opt dead" disabled>${esc(acStripTags(o))}</button>`;
+    const last = alive.length===1;
+    return `<button class="ac-odd-opt ${last&&k===it.a?'ok':''}" onclick="acOddPick(${k})">${esc(acStripTags(o))}</button>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="ac-game-score"><span>Вопрос: <b>${acG.cur+1} / ${acG.q.length}</b></span><span>ошибок: <b>${acG.wrong}</b></span></div>
+    <div class="ac-odd-q">${esc(acStripTags(it.q))}</div>
+    <p class="dim" style="font-size:12px;margin:2px 0 8px">Вычёркивай неверные варианты</p>
+    <div class="ac-odd-opts">${opts}</div>`;
+}
+function acOddPick(k){
+  if(!acG || acG.lock) return;
+  const it = acG.q[acG.cur];
+  if(!acG.dead[acG.cur]) acG.dead[acG.cur] = {};
+  if(k === it.a){
+    // попытались убрать правильный — ошибка, трясём
+    acG.wrong++; acG.lock = true;
+    const el = document.querySelectorAll('#acGameBox .ac-odd-opt')[k]; if(el) el.classList.add('shake');
+    toast('Это верный ответ — его убирать нельзя');
+    setTimeout(()=>{ if(el) el.classList.remove('shake'); acG.lock=false; }, 480);
+    return;
+  }
+  acG.dead[acG.cur][k] = true;
+  const alive = it.o.map((_,i)=>i).filter(i=>!acG.dead[acG.cur][i]);
+  if(alive.length === 1){
+    // остался правильный — следующий вопрос
+    acG.lock = true;
+    acRenderOdd(document.getElementById('acGameBox'));
+    setTimeout(()=>{ acG.cur++; acG.lock=false; if(acG.cur>=acG.q.length){ acGameFinish(acG.wrong); return; } acRenderOdd(document.getElementById('acGameBox')); }, 640);
+  } else {
+    acRenderOdd(document.getElementById('acGameBox'));
   }
 }
 

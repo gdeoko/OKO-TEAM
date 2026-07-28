@@ -562,3 +562,71 @@
 @keyframes acIcoFloat{0%,100%{transform:scale(1.05) translateY(0)}50%{transform:scale(1.05) translateY(-6px)}}
 .ac-slide.cur h3{animation:acH3In .5s cubic-bezier(.25,1,.4,1) both}
 @keyframes acH3In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ================= НОВЫЕ ИГРОВЫЕ ДВИЖКИ ================= */
+/* — Мемори — */
+.ac-mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:380px){.ac-mem-grid{grid-template-columns:repeat(3,1fr)}}
+.ac-mem-card{position:relative;aspect-ratio:3/4;border:none;background:none;padding:0;cursor:pointer;perspective:600px}
+.ac-mem-card .face{position:absolute;inset:0;border-radius:11px;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;font-size:10.5px;font-weight:600;line-height:1.2;backface-visibility:hidden;transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .2s;border:1px solid var(--border)}
+.ac-mem-card .back{background:var(--raised);color:var(--accent)}
+.ac-mem-card .back svg.i{width:26px;height:26px;opacity:.5}
+.ac-mem-card .front{background:var(--lime-dim);color:var(--text);transform:rotateY(180deg);overflow:hidden}
+.ac-mem-card.open .back,.ac-mem-card.done .back{transform:rotateY(180deg)}
+.ac-mem-card.open .front,.ac-mem-card.done .front{transform:rotateY(360deg)}
+.ac-mem-card.done .front{border-color:var(--lime);background:var(--lime);color:#000;box-shadow:0 0 14px rgba(154,255,0,.3)}
+.ac-mem-card.miss .front{border-color:var(--danger);background:rgba(255,77,77,.14);animation:acShake .4s}
+.ac-mem-card:active{transform:scale(.96)}
+/* — Флеш-карточки — */
+.ac-flash{perspective:1100px;cursor:pointer;margin-bottom:12px}
+.ac-flash-in{position:relative;width:100%;min-height:168px;transition:transform .5s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.ac-flash.flip .ac-flash-in{transform:rotateY(180deg)}
+.ac-flash-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;border:1px solid var(--border);background:var(--raised);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;gap:10px}
+.ac-flash-face.back{transform:rotateY(180deg);background:var(--lime-dim);border-color:rgba(154,255,0,.4)}
+.ac-flash-face .tag{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.ac-flash-face .t{font-size:17px;font-weight:700;line-height:1.32;color:var(--text)}
+.ac-flash-face .hint{font-size:11px;color:var(--dim)}
+.ac-flash-btns{display:flex;gap:12px}
+/* — Блиц — */
+.ac-speed-bar{height:7px;border-radius:99px;background:var(--raised);overflow:hidden;margin-bottom:12px}
+.ac-speed-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),#c6ff5a);border-radius:99px;transition:width .1s linear}
+.ac-speed-q{font-size:15.5px;font-weight:700;line-height:1.36;margin-bottom:12px}
+.ac-speed-opts{display:grid;gap:8px}
+.ac-speed-opt{width:100%;text-align:left;padding:13px 15px;border-radius:12px;border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.03));color:var(--text);font-size:13px;font-weight:600;line-height:1.3;transition:transform .12s,border-color .15s,background .15s}
+.ac-speed-opt:hover{border-color:var(--accent);transform:translateX(3px)}
+.ac-speed-opt.ok{border-color:var(--lime);background:rgba(154,255,0,.14);color:var(--accent)}
+.ac-speed-opt.bad{border-color:var(--danger);background:rgba(255,77,77,.1);color:var(--danger);animation:acShake .4s}
+/* — Заполни пропуск — */
+.ac-gap-sent{font-size:15px;line-height:1.7;margin-bottom:14px;padding:15px;border-radius:14px;background:var(--raised);border:1px solid var(--border)}
+.gap-blank{display:inline-block;min-width:52px;text-align:center;padding:1px 10px;border-radius:7px;background:var(--lime-dim);color:var(--accent);font-weight:800;letter-spacing:.06em;border-bottom:2px solid var(--accent)}
+.gap-blank.filled{background:var(--lime);color:#000;border-bottom-color:var(--lime)}
+.ac-gap-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ac-gap-opt{padding:12px 10px;border-radius:11px;border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.03));color:var(--text);font-size:13px;font-weight:700;transition:transform .12s,border-color .15s,background .15s}
+.ac-gap-opt:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ac-gap-opt.ok{border-color:var(--lime);background:var(--lime);color:#000}
+.ac-gap-opt.bad{border-color:var(--danger);background:rgba(255,77,77,.1);color:var(--danger);animation:acShake .4s}
+/* — Правда/Ложь по полкам — */
+.ac-bkt-pool{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;min-height:20px}
+.ac-bkt-chip{padding:9px 12px;border-radius:11px;border:1px solid var(--line);background:var(--raised);color:var(--text);font-size:11.5px;font-weight:600;line-height:1.3;text-align:left;transition:border-color .15s,transform .12s}
+.ac-bkt-chip.sel{border-color:var(--accent);background:var(--lime-dim);color:var(--accent);box-shadow:0 0 12px rgba(154,255,0,.2)}
+.ac-bkt-chip b{color:var(--accent);font-weight:800}
+.ac-bkt-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ac-bkt-col{border:1px dashed var(--border);border-radius:14px;padding:10px;min-height:90px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.ac-bkt-col.t{border-color:rgba(154,255,0,.3)}
+.ac-bkt-col.f{border-color:rgba(255,77,77,.28)}
+.ac-bkt-col .h{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+.ac-bkt-col.t .h{color:var(--accent)}
+.ac-bkt-col .h svg.i{width:13px;height:13px}
+.ac-bkt-col .ph{font-size:11px;color:var(--dim);opacity:.6;text-align:center;margin:auto 0}
+.ac-bkt-item{padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--card2,rgba(255,255,255,.03));color:var(--text);font-size:11px;font-weight:600;line-height:1.25;text-align:left}
+.ac-bkt-item b{font-weight:800}
+.ac-bkt-item.ok{border-color:var(--lime);background:rgba(154,255,0,.12)}
+.ac-bkt-item.bad{border-color:var(--danger);background:rgba(255,77,77,.1);color:var(--danger)}
+/* — Убери неверное — */
+.ac-odd-q{font-size:15px;font-weight:700;line-height:1.36}
+.ac-odd-opts{display:grid;gap:8px}
+.ac-odd-opt{width:100%;text-align:left;padding:13px 15px;border-radius:12px;border:1px solid var(--line);background:var(--card2,rgba(255,255,255,.03));color:var(--text);font-size:13px;font-weight:600;line-height:1.3;transition:transform .15s,opacity .3s,border-color .15s}
+.ac-odd-opt:hover{border-color:var(--danger);transform:translateX(3px)}
+.ac-odd-opt.dead{opacity:.32;text-decoration:line-through;pointer-events:none;border-style:dashed}
+.ac-odd-opt.ok{border-color:var(--lime);background:var(--lime);color:#000;font-weight:800}
+.ac-odd-opt.shake{animation:acShake .4s;border-color:var(--danger)}
