@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Надёжный прямой постер (обход зависающего publish_next). Usage: post_direct.py <NNN>
-import os,sys,json,base64,subprocess
+import shlex, os,sys,json,base64,subprocess
 BASE="/opt/oko-poster"; nn=sys.argv[1]
 d=f"{BASE}/queue/{nn}"; mp=f"{d}/meta.json"
 m=json.load(open(mp)); done=m.setdefault("_done",{})
@@ -21,7 +21,7 @@ open(f"{d}/ytdesc","w").write(m["yt_desc"])
 capb64=base64.b64encode(m["caption"].encode()).decode()
 # YouTube
 if not done.get("youtube"):
-    o=run(f'YT_CREDS_FILE={BAT["yt"]} python3 yt_upload.py {d}/reel.mp4 {json.dumps(m["title"])} {d}/ytdesc {d}/cover.jpg',120)
+    o=run(f'YT_CREDS_FILE={BAT["yt"]} python3 yt_upload.py {d}/reel.mp4 {shlex.quote(m["title"])} {d}/ytdesc {d}/cover.jpg',120)
     vid=next((l.split()[1] for l in o.splitlines() if l.startswith("VIDEO_ID")),"")
     if vid: done["youtube"]=vid; json.dump(m,open(mp,"w"),ensure_ascii=False); print("YT",batch,vid)
     else: print("YT FAIL",o[-150:])
