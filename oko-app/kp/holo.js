@@ -52,10 +52,19 @@ export function initHolo(){
   // EYE (GLB) — one mesh serves hero + clone anchors
   let eyeMesh=null; const eyeAnchors=['holoEye','holoEye2'].map(id=>document.getElementById(id)).filter(Boolean);
   function eyeReady(){ window.__eyeReady=true; try{dispatchEvent(new Event('eye-ready'));}catch(e){} }
-  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb',g=>{eyeMesh=g.scene;const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
+  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb',g=>{eyeMesh=g.scene;
+    // ЧИСТЫЙ ЛАЙМ без запечённой чёрной обводки: заменяем baseColor на брендовый цвет, оставляем normalMap
+    eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
+      const nm=o.material.normalMap||null;
+      o.material=new THREE.MeshStandardMaterial({
+        color:new THREE.Color(0x9AFF00), emissive:new THREE.Color(0x5FBF00), emissiveIntensity:.55,
+        metalness:.28, roughness:.34, normalMap:nm, side:THREE.DoubleSide });
+      o.material.needsUpdate=true; } });
+    const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
   else eyeReady();
 
-  makeSprite('holoHand','kp-media/fig/hand_sheet.webp',6,6,36,450/253,{progType:'hand',fit:'width',slide:true,rotZ:-1.15});
+  // рука уже повернута в самом спрайте (запястье слева, ладонь вверх, пальцы вправо) — 440x243
+  makeSprite('holoHand','kp-media/fig/hand_sheet.webp',6,6,36,440/243,{progType:'hand',fit:'width',slide:true});
   makeSprite('holoWoman','kp-media/fig/woman_sheet.webp',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
@@ -68,8 +77,12 @@ export function initHolo(){
     // EYE (interactive hero centrepiece)
     if(eyeMesh&&eyeAnchors.length){const grp=eyeMesh.userData.grp;let best=null,bd=1e9;
       for(const an of eyeAnchors){const r=an.getBoundingClientRect();if(r.bottom>-120&&r.top<H+120){const cy=r.top+r.height/2;const d=Math.abs(cy-H/2);if(d<bd){bd=d;best=r;}}}
-      if(best){const P=rectPos(best);grp.visible=true;grp.position.set(P.x,P.y+Math.sin(time*1.0)*4,0);const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9;grp.scale.setScalar(sc);
-        eyeMesh.rotation.y=ptr.x*0.55+Math.sin(time/2.8)*0.10;eyeMesh.rotation.x=ptr.y*0.35+Math.cos(time/3.2)*0.05;}
+      if(best){const P=rectPos(best);grp.visible=true;
+        // глаз ВЕДЁТСЯ за пальцем: и поворот, и лёгкое смещение к курсору
+        grp.position.set(P.x+ptr.x*P.w*0.06, P.y+Math.sin(time*1.0)*4 - ptr.y*P.h*0.05, 0);
+        const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9;grp.scale.setScalar(sc);
+        eyeMesh.rotation.y=ptr.x*1.05+Math.sin(time/2.8)*0.08;eyeMesh.rotation.x=ptr.y*0.75+Math.cos(time/3.2)*0.04;
+        window.__eyeRotY=eyeMesh.rotation.y;}
       else grp.visible=false;}
     // SPRITE FIGURES — part of background: scroll-tied frame + position, tiny breath, no springy motion
     for(const f of figs){const r=f.anchor.getBoundingClientRect();const P=rectPos(r);f.grp.visible=P.vis;if(!P.vis)continue;

@@ -16,10 +16,30 @@
 </script>
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
-/* CSS-АНИМАЦИОННЫЙ фон: статичные кубы + 3 плавающих лаймовых свечения + slow zoom-drift */
-#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505 url('kp-media/bg/cubes_land.webp') center/cover no-repeat;opacity:.9;animation:bgDrift 40s ease-in-out infinite alternate}
-@media(max-width:760px){#cubes-bg{background-image:url('kp-media/bg/cubes_port.webp')}}
-@keyframes bgDrift{0%{transform:scale(1) translate(0,0);filter:brightness(1)}50%{transform:scale(1.06) translate(-1.2%,-.8%);filter:brightness(1.08)}100%{transform:scale(1.03) translate(1%,.6%);filter:brightness(1.03)}}
+/* ЧИСТО CSS фон: сетка объёмных квадратов + мягкая подсветка, ноль картинок и WebGL */
+#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505;overflow:hidden}
+#cubes-bg::before{content:'';position:absolute;inset:-20%;
+  background-image:
+    linear-gradient(rgba(154,255,0,.11) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(154,255,0,.11) 1px,transparent 1px),
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:132px 132px,132px 132px,44px 44px,44px 44px;
+  animation:gridPan 46s linear infinite;
+  -webkit-mask-image:radial-gradient(ellipse 78% 68% at 50% 42%,#000 25%,rgba(0,0,0,.55) 62%,transparent 88%);
+  mask-image:radial-gradient(ellipse 78% 68% at 50% 42%,#000 25%,rgba(0,0,0,.55) 62%,transparent 88%)}
+#cubes-bg::after{content:'';position:absolute;inset:-20%;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.05) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.5) 75%),
+    linear-gradient(135deg,rgba(255,255,255,.05) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.5) 75%);
+  background-size:132px 132px;background-position:0 0,66px 66px;
+  animation:gridPan 46s linear infinite;opacity:.7;
+  -webkit-mask-image:radial-gradient(ellipse 78% 68% at 50% 42%,#000 20%,transparent 80%);
+  mask-image:radial-gradient(ellipse 78% 68% at 50% 42%,#000 20%,transparent 80%)}
+@keyframes gridPan{to{transform:translate3d(132px,132px,0)}}
+@media(max-width:760px){#cubes-bg::before,#cubes-bg::after{background-size:88px 88px,88px 88px,30px 30px,30px 30px}
+  #cubes-bg::after{background-size:88px 88px;background-position:0 0,44px 44px}
+  @keyframes gridPan{to{transform:translate3d(88px,88px,0)}}}
 #bg-glows{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
 #bg-glows i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform,opacity}
 #bg-glows .g1{width:60vmin;height:60vmin;left:-10vmin;top:5vmin;background:radial-gradient(circle,rgba(154,255,0,.18),transparent 70%);animation:glDrift1 22s ease-in-out infinite alternate}
@@ -109,7 +129,7 @@ section{position:relative;z-index:1;padding:30px 0}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important;transition:none}}
 .creveal .ch{opacity:.14;transition:opacity .5s}.creveal.on .ch{opacity:1}
 /* HERO — один экран */
-.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:88px 24px 40px;position:relative}
+.hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 20px;position:relative}
 .eye-wrap{position:relative;width:min(300px,64vw);height:min(300px,64vw);margin-bottom:2px;display:flex;align-items:center;justify-content:center;will-change:transform}
 .eye-wrap::before{content:'';position:absolute;width:150%;height:150%;left:-25%;top:-25%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.6),rgba(154,255,0,.22) 32%,rgba(120,220,10,.08) 55%,transparent 72%);filter:blur(48px);z-index:0;animation:glowpulse 4s ease-in-out infinite;will-change:transform,opacity}
 .eye-wrap::after{content:'';position:absolute;width:88%;height:88%;left:6%;top:6%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.35),rgba(154,255,0,.12) 50%,transparent 75%);filter:blur(18px);z-index:0;animation:glowpulse 4s ease-in-out infinite reverse}
@@ -135,11 +155,11 @@ section{position:relative;z-index:1;padding:30px 0}
 .scroll-hint .m::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;background:var(--lime);border-radius:2px;transform:translateX(-50%);animation:wheel 1.6s infinite}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
 /* HAND holds title */
-.hand-hero{position:relative;min-height:44vh;display:flex;align-items:center;overflow:visible;margin-top:-30px;margin-bottom:-20px}
-#holoHand{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);height:min(340px,40vw)}
-.hand-caption{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(20px,4.4vw,50px);line-height:1;letter-spacing:-1px;white-space:nowrap;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.85),0 0 30px rgba(154,255,0,.25);opacity:0;transition:opacity .6s ease;pointer-events:none}
+.hand-hero{position:relative;min-height:32vh;display:flex;align-items:center;overflow:visible;margin:-46px 0 -34px}
+#holoHand{position:absolute;left:-2%;top:50%;transform:translateY(-50%);width:min(520px,58vw);height:min(290px,32vw)}
+.hand-caption{position:absolute;left:min(196px,22vw);top:50%;transform:translateY(-50%);width:min(430px,48vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(20px,4.4vw,50px);line-height:1;letter-spacing:-1px;white-space:nowrap;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.85),0 0 30px rgba(154,255,0,.25);opacity:0;transition:opacity .6s ease;pointer-events:none}
 .hand-caption.on{opacity:1}
-@media(max-width:760px){.hand-hero{min-height:38vh}#holoHand{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;height:56vw}.hand-caption{left:50%;top:50%;transform:translate(-50%,-50%);width:100vw;font-size:clamp(17px,5.8vw,34px)}}
+@media(max-width:760px){.hand-hero{min-height:24vh;margin:-38px 0 -26px}#holoHand{left:50%;top:50%;transform:translate(-50%,-50%);width:100vw;height:56vw}.hand-caption{left:52%;top:50%;transform:translate(-50%,-50%);width:78vw;font-size:clamp(15px,4.6vw,26px);white-space:normal;line-height:1.05}}
 /* OFFER sticky cards */
 #offer .stack{position:relative}
 .ocard{position:sticky;top:78px;margin-bottom:24px;border-radius:24px;border:1px solid var(--border-lime);background:linear-gradient(160deg,rgba(16,20,14,.97),rgba(6,8,6,.98));box-shadow:0 34px 90px -40px rgba(0,0,0,.9);overflow:hidden;padding:24px 22px 20px;backdrop-filter:blur(6px)}
@@ -174,17 +194,17 @@ section{position:relative;z-index:1;padding:30px 0}
 @keyframes livep{0%{box-shadow:0 0 0 0 rgba(154,255,0,.65)}70%{box-shadow:0 0 0 7px rgba(154,255,0,0)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0)}}
 /* AGENTS DETAIL — pinned 3D capability cards + woman */
 #agents-detail{position:relative}
-.adt-pin{position:relative;height:220vh}
+.adt-pin{position:relative;height:200vh}
 .adt-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;padding-left:4vw;perspective:1400px}
-@media(max-width:760px){.adt-sticky{justify-content:center;align-items:flex-end;padding:0 0 8vh}}
+@media(max-width:760px){.adt-sticky{justify-content:center;align-items:flex-start;padding:59vh 0 0}}
 .adt-head{position:absolute;top:max(76px,9vh);left:0;right:0;text-align:center;z-index:4;padding:0 24px;pointer-events:none}
 .acap-stage{position:relative;width:min(520px,92vw);height:min(320px,54vh);transform-style:preserve-3d}
 .acap{position:absolute;left:50%;top:50%;width:min(340px,82vw);border-radius:22px;padding:24px;background:linear-gradient(165deg,rgba(18,24,14,.98),rgba(8,10,8,.99));border:1px solid var(--border-lime);will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
 .acap-i{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
 .acap-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
 .acap-d{font-size:13px;color:var(--w2);line-height:1.55}
-#holoWoman{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:42%;height:76%;z-index:2}
-@media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:3%;width:74%;height:42%}}
+#holoWoman{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:44%;height:96%;z-index:2}
+@media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:5%;width:90%;height:52%}}
 .adt-dots{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:4}
 .adt-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
 .adt-dot.on{background:var(--lime);width:22px;border-radius:4px}
@@ -256,23 +276,28 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .trev-tx{font-size:12.5px;color:var(--w2);line-height:1.6}
 .rev-more{text-align:center;margin-top:18px}
 /* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
-/* GUARANTEES — pin+scrub горизонтальная лента: вертикальный скролл прокручивает карты вправо */
-.gcar-pin{position:relative;height:220px;overflow:hidden}
-.gcar-track{display:flex;gap:16px;padding:10px 5vw;height:100%;align-items:center;will-change:transform}
-.gcard{flex:0 0 auto;width:min(320px,78vw);height:180px;border-radius:18px;padding:20px 22px;
-  background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03));
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.24),0 18px 40px -20px rgba(0,0,0,.85),0 0 22px -8px rgba(154,255,0,.2);
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;gap:14px;align-items:flex-start;transition:box-shadow .3s,border-color .3s}
-.gcard:hover{border-color:var(--border-lime);box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 30px -6px rgba(154,255,0,.35),0 18px 40px -18px rgba(0,0,0,.9)}
-.gc-bead{flex:0 0 auto;width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
-.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:14px;color:#fff;line-height:1.2;margin-bottom:6px}
-.gc-d{font-size:12px;color:var(--w2);line-height:1.45}
-.gcar-hint{text-align:center;font-size:11px;color:var(--w4);margin-top:8px;letter-spacing:.5px}
-@media(max-width:760px){.gcar-pin{height:200px}.gcard{width:78vw;height:160px}}
+/* GUARANTEES — 3D coverflow как у агентов: pin + scrub, робот справа */
+.guar-pin{position:relative;height:200vh}
+.guar-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;padding-left:4vw;perspective:1400px}
+@media(max-width:760px){.guar-sticky{justify-content:center;align-items:flex-start;padding:53vh 0 0}}
+.guar-head{position:absolute;top:max(70px,8vh);left:0;right:0;text-align:center;z-index:4;padding:0 24px;pointer-events:none}
+.gcard-stage{position:relative;width:min(520px,92vw);height:min(320px,54vh);transform-style:preserve-3d}
+.gcard{position:absolute;left:50%;top:50%;width:min(340px,82vw);border-radius:22px;padding:24px;
+  background:linear-gradient(165deg,rgba(18,24,14,.98),rgba(8,10,8,.99));border:1px solid var(--border-lime);
+  will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9),0 0 26px -10px rgba(154,255,0,.25)}
+.gc-bead{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
+.gc-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px;color:#fff}
+.gc-d{font-size:13px;color:var(--w2);line-height:1.55}
+#guarRobot{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:34%;height:74%;z-index:2;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 18px 46px rgba(154,255,0,.35))}
+#guarRobot video{width:100%;height:100%;object-fit:contain;display:block}
+#guarRobot::before{content:'';position:absolute;inset:5%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.22),transparent 68%);filter:blur(30px);z-index:-1}
+@media(max-width:760px){#guarRobot{right:auto;left:50%;transform:translateX(-50%);top:4%;width:60%;height:44%}}
+.guar-dots{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:4}
+.guar-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
+.guar-dot.on{background:var(--lime);width:22px;border-radius:4px}
 /* FAQ — робот сверху со свечением, стеклянные строки-аккордеон 2 колонки */
 .faq-scene{position:relative;margin-top:12px}
-.faq-scene::before{content:'';position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:min(520px,90vw);height:280px;background:radial-gradient(ellipse 55% 55% at 50% 45%,rgba(154,255,0,.2),transparent 70%);pointer-events:none;z-index:0;filter:blur(4px)}
+.faq-scene::before{content:'';position:absolute;left:50%;top:-20px;transform:translateX(-50%);width:min(680px,94vw);height:200px;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(154,255,0,.13),transparent 72%);pointer-events:none;z-index:0;filter:blur(6px)}
 .faq-robot{position:relative;z-index:2;width:min(200px,44vw);aspect-ratio:1/1;margin:0 auto -6px;filter:drop-shadow(0 18px 44px rgba(154,255,0,.35));transition:transform .4s cubic-bezier(.2,1.4,.4,1)}
 .faq-robot video{width:100%;height:100%;object-fit:contain;display:block}
 .faq-robot.react{transform:translateY(-6px) scale(1.08)}
@@ -358,7 +383,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <section class="hero" id="hero">
   <div class="eye-wrap" id="eyeWrap"><div id="holoEye" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge rv"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
-  <h1 class="hero-title rv">ОК<span class="lime">О</span></h1>
+  <h1 class="hero-title rv">О<span class="lime">К</span>О</h1>
   <div class="hero-stats rv">
     <div class="h-stat"><div class="h-stat-n" data-n="150" data-suf="+">150+</div><div class="h-stat-l">проектов</div></div>
     <div class="h-stat"><div class="h-stat-n">8 лет</div><div class="h-stat-l">на рынке</div></div>
@@ -474,18 +499,21 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 
 <!-- GUARANTEES -->
 <section id="guarantees">
-<div class="wrap">
-  <div class="rv" style="max-width:760px"><div class="sec-lbl">Гарантии</div><h2 class="sec-h creveal">Работаем <span class="lime">по-честному</span></h2></div>
-  <div class="gcar-pin" id="gcarPin"><div class="gcar-track" id="gcarTrack">
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span><div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, без скрытых доплат.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем и остаёмся на связи после запуска.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="gc-t">До 10 рабочих дней</div><div class="gc-d">Срок в договоре. Срываем — компенсируем.</div></div></div>
-    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года.</div></div></div>
-  </div></div>
-  <div class="gcar-hint">скроллите вниз — карты пролетают вправо</div>
-</div>
+  <div class="guar-pin" id="guarPin">
+    <div class="guar-sticky">
+      <div class="guar-head"><div class="sec-lbl">Гарантии</div><h2 class="sec-h">Работаем <span class="lime">по-честному</span></h2></div>
+      <div id="guarRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
+      <div class="gcard-stage" id="gcardStage">
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="gc-t">Договор и акт</div><div class="gc-d">Официальный договор (самозанятый/НПД), приложение с ТЗ и акт выполненных работ — всё юридически.</div></div>
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, фиксированные суммы, без скрытых доплат и сюрпризов.</div></div>
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем, пока не будет так, как нужно вам. Правки в рамках ТЗ — без счётчика.</div></div>
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем работе с системой и агентами, остаёмся на связи и помогаем расти после запуска.</div></div>
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="gc-t">До 10 рабочих дней</div><div class="gc-d">Срок зафиксирован в договоре. Срываем срок — компенсируем.</div></div>
+    <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Работаем с 2018 года, команда 40+ специалистов. Реальные кейсы — не обещания.</div></div>
+      </div>
+      <div class="guar-dots" id="guarDots"></div>
+    </div>
+  </div>
 </section>
 <div class="sec-divider"><span class="dot"></span></div>
 
@@ -495,8 +523,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Вопросы</div><h2 class="sec-h creveal">Спросите <span class="lime">ИИ-агента</span></h2></div>
   <div class="faq-scene">
-    <div class="faq-robot rv" id="faqRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
-    <div class="faq-cap"><span class="rb-say" id="rbSay"><b>Агент OKO</b> на связи — тапни вопрос</span></div>
+    <div class="faq-cap"><span class="rb-say" id="rbSay">Отвечаем честно — <b>тапни вопрос</b></span></div>
     <div class="faq-list" id="faqList">
       <div class="faq-i"><div class="faq-q">Чем ИИ-агент лучше живого менеджера?<span class="p">+</span></div><div class="faq-a"><div>Работает 24/7 без выходных, отвечает за секунды, не теряет заявки, ведёт по выверенным скриптам. Один агент заменяет отдел — стоит в разы дешевле.</div></div></div>
       <div class="faq-i"><div class="faq-q">Заходят в мои аккаунты?<span class="p">+</span></div><div class="faq-a"><div>Да, с вашего разрешения и под контролем. Публикуют, отвечают в директ, ведут диалоги — вы видите каждое действие в админке и в любой момент можете вмешаться.</div></div></div>
@@ -515,7 +542,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <section class="hero" id="heroClone" aria-hidden="true">
   <div class="eye-wrap"><div id="holoEye2" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
-  <h1 class="hero-title">ОК<span class="lime">О</span></h1>
+  <h1 class="hero-title">О<span class="lime">К</span>О</h1>
   <div class="hero-stats">
     <div class="h-stat"><div class="h-stat-n">150+</div><div class="h-stat-l">проектов</div></div>
     <div class="h-stat"><div class="h-stat-n">8 лет</div><div class="h-stat-l">на рынке</div></div>
@@ -666,18 +693,26 @@ function buildTariffs(){
   var ru=false;try{var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';ru=/Moscow|Samara|Yekaterinburg|Kaliningrad|Volgograd|Kirov|Saratov|Simferopol|Omsk|Novosibirsk|Krasnoyarsk/i.test(tz)||/^ru\b/i.test(navigator.language||'');}catch(e){}
   document.querySelectorAll('[data-usd]').forEach(function(el){var v=el.getAttribute(ru?'data-rub':'data-usd');if(v){if(el.classList.contains('pay-btn'))el.href=v;else el.innerHTML=v;}});
 }
-/* ---- GUARANTEES: pin + scrub, вертикальный скролл → горизонтальный пролёт ---- */
+/* ---- GUARANTEES: 3D coverflow (как у агентов) + робот ---- */
 function buildGuarCoverflow(){
-  var pin=document.getElementById('gcarPin'),track=document.getElementById('gcarTrack');if(!pin||!track||!ST)return;
-  function build(){
-    var scrollDist=Math.max(0,track.scrollWidth-pin.clientWidth);
-    if(scrollDist<10)return;
-    gsap.to(track,{x:-scrollDist,ease:'none',
-      scrollTrigger:{trigger:pin,pin:true,scrub:0.6,start:'top 8%',end:'+='+scrollDist,invalidateOnRefresh:true,anticipatePin:1}});
+  var stage=document.getElementById('gcardStage'),dotsC=document.getElementById('guarDots'),rob=document.getElementById('guarRobot');
+  if(!stage)return;
+  var cards=Array.from(stage.querySelectorAll('.gcard')),N=cards.length;
+  cards.forEach(function(_,i){var d=document.createElement('span');d.className='guar-dot'+(i===0?' on':'');dotsC.appendChild(d);});
+  var dots=Array.from(dotsC.children);
+  function layout(active){
+    cards.forEach(function(c,i){var off=i-active,a=Math.abs(off);
+      var tx=off*(TOUCH?66:60),tz=-a*230,ry=-off*34,sc=1-Math.min(a*.14,.4),op=a>1.7?0:1-Math.min(a*.42,.75);
+      c.style.transform='translate(-50%,-50%) translateX('+tx+'%) translateZ('+tz+'px) rotateY('+ry+'deg) scale('+sc+')';
+      c.style.opacity=op;c.style.zIndex=String(100-Math.round(a*10));});
+    var ai=Math.round(active);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});
   }
-  // ждём загрузки шрифтов/размеров
-  setTimeout(build,300);
-  addEventListener('resize',function(){if(ST)ST.refresh();});
+  layout(0);
+  ST.create({trigger:'#guarPin',start:'top top',end:'bottom bottom',scrub:.5,onUpdate:function(self){
+    var p=self.progress;layout(p*(N-1));
+    if(rob){var wp=Math.min(p/0.12,1);rob.style.opacity=(0.15+wp*0.85);
+      rob.style.transform=(TOUCH?('translateX(-50%) translateY('+((1-wp)*34)+'%)'):('translateY(calc(-50% + '+((1-wp)*26)+'px))'));}
+  }});
 }
 /* ---- FAQ robot answers ---- */
 function buildFaqRobot(){
@@ -686,7 +721,7 @@ function buildFaqRobot(){
     q.addEventListener('click',function(){var willOpen=!it.classList.contains('open');
       items.forEach(function(o){o.classList.remove('open');var oa=o.querySelector('.faq-a');if(oa)oa.style.maxHeight='0';});
       if(willOpen){it.classList.add('open');a.style.maxHeight=a.scrollHeight+40+'px';}
-      var rob=document.getElementById('faqRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
+      var rob=document.getElementById('guarRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
       if(window.__sfx)window.__sfx('click');
     });});
 }
