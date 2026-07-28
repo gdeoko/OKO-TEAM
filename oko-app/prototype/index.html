@@ -8971,7 +8971,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.64</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.65</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -24642,7 +24642,7 @@ function acPack(id){ return Array.isArray(AC_PACK[id]) ? AC_PACK[id] : []; }
 /* блоки: сид-уроки (уже готовые объекты) + пак дозаполнения по id блока */
 const AC_DIRS = [
   { id:'media', title:'Медийность', tag:'Направление · база', free:true, minTier:'PRO', price:0,
-    author:'OKO · по методологии ХЛБ', c1:'МЕДИЙ', c2:'НОСТЬ',
+    author:'OKO · по методологии ХЛБ', c1:'КУРС', c2:'МЕДИЙНОСТЬ',
     outcomes:[
       'Упаковать профиль так, что за 3 секунды ясно — кто ты и зачем',
       'Собрать визуал и ленту, которым доверяют (51% судят по картинке)',
@@ -24656,7 +24656,7 @@ const AC_DIRS = [
       {id:'m5', title:'Сторис, эфиры, характер',    seed:[MEDIA_LESSONS2[1], MEDIA_LESSONS2[2]]},
     ]},
   { id:'marketing', title:'Маркетинг', tag:'Направление · продажи', free:false, minTier:'PRO', price:2900,
-    author:'OKO · по методологии ХЛБ', c1:'МАРКЕ', c2:'ТИНГ',
+    author:'OKO · по методологии ХЛБ', c1:'КУРС', c2:'МАРКЕТИНГ',
     outcomes:[
       'Писать тексты, которые читают и покупают',
       'Собирать продающий пост по структуре из 7 блоков',
@@ -24670,7 +24670,7 @@ const AC_DIRS = [
       {id:'k5', title:'Продвижение, продажи, деньги',       seed:[MARKETING_LESSONS2[2], AC_COURSE_REELS[2]]},
     ]},
   { id:'ai', title:'Нейросети', tag:'Направление · практика', free:false, minTier:'PRO', price:2900,
-    author:'Команда OKO', c1:'НЕЙРО', c2:'СЕТИ',
+    author:'Команда OKO', c1:'КУРС', c2:'НЕЙРОСЕТИ',
     outcomes:[
       'Выбирать нейросеть под задачу за секунды по карте 2026',
       'Собирать сильные промпты по формуле: роль, задача, контекст, формат',
@@ -24997,9 +24997,12 @@ function acAnimRings(){
    hero=true → без крупного текста (его дублирует заголовок-капшн под обложкой). */
 function acCourseCover(ci, hero){
   const c = AC_COURSES[ci];
+  const c2Len = (c.c2||'').length;
+  const c2Size = c2Len > 8 ? Math.max(22, 36 - (c2Len-8)*2) : 36;
+  const c2Space = c2Len > 8 ? 1 : 2;
   const bigText = hero ? '' : `
-    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
-    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="36" fill="#9AFF00" letter-spacing="2">${esc(c.c2)}</text>
+    <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="26" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
+    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="${c2Size}" fill="#9AFF00" letter-spacing="${c2Space}">${esc(c.c2)}</text>
     <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>`;
   return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <rect width="320" height="190" fill="#070a04"/>
@@ -25337,8 +25340,8 @@ function acVpCover(L){
         <!-- нижний скрим: держит центр постера чистым под кнопку play, а заголовок внизу — читаемым в обеих темах -->
         <rect x="0" y="150" width="640" height="210" fill="url(#acPosterScrim)"/>
         <!-- заголовок вынесен в НИЖНЮЮ треть постера: не пересекается с центральной кнопкой play (она в чистом поле выше) -->
-        <text x="48" y="272" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="44" fill="#fff" letter-spacing="1">${L.c1}</text>
-        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#9AFF00" letter-spacing="4">${L.c2}</text>
+        <text x="48" y="272" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="40" fill="#fff" letter-spacing="1" textLength="${(L.c1||'').length>8?520:''}" lengthAdjust="spacingAndGlyphs">${L.c1}</text>
+        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#9AFF00" letter-spacing="${(L.c2||'').length>8?2:4}" textLength="${(L.c2||'').length>9?540:''}" lengthAdjust="spacingAndGlyphs">${L.c2}</text>
         <text x="48" y="346" font-family="Montserrat,sans-serif" font-size="14" font-weight="600" fill="rgba(255,255,255,.6)" letter-spacing="3">АКАДЕМИЯ OKO · УРОК ${acLocalNo(acL)}</text>
       </svg>`;
 }
