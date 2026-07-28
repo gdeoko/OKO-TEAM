@@ -686,6 +686,71 @@ label.f-lab{display:block}
 .sys-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .sys-metric{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 6px;text-align:center}
 .sys-metric .v{font-size:16px;font-weight:800;color:var(--accent)}
+/* Новая 6-раздельная система (эталон OKO П10) */
+.sys-share{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.25);margin-bottom:16px}
+.sys-share>div{flex:1;min-width:0}
+.sys-share b{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:2px}
+.sys-share small{font-size:12px;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;display:block}
+.sys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.sys-card{position:relative;text-align:left;padding:16px 14px 14px;border-radius:16px;border:1px solid var(--border);background:var(--raised);color:var(--text);transition:border-color .15s,transform .12s,background .15s;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-height:150px}
+.sys-card:hover{border-color:var(--accent);transform:translateY(-2px);background:var(--lime-dim)}
+.sys-card-n{position:absolute;top:12px;right:14px;font-family:var(--font-display,'Bebas Neue');font-size:22px;font-weight:700;color:var(--accent);opacity:.5;letter-spacing:.04em}
+.sys-card-ic{width:38px;height:38px;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sys-card-ic svg.i{width:18px;height:18px}
+.sys-card b{font-size:13.5px;font-weight:800;line-height:1.3}
+.sys-card small{font-size:11.5px;color:var(--dim);line-height:1.4}
+.sys-cta{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.sv-back{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:transparent;color:var(--dim);font-size:12.5px;font-weight:600;border:0;cursor:pointer;margin-bottom:12px;transition:color .15s}
+.sv-back:hover{color:var(--accent)}
+.sv-back svg.i{width:14px;height:14px}
+.sys-sec-h{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.sys-sec-h .sys-card-n{position:static;font-size:32px;opacity:.7;flex-shrink:0}
+.sys-sec-h h2{font-size:22px;font-weight:800;margin-bottom:4px;line-height:1.15}
+.sys-sec-h p{font-size:12.5px;color:var(--dim);line-height:1.45}
+.sys-note{display:flex;align-items:flex-start;gap:9px;padding:12px 14px;border-radius:11px;background:var(--raised);border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--dim);margin-bottom:14px}
+.sys-note svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0;margin-top:1px}
+/* Контент-план: сводка + календарь */
+.sys-plan-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-bottom:14px}
+.sys-plan-sum>div{padding:12px 8px;border-radius:11px;background:var(--raised);border:1px solid var(--border);text-align:center}
+.sys-plan-sum b{display:block;font-size:19px;font-weight:800;color:var(--accent);font-family:var(--font-display,'Bebas Neue');letter-spacing:.02em}
+.sys-plan-sum small{font-size:10.5px;color:var(--dim);line-height:1.3;margin-top:2px;display:block}
+.sys-cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.sys-day{position:relative;text-align:left;padding:11px 12px;border-radius:11px;border:1px solid var(--border);background:var(--raised);color:var(--text);cursor:pointer;transition:border-color .15s,transform .12s;display:flex;flex-direction:column;gap:5px;min-height:90px}
+.sys-day:hover{border-color:var(--accent);transform:translateY(-1px)}
+.sys-day.rest{opacity:.5}
+.sys-day-n{font-family:var(--font-display,'Bebas Neue');font-size:20px;font-weight:700;color:var(--accent);letter-spacing:.02em}
+.sys-day-date{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.sys-day-ic{position:absolute;top:10px;right:11px;width:24px;height:24px;border-radius:7px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.sys-day-ic svg.i{width:12px;height:12px}
+.sys-day b{font-size:11.5px;font-weight:700;line-height:1.3}
+/* Бизнес-план: сетка блоков */
+.sys-biz-grid{display:flex;flex-direction:column;gap:7px}
+.sys-biz-card{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:11px;border:1px solid var(--border);background:var(--raised);color:var(--text);text-align:left;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s;line-height:1.35}
+.sys-biz-card:hover{border-color:var(--accent);background:var(--lime-dim)}
+.sys-biz-card>span:not(.sys-biz-n){flex:1}
+.sys-biz-n{flex-shrink:0;width:34px;height:34px;border-radius:9px;background:var(--lime-dim);color:var(--accent);font-family:var(--font-display,'Bebas Neue');font-size:15px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.sys-biz-card svg.i{width:14px;height:14px;color:var(--dim);flex-shrink:0}
+/* Чек-лист: категории */
+.sys-check-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.sys-check-cat{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:11px;background:var(--raised);border:1px solid var(--border)}
+.sys-check-ic{flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.sys-check-ic svg.i{width:14px;height:14px}
+.sys-check-cat b{font-size:12.5px;display:block;font-weight:700}
+.sys-check-cat small{font-size:10.5px;color:var(--dim)}
+/* Материалы/Визуал: сетка карточек */
+.sys-mat-grid{display:flex;flex-direction:column;gap:7px}
+.sys-mat-card{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;border:1px solid var(--border);background:var(--raised);color:var(--text);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+.sys-mat-card:hover{border-color:var(--accent);background:var(--lime-dim)}
+.sys-mat-card>div{flex:1;min-width:0}
+.sys-mat-card b{font-size:13px;font-weight:700;display:block;line-height:1.3}
+.sys-mat-card small{font-size:11.5px;color:var(--dim);line-height:1.4;display:block;margin-top:2px}
+.sys-mat-n{flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--lime-dim);color:var(--accent);font-family:var(--font-display,'Bebas Neue');font-size:14px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.sys-mat-card svg.i{width:14px;height:14px;color:var(--dim);flex-shrink:0}
+/* Перспективы: витрина */
+.sys-future-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.sys-future-card{position:relative;padding:14px 14px 14px 16px;border-radius:11px;background:linear-gradient(135deg,rgba(154,255,0,.06),transparent);border:1px solid var(--border);display:flex;flex-direction:column;gap:6px;min-height:80px}
+.sys-future-card .sys-card-n{position:static;font-size:22px;opacity:.5}
+.sys-future-card b{font-size:13px;font-weight:700;line-height:1.35}
 .sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
 @media(prefers-reduced-motion:reduce){#systemView{transition:none}}
 /* ===== Глобальный поиск ===== */
@@ -8636,7 +8701,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.51</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.52</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -10637,44 +10702,250 @@ function anketaFinish(){
       <button class="btn ghost" onclick="anketaStart('${aState.mode}')">Пройти анкету заново</button>
     </div>`;
 }
-function openSystemPreview(){
+/* ============ РЕНДЕР СИСТЕМЫ РОСТА (6 разделов по эталону OKO П10) ============
+   Разделы: 1) Контент-план · 2) Бизнес-план · 3) Чек-лист · 4) Материалы · 5) Визуал · 6) Перспективы */
+let sysActiveSection = 'home';
+const SYS_SECTIONS = [
+  {k:'plan',      n:'01', t:'Контент-план',   ic:'file',       d:'Календарь на 30 дней с темами роликов, TG-постов, каруселей и сторис под каждую площадку'},
+  {k:'biz',       n:'02', t:'Бизнес-план',    ic:'briefcase',  d:'18 блоков: точка А, финплан, продукты, воронка, реклама, KPI, команда, конкуренты, риски'},
+  {k:'checklist', n:'03', t:'Чек-лист',       ic:'check2',     d:'Ежедневные задачи по 8 категориям с прогресс-баром и кросс-ссылками'},
+  {k:'materials', n:'04', t:'Материалы',      ic:'bookmark',   d:'Промпты, скрипты, генератор договоров и КП, лид-магниты, партнёрства, анкеты'},
+  {k:'visual',    n:'05', t:'Визуал',         ic:'photo',      d:'Брендбук, оформление соцсетей, шаблоны постов, обложки, ТЗ на монтаж Reels'},
+  {k:'future',    n:'06', t:'Перспективы',    ic:'rocket',     d:'Прогноз выручки, дорожная карта, масштабирование, новые платформы, видение 3 года'},
+];
+function sysGoto(k){ sysActiveSection = k; openSystemPreview(true); }
+function openSystemPreview(keepSection){
+  if(!keepSection) sysActiveSection = 'home';
   const a = aState.answers;
-  const fmt = {'Говорю на камеру':'talking head — ты в кадре','Закадр и монтаж':'динамичные Reels с закадром','Тексты и карусели':'карусели и лонгриды','Не знаю — подскажите':'ролики + карусели (A/B-тест)'}[a.format] || 'короткие ролики';
-  const freq = {'1–2 часа в неделю':'2 единицы/нед','3–5 часов в неделю':'3–4 единицы/нед','Каждый день понемногу':'ежедневно','У меня есть команда':'5+ единиц/нед (конвейер)'}[a.time] || '3 единицы/нед';
-  const goalLow = (a.goal||'рост').toLowerCase();
-  const weeks = [
-    {t:'Неделя 1 · Фундамент', items:['Упаковка профиля: аватар, шапка, закреп','3 единицы контента в формате «'+fmt+'»','Настроить автопостинг VK + Telegram']},
-    {t:'Неделя 2 · Разгон', items:['Тест 3 разных хуков, замер досмотра','Первый прогрев под «'+goalLow+'»','Собрать лид-магнит / оффер']},
-    {t:'Неделя 3 · Воронка', items:['Запуск воронки: контент → чат OKO → заявка','Коллаборация или тренд для охвата', a.budget==='Пока 0'?'Органический разгон, 0 ₽':'Тест таргета на 2 лучших ролика']},
-    {t:'Неделя 4 · Масштаб', items:['Удвоить то, что зашло по метрикам','Рубрики и контент-план на месяц вперёд','Отчёт: охваты, заявки, выручка']},
-  ];
-  const metrics = [
-    {k:'Охваты', v:'+35–60%'}, {k:'Вовлечённость', v:'x2'},
-    {k: a.goal==='Продажи и заявки'?'Заявки':'Подписчики', v: a.goal==='Продажи и заявки'?'10–30/мес':'+300–900'},
-  ];
-  document.getElementById('systemBody').innerHTML = `
+  document.getElementById('systemBody').innerHTML = sysActiveSection==='home' ? sysHomeHtml(a) : sysSectionHtml(sysActiveSection, a);
+  document.getElementById('systemView').classList.add('open');
+  const bd = document.querySelector('.sv-body'); if(bd) bd.scrollTop = 0;
+}
+function closeSystemView(){ document.getElementById('systemView').classList.remove('open'); }
+function sysHomeHtml(a){
+  const platforms = Array.isArray(a.platforms) ? a.platforms.join(' · ') : (a.platforms||'—');
+  const tier = okoTier();
+  return `
     <div class="sys-hero">
       <div class="sys-badge">${I('compass')}</div>
-      <h2>Система роста</h2>
-      <p>${esc(a.who||'Эксперт')} · ниша «${esc(a.niche||'—')}»</p>
+      <h2>Система Роста</h2>
+      <p>${esc(a.who||'Эксперт')} · ниша «${esc(a.niche||'—')}» · ${esc(platforms)}</p>
     </div>
-    <div class="sys-sec"><h3>Позиционирование</h3>
-      <p>Ты — ${esc((a.who||'эксперт').toLowerCase())} в нише «${esc(a.niche||'—')}». Главная цель на 3 месяца — ${esc(goalLow)}. Аудитория: ${esc(a.audience||'твой клиент')}.</p></div>
-    <div class="sys-sec"><h3>Контент-стратегия</h3>
-      <div class="sys-kv"><span>Формат-ядро</span><b>${esc(fmt)}</b></div>
-      <div class="sys-kv"><span>Ритм</span><b>${esc(freq)}</b></div>
-      <div class="sys-kv"><span>Площадка</span><b>${esc(a.platforms||'по нише')}</b></div>
-      <div class="sys-kv"><span>Автопостинг</span><b>VK + Telegram</b></div></div>
-    <div class="sys-sec"><h3>План на 30 дней</h3>
-      ${weeks.map(w=>`<div class="sys-week"><b>${w.t}</b><ul>${w.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>
-    <div class="sys-sec"><h3>Цель по метрикам</h3>
-      <div class="sys-metrics">${metrics.map(m=>`<div class="sys-metric"><div class="v">${m.v}</div><div class="k">${m.k}</div></div>`).join('')}</div></div>
-    <div class="sys-sec"><h3>Что дальше</h3>
-      <p>Полную систему в HTML можно скачать, а контент-завод OKO соберёт ролики по этому плану автоматически на тарифе Business.</p></div>
-    <button class="btn" onclick="toast('Система сохранена в личный кабинет')"><svg class="i"><use href="#i-check"/></svg> Сохранить систему</button>
-    <div style="height:9px"></div>
-    <button class="btn ghost" onclick="toast('PDF-версия готова к скачиванию')">Скачать PDF</button>`;
-  document.getElementById('systemView').classList.add('open');
+    <div class="sys-share">
+      <div><b>Персональная ссылка</b><small>okoteam.top/s/${esc(aState.slug||'preview')}</small></div>
+      <button class="btn sm ghost" onclick="navigator.clipboard&&navigator.clipboard.writeText('https://okoteam.top/s/${esc(aState.slug||'preview')}');toast('Ссылка скопирована')">${I('copy')} Копировать</button>
+    </div>
+    <div class="sys-grid">${SYS_SECTIONS.map(s=>`
+      <button class="sys-card" onclick="sysGoto('${s.k}')">
+        <span class="sys-card-n">${s.n}</span>
+        <span class="sys-card-ic">${I(s.ic)}</span>
+        <b>${s.t}</b>
+        <small>${s.d}</small>
+      </button>`).join('')}
+    </div>
+    <div class="sys-cta">
+      <button class="btn" onclick="closeSystemView();showTab('mini');openMa('factory')">${I('bolt')} Запустить контент-завод по этому плану</button>
+      <button class="btn ghost" onclick="toast('Готовим ссылку и PDF... команда закончит через 4–6 часов')">${I('file')} Скачать PDF · получить HTML</button>
+    </div>`;
+}
+function sysSectionHtml(k, a){
+  const s = SYS_SECTIONS.find(x=>x.k===k) || SYS_SECTIONS[0];
+  const back = `<button class="sv-back" onclick="sysGoto('home')">${I('back')} <span>К разделам</span></button>
+    <div class="sys-sec-h">
+      <span class="sys-card-n">${s.n}</span>
+      <div><h2>${s.t}</h2><p>${s.d}</p></div>
+    </div>`;
+  if(k==='plan')      return back + sysPlanHtml(a);
+  if(k==='biz')       return back + sysBizHtml(a);
+  if(k==='checklist') return back + sysChecklistHtml(a);
+  if(k==='materials') return back + sysMaterialsHtml(a);
+  if(k==='visual')    return back + sysVisualHtml(a);
+  if(k==='future')    return back + sysFutureHtml(a);
+  return back;
+}
+/* --- РАЗДЕЛ 1 — Контент-план на 30 дней --- */
+function sysPlanHtml(a){
+  const rpd = +a.reels_per_day || 1;
+  const tpd = +a.tg_per_day || 0;
+  const cpm = +a.carousels_per_month || 0;
+  const spd = +a.stories_per_day || 0;
+  const total = rpd*30 + tpd*30 + cpm + spd*30;
+  const platforms = Array.isArray(a.platforms) ? a.platforms : [];
+  const start = a.start_date ? new Date(a.start_date) : new Date();
+  const days = [];
+  for(let i=0; i<30; i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const dow = d.getDay(); // 0=вс,1=пн
+    const dateStr = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'short'});
+    // Тип поста дня: 6 архетипов чередуются
+    const archetypes = [
+      {t:'Экспертный разбор', ic:'star'},
+      {t:'Личная история',    ic:'heart'},
+      {t:'Кейс клиента',      ic:'thumb'},
+      {t:'Разбор ошибки',     ic:'flag'},
+      {t:'Тренд-адаптация',   ic:'fire'},
+      {t:'Продающий пост',    ic:'money'},
+    ];
+    const arch = archetypes[i % archetypes.length];
+    days.push({i:i+1, date:dateStr, arch, isRest: dow===0});
+  }
+  return `
+    <div class="sys-plan-sum">
+      <div><b>${rpd*30}</b><small>роликов/мес</small></div>
+      ${tpd?`<div><b>${tpd*30}</b><small>TG-постов</small></div>`:''}
+      ${cpm?`<div><b>${cpm}</b><small>каруселей</small></div>`:''}
+      ${spd?`<div><b>${spd*30}</b><small>сторис</small></div>`:''}
+      <div><b>${total}</b><small>единиц контента</small></div>
+    </div>
+    <p class="sys-note">${I('bolt')} Календарь под ${platforms.length ? platforms.join(', ') : 'все выбранные'} · старт ${esc(a.start_date||'сегодня')}. Клик на день — детали, кнопки «Копировать», «Промпт», «Запустить в производство».</p>
+    <div class="sys-cal">${days.map(d=>`
+      <button class="sys-day ${d.isRest?'rest':''}" onclick="sysDayOpen(${d.i})">
+        <span class="sys-day-n">${d.i}</span>
+        <span class="sys-day-date">${d.date}</span>
+        <span class="sys-day-ic">${I(d.arch.ic)}</span>
+        <b>${d.arch.t}</b>
+      </button>`).join('')}
+    </div>`;
+}
+function sysDayOpen(n){
+  const a = aState.answers;
+  const platforms = Array.isArray(a.platforms) ? a.platforms : [];
+  showPopup({ico:'file', title:`День ${n} · Контент дня`,
+    body:`<b>Тема:</b> будет сформирована командой OKO на основе твоей ниши и текущих трендов.<br><br>
+    <b>Форматы под платформы:</b><br>
+    ${platforms.map(p=>`• ${esc(p)} — сценарий на 45–60 сек с хуком, воронкой и призывом`).join('<br>')||'• Все платформы — сценарий, пост, сторис'}<br><br>
+    <span class="dim" style="font-size:12px">Полный сценарий, промпт для картинки и готовый файл — придут в течение 4–6 часов, как только команда завершит генерацию Системы.</span>`,
+    actions:[{label:'Понятно'}]});
+}
+/* --- РАЗДЕЛ 2 — Бизнес-план (18 блоков) --- */
+function sysBizHtml(a){
+  const blocks = [
+    'Точка А — где ты сейчас',
+    'Финансовый план М1 / М2 / М3',
+    'Продукты с ценами и маржой',
+    'Воронка продаж',
+    'Монетизация контента',
+    'Реклама: бюджеты, форматы, даты',
+    'KPI и метрики',
+    'Найм команды: кого/когда/ЗП',
+    'Анализ 15–100+ конкурентов',
+    'Партнёрства: план действий',
+    'Риски и план Б по месяцам',
+    'Дорожная карта 90 дней',
+    'OKO CLUB / закрытый клуб',
+    'Рассылки по базам',
+    'Команда: роли, ЗП, распределение',
+    'Психология и состояние',
+    'Скрипты продаж',
+    'Позиционирование',
+  ];
+  return `
+    <p class="sys-note">${I('briefcase')} 18 блоков бизнес-плана, собранных под твою нишу «${esc(a.niche||'—')}». В каждом — раскрывающийся текст с реальным контентом, цифрами и «Копировать».</p>
+    <div class="sys-biz-grid">${blocks.map((b,i)=>`
+      <button class="sys-biz-card" onclick="sysBizOpen(${i})">
+        <span class="sys-biz-n">${String(i+1).padStart(2,'0')}</span>
+        <span>${esc(b)}</span>
+        <svg class="i"><use href="#i-chev"/></svg>
+      </button>`).join('')}
+    </div>`;
+}
+function sysBizOpen(i){
+  showPopup({ico:'briefcase', title:'Блок бизнес-плана',
+    body:'Полное содержимое блока появится, как только команда OKO завершит генерацию твоей Системы (4–6 часов после отправки анкеты).',
+    actions:[{label:'Понятно'}]});
+}
+/* --- РАЗДЕЛ 3 — Чек-лист --- */
+function sysChecklistHtml(a){
+  const cats = [
+    {n:'Контент',   ic:'file',    c:5},
+    {n:'Бизнес',    ic:'briefcase', c:3},
+    {n:'Маркетинг', ic:'megaphone', c:4},
+    {n:'Продажи',   ic:'money',   c:3},
+    {n:'Реклама',   ic:'flag',    c:2},
+    {n:'Партнёрства', ic:'users', c:2},
+    {n:'Аналитика', ic:'star',    c:2},
+    {n:'Личное',    ic:'heart',   c:1},
+  ];
+  return `
+    <p class="sys-note">${I('check2')} Ежедневный чек-лист по 8 категориям. Галочки сохраняются, прогресс месяца растёт. Готов после генерации Системы.</p>
+    <div class="sys-check-cats">${cats.map(c=>`
+      <div class="sys-check-cat">
+        <span class="sys-check-ic">${I(c.ic)}</span>
+        <div><b>${c.n}</b><small>~${c.c} задач в день</small></div>
+      </div>`).join('')}
+    </div>`;
+}
+/* --- РАЗДЕЛ 4 — Материалы (9 блоков) --- */
+function sysMaterialsHtml(a){
+  const blocks = [
+    {t:'Промпты',              d:'Календарь дат → готовые промпты для картинок'},
+    {t:'Скрипты и офферы',     d:'По каждому продукту: холодка, созвон, дожим'},
+    {t:'Генератор КП',         d:'Выбор продукта + имя клиента → готовое КП'},
+    {t:'Генератор договоров',  d:'ФИО + продукт → договор с обязанностями'},
+    {t:'Лид-магниты',          d:'10–15 штук: чек-листы, гайды, разборы'},
+    {t:'Партнёрства',          d:'Шаблоны предложений: коллаб, спонсор, взаимопиар'},
+    {t:'Анкеты и брифинги',    d:'Анкета клиента, бриф, квалификация'},
+    {t:'OKO CLUB',             d:'Материалы закрытого клуба (наполняется позже)'},
+    {t:'База знаний',          d:'Полезные ссылки, сервисы, инструменты команды'},
+  ];
+  return `
+    <p class="sys-note">${I('bookmark')} 9 блоков материалов с генераторами, промптами и готовыми шаблонами.</p>
+    <div class="sys-mat-grid">${blocks.map((b,i)=>`
+      <button class="sys-mat-card" onclick="sysBizOpen(${i})">
+        <span class="sys-mat-n">${String(i+1).padStart(2,'0')}</span>
+        <div><b>${esc(b.t)}</b><small>${esc(b.d)}</small></div>
+        <svg class="i"><use href="#i-chev"/></svg>
+      </button>`).join('')}
+    </div>`;
+}
+/* --- РАЗДЕЛ 5 — Визуал (10 блоков) --- */
+function sysVisualHtml(a){
+  const blocks = [
+    'Брендбук',
+    'Оформление соцсетей',
+    'Шаблоны постов и каруселей',
+    'Упаковка продуктов',
+    'Сайт и лендинги',
+    'Боты и воронки',
+    'Reels и видео — ТЗ на монтаж',
+    'Сторис — форматы и шаблоны',
+    'Обложки и превью',
+    'Оформление Telegram',
+  ];
+  return `
+    <p class="sys-note">${I('photo')} 10 блоков визуала: от брендбука до готовых ТЗ монтажёру.</p>
+    <div class="sys-mat-grid">${blocks.map((b,i)=>`
+      <button class="sys-mat-card" onclick="sysBizOpen(${i})">
+        <span class="sys-mat-n">${String(i+1).padStart(2,'0')}</span>
+        <div><b>${esc(b)}</b></div>
+        <svg class="i"><use href="#i-chev"/></svg>
+      </button>`).join('')}
+    </div>`;
+}
+/* --- РАЗДЕЛ 6 — Перспективы --- */
+function sysFutureHtml(a){
+  const blocks = [
+    'После 90 дней — новые продукты',
+    'Прогноз выручки М4–М12',
+    'Расширение команды',
+    'Западный рынок / EN-контент',
+    'Регистрация компании в Дубае',
+    'Франшиза / лицензирование',
+    'Личный бренд 500k+ и книга',
+    'Собственные оффлайн-проекты',
+    'Инвестиции в стартапы клиентов',
+    'Партнёрство с крупными игроками',
+    'Экспансия на все площадки',
+    'Пассивные доходы и роялти',
+  ];
+  return `
+    <p class="sys-note">${I('rocket')} 12 блоков масштабирования: от следующего года до долгосрочного видения.</p>
+    <div class="sys-future-grid">${blocks.map((b,i)=>`
+      <div class="sys-future-card">
+        <span class="sys-card-n">${String(i+1).padStart(2,'0')}</span>
+        <b>${esc(b)}</b>
+      </div>`).join('')}
+    </div>`;
 }
 function closeSystemView(){ document.getElementById('systemView').classList.remove('open'); }
 function buildPlan(a){
