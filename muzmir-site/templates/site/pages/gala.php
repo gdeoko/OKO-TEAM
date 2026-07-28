@@ -114,7 +114,7 @@ ob_start(); ?>
         <?php if ($votingOn): ?>
           <a class="btn btn--ghost btn--lg" href="#gala-vote">Голосование зрителей <?= $ic['arrow'] ?></a>
         <?php else: ?>
-          <a class="btn btn--ghost btn--lg" href="<?= url('/awards') ?>">Аллея Славы <?= $ic['arrow'] ?></a>
+          <a class="btn btn--ghost btn--lg" href="<?= url('/concerts') ?>">Онлайн-концерты <?= $ic['arrow'] ?></a>
         <?php endif; ?>
       </div>
     </div>

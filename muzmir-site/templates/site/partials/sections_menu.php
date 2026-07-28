@@ -11,7 +11,6 @@ $SECTIONS = [
   ['/awards', 'Награды', '<circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/>'],
   ['/order-awards', 'Заказ наград', '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M3 12h18M8 8V6a4 4 0 0 1 8 0v2"/>'],
   ['/concerts', 'Концерты', '<path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>'],
-  ['/hall-of-fame', 'Аллея Славы', '<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>'],
   ['/gala', 'Гала-концерт', '<path d="M4 4h16v12H4z"/><path d="M8 20h8M12 16v4"/><path d="m10 8 4 2-4 2z"/>'],
   ['/calendar', 'Календарь', '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'],
   ['/reviews', 'Отзывы', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],

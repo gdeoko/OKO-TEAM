@@ -113,7 +113,7 @@ $u = current_user();
     <div>
       <h4>Разделы</h4>
       <ul>
-        <?php foreach (['/competitions'=>'Конкурсы','/apply'=>'Подать заявку','/awards'=>'Награды','/order-awards'=>'Заказ наград','/concerts'=>'Концерты','/hall-of-fame'=>'Аллея Славы','/blog'=>'Блог','/about'=>'О нас'] as $hr=>$lb): ?>
+        <?php foreach (['/competitions'=>'Конкурсы','/apply'=>'Подать заявку','/awards'=>'Награды','/order-awards'=>'Заказ наград','/concerts'=>'Концерты','/blog'=>'Блог','/about'=>'О нас'] as $hr=>$lb): ?>
           <li><a href="<?= url($hr) ?>"><?= h($lb) ?></a></li>
         <?php endforeach; ?>
       </ul>
@@ -160,7 +160,7 @@ $u = current_user();
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>Награды</a>
     <a href="<?= url('/competitions') ?>" class="appnav-cta" aria-label="Конкурсы и подача заявки">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>Конкурсы</a>
-    <a href="#" data-sections-open class="<?= in_array($active,['/concerts','/about','/faq','/contacts','/reviews','/ministry-support','/hall-of-fame','/blog','/gala','/calendar','/club','/goals'])?'active':'' ?>" aria-label="Все разделы сайта">
+    <a href="#" data-sections-open class="<?= in_array($active,['/concerts','/about','/faq','/contacts','/reviews','/ministry-support','/blog','/gala','/calendar','/club','/goals'])?'active':'' ?>" aria-label="Все разделы сайта">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Разделы</a>
     <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login'])?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Кабинет':'Вход' ?></a>
