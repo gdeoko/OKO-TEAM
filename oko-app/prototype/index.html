@@ -8142,14 +8142,12 @@ html.oko-hidden *{ animation-play-state:paused !important; }
         <div id="maGrid">
           <h2 class="svc-h" style="display:none">Сервисы OKO</h2>
           <div class="svc-grid">
-            <button class="svc" onclick="openMa('video')"><span class="svc-ic ic-video"><svg class="i"><use href="#i-camera"/></svg></span><span class="svc-label">Проверка видео</span></button>
+            <button class="svc" id="svc-academy" onclick="showTab('academy')"><span class="svc-ic ic-academy"><svg class="i"><use href="#i-star"/></svg></span><span class="svc-label">Академия</span></button>
             <button class="svc" onclick="openMa('system')"><span class="svc-ic ic-system"><svg class="i"><use href="#i-rocket"/></svg></span><span class="svc-label">Система роста</span></button>
-            <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="openMa('factory')"><span class="svc-ic ic-factory"><svg class="i"><use href="#i-bolt"/></svg></span><span class="svc-label">Контент-завод</span></button>
+            <button class="svc" onclick="openMa('video')"><span class="svc-ic ic-video"><svg class="i"><use href="#i-camera"/></svg></span><span class="svc-label">Проверка видео</span></button>
+            <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="showTab('partner')"><span class="svc-ic ic-partner"><svg class="i"><use href="#i-users"/></svg></span><span class="svc-label">Партнёрка</span></button>
-            <button class="svc" onclick="showTab('chats');openConv(1)"><span class="svc-ic ic-support"><svg class="i"><use href="#i-logo"/></svg></span><span class="svc-label">Поддержка</span></button>
-            <button class="svc" onclick="openPay('PRO')"><span class="svc-ic ic-tariff"><svg class="i"><use href="#i-crown"/></svg></span><span class="svc-label">Тарифы</span></button>
-            <button class="svc" onclick="showTab('profile')"><span class="svc-ic ic-profile"><svg class="i"><use href="#i-user"/></svg></span><span class="svc-label">Профиль</span></button>
           </div>
           <p class="svc-note">Нажми на сервис — откроется внутри OKO</p>
           <div class="ma-foot">
@@ -8572,7 +8570,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.46</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.47</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
