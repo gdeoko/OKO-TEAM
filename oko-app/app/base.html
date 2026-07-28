@@ -5842,16 +5842,40 @@ function renderPay(){
     <button class="btn" onclick="doPay()"><svg class="i"><use href="#i-lock"/></svg> Оплатить ${fmtRub(total)}</button>
     <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>`;
 }
+/* Реф-код партнёра из URL или localStorage: доход капнет партнёру после вебхука оплаты. */
+function payRefCode(){
+  try{
+    const u = new URL(location.href);
+    const q = u.searchParams.get('ref');
+    if(q){ localStorage.setItem('oko-ref', q); return q; }
+    return localStorage.getItem('oko-ref') || '';
+  }catch(e){ return ''; }
+}
+/* Формирование URL оплаты Lava.top под тариф + реф-параметр.
+   Реальные lava-ссылки живут на VPS в config.php['lava'], хендлер /api.php?action=pay_url
+   возвращает готовый URL с бэкенд-подписью. Пока endpoint не активен - симуляция. */
+function payLavaUrl(){
+  const p = PLANS[payState.plan]; const {total} = payPrice();
+  const ref = payRefCode();
+  // TODO(L8-backend): fetch('/api.php?action=pay_url', {method:'POST', body:JSON.stringify({tier:p.name, period:payState.period, ref})})
+  //   .then(r=>r.json()).then(d=>window.location=d.url)
+  return `https://okoteam.top/pay?tier=${encodeURIComponent(p.name)}&period=${payState.period}&sum=${total}${ref?'&ref='+encodeURIComponent(ref):''}`;
+}
 function doPay(){
   const p = PLANS[payState.plan];
+  const {total} = payPrice();
+  const ref = payRefCode();
+  const methodLbl = {card:'Карта РФ',crypto:'Крипта',lava:'Lava.top'}[payState.method];
+  const refNote = ref ? `<p class="dim" style="font-size:11.5px;margin-top:6px">Реф-код <b>${esc(ref)}</b> учтён. Партнёр получит 15% с этой оплаты.</p>` : '';
   document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:20px 0">
     <div class="spin"></div><p style="font-weight:700;margin-top:14px">Проводим оплату…</p>
-    <p class="dim" style="font-size:12px;margin-top:5px">${{card:'Карта РФ',crypto:'Крипта',lava:'Lava.top'}[payState.method]} · защищённое соединение</p></div>`;
+    <p class="dim" style="font-size:12px;margin-top:5px">${methodLbl} · защищённое соединение</p>${refNote}</div>`;
   setTimeout(()=>{
     document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:14px 0">
       <div class="pay-ok">${I('check')}</div>
       <p style="font-weight:800;font-size:19px;margin-top:12px">Тариф ${p.name} активирован</p>
       <p class="dim" style="font-size:13px;margin-top:6px">Лимиты обновлены, партнёрка включена. Спасибо!</p>
+      ${ref?`<p class="dim" style="font-size:12px;margin-top:6px">15% с оплаты (${fmtRub(Math.round(total*0.15))}) капнули партнёру <b>${esc(ref)}</b>.</p>`:''}
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
     PROFILE.tier = p.name;
