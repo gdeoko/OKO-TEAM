@@ -64,7 +64,7 @@ export function initHolo(){
   else eyeReady();
 
   // рука уже повернута в самом спрайте (запястье слева, ладонь вверх, пальцы вправо) — 440x243
-  makeSprite('holoHand','kp-media/fig/hand_sheet_hi.webp?v=94',6,6,36,660/633,{progType:'hand',fit:'width',slide:true});
+  makeSprite('holoHand','kp-media/fig/hand_sheet_hi.webp?v=95',6,6,36,660/538,{progType:'hand',fit:'width',slide:true});
   makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=92',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}

@@ -147,7 +147,7 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
 /* HAND holds title */
 .hand-hero{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:visible;margin:18px 0 0;padding:0 20px 22px}
-.hand-stage{position:relative;width:min(470px,64vw);aspect-ratio:660/633;z-index:6;margin:0 auto;transform:none}
+.hand-stage{position:relative;width:min(390px,46vw);aspect-ratio:660/538;z-index:6;margin:0 auto;transform:none}
 #holoHand{position:absolute;inset:0}
 /* заголовок ПАРИТ НАД РУКОЙ — ровно, крупно, во всю ширину, буквы проявляются по скроллу */
 .hand-caption{position:relative;white-space:nowrap;z-index:7;pointer-events:none;margin:0 auto 2px;
@@ -157,8 +157,8 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
   text-shadow:0 2px 0 rgba(0,0,0,.45),0 10px 28px rgba(0,0,0,.8),0 0 30px rgba(154,255,0,.5),0 22px 46px rgba(154,255,0,.3);
   will-change:transform}
 .hand-caption .hc{display:inline-block;opacity:0;will-change:transform,opacity,filter}
-@media(max-width:1000px){ .hand-hero{margin:4px 0 0;padding:0 12px 22px} .hand-stage{width:78vw} }
-@media(max-width:760px){ .hand-hero{margin:2px 0 0;padding:0 8px 18px} .hand-stage{width:82vw} }
+@media(max-width:1000px){ .hand-hero{margin:4px 0 0;padding:0 12px 22px} .hand-stage{width:62vw} }
+@media(max-width:760px){ .hand-hero{margin:2px 0 0;padding:0 8px 18px} .hand-stage{width:68vw} }
 /* OFFER sticky cards */
 #offer .stack{position:relative}
 .ocard{position:sticky;top:78px;margin-bottom:24px;border-radius:24px;border:1px solid var(--border-lime);background:linear-gradient(160deg,rgba(16,20,14,.97),rgba(6,8,6,.98));box-shadow:0 34px 90px -40px rgba(0,0,0,.9);overflow:hidden;padding:24px 22px 20px;backdrop-filter:blur(6px)}

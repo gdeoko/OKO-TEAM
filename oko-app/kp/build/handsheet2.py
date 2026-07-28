@@ -61,7 +61,7 @@ H,W=mats[0].shape[:2]
 x0=max(0,x0-pad); y0=max(0,y0-pad); x1=min(W-1,x1+pad); y1=min(H-1,y1+pad)
 cw,ch=x1-x0+1, y1-y0+1
 # отрезаем «рукав» слева — остаётся чистая кисть, край растворяется голограммой
-CUT=0.44
+CUT=0.34
 x0=x0+int(cw*CUT)
 cw,ch=x1-x0+1, y1-y0+1
 print('bbox',x0,y0,x1,y1,'cell',cw,ch,'aspect',round(cw/ch,4))
@@ -72,12 +72,18 @@ sheet=Image.new('RGBA',(CW*6,CH*6),(0,0,0,0))
 for i,m in enumerate(mats):
     cell=Image.fromarray(m,'RGBA').crop((x0,y0,x1+1,y1+1)).resize((CW,CH),Image.LANCZOS)
     ca=np.asarray(cell).astype(np.float32)
-    ramp=np.clip(np.linspace(0,1,CW)/0.26,0,1)[None,:,None]     # мягкое растворение левого края
-    ca[:,:,3:4]*=ramp
-    # низ у запястья тоже растворяем, чтобы не было плоского блока манжеты
-    vr=np.clip((1.0-np.linspace(0,1,CH))/0.14,0,1)[:,None,None]
-    xr=np.clip(np.linspace(0,1,CW)/0.42,0,1)[None,:,None]
-    ca[:,:,3:4]*=np.clip(vr+xr,0,1)
+    # запястье уходит в тень: плавная S-кривая по альфе + затемнение цвета, без плоского блока
+    x=np.linspace(0,1,CW)
+    t=np.clip(x/0.34,0,1)
+    ease=t*t*(3-2*t)                       # smoothstep
+    ca[:,:,3:4]*=ease[None,:,None]
+    shade=(0.24+0.76*ease)[None,:,None]    # к левому краю темнее
+    ca[:,:,0:3]*=shade
+    # нижняя кромка рукава в левой половине тоже гаснет
+    y=np.linspace(0,1,CH); vb=np.clip((1.0-y)/0.16,0,1); vb=vb*vb*(3-2*vb)
+    left=np.clip((0.62-x)/0.62,0,1)[None,:]
+    fade=1.0-(1.0-vb[:,None])*left
+    ca[:,:,3]*=fade
     cell=Image.fromarray(ca.astype(np.uint8),'RGBA')
     sheet.paste(cell,((i%6)*CW,(i//6)*CH))
 sheet.save('hand_sheet_hi.webp','WEBP',quality=90,method=6)
