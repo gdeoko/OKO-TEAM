@@ -1,0 +1,271 @@
+{
+ "id": "gbrain_023",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "dreamy synth focus",
+   "warm inspiring piano electronic",
+   "bright optimistic electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "yoga breathing calm room"
+  ],
+  "ai": "work/gbrain_023/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "panup"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.049,
+   "dur": 2.22,
+   "type": "kicker",
+   "text": "MEMORY 101"
+  },
+  {
+   "at": 0.266,
+   "dur": 1.83,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.268,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.373,
+   "dur": 2.23,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.391,
+   "dur": 2.4,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.512,
+   "dur": 1.82,
+   "type": "ticker",
+   "to": 14,
+   "suffix": "d",
+   "label": "STREAK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.63,
+   "dur": 2.28,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  },
+  {
+   "at": 0.63,
+   "dur": 2.03,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.785,
+   "dur": 1.67,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  },
+  {
+   "at": 0.856,
+   "dur": 2.32,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #music #brain #mental #focus",
+ "yt_title": "Neuroscientist How To Boost Your Focus #shorts",
+ "trend_keys": [
+  "music",
+  "brain",
+  "mental",
+  "focus",
+  "test",
+  "memory",
+  "age",
+  "concentration"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Neuroscientist: How To Boost Your Focus PERMANENTLY in Minutes",
+  "views": 5302838,
+  "channel": "RESPIRE"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-5302k"
+  ],
+  "hook": "Your brain has an age, just like your body."
+ }
+}
