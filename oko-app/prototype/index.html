@@ -2736,6 +2736,36 @@ main>.screen{position:relative;z-index:1}
 .ac-odd-opt.ok{border-color:var(--lime);background:var(--lime);color:#000;font-weight:800}
 .ac-odd-opt.shake{animation:acShake .4s;border-color:var(--danger)}
 
+/* ================= ОБОГАЩЕНИЕ УРОКА ================= */
+.ac-intro-hook{margin-top:12px;font-size:14px;line-height:1.55;color:var(--text);font-weight:600;padding:12px 14px;border-radius:12px;background:var(--lime-dim);border-left:3px solid var(--accent)}
+/* глубокий разбор */
+.ac-deep{display:flex;flex-direction:column;gap:10px}
+.ac-deep-sec{display:flex;gap:12px;padding:14px;border-radius:14px;background:var(--raised);border:1px solid var(--border);animation:acDeepIn .5s cubic-bezier(.25,1,.4,1) both;animation-delay:var(--d,0s)}
+.ac-deep-sec .n{flex-shrink:0;width:30px;height:30px;border-radius:9px;background:var(--lime-dim);color:var(--accent);font-family:var(--font-display);font-size:15px;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.ac-deep-sec h4{font-size:14.5px;font-weight:800;margin:2px 0 5px;letter-spacing:-.01em}
+.ac-deep-sec p{font-size:13px;line-height:1.6;color:var(--dim)}
+.ac-deep-sec p b,.ac-deep-sec h4 b{color:var(--accent)}
+@keyframes acDeepIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* лайфхак */
+.ac-lifehack{display:flex;gap:13px;align-items:flex-start;margin-top:12px;padding:15px;border-radius:16px;background:linear-gradient(135deg,rgba(154,255,0,.14),rgba(154,255,0,.04));border:1px solid rgba(154,255,0,.32);position:relative;overflow:hidden}
+.ac-lifehack::after{content:'';position:absolute;right:-30px;top:-30px;width:110px;height:110px;background:radial-gradient(circle,rgba(154,255,0,.22),transparent 70%);pointer-events:none}
+.ac-lifehack .ic{flex-shrink:0;width:40px;height:40px;border-radius:12px;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(154,255,0,.4)}
+.ac-lifehack .ic svg.i{width:20px;height:20px}
+.ac-lifehack .lbl{display:block;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:3px}
+.ac-lifehack p{font-size:13.5px;line-height:1.55;font-weight:600;color:var(--text)}
+/* кнопки-ссылки на инструменты */
+.ac-links{display:flex;flex-direction:column;gap:8px}
+.ac-link-btn{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:13px;background:var(--raised);border:1px solid var(--border);transition:border-color .15s,transform .12s,background .15s;text-decoration:none;color:var(--text)}
+.ac-link-btn:hover{border-color:var(--accent);transform:translateX(3px);background:var(--lime-dim)}
+.ac-link-btn .ic{flex-shrink:0;width:38px;height:38px;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.ac-link-btn .ic svg.i{width:18px;height:18px}
+.ac-link-btn .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ac-link-btn .tx b{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-link-btn .tx span{font-size:11.5px;color:var(--dim);line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ac-link-btn .host{flex-shrink:0;font-size:10px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 8px;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-link-btn .go{width:15px;height:15px;color:var(--dim);flex-shrink:0}
+@media(max-width:380px){.ac-link-btn .host{display:none}}
+
 /* ===== module: ads ===== */
 /* ===== ADS: рекламный кабинет (префикс ads-) ===== */
 .ads-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -8541,7 +8571,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.29</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.30</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -18961,6 +18991,14 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   ]
 });
 
+/* ===== module: academy-enrich ===== */
+/* ================= ОБОГАЩЕНИЕ УРОКОВ АКАДЕМИИ =================
+   window.AC_ENRICH[gi] = { intro, notes:[{h,body}], lifehack, links:[{label,url,note}] }
+   gi — глобальный индекс урока (== acL в плоском AC_COURSE).
+   Данные наполняются воркфлоу oko-academy-enrich (по агенту на урок, без повторов).
+   Пока карта пуста — UI просто не показывает блоки обогащения (грациозная деградация). */
+window.AC_ENRICH = window.AC_ENRICH || {};
+
 /* ===== module: academy ===== */
 /* ================= ACADEMY: Академия OKO (префикс ac-) =================
    Курс «Нейросети 2026»: 5 уроков (видео + слайды + тест + практика + мини-игра),
@@ -21204,6 +21242,7 @@ function acLessonHtml(){
       <span class="chip">Урок ${acLocalNo(acL)} из ${AC_COURSES[ci].count}</span>
       <h2>${L.title}</h2>
       <div class="m">${vid?`<span>${I('clock')} ${L.dur} видео</span><span>·</span>`:''}<span>${I('file')} ${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
+      ${acEnrichIntroHtml()}
     </div>
 
     ${vid ? '<div id="acVideoBox"></div>' : ''}
@@ -21225,9 +21264,12 @@ function acLessonHtml(){
       </div>
     </div>
 
+    ${acEnrichDeepHtml()}
+
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Конспект</h2>
     ${acNotesHtml()}
 
+    ${acEnrichLinksHtml()}
     ${acToolsHtml(L)}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
@@ -21245,6 +21287,50 @@ function acLessonHtml(){
     <div style="height:14px"></div>
     <div id="acCertBox"></div>
     <div style="height:16px"></div>`;
+}
+
+/* ================= ОБОГАЩЕНИЕ УРОКА (intro / глубокий разбор / лайфхак / ссылки) ================= */
+function acEnrich(){ try{ return (window.AC_ENRICH||{})[acL] || null; }catch(e){ return null; } }
+function acEnrichIntroHtml(){
+  const e = acEnrich();
+  if(!e || !e.intro) return '';
+  return `<p class="ac-intro-hook">${esc(e.intro)}</p>`;
+}
+function acEnrichDeepHtml(){
+  const e = acEnrich();
+  if(!e) return '';
+  let out = '';
+  if(Array.isArray(e.notes) && e.notes.length){
+    out += `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Глубокий разбор</h2>
+      <div class="ac-deep">${e.notes.map((n,i)=>`
+        <div class="ac-deep-sec" style="--d:${(i*0.06).toFixed(2)}s">
+          <span class="n">${String(i+1).padStart(2,'0')}</span>
+          <div class="bd"><h4>${esc(n.h||'')}</h4><p>${esc(n.body||'')}</p></div>
+        </div>`).join('')}</div>`;
+  }
+  if(e.lifehack){
+    out += `<div class="ac-lifehack">
+      <div class="ic">${I('bolt')}</div>
+      <div><span class="lbl">Лайфхак</span><p>${esc(e.lifehack)}</p></div>
+    </div>`;
+  }
+  return out;
+}
+function acEnrichLinksHtml(){
+  const e = acEnrich();
+  if(!e || !Array.isArray(e.links) || !e.links.length) return '';
+  const items = e.links.map(l=>{
+    const url = String(l.url||'').trim();
+    const safe = /^https?:\/\//i.test(url) ? url : ('https://' + url.replace(/^\/+/,''));
+    let host = ''; try{ host = new URL(safe).hostname.replace(/^www\./,''); }catch(_){ host = safe; }
+    return `<a class="ac-link-btn" href="${esc(safe)}" target="_blank" rel="noopener noreferrer">
+      <span class="ic">${I('compass')}</span>
+      <span class="tx"><b>${esc(l.label||host)}</b><span>${esc(l.note||host)}</span></span>
+      <span class="host">${esc(host)}</span>
+      <svg class="i go"><use href="#i-forward"/></svg></a>`;
+  }).join('');
+  return `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Инструменты урока</h2>
+    <div class="ac-links">${items}</div>`;
 }
 
 /* ---------- а) ВИДЕО ---------- */

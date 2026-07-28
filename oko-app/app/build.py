@@ -20,6 +20,7 @@ ORDER = [
     'wallet',          # экран кошелька / лицевой счёт
     'games',           # игры: рулетка + дорога
     'academy-content', # академия: контент-пак уроков (window.AC_PACK) — ДО academy
+    'academy-enrich',  # академия: обогащение уроков (window.AC_ENRICH) — ДО academy
     'academy',         # академия: уроки, тесты, сертификаты
     'ads',             # рекламный кабинет
     'legal',           # юр-документы RU/EN

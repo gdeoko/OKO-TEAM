@@ -2240,6 +2240,7 @@ function acLessonHtml(){
       <span class="chip">Урок ${acLocalNo(acL)} из ${AC_COURSES[ci].count}</span>
       <h2>${L.title}</h2>
       <div class="m">${vid?`<span>${I('clock')} ${L.dur} видео</span><span>·</span>`:''}<span>${I('file')} ${L.slides.length} слайдов</span><span>·</span><span>тест из ${L.quiz.length} вопросов</span><span>·</span><span>мини-игра</span></div>
+      ${acEnrichIntroHtml()}
     </div>
 
     ${vid ? '<div id="acVideoBox"></div>' : ''}
@@ -2261,9 +2262,12 @@ function acLessonHtml(){
       </div>
     </div>
 
+    ${acEnrichDeepHtml()}
+
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Конспект</h2>
     ${acNotesHtml()}
 
+    ${acEnrichLinksHtml()}
     ${acToolsHtml(L)}
 
     <h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Тест по материалу</h2>
@@ -2281,6 +2285,50 @@ function acLessonHtml(){
     <div style="height:14px"></div>
     <div id="acCertBox"></div>
     <div style="height:16px"></div>`;
+}
+
+/* ================= ОБОГАЩЕНИЕ УРОКА (intro / глубокий разбор / лайфхак / ссылки) ================= */
+function acEnrich(){ try{ return (window.AC_ENRICH||{})[acL] || null; }catch(e){ return null; } }
+function acEnrichIntroHtml(){
+  const e = acEnrich();
+  if(!e || !e.intro) return '';
+  return `<p class="ac-intro-hook">${esc(e.intro)}</p>`;
+}
+function acEnrichDeepHtml(){
+  const e = acEnrich();
+  if(!e) return '';
+  let out = '';
+  if(Array.isArray(e.notes) && e.notes.length){
+    out += `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Глубокий разбор</h2>
+      <div class="ac-deep">${e.notes.map((n,i)=>`
+        <div class="ac-deep-sec" style="--d:${(i*0.06).toFixed(2)}s">
+          <span class="n">${String(i+1).padStart(2,'0')}</span>
+          <div class="bd"><h4>${esc(n.h||'')}</h4><p>${esc(n.body||'')}</p></div>
+        </div>`).join('')}</div>`;
+  }
+  if(e.lifehack){
+    out += `<div class="ac-lifehack">
+      <div class="ic">${I('bolt')}</div>
+      <div><span class="lbl">Лайфхак</span><p>${esc(e.lifehack)}</p></div>
+    </div>`;
+  }
+  return out;
+}
+function acEnrichLinksHtml(){
+  const e = acEnrich();
+  if(!e || !Array.isArray(e.links) || !e.links.length) return '';
+  const items = e.links.map(l=>{
+    const url = String(l.url||'').trim();
+    const safe = /^https?:\/\//i.test(url) ? url : ('https://' + url.replace(/^\/+/,''));
+    let host = ''; try{ host = new URL(safe).hostname.replace(/^www\./,''); }catch(_){ host = safe; }
+    return `<a class="ac-link-btn" href="${esc(safe)}" target="_blank" rel="noopener noreferrer">
+      <span class="ic">${I('compass')}</span>
+      <span class="tx"><b>${esc(l.label||host)}</b><span>${esc(l.note||host)}</span></span>
+      <span class="host">${esc(host)}</span>
+      <svg class="i go"><use href="#i-forward"/></svg></a>`;
+  }).join('');
+  return `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Инструменты урока</h2>
+    <div class="ac-links">${items}</div>`;
 }
 
 /* ---------- а) ВИДЕО ---------- */
