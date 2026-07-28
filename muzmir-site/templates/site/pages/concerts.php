@@ -105,7 +105,7 @@ ob_start(); ?>
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Смотрите</p>
-      <h2>Онлайн-гала-концерты</h2>
+      <h2>Онлайн-концерты</h2>
     </div>
     <div class="concert-lead reveal">
       <p style="color:var(--text-dim);margin:0">Записи гала-концертов, творческих вечеров и концертных программ Культурного центра «Музыкальный Мир» - лауреаты и дипломанты наших конкурсов на одной сцене.</p>

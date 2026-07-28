@@ -148,7 +148,7 @@ ob_start(); ?>
   <div class="container" style="max-width:760px">
     <div class="section-head reveal">
       <p class="eyebrow">Награды</p>
-      <h2>Заказ наградного материала</h2>
+      <h2>Оплата наград</h2>
       <div class="gold-rule"></div>
       <p>Отметьте нужные позиции - сумма пересчитывается сразу. Заказ оформляется после оплаты.</p>
     </div>

@@ -127,7 +127,7 @@ ob_start(); ?>
   <div class="container" style="max-width:820px">
     <div class="section-head reveal">
       <p class="eyebrow">Обратная связь</p>
-      <h2>Вопросы и ответы</h2>
+      <h2>Часто задаваемые вопросы</h2>
       <div class="gold-rule"></div>
     </div>
 
