@@ -14,11 +14,15 @@
 <script type="importmap">
 {"imports":{"three":"./js/vendor/three.module.min.js","three/addons/":"./js/vendor/jsm/"}}
 </script>
+<script type="module" src="spline/spline-viewer.js"></script>
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
-/* СТАТИЧНЫЙ фон-кубы (пре-рендер Spline) — ноль WebGL/лагов/глюков */
+/* ЖИВОЙ Spline WebGL фон (кубы) — с оптимизацией, ниже — статичный fallback */
 #cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505 url('kp-media/bg/cubes_land.webp') center/cover no-repeat;opacity:.85}
 @media(max-width:760px){#cubes-bg{background-image:url('kp-media/bg/cubes_port.webp')}}
+spline-viewer#spline-bg{position:fixed;top:0;left:0;width:70vw;height:70vh;transform:scale(1.5);transform-origin:0 0;z-index:-2;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s ease}
+spline-viewer#spline-bg.ready{opacity:.68}
+spline-viewer#spline-bg::part(logo){display:none!important}
 .holo-anchor{pointer-events:none}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--lime:#9AFF00;--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--border-lime:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.75);--w3:rgba(255,255,255,0.45);--w4:rgba(255,255,255,0.22);--bg:#050505}
@@ -71,7 +75,15 @@ html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!
 .mob-nav .nav-cta{display:block;text-align:center;padding:15px;border-radius:14px;font-size:15px;margin-top:6px}
 /* LAYOUT */
 .wrap{max-width:1120px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
-section{position:relative;z-index:1;padding:42px 0}
+section{position:relative;z-index:1;padding:30px 0}
+/* Красивый анимированный разделитель между секциями */
+.sec-divider{position:relative;height:56px;display:flex;align-items:center;justify-content:center;margin:-6px 0;pointer-events:none}
+.sec-divider::before{content:'';position:absolute;left:12%;right:12%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(154,255,0,.5),transparent);transform:translateY(-50%)}
+.sec-divider .dot{width:10px;height:10px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px rgba(154,255,0,.7),0 0 30px rgba(154,255,0,.4);animation:divpulse 2.4s ease-in-out infinite;position:relative;z-index:1}
+.sec-divider .dot::before,.sec-divider .dot::after{content:'';position:absolute;top:50%;width:36px;height:1px;background:linear-gradient(90deg,var(--lime),transparent)}
+.sec-divider .dot::before{right:14px;background:linear-gradient(90deg,transparent,var(--lime))}
+.sec-divider .dot::after{left:14px}
+@keyframes divpulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.25);opacity:1}}
 .sec-lbl{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);margin-bottom:10px}
 .sec-h{font-family:'Unbounded',sans-serif;font-size:clamp(24px,3.4vw,44px);font-weight:900;line-height:1.1;margin-bottom:14px}
 .sec-h .lime{color:var(--lime)}
@@ -93,8 +105,9 @@ section{position:relative;z-index:1;padding:42px 0}
 /* HERO — один экран */
 .hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:88px 24px 40px;position:relative}
 .eye-wrap{position:relative;width:min(300px,64vw);height:min(300px,64vw);margin-bottom:2px;display:flex;align-items:center;justify-content:center;will-change:transform}
-.eye-wrap::before{content:'';position:absolute;width:74%;height:74%;left:13%;top:13%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.28),rgba(120,220,10,.12) 40%,transparent 70%);filter:blur(24px);z-index:0;animation:glowpulse 5s ease-in-out infinite}
-@keyframes glowpulse{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+.eye-wrap::before{content:'';position:absolute;width:150%;height:150%;left:-25%;top:-25%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.6),rgba(154,255,0,.22) 32%,rgba(120,220,10,.08) 55%,transparent 72%);filter:blur(48px);z-index:0;animation:glowpulse 4s ease-in-out infinite;will-change:transform,opacity}
+.eye-wrap::after{content:'';position:absolute;width:88%;height:88%;left:6%;top:6%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.35),rgba(154,255,0,.12) 50%,transparent 75%);filter:blur(18px);z-index:0;animation:glowpulse 4s ease-in-out infinite reverse}
+@keyframes glowpulse{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
 #eye-canvas{width:100%;height:100%;display:block;position:relative;z-index:1}
 #eye-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1}
 #eye-fallback img{width:56%;height:56%;object-fit:contain;filter:drop-shadow(0 6px 22px rgba(154,255,0,.5))}
@@ -116,7 +129,7 @@ section{position:relative;z-index:1;padding:42px 0}
 .scroll-hint .m::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;background:var(--lime);border-radius:2px;transform:translateX(-50%);animation:wheel 1.6s infinite}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
 /* HAND holds title */
-.hand-hero{position:relative;min-height:56vh;display:flex;align-items:center;overflow:visible}
+.hand-hero{position:relative;min-height:44vh;display:flex;align-items:center;overflow:visible;margin-top:-30px;margin-bottom:-20px}
 #holoHand{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);height:min(340px,40vw)}
 .hand-caption{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(20px,4.4vw,50px);line-height:1;letter-spacing:-1px;white-space:nowrap;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.85),0 0 30px rgba(154,255,0,.25);opacity:0;transition:opacity .6s ease;pointer-events:none}
 .hand-caption.on{opacity:1}
@@ -155,7 +168,7 @@ section{position:relative;z-index:1;padding:42px 0}
 @keyframes livep{0%{box-shadow:0 0 0 0 rgba(154,255,0,.65)}70%{box-shadow:0 0 0 7px rgba(154,255,0,0)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0)}}
 /* AGENTS DETAIL — pinned 3D capability cards + woman */
 #agents-detail{position:relative}
-.adt-pin{position:relative;height:300vh}
+.adt-pin{position:relative;height:220vh}
 .adt-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;padding-left:4vw;perspective:1400px}
 @media(max-width:760px){.adt-sticky{justify-content:center;align-items:flex-end;padding:0 0 8vh}}
 .adt-head{position:absolute;top:max(76px,9vh);left:0;right:0;text-align:center;z-index:4;padding:0 24px;pointer-events:none}
@@ -237,47 +250,49 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .trev-tx{font-size:12.5px;color:var(--w2);line-height:1.6}
 .rev-more{text-align:center;margin-top:18px}
 /* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
-/* GUARANTEES — liquid-glass парящие карточки (breathing float, как в референсе) */
-.glass-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
-@media(max-width:900px){.glass-cards{grid-template-columns:repeat(2,1fr);gap:14px}}
-@media(max-width:560px){.glass-cards{grid-template-columns:1fr;gap:14px;max-width:400px;margin:26px auto 0}}
-.gcard{display:flex;align-items:center;gap:14px;padding:18px 18px;border-radius:22px;
-  background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.035));
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),inset 0 0 0 1px rgba(154,255,0,.05),0 22px 44px -22px rgba(0,0,0,.85);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);will-change:transform;animation:gfloat 5s ease-in-out infinite;transition:box-shadow .3s}
-.gcard:hover{box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 34px -6px rgba(154,255,0,.3),0 22px 44px -20px rgba(0,0,0,.85)}
-.gcard:nth-child(2){animation-duration:5.7s;animation-delay:-1.4s}
-.gcard:nth-child(3){animation-duration:4.6s;animation-delay:-2.6s}
-.gcard:nth-child(4){animation-duration:5.3s;animation-delay:-0.8s}
-.gcard:nth-child(5){animation-duration:4.9s;animation-delay:-3.1s}
-.gcard:nth-child(6){animation-duration:5.9s;animation-delay:-1.9s}
-@keyframes gfloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(2px,-9px,0)}}
-@media(prefers-reduced-motion:reduce){.gcard{animation:none}}
-.gc-bead{flex:0 0 auto;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
-.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:14px;color:#fff;line-height:1.15}
-.gc-d{font-size:11.5px;color:var(--w2);margin-top:3px;line-height:1.4}
-/* FAQ — живой робот-видео сверху, стеклянные вопросы сеткой (в один экран) */
-.faq-scene{position:relative;margin-top:14px;display:flex;flex-direction:column;align-items:center}
-.faq-scene::before{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:min(520px,92vw);height:300px;background:radial-gradient(ellipse 60% 60% at 50% 42%,rgba(154,255,0,.16),transparent 70%);pointer-events:none;z-index:0}
-.faq-robot{position:relative;z-index:2;width:min(210px,46vw);aspect-ratio:1/1;margin:0 auto -6px;transition:transform .4s cubic-bezier(.2,1.4,.4,1);filter:drop-shadow(0 18px 34px rgba(154,255,0,.2))}
+/* GUARANTEES — 3D coverflow банковских карт (пролёт по скроллу) */
+.gcar-wrap{position:relative;height:340px;margin-top:16px;perspective:1400px;touch-action:pan-y}
+.gcar{position:absolute;inset:0;transform-style:preserve-3d}
+.gcard{position:absolute;left:50%;top:50%;width:min(300px,82vw);height:180px;border-radius:20px;padding:20px 22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.3),0 24px 60px -30px rgba(0,0,0,.9),0 0 30px -8px rgba(154,255,0,.22);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);will-change:transform,opacity;display:flex;gap:12px;transform:translate(-50%,-50%)}
+.gcard::before{content:'';position:absolute;inset:-1px;border-radius:20px;background:linear-gradient(135deg,rgba(154,255,0,.35),transparent 40%,transparent 60%,rgba(154,255,0,.2));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:1px;pointer-events:none}
+.gc-bead{flex:0 0 auto;width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
+.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:15px;color:#fff;line-height:1.15;margin-bottom:4px}
+.gc-d{font-size:12px;color:var(--w2);line-height:1.42}
+.gcar-nav{display:flex;gap:8px;justify-content:center;margin-top:10px}
+.gcar-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:all .3s}
+.gcar-dot.on{background:var(--lime);width:24px;border-radius:5px}
+.gcar-hint{text-align:center;font-size:11px;color:var(--w4);margin-top:8px;letter-spacing:.5px}
+/* FAQ — компактно в 1 экран: маленький робот + 4×2 стеклянные flip-плитки */
+.faq-scene{position:relative;display:grid;grid-template-columns:180px 1fr;grid-template-rows:auto 1fr;gap:14px 22px;align-items:start;margin-top:12px;min-height:520px}
+@media(max-width:760px){.faq-scene{grid-template-columns:1fr;grid-template-rows:auto auto auto;gap:8px;min-height:auto}}
+.faq-scene::before{content:'';position:absolute;left:0;top:0;width:min(420px,68vw);height:340px;background:radial-gradient(ellipse 55% 55% at 30% 40%,rgba(154,255,0,.18),transparent 70%);pointer-events:none;z-index:0;filter:blur(4px)}
+.faq-robot{grid-column:1;grid-row:1/3;position:sticky;top:80px;z-index:2;width:100%;max-width:180px;aspect-ratio:1/1;filter:drop-shadow(0 18px 40px rgba(154,255,0,.32));transition:transform .4s cubic-bezier(.2,1.4,.4,1)}
+.faq-cap{grid-column:2;grid-row:1;text-align:left;margin-bottom:2px;position:relative;z-index:2}
+.faq-list{grid-column:2;grid-row:2}
 .faq-robot video{width:100%;height:100%;object-fit:contain;display:block}
-.faq-robot.react{transform:translateY(-8px) scale(1.06)}
-.faq-cap{text-align:center;margin-bottom:16px;position:relative;z-index:2}
-.rb-say{display:inline-block;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid var(--border-lime);border-radius:30px;padding:9px 18px;font-size:12.5px;color:var(--w2)}
-.rb-say b{color:var(--lime)}
-.faq-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1;width:100%;max-width:920px}
-@media(max-width:760px){.faq-list{grid-template-columns:1fr;gap:10px}}
-.faq-i{border-radius:16px;overflow:hidden;align-self:start;transition:border-color .3s,background .3s;
-  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 1px 2px rgba(255,255,255,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-.faq-i.open{border-color:var(--border-lime);background:rgba(154,255,0,.07)}
-.faq-q{padding:14px 16px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;line-height:1.3}
-.faq-q .p{color:var(--lime);font-size:20px;transition:transform .3s;flex:0 0 auto}
-.faq-i.open .p{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w2);font-size:12.5px;line-height:1.6}
-.faq-a div{padding:0 16px 14px}
-@media(max-width:760px){.faq-robot{width:min(170px,42vw)}}
+.faq-robot.react{transform:translateY(-6px) scale(1.08)}
+@media(max-width:760px){.faq-robot{position:relative;top:0;width:130px;margin:0 auto}}
+.faq-list{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:10px;position:relative;z-index:1;width:100%}
+@media(max-width:900px){.faq-list{grid-template-columns:repeat(3,1fr);gap:9px}}
+@media(max-width:600px){.faq-list{grid-template-columns:repeat(2,1fr);gap:8px}}
+.faq-i{position:relative;perspective:1000px;min-height:118px;cursor:pointer}
+.faq-flip{position:relative;width:100%;height:100%;min-height:118px;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,1.2,.4,1)}
+.faq-i.open .faq-flip{transform:rotateY(180deg)}
+.faq-face,.faq-back{position:absolute;inset:0;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);
+  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.22),0 12px 28px -14px rgba(0,0,0,.85),0 0 20px -8px rgba(154,255,0,.15);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:box-shadow .3s,border-color .3s}
+.faq-i:hover .faq-face,.faq-i:hover .faq-back{border-color:var(--border-lime);box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 26px -6px rgba(154,255,0,.35),0 12px 28px -14px rgba(0,0,0,.9)}
+.faq-back{transform:rotateY(180deg);background:linear-gradient(135deg,rgba(154,255,0,.18),rgba(154,255,0,.04));border-color:var(--border-lime)}
+.faq-face-q{font-family:'Unbounded',sans-serif;font-weight:800;font-size:12px;color:#fff;line-height:1.2;flex:1;display:flex;align-items:center}
+.faq-face-hint{font-size:10px;color:var(--lime);letter-spacing:1px;text-transform:uppercase;margin-top:4px;opacity:.7}
+.faq-back-a{font-size:11px;color:var(--w2);line-height:1.4;overflow-y:auto;max-height:100%;padding-right:2px}
+.faq-back-a::-webkit-scrollbar{width:2px}
+.faq-back-a::-webkit-scrollbar-thumb{background:rgba(154,255,0,.4)}
 /* CTA loop */
 .cta-f{text-align:center;padding:72px 24px;position:relative;overflow:hidden}
 .cta-logo{width:120px;height:120px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.16),rgba(6,8,6,.9));border:1px solid var(--border-lime);box-shadow:0 0 60px -10px rgba(154,255,0,.4);animation:plfloat 5s ease-in-out infinite}
@@ -298,6 +313,9 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .pay-copy code{color:#fff;font-size:12px;word-break:break-all}
 .pay-copy.ok{border-color:var(--lime)}.pay-copy .c{color:var(--lime);font-size:11px;font-weight:700;white-space:nowrap}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--lime);color:#000;font-weight:700;font-size:13px;padding:12px 22px;border-radius:30px;opacity:0;transition:all .3s;z-index:1100;pointer-events:none}
+#sound-btn{position:fixed;right:16px;bottom:16px;z-index:900;width:44px;height:44px;border-radius:50%;background:rgba(5,5,5,.7);border:1px solid var(--border-lime);color:var(--lime);display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px);transition:all .3s;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#sound-btn:hover{background:rgba(154,255,0,.14);transform:scale(1.08)}
+#sound-btn.off{opacity:.55}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* RESPONSIVE */
 @media(max-width:900px){.nav-links{display:none}.ham{display:block}.nav{padding:12px 18px}.wrap{padding:0 18px}section{padding:48px 0}.ocard{top:70px}}
@@ -309,6 +327,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <div id="preloader"><div class="pl-logo"><img src="__LOGO__" alt="OKO"></div><div class="pl-word">OK<span>O</span></div><div class="pl-bar"><i></i></div></div>
 <!-- BACKGROUND -->
 <div id="cubes-bg"></div>
+<spline-viewer id="spline-bg" url="spline/scene.splinecode"></spline-viewer>
 <div id="bg-grid"></div>
 <div id="bg-overlay"></div>
 <div id="glow-bg"><span class="g1"></span><span class="g2"></span></div>
@@ -405,6 +424,8 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   </div>
 </div>
 </section>
+<div class="sec-divider"><span class="dot"></span></div>
+
 
 <!-- AGENTS DETAIL — pinned capability cards + woman -->
 <section id="agents-detail">
@@ -424,6 +445,8 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   </div>
   <div class="wrap" style="margin-top:8px"><div class="buttons-row rv" style="justify-content:center"><a href="https://true-journey-418.higgsfield.app/hq" target="_blank" class="btn btn-lime magnetic">Войти в 3D-штаб →</a></div></div>
 </section>
+<div class="sec-divider"><span class="dot"></span></div>
+
 
 <!-- TARIFFS -->
 <section id="tariffs">
@@ -436,6 +459,8 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="req-btn-wrap"><button class="btn btn-lime btn-sm magnetic" onclick="openPay()" style="white-space:nowrap;letter-spacing:.5px">ДРУГИЕ СПОСОБЫ ОПЛАТЫ</button></div>
 </div>
 </section>
+<div class="sec-divider"><span class="dot"></span></div>
+
 
 <!-- REVIEWS -->
 <section id="reviews">
@@ -447,21 +472,27 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="rev-more"><a href="https://t.me/okoreviews" target="_blank" class="btn btn-ghost magnetic">Больше отзывов в Telegram →</a></div>
 </div>
 </section>
+<div class="sec-divider"><span class="dot"></span></div>
+
 
 <!-- GUARANTEES -->
 <section id="guarantees">
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Гарантии</div><h2 class="sec-h creveal">Работаем <span class="lime">по-честному</span></h2></div>
-  <div class="glass-cards">
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом</div></div></div>
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span><div><div class="gc-t">Рассрочка 50/50</div><div class="gc-d">Половина на старте — без скрытых доплат</div></div></div>
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика</div></div></div>
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем и остаёмся на связи после запуска</div></div></div>
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="gc-t">Сроки в договоре</div><div class="gc-d">Фиксируем сроки, срыв — компенсируем</div></div></div>
-    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года</div></div></div>
-  </div>
+  <div class="gcar-wrap" id="gcarWrap"><div class="gcar" id="gcar">
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом. Всё юридически.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span><div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, без скрытых доплат.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика и лишних нервов.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем работе с системой, остаёмся на связи после запуска.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="gc-t">До 10 рабочих дней</div><div class="gc-d">Срок в договоре. Срываем — компенсируем.</div></div></div>
+    <div class="gcard"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года. Реальные кейсы.</div></div></div>
+  </div></div>
+  <div class="gcar-nav" id="gcarNav"></div>
+  <div class="gcar-hint">свайп · клик по точкам · авто-пролёт</div>
 </div>
 </section>
+<div class="sec-divider"><span class="dot"></span></div>
+
 
 <!-- FAQ + robot -->
 <section id="faq">
@@ -471,14 +502,14 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
     <div class="faq-robot rv" id="faqRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
     <div class="faq-cap"><span class="rb-say" id="rbSay"><b>Агент OKO</b> на связи — тапни вопрос</span></div>
     <div class="faq-list" id="faqList">
-      <div class="faq-i"><div class="faq-q">Чем ИИ-агент лучше живого менеджера?<span class="p">+</span></div><div class="faq-a"><div>Агент работает 24/7 без выходных и больничных, отвечает за секунды, не теряет заявки и ведёт по выверенным скриптам. Один агент заменяет отдел — а стоит в разы дешевле.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Агенты реально заходят в мои аккаунты?<span class="p">+</span></div><div class="faq-a"><div>Да, с вашего разрешения и под вашим контролем. Они публикуют, отвечают в директ, ведут диалоги — а вы видите каждое действие в админке и в любой момент можете вмешаться.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Это не выглядит как спам-бот?<span class="p">+</span></div><div class="faq-a"><div>Нет. Агенты пишут по-человечески, отвечают голосом, реагируют на контекст и возражения. Клиент общается как с живым менеджером, а не с шаблонным ботом.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Какие сроки запуска?<span class="p">+</span></div><div class="faq-a"><div>СТАРТ — от 5–7 дней, БИЗНЕС — 2–3 недели, ИМПЕРИЯ — 3–5 недель. Точные сроки фиксируем в договоре.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Как происходит оплата и рассрочка?<span class="p">+</span></div><div class="faq-a"><div>50% на старте, 50% по готовности. Карта РФ и зарубежная — через Lava, также крипта (USDT), карта USD и ЮMoney. Всё по договору.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Что если мне не понравится результат?<span class="p">+</span></div><div class="faq-a"><div>Дорабатываем в рамках ТЗ до результата. Работаем поэтапно: вы принимаете каждый этап, прежде чем двигаться дальше.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Я ничего не понимаю в digital — справлюсь?<span class="p">+</span></div><div class="faq-a"><div>Да. Мы всё настраиваем под ключ и обучаем работе с системой. Ваша задача — принимать заявки и заниматься бизнесом.</div></div></div>
-      <div class="faq-i"><div class="faq-q">Можно собрать пакет индивидуально?<span class="p">+</span></div><div class="faq-a"><div>Конечно. Напишите в Telegram — соберём решение под вашу нишу, задачи и бюджет.</div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Чем ИИ-агент лучше?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Работает 24/7, не теряет заявки, отвечает за секунды. Один агент заменяет отдел, стоит в разы дешевле.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Заходят в мои аккаунты?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Да, с вашего разрешения. Публикуют, ведут диалоги, вы видите каждое действие в админке и можете вмешаться.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Это не спам-бот?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Нет. Агенты пишут по-человечески, отвечают голосом, реагируют на контекст. Клиент общается как с живым.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Какие сроки?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">До 10 рабочих дней с момента старта и передачи доступов. Срываем — компенсируем. Всё в договоре.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Как платить?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Карты РФ и зарубежные, СБП, СберPay, T-Pay через Lava.top. Крипта USDT в Telegram. По каждому — чек.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Не понравится результат?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Дорабатываем в рамках ТЗ до результата. Работаем поэтапно: принимаете каждый этап, прежде чем двигаться.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Я ничего не понимаю?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Настраиваем под ключ и обучаем работе с системой. Ваша задача — принимать заявки и заниматься бизнесом.</div></div></div></div>
+      <div class="faq-i"><div class="faq-flip"><div class="faq-face"><div class="faq-face-q">Индивидуальный пакет?</div><div class="faq-face-hint">Тапни для ответа →</div></div><div class="faq-back"><div class="faq-back-a">Напишите в Telegram @ktodaniel — соберём решение под вашу нишу, задачи и бюджет.</div></div></div></div>
     </div>
   </div>
 </div>
@@ -515,6 +546,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   </div>
 </div>
 <div id="toast">Скопировано</div>
+<button id="sound-btn" class="off" title="Звук"><svg id="sndOff" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg><svg id="sndOn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M19 5a10 10 0 010 14"/></svg></button>
 
 <script src="js/vendor/lenis.min.js"></script>
 <script src="js/vendor/gsap.min.js"></script>
@@ -576,10 +608,11 @@ function build(){
   if(TOUCH&&window.DeviceOrientationEvent){addEventListener('deviceorientation',function(e){if(e.gamma==null)return;var ry=Math.max(-10,Math.min(10,e.gamma*.3)),rx=Math.max(-8,Math.min(8,(e.beta-40)*.16));document.querySelectorAll('[data-tilt]').forEach(function(c){c.style.transform='rotateX('+(-rx)+'deg) rotateY('+ry+'deg)';});},true);}
   /* HAND caption appears in the hand (holo renders the hand itself) */
   var cap=document.getElementById('handCap');
-  if(cap)ST.create({trigger:'#handHero',start:'top 62%',end:'center 60%',onEnter:function(){cap.classList.add('on');},onLeaveBack:function(){cap.classList.remove('on');}});
+  if(cap){(function tick(){requestAnimationFrame(tick);var op=window.__handOpen||0;cap.classList.toggle('on',op>0.7);})();}
   /* AGENTS DETAIL pinned coverflow + woman */
   buildAgents();
   buildTariffs();
+  buildGuarCoverflow();
   buildFaqRobot();
   buildLoop();
   ST.refresh();
@@ -637,14 +670,33 @@ function buildTariffs(){
   var ru=false;try{var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';ru=/Moscow|Samara|Yekaterinburg|Kaliningrad|Volgograd|Kirov|Saratov|Simferopol|Omsk|Novosibirsk|Krasnoyarsk/i.test(tz)||/^ru\b/i.test(navigator.language||'');}catch(e){}
   document.querySelectorAll('[data-usd]').forEach(function(el){var v=el.getAttribute(ru?'data-rub':'data-usd');if(v){if(el.classList.contains('pay-btn'))el.href=v;else el.innerHTML=v;}});
 }
+/* ---- GUARANTEES 3D coverflow (auto-fly + swipe + tilt on scroll) ---- */
+function buildGuarCoverflow(){
+  var wrap=document.getElementById('gcarWrap'),car=document.getElementById('gcar');if(!wrap||!car)return;
+  var cards=Array.from(car.querySelectorAll('.gcard')),N=cards.length,pos=0,target=0,drag=false,x0=0,y0=0,sp=0,dir=0,tilt=0,auto=true,autoT=Date.now();
+  var nav=document.getElementById('gcarNav');cards.forEach(function(_,i){var d=document.createElement('span');d.className='gcar-dot'+(i===0?' on':'');d.dataset.i=i;nav.appendChild(d);});
+  var dots=Array.from(nav.children);
+  function layout(){cards.forEach(function(c,i){var off=((i-pos)%N+N)%N;if(off>N/2)off-=N;var a=Math.abs(off);
+    var tx=off*(TOUCH?58:70),tz=-a*260,ry=-off*38+(i===Math.round(((pos%N)+N)%N)?tilt:0),sc=1-Math.min(a*.14,.35),op=a>2.1?0:1-Math.min(a*.4,.75);
+    c.style.transform='translate(-50%,-50%) translateX('+tx+'%) translateZ('+tz+'px) rotateY('+ry+'deg) scale('+sc+')';
+    c.style.opacity=op;c.style.zIndex=String(100-Math.round(a*10));c.style.pointerEvents=a<.5?'auto':'none';});
+    var ai=Math.round(((pos%N)+N)%N);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});}
+  (function raf(){pos+=(target-pos)*.11;tilt+=(0-tilt)*.1;if(auto&&Date.now()-autoT>3200){target+=1;autoT=Date.now();}layout();requestAnimationFrame(raf);})();
+  dots.forEach(function(d){d.addEventListener('click',function(){target=+d.dataset.i;auto=false;autoT=Date.now();});});
+  wrap.addEventListener('pointerdown',function(e){if(e.target.closest('a'))return;drag=true;x0=e.clientX;y0=e.clientY;sp=pos;dir=0;auto=false;});
+  wrap.addEventListener('pointermove',function(e){if(!drag)return;var dx=e.clientX-x0,dy=e.clientY-y0;if(!dir){if(Math.abs(dx)+Math.abs(dy)<10)return;dir=Math.abs(dx)>Math.abs(dy)?'x':'y';if(dir==='y'){drag=false;return;}}target=sp-(dx/wrap.offsetWidth)*1.4;});
+  addEventListener('pointerup',function(){if(!drag)return;drag=false;if(dir==='x')target=Math.round(target);autoT=Date.now()+2000;setTimeout(function(){auto=true;},4000);});
+  if(TOUCH&&window.DeviceOrientationEvent)addEventListener('deviceorientation',function(e){if(e.gamma!=null)tilt=Math.max(-12,Math.min(12,e.gamma*.3));},true);
+}
 /* ---- FAQ robot answers ---- */
 function buildFaqRobot(){
   var items=Array.from(document.querySelectorAll('#faqList .faq-i'));
-  document.querySelectorAll('.faq-q').forEach(function(q){q.addEventListener('click',function(){
-    var it=q.parentElement,a=it.querySelector('.faq-a');var willOpen=!it.classList.contains('open');
-    items.forEach(function(o){o.classList.remove('open');var oa=o.querySelector('.faq-a');if(oa)oa.style.maxHeight='0';});
-    if(willOpen){it.classList.add('open');a.style.maxHeight=a.scrollHeight+40+'px';}
+  items.forEach(function(it){it.addEventListener('click',function(){
+    var willOpen=!it.classList.contains('open');
+    items.forEach(function(o){o.classList.remove('open');});
+    if(willOpen)it.classList.add('open');
     var rob=document.getElementById('faqRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
+    if(window.__sfx)window.__sfx('click');
   });});
 }
 /* ---- SEAMLESS INFINITE LOOP (bidirectional, clone hero == real hero) ---- */
@@ -663,6 +715,38 @@ function buildLoop(){
   var ty=0;addEventListener('touchstart',function(e){ty=e.touches[0].clientY;},{passive:true});
   addEventListener('touchmove',function(e){if(lock)return;var c=ct();if(c<innerHeight*2)return;var dy=ty-e.touches[0].clientY;if(sy()<=1&&dy<-6){to(c-2);}},{passive:true});
 }
+/* ---- SOUND (WebAudio SFX + генеративный ambient) ---- */
+(function(){
+  var ctx=null,gain=null,ambOn=false,ambNodes=[];
+  function ensure(){if(ctx)return;try{ctx=new (window.AudioContext||window.webkitAudioContext)();gain=ctx.createGain();gain.gain.value=0.18;gain.connect(ctx.destination);}catch(e){}}
+  function beep(freq,dur,type,vol){if(!ctx)return;var o=ctx.createOscillator(),g=ctx.createGain();o.type=type||'sine';o.frequency.value=freq;g.gain.value=0;g.gain.linearRampToValueAtTime(vol||0.14,ctx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);o.connect(g);g.connect(gain);o.start();o.stop(ctx.currentTime+dur+0.01);}
+  window.__sfx=function(kind){ensure();if(!ctx)return;
+    if(kind==='click')beep(680,0.08,'triangle',0.08);
+    else if(kind==='woosh'){for(var i=0;i<5;i++){setTimeout(function(){beep(200+Math.random()*300,0.12,'sawtooth',0.04);},i*22);}}
+    else if(kind==='open'){beep(440,0.08,'sine',0.06);setTimeout(function(){beep(660,0.14,'sine',0.07);},60);}
+    else if(kind==='switch'){beep(520,0.06,'triangle',0.06);}
+  };
+  function startAmb(){if(ambOn)return;ambOn=true;ensure();if(!ctx)return;
+    // Тихий 3-осцилляторный пэд (лайм-текстура)
+    var freqs=[110,138.6,164.8];
+    freqs.forEach(function(f,i){var o=ctx.createOscillator(),g=ctx.createGain(),lfo=ctx.createOscillator(),lfoG=ctx.createGain();
+      o.type='sine';o.frequency.value=f;g.gain.value=0;g.gain.linearRampToValueAtTime(0.028,ctx.currentTime+2);
+      lfo.frequency.value=0.08+i*0.03;lfoG.gain.value=0.011;lfo.connect(lfoG);lfoG.connect(g.gain);
+      o.connect(g);g.connect(gain);o.start();lfo.start();ambNodes.push(o,lfo,g,lfoG);
+    });}
+  function stopAmb(){if(!ambOn)return;ambOn=false;
+    ambNodes.forEach(function(n){try{if(n.gain)n.gain.gain.linearRampToValueAtTime(0,ctx.currentTime+0.6);if(n.stop)setTimeout(function(){try{n.stop();n.disconnect();}catch(e){}},700);}catch(e){}});
+    ambNodes=[];}
+  var btn=document.getElementById('sound-btn');
+  btn.addEventListener('click',function(){ensure();if(ctx&&ctx.state==='suspended')ctx.resume();
+    if(ambOn){stopAmb();btn.classList.add('off');document.getElementById('sndOff').style.display='';document.getElementById('sndOn').style.display='none';}
+    else{startAmb();btn.classList.remove('off');document.getElementById('sndOff').style.display='none';document.getElementById('sndOn').style.display='';window.__sfx('click');}
+  });
+  // section-enter woosh
+  document.querySelectorAll('section').forEach(function(sec){ST.create({trigger:sec,start:'top 55%',once:false,onEnter:function(){if(ambOn)window.__sfx('woosh');},onEnterBack:function(){if(ambOn)window.__sfx('woosh');}});});
+  // button click SFX
+  document.addEventListener('click',function(e){var el=e.target.closest('a.btn,button.btn');if(el&&window.__sfx)window.__sfx('click');},{capture:true});
+})();
 /* ---- MODALS / helpers ---- */
 window.openPay=function(){document.getElementById('payModal').classList.add('open');};
 window.closePay=function(){document.getElementById('payModal').classList.remove('open');};
@@ -676,6 +760,12 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 import { initHolo } from './js/holo.js';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
+// SPLINE bg: fade-in + remove badge
+(function(){var sv=document.getElementById('spline-bg');if(!sv)return;
+  function ready(){sv.classList.add('ready');try{var s=sv.shadowRoot;if(s){['#logo','a'].forEach(function(q){var el=s.querySelector(q);if(el)el.remove();});}}catch(e){}}
+  sv.addEventListener('load',ready);setTimeout(ready,3200);
+  var n=0,iv=setInterval(function(){n++;try{var s=sv.shadowRoot;if(s){var a=s.querySelector('a');if(a)a.remove();}}catch(e){}if(n>10)clearInterval(iv);},600);
+})();
 </script>
 </body>
 </html>

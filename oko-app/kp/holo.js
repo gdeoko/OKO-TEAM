@@ -46,7 +46,7 @@ export function initHolo(){
   if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb',g=>{eyeMesh=g.scene;const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
   else eyeReady();
 
-  makeSprite('holoHand','kp-media/fig/hand_sheet.webp',6,6,36,450/253,{progType:'hand',fit:'width',slide:true});
+  makeSprite('holoHand','kp-media/fig/hand_sheet.webp',6,6,36,450/253,{progType:'hand',fit:'width',slide:true,rotZ:-1.15});
   makeSprite('holoWoman','kp-media/fig/woman_sheet.webp',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
@@ -73,6 +73,9 @@ export function initHolo(){
       if(f.opt.slide){ x += (1-clamp(prog*2.5,0,1))*(-P.w*0.55); } // enters from left, settles early
       f.grp.position.set(x,y,0);
       f.mesh.scale.set(w,h,1); f.glow.scale.set(w*1.3,h*1.3,1);
+      f.mesh.rotation.z = f.opt.rotZ || 0;
+      // хук для DOM: раскрытие руки в % (0..1) — используется для показа заголовка
+      if(f.opt.progType==='hand') window.__handOpen = prog;
     }
     renderer.render(scene,cam);
   }
