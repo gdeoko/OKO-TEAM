@@ -90,9 +90,9 @@ body.booting .hero-badge,body.booting .hero-title,body.booting .hero-stats,body.
 .mob-nav .nav-cta{display:block;text-align:center;padding:15px;border-radius:14px;font-size:15px;margin-top:6px}
 /* LAYOUT */
 .wrap{max-width:1120px;margin:0 auto;padding:0 32px;position:relative;z-index:1}
-section{position:relative;z-index:1;padding:30px 0}
+section{position:relative;z-index:1;padding:26px 0}
 /* Красивый анимированный разделитель между секциями */
-.sec-divider{position:relative;height:56px;display:flex;align-items:center;justify-content:center;margin:-6px 0;pointer-events:none}
+.sec-divider{position:relative;height:46px;display:flex;align-items:center;justify-content:center;margin:-12px 0;pointer-events:none}
 .sec-divider::before{content:'';position:absolute;left:12%;right:12%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(154,255,0,.5),transparent);transform:translateY(-50%)}
 .sec-divider .dot{width:10px;height:10px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px rgba(154,255,0,.7),0 0 30px rgba(154,255,0,.4);animation:divpulse 2.4s ease-in-out infinite;position:relative;z-index:1}
 .sec-divider .dot::before,.sec-divider .dot::after{content:'';position:absolute;top:50%;width:36px;height:1px;background:linear-gradient(90deg,var(--lime),transparent)}
@@ -146,19 +146,19 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 .scroll-hint .m::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;background:var(--lime);border-radius:2px;transform:translateX(-50%);animation:wheel 1.6s infinite}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
 /* HAND holds title */
-.hand-hero{position:relative;z-index:6;display:flex;align-items:center;justify-content:center;overflow:visible;margin:-150px 0 0;padding:0 20px 30px}
-.hand-stage{position:relative;width:min(700px,88vw);aspect-ratio:440/243;z-index:6;margin:0 auto;transform:translateX(-8.5%)}
+.hand-hero{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:visible;margin:18px 0 0;padding:0 20px 22px}
+.hand-stage{position:relative;width:min(470px,64vw);aspect-ratio:660/633;z-index:6;margin:0 auto;transform:none}
 #holoHand{position:absolute;inset:0}
 /* заголовок ПАРИТ НАД РУКОЙ — ровно, крупно, во всю ширину, буквы проявляются по скроллу */
-.hand-caption{position:absolute;left:58.5%;top:20%;white-space:nowrap;z-index:7;pointer-events:none;
-  transform:translate(-50%,calc(-50% + var(--fy,0px))) scale(var(--capk,1));transform-origin:50% 50%;
-  font-family:'Unbounded',sans-serif;font-weight:900;font-size:46px;line-height:1;letter-spacing:-.8px;
+.hand-caption{position:relative;white-space:nowrap;z-index:7;pointer-events:none;margin:0 auto 2px;
+  transform:translateY(var(--fy,0px));
+  font-family:'Unbounded',sans-serif;font-weight:900;font-size:40px;line-height:1.05;letter-spacing:-.8px;
   color:#fff;
   text-shadow:0 2px 0 rgba(0,0,0,.45),0 10px 28px rgba(0,0,0,.8),0 0 30px rgba(154,255,0,.5),0 22px 46px rgba(154,255,0,.3);
   will-change:transform}
 .hand-caption .hc{display:inline-block;opacity:0;will-change:transform,opacity,filter}
-@media(max-width:1000px){ .hand-hero{margin:-64px 0 0;padding:0 12px 34px} .hand-stage{width:96vw} }
-@media(max-width:760px){ .hand-hero{margin:-46px 0 0;padding:0 8px 26px} .hand-stage{width:100vw} }
+@media(max-width:1000px){ .hand-hero{margin:4px 0 0;padding:0 12px 22px} .hand-stage{width:78vw} }
+@media(max-width:760px){ .hand-hero{margin:2px 0 0;padding:0 8px 18px} .hand-stage{width:82vw} }
 /* OFFER sticky cards */
 #offer .stack{position:relative}
 .ocard{position:sticky;top:78px;margin-bottom:24px;border-radius:24px;border:1px solid var(--border-lime);background:linear-gradient(160deg,rgba(16,20,14,.97),rgba(6,8,6,.98));box-shadow:0 34px 90px -40px rgba(0,0,0,.9);overflow:hidden;padding:24px 22px 20px;backdrop-filter:blur(6px)}
@@ -193,18 +193,18 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 @keyframes livep{0%{box-shadow:0 0 0 0 rgba(154,255,0,.65)}70%{box-shadow:0 0 0 7px rgba(154,255,0,0)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0)}}
 /* AGENTS DETAIL — pinned 3D capability cards + woman */
 #agents-detail{position:relative}
-.adt-pin{position:relative;height:200vh}
+.adt-pin{position:relative;height:200vh;margin-top:-18px}
 .adt-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;padding-left:4vw;perspective:1400px}
 @media(max-width:760px){.adt-sticky{justify-content:center;align-items:flex-start;padding:calc(140px + 30vh + 16px) 0 0}}
 .adt-head,.guar-head{position:absolute;top:max(74px,8vh);left:0;right:48%;text-align:left;z-index:6;padding:0 0 0 4vw;pointer-events:none}
 .adt-head .sec-h,.guar-head .sec-h{margin:6px 0 0}
-@media(max-width:760px){.adt-head,.guar-head{top:70px;left:0;right:0;text-align:center;padding:0 20px}.adt-head .sec-h,.guar-head .sec-h{font-size:clamp(20px,6.1vw,28px);margin:2px 0 0}}
+@media(max-width:760px){.adt-head,.guar-head{top:62px;left:0;right:0;text-align:center;padding:0 20px}.adt-head .sec-h,.guar-head .sec-h{font-size:clamp(20px,6.1vw,28px);margin:2px 0 0}}
 .acap-stage{position:relative;width:min(520px,92vw);height:min(320px,54vh);transform-style:preserve-3d}
-@media(max-width:760px){.acap-stage{height:min(280px,30vh)}}
+@media(max-width:760px){.acap-stage{height:min(300px,30vh)}}
 .adt-cta{position:absolute;left:0;right:0;bottom:58px;display:flex;justify-content:center;z-index:5;pointer-events:none;padding:0 20px}
 .adt-cta .btn{pointer-events:auto}
 @media(max-width:760px){.adt-cta{bottom:46px}}
-.acap{position:absolute;left:50%;top:50%;width:min(340px,82vw);border-radius:22px;padding:24px;background:linear-gradient(165deg,rgba(18,24,14,.98),rgba(8,10,8,.99));border:1px solid var(--border-lime);will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
+.acap{position:absolute;left:50%;top:50%;width:min(340px,82vw);height:100%;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border-radius:22px;padding:22px;background:linear-gradient(165deg,rgba(18,24,14,.98),rgba(8,10,8,.99));border:1px solid var(--border-lime);will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
 .acap-i{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
 .acap-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
 .acap-d{font-size:13px;color:var(--w2);line-height:1.55}
@@ -282,12 +282,12 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .rev-more{text-align:center;margin-top:18px}
 /* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
 /* GUARANTEES — 3D coverflow как у агентов: pin + scrub, робот справа */
-.guar-pin{position:relative;height:200vh}
+.guar-pin{position:relative;height:200vh;margin-top:-18px}
 .guar-sticky{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center;justify-content:flex-start;padding-left:4vw;perspective:1400px}
 @media(max-width:760px){.guar-sticky{justify-content:center;align-items:flex-start;padding:calc(140px + 30vh + 16px) 0 0}}
 .gcard-stage{position:relative;width:min(520px,92vw);height:min(320px,54vh);transform-style:preserve-3d}
-@media(max-width:760px){.gcard-stage{height:min(280px,30vh)}}
-.gcard{position:absolute;left:50%;top:50%;width:min(340px,82vw);border-radius:22px;padding:24px;
+@media(max-width:760px){.gcard-stage{height:min(300px,30vh)}}
+.gcard{position:absolute;left:50%;top:50%;width:min(340px,82vw);height:100%;display:flex;flex-direction:column;justify-content:center;overflow:hidden;border-radius:22px;padding:22px;
   background:linear-gradient(165deg,rgba(18,24,14,.98),rgba(8,10,8,.99));border:1px solid var(--border-lime);
   will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9),0 0 26px -10px rgba(154,255,0,.25)}
 .gc-bead{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
@@ -345,7 +345,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* RESPONSIVE */
-@media(max-width:900px){.nav-links{display:none}.ham{display:block}.nav{padding:12px 18px}.wrap{padding:0 18px}section{padding:48px 0}.ocard{top:70px}}
+@media(max-width:900px){.nav-links{display:none}.ham{display:block}.nav{padding:12px 18px}.wrap{padding:0 18px}section{padding:24px 0}.ocard{top:70px}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important}}
 </style>
 </head>
@@ -401,6 +401,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="scroll-hint"><div class="m"></div>скролл</div>
 </section>
 
+<div class="sec-divider"><span class="dot"></span></div>
 <!-- HAND holds title -->
 <div class="hand-hero" id="handHero">
   <div class="hand-stage">
@@ -510,7 +511,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="guar-pin" id="guarPin">
     <div class="guar-sticky">
       <div class="guar-head"><div class="sec-lbl">Гарантии</div><h2 class="sec-h">Работаем <span class="lime">по-честному</span></h2></div>
-      <div id="guarRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
+      <div id="guarRobot"><video src="kp-media/fig/robot_alpha_v2.webm?v=92" autoplay loop muted playsinline preload="auto"></video></div>
       <div class="gcard-stage" id="gcardStage">
     <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="gc-t">Договор и акт</div><div class="gc-d">Официальный договор (самозанятый/НПД), приложение с ТЗ и акт выполненных работ — всё юридически.</div></div>
     <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, фиксированные суммы, без скрытых доплат и сюрпризов.</div></div>
@@ -712,7 +713,7 @@ if(!TOUCH){var cg=document.getElementById('cursor-glow');addEventListener('point
 
 function start(){
   if(window.__st)return;window.__st=true;
-  try{if(!RM&&window.Lenis){lenis=new Lenis({lerp:.1,wheelMultiplier:1,smoothWheel:true,syncTouch:true,touchMultiplier:1.5,infinite:true});window.__lenis=lenis;
+  try{if(!RM&&window.Lenis){lenis=new Lenis({lerp:.065,wheelMultiplier:.85,smoothWheel:true,syncTouch:true,touchMultiplier:1.15,touchInertiaMultiplier:22,infinite:true});window.__lenis=lenis;
     if(gsap&&ST){lenis.on('scroll',ST.update);gsap.ticker.add(function(t){lenis.raf(t*1000);});gsap.ticker.lagSmoothing(0);}else{(function rl(t){lenis.raf(t);requestAnimationFrame(rl);})();}}}catch(e){}
   document.querySelectorAll('a[href^="#"]').forEach(function(a){a.addEventListener('click',function(e){var id=a.getAttribute('href');if(id.length<2)return;var el=document.querySelector(id);if(!el)return;e.preventDefault();closeMob();if(lenis)lenis.scrollTo(el,{offset:-60});else el.scrollIntoView({behavior:'smooth'});});});
   build();
@@ -749,9 +750,10 @@ function build(){
     (function(){var txt=cap.textContent.trim();cap.textContent='';
       txt.split('').forEach(function(c){var sp=document.createElement('span');sp.className='hc';
         sp.textContent=(c===' '?'\u00A0':c);cap.appendChild(sp);chars.push(sp);});})();
+    var BASE=40;
     function fitCap(){var sw=stg.getBoundingClientRect().width;if(!sw||Math.abs(sw-lastW)<1)return;lastW=sw;
-      cap.style.setProperty('--capk','1');var need=cap.scrollWidth||1;var target=sw*0.84;
-      var k=Math.max(0.30,Math.min(1.6,target/need));cap.style.setProperty('--capk',k.toFixed(3));}
+      cap.style.fontSize=BASE+'px';var need=cap.scrollWidth||1;var target=Math.min(sw*0.98,innerWidth-28);
+      var k=Math.max(0.30,Math.min(1.7,target/need));cap.style.fontSize=(BASE*k).toFixed(1)+'px';}
     addEventListener('resize',function(){lastW=0;fitCap();});
     var NCH=chars.length;
     (function tick(ts){requestAnimationFrame(tick);fitCap();
@@ -789,7 +791,7 @@ function buildAgents(){
     var ai=Math.round(active);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});
   }
   layout(0);
-  ST.create({trigger:'#adtPin',start:'top top',end:'bottom bottom',scrub:.5,onUpdate:function(self){
+  ST.create({trigger:'#adtPin',start:'top top',end:'bottom bottom',scrub:.9,onUpdate:function(self){
     var p=self.progress,active=p*(N-1);layout(active);
     if(woman){var wp=Math.min(p/0.12,1);var rise=(1-wp)* (TOUCH?-30:34);
       woman.style.opacity=(0.15+wp*0.75);
@@ -865,7 +867,7 @@ function buildGuarCoverflow(){
     var ai=Math.round(active);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});
   }
   layout(0);
-  ST.create({trigger:'#guarPin',start:'top top',end:'bottom bottom',scrub:.5,onUpdate:function(self){
+  ST.create({trigger:'#guarPin',start:'top top',end:'bottom bottom',scrub:.9,onUpdate:function(self){
     var p=self.progress;layout(p*(N-1));
     if(rob){var wp=Math.min(p/0.12,1);rob.style.opacity=1;
       var MOB=matchMedia('(max-width:760px)').matches;

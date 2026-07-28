@@ -37,11 +37,11 @@ export function initHolo(){
     opt=opt||{};
     const anchor=document.getElementById(id); if(!anchor) return null;
     const tex=new THREE.TextureLoader().load(src);
-    tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter;
+    tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter; tex.generateMipmaps=false;
     tex.repeat.set(1/cols,1/rows);
     const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:0});
     const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),mat);
-    const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,transparent:true,opacity:.35,blending:THREE.AdditiveBlending,depthWrite:false})); glow.position.z=-30;
+    const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false})); glow.position.z=-30;
     const grp=new THREE.Group(); grp.add(glow); grp.add(mesh); scene.add(grp);
     const f={id,anchor,tex,mat,mesh,glow,grp,cols,rows,N,aspect,opt,frame:-1};
     figs.push(f); return f;
@@ -52,7 +52,7 @@ export function initHolo(){
   // EYE (GLB) — one mesh serves hero + clone anchors
   let eyeMesh=null; const eyeAnchors=['holoEye','holoEye2'].map(id=>document.getElementById(id)).filter(Boolean);
   function eyeReady(){ window.__eyeReady=true; try{dispatchEvent(new Event('eye-ready'));}catch(e){} }
-  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb?v=91',g=>{eyeMesh=g.scene;
+  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb?v=92',g=>{eyeMesh=g.scene;
     // ЧИСТЫЙ ЛАЙМ без запечённой чёрной обводки: заменяем baseColor на брендовый цвет, оставляем normalMap
     eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
       const nm=o.material.normalMap||null;
@@ -64,8 +64,8 @@ export function initHolo(){
   else eyeReady();
 
   // рука уже повернута в самом спрайте (запястье слева, ладонь вверх, пальцы вправо) — 440x243
-  makeSprite('holoHand','kp-media/fig/hand_sheet.webp?v=91',6,6,36,440/243,{progType:'hand',fit:'width',slide:true});
-  makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=91',6,6,36,340/316,{progType:'woman',fit:'contain'});
+  makeSprite('holoHand','kp-media/fig/hand_sheet_hi.webp?v=94',6,6,36,660/633,{progType:'hand',fit:'width',slide:true});
+  makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=92',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
   function handProg(r){return clamp((H*0.86 - r.top)/(H*0.62),0,1);}
@@ -95,7 +95,7 @@ export function initHolo(){
       let x=P.x, y=P.y+Math.sin(time*0.6+figs.indexOf(f))*2;      // tiny breath only (±2px)
       if(f.opt.slide){ x += (1-clamp(prog*2.5,0,1))*(-P.w*0.55); } // enters from left, settles early
       f.grp.position.set(x,y,0);
-      f.mesh.scale.set(w,h,1); f.glow.scale.set(w*1.3,h*1.3,1);
+      f.mesh.scale.set(w,h,1); f.glow.scale.set(w*1.15,h*1.15,1);
       f.mesh.rotation.z = f.opt.rotZ || 0;
       // хук для DOM: раскрытие руки в % (0..1) — используется для показа заголовка
       if(f.opt.progType==='hand') window.__handOpen = prog;
