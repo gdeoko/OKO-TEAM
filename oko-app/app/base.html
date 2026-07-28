@@ -1182,7 +1182,7 @@ main>.screen{position:relative;z-index:1}
     <!-- МИНИ-АППЫ -->
     <section class="screen" id="screen-mini">
       <div class="pad">
-        <div class="ma-hero" id="maHero"><div class="ma-hero-txt"><h2>Сервисы OKO</h2><p>Мессенджер, лента, биржа и ИИ-инструменты</p></div><svg class="ma-hero-logo"><use href="#i-logo"/></svg></div>
+        <div class="ma-hero" id="maHero"><div class="ma-hero-txt"><h2>Сервисы OKO</h2><p>Мессенджер, лента, биржа и инструменты для роста</p></div><svg class="ma-hero-logo"><use href="#i-logo"/></svg></div>
         <div id="maGrid">
           <h2 class="svc-h" style="display:none">Сервисы OKO</h2>
           <div class="svc-grid">
@@ -1220,7 +1220,7 @@ main>.screen{position:relative;z-index:1}
           <div class="card" id="vcProgress" style="display:none">
             <p style="font-size:14px" id="vcStage">Загрузка…</p>
             <div class="progress"><i id="vcBar"></i></div>
-            <p class="dim" style="font-size:12.5px">Gemini анализирует хук, динамику, риски и технические параметры</p>
+            <p class="dim" style="font-size:12.5px">Наши монтажёры разбирают хук, динамику, риски и технические параметры</p>
           </div>
           <div id="vcResult" style="display:none"></div>
         </div>
@@ -1317,22 +1317,35 @@ main>.screen{position:relative;z-index:1}
         <div class="plans-wrap">
           <div class="plan">
             <h3>START</h3>
-            <div class="price"><b>$12</b><span> /мес при оплате за год · ~1190₽</span></div>
-            <ul><li>Все чаты и сообщества</li><li>10 проверок видео/мес</li><li>Обучение нейронкам</li><li>Активация партнёрки</li></ul>
+            <div class="price"><b>990&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых)</li><li>Магазин шаблонов + Каталог трендов</li><li>Аналитика соцсетей: 1 канал</li><li>Проверка видео: 30 в месяц</li></ul>
             <button class="btn ghost" onclick="openPay('START')">Выбрать</button>
           </div>
           <div class="plan hot">
-            <span class="chip flag">Флагман</span>
+            <span class="chip flag">Хит</span>
             <h3>PRO</h3>
-            <div class="price"><b>$39</b><span> /мес при оплате за год · ~3890₽</span></div>
-            <ul><li>Система роста по анкете</li><li>Автопостинг в 3 соцсети</li><li>30 проверок видео/мес</li><li>CRM-лайт</li></ul>
+            <div class="price"><b>4&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Система Роста под ключ, 15 конкурентов</li><li>Личный помощник OKO: 300 обращений</li><li>Студия контента: 100 генераций</li><li>Проверка видео 100/мес + 20 автоправок</li></ul>
             <button class="btn" onclick="openPay('PRO')">Выбрать</button>
           </div>
           <div class="plan">
             <h3>BUSINESS</h3>
-            <div class="price"><b>$158</b><span> /мес при оплате за год · ~15900₽</span></div>
-            <ul><li>Полная Система + сайт по клику</li><li>Контент-завод: 30 роликов/мес</li><li>Автопостинг во все сети</li><li>Приоритетная поддержка</li></ul>
+            <div class="price"><b>19&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Контент-завод: 30–50 роликов/мес</li><li>5 специалистов OKO под твой проект</li><li>Автопостинг во все сети + приоритет</li><li>Помощник 1000, проверка 300, автоправка 100</li></ul>
             <button class="btn ghost" onclick="openPay('BUSINESS')">Выбрать</button>
+          </div>
+          <div class="plan">
+            <h3>BUSINESS&nbsp;PRO</h3>
+            <div class="price"><b>49&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Контент-завод: 100 роликов/мес</li><li>Персональный образ (двойник голоса и лица)</li><li>Помощник и Студия без лимитов</li><li>Бонус: лендинг + бот при годовой оплате</li></ul>
+            <button class="btn ghost" onclick="openPay('BUSINESS_PRO')">Выбрать</button>
+          </div>
+          <div class="plan gold">
+            <span class="chip flag">Максимум</span>
+            <h3>MAX</h3>
+            <div class="price"><b>149&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Контент-завод: 300 роликов/мес</li><li>10 специалистов + персональный менеджер</li><li>Полный digital-запуск: сайт, бот, автоматизации</li><li>White-label, мультиаккаунт до 15 чел</li></ul>
+            <button class="btn" onclick="openPay('MAX')">Выбрать</button>
           </div>
         </div>
       </div>
@@ -1520,7 +1533,7 @@ const CHATS = [
    ]},
   {id:1, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null, preview:'Подписка активна до 15.08', time:'12:40', unread:0, online:true,
    msgs:[
-     {in:1, t:'12:38', kind:'text', body:'Привет! Я ИИ-поддержка OKO. Отвечаю из базы знаний, деньги и возвраты — сразу к человеку. Кнопка «позвать человека» всегда рядом.'},
+     {in:1, t:'12:38', kind:'text', body:'Привет! Я поддержка OKO. Отвечаю из базы знаний, деньги и возвраты — сразу к менеджеру. Кнопка «позвать менеджера» всегда рядом.'},
      {in:0, t:'12:39', kind:'text', body:'До какого числа у меня подписка?'},
      {in:1, t:'12:40', kind:'text', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
    ]},
@@ -2671,8 +2684,8 @@ function anketaFinish(){
   const card = document.getElementById('anketaCard');
   card.innerHTML = `<div style="text-align:center;padding:8px 0">
       <div class="spin"></div>
-      <p style="font-weight:700;margin-top:14px">Claude собирает твою систему…</p>
-      <p class="dim" style="font-size:12.5px;margin-top:6px">Анализ ниши, целей и ресурсов по мастер-методике OKO</p>
+      <p style="font-weight:700;margin-top:14px">Наши аналитики собирают твою систему…</p>
+      <p class="dim" style="font-size:12.5px;margin-top:6px">Разбор ниши, целей и ресурсов по мастер-методике OKO. Готово через 4–6 часов, пришлём уведомление.</p>
     </div>`;
   setTimeout(()=>{
     const plan = buildPlan(a);
@@ -2781,7 +2794,7 @@ function renderFactory(){
     const tempos = ['2 ролика/нед','3–4 ролика/нед','Ежедневно','Конвейер 30/мес'];
     r.innerHTML = `
       <div class="card">
-        <p class="dim" style="font-size:13px;line-height:1.55">Задай нишу и площадки — конвейер соберёт ролики под ключ: сценарий (Claude), нейро-озвучка, монтаж, караоке-субтитры и автопостинг по расписанию. Исходники автоудаляются через 24 часа.</p>
+        <p class="dim" style="font-size:13px;line-height:1.55">Задай нишу и площадки — команда OKO соберёт ролики под ключ: сценарист напишет текст, дикторская озвучка, монтаж, караоке-субтитры и автопостинг по расписанию. Исходники автоудаляются через 24 часа.</p>
         <div style="height:14px"></div>
         <p style="font-weight:700;font-size:13.5px;margin-bottom:7px">Ниша / тема канала</p>
         <input id="fxNiche" placeholder="Например: маркетинг для салонов красоты" value="${esc(fxState.niche)}" oninput="fxState.niche=this.value">
@@ -2799,7 +2812,7 @@ function renderFactory(){
   if(fxState.phase==='building'){
     r.innerHTML = `<div class="card" style="text-align:center;padding:8px 0">
         <div class="spin"></div>
-        <p style="font-weight:700;margin-top:14px">Claude собирает контент-план…</p>
+        <p style="font-weight:700;margin-top:14px">Наши сценаристы собирают контент-план…</p>
         <p class="dim" style="font-size:12.5px;margin-top:6px">Ниша «${esc(fxState.niche||'—')}» · ${esc(fxState.tempo)}</p>
       </div>`;
     return;
@@ -2864,7 +2877,7 @@ function vcStart(){
   document.getElementById('vcUpload').style.display='none';
   document.getElementById('vcProgress').style.display='';
   const bar = document.getElementById('vcBar'), stage = document.getElementById('vcStage');
-  const steps = [[15,'Загрузка в S3 (presigned, multipart)…'],[45,'Gemini: анализ хука и динамики…'],[75,'Проверка рисков: политика / коммерция / авторские…'],[100,'Формируем отчёт…']];
+  const steps = [[15,'Загружаем ролик в наше хранилище…'],[45,'Монтажёры смотрят хук и динамику…'],[75,'Проверка рисков: политика / коммерция / авторские…'],[100,'Формируем отчёт команды…']];
   let i=0;
   const tick = setInterval(()=>{
     if(i>=steps.length){ clearInterval(tick);
@@ -2914,7 +2927,7 @@ function renderVcReport(){
     <div class="vc-risks">${VC_RISKS.map(r=>`
       <div class="vc-risk"><span class="vc-r-ic ${r.bad?'bad':'ok'}">${I(r.bad?'flag':'check')}</span>
         <div><b>${r.t}</b><small>${r.s}${r.fix?' · '+r.fix:''}</small></div></div>`).join('')}</div>
-    <p class="f-lab">Рекомендации ИИ</p>
+    <p class="f-lab">Рекомендации команды</p>
     <div class="vc-recs">${VC_RECS.map((r,i)=>`<div class="plan-row"><span class="plan-n">${i+1}</span><span>${r}</span></div>`).join('')}</div>
     <div style="height:16px"></div>
     <button class="btn" onclick="toast('Обложка, субтитры и трек пересобраны — готовность 91%')"><svg class="i"><use href="#i-bolt"/></svg> Исправить одним кликом</button>

@@ -62,9 +62,11 @@ ru: { title:'Публичная оферта', rev:'Редакция № 4', sec
 {h:'Тарифы и порядок оплаты', b:
 `<table class="lg-table">
 <tr><th>Тариф</th><th>Цена / мес*</th><th>Состав</th></tr>
-<tr><td>START</td><td>$12</td><td>Все чаты и сообщества, 10 проверок видео в месяц, обучение нейросетям, активация партнёрской программы.</td></tr>
-<tr><td>PRO</td><td>$39</td><td>Полный доступ к Бирже и Академии, расширенная аналитика, приоритетная модерация контента.</td></tr>
-<tr><td>BUSINESS</td><td>$158</td><td>Рекламный кабинет без ограничений, командные аккаунты, персональный менеджер и приоритетная поддержка.</td></tr>
+<tr><td>START</td><td>990&nbsp;₽</td><td>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых), магазин шаблонов, каталог трендов, 30 проверок видео в месяц, активация партнёрской программы.</td></tr>
+<tr><td>PRO</td><td>4&nbsp;900&nbsp;₽</td><td>Персональная система роста, личный помощник OKO (300 обращений), студия контента (100 генераций), 100 проверок видео и 20 автоправок в месяц, аналитика 3 каналов.</td></tr>
+<tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;₽</td><td>Контент-производство 30–50 роликов в месяц, команда специалистов OKO под проект, автопостинг во все привязанные соцсети, приоритетная поддержка, командные аккаунты (до 3).</td></tr>
+<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;₽</td><td>Контент-производство 100 роликов в месяц, персональный образ (двойник голоса и лица), безлимитные помощник и студия, API-доступ, до 5 командных аккаунтов, бонус: лендинг и бот при годовой оплате.</td></tr>
+<tr><td>MAX</td><td>149&nbsp;900&nbsp;₽</td><td>Контент-производство 300 роликов в месяц, полная команда специалистов OKO с персональным менеджером, полный digital-запуск (сайт, бот, автоматизации) при годовой оплате, до 15 командных аккаунтов, white-label.</td></tr>
 </table>
 <p class="lg-note">* Указана цена за месяц при оплате за год. Скидки периодов от базовой месячной цены: 3 месяца — 10%, 6 месяцев — 15%, 12 месяцев — 20%.</p>
 <p>Способы оплаты: банковские карты РФ, криптовалюта, платёжная платформа Lava.top. Цены могут указываться в долларах США; фактическое списание производится в валюте платёжного метода по курсу на дату платежа. Подписка продлевается автоматически на аналогичный период; автопродление отключается в настройках до даты списания.</p>`},
@@ -111,9 +113,11 @@ en: { title:'Public Offer Agreement', rev:'Revision No. 4', secs:[
 {h:'Plans and Payment', b:
 `<table class="lg-table">
 <tr><th>Plan</th><th>Price / mo*</th><th>Includes</th></tr>
-<tr><td>START</td><td>$12</td><td>All chats and communities, 10 video checks per month, AI training courses, affiliate program activation.</td></tr>
-<tr><td>PRO</td><td>$39</td><td>Full access to the Marketplace and Academy, advanced analytics, priority content moderation.</td></tr>
-<tr><td>BUSINESS</td><td>$158</td><td>Unlimited advertising cabinet, team accounts, dedicated manager and priority support.</td></tr>
+<tr><td>START</td><td>990&nbsp;RUB (~$10)</td><td>Premium messenger (files up to 4 GB, voice transcription), templates marketplace, trends catalog, 30 video checks per month, affiliate program activation.</td></tr>
+<tr><td>PRO</td><td>4&nbsp;900&nbsp;RUB (~$49)</td><td>Personal growth system, OKO Personal Assistant (300 requests), Content Studio (100 generations), 100 video checks and 20 auto-fixes per month, analytics for 3 channels.</td></tr>
+<tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;RUB (~$199)</td><td>Content production 30–50 videos per month, dedicated OKO specialists on your project, autoposting to all connected social networks, priority support, up to 3 team accounts.</td></tr>
+<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;RUB (~$499)</td><td>Content production 100 videos per month, Personal Image (voice and face twin), unlimited assistant and studio, API access, up to 5 team accounts, bonus: landing page and bot with annual payment.</td></tr>
+<tr><td>MAX</td><td>149&nbsp;900&nbsp;RUB (~$1499)</td><td>Content production 300 videos per month, full OKO specialists team with a dedicated manager, complete digital launch (website, bot, automations) with annual payment, up to 15 team accounts, white-label.</td></tr>
 </table>
 <p class="lg-note">* Monthly price with annual billing. Period discounts off the base monthly price: 3 months — 10%, 6 months — 15%, 12 months — 20%.</p>
 <p>Payment methods: Russian bank cards, cryptocurrency, and the Lava.top payment platform. Prices may be quoted in US dollars; the actual charge is made in the currency of the payment method at the exchange rate on the payment date. Subscriptions renew automatically for the same period; auto-renewal can be disabled in the settings before the billing date.</p>`},

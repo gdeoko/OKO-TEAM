@@ -215,7 +215,7 @@ function adsEditDup(c){
       <button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button></div>`;
 }
 function adsCampActs(c){
-  if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}ИИ-агент проверяет объявление…</div>`;
+  if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}Модератор OKO проверяет объявление…</div>`;
   if(c.status==='sched')return `<div class="ads-camp-acts">
       <button class="btn sm" onclick="adsStartNow(${c.id})">${I('rocket')}Запустить сейчас</button>
       <button class="btn sm ghost stop" onclick="adsCancelSched(${c.id})">${I('flag')}Отменить</button></div>`+adsEditDup(c);
@@ -280,7 +280,7 @@ function adsRenderList(){
       <button class="ads-stats-toggle ${adsOpenStats.has(c.id)?'open':''}" onclick="adsToggleStats(${c.id})">
         ${I('poll')}Статистика${c.ab?`<em class="ads-abmark">A/B</em>`:''}<i>${I('chev')}</i></button>
       ${adsOpenStats.has(c.id) ? adsStatsBlock(c) : ''}
-      ${c.status==='rej' && c.reason ? `<div class="ads-reason">${I('flag')}<span>Отклонено ИИ-модератором: ${esc(c.reason)}. Бюджет возвращён на лицевой счёт.</span></div>` : ''}
+      ${c.status==='rej' && c.reason ? `<div class="ads-reason">${I('flag')}<span>Отклонено модератором OKO: ${esc(c.reason)}. Бюджет возвращён на лицевой счёт.</span></div>` : ''}
       ${adsCampActs(c)}
     </div>`).join('');
   requestAnimationFrame(()=>ADS.camps.forEach(c=>{
@@ -462,9 +462,9 @@ function adsAdvice(c){
 }
 function adsAdviceBlock(c){
   const list = adsAdvice(c);
-  if(!list.length) return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}ИИ-оптимизатор</div>
+  if(!list.length) return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}Оптимизатор кампаний</div>
     <div class="ads-advice-empty">${I('check')}Кампания настроена оптимально — критичных улучшений нет.</div></div>`;
-  return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}ИИ-оптимизатор<span class="ads-advice-n">${list.length}</span></div>`+
+  return `<div class="ads-advice"><div class="ads-advice-h">${I('bolt')}Оптимизатор кампаний<span class="ads-advice-n">${list.length}</span></div>`+
     list.map(a=>`<div class="ads-advice-row ${a.tone}">
       <span class="ads-advice-ic">${I(a.ic)}</span>
       <div class="ads-advice-mid"><p>${a.text}</p>
@@ -1128,7 +1128,7 @@ function adsLaunch(){
   if(sched){
     toast('Кампания запланирована на '+new Date(startTs).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}));
   }else{
-    toast('Кампания отправлена на модерацию ИИ-агенту');
+    toast('Кампания отправлена на модерацию OKO');
     setTimeout(()=>adsModerate(camp.id), 3000);
   }
 }
@@ -1187,7 +1187,7 @@ function adsModerate(id){
     walletAdd(c.budget, 'Возврат: реклама отклонена — '+c.name);
     adsBill(-c.budget, c.name, 'Возврат (отклонено ИИ)');
     showPopup({ico:'flag', title:'Реклама отклонена',
-      body:`ИИ-модератор нашёл в объявлении «${esc(c.name)}» запрещённую тематику: <b>«${esc(bad)}»</b>.<br><br>Бюджет ${fmtMoney(c.budget)} уже вернулся на лицевой счёт. Исправь текст и запусти заново.`,
+      body:`Модератор OKO нашёл в объявлении «${esc(c.name)}» запрещённую тематику: <b>«${esc(bad)}»</b>.<br><br>Бюджет ${fmtMoney(c.budget)} уже вернулся на лицевой счёт. Исправь текст и запусти заново.`,
       actions:[{label:'Понятно'}]});
   }else{
     c.status = 'act';

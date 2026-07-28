@@ -1844,7 +1844,7 @@ let acL = 0;                    // глобальный индекс текущ�
 let acCourse = 0;               // индекс текущего курса (для страницы курса)
 let acQuiz = null;              // сессия теста (не персистится)
 let acG = null;                 // сессия мини-игры
-let acTaskChecking = false;     // «Проверяется ИИ-куратором»
+let acTaskChecking = false;     // «Проверяется куратором»
 let acCertUrl = null;           // кэш PNG сертификата
 let acCertShownNo = null;
 let acBadgeNewIds = [];         // бейджи, открытые в этом ре-рендере (для pop-анимации)
@@ -2126,7 +2126,7 @@ function acCourseInsideHtml(ci){
     ['file', st.lessons + ' ' + acPlural(st.lessons,['урок','урока','уроков']) + ' полного формата', 'анимированные слайды + конспект'],
     ['file',  st.slides + ' ' + acPlural(st.slides,['слайд','слайда','слайдов']), 'наглядно и по делу'],
     ['poll',  'Тесты · ' + st.quiz + ' ' + acPlural(st.quiz,['вопрос','вопроса','вопросов']), 'порог зачёта ' + AC_PASS + '%'],
-    ['edit',  'Практика', 'проверка ИИ-куратором'],
+    ['edit',  'Практика', 'проверка куратором'],
     ['bolt',  st.games + ' мини-' + acPlural(st.games,['игра','игры','игр']), 'закрепление на связках'],
     ['star',  'Сертификат', 'именной — за всё направление'],
   ];
@@ -2676,7 +2676,7 @@ function acRenderTaskBox(){
   const T = acCur().task, ls = acLS();
   if(acTaskChecking){
     box.innerHTML = `<div class="ac-checking"><span class="ac-spin"></span>
-      <div><p>Проверяется ИИ-куратором<small>Сверяю ответ с материалом урока…</small></p></div></div>`;
+      <div><p>Проверяется куратором<small>Сверяю ответ с материалом урока…</small></p></div></div>`;
     return;
   }
   if(ls.task){

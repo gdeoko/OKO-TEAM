@@ -157,7 +157,7 @@ const DC_CHATS = [
 /* Поддержка OKO — только если её ещё нет в CHATS (в базе есть, id:1) */
 const DC_SUPPORT = {id:9008, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null,
   preview:'Чем помочь?', time:'12:40', unread:0, online:true,
-  msgs:[{in:1, t:'12:40', kind:'text', body:'Привет! Я ИИ-поддержка OKO. Отвечу на вопросы о приложении, а деньги и возвраты передам человеку.'}]};
+  msgs:[{in:1, t:'12:40', kind:'text', body:'Привет! Я поддержка OKO. Отвечу на вопросы о приложении, а деньги и возвраты передам менеджеру.'}]};
 
 const DC_STORIES = [
   {avaIcon:'logo', name:'OKO Team', text:'Новая сборка уже в приложении: кошелёк, академия с сертификатами и игры. Обнови вкладку и посмотри.', bg:'linear-gradient(155deg,#131f04 0%,#060606 55%,#0e1a03 100%)'},
