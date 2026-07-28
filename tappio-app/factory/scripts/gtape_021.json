@@ -1,0 +1,220 @@
+{
+ "id": "gtape_021",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "upbeat indie acoustic diy",
+   "bright pop home",
+   "warm optimistic guitar"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "apartment tour empty rooms"
+  ],
+  "ai": "work/gtape_021/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.111,
+   "dur": 1.65,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.225,
+   "dur": 1.93,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.391,
+   "dur": 1.84,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.571,
+   "dur": 1.72,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.578,
+   "dur": 1.95,
+   "type": "chips",
+   "items": [
+    "ROOMS",
+    "WALLS",
+    "DOORS",
+    "FURNITURE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.716,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #measuring #tape #augmented #app",
+ "yt_title": "How Do I Use The iPhone #shorts",
+ "trend_keys": [
+  "measuring",
+  "tape",
+  "augmented",
+  "app",
+  "phone",
+  "hacks",
+  "measure",
+  "reality"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How Do I Use The iPhone Measure App? How Accurate Is It?",
+  "views": 198430,
+  "channel": "Payette Forward"
+ },
+ "virality": {
+  "score": 88,
+  "notes": [
+   "angle<-198k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+ }
+}
