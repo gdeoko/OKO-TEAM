@@ -201,6 +201,9 @@ def main():
     day=datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M")
     print(f"[deep] reel {reel_nn} · цель {count} конкурентов · discovery…",flush=True)
     at=yt_token(); seen=seen_ids(); vids=collect(at,seen)
+    if len(vids)<count:  # свежий пул 1M+ исчерпан дедупом → добираем лучшими из уже виденных (валидно пересматривать сильнейшие рефы)
+        for vid,v in collect(at, set()).items():
+            vids.setdefault(vid, v)
     top=sorted(vids.values(), key=lambda x:(-int(x["is_short"]),-x["views"]))[:count*2]
     subs=subs_for(at,{v["chid"] for v in top})
     print(f"[deep] найдено {len(vids)} свежих 1M+ · разбираю до {count}",flush=True)
