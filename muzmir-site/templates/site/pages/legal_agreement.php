@@ -51,7 +51,7 @@ $reqAddr   = h((string) cfgv('org_address', '109240, г. Москва, ул. С�
 $reqPhone  = h((string) cfgv('org_phone', '8 (950) 945-99-00'));
 $reqPhoneR = h((string) cfgv('org_phone_raw', '+79509459900'));
 $reqEmail  = h((string) cfgv('org_email', 'kulturniy.centr.mir@mail.ru'));
-$reqDir    = 'Ильясов А.И.';
+$reqDir    = 'Оргкомитет Культурного центра';
 
 ob_start(); ?>
 <style>
@@ -110,7 +110,7 @@ ob_start(); ?>
         <dl>
           <dt>Организация</dt><dd><?= $reqOrg ?></dd>
           <dt>Регистрация</dt><dd><?= $reqReg ?></dd>
-          <dt>Генеральный директор</dt><dd><?= $reqDir ?></dd>
+          <dt>Руководство</dt><dd><?= $reqDir ?></dd>
           <dt>Адрес</dt><dd><?= $reqAddr ?></dd>
           <dt>Телефон</dt><dd><a href="tel:<?= $reqPhoneR ?>"><?= $reqPhone ?></a></dd>
           <dt>Электронная почта</dt><dd><a href="mailto:<?= $reqEmail ?>"><?= $reqEmail ?></a></dd>
