@@ -87,24 +87,49 @@ def word_timings(audio):
             if ww: out.append({"w":ww,"t":round(w.start,3),"d":round(w.end-w.start,3)})
     return out
 
-def synth(text, out_mp3, ref=REF_30, speed=SPEED, json_out=None):
-    text = " ".join(text.split())
+def _synth_one(text, out_wav, ref):
+    """Одно короткое предложение: OmniVoice + анти-филлер-ретрай + обрезка границ. БЕЗ atempo/мастера."""
+    words=None
     with tempfile.TemporaryDirectory() as td:
-        raw = os.path.join(td, "raw.wav")
-        # ГАРАНТИЯ ПРОТИВ «мягко»: генерим, ASR-проверяем на галлюцинацию, при вставках —
-        # ретрай с всё меньшим du (модель не успевает добить филлер). До 3 попыток.
-        words = None
-        for k in (1.0, 0.85, 0.72):
+        raw=os.path.join(td,"raw.wav")
+        for k in (1.0, 0.82):
             _omnivoice(text, ref, raw, du=_du(text, k))
-            words = _asr_words(raw)
-            if not _halluc(words, text):
-                break
-            sys.stderr.write(f"[synth: обнаружен филлер-галлюцинация, ретрай du×{k}]\n")
-        st, en = _bounds(raw, text, words)                # старт + конец полезной речи (без филлера)
-        af = f"atempo={speed},{MASTER}" if speed and abs(speed-1.0) > 1e-3 else MASTER
-        seg = ["-ss", f"{st:.3f}"] + (["-t", f"{max(0.5, en-st):.3f}"] if en else [])
-        subprocess.run(["ffmpeg","-y","-v","error", *seg, "-i", raw,
-                        "-af",af,"-b:a","192k",out_mp3], check=True)
+            words=_asr_words(raw)
+            if not _halluc(words, text): break
+            sys.stderr.write(f"[synth: филлер в '{text[:30]}...', ретрай du×{k}]\n")
+        st, en = _bounds(raw, text, words)
+        seg=["-ss",f"{st:.3f}"]+(["-t",f"{max(0.4,en-st):.3f}"] if en else [])
+        subprocess.run(["ffmpeg","-y","-v","error",*seg,"-i",raw,"-c:a","pcm_s16le",out_wav],check=True)
+    return out_wav
+
+def _sentences(text):
+    import re as _r
+    parts=_r.split(r'(?<=[.!?])\s+', text.strip())
+    return [p.strip() for p in parts if p.strip()]
+
+def synth(text, out_mp3, ref=REF_30, speed=SPEED, json_out=None, gap=0.26):
+    """ПО ПРЕДЛОЖЕНИЯМ (короткие = чистые, БЕЗ «мягко») + склейка с паузами по пунктуации.
+    Длинный текст одним куском OmniVoice портит (вставляет филлер на паузах, рушит длину) —
+    поэтому режем на предложения, синтезим каждое отдельно, склеиваем с тишиной."""
+    text=" ".join(text.split())
+    sents=_sentences(text)
+    with tempfile.TemporaryDirectory() as td:
+        wavs=[]
+        sil=os.path.join(td,"sil.wav")
+        subprocess.run(["ffmpeg","-y","-v","error","-f","lavfi","-t",f"{gap}","-i","anullsrc=r=24000:cl=mono",sil],check=True)
+        for i,s in enumerate(sents):
+            w=os.path.join(td,f"s{i}.wav"); _synth_one(s, w, ref)
+            wavs.append(w)
+        # конкат: предложение + пауза
+        lst=os.path.join(td,"list.txt")
+        with open(lst,"w") as f:
+            for i,w in enumerate(wavs):
+                f.write(f"file '{w}'\n")
+                if i < len(wavs)-1: f.write(f"file '{sil}'\n")
+        joined=os.path.join(td,"joined.wav")
+        subprocess.run(["ffmpeg","-y","-v","error","-f","concat","-safe","0","-i",lst,"-c","copy",joined],check=True)
+        af=f"atempo={speed},{MASTER}" if speed and abs(speed-1.0)>1e-3 else MASTER
+        subprocess.run(["ffmpeg","-y","-v","error","-i",joined,"-af",af,"-b:a","192k",out_mp3],check=True)
     if json_out:
         import json as _j
         _j.dump(word_timings(out_mp3), open(json_out,"w"), ensure_ascii=False)
