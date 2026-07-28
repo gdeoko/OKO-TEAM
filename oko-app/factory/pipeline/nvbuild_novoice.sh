@@ -151,3 +151,7 @@ python3 "$W/audio.py" | tail -2
 # ---- compose (titles-only) ----
 python3 "$W/compose.py" | tail -2
 echo "NVBUILD_DONE $W"
+
+# PRUNE heavy intermediates (foot/segs/base/vfull/frames) — keep reel.mp4+cover.jpg+meta.json
+rm -rf "$W/foot" "$W/segs" "$W/fr_titles" "$W/base.mp4" "$W/vfull.mp4" "$W/cover_cand" "$W/ig/titles.mov" 2>/dev/null
+echo "PRUNED $W (kept reel.mp4/cover.jpg/meta.json)"
