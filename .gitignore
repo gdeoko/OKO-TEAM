@@ -23,3 +23,6 @@ secrets.env
 # Python bytecode cache
 __pycache__/
 *.pyc
+
+# машинный симлинк на глобальные node_modules (playwright для cover_ill) — не коммитить
+КОНТЕНТ-ЗАВОД/factory/pipeline/node_modules
