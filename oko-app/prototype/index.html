@@ -261,9 +261,17 @@ nav#tabs .nav-logo{display:none}
 .post .head .name{font-weight:600;font-size:14px}
 .post .head .sub{font-size:11.5px;color:var(--dim)}
 .post .body{font-size:14px;line-height:1.55}
-.post .media{margin-top:11px;border-radius:var(--r-md);background:linear-gradient(135deg,#16240a,#090b06 60%);border:1px solid var(--border);aspect-ratio:16/9;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;color:var(--lime);font-family:var(--font-display);font-size:22px;letter-spacing:.1em}
-:root[data-theme="light"] .post .media{background:linear-gradient(135deg,#e8f5d4,#f4f9ec 60%);color:var(--accent)}
-.post .media svg.i{width:38px;height:38px}
+.post .media{margin-top:11px;border-radius:var(--r-md);border:1px solid var(--border);aspect-ratio:16/9;position:relative;overflow:hidden;color:#fff;display:flex;align-items:flex-end;padding:12px 14px}
+.post .media::after{content:'';position:absolute;inset:0;background:radial-gradient(120% 90% at 78% 12%,rgba(255,255,255,.10),transparent 55%);pointer-events:none}
+.post .media-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:2}
+.post .media-play svg.i{width:26px;height:26px}
+.post .media-time,.post .media-tag{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;border-radius:99px;padding:3px 10px;font-family:var(--font-display,'Bebas Neue');font-size:14px;letter-spacing:.05em;z-index:2;backdrop-filter:blur(3px)}
+.post .media-tag{display:inline-flex;align-items:center;gap:5px}
+.post .media-tag svg.i{width:12px;height:12px}
+.post .media-tag span{font-size:12px}
+.post .media-ava{position:absolute;top:10px;left:10px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.55);border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;z-index:2;backdrop-filter:blur(3px)}
+.post .media-teaser{position:relative;z-index:2;font-size:12.5px;line-height:1.35;color:rgba(255,255,255,.9);font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+:root[data-theme="light"] .post .media-teaser{color:#fff}
 .post .acts{display:flex;gap:20px;margin-top:12px;color:var(--dim);font-size:13px}
 .post .acts button{color:var(--dim);display:flex;gap:6px;align-items:center;transition:color .15s}
 .post .acts button svg.i{width:18px;height:18px}
@@ -8975,7 +8983,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.66</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.67</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -10629,7 +10637,7 @@ function renderFeed(kind){
         <div style="flex:1;min-width:0"><div class="name">${p.name}${p.promoted?' <span class="chip promo-chip">Реклама</span>':(kind==='rec'&&pi===0?' <span class="chip" style="font-size:9px">В тренде</span>':'')}</div><div class="sub">${p.sub}</div></div>
         <button class="post-more" onclick="openPostMenu(${p.id})">${I('more')}</button></div>
       <div class="body">${p.body}</div>
-      ${p.media?`<div class="media">${I('circle-play')}<span>${p.media}</span></div>`:''}
+      ${p.media?renderPostMedia(p):''}
       <div class="acts">
         <button class="act-like ${p.liked?'liked':''}" onclick="likePost(${p.id})">${I('heart')}<i style="font-style:normal">${p.likes}</i></button>
         <button onclick="openComments(${p.id})">${I('comment')}<i class="act-cmt" style="font-style:normal">${p.comments.length}</i></button>
@@ -12806,6 +12814,38 @@ function vcReset(){
   document.getElementById('vcBar').style.width='0';
 }
 
+/* --- Постер видео в ленте: динамический градиент + аватар + play-overlay --- */
+const POST_MEDIA_PALETTES = [
+  ['#1e3a1a','#0d1907','#9AFF00'],
+  ['#0a2540','#040f1c','#7ECBEB'],
+  ['#3a2a0e','#180f04','#FFB84A'],
+  ['#3a1418','#1a0708','#FF7EA6'],
+  ['#291a3a','#100819','#A980FF'],
+  ['#0e3020','#04140e','#4EE2B8'],
+  ['#3a2e0e','#181204','#FFDF5C'],
+];
+function renderPostMedia(p){
+  if(!p || !p.media) return '';
+  // карусель распознаётся по формату "N/M"
+  const isCarousel = /^\d+\/\d+$/.test(p.media);
+  const idx = ((p.id||0) % POST_MEDIA_PALETTES.length + POST_MEDIA_PALETTES.length) % POST_MEDIA_PALETTES.length;
+  const [c1, c2, ac] = POST_MEDIA_PALETTES[idx];
+  const initial = ((p.name||'').trim().charAt(0) || 'O').toUpperCase();
+  const teaser = (p.body||'').replace(/[«»"'`]+/g,'').slice(0, 46);
+  if(isCarousel){
+    return `<div class="media media-car" style="background:linear-gradient(140deg,${c1},${c2} 65%);color:${ac}">
+      <span class="media-tag">${I('photo')}<span>${p.media}</span></span>
+      <span class="media-ava" style="border-color:${ac}">${initial}</span>
+      <span class="media-teaser">${esc(teaser)}</span>
+    </div>`;
+  }
+  return `<div class="media media-vid" style="background:linear-gradient(140deg,${c1},${c2} 65%);color:${ac}">
+    <span class="media-play"><svg class="i"><use href="#i-circle-play"/></svg></span>
+    <span class="media-time">${p.media}</span>
+    <span class="media-ava" style="border-color:${ac}">${initial}</span>
+    <span class="media-teaser">${esc(teaser)}</span>
+  </div>`;
+}
 /* --- Видео-премодератор: история проверок и пример вердикта --- */
 function vcHistKey(){ return 'oko-vc-history'; }
 function vcHistory(){
