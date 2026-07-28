@@ -28,3 +28,4 @@ oko-app/factory/models/
 # Python bytecode
 __pycache__/
 *.pyc
+oko-app/factory/cfg/google_tts.key
