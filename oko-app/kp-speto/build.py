@@ -8,7 +8,7 @@ tpl = tpl.replace("<title>OKO — Экосистема роста бизнеса
 tpl = tpl.replace("Три пакета под <span class=\"lime\">запуск и масштаб</span>",
     "Три варианта под <span class=\"lime\">запуск бота</span>")
 tpl = tpl.replace("Осталось 7 мест на этот месяц · цена действует 48 часов",
-    "Персональное КП · Telegram-бот композитор песен (клон @spetoai_bot) · старт в сентябре")
+    "Персональное КП · Telegram-бот композитор песен (клон @spetoai_bot) · срок до 10 рабочих дней")
 tpl = tpl.replace("свайп · клик по точкам · наклон телефона",
     "свайп · клик по точкам · наклон телефона · техрасходы отдельно: домен ~2 000 ₽/год, VPS 3 000–6 000 ₽/мес, Claude+Suno+Whisper — по факту генераций")
 tpl = tpl.replace("<div class=\"gc-t\">Рассрочка 50/50</div><div class=\"gc-d\">Половина на старте — без скрытых доплат</div>",
@@ -95,13 +95,22 @@ def tli(label, detail, hl=False):
     return (f'<div class="tli{" hl" if hl else ""}"><div class="tli-q"><span class="ck">{CK}</span>{lab}<span class="ar">›</span></div>'
             f'<div class="tli-a"><div>{html.escape(detail)}</div></div></div>')
 
-def tier(name, cfile, tag, feat, rub_old, rub_full, sup, items):
+def tier(name, cfile, tag, feat, rub_old, rub_full, sup, items, breakdown=None):
     lis = "".join(tli(*it) for it in items)
+    detail = ""
+    if breakdown:
+        rows = "".join(f'<dt>{html.escape(k)}</dt><dd>{html.escape(v)}&#8201;₽</dd>' for k,v in breakdown)
+        total_val = rub_full.replace('&#8201;₽','')
+        detail = (f'<div class="tier-detail"><div class="tier-detail-h">Детализация</div>'
+                  f'<dl>{rows}</dl>'
+                  f'<dl class="sum"><dt>Итого</dt><dd>{total_val}&#8201;₽</dd></dl>'
+                  f'</div>')
     return (f'<div class="tier{" feat" if feat else ""}">'
             f'<div class="tier-name">{name}</div><div class="tier-tag">{tag}</div>'
             f'<div class="tier-oldprice">{rub_old}</div>'
             f'<div class="tier-perday"><b>{rub_full}</b><span>за проект</span></div>'
             f'<div class="tier-total">до 10 рабочих дней · сопровождение <b>{sup}/мес</b></div>'
+            f'{detail}'
             f'<ul class="tier-list">{lis}</ul>'
             f'<div class="tier-btns">'
             f'<a href="https://t.me/ktodaniel" target="_blank" class="btn btn-lime btn-sm">Запустить</a>'
@@ -115,12 +124,32 @@ tiers = (
    ("Голосовой ввод идеи","Whisper распознаёт голосовое как текст — как у конкурента.",True),
    ("Оплаты: Lava.top + CryptoBot","Карты РФ и зарубежные, СБП, СберPay, T-Pay через Lava.top + USDT в Telegram для СНГ."),
    ("Пакеты, реферальная программа, Google Sheets","Пакеты 1/2/3/10 песен, «Подарок за друга», отчёты в таблицу."),
+ ], breakdown=[
+   ("Разработка бота (сценарий, меню, БД)","22 000"),
+   ("Интеграции Claude + Suno API","14 000"),
+   ("Голосовой ввод (Whisper)","6 000"),
+   ("Биллинг, лимит демо, реферальная","10 000"),
+   ("Дизайн UI и текстов бота","6 000"),
+   ("Подключение оплат: Lava.top + CryptoBot","8 000"),
+   ("Google Sheets — отчёты продаж","2 000"),
+   ("VPS, домен, деплой, запуск","8 000"),
+   ("Тестирование и передача исходников","4 000"),
  ]),
  tier("БИЗНЕС","Договор_OKO_БИЗНЕС.docx","Бот + Mini-app + Админка",True,"260 000&#8201;₽","130 000&#8201;₽","12 000&#8201;₽",[
    ("Всё из варианта СТАРТ","Бот, Claude+Suno, голос, платежи Lava.top+CryptoBot, база, рефералка."),
    ("Telegram Mini-app","Красивый личный кабинет: плеер, черновики, покупка пакетов, история — в TG.",True),
    ("Админ-панель","Аналитика, редактирование текстов/цен/жанров, ручные операции, рассылки, экспорт CSV.",True),
    ("Расширенный дизайн UI","Более проработанный визуал mini-app и админки."),
+ ], breakdown=[
+   ("Разработка бота + Mini-app","42 000"),
+   ("Админ-панель (аналитика, редактор, рассылки)","22 000"),
+   ("Интеграции Claude + Suno + Whisper","18 000"),
+   ("Биллинг, база, реферальная","10 000"),
+   ("Дизайн UI + вёрстка Mini-app и админки","18 000"),
+   ("Подключение оплат: Lava.top + CryptoBot","8 000"),
+   ("Google Sheets — отчёты продаж","2 000"),
+   ("VPS, домен, деплой, запуск","6 000"),
+   ("Тестирование и передача исходников","4 000"),
  ]),
  tier("ПОД КЛЮЧ","Договор_OKO_ПОД_КЛЮЧ.docx","+ Веб + ИИ-агент 24/7",False,"400 000&#8201;₽","200 000&#8201;₽","18 000&#8201;₽",[
    ("Всё из варианта БИЗНЕС","Бот, mini-app, админ-панель, платежи, база, рефералка."),
@@ -128,6 +157,18 @@ tiers = (
    ("ИИ-агент поддержки 24/7","Claude Sonnet отвечает клиентам, помогает выбрать пакет, эскалирует сложное.",True),
    ("Продвинутая аналитика","Когорты, LTV, воронка от старта до покупки, каналы трафика."),
    ("Премиум-дизайн","Анимации, брендирование mini-app и веб-версии."),
+ ], breakdown=[
+   ("Разработка бота + PRO Mini-app","46 000"),
+   ("Адаптация Mini-app под браузер (веб)","20 000"),
+   ("Админ-панель PRO + сегменты + рассылки","26 000"),
+   ("ИИ-агент саппорта 24/7 (Claude)","30 000"),
+   ("Интеграции Claude + Suno + Whisper","20 000"),
+   ("Биллинг, база, реферальная, аналитика","14 000"),
+   ("Премиум-дизайн + вёрстка + анимации","24 000"),
+   ("Оплаты: Lava.top + CryptoBot","8 000"),
+   ("Google Sheets — отчёты продаж","2 000"),
+   ("VPS, домен, деплой, запуск","6 000"),
+   ("Тестирование, обучение админке","4 000"),
  ]),
 )
 
