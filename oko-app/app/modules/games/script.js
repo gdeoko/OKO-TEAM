@@ -744,6 +744,7 @@ function gmLbAddWin(sum){
   else if(after > before) GM_LB.move = 'down';
   gmLbSave();
   gmLbRender();
+  if(GM_LB.my >= 5000 && typeof gmAchUnlock === 'function') gmAchUnlock('rich');
 }
 /* «живая» таблица: при заходе на экран кто-то из мок-игроков иногда выигрывает */
 function gmLbDrift(){
@@ -907,6 +908,233 @@ setInterval(()=>{
   ['gmFreeCd','gmFreeCd2'].forEach(id=>{ const e = document.getElementById(id); if(e) e.textContent = cd; });
 }, 1000);
 
+/* ============================================================
+   БЕСПЛАТНЫЕ КРУТКИ В КОПИЛКЕ (стрик 7 дней = +2 бесплатных крутки)
+   ============================================================ */
+function gmExtraFreeGet(){ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-extrafree'),10) || 0); }catch(e){ return 0; } }
+function gmExtraFreeSet(n){
+  try{
+    if(n > 0) localStorage.setItem('oko-games-extrafree', String(n));
+    else localStorage.removeItem('oko-games-extrafree');
+  }catch(e){}
+}
+function gmExtraFreeUse(){
+  const n = gmExtraFreeGet();
+  if(n <= 0) return false;
+  gmExtraFreeSet(n - 1);
+  return true;
+}
+function gmCanFree(){ return !gmBonusClaimedToday() || gmExtraFreeGet() > 0; }
+
+/* ============================================================
+   СТАТИСТИКА КРУТОК — для Mystery Box, ретеншена, достижений
+   ============================================================ */
+function gmSpinTotal(){ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-spins-total'),10) || 0); }catch(e){ return 0; } }
+function gmSpinTotalInc(){
+  const n = gmSpinTotal() + 1;
+  try{ localStorage.setItem('oko-games-spins-total', String(n)); }catch(e){}
+  return n;
+}
+function gmLastSpin(){ try{ return parseInt(localStorage.getItem('oko-games-lastspin'),10) || 0; }catch(e){ return 0; } }
+function gmSetLastSpin(){ try{ localStorage.setItem('oko-games-lastspin', String(Date.now())); }catch(e){} }
+
+/* ============================================================
+   MYSTERY BOX — особый приз каждые 20 круток (loot crate)
+   Пул только премиум-призов, гарантированно крупнее среднего.
+   ============================================================ */
+const GM_MB_STEP = 20;
+const GM_MB_POOL = [
+  {t:'ticket',  v:10,          w:200},
+  {t:'check',   v:5,           w:170},
+  {t:'disc',    v:30,          w:130},
+  {t:'ticket',  v:20,          w:110},
+  {t:'boost',   v:5,           w:90},
+  {t:'service', v:'priority',  w:75},
+  {t:'disc',    v:50,          w:55},
+  {t:'tier',    v:'PRO',       w:45},
+  {t:'service', v:'campaign',  w:35}
+];
+function gmMBCount(){ try{ return Math.max(0, parseInt(localStorage.getItem('oko-games-mbspins'),10) || 0); }catch(e){ return 0; } }
+function gmMBSet(n){ try{ localStorage.setItem('oko-games-mbspins', String(Math.max(0, n|0))); }catch(e){} }
+function gmMBPluralSpin(n){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return 'круток';
+  if(b > 1 && b < 5) return 'крутки';
+  if(b === 1) return 'крутка';
+  return 'круток';
+}
+function gmMBProgressHtml(){
+  const cur = Math.min(GM_MB_STEP, gmMBCount());
+  const pct = cur / GM_MB_STEP * 100;
+  const left = Math.max(0, GM_MB_STEP - cur);
+  const ready = left === 0;
+  return `<div class="gm-mb-progress ${ready ? 'ready' : ''}">
+    <div class="gm-mb-p-head">
+      <span>${I('gm-mbox')}Тайный сундук</span>
+      <b>${cur}/${GM_MB_STEP}</b>
+    </div>
+    <div class="gm-mb-p-bar"><i style="width:${pct}%"></i></div>
+    <small>${ready ? 'Готов к открытию · следующая крутка откроет сундук' : `Ещё ${left} ${gmMBPluralSpin(left)} до особого приза`}</small>
+  </div>`;
+}
+function gmMBAward(){
+  const pool = GM_MB_POOL;
+  const tot = pool.reduce((a,p)=>a + p.w, 0);
+  let r = Math.random() * tot, idx = 0;
+  for(let i = 0; i < pool.length; i++){ if(r < pool[i].w){ idx = i; break; } r -= pool[i].w; }
+  const p = pool[idx];
+  let title = '', prize = null;
+  switch(p.t){
+    case 'ticket':
+      gmTicketsAdd(p.v); prize = {type:'ticket', val:p.v, status:'done'};
+      title = `+ ${p.v} ${gmPluralTk(p.v)}`; break;
+    case 'check':
+      gmChecksAdd(p.v); prize = {type:'check', val:p.v, status:'active'};
+      title = `+ ${p.v} ${gmPluralCheck(p.v)} видео`; break;
+    case 'disc':
+      prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'};
+      title = `Скидка −${p.v}% на тариф`; break;
+    case 'boost':
+      gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'};
+      title = `Буст ×${p.v} к призу`; break;
+    case 'service':{
+      const sv = GM_SERVICES[p.v] || {};
+      prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'};
+      title = sv.label || 'Услуга OKO'; break;
+    }
+    case 'tier':
+      if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
+      prize = {type:'tier', val:p.v, status:'active'};
+      title = `Тариф ${p.v} на месяц`;
+      gmAchUnlock('tier'); break;
+  }
+  gmPrizeAdd(prize);
+  gmAchUnlock('mbox');
+  const val = gmNominal(p);
+  if(val > 0) gmLbAddWin(val);
+  gmMBReveal(gmPrizeIcon(p), title);
+  gmRenderModes(); /* обновить прогресс сундука на 0/20 */
+}
+function gmMBReveal(icon, title){
+  const host = document.getElementById('screen-games');
+  if(!host) return;
+  const el = document.createElement('div');
+  el.className = 'gm-mb-overlay';
+  el.innerHTML = `
+    <div class="gm-mb-scrim" onclick="gmMBClose(this)"></div>
+    <div class="gm-mb-modal" role="dialog" aria-modal="true">
+      <span class="gm-mb-tag">${I('gm-cup')}Тайный сундук</span>
+      <div class="gm-mb-crate">
+        <span class="gm-mb-crate-glow"></span>
+        <span class="gm-mb-crate-ic">${I('gm-mbox')}</span>
+      </div>
+      <div class="gm-mb-prize">
+        <span class="gm-mb-prize-ic">${I(icon)}</span>
+        <b>${title}</b>
+      </div>
+      <small class="gm-mb-sub">Награда за ${GM_MB_STEP} круток · уже в «Мои призы»</small>
+      <button class="gm-spin" onclick="gmMBClose(this)">${I('gm-gift')}Забрать</button>
+    </div>`;
+  host.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('open'));
+  gmConfetti(el.querySelector('.gm-mb-modal'), true);
+  try{ if(navigator.vibrate) navigator.vibrate([30, 60, 30, 60, 90]); }catch(e){}
+}
+function gmMBClose(node){
+  const wrap = node && node.closest ? node.closest('.gm-mb-overlay') : null;
+  if(wrap){ wrap.classList.remove('open'); setTimeout(()=>wrap.remove(), 260); }
+}
+
+/* ============================================================
+   ДОСТИЖЕНИЯ — 8 бейджей за активность в рулетке
+   ============================================================ */
+const GM_ACH = [
+  {id:'first',   ic:'gm-gift',    t:'Первый спин',    s:'Крути рулетку впервые'},
+  {id:'ten',     ic:'bolt',       t:'10 круток',      s:'Разогрев начат'},
+  {id:'fifty',   ic:'gm-flame',   t:'50 круток',      s:'Постоянный игрок'},
+  {id:'jackpot', ic:'gm-cup',     t:'Джекпот',        s:'Поймать редкий сектор'},
+  {id:'streak7', ic:'gm-cal',     t:'Неделя подряд',  s:'Серия из 7 дней'},
+  {id:'mbox',    ic:'gm-mbox',    t:'Тайный сундук',  s:'Открыть Mystery Box'},
+  {id:'rich',    ic:'money',      t:'Богач недели',   s:'5000 рублей призов за неделю'},
+  {id:'tier',    ic:'crown',      t:'Тарифный удар',  s:'Выиграть тариф в рулетке'}
+];
+function gmAchGet(){ try{ return JSON.parse(localStorage.getItem('oko-games-ach')) || {}; }catch(e){ return {}; } }
+function gmAchSave(a){ try{ localStorage.setItem('oko-games-ach', JSON.stringify(a)); }catch(e){} }
+function gmAchUnlock(id){
+  const a = gmAchGet();
+  if(a[id]) return false;
+  a[id] = Date.now();
+  gmAchSave(a);
+  const info = GM_ACH.find(x=>x.id === id);
+  if(info) toast(`Достижение · ${info.t}`);
+  gmAchRender();
+  return true;
+}
+function gmAchRender(){
+  const el = document.getElementById('gmAch');
+  if(!el) return;
+  const a = gmAchGet();
+  const done = GM_ACH.filter(x=>a[x.id]).length;
+  el.innerHTML = GM_ACH.map(ach=>{
+    const on = !!a[ach.id];
+    return `<div class="gm-ach ${on ? 'on' : ''}">
+      <span class="gm-ach-ic">${I(ach.ic)}</span>
+      <b>${ach.t}</b>
+      <small>${ach.s}</small>
+      ${on ? `<span class="gm-ach-check">${I('check')}</span>` : ''}
+    </div>`;
+  }).join('');
+  const head = document.getElementById('gmAchHead');
+  if(head) head.textContent = `${done}/${GM_ACH.length}`;
+}
+
+/* ============================================================
+   RETENTION-БАННЕР — если last-spin > 24ч и клиент вернулся,
+   а бесплатная крутка снова доступна, показать «С возвращением»
+   ============================================================ */
+function gmRetentionSeenKey(){ return 'oko-games-retseen-' + gmDayIdx(); }
+function gmRetentionRender(){
+  const el = document.getElementById('gmRetention');
+  if(!el) return;
+  const last = gmLastSpin();
+  const gap = last ? (Date.now() - last) / 3600e3 : 0;
+  let seen = false;
+  try{ seen = !!localStorage.getItem(gmRetentionSeenKey()); }catch(e){}
+  if(last && gap > 24 && !gmBonusClaimedToday() && !seen){
+    el.innerHTML = `<div class="gm-ret">
+      <span class="gm-ret-ic">${I('gm-gift')}</span>
+      <div class="gm-ret-b"><b>С возвращением</b><small>Бесплатная крутка ждёт тебя в колесе</small></div>
+      <button class="gm-ret-cta" onclick="gmSelectMode('free');gmRetentionDismiss()">Крутить</button>
+      <button class="gm-ret-x" onclick="gmRetentionDismiss()" aria-label="Закрыть">×</button>
+    </div>`;
+  }else{
+    el.innerHTML = '';
+  }
+}
+function gmRetentionDismiss(){
+  try{ localStorage.setItem(gmRetentionSeenKey(), '1'); }catch(e){}
+  gmRetentionRender();
+}
+
+/* ============================================================
+   WHEEL-TEASER — три самых крупных приза из текущего пула,
+   чтобы клиент видел ЧТО можно получить ещё до крутки
+   ============================================================ */
+function gmWheelTeaserHtml(){
+  const pool = gmCurrentPool();
+  const top = pool.slice().sort((a,b)=>gmNominal(b) - gmNominal(a)).slice(0, 3);
+  const cells = top.map(p=>
+    `<div class="gm-teaser-cell">
+      <span class="gm-teaser-ic">${I(gmPrizeIcon(p))}</span>
+      <b>${p.s}</b>
+    </div>`
+  ).join('');
+  return `<div class="gm-teaser">
+    <small>В колесе прямо сейчас · крупные призы</small>
+    <div class="gm-teaser-row">${cells}</div>
+  </div>`;
+}
+
 /* ---------- патчи ядра (прежние версии сохранены и вызываются) ---------- */
 const _prevWalletAddGm = walletAdd;
 walletAdd = function(sum, why){
@@ -940,8 +1168,11 @@ showTab = function(t){
     gmTicketsRender();
     gmBoostBadge();
     gmStreakRender();
+    gmAchRender();
+    gmRetentionRender();
     if(!gmSpinning){
-      if(gmMode === 'free' && gmBonusClaimedToday()) gmMode = 'p100';
+      /* автопереключение на платный пул только если бесплатной крутки правда нет */
+      if(gmMode === 'free' && !gmCanFree()) gmMode = 'p100';
       gmBuildWheel();
       gmRenderModes();
     }
@@ -951,7 +1182,7 @@ showTab = function(t){
 /* ---------- самоинициализация ---------- */
 regTitle('games', 'Рулетка OKO');
 addSvcTile({id:'games', label:'Рулетка OKO', ico:'gm-gift', first:true, onclick:()=>showTab('games')});
-gmMode = gmBonusClaimedToday() ? 'p100' : 'free';
+gmMode = gmCanFree() ? 'free' : 'p100';
 gmBuildWheel();
 gmRenderModes();
 gmLbEnsure();
@@ -960,6 +1191,8 @@ gmPrizesBtnRender();
 gmTicketsRender();
 gmBoostBadge();
 gmStreakRender();
+gmAchRender();
+gmRetentionRender();
 gmUpdateBalance();
 
 /* ---------- подхват призовой скидки в оплате тарифа ----------
