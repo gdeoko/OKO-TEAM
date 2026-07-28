@@ -731,8 +731,44 @@ label.f-lab{display:block}
 .sys-cal-tag{font-size:7.5px;font-weight:800;letter-spacing:.02em;color:var(--arch,var(--accent));white-space:nowrap;overflow:hidden;text-overflow:clip;max-width:calc(100% - 2px);padding:0 1px;text-align:center}
 @media(min-width:420px){.sys-cal-tag{font-size:9px;letter-spacing:.04em}}
 @media(min-width:600px){.sys-cal-tag{font-size:10px}}
-/* Модалка дня */
-.sys-day-modal{text-align:left}
+/* Точки типов на дне */
+.sys-cal-cnt{font-size:8.5px;font-weight:800;letter-spacing:.02em;color:var(--dim);text-transform:uppercase;line-height:1}
+.sys-cal-dots{display:flex;gap:3px;justify-content:center;align-items:center;min-height:6px}
+.sys-cal-dots i{display:inline-block;width:5px;height:5px;border-radius:50%;box-shadow:0 0 3px currentColor}
+@media(min-width:420px){.sys-cal-cnt{font-size:9.5px} .sys-cal-dots i{width:6px;height:6px}}
+/* Полноэкранная модалка дня (по эталону Копылыча) */
+.sys-day-mv{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;animation:sysDayFadeIn .25s cubic-bezier(.25,1,.4,1) both}
+@media(min-width:640px){.sys-day-mv{align-items:center;padding:24px}}
+@keyframes sysDayFadeIn{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(10px)}}
+.sys-day-sheet{width:100%;max-width:680px;max-height:92vh;background:var(--bg);border:1px solid var(--border);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:sysDaySlideUp .35s cubic-bezier(.25,1,.4,1) both}
+@media(min-width:640px){.sys-day-sheet{border-radius:20px;max-height:82vh}}
+@keyframes sysDaySlideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sys-day-head{display:flex;align-items:flex-start;gap:14px;padding:20px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sys-day-head>div:first-child{flex:1;min-width:0}
+.sys-day-eyebrow{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.sys-day-head h2{font-size:22px;font-weight:800;letter-spacing:-.01em;line-height:1.15;margin-bottom:4px}
+.sys-day-head p{font-size:12px;color:var(--dim);line-height:1.45}
+.sys-day-close{flex-shrink:0;width:36px;height:36px;border-radius:12px;border:1px solid var(--border);background:var(--raised);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,transform .12s}
+.sys-day-close:hover{border-color:var(--accent);transform:rotate(-90deg)}
+.sys-day-close svg.i{width:16px;height:16px}
+.sys-day-content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.sys-day-item{border-radius:14px;background:var(--raised);border:1px solid var(--border);overflow:hidden;position:relative}
+.sys-day-item::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--ac)}
+.sys-day-item-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.sys-day-item-ic{flex-shrink:0;width:38px;height:38px;border-radius:11px;color:#000;display:flex;align-items:center;justify-content:center}
+.sys-day-item-ic svg.i{width:18px;height:18px}
+.sys-day-item-h b{display:block;font-size:14px;font-weight:800;line-height:1.2}
+.sys-day-item-h small{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.4}
+.sys-day-item-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.sys-day-field{position:relative}
+.sys-day-lbl{display:block;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.sys-day-field p{font-size:13.5px;line-height:1.55;color:var(--text);padding-right:110px}
+.sys-day-copy{position:absolute;top:0;right:0;display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10.5px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.sys-day-copy:hover{border-color:var(--accent);color:var(--accent);background:var(--lime-dim)}
+.sys-day-copy svg.i{width:10px;height:10px}
+.sys-day-foot{display:flex;gap:10px;padding:14px 20px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.sys-day-foot .btn{flex:1}
+.sys-day-foot .btn.ghost{flex:0 1 auto;min-width:110px}
 .sys-day-date{font-size:12px;color:var(--dim);text-transform:capitalize;margin-bottom:10px;font-weight:600}
 .sys-day-lbl{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
 .sys-day-hook{padding:12px 14px;border-radius:11px;background:var(--lime-dim);border-left:3px solid var(--accent);margin-bottom:10px}
@@ -778,7 +814,112 @@ label.f-lab{display:block}
 .sys-future-card .sys-card-n{position:static;font-size:22px;opacity:.5}
 .sys-future-card b{font-size:13px;font-weight:700;line-height:1.35}
 .sys-metric .k{font-size:10.5px;color:var(--dim);margin-top:3px}
-@media(prefers-reduced-motion:reduce){#systemView{transition:none}}
+/* --- Бизнес-план: расширенные карточки --- */
+.sys-biz-card{align-items:flex-start;padding:12px 14px 12px 12px}
+.sys-biz-ic{flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--surface);color:var(--accent);display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.sys-biz-ic svg.i{width:15px;height:15px}
+.sys-biz-body{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.sys-biz-body b{font-size:13.5px;font-weight:700;line-height:1.3;display:block}
+.sys-biz-body small{font-size:11px;color:var(--dim);line-height:1.4;display:block}
+.sys-biz-card.hl,.sys-mat-card.hl,.sys-future-card.hl{animation:hlPulse 1.6s ease-out;border-color:var(--accent)!important}
+@keyframes hlPulse{0%{box-shadow:0 0 0 0 rgba(154,255,0,.5)}100%{box-shadow:0 0 0 14px rgba(154,255,0,0)}}
+/* --- Универсальная модалка блока --- */
+.sys-blk-mv .sys-blk-sheet{max-width:720px}
+.sys-blk-head h2{display:flex;align-items:center;gap:8px}
+.sys-blk-head h2 svg.i{width:20px;height:20px;color:var(--accent);flex-shrink:0}
+.sys-blk-content{gap:14px;padding:16px 18px}
+.sys-blk-sec{padding:14px 15px;border-radius:12px;background:var(--raised);border:1px solid var(--border)}
+.sys-blk-sec h4{margin:0 0 8px;font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.sys-blk-sec p{margin:0;font-size:13.5px;line-height:1.55;color:var(--fg)}
+.sys-blk-sec p + p, .sys-blk-sec p + .sys-blk-tbl-w{margin-top:8px}
+.sys-blk-tbl-w{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px;border-radius:8px;border:1px solid var(--border)}
+.sys-blk-tbl{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--surface)}
+.sys-blk-tbl th,.sys-blk-tbl td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.sys-blk-tbl th{background:var(--raised);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim)}
+.sys-blk-tbl tr:last-child td{border-bottom:none}
+.sys-blk-tbl td.hl{color:var(--accent);font-weight:800}
+.sys-blk-foot{gap:8px}
+.sys-blk-foot-mid{flex:1;display:flex;justify-content:center}
+.sys-blk-foot > .btn.ghost:first-child,.sys-blk-foot > .btn.ghost:last-child{padding:10px 12px;flex-shrink:0}
+.sys-blk-foot > .btn.ghost:first-child svg.i{transform:none}
+.sys-blk-foot > .btn.ghost:last-child svg.i{transform:rotate(180deg)}
+/* --- Чек-лист: календарь с прогресс-кольцами --- */
+.sys-chk-grid .sys-chk-day{position:relative;flex-direction:column;align-items:center;justify-content:center;min-height:60px}
+.sys-chk-day .sys-cal-num{margin-bottom:2px}
+.sys-chk-ring{position:relative;width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),transparent 0);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sys-chk-ring::before{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--surface)}
+.sys-chk-ring span{position:relative;font-size:8.5px;font-weight:800;color:var(--fg);z-index:1;letter-spacing:-.02em}
+@media(min-width:481px){.sys-chk-ring{width:30px;height:30px}.sys-chk-ring span{font-size:9.5px}}
+/* Чек-модалка */
+.sys-chk-cat{border-radius:12px;background:var(--raised);border:1px solid var(--border);overflow:hidden}
+.sys-chk-cat-h{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border)}
+.sys-chk-cat-ic{flex-shrink:0;width:30px;height:30px;border-radius:9px;color:#000;display:flex;align-items:center;justify-content:center}
+.sys-chk-cat-ic svg.i{width:14px;height:14px}
+.sys-chk-cat-h b{display:block;font-size:13px;font-weight:800}
+.sys-chk-cat-h small{display:block;font-size:11px;color:var(--dim);margin-top:1px}
+.sys-chk-items{padding:6px 8px}
+.sys-chk-item{display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:8px;cursor:pointer;transition:background .15s}
+.sys-chk-item:hover{background:var(--lime-dim)}
+.sys-chk-item input{position:absolute;opacity:0;pointer-events:none}
+.sys-chk-mark{flex-shrink:0;width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .15s;position:relative}
+.sys-chk-item.on .sys-chk-mark{background:var(--accent);border-color:var(--accent)}
+.sys-chk-item.on .sys-chk-mark::after{content:'';width:9px;height:5px;border-left:2.5px solid #000;border-bottom:2.5px solid #000;transform:rotate(-45deg) translate(1px,-1px)}
+.sys-chk-lbl{font-size:13px;line-height:1.4;flex:1}
+.sys-chk-item.on .sys-chk-lbl{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--accent)}
+/* --- Материалы: генераторы КП/договоров --- */
+.sys-gen{padding:0}
+.sys-gen-h{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;margin-bottom:4px}
+.sys-gen-h svg.i{width:18px;height:18px;color:var(--accent)}
+.sys-gen-p{font-size:12.5px;color:var(--dim);margin:0 0 12px;line-height:1.5}
+.sys-gen-form{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+@media(max-width:540px){.sys-gen-form{grid-template-columns:1fr}}
+.sys-gen-form label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sys-gen-form input,.sys-gen-form select{padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--fg);font-size:13px;font-weight:500;font-family:inherit}
+.sys-gen-form input:focus,.sys-gen-form select:focus{outline:none;border-color:var(--accent)}
+.sys-gen-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.sys-gen-out{padding:14px 15px;border-radius:12px;background:#fff;color:#111;min-height:100px;font-size:13.5px;line-height:1.55}
+.sys-gen-out:empty{background:transparent;border:1px dashed var(--border);color:var(--dim);text-align:center;padding:24px;font-size:12px}
+.sys-gen-out:empty::before{content:'Предпросмотр появится после генерации'}
+.sys-doc h3{margin:14px 0 8px;font-size:16px;color:#111}
+.sys-doc h4{margin:12px 0 6px;font-size:13px;color:#333;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.sys-doc-h{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}
+.sys-doc-h b{font-size:16px;font-weight:900;display:block}
+.sys-doc-h small{display:block;font-size:11px;color:#666;margin-top:4px}
+.sys-doc ul{margin:6px 0 6px 20px;padding:0}
+.sys-doc ul li{margin-bottom:4px}
+.sys-doc p{margin:6px 0}
+.sys-doc-f{margin-top:16px;padding-top:10px;border-top:1px solid #ccc;color:#666;font-size:11.5px;text-align:center}
+/* --- Визуал: брендбук swatches --- */
+.sys-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.sys-swatch{padding:12px;border-radius:11px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.sys-swatch-c{width:100%;height:56px;border-radius:8px;border:1px solid var(--border);margin-bottom:6px}
+.sys-swatch b{font-size:12.5px;font-weight:800}
+.sys-swatch small{font-size:11px;color:var(--dim)}
+.sys-swatch small code{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:var(--fg);background:var(--raised);padding:2px 5px;border-radius:5px}
+.sys-swatch-r{font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.35}
+.sys-fonts{display:flex;flex-direction:column;gap:12px}
+.sys-font{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:9px;background:var(--surface);border:1px solid var(--border)}
+.sys-font small{font-size:11px;color:var(--dim)}
+.sys-blk-sec code{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--accent);background:var(--raised);padding:2px 6px;border-radius:5px}
+/* --- Перспективы: timeline + расширенные карточки --- */
+.sys-future-hero{padding:16px;border-radius:14px;background:linear-gradient(135deg,rgba(154,255,0,.08),transparent);border:1px solid var(--border);margin-bottom:14px}
+.sys-future-hero h3{margin:0 0 4px;font-size:16px;font-weight:900}
+.sys-future-hero p{margin:0;font-size:13px;color:var(--dim);line-height:1.5}
+.sys-timeline{display:flex;gap:0;padding:8px 0 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:6px}
+.sys-timeline::-webkit-scrollbar{display:none}
+.sys-tl-item{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding:0 12px;min-width:88px;position:relative}
+.sys-tl-item:not(:last-child)::after{content:'';position:absolute;top:18px;left:50%;width:100%;height:2px;background:linear-gradient(to right,var(--accent),var(--border));z-index:0}
+.sys-tl-dot{width:38px;height:38px;border-radius:50%;background:var(--surface);border:2px solid var(--accent);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:.02em;position:relative;z-index:1;margin-bottom:8px}
+.sys-tl-item:first-child .sys-tl-dot{background:var(--accent);color:#000}
+.sys-tl-item div{text-align:center}
+.sys-tl-item b{display:block;font-size:12.5px;font-weight:800}
+.sys-tl-item small{display:block;font-size:10px;color:var(--dim);margin-top:2px;max-width:96px;line-height:1.3}
+.sys-future-card{cursor:pointer;transition:border-color .15s,background .15s}
+.sys-future-card:hover{border-color:var(--accent);background:linear-gradient(135deg,rgba(154,255,0,.09),transparent)}
+.sys-fut-ic{position:absolute;top:12px;right:14px;color:var(--accent);opacity:.55}
+.sys-fut-ic svg.i{width:16px;height:16px}
+.sys-future-card small{display:block;font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4}
+@media(prefers-reduced-motion:reduce){#systemView,.sys-biz-card.hl,.sys-mat-card.hl,.sys-future-card.hl{transition:none;animation:none}}
 /* ===== Глобальный поиск ===== */
 #searchView{position:fixed;inset:0;z-index:74;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #searchView.open{transform:none}
@@ -3135,6 +3276,32 @@ const SYS_ARCHETYPES = [
   {k:'trend',   t:'Тренд-адаптация',   short:'ТРЕНД', full:'ТРЕНД',    ic:'fire',   color:'#ff5c5c'},
   {k:'sell',    t:'Продающий пост',    short:'ПРОД',  full:'ПРОДАЖА',  ic:'money',  color:'#a980ff'},
 ];
+/* Типы контента (точки на календаре и item'ы в модалке дня) */
+const SYS_CTYPES = {
+  reels:    {n:'Ролик',       ic:'circle-play', color:'#9AFF00'},
+  tg:       {n:'TG-пост',     ic:'send',        color:'#7ecfff'},
+  carousel: {n:'Карусель',    ic:'photo',       color:'#ffb84a'},
+  stories:  {n:'Сторис',      ic:'star',        color:'#ff7ea6'},
+  youtube:  {n:'YT-видео',    ic:'circle-play', color:'#ff5c5c'},
+};
+/* Раскладка форматов по дням: возвращает массив ключей типов для дня n (1..30) */
+function sysDayItems(n, a){
+  const items = [];
+  const rpd = +a.reels_per_day || 0;
+  const tpd = +a.tg_per_day || 0;
+  const cpm = +a.carousels_per_month || 0;
+  const spd = +a.stories_per_day || 0;
+  const ypw = +a.youtube_long_per_week || 0;
+  for(let k=0;k<rpd;k++) items.push('reels');
+  for(let k=0;k<tpd;k++) items.push('tg');
+  // карусели раскидываем равномерно по месяцу
+  if(cpm > 0 && (n-1) % Math.ceil(30/Math.max(1,cpm)) === 0 && items.length + 1 <= 10) items.push('carousel');
+  // сторис-серии
+  if(spd > 0) items.push('stories');
+  // YouTube — 1 раз в неделю
+  if(ypw > 0 && (n-1) % 7 === 0) items.push('youtube');
+  return items;
+}
 function sysPlanHtml(a){
   const rpd = +a.reels_per_day || 1;
   const tpd = +a.tg_per_day || 0;
@@ -3143,27 +3310,31 @@ function sysPlanHtml(a){
   const total = rpd*30 + tpd*30 + cpm + spd*30;
   const platforms = Array.isArray(a.platforms) ? a.platforms : [];
   const start = a.start_date ? new Date(a.start_date) : new Date();
-  // Понедельник до старта — для выравнивания сетки 7×N (пн-вс)
-  const startDow = (start.getDay()+6)%7; // 0=пн,6=вс
+  const startDow = (start.getDay()+6)%7;
   const monthName = start.toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
   const WEEK_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  // Собрать 30 дней контент-плана
   const days = [];
   for(let i=0; i<30; i++){
     const d = new Date(start); d.setDate(start.getDate()+i);
     const dow = (d.getDay()+6)%7;
-    const arch = SYS_ARCHETYPES[i % SYS_ARCHETYPES.length];
-    days.push({i:i+1, day:d.getDate(), dow, arch, isRest:dow===6, dateStr:d.toLocaleDateString('ru-RU',{day:'2-digit', month:'2-digit'})});
+    const items = sysDayItems(i+1, a);
+    days.push({i:i+1, day:d.getDate(), dow, items, isRest:dow===6 && rpd===0});
   }
-  // Отрисуем пустые ячейки в начале, затем дни, добьём до кратного 7
   let cells = '';
   for(let e=0; e<startDow; e++) cells += `<div class="sys-cal-empty"></div>`;
-  cells += days.map(d=>`
-    <button class="sys-cal-day ${d.isRest?'rest':''}" style="--arch:${d.arch.color}" onclick="sysDayOpen(${d.i})" title="${esc(d.arch.t)}">
+  cells += days.map(d=>{
+    // Уникальные типы и их количество для точек
+    const seen = {};
+    d.items.forEach(k=>{ seen[k]=(seen[k]||0)+1; });
+    const uniq = Object.keys(seen);
+    const dots = uniq.map(k=>`<i style="background:${SYS_CTYPES[k].color}" title="${SYS_CTYPES[k].n}${seen[k]>1?' ×'+seen[k]:''}"></i>`).join('');
+    return `
+    <button class="sys-cal-day ${d.isRest?'rest':''}" onclick="sysDayOpen(${d.i})" title="День ${d.i}: ${d.items.length} единиц">
       <span class="sys-cal-num">${d.day}</span>
-      <span class="sys-cal-dot" style="background:${d.arch.color}"></span>
-      <span class="sys-cal-tag">${d.arch.short}</span>
-    </button>`).join('');
+      <span class="sys-cal-cnt">${d.items.length ? d.items.length+' ед.' : '—'}</span>
+      <span class="sys-cal-dots">${dots}</span>
+    </button>`;
+  }).join('');
   const tail = (startDow + 30) % 7;
   if(tail) for(let e=0; e<7-tail; e++) cells += `<div class="sys-cal-empty"></div>`;
   return `
@@ -3174,189 +3345,1064 @@ function sysPlanHtml(a){
       ${spd?`<div><b>${spd*30}</b><small>сторис</small></div>`:''}
       <div><b>${total}</b><small>всего единиц</small></div>
     </div>
-    <p class="sys-note">${I('bolt')} Календарь на ${platforms.length ? platforms.join(', ') : 'все выбранные площадки'} · <b>${esc(monthName)}</b>. Клик на день — сценарий, посты, промпты, кнопка «В производство».</p>
-    <div class="sys-cal-legend">${SYS_ARCHETYPES.map(x=>`
-      <span class="sys-cal-leg"><i style="background:${x.color}"></i>${x.full}</span>`).join('')}</div>
+    <p class="sys-note">${I('bolt')} Календарь на ${platforms.length ? platforms.join(', ') : 'все выбранные площадки'} · <b>${esc(monthName)}</b>. Клик на день — все форматы, тексты, промпты и кнопка «В производство».</p>
+    <div class="sys-cal-legend">${Object.entries(SYS_CTYPES).map(([k,x])=>`
+      <span class="sys-cal-leg"><i style="background:${x.color}"></i>${x.n}</span>`).join('')}</div>
     <div class="sys-cal-grid">
       ${WEEK_LABELS.map(w=>`<div class="sys-cal-wl">${w}</div>`).join('')}
       ${cells}
     </div>`;
 }
+/* Полноэкранная модалка дня — по эталону Копылыча */
+let sysDayModalN = 0, sysDayModalOpen = false;
 function sysDayOpen(n){
+  sysDayModalN = n;
+  sysDayModalOpen = true;
+  document.body.appendChild(sysDayModalEl(n));
+  document.body.style.overflow='hidden';
+}
+function sysDayClose(){
+  const el = document.getElementById('sysDayModal'); if(el) el.remove();
+  document.body.style.overflow='';
+  sysDayModalOpen = false;
+}
+function sysDayModalEl(n){
+  const wrap = document.createElement('div');
+  wrap.id = 'sysDayModal';
+  wrap.className = 'sys-day-mv';
+  wrap.innerHTML = sysDayHtml(n);
+  wrap.addEventListener('click', e => { if(e.target === wrap) sysDayClose(); });
+  return wrap;
+}
+function sysDayHtml(n){
   const a = aState.answers;
   const platforms = Array.isArray(a.platforms) ? a.platforms : ['Instagram','TikTok','Telegram'];
-  const arch = SYS_ARCHETYPES[(n-1) % SYS_ARCHETYPES.length];
   const start = a.start_date ? new Date(a.start_date) : new Date();
   const d = new Date(start); d.setDate(start.getDate()+(n-1));
   const dateStr = d.toLocaleDateString('ru-RU',{weekday:'long', day:'numeric', month:'long'});
-  // «Реалистичный» контент для превью — будет заменён на реальную генерацию Claude API
-  const previews = {
-    expert:  {hook:'3 ошибки в первых 2 секундах ролика — почему у 90% не залетает', body:'Разбираем распространённые ошибки в хуке: медленный старт, объяснение вместо интриги, лицо без эмоции. Показываем правильные примеры с досмотром >70%.'},
-    story:   {hook:'Как я слил 200 000 ₽ на рекламу и что понял', body:'Личная история про первый провальный запуск. Что бы я сделал иначе, зная то, что знаю сейчас.'},
-    case:    {hook:'Клиент был в минусе — за 60 дней вышел на 480 000 ₽/мес', body:'Реальный кейс: точка А, что делали, точка Б. Скриншоты статистики. Универсальные приёмы, которые сработали.'},
-    error:   {hook:'НЕ снимайте это в первые 30 роликов', body:'Топ-5 форматов, которые убивают охваты новичкам. Что вместо них — с примерами и цифрами.'},
-    trend:   {hook:'Новый формат Reels — уже собрал 12 млн просмотров у топов', body:'Как адаптировать вирусный тренд под свою нишу без потери смысла. Пошаговая инструкция.'},
-    sell:    {hook:'Открываю запись на наставничество — 5 мест по спец-цене', body:'Оффер месяца: программа, что входит, кому подойдёт, кому нет. Отзывы прошлого потока. Форма записи.'},
-  };
-  const p = previews[arch.k];
-  showPopup({title:`${arch.short} · День ${n}`, ico:arch.ic,
-    body:`
-    <div class="sys-day-modal">
-      <div class="sys-day-date">${esc(dateStr)}</div>
-      <div class="sys-day-hook"><span class="sys-day-lbl">Хук</span><p>${esc(p.hook)}</p></div>
-      <div class="sys-day-body"><span class="sys-day-lbl">Раскрытие</span><p>${esc(p.body)}</p></div>
-      <div class="sys-day-plat">
-        <span class="sys-day-lbl">Форматы под платформы</span>
-        ${platforms.map(pl=>`<div class="sys-day-pl"><b>${esc(pl)}</b><small>${sysDayFormatForPlatform(pl,arch.k)}</small></div>`).join('')}
+  const items = sysDayItems(n, a);
+  // 6 архетипов сюжета — чередуются
+  const archTitles = ['Экспертный разбор','Личная история','Кейс клиента','Разбор ошибки','Тренд-адаптация','Продающий пост'];
+  const archTitle = archTitles[(n-1) % 6];
+  // Собираем секции по типам
+  const grouped = {};
+  items.forEach(k=>{ grouped[k]=(grouped[k]||0)+1; });
+  const sections = Object.entries(grouped).map(([k,cnt])=>sysDayItemHtml(k, cnt, n, platforms, archTitle)).join('');
+  return `
+    <div class="sys-day-sheet" onclick="event.stopPropagation()">
+      <div class="sys-day-head">
+        <div>
+          <span class="sys-day-eyebrow">День ${n} · ${esc(dateStr)}</span>
+          <h2>${esc(archTitle)}</h2>
+          <p>${items.length} единиц контента для ${esc(platforms.join(' · '))}</p>
+        </div>
+        <button class="sys-day-close" onclick="sysDayClose()" aria-label="Закрыть">${I('back')}</button>
       </div>
-      <div class="sys-day-btns">
-        <button class="sys-day-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(p.hook).replace(/'/g,"\\'")}');toast('Хук скопирован')">${I('copy')} Хук</button>
-        <button class="sys-day-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(p.body).replace(/'/g,"\\'")}');toast('Раскрытие скопировано')">${I('copy')} Текст</button>
-        <button class="sys-day-btn" onclick="toast('Промпт для картинки скопирован')">${I('photo')} Промпт</button>
-        <button class="sys-day-btn primary" onclick="closePopup&&closePopup();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} В производство</button>
+      <div class="sys-day-content">
+        ${sections || '<p class="dim" style="padding:24px;text-align:center;font-size:13px">На этот день контент не запланирован (выходной)</p>'}
       </div>
-    </div>`,
-    actions:[{label:'Закрыть', ghost:true}]});
+      <div class="sys-day-foot">
+        <button class="btn ghost" onclick="sysDayClose()">Закрыть</button>
+        <button class="btn" onclick="sysDayClose();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} Запустить всё в производство</button>
+      </div>
+    </div>`;
 }
-function sysDayFormatForPlatform(pl, ak){
-  const m = {
-    Instagram:'Reels 45–60 сек + карусель 5 слайдов + сторис-серия из 3',
-    TikTok:   'Вертикаль 25–40 сек + караоке-субтитры',
-    YouTube:  'Shorts 45–60 сек + описание с хук-ссылкой на длинное видео',
-    Telegram: 'Пост 500–800 знаков + голосовое до 60 сек',
-    VK:       'Клип 30–45 сек + пост в стену с CTA',
-    'Дзен':   'Статья 300–500 слов + вертикальный видео-превью'
+function sysDayItemHtml(k, cnt, n, platforms, archTitle){
+  const c = SYS_CTYPES[k];
+  // «Реалистичный» контент дня (заменится реальной генерацией Claude API)
+  const seedTexts = {
+    reels: {
+      hook: 'В первые 2 секунды покажи неожиданный факт из «'+archTitle.toLowerCase()+'» и обещание пользы за 30 секунд',
+      body: 'Структура: хук → усиление боли → главный приём/решение → доказательство → призыв. Длина 30–45 сек. Караоке-субтитры обязательны.',
+      cta:  'Пиши слово СТАРТ в директ — пришлю программу',
+    },
+    tg: {
+      hook: archTitle+' — короткая мысль, которая заставит переслать',
+      body: 'Пост 500–800 знаков: боль → инсайт → своя история/цифра → CTA. Абзацы по 1–2 строки. В конце вопрос для комментов.',
+      cta:  'Ответы в комментах ниже — читаю каждый',
+    },
+    carousel: {
+      hook: '5-7 слайдов, где 1-й — крупная цифра или обещание, а последний — CTA',
+      body: 'Формат: обложка → 3 пункта пользы → пример/кейс → результат → CTA. Единый визуал: один шрифт, палитра бренда.',
+      cta:  'Сохрани, чтобы не потерять',
+    },
+    stories: {
+      hook: 'Серия из 3–5 сторис: боль → инсайт → анонс',
+      body: 'Форматы серии: голос над видео, текст на фоне, опрос, кружок-ответ. В финале — свайп-стикер на пост дня.',
+      cta:  'Свайп ↑ — читать пост дня',
+    },
+    youtube: {
+      hook: 'Длинное видео 8–15 минут: разбор темы с примерами и цифрами',
+      body: 'Структура: хук 30 сек → главные 3 тезиса → кейс → выводы → CTA. Обложка с крупным лицом и одной фразой.',
+      cta:  'Ссылка в описании — бесплатный гайд по теме',
+    },
   };
-  return m[pl] || 'Сценарий 30–60 сек + подпись + сторис-анонс';
+  const s = seedTexts[k];
+  const platformHint = {
+    reels:    'Instagram Reels · TikTok · YouTube Shorts · VK Клипы',
+    tg:       'Telegram-канал · копия в VK Стена',
+    carousel: 'Instagram · VK · LinkedIn',
+    stories:  'Instagram Stories · VK Истории',
+    youtube:  'YouTube (длинное горизонтальное 16:9)',
+  }[k] || platforms.join(' · ');
+  return `
+    <div class="sys-day-item" style="--ac:${c.color}">
+      <div class="sys-day-item-h">
+        <span class="sys-day-item-ic" style="background:${c.color}">${I(c.ic)}</span>
+        <div>
+          <b>${c.n}${cnt>1?' × '+cnt:''}</b>
+          <small>${esc(platformHint)}</small>
+        </div>
+      </div>
+      <div class="sys-day-item-body">
+        <div class="sys-day-field"><span class="sys-day-lbl">Хук</span><p>${esc(s.hook)}</p>
+          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('Хук скопирован')">${I('copy')} Копировать</button></div>
+        <div class="sys-day-field"><span class="sys-day-lbl">Раскрытие</span><p>${esc(s.body)}</p>
+          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('Текст скопирован')">${I('copy')} Копировать</button></div>
+        <div class="sys-day-field"><span class="sys-day-lbl">CTA (призыв)</span><p>${esc(s.cta)}</p>
+          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('CTA скопирован')">${I('copy')} Копировать</button></div>
+      </div>
+    </div>`;
 }
-/* --- РАЗДЕЛ 2 — Бизнес-план (18 блоков) --- */
+/* ============ РАЗДЕЛ 2 — БИЗНЕС-ПЛАН (18 блоков с раскрывающимися страницами) ============ */
+function sysBizBlocks(a){
+  const niche = a.niche || 'твоя ниша';
+  const audience = a.audience || 'твоя аудитория';
+  const geo = a.geo || 'Россия';
+  const who = a.who || 'Эксперт';
+  const platforms = (Array.isArray(a.platforms)?a.platforms:['Instagram','TikTok','Telegram']).join(' · ');
+  return [
+    {t:'Точка А — где ты сейчас', ic:'compass', sub:'Диагностика стартовой позиции',
+      sections:[
+        {h:'Кто ты', body:`${who}. Ниша «${niche}». География: ${geo}. Ядро площадок: ${platforms}.`},
+        {h:'Аудитория и её боли', body:`${audience}. Первичные боли: страх начать, дефицит времени, недостаток веры в себя, риск ошибок, страх осуждения.`},
+        {h:'Текущие ресурсы', body:'Что уже есть: экспертиза, ~1–3 часа в день на контент, стартовый бюджет до 30 000 ₽. Чего не хватает: системы, шаблонов, аналитики, команды.'},
+        {h:'Финансы на старте', body:'Средний чек ~0 ₽ (нет упаковки). Задача М1: выйти на 5–10 продаж среднего продукта.'},
+      ],
+      cta:{label:'Перейти к позиционированию (блок 18)', to:17},
+    },
+    {t:'Финансовый план М1 · М2 · М3', ic:'money', sub:'Три месяца с целями и приходом',
+      sections:[
+        {h:'Модель по месяцам', body:'', tbl:[
+          ['Месяц','Клиенты','Средний чек','Приход','Расходы','Прибыль'],
+          ['М1',   '8',       '9 900 ₽',    '79 200 ₽', '18 000 ₽', '61 200 ₽'],
+          ['М2',   '15',      '12 900 ₽',   '193 500 ₽','36 000 ₽', '157 500 ₽'],
+          ['М3',   '25',      '14 900 ₽',   '372 500 ₽','58 000 ₽', '314 500 ₽'],
+        ]},
+        {h:'Из чего расходы', body:'Реклама (60%), сервисы/подписки (15%), команда-подрядчики (20%), налоги/резерв (5%). Всё до вычета.'},
+        {h:'Цель квартала', body:'Выйти на устойчивые 300 000+ ₽/мес чистыми и заложить фундамент под М4–М6 (масштаб × 3).'},
+      ],
+    },
+    {t:'Продукты, цены, маржа', ic:'star', sub:'Продуктовая линейка от лид-магнита до VIP',
+      sections:[
+        {h:'Линейка', body:'', tbl:[
+          ['Продукт','Формат','Цена','Себестоимость','Маржа'],
+          ['Лид-магнит','PDF/чек-лист','0 ₽','—','—'],
+          ['Trip-wire','Мини-курс/разбор','990 ₽','~50 ₽','~95%'],
+          ['Основной','Курс/наставничество 4 нед','19 900 ₽','~2 000 ₽','~90%'],
+          ['Премиум','VIP-сопровождение 3 мес','149 000 ₽','~15 000 ₽','~90%'],
+        ]},
+        {h:'Как разложить трафик', body:'80% усилий — на основной продукт, 15% — на trip-wire (тёплый вход), 5% — на VIP (личный чек через Zoom).'},
+      ],
+      cta:{label:'Скрипты продаж (блок 17)', to:16},
+    },
+    {t:'Воронка продаж', ic:'flag', sub:'Путь от подписчика до чека',
+      sections:[
+        {h:'5 шагов воронки', body:'1) Reels/пост попадает в рекомендации. 2) Подписка + welcome-серия из 3 сторис. 3) Лид-магнит в директе → сегментация. 4) Прогревающая серия (5–7 касаний). 5) Оффер + дожим за 24 часа.'},
+        {h:'Метрики каждого шага', body:'CTR на подписку (5–8%), открываемость welcome (60–70%), конверсия в заявку (7–12%), доходимость до оплаты (35–50%).'},
+        {h:'Автоматизация', body:'Триггер-сообщения в директе через встроенного бота OKO, сегменты — тег «холод/тёплый/горячий», ретаргет — на VK Реклама и Telegram Ads.'},
+      ],
+    },
+    {t:'Монетизация контента', ic:'bolt', sub:'6 способов заработка на охватах',
+      sections:[
+        {h:'Способы', body:'1) Продажа продукта. 2) Партнёрские интеграции (10–30% с оборота). 3) Донаты/чаевые (Telegram Stars, TON, СБП). 4) Закрытый клуб OKO CLUB (годовая подписка). 5) Продажа стикер-паков/шаблонов. 6) Спонсорские интеграции ≥ 30к подписчиков.'},
+        {h:'Тарифы клуба', body:'', tbl:[
+          ['Тариф','Цена/мес','Что даёт'],
+          ['Bronze','990 ₽','Библиотека уроков + 1 разбор в мес'],
+          ['Silver','2 900 ₽','Уроки + 2 групповых созвона + чат'],
+          ['Gold','9 900 ₽','+ личный разбор + приоритет'],
+        ]},
+      ],
+    },
+    {t:'Реклама: бюджеты, форматы, даты', ic:'megaphone', sub:'Куда лить и сколько',
+      sections:[
+        {h:'Каналы и бюджеты М1', body:'', tbl:[
+          ['Канал','Бюджет','Формат','Цель'],
+          ['VK Реклама','10 000 ₽','ретаргет reels','подписка ≤ 12 ₽'],
+          ['Telegram Ads','15 000 ₽','пост в тематике','подписка ≤ 25 ₽'],
+          ['Инфлюенсеры','20 000 ₽','нано 5–15к','заявка ≤ 400 ₽'],
+        ]},
+        {h:'Тестовый цикл', body:'Неделя 1 — 3 креатива × 3 аудитории. Неделя 2 — выключаем аутсайдеров. Неделя 3–4 — масштабируем победителей × 3–5.'},
+      ],
+      cta:{label:'Партнёрства (блок 10)', to:9},
+    },
+    {t:'KPI и метрики', ic:'star', sub:'На что смотрим каждую неделю',
+      sections:[
+        {h:'Недельные метрики', body:'', tbl:[
+          ['Метрика','Норма','Кризис'],
+          ['Reels в тренд','1 из 5','0 из 10'],
+          ['Досматриваемость','≥ 55%','< 35%'],
+          ['Заявки в директ','15–25','< 5'],
+          ['CPL из рекламы','≤ 300 ₽','≥ 800 ₽'],
+          ['Конверсия в оплату','≥ 35%','< 15%'],
+        ]},
+        {h:'Красные флажки', body:'2 недели подряд ниже кризисной нормы → ставим спринт: проверка оффера, лид-магнита, воронки, креативов. Не даём проблеме расти.'},
+      ],
+    },
+    {t:'Найм команды: кого / когда / ЗП', ic:'users', sub:'Кого нанимаем и в каком порядке',
+      sections:[
+        {h:'Приоритет найма', body:'', tbl:[
+          ['Роль','Когда','ЗП/оклад','Задача'],
+          ['Ассистент','М2','20 000 ₽','рутина, ответы, публикация'],
+          ['SMM-менеджер','М3','35 000 ₽','контент-план, оформление'],
+          ['Продажник','М4','30 000 ₽ + 10%','обработка заявок'],
+          ['Монтажёр','М4','25 000 ₽ / 20 роликов','монтаж'],
+        ]},
+        {h:'Как искать', body:'HH.ru, Telegram-каналы (@smm_vacancy, @remotework), внутренняя биржа OKO. Тестовое ≤ 2 часа, оплата испытательного.'},
+      ],
+    },
+    {t:'Анализ 15+ конкурентов', ic:'compass', sub:'Кто уже занял рынок',
+      sections:[
+        {h:'Топ-3 прямых конкурента', body:'', tbl:[
+          ['Кто','Аудитория','Средний чек','Слабое место'],
+          ['Конкурент A','120k','29 900 ₽','нет комьюнити'],
+          ['Конкурент B','80k','15 000 ₽','контент 1 раз/нед'],
+          ['Конкурент C','50k','9 900 ₽','нет упаковки'],
+        ]},
+        {h:'Твоя разница', body:`У тебя: живая подача, узкая ниша «${niche}», глубокая проработка кейсов, скорость ответа < 1 час, гарантия результата.`},
+        {h:'Что копировать', body:'Форматы, которые «залетают» у топ-3, но подавать под свою нишу. Ошибки конкурентов — обходить.'},
+      ],
+    },
+    {t:'Партнёрства: план действий', ic:'thumb', sub:'50 контактов на месяц',
+      sections:[
+        {h:'Типы партнёрств', body:'Взаимопиар (обмен аудиторией), спонсорские посты (оплата за размещение), интеграции с продуктом (% с продаж), совместные продукты, гостевые эфиры.'},
+        {h:'Шаблон холодного письма', body:`Привет! Я ${who} в нише «${niche}», ${audience}. У меня X подписчиков и активность Y%. Предлагаю [взаимопиар/интеграцию/спонсорство]. Формат: [Reels/сторис/пост]. Мой оффер: [что даю]. Что нужно от вас: [что прошу]. Ссылка: [окно связи].`},
+        {h:'Цели М1', body:'20 холодных писем в неделю → 5 ответов → 2 сделки. Итого М1: 8 партнёрств.'},
+      ],
+      cta:{label:'Материалы: шаблоны партнёрств (раздел 4)', to:-1, sec:'materials'},
+    },
+    {t:'Риски и план Б по месяцам', ic:'flag', sub:'Что может пойти не так',
+      sections:[
+        {h:'Основные риски', body:'', tbl:[
+          ['Риск','Вероятность','План Б'],
+          ['Reels не заходят','средняя','сменить упаковку хука, тестировать 5 форматов'],
+          ['Реклама выгорела','высокая','пересобрать креативы, сменить площадку'],
+          ['Проседает трафик','средняя','включить партнёрства и коллабы'],
+          ['Отток подписчиков','низкая','провести опрос, вернуться к болям'],
+          ['Проблемы со здоровьем','низкая','ассистент подхватит рутину'],
+        ]},
+        {h:'Резервный фонд', body:'20% от дохода уходит в резерв: покрытие 3 месяцев без выручки. Никаких лишних трат до достижения этого фонда.'},
+      ],
+    },
+    {t:'Дорожная карта 90 дней', ic:'rocket', sub:'Неделя за неделей',
+      sections:[
+        {h:'Месяц 1 — упаковка', body:'Неделя 1: анкета, план, брендбук. Неделя 2: контент-план на 30 дней. Неделя 3: первый оффер + лид-магнит. Неделя 4: запуск рекламы 10к.'},
+        {h:'Месяц 2 — тесты', body:'Неделя 5–6: сегментация аудитории, оптимизация воронки. Неделя 7: масштабирование креативов ×3. Неделя 8: партнёрства 5+.'},
+        {h:'Месяц 3 — масштаб', body:'Неделя 9: премиум-продукт. Неделя 10: клуб OKO CLUB. Неделя 11: команда — ассистент + SMM. Неделя 12: разбор итогов, план М4–М6.'},
+      ],
+      cta:{label:'Чек-лист по дням (раздел 3)', to:-1, sec:'checklist'},
+    },
+    {t:'OKO CLUB / закрытый клуб', ic:'crown', sub:'Клуб как основной актив',
+      sections:[
+        {h:'Формат', body:'Закрытое комьюнити на 100–300 человек. Ежемесячная подписка. Внутри: библиотека уроков, ежемесячный разбор, чат-помощь, гостевые эксперты, гайды.'},
+        {h:'Экономика клуба', body:'', tbl:[
+          ['Месяц','Участники','Средняя цена','MRR'],
+          ['М3','30','2 900 ₽','87 000 ₽'],
+          ['М6','100','2 900 ₽','290 000 ₽'],
+          ['М12','300','2 900 ₽','870 000 ₽'],
+        ]},
+        {h:'Ретеншен', body:'Ключ — ежемесячные ивенты и постоянное обновление контента. Цель по удержанию: 90% через 3 месяца, 75% через 6 месяцев.'},
+      ],
+    },
+    {t:'Рассылки по базам', ic:'send', sub:'Автоматизации в директе / Telegram / email',
+      sections:[
+        {h:'3 базы, 3 канала', body:'1) База в Telegram-боте (главная, до 100% доставка). 2) Директ Instagram (welcome + оффер). 3) Email (VIP-новости).'},
+        {h:'Цепочки', body:'Welcome (3 сообщения за 3 дня), обучающая (7 сообщений за 14 дней), продающая (5 сообщений за 7 дней), реактивация (3 сообщения через 30 дней тишины).'},
+        {h:'Инструменты', body:'Telegram-бот + BotFather + n8n или Make для сценариев. В OKO встроен свой воркфлоу-конструктор.'},
+      ],
+    },
+    {t:'CRM клиентов', ic:'briefcase', sub:'База клиентов и сделок',
+      sections:[
+        {h:'Что храним', body:'ФИО, ник, канал первого касания, теги (холод/тёплый/клиент), сумма сделок, история касаний, дата следующего действия.'},
+        {h:'Статусы сделок', body:'Новый лид → Заявка → Разговор → Оффер выслан → Ожидание оплаты → Клиент → Дожим апсейла.'},
+        {h:'Правила', body:'Каждый лид получает ответ в течение 60 минут. Следующее действие ставится сразу после разговора. Раз в неделю — уборка мёртвых сделок.'},
+      ],
+      cta:{label:'Открыть CRM (заглушка)', act:'bizOpenCRM'},
+    },
+    {t:'Трекер задач', ic:'check2', sub:'Всё что надо сделать — в одном месте',
+      sections:[
+        {h:'Столбцы', body:'Идеи → В работе → На проверке → Готово. Каждая задача: срок, ответственный, ссылки, чек-лист.'},
+        {h:'Ритм', body:'Планёрка понедельник 10:00 (15 минут). Стендап каждый день 09:30 (5 минут). Разбор недели пятница 18:00.'},
+        {h:'Инструменты', body:'Внутренний трекер OKO, Notion как база знаний, TG-чат «Ежедневка» для оперативки.'},
+      ],
+    },
+    {t:'Психология и состояние', ic:'heart', sub:'Ты — главный актив бизнеса',
+      sections:[
+        {h:'Правила ресурса', body:'Сон 7–8 часов. 30 минут спорта / прогулки в день. 1 полный выходной в неделю без телефона. Один месяц отпуска в год.'},
+        {h:'Работа с выгоранием', body:'Первые признаки: раздражительность, откладывание, обесценивание. Реакция: 3 дня отдыха + возврат к базе (сон/спорт/питание) + разбор с психологом.'},
+        {h:'Ежедневная практика', body:'Утро: 5 минут дыхательной практики + 3 благодарности. Вечер: 3 итога дня + одна лёгкая задача на завтра. Никакой соцсети первые 30 минут после пробуждения.'},
+      ],
+    },
+    {t:'Скрипты продаж', ic:'money', sub:'Что говорить в директе и на созвоне',
+      sections:[
+        {h:'Первое сообщение (директ)', body:`«Привет! Увидел(а) тебя по хэштегу #${niche.replace(/\s+/g,'')}. Скажи, что для тебя сейчас самое сложное в теме ${niche}?» — без продажи, только диагностика.`},
+        {h:'Квалификация', body:'3 вопроса: Что уже пробовал(а)? Что мешает? Какой результат нужен за 30 дней? По ответам — сегмент (холод/тёплый/горячий).'},
+        {h:'Оффер', body:'«У меня есть [продукт], который решает именно [твою боль]. Формат: [что внутри]. Стоимость: [сумма]. Стартуем [дата]. Ты в игре?»'},
+        {h:'Отработка возражений', body:'«Дорого» → показать цену бездействия. «Подумаю» → назвать срок и предложить брать сейчас со скидкой. «Не сейчас» → занять слот на следующий поток.'},
+      ],
+      cta:{label:'Материалы: 15 готовых скриптов (раздел 4)', to:-1, sec:'materials'},
+    },
+    {t:'Позиционирование', ic:'compass', sub:'Одно предложение о тебе',
+      sections:[
+        {h:'Формула', body:'«Я помогаю [аудитория] получить [результат] за [срок] через [метод] без [боли]».'},
+        {h:'Твоя версия', body:`Я помогаю ${audience} выйти на первый устойчивый доход в нише «${niche}» за 90 дней через готовую Систему OKO — без бесконечных консультаций и без выгорания.`},
+        {h:'Куда ставим', body:'Шапка Instagram / TG-канала, первая строка сайта, шаблон холодного письма, знакомство на конференциях, автоответ в директе.'},
+      ],
+    },
+  ];
+}
 function sysBizHtml(a){
-  const blocks = [
-    'Точка А — где ты сейчас',
-    'Финансовый план М1 / М2 / М3',
-    'Продукты с ценами и маржой',
-    'Воронка продаж',
-    'Монетизация контента',
-    'Реклама: бюджеты, форматы, даты',
-    'KPI и метрики',
-    'Найм команды: кого/когда/ЗП',
-    'Анализ 15–100+ конкурентов',
-    'Партнёрства: план действий',
-    'Риски и план Б по месяцам',
-    'Дорожная карта 90 дней',
-    'OKO CLUB / закрытый клуб',
-    'Рассылки по базам',
-    'Команда: роли, ЗП, распределение',
-    'Психология и состояние',
-    'Скрипты продаж',
-    'Позиционирование',
-  ];
+  const blocks = sysBizBlocks(a);
   return `
-    <p class="sys-note">${I('briefcase')} 18 блоков бизнес-плана, собранных под твою нишу «${esc(a.niche||'—')}». В каждом — раскрывающийся текст с реальным контентом, цифрами и «Копировать».</p>
+    <p class="sys-note">${I('briefcase')} 18 блоков бизнес-плана под нишу «${esc(a.niche||'—')}». Каждый — раскрывается в полную страницу с текстом, цифрами и таблицами.</p>
     <div class="sys-biz-grid">${blocks.map((b,i)=>`
-      <button class="sys-biz-card" onclick="sysBizOpen(${i})">
+      <button class="sys-biz-card" id="bizCard-${i}" onclick="sysBlockOpen('biz',${i})">
         <span class="sys-biz-n">${String(i+1).padStart(2,'0')}</span>
-        <span>${esc(b)}</span>
+        <span class="sys-biz-ic">${I(b.ic)}</span>
+        <span class="sys-biz-body"><b>${esc(b.t)}</b><small>${esc(b.sub)}</small></span>
         <svg class="i"><use href="#i-chev"/></svg>
       </button>`).join('')}
     </div>`;
 }
-function sysBizOpen(i){
-  showPopup({ico:'briefcase', title:'Блок бизнес-плана',
-    body:'Полное содержимое блока появится, как только команда OKO завершит генерацию твоей Системы (4–6 часов после отправки анкеты).',
-    actions:[{label:'Понятно'}]});
+/* Универсальная полноэкранная модалка блока (биз/материал/визуал/будущее) */
+let sysBlockCurrent = null;
+function sysBlockOpen(sec, i){
+  sysBlockCurrent = {sec, i};
+  const a = aState.answers;
+  let arr;
+  if(sec==='biz')       arr = sysBizBlocks(a);
+  else if(sec==='materials') arr = sysMatBlocks(a);
+  else if(sec==='visual')    arr = sysVisualBlocks(a);
+  else if(sec==='future')    arr = sysFutureBlocks(a);
+  else return;
+  const b = arr[i];
+  if(!b) return;
+  const secN = {biz:'02', materials:'04', visual:'05', future:'06'}[sec];
+  const secT = {biz:'Бизнес-план', materials:'Материалы', visual:'Визуал', future:'Перспективы'}[sec];
+  document.body.appendChild(sysBlockModalEl(b, secN, secT, i, arr.length, sec));
+  document.body.style.overflow='hidden';
 }
-/* --- РАЗДЕЛ 3 — Чек-лист --- */
+function sysBlockClose(){
+  const el = document.getElementById('sysBlockModal'); if(el) el.remove();
+  document.body.style.overflow='';
+  sysBlockCurrent = null;
+}
+function sysBlockNav(dir){
+  if(!sysBlockCurrent) return;
+  const {sec, i} = sysBlockCurrent;
+  const a = aState.answers;
+  let arr;
+  if(sec==='biz')       arr = sysBizBlocks(a);
+  else if(sec==='materials') arr = sysMatBlocks(a);
+  else if(sec==='visual')    arr = sysVisualBlocks(a);
+  else if(sec==='future')    arr = sysFutureBlocks(a);
+  const ni = (i + dir + arr.length) % arr.length;
+  sysBlockClose(); sysBlockOpen(sec, ni);
+}
+function sysBlockModalEl(b, secN, secT, i, total, sec){
+  const w = document.createElement('div');
+  w.id='sysBlockModal'; w.className='sys-day-mv sys-blk-mv';
+  const tblHtml = (rows) => {
+    if(!rows||!rows.length) return '';
+    const head = rows[0], body = rows.slice(1);
+    return `<div class="sys-blk-tbl-w"><table class="sys-blk-tbl"><thead><tr>${head.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${body.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  };
+  const secs = (b.sections||[]).map(s=>`
+    <div class="sys-blk-sec">
+      <h4>${esc(s.h)}</h4>
+      ${s.body?`<p>${esc(s.body)}</p>`:''}
+      ${s.tbl?tblHtml(s.tbl):''}
+    </div>`).join('');
+  const ctaHtml = b.cta ? (
+    b.cta.act
+      ? `<button class="btn ghost" onclick="${b.cta.act}()">${I('bolt')} ${esc(b.cta.label)}</button>`
+      : b.cta.sec
+        ? `<button class="btn ghost" onclick="sysBlockClose();sysGoto('${b.cta.sec}')">${I('chev')} ${esc(b.cta.label)}</button>`
+        : `<button class="btn ghost" onclick="sysBlockClose();sysBlockOpen('${sec}', ${b.cta.to})">${I('chev')} ${esc(b.cta.label)}</button>`
+  ) : '';
+  const bodyContent = b.custom ? b.custom() : secs;
+  w.innerHTML = `
+    <div class="sys-day-sheet sys-blk-sheet" onclick="event.stopPropagation()">
+      <div class="sys-day-head sys-blk-head">
+        <div>
+          <span class="sys-day-eyebrow">${secN} · ${secT} · Блок ${i+1} из ${total}</span>
+          <h2>${b.ic?I(b.ic):''} ${esc(b.t)}</h2>
+          ${b.sub?`<p>${esc(b.sub)}</p>`:''}
+        </div>
+        <button class="sys-day-close" onclick="sysBlockClose()" aria-label="Закрыть">${I('back')}</button>
+      </div>
+      <div class="sys-day-content sys-blk-content">${bodyContent}</div>
+      <div class="sys-day-foot sys-blk-foot">
+        <button class="btn ghost" onclick="sysBlockNav(-1)" aria-label="Предыдущий">${I('back')}</button>
+        <div class="sys-blk-foot-mid">${ctaHtml}</div>
+        <button class="btn ghost" onclick="sysBlockNav(1)" aria-label="Следующий">${I('chev')}</button>
+      </div>
+    </div>`;
+  w.addEventListener('click', e => { if(e.target===w) sysBlockClose(); });
+  return w;
+}
+function bizOpenCRM(){
+  toast('CRM клиентов запустится после отправки анкеты — команда OKO настроит её под тебя');
+}
+
+/* ============ РАЗДЕЛ 3 — ЧЕК-ЛИСТ (календарный grid + модалка дня с чекбоксами) ============ */
+const SYS_CHECK_CATS = [
+  {k:'content', n:'Контент',    ic:'file',      color:'#9AFF00', tasks:[
+    'Снять 1 Reels (30–45 сек)','Написать 1 TG-пост (500–800 знаков)','Опубликовать 3–5 сторис','Ответить всем комментариям','Собрать 1 идею для следующего дня']},
+  {k:'biz',     n:'Бизнес',     ic:'briefcase', color:'#7ecfff', tasks:[
+    'Просмотр KPI (5 минут)','Проверка баланса и расходов','Одна стратегическая задача (90 минут)']},
+  {k:'mkt',     n:'Маркетинг',  ic:'megaphone', color:'#ffb84a', tasks:[
+    'Проверка креативов рекламы','Отправить 3 холодных партнёрских письма','Обновить лид-магниты','Собрать 1 инсайт из аналитики']},
+  {k:'sales',   n:'Продажи',    ic:'money',     color:'#a980ff', tasks:[
+    'Обработать все заявки (SLA 60 мин)','Провести 1 диагностику по скрипту','Дожать 1 «тёплого» клиента']},
+  {k:'ads',     n:'Реклама',    ic:'flag',      color:'#ff5c5c', tasks:[
+    'Проверка CPL по кампаниям','Выключить аутсайдеров','Тест 1 нового креатива']},
+  {k:'part',    n:'Партнёрства',ic:'users',     color:'#4ee2b8', tasks:[
+    'Ответить всем на запросы','Проверить статус текущих коллабов']},
+  {k:'anal',    n:'Аналитика',  ic:'star',      color:'#ffdf5c', tasks:[
+    'Посмотреть охваты и вовлечённость','Записать 1 гипотезу для теста']},
+  {k:'life',    n:'Личное',     ic:'heart',     color:'#ff7ea6', tasks:[
+    '30 минут спорта / прогулки','Полный digital-detox после 22:00']},
+];
+function sysChecklistKey(a){
+  return 'oko-check-'+(a.slug||aState.slug||'demo');
+}
+function sysChecklistState(){
+  try{ return JSON.parse(localStorage.getItem(sysChecklistKey(aState.answers)) || '{}'); }
+  catch(e){ return {}; }
+}
+function sysChecklistSave(s){
+  try{ localStorage.setItem(sysChecklistKey(aState.answers), JSON.stringify(s)); }catch(e){}
+}
+function sysChecklistDayScore(dayIdx, st){
+  const day = st[dayIdx] || {};
+  let done=0, tot=0;
+  SYS_CHECK_CATS.forEach(c=>c.tasks.forEach((t,i)=>{
+    tot++;
+    if(day[c.k+'_'+i]) done++;
+  }));
+  return {done, tot, pct: tot ? Math.round(done*100/tot) : 0};
+}
 function sysChecklistHtml(a){
-  const cats = [
-    {n:'Контент',   ic:'file',    c:5},
-    {n:'Бизнес',    ic:'briefcase', c:3},
-    {n:'Маркетинг', ic:'megaphone', c:4},
-    {n:'Продажи',   ic:'money',   c:3},
-    {n:'Реклама',   ic:'flag',    c:2},
-    {n:'Партнёрства', ic:'users', c:2},
-    {n:'Аналитика', ic:'star',    c:2},
-    {n:'Личное',    ic:'heart',   c:1},
-  ];
+  const start = a.start_date ? new Date(a.start_date) : new Date();
+  const startDow = (start.getDay()+6)%7;
+  const monthName = start.toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
+  const WEEK_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const st = sysChecklistState();
+  let cells = '';
+  for(let e=0; e<startDow; e++) cells += `<div class="sys-cal-empty"></div>`;
+  let totalDone=0, totalAll=0, streak=0, maxStreak=0;
+  for(let i=1;i<=30;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i-1);
+    const sc = sysChecklistDayScore(i, st);
+    totalDone += sc.done; totalAll += sc.tot;
+    if(sc.pct===100){ streak++; if(streak>maxStreak) maxStreak=streak; } else { streak=0; }
+    const clr = sc.pct===100 ? '#9AFF00' : sc.pct>=50 ? '#ffb84a' : sc.pct>0 ? '#7ecfff' : '';
+    const ring = sc.tot ? `<span class="sys-chk-ring" style="--p:${sc.pct};--c:${clr||'var(--border)'}"><span>${sc.pct}%</span></span>` : '';
+    cells += `
+      <button class="sys-cal-day sys-chk-day" onclick="sysCheckDayOpen(${i})" title="День ${i}: ${sc.done}/${sc.tot} задач">
+        <span class="sys-cal-num">${d.getDate()}</span>
+        ${ring}
+      </button>`;
+  }
+  const tail = (startDow + 30) % 7;
+  if(tail) for(let e=0; e<7-tail; e++) cells += `<div class="sys-cal-empty"></div>`;
+  const totalPct = totalAll ? Math.round(totalDone*100/totalAll) : 0;
   return `
-    <p class="sys-note">${I('check2')} Ежедневный чек-лист по 8 категориям. Галочки сохраняются, прогресс месяца растёт. Готов после генерации Системы.</p>
-    <div class="sys-check-cats">${cats.map(c=>`
-      <div class="sys-check-cat">
-        <span class="sys-check-ic">${I(c.ic)}</span>
-        <div><b>${c.n}</b><small>~${c.c} задач в день</small></div>
-      </div>`).join('')}
+    <div class="sys-plan-sum">
+      <div><b>${totalDone}</b><small>из ${totalAll} задач</small></div>
+      <div><b>${totalPct}%</b><small>месяца</small></div>
+      <div><b>${maxStreak}</b><small>дней подряд</small></div>
+      <div><b>${SYS_CHECK_CATS.length}</b><small>категорий</small></div>
+    </div>
+    <p class="sys-note">${I('check2')} Календарь на <b>${esc(monthName)}</b>. Клик на день — открывается список задач по 8 категориям. Галочки сохраняются автоматически.</p>
+    <div class="sys-cal-legend">${SYS_CHECK_CATS.map(c=>`
+      <span class="sys-cal-leg"><i style="background:${c.color}"></i>${c.n}</span>`).join('')}</div>
+    <div class="sys-cal-grid sys-chk-grid">
+      ${WEEK_LABELS.map(w=>`<div class="sys-cal-wl">${w}</div>`).join('')}
+      ${cells}
+    </div>
+    <button class="btn ghost" style="width:100%;margin-top:12px" onclick="sysChecklistReset()">${I('flag')} Сбросить прогресс месяца</button>`;
+}
+function sysChecklistReset(){
+  if(!confirm('Сбросить весь прогресс чек-листа за этот месяц?')) return;
+  try{ localStorage.removeItem(sysChecklistKey(aState.answers)); }catch(e){}
+  sysGoto('checklist'); toast('Прогресс сброшен');
+}
+function sysCheckDayOpen(n){
+  const w = document.createElement('div');
+  w.id='sysBlockModal'; w.className='sys-day-mv';
+  w.innerHTML = sysCheckDayHtml(n);
+  w.addEventListener('click', e => { if(e.target===w) sysBlockClose(); });
+  document.body.appendChild(w);
+  document.body.style.overflow='hidden';
+}
+function sysCheckDayHtml(n){
+  const a = aState.answers;
+  const start = a.start_date ? new Date(a.start_date) : new Date();
+  const d = new Date(start); d.setDate(start.getDate()+n-1);
+  const dateStr = d.toLocaleDateString('ru-RU',{weekday:'long', day:'numeric', month:'long'});
+  const st = sysChecklistState();
+  const day = st[n] || {};
+  const sc = sysChecklistDayScore(n, st);
+  const cats = SYS_CHECK_CATS.map(c=>{
+    const items = c.tasks.map((t,i)=>{
+      const key = c.k+'_'+i;
+      const on = !!day[key];
+      return `<label class="sys-chk-item ${on?'on':''}">
+        <input type="checkbox" ${on?'checked':''} onchange="sysCheckToggle(${n},'${c.k}',${i},this.checked)"/>
+        <span class="sys-chk-mark"></span>
+        <span class="sys-chk-lbl">${esc(t)}</span>
+      </label>`;
+    }).join('');
+    const catDone = c.tasks.filter((_,i)=>day[c.k+'_'+i]).length;
+    return `
+      <div class="sys-chk-cat">
+        <div class="sys-chk-cat-h">
+          <span class="sys-chk-cat-ic" style="background:${c.color}">${I(c.ic)}</span>
+          <div><b>${c.n}</b><small>${catDone}/${c.tasks.length}</small></div>
+        </div>
+        <div class="sys-chk-items">${items}</div>
+      </div>`;
+  }).join('');
+  return `
+    <div class="sys-day-sheet" onclick="event.stopPropagation()">
+      <div class="sys-day-head">
+        <div>
+          <span class="sys-day-eyebrow">День ${n} · ${esc(dateStr)}</span>
+          <h2>Чек-лист дня</h2>
+          <p><b id="chkDayScore">${sc.done}/${sc.tot}</b> задач выполнено · <b id="chkDayPct">${sc.pct}%</b></p>
+        </div>
+        <button class="sys-day-close" onclick="sysBlockClose()" aria-label="Закрыть">${I('back')}</button>
+      </div>
+      <div class="sys-day-content">${cats}</div>
+      <div class="sys-day-foot">
+        <button class="btn ghost" onclick="sysBlockClose()">Закрыть</button>
+        <button class="btn" onclick="sysCheckDayFill(${n},true)">${I('check2')} Всё сделано</button>
+      </div>
     </div>`;
 }
-/* --- РАЗДЕЛ 4 — Материалы (9 блоков) --- */
+function sysCheckToggle(n, cat, i, on){
+  const st = sysChecklistState();
+  st[n] = st[n] || {};
+  const key = cat+'_'+i;
+  if(on) st[n][key]=1; else delete st[n][key];
+  sysChecklistSave(st);
+  // Обновить счётчики в модалке
+  const sc = sysChecklistDayScore(n, st);
+  const s1=document.getElementById('chkDayScore'), s2=document.getElementById('chkDayPct');
+  if(s1) s1.textContent = sc.done+'/'+sc.tot;
+  if(s2) s2.textContent = sc.pct+'%';
+  const lbl = document.querySelectorAll('#sysBlockModal .sys-chk-item')[Array.from(document.querySelectorAll('#sysBlockModal .sys-chk-item input')).findIndex(inp=>inp===event.target)];
+  if(event && event.target && event.target.closest){
+    const it = event.target.closest('.sys-chk-item');
+    if(it) it.classList.toggle('on', on);
+    const catBlock = it && it.closest('.sys-chk-cat');
+    if(catBlock){
+      const cnt = catBlock.querySelectorAll('.sys-chk-item.on').length;
+      const tot = catBlock.querySelectorAll('.sys-chk-item').length;
+      const cs = catBlock.querySelector('.sys-chk-cat-h small');
+      if(cs) cs.textContent = cnt+'/'+tot;
+    }
+  }
+}
+function sysCheckDayFill(n, on){
+  const st = sysChecklistState();
+  st[n] = st[n] || {};
+  SYS_CHECK_CATS.forEach(c=>c.tasks.forEach((_,i)=>{
+    const key=c.k+'_'+i; if(on) st[n][key]=1; else delete st[n][key];
+  }));
+  sysChecklistSave(st);
+  sysBlockClose(); sysCheckDayOpen(n);
+  toast(on?'День отмечен полностью':'День сброшен');
+}
+
+/* ============ РАЗДЕЛ 4 — МАТЕРИАЛЫ (9 блоков с генераторами) ============ */
+function sysMatBlocks(a){
+  const who = a.who || 'Эксперт';
+  const niche = a.niche || 'ниша';
+  return [
+    {t:'Промпты для картинок', ic:'photo', sub:'Готовые описания для Midjourney / Gemini под каждую площадку',
+      sections:[
+        {h:'Формула промпта', body:'[стиль] + [объект] + [окружение] + [свет] + [цвет] + [ракурс] + [фактура]. Обязательно на английском, > 60 слов.'},
+        {h:'Промпт для обложки Reels', body:`Cinematic lifestyle photograph of a woman ${who.toLowerCase()} in the niche of ${niche}, natural window light, muted lime accent on frame, shallow depth of field, 9:16 vertical, tack-sharp on eyes, soft skin tones, editorial fashion mood, subtle grain, high-end magazine cover style, no text.`},
+        {h:'Промпт для карусели', body:`Minimalist flatlay of objects related to ${niche}, top-down 4:5 portrait, soft north-facing daylight, seamless paper background in warm off-white, gentle shadows, brand accent color lime (#9AFF00) on one small element, editorial styling, cinematic clarity, empty top-third for headline.`},
+      ],
+      cta:{label:'Копировать все промпты', act:'sysMatCopyAll'},
+    },
+    {t:'Скрипты и офферы продаж', ic:'money', sub:'Холодка · разговор · дожим по каждому продукту',
+      sections:[
+        {h:'Первое сообщение (холодка)', body:'«Привет! Смотрю за твоим контентом — очень ценно. Скажи, что для тебя сейчас самое сложное в теме {ниша}?»'},
+        {h:'Разговор (созвон)', body:'Диагностика: что уже пробовал / что мешает / какой нужен результат за 30 дней. По ответам — сегмент и оффер.'},
+        {h:'Оффер', body:'«У меня есть {продукт}, который решает {боль}. Формат: {что внутри}. Стоимость: {цена}. Стартуем {дата}. Ты в игре?»'},
+        {h:'Дожим 24 часа', body:'«Резервирую за тобой место до 23:59. Если решишь позже — уйдёт другому. Что скажешь?»'},
+      ],
+    },
+    {t:'Генератор КП', ic:'file', sub:'Форма → готовое коммерческое предложение с шапкой и ценой',
+      custom:()=>sysMatGenKPForm(),
+    },
+    {t:'Генератор договоров', ic:'file', sub:'ФИО + продукт → договор с обязанностями и подписями',
+      custom:()=>sysMatGenContractForm(),
+    },
+    {t:'Лид-магниты', ic:'bookmark', sub:'12 готовых идей + PDF-шаблоны',
+      sections:[
+        {h:'Идеи под нишу', body:''},
+        {h:'Топ-12 идей', body:'1) Чек-лист «10 ошибок». 2) Гайд «Мой первый шаг за 7 дней». 3) Мини-курс из 3 писем. 4) Разбор кейса. 5) Шаблон Excel. 6) Скрипт разговора. 7) Календарь на 30 дней. 8) Библиотека промптов. 9) Список сервисов. 10) Тест-опросник. 11) Аудио-подкаст 15 мин. 12) Живой мини-мастер-класс 45 мин.'},
+        {h:'Как отдавать', body:'В директе после подписки → одно сообщение с ссылкой на PDF/лендинг → автоматическая сегментация по клику.'},
+      ],
+    },
+    {t:'Партнёрские предложения', ic:'thumb', sub:'Шаблоны писем: коллаб · спонсор · взаимопиар',
+      sections:[
+        {h:'Взаимопиар (нано)', body:'«Привет! У меня в нише {ниша} X подписчиков и активность Y%. Предлагаю обмен: я делаю сторис + пост про тебя, ты — про меня. Даты: {когда}. Формат: {что}. Идёт?»'},
+        {h:'Спонсорское размещение', body:'«Ищу партнёров на {формат}. У меня охват {N}. Стоимость размещения {сумма}. Пример прошлого поста: {ссылка}. Скину медиа-кит по запросу.»'},
+        {h:'Интеграция с продуктом', body:'«Есть продукт для твоей аудитории. Условия: тебе {X%} с каждой продажи + промокод на скидку {N%}. Средний чек — {сумма}. По ссылке — оффер: {ссылка}.»'},
+      ],
+    },
+    {t:'Анкеты и брифинги клиентов', ic:'compass', sub:'Диагностика · бриф · квалификация',
+      sections:[
+        {h:'Анкета клиента (15 вопросов)', body:'Имя, ниша, аудитория, точка А (реальные цифры), точка Б (цель за 3 мес), 3 главных боли, что уже пробовал, бюджет, время на неделю, готовность делегировать, желаемый формат работы, канал общения, часовой пояс, ожидания от нас, комментарий.'},
+        {h:'Бриф на проект', body:'Задача, дедлайн, референсы, ограничения, бюджет, стейкхолдеры, канал согласований, точка контроля.'},
+        {h:'Квалификация', body:'Соответствует ли идеальному клиенту? (нужна ниша × бюджет × готовность × характер). Если ≥3 из 4 — берём. Если <3 — отдаём partner-каналам.'},
+      ],
+    },
+    {t:'OKO CLUB — материалы', ic:'crown', sub:'Наполнение закрытого клуба',
+      sections:[
+        {h:'Стартовый пак клуба', body:'Приветственное видео (2 мин), правила клуба, календарь ивентов на квартал, доступ к библиотеке уроков, чат-навигатор.'},
+        {h:'Ежемесячные ивенты', body:'1 групповой разбор, 1 гостевой эксперт, 1 практикум, 1 open-mic для участников.'},
+        {h:'Ретеншен-механики', body:'Персональные разборы в первый месяц, публичные победы участников, бейджи прогресса, доступ к архиву прошлых потоков.'},
+      ],
+    },
+    {t:'База знаний команды', ic:'bookmark', sub:'Ссылки, сервисы, инструменты',
+      sections:[
+        {h:'Сервисы', body:'CapCut / Premiere (монтаж), Suno / Udio (музыка), Midjourney / Gemini (картинки), Krisp (шумодав), Notion (база), n8n (автоматизации).'},
+        {h:'Каналы найма', body:'HH.ru, @smm_vacancy, @remotework, LinkedIn, внутренняя биржа OKO.'},
+        {h:'Комьюнити', body:'Профильные чаты в Telegram, конференции RIW/BestPersons, локальные митапы.'},
+      ],
+    },
+  ];
+}
+function sysMatCopyAll(){
+  try{ navigator.clipboard && navigator.clipboard.writeText('Все промпты скопированы в буфер обмена (демо)'); }catch(e){}
+  toast('Промпты скопированы');
+}
+function sysMatGenKPForm(){
+  const a = aState.answers;
+  return `
+    <div class="sys-gen">
+      <div class="sys-gen-h">${I('file')} <b>Генератор коммерческого предложения</b></div>
+      <p class="sys-gen-p">Заполни поля — получишь готовое КП в HTML. Скачивание в PDF/PNG после отправки анкеты, здесь — предпросмотр.</p>
+      <div class="sys-gen-form">
+        <label>Имя клиента<input id="kpName" type="text" placeholder="Иван Петров" value=""></label>
+        <label>Компания клиента<input id="kpCo" type="text" placeholder="ООО Свет" value=""></label>
+        <label>Продукт / услуга<select id="kpProd"><option>Наставничество 4 недели · 19 900 ₽</option><option>Мини-курс · 990 ₽</option><option>VIP-сопровождение 3 мес · 149 000 ₽</option><option>Разовая консультация · 5 000 ₽</option></select></label>
+        <label>Ниша клиента<input id="kpNiche" type="text" placeholder="${esc(a.niche||'фитнес')}" value="${esc(a.niche||'')}"></label>
+        <label>Сроки старта<input id="kpDate" type="date" value=""></label>
+      </div>
+      <div class="sys-gen-actions">
+        <button class="btn" onclick="sysMatGenKP()">${I('bolt')} Сгенерировать КП</button>
+        <button class="btn ghost" onclick="sysMatDownload('kp')">${I('file')} Скачать HTML</button>
+      </div>
+      <div id="kpPreview" class="sys-gen-out"></div>
+    </div>`;
+}
+function sysMatGenKP(){
+  const a = aState.answers;
+  const nm = (document.getElementById('kpName')||{}).value || 'Клиент';
+  const co = (document.getElementById('kpCo')||{}).value || '—';
+  const prod = (document.getElementById('kpProd')||{}).value || '—';
+  const niche = (document.getElementById('kpNiche')||{}).value || 'ниша';
+  const date = (document.getElementById('kpDate')||{}).value || '—';
+  const who = a.who || 'Эксперт';
+  const html = `
+    <div class="sys-doc">
+      <div class="sys-doc-h">
+        <b>КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</b>
+        <small>Дата: ${new Date().toLocaleDateString('ru-RU')}</small>
+      </div>
+      <h3>Для ${esc(nm)}${co!=='—'?', '+esc(co):''}</h3>
+      <p><b>От:</b> ${esc(who)} · ниша «${esc(a.niche||niche)}»</p>
+      <h4>Ситуация клиента</h4>
+      <p>Вы работаете в нише «${esc(niche)}» и сталкиваетесь с ключевыми задачами: устойчивый поток заявок, конверсия в оплату, автоматизация рутины. Наше предложение закрывает эти задачи под ключ.</p>
+      <h4>Что мы предлагаем</h4>
+      <p><b>Продукт:</b> ${esc(prod)}</p>
+      <ul>
+        <li>Персональная диагностика (60 минут) и стратегия под нишу.</li>
+        <li>Полная упаковка: контент-план, лид-магниты, воронка, скрипты продаж.</li>
+        <li>Еженедельные разборы прогресса + чат с ответами &lt; 4 часа.</li>
+        <li>Гарантия результата: если не окупите вложение — вернём деньги.</li>
+      </ul>
+      <h4>Сроки</h4>
+      <p>Старт: <b>${esc(date)}</b>. Первые результаты — 14 день. Финальный отчёт — 30 день.</p>
+      <h4>Стоимость</h4>
+      <p><b>${esc(prod)}</b>. Оплата разбиванием на 2 части возможна.</p>
+      <h4>Следующий шаг</h4>
+      <p>Подтвердите готовность в ответ на это КП — и мы забронируем стартовый слот. Скидка 10%, если ответ до 48 часов.</p>
+      <div class="sys-doc-f">С уважением, команда OKO · okoteam.top</div>
+    </div>`;
+  const out = document.getElementById('kpPreview'); if(out) out.innerHTML = html;
+  toast('КП сгенерировано');
+}
+function sysMatGenContractForm(){
+  const a = aState.answers;
+  return `
+    <div class="sys-gen">
+      <div class="sys-gen-h">${I('file')} <b>Генератор договора оферты</b></div>
+      <p class="sys-gen-p">Заполни данные заказчика и исполнителя — получишь короткий договор в стиле оферты. Юридически шаблон, финальный вариант согласуй с юристом.</p>
+      <div class="sys-gen-form">
+        <label>ФИО заказчика<input id="cnClient" type="text" placeholder="Петров Иван Иванович"></label>
+        <label>Паспорт заказчика<input id="cnPass" type="text" placeholder="4500 123456"></label>
+        <label>Предмет договора<input id="cnSubj" type="text" placeholder="Наставничество 4 недели"></label>
+        <label>Сумма (₽)<input id="cnSum" type="number" placeholder="19900"></label>
+        <label>Срок оказания услуг<input id="cnTerm" type="text" placeholder="30 календарных дней"></label>
+        <label>Дата подписания<input id="cnDate" type="date"></label>
+      </div>
+      <div class="sys-gen-actions">
+        <button class="btn" onclick="sysMatGenContract()">${I('bolt')} Сгенерировать договор</button>
+        <button class="btn ghost" onclick="sysMatDownload('contract')">${I('file')} Скачать HTML</button>
+      </div>
+      <div id="cnPreview" class="sys-gen-out"></div>
+    </div>`;
+}
+function sysMatGenContract(){
+  const client = (document.getElementById('cnClient')||{}).value || '_______________';
+  const pass = (document.getElementById('cnPass')||{}).value || '_______________';
+  const subj = (document.getElementById('cnSubj')||{}).value || 'услуги';
+  const sum = (document.getElementById('cnSum')||{}).value || '0';
+  const term = (document.getElementById('cnTerm')||{}).value || '30 дней';
+  const date = (document.getElementById('cnDate')||{}).value || new Date().toLocaleDateString('ru-RU');
+  const html = `
+    <div class="sys-doc">
+      <div class="sys-doc-h">
+        <b>ДОГОВОР-ОФЕРТА № OKO-${Date.now().toString(36).slice(-6).toUpperCase()}</b>
+        <small>${esc(date)} · РФ</small>
+      </div>
+      <h4>1. Стороны</h4>
+      <p><b>Исполнитель:</b> Индивидуальный предприниматель (реквизиты в счёте).<br>
+      <b>Заказчик:</b> ${esc(client)}, паспорт ${esc(pass)}.</p>
+      <h4>2. Предмет договора</h4>
+      <p>Исполнитель обязуется оказать Заказчику услуги: <b>${esc(subj)}</b>. Заказчик обязуется принять и оплатить услуги.</p>
+      <h4>3. Стоимость и порядок оплаты</h4>
+      <p>Стоимость услуг составляет <b>${esc(sum)} ₽</b>. Оплата производится 100% предоплатой в течение 3 рабочих дней с даты подписания.</p>
+      <h4>4. Сроки</h4>
+      <p>Срок оказания услуг: <b>${esc(term)}</b> с даты оплаты.</p>
+      <h4>5. Ответственность</h4>
+      <p>При невозможности продолжения оказания услуг по вине Исполнителя — возврат неотработанной части в течение 10 рабочих дней.</p>
+      <h4>6. Форс-мажор</h4>
+      <p>Стороны освобождаются от ответственности при обстоятельствах непреодолимой силы.</p>
+      <h4>7. Подписи</h4>
+      <p>Исполнитель: __________________ &nbsp;&nbsp; Заказчик: __________________ (${esc(client)})</p>
+      <div class="sys-doc-f">OKO · okoteam.top · ${esc(date)}</div>
+    </div>`;
+  const out = document.getElementById('cnPreview'); if(out) out.innerHTML = html;
+  toast('Договор сгенерирован');
+}
+function sysMatDownload(kind){
+  const el = document.getElementById(kind==='kp'?'kpPreview':'cnPreview');
+  if(!el || !el.innerHTML.trim()){ toast('Сначала сгенерируй документ'); return; }
+  const wrap = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>OKO — ${kind==='kp'?'КП':'Договор'}</title>
+    <style>body{font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;color:#111;background:#fff;padding:32px;max-width:720px;margin:0 auto}.sys-doc h3{margin:16px 0 8px}.sys-doc h4{margin:14px 0 6px;color:#333}.sys-doc-h{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}.sys-doc-h b{font-size:18px}.sys-doc-h small{display:block;color:#666;margin-top:4px}.sys-doc ul{margin:8px 0 8px 20px}.sys-doc-f{margin-top:24px;padding-top:12px;border-top:1px solid #ccc;color:#666;font-size:12px}</style>
+    </head><body>${el.innerHTML}</body></html>`;
+  const blob = new Blob([wrap], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'oko-'+kind+'-'+Date.now()+'.html'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  toast('Скачивание запущено');
+}
 function sysMaterialsHtml(a){
-  const blocks = [
-    {t:'Промпты',              d:'Календарь дат → готовые промпты для картинок'},
-    {t:'Скрипты и офферы',     d:'По каждому продукту: холодка, созвон, дожим'},
-    {t:'Генератор КП',         d:'Выбор продукта + имя клиента → готовое КП'},
-    {t:'Генератор договоров',  d:'ФИО + продукт → договор с обязанностями'},
-    {t:'Лид-магниты',          d:'10–15 штук: чек-листы, гайды, разборы'},
-    {t:'Партнёрства',          d:'Шаблоны предложений: коллаб, спонсор, взаимопиар'},
-    {t:'Анкеты и брифинги',    d:'Анкета клиента, бриф, квалификация'},
-    {t:'OKO CLUB',             d:'Материалы закрытого клуба (наполняется позже)'},
-    {t:'База знаний',          d:'Полезные ссылки, сервисы, инструменты команды'},
-  ];
+  const blocks = sysMatBlocks(a);
   return `
-    <p class="sys-note">${I('bookmark')} 9 блоков материалов с генераторами, промптами и готовыми шаблонами.</p>
+    <p class="sys-note">${I('bookmark')} 9 блоков: промпты, скрипты, генераторы КП и договоров, лид-магниты, партнёрства, анкеты, клуб, база знаний.</p>
     <div class="sys-mat-grid">${blocks.map((b,i)=>`
-      <button class="sys-mat-card" onclick="sysBizOpen(${i})">
+      <button class="sys-mat-card" onclick="sysBlockOpen('materials',${i})">
         <span class="sys-mat-n">${String(i+1).padStart(2,'0')}</span>
-        <div><b>${esc(b.t)}</b><small>${esc(b.d)}</small></div>
+        <span class="sys-mat-ic">${I(b.ic)}</span>
+        <div><b>${esc(b.t)}</b><small>${esc(b.sub)}</small></div>
         <svg class="i"><use href="#i-chev"/></svg>
       </button>`).join('')}
     </div>`;
 }
-/* --- РАЗДЕЛ 5 — Визуал (10 блоков) --- */
+
+/* ============ РАЗДЕЛ 5 — ВИЗУАЛ (10 блоков + брендбук со swatches) ============ */
+const OKO_BRAND_COLORS = [
+  {n:'Bg Dark',   hex:'#0d0d0d', role:'Основной фон (dark)'},
+  {n:'Bg Light',  hex:'#f7f7f5', role:'Основной фон (light)'},
+  {n:'Accent',    hex:'#9AFF00', role:'Акцент бренда'},
+  {n:'Ink',       hex:'#1a1a1a', role:'Основной текст (dark)'},
+  {n:'Muted',     hex:'#8a8a8a', role:'Второстепенный текст'},
+  {n:'Border',    hex:'#2a2a2a', role:'Разделители'},
+];
+function sysVisualBlocks(a){
+  const niche = a.niche || 'ниша';
+  return [
+    {t:'Брендбук', ic:'star', sub:'Цвета · шрифты · логика применения',
+      custom:()=>sysVisualBrandbook(a),
+    },
+    {t:'Оформление соцсетей', ic:'photo', sub:'Обложки Instagram, шапки TG, аватары, VK',
+      sections:[
+        {h:'Instagram-профиль', body:'Аватар — крупное лицо на однотонном фоне бренда, никаких мелких надписей. Шапка: имя + позиционирование одной строкой + CTA-ссылка. 6 закреплённых сторис: О себе / Кейсы / Отзывы / Программы / FAQ / Контакты.'},
+        {h:'Telegram-канал', body:'Аватар — знак OKO / логотип в круге. Описание: одна короткая строка позиционирования + ссылка на бота. Закреплённое сообщение обновляется раз в неделю.'},
+        {h:'YouTube', body:'Баннер 2560×1440 с центральным блоком 1546×423 (безопасная зона). Watermark 150×150 в углу видео. Обложки по единому шаблону.'},
+      ],
+    },
+    {t:'Шаблоны постов и каруселей', ic:'file', sub:'8 стилей · Figma-файлы',
+      sections:[
+        {h:'8 стилей', body:'1) Крупный факт. 2) Список 5 шагов. 3) До/после. 4) Цитата эксперта. 5) Мини-урок. 6) Разбор ошибки. 7) Кейс клиента. 8) Продающий пост.'},
+        {h:'Соотношение сторон', body:'Instagram feed 4:5 · Instagram Reels/сторис 9:16 · TG-канал 1:1 или горизонтальный · VK 4:5.'},
+        {h:'Технические', body:'Все шрифты векторные (Bebas Neue, Montserrat). Экспорт: PNG 2×, JPG 95%.'},
+      ],
+    },
+    {t:'Упаковка продуктов', ic:'crown', sub:'Обложки курсов · мокапы · превью',
+      sections:[
+        {h:'Обложка продукта', body:'Крупная фотография результата + название продукта максимум 4 слова + цена. Формат 1200×628 (соцсети) + 1080×1080 (пост).'},
+        {h:'Мокапы', body:'Ноутбук/телефон с превью материалов. Использовать mockuuups.com / smartmockups.com. Свет — от 45° сверху.'},
+      ],
+    },
+    {t:'Сайт и лендинги', ic:'compass', sub:'Одностраничный сайт под ключ',
+      sections:[
+        {h:'Структура лендинга', body:'1) Первый экран: заголовок + оффер + CTA. 2) Проблема и решение. 3) Программа. 4) О эксперте. 5) Тарифы. 6) Отзывы. 7) FAQ. 8) Форма заявки.'},
+        {h:'Конверсия', body:'Норма 2–5% с холодного трафика. Кризис < 1%. Инструменты: Тильда / Craftum / собственный лендинг на Astro.'},
+        {h:'Скорость', body:'PageSpeed ≥ 85 mobile. Все изображения в WebP, шрифты — subset only, критический CSS в head.'},
+      ],
+    },
+    {t:'Боты и воронки', ic:'send', sub:'Чат-боты Telegram и Instagram',
+      sections:[
+        {h:'Стек', body:'Telegram: aiogram / grammy + n8n сценарии. Instagram: ManyChat.'},
+        {h:'Сценарии', body:'Приветствие → лид-магнит → сегментация по 3 кнопкам → welcome-серия → оффер → дожим.'},
+        {h:'Метрики', body:'Открываемость приветствия — 90%+. Клик на лид-магнит — 60%+. Оффер откликается — 8–15%.'},
+      ],
+    },
+    {t:'Reels и видео — ТЗ на монтаж', ic:'circle-play', sub:'Формат брифа для монтажёра',
+      sections:[
+        {h:'Обязательные параметры', body:'Формат 9:16, кадр 1080×1920, длина 20–45 сек, обложка первым кадром, караоке-субтитры лайм, обязательный CTA в последние 3 сек.'},
+        {h:'Структура ТЗ', body:'Хук (0–2 сек) → раскрытие (2–30 сек) → доказательство (30–40 сек) → CTA (40–45 сек). Между сценами — 1 переход, не мельтешить.'},
+        {h:'Звук и музыка', body:'Голос -14 LUFS, музыка -22 LUFS. Sidechain-ducking от голоса. Никакой стоковой музыки под копирайтом.'},
+      ],
+    },
+    {t:'Сторис — форматы и шаблоны', ic:'star', sub:'12 форматов на неделю',
+      sections:[
+        {h:'12 форматов', body:'1) Утро/вечер дня. 2) Опрос. 3) Викторина. 4) Слайдер. 5) Ответ на вопрос. 6) Голос над видео. 7) Скринкаст. 8) Кружок. 9) Полезное видео 15 сек. 10) Бэкстейдж. 11) Анонс. 12) Резюме недели.'},
+        {h:'Единый стиль', body:'Плашка с рубрикой сверху, брендовый цвет-акцент, лого-водяной знак в углу. Максимум 2 шрифта.'},
+      ],
+    },
+    {t:'Обложки и превью', ic:'photo', sub:'YouTube · Reels · сторис',
+      sections:[
+        {h:'YouTube', body:'Крупное лицо со злым/удивлённым выражением + 2–4 слова + одна яркая деталь. Тест 3 обложек через 24 часа после публикации.'},
+        {h:'Reels/Shorts', body:'Обложка = первый кадр видео. Заголовок сверху, крупное лицо в центре, разница с фоном по яркости 40%+.'},
+        {h:'Сторис-превью', body:'Единый шаблон рубрик — 6 икон на профиле, минимализм, только знак и рубрика.'},
+      ],
+    },
+    {t:'Оформление Telegram', ic:'send', sub:'Канал · чат · закрепы · стикеры',
+      sections:[
+        {h:'Канал', body:'Аватар — знак бренда. Название — короткое. Описание: одна строка позиционирования + ссылка на бота. Закреп — с обновляемым оффером.'},
+        {h:'Стикер-пак', body:'20–40 стикеров под бренд, стилизация — иллюстрация с акцентом OKO-лайм. Публикация через @Stickers.'},
+        {h:'Emoji-пак', body:'Кастомные эмодзи под премиум-контент. Продаётся в клубе как бонус.'},
+      ],
+    },
+  ];
+}
+function sysVisualBrandbook(a){
+  const swatches = OKO_BRAND_COLORS.map(c=>`
+    <div class="sys-swatch">
+      <span class="sys-swatch-c" style="background:${c.hex}"></span>
+      <b>${c.n}</b>
+      <small><code>${c.hex}</code></small>
+      <span class="sys-swatch-r">${esc(c.role)}</span>
+    </div>`).join('');
+  return `
+    <div class="sys-blk-sec">
+      <h4>Палитра бренда</h4>
+      <div class="sys-swatches">${swatches}</div>
+    </div>
+    <div class="sys-blk-sec">
+      <h4>Шрифты</h4>
+      <div class="sys-fonts">
+        <div class="sys-font"><span style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.02em">BEBAS NEUE</span><small>Заголовки, цифры, акценты. 24–72px. Только капслок.</small></div>
+        <div class="sys-font"><span style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:22px">Montserrat Black</span><small>Подзаголовки. Начертания: 700/800/900.</small></div>
+        <div class="sys-font"><span style="font-family:-apple-system,sans-serif;font-size:15px;font-weight:400">System UI · body text</span><small>Основной текст: 14–16px, вес 400/500.</small></div>
+      </div>
+    </div>
+    <div class="sys-blk-sec">
+      <h4>Логика применения</h4>
+      <p>Лайм <code>#9AFF00</code> — только для акцентов и CTA. Никогда не заливать плашки целиком. Основной фон — чёрный <code>#0d0d0d</code> (dark) / светло-серый <code>#f7f7f5</code> (light). Все второстепенные тексты — через <code>--dim</code> (60% контраста).</p>
+    </div>
+    <div class="sys-blk-sec">
+      <h4>Готовые био для соцсетей</h4>
+      <p><b>Instagram:</b> ${esc(a.who||'Эксперт')} · ${esc(a.niche||'ниша')} · Помогаю ${esc(a.audience||'клиентам')} за 90 дней · CTA ниже</p>
+      <p><b>Telegram:</b> Канал ${esc(a.who||'эксперта')} по «${esc(a.niche||'нише')}». Каждый день — короткие уроки и разборы. Личный контакт: @<i>ник</i></p>
+    </div>`;
+}
 function sysVisualHtml(a){
-  const blocks = [
-    'Брендбук',
-    'Оформление соцсетей',
-    'Шаблоны постов и каруселей',
-    'Упаковка продуктов',
-    'Сайт и лендинги',
-    'Боты и воронки',
-    'Reels и видео — ТЗ на монтаж',
-    'Сторис — форматы и шаблоны',
-    'Обложки и превью',
-    'Оформление Telegram',
-  ];
+  const blocks = sysVisualBlocks(a);
   return `
-    <p class="sys-note">${I('photo')} 10 блоков визуала: от брендбука до готовых ТЗ монтажёру.</p>
+    <p class="sys-note">${I('photo')} 10 блоков визуала: от брендбука с цветами до готовых ТЗ монтажёру.</p>
     <div class="sys-mat-grid">${blocks.map((b,i)=>`
-      <button class="sys-mat-card" onclick="sysBizOpen(${i})">
+      <button class="sys-mat-card" onclick="sysBlockOpen('visual',${i})">
         <span class="sys-mat-n">${String(i+1).padStart(2,'0')}</span>
-        <div><b>${esc(b)}</b></div>
+        <span class="sys-mat-ic">${I(b.ic)}</span>
+        <div><b>${esc(b.t)}</b><small>${esc(b.sub)}</small></div>
         <svg class="i"><use href="#i-chev"/></svg>
       </button>`).join('')}
     </div>`;
 }
-/* --- РАЗДЕЛ 6 — Перспективы --- */
+
+/* ============ РАЗДЕЛ 6 — ПЕРСПЕКТИВЫ (timeline + forecast + competitors) ============ */
+function sysFutureBlocks(a){
+  return [
+    {t:'После 90 дней — новые продукты', ic:'rocket', sub:'Что запустим в квартал 2',
+      sections:[
+        {h:'Новые продукты Q2', body:'1) VIP-мастермайнд 6 месяцев по 89 000 ₽/мес. 2) Онлайн-марафон для 500+ участников. 3) Клуб OKO CLUB (месячная подписка).'},
+        {h:'Приоритет запуска', body:'Клуб — первым (стабильный MRR). Мастермайнд — по факту 20+ желающих. Марафон — сезонно.'},
+      ],
+    },
+    {t:'Прогноз выручки М4–М12', ic:'money', sub:'Три сценария развития',
+      sections:[
+        {h:'Три сценария', body:'', tbl:[
+          ['Месяц','Пессим.','Реалист.','Оптим.'],
+          ['М4',  '350k',   '500k',    '750k'],
+          ['М6',  '500k',   '900k',    '1.5M'],
+          ['М9',  '750k',   '1.5M',    '3M'],
+          ['М12', '1M',     '2.5M',    '5M'],
+        ]},
+        {h:'Ключевой драйвер', body:'Выход в TikTok и YouTube Shorts — умножает охват на 3–5×. Плюс запуск партнёрской сети — ещё 25–40% выручки без роста рекламы.'},
+      ],
+    },
+    {t:'Расширение команды', ic:'users', sub:'Кого добавляем в М4–М12',
+      sections:[
+        {h:'План найма', body:'', tbl:[
+          ['Месяц','Роль','Тип','ЗП/оклад'],
+          ['М4','Продажник','штат','30k + 10%'],
+          ['М5','Проджект','штат','45k'],
+          ['М6','Аналитик','парт-тайм','25k'],
+          ['М8','Второй тренер','штат','60k + %'],
+          ['М10','SMM-2','штат','35k'],
+        ]},
+        {h:'Финмодель команды', body:'ФОТ ≤ 25% выручки — жёсткая планка. При превышении — оптимизируем или ускоряем рост.'},
+      ],
+    },
+    {t:'Западный рынок / EN-контент', ic:'compass', sub:'Выход на англоязычную аудиторию',
+      sections:[
+        {h:'Шаги', body:'1) Дубляж лучших 10 роликов на английский (Elevenlabs voice-clone). 2) EN-Instagram + EN-TikTok. 3) Английский лендинг + Stripe для приёма платежей.'},
+        {h:'Юр-структура', body:'ИП + УСН (РФ) для локального дохода. LLC в США / FZE в Дубае для международного (>$5k/мес выручки).'},
+      ],
+    },
+    {t:'Регистрация в Дубае / IFZA', ic:'crown', sub:'Юр-лицо для международной работы',
+      sections:[
+        {h:'Что даёт', body:'0% налог на доход до $100k/год, банк с USD/EUR/AED-счетами, полное владение бизнесом без резидентства.'},
+        {h:'Стоимость и сроки', body:'Регистрация ~$5 000, срок 2–4 недели. Годовое обслуживание ~$3 000.'},
+      ],
+    },
+    {t:'Франшиза / лицензирование', ic:'crown', sub:'Продажа методологии другим экспертам',
+      sections:[
+        {h:'Модель франшизы', body:'Роялти 10–15% с оборота франчайзи + разовый взнос 200–500k ₽. Даёшь: методология, шаблоны, обучение команды, sup-чат.'},
+        {h:'Первые франшизы', body:'Начинаем с М9–М12: 3–5 пилотных проектов с большими скидками для отработки процесса.'},
+      ],
+    },
+    {t:'Личный бренд 500k+ и книга', ic:'star', sub:'Медиа-стратегия на 2–3 года',
+      sections:[
+        {h:'Медийность', body:'Гости-подкасты (3 в месяц), спикер-выступления (1 в квартал), профильные СМИ (Forbes, VC, T—Ж).'},
+        {h:'Книга', body:'150–200 страниц. Формат — ясная методика + 30 кейсов. Издательство МИФ / Альпина. Срок написания — 8 месяцев.'},
+      ],
+    },
+    {t:'Собственные оффлайн-проекты', ic:'flag', sub:'Ивенты, конференции, коворкинги',
+      sections:[
+        {h:'Ежегодная конференция', body:'2 дня в Москве / Дубае, 300–500 участников, средний чек 25–45k ₽. Плюс спонсорские пакеты по 300–500k ₽.'},
+        {h:'Клубы в городах', body:'Партнёрские офлайн-точки в 3–5 городах: пространство для встреч клуба OKO CLUB.'},
+      ],
+    },
+    {t:'Инвестиции в клиентов', ic:'thumb', sub:'Долевая модель работы',
+      sections:[
+        {h:'Формат', body:'Работа с сильными клиентами не только за деньги, но за долю в бизнесе. Порог входа — MRR ≥ 300k, готовность масштаба.'},
+        {h:'Портфель', body:'К концу года — 3–5 проектов в портфеле. Ожидаемый совокупный доход — 300k–1M ₽/мес пассивно к М18.'},
+      ],
+    },
+    {t:'Партнёрство с крупными игроками', ic:'users', sub:'Интеграция с большими площадками',
+      sections:[
+        {h:'Кто', body:'Marketplace-платформы, крупные СМИ (Т—Ж, VC), онлайн-школы (Skillbox, Нетология).'},
+        {h:'Форматы', body:'Партнёрский курс, whitelabel-программа, гостевой блок, совместные лид-магниты.'},
+      ],
+    },
+    {t:'Экспансия на все площадки', ic:'compass', sub:'Не только Instagram и Telegram',
+      sections:[
+        {h:'Приоритет площадок', body:'Q2: TikTok, YT Shorts, VK Клипы. Q3: Rutube, Дзен. Q4: LinkedIn (для B2B-ветки), Threads.'},
+        {h:'Единый контент-план', body:'Один сценарий → 5–7 адаптаций под форматы. Автопостинг через SMMplanner / Onlypult.'},
+      ],
+    },
+    {t:'Пассивные доходы и роялти', ic:'money', sub:'Автопродажи и roy-акты',
+      sections:[
+        {h:'Что запускаем', body:'1) Автопродающие мини-курсы (990–4 900 ₽). 2) Роялти с франшизы. 3) Дивиденды с долей в бизнесах клиентов.'},
+        {h:'Цель на 24 мес.', body:'50% дохода — «пассивный» (не требует ежедневного участия). Условие: команда 5+ человек и работающие процессы.'},
+      ],
+    },
+  ];
+}
 function sysFutureHtml(a){
-  const blocks = [
-    'После 90 дней — новые продукты',
-    'Прогноз выручки М4–М12',
-    'Расширение команды',
-    'Западный рынок / EN-контент',
-    'Регистрация компании в Дубае',
-    'Франшиза / лицензирование',
-    'Личный бренд 500k+ и книга',
-    'Собственные оффлайн-проекты',
-    'Инвестиции в стартапы клиентов',
-    'Партнёрство с крупными игроками',
-    'Экспансия на все площадки',
-    'Пассивные доходы и роялти',
+  const blocks = sysFutureBlocks(a);
+  const forecast = [
+    ['М3',  '450k',  'старт: 25 клиентов'],
+    ['М6',  '900k',  'клуб + партнёры'],
+    ['М9',  '1.5M',  'команда 5 чел'],
+    ['М12', '2.5M',  'выход на EN + Дубай'],
+    ['М18', '4M',    'франшиза 3 партнёра'],
+    ['М24', '6M+',   'пассив 50%'],
+  ];
+  const competitors = [
+    ['Кто','Аудитория','Средний чек','Оборот/мес','Слабое место'],
+    ['Ты (М12)',    '80–150k',  '15 000 ₽', '2.5M',  '—'],
+    ['Конкурент A', '200k',     '29 900 ₽', '4.5M',  'нет комьюнити'],
+    ['Конкурент B', '80k',      '15 000 ₽', '1.8M',  '1 пост/нед'],
+    ['Конкурент C', '50k',      '9 900 ₽',  '900k',  'нет упаковки'],
   ];
   return `
-    <p class="sys-note">${I('rocket')} 12 блоков масштабирования: от следующего года до долгосрочного видения.</p>
+    <div class="sys-future-hero">
+      <h3>Долгосрочная карта: 6 → 24 месяца</h3>
+      <p>Твой путь от старта до устойчивых 6M+ ₽/мес. Каждая точка timeline — реальная цель с сроком.</p>
+    </div>
+    <div class="sys-timeline">
+      ${forecast.map((r,i)=>`
+        <div class="sys-tl-item">
+          <span class="sys-tl-dot" style="--i:${i}">${r[0]}</span>
+          <div><b>${r[1]}/мес</b><small>${r[2]}</small></div>
+        </div>`).join('')}
+    </div>
+    <div class="sys-blk-sec">
+      <h4>Прогноз выручки — 3 сценария</h4>
+      <div class="sys-blk-tbl-w"><table class="sys-blk-tbl">
+        <thead><tr><th>Месяц</th><th>Пессим.</th><th>Реалист.</th><th>Оптим.</th></tr></thead>
+        <tbody>
+          <tr><td>М4</td><td>350k</td><td>500k</td><td>750k</td></tr>
+          <tr><td>М6</td><td>500k</td><td>900k</td><td>1.5M</td></tr>
+          <tr><td>М9</td><td>750k</td><td>1.5M</td><td>3M</td></tr>
+          <tr><td>М12</td><td>1M</td><td>2.5M</td><td>5M</td></tr>
+          <tr><td>М18</td><td>2M</td><td>4M</td><td>8M</td></tr>
+          <tr><td>М24</td><td>3M</td><td>6M</td><td>12M</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="sys-blk-sec">
+      <h4>Матрица конкурентов через 12 месяцев</h4>
+      <div class="sys-blk-tbl-w"><table class="sys-blk-tbl">
+        <thead><tr>${competitors[0].map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead>
+        <tbody>${competitors.slice(1).map(r=>`<tr>${r.map((c,i)=>`<td${i===0&&r[0].startsWith('Ты')?' class="hl"':''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+    <p class="sys-note">${I('rocket')} 12 блоков масштабирования — от нового продукта в Q2 до пассивных 50% через 24 месяца. Кликай на любой блок — раскроется полная страница с планом действий.</p>
     <div class="sys-future-grid">${blocks.map((b,i)=>`
-      <div class="sys-future-card">
+      <button class="sys-future-card" onclick="sysBlockOpen('future',${i})">
         <span class="sys-card-n">${String(i+1).padStart(2,'0')}</span>
-        <b>${esc(b)}</b>
-      </div>`).join('')}
+        <span class="sys-fut-ic">${I(b.ic)}</span>
+        <b>${esc(b.t)}</b>
+        <small>${esc(b.sub)}</small>
+      </button>`).join('')}
     </div>`;
 }
 function closeSystemView(){ document.getElementById('systemView').classList.remove('open'); }
