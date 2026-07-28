@@ -1861,6 +1861,19 @@ function acLS(i){
    videoUrl в данных сохранён, вернём включением AC_VIDEO_ON. */
 const AC_VIDEO_ON = false;
 function acHasVideo(L){ return AC_VIDEO_ON && L && !!L.videoUrl; }
+/* Подпись урока: sub из данных, но при выключенном видео чистим упоминания видео
+   и гарантируем «слайды + тест + игра» — от того, что реально есть в уроке. */
+function acLessonSub(L){
+  if(AC_VIDEO_ON) return String((L && L.sub) || '');
+  const parts = [];
+  const nS = (L && L.slides || []).length;
+  const nQ = (L && L.quiz   || []).length;
+  const nP = (L && L.pairs  || []).length;
+  if(nS) parts.push(nS + ' ' + acPlural(nS, ['слайд','слайда','слайдов']));
+  if(nQ) parts.push('тест из ' + nQ);
+  if(nP || nS>=3 || nQ>=3) parts.push('мини-игра');
+  return parts.join(' · ');
+}
 function acItems(i){
   const k = (i===undefined?acL:i);
   const ls = acS.lessons[k] || {};
@@ -2141,7 +2154,7 @@ function acCourseHtml(){
     const local = acLocalNo(i);
     if(!acUnlocked(i)) return `<button class="ac-lesson-row locked ac-rise" style="animation-delay:${(k*0.04).toFixed(2)}s" onclick="acCourseGate(${ci})">
       <span class="ac-num">${local}</span>
-      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(acLessonSub(AC_COURSE[i]))}</span></span>
       <svg class="i"><use href="#i-lock"/></svg></button>`;
     const p = acLessonPct(i);
     const stg = (p > 0 ? `<span class="ac-mini-ring" title="Урок пройден на ${p}%">
@@ -2150,7 +2163,7 @@ function acCourseHtml(){
           <b>${p}</b></span>` : '');
     return `<button class="ac-lesson-row ac-rise" style="animation-delay:${(k*0.04).toFixed(2)}s" onclick="acOpenLesson(${i})">
       <span class="ac-num">${local}</span>
-      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(AC_COURSE[i].sub)}</span></span>
+      <span class="meta"><span class="t">${esc(AC_COURSE[i].title)}</span><span class="s" style="display:block">${esc(acLessonSub(AC_COURSE[i]))}</span></span>
       ${stg}
       <svg class="i go"><use href="#i-chev"/></svg></button>`;
   };
