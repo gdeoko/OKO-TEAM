@@ -787,6 +787,55 @@ label.f-lab{display:block}
 .opt{text-align:left;padding:13px 15px;border:1px solid var(--border);border-radius:var(--r-md);font-size:14px;font-weight:600;transition:transform .12s,border-color .2s,background .2s}
 .opt:active{transform:scale(.98)}
 .opt.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.opts-multi .opt{position:relative;padding-left:38px}
+.opts-multi .opt::before{content:'';position:absolute;left:14px;top:14px;width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border);transition:all .15s}
+.opts-multi .opt.on::before{background:var(--lime);border-color:var(--lime);box-shadow:inset 0 0 0 3px var(--lime-dim,rgba(154,255,0,.12))}
+/* Расширенная анкета — режим, файлы, слайдер */
+.anketa-mode{display:flex;align-items:center;gap:12px;width:100%;padding:16px 14px;border-radius:14px;border:1px solid var(--border);background:var(--raised);color:var(--text);text-align:left;position:relative;transition:border-color .15s,transform .12s;cursor:pointer}
+.anketa-mode:hover{border-color:var(--accent);transform:translateX(3px)}
+.anketa-mode div{flex:1;min-width:0}
+.anketa-mode b{font-size:14px;display:block;margin-bottom:3px}
+.anketa-mode small{font-size:12px;color:var(--dim);line-height:1.4}
+.anketa-mode svg.i{width:14px;height:14px;color:var(--accent);flex-shrink:0}
+.anketa-mode.reco{border-color:rgba(154,255,0,.35);background:linear-gradient(135deg,rgba(154,255,0,.08),rgba(154,255,0,.02))}
+.anketa-mode-badge{position:absolute;top:-8px;right:12px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:var(--accent);color:#000;padding:3px 8px;border-radius:99px}
+.anketa-file-btn{width:100%;display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:12px;border:1.5px dashed var(--border);background:var(--raised);color:var(--dim);font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
+.anketa-file-btn:hover{border-color:var(--accent);color:var(--accent)}
+.anketa-file-btn svg.i{width:16px;height:16px}
+.anketa-files{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.anketa-file{display:inline-block;padding:5px 10px;border-radius:8px;background:var(--lime-dim);color:var(--accent);font-size:11px;font-weight:600}
+.anketa-slider{padding:14px 0 8px}
+.anketa-slider input[type=range]{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:99px;outline:none}
+.anketa-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--lime);cursor:pointer;box-shadow:0 0 10px rgba(154,255,0,.4)}
+.anketa-slider input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--lime);cursor:pointer;border:0;box-shadow:0 0 10px rgba(154,255,0,.4)}
+.anketa-slider-v{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}
+.anketa-slider-v b{color:var(--accent);font-size:15px}
+.anketa-limit-hint{font-size:11px}
+.anketa-ok{color:var(--dim)}
+.anketa-over{color:#ff6b6b;font-weight:700}
+/* Финиш анкеты — команда работает */
+.anketa-ready{padding:4px 0}
+.anketa-ready-h{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.anketa-ready-badge{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 0 22px rgba(154,255,0,.35)}
+.anketa-ready-badge svg.i{width:22px;height:22px}
+.anketa-ready-h b{font-size:14px;display:block;margin-bottom:3px;line-height:1.35}
+.anketa-ready-h small{font-size:12px;color:var(--dim);line-height:1.45}
+.anketa-eta{padding:13px 15px;border-radius:12px;background:linear-gradient(135deg,rgba(154,255,0,.14),rgba(154,255,0,.03));border:1px solid rgba(154,255,0,.28);margin-bottom:14px}
+.anketa-eta b{display:block;font-size:14px;color:var(--accent);margin-bottom:3px}
+.anketa-eta span{font-size:11.5px;color:var(--dim);line-height:1.45}
+.anketa-stages{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.anketa-stage{display:flex;gap:11px;align-items:center;padding:10px 13px;border-radius:10px;background:var(--raised);border:1px solid var(--border);animation:acDeepIn .5s cubic-bezier(.25,1,.4,1) both}
+.anketa-stage:nth-child(1){animation-delay:.05s} .anketa-stage:nth-child(2){animation-delay:.15s}
+.anketa-stage:nth-child(3){animation-delay:.25s} .anketa-stage:nth-child(4){animation-delay:.35s}
+.anketa-stage:nth-child(5){animation-delay:.45s}
+.anketa-stage-ic{flex-shrink:0;width:32px;height:32px;border-radius:9px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.anketa-stage-ic svg.i{width:14px;height:14px}
+.anketa-stage b{font-size:12.5px;font-weight:700;display:block;margin-bottom:2px;line-height:1.35}
+.anketa-stage small{font-size:11px;color:var(--dim)}
+#anketaCard textarea{width:100%;min-height:80px;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--raised);color:var(--text);font:14px/1.5 inherit;resize:vertical}
+#anketaCard textarea:focus{border-color:var(--accent);outline:none}
+#anketaCard input[type=date]{color-scheme:dark}
+:root[data-theme="light"] #anketaCard input[type=date]{color-scheme:light}
 .plan{display:flex;flex-direction:column;gap:9px}
 .plan-row{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.5}
 .plan-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--lime);color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;margin-top:1px}
@@ -2690,38 +2739,139 @@ function openMa(id){
   var _h=document.getElementById('maHero'); if(_h)_h.style.display='none';
   document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
   document.getElementById('ma-'+id).style.display='block';
-  if(id==='system'){ aState = {step:0, answers:{}}; renderAnketa(); }
+  if(id==='system'){ aState = {mode:'__pick', step:-1, answers:{}, order:[]}; renderAnketa(); }
   if(id==='market'){ mkView='cats'; mkCat=null; mkSearchQ=''; renderMarket(); }
   if(id==='factory'){ fxReset(); renderFactory(); }
 }
-/* ===== Система роста: многошаговая анкета ===== */
-const ANKETA = [
-  {k:'who', q:'Кто ты и чем занимаешься?', hint:'От этого зависит вся стратегия.',
+/* ===== Система роста: расширенная анкета (быстрая / полная) =====
+   fast:true — вопрос попадает в быструю (10 вопросов). Полная = все.
+   condShow — функция условного показа (например TG-посты только если платформы содержат TG). */
+const ANKETA_ALL = [
+  // Блок 1 — О тебе
+  {k:'who', q:'Кто ты?', hint:'Тип: от этого зависит стратегия и продукт.', fast:true,
    opts:['Эксперт / блогер','Малый бизнес','Магазин / бренд','Услуги, фриланс','Инфопродукт']},
-  {k:'niche', q:'Опиши нишу в двух словах', hint:'Например: «фитнес для мам» или «ремонт квартир под ключ».', text:true},
-  {k:'goal', q:'Главная цель на 3 месяца', hint:'Одна, самая важная.',
-   opts:['Продажи и заявки','Подписчики и охваты','Личный бренд','Трафик в оффлайн','Всё сразу']},
-  {k:'platforms', q:'Где ты сейчас?', hint:'Основная площадка.',
-   opts:['Instagram / Reels','TikTok','YouTube','Telegram / VK','Почти с нуля']},
-  {k:'audience', q:'Кто твой клиент?', hint:'Пол, возраст, что для него важно.', text:true},
-  {k:'time', q:'Сколько времени готов уделять?', hint:'Честно — под это подберём режим.',
-   opts:['1–2 часа в неделю','3–5 часов в неделю','Каждый день понемногу','У меня есть команда']},
-  {k:'format', q:'Какой формат тебе ближе?', hint:'С чем комфортно работать.',
-   opts:['Говорю на камеру','Закадр и монтаж','Тексты и карусели','Не знаю — подскажите']},
-  {k:'budget', q:'Бюджет на продвижение', hint:'В месяц, ориентировочно.',
+  {k:'niche', q:'Опиши нишу', hint:'Например: «фитнес для мам» или «ремонт квартир под ключ».', text:true, fast:true},
+  {k:'geo', q:'Гео (город, страна)', hint:'Для локальных запросов и конкурентов.', text:true},
+  {k:'exp', q:'Опыт в нише', hint:'Влияет на позиционирование.', opts:['Менее года','1–3 года','3–7 лет','7+ лет']},
+  {k:'mission', q:'Миссия — зачем ты это делаешь?', hint:'Одной строкой. Работает в позиционировании.', text:true},
+  // Блок 2 — Продукты
+  {k:'products', q:'Продукты и цены', hint:'Список твоих услуг/товаров и их цены. Пример: «Наставничество 90 000 ₽; курс 15 000 ₽».', textarea:true, fast:true},
+  {k:'main_product', q:'Главный продукт-локомотив', hint:'Тот, что двигает основной доход.', text:true},
+  {k:'avg_check', q:'Средний чек, ₽', hint:'Ориентировочно.', number:true},
+  // Блок 3 — Аудитория
+  {k:'audience', q:'Кто твой клиент?', hint:'Пол, возраст, статус, что важно. 1-3 портрета.', textarea:true, fast:true},
+  {k:'pains', q:'Топ-5 болей клиента', hint:'Что реально болит у аудитории. Список.', textarea:true},
+  {k:'objections', q:'Топ-5 возражений', hint:'Что мешает купить? «Дорого», «не сработает», «нет времени» и т.д.', textarea:true},
+  // Блок 4 — Финансы
+  {k:'revenue', q:'Текущая выручка / мес, ₽', hint:'Честно — под это стратегия.', number:true},
+  {k:'goal_income', q:'Цель по выручке через 3 мес, ₽', hint:'Число, а не мечта.', number:true, fast:true},
+  {k:'goal_subs', q:'Цель по подписчикам через 3 мес', hint:'Общая сумма по всем сетям.', number:true},
+  {k:'budget', q:'Бюджет на рекламу / мес', hint:'В месяц, ориентировочно.', fast:true,
    opts:['Пока 0','До 10 000 ₽','10–50 000 ₽','50 000 ₽ и больше']},
+  // Блок 5 — Соцсети (мульти-выбор)
+  {k:'platforms', q:'Где ты сейчас — площадки', hint:'Отметь все свои. Под каждую соберём формат.', multi:true, fast:true,
+   opts:['Instagram','TikTok','YouTube','Telegram','VK','Дзен']},
+  {k:'subs_now', q:'Подписчики сейчас (всего по всем)', hint:'Примерно, суммарно.', number:true},
+  {k:'main_platform', q:'Главная платформа', hint:'Та, что даёт больше всего денег или охватов.',
+   opts:['Instagram','TikTok','YouTube','Telegram','VK','Дзен','Почти с нуля']},
+  // Блок 6 — Объём контента (с валидацией по тарифу)
+  {k:'reels_per_day', q:'Роликов в день', hint:'Короткие (Reels/Shorts/TikTok). Мы адаптируем под твой тариф.', slider:{min:0, max:30, step:1, unit:'/день'}, fast:true},
+  {k:'tg_per_day', q:'TG-постов в день', hint:'Тексты в канал Telegram.', slider:{min:0, max:30, step:1, unit:'/день'},
+   condShow:a=>Array.isArray(a.platforms) && a.platforms.includes('Telegram')},
+  {k:'carousels_per_month', q:'Каруселей в месяц', hint:'Instagram-карусели.', slider:{min:0, max:20, step:1, unit:'/мес'},
+   condShow:a=>Array.isArray(a.platforms) && a.platforms.includes('Instagram')},
+  {k:'stories_per_day', q:'Сторис в день', hint:'Instagram/VK сторис.', slider:{min:0, max:15, step:1, unit:'/день'}},
+  {k:'youtube_long_per_week', q:'Длинных YouTube-видео в неделю', hint:'Только если ведёшь YouTube.', slider:{min:0, max:5, step:1, unit:'/нед'},
+   condShow:a=>Array.isArray(a.platforms) && a.platforms.includes('YouTube')},
+  // Блок 7 — Формат и стиль
+  {k:'on_camera', q:'Готов сниматься сам?', hint:'От этого зависит формат.', opts:['Да, буду в кадре','Иногда','Нет, только закадр'], fast:true},
+  {k:'voice', q:'Голос для роликов', hint:'Мы можем клонировать твой (Premium).',
+   opts:['Мой (запишу образец)','Мужской дикторский','Женский дикторский','Всё равно, подберите']},
+  {k:'tone', q:'Тон бренда', hint:'Как ты говоришь с аудиторией.',
+   opts:['Дружеский','Экспертный','Дерзкий','Вдохновляющий','Спокойный']},
+  {k:'colors', q:'Цвета бренда (2 HEX)', hint:'Пример: #9AFF00 #0d0d0d. Пусто — подберём под нишу.', text:true},
+  {k:'refs', q:'Референсы визуала', hint:'Загрузи 2–3 картинки-эталона (по желанию).', files:true, accept:'image/*'},
+  // Блок 8 — Материалы (загрузки)
+  {k:'logo', q:'Логотип', hint:'PNG/SVG. Если нет — сгенерируем.', files:true, accept:'image/*'},
+  {k:'brandbook', q:'Брендбук (если есть)', hint:'PDF или архив.', files:true, accept:'.pdf,.zip'},
+  {k:'scripts', q:'Готовые скрипты/офферы', hint:'Текст, PDF, DOC — что есть.', files:true, accept:'.txt,.pdf,.doc,.docx'},
+  {k:'contract_sample', q:'Образец договора', hint:'Для генератора договоров.', files:true, accept:'.pdf,.doc,.docx'},
+  {k:'requisites', q:'Реквизиты (для генератора договоров)', hint:'ФИО/название, ИНН, адрес — одной строкой.', textarea:true},
+  // Блок 9 — Конкуренты
+  {k:'competitors', q:'Твои конкуренты (3–5 ников)', hint:'Список: @nick1, @nick2… Мы найдём ещё 100+.', textarea:true, fast:true},
+  {k:'compet_depth', q:'Глубина анализа конкурентов', hint:'На PRO — 15, BUSINESS — 50, MAX — 100+.',
+   opts:['15 (PRO)','50 (BUSINESS)','100+ (MAX)']},
+  // Блок 10 — Технические
+  {k:'start_date', q:'Дата старта (день 1)', hint:'С какого дня считаем календарь.', date:true},
+  {k:'contacts', q:'Контакты для CTA', hint:'TG, WA, ссылка на сайт — одной строкой.', text:true},
+  {k:'code_words', q:'Кодовые слова для ManyChat/SMMBot', hint:'Слова, по которым бот выдаёт лид-магнит.', text:true, fast:true},
 ];
-let aState = {step:0, answers:{}};
+let aState = {mode:'fast', step:0, answers:{}, order:[]};
+function anketaBuildOrder(){
+  const a = aState.answers;
+  aState.order = ANKETA_ALL
+    .filter(q => aState.mode==='full' || q.fast)
+    .filter(q => !q.condShow || q.condShow(a));
+}
+function anketaCurrent(){ return aState.order[aState.step]; }
 function renderAnketa(){
-  const total = ANKETA.length, i = aState.step;
+  // Первый экран — выбор режима
+  if(aState.step === -1 || (!aState.order.length && aState.mode==='__pick')){
+    document.getElementById('anketaBar').style.width = '0%';
+    document.getElementById('anketaCard').innerHTML = `
+      <span class="chip">Персональная Система Роста</span>
+      <div style="height:14px"></div>
+      <p style="font-weight:700;font-size:16px;margin-bottom:6px">Выбери режим анкеты</p>
+      <p class="dim" style="font-size:12.5px;line-height:1.5;margin-bottom:16px">От анкеты зависит, насколько точной будет твоя Система. Быстрая — за 3 минуты, полная — за 15–20.</p>
+      <button class="anketa-mode" onclick="anketaStart('fast')">
+        <div><b>Быстрая · 10 вопросов</b><small>3 минуты. Базовая система с контент-планом.</small></div>
+        <svg class="i"><use href="#i-chev"/></svg></button>
+      <div style="height:8px"></div>
+      <button class="anketa-mode reco" onclick="anketaStart('full')">
+        <span class="anketa-mode-badge">Рекомендуем</span>
+        <div><b>Полная · 37 вопросов</b><small>15–20 минут. Максимально точная система, конкуренты, генератор договоров, брендбук.</small></div>
+        <svg class="i"><use href="#i-chev"/></svg></button>`;
+    return;
+  }
+  if(!aState.order.length) anketaBuildOrder();
+  const total = aState.order.length, i = aState.step;
   document.getElementById('anketaBar').style.width = Math.round(i/total*100)+'%';
   if(i >= total) return anketaFinish();
-  const s = ANKETA[i], val = aState.answers[s.k];
-  const body = s.text
-    ? `<input id="aInput" placeholder="Напиши здесь…" value="${val?esc(val):''}" oninput="aState.answers['${s.k}']=this.value">`
-    : `<div class="opts">${s.opts.map(o=>`<button class="opt ${val===o?'on':''}" onclick="anketaPick('${s.k}',this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+  const s = anketaCurrent(), val = aState.answers[s.k];
+  let body = '';
+  if(s.text){
+    body = `<input id="aInput" placeholder="Напиши здесь…" value="${val?esc(val):''}" oninput="aState.answers['${s.k}']=this.value">`;
+  } else if(s.textarea){
+    body = `<textarea id="aInput" placeholder="Напиши здесь…" oninput="aState.answers['${s.k}']=this.value" rows="4">${val?esc(val):''}</textarea>`;
+  } else if(s.number){
+    body = `<input type="number" inputmode="numeric" id="aInput" placeholder="0" value="${val||''}" oninput="aState.answers['${s.k}']=this.value">`;
+  } else if(s.date){
+    const dv = val || new Date().toISOString().slice(0,10);
+    body = `<input type="date" id="aInput" value="${dv}" oninput="aState.answers['${s.k}']=this.value">`;
+    if(!val) aState.answers[s.k] = dv;
+  } else if(s.files){
+    const files = Array.isArray(val) ? val : [];
+    body = `<input type="file" id="aInputFile" accept="${s.accept||'*/*'}" multiple style="display:none" onchange="anketaFilePick('${s.k}',event)">
+      <button class="anketa-file-btn" onclick="document.getElementById('aInputFile').click()">
+        ${I('file')} <span>${files.length ? `Выбрано: ${files.length}` : 'Загрузить файлы (по желанию)'}</span></button>
+      ${files.length ? `<div class="anketa-files">${files.map(f=>`<span class="anketa-file">${esc(f.name)} · ${(f.size/1024).toFixed(0)} КБ</span>`).join('')}</div>` : ''}`;
+  } else if(s.slider){
+    const cur = (val==null || val==='') ? s.slider.min : +val;
+    body = `<div class="anketa-slider">
+      <input type="range" min="${s.slider.min}" max="${s.slider.max}" step="${s.slider.step}" value="${cur}"
+             oninput="aState.answers['${s.k}']=+this.value; document.getElementById('aSlV_${s.k}').textContent=this.value+' ${s.slider.unit}'; anketaCheckLimit('${s.k}',+this.value);">
+      <div class="anketa-slider-v"><b id="aSlV_${s.k}">${cur} ${s.slider.unit}</b>
+        <span class="anketa-limit-hint" id="aLim_${s.k}"></span></div>
+    </div>`;
+    if(val==null || val==='') aState.answers[s.k] = cur;
+  } else if(s.multi){
+    body = `<div class="opts opts-multi">${s.opts.map(o=>`<button class="opt ${Array.isArray(val)&&val.includes(o)?'on':''}" onclick="anketaPickMulti('${s.k}',this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+  } else {
+    body = `<div class="opts">${s.opts.map(o=>`<button class="opt ${val===o?'on':''}" onclick="anketaPick('${s.k}',this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+  }
+  const modeLabel = aState.mode==='fast' ? 'Быстрая' : 'Полная';
   document.getElementById('anketaCard').innerHTML = `
-    <span class="chip">Секция ${i+1} из ${total}</span>
+    <span class="chip">${modeLabel} · ${i+1} из ${total}</span>
     <div style="height:14px"></div>
     <p style="font-weight:700;font-size:15.5px;margin-bottom:5px">${s.q}</p>
     <p class="dim" style="font-size:12.5px;line-height:1.5;margin-bottom:14px">${s.hint}</p>
@@ -2731,41 +2881,98 @@ function renderAnketa(){
       ${i>0?'<button class="btn ghost" onclick="anketaPrev()" style="flex:1">Назад</button>':''}
       <button class="btn" onclick="anketaNext()" style="flex:2">${i===total-1?'Собрать систему':'Далее'}</button>
     </div>`;
+  // проверить лимит слайдера сразу
+  if(s.slider) anketaCheckLimit(s.k, aState.answers[s.k]);
 }
+function anketaStart(mode){ aState = {mode, step:0, answers:{}, order:[]}; anketaBuildOrder(); renderAnketa(); }
 function anketaPick(k, btn, val){
   aState.answers[k] = val;
   btn.parentElement.querySelectorAll('.opt').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
 }
+function anketaPickMulti(k, btn, val){
+  if(!Array.isArray(aState.answers[k])) aState.answers[k] = [];
+  const arr = aState.answers[k], i = arr.indexOf(val);
+  if(i>=0) arr.splice(i,1); else arr.push(val);
+  btn.classList.toggle('on');
+}
+function anketaFilePick(k, ev){
+  const fs = Array.from(ev.target.files||[]).map(f=>({name:f.name, size:f.size, type:f.type}));
+  aState.answers[k] = fs;
+  renderAnketa();
+}
+/* Проверка лимитов по тарифу для слайдеров количества */
+function anketaCheckLimit(k, v){
+  const el = document.getElementById('aLim_'+k); if(!el) return;
+  const tier = okoTier();
+  // Лимиты в мес по тарифу (роликов/день × 30, tg-постов/день × 30 и т.д.)
+  const cap = {
+    reels_per_day:        {FREE:0, START:1, PRO:1, BUSINESS:2, BUSINESS_PRO:4, MAX:10},
+    tg_per_day:           {FREE:0, START:1, PRO:1, BUSINESS:1, BUSINESS_PRO:2, MAX:4},
+    carousels_per_month:  {FREE:0, START:0, PRO:4, BUSINESS:5, BUSINESS_PRO:8, MAX:15},
+    stories_per_day:      {FREE:1, START:2, PRO:5, BUSINESS:10, BUSINESS_PRO:15, MAX:15},
+    youtube_long_per_week:{FREE:0, START:0, PRO:1, BUSINESS:2, BUSINESS_PRO:3, MAX:5},
+  }[k];
+  if(!cap) return;
+  const limit = cap[tier] != null ? cap[tier] : 0;
+  if(v > limit){
+    el.innerHTML = '<span class="anketa-over">Тариф «'+tier+'» даёт до '+limit+'. Больше — доплата или апгрейд</span>';
+  } else {
+    el.innerHTML = '<span class="anketa-ok">В рамках тарифа «'+tier+'»</span>';
+  }
+}
 function anketaNext(){
-  const s = ANKETA[aState.step];
-  if(!aState.answers[s.k] || !String(aState.answers[s.k]).trim()){ toast('Ответь, чтобы продолжить'); return; }
-  aState.step++; renderAnketa();
+  const s = anketaCurrent(); if(!s) return;
+  const v = aState.answers[s.k];
+  // Обязательными считаем только базовые (fast) — файлы, длинные текстовые могут быть пустыми
+  const isRequired = s.fast || s.opts || s.multi;
+  if(isRequired){
+    const ok = s.multi ? (Array.isArray(v) && v.length>0) : (v!=null && String(v).trim()!=='');
+    if(!ok){ toast('Ответь, чтобы продолжить'); return; }
+  }
+  aState.step++;
+  anketaBuildOrder(); // пересчитать условные вопросы
+  renderAnketa();
 }
 function anketaPrev(){ if(aState.step>0){ aState.step--; renderAnketa(); } }
 function anketaFinish(){
   const a = aState.answers;
   document.getElementById('anketaBar').style.width = '100%';
   const card = document.getElementById('anketaCard');
-  card.innerHTML = `<div style="text-align:center;padding:8px 0">
-      <div class="spin"></div>
-      <p style="font-weight:700;margin-top:14px">Наши аналитики собирают твою систему…</p>
-      <p class="dim" style="font-size:12.5px;margin-top:6px">Разбор ниши, целей и ресурсов по мастер-методике OKO. Готово через 4–6 часов, пришлём уведомление.</p>
+  // Сохраним анкету локально (при подключении backend уйдёт в Supabase)
+  try{
+    const saved = JSON.parse(localStorage.getItem('oko-systems')||'[]');
+    const rec = {id:'sys_'+Date.now(), mode:aState.mode, answers:a, status:'in_progress',
+                 createdAt:Date.now(), readyAt:Date.now() + 4*60*60*1000, /* 4 часа */
+                 slug: 'sys_' + Math.random().toString(36).slice(2,8)};
+    saved.unshift(rec); localStorage.setItem('oko-systems', JSON.stringify(saved));
+    aState.recId = rec.id; aState.slug = rec.slug;
+  }catch(e){}
+  // Показать реалистичный тайминг «команда работает»
+  const stages = [
+    {ic:'compass',   t:'Аналитик изучает твою нишу и конкурентов',        eta:'~40 минут'},
+    {ic:'file',      t:'Стратег собирает бизнес-план и воронку продаж',   eta:'~1 час'},
+    {ic:'bolt',      t:'Копирайтер пишет контент-план на 30 дней',        eta:'~2 часа'},
+    {ic:'star',      t:'Дизайнер оформляет систему в фирменный HTML',     eta:'~1 час'},
+    {ic:'check2',    t:'Готовая система → в твой личный кабинет',         eta:'~15 минут'},
+  ];
+  const platforms = Array.isArray(a.platforms) ? a.platforms.join(' · ') : (a.platforms||'—');
+  card.innerHTML = `
+    <div class="anketa-ready">
+      <div class="anketa-ready-h">
+        <div class="anketa-ready-badge">${I('rocket')}</div>
+        <div><b>Анкета принята — команда OKO приступила</b>
+        <small>Готовим твою Систему Роста · ниша «${esc(a.niche||'—')}» · ${esc(platforms)}</small></div>
+      </div>
+      <div class="anketa-eta"><b>Готовность: 4–6 часов</b><span>Придёт уведомление в приложение и Telegram, как только команда закончит.</span></div>
+      <div class="anketa-stages">${stages.map(s=>`
+        <div class="anketa-stage"><span class="anketa-stage-ic">${I(s.ic)}</span>
+          <div><b>${s.t}</b><small>${s.eta}</small></div></div>`).join('')}
+      </div>
+      <button class="btn" onclick="openSystemPreview()"><svg class="i"><use href="#i-bolt"/></svg> Посмотреть черновик уже сейчас</button>
+      <div style="height:8px"></div>
+      <button class="btn ghost" onclick="anketaStart('${aState.mode}')">Пройти анкету заново</button>
     </div>`;
-  setTimeout(()=>{
-    const plan = buildPlan(a);
-    card.innerHTML = `
-      <div class="big-score" style="color:var(--accent)">Готово<small>персональная система роста</small></div>
-      <div class="divider"></div>
-      <p style="font-size:13px;line-height:1.6"><b>Профиль:</b> ${esc(a.who||'')}, ниша «${esc(a.niche||'—')}». Цель — ${esc((a.goal||'').toLowerCase())}.</p>
-      <div style="height:12px"></div>
-      <p style="font-weight:700;font-size:13.5px;margin-bottom:8px">Твой план на 30 дней</p>
-      <div class="plan">${plan.map((p,n)=>`<div class="plan-row"><span class="plan-n">${n+1}</span><span>${p}</span></div>`).join('')}</div>
-      <div style="height:16px"></div>
-      <button class="btn" onclick="openSystemPreview()"><svg class="i"><use href="#i-bolt"/></svg> Открыть полную систему</button>
-      <div style="height:9px"></div>
-      <button class="btn ghost" onclick="aState={step:0,answers:{}};renderAnketa()">Пройти заново</button>`;
-  }, 1800);
 }
 function openSystemPreview(){
   const a = aState.answers;
