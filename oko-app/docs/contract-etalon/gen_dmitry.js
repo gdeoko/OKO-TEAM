@@ -3,9 +3,12 @@ const fs = require('fs');
 const {
   Document, Packer, Paragraph, TextRun, ImageRun, AlignmentType, HeadingLevel,
   Table, TableRow, TableCell, WidthType, BorderStyle, LevelFormat, convertMillimetersToTwip,
+  HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType,
 } = require('docx');
 
 const LOGO = fs.readFileSync('/home/user/OKO-TEAM/brand/oko-logo-256.png');
+const SEAL = fs.readFileSync('/home/user/OKO-TEAM/brand/oko-seal-blue-512.png');
+const SIGN = fs.readFileSync('/home/user/OKO-TEAM/brand/daniel-signature-transparent.png');
 
 const VARIANTS = {
   'СТАРТ': {
@@ -173,9 +176,16 @@ function build(name, V) {
                   'Тел.: +7 977 995 55 66',
                   'Telegram: @ktodaniel',
                   'E-mail: okoteam.top@gmail.com',
-                  '',
-                  '_________________ / Ильясов Д. А. /',
-                ])) }),
+                ])).concat([
+                  new Paragraph({ spacing: { before: 60, after: 0 }, children: [
+                    new ImageRun({ type: 'png', data: SEAL, transformation: { width: 136, height: 136 },
+                      floating: { horizontalPosition: { relative: HorizontalPositionRelativeFrom.COLUMN, offset: 1300000 },
+                                  verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: -430000 },
+                                  wrap: { type: TextWrappingType.NONE }, behindDocument: false, allowOverlap: true } }),
+                    new ImageRun({ type: 'png', data: SIGN, transformation: { width: 150, height: 64 } }),
+                  ] }),
+                  new Paragraph({ spacing: { before: 20 }, children: [T('_________________ / Ильясов Д. А. /')] }),
+                ]) }),
               new TableCell({ width: { size: 4800, type: WidthType.DXA }, margins: { top: 100, bottom: 100, left: 140, right: 140 },
                 children: cellP(['ЗАКАЗЧИК'], true).concat(cellP([
                   'Ф. И. О. / компания:',

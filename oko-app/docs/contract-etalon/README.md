@@ -40,3 +40,9 @@
 `cd scratchpad/dogen && npm i docx && node gen.js` (пример: договоры Димы Волкова, kp-dmitry).
 `gen_main.js` — договоры основного КП (СТАРТ/БИЗНЕС/ИМПЕРИЯ). Скрипты лежат рядом.
 Проверять: validate.py (XSD) + LibreOffice→PDF→скрин (нужен пакет libreoffice-writer).
+
+## Печать и подпись (ОБЯЗАТЕЛЬНО в каждом договоре)
+В ячейке Исполнителя: синяя подпись `brand/daniel-signature-transparent.png` (inline, ~150×64)
+над строкой «___ / Ильясов Д. А. /», рядом плавающая синяя печать
+`brand/oko-seal-blue-512.png` (~136px, floating, offset 1300000/-430000 EMU, allowOverlap) —
+печать частично перекрывает подпись, как на настоящем документе.
