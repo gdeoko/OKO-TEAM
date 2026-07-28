@@ -3365,7 +3365,7 @@ function acRenderCertBox(){
           <span class="ico"><svg class="i"><use href="#i-star"/></svg></span>
           <div><h3>Сертификат направления готов</h3><p>Все ${dir.count} уроков «${esc(dir.title)}» пройдены — забирай именной диплом</p></div>
         </div>
-        <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат направления</button>
+        <button class="btn" onclick="acIssueCert()">${I('star')} Получить сертификат</button>
       </div>`;
     return;
   }

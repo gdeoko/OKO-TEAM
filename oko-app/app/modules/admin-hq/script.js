@@ -775,8 +775,8 @@ function hqAdsBlock(){
       <div class="hq-ad-top"><span class="hq-ad-ic">${I('megaphone')}</span>
         <span class="adm-main"><b style="white-space:normal">${esc(a.name)}</b><small>${esc(a.fmt)} · бюджет ${fmtMoney(a.budget)}</small></span></div>
       ${a.reason
-        ? `<div class="hq-rep-reason">${I('flag')}<span>Флаг ИИ: ${esc(a.reason)}</span></div>`
-        : `<div class="hq-ad-clean">${I('check2')}<span>ИИ нарушений не нашёл — на финальное решение владельца</span></div>`}
+        ? `<div class="hq-rep-reason">${I('flag')}<span>Флаг системы: ${esc(a.reason)}</span></div>`
+        : `<div class="hq-ad-clean">${I('check2')}<span>Нарушений не найдено, на финальное решение владельца</span></div>`}
       <div class="hq-ad-acts">
         <button class="adm-btn pri" onclick="hqAdRevDecide('${a.id}',1)">Одобрить</button>
         <button class="adm-btn dng" onclick="hqAdRevDecide('${a.id}',0)">Отклонить</button>
@@ -792,7 +792,7 @@ admModer = function(){
   const m = HQ_MOD;
   const head = `
     <div class="hq-mod card">
-      <div class="hq-mod-head"><i class="hq-dot work"></i><b>ИИ-агент модерации: активен</b><span class="chip on" style="font-size:9px">24/7</span></div>
+      <div class="hq-mod-head"><i class="hq-dot work"></i><b>Модератор OKO: активен</b><span class="chip on" style="font-size:9px">24/7</span></div>
       <div class="hq-mod-stats">
         <div class="hq-ms"><b>${m.spam}</b><small>спам</small></div>
         <div class="hq-ms bad"><b>${m.scam}</b><small>скам</small></div>
@@ -801,7 +801,7 @@ admModer = function(){
       </div>
       <div class="hq-mod-note">За сутки проверено ${m.checked.toLocaleString('ru')} сообщений и постов. Автоблок мгновенный, спорное — в очередь ниже.</div>
     </div>
-    <div class="adm-sec-h">Последние блокировки ИИ</div>
+    <div class="adm-sec-h">Последние автоблокировки</div>
     ${HQ_MOD_FEED.map(f=>`
       <div class="adm-row">
         <span class="adm-tag ${f.cls}">${esc(f.k)}</span>
@@ -988,7 +988,7 @@ function hqAiOn(k){ return !HQ_STATE.aiOff[k]; }
 function hqAiToggle(k){
   if(HQ_STATE.aiOff[k]) delete HQ_STATE.aiOff[k]; else HQ_STATE.aiOff[k] = 1;
   hqSave(); renderAdmin();
-  toast('ИИ-'+(HQ_AISYS.find(a=>a.k===k)||{}).n+': '+(hqAiOn(k)?'включён':'выключен'));
+  toast(''+(HQ_AISYS.find(a=>a.k===k)||{}).n+': '+(hqAiOn(k)?'включён':'выключен'));
 }
 function hqEscResolve(i){ HQ_STATE.escDone[i] = 1; hqSave(); renderAdmin(); toast('Эскалация закрыта · пользователю отправлен ответ'); }
 function hqAiCard(a){
@@ -1014,7 +1014,7 @@ admAgents = function(){
       <div class="hq-part-s"><b>24/7</b><small>режим работы</small></div>
       <div class="hq-part-s"><b class="${openEsc?'warn':''}">${openEsc}</b><small>эскалаций</small></div>
     </div>
-    <div class="adm-sec-h">ИИ-системы · вкл/выкл</div>
+    <div class="adm-sec-h">Системы OKO · вкл/выкл</div>
     <div class="hq-ai-grid">${HQ_AISYS.map(hqAiCard).join('')}</div>`;
   const escRows = ADMIN.agents.map((a,i)=>{
     const done = !!HQ_STATE.escDone[i];

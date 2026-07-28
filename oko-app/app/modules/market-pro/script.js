@@ -567,7 +567,7 @@ function mpOpenPackages(){
     <div class="mp-hero">
       <svg><use href="#i-logo"/></svg>
       <h2>OKO <b>PRODUCTION</b></h2>
-      <p>Флагманская услуга «под ключ» от команды OKO: контент, дизайн, сайт и реклама — делаем мы, растёшь ты.</p>
+      <p>Флагманская услуга «под ключ» от команды OKO: контент, дизайн, сайт и реклама, делаем мы, растёшь ты.</p>
     </div>
     ${packCard(MP_PACKS.start)}
     ${packCard(MP_PACKS.business)}
@@ -639,7 +639,7 @@ function mpDoOrderPay(){
       <p class="dim" style="font-size:13px;margin-top:6px">Списано ${fmtMoney(rub)} · баланс ${fmtMoney(WALLET.balance)}.<br>Личный ассистент уже ждёт твой бриф.</p>
       <div style="height:16px"></div>
       <button class="btn" onclick="mpOpenWorkChat(${chat.id})">${I('chat')} Открыть рабочий чат</button></div>`;
-    toast('Пакет «'+p.name+'» оплачен — чат с командой создан');
+    toast('Пакет «'+p.name+'» оплачен, чат с командой создан');
   }, 1200);
 }
 function mpOpenWorkChat(id){
@@ -725,7 +725,7 @@ function mpInjectMarket(){
   bn.id = 'mpBanner'; bn.className = 'mp-banner'; bn.onclick = mpOpenPackages;
   bn.innerHTML = `<span class="mp-banner-logo"><svg><use href="#i-logo"/></svg></span>
     <span class="mp-banner-b">
-      <span class="mp-banner-t">OKO <b>PRODUCTION</b> — под ключ</span>
+      <span class="mp-banner-t">OKO <b>PRODUCTION</b>, под ключ</span>
       <span class="mp-banner-s">Полный цикл роста под ключ: контент, дизайн, сайт, реклама</span>
     </span>
     <span class="mp-banner-cta"><span class="mp-banner-chip">от $1500</span>${I('chev')}</span>`;
@@ -1351,7 +1351,7 @@ function mpRichEmpty(){
     ${hasF?`<button class="btn ghost" onclick="mpEmptyReset()">${I('poll')} Сбросить фильтры</button>`:''}
     ${cats.length?`<div class="mp-emp-lab">Популярные категории</div>
       <div class="mp-emp-cats">${cats.map(c=>`<button class="mp-emp-cat" onclick="mpEmptyGoCat('${c.k}')">${I(c.ic)}<span>${c.name}</span></button>`).join('')}</div>`:''}
-    ${(hasQ||hasF)?`<button class="mp-emp-save" onclick="mpSaveSearch()">${I('bell')} Сохранить поиск и получать новые предложения</button>`:''}
+    ${(hasQ||hasF)?`<button class="mp-emp-save" onclick="mpSaveSearch()">${I('bell')} Сохранить поиск</button>`:''}
   </div>`;
 }
 function mpEmptyReset(){

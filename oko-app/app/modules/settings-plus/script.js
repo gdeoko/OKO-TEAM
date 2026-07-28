@@ -282,7 +282,7 @@ function st2Render(){
     <div class="st2-h">${I('st2-devices')} Сессии</div>
     <div class="st2-card" id="st2SesList">
       ${alive.map(st2SesHtml).join('')}
-      ${others.length ? `<button class="st2-killall" onclick="st2KillAll()">Завершить остальные сессии (${others.length})</button>`
+      ${others.length ? `<button class="st2-killall" onclick="st2KillAll()">Завершить остальные (${others.length})</button>`
                       : '<div class="st2-empty">Других активных сессий нет</div>'}
     </div>
   </div>
@@ -648,7 +648,7 @@ function st2ChangePass(err){
   showPopup({
     ico:'st2-key', title:'Сменить пароль',
     body:`<div class="st2-pin"><input id="st2PwOld" type="password" placeholder="Текущий пароль" autocomplete="off"></div>
-      <div class="st2-pin" style="margin-top:10px"><input id="st2PwNew" type="password" placeholder="Новый пароль — минимум 8 символов" autocomplete="off"></div>
+      <div class="st2-pin" style="margin-top:10px"><input id="st2PwNew" type="password" placeholder="Новый пароль: минимум 8 символов" autocomplete="off"></div>
       ${err ? `<div class="st2-perr">${esc(err)}</div>` : ''}`,
     actions:[
       {label:'Отмена', ghost:true},
@@ -665,7 +665,7 @@ function st2ChangePassSave(){
   const oldv = st2_pwOld ? st2_pwOld.value : '';
   const nv   = st2_pwNew ? st2_pwNew.value : '';
   if(!oldv)          return st2ChangePass('Введите текущий пароль');
-  if(nv.length < 8)  return st2ChangePass('Новый пароль слишком короткий — минимум 8 символов');
+  if(nv.length < 8)  return st2ChangePass('Новый пароль слишком короткий, минимум 8 символов');
   if(nv === oldv)    return st2ChangePass('Новый пароль совпадает со старым');
   toast('Пароль изменён');
 }

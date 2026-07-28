@@ -350,16 +350,18 @@ function walRenderCats(){
   const cats = Object.entries(sums).sort((a,b)=>b[1]-a[1]);
   if(!cats.length){
     bar.style.display = 'none';
-    wrap.innerHTML = '<div class="wal-cats-empty">Расходов пока нет — всё в плюсе</div>';
+    wrap.innerHTML = '<div class="wal-cats-empty">Расходов пока нет, всё в плюсе</div>';
     return;
   }
   bar.style.display = 'flex';
   const total = cats.reduce((s,c)=>s+c[1],0);
+  const CAT_COLORS = ['#9AFF00','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
   bar.innerHTML = cats.map(([,v],i)=>
-    `<i style="width:${(v/total*100).toFixed(1)}%;opacity:${(1 - i*0.16).toFixed(2)};animation-delay:${i*70}ms"></i>`).join('');
+    `<i style="width:${(v/total*100).toFixed(1)}%;background:${CAT_COLORS[i%CAT_COLORS.length]};animation-delay:${i*70}ms"></i>`).join('');
   wrap.innerHTML = cats.map(([k,v],i)=>{
     const pct = Math.round(v / total * 100);
-    return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="opacity:${(1 - i*0.16).toFixed(2)}"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
+    const c = CAT_COLORS[i%CAT_COLORS.length];
+    return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="background:${c};box-shadow:0 0 6px ${c}66"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
   }).join('');
 }
 function walOpTime(at){
@@ -438,7 +440,7 @@ function walRenderAutopay(){
   sw.classList.toggle('on', !!WAL_X.autopay);
   sub.textContent = WAL_X.autopay
     ? 'Следующее списание ' + walDMY(WAL_X.nextAt) + ' · ' + fmtMoney(walProPrice())
-    : 'Выключено — тариф не продлевается сам';
+    : 'Выключено, тариф не продлевается сам';
 }
 function walToggleAutopay(){
   if(WAL_X.autopay){
@@ -498,7 +500,7 @@ function walRenderSec(){
   }
   const psw = document.getElementById('walPinSw'), psub = document.getElementById('walPinSub');
   if(psw) psw.classList.toggle('on', !!WAL_X.pin);
-  if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен — включи для защиты вывода';
+  if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен, включи для защиты вывода';
 }
 function walWdUpsell(){
   const tier = walTier();

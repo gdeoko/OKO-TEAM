@@ -62,8 +62,8 @@ function vsRenderVerify(){
   const st = VS_VERIFY.status;
   const meta = {
     none:     { cls:'',        ico:'user',     t:'Не верифицирован', s:'Синяя галочка подтверждает подлинность аккаунта для всех в OKO' },
-    pending:  { cls:'pending', ico:'clock',    t:'На рассмотрении',  s:'Модерация проверяет аккаунт и активность — обычно до 24 часов' },
-    approved: { cls:'ok',      ico:'verified', t:'Верифицирован',    s:'Аккаунт подтверждён — галочка видна в профиле, ленте и чатах' },
+    pending:  { cls:'pending', ico:'clock',    t:'На рассмотрении',  s:'Модерация проверяет аккаунт и активность, обычно до 24 часов' },
+    approved: { cls:'ok',      ico:'verified', t:'Верифицирован',    s:'Аккаунт подтверждён, галочка видна в профиле, ленте и чатах' },
   }[st];
   const conds = `
     <div class="vs-cond">${I('crown')}<div>Тариф PRO или BUSINESS<small>Активная подписка на момент подачи и проверки заявки</small></div></div>
@@ -105,7 +105,7 @@ function vsApply(){
       VS_VERIFY.status = 'none'; vsSave();
       if(typeof showPopup === 'function') showPopup({
         ico:'lock', title:'Заявка отклонена',
-        body:'Для верификации нужен активный тариф PRO или BUSINESS либо подтверждённый официальный бизнес. Оформи PRO — и подай заявку снова.',
+        body:'Для верификации нужен активный тариф PRO или BUSINESS либо подтверждённый официальный бизнес. Оформи PRO, и подай заявку снова.',
         actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
       });
     }

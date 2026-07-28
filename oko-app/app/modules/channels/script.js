@@ -65,7 +65,7 @@ function chSave(){ try{ localStorage.setItem('oko-channels', JSON.stringify(CH))
 
 function chSeed(){
   const mine = [
-    { id:'ch-own-1', name:'OKO Инсайды', desc:'Личный канал: как я строю бизнес на нейросетях внутри OKO. Разборы, цифры, кейсы — без воды.',
+    { id:'ch-own-1', name:'OKO Инсайды', desc:'Личный канал: как я строю бизнес внутри OKO. Разборы, цифры, кейсы — без воды.',
       icon:'bolt', bg:0, type:'free', price:0, verified:true, subs:2140, reactions:true, discussions:true,
       admins:[{name:'Марина К.',nick:'marina_k'}], gross:0,
       members:chMockMembers(6), black:[],

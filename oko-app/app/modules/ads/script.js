@@ -1185,7 +1185,7 @@ function adsModerate(id){
   if(bad){
     c.status = 'rej'; c.reason = 'запрещённая тематика («'+bad+'»)';
     walletAdd(c.budget, 'Возврат: реклама отклонена — '+c.name);
-    adsBill(-c.budget, c.name, 'Возврат (отклонено ИИ)');
+    adsBill(-c.budget, c.name, 'Возврат (отклонено модерацией)');
     showPopup({ico:'flag', title:'Реклама отклонена',
       body:`Модератор OKO нашёл в объявлении «${esc(c.name)}» запрещённую тематику: <b>«${esc(bad)}»</b>.<br><br>Бюджет ${fmtMoney(c.budget)} уже вернулся на лицевой счёт. Исправь текст и запусти заново.`,
       actions:[{label:'Понятно'}]});
