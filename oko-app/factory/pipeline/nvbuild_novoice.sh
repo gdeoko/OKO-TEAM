@@ -152,6 +152,12 @@ python3 "$W/audio.py" | tail -2
 python3 "$W/compose.py" | tail -2
 echo "NVBUILD_DONE $W"
 
-# PRUNE heavy intermediates (foot/segs/base/vfull/frames) — keep reel.mp4+cover.jpg+meta.json
-rm -rf "$W/foot" "$W/segs" "$W/fr_titles" "$W/base.mp4" "$W/vfull.mp4" "$W/cover_cand" "$W/ig/titles.mov" 2>/dev/null
-echo "PRUNED $W (kept reel.mp4/cover.jpg/meta.json)"
+# PRUNE heavy footage/intermediates from OLD builds only (reel.mp4 older than 25 min),
+# keeping the just-built reel's foot/ for post-QC clip swaps. Bounds disk without blocking QC.
+SCR=$(dirname "$W")
+find "$SCR" -maxdepth 1 -type d -name 'build*' 2>/dev/null | while read d; do
+  if [ -f "$d/reel.mp4" ] && [ -n "$(find "$d/reel.mp4" -mmin +25 2>/dev/null)" ]; then
+    rm -rf "$d/foot" "$d/segs" "$d/fr_titles" "$d/base.mp4" "$d/vfull.mp4" "$d/cover_cand" "$d/ig/titles.mov" 2>/dev/null
+  fi
+done
+echo "PRUNED old builds under $SCR (kept recent for QC-swaps)"
