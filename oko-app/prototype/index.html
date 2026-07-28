@@ -783,6 +783,10 @@ label.f-lab{display:block}
 .sys-day-persona-h svg.i{width:12px;height:12px}
 .sys-day-persona p{margin:0 0 6px;font-size:12.5px;font-weight:600;line-height:1.5;color:var(--fg)}
 .sys-day-persona small{display:block;font-size:11px;color:var(--dim);line-height:1.4}
+.sys-persona-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:8px}
+.sys-persona-i{padding:7px 9px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;flex-direction:column;gap:2px;min-width:0}
+.sys-persona-i b{font-size:9.5px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.sys-persona-i span{font-size:11.5px;color:var(--fg);font-weight:600;line-height:1.35;word-break:break-word}
 .sys-day-foot{display:flex;gap:10px;padding:14px 20px 20px;border-top:1px solid var(--border);flex-shrink:0}
 .sys-day-foot .btn{flex:1}
 .sys-day-foot .btn.ghost{flex:0 1 auto;min-width:110px}
@@ -8885,7 +8889,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.59</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.60</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11110,7 +11114,33 @@ function sysDayTopic(n, a){
   const topic = arch.topics[topicIdx].replace(/{niche}/g, niche).replace(/{audience_short}/g, audShort);
   return {arch: arch.a, archIdx, topic, ffmt: arch.ffmt, code: arch.code, shoot: arch.shoot};
 }
-const SYS_SHOOT_LABEL = {live:'🎥 Живьём в кадре', ai:'🤖 ИИ-аватар HeyGen', stock:'🎬 Стоковое видео + текст'};
+const SYS_SHOOT_LABEL = {live:'🎥 Живьём в кадре', ai:'🤖 Аватар HeyGen', stock:'🎬 Стоковое видео + текст'};
+/* Персона клиента: собирается из ВСЕХ полей анкеты и подставляется в каждый шаблон.
+   Возвращает: обращение (ты/вы), стиль реплик, план съёмки, ведущую платформу, гео-триггер. */
+function sysPersona(a){
+  const tone = (a.tone||'').toLowerCase();
+  const voice = (a.voice||'').toLowerCase();
+  const cam = (a.on_camera||'').toLowerCase();
+  const mp = (a.main_platform||'').toLowerCase();
+  const geo = a.geo || '';
+  const address = /вы|формал/.test(tone) ? 'вы' : 'ты';
+  const you = address==='вы' ? 'вы' : 'ты';
+  const yourP = address==='вы' ? 'вашу' : 'твою';
+  let voiceStyle = 'нейтрально-дружеский';
+  if(/дерз|провок/.test(tone)) voiceStyle = 'дерзкий, прямой, без реверансов';
+  else if(/эксперт|деловой|формал/.test(tone)) voiceStyle = 'экспертный, спокойный, с цифрами';
+  else if(/друж|тепл/.test(tone)) voiceStyle = 'дружеский, тёплый, с эмодзи в тексте';
+  let cameraPlan = 'КРУПНЫЙ план, глаза в кадре';
+  if(/закадр|нет|не буду/.test(cam)) cameraPlan = 'B-roll видео + голос за кадром';
+  else if(/аватар|heygen|нейро/.test(cam)) cameraPlan = 'HeyGen аватар с клонированным голосом';
+  let mainPlatformNote = 'адаптация под все площадки';
+  if(/instagram|инстаг/.test(mp)) mainPlatformNote = 'ведущая площадка Instagram Reels, длина 30-45 сек';
+  else if(/tiktok/.test(mp)) mainPlatformNote = 'ведущая площадка TikTok, длина 15-30 сек, вертикаль 9:16';
+  else if(/telegram/.test(mp)) mainPlatformNote = 'ведущая площадка Telegram, копия в VK-стену';
+  else if(/youtube/.test(mp)) mainPlatformNote = 'ведущая площадка YouTube Shorts, длина до 60 сек';
+  const geoHint = geo ? `упоминание "${geo}" в примерах` : 'без географической привязки';
+  return {address, you, yourP, voiceStyle, cameraPlan, mainPlatformNote, geoHint, geo, tone: a.tone||'нейтральный', voice: a.voice||'мой', mp: a.main_platform||'все площадки'};
+}
 function sysDayHtml(n){
   const a = aState.answers;
   const platforms = Array.isArray(a.platforms) ? a.platforms : ['Instagram','TikTok','Telegram'];
@@ -11122,13 +11152,17 @@ function sysDayHtml(n){
   const grouped = {};
   items.forEach(k=>{ grouped[k]=(grouped[k]||0)+1; });
   const sections = Object.entries(grouped).map(([k,cnt])=>sysDayItemHtml(k, cnt, n, a, archTitle, topic)).join('');
-  const bio = [
-    a.niche && `Ниша: ${a.niche}`,
-    a.audience && `Аудитория: ${a.audience}`,
-    a.tone && `Тон: ${a.tone}`,
-    a.on_camera && `Камера: ${a.on_camera}`,
-    platforms.length && `Площадки: ${platforms.join(' · ')}`,
-  ].filter(Boolean).join(' · ');
+  const P = sysPersona(a);
+  const bioFields = [
+    a.niche && {k:'ниша', v:a.niche},
+    a.audience && {k:'аудитория', v:a.audience},
+    a.tone && {k:'тон', v:P.voiceStyle},
+    a.on_camera && {k:'кадр', v:P.cameraPlan},
+    a.main_platform && {k:'площадка', v:P.mainPlatformNote},
+    a.geo && {k:'гео', v:a.geo},
+    a.voice && {k:'голос', v:a.voice},
+    platforms.length && {k:'дистрибуция', v:platforms.join(' · ')},
+  ].filter(Boolean);
   return `
     <div class="sys-day-sheet" onclick="event.stopPropagation()">
       <div class="sys-day-head">
@@ -11141,9 +11175,9 @@ function sysDayHtml(n){
       </div>
       <div class="sys-day-content">
         <div class="sys-day-persona">
-          <span class="sys-day-persona-h">${I('compass')} Собрано под тебя</span>
-          <p>${esc(bio||'Заполни анкету — увидишь каждое поле в сценариях')}</p>
-          <small>Каркас темы, тайминги, ФN-формат из эталонов OKO. Персонализация конкурентов, бренд-визуала и голоса включается после анализа команды OKO (4-6 часов).</small>
+          <span class="sys-day-persona-h">${I('compass')} Собрано под тебя из анкеты</span>
+          <div class="sys-persona-grid">${bioFields.length ? bioFields.map(f=>`<div class="sys-persona-i"><b>${esc(f.k)}</b><span>${esc(f.v)}</span></div>`).join('') : '<p class="dim" style="font-size:12px">Заполни анкету, каждое поле влияет на сценарий</p>'}</div>
+          <small>Каркас темы, тайминги, ФN-формат из эталонов OKO. Реальный анализ 15 конкурентов ниши, бренд-визуал под клиента и клон голоса подключаются после отправки анкеты (команда OKO собирает за 4-6 часов).</small>
         </div>
         ${sections || '<p class="dim" style="padding:24px;text-align:center;font-size:13px">На этот день контент не запланирован (выходной)</p>'}
       </div>
@@ -11161,16 +11195,18 @@ function sysDayReelScript(topic, a, cnt, meta){
   const code = meta && meta.code ? meta.code : 'СИСТЕМА';
   const shoot = meta && meta.shoot ? meta.shoot : 'live';
   const audShort = aud.split(',')[0].trim().toLowerCase();
+  const P = sysPersona(a);
+  const g = P.geo ? ` в ${P.geo}` : '';
   const scenes = [
-    {t:'0-3 сек · ХУК (стоп-скролл)', body:`План: КРУПНЫЙ, глаза в кадре.\nРеплика: «${topic}»\nСубтитр (крупно, лайм на чёрном): ${topic.toUpperCase().slice(0,42)}\nЗвук: резкий whoosh + вступление трека.`},
-    {t:'3-15 сек · БОЛЬ + ЦИФРА', body:`План: СРЕДНИЙ, эмоция на лице.\nРеплика: «97% ${audShort} тратят по 3 часа в день на задачу, которая делается за 15 минут. Я покажу как за 30 секунд забрать эти 3 часа обратно.»\nСубтитр: 3 ЧАСА → 15 МИНУТ`},
-    {t:'15-35 сек · МЕТОД (3 шага)', body:`План: чередую крупный и B-roll. Три коротких вставки.\nРеплика: «Шаг 1. Открываешь [конкретный сервис или файл в ${niche}]. Записываешь 3 главных задачи недели.\nШаг 2. К каждой задаче ставишь одну метрику. Одну, не пять.\nШаг 3. Пятница вечер. Проверка. Если метрика выросла — пошёл дальше. Если нет — задача идёт в следующий понедельник без обсуждений.»\nСубтитр по шагам: ШАГ 1 · ШАГ 2 · ШАГ 3\nФормат монтажа: смена кадра каждые 2.5 сек, jump-cut между шагами.`},
+    {t:'0-3 сек · ХУК (стоп-скролл)', body:`План: ${P.cameraPlan}.\nРеплика (${P.voiceStyle}): «${topic}»\nСубтитр (крупно, лайм на чёрном): ${topic.toUpperCase().slice(0,42)}\nЗвук: резкий whoosh + вступление трека.`},
+    {t:'3-15 сек · БОЛЬ + ЦИФРА', body:`План: смягчение, средний план.\nРеплика: «97% ${audShort}${g} тратят по 3 часа в день на задачу, которая делается за 15 минут. Покажу как за 30 секунд забрать эти 3 часа обратно.»\nСубтитр: 3 ЧАСА → 15 МИНУТ`},
+    {t:'15-35 сек · МЕТОД (3 шага)', body:`План: чередую крупный и B-roll. Три коротких вставки.\nРеплика: «Шаг 1. Открываешь конкретный сервис или файл в ${niche}. Записываешь 3 главных задачи недели.\nШаг 2. К каждой задаче ставишь одну метрику. Одну, не пять.\nШаг 3. Пятница вечер. Проверка. Если метрика выросла, идёшь дальше. Если нет, задача переносится на следующий понедельник без обсуждений.»\nСубтитр по шагам: ШАГ 1 · ШАГ 2 · ШАГ 3\nФормат монтажа: смена кадра каждые 2.5 сек, jump-cut между шагами.`},
     {t:'35-45 сек · CTA (кодовое слово)', body:`План: возврат к крупному плану, прямой взгляд в камеру.\nРеплика: «Пиши в директ слово ${code}. За 5 минут пришлю полный шаблон с примерами по ${niche}. Бесплатно, без регистраций.»\nСубтитр (крупно, лайм): ПИШИ ${code} В ДИРЕКТ\nПоследний кадр: обложка с текстом ${code} и логотипом бренда на 1.2 сек.`},
   ];
-  const hashtags = `#${niche.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${audShort.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${code.toLowerCase()} #okoteam #saveit`;
+  const hashtags = `#${niche.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${audShort.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${code.toLowerCase()}${P.geo?' #'+P.geo.replace(/\s+/g,'').toLowerCase():''} #okoteam #saveit`;
   const music = 'Трек: динамичный upbeat, 100-120 BPM, без слов. Freesound tag «motivational upbeat». Дакинг под голос: sidechain -8 dB от голоса.';
   const shootLabel = SYS_SHOOT_LABEL[shoot];
-  const formatMeta = `${meta && meta.ffmt ? meta.ffmt : 'Ф1 Стоп-скролл'} · Способ: ${shootLabel} · Кодовое слово: ${code}`;
+  const formatMeta = `${meta && meta.ffmt ? meta.ffmt : 'Ф1 Стоп-скролл'} · Способ: ${shootLabel} · Кодовое слово: ${code} · ${P.mainPlatformNote}`;
   return {scenes, hashtags, music, formatMeta, count: cnt};
 }
 /* Полный TG-пост 500-800 знаков под тему. Реальный текст, готовый к публикации. */
