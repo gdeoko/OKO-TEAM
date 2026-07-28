@@ -469,6 +469,27 @@ nav#tabs .nav-logo{display:none}
 .hp-send svg.i{width:18px;height:18px}
 .hp-hint{margin:0;font-size:10.5px;color:var(--dim);text-align:center;line-height:1.4;padding:0 8px}
 .hp-msg-b b{color:var(--accent);font-weight:800}
+/* --- Мои соцсети --- */
+#socialsRoot{display:flex;flex-direction:column;gap:12px;padding-bottom:24px}
+.sn-hero{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border-radius:14px;background:linear-gradient(135deg,rgba(154,255,0,.08),transparent);border:1px solid var(--border);margin-bottom:6px}
+.sn-hero-ic{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center}
+.sn-hero-ic svg.i{width:22px;height:22px}
+.sn-hero-t{flex:1;min-width:0}
+.sn-hero-t b{display:block;font-size:14px;font-weight:800;margin-bottom:4px}
+.sn-hero-t p{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
+.sn-list{display:flex;flex-direction:column;gap:8px}
+.sn-card{padding:12px 13px;border-radius:12px;background:var(--surface);border:1px solid var(--border);transition:border-color .18s}
+.sn-card.on{border-color:var(--accent);background:linear-gradient(135deg,rgba(154,255,0,.05),transparent)}
+.sn-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sn-ic{flex-shrink:0;width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center}
+.sn-ic svg.i{width:18px;height:18px}
+.sn-t{flex:1;min-width:0}
+.sn-t b{display:block;font-size:13.5px;font-weight:800;line-height:1.2}
+.sn-t small{display:block;font-size:11px;color:var(--dim);margin-top:2px;line-height:1.4}
+.sn-st{flex-shrink:0;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;background:var(--raised);color:var(--dim);border:1px solid var(--border)}
+.sn-st.ok{background:var(--lime-dim);color:var(--accent);border-color:var(--accent)}
+.sn-act{display:flex;gap:8px}
+.sn-act .btn{flex:1;font-size:12px;padding:9px 12px}
 .score-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px}
 .score-row:last-child{border-bottom:none}
 .score-row b{color:var(--accent);font-size:16px}
@@ -9323,6 +9344,7 @@ nav#tabs>button.active svg.i{
             <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="showTab('partner')"><span class="svc-ic ic-partner"><svg class="i"><use href="#i-users"/></svg></span><span class="svc-label">Партнёрка</span></button>
             <button class="svc" onclick="openMa('helper')"><span class="svc-ic ic-help"><svg class="i"><use href="#i-chat"/></svg></span><span class="svc-label">Помощник OKO</span></button>
+            <button class="svc" onclick="openMa('socials')"><span class="svc-ic ic-socials"><svg class="i"><use href="#i-send"/></svg></span><span class="svc-label">Мои соцсети</span></button>
           </div>
           <p class="svc-note">Нажми на сервис, откроется внутри OKO</p>
           <div class="ma-foot">
@@ -9392,6 +9414,11 @@ nav#tabs>button.active svg.i{
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
           <h2 class="section-h" style="margin-top:16px">Помощник OKO</h2>
           <div id="helperRoot"></div>
+        </div>
+        <div class="ma-view" id="ma-socials">
+          <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
+          <h2 class="section-h" style="margin-top:16px">Мои соцсети</h2>
+          <div id="socialsRoot"></div>
         </div>
       </div>
     </section>
@@ -9804,7 +9831,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.79</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.80</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11580,6 +11607,7 @@ function openMa(id){
   if(id==='factory'){ fxReset(); renderFactory(); }
   if(id==='video'){ try{ vcHistRender(); }catch(e){} }
   if(id==='helper'){ try{ helperRender(); }catch(e){} }
+  if(id==='socials'){ try{ socialsRender(); }catch(e){} }
 }
 /* ===== Система роста: расширенная анкета (быстрая / полная) =====
    fast:true — вопрос попадает в быструю (10 вопросов). Полная = все.
@@ -13641,6 +13669,84 @@ function vcReset(){
   document.getElementById('vcBar').style.width='0';
 }
 
+/* ================= МОИ СОЦСЕТИ =================
+   Клиент привязывает свои Instagram/Telegram/VK/TikTok/YouTube для
+   автопостинга через контент-завод. OAuth-подключение — на бэкенде.
+   Пока: подключение через forms (логин + пароль-app) с сохранением в
+   localStorage (без прода), отдельные счётчики подписчиков вручную. */
+const SOCIALS_PLATFORMS = [
+  {k:'ig',  n:'Instagram',       ic:'photo',       color:'#E1306C', hint:'через Instagram Business API'},
+  {k:'tg',  n:'Telegram-канал',  ic:'send',        color:'#0088CC', hint:'через @okoappbot и права администратора'},
+  {k:'vk',  n:'VKontakte',       ic:'chat',        color:'#0077FF', hint:'ВК API, посты и сторис'},
+  {k:'tt',  n:'TikTok',          ic:'circle-play', color:'#FF0050', hint:'TikTok for Business API'},
+  {k:'yt',  n:'YouTube',         ic:'circle-play', color:'#FF0000', hint:'YouTube Data API v3, Shorts + длинные'},
+  {k:'ok',  n:'Одноклассники',   ic:'star',        color:'#EE8208', hint:'ОК API, посты и видео'},
+];
+function socialsKey(){ return 'oko-socials'; }
+function socialsState(){
+  try{ return JSON.parse(localStorage.getItem(socialsKey())||'{}'); }catch(e){ return {}; }
+}
+function socialsSave(s){ try{ localStorage.setItem(socialsKey(), JSON.stringify(s)); }catch(e){} }
+function socialsRender(){
+  const r = document.getElementById('socialsRoot');
+  if(!r) return;
+  const st = socialsState();
+  const connected = Object.values(st).filter(x=>x&&x.name).length;
+  const total = SOCIALS_PLATFORMS.length;
+  const cards = SOCIALS_PLATFORMS.map(p=>{
+    const s = st[p.k];
+    const on = s && s.name;
+    return `<div class="sn-card ${on?'on':''}">
+      <div class="sn-h">
+        <span class="sn-ic" style="background:${p.color}20;color:${p.color}">${I(p.ic)}</span>
+        <div class="sn-t"><b>${esc(p.n)}</b><small>${on?'@'+esc(s.name)+' · '+(s.subs||0)+' подписчиков':esc(p.hint)}</small></div>
+        <span class="sn-st ${on?'ok':''}">${on?'подключено':'не подключено'}</span>
+      </div>
+      <div class="sn-act">
+        ${on ? `<button class="btn ghost sm" onclick="socialsDisconnect('${p.k}')">Отключить</button>
+                <button class="btn sm" onclick="socialsAutopost('${p.k}')">${I('bolt')} Автопостинг: ${s.autopost?'ВКЛ':'выкл'}</button>`
+             : `<button class="btn sm" onclick="socialsConnect('${p.k}')">${I('plus')} Подключить</button>`}
+      </div>
+    </div>`;
+  }).join('');
+  r.innerHTML = `
+    <div class="sn-hero">
+      <div class="sn-hero-ic">${I('send')}</div>
+      <div class="sn-hero-t">
+        <b>${connected} из ${total} площадок подключено</b>
+        <p>Привяжи соцсети, чтобы контент-завод постил ролики автоматически по расписанию. Ключи храним зашифрованными, никогда не отдаём третьим.</p>
+      </div>
+    </div>
+    <div class="sn-list">${cards}</div>
+    <p class="dim" style="font-size:11.5px;text-align:center;margin-top:12px;line-height:1.5">Полная привязка через OAuth активируется 1 августа. Сейчас можно записать ник и число подписчиков для планирования.</p>`;
+}
+function socialsConnect(k){
+  const p = SOCIALS_PLATFORMS.find(x=>x.k===k); if(!p) return;
+  const name = prompt('Ник или ID канала в ' + p.n + ' (без @):');
+  if(!name) return;
+  const subs = prompt('Сколько сейчас подписчиков?', '0');
+  const st = socialsState();
+  st[k] = {name:name.trim(), subs:parseInt(subs)||0, autopost:false, at:new Date().toISOString()};
+  socialsSave(st);
+  socialsRender();
+  toast(p.n + ' привязан');
+}
+function socialsDisconnect(k){
+  if(!confirm('Отключить эту площадку от контент-завода?')) return;
+  const st = socialsState();
+  delete st[k];
+  socialsSave(st);
+  socialsRender();
+  toast('Отключено');
+}
+function socialsAutopost(k){
+  const st = socialsState();
+  if(!st[k]) return;
+  st[k].autopost = !st[k].autopost;
+  socialsSave(st);
+  socialsRender();
+  toast(st[k].autopost?'Автопостинг включён':'Автопостинг выключен');
+}
 /* ================= ПОМОЩНИК OKO (L5 frontend) =================
    Backend endpoint: POST /api.php?action=assistant с {msg, history[]}
    Ключ живёт на VPS в config.php, не во фронте.
