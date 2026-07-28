@@ -1,0 +1,225 @@
+{
+ "id": "gtape_030",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "positive corporate light groove",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "ONLINE SHOPPING",
+  "top": "BUY FURNITURE",
+  "big": "THAT ACTUALLY\nFITS",
+  "q": [
+   "garden patio outdoor measuring"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "That online sofa looks perfect on screen."
+  },
+  {
+   "id": "b2",
+   "text": "But will it swallow your whole living room?"
+  },
+  {
+   "id": "b3",
+   "text": "Measure the real space with your phone first."
+  },
+  {
+   "id": "b4",
+   "text": "Compare it to the product dimensions."
+  },
+  {
+   "id": "b5",
+   "text": "Order only what genuinely fits."
+  },
+  {
+   "id": "b6",
+   "text": "Fewer returns, zero regret."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.113,
+   "dur": 2.37,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.341,
+   "dur": 2.2,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.52,
+   "dur": 2.25,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.755,
+   "dur": 2.23,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.845,
+   "dur": 1.79,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.905,
+   "dur": 1.74,
+   "type": "lowerthird",
+   "title": "DROP A FRAME",
+   "sub": "test it before the nail"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #people #know #read #about",
+ "yt_title": "Buy furniture that actually fits #shorts",
+ "trend_keys": [
+  "people",
+  "know",
+  "read",
+  "about",
+  "few",
+  "tape",
+  "plan",
+  "measure"
+ ],
+ "content_type": "viral"
+}
