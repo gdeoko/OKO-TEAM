@@ -183,6 +183,10 @@ nav#tabs .nav-logo{display:none}
 .wave{display:flex;align-items:center;gap:2px;height:26px;flex:1}
 .wave i{width:3px;border-radius:2px;background:currentColor;opacity:.75}
 .voice .dur{font-size:11px;opacity:.7}
+.voice-tr{margin-left:auto;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:currentColor;opacity:.55;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s,background .15s}
+.voice-tr:hover{opacity:1;background:rgba(255,255,255,.08)}
+.voice-tr svg.i{width:12px;height:12px}
+.voice-transcript{margin-top:8px;padding:8px 11px;border-radius:10px;background:rgba(154,255,0,.08);border-left:2px solid var(--accent);font-size:12.5px;line-height:1.45;color:var(--text);font-style:italic;white-space:pre-wrap}
 /* video note */
 .vnote{width:136px;height:136px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #2a3d10, #0c1204 70%);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;color:var(--lime);position:relative}
 :root[data-theme="light"] .vnote{background:radial-gradient(circle at 35% 30%, #dff5c2, #b9e18d 75%);color:#3c7a00;border-color:#7ACC00}
@@ -8514,7 +8518,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   <div class="gal-row" id="galRow"></div>
   <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoPick(event)">
   <button class="sheet-item" onclick="document.getElementById('photoInput').click()"><svg class="i"><use href="#i-photo"/></svg><span>Фото с устройства<small>Выбрать изображение и отправить</small></span></button>
-  <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Start/Pro до 2 ГБ</small></span></button>
+  <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Premium от 990 ₽ — до 4 ГБ</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('poll')"><svg class="i"><use href="#i-poll"/></svg><span>Опрос<small>Голосование в чате</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('money')"><svg class="i"><use href="#i-money"/></svg><span>Перевести деньги<small>Мгновенно, без комиссии</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openStickers()"><svg class="i"><use href="#i-sticker"/></svg><span>Стикеры OKO<small>Фирменный набор</small></span></button>
@@ -8583,7 +8587,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.49</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.50</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -9436,7 +9440,9 @@ function msgHtml(m, idx){
   const tap = `onclick="reactBar(event,${idx})"`;
   if(m.kind==='voice') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="voice">
       <button class="pp" data-audio="${m.audio||''}" onclick="event.stopPropagation();togglePlay(this)">${I('play')}</button>
-      <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span></div>${time}${rx}</div>`;
+      <div class="wave">${WAVE(m.seed||3)}</div><span class="dur">${m.dur}</span>
+      <button class="voice-tr" title="Расшифровать голосовое" onclick="event.stopPropagation();voiceTranscribe(${idx})">${I('file')}</button>
+      </div>${m.transcript?`<p class="voice-transcript">${esc(m.transcript)}</p>`:''}${time}${rx}</div>`;
   if(m.kind==='vnote') return `<div class="msg has-vnote ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}" ${tap}>
       <div class="vnote" ${m.video?`onclick="event.stopPropagation();playVnote(this)"`:''}>${m.video?`<video src="${m.video}" playsinline muted loop></video>`:I('play')}<span class="dur">${m.dur}</span></div>${rx}</div>`;
   if(m.kind==='file') return `<div class="msg ${m.in?'in':'out'}" ${tap}><div class="filemsg">
@@ -9962,6 +9968,50 @@ function pushMsg(m){
   renderMsgs(); renderChatList(document.getElementById('chatSearch').value);
 }
 
+/* ============ ЛИМИТЫ МЕССЕНДЖЕРА (Free vs Premium) ============
+   Free: файлы 100 МБ, голосовые 5 мин, 500 чатов, 3 подписки на каналы.
+   START+ (Premium): файлы 4 ГБ, голосовые безлимит, транскрипция, эмодзи OKO. */
+const OKO_LIMITS = {
+  FREE:         { fileMB:100,  voiceSec:5*60,   chats:500,  subs:3   },
+  START:        { fileMB:4096, voiceSec:1e9,    chats:1e6,  subs:1e6 },
+  PRO:          { fileMB:4096, voiceSec:1e9,    chats:1e6,  subs:1e6 },
+  BUSINESS:     { fileMB:4096, voiceSec:1e9,    chats:1e6,  subs:1e6 },
+  BUSINESS_PRO: { fileMB:4096, voiceSec:1e9,    chats:1e6,  subs:1e6 },
+  MAX:          { fileMB:4096, voiceSec:1e9,    chats:1e6,  subs:1e6 },
+};
+function okoTier(){ return (typeof PROFILE!=='undefined' && PROFILE.tier) ? PROFILE.tier.replace(/[- ].*/,'').toUpperCase() : 'FREE'; }
+function okoIsPremium(){ return okoTier() !== 'FREE'; }
+function okoLimits(){ return OKO_LIMITS[okoTier()] || OKO_LIMITS.FREE; }
+/* Транскрипция голосового — фича Premium (START+). На FREE предлагает апгрейд. */
+function voiceTranscribe(idx){
+  if(!okoIsPremium()){
+    okoOfferPremium('Расшифровка голосовых — <b>Premium-функция</b>.');
+    return;
+  }
+  if(!currentChat) return;
+  const m = currentChat.msgs[idx];
+  if(!m || m.kind!=='voice') return;
+  if(m.transcript){ toast('Расшифровка уже готова'); return; }
+  m.transcript = '…';
+  renderMsgs();
+  // real backend: WhisperAPI/faster-whisper локально, тут — реалистичный стаб «команда расшифровывает»
+  setTimeout(()=>{
+    // Заглушка: реальный текст подтянется когда подключим backend с faster-whisper
+    m.transcript = 'Голосовое расшифровано командой OKO. Реальная транскрипция появится после подключения к нашему бэкенду.';
+    renderMsgs();
+    toast('Голосовое расшифровано');
+  }, 1200);
+}
+function okoOfferPremium(reason){
+  const body = reason + '<br><br>Подключи <b>START за 990 ₽/мес</b> — файлы до 4 ГБ, голосовые без лимита, транскрипция и эксклюзивные эмодзи OKO.';
+  if(typeof showPopup==='function'){
+    showPopup({ico:'crown', title:'Функция Premium',  body,
+      actions:[{label:'Подключить START', onclick:()=>{ closePopup&&closePopup(); openPay('START'); }}, {label:'Позже', ghost:true}]});
+  } else {
+    toast('Функция доступна с тарифа START (990 ₽/мес)');
+  }
+}
+
 /* отправка / запись: удержание = запись, тап = смена голосовое/кружочек */
 let recMode = 'voice', holdTimer = null, holdStarted = false;
 function sendText(){
@@ -10022,6 +10072,15 @@ function stopRec(){
   const cleanup = ()=>{ if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream=null; } };
   const isVideo = recMode==='vnote';
   const pv = document.getElementById('recPreview'); if(pv){ pv.style.display='none'; pv.srcObject=null; }
+  // Лимит длины голосового на FREE: 5 минут
+  const voiceLimit = okoLimits().voiceSec;
+  if(!isVideo && sec > voiceLimit){
+    // отменяем отправку и предлагаем Premium
+    if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){ try{ mediaRec.onstop=null; mediaRec.stop(); }catch(e){} }
+    cleanup(); mediaRec = null; syncSendIcon();
+    okoOfferPremium('Голосовое <b>'+dur+'</b> длиннее лимита <b>'+Math.floor(voiceLimit/60)+' минут</b> на текущем тарифе.');
+    return;
+  }
   if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
     mediaRec.onstop = ()=>{
       const blob = new Blob(recChunks, {type: mediaRec.mimeType||(isVideo?'video/webm':'audio/webm')});
@@ -10155,6 +10214,12 @@ function onPhotoPick(ev){
   ev.target.value = '';
   closeSheet();
   if(!f || !currentChat) return;
+  const limitMB = okoLimits().fileMB;
+  const sizeMB = f.size / (1024*1024);
+  if(sizeMB > limitMB){
+    okoOfferPremium('Файл <b>'+sizeMB.toFixed(1)+' МБ</b> больше лимита <b>'+limitMB+' МБ</b> на текущем тарифе.');
+    return;
+  }
   const src = URL.createObjectURL(f);
   pushMsg({in:0, t:nowT(), kind:'photo', src});
 }
