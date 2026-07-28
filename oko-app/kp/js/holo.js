@@ -86,9 +86,10 @@ export function initHolo(){
       else grp.visible=false;}
     // SPRITE FIGURES — part of background: scroll-tied frame + position, tiny breath, no springy motion
     for(const f of figs){const r=f.anchor.getBoundingClientRect();const P=rectPos(r);f.grp.visible=P.vis;if(!P.vis)continue;
-      const prog = f.opt.progType==='hand' ? handProg(r) : pinProg();
+      let prog = f.opt.progType==='hand' ? handProg(r) : pinProg();
+      if(f.opt.progType==='hand'){ f.maxProg = Math.max(f.maxProg||0, prog); prog = f.maxProg; }  // рука не закрывается обратно
       setFrame(f, prog*(f.N-1));
-      f.mat.opacity=clamp(((H*0.94-r.top)/(H*0.5))*1.5,0,1);
+      f.mat.opacity=(f.opt.progType==='hand'&&(f.maxProg||0)>0.99)?1:clamp(((H*0.94-r.top)/(H*0.5))*1.5,0,1);
       const asp=f.aspect; let w,h;
       if(f.opt.fit==='contain'){ w=P.w; h=w/asp; if(h>P.h){h=P.h;w=h*asp;} } else { w=P.w; h=w/asp; }
       let x=P.x, y=P.y+Math.sin(time*0.6+figs.indexOf(f))*2;      // tiny breath only (±2px)
