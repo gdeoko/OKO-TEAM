@@ -352,6 +352,46 @@ nav#tabs .nav-logo{display:none}
 .fx-badge{flex-shrink:0;font-size:10px;font-weight:700;color:#000;background:var(--lime);border-radius:99px;padding:3px 9px;text-transform:uppercase;letter-spacing:.04em}
 .progress{height:6px;background:var(--raised);border-radius:3px;overflow:hidden;margin:14px 0}
 .progress i{display:block;height:100%;background:var(--lime);width:0;transition:width .3s;border-radius:3px}
+/* --- Видео-премодератор --- */
+.vc-hero{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(154,255,0,.08),transparent);border:1px solid var(--border);margin-bottom:14px}
+.vc-hero-t{flex:1;min-width:0}
+.vc-hero-t b{display:block;font-size:15px;font-weight:800;margin-bottom:4px}
+.vc-hero-t p{margin:0;font-size:12.5px;color:var(--dim);line-height:1.5}
+.vc-hero-ic{flex-shrink:0;width:52px;height:52px;border-radius:14px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center}
+.vc-hero-ic svg.i{width:26px;height:26px}
+.vc-steps{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.vc-step{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:11px;background:var(--surface);border:1px solid var(--border)}
+.vc-step-n{flex-shrink:0;width:26px;height:26px;border-radius:8px;background:var(--lime-dim);color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;padding-top:1px}
+.vc-step b{display:block;font-size:13px;font-weight:800;margin-bottom:2px}
+.vc-step small{display:block;font-size:11.5px;color:var(--dim);line-height:1.4}
+.vc-btns{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.vc-hist-h{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.vc-hist-h svg.i{width:12px;height:12px;color:var(--accent)}
+.vc-hist{display:flex;flex-direction:column;gap:6px}
+.vc-hist:empty::before{content:'История появится после первой проверки';display:block;text-align:center;padding:14px;font-size:12px;color:var(--dim)}
+.vc-hi{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;background:var(--surface);border:1px solid var(--border)}
+.vc-hi-thm{flex-shrink:0;width:38px;height:52px;border-radius:6px;background:linear-gradient(135deg,#161616,#0a0a0a);display:flex;align-items:center;justify-content:center;color:var(--accent);font-family:'Bebas Neue',sans-serif;font-size:11px}
+.vc-hi-t{flex:1;min-width:0}
+.vc-hi-t b{display:block;font-size:12.5px;font-weight:700;line-height:1.3}
+.vc-hi-t small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}
+.vc-hi-v{flex-shrink:0;padding:4px 9px;border-radius:99px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.vc-hi-v.ok{background:rgba(154,255,0,.15);color:var(--accent)}
+.vc-hi-v.warn{background:rgba(255,184,74,.15);color:#ffb84a}
+.vc-hi-v.bad{background:rgba(255,92,92,.15);color:#ff5c5c}
+.vc-sample{margin-top:12px}
+.vc-sample-h{border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:12px}
+.vc-sample-h b{display:block;font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.vc-sample-h small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.vc-sample-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+@media(min-width:480px){.vc-sample-metrics{grid-template-columns:repeat(4,1fr)}}
+.vc-sample-metrics>div{padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;text-align:center}
+.vc-sample-metrics b{display:block;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);letter-spacing:.02em}
+.vc-sample-metrics small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.3}
+.vc-sample-sec{margin-bottom:12px;padding:12px 14px;border-radius:11px;background:var(--surface);border:1px solid var(--border)}
+.vc-sample-sec h4{margin:0 0 6px;font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.05em}
+.vc-sample-sec ul{margin:0;padding-left:20px}
+.vc-sample-sec li{font-size:12.5px;line-height:1.55;margin-bottom:4px;color:var(--fg)}
+.vc-sample-sec p{margin:0;font-size:12.5px;line-height:1.55;color:var(--fg)}
 .score-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px}
 .score-row:last-child{border-bottom:none}
 .score-row b{color:var(--accent);font-size:16px}
@@ -1517,16 +1557,32 @@ main>.screen{position:relative;z-index:1}
 
         <div class="ma-view" id="ma-video">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
-          <h2 class="section-h" style="margin-top:16px">Видео-премодератор</h2>
+          <h2 class="section-h" style="margin-top:16px">Проверка видео</h2>
           <div class="card" id="vcUpload">
-            <p class="dim" style="font-size:13.5px;line-height:1.5">Ролик до 10 ГБ. Исходник автоудаляется через 24 часа после анализа.</p>
-            <div style="height:12px"></div>
-            <button class="btn" onclick="vcStart()"><svg class="i"><use href="#i-camera"/></svg> Загрузить ролик</button>
+            <div class="vc-hero">
+              <div class="vc-hero-t">
+                <b>Анализ ролика за 30 секунд</b>
+                <p>Проверим на бан-риски площадок, дадим оценку хука и досмотра, предложим что улучшить. Твой ролик остаётся у тебя, никуда не публикуется.</p>
+              </div>
+              <span class="vc-hero-ic"><svg class="i"><use href="#i-circle-play"/></svg></span>
+            </div>
+            <div class="vc-steps">
+              <div class="vc-step"><span class="vc-step-n">1</span><div><b>Загрузка</b><small>MP4/MOV до 10 ГБ. 4K, HDR, вертикаль поддерживаются.</small></div></div>
+              <div class="vc-step"><span class="vc-step-n">2</span><div><b>Анализ 30 сек</b><small>Проверка бан-слов, музыки, кадров, скорости, длительности, обложки.</small></div></div>
+              <div class="vc-step"><span class="vc-step-n">3</span><div><b>Вердикт + правки</b><small>Готов к публикации или список правок с таймкодами.</small></div></div>
+              <div class="vc-step"><span class="vc-step-n">4</span><div><b>Автофикс за 3-5 мин</b><small>По кнопке команда OKO поправит и вернёт готовый вариант.</small></div></div>
+            </div>
+            <div class="vc-btns">
+              <button class="btn" onclick="vcStart()"><svg class="i"><use href="#i-bolt"/></svg> Загрузить ролик</button>
+              <button class="btn ghost" onclick="vcOpenSample()"><svg class="i"><use href="#i-star"/></svg> Пример вердикта</button>
+            </div>
+            <div class="vc-hist-h"><svg class="i"><use href="#i-check2"/></svg> Твоя история проверок</div>
+            <div id="vcHistory" class="vc-hist"></div>
           </div>
           <div class="card" id="vcProgress" style="display:none">
             <p style="font-size:14px" id="vcStage">Загрузка…</p>
             <div class="progress"><i id="vcBar"></i></div>
-            <p class="dim" style="font-size:12.5px">Наши монтажёры разбирают хук, динамику, риски и технические параметры</p>
+            <p class="dim" style="font-size:12.5px">Специалист OKO смотрит хук, динамику, риски и технические параметры</p>
           </div>
           <div id="vcResult" style="display:none"></div>
         </div>
@@ -2995,6 +3051,7 @@ function openMa(id){
   if(id==='system'){ aState = {mode:'__pick', step:-1, answers:{}, order:[]}; renderAnketa(); }
   if(id==='market'){ mkView='cats'; mkCat=null; mkSearchQ=''; renderMarket(); }
   if(id==='factory'){ fxReset(); renderFactory(); }
+  if(id==='video'){ try{ vcHistRender(); }catch(e){} }
 }
 /* ===== Система роста: расширенная анкета (быстрая / полная) =====
    fast:true — вопрос попадает в быструю (10 вопросов). Полная = все.
@@ -4956,7 +5013,11 @@ function vcStart(){
     if(i>=steps.length){ clearInterval(tick);
       document.getElementById('vcProgress').style.display='none';
       renderVcReport();
-      document.getElementById('vcResult').style.display='block'; return; }
+      document.getElementById('vcResult').style.display='block';
+      try{ const avg=Math.round(VC_METRICS.reduce((s,m)=>s+m.v,0)/VC_METRICS.length);
+        vcHistAdd({name:'Ролик '+new Date().toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}), at:new Date().toLocaleDateString('ru-RU'), summary:'2 риска, 4 правки', score:avg});
+      }catch(e){}
+      return; }
     bar.style.width = steps[i][0]+'%'; stage.textContent = steps[i][1]; i++;
   }, 800);
 }
@@ -5015,6 +5076,59 @@ function vcReset(){
   document.getElementById('vcBar').style.width='0';
 }
 
+/* --- Видео-премодератор: история проверок и пример вердикта --- */
+function vcHistKey(){ return 'oko-vc-history'; }
+function vcHistory(){
+  try{ return JSON.parse(localStorage.getItem(vcHistKey())||'[]'); }
+  catch(e){ return []; }
+}
+function vcHistSave(items){ try{ localStorage.setItem(vcHistKey(), JSON.stringify(items.slice(0,10))); }catch(e){} }
+function vcHistAdd(v){
+  const items = vcHistory();
+  items.unshift(v);
+  vcHistSave(items);
+  vcHistRender();
+}
+function vcHistRender(){
+  const el = document.getElementById('vcHistory');
+  if(!el) return;
+  const items = vcHistory();
+  if(!items.length){ el.innerHTML=''; return; }
+  el.innerHTML = items.map(v=>{
+    const cls = v.score>=80?'ok':v.score>=60?'warn':'bad';
+    const lbl = v.score>=80?'готов':v.score>=60?'правки':'риск';
+    return `<div class="vc-hi">
+      <div class="vc-hi-thm">${v.score}%</div>
+      <div class="vc-hi-t"><b>${esc(v.name||'Ролик')}</b><small>${esc(v.at)} · ${esc(v.summary)}</small></div>
+      <span class="vc-hi-v ${cls}">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+function vcOpenSample(){
+  const html = `
+    <div class="card vc-sample">
+      <button class="btn ghost sm" onclick="this.parentElement.remove()" style="width:auto;margin-bottom:12px">${I('back')} Закрыть пример</button>
+      <div class="vc-sample-h"><b>ПРИМЕР ВЕРДИКТА</b><small>Ролик клиента, ниша фитнес, длина 42 сек</small></div>
+      <div class="vc-sample-metrics">
+        <div><b>78%</b><small>готовность</small></div>
+        <div><b>68%</b><small>вероятность рекомендаций</small></div>
+        <div><b>2</b><small>риска блокировки</small></div>
+        <div><b>4</b><small>правки на 3-5 мин</small></div>
+      </div>
+      <div class="vc-sample-sec">
+        <h4>Что понравилось</h4>
+        <ul><li>Хук в первые 1.2 сек: сильно</li><li>Динамика склеек ровная 2.3 сек в среднем</li><li>Тренд-формат «до и после» в топе недели</li></ul>
+      </div>
+      <div class="vc-sample-sec">
+        <h4>Что чинить</h4>
+        <ul><li>Авторский трек Ariana Grande, будет теневой бан. Заменить на бесплатную библиотеку OKO.</li><li>Нет субтитров, теряется +18% досмотра. Вшить авто-субтитры.</li><li>Просадка на 12-й секунде, ужать сцену 2 на 3 сек.</li><li>Обложка тёмная, поднять тени на +10.</li></ul>
+      </div>
+      <div class="vc-sample-sec"><h4>Прогноз после правок</h4><p>Готовность вырастет до 92%. Вероятность рекомендаций 82%. Средний охват 45-70к.</p></div>
+    </div>`;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = html;
+  document.getElementById('vcUpload').after(wrap.firstElementChild);
+}
 /* ================= ПАРТНЁРКА ================= */
 function copyRef(){
   const inp = document.getElementById('refInput');
