@@ -118,3 +118,15 @@
 - s3: /tmp/R3/stocks/s3.mp4
 - s4: /tmp/R3/stocks/s4.mp4
 - s5: /tmp/R3/stocks/s5.mp4
+
+## 2026-07-28 — ЭТАЛОН кино-кадр на телефоне (видеопродакшн, Pexels)
+- hook: /tmp/P1/stocks/hook.mp4
+- light: /tmp/P1/stocks/light.mp4
+- face: /tmp/P1/stocks/face.mp4
+- move: /tmp/P1/stocks/move.mp4
+- frame: /tmp/P1/stocks/frame.mp4
+- sound: /tmp/P1/stocks/sound.mp4
+- warm: /tmp/P1/stocks/warm.mp4
+- cam: /tmp/P1/stocks/cam.mp4
+- softbox: /tmp/P1/stocks/softbox.mp4
+- cta: /tmp/P1/stocks/cta.mp4
