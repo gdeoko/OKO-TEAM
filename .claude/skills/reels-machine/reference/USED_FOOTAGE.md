@@ -102,3 +102,11 @@
 - s3: /tmp/R1/stocks/s3.mp4
 - s4: /tmp/R1/stocks/s4.mp4
 - cta: /tmp/R1/stocks/cta.mp4
+
+## 2026-07-28 — ролик джун-vs-сеньор (Pexels)
+- hook: /tmp/R2/stocks/hook.mp4
+- s1: /tmp/R2/stocks/s1.mp4
+- s2: /tmp/R2/stocks/s2.mp4
+- s3: /tmp/R2/stocks/s3.mp4
+- s4: /tmp/R2/stocks/s4.mp4
+- cta: /tmp/R2/stocks/cta.mp4
