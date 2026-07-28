@@ -31,3 +31,6 @@
 fs_viral_563543 (50.8с), fs_viral_620918 (96.0с), fs_viral_790949 (60.1с), fs_viral_858710 (172.6с) — все energetic/driving/hype, зарегистрированы в manifest.json.
 Виральный пул: 23 трека, 17 уник неиспользованных. Исчерпание снято.
 Грабли Freesound API: токен через ЗАГОЛОВОК `Authorization: Token <KEY>` (query-param ?token= тоже, но нестабилен); фильтр CC0 работает `filter=license:"Creative Commons 0"` через --data-urlencode; НО узкие SFX-запросы («driving instrumental») дают 0 под CC0 — брать музыкальные термины («electronic music», «hip hop beat», «action cinematic»). useful/sales добить следующим проходом (таймаут прервал).
+
+## 28.07 (~05:25 UTC) — добил useful/sales пул (+5 CC0)
+useful: fs_useful_713517(60с), fs_useful_423665(160с), fs_useful_683821(121с). sales (был пуст!): fs_sales_506495(78с), fs_sales_579829(35с). Зарегистрированы в manifest. Теперь все 3 бакета укомплектованы: viral 23 / useful 12 / sales 2. Sales добить ещё (пул мал), но бакет ожил.

@@ -392,5 +392,70 @@
   "src": "freesound:858710",
   "license": "CC0",
   "name": "CC0 viral bed 858710"
+ },
+ "fs_useful_713517.mp3": {
+  "mood": [
+   "confident",
+   "clean",
+   "focused",
+   "steady"
+  ],
+  "bucket": "useful",
+  "dur": 60.0,
+  "src": "freesound:713517",
+  "license": "CC0",
+  "name": "Perspire (Loop) - Corporate-style background music with echo pedal guitar and piano"
+ },
+ "fs_useful_423665.mp3": {
+  "mood": [
+   "confident",
+   "clean",
+   "focused",
+   "steady"
+  ],
+  "bucket": "useful",
+  "dur": 160.0,
+  "src": "freesound:423665",
+  "license": "CC0",
+  "name": "DivKid 4 Voice Ambient Reel - FX ONLY.wav"
+ },
+ "fs_useful_683821.mp3": {
+  "mood": [
+   "confident",
+   "clean",
+   "focused",
+   "steady"
+  ],
+  "bucket": "useful",
+  "dur": 121.0,
+  "src": "freesound:683821",
+  "license": "CC0",
+  "name": "Slightly Mysterious Sounding Track"
+ },
+ "fs_sales_506495.mp3": {
+  "mood": [
+   "uplifting",
+   "warm",
+   "hopeful",
+   "confident"
+  ],
+  "bucket": "sales",
+  "dur": 78.0,
+  "src": "freesound:506495",
+  "license": "CC0",
+  "name": "Overlook (uplifting ambient loop)"
+ },
+ "fs_sales_579829.mp3": {
+  "mood": [
+   "uplifting",
+   "warm",
+   "hopeful",
+   "confident"
+  ],
+  "bucket": "sales",
+  "dur": 34.8,
+  "src": "freesound:579829",
+  "license": "CC0",
+  "name": "Noir_Song_Short8.wav"
  }
 }
