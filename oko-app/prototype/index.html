@@ -8889,7 +8889,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.60</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.61</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11861,12 +11861,8 @@ function sysMatBlocks(a){
     {t:'Генератор договоров', ic:'file', sub:'ФИО + продукт → договор с обязанностями и подписями',
       custom:()=>sysMatGenContractForm(),
     },
-    {t:'Лид-магниты', ic:'bookmark', sub:'12 готовых идей + PDF-шаблоны',
-      sections:[
-        {h:'Идеи под нишу', body:''},
-        {h:'Топ-12 идей', body:'1) Чек-лист «10 ошибок». 2) Гайд «Мой первый шаг за 7 дней». 3) Мини-курс из 3 писем. 4) Разбор кейса. 5) Шаблон Excel. 6) Скрипт разговора. 7) Календарь на 30 дней. 8) Библиотека промптов. 9) Список сервисов. 10) Тест-опросник. 11) Аудио-подкаст 15 мин. 12) Живой мини-мастер-класс 45 мин.'},
-        {h:'Как отдавать', body:'В директе после подписки → одно сообщение с ссылкой на PDF/лендинг → автоматическая сегментация по клику.'},
-      ],
+    {t:'Лид-магниты', ic:'bookmark', sub:'12 готовых идей + генератор мобильного HTML-документа',
+      custom:()=>sysMagnetGenForm(),
     },
     {t:'Партнёрские предложения', ic:'thumb', sub:'Шаблоны писем: коллаб · спонсор · взаимопиар',
       sections:[
@@ -12016,7 +12012,7 @@ function sysMatGenContract(){
 function sysMatDownload(kind){
   const el = document.getElementById(kind==='kp'?'kpPreview':'cnPreview');
   if(!el || !el.innerHTML.trim()){ toast('Сначала сгенерируй документ'); return; }
-  const wrap = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>OKO — ${kind==='kp'?'КП':'Договор'}</title>
+  const wrap = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>OKO ${kind==='kp'?'КП':'Договор'}</title>
     <style>body{font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif;color:#111;background:#fff;padding:32px;max-width:720px;margin:0 auto}.sys-doc h3{margin:16px 0 8px}.sys-doc h4{margin:14px 0 6px;color:#333}.sys-doc-h{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}.sys-doc-h b{font-size:18px}.sys-doc-h small{display:block;color:#666;margin-top:4px}.sys-doc ul{margin:8px 0 8px 20px}.sys-doc-f{margin-top:24px;padding-top:12px;border-top:1px solid #ccc;color:#666;font-size:12px}</style>
     </head><body>${el.innerHTML}</body></html>`;
   const blob = new Blob([wrap], {type:'text/html;charset=utf-8'});
@@ -12024,6 +12020,175 @@ function sysMatDownload(kind){
   const a = document.createElement('a'); a.href=url; a.download = 'oko-'+kind+'-'+Date.now()+'.html'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 3000);
   toast('Скачивание запущено');
+}
+/* Генератор лид-магнитов: 12 готовых идей + мобильный HTML-документ под нишу. */
+const SYS_MAGNET_IDEAS = [
+  {k:'check', t:'Чек-лист «10 ошибок»',       d:'10 частых ошибок в нише, каждая с примером и решением'},
+  {k:'guide', t:'Гайд «Первый шаг за 7 дней»', d:'Дневник действий на неделю с ежедневными задачами'},
+  {k:'mini',  t:'Мини-курс из 3 писем',        d:'Проблема, метод, разбор кейса. По одному письму в день'},
+  {k:'case',  t:'Разбор кейса клиента',        d:'Реальный клиент. До, что делали, после — с цифрами'},
+  {k:'xls',   t:'Шаблон Excel/Google Sheets',  d:'Готовая таблица под задачу ниши с формулами и примером'},
+  {k:'script',t:'Скрипт разговора',            d:'От первого контакта до закрытия сделки. 4 сцены'},
+  {k:'cal',   t:'Календарь на 30 дней',        d:'День за днём. Что делать сегодня и как отметить прогресс'},
+  {k:'prompt',t:'Библиотека промптов',         d:'50 готовых промптов для Midjourney и Gemini под нишу'},
+  {k:'srv',   t:'Список 25 сервисов',          d:'Топ-25 бесплатных и платных инструментов в нише'},
+  {k:'test',  t:'Тест-опросник',               d:'10 вопросов. По итогу балл и персональная рекомендация'},
+  {k:'pod',   t:'Аудио-подкаст 15 минут',      d:'Короткий выпуск с главной мыслью и практическим шагом'},
+  {k:'mm',    t:'Живой мини-мастер-класс 45 мин', d:'Zoom-разбор в узкой группе. Регистрация по кодовому слову'},
+];
+function sysMagnetGenForm(){
+  const a = aState.answers;
+  const opts = SYS_MAGNET_IDEAS.map((m,i)=>`<option value="${i}">${m.t}</option>`).join('');
+  return `
+    <div class="sys-gen">
+      <div class="sys-gen-h">${I('bookmark')} <b>Генератор лид-магнита</b></div>
+      <p class="sys-gen-p">Выбери формат из 12 идей. Получишь полноценный мобильный HTML-документ 3-4 страницы с обложкой в бренде, готовый к отправке в директ. Скачивается одним файлом.</p>
+      <div class="sys-gen-form">
+        <label>Формат лид-магнита<select id="lmType">${opts}</select></label>
+        <label>Своя тема (или оставь из ниши)<input id="lmTopic" type="text" placeholder="${esc(a.niche||'фитнес для мам')}"></label>
+        <label>Кодовое слово в CTA<select id="lmCode"><option>СТАРТ</option><option>РАЗБОР</option><option>СИСТЕМА</option><option>КЛУБ</option><option>ГАЙД</option><option>VIP</option></select></label>
+        <label>Автор (имя + ссылка)<input id="lmAuthor" type="text" placeholder="${esc(a.who||'Эксперт')}, @nick"></label>
+      </div>
+      <div class="sys-gen-actions">
+        <button class="btn" onclick="sysMagnetGen()">${I('bolt')} Сгенерировать</button>
+        <button class="btn ghost" onclick="sysMagnetDownload()">${I('file')} Скачать HTML</button>
+      </div>
+      <div id="lmPreview" class="sys-gen-out"></div>
+    </div>`;
+}
+function sysMagnetGen(){
+  const a = aState.answers;
+  const idx = parseInt((document.getElementById('lmType')||{}).value||'0',10);
+  const idea = SYS_MAGNET_IDEAS[idx] || SYS_MAGNET_IDEAS[0];
+  const topic = (document.getElementById('lmTopic')||{}).value || a.niche || 'ниша';
+  const code = (document.getElementById('lmCode')||{}).value || 'СТАРТ';
+  const author = (document.getElementById('lmAuthor')||{}).value || (a.who||'Эксперт');
+  const niche = a.niche || topic;
+  const aud = (a.audience||'клиентов').split(',')[0].trim();
+  // 3 страницы контента под ключевые типы
+  const pages = sysMagnetPages(idea, topic, niche, aud);
+  const html = sysMagnetHtml({idea, topic, niche, aud, code, author, pages});
+  const out = document.getElementById('lmPreview'); if(out) out.innerHTML = html;
+  toast('Лид-магнит собран, кнопка «Скачать HTML» рядом');
+}
+function sysMagnetPages(idea, topic, niche, aud){
+  const T = topic || niche;
+  const A = aud || 'клиентов';
+  if(idea.k==='check'){
+    return [
+      {n:'01', h:'10 ошибок, которые убивают результат', body:[
+        'Работа без плана. Каждая неделя как чистый лист, старые задачи забыты.',
+        'Один продукт, но 5 разных лендингов и 3 версии оффера. Клиент теряется.',
+        'Реклама без контроля. Бюджет уходит, метрик ноль.',
+        'Ответы в директ раз в 2 дня. За это время клиент уходит к конкуренту.',
+        'Нет базы. Все клиенты в личке, экспорта нет.',
+      ]},
+      {n:'02', h:'Ещё 5 ошибок, которые стоят денег', body:[
+        'Скидки без причины. Клиент привыкает покупать со скидкой, полная цена не берётся.',
+        'Работа без юр-документов. Один спор и минус 100 000 ₽.',
+        'Один канал трафика. Он замолчал, продажи упали.',
+        'Отсутствие следующего шага после покупки. Клиенты не возвращаются.',
+        'Тестирование в голове, а не в цифрах. Кажется работает, а по факту нет.',
+      ]},
+      {n:'03', h:'Как исправить за 7 дней', body:[
+        'День 1: выпиши свои 10 ошибок из списка выше. Честно.',
+        'День 2: выбери 3 самые дорогие. Не 10, три.',
+        'День 3-5: исправь каждую по одной в день. Одну!',
+        'День 6-7: проверь результат. Что изменилось в цифрах.',
+        `Проверил на 47 ${A}. У 42 из них выручка выросла в первый месяц.`,
+      ]},
+    ];
+  }
+  if(idea.k==='guide'){
+    return [
+      {n:'01', h:`Что вы получите за 7 дней в теме «${T}»`, body:[
+        'Понимание собственной точки А. Реальные цифры без иллюзий.',
+        'Одну рабочую тактику, которая даст результат уже на этой неделе.',
+        'Готовый шаблон, который экономит 3 часа в день.',
+        'План следующих 21 дней с конкретными шагами.',
+      ]},
+      {n:'02', h:'Дни 1-3: разбор и подготовка', body:[
+        'День 1: замер точки А. Записываешь 5 главных метрик как есть.',
+        `День 2: анализ 3 сильных конкурентов в «${niche}». Что они делают лучше.`,
+        'День 3: выбор одной главной задачи недели. Одной!',
+      ]},
+      {n:'03', h:'Дни 4-7: действие и итоги', body:[
+        'День 4: первый рабочий день по новой схеме. 90 минут фокуса без телефона.',
+        'День 5: разбор дня 4. Что сработало, что нет.',
+        'День 6: усиление того что сработало. Отказ от того что нет.',
+        'День 7: итоги недели. Ставишь следующую задачу на 21 день.',
+      ]},
+    ];
+  }
+  // Универсальный fallback для остальных типов
+  return [
+    {n:'01', h:`Главное о «${T}» за 60 секунд`, body:[
+      `Ниша «${niche}» — это реальный рынок с реальными деньгами.`,
+      `${A} готовы платить за результат, не за процесс.`,
+      'Проблема не в инструментах, а в системе.',
+      'Правильная последовательность важнее скорости.',
+    ]},
+    {n:'02', h:`3 главных приёма`, body:[
+      'Приём 1: одна метрика на неделю. Одна, не пять.',
+      'Приём 2: пятница вечер, 20 минут разбор. Всегда.',
+      'Приём 3: усиливаешь что растёт, переносишь что просело. Без сожалений.',
+    ]},
+    {n:'03', h:'Как применить прямо сегодня', body:[
+      'Открой файл или доску прямо сейчас.',
+      'Запиши 3 задачи недели с одной метрикой к каждой.',
+      'Поставь напоминание на пятницу 18:00.',
+      'Пришли скрин в директ по кодовому слову. Дам обратную связь.',
+    ]},
+  ];
+}
+function sysMagnetHtml({idea, topic, niche, aud, code, author, pages}){
+  const T = (topic||niche||'ниша');
+  return `
+    <div class="sys-magnet" id="magnetPreview">
+      <div class="mg-cover">
+        <div class="mg-badge">Кодовое слово: ${esc(code)}</div>
+        <h1>${esc(idea.t)}<span class="mg-sub">${esc(T)}</span></h1>
+        <p class="mg-cover-sub">${esc(idea.d)}.<br>Автор: ${esc(author)} · OKO Team</p>
+      </div>
+      ${pages.map(pg=>`
+        <div class="mg-page">
+          <div class="mg-pn">Страница ${esc(pg.n)}</div>
+          <h2>${esc(pg.h)}</h2>
+          <ol>${pg.body.map(b=>`<li>${esc(b)}</li>`).join('')}</ol>
+        </div>`).join('')}
+      <div class="mg-cta">
+        <h2>Хочешь полную программу?</h2>
+        <p>Пиши в директ слово <b>${esc(code)}</b>. За 5 минут пришлю расширенный гайд с примерами и разбор твоего случая. Бесплатно.</p>
+        <div class="mg-cta-a">${esc(author)} · OKO Team · okoteam.top</div>
+      </div>
+    </div>`;
+}
+function sysMagnetDownload(){
+  const el = document.getElementById('magnetPreview');
+  if(!el){ toast('Сначала нажми «Сгенерировать»'); return; }
+  const css = `body{font:14px/1.6 'Inter',system-ui,-apple-system,sans-serif;color:#eee;background:#0d0d0d;margin:0;padding:24px;max-width:420px;margin:0 auto}
+    h1,h2{font-family:'Bebas Neue','Montserrat',sans-serif;letter-spacing:.01em;color:#fff}
+    .mg-cover{text-align:center;padding:32px 8px 16px}
+    .mg-badge{display:inline-block;padding:4px 12px;border:1px solid #9AFF00;border-radius:16px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9AFF00;margin-bottom:12px}
+    .mg-cover h1{font-size:34px;font-weight:900;line-height:1.15;margin:0 0 8px}
+    .mg-sub{display:block;font-size:22px;color:#9AFF00;margin-top:4px}
+    .mg-cover-sub{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;margin:8px 0 0}
+    .mg-page{padding:22px 8px;border-top:1px solid rgba(154,255,0,.15)}
+    .mg-pn{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#9AFF00;margin-bottom:6px;font-weight:700}
+    .mg-page h2{font-size:20px;margin:0 0 12px;line-height:1.25}
+    .mg-page ol{margin:0;padding-left:22px;color:rgba(255,255,255,.85);font-size:13.5px;line-height:1.6}
+    .mg-page li{margin-bottom:9px}
+    .mg-cta{padding:32px 8px;text-align:center;border-top:1px solid rgba(154,255,0,.15);margin-top:8px}
+    .mg-cta h2{font-size:22px;margin:0 0 8px}
+    .mg-cta p{font-size:13px;line-height:1.55;color:rgba(255,255,255,.75);margin:0 0 12px}
+    .mg-cta p b{color:#9AFF00}
+    .mg-cta-a{font-size:11px;color:rgba(255,255,255,.45);margin-top:14px}`;
+  const wrap = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OKO лид-магнит</title><style>${css}</style></head><body>${el.outerHTML}</body></html>`;
+  const blob = new Blob([wrap], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'oko-magnet-'+Date.now()+'.html'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  toast('Лид-магнит скачан');
 }
 function sysMaterialsHtml(a){
   const blocks = sysMatBlocks(a);
