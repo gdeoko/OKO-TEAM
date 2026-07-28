@@ -438,6 +438,7 @@ nav#tabs .nav-logo{display:none}
 .profile-top .ava{width:72px;height:72px;font-size:26px}
 .profile-top h2{font-size:28px;line-height:1}
 .profile-top .u{color:var(--dim);font-size:13px;margin-top:3px}
+.p-sec-h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:14px 4px 6px;margin-top:8px}
 .prow{display:flex;align-items:center;gap:14px;width:100%;padding:14px 4px;border-bottom:1px solid var(--border);font-size:14.5px;font-weight:500;text-align:left}
 .prow svg.i{width:20px;height:20px;color:var(--accent)}
 .prow .chev{margin-left:auto;color:var(--dim)}
@@ -1685,16 +1686,19 @@ main>.screen{position:relative;z-index:1}
         <p class="prof-bio" id="profBio"></p>
         <div class="prof-stats" id="profStats"></div>
         <div class="prof-ach" id="profAch"></div>
+        <div class="p-sec-h">Аккаунт</div>
         <div class="card" style="padding:4px 14px">
-          <button class="prow" onclick="toggleTheme()">
-            <svg class="i" id="themeIcoP"><use href="#i-sun"/></svg> Светлая тема
-            <span class="switch" id="themeSwitch"><i></i></span>
-          </button>
           <button class="prow" onclick="openEdit()"><svg class="i"><use href="#i-user"/></svg> Профиль <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" style="border-bottom:none" id="prowAdmin" onclick="openAdmin()"><svg class="i"><use href="#i-bolt"/></svg> Админка OKO <span class="chip" style="font-size:9px;margin-left:auto">владелец</span></button>
+        </div>
+        <div class="p-sec-h">Уведомления и приватность</div>
+        <div class="card" style="padding:4px 14px">
           <button class="prow" onclick="openSettings('notif')"><svg class="i"><use href="#i-bell"/></svg> Уведомления <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
-          <button class="prow" onclick="openSettings('privacy')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+          <button class="prow" style="border-bottom:none" onclick="openSettings('privacy')"><svg class="i"><use href="#i-lock"/></svg> Конфиденциальность <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
+        </div>
+        <div class="p-sec-h">Сервис</div>
+        <div class="card" style="padding:4px 14px">
           <button class="prow" onclick="openSheet('progress')"><svg class="i"><use href="#i-flag"/></svg> Прогресс сборки <span class="chev"><svg class="i"><use href="#i-chev"/></svg></span></button>
-          <button class="prow" id="prowAdmin" onclick="openAdmin()"><svg class="i"><use href="#i-bolt"/></svg> Админка OKO <span class="chip" style="font-size:9px;margin-left:auto">владелец</span></button>
           <button class="prow" style="border-bottom:none" onclick="doLogout()"><svg class="i"><use href="#i-logout"/></svg> Выйти</button>
         </div>
 
