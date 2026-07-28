@@ -24,3 +24,10 @@
 - #27 fs_viral_560759 (energetic/driving, seed 696) — уник, дедуп used_music.json.
 - #28 fs_viral_666720 (energetic/driving, seed 458) — уник, дедуп used_music.json.
 - #29 fs_viral_676998 (energetic/driving, seed 812) — уник, дедуп used_music.json (14/22 использовано).
+
+## 28.07 (~04:20 UTC) — ПОПОЛНЕНИЕ ПУЛА (fix исчерпания виральной музыки)
+Прошлый проход отметил: уник виральных треков почти кончились (2/10 роликов повторили бэд).
+Долил 4 свежих CC0-трека с Freesound (фильтр license:"Creative Commons 0", HQ-preview mp3, дедуп по id):
+fs_viral_563543 (50.8с), fs_viral_620918 (96.0с), fs_viral_790949 (60.1с), fs_viral_858710 (172.6с) — все energetic/driving/hype, зарегистрированы в manifest.json.
+Виральный пул: 23 трека, 17 уник неиспользованных. Исчерпание снято.
+Грабли Freesound API: токен через ЗАГОЛОВОК `Authorization: Token <KEY>` (query-param ?token= тоже, но нестабилен); фильтр CC0 работает `filter=license:"Creative Commons 0"` через --data-urlencode; НО узкие SFX-запросы («driving instrumental») дают 0 под CC0 — брать музыкальные термины («electronic music», «hip hop beat», «action cinematic»). useful/sales добить следующим проходом (таймаут прервал).
