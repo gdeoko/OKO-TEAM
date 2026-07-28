@@ -661,3 +661,47 @@
 .ac-link-btn .host{flex-shrink:0;font-size:10px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:3px 8px;max-width:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ac-link-btn .go{width:15px;height:15px;color:var(--dim);flex-shrink:0}
 @media(max-width:380px){.ac-link-btn .host{display:none}}
+
+/* --- крупная лайм-полоса прогресса курса (под кольцом) --- */
+.ac-course-progress{position:relative;height:14px;background:var(--raised);border:1px solid var(--border);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+.ac-course-progress i{display:block;height:100%;background:linear-gradient(90deg,#79d900,var(--lime) 60%,#c8ff45);border-radius:99px;transition:width .9s cubic-bezier(.3,1,.4,1);box-shadow:0 0 14px rgba(154,255,0,.45)}
+:root[data-theme="light"] .ac-course-progress i{box-shadow:0 0 8px rgba(110,200,0,.28)}
+.ac-course-progress-lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:10.5px;letter-spacing:.06em;color:var(--text);text-shadow:0 1px 2px rgba(0,0,0,.35);pointer-events:none}
+:root[data-theme="light"] .ac-course-progress-lbl{text-shadow:none;color:#1a2b00}
+
+/* --- карточка «Продолжи с этого» на главной --- */
+.ac-continue{cursor:pointer;transition:border-color .18s,transform .12s,box-shadow .3s;animation:fade .3s ease both;border:1px solid rgba(154,255,0,.28);background:linear-gradient(135deg,var(--lime-dim),var(--surface) 70%);margin-bottom:12px;position:relative;overflow:hidden}
+.ac-continue::before{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.14),transparent 70%);pointer-events:none}
+.ac-continue:hover{border-color:var(--accent);box-shadow:0 0 26px rgba(154,255,0,.12)}
+.ac-continue:active{transform:scale(.99)}
+.ac-continue-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;position:relative}
+.ac-continue-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#000;background:var(--lime);border-radius:99px;padding:5px 11px}
+.ac-continue-tag svg.i{width:13px;height:13px;color:#000}
+.ac-continue-meta{font-size:11px;color:var(--dim);font-weight:600;text-align:right;line-height:1.35}
+.ac-continue-title{font-size:19px;line-height:1.15;margin:2px 0 4px;position:relative}
+.ac-continue-sub{font-size:12px;color:var(--dim);line-height:1.4;margin-bottom:10px;position:relative}
+.ac-continue-bar{height:8px;background:var(--raised);border-radius:99px;overflow:hidden;margin-bottom:10px;position:relative}
+.ac-continue-bar i{display:block;height:100%;background:var(--lime);border-radius:99px;transition:width .8s cubic-bezier(.3,1,.4,1);box-shadow:0 0 8px rgba(154,255,0,.35)}
+:root[data-theme="light"] .ac-continue-bar i{box-shadow:none}
+.ac-continue-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
+.ac-continue-pct{font-size:11.5px;font-weight:700;color:var(--accent)}
+.ac-continue-cta{flex-shrink:0;white-space:nowrap}
+
+/* --- рекомендация следующего курса под текущим --- */
+.ac-rec{margin-top:14px;overflow:hidden;padding:14px 15px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .18s,transform .12s,box-shadow .3s;animation:fade .3s ease both;background:linear-gradient(135deg,var(--surface),var(--raised) 80%)}
+.ac-rec:hover{border-color:rgba(154,255,0,.4);box-shadow:0 0 22px rgba(154,255,0,.08)}
+.ac-rec:active{transform:scale(.99)}
+.ac-rec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.ac-rec-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 10px}
+.ac-rec-tag svg.i{width:12px;height:12px;color:var(--accent)}
+.ac-rec-meta{font-size:11px;color:var(--dim);font-weight:600;text-align:right;line-height:1.35;flex:1;min-width:0}
+.ac-rec-body{display:flex;gap:12px;align-items:stretch}
+.ac-rec-cover{width:110px;flex-shrink:0;aspect-ratio:16/10;border-radius:var(--r-md);overflow:hidden;position:relative;background:#070a04}
+.ac-rec-cover .ac-cover-svg{position:absolute;inset:0;width:100%;height:100%}
+.ac-rec-cover .ac-cc-veil{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff}
+.ac-rec-cover .ac-cc-veil svg.i{width:13px;height:13px}
+.ac-rec-cap{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ac-rec-cap h3{font-size:17px;line-height:1.15;margin:0}
+.ac-rec-cap p{font-size:11.5px;color:var(--dim);line-height:1.4;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ac-rec-cta{align-self:flex-start;white-space:nowrap;margin-top:auto}
+@media(max-width:380px){.ac-rec-cover{width:88px}}

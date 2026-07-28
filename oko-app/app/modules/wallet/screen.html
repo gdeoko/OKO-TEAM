@@ -28,6 +28,12 @@
       <span class="switch" id="walAutoSw"><i></i></span>
     </div>
 
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Уровень безопасности</h2>
+    <div class="card wal-safety" id="walSafety" onclick="walSafetyTips()" role="button" tabindex="0"></div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Ближайшие списания</h2>
+    <div class="card wal-plan" id="walPlanned"></div>
+
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Статистика · 30 дней</h2>
     <div class="wal-stats" id="walStats"></div>
 
@@ -64,11 +70,20 @@
 
     <div class="wal-hist-head">
       <h2 class="section-h" id="walHistAnchor" style="margin:0;font-size:21px">История операций</h2>
-      <button class="wal-stmt-btn" onclick="walOpenStatement()"><svg class="i"><use href="#i-file"/></svg>Выписка</button>
+      <div class="wal-hist-acts">
+        <button class="wal-stmt-btn" onclick="walDownloadCSV()"><svg class="i"><use href="#i-dl"/></svg>CSV</button>
+        <button class="wal-stmt-btn" onclick="walOpenStatement()"><svg class="i"><use href="#i-file"/></svg>Выписка</button>
+      </div>
     </div>
     <div class="wal-search-wrap">
       <svg class="i wal-search-ic"><use href="#i-search"/></svg>
       <input id="walSearch" class="wal-search" type="search" inputmode="search" autocomplete="off" placeholder="Поиск по истории" oninput="walSetSearch(this.value)">
+    </div>
+    <div class="wal-period" id="walPeriod">
+      <button class="on" data-p="all" onclick="walSetPeriod('all')">Всё время</button>
+      <button data-p="7" onclick="walSetPeriod('7')">7 дней</button>
+      <button data-p="30" onclick="walSetPeriod('30')">30 дней</button>
+      <button data-p="90" onclick="walSetPeriod('90')">90 дней</button>
     </div>
     <div class="wal-filters" id="walFilters">
       <button class="on" data-f="all" onclick="walSetFilter('all')">Все</button>

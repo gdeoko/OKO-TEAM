@@ -1838,6 +1838,25 @@ function acNextLesson(){
     if(acUnlocked(i) && !acLessonDone(i)) return i;
   return -1;
 }
+/* глобальный счётчик пройденных уроков — для бейджей уровня */
+function acLessonsDoneCount(){
+  let n = 0;
+  for(let i=0; i<AC_COURSE.length; i++) if(acLessonDone(i)) n++;
+  return n;
+}
+/* последний открытый урок — «Продолжи с этого» на главной */
+function acResumeLesson(){
+  const last = acS.lastLesson;
+  if(typeof last === 'number' && last >= 0 && last < AC_COURSE.length
+     && acUnlocked(last) && !acLessonDone(last)) return last;
+  return acNextLesson();
+}
+/* рекомендация следующего курса после текущего */
+function acRecommendNext(ci){
+  for(let j=ci+1; j<AC_COURSES.length; j++) if(!acCourseDone(j)) return j;
+  for(let j=0; j<ci; j++) if(!acCourseDone(j)) return j;
+  return -1;
+}
 
 let acView = 'home';            // 'home' (каталог) | 'course' (уроки курса) | 'lesson'
 let acL = 0;                    // глобальный индекс текущего урока
@@ -1954,8 +1973,14 @@ function acAnyLessonTest100(){ for(const k in acS.lessons){ if((acS.lessons[k].t
 function acTasksDone(){ let n=0; for(const k in acS.lessons){ if(acS.lessons[k].task) n++; } return n; }
 function acBadgeDefs(){
   const st = acStreak();
+  const done = acLessonsDoneCount();
   return [
     {id:'first',  ic:'bolt',     t:'Первый шаг',     d:'Пройти первый урок',                on: AC_COURSE.some((_,i)=>acLessonPct(i)>=100) || acS.certs.length>0},
+    {id:'l3',     ic:'circle-play',t:'Разгон',       d:'Пройти 3 урока',                    on: done >= 3},
+    {id:'l10',    ic:'flag',     t:'Ученик',         d:'Пройти 10 уроков',                  on: done >= 10},
+    {id:'l25',    ic:'poll',     t:'Знаток',         d:'Пройти 25 уроков',                  on: done >= 25},
+    {id:'l50',    ic:'rocket',   t:'Профи',          d:'Пройти 50 уроков',                  on: done >= 50},
+    {id:'l100',   ic:'crown',    t:'Магистр',        d:'Пройти 100 уроков',                 on: done >= 100},
     {id:'cert1',  ic:'star',     t:'Сертификат',     d:'Получить первый сертификат',        on: acS.certs.length >= 1},
     {id:'ace',    ic:'poll',     t:'Отличник',       d:'Сдать тест на 100%',                on: acAnyLessonTest100()},
     {id:'prac',   ic:'edit',     t:'Практик',        d:'Зачесть 3 практики',                on: acTasksDone() >= 3},
@@ -2079,6 +2104,35 @@ function acCourseCardHtml(ci){
 function acCourseCardClick(ci){ acOpenCourse(ci); }
 
 /* ---------- ГЛАВНАЯ АКАДЕМИИ: КАТАЛОГ КУРСОВ ---------- */
+/* большая карточка «Продолжи с этого» — берёт последний открытый урок из localStorage,
+   иначе первый доступный. Показывает превью урока и его прогресс. */
+function acContinueCardHtml(){
+  const last = acResumeLesson();
+  if(last < 0){
+    return `<div class="ac-next-row done">${I('check2')}<span>Доступные уроки пройдены, открой премиум-курс</span></div>`;
+  }
+  const L = AC_COURSE[last];
+  const ci = acCourseOf(last);
+  const c = AC_COURSES[ci];
+  const p = acLessonPct(last);
+  const started = p > 0;
+  const label = started ? 'Продолжи с этого' : 'Начни отсюда';
+  const cta = started ? 'Продолжить урок' : 'Открыть урок';
+  return `
+    <div class="card ac-continue" onclick="acOpenLesson(${last})">
+      <div class="ac-continue-head">
+        <span class="ac-continue-tag">${I('circle-play')} ${label}</span>
+        <span class="ac-continue-meta">${esc(c.title)} , урок ${acLocalNo(last)}/${c.count}</span>
+      </div>
+      <h3 class="ac-continue-title">${esc(L.title)}</h3>
+      <p class="ac-continue-sub">${esc(acLessonSub(L))}</p>
+      <div class="ac-continue-bar" title="Прогресс урока ${p}%"><i style="width:${p}%"></i></div>
+      <div class="ac-continue-foot">
+        <span class="ac-continue-pct">${p}% пройдено</span>
+        <button class="btn sm ac-continue-cta" onclick="event.stopPropagation();acOpenLesson(${last})">${cta}</button>
+      </div>
+    </div>`;
+}
 function acHomeHtml(){
   const st = acStreak();
   const hot = st.days >= 3;
@@ -2086,13 +2140,10 @@ function acHomeHtml(){
     <div class="card ac-streak ${hot?'hot':''}">
       <span class="ac-flame">${I('fire')}</span>
       <div class="meta"><b>Дней подряд в учёбе: ${st.days||0}</b>
-        <span>${hot ? 'Серия в огне — так держать!' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
+        <span>${hot ? 'Серия в огне, так держать' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
       ${hot?`<span class="ac-hot-chip">${I('fire')} ${st.days}</span>`:''}
     </div>`;
-  const nx = acNextLesson();
-  const nextRow = nx >= 0
-    ? `<button class="ac-next-row" onclick="acOpenLesson(${nx})">${I('circle-play')}<span>Продолжить: <b>урок ${acLocalNo(nx)} — ${esc(AC_COURSE[nx].title)}</b></span><svg class="i go"><use href="#i-chev"/></svg></button>`
-    : `<div class="ac-next-row done">${I('check2')}<span>Доступные уроки пройдены — открой премиум-курс</span></div>`;
+  const nextRow = acContinueCardHtml();
   const courses = AC_COURSES.map((_,ci)=>acCourseCardHtml(ci)).join('');
   const certs = acS.certs.length ? acS.certs.map((c,i)=>`
     <div class="ac-cert-item" style="animation-delay:${i*.05}s">
@@ -2152,6 +2203,7 @@ function acCourseHtml(){
   const pct = acCoursePctOf(ci), C = 2*Math.PI*33, CR = 2*Math.PI*15;
   const idx = acCourseIdx(ci);
   const done = acCourseDone(ci);
+  const doneCnt = idx.filter(i=>acLessonDone(i)).length;  // «34/45 уроков»
   /* строка урока (номер — сквозной внутри направления) */
   const lessonRow = (i,k)=>{
     const local = acLocalNo(i);
@@ -2216,13 +2268,50 @@ function acCourseHtml(){
           <circle class="val" cx="40" cy="40" r="33" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C*(1-pct/100)).toFixed(1)}"/></svg>
           <b>${pct}%</b>
         </span>
-        <div><h3>Прогресс курса</h3><p class="dim">${c.count} ${acPlural(c.count,['урок','урока','уроков'])} · ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])} получено</p></div>
+        <div>
+          <h3>Прогресс курса</h3>
+          <p class="dim"><b style="color:var(--accent)">${doneCnt}</b>/${c.count} ${acPlural(c.count,['урок','урока','уроков'])} · ${certN} ${acPlural(certN,['сертификат','сертификата','сертификатов'])}</p>
+        </div>
+      </div>
+      <div class="ac-course-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" title="Прогресс курса ${pct}%">
+        <i style="width:${pct}%"></i>
+        <span class="ac-course-progress-lbl">${doneCnt}/${c.count} · ${pct}%</span>
       </div>
       ${nextRow}
       <div>${rows}</div>
     </div>
     ${finale}
+    ${acRecCourseHtml(ci)}
     <div style="height:16px"></div>`;
+}
+/* плитка «Следующий рекомендуемый курс» под текущим курсом.
+   Показываем только если у пользователя есть куда идти дальше внутри Академии. */
+function acRecCourseHtml(ci){
+  const rec = acRecommendNext(ci);
+  if(rec < 0) return '';
+  const c = AC_COURSES[rec];
+  const acc = acCourseAccessible(rec);
+  const pct = acCoursePctOf(rec);
+  const started = pct > 0;
+  const cta = acc ? (started ? 'Продолжить курс' : 'Начать курс') : 'Открыть доступ';
+  const meta = acc
+    ? (started ? ('Начат · пройдено ' + pct + '%') : (c.count + ' ' + acPlural(c.count,['урок','урока','уроков']) + ' · доступ открыт'))
+    : (c.count + ' ' + acPlural(c.count,['урок','урока','уроков']) + ' · ' + acFmtPrice(c.price) + ' или подписка ' + c.minTier);
+  return `
+    <div class="card ac-rec" onclick="acCourseCardClick(${rec})">
+      <div class="ac-rec-head">
+        <span class="ac-rec-tag">${I('rocket')} Следующий шаг</span>
+        <span class="ac-rec-meta">${esc(meta)}</span>
+      </div>
+      <div class="ac-rec-body">
+        <div class="ac-rec-cover">${acCourseCover(rec, true)}${acc?'':`<span class="ac-cc-veil">${I('lock')}</span>`}</div>
+        <div class="ac-rec-cap">
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.sub)}</p>
+          <button class="btn sm ac-rec-cta" onclick="event.stopPropagation();acCourseCardClick(${rec})">${cta}</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 /* ---------- СТРАНИЦА УРОКА ---------- */
@@ -2232,6 +2321,7 @@ function acOpenLesson(i){
   if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
   if(!acUnlocked(k)){ toast('Урок '+acLocalNo(k)+' откроется после предыдущего'); return; }
   acL = k; acCourse = ci;
+  acS.lastLesson = k; acSave();   // «Продолжи с этого» помнит последний открытый урок
   if(typeof acSpeedStop==='function') acSpeedStop();
   acView = 'lesson'; acQuiz = null; acG = null; acTaskChecking = false;
   acRender();

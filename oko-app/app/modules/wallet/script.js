@@ -82,6 +82,7 @@
 /* ---------- состояние модуля ---------- */
 let walFilter = 'all';
 let walSearch = '';
+let walPeriod = 'all';
 let walTopupState = {sum:1000, method:'card'};
 let walWdState = {sum:0, method:'card'};
 const WAL_METHODS = [
@@ -190,6 +191,8 @@ function renderWallet(){
   walRenderLedger();
   walUpdateChips();
   walRenderAutopay();
+  walRenderSafety();
+  walRenderPlanned();
   walRenderSec();
   walDrawChart(true);
 }
@@ -372,13 +375,21 @@ function walRenderLedger(){
   const box = document.getElementById('walLedger');
   if(!box) return;
   const q = walSearch;
+  const periodMs = walPeriod === 'all' ? 0 : Number(walPeriod) * 864e5;
+  const since = periodMs ? Date.now() - periodMs : 0;
   const list = WALLET.ledger
     .filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'))
+    .filter(op => !since || op.at >= since)
     .filter(op => !q || (op.why + ' ' + walCat(op.why)).toLowerCase().includes(q))
     .slice().sort((a,b)=>b.at-a.at)
     .slice(0, 80);
   if(!list.length){
-    const emptyMsg = q ? 'Ничего не найдено' : walFilter==='in' ? 'Пополнений пока нет' : walFilter==='out' ? 'Списаний пока нет' : 'Операций пока нет';
+    let emptyMsg;
+    if(q) emptyMsg = 'Ничего не найдено';
+    else if(since) emptyMsg = 'За выбранный период операций нет';
+    else if(walFilter==='in') emptyMsg = 'Пополнений пока нет';
+    else if(walFilter==='out') emptyMsg = 'Списаний пока нет';
+    else emptyMsg = 'Операций пока нет';
     box.innerHTML = `<div class="wal-empty">${I(q ? 'search' : 'file')}${emptyMsg}</div>`;
     return;
   }
@@ -423,6 +434,11 @@ function walSetFilter(f){
 }
 function walSetSearch(v){
   walSearch = (v || '').trim().toLowerCase();
+  walRenderLedger();
+}
+function walSetPeriod(p){
+  walPeriod = String(p);
+  document.querySelectorAll('#walPeriod button').forEach(b=>b.classList.toggle('on', b.dataset.p===walPeriod));
   walRenderLedger();
 }
 function walCopyAcc(){
@@ -895,6 +911,120 @@ function walDownloadStatement(){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
   toast('Выписка сохранена: ' + name);
+}
+
+/* ---------- CSV-экспорт операций (Excel/Numbers/Google Sheets) ---------- */
+function walCsvCell(v){
+  const s = String(v==null ? '' : v);
+  return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function walDownloadCSV(){
+  const ops = WALLET.ledger.slice().sort((a,b)=>b.at-a.at);
+  const rows = [['Дата','Тип','Категория','Сумма, ₽','Описание']];
+  ops.forEach(o=>{
+    rows.push([
+      walDMYT(o.at),
+      o.t==='+' ? 'Пополнение' : 'Списание',
+      walCat(o.why),
+      (o.t==='+' ? '+' : '-') + o.sum,
+      o.why
+    ]);
+  });
+  const csv = rows.map(r=>r.map(walCsvCell).join(';')).join('\r\n');
+  const d = new Date();
+  const name = 'oko-wallet-' + d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.csv';
+  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); }catch(e){} }, 4000);
+  toast('CSV сохранён: ' + name + ' (' + ops.length + ' операций)');
+}
+
+/* ---------- ПЛАНИРУЕМЫЕ СПИСАНИЯ (ближайшие подписки и автоплатежи) ---------- */
+function walPlannedItems(){
+  const now = new Date();
+  const y = now.getFullYear();
+  const nextAutopay = WAL_X.autopay && WAL_X.nextAt
+    ? {ic:'crown', title:'Автопродление PRO', date: walDMY(WAL_X.nextAt), sum: walProPrice(), sub:'Списание с лицевого счёта'}
+    : {ic:'crown', title:'Подписка PRO', date:'1 сентября ' + y, sum: walProPrice(), sub:'Продление тарифа, если включишь автопродление'};
+  return [
+    nextAutopay,
+    {ic:'plus',    title:'Автопополнение баланса', date:'5 октября ' + y, sum: 3000, sub:'Регулярное пополнение с карты РФ'},
+    {ic:'rocket',  title:'Продвижение канала',     date:'12 октября ' + y, sum: 349,  sub:'Продление кампании «Старт»'},
+  ];
+}
+function walRenderPlanned(){
+  const box = document.getElementById('walPlanned');
+  if(!box) return;
+  const items = walPlannedItems();
+  const total = items.reduce((s,it)=>s+it.sum, 0);
+  box.innerHTML = items.map((it,i)=>`
+    <div class="wal-plan-row" style="animation-delay:${i*50}ms">
+      <div class="wal-plan-ic">${I(it.ic)}</div>
+      <div class="wal-plan-b">
+        <b>${it.title}</b>
+        <span>${it.sub}, ${it.date}</span>
+      </div>
+      <div class="wal-plan-sum">− ${fmtMoney(it.sum)}</div>
+    </div>`).join('') + `
+    <div class="wal-plan-total"><span>Итого запланировано</span><b>− ${fmtMoney(total)}</b></div>`;
+}
+
+/* ---------- УРОВЕНЬ БЕЗОПАСНОСТИ (виджет с прогресс-баром) ---------- */
+function walSafetyChecks(){
+  return [
+    {ok: !!WAL_X.pin,   name:'ПИН-код на вывод'},
+    {ok: !!WAL_X.twofa, name:'Двухфакторная защита входа'},
+    {ok: !!WAL_X.phone, name:'Привязанный номер телефона'},
+    {ok: true,          name:'Подтверждение крупных операций'},
+    {ok: true,          name:'Проверка устройств входа'},
+  ];
+}
+function walRenderSafety(){
+  const box = document.getElementById('walSafety');
+  if(!box) return;
+  const list = walSafetyChecks();
+  const ok = list.filter(c=>c.ok).length, tot = list.length;
+  const pct = Math.round(ok/tot*100);
+  const lvl = ok>=5 ? 'максимальный' : ok>=4 ? 'высокий' : ok>=3 ? 'средний' : ok>=2 ? 'базовый' : 'низкий';
+  const cls = ok>=4 ? 'hi' : ok>=3 ? 'md' : 'lo';
+  box.innerHTML = `
+    <div class="wal-safe-h">
+      <div class="wal-safe-ic ${cls}">${I('lock')}</div>
+      <div class="wal-safe-t">
+        <b>Уровень защиты: ${lvl}</b>
+        <span>${ok} из ${tot} мер активны, нажми для советов</span>
+      </div>
+      <span class="wal-safe-score ${cls}">${ok}/${tot}</span>
+    </div>
+    <div class="wal-safe-bar"><i class="${cls}" style="width:${pct}%"></i></div>
+    <div class="wal-safe-list">
+      ${list.map(c=>`<span class="wal-safe-chip ${c.ok?'on':''}">${I(c.ok ? 'check' : 'lock')}${c.name}</span>`).join('')}
+    </div>`;
+}
+function walSafetyTips(){
+  const off = walSafetyChecks().filter(c=>!c.ok);
+  let body;
+  if(off.length){
+    const tips = {
+      'ПИН-код на вывод':           'Включи ПИН-код в блоке «Лимиты и безопасность» ниже, любой вывод потребует 4 цифры.',
+      'Двухфакторная защита входа': 'В настройках профиля привяжи Telegram-подтверждение входа, второй фактор к паролю.',
+      'Привязанный номер телефона': 'Добавь телефон в профиле, восстановление доступа и SMS-подтверждение крупных операций.',
+    };
+    body = '<b>Что усилить, по приоритету:</b><br>' +
+      off.map((c,i)=>'<b>' + (i+1) + '.</b> ' + c.name + '<br><span style="color:var(--dim);font-size:12px">' + (tips[c.name] || 'Активировать в настройках профиля.') + '</span>').join('<br><br>') +
+      '<br><br>Каждая мера снижает риск кражи денег и потери доступа к счёту.';
+  } else {
+    body = 'Все меры активны, кошелёк защищён по максимуму. Проверяй список активных сессий раз в месяц.';
+  }
+  if(typeof showPopup === 'function'){
+    showPopup({ico:'lock', title:'Как усилить защиту счёта', body, actions:[{label:'Понятно'}]});
+  } else {
+    toast('Активно ' + (walSafetyChecks().length - off.length) + ' из ' + walSafetyChecks().length + ' мер защиты');
+  }
 }
 
 /* ---------- WOW: вспышка-свечение баланса при денежной операции ---------- */

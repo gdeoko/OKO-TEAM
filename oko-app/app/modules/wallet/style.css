@@ -68,11 +68,57 @@
 .wal-upsell svg.i{width:15px;height:15px;flex-shrink:0}
 .wal-upsell svg.i:last-child{width:13px;height:13px;opacity:.7}
 
-/* шапка истории + кнопка «Выписка» */
+/* шапка истории + кнопки «CSV» и «Выписка» */
 .wal-hist-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:24px 0 4px}
-.wal-stmt-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:7px 13px;transition:transform .12s;flex-shrink:0}
+.wal-hist-acts{display:inline-flex;gap:6px;flex-shrink:0;flex-wrap:nowrap}
+.wal-stmt-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:7px 13px;transition:transform .12s;flex-shrink:0;white-space:nowrap}
 .wal-stmt-btn:active{transform:scale(.95)}
 .wal-stmt-btn svg.i{width:14px;height:14px}
+
+/* период истории: 7д / 30д / 90д / всё время */
+.wal-period{display:flex;gap:8px;margin:10px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.wal-period::-webkit-scrollbar{display:none}
+.wal-period button{flex:1 0 auto;padding:8px 12px;border:1px solid var(--border);border-radius:99px;font-size:11.5px;font-weight:700;color:var(--dim);white-space:nowrap;transition:all .18s}
+.wal-period button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.wal-period button:active{transform:scale(.96)}
+
+/* планируемые списания */
+.wal-plan{padding:6px 14px;animation:fade .3s ease both}
+.wal-plan-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);animation:walOpIn .3s cubic-bezier(.25,1,.4,1) both}
+.wal-plan-row:last-of-type{border-bottom:none}
+.wal-plan-ic{width:36px;height:36px;border-radius:11px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-plan-ic svg.i{width:17px;height:17px}
+.wal-plan-b{flex:1;min-width:0}
+.wal-plan-b b{display:block;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-plan-b span{display:block;font-size:11px;color:var(--dim);margin-top:3px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-plan-sum{font-size:14px;font-weight:800;color:var(--text);flex-shrink:0;white-space:nowrap}
+.wal-plan-total{display:flex;justify-content:space-between;align-items:center;padding:11px 0 6px;border-top:1px dashed var(--border);margin-top:2px;font-size:12.5px}
+.wal-plan-total span{color:var(--dim);font-weight:600}
+.wal-plan-total b{color:var(--accent);font-weight:800;font-size:14px}
+
+/* виджет уровня безопасности */
+.wal-safety{padding:14px;cursor:pointer;transition:transform .12s,border-color .18s;animation:fade .3s ease both}
+.wal-safety:active{transform:scale(.99)}
+.wal-safety:hover{border-color:var(--lime)}
+.wal-safe-h{display:flex;align-items:center;gap:12px}
+.wal-safe-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--lime-dim);color:var(--accent)}
+.wal-safe-ic.md{background:rgba(255,184,74,.15);color:#FFB84A}
+.wal-safe-ic.lo{background:rgba(255,77,77,.14);color:var(--danger)}
+.wal-safe-ic svg.i{width:20px;height:20px}
+.wal-safe-t{flex:1;min-width:0}
+.wal-safe-t b{display:block;font-size:13.5px;font-weight:700}
+.wal-safe-t span{display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.35}
+.wal-safe-score{flex-shrink:0;font-family:var(--font-display);font-size:19px;letter-spacing:.05em;padding:4px 12px;border-radius:99px;background:var(--lime-dim);color:var(--accent)}
+.wal-safe-score.md{background:rgba(255,184,74,.15);color:#FFB84A}
+.wal-safe-score.lo{background:rgba(255,77,77,.14);color:var(--danger)}
+.wal-safe-bar{height:8px;border-radius:4px;background:var(--raised);border:1px solid var(--border);overflow:hidden;margin:12px 0 12px;box-shadow:inset 0 1px 3px rgba(0,0,0,.22)}
+.wal-safe-bar i{display:block;height:100%;width:0;border-radius:4px;background:var(--lime);transform-origin:left;animation:walBarIn .8s cubic-bezier(.3,1,.4,1) both;transition:width .6s cubic-bezier(.3,1,.4,1)}
+.wal-safe-bar i.md{background:linear-gradient(90deg,color-mix(in srgb,#FFB84A 82%,#fff),#FFB84A)}
+.wal-safe-bar i.lo{background:linear-gradient(90deg,color-mix(in srgb,var(--danger) 82%,#fff),var(--danger))}
+.wal-safe-list{display:flex;flex-wrap:wrap;gap:6px}
+.wal-safe-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;padding:5px 10px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim)}
+.wal-safe-chip.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.wal-safe-chip svg.i{width:11px;height:11px;flex-shrink:0}
 
 /* статистика доходов/расходов за 30 дней (мини-график с ростом баров) */
 .wal-stat-card{padding:16px 16px 14px;animation:fade .3s ease both}
