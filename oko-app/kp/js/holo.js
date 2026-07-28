@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { buildHand3D, poseHand } from './hand3d.js?v=95';
 // DOM-synced WebGL: eye(GLB) + hand/woman as scroll-scrubbed sprite sheets.
 // Figures are treated as part of the background: precise scroll-tied position + tiny breathing only.
 export function initHolo(){
@@ -63,8 +64,17 @@ export function initHolo(){
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
   else eyeReady();
 
-  // рука уже повернута в самом спрайте (запястье слева, ладонь вверх, пальцы вправо) — 440x243
-  makeSprite('holoHand','kp-media/fig/hand_sheet_hi.webp?v=95',6,6,36,660/538,{progType:'hand',fit:'width',slide:true});
+  // ---- КИСТЬ: настоящая 3D-геометрия (никаких спрайтов/видео) ----
+  let handWrap=null,handInner=null,handAnchor=null,handNorm=1,handAspect=1.9,handMax=0;
+  (function(){ const a=document.getElementById('holoHand'); if(!a) return;
+    const h=buildHand3D(); poseHand(h,1,0); h.rotation.set(0.34,-0.30,0.05);
+    const b=new THREE.Box3().setFromObject(h); const c=b.getCenter(new THREE.Vector3()); const sz=b.getSize(new THREE.Vector3());
+    handNorm=1/(sz.x||1); handAspect=(sz.x||1)/(sz.y||1);
+    h.position.sub(c);
+    handInner=new THREE.Group(); handInner.add(h);
+    handWrap=new THREE.Group(); handWrap.add(handInner); scene.add(handWrap);
+    handWrap.userData.hand=h; handAnchor=a; window.__handAspect=+handAspect.toFixed(3);
+  })();
   makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=92',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
@@ -99,6 +109,20 @@ export function initHolo(){
       f.mesh.rotation.z = f.opt.rotZ || 0;
       // хук для DOM: раскрытие руки в % (0..1) — используется для показа заголовка
       if(f.opt.progType==='hand') window.__handOpen = prog;
+    }
+    // КИСТЬ 3D
+    if(handWrap&&handAnchor){
+      const r=handAnchor.getBoundingClientRect(); const P=rectPos(r);
+      handWrap.visible=P.vis;
+      if(P.vis){
+        let prog=handProg(r); handMax=Math.max(handMax,prog); prog=handMax;   // не закрывается обратно
+        window.__handOpen=prog;
+        poseHand(handWrap.userData.hand,prog,time);
+        const sc=P.w*handNorm*0.96; handWrap.scale.setScalar(sc);
+        const slide=(1-clamp(prog*2.5,0,1))*(-P.w*0.5);
+        handWrap.position.set(P.x+slide, P.y+Math.sin(time*0.7)*3, 0);
+        handInner.rotation.y=ptr.x*0.34; handInner.rotation.x=-ptr.y*0.20;
+      }
     }
     renderer.render(scene,cam);
   }

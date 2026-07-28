@@ -18,6 +18,6 @@ for f in $(ls $CD/c*); do
   i=$((i+1)); echo "  $i/$N"
 done
 echo "UPLOADED $exp expect $TOTAL"
-ctl "cd /tmp && base64 -d dep.b64 > dep.tgz && echo MD5 \$(md5sum dep.tgz|cut -d' ' -f1) WANT c7a3275e5b6c772493e4fbc55736b844"
-ctl "cd /var/www/okoteam && tar xzf /tmp/dep.tgz && for d in kp-dmitry kp-speto; do cp -f kp/kp-media/fig/hand_sheet_hi.webp \$d/kp-media/fig/; done && chown -R www-data:www-data kp kp-dmitry kp-speto && echo EXTRACTED && for d in kp kp-dmitry kp-speto; do echo \$d \$(wc -c < \$d/index.html) \$(wc -c < \$d/js/holo.js) \$(wc -c < \$d/kp-media/fig/hand_sheet_hi.webp); done"
+ctl "cd /tmp && base64 -d dep.b64 > dep.tgz && echo MD5 \$(md5sum dep.tgz|cut -d' ' -f1) WANT 6a6f516b8f01db6b9f12acc9037f38b5"
+ctl "cd /var/www/okoteam && tar xzf /tmp/dep.tgz && chown -R www-data:www-data kp kp-dmitry kp-speto && echo EXTRACTED && for d in kp kp-dmitry kp-speto; do echo \$d \$(wc -c < \$d/index.html) \$(wc -c < \$d/js/holo.js) \$(wc -c < \$d/kp-media/fig/hand_sheet_hi.webp); done"
 echo PUSHDONE
