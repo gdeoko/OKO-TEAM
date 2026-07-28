@@ -145,8 +145,11 @@ $map = [
     '/partner' => 'partner',
     '/club' => 'club',
     '/widget' => 'widget',
-    '/tma' => 'tma',
 ];
+
+// Telegram Mini App = сам сайт (не отдельная витрина): /tma отдаёт полную главную с TG-адаптацией
+// ($_GET['tg'] включает in-tg режим в layout; дальше контекст держит кука mz_tg на всех страницах).
+if ($route === '/tma') { $_GET['tg'] = '1'; serve('home'); }
 
 if (isset($map[$route]) && is_file($pagesDir . '/' . $map[$route] . '.php')) {
     serve($map[$route]);

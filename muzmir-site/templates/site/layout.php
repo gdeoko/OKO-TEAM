@@ -13,8 +13,10 @@ $partners = [
   ['natsproekty_kultura','Нацпроекты «Культура»','https://национальныепроекты.рф'],
 ];
 $u = current_user();
+// Контекст Telegram Mini App: ?tg=1 (кнопка бота) или кука сессии (держит контекст на всех страницах).
+$inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 ?><!doctype html>
-<html lang="ru">
+<html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
 <head>
 <script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}</script>
 <meta charset="utf-8">
@@ -55,7 +57,7 @@ $u = current_user();
 .appnav{padding-bottom:env(safe-area-inset-bottom,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
 </style>
 </head>
-<body>
+<body<?= $u ? ' class="is-auth"' : '' ?>>
 <div class="bg-fx" aria-hidden="true"></div>
 <div class="topbar"><div class="container">
   <a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a>
@@ -282,5 +284,33 @@ $u = current_user();
 <?php endif; ?>
 <?php require BASE_PATH . '/templates/site/partials/popups.php'; ?>
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<?php if ($inTg): ?>
+<!-- Telegram Mini App: тот же сайт открывается нативно в боте (автологин, тема, expand, back). -->
+<script>
+(function(){
+  document.documentElement.classList.add('in-tg');
+  try{ document.cookie = 'mz_tg=1; path=/; max-age=86400; samesite=lax'; }catch(e){}
+  function init(){
+    var tg = window.Telegram && window.Telegram.WebApp; if(!tg) return;
+    try{ tg.ready(); tg.expand && tg.expand(); }catch(e){}
+    try{ if(tg.colorScheme){ document.documentElement.dataset.theme = tg.colorScheme; localStorage.setItem('muzmir-theme', tg.colorScheme);} }catch(e){}
+    try{ tg.onEvent && tg.onEvent('themeChanged', function(){ document.documentElement.dataset.theme = tg.colorScheme; }); }catch(e){}
+    // Кнопка «назад» Telegram
+    try{ if(tg.BackButton){ if(location.pathname!=='/' ) tg.BackButton.show(); else tg.BackButton.hide();
+      tg.BackButton.onClick(function(){ if(history.length>1) history.back(); else { location.href='/?tg=1'; } }); } }catch(e){}
+    // Автологин по initData (один раз за запуск), если не авторизован
+    try{
+      if(tg.initData && !document.body.classList.contains('is-auth') && !sessionStorage.getItem('mz_tg_auth')){
+        sessionStorage.setItem('mz_tg_auth','1');
+        fetch('/api/v1/tma_auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'initData='+encodeURIComponent(tg.initData)})
+          .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok){ location.reload(); } }).catch(function(){});
+      }
+    }catch(e){}
+  }
+  if(window.Telegram && window.Telegram.WebApp){ init(); }
+  else { var s=document.createElement('script'); s.src='https://telegram.org/js/telegram-web-app.js'; s.async=true; s.onload=init; document.head.appendChild(s); }
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>

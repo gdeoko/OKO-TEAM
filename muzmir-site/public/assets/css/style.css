@@ -842,3 +842,8 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 
 /* Аудит-фикс: эйброу и h2 в .section-head не слипаются в одну строку (оба были inline-block). */
 .section-head .eyebrow,.section--head .eyebrow{display:block}
+
+/* ══ Telegram Mini App: тот же сайт нативно в боте ══ */
+.in-tg .topbar{display:none}              /* Telegram даёт свою верхнюю панель */
+.in-tg .header{position:sticky;top:0}
+.in-tg .chat-fab{display:none}            /* поддержка — через раздел, не дублируем FAB в боте */
