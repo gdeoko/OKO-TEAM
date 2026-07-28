@@ -1256,3 +1256,266 @@ if(typeof closeConv === 'function'){
   if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
   if(typeof currentChat!=='undefined' && currentChat) cpDecorateConvAccess();
 })();
+
+/* =======================================================================
+   ЧАСТЬ 5 — доработки TG-уровня: черновики, ссылки-предпросмотр,
+   реальная пересылка, быстрая реакция двойным-тапом. Всё поверх ядра,
+   base.html не трогается — только chain-патчи и DOM-инъекции.
+   ======================================================================= */
+
+/* ================= 15. ЧЕРНОВИКИ (не отправленный текст поля) ================= */
+if(!CP.drafts || typeof CP.drafts!=='object') CP.drafts = {};
+
+function cpDraftLoad(){
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const inp = document.getElementById('msgInput'); if(!inp) return;
+  const d = CP.drafts[currentChat.id];
+  if(d && !inp.value){
+    inp.value = d;
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }
+}
+function cpDraftSave(){
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const inp = document.getElementById('msgInput'); if(!inp) return;
+  const id = currentChat.id;
+  const had = !!CP.drafts[id];
+  const v = inp.value;
+  if(v && v.trim()) CP.drafts[id] = v;
+  else if(CP.drafts[id]) delete CP.drafts[id];
+  cpSave();
+  const has = !!CP.drafts[id];
+  /* перерисовываем список только при СМЕНЕ состояния (появился/пропал черновик) —
+     чтобы не колбасить DOM на каждый ввод символа */
+  if(had !== has && typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
+}
+function cpDraftClear(id){
+  if(id==null || !CP.drafts[id]) return;
+  delete CP.drafts[id]; cpSave();
+  if(typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
+}
+/* привязка input-слушателя один раз (msgInput живёт постоянно в DOM) */
+(function cpDraftBind(){
+  const inp = document.getElementById('msgInput'); if(!inp || inp._cpDraft) return;
+  inp._cpDraft = 1;
+  let t = null;
+  inp.addEventListener('input', ()=>{
+    clearTimeout(t); t = setTimeout(cpDraftSave, 320);
+  });
+})();
+/* chain: openConv — восстановить черновик; sendText — очистить после отправки */
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv4 = openConv;
+  openConv = function(){
+    _cpPrevOpenConv4.apply(this, arguments);
+    setTimeout(cpDraftLoad, 0);
+  };
+}
+if(typeof sendText === 'function'){
+  const _cpPrevSendText4 = sendText;
+  sendText = function(){
+    const c = (typeof currentChat!=='undefined') ? currentChat : null;
+    _cpPrevSendText4.apply(this, arguments);
+    if(c) cpDraftClear(c.id);
+  };
+}
+/* хук в список: подменяем превью «Черновик: <текст>» лаймовой пометкой */
+if(typeof renderChatList === 'function'){
+  const _cpPrevRenderChatList2 = renderChatList;
+  renderChatList = function(){
+    _cpPrevRenderChatList2.apply(this, arguments);
+    cpPaintDrafts();
+  };
+}
+function cpPaintDrafts(){
+  const list = document.getElementById('chatList'); if(!list) return;
+  Object.keys(CP.drafts).forEach(id=>{
+    const text = CP.drafts[id]; if(!text) return;
+    const isNum = /^-?\d+$/.test(id);
+    const sel = isNum ? 'openConv('+(+id)+')' : "openConv('"+id+"')";
+    const item = list.querySelector('.chat-item[onclick="'+sel+'"]'); if(!item) return;
+    const rows = item.querySelectorAll('.row1');
+    const row2 = rows[1]; if(!row2) return;
+    const prev = row2.querySelector('.preview'); if(!prev) return;
+    const short = text.length > 34 ? text.slice(0,34).trim()+'...' : text;
+    prev.innerHTML = '<span class="cp-draft-tag">Черновик:</span> <span class="ci-txt">'+cpEsc(short)+'</span>';
+  });
+}
+
+/* ================= 16. ССЫЛКИ-ПРЕДПРОСМОТР (карточка URL) ================= */
+const CP_URL_RE = /https?:\/\/[^\s<>"']+/i;
+const CP_HOST_MAP = {
+  'youtube.com':'YouTube · видео', 'youtu.be':'YouTube · видео',
+  'youtube-nocookie.com':'YouTube · видео', 'vimeo.com':'Vimeo · видео',
+  'rutube.ru':'Rutube · видео', 'vk.com':'ВКонтакте · пост', 'vkvideo.ru':'VK Video',
+  'tiktok.com':'TikTok · клип', 'instagram.com':'Instagram · публикация',
+  't.me':'Telegram · публикация', 'telegram.me':'Telegram · публикация',
+  'github.com':'GitHub · репозиторий', 'gitlab.com':'GitLab · репозиторий',
+  'x.com':'X (ex-Twitter)', 'twitter.com':'X (ex-Twitter)',
+  'okoteam.top':'OKO TEAM · сайт', 'okoagents.okoteam.top':'OKO TEAM · сервисы',
+  'notion.so':'Notion · страница', 'figma.com':'Figma · проект',
+  'behance.net':'Behance · портфолио', 'dribbble.com':'Dribbble · шот',
+  'medium.com':'Medium · статья', 'habr.com':'Хабр · статья',
+  'yandex.ru':'Яндекс', 'google.com':'Google',
+  'apple.com':'Apple', 'app.store':'App Store',
+  'ozon.ru':'Ozon · товар', 'wildberries.ru':'Wildberries · товар',
+  'avito.ru':'Авито · объявление'
+};
+function cpLinkTitle(host, u){
+  if(CP_HOST_MAP[host]) return CP_HOST_MAP[host];
+  const seg = (u.pathname||'').split('/').filter(Boolean)[0];
+  if(seg){
+    const clean = decodeURIComponent(seg).replace(/[-_+]+/g,' ').trim();
+    if(clean.length > 1) return host + ' · ' + clean.slice(0,44);
+  }
+  return host;
+}
+function cpLinkCard(url){
+  try{
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./,'');
+    const title = cpLinkTitle(host, u);
+    return `<a class="cp-linkprev" href="${cpEsc(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+      <span class="cp-lp-fav">${I('globe')}</span>
+      <span class="cp-lp-txt"><b>${cpEsc(title)}</b><small>${cpEsc(host)}</small></span>
+      <span class="cp-lp-go">${I('chev')}</span>
+    </a>`;
+  }catch(e){ return ''; }
+}
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml2 = msgHtml;
+  msgHtml = function(m, idx){
+    let out = _cpPrevMsgHtml2.apply(this, arguments);
+    if(m && (m.kind==='text' || !m.kind) && typeof m.body==='string'){
+      const match = m.body.match(CP_URL_RE);
+      if(match){
+        const card = cpLinkCard(match[0]);
+        /* вставим карточку прямо перед строкой времени `.t`, чтобы реакции остались снизу */
+        if(card) out = out.replace(/<span class="t">/, card + '<span class="t">');
+      }
+    }
+    return out;
+  };
+}
+
+/* ================= 17. ПЕРЕСЫЛКА С ВЫБОРОМ ЧАТА ================= */
+let cpFwMsg = null, cpFwFrom = null;
+if(typeof forwardMsg === 'function'){
+  forwardMsg = function(idx){
+    if(typeof closeMsgMenu==='function') closeMsgMenu();
+    if(typeof currentChat==='undefined' || !currentChat) return;
+    const m = currentChat.msgs[idx]; if(!m) return;
+    cpForwardOpen(m, currentChat);
+  };
+}
+function cpForwardOpen(msg, fromChat){
+  if(typeof showPopup!=='function' || typeof CHATS==='undefined'){ if(typeof toast==='function') toast('Пересылка недоступна'); return; }
+  const chats = CHATS.filter(c=>c && c.id !== fromChat.id && c.kind !== 'sys');
+  if(!chats.length){ toast('Нет чатов для пересылки'); return; }
+  cpFwMsg = msg; cpFwFrom = fromChat;
+  const items = chats.slice(0,20).map(c=>{
+    const idArg = typeof c.id==='number' ? c.id : ("'"+c.id+"'");
+    const ava = (typeof avaHtml==='function') ? avaHtml(c) : `<div class="ava">${cpEsc(c.ava||'')}</div>`;
+    const on = c.online ? '<span class="cp-fw-on" title="в сети"></span>' : '';
+    return `<button class="cp-fw-item" onclick="cpForwardTo(${idArg})">
+      <span class="cp-fw-ava">${ava}${on}</span>
+      <span class="cp-fw-txt"><b>${cpEsc(c.name||'')}</b><small>${cpEsc(c.preview||'')}</small></span>
+      <span class="cp-fw-go">${I('chev')}</span>
+    </button>`;
+  }).join('');
+  const preview = cpEsc((typeof msgQuoteText==='function' ? msgQuoteText(msg) : (msg.body||'')) || 'сообщение').slice(0,120);
+  showPopup({ico:'forward', title:'Переслать в чат',
+    body: '<div class="cp-fw-quote">'+preview+'</div><div class="cp-fw-list">'+items+'</div>',
+    actions:[{label:'Отмена', ghost:true, onclick:()=>{ cpFwMsg = null; cpFwFrom = null; }}]
+  });
+}
+window.cpForwardTo = function(id){
+  const m = cpFwMsg, from = cpFwFrom;
+  cpFwMsg = null; cpFwFrom = null;
+  if(typeof closePopup==='function') closePopup();
+  if(!m) return;
+  const target = (typeof CHATS!=='undefined' ? CHATS : []).find(c=>c.id===id);
+  if(!target){ if(typeof toast==='function') toast('Чат не найден'); return; }
+  /* глубокое-мелкое копирование, чтобы не подцепить реакции/статусы оригинала */
+  const clone = Object.assign({}, m, {
+    in: 0,
+    t: (typeof nowT==='function' ? nowT() : ''),
+    edited: false,
+    reacts: null,
+    cpSt: 'sent',
+    fwd: { who: m.in ? (m.who || (from && from.name) || 'Автор') : 'Ты' }
+  });
+  delete clone.reply; delete clone.sid;
+  if(typeof openConv==='function') openConv(id);
+  /* pushMsg — после того как чат открылся и лента отрисована */
+  setTimeout(()=>{
+    if(typeof pushMsg==='function') pushMsg(clone);
+    if(typeof toast==='function') toast('Переслано в «'+(target.name||'чат')+'»');
+  }, 80);
+};
+/* показать метку «Переслано от …» в теле сообщения (без правки базового рендера) */
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml3 = msgHtml;
+  msgHtml = function(m, idx){
+    let out = _cpPrevMsgHtml3.apply(this, arguments);
+    if(m && m.fwd && m.fwd.who && m.kind !== 'sys'){
+      const tag = `<div class="cp-fwd-tag">${I('forward')}<span>Переслано от <b>${cpEsc(m.fwd.who)}</b></span></div>`;
+      /* вставляем плашку в начало пузыря (после первого <div class="msg ..."> открывающего) */
+      out = out.replace(/(<div class="msg[^"]*"[^>]*>)/, '$1' + tag);
+    }
+    return out;
+  };
+}
+
+/* ================= 18. БЫСТРАЯ РЕАКЦИЯ ДВОЙНЫМ ТАПОМ (fire) ================= */
+if(typeof reactBar === 'function'){
+  const _cpPrevReactBar = reactBar;
+  let cpTapEl = null, cpTapT = 0, cpTapTimer = 0;
+  reactBar = function(ev, idx){
+    ev.stopPropagation();
+    const now = Date.now();
+    const msg = ev.currentTarget;
+    /* игнорим тапы по интерактивным потомкам — те сами обрабатывают клик */
+    if(ev.target && ev.target.closest &&
+       ev.target.closest('button, a, video, audio, input, .cp-linkprev, .cp-vn-play, .cp-vn-speed, .cp-speed, .voice, .popt')){
+      return; /* фолбэк ядра тоже гасим — интерактив рулит */
+    }
+    if(cpTapEl === msg && (now - cpTapT) < 320){
+      clearTimeout(cpTapTimer);
+      cpTapEl = null; cpTapT = 0;
+      if(typeof pickReact === 'function'){
+        pickReact(idx, 'fire');
+        /* pickReact вызывает refreshMsg — узел заменится; вешаем FX уже на новый */
+        setTimeout(()=>{
+          const el = cpMsgsEl();
+          const fresh = el && el.children[idx];
+          if(fresh) cpQuickReactFx(fresh);
+        }, 0);
+      }
+      return;
+    }
+    cpTapEl = msg; cpTapT = now;
+    clearTimeout(cpTapTimer);
+    cpTapTimer = setTimeout(()=>{
+      cpTapEl = null; cpTapT = 0;
+      /* одиночный тап — оригинальное поведение: открыть контекст-меню */
+      if(typeof openMsgMenu === 'function') openMsgMenu(idx);
+    }, 260);
+  };
+}
+function cpQuickReactFx(msg){
+  const fx = document.createElement('span');
+  fx.className = 'cp-quick-fx'; fx.innerHTML = I('fire');
+  msg.appendChild(fx);
+  setTimeout(()=>fx.remove(), 900);
+}
+
+(function cpInit4(){
+  /* если чат уже открыт при загрузке модуля — сразу восстановить черновик */
+  if(typeof currentChat!=='undefined' && currentChat) cpDraftLoad();
+  /* обновить список — на случай сохранённых черновиков с прошлой сессии */
+  if(typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
+})();

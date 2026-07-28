@@ -1,0 +1,95 @@
+/* ===== PARTNER-PLUS: усиленный партнёрский кабинет ===== */
+
+/* Блок «Твой уровень» */
+.pp-tier{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-top:14px;position:relative;overflow:hidden}
+.pp-tier::before{content:"";position:absolute;inset:0;background:radial-gradient(1200px 200px at -10% -50%, var(--lime-dim), transparent 60%);pointer-events:none}
+.pp-tier-row{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
+.pp-tier-name{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.pp-tier-badge{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000;flex-shrink:0}
+.pp-tier-badge.bronze{background:linear-gradient(135deg,#c98a5a,#8a5230)}
+.pp-tier-badge.silver{background:linear-gradient(135deg,#e6e6e6,#8f8f8f);color:#111}
+.pp-tier-badge.gold{background:linear-gradient(135deg,#ffd93a,#c98a10);color:#111}
+.pp-tier-badge svg.i{width:18px;height:18px}
+.pp-tier-sales{font-weight:800;font-size:14px;color:var(--dim)}
+.pp-tier-sales b{color:var(--text)}
+.pp-tier-bar{height:10px;background:var(--raised);border-radius:99px;margin-top:12px;position:relative;overflow:hidden}
+.pp-tier-bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7ACC00,var(--lime));border-radius:99px;transition:width .5s ease}
+.pp-tier-sub{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin-top:8px;font-weight:600}
+.pp-tier-note{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.5}
+.pp-tier-note b{color:var(--accent)}
+
+/* Блок реф-ссылки: селектор тарифа + кнопки Копировать/QR */
+.pp-deep{margin-top:12px}
+.pp-deep-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.pp-deep-tabs::-webkit-scrollbar{display:none}
+.pp-deep-tabs button{flex:0 0 auto;background:var(--raised);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:700;padding:8px 12px;border-radius:99px;white-space:nowrap;cursor:pointer;transition:all .15s}
+.pp-deep-tabs button.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.pp-ref-actions{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
+.pp-ref-actions .btn{padding:11px 14px;font-size:13px;white-space:nowrap;width:auto}
+.pp-ref-actions .btn.icon-only{padding:11px 12px;min-width:44px;flex:0 0 auto}
+.pp-ref-actions .btn.icon-only svg.i{margin:0}
+.pp-ref-hint{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.5}
+
+/* QR-модалка */
+.pp-qr-wrap{display:flex;flex-direction:column;align-items:center;padding:12px 0 4px}
+.pp-qr{background:#fff;padding:16px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.pp-qr svg{display:block;width:220px;height:220px}
+.pp-qr-url{margin-top:14px;font-size:12.5px;color:var(--dim);text-align:center;word-break:break-all;padding:0 8px;line-height:1.5}
+.pp-qr-tip{font-size:12px;color:var(--dim);text-align:center;margin-top:8px}
+
+/* Промо-материалы */
+.pp-promo-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:10px}
+.pp-promo-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s, border-color .15s}
+.pp-promo-card:active{transform:scale(.98)}
+.pp-promo-card:hover{border-color:var(--accent)}
+.pp-promo-thumb{aspect-ratio:1/1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;padding:14px;font-weight:800;line-height:1.15}
+.pp-promo-thumb.g1{background:linear-gradient(135deg,#000 0%,#1a1a1a 50%,#0d2100 100%)}
+.pp-promo-thumb.g2{background:linear-gradient(135deg,#9AFF00 0%,#5aa000 100%);color:#000}
+.pp-promo-thumb.g3{background:radial-gradient(circle at 30% 30%,#9AFF00,transparent 60%),#111;color:#fff}
+.pp-promo-thumb.g4{background:linear-gradient(180deg,#111 0%,#000 100%);color:#fff;border:1px solid var(--lime-dim)}
+.pp-promo-thumb.g5{background:linear-gradient(135deg,#2a2a2a 0%,#000 100%);color:var(--lime)}
+.pp-promo-thumb.g6{background:linear-gradient(45deg,#9AFF00 0%,#000 100%);color:#fff}
+.pp-promo-thumb .pp-promo-h{font-size:15px;letter-spacing:-.01em}
+.pp-promo-thumb .pp-promo-sub{font-size:10.5px;font-weight:600;opacity:.75;margin-top:6px;letter-spacing:.03em;text-transform:uppercase}
+.pp-promo-thumb .pp-promo-logo{position:absolute;left:8px;bottom:8px;font-weight:800;font-size:11px;opacity:.85;letter-spacing:.1em}
+.pp-promo-meta{padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;font-weight:600}
+.pp-promo-meta .dim{color:var(--dim)}
+
+/* Промо-сит: копирование текста */
+.pp-promo-view h3{margin-bottom:4px}
+.pp-promo-preview{margin:8px 0 14px;border-radius:14px;overflow:hidden;height:200px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font-weight:800;color:#fff}
+.pp-promo-copy{background:var(--raised);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;line-height:1.55;white-space:pre-wrap;color:var(--text);margin-bottom:12px}
+.pp-promo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pp-promo-actions .btn{width:auto}
+
+/* Лидерборд */
+.pp-lb{margin-top:0}
+.pp-lb-row{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13.5px}
+.pp-lb-row:last-child{border-bottom:none}
+.pp-lb-row.you{background:var(--lime-dim);border-radius:10px;margin:6px 0;border-bottom:none}
+.pp-lb-row.you::after{content:"ты";display:inline-block;font-size:9.5px;font-weight:800;background:var(--accent);color:#000;padding:3px 8px;border-radius:99px;margin-left:6px;letter-spacing:.06em;text-transform:uppercase}
+.pp-lb-place{font-weight:800;font-size:15px;text-align:center;color:var(--dim)}
+.pp-lb-row:nth-child(1) .pp-lb-place, .pp-lb-row.top1 .pp-lb-place{color:#ffd93a}
+.pp-lb-row.top2 .pp-lb-place{color:#e0e0e0}
+.pp-lb-row.top3 .pp-lb-place{color:#c98a5a}
+.pp-lb-nick{font-weight:700;display:flex;align-items:center;gap:8px;min-width:0}
+.pp-lb-ava{width:26px;height:26px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;color:var(--accent)}
+.pp-lb-nick span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pp-lb-sum{font-weight:800;color:var(--accent);font-size:13.5px;white-space:nowrap}
+
+/* История начислений с фильтром */
+.pp-hist-filters{display:flex;gap:6px;margin:10px 0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.pp-hist-filters::-webkit-scrollbar{display:none}
+.pp-hist-filters button{flex:0 0 auto;background:var(--raised);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:700;padding:7px 12px;border-radius:99px;white-space:nowrap;cursor:pointer}
+.pp-hist-filters button.on{background:var(--lime);color:#000;border-color:var(--lime)}
+.pp-hist-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}
+.pp-hist-row:last-child{border-bottom:none}
+.pp-hist-t{font-weight:700}
+.pp-hist-m{display:flex;gap:8px;font-size:11.5px;color:var(--dim);margin-top:3px;flex-wrap:wrap}
+.pp-hist-st{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:99px;letter-spacing:.06em;text-transform:uppercase}
+.pp-hist-st.paid{background:var(--lime-dim);color:var(--accent)}
+.pp-hist-st.hold{background:rgba(255,180,0,.15);color:#e0a700}
+.pp-hist-st.can{background:rgba(255,77,77,.14);color:var(--danger)}
+:root[data-theme="light"] .pp-hist-st.hold{color:#9a6f00}
+.pp-hist-sum{font-weight:800;color:var(--accent);font-size:14px;white-space:nowrap}
+.pp-hist-empty{padding:24px 0;text-align:center;color:var(--dim);font-size:13px}

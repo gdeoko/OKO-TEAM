@@ -275,3 +275,122 @@
     try { document.documentElement.classList.remove('wm-on'); } catch(e){}
   }
 })();
+
+/* ==========================================================================
+   wow-motion, слой 2: RIPPLE + SCROLL-SHADOW.
+   Отдельная IIFE со своей защитой (reduced-motion гасит только визуал через CSS,
+   а JS всё равно не мешает работать интерфейсу). Ничего в ядре не переопределяем,
+   только слушаем события и добавляем классы/дочерние спаны.
+   ========================================================================== */
+(function(){
+  'use strict';
+  try{
+    var doc = document;
+    if(!doc || !doc.documentElement) return;
+
+    var mqReduce2 = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    var reduced = !!(mqReduce2 && mqReduce2.matches);
+
+    // ----------------------------------------------------------------------
+    // RIPPLE, лаймовая волна из точки клика на кнопках/чипах/тайлах/табах/строках.
+    // При reduced-motion не добавляем спан вовсе (экономим DOM).
+    // ----------------------------------------------------------------------
+    var RIP_SEL = '.btn, .chip, .svc-ic, .sheet-item, .prow, nav#tabs>button, nav#tabs button';
+    function wmMakeRipple(ev){
+      try{
+        if(reduced) return;
+        var t = ev.target;
+        if(!t || !t.closest) return;
+        var host = t.closest(RIP_SEL);
+        if(!host) return;
+        // не плодим одновременных волн
+        if(host.__wmRipTs && (Date.now() - host.__wmRipTs) < 80) return;
+        host.__wmRipTs = Date.now();
+
+        var rect = host.getBoundingClientRect();
+        var px = (typeof ev.clientX === 'number') ? ev.clientX
+              : (ev.touches && ev.touches[0] ? ev.touches[0].clientX : rect.left + rect.width/2);
+        var py = (typeof ev.clientY === 'number') ? ev.clientY
+              : (ev.touches && ev.touches[0] ? ev.touches[0].clientY : rect.top + rect.height/2);
+        var x = px - rect.left;
+        var y = py - rect.top;
+        // масштаб волны подгоняем под самый дальний угол
+        var maxDim = Math.max(rect.width, rect.height);
+        var scale = Math.max(18, Math.min(42, Math.ceil(maxDim / 8)));
+
+        var r = doc.createElement('span');
+        r.className = 'wm-ripple';
+        r.style.left = x + 'px';
+        r.style.top  = y + 'px';
+        r.style.setProperty('--wm-rip-max', scale);
+        // не ломаем клики по внутренним элементам
+        host.appendChild(r);
+        setTimeout(function(){
+          try{ if(r && r.parentNode) r.parentNode.removeChild(r); }catch(e){}
+        }, 640);
+      }catch(e){}
+    }
+    // pointerdown ловит и мышь и тач, ДО клика (волна успевает стартовать)
+    doc.addEventListener('pointerdown', wmMakeRipple, { capture:true, passive:true });
+
+    // ----------------------------------------------------------------------
+    // SCROLL-SHADOW, тень под шапкой когда контент под ней прокручивается.
+    // Основной скроллер приложения, <main>. Плюс sticky-поиск .st2-search
+    // внутри своих скроллеров получает такую же подсветку.
+    // ----------------------------------------------------------------------
+    function wmApplyMainShadow(){
+      try{
+        var m = doc.querySelector('main');
+        if(!m) return;
+        if(m.scrollTop > 6) m.classList.add('wm-scrolled');
+        else m.classList.remove('wm-scrolled');
+      }catch(e){}
+    }
+    function wmApplyStickyShadow(scope){
+      try{
+        var stickies = (scope || doc).querySelectorAll('.st2-search');
+        for(var i=0;i<stickies.length;i++){
+          var s = stickies[i];
+          // sticky сидит внутри своего скроллера, находим ближайший scroller
+          var p = s.parentElement, hit = null;
+          while(p){
+            var ov = getComputedStyle(p).overflowY;
+            if(ov === 'auto' || ov === 'scroll'){ hit = p; break; }
+            p = p.parentElement;
+          }
+          if(!hit) continue;
+          if(hit.scrollTop > 6) s.classList.add('wm-scrolled');
+          else s.classList.remove('wm-scrolled');
+        }
+      }catch(e){}
+    }
+    function wmOnAnyScroll(ev){
+      // main-скролл ставим по любому событию скролла (capture ловит и внутренние)
+      wmApplyMainShadow();
+      var tgt = ev && ev.target;
+      if(tgt && tgt.querySelectorAll) wmApplyStickyShadow(tgt);
+      else wmApplyStickyShadow(doc);
+    }
+    // capture:true ловит скролл main и любых внутренних контейнеров
+    window.addEventListener('scroll', wmOnAnyScroll, { capture:true, passive:true });
+
+    // Первичный прогон + после смены таба (нужен для нового активного экрана)
+    function wmShadowInit(){
+      wmApplyMainShadow();
+      wmApplyStickyShadow(doc);
+    }
+    if(doc.readyState === 'loading'){
+      doc.addEventListener('DOMContentLoaded', wmShadowInit, { once:true });
+    } else {
+      wmShadowInit();
+    }
+    // Клик по табам может сбросить скролл нового экрана, обновим индикатор
+    var tabsEl = doc.getElementById('tabs');
+    if(tabsEl){
+      tabsEl.addEventListener('click', function(){
+        setTimeout(wmShadowInit, 80);
+      }, true);
+    }
+
+  }catch(err){ /* тихо, не ломаем приложение */ }
+})();

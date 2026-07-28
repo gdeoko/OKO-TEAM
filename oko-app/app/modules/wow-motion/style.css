@@ -188,9 +188,185 @@ html.wm-on .plan.hot{ animation:wmHotPulse 3.6s var(--wm-ease) infinite; }
    ========================================================================= */
 /* a) Экраны не в фокусе не анимируются вовсе (даже если не display:none). */
 .screen:not(.active) *{ animation-play-state:paused !important; }
-/* b) Во время активного скролла ставим на паузу все бесконечные анимации —
+/* b) Во время активного скролла ставим на паузу все бесконечные анимации,
       это главный источник «дёрганого» скролла на слабых телефонах. Класс
       снимается через ~160 мс после остановки скролла (JS ниже). */
 html.oko-scrolling *{ animation-play-state:paused !important; }
-/* c) Когда вкладка/мини-апп в фоне — тоже пауза (не греем телефон впустую). */
+/* c) Когда вкладка/мини-апп в фоне, тоже пауза (не греем телефон впустую). */
 html.oko-hidden *{ animation-play-state:paused !important; }
+
+/* =========================================================================
+   7. SKELETON-ЗАГРУЗКА (Facebook-style shimmer)
+   Пульсирующие серо-лаймовые прямоугольники под ленту/чаты/списки. Работают
+   и без wm-on (класс наносится приложением/шаблоном). Reduced-motion гасит.
+   Использование: <div class="wm-sk wm-sk-line"></div>, .wm-sk-avatar, .wm-sk-thumb,
+   .wm-sk-chip. Ширину/высоту можно менять на элементе.
+   ========================================================================= */
+.wm-sk{
+  position:relative; overflow:hidden;
+  background:rgba(255,255,255,.045);
+  border:1px solid var(--border,rgba(255,255,255,.06));
+  border-radius:10px; color:transparent;
+  min-height:14px;
+  isolation:isolate;
+}
+.wm-sk::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,255,255,.055) 42%,
+    rgba(154,255,0,.14) 50%,
+    rgba(255,255,255,.055) 58%,
+    transparent 100%);
+  transform:translateX(-100%);
+  animation:wmSkShimmer 1.4s var(--wm-ease-io) infinite;
+  z-index:1; pointer-events:none;
+}
+:root[data-theme="light"] .wm-sk{ background:#eef1ec; border-color:rgba(0,0,0,.05); }
+:root[data-theme="light"] .wm-sk::after{
+  background:linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,0,0,.035) 42%,
+    rgba(110,200,0,.14) 50%,
+    rgba(0,0,0,.035) 58%,
+    transparent 100%);
+}
+@keyframes wmSkShimmer{ to{ transform:translateX(100%); } }
+
+/* Шейпы под типовые места */
+.wm-sk.wm-sk-line{ height:12px; border-radius:6px; margin:6px 0; }
+.wm-sk.wm-sk-line.wm-sk-lg{ height:16px; }
+.wm-sk.wm-sk-line.wm-sk-sm{ height:9px; width:58%; }
+.wm-sk.wm-sk-line.wm-sk-title{ height:18px; width:72%; border-radius:8px; }
+.wm-sk.wm-sk-avatar{ width:44px; height:44px; border-radius:50%; }
+.wm-sk.wm-sk-thumb{ height:160px; border-radius:14px; }
+.wm-sk.wm-sk-chip{ display:inline-block; height:26px; width:68px; border-radius:99px; margin:0 6px 6px 0; }
+.wm-sk.wm-sk-block{ height:88px; border-radius:14px; }
+/* Готовый контейнер под ряд ленты */
+.wm-sk-row{ display:flex; gap:12px; align-items:flex-start; padding:14px; border:1px solid var(--border,rgba(255,255,255,.06)); border-radius:14px; background:var(--surface,transparent); margin:0 0 12px; }
+.wm-sk-row .wm-sk-col{ flex:1; min-width:0; }
+
+/* =========================================================================
+   8. RIPPLE, лаймовая волна из точки клика на кнопках/чипах/тайлах/сит-итемах/табах
+   Спан вставляется JS-ом (wow-motion/script.js) в момент pointerdown.
+   ========================================================================= */
+.btn, .chip, .svc-ic, .sheet-item, .prow, nav#tabs>button{ position:relative; overflow:hidden; }
+.wm-ripple{
+  position:absolute; pointer-events:none; z-index:0;
+  width:14px; height:14px; margin:-7px 0 0 -7px;
+  border-radius:50%;
+  background:radial-gradient(circle,
+    rgba(154,255,0,.55) 0%,
+    rgba(154,255,0,.28) 40%,
+    rgba(154,255,0,0) 72%);
+  transform:scale(1); opacity:.85;
+  animation:wmRipple .58s var(--wm-ease-io) forwards;
+  mix-blend-mode:screen;
+}
+.btn.ghost .wm-ripple, .btn.sm .wm-ripple,
+.sheet-item .wm-ripple, .prow .wm-ripple, nav#tabs>button .wm-ripple{
+  background:radial-gradient(circle,
+    rgba(154,255,0,.42) 0%,
+    rgba(154,255,0,.18) 50%,
+    rgba(154,255,0,0) 76%);
+}
+:root[data-theme="light"] .wm-ripple{
+  background:radial-gradient(circle,
+    rgba(110,200,0,.55) 0%,
+    rgba(110,200,0,.25) 45%,
+    rgba(110,200,0,0) 72%);
+  mix-blend-mode:multiply;
+}
+/* Контент кнопки поверх волны */
+.btn>*, .chip>*, .sheet-item>*, .prow>*, nav#tabs>button>*{ position:relative; z-index:1; }
+@keyframes wmRipple{
+  from{ transform:scale(1); opacity:.75; }
+  to  { transform:scale(28); opacity:0; }
+}
+
+/* =========================================================================
+   9. TOAST, bouncy slide-in снизу вместо fade
+   Оверрайдит переходы у #toast (создаётся в ядре). Не меняет разметку.
+   ========================================================================= */
+#toast{
+  transform:translate(-50%, 34px) scale(.9) !important;
+  transition:opacity .22s ease-out, transform .44s cubic-bezier(.34,1.56,.64,1) !important;
+  will-change:transform, opacity;
+}
+#toast.show{
+  transform:translate(-50%, 0) scale(1) !important;
+}
+
+/* =========================================================================
+   10. SCROLL-SHADOW, шапка получает тень когда контент под ней прокручивается
+   Основной скроллер приложения, main. Класс wm-scrolled ставит JS ниже.
+   ========================================================================= */
+main{ transition:box-shadow .26s ease; }
+main.wm-scrolled{
+  box-shadow: inset 0 10px 14px -10px rgba(0,0,0,.55);
+}
+:root[data-theme="light"] main.wm-scrolled{
+  box-shadow: inset 0 10px 14px -10px rgba(50,80,10,.18);
+}
+/* Также подсвечиваем sticky-поиск в списках */
+.st2-search{ transition:box-shadow .22s ease, border-color .22s ease; }
+.st2-search.wm-scrolled{
+  box-shadow:0 8px 18px -10px rgba(0,0,0,.55), 0 0 0 1px rgba(154,255,0,.14);
+}
+:root[data-theme="light"] .st2-search.wm-scrolled{
+  box-shadow:0 6px 14px -8px rgba(60,90,20,.18), 0 0 0 1px rgba(110,200,0,.18);
+}
+
+/* =========================================================================
+   11. МАГНИТНЫЙ ПУЗЫРЬ, активная вкладка в bottom-nav получает мягкий овал
+   позади иконки. Работает вместе с существующей полоской-индикатором сверху.
+   ========================================================================= */
+nav#tabs>button svg.i{ transition:transform .34s var(--wm-spring); }
+nav#tabs>button::after{
+  content:''; position:absolute;
+  top:6px; left:50%;
+  width:44px; height:30px; border-radius:16px;
+  transform:translateX(-50%) scale(.55);
+  background:radial-gradient(ellipse at center,
+    rgba(154,255,0,.32) 0%,
+    rgba(154,255,0,.14) 55%,
+    rgba(154,255,0,0) 82%);
+  opacity:0; pointer-events:none; z-index:0;
+  transition:opacity .28s var(--wm-ease-io), transform .38s var(--wm-spring);
+}
+nav#tabs>button.active::after{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
+}
+nav#tabs>button.active svg.i{
+  transform:translateY(-1px) scale(1.08);
+}
+:root[data-theme="light"] nav#tabs>button::after{
+  background:radial-gradient(ellipse at center,
+    rgba(110,200,0,.28) 0%,
+    rgba(110,200,0,.12) 55%,
+    rgba(110,200,0,0) 82%);
+}
+/* Десктоп, вертикальный рельс: пузырёк слева от иконки */
+@media(min-width:900px){
+  nav#tabs>button::after{
+    top:50%; left:46%;
+    transform:translate(-50%,-50%) scale(.55);
+    width:52px; height:36px; border-radius:18px;
+  }
+  nav#tabs>button.active::after{
+    transform:translate(-50%,-50%) scale(1);
+  }
+}
+
+/* =========================================================================
+   12. RESPECT prefers-reduced-motion для новых слоёв
+   ========================================================================= */
+@media(prefers-reduced-motion:reduce){
+  .wm-sk::after{ animation:none !important; }
+  .wm-ripple{ animation:none !important; opacity:0 !important; }
+  #toast{ transition:opacity .18s ease !important; transform:translate(-50%,0) !important; }
+  main{ transition:none !important; }
+  nav#tabs>button::after,
+  nav#tabs>button svg.i{ transition:none !important; }
+}

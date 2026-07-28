@@ -1511,5 +1511,220 @@ openListing = function(id){
   }catch(e){}
 };
 
+/* ================= AVITO-МЕХАНИКИ v2: отзыв-плашка, портфолио продавца, быстрые чипы,
+   цветной индикатор ответа, попап «как работает эскроу». Всё аддитивно, поверх базовой Биржи. */
+
+/* ---------- индикатор ответа: скорость + цвет + минуты ---------- */
+function mpReplyMeta(l){
+  const k = l.seed % 3;
+  if(k===0){ const m = 10 + (l.seed%16); return {cls:'fast', lab:'отвечает за '+m+' мин', short:'за '+m+' мин'}; }
+  if(k===1){ return {cls:'mid', lab:'отвечает в течение часа', short:'за 1 ч'}; }
+  const h = 2 + (l.seed%3); return {cls:'slow', lab:'отвечает за '+h+' ч', short:'за '+h+' ч'};
+}
+function mpIsFast(l){ return mpReplyMeta(l).cls==='fast'; }
+function mpIsOnline(l){ return (l.seed%2)===0; }
+function mpHasReviews(l){ return Array.isArray(l.reviews) && l.reviews.length>0; }
+
+/* ---------- плашка «Отзыв продавца»: рейтинг + число + одна цитата ---------- */
+function mpTopReview(l){
+  const rv = l.reviews||[];
+  if(!rv.length) return null;
+  return rv.slice().sort((a,b)=>(b.r-a.r) || ((b.t||'').length-(a.t||'').length))[0];
+}
+function mpSellerReviewCard(l){
+  if(!mpHasReviews(l)) return '';
+  const top = mpTopReview(l);
+  const rv = l.reviews||[];
+  const cnt = rv.length;
+  const word = cnt%10===1 && cnt%100!==11 ? 'отзыв'
+             : (cnt%10>=2 && cnt%10<=4 && (cnt%100<10||cnt%100>=20)) ? 'отзыва' : 'отзывов';
+  return `<div class="mp-srv" id="mpSrv">
+    <div class="mp-srv-head">
+      <span class="mp-srv-big"><b>${l.r.toFixed(1)}</b>${I('star')}</span>
+      <div class="mp-srv-b">
+        <b>Отзывы о продавце</b>
+        <small>${stars(l.r)} · ${cnt} ${word}</small>
+      </div>
+    </div>
+    <div class="mp-srv-quote">
+      ${I('comment')}
+      <div><p>«${esc(top.t)}»</p><small>${esc(top.n)} · ${stars(top.r)}</small></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- портфолио продавца: другие услуги того же n ---------- */
+function mpSellerOther(l){
+  return LISTINGS.filter(x=>x.n===l.n && x.id!==l.id && !x.my && x.st==='act').slice(0,6);
+}
+function mpPortfolioBlock(l){
+  const arr = mpSellerOther(l);
+  if(!arr.length) return '';
+  return `<div class="mp-portf" id="mpPortf">
+    <div class="mp-strip-h">${I('grid')} Портфолио продавца · ${arr.length}</div>
+    <div class="mp-recent-row">${arr.map(s=>`
+      <button class="mp-rc" onclick="openListing(${s.id})">
+        <span class="mp-rc-ph">${mpRecentThumb(s)}${s.r?`<span class="mp-rc-rate">${I('star')}${s.r.toFixed(1)}</span>`:''}</span>
+        <span class="mp-rc-p">${esc(s.pt)}</span>
+        <span class="mp-rc-t">${esc(s.t)}</span>
+      </button>`).join('')}</div>
+  </div>`;
+}
+
+/* ---------- инъекция плашки отзывов + портфолио в карточку объявления ---------- */
+const _mpOpenListingRev2 = openListing;
+openListing = function(id){
+  _mpOpenListingRev2.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v) return;
+    /* плашка отзывов сразу после карточки продавца */
+    const seller = v.querySelector('.seller-card');
+    if(seller && !v.querySelector('#mpSrv')){
+      const html = mpSellerReviewCard(l);
+      if(html) seller.insertAdjacentHTML('afterend', html);
+    }
+    /* индикатор ответа: цветной чип + онлайн-точка — заменяем текстовую meta-строку */
+    const meta = v.querySelector('.mp-seller-meta');
+    if(meta && !meta.querySelector('.mp-reply')){
+      const r = mpReplyMeta(l);
+      const on = mpIsOnline(l);
+      const onlineChip = on
+        ? `<span class="mp-online on">онлайн сейчас</span>`
+        : `<span class="mp-online off">был ${1+(l.seed%9)} ч назад</span>`;
+      const rateN = (typeof mpSellerRate==='function') ? mpSellerRate(l) : 95;
+      const since = (typeof mpSellerSince==='function') ? mpSellerSince(l) : 2020;
+      meta.innerHTML = `
+        <span class="mp-reply ${r.cls}">${I('clock')} ${r.lab}</span>
+        ${onlineChip}
+        <span class="mp-meta-dot">${I('crown')} на OKO с ${since} · ${rateN}% ответов</span>`;
+    }
+    /* портфолио продавца — перед похожими объявлениями (или в конец) */
+    if(!l.my && !v.querySelector('#mpPortf')){
+      const html = mpPortfolioBlock(l);
+      if(html){
+        const sim = v.querySelector('#mpSim');
+        if(sim) sim.insertAdjacentHTML('beforebegin', html);
+        else v.insertAdjacentHTML('beforeend', html);
+      }
+    }
+    /* делаем эскроу-блок кликабельным + добавляем строку-подсказку */
+    const trust = v.querySelector('#mpTrust');
+    if(trust && !trust.classList.contains('clickable')){
+      trust.classList.add('clickable');
+      trust.setAttribute('role','button');
+      trust.setAttribute('tabindex','0');
+      trust.addEventListener('click', mpEscInfoOpen);
+      trust.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); mpEscInfoOpen(); } });
+      const row = trust.querySelector('.mp-trust-row');
+      if(row && !row.querySelector('.mp-trust-more'))
+        row.insertAdjacentHTML('beforeend',
+          `<span class="mp-trust-more">${I('chev')} как это работает</span>`);
+    }
+  }catch(e){}
+};
+
+/* ---------- попап «Как работает безопасная сделка» ---------- */
+const MP_ESC_STEPS = [
+  ['card',      'Оплата',    'Ты платишь с кошелька OKO. Деньги замораживаются на счёте площадки — исполнитель их пока не видит.'],
+  ['briefcase', 'Работа',    'Исполнитель принимает заказ и начинает работу. В любой момент можно писать в чат по сделке — он в разделе Кабинет.'],
+  ['eye',       'Проверка',  'Готовую работу исполнитель сдаёт. У тебя есть время всё проверить: сделка на холде, деньги ещё у OKO.'],
+  ['check',     'Выплата',   'Всё нравится — подтверждаешь получение. Только тогда деньги уходят исполнителю, а тебя просят оставить отзыв.'],
+  ['flag',      'Спор',      'Что-то не так — открываешь спор. Модерация OKO разбирает переписку и возвращает деньги, если работа не выполнена.'],
+];
+function mpEscInfoOpen(){
+  if(document.getElementById('mpEscModal')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'mpEscModal';
+  wrap.className = 'mp-escm';
+  wrap.innerHTML = `
+    <div class="mp-escm-back" onclick="mpEscInfoClose()"></div>
+    <div class="mp-escm-card" role="dialog" aria-label="Безопасная сделка">
+      <button class="mp-escm-x" onclick="mpEscInfoClose()" aria-label="Закрыть">${I('back')}</button>
+      <div class="mp-escm-head">
+        <span class="mp-escm-ic">${I('lock')}</span>
+        <div><b>Безопасная сделка</b><small>Эскроу через кошелёк OKO · комиссия 10% только с продавца</small></div>
+      </div>
+      <div class="mp-escm-list">
+        ${MP_ESC_STEPS.map((s,i)=>`
+          <div class="mp-escm-step">
+            <span class="mp-escm-n">${i+1}</span>
+            <div class="mp-escm-b">
+              <b>${I(s[0])} ${s[1]}</b>
+              <p>${s[2]}</p>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="mp-escm-foot">
+        ${I('check')} <span>Возврат при спорах гарантирован — деньги хранятся на счёте OKO до подтверждения.</span>
+      </div>
+      <button class="btn" onclick="mpEscInfoClose()">Понятно</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add('open'));
+  document.addEventListener('keydown', mpEscKey);
+}
+function mpEscInfoClose(){
+  const w = document.getElementById('mpEscModal');
+  if(!w) return;
+  w.classList.remove('open');
+  document.removeEventListener('keydown', mpEscKey);
+  setTimeout(()=>{ if(w.parentNode) w.parentNode.removeChild(w); }, 220);
+}
+function mpEscKey(e){ if(e.key==='Escape') mpEscInfoClose(); }
+
+/* ================= БЫСТРЫЕ ЧИПЫ: онлайн, с отзывами, быстрый ответ ================= */
+if(typeof mkFilters.mpOnline==='undefined')  mkFilters.mpOnline  = false;
+if(typeof mkFilters.mpHasRev==='undefined')  mkFilters.mpHasRev  = false;
+if(typeof mkFilters.mpFast==='undefined')    mkFilters.mpFast    = false;
+
+const _prevMkApplyFiltersQuick = mkApplyFilters;
+mkApplyFilters = function(arr){
+  arr = _prevMkApplyFiltersQuick(arr);
+  if(mkFilters.mpOnline) arr = arr.filter(mpIsOnline);
+  if(mkFilters.mpHasRev) arr = arr.filter(mpHasReviews);
+  if(mkFilters.mpFast)   arr = arr.filter(mpIsFast);
+  return arr;
+};
+const _prevActiveFilterCountQuick = activeFilterCount;
+activeFilterCount = function(){
+  return _prevActiveFilterCountQuick()
+    + (mkFilters.mpOnline?1:0) + (mkFilters.mpHasRev?1:0) + (mkFilters.mpFast?1:0);
+};
+const _prevResetFiltersQuick = resetFilters;
+resetFilters = function(){
+  _prevResetFiltersQuick();
+  mkFilters.mpOnline = false; mkFilters.mpHasRev = false; mkFilters.mpFast = false;
+};
+function mpToggleQuick(k){
+  mkFilters[k] = !mkFilters[k];
+  renderMarketList(document.getElementById('marketRoot'), typeof mkView!=='undefined' && mkView==='fav');
+}
+function mpInjectQuickChips(){
+  const root = document.getElementById('marketRoot');
+  if(!root) return;
+  if(document.getElementById('mpQuickChips')) return;
+  const bar = root.querySelector('.mk-toolbar');
+  if(!bar) return;
+  const w = document.createElement('div');
+  w.id = 'mpQuickChips'; w.className = 'mp-qchips';
+  const chip = (k, ic, lab) =>
+    `<button class="mp-qc${mkFilters[k]?' on':''}" onclick="mpToggleQuick('${k}')">${I(ic)}<span>${lab}</span></button>`;
+  w.innerHTML = `<div class="mp-qc-row">
+    ${chip('mpOnline', 'circle-play', 'Онлайн сейчас')}
+    ${chip('mpHasRev', 'star',        'С отзывами')}
+    ${chip('mpFast',   'bolt',        'Быстрый ответ')}
+  </div>`;
+  bar.insertAdjacentElement('afterend', w);
+}
+if(typeof renderMarketList==='function'){
+  const _mpRMLquick = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLquick.apply(this, arguments);
+    try{ mpInjectQuickChips(); }catch(e){}
+  };
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();

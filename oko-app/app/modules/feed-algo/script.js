@@ -54,6 +54,26 @@ function faAuthor(name, w){
   faSaveAuthors();
 }
 
+/* ---------- скрытые посты (persist): свайп-влево и «Не интересно» помнят выбор между сессиями ----------
+   Ключ oko-feed-hidden хранит массив id, чтобы после F5 пользователь не видел уже скрытое.
+   Держим не больше 200 последних id (защита от бесконтрольного роста хранилища). */
+function faLoadHidden(){
+  if(FA.hidden) return FA.hidden;
+  FA.hidden = new Set();
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-feed-hidden') || 'null');
+    if(s && Array.isArray(s.ids)) s.ids.forEach(id => FA.hidden.add(+id));
+  }catch(e){}
+  return FA.hidden;
+}
+function faSaveHidden(){
+  try{
+    const arr = [...(FA.hidden||[])].slice(-200);
+    localStorage.setItem('oko-feed-hidden', JSON.stringify({ids:arr, at:Date.now()}));
+  }catch(e){}
+}
+function faMarkHidden(id){ (FA.hidden || faLoadHidden()).add(+id); faSaveHidden(); }
+
 /* ---------- интересы из регистрации (кэш: не парсим localStorage на каждый пост при сортировке) ---------- */
 function faInterests(){
   if(FA._ints) return FA._ints;
@@ -95,8 +115,10 @@ function faMediaSec(m){                   /* '1:12' -> секунды (watch-tim
   const a = String(m).split(':').map(x => parseInt(x, 10) || 0);
   return a.length === 2 ? a[0]*60 + a[1] : a[0];
 }
-function faIsTrending(p){                 /* виральный порог: быстро набирает и уже заметен */
-  return !p.promoted && faVelocity(p) >= 100 && faReactions(p) >= 150;
+function faIsTrending(p){                 /* виральный порог: быстро набирает и заметен, ИЛИ уже большой охват */
+  if(p.promoted) return false;
+  if((p.views||0) >= 10000) return true;           /* «В тренде» также по массовому охвату (>10k просмотров) */
+  return faVelocity(p) >= 100 && faReactions(p) >= 150;
 }
 
 /* ================= 1. ПУЛ КОНТЕНТА (12-15 демо-постов по интересам) ================= */
@@ -242,6 +264,50 @@ if(typeof repost === 'function'){
     }
   };
 }
+/* chain hidePost: помимо фильтра массива (ядро) — запоминаем id в localStorage,
+   чтобы пост не вернулся после F5, плюс сдвигаем персонализацию: «не интересно» — обратный сигнал. */
+if(typeof hidePost === 'function'){
+  const _faPrevHidePost = hidePost;
+  hidePost = function(id){
+    const p = postById(id);
+    faMarkHidden(id);
+    _faPrevHidePost(id);
+    if(p){
+      if(p.topic) faSignal(p.topic, -1.5);
+      faAuthor(p.name, -1);
+    }
+  };
+}
+
+/* chain repost: после базового toggle — при первом «репосте» вызвать native-шер
+   (navigator.share), а если его нет, скопировать ссылку в буфер (реальный «Поделиться»). */
+if(typeof repost === 'function'){
+  const _faPrevRepostShare = repost;
+  repost = function(id){
+    const p = postById(id);
+    const willShare = p && !p.reposted;
+    _faPrevRepostShare(id);
+    if(willShare && p && p.reposted) faShareOut(p);
+  };
+}
+function faShareOut(p){
+  if(!p) return;
+  try{
+    const link = 'https://okoteam.top/post/' + p.id;
+    const body = String(p.body || '').replace(/\s+/g,' ').trim().slice(0, 140);
+    const txt  = (p.name || 'OKO') + ': ' + body;
+    if(navigator.share){
+      navigator.share({title:'OKO', text:txt, url:link}).catch(function(){});
+      return;
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(link)
+        .then(function(){ try{ typeof toast === 'function' && toast('Ссылка на пост скопирована'); }catch(e){} })
+        .catch(function(){});
+    }
+  }catch(e){}
+}
+
 /* openComments/addComment полностью переопределены ниже (секция 6: комментарии-треды) —
    сигнал интереса от открытия/написания коммента учитывается там же. */
 
@@ -374,14 +440,22 @@ function faDecorate(){
     }
   });
 
-  /* сторожок бесконечной ленты */
+  /* сторожок бесконечной ленты + видимая кнопка «Загрузить ещё» как страховка,
+     если IntersectionObserver не сработал (reduced-motion, старый браузер, ручной сценарий) */
   const old = list.querySelector('.fa-sentinel'); if(old) old.remove();
+  const oldBtn = list.querySelector('.fa-load-more'); if(oldBtn) oldBtn.remove();
   const endNote = list.querySelector('.fa-end'); if(endNote) endNote.remove();
   if(FA.page < FA.maxPages){
     const s = document.createElement('div'); s.className = 'fa-sentinel'; list.appendChild(s);
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'fa-load-more';
+    btn.setAttribute('aria-label', 'Загрузить ещё');
+    btn.innerHTML = I('fa-refresh') + '<span>Загрузить ещё</span>';
+    btn.onclick = function(){ if(!FA.loading) faLoadMore(); };
+    list.appendChild(btn);
     if(FA.io){ FA.io.disconnect(); FA.io.observe(s); }
   }else{
-    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Это вся подборка на сейчас. Жми «Обновить подборку» сверху — алгоритм найдёт свежее под тебя</div>`);
+    list.insertAdjacentHTML('beforeend', `<div class="fa-end">Это вся подборка на сейчас. Жми «Обновить подборку» сверху, алгоритм найдёт свежее под тебя</div>`);
   }
 }
 
@@ -445,13 +519,38 @@ function faStampTimes(list){
   });
 }
 
+/* индикатор «прочитали» (двойная галка + число уникальных) — только для СВОИХ постов,
+   как в Telegram. Показов у поста >= уникальных читателей, берём консервативные 72%. */
+function faSeenMark(list){
+  if(!list) return;
+  const me = (typeof PROFILE !== 'undefined' && PROFILE && PROFILE.name) ? PROFILE.name : null;
+  if(!me) return;
+  list.querySelectorAll('article.post').forEach(art=>{
+    if(art.querySelector('.fa-seen')) return;
+    const p = postById(faIdOf(art));
+    if(!p || p.name !== me) return;
+    const sub = art.querySelector('.head .sub'); if(!sub) return;
+    const uniq = Math.max(1, Math.floor((p.views || 0) * 0.72));
+    const n = (typeof fmtN === 'function') ? fmtN(uniq) : String(uniq);
+    sub.insertAdjacentHTML('beforeend',
+      `<span class="fa-seen" title="Прочитали ${uniq}">${I('check')}${I('check')}<b>${n}</b></span>`);
+  });
+}
+
 const _faPrevRenderFeed = renderFeed;
 renderFeed = function(kind){
   kind = kind || curFeedKind || 'sub';
+  /* фильтр скрытых: пользователь свайпнул или нажал «Не интересно» — не показываем даже после F5 */
+  const hset = faLoadHidden();
+  if(hset && hset.size){
+    if(Array.isArray(POSTS.sub)) POSTS.sub = POSTS.sub.filter(p => !hset.has(+p.id));
+    if(Array.isArray(POSTS.rec)) POSTS.rec = POSTS.rec.filter(p => !hset.has(+p.id));
+  }
   _faPrevRenderFeed(kind);           /* декор-«почему показано» — только для rec */
   const list = document.getElementById('feedList');
   if(list && !list.querySelector('article.post')){ faRenderEmpty(list, kind); return; }
   faStampTimes(list);                /* время публикации — на обеих вкладках */
+  faSeenMark(list);                  /* прочитали — только для своих постов (обе вкладки) */
   if(kind === 'rec') faDecorate();
 };
 
@@ -796,6 +895,102 @@ function faDoubleTapLike(){
   });
 }
 
+/* ================= 7b. СВАЙП-ВЛЕВО ПО ПОСТУ = СКРЫТЬ (Instagram/TG) =================
+   Тянем карточку влево на > 100 px — вызывается hidePost (chain уже сохраняет id в
+   localStorage), карточка красиво сворачивается. Порог активации по горизонтали
+   отсекает вертикальный скролл: если dy > dx, жест отменяется, скролл идёт как обычно. */
+function faSwipeToHide(){
+  const list = document.getElementById('feedList');
+  if(!list || list._faSwipe) return; list._faSwipe = 1;
+  let art = null, sx = 0, sy = 0, dx = 0, dy = 0, active = false, pid = null;
+  const THR = 100;   /* дистанция скрытия */
+  const AX  = 14;    /* порог активации горизонтального жеста */
+
+  const cleanupInline = (el) => {
+    if(!el) return;
+    el.style.transform = ''; el.style.opacity = '';
+    el.style.transition = ''; el.classList.remove('fa-swiping');
+    const rev = el.querySelector('.fa-swipe-hint'); if(rev) rev.remove();
+  };
+
+  const start = (e) => {
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    const t = e.target;
+    if(!t || !t.closest) return;
+    if(t.closest('button,a,input,textarea,.acts,.post-more,.fa-why,.fa-bar,.fa-explain,.fa-empty,.fa-load-more,.fa-head,.media')) return;
+    const a = t.closest('article.post'); if(!a) return;
+    const id = faIdOf(a); if(id == null) return;
+    const p = postById(id); if(!p || p.promoted) return;   /* рекламу не скрываем свайпом */
+    art = a; pid = id; sx = e.clientX; sy = e.clientY; dx = 0; dy = 0; active = false;
+  };
+
+  const move = (e) => {
+    if(!art) return;
+    dx = e.clientX - sx; dy = e.clientY - sy;
+    if(!active){
+      if(Math.abs(dy) > AX && Math.abs(dy) > Math.abs(dx)){ art = null; return; }  /* вертикальный жест: отдаём скроллу */
+      if(Math.abs(dx) < AX) return;
+      active = true;
+      art.classList.add('fa-swiping');
+      if(!art.querySelector('.fa-swipe-hint')){
+        const hint = document.createElement('span');
+        hint.className = 'fa-swipe-hint';
+        hint.innerHTML = I('fa-x') + '<b>Скрыть</b>';
+        art.appendChild(hint);
+      }
+    }
+    const shift = dx < 0 ? dx : dx * 0.22;                 /* влево свободно, вправо резинка */
+    art.style.transform = 'translateX(' + shift + 'px)';
+    art.style.opacity = String(Math.max(0.4, 1 - Math.abs(shift)/340));
+    const hint = art.querySelector('.fa-swipe-hint');
+    if(hint) hint.style.opacity = String(Math.min(1, Math.abs(shift)/THR));
+  };
+
+  const end = () => {
+    if(!art){ return; }
+    const el = art, id = pid; art = null; pid = null;
+    if(!active){ return; }
+    if(dx < -THR){
+      /* скрываем: сначала уезжаем влево, потом схлопываем высоту, потом чистим POSTS */
+      el.style.transition = 'transform .26s ease, opacity .26s ease';
+      el.style.transform = 'translateX(-115%)'; el.style.opacity = '0';
+      setTimeout(function(){
+        try{
+          el.style.transition = 'max-height .28s ease, margin .28s ease, padding .28s ease, border-color .28s ease';
+          el.style.maxHeight = el.offsetHeight + 'px';
+          requestAnimationFrame(function(){
+            el.style.maxHeight = '0'; el.style.marginTop = '0'; el.style.marginBottom = '0';
+            el.style.paddingTop = '0'; el.style.paddingBottom = '0'; el.style.borderColor = 'transparent';
+          });
+        }catch(e){}
+      }, 240);
+      setTimeout(function(){
+        try{
+          if(id != null && typeof hidePost === 'function') hidePost(id);
+          else{ cleanupInline(el); }
+          if(typeof toast === 'function') toast('Пост скрыт, больше не покажем такое');
+        }catch(e){}
+      }, 540);
+    }else{
+      /* не дотянул — плавно возвращаем */
+      el.style.transition = 'transform .2s ease, opacity .2s ease';
+      el.style.transform = ''; el.style.opacity = '';
+      const hint = el.querySelector('.fa-swipe-hint'); if(hint) hint.style.opacity = '';
+      setTimeout(function(){ cleanupInline(el); }, 220);
+    }
+  };
+
+  if(window.PointerEvent){
+    list.addEventListener('pointerdown', start, {passive:true});
+    list.addEventListener('pointermove', move, {passive:true});
+    ['pointerup','pointercancel','pointerleave'].forEach(t => list.addEventListener(t, end, {passive:true}));
+  }else{
+    list.addEventListener('touchstart', e=>{ const t = e.touches && e.touches[0]; if(t) start({pointerType:'touch', button:0, clientX:t.clientX, clientY:t.clientY, target:e.target}); }, {passive:true});
+    list.addEventListener('touchmove',  e=>{ const t = e.touches && e.touches[0]; if(t) move({clientX:t.clientX, clientY:t.clientY}); }, {passive:true});
+    ['touchend','touchcancel'].forEach(t => list.addEventListener(t, end, {passive:true}));
+  }
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 (function faInit(){
   /* svg-иконка «обновить» в общие defs */
@@ -838,12 +1033,19 @@ function faDoubleTapLike(){
         'No fresh posts found. Refresh and the algorithm will build a new feed for you.',
       'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.':
         'Follow channels and authors — their posts show up here. Meanwhile, check the recommendations.',
+      'Загрузить ещё':'Load more',
+      'Скрыть':'Hide',
+      'Пост скрыт, больше не покажем такое':'Post hidden, we will not show it again',
+      'Ссылка на пост скопирована':'Post link copied',
+      'Это вся подборка на сейчас. Жми «Обновить подборку» сверху, алгоритм найдёт свежее под тебя':
+        'That is the whole feed for now. Tap “Refresh feed” above, the algorithm finds fresh posts for you',
     };
     for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
   }
   try{ FA.infoOpen = localStorage.getItem('oko-feed-info') === '1'; }catch(e){}
   faLoadSignals();
   faLoadAuthors();
+  faLoadHidden();
 
   /* обогащение composer'а комментариев: аватар автора + плашка «Ответ …» (base.html не трогаем) */
   (function faWireCompose(){
@@ -875,6 +1077,7 @@ function faDoubleTapLike(){
     }, {rootMargin:'240px'});
   }
   faDoubleTapLike();
+  faSwipeToHide();
   /* если лента уже открыта на рекомендациях — декорировать сразу */
   const feed = document.getElementById('screen-feed');
   if(feed && feed.classList.contains('active') && curFeedKind === 'rec') faDecorate();

@@ -162,6 +162,51 @@
 .fa-sentinel{height:2px}
 .fa-end{padding:18px;text-align:center;font-size:11.5px;color:var(--dim)}
 
+/* «Загрузить ещё» — видимая ручная кнопка на случай, когда IntersectionObserver
+   не сработал (reduced-motion, старый браузер). Стиль под .fac-more, но лаймовый акцент. */
+.fa-load-more{display:flex;align-items:center;justify-content:center;gap:8px;
+  width:calc(100% - 36px);margin:14px 18px 22px;padding:13px 18px;
+  font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--accent);
+  background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:99px;cursor:pointer;
+  transition:background .16s,border-color .16s,box-shadow .2s,transform .12s}
+.fa-load-more svg.i{width:14px;height:14px;transition:transform .3s}
+.fa-load-more:hover{border-color:rgba(154,255,0,.55);box-shadow:var(--glow)}
+.fa-load-more:hover svg.i{animation:fa-spin .9s linear infinite}
+.fa-load-more:active{transform:scale(.97)}
+:root[data-theme="light"] .fa-load-more{border-color:rgba(83,168,0,.35)}
+:root[data-theme="light"] .fa-load-more:hover{border-color:rgba(83,168,0,.55)}
+
+/* ======================= «ПРОЧИТАЛИ» (двойная галка + число) — только для СВОИХ постов ======================= */
+/* TG-стиль: под именем автора у своего поста показываем, сколько уникальных прочитали.
+   Две галки чуть внахлёст, число — tabular-nums, всё вписано в .sub. */
+#feedList .post .head .sub .fa-seen{display:inline-flex;align-items:center;gap:2px;flex:none;
+  color:var(--accent);font-weight:600;opacity:.9;white-space:nowrap;padding:0 0 0 4px}
+#feedList .post .head .sub .fa-seen svg.i{width:12px;height:12px}
+#feedList .post .head .sub .fa-seen svg.i:nth-of-type(2){margin-left:-6px}
+#feedList .post .head .sub .fa-seen b{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--accent);margin-left:3px}
+
+/* ======================= СВАЙП-ВЛЕВО = СКРЫТЬ (Instagram/TG-жест) ======================= */
+/* Пока пользователь ведёт карточку влево, показываем «×  Скрыть» справа снаружи от жеста
+   и лёгкую бордо-тень как индикатор деструктивного действия. Всё через transform,
+   без reflow. Резинка вправо — CSS уже даёт (limit в JS: dx*0.22). */
+#feedList .post.fa-swiping{will-change:transform,opacity;
+  box-shadow:inset -3px 0 0 rgba(255,86,86,.35),0 2px 14px rgba(0,0,0,.18);z-index:2}
+.fa-swipe-hint{position:absolute;top:50%;right:14px;z-index:3;transform:translateY(-50%);
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  font-size:11.5px;font-weight:700;letter-spacing:.02em;color:#fff;
+  background:#c93b3b;border-radius:99px;box-shadow:0 6px 18px rgba(201,59,59,.35);
+  opacity:0;pointer-events:none;white-space:nowrap}
+.fa-swipe-hint svg.i{width:10px;height:10px;color:#fff}
+.fa-swipe-hint b{font-weight:800}
+:root[data-theme="light"] #feedList .post.fa-swiping{box-shadow:inset -3px 0 0 rgba(201,59,59,.4),0 2px 14px rgba(0,0,0,.12)}
+
+/* уважение к prefers-reduced-motion */
+@media(prefers-reduced-motion:reduce){
+  #feedList .post.fa-swiping{transition:none}
+  .fa-load-more:hover svg.i{animation:none}
+}
+
 /* ======================= ПУСТОЕ СОСТОЯНИЕ ЛЕНТЫ ======================= */
 .fa-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;
   padding:56px 28px 72px;animation:fa-fade .4s ease}
