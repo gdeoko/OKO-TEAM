@@ -110,3 +110,11 @@
 - s3: /tmp/R2/stocks/s3.mp4
 - s4: /tmp/R2/stocks/s4.mp4
 - cta: /tmp/R2/stocks/cta.mp4
+
+## 2026-07-28 — ролик 5 приёмов монтажа (Pexels)
+- hook: /tmp/R3/stocks/hook.mp4
+- s1: /tmp/R3/stocks/s1.mp4
+- s2: /tmp/R3/stocks/s2.mp4
+- s3: /tmp/R3/stocks/s3.mp4
+- s4: /tmp/R3/stocks/s4.mp4
+- s5: /tmp/R3/stocks/s5.mp4
