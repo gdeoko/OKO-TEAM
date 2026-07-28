@@ -709,20 +709,46 @@ label.f-lab{display:block}
 .sys-sec-h p{font-size:12.5px;color:var(--dim);line-height:1.45}
 .sys-note{display:flex;align-items:flex-start;gap:9px;padding:12px 14px;border-radius:11px;background:var(--raised);border:1px solid var(--border);font-size:12.5px;line-height:1.5;color:var(--dim);margin-bottom:14px}
 .sys-note svg.i{width:15px;height:15px;color:var(--accent);flex-shrink:0;margin-top:1px}
+.sys-note b{color:var(--accent);font-weight:800;text-transform:capitalize;white-space:nowrap}
 /* Контент-план: сводка + календарь */
 .sys-plan-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;margin-bottom:14px}
 .sys-plan-sum>div{padding:12px 8px;border-radius:11px;background:var(--raised);border:1px solid var(--border);text-align:center}
 .sys-plan-sum b{display:block;font-size:19px;font-weight:800;color:var(--accent);font-family:var(--font-display,'Bebas Neue');letter-spacing:.02em}
 .sys-plan-sum small{font-size:10.5px;color:var(--dim);line-height:1.3;margin-top:2px;display:block}
-.sys-cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
-.sys-day{position:relative;text-align:left;padding:11px 12px;border-radius:11px;border:1px solid var(--border);background:var(--raised);color:var(--text);cursor:pointer;transition:border-color .15s,transform .12s;display:flex;flex-direction:column;gap:5px;min-height:90px}
-.sys-day:hover{border-color:var(--accent);transform:translateY(-1px)}
-.sys-day.rest{opacity:.5}
-.sys-day-n{font-family:var(--font-display,'Bebas Neue');font-size:20px;font-weight:700;color:var(--accent);letter-spacing:.02em}
-.sys-day-date{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.sys-day-ic{position:absolute;top:10px;right:11px;width:24px;height:24px;border-radius:7px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center}
-.sys-day-ic svg.i{width:12px;height:12px}
-.sys-day b{font-size:11.5px;font-weight:700;line-height:1.3}
+/* Визуальный календарь 7×N */
+.sys-cal-legend{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px;padding:10px 12px;border-radius:11px;background:var(--raised);border:1px solid var(--border)}
+.sys-cal-leg{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim)}
+.sys-cal-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;box-shadow:0 0 5px currentColor}
+.sys-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;background:var(--raised);border:1px solid var(--border);border-radius:14px;padding:12px}
+.sys-cal-wl{text-align:center;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:2px 0 8px}
+.sys-cal-empty{background:transparent;min-height:60px}
+.sys-cal-day{position:relative;aspect-ratio:1/1;min-height:60px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 4px 5px;transition:border-color .12s,transform .12s,background .12s;overflow:hidden}
+.sys-cal-day:hover{border-color:var(--arch,var(--accent));transform:scale(1.04);background:var(--raised);z-index:5}
+.sys-cal-day.rest{opacity:.55}
+.sys-cal-day::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--arch,var(--accent))}
+.sys-cal-num{font-family:var(--font-display,'Bebas Neue');font-size:18px;font-weight:800;line-height:1;padding-top:3px;letter-spacing:.02em}
+.sys-cal-dot{display:none}
+.sys-cal-tag{font-size:7.5px;font-weight:800;letter-spacing:.02em;color:var(--arch,var(--accent));white-space:nowrap;overflow:hidden;text-overflow:clip;max-width:calc(100% - 2px);padding:0 1px;text-align:center}
+@media(min-width:420px){.sys-cal-tag{font-size:9px;letter-spacing:.04em}}
+@media(min-width:600px){.sys-cal-tag{font-size:10px}}
+/* Модалка дня */
+.sys-day-modal{text-align:left}
+.sys-day-date{font-size:12px;color:var(--dim);text-transform:capitalize;margin-bottom:10px;font-weight:600}
+.sys-day-lbl{display:block;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.sys-day-hook{padding:12px 14px;border-radius:11px;background:var(--lime-dim);border-left:3px solid var(--accent);margin-bottom:10px}
+.sys-day-hook p{font-size:14px;font-weight:700;line-height:1.4;color:var(--text)}
+.sys-day-body{margin-bottom:12px}
+.sys-day-body p{font-size:13px;line-height:1.55;color:var(--dim)}
+.sys-day-plat{margin-bottom:14px}
+.sys-day-pl{padding:8px 12px;border-radius:9px;background:var(--raised);border:1px solid var(--border);margin-bottom:5px}
+.sys-day-pl b{font-size:12px;color:var(--text);display:block;margin-bottom:2px}
+.sys-day-pl small{font-size:11.5px;color:var(--dim);line-height:1.4}
+.sys-day-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.sys-day-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:9px;border:1px solid var(--border);background:var(--raised);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
+.sys-day-btn:hover{border-color:var(--accent);background:var(--lime-dim)}
+.sys-day-btn.primary{grid-column:span 2;background:var(--lime);color:#000;border-color:var(--lime);font-weight:800}
+.sys-day-btn.primary:hover{background:#c6ff5a}
+.sys-day-btn svg.i{width:12px;height:12px}
 /* Бизнес-план: сетка блоков */
 .sys-biz-grid{display:flex;flex-direction:column;gap:7px}
 .sys-biz-card{display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:11px;border:1px solid var(--border);background:var(--raised);color:var(--text);text-align:left;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s;line-height:1.35}
@@ -8701,7 +8727,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.52</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.54</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -10763,7 +10789,15 @@ function sysSectionHtml(k, a){
   if(k==='future')    return back + sysFutureHtml(a);
   return back;
 }
-/* --- РАЗДЕЛ 1 — Контент-план на 30 дней --- */
+/* --- РАЗДЕЛ 1 — Контент-план: ВИЗУАЛЬНЫЙ КАЛЕНДАРЬ 7×N --- */
+const SYS_ARCHETYPES = [
+  {k:'expert',  t:'Экспертный разбор', short:'ЭКСП',  full:'ЭКСПЕРТ',  ic:'star',   color:'#9AFF00'},
+  {k:'story',   t:'Личная история',    short:'ИСТ',   full:'ИСТОРИЯ',  ic:'heart',  color:'#ff7ea6'},
+  {k:'case',    t:'Кейс клиента',      short:'КЕЙС',  full:'КЕЙС',     ic:'thumb',  color:'#7ecfff'},
+  {k:'error',   t:'Разбор ошибки',     short:'ОШИБ',  full:'ОШИБКА',   ic:'flag',   color:'#ffb84a'},
+  {k:'trend',   t:'Тренд-адаптация',   short:'ТРЕНД', full:'ТРЕНД',    ic:'fire',   color:'#ff5c5c'},
+  {k:'sell',    t:'Продающий пост',    short:'ПРОД',  full:'ПРОДАЖА',  ic:'money',  color:'#a980ff'},
+];
 function sysPlanHtml(a){
   const rpd = +a.reels_per_day || 1;
   const tpd = +a.tg_per_day || 0;
@@ -10772,50 +10806,91 @@ function sysPlanHtml(a){
   const total = rpd*30 + tpd*30 + cpm + spd*30;
   const platforms = Array.isArray(a.platforms) ? a.platforms : [];
   const start = a.start_date ? new Date(a.start_date) : new Date();
+  // Понедельник до старта — для выравнивания сетки 7×N (пн-вс)
+  const startDow = (start.getDay()+6)%7; // 0=пн,6=вс
+  const monthName = start.toLocaleDateString('ru-RU', {month:'long', year:'numeric'});
+  const WEEK_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  // Собрать 30 дней контент-плана
   const days = [];
   for(let i=0; i<30; i++){
     const d = new Date(start); d.setDate(start.getDate()+i);
-    const dow = d.getDay(); // 0=вс,1=пн
-    const dateStr = d.toLocaleDateString('ru-RU', {day:'2-digit', month:'short'});
-    // Тип поста дня: 6 архетипов чередуются
-    const archetypes = [
-      {t:'Экспертный разбор', ic:'star'},
-      {t:'Личная история',    ic:'heart'},
-      {t:'Кейс клиента',      ic:'thumb'},
-      {t:'Разбор ошибки',     ic:'flag'},
-      {t:'Тренд-адаптация',   ic:'fire'},
-      {t:'Продающий пост',    ic:'money'},
-    ];
-    const arch = archetypes[i % archetypes.length];
-    days.push({i:i+1, date:dateStr, arch, isRest: dow===0});
+    const dow = (d.getDay()+6)%7;
+    const arch = SYS_ARCHETYPES[i % SYS_ARCHETYPES.length];
+    days.push({i:i+1, day:d.getDate(), dow, arch, isRest:dow===6, dateStr:d.toLocaleDateString('ru-RU',{day:'2-digit', month:'2-digit'})});
   }
+  // Отрисуем пустые ячейки в начале, затем дни, добьём до кратного 7
+  let cells = '';
+  for(let e=0; e<startDow; e++) cells += `<div class="sys-cal-empty"></div>`;
+  cells += days.map(d=>`
+    <button class="sys-cal-day ${d.isRest?'rest':''}" style="--arch:${d.arch.color}" onclick="sysDayOpen(${d.i})" title="${esc(d.arch.t)}">
+      <span class="sys-cal-num">${d.day}</span>
+      <span class="sys-cal-dot" style="background:${d.arch.color}"></span>
+      <span class="sys-cal-tag">${d.arch.short}</span>
+    </button>`).join('');
+  const tail = (startDow + 30) % 7;
+  if(tail) for(let e=0; e<7-tail; e++) cells += `<div class="sys-cal-empty"></div>`;
   return `
     <div class="sys-plan-sum">
       <div><b>${rpd*30}</b><small>роликов/мес</small></div>
       ${tpd?`<div><b>${tpd*30}</b><small>TG-постов</small></div>`:''}
       ${cpm?`<div><b>${cpm}</b><small>каруселей</small></div>`:''}
       ${spd?`<div><b>${spd*30}</b><small>сторис</small></div>`:''}
-      <div><b>${total}</b><small>единиц контента</small></div>
+      <div><b>${total}</b><small>всего единиц</small></div>
     </div>
-    <p class="sys-note">${I('bolt')} Календарь под ${platforms.length ? platforms.join(', ') : 'все выбранные'} · старт ${esc(a.start_date||'сегодня')}. Клик на день — детали, кнопки «Копировать», «Промпт», «Запустить в производство».</p>
-    <div class="sys-cal">${days.map(d=>`
-      <button class="sys-day ${d.isRest?'rest':''}" onclick="sysDayOpen(${d.i})">
-        <span class="sys-day-n">${d.i}</span>
-        <span class="sys-day-date">${d.date}</span>
-        <span class="sys-day-ic">${I(d.arch.ic)}</span>
-        <b>${d.arch.t}</b>
-      </button>`).join('')}
+    <p class="sys-note">${I('bolt')} Календарь на ${platforms.length ? platforms.join(', ') : 'все выбранные площадки'} · <b>${esc(monthName)}</b>. Клик на день — сценарий, посты, промпты, кнопка «В производство».</p>
+    <div class="sys-cal-legend">${SYS_ARCHETYPES.map(x=>`
+      <span class="sys-cal-leg"><i style="background:${x.color}"></i>${x.full}</span>`).join('')}</div>
+    <div class="sys-cal-grid">
+      ${WEEK_LABELS.map(w=>`<div class="sys-cal-wl">${w}</div>`).join('')}
+      ${cells}
     </div>`;
 }
 function sysDayOpen(n){
   const a = aState.answers;
-  const platforms = Array.isArray(a.platforms) ? a.platforms : [];
-  showPopup({ico:'file', title:`День ${n} · Контент дня`,
-    body:`<b>Тема:</b> будет сформирована командой OKO на основе твоей ниши и текущих трендов.<br><br>
-    <b>Форматы под платформы:</b><br>
-    ${platforms.map(p=>`• ${esc(p)} — сценарий на 45–60 сек с хуком, воронкой и призывом`).join('<br>')||'• Все платформы — сценарий, пост, сторис'}<br><br>
-    <span class="dim" style="font-size:12px">Полный сценарий, промпт для картинки и готовый файл — придут в течение 4–6 часов, как только команда завершит генерацию Системы.</span>`,
-    actions:[{label:'Понятно'}]});
+  const platforms = Array.isArray(a.platforms) ? a.platforms : ['Instagram','TikTok','Telegram'];
+  const arch = SYS_ARCHETYPES[(n-1) % SYS_ARCHETYPES.length];
+  const start = a.start_date ? new Date(a.start_date) : new Date();
+  const d = new Date(start); d.setDate(start.getDate()+(n-1));
+  const dateStr = d.toLocaleDateString('ru-RU',{weekday:'long', day:'numeric', month:'long'});
+  // «Реалистичный» контент для превью — будет заменён на реальную генерацию Claude API
+  const previews = {
+    expert:  {hook:'3 ошибки в первых 2 секундах ролика — почему у 90% не залетает', body:'Разбираем распространённые ошибки в хуке: медленный старт, объяснение вместо интриги, лицо без эмоции. Показываем правильные примеры с досмотром >70%.'},
+    story:   {hook:'Как я слил 200 000 ₽ на рекламу и что понял', body:'Личная история про первый провальный запуск. Что бы я сделал иначе, зная то, что знаю сейчас.'},
+    case:    {hook:'Клиент был в минусе — за 60 дней вышел на 480 000 ₽/мес', body:'Реальный кейс: точка А, что делали, точка Б. Скриншоты статистики. Универсальные приёмы, которые сработали.'},
+    error:   {hook:'НЕ снимайте это в первые 30 роликов', body:'Топ-5 форматов, которые убивают охваты новичкам. Что вместо них — с примерами и цифрами.'},
+    trend:   {hook:'Новый формат Reels — уже собрал 12 млн просмотров у топов', body:'Как адаптировать вирусный тренд под свою нишу без потери смысла. Пошаговая инструкция.'},
+    sell:    {hook:'Открываю запись на наставничество — 5 мест по спец-цене', body:'Оффер месяца: программа, что входит, кому подойдёт, кому нет. Отзывы прошлого потока. Форма записи.'},
+  };
+  const p = previews[arch.k];
+  showPopup({title:`${arch.short} · День ${n}`, ico:arch.ic,
+    body:`
+    <div class="sys-day-modal">
+      <div class="sys-day-date">${esc(dateStr)}</div>
+      <div class="sys-day-hook"><span class="sys-day-lbl">Хук</span><p>${esc(p.hook)}</p></div>
+      <div class="sys-day-body"><span class="sys-day-lbl">Раскрытие</span><p>${esc(p.body)}</p></div>
+      <div class="sys-day-plat">
+        <span class="sys-day-lbl">Форматы под платформы</span>
+        ${platforms.map(pl=>`<div class="sys-day-pl"><b>${esc(pl)}</b><small>${sysDayFormatForPlatform(pl,arch.k)}</small></div>`).join('')}
+      </div>
+      <div class="sys-day-btns">
+        <button class="sys-day-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(p.hook).replace(/'/g,"\\'")}');toast('Хук скопирован')">${I('copy')} Хук</button>
+        <button class="sys-day-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(p.body).replace(/'/g,"\\'")}');toast('Раскрытие скопировано')">${I('copy')} Текст</button>
+        <button class="sys-day-btn" onclick="toast('Промпт для картинки скопирован')">${I('photo')} Промпт</button>
+        <button class="sys-day-btn primary" onclick="closePopup&&closePopup();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} В производство</button>
+      </div>
+    </div>`,
+    actions:[{label:'Закрыть', ghost:true}]});
+}
+function sysDayFormatForPlatform(pl, ak){
+  const m = {
+    Instagram:'Reels 45–60 сек + карусель 5 слайдов + сторис-серия из 3',
+    TikTok:   'Вертикаль 25–40 сек + караоке-субтитры',
+    YouTube:  'Shorts 45–60 сек + описание с хук-ссылкой на длинное видео',
+    Telegram: 'Пост 500–800 знаков + голосовое до 60 сек',
+    VK:       'Клип 30–45 сек + пост в стену с CTA',
+    'Дзен':   'Статья 300–500 слов + вертикальный видео-превью'
+  };
+  return m[pl] || 'Сценарий 30–60 сек + подпись + сторис-анонс';
 }
 /* --- РАЗДЕЛ 2 — Бизнес-план (18 блоков) --- */
 function sysBizHtml(a){
