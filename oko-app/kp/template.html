@@ -9,17 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="__LOGO__">
 <link rel="preload" as="fetch" href="assets/oko-eye.glb" crossorigin>
-<link rel="preload" as="image" href="kp-media/fig/robot.webp">
+<link rel="preload" as="image" href="kp-media/bg/cubes_land.webp">
+<link rel="preload" as="image" href="kp-media/fig/hand_sheet.webp">
 <script type="importmap">
 {"imports":{"three":"./js/vendor/three.module.min.js","three/addons/":"./js/vendor/jsm/"}}
 </script>
-<script type="module" src="spline/spline-viewer.js"></script>
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
-/* фон рендерится в пониженном разрешении (меньше пикселей = меньше лага), затем растягивается до 100% — сцена/физика/кадрирование не меняются, только чуть мягче */
-#spline-bg{position:fixed;top:0;left:0;width:68vw;height:68vh;transform:scale(1.5);transform-origin:0 0;z-index:-3;display:block;pointer-events:none;opacity:0;transition:opacity 1.4s ease;backface-visibility:hidden}
-#spline-bg.ready{opacity:.62}
-#spline-bg::part(logo){display:none!important}
+/* СТАТИЧНЫЙ фон-кубы (пре-рендер Spline) — ноль WebGL/лагов/глюков */
+#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505 url('kp-media/bg/cubes_land.webp') center/cover no-repeat;opacity:.85}
+@media(max-width:760px){#cubes-bg{background-image:url('kp-media/bg/cubes_port.webp')}}
 .holo-anchor{pointer-events:none}
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--lime:#9AFF00;--glass:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--border-lime:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.75);--w3:rgba(255,255,255,0.45);--w4:rgba(255,255,255,0.22);--bg:#050505}
@@ -121,7 +120,7 @@ section{position:relative;z-index:1;padding:42px 0}
 #holoHand{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);height:min(340px,40vw)}
 .hand-caption{position:absolute;left:0;top:50%;transform:translateY(-50%);width:min(560px,64vw);z-index:6;text-align:center;font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(20px,4.4vw,50px);line-height:1;letter-spacing:-1px;white-space:nowrap;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.85),0 0 30px rgba(154,255,0,.25);opacity:0;transition:opacity .6s ease;pointer-events:none}
 .hand-caption.on{opacity:1}
-@media(max-width:760px){.hand-hero{min-height:46vh}#holoHand{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;height:56vw}.hand-caption{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;font-size:clamp(20px,7vw,40px)}}
+@media(max-width:760px){.hand-hero{min-height:38vh}#holoHand{left:50%;top:50%;transform:translate(-50%,-50%);width:96vw;height:56vw}.hand-caption{left:50%;top:50%;transform:translate(-50%,-50%);width:100vw;font-size:clamp(17px,5.8vw,34px)}}
 /* OFFER sticky cards */
 #offer .stack{position:relative}
 .ocard{position:sticky;top:78px;margin-bottom:24px;border-radius:24px;border:1px solid var(--border-lime);background:linear-gradient(160deg,rgba(16,20,14,.97),rgba(6,8,6,.98));box-shadow:0 34px 90px -40px rgba(0,0,0,.9);overflow:hidden;padding:24px 22px 20px;backdrop-filter:blur(6px)}
@@ -172,7 +171,7 @@ section{position:relative;z-index:1;padding:42px 0}
 .adt-dot.on{background:var(--lime);width:22px;border-radius:4px}
 /* TARIFFS */
 #tariffs{overflow:hidden}
-.tcar-wrap{position:relative;min-height:600px;margin-top:12px;perspective:1500px;touch-action:pan-y}
+.tcar-wrap{position:relative;min-height:540px;margin-top:10px;perspective:1500px;touch-action:pan-y}
 .tcar{position:absolute;inset:0;transform-style:preserve-3d}
 .tier{position:absolute;left:50%;top:0;width:min(330px,84vw);border-radius:24px;padding:24px 22px;background:linear-gradient(165deg,rgba(18,22,16,.99),rgba(8,10,8,.995));border:1px solid var(--border-lime);will-change:transform;backface-visibility:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
 .tier.feat{border-color:var(--lime);box-shadow:0 0 44px rgba(154,255,0,.16),0 30px 80px -30px rgba(0,0,0,.9)}
@@ -195,7 +194,7 @@ section{position:relative;z-index:1;padding:42px 0}
 .tli-a div{padding:0 0 10px 26px}
 .tli b.mark{color:var(--lime);font-weight:800}
 .tier-btns{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.tcar-nav{display:flex;gap:9px;justify-content:center;margin-top:16px}
+.tcar-nav{display:flex;gap:9px;justify-content:center;margin-top:6px}
 .tcar-dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s}
 .tcar-dot.on{background:var(--lime);width:26px;border-radius:5px}
 .tcar-hint{text-align:center;font-size:11px;color:var(--w4);margin-top:9px;letter-spacing:.5px}
@@ -203,8 +202,8 @@ section{position:relative;z-index:1;padding:42px 0}
 .scarce{display:inline-flex;align-items:center;gap:8px;background:rgba(255,60,60,.08);border:1px solid rgba(255,80,80,.25);color:#ff9a9a;font-size:12px;font-weight:700;padding:8px 16px;border-radius:30px;margin:0 auto}
 .scarce .d{width:7px;height:7px;background:#ff5a5a;border-radius:50%;animation:blink 1.4s infinite}
 /* REVIEWS — circles */
-.rev-circles{display:flex;gap:14px;overflow-x:auto;padding:10px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.rev-circles::-webkit-scrollbar{display:none}
+.rev-caro{position:relative;overflow:hidden;margin-top:10px;padding:6px 0 12px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.rev-track{display:flex;gap:14px;width:max-content;will-change:transform}
 .rcirc{flex:0 0 auto;width:118px;text-align:center;cursor:pointer}
 .rcirc-v{width:118px;height:118px;border-radius:50%;overflow:hidden;position:relative;border:2px solid var(--lime);box-shadow:0 0 22px rgba(154,255,0,.25);background:#0a0c0a}
 .rcirc-v video{width:100%;height:100%;object-fit:cover}
@@ -221,40 +220,47 @@ section{position:relative;z-index:1;padding:42px 0}
 .trev-tx{font-size:12.5px;color:var(--w2);line-height:1.6}
 .rev-more{text-align:center;margin-top:18px}
 /* GUARANTEES — премиальные 3D банковские карты с видео-фоном */
-.bankcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px;perspective:1500px}
-@media(max-width:900px){.bankcards{grid-template-columns:repeat(2,1fr);gap:14px}}
-@media(max-width:560px){.bankcards{grid-template-columns:1fr;gap:14px;max-width:400px;margin-left:auto;margin-right:auto}}
-.bcard{position:relative;aspect-ratio:1.6/1;border-radius:18px;overflow:hidden;border:1px solid var(--border-lime);background:#0a0c0a;box-shadow:0 24px 60px -34px rgba(0,0,0,.95);transform-style:preserve-3d;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;will-change:transform}
-.bcard:hover{box-shadow:0 30px 70px -30px rgba(0,0,0,.95),0 0 40px -6px rgba(154,255,0,.28)}
-.bcard video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.4}
-.bc-veil{position:absolute;inset:0;z-index:1;background:linear-gradient(125deg,rgba(5,8,3,.96),rgba(5,8,3,.72) 50%,rgba(9,15,3,.92))}
-.bc-sheen{position:absolute;inset:-40%;z-index:2;background:linear-gradient(115deg,transparent 38%,rgba(154,255,0,.14) 48%,rgba(255,255,255,.06) 50%,transparent 60%);mix-blend-mode:screen;transform:translateX(-30%);animation:bcsheen 6s ease-in-out infinite}
-@keyframes bcsheen{0%,100%{transform:translateX(-38%)}50%{transform:translateX(38%)}}
-.bc-top{position:absolute;left:18px;right:18px;top:16px;display:flex;justify-content:space-between;align-items:center;z-index:3;transform:translateZ(30px)}
-.bc-chip{width:40px;height:30px;border-radius:7px;background:linear-gradient(135deg,#d7ff86,#69ad00);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.4);position:relative}
-.bc-chip::after{content:'';position:absolute;inset:6px 8px;border:1px solid rgba(0,0,0,.35);border-radius:2px;background:linear-gradient(90deg,transparent 45%,rgba(0,0,0,.3) 45% 55%,transparent 55%)}
-.bc-ico{color:var(--lime);filter:drop-shadow(0 2px 8px rgba(154,255,0,.5))}
-.bc-body{position:absolute;left:18px;right:18px;bottom:16px;z-index:3;transform:translateZ(24px)}
-.bc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:clamp(15px,1.5vw,19px);line-height:1.05;margin-bottom:6px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
-.bc-d{font-size:12px;color:var(--w2);line-height:1.5;text-shadow:0 1px 8px rgba(0,0,0,.8)}
-/* FAQ — робот-сцена сверху, вопросы сеткой снизу */
-.faq-scene{position:relative;margin-top:20px}
-.faq-scene::before{content:'';position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:min(520px,90vw);height:340px;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(154,255,0,.14),transparent 70%);pointer-events:none;z-index:0}
-.faq-robot{position:sticky;top:74px;z-index:5;width:min(230px,54vw);aspect-ratio:1/1;margin:0 auto 2px}
-#holoRobot{position:absolute;inset:0}
-.faq-cap{text-align:center;margin-bottom:16px;position:relative;z-index:1}
-.rb-say{display:inline-block;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);border:1px solid var(--border-lime);border-radius:30px;padding:9px 18px;font-size:12.5px;color:var(--w2)}
+/* GUARANTEES — liquid-glass парящие карточки (breathing float, как в референсе) */
+.glass-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+@media(max-width:900px){.glass-cards{grid-template-columns:repeat(2,1fr);gap:14px}}
+@media(max-width:560px){.glass-cards{grid-template-columns:1fr;gap:14px;max-width:400px;margin:26px auto 0}}
+.gcard{display:flex;align-items:center;gap:14px;padding:18px 18px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(255,255,255,.11),rgba(255,255,255,.035));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),inset 0 0 0 1px rgba(154,255,0,.05),0 22px 44px -22px rgba(0,0,0,.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);will-change:transform;animation:gfloat 5s ease-in-out infinite;transition:box-shadow .3s}
+.gcard:hover{box-shadow:inset 0 1.5px 3px rgba(255,255,255,.28),0 0 34px -6px rgba(154,255,0,.3),0 22px 44px -20px rgba(0,0,0,.85)}
+.gcard:nth-child(2){animation-duration:5.7s;animation-delay:-1.4s}
+.gcard:nth-child(3){animation-duration:4.6s;animation-delay:-2.6s}
+.gcard:nth-child(4){animation-duration:5.3s;animation-delay:-0.8s}
+.gcard:nth-child(5){animation-duration:4.9s;animation-delay:-3.1s}
+.gcard:nth-child(6){animation-duration:5.9s;animation-delay:-1.9s}
+@keyframes gfloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(2px,-9px,0)}}
+@media(prefers-reduced-motion:reduce){.gcard{animation:none}}
+.gc-bead{flex:0 0 auto;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#d7ff86,#5fa800);display:flex;align-items:center;justify-content:center;color:#0a1400;box-shadow:0 6px 16px rgba(154,255,0,.35),inset 0 1px 2px rgba(255,255,255,.5)}
+.gc-t{font-family:'Unbounded',sans-serif;font-weight:800;font-size:14px;color:#fff;line-height:1.15}
+.gc-d{font-size:11.5px;color:var(--w2);margin-top:3px;line-height:1.4}
+/* FAQ — живой робот-видео сверху, стеклянные вопросы сеткой (в один экран) */
+.faq-scene{position:relative;margin-top:14px;display:flex;flex-direction:column;align-items:center}
+.faq-scene::before{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:min(520px,92vw);height:300px;background:radial-gradient(ellipse 60% 60% at 50% 42%,rgba(154,255,0,.16),transparent 70%);pointer-events:none;z-index:0}
+.faq-robot{position:relative;z-index:2;width:min(210px,46vw);aspect-ratio:1/1;margin:0 auto -6px;transition:transform .4s cubic-bezier(.2,1.4,.4,1);filter:drop-shadow(0 18px 34px rgba(154,255,0,.2))}
+.faq-robot video{width:100%;height:100%;object-fit:contain;display:block}
+.faq-robot.react{transform:translateY(-8px) scale(1.06)}
+.faq-cap{text-align:center;margin-bottom:16px;position:relative;z-index:2}
+.rb-say{display:inline-block;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);border:1px solid var(--border-lime);border-radius:30px;padding:9px 18px;font-size:12.5px;color:var(--w2)}
 .rb-say b{color:var(--lime)}
-.faq-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
-@media(max-width:760px){.faq-list{grid-template-columns:1fr}}
-.faq-i{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.03);backdrop-filter:blur(4px);transition:border-color .3s,background .3s;align-self:start}
-.faq-i.open{border-color:var(--border-lime);background:rgba(154,255,0,.04)}
-.faq-q{padding:15px 16px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;line-height:1.3}
+.faq-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1;width:100%;max-width:920px}
+@media(max-width:760px){.faq-list{grid-template-columns:1fr;gap:10px}}
+.faq-i{border-radius:16px;overflow:hidden;align-self:start;transition:border-color .3s,background .3s;
+  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.13);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.faq-i.open{border-color:var(--border-lime);background:rgba(154,255,0,.07)}
+.faq-q{padding:14px 16px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;line-height:1.3}
 .faq-q .p{color:var(--lime);font-size:20px;transition:transform .3s;flex:0 0 auto}
 .faq-i.open .p{transform:rotate(45deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w3);font-size:13px;line-height:1.6}
-.faq-a div{padding:0 16px 15px}
-@media(max-width:760px){.faq-robot{top:66px;width:min(190px,46vw)}}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;color:var(--w2);font-size:12.5px;line-height:1.6}
+.faq-a div{padding:0 16px 14px}
+@media(max-width:760px){.faq-robot{width:min(170px,42vw)}}
 /* CTA loop */
 .cta-f{text-align:center;padding:72px 24px;position:relative;overflow:hidden}
 .cta-logo{width:120px;height:120px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(154,255,0,.16),rgba(6,8,6,.9));border:1px solid var(--border-lime);box-shadow:0 0 60px -10px rgba(154,255,0,.4);animation:plfloat 5s ease-in-out infinite}
@@ -285,8 +291,8 @@ section{position:relative;z-index:1;padding:42px 0}
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader"><div class="pl-logo"><img src="__LOGO__" alt="OKO"></div><div class="pl-word">OK<span>O</span></div><div class="pl-bar"><i></i></div></div>
 <!-- BACKGROUND -->
+<div id="cubes-bg"></div>
 <div id="bg-grid"></div>
-<spline-viewer id="spline-bg" url="spline/scene.splinecode"></spline-viewer>
 <div id="bg-overlay"></div>
 <div id="glow-bg"><span class="g1"></span><span class="g2"></span></div>
 <canvas id="holo-canvas"></canvas>
@@ -419,7 +425,7 @@ section{position:relative;z-index:1;padding:42px 0}
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Отзывы</div><h2 class="sec-h creveal">Живые отзывы <span class="lime">клиентов</span></h2>
   <p class="sec-p">Видео и голосовые из @okoreviews. Тапни кружок — включится звук.</p></div>
-  <div class="rev-circles rv">__VREV_CIRCLES____VOICE_CIRCLES__</div>
+  <div class="rev-caro rv"><div class="rev-track">__VREV_CIRCLES__</div></div>
   <div class="trev-caro rv"><div class="trev-track">__TREV_CARDS__</div></div>
   <div class="rev-more"><a href="https://t.me/okoreviews" target="_blank" class="btn btn-ghost magnetic">Больше отзывов в Telegram →</a></div>
 </div>
@@ -429,25 +435,13 @@ section{position:relative;z-index:1;padding:42px 0}
 <section id="guarantees">
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Гарантии</div><h2 class="sec-h creveal">Работаем <span class="lime">по-честному</span></h2></div>
-  <div class="bankcards">
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r1.mp4" poster="kp-media/reels/r1.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">Договор и акт</div><div class="bc-d">Официальный договор (самозанятый/НПД), приложение с ТЗ и акт — всё юридически.</div></div></div>
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r2.mp4" poster="kp-media/reels/r2.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">Рассрочка 50/50</div><div class="bc-d">Половина на старте, половина по готовности. Без скрытых доплат.</div></div></div>
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r3.mp4" poster="kp-media/reels/r3.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">Правки до результата</div><div class="bc-d">Дорабатываем, пока не будет так, как нужно вам — без счётчика.</div></div></div>
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r4.mp4" poster="kp-media/reels/r4.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">Сопровождение после</div><div class="bc-d">Обучаем работе с системой и агентами, помогаем расти после запуска.</div></div></div>
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r5.mp4" poster="kp-media/reels/r5.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">Сроки зафиксированы</div><div class="bc-d">СТАРТ 5–7 дней · БИЗНЕС 2–3 нед · ИМПЕРИЯ 3–5 нед. Срыв — компенсируем.</div></div></div>
-    <div class="bcard rv" data-tilt><video class="lazyvid" data-src="kp-media/reels/r6.mp4" poster="kp-media/reels/r6.jpg" muted loop playsinline preload="none"></video><div class="bc-veil"></div><div class="bc-sheen"></div>
-      <div class="bc-top"><span class="bc-chip"></span><span class="bc-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span></div>
-      <div class="bc-body"><div class="bc-t">8 лет · 150+ проектов</div><div class="bc-d">Команда 40+ специалистов с 2018 года. Реальные кейсы — не обещания.</div></div></div>
+  <div class="glass-cards">
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><div><div class="gc-t">Договор и акт</div><div class="gc-d">Официально (самозанятый/НПД), с ТЗ и актом</div></div></div>
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></span><div><div class="gc-t">Рассрочка 50/50</div><div class="gc-d">Половина на старте — без скрытых доплат</div></div></div>
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6L9 17l-5-5"/></svg></span><div><div class="gc-t">Правки до результата</div><div class="gc-d">Дорабатываем в рамках ТЗ, без счётчика</div></div></div>
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 11.5V16a2 2 0 01-2 2H8l-4 4V6a2 2 0 012-2h9"/><circle cx="19" cy="5" r="3"/></svg></span><div><div class="gc-t">Сопровождение после</div><div class="gc-d">Обучаем и остаёмся на связи после запуска</div></div></div>
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div><div class="gc-t">Сроки в договоре</div><div class="gc-d">Фиксируем сроки, срыв — компенсируем</div></div></div>
+    <div class="gcard rv"><span class="gc-bead"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg></span><div><div class="gc-t">8 лет · 150+ проектов</div><div class="gc-d">Команда 40+ специалистов с 2018 года</div></div></div>
   </div>
 </div>
 </section>
@@ -457,7 +451,7 @@ section{position:relative;z-index:1;padding:42px 0}
 <div class="wrap">
   <div class="rv" style="max-width:760px"><div class="sec-lbl">Вопросы</div><h2 class="sec-h creveal">Спросите <span class="lime">ИИ-агента</span></h2></div>
   <div class="faq-scene">
-    <div class="faq-robot rv"><div id="holoRobot" class="holo-anchor"></div></div>
+    <div class="faq-robot rv" id="faqRobot"><video src="kp-media/fig/robot_alpha.webm" autoplay loop muted playsinline preload="auto"></video></div>
     <div class="faq-cap"><span class="rb-say" id="rbSay"><b>Агент OKO</b> на связи — тапни вопрос</span></div>
     <div class="faq-list" id="faqList">
       <div class="faq-i"><div class="faq-q">Чем ИИ-агент лучше живого менеджера?<span class="p">+</span></div><div class="faq-a"><div>Агент работает 24/7 без выходных и больничных, отвечает за секунды, не теряет заявки и ведёт по выверенным скриптам. Один агент заменяет отдел — а стоит в разы дешевле.</div></div></div>
@@ -532,7 +526,7 @@ if(!TOUCH){var cg=document.getElementById('cursor-glow');addEventListener('point
 
 function start(){
   if(window.__st)return;window.__st=true;
-  try{if(!RM&&window.Lenis){lenis=new Lenis({lerp:.1,wheelMultiplier:1,smoothWheel:true,smoothTouch:false,touchMultiplier:1.6});
+  try{if(!RM&&window.Lenis){lenis=new Lenis({lerp:.1,wheelMultiplier:1,smoothWheel:true,syncTouch:true,touchMultiplier:1.5,infinite:true});
     if(gsap&&ST){lenis.on('scroll',ST.update);gsap.ticker.add(function(t){lenis.raf(t*1000);});gsap.ticker.lagSmoothing(0);}else{(function rl(t){lenis.raf(t);requestAnimationFrame(rl);})();}}}catch(e){}
   document.querySelectorAll('a[href^="#"]').forEach(function(a){a.addEventListener('click',function(e){var id=a.getAttribute('href');if(id.length<2)return;var el=document.querySelector(id);if(!el)return;e.preventDefault();closeMob();if(lenis)lenis.scrollTo(el,{offset:-60});else el.scrollIntoView({behavior:'smooth'});});});
   build();
@@ -552,6 +546,7 @@ function build(){
   function marquee(track,speed){if(!track||!track.children.length)return;track.innerHTML=track.innerHTML+track.innerHTML;var half=track.scrollWidth/2,pos=0,last=null;function step(t){if(last==null)last=t;var dt=(t-last)/1000;last=t;pos-=speed*dt;if(pos<=-half)pos+=half;track.style.transform='translate3d('+pos+'px,0,0)';requestAnimationFrame(step);}requestAnimationFrame(step);}
   document.querySelectorAll('.hcaro-track').forEach(function(tr,i){marquee(tr,26+(i%3)*5);});
   marquee(document.querySelector('.trev-track'),30);
+  marquee(document.querySelector('.rev-track'),22);
   /* lazy video */
   var vio=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;if(e.isIntersecting){if(!v.getAttribute('src')&&v.dataset.src)v.src=v.dataset.src;var p=v.play&&v.play();p&&p.catch&&p.catch(function(){});}else{try{v.pause();}catch(x){}}});},{threshold:.02,rootMargin:'250px 0px'});
   document.querySelectorAll('video.lazyvid,video[data-lazy]').forEach(function(v){vio.observe(v);});
@@ -629,12 +624,13 @@ function buildFaqRobot(){
     var it=q.parentElement,a=it.querySelector('.faq-a');var willOpen=!it.classList.contains('open');
     items.forEach(function(o){o.classList.remove('open');var oa=o.querySelector('.faq-a');if(oa)oa.style.maxHeight='0';});
     if(willOpen){it.classList.add('open');a.style.maxHeight=a.scrollHeight+40+'px';}
-    if(window.__holoClickRobot)window.__holoClickRobot();   // робот реагирует на клик
+    var rob=document.getElementById('faqRobot');if(rob){rob.classList.add('react');setTimeout(function(){rob.classList.remove('react');},450);}
   });});
 }
 /* ---- SEAMLESS INFINITE LOOP (bidirectional, clone hero == real hero) ---- */
 function buildLoop(){
   var clone=document.getElementById('heroClone');if(!clone)return;
+  if(lenis)return;   // Lenis infinite:true уже зацикливает скролл в обе стороны
   var lock=false;
   function ct(){return clone.offsetTop;}
   function sy(){return window.scrollY||window.pageYOffset||0;}
@@ -660,12 +656,6 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 import { initHolo } from './js/holo.js';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
-// SPLINE bg: fade in + remove badge
-(function(){var sv=document.getElementById('spline-bg');if(!sv)return;
-  function ready(){sv.classList.add('ready');try{var s=sv.shadowRoot;if(s){['#logo','a'].forEach(function(q){var el=s.querySelector(q);if(el)el.remove();});}}catch(e){}}
-  sv.addEventListener('load',ready);setTimeout(ready,2800);
-  var n=0,iv=setInterval(function(){n++;try{var s=sv.shadowRoot;if(s){var a=s.querySelector('a');if(a)a.remove();}}catch(e){}if(n>12)clearInterval(iv);},600);
-})();
 </script>
 </body>
 </html>
