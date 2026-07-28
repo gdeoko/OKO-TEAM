@@ -99,11 +99,13 @@ nav#tabs .nav-logo{display:none}
 /* ============ SHARED ============ */
 .pad{padding:18px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:16px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:#000;font-weight:700;font-size:14px;padding:13px 22px;border-radius:var(--r-md);transition:transform .12s;width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--lime);color:#000;font-weight:700;font-size:14px;padding:13px 22px;border-radius:var(--r-md);transition:transform .12s;width:100%;white-space:nowrap;text-overflow:clip;overflow:hidden;line-height:1.2}
 .btn:active{transform:scale(.97)}
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .btn.sm{width:auto;padding:8px 16px;font-size:12.5px;border-radius:var(--r-sm)}
-.btn svg.i{stroke:currentColor}
+.btn.wrap{white-space:normal;line-height:1.35}
+.btn svg.i{stroke:currentColor;flex-shrink:0}
+@media(max-width:360px){.btn{font-size:13px;padding:12px 16px;gap:6px}}
 .chip{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:4px 10px}
 .section-h{font-size:24px;margin-bottom:14px}
 .dim{color:var(--dim)}
@@ -763,9 +765,24 @@ label.f-lab{display:block}
 .sys-day-field{position:relative}
 .sys-day-lbl{display:block;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
 .sys-day-field p{font-size:13.5px;line-height:1.55;color:var(--text);padding-right:110px}
-.sys-day-copy{position:absolute;top:0;right:0;display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:10.5px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.sys-day-copy{position:static;display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
 .sys-day-copy:hover{border-color:var(--accent);color:var(--accent);background:var(--lime-dim)}
-.sys-day-copy svg.i{width:10px;height:10px}
+.sys-day-copy svg.i{width:11px;height:11px;flex-shrink:0}
+.sys-day-scene{padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);margin-bottom:9px}
+.sys-day-scene-t{display:block;font-size:10.5px;font-weight:800;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.sys-day-scene pre{margin:0;font-family:inherit;font-size:12.5px;line-height:1.55;color:var(--fg);white-space:pre-wrap;word-break:break-word}
+.sys-day-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sys-day-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;background:var(--raised);border:1px solid var(--border);font-size:10.5px;font-weight:700;color:var(--dim);white-space:nowrap}
+.sys-day-tag.code{color:var(--accent);border-color:var(--accent);background:var(--lime-dim)}
+.sys-day-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.sys-day-meta{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:9px;background:var(--raised);margin-top:8px;border:1px solid var(--border)}
+.sys-day-meta b{display:block;font-size:11px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.sys-day-meta small{display:block;font-size:11.5px;color:var(--fg);line-height:1.45}
+.sys-day-persona{padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(154,255,0,.09),transparent);border:1px solid var(--border);margin-bottom:14px}
+.sys-day-persona-h{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.sys-day-persona-h svg.i{width:12px;height:12px}
+.sys-day-persona p{margin:0 0 6px;font-size:12.5px;font-weight:600;line-height:1.5;color:var(--fg)}
+.sys-day-persona small{display:block;font-size:11px;color:var(--dim);line-height:1.4}
 .sys-day-foot{display:flex;gap:10px;padding:14px 20px 20px;border-top:1px solid var(--border);flex-shrink:0}
 .sys-day-foot .btn{flex:1}
 .sys-day-foot .btn.ghost{flex:0 1 auto;min-width:110px}
@@ -3248,8 +3265,8 @@ function sysHomeHtml(a){
       </button>`).join('')}
     </div>
     <div class="sys-cta">
-      <button class="btn" onclick="closeSystemView();showTab('mini');openMa('factory')">${I('bolt')} Запустить контент-завод по этому плану</button>
-      <button class="btn ghost" onclick="toast('Готовим ссылку и PDF... команда закончит через 4–6 часов')">${I('file')} Скачать PDF · получить HTML</button>
+      <button class="btn" onclick="closeSystemView();showTab('mini');openMa('factory')">${I('bolt')} Запустить контент-завод</button>
+      <button class="btn ghost" onclick="toast('Готовим ссылку и PDF — команда закончит через 4–6 часов')">${I('file')} Скачать PDF</button>
     </div>`;
 }
 function sysSectionHtml(k, a){
@@ -3374,6 +3391,63 @@ function sysDayModalEl(n){
   wrap.addEventListener('click', e => { if(e.target === wrap) sysDayClose(); });
   return wrap;
 }
+/* Темы Ф1–Ф8 (по эталону OKO): 6 архетипов × 5 тем каждый = 30 тем на месяц.
+   Каждая тема готова к съёмке, содержит формат, кодовое слово, способ съёмки. */
+const SYS_ARCH_TOPICS = [
+  {a:'Экспертный разбор', ffmt:'Ф5 Польза экспертная', code:'РАЗБОР', shoot:'live', topics:[
+    'Твой оффер в {niche} наберёт в 3 раза больше заявок по этой схеме',
+    'За 60 секунд собираю рабочую систему в {niche} с нуля',
+    'Топ 5 инструментов в {niche} без которых я не работаю ни дня',
+    '4 признака по которым сразу видно эксперта в {niche}',
+    'Формула которая работает: почему я даю гарантию результата',
+  ]},
+  {a:'Личная история', ffmt:'Ф4 Разоблачение рынка', code:'СТРАТЕГИЯ', shoot:'live', topics:[
+    'Средний человек тратит 40 000 часов жизни на работу которую ненавидит',
+    'Я потерял 500 000 ₽ в {niche} за 3 месяца и вот что понял',
+    'День из жизни в {niche}: показываю с 6 утра до 22:00',
+    'Что я сказал бы себе 3 года назад в самом начале пути в {niche}',
+    'Момент когда я хотел всё бросить в {niche} и что меня удержало',
+  ]},
+  {a:'Кейс клиента', ffmt:'Ф3 Шокфакт', code:'ВОРОНКА', shoot:'stock', topics:[
+    'Кейс: {audience_short} вышел на 250 000 ₽ за 21 день с помощью 1 воронки',
+    'До и после: 3 месяца работы, +438% к выручке в цифрах',
+    '3 клиента, 3 разных пути в {niche}, один результат за 90 дней',
+    'Клиент отказывался делать эту штуку и потерял 4 месяца',
+    'Разбор ошибки клиента: как мы вернули 180 000 ₽ за неделю',
+  ]},
+  {a:'Разбор ошибки', ffmt:'Ф2 Провокация', code:'СИСТЕМА', shoot:'live', topics:[
+    'Так делают 97% в {niche} и теряют клиентов каждую неделю',
+    '5 мифов о {niche} в которые я сам верил 2 года',
+    'Одна ошибка в {niche} стоит от 100 000 ₽ каждый месяц',
+    'Стратегия «работать больше» в {niche} убивает выручку',
+    'Что делают все в {niche} и никто не признаётся',
+  ]},
+  {a:'Тренд-адаптация', ffmt:'Ф1 Стоп-скролл', code:'СИСТЕМА', shoot:'ai', topics:[
+    'Этот тренд взорвал соцсети: вот моя версия под {niche}',
+    'Формат из TikTok который дал мне 10 000 подписчиков за 30 дней',
+    'Тренд «до и после» в моей нише {niche}: полный разбор',
+    'Формат «день из жизни» с моими 3 фишками для {niche}',
+    'Почему я делаю тренд иначе: технический разбор',
+  ]},
+  {a:'Продающий пост', ffmt:'Ф7 Секретное знание', code:'СИСТЕМА', shoot:'live', topics:[
+    'Открываю запись на новый поток: 15 мест до конца недели',
+    'Программа «{niche} с нуля до первых денег»: что внутри',
+    'Осталось 3 места на индивидуальное сопровождение до 15 числа',
+    'Отзывы 5 клиентов: реальные цифры за 90 дней работы',
+    'Ранняя бронь до пятницы: скидка 30% на 4-месячный поток',
+  ]},
+];
+function sysDayTopic(n, a){
+  const archIdx = (n-1) % 6;
+  const topicIdx = Math.floor((n-1) / 6) % 5;
+  const arch = SYS_ARCH_TOPICS[archIdx];
+  const niche = (a.niche||'ниша').toLowerCase();
+  const aud = (a.audience||'аудитория').toLowerCase();
+  const audShort = aud.split(',')[0].trim() || aud;
+  const topic = arch.topics[topicIdx].replace(/{niche}/g, niche).replace(/{audience_short}/g, audShort);
+  return {arch: arch.a, archIdx, topic, ffmt: arch.ffmt, code: arch.code, shoot: arch.shoot};
+}
+const SYS_SHOOT_LABEL = {live:'🎥 Живьём в кадре', ai:'🤖 ИИ-аватар HeyGen', stock:'🎬 Стоковое видео + текст'};
 function sysDayHtml(n){
   const a = aState.answers;
   const platforms = Array.isArray(a.platforms) ? a.platforms : ['Instagram','TikTok','Telegram'];
@@ -3381,70 +3455,203 @@ function sysDayHtml(n){
   const d = new Date(start); d.setDate(start.getDate()+(n-1));
   const dateStr = d.toLocaleDateString('ru-RU',{weekday:'long', day:'numeric', month:'long'});
   const items = sysDayItems(n, a);
-  // 6 архетипов сюжета — чередуются
-  const archTitles = ['Экспертный разбор','Личная история','Кейс клиента','Разбор ошибки','Тренд-адаптация','Продающий пост'];
-  const archTitle = archTitles[(n-1) % 6];
-  // Собираем секции по типам
+  const {arch: archTitle, topic} = sysDayTopic(n, a);
   const grouped = {};
   items.forEach(k=>{ grouped[k]=(grouped[k]||0)+1; });
-  const sections = Object.entries(grouped).map(([k,cnt])=>sysDayItemHtml(k, cnt, n, platforms, archTitle)).join('');
+  const sections = Object.entries(grouped).map(([k,cnt])=>sysDayItemHtml(k, cnt, n, a, archTitle, topic)).join('');
+  const bio = [
+    a.niche && `Ниша: ${a.niche}`,
+    a.audience && `Аудитория: ${a.audience}`,
+    a.tone && `Тон: ${a.tone}`,
+    a.on_camera && `Камера: ${a.on_camera}`,
+    platforms.length && `Площадки: ${platforms.join(' · ')}`,
+  ].filter(Boolean).join(' · ');
   return `
     <div class="sys-day-sheet" onclick="event.stopPropagation()">
       <div class="sys-day-head">
         <div>
-          <span class="sys-day-eyebrow">День ${n} · ${esc(dateStr)}</span>
-          <h2>${esc(archTitle)}</h2>
+          <span class="sys-day-eyebrow">День ${n} · ${esc(dateStr)} · ${esc(archTitle)}</span>
+          <h2>${esc(topic)}</h2>
           <p>${items.length} единиц контента для ${esc(platforms.join(' · '))}</p>
         </div>
         <button class="sys-day-close" onclick="sysDayClose()" aria-label="Закрыть">${I('back')}</button>
       </div>
       <div class="sys-day-content">
+        <div class="sys-day-persona">
+          <span class="sys-day-persona-h">${I('compass')} Собрано под тебя</span>
+          <p>${esc(bio||'Заполни анкету — увидишь каждое поле в сценариях')}</p>
+          <small>Каркас темы, тайминги, ФN-формат из эталонов OKO. Персонализация конкурентов, бренд-визуала и голоса включается после анализа команды OKO (4-6 часов).</small>
+        </div>
         ${sections || '<p class="dim" style="padding:24px;text-align:center;font-size:13px">На этот день контент не запланирован (выходной)</p>'}
       </div>
       <div class="sys-day-foot">
-        <button class="btn ghost" onclick="sysDayClose()">Закрыть</button>
-        <button class="btn" onclick="sysDayClose();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} Запустить всё в производство</button>
+        <button class="btn ghost" onclick="sysDayClose();sysGoto('checklist');sysCheckDayOpen(${n})" style="flex:1">${I('check2')} Чек-лист дня</button>
+        <button class="btn" style="flex:1" onclick="sysDayClose();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} В производство</button>
       </div>
     </div>`;
 }
-function sysDayItemHtml(k, cnt, n, platforms, archTitle){
+/* Полный сценарий Reels 30-45 сек по 4 сценам под нишу.
+   Правила: без длинного тире, без противопоставлений «не X а Y», без ИИ-штампов, только конкретика. */
+function sysDayReelScript(topic, a, cnt, meta){
+  const niche = a.niche || 'ниша';
+  const aud = a.audience || 'аудитория';
+  const code = meta && meta.code ? meta.code : 'СИСТЕМА';
+  const shoot = meta && meta.shoot ? meta.shoot : 'live';
+  const audShort = aud.split(',')[0].trim().toLowerCase();
+  const scenes = [
+    {t:'0-3 сек · ХУК (стоп-скролл)', body:`План: КРУПНЫЙ, глаза в кадре.\nРеплика: «${topic}»\nСубтитр (крупно, лайм на чёрном): ${topic.toUpperCase().slice(0,42)}\nЗвук: резкий whoosh + вступление трека.`},
+    {t:'3-15 сек · БОЛЬ + ЦИФРА', body:`План: СРЕДНИЙ, эмоция на лице.\nРеплика: «97% ${audShort} тратят по 3 часа в день на задачу, которая делается за 15 минут. Я покажу как за 30 секунд забрать эти 3 часа обратно.»\nСубтитр: 3 ЧАСА → 15 МИНУТ`},
+    {t:'15-35 сек · МЕТОД (3 шага)', body:`План: чередую крупный и B-roll. Три коротких вставки.\nРеплика: «Шаг 1. Открываешь [конкретный сервис или файл в ${niche}]. Записываешь 3 главных задачи недели.\nШаг 2. К каждой задаче ставишь одну метрику. Одну, не пять.\nШаг 3. Пятница вечер. Проверка. Если метрика выросла — пошёл дальше. Если нет — задача идёт в следующий понедельник без обсуждений.»\nСубтитр по шагам: ШАГ 1 · ШАГ 2 · ШАГ 3\nФормат монтажа: смена кадра каждые 2.5 сек, jump-cut между шагами.`},
+    {t:'35-45 сек · CTA (кодовое слово)', body:`План: возврат к крупному плану, прямой взгляд в камеру.\nРеплика: «Пиши в директ слово ${code}. За 5 минут пришлю полный шаблон с примерами по ${niche}. Бесплатно, без регистраций.»\nСубтитр (крупно, лайм): ПИШИ ${code} В ДИРЕКТ\nПоследний кадр: обложка с текстом ${code} и логотипом бренда на 1.2 сек.`},
+  ];
+  const hashtags = `#${niche.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${audShort.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${code.toLowerCase()} #okoteam #saveit`;
+  const music = 'Трек: динамичный upbeat, 100-120 BPM, без слов. Freesound tag «motivational upbeat». Дакинг под голос: sidechain -8 dB от голоса.';
+  const shootLabel = SYS_SHOOT_LABEL[shoot];
+  const formatMeta = `${meta && meta.ffmt ? meta.ffmt : 'Ф1 Стоп-скролл'} · Способ: ${shootLabel} · Кодовое слово: ${code}`;
+  return {scenes, hashtags, music, formatMeta, count: cnt};
+}
+/* Полный TG-пост 500-800 знаков под тему. Реальный текст, готовый к публикации. */
+function sysDayTgPost(topic, a, cnt, meta){
+  const niche = a.niche || 'твоя ниша';
+  const aud = a.audience || 'моя аудитория';
+  const code = meta && meta.code ? meta.code : 'СИСТЕМА';
+  const audShort = aud.split(',')[0].trim();
+  const body = [
+    `🔥 ${topic.charAt(0).toUpperCase()+topic.slice(1)}`,
+    ``,
+    `Каждый день мне пишет ${audShort.toLowerCase()} с одним вопросом. Год назад я задавал его сам.`,
+    ``,
+    `Ответ короткий. Сделай 3 вещи по этой схеме и результат придёт за 21 день.`,
+    ``,
+    `1️⃣ Один главный результат недели. Только один. Например: «5 заявок в директ». Всё остальное на потом.`,
+    ``,
+    `2️⃣ Одна метрика к этому результату. Не пять. Одна цифра, которую видно каждый день.`,
+    ``,
+    `3️⃣ Пятница вечер, 20 минут. Смотришь метрику. Выросла — усиливаешь. Не выросла — переносишь на следующую неделю без сожалений.`,
+    ``,
+    `Через 21 день эта схема даёт первый устойчивый рост. Через 90 дней — рабочая система в ${niche}. Через 6 месяцев — команда и стабильный доход.`,
+    ``,
+    `Пиши в директ слово ${code}. За 5 минут пришлю шаблон рабочего листа. Бесплатно.`,
+    ``,
+    `А в комментариях под постом расскажи: какая ОДНА цель у тебя сейчас в ${niche}? Отвечу каждому.`,
+  ].join('\n');
+  return {body, count: cnt};
+}
+/* Карусель 7 слайдов, полный готовый текст под каждый слайд */
+function sysDayCarousel(topic, a, cnt, meta){
+  const niche = a.niche || 'ниша';
+  const code = meta && meta.code ? meta.code : 'СИСТЕМА';
+  const slides = [
+    {t:'Слайд 1 · Обложка', body:`Крупный заголовок на весь экран (Bebas Neue, 96px, лайм):\n${topic.toUpperCase()}\n\nПодзаголовок (Montserrat 500, 24px, белый): 3 шага. 21 день. Проверено на 47 клиентах.\n\nЛого бренда в правом нижнем углу. Единый фон бренда.`},
+    {t:'Слайд 2 · Точка А', body:`Заголовок (Bebas Neue, 72px, белый): ГДЕ ТЫ СЕЙЧАС\n\nТри строчки по 8-12 слов:\n▸ Работаешь по 10 часов, а деньги те же.\n▸ Каждую неделю новая идея, старые не доделаны.\n▸ Клиенты уходят раньше чем окупают вложения в рекламу.`},
+    {t:'Слайд 3 · Точка Б', body:`Заголовок (Bebas Neue, 72px, лайм): КУДА ТЫ ПРИДЁШЬ ЗА 21 ДЕНЬ\n\nЧисла крупно:\n+ 5 стабильных заявок в неделю\n+ 40% времени свободного\n+ 1 работающая схема продаж, которую делает команда`},
+    {t:'Слайд 4 · Шаг 1', body:`Крупная цифра 1️⃣ (лайм, 140px)\n\nЗаголовок: ГЛАВНЫЙ РЕЗУЛЬТАТ НЕДЕЛИ\n\nТекст (60 слов):\nВыбираешь одну задачу недели и одну метрику к ней. Например: «5 заявок из директа». Не двадцать, не сто. Пять. Именно эта конкретика включает мозг в режим фокусировки. Остальные задачи ждут своей очереди.`},
+    {t:'Слайд 5 · Шаг 2', body:`Крупная цифра 2️⃣\n\nЗаголовок: ОДНА МЕТРИКА, КАЖДЫЙ ДЕНЬ\n\nТекст (60 слов):\nЗаводишь один документ или доску. Каждый вечер пишешь одну цифру. Число заявок, охват, продажи. Что угодно — но одно. Через 7 дней у тебя есть кривая. Кривая показывает правду быстрее интуиции.`},
+    {t:'Слайд 6 · Шаг 3', body:`Крупная цифра 3️⃣\n\nЗаголовок: ПЯТНИЦА, 20 МИНУТ\n\nТекст (60 слов):\nВ пятницу вечером смотришь кривую. Выросла — понимаешь что сработало и удваиваешь. Просела — переносишь задачу на следующую неделю без стыда и вины. Это не отступление, это фокусировка. Именно так работают компании с ростом.`},
+    {t:'Слайд 7 · CTA', body:`Заголовок (Bebas Neue, 90px, лайм): СОХРАНИ И ЗАБИРАЙ ШАБЛОН\n\nПодпись:\nПиши в директ слово ${code}. За 5 минут пришлю рабочий лист под ${niche} с примерами заполнения. Бесплатно, без регистраций.\n\nВ углу: стрелка вверх ↑ на «Сохранить»`},
+  ];
+  return {slides, count: cnt};
+}
+/* Серия сторис 5 штук с реальным текстом */
+function sysDayStories(topic, a, cnt, meta){
+  const niche = a.niche || 'своей нише';
+  const aud = a.audience || 'клиентов';
+  const code = meta && meta.code ? meta.code : 'СИСТЕМА';
+  const audShort = aud.split(',')[0].trim();
+  const stories = [
+    {t:'Сторис 1 · Хук (кружок 15 сек)', body:`Формат: круглое видео, взгляд в камеру.\n\nРеплика: «Сейчас покажу штуку, которую я делаю каждый понедельник в ${niche}. 20 минут и вся неделя собрана.»\n\nСверху текст-стикер: 20 МИНУТ = 7 ДНЕЙ ФОКУСА`},
+    {t:'Сторис 2 · Проблема (текст на фоне)', body:`Фон: чёрный.\n\nЗаголовок (лайм, крупно): «${audShort.toUpperCase()} ТРАТЯТ 3 ЧАСА ТАМ, ГДЕ ХВАТИТ 20 МИНУТ»\n\nПод заголовком: маленький текст «Это не про лень. Это про отсутствие одного простого шаблона.»\n\nВнизу: стикер «→» с ссылкой на пост дня.`},
+    {t:'Сторис 3 · Опрос', body:`Фон: тёплый градиент.\n\nВопрос (крупно): «Как ты сейчас планируешь неделю в ${niche}?»\n\nВарианты стикера-опроса:\n• В голове\n• В блокноте\n• В приложении\n• Не планирую`},
+    {t:'Сторис 4 · Раскрытие (кружок 30 сек)', body:`Формат: круглое видео, показываю на экран телефона.\n\nРеплика: «Смотри. Открываю файл. Три задачи. Одна метрика. Пятница проверка. И всё, неделя собрана. Проверил на 47 клиентах в ${niche}. Работает у всех.»\n\nСубтитр внизу: 3 ЗАДАЧИ · 1 МЕТРИКА · ПЯТНИЦА`},
+    {t:'Сторис 5 · CTA', body:`Фон: обложка бренда.\n\nТекст-стикер крупно (лайм на чёрном):\n«ПИШИ ${code} В ДИРЕКТ»\n«ЗА 5 МИНУТ ПРИШЛЮ ШАБЛОН»\n\nСтикер «↑ читать пост» с прямой ссылкой на пост дня.`},
+  ];
+  return {stories, count: cnt};
+}
+/* Промпт обложки на английском 2000+ символов */
+function sysDayCoverPrompt(topic, a){
+  const niche = a.niche || 'niche';
+  const who = (a.who||'expert').toLowerCase();
+  return `Cinematic editorial cover photograph for a social media Reels/short-form video, 9:16 vertical composition, ultra-sharp focus. Subject: a Russian ${who} in the niche of ${niche}, mid-30s, warm natural expression, direct eye contact with camera, slight smile that reads as approachable but authoritative. Composition: subject positioned on the right third of the frame following rule-of-thirds, leaving the top-left third free for a bold headline text overlay in Bebas Neue font capital letters "${topic.toUpperCase().slice(0,40)}", subject occupies the bottom-two-thirds of the frame from head to mid-torso. Lighting: soft window light from a 45-degree angle on the left, gentle fill on the right side using a bounce card, small rim-light behind the subject to separate them from a slightly out-of-focus background, tack-sharp on the eyes with beautiful catchlights, no harsh shadows on face. Wardrobe: minimalist neutral tones — an off-white linen shirt or beige cashmere sweater, one small accessory in a lime accent color (#9AFF00) that matches the brand palette. Background: shallow depth of field f/1.8, tastefully blurred interior of a modern well-lit studio or Scandinavian minimalist apartment, hint of a large window, natural plants slightly out of focus, warm off-white walls with a subtle texture. Color grading: editorial magazine tones, muted midtones, slightly lifted shadows for a filmic feel, warm skin tones preserved perfectly, no orange-teal cliché, subtle desaturation with one accent color (lime) preserved fully saturated. Camera and lens: shot on a full-frame mirrorless camera equivalent, 50mm or 85mm portrait lens at f/1.8, ISO 200, 1/125s shutter speed. Post-processing hints: subtle film grain for texture, gentle skin retouching that preserves natural pores, editorial magazine cover treatment. Overall mood: aspirational yet accessible, professional but warm, high-end lifestyle magazine cover quality. Avoid: over-processed skin, harsh flash, cluttered background, cheap stock-photo feel, generic corporate look, deep saturated colors except the single lime accent, artificial bokeh, over-brightened highlights, distracting objects near face. Reference for style: mix of Kinfolk magazine editorial + Apple product page portraiture + high-end personal brand photography in the style of Chris Do or Ali Abdaal. Aspect ratio: 9:16 (1080x1920 pixels), print-quality resolution, ready to be used as a Reels/TikTok/YouTube Shorts cover with headline text overlay added in post-production. No text or watermark rendered in the AI image itself — text will be added by designer in Figma afterwards.`;
+}
+function sysDayItemHtml(k, cnt, n, a, archTitle, topic){
   const c = SYS_CTYPES[k];
-  // «Реалистичный» контент дня (заменится реальной генерацией Claude API)
-  const seedTexts = {
-    reels: {
-      hook: 'В первые 2 секунды покажи неожиданный факт из «'+archTitle.toLowerCase()+'» и обещание пользы за 30 секунд',
-      body: 'Структура: хук → усиление боли → главный приём/решение → доказательство → призыв. Длина 30–45 сек. Караоке-субтитры обязательны.',
-      cta:  'Пиши слово СТАРТ в директ — пришлю программу',
-    },
-    tg: {
-      hook: archTitle+' — короткая мысль, которая заставит переслать',
-      body: 'Пост 500–800 знаков: боль → инсайт → своя история/цифра → CTA. Абзацы по 1–2 строки. В конце вопрос для комментов.',
-      cta:  'Ответы в комментах ниже — читаю каждый',
-    },
-    carousel: {
-      hook: '5-7 слайдов, где 1-й — крупная цифра или обещание, а последний — CTA',
-      body: 'Формат: обложка → 3 пункта пользы → пример/кейс → результат → CTA. Единый визуал: один шрифт, палитра бренда.',
-      cta:  'Сохрани, чтобы не потерять',
-    },
-    stories: {
-      hook: 'Серия из 3–5 сторис: боль → инсайт → анонс',
-      body: 'Форматы серии: голос над видео, текст на фоне, опрос, кружок-ответ. В финале — свайп-стикер на пост дня.',
-      cta:  'Свайп ↑ — читать пост дня',
-    },
-    youtube: {
-      hook: 'Длинное видео 8–15 минут: разбор темы с примерами и цифрами',
-      body: 'Структура: хук 30 сек → главные 3 тезиса → кейс → выводы → CTA. Обложка с крупным лицом и одной фразой.',
-      cta:  'Ссылка в описании — бесплатный гайд по теме',
-    },
-  };
-  const s = seedTexts[k];
+  const meta = sysDayTopic(n, a);
   const platformHint = {
     reels:    'Instagram Reels · TikTok · YouTube Shorts · VK Клипы',
     tg:       'Telegram-канал · копия в VK Стена',
     carousel: 'Instagram · VK · LinkedIn',
     stories:  'Instagram Stories · VK Истории',
-    youtube:  'YouTube (длинное горизонтальное 16:9)',
-  }[k] || platforms.join(' · ');
+    youtube:  'YouTube (16:9)',
+  }[k] || 'Все выбранные площадки';
+  const metaHtml = `<div class="sys-day-tags">
+    <span class="sys-day-tag">${esc(meta.ffmt||'Ф1')}</span>
+    <span class="sys-day-tag">${esc(SYS_SHOOT_LABEL[meta.shoot]||'🎥')}</span>
+    <span class="sys-day-tag code">Код: ${esc(meta.code||'СИСТЕМА')}</span>
+  </div>`;
+  let body = '';
+  if(k==='reels'){
+    const s = sysDayReelScript(topic, a, cnt, meta);
+    body = `${metaHtml}
+      ${s.scenes.map(sc=>`
+        <div class="sys-day-scene">
+          <span class="sys-day-scene-t">${esc(sc.t)}</span>
+          <pre>${esc(sc.body)}</pre>
+        </div>`).join('')}
+      <div class="sys-day-meta">
+        <div><b>Хэштеги</b><small>${esc(s.hashtags)}</small></div>
+        <div><b>Музыка</b><small>${esc(s.music)}</small></div>
+      </div>
+      <div class="sys-day-btns">
+        <button class="sys-day-copy" onclick="sysCopyText(this,'reel-${n}')">${I('copy')} Копировать сценарий</button>
+        <button class="sys-day-copy" onclick="sysCopyPrompt(${n})">${I('photo')} Промпт обложки</button>
+      </div>
+      <textarea id="reel-${n}" style="display:none">${esc(s.formatMeta+'\n\n'+s.scenes.map(sc=>sc.t+'\n'+sc.body).join('\n\n')+'\n\nХэштеги: '+s.hashtags+'\nМузыка: '+s.music)}</textarea>`;
+  } else if(k==='tg'){
+    const s = sysDayTgPost(topic, a, cnt, meta);
+    body = `${metaHtml}
+      <div class="sys-day-scene">
+        <span class="sys-day-scene-t">Готовый пост · ${(s.body.length)} знаков</span>
+        <pre>${esc(s.body)}</pre>
+      </div>
+      <div class="sys-day-btns">
+        <button class="sys-day-copy" onclick="sysCopyText(this,'tg-${n}')">${I('copy')} Копировать пост</button>
+      </div>
+      <textarea id="tg-${n}" style="display:none">${esc(s.body)}</textarea>`;
+  } else if(k==='carousel'){
+    const s = sysDayCarousel(topic, a, cnt, meta);
+    body = `${metaHtml}
+      ${s.slides.map(sl=>`
+        <div class="sys-day-scene">
+          <span class="sys-day-scene-t">${esc(sl.t)}</span>
+          <pre>${esc(sl.body)}</pre>
+        </div>`).join('')}
+      <div class="sys-day-btns">
+        <button class="sys-day-copy" onclick="sysCopyText(this,'car-${n}')">${I('copy')} Копировать карусель</button>
+        <button class="sys-day-copy" onclick="sysCopyPrompt(${n})">${I('photo')} Промпт слайдов</button>
+      </div>
+      <textarea id="car-${n}" style="display:none">${esc(s.slides.map(sl=>sl.t+'\n'+sl.body).join('\n\n'))}</textarea>`;
+  } else if(k==='stories'){
+    const s = sysDayStories(topic, a, cnt, meta);
+    body = `${metaHtml}
+      ${s.stories.map(st=>`
+        <div class="sys-day-scene">
+          <span class="sys-day-scene-t">${esc(st.t)}</span>
+          <pre>${esc(st.body)}</pre>
+        </div>`).join('')}
+      <div class="sys-day-btns">
+        <button class="sys-day-copy" onclick="sysCopyText(this,'st-${n}')">${I('copy')} Копировать серию</button>
+      </div>
+      <textarea id="st-${n}" style="display:none">${esc(s.stories.map(st=>st.t+'\n'+st.body).join('\n\n'))}</textarea>`;
+  } else if(k==='youtube'){
+    body = `${metaHtml}
+      <div class="sys-day-scene">
+        <span class="sys-day-scene-t">Полное видео · 8-15 минут</span>
+        <pre>Тема: ${esc(topic)}\n\nСТРУКТУРА (тайминги):\n0:00-0:30. Хук + обещание пользы\n0:30-2:00. Проблема и почему важна именно сейчас\n2:00-8:00. 3 тезиса с примерами и цифрами\n8:00-11:00. Кейс из практики: реальный клиент, реальные цифры\n11:00-13:00. Выводы и практические шаги\n13:00-15:00. CTA + анонс следующего видео\n\nОбложка: крупное лицо + фраза "${topic.slice(0,50)}..." в 3-4 слова\nТипография: Bebas Neue 120px + Montserrat 40px описание</pre>
+      </div>
+      <div class="sys-day-btns">
+        <button class="sys-day-copy" onclick="sysCopyText(this,'yt-${n}')">${I('copy')} Копировать структуру</button>
+      </div>`;
+  }
   return `
     <div class="sys-day-item" style="--ac:${c.color}">
       <div class="sys-day-item-h">
@@ -3454,15 +3661,16 @@ function sysDayItemHtml(k, cnt, n, platforms, archTitle){
           <small>${esc(platformHint)}</small>
         </div>
       </div>
-      <div class="sys-day-item-body">
-        <div class="sys-day-field"><span class="sys-day-lbl">Хук</span><p>${esc(s.hook)}</p>
-          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('Хук скопирован')">${I('copy')} Копировать</button></div>
-        <div class="sys-day-field"><span class="sys-day-lbl">Раскрытие</span><p>${esc(s.body)}</p>
-          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('Текст скопирован')">${I('copy')} Копировать</button></div>
-        <div class="sys-day-field"><span class="sys-day-lbl">CTA (призыв)</span><p>${esc(s.cta)}</p>
-          <button class="sys-day-copy" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.previousElementSibling.textContent);toast('CTA скопирован')">${I('copy')} Копировать</button></div>
-      </div>
+      <div class="sys-day-item-body">${body}</div>
     </div>`;
+}
+function sysCopyText(btn, id){
+  const el = document.getElementById(id);
+  if(el && navigator.clipboard){ navigator.clipboard.writeText(el.value); toast('Скопировано'); }
+}
+function sysCopyPrompt(n){
+  const p = sysDayCoverPrompt(sysDayTopic(n, aState.answers).topic, aState.answers);
+  if(navigator.clipboard){ navigator.clipboard.writeText(p); toast('Промпт на английском ('+p.length+' символов) скопирован'); }
 }
 /* ============ РАЗДЕЛ 2 — БИЗНЕС-ПЛАН (18 блоков с раскрывающимися страницами) ============ */
 function sysBizBlocks(a){
