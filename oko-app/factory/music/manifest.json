@@ -457,5 +457,31 @@
   "src": "freesound:579829",
   "license": "CC0",
   "name": "Noir_Song_Short8.wav"
+ },
+ "fs_viral_658811.mp3": {
+  "mood": [
+   "energetic",
+   "driving",
+   "hype",
+   "bold"
+  ],
+  "bucket": "viral",
+  "dur": 31.7,
+  "src": "freesound:658811",
+  "license": "CC0",
+  "name": "Future Bounce Loop 125 BPM"
+ },
+ "fs_sales_819108.mp3": {
+  "mood": [
+   "uplifting",
+   "warm",
+   "hopeful",
+   "confident"
+  ],
+  "bucket": "sales",
+  "dur": 88.6,
+  "src": "freesound:819108",
+  "license": "CC0",
+  "name": "TheEternalLighthouse - a soft slow piano with basic chords and Rythm for my book promo video"
  }
 }
