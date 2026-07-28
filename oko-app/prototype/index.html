@@ -3341,6 +3341,50 @@ main>.screen{position:relative;z-index:1}
 .ac-link-btn .go{width:15px;height:15px;color:var(--dim);flex-shrink:0}
 @media(max-width:380px){.ac-link-btn .host{display:none}}
 
+/* --- крупная лайм-полоса прогресса курса (под кольцом) --- */
+.ac-course-progress{position:relative;height:14px;background:var(--raised);border:1px solid var(--border);border-radius:99px;overflow:hidden;margin:6px 0 12px}
+.ac-course-progress i{display:block;height:100%;background:linear-gradient(90deg,#79d900,var(--lime) 60%,#c8ff45);border-radius:99px;transition:width .9s cubic-bezier(.3,1,.4,1);box-shadow:0 0 14px rgba(154,255,0,.45)}
+:root[data-theme="light"] .ac-course-progress i{box-shadow:0 0 8px rgba(110,200,0,.28)}
+.ac-course-progress-lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:10.5px;letter-spacing:.06em;color:var(--text);text-shadow:0 1px 2px rgba(0,0,0,.35);pointer-events:none}
+:root[data-theme="light"] .ac-course-progress-lbl{text-shadow:none;color:#1a2b00}
+
+/* --- карточка «Продолжи с этого» на главной --- */
+.ac-continue{cursor:pointer;transition:border-color .18s,transform .12s,box-shadow .3s;animation:fade .3s ease both;border:1px solid rgba(154,255,0,.28);background:linear-gradient(135deg,var(--lime-dim),var(--surface) 70%);margin-bottom:12px;position:relative;overflow:hidden}
+.ac-continue::before{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.14),transparent 70%);pointer-events:none}
+.ac-continue:hover{border-color:var(--accent);box-shadow:0 0 26px rgba(154,255,0,.12)}
+.ac-continue:active{transform:scale(.99)}
+.ac-continue-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;position:relative}
+.ac-continue-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#000;background:var(--lime);border-radius:99px;padding:5px 11px}
+.ac-continue-tag svg.i{width:13px;height:13px;color:#000}
+.ac-continue-meta{font-size:11px;color:var(--dim);font-weight:600;text-align:right;line-height:1.35}
+.ac-continue-title{font-size:19px;line-height:1.15;margin:2px 0 4px;position:relative}
+.ac-continue-sub{font-size:12px;color:var(--dim);line-height:1.4;margin-bottom:10px;position:relative}
+.ac-continue-bar{height:8px;background:var(--raised);border-radius:99px;overflow:hidden;margin-bottom:10px;position:relative}
+.ac-continue-bar i{display:block;height:100%;background:var(--lime);border-radius:99px;transition:width .8s cubic-bezier(.3,1,.4,1);box-shadow:0 0 8px rgba(154,255,0,.35)}
+:root[data-theme="light"] .ac-continue-bar i{box-shadow:none}
+.ac-continue-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
+.ac-continue-pct{font-size:11.5px;font-weight:700;color:var(--accent)}
+.ac-continue-cta{flex-shrink:0;white-space:nowrap}
+
+/* --- рекомендация следующего курса под текущим --- */
+.ac-rec{margin-top:14px;overflow:hidden;padding:14px 15px 16px;border:1px solid var(--border);cursor:pointer;transition:border-color .18s,transform .12s,box-shadow .3s;animation:fade .3s ease both;background:linear-gradient(135deg,var(--surface),var(--raised) 80%)}
+.ac-rec:hover{border-color:rgba(154,255,0,.4);box-shadow:0 0 22px rgba(154,255,0,.08)}
+.ac-rec:active{transform:scale(.99)}
+.ac-rec-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
+.ac-rec-tag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 10px}
+.ac-rec-tag svg.i{width:12px;height:12px;color:var(--accent)}
+.ac-rec-meta{font-size:11px;color:var(--dim);font-weight:600;text-align:right;line-height:1.35;flex:1;min-width:0}
+.ac-rec-body{display:flex;gap:12px;align-items:stretch}
+.ac-rec-cover{width:110px;flex-shrink:0;aspect-ratio:16/10;border-radius:var(--r-md);overflow:hidden;position:relative;background:#070a04}
+.ac-rec-cover .ac-cover-svg{position:absolute;inset:0;width:100%;height:100%}
+.ac-rec-cover .ac-cc-veil{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;color:#fff}
+.ac-rec-cover .ac-cc-veil svg.i{width:13px;height:13px}
+.ac-rec-cap{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ac-rec-cap h3{font-size:17px;line-height:1.15;margin:0}
+.ac-rec-cap p{font-size:11.5px;color:var(--dim);line-height:1.4;margin:0 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ac-rec-cta{align-self:flex-start;white-space:nowrap;margin-top:auto}
+@media(max-width:380px){.ac-rec-cover{width:88px}}
+
 /* ===== module: ads ===== */
 /* ===== ADS: рекламный кабинет (префикс ads-) ===== */
 .ads-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -7013,6 +7057,93 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .st2-quiet-note{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--dim);line-height:1.5;padding:9px 4px 11px}
 .st2-quiet-note svg.i{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:var(--accent)}
 
+/* ===== module: notifs-plus ===== */
+/* ===== NOTIFS-PLUS: центр уведомлений (префикс npx-) =====
+   Не трогает base.html. Только chain-патчи renderNotifs/openNotifs/closeNotifs/notifTap.
+   1) Чипы-фильтры сверху (Все/Лайки/Комменты/Заявки/Партнёрка/Достижения)
+   2) Свайп-влево на уведомлении → «Прочитано» / «Удалить» (iOS Mail)
+   3) Быстрые кнопки под текстом уведомления по типу (Ответить/Забронировать/…)
+   4) Тумблер «Не беспокоить» с иконкой луны в шапке экрана
+   5) Живой feed: раз в 30–60 сек добавляет новое уведомление с bounce-анимацией */
+
+.npx-chips{
+  display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;
+  padding:10px 18px 12px;border-bottom:1px solid var(--border);
+  flex-shrink:0;background:var(--bg);scrollbar-width:none;
+}
+.npx-chips::-webkit-scrollbar{display:none}
+.npx-chip{
+  padding:7px 14px;border-radius:100px;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--dim);font-size:12.5px;font-weight:600;
+  white-space:nowrap;flex-shrink:0;opacity:.65;
+  transition:background .18s,color .18s,opacity .18s,border-color .18s,transform .12s;
+  font-family:var(--font-body);
+}
+.npx-chip.on{background:var(--lime);color:#0a0a0a;border-color:var(--lime);opacity:1}
+.npx-chip:active{transform:scale(.97)}
+
+.npx-headx{display:inline-flex;align-items:center;gap:8px}
+.npx-dnd-btn{
+  width:36px;height:36px;border-radius:10px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid transparent;
+  transition:background .18s,border-color .18s;
+}
+.npx-dnd-btn svg.i{width:20px;height:20px;color:var(--dim);transition:color .18s,filter .18s}
+.npx-dnd-btn.on{background:var(--lime-dim);border-color:var(--lime)}
+.npx-dnd-btn.on svg.i{color:var(--accent);filter:drop-shadow(0 0 6px rgba(154,255,0,.55))}
+.npx-dnd-btn:active{transform:scale(.94)}
+
+#notifsView.npx-is-dnd .npx-chips::before{
+  content:'Тихий режим включён — уведомления придут беззвучно';
+  display:block;width:100%;font-size:11px;color:var(--accent);
+  font-weight:600;text-align:center;padding:0 0 6px;letter-spacing:.01em;
+}
+
+.npx-row{position:relative;border-radius:var(--r-md);overflow:hidden;margin:2px 0;isolation:isolate}
+.npx-swipe{
+  position:relative;background:var(--bg);
+  transition:transform .28s cubic-bezier(.3,1,.4,1);
+  will-change:transform;touch-action:pan-y;z-index:1;
+}
+.npx-row.npx-open .npx-swipe{transform:translateX(-140px)}
+
+.npx-actions{position:absolute;top:0;right:0;bottom:0;width:140px;display:flex;pointer-events:auto;z-index:0}
+.npx-row:not(.npx-open) .npx-actions{pointer-events:none}
+.npx-act{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;user-select:none;
+  text-align:center;padding:0 6px;cursor:pointer;letter-spacing:.01em;
+  font-family:var(--font-body);white-space:nowrap;
+}
+.npx-act.read{background:#37a0ff}
+.npx-act.del{background:#e64545}
+.npx-act:active{opacity:.85}
+
+.npx-quick{display:inline-flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.npx-q{
+  display:inline-flex;align-items:center;
+  padding:5px 11px;border-radius:100px;
+  background:var(--lime-dim);color:var(--accent);
+  font-size:11.5px;font-weight:600;border:1px solid var(--border);
+  cursor:pointer;white-space:nowrap;
+  transition:background .16s,color .16s,border-color .16s,transform .12s;
+  font-family:var(--font-body);
+}
+.npx-q:hover{background:var(--lime);color:#0a0a0a;border-color:var(--lime)}
+.npx-q:active{transform:scale(.97)}
+
+.npx-bounce{animation:npxBounce .7s cubic-bezier(.3,1.5,.4,1)}
+@keyframes npxBounce{
+  0%{transform:translateY(-14px);opacity:0}
+  55%{transform:translateY(3px);opacity:1}
+  100%{transform:none;opacity:1}
+}
+
+:root[data-theme="light"] .npx-swipe{background:var(--bg)}
+:root[data-theme="light"] .npx-chips{background:var(--bg)}
+
 /* ===== module: tour ===== */
 /* ===== TOUR (tr-) — интерактивный тур: мягкий спотлайт + карточки-подсказки ===== */
 #trOverlay{position:fixed;inset:0;z-index:65;opacity:0;transition:opacity .34s ease;
@@ -9673,7 +9804,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.77</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.78</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -26415,7 +26546,7 @@ function acContinueCardHtml(){
     <div class="card ac-continue" onclick="acOpenLesson(${last})">
       <div class="ac-continue-head">
         <span class="ac-continue-tag">${I('circle-play')} ${label}</span>
-        <span class="ac-continue-meta">${esc(c.title)} , урок ${acLocalNo(last)}/${c.count}</span>
+        <span class="ac-continue-meta">${esc(c.title)} · урок ${acLocalNo(last)}/${c.count}</span>
       </div>
       <h3 class="ac-continue-title">${esc(L.title)}</h3>
       <p class="ac-continue-sub">${esc(acLessonSub(L))}</p>
@@ -26433,7 +26564,7 @@ function acHomeHtml(){
     <div class="card ac-streak ${hot?'hot':''}">
       <span class="ac-flame">${I('fire')}</span>
       <div class="meta"><b>Дней подряд в учёбе: ${st.days||0}</b>
-        <span>${hot ? 'Серия в огне, так держать' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
+        <span>${hot ? 'Серия в огне — так держать!' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
       ${hot?`<span class="ac-hot-chip">${I('fire')} ${st.days}</span>`:''}
     </div>`;
   const nextRow = acContinueCardHtml();
@@ -41444,6 +41575,295 @@ function st2InsertRow(){
 
   /* стартовая покраска аватара/обложки (ядро могло отрисовать профиль до установки чейна) */
   try{ st2PaintProfile(); }catch(e){}
+})();
+
+/* ===== module: notifs-plus ===== */
+/* ===== NOTIFS-PLUS: центр уведомлений ПОВЕРХ ядра =====
+   base.html не тронут. Только chain-патчи функций ядра:
+     renderNotifs / openNotifs / closeNotifs / notifTap.
+   Использует NOTIFS, updateNotifDot, I(), esc(), toast(), showTab(), openMa(). */
+(function(){
+  if(typeof NOTIFS==='undefined' || typeof window.renderNotifs!=='function') return;
+
+  var LS = 'oko-npx';
+  var NPX = (function(){ try{ return JSON.parse(localStorage.getItem(LS))||{}; }catch(e){ return {}; } })();
+  if(!NPX.filter) NPX.filter = 'all';
+  if(typeof NPX.dnd !== 'boolean') NPX.dnd = false;
+  function save(){ try{ localStorage.setItem(LS, JSON.stringify({filter:NPX.filter, dnd:NPX.dnd})); }catch(e){} }
+
+  var CHIPS = [
+    {k:'all',           t:'Все'},
+    {k:'likes',         t:'Лайки'},
+    {k:'comments',      t:'Комменты'},
+    {k:'requests',      t:'Заявки'},
+    {k:'partner',       t:'Партнёрка'},
+    {k:'achievements',  t:'Достижения'}
+  ];
+  function catOf(n){
+    if(!n) return 'other';
+    if(n.ic==='heart') return 'likes';
+    if(n.ic==='comment') return 'comments';
+    if(n.ic==='briefcase') return 'requests';
+    if(n.ic==='users') return 'requests';
+    if(n.ic==='money' || /Партнёрк/i.test(n.who||'')) return 'partner';
+    if(n.ic==='star' || n.ic==='rocket') return 'achievements';
+    return 'other';
+  }
+  function quickFor(cat){
+    if(cat==='comments')     return {k:'reply',   t:'Ответить'};
+    if(cat==='likes')        return {k:'post',    t:'Открыть пост'};
+    if(cat==='requests')     return {k:'book',    t:'Забронировать'};
+    if(cat==='partner')      return {k:'history', t:'История'};
+    if(cat==='achievements') return {k:'open',    t:'Открыть'};
+    return null;
+  }
+  function saytoast(msg){ if(typeof toast==='function') toast(msg); }
+
+  /* ---------- head: DND-кнопка + строка чипов ---------- */
+  function ensureHead(){
+    var view = document.getElementById('notifsView'); if(!view) return;
+    var head = view.querySelector('.sv-head');
+    if(head && !head.querySelector('.npx-dnd-btn')){
+      var done = head.querySelector('.ep-done');
+      var dnd = document.createElement('button');
+      dnd.type = 'button';
+      dnd.className = 'npx-dnd-btn';
+      dnd.setAttribute('aria-label','Тихий режим');
+      dnd.title = 'Тихий режим';
+      dnd.innerHTML = '<svg class="i"><use href="#i-moon"/></svg>';
+      dnd.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        NPX.dnd = !NPX.dnd; save(); syncDnd();
+        saytoast(NPX.dnd ? 'Тихий режим включён' : 'Тихий режим выключен');
+      });
+      if(done){
+        var wrap = document.createElement('div');
+        wrap.className = 'npx-headx';
+        head.insertBefore(wrap, done);
+        wrap.appendChild(dnd);
+        wrap.appendChild(done);
+      } else head.appendChild(dnd);
+    }
+    var body = document.getElementById('notifsBody');
+    if(body && !view.querySelector('.npx-chips')){
+      var bar = document.createElement('div');
+      bar.className = 'npx-chips';
+      bar.innerHTML = CHIPS.map(function(c){
+        return '<button type="button" class="npx-chip '+(NPX.filter===c.k?'on':'')+'" data-k="'+c.k+'">'+c.t+'</button>';
+      }).join('');
+      bar.addEventListener('click', function(e){
+        var b = e.target.closest && e.target.closest('.npx-chip'); if(!b) return;
+        NPX.filter = b.dataset.k; save();
+        bar.querySelectorAll('.npx-chip').forEach(function(x){
+          x.classList.toggle('on', x.dataset.k===NPX.filter);
+        });
+        applyFilter();
+      });
+      view.insertBefore(bar, body);
+    }
+    syncDnd();
+  }
+  function syncDnd(){
+    var view = document.getElementById('notifsView'); if(!view) return;
+    view.classList.toggle('npx-is-dnd', NPX.dnd);
+    var btn = view.querySelector('.npx-dnd-btn');
+    if(btn) btn.classList.toggle('on', NPX.dnd);
+  }
+  function applyFilter(){
+    var body = document.getElementById('notifsBody'); if(!body) return;
+    body.querySelectorAll('.npx-row').forEach(function(r){
+      r.style.display = (NPX.filter==='all' || r.dataset.cat===NPX.filter) ? '' : 'none';
+    });
+    body.querySelectorAll('.nt-group').forEach(function(g){
+      var sib = g.nextElementSibling, has = false;
+      while(sib && !sib.classList.contains('nt-group')){
+        if(sib.classList.contains('npx-row') && sib.style.display!=='none'){ has = true; break; }
+        sib = sib.nextElementSibling;
+      }
+      g.style.display = has ? '' : 'none';
+    });
+  }
+
+  /* ---------- обёртка каждого .nt-item свайпом + quick-action ---------- */
+  function enhanceItems(){
+    var body = document.getElementById('notifsBody'); if(!body) return;
+    body.querySelectorAll('button.nt-item').forEach(function(btn){
+      if(btn.parentNode && btn.parentNode.classList && btn.parentNode.classList.contains('npx-swipe')) return;
+      var m = (btn.getAttribute('onclick')||'').match(/notifTap\((\d+)\)/);
+      if(!m) return;
+      var i = +m[1];
+      var n = NOTIFS[i]; if(!n) return;
+      var cat = catOf(n);
+
+      var row = document.createElement('div');
+      row.className = 'npx-row';
+      row.dataset.cat = cat;
+      row.dataset.idx = String(i);
+
+      var actions = document.createElement('div');
+      actions.className = 'npx-actions';
+      actions.innerHTML =
+        '<span class="npx-act read" data-a="read">Прочитано</span>'+
+        '<span class="npx-act del"  data-a="del">Удалить</span>';
+
+      var swipe = document.createElement('div');
+      swipe.className = 'npx-swipe';
+
+      var parent = btn.parentNode;
+      parent.insertBefore(row, btn);
+      row.appendChild(actions);
+      row.appendChild(swipe);
+      swipe.appendChild(btn);
+
+      var q = quickFor(cat);
+      if(q){
+        var nb = btn.querySelector('.nt-b');
+        if(nb && !nb.querySelector('.npx-quick')){
+          var qb = document.createElement('span');
+          qb.className = 'npx-quick';
+          qb.innerHTML = '<span class="npx-q" data-q="'+q.k+'">'+q.t+'</span>';
+          nb.appendChild(qb);
+        }
+      }
+      attachRow(row, actions, swipe);
+    });
+  }
+
+  function attachRow(row, actions, swipe){
+    actions.querySelectorAll('.npx-act').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.stopPropagation(); e.preventDefault();
+        var idx = +row.dataset.idx; var n = NOTIFS[idx]; if(!n) return;
+        if(el.dataset.a==='read'){
+          n.unread = false;
+          if(typeof updateNotifDot==='function') updateNotifDot();
+          window.renderNotifs();
+          saytoast('Отмечено прочитанным');
+        } else if(el.dataset.a==='del'){
+          NOTIFS.splice(idx, 1);
+          if(typeof updateNotifDot==='function') updateNotifDot();
+          window.renderNotifs();
+          saytoast('Удалено');
+        }
+      });
+    });
+
+    var q = row.querySelector('.npx-q');
+    if(q) q.addEventListener('click', function(e){
+      e.stopPropagation(); e.preventDefault();
+      var idx = +row.dataset.idx; var n = NOTIFS[idx]; if(!n) return;
+      n.unread = false;
+      if(typeof updateNotifDot==='function') updateNotifDot();
+      if(typeof closeNotifs==='function') closeNotifs();
+      var k = q.dataset.q;
+      if(k==='reply' || k==='post'){ if(typeof showTab==='function') showTab('feed'); }
+      else if(k==='book'){
+        if(typeof showTab==='function') showTab('mini');
+        if(typeof openMa==='function') openMa('market');
+      }
+      else if(k==='history'){ if(typeof showTab==='function') showTab('partner'); }
+      else if(typeof n.act==='function') n.act();
+    });
+
+    var sx=0, sy=0, dx=0, live=false, lock=null;
+    swipe.addEventListener('touchstart', function(e){
+      var t = e.touches[0]; sx = t.clientX; sy = t.clientY;
+      dx = 0; live = true; lock = null;
+      document.querySelectorAll('.npx-row.npx-open').forEach(function(r){
+        if(r!==row) r.classList.remove('npx-open');
+      });
+    }, {passive:true});
+    swipe.addEventListener('touchmove', function(e){
+      if(!live) return;
+      var t = e.touches[0];
+      var cx = t.clientX - sx, cy = t.clientY - sy;
+      if(lock===null){
+        if(Math.abs(cx) < 6 && Math.abs(cy) < 6) return;
+        lock = Math.abs(cx) > Math.abs(cy)*1.4 ? 'x' : 'y';
+      }
+      if(lock!=='x'){ live = false; swipe.style.transform = ''; return; }
+      var base = row.classList.contains('npx-open') ? -140 : 0;
+      dx = Math.max(-160, Math.min(20, cx + base));
+      swipe.style.transform = 'translateX('+dx+'px)';
+    }, {passive:true});
+    swipe.addEventListener('touchend', function(){
+      if(!live) return;
+      live = false;
+      swipe.style.transform = '';
+      row.classList.toggle('npx-open', dx < -70);
+    });
+    swipe.addEventListener('click', function(e){
+      if(row.classList.contains('npx-open')){
+        e.stopPropagation(); e.preventDefault();
+        row.classList.remove('npx-open');
+      }
+    }, true);
+  }
+
+  /* ---------- живой feed: раз в 30–60 сек, только когда экран открыт ---------- */
+  var DEMO = [
+    {ic:'heart',    who:'Даня П.',        t:'оценил твой пост'},
+    {ic:'comment',  who:'Ксюша Р.',       t:'ответила: «согласна, беру в работу»'},
+    {ic:'briefcase',who:'Биржа OKO',      t:'новая заявка по услуге «Монтаж Reels»'},
+    {ic:'users',    who:'+2 подписчика',  t:'подписались на твой канал'},
+    {ic:'money',    who:'Партнёрка',      t:'начисление +$12.40 за оплату PRO'},
+    {ic:'star',     who:'Аня М.',         t:'поставила 5 звёзд за услугу'},
+    {ic:'heart',    who:'Максим Т.',      t:'оценил твой пост «Правило простое…»'},
+    {ic:'rocket',   who:'OKO',            t:'твой ролик вошёл в топ дня'}
+  ];
+  var liveT = null;
+  function livePush(){
+    if(NPX.dnd) return;
+    var view = document.getElementById('notifsView');
+    if(!view || !view.classList.contains('open')) return;
+    var p = DEMO[Math.floor(Math.random()*DEMO.length)];
+    NOTIFS.unshift({ic:p.ic, who:p.who, t:p.t, time:'только что', g:'Сегодня', unread:true, act:function(){}});
+    if(typeof updateNotifDot==='function') updateNotifDot();
+    window.renderNotifs();
+    var first = document.querySelector('#notifsBody .npx-row');
+    if(first){
+      first.classList.add('npx-bounce');
+      setTimeout(function(){ first.classList.remove('npx-bounce'); }, 800);
+    }
+  }
+  function liveStart(){
+    if(liveT) return;
+    var tick = function(){
+      livePush();
+      liveT = setTimeout(tick, 30000 + Math.random()*30000);
+    };
+    liveT = setTimeout(tick, 30000 + Math.random()*30000);
+  }
+  function liveStop(){ if(liveT){ clearTimeout(liveT); liveT = null; } }
+
+  /* ---------- chain-патчи ---------- */
+  var _render = window.renderNotifs;
+  window.renderNotifs = function(){
+    _render.apply(this, arguments);
+    ensureHead();
+    enhanceItems();
+    applyFilter();
+  };
+  var _open = window.openNotifs;
+  window.openNotifs = function(){
+    _open.apply(this, arguments);
+    ensureHead();
+    liveStart();
+  };
+  var _close = window.closeNotifs;
+  window.closeNotifs = function(){
+    _close.apply(this, arguments);
+    liveStop();
+    document.querySelectorAll('.npx-row.npx-open').forEach(function(r){
+      r.classList.remove('npx-open');
+    });
+  };
+  var _tap = window.notifTap;
+  window.notifTap = function(){
+    var openRow = document.querySelector('.npx-row.npx-open');
+    if(openRow){ openRow.classList.remove('npx-open'); return; }
+    _tap.apply(this, arguments);
+  };
 })();
 
 /* ===== module: tour ===== */

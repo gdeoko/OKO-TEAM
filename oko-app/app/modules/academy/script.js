@@ -2122,7 +2122,7 @@ function acContinueCardHtml(){
     <div class="card ac-continue" onclick="acOpenLesson(${last})">
       <div class="ac-continue-head">
         <span class="ac-continue-tag">${I('circle-play')} ${label}</span>
-        <span class="ac-continue-meta">${esc(c.title)} , урок ${acLocalNo(last)}/${c.count}</span>
+        <span class="ac-continue-meta">${esc(c.title)} · урок ${acLocalNo(last)}/${c.count}</span>
       </div>
       <h3 class="ac-continue-title">${esc(L.title)}</h3>
       <p class="ac-continue-sub">${esc(acLessonSub(L))}</p>
@@ -2140,7 +2140,7 @@ function acHomeHtml(){
     <div class="card ac-streak ${hot?'hot':''}">
       <span class="ac-flame">${I('fire')}</span>
       <div class="meta"><b>Дней подряд в учёбе: ${st.days||0}</b>
-        <span>${hot ? 'Серия в огне, так держать' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
+        <span>${hot ? 'Серия в огне — так держать!' : 'Заходи каждый день, чтобы разжечь серию'}${st.best>1?` · рекорд: ${st.best}`:''}</span></div>
       ${hot?`<span class="ac-hot-chip">${I('fire')} ${st.days}</span>`:''}
     </div>`;
   const nextRow = acContinueCardHtml();

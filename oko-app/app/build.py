@@ -34,6 +34,7 @@ ORDER = [
     'profile-social',  # чужие профили, подписки, соцграф
     'stories-plus',    # редактор сторис, просмотры
     'settings-plus',   # настройки: сессии, уведомления, кэш, аккаунт
+    'notifs-plus',     # центр уведомлений: чипы-фильтры, свайп-действия, quick-кнопки, DND, живой feed
     'tour',            # интерактивный тур по приложению
     'navstack',        # единый стек навигации: назад везде (TG BackButton + history)
     'tg-webapp',       # интеграция Telegram Mini App (@okoappbot)
