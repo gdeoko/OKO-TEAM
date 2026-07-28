@@ -394,3 +394,65 @@
 .cp-pin-txt b{letter-spacing:.01em}
 /* композер-смайл: ровный размер как у clip */
 .cp-smile svg.i{width:23px;height:23px}
+
+/* =======================================================================
+   ЧАСТЬ 5 — черновики, ссылки-предпросмотр, пересылка, двойной-тап
+   ======================================================================= */
+
+/* --- 16. Черновик в превью списка чатов --- */
+.cp-draft-tag{color:var(--accent);font-weight:800;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:6px;padding:1px 6px;margin-right:5px;flex-shrink:0}
+.chat-item .preview:has(.cp-draft-tag) .ci-txt{color:var(--text)}
+
+/* --- 17. Ссылки-предпросмотр (карточка URL внутри пузыря) --- */
+.cp-linkprev{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:8px 10px 8px 9px;border-radius:10px;border-left:3px solid var(--lime);background:rgba(154,255,0,.08);text-decoration:none;color:inherit;transition:background .16s,transform .12s}
+.cp-linkprev:hover{background:rgba(154,255,0,.14)}
+.cp-linkprev:active{transform:scale(.985)}
+.msg.out .cp-linkprev{border-left-color:#0a0a0a;background:rgba(0,0,0,.14)}
+.msg.out .cp-linkprev:hover{background:rgba(0,0,0,.22)}
+:root[data-theme="light"] .cp-linkprev{background:rgba(110,200,0,.11)}
+:root[data-theme="light"] .cp-linkprev:hover{background:rgba(110,200,0,.18)}
+.cp-lp-fav{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--lime);color:#0a0a0a}
+.cp-lp-fav svg.i{width:14px;height:14px}
+.msg.out .cp-lp-fav{background:#0a0a0a;color:var(--lime)}
+.cp-lp-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2;gap:2px;overflow:hidden}
+.cp-lp-txt b{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-lp-txt small{font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg.out .cp-lp-txt small{color:rgba(0,0,0,.6)}
+.cp-lp-go{width:16px;height:16px;color:var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.cp-lp-go svg.i{width:14px;height:14px}
+.msg.out .cp-lp-go{color:rgba(0,0,0,.55)}
+
+/* --- 18. Пересылка: попап со списком чатов --- */
+.cp-fw-quote{margin:2px 0 12px;padding:9px 11px;border-left:3px solid var(--lime);background:var(--raised);border-radius:8px;font-size:12.5px;color:var(--dim);text-align:left;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cp-fw-list{display:flex;flex-direction:column;gap:4px;max-height:min(52dvh,420px);overflow-y:auto;padding-right:2px;margin:2px -2px 0}
+.cp-fw-list::-webkit-scrollbar{width:5px}
+.cp-fw-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:9px}
+.cp-fw-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:12px;background:transparent;color:var(--text);text-align:left;transition:background .14s,transform .1s;font-family:var(--font-body)}
+.cp-fw-item:hover{background:var(--lime-dim)}
+.cp-fw-item:active{transform:scale(.985)}
+.cp-fw-ava{position:relative;flex-shrink:0}
+.cp-fw-ava .ava{width:42px;height:42px;font-size:15px}
+.cp-fw-on{position:absolute;right:-2px;bottom:-2px;width:11px;height:11px;border-radius:50%;background:var(--lime);border:2px solid var(--surface);box-shadow:0 0 6px rgba(154,255,0,.55)}
+.cp-fw-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.22;gap:2px;overflow:hidden}
+.cp-fw-txt b{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-fw-txt small{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-fw-go{width:18px;height:18px;color:var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;transform:rotate(0)}
+.cp-fw-go svg.i{width:16px;height:16px}
+/* плашка «Переслано от …» в теле сообщения */
+.cp-fwd-tag{display:flex;align-items:center;gap:6px;margin:0 0 6px;padding:4px 8px 4px 6px;border-radius:8px;background:rgba(154,255,0,.14);color:var(--accent);font-size:11.5px;font-weight:700;letter-spacing:.01em}
+.cp-fwd-tag svg.i{width:13px;height:13px;flex-shrink:0}
+.cp-fwd-tag b{color:var(--text);font-weight:800}
+.msg.out .cp-fwd-tag{background:rgba(0,0,0,.16);color:#0a0a0a}
+.msg.out .cp-fwd-tag b{color:#0a0a0a}
+
+/* --- 19. Быстрая реакция двойным тапом: летящий огонь --- */
+.cp-quick-fx{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#ff7a0c;z-index:5;filter:drop-shadow(0 4px 10px rgba(255,90,0,.55));animation:cpQuickFx .9s cubic-bezier(.3,1.3,.4,1) forwards}
+.cp-quick-fx svg.i{width:48px;height:48px}
+.msg{position:relative}
+@keyframes cpQuickFx{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  22%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}
+  55%{opacity:1;transform:translate(-50%,-120%) scale(1.1)}
+  100%{opacity:0;transform:translate(-50%,-220%) scale(.6)}
+}
+@media(prefers-reduced-motion:reduce){.cp-quick-fx{animation:none;opacity:.9}}

@@ -6024,6 +6024,68 @@ html.oko-scrolling .far-motion,html.oko-scrolling .far-eq i{animation-play-state
 /* композер-смайл: ровный размер как у clip */
 .cp-smile svg.i{width:23px;height:23px}
 
+/* =======================================================================
+   ЧАСТЬ 5 — черновики, ссылки-предпросмотр, пересылка, двойной-тап
+   ======================================================================= */
+
+/* --- 16. Черновик в превью списка чатов --- */
+.cp-draft-tag{color:var(--accent);font-weight:800;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;background:var(--lime-dim);border:1px solid rgba(154,255,0,.28);border-radius:6px;padding:1px 6px;margin-right:5px;flex-shrink:0}
+.chat-item .preview:has(.cp-draft-tag) .ci-txt{color:var(--text)}
+
+/* --- 17. Ссылки-предпросмотр (карточка URL внутри пузыря) --- */
+.cp-linkprev{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:8px 10px 8px 9px;border-radius:10px;border-left:3px solid var(--lime);background:rgba(154,255,0,.08);text-decoration:none;color:inherit;transition:background .16s,transform .12s}
+.cp-linkprev:hover{background:rgba(154,255,0,.14)}
+.cp-linkprev:active{transform:scale(.985)}
+.msg.out .cp-linkprev{border-left-color:#0a0a0a;background:rgba(0,0,0,.14)}
+.msg.out .cp-linkprev:hover{background:rgba(0,0,0,.22)}
+:root[data-theme="light"] .cp-linkprev{background:rgba(110,200,0,.11)}
+:root[data-theme="light"] .cp-linkprev:hover{background:rgba(110,200,0,.18)}
+.cp-lp-fav{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--lime);color:#0a0a0a}
+.cp-lp-fav svg.i{width:14px;height:14px}
+.msg.out .cp-lp-fav{background:#0a0a0a;color:var(--lime)}
+.cp-lp-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2;gap:2px;overflow:hidden}
+.cp-lp-txt b{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-lp-txt small{font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg.out .cp-lp-txt small{color:rgba(0,0,0,.6)}
+.cp-lp-go{width:16px;height:16px;color:var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.cp-lp-go svg.i{width:14px;height:14px}
+.msg.out .cp-lp-go{color:rgba(0,0,0,.55)}
+
+/* --- 18. Пересылка: попап со списком чатов --- */
+.cp-fw-quote{margin:2px 0 12px;padding:9px 11px;border-left:3px solid var(--lime);background:var(--raised);border-radius:8px;font-size:12.5px;color:var(--dim);text-align:left;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cp-fw-list{display:flex;flex-direction:column;gap:4px;max-height:min(52dvh,420px);overflow-y:auto;padding-right:2px;margin:2px -2px 0}
+.cp-fw-list::-webkit-scrollbar{width:5px}
+.cp-fw-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:9px}
+.cp-fw-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:12px;background:transparent;color:var(--text);text-align:left;transition:background .14s,transform .1s;font-family:var(--font-body)}
+.cp-fw-item:hover{background:var(--lime-dim)}
+.cp-fw-item:active{transform:scale(.985)}
+.cp-fw-ava{position:relative;flex-shrink:0}
+.cp-fw-ava .ava{width:42px;height:42px;font-size:15px}
+.cp-fw-on{position:absolute;right:-2px;bottom:-2px;width:11px;height:11px;border-radius:50%;background:var(--lime);border:2px solid var(--surface);box-shadow:0 0 6px rgba(154,255,0,.55)}
+.cp-fw-txt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.22;gap:2px;overflow:hidden}
+.cp-fw-txt b{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-fw-txt small{font-size:11.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-fw-go{width:18px;height:18px;color:var(--dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;transform:rotate(0)}
+.cp-fw-go svg.i{width:16px;height:16px}
+/* плашка «Переслано от …» в теле сообщения */
+.cp-fwd-tag{display:flex;align-items:center;gap:6px;margin:0 0 6px;padding:4px 8px 4px 6px;border-radius:8px;background:rgba(154,255,0,.14);color:var(--accent);font-size:11.5px;font-weight:700;letter-spacing:.01em}
+.cp-fwd-tag svg.i{width:13px;height:13px;flex-shrink:0}
+.cp-fwd-tag b{color:var(--text);font-weight:800}
+.msg.out .cp-fwd-tag{background:rgba(0,0,0,.16);color:#0a0a0a}
+.msg.out .cp-fwd-tag b{color:#0a0a0a}
+
+/* --- 19. Быстрая реакция двойным тапом: летящий огонь --- */
+.cp-quick-fx{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;color:#ff7a0c;z-index:5;filter:drop-shadow(0 4px 10px rgba(255,90,0,.55));animation:cpQuickFx .9s cubic-bezier(.3,1.3,.4,1) forwards}
+.cp-quick-fx svg.i{width:48px;height:48px}
+.msg{position:relative}
+@keyframes cpQuickFx{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  22%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}
+  55%{opacity:1;transform:translate(-50%,-120%) scale(1.1)}
+  100%{opacity:0;transform:translate(-50%,-220%) scale(.6)}
+}
+@media(prefers-reduced-motion:reduce){.cp-quick-fx{animation:none;opacity:.9}}
+
 /* ===== module: profile-social ===== */
 /* ===== PROFILE-SOCIAL (ps-): чужие профили, подписки, соцграф ===== */
 
@@ -9294,7 +9356,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.70</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.71</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -16164,6 +16226,12 @@ if(document.getElementById('screen-wallet') && document.getElementById('screen-w
   mk('i-gm-flame','<path d="M53 12c2 16 18 21 18 39a21 21 0 01-42 0c0-9 5-14 5-14-11 4-18 15-18 27a34 34 0 0068 0c0-26-24-36-31-52z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M50 84a13 13 0 01-8-23c1 8 7 9 8 15 4-3 4-7 3-11 6 2 10 8 10 14a13 13 0 01-13 5z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
   /* весы честности (таблица шансов) */
   mk('i-gm-scales','<path d="M50 16v66M30 82h40" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28h52" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28 12 54a13 13 0 0024 0zM76 28 64 54a13 13 0 0024 0z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
+  /* тайный сундук (mystery box — loot crate) */
+  mk('i-gm-mbox','<rect x="14" y="30" width="72" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="7"/><rect x="10" y="22" width="80" height="14" rx="4" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 30v56" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="52" r="6" fill="none" stroke="currentColor" stroke-width="6"/><path d="M50 22c-6-10 6-12 6-4 0-6 12-4 6 4M50 22c6-10-6-12-6-4 0-6-12-4-6 4" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>');
+  /* медаль-звезда (достижения) */
+  mk('i-gm-medal','<path d="M28 10h44l-8 30H36z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><circle cx="50" cy="62" r="24" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 50l4 10 10 1-8 7 3 10-9-6-9 6 3-10-8-7 10-1z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>');
+  /* календарь стрика */
+  mk('i-gm-cal','<rect x="14" y="22" width="72" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="7"/><path d="M14 40h72M32 12v18M68 12v18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
 })();
 
 /* ---------- общее состояние + хелперы ---------- */
@@ -37223,6 +37291,269 @@ if(typeof closeConv === 'function'){
   cpSeedChats();
   if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
   if(typeof currentChat!=='undefined' && currentChat) cpDecorateConvAccess();
+})();
+
+/* =======================================================================
+   ЧАСТЬ 5 — доработки TG-уровня: черновики, ссылки-предпросмотр,
+   реальная пересылка, быстрая реакция двойным-тапом. Всё поверх ядра,
+   base.html не трогается — только chain-патчи и DOM-инъекции.
+   ======================================================================= */
+
+/* ================= 15. ЧЕРНОВИКИ (не отправленный текст поля) ================= */
+if(!CP.drafts || typeof CP.drafts!=='object') CP.drafts = {};
+
+function cpDraftLoad(){
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const inp = document.getElementById('msgInput'); if(!inp) return;
+  const d = CP.drafts[currentChat.id];
+  if(d && !inp.value){
+    inp.value = d;
+    if(typeof syncSendIcon==='function') syncSendIcon();
+  }
+}
+function cpDraftSave(){
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const inp = document.getElementById('msgInput'); if(!inp) return;
+  const id = currentChat.id;
+  const had = !!CP.drafts[id];
+  const v = inp.value;
+  if(v && v.trim()) CP.drafts[id] = v;
+  else if(CP.drafts[id]) delete CP.drafts[id];
+  cpSave();
+  const has = !!CP.drafts[id];
+  /* перерисовываем список только при СМЕНЕ состояния (появился/пропал черновик) —
+     чтобы не колбасить DOM на каждый ввод символа */
+  if(had !== has && typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
+}
+function cpDraftClear(id){
+  if(id==null || !CP.drafts[id]) return;
+  delete CP.drafts[id]; cpSave();
+  if(typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
+}
+/* привязка input-слушателя один раз (msgInput живёт постоянно в DOM) */
+(function cpDraftBind(){
+  const inp = document.getElementById('msgInput'); if(!inp || inp._cpDraft) return;
+  inp._cpDraft = 1;
+  let t = null;
+  inp.addEventListener('input', ()=>{
+    clearTimeout(t); t = setTimeout(cpDraftSave, 320);
+  });
+})();
+/* chain: openConv — восстановить черновик; sendText — очистить после отправки */
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv4 = openConv;
+  openConv = function(){
+    _cpPrevOpenConv4.apply(this, arguments);
+    setTimeout(cpDraftLoad, 0);
+  };
+}
+if(typeof sendText === 'function'){
+  const _cpPrevSendText4 = sendText;
+  sendText = function(){
+    const c = (typeof currentChat!=='undefined') ? currentChat : null;
+    _cpPrevSendText4.apply(this, arguments);
+    if(c) cpDraftClear(c.id);
+  };
+}
+/* хук в список: подменяем превью «Черновик: <текст>» лаймовой пометкой */
+if(typeof renderChatList === 'function'){
+  const _cpPrevRenderChatList2 = renderChatList;
+  renderChatList = function(){
+    _cpPrevRenderChatList2.apply(this, arguments);
+    cpPaintDrafts();
+  };
+}
+function cpPaintDrafts(){
+  const list = document.getElementById('chatList'); if(!list) return;
+  Object.keys(CP.drafts).forEach(id=>{
+    const text = CP.drafts[id]; if(!text) return;
+    const isNum = /^-?\d+$/.test(id);
+    const sel = isNum ? 'openConv('+(+id)+')' : "openConv('"+id+"')";
+    const item = list.querySelector('.chat-item[onclick="'+sel+'"]'); if(!item) return;
+    const rows = item.querySelectorAll('.row1');
+    const row2 = rows[1]; if(!row2) return;
+    const prev = row2.querySelector('.preview'); if(!prev) return;
+    const short = text.length > 34 ? text.slice(0,34).trim()+'...' : text;
+    prev.innerHTML = '<span class="cp-draft-tag">Черновик:</span> <span class="ci-txt">'+cpEsc(short)+'</span>';
+  });
+}
+
+/* ================= 16. ССЫЛКИ-ПРЕДПРОСМОТР (карточка URL) ================= */
+const CP_URL_RE = /https?:\/\/[^\s<>"']+/i;
+const CP_HOST_MAP = {
+  'youtube.com':'YouTube · видео', 'youtu.be':'YouTube · видео',
+  'youtube-nocookie.com':'YouTube · видео', 'vimeo.com':'Vimeo · видео',
+  'rutube.ru':'Rutube · видео', 'vk.com':'ВКонтакте · пост', 'vkvideo.ru':'VK Video',
+  'tiktok.com':'TikTok · клип', 'instagram.com':'Instagram · публикация',
+  't.me':'Telegram · публикация', 'telegram.me':'Telegram · публикация',
+  'github.com':'GitHub · репозиторий', 'gitlab.com':'GitLab · репозиторий',
+  'x.com':'X (ex-Twitter)', 'twitter.com':'X (ex-Twitter)',
+  'okoteam.top':'OKO TEAM · сайт', 'okoagents.okoteam.top':'OKO TEAM · сервисы',
+  'notion.so':'Notion · страница', 'figma.com':'Figma · проект',
+  'behance.net':'Behance · портфолио', 'dribbble.com':'Dribbble · шот',
+  'medium.com':'Medium · статья', 'habr.com':'Хабр · статья',
+  'yandex.ru':'Яндекс', 'google.com':'Google',
+  'apple.com':'Apple', 'app.store':'App Store',
+  'ozon.ru':'Ozon · товар', 'wildberries.ru':'Wildberries · товар',
+  'avito.ru':'Авито · объявление'
+};
+function cpLinkTitle(host, u){
+  if(CP_HOST_MAP[host]) return CP_HOST_MAP[host];
+  const seg = (u.pathname||'').split('/').filter(Boolean)[0];
+  if(seg){
+    const clean = decodeURIComponent(seg).replace(/[-_+]+/g,' ').trim();
+    if(clean.length > 1) return host + ' · ' + clean.slice(0,44);
+  }
+  return host;
+}
+function cpLinkCard(url){
+  try{
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./,'');
+    const title = cpLinkTitle(host, u);
+    return `<a class="cp-linkprev" href="${cpEsc(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">
+      <span class="cp-lp-fav">${I('globe')}</span>
+      <span class="cp-lp-txt"><b>${cpEsc(title)}</b><small>${cpEsc(host)}</small></span>
+      <span class="cp-lp-go">${I('chev')}</span>
+    </a>`;
+  }catch(e){ return ''; }
+}
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml2 = msgHtml;
+  msgHtml = function(m, idx){
+    let out = _cpPrevMsgHtml2.apply(this, arguments);
+    if(m && (m.kind==='text' || !m.kind) && typeof m.body==='string'){
+      const match = m.body.match(CP_URL_RE);
+      if(match){
+        const card = cpLinkCard(match[0]);
+        /* вставим карточку прямо перед строкой времени `.t`, чтобы реакции остались снизу */
+        if(card) out = out.replace(/<span class="t">/, card + '<span class="t">');
+      }
+    }
+    return out;
+  };
+}
+
+/* ================= 17. ПЕРЕСЫЛКА С ВЫБОРОМ ЧАТА ================= */
+let cpFwMsg = null, cpFwFrom = null;
+if(typeof forwardMsg === 'function'){
+  forwardMsg = function(idx){
+    if(typeof closeMsgMenu==='function') closeMsgMenu();
+    if(typeof currentChat==='undefined' || !currentChat) return;
+    const m = currentChat.msgs[idx]; if(!m) return;
+    cpForwardOpen(m, currentChat);
+  };
+}
+function cpForwardOpen(msg, fromChat){
+  if(typeof showPopup!=='function' || typeof CHATS==='undefined'){ if(typeof toast==='function') toast('Пересылка недоступна'); return; }
+  const chats = CHATS.filter(c=>c && c.id !== fromChat.id && c.kind !== 'sys');
+  if(!chats.length){ toast('Нет чатов для пересылки'); return; }
+  cpFwMsg = msg; cpFwFrom = fromChat;
+  const items = chats.slice(0,20).map(c=>{
+    const idArg = typeof c.id==='number' ? c.id : ("'"+c.id+"'");
+    const ava = (typeof avaHtml==='function') ? avaHtml(c) : `<div class="ava">${cpEsc(c.ava||'')}</div>`;
+    const on = c.online ? '<span class="cp-fw-on" title="в сети"></span>' : '';
+    return `<button class="cp-fw-item" onclick="cpForwardTo(${idArg})">
+      <span class="cp-fw-ava">${ava}${on}</span>
+      <span class="cp-fw-txt"><b>${cpEsc(c.name||'')}</b><small>${cpEsc(c.preview||'')}</small></span>
+      <span class="cp-fw-go">${I('chev')}</span>
+    </button>`;
+  }).join('');
+  const preview = cpEsc((typeof msgQuoteText==='function' ? msgQuoteText(msg) : (msg.body||'')) || 'сообщение').slice(0,120);
+  showPopup({ico:'forward', title:'Переслать в чат',
+    body: '<div class="cp-fw-quote">'+preview+'</div><div class="cp-fw-list">'+items+'</div>',
+    actions:[{label:'Отмена', ghost:true, onclick:()=>{ cpFwMsg = null; cpFwFrom = null; }}]
+  });
+}
+window.cpForwardTo = function(id){
+  const m = cpFwMsg, from = cpFwFrom;
+  cpFwMsg = null; cpFwFrom = null;
+  if(typeof closePopup==='function') closePopup();
+  if(!m) return;
+  const target = (typeof CHATS!=='undefined' ? CHATS : []).find(c=>c.id===id);
+  if(!target){ if(typeof toast==='function') toast('Чат не найден'); return; }
+  /* глубокое-мелкое копирование, чтобы не подцепить реакции/статусы оригинала */
+  const clone = Object.assign({}, m, {
+    in: 0,
+    t: (typeof nowT==='function' ? nowT() : ''),
+    edited: false,
+    reacts: null,
+    cpSt: 'sent',
+    fwd: { who: m.in ? (m.who || (from && from.name) || 'Автор') : 'Ты' }
+  });
+  delete clone.reply; delete clone.sid;
+  if(typeof openConv==='function') openConv(id);
+  /* pushMsg — после того как чат открылся и лента отрисована */
+  setTimeout(()=>{
+    if(typeof pushMsg==='function') pushMsg(clone);
+    if(typeof toast==='function') toast('Переслано в «'+(target.name||'чат')+'»');
+  }, 80);
+};
+/* показать метку «Переслано от …» в теле сообщения (без правки базового рендера) */
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml3 = msgHtml;
+  msgHtml = function(m, idx){
+    let out = _cpPrevMsgHtml3.apply(this, arguments);
+    if(m && m.fwd && m.fwd.who && m.kind !== 'sys'){
+      const tag = `<div class="cp-fwd-tag">${I('forward')}<span>Переслано от <b>${cpEsc(m.fwd.who)}</b></span></div>`;
+      /* вставляем плашку в начало пузыря (после первого <div class="msg ..."> открывающего) */
+      out = out.replace(/(<div class="msg[^"]*"[^>]*>)/, '$1' + tag);
+    }
+    return out;
+  };
+}
+
+/* ================= 18. БЫСТРАЯ РЕАКЦИЯ ДВОЙНЫМ ТАПОМ (fire) ================= */
+if(typeof reactBar === 'function'){
+  const _cpPrevReactBar = reactBar;
+  let cpTapEl = null, cpTapT = 0, cpTapTimer = 0;
+  reactBar = function(ev, idx){
+    ev.stopPropagation();
+    const now = Date.now();
+    const msg = ev.currentTarget;
+    /* игнорим тапы по интерактивным потомкам — те сами обрабатывают клик */
+    if(ev.target && ev.target.closest &&
+       ev.target.closest('button, a, video, audio, input, .cp-linkprev, .cp-vn-play, .cp-vn-speed, .cp-speed, .voice, .popt')){
+      return; /* фолбэк ядра тоже гасим — интерактив рулит */
+    }
+    if(cpTapEl === msg && (now - cpTapT) < 320){
+      clearTimeout(cpTapTimer);
+      cpTapEl = null; cpTapT = 0;
+      if(typeof pickReact === 'function'){
+        pickReact(idx, 'fire');
+        /* pickReact вызывает refreshMsg — узел заменится; вешаем FX уже на новый */
+        setTimeout(()=>{
+          const el = cpMsgsEl();
+          const fresh = el && el.children[idx];
+          if(fresh) cpQuickReactFx(fresh);
+        }, 0);
+      }
+      return;
+    }
+    cpTapEl = msg; cpTapT = now;
+    clearTimeout(cpTapTimer);
+    cpTapTimer = setTimeout(()=>{
+      cpTapEl = null; cpTapT = 0;
+      /* одиночный тап — оригинальное поведение: открыть контекст-меню */
+      if(typeof openMsgMenu === 'function') openMsgMenu(idx);
+    }, 260);
+  };
+}
+function cpQuickReactFx(msg){
+  const fx = document.createElement('span');
+  fx.className = 'cp-quick-fx'; fx.innerHTML = I('fire');
+  msg.appendChild(fx);
+  setTimeout(()=>fx.remove(), 900);
+}
+
+(function cpInit4(){
+  /* если чат уже открыт при загрузке модуля — сразу восстановить черновик */
+  if(typeof currentChat!=='undefined' && currentChat) cpDraftLoad();
+  /* обновить список — на случай сохранённых черновиков с прошлой сессии */
+  if(typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value || '');
 })();
 
 /* ===== module: profile-social ===== */

@@ -35,6 +35,12 @@
   mk('i-gm-flame','<path d="M53 12c2 16 18 21 18 39a21 21 0 01-42 0c0-9 5-14 5-14-11 4-18 15-18 27a34 34 0 0068 0c0-26-24-36-31-52z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M50 84a13 13 0 01-8-23c1 8 7 9 8 15 4-3 4-7 3-11 6 2 10 8 10 14a13 13 0 01-13 5z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
   /* весы честности (таблица шансов) */
   mk('i-gm-scales','<path d="M50 16v66M30 82h40" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28h52" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><path d="M24 28 12 54a13 13 0 0024 0zM76 28 64 54a13 13 0 0024 0z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>');
+  /* тайный сундук (mystery box — loot crate) */
+  mk('i-gm-mbox','<rect x="14" y="30" width="72" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="7"/><rect x="10" y="22" width="80" height="14" rx="4" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 30v56" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><circle cx="50" cy="52" r="6" fill="none" stroke="currentColor" stroke-width="6"/><path d="M50 22c-6-10 6-12 6-4 0-6 12-4 6 4M50 22c6-10-6-12-6-4 0-6-12-4-6 4" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>');
+  /* медаль-звезда (достижения) */
+  mk('i-gm-medal','<path d="M28 10h44l-8 30H36z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/><circle cx="50" cy="62" r="24" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 50l4 10 10 1-8 7 3 10-9-6-9 6 3-10-8-7 10-1z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>');
+  /* календарь стрика */
+  mk('i-gm-cal','<rect x="14" y="22" width="72" height="64" rx="6" fill="none" stroke="currentColor" stroke-width="7"/><path d="M14 40h72M32 12v18M68 12v18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
 })();
 
 /* ---------- общее состояние + хелперы ---------- */
@@ -313,6 +319,13 @@ function gmStreakBump(){
   else s.n = 1;                                 /* был пропуск — серия с начала */
   s.d = t;
   gmStreakSave(s);
+  /* веха 7 дней — +2 бесплатных крутки в копилке */
+  if(s.n === 7){
+    gmExtraFreeSet(gmExtraFreeGet() + 2);
+    gmAchUnlock('streak7');
+    toast('Серия 7 дней подряд · +2 бесплатных крутки в копилке');
+  }
+  /* прочие вехи — бонусные билеты */
   const bonus = GM_STREAK_MILE[s.n] || (s.n > 30 && s.n % 7 === 0 ? 5 : 0);
   if(bonus){
     gmTicketsAdd(bonus);
@@ -320,6 +333,20 @@ function gmStreakBump(){
   }
   gmStreakRender();
   return s;
+}
+/* календарь последних 7 дней — активные дни закрашены как «сделано» */
+function gmStreakCalendar(){
+  const s = gmStreakGet(), today = gmDayIdx();
+  const now = new Date();
+  const names = ['вс','пн','вт','ср','чт','пт','сб'];
+  const out = [];
+  for(let i = 6; i >= 0; i--){
+    const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const dayIdx = today - i;
+    const active = s.d !== null && s.d !== undefined && dayIdx <= s.d && dayIdx > s.d - (s.n || 0);
+    out.push({name: names[dt.getDay()], num: dt.getDate(), done: active, isToday: i === 0});
+  }
+  return out;
 }
 function gmStreakRender(){
   const el = document.getElementById('gmStreakChip');
