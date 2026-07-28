@@ -101,10 +101,11 @@ def tier(name, cfile, tag, feat, rub_old, rub_full, sup, items, breakdown=None):
     if breakdown:
         rows = "".join(f'<dt>{html.escape(k)}</dt><dd>{html.escape(v)}&#8201;₽</dd>' for k,v in breakdown)
         total_val = rub_full.replace('&#8201;₽','')
-        detail = (f'<div class="tier-detail"><div class="tier-detail-h">Детализация</div>'
+        detail = (f'<details class="tier-detail"><summary><span class="tier-detail-h">Детализация · {len(breakdown)} строк</span><span class="ar">›</span></summary>'
+                  f'<div class="tier-detail-body">'
                   f'<dl>{rows}</dl>'
                   f'<dl class="sum"><dt>Итого</dt><dd>{total_val}&#8201;₽</dd></dl>'
-                  f'</div>')
+                  f'</div></details>')
     return (f'<div class="tier{" feat" if feat else ""}">'
             f'<div class="tier-name">{name}</div><div class="tier-tag">{tag}</div>'
             f'<div class="tier-oldprice">{rub_old}</div>'
