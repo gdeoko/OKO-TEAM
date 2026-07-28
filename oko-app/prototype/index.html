@@ -8583,7 +8583,7 @@ html.oko-hidden *{ animation-play-state:paused !important; }
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.48</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.49</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск — 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11012,9 +11012,11 @@ function saveProfile(){
 }
 /* ===== Оплата тарифов ===== */
 const PLANS = {
-  START:    {name:'START',    mo:1490},
-  PRO:      {name:'PRO',      mo:4890},
-  BUSINESS: {name:'BUSINESS', mo:19900},
+  START:        {name:'START',        mo:990},
+  PRO:          {name:'PRO',          mo:4900},
+  BUSINESS:     {name:'BUSINESS',     mo:19900},
+  BUSINESS_PRO: {name:'BUSINESS PRO', mo:49900},
+  MAX:          {name:'MAX',          mo:149900},
 };
 const PAY_PERIODS = [[1,'1 мес',0],[3,'3 мес',10],[6,'6 мес',15],[12,'Год',20]];
 const PAY_METHODS = [['card','Карта РФ','card'],['crypto','Крипта','money'],['lava','Lava.top','bolt']];
@@ -11059,7 +11061,7 @@ function doPay(){
       <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
     PROFILE.tier = p.name;
     renderMyProfile();
-    const map = {START:'до 15.09', PRO:'до 15.09', BUSINESS:'до 15.09'};
+    const map = {START:'до 01.09', PRO:'до 01.09', BUSINESS:'до 01.09', 'BUSINESS PRO':'до 01.09', MAX:'до 01.09'};
     const tierEl = document.getElementById('profTier'); if(tierEl) tierEl.textContent = p.name + ' ' + map[p.name];
     toast('Тариф ' + p.name + ' активирован');
   }, 1600);
@@ -37931,7 +37933,7 @@ var PW_ASSET = {
   }
 
   /* ---- цены/мес (fallback если PLANS нет), спец-годовая цена ---- */
-  var PW_MO = {START:1490, PRO:4890, BUSINESS:19900, MAX:27000};   // MAX ~ $300/мес
+  var PW_MO = {START:990, PRO:4900, BUSINESS:19900, BUSINESS_PRO:49900, MAX:149900};
   var PW_YR = {MAX:259200};   // MAX год = −20% (27000×12×0.8) — единая скидка со всеми тарифами, лестница не инвертируется
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;

@@ -3349,9 +3349,11 @@ function saveProfile(){
 }
 /* ===== Оплата тарифов ===== */
 const PLANS = {
-  START:    {name:'START',    mo:1490},
-  PRO:      {name:'PRO',      mo:4890},
-  BUSINESS: {name:'BUSINESS', mo:19900},
+  START:        {name:'START',        mo:990},
+  PRO:          {name:'PRO',          mo:4900},
+  BUSINESS:     {name:'BUSINESS',     mo:19900},
+  BUSINESS_PRO: {name:'BUSINESS PRO', mo:49900},
+  MAX:          {name:'MAX',          mo:149900},
 };
 const PAY_PERIODS = [[1,'1 мес',0],[3,'3 мес',10],[6,'6 мес',15],[12,'Год',20]];
 const PAY_METHODS = [['card','Карта РФ','card'],['crypto','Крипта','money'],['lava','Lava.top','bolt']];
@@ -3396,7 +3398,7 @@ function doPay(){
       <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
     PROFILE.tier = p.name;
     renderMyProfile();
-    const map = {START:'до 15.09', PRO:'до 15.09', BUSINESS:'до 15.09'};
+    const map = {START:'до 01.09', PRO:'до 01.09', BUSINESS:'до 01.09', 'BUSINESS PRO':'до 01.09', MAX:'до 01.09'};
     const tierEl = document.getElementById('profTier'); if(tierEl) tierEl.textContent = p.name + ' ' + map[p.name];
     toast('Тариф ' + p.name + ' активирован');
   }, 1600);

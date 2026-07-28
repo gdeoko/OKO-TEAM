@@ -21,7 +21,7 @@ var PW_ASSET = {
   }
 
   /* ---- цены/мес (fallback если PLANS нет), спец-годовая цена ---- */
-  var PW_MO = {START:1490, PRO:4890, BUSINESS:19900, MAX:27000};   // MAX ~ $300/мес
+  var PW_MO = {START:990, PRO:4900, BUSINESS:19900, BUSINESS_PRO:49900, MAX:149900};
   var PW_YR = {MAX:259200};   // MAX год = −20% (27000×12×0.8) — единая скидка со всеми тарифами, лестница не инвертируется
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;
