@@ -17,7 +17,10 @@ SPACE = "k2-fsa/OmniVoice"
 REF_30 = os.path.join(HERE, "reference", "vladimir_ref_30s.wav")
 NS = 48; GS = 2.0; SPEED = 1.8
 MASTER = "highpass=f=80,loudnorm=I=-14.5:TP=-1.2"
-def _du(text): return max(8.0, round(max(1, len(text.split())) * 0.55 + 2, 1))
+# du = целевая длительность для OmniVoice. Раньше была завышена (0.55/слово+2) → модель
+# ДОБИВАЛА лишнее время ГАЛЛЮЦИНАЦИЕЙ-ФИЛЛЕРОМ в конце («мягко мягко...»). Теперь ближе к
+# естественной речи; хвостовую галлюцинацию всё равно срезаем _bounds по ASR.
+def _du(text): return max(6.0, round(max(1, len(text.split())) * 0.42 + 1.2, 1))
 def _omnivoice(text, ref, out_wav):
     from gradio_client import Client, handle_file
     c = Client(SPACE, token=os.environ.get("HF_TOKEN"), verbose=False)
@@ -26,21 +29,38 @@ def _omnivoice(text, ref, out_wav):
         api_name="/_clone_fn")
     shutil.copy(r[0] if isinstance(r,(list,tuple)) else r, out_wav)
 def _norm(w): return re.sub(r"[^а-яёa-z0-9]", "", w.lower())
-def _lead_trim(wav, text):
-    """Стартовый призвук OmniVoice = лишнее первое слово. Если первое распознанное
-    слово != первому слову входа — режем до второго слова."""
+def _bounds(wav, text):
+    """Границы полезной речи (start, end). Режет и стартовый призвук, и ХВОСТОВУЮ
+    галлюцинацию OmniVoice (повтор слов вроде «мягко»). end = конец последнего слова,
+    реально совпавшего с концом сценария; всё, что модель добила после — отбрасываем."""
     try:
         from faster_whisper import WhisperModel
         m = WhisperModel("small", device="cpu", compute_type="int8")
         segs, _ = m.transcribe(wav, vad_filter=True, word_timestamps=True)
         words = [w for s in segs for w in (s.words or [])]
-        if not words: return 0.0
-        if _norm(words[0].word) == _norm(text.split()[0]):
-            return max(0.0, words[0].start - 0.05)
-        if len(words) > 1: return max(0.0, words[1].start - 0.05)
-        return max(0.0, words[0].end)
+        if not words: return 0.0, None
+        sw = [ _norm(x) for x in text.split() ]
+        # --- start ---
+        if _norm(words[0].word) == sw[0]:
+            st = max(0.0, words[0].start - 0.05)
+        elif len(words) > 1:
+            st = max(0.0, words[1].start - 0.05)
+        else:
+            st = max(0.0, words[0].end)
+        # --- end: последнее вхождение последнего слова сценария (кон. хвоста хука) ---
+        tail = [w for w in sw if w][-3:]                       # 3 последних слова сценария
+        en = None
+        wl = [_norm(w.word) for w in words]
+        for i in range(len(words) - 1, -1, -1):
+            if tail and wl[i] == tail[-1]:
+                en = words[i].end + 0.12; break
+        # если не нашли последнее слово, но распознали хвостовую болтологию длиннее сценария —
+        # обрезаем по числу слов сценария (страховка от филлера)
+        if en is None and len(words) > len(sw) + 1:
+            en = words[len(sw)-1].end + 0.12
+        return st, en
     except Exception as e:
-        sys.stderr.write(f"[lead_trim fallback ~1.3s: {e}]\n"); return 1.3
+        sys.stderr.write(f"[bounds fallback: {e}]\n"); return 1.3, None
 
 def word_timings(audio):
     """[{w,t,d}] по финальному аудио (для караоке и привязки анимаций)."""
@@ -59,9 +79,10 @@ def synth(text, out_mp3, ref=REF_30, speed=SPEED, json_out=None):
     with tempfile.TemporaryDirectory() as td:
         raw = os.path.join(td, "raw.wav")
         _omnivoice(text, ref, raw)
-        st = _lead_trim(raw, text)
+        st, en = _bounds(raw, text)                       # старт + конец полезной речи (без хвост-филлера)
         af = f"atempo={speed},{MASTER}" if speed and abs(speed-1.0) > 1e-3 else MASTER
-        subprocess.run(["ffmpeg","-y","-v","error","-ss",f"{st:.3f}","-i",raw,
+        seg = ["-ss", f"{st:.3f}"] + (["-t", f"{max(0.5, en-st):.3f}"] if en else [])
+        subprocess.run(["ffmpeg","-y","-v","error", *seg, "-i", raw,
                         "-af",af,"-b:a","192k",out_mp3], check=True)
     if json_out:
         import json as _j
