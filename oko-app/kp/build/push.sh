@@ -18,6 +18,6 @@ for f in $(ls $CD/c*); do
   i=$((i+1)); echo "  $i/$N"
 done
 echo "UPLOADED $exp expect $TOTAL"
-ctl "cd /tmp && base64 -d dep.b64 > dep.tgz && echo MD5 \$(md5sum dep.tgz|cut -d' ' -f1) WANT 555f6baf3a90712051f4a5e3d8f32e5f"
+ctl "cd /tmp && base64 -d dep.b64 > dep.tgz && echo MD5 \$(md5sum dep.tgz|cut -d' ' -f1) WANT 19fcf7cc18d4e9ec8804686131a884f5"
 ctl "cd /var/www/okoteam && cp -f kp/index.html kp/index_v8_backup.html; tar xzf /tmp/dep.tgz && chown -R www-data:www-data kp kp-dmitry kp-speto && echo EXTRACTED && for d in kp kp-dmitry kp-speto; do echo \$d \$(wc -c < \$d/index.html) \$(wc -c < \$d/js/holo.js); done"
 echo PUSHDONE

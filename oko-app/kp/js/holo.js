@@ -52,7 +52,7 @@ export function initHolo(){
   // EYE (GLB) — one mesh serves hero + clone anchors
   let eyeMesh=null; const eyeAnchors=['holoEye','holoEye2'].map(id=>document.getElementById(id)).filter(Boolean);
   function eyeReady(){ window.__eyeReady=true; try{dispatchEvent(new Event('eye-ready'));}catch(e){} }
-  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb',g=>{eyeMesh=g.scene;
+  if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb?v=91',g=>{eyeMesh=g.scene;
     // ЧИСТЫЙ ЛАЙМ без запечённой чёрной обводки: заменяем baseColor на брендовый цвет, оставляем normalMap
     eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
       const nm=o.material.normalMap||null;
@@ -64,8 +64,8 @@ export function initHolo(){
   else eyeReady();
 
   // рука уже повернута в самом спрайте (запястье слева, ладонь вверх, пальцы вправо) — 440x243
-  makeSprite('holoHand','kp-media/fig/hand_sheet.webp',6,6,36,440/243,{progType:'hand',fit:'width',slide:true});
-  makeSprite('holoWoman','kp-media/fig/woman_sheet.webp',6,6,36,340/316,{progType:'woman',fit:'contain'});
+  makeSprite('holoHand','kp-media/fig/hand_sheet.webp?v=91',6,6,36,440/243,{progType:'hand',fit:'width',slide:true});
+  makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=91',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
   function handProg(r){return clamp((H*0.86 - r.top)/(H*0.62),0,1);}
