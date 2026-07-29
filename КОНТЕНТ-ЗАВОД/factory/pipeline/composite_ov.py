@@ -17,11 +17,15 @@ for s in sched:
         inputs+=["-c:v","libvpx-vp9","-i",p]; ov_idx.append((len(ov_idx)+3,s))
 
 fc=[]; cur="0:v"
-# наложить каждую инфографику в её окне времени
+# наложить каждую инфографику в её окне времени.
+# ВАЖНО: overlay синхронит вторичный вход с главным таймлайном от t=0, а webm короткие —
+# поэтому СДВИГАЕМ PTS каждого webm на его start (setpts=PTS+start/TB), иначе к окну enable
+# webm уже кончился и показывает последний (прозрачный) кадр.
 for n,(idx,s) in enumerate(ov_idx):
     st=float(s['start']); en=st+float(s['dur'])
-    lbl=f"v{n}"
-    fc.append(f"[{cur}][{idx}:v]overlay=0:0:enable='between(t,{st:.2f},{en:.2f})':shortest=0[{lbl}]")
+    lbl=f"v{n}"; sh=f"s{n}"
+    fc.append(f"[{idx}:v]setpts=PTS+{st:.3f}/TB[{sh}]")
+    fc.append(f"[{cur}][{sh}]overlay=0:0:enable='between(t,{st:.2f},{en:.2f})':shortest=0[{lbl}]")
     cur=lbl
 # субтитры
 fc.append(f"[{cur}]subtitles={WD}/work/subs_std.ass:fontsdir={FONTS}[sub]")
