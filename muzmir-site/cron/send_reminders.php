@@ -24,6 +24,7 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
+if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 require_once __DIR__ . '/_lib.php';
 // Опционально: движок рассылок даёт настоящий unsub_token через nl_ensure_subscriber().
 if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
@@ -96,6 +97,11 @@ try {
 
         if ($html !== '' && reminder_enqueue((string) $a['email'], $name, 'Оплатите участие - «' . $a['comp_name'] . '»', $html)) {
             audit('reminder_payment', 'application', $id, ['competition' => $a['comp_name']]);
+            // In-app уведомление участнику
+            if (!empty($a['user_id']) && function_exists('notify_user')) {
+                notify_user((int)$a['user_id'], 'Заявка ' . $a['number'] . ' ждёт оплаты',
+                    'Чтобы работа попала на оценку жюри — оплатите оргвзнос.', '/cabinet#apps', 'pay');
+            }
             $unpaid++;
         }
     }
@@ -135,6 +141,11 @@ try {
 
         if ($html !== '' && reminder_enqueue((string) $a['email'], (string) $a['full_name'], 'Оформите награду - «' . $a['comp_name'] . '»', $html)) {
             audit('reminder_award', 'application', $id, ['competition' => $a['comp_name']]);
+            if (!empty($a['user_id']) && function_exists('notify_user')) {
+                notify_user((int)$a['user_id'], 'Оформите памятную награду',
+                    'По результату «' . $a['result'] . '» на конкурсе «' . $a['comp_name'] . '» — доступен заказ кубка/статуэтки/медали.',
+                    '/order-awards?app=' . $id, 'trophy');
+            }
             $awards++;
         }
     }

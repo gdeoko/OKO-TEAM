@@ -13,6 +13,23 @@ $noms = NOMINATIONS();
 $ages = AGE_CATEGORIES();
 $forms = FORMATIONS();
 
+// Пре-заполнение из последней заявки авторизованного пользователя (быстрая повторная подача)
+$prefill = [
+    'full_name' => '', 'phone' => '', 'email' => '', 'teacher' => '',
+    'institution' => '', 'city' => '', 'address' => '', 'postal_index' => '',
+    'group_name' => '', 'is_group' => 0,
+];
+$_prefUser = current_user();
+if ($_prefUser) {
+    $last = one("SELECT full_name, phone, email, teacher, institution, city, address, postal_index, group_name, is_group
+                 FROM applications WHERE user_id=? ORDER BY created_at DESC LIMIT 1", [(int)$_prefUser['id']]);
+    if ($last) $prefill = array_merge($prefill, array_map('strval', $last));
+    // Если пусто — берём из профиля
+    if ($prefill['full_name'] === '') $prefill['full_name'] = (string)($_prefUser['full_name'] ?? '');
+    if ($prefill['phone'] === '')     $prefill['phone']     = (string)($_prefUser['phone'] ?? '');
+    if ($prefill['email'] === '')     $prefill['email']     = (string)($_prefUser['email'] ?? '');
+}
+
 // Конфиг для клиентской логики (apply.js читает window.APPLY_CONFIG)
 $jsCfg = [
     'apiUrl'    => url('/api/v1/apply'),
@@ -288,13 +305,13 @@ ob_start(); ?>
           </div>
 
           <div class="field ff" data-when="group" style="display:none">
-            <input type="text" id="group_name" name="group_name" placeholder=" ">
+            <input type="text" id="group_name" name="group_name" placeholder=" " value="<?= h($prefill['group_name']) ?>">
             <label for="group_name">Название коллектива</label>
             <div class="hint">Например, образцовый ансамбль «Родник».</div>
             <div class="err-msg">Укажите название коллектива.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="full_name" name="full_name" placeholder=" " data-fio required>
+            <input type="text" id="full_name" name="full_name" placeholder=" " data-fio required value="<?= h($prefill['full_name']) ?>">
             <label for="full_name" id="fnLabel">Фамилия, имя, отчество участника</label>
             <div class="hint">Регистр поправится автоматически.</div>
             <div class="err-msg">Укажите ФИО участника.</div>
@@ -318,17 +335,17 @@ ob_start(); ?>
         <section class="astep" data-step="teacher">
           <div class="astep-head"><p class="eyebrow">Шаг 3</p><h2>Педагог и учреждение</h2></div>
           <div class="field ff">
-            <input type="text" id="teacher" name="teacher" placeholder=" " data-fio>
+            <input type="text" id="teacher" name="teacher" placeholder=" " data-fio value="<?= h($prefill['teacher']) ?>">
             <label for="teacher">ФИО руководителя или педагога</label>
             <div class="hint">Как указать в дипломе руководителя. Можно оставить пустым.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="institution" name="institution" placeholder=" ">
+            <input type="text" id="institution" name="institution" placeholder=" " value="<?= h($prefill['institution']) ?>">
             <label for="institution">Учреждение</label>
             <div class="hint">Например, детская школа искусств №1.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="city" name="city" placeholder=" " required>
+            <input type="text" id="city" name="city" placeholder=" " required value="<?= h($prefill['city']) ?>">
             <label for="city">Населённый пункт</label>
             <div class="hint">Например, г. Москва.</div>
             <div class="err-msg">Укажите город или населённый пункт.</div>
@@ -390,24 +407,24 @@ ob_start(); ?>
           <div class="astep-head"><p class="eyebrow">Шаг 5</p><h2>Контакты и доставка</h2></div>
           <div class="grid-2c">
             <div class="field ff">
-              <input type="email" id="email" name="email" placeholder=" " required>
+              <input type="email" id="email" name="email" placeholder=" " required value="<?= h($prefill['email']) ?>">
               <label for="email">Электронная почта</label>
               <div class="hint">На неё придут дипломы и результаты.</div>
               <div class="err-msg">Укажите корректную электронную почту.</div>
             </div>
             <div class="field ff">
-              <input type="tel" id="phone" name="phone" placeholder=" " data-phone required>
+              <input type="tel" id="phone" name="phone" placeholder=" " data-phone required value="<?= h($prefill['phone']) ?>">
               <label for="phone">Телефон</label>
               <div class="err-msg">Укажите телефон в формате +7 (___) ___-__-__.</div>
             </div>
           </div>
           <div class="field ff">
-            <input type="text" id="address" name="address" placeholder=" ">
+            <input type="text" id="address" name="address" placeholder=" " value="<?= h($prefill['address']) ?>">
             <label for="address">Адрес доставки оригиналов</label>
             <div class="hint">Нужен только для оригиналов наградных материалов. Дипломы приходят на почту.</div>
           </div>
           <div class="field ff" style="max-width:240px">
-            <input type="text" id="postal_index" name="postal_index" placeholder=" " inputmode="numeric" maxlength="6">
+            <input type="text" id="postal_index" name="postal_index" placeholder=" " inputmode="numeric" maxlength="6" value="<?= h($prefill['postal_index']) ?>">
             <label for="postal_index">Почтовый индекс</label>
           </div>
           <div class="astep-nav">

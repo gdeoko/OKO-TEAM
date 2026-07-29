@@ -210,9 +210,9 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
   </div>
 </nav>
 
-<button class="chat-fab" id="chatFab" aria-label="Поддержка">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
-</button>
+<a class="chat-fab" id="chatFab" href="https://t.me/kc_muz_mir_bot" target="_blank" rel="noopener" aria-label="Поддержка в Telegram" title="Написать в Telegram-бот">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+</a>
 
 <?php /* auth-modal удалён — теперь /login отдельная страница с тем же анимационным фоном */ ?>
 

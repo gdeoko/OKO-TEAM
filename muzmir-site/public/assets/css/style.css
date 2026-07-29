@@ -1279,6 +1279,30 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
 /* Спрятать старые декоративные span (если где-то остались) — стилизуем через SVG */
 .burger span{display:none !important}
 
+/* Quick-actions widget (главная, авторизованный/дедлайн) */
+.qa-grid{display:grid;grid-template-columns:1fr;gap:11px}
+@media(min-width:720px){.qa-grid{grid-template-columns:repeat(3,1fr)}}
+.qa-tile{position:relative;display:flex;align-items:center;gap:12px;padding:14px;padding-right:32px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--glass-brd);text-decoration:none;color:inherit;
+  box-shadow:0 6px 16px rgba(139,111,31,.08);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;
+  backdrop-filter:blur(10px);overflow:hidden}
+.qa-tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-gold);opacity:.9}
+.qa-tile--warn::before{background:linear-gradient(180deg,#ff9800,#f57c00)}
+.qa-tile--err::before{background:linear-gradient(180deg,#e63946,#b91c2c)}
+.qa-tile--cta{background:linear-gradient(135deg,var(--gold-soft),color-mix(in srgb,var(--gold-soft) 60%,transparent))}
+.qa-tile--cta::before{background:linear-gradient(180deg,var(--gold),var(--gold-2))}
+@media(hover:hover){.qa-tile:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 14px 30px rgba(201,168,76,.22)}}
+.qa-ic{flex:none;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 6px 14px rgba(201,168,76,.28)}
+.qa-tile--warn .qa-ic{background:linear-gradient(135deg,#ffb74d,#f57c00);box-shadow:0 6px 14px rgba(245,124,0,.32)}
+.qa-tile--err .qa-ic{background:linear-gradient(135deg,#ef5350,#c62828);box-shadow:0 6px 14px rgba(198,40,40,.32)}
+.qa-ic svg{width:22px;height:22px}
+.qa-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.qa-lbl{font-size:.7rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.qa-body b{font-family:var(--ff-serif);font-size:1rem;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa-meta{font-size:.78rem;color:var(--muted);line-height:1.3}
+.qa-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--gold);opacity:.55}
+
 /* Notifications list styles */
 .notif-list{display:flex;flex-direction:column;gap:8px}
 .notif-item{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:14px;

@@ -53,6 +53,22 @@ $icons = [
   'globe' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>',
 ];
 
+/* Быстрые действия для авторизованных: последняя заявка, ближайший дедлайн */
+$currentUser = current_user();
+$quickApp = null; $quickDeadline = null;
+if ($currentUser) {
+    $quickApp = one("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.end_date FROM applications a
+                     JOIN competitions c ON c.id=a.competition_id
+                     WHERE a.user_id=? ORDER BY a.created_at DESC LIMIT 1", [(int)$currentUser['id']]);
+}
+// Ближайший дедлайн среди открытых конкурсов (для всех — как «горит»)
+$quickDeadline = one("SELECT name, slug, end_date FROM competitions
+                      WHERE status='open' AND end_date IS NOT NULL AND end_date >= date('now')
+                      ORDER BY end_date ASC LIMIT 1");
+$quickAppStatusLbl = ['new'=>['Не оплачена','pay'],'paid'=>['Оплачена — ждёт оценки','ok'],
+                      'judging'=>['На оценке жюри','warn'],'graded'=>['Оценена','ok'],
+                      'sent'=>['Диплом отправлен','ok'],'rejected'=>['Отклонена','err']];
+
 ob_start(); ?>
 <section class="hero">
   <div class="hero-notes" aria-hidden="true"></div>
@@ -80,6 +96,57 @@ ob_start(); ?>
     </div>
   </div>
 </section>
+
+<?php if ($currentUser || $quickDeadline): ?>
+<section class="section quick-actions" style="padding:14px 0 0">
+  <div class="container">
+    <div class="qa-grid">
+      <?php if ($quickApp):
+        [$stLbl, $stKind] = $quickAppStatusLbl[$quickApp['status']] ?? [$quickApp['status'], 'ok']; ?>
+      <a class="qa-tile qa-tile--<?= h($stKind) ?>" href="<?= url('/cabinet#apps') ?>">
+        <div class="qa-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>
+        </div>
+        <div class="qa-body">
+          <span class="qa-lbl">Последняя заявка</span>
+          <b><?= h(mb_strimwidth($quickApp['comp_name'], 0, 38, '…')) ?></b>
+          <span class="qa-meta">№ <?= h($quickApp['number']) ?> · <?= h($stLbl) ?></span>
+        </div>
+        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <?php endif; ?>
+
+      <?php if ($quickDeadline):
+        $daysLeft = max(0, (int) ceil((strtotime($quickDeadline['end_date']) - time()) / 86400));
+      ?>
+      <a class="qa-tile qa-tile--<?= $daysLeft <= 3 ? 'warn' : 'ok' ?>" href="<?= url('/competition/' . $quickDeadline['slug']) ?>">
+        <div class="qa-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+        </div>
+        <div class="qa-body">
+          <span class="qa-lbl">Ближайший дедлайн</span>
+          <b><?= h(mb_strimwidth($quickDeadline['name'], 0, 38, '…')) ?></b>
+          <span class="qa-meta">Осталось <?= (int)$daysLeft ?> <?= _ru_plural($daysLeft, ['день','дня','дней']) ?> · до <?= h(ru_date($quickDeadline['end_date'])) ?></span>
+        </div>
+        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <?php endif; ?>
+
+      <a class="qa-tile qa-tile--cta" href="<?= url('/apply') ?>">
+        <div class="qa-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div class="qa-body">
+          <span class="qa-lbl">Новая заявка</span>
+          <b>Подать сейчас</b>
+          <span class="qa-meta">Один клик — выбрать конкурс и подать</span>
+        </div>
+        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
 
 
 <section class="section section--parchment">
