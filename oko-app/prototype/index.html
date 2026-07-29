@@ -37552,11 +37552,19 @@ function adsRenderSaved(){
 function adsApplyAud(id){
   const a = ADS.auds.find(x=>x.id===id); if(!a) return;
   adsDraft.sex = a.sex; adsDraft.geo = a.geo; adsDraft.cities = [...(a.cities||[])];
+  adsDraft.interests = [...(a.interests||[])];
+  adsDraft.devs = [...(a.devs||[])];
+  if(a.ageMin!=null) adsDraft.ageMin = a.ageMin;
+  if(a.ageMax!=null) adsDraft.ageMax = a.ageMax;
   document.querySelectorAll('#adsSexChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===a.sex));
   document.querySelectorAll('#adsGeoChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===a.geo));
-  const app = (box, arr)=>document.querySelectorAll('#'+box+' .ads-chip').forEach(b=>b.classList.toggle('on', (arr||[]).includes(b.dataset.v)));
-  app('adsIntChips', a.interests); app('adsAgeChips', a.ages); app('adsDevChips', a.devs); app('adsTimeChips', a.times);
-  adsRenderCities(); adsCalcReach();
+  document.querySelectorAll('#adsDevChips .ads-chip').forEach(b=>b.classList.toggle('on', (a.devs||[]).includes(b.dataset.v)));
+  const amn = document.getElementById('adsAgeMin'); if(amn && a.ageMin!=null) amn.value = a.ageMin;
+  const amx = document.getElementById('adsAgeMax'); if(amx && a.ageMax!=null) amx.value = a.ageMax;
+  adsRenderCities();
+  adsRenderInterests();   /* перерисовываем интересы с активацией */
+  adsAgeInput(true);
+  adsCalcReach();
   toast('Аудитория «'+a.name+'» применена');
 }
 function adsDelAud(id){
@@ -37567,13 +37575,14 @@ function adsDelAud(id){
 function adsSaveAud(){
   const aud = {
     id: ADS.audSeq++, sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
-    interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
-    devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips')
+    interests: adsPicked('adsIntChips'),
+    ageMin: adsDraft.ageMin||18, ageMax: adsDraft.ageMax||45,
+    devs: adsPicked('adsDevChips')
   };
   aud.name = adsAudName(aud);
   ADS.auds.unshift(aud);
   if(ADS.auds.length>8) ADS.auds.pop();
-  adsSave(); adsRenderSaved(); adsRenderSummary();
+  adsSave(); adsRenderSaved(); adsRenderLal(); adsRenderSummary();
   toast('Аудитория сохранена');
 }
 function adsAudName(a){
@@ -41081,7 +41090,7 @@ function stApplyLang(l){
   const cs = document.getElementById('chatSearch');   if(cs) cs.placeholder = t('st.ph.search');
   /* 5. собственные элементы модуля */
   const lt = document.getElementById('stLangText'); if(lt) lt.textContent = t('st.row.lang');
-  const lc = document.getElementById('stLangCur');  if(lc) lc.textContent = l==='en' ? 'English' : 'Русский';
+  const lc = document.getElementById('stLangCur');  if(lc) lc.textContent = l==='en' ? 'English' : (l==='kk' ? 'Қазақша' : 'Русский');
   const ar = document.getElementById('stAutoRow');  if(ar) stSetText(ar, t('st.row.auto'));
   const sh = document.getElementById('stLangTitle'); if(sh) sh.textContent = t('st.sheet.title');
   const sn = document.getElementById('stLangNote');  if(sn) sn.textContent = t('st.sheet.note');
@@ -54089,30 +54098,31 @@ const ST2 = {
 (function st2Load(){
   try{
     const s = JSON.parse(localStorage.getItem('oko-settings2') || 'null');
-    if(!s) return;
-    if(s.notif){
-      Object.assign(ST2.notif, s.notif);
-      if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
-      if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
-    }
-    if(s.priv)  Object.assign(ST2.priv,  s.priv);
-    if(s.sec)   Object.assign(ST2.sec,   s.sec);
-    if(s.data){
-      Object.assign(ST2.data, s.data);
-      if(s.data.autodl){
-        if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
-        if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+    if(s){
+      if(s.notif){
+        Object.assign(ST2.notif, s.notif);
+        if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
+        if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
       }
+      if(s.priv)  Object.assign(ST2.priv,  s.priv);
+      if(s.sec)   Object.assign(ST2.sec,   s.sec);
+      if(s.data){
+        Object.assign(ST2.data, s.data);
+        if(s.data.autodl){
+          if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
+          if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+        }
+      }
+      if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
+      if(s.loc)       Object.assign(ST2.loc,       s.loc);
+      if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
+      ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
+      if(Array.isArray(s.killed))   ST2.killed   = s.killed;
+      if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
+      if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
     }
-    if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
-    if(s.loc)       Object.assign(ST2.loc,       s.loc);
-    if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
-    ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
-    if(Array.isArray(s.killed))   ST2.killed   = s.killed;
-    if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
-    if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
-  /* нормализуем перечёт-каналы */
+  /* нормализуем перечёт-каналы (в т.ч. на первом запуске без localStorage) */
   ST2_CH.forEach(c => { if(!ST2.notif.perCh[c.k]) ST2.notif.perCh[c.k] = ST2_NOTIF_DEF(); });
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }

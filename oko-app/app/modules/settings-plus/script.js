@@ -54,30 +54,31 @@ const ST2 = {
 (function st2Load(){
   try{
     const s = JSON.parse(localStorage.getItem('oko-settings2') || 'null');
-    if(!s) return;
-    if(s.notif){
-      Object.assign(ST2.notif, s.notif);
-      if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
-      if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
-    }
-    if(s.priv)  Object.assign(ST2.priv,  s.priv);
-    if(s.sec)   Object.assign(ST2.sec,   s.sec);
-    if(s.data){
-      Object.assign(ST2.data, s.data);
-      if(s.data.autodl){
-        if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
-        if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+    if(s){
+      if(s.notif){
+        Object.assign(ST2.notif, s.notif);
+        if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
+        if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
       }
+      if(s.priv)  Object.assign(ST2.priv,  s.priv);
+      if(s.sec)   Object.assign(ST2.sec,   s.sec);
+      if(s.data){
+        Object.assign(ST2.data, s.data);
+        if(s.data.autodl){
+          if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
+          if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+        }
+      }
+      if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
+      if(s.loc)       Object.assign(ST2.loc,       s.loc);
+      if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
+      ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
+      if(Array.isArray(s.killed))   ST2.killed   = s.killed;
+      if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
+      if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
     }
-    if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
-    if(s.loc)       Object.assign(ST2.loc,       s.loc);
-    if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
-    ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
-    if(Array.isArray(s.killed))   ST2.killed   = s.killed;
-    if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
-    if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
-  /* нормализуем перечёт-каналы */
+  /* нормализуем перечёт-каналы (в т.ч. на первом запуске без localStorage) */
   ST2_CH.forEach(c => { if(!ST2.notif.perCh[c.k]) ST2.notif.perCh[c.k] = ST2_NOTIF_DEF(); });
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }

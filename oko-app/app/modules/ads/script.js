@@ -1744,11 +1744,19 @@ function adsRenderSaved(){
 function adsApplyAud(id){
   const a = ADS.auds.find(x=>x.id===id); if(!a) return;
   adsDraft.sex = a.sex; adsDraft.geo = a.geo; adsDraft.cities = [...(a.cities||[])];
+  adsDraft.interests = [...(a.interests||[])];
+  adsDraft.devs = [...(a.devs||[])];
+  if(a.ageMin!=null) adsDraft.ageMin = a.ageMin;
+  if(a.ageMax!=null) adsDraft.ageMax = a.ageMax;
   document.querySelectorAll('#adsSexChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===a.sex));
   document.querySelectorAll('#adsGeoChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===a.geo));
-  const app = (box, arr)=>document.querySelectorAll('#'+box+' .ads-chip').forEach(b=>b.classList.toggle('on', (arr||[]).includes(b.dataset.v)));
-  app('adsIntChips', a.interests); app('adsAgeChips', a.ages); app('adsDevChips', a.devs); app('adsTimeChips', a.times);
-  adsRenderCities(); adsCalcReach();
+  document.querySelectorAll('#adsDevChips .ads-chip').forEach(b=>b.classList.toggle('on', (a.devs||[]).includes(b.dataset.v)));
+  const amn = document.getElementById('adsAgeMin'); if(amn && a.ageMin!=null) amn.value = a.ageMin;
+  const amx = document.getElementById('adsAgeMax'); if(amx && a.ageMax!=null) amx.value = a.ageMax;
+  adsRenderCities();
+  adsRenderInterests();   /* перерисовываем интересы с активацией */
+  adsAgeInput(true);
+  adsCalcReach();
   toast('Аудитория «'+a.name+'» применена');
 }
 function adsDelAud(id){
@@ -1759,13 +1767,14 @@ function adsDelAud(id){
 function adsSaveAud(){
   const aud = {
     id: ADS.audSeq++, sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
-    interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
-    devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips')
+    interests: adsPicked('adsIntChips'),
+    ageMin: adsDraft.ageMin||18, ageMax: adsDraft.ageMax||45,
+    devs: adsPicked('adsDevChips')
   };
   aud.name = adsAudName(aud);
   ADS.auds.unshift(aud);
   if(ADS.auds.length>8) ADS.auds.pop();
-  adsSave(); adsRenderSaved(); adsRenderSummary();
+  adsSave(); adsRenderSaved(); adsRenderLal(); adsRenderSummary();
   toast('Аудитория сохранена');
 }
 function adsAudName(a){

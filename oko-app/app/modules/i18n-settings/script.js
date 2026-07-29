@@ -134,7 +134,7 @@ function stApplyLang(l){
   const cs = document.getElementById('chatSearch');   if(cs) cs.placeholder = t('st.ph.search');
   /* 5. собственные элементы модуля */
   const lt = document.getElementById('stLangText'); if(lt) lt.textContent = t('st.row.lang');
-  const lc = document.getElementById('stLangCur');  if(lc) lc.textContent = l==='en' ? 'English' : 'Русский';
+  const lc = document.getElementById('stLangCur');  if(lc) lc.textContent = l==='en' ? 'English' : (l==='kk' ? 'Қазақша' : 'Русский');
   const ar = document.getElementById('stAutoRow');  if(ar) stSetText(ar, t('st.row.auto'));
   const sh = document.getElementById('stLangTitle'); if(sh) sh.textContent = t('st.sheet.title');
   const sn = document.getElementById('stLangNote');  if(sn) sn.textContent = t('st.sheet.note');
