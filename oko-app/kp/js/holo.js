@@ -58,6 +58,7 @@ export function initHolo(){
 
   // EYE (GLB) — one mesh serves hero + clone anchors
   let eyeMesh=null; const eyeAnchors=['holoEye','holoEye2'].map(id=>document.getElementById(id)).filter(Boolean);
+  const eyeLoad=document.getElementById('holoEyeLoad');   // фиксированный якорь глаза на экране загрузки (стабильно, без прыжков)
   function eyeReady(){ window.__eyeReady=true; try{dispatchEvent(new Event('eye-ready'));}catch(e){} }
   if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb?v=92',g=>{eyeMesh=g.scene;
     // ГЛАДКИЙ глянцевый 3D-глаз: БЕЗ normalMap (она давала царапины/битые пиксели/вмятины на радужке) — чистая поверхность.
@@ -133,15 +134,17 @@ export function initHolo(){
     ptr.x+=(ptr.tx-ptr.x)*.05; ptr.y+=(ptr.ty-ptr.y)*.05;
     const time=t/1000; const dt=clock.getDelta(); _rt=time;
     // EYE (interactive hero centrepiece)
-    if(eyeMesh&&eyeAnchors.length){const grp=eyeMesh.userData.grp;let best=null,bd=1e9;
-      for(const an of eyeAnchors){const r=an.getBoundingClientRect();if(r.bottom>-120&&r.top<H+120){const cy=r.top+r.height/2;const d=Math.abs(cy-H/2);if(d<bd){bd=d;best=r;}}}
+    if(eyeMesh){const grp=eyeMesh.userData.grp;let best=null,bd=1e9;
+      // На экране загрузки — ФИКСИРОВАННЫЙ якорь #holoEyeLoad (глаз стабилен, всегда глаз, без прыжков и без «руки»).
+      const boot=document.body.classList.contains('booting');
+      const anchors=(boot&&eyeLoad)?[eyeLoad]:eyeAnchors;
+      for(const an of anchors){const r=an.getBoundingClientRect();if(r.bottom>-120&&r.top<H+120){const cy=r.top+r.height/2;const d=Math.abs(cy-H/2);if(d<bd){bd=d;best=r;}}}
       if(best){const P=rectPos(best);grp.visible=true;
-        // ИНТРО: глаз красиво появляется в 3D (масштаб + доворот), затем живёт
-        const bt=Math.min(1,(t-(window.__t0||(window.__t0=t)))/1200); const be=1-Math.pow(1-bt,3);
-        // глаз ВЕДЁТСЯ за пальцем: и поворот, и лёгкое смещение к курсору
-        grp.position.set(P.x+ptr.x*P.w*0.06, P.y+Math.sin(time*1.0)*4 - ptr.y*P.h*0.05, 0);
-        const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9*(0.42+0.58*be);grp.scale.setScalar(sc);
-        eyeMesh.rotation.y=ptr.x*1.05+Math.sin(time/2.8)*0.08+(1-be)*1.4;eyeMesh.rotation.x=ptr.y*0.75+Math.cos(time/3.2)*0.04;
+        // мягкое появление (только масштаб, без резкого доворота и без смены позиции)
+        const bt=Math.min(1,(t-(window.__t0||(window.__t0=t)))/900); const be=1-Math.pow(1-bt,3);
+        grp.position.set(P.x+ptr.x*P.w*0.05, P.y+Math.sin(time*1.0)*3 - ptr.y*P.h*0.04, 0);
+        const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9*(0.82+0.18*be);grp.scale.setScalar(sc);
+        eyeMesh.rotation.y=ptr.x*1.0+Math.sin(time/2.8)*0.08+(1-be)*0.35;eyeMesh.rotation.x=ptr.y*0.7+Math.cos(time/3.2)*0.04;
         window.__eyeRotY=eyeMesh.rotation.y;}
       else grp.visible=false;}
     // РОБОТ 3D (гарантии) — живой персонаж: дыхание + чередующиеся жесты + свечение/моргание глаза

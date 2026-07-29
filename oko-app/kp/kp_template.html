@@ -39,9 +39,9 @@ a{text-decoration:none;color:inherit}img,video{max-width:100%;display:block}
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
 /* PRELOADER — 3D-лого сразу */
 /* ЗАПУСК: 3D-глаз сразу виден, под ним прогресс, затем кнопка ВОЙТИ */
-#preloader{position:fixed;inset:0;z-index:9990;background:radial-gradient(ellipse 90% 70% at 50% 42%,rgba(4,8,12,.12),rgba(3,6,11,.55) 78%,rgba(2,4,9,.78));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:15vh;gap:16px;transition:opacity .9s ease,visibility .9s}
+#preloader{position:fixed;inset:0;z-index:9990;background:radial-gradient(ellipse 90% 70% at 50% 42%,rgba(4,8,12,.12),rgba(3,6,11,.55) 78%,rgba(2,4,9,.78));display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:0;gap:16px;transition:opacity .9s ease,visibility .9s}
 #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
-body.booting{overflow:hidden}
+html.booting,body.booting{overflow:hidden;touch-action:none;overscroll-behavior:none}
 body.booting #holo-canvas{z-index:9995}
 .pl-core{display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;transform:translateY(22px);animation:plIn .9s cubic-bezier(.16,1,.3,1) .15s forwards}
 @keyframes plIn{to{opacity:1;transform:none}}
@@ -59,9 +59,8 @@ body.booting #holo-canvas{z-index:9995}
 .pl-enter:hover{transform:translateY(-2px) scale(1.03)}
 @keyframes entpulse{0%,100%{box-shadow:0 0 34px rgba(154,255,0,.45),0 10px 30px -8px rgba(0,0,0,.8)}50%{box-shadow:0 0 54px rgba(154,255,0,.7),0 10px 30px -8px rgba(0,0,0,.8)}}
 /* КИНЕМАТОГРАФИЧНАЯ ЗАГРУЗКА: 3D-глаз + сканирующая линия + элегантный прогресс (без кольца) */
-.pl-scan{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(154,255,0,.75),transparent);box-shadow:0 0 20px rgba(154,255,0,.55);top:6%;z-index:9994;pointer-events:none;animation:plScan 2.4s cubic-bezier(.4,0,.2,1) infinite}
-@keyframes plScan{0%{top:8%;opacity:0}12%{opacity:.85}88%{opacity:.85}100%{top:90%;opacity:0}}
-.pl-stage{position:absolute;left:0;right:0;bottom:15vh;display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;animation:plIn .7s ease .12s forwards}
+.pl-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:15px;padding:0 24px;opacity:0;animation:plIn .55s ease .08s forwards}
+#holoEyeLoad{width:min(290px,62vw);height:min(290px,62vw);pointer-events:none;flex:0 0 auto}
 .pl-brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(34px,8vw,58px);letter-spacing:2px;color:#fff;position:relative;line-height:1}
 .pl-brand span{color:var(--lime)}
 .pl-brand.glitch::before,.pl-brand.glitch::after{content:'ОКО';position:absolute;left:0;top:0;width:100%}
@@ -82,9 +81,11 @@ body.booting #holo-canvas{z-index:9995}
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
   animation:stSpin 3.4s linear infinite;filter:drop-shadow(0 0 16px rgba(154,255,0,.65))}
 .pl-start::after{content:'';position:absolute;inset:0;border-radius:50%;z-index:-2;animation:stPulse 2.1s ease-out infinite}
-.pl-start .core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 50% 32%,#0f1a0c,#05080c 78%);
-  border:1px solid rgba(154,255,0,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  box-shadow:inset 0 0 26px rgba(154,255,0,.20),inset 0 2px 10px rgba(255,255,255,.06)}
+.pl-start .core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 50% 30%,#12200d,#05080c 78%);overflow:hidden;
+  border:1px solid rgba(154,255,0,.30);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:inset 0 0 30px rgba(154,255,0,.22),inset 0 3px 12px rgba(255,255,255,.08)}
+.pl-start .core::before{content:'';position:absolute;top:6%;left:16%;right:16%;height:38%;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(230,255,190,.18),transparent 72%);pointer-events:none}
 .pl-start .core svg{width:20px;height:20px;fill:var(--lime);filter:drop-shadow(0 0 7px rgba(154,255,0,.85))}
 .pl-start .core b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:19px;letter-spacing:5px;color:var(--lime);
   text-transform:uppercase;text-shadow:0 0 18px rgba(154,255,0,.75);padding-left:5px}
@@ -95,7 +96,7 @@ body.booting #holo-canvas{z-index:9995}
 .pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
-body.booting .hero-badge,body.booting .hero-title,body.booting .hero-stats,body.booting .hero-btns,body.booting .scroll-hint{opacity:0;transform:translateY(26px)}
+body.booting .hero-badge,body.booting .hero-title,body.booting .hero-stats,body.booting .hero-btns{opacity:0}
 /* BACKGROUND — видео-квадратики (лёгкое) + спираль ДНК + свечения */
 #bgv{position:fixed;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
 #bg-grid{display:none}
@@ -180,7 +181,7 @@ section{position:relative;z-index:1;padding:26px 0}
 .hero-btns .btn{flex:1;min-width:0}
 .scroll-hint{transition:opacity .4s ease}
 body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
-.scroll-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--w3);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+.scroll-hint{display:none!important}
 .scroll-hint .m{width:20px;height:32px;border:2px solid rgba(255,255,255,.2);border-radius:12px;position:relative}
 .scroll-hint .m::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:6px;background:var(--lime);border-radius:2px;transform:translateX(-50%);animation:wheel 1.6s infinite}
 @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,11px)}}
@@ -396,12 +397,12 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <body>
 <!-- ФОНОВАЯ МУЗЫКА: настоящий DOM-элемент <audio> (надёжно играет на мобильных, в отличие от new Audio()) -->
 <audio id="bgm" loop preload="auto" playsinline>
-  <source src="kp-media/snd/music.mp3?v=7" type="audio/mpeg">
+  <source src="kp-media/snd/music.mp3?v=8" type="audio/mpeg">
 </audio>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
-  <div class="pl-scan"></div>
   <div class="pl-stage">
+    <div id="holoEyeLoad"></div>
     <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
     <div class="pl-bar2"><i id="plFill"></i></div>
     <div class="pl-lbl" id="plLbl">ЗАГРУЗКА СИСТЕМЫ · <b id="plPct">0%</b></div>
@@ -649,7 +650,14 @@ if(gsap&&ST)gsap.registerPlugin(ST);
 /* ЗАПУСК: без стартового экрана — сайт поднимается сам, звук включается сам */
 try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
 try{scrollTo(0,0);}catch(e){}
+document.documentElement.classList.add('booting');
 document.body.classList.add('booting');
+// перезагрузка всегда стартует сверху (не запоминать позицию скролла) + блок скролла на экране запуска
+try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
+try{scrollTo(0,0);}catch(e){}
+addEventListener('load',function(){try{scrollTo(0,0);}catch(e){}});
+(function(){function block(e){if(document.body.classList.contains('booting')){e.preventDefault();}}
+  addEventListener('touchmove',block,{passive:false});addEventListener('wheel',block,{passive:false});})();
 (function(){
   var pl=document.getElementById('preloader'),fill=document.getElementById('plFill'),
       pct=document.getElementById('plPct'),brand=document.getElementById('plBrand'),flash=document.getElementById('plFlash'),
@@ -676,7 +684,7 @@ document.body.classList.add('booting');
     setTimeout(function(){
       if(flash){flash.style.transition='opacity .18s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity 1s ease';flash.style.opacity='0';},180);}
       try{scrollTo(0,0);}catch(e){}
-      pl.classList.add('done'); document.body.classList.remove('booting'); start();
+      pl.classList.add('done'); document.body.classList.remove('booting'); document.documentElement.classList.remove('booting'); start();
       var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
       seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},300+i*120);});
     },780);   // даём гиперпрыжку разогнаться до вспышки
@@ -794,7 +802,7 @@ document.body.classList.add('booting');
   var mus=null, masterVol=1.0, confirmed=false, fadeRAF=0;
   function makeMus(){ if(mus)return mus;
     mus=document.getElementById('bgm');   // настоящий DOM <audio> — надёжно играет на мобильных
-    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=7'); document.body.appendChild(mus); }
+    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=8'); document.body.appendChild(mus); }
     mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.volume=0; return mus; }
   function fadeTo(to,ms){ makeMus(); if(fadeRAF)cancelAnimationFrame(fadeRAF);
     var from=mus.volume, t0=performance.now();
