@@ -1343,7 +1343,8 @@ main>.screen{position:relative;z-index:1}
 .btn.ghost{background:none}
 
 /* ============ СТОРИС ============ */
-.stories{display:flex;gap:14px;padding:14px 18px 6px;overflow-x:auto;scrollbar-width:none}
+.stories{display:flex;gap:14px;padding:14px 18px 6px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 24px),transparent)}
+.folders,.mk-feat,.adm-tabs,.prof-ach{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 20px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 20px),transparent)}
 .stories::-webkit-scrollbar{display:none}
 .story{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;cursor:pointer;width:64px}
 .story .ring{width:62px;height:62px;border-radius:50%;padding:3px;background:conic-gradient(#9AFF00,#4d7a00,#9AFF00)}
