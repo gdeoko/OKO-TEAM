@@ -380,8 +380,8 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 </head>
 <body>
 <!-- ФОНОВАЯ МУЗЫКА: настоящий DOM-элемент <audio> (надёжно играет на мобильных, в отличие от new Audio()) -->
-<audio id="bgm" loop preload="auto" playsinline crossorigin="anonymous">
-  <source src="kp-media/snd/music.mp3?v=4" type="audio/mpeg">
+<audio id="bgm" loop preload="auto" playsinline>
+  <source src="kp-media/snd/music.mp3?v=5" type="audio/mpeg">
 </audio>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
@@ -709,10 +709,10 @@ document.body.classList.add('booting');
    касании/скролле и не снимаем слушатели, пока воспроизведение реально не подтвердится.
    Плавное появление при входе и плавное затухание при уходе/сворачивании вкладки. */
 (function(){
-  var mus=null, masterVol=0.35, confirmed=false, fadeRAF=0;
+  var mus=null, masterVol=1.0, confirmed=false, fadeRAF=0;
   function makeMus(){ if(mus)return mus;
     mus=document.getElementById('bgm');   // настоящий DOM <audio> — надёжно играет на мобильных
-    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=4'); document.body.appendChild(mus); }
+    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=5'); document.body.appendChild(mus); }
     mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.volume=0; return mus; }
   function fadeTo(to,ms){ makeMus(); if(fadeRAF)cancelAnimationFrame(fadeRAF);
     var from=mus.volume, t0=performance.now();
@@ -738,8 +738,7 @@ document.body.classList.add('booting');
     else if(confirmed){ try{ var p=mus.play(); if(p&&p.catch)p.catch(function(){}); }catch(e){} fadeTo(masterVol,1400); }
   });
   addEventListener('pagehide',function(){ if(mus)fadeTo(0,300); });
-  addEventListener('blur',function(){ if(mus&&confirmed)fadeTo(masterVol*0.4,500); });
-  addEventListener('focus',function(){ if(mus&&confirmed&&!document.hidden)fadeTo(masterVol,900); });
+  addEventListener('focus',function(){ if(mus&&confirmed&&!document.hidden){ try{ var p=mus.play(); if(p&&p.catch)p.catch(function(){}); }catch(e){} fadeTo(masterVol,900); } });
   window.__sfx=function(){};   // SFX отключены — оставлена только музыка
   window.__audio={ state:function(){return mus?{playing:!mus.paused,muted:mus.muted,vol:+mus.volume.toFixed(3),confirmed:confirmed,src:(mus.currentSrc||'').split('/').pop()}:{playing:false};},
     start:function(){ unmutePlay(); } };
@@ -962,7 +961,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=104';
+import { initHolo } from './js/holo.js?v=105';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
