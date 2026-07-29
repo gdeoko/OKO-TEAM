@@ -1027,3 +1027,33 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 @media(prefers-reduced-motion:reduce){.mz-music-wave i{animation:none}.mz-music-btn{transition:none}}
 /* Кнопка плеера убрана по запросу — музыка полностью фоновая */
 .mz-music-btn{display:none!important}
+
+/* ══ Нижнее меню — стиль как в OKO app (glow-полоска сверху активной, spring-bounce, ripple, drop-shadow иконки) ══ */
+.appnav a{position:relative;overflow:hidden;transition:color .22s ease,transform .14s cubic-bezier(.34,1.4,.5,1)}
+.appnav a:active{transform:scale(.90)}
+.appnav a svg{transition:transform .3s cubic-bezier(.34,1.4,.5,1),filter .22s}
+.appnav a.active svg{transform:translateY(-1px) scale(1.12);filter:drop-shadow(0 0 6px rgba(201,168,76,.55))}
+[data-theme="dark"] .appnav a.active svg{filter:drop-shadow(0 0 7px rgba(232,194,90,.65))}
+/* Активная — верхняя золотая полоска (как в OKO) */
+.appnav a::before{content:"";position:absolute;top:0;left:50%;width:26px;height:3px;border-radius:0 0 3px 3px;
+  background:var(--grad-gold);box-shadow:0 0 8px rgba(201,168,76,.55);
+  transform:translateX(-50%) scaleX(0);transform-origin:center top;
+  transition:transform .28s cubic-bezier(.34,1.4,.5,1)}
+.appnav a.active::before{transform:translateX(-50%) scaleX(1)}
+/* Мягкое золотое свечение под активной кнопкой (radial glow) */
+.appnav a::after{content:"";position:absolute;top:6px;left:50%;width:44px;height:30px;border-radius:16px;
+  background:radial-gradient(ellipse at center,rgba(201,168,76,.28) 0%,rgba(201,168,76,.10) 55%,rgba(201,168,76,0) 82%);
+  transform:translateX(-50%) scale(.55);opacity:0;pointer-events:none;
+  transition:opacity .22s,transform .22s cubic-bezier(.34,1.4,.5,1)}
+.appnav a.active::after{opacity:1;transform:translateX(-50%) scale(1)}
+/* На десктопе (док-таблетка) — полоска слева, а не сверху */
+@media(min-width:1281px){
+  .appnav a::before{top:50%;left:0;width:3px;height:24px;border-radius:0 3px 3px 0;transform:translateY(-50%) scaleY(0)}
+  .appnav a.active::before{transform:translateY(-50%) scaleY(1)}
+}
+@media(prefers-reduced-motion:reduce){.appnav a,.appnav a svg,.appnav a::before,.appnav a::after{transition:none}}
+
+/* CTA-кнопка в центре нижнего меню (Конкурсы) — увеличенная, «плавающая» как в OKO */
+.appnav a.appnav-cta .ic{transition:transform .3s cubic-bezier(.34,1.4,.5,1),box-shadow .22s}
+.appnav a.appnav-cta:active .ic{transform:scale(.92) translateY(1px)}
+.appnav a.appnav-cta.active .ic{box-shadow:0 8px 22px rgba(201,168,76,.55),0 0 0 3px rgba(201,168,76,.25)}
