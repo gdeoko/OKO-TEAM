@@ -1069,6 +1069,262 @@ renderMyProfile = function(){
   hqDecorateProfile();
 };
 
+/* ==================== 7. ОБЗОР+: кризис-виджет / live-лента / heatmap / топ-фичи / воронка ====================
+   Ставим ПЯТЬ дашборд-блоков уровня Stripe/Linear на вкладку «Обзор»,
+   между KPI-рядом и панелью «Быстро». Ничего не удаляем, только вставляем. */
+
+/* ---- 7.1 КРИЗИС-ВИДЖЕТ: диагностика по MRR/оттоку/возвратам ---- */
+function hqCrisisSignal(){
+  const now = Date.now(), W = 7*864e5;
+  const rev = (typeof OKO_REVENUE!=='undefined') ? OKO_REVENUE : [];
+  const sumBetween = (a,b)=>rev.reduce((s,r)=>(r.at>=a&&r.at<b)?s+r.sum:s, 0);
+  const cur = sumBetween(now-W, now), prev = sumBetween(now-2*W, now-W);
+  const dropPct = prev>0 ? Math.round((cur-prev)/prev*100) : 0;
+  const churn = (typeof ADMIN!=='undefined' && ADMIN.kpi) ? +ADMIN.kpi.churn : 0;
+  const refN = (typeof ADMIN!=='undefined' && ADMIN.pay) ? ADMIN.pay.filter((p,i)=>hqPaySt(i)==='refunded').length : 0;
+  const waitN = (typeof ADMIN!=='undefined' && ADMIN.pay) ? ADMIN.pay.filter((p,i)=>hqPaySt(i)==='wait').length : 0;
+  const items = [];
+  if(dropPct <= -5) items.push({sev:'hi', txt:'выручка недели ниже на '+Math.abs(dropPct)+'% ('+fmtMoney(Math.round(cur))+' против '+fmtMoney(Math.round(prev))+')'});
+  if(churn >= 2.0)  items.push({sev:'md', txt:'отток '+churn+'% выше нормы 1.5% — платные снимаются'});
+  if(refN >= 1)     items.push({sev:'md', txt:refN+' возврат'+(refN===1?'':'а')+' за период — проверь причины отказов'});
+  if(waitN >= 1)    items.push({sev:'lo', txt:waitN+' платёж'+(waitN===1?'':'а')+' висят в статусе «ожидает»'});
+  if(!items.length) return null;
+  const sev = items.some(x=>x.sev==='hi') ? 'hi' : (items.some(x=>x.sev==='md') ? 'md' : 'lo');
+  const title = dropPct <= -5
+    ? 'ALERT · MRR '+dropPct+'% за неделю'
+    : (churn >= 2.0 ? 'ALERT · отток растёт' : 'Внимание · сигналы дашборда');
+  return {sev, title, items, dropPct, churn, cur, prev, refN, waitN};
+}
+function hqCrisisBlock(){
+  if(HQ_STATE.crisisHide) return '';
+  const s = hqCrisisSignal(); if(!s) return '';
+  const rows = s.items.map(x=>`<li><span class="hq-cr-b ${x.sev}"></span>${esc(x.txt)}</li>`).join('');
+  return `<div class="hq-crisis card sev-${s.sev}">
+    <div class="hq-crisis-h">
+      <span class="hq-crisis-ic">${I('bolt')}</span>
+      <b>${esc(s.title)}</b>
+      <span class="hq-crisis-live"><i class="hq-dot work"></i>LIVE</span>
+    </div>
+    <ul class="hq-crisis-list">${rows}</ul>
+    <div class="hq-crisis-acts">
+      <button class="adm-btn pri" onclick="hqCrisisOpen()">Разобрать</button>
+      <button class="adm-btn" onclick="hqCrisisDismiss()">Скрыть на сутки</button>
+    </div>
+  </div>`;
+}
+function hqCrisisDismiss(){
+  HQ_STATE.crisisHide = Date.now() + 864e5; hqSave();
+  renderAdmin(); toast('Плашка скрыта — вернётся через сутки');
+}
+(function hqCrisisAutoUnhide(){
+  if(HQ_STATE.crisisHide && HQ_STATE.crisisHide < Date.now()){ delete HQ_STATE.crisisHide; hqSave(); }
+})();
+function hqCrisisOpen(){
+  const s = hqCrisisSignal(); if(!s){ toast('Сигналов больше нет'); return; }
+  const detail = s.items.map(x=>`<div class="hq-crisis-drow"><span class="hq-cr-b ${x.sev}"></span><span>${esc(x.txt)}</span></div>`).join('');
+  const numRows = [
+    ['Выручка · 7 дней', fmtMoney(Math.round(s.cur))],
+    ['Выручка · предыдущие 7 дней', fmtMoney(Math.round(s.prev))],
+    ['Отток', s.churn+'%'],
+    ['Возвраты в очереди', s.refN],
+    ['Платежи ждут', s.waitN],
+  ].map(([l,v])=>`<div class="hq-pay-drow"><span>${l}</span><b>${v}</b></div>`).join('');
+  showPopup({
+    ico:'bolt', title:'Разбор сигналов',
+    body:`<div class="hq-crisis-pop">
+      <div class="hq-crisis-block">${detail}</div>
+      <div class="hq-pay-det">${numRows}</div>
+      <p class="hq-crisis-p">Следующие шаги: проверь платежи в статусе «ожидает» (вкладка Платежи), запусти акцию на удержание для оттока, сверь модерацию — часть возвратов идёт из-за отклонённых заявок.</p>
+    </div>`,
+    actions:[
+      {label:'К платежам', onclick:()=>{ closePopup(); admGo('pay'); }},
+      {label:'К модерации', ghost:true, onclick:()=>{ closePopup(); admGo('moder'); }},
+      {label:'Закрыть', ghost:true},
+    ]
+  });
+}
+
+/* ---- 7.2 LIVE-ЛЕНТА СОБЫТИЙ: регистрации, оплаты, выводы, сделки (тик 5с) ---- */
+const HQ_FEED_POOL = [
+  {k:'reg',   ic:'user',      c:'#4aa0ff', tpl:['Регистрация · @{nick} · через Telegram','Регистрация · @{nick} · e-mail','Новый гость: @{nick} · трафик из ленты']},
+  {k:'pay',   ic:'card',      c:'#9AFF00', tpl:['Оплата ${a} · PRO · {name}','Оплата ${a} · BUSINESS · {name}','Оплата ${a} · START · {name}','Продление ${a} · PRO · {name}']},
+  {k:'out',   ic:'money',     c:'#facc15', tpl:['Выплата партнёру ${a} · @{nick}','Вывод на карту ${a} · {name}','Комиссия +${b} ₽ · тариф']},
+  {k:'deal',  ic:'briefcase', c:'#22d3ee', tpl:['Новая сделка Биржи · {name} · {c} ₽','Эскроу открыт · {c} ₽ · @{nick}','Сделка закрыта · {c} ₽ · комиссия 10%']},
+  {k:'churn', ic:'flag',      c:'#ff7a3c', tpl:['Отписка от PRO · {name}','Заявка на возврат ${a} · @{nick}']},
+  {k:'mod',   ic:'shield',    c:'#a855f7', tpl:['Модератор OKO: блок спам-рассылки ×{d}','Флаг «скам-реквизит» в чате · автобан','Жалоба на @{nick} · в очередь']},
+  {k:'ref',   ic:'users',     c:'#ff6bad', tpl:['Реферал @{nick} привёл {d} новых','Уровень партнёра @{nick} повышен до GOLD']},
+];
+const HQ_FEED_LABEL = {reg:'РЕГИСТРАЦИЯ', pay:'ПЛАТЁЖ', out:'ВЫВОД', deal:'СДЕЛКА', churn:'ОТПИСКА', mod:'МОДЕРАЦИЯ', ref:'ПАРТНЁРКА'};
+const HQ_FEED_NICKS = ['marina_smm','igorvideo','alina.grow','stomat_pro','fastcash_pro','dmitrymarketing','beauty_msk','zoo_opt','fitmax','denta_clinic','editor_pro','target_alena','coach_max','vp_studio','sales_pro'];
+const HQ_FEED_NAMES = ['Марина К.','Игорь В.','Алина Р.','Пётр С.','Анна Л.','Дмитрий О.','Ксения В.','Роман Т.','Ольга М.','Никита Ш.','Елена Д.'];
+function hqFeedRandom(kind){
+  const p = HQ_FEED_POOL.find(x=>x.k===kind) || HQ_FEED_POOL[0];
+  const t = p.tpl[Math.floor(Math.random()*p.tpl.length)];
+  return t
+    .replace('{nick}', HQ_FEED_NICKS[Math.floor(Math.random()*HQ_FEED_NICKS.length)])
+    .replace('{name}', HQ_FEED_NAMES[Math.floor(Math.random()*HQ_FEED_NAMES.length)])
+    .replace('${a}',  '$'+([15,49,99,149,199,299][Math.floor(Math.random()*6)]))
+    .replace('${b}',  ([120,240,340,590,890][Math.floor(Math.random()*5)]))
+    .replace('{c}',   ([1200,1800,2500,3400,4900,8900][Math.floor(Math.random()*6)]).toLocaleString('ru'))
+    .replace('{d}',   String(3+Math.floor(Math.random()*17)));
+}
+function hqFeedNew(kind){
+  const k = kind || (['reg','pay','out','deal','pay','reg','mod','deal','churn','ref'][Math.floor(Math.random()*10)]);
+  const p = HQ_FEED_POOL.find(x=>x.k===k) || HQ_FEED_POOL[0];
+  return {t: hqHM(new Date()), k, ic:p.ic, c:p.c, m: hqFeedRandom(k)};
+}
+let HQ_FEED = [];
+(function hqSeedFeed(){
+  const order = ['pay','reg','deal','pay','mod','out','reg','deal','pay','ref','reg','mod','pay','out'];
+  for(const k of order) HQ_FEED.push(hqFeedNew(k));
+})();
+function hqFeedLine(e, fresh){
+  return `<div class="hq-fd${fresh?' new':''}">
+    <span class="hq-fd-ic" style="color:${e.c};background:${e.c}1e">${I(e.ic)}</span>
+    <span class="hq-fd-b">
+      <span class="hq-fd-k" style="color:${e.c}">${HQ_FEED_LABEL[e.k]||e.k}</span>
+      <span class="hq-fd-m">${esc(e.m)}</span>
+    </span>
+    <span class="hq-fd-t">${e.t}</span>
+  </div>`;
+}
+function hqFeedBlock(){
+  return `<div class="adm-sec-h">Лента событий · live <span class="hq-fd-pulse"><i class="hq-dot work"></i>обновление 5 сек</span></div>
+    <div class="hq-fd-box card" id="hqFeedBox">${HQ_FEED.map(e=>hqFeedLine(e)).join('')}</div>`;
+}
+let hqFeedTimer = null;
+function hqStartFeed(){ if(!hqFeedTimer) hqFeedTimer = setInterval(hqFeedTick, 5000); }
+function hqStopFeed(){ if(hqFeedTimer){ clearInterval(hqFeedTimer); hqFeedTimer = null; } }
+function hqFeedTick(){
+  const av = document.getElementById('adminView');
+  if(!av || !av.classList.contains('open') || admTab !== 'overview'){ hqStopFeed(); return; }
+  const line = hqFeedNew();
+  HQ_FEED.unshift(line); if(HQ_FEED.length > 18) HQ_FEED.length = 18;
+  const box = document.getElementById('hqFeedBox'); if(!box) return;
+  box.insertAdjacentHTML('afterbegin', hqFeedLine(line, true));
+  while(box.children.length > 18) box.lastElementChild.remove();
+}
+
+/* ---- 7.3 HEATMAP DAU: 7×24, интенсивность = активность ---- */
+const HQ_HEAT_DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+function hqHeatData(){
+  /* стабильный псевдослучайный паттерн: утро/обед/вечер выше, ночь ниже, ВС/СБ иначе */
+  const grid = [];
+  for(let d=0; d<7; d++){
+    const row = [];
+    for(let h=0; h<24; h++){
+      let base = 0;
+      if(h>=9 && h<=13) base = 55;
+      else if(h>=17 && h<=22) base = 78;
+      else if(h>=14 && h<=16) base = 40;
+      else if(h>=7 && h<=8) base = 25;
+      else if(h>=23 || h<=5) base = 6;
+      else base = 18;
+      /* выходные: вечерний пик выше, будни днём выше */
+      if(d>=5){ if(h>=18 && h<=23) base += 18; if(h>=9 && h<=13) base -= 12; }
+      else   { if(h>=10 && h<=12) base += 10; if(h>=20 && h<=22) base += 6; }
+      /* лёгкий детерминированный шум */
+      const noise = ((d*31 + h*17 + 7) % 13) - 6;
+      row.push(Math.max(0, Math.min(100, base + noise)));
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+function hqHeatBlock(){
+  const g = hqHeatData();
+  const hours = Array.from({length:24}, (_,h)=>h);
+  const head = '<div class="hq-hm-hrow"><span></span>' +
+    hours.map(h=>`<span class="hq-hm-hh${(h%3===0)?' k':''}">${h%3===0?h:''}</span>`).join('') + '</div>';
+  const rows = g.map((row,d)=>{
+    const cells = row.map((v,h)=>{
+      const cls = v>=80?'lv5':v>=60?'lv4':v>=40?'lv3':v>=20?'lv2':v>=5?'lv1':'lv0';
+      return `<i class="${cls}" title="${HQ_HEAT_DAYS[d]} ${h}:00 · ${v}"></i>`;
+    }).join('');
+    return `<div class="hq-hm-row"><span class="hq-hm-d">${HQ_HEAT_DAYS[d]}</span>${cells}</div>`;
+  }).join('');
+  const peak = g.reduce((m,r,d)=>{ r.forEach((v,h)=>{ if(v>m.v) m={v,d,h}; }); return m; }, {v:0,d:0,h:0});
+  return `<div class="adm-sec-h">Heatmap активности · 7 дней × 24 часа</div>
+    <div class="hq-hm card">
+      <div class="hq-hm-grid">${head}${rows}</div>
+      <div class="hq-hm-foot">
+        <span class="hq-hm-peak">Пик: <b>${HQ_HEAT_DAYS[peak.d]} ${peak.h}:00</b></span>
+        <span class="hq-hm-leg"><em>меньше</em><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><i class="lv5"></i><em>больше</em></span>
+      </div>
+    </div>`;
+}
+
+/* ---- 7.4 ТОП-ФИЧИ ПО ИСПОЛЬЗОВАНИЮ ---- */
+const HQ_FEATS = [
+  {n:'Контент-завод',   ic:'rocket',    c:'#9AFF00', n24:342, dl:'+18%', up:1, sub:'запусков за 24 часа'},
+  {n:'Reels-машина',    ic:'circle-play', c:'#4aa0ff', n24:217, dl:'+12%', up:1, sub:'сборок за сутки'},
+  {n:'Академия OKO',    ic:'crown',     c:'#facc15', n24:189, dl:'+9%',  up:1, sub:'уроков открыто'},
+  {n:'Биржа услуг',     ic:'briefcase', c:'#22d3ee', n24:94,  dl:'+7%',  up:1, sub:'сделок закрыто'},
+  {n:'Штаб OKO HQ',     ic:'shield',    c:'#a855f7', n24:66,  dl:'−2%',  up:0, sub:'планёрок агентов'},
+  {n:'Разбор конкурентов', ic:'search', c:'#ff6bad', n24:51,  dl:'+22%', up:1, sub:'отчётов в мозг'},
+];
+function hqFeatsBlock(){
+  const max = Math.max(1, ...HQ_FEATS.map(f=>f.n24));
+  const rows = HQ_FEATS.map((f,i)=>`
+    <div class="hq-feat" style="animation-delay:${i*0.045}s">
+      <span class="hq-feat-ic" style="color:${f.c};background:${f.c}1e">${I(f.ic)}</span>
+      <span class="hq-feat-b">
+        <span class="hq-feat-top"><b>${esc(f.n)}</b><span class="hq-feat-n">${f.n24}<em>${esc(f.sub)}</em></span></span>
+        <span class="hq-bar"><i style="width:${Math.round(f.n24/max*100)}%;background:linear-gradient(90deg,${f.c},${f.c}99)"></i></span>
+      </span>
+      <span class="hq-feat-dl ${f.up?'up':'dn'}">${esc(f.dl)}</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Топ фич · использование за 24 часа</div>
+    <div class="hq-feats card">${rows}</div>`;
+}
+
+/* ---- 7.5 ФИНАНСОВАЯ ВОРОНКА: визитор → рег → START → PRO → BUSINESS ---- */
+const HQ_FUNNEL = [
+  {n:'Визиторы',    v:12840, c:'#4aa0ff', sub:'уник. за 30 дней'},
+  {n:'Регистрации', v:1284,  c:'#22d3ee', sub:'аккаунтов создано'},
+  {n:'START',       v:214,   c:'#facc15', sub:'активировали базовый'},
+  {n:'PRO',         v:78,    c:'#9AFF00', sub:'переход на средний'},
+  {n:'BUSINESS',    v:12,    c:'#ff7a3c', sub:'верхний тариф'},
+];
+function hqFunnelBlock(){
+  const top = HQ_FUNNEL[0].v;
+  const rows = HQ_FUNNEL.map((s,i)=>{
+    const pct = Math.round(s.v/top*100);
+    const conv = i===0 ? 100 : Math.round(s.v/HQ_FUNNEL[i-1].v*100*10)/10;
+    const dropTxt = i===0 ? '' : ' · '+conv+'% из «'+HQ_FUNNEL[i-1].n+'»';
+    return `<div class="hq-fn-row" style="animation-delay:${i*0.06}s">
+      <div class="hq-fn-l"><b>${esc(s.n)}</b><small>${esc(s.sub)}${dropTxt}</small></div>
+      <div class="hq-fn-bar"><i style="width:${pct}%;background:linear-gradient(90deg,${s.c},${s.c}99)"><em>${s.v.toLocaleString('ru')}</em></i></div>
+    </div>`;
+  }).join('');
+  const overall = Math.round(HQ_FUNNEL[HQ_FUNNEL.length-1].v/HQ_FUNNEL[0].v*10000)/100;
+  return `<div class="adm-sec-h">Финансовая воронка · визитор до BUSINESS</div>
+    <div class="hq-fn card">
+      ${rows}
+      <div class="hq-fn-foot">Сквозная конверсия: <b>${overall}%</b> визитор в верхний тариф</div>
+    </div>`;
+}
+
+/* ---- 7.6 патчим admOverview: вставляем 5 блоков после KPI-ряда, перед «Быстро» ---- */
+const _prevAdmOverviewHq2 = admOverview;
+admOverview = function(){
+  const html = _prevAdmOverviewHq2();
+  const insert = hqCrisisBlock() + hqHeatBlock() + hqFunnelBlock() + hqFeatsBlock() + hqFeedBlock();
+  /* вставляем перед секцией «Быстро · действия владельца» — держит структуру предсказуемой */
+  const marker = '<div class="adm-sec-h">Быстро · действия владельца</div>';
+  if(html.indexOf(marker) >= 0) return html.replace(marker, insert + marker);
+  return html + insert;
+};
+
+/* ---- 7.7 стартуем ленту на overview, останавливаем при уходе ---- */
+const _prevRenderAdminHq2 = renderAdmin;
+renderAdmin = function(){
+  _prevRenderAdminHq2();
+  if(admTab === 'overview') hqStartFeed(); else hqStopFeed();
+};
+const _prevCloseAdminHq2 = closeAdmin;
+closeAdmin = function(){ hqStopFeed(); _prevCloseAdminHq2(); };
+
 /* ==================== самоинициализация ==================== */
 (function hqInit(){
   hqDecorateProfile();

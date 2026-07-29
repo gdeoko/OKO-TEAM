@@ -4862,6 +4862,117 @@ main>.screen{position:relative;z-index:1}
 .hq-esc.hot{border-color:rgba(255,95,95,.35)}
 .hq-esc .adm-acts{margin-top:9px}
 
+/* ================= 7. ОБЗОР+: кризис / live-лента / heatmap / топ-фичи / воронка ================= */
+
+/* ---- 7.1 КРИЗИС-ВИДЖЕТ ---- */
+.hq-crisis{margin:2px 0 8px;padding:14px 15px 12px;position:relative;overflow:hidden;border:1px solid rgba(255,180,0,.4);background:radial-gradient(120% 170% at 0% 0%,rgba(255,180,0,.14),transparent 55%),var(--surface);animation:fade .4s ease both}
+.hq-crisis.sev-hi{border-color:rgba(255,95,95,.5);background:radial-gradient(120% 170% at 0% 0%,rgba(255,95,95,.16),transparent 55%),var(--surface)}
+.hq-crisis.sev-lo{border-color:var(--border);background:var(--surface)}
+.hq-crisis-h{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.hq-crisis-ic{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:rgba(255,180,0,.14);color:#ffb400;display:flex;align-items:center;justify-content:center}
+.hq-crisis.sev-hi .hq-crisis-ic{background:rgba(255,95,95,.14);color:var(--danger)}
+.hq-crisis-ic svg.i{width:17px;height:17px}
+.hq-crisis-h b{flex:1;min-width:0;font-family:var(--font-display);font-size:16px;letter-spacing:.02em;color:#ffb400;line-height:1.1}
+.hq-crisis.sev-hi .hq-crisis-h b{color:var(--danger)}
+.hq-crisis-live{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--dim);background:var(--raised);border-radius:99px;padding:3px 8px}
+.hq-crisis-list{list-style:none;margin:0 0 12px;padding:0;font-size:12px;color:var(--text);line-height:1.55}
+.hq-crisis-list li{display:flex;align-items:flex-start;gap:8px;padding:3px 0}
+.hq-cr-b{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:6px;background:var(--dim)}
+.hq-cr-b.hi{background:var(--danger)}
+.hq-cr-b.md{background:#ffb400}
+.hq-cr-b.lo{background:var(--dim)}
+.hq-crisis-acts{display:flex;gap:8px;flex-wrap:wrap}
+.hq-crisis-acts .adm-btn{flex:1;min-width:120px;justify-content:center;text-align:center}
+.hq-crisis-pop .hq-crisis-block{margin:2px 0 12px;text-align:left}
+.hq-crisis-drow{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:12.5px;color:var(--text);line-height:1.4;border-bottom:1px dashed var(--border)}
+.hq-crisis-drow:last-child{border-bottom:none}
+.hq-crisis-drow .hq-cr-b{margin-top:0}
+.hq-crisis-p{margin-top:11px;font-size:12px;color:var(--dim);line-height:1.5;text-align:left}
+
+/* ---- 7.2 LIVE-ЛЕНТА СОБЫТИЙ ---- */
+.hq-fd-pulse{display:inline-flex;align-items:center;gap:5px;margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:var(--dim);text-transform:none}
+.hq-fd-box{padding:8px 10px;max-height:280px;overflow-y:auto;font-size:12px;line-height:1.35;scrollbar-width:thin}
+.hq-fd-box::-webkit-scrollbar{width:5px}
+.hq-fd-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+.hq-fd{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px dashed var(--border)}
+.hq-fd:last-child{border-bottom:none}
+.hq-fd.new{animation:hqFdNew .55s cubic-bezier(.2,.85,.3,1)}
+@keyframes hqFdNew{from{opacity:0;transform:translateY(-8px);background:var(--lime-dim)}to{opacity:1;transform:none;background:transparent}}
+.hq-fd-ic{width:30px;height:30px;flex-shrink:0;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.hq-fd-ic svg.i{width:15px;height:15px}
+.hq-fd-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.hq-fd-k{font-size:8.5px;font-weight:800;letter-spacing:.09em;line-height:1;text-transform:uppercase}
+.hq-fd-m{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-fd-t{flex-shrink:0;font-size:10.5px;color:var(--dim);font-family:ui-monospace,'SF Mono',Consolas,monospace}
+
+/* ---- 7.3 HEATMAP DAU ---- */
+.hq-hm{padding:14px 13px 12px;margin-bottom:4px}
+.hq-hm-grid{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hq-hm-grid::-webkit-scrollbar{display:none}
+.hq-hm-hrow,.hq-hm-row{display:grid;grid-template-columns:26px repeat(24,minmax(9px,1fr));gap:2px;align-items:center;min-width:280px}
+.hq-hm-hrow{margin-bottom:4px}
+.hq-hm-hh{font-size:8px;color:var(--dim);text-align:center;line-height:1;font-weight:700}
+.hq-hm-hh.k{color:var(--text);opacity:.6}
+.hq-hm-row{margin-bottom:2px}
+.hq-hm-d{font-size:9.5px;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.hq-hm-row i{display:block;height:14px;border-radius:3px;transition:transform .12s,filter .12s;cursor:default}
+.hq-hm-row i:hover{transform:scale(1.35);filter:brightness(1.2);z-index:2;position:relative}
+.hq-hm-row i.lv0{background:var(--raised)}
+.hq-hm-row i.lv1{background:rgba(154,255,0,.15)}
+.hq-hm-row i.lv2{background:rgba(154,255,0,.32)}
+.hq-hm-row i.lv3{background:rgba(154,255,0,.55)}
+.hq-hm-row i.lv4{background:rgba(154,255,0,.78)}
+.hq-hm-row i.lv5{background:var(--lime);box-shadow:0 0 6px rgba(154,255,0,.6)}
+:root[data-theme="light"] .hq-hm-row i.lv1{background:rgba(110,200,0,.16)}
+:root[data-theme="light"] .hq-hm-row i.lv2{background:rgba(110,200,0,.35)}
+:root[data-theme="light"] .hq-hm-row i.lv3{background:rgba(110,200,0,.58)}
+:root[data-theme="light"] .hq-hm-row i.lv4{background:rgba(110,200,0,.8)}
+.hq-hm-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--border);flex-wrap:wrap}
+.hq-hm-peak{font-size:11px;color:var(--dim)}
+.hq-hm-peak b{color:var(--accent);font-weight:700}
+.hq-hm-leg{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--dim)}
+.hq-hm-leg em{font-style:normal;font-size:9.5px}
+.hq-hm-leg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.hq-hm-leg i.lv0{background:var(--raised)}
+.hq-hm-leg i.lv1{background:rgba(154,255,0,.15)}
+.hq-hm-leg i.lv2{background:rgba(154,255,0,.32)}
+.hq-hm-leg i.lv3{background:rgba(154,255,0,.55)}
+.hq-hm-leg i.lv4{background:rgba(154,255,0,.78)}
+.hq-hm-leg i.lv5{background:var(--lime)}
+
+/* ---- 7.4 ТОП-ФИЧИ ---- */
+.hq-feats{padding:6px 13px;margin-bottom:4px}
+.hq-feat{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px dashed var(--border);animation:fade .4s ease both}
+.hq-feat:last-child{border-bottom:none}
+.hq-feat-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hq-feat-ic svg.i{width:17px;height:17px}
+.hq-feat-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.hq-feat-top{display:flex;align-items:baseline;justify-content:space-between;gap:9px;min-width:0}
+.hq-feat-top b{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-feat-n{flex-shrink:0;font-family:var(--font-display);font-size:19px;color:var(--accent);line-height:1;letter-spacing:.02em}
+.hq-feat-n em{font-style:normal;font-family:inherit;font-size:9.5px;color:var(--dim);margin-left:6px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.hq-feat-dl{flex-shrink:0;font-size:11px;font-weight:700;padding:4px 9px;border-radius:99px;line-height:1;align-self:center}
+.hq-feat-dl.up{color:var(--accent);background:var(--lime-dim)}
+.hq-feat-dl.dn{color:var(--danger);background:rgba(255,95,95,.12)}
+
+/* ---- 7.5 ФИНАНСОВАЯ ВОРОНКА ---- */
+.hq-fn{padding:14px 15px 12px;margin-bottom:4px}
+.hq-fn-row{display:flex;align-items:center;gap:12px;padding:8px 0;animation:fade .4s ease both}
+.hq-fn-l{flex-shrink:0;width:106px;min-width:0}
+.hq-fn-l b{display:block;font-size:12.5px;font-weight:700;line-height:1.15;letter-spacing:.02em}
+.hq-fn-l small{display:block;font-size:9.5px;color:var(--dim);margin-top:3px;line-height:1.3}
+.hq-fn-bar{flex:1;min-width:0;height:26px;background:var(--raised);border-radius:8px;position:relative;overflow:hidden}
+.hq-fn-bar i{display:flex;align-items:center;justify-content:flex-end;padding-right:9px;height:100%;border-radius:8px;transition:width .7s cubic-bezier(.2,.85,.3,1);animation:hqFnGrow .95s cubic-bezier(.2,.85,.3,1) both}
+@keyframes hqFnGrow{from{width:0}}
+.hq-fn-bar i em{font-style:normal;color:#000;font-family:var(--font-display);font-size:13px;letter-spacing:.02em}
+.hq-fn-foot{margin-top:11px;padding-top:10px;border-top:1px dashed var(--border);font-size:12px;color:var(--dim);text-align:center}
+.hq-fn-foot b{color:var(--accent);font-family:var(--font-display);font-size:16px;letter-spacing:.02em}
+@media(max-width:380px){
+  .hq-fn-l{width:82px}
+  .hq-fn-l small{display:none}
+  .hq-fn-bar{height:24px}
+}
+
 /* ================= DESKTOP-ONLY POLISH (аудит: KPI-плитки обзора слишком высокие) =================
    Ряд KPI обзора .adm-kpis (в base 2-col) в широкой админ-панели (~1040px) даёт очень
    высокие плитки с тяжёлым паддингом — читается как крупные блоки, а не компактный ряд KPI.
@@ -10192,7 +10303,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.86</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.87</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -34359,6 +34470,262 @@ renderMyProfile = function(){
   _prevRenderMyProfileHq();
   hqDecorateProfile();
 };
+
+/* ==================== 7. ОБЗОР+: кризис-виджет / live-лента / heatmap / топ-фичи / воронка ====================
+   Ставим ПЯТЬ дашборд-блоков уровня Stripe/Linear на вкладку «Обзор»,
+   между KPI-рядом и панелью «Быстро». Ничего не удаляем, только вставляем. */
+
+/* ---- 7.1 КРИЗИС-ВИДЖЕТ: диагностика по MRR/оттоку/возвратам ---- */
+function hqCrisisSignal(){
+  const now = Date.now(), W = 7*864e5;
+  const rev = (typeof OKO_REVENUE!=='undefined') ? OKO_REVENUE : [];
+  const sumBetween = (a,b)=>rev.reduce((s,r)=>(r.at>=a&&r.at<b)?s+r.sum:s, 0);
+  const cur = sumBetween(now-W, now), prev = sumBetween(now-2*W, now-W);
+  const dropPct = prev>0 ? Math.round((cur-prev)/prev*100) : 0;
+  const churn = (typeof ADMIN!=='undefined' && ADMIN.kpi) ? +ADMIN.kpi.churn : 0;
+  const refN = (typeof ADMIN!=='undefined' && ADMIN.pay) ? ADMIN.pay.filter((p,i)=>hqPaySt(i)==='refunded').length : 0;
+  const waitN = (typeof ADMIN!=='undefined' && ADMIN.pay) ? ADMIN.pay.filter((p,i)=>hqPaySt(i)==='wait').length : 0;
+  const items = [];
+  if(dropPct <= -5) items.push({sev:'hi', txt:'выручка недели ниже на '+Math.abs(dropPct)+'% ('+fmtMoney(Math.round(cur))+' против '+fmtMoney(Math.round(prev))+')'});
+  if(churn >= 2.0)  items.push({sev:'md', txt:'отток '+churn+'% выше нормы 1.5% — платные снимаются'});
+  if(refN >= 1)     items.push({sev:'md', txt:refN+' возврат'+(refN===1?'':'а')+' за период — проверь причины отказов'});
+  if(waitN >= 1)    items.push({sev:'lo', txt:waitN+' платёж'+(waitN===1?'':'а')+' висят в статусе «ожидает»'});
+  if(!items.length) return null;
+  const sev = items.some(x=>x.sev==='hi') ? 'hi' : (items.some(x=>x.sev==='md') ? 'md' : 'lo');
+  const title = dropPct <= -5
+    ? 'ALERT · MRR '+dropPct+'% за неделю'
+    : (churn >= 2.0 ? 'ALERT · отток растёт' : 'Внимание · сигналы дашборда');
+  return {sev, title, items, dropPct, churn, cur, prev, refN, waitN};
+}
+function hqCrisisBlock(){
+  if(HQ_STATE.crisisHide) return '';
+  const s = hqCrisisSignal(); if(!s) return '';
+  const rows = s.items.map(x=>`<li><span class="hq-cr-b ${x.sev}"></span>${esc(x.txt)}</li>`).join('');
+  return `<div class="hq-crisis card sev-${s.sev}">
+    <div class="hq-crisis-h">
+      <span class="hq-crisis-ic">${I('bolt')}</span>
+      <b>${esc(s.title)}</b>
+      <span class="hq-crisis-live"><i class="hq-dot work"></i>LIVE</span>
+    </div>
+    <ul class="hq-crisis-list">${rows}</ul>
+    <div class="hq-crisis-acts">
+      <button class="adm-btn pri" onclick="hqCrisisOpen()">Разобрать</button>
+      <button class="adm-btn" onclick="hqCrisisDismiss()">Скрыть на сутки</button>
+    </div>
+  </div>`;
+}
+function hqCrisisDismiss(){
+  HQ_STATE.crisisHide = Date.now() + 864e5; hqSave();
+  renderAdmin(); toast('Плашка скрыта — вернётся через сутки');
+}
+(function hqCrisisAutoUnhide(){
+  if(HQ_STATE.crisisHide && HQ_STATE.crisisHide < Date.now()){ delete HQ_STATE.crisisHide; hqSave(); }
+})();
+function hqCrisisOpen(){
+  const s = hqCrisisSignal(); if(!s){ toast('Сигналов больше нет'); return; }
+  const detail = s.items.map(x=>`<div class="hq-crisis-drow"><span class="hq-cr-b ${x.sev}"></span><span>${esc(x.txt)}</span></div>`).join('');
+  const numRows = [
+    ['Выручка · 7 дней', fmtMoney(Math.round(s.cur))],
+    ['Выручка · предыдущие 7 дней', fmtMoney(Math.round(s.prev))],
+    ['Отток', s.churn+'%'],
+    ['Возвраты в очереди', s.refN],
+    ['Платежи ждут', s.waitN],
+  ].map(([l,v])=>`<div class="hq-pay-drow"><span>${l}</span><b>${v}</b></div>`).join('');
+  showPopup({
+    ico:'bolt', title:'Разбор сигналов',
+    body:`<div class="hq-crisis-pop">
+      <div class="hq-crisis-block">${detail}</div>
+      <div class="hq-pay-det">${numRows}</div>
+      <p class="hq-crisis-p">Следующие шаги: проверь платежи в статусе «ожидает» (вкладка Платежи), запусти акцию на удержание для оттока, сверь модерацию — часть возвратов идёт из-за отклонённых заявок.</p>
+    </div>`,
+    actions:[
+      {label:'К платежам', onclick:()=>{ closePopup(); admGo('pay'); }},
+      {label:'К модерации', ghost:true, onclick:()=>{ closePopup(); admGo('moder'); }},
+      {label:'Закрыть', ghost:true},
+    ]
+  });
+}
+
+/* ---- 7.2 LIVE-ЛЕНТА СОБЫТИЙ: регистрации, оплаты, выводы, сделки (тик 5с) ---- */
+const HQ_FEED_POOL = [
+  {k:'reg',   ic:'user',      c:'#4aa0ff', tpl:['Регистрация · @{nick} · через Telegram','Регистрация · @{nick} · e-mail','Новый гость: @{nick} · трафик из ленты']},
+  {k:'pay',   ic:'card',      c:'#9AFF00', tpl:['Оплата ${a} · PRO · {name}','Оплата ${a} · BUSINESS · {name}','Оплата ${a} · START · {name}','Продление ${a} · PRO · {name}']},
+  {k:'out',   ic:'money',     c:'#facc15', tpl:['Выплата партнёру ${a} · @{nick}','Вывод на карту ${a} · {name}','Комиссия +${b} ₽ · тариф']},
+  {k:'deal',  ic:'briefcase', c:'#22d3ee', tpl:['Новая сделка Биржи · {name} · {c} ₽','Эскроу открыт · {c} ₽ · @{nick}','Сделка закрыта · {c} ₽ · комиссия 10%']},
+  {k:'churn', ic:'flag',      c:'#ff7a3c', tpl:['Отписка от PRO · {name}','Заявка на возврат ${a} · @{nick}']},
+  {k:'mod',   ic:'shield',    c:'#a855f7', tpl:['Модератор OKO: блок спам-рассылки ×{d}','Флаг «скам-реквизит» в чате · автобан','Жалоба на @{nick} · в очередь']},
+  {k:'ref',   ic:'users',     c:'#ff6bad', tpl:['Реферал @{nick} привёл {d} новых','Уровень партнёра @{nick} повышен до GOLD']},
+];
+const HQ_FEED_LABEL = {reg:'РЕГИСТРАЦИЯ', pay:'ПЛАТЁЖ', out:'ВЫВОД', deal:'СДЕЛКА', churn:'ОТПИСКА', mod:'МОДЕРАЦИЯ', ref:'ПАРТНЁРКА'};
+const HQ_FEED_NICKS = ['marina_smm','igorvideo','alina.grow','stomat_pro','fastcash_pro','dmitrymarketing','beauty_msk','zoo_opt','fitmax','denta_clinic','editor_pro','target_alena','coach_max','vp_studio','sales_pro'];
+const HQ_FEED_NAMES = ['Марина К.','Игорь В.','Алина Р.','Пётр С.','Анна Л.','Дмитрий О.','Ксения В.','Роман Т.','Ольга М.','Никита Ш.','Елена Д.'];
+function hqFeedRandom(kind){
+  const p = HQ_FEED_POOL.find(x=>x.k===kind) || HQ_FEED_POOL[0];
+  const t = p.tpl[Math.floor(Math.random()*p.tpl.length)];
+  return t
+    .replace('{nick}', HQ_FEED_NICKS[Math.floor(Math.random()*HQ_FEED_NICKS.length)])
+    .replace('{name}', HQ_FEED_NAMES[Math.floor(Math.random()*HQ_FEED_NAMES.length)])
+    .replace('${a}',  '$'+([15,49,99,149,199,299][Math.floor(Math.random()*6)]))
+    .replace('${b}',  ([120,240,340,590,890][Math.floor(Math.random()*5)]))
+    .replace('{c}',   ([1200,1800,2500,3400,4900,8900][Math.floor(Math.random()*6)]).toLocaleString('ru'))
+    .replace('{d}',   String(3+Math.floor(Math.random()*17)));
+}
+function hqFeedNew(kind){
+  const k = kind || (['reg','pay','out','deal','pay','reg','mod','deal','churn','ref'][Math.floor(Math.random()*10)]);
+  const p = HQ_FEED_POOL.find(x=>x.k===k) || HQ_FEED_POOL[0];
+  return {t: hqHM(new Date()), k, ic:p.ic, c:p.c, m: hqFeedRandom(k)};
+}
+let HQ_FEED = [];
+(function hqSeedFeed(){
+  const order = ['pay','reg','deal','pay','mod','out','reg','deal','pay','ref','reg','mod','pay','out'];
+  for(const k of order) HQ_FEED.push(hqFeedNew(k));
+})();
+function hqFeedLine(e, fresh){
+  return `<div class="hq-fd${fresh?' new':''}">
+    <span class="hq-fd-ic" style="color:${e.c};background:${e.c}1e">${I(e.ic)}</span>
+    <span class="hq-fd-b">
+      <span class="hq-fd-k" style="color:${e.c}">${HQ_FEED_LABEL[e.k]||e.k}</span>
+      <span class="hq-fd-m">${esc(e.m)}</span>
+    </span>
+    <span class="hq-fd-t">${e.t}</span>
+  </div>`;
+}
+function hqFeedBlock(){
+  return `<div class="adm-sec-h">Лента событий · live <span class="hq-fd-pulse"><i class="hq-dot work"></i>обновление 5 сек</span></div>
+    <div class="hq-fd-box card" id="hqFeedBox">${HQ_FEED.map(e=>hqFeedLine(e)).join('')}</div>`;
+}
+let hqFeedTimer = null;
+function hqStartFeed(){ if(!hqFeedTimer) hqFeedTimer = setInterval(hqFeedTick, 5000); }
+function hqStopFeed(){ if(hqFeedTimer){ clearInterval(hqFeedTimer); hqFeedTimer = null; } }
+function hqFeedTick(){
+  const av = document.getElementById('adminView');
+  if(!av || !av.classList.contains('open') || admTab !== 'overview'){ hqStopFeed(); return; }
+  const line = hqFeedNew();
+  HQ_FEED.unshift(line); if(HQ_FEED.length > 18) HQ_FEED.length = 18;
+  const box = document.getElementById('hqFeedBox'); if(!box) return;
+  box.insertAdjacentHTML('afterbegin', hqFeedLine(line, true));
+  while(box.children.length > 18) box.lastElementChild.remove();
+}
+
+/* ---- 7.3 HEATMAP DAU: 7×24, интенсивность = активность ---- */
+const HQ_HEAT_DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+function hqHeatData(){
+  /* стабильный псевдослучайный паттерн: утро/обед/вечер выше, ночь ниже, ВС/СБ иначе */
+  const grid = [];
+  for(let d=0; d<7; d++){
+    const row = [];
+    for(let h=0; h<24; h++){
+      let base = 0;
+      if(h>=9 && h<=13) base = 55;
+      else if(h>=17 && h<=22) base = 78;
+      else if(h>=14 && h<=16) base = 40;
+      else if(h>=7 && h<=8) base = 25;
+      else if(h>=23 || h<=5) base = 6;
+      else base = 18;
+      /* выходные: вечерний пик выше, будни днём выше */
+      if(d>=5){ if(h>=18 && h<=23) base += 18; if(h>=9 && h<=13) base -= 12; }
+      else   { if(h>=10 && h<=12) base += 10; if(h>=20 && h<=22) base += 6; }
+      /* лёгкий детерминированный шум */
+      const noise = ((d*31 + h*17 + 7) % 13) - 6;
+      row.push(Math.max(0, Math.min(100, base + noise)));
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+function hqHeatBlock(){
+  const g = hqHeatData();
+  const hours = Array.from({length:24}, (_,h)=>h);
+  const head = '<div class="hq-hm-hrow"><span></span>' +
+    hours.map(h=>`<span class="hq-hm-hh${(h%3===0)?' k':''}">${h%3===0?h:''}</span>`).join('') + '</div>';
+  const rows = g.map((row,d)=>{
+    const cells = row.map((v,h)=>{
+      const cls = v>=80?'lv5':v>=60?'lv4':v>=40?'lv3':v>=20?'lv2':v>=5?'lv1':'lv0';
+      return `<i class="${cls}" title="${HQ_HEAT_DAYS[d]} ${h}:00 · ${v}"></i>`;
+    }).join('');
+    return `<div class="hq-hm-row"><span class="hq-hm-d">${HQ_HEAT_DAYS[d]}</span>${cells}</div>`;
+  }).join('');
+  const peak = g.reduce((m,r,d)=>{ r.forEach((v,h)=>{ if(v>m.v) m={v,d,h}; }); return m; }, {v:0,d:0,h:0});
+  return `<div class="adm-sec-h">Heatmap активности · 7 дней × 24 часа</div>
+    <div class="hq-hm card">
+      <div class="hq-hm-grid">${head}${rows}</div>
+      <div class="hq-hm-foot">
+        <span class="hq-hm-peak">Пик: <b>${HQ_HEAT_DAYS[peak.d]} ${peak.h}:00</b></span>
+        <span class="hq-hm-leg"><em>меньше</em><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><i class="lv5"></i><em>больше</em></span>
+      </div>
+    </div>`;
+}
+
+/* ---- 7.4 ТОП-ФИЧИ ПО ИСПОЛЬЗОВАНИЮ ---- */
+const HQ_FEATS = [
+  {n:'Контент-завод',   ic:'rocket',    c:'#9AFF00', n24:342, dl:'+18%', up:1, sub:'запусков за 24 часа'},
+  {n:'Reels-машина',    ic:'circle-play', c:'#4aa0ff', n24:217, dl:'+12%', up:1, sub:'сборок за сутки'},
+  {n:'Академия OKO',    ic:'crown',     c:'#facc15', n24:189, dl:'+9%',  up:1, sub:'уроков открыто'},
+  {n:'Биржа услуг',     ic:'briefcase', c:'#22d3ee', n24:94,  dl:'+7%',  up:1, sub:'сделок закрыто'},
+  {n:'Штаб OKO HQ',     ic:'shield',    c:'#a855f7', n24:66,  dl:'−2%',  up:0, sub:'планёрок агентов'},
+  {n:'Разбор конкурентов', ic:'search', c:'#ff6bad', n24:51,  dl:'+22%', up:1, sub:'отчётов в мозг'},
+];
+function hqFeatsBlock(){
+  const max = Math.max(1, ...HQ_FEATS.map(f=>f.n24));
+  const rows = HQ_FEATS.map((f,i)=>`
+    <div class="hq-feat" style="animation-delay:${i*0.045}s">
+      <span class="hq-feat-ic" style="color:${f.c};background:${f.c}1e">${I(f.ic)}</span>
+      <span class="hq-feat-b">
+        <span class="hq-feat-top"><b>${esc(f.n)}</b><span class="hq-feat-n">${f.n24}<em>${esc(f.sub)}</em></span></span>
+        <span class="hq-bar"><i style="width:${Math.round(f.n24/max*100)}%;background:linear-gradient(90deg,${f.c},${f.c}99)"></i></span>
+      </span>
+      <span class="hq-feat-dl ${f.up?'up':'dn'}">${esc(f.dl)}</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Топ фич · использование за 24 часа</div>
+    <div class="hq-feats card">${rows}</div>`;
+}
+
+/* ---- 7.5 ФИНАНСОВАЯ ВОРОНКА: визитор → рег → START → PRO → BUSINESS ---- */
+const HQ_FUNNEL = [
+  {n:'Визиторы',    v:12840, c:'#4aa0ff', sub:'уник. за 30 дней'},
+  {n:'Регистрации', v:1284,  c:'#22d3ee', sub:'аккаунтов создано'},
+  {n:'START',       v:214,   c:'#facc15', sub:'активировали базовый'},
+  {n:'PRO',         v:78,    c:'#9AFF00', sub:'переход на средний'},
+  {n:'BUSINESS',    v:12,    c:'#ff7a3c', sub:'верхний тариф'},
+];
+function hqFunnelBlock(){
+  const top = HQ_FUNNEL[0].v;
+  const rows = HQ_FUNNEL.map((s,i)=>{
+    const pct = Math.round(s.v/top*100);
+    const conv = i===0 ? 100 : Math.round(s.v/HQ_FUNNEL[i-1].v*100*10)/10;
+    const dropTxt = i===0 ? '' : ' · '+conv+'% из «'+HQ_FUNNEL[i-1].n+'»';
+    return `<div class="hq-fn-row" style="animation-delay:${i*0.06}s">
+      <div class="hq-fn-l"><b>${esc(s.n)}</b><small>${esc(s.sub)}${dropTxt}</small></div>
+      <div class="hq-fn-bar"><i style="width:${pct}%;background:linear-gradient(90deg,${s.c},${s.c}99)"><em>${s.v.toLocaleString('ru')}</em></i></div>
+    </div>`;
+  }).join('');
+  const overall = Math.round(HQ_FUNNEL[HQ_FUNNEL.length-1].v/HQ_FUNNEL[0].v*10000)/100;
+  return `<div class="adm-sec-h">Финансовая воронка · визитор до BUSINESS</div>
+    <div class="hq-fn card">
+      ${rows}
+      <div class="hq-fn-foot">Сквозная конверсия: <b>${overall}%</b> визитор в верхний тариф</div>
+    </div>`;
+}
+
+/* ---- 7.6 патчим admOverview: вставляем 5 блоков после KPI-ряда, перед «Быстро» ---- */
+const _prevAdmOverviewHq2 = admOverview;
+admOverview = function(){
+  const html = _prevAdmOverviewHq2();
+  const insert = hqCrisisBlock() + hqHeatBlock() + hqFunnelBlock() + hqFeatsBlock() + hqFeedBlock();
+  /* вставляем перед секцией «Быстро · действия владельца» — держит структуру предсказуемой */
+  const marker = '<div class="adm-sec-h">Быстро · действия владельца</div>';
+  if(html.indexOf(marker) >= 0) return html.replace(marker, insert + marker);
+  return html + insert;
+};
+
+/* ---- 7.7 стартуем ленту на overview, останавливаем при уходе ---- */
+const _prevRenderAdminHq2 = renderAdmin;
+renderAdmin = function(){
+  _prevRenderAdminHq2();
+  if(admTab === 'overview') hqStartFeed(); else hqStopFeed();
+};
+const _prevCloseAdminHq2 = closeAdmin;
+closeAdmin = function(){ hqStopFeed(); _prevCloseAdminHq2(); };
 
 /* ==================== самоинициализация ==================== */
 (function hqInit(){
