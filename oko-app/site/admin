@@ -9,25 +9,29 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--lime:#9AFF00;--bg:#050505;--card:rgba(255,255,255,0.035);--bd:rgba(255,255,255,0.08);--bdl:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.72);--w3:rgba(255,255,255,0.42);--w4:rgba(255,255,255,0.2)}
+:root{--lime:#9AFF00;--bg:#050505;--card:rgba(255,255,255,0.035);--bd:rgba(255,255,255,0.08);--bdl:rgba(154,255,0,0.18);--w2:rgba(255,255,255,0.72);--w3:rgba(255,255,255,0.42);--w4:rgba(255,255,255,0.2);--red:#ff6b6b;--amber:#ffb800;--blu:#78b4ff}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:#fff;font-family:'Onest',sans-serif;min-height:100vh;overflow-x:hidden;line-height:1.5}
 canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 .uni{font-family:'Unbounded',sans-serif}
 .lime{color:var(--lime)}
+.red{color:var(--red)}
+.amber{color:var(--amber)}
 a{color:inherit;text-decoration:none}
 .hide{display:none!important}
 .login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg)}
 .login-box{position:relative;z-index:2;width:100%;max-width:360px;background:var(--card);border:1px solid var(--bdl);border-radius:22px;padding:34px 28px;backdrop-filter:blur(20px);text-align:center}
 .login-logo{font-family:'Unbounded';font-size:24px;font-weight:900;margin-bottom:6px}
 .login-sub{font-size:11px;color:var(--lime);letter-spacing:3px;text-transform:uppercase;margin-bottom:26px}
-.inp{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:13px;padding:14px 16px;color:#fff;font-family:'Onest';font-size:15px;outline:none;transition:.2s}
+.inp,textarea.inp{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:13px;padding:14px 16px;color:#fff;font-family:'Onest';font-size:15px;outline:none;transition:.2s;resize:vertical}
 .inp:focus{border-color:var(--lime)}
 .btn{width:100%;background:var(--lime);color:#000;border:none;border-radius:13px;padding:14px;font-family:'Unbounded';font-weight:800;font-size:13px;cursor:pointer;margin-top:12px;transition:.2s}
 .btn:hover{opacity:.88;transform:translateY(-1px)}
+.btn.ghost{background:rgba(255,255,255,0.05);color:#fff;border:1px solid var(--bd)}
+.btn.danger{background:rgba(255,107,107,0.14);color:var(--red);border:1px solid rgba(255,107,107,0.3)}
 .login-err{color:#ff6b6b;font-size:12px;margin-top:12px;min-height:14px}
 .app{position:relative;z-index:1;display:flex;min-height:100vh}
-.side{position:fixed;top:0;left:0;bottom:0;width:230px;background:rgba(8,8,8,0.86);backdrop-filter:blur(22px);border-right:1px solid var(--bd);padding:22px 14px;display:flex;flex-direction:column;gap:4px;z-index:30;transition:transform .28s}
+.side{position:fixed;top:0;left:0;bottom:0;width:230px;background:rgba(8,8,8,0.86);backdrop-filter:blur(22px);border-right:1px solid var(--bd);padding:22px 14px;display:flex;flex-direction:column;gap:4px;z-index:30;transition:transform .28s;overflow-y:auto}
 .side-logo{display:flex;align-items:center;gap:10px;padding:6px 10px 20px}
 .side-logo .n{font-family:'Unbounded';font-size:17px;font-weight:900}
 .nav-i{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;color:var(--w3);font-size:13px;font-weight:600;cursor:pointer;transition:.18s;border:1px solid transparent}
@@ -35,22 +39,29 @@ a{color:inherit;text-decoration:none}
 .nav-i:hover{color:#fff;background:rgba(255,255,255,0.04)}
 .nav-i.on{color:var(--lime);background:rgba(154,255,0,0.07);border-color:var(--bdl)}
 .nav-sp{flex:1}
+.nav-live-dot{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime);animation:pulse 1.6s infinite;margin-left:auto}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .main{flex:1;margin-left:230px;padding:22px 26px 60px;max-width:100%}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px}
 .topbar-t{font-family:'Unbounded';font-size:22px;font-weight:900}
 .topbar-s{font-size:12px;color:var(--w3);margin-top:2px}
+.topbar-r{display:flex;align-items:center;gap:8px}
 .ham{display:none;background:rgba(255,255,255,0.05);border:1px solid var(--bd);color:#fff;width:42px;height:42px;border-radius:11px;font-size:19px;cursor:pointer}
 .side-x{display:none;position:absolute;top:16px;right:14px;background:none;border:none;color:var(--w3);font-size:22px;cursor:pointer}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
 .kpi{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;transition:.25s;position:relative;overflow:hidden}
 .kpi:hover{border-color:var(--bdl);transform:translateY(-2px)}
-.kpi-n{font-family:'Unbounded';font-size:28px;font-weight:900;color:var(--lime);line-height:1}
+.kpi-n{font-family:'Unbounded';font-size:26px;font-weight:900;color:var(--lime);line-height:1.05;word-break:break-word}
 .kpi-l{font-size:11px;color:var(--w3);margin-top:7px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-d{font-size:11px;margin-top:4px;font-weight:700}
+.kpi-d.up{color:var(--lime)}
+.kpi-d.dn{color:var(--red)}
 .kpi-ico{position:absolute;top:14px;right:14px;color:rgba(154,255,0,0.22)}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px 18px;transition:.22s}
 .card:hover{border-color:var(--bdl)}
-.card-h{font-family:'Unbounded';font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--w2)}
+.card-h{font-family:'Unbounded';font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--w2);text-transform:uppercase;letter-spacing:.5px}
+.card-h .live{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime);animation:pulse 1.6s infinite}
 .chart-card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px}
 .charts{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:20px}
 .chart-wrap{position:relative;height:230px}
@@ -62,19 +73,30 @@ a{color:inherit;text-decoration:none}
 .lc-meta a{color:var(--lime)}
 .badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .b-new{background:rgba(255,255,255,0.08);color:var(--w2)}
-.b-deal{background:rgba(154,255,0,0.14);color:var(--lime)}
-.b-paid{background:rgba(154,255,0,0.14);color:var(--lime)}
+.b-deal,.b-paid{background:rgba(154,255,0,0.14);color:var(--lime)}
 .b-wait{background:rgba(255,180,0,0.14);color:#ffb800}
+.b-lead{background:rgba(120,180,255,0.14);color:var(--blu)}
+.b-partner{background:rgba(255,122,60,0.14);color:#ff7a3c}
+.b-response{background:rgba(168,85,247,0.14);color:#a855f7}
+.b-anketa{background:rgba(52,211,153,0.14);color:#34d399}
+.b-refund,.b-banned{background:rgba(255,107,107,0.14);color:var(--red)}
 .row-tools{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .row-tools .inp{flex:1;min-width:180px}
 .sel{background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:13px;padding:13px 14px;color:#fff;font-family:'Onest';font-size:14px;outline:none}
 .empty{padding:40px 20px;text-align:center;color:var(--w3);font-size:14px}
-.mini-btn{background:rgba(154,255,0,0.08);border:1px solid var(--bdl);color:var(--lime);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Onest'}
+.mini-btn{background:rgba(154,255,0,0.08);border:1px solid var(--bdl);color:var(--lime);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Onest';transition:.15s}
+.mini-btn:hover{background:rgba(154,255,0,0.14)}
 .mini-btn.ghost{background:rgba(255,255,255,0.04);border-color:var(--bd);color:var(--w2)}
+.mini-btn.ghost:hover{background:rgba(255,255,255,0.08)}
+.mini-btn.dngr{background:rgba(255,107,107,0.1);border-color:rgba(255,107,107,0.3);color:var(--red)}
+.mini-btn.dngr:hover{background:rgba(255,107,107,0.18)}
+.mini-btn.warn{background:rgba(255,184,0,0.1);border-color:rgba(255,184,0,0.3);color:var(--amber)}
+.mini-btn.warn:hover{background:rgba(255,184,0,0.18)}
 .detail{margin-top:12px;padding-top:12px;border-top:1px solid var(--bd);font-size:13px;color:var(--w2)}
 .detail b{color:#fff}
+.detail .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .dlg{background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 12px;margin-top:6px;font-size:12.5px}
-.dlg .r{color:var(--lime);font-weight:700;font-size:11px;text-transform:uppercase}
+.dlg .r{color:var(--lime);font-weight:700;font-size:11px;text-transform:uppercase;margin-right:6px}
 .insight{display:flex;gap:12px;background:rgba(154,255,0,0.04);border:1px solid var(--bdl);border-radius:14px;padding:14px 16px;margin-bottom:10px}
 .insight-ico{color:var(--lime);flex-shrink:0}
 .insight b{color:#fff}
@@ -83,6 +105,41 @@ a{color:inherit;text-decoration:none}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .spin{width:26px;height:26px;border:3px solid rgba(154,255,0,0.2);border-top-color:var(--lime);border-radius:50%;animation:sp 1s linear infinite;margin:40px auto}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* Live newsfeed */
+.feed-row{display:flex;gap:12px;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,0.02);border:1px solid var(--bd);margin-bottom:6px;transition:.2s;align-items:center}
+.feed-row:hover{background:rgba(154,255,0,0.03);border-color:var(--bdl)}
+.feed-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.feed-dot.lead{background:var(--blu);box-shadow:0 0 6px var(--blu)}
+.feed-dot.payment{background:var(--lime);box-shadow:0 0 8px var(--lime)}
+.feed-dot.deal{background:var(--lime)}
+.feed-dot.partner{background:#ff7a3c;box-shadow:0 0 6px #ff7a3c}
+.feed-dot.response{background:#a855f7}
+.feed-dot.anketa{background:#34d399}
+.feed-body{flex:1;min-width:0}
+.feed-t{font-size:13.5px;color:#fff;font-weight:600}
+.feed-m{font-size:11.5px;color:var(--w3);margin-top:2px}
+.feed-age{font-size:11px;color:var(--w4);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* Agent panel */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.agent-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;transition:.2s;position:relative;overflow:hidden}
+.agent-card:hover{border-color:var(--bdl)}
+.agent-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,#666)}
+.agent-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.agent-av{width:36px;height:36px;border-radius:10px;background:rgba(154,255,0,0.08);display:flex;align-items:center;justify-content:center;font-family:'Unbounded';font-weight:900;font-size:13px;color:var(--ac,#9AFF00)}
+.agent-nm{font-weight:700;font-size:14px}
+.agent-en{font-size:10px;color:var(--w3);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.agent-t{font-size:12.5px;color:var(--w2);margin-bottom:10px;min-height:32px;line-height:1.4}
+.agent-b{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--w3)}
+.agent-progress{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:8px}
+.agent-progress-b{height:100%;background:var(--ac,#9AFF00);transition:width .3s ease}
+.stat-bar{display:flex;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 18px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.stat-bar span{font-size:12px;color:var(--w3)}
+.stat-bar b{color:#fff;font-weight:700}
+/* Modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px)}
+.modal-b{max-width:520px;width:100%;background:#0a0a0a;border:1px solid var(--bdl);border-radius:20px;padding:24px;max-height:90vh;overflow-y:auto}
+.modal-t{font-family:'Unbounded';font-size:16px;font-weight:900;margin-bottom:12px}
+.modal-close{background:none;border:none;color:var(--w3);float:right;font-size:20px;cursor:pointer}
 @media(max-width:860px){
   .side{transform:translateX(-100%);width:250px}
   .side.open{transform:none}
@@ -91,6 +148,7 @@ a{color:inherit;text-decoration:none}
   .ham{display:block}
   .charts{grid-template-columns:1fr}
   .topbar-t{font-size:19px}
+  .kpi-n{font-size:22px}
 }
 </style>
 </head>
@@ -112,17 +170,23 @@ a{color:inherit;text-decoration:none}
       <svg width="30" height="30" viewBox="0 0 40 40" fill="none"><path d="M4 20 C10 8 30 8 36 20 C30 32 10 32 4 20Z" stroke="#9AFF00" stroke-width="2.5"/><circle cx="20" cy="20" r="6" stroke="#9AFF00" stroke-width="2.5"/><circle cx="20" cy="20" r="2.5" fill="#9AFF00"/></svg>
       <div class="n uni">ОКО<span class="lime"> TEAM</span></div>
     </div>
-    <div class="nav-i on" data-p="dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Дашборд</div>
+    <div class="nav-i on" data-p="dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Дашборд<span class="nav-live-dot"></span></div>
     <div class="nav-i" data-p="clients" onclick="go('clients')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5a3.5 3.5 0 0 1 0 6.5M22 21c0-2.8-1.6-5-4-5.7"/></svg>Клиенты</div>
+    <div class="nav-i" data-p="feed" onclick="go('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Live-лента</div>
+    <div class="nav-i" data-p="agents" onclick="go('agents')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>Агенты<span class="nav-live-dot"></span></div>
+    <div class="nav-i" data-p="partners" onclick="go('partners')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Партнёры</div>
+    <div class="nav-i" data-p="moderation" onclick="go('moderation')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Модерация</div>
+    <div class="nav-i" data-p="finance" onclick="go('finance')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Финансы</div>
     <div class="nav-i" data-p="anketas" onclick="go('anketas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Анкеты</div>
     <div class="nav-i" data-p="dialogs" onclick="go('dialogs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>Диалоги</div>
-    <div class="nav-i" data-p="deals" onclick="go('deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Сделки</div>
+    <div class="nav-i" data-p="deals" onclick="go('deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/></svg>Сделки</div>
     <div class="nav-i" data-p="vacancies" onclick="go('vacancies')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Вакансии</div>
     <div class="nav-i" data-p="responses" onclick="go('responses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>Отклики</div>
     <div class="nav-i" data-p="payments" onclick="go('payments')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Оплаты</div>
     <div class="nav-i" data-p="products" onclick="go('products')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/><path d="M12 3v18M4 7l8 4 8-4"/></svg>Продукты</div>
     <div class="nav-i" data-p="newsletter" onclick="go('newsletter')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7 10-7"/></svg>Рассылка</div>
     <div class="nav-sp"></div>
+    <div class="nav-i" onclick="location.href='/ai-team'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20"/></svg>3D-Штаб</div>
     <div class="nav-i" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>Выйти</div>
   </aside>
   <main class="main">
@@ -131,29 +195,58 @@ a{color:inherit;text-decoration:none}
         <button class="ham" onclick="toggleSide()">☰</button>
         <div><div class="topbar-t" id="pageTitle">Дашборд</div><div class="topbar-s" id="pageSub">Обзор системы OKO</div></div>
       </div>
-      <button class="mini-btn ghost" onclick="loadPage(cur)">↻ Обновить</button>
+      <div class="topbar-r">
+        <span id="lastUpd" style="font-size:11px;color:var(--w3)"></span>
+        <button class="mini-btn ghost" onclick="loadPage(cur)">↻ Обновить</button>
+      </div>
     </div>
     <div id="content"><div class="spin"></div></div>
   </main>
 </div>
+<div id="modalWrap"></div>
 <script>
 const API='/api.php';
 let adminKey=localStorage.getItem('okoKey')||'';
 let cur='dashboard';
 let charts={};
-(function(){
+let refreshTimer=null;
+const REFRESH_MS={dashboard:30000,feed:15000,agents:15000,partners:60000,moderation:60000};
+
+(function bg(){
   const c=document.getElementById('bg'),x=c.getContext('2d');let W,H,ps=[];
   function rs(){W=c.width=innerWidth;H=c.height=innerHeight}rs();addEventListener('resize',rs);
   for(let i=0;i<55;i++)ps.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.5+.4,a:Math.random()});
   (function d(){x.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle='rgba(154,255,0,'+(p.a*.35)+')';x.fill()});ps.forEach((p,i)=>ps.slice(i+1).forEach(q=>{const dd=Math.hypot(p.x-q.x,p.y-q.y);if(dd<115){x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q.x,q.y);x.strokeStyle='rgba(154,255,0,'+(.05*(1-dd/115))+')';x.lineWidth=.5;x.stroke()}}));requestAnimationFrame(d)})();
 })();
+
 async function api(action,extra=''){
-  try{const r=await fetch(API+'?action='+action+'&key='+encodeURIComponent(adminKey)+extra);return await r.json()}
+  try{const r=await fetch(API+'?action='+action+'&key='+encodeURIComponent(adminKey)+extra+'&_='+Date.now());return await r.json()}
+  catch(e){return{ok:false,error:'net'}}
+}
+async function apiPost(action,payload){
+  payload=Object.assign({key:adminKey},payload||{});
+  try{const r=await fetch(API+'?action='+action,{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':adminKey},body:JSON.stringify(payload)});return await r.json()}
   catch(e){return{ok:false,error:'net'}}
 }
 function esc(s){return(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function badge(st,paid){if(paid)return'<span class="badge b-paid">оплатил</span>';const m={'new':'b-new','deal':'b-deal','wait':'b-wait','ожидает':'b-wait'};return'<span class="badge '+(m[st]||'b-new')+'">'+esc(st||'new')+'</span>'}
+function badge(st,paid){
+  if(paid)return'<span class="badge b-paid">оплатил</span>';
+  const m={'new':'b-new','deal':'b-deal','wait':'b-wait','ожидает':'b-wait','lead':'b-lead','banned':'b-banned','refund':'b-refund','active':'b-paid','approved':'b-paid','dialog':'b-lead','anketa':'b-anketa'};
+  return'<span class="badge '+(m[st]||'b-new')+'">'+esc(st||'new')+'</span>';
+}
 function when(t){if(!t)return'';return String(t).replace('T',' ').slice(0,16)}
+function rub(v){return Math.round(v||0).toLocaleString('ru-RU')+' ₽'}
+function ago(ts){
+  if(!ts)return'';
+  const now=Date.now();
+  const t=new Date(String(ts).replace(' ','T')).getTime();
+  if(isNaN(t))return when(ts);
+  const s=Math.max(0,Math.floor((now-t)/1000));
+  if(s<60)return s+' сек назад';
+  if(s<3600)return Math.floor(s/60)+' мин назад';
+  if(s<86400)return Math.floor(s/3600)+' ч назад';
+  return Math.floor(s/86400)+' дн назад';
+}
 async function doLogin(){
   adminKey=document.getElementById('pw').value.trim();
   document.getElementById('loginErr').textContent='';
@@ -163,25 +256,528 @@ async function doLogin(){
 }
 document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 function logout(){localStorage.removeItem('okoKey');location.reload()}
-const TITLES={dashboard:['Дашборд','Обзор системы OKO'],clients:['Клиенты','База клиентов и лидов'],anketas:['Анкеты','Заполненные анкеты клиентов'],dialogs:['Диалоги агентов','Переписка агентов с клиентами'],deals:['Сделки','Закрытые и активные сделки'],vacancies:['Вакансии','Найденные вакансии'],responses:['Отклики','Отправленные отклики'],payments:['Оплаты','История оплат'],products:['Продукты','Статистика по продуктам'],newsletter:['Рассылка','Email-рассылка по базе']};
-function go(p){cur=p;document.querySelectorAll('.nav-i').forEach(n=>n.classList.toggle('on',n.dataset.p===p));const t=TITLES[p]||[p,''];document.getElementById('pageTitle').textContent=t[0];document.getElementById('pageSub').textContent=t[1];if(innerWidth<=860)document.getElementById('side').classList.remove('open');loadPage(p)}
+
+const TITLES={
+  dashboard:['Дашборд','Real-time · обновление каждые 30 сек'],
+  clients:['Клиенты','CRM · база клиентов и лидов'],
+  feed:['Live-лента','Все события в реальном времени'],
+  agents:['Агенты','Sub-агенты OKO · их состояния'],
+  partners:['Партнёры','Партнёрские продажи и выплаты'],
+  moderation:['Модерация','Анкеты и заявки на проверку'],
+  finance:['Финансы','Выручка, расходы, бухгалтерия'],
+  anketas:['Анкеты','Заполненные анкеты клиентов'],
+  dialogs:['Диалоги агентов','Переписка агентов с клиентами'],
+  deals:['Сделки','Закрытые и активные сделки'],
+  vacancies:['Вакансии','Найденные вакансии'],
+  responses:['Отклики','Отправленные отклики'],
+  payments:['Оплаты','История оплат'],
+  products:['Продукты','Статистика по продуктам'],
+  newsletter:['Рассылка','Email-рассылка по базе']
+};
+function go(p){
+  cur=p;
+  document.querySelectorAll('.nav-i').forEach(n=>n.classList.toggle('on',n.dataset.p===p));
+  const t=TITLES[p]||[p,''];
+  document.getElementById('pageTitle').textContent=t[0];
+  document.getElementById('pageSub').textContent=t[1];
+  if(innerWidth<=860)document.getElementById('side').classList.remove('open');
+  loadPage(p);
+  scheduleRefresh(p);
+}
+function scheduleRefresh(p){
+  if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null}
+  const ms=REFRESH_MS[p];
+  if(ms) refreshTimer=setInterval(()=>{if(cur===p && !document.hidden) loadPage(p,true)},ms);
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden && REFRESH_MS[cur]) loadPage(cur,true)});
+
 function toggleSide(){document.getElementById('side').classList.toggle('open')}
-async function loadPage(p){
-  const box=document.getElementById('content');box.innerHTML='<div class="spin"></div>';
-  if(p==='dashboard')return renderDash(box);
+function markUpd(){document.getElementById('lastUpd').textContent='обновлено '+new Date().toLocaleTimeString('ru-RU')}
+
+async function loadPage(p,silent){
+  const box=document.getElementById('content');
+  if(!silent) box.innerHTML='<div class="spin"></div>';
+  if(p==='dashboard')return renderDash(box,silent);
+  if(p==='feed')return renderFeed(box);
+  if(p==='agents')return renderAgents(box);
+  if(p==='partners')return renderPartners(box);
+  if(p==='moderation')return renderModeration(box);
+  if(p==='finance')return renderFinance(box);
   if(p==='clients')return renderClients(box);
   if(p==='anketas')return renderList(box,'getAnketas','anketas',renderAnketa,'Анкет пока нет');
-  if(p==='dialogs')return renderList(box,'getDialogs','dialogs',renderDialog,'Диалогов пока нет (появятся с агентов)');
+  if(p==='dialogs')return renderList(box,'getDialogs','dialogs',renderDialog,'Диалогов пока нет');
   if(p==='deals')return renderList(box,'getStats','deals',renderDeal,'Сделок пока нет');
-  if(p==='vacancies')return renderList(box,'getVacancies','vacancies',renderVac,'Вакансий пока нет (появятся с агентов)');
-  if(p==='responses')return renderList(box,'getResponses','responses',renderResp,'Откликов пока нет (появятся с агентов)');
+  if(p==='vacancies')return renderList(box,'getVacancies','vacancies',renderVac,'Вакансий пока нет');
+  if(p==='responses')return renderList(box,'getResponses','responses',renderResp,'Откликов пока нет');
   if(p==='payments')return renderList(box,'getPayments','payments',renderPay,'Оплат пока нет');
   if(p==='products')return renderProducts(box);
   if(p==='newsletter')return renderNewsletter(box);
 }
+
+/* ========== DASHBOARD ========== */
+async function renderDash(box,silent){
+  const d=await api('admin_dashboard');
+  if(!d.ok){box.innerHTML='<div class="empty">Не удалось загрузить: '+esc(d.error||'')+'</div>';return}
+  markUpd();
+  const sv=(p)=>'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+p+'</svg>';
+  const iR=sv('<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>');
+  const iC=sv('<circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6"/>');
+  const iM=sv('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>');
+  const iV=sv('<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>');
+  const iP=sv('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>');
+  const kpi=(n,l,ico,delta,dCls)=>`<div class="kpi"><div class="kpi-ico">${ico}</div><div class="kpi-n">${n}</div><div class="kpi-l">${l}</div>${delta?`<div class="kpi-d ${dCls||''}">${delta}</div>`:''}</div>`;
+  const gr=d.mrr_growth||0;
+  const grStr=(gr>0?'+':'')+gr+'% к прошлому месяцу';
+  box.innerHTML=`<div class="section">
+    <div class="kpis">
+      ${kpi(rub(d.mrr),'MRR (30 дней)',iR,grStr,gr>=0?'up':'dn')}
+      ${kpi(rub(d.arr),'ARR (прогноз)',iR)}
+      ${kpi(rub(d.rev_today),'Сегодня',iR)}
+      ${kpi(d.dau,'DAU',iV,d.mau+' MAU')}
+      ${kpi(d.reg_today,'Регистраций сегодня',iC,d.reg_week+' за неделю')}
+      ${kpi(d.clients_paid+'/'+d.clients_total,'Клиентов оплатили',iM,d.conversion+'% конверсия')}
+      ${kpi(d.retention_7d+'%','Retention 7d',iP,'из '+d.retention_7d_base)}
+      ${kpi(d.retention_30d+'%','Retention 30d',iP,'из '+d.retention_30d_base)}
+    </div>
+    <div class="chart-card" style="margin-bottom:14px"><div class="card-h">Динамика 30 дней · лиды и визиты<span class="live"></span></div><div class="chart-wrap" style="height:240px"><canvas id="chTrend"></canvas></div></div>
+    <div class="charts">
+      <div class="chart-card"><div class="card-h">Выручка · 30 дней</div><div class="chart-wrap"><canvas id="chRev"></canvas></div></div>
+      <div class="chart-card"><div class="card-h">Активные подписки по продуктам</div><div class="chart-wrap"><canvas id="chDonut"></canvas></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0" class="ptop-grid">
+      <div>
+        <div class="card-h">Топ-10 партнёров по обороту</div>
+        <div id="topPartners"></div>
+      </div>
+      <div>
+        <div class="card-h">Live-лента <span class="live"></span></div>
+        <div id="liveDashFeed"></div>
+      </div>
+    </div>
+    <div style="margin:8px 0 16px;display:flex;gap:8px;flex-wrap:wrap">
+      <a class="mini-btn ghost" href="${API}?action=exportAnalytics&key=${encodeURIComponent(adminKey)}">Аналитика CSV (30 дней)</a>
+      <a class="mini-btn ghost" href="${API}?action=exportBase&key=${encodeURIComponent(adminKey)}">База клиентов CSV</a>
+      <a class="mini-btn ghost" href="${API}?action=admin_finance_export&key=${encodeURIComponent(adminKey)}">Бухгалтерия CSV</a>
+    </div>
+  </div>`;
+  const s=d.series||[]; const lb=s.map(x=>x.d);
+  drawTrend('chTrend',lb,s.map(x=>x.leads),s.map(x=>x.visits));
+  drawArea('chRev',lb,s.map(x=>x.revenue));
+  const prodLabels=(d.by_product||[]).map(x=>x.p||'—');
+  const prodData=(d.by_product||[]).map(x=>x.c||0);
+  drawDonut('chDonut',prodLabels,prodData);
+  // Топ-партнёры
+  const tp=d.partners||[];
+  document.getElementById('topPartners').innerHTML = tp.length ?
+    tp.map(p=>`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(p.ref)}</div><span class="badge b-partner">${rub(p.turnover)}</span></div><div class="lc-meta"><span>Продаж: <b class="lime">${p.sales}</b></span><span>Выплачено: ${rub(p.paid_out)}</span><span>К выплате: ${rub(p.pending)}</span></div></div>`).join('')
+    : '<div class="empty">Партнёрских продаж пока нет</div>';
+  // Мини-фид на дашборде
+  loadDashFeed();
+}
+async function loadDashFeed(){
+  const d=await api('admin_feed');
+  const el=document.getElementById('liveDashFeed'); if(!el)return;
+  const items=(d.items||[]).slice(0,10);
+  el.innerHTML = items.length ? items.map(it=>`
+    <div class="feed-row" onclick="if(${it.client_id||0})openClientModal(${it.client_id||0})">
+      <div class="feed-dot ${esc(it.kind)}"></div>
+      <div class="feed-body"><div class="feed-t">${esc(it.title)}</div><div class="feed-m">${esc(it.who||'')}${it.email?' · '+esc(it.email):''}</div></div>
+      <div class="feed-age">${ago(it.t)}</div>
+    </div>`).join('') : '<div class="empty">События появятся тут</div>';
+}
+function drawTrend(id,labels,leads,visits){
+  const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();
+  const g=el.getContext('2d').createLinearGradient(0,0,0,240);g.addColorStop(0,'rgba(154,255,0,0.28)');g.addColorStop(1,'rgba(154,255,0,0)');
+  charts[id]=new Chart(el,{type:'line',data:{labels,datasets:[
+    {label:'Визиты',data:visits,borderColor:'rgba(120,180,255,0.9)',backgroundColor:'rgba(120,180,255,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:0,pointHoverRadius:4},
+    {label:'Лиды',data:leads,borderColor:'#9AFF00',backgroundColor:g,borderWidth:2.5,tension:0.4,fill:true,pointRadius:0,pointHoverRadius:5}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},animation:{duration:800},plugins:{legend:{labels:{color:'#aaa',font:{family:'Onest'},usePointStyle:true,boxWidth:8}}},scales:{x:{ticks:{color:'#777',font:{family:'Onest',size:9},maxRotation:0,autoSkip:true,maxTicksLimit:10},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#777',font:{family:'Onest'},precision:0},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+}
+function drawArea(id,labels,data){
+  const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();
+  const g=el.getContext('2d').createLinearGradient(0,0,0,200);g.addColorStop(0,'rgba(154,255,0,0.5)');g.addColorStop(1,'rgba(154,255,0,0.02)');
+  charts[id]=new Chart(el,{type:'bar',data:{labels,datasets:[{data,backgroundColor:g,borderColor:'#9AFF00',borderWidth:{top:2,left:0,right:0,bottom:0},borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:800},plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>Math.round(c.raw).toLocaleString('ru-RU')+' ₽'}}},scales:{x:{ticks:{color:'#777',font:{family:'Onest',size:9},maxTicksLimit:10},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#777',font:{family:'Onest'}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+}
+function drawDonut(id,labels,data){
+  const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();
+  const palette=['#9AFF00','#78b4ff','#ff7a3c','#a855f7','#22d3ee','#facc15','#ff6bad','#34d399'];
+  charts[id]=new Chart(el,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:palette.slice(0,data.length),borderColor:'#050505',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{position:'right',labels:{color:'#aaa',font:{family:'Onest',size:11},usePointStyle:true,boxWidth:8,padding:8}}}}});
+}
+
+/* ========== LIVE FEED (полная страница) ========== */
+async function renderFeed(box){
+  const d=await api('admin_feed');
+  markUpd();
+  const items=d.items||[];
+  box.innerHTML=`<div class="section">
+    <div class="stat-bar"><span>Всего событий: <b>${items.length}</b></span><span>Обновление каждые 15 сек</span></div>
+    <div id="feedList">${items.length?items.map(it=>`
+      <div class="feed-row" onclick="${it.client_id?'openClientModal('+it.client_id+')':''}">
+        <div class="feed-dot ${esc(it.kind)}"></div>
+        <div class="feed-body"><div class="feed-t">${esc(it.title)}</div><div class="feed-m">${esc(it.who||'')}${it.email?' · '+esc(it.email):''}${it.tg?' · <a href="https://t.me/'+esc(it.tg)+'" target="_blank">@'+esc(it.tg)+'</a>':''}</div></div>
+        <div class="feed-age">${ago(it.t)}</div>
+      </div>`).join(''):'<div class="empty">События появятся тут</div>'}</div>
+  </div>`;
+}
+
+/* ========== AGENTS ========== */
+const AGENT_META={
+  ceo:{nm:'Гендиректор',en:'CEO',c:'#9AFF00'},
+  sales:{nm:'Отдел продаж',en:'Sales',c:'#4aa0ff'},
+  editor:{nm:'Монтажёр',en:'Editor',c:'#a855f7'},
+  designer:{nm:'Дизайнер',en:'Designer',c:'#ff7a3c'},
+  marketer:{nm:'Маркетолог',en:'Marketer',c:'#22d3ee'},
+  legal:{nm:'Юрист',en:'Legal',c:'#d4af37'},
+  copy:{nm:'Копирайтер',en:'Copy',c:'#ff6bad'},
+  support:{nm:'Саппорт',en:'Support',c:'#34d399'},
+  factory:{nm:'Контент-завод',en:'Factory',c:'#facc15'},
+  analyst:{nm:'Аналитик',en:'Analyst',c:'#f472b6'},
+  hr:{nm:'HR / Партнёры',en:'HR',c:'#60a5fa'},
+  assist:{nm:'Помощник',en:'Assist',c:'#c084fc'}
+};
+const ST_LABEL={idle:'ждёт',work:'работает',think:'думает',wait:'пауза',busy:'занят'};
+async function renderAgents(box){
+  const d=await api('agent_status');
+  markUpd();
+  const agents=d.agents||[];
+  const cts=d.counts||{};
+  box.innerHTML=`<div class="section">
+    <div class="stat-bar">
+      <span>Всего агентов: <b>${agents.length}</b></span>
+      <span>В работе: <b class="lime">${cts.work||0}</b></span>
+      <span>Ожидают: <b class="amber">${(cts.wait||0)+(cts.idle||0)}</b></span>
+      <span>Думают: <b>${cts.think||0}</b></span>
+      <button class="mini-btn" onclick="agentPushModal()" style="margin-left:auto">+ Обновить задачу</button>
+    </div>
+    <div class="agent-grid">${agents.map(a=>{
+      const m=AGENT_META[a.agent_name]||{nm:a.agent_name,en:a.agent_name,c:'#666'};
+      const ini=m.nm.slice(0,2).toUpperCase();
+      const st=a.status||'idle';
+      return `<div class="agent-card" style="--ac:${m.c}" onclick="openAgentHistory('${esc(a.agent_name)}')">
+        <div class="agent-h">
+          <div class="agent-av">${ini}</div>
+          <div style="flex:1"><div class="agent-nm">${esc(m.nm)}</div><div class="agent-en">${esc(m.en)}</div></div>
+          <span class="badge ${st==='work'?'b-paid':(st==='wait'?'b-wait':'b-new')}">${ST_LABEL[st]||st}</span>
+        </div>
+        <div class="agent-t">${esc(a.task||'—')}</div>
+        <div class="agent-b"><span>${a.progress||0}%</span><span>${ago(a.updated_at||a.created_at)}</span></div>
+        <div class="agent-progress"><div class="agent-progress-b" style="width:${a.progress||0}%"></div></div>
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+}
+function agentPushModal(){
+  const opts=Object.entries(AGENT_META).map(([k,v])=>`<option value="${k}">${v.nm} (${v.en})</option>`).join('');
+  showModal(`<div class="modal-t">Обновить задачу агента<button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <select class="sel" id="agAg">${opts}</select>
+      <select class="sel" id="agSt">
+        <option value="idle">Ждёт</option><option value="work" selected>Работает</option>
+        <option value="think">Думает</option><option value="wait">Пауза</option><option value="busy">Занят</option>
+      </select>
+      <input class="inp" id="agTask" placeholder="Текст задачи">
+      <input class="inp" id="agProg" type="number" placeholder="Прогресс, %" min="0" max="100" value="0">
+      <button class="btn" onclick="agentPushSave()">Отправить</button>
+      <div id="agRes" style="font-size:12px;color:var(--w3);text-align:center"></div>
+    </div>`);
+}
+async function agentPushSave(){
+  const agent=document.getElementById('agAg').value;
+  const status=document.getElementById('agSt').value;
+  const task=document.getElementById('agTask').value.trim();
+  const progress=parseInt(document.getElementById('agProg').value||'0',10);
+  document.getElementById('agRes').textContent='Отправляю…';
+  const r=await apiPost('agent_update',{agent,status,task,progress});
+  document.getElementById('agRes').textContent=r.ok?'Готово':('Ошибка: '+(r.error||''));
+  if(r.ok){setTimeout(()=>{closeModal();loadPage('agents',true)},600)}
+}
+async function openAgentHistory(name){
+  const d=await api('agent_history','&agent='+encodeURIComponent(name));
+  const m=AGENT_META[name]||{nm:name,en:name};
+  const items=d.items||[];
+  showModal(`<div class="modal-t">${esc(m.nm)} · история<button class="modal-close" onclick="closeModal()">✕</button></div>
+    ${items.length?items.map(x=>`<div class="dlg"><span class="r">${esc(ST_LABEL[x.status]||x.status)}</span> ${esc(x.task||'—')} <span style="color:var(--w3);float:right">${ago(x.updated_at||x.created_at)}</span></div>`).join(''):'<div class="empty">История пуста</div>'}`);
+}
+
+/* ========== PARTNERS ========== */
+async function renderPartners(box){
+  const d=await api('admin_partners');
+  markUpd();
+  const grouped=d.partners||[];
+  const payouts=d.payouts||[];
+  const stats=d.stats||{};
+  box.innerHTML=`<div class="section">
+    <div class="stat-bar">
+      <span>Партнёров: <b>${grouped.length}</b></span>
+      <span>Кликов всего: <b>${stats.clicks_total||0}</b></span>
+      <span>Кликов сегодня: <b class="lime">${stats.clicks_today||0}</b></span>
+    </div>
+    <div class="card-h">Партнёры</div>
+    <div id="partnersGrouped">${grouped.length?grouped.map(g=>`
+      <div class="lc">
+        <div class="lc-top">
+          <div class="lc-name">${esc(g.ref)}</div>
+          <span class="badge b-partner">${rub(g.turnover)}</span>
+        </div>
+        <div class="lc-meta">
+          <span>Продаж: <b class="lime">${g.sales}</b></span>
+          <span>Покупателей: <b>${g.buyers}</b></span>
+          <span>Всего к выплате: <b>${rub(g.payout_total)}</b></span>
+          <span>Выплачено: ${rub(g.paid_out)}</span>
+          <span class="lime">Ожидает: ${rub(g.pending)}</span>
+          <span>${when(g.first_sale)} → ${when(g.last_sale)}</span>
+        </div>
+        ${g.pending>0?`<div style="margin-top:10px"><button class="mini-btn" onclick="doPayoutRef('${esc(g.ref)}')">Выплатить ${rub(g.pending)}</button></div>`:''}
+      </div>`).join(''):'<div class="empty">Партнёрских продаж пока нет</div>'}</div>
+    <div class="card-h" style="margin-top:20px">Все выплаты (последние 100)</div>
+    <div id="payoutsList">${payouts.length?payouts.map(p=>`
+      <div class="lc">
+        <div class="lc-top">
+          <div class="lc-name">ref: ${esc(p.ref)} · ${esc(p.buyer_email||'—')}</div>
+          <span class="badge ${p.status==='paid'?'b-paid':'b-wait'}">${esc(p.status)}</span>
+        </div>
+        <div class="lc-meta">
+          <span>${esc(p.product||'—')}</span>
+          <span>Сумма: ${rub(p.amount)}</span>
+          <span class="lime">Партнёру: ${rub(p.partner_amount)}</span>
+          <span>${when(p.created_at)}</span>
+          ${p.status==='pending'?`<button class="mini-btn" onclick="doPayoutId(${p.id})">Выплатить</button>`:''}
+        </div>
+      </div>`).join(''):'<div class="empty">Выплат пока нет</div>'}</div>
+  </div>`;
+}
+async function doPayoutRef(ref){
+  if(!confirm('Выплатить всё pending для '+ref+'?'))return;
+  const r=await apiPost('partner_payout',{ref});
+  alert(r.ok?('Выплачено '+r.total+'₽'+(r.partner_email?' → '+r.partner_email:' (email не найден)')):('Ошибка: '+(r.error||'')));
+  if(r.ok)loadPage('partners',true);
+}
+async function doPayoutId(id){
+  if(!confirm('Выплатить payout #'+id+'?'))return;
+  const r=await apiPost('partner_payout',{payout_id:id});
+  alert(r.ok?('Выплачено '+r.total+'₽'):('Ошибка: '+(r.error||'')));
+  if(r.ok)loadPage('partners',true);
+}
+
+/* ========== MODERATION ========== */
+async function renderModeration(box){
+  const d=await api('admin_moderation');
+  markUpd();
+  const anketas=d.anketas||[];
+  const s=d.stats||{};
+  box.innerHTML=`<div class="section">
+    <div class="stat-bar">
+      <span>Ждут проверки: <b class="amber">${s.anketa_pending||0}</b></span>
+      <span>Всего анкет: <b>${s.anketa_total||0}</b></span>
+    </div>
+    ${anketas.length?anketas.map(a=>`
+      <div class="lc">
+        <div class="lc-top">
+          <div class="lc-name">${esc(a.client_name||'—')}</div>
+          <span class="badge ${a.complete?'b-paid':'b-wait'}">${a.complete?'готова':'частично'}</span>
+        </div>
+        <div class="lc-meta">
+          <span>${esc(a.service_type||'')}</span>
+          ${a.email?'<span>'+esc(a.email)+'</span>':''}
+          ${a.tg?'<a href="https://t.me/'+esc(a.tg)+'">@'+esc(a.tg)+'</a>':''}
+          <span>${a.progress||0}/${a.total||'?'}</span>
+          <span>${when(a.created_at)}</span>
+        </div>
+        <div class="detail" style="border:none;padding-top:8px">
+          <div class="btnrow">
+            <a class="mini-btn ghost" href="${API}?action=downloadAnketa&id=${encodeURIComponent(a.submission_id)}&key=${encodeURIComponent(adminKey)}" target="_blank">Скачать</a>
+            <button class="mini-btn" onclick="modAnketa('${esc(a.submission_id)}','approve')">Одобрить</button>
+            <button class="mini-btn warn" onclick="modAnketaDiscount('${esc(a.submission_id)}')">Скидка</button>
+            <button class="mini-btn dngr" onclick="modAnketaReject('${esc(a.submission_id)}')">Отклонить</button>
+          </div>
+        </div>
+      </div>`).join(''):'<div class="empty">Всё проверено, нет заявок в очереди</div>'}
+  </div>`;
+}
+async function modAnketa(sid,action,extra){
+  const r=await apiPost('moderate_anketa',Object.assign({sid,action},extra||{}));
+  if(r.ok){loadPage('moderation',true)} else {alert('Ошибка: '+(r.error||''))}
+}
+function modAnketaDiscount(sid){
+  const pct=parseInt(prompt('Размер скидки, %:','10')||'0',10);
+  if(pct>0)modAnketa(sid,'discount',{pct});
+}
+function modAnketaReject(sid){
+  const reason=prompt('Причина отклонения:','');
+  if(reason!==null)modAnketa(sid,'reject',{reason});
+}
+
+/* ========== FINANCE ========== */
+async function renderFinance(box){
+  const d=await api('admin_finance');
+  markUpd();
+  if(!d.ok){box.innerHTML='<div class="empty">Не удалось</div>';return}
+  const growth=d.revenue_prev_month>0 ? Math.round((d.revenue_month-d.revenue_prev_month)/d.revenue_prev_month*100) : 0;
+  box.innerHTML=`<div class="section">
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-n">${rub(d.revenue_month)}</div><div class="kpi-l">Выручка · этот месяц</div><div class="kpi-d ${growth>=0?'up':'dn'}">${growth>=0?'+':''}${growth}% к прошлому</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.revenue_prev_month)}</div><div class="kpi-l">Прошлый месяц</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.revenue_total)}</div><div class="kpi-l">Всего за всё время</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.avg_check)}</div><div class="kpi-l">Средний чек</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.partner_paid)}</div><div class="kpi-l">Расход на партнёров</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.partner_pending)}</div><div class="kpi-l">Ждёт выплаты партнёрам</div></div>
+      <div class="kpi"><div class="kpi-n">${rub(d.profit_month)}</div><div class="kpi-l">Прибыль этот месяц</div></div>
+    </div>
+    <div class="charts">
+      <div class="chart-card"><div class="card-h">Помесячно, 12 месяцев</div><div class="chart-wrap"><canvas id="chMonth"></canvas></div></div>
+      <div class="chart-card"><div class="card-h">Выручка по продуктам</div><div class="chart-wrap"><canvas id="chProdRev"></canvas></div></div>
+    </div>
+    <div style="margin-top:16px">
+      <a class="mini-btn ghost" href="${API}?action=admin_finance_export&key=${encodeURIComponent(adminKey)}">Скачать бухгалтерию (CSV с ref/партнёром)</a>
+      <a class="mini-btn ghost" href="${API}?action=exportAnalytics&key=${encodeURIComponent(adminKey)}">Аналитика 30 дней</a>
+    </div>
+  </div>`;
+  drawArea('chMonth',(d.monthly||[]).map(m=>m.m.slice(2)),(d.monthly||[]).map(m=>m.revenue));
+  const byP=d.by_product||[];
+  drawDonut('chProdRev',byP.map(x=>x.product),byP.map(x=>x.revenue));
+}
+
+/* ========== CLIENTS ========== */
+let allClients=[];
+async function renderClients(box){
+  const d=await api('getClients');
+  allClients=(d.clients||[]);
+  box.innerHTML=`<div class="section">
+    <div class="row-tools">
+      <input class="inp" id="cSearch" placeholder="Поиск: имя, email, ниша, @tg…" oninput="filterClients()">
+      <select class="sel" id="cStatus" onchange="filterClients()">
+        <option value="">Все статусы</option>
+        <option value="new">Новые</option><option value="lead">Лиды</option>
+        <option value="dialog">В диалоге</option><option value="deal">Оплатили</option>
+        <option value="anketa">Заполнили анкету</option><option value="banned">Забанены</option>
+        <option value="refund">Возврат</option>
+      </select>
+      <select class="sel" id="cPaid" onchange="filterClients()">
+        <option value="">Все</option><option value="1">Оплатившие</option><option value="0">Не оплатившие</option>
+      </select>
+      <a class="sel" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" href="${API}?action=exportBase&key=${encodeURIComponent(adminKey)}">CSV</a>
+    </div>
+    <div id="clientList"></div>
+  </div>`;
+  filterClients();
+}
+function filterClients(){
+  const q=(document.getElementById('cSearch')?.value||'').toLowerCase();
+  const st=document.getElementById('cStatus')?.value||'';
+  const paid=document.getElementById('cPaid')?.value||'';
+  let list=allClients.filter(c=>{
+    const hay=((c.name||'')+' '+(c.email||'')+' '+(c.niche||'')+' '+(c.tg||'')+' '+(c.phone||'')).toLowerCase();
+    if(paid!==''&&String(c.paid||0)!==paid)return false;
+    return hay.includes(q)&&(!st||(c.status||'')===st);
+  });
+  const el=document.getElementById('clientList');
+  el.innerHTML='<div style="font-size:12px;color:var(--w3);margin-bottom:8px">Показано: '+list.length+' из '+allClients.length+'</div>' + (list.map(c=>clientCard(c)).join('')||'<div class="empty">Ничего не найдено</div>');
+}
+function clientCard(c){
+  const tg=c.tg?`<a href="https://t.me/${esc(c.tg)}" target="_blank">@${esc(c.tg)}</a>`:'';
+  return`<div class="lc" onclick="openClient(${c.id},this,event)">
+    <div class="lc-top"><div class="lc-name">${esc(c.name||'—')} <span style="color:var(--w4);font-size:11px">#${c.id}</span></div>${badge(c.status,c.paid)}</div>
+    <div class="lc-meta">${c.niche?'<span>'+esc(c.niche)+'</span>':''}${tg}${c.email?'<span>'+esc(c.email)+'</span>':''}${c.phone?'<span>'+esc(c.phone)+'</span>':''}${c.created_at?'<span>'+when(c.created_at)+'</span>':''}</div>
+    <div class="cdetail"></div></div>`;
+}
+async function openClient(id,el,ev){
+  if(ev&&ev.target.closest('a,button'))return;
+  const box=el.querySelector('.cdetail');
+  if(box.dataset.open){box.innerHTML='';box.dataset.open='';return}
+  box.innerHTML='<div class="spin" style="margin:16px auto"></div>';box.dataset.open='1';
+  const d=await api('getClient','&id='+id);
+  if(!d.ok){box.innerHTML='<div class="detail">Не загрузилось</div>';return}
+  const c=d.client||{};
+  let h='<div class="detail">';
+  if(c.phone)h+='<div>Телефон: <b>'+esc(c.phone)+'</b></div>';
+  if(c.email)h+='<div>Email: <b>'+esc(c.email)+'</b></div>';
+  if(c.tg)h+='<div>Telegram: <b><a href="https://t.me/'+esc(c.tg)+'" target="_blank">@'+esc(c.tg)+'</a></b></div>';
+  if(c.niche)h+='<div>Ниша: <b>'+esc(c.niche)+'</b></div>';
+  if(c.tariff)h+='<div>Тариф: <b>'+esc(c.tariff)+'</b></div>';
+  if(c.source)h+='<div>Источник: <b>'+esc(c.source)+'</b></div>';
+  if(c.paid)h+='<div>Оплатил: <b class="lime">'+esc(c.paid_product||'yes')+'</b> ('+esc(c.paid_ts||'')+')</div>';
+  if(c.note)h+='<div>Заметка: '+esc(c.note)+'</div>';
+  h+='<div class="btnrow">';
+  if(c.tg)h+='<a class="mini-btn" href="https://t.me/'+esc(c.tg)+'" target="_blank">Написать в TG</a>';
+  if(c.email && !c.paid)h+='<button class="mini-btn" onclick="event.stopPropagation();adminOp(\'mark_paid\',{email:\''+esc(c.email)+'\',product:\'sistema\'})">Пометить оплаченным</button>';
+  if(c.email && c.paid)h+='<button class="mini-btn warn" onclick="event.stopPropagation();refundClient(\''+esc(c.email)+'\','+id+')">Возврат</button>';
+  h+='<button class="mini-btn" onclick="event.stopPropagation();bonusClient(\''+esc(c.email)+'\')">Начислить бонус</button>';
+  h+='<button class="mini-btn ghost" onclick="event.stopPropagation();messageClient('+id+')">Сообщение</button>';
+  if(c.status!=='banned')h+='<button class="mini-btn dngr" onclick="event.stopPropagation();adminOp(\'ban\',{client_id:'+id+'})">Заблокировать</button>';
+  else h+='<button class="mini-btn" onclick="event.stopPropagation();adminOp(\'unban\',{client_id:'+id+'})">Разбанить</button>';
+  h+='</div>';
+  const dl=(d.dialogs||[]);
+  if(dl.length){h+='<div style="margin-top:12px;font-size:11px;color:var(--w3);text-transform:uppercase">Диалоги ('+dl.length+')</div>';dl.slice(-8).forEach(m=>{h+='<div class="dlg"><span class="r">'+esc(m.role||m.account||'')+'</span>'+esc((m.text||m.message||m.snippet||'').slice(0,200))+'</div>'})}
+  const pay=(d.payments||[]);
+  if(pay.length){h+='<div style="margin-top:12px;font-size:11px;color:var(--w3);text-transform:uppercase">Платежи ('+pay.length+')</div>';pay.forEach(p=>{h+='<div class="dlg">'+esc(p.product||'')+' · '+esc(p.amount||'')+' · '+when(p.created_at)+(p.manual?' <span class="amber">вручную</span>':'')+'</div>'})}
+  const an=(d.anketas||[]);
+  if(an.length){h+='<div style="margin-top:12px;font-size:11px;color:var(--w3);text-transform:uppercase">Анкеты</div>';an.forEach(a=>{h+='<div class="dlg">'+esc(a.service_type||'анкета')+' · '+(a.complete?'<span class="lime">готова</span>':'<span class="amber">частично</span>')+' <a class="lime" href="'+API+'?action=downloadAnketa&id='+encodeURIComponent(a.submission_id||a.id)+'&key='+encodeURIComponent(adminKey)+'" target="_blank">скачать</a></div>'})}
+  const rp=(d.responses||[]);
+  if(rp.length){h+='<div style="margin-top:12px;font-size:11px;color:var(--w3);text-transform:uppercase">Отклики агентов ('+rp.length+')</div>';rp.slice(0,5).forEach(r=>{h+='<div class="dlg"><span class="r">'+esc(r.account||'')+'</span>'+esc((r.message||'').slice(0,140))+'</div>'})}
+  const dl2=(d.deals||[]);
+  if(dl2.length){h+='<div style="margin-top:12px;font-size:11px;color:var(--w3);text-transform:uppercase">Сделки</div>';dl2.forEach(x=>{h+='<div class="dlg">'+esc(x.product||'')+' · '+esc(x.status||'')+' · '+rub(x.amount)+'</div>'})}
+  h+='</div>';box.innerHTML=h;
+}
+async function openClientModal(id){
+  const d=await api('getClient','&id='+id);
+  if(!d.ok){alert('Не найден');return}
+  const c=d.client||{};
+  showModal(`<div class="modal-t">${esc(c.name||'—')} #${c.id}<button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div>${badge(c.status,c.paid)} ${c.niche?'<span style="color:var(--w3)">'+esc(c.niche)+'</span>':''}</div>
+    <div style="margin-top:10px;font-size:13px;color:var(--w2)">${c.email?esc(c.email):'—'}${c.tg?' · @'+esc(c.tg):''}${c.phone?' · '+esc(c.phone):''}</div>
+    <div class="btnrow" style="margin-top:14px">
+      <a class="mini-btn ghost" onclick="closeModal();go('clients')">Перейти в CRM</a>
+      ${c.tg?'<a class="mini-btn" href="https://t.me/'+esc(c.tg)+'" target="_blank">Написать в TG</a>':''}
+    </div>`);
+}
+async function adminOp(op,payload){
+  if(!confirm('Подтверди действие: '+op))return;
+  const r=await apiPost('admin_action',Object.assign({op},payload));
+  alert(r.ok?('Готово: '+op):('Ошибка: '+(r.error||'')));
+  if(r.ok)loadPage(cur,true);
+}
+async function refundClient(email,cid){
+  const amt=parseInt(prompt('Сумма возврата в кошелёк (0 = только пометить):','0')||'0',10);
+  const r=await apiPost('admin_action',{op:'refund',email,client_id:cid,amount:amt});
+  alert(r.ok?('Возврат оформлен'+(r.refunded?', '+r.refunded+'₽ в кошелёк':'')):'Ошибка: '+(r.error||''));
+  if(r.ok)loadPage(cur,true);
+}
+async function bonusClient(email){
+  const amt=parseInt(prompt('Сумма бонуса в кошелёк, ₽:','500')||'0',10);
+  if(amt<=0)return;
+  const r=await apiPost('admin_action',{op:'bonus',email,amount:amt});
+  alert(r.ok?('Начислено '+amt+'₽'):'Ошибка: '+(r.error||''));
+}
+async function messageClient(cid){
+  const text=prompt('Текст сообщения клиенту:','');
+  if(!text)return;
+  const r=await apiPost('admin_action',{op:'message',client_id:cid,text});
+  alert(r.ok?'Отправлено':'Ошибка: '+(r.error||''));
+}
+
+/* ========== MODALS ========== */
+function showModal(html){
+  document.getElementById('modalWrap').innerHTML='<div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-b">'+html+'</div></div>';
+}
+function closeModal(){document.getElementById('modalWrap').innerHTML=''}
+addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+/* ========== ПРОСТЫЕ ЛИСТИНГИ (существующие endpoints, оставлены) ========== */
+async function renderList(box,action,key,render,emptyMsg){
+  const d=await api(action);
+  const arr=(d[key]||[]);
+  box.innerHTML='<div class="section">'+(arr.length?arr.map(render).join(''):'<div class="empty">'+emptyMsg+'</div>')+'</div>';
+}
+function renderAnketa(a){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(a.client_name||'Клиент')}</div><span class="badge ${a.complete?'b-paid':'b-wait'}">${a.complete?'готова':'частично'}</span></div><div class="lc-meta">${a.service_type?'<span>'+esc(a.service_type)+'</span>':''}${a.email?'<span>'+esc(a.email)+'</span>':''}${a.tg?'<a href="https://t.me/'+esc(a.tg)+'">@'+esc(a.tg)+'</a>':''}<span>${a.progress||0}/${a.total||'?'}</span>${a.created_at?'<span>'+when(a.created_at)+'</span>':''}</div><div style="margin-top:10px"><a class="mini-btn" href="${API}?action=downloadAnketa&id=${encodeURIComponent(a.submission_id||a.id)}&key=${encodeURIComponent(adminKey)}" target="_blank">Скачать</a></div></div>`}
+function renderDialog(m){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(m.client_name||m.name||m.username||'—')}</div><span class="badge b-new">${esc(m.account||m.role||'')}</span></div><div class="lc-meta">${when(m.created_at||m.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((m.message||m.text||m.snippet||'').slice(0,240))}</div></div>`}
+function renderDeal(d){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(d.name||d.client_name||'Сделка')}</div><span class="badge b-deal">${esc(d.product||d.status||'deal')}</span></div><div class="lc-meta">${d.amount?'<span class="lime">'+rub(d.amount)+'</span>':''}${when(d.created_at||d.ts)}</div></div>`}
+function renderVac(v){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(v.source||v.niche||'Вакансия')}</div>${v.score?'<span class="badge b-deal">'+esc(v.score)+'</span>':''}</div><div class="lc-meta">${v.niche?'<span>'+esc(v.niche)+'</span>':''}${when(v.created_at||v.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((v.text||'').slice(0,200))}</div></div>`}
+function renderResp(r){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(r.account||r.username||'Отклик')}</div><span class="badge b-new">${esc(r.niche||'')}</span></div><div class="lc-meta">${when(r.created_at||r.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((r.message||r.text||'').slice(0,200))}</div></div>`}
+function renderPay(p){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(p.name||'—')}</div><span class="badge b-paid">${esc(p.amount||p.product||'оплата')}</span></div><div class="lc-meta">${p.product?'<span>'+esc(p.product)+'</span>':''}${p.email?'<span>'+esc(p.email)+'</span>':''}${when(p.created_at||p.ts)}</div></div>`}
+
 async function renderProducts(box){
   const d=await api('getProducts');const arr=(d.products||[]);
-  box.innerHTML='<div class="section cards-grid">'+(arr.map(p=>`<div class="card"><div class="card-h">${p.emoji||''} ${esc(p.name)}</div><div style="display:flex;gap:20px"><div><div class="kpi-n" style="font-size:22px">${p.leads}</div><div class="kpi-l">Лидов</div></div><div><div class="kpi-n" style="font-size:22px">${p.paid}</div><div class="kpi-l">Оплат</div></div><div><div class="kpi-n" style="font-size:22px">${p.leads?Math.round(p.paid/p.leads*100):0}%</div><div class="kpi-l">Конверсия</div></div></div></div>`).join('')||'<div class="empty">Пусто</div>')+'</div>';
+  box.innerHTML='<div class="section cards-grid">'+(arr.map(p=>`<div class="card"><div class="card-h">${esc(p.name)}</div><div style="display:flex;gap:20px"><div><div class="kpi-n" style="font-size:22px">${p.leads}</div><div class="kpi-l">Лидов</div></div><div><div class="kpi-n" style="font-size:22px">${p.paid}</div><div class="kpi-l">Оплат</div></div><div><div class="kpi-n" style="font-size:22px">${p.leads?Math.round(p.paid/p.leads*100):0}%</div><div class="kpi-l">Конверсия</div></div></div></div>`).join('')||'<div class="empty">Пусто</div>')+'</div>';
 }
 async function renderNewsletter(box){
   const d=await api('getSubscribers');const subs=(d.subscribers||[]);const log=(d.log||[]);
@@ -206,131 +802,13 @@ async function sendNl(){
   const subject=document.getElementById('nlSubj').value.trim();
   const content=document.getElementById('nlBody').value.trim();
   if(!subject||!content){document.getElementById('nlRes').textContent='Заполни тему и текст';return}
-  document.getElementById('nlRes').textContent='Отправляю...';
-  const r=await fetch(API+'?action=sendNewsletter',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:adminKey,segment:document.getElementById('nlSeg').value,subject,content,btnText:document.getElementById('nlBt').value.trim(),btnUrl:document.getElementById('nlBu').value.trim()})}).then(x=>x.json()).catch(()=>({ok:false}));
+  document.getElementById('nlRes').textContent='Отправляю…';
+  const r=await apiPost('sendNewsletter',{segment:document.getElementById('nlSeg').value,subject,content,btnText:document.getElementById('nlBt').value.trim(),btnUrl:document.getElementById('nlBu').value.trim()});
   document.getElementById('nlRes').textContent=r.ok?('Готово! Отправлено: '+r.sent+', ошибок: '+r.failed):('Ошибка: '+(r.error||'сеть'));
   if(r.ok)setTimeout(()=>loadPage('newsletter'),1500);
 }
-async function renderDash(box){
-  const d=await api('getStats');
-  if(!d.ok){box.innerHTML='<div class="empty">Не удалось загрузить</div>';return}
-  const kpi=(n,l,ico)=>`<div class="kpi"><div class="kpi-ico">${ico}</div><div class="kpi-n">${n??0}</div><div class="kpi-l">${l}</div></div>`;
-  const sv=(p)=>'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+p+'</svg>';
-  const iC=sv('<circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6"/>');
-  const iM=sv('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>');
-  const iR=sv('<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>');
-  const iV=sv('<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>');
-  const iP=sv('<path d="M19 5 5 19M6.5 6.5h.01M17.5 17.5h.01"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>');
-  const rub=(v)=>Math.round(v||0).toLocaleString('ru-RU')+' ₽';
-  box.innerHTML=`<div class="section">
-    <div class="kpis">
-      ${kpi(rub(d.revenue),'Выручка',iR)}
-      ${kpi(d.total_subs,'Клиентов',iC)}
-      ${kpi(d.paid,'Оплатили',iM)}
-      ${kpi((d.conversion||0)+'%','Конверсия',iP)}
-      ${kpi(d.visits_total,'Визиты',iV)}
-      ${kpi(d.today,'Сегодня',iC)}
-    </div>
-    <div class="chart-card" style="margin-bottom:14px"><div class="card-h">Динамика за 14 дней — лиды и визиты</div><div class="chart-wrap" style="height:230px"><canvas id="chTrend"></canvas></div></div>
-    <div class="charts">
-      <div class="chart-card"><div class="card-h">Выручка, 14 дней</div><div class="chart-wrap"><canvas id="chRev"></canvas></div></div>
-      <div class="chart-card"><div class="card-h">Оплаты / клиенты</div><div class="chart-wrap"><canvas id="chPie"></canvas></div></div>
-    </div>
-    <div style="margin:8px 0 16px">
-      <a class="sel" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" href="${API}?action=exportAnalytics&key=${encodeURIComponent(adminKey)}">Скачать аналитику (CSV, 30 дней)</a>
-    </div>
-    <div class="card-h" style="margin:6px 0 12px">Инсайты</div>
-    <div id="insights"></div>
-    <div class="card-h" style="margin:20px 0 12px">Последние клиенты</div>
-    <div id="recent"></div>
-  </div>`;
-  const s=d.series||[]; const lb=s.map(x=>x.d);
-  drawTrend('chTrend',lb,s.map(x=>x.leads),s.map(x=>x.visits));
-  drawArea('chRev',lb,s.map(x=>x.revenue));
-  drawPie('chPie',['Оплатили','В работе'],[d.paid||0,d.unpaid||0]);
-  const rev14=s.reduce((a,x)=>a+(x.revenue||0),0), vis14=s.reduce((a,x)=>a+(x.visits||0),0);
-  document.getElementById('insights').innerHTML=
-    ins('Выручка всего',rub(d.revenue)+' · '+(d.payments||0)+' оплат')+
-    ins('Конверсия в оплату',(d.conversion||0)+'% ('+(d.paid||0)+' из '+(d.total_subs||0)+')')+
-    ins('Визиты сайта',(d.visits_total||0)+' всего · '+vis14+' за 14 дней · '+(d.visits_today||0)+' сегодня')+
-    ins('За 14 дней',rub(rev14)+' выручки · '+(d.today||0)+' новых сегодня');
-  document.getElementById('recent').innerHTML=(d.recent||[]).slice(0,8).map(c=>clientCard(c,false)).join('')||'<div class="empty">Пусто</div>';
-}
-function drawTrend(id,labels,leads,visits){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();
-  const g=el.getContext('2d').createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(154,255,0,0.28)');g.addColorStop(1,'rgba(154,255,0,0)');
-  charts[id]=new Chart(el,{type:'line',data:{labels,datasets:[
-    {label:'Визиты',data:visits,borderColor:'rgba(120,180,255,0.9)',backgroundColor:'rgba(120,180,255,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:0,pointHoverRadius:4},
-    {label:'Лиды',data:leads,borderColor:'#9AFF00',backgroundColor:g,borderWidth:2.5,tension:0.4,fill:true,pointRadius:0,pointHoverRadius:5}
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},animation:{duration:900,easing:'easeOutQuart'},plugins:{legend:{labels:{color:'#aaa',font:{family:'Onest'},usePointStyle:true,boxWidth:8}}},scales:{x:{ticks:{color:'#777',font:{family:'Onest',size:9},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#777',font:{family:'Onest'},precision:0},grid:{color:'rgba(255,255,255,0.05)'}}}}})}
-function drawArea(id,labels,data){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();
-  const g=el.getContext('2d').createLinearGradient(0,0,0,180);g.addColorStop(0,'rgba(154,255,0,0.5)');g.addColorStop(1,'rgba(154,255,0,0.02)');
-  charts[id]=new Chart(el,{type:'bar',data:{labels,datasets:[{data,backgroundColor:g,borderColor:'#9AFF00',borderWidth:{top:2,left:0,right:0,bottom:0},borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:900,easing:'easeOutQuart'},plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>Math.round(c.raw).toLocaleString('ru-RU')+' ₽'}}},scales:{x:{ticks:{color:'#777',font:{family:'Onest',size:9},maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#777',font:{family:'Onest'}},grid:{color:'rgba(255,255,255,0.05)'}}}}})}
-function ins(t,s){return`<div class="insight"><svg class="insight-ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1h6c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg><div><b>${t}</b><br><span>${s}</span></div></div>`}
-function drawBar(id,labels,data){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,{type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(154,255,0,0.6)',borderRadius:6,borderSkipped:false}]},options:chOpts(true)})}
-function drawPie(id,labels,data){const el=document.getElementById(id);if(!el)return;if(charts[id])charts[id].destroy();charts[id]=new Chart(el,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['#9AFF00','rgba(255,255,255,0.12)'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'66%',plugins:{legend:{labels:{color:'#aaa',font:{family:'Onest'}}}}}})}
-function chOpts(noleg){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!noleg}},scales:{x:{ticks:{color:'#777',font:{family:'Onest',size:10}},grid:{display:false}},y:{ticks:{color:'#777',font:{family:'Onest'}},grid:{color:'rgba(255,255,255,0.05)'}}}}}
-let allClients=[];
-async function renderClients(box){
-  const d=await api('getClients');
-  allClients=(d.clients||[]);
-  box.innerHTML=`<div class="section">
-    <div class="row-tools">
-      <input class="inp" id="cSearch" placeholder="Поиск: имя, email, ниша, @tg..." oninput="filterClients()">
-      <select class="sel" id="cStatus" onchange="filterClients()">
-        <option value="">Все статусы</option><option value="new">new</option><option value="deal">deal</option><option value="wait">ожидают</option>
-      </select>
-      <a class="sel" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" href="${API}?action=exportBase&key=${encodeURIComponent(adminKey)}">Скачать базу (CSV)</a>
-    </div>
-    <div id="clientList"></div></div>`;
-  filterClients();
-}
-function filterClients(){
-  const q=(document.getElementById('cSearch')?.value||'').toLowerCase();
-  const st=document.getElementById('cStatus')?.value||'';
-  let list=allClients.filter(c=>{
-    const hay=((c.name||'')+' '+(c.email||'')+' '+(c.niche||'')+' '+(c.tg||'')+' '+(c.phone||'')).toLowerCase();
-    return hay.includes(q)&&(!st||(c.status||'')===st);
-  });
-  document.getElementById('clientList').innerHTML=list.map(c=>clientCard(c,true)).join('')||'<div class="empty">Ничего не найдено</div>';
-}
-function clientCard(c,full){
-  const tg=c.tg?`<a href="https://t.me/${esc(c.tg)}" target="_blank">@${esc(c.tg)}</a>`:'';
-  return`<div class="lc" ${full?`onclick="openClient(${c.id},this,event)"`:''}>
-    <div class="lc-top"><div class="lc-name">${esc(c.name||'—')}</div>${badge(c.status,c.paid)}</div>
-    <div class="lc-meta">${c.niche?'<span>'+esc(c.niche)+'</span>':''}${tg}${c.email?'<span>'+esc(c.email)+'</span>':''}${c.created_at?'<span>'+when(c.created_at)+'</span>':''}</div>
-    <div class="cdetail"></div></div>`;
-}
-async function openClient(id,el,ev){
-  if(ev&&ev.target.closest('a'))return;
-  const box=el.querySelector('.cdetail');
-  if(box.dataset.open){box.innerHTML='';box.dataset.open='';return}
-  box.innerHTML='<div class="spin" style="margin:16px auto"></div>';box.dataset.open='1';
-  const d=await api('getClient','&id='+id);
-  if(!d.ok){box.innerHTML='<div class="detail">Не загрузилось</div>';return}
-  const c=d.client||{};
-  let h='<div class="detail">';
-  if(c.phone)h+='<div>Тел: <b>'+esc(c.phone)+'</b></div>';
-  if(c.budget)h+='<div>Бюджет: <b>'+esc(c.budget)+'</b></div>';
-  h+='<div style="margin-top:8px"><button class="mini-btn" onclick="confirmPay(\''+esc(c.email)+'\',event)">Подтвердить оплату</button></div>';
-  const dl=(d.dialogs||[]);
-  if(dl.length){h+='<div style="margin-top:10px;font-size:11px;color:var(--w3);text-transform:uppercase">Диалоги</div>';dl.slice(0,6).forEach(m=>{h+='<div class="dlg"><span class="r">'+esc(m.role||m.account||'')+'</span> '+esc((m.text||m.message||m.snippet||'').slice(0,160))+'</div>'})}
-  const an=(d.anketas||[]);
-  if(an.length){h+='<div style="margin-top:10px;font-size:11px;color:var(--w3);text-transform:uppercase">Анкеты</div>';an.forEach(a=>{h+='<div class="dlg">'+esc(a.service_type||a.submission_id||'анкета')+' <a class="lime" href="'+API+'?action=downloadAnketa&id='+encodeURIComponent(a.submission_id||a.id)+'&key='+encodeURIComponent(adminKey)+'" target="_blank">скачать</a></div>'})}
-  h+='</div>';box.innerHTML=h;
-}
-async function confirmPay(email,ev){ev.stopPropagation();if(!email){alert('Нет email');return}const r=await api('manualConfirm','&email='+encodeURIComponent(email));alert(r.ok?'Оплата подтверждена':'Ошибка: '+(r.error||''))}
-async function renderList(box,action,key,render,emptyMsg){
-  const d=await api(action);
-  const arr=(d[key]||[]);
-  box.innerHTML='<div class="section">'+(arr.length?arr.map(render).join(''):'<div class="empty">'+emptyMsg+'</div>')+'</div>';
-}
-function renderAnketa(a){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(a.client_name||a.name||'Клиент')}</div><span class="badge ${a.complete?'b-paid':'b-wait'}">${a.complete?'готова':'частично'}</span></div><div class="lc-meta">${a.service_type?'<span>'+esc(a.service_type)+'</span>':''}${a.email?'<span>'+esc(a.email)+'</span>':''}${a.tg?'<a href="https://t.me/'+esc(a.tg)+'">@'+esc(a.tg)+'</a>':''}<span>${a.progress||0}/${a.total||'?'}</span>${a.created_at?'<span>'+when(a.created_at)+'</span>':''}</div><div style="margin-top:10px"><a class="mini-btn" href="${API}?action=downloadAnketa&id=${encodeURIComponent(a.submission_id||a.id)}&key=${encodeURIComponent(adminKey)}" target="_blank">Скачать</a></div></div>`}
-function renderDialog(m){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(m.client_name||m.name||m.username||'—')}</div><span class="badge b-new">${esc(m.account||m.role||'')}</span></div><div class="lc-meta">${when(m.created_at||m.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((m.message||m.text||m.snippet||'').slice(0,240))}</div></div>`}
-function renderDeal(d){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(d.name||d.client_name||'Сделка')}</div><span class="badge b-deal">${esc(d.product||d.status||'deal')}</span></div><div class="lc-meta">${d.amount?'<span class="lime">'+esc(d.amount)+'</span>':''}${when(d.created_at||d.ts)}</div></div>`}
-function renderVac(v){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(v.source||v.niche||'Вакансия')}</div>${v.score?'<span class="badge b-deal">'+esc(v.score)+'</span>':''}</div><div class="lc-meta">${v.niche?'<span>'+esc(v.niche)+'</span>':''}${when(v.created_at||v.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((v.text||'').slice(0,200))}</div></div>`}
-function renderResp(r){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(r.account||r.username||'Отклик')}</div><span class="badge b-new">${esc(r.niche||'')}</span></div><div class="lc-meta">${when(r.created_at||r.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((r.message||r.text||'').slice(0,200))}</div></div>`}
-function renderPay(p){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(p.name||'—')}</div><span class="badge b-paid">${esc(p.amount||p.product||'оплата')}</span></div><div class="lc-meta">${p.product?'<span>'+esc(p.product)+'</span>':''}${p.email?'<span>'+esc(p.email)+'</span>':''}${when(p.created_at||p.ts)}</div></div>`}
-if(adminKey){api('getStats').then(r=>{if(r.ok){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');go('dashboard')}else{document.getElementById('pw').focus()}})}
+
+if(adminKey){api('admin_dashboard').then(r=>{if(r.ok){document.getElementById('login').classList.add('hide');document.getElementById('app').classList.remove('hide');go('dashboard')}else{document.getElementById('pw').focus()}})}
 else{document.getElementById('pw').focus()}
 </script>
 </body>

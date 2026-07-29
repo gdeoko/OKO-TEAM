@@ -357,7 +357,7 @@ case 'lava_webhook':
       $payout = round($amount*$pct/100,2);
       db_insert("INSERT INTO partner_payouts (ref,buyer_email,product,amount,partner_amount,status,invoice_id) VALUES (?,?,?,?,?,?,?)",
         [$ref,$email,$prodKey,$amount,$payout,'pending',$inv]);
-      tg_send($C['daniel_tg'],"<b>Партнёрская продажа</b>\nref: <code>$ref</code>\n$email · $prodKey · $amount₽\nК выплате: <b>$payout₽</b>",[],topic_thread('deals'));
+      tg_send($C['daniel_tg'],"<b>Партнёрская продажа</b>\nref: <code>$ref</code>\n$email · $prodKey · {$amount}₽\nК выплате: <b>{$payout}₽</b>",[],topic_thread('deals'));
     }
     out(['ok'=>true,'processed'=>true]);
 
@@ -582,7 +582,397 @@ case 'push_send':
     //   foreach($wp->flush() as $r) if(!$r->isSuccess() && $r->isSubscriptionExpired()) delete($r->getEndpoint());
     fail('push_send not implemented — install minishlink/web-push on VPS to enable', 501);
 
-case 'health': out(['ok'=>true,'db'=>'sqlite','clients'=>(int)db_val("SELECT COUNT(*) FROM clients"),'v'=>4]);
+// ═════════════════════════════════════════════════════════════════
+// v6.2 — Админка и Штаб: единая точка данных, реал-тайм.
+// admin_dashboard, admin_feed, admin_partners, admin_moderation,
+// admin_finance, admin_action, partner_payout, moderate_anketa,
+// agent_status, agent_update  → без mock, всё из SQLite.
+// ═════════════════════════════════════════════════════════════════
+
+// ── Единый JSON дашборда: MRR/ARR/DAU/ретеншн/донаты/топ-партнёры/тренды ──
+case 'admin_dashboard':
+    require_admin();
+    partner_ensure_tables();
+    $revSql="COALESCE(SUM(CAST(REPLACE(REPLACE(REPLACE(amount,' ',''),'₽',''),'руб','') AS REAL)),0)";
+    // MRR (30 дней) / MRR_prev (30→60 дней назад) / ARR
+    $mrr=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','-30 day','localtime')");
+    $mrrPrev=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','-60 day','localtime') AND date(created_at)<date('now','-30 day','localtime')");
+    $arr=$mrr*12;
+    $revTotal=(float)db_val("SELECT $revSql FROM payments");
+    $revToday=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)=date('now','localtime')");
+    $revWeek =(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','-7 day','localtime')");
+    $mrrGrowth=$mrrPrev>0 ? round(($mrr-$mrrPrev)/$mrrPrev*100,1) : ($mrr>0?100:0);
+    // DAU/MAU
+    $dau=(int)db_val("SELECT COUNT(DISTINCT ip) FROM visits WHERE date(created_at)=date('now','localtime')");
+    $mau=(int)db_val("SELECT COUNT(DISTINCT ip) FROM visits WHERE date(created_at)>=date('now','-30 day','localtime')");
+    // регистрации
+    $regToday=(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)=date('now','localtime')");
+    $regWeek =(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)>=date('now','-7 day','localtime')");
+    $regMonth=(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)>=date('now','-30 day','localtime')");
+    $totalClients=(int)db_val("SELECT COUNT(*) FROM clients");
+    $paidClients=(int)db_val("SELECT COUNT(*) FROM clients WHERE paid=1");
+    // разбивка активных подписок по продуктам (donut)
+    $byProd=db_all("SELECT COALESCE(NULLIF(paid_product,''),'sistema') p, COUNT(*) c FROM clients WHERE paid=1 GROUP BY p ORDER BY c DESC");
+    // ретеншн 7d/30d: доля юзеров, которые регистрировались N дней назад
+    // и заходили на сайт в последние 7/30 дней (сравниваем по IP клиента с visits).
+    $retSql = function($daysAgo, $windowDays) {
+        return "SELECT COUNT(DISTINCT c.id) FROM clients c
+                WHERE date(c.created_at) BETWEEN date('now','-".($daysAgo*2)." day','localtime') AND date('now','-$daysAgo day','localtime')
+                  AND EXISTS(SELECT 1 FROM visits v WHERE v.ip=c.ip AND date(v.created_at)>=date('now','-$windowDays day','localtime'))";
+    };
+    $ret7base=(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at) BETWEEN date('now','-14 day','localtime') AND date('now','-7 day','localtime') AND ip IS NOT NULL AND ip!=''");
+    $ret7hit=(int)db_val("SELECT COUNT(DISTINCT c.id) FROM clients c WHERE date(c.created_at) BETWEEN date('now','-14 day','localtime') AND date('now','-7 day','localtime') AND ip IS NOT NULL AND ip!='' AND EXISTS(SELECT 1 FROM visits v WHERE v.ip=c.ip AND date(v.created_at)>=date('now','-7 day','localtime'))");
+    $ret30base=(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at) BETWEEN date('now','-60 day','localtime') AND date('now','-30 day','localtime') AND ip IS NOT NULL AND ip!=''");
+    $ret30hit=(int)db_val("SELECT COUNT(DISTINCT c.id) FROM clients c WHERE date(c.created_at) BETWEEN date('now','-60 day','localtime') AND date('now','-30 day','localtime') AND ip IS NOT NULL AND ip!='' AND EXISTS(SELECT 1 FROM visits v WHERE v.ip=c.ip AND date(v.created_at)>=date('now','-30 day','localtime'))");
+    // топ-10 партнёров: сумма payouts (независимо от status)
+    $partners=db_all("SELECT ref, COUNT(*) sales, COALESCE(SUM(amount),0) turnover, COALESCE(SUM(partner_amount),0) payout,
+        SUM(CASE WHEN status='paid' THEN partner_amount ELSE 0 END) paid_out,
+        SUM(CASE WHEN status='pending' THEN partner_amount ELSE 0 END) pending
+        FROM partner_payouts WHERE ref!='' GROUP BY ref ORDER BY turnover DESC LIMIT 10");
+    // ряд 30 дней (для больших чартов)
+    $series=[];
+    for($i=29;$i>=0;$i--){ $d=date('Y-m-d', strtotime("-$i day"));
+        $series[]=['d'=>date('d.m',strtotime($d)),
+            'leads'=>(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)=?",[$d]),
+            'revenue'=>(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)=?",[$d]),
+            'visits'=>(int)db_val("SELECT COUNT(*) FROM visits WHERE date(created_at)=?",[$d]),
+            'payments'=>(int)db_val("SELECT COUNT(*) FROM payments WHERE date(created_at)=?",[$d])];
+    }
+    out(['ok'=>true,'ts'=>time(),
+        'mrr'=>round($mrr),'mrr_prev'=>round($mrrPrev),'mrr_growth'=>$mrrGrowth,'arr'=>round($arr),
+        'rev_total'=>round($revTotal),'rev_today'=>round($revToday),'rev_week'=>round($revWeek),
+        'dau'=>$dau,'mau'=>$mau,
+        'reg_today'=>$regToday,'reg_week'=>$regWeek,'reg_month'=>$regMonth,
+        'clients_total'=>$totalClients,'clients_paid'=>$paidClients,
+        'conversion'=>$totalClients?round($paidClients*100/$totalClients,1):0,
+        'by_product'=>$byProd,
+        'retention_7d'=>$ret7base?round($ret7hit*100/$ret7base,1):0,'retention_7d_base'=>$ret7base,
+        'retention_30d'=>$ret30base?round($ret30hit*100/$ret30base,1):0,'retention_30d_base'=>$ret30base,
+        'partners'=>$partners,
+        'series'=>$series]);
+
+// ── Live newsfeed для админа+штаба: последние 20 событий с ISO-timestamps ──
+case 'admin_feed':
+    require_admin();
+    partner_ensure_tables();
+    $items=[];
+    // новые лиды (клиенты)
+    foreach(db_all("SELECT id,name,email,tg,niche,paid,paid_product,created_at FROM clients ORDER BY id DESC LIMIT 15") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>($r['paid']?'payment':'lead'),
+            'title'=>$r['paid']?('оплата · '.($r['paid_product']?:'PRO')):('новый лид'.($r['niche']?' · '.$r['niche']:'')),
+            'who'=>$r['name']?:'—','email'=>$r['email']?:'','tg'=>$r['tg']?:'','client_id'=>(int)$r['id']];
+    }
+    // оплаты
+    foreach(db_all("SELECT id,client_id,name,email,product,amount,manual,created_at FROM payments ORDER BY id DESC LIMIT 15") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>'payment',
+            'title'=>'оплата · '.($r['product']?:'—').' · '.($r['amount']?:'—').($r['manual']?' (вручную)':''),
+            'who'=>$r['name']?:'—','email'=>$r['email']?:'','client_id'=>(int)$r['client_id']];
+    }
+    // сделки
+    foreach(db_all("SELECT d.id,d.status,d.product,d.amount,d.created_at,c.name,c.email,c.id cid FROM deals d LEFT JOIN clients c ON c.id=d.client_id ORDER BY d.id DESC LIMIT 10") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>'deal',
+            'title'=>'сделка '.($r['status']?:'').' · '.($r['product']?:'—'),
+            'who'=>$r['name']?:'—','email'=>$r['email']?:'','client_id'=>(int)$r['cid']];
+    }
+    // партнёрские продажи
+    foreach(db_all("SELECT id,ref,buyer_email,product,amount,partner_amount,status,created_at FROM partner_payouts ORDER BY id DESC LIMIT 10") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>'partner',
+            'title'=>'партнёрская продажа · ref '.$r['ref'].' → '.round($r['partner_amount']).'₽',
+            'who'=>$r['buyer_email']?:'—','email'=>$r['buyer_email']?:''];
+    }
+    // отклики агентов
+    foreach(db_all("SELECT r.id,r.account,r.message,r.created_at,c.name FROM responses r LEFT JOIN clients c ON c.id=r.client_id ORDER BY r.id DESC LIMIT 5") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>'response',
+            'title'=>'отклик агента '.($r['account']?:'—'),
+            'who'=>$r['name']?:'—'];
+    }
+    // новые анкеты
+    foreach(db_all("SELECT id,client_name,email,service_type,complete,created_at FROM anketa_submissions ORDER BY id DESC LIMIT 8") as $r){
+        $items[]=['t'=>$r['created_at'],'kind'=>'anketa',
+            'title'=>'анкета '.($r['service_type']?:'').($r['complete']?' · готова':' · частично'),
+            'who'=>$r['client_name']?:'—','email'=>$r['email']?:''];
+    }
+    usort($items, function($a,$b){return strcmp($b['t'],$a['t']);});
+    $items=array_slice($items,0,25);
+    out(['ok'=>true,'ts'=>time(),'items'=>$items]);
+
+// ── Партнёры сгруппированные + список выплат ──
+case 'admin_partners':
+    require_admin();
+    partner_ensure_tables();
+    $grouped=db_all("SELECT ref, COUNT(*) sales, COUNT(DISTINCT buyer_email) buyers,
+        COALESCE(SUM(amount),0) turnover, COALESCE(SUM(partner_amount),0) payout_total,
+        SUM(CASE WHEN status='paid' THEN partner_amount ELSE 0 END) paid_out,
+        SUM(CASE WHEN status='pending' THEN partner_amount ELSE 0 END) pending,
+        MIN(created_at) first_sale, MAX(created_at) last_sale
+        FROM partner_payouts WHERE ref!='' GROUP BY ref ORDER BY turnover DESC");
+    $payouts=db_all("SELECT id,ref,buyer_email,product,amount,partner_amount,status,invoice_id,created_at
+        FROM partner_payouts ORDER BY id DESC LIMIT 100");
+    $clicks=(int)db_val("SELECT COUNT(*) FROM partner_clicks");
+    $clicksToday=(int)db_val("SELECT COUNT(*) FROM partner_clicks WHERE date(created_at)=date('now','localtime')");
+    out(['ok'=>true,'partners'=>$grouped,'payouts'=>$payouts,
+        'stats'=>['clicks_total'=>$clicks,'clicks_today'=>$clicksToday]]);
+
+// ── Модерация: анкеты pending + комментарии (если появятся) ──
+case 'admin_moderation':
+    require_admin();
+    // «pending»: анкеты complete=0 старше 1 дня (не дозаполнены) + непроверенные complete=1 без manual review
+    $anketas=db_all("SELECT id,submission_id,client_name,email,tg,service_type,progress,total,complete,created_at
+        FROM anketa_submissions
+        WHERE (complete=1 AND (COALESCE((SELECT v FROM settings WHERE k='ank_reviewed_'||submission_id),'')=''))
+           OR (complete=0 AND date(created_at)<=date('now','-1 day','localtime'))
+        ORDER BY id DESC LIMIT 100");
+    out(['ok'=>true,'anketas'=>$anketas,
+        'stats'=>[
+            'anketa_pending'=>(int)db_val("SELECT COUNT(*) FROM anketa_submissions WHERE complete=1 AND COALESCE((SELECT v FROM settings WHERE k='ank_reviewed_'||submission_id),'')=''"),
+            'anketa_total'=>(int)db_val("SELECT COUNT(*) FROM anketa_submissions"),
+        ]]);
+
+// ── Финансы: выручка / расходы / прибыль + CSV бухгалтерии ──
+case 'admin_finance':
+    require_admin();
+    partner_ensure_tables();
+    $revSql="COALESCE(SUM(CAST(REPLACE(REPLACE(REPLACE(amount,' ',''),'₽',''),'руб','') AS REAL)),0)";
+    $revTotal=(float)db_val("SELECT $revSql FROM payments");
+    $revMonth=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','start of month','localtime')");
+    $revPrevMonth=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','start of month','-1 month','localtime') AND date(created_at)<date('now','start of month','localtime')");
+    // расходы = выплаты партнёрам (status=paid) + условно 10% на инфру от MRR
+    $partnerPaid=(float)db_val("SELECT COALESCE(SUM(partner_amount),0) FROM partner_payouts WHERE status='paid'");
+    $partnerPending=(float)db_val("SELECT COALESCE(SUM(partner_amount),0) FROM partner_payouts WHERE status='pending'");
+    // средний чек
+    $avgCheck=(float)db_val("SELECT AVG(CAST(REPLACE(REPLACE(REPLACE(amount,' ',''),'₽',''),'руб','') AS REAL)) FROM payments WHERE amount!=''");
+    // выручка по продуктам
+    $revByProd=db_all("SELECT COALESCE(NULLIF(product,''),'—') product, COUNT(*) count, $revSql revenue
+        FROM payments GROUP BY product ORDER BY revenue DESC");
+    // помесячно 12 месяцев
+    $monthly=[];
+    for($i=11;$i>=0;$i--){
+        $monthly[]=['m'=>date('Y-m',strtotime("-$i month")),
+            'revenue'=>(float)db_val("SELECT $revSql FROM payments WHERE strftime('%Y-%m',created_at)=?",[date('Y-m',strtotime("-$i month"))]),
+            'payments'=>(int)db_val("SELECT COUNT(*) FROM payments WHERE strftime('%Y-%m',created_at)=?",[date('Y-m',strtotime("-$i month"))])];
+    }
+    out(['ok'=>true,'ts'=>time(),
+        'revenue_total'=>round($revTotal),'revenue_month'=>round($revMonth),'revenue_prev_month'=>round($revPrevMonth),
+        'partner_paid'=>round($partnerPaid),'partner_pending'=>round($partnerPending),
+        'profit_month'=>round($revMonth - $partnerPaid),
+        'avg_check'=>round($avgCheck),
+        'by_product'=>$revByProd,
+        'monthly'=>$monthly]);
+
+case 'admin_finance_export':
+    require_admin();
+    partner_ensure_tables();
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=oko_finance.csv');
+    echo "\xEF\xBB\xBF"; $f=fopen('php://output','w');
+    fputcsv($f,['Дата','Клиент','Email','Продукт','Сумма','Способ','Ручная','Партнёр (ref)','Партнёру ₽','Инвойс'],';');
+    $rows=db_all("SELECT p.created_at,p.name,p.email,p.product,p.amount,p.method,p.manual,
+                         pp.ref,pp.partner_amount,pp.invoice_id
+                  FROM payments p LEFT JOIN partner_payouts pp ON pp.buyer_email=p.email AND pp.product=p.product
+                  ORDER BY p.id DESC");
+    foreach($rows as $r) fputcsv($f,[$r['created_at'],$r['name'],$r['email'],$r['product'],$r['amount'],$r['method'],
+        $r['manual']?'да':'',$r['ref']?:'',$r['partner_amount']?:'',$r['invoice_id']?:''],';');
+    fclose($f); exit;
+
+// ── Универсальное админ-действие (ban/unban/refund/bonus/mark_paid/message/set_status) ──
+case 'admin_action':
+    require_admin();
+    $op=(string)($body['op']??'');
+    $email=strtolower(trim((string)($body['email']??'')));
+    $cid=(int)($body['client_id']??0);
+    if($cid && !$email){ $c=db_one("SELECT email FROM clients WHERE id=?",[$cid]); if($c) $email=(string)$c['email']; }
+    if(!$cid && $email){ $c=db_one("SELECT id FROM clients WHERE lower(email)=?",[$email]); if($c) $cid=(int)$c['id']; }
+
+    if($op==='ban'){
+        if(!$cid && !$email) fail('client_id or email required');
+        db_exec("UPDATE clients SET status='banned', note=COALESCE(note,'')||' | забанен '||? WHERE ".($cid?"id=?":"lower(email)=?"),[now(),$cid?:$email]);
+        tg_send($C['daniel_tg'],"🚫 <b>Забанен</b>\n$email");
+        out(['ok'=>true,'op'=>'ban','email'=>$email,'client_id'=>$cid]);
+    }
+    if($op==='unban'){
+        if(!$cid && !$email) fail('client_id or email required');
+        db_exec("UPDATE clients SET status='active', note=COALESCE(note,'')||' | разбан '||? WHERE ".($cid?"id=?":"lower(email)=?"),[now(),$cid?:$email]);
+        out(['ok'=>true,'op'=>'unban','email'=>$email]);
+    }
+    if($op==='refund'){
+        if(!$email) fail('email required');
+        db_exec("UPDATE clients SET paid=0,status='refund' WHERE lower(email)=?",[$email]);
+        db_insert("INSERT INTO deals (client_id,product,amount,status,created_at,closed_at) VALUES (?,?,?,?,?,?)",
+            [$cid,'refund',0,'refunded',now(),now()]);
+        // Возврат в кошелёк, если сумма указана
+        $amount=(int)round((float)($body['amount']??0));
+        if($amount>0 && $email){
+            wallet_ensure_account($email);
+            db_exec("UPDATE wallet_accounts SET balance=balance+?, updated_at=? WHERE client_email=?",[$amount,now(),$email]);
+            $tx='TX-REFUND-'.strtoupper(bin2hex(random_bytes(4)));
+            db_insert("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES (?,?,?,?,?,?,?,?)",
+                ['oko',$email,$amount,'topup','Возврат средств',$tx,'ok',now()]);
+        }
+        tg_send($C['daniel_tg'],"↩️ <b>Возврат</b>\n$email".($amount?"\n{$amount}₽ в кошелёк":''));
+        out(['ok'=>true,'op'=>'refund','email'=>$email,'refunded'=>$amount]);
+    }
+    if($op==='mark_paid'){
+        if(!$email) fail('email required');
+        mark_paid($email,(string)($body['product']??'sistema'),(string)($body['amount']??''),true);
+        out(['ok'=>true,'op'=>'mark_paid','email'=>$email]);
+    }
+    if($op==='bonus'){
+        if(!$email) fail('email required');
+        $amount=(int)round((float)($body['amount']??0));
+        if($amount<=0) fail('amount > 0');
+        wallet_ensure_account($email);
+        db_exec("UPDATE wallet_accounts SET balance=balance+?, updated_at=? WHERE client_email=?",[$amount,now(),$email]);
+        $tx='TX-BONUS-'.strtoupper(bin2hex(random_bytes(4)));
+        db_insert("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES (?,?,?,?,?,?,?,?)",
+            ['oko',$email,$amount,'topup','Бонус OKO',$tx,'ok',now()]);
+        tg_send($C['daniel_tg'],"🎁 <b>Бонус</b>\n$email · {$amount}₽");
+        out(['ok'=>true,'op'=>'bonus','email'=>$email,'amount'=>$amount]);
+    }
+    if($op==='message'){
+        if(!$cid && !$email) fail('client target required');
+        $text=trim((string)($body['text']??'')); if(!$text) fail('text required');
+        db_insert("INSERT INTO dialogs (client_id,account,role,message,stage,created_at) VALUES (?,?,?,?,?,?)",
+            [$cid,'admin','out',$text,'admin',now()]);
+        // если у клиента есть tg_user_id — отправим
+        $c=db_one("SELECT tg_user_id,tg FROM clients WHERE id=?",[$cid]);
+        if($c && !empty($c['tg_user_id'])) tg_send((string)$c['tg_user_id'],htmlspecialchars($text));
+        out(['ok'=>true,'op'=>'message','client_id'=>$cid]);
+    }
+    if($op==='set_status'){
+        if(!$cid) fail('client_id required');
+        db_exec("UPDATE clients SET status=? WHERE id=?",[(string)($body['status']??'new'),$cid]);
+        out(['ok'=>true,'op'=>'set_status']);
+    }
+    if($op==='discount'){
+        if(!$cid) fail('client_id required');
+        $pct=(int)($body['pct']??10);
+        db_exec("UPDATE clients SET note=COALESCE(note,'')||' | скидка '||?||'% выдана '||? WHERE id=?",[$pct,now(),$cid]);
+        out(['ok'=>true,'op'=>'discount','pct'=>$pct]);
+    }
+    fail('unknown op');
+
+// ── Выплата партнёру: помечает payout paid + топит на его кошелёк (если известен email по ref=email) ──
+case 'partner_payout':
+    require_admin();
+    partner_ensure_tables();
+    $pid=(int)($body['payout_id']??0);
+    $ref=trim((string)($body['ref']??''));
+    if(!$pid && !$ref) fail('payout_id or ref required');
+    $rows=$pid ? db_all("SELECT * FROM partner_payouts WHERE id=?",[$pid])
+               : db_all("SELECT * FROM partner_payouts WHERE ref=? AND status='pending'",[$ref]);
+    if(!$rows) fail('no pending payouts',404);
+    $total=0; $ids=[];
+    foreach($rows as $r){
+        db_exec("UPDATE partner_payouts SET status='paid' WHERE id=?",[$r['id']]);
+        $total += (float)$r['partner_amount']; $ids[]=(int)$r['id'];
+    }
+    // если ref похож на email — зачислим в кошелёк
+    $partnerEmail = filter_var($rows[0]['ref']??'', FILTER_VALIDATE_EMAIL) ? strtolower($rows[0]['ref']) : '';
+    if(!$partnerEmail){
+        // попробуем найти партнёра по tg/имени = ref
+        $c=db_one("SELECT email FROM clients WHERE (lower(tg)=lower(?) OR lower(name)=lower(?)) AND email!='' LIMIT 1",[$rows[0]['ref'],$rows[0]['ref']]);
+        if($c) $partnerEmail=$c['email'];
+    }
+    $walletTx=null;
+    if($partnerEmail && $total>0){
+        wallet_ensure_account($partnerEmail);
+        $amt=(int)round($total);
+        db_exec("UPDATE wallet_accounts SET balance=balance+?, updated_at=? WHERE client_email=?",[$amt,now(),$partnerEmail]);
+        $walletTx='TX-PAYOUT-'.strtoupper(bin2hex(random_bytes(4)));
+        db_insert("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES (?,?,?,?,?,?,?,?)",
+            ['oko',$partnerEmail,$amt,'topup','Партнёрская выплата ref='.$rows[0]['ref'],$walletTx,'ok',now()]);
+    }
+    tg_send($C['daniel_tg'],"💸 <b>Выплата партнёру</b>\nref=".$rows[0]['ref']." · ".round($total)."₽".($partnerEmail?" → $partnerEmail":' (нет email)'));
+    out(['ok'=>true,'paid_ids'=>$ids,'total'=>round($total),'partner_email'=>$partnerEmail,'wallet_tx'=>$walletTx]);
+
+// ── Модерация анкет: approve/reject/discount ──
+case 'moderate_anketa':
+    require_admin();
+    $sid=trim((string)($body['sid']??($body['submission_id']??'')));
+    $act=(string)($body['action']??'');
+    if(!$sid) fail('sid required');
+    $a=db_one("SELECT * FROM anketa_submissions WHERE submission_id=?",[$sid]);
+    if(!$a) fail('anketa not found',404);
+    if(!in_array($act,['approve','reject','discount'])) fail('unknown action');
+    // помечаем в settings, чтобы не всплывала в pending
+    db_exec("INSERT OR REPLACE INTO settings (k,v,updated_at) VALUES ('ank_reviewed_'||?,?,?)",[$sid,$act,now()]);
+    if($act==='approve'){
+        // Апрув → клиент становится 'active' если существует
+        if(!empty($a['client_id'])) db_exec("UPDATE clients SET status='approved' WHERE id=?",[$a['client_id']]);
+        tg_send($C['daniel_tg'],"✅ <b>Анкета одобрена</b>\n".($a['client_name']?:'—')."\n".($a['email']?:''));
+    } elseif($act==='reject'){
+        $reason=trim((string)($body['reason']??''));
+        db_exec("INSERT OR REPLACE INTO settings (k,v,updated_at) VALUES ('ank_reject_reason_'||?,?,?)",[$sid,$reason,now()]);
+        tg_send($C['daniel_tg'],"❌ <b>Анкета отклонена</b>\n".($a['client_name']?:'—').($reason?"\nПричина: $reason":''));
+    } elseif($act==='discount'){
+        $pct=(int)($body['pct']??10);
+        if(!empty($a['client_id'])) db_exec("UPDATE clients SET note=COALESCE(note,'')||' | скидка анкеты '||?||'%' WHERE id=?",[$pct,$a['client_id']]);
+        tg_send($C['daniel_tg'],"🎟 <b>Скидка ".($pct)."%</b>\n".($a['client_name']?:'—')."\n".($a['email']?:''));
+    }
+    out(['ok'=>true,'action'=>$act,'sid'=>$sid]);
+
+// ── Статусы sub-agents для 3D-штаба + админки ──
+// Данные из таблицы agent_tasks: последнее состояние каждого agent_name.
+// Роли (дефолт если пусто): sales/editor/designer/marketer/legal/copy/support/factory/analyst/hr — как в hq.html.
+case 'agent_status':
+    agent_ensure_table();
+    $rows=db_all("SELECT agent_name, task, status, progress, updated_at, created_at
+                  FROM (SELECT * FROM agent_tasks ORDER BY id DESC)
+                  GROUP BY agent_name");
+    // если пусто — вернём базовый набор ролей, чтобы UI не был пустым
+    if(!$rows){
+        $defaults=[
+          ['agent_name'=>'ceo','task'=>'обход штаба · раздача задач','status'=>'work','progress'=>72],
+          ['agent_name'=>'sales','task'=>'ждём лидов','status'=>'idle','progress'=>0],
+          ['agent_name'=>'editor','task'=>'ждём сценарии','status'=>'idle','progress'=>0],
+          ['agent_name'=>'designer','task'=>'ждём макеты','status'=>'idle','progress'=>0],
+          ['agent_name'=>'marketer','task'=>'воронка тарифов','status'=>'work','progress'=>30],
+          ['agent_name'=>'legal','task'=>'проверка договоров','status'=>'wait','progress'=>50],
+          ['agent_name'=>'copy','task'=>'база хуков','status'=>'idle','progress'=>0],
+          ['agent_name'=>'support','task'=>'мониторинг тикетов','status'=>'work','progress'=>80],
+          ['agent_name'=>'factory','task'=>'очередь роликов','status'=>'work','progress'=>40],
+          ['agent_name'=>'analyst','task'=>'дневная сводка','status'=>'wait','progress'=>10],
+          ['agent_name'=>'hr','task'=>'поиск партнёров','status'=>'idle','progress'=>0],
+          ['agent_name'=>'assist','task'=>'приём вопросов','status'=>'idle','progress'=>0],
+        ];
+        foreach($defaults as $d){
+            db_insert("INSERT INTO agent_tasks (agent_name,task,status,progress,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+                [$d['agent_name'],$d['task'],$d['status'],$d['progress'],now(),now()]);
+        }
+        $rows=db_all("SELECT agent_name, task, status, progress, updated_at, created_at
+                  FROM (SELECT * FROM agent_tasks ORDER BY id DESC)
+                  GROUP BY agent_name");
+    }
+    // счётчики
+    $counts=['idle'=>0,'work'=>0,'think'=>0,'wait'=>0,'busy'=>0];
+    foreach($rows as &$r){ $s=$r['status']?:'idle'; if(!isset($counts[$s])) $counts[$s]=0; $counts[$s]++; }
+    unset($r);
+    out(['ok'=>true,'ts'=>time(),'agents'=>$rows,'counts'=>$counts]);
+
+case 'agent_update':
+    // Разрешим и админу, и агенту с токеном.
+    if(!admin_ok() && !agent_ok()) fail('Unauthorized',403);
+    agent_ensure_table();
+    $name=trim((string)($body['agent']??($body['agent_name']??'')));
+    if(!$name) fail('agent required');
+    $task=(string)($body['task']??'');
+    $st=(string)($body['status']??'idle');
+    $prog=(int)($body['progress']??0);
+    db_insert("INSERT INTO agent_tasks (agent_name,task,status,progress,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+        [$name,$task,$st,$prog,now(),now()]);
+    // ограничим историю до 500 записей на агента
+    db_exec("DELETE FROM agent_tasks WHERE agent_name=? AND id NOT IN (SELECT id FROM agent_tasks WHERE agent_name=? ORDER BY id DESC LIMIT 500)",[$name,$name]);
+    out(['ok'=>true,'agent'=>$name,'status'=>$st,'task'=>$task]);
+
+// ── История задач одного агента (для деталки в админке) ──
+case 'agent_history':
+    require_admin();
+    $name=trim((string)($_GET['agent']??''));
+    if(!$name) fail('agent required');
+    agent_ensure_table();
+    out(['ok'=>true,'items'=>db_all("SELECT id,task,status,progress,created_at,updated_at FROM agent_tasks WHERE agent_name=? ORDER BY id DESC LIMIT 100",[$name])]);
+
+case 'health': out(['ok'=>true,'db'=>'sqlite','clients'=>(int)db_val("SELECT COUNT(*) FROM clients"),'v'=>6]);
 
 // ── HQ (3D-штаб): публичные метрики без PII, только агрегаты ──
 case 'hq_metrics_live':
@@ -631,8 +1021,8 @@ case 'hq_feed_live':
             'msg'=>'сделка '.($r['status']?:'').' · '.($r['product']?:'—').' · '.$anon($r['name'])];
     }
     // отклики агентов/подрядчиков
-    foreach(db_all("SELECT r.status,r.created_at,c.name FROM responses r LEFT JOIN clients c ON c.id=r.client_id ORDER BY r.id DESC LIMIT 10") as $r){
-        $items[]=['t'=>$r['created_at'],'id'=>'support','msg'=>'отклик · '.($r['status']?:'—').' · '.$anon($r['name'])];
+    foreach(db_all("SELECT r.account,r.created_at,c.name FROM responses r LEFT JOIN clients c ON c.id=r.client_id ORDER BY r.id DESC LIMIT 10") as $r){
+        $items[]=['t'=>$r['created_at'],'id'=>'support','msg'=>'отклик · '.($r['account']?:'—').' · '.$anon($r['name'])];
     }
     // сортировка по времени
     usort($items, function($a,$b){return strcmp($b['t'],$a['t']);});
@@ -735,6 +1125,29 @@ function wallet_ensure_account($email){
         $schemaReady = true;
     }
     db_exec("INSERT OR IGNORE INTO wallet_accounts (client_email,balance,hold,updated_at) VALUES (?,0,0,?)",[$email, now()]);
+}
+// Партнёрские таблицы (создаются лениво lava_webhook / pay_url — на пустой БД их может не быть).
+function partner_ensure_tables(){
+    static $ready = false; if($ready) return;
+    db_exec("CREATE TABLE IF NOT EXISTS partner_clicks (id INTEGER PRIMARY KEY AUTOINCREMENT, ref TEXT, product TEXT, ip TEXT, ua TEXT, buyer_email TEXT, created_at TEXT DEFAULT (datetime('now','localtime')))");
+    db_exec("CREATE TABLE IF NOT EXISTS partner_payouts (id INTEGER PRIMARY KEY AUTOINCREMENT, ref TEXT, buyer_email TEXT, product TEXT, amount REAL, partner_amount REAL, status TEXT, invoice_id TEXT, created_at TEXT DEFAULT (datetime('now','localtime')))");
+    $ready = true;
+}
+// Agent tasks: статусы sub-агентов OKO (Sonnet/Haiku/Opus/Fable/Claude Fable/…).
+// Каждый пуш — новая строка; последняя запись по agent_name = текущее состояние.
+function agent_ensure_table(){
+    static $ready = false; if($ready) return;
+    db_exec("CREATE TABLE IF NOT EXISTS agent_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_name TEXT NOT NULL,
+        task TEXT,
+        status TEXT DEFAULT 'idle',
+        progress INTEGER DEFAULT 0,
+        payload TEXT,
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        updated_at TEXT)");
+    db_exec("CREATE INDEX IF NOT EXISTS idx_agent_tasks_name ON agent_tasks(agent_name, id DESC)");
+    $ready = true;
 }
 // Web Push подписки: создаём таблицу лениво (без миграций).
 function push_ensure_table(){
