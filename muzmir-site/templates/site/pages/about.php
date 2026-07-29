@@ -388,6 +388,69 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
   </div>
 </section>
 
+<!-- Публикации о нас в СМИ -->
+<?php
+try { $pubs = all("SELECT * FROM publications ORDER BY sort,id"); } catch (\Throwable $e) { $pubs = []; }
+if ($pubs):
+$byHost = [];
+foreach ($pubs as $p) { $byHost[$p['host']][] = $p; }
+$hostsTotal = count($byHost);
+?>
+<section class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Публикации о нас</p>
+      <h2>Нас цитируют в СМИ</h2>
+      <div class="gold-rule"></div>
+      <p><?= count($pubs) ?> публикаций на <?= $hostsTotal ?> официальных источниках: Министерства культуры и образования регионов РФ, Дома культуры, детские школы искусств, порталы новостей.</p>
+    </div>
+    <div class="pubs-grid reveal">
+      <?php foreach (array_slice($pubs, 0, 12) as $p): ?>
+        <a class="pubs-card" href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow">
+          <span class="pubs-host"><?= h($p['host']) ?></span>
+          <span class="pubs-src"><?= h($p['source']) ?></span>
+          <span class="pubs-title"><?= h(mb_strimwidth($p['title'], 0, 110, '…', 'UTF-8')) ?></span>
+          <span class="pubs-arrow">↗</span>
+        </a>
+      <?php endforeach; ?>
+    </div>
+    <?php if (count($pubs) > 12): ?>
+      <details class="pubs-more reveal">
+        <summary>Показать все <?= count($pubs) ?> публикаций</summary>
+        <ul class="pubs-list">
+          <?php foreach (array_slice($pubs, 12) as $p): ?>
+            <li><a href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow"><b><?= h($p['source']) ?></b> — <?= h($p['host']) ?></a></li>
+          <?php endforeach; ?>
+        </ul>
+      </details>
+    <?php endif; ?>
+  </div>
+</section>
+<style>
+.pubs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pubs-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px 16px 14px;text-decoration:none;
+  border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text);
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;overflow:hidden}
+.pubs-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-gold);opacity:.85}
+@media(hover:hover){.pubs-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 14px 28px rgba(201,168,76,.22)}}
+.pubs-host{font-family:var(--ff-mono,ui-monospace,monospace);font-size:.7rem;color:var(--muted);letter-spacing:.02em}
+.pubs-src{font-family:var(--ff-serif);font-weight:700;font-size:1.02rem;color:var(--gold-ink);line-height:1.15}
+[data-theme="dark"] .pubs-src{color:var(--gold)}
+.pubs-title{color:var(--text-dim);font-size:.88rem;line-height:1.35}
+.pubs-arrow{position:absolute;right:12px;top:10px;color:var(--gold);font-size:1.1rem}
+.pubs-more{margin-top:22px;text-align:center}
+.pubs-more summary{display:inline-block;cursor:pointer;padding:10px 22px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-ink);font-weight:700;list-style:none}
+[data-theme="dark"] .pubs-more summary{color:var(--gold)}
+.pubs-more summary::-webkit-details-marker{display:none}
+.pubs-list{list-style:none;padding:0;margin:22px auto 0;max-width:820px;columns:1;column-gap:22px}
+@media(min-width:720px){.pubs-list{columns:2}}
+.pubs-list li{margin-bottom:8px;line-height:1.35}
+.pubs-list a{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:2px}
+.pubs-list a:hover{color:var(--gold-ink);border-color:var(--gold)}
+[data-theme="dark"] .pubs-list a:hover{color:var(--gold)}
+</style>
+<?php endif; ?>
+
 <!-- Реквизиты -->
 <section class="section section--parchment">
   <div class="container">
