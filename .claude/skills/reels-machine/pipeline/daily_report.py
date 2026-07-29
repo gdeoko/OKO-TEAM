@@ -18,12 +18,12 @@ def sh(cmd, **kw):
     return subprocess.run(cmd, capture_output=True, text=True, timeout=kw.get("t",600))
 
 def main():
-    niche=sys.argv[1] if len(sys.argv)>1 else "нейросети программирование"
+    niche=sys.argv[1] if len(sys.argv)>1 else "видеопродакшн подкасты монтаж"
     date=(datetime.datetime.utcnow()+datetime.timedelta(hours=3)).strftime("%d.%m.%Y")
     out=os.path.join("/tmp",f"daily_{date.replace('.','')}"); os.makedirs(out,exist_ok=True)
     # 1) свежий разбор конкурентов (разные — дедуп внутри discover)
     sh([sys.executable, os.path.join(RES,"discover.py"), niche,
-        "--queries", "нейросети|chatgpt|ии для бизнеса|midjourney|автоматизация",
+        "--queries", "видеопродакшн|как снимать видео|монтаж видео|подкаст запись|reels монтаж",
         "--n","6","--min-views","1000000","--outdir",out], t=700)
     rj=os.path.join(out,"research.json")
     R=json.load(open(rj)) if os.path.exists(rj) else []
@@ -34,7 +34,7 @@ def main():
             "script":"Транскрипт: "+((it.get("transcript") or "—")[:280]),
             "funnel":"Описание: "+((it.get("description") or "—")[:160]),
             "why_viral":f"{it.get('views')} просмотров.","product":"—",
-            "borrow":"Разобрать хук/ритм под наш дев/ИИ-контент."}
+            "borrow":"Разобрать хук/ритм под наш видеопродакшн-контент."}
     A["synthesis"]=f"Утренний разбор {len(R)} свежих конкурентов ниши на {date}. Форматы и хуки — основа сценариев дня."
     aj=os.path.join(out,"analysis.json"); json.dump(A,open(aj,"w"),ensure_ascii=False)
     txt=os.path.join(out,"analiz.txt"); pdf=os.path.join(out,"analiz.pdf")
@@ -49,7 +49,7 @@ def main():
          f"Разобрано свежих конкурентов 1М+: {len(R)}\n"
          f"Топ дня: {top}\n\n"
          f"Полная аналитика — документом ниже. На её основе собираю ролики дня "
-         f"(голос Владимира 1.8×, всё с нуля, без повторов).")
+         f"(голос Владимира 1.2×, всё с нуля, без повторов).")
     urllib.request.urlopen(urllib.request.Request(
         f"https://api.telegram.org/bot{tok}/sendMessage",
         data=urllib.parse.urlencode({"chat_id":chat,"text":txt}).encode()), timeout=60)

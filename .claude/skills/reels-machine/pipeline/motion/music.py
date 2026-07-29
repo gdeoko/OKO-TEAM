@@ -4,7 +4,7 @@
   fetch(query, out_mp3)  -> путь трека
   mix(video, voice, music, out, vol=0.11) -> видео с озвучкой+музыкой"""
 import os,sys,json,subprocess,urllib.request,urllib.parse
-_REG=os.path.join(os.path.dirname(__file__),"..","reference","USED_MUSIC.md")
+_REG=os.path.join(os.path.dirname(__file__),"..","..","reference","USED_MUSIC.md")
 def _used():
     try: return set(l.strip() for l in open(_REG) if l.strip())
     except Exception: return set()
