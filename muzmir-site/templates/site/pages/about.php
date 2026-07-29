@@ -186,8 +186,40 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 }
 </style>
 
+<!-- Sticky-подменю быстрых переходов (без переработки секций) -->
+<nav class="about-nav" aria-label="Навигация «О нас»">
+  <div class="container about-nav-inner">
+    <a href="#intro">О центре</a>
+    <a href="#history">История</a>
+    <a href="#numbers">Цифры</a>
+    <a href="#leaders">Оргкомитет</a>
+    <a href="#partners">Партнёры</a>
+    <a href="#pubs">СМИ</a>
+    <a href="#req">Реквизиты</a>
+  </div>
+</nav>
+<style>
+.about-nav{position:sticky;top:64px;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.about-nav-inner{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 0}
+.about-nav-inner::-webkit-scrollbar{display:none}
+.about-nav a{flex:0 0 auto;padding:8px 14px;border-radius:999px;font-weight:700;font-size:.86rem;color:var(--text-dim);text-decoration:none;
+  border:1px solid transparent;transition:all .22s cubic-bezier(.2,.8,.2,1);white-space:nowrap;scroll-snap-align:start}
+.about-nav a:hover,.about-nav a.on{color:var(--gold-ink);background:var(--gold-soft);border-color:var(--gold)}
+[data-theme="dark"] .about-nav a:hover,[data-theme="dark"] .about-nav a.on{color:var(--gold);background:rgba(232,194,90,.10)}
+@media(max-width:900px){.about-nav{top:56px}}
+</style>
+<script>
+// подсветка активного пункта при скролле + плавная прокрутка
+(function(){var links=document.querySelectorAll('.about-nav a');
+  function upd(){var y=window.scrollY+140;var cur=null;links.forEach(function(a){var id=a.getAttribute('href').slice(1);var s=document.getElementById(id);if(s&&s.offsetTop<=y)cur=a;});
+    links.forEach(function(a){a.classList.toggle('on',a===cur);});}
+  window.addEventListener('scroll',upd,{passive:true}); upd();
+  links.forEach(function(a){a.addEventListener('click',function(e){var id=this.getAttribute('href').slice(1);var s=document.getElementById(id);if(s){e.preventDefault();window.scrollTo({top:s.offsetTop-90,behavior:'smooth'});}});});
+})();
+</script>
+
 <!-- Интро: история + миссия -->
-<section class="section">
+<section class="section" id="intro">
   <div class="container">
     <div class="grid grid-2" style="align-items:start;gap:40px">
       <div class="reveal">
@@ -218,7 +250,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 </section>
 
 <!-- Таймлайн истории -->
-<section class="section section--tint">
+<section class="section section--tint" id="history">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Путь центра</p>
@@ -239,7 +271,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 </section>
 
 <!-- Статистика -->
-<section class="section">
+<section class="section" id="numbers">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Цифры</p>
@@ -308,7 +340,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 </section>
 
 <!-- Руководство -->
-<section class="section">
+<section class="section" id="leaders">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Управление</p>
@@ -370,7 +402,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 </section>
 
 <!-- Партнёры -->
-<section class="section">
+<section class="section" id="partners">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Кто с нами</p>
@@ -396,7 +428,7 @@ $byHost = [];
 foreach ($pubs as $p) { $byHost[$p['host']][] = $p; }
 $hostsTotal = count($byHost);
 ?>
-<section class="section">
+<section class="section" id="pubs">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Публикации о нас</p>
@@ -452,7 +484,7 @@ $hostsTotal = count($byHost);
 <?php endif; ?>
 
 <!-- Реквизиты -->
-<section class="section section--parchment">
+<section class="section section--parchment" id="req">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Организация</p>
