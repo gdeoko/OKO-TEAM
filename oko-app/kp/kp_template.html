@@ -18,6 +18,10 @@
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
 /* ЖИВОЙ фон: canvas-сетка квадратов с волной подсветки (лёгкий 2D, без WebGL) */
 #cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505}
+#cubes-bg::after{content:'';position:absolute;inset:-20%;z-index:1;pointer-events:none;
+  background:radial-gradient(38% 32% at 22% 18%,rgba(154,255,0,.10),transparent 60%),radial-gradient(42% 36% at 82% 78%,rgba(120,220,10,.09),transparent 62%);
+  filter:blur(30px);animation:aurora 18s ease-in-out infinite alternate;mix-blend-mode:screen}
+@keyframes aurora{0%{transform:translate3d(-4%,-2%,0) scale(1)}50%{transform:translate3d(3%,3%,0) scale(1.12)}100%{transform:translate3d(-2%,4%,0) scale(1.04)}}
 #gridCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;
   -webkit-mask-image:radial-gradient(ellipse 82% 74% at 50% 44%,#000 22%,rgba(0,0,0,.6) 60%,transparent 92%);
   mask-image:radial-gradient(ellipse 82% 74% at 50% 44%,#000 22%,rgba(0,0,0,.6) 60%,transparent 92%)}
@@ -40,9 +44,14 @@ a{text-decoration:none;color:inherit}img,video{max-width:100%;display:block}
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
 /* PRELOADER — 3D-лого сразу */
 /* ЗАПУСК: 3D-глаз сразу виден, под ним прогресс, затем кнопка ВОЙТИ */
-#preloader{position:fixed;inset:0;z-index:9990;background:#050505;transition:opacity .8s ease,visibility .8s}
+#preloader{position:fixed;inset:0;z-index:9990;background:radial-gradient(ellipse 70% 60% at 50% 44%,#0a0f07,#050505 70%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:15vh;gap:16px;transition:opacity .9s ease,visibility .9s}
 #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
 body.booting{overflow:hidden}
+body.booting #holo-canvas{z-index:9995}
+.pl-core{display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;transform:translateY(22px);animation:plIn .9s cubic-bezier(.16,1,.3,1) .15s forwards}
+@keyframes plIn{to{opacity:1;transform:none}}
+.pl-ring{width:54px;height:54px;border-radius:50%;border:2px solid rgba(154,255,0,.16);border-top-color:var(--lime);animation:plSpin 1s linear infinite;box-shadow:0 0 20px rgba(154,255,0,.45)}
+@keyframes plSpin{to{transform:rotate(360deg)}}
 .pl-word{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(22px,4vw,32px);letter-spacing:3px;color:#fff;opacity:.92}
 .pl-word span{color:var(--lime)}
 .pl-sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--w3);margin-top:-12px}
@@ -120,7 +129,7 @@ section{position:relative;z-index:1;padding:26px 0}
 /* HERO — один экран */
 .hero{min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:64px 24px 68px;position:relative}
 .eye-wrap{position:relative;flex:1 1 0;min-height:150px;max-height:min(54vh,96vw);width:min(88vw,560px);margin:0 auto;display:flex;align-items:center;justify-content:center;will-change:transform}
-.eye-wrap::before{content:'';position:absolute;width:150%;height:150%;left:-25%;top:-25%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.6),rgba(154,255,0,.22) 32%,rgba(120,220,10,.08) 55%,transparent 72%);filter:blur(48px);z-index:0;animation:glowpulse 4s ease-in-out infinite;will-change:transform,opacity}
+.eye-wrap::before{content:'';position:absolute;width:135%;height:135%;left:-17.5%;top:-17.5%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.42),rgba(154,255,0,.16) 34%,rgba(120,220,10,.06) 56%,transparent 72%);filter:blur(46px);z-index:0;animation:glowpulse 4s ease-in-out infinite;will-change:transform,opacity}
 .eye-wrap::after{content:'';position:absolute;width:88%;height:88%;left:6%;top:6%;border-radius:50%;background:radial-gradient(circle,rgba(154,255,0,.35),rgba(154,255,0,.12) 50%,transparent 75%);filter:blur(18px);z-index:0;animation:glowpulse 4s ease-in-out infinite reverse}
 @keyframes glowpulse{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
 #eye-canvas{width:100%;height:100%;display:block;position:relative;z-index:1}
@@ -150,13 +159,18 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 .hand-stage{position:relative;width:min(560px,62vw);aspect-ratio:2.30/1;z-index:6;margin:0 auto;transform:none}
 #holoHand{position:absolute;inset:0}
 /* заголовок ПАРИТ НАД РУКОЙ — ровно, крупно, во всю ширину, буквы проявляются по скроллу */
-.hand-caption{position:relative;white-space:nowrap;z-index:7;pointer-events:none;margin:0 auto 10px;
-  transform:translateY(var(--fy,0px));
-  font-family:'Unbounded',sans-serif;font-weight:900;font-size:40px;line-height:1.05;letter-spacing:-.8px;
+.hand-caption{position:absolute;left:50%;top:13%;white-space:nowrap;z-index:8;pointer-events:none;
+  transform:translate(-50%,var(--fy,0px));
+  font-family:'Unbounded',sans-serif;font-weight:900;font-size:40px;line-height:1.02;letter-spacing:-.8px;
   color:#fff;
-  text-shadow:0 2px 0 rgba(0,0,0,.45),0 10px 28px rgba(0,0,0,.8),0 0 30px rgba(154,255,0,.5),0 22px 46px rgba(154,255,0,.3);
+  text-shadow:0 2px 0 rgba(0,0,0,.4),0 12px 22px rgba(0,0,0,.85),0 0 26px rgba(154,255,0,calc(.35 + var(--gl,0)*.5)),0 34px 42px rgba(52,110,0,calc(.25 + var(--gl,0)*.4));
   will-change:transform}
+/* свечение из ладони, поднимающееся к заголовку */
+.hand-caption::before{content:'';position:absolute;left:50%;top:120%;width:150%;height:340%;transform:translate(-50%,-30%);
+  background:radial-gradient(ellipse 46% 60% at 50% 100%,rgba(154,255,0,calc(var(--gl,0)*.5)),rgba(154,255,0,calc(var(--gl,0)*.14)) 42%,transparent 72%);
+  filter:blur(16px);z-index:-1}
 .hand-caption .hc{display:inline-block;opacity:0;will-change:transform,opacity,filter}
+.sec-divider.up{transform:translateY(-30px)}
 @media(max-width:1000px){ .hand-hero{margin:4px 0 0;padding:0 12px 22px} .hand-stage{width:86vw} }
 @media(max-width:760px){ .hand-hero{margin:2px 0 0;padding:0 8px 18px} .hand-stage{width:94vw} }
 /* OFFER sticky cards */
@@ -351,7 +365,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 </head>
 <body>
 <!-- PRELOADER (3D-лого сразу) -->
-<div id="preloader"></div>
+<div id="preloader"><div class="pl-core"><div class="pl-ring"></div><div class="pl-word">О<span>К</span>О</div><div class="pl-sub">экосистема роста</div></div></div>
 <!-- BACKGROUND -->
 <div id="cubes-bg"><canvas id="gridCanvas"></canvas></div>
 <div id="bg-glows"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
@@ -401,7 +415,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="scroll-hint"><div class="m"></div>скролл</div>
 </section>
 
-<div class="sec-divider"><span class="dot"></span></div>
+<div class="sec-divider up"><span class="dot"></span></div>
 <!-- HAND holds title -->
 <div class="hand-hero" id="handHero">
   <div class="hand-stage">
@@ -511,7 +525,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="guar-pin" id="guarPin">
     <div class="guar-sticky">
       <div class="guar-head"><div class="sec-lbl">Гарантии</div><h2 class="sec-h">Работаем <span class="lime">по-честному</span></h2></div>
-      <div id="guarRobot"><video src="kp-media/fig/robot_alpha_v2.webm?v=92" autoplay loop muted playsinline preload="auto"></video></div>
+      <div id="guarRobot" class="holo-anchor"></div>
       <div class="gcard-stage" id="gcardStage">
     <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="gc-t">Договор и акт</div><div class="gc-d">Официальный договор (самозанятый/НПД), приложение с ТЗ и акт выполненных работ — всё юридически.</div></div>
     <div class="gcard"><div class="gc-bead"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M12 7V5m0 14v-2"/></svg></div><div class="gc-t">Поэтапная оплата</div><div class="gc-d">Прозрачные этапы по договору, фиксированные суммы, без скрытых доплат и сюрпризов.</div></div>
@@ -757,9 +771,10 @@ function build(){
     addEventListener('resize',function(){lastW=0;fitCap();});
     var NCH=chars.length;
     (function tick(ts){requestAnimationFrame(tick);fitCap();
-      var op=window.__handOpen||0;                       // латч: назад не откатывается
+      var op=window.__handOpen||0;                       // симметрично: появляется/исчезает вместе с рукой
       var t=Math.max(0,Math.min(1,(op-0.50)/0.34));      // 0.50→0.84 раскрытия = проявление букв
-      cap.style.setProperty('--fy',(Math.sin((ts||0)/1400)*4*t).toFixed(2)+'px');  // парит над рукой
+      cap.style.setProperty('--fy',(Math.sin((ts||0)/1400)*5*t).toFixed(2)+'px');  // левитация над ладонью
+      cap.style.setProperty('--gl',t.toFixed(3));        // свечение из ладони на текст
       for(var i=0;i<NCH;i++){
         var st=i/NCH*0.6, k=Math.max(0,Math.min(1,(t-st)/0.4));
         var e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;         // easeInOutQuad
