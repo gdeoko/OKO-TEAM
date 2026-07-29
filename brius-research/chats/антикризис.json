@@ -1,0 +1,44 @@
+{
+ "chat_id": -1003812209471,
+ "alias": "антикризис",
+ "title": "антикризис",
+ "username": null,
+ "members": 12,
+ "about": null,
+ "type": "ChatType.CHANNEL",
+ "messages": [
+  {
+   "id": 3,
+   "date": "2026-02-26 08:13:54",
+   "views": 27,
+   "outgoing": false,
+   "from_id": -1003812209471,
+   "from_name": "антикризис",
+   "from_username": null,
+   "text": "Обращение к каждому в команде.\n\n@brius1",
+   "media": "VOICE",
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": [
+    [
+     "👍",
+     2
+    ]
+   ]
+  },
+  {
+   "id": 1,
+   "date": "2026-02-26 08:01:01",
+   "views": null,
+   "outgoing": null,
+   "from_id": -1003812209471,
+   "from_name": "антикризис",
+   "from_username": null,
+   "text": null,
+   "media": null,
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": null
+  }
+ ]
+}

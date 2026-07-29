@@ -1,0 +1,44 @@
+{
+ "chat_id": -1002023399829,
+ "alias": "Бриус",
+ "title": "Бриус",
+ "username": "briusnespit",
+ "members": 73987,
+ "about": null,
+ "type": "ChatType.CHANNEL",
+ "messages": [
+  {
+   "id": 10519,
+   "date": "2026-07-29 17:15:08",
+   "views": 399,
+   "outgoing": false,
+   "from_id": -1002023399829,
+   "from_name": "Бриус",
+   "from_username": null,
+   "text": "Финальная часть моего перформанса: оставил только одну реакцию клоуна.\n\nЖмите.",
+   "media": null,
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": [
+    [
+     "🤡",
+     78
+    ]
+   ]
+  },
+  {
+   "id": 1,
+   "date": "2024-03-03 17:22:08",
+   "views": null,
+   "outgoing": null,
+   "from_id": -1002023399829,
+   "from_name": "Бриус",
+   "from_username": null,
+   "text": null,
+   "media": null,
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": null
+  }
+ ]
+}

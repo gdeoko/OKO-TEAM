@@ -1,0 +1,39 @@
+{
+ "chat_id": -1003766971851,
+ "alias": "КИТОВАРКА",
+ "title": "КИТОВАРКА",
+ "username": null,
+ "members": 1438,
+ "about": "Мы не варим китов, а занимаемся товарным бизнесом с Китаем 🇨🇳",
+ "type": "ChatType.CHANNEL",
+ "messages": [
+  {
+   "id": 3,
+   "date": "2026-03-10 07:16:28",
+   "views": null,
+   "outgoing": null,
+   "from_id": -1003766971851,
+   "from_name": "КИТОВАРКА",
+   "from_username": null,
+   "text": null,
+   "media": null,
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": null
+  },
+  {
+   "id": 1,
+   "date": "2026-03-10 07:13:09",
+   "views": null,
+   "outgoing": null,
+   "from_id": -1003766971851,
+   "from_name": "КИТОВАРКА",
+   "from_username": null,
+   "text": null,
+   "media": null,
+   "forward_from": null,
+   "reply_to_message_id": null,
+   "reactions": null
+  }
+ ]
+}
