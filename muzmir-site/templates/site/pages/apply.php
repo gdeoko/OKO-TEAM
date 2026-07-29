@@ -244,7 +244,11 @@ ob_start(); ?>
 
         <!-- ШАГ 1. Выбор конкурса -->
         <section class="astep active" data-step="comp">
-          <div class="astep-head"><p class="eyebrow">Шаг 1</p><h2>Выберите конкурс</h2></div>
+          <div class="astep-head">
+            <p class="eyebrow">Шаг 1</p>
+            <h2>Выберите конкурс</h2>
+            <p style="color:var(--muted);font-size:.88rem;margin:6px 0 0">Подать на несколько конкурсов? Выберите первый, оформите заявку, затем со страницы успеха — быстро на следующий (данные предзаполнятся).</p>
+          </div>
           <div class="comp-list">
             <?php foreach ($comps as $c): ?>
               <label class="comp-opt">
@@ -259,7 +263,7 @@ ob_start(); ?>
                     <b><?= h($c['name']) ?></b>
                     <span class="co-tags">
                       <span class="badge badge--intl"><?= $c['type']==='international'?'Международный':'Всероссийский' ?></span>
-                      <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?= (int)$c['is_paid'] ? 'Платный' : 'Бесплатный' ?></span>
+                      <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?= (int)$c['is_paid'] ? (int)$c['price'].' ₽' : 'Бесплатный' ?></span>
                     </span>
                   </span>
                 </span>

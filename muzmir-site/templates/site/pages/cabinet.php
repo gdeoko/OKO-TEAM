@@ -112,6 +112,8 @@ $icons = [
   'qr'      => $icon('<path d="M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3z"/><path d="M15 15h2v2h-2zM19 15h2M15 19h2v2M19 19h2v2"/>'),
   'dl'      => $icon('<path d="M12 3v12M7 11l5 4 5-4M4 21h16"/>'),
   'mail'    => $icon('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
+  'stats'   => $icon('<path d="M4 20V10M10 20V4M16 20v-6M22 20H2"/>'),
+  'theme'   => $icon('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
 ];
 $badgeMap = ['success'=>'open','error'=>'closed','warning'=>'judging','info'=>'intl'];
 $badge = fn(string $label, string $type) => '<span class="badge badge--' . ($badgeMap[$type] ?? 'intl') . '">' . h($label) . '</span>';
@@ -131,9 +133,34 @@ $sections = [
   ['apps','Мои заявки'],
   ['diplomas','Мои дипломы'],
   ['awards','Награды и заказы'],
+  ['stats','Статистика'],
   ['settings','Настройки'],
 ];
 if ($isTeacher) { $sections[] = ['students','Мои ученики']; $sections[] = ['ref','Реферальная программа']; }
+
+/* --- Данные для панели «Статистика» (мини-аналитика по заявкам) --- */
+$byMonth = [];
+$byStatus = ['new'=>0,'paid'=>0,'judging'=>0,'graded'=>0,'sent'=>0,'rejected'=>0];
+$byResult = ['gp'=>0,'laur1'=>0,'laur2'=>0,'laur3'=>0,'dipl'=>0,'other'=>0];
+$totalPaid = 0;
+foreach ($apps as $a) {
+    $m = substr((string)($a['created_at'] ?? ''), 0, 7);
+    if ($m !== '') $byMonth[$m] = ($byMonth[$m] ?? 0) + 1;
+    $st = (string)($a['status'] ?? '');
+    if (isset($byStatus[$st])) $byStatus[$st]++;
+    $r = mb_strtolower((string)($a['result'] ?? ''));
+    if     (str_contains($r, 'гран')) $byResult['gp']++;
+    elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $byResult['laur1']++;
+    elseif (str_contains($r, 'ii степ') || str_contains($r, '2 степ')) $byResult['laur2']++;
+    elseif (str_contains($r, 'iii степ') || str_contains($r, '3 степ')) $byResult['laur3']++;
+    elseif ($r !== '' && str_contains($r, 'дипл')) $byResult['dipl']++;
+    elseif ($r !== '') $byResult['other']++;
+    if (in_array($st, ['paid','judging','graded','sent'], true)) $totalPaid += (int)($a['amount_paid'] ?? 0);
+}
+ksort($byMonth);
+$monthLabels = array_slice(array_keys($byMonth), -6);
+$monthVals = array_values(array_intersect_key($byMonth, array_flip($monthLabels)));
+$maxMonth = max([1, ...($monthVals ?: [0])]);
 
 ob_start(); ?>
 <style>
@@ -412,9 +439,89 @@ ob_start(); ?>
           <?php endforeach; endif; ?>
         </div>
 
+        <!-- Статистика -->
+        <div class="cab-panel" id="tab-stats" role="tabpanel">
+          <h2>Статистика и аналитика</h2>
+          <div class="cab-kpis">
+            <div class="cab-kpi"><b><?= (int)count($apps) ?></b><span>Всего заявок</span></div>
+            <div class="cab-kpi"><b><?= (int)count($diplomas) ?></b><span>Дипломов</span></div>
+            <div class="cab-kpi"><b><?= (int)$byResult['gp'] + (int)$byResult['laur1'] ?></b><span>Гран-При и I ст.</span></div>
+            <div class="cab-kpi"><b><?= (int)$totalPaid ?> ₽</b><span>Оплачено всего</span></div>
+          </div>
+
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Активность по месяцам</h3>
+            <?php if (!$monthVals): ?>
+              <p style="color:var(--muted);margin:0">Данных пока нет — подайте первую заявку.</p>
+            <?php else: ?>
+            <div class="cab-bars">
+              <?php foreach ($monthVals as $i => $v):
+                $pct = round($v * 100 / $maxMonth);
+                $ml = $monthLabels[$i] ?? '';
+                $mm = ['01'=>'Янв','02'=>'Фев','03'=>'Мар','04'=>'Апр','05'=>'Май','06'=>'Июн','07'=>'Июл','08'=>'Авг','09'=>'Сен','10'=>'Окт','11'=>'Ноя','12'=>'Дек'][substr($ml,5,2)] ?? substr($ml,5,2);
+              ?>
+              <div class="cab-bar-col" style="--h:<?= $pct ?>%" title="<?= h($ml) ?>: <?= (int)$v ?>">
+                <div class="cab-bar-fill"><span><?= (int)$v ?></span></div>
+                <small><?= h($mm) ?></small>
+              </div>
+              <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+          </div>
+
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Распределение результатов</h3>
+            <?php
+              $rTot = array_sum($byResult);
+              $rLabels = ['gp'=>'Гран-При','laur1'=>'Лауреат I','laur2'=>'Лауреат II','laur3'=>'Лауреат III','dipl'=>'Дипломант','other'=>'Другое'];
+            ?>
+            <?php if (!$rTot): ?>
+              <p style="color:var(--muted);margin:0">Результаты появятся после оценки заявок жюри.</p>
+            <?php else: ?>
+              <div class="cab-legend">
+                <?php foreach ($byResult as $k => $v): if(!$v) continue; $pct = round($v*100/$rTot); ?>
+                  <div class="cab-legend-row">
+                    <span class="cab-legend-lbl"><?= h($rLabels[$k]) ?></span>
+                    <span class="cab-legend-bar"><i style="width:<?= $pct ?>%"></i></span>
+                    <span class="cab-legend-num"><?= (int)$v ?> <small>(<?= $pct ?>%)</small></span>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Статусы заявок</h3>
+            <div class="cab-legend">
+              <?php foreach ($byStatus as $k => $v): $lbl = $appStatus[$k][0] ?? $k; $t = $appStatus[$k][1] ?? 'info'; ?>
+                <div class="cab-legend-row">
+                  <span class="cab-legend-lbl"><?= h($lbl) ?></span>
+                  <span class="cab-legend-bar"><i style="width:<?= (int)count($apps) ? round($v*100/count($apps)) : 0 ?>%;background:var(--<?= $t==='success'?'grad-gold':($t==='error'?'error':'gold-2') ?>,var(--grad-gold))"></i></span>
+                  <span class="cab-legend-num"><?= (int)$v ?></span>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+
         <!-- Настройки -->
         <div class="cab-panel" id="tab-settings" role="tabpanel">
           <h2>Настройки</h2>
+
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Тема приложения</h3>
+            <div class="theme-picker">
+              <button type="button" class="theme-opt" data-theme-set="light" aria-pressed="false">
+                <span class="theme-preview theme-preview--light"><i></i><i></i><i></i></span>
+                <span>Светлая</span>
+              </button>
+              <button type="button" class="theme-opt" data-theme-set="dark" aria-pressed="false">
+                <span class="theme-preview theme-preview--dark"><i></i><i></i><i></i></span>
+                <span>Тёмная</span>
+              </button>
+            </div>
+            <p class="hint" style="margin-top:12px">Тема сохраняется на устройстве. По умолчанию — светлая.</p>
+          </div>
 
           <div class="cab-card">
             <h3 style="margin-top:0;font-family:var(--ff-serif)">Профиль</h3>
@@ -587,6 +694,21 @@ ob_start(); ?>
       if(navigator.clipboard)navigator.clipboard.writeText(code);
       if(window.toast)window.toast('Промокод скопирован','success');
     });
+  });
+  // Theme-picker: тумблер темы в настройках профиля
+  function applyTheme(t){
+    try{ localStorage.setItem('muzmir-theme', t); }catch(e){}
+    document.documentElement.dataset.theme = t;
+    document.querySelectorAll('.theme-opt').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-theme-set')===t ? 'true':'false');
+    });
+    var mtc = document.getElementById('metaThemeColor');
+    if (mtc) mtc.setAttribute('content', t==='dark' ? '#0b0a0d' : '#FFFCF5');
+  }
+  var curT = (document.documentElement.dataset.theme || 'light');
+  applyTheme(curT);
+  document.querySelectorAll('.theme-opt').forEach(function(b){
+    b.addEventListener('click', function(){ applyTheme(b.getAttribute('data-theme-set')); });
   });
 })();
 </script>

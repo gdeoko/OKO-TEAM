@@ -1228,3 +1228,45 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
   .topbar{display:none !important}  /* топ-бар с реквизитами скрываем на моб — экономим место */
 }
 
+/* ══ Кабинет: KPI-плитки и мини-графики (OKO-стиль) ══ */
+.cab-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:18px}
+@media(min-width:640px){.cab-kpis{grid-template-columns:repeat(4,1fr)}}
+.cab-kpi{padding:16px 14px;border-radius:16px;background:var(--panel);border:1px solid var(--glass-brd);
+  box-shadow:0 6px 18px rgba(139,111,31,.08);backdrop-filter:blur(10px);text-align:center;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
+.cab-kpi b{display:block;font-family:var(--ff-display);font-size:clamp(1.5rem,4.6vw,2.1rem);line-height:1;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cab-kpi span{display:block;color:var(--muted);font-size:.74rem;letter-spacing:.04em;margin-top:6px;line-height:1.25}
+@media(hover:hover){.cab-kpi:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(201,168,76,.22)}}
+
+/* Барчарт по месяцам */
+.cab-bars{display:flex;align-items:flex-end;gap:8px;height:140px;padding:8px 0}
+.cab-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.cab-bar-fill{position:relative;width:100%;max-width:44px;background:var(--grad-gold);
+  border-radius:8px 8px 3px 3px;box-shadow:0 6px 14px rgba(201,168,76,.28);
+  height:var(--h);min-height:6px;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+.cab-bar-fill span{position:absolute;left:50%;top:-20px;transform:translateX(-50%);font-family:var(--ff-display);font-size:.82rem;color:var(--gold-ink);font-weight:700}
+.cab-bar-col small{font-size:.68rem;color:var(--muted);letter-spacing:.04em}
+
+/* Легенда со шкалой */
+.cab-legend{display:flex;flex-direction:column;gap:10px}
+.cab-legend-row{display:grid;grid-template-columns:100px 1fr auto;gap:12px;align-items:center;font-size:.86rem}
+.cab-legend-lbl{color:var(--text);font-weight:600}
+.cab-legend-bar{position:relative;height:8px;background:var(--gold-soft);border-radius:999px;overflow:hidden}
+.cab-legend-bar i{display:block;height:100%;background:var(--grad-gold);border-radius:999px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.cab-legend-num{color:var(--muted);font-weight:700;font-size:.86rem;white-space:nowrap}
+.cab-legend-num small{color:var(--muted);opacity:.7;font-weight:400}
+
+/* Theme picker в настройках */
+.theme-picker{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.theme-opt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;border-radius:16px;
+  background:var(--panel);border:2px solid var(--glass-brd);cursor:pointer;font:inherit;font-weight:700;font-size:.9rem;color:var(--text);
+  transition:border-color .2s,transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.theme-opt[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 8px 22px rgba(201,168,76,.28)}
+.theme-opt:active{transform:scale(.98)}
+.theme-preview{display:flex;flex-direction:column;gap:4px;padding:10px;width:100%;max-width:120px;height:80px;border-radius:12px;position:relative;overflow:hidden}
+.theme-preview i{display:block;height:6px;border-radius:3px;background:currentColor;opacity:.6}
+.theme-preview i:first-child{width:70%;opacity:.85}.theme-preview i:nth-child(2){width:50%}.theme-preview i:nth-child(3){width:85%;opacity:.55}
+.theme-preview--light{background:linear-gradient(180deg,#fffcf5,#f3e9d0);color:#b8923a;border:1px solid #e7ddc7}
+.theme-preview--dark{background:linear-gradient(180deg,#181017,#0e0b0f);color:#e8c25a;border:1px solid rgba(232,194,90,.25)}
+
