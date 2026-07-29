@@ -19,8 +19,8 @@ return [
     // Оплаты Lava.top (готовые продукты)
     'lava' => ['sistema'=>'PUT_ON_VPS','zavod'=>'PUT_ON_VPS','consult'=>'PUT_ON_VPS'],
     'lava_api_key'      => 'PUT_ON_VPS',                  // динамические счета
-    'lava_webhook_user' => 'PUT_ON_VPS',                  // Basic auth для /api.php?action=lava_webhook
-    'lava_webhook_pass' => 'PUT_ON_VPS',
+    'lava_webhook_user' => 'PUT_ON_VPS',                  // Basic auth для /api.php?action=lava_webhook (пример: 'oko')
+    'lava_webhook_pass' => 'PUT_ON_VPS',                  // (пример: 'oko2026' — как настроил Даниэль)
     'partner_percent'   => 15,                            // % партнёру с оплаты (L8)
     // Помощник OKO (L5): Anthropic Claude через Cloudflare-прокси
     'anthropic_key'   => 'PUT_ON_VPS',                    // sk-ant-api03-...
