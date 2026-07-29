@@ -63,22 +63,20 @@ body.booting #holo-canvas{z-index:9995}
 .pl-enter.show{opacity:1;transform:none;pointer-events:auto;animation:entpulse 2.6s ease-in-out infinite}
 .pl-enter:hover{transform:translateY(-2px) scale(1.03)}
 @keyframes entpulse{0%,100%{box-shadow:0 0 34px rgba(154,255,0,.45),0 10px 30px -8px rgba(0,0,0,.8)}50%{box-shadow:0 0 54px rgba(154,255,0,.7),0 10px 30px -8px rgba(0,0,0,.8)}}
-/* КИНЕМАТОГРАФИЧНЫЙ HUD ЗАГРУЗКИ вокруг 3D-глаза */
-.pl-hud{position:absolute;width:300px;height:300px;pointer-events:none;opacity:0;animation:plIn .8s ease .1s forwards}
-.pl-hud svg{display:block;overflow:visible}
-.pl-hud .rng{fill:none}
-.pl-hud .rng.d{stroke:rgba(154,255,0,.4);stroke-width:1.5;stroke-dasharray:3 9;transform-origin:150px 150px;animation:plRot 9s linear infinite}
-.pl-hud .rng.d2{stroke:rgba(154,255,0,.24);stroke-width:1.5;stroke-dasharray:2 16;transform-origin:150px 150px;animation:plRot 15s linear infinite reverse}
-.pl-hud .rng.b{stroke:rgba(154,255,0,.12);stroke-width:1}
-.pl-hud .prog{fill:none;stroke:var(--lime);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--lime));transform:rotate(-90deg);transform-origin:150px 150px}
-@keyframes plRot{to{transform:rotate(360deg)}}
-.pl-pct{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-family:'Unbounded',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--lime);text-shadow:0 0 10px rgba(154,255,0,.6)}
-.pl-brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(30px,7vw,54px);letter-spacing:2px;color:#fff;position:relative;line-height:1}
+/* КИНЕМАТОГРАФИЧНАЯ ЗАГРУЗКА: 3D-глаз + сканирующая линия + элегантный прогресс (без кольца) */
+.pl-scan{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(154,255,0,.75),transparent);box-shadow:0 0 20px rgba(154,255,0,.55);top:6%;z-index:9994;pointer-events:none;animation:plScan 2.4s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes plScan{0%{top:8%;opacity:0}12%{opacity:.85}88%{opacity:.85}100%{top:90%;opacity:0}}
+.pl-stage{position:absolute;left:0;right:0;bottom:15vh;display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;animation:plIn .7s ease .12s forwards}
+.pl-brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(34px,8vw,58px);letter-spacing:2px;color:#fff;position:relative;line-height:1}
 .pl-brand span{color:var(--lime)}
 .pl-brand.glitch::before,.pl-brand.glitch::after{content:'ОКО';position:absolute;left:0;top:0;width:100%}
-.pl-brand.glitch::before{color:#9AFF00;transform:translate(2px,-1px);opacity:.75;clip-path:inset(0 0 55% 0);animation:plGl .18s steps(2) infinite}
-.pl-brand.glitch::after{color:#12E6FF;transform:translate(-2px,1px);opacity:.5;clip-path:inset(52% 0 0 0);animation:plGl .22s steps(2) infinite reverse}
+.pl-brand.glitch::before{color:#9AFF00;transform:translate(2px,-1px);opacity:.8;clip-path:inset(0 0 55% 0);animation:plGl .16s steps(2) infinite}
+.pl-brand.glitch::after{color:#12E6FF;transform:translate(-2px,1px);opacity:.55;clip-path:inset(52% 0 0 0);animation:plGl .2s steps(2) infinite reverse}
 @keyframes plGl{50%{transform:translate(-2px,1px)}}
+.pl-bar2{width:min(270px,66vw);height:3px;border-radius:3px;background:rgba(154,255,0,.14);overflow:hidden;position:relative}
+.pl-bar2 i{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#5FBF00,var(--lime));box-shadow:0 0 16px var(--lime)}
+.pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase}
+.pl-lbl b{color:var(--lime)}
 .pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
@@ -383,17 +381,12 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <body>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
-  <div class="pl-hud" id="plHud">
-    <svg width="300" height="300" viewBox="0 0 300 300">
-      <circle class="rng d" cx="150" cy="150" r="132"/>
-      <circle class="rng d2" cx="150" cy="150" r="112"/>
-      <circle class="rng b" cx="150" cy="150" r="146"/>
-      <circle class="prog" id="plProg" cx="150" cy="150" r="146"/>
-    </svg>
-    <div class="pl-pct" id="plPct">0%</div>
+  <div class="pl-scan"></div>
+  <div class="pl-stage">
+    <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
+    <div class="pl-bar2"><i id="plFill"></i></div>
+    <div class="pl-lbl">ЗАГРУЗКА СИСТЕМЫ · <b id="plPct">0%</b></div>
   </div>
-  <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
-  <div class="pl-sub">ЭКОСИСТЕМА РОСТА · ЗАПУСК СИСТЕМЫ</div>
 </div>
 <div class="pl-flash" id="plFlash"></div>
 <!-- BACKGROUND -->
@@ -638,31 +631,25 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
 try{scrollTo(0,0);}catch(e){}
 document.body.classList.add('booting');
 (function(){
-  var pl=document.getElementById('preloader'),hud=document.getElementById('plHud'),prog=document.getElementById('plProg'),
+  var pl=document.getElementById('preloader'),fill=document.getElementById('plFill'),
       pct=document.getElementById('plPct'),brand=document.getElementById('plBrand'),flash=document.getElementById('plFlash'),entered=false;
-  var C=2*Math.PI*146; if(prog){prog.style.strokeDasharray=C;prog.style.strokeDashoffset=C;}
-  function placeHud(){var ew=document.getElementById('eyeWrap');if(!ew||!hud)return;var r=ew.getBoundingClientRect();
-    var s=Math.min(1,(r.width)/300*1.15); hud.style.transform='scale('+s.toFixed(3)+')';
-    hud.style.left=(r.left+r.width/2-150)+'px'; hud.style.top=(r.top+r.height/2-150)+'px';}
-  placeHud(); addEventListener('resize',placeHud);
-  var t0=performance.now(),DUR=2100,ready=window.__eyeReady||false;
+  var t0=performance.now(),DUR=2200,ready=window.__eyeReady||false;
   addEventListener('eye-ready',function(){ready=true;});
   function finish(){ if(entered)return; entered=true;
     if(brand)brand.classList.remove('glitch');
-    if(flash){flash.style.transition='opacity .16s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity .85s ease';flash.style.opacity='0';},170);}
+    if(flash){flash.style.transition='opacity .16s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity .9s ease';flash.style.opacity='0';},170);}
     if(window.__audio)window.__audio.start();
     if(window.__sfx)window.__sfx('enter');
     try{scrollTo(0,0);}catch(e){}
     pl.classList.add('done'); document.body.classList.remove('booting'); start();
     var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
-    seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},240+i*120);});
+    seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},260+i*120);});
   }
-  (function tick(){var e=performance.now()-t0; var p=Math.min(1,e/DUR); if(!ready)p=Math.min(p,0.9);
-    if(prog)prog.style.strokeDashoffset=C*(1-p); if(pct)pct.textContent=Math.round(p*100)+'%';
-    placeHud();
-    if(e>1100&&brand&&!brand.classList.contains('glitch'))brand.classList.add('glitch');
+  (function tick(){var e=performance.now()-t0; var p=Math.min(1,e/DUR); if(!ready)p=Math.min(p,0.92);
+    if(fill)fill.style.width=(p*100).toFixed(1)+'%'; if(pct)pct.textContent=Math.round(p*100)+'%';
+    if(e>1000&&brand&&!brand.classList.contains('glitch'))brand.classList.add('glitch');
     if(p>=1){finish();return;} requestAnimationFrame(tick);})();
-  setTimeout(finish,4200);   // страховка: сайт всегда стартует
+  setTimeout(finish,4200);
 })();
 /* ЖИВАЯ СЕТКА КВАДРАТОВ (canvas 2D): дрейф + бегущая волна подсветки + отклик на курсор */
 (function(){
@@ -716,7 +703,7 @@ document.body.classList.add('booting');
 /* ЗВУК: красивая фоновая музыка + глубокие мягкие SFX. АВТОЗАПУСК: muted-autoplay сразу,
    снятие мьюта с плавным появлением на первом же касании/скролле (обход политики браузеров). */
 (function(){
-  var mus=null,started=false,unmuted=false,masterVol=0.40;
+  var mus=null,started=false,unmuted=false,masterVol=0.55;
   function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3?v=2');a.preload='auto';a.volume=vol;a.setAttribute('playsinline','');return a;}
   var pool={};
   function sfx(name,vol){
@@ -744,10 +731,12 @@ document.body.classList.add('booting');
     mus.play().then(function(){started=true;}).catch(function(){started=false;});
   }
   var armed=false;
-  function unmute(){ if(unmuted)return; makeMus();
-    var go=function(){ mus.muted=false; if(mus.paused){mus.play().catch(function(){});}
-      unmuted=true; started=true; fade(mus,masterVol,2200); setTimeout(function(){window.__sfx('enter');},200); };
-    if(started){go();} else { mus.play().then(go).catch(function(){go();}); }
+  function unmute(){ if(unmuted)return; unmuted=true; makeMus();
+    // СИНХРОННО в обработчике жеста (надёжно для iOS/Android): снимаем мьют и играем сразу
+    mus.muted=false; mus.volume=0.001;
+    try{ var pr=mus.play(); if(pr&&pr.catch)pr.catch(function(){}); }catch(e){}
+    started=true; fade(mus,masterVol,1800);
+    setTimeout(function(){window.__sfx('enter');},220);
   }
   function arm(){ if(armed)return; armed=true;
     var evs=['pointerdown','touchstart','touchend','keydown','wheel','click','scroll','mousemove'];
@@ -984,7 +973,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=101';
+import { initHolo } from './js/holo.js?v=102';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>

@@ -64,8 +64,9 @@ export function initHolo(){
     eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
       const nm=o.material.normalMap||null;
       o.material=new THREE.MeshStandardMaterial({
-        color:new THREE.Color(0x9AFF00), emissive:new THREE.Color(0x74D400), emissiveIntensity:.92,
-        metalness:.30, roughness:.30, normalMap:nm, side:THREE.DoubleSide });
+        color:new THREE.Color(0x9AFF00), emissive:new THREE.Color(0x9AFF00), emissiveIntensity:.35,
+        metalness:.15, roughness:.5, normalMap:nm, side:THREE.DoubleSide });
+      o.material.toneMapped=false;   // держим точный брендовый лайм #9AFF00 как в тексте, без пересвета ACES
       o.material.needsUpdate=true; } });
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);
     // чистый глаз без лишних оболочек — только сам глаз + мягкое CSS-свечение под ним
@@ -103,21 +104,16 @@ export function initHolo(){
   function applyPose(){for(var nm in _poseAcc){var bn=robotBones[nm];var p=_poseAcc[nm];if(bn&&bn.userData.baseQ){_e.set(p[0],p[1],p[2]);_tq.setFromEuler(_e);bn.quaternion.copy(bn.userData.baseQ).multiply(_tq);}p[0]=p[1]=p[2]=0;}}
   // ---- ЖЕСТЫ РОБОТА (живой персонаж): 5 анимаций по кругу ----
   function osc(t,spd,ph){return Math.sin(t*spd+ph);}
+  // ТОЛЬКО 3 чистых жеста (без деформации): приветствие-махание, сложение рук, топот
   var GESTURES=[
-    // 0) машет ПРАВОЙ рукой «привет»
-    function(g,t,w){addPose('RightArm',0,0,(-1.15+0.15*osc(t,7,0))*w);addPose('RightForeArm',0,0,(-0.5+0.5*osc(t,7,0))*w);addPose('Head',0,0.12*w,0.06*osc(t,3,0)*w);addPose('Spine',0,0,0.04*w);},
-    // 1) машет ЛЕВОЙ рукой «привет»
-    function(g,t,w){addPose('LeftArm',0,0,(1.15-0.15*osc(t,7,0))*w);addPose('LeftForeArm',0,0,(0.5-0.5*osc(t,7,0))*w);addPose('Head',0,-0.12*w,-0.06*osc(t,3,0)*w);addPose('Spine',0,0,-0.04*w);},
-    // 2) складывает руки на груди
-    function(g,t,w){addPose('RightArm',0,0,(-0.55)*w);addPose('LeftArm',0,0,(0.55)*w);addPose('RightForeArm',0,(-1.1)*w,(-0.7)*w);addPose('LeftForeArm',0,(1.1)*w,(0.7)*w);addPose('Head',0.05*w,0,0);addPose('Spine',(0.04)*w,0,0);},
-    // 3) топает ногой + лёгкое покачивание
-    function(g,t,w){var tap=Math.max(0,osc(t,6,0));addPose('RightUpLeg',(0.28*tap)*w,0,0);addPose('RightLeg',(-0.45*tap)*w,0,0);addPose('Hips',0,0.06*osc(t,3,0)*w,0.05*osc(t,3,1)*w);addPose('Head',0.04*osc(t,6,0)*w,0,0);addPose('RightArm',0,0,-0.1*w);addPose('LeftArm',0,0,0.1*w);},
-    // 4) «думает»: чешет голову правой рукой + наклон
-    function(g,t,w){addPose('RightArm',0,0,(-1.5)*w);addPose('RightForeArm',0,(-1.7)*w,(-1.2+0.15*osc(t,8,0))*w);addPose('Head',(0.12)*w,(0.22)*w,(0.14)*w);addPose('Spine',0,0.1*w,0.06*w);addPose('LeftArm',0,0,0.12*w);},
-    // 5) ходит на месте влево-вправо (шаг)
-    function(g,t,w){var s1=osc(t,3.2,0);addPose('Hips',0,0.14*s1*w,0);addPose('LeftUpLeg',(0.3*Math.max(0,s1))*w,0,0);addPose('RightUpLeg',(0.3*Math.max(0,-s1))*w,0,0);addPose('LeftArm',0,0,(-0.25*s1)*w);addPose('RightArm',0,0,(0.25*s1)*w);addPose('Head',0,0.1*s1*w,0);}
+    // 0) ПРИВЕТСТВИЕ: рука согнута в локте поднята ВВЕРХ, ладонь машет из стороны в сторону
+    function(g,t,w){addPose('RightArm',0,0,1.5*w);addPose('RightForeArm',0,0,(1.05+0.38*osc(t,6.5,0))*w);addPose('Head',0,0.10*w,0.05*osc(t,3,0)*w);addPose('Spine',0,0,0.03*w);},
+    // 1) СКЛАДЫВАЕТ РУКИ на груди
+    function(g,t,w){addPose('RightArm',0,0,0.5*w);addPose('LeftArm',0,0,-0.5*w);addPose('RightForeArm',0,0,1.35*w);addPose('LeftForeArm',0,0,-1.35*w);addPose('Head',0.05*w,0,0);},
+    // 2) ТОПАЕТ ногой на месте + лёгкое покачивание корпуса
+    function(g,t,w){var tap=Math.max(0,osc(t,5,0));addPose('RightUpLeg',(0.22*tap)*w,0,0);addPose('RightLeg',(-0.30*tap)*w,0,0);addPose('Hips',0,0.05*osc(t,2.5,0)*w,0);addPose('Head',0.03*osc(t,5,0)*w,0,0);}
   ];
-  var gi=0,gStart=0,gDur=3.6,gGap=1.0,gPhase='play';
+  var gi=0,gStart=0,gDur=3.4,gGap=1.2,gPhase='play';
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
   function handProg(r){return clamp((H*0.86 - r.top)/(H*0.62),0,1);}
