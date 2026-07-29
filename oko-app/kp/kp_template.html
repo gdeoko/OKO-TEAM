@@ -75,8 +75,18 @@ body.booting #holo-canvas{z-index:9995}
 @keyframes plGl{50%{transform:translate(-2px,1px)}}
 .pl-bar2{width:min(270px,66vw);height:3px;border-radius:3px;background:rgba(154,255,0,.14);overflow:hidden;position:relative}
 .pl-bar2 i{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#5FBF00,var(--lime));box-shadow:0 0 16px var(--lime)}
-.pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase}
+.pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase;transition:opacity .4s}
 .pl-lbl b{color:var(--lime)}
+/* Кнопка запуска (гарантирует жест → звук включается на 100%) */
+.pl-start{opacity:0;pointer-events:none;transform:translateY(14px) scale(.96);transition:opacity .5s ease,transform .5s cubic-bezier(.16,1,.3,1);
+  display:inline-flex;align-items:center;gap:12px;background:var(--lime);color:#0a0f07;
+  font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;
+  padding:19px 46px;border:none;border-radius:100px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 12px 44px rgba(154,255,0,.34);animation:plPulse 1.9s ease-in-out infinite}
+.pl-start.show{opacity:1;pointer-events:auto;transform:none}
+.pl-start svg{width:17px;height:17px;fill:#0a0f07;display:block}
+.pl-start:active{transform:scale(.95)}
+@keyframes plPulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.42),0 12px 44px rgba(154,255,0,.3)}50%{box-shadow:0 0 0 18px rgba(154,255,0,0),0 14px 54px rgba(154,255,0,.5)}}
 .pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
@@ -389,7 +399,8 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="pl-stage">
     <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
     <div class="pl-bar2"><i id="plFill"></i></div>
-    <div class="pl-lbl">ЗАГРУЗКА СИСТЕМЫ · <b id="plPct">0%</b></div>
+    <div class="pl-lbl" id="plLbl">ЗАГРУЗКА СИСТЕМЫ · <b id="plPct">0%</b></div>
+    <button class="pl-start" id="plStart" type="button" aria-label="Запустить"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>ЗАПУСТИТЬ</button>
   </div>
 </div>
 <div class="pl-flash" id="plFlash"></div>
@@ -636,24 +647,33 @@ try{scrollTo(0,0);}catch(e){}
 document.body.classList.add('booting');
 (function(){
   var pl=document.getElementById('preloader'),fill=document.getElementById('plFill'),
-      pct=document.getElementById('plPct'),brand=document.getElementById('plBrand'),flash=document.getElementById('plFlash'),entered=false;
+      pct=document.getElementById('plPct'),brand=document.getElementById('plBrand'),flash=document.getElementById('plFlash'),
+      lbl=document.getElementById('plLbl'),startBtn=document.getElementById('plStart'),entered=false,shown=false;
   var t0=performance.now(),DUR=2200,ready=window.__eyeReady||false;
   addEventListener('eye-ready',function(){ready=true;});
+  // Показываем кнопку «ЗАПУСТИТЬ», когда всё загружено. Пока не нажали — сайт за прелоадером (гарантия жеста).
+  function showStart(){ if(shown||entered)return; shown=true;
+    if(brand)brand.classList.remove('glitch');
+    if(fill)fill.style.width='100%'; if(pct)pct.textContent='100%';
+    if(lbl){lbl.style.opacity='0';setTimeout(function(){lbl.style.display='none';},400);}
+    if(startBtn)startBtn.classList.add('show');
+  }
+  // Вход по нажатию кнопки — это НАСТОЯЩИЙ жест пользователя, поэтому музыка гарантированно играет (100%).
   function finish(){ if(entered)return; entered=true;
+    if(window.__audio)window.__audio.start();   // синхронно в обработчике клика → play() разрешён
     if(brand)brand.classList.remove('glitch');
     if(flash){flash.style.transition='opacity .16s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity .9s ease';flash.style.opacity='0';},170);}
-    if(window.__audio)window.__audio.start();
-    if(window.__sfx)window.__sfx('enter');
     try{scrollTo(0,0);}catch(e){}
     pl.classList.add('done'); document.body.classList.remove('booting'); start();
     var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
     seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},260+i*120);});
   }
+  if(startBtn){ startBtn.addEventListener('click',finish); startBtn.addEventListener('touchend',function(e){e.preventDefault();finish();},{passive:false}); }
   (function tick(){var e=performance.now()-t0; var p=Math.min(1,e/DUR); if(!ready)p=Math.min(p,0.92);
-    if(fill)fill.style.width=(p*100).toFixed(1)+'%'; if(pct)pct.textContent=Math.round(p*100)+'%';
+    if(fill&&!shown)fill.style.width=(p*100).toFixed(1)+'%'; if(pct&&!shown)pct.textContent=Math.round(p*100)+'%';
     if(e>1000&&brand&&!brand.classList.contains('glitch'))brand.classList.add('glitch');
-    if(p>=1){finish();return;} requestAnimationFrame(tick);})();
-  setTimeout(finish,4200);
+    if(p>=1){showStart();return;} requestAnimationFrame(tick);})();
+  setTimeout(showStart,4600);   // фолбэк: кнопка появится даже если что-то не догрузилось
 })();
 /* ЖИВАЯ СЕТКА КВАДРАТОВ (canvas 2D): дрейф + бегущая волна подсветки + отклик на курсор */
 (function(){
@@ -961,7 +981,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=106';
+import { initHolo } from './js/holo.js?v=107';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>

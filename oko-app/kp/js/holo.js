@@ -60,16 +60,15 @@ export function initHolo(){
   let eyeMesh=null; const eyeAnchors=['holoEye','holoEye2'].map(id=>document.getElementById(id)).filter(Boolean);
   function eyeReady(){ window.__eyeReady=true; try{dispatchEvent(new Event('eye-ready'));}catch(e){} }
   if(eyeAnchors.length){ new GLTFLoader().load('assets/oko-eye.glb?v=92',g=>{eyeMesh=g.scene;
-    // ЧИСТЫЙ ЛАЙМ без запечённой чёрной обводки: заменяем baseColor на брендовый цвет, оставляем normalMap
+    // ГЛАДКИЙ глянцевый 3D-глаз: БЕЗ normalMap (она давала царапины/битые пиксели/вмятины на радужке) — чистая поверхность.
     eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
-      const nm=o.material.normalMap||null;
-      // ОБЪЁМНЫЙ 3D-глаз: глянцевый лайм с тенями и бликом (не плоская пересвеченная заливка).
-      // Базовый цвет чуть глубже бренда, чтобы освещённые участки выходили в #9AFF00, а теневые — темнее (объём).
       o.material=new THREE.MeshStandardMaterial({
-        color:new THREE.Color(0x58A300), emissive:new THREE.Color(0x123000), emissiveIntensity:.32,
-        metalness:.50, roughness:.34, normalMap:nm, envMap:ENVTEX, envMapIntensity:.95, side:THREE.DoubleSide });
-      o.material.toneMapped=true;   // ACES мягко сжимает сильный ключевой свет → плавный градиент + глянцевый блик = объём и тень
-      o.material.needsUpdate=true; } });
+        color:new THREE.Color(0x58A300), emissive:new THREE.Color(0x123000), emissiveIntensity:.30,
+        metalness:.55, roughness:.22, envMap:ENVTEX, envMapIntensity:1.15, side:THREE.DoubleSide });
+      o.material.toneMapped=true;   // ACES мягко сжимает свет → плавный градиент + чистый глянцевый блик = объём без артефактов
+      o.material.needsUpdate=true;
+      if(o.geometry){ try{ o.geometry.computeVertexNormals(); }catch(e){} }   // сглаживаем нормали (убираем фасеточность)
+    } });
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);
     // чистый глаз без лишних оболочек — только сам глаз + мягкое CSS-свечение под ним
     scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
