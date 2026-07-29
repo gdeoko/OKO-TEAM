@@ -6,11 +6,10 @@ $YEARS = max(1, (int) date('Y') - 2020);
 
 /* Инфографика - реальные цифры (эталон данных), с фолбэком на настройки БД. */
 $infographic = [
-  ['val' => (int) setting('stat_years', (string) $YEARS), 'suf' => '', 'label' => 'Лет в искусстве', 'note' => '2020-2026'],
-  ['val' => (int) setting('stat_competitions', '95'), 'suf' => '+', 'label' => 'Конкурсов и фестивалей', 'note' => 'многожанровых'],
-  ['val' => (int) setting('stat_participants', '30621'), 'suf' => '+', 'label' => 'Заявок участников', 'note' => 'со всего мира'],
-  ['val' => (int) setting('stat_regions', '85'), 'suf' => '', 'label' => 'Регионов России', 'note' => 'все федеральные округа'],
-  ['val' => (int) setting('stat_countries', '10'), 'suf' => '', 'label' => 'Стран-участниц', 'note' => 'СНГ и дальнее зарубежье'],
+  ['val' => (int) setting('stat_competitions', '5000'), 'suf' => '+', 'label' => 'Конкурсов проведено', 'note' => 'международных и всероссийских'],
+  ['val' => (int) setting('stat_participants', '300000'), 'suf' => '+', 'label' => 'Участников', 'note' => 'со всего мира'],
+  ['val' => (int) setting('stat_years', '7'), 'suf' => '+', 'label' => 'Лет в искусстве', 'note' => 'с 2020 года'],
+  ['val' => (int) setting('stat_countries', '15'), 'suf' => '+', 'label' => 'Стран-участниц', 'note' => 'СНГ и дальнее зарубежье'],
 ];
 
 /* Данные из БД (as is). */
@@ -101,65 +100,6 @@ ob_start(); ?>
       <?php endforeach; ?>
     </div>
 
-    <div class="grid grid-3 reveal" style="margin-top:32px">
-      <!-- Пончик: номинации -->
-      <div class="card">
-        <h3>Номинации участников</h3>
-        <div class="donut">
-          <svg viewBox="0 0 140 140" role="img" aria-label="Распределение заявок по номинациям">
-            <circle cx="70" cy="70" r="54" fill="none" stroke="var(--line)" stroke-width="17"></circle>
-            <?php foreach ($donutSegs as $seg): ?>
-              <circle cx="70" cy="70" r="54" fill="none" stroke="<?= $seg['color'] ?>" stroke-width="17"
-                      stroke-dasharray="<?= $seg['dash'] ?> <?= $seg['gap'] ?>" stroke-dashoffset="<?= $seg['offset'] ?>"
-                      transform="rotate(-90 70 70)" stroke-linecap="butt"></circle>
-            <?php endforeach; ?>
-            <text x="70" y="66" text-anchor="middle" class="donut-num">9</text>
-            <text x="70" y="86" text-anchor="middle" class="donut-cap">номинаций</text>
-          </svg>
-        </div>
-        <ul class="legend">
-          <?php foreach ($noms as [$nName, $nPct, $nColor]): ?>
-            <li><i style="background:<?= $nColor ?>"></i><span><?= h($nName) ?></span><b><?= (int) $nPct ?>%</b></li>
-          <?php endforeach; ?>
-        </ul>
-      </div>
-
-      <!-- Кольцо прогресса: ведущая номинация -->
-      <div class="card" style="text-align:center">
-        <h3>Ведущая номинация</h3>
-        <div class="stat-ring">
-          <svg viewBox="0 0 140 140" role="img" aria-label="Доля вокальных заявок - 39 процентов">
-            <circle cx="70" cy="70" r="54" fill="none" stroke="var(--line)" stroke-width="14"></circle>
-            <circle cx="70" cy="70" r="54" fill="none" stroke="var(--gold)" stroke-width="14" stroke-linecap="round"
-                    stroke-dasharray="<?= $ringDash ?> <?= round($C - $ringDash, 2) ?>" transform="rotate(-90 70 70)"></circle>
-            <text x="70" y="66" text-anchor="middle" class="ring-num" data-count="<?= $ringPct ?>" data-suffix="%">0%</text>
-            <text x="70" y="88" text-anchor="middle" class="ring-cap">заявок</text>
-          </svg>
-        </div>
-        <p style="color:var(--muted);margin-top:6px">Вокальное искусство - самое массовое направление конкурсов «Музыкального Мира».</p>
-      </div>
-
-      <!-- Полосы: самые массовые конкурсы -->
-      <div class="card">
-        <h3>Самые массовые конкурсы</h3>
-        <div class="mz-bars">
-          <?php foreach ($topComps as [$cName, $cCnt]): $w = max(8, round($cCnt / $topMax * 100)); ?>
-            <div class="mz-bar">
-              <span class="mz-bar-name"><?= h($cName) ?></span>
-              <b class="mz-bar-val"><?= number_format($cCnt, 0, '.', ' ') ?></b>
-              <span class="mz-bar-track"><i style="width:<?= $w ?>%"></i></span>
-            </div>
-          <?php endforeach; ?>
-        </div>
-        <p style="color:var(--muted);font-size:.82rem;margin:14px 0 0">Число поданных заявок на флагманские конкурсы центра.</p>
-      </div>
-    </div>
-
-    <div class="reveal" style="margin-top:24px">
-      <h3 style="text-align:center">География участников</h3>
-      <p style="color:var(--muted);margin:0 0 18px">Россия, страны СНГ и дальнее зарубежье - от Калининграда до Дальнего Востока, от Минска до Уханя.</p>
-      <?= render_regions_heatmap() ?>
-    </div>
   </div>
 </section>
 

@@ -953,14 +953,47 @@ h1,h2,.stat b{background-size:200% 100% !important;animation:goldShimmer 8s line
 }
 .btn--primary:active::after { opacity:1; transition:opacity 0s; }
 
-/* Стрелка «пульс» у CTA — приглашает нажать */
-.btn--primary.btn--lg::before {
-  content:""; position:absolute; inset:0; border-radius:inherit; border:2px solid rgba(232,194,90,.6);
-  animation:ctaPulse 2.2s ease-out infinite; pointer-events:none;
+/* Pulse-кольцо у CTA — убран (был перегруз) */
+
+/* ══ ЕДИНЫЙ анимационный фон на ВСЁМ сайте (не только hero) ══
+   Fixed слой за всем контентом — плавный конический градиент + мягкое дыхание.
+   Использует только transform+opacity → GPU, без layout, без lag. */
+body::before{
+  content:"";position:fixed;inset:-10%;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(45% 45% at 20% 22%,rgba(232,194,90,.28),transparent 60%),
+    radial-gradient(40% 42% at 82% 18%,rgba(139,111,31,.22),transparent 65%),
+    radial-gradient(55% 45% at 50% 90%,rgba(201,168,76,.20),transparent 65%),
+    linear-gradient(180deg,var(--bg) 0%,var(--bg-2) 100%);
+  filter:blur(38px);opacity:.9;
+  animation:appAurora 30s ease-in-out infinite alternate;will-change:transform}
+[data-theme="dark"] body::before{opacity:.55;
+  background:
+    radial-gradient(45% 45% at 20% 22%,rgba(201,168,76,.28),transparent 62%),
+    radial-gradient(40% 42% at 82% 18%,rgba(139,111,31,.30),transparent 65%),
+    radial-gradient(55% 45% at 50% 90%,rgba(201,168,76,.20),transparent 65%),
+    linear-gradient(180deg,#0e0b0f 0%,#181017 100%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.06;
+  background-image:var(--tex-notes);background-size:180px 180px;
+  animation:appNotes 60s linear infinite;will-change:transform}
+@keyframes appAurora{
+  0%  {transform:translate3d(-2%,-2%,0) scale(1)}
+  50% {transform:translate3d(2%,3%,0)  scale(1.05)}
+  100%{transform:translate3d(-1%,-3%,0) scale(1.08)}
 }
-@keyframes ctaPulse{
-  0%{transform:scale(1);opacity:.6}
-  70%{transform:scale(1.08);opacity:0}
-  100%{transform:scale(1.08);opacity:0}
+@keyframes appNotes{
+  0%  {transform:translate3d(0,0,0)}
+  100%{transform:translate3d(-360px,-360px,0)}
 }
-@media(prefers-reduced-motion:reduce){.btn--primary.btn--lg::before{animation:none;opacity:0}}
+/* Отменяем старый статичный bg-fx (у нас теперь единый фон в body::before/after) */
+.bg-fx{display:none}
+/* Секции полупрозрачные — единый фон просвечивает */
+.section{background:transparent}
+.section--tint{background:linear-gradient(180deg,rgba(255,248,225,.35),transparent)}
+[data-theme="dark"] .section--tint{background:linear-gradient(180deg,rgba(201,168,76,.06),transparent)}
+.section--parchment{background:linear-gradient(180deg,rgba(249,242,228,.45),transparent)}
+[data-theme="dark"] .section--parchment{background:linear-gradient(180deg,rgba(232,194,90,.05),transparent)}
+
+/* На prefers-reduced-motion / очень маленьких — фон статичный (без animation) */
+@media(prefers-reduced-motion:reduce){body::before,body::after{animation:none}}
+@media(max-width:480px){body::after{display:none}} /* нотный слой убираем на телефонах */
