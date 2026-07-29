@@ -7283,6 +7283,49 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .sp-vw-re svg.i{width:18px;height:18px}
 .sp-vw-empty{color:var(--dim);font-size:13px;text-align:center;padding:18px 0 10px}
 
+/* ---------- вьювер: экшены сверху (поделиться + звук) ---------- */
+.sp-actions{position:absolute;top:34px;right:14px;z-index:5;display:flex;gap:8px;pointer-events:auto}
+.sp-act-btn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s}
+.sp-act-btn:hover{border-color:#9AFF00;color:#9AFF00}
+.sp-act-btn:active{transform:scale(.9)}
+.sp-act-btn svg.i{width:16px;height:16px}
+#storyViewer.sp-dragging .sp-actions{opacity:var(--sp-fade,1)}
+
+/* ---------- опрос / викторина в сторис ---------- */
+.sp-poll{position:absolute;left:14px;right:14px;bottom:96px;z-index:2;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px 14px;backdrop-filter:blur(10px);animation:spPop .3s ease}
+.sp-poll-q{color:#fff;font-size:14px;font-weight:700;text-align:center;margin-bottom:10px;line-height:1.35}
+.sp-poll-opts{display:flex;flex-direction:column;gap:6px}
+.sp-poll-opt{position:relative;overflow:hidden;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:99px;padding:10px 14px;font-size:13.5px;font-weight:600;text-align:left;transition:border-color .15s,background .18s}
+.sp-poll-opt:hover{border-color:#9AFF00}
+.sp-poll-opt:active{transform:scale(.98)}
+.sp-poll-opt .sp-poll-bar{position:absolute;inset:0;background:linear-gradient(90deg,rgba(154,255,0,.35),rgba(154,255,0,.18));border-radius:99px;transform:scaleX(0);transform-origin:left center;transition:transform .55s cubic-bezier(.3,1,.4,1);z-index:0}
+.sp-poll-opt .sp-poll-lb,.sp-poll-opt .sp-poll-pc{position:relative;z-index:1;display:inline-flex;align-items:center}
+.sp-poll-opt .sp-poll-pc{float:right;color:#9AFF00;font-family:var(--font-display);letter-spacing:.03em;font-size:15px;margin-left:8px}
+.sp-poll.voted .sp-poll-opt{cursor:default;pointer-events:none;background:rgba(255,255,255,.06)}
+.sp-poll.voted .sp-poll-opt.picked{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.4)}
+.sp-poll.quiz.voted .sp-poll-opt.correct{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.55);color:#9AFF00}
+.sp-poll.quiz.voted .sp-poll-opt.wrong{border-color:#ff5757;box-shadow:0 0 0 1px rgba(255,87,87,.4);color:#ffb3b3}
+.sp-poll.quiz.voted .sp-poll-opt.correct .sp-poll-bar{background:linear-gradient(90deg,rgba(154,255,0,.38),rgba(154,255,0,.16))}
+.sp-poll.quiz.voted .sp-poll-opt.wrong .sp-poll-bar{background:linear-gradient(90deg,rgba(255,87,87,.28),rgba(255,87,87,.1))}
+.sp-poll-mark{display:inline-flex;width:16px;height:16px;margin-right:8px;color:#9AFF00;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.sp-poll.voted .sp-poll-opt.picked .sp-poll-mark,
+.sp-poll.quiz.voted .sp-poll-opt.correct .sp-poll-mark{opacity:1}
+.sp-poll-mark svg.i{width:14px;height:14px}
+@media(prefers-reduced-motion:reduce){.sp-poll{animation:none}.sp-poll-opt .sp-poll-bar{transition:none}}
+
+/* ---------- панель быстрых реакций (свайп-вверх) ---------- */
+#spQuickReact{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,120%);z-index:79;display:flex;gap:8px;background:rgba(10,10,10,.72);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:8px 10px;backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.55);pointer-events:none;opacity:0;transition:transform .3s cubic-bezier(.3,1,.4,1),opacity .2s ease}
+#spQuickReact.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.sp-qr-btn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,border-color .15s,color .15s,background .15s}
+.sp-qr-btn:hover{border-color:#9AFF00;color:#9AFF00}
+.sp-qr-btn:active{transform:scale(1.22)}
+.sp-qr-btn svg.i{width:22px;height:22px}
+@media(prefers-reduced-motion:reduce){#spQuickReact{transition:opacity .01s}}
+
+/* ---------- видео-сторис (fallback, если st.video задан) ---------- */
+.sv-video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+#storyViewer .sv-card.video{text-align:left;padding:0}
+
 /* ===== module: settings-plus ===== */
 /* ===== SETTINGS-PLUS (st2-): полноэкранный раздел «Настройки» ===== */
 
@@ -10807,6 +10850,13 @@ nav#tabs>button.active svg.i{
     <h3><svg class="i"><use href="#i-eye"/></svg>Просмотры<span id="spVwCount"></span></h3>
     <div id="spVwList"></div>
   </div>
+</div>
+<div id="spQuickReact" onclick="event.stopPropagation()">
+  <button class="sp-qr-btn" onclick="spQuickReact('heart',event)" title="Сердце"><svg class="i"><use href="#i-heart"/></svg></button>
+  <button class="sp-qr-btn" onclick="spQuickReact('fire',event)" title="Огонь"><svg class="i"><use href="#i-fire"/></svg></button>
+  <button class="sp-qr-btn" onclick="spQuickReact('thumb',event)" title="Класс"><svg class="i"><use href="#i-thumb"/></svg></button>
+  <button class="sp-qr-btn" onclick="spQuickReact('star',event)" title="Звезда"><svg class="i"><use href="#i-star"/></svg></button>
+  <button class="sp-qr-btn" onclick="spQuickReact('bolt',event)" title="Молния"><svg class="i"><use href="#i-bolt"/></svg></button>
 </div>
 
 <!-- ===== module: settings-plus ===== -->
@@ -31995,6 +32045,7 @@ function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON
   }catch(e){}
   if(!VS_TON.owned || typeof VS_TON.owned !== 'object') VS_TON.owned = {};
   if(!Array.isArray(VS_TON.tx)) VS_TON.tx = [];
+  if(!Array.isArray(VS_TON.wish)) VS_TON.wish = [];
   if(typeof VS_TON.balance !== 'number' || isNaN(VS_TON.balance)) VS_TON.balance = 0;
   if(!VS_TON.addr){
     const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789-_';
@@ -32243,7 +32294,12 @@ function vsRenderTon(){
   const totalOwned = vsOwnedTotal();
   let body;
   if(VS_TON_TAB === 'shop'){
-    body = `<div class="vs-gshop">${VS_GIFTS.map(vsShopCard).join('')}</div>`;
+    const wishItems = (VS_TON.wish||[]).map(vsGiftById).filter(Boolean);
+    const wishSec = wishItems.length ? `<div class="vs-wish-sec">
+      <div class="vs-wish-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg><span>Твой вишлист</span><i>${wishItems.length}</i><small>другие увидят и подарят</small></div>
+      <div class="vs-wish-row">${wishItems.map(g=>`<div class="vs-wish-item vs-rar-${vsRarity(g)}" role="button" tabindex="0" onclick="vsOpenBuy('${g.id}')" title="${esc(g.name)}">${vsGiftSvg(g.art,40)}<b>${esc(g.name)}</b><small>${vsGemMark(10)} ${vsTonFmt(g.price)}</small><span class="vs-wish-x" onclick="event.stopPropagation();vsWishToggle('${g.id}')" role="button" aria-label="Убрать">${I('close')||'×'}</span></div>`).join('')}</div>
+    </div>` : '';
+    body = wishSec + `<div class="vs-gshop">${VS_GIFTS.map(vsShopCard).join('')}</div>`;
   } else {
     body = owned.length
       ? `<div class="vs-gshop">${owned.map(k=>vsMineCard(k, VS_TON.owned[k])).join('')}</div>`
@@ -32278,19 +32334,25 @@ function vsTonTab(t){ VS_TON_TAB = t; vsRenderTon(); }
 function vsShopCard(g){
   const locked = g.premium && !vsPremiumOk();
   const own = VS_TON.owned[g.id] || 0;
-  return `<button class="vs-gcard${locked?' vs-locked':''}${g.premium?' vs-nft':''}" onclick="vsOpenBuy('${g.id}')">
+  const rar = vsRarity(g);
+  const wish = vsWishHas(g.id);
+  return `<div class="vs-gcard vs-rar-${rar}${locked?' vs-locked':''}${g.premium?' vs-nft':''}" role="button" tabindex="0" onclick="vsOpenBuy('${g.id}')">
+    <span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span>
+    <span class="vs-wish-tog${wish?' on':''}" onclick="event.stopPropagation();vsWishToggle('${g.id}')" role="button" aria-label="В вишлист"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg></span>
     <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price">${vsGemMark(12)} ${vsTonFmt(g.price)}</div>
-  </button>`;
+  </div>`;
 }
 function vsMineCard(id, n){
   const g = vsGiftById(id); if(!g) return '';
-  return `<button class="vs-gcard" onclick="vsOpenGift('${id}')">
+  const rar = vsRarity(g);
+  return `<div class="vs-gcard vs-rar-${rar}" role="button" tabindex="0" onclick="vsOpenGift('${id}')">
+    <span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span>
     <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}<span class="vs-gcard-own">×${n}</span></div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price vs-mine-send"><svg class="i"><use href="#i-send"/></svg> Отправить</div>
-  </button>`;
+  </div>`;
 }
 
 /* --- покупка --- */
@@ -32302,16 +32364,22 @@ function vsOpenBuy(id){
   const left = Math.max(0, g.supply - g.sold);
   const pct = Math.min(100, Math.round(g.sold*100/g.supply));
   const own = VS_TON.owned[g.id] || 0;
+  const rar = vsRarity(g);
+  const wish = vsWishHas(g.id);
+  const wishBtn = `<button class="btn ghost vs-wish-btn${wish?' on':''}" style="width:100%;margin-top:8px" onclick="vsWishToggle('${g.id}')"><svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg> ${wish?'В вишлисте':'В вишлист'}</button>`;
   const act = locked
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
     : `<button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
+  v.dataset.gid = g.id;
   v.innerHTML = `
-    <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-art vs-rar-${rar}${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-rar"><span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span></div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
     <div class="vs-buy-price">${vsGemMark(20)}<b>${vsTonFmt(g.price)}</b> TON <small>≈ ${rub}</small></div>
     <div class="vs-buy-supply"><div class="vs-buy-sbar"><i style="width:${pct}%"></i></div><span>Выпущено ${g.sold.toLocaleString('ru-RU')} · осталось ${left.toLocaleString('ru-RU')} из ${g.supply.toLocaleString('ru-RU')}</span></div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: покупка списывает TON с локального кошелька. Настоящие NFT-подарки TON — в релизе.</div>
-    ${act}`;
+    ${act}
+    ${locked?'':wishBtn}`;
   openSheet('vs-ton-buy');
 }
 function vsGiftLock(){
@@ -32395,25 +32463,38 @@ function vsRenderSend(){
   const chats = (typeof CHATS !== 'undefined' ? CHATS : []).filter(c=>c && c.name && c.kind !== 'channel');
   v.innerHTML = `
     <div class="vs-send-head">${vsGiftSvg(g?g.art:'crystal',44)}<div><b>Кому подарить</b><small>${g?esc(g.name):''} · выбери чат</small></div></div>
+    <div class="vs-send-note">
+      <label class="vs-field-lbl" for="vsSendNote">Поздравление <span class="vs-send-opt">необязательно · до 120</span></label>
+      <textarea id="vsSendNote" maxlength="120" placeholder="С днём рождения, друг!" oninput="VS_SEND_NOTE=this.value;vsSendNoteCount()">${esc(VS_SEND_NOTE||'')}</textarea>
+      <div class="vs-send-count" id="vsSendCount">${(VS_SEND_NOTE||'').length} / 120</div>
+    </div>
     <div class="vs-send-list">${chats.map(c=>{
       const ava = c.avaIcon ? `<svg class="i"><use href="#i-${c.avaIcon}"/></svg>` : esc(String(c.ava||c.name[0]||'O'));
       const cid = String(c.id).replace(/[^A-Za-z0-9_-]/g,'');
       return `<button class="vs-send-row" onclick="vsSendGift('${vsSendGiftId}','${cid}')"><span class="vs-send-ava">${ava}</span><span class="vs-send-name">${esc(c.name)}</span><svg class="i vs-send-go"><use href="#i-send"/></svg></button>`;
     }).join('')}</div>`;
 }
+function vsSendNoteCount(){
+  const el = document.getElementById('vsSendCount');
+  if(el) el.textContent = ((VS_SEND_NOTE||'').length) + ' / 120';
+}
 function vsSendGift(giftId, chatId){
   const g = vsGiftById(giftId);
   if(!g || (VS_TON.owned[giftId]||0) <= 0){ toast('Подарка нет в коллекции'); return; }
   const c = (typeof CHATS !== 'undefined' ? CHATS : []).find(x=>String(x.id).replace(/[^A-Za-z0-9_-]/g,'')===String(chatId));
   if(!c){ toast('Чат не найден'); return; }
+  const note = String(VS_SEND_NOTE||'').trim().slice(0,120);
   VS_TON.owned[giftId]--; if(VS_TON.owned[giftId] <= 0) delete VS_TON.owned[giftId];
   VS_TON.tx.unshift({ t:'send', ton:0, why:'Подарок «'+g.name+'» → '+c.name, at:Date.now() });
   if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
   vsTonSave();
   const tm = (typeof nowT === 'function') ? nowT() : '';
   c.msgs = c.msgs || [];
-  c.msgs.push({ in:0, t:tm, kind:'gift', gift:giftId });
+  const msg = { in:0, t:tm, kind:'gift', gift:giftId };
+  if(note) msg.note = note;
+  c.msgs.push(msg);
   c.preview = 'Ты: Подарок · ' + g.name; c.time = tm;
+  VS_SEND_NOTE = '';
   closeSheet();
   if(typeof showTab === 'function') showTab('chats');
   if(typeof openConv === 'function') openConv(c.id);
@@ -32471,7 +32552,11 @@ msgHtml = function(m, idx){
     const g = vsGiftById(m.gift) || VS_GIFTS[0];
     const checks = m.in ? '' : (typeof I==='function' ? I('check2') : '');
     const time = `<span class="t">${m.t||''}${checks}</span>`;
-    return `<div class="msg gift-msg ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}"><div class="vs-giftmsg">${vsGiftSvg(g.art,88)}<div class="vs-giftmsg-cap"><b>${vsGemMark(11)} Подарок</b><span>${esc(g.name)}</span></div></div>${time}</div>`;
+    const rar = vsRarity(g);
+    const noteHtml = m.note ? `<div class="vs-giftmsg-note">${esc(m.note)}</div>` : '';
+    const repeatBtn = m.in ? '' : `<button class="vs-giftmsg-act" onclick="event.stopPropagation();vsResend(${idx})"><svg class="i"><use href="#i-send"/></svg> Повторить</button>`;
+    const openHint = `<span class="vs-giftmsg-tap">${m.in?'нажми, чтобы открыть':'превью подарка'}</span>`;
+    return `<div class="msg gift-msg ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}"><div class="vs-giftmsg vs-rar-${rar}" onclick="vsUnwrap(${idx})">${vsGiftSvg(g.art,88)}<div class="vs-giftmsg-cap"><b>${vsGemMark(11)} Подарок <i class="vs-giftmsg-rar vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</i></b><span>${esc(g.name)}</span></div>${noteHtml}${openHint}${repeatBtn}</div>${time}</div>`;
   }
   return _prevMsgHtmlVs(m, idx);
 };
@@ -41328,7 +41413,7 @@ function mpInject(){
 /* ---------- состояние (персист настроек редактора + своих сторис) ---------- */
 const SP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-stories-plus'))||{}; }catch(e){ return {}; } })();
 SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br', stk:'logo'}, SP.ed||{});
-function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed})); }catch(e){} }
+function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed, mute:SP.mute})); }catch(e){} }
 
 /* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
 const SP_BGS = [
@@ -41357,7 +41442,12 @@ const SP_DUR = 4000;
   mk('i-sp-al','<path d="M14 25h72M14 50h42M14 75h58"/>');
   mk('i-sp-ac','<path d="M14 25h72M29 50h42M21 75h58"/>');
   mk('i-sp-ar','<path d="M14 25h72M44 50h42M28 75h58"/>');
+  mk('i-sp-vol','<path d="M14 38h16l24-18v60L30 62H14z"/><path d="M66 34c8 8 8 24 0 32M76 24c14 14 14 38 0 52"/>');
+  mk('i-sp-mute','<path d="M14 38h16l24-18v60L30 62H14z"/><path d="M64 40l24 20M88 40 64 60"/>');
 })();
+
+/* глобальные предпочтения (звук видео) */
+SP.mute = (typeof SP.mute === 'boolean') ? SP.mute : true;
 
 /* ---------- мок-зрители (в духе демо-контента) ---------- */
 const SP_POOL = [
@@ -41515,6 +41605,8 @@ function spBindGestures(v){
       }
     }
   });
+  /* фиксация свайпа-вверх: панель быстрых реакций (жест только вне UI) */
+  function detectSwipeUp(dy, dx){ return dy < -48 && Math.abs(dy) > Math.abs(dx) * 1.4; }
   const finish = (e)=>{
     if(!downT) return;
     clearTimeout(hold);
@@ -41529,6 +41621,11 @@ function spBindGestures(v){
     }
     if(spReplyLock || inUI(e.target)) return;
     if(isHold){ spResume(); navHandled = true; return; }
+    if(detectSwipeUp(dy, dx)){                                    /* свайп-вверх → быстрые реакции */
+      navHandled = true;
+      spOpenQuickReact();
+      return;
+    }
     if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3){   /* свайп → смена автора */
       navHandled = true;
       if(dx < 0) spNextAuthor(); else spPrevAuthor();
@@ -41619,6 +41716,21 @@ function spDecorate(){
     if(ring && g.idx.every(i=>STORIES[i].seen)) ring.classList.add('seen');
   }
 
+  /* верхние экшены: поделиться (всегда), звук (когда видео в кадре) */
+  const v = els.v;
+  const hasVideo = !!v.querySelector('#svCard video');
+  let acts = v.querySelector('.sp-actions');
+  if(!acts){
+    acts = document.createElement('div'); acts.className = 'sp-actions';
+    v.appendChild(acts);
+  }
+  const muteIcon = SP.mute ? 'sp-mute' : 'sp-vol';
+  const muteTitle = SP.mute ? 'Включить звук' : 'Выключить звук';
+  acts.innerHTML =
+    (hasVideo ? `<button class="sp-act-btn sp-mute-btn" onclick="spMuteToggle(event)" title="${muteTitle}"><svg class="i"><use href="#i-${muteIcon}"/></svg></button>` : '')
+    + `<button class="sp-act-btn sp-share-btn" onclick="spShare(event)" title="Поделиться"><svg class="i"><use href="#i-share"/></svg></button>`;
+  spApplyMuteToVideos();
+
   /* стили из редактора: цвет текста, размер, выравнивание, стикер */
   const card = document.getElementById('svCard');
   if(card){
@@ -41636,6 +41748,12 @@ function spDecorate(){
       if(tm && st.sp.fg){ tm.style.color = st.sp.fg; tm.style.opacity = '.62'; }
       if(st.sp.sticker && !card.querySelector('.sp-sticker'))
         card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I(st.sp.stk||'logo')}</div>`);
+    }
+    /* опрос / викторина: интерактивный оверлей поверх карточки */
+    const pq = st.sp && (st.sp.poll || st.sp.quiz);
+    if(pq && !card.querySelector('.sp-poll')){
+      const isQuiz = !!(st.sp && st.sp.quiz);
+      card.insertAdjacentHTML('beforeend', spPollHtml(st, isQuiz));
     }
   }
 
@@ -41708,6 +41826,138 @@ function spFlyBurst(btn, ic, count){
     f.addEventListener('animationend', ()=>f.remove());
     setTimeout(()=>f.remove(), 2400); /* страховка */
   }
+}
+
+/* ---------- поделиться сторис: navigator.share или клипборд ---------- */
+function spShare(ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add) return;
+  const g = spGroupOf(curStory);
+  const key = g ? g.key : (st.my ? '@me' : (st.name||'author'));
+  const base = location.origin + location.pathname;
+  const url = base + '?story=' + encodeURIComponent(key);
+  const title = 'OKO · история' + (st.name ? ' · ' + st.name : '');
+  const text = (st.text || 'Смотри историю в OKO').slice(0, 160);
+  spPause();
+  const resume = ()=> setTimeout(()=>spResume(), 250);
+  if(navigator.share){
+    navigator.share({title, text, url}).then(resume, resume);
+  } else {
+    try{
+      navigator.clipboard.writeText(url).then(()=>{
+        if(typeof toast === 'function') toast('Ссылка скопирована');
+      }, ()=>{
+        if(typeof toast === 'function') toast('Не удалось скопировать');
+      });
+    }catch(e){ if(typeof toast === 'function') toast('Ссылка: ' + url); }
+    resume();
+  }
+}
+
+/* ---------- звук: тумблер для видео-сторис ---------- */
+function spApplyMuteToVideos(){
+  const card = document.getElementById('svCard');
+  if(!card) return;
+  card.querySelectorAll('video').forEach(v=>{
+    v.muted = !!SP.mute;
+    if(!SP.mute){ try{ v.play().catch(()=>{}); }catch(e){} }
+  });
+}
+function spMuteToggle(ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  SP.mute = !SP.mute; spSave();
+  spApplyMuteToVideos();
+  const btn = document.querySelector('.sp-mute-btn');
+  if(btn){
+    btn.title = SP.mute ? 'Включить звук' : 'Выключить звук';
+    btn.innerHTML = `<svg class="i"><use href="#i-${SP.mute ? 'sp-mute' : 'sp-vol'}"/></svg>`;
+  }
+  if(typeof toast === 'function') toast(SP.mute ? 'Звук выключен' : 'Звук включён');
+}
+
+/* ---------- опросы / викторины: HTML + голос ---------- */
+function spPollHtml(st, isQuiz){
+  const src = isQuiz ? st.sp.quiz : st.sp.poll;
+  const total = (src.votes||[]).reduce((a,b)=>a+(b||0), 0) || 0;
+  const picked = (typeof st.spPollPick === 'number') ? st.spPollPick : -1;
+  const voted = picked >= 0;
+  const opts = (src.opts||[]).map((o, i)=>{
+    const pc = total > 0 ? Math.round(((src.votes||[])[i] || 0) * 100 / total) : 0;
+    let cls = '';
+    if(voted){
+      if(isQuiz){
+        if(i === src.correct) cls = ' correct';
+        else if(i === picked) cls = ' wrong';
+      } else if(i === picked) cls = ' picked';
+    }
+    const barW = voted ? Math.max(0.02, ((src.votes||[])[i] || 0) / Math.max(total,1)) : 0;
+    return `<button class="sp-poll-opt${cls}" style="--w:${barW}" onclick="spVote(${i},${isQuiz?1:0},event)">
+      <span class="sp-poll-bar" style="transform:scaleX(${barW})"></span>
+      <span class="sp-poll-lb"><span class="sp-poll-mark"><svg class="i"><use href="#i-check"/></svg></span>${esc(o)}</span>
+      ${voted ? `<span class="sp-poll-pc">${pc}%</span>` : ''}
+    </button>`;
+  }).join('');
+  return `<div class="sp-poll${isQuiz?' quiz':''}${voted?' voted':''}">
+    <div class="sp-poll-q">${esc(src.q||(isQuiz?'Викторина':'Опрос'))}</div>
+    <div class="sp-poll-opts">${opts}</div>
+  </div>`;
+}
+function spVote(idx, isQuiz, ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || !st.sp) return;
+  const src = isQuiz ? st.sp.quiz : st.sp.poll;
+  if(!src) return;
+  if(typeof st.spPollPick === 'number') return;   /* уже голосовал в этой сессии */
+  src.votes = src.votes || (src.opts||[]).map(()=>0);
+  src.votes[idx] = (src.votes[idx] || 0) + 1;
+  st.spPollPick = idx;
+  try{ navigator.vibrate && navigator.vibrate(12); }catch(e){}
+  const card = document.getElementById('svCard');
+  const old = card && card.querySelector('.sp-poll');
+  if(old){ old.outerHTML = spPollHtml(st, !!isQuiz); }
+  spPause();                                         /* даём прочесть результат */
+  setTimeout(()=>spResume(), 2200);
+  const correct = isQuiz && idx === src.correct;
+  if(typeof toast === 'function') toast(isQuiz ? (correct ? 'Верно' : 'Не в этот раз') : 'Голос учтён');
+}
+
+/* ---------- панель быстрых реакций (свайп-вверх) ---------- */
+let spQRTimer = null;
+function spOpenQuickReact(){
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add || st.my) return;   /* свои сторис — нет смысла реагировать */
+  const p = document.getElementById('spQuickReact');
+  if(!p) return;
+  spPause();
+  p.classList.add('open');
+  clearTimeout(spQRTimer);
+  spQRTimer = setTimeout(spCloseQuickReact, 3200);
+  if(typeof nvPush === 'function') nvPush('view:sp-qr', spCloseQuickReact);
+}
+function spCloseQuickReact(){
+  const p = document.getElementById('spQuickReact');
+  if(!p || !p.classList.contains('open')) return;
+  p.classList.remove('open');
+  clearTimeout(spQRTimer);
+  if(typeof nvPop === 'function') nvPop('view:sp-qr');
+  const v = document.getElementById('storyViewer');
+  if(v && v.classList.contains('open')) spResume();
+}
+function spQuickReact(ic, ev){
+  if(ev) ev.stopPropagation();
+  const btn = ev && ev.currentTarget;
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(st && !st.my){
+    st.spReacted = ic;
+    document.querySelectorAll('#spFoot .sp-react').forEach(b=>{
+      b.classList.toggle('on', b.title === 'Реакция' && b.querySelector(`use[href="#i-${ic}"]`));
+    });
+  }
+  if(btn) spFlyBurst(btn, ic, 6);
+  if(typeof toast === 'function') toast('Реакция отправлена');
+  setTimeout(spCloseQuickReact, 320);
 }
 
 /* ---------- шторка «кто посмотрел» (сторис на паузе, поверх вьювера) ---------- */
@@ -41879,7 +42129,25 @@ if(typeof showStory === 'function'){
   const _spPrevShowStory = showStory; /* поверх патча demo-content (градиент-фон) */
   showStory = function(){
     _spPrevShowStory();
-    try{ spDecorate(); }catch(e){ console.warn('stories-plus decorate:', e); }
+    try{
+      /* видео-сторис: если st.video задан — подменяем картинку на <video> с сохранением состояния звука */
+      const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+      const card = document.getElementById('svCard');
+      if(st && st.video && card){
+        const img = card.querySelector('img.sv-photo');
+        if(img){
+          const vid = document.createElement('video');
+          vid.className = 'sv-video sv-photo';
+          vid.src = st.video;
+          vid.playsInline = true; vid.autoplay = true; vid.loop = true;
+          vid.muted = !!SP.mute; vid.poster = st.src || '';
+          img.replaceWith(vid);
+          card.classList.add('video');
+          try{ vid.play().catch(()=>{}); }catch(e){}
+        }
+      }
+      spDecorate();
+    }catch(e){ console.warn('stories-plus decorate:', e); }
   };
 }
 if(typeof closeStory === 'function'){
@@ -41892,6 +42160,12 @@ if(typeof closeStory === 'function'){
     if(wrap && wrap.classList.contains('open')){
       wrap.classList.remove('open');
       if(typeof nvPop === 'function') nvPop('view:sp-viewers');
+    }
+    const qr = document.getElementById('spQuickReact');
+    if(qr && qr.classList.contains('open')){
+      qr.classList.remove('open');
+      clearTimeout(spQRTimer);
+      if(typeof nvPop === 'function') nvPop('view:sp-qr');
     }
   };
 }
@@ -41910,6 +42184,36 @@ function spSeed(){
   put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
     text:'Вторая часть кейса кофейни: до и после цветокора. Исходник против финала — разница в один вечер работы.',
     bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'});
+  /* сторис-опрос от OKO (нативный формат Instagram / Telegram) */
+  put('OKO', {spSeed:true, avaIcon:'logo', name:'OKO',
+    text:'Что важнее в вертикальном ролике?',
+    bg:'linear-gradient(155deg,#0a1a10 0%,#050505 60%,#08240e 100%)',
+    sp:{size:'m', align:'center', fg:'#fff',
+      poll:{q:'Что важнее в Reels?', opts:['Идея и хук','Монтаж и темп'], votes:[142, 108]}}});
+  /* сторис-викторина от Марка (правильный ответ подсвечивается) */
+  put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
+    text:'Мини-квиз про монтаж',
+    bg:'linear-gradient(160deg,#131f04 0%,#060606 55%,#0e1a03 100%)',
+    sp:{size:'m', align:'center', fg:'#fff',
+      quiz:{q:'Оптимальная длина хука?', opts:['0.5 сек','1.5 сек','3 сек'], correct:1, votes:[38, 194, 76]}}});
+}
+
+/* авто-открытие сторис по параметру ?story=<ключ> */
+function spOpenFromURL(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const key = p.get('story');
+    if(!key) return;
+    /* убираем параметр, чтобы обновление страницы не заходило в цикл */
+    try{
+      const u = new URL(location.href); u.searchParams.delete('story');
+      history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash);
+    }catch(e){}
+    setTimeout(()=>{
+      const g = spGroups().find(x=>!x.add && x.key === key);
+      if(g) spOpenGroup(encodeURIComponent(key));
+    }, 400);
+  }catch(e){}
 }
 
 /* ---------- самоинициализация ---------- */
@@ -41919,6 +42223,7 @@ function spSeed(){
     spRestore();
     if(typeof renderStories === 'function' && document.getElementById('storiesRow')) renderStories();
     spEdApply(); /* свотчи и состояние контролов готовы до первого открытия */
+    spOpenFromURL(); /* если пришли по shared-ссылке — открыть нужного автора */
   }catch(e){ console.warn('stories-plus init:', e); }
 })();
 

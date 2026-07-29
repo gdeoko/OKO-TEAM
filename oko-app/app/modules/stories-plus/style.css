@@ -144,3 +144,46 @@
 .sp-vw-re{margin-left:auto;color:var(--accent);display:flex}
 .sp-vw-re svg.i{width:18px;height:18px}
 .sp-vw-empty{color:var(--dim);font-size:13px;text-align:center;padding:18px 0 10px}
+
+/* ---------- вьювер: экшены сверху (поделиться + звук) ---------- */
+.sp-actions{position:absolute;top:34px;right:14px;z-index:5;display:flex;gap:8px;pointer-events:auto}
+.sp-act-btn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);color:#fff;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s,color .15s}
+.sp-act-btn:hover{border-color:#9AFF00;color:#9AFF00}
+.sp-act-btn:active{transform:scale(.9)}
+.sp-act-btn svg.i{width:16px;height:16px}
+#storyViewer.sp-dragging .sp-actions{opacity:var(--sp-fade,1)}
+
+/* ---------- опрос / викторина в сторис ---------- */
+.sp-poll{position:absolute;left:14px;right:14px;bottom:96px;z-index:2;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px 14px;backdrop-filter:blur(10px);animation:spPop .3s ease}
+.sp-poll-q{color:#fff;font-size:14px;font-weight:700;text-align:center;margin-bottom:10px;line-height:1.35}
+.sp-poll-opts{display:flex;flex-direction:column;gap:6px}
+.sp-poll-opt{position:relative;overflow:hidden;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:99px;padding:10px 14px;font-size:13.5px;font-weight:600;text-align:left;transition:border-color .15s,background .18s}
+.sp-poll-opt:hover{border-color:#9AFF00}
+.sp-poll-opt:active{transform:scale(.98)}
+.sp-poll-opt .sp-poll-bar{position:absolute;inset:0;background:linear-gradient(90deg,rgba(154,255,0,.35),rgba(154,255,0,.18));border-radius:99px;transform:scaleX(0);transform-origin:left center;transition:transform .55s cubic-bezier(.3,1,.4,1);z-index:0}
+.sp-poll-opt .sp-poll-lb,.sp-poll-opt .sp-poll-pc{position:relative;z-index:1;display:inline-flex;align-items:center}
+.sp-poll-opt .sp-poll-pc{float:right;color:#9AFF00;font-family:var(--font-display);letter-spacing:.03em;font-size:15px;margin-left:8px}
+.sp-poll.voted .sp-poll-opt{cursor:default;pointer-events:none;background:rgba(255,255,255,.06)}
+.sp-poll.voted .sp-poll-opt.picked{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.4)}
+.sp-poll.quiz.voted .sp-poll-opt.correct{border-color:#9AFF00;box-shadow:0 0 0 1px rgba(154,255,0,.55);color:#9AFF00}
+.sp-poll.quiz.voted .sp-poll-opt.wrong{border-color:#ff5757;box-shadow:0 0 0 1px rgba(255,87,87,.4);color:#ffb3b3}
+.sp-poll.quiz.voted .sp-poll-opt.correct .sp-poll-bar{background:linear-gradient(90deg,rgba(154,255,0,.38),rgba(154,255,0,.16))}
+.sp-poll.quiz.voted .sp-poll-opt.wrong .sp-poll-bar{background:linear-gradient(90deg,rgba(255,87,87,.28),rgba(255,87,87,.1))}
+.sp-poll-mark{display:inline-flex;width:16px;height:16px;margin-right:8px;color:#9AFF00;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.sp-poll.voted .sp-poll-opt.picked .sp-poll-mark,
+.sp-poll.quiz.voted .sp-poll-opt.correct .sp-poll-mark{opacity:1}
+.sp-poll-mark svg.i{width:14px;height:14px}
+@media(prefers-reduced-motion:reduce){.sp-poll{animation:none}.sp-poll-opt .sp-poll-bar{transition:none}}
+
+/* ---------- панель быстрых реакций (свайп-вверх) ---------- */
+#spQuickReact{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,120%);z-index:79;display:flex;gap:8px;background:rgba(10,10,10,.72);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:8px 10px;backdrop-filter:blur(14px);box-shadow:0 12px 40px rgba(0,0,0,.55);pointer-events:none;opacity:0;transition:transform .3s cubic-bezier(.3,1,.4,1),opacity .2s ease}
+#spQuickReact.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.sp-qr-btn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,border-color .15s,color .15s,background .15s}
+.sp-qr-btn:hover{border-color:#9AFF00;color:#9AFF00}
+.sp-qr-btn:active{transform:scale(1.22)}
+.sp-qr-btn svg.i{width:22px;height:22px}
+@media(prefers-reduced-motion:reduce){#spQuickReact{transition:opacity .01s}}
+
+/* ---------- видео-сторис (fallback, если st.video задан) ---------- */
+.sv-video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+#storyViewer .sv-card.video{text-align:left;padding:0}

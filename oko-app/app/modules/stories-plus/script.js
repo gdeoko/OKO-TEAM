@@ -17,7 +17,7 @@
 /* ---------- состояние (персист настроек редактора + своих сторис) ---------- */
 const SP = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-stories-plus'))||{}; }catch(e){ return {}; } })();
 SP.ed = Object.assign({bg:1, size:'m', align:'center', sticker:false, pos:'br', stk:'logo'}, SP.ed||{});
-function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed})); }catch(e){} }
+function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify({ed:SP.ed, mute:SP.mute})); }catch(e){} }
 
 /* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
 const SP_BGS = [
@@ -46,7 +46,12 @@ const SP_DUR = 4000;
   mk('i-sp-al','<path d="M14 25h72M14 50h42M14 75h58"/>');
   mk('i-sp-ac','<path d="M14 25h72M29 50h42M21 75h58"/>');
   mk('i-sp-ar','<path d="M14 25h72M44 50h42M28 75h58"/>');
+  mk('i-sp-vol','<path d="M14 38h16l24-18v60L30 62H14z"/><path d="M66 34c8 8 8 24 0 32M76 24c14 14 14 38 0 52"/>');
+  mk('i-sp-mute','<path d="M14 38h16l24-18v60L30 62H14z"/><path d="M64 40l24 20M88 40 64 60"/>');
 })();
+
+/* глобальные предпочтения (звук видео) */
+SP.mute = (typeof SP.mute === 'boolean') ? SP.mute : true;
 
 /* ---------- мок-зрители (в духе демо-контента) ---------- */
 const SP_POOL = [
@@ -204,6 +209,8 @@ function spBindGestures(v){
       }
     }
   });
+  /* фиксация свайпа-вверх: панель быстрых реакций (жест только вне UI) */
+  function detectSwipeUp(dy, dx){ return dy < -48 && Math.abs(dy) > Math.abs(dx) * 1.4; }
   const finish = (e)=>{
     if(!downT) return;
     clearTimeout(hold);
@@ -218,6 +225,11 @@ function spBindGestures(v){
     }
     if(spReplyLock || inUI(e.target)) return;
     if(isHold){ spResume(); navHandled = true; return; }
+    if(detectSwipeUp(dy, dx)){                                    /* свайп-вверх → быстрые реакции */
+      navHandled = true;
+      spOpenQuickReact();
+      return;
+    }
     if(Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3){   /* свайп → смена автора */
       navHandled = true;
       if(dx < 0) spNextAuthor(); else spPrevAuthor();
@@ -308,6 +320,21 @@ function spDecorate(){
     if(ring && g.idx.every(i=>STORIES[i].seen)) ring.classList.add('seen');
   }
 
+  /* верхние экшены: поделиться (всегда), звук (когда видео в кадре) */
+  const v = els.v;
+  const hasVideo = !!v.querySelector('#svCard video');
+  let acts = v.querySelector('.sp-actions');
+  if(!acts){
+    acts = document.createElement('div'); acts.className = 'sp-actions';
+    v.appendChild(acts);
+  }
+  const muteIcon = SP.mute ? 'sp-mute' : 'sp-vol';
+  const muteTitle = SP.mute ? 'Включить звук' : 'Выключить звук';
+  acts.innerHTML =
+    (hasVideo ? `<button class="sp-act-btn sp-mute-btn" onclick="spMuteToggle(event)" title="${muteTitle}"><svg class="i"><use href="#i-${muteIcon}"/></svg></button>` : '')
+    + `<button class="sp-act-btn sp-share-btn" onclick="spShare(event)" title="Поделиться"><svg class="i"><use href="#i-share"/></svg></button>`;
+  spApplyMuteToVideos();
+
   /* стили из редактора: цвет текста, размер, выравнивание, стикер */
   const card = document.getElementById('svCard');
   if(card){
@@ -325,6 +352,12 @@ function spDecorate(){
       if(tm && st.sp.fg){ tm.style.color = st.sp.fg; tm.style.opacity = '.62'; }
       if(st.sp.sticker && !card.querySelector('.sp-sticker'))
         card.insertAdjacentHTML('beforeend', `<div class="sp-sticker sp-pos-${st.sp.pos||'br'}">${I(st.sp.stk||'logo')}</div>`);
+    }
+    /* опрос / викторина: интерактивный оверлей поверх карточки */
+    const pq = st.sp && (st.sp.poll || st.sp.quiz);
+    if(pq && !card.querySelector('.sp-poll')){
+      const isQuiz = !!(st.sp && st.sp.quiz);
+      card.insertAdjacentHTML('beforeend', spPollHtml(st, isQuiz));
     }
   }
 
@@ -397,6 +430,138 @@ function spFlyBurst(btn, ic, count){
     f.addEventListener('animationend', ()=>f.remove());
     setTimeout(()=>f.remove(), 2400); /* страховка */
   }
+}
+
+/* ---------- поделиться сторис: navigator.share или клипборд ---------- */
+function spShare(ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add) return;
+  const g = spGroupOf(curStory);
+  const key = g ? g.key : (st.my ? '@me' : (st.name||'author'));
+  const base = location.origin + location.pathname;
+  const url = base + '?story=' + encodeURIComponent(key);
+  const title = 'OKO · история' + (st.name ? ' · ' + st.name : '');
+  const text = (st.text || 'Смотри историю в OKO').slice(0, 160);
+  spPause();
+  const resume = ()=> setTimeout(()=>spResume(), 250);
+  if(navigator.share){
+    navigator.share({title, text, url}).then(resume, resume);
+  } else {
+    try{
+      navigator.clipboard.writeText(url).then(()=>{
+        if(typeof toast === 'function') toast('Ссылка скопирована');
+      }, ()=>{
+        if(typeof toast === 'function') toast('Не удалось скопировать');
+      });
+    }catch(e){ if(typeof toast === 'function') toast('Ссылка: ' + url); }
+    resume();
+  }
+}
+
+/* ---------- звук: тумблер для видео-сторис ---------- */
+function spApplyMuteToVideos(){
+  const card = document.getElementById('svCard');
+  if(!card) return;
+  card.querySelectorAll('video').forEach(v=>{
+    v.muted = !!SP.mute;
+    if(!SP.mute){ try{ v.play().catch(()=>{}); }catch(e){} }
+  });
+}
+function spMuteToggle(ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  SP.mute = !SP.mute; spSave();
+  spApplyMuteToVideos();
+  const btn = document.querySelector('.sp-mute-btn');
+  if(btn){
+    btn.title = SP.mute ? 'Включить звук' : 'Выключить звук';
+    btn.innerHTML = `<svg class="i"><use href="#i-${SP.mute ? 'sp-mute' : 'sp-vol'}"/></svg>`;
+  }
+  if(typeof toast === 'function') toast(SP.mute ? 'Звук выключен' : 'Звук включён');
+}
+
+/* ---------- опросы / викторины: HTML + голос ---------- */
+function spPollHtml(st, isQuiz){
+  const src = isQuiz ? st.sp.quiz : st.sp.poll;
+  const total = (src.votes||[]).reduce((a,b)=>a+(b||0), 0) || 0;
+  const picked = (typeof st.spPollPick === 'number') ? st.spPollPick : -1;
+  const voted = picked >= 0;
+  const opts = (src.opts||[]).map((o, i)=>{
+    const pc = total > 0 ? Math.round(((src.votes||[])[i] || 0) * 100 / total) : 0;
+    let cls = '';
+    if(voted){
+      if(isQuiz){
+        if(i === src.correct) cls = ' correct';
+        else if(i === picked) cls = ' wrong';
+      } else if(i === picked) cls = ' picked';
+    }
+    const barW = voted ? Math.max(0.02, ((src.votes||[])[i] || 0) / Math.max(total,1)) : 0;
+    return `<button class="sp-poll-opt${cls}" style="--w:${barW}" onclick="spVote(${i},${isQuiz?1:0},event)">
+      <span class="sp-poll-bar" style="transform:scaleX(${barW})"></span>
+      <span class="sp-poll-lb"><span class="sp-poll-mark"><svg class="i"><use href="#i-check"/></svg></span>${esc(o)}</span>
+      ${voted ? `<span class="sp-poll-pc">${pc}%</span>` : ''}
+    </button>`;
+  }).join('');
+  return `<div class="sp-poll${isQuiz?' quiz':''}${voted?' voted':''}">
+    <div class="sp-poll-q">${esc(src.q||(isQuiz?'Викторина':'Опрос'))}</div>
+    <div class="sp-poll-opts">${opts}</div>
+  </div>`;
+}
+function spVote(idx, isQuiz, ev){
+  if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || !st.sp) return;
+  const src = isQuiz ? st.sp.quiz : st.sp.poll;
+  if(!src) return;
+  if(typeof st.spPollPick === 'number') return;   /* уже голосовал в этой сессии */
+  src.votes = src.votes || (src.opts||[]).map(()=>0);
+  src.votes[idx] = (src.votes[idx] || 0) + 1;
+  st.spPollPick = idx;
+  try{ navigator.vibrate && navigator.vibrate(12); }catch(e){}
+  const card = document.getElementById('svCard');
+  const old = card && card.querySelector('.sp-poll');
+  if(old){ old.outerHTML = spPollHtml(st, !!isQuiz); }
+  spPause();                                         /* даём прочесть результат */
+  setTimeout(()=>spResume(), 2200);
+  const correct = isQuiz && idx === src.correct;
+  if(typeof toast === 'function') toast(isQuiz ? (correct ? 'Верно' : 'Не в этот раз') : 'Голос учтён');
+}
+
+/* ---------- панель быстрых реакций (свайп-вверх) ---------- */
+let spQRTimer = null;
+function spOpenQuickReact(){
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(!st || st.add || st.my) return;   /* свои сторис — нет смысла реагировать */
+  const p = document.getElementById('spQuickReact');
+  if(!p) return;
+  spPause();
+  p.classList.add('open');
+  clearTimeout(spQRTimer);
+  spQRTimer = setTimeout(spCloseQuickReact, 3200);
+  if(typeof nvPush === 'function') nvPush('view:sp-qr', spCloseQuickReact);
+}
+function spCloseQuickReact(){
+  const p = document.getElementById('spQuickReact');
+  if(!p || !p.classList.contains('open')) return;
+  p.classList.remove('open');
+  clearTimeout(spQRTimer);
+  if(typeof nvPop === 'function') nvPop('view:sp-qr');
+  const v = document.getElementById('storyViewer');
+  if(v && v.classList.contains('open')) spResume();
+}
+function spQuickReact(ic, ev){
+  if(ev) ev.stopPropagation();
+  const btn = ev && ev.currentTarget;
+  const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+  if(st && !st.my){
+    st.spReacted = ic;
+    document.querySelectorAll('#spFoot .sp-react').forEach(b=>{
+      b.classList.toggle('on', b.title === 'Реакция' && b.querySelector(`use[href="#i-${ic}"]`));
+    });
+  }
+  if(btn) spFlyBurst(btn, ic, 6);
+  if(typeof toast === 'function') toast('Реакция отправлена');
+  setTimeout(spCloseQuickReact, 320);
 }
 
 /* ---------- шторка «кто посмотрел» (сторис на паузе, поверх вьювера) ---------- */
@@ -568,7 +733,25 @@ if(typeof showStory === 'function'){
   const _spPrevShowStory = showStory; /* поверх патча demo-content (градиент-фон) */
   showStory = function(){
     _spPrevShowStory();
-    try{ spDecorate(); }catch(e){ console.warn('stories-plus decorate:', e); }
+    try{
+      /* видео-сторис: если st.video задан — подменяем картинку на <video> с сохранением состояния звука */
+      const st = typeof STORIES !== 'undefined' && STORIES[curStory];
+      const card = document.getElementById('svCard');
+      if(st && st.video && card){
+        const img = card.querySelector('img.sv-photo');
+        if(img){
+          const vid = document.createElement('video');
+          vid.className = 'sv-video sv-photo';
+          vid.src = st.video;
+          vid.playsInline = true; vid.autoplay = true; vid.loop = true;
+          vid.muted = !!SP.mute; vid.poster = st.src || '';
+          img.replaceWith(vid);
+          card.classList.add('video');
+          try{ vid.play().catch(()=>{}); }catch(e){}
+        }
+      }
+      spDecorate();
+    }catch(e){ console.warn('stories-plus decorate:', e); }
   };
 }
 if(typeof closeStory === 'function'){
@@ -581,6 +764,12 @@ if(typeof closeStory === 'function'){
     if(wrap && wrap.classList.contains('open')){
       wrap.classList.remove('open');
       if(typeof nvPop === 'function') nvPop('view:sp-viewers');
+    }
+    const qr = document.getElementById('spQuickReact');
+    if(qr && qr.classList.contains('open')){
+      qr.classList.remove('open');
+      clearTimeout(spQRTimer);
+      if(typeof nvPop === 'function') nvPop('view:sp-qr');
     }
   };
 }
@@ -599,6 +788,36 @@ function spSeed(){
   put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
     text:'Вторая часть кейса кофейни: до и после цветокора. Исходник против финала — разница в один вечер работы.',
     bg:'linear-gradient(150deg,#151f08 0%,#070707 55%,#0c1f14 100%)'});
+  /* сторис-опрос от OKO (нативный формат Instagram / Telegram) */
+  put('OKO', {spSeed:true, avaIcon:'logo', name:'OKO',
+    text:'Что важнее в вертикальном ролике?',
+    bg:'linear-gradient(155deg,#0a1a10 0%,#050505 60%,#08240e 100%)',
+    sp:{size:'m', align:'center', fg:'#fff',
+      poll:{q:'Что важнее в Reels?', opts:['Идея и хук','Монтаж и темп'], votes:[142, 108]}}});
+  /* сторис-викторина от Марка (правильный ответ подсвечивается) */
+  put('Марк Волков', {spSeed:true, ava:'МВ', name:'Марк Волков',
+    text:'Мини-квиз про монтаж',
+    bg:'linear-gradient(160deg,#131f04 0%,#060606 55%,#0e1a03 100%)',
+    sp:{size:'m', align:'center', fg:'#fff',
+      quiz:{q:'Оптимальная длина хука?', opts:['0.5 сек','1.5 сек','3 сек'], correct:1, votes:[38, 194, 76]}}});
+}
+
+/* авто-открытие сторис по параметру ?story=<ключ> */
+function spOpenFromURL(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const key = p.get('story');
+    if(!key) return;
+    /* убираем параметр, чтобы обновление страницы не заходило в цикл */
+    try{
+      const u = new URL(location.href); u.searchParams.delete('story');
+      history.replaceState({}, '', u.pathname + (u.search ? u.search : '') + u.hash);
+    }catch(e){}
+    setTimeout(()=>{
+      const g = spGroups().find(x=>!x.add && x.key === key);
+      if(g) spOpenGroup(encodeURIComponent(key));
+    }, 400);
+  }catch(e){}
 }
 
 /* ---------- самоинициализация ---------- */
@@ -608,5 +827,6 @@ function spSeed(){
     spRestore();
     if(typeof renderStories === 'function' && document.getElementById('storiesRow')) renderStories();
     spEdApply(); /* свотчи и состояние контролов готовы до первого открытия */
+    spOpenFromURL(); /* если пришли по shared-ссылке — открыть нужного автора */
   }catch(e){ console.warn('stories-plus init:', e); }
 })();
