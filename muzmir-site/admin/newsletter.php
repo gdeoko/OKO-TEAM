@@ -311,7 +311,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($do === 'send') {
             $queued = nl_admin_enqueue($id);
-            flash("Рассылка поставлена в очередь отправки. Получателей: $queued.", $queued > 0 ? 'success' : 'error');
+            // Multi-channel fan-out (ВК, Telegram-канал, Telegram-пользователи бота)
+            $channels = 0;
+            if (!empty($_POST['ch_vk']))         $channels |= 1;
+            if (!empty($_POST['ch_tg_channel'])) $channels |= 2;
+            if (!empty($_POST['ch_tg_users']))   $channels |= 4;
+            $extra = '';
+            if ($channels > 0 && is_file(BASE_PATH . '/core/broadcast.php')) {
+                require_once BASE_PATH . '/core/broadcast.php';
+                require_once BASE_PATH . '/core/vk.php';
+                require_once BASE_PATH . '/core/telegram.php';
+                $newsletter = one("SELECT * FROM newsletters WHERE id=?", [$id]);
+                if ($newsletter) {
+                    $r = broadcast_newsletter_fanout($newsletter, $channels);
+                    $bits = [];
+                    if ($r['vk'])          $bits[] = 'ВКонтакте: ✓';
+                    if ($r['tg_channel'])  $bits[] = 'TG-канал: ✓';
+                    if ($r['tg_users'] > 0) $bits[] = 'TG-пользователей: ' . (int)$r['tg_users'];
+                    $extra = $bits ? ' Доп.каналы: ' . implode(', ', $bits) . '.' : '';
+                }
+            }
+            flash("Рассылка поставлена в очередь отправки. Получателей: $queued.$extra", $queued > 0 ? 'success' : 'error');
             admin_redirect('newsletter');
         }
         if ($do === 'schedule') {
@@ -427,6 +447,25 @@ if ($action === 'edit' || $action === 'new') {
           <div class="field"><label>Запланировать на <span class="muted small">(необязательно)</span></label>
             <input type="datetime-local" name="scheduled_at" value="<?= h($n['scheduled_at'] ? str_replace(' ', 'T', substr((string) $n['scheduled_at'], 0, 16)) : '') ?>">
             <div class="hint">При планировании рассылка уйдёт в очередь автоматически по наступлении срока.</div></div>
+
+          <div class="field" style="margin-top:14px">
+            <label>Дополнительные каналы (одновременно с почтой)</label>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--glass-brd);border-radius:10px;background:var(--gold-soft)">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" name="ch_vk" value="1" style="width:18px;height:18px;margin:0">
+                <span><b>ВКонтакте</b> — пост в сообществе <span class="muted small">(1 публикация на всех подписчиков VK)</span></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" name="ch_tg_channel" value="1" style="width:18px;height:18px;margin:0">
+                <span><b>Telegram-канал</b> — пост в <?= h(cfgv('org_tg_channel') ?: '(не указан)') ?></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" name="ch_tg_users" value="1" style="width:18px;height:18px;margin:0">
+                <span><b>Telegram — каждому пользователю бота</b> <span class="muted small">(кто привязал @okoappbot и включил notify_tg)</span></span>
+              </label>
+            </div>
+            <div class="hint">Каналы отправятся после того, как email-очередь будет составлена. Не работает при «Отправить только тест».</div>
+          </div>
 
           <div class="toolbar" style="margin-top:16px;gap:8px;flex-wrap:wrap">
             <button class="btn btn--ghost btn--sm" type="submit" name="do" value="save"><?= admin_icon('check') ?>Сохранить черновик</button>

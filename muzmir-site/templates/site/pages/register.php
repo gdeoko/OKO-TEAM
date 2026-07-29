@@ -1,244 +1,252 @@
 <?php
 /**
- * Регистрация - тот же 1-клик, что и вход (ВК / MAX / почта / телефон).
- * Дизайн V3: премиум-карточка по центру, светлая тема, лого, «Вы», без эмодзи.
- * Соц-регистрация - /api/v1/oauth_vk|oauth_max. Почта/телефон - JSON /api/v1/auth_email|auth_phone
- * (эндпоинты сами создают пользователя при первом входе). Серверный POST - надёжный путь без JS.
- * Согласие - подразумевается фактом действия (правовая сноска под формой, как в модалке входа).
+ * Регистрация — пошаговая форма с OTP-верификацией почты.
+ * 1) Ввод email → отправка 6-значного кода через /api/v1/auth_email (action=request)
+ * 2) Ввод кода → верификация → сразу создаёт profile и логинит
+ * 3) Настройка профиля (ФИО, никнейм, категория, аватар) — редактируется в /cabinet#settings позже
+ * Альтернативы: ВК / MAX / телефон.
  */
-
 if (current_user()) redirect('/cabinet');
 
-$email = ''; $name = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = input('full_name');
-    $email = input('email');
-    $password = (string)($_POST['password'] ?? '');
+$vkReady  = (bool) (cfgv('vk_client_id') && cfgv('vk_client_secret'));
+$maxReady = (bool) (cfgv('max_client_id') && cfgv('max_client_secret'));
 
-    if (!csrf_check()) {
-        flash('Сессия устарела. Обновите страницу и попробуйте снова.', 'error');
-    } elseif (!rate_ok('register:' . client_ip(), 10, 3600)) {
-        flash('Слишком много попыток регистрации. Попробуйте позже.', 'error');
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        flash('Проверьте адрес электронной почты.', 'error');
-    } elseif (mb_strlen($password) < 6) {
-        flash('Пароль должен быть не короче 6 символов.', 'error');
-    } else {
-        // Автокоррекция ФИО, если доступен валидатор.
-        if ($name !== '' && function_exists('v_fio')) $name = v_fio($name);
-        $res = register_user($email, $password, $name);
-        if (!$res['ok']) {
-            flash($res['error'] ?? 'Не удалось создать аккаунт.', 'error');
-        } else {
-            $uid = (int)$res['id'];
-            // Письмо подтверждения - в очередь, если механизм подключён.
-            if (function_exists('mail_queue')) {
-                $link = url('/verify-email?token=' . urlencode((string)($res['verify_token'] ?? '')));
-                $html = function_exists('mail_template')
-                    ? mail_template('registration', ['name' => $name, 'verify_url' => $link])
-                    : '<p>Здравствуйте, ' . h($name) . '.</p><p>Подтвердите электронную почту по ссылке: <a href="' . h($link) . '">' . h($link) . '</a></p>';
-                mail_queue($email, $name, 'Подтверждение регистрации - КЦ «Музыкальный Мир»', $html);
-            }
-            login_user($uid);
-            audit('register', 'user', $uid);
-            flash('Аккаунт создан. Добро пожаловать в личный кабинет.', 'success');
-            redirect('/cabinet');
-        }
-    }
-}
-
-$vkReady     = (bool) (cfgv('vk_client_id') && cfgv('vk_client_secret'));
-$maxReady    = (bool) (cfgv('max_client_id') && cfgv('max_client_secret'));
-
-$svgVk     = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>';
-$svgMax    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 3.2c-5.4 0-9.8 3.5-9.8 7.9 0 2.5 1.4 4.7 3.6 6.1-.2 1-.7 2.3-1.6 3.4-.3.4 0 .9.5.8 1.9-.4 3.5-1.1 4.7-1.8 .8.2 1.7.3 2.6.3 5.4 0 9.8-3.5 9.8-7.9S17.4 3.2 12 3.2z"/></svg>';
-$svgPhone  = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
+$svgVk    = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>';
+$svgMax   = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V6l8 6 8-6v13"/></svg>';
+$svgPhone = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>';
+$svgMail  = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
 
 ob_start(); ?>
-<style>
-/* Ровные соц-кнопки: единый ритм, аккуратный перенос длинных подписей */
-.auth-social .auth-btn{margin-bottom:0}
-.auth-btn span{overflow-wrap:anywhere}
-</style>
 <section class="section auth-page">
-  <div class="container" style="max-width:440px">
-    <div class="card reveal auth-shell" style="padding:34px 26px 30px">
-
+  <div class="container" style="max-width:460px">
+    <div class="reveal in auth-shell" id="regShell">
       <div class="auth-head" style="text-align:center;margin-bottom:22px">
-        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="64" height="64"
-             style="width:64px;height:64px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 12px;display:block">
-        <p class="eyebrow" style="margin-bottom:2px">Личный кабинет</p>
-        <h1 style="font-size:1.9rem;margin:0 0 6px">Регистрация</h1>
-        <p style="color:var(--muted);font-size:.9rem;margin:0">Создайте аккаунт в один клик - подавайте заявки и получайте наградные документы онлайн.</p>
+        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="72" height="72"
+             style="width:72px;height:72px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 14px;display:block;filter:drop-shadow(0 8px 20px rgba(201,168,76,.28))">
+        <p class="eyebrow eyebrow--script" style="margin-bottom:2px">Присоединяйтесь</p>
+        <h1 style="font-size:1.9rem;margin:0 0 6px;background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent">Регистрация</h1>
+        <p style="color:var(--muted);font-size:.92rem;margin:0">Создайте профиль за 30 секунд — код на почту, никакого пароля запоминать не нужно.</p>
       </div>
 
-      <div class="auth-social" style="display:grid;gap:12px">
-        <?php if ($vkReady): ?>
-          <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk') ?>" rel="nofollow"><?= $svgVk ?><span>Продолжить с ВКонтакте</span></a>
-        <?php else: ?>
-          <button type="button" class="auth-btn auth-btn--vk" disabled style="opacity:.55;cursor:not-allowed"><?= $svgVk ?><span>ВКонтакте (скоро)</span></button>
-        <?php endif; ?>
-        <?php if ($maxReady): ?>
-          <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max') ?>" rel="nofollow"><?= $svgMax ?><span>Продолжить с MAX</span></a>
-        <?php else: ?>
-          <button type="button" class="auth-btn auth-btn--max" disabled style="opacity:.55;cursor:not-allowed"><?= $svgMax ?><span>MAX (скоро)</span></button>
-        <?php endif; ?>
+      <!-- Шаги -->
+      <div class="reg-steps" role="tablist" aria-label="Шаги регистрации">
+        <span class="reg-step is-on" data-step="method">1</span>
+        <span class="reg-line"></span>
+        <span class="reg-step" data-step="code">2</span>
+        <span class="reg-line"></span>
+        <span class="reg-step" data-step="profile">3</span>
       </div>
 
-      <div class="auth-sep"><span>или по почте</span></div>
+      <!-- Шаг 1: выбор метода -->
+      <div class="reg-panel is-on" data-panel="method">
+        <div class="auth-social" style="display:grid;gap:10px">
+          <?php if ($vkReady): ?>
+            <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk') ?>" rel="nofollow"><?= $svgVk ?><span>Через ВКонтакте</span></a>
+          <?php endif; ?>
+          <?php if ($maxReady): ?>
+            <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max') ?>" rel="nofollow"><?= $svgMax ?><span>Через MAX</span></a>
+          <?php endif; ?>
+        </div>
 
-      <form id="authEmailForm" method="post" action="<?= url('/register') ?>" novalidate>
-        <?= csrf_field() ?>
-        <div class="field">
-          <label for="full_name">Фамилия и имя</label>
-          <input type="text" id="full_name" name="full_name" value="<?= h($name) ?>" placeholder="Иванова Мария" autocomplete="name">
-        </div>
-        <div class="field">
-          <label for="email">Электронная почта</label>
-          <input type="email" id="email" name="email" value="<?= h($email) ?>" placeholder="you@example.ru" autocomplete="email" inputmode="email" required>
-        </div>
-        <div class="field" data-pass-field>
-          <label for="password">Пароль</label>
-          <input type="password" id="password" name="password" placeholder="Не короче 6 символов" autocomplete="new-password" minlength="6" required>
-        </div>
-        <button class="btn btn--primary btn--block btn--lg" type="submit">Создать аккаунт</button>
-        <button type="button" class="auth-link" data-code-login
-                style="display:block;width:100%;margin-top:12px;background:none;border:none;color:var(--gold-ink);font:inherit;font-size:.86rem;cursor:pointer">
-          Зарегистрироваться по коду из письма
-        </button>
-      </form>
+        <?php if ($vkReady || $maxReady): ?><div class="auth-sep"><span>или почта / телефон</span></div><?php endif; ?>
 
-      <div style="margin-top:14px">
-        <button type="button" class="auth-btn auth-btn--phone" data-phone-toggle aria-expanded="false" aria-controls="authPhoneForm"><?= $svgPhone ?><span>Регистрация по телефону</span></button>
+        <form id="regEmailForm" novalidate>
+          <div class="field">
+            <label for="reg_email">Электронная почта</label>
+            <input type="email" id="reg_email" name="email" placeholder="you@example.ru" autocomplete="email" inputmode="email" required>
+            <div class="hint">Пришлём 6-значный код для подтверждения — пароль настроите потом.</div>
+          </div>
+          <button class="btn btn--primary btn--block btn--lg" type="submit"><?= $svgMail ?> Отправить код</button>
+        </form>
+
+        <details class="reg-phone">
+          <summary><?= $svgPhone ?> Регистрация по телефону</summary>
+          <form id="regPhoneForm" novalidate style="margin-top:10px">
+            <div class="field">
+              <label for="reg_phone">Номер телефона</label>
+              <input type="tel" id="reg_phone" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel">
+              <div class="hint">Мы отправим SMS с кодом.</div>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit"><?= $svgPhone ?> Отправить SMS</button>
+          </form>
+        </details>
+
+        <p class="auth-note" style="text-align:center;margin-top:16px;color:var(--muted);font-size:.8rem">
+          Нажимая, Вы принимаете <a href="<?= url('/agreement') ?>">пользовательское соглашение</a> и <a href="<?= url('/privacy') ?>">политику конфиденциальности</a>.
+        </p>
+        <p class="auth-note" style="text-align:center;margin-top:8px">
+          Уже есть аккаунт? <a href="<?= url('/login') ?>" style="color:var(--gold-ink);font-weight:700">Войти</a>
+        </p>
       </div>
 
-      <form id="authPhoneForm" novalidate hidden style="margin-top:4px">
-        <div class="field">
-          <label for="phone">Номер телефона</label>
-          <input type="tel" id="phone" name="phone" placeholder="+7 900 000-00-00" autocomplete="tel" inputmode="tel">
-        </div>
-        <div class="field" data-otp-field hidden>
-          <label for="phoneCode">Код из SMS</label>
-          <input type="text" id="phoneCode" name="code" placeholder="Код из сообщения" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-        <button class="btn btn--primary btn--block btn--lg" type="submit" data-phase="request">Получить код</button>
-      </form>
+      <!-- Шаг 2: ввод кода -->
+      <div class="reg-panel" data-panel="code">
+        <p style="color:var(--muted);font-size:.94rem;text-align:center;margin:0 0 20px">
+          Код отправлен на <b id="regEmailShown" style="color:var(--gold-ink)"></b>.<br>
+          Введите 6 цифр из письма (проверьте «Спам» если не пришло).
+        </p>
+        <form id="regCodeForm" novalidate>
+          <div class="field code-field">
+            <input type="text" id="reg_code" name="code" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="one-time-code" placeholder="000000" required>
+          </div>
+          <button class="btn btn--primary btn--block btn--lg" type="submit">Подтвердить код</button>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:.86rem">
+            <a href="#" data-back-method style="color:var(--muted)">← Другая почта</a>
+            <a href="#" data-resend-code style="color:var(--gold-ink);font-weight:700">Отправить ещё раз</a>
+          </div>
+          <div id="regResendCd" style="text-align:right;color:var(--muted);font-size:.78rem;margin-top:4px"></div>
+        </form>
+      </div>
 
-      <p style="text-align:center;margin:22px 0 0;color:var(--muted);font-size:.9rem">
-        Уже зарегистрированы? <a href="<?= url('/login') ?>">Войдите</a>
-      </p>
-      <p class="auth-note" style="text-align:center;margin:12px 0 0;color:var(--muted);font-size:.76rem;line-height:1.5">
-        Создавая аккаунт, Вы даёте согласие на обработку персональных данных и принимаете
-        <a href="<?= url('/privacy') ?>">политику конфиденциальности</a> и
-        <a href="<?= url('/agreement') ?>">пользовательское соглашение</a>.
-      </p>
+      <!-- Шаг 3: имя + категория + аватар -->
+      <div class="reg-panel" data-panel="profile">
+        <p style="color:var(--muted);font-size:.94rem;text-align:center;margin:0 0 16px">
+          Отлично, аккаунт создан! Заполните профиль — это можно всегда изменить в настройках.
+        </p>
+        <form id="regProfileForm" novalidate action="<?= url('/cabinet') ?>" method="post" enctype="multipart/form-data">
+          <?= csrf_field() ?>
+          <input type="hidden" name="action" value="profile">
+          <input type="hidden" id="regAvaHidden" name="avatar" value="">
+          <div class="cab-avaedit">
+            <div class="cab-ava" id="regAvaPreview" style="width:76px;height:76px;font-size:1.6rem" data-init="?"></div>
+            <label class="btn btn--ghost btn--sm" for="regAvaFile" style="cursor:pointer;flex:1;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center">Загрузить фото</label>
+            <input type="file" id="regAvaFile" accept="image/*" hidden>
+          </div>
+          <div class="field">
+            <label for="reg_fio">Фамилия, имя, отчество</label>
+            <input type="text" id="reg_fio" name="full_name" placeholder="Иванова Мария Петровна" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="reg_nick">Никнейм</label>
+            <input type="text" id="reg_nick" name="nickname" placeholder="как обращаться" maxlength="30">
+          </div>
+          <div class="field">
+            <label>Категория</label>
+            <div class="cat-picker">
+              <label class="cat-opt is-on"><input type="radio" name="category" value="participant" checked><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Участник</span></label>
+              <label class="cat-opt"><input type="radio" name="category" value="teacher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v6a6 6 0 0 0 12 0v-6"/></svg><span>Педагог</span></label>
+              <label class="cat-opt"><input type="radio" name="category" value="parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 21a7 7 0 0 1 14 0M13 21a5 5 0 0 1 9 0"/></svg><span>Родитель</span></label>
+              <label class="cat-opt"><input type="radio" name="category" value="other"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2.5-3 4M12 17h.01"/></svg><span>Другое</span></label>
+            </div>
+          </div>
+          <button class="btn btn--primary btn--block btn--lg" type="submit">Готово — в кабинет</button>
+        </form>
+      </div>
     </div>
   </div>
 </section>
 
 <script>
-(function () {
-  'use strict';
-  var origin = location.origin;
-  function toast(m, t) { if (window.toast) window.toast(m, t || ''); }
-  function api(path, body) {
-    return fetch(origin + path, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
-    }).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, data: d }; });
-    });
-  }
-  function done(res) {
-    toast('Готово. Добро пожаловать!', 'success');
-    var to = (res.data && res.data.redirect) || '/cabinet';
-    setTimeout(function () { location.href = to; }, 500);
-  }
-  function fail(res, fb) { toast((res && res.data && (res.data.error || res.data.message)) || fb || 'Не удалось завершить регистрацию.', 'error'); }
-  function load(btn, on) { if (!btn) return; btn.classList.toggle('is-loading', on); btn.disabled = on; }
-
-  var ef = document.getElementById('authEmailForm');
-  if (ef) {
-    var codeMode = false;
-    var pf = ef.querySelector('[data-pass-field]');
-    var pass = document.getElementById('password');
-    var nameEl = document.getElementById('full_name');
-    var codeBtn = ef.querySelector('[data-code-login]');
-    if (codeBtn) codeBtn.addEventListener('click', function () {
-      var em = ef.email.value.trim();
-      if (!em) { toast('Введите почту, чтобы получить код.', 'error'); return; }
-      this.disabled = true; this.textContent = 'Отправляем код…';
-      var self = this;
-      api('/api/v1/auth_email', { action: 'request', email: em, name: nameEl ? nameEl.value.trim() : '' }).then(function (res) {
-        self.disabled = false;
-        if (res.ok && res.data && res.data.ok !== false) {
-          codeMode = true;
-          pf.querySelector('label').textContent = 'Код из письма';
-          pass.type = 'text'; pass.value = ''; pass.name = 'code'; pass.required = false; pass.minLength = 0;
-          pass.setAttribute('inputmode', 'numeric'); pass.placeholder = '6-значный код'; pass.focus();
-          self.textContent = 'Отправить код повторно';
-          toast('Код отправлен на почту.', 'success');
-        } else { self.textContent = 'Зарегистрироваться по коду из письма'; fail(res, 'Не удалось отправить код.'); }
-      }).catch(function () { self.disabled = false; self.textContent = 'Зарегистрироваться по коду из письма'; toast('Сеть недоступна.', 'error'); });
-    });
-    ef.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var em = ef.email.value.trim();
-      if (!em) { toast('Укажите почту.', 'error'); return; }
-      var btn = ef.querySelector('button[type="submit"]');
-      var nm = nameEl ? nameEl.value.trim() : '';
-      var body = codeMode
-        ? { action: 'verify', email: em, code: pass.value.trim(), name: nm }
-        : { action: 'request', email: em, password: pass.value, name: nm };
-      load(btn, true);
-      api('/api/v1/auth_email', body).then(function (res) {
-        load(btn, false);
-        if (res.ok && res.data && res.data.ok === true) done(res);
-        else fail(res);
-      }).catch(function () { load(btn, false); ef.submit(); });
+(function(){
+  var shell = document.getElementById('regShell');
+  var steps = {method: 0, code: 1, profile: 2};
+  function goto(step){
+    shell.querySelectorAll('.reg-panel').forEach(function(p){ p.classList.toggle('is-on', p.getAttribute('data-panel')===step); });
+    shell.querySelectorAll('.reg-step').forEach(function(s){
+      var i = steps[s.getAttribute('data-step')];
+      s.classList.toggle('is-on', i === steps[step]);
+      s.classList.toggle('is-done', i < steps[step]);
     });
   }
 
-  var toggle = document.querySelector('[data-phone-toggle]');
-  var pff = document.getElementById('authPhoneForm');
-  if (toggle && pff) {
-    toggle.addEventListener('click', function () {
-      var open = pff.hidden;
-      pff.hidden = !open;
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) { var i = pff.querySelector('#phone'); if (i) i.focus(); }
-    });
-    var otp = pff.querySelector('[data-otp-field]');
-    var pbtn = pff.querySelector('button[type="submit"]');
-    pff.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var ph = pff.phone.value.trim();
-      if (!ph) { toast('Введите номер телефона.', 'error'); return; }
-      var phase = pbtn.getAttribute('data-phase');
-      if (phase === 'request') {
-        load(pbtn, true);
-        api('/api/v1/auth_phone', { action: 'request', phone: ph }).then(function (res) {
-          load(pbtn, false);
-          if (res.ok && res.data && res.data.ok !== false && !res.data.sms_unavailable) {
-            otp.hidden = false; pbtn.setAttribute('data-phase', 'verify'); pbtn.textContent = 'Подтвердить и войти';
-            var c = document.getElementById('phoneCode'); if (c) c.focus();
-            toast('Код отправлен по SMS.', 'success');
-          } else if (res.data && res.data.sms_unavailable) {
-            toast(res.data.message || 'SMS-вход временно недоступен. Войдите через ВК, MAX или почту.', 'error');
-          } else { fail(res, 'Не удалось отправить код.'); }
-        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
-      } else {
-        load(pbtn, true);
-        var nm2 = document.getElementById('full_name');
-        api('/api/v1/auth_phone', { action: 'verify', phone: ph, code: document.getElementById('phoneCode').value.trim(), name: nm2 ? nm2.value.trim() : '' }).then(function (res) {
-          load(pbtn, false);
-          if (res.ok && res.data && res.data.ok === true) done(res); else fail(res);
-        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
-      }
-    });
+  var pendingEmail = '';
+  function apiEmail(action, data){
+    var body = new URLSearchParams();
+    body.set('action', action);
+    Object.keys(data||{}).forEach(function(k){ body.set(k, data[k]); });
+    return fetch('/api/v1/auth_email', {method:'POST', credentials:'same-origin', body:body, headers:{'Content-Type':'application/x-www-form-urlencoded'}}).then(function(r){return r.json();});
   }
+
+  document.getElementById('regEmailForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var em = document.getElementById('reg_email').value.trim();
+    if (!/^[^@]+@[^@]+\.[a-z]{2,}$/i.test(em)) { alert('Проверьте email'); return; }
+    var btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Отправляем…';
+    apiEmail('request', {email: em}).then(function(d){
+      btn.disabled = false; btn.innerHTML = 'Отправить код';
+      if (!d.ok) { alert(d.error || 'Ошибка. Попробуйте позже.'); return; }
+      pendingEmail = em;
+      document.getElementById('regEmailShown').textContent = em;
+      goto('code');
+      startResendCd();
+      setTimeout(function(){ document.getElementById('reg_code').focus(); }, 200);
+    });
+  });
+
+  document.querySelector('[data-back-method]').addEventListener('click', function(e){e.preventDefault(); goto('method');});
+
+  var cdIv = null, cdLeft = 60;
+  function startResendCd(){
+    cdLeft = 60;
+    var box = document.getElementById('regResendCd');
+    var link = document.querySelector('[data-resend-code]');
+    link.style.pointerEvents = 'none'; link.style.opacity = '.4';
+    if (cdIv) clearInterval(cdIv);
+    cdIv = setInterval(function(){
+      cdLeft--;
+      if (cdLeft <= 0) { clearInterval(cdIv); box.textContent = ''; link.style.pointerEvents = ''; link.style.opacity = ''; return; }
+      box.textContent = 'Повторно можно через ' + cdLeft + ' с';
+    }, 1000);
+  }
+  document.querySelector('[data-resend-code]').addEventListener('click', function(e){
+    e.preventDefault();
+    if (!pendingEmail) return;
+    apiEmail('request', {email: pendingEmail}).then(function(){ startResendCd(); });
+  });
+
+  document.getElementById('regCodeForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var code = document.getElementById('reg_code').value.trim();
+    if (!/^\d{6}$/.test(code)) { alert('Введите 6 цифр'); return; }
+    var btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Проверяем…';
+    apiEmail('verify', {email: pendingEmail, code: code}).then(function(d){
+      btn.disabled = false; btn.innerHTML = 'Подтвердить код';
+      if (!d.ok) { alert(d.error || 'Код неверный или устарел'); return; }
+      // Успех — авторизация установлена сервером. Переходим к шагу 3.
+      goto('profile');
+      var e2 = pendingEmail;
+      document.getElementById('regAvaPreview').setAttribute('data-init', e2[0].toUpperCase());
+      document.getElementById('regAvaPreview').textContent = e2[0].toUpperCase();
+    });
+  });
+
+  // Category picker
+  shell.querySelectorAll('.cat-opt input').forEach(function(inp){
+    inp.addEventListener('change', function(){
+      shell.querySelectorAll('.cat-opt').forEach(function(l){l.classList.remove('is-on');});
+      inp.closest('.cat-opt').classList.add('is-on');
+    });
+  });
+  // Avatar
+  var af = document.getElementById('regAvaFile'), ah = document.getElementById('regAvaHidden'), ap = document.getElementById('regAvaPreview');
+  if (af) af.addEventListener('change', function(){
+    var f = af.files[0]; if (!f) return;
+    if (f.size > 3*1024*1024) { alert('Файл слишком большой (макс 3 МБ)'); return; }
+    var fr = new FileReader();
+    fr.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var c = document.createElement('canvas');
+        var scale = 512 / Math.max(img.width, img.height);
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var b64 = c.toDataURL('image/jpeg', .85);
+        ah.value = b64;
+        ap.innerHTML = '<img src="'+b64+'" alt="Аватар" loading="lazy">';
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+  // Init preview from email
+  document.getElementById('reg_email') && document.getElementById('reg_email').addEventListener('blur', function(){
+    var v = this.value.trim();
+    if (v && ap.textContent === '?') ap.textContent = v[0].toUpperCase();
+  });
 })();
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация участника КЦ «Музыкальный Мир».']);
+render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация в КЦ «Музыкальный Мир»: код на почту без пароля, ВК, MAX, телефон. Профиль за 30 секунд.']);

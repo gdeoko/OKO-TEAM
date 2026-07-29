@@ -355,6 +355,7 @@ if('serviceWorker' in navigator){
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <script src="<?= asset('js/music.js') ?>" defer></script>
 <script src="<?= asset('js/spa.js') ?>" defer></script>
+<script src="<?= asset('js/motion.js') ?>" defer></script>
 <script src="<?= asset('js/funnel.js') ?>" defer></script>
 <?php if ($inTg): ?>
 <!-- Telegram Mini App: тот же сайт открывается нативно в боте (автологин, тема, expand, back). -->
