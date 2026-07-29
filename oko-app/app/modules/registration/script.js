@@ -560,6 +560,47 @@ doLogin = function(method){
 };
 
 /* ============================================================
+   ГЛОБАЛЬНЫЙ ГЕЙТ на приглашение в Академию (bugfix v1.94).
+   Аудит: попап «Академия OKO — начни урок 1» дублировался при
+   каждом переключении вкладок. Держим строгий флаг в localStorage
+   (`oko-academy-invite-seen`) — показываем максимум ОДИН раз
+   за жизнь аккаунта, а не за сессию. Дополнительно давим повторы
+   в рамках одной сессии (быстрые re-check по таймеру).
+   ============================================================ */
+(function regAcademyInviteGate(){
+  const K = 'oko-academy-invite-seen';
+  const SK = 'oko-academy-invite-shown-session';
+  /* распознать «приглашение начать урок 1»: строго по тайтлу + телу */
+  function isAcademyInvite(o){
+    if(!o) return false;
+    const t = String(o.title || '');
+    const b = String(o.body || '');
+    if(!/Академия\s*OKO/i.test(t)) return false;
+    return /Начни\s*урок/i.test(b) || /Продолжи\s*урок/i.test(b);
+  }
+  function seen(){ try{ return !!localStorage.getItem(K); }catch(e){ return false; } }
+  function mark(){
+    try{ localStorage.setItem(K, String(Date.now())); }catch(e){}
+    try{ sessionStorage.setItem(SK, '1'); }catch(e){}
+  }
+  /* Chain-патч: перехватываем ЛЮБОЙ вызов showPopup.
+     Если это академ-приглашение и мы его уже видели (в этом аккаунте либо в этой
+     сессии) — молча гасим. Иначе — помечаем и пропускаем в базовый showPopup. */
+  if(typeof showPopup === 'function'){
+    const _regPrevShowPopup = showPopup;
+    showPopup = function(o){
+      if(isAcademyInvite(o)){
+        let sessionShown = false;
+        try{ sessionShown = !!sessionStorage.getItem(SK); }catch(e){}
+        if(seen() || sessionShown) return;      /* уже видели — не показываем */
+        mark();
+      }
+      _regPrevShowPopup(o);
+    };
+  }
+})();
+
+/* ============================================================
    ПРЕМИУМ-ОНБОРДИНГ — брендовая воронка активации.
    Оболочка (#onboard, obShow/obNext/obFinish, ONBOARD, obStep)
    живёт в base.html. Мы доводим её цепочкой: пересобираем данные
