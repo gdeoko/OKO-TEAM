@@ -1302,6 +1302,6 @@ function mpInject(){
   try{
     const sp = document.getElementById('screen-profile');
     if(sp && sp.classList.contains('active') && typeof renderMyProfile === 'function') renderMyProfile();
-    else { psInjectAccSwitch(); psInjectMyFollows(); }
+    else { psInjectAccSwitch(); psInjectMyFollows(); mpInject(); }
   }catch(e){}
 })();

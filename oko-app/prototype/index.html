@@ -10034,7 +10034,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.82</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.83</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -40390,7 +40390,7 @@ function mpInject(){
   try{
     const sp = document.getElementById('screen-profile');
     if(sp && sp.classList.contains('active') && typeof renderMyProfile === 'function') renderMyProfile();
-    else { psInjectAccSwitch(); psInjectMyFollows(); }
+    else { psInjectAccSwitch(); psInjectMyFollows(); mpInject(); }
   }catch(e){}
 })();
 
