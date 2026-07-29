@@ -39512,38 +39512,40 @@ function acProfileInject(){
   }
   function apdCatalogFiltersHtml(){
     const S = APD_CAT_STATE;
-    const chip = (val, cur, cb, extra)=>`<button class="acd-fchip ${cur===val?'on':''}" onclick="${cb}('${esc(val).replace(/'/g,"\\'")}')">${extra||''}<span>${esc(val)}</span></button>`;
+    // val — обычная строка (заголовок фильтра). Экранируем и для HTML-атрибута, и для JS-строки.
+    const esq = v => String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const chip = (key, val, cur)=>`<button class="acd-fchip ${cur===val?'on':''}" onclick="apdCatSet('${key}','${esq(val)}')"><span>${esc(val)}</span></button>`;
     const dirs = AC_COURSES.map(c=>c.title);
     const authors = apdCourseAuthors();
     return `
       <div class="acd-fgroup"><div class="acd-fgroup-h">Направление</div>
         <div class="acd-fgroup-chips">
           <button class="acd-fchip ${!S.dir?'on':''}" onclick="apdCatSet('dir','')"><span>Все</span></button>
-          ${dirs.map(d=>chip(d, S.dir, 'apdCatSet.bind(null,"dir")')).join('')}
+          ${dirs.map(d=>chip('dir', d, S.dir)).join('')}
         </div>
       </div>
       <div class="acd-fgroup"><div class="acd-fgroup-h">Формат</div>
         <div class="acd-fgroup-chips">
           <button class="acd-fchip ${!S.fmt?'on':''}" onclick="apdCatSet('fmt','')"><span>Все</span></button>
-          ${APD_FMT_OPTS.map(v=>chip(v, S.fmt, 'apdCatSet.bind(null,"fmt")')).join('')}
+          ${APD_FMT_OPTS.map(v=>chip('fmt', v, S.fmt)).join('')}
         </div>
       </div>
       <div class="acd-fgroup"><div class="acd-fgroup-h">Уровень</div>
         <div class="acd-fgroup-chips">
           <button class="acd-fchip ${!S.level?'on':''}" onclick="apdCatSet('level','')"><span>Все</span></button>
-          ${APD_LEVEL_OPTS.map(v=>chip(v, S.level, 'apdCatSet.bind(null,"level")')).join('')}
+          ${APD_LEVEL_OPTS.map(v=>chip('level', v, S.level)).join('')}
         </div>
       </div>
       <div class="acd-fgroup"><div class="acd-fgroup-h">Автор</div>
         <div class="acd-fgroup-chips">
           <button class="acd-fchip ${!S.author?'on':''}" onclick="apdCatSet('author','')"><span>Все</span></button>
-          ${authors.map(v=>chip(v, S.author, 'apdCatSet.bind(null,"author")')).join('')}
+          ${authors.map(v=>chip('author', v, S.author)).join('')}
         </div>
       </div>
       <div class="acd-fgroup"><div class="acd-fgroup-h">Длительность</div>
         <div class="acd-fgroup-chips">
           <button class="acd-fchip ${!S.dur?'on':''}" onclick="apdCatSet('dur','')"><span>Все</span></button>
-          ${APD_DUR_OPTS.map(v=>chip(v, S.dur, 'apdCatSet.bind(null,"dur")')).join('')}
+          ${APD_DUR_OPTS.map(v=>chip('dur', v, S.dur)).join('')}
         </div>
       </div>`;
   }
