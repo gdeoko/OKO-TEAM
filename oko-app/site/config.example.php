@@ -1,18 +1,34 @@
 <?php
 // Пример конфига. Реальный config.php лежит ТОЛЬКО на VPS (секреты в git не хранятся).
+// Полный live-config всегда доступен агенту через control-эндпоинт
+// (CONTROL_URL/CONTROL_TOKEN + cat /var/www/okoteam/config.php).
 return [
-    'tg_bot_token' => 'PUT_ON_VPS',
+    // Ядро
+    'tg_bot_token' => 'PUT_ON_VPS',                       // @okoappbot
     'daniel_tg'    => '1966985736',
     'team_chat_id' => '-1002971919136',
-    'admin_password' => 'PUT_ON_VPS',
-    'agent_token' => 'PUT_ON_VPS',
-    'control_url'   => 'https://okoagents.okoteam.top',
-    'control_token' => 'PUT_ON_VPS',
+    'admin_password' => 'PUT_ON_VPS',                     // /admin
+    'agent_token'    => 'PUT_ON_VPS',                     // агент↔сайт (X-Agent-Token)
+    'control_url'    => 'https://okoagents.okoteam.top',
+    'control_token'  => 'PUT_ON_VPS',
     'gmail'      => 'daniel.okoteam@gmail.com',
-    'gmail_pass' => 'PUT_ON_VPS',
+    'gmail_pass' => 'PUT_ON_VPS',                         // app-password (16 симв.)
     'gmail_name' => 'OKO TEAM · Даниэль Ильясов',
     'daniel_fio' => 'Ильясов Даниэль Альбертович',
     'daniel_inn' => '682016634349',
+    // Оплаты Lava.top (готовые продукты)
     'lava' => ['sistema'=>'PUT_ON_VPS','zavod'=>'PUT_ON_VPS','consult'=>'PUT_ON_VPS'],
+    'lava_api_key'      => 'PUT_ON_VPS',                  // динамические счета
+    'lava_webhook_user' => 'PUT_ON_VPS',                  // Basic auth для /api.php?action=lava_webhook
+    'lava_webhook_pass' => 'PUT_ON_VPS',
+    'partner_percent'   => 15,                            // % партнёру с оплаты (L8)
+    // Помощник OKO (L5): Anthropic Claude через Cloudflare-прокси
+    'anthropic_key'   => 'PUT_ON_VPS',                    // sk-ant-api03-...
+    'anthropic_base'  => 'https://anthropic-proxy.okoteam.workers.dev',
+    'anthropic_model' => 'claude-haiku-4-5-20250929',
+    // Проверка видео (L6): Gemini через Cloudflare-прокси, ротация ключей
+    'gemini_keys' => ['PUT_ON_VPS'],
+    'gemini_base'  => 'https://gemini-proxy.okoteam.workers.dev',
+    'gemini_model' => 'gemini-flash-latest',
     'site_url' => 'https://okoteam.top',
 ];

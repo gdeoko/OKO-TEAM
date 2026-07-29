@@ -275,7 +275,147 @@ case 'exportBase':
     fputcsv($f,['id','name','email','phone','tg','niche','status','products','paid','source','created_at'],';');
     foreach($rows as $r){ fputcsv($f,[$r['id'],$r['name'],$r['email'],$r['phone'],$r['tg'],$r['niche'],$r['status'],$r['products'],$r['paid'],$r['source'],$r['created_at']],';'); }
     fclose($f); exit;
-case 'health': out(['ok'=>true,'db'=>'sqlite','clients'=>(int)db_val("SELECT COUNT(*) FROM clients")]);
+// ═════════════════════════════════════════════════════════════════
+// L5 — Помощник OKO: форвард в Claude через Cloudflare-прокси
+// POST {msg, history[]?, context?}   → {reply, usage}
+// ═════════════════════════════════════════════════════════════════
+case 'assistant':
+    rate_limit('assistant',30,60);
+    $msg = trim((string)($body['msg']??'')); if($msg==='') fail('empty');
+    $key  = (string)($C['anthropic_key'] ?? '');
+    $base = rtrim((string)($C['anthropic_base'] ?? 'https://api.anthropic.com'),'/');
+    $model= (string)($C['anthropic_model'] ?? 'claude-haiku-4-5-20250929');
+    if(!$key) fail('no anthropic key',500);
+    $hist = is_array($body['history']??null)?array_slice($body['history'],-8):[];
+    $ctx  = trim((string)($body['context']??''));
+    $sys  = "Ты — Личный Помощник OKO. Отвечаешь по-русски, коротко и по делу, mobile-first. Помогаешь предпринимателю с ростом в соцсетях, продажами, контентом, автоматизацией. Не упоминай что ты нейросеть, Claude, OpenAI и т.п. Ты — OKO.";
+    if($ctx) $sys .= "\n\nКонтекст пользователя:\n".mb_substr($ctx,0,1500);
+    $messages = [];
+    foreach($hist as $h){ $r=($h['role']??'')==='assistant'?'assistant':'user'; $t=trim((string)($h['text']??$h['content']??''));
+      if($t!=='') $messages[]=['role'=>$r,'content'=>$t]; }
+    $messages[] = ['role'=>'user','content'=>$msg];
+    $payload = ['model'=>$model,'max_tokens'=>800,'system'=>$sys,'messages'=>$messages];
+    $ch = curl_init($base.'/v1/messages');
+    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-api-key: '.$key,'anthropic-version: 2023-06-01'],
+        CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>10]);
+    $raw = curl_exec($ch); $err=curl_error($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+    if(!$raw) fail('upstream: '.$err,502);
+    $j = json_decode($raw,true);
+    if($code>=400) fail('claude '.$code.': '.(($j['error']['message']??'')?:mb_substr($raw,0,200)),502);
+    $reply=''; foreach(($j['content']??[]) as $b){ if(($b['type']??'')==='text') $reply.=$b['text']; }
+    db_exec("CREATE TABLE IF NOT EXISTS assistant_log (id INTEGER PRIMARY KEY AUTOINCREMENT, client_email TEXT, msg TEXT, reply TEXT, tokens_in INTEGER, tokens_out INTEGER, created_at TEXT DEFAULT (datetime('now','localtime')))");
+    db_insert("INSERT INTO assistant_log (client_email,msg,reply,tokens_in,tokens_out) VALUES (?,?,?,?,?)",
+        [trim((string)($body['email']??'')), $msg, $reply, (int)($j['usage']['input_tokens']??0), (int)($j['usage']['output_tokens']??0)]);
+    out(['ok'=>true,'reply'=>$reply,'usage'=>$j['usage']??null]);
+
+// ═════════════════════════════════════════════════════════════════
+// L8 — Партнёрка: выдать оплаты-URL с реф-кодом + записать клик
+// POST {product, ref?, email?, name?}   → {url}
+// ═════════════════════════════════════════════════════════════════
+case 'pay_url':
+    rate_limit('pay_url',60,60);
+    $product = (string)($body['product']??'sistema');
+    $url = $C['lava'][$product] ?? '';
+    if(!$url) fail('unknown product');
+    $ref = trim((string)($body['ref']??'')); $ref=preg_replace('/[^A-Za-z0-9_\-]/','',$ref);
+    if($ref!==''){
+      $url .= (strpos($url,'?')===false?'?':'&').'ref='.urlencode($ref).'&partner='.urlencode($ref);
+      db_exec("CREATE TABLE IF NOT EXISTS partner_clicks (id INTEGER PRIMARY KEY AUTOINCREMENT, ref TEXT, product TEXT, ip TEXT, ua TEXT, buyer_email TEXT, created_at TEXT DEFAULT (datetime('now','localtime')))");
+      db_insert("INSERT INTO partner_clicks (ref,product,ip,ua,buyer_email) VALUES (?,?,?,?,?)",
+        [$ref,$product,$_SERVER['REMOTE_ADDR']??'',mb_substr($_SERVER['HTTP_USER_AGENT']??'',0,200),trim((string)($body['email']??''))]);
+    }
+    out(['ok'=>true,'url'=>$url]);
+
+// ═════════════════════════════════════════════════════════════════
+// L8 — Lava webhook: приём оплаты + начисление 15% партнёру
+// POST body — JSON от Lava (buyer.email, product.title, amount, status)
+// Auth: HTTP Basic (lava_webhook_user:lava_webhook_pass)
+// ═════════════════════════════════════════════════════════════════
+case 'lava_webhook':
+    $u = $_SERVER['PHP_AUTH_USER'] ?? '';
+    $p = $_SERVER['PHP_AUTH_PW']   ?? '';
+    if(!hash_equals((string)($C['lava_webhook_user']??''),(string)$u) ||
+       !hash_equals((string)($C['lava_webhook_pass']??''),(string)$p)){
+        header('WWW-Authenticate: Basic realm="lava"'); fail('Unauthorized',401);
+    }
+    db_exec("CREATE TABLE IF NOT EXISTS partner_payouts (id INTEGER PRIMARY KEY AUTOINCREMENT, ref TEXT, buyer_email TEXT, product TEXT, amount REAL, partner_amount REAL, status TEXT, invoice_id TEXT, created_at TEXT DEFAULT (datetime('now','localtime')))");
+    $status = strtolower((string)($body['status']??$body['eventType']??''));
+    $email  = trim((string)($body['buyer']['email']??$body['email']??''));
+    $amount = (float)($body['amount']??$body['sum']??0);
+    $title  = (string)($body['product']['title']??$body['product']??'');
+    $ref    = (string)($body['clientUtm']['utm_content']??$body['partnerId']??$body['ref']??'');
+    $inv    = (string)($body['id']??$body['invoiceId']??$body['contractId']??'');
+    file_put_contents(sys_get_temp_dir().'/oko_lava_'.time().'.json', json_encode($body,JSON_UNESCAPED_UNICODE));
+    if(!in_array($status,['success','completed','paid','subscription-active','subscription.recurring.payment.success'])) out(['ok'=>true,'skipped'=>$status]);
+    $prodKey = 'sistema';
+    if(stripos($title,'завод')!==false||stripos($title,'zavod')!==false) $prodKey='zavod';
+    if(stripos($title,'консульт')!==false||stripos($title,'consult')!==false) $prodKey='consult';
+    if($email) mark_paid($email,$prodKey,(string)$amount,false);
+    if($ref!==''){
+      $pct = (float)($C['partner_percent']??15);
+      $payout = round($amount*$pct/100,2);
+      db_insert("INSERT INTO partner_payouts (ref,buyer_email,product,amount,partner_amount,status,invoice_id) VALUES (?,?,?,?,?,?,?)",
+        [$ref,$email,$prodKey,$amount,$payout,'pending',$inv]);
+      tg_send($C['daniel_tg'],"<b>Партнёрская продажа</b>\nref: <code>$ref</code>\n$email · $prodKey · $amount₽\nК выплате: <b>$payout₽</b>",[],topic_thread('deals'));
+    }
+    out(['ok'=>true,'processed'=>true]);
+
+// ═════════════════════════════════════════════════════════════════
+// L6 — Проверка видео (Gemini Vision, multipart upload)
+// POST multipart:  file (mp4/mov ≤50MB) + niche?, goal?
+// ═════════════════════════════════════════════════════════════════
+case 'video_analyze':
+    rate_limit('video_analyze',10,60);
+    if(empty($_FILES['file']['tmp_name'])) fail('no file');
+    if($_FILES['file']['size']>50*1024*1024) fail('too big');
+    $keys = $C['gemini_keys'] ?? []; if(!$keys) fail('no gemini keys',500);
+    $key = $keys[array_rand($keys)];
+    $base = rtrim((string)($C['gemini_base'] ?? 'https://generativelanguage.googleapis.com'),'/');
+    $model = (string)($C['gemini_model'] ?? 'gemini-flash-latest');
+    $niche = trim((string)($_POST['niche']??''));
+    $goal  = trim((string)($_POST['goal']??'вирал в reels'));
+    $data = base64_encode(file_get_contents($_FILES['file']['tmp_name']));
+    $mime = mime_content_type($_FILES['file']['tmp_name']) ?: 'video/mp4';
+    $prompt = "Проанализируй короткое вертикальное видео как продюсер вирусного контента для ниши «$niche», цель — $goal. Верни СТРОГО JSON (без markdown): {\"hook\":0-10, \"dynamics\":0-10, \"clarity\":0-10, \"cta\":0-10, \"score\":0-10, \"strengths\":[..5], \"risks\":[..5], \"fixes\":[..5], \"caption_ru\":\"...\", \"hashtags\":[..10], \"score_reason\":\"1 предложение\"}. По-русски. Только JSON.";
+    $payload = ['contents'=>[['parts'=>[
+        ['inline_data'=>['mime_type'=>$mime,'data'=>$data]],
+        ['text'=>$prompt]
+    ]]], 'generationConfig'=>['response_mime_type'=>'application/json','temperature'=>0.4,'max_output_tokens'=>1500]];
+    $url = $base.'/v1beta/models/'.$model.':generateContent?key='.urlencode($key);
+    $ch = curl_init($url);
+    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER=>['Content-Type: application/json'],
+        CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>90]);
+    $raw=curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+    if(!$raw||$code>=400) fail('gemini '.$code.': '.mb_substr((string)$raw,0,200),502);
+    $j=json_decode($raw,true);
+    $text = $j['candidates'][0]['content']['parts'][0]['text'] ?? '';
+    $parsed = json_decode($text,true);
+    if(!$parsed){
+        if(preg_match('/\{[\s\S]+\}/', $text, $m)) $parsed = json_decode($m[0],true);
+    }
+    if(!$parsed) fail('parse: '.mb_substr($text,0,200),502);
+    out(['ok'=>true,'result'=>$parsed]);
+
+// ═════════════════════════════════════════════════════════════════
+// L7b — соцсети: получение OAuth-callback / сохранение токена
+// POST {platform, access_token, handle, email?}
+// ═════════════════════════════════════════════════════════════════
+case 'socials_link':
+    rate_limit('socials_link',20,60);
+    $platform = preg_replace('/[^a-z]/','',strtolower((string)($body['platform']??'')));
+    if(!in_array($platform,['instagram','telegram','vk','tiktok','youtube'])) fail('bad platform');
+    $tok = trim((string)($body['access_token']??''));
+    $handle = trim((string)($body['handle']??''));
+    $email = trim((string)($body['email']??''));
+    if(!$handle) fail('handle required');
+    db_exec("CREATE TABLE IF NOT EXISTS user_socials (id INTEGER PRIMARY KEY AUTOINCREMENT, client_email TEXT, platform TEXT, handle TEXT, access_token TEXT, linked_at TEXT DEFAULT (datetime('now','localtime')), UNIQUE(client_email,platform))");
+    db_exec("INSERT INTO user_socials (client_email,platform,handle,access_token) VALUES (?,?,?,?) ON CONFLICT(client_email,platform) DO UPDATE SET handle=excluded.handle,access_token=excluded.access_token,linked_at=datetime('now','localtime')",
+        [$email,$platform,$handle,$tok]);
+    out(['ok'=>true,'linked'=>$platform.':'.$handle]);
+
+case 'health': out(['ok'=>true,'db'=>'sqlite','clients'=>(int)db_val("SELECT COUNT(*) FROM clients"),'v'=>4]);
 
 default: fail('unknown action',404);
 }

@@ -10501,7 +10501,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.89</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.90</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11893,6 +11893,12 @@ function pushMsg(m){
   currentChat.time = m.t;
   renderMsgs(); renderChatList(document.getElementById('chatSearch').value);
 }
+
+/* ============ BACKEND (VPS okoteam.top) ============
+   Единая точка входа для всех api-вызовов (assistant, pay_url, video_analyze, socials_link). */
+const OKO_API = (location.protocol==='file:' || location.hostname==='localhost' || location.hostname.endsWith('.higgsfield.app'))
+  ? 'https://okoteam.top/api.php'
+  : '/api.php';
 
 /* ============ ЛИМИТЫ МЕССЕНДЖЕРА (Free vs Premium) ============
    Free: файлы 100 МБ, голосовые 5 мин, 500 чатов, 3 подписки на каналы.
@@ -14506,13 +14512,21 @@ function helperSend(text){
     log.insertAdjacentHTML('beforeend', '<div class="hp-msg hp-msg-ai hp-typing" id="hpTyping"><div class="hp-msg-b"><span></span><span></span><span></span></div></div>');
     log.scrollTop = log.scrollHeight;
   }
-  // TODO(L5-backend): fetch('/api.php?action=assistant', {method:'POST', body:JSON.stringify({msg:text, history:h.slice(-10), context:aState.answers||{}})})
-  //   .then(r=>r.json()).then(d=>helperReceive(d.reply))
-  // Пока endpoint не активен - заглушка с симуляцией стрима.
-  setTimeout(()=>{
-    const el = document.getElementById('hpTyping'); if(el) el.remove();
-    helperReceive(helperMockReply(text));
-  }, 900 + Math.random()*600);
+  const email = (typeof PROFILE!=='undefined'&&PROFILE.email) ? PROFILE.email : '';
+  const ctx = JSON.stringify((typeof aState!=='undefined'&&aState.answers)?aState.answers:{});
+  const histApi = h.slice(-8).map(m=>({role:m.who==='user'?'user':'assistant',text:m.text}));
+  fetch(OKO_API+'?action=assistant',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({msg:text, history:histApi, context:ctx, email})})
+    .then(r=>r.json())
+    .then(d=>{
+      const el=document.getElementById('hpTyping'); if(el) el.remove();
+      if(d && d.ok && d.reply) helperReceive(d.reply);
+      else helperReceive(helperMockReply(text));
+    })
+    .catch(()=>{
+      const el=document.getElementById('hpTyping'); if(el) el.remove();
+      helperReceive(helperMockReply(text));
+    });
 }
 function helperReceive(text){
   const h = helperHistory();
@@ -15077,12 +15091,22 @@ function payRefCode(){
 /* Формирование URL оплаты Lava.top под тариф + реф-параметр.
    Реальные lava-ссылки живут на VPS в config.php['lava'], хендлер /api.php?action=pay_url
    возвращает готовый URL с бэкенд-подписью. Пока endpoint не активен - симуляция. */
+/* Синхронный fallback-URL (для непосредственного open). Основная логика — payLavaOpen(). */
 function payLavaUrl(){
   const p = PLANS[payState.plan]; const {total} = payPrice();
   const ref = payRefCode();
-  // TODO(L8-backend): fetch('/api.php?action=pay_url', {method:'POST', body:JSON.stringify({tier:p.name, period:payState.period, ref})})
-  //   .then(r=>r.json()).then(d=>window.location=d.url)
   return `https://okoteam.top/pay?tier=${encodeURIComponent(p.name)}&period=${payState.period}&sum=${total}${ref?'&ref='+encodeURIComponent(ref):''}`;
+}
+/* Открывает реальную Lava-ссылку из бэкенда (с реф-кодом партнёра). */
+function payLavaOpen(){
+  const p = PLANS[payState.plan]; const ref = payRefCode();
+  const productKey = /BUSINESS|MAX/i.test(p.name) ? 'zavod' : /START|PRO/i.test(p.name) ? 'sistema' : 'consult';
+  const email = (typeof PROFILE!=='undefined'&&PROFILE.email) ? PROFILE.email : '';
+  fetch(OKO_API+'?action=pay_url',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({product:productKey, ref, email})})
+    .then(r=>r.json())
+    .then(d=>{ if(d && d.ok && d.url) window.open(d.url,'_blank'); else window.open(payLavaUrl(),'_blank'); })
+    .catch(()=>window.open(payLavaUrl(),'_blank'));
 }
 function doPay(){
   const p = PLANS[payState.plan];
@@ -15090,6 +15114,7 @@ function doPay(){
   const ref = payRefCode();
   const methodLbl = {card:'Карта РФ',crypto:'Крипта',lava:'Lava.top'}[payState.method];
   const refNote = ref ? `<p class="dim" style="font-size:11.5px;margin-top:6px">Реф-код <b>${esc(ref)}</b> учтён. Партнёр получит 15% с этой оплаты.</p>` : '';
+  if(payState.method==='lava'){ payLavaOpen(); toast('Открыл Lava в новой вкладке'); return; }
   document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:20px 0">
     <div class="spin"></div><p style="font-weight:700;margin-top:14px">Проводим оплату…</p>
     <p class="dim" style="font-size:12px;margin-top:5px">${methodLbl} · защищённое соединение</p>${refNote}</div>`;
