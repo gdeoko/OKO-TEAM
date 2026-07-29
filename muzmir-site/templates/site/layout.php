@@ -284,6 +284,7 @@ $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 <?php endif; ?>
 <?php require BASE_PATH . '/templates/site/partials/popups.php'; ?>
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<script src="<?= asset('js/music.js') ?>" defer></script>
 <?php if ($inTg): ?>
 <!-- Telegram Mini App: тот же сайт открывается нативно в боте (автологин, тема, expand, back). -->
 <script>
