@@ -473,19 +473,31 @@ function lgDocHtml(kind, lang){
   const reqLabel  = lang==='en' ? 'Operator details' : 'Реквизиты Оператора';
   const topLabel  = lang==='en' ? 'to contents' : 'к содержанию';
   const revLabel  = lang==='en' ? d.rev + ' · effective ' + r.date : d.rev + ' · дата вступления в силу: ' + r.date;
+  const updLabel  = lang==='en' ? 'Updated ' + r.date : 'Обновлено ' + r.date;
+  const dlLabel   = lang==='en' ? 'Download HTML' : 'Скачать HTML';
+  const shLabel   = lang==='en' ? 'Share link'    : 'Поделиться ссылкой';
+  const cnT       = lang==='en' ? 'I have read and I agree' : 'Прочитано, согласен';
+  const cnS       = lang==='en' ? 'The consent is saved locally and used at registration.' : 'Согласие сохраняется локально и учитывается при регистрации.';
   const sid = (i)=>'lg-s-'+kind+'-'+i;
   const toc = `<nav class="lg-toc" aria-label="${tocLabel}">
       <div class="lg-toc-h">${I('file')}<b>${tocLabel}</b></div>
       <ol>${d.secs.map((s,i)=>`<li><button type="button" class="lg-toc-a" onclick="lgJump('${sid(i)}')"><span class="lg-toc-n">${i+1}</span><span>${s.h}</span></button></li>`).join('')}</ol>
     </nav>`;
+  const agreed = lgIsAgreed(kind);
   return `<div class="lg-doc" id="lgDoc">
+    <div class="lg-progress" aria-hidden="true"><span id="lgProgFill"></span></div>
     <div class="lg-doc-head">
       <svg class="lg-doc-logo"><use href="#i-logo"/></svg>
       <div>
         <h1>${d.title}</h1>
         <div class="lg-doc-meta"><b>OKO PROJECT</b> · ${revLabel}</div>
         <div class="lg-doc-meta">${opLabel}: ${r.op}, ${r.inn}</div>
+        <span class="lg-updated">${I('check')} ${updLabel}</span>
       </div>
+    </div>
+    <div class="lg-actions">
+      <button type="button" onclick="lgDownloadHtml()" title="${dlLabel}">${I('copy')}<span>${dlLabel}</span></button>
+      <button type="button" onclick="lgShareLink()" title="${shLabel}">${I('share')}<span>${shLabel}</span></button>
     </div>
     ${toc}
     ${d.secs.map((s,i)=>`<section class="lg-sec" id="${sid(i)}"><h2><span class="lg-sec-n">${i+1}.</span> ${s.h}<button type="button" class="lg-sec-top" onclick="lgJump('lgDoc')" title="${topLabel}">${I('chev')}</button></h2>${s.b}</section>`).join('')}
@@ -501,7 +513,89 @@ function lgDocHtml(kind, lang){
         <div class="lg-sig-cap">${r.sig}</div>
       </div>
     </div>
+    <button type="button" class="lg-consent ${agreed?'on':''}" id="lgConsent" onclick="lgToggleAgreed()" aria-pressed="${agreed?'true':'false'}">
+      <span class="lg-consent-box">${I('check2')}</span>
+      <span class="lg-consent-txt">
+        <span class="lg-consent-t">${cnT}</span>
+        <span class="lg-consent-s">${cnS}</span>
+      </span>
+    </button>
   </div>`;
+}
+
+/* ---------- v1.84: согласие «прочитано» — хранится в localStorage ---------- */
+function lgIsAgreed(kind){ try{ return !!(lgS.agreed && lgS.agreed[kind]); }catch(e){ return false; } }
+function lgToggleAgreed(){
+  if(!lgS.agreed) lgS.agreed = {};
+  const cur = !!lgS.agreed[lgKind];
+  lgS.agreed[lgKind] = !cur;
+  if(!cur) lgS.agreed[lgKind+'_at'] = new Date().toISOString();
+  lgSave();
+  const el = document.getElementById('lgConsent');
+  if(el){ el.classList.toggle('on', !cur); el.setAttribute('aria-pressed', (!cur).toString()); }
+}
+
+/* ---------- v1.84: скачать документ как самодостаточный HTML ---------- */
+function lgDownloadHtml(){
+  try{
+    const d = LG_DOCS[lgKind][lgS.lang]; if(!d) return;
+    const doc = document.getElementById('lgDoc');
+    if(!doc) return;
+    // клон без интерактивных элементов
+    const clone = doc.cloneNode(true);
+    ['#lgProgFill','.lg-actions','.lg-consent','.lg-sec-top','.lg-progress'].forEach(sel=>{
+      clone.querySelectorAll(sel).forEach(n=>n.remove());
+    });
+    const css = 'body{font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;background:#fff;max-width:760px;margin:32px auto;padding:0 20px}h1{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.05em;margin:0 0 6px}h2{color:#0f8b00;font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.06em;margin:26px 0 6px}.lg-doc-head{border-bottom:2px solid #0f8b00;padding-bottom:16px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start}.lg-doc-logo{width:44px;height:44px;color:#0f8b00}.lg-doc-meta{font-size:11.5px;color:#555;margin-top:3px}.lg-updated{display:inline-block;margin-top:8px;padding:4px 10px;border:1px solid #0f8b00;color:#0f8b00;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.lg-toc{background:#f4f4f4;border-left:3px solid #0f8b00;padding:12px 14px;margin:16px 0 22px;border-radius:6px}.lg-toc ol{list-style:decimal;padding-left:22px;margin:0}.lg-toc li{margin:3px 0;font-size:12.5px;color:#333}.lg-toc-a{background:none;border:0;padding:0;text-align:left;color:#333;font:inherit;cursor:default}.lg-sec{margin-bottom:20px}.lg-sec ul{list-style:disc;padding-left:20px}.lg-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}.lg-table th,.lg-table td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}.lg-table th{background:#eee;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#0f8b00}.lg-note{font-size:11px;color:#666}.lg-req{background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#333;margin-top:22px}.lg-req-h{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.08em;color:#0f8b00;margin-bottom:6px}.doc-sign-block{margin-top:24px;padding-top:16px;border-top:1px dashed #999;display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}.lg-sig-cap{font-size:11px;color:#555;margin-top:5px}.lg-sig-line{height:1px;background:#999;margin-top:-8px}';
+    const html = '<!doctype html><html lang="'+lgS.lang+'"><head><meta charset="utf-8"><title>'+d.title+' — OKO</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+clone.outerHTML+'</body></html>';
+    const iso = new Date().toISOString().slice(0,10);
+    const fn = 'oko-'+lgKind+'-'+lgS.lang+'-'+iso+'.html';
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fn; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 800);
+    lgToast(lgS.lang==='en' ? 'Downloaded' : 'Файл скачан');
+  }catch(e){ console.warn('lgDownloadHtml', e); }
+}
+
+/* ---------- v1.84: поделиться ссылкой (navigator.share → clipboard fallback) ---------- */
+function lgShareLink(){
+  try{
+    const slug = { offer:'oferta', privacy:'privacy', terms:'terms', consent:'consent' }[lgKind] || lgKind;
+    const url  = 'https://okoteam.top/legal/' + slug;
+    const d    = LG_DOCS[lgKind][lgS.lang];
+    const title= (d && d.title) || 'OKO Legal';
+    const done = ()=> lgToast(lgS.lang==='en' ? 'Link copied' : 'Ссылка скопирована');
+    if(navigator.share){
+      navigator.share({ title:'OKO — '+title, text:title, url }).catch(()=>{
+        if(navigator.clipboard) navigator.clipboard.writeText(url).then(done).catch(()=>{});
+      });
+    } else if(navigator.clipboard){
+      navigator.clipboard.writeText(url).then(done).catch(()=>{});
+    } else {
+      // legacy fallback
+      const t = document.createElement('textarea'); t.value = url;
+      document.body.appendChild(t); t.select();
+      try{ document.execCommand('copy'); done(); }catch(e){}
+      t.remove();
+    }
+  }catch(e){ console.warn('lgShareLink', e); }
+}
+
+/* мини-тост (использует core toast если есть, иначе временный чип) */
+function lgToast(msg){
+  try{ if(typeof toast==='function'){ toast(msg); return; } }catch(e){}
+  try{
+    let t = document.getElementById('lgToast');
+    if(!t){
+      t = document.createElement('div'); t.id = 'lgToast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--raised,#141414);color:var(--accent,#9AFF00);border:1px solid var(--accent,#9AFF00);padding:8px 16px;border-radius:99px;font:600 12.5px/1 Montserrat,sans-serif;letter-spacing:.04em;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.35);opacity:0;transition:opacity .2s';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg; t.style.opacity = '1';
+    clearTimeout(t._to); t._to = setTimeout(()=>{ t.style.opacity = '0'; }, 1600);
+  }catch(e){}
 }
 
 /* плавный скролл к секции/оглавлению внутри контейнера документа */
@@ -518,7 +612,8 @@ function lgJump(id){
 }
 
 /* ---------- scroll-spy: подсветка активного пункта оглавления при прокрутке ----------
-   Лёгкий, пассивный, throttle через rAF — не создаёт лага и не мешает перф-слою. */
+   Лёгкий, пассивный, throttle через rAF — не создаёт лага и не мешает перф-слою.
+   Дополнительно двигает индикатор прогресса чтения (lgProgFill). */
 let _lgSpyBound = false;
 function lgSpyUpdate(){
   try{
@@ -527,11 +622,19 @@ function lgSpyUpdate(){
     if(!box || !doc) return;
     const secs = doc.querySelectorAll('.lg-sec');
     const links = doc.querySelectorAll('.lg-toc-a');
-    if(!secs.length || !links.length) return;
-    const bt = box.getBoundingClientRect().top;
-    let cur = 0;
-    secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top - bt <= 90) cur = i; });
-    links.forEach((a,i)=>a.classList.toggle('on', i===cur));
+    if(secs.length && links.length){
+      const bt = box.getBoundingClientRect().top;
+      let cur = 0;
+      secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top - bt <= 90) cur = i; });
+      links.forEach((a,i)=>a.classList.toggle('on', i===cur));
+    }
+    /* прогресс-бар: отношение scrollTop к максимальной прокрутке */
+    const fill = document.getElementById('lgProgFill');
+    if(fill){
+      const max = Math.max(1, box.scrollHeight - box.clientHeight);
+      const p = Math.max(0, Math.min(100, (box.scrollTop / max) * 100));
+      fill.style.width = p.toFixed(2) + '%';
+    }
   }catch(e){}
 }
 function lgBindSpy(){
