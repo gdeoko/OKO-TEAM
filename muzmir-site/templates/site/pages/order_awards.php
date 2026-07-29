@@ -3,6 +3,29 @@
 $comps = all("SELECT id,slug,name FROM competitions WHERE status != 'draft' ORDER BY sort");
 $preselect = input('competition', '');
 
+// Заказ ИЗ ЗАЯВКИ: /order-awards?app={id} — данные подставляются из заявки участника,
+// повторно ничего вводить не нужно. Трофей ограничивается аттестационным результатом.
+$pf = ['full_name'=>'','age_category'=>'','nomination'=>'','teacher'=>'','act_title'=>'','email'=>'','phone'=>''];
+$fromApp = null; $appResultLock = '';
+$appId = (int) input('app', 0);
+if ($appId && ($cu = current_user())) {
+    $a = one("SELECT a.*, c.slug AS comp_slug, c.name AS comp_name FROM applications a
+              LEFT JOIN competitions c ON c.id=a.competition_id
+              WHERE a.id=? AND a.user_id=?", [$appId, $cu['id']]);
+    if ($a && (string)($a['result'] ?? '') !== '') {
+        $fromApp = $a;
+        $pf['full_name']   = $a['is_group'] ? ($a['group_name'] ?: $a['full_name']) : $a['full_name'];
+        $pf['age_category']= (string)$a['age_category'];
+        $pf['nomination']  = (string)$a['nomination'];
+        $pf['teacher']     = (string)$a['teacher'];
+        $pf['act_title']   = (string)$a['work_title'];
+        $pf['email']       = (string)$a['email'];
+        $pf['phone']       = (string)$a['phone'];
+        $preselect         = (string)$a['comp_slug'];
+        $appResultLock     = (string)$a['result'];
+    }
+}
+
 // Результаты аттестации - из общей шкалы оценивания.
 $results = [];
 foreach (GRADE_SCALE() as [$lo, $hi, $title]) { $results[$title] = true; }
@@ -173,26 +196,36 @@ ob_start(); ?>
       </div>
     </div>
 
-    <form id="awardsOrderForm" class="card reveal order-card" novalidate>
+    <form id="awardsOrderForm" class="card reveal order-card" novalidate data-app-result="<?= h($appResultLock) ?>">
       <?= csrf_field() ?>
+      <?php if ($fromApp): ?>
+        <input type="hidden" name="application_id" value="<?= (int)$fromApp['id'] ?>">
+        <div class="award-note" style="margin:0 0 6px;background:var(--gold-soft);padding:14px 16px;border-radius:14px">
+          <div>
+            <b style="color:var(--gold-ink)">Заказ по заявке <?= h($fromApp['number']) ?></b> —
+            <?= h($fromApp['comp_name']) ?>, результат: <b><?= h($appResultLock) ?></b>.
+            <div class="hint" style="margin-top:4px">Данные подставлены из Вашей заявки — проверьте и выберите, что изготовить.</div>
+          </div>
+        </div>
+      <?php endif; ?>
 
       <div class="order-sec-head"><span class="order-sec-n">1</span><h3>Данные участника</h3></div>
 
       <div class="field ff">
-        <input type="text" id="fullName" name="full_name" placeholder=" " required>
+        <input type="text" id="fullName" name="full_name" placeholder=" " required value="<?= h($pf['full_name']) ?>">
         <label for="fullName">ФИО участника / название коллектива</label>
         <span class="err-msg">Укажите ФИО участника или название коллектива.</span>
       </div>
 
       <div class="grid grid-2">
         <div class="field ff">
-          <input type="text" id="ageCategory" name="age_category" placeholder=" " required>
+          <input type="text" id="ageCategory" name="age_category" placeholder=" " required value="<?= h($pf['age_category']) ?>">
           <label for="ageCategory">Возрастная категория</label>
           <span class="hint">Например, 10-12 лет.</span>
           <span class="err-msg">Укажите возрастную категорию.</span>
         </div>
         <div class="field ff">
-          <input type="text" id="nomination" name="nomination" placeholder=" " required>
+          <input type="text" id="nomination" name="nomination" placeholder=" " required value="<?= h($pf['nomination']) ?>">
           <label for="nomination">Номинация</label>
           <span class="hint">Например, вокал, эстрадный.</span>
           <span class="err-msg">Укажите номинацию.</span>
@@ -200,13 +233,13 @@ ob_start(); ?>
       </div>
 
       <div class="field ff">
-        <input type="text" id="teacher" name="teacher" placeholder=" ">
+        <input type="text" id="teacher" name="teacher" placeholder=" " value="<?= h($pf['teacher']) ?>">
         <label for="teacher">ФИО педагога / название учреждения</label>
         <span class="hint">Заполняется, если нужен именной диплом или благодарность педагогу.</span>
       </div>
 
       <div class="field ff">
-        <input type="text" id="actTitle" name="act_title" placeholder=" " required>
+        <input type="text" id="actTitle" name="act_title" placeholder=" " required value="<?= h($pf['act_title']) ?>">
         <label for="actTitle">Название конкурсного номера</label>
         <span class="hint">Например, «Аве Мария».</span>
         <span class="err-msg">Укажите название конкурсного номера.</span>
@@ -228,7 +261,7 @@ ob_start(); ?>
           <select id="result" name="result" required>
             <option value="">Выберите результат</option>
             <?php foreach ($results as $r): ?>
-              <option value="<?= h($r) ?>"><?= h($r) ?></option>
+              <option value="<?= h($r) ?>" <?= $appResultLock === $r ? 'selected' : '' ?>><?= h($r) ?></option>
             <?php endforeach; ?>
           </select>
           <span class="err-msg">Выберите аттестационный результат.</span>
@@ -273,7 +306,7 @@ ob_start(); ?>
       <div class="order-sec-head"><span class="order-sec-n">4</span><h3>Контакты и оплата</h3></div>
 
       <div class="field ff">
-        <input type="email" id="email" name="email" placeholder=" " required>
+        <input type="email" id="email" name="email" placeholder=" " required value="<?= h($pf['email']) ?>">
         <label for="email">Электронная почта</label>
         <span class="hint">На эту почту придёт электронный наградной материал и подтверждение оплаты.</span>
         <span class="err-msg">Укажите корректную электронную почту.</span>
@@ -310,7 +343,22 @@ ob_start(); ?>
 
   var form = document.getElementById('awardsOrderForm');
   var compSel = document.getElementById('competition');
+  var resultSel = document.getElementById('result');
   var itemsBox = document.getElementById('awardItems');
+
+  // Трофей ограничен результатом: кубок=гран-при, статуэтка=лауреат, медаль=дипломант.
+  // Дипломы и благодарности доступны при любом результате.
+  function resultAllows(itemName) {
+    var n = (itemName || '').toLowerCase();
+    var res = (resultSel.value || '').toLowerCase();
+    var isCup = n.indexOf('кубок') >= 0, isStat = n.indexOf('статуэтк') >= 0, isMedal = n.indexOf('медал') >= 0;
+    if (!isCup && !isStat && !isMedal) return true;            // дипломы/благодарности — всегда
+    if (!res) return true;                                     // результат не выбран — показываем всё
+    if (isCup)   return res.indexOf('гран') >= 0;
+    if (isStat)  return res.indexOf('лауреат') >= 0;
+    if (isMedal) return res.indexOf('дипломант') >= 0;
+    return true;
+  }
   var totalEl = document.getElementById('totalDisplay');
   var recipientBlock = document.getElementById('recipientBlock');
   var recipientFields = ['recipientName', 'address', 'phone'];
@@ -329,10 +377,12 @@ ob_start(); ?>
     var html = '';
     keys.forEach(function (k) {
       var m = META[k] || { label: k };
+      if (!resultAllows(m.item || m.label)) return;           // трофей не по результату — скрываем
       html += '<label style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer">' +
         '<span><input type="checkbox" class="award-item" data-key="' + k + '" data-price="' + rows[k] + '" style="width:auto;margin-right:10px">' + m.label + '</span>' +
         '<b style="white-space:nowrap">' + money(rows[k]) + '</b></label>';
     });
+    if (!html) html = '<p style="color:var(--muted);margin:12px 0">Нет доступных позиций для выбранного результата.</p>';
     itemsBox.innerHTML = html;
     recompute();
   }
@@ -355,6 +405,7 @@ ob_start(); ?>
   }
 
   compSel.addEventListener('change', function () { renderItems(compSel.value); });
+  resultSel.addEventListener('change', function () { renderItems(compSel.value); });
   itemsBox.addEventListener('change', function (e) { if (e.target.classList.contains('award-item')) recompute(); });
 
   if (compSel.value) renderItems(compSel.value);

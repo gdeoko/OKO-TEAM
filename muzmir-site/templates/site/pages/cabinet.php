@@ -340,7 +340,15 @@ ob_start(); ?>
                 </div>
                 <div class="cab-bar"><i data-w="<?= $pct ?>"></i></div>
               <?php endif; ?>
-              <?php if (!empty($a['result'])): ?><p class="cab-result"><?= h($a['result']) ?></p><?php endif; ?>
+              <?php if (!empty($a['result'])): ?>
+                <p class="cab-result"><?= h($a['result']) ?></p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+                  <a class="btn btn--primary" href="<?= url('/order-awards?app=' . (int)$a['id']) ?>">Заказать награду</a>
+                  <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
+                </div>
+              <?php else: ?>
+                <p class="cab-meta" style="margin-top:10px;opacity:.85">Награды можно будет заказать после оглашения результата.</p>
+              <?php endif; ?>
             </div>
           <?php endforeach; endif; ?>
         </div>
