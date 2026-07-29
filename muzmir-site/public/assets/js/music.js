@@ -13,35 +13,9 @@
   const $ = (s, r) => (r || document).querySelector(s);
 
   let audio, gain, ctx, source, playlist = null, mode = 'stream', idx = 0, tries = 0, ready = false;
-  let btn, btnIcon, btnLabel;
-  let userWantsOn = localStorage.getItem(LS_KEY) === '1' || localStorage.getItem(LS_KEY) === null; // по умолчанию ВКЛ
-
-  function createBtn() {
-    if (btn) return;
-    btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'mz-music-btn';
-    btn.setAttribute('aria-label', 'Фоновая музыка');
-    btn.innerHTML =
-      '<span class="mz-music-ic">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-      '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>' +
-      '</svg></span>' +
-      '<span class="mz-music-lbl">Музыка</span>' +
-      '<span class="mz-music-wave"><i></i><i></i><i></i><i></i></span>';
-    document.body.appendChild(btn);
-    btnIcon = btn.querySelector('.mz-music-ic');
-    btnLabel = btn.querySelector('.mz-music-lbl');
-    btn.addEventListener('click', toggle);
-    updateBtn();
-  }
-
-  function updateBtn() {
-    if (!btn) return;
-    btn.classList.toggle('is-on', userWantsOn && ready && !audio?.paused);
-    btn.classList.toggle('is-off', !userWantsOn);
-    btnLabel.textContent = userWantsOn ? (ready ? 'Играет' : 'Загрузка…') : 'Музыка';
-  }
+  // Без кнопки — фоновая музыка всегда ВКЛ. Пользователь не отключает вручную.
+  let userWantsOn = true;
+  function updateBtn() { /* no-op — плеер без UI */ }
 
   async function loadPlaylist() {
     if (playlist) return playlist;
@@ -129,42 +103,29 @@
     setTimeout(() => { mode = 'tracks'; playCurrent(); }, 720);
   }
 
-  async function toggle() {
-    userWantsOn = !userWantsOn;
-    localStorage.setItem(LS_KEY, userWantsOn ? '1' : '0');
-    if (userWantsOn) {
-      await playCurrent();
-    } else if (audio) {
-      fade(0, 500);
-      setTimeout(() => audio.pause(), 520);
-    }
-    updateBtn();
-  }
+  function toggle() { /* no-op */ }
 
-  // Первый gesture-listener на случай если браузер не пустил autoplay
+  // Первый gesture — обязательно (браузеры блокируют autoplay без user interaction).
+  // Ловим любое взаимодействие: клик, тап, скролл, клавиша, движение мыши.
   function armGesture() {
+    const events = ['pointerdown','touchstart','click','keydown','scroll','wheel','mousemove'];
     const once = async () => {
-      if (userWantsOn && (!audio || audio.paused)) {
-        await playCurrent();
-        updateBtn();
+      if (!audio || audio.paused) {
+        try { await playCurrent(); } catch (_) {}
       }
-      document.removeEventListener('click', once, true);
-      document.removeEventListener('touchstart', once, true);
-      document.removeEventListener('keydown', once, true);
+      events.forEach(ev => document.removeEventListener(ev, once, true));
+      window.removeEventListener('scroll', once, true);
     };
-    document.addEventListener('click', once, true);
-    document.addEventListener('touchstart', once, true);
-    document.addEventListener('keydown', once, true);
+    events.forEach(ev => document.addEventListener(ev, once, true));
+    window.addEventListener('scroll', once, true);
   }
 
   function init() {
-    createBtn();
-    if (userWantsOn) {
-      playCurrent().then(() => { if (!ready || audio?.paused) armGesture(); });
-    }
+    // Пробуем autoplay сразу; если браузер не пустит — стартанёт при первом взаимодействии.
+    playCurrent().then(() => { if (!ready || (audio && audio.paused)) armGesture(); });
     // при смене видимости страницы — приглушаем/восстанавливаем
     document.addEventListener('visibilitychange', () => {
-      if (!audio || !userWantsOn) return;
+      if (!audio) return;
       if (document.hidden) fade(0.10, 400);
       else fade(0.35, 800);
     });

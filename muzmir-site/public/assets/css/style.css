@@ -1025,3 +1025,5 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 @media(max-width:640px){.mz-music-btn{padding:8px 12px 8px 9px;font-size:.76rem;bottom:calc(84px + env(safe-area-inset-bottom))}
   .mz-music-lbl{display:none}}
 @media(prefers-reduced-motion:reduce){.mz-music-wave i{animation:none}.mz-music-btn{transition:none}}
+/* Кнопка плеера убрана по запросу — музыка полностью фоновая */
+.mz-music-btn{display:none!important}
