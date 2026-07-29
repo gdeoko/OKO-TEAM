@@ -1,24 +1,43 @@
-const CACHE = 'muzmir-v19';
+const CACHE = 'muzmir-v20';
 const CORE = ['/offline.html', '/assets/img/logo_muzmir_256.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+    // Радикально: сносим ВСЕ старые кэши.
+    const ks = await caches.keys();
+    await Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+    // Просим все открытые вкладки/мини-аппы перезагрузиться на свежую версию.
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    list.forEach(c => c.postMessage({ type: 'mz-sw-reload', ver: CACHE }));
+  })());
 });
 
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;                       // POST/не-GET не кэшируем
+  if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return;             // сторонние запросы — как есть
+  if (url.origin !== location.origin) return;
 
-  // Статика /assets/ — stale-while-revalidate.
+  // HTML — NETWORK ONLY (никакого кэша HTML, чтобы старая вёрстка не вылезала).
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    e.respondWith(fetch(req).catch(() => caches.match('/offline.html')));
+    return;
+  }
+  // CSS/JS — NETWORK-FIRST (свежее, кэш — только оффлайн-страховка).
+  if (/\.(css|js)(\?|$)/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req).then(res => {
+        if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+  // Прочие /assets/ (изображения, шрифты) — stale-while-revalidate.
   if (url.pathname.startsWith('/assets/')) {
     e.respondWith(
       caches.open(CACHE).then(cache =>
@@ -33,23 +52,6 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
-
-  // HTML-страницы — NETWORK-FIRST (всегда свежая вёрстка; кэш только как оффлайн-фолбэк).
-  // Это чинит проблему «залипшего» старого дизайна из кэша на телефоне.
-  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
-    e.respondWith(
-      fetch(req).then(res => {
-        if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
-        return res;
-      }).catch(() => caches.match(req).then(r => r || caches.match('/offline.html')))
-    );
-    return;
-  }
-  // Прочее (не-asset, не-HTML) — cache-first с сетевым обновлением.
-  e.respondWith(
-    caches.match(req).then(hit => hit || fetch(req).then(res => {
-      if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
-      return res;
-    }).catch(() => caches.match('/offline.html')))
-  );
+  // Всё остальное — просто из сети.
+  e.respondWith(fetch(req).catch(() => caches.match(req)));
 });

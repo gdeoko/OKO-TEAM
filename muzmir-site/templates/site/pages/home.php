@@ -81,27 +81,6 @@ ob_start(); ?>
   </div>
 </section>
 
-<section class="section section--tint">
-  <div class="container">
-    <div class="section-head reveal">
-      <p class="eyebrow eyebrow--script">Пять лет в искусстве</p>
-      <h2>Центр в цифрах</h2>
-      <div class="gold-rule"></div>
-      <p>С 2020 года «Музыкальный Мир» объединяет талантливых людей со всей России и зарубежья. Участие - бесплатное, оценка - честная, результаты - на Вашу почту.</p>
-    </div>
-
-    <div class="stats reveal">
-      <?php foreach ($infographic as $s): ?>
-        <div class="stat">
-          <b data-count="<?= (int) $s['val'] ?>" data-suffix="<?= h($s['suf']) ?>">0</b>
-          <span><?= h($s['label']) ?></span>
-          <em class="stat-note"><?= h($s['note']) ?></em>
-        </div>
-      <?php endforeach; ?>
-    </div>
-
-  </div>
-</section>
 
 <section class="section section--parchment">
   <div class="container">
