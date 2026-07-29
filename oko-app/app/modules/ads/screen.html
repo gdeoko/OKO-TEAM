@@ -13,7 +13,17 @@
     <div class="ads-quick" id="adsQuick">
       <button class="ads-quick-b" onclick="adsOpenBilling()"><svg class="i"><use href="#i-card"/></svg><span>Биллинг</span><em id="adsQuickSpent">0 ₽</em></button>
       <button class="ads-quick-b" onclick="adsShowAuds()"><svg class="i"><use href="#i-bookmark"/></svg><span>Аудитории</span><em id="adsQuickAud">0</em></button>
+      <button class="ads-quick-b boost" onclick="adsBoostPost()"><svg class="i"><use href="#i-rocket"/></svg><span>Boost поста</span><em>от 300 ₽</em></button>
     </div>
+
+    <!-- Расчёт бюджета: ползунок с живым прогнозом охвата, кликов и регистраций -->
+    <div class="card ads-calc" id="adsCalc"></div>
+
+    <!-- Живые подсказки системы OKO по всем активным кампаниям (CPM, CTR, темп) -->
+    <div class="ads-live-tip" id="adsLiveTip"></div>
+
+    <!-- Шаблоны кампаний: клик открывает мастер с уже заполненными полями -->
+    <div class="ads-presets-wrap" id="adsPresetsWrap"></div>
 
     <div class="card ads-ai-note">
       <span class="ads-ai-ic"><svg class="i"><use href="#i-bolt"/></svg></span>

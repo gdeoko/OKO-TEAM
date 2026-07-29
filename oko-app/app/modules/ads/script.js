@@ -210,9 +210,11 @@ function adsRenderSummary(){
 
 /* вторичный ряд: Изменить + Дублировать (двухколоночная сетка, не переполняет 390px) */
 function adsEditDup(c){
+  const hasData = c.imps>0 || c.spent>0 || c.status==='done';
+  const csvRow = hasData ? `<div class="ads-camp-acts2"><button class="btn sm ghost dup csv" onclick="adsExportCsv(${c.id})">${I('poll')}Скачать CSV по дням</button></div>` : '';
   return `<div class="ads-camp-acts2 two">
       <button class="btn sm ghost dup" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
-      <button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button></div>`;
+      <button class="btn sm ghost dup" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button></div>${csvRow}`;
 }
 function adsCampActs(c){
   if(c.status==='mod')  return `<div class="ads-modwait">${I('clock')}Модератор OKO проверяет объявление…</div>`;
@@ -230,7 +232,8 @@ function adsCampActs(c){
   return `<div class="ads-camp-acts">
       <button class="btn sm ghost" onclick="adsEdit(${c.id})">${I('edit')}Изменить</button>
       <button class="btn sm ghost" onclick="adsDuplicate(${c.id})">${I('copy')}Дублировать</button>
-      <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>`;
+      <button class="btn sm ghost stop" onclick="adsDelete(${c.id})">${I('trash')}Удалить</button></div>
+      <div class="ads-camp-acts2"><button class="btn sm ghost dup csv" onclick="adsExportCsv(${c.id})">${I('poll')}Скачать CSV по дням</button></div>`;
 }
 
 function adsFmtBadge(c){
@@ -603,10 +606,293 @@ function adsTierUpsell(){
   if(typeof okoRequireSub==='function') okoRequireSub('MAX','Реклама дешевле — до −30% на MAX');
 }
 
-function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); }
+/* ================================================================
+   ШАБЛОНЫ КАМПАНИЙ: 6 пресетов под типовые задачи. Клик по карточке
+   открывает мастер создания с уже проставленными полями.
+   ================================================================ */
+const ADS_PRESETS = [
+  {k:'first', name:'Первые подписчики', ico:'users',
+   title:'Подпишись на OKO', text:'Свежие материалы, тренды и практика по контенту. Подпишись за 1 клик.',
+   fmt:'channel', model:'CPC', bid:9,  cta:'Подписаться',
+   budget:1000, sex:'any', geo:'РФ', interests:['контент','маркетинг'], ages:['18-24','25-34'], devs:['ios','android'], times:[],
+   tags:['CPC · 9 ₽','бюджет 1 000 ₽','канал']},
+  {k:'sale',  name:'Продажа продукта',  ico:'money',
+   title:'Скидка 30% на 3 дня', text:'Забирай по акции. Оплата в 1 клик, доставка сразу.',
+   fmt:'listing', model:'CPC', bid:14, cta:'Купить',
+   budget:3000, sex:'any', geo:'РФ', interests:['бизнес','финансы'], ages:['25-34','35-44'], devs:[], times:['evening'],
+   tags:['CPC · 14 ₽','бюджет 3 000 ₽','продажа']},
+  {k:'retgt', name:'Тёплый ретаргет',   ico:'fire',
+   title:'Забери свой бонус', text:'Ты смотрел, но не оформил. Персональная скидка 20% на 24 часа.',
+   fmt:'post', model:'CPM', bid:32, cta:'Открыть',
+   budget:1500, sex:'any', geo:'РФ', interests:['контент'], ages:['25-34','35-44'], devs:['ios','android'], times:[],
+   tags:['CPM · 32 ₽','бюджет 1 500 ₽','ретаргет']},
+  {k:'post',  name:'Продвижение поста', ico:'megaphone',
+   title:'Новый пост в OKO', text:'Показать пост целевой аудитории и получить максимум охвата.',
+   fmt:'post', model:'CPM', bid:28, cta:'Подробнее',
+   budget:500, sex:'any', geo:'РФ', interests:[], ages:['18-24','25-34','35-44'], devs:[], times:[],
+   tags:['CPM · 28 ₽','бюджет 500 ₽','пост']},
+  {k:'brand', name:'Охват на бренд',    ico:'crown',
+   title:'Твой бренд в шапке OKO', text:'Максимум глаз за минимальный CPM. Формат баннера, широкая география.',
+   fmt:'banner', model:'CPM', bid:22, cta:'Открыть',
+   budget:5000, sex:'any', geo:'РФ', interests:[], ages:['18-24','25-34','35-44','45+'], devs:[], times:['evening','night'],
+   tags:['CPM · 22 ₽','бюджет 5 000 ₽','баннер']},
+  {k:'lead',  name:'Сбор заявок',       ico:'briefcase',
+   title:'Разбор проекта за 30 минут', text:'Бесплатная консультация. Осталось 5 слотов на этой неделе.',
+   fmt:'listing', model:'CPC', bid:11, cta:'Подробнее',
+   budget:2000, sex:'any', geo:'РФ', interests:['бизнес','образование'], ages:['25-34','35-44'], devs:[], times:['day','evening'],
+   tags:['CPC · 11 ₽','бюджет 2 000 ₽','заявки']}
+];
+function adsRenderPresets(){
+  const wrap = document.getElementById('adsPresetsWrap'); if(!wrap) return;
+  wrap.innerHTML = `<div class="ads-presets-h">${I('bolt')}Готовые шаблоны кампаний<small>клик, чтобы заполнить мастер</small></div>
+    <div class="ads-presets">${ADS_PRESETS.map(p=>`
+      <button class="ads-preset" onclick="adsApplyPreset('${p.k}')">
+        <div class="ads-preset-top"><span class="ads-preset-ic">${I(p.ico)}</span><span class="ads-preset-name">${esc(p.name)}</span></div>
+        <div class="ads-preset-txt">${esc(p.text)}</div>
+        <div class="ads-preset-tags">
+          <span class="ads-preset-tag acc">${esc(p.tags[0])}</span>
+          <span class="ads-preset-tag">${esc(p.tags[1])}</span>
+        </div>
+      </button>`).join('')}</div>`;
+}
+function adsApplyPreset(k){
+  const p = ADS_PRESETS.find(x=>x.k===k); if(!p) return;
+  const fake = {name:p.title, text:p.text, cta:p.cta, link:'', fmt:p.fmt, model:p.model, bid:p.bid,
+    sex:p.sex, geo:p.geo, cities:[], interests:p.interests, ages:p.ages, devs:p.devs||[], times:p.times||[],
+    budget:p.budget, pace:0, ab:null, media:null};
+  adsEditId = 0;
+  const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания · '+p.name;
+  adsPrefillFromCamp(fake);
+  adsSyncLaunchBtn();
+  adsStep(1);
+  openSheet('ads-create');
+  toast('Шаблон «'+p.name+'» применён. Проверьте поля и запустите.');
+}
+
+/* ================================================================
+   КАЛЬКУЛЯТОР бюджета: ползунок 300…20000 ₽ + живой прогноз охвата,
+   кликов и регистраций. Кнопка сразу открывает мастер с этой суммой.
+   ================================================================ */
+let adsCalcBudget = 3000;
+function adsCalcPredict(b){
+  const disc = adsDisc();
+  const cpm = 28*(1-disc);                       /* базовый пост CPM с учётом скидки тарифа */
+  const imps = Math.round(b/cpm*1000);
+  const clicks = Math.round(imps*0.028);         /* усреднённый CTR по кабинету */
+  const regs = Math.round(clicks*0.22);          /* доля кликов до регистрации */
+  return {imps, clicks, regs};
+}
+function adsRenderCalc(){
+  const box = document.getElementById('adsCalc'); if(!box) return;
+  const b = adsCalcBudget;
+  const p = adsCalcPredict(b);
+  box.innerHTML = `
+    <div class="ads-calc-h">${I('poll')}Расчёт бюджета<b>${fmtN(b)} ₽</b></div>
+    <input type="range" class="ads-calc-slider" id="adsCalcSlider" min="300" max="20000" step="100" value="${b}"
+           oninput="adsCalcSet(this.value)">
+    <div class="ads-calc-scale"><span>300 ₽</span><span>10 000 ₽</span><span>20 000 ₽</span></div>
+    <div class="ads-calc-grid">
+      <div class="ads-calc-c hot"><b>${fmtN(p.imps)}</b><span>охват</span></div>
+      <div class="ads-calc-c"><b>${fmtN(p.clicks)}</b><span>клики</span></div>
+      <div class="ads-calc-c"><b>${fmtN(p.regs)}</b><span>регистрации</span></div>
+    </div>
+    <button class="btn ads-calc-go" onclick="adsCalcLaunch()">${I('rocket')}Запустить кампанию на ${fmtN(b)} ₽</button>`;
+}
+function adsCalcSet(v){
+  adsCalcBudget = Math.max(300, Math.min(20000, parseInt(v,10)||300));
+  const p = adsCalcPredict(adsCalcBudget);
+  const box = document.getElementById('adsCalc'); if(!box) return;
+  const h = box.querySelector('.ads-calc-h b'); if(h) h.textContent = fmtN(adsCalcBudget)+' ₽';
+  const cells = box.querySelectorAll('.ads-calc-c b');
+  if(cells[0]) cells[0].textContent = fmtN(p.imps);
+  if(cells[1]) cells[1].textContent = fmtN(p.clicks);
+  if(cells[2]) cells[2].textContent = fmtN(p.regs);
+  const btn = box.querySelector('.ads-calc-go');
+  if(btn) btn.innerHTML = `${I('rocket')}Запустить кампанию на ${fmtN(adsCalcBudget)} ₽`;
+}
+function adsCalcLaunch(){
+  adsOpenCreate();
+  setTimeout(()=>{
+    adsStep(4);
+    const bi = document.getElementById('adsInpBudget');
+    if(bi){ bi.value = adsCalcBudget; adsCalcForecast(); }
+    document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.remove('on'));
+  }, 30);
+}
+
+/* ================================================================
+   LIVE-ПОДСКАЗКИ: анализ последних 6 замеров активных кампаний
+   (около 30 минут работы live-тика). Показывает одну лучшую идею.
+   ================================================================ */
+function adsLiveInsight(){
+  const act = ADS.camps.filter(c=>c.status==='act' && (c.hist||[]).length>=8);
+  if(!act.length) return null;
+  let best = null;
+  act.forEach(c=>{
+    const h = c.hist.slice(-8);
+    const half = Math.floor(h.length/2);
+    const early = h.slice(0,half).reduce((s,v)=>s+v,0)/half || 1;
+    const late  = h.slice(half).reduce((s,v)=>s+v,0)/(h.length-half) || 1;
+    const dImp = (late-early)/early;                 /* динамика показов за 30 мин */
+    const ctr = adsCtr(c), roas = adsRoas(c);
+    const bpct = c.budget ? c.spent/c.budget*100 : 0;
+    /* тон отбирается по приоритету: сильный сигнал побеждает слабый */
+    if(roas>=2 && bpct<80){
+      pick({p:5, tone:'ok', hd:'Есть смысл усилить', txt:`«${c.name}»: окупаемость <em>${adsRoasTxt(roas)}</em>. Реклама в плюсе, а бюджет ещё не выработан.`, btn:'Пополнить', act:`adsTopup(${c.id})`});
+    }
+    if(dImp>0.15 && ctr>=2){
+      pick({p:4, tone:'ok', hd:'Темп растёт', txt:`За последние 30 мин показы «${c.name}» выросли на <em>${Math.round(dImp*100)}%</em> при CTR <em>${ctr.toFixed(1)}%</em>. Можно поднять бюджет.`, btn:'Пополнить', act:`adsTopup(${c.id})`});
+    }
+    if(dImp<-0.15){
+      pick({p:3, tone:'warn', hd:'Темп замедляется', txt:`Показы «${c.name}» просели на <em>${Math.round(Math.abs(dImp)*100)}%</em> за 30 мин. Поднимите ставку или расширьте аудиторию.`, btn:'Изменить', act:`adsEdit(${c.id})`});
+    }
+    if(c.imps>1500 && ctr<1){
+      pick({p:2, tone:'warn', hd:'CTR ниже нормы', txt:`«${c.name}»: CTR <em>${ctr.toFixed(1)}%</em>. Обновите креатив или заголовок.`, btn:'Изменить', act:`adsEdit(${c.id})`});
+    }
+  });
+  function pick(x){ if(!best || x.p>best.p) best = x; }
+  return best;
+}
+function adsRenderLiveTip(){
+  const box = document.getElementById('adsLiveTip'); if(!box) return;
+  const tip = adsLiveInsight();
+  if(!tip){ box.className = 'ads-live-tip'; box.innerHTML = ''; return; }
+  box.className = 'ads-live-tip '+(tip.tone==='warn'?'warn':'');
+  box.innerHTML = `
+    <span class="ads-live-tip-ic">${I(tip.tone==='warn'?'flag':'fire')}</span>
+    <div class="ads-live-tip-mid"><b>${esc(tip.hd)}</b><p>${tip.txt}</p></div>
+    <button class="ads-live-tip-btn" onclick="${tip.act}">${esc(tip.btn)}</button>`;
+}
+
+/* ================================================================
+   ЭКСПОРТ CSV кампании: выписка показов, кликов и расходов по дням.
+   Открывается в Excel и Google Sheets, разделитель «;», BOM UTF-8.
+   ================================================================ */
+function adsExportCsv(id){
+  const c = ADS.camps.find(x=>x.id===id); if(!c) return;
+  const now = new Date();
+  const rows = [['Дата','Показы','Клики','CTR %','Расход, ₽']];
+  const totalI = (c.days||[]).reduce((s,d)=>s+d.i,0) || 1;
+  (c.days||[]).forEach((d,i)=>{
+    const dt = new Date(now.getTime()-(6-i)*864e5);
+    const dd = dt.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const ctr = d.i ? (d.c/d.i*100).toFixed(2).replace('.',',') : '0';
+    const dSpent = Math.round(d.i/totalI * c.spent);
+    rows.push([dd, d.i, d.c, ctr, dSpent]);
+  });
+  rows.push([]);
+  rows.push(['Итого', c.imps, c.clicks, adsCtr(c).toFixed(2).replace('.',','), Math.round(c.spent)]);
+  rows.push([]);
+  rows.push(['Кампания', c.name]);
+  rows.push(['Формат', (ADS_FORMATS[c.fmt]||{}).l || c.fmt]);
+  rows.push(['Модель', c.model, 'ставка', c.bid+' ₽']);
+  const csv = rows.map(r=>r.map(x=>{
+    const s = String(x==null?'':x);
+    return /[";\r\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(';')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safe = (c.name||'campaign').replace(/[^\wа-яА-ЯёЁ0-9\-]+/g,'_').slice(0,40);
+  a.href = url; a.download = 'oko_ads_'+safe+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 400);
+  toast('Файл CSV сохранён. Открывается в Excel и Google Sheets.');
+}
+
+/* ================================================================
+   БЫСТРЫЙ BOOST поста: одна модалка, выбор поста + бюджет + срок.
+   За 1 клик создаёт кампанию формата «пост» и уходит на модерацию.
+   ================================================================ */
+let ADS_BOOST = null;
+function adsBoostPosts(){
+  if(typeof POSTS==='undefined' || !Array.isArray(POSTS.rec)) return [];
+  return POSTS.rec.filter(p=>!p.promoted && !p.sponsored && p.name===PROFILE.name).slice(0,6);
+}
+function adsBoostPredict(b, days){
+  const cpm = 28*(1-adsDisc());
+  const imps = Math.round(b/cpm*1000);
+  return {imps, days};
+}
+function adsBoostPost(){
+  const posts = adsBoostPosts();
+  ADS_BOOST = {budget:300, days:3, postId: posts[0] ? posts[0].id : 0};
+  showPopup({ico:'rocket', title:'Продвинуть пост',
+    body: adsBoostBody(posts),
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Продвинуть', onclick:()=>adsBoostConfirm()}
+    ]});
+}
+function adsBoostBody(posts){
+  const pred = adsBoostPredict(ADS_BOOST.budget, ADS_BOOST.days);
+  const list = posts.length ? posts.map(p=>{
+    const txt = (p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,80);
+    return `<div class="ads-boost-post ${ADS_BOOST.postId===p.id?'on':''}" onclick="adsBoostPick(${p.id})">
+      <div class="ads-boost-post-mid"><b>${esc(p.name)}</b><small>${esc(txt||'без текста')}</small></div>
+    </div>`;
+  }).join('') : `<div class="ads-boost-empty">${I('photo')}Нет своих постов для продвижения. Опубликуйте пост в ленте, чтобы вернуться сюда.</div>`;
+  return `<div class="ads-boost-picker">
+    ${list}
+    <div>
+      <div class="ads-lbl" style="margin:0 0 8px">Бюджет</div>
+      <div class="ads-chips" style="margin:0">
+        ${[300,500,1000,2000].map(v=>`<button class="ads-chip ${ADS_BOOST.budget===v?'on':''}" onclick="adsBoostSet('budget',${v})">${v} ₽</button>`).join('')}
+      </div>
+    </div>
+    <div>
+      <div class="ads-lbl" style="margin:0 0 8px">Срок продвижения</div>
+      <div class="ads-chips" style="margin:0">
+        ${[3,7,14].map(v=>`<button class="ads-chip ${ADS_BOOST.days===v?'on':''}" onclick="adsBoostSet('days',${v})">${v} дн.</button>`).join('')}
+      </div>
+    </div>
+    <div class="ads-boost-sum">Ожидаемый охват <b>${fmtN(pred.imps)}</b> показов за <b>${pred.days}</b> дн.</div>
+  </div>`;
+}
+function adsBoostRerender(){
+  /* самое простое и надёжное — перерисовать всю модалку с текущим ADS_BOOST */
+  const posts = adsBoostPosts();
+  showPopup({ico:'rocket', title:'Продвинуть пост',
+    body: adsBoostBody(posts),
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Продвинуть', onclick:()=>adsBoostConfirm()}
+    ]});
+}
+function adsBoostPick(id){ ADS_BOOST.postId = id; adsBoostRerender(); }
+function adsBoostSet(k, v){ ADS_BOOST[k] = v; adsBoostRerender(); }
+function adsBoostConfirm(){
+  const posts = adsBoostPosts();
+  const post = posts.find(p=>p.id===ADS_BOOST.postId) || posts[0];
+  if(!post){ toast('Сначала опубликуйте пост в ленте'); closePopup(); return; }
+  const budget = ADS_BOOST.budget, days = ADS_BOOST.days;
+  if(!walletCharge(budget, 'Boost поста')) return;
+  okoEarn(budget, 'Рекламный кабинет');
+  const name = 'Boost: '+((post.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,32) || 'ваш пост');
+  adsBill(budget, name, 'Быстрое продвижение');
+  const camp = {
+    id: ADS.seq++, name, text: 'Пост из ленты OKO продвигается на целевую аудиторию.',
+    cta:'Открыть', link:'', fmt:'post', model:'CPM', bid:28, ctrEst:.022,
+    cvr:0.22, aov:690, salesRate:0.008,
+    disc: adsDisc(), pace: days, dailyCap: Math.max(1, Math.round(budget/days)),
+    spentToday:0, spentDay: adsDayKey(),
+    sex:'any', geo:'РФ', cities:[], interests:[], ages:['18-24','25-34','35-44'], devs:[], times:[],
+    media:null, budget, spent:0, imps:0, clicks:0, status:'mod', startTs:0,
+    hist:[], created: Date.now(),
+    days:[...Array(7)].map(()=>({i:0,c:0})), dstamp: adsDayKey(),
+    boostedPostId: post.id
+  };
+  ADS.camps.unshift(camp);
+  adsSave(); closePopup(); adsRender();
+  toast('Пост ушёл на модерацию OKO. Показ стартует через несколько секунд.');
+  setTimeout(()=>adsModerate(camp.id), 2400);
+}
+
+function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); adsRenderPresets(); adsRenderCalc(); adsRenderLiveTip(); }
 
 function adsTickUI(){
   adsRenderSummary();
+  adsRenderLiveTip();
   ADS.camps.forEach(c=>{
     const el = document.querySelector(`.ads-camp[data-cid="${c.id}"]`); if(!el) return;
     const set = (k,v)=>{ const n = el.querySelector(`[data-m="${k}"]`); if(n) n.textContent = v; };
