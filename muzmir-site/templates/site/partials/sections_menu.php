@@ -43,18 +43,24 @@ $SECTIONS[] = $menuUser
   background:var(--grad-gold-text,linear-gradient(135deg,#b8923a,#8a6d1f));-webkit-background-clip:text;background-clip:text;color:transparent}
 .sm-close{width:36px;height:36px;border-radius:50%;border:none;background:var(--gold-soft,#f4ecd6);color:var(--gold-ink,#8a6d1f);cursor:pointer;display:flex;align-items:center;justify-content:center}
 .sm-close svg{width:18px;height:18px}
-.sm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:360px){.sm-grid{grid-template-columns:repeat(3,1fr)}}
-.sm-tile{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;text-decoration:none;
-  padding:14px 6px;border-radius:16px;background:var(--panel,#fff);border:1px solid var(--line,#eee6d2);
-  color:var(--text,#1b2340);font-size:.72rem;font-weight:600;line-height:1.15;transition:transform .18s,box-shadow .2s,border-color .2s}
-.sm-tile .sm-ic{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:var(--gold-soft,#f4ecd6);color:var(--gold-ink,#8a6d1f);flex:none}
-.sm-tile .sm-ic svg{width:22px;height:22px}
-[data-theme="dark"] .sm-tile{background:rgba(255,255,255,.04)}
-[data-theme="dark"] .sm-tile .sm-ic{color:var(--gold,#e8c25a)}
-@media(hover:hover){.sm-tile:active,.sm-tile:hover{transform:translateY(-3px);border-color:var(--gold,#c9a84c);box-shadow:0 10px 24px rgba(201,168,76,.18)}}
-@media(prefers-reduced-motion:reduce){.sm-backdrop,.sm-panel,.sm-tile{transition:none}}
+.sm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+@media(max-width:360px){.sm-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:720px){.sm-grid{grid-template-columns:repeat(4,1fr)}}
+.sm-tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:11px;text-decoration:none;overflow:hidden;
+  padding:15px 13px;border-radius:18px;background:var(--panel,#fff);border:1px solid var(--line,#eee6d2);
+  color:var(--text,#1b2340);font-size:.82rem;font-weight:700;line-height:1.18;box-shadow:var(--shadow-soft,0 4px 16px rgba(139,111,31,.08));
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;
+  opacity:0;transform:translateY(14px);animation:smIn .42s cubic-bezier(.2,.85,.25,1) forwards;animation-delay:calc(var(--i,0)*26ms)}
+.sm-tile::after{content:"";position:absolute;right:12px;bottom:12px;width:16px;height:16px;opacity:.35;
+  background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c9a84c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E")}
+@keyframes smIn{to{opacity:1;transform:none}}
+.sm-tile .sm-ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold,linear-gradient(135deg,#e6c766,#c9a84c 45%,#8b6f1f));color:var(--gold-fg,#1a1206);flex:none;
+  box-shadow:0 6px 16px rgba(201,168,76,.32)}
+.sm-tile .sm-ic svg{width:24px;height:24px}
+[data-theme="dark"] .sm-tile{background:rgba(255,255,255,.045);border-color:rgba(232,194,90,.18)}
+@media(hover:hover){.sm-tile:active,.sm-tile:hover{transform:translateY(-4px);border-color:var(--gold,#c9a84c);box-shadow:0 14px 30px rgba(201,168,76,.24)}}
+@media(prefers-reduced-motion:reduce){.sm-backdrop,.sm-panel,.sm-tile{transition:none;animation:none;opacity:1;transform:none}}
 </style>
 
 <div class="sm-sheet" id="sectionsSheet" role="dialog" aria-modal="true" aria-label="Все разделы сайта">
@@ -68,8 +74,8 @@ $SECTIONS[] = $menuUser
       </button>
     </div>
     <div class="sm-grid">
-      <?php foreach ($SECTIONS as [$href, $label, $path]): ?>
-        <a class="sm-tile" href="<?= url($href) ?>">
+      <?php foreach ($SECTIONS as $i => [$href, $label, $path]): ?>
+        <a class="sm-tile" href="<?= url($href) ?>" style="--i:<?= $i ?>">
           <span class="sm-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $path ?></svg></span>
           <span><?= h($label) ?></span>
         </a>
