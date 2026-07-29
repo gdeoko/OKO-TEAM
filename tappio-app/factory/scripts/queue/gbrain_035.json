@@ -1,0 +1,263 @@
+{
+ "id": "gbrain_035",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "bright optimistic electronic",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "DAILY STREAK",
+  "top": "SMARTER IN",
+  "big": "14\nDAYS",
+  "q": [
+   "walking park green trees"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big change starts with one tiny daily rep."
+  },
+  {
+   "id": "b2",
+   "text": "Day one feels slow and a little clumsy."
+  },
+  {
+   "id": "b3",
+   "text": "By day five your reaction time drops."
+  },
+  {
+   "id": "b4",
+   "text": "By day ten recall feels sharper, easier."
+  },
+  {
+   "id": "b5",
+   "text": "Two weeks in, the streak keeps you going."
+  },
+  {
+   "id": "b6",
+   "text": "Fourteen days to a quicker mind."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.107,
+   "dur": 1.61,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.296,
+   "dur": 1.78,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.317,
+   "dur": 2.39,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  },
+  {
+   "at": 0.431,
+   "dur": 2.26,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.602,
+   "dur": 1.85,
+   "type": "chips",
+   "items": [
+    "RECALL",
+    "REACT",
+    "SOLVE",
+    "REPEAT"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.639,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.709,
+   "dur": 1.7,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.742,
+   "dur": 1.85,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.846,
+   "dur": 2.03,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #beats #memory #music #binaural",
+ "yt_title": "Get measurably smarter in 14 days #shorts",
+ "trend_keys": [
+  "beats",
+  "memory",
+  "music",
+  "binaural",
+  "concentration",
+  "focus",
+  "improve",
+  "can"
+ ],
+ "content_type": "viral"
+}
