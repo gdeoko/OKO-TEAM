@@ -1395,21 +1395,7 @@ main>.screen{position:relative;z-index:1}
 .step small{color:var(--dim);font-size:12px;line-height:1.45;display:block;margin-top:2px}
 .step .tag{margin-left:auto;flex-shrink:0}
 /* @MODULES:CSS */
-/* model-viewer тег для 3D-логотипа OKO (тот самый GLB что в hero-блоке /kp) */
-model-viewer.auth-logo{--poster-color:transparent;background:transparent;display:block}
-model-viewer.auth-logo::part(default-progress-bar){display:none}
 </style>
-<script type="module" src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"
-  onerror="this.onerror=null;var s=document.createElement('script');s.type='module';s.src='https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';document.head.appendChild(s)"></script>
-<script>
-// Fallback на статичный PNG-лого через 2.8с, если <model-viewer> не зарегистрирован
-addEventListener('DOMContentLoaded',function(){setTimeout(function(){
-  try{ if(!customElements.get('model-viewer')){
-    var mv=document.querySelector('model-viewer.auth-logo'); if(mv) mv.style.display='none';
-    var fb=document.getElementById('authLogoFallback'); if(fb) fb.style.display='';
-  } }catch(e){}
-}, 2800)});
-</script>
 </head>
 <body>
 <!-- ============ SVG ICON SET (стиль бренда: жирный округлый штрих) ============ -->
