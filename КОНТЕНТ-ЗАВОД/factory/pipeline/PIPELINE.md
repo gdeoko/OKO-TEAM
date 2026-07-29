@@ -63,13 +63,19 @@ python3 build_segments.py   # 12 сегментов, РАЗНЫЕ движени
 python3 xfade.py            # склейка РАЗНЫМИ переходами (fade/slide/wipe/circle/dissolve)
 ```
 
-## 5. Инфографика кодом (Playwright → alpha webm)
-- Опиши 8+ сцен в overlays_lib.mjs (jobs.json) + 2-3 новые под тему (jobs2). Рендер:
+## 5. Инфографика/анимации/наложения кодом — ОБЯЗАТЕЛЬНО (без них ролик = БРАК!)
+ДВИЖОК (переиспользуемый, механики по смыслу): `ov_build.mjs` (библиотека анимаций) + `ovgen.mjs` (рендер) +
+`composite_ov.py` (свод с наложениями). На ролик — маленький конфиг ДАННЫМИ `ovcfgNN.json`:
 ```
-cd scratchpad/reel01v2/work && node ovgen.mjs <WD>/jobs.json    # → WD/ov/o*.webm (yuva420p vp9)
-node outro_gen.mjs                                              # анимированный аутро (маяк/свет+лого)
+# 1) конфиг ≥7 сцен ПО СМЫСЛУ сценария. Механики (дедуп USED_ANIM): strike/list/quote/transform/chips/statement/ctaword/counter
+#    формат: [{"kind":"strike","start":0.3,"dur":4.6,"word":"...","sub":"..."}, {"kind":"list","start":5.3,...}, ...]
+cp brand/metanoia/png/metanoia-logo-1024.png <WD>/work/logo_t.png       # лого для оверлеев (ГРАБЛЯ: без него падает)
+OVWD=<WD> node pipeline/ov_build.mjs <WD>/ovcfgNN.json                  # → jobs.json + schedule.json
+OVWD=<WD> NODE_PATH=/opt/node22/lib/node_modules PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
+  node pipeline/ovgen.mjs <WD>/jobs.json                               # → WD/ov/o*.webm (в фоне, дождись DONE)
 ```
-ГРАБЛЯ: при наложении webm в ffmpeg декодить ЯВНО `-c:v libvpx-vp9 -i o.webm`, иначе чёрный фон.
+Инфографика/наложения строятся С НУЛЯ ПО СМЫСЛУ, ≥7 сцен, каждые ~3-5с смена, НОВЫЕ механики (дедуп USED_ANIM).
+ГРАБЛЯ: при наложении webm в ffmpeg декодить ЯВНО `-c:v libvpx-vp9 -i o.webm`, иначе чёрный фон (composite_ov.py уже так делает).
 
 ## 6. Субтитры (синхрон по голосу!)
 ```
@@ -81,12 +87,14 @@ python3 subs_std.py         # ЕДИНЫЙ ФИРМЕННЫЙ СТИЛЬ (зак
                             # НЕ таскать субтитры по верху/центру, НЕ менять цвет ради разнообразия.
 ```
 
-## 7. Свод
+## 7. Свод С НАЛОЖЕНИЯМИ (обязательно!)
 ```
-python3 composite.py        # БЕЗ intro! montage_b(с 0)+outro2 xfade → оверлеи (libvpx-vp9, offset БЕЗ +2с!) →
-                            # прогресс-бар drawbox → субтитры → аудио36 (VO+музыка дакинг+fade). 36с.
+python3 pipeline/composite_ov.py <WD> <TOTAL> <CTA> <OUT.mp4>
+# montage.mp4 → наложить каждый ov/o*.webm в окне schedule.json (libvpx-vp9) → субтитры →
+# CTA-эндкард (лого y1000 + okoteam.top y1215) → аудио (VO+фоновая музыка дакинг+fade). БЕЗ intro (0-АЛЬФА-2).
 ```
-QA: снять 5-6 кадров, глазами проверить (видеоряд виден под инфографикой, субтитры резкие/по голосу).
+QA: снять 5-6 кадров, ГЛАЗАМИ проверить: видеоряд + ИНФОГРАФИКА/анимации видны, субтитры резкие/по голосу,
+и слышна ФОНОВАЯ МУЗЫКА. Если наложений/музыки нет — БРАК, не публиковать. QA ДО пуша (без пересборок).
 
 ## 8. Публикация во ВСЕ 3 (см. PROJECT_CONFIG «Публикация — проверенные команды»)
 ```

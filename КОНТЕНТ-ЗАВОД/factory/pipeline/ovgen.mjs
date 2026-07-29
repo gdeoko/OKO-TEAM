@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { execSync } from 'child_process';
 import fs from 'fs';
-const WD="/tmp/claude-0/-home-user-OKO-TEAM/f6f2aa4f-e22a-54d1-83e7-29eece9e291a/scratchpad/reel02";
+const WD=process.env.OVWD||"/tmp/claude-0/-home-user-OKO-TEAM/f6f2aa4f-e22a-54d1-83e7-29eece9e291a/scratchpad/reel02";
 const F="/home/user/OKO-TEAM/.claude/skills/reels-machine/fonts";
 const b64=p=>fs.readFileSync(p).toString('base64');
 const M9=b64(`${F}/montserrat-v31-cyrillic_latin-900.ttf`), M7=b64(`${F}/montserrat-v31-cyrillic_latin-700.ttf`), PF=b64(`${F}/PlayfairDisplay-Bold.ttf`);
