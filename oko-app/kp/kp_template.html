@@ -381,7 +381,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <body>
 <!-- ФОНОВАЯ МУЗЫКА: настоящий DOM-элемент <audio> (надёжно играет на мобильных, в отличие от new Audio()) -->
 <audio id="bgm" loop preload="auto" playsinline>
-  <source src="kp-media/snd/music.mp3?v=5" type="audio/mpeg">
+  <source src="kp-media/snd/music.mp3?v=6" type="audio/mpeg">
 </audio>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
@@ -712,7 +712,7 @@ document.body.classList.add('booting');
   var mus=null, masterVol=1.0, confirmed=false, fadeRAF=0;
   function makeMus(){ if(mus)return mus;
     mus=document.getElementById('bgm');   // настоящий DOM <audio> — надёжно играет на мобильных
-    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=5'); document.body.appendChild(mus); }
+    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=6'); document.body.appendChild(mus); }
     mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.volume=0; return mus; }
   function fadeTo(to,ms){ makeMus(); if(fadeRAF)cancelAnimationFrame(fadeRAF);
     var from=mus.volume, t0=performance.now();
@@ -961,7 +961,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=105';
+import { initHolo } from './js/holo.js?v=106';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
