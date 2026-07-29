@@ -1402,6 +1402,23 @@ main>.screen{position:relative;z-index:1}
 .step b{font-size:14px;display:block}
 .step small{color:var(--dim);font-size:12px;line-height:1.45;display:block;margin-top:2px}
 .step .tag{margin-left:auto;flex-shrink:0}
+/* ============= ПРАВКИ ДАНИЭЛЯ 29.07 (v1.96) — глобальные фиксы ============= */
+/* Круглые аватары везде: убираем квадратную обрезку через overflow:hidden. */
+.ava,.st-ava,.stories-item .ava,.chat-item .ava,.msg .ava,.post .head .ava,
+.pv-top .ava,.profile-top .ava,.seller-card .ava,.cmt .ava,.ma-ava,
+.ch-ava,.chat-ava,.channel-ava,.contact-ava,.friend-ava,.person-ava,
+[class*="-ava"]{overflow:hidden!important}
+.ava img,.st-ava img,[class*="-ava"] img{width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important}
+/* Кнопки: без переноса строк, точка-опущение вместо wrap. */
+.btn,.chip,.tab-btn,.chip-btn,button.btn,.hero-btns .btn,.svc-label,
+.mk-cat b,.hp-q,.setting-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Кнопки высокого приоритета — max-width 100% чтобы влезли в контейнер. */
+.btn{max-width:100%}
+/* Убираем пустой чёрный баннер на профиле если он есть */
+#screen-profile>.pad>.prof-bg,#screen-profile .empty-cover,
+#screen-profile .prof-cover:empty{display:none!important}
+/* Тарифы: видео на фоне карточки — убираем (моушен CSS-анимациями делают модули) */
+.plan-card video,.plan video,.plan-media video,.pv-media video{display:none!important}
 /* @MODULES:CSS */
 </style>
 </head>
@@ -1628,13 +1645,17 @@ main>.screen{position:relative;z-index:1}
 
     <!-- ЛЕНТА -->
     <section class="screen active" id="screen-feed">
-      <div class="stories" id="storiesRow"></div>
+      <!-- Сторис-раил убран по правке Даниэля от 29.07 (лента как в TikTok:
+           только «Рекомендации» и «Подписки»). Сторис показываются в
+           отдельных модулях stories-plus и tour, не в шапке ленты. -->
+      <div class="stories" id="storiesRow" style="display:none"></div>
       <div class="feed-tabs">
         <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
         <button onclick="feedTab(this,'rec')">Рекомендации</button>
       </div>
       <div id="feedList"></div>
-      <button class="fab" onclick="openSheet('npost')" title="Новый пост"><svg class="i"><use href="#i-plus"/></svg></button>
+      <!-- Кнопка «Новый пост» убрана по правке Даниэля от 29.07 (лента только для потребления, публикация из мини-аппа) -->
+      <button class="fab" onclick="openSheet('npost')" title="Новый пост" style="display:none"><svg class="i"><use href="#i-plus"/></svg></button>
     </section>
 
     <!-- МИНИ-АППЫ -->
@@ -2065,12 +2086,18 @@ let curFeedKind = 'sub';
 /* ================= НАВИГАЦИЯ ================= */
 const TITLES = {chats:'Чаты', feed:'Лента', mini:'Мини-аппы', partner:'Партнёрка', profile:'Профиль'};
 function showTab(t){
-  /* закрываем всплывающие оверлеи, чтобы контекст-меню поста/сообщения не «залипало»
-     при переходе между вкладками (правка по аудиту) */
-  try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
+  /* Guard: если уже на этом табе — не перерисовываем (убирает «дёргание»
+     при повторном тапе по нижнему меню, правка Даниэля 29.07). */
   const sc = document.getElementById('screen-'+t);
+  if(sc && sc.classList.contains('active')){
+    // уже активен — только закрываем открытые sheet'ы и оверлеи
+    try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
+    try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
+    return;
+  }
+  try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
   if(!sc){
-    // экран не зарегистрирован — это mini-app; открываем через openMa (если функция есть)
+    // экран не зарегистрирован — это mini-app; открываем через openMa
     if(typeof openMa==='function'){ try{ openMa(t); return; }catch(e){} }
     return;
   }
