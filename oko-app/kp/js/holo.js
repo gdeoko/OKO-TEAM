@@ -63,10 +63,12 @@ export function initHolo(){
     // ЧИСТЫЙ ЛАЙМ без запечённой чёрной обводки: заменяем baseColor на брендовый цвет, оставляем normalMap
     eyeMesh.traverse(function(o){ if(o.isMesh&&o.material){
       const nm=o.material.normalMap||null;
+      // ОБЪЁМНЫЙ 3D-глаз: глянцевый лайм с тенями и бликом (не плоская пересвеченная заливка).
+      // Базовый цвет чуть глубже бренда, чтобы освещённые участки выходили в #9AFF00, а теневые — темнее (объём).
       o.material=new THREE.MeshStandardMaterial({
-        color:new THREE.Color(0x9AFF00), emissive:new THREE.Color(0x9AFF00), emissiveIntensity:.35,
-        metalness:.15, roughness:.5, normalMap:nm, side:THREE.DoubleSide });
-      o.material.toneMapped=false;   // держим точный брендовый лайм #9AFF00 как в тексте, без пересвета ACES
+        color:new THREE.Color(0x58A300), emissive:new THREE.Color(0x123000), emissiveIntensity:.32,
+        metalness:.50, roughness:.34, normalMap:nm, envMap:ENVTEX, envMapIntensity:.95, side:THREE.DoubleSide });
+      o.material.toneMapped=true;   // ACES мягко сжимает сильный ключевой свет → плавный градиент + глянцевый блик = объём и тень
       o.material.needsUpdate=true; } });
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);
     // чистый глаз без лишних оболочек — только сам глаз + мягкое CSS-свечение под ним
@@ -104,14 +106,22 @@ export function initHolo(){
   function applyPose(){for(var nm in _poseAcc){var bn=robotBones[nm];var p=_poseAcc[nm];if(bn&&bn.userData.baseQ){_e.set(p[0],p[1],p[2]);_tq.setFromEuler(_e);bn.quaternion.copy(bn.userData.baseQ).multiply(_tq);}p[0]=p[1]=p[2]=0;}}
   // ---- ЖЕСТЫ РОБОТА (живой персонаж): 5 анимаций по кругу ----
   function osc(t,spd,ph){return Math.sin(t*spd+ph);}
-  // ТОЛЬКО 3 чистых жеста (без деформации): приветствие-махание, сложение рук, топот
+  // ТОЛЬКО 3 чистых жеста (реалистичная физика, без деформации): приветствие, сложение рук перед собой, шаги
   var GESTURES=[
-    // 0) ПРИВЕТСТВИЕ: рука согнута в локте поднята ВВЕРХ, ладонь машет из стороны в сторону
-    function(g,t,w){addPose('RightArm',0,0,1.5*w);addPose('RightForeArm',0,0,(1.05+0.38*osc(t,6.5,0))*w);addPose('Head',0,0.10*w,0.05*osc(t,3,0)*w);addPose('Spine',0,0,0.03*w);},
-    // 1) СКЛАДЫВАЕТ РУКИ на груди
-    function(g,t,w){addPose('RightArm',0,0,0.5*w);addPose('LeftArm',0,0,-0.5*w);addPose('RightForeArm',0,0,1.35*w);addPose('LeftForeArm',0,0,-1.35*w);addPose('Head',0.05*w,0,0);},
-    // 2) ТОПАЕТ ногой на месте + лёгкое покачивание корпуса
-    function(g,t,w){var tap=Math.max(0,osc(t,5,0));addPose('RightUpLeg',(0.22*tap)*w,0,0);addPose('RightLeg',(-0.30*tap)*w,0,0);addPose('Hips',0,0.05*osc(t,2.5,0)*w,0);addPose('Head',0.03*osc(t,5,0)*w,0,0);}
+    // 0) ПРИВЕТСТВИЕ: рука с ОТКРЫТОЙ стороны (для зрителя — правая, кость LeftArm) ПРЯМАЯ,
+    //    чуть поднимается и машет ВВЕРХ-ВНИЗ (качается только угол подъёма; локоть НЕ сгибается, вперёд/назад не двигается)
+    function(g,t,w){var sw=osc(t,4.6,0);
+      addPose('LeftArm',(1.25+0.40*sw)*w,0,0);               // рука поднимается ВПЕРЁД к зрителю и машет ВВЕРХ-ВНИЗ (ось X, без ухода вбок/назад, без сгибания)
+      addPose('Head',0,-0.03*w,0);addPose('Spine',0.02*w,0,0);},
+    // 1) СКЛАДЫВАЕТ ОБЕ РУКИ ПЕРЕД СОБОЙ на грудь/пузо (вперёд к зрителю, не назад): плечи вперёд + предплечья сходятся спереди
+    function(g,t,w){addPose('RightArm',0.90*w,0,0.30*w);addPose('LeftArm',0.90*w,0,-0.30*w);
+      addPose('RightForeArm',0,0,1.05*w);addPose('LeftForeArm',0,0,-1.05*w);
+      addPose('Head',0.05*w,0,0);addPose('Spine',0.03*w,0,0);},
+    // 2) ШАГАЕТ/топает на месте + лёгкое покачивание корпуса
+    function(g,t,w){var tap=osc(t,4.4,0);
+      addPose('RightUpLeg',(0.20+0.16*tap)*w,0,0);addPose('RightLeg',(-0.26-0.10*tap)*w,0,0);
+      addPose('LeftUpLeg',(0.20-0.16*tap)*w,0,0);addPose('LeftLeg',(-0.26+0.10*tap)*w,0,0);
+      addPose('Hips',0,0.05*osc(t,2.2,0)*w,0);addPose('Head',0.03*tap*w,0,0);}
   ];
   var gi=0,gStart=0,gDur=3.4,gGap=1.2,gPhase='play';
 
