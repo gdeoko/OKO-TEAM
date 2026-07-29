@@ -78,6 +78,11 @@ return [
     'vk_client_id'         => cfg('MUZMIR_VK_CLIENT_ID', ''),
     'vk_client_secret'     => cfg('MUZMIR_VK_CLIENT_SECRET', ''),
     'vk_redirect'          => cfg('MUZMIR_VK_REDIRECT', ''),      // необязательно: переопределить callback URL
+    // VK API (авто-постинг, комментарии, рассылки от лица сообщества/пользователя)
+    'vk_token'             => cfg('MUZMIR_VK_TOKEN', ''),
+    'vk_group_id'          => cfg('MUZMIR_VK_GROUP_ID', '211325055'),
+    'vk_group_url'         => cfg('MUZMIR_VK_GROUP_URL', 'https://vk.com/music_world.online'),
+    'vk_api_version'       => '5.199',
 
     // MAX (мессенджер Max, max.ru / Max ID OAuth) — секреты только из окружения/local
     'max_client_id'        => cfg('MUZMIR_MAX_CLIENT_ID', ''),
