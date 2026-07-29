@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildHand3D, poseHand } from './hand3d.js?v=96';
+import { buildHand3D, poseHand } from './hand3d.js?v=97';
 // DOM-synced WebGL: eye(GLB) + hand/woman as scroll-scrubbed sprite sheets.
 // Figures are treated as part of the background: precise scroll-tied position + tiny breathing only.
 export function initHolo(){
@@ -64,13 +64,12 @@ export function initHolo(){
         metalness:.28, roughness:.34, normalMap:nm, side:THREE.DoubleSide });
       o.material.needsUpdate=true; } });
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);
-    // СТЕКЛЯННАЯ ОБОЛОЧКА вокруг глаза (вау-эффект): внутренний rim-glow + внешний прозрачный купол
-    const rim=new THREE.Mesh(new THREE.SphereGeometry(m*0.60,40,30),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.07,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false}));
-    grp.add(rim);
-    let glassMat;try{glassMat=new THREE.MeshPhysicalMaterial({color:0xEFFFD6,metalness:0,roughness:.06,transmission:.9,thickness:.4,transparent:true,opacity:.28,clearcoat:1,clearcoatRoughness:.08,ior:1.35,side:THREE.DoubleSide,depthWrite:false});}catch(e){glassMat=new THREE.MeshBasicMaterial({color:0xCFffA0,transparent:true,opacity:.10,depthWrite:false});}
-    const glass=new THREE.Mesh(new THREE.SphereGeometry(m*0.66,44,32),glassMat); grp.add(glass);
-    const halo=new THREE.Mesh(new THREE.TorusGeometry(m*0.66,m*0.012,12,64),new THREE.MeshBasicMaterial({color:0xB6FF3A,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false}));
-    grp.add(halo); eyeMesh.userData.halo=halo;
+    // СТЕКЛЯННАЯ ОБВОДКА ПО КОНТУРУ САМОЙ ФИГУРЫ ГЛАЗА (не сфера): чистое прозрачное стекло + свечение по силуэту
+    let glassMat;try{glassMat=new THREE.MeshPhysicalMaterial({color:0xF3FFE2,metalness:0,roughness:.04,transmission:.96,thickness:.2,transparent:true,opacity:.5,clearcoat:1,clearcoatRoughness:.04,ior:1.42,side:THREE.DoubleSide,depthWrite:false});}catch(e){glassMat=new THREE.MeshBasicMaterial({color:0xEFFFD6,transparent:true,opacity:.16,depthWrite:false});}
+    const eyeGlass=eyeMesh.clone(true); eyeGlass.traverse(function(o){if(o.isMesh)o.material=glassMat;}); eyeGlass.scale.multiplyScalar(1.045); grp.add(eyeGlass);
+    const eyeRim=eyeMesh.clone(true); const rimMat=new THREE.MeshBasicMaterial({color:0xB6FF3A,transparent:true,opacity:.22,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false});
+    eyeRim.traverse(function(o){if(o.isMesh)o.material=rimMat;}); eyeRim.scale.multiplyScalar(1.11); grp.add(eyeRim);
+    eyeMesh.userData.rim=rimMat;
     scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
   else eyeReady();
 
@@ -87,17 +86,22 @@ export function initHolo(){
   })();
   makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=92',6,6,36,340/316,{progType:'woman',fit:'contain'});
 
-  // ---- РОБОТ ГАРАНТИЙ: настоящий 3D GLB со скелетной анимацией ----
-  let robot=null,robotMixer=null,robotNorm=1;const robotAnchor=document.getElementById('guarRobot');
-  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=1',function(g){ robot=g.scene;
+  // ---- РОБОТ ГАРАНТИЙ: настоящий 3D GLB, полный скелет + процедурное «дыхание» (руки/ноги/голова) ----
+  let robot=null,robotNorm=1,robotBones={};const robotAnchor=document.getElementById('guarRobot');
+  const BONEN=['Head','neck','Spine','Spine01','Spine02','Hips','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftShoulder','RightShoulder','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg'];
+  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=2',function(g){ robot=g.scene;
     robot.traverse(function(o){ if(o.isMesh&&o.material){ const t=o.material.map||o.material.emissiveMap||null;
-      o.material=new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(0xffffff),emissive:new THREE.Color(0x9AFF00),emissiveMap:t,emissiveIntensity:.45,metalness:.45,roughness:.42});
-      o.material.needsUpdate=true; o.frustumCulled=false; } });
+      o.material=new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(0xffffff),emissive:new THREE.Color(0x9AFF00),emissiveMap:t,emissiveIntensity:.4,metalness:.42,roughness:.44});
+      o.material.needsUpdate=true; o.frustumCulled=false; }
+      if(BONEN.indexOf(o.name)>=0){ robotBones[o.name]=o; o.userData.baseQ=o.quaternion.clone(); } });
     const b=new THREE.Box3().setFromObject(robot);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());
     robotNorm=1/(Math.max(s.x,s.y,s.z)||1); robot.position.sub(c);
     const grp=new THREE.Group();grp.add(robot);scene.add(grp);robot.userData.grp=grp;
-    if(g.animations&&g.animations.length){robotMixer=new THREE.AnimationMixer(robot);g.animations.forEach(function(a){robotMixer.clipAction(a).play();});}
   },undefined,function(){}); }
+  var _e=new THREE.Euler();
+  function boneIdle(name,ax,amp,spd,ph){var bn=robotBones[name];if(!bn||!bn.userData.baseQ)return;
+    _e.setFromQuaternion(bn.userData.baseQ);_e[ax]+=Math.sin(_rt*spd+ph)*amp;bn.quaternion.setFromEuler(_e);}
+  var _rt=0;
 
   function rectPos(r){return {x:r.left+r.width/2,y:-(r.top+r.height/2),w:r.width,h:r.height,vis:r.bottom>-160&&r.top<H+160};}
   function handProg(r){return clamp((H*0.86 - r.top)/(H*0.62),0,1);}
@@ -105,8 +109,7 @@ export function initHolo(){
 
   function loop(t){requestAnimationFrame(loop);
     ptr.x+=(ptr.tx-ptr.x)*.05; ptr.y+=(ptr.ty-ptr.y)*.05;
-    const time=t/1000; const dt=clock.getDelta();
-    if(robotMixer) robotMixer.update(dt);
+    const time=t/1000; const dt=clock.getDelta(); _rt=time;
     // EYE (interactive hero centrepiece)
     if(eyeMesh&&eyeAnchors.length){const grp=eyeMesh.userData.grp;let best=null,bd=1e9;
       for(const an of eyeAnchors){const r=an.getBoundingClientRect();if(r.bottom>-120&&r.top<H+120){const cy=r.top+r.height/2;const d=Math.abs(cy-H/2);if(d<bd){bd=d;best=r;}}}
@@ -117,14 +120,23 @@ export function initHolo(){
         grp.position.set(P.x+ptr.x*P.w*0.06, P.y+Math.sin(time*1.0)*4 - ptr.y*P.h*0.05, 0);
         const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9*(0.42+0.58*be);grp.scale.setScalar(sc);
         eyeMesh.rotation.y=ptr.x*1.05+Math.sin(time/2.8)*0.08+(1-be)*1.4;eyeMesh.rotation.x=ptr.y*0.75+Math.cos(time/3.2)*0.04;
-        if(eyeMesh.userData.halo){eyeMesh.userData.halo.rotation.z=time*0.4;eyeMesh.userData.halo.material.opacity=.4+Math.sin(time*1.6)*.18;}
+        if(eyeMesh.userData.rim){eyeMesh.userData.rim.opacity=.16+Math.sin(time*1.5)*.08;}
         window.__eyeRotY=eyeMesh.rotation.y;}
       else grp.visible=false;}
     // РОБОТ 3D (гарантии)
     if(robot&&robotAnchor){const r=robotAnchor.getBoundingClientRect();const P=rectPos(r);const grp=robot.userData.grp;grp.visible=P.vis;
-      if(P.vis){const sc=Math.min(P.w,P.h)*robotNorm*0.94;grp.scale.setScalar(sc);
-        grp.position.set(P.x+ptr.x*P.w*0.04, P.y+Math.sin(time*1.1)*P.h*0.03, 0);
-        robot.rotation.y=ptr.x*0.5+Math.sin(time*0.55)*0.12;}}
+      if(P.vis){const sc=Math.min(P.w,P.h)*robotNorm*0.82;grp.scale.setScalar(sc);
+        // ПРИВЯЗАН к позиции: без дрейфа, только «дыхание» скелета на месте
+        grp.position.set(P.x, P.y+Math.sin(time*1.0)*P.h*0.012, 0);
+        robot.rotation.y=ptr.x*0.4+Math.sin(time*0.5)*0.10;
+        // живой idle: дыхание корпуса + покачивание головы/рук/ног
+        boneIdle('Spine','x',0.03,1.1,0);   boneIdle('Spine02','x',0.025,1.1,0.3);
+        boneIdle('Head','x',0.05,0.9,0.4);  boneIdle('Head','y',0.06,0.6,1.2);
+        boneIdle('neck','x',0.03,0.9,0.4);
+        boneIdle('LeftArm','z',0.07,0.85,0);   boneIdle('RightArm','z',0.07,0.85,Math.PI);
+        boneIdle('LeftForeArm','z',0.05,0.9,0.6); boneIdle('RightForeArm','z',0.05,0.9,Math.PI+0.6);
+        boneIdle('LeftUpLeg','x',0.03,0.7,0);  boneIdle('RightUpLeg','x',0.03,0.7,Math.PI);
+      }}
     // SPRITE FIGURES — part of background: scroll-tied frame + position, tiny breath, no springy motion
     for(const f of figs){const r=f.anchor.getBoundingClientRect();const P=rectPos(r);f.grp.visible=P.vis;if(!P.vis)continue;
       let prog = f.opt.progType==='hand' ? handProg(r) : pinProg();
@@ -149,10 +161,10 @@ export function initHolo(){
         const prog=handProg(r);   // симметрично: открывается вниз, закрывается обратно вверх
         window.__handOpen=prog;
         poseHand(handWrap.userData.hand,prog,time);
-        const sc=P.w*handNorm*0.96; handWrap.scale.setScalar(sc);
-        const slide=(1-clamp(prog*2.2,0,1))*(-P.w*0.22);
-        handWrap.position.set(P.x+slide, P.y+Math.sin(time*0.7)*3, 0);
-        handInner.rotation.y=ptr.x*0.30; handInner.rotation.x=-ptr.y*0.16;
+        const sc=P.w*handNorm*0.82; handWrap.scale.setScalar(sc);
+        // ЗАКРЕПЛЕНА в своей позиции: без дрейфа от скролла, только дыхание + наклон/слежение
+        handWrap.position.set(P.x, P.y+Math.sin(time*0.8)*2.5, 0);
+        handInner.rotation.y=ptr.x*0.30+Math.sin(time*0.5)*0.05; handInner.rotation.x=-ptr.y*0.16;
       }
     }
     renderer.render(scene,cam);

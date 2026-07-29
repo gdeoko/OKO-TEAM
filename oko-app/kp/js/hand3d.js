@@ -30,13 +30,12 @@ export function buildHand3D(){
   core.position.set(.04,.120,0); HAND.add(core);
   const coreRing=new THREE.Mesh(new THREE.TorusGeometry(.105,.018,10,30),PLATE);
   coreRing.rotation.x=Math.PI/2; coreRing.position.set(.04,.123,0); HAND.add(coreRing);
-  // столб света из центра ладони ВВЕРХ (падает на заголовок) + мягкая аура
-  const beamMat=new THREE.MeshBasicMaterial({color:0xB6FF3A,transparent:true,opacity:.10,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
-  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.045,.42,1.05,26,1,true),beamMat);
-  beam.position.set(.04,.62,0); HAND.add(beam);
-  const CG=new THREE.Mesh(new THREE.SphereGeometry(.26,20,16),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.20,blending:THREE.AdditiveBlending,depthWrite:false}));
-  CG.scale.set(1,.55,1); CG.position.set(.04,.14,0); HAND.add(CG);
-  HAND.userData.coreGlow=CG; HAND.userData.beam=beam;
+  // РАССЕЯННОЕ свечение из центра ладони (мягкое, с «туманом», без прожектора)
+  const CG=new THREE.Mesh(new THREE.SphereGeometry(.30,22,16),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false}));
+  CG.scale.set(1.1,.7,1.1); CG.position.set(.04,.16,0); HAND.add(CG);
+  const CG2=new THREE.Mesh(new THREE.SphereGeometry(.5,20,14),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.06,blending:THREE.AdditiveBlending,depthWrite:false}));
+  CG2.scale.set(1,.55,1); CG2.position.set(.04,.28,0); HAND.add(CG2);   // туман над ладонью
+  HAND.userData.coreGlow=CG; HAND.userData.fog=CG2;
   // костяшки-гребень
   const ridge=new THREE.Mesh(new THREE.CapsuleGeometry(.075,.40,8,18),JOINT);
   ridge.rotation.x=Math.PI/2; ridge.position.set(.44,.02,0); HAND.add(ridge);
@@ -73,27 +72,39 @@ export function buildHand3D(){
   finger([.305,.240,.178],R,[.47,.055,.062], -.02,  .03);   // безымянный
   finger([.245,.190,.150],[.056,.049,.042],[.44,.035,.185],-.24,.10); // мизинец
   // большой палец
-  const thumb=finger([.245,.195,.145],[.070,.061,.051],[.05,-.045,-.245],-.62,-1.05);
+  const thumb=finger([.235,.185,.140],[.072,.063,.053],[-.02,-.06,-.235],-.30,0);
+  // большой палец ВСЕГДА сбоку у основания ладони — задаём стабильную базовую ориентацию (без переброса)
+  thumb.rotation.set(0,-0.60,-0.55);
+  thumb.userData.isThumb=true;
 
-  HAND.userData={fingers,thumb,SKIN,JOINT,PLATE,coreGlow:CG,beam:beam};
+  HAND.userData={fingers,thumb,SKIN,JOINT,PLATE,coreGlow:CG,fog:CG2};
   return HAND;
 }
 /* open: 0 — кулак, 1 — раскрытая ладонь */
 export function poseHand(hand,open,t){
   const e=Math.max(0,Math.min(1,open));
   const s=e*e*(3-2*e);
-  // 🫴 РАСКРЫТАЯ ЛАДОНЬ ВВЕРХ: пальцы остаются мягко подогнутыми (никакого выгиба назад)
-  const FIST=[1.28,1.44,1.12], OPEN=[0.20,0.24,0.26];
+  // 🫴 РАСКРЫТАЯ ЛАДОНЬ ВВЕРХ: пальцы мягко подогнуты вверх, естественный каскад раскрытия
+  const FIST=[1.30,1.46,1.16], OPEN=[0.16,0.22,0.28];
   hand.userData.fingers.forEach((f,idx)=>{
-    const ph=idx*0.55;
-    const wob=Math.sin(t*1.1+ph)*0.018*s;         // живое микродвижение
+    if(f.userData.isThumb){
+      // большой палец: только слегка отгибается, НЕ перебрасывается на другую сторону
+      var ts=s;
+      f.userData.chain.forEach((g,i)=>{ g.rotation.z=(0.95-i*0.06)-(0.45)*ts; });
+      f.rotation.set(0,-0.60-0.18*ts,-0.55+0.10*ts);
+      return;
+    }
+    const ph=idx*0.6;
+    const stagger=Math.max(0,Math.min(1,(s-idx*0.05)/0.9));   // пальцы раскрываются каскадом
+    const ss=stagger*stagger*(3-2*stagger);
+    const wob=Math.sin(t*1.05+ph)*0.016*ss;                   // живое микродвижение
     f.userData.chain.forEach((g,i)=>{
-      g.rotation.z=FIST[i]+(OPEN[i]-FIST[i])*s+wob*(i===0?1:.5);
+      g.rotation.z=FIST[i]+(OPEN[i]-FIST[i])*ss+wob*(i===0?1:.5);
     });
-    f.rotation.z=f.userData.fanZ*s*0.7;           // меньше «растопыр»
-    f.rotation.y=f.userData.fanY*s;
+    f.rotation.z=f.userData.fanZ*ss*0.62;                     // умеренный веер
+    f.rotation.y=f.userData.fanY*ss*0.6;
   });
-  // ядро/аура ярче по мере раскрытия
-  if(hand.userData.coreGlow){var g=hand.userData.coreGlow;g.material.opacity=0.10+0.28*s+Math.sin(t*2.2)*0.03*s;}
-  if(hand.userData.beam){hand.userData.beam.material.opacity=0.04+0.13*s;}
+  // рассеянное свечение/туман ярче по мере раскрытия
+  if(hand.userData.coreGlow){var g=hand.userData.coreGlow;g.material.opacity=0.08+0.20*s+Math.sin(t*2.0)*0.02*s;}
+  if(hand.userData.fog){hand.userData.fog.material.opacity=0.02+0.09*s;}
 }
