@@ -1,0 +1,70 @@
+<!-- PWA module: install banner (Android/desktop), iOS hint, offline indicator, update toast, sync toast -->
+
+<div id="pwa-offline" role="status" aria-live="polite">
+  <span class="pwa-off-dot" aria-hidden="true"></span>
+  <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 42a60 60 0 0 1 84 0"/><path d="M22 58a40 40 0 0 1 56 0"/><circle cx="50" cy="78" r="4" fill="currentColor" stroke="none"/><path d="M14 14 86 86"/></svg>
+  <span>Ты офлайн. Часть функций недоступна.</span>
+</div>
+
+<div id="pwa-install" role="dialog" aria-label="Установить OKO на главный экран" aria-hidden="true">
+  <div class="pwa-row">
+    <div class="pwa-ico" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><rect x="28" y="10" width="44" height="80" rx="8"/><path d="M42 82h16"/><path d="M50 30v28M38 46l12 12 12-12"/></svg>
+    </div>
+    <div class="pwa-txt">
+      <div class="pwa-title">Установи OKO на главный экран</div>
+      <div class="pwa-sub">Один тап вместо трёх. Работает быстрее, полноэкранно, без адресной строки.</div>
+    </div>
+    <button class="pwa-close" type="button" aria-label="Закрыть" onclick="pwaDismissInstall(false)">
+      <svg viewBox="0 0 100 100"><path d="M22 22l56 56M78 22l-56 56"/></svg>
+    </button>
+  </div>
+  <div class="pwa-actions">
+    <button class="pwa-btn pwa-primary" type="button" onclick="pwaTriggerInstall()">
+      <svg viewBox="0 0 100 100"><path d="M50 12v52M28 46l22 22 22-22M18 84h64"/></svg>
+      Установить
+    </button>
+    <button class="pwa-btn pwa-ghost" type="button" onclick="pwaDismissInstall(true)">Позже</button>
+  </div>
+</div>
+
+<div id="pwa-ios" role="dialog" aria-label="Как установить OKO на iPhone" aria-hidden="true">
+  <button class="pwa-close" type="button" aria-label="Закрыть" onclick="pwaDismissIos(true)">
+    <svg viewBox="0 0 100 100"><path d="M22 22l56 56M78 22l-56 56"/></svg>
+  </button>
+  <div class="pwa-row">
+    <div class="pwa-ico" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><path d="M50 12v52M32 30l18-18 18 18M22 62v20a6 6 0 0 0 6 6h44a6 6 0 0 0 6-6V62"/></svg>
+    </div>
+    <div class="pwa-txt">
+      <div class="pwa-title">Добавь OKO на главный экран</div>
+      <div class="pwa-sub">В Safari это делается в два тапа:</div>
+    </div>
+  </div>
+  <div class="pwa-ios-step">
+    <span class="pwa-ios-num">1</span>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12v52M32 30l18-18 18 18M22 62v20a6 6 0 0 0 6 6h44a6 6 0 0 0 6-6V62"/></svg>
+    <span>Нажми <b>Поделиться</b> (квадрат со стрелкой вверх) в нижней панели Safari.</span>
+  </div>
+  <div class="pwa-ios-step">
+    <span class="pwa-ios-num">2</span>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 22v56M22 50h56"/></svg>
+    <span>Выбери <b>«На экран Домой»</b> — иконка OKO появится рядом с остальными приложениями.</span>
+  </div>
+</div>
+
+<div id="pwa-update" role="status" aria-live="polite">
+  <div class="pwa-ico" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><path d="M84 34A38 38 0 1 0 88 60"/><path d="M84 14v22H62"/></svg>
+  </div>
+  <div class="pwa-txt">
+    <div class="pwa-title">Новая версия OKO готова</div>
+    <div class="pwa-sub">Перезагрузи, чтобы обновиться.</div>
+  </div>
+  <button class="pwa-btn pwa-primary" type="button" onclick="pwaApplyUpdate()">Обновить</button>
+</div>
+
+<div id="pwa-sync-toast" role="status" aria-live="polite">
+  <span class="pwa-spin" aria-hidden="true"></span>
+  <span id="pwa-sync-text">Синхронизирую офлайн-действия…</span>
+</div>

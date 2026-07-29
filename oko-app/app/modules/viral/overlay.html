@@ -1,0 +1,48 @@
+<!-- ===== VIRAL: share sheets + public profile route ===== -->
+
+<!-- Универсальный share-sheet (полноэкранный) -->
+<div class="sheet" id="sheet-vr-share">
+  <div id="vrShareView" class="vr-share-view"></div>
+</div>
+
+<!-- Reels-цитаты (slideshow-preview урока) -->
+<div class="sheet" id="sheet-vr-reels">
+  <div id="vrReelsView" class="vr-reels-view"></div>
+</div>
+
+<!-- Weekly Story summary (превью для Instagram/TG stories) -->
+<div class="sheet" id="sheet-vr-weekly">
+  <div id="vrWeeklyView" class="vr-weekly-view"></div>
+</div>
+
+<!-- Referral squared: цели +3 / +10 клиентов -->
+<div class="sheet" id="sheet-vr-refsq">
+  <div id="vrRefsqView" class="vr-refsq-view"></div>
+</div>
+
+<!-- Экран публичного профиля /u/@username (fullscreen, без auth) -->
+<div class="vr-public" id="vrPublic" role="dialog" aria-label="Публичный профиль">
+  <div class="vr-public-inner" id="vrPublicInner"></div>
+</div>
+
+<!-- Плашка «поделись за 30 сек» после длинного урока Академии -->
+<div class="vr-nudge" id="vrLessonNudge" role="status" aria-live="polite">
+  <div class="vr-nudge-ico"><svg class="i"><use href="#i-share"/></svg></div>
+  <div class="vr-nudge-body">
+    <div class="vr-nudge-t">Сделай Reels из этого урока</div>
+    <div class="vr-nudge-s">3 цитаты → готовый storyboard · 30 секунд</div>
+  </div>
+  <button class="vr-nudge-cta" type="button" onclick="viralNudgeReels()">Собрать</button>
+  <button class="vr-nudge-x" type="button" onclick="viralNudgeHide()" aria-label="Закрыть">&times;</button>
+</div>
+
+<!-- Плашка «твоя неделя в OKO готова» (вс 20:00) -->
+<div class="vr-nudge weekly" id="vrWeeklyNudge" role="status" aria-live="polite">
+  <div class="vr-nudge-ico"><svg class="i"><use href="#i-star"/></svg></div>
+  <div class="vr-nudge-body">
+    <div class="vr-nudge-t">Твоя неделя в OKO готова</div>
+    <div class="vr-nudge-s">Story-summary собран — покажи подписчикам</div>
+  </div>
+  <button class="vr-nudge-cta" type="button" onclick="viralOpenWeekly()">Открыть</button>
+  <button class="vr-nudge-x" type="button" onclick="viralWeeklyNudgeHide()" aria-label="Закрыть">&times;</button>
+</div>

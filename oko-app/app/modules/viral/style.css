@@ -1,0 +1,384 @@
+/* ================= VIRAL — общий share-слой (префикс vr-)
+   Тёмная и светлая темы. Никаких эмодзи. Только SVG-иконки бренда. */
+
+/* ---------- Sheet-контейнеры ---------- */
+.vr-share-view, .vr-reels-view, .vr-weekly-view, .vr-refsq-view{
+  display:flex; flex-direction:column; gap:12px;
+}
+.vr-share-view h3, .vr-reels-view h3, .vr-weekly-view h3, .vr-refsq-view h3{
+  margin:0; font-family:'Bebas Neue', sans-serif; letter-spacing:.02em;
+  font-size:22px; line-height:1.05;
+}
+.vr-share-view .sub, .vr-reels-view .sub, .vr-weekly-view .sub, .vr-refsq-view .sub{
+  color:var(--dim); font-size:12.5px; margin-top:-6px;
+}
+
+/* ---------- Canvas-превью ---------- */
+.vr-preview-wrap{
+  border-radius:16px; overflow:hidden; background:#0a0a0a;
+  border:1px solid var(--border); position:relative;
+  display:flex; align-items:center; justify-content:center;
+  min-height:240px; max-height:56vh;
+}
+.vr-preview-wrap canvas, .vr-preview-wrap img{
+  display:block; max-width:100%; max-height:56vh; height:auto; width:auto;
+  border-radius:14px; box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+.vr-preview-hint{
+  color:var(--dim); font-size:11.5px; text-align:center; margin:2px 0 0;
+}
+
+/* ---------- 4 share-кнопки ---------- */
+.vr-share-grid{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:2px;
+}
+.vr-share-btn{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:12px 6px 10px; border-radius:14px; cursor:pointer;
+  background:var(--raised); border:1px solid var(--border);
+  color:var(--fg); font-size:11.5px; font-weight:700;
+  transition:transform .15s ease, background .15s ease, border-color .15s ease;
+  font-family:inherit;
+}
+.vr-share-btn:hover{ transform:translateY(-1px); border-color:var(--accent); }
+.vr-share-btn:active{ transform:translateY(0); }
+.vr-share-btn .ico{
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--lime-dim); color:var(--accent);
+}
+.vr-share-btn .i{ width:18px; height:18px; }
+.vr-share-btn.story .ico{ background:linear-gradient(135deg,#f58529,#dd2a7b 45%,#8134af 90%); color:#fff; }
+.vr-share-btn.tg .ico{ background:#26a5e4; color:#fff; }
+.vr-share-btn.vk .ico{ background:#07f; color:#fff; }
+.vr-share-btn.tt .ico{ background:#000; color:#fff; border:1px solid #333; }
+.vr-share-btn.wa .ico{ background:#25d366; color:#fff; }
+.vr-share-btn.copy .ico{ background:var(--raised); color:var(--fg); border:1px solid var(--border); }
+
+/* ---------- Native-Share кнопка сверху ---------- */
+.vr-native-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; padding:12px 14px; border-radius:12px; cursor:pointer;
+  background:var(--accent); color:#000; border:0;
+  font-weight:800; font-size:14px; font-family:inherit;
+  letter-spacing:.01em;
+}
+.vr-native-btn .i{ width:16px; height:16px; }
+.vr-native-btn:disabled{ opacity:.5; cursor:default; }
+
+/* ---------- Плашки: nudge (после урока / вс 20:00) ---------- */
+.vr-nudge{
+  position:fixed; left:50%; top:8px; transform:translate(-50%,-120%);
+  z-index:2200; width:min(96vw, 460px);
+  background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+  display:grid; grid-template-columns:36px 1fr auto 24px;
+  gap:8px; align-items:center; padding:10px 10px 10px 10px;
+  transition:transform .38s cubic-bezier(.2,.9,.35,1.2), opacity .3s;
+  opacity:0; pointer-events:none;
+}
+.vr-nudge.on{ transform:translate(-50%, calc(env(safe-area-inset-top,0px) + 8px)); opacity:1; pointer-events:auto; }
+.vr-nudge.weekly .vr-nudge-ico{ background:linear-gradient(135deg,#f58529,#dd2a7b 55%,#8134af); color:#fff; }
+.vr-nudge-ico{
+  width:36px; height:36px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--lime-dim); color:var(--accent);
+}
+.vr-nudge-ico .i{ width:18px; height:18px; }
+.vr-nudge-body{ min-width:0; }
+.vr-nudge-t{ font-weight:800; font-size:13px; line-height:1.15; }
+.vr-nudge-s{ color:var(--dim); font-size:11.5px; margin-top:2px; }
+.vr-nudge-cta{
+  background:var(--accent); color:#000; border:0; border-radius:9px;
+  padding:7px 12px; font-weight:800; font-size:12px; cursor:pointer;
+  font-family:inherit;
+}
+.vr-nudge-x{
+  background:none; border:0; color:var(--dim); font-size:20px;
+  line-height:1; cursor:pointer; padding:0 4px;
+}
+
+/* ---------- Публичный профиль /u/@username ---------- */
+.vr-public{
+  position:fixed; inset:0; z-index:2500;
+  background:var(--bg); color:var(--fg);
+  display:none; overflow-y:auto; overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+.vr-public.open{ display:block; }
+.vr-public-inner{
+  max-width:520px; margin:0 auto;
+  padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 24px);
+}
+.vr-pu-top{
+  display:flex; align-items:center; gap:10px; margin-bottom:12px;
+}
+.vr-pu-logo{
+  display:flex; align-items:center; gap:8px; font-family:'Bebas Neue', sans-serif;
+  font-size:22px; letter-spacing:.08em; color:var(--fg); text-decoration:none;
+}
+.vr-pu-logo .i{ width:22px; height:22px; color:var(--accent); }
+.vr-pu-actions{ margin-left:auto; display:flex; gap:8px; }
+.vr-pu-actions button, .vr-pu-actions a{
+  background:var(--raised); border:1px solid var(--border);
+  color:var(--fg); border-radius:10px; padding:8px 12px;
+  font-weight:700; font-size:12.5px; cursor:pointer; font-family:inherit;
+  text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+}
+.vr-pu-actions .primary{ background:var(--accent); color:#000; border-color:var(--accent); }
+.vr-pu-actions .i{ width:14px; height:14px; }
+
+.vr-pu-hero{
+  background:linear-gradient(135deg,rgba(154,255,0,.18),rgba(0,0,0,0) 55%),
+             var(--surface);
+  border:1px solid var(--border); border-radius:22px;
+  padding:22px 20px 20px; margin-bottom:12px; overflow:hidden;
+  position:relative;
+}
+.vr-pu-hero::before{
+  content:''; position:absolute; right:-40px; top:-40px;
+  width:160px; height:160px; border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, rgba(154,255,0,.25), transparent 65%);
+  filter:blur(2px);
+}
+.vr-pu-ava{
+  width:88px; height:88px; border-radius:26px;
+  background:var(--raised); border:2px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue', sans-serif; font-size:44px; letter-spacing:.02em;
+  color:var(--accent);
+  margin:0 auto 12px; background-size:cover; background-position:center;
+  box-shadow:0 6px 22px rgba(154,255,0,.28);
+}
+.vr-pu-name{ font-family:'Bebas Neue', sans-serif; font-size:30px; letter-spacing:.03em; text-align:center; line-height:1; }
+.vr-pu-nick{ color:var(--dim); text-align:center; font-size:13px; margin-top:6px; font-weight:600; }
+.vr-pu-bio{ color:var(--fg); font-size:13.5px; line-height:1.4; text-align:center; margin:10px 8px 0; opacity:.9; }
+.vr-pu-chips{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:12px; }
+.vr-pu-chip{
+  background:var(--raised); border:1px solid var(--border); color:var(--fg);
+  padding:5px 10px; border-radius:999px; font-size:11.5px; font-weight:700;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.vr-pu-chip.gold{ background:var(--lime-dim); color:var(--accent); border-color:var(--accent); }
+.vr-pu-chip .i{ width:12px; height:12px; }
+
+.vr-pu-stats{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:14px 0 0;
+}
+.vr-pu-stat{
+  background:var(--raised); border:1px solid var(--border);
+  border-radius:12px; padding:10px 4px; text-align:center;
+}
+.vr-pu-stat .v{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:.02em; color:var(--fg); line-height:1; }
+.vr-pu-stat .v.lime{ color:var(--accent); }
+.vr-pu-stat .l{ font-size:10px; color:var(--dim); margin-top:4px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+
+.vr-pu-cta{
+  display:grid; grid-template-columns:1fr auto auto; gap:8px; margin-top:14px;
+}
+.vr-pu-cta .btn-primary{
+  background:var(--accent); color:#000; border:0; border-radius:12px;
+  padding:12px; font-weight:800; font-size:14px; cursor:pointer; font-family:inherit;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.vr-pu-cta .btn-ghost{
+  background:var(--raised); color:var(--fg); border:1px solid var(--border);
+  border-radius:12px; padding:12px; cursor:pointer; font-family:inherit;
+  display:flex; align-items:center; justify-content:center;
+}
+.vr-pu-cta .btn-ghost .i, .vr-pu-cta .btn-primary .i{ width:16px; height:16px; }
+
+/* Разделы */
+.vr-pu-section{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:14px; margin-bottom:12px;
+}
+.vr-pu-section h3{
+  margin:0 0 10px; font-family:'Bebas Neue', sans-serif;
+  font-size:18px; letter-spacing:.03em; display:flex; align-items:baseline; gap:8px;
+}
+.vr-pu-section h3 .badge{
+  font-size:11px; letter-spacing:.05em; color:var(--accent);
+  background:var(--lime-dim); padding:2px 8px; border-radius:999px; font-family:inherit; font-weight:700;
+}
+.vr-pu-soc{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr));
+  gap:8px;
+}
+.vr-pu-soc a{
+  display:flex; align-items:center; gap:10px; padding:10px;
+  background:var(--raised); border:1px solid var(--border);
+  border-radius:12px; text-decoration:none; color:var(--fg);
+  font-weight:700; font-size:12.5px;
+}
+.vr-pu-soc a .ico{
+  width:32px; height:32px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--accent); color:#000;
+}
+.vr-pu-soc a .ico .i{ width:16px; height:16px; }
+.vr-pu-soc a .lbl{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.vr-pu-cert{
+  display:flex; align-items:center; gap:10px; padding:10px;
+  background:var(--raised); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:6px;
+}
+.vr-pu-cert .seal{
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,#c0c0c0 30%,#e6e6e6 70%);
+  color:#333; display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue', sans-serif; font-size:11px; letter-spacing:.05em;
+  border:2px solid var(--accent); flex:0 0 auto;
+}
+.vr-pu-cert .t{ font-weight:700; font-size:13px; line-height:1.15; min-width:0; }
+.vr-pu-cert .s{ color:var(--dim); font-size:11.5px; margin-top:2px; }
+.vr-pu-cert .info{ min-width:0; flex:1 1 auto; }
+
+.vr-pu-chan{
+  display:flex; align-items:center; gap:10px; padding:10px;
+  background:var(--raised); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:6px;
+}
+.vr-pu-chan .a{
+  width:36px; height:36px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--lime-dim); color:var(--accent);
+  font-family:'Bebas Neue', sans-serif; font-size:18px;
+  flex:0 0 auto;
+}
+.vr-pu-chan .t{ font-weight:700; font-size:13px; line-height:1.15; }
+.vr-pu-chan .s{ color:var(--dim); font-size:11.5px; margin-top:2px; }
+.vr-pu-chan .info{ flex:1 1 auto; min-width:0; }
+.vr-pu-chan .k{ font-family:'Bebas Neue', sans-serif; font-size:15px; color:var(--fg); letter-spacing:.02em; }
+
+.vr-pu-ref{
+  display:flex; align-items:center; gap:10px; padding:14px;
+  background:linear-gradient(135deg, rgba(154,255,0,.12), var(--raised) 60%);
+  border:1px solid var(--accent); border-radius:14px;
+}
+.vr-pu-ref .ico{
+  width:40px; height:40px; border-radius:12px; background:var(--accent); color:#000;
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+}
+.vr-pu-ref .ico .i{ width:20px; height:20px; }
+.vr-pu-ref .info{ flex:1 1 auto; min-width:0; }
+.vr-pu-ref .t{ font-weight:800; font-size:13.5px; line-height:1.15; }
+.vr-pu-ref .s{ color:var(--dim); font-size:11.5px; margin-top:3px; }
+.vr-pu-ref button{
+  background:#000; color:var(--accent); border:1px solid var(--accent);
+  border-radius:10px; padding:8px 14px; font-weight:800; font-size:12.5px;
+  cursor:pointer; font-family:inherit; flex:0 0 auto;
+}
+
+.vr-pu-foot{
+  color:var(--dim); font-size:11px; text-align:center; padding:20px 4px 8px;
+  line-height:1.5;
+}
+.vr-pu-foot a{ color:var(--dim); text-decoration:underline; }
+
+/* ---------- Weekly Story slide (preview) ---------- */
+.vr-weekly-metrics{
+  display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+}
+.vr-weekly-metric{
+  background:var(--raised); border:1px solid var(--border); border-radius:12px;
+  padding:10px 12px;
+}
+.vr-weekly-metric .l{ color:var(--dim); font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+.vr-weekly-metric .v{ font-family:'Bebas Neue', sans-serif; font-size:24px; letter-spacing:.02em; margin-top:4px; }
+.vr-weekly-metric .v.lime{ color:var(--accent); }
+
+/* ---------- Refsquared (партнёрка: +3/+10) ---------- */
+.vr-refsq-progress{
+  background:var(--raised); border:1px solid var(--border); border-radius:14px;
+  padding:14px; margin-bottom:8px;
+}
+.vr-refsq-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin-bottom:8px;
+}
+.vr-refsq-row .lbl{ font-weight:700; font-size:13px; }
+.vr-refsq-row .n{ font-family:'Bebas Neue', sans-serif; font-size:22px; letter-spacing:.02em; color:var(--accent); }
+.vr-refsq-bar{
+  height:8px; border-radius:99px; background:var(--border); overflow:hidden; margin-top:6px;
+}
+.vr-refsq-bar > i{
+  display:block; height:100%; background:linear-gradient(90deg, var(--accent), #b8ff42);
+  border-radius:99px; transition:width .6s cubic-bezier(.2,.9,.4,1);
+}
+.vr-refsq-goal{
+  display:flex; gap:10px; padding:12px; border-radius:14px;
+  background:var(--surface); border:1px solid var(--border); margin-bottom:8px;
+}
+.vr-refsq-goal .badge{
+  width:44px; height:44px; border-radius:12px;
+  background:var(--lime-dim); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Bebas Neue', sans-serif; font-size:20px; letter-spacing:.02em;
+  flex:0 0 auto;
+}
+.vr-refsq-goal.done .badge{ background:var(--accent); color:#000; }
+.vr-refsq-goal .t{ font-weight:800; font-size:13.5px; line-height:1.2; }
+.vr-refsq-goal .s{ color:var(--dim); font-size:11.5px; margin-top:3px; }
+.vr-refsq-goal.done{ border-color:var(--accent); }
+
+/* ---------- Serial badge (мессия шеринга) ---------- */
+.vr-serial{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 10px; border-radius:999px;
+  background:linear-gradient(135deg, #ffd11a, #ff7a00);
+  color:#000; font-weight:800; font-size:11.5px;
+  border:1px solid rgba(0,0,0,.25);
+  box-shadow:0 4px 12px rgba(255,140,0,.35);
+}
+.vr-serial .i{ width:12px; height:12px; }
+
+/* ---------- Share-кнопка в постах ленты (доп. полировка) ---------- */
+.vr-post-share-btn{ display:inline-flex; align-items:center; gap:4px; }
+
+/* ---------- Партнёрка: карточка refsquared, если ppRoot существует ---------- */
+#vrRefSquaredCard{
+  padding:16px; border-radius:16px; background:var(--surface);
+  border:1px solid var(--border); margin-top:12px;
+  display:flex; flex-direction:column; gap:10px;
+}
+#vrRefSquaredCard .h{ display:flex; justify-content:space-between; align-items:baseline; }
+#vrRefSquaredCard .h .lb{ font-family:'Bebas Neue', sans-serif; font-size:19px; letter-spacing:.03em; }
+#vrRefSquaredCard .h .chip{
+  background:var(--lime-dim); color:var(--accent); border-radius:999px;
+  padding:3px 10px; font-size:11px; font-weight:800;
+}
+#vrRefSquaredCard button{
+  background:var(--raised); color:var(--fg); border:1px solid var(--border);
+  border-radius:10px; padding:9px; font-weight:700; font-size:12px;
+  cursor:pointer; font-family:inherit;
+}
+
+/* ---------- Игры: кнопка share моей позиции ---------- */
+.vr-lb-share{
+  margin:8px 12px 12px; width:calc(100% - 24px);
+  padding:10px; border-radius:12px;
+  background:var(--accent); color:#000; border:0;
+  font-weight:800; font-size:13px; cursor:pointer; font-family:inherit;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+}
+.vr-lb-share .i{ width:14px; height:14px; }
+
+/* ---------- Reels-scene карточки (внутри reels-sheet) ---------- */
+.vr-reels-scenes{ display:flex; flex-direction:column; gap:8px; }
+.vr-reels-scene{
+  background:var(--raised); border:1px solid var(--border); border-radius:12px;
+  padding:10px 12px;
+}
+.vr-reels-scene .n{
+  display:inline-block; font-family:'Bebas Neue', sans-serif;
+  font-size:13px; letter-spacing:.05em; color:var(--accent);
+}
+.vr-reels-scene .q{ font-size:13px; margin-top:4px; font-weight:600; line-height:1.35; }
+
+/* ---------- Мелочи для светлой темы ---------- */
+:root[data-theme="light"] .vr-preview-wrap{ background:#111; }
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .vr-preview-wrap{ background:#111; }
+}

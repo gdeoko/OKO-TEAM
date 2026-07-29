@@ -12194,6 +12194,107 @@ body.st2-over #sheetOverlay.open{z-index:67}
   .ts-bar > i{transition:none !important}
 }
 
+/* ===== module: pwa ===== */
+/* ===== PWA module: установка, offline, обновление, sync ===== */
+
+/* --- баннер «Установить OKO» (Android/desktop) --- */
+#pwa-install{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9800;
+  display:none;flex-direction:column;gap:12px;padding:16px 16px 14px;border-radius:18px;
+  background:linear-gradient(180deg,rgba(154,255,0,.06),transparent 70%),var(--surface);
+  border:1px solid var(--border);box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1px rgba(154,255,0,.14);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-install.pwa-show{display:flex;opacity:1;transform:translateY(0)}
+:root[data-theme="light"] #pwa-install{box-shadow:0 12px 32px rgba(10,30,0,.14),0 0 0 1px rgba(83,168,0,.18)}
+
+.pwa-row{display:flex;align-items:center;gap:12px;min-width:0}
+.pwa-ico{width:44px;height:44px;flex:none;border-radius:12px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.pwa-ico svg{width:24px;height:24px;stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.pwa-txt{min-width:0;flex:1}
+.pwa-title{font-family:var(--font-display);font-size:16px;letter-spacing:.05em;text-transform:uppercase;line-height:1.1;color:var(--text)}
+.pwa-sub{margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--dim)}
+.pwa-close{width:32px;height:32px;flex:none;border-radius:10px;border:1px solid var(--border);background:transparent;
+  color:var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:color .18s,border-color .18s,transform .12s}
+.pwa-close:hover{color:var(--text);border-color:var(--accent)}
+.pwa-close:active{transform:scale(.94)}
+.pwa-close svg{width:14px;height:14px;stroke:currentColor;stroke-width:8;stroke-linecap:round;fill:none}
+
+.pwa-actions{display:flex;gap:10px}
+.pwa-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 14px;border-radius:12px;font-weight:700;font-size:14px;letter-spacing:.02em;cursor:pointer;
+  border:1px solid transparent;transition:box-shadow .2s,transform .12s,background .2s,border-color .2s;
+  -webkit-tap-highlight-color:transparent}
+.pwa-btn.pwa-primary{background:var(--lime);color:#000;border-color:var(--lime)}
+.pwa-btn.pwa-primary:hover{box-shadow:var(--glow)}
+.pwa-btn.pwa-ghost{background:transparent;color:var(--dim);border-color:var(--border)}
+.pwa-btn.pwa-ghost:hover{color:var(--text);border-color:var(--accent)}
+.pwa-btn:active{transform:scale(.97)}
+.pwa-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+
+/* --- iOS-подсказка: «Поделиться → На главный экран» --- */
+#pwa-ios{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9800;
+  display:none;padding:14px 14px 16px;border-radius:18px;background:var(--surface);
+  border:1px solid var(--border);box-shadow:0 16px 36px rgba(0,0,0,.5),0 0 0 1px rgba(154,255,0,.14);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-ios.pwa-show{display:block;opacity:1;transform:translateY(0)}
+#pwa-ios .pwa-row{margin-bottom:10px}
+.pwa-ios-step{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:13px;color:var(--text);line-height:1.4}
+.pwa-ios-num{width:22px;height:22px;flex:none;border-radius:50%;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+.pwa-ios-step svg{width:16px;height:16px;color:var(--accent);flex:none;margin-top:2px;
+  stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.pwa-ios-step b{color:var(--text);font-weight:700}
+#pwa-ios .pwa-close{position:absolute;top:10px;right:10px}
+#pwa-ios{position:fixed} /* сохраняем позиционирование */
+
+/* --- офлайн-плашка сверху --- */
+#pwa-offline{position:fixed;top:0;left:0;right:0;z-index:9900;
+  display:none;align-items:center;justify-content:center;gap:10px;
+  padding:8px 14px;padding-top:max(8px,env(safe-area-inset-top));
+  background:#ff4d4d;color:#fff;font-size:13px;font-weight:600;letter-spacing:.02em;
+  box-shadow:0 6px 18px rgba(255,77,77,.35);
+  transform:translateY(-100%);transition:transform .32s cubic-bezier(.22,.9,.36,1)}
+#pwa-offline.pwa-show{display:flex;transform:translateY(0)}
+#pwa-offline svg{width:14px;height:14px;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;fill:none;flex:none}
+#pwa-offline .pwa-off-dot{width:7px;height:7px;border-radius:50%;background:#fff;
+  box-shadow:0 0 0 0 rgba(255,255,255,.6);animation:pwa-puls 2.4s ease-in-out infinite;flex:none}
+@keyframes pwa-puls{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}
+body.pwa-offline-shift #app{padding-top:38px}
+body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inset-top)) + 30px)}
+
+/* --- toast «Новая версия готова» --- */
+#pwa-update{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9850;
+  display:none;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+  background:var(--surface);border:1px solid rgba(154,255,0,.35);
+  box-shadow:0 14px 32px rgba(0,0,0,.45),0 0 0 1px rgba(154,255,0,.12);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-update.pwa-show{display:flex;opacity:1;transform:translateY(0)}
+#pwa-update .pwa-ico{width:36px;height:36px;border-radius:10px}
+#pwa-update .pwa-ico svg{width:20px;height:20px}
+#pwa-update .pwa-txt{flex:1;min-width:0}
+#pwa-update .pwa-title{font-size:14px}
+#pwa-update .pwa-sub{margin-top:2px;font-size:12px}
+#pwa-update .pwa-btn{flex:none;padding:10px 14px;font-size:13px}
+
+/* --- offline-toast «синхронизируем...» --- */
+#pwa-sync-toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  z-index:9860;display:none;opacity:0;transition:opacity .25s,transform .25s;
+  background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:99px;
+  padding:8px 16px;font-size:12.5px;font-weight:600;box-shadow:0 10px 24px rgba(0,0,0,.35);
+  align-items:center;gap:8px}
+#pwa-sync-toast.pwa-show{display:inline-flex;opacity:1;transform:translateX(-50%) translateY(0)}
+#pwa-sync-toast .pwa-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:pwa-spin 1s linear infinite}
+@keyframes pwa-spin{to{transform:rotate(360deg)}}
+
+/* --- когда установлено standalone: чуть-чуть safe-area внизу --- */
+@media all and (display-mode: standalone){
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media all and (display-mode: window-controls-overlay){
+  body{padding-top:env(titlebar-area-height,0)}
+}
+
 /* ===== module: paywall ===== */
 /* ============ PAYWALL (pw-) — монетизация, паволлы, тарифы ============ */
 
@@ -16758,6 +16859,78 @@ html.wm-on .screen.active.wm-tab-in-left{
     <span style="width:24px"></span>
   </div>
   <div class="sv-body" id="st2Body"></div>
+</div>
+
+<!-- ===== module: pwa ===== -->
+<!-- PWA module: install banner (Android/desktop), iOS hint, offline indicator, update toast, sync toast -->
+
+<div id="pwa-offline" role="status" aria-live="polite">
+  <span class="pwa-off-dot" aria-hidden="true"></span>
+  <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 42a60 60 0 0 1 84 0"/><path d="M22 58a40 40 0 0 1 56 0"/><circle cx="50" cy="78" r="4" fill="currentColor" stroke="none"/><path d="M14 14 86 86"/></svg>
+  <span>Ты офлайн. Часть функций недоступна.</span>
+</div>
+
+<div id="pwa-install" role="dialog" aria-label="Установить OKO на главный экран" aria-hidden="true">
+  <div class="pwa-row">
+    <div class="pwa-ico" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><rect x="28" y="10" width="44" height="80" rx="8"/><path d="M42 82h16"/><path d="M50 30v28M38 46l12 12 12-12"/></svg>
+    </div>
+    <div class="pwa-txt">
+      <div class="pwa-title">Установи OKO на главный экран</div>
+      <div class="pwa-sub">Один тап вместо трёх. Работает быстрее, полноэкранно, без адресной строки.</div>
+    </div>
+    <button class="pwa-close" type="button" aria-label="Закрыть" onclick="pwaDismissInstall(false)">
+      <svg viewBox="0 0 100 100"><path d="M22 22l56 56M78 22l-56 56"/></svg>
+    </button>
+  </div>
+  <div class="pwa-actions">
+    <button class="pwa-btn pwa-primary" type="button" onclick="pwaTriggerInstall()">
+      <svg viewBox="0 0 100 100"><path d="M50 12v52M28 46l22 22 22-22M18 84h64"/></svg>
+      Установить
+    </button>
+    <button class="pwa-btn pwa-ghost" type="button" onclick="pwaDismissInstall(true)">Позже</button>
+  </div>
+</div>
+
+<div id="pwa-ios" role="dialog" aria-label="Как установить OKO на iPhone" aria-hidden="true">
+  <button class="pwa-close" type="button" aria-label="Закрыть" onclick="pwaDismissIos(true)">
+    <svg viewBox="0 0 100 100"><path d="M22 22l56 56M78 22l-56 56"/></svg>
+  </button>
+  <div class="pwa-row">
+    <div class="pwa-ico" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><path d="M50 12v52M32 30l18-18 18 18M22 62v20a6 6 0 0 0 6 6h44a6 6 0 0 0 6-6V62"/></svg>
+    </div>
+    <div class="pwa-txt">
+      <div class="pwa-title">Добавь OKO на главный экран</div>
+      <div class="pwa-sub">В Safari это делается в два тапа:</div>
+    </div>
+  </div>
+  <div class="pwa-ios-step">
+    <span class="pwa-ios-num">1</span>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12v52M32 30l18-18 18 18M22 62v20a6 6 0 0 0 6 6h44a6 6 0 0 0 6-6V62"/></svg>
+    <span>Нажми <b>Поделиться</b> (квадрат со стрелкой вверх) в нижней панели Safari.</span>
+  </div>
+  <div class="pwa-ios-step">
+    <span class="pwa-ios-num">2</span>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 22v56M22 50h56"/></svg>
+    <span>Выбери <b>«На экран Домой»</b> — иконка OKO появится рядом с остальными приложениями.</span>
+  </div>
+</div>
+
+<div id="pwa-update" role="status" aria-live="polite">
+  <div class="pwa-ico" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><path d="M84 34A38 38 0 1 0 88 60"/><path d="M84 14v22H62"/></svg>
+  </div>
+  <div class="pwa-txt">
+    <div class="pwa-title">Новая версия OKO готова</div>
+    <div class="pwa-sub">Перезагрузи, чтобы обновиться.</div>
+  </div>
+  <button class="pwa-btn pwa-primary" type="button" onclick="pwaApplyUpdate()">Обновить</button>
+</div>
+
+<div id="pwa-sync-toast" role="status" aria-live="polite">
+  <span class="pwa-spin" aria-hidden="true"></span>
+  <span id="pwa-sync-text">Синхронизирую офлайн-действия…</span>
 </div>
 
 <!-- ===== module: partner-plus ===== -->
@@ -65268,44 +65441,437 @@ if(typeof mpOpenPackages === 'function'){
 })();
 
 /* ===== module: pwa ===== */
-/* ===== PWA: service worker + подсказка установки (Android/десктоп) ===== */
-(function pwaInit(){
-  if(location.protocol !== 'https:') return; // локальный file:// — пропуск
-  if('serviceWorker' in navigator){
-    try{
-      navigator.serviceWorker.register('/sw.js').then(function(reg){
-        try{ reg.update(); }catch(e){}
-      }).catch(function(){});
-      /* когда активируется НОВЫЙ воркер (после деплоя) — один раз перезагружаем страницу,
-         чтобы пользователь сразу получил свежую сборку, а не залипшую в кэше. */
-      var _okoReloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', function(){
-        if(_okoReloaded) return; _okoReloaded = true;
-        try{ location.reload(); }catch(e){}
-      });
-    }catch(e){}
+/* ===== PWA module: service worker, установка, offline, sync, share =====
+   Всё под префиксом pwa*, без эмодзи, обе темы, без внешних зависимостей.
+   Экспорт наружу:
+     window.okoPwaShare({title,text,url})   — Web Share API + fallback на clipboard
+     window.okoPwaEnqueue(kind, payload)    — положить действие в офлайн-очередь IDB
+     window.okoPwaSetSyncHandler(kind, fn)  — зарегистрировать хендлер отправки
+     window.okoPwaFlushQueue()              — попытка синхронизации сейчас
+*/
+(function pwaModule(){
+  'use strict';
+
+  const IS_HTTPS       = location.protocol === 'https:';
+  const IS_LOCAL       = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const IS_STANDALONE  = window.matchMedia('(display-mode: standalone)').matches
+                      || window.matchMedia('(display-mode: window-controls-overlay)').matches
+                      || window.navigator.standalone === true;
+  const UA             = navigator.userAgent || '';
+  const IS_IOS         = /iPad|iPhone|iPod/.test(UA) && !window.MSStream;
+  const IS_IOS_SAFARI  = IS_IOS && /Safari/i.test(UA) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(UA);
+  const LS_DECLINED    = 'oko-pwa-declined-at';
+  const LS_FIRST_SEEN  = 'oko-pwa-first-seen-at';
+  const LS_INSTALLED   = 'oko-pwa-installed';
+  const LS_IOS_HINT    = 'oko-pwa-ios-hint-at';
+  const DECLINE_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; /* 30 дней */
+  const PROMPT_DELAY_MS     = 30 * 1000;                /* 30 сек после первого захода */
+
+  /* --------- state --------- */
+  let deferredPrompt = null;
+  let installTimer   = null;
+  let iosTimer       = null;
+  let reloadedOnce   = false;
+  let waitingWorker  = null;
+
+  /* --------- helpers --------- */
+  function safeToast(msg){
+    try { if (typeof window.toast === 'function') window.toast(msg); }
+    catch(e){}
   }
-  let deferred = null;
+  function nowTs(){ return Date.now(); }
+  function readTs(key){ try { return +localStorage.getItem(key) || 0; } catch(e){ return 0; } }
+  function writeTs(key, val){ try { localStorage.setItem(key, String(val)); } catch(e){} }
+  function delTs(key){ try { localStorage.removeItem(key); } catch(e){} }
+
+  function markProfileInstalled(){
+    try {
+      if (window.PROFILE) window.PROFILE.pwaInstalled = true;
+      writeTs(LS_INSTALLED, 1);
+    } catch(e){}
+  }
+
+  function pwaInstalledOrDeclinedRecently(){
+    if (readTs(LS_INSTALLED)) return true;
+    if (IS_STANDALONE) return true;
+    const declined = readTs(LS_DECLINED);
+    if (declined && (nowTs() - declined) < DECLINE_COOLDOWN_MS) return true;
+    return false;
+  }
+
+  /* --------- INSTALL PROMPT (Android/desktop) --------- */
+  function showInstallBanner(){
+    const el = document.getElementById('pwa-install');
+    if (!el) return;
+    el.classList.add('pwa-show');
+    el.setAttribute('aria-hidden', 'false');
+  }
+  function hideInstallBanner(){
+    const el = document.getElementById('pwa-install');
+    if (!el) return;
+    el.classList.remove('pwa-show');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  window.pwaTriggerInstall = async function(){
+    if (!deferredPrompt) { hideInstallBanner(); return; }
+    try {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted'){
+        markProfileInstalled();
+        safeToast('OKO установлено');
+      } else {
+        writeTs(LS_DECLINED, nowTs());
+      }
+    } catch(e){}
+    deferredPrompt = null;
+    hideInstallBanner();
+  };
+
+  window.pwaDismissInstall = function(persist){
+    if (persist) writeTs(LS_DECLINED, nowTs());
+    hideInstallBanner();
+  };
+
   window.addEventListener('beforeinstallprompt', ev => {
     ev.preventDefault();
-    deferred = ev;
-    try{
-      if(localStorage.getItem('oko-pwa-hint')) return;
-      setTimeout(()=>{
-        if(!deferred || typeof showPopup !== 'function') return;
-        showPopup({
-          ico: 'phone',
-          title: 'OKO на главный экран',
-          body: 'Установи OKO как приложение: значок на рабочем столе, полный экран, работает быстрее.',
-          actions: [
-            {label:'Установить', onclick: ()=>{ try{ deferred.prompt(); }catch(e){} deferred = null; }},
-            {label:'Позже', ghost:true}
-          ]
-        });
-        try{ localStorage.setItem('oko-pwa-hint','1'); }catch(e){}
-      }, 120000);
-    }catch(e){}
+    deferredPrompt = ev;
+    if (pwaInstalledOrDeclinedRecently()) return;
+    clearTimeout(installTimer);
+    installTimer = setTimeout(() => {
+      if (!deferredPrompt || pwaInstalledOrDeclinedRecently()) return;
+      showInstallBanner();
+    }, PROMPT_DELAY_MS);
   });
+
+  window.addEventListener('appinstalled', () => {
+    hideInstallBanner();
+    hideIosHint();
+    markProfileInstalled();
+    delTs(LS_DECLINED);
+    safeToast('OKO установлено на главный экран');
+  });
+
+  /* --------- iOS: свой tooltip (у iOS Safari нет beforeinstallprompt) --------- */
+  function showIosHint(){
+    const el = document.getElementById('pwa-ios');
+    if (!el) return;
+    el.classList.add('pwa-show');
+    el.setAttribute('aria-hidden', 'false');
+  }
+  function hideIosHint(){
+    const el = document.getElementById('pwa-ios');
+    if (!el) return;
+    el.classList.remove('pwa-show');
+    el.setAttribute('aria-hidden', 'true');
+  }
+  window.pwaDismissIos = function(persist){
+    if (persist) writeTs(LS_IOS_HINT, nowTs());
+    hideIosHint();
+  };
+
+  function maybeScheduleIosHint(){
+    if (!IS_IOS_SAFARI) return;
+    if (IS_STANDALONE) return;
+    const shown = readTs(LS_IOS_HINT);
+    if (shown && (nowTs() - shown) < DECLINE_COOLDOWN_MS) return;
+    clearTimeout(iosTimer);
+    iosTimer = setTimeout(showIosHint, PROMPT_DELAY_MS);
+  }
+
+  /* --------- OFFLINE indicator + sync trigger --------- */
+  function paintOffline(){
+    const el = document.getElementById('pwa-offline');
+    const off = !navigator.onLine;
+    if (el) el.classList.toggle('pwa-show', off);
+    document.body.classList.toggle('pwa-offline-shift', off);
+    if (!off) { setTimeout(flushSyncQueue, 300); }
+  }
+  window.addEventListener('online',  paintOffline);
+  window.addEventListener('offline', paintOffline);
+
+  /* --------- UPDATE toast (появление нового SW) --------- */
+  function showUpdateToast(w){
+    waitingWorker = w || waitingWorker;
+    const el = document.getElementById('pwa-update');
+    if (!el) return;
+    el.classList.add('pwa-show');
+  }
+  function hideUpdateToast(){
+    const el = document.getElementById('pwa-update');
+    if (!el) return;
+    el.classList.remove('pwa-show');
+  }
+  window.pwaApplyUpdate = function(){
+    hideUpdateToast();
+    try {
+      if (waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    } catch(e){}
+    setTimeout(() => { try { location.reload(); } catch(e){} }, 250);
+  };
+
+  /* --------- SERVICE WORKER --------- */
+  async function registerSW(){
+    if (!('serviceWorker' in navigator)) return;
+    if (!IS_HTTPS && !IS_LOCAL) return;
+
+    /* убираем устаревшие регистрации (был /sw.js в старой сборке) */
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs){
+        const url = (r.active && r.active.scriptURL) || (r.installing && r.installing.scriptURL) || '';
+        if (/\/sw\.js(\?|$)/.test(url) && !/\/service-worker\.js/.test(url)) {
+          try { await r.unregister(); } catch(e){}
+        }
+      }
+    } catch(e){}
+
+    try {
+      const reg = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+
+      /* если уже стоит waiting-воркер — сразу показать плашку обновления */
+      if (reg.waiting && navigator.serviceWorker.controller){
+        showUpdateToast(reg.waiting);
+      }
+
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller){
+            showUpdateToast(nw);
+          }
+        });
+      });
+
+      /* пассивная проверка апдейта раз в 30 мин */
+      setInterval(() => { try { reg.update(); } catch(e){} }, 30 * 60 * 1000);
+
+    } catch(e){ /* тихо */ }
+
+    /* смена контроллера → перезагрузка ОДИН раз (свежая сборка сразу) */
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloadedOnce) return;
+      reloadedOnce = true;
+      try { location.reload(); } catch(e){}
+    });
+
+    /* сообщения от воркера (например, sync тэг) */
+    navigator.serviceWorker.addEventListener('message', ev => {
+      const d = ev.data || {};
+      if (d.type === 'oko-sync-request') flushSyncQueue();
+    });
+  }
+
+  /* --------- WEB SHARE API helper --------- */
+  window.okoPwaShare = async function(o){
+    o = o || {};
+    const data = {};
+    if (o.title) data.title = o.title;
+    if (o.text)  data.text  = o.text;
+    if (o.url)   data.url   = o.url;
+
+    if (navigator.share) {
+      try {
+        if (!navigator.canShare || navigator.canShare(data)) {
+          await navigator.share(data);
+          return true;
+        }
+      } catch(e){
+        if (e && e.name === 'AbortError') return false;
+      }
+    }
+    /* fallback: clipboard */
+    const composite = [o.title, o.text, o.url].filter(Boolean).join(' — ');
+    try {
+      await navigator.clipboard.writeText(composite);
+      safeToast('Ссылка скопирована');
+      return true;
+    } catch(e){
+      /* legacy fallback */
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = composite; ta.setAttribute('readonly','');
+        ta.style.position='fixed'; ta.style.top='-9999px';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove();
+        safeToast('Ссылка скопирована');
+        return true;
+      } catch(err){
+        safeToast('Не удалось поделиться');
+        return false;
+      }
+    }
+  };
+
+  /* --------- OFFLINE SYNC QUEUE (IndexedDB) --------- */
+  const DB_NAME = 'oko-pwa';
+  const DB_VER  = 1;
+  const STORE   = 'queue';
+  const HANDLERS = {};
+  let flushing = false;
+
+  function openDb(){
+    return new Promise((resolve, reject) => {
+      try {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE)){
+            const s = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+            s.createIndex('kind', 'kind', { unique: false });
+            s.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+      } catch(e){ reject(e); }
+    });
+  }
+
+  async function idbAdd(item){
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const s = tx.objectStore(STORE);
+      const r = s.add(item);
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+  async function idbList(){
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const s = tx.objectStore(STORE);
+      const r = s.getAll();
+      r.onsuccess = () => res(r.result || []);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+  async function idbDelete(id){
+    const db = await openDb();
+    return new Promise((res) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).delete(id);
+      tx.oncomplete = () => res(true);
+      tx.onerror    = () => res(false);
+    });
+  }
+
+  window.okoPwaSetSyncHandler = function(kind, fn){
+    if (!kind || typeof fn !== 'function') return;
+    HANDLERS[kind] = fn;
+  };
+
+  window.okoPwaEnqueue = async function(kind, payload){
+    if (!kind) return null;
+    const item = { kind, payload: payload || null, createdAt: nowTs(), tries: 0 };
+    try {
+      const id = await idbAdd(item);
+      /* если онлайн — тут же пробуем отправить */
+      if (navigator.onLine) queueMicrotask(flushSyncQueue);
+      else showSyncToast('Сохранено. Отправим, когда появится сеть.', 1900);
+      /* пробуем зарегистрировать background sync */
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.sync) await reg.sync.register('oko-sync-queue');
+      } catch(e){}
+      return id;
+    } catch(e){
+      return null;
+    }
+  };
+
+  window.okoPwaFlushQueue = function(){ return flushSyncQueue(); };
+
+  async function flushSyncQueue(){
+    if (flushing || !navigator.onLine) return;
+    flushing = true;
+    let list = [];
+    try { list = await idbList(); } catch(e){ flushing = false; return; }
+    if (!list.length){ flushing = false; return; }
+
+    showSyncToast('Синхронизирую офлайн-действия…', 0);
+    let ok = 0, fail = 0;
+    for (const item of list){
+      const fn = HANDLERS[item.kind];
+      if (!fn){ /* нет обработчика — пропускаем, но не удаляем */ fail++; continue; }
+      try {
+        const done = await fn(item.payload, item);
+        if (done !== false){ await idbDelete(item.id); ok++; }
+        else fail++;
+      } catch(e){ fail++; }
+    }
+    hideSyncToast();
+    if (ok) safeToast(`Отправлено ${ok} офлайн-${plural(ok, 'действие','действия','действий')}`);
+    flushing = false;
+  }
+
+  function plural(n, one, few, many){
+    const n10 = n % 10, n100 = n % 100;
+    if (n10 === 1 && n100 !== 11) return one;
+    if (n10 >= 2 && n10 <= 4 && (n100 < 10 || n100 >= 20)) return few;
+    return many;
+  }
+
+  let syncToastTimer = null;
+  function showSyncToast(txt, autohide){
+    const el = document.getElementById('pwa-sync-toast');
+    const t  = document.getElementById('pwa-sync-text');
+    if (!el || !t) return;
+    t.textContent = txt;
+    el.classList.add('pwa-show');
+    clearTimeout(syncToastTimer);
+    if (autohide) syncToastTimer = setTimeout(hideSyncToast, autohide);
+  }
+  function hideSyncToast(){
+    const el = document.getElementById('pwa-sync-toast');
+    if (el) el.classList.remove('pwa-show');
+  }
+
+  /* --------- SHORTCUTS: ?tab=feed|chats|wallet|academy из manifest --------- */
+  function handleShortcut(){
+    try {
+      const url = new URL(location.href);
+      const tab = url.searchParams.get('tab');
+      if (!tab) return;
+      const allowed = ['feed','chats','wallet','academy','mini','partner','profile'];
+      if (allowed.indexOf(tab) === -1) return;
+      const fire = () => { try { if (typeof window.showTab === 'function') window.showTab(tab); } catch(e){} };
+      /* даём приложению отрисоваться */
+      setTimeout(fire, 350);
+      /* чистим URL, чтобы не залипал tab= при рестартах */
+      try {
+        url.searchParams.delete('tab');
+        const clean = url.pathname + (url.search ? url.search : '') + url.hash;
+        history.replaceState({}, '', clean);
+      } catch(e){}
+    } catch(e){}
+  }
+
+  /* --------- BOOT --------- */
+  function boot(){
+    /* first-visit stamp */
+    if (!readTs(LS_FIRST_SEEN)) writeTs(LS_FIRST_SEEN, nowTs());
+    /* если приложение уже установлено — фиксируем в профиле */
+    if (IS_STANDALONE) markProfileInstalled();
+
+    paintOffline();
+    registerSW();
+    maybeScheduleIosHint();
+    handleShortcut();
+
+    /* если onLine=true при загрузке — сразу пробуем добить очередь */
+    if (navigator.onLine) setTimeout(flushSyncQueue, 1200);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
 
 /* ===== module: paywall ===== */

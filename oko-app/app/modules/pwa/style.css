@@ -1,0 +1,99 @@
+/* ===== PWA module: установка, offline, обновление, sync ===== */
+
+/* --- баннер «Установить OKO» (Android/desktop) --- */
+#pwa-install{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9800;
+  display:none;flex-direction:column;gap:12px;padding:16px 16px 14px;border-radius:18px;
+  background:linear-gradient(180deg,rgba(154,255,0,.06),transparent 70%),var(--surface);
+  border:1px solid var(--border);box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1px rgba(154,255,0,.14);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-install.pwa-show{display:flex;opacity:1;transform:translateY(0)}
+:root[data-theme="light"] #pwa-install{box-shadow:0 12px 32px rgba(10,30,0,.14),0 0 0 1px rgba(83,168,0,.18)}
+
+.pwa-row{display:flex;align-items:center;gap:12px;min-width:0}
+.pwa-ico{width:44px;height:44px;flex:none;border-radius:12px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.pwa-ico svg{width:24px;height:24px;stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.pwa-txt{min-width:0;flex:1}
+.pwa-title{font-family:var(--font-display);font-size:16px;letter-spacing:.05em;text-transform:uppercase;line-height:1.1;color:var(--text)}
+.pwa-sub{margin-top:4px;font-size:12.5px;line-height:1.45;color:var(--dim)}
+.pwa-close{width:32px;height:32px;flex:none;border-radius:10px;border:1px solid var(--border);background:transparent;
+  color:var(--dim);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:color .18s,border-color .18s,transform .12s}
+.pwa-close:hover{color:var(--text);border-color:var(--accent)}
+.pwa-close:active{transform:scale(.94)}
+.pwa-close svg{width:14px;height:14px;stroke:currentColor;stroke-width:8;stroke-linecap:round;fill:none}
+
+.pwa-actions{display:flex;gap:10px}
+.pwa-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 14px;border-radius:12px;font-weight:700;font-size:14px;letter-spacing:.02em;cursor:pointer;
+  border:1px solid transparent;transition:box-shadow .2s,transform .12s,background .2s,border-color .2s;
+  -webkit-tap-highlight-color:transparent}
+.pwa-btn.pwa-primary{background:var(--lime);color:#000;border-color:var(--lime)}
+.pwa-btn.pwa-primary:hover{box-shadow:var(--glow)}
+.pwa-btn.pwa-ghost{background:transparent;color:var(--dim);border-color:var(--border)}
+.pwa-btn.pwa-ghost:hover{color:var(--text);border-color:var(--accent)}
+.pwa-btn:active{transform:scale(.97)}
+.pwa-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+
+/* --- iOS-подсказка: «Поделиться → На главный экран» --- */
+#pwa-ios{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9800;
+  display:none;padding:14px 14px 16px;border-radius:18px;background:var(--surface);
+  border:1px solid var(--border);box-shadow:0 16px 36px rgba(0,0,0,.5),0 0 0 1px rgba(154,255,0,.14);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-ios.pwa-show{display:block;opacity:1;transform:translateY(0)}
+#pwa-ios .pwa-row{margin-bottom:10px}
+.pwa-ios-step{display:flex;align-items:flex-start;gap:10px;padding:8px 0;font-size:13px;color:var(--text);line-height:1.4}
+.pwa-ios-num{width:22px;height:22px;flex:none;border-radius:50%;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+.pwa-ios-step svg{width:16px;height:16px;color:var(--accent);flex:none;margin-top:2px;
+  stroke:currentColor;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.pwa-ios-step b{color:var(--text);font-weight:700}
+#pwa-ios .pwa-close{position:absolute;top:10px;right:10px}
+#pwa-ios{position:fixed} /* сохраняем позиционирование */
+
+/* --- офлайн-плашка сверху --- */
+#pwa-offline{position:fixed;top:0;left:0;right:0;z-index:9900;
+  display:none;align-items:center;justify-content:center;gap:10px;
+  padding:8px 14px;padding-top:max(8px,env(safe-area-inset-top));
+  background:#ff4d4d;color:#fff;font-size:13px;font-weight:600;letter-spacing:.02em;
+  box-shadow:0 6px 18px rgba(255,77,77,.35);
+  transform:translateY(-100%);transition:transform .32s cubic-bezier(.22,.9,.36,1)}
+#pwa-offline.pwa-show{display:flex;transform:translateY(0)}
+#pwa-offline svg{width:14px;height:14px;stroke:currentColor;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;fill:none;flex:none}
+#pwa-offline .pwa-off-dot{width:7px;height:7px;border-radius:50%;background:#fff;
+  box-shadow:0 0 0 0 rgba(255,255,255,.6);animation:pwa-puls 2.4s ease-in-out infinite;flex:none}
+@keyframes pwa-puls{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0)}}
+body.pwa-offline-shift #app{padding-top:38px}
+body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inset-top)) + 30px)}
+
+/* --- toast «Новая версия готова» --- */
+#pwa-update{position:fixed;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));z-index:9850;
+  display:none;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+  background:var(--surface);border:1px solid rgba(154,255,0,.35);
+  box-shadow:0 14px 32px rgba(0,0,0,.45),0 0 0 1px rgba(154,255,0,.12);
+  transform:translateY(24px);opacity:0;transition:transform .32s cubic-bezier(.22,.9,.36,1),opacity .28s ease}
+#pwa-update.pwa-show{display:flex;opacity:1;transform:translateY(0)}
+#pwa-update .pwa-ico{width:36px;height:36px;border-radius:10px}
+#pwa-update .pwa-ico svg{width:20px;height:20px}
+#pwa-update .pwa-txt{flex:1;min-width:0}
+#pwa-update .pwa-title{font-size:14px}
+#pwa-update .pwa-sub{margin-top:2px;font-size:12px}
+#pwa-update .pwa-btn{flex:none;padding:10px 14px;font-size:13px}
+
+/* --- offline-toast «синхронизируем...» --- */
+#pwa-sync-toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  z-index:9860;display:none;opacity:0;transition:opacity .25s,transform .25s;
+  background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:99px;
+  padding:8px 16px;font-size:12.5px;font-weight:600;box-shadow:0 10px 24px rgba(0,0,0,.35);
+  align-items:center;gap:8px}
+#pwa-sync-toast.pwa-show{display:inline-flex;opacity:1;transform:translateX(-50%) translateY(0)}
+#pwa-sync-toast .pwa-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:pwa-spin 1s linear infinite}
+@keyframes pwa-spin{to{transform:rotate(360deg)}}
+
+/* --- когда установлено standalone: чуть-чуть safe-area внизу --- */
+@media all and (display-mode: standalone){
+  body{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media all and (display-mode: window-controls-overlay){
+  body{padding-top:env(titlebar-area-height,0)}
+}
