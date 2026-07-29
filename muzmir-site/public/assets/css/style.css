@@ -1080,3 +1080,101 @@ body::after{background-size:90px 90px!important;opacity:.035!important}
 .in-tg .header{background:transparent!important;border-bottom:0!important}
 /* Тёмный фон в TG — приглушаем свечения чтобы не «сжигало» глаз */
 .in-tg body::before{opacity:.4!important;filter:blur(60px) saturate(1.1)!important}
+
+/* ══════════════════════════════ APP-FORMAT: компактность + нативный вайб на всех страницах ══════════════════════════════ */
+@media(max-width:900px){
+  /* Секции — плотнее, как в приложении, а не разряженный сайт */
+  .section{padding:22px 0 !important}
+  .section-head{margin-bottom:16px !important}
+  .section-head h2{font-size:clamp(1.35rem,5.6vw,1.8rem) !important;line-height:1.08 !important;margin-bottom:.2em !important}
+  .section-head p{font-size:.9rem !important;margin-top:.4em !important}
+  .section-head .eyebrow{font-size:.72rem !important;margin-bottom:.35em !important}
+  .gold-rule{margin:6px auto 10px !important}
+  /* Grid — плотнее */
+  .grid{gap:12px !important}
+  .grid-2{grid-template-columns:1fr !important}
+  .grid-3{grid-template-columns:1fr !important}
+  .grid-4{grid-template-columns:repeat(2,1fr) !important}
+  @media(min-width:520px){.grid-3{grid-template-columns:repeat(2,1fr) !important}}
+  /* Карточка — плотнее, скругления как в iOS */
+  .card{padding:16px !important;border-radius:16px !important}
+  /* Кнопка primary/ghost — крупнее «нажимаемая» цель, как в приложении */
+  .btn{min-height:44px !important;border-radius:12px !important}
+  .btn--lg{min-height:52px !important;border-radius:14px !important;font-size:.98rem !important}
+  .btn--block{width:100% !important}
+  /* Hero — компактный на моб (не только в TG) */
+  .hero{padding:20px 0 30px !important}
+  .hero .container{gap:18px !important}
+  .hero-logo{width:min(200px,58%) !important}
+  .hero h1{font-size:clamp(1.7rem,7vw,2.4rem) !important;line-height:1.05 !important;margin-bottom:.2em !important}
+  .hero .lead{font-size:.94rem !important;margin-bottom:14px !important;line-height:1.5 !important}
+  .hero-cta{gap:8px !important}
+  .hero-cta .btn{flex:1 1 auto}
+  .hero-trust{gap:8px !important;flex-wrap:wrap !important;margin-top:14px !important}
+  .hero-trust li{padding:5px 10px !important;font-size:.72rem !important}
+  .hero-eq{display:none !important}
+  /* Топбар — компактнее */
+  .topbar{padding:5px 0 !important;font-size:.72rem !important}
+  .topbar .container{gap:8px !important}
+  /* Header — компактный */
+  .header .container{padding-top:8px !important;padding-bottom:8px !important;gap:8px !important}
+  .brand img{width:36px !important;height:36px !important}
+  .brand span{font-size:.9rem !important;line-height:1 !important}
+  /* Footer — минимум пустоты, всё гармошкой */
+  .footer{padding:26px 0 !important}
+  .footer-grid{gap:20px !important;grid-template-columns:1fr !important}
+  .footer-grid ul{margin:0 !important}
+  .footer-grid ul li{padding:3px 0 !important;font-size:.88rem !important}
+  .footer-partners{gap:10px !important;padding:14px 0 !important}
+  .footer-partners img{height:44px !important}
+  .footer-bottom{flex-direction:column !important;gap:6px !important;font-size:.75rem !important;text-align:center !important}
+  /* Контейнер — почти на весь экран (как в мини-аппе) */
+  .container{padding-left:14px !important;padding-right:14px !important}
+  /* Кабинет — плотнее, без разряженных отступов */
+  .cab-card{padding:14px !important;border-radius:14px !important}
+  .cab-grid,.cab-sections{gap:10px !important}
+  /* Форма — большие поля для пальца */
+  input,select,textarea{min-height:46px !important;font-size:16px !important;border-radius:12px !important}
+  textarea{min-height:96px !important}
+  .field{margin-bottom:12px !important}
+  /* Модалка входа — на весь экран, как в приложении */
+  .auth-modal{padding:0 !important}
+  .auth-card{max-width:none !important;width:100% !important;height:auto !important;min-height:100vh !important;border-radius:0 !important;padding:18px 18px calc(20px + env(safe-area-inset-bottom)) !important}
+}
+
+/* Тактильный отклик — все интерактивы отвечают на тап (native feel) */
+@media(hover:none) and (pointer:coarse){
+  a.card,.card,.btn,.appnav a,.sm-tile,.cab-card,.comp-card,.auth-btn,.chat-fab,.acc-q,.badge,button{
+    -webkit-tap-highlight-color:transparent;
+    transition:transform .12s ease,box-shadow .14s ease,filter .14s !important;
+  }
+  a.card:active,.card:active,.btn:active,.sm-tile:active,.cab-card:active,.comp-card:active,.auth-btn:active{
+    transform:scale(.97) !important;filter:brightness(.98);
+  }
+}
+
+/* Убираем «мигание» ссылок и полосу скролла в приложении */
+html{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body{overscroll-behavior-y:contain}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* Плавные переходы между секциями страницы — imperceptible slide-in при появлении блока */
+@media(min-width:481px){
+  .section > .container > *{will-change:auto}
+}
+
+/* Bottom-nav «активная» кнопка — pulse-glow один раз при переходе (визуальный отклик SPA) */
+@keyframes appnavPulseGlow{0%{box-shadow:0 0 0 0 rgba(201,168,76,.55)}70%{box-shadow:0 0 0 12px rgba(201,168,76,0)}100%{box-shadow:0 0 0 0 rgba(201,168,76,0)}}
+.appnav a.just-active::after{animation:appnavPulseGlow .6s ease-out}
+
+/* SPA-fade: контент нового <main> появляется мягко (fallback если JS-плеер не установил opacity) */
+main{transition:opacity .22s ease}
+
+/* Компактный «page-hero» для внутренних страниц (когда есть) */
+.page-hero{padding:22px 0 14px}
+@media(max-width:900px){.page-hero{padding:14px 0 8px !important}}
+.page-hero h1{font-family:var(--ff-display);font-size:clamp(1.6rem,5.8vw,2.4rem);line-height:1.06;margin:0 0 .25em}
+.page-hero p{color:var(--muted);font-size:.94rem;margin:0}
+

@@ -28,7 +28,17 @@
     var here = location.pathname;
     nav.querySelectorAll('a').forEach(function (a) {
       var p = new URL(a.href, location.href).pathname;
-      a.classList.toggle('active', p === here);
+      var wasActive = a.classList.contains('active');
+      var isActive = p === here;
+      a.classList.toggle('active', isActive);
+      // Пульс-эффект на новоактивной кнопке
+      if (isActive && !wasActive) {
+        a.classList.remove('just-active');
+        // reflow трюк, чтобы анимация проиграла
+        void a.offsetWidth;
+        a.classList.add('just-active');
+        setTimeout(function(){ a.classList.remove('just-active'); }, 700);
+      }
     });
   }
 

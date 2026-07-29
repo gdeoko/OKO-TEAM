@@ -52,9 +52,40 @@ $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Marck+Script&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="preload" as="style" href="<?= asset('css/style.css') ?>">
 <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
-<style>
+<style id="mz-critical-nav">
+/* CRITICAL: нижнее меню ВСЕГДА закреплено на экране (перекрывает любой кэш style.css). */
+html body nav.appnav,
+html body nav.appnav.appnav{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  top:auto !important;
+  z-index:2147483000 !important;
+  display:block !important;
+  transform:none !important;
+  filter:none !important;
+  contain:none !important;
+  will-change:auto !important;
+  padding:8px max(6px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-right)) !important;
+  background:color-mix(in srgb, var(--bg,#fffcf5) 88%, transparent) !important;
+  backdrop-filter:blur(14px) saturate(1.2) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(1.2) !important;
+  border-top:1px solid var(--line,rgba(0,0,0,.08)) !important;
+  pointer-events:auto !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+html body,html.in-tg body{
+  padding-bottom:calc(84px + env(safe-area-inset-bottom)) !important;
+  /* ВАЖНО: никаких transform/filter/perspective/contain на body — они ломают position:fixed у детей. */
+  transform:none !important;
+  filter:none !important;
+  perspective:none !important;
+  contain:none !important;
+}
+html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important}
 .header{padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
-.appnav{padding-bottom:env(safe-area-inset-bottom,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
@@ -292,6 +323,25 @@ if('serviceWorker' in navigator){
     }
   });
 }
+// Страховка нижнего меню: если какой-то скрипт/стиль перебил fixed — переприменяем каждые 500 мс первые 3 сек.
+(function(){
+  var tries = 0;
+  function reassert(){
+    var el = document.querySelector('.appnav'); if(!el) return;
+    var st = getComputedStyle(el);
+    if (st.position !== 'fixed') {
+      el.style.setProperty('position','fixed','important');
+      el.style.setProperty('left','0','important');
+      el.style.setProperty('right','0','important');
+      el.style.setProperty('bottom','0','important');
+      el.style.setProperty('z-index','2147483000','important');
+      el.style.setProperty('display','block','important');
+    }
+  }
+  var iv = setInterval(function(){ reassert(); if(++tries>=6) clearInterval(iv); }, 500);
+  window.addEventListener('load', reassert);
+  document.addEventListener('mz-spa-navigate', reassert);
+})();
 </script>
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <script src="<?= asset('js/music.js') ?>" defer></script>

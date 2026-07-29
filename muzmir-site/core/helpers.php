@@ -13,7 +13,19 @@ function cfgv(string $key, $default = null) {
 function url(string $path = ''): string {
     return rtrim(cfgv('base_url'), '/') . '/' . ltrim($path, '/');
 }
-function asset(string $path): string { return url('assets/' . ltrim($path, '/')); }
+function asset(string $path): string {
+    $rel = ltrim($path, '/');
+    // Cache-busting: только для CSS/JS/webmanifest — добавляем ?v=<mtime> чтобы обход nginx max-age=30d.
+    $qmark = strpos($rel, '?');
+    $clean = $qmark === false ? $rel : substr($rel, 0, $qmark);
+    if (preg_match('~\.(css|js|webmanifest)$~i', $clean)) {
+        $abs = defined('BASE_PATH') ? BASE_PATH . '/public/assets/' . $clean : '';
+        if ($abs !== '' && is_file($abs)) {
+            $rel .= ($qmark === false ? '?' : '&') . 'v=' . filemtime($abs);
+        }
+    }
+    return url('assets/' . $rel);
+}
 
 /** Правила текстов КЦ: короткие тире, «ёлочки», без AI-лексики, «Вы». */
 function normalize_text(string $t): string {
