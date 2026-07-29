@@ -15,6 +15,12 @@
 | 2026-07 · d11 титаник · fx[camui,slam,particles-snow,callout,donut,stamp,toast,shine,ticker] · lottie[warning] · gl[DoomScreen,burn,StaticFade,GlitchMemories,luma] · 3d[diamond/orange] · infogr[donut 70%, kinetic 3ч/3года] · grade[moody_dark] |
 | 2026-07 · d12 не досматривают · fx[camui,slam,callout,stamp×3,shine,dm,ticker] · lottie[timer, checkmark] · gl[GlitchDisplace,directionalwarp,SimpleZoomOut,pixelize] · 3d[diamond/lime] · infogr[retention graph] · grade[clean_ad] |
 | 2026-07 · d13 один ролик · fx[camui,stamp,bars,callout,dm,likes,toast,shine,ticker] · lottie[clock, chat] · gl[splitSlideInOutHorizontal,crosswarp,SimpleFlip,Bounce,wipeLeft] · 3d[diamond/lime] · infogr[counter 200k, bars реклама/ролик] · grade[warm_cine] |
+| 2026-07-29 · r2 нейросети · fx[corner_tag×5,puppeteer-css] · lottie[—] · gl[—skipped] · 3d[—] · infogr[capcut/runway/11labs cards] · grade[teal_orange] · music[bg.mp3 shared] |
+| 2026-07-29 · r3 монтаж · fx[corner_tag×5,puppeteer-css] · lottie[—] · gl[—skipped] · 3d[—] · infogr[#1-#5 приёмы tags] · grade[clean_ad] · music[bg.mp3 shared] |
+| 2026-07-29 · r4 свет · fx[badge,compare,big_number,puppeteer-css] · lottie[—] · gl[—skipped] · 3d[—] · infogr[3000→1M число, сравнение до/после] · grade[warm_cine] · music[bg.mp3 shared] |
+| 2026-07-29 · r5 медиа · fx[drawtext-checklist,drawtext-big_number,drawtext-badge] · lottie[—] · gl[—skipped] · 3d[—] · infogr[90% число, checklist досмотры/сохранения/репосты] · grade[epic_gold] · music[freesound r5] |
+| 2026-07-29 · r6 подкаст · fx[drawtext-price_tag×2,drawtext-big_number] · lottie[—] · gl[—skipped] · 3d[—] · infogr[8000₽, 12000₽, 30000₽ прайс] · grade[flower_soft] · music[freesound r6] |
+| 2026-07-29 · r7 студия · fx[drawtext-badge×2,drawtext-big_number] · lottie[—] · gl[—skipped] · 3d[—] · infogr[0.5сек=качество, 50 проектов] · grade[teal_orange] · music[freesound r7] |
 <!-- Следующие ролики: взять ДРУГИЕ типы, переходы, 3D-фигуры, Lottie, грейды. -->
 
 ## Партия n1–n5 (Ставрополь, локальные, 16.07.2026) — голос Dmitry +6%

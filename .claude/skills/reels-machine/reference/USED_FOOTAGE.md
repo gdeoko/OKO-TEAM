@@ -8,6 +8,12 @@
 | дата | ролик | ист | id | что на кадре |
 |------|-------|-----|----|--------------|
 | 2026-07-08 | d8 автомойка | pex | 6872072 | camera lens (был в d7, заменён) |
+| 2026-07-29 | r2 нейросети | pex | auto | ai tech, edit phone, ai screen, mic studio, clock, fast work, director, team + brand clips |
+| 2026-07-29 | r3 монтаж | pex | auto | timeline, cuts, sound, zoom, motion, fastcuts + brand clips |
+| 2026-07-29 | r4 свет | pex | auto | lighting setup, backlight, rimlight, flat, cinematic, softbox + brand clips |
+| 2026-07-29 | r5 медиа | pex | auto | scroll, analytics, bored, creator, share, frustrated + brand clips |
+| 2026-07-29 | r6 подкаст | pex | auto | podcast, mic, acoustic, light2, phone cam, budget, interview + brand clips |
+| 2026-07-29 | r7 студия | pex | auto | business, quality, deal, full studio, podcast pro, team work + brand clips |
 <!-- дописывать сюда новые строки на каждый ролик. НЕ переиспользовать id из таблицы. -->
 
 ## Партия n1–n5 (16.07.2026): по 12 уникальных вертикальных Pexels-клипов на ролик,
