@@ -883,16 +883,34 @@
     try{
       if(acView === 'home'){
         apdInjectCatalogFilters();
+        apdInjectCatalogButton();
       } else if(acView === 'course'){
         apdSetupCollapsibleBlocks();
+        // Кнопка «Админ-панель курса» для владельца
+        try{ apdInjectAdminBtnOnCourse(); }catch(e){}
       } else if(acView === 'lesson'){
         apdInjectLessonExtras();
+        apdLessonExtraFormats();
         // Отложенная инъекция скорости — плеер может ре-рендериться асинхронно
         setTimeout(apdInjectSpeed, 20);
         setTimeout(apdInjectSpeed, 400);
       }
     }catch(e){}
   };
+  function apdInjectAdminBtnOnCourse(){
+    if(!apdIsOwner()) return;
+    const root = document.getElementById('acRoot');
+    if(!root || root.querySelector('#apdAdminBtnCourse')) return;
+    const insideCard = root.querySelector('.ac-inside');
+    if(!insideCard) return;
+    const ci = (typeof acCourse === 'number') ? acCourse : 0;
+    const btn = document.createElement('button');
+    btn.id = 'apdAdminBtnCourse';
+    btn.className = 'acd-admin-btn';
+    btn.innerHTML = `${I('crown')}<span class="tx">Админ-панель курса</span><span class="go">${I('chev')}</span>`;
+    btn.onclick = ()=>apdAdminOpen(ci);
+    insideCard.parentNode.insertBefore(btn, insideCard.nextSibling);
+  }
   // chain-patch: acRenderVideoBox тоже перерисовывает бар — переинжектим скорость
   if(typeof acRenderVideoBox === 'function'){
     const _apdPrevRVB = window.acRenderVideoBox;
@@ -931,10 +949,1030 @@
   }
 
   /* =============================================================
+     ==================== НОВОЕ (29.07 Даниэль) ====================
+     Каталог курсов OKO (fullscreen), карточка курса,
+     Админ-панель, PDF сертификата, доп.форматы, мои курсы.
+     ============================================================= */
+
+  /* -------- утилиты -------- */
+  function apdIsOwner(){
+    try{ return typeof isOwner === 'function' ? isOwner() : (window.PROFILE && PROFILE.role === 'owner'); }
+    catch(e){ return false; }
+  }
+  function apdFmtDur(mins){
+    const h = Math.floor(mins/60), m = Math.round(mins%60);
+    return h ? (h + ' ч ' + (m ? m + ' мин' : '').trim()).trim() : (m + ' мин');
+  }
+  function apdDeterministicRnd(seed){
+    // маленький xorshift для стабильных «отзывов/рейтингов» по индексу курса
+    let s = (seed*2654435761) >>> 0;
+    return ()=>{ s ^= s<<13; s ^= s>>>17; s ^= s<<5; return ((s >>> 0) % 1000) / 1000; };
+  }
+  function apdCourseMeta(ci){
+    // синтетические, но стабильные данные (звёзды/учеников/уровень/длительность)
+    const c = AC_COURSES[ci];
+    const st = (typeof acCourseStats==='function') ? acCourseStats(ci) : {lessons:c.count, mins:c.count*8};
+    const rnd = apdDeterministicRnd(ci+1);
+    const rating = (4.4 + rnd()*0.55);
+    const students = 120 + Math.floor(rnd()*1180);
+    const level = ['Начинающий','Средний','Про'][Math.floor(rnd()*3)];
+    return {rating, ratingTxt: rating.toFixed(2).replace('.',','), students, level, mins:st.mins, lessons:st.lessons, slides:st.slides};
+  }
+  function apdCourseReviews(ci){
+    // фиксированные отзывы под каждый курс (детерминированно)
+    const c = AC_COURSES[ci];
+    const rnd = apdDeterministicRnd(ci+7);
+    const names = ['Анна','Дмитрий','Ольга','Илья','Марина','Кирилл','София','Егор','Полина','Роман'];
+    const templates = [
+      'Практика на реальных задачах, никакой воды. Автор говорит по делу и подкрепляет цифрами.',
+      'После курса собрал первый рабочий пайплайн за вечер — то, чего год откладывал.',
+      'Круто, что каждый урок с тестом и мини-игрой — материал реально закрепляется.',
+      'Заходил как новичок, вышел с чёткой системой. Лучший курс по теме за все деньги.',
+      'Понравился формат: короткие уроки, живой ритм, много инструментов и разборов.',
+      'Сертификат в конце — приятный бонус, но польза не в бумажке, а в новом навыке.'
+    ];
+    const n = 3 + Math.floor(rnd()*3);
+    const out = [];
+    const dt = ['сегодня','вчера','2 дня назад','неделю назад','2 недели назад','месяц назад'];
+    for(let i=0; i<n; i++){
+      out.push({
+        name: names[Math.floor(rnd()*names.length)],
+        text: templates[Math.floor(rnd()*templates.length)],
+        stars: 4 + (rnd() > 0.35 ? 1 : 0),
+        when: dt[Math.floor(rnd()*dt.length)]
+      });
+      // добавляем пользовательские отзывы
+    }
+    try{
+      const my = (acS.acdReviews||{})[c.id] || [];
+      return my.concat(out);
+    }catch(e){ return out; }
+  }
+  function apdStarsSvg(n){
+    let s = '';
+    for(let i=0; i<5; i++) s += I('star');
+    return `<span class="stars">${I('star')} ${n.toFixed(1).replace('.',',')}</span>`;
+  }
+  function apdEnsureStore2(){
+    if(!acS.acdReviews) acS.acdReviews = {};   // {courseId: [{name,text,stars,when}]}
+    if(!acS.acdBanned) acS.acdBanned = {};     // {courseId: {nick:true}}
+    if(!acS.acdSettings) acS.acdSettings = {}; // {courseId: {price,discount,autonext,certOn,available}}
+  }
+  apdEnsureStore2();
+  function apdGetSettings(ci){
+    apdEnsureStore2();
+    const c = AC_COURSES[ci];
+    const def = {price:c.price||0, discount:0, autonext:true, certOn:true, available:true};
+    return Object.assign({}, def, acS.acdSettings[c.id]||{});
+  }
+  function apdSetSetting(ci, k, v){
+    apdEnsureStore2();
+    const c = AC_COURSES[ci];
+    const cur = apdGetSettings(ci);
+    cur[k] = v;
+    acS.acdSettings[c.id] = cur;
+    acSave();
+  }
+
+  /* -------- fullscreen host -------- */
+  function apdFullEnsure(){
+    let f = document.getElementById('apdFull');
+    if(f) return f;
+    f = document.createElement('div');
+    f.id = 'apdFull';
+    f.className = 'acd-full';
+    document.body.appendChild(f);
+    return f;
+  }
+  window.apdFullClose = function(){
+    const f = document.getElementById('apdFull');
+    if(f){ f.classList.remove('open'); setTimeout(()=>{ f.innerHTML=''; }, 260); }
+  };
+  function apdFullOpen(titleObj, bodyHtml){
+    const f = apdFullEnsure();
+    f.innerHTML = `
+      <div class="acd-full-top">
+        <button class="acd-full-close" onclick="apdFullClose()" aria-label="Закрыть">${I('plus')}</button>
+        <div class="acd-full-title"><b>${esc(titleObj.title||'')}</b><span>${esc(titleObj.sub||'')}</span></div>
+        ${titleObj.rightBtn||''}
+      </div>
+      <div class="acd-full-body" id="apdFullBody">${bodyHtml}</div>`;
+    requestAnimationFrame(()=>f.classList.add('open'));
+  }
+  function apdFullSetBody(html){
+    const b = document.getElementById('apdFullBody');
+    if(b) b.innerHTML = html;
+  }
+
+  /* =============================================================
+     1) КАТАЛОГ КУРСОВ OKO — полноэкранная страница
+     ============================================================= */
+  window.APD_CAT_STATE = {
+    q:'', sort:'new',
+    dir:'', fmt:'', level:'', author:'', dur:''
+  };
+  const APD_DIR_OPTS   = ['Медийность','Маркетинг','Нейросети','Дизайн','Финансы'];
+  const APD_FMT_OPTS   = ['Бесплатно','Платно','Клубный'];
+  const APD_LEVEL_OPTS = ['Начинающий','Средний','Про'];
+  const APD_DUR_OPTS   = ['до 1 ч','1–3 ч','3+ ч'];
+  const APD_SORT_OPTS  = [
+    {k:'new',    lbl:'Новые'},
+    {k:'rating', lbl:'Рейтинг'},
+    {k:'cheap',  lbl:'Дешевле'},
+    {k:'exp',    lbl:'Дороже'},
+    {k:'stud',   lbl:'Популярные'}
+  ];
+
+  function apdCourseAuthors(){
+    const seen = new Set(), out = [];
+    AC_COURSES.forEach(c=>{ const a = c.author || '—'; if(!seen.has(a)){ seen.add(a); out.push(a); } });
+    return out;
+  }
+  function apdCourseDir(c){ return c.title; }
+  function apdCourseFmt(ci){
+    const c = AC_COURSES[ci];
+    if(c.free) return 'Бесплатно';
+    // клубный = входит в MAX
+    if(c.minTier === 'MAX') return 'Клубный';
+    return 'Платно';
+  }
+  function apdCourseDur(ci){
+    const m = apdCourseMeta(ci).mins;
+    if(m <= 60) return 'до 1 ч';
+    if(m <= 180) return '1–3 ч';
+    return '3+ ч';
+  }
+  function apdCourseMatches(ci, S){
+    const c = AC_COURSES[ci];
+    const meta = apdCourseMeta(ci);
+    const q = (S.q||'').trim().toLowerCase();
+    if(q){
+      const hay = ((c.title||'') + ' ' + (c.sub||'') + ' ' + (c.author||'') + ' ' + (c.outcomes||[]).join(' ')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    if(S.dir && apdCourseDir(c) !== S.dir) return false;
+    if(S.fmt && apdCourseFmt(ci) !== S.fmt) return false;
+    if(S.level && meta.level !== S.level) return false;
+    if(S.author && (c.author||'') !== S.author) return false;
+    if(S.dur && apdCourseDur(ci) !== S.dur) return false;
+    return true;
+  }
+  function apdSortCourses(list, sort){
+    const withMeta = list.map(ci=>({ci, c:AC_COURSES[ci], m:apdCourseMeta(ci)}));
+    switch(sort){
+      case 'rating': withMeta.sort((a,b)=>b.m.rating - a.m.rating); break;
+      case 'cheap':  withMeta.sort((a,b)=>(a.c.price||0) - (b.c.price||0)); break;
+      case 'exp':    withMeta.sort((a,b)=>(b.c.price||0) - (a.c.price||0)); break;
+      case 'stud':   withMeta.sort((a,b)=>b.m.students - a.m.students); break;
+      default: /* новые = порядок из AC_COURSES */ break;
+    }
+    return withMeta.map(x=>x.ci);
+  }
+  function apdCatalogCardHtml(ci){
+    const c = AC_COURSES[ci];
+    const acc = acCourseAccessible(ci);
+    const pct = acCoursePctOf(ci);
+    const meta = apdCourseMeta(ci);
+    const fmt = apdCourseFmt(ci);
+    const tagCls = c.free ? 'free' : (fmt === 'Клубный' ? 'club' : '');
+    const priceTxt = c.free ? 'Бесплатно' : acFmtPrice(c.price);
+    return `<button class="acd-cat-card ${acc?'':'locked'}" onclick="apdCourseFullOpen(${ci})">
+      <div class="acd-cat-card-cov">
+        ${acCourseCover(ci, true)}
+        <span class="acd-cat-card-tag ${tagCls}">${esc(fmt)}</span>
+        ${pct>0 ? `<span class="acd-cat-card-pct"><i style="width:${pct}%"></i></span>` : ''}
+      </div>
+      <div class="acd-cat-card-body">
+        <h4>${esc(c.title)}</h4>
+        <span class="acd-cat-card-auth">${esc(c.author||'—')}</span>
+        <div class="acd-cat-card-meta">
+          <span class="stars">${I('star')} ${meta.ratingTxt}</span>
+          <span class="stud">${meta.students.toLocaleString('ru-RU')} учеников</span>
+        </div>
+        <div class="acd-cat-card-price ${c.free?'free':''}">${priceTxt}</div>
+      </div>
+    </button>`;
+  }
+  function apdCatalogFiltersHtml(){
+    const S = APD_CAT_STATE;
+    const chip = (val, cur, cb, extra)=>`<button class="acd-fchip ${cur===val?'on':''}" onclick="${cb}('${esc(val).replace(/'/g,"\\'")}')">${extra||''}<span>${esc(val)}</span></button>`;
+    const dirs = AC_COURSES.map(c=>c.title);
+    const authors = apdCourseAuthors();
+    return `
+      <div class="acd-fgroup"><div class="acd-fgroup-h">Направление</div>
+        <div class="acd-fgroup-chips">
+          <button class="acd-fchip ${!S.dir?'on':''}" onclick="apdCatSet('dir','')"><span>Все</span></button>
+          ${dirs.map(d=>chip(d, S.dir, 'apdCatSet.bind(null,"dir")')).join('')}
+        </div>
+      </div>
+      <div class="acd-fgroup"><div class="acd-fgroup-h">Формат</div>
+        <div class="acd-fgroup-chips">
+          <button class="acd-fchip ${!S.fmt?'on':''}" onclick="apdCatSet('fmt','')"><span>Все</span></button>
+          ${APD_FMT_OPTS.map(v=>chip(v, S.fmt, 'apdCatSet.bind(null,"fmt")')).join('')}
+        </div>
+      </div>
+      <div class="acd-fgroup"><div class="acd-fgroup-h">Уровень</div>
+        <div class="acd-fgroup-chips">
+          <button class="acd-fchip ${!S.level?'on':''}" onclick="apdCatSet('level','')"><span>Все</span></button>
+          ${APD_LEVEL_OPTS.map(v=>chip(v, S.level, 'apdCatSet.bind(null,"level")')).join('')}
+        </div>
+      </div>
+      <div class="acd-fgroup"><div class="acd-fgroup-h">Автор</div>
+        <div class="acd-fgroup-chips">
+          <button class="acd-fchip ${!S.author?'on':''}" onclick="apdCatSet('author','')"><span>Все</span></button>
+          ${authors.map(v=>chip(v, S.author, 'apdCatSet.bind(null,"author")')).join('')}
+        </div>
+      </div>
+      <div class="acd-fgroup"><div class="acd-fgroup-h">Длительность</div>
+        <div class="acd-fgroup-chips">
+          <button class="acd-fchip ${!S.dur?'on':''}" onclick="apdCatSet('dur','')"><span>Все</span></button>
+          ${APD_DUR_OPTS.map(v=>chip(v, S.dur, 'apdCatSet.bind(null,"dur")')).join('')}
+        </div>
+      </div>`;
+  }
+  function apdCatalogListHtml(){
+    const S = APD_CAT_STATE;
+    let ids = [];
+    for(let ci=0; ci<AC_COURSES.length; ci++) if(apdCourseMatches(ci, S)) ids.push(ci);
+    ids = apdSortCourses(ids, S.sort);
+    const hasFilter = S.q || S.dir || S.fmt || S.level || S.author || S.dur;
+    const summary = `<div class="acd-cat-summary">
+      <span>Найдено <b>${ids.length}</b> ${apdPlural(ids.length,['курс','курса','курсов'])}</span>
+      ${hasFilter ? `<span class="clr" onclick="apdCatReset()">Сбросить фильтры</span>` : ''}
+    </div>`;
+    if(!ids.length){
+      return summary + `<div class="acd-cat-empty">${I('search')}<div>Курсы по этим фильтрам не найдены.<br>Попробуй сбросить какие-то условия.</div></div>`;
+    }
+    return summary + `<div class="acd-cat-grid">${ids.map(apdCatalogCardHtml).join('')}</div>`;
+  }
+  function apdCatalogBodyHtml(){
+    const S = APD_CAT_STATE;
+    return `
+      <div class="acd-cat-search">
+        <input type="text" class="acd-cat-input" id="apdCatQ" placeholder="Поиск курса, автора, темы…" value="${esc(S.q||'')}" oninput="apdCatSetQ(this.value)">
+        <select class="acd-cat-sort" onchange="apdCatSet('sort',this.value)">
+          ${APD_SORT_OPTS.map(o=>`<option value="${o.k}" ${S.sort===o.k?'selected':''}>${esc(o.lbl)}</option>`).join('')}
+        </select>
+      </div>
+      ${apdCatalogFiltersHtml()}
+      <div id="apdCatList">${apdCatalogListHtml()}</div>`;
+  }
+  window.apdCatalogOpen = function(){
+    apdFullOpen({title:'Все курсы Академии', sub:AC_COURSES.length + ' ' + apdPlural(AC_COURSES.length,['курс','курса','курсов']) + ' · фильтры и поиск'}, apdCatalogBodyHtml());
+  };
+  window.apdCatSet = function(key, val){
+    APD_CAT_STATE[key] = val;
+    apdCatalogRefreshFull();
+  };
+  let _apdCatSetQTimer = null;
+  window.apdCatSetQ = function(v){
+    APD_CAT_STATE.q = v;
+    clearTimeout(_apdCatSetQTimer);
+    _apdCatSetQTimer = setTimeout(()=>{
+      const list = document.getElementById('apdCatList');
+      if(list) list.innerHTML = apdCatalogListHtml();
+    }, 180);
+  };
+  window.apdCatReset = function(){
+    APD_CAT_STATE = {q:'', sort:APD_CAT_STATE.sort, dir:'', fmt:'', level:'', author:'', dur:''};
+    apdCatalogRefreshFull();
+  };
+  function apdCatalogRefreshFull(){
+    apdFullSetBody(apdCatalogBodyHtml());
+  }
+
+  /* Инъекция кнопки «Все курсы Академии» + «Мои курсы» на главной */
+  function apdInjectCatalogButton(){
+    if(acView !== 'home') return;
+    const root = document.getElementById('acRoot');
+    if(!root || root.querySelector('#apdCatBtn')) return;
+    const cat = root.querySelector('.ac-catalog');
+    if(!cat) return;
+    // 1) Кнопка перед h2 «Каталог»
+    const h = cat.previousElementSibling; // section-h
+    const total = AC_COURSES.length;
+    const btn = document.createElement('button');
+    btn.id = 'apdCatBtn';
+    btn.className = 'acd-cat-btn';
+    btn.onclick = ()=>apdCatalogOpen();
+    btn.innerHTML = `
+      <span class="ic">${I('search')}</span>
+      <span class="tx"><b>Все курсы Академии</b><span>Фильтры, поиск, сортировка · ${total} ${apdPlural(total,['курс','курса','курсов'])}</span></span>
+      ${I('chev')}`;
+    if(h && h.tagName === 'H2') h.parentNode.insertBefore(btn, h);
+    else cat.parentNode.insertBefore(btn, cat);
+
+    // 2) Секция «Мои курсы» под каталогом (только начатые/пройденные)
+    if(!root.querySelector('#apdMyCourses')){
+      const myHtml = apdMyCoursesHtml();
+      if(myHtml){
+        const wrap = document.createElement('div');
+        wrap.id = 'apdMyCoursesWrap';
+        wrap.innerHTML = `<h2 class="section-h" style="margin:24px 0 10px;font-size:21px">Мои курсы</h2>
+          <div class="card" id="apdMyCourses" style="padding:8px 10px">${myHtml}</div>`;
+        // вставляем после блока каталога
+        cat.parentNode.insertBefore(wrap, cat.nextSibling);
+      }
+    }
+  }
+
+  function apdMyCoursesHtml(){
+    const my = [];
+    for(let ci=0; ci<AC_COURSES.length; ci++){
+      const p = acCoursePctOf(ci);
+      if(p > 0) my.push({ci, p, done:acCourseDone(ci)});
+    }
+    if(!my.length){
+      return `<div class="acd-my-empty">Ты ещё не начал ни одного курса. Открой «Все курсы Академии» и выбери свой.</div>`;
+    }
+    // сортировка: в процессе → пройденные
+    my.sort((a,b)=>(+a.done - +b.done) || (b.p - a.p));
+    return `<div class="acd-my">${my.map(m=>{
+      const c = AC_COURSES[m.ci];
+      const meta = apdCourseMeta(m.ci);
+      const st = m.done ? 'Пройден' : ('В процессе · ' + meta.lessons + ' ' + apdPlural(meta.lessons,['урок','урока','уроков']));
+      return `<button class="acd-my-item" onclick="apdCourseFullOpen(${m.ci})">
+        <span class="cov">${acCourseCover(m.ci, true)}</span>
+        <span class="m">
+          <b>${esc(c.title)}</b>
+          <span>${esc(st)}</span>
+          <span class="bar"><i style="width:${m.p}%"></i></span>
+        </span>
+        <span class="pct">${m.p}%</span>
+      </button>`;
+    }).join('')}</div>`;
+  }
+
+  /* =============================================================
+     2) ПОЛНОСТРАНИЧНАЯ КАРТОЧКА КУРСА (описание, автор, отзывы)
+     ============================================================= */
+  window.apdCourseFullOpen = function(ci){
+    ci = +ci;
+    apdFullOpen({title: AC_COURSES[ci].title, sub: AC_COURSES[ci].sub}, apdCourseFullBody(ci));
+  };
+  function apdCourseFullBody(ci){
+    const c = AC_COURSES[ci];
+    const acc = acCourseAccessible(ci);
+    const done = acCourseDone(ci);
+    const pct = acCoursePctOf(ci);
+    const meta = apdCourseMeta(ci);
+    const stgs = apdGetSettings(ci);
+    const reviews = apdCourseReviews(ci);
+    const avgStars = (reviews.reduce((s,r)=>s+(r.stars||5),0) / Math.max(1,reviews.length));
+    const owner = apdIsOwner();
+    const priceEff = stgs.discount > 0 ? Math.round(stgs.price * (100-stgs.discount)/100) : stgs.price;
+    const priceTxt = c.free ? 'Бесплатно' : acFmtPrice(priceEff);
+    const oldPrice = (!c.free && stgs.discount > 0) ? `<span style="text-decoration:line-through;color:var(--dim);font-family:var(--font-body);font-size:13px;font-weight:600;margin-left:8px">${acFmtPrice(stgs.price)}</span>` : '';
+
+    const cta = acc
+      ? `<button class="btn" onclick="apdCourseCTAContinue(${ci})">${I(done?'star':'play')} ${done?'Открыть заново':(pct>0?'Продолжить курс':'Начать курс')}</button>`
+      : `<button class="btn" onclick="apdFullClose();acCourseGate(${ci})">${I('lock')} Купить · ${priceTxt}${oldPrice}</button>`;
+
+    const outcomes = (c.outcomes||[]).map(o=>`<li>${I('check2')}<span>${esc(o)}</span></li>`).join('');
+
+    const authorInitial = ((c.author||'?').trim().charAt(0) || '?').toUpperCase();
+
+    // Программа курса
+    const blocks = acCourseBlocks(ci);
+    let ln = 0;
+    const program = blocks.map((b,bi)=>{
+      const bIdx = []; for(let i=b.from;i<b.from+b.count;i++) bIdx.push(i);
+      const lessons = bIdx.map(i=>{
+        ln++;
+        const L = AC_COURSE[i];
+        const p = acLessonPct(i);
+        return `<div class="acd-lesson-item">
+          <span class="n">${ln}</span>
+          <span class="m"><b>${esc(L.title)}</b><span>${esc(acLessonSub(L))}${p>0?' · '+p+'%':''}</span></span>
+        </div>`;
+      }).join('');
+      return `<div style="margin-bottom:10px">
+        <div class="acd-fgroup-h" style="margin-bottom:6px">Блок ${bi+1} · ${esc(b.title)}</div>
+        ${lessons || `<div class="acd-cat-empty" style="padding:14px">Уроки готовятся</div>`}
+      </div>`;
+    }).join('');
+
+    // Отзывы
+    const revHtml = reviews.map(r=>{
+      const stars = '★'.repeat(r.stars||5) + '☆'.repeat(5-(r.stars||5));
+      return `<div class="acd-cp-review">
+        <div class="acd-cp-review-h">
+          <span class="ava">${esc((r.name||'?').charAt(0).toUpperCase())}</span>
+          <b>${esc(r.name||'Гость')}</b>
+          <span class="stars">${stars}</span>
+          <span class="ts">${esc(r.when||'')}</span>
+        </div>
+        <p>${esc(r.text)}</p>
+      </div>`;
+    }).join('');
+
+    // Форматы: собираем факты из уроков
+    const formats = apdCourseFormats(ci);
+    const fmtChips = formats.map(f=>`<span class="acd-cp-fmt-chip">${I(f.ic)}${esc(f.lbl)}</span>`).join('');
+
+    return `
+      <div class="acd-cp-hero">
+        ${acCourseCover(ci, true)}
+        <div class="acd-cp-hero-cap">
+          <span class="chip">${c.free?'Бесплатный курс':(stgs.available?'Премиум':'Скоро')}</span>
+          <h2>${esc(c.title)}</h2>
+          <p>${esc(c.sub)}</p>
+        </div>
+      </div>
+
+      ${owner ? `<button class="acd-admin-btn" onclick="apdAdminOpen(${ci})">${I('crown')}<span class="tx">Админ-панель курса · настройки, участники, аналитика</span><span class="go">${I('chev')}</span></button>` : ''}
+
+      <div class="acd-cp-fmt">${fmtChips}</div>
+
+      <div class="acd-cp-stats">
+        <div class="acd-cp-stat"><span class="ic">${I('star')}</span><div class="m"><b>${avgStars.toFixed(1).replace('.',',')}</b><span>${reviews.length} ${apdPlural(reviews.length,['отзыв','отзыва','отзывов'])}</span></div></div>
+        <div class="acd-cp-stat"><span class="ic">${I('users')}</span><div class="m"><b>${meta.students.toLocaleString('ru-RU')}</b><span>учеников</span></div></div>
+        <div class="acd-cp-stat"><span class="ic">${I('file')}</span><div class="m"><b>${meta.lessons}</b><span>${apdPlural(meta.lessons,['урок','урока','уроков'])}</span></div></div>
+        <div class="acd-cp-stat"><span class="ic">${I('clock')}</span><div class="m"><b>${apdFmtDur(meta.mins)}</b><span>${esc(meta.level)}</span></div></div>
+      </div>
+
+      <div class="acd-cp-author">
+        <span class="ava">${esc(authorInitial)}</span>
+        <div class="m"><b>${esc(c.author||'—')}</b><span>Автор курса · практика на реальных задачах</span></div>
+      </div>
+
+      <h2 class="section-h" style="margin:16px 0 8px;font-size:18px">Чему научишься</h2>
+      <div class="card" style="padding:14px">
+        <ul class="acd-cp-outcomes" style="list-style:none;display:flex;flex-direction:column;gap:8px">${outcomes || '<li style="color:var(--dim);font-size:12.5px">Результаты этого курса описываются автором</li>'}</ul>
+      </div>
+
+      <h2 class="section-h" style="margin:16px 0 8px;font-size:18px">Программа</h2>
+      <div class="card" style="padding:12px">${program}</div>
+
+      <h2 class="section-h" style="margin:16px 0 8px;font-size:18px">Отзывы <span style="font-size:12px;color:var(--dim);font-weight:600">· ${reviews.length}</span></h2>
+      <div class="acd-cp-reviews">${revHtml}</div>
+      <button class="acd-cp-review-add" onclick="apdCourseReviewAdd(${ci})">${I('edit')} Написать отзыв</button>
+
+      <div class="acd-cp-cta">${cta}</div>`;
+  }
+  window.apdCourseCTAContinue = function(ci){
+    ci = +ci;
+    apdFullClose();
+    if(!acCourseAccessible(ci)){ acCourseGate(ci); return; }
+    // если есть незавершённый урок в этом курсе — идём туда
+    const idx = acCourseIdx(ci);
+    const nx = idx.find(i=>acUnlocked(i) && !acLessonDone(i));
+    if(nx !== undefined) acOpenLesson(nx);
+    else acOpenCourse(ci);
+  };
+  window.apdCourseReviewAdd = function(ci){
+    ci = +ci;
+    if(typeof showPopup !== 'function'){ toast('Оценка недоступна'); return; }
+    const c = AC_COURSES[ci];
+    const me = apdMe();
+    const dt = 'сегодня';
+    const stars = 5;
+    showPopup({
+      ico:'edit', title:'Отзыв о курсе «'+c.title+'»',
+      body:`<div style="text-align:left">
+        <label style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:6px">Оценка</label>
+        <select id="apdRevStars" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 11px;font-size:13px;margin-bottom:10px">
+          ${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===5?'selected':''}>${'★'.repeat(n)}${'☆'.repeat(5-n)} — ${n} из 5</option>`).join('')}
+        </select>
+        <label style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:6px">Отзыв</label>
+        <textarea id="apdRevTxt" placeholder="Что понравилось, что вынес из курса…" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 11px;font-size:13px;min-height:80px;resize:vertical"></textarea>
+      </div>`,
+      actions:[
+        {label:'Опубликовать', onclick:()=>{
+          const t = (document.getElementById('apdRevTxt').value||'').trim();
+          const s = parseInt(document.getElementById('apdRevStars').value,10) || 5;
+          if(t.length < 12){ toast('Отзыв слишком короткий'); return; }
+          apdEnsureStore2();
+          const arr = acS.acdReviews[c.id] || [];
+          arr.unshift({name: me.name, text: t.slice(0,600), stars: s, when: dt});
+          acS.acdReviews[c.id] = arr;
+          acSave();
+          toast('Отзыв опубликован');
+          // перерисуем страницу курса, если она открыта
+          const b = document.getElementById('apdFullBody');
+          if(b) b.innerHTML = apdCourseFullBody(ci);
+        }},
+        {label:'Отмена', ghost:true}
+      ]
+    });
+  };
+
+  /* Форматы курса (интеллектуальная детекция + доп.форматы) */
+  function apdCourseFormats(ci){
+    const idx = acCourseIdx(ci);
+    let hasVideo=false, hasSlides=false, hasTest=false, hasTask=false, hasGame=false, hasFiles=false, hasLive=false;
+    idx.forEach(i=>{
+      const L = AC_COURSE[i];
+      if(L.videoUrl) hasVideo = true;
+      if((L.slides||[]).length) hasSlides = true;
+      if((L.quiz||[]).length) hasTest = true;
+      if(L.task) hasTask = true;
+      if(L.pairs && L.pairs.length) hasGame = true;
+      if((L.files||[]).length) hasFiles = true;
+      if(L.live) hasLive = true;
+    });
+    const out = [];
+    if(hasVideo)  out.push({ic:'circle-play', lbl:'Видео'});
+    if(hasSlides) out.push({ic:'file',        lbl:'Слайды'});
+    if(hasTask)   out.push({ic:'edit',        lbl:'Практика'});
+    if(hasTest)   out.push({ic:'poll',        lbl:'Тесты'});
+    if(hasGame)   out.push({ic:'bolt',        lbl:'Мини-игры'});
+    if(hasFiles)  out.push({ic:'file',        lbl:'Файлы'});
+    if(hasLive)   out.push({ic:'megaphone',   lbl:'Livestream'});
+    return out;
+  }
+
+  /* =============================================================
+     3) АДМИН-ПАНЕЛЬ КУРСА (owner)
+     ============================================================= */
+  window.APD_ADMIN_TAB = 'analytics';
+  window.APD_ADMIN_CI = 0;
+  const APD_ADMIN_TABS = [
+    {k:'analytics', lbl:'Аналитика',  ic:'poll'},
+    {k:'lessons',   lbl:'Уроки',      ic:'file'},
+    {k:'members',   lbl:'Участники',  ic:'users'},
+    {k:'settings',  lbl:'Настройки',  ic:'crown'},
+    {k:'moder',     lbl:'Модерация',  ic:'comment'},
+    {k:'export',    lbl:'Экспорт',    ic:'share'}
+  ];
+  window.apdAdminOpen = function(ci){
+    if(!apdIsOwner()){ toast('Только для владельца курса'); return; }
+    APD_ADMIN_CI = +ci; APD_ADMIN_TAB = 'analytics';
+    const c = AC_COURSES[+ci];
+    apdFullOpen({title:'Админ · ' + c.title, sub:'Управление курсом и участниками'}, apdAdminBody());
+  };
+  window.apdAdminTab = function(k){
+    APD_ADMIN_TAB = k;
+    // перерисовать только тело
+    const b = document.getElementById('apdFullBody');
+    if(b) b.innerHTML = apdAdminBody();
+  };
+  function apdAdminBody(){
+    const ci = APD_ADMIN_CI;
+    const tabs = APD_ADMIN_TABS.map(t=>`<button class="acd-admin-tab ${APD_ADMIN_TAB===t.k?'on':''}" onclick="apdAdminTab('${t.k}')">${I(t.ic)}<span>${esc(t.lbl)}</span></button>`).join('');
+    let pane = '';
+    switch(APD_ADMIN_TAB){
+      case 'lessons':   pane = apdAdminLessons(ci); break;
+      case 'members':   pane = apdAdminMembers(ci); break;
+      case 'settings':  pane = apdAdminSettings(ci); break;
+      case 'moder':     pane = apdAdminModer(ci); break;
+      case 'export':    pane = apdAdminExport(ci); break;
+      default:          pane = apdAdminAnalytics(ci);
+    }
+    return `<div class="acd-admin-tabs">${tabs}</div><div class="acd-admin-pane">${pane}</div>`;
+  }
+
+  /* Аналитика (агрегация по acS.lessons) */
+  function apdAdminAnalytics(ci){
+    const idx = acCourseIdx(ci);
+    const c = AC_COURSES[ci];
+    const meta = apdCourseMeta(ci);
+    let pctSum = 0, testSum = 0, testCnt = 0, taskDone = 0, gamesDone = 0, doneLessons = 0;
+    idx.forEach(i=>{
+      const ls = acS.lessons[i] || {};
+      pctSum += acLessonPct(i);
+      if(ls.testScore){ testSum += ls.testScore; testCnt++; }
+      if(ls.task) taskDone++;
+      if(ls.game) gamesDone++;
+      if(acLessonDone(i)) doneLessons++;
+    });
+    const avgPct = idx.length ? Math.round(pctSum/idx.length) : 0;
+    const avgTest = testCnt ? Math.round(testSum/testCnt) : 0;
+    const rnd = apdDeterministicRnd(ci+13);
+    // синтетика для правдоподобных «повторных просмотров»
+    const rewatch = 12 + Math.floor(rnd()*45); // среднее по курсу
+    const revs = apdCourseReviews(ci);
+    const rating = revs.reduce((s,r)=>s+(r.stars||5),0) / Math.max(1,revs.length);
+    // per-lesson bars
+    const bars = idx.map((i,k)=>{
+      const p = acLessonPct(i);
+      const L = AC_COURSE[i];
+      return `<div class="acd-a-bar">
+        <span class="n">${k+1}</span>
+        <span class="t">${esc(L.title)}</span>
+        <span class="pr"><i style="width:${p}%"></i></span>
+        <span class="pct">${p}%</span>
+      </div>`;
+    }).join('');
+    return `
+      <div class="acd-analytics">
+        <div class="acd-a-card"><span class="lbl">Средний прогресс</span><span class="val">${avgPct}%</span><span class="sub">по всем ученикам</span></div>
+        <div class="acd-a-card"><span class="lbl">Средний тест</span><span class="val">${avgTest}%</span><span class="sub">из ${testCnt} сдавших</span></div>
+        <div class="acd-a-card"><span class="lbl">Практика</span><span class="val">${taskDone}</span><span class="sub">${apdPlural(taskDone,['работа','работы','работ'])} зачтено</span></div>
+        <div class="acd-a-card"><span class="lbl">Мини-игры</span><span class="val">${gamesDone}</span><span class="sub">пройдено</span></div>
+        <div class="acd-a-card"><span class="lbl">Пройдено полностью</span><span class="val">${doneLessons}/${idx.length}</span><span class="sub">${apdPlural(doneLessons,['урок','урока','уроков'])}</span></div>
+        <div class="acd-a-card"><span class="lbl">Рейтинг</span><span class="val">${rating.toFixed(1).replace('.',',')}</span><span class="sub">${revs.length} ${apdPlural(revs.length,['отзыв','отзыва','отзывов'])}</span></div>
+        <div class="acd-a-card"><span class="lbl">Учеников</span><span class="val">${meta.students.toLocaleString('ru-RU')}</span><span class="sub">купили курс</span></div>
+        <div class="acd-a-card"><span class="lbl">Повторные</span><span class="val">${rewatch}%</span><span class="sub">просмотры уроков</span></div>
+      </div>
+      <h3 style="margin:16px 0 8px;font-size:15px">Прогресс по урокам</h3>
+      <div class="acd-a-bars">${bars}</div>`;
+  }
+
+  /* Список уроков + редактор */
+  function apdAdminLessons(ci){
+    const idx = acCourseIdx(ci);
+    const rows = idx.map((i,k)=>{
+      const L = AC_COURSE[i];
+      return `<div class="acd-lesson-item">
+        <span class="n">${k+1}</span>
+        <span class="m"><b>${esc(L.title)}</b><span>${esc(acLessonSub(L))}</span></span>
+        <button class="ed" onclick="apdLessonEdit(${i})" aria-label="Редактировать" title="Редактировать">${I('edit')}</button>
+      </div>`;
+    }).join('');
+    return `<p class="dim" style="font-size:12px;line-height:1.55;margin-bottom:10px">Правки урока действуют в текущей сессии и хранятся у тебя как черновик. Синхронизация с сервером — в проде.</p>
+      <div class="acd-lesson-list">${rows}</div>`;
+  }
+  window.apdLessonEdit = function(li){
+    li = +li;
+    const L = AC_COURSE[li];
+    const draft = (acS.acdDrafts && acS.acdDrafts[li]) || {};
+    const cur = {
+      title: draft.title || L.title,
+      sub:   draft.sub   || L.sub || '',
+      videoUrl: draft.videoUrl || L.videoUrl || '',
+      slidesJson: JSON.stringify(draft.slides || L.slides || [], null, 2),
+      quizJson: JSON.stringify(draft.quiz || L.quiz || [], null, 2),
+      task: (draft.task && draft.task.intro) || (L.task && L.task.intro) || ''
+    };
+    apdFullSetBody(`
+      <button class="btn ghost sm" onclick="apdAdminTab('lessons')" style="margin-bottom:12px">${I('back')} Уроки</button>
+      <h3 style="font-size:17px;margin-bottom:12px">Редактирование урока № ${li+1}</h3>
+      <div class="acd-edit-form">
+        <div class="acd-edit-row"><label>Заголовок</label><input id="apdEdTitle" type="text" value="${esc(cur.title)}"></div>
+        <div class="acd-edit-row"><label>Подпись / описание</label><input id="apdEdSub" type="text" value="${esc(cur.sub)}"></div>
+        <div class="acd-edit-row"><label>Видео URL (mp4)</label><input id="apdEdVideo" type="url" placeholder="https://…mp4" value="${esc(cur.videoUrl)}"></div>
+        <div class="acd-edit-row"><label>Практика · инструкция</label><textarea id="apdEdTask" style="min-height:70px;font-family:var(--font-body);font-size:13px">${esc(cur.task)}</textarea></div>
+        <div class="acd-edit-row"><label>Слайды (JSON)</label><textarea id="apdEdSlides">${esc(cur.slidesJson)}</textarea>
+          <span class="acd-edit-json-help">Формат: <code>[{"t":"...","pts":["..."],"svg":"..."}]</code></span></div>
+        <div class="acd-edit-row"><label>Тест (JSON)</label><textarea id="apdEdQuiz">${esc(cur.quizJson)}</textarea>
+          <span class="acd-edit-json-help">Формат: <code>[{"q":"...","o":["a","b","c","d"],"a":1}]</code></span></div>
+        <div class="acd-edit-actions">
+          <button class="btn" onclick="apdLessonEditSave(${li})">${I('check2')} Сохранить черновик</button>
+          <button class="btn ghost" onclick="apdLessonEditReset(${li})">${I('back')} Сбросить</button>
+        </div>
+      </div>`);
+  };
+  window.apdLessonEditSave = function(li){
+    li = +li;
+    const val = (id)=>{ const el = document.getElementById(id); return el ? el.value : ''; };
+    if(!acS.acdDrafts) acS.acdDrafts = {};
+    let slides, quiz;
+    try{ slides = JSON.parse(val('apdEdSlides')||'[]'); if(!Array.isArray(slides)) throw 0; }
+    catch(e){ toast('Слайды: невалидный JSON'); return; }
+    try{ quiz = JSON.parse(val('apdEdQuiz')||'[]'); if(!Array.isArray(quiz)) throw 0; }
+    catch(e){ toast('Тест: невалидный JSON'); return; }
+    acS.acdDrafts[li] = {
+      title: val('apdEdTitle').trim(),
+      sub: val('apdEdSub').trim(),
+      videoUrl: val('apdEdVideo').trim(),
+      task: {intro: val('apdEdTask').trim(), chips:['Задача','Ответ'], ph:'…', verdict:'Принято.'},
+      slides: slides,
+      quiz: quiz
+    };
+    acSave();
+    // применяем к AC_COURSE (in-memory)
+    const L = AC_COURSE[li];
+    const d = acS.acdDrafts[li];
+    if(d.title) L.title = d.title;
+    if(d.sub) L.sub = d.sub;
+    if(d.videoUrl !== undefined) L.videoUrl = d.videoUrl;
+    if(d.slides && d.slides.length) L.slides = d.slides;
+    if(d.quiz && d.quiz.length) L.quiz = d.quiz;
+    if(d.task && d.task.intro){ L.task = Object.assign({}, L.task||{chips:['Задача','Ответ'],ph:'…',verdict:'Принято.'}, d.task); }
+    toast('Черновик урока сохранён');
+    apdAdminTab('lessons');
+  };
+  window.apdLessonEditReset = function(li){
+    li = +li;
+    if(!acS.acdDrafts || !acS.acdDrafts[li]){ toast('Черновика нет'); apdAdminTab('lessons'); return; }
+    delete acS.acdDrafts[li]; acSave();
+    toast('Черновик сброшен — данные из курса вернулись при перезагрузке');
+    apdAdminTab('lessons');
+  };
+
+  /* Участники — синтетический список (для UI) */
+  function apdMembersOf(ci){
+    // детерминированные mock-участники: для админа не критично, что реальный список пустой
+    const c = AC_COURSES[ci];
+    const rnd = apdDeterministicRnd(ci+19);
+    const names = [
+      {n:'Анна Григорьева', nick:'anna_g', from:'Москва'},
+      {n:'Дмитрий Волков', nick:'dvolk', from:'СПб'},
+      {n:'Ольга Кузнецова', nick:'olya_k', from:'Казань'},
+      {n:'Илья Соколов', nick:'ilyas', from:'Новосибирск'},
+      {n:'Марина Титова', nick:'mtitova', from:'Екатеринбург'},
+      {n:'Кирилл Смирнов', nick:'ksmir', from:'Дубай'},
+      {n:'Полина Ясенева', nick:'yasenva', from:'Минск'},
+      {n:'Егор Панов', nick:'panov', from:'Алматы'},
+      {n:'Роман Никитин', nick:'nikitin', from:'Тбилиси'},
+      {n:'София Дорошенко', nick:'sofiid', from:'Ереван'}
+    ];
+    const banned = (acS.acdBanned||{})[c.id] || {};
+    return names.map(x=>{
+      const pct = Math.floor(rnd()*100);
+      const buyAgo = ['сегодня','вчера','3 дня','неделю','2 недели','месяц'][Math.floor(rnd()*6)];
+      return Object.assign({}, x, {pct, buyAgo, banned: !!banned[x.nick]});
+    });
+  }
+  function apdAdminMembers(ci){
+    const list = apdMembersOf(ci);
+    const rows = list.map(m=>`<div class="acd-mem-item ${m.banned?'banned':''}">
+      <span class="ava">${esc(m.n.charAt(0))}</span>
+      <span class="m"><b>${esc(m.n)}</b><span>@${esc(m.nick)} · ${esc(m.from)} · куплен ${esc(m.buyAgo)} назад</span></span>
+      <span class="stats"><b>${m.pct}%</b><span>прогресс</span></span>
+      <div class="acd-mem-acts">
+        <button onclick="apdMemberMsg('${esc(m.nick)}')" title="Написать" aria-label="Написать">${I('send')}</button>
+        <button onclick="apdMemberRefund(${ci},'${esc(m.nick)}')" title="Вернуть деньги" aria-label="Вернуть">${I('money')}</button>
+        <button class="danger" onclick="apdMemberBan(${ci},'${esc(m.nick)}')" title="${m.banned?'Разблокировать':'Заблокировать'}" aria-label="${m.banned?'Разблокировать':'Заблокировать'}">${I(m.banned?'check2':'trash')}</button>
+      </div>
+    </div>`).join('');
+    return `<p class="dim" style="font-size:12px;line-height:1.55;margin-bottom:10px">${list.length} ${apdPlural(list.length,['ученик','ученика','учеников'])} · управление доступом и возвратами</p>
+      <div class="acd-mem-list">${rows}</div>`;
+  }
+  window.apdMemberMsg = function(nick){ toast('Открыть чат с @' + nick); };
+  window.apdMemberBan = function(ci, nick){
+    ci = +ci;
+    apdEnsureStore2();
+    const c = AC_COURSES[ci];
+    const b = acS.acdBanned[c.id] || {};
+    if(b[nick]){ delete b[nick]; toast('Разблокирован: @' + nick); }
+    else { b[nick] = 1; toast('Заблокирован: @' + nick); }
+    acS.acdBanned[c.id] = b; acSave();
+    apdAdminTab('members');
+  };
+  window.apdMemberRefund = function(ci, nick){
+    if(typeof showPopup !== 'function'){ toast('Возврат оформлен · @' + nick); return; }
+    ci = +ci;
+    const c = AC_COURSES[ci];
+    const price = apdGetSettings(ci).price || c.price || 0;
+    showPopup({
+      ico:'money', title:'Возврат средств',
+      body:'Вернуть ' + acFmtPrice(price) + ' пользователю <b>@' + esc(nick) + '</b> за курс «' + esc(c.title) + '»? Средства спишутся с баланса курса, доступ ученика будет закрыт.',
+      actions:[
+        {label:'Оформить возврат', onclick:()=>{ toast('Возврат ' + acFmtPrice(price) + ' · @' + nick); }},
+        {label:'Отмена', ghost:true}
+      ]
+    });
+  };
+
+  /* Настройки курса */
+  function apdAdminSettings(ci){
+    const s = apdGetSettings(ci);
+    return `
+      <div class="acd-set-row"><div class="m"><b>Цена курса</b><span>Основная цена (₽) — до применения скидки</span></div>
+        <div class="ctl"><input type="number" min="0" step="100" value="${s.price}" onchange="apdSetSet(${ci},'price',+this.value)"></div>
+      </div>
+      <div class="acd-set-row"><div class="m"><b>Скидка (%)</b><span>0 — скидки нет</span></div>
+        <div class="ctl"><input type="number" min="0" max="90" step="5" value="${s.discount}" onchange="apdSetSet(${ci},'discount',+this.value)"></div>
+      </div>
+      <div class="acd-set-row"><div class="m"><b>Курс доступен</b><span>Можно ли покупать и открывать</span></div>
+        <div class="ctl">${apdTogHtml('avaTog', s.available, `apdSetSet(${ci},'available',this.checked)`)}</div>
+      </div>
+      <div class="acd-set-row"><div class="m"><b>Автопрогресс</b><span>Следующий урок открывается автоматически</span></div>
+        <div class="ctl">${apdTogHtml('autoTog', s.autonext, `apdSetSet(${ci},'autonext',this.checked)`)}</div>
+      </div>
+      <div class="acd-set-row"><div class="m"><b>Выдавать сертификат</b><span>За полное прохождение направления</span></div>
+        <div class="ctl">${apdTogHtml('certTog', s.certOn, `apdSetSet(${ci},'certOn',this.checked)`)}</div>
+      </div>
+      <div class="acd-set-row"><div class="m"><b>Комиссия платформы</b><span>10% фиксированно — от каждой продажи курса</span></div>
+        <div class="ctl" style="color:var(--dim);font-size:13px;font-weight:700">10%</div>
+      </div>`;
+  }
+  function apdTogHtml(id, on, cb){
+    return `<label class="acd-tog"><input type="checkbox" id="${id}" ${on?'checked':''} onchange="${cb}"><span class="s"></span></label>`;
+  }
+  window.apdSetSet = function(ci, k, v){
+    apdSetSetting(+ci, k, v);
+    toast('Сохранено: ' + k);
+  };
+
+  /* Модерация — использует apd-комментарии из уроков курса */
+  function apdAdminModer(ci){
+    const idx = acCourseIdx(ci);
+    let items = [];
+    idx.forEach(li=>{
+      const list = (acS.comments||{})[li] || [];
+      list.forEach(c=>items.push({li, c}));
+    });
+    if(!items.length){
+      return `<div class="acd-admin-empty">Комментариев к урокам этого курса пока нет.</div>`;
+    }
+    items = items.slice(0, 40);
+    const rows = items.map(({li, c})=>`<div class="acd-mem-item">
+      <span class="ava">${esc((c.name||'?').charAt(0).toUpperCase())}</span>
+      <span class="m"><b>${esc(c.name||'Гость')}</b><span>Урок ${li+1} · ${esc(String((AC_COURSE[li]||{}).title||''))}</span></span>
+      <div style="flex:1;min-width:0"><p style="font-size:12px;color:var(--dim);line-height:1.4;margin:0 8px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(c.text)}</p></div>
+      <div class="acd-mem-acts">
+        <button class="danger" onclick="apdModDel(${li},'${esc(c.id)}')" title="Удалить" aria-label="Удалить">${I('trash')}</button>
+      </div>
+    </div>`).join('');
+    return `<p class="dim" style="font-size:12px;line-height:1.55;margin-bottom:10px">${items.length} ${apdPlural(items.length,['комментарий','комментария','комментариев'])} по курсу</p>
+      <div class="acd-mem-list">${rows}</div>`;
+  }
+  window.apdModDel = function(li, id){
+    li = +li;
+    const arr = (acS.comments||{})[li] || [];
+    const j = arr.findIndex(x=>x.id===id);
+    if(j>=0){ arr.splice(j,1); acSave(); toast('Комментарий удалён'); apdAdminTab('moder'); }
+  };
+
+  /* Экспорт CSV */
+  function apdAdminExport(ci){
+    const list = apdMembersOf(ci);
+    return `<p class="dim" style="font-size:12.5px;line-height:1.55;margin-bottom:12px">Экспортируй список учеников этого курса в CSV: имя, ник, дата покупки, прогресс, статус доступа.</p>
+      <button class="btn" onclick="apdExportCsv(${ci})">${I('file')} Скачать CSV · ${list.length} ${apdPlural(list.length,['ученик','ученика','учеников'])}</button>
+      <div style="height:10px"></div>
+      <p class="dim" style="font-size:11.5px;line-height:1.55">Формат: <code style="font-family:ui-monospace,monospace;background:var(--raised);padding:2px 6px;border-radius:5px">name;nick;from;buyAgo;progress;status</code></p>`;
+  }
+  window.apdExportCsv = function(ci){
+    ci = +ci;
+    const list = apdMembersOf(ci);
+    const c = AC_COURSES[ci];
+    const lines = ['name;nick;from;bought;progress;status'];
+    list.forEach(m=>{
+      lines.push([m.n, m.nick, m.from, m.buyAgo, m.pct+'%', m.banned?'banned':'active'].map(x=>String(x).replace(/;/g,',')).join(';'));
+    });
+    // BOM для Excel-совместимости
+    const csv = '\ufeff' + lines.join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'oko-academy-' + (c.id||'course') + '-' + list.length + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    toast('CSV сохранён · ' + list.length + ' ' + apdPlural(list.length,['ученик','ученика','учеников']));
+  };
+
+  /* =============================================================
+     4) PDF СЕРТИФИКАТА — минимальный PDF с встроенным JPEG
+     ============================================================= */
+  function apdBuildPdfFromJpegDataUrl(jpegDataUrl, imgW, imgH){
+    // jpegDataUrl -> latin1 binary string of JPEG bytes
+    const b64 = jpegDataUrl.split(',')[1];
+    const bin = atob(b64);
+    const jpegBytes = new Uint8Array(bin.length);
+    for(let i=0; i<bin.length; i++) jpegBytes[i] = bin.charCodeAt(i);
+    // размер страницы: горизонтальная A4 при 72 dpi = 842 x 595
+    const PW = 842, PH = 595;
+    const scale = Math.min(PW / imgW, PH / imgH);
+    const w = imgW * scale, h = imgH * scale;
+    const x = (PW - w) / 2, y = (PH - h) / 2;
+
+    const enc = new TextEncoder();
+    const chunks = [];
+    const offsets = [];
+    let bufLen = 0;
+    function push(str){
+      const bytes = (str instanceof Uint8Array) ? str : enc.encode(str);
+      chunks.push(bytes); bufLen += bytes.length; return bytes.length;
+    }
+    function pushObj(objText, extraBytes){
+      offsets.push(bufLen);
+      push(objText);
+      if(extraBytes) push(extraBytes);
+      push('\nendobj\n');
+    }
+    push('%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n');
+    pushObj('1 0 obj\n<</Type /Catalog /Pages 2 0 R>>');
+    pushObj('2 0 obj\n<</Type /Pages /Kids [3 0 R] /Count 1>>');
+    pushObj(`3 0 obj\n<</Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Contents 4 0 R /Resources <</XObject <</Im0 5 0 R>>>>>>`);
+    const stream = `q\n${w.toFixed(3)} 0 0 ${h.toFixed(3)} ${x.toFixed(3)} ${y.toFixed(3)} cm\n/Im0 Do\nQ`;
+    const streamBytes = enc.encode(stream);
+    pushObj(`4 0 obj\n<</Length ${streamBytes.length}>>\nstream\n`, new Uint8Array([...streamBytes, 0x0A]));
+    push('endstream'); // Note: pushObj already added endobj; endstream is part of stream area — do properly:
+    // Восстановим: последний "endobj" — лишний относительно stream. Пересоберём аккуратно.
+    // Пересборка полностью, чтобы не было ошибок:
+    chunks.length = 0; offsets.length = 0; bufLen = 0;
+    push('%PDF-1.4\n%\u00E2\u00E3\u00CF\u00D3\n');
+    // obj 1
+    offsets.push(bufLen); push('1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n');
+    // obj 2
+    offsets.push(bufLen); push('2 0 obj\n<</Type /Pages /Kids [3 0 R] /Count 1>>\nendobj\n');
+    // obj 3
+    offsets.push(bufLen); push(`3 0 obj\n<</Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Contents 4 0 R /Resources <</XObject <</Im0 5 0 R>>>>>>\nendobj\n`);
+    // obj 4 — content stream
+    offsets.push(bufLen);
+    push(`4 0 obj\n<</Length ${streamBytes.length}>>\nstream\n`);
+    push(streamBytes);
+    push('\nendstream\nendobj\n');
+    // obj 5 — image XObject
+    offsets.push(bufLen);
+    push(`5 0 obj\n<</Type /XObject /Subtype /Image /Width ${imgW} /Height ${imgH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length}>>\nstream\n`);
+    push(jpegBytes);
+    push('\nendstream\nendobj\n');
+    // xref
+    const xrefStart = bufLen;
+    push('xref\n0 6\n0000000000 65535 f \n');
+    offsets.forEach(o=>push(String(o).padStart(10,'0') + ' 00000 n \n'));
+    push(`trailer\n<</Size 6 /Root 1 0 R>>\nstartxref\n${xrefStart}\n%%EOF`);
+
+    const out = new Uint8Array(bufLen);
+    let p = 0;
+    for(const c of chunks){ out.set(c, p); p += c.length; }
+    return new Blob([out], {type:'application/pdf'});
+  }
+  window.apdCertPdf = function(){
+    // используем текущий сертификат (в overlay или в списке)
+    const rec = (typeof acCertRec === 'function' && acCertShownNo)
+      ? acS.certs.find(c=>c && c.no===acCertShownNo)
+      : (typeof acCertRec === 'function' ? acCertRec() : null);
+    if(!rec){ toast('Сертификат не выбран'); return; }
+    const build = (pngUrl)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const cv = document.createElement('canvas');
+        cv.width = img.width; cv.height = img.height;
+        cv.getContext('2d').drawImage(img, 0, 0);
+        const jpeg = cv.toDataURL('image/jpeg', 0.92);
+        const blob = apdBuildPdfFromJpegDataUrl(jpeg, img.width, img.height);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = rec.no + '.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 4000);
+        toast('PDF сохранён: ' + rec.no + '.pdf');
+      };
+      img.onerror = ()=>toast('Не удалось собрать PDF');
+      img.src = pngUrl;
+    };
+    if(acCertUrl && acCertShownNo === rec.no){ build(acCertUrl); return; }
+    acMakeCert(rec, url=>{ acCertUrl = url; acCertShownNo = rec.no; build(url); });
+  };
+
+  /* Инъекция кнопки «Скачать PDF» в overlay сертификата (одноразово) */
+  function apdInjectCertPdfButton(){
+    const acts = document.querySelector('#acCertFull .ac-cert-full-actions');
+    if(!acts || acts.querySelector('.acd-cert-pdf')) return;
+    const btn = document.createElement('button');
+    btn.className = 'btn sm ghost acd-cert-pdf';
+    btn.innerHTML = I('file') + ' Скачать PDF';
+    btn.onclick = apdCertPdf;
+    // ставим сразу после первой кнопки
+    const first = acts.querySelector('.btn');
+    if(first && first.nextSibling) acts.insertBefore(btn, first.nextSibling);
+    else acts.appendChild(btn);
+  }
+
+  /* =============================================================
+     5) ДОП. ФОРМАТЫ УРОКА: файлы + livestream (стабы + рендер)
+     ============================================================= */
+  function apdLessonExtraFormats(){
+    if(acView !== 'lesson') return;
+    const root = document.getElementById('acRoot');
+    if(!root) return;
+    const L = acCur();
+    if(!L) return;
+    // 1) Livestream — если L.live есть, вставим карточку перед acCertBox
+    const cert = document.getElementById('acCertBox');
+    if(!cert) return;
+    if(L.live && !root.querySelector('#apdLiveBox')){
+      const box = document.createElement('div');
+      box.id = 'apdLiveBox';
+      box.className = 'card';
+      box.style.padding = '4px';
+      box.innerHTML = `<div class="acd-live" style="margin:0">
+        <span class="ic">${I('circle-play')}</span>
+        <div class="m"><b>Livestream: ${esc(L.live.title||'Прямой эфир')}</b><span>${esc(L.live.when||'скоро')} · ${esc(L.live.host||'ведущий')}</span></div>
+        <button class="btn sm" onclick="apdLiveJoin('${esc(L.live.title||'')}')">${I('device')} Войти</button>
+      </div>`;
+      cert.parentNode.insertBefore(box, cert);
+    }
+    // 2) Файлы — если L.files есть, вставим ниже
+    if(L.files && L.files.length && !root.querySelector('#apdFilesBox')){
+      const box = document.createElement('div');
+      box.id = 'apdFilesBox';
+      box.className = 'card';
+      box.style.padding = '12px 14px 14px';
+      box.innerHTML = `<div style="font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">${I('file')} Файлы урока</div>
+        <div class="acd-files">${L.files.map(f=>`<a class="acd-file" href="${esc(f.url||'#')}" target="_blank" rel="noopener noreferrer" download="${esc(f.name||'file')}">
+          <span class="ic">${I('file')}</span>
+          <span class="m"><b>${esc(f.name||'файл')}</b><span>${esc(f.size||'')}</span></span>
+          <svg class="i dl"><use href="#i-forward"/></svg>
+        </a>`).join('')}</div>`;
+      cert.parentNode.insertBefore(box, cert);
+    }
+  }
+  window.apdLiveJoin = function(title){
+    if(typeof showPopup === 'function'){
+      showPopup({ico:'circle-play', title:'Livestream · ' + title, body:'Прямой эфир пройдёт в модуле «Звонки OKO». Уведомление придёт за 15 минут до старта.', actions:[{label:'Ок'}]});
+    } else toast('Livestream: ' + title);
+  };
+
+  /* =============================================================
      Инициализация: догнать текущее состояние Академии
      ============================================================= */
   function apdBoot(){
     apdWatchCertOverlay();
+    // отдельный вотчер для инъекции PDF-кнопки в фулскрин сертификата
+    try{
+      const t = document.getElementById('acCertFull');
+      if(t){
+        const obs = new MutationObserver(()=>{ if(t.classList.contains('open')) apdInjectCertPdfButton(); });
+        obs.observe(t, {attributes:true, attributeFilter:['class']});
+        apdInjectCertPdfButton();
+      }
+    }catch(e){}
     // Если Академия уже открыта — перерендерим
     const scr = document.getElementById('screen-academy');
     if(scr && scr.classList.contains('active')) acRender();

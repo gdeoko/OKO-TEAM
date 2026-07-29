@@ -199,6 +199,10 @@ function chNormalize(c){
   if(c.archived==null)    c.archived    = false;                             // канал в архиве
   if(c.pinned===undefined) c.pinned     = null;                              // id закреплённого поста (закреп)
   if(!Array.isArray(c.invites)) c.invites = [];                              // пригласительные ссылки
+  if(c.chatBgUrl===undefined) c.chatBgUrl = null;                            // свой фон чата (data URL)
+  if(c.website===undefined)   c.website   = '';                              // сайт-ссылка (PRO)
+  if(c.verifyRequested===undefined) c.verifyRequested = false;               // заявка на верификацию
+  if(c.kind==='channel' && c.commentsOn===undefined) c.commentsOn = true;    // комменты к постам (админ вкл/выкл)
   // гранулярные права администраторов (как в Telegram): доп-миграция старых записей
   if(Array.isArray(c.admins)) c.admins.forEach(a=>{ if(a && !a.rights) a.rights = chDefaultRights(); });
   // legacy-поле type держим синхронным — вдруг читает внешний код
@@ -2040,6 +2044,23 @@ if(typeof renderFeed==='function'){
 }
 
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
+(function chInitCat(){
+  /* доп-каталожные каналы для витрины (появляются один раз, если их ещё нет) */
+  const CAT_SEED = [
+    {id:'ch-cat-1', name:'Психология без воды', desc:'Практическая психология: самооценка, отношения, тревожность. Разборы, техники, поддержка сообщества.', icon:'star', bg:2, kind:'club', access:'closed', type:'paid', price:490, verified:true, subs:3210, reactions:true, discussions:true, owner:'Марина Ковалёва', ownerNick:'marina_psy', niche:'psy', posts:[]},
+    {id:'ch-cat-2', name:'Финансы для новичка', desc:'Инвестиции с нуля: акции, облигации, ETF. Живая аналитика и разбор портфелей подписчиков.', icon:'bolt', bg:5, kind:'channel', access:'closed', type:'paid', price:399, verified:false, subs:1840, reactions:true, discussions:true, owner:'Игорь Финансист', ownerNick:'igor_fin', niche:'fin', posts:[]},
+    {id:'ch-cat-3', name:'AI-дизайн PRO 2.0', desc:'Продвинутый курс по Midjourney, Sora, Runway и nano-banana. 12 уроков, шаблоны, промпты, живой чат авторов.', icon:'star', bg:8, kind:'course', access:'closed', type:'course', price:2490, verified:true, subs:412, reactions:true, discussions:true, owner:'Kate Design', ownerNick:'kate_ai', niche:'des', posts:[], lessons:[{id:'l1',title:'AI-workflow',dur:'8:00'},{id:'l2',title:'Midjourney базы',dur:'12:00'}]},
+    {id:'ch-cat-4', name:'Отдел продаж за 30 дней', desc:'Клуб предпринимателей: скрипты, воронки, найм менеджеров. Работаем на цифры и результат.', icon:'crown', bg:0, kind:'club', access:'closed', type:'paid', price:1490, verified:true, subs:920, reactions:true, discussions:true, owner:'Роман Гуров', ownerNick:'roman_sales', niche:'biz', posts:[]},
+    {id:'ch-cat-5', name:'Стиль жизни без спешки', desc:'Медитации, йога, режим сна. Мягкие практики для тех, кто выгорел на дедлайнах.', icon:'compass', bg:3, kind:'channel', access:'closed', type:'paid', price:299, verified:false, subs:2140, reactions:true, discussions:true, owner:'Лена Соболь', ownerNick:'lena_slow', niche:'life', posts:[]},
+    {id:'ch-cat-6', name:'Английский разговорный', desc:'Живой английский без учебников. Мини-курс из 10 уроков + чат для практики с носителями.', icon:'globe', bg:7, kind:'course', access:'closed', type:'course', price:1290, verified:true, subs:1560, reactions:true, discussions:true, owner:'Emma Speak', ownerNick:'emma_en', niche:'edu', posts:[], lessons:[{id:'l1',title:'Small talk',dur:'6:00'}]},
+  ];
+  try{
+    (CH.disc||[]).forEach(c=>{ if(!c.niche) c.niche = chNiche(c); });
+    (CH.mine||[]).forEach(c=>{ if(!c.niche) c.niche = chNiche(c); });
+    CAT_SEED.forEach(s=>{ if(!CH.disc.some(x=>x.id===s.id)) CH.disc.push(chNormalize(s)); });
+    chSave();
+  }catch(e){}
+})();
 (function chInit(){
   // недостающий символ шестерёнки (в ядре нет i-gear) — добавляем в стиле бренда
   try{
@@ -2052,6 +2073,7 @@ if(typeof renderFeed==='function'){
     }
   }catch(e){}
   chInsertProfileRow();
+  try{ chInsertCatalogChip(); }catch(e){}
   // зеркалим существующие свои каналы в мессенджер (после перезагрузки)
   CH.mine.forEach(c=>chMirrorToChats(c));
 })();

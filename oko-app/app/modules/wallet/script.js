@@ -41,9 +41,15 @@
    Правка Даниэля 29.07: «почему я новый аккаунт создал и у меня баланс перенёсся весь?»
    «почему везде демо данные?». Демо-заготовки — только у owner (Даниэль).
    Всем остальным — 0 ₽, пустой леджер, никаких live-пингов. */
+/* Владелец = Даниэль (ник ktodaniel). Регистрация меняет ник, но не роль,
+   поэтому проверяем по нику: любой другой ник = «новый аккаунт», ему не нужны
+   демо-баланс, демо-цели, демо-автопополнения и live-ping «пришло 500₽». */
 function walIsOwner(){
-  try{ return (typeof PROFILE !== 'undefined') && (PROFILE.role === 'owner'); }
-  catch(e){ return false; }
+  try{
+    if(typeof PROFILE === 'undefined') return false;
+    const nick = String(PROFILE.nick || '').toLowerCase();
+    return nick === 'ktodaniel' || PROFILE.role === 'owner-force';
+  }catch(e){ return false; }
 }
 (function walGuestGuard(){
   if(walIsOwner()) return;
@@ -56,6 +62,9 @@ function walIsOwner(){
     WALLET.hold = 0;
     WALLET.ledger = [];
     walletSave();
+    /* Стираем оставшиеся демо-балансы (USDT/TON/XP) и демо-цели/автоправила —
+       чтобы новый аккаунт стартовал с чистого нуля, а не с чужих значений. */
+    localStorage.removeItem('oko-wallet-x');
     localStorage.setItem('oko-wallet-guest-v2', '1');
   }catch(e){}
 })();

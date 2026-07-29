@@ -2704,8 +2704,8 @@ function psSocInjectEntry(){
     return cards + pp2Group(rows);
   }
   window.pp2Legal = function(kind){
+    if(typeof openLegalDoc === 'function'){ openLegalDoc(kind); return; }
     if(typeof openLegal === 'function'){ openLegal(kind); return; }
-    if(typeof openSheet === 'function'){ openSheet('legal'); return; }
     T('Открытие документа');
   };
   window.pp2OpenLang = function(){
@@ -2804,13 +2804,16 @@ function psSocInjectEntry(){
       + '</div>';
   }
 
-  /* ================= ЧЕЙН РЕНДЕРА ================= */
+  /* ================= ЧЕЙН РЕНДЕРА =================
+     Особенность: ядро (renderMyProfile в base.html) и старые чейны ссылаются на
+     ID-элементы (#profName, #profStats, #profAch и т.д.), которых после нашей
+     пересборки уже нет. Чтобы прошлый чейн не крашился, оборачиваем его вызов
+     в try/catch и в любом случае перерисовываем pp2-версию. Компактный вид —
+     единственная правда для #screen-profile. */
   if(typeof renderMyProfile === 'function'){
     const _pp2PrevRender = renderMyProfile;
     renderMyProfile = function(){
-      /* сначала пусть отработает ядро и все предыдущие чейны */
-      _pp2PrevRender.apply(this, arguments);
-      /* затем — полностью перерисовываем компактной версией */
+      try{ _pp2PrevRender.apply(this, arguments); }catch(e){ /* устаревшие DOM-хуки — не критично */ }
       try{ pp2Rebuild(); }catch(e){ /* nop */ }
     };
   }

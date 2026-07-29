@@ -392,18 +392,21 @@ var PW_ASSET = {
     renderPay();
   };
 
-  /* сравнительная таблица: FREE / START / PRO / BUSINESS / MAX (партнёрки тут НЕТ) */
+  /* сравнительная таблица: FREE / START / PRO / BUSINESS / BUSINESS PRO / MAX (партнёрки тут НЕТ) */
   var PW_CMP_ROWS = [
-    {k:'Проверка видео', vals:['3/день','15/мес','безлимит','безлимит','безлимит']},
-    {k:'Загрузка файла', vals:['100 МБ','300 МБ','2 ГБ','4 ГБ','8 ГБ']},
-    {k:'Автопостинг', vals:['no','2 сети','все сети','все + план','все + очередь']},
-    {k:'Система роста', vals:['no','no','yes','yes','yes']},
-    {k:'Контент-завод', vals:['no','no','no','конвейер','30 видео/мес']},
-    {k:'Рекламный кабинет', vals:['база','база','расшир.','PRO','PRO + команда']},
-    {k:'Скидка на рекламу', vals:['0%','5%','10%','20%','30%']},
-    {k:'Команда / места', vals:['no','no','no','no','до 5']},
-    {k:'Менеджер и API', vals:['no','no','no','yes','yes']},
-    {k:'Поддержка', vals:['общая','общая','приоритет','приоритет','24/7']}
+    {k:'Проверка видео',     vals:['no',    '30/мес',    'безлимит',    'безлимит',       'безлимит',    'безлимит']},
+    {k:'Загрузка файла',     vals:['100 МБ','4 ГБ',      '4 ГБ',        '8 ГБ',           '16 ГБ',       '32 ГБ']},
+    {k:'Автопостинг',        vals:['no',    'no',        'VK+TG',       'все сети',       'все + план',  'все + очередь']},
+    {k:'Система Роста',      vals:['no',    'no',        'yes',         'yes',            'yes',         'yes']},
+    {k:'Контент-завод',      vals:['no',    'no',        'no',          '30/мес',         '100/мес',     '500/мес']},
+    {k:'Академия премиум',   vals:['no',    'no',        'no',          'yes',            'yes',         'yes']},
+    {k:'Белый лейбл',        vals:['no',    'no',        'no',          'yes',            'yes',         'yes']},
+    {k:'Голос-клон / студия',vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
+    {k:'API',                vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
+    {k:'Команда / места',    vals:['no',    'no',        'no',          'no',             'до 5',        'до 15']},
+    {k:'Скидка на рекламу',  vals:['0%',    '0%',        '10%',         '20%',            '25%',         '30%']},
+    {k:'Higgsfield',         vals:['no',    'no',        'no',          'no',             'no',          'безлимит']},
+    {k:'Поддержка',          vals:['общая', 'общая',     'приоритет',   'приоритет',      '24/7',        '24/7 + личный']}
   ];
   function pwCmpCell(v, isPro){
     var cls = isPro ? ' pw-c-pro-cell' : '';
@@ -754,13 +757,78 @@ var PW_ASSET = {
   function pwInit(){
     pwDecorateTiles();
     pwInjectBigFile();
+    try{ pwCompactProfilePlans(); }catch(e){}
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', pwInit);
   else pwInit();
 
+  /* ---- В ПРОФИЛЕ: скрыть длинные карточки тарифов, показать компакт-строку ---- */
+  function pwCompactProfilePlans(){
+    var screen = document.getElementById('screen-profile');
+    if(!screen) return;
+    var plans = screen.querySelector('.plans-wrap');
+    var discRow = screen.querySelector('.disc-row');
+    if(!plans) return; /* уже переработано */
+    /* Найти заголовок "Тарифы" перед .disc-row */
+    var head = null;
+    var prev = discRow ? discRow.previousElementSibling : plans.previousElementSibling;
+    while(prev){
+      if(prev.classList && prev.classList.contains('section-h') && /Тарифы/i.test(prev.textContent||'')){ head = prev; break; }
+      prev = prev.previousElementSibling;
+    }
+    /* Собираем компакт-строку */
+    var cur = pwCurTier();
+    var curLabel = pwLabel(cur);
+    var isOwner_ = (typeof isOwner==='function' && isOwner());
+    var band = document.createElement('div');
+    band.className = 'pw-prof-band';
+    band.id = 'pwProfBand';
+    band.innerHTML =
+      '<span class="pw-prof-ic">'+I('crown')+'</span>'+
+      '<div class="pw-prof-tx"><b>Твой тариф · '+curLabel+(isOwner_?' · владелец':'')+'</b>'+
+        '<small>'+esc(PW_TAG[cur]||'Открой больше возможностей OKO')+'</small></div>'+
+      '<button class="pw-prof-btn" onclick="pwOpenTiers()">'+I('bolt')+' Тарифы</button>';
+    /* Вставляем band на место старой шапки/чипов/карточек, всё лишнее — удаляем */
+    var anchor = head || discRow || plans;
+    anchor.parentNode.insertBefore(band, anchor);
+    if(head) head.remove();
+    if(discRow) discRow.remove();
+    plans.remove();
+  }
+  /* Открытие тарифов (кнопка «Тарифы» в компакт-строке профиля) */
+  window.pwOpenTiers = function(){
+    if(typeof openPay==='function'){
+      var cur = pwCurTier();
+      /* если у пользователя FREE — предлагаем PRO как якорь; иначе — текущий тариф */
+      var start = (cur==='FREE' || cur==='OWNER') ? 'PRO' : cur;
+      openPay(start);
+    }
+  };
+  /* Перехват «Тарифы OKO» из profile-social (pp2OpenTiers): вместо второго набора длинных
+     карточек — единый экран тарифов со свайпером (pwOpenTiers -> openPay -> pw-swiper). */
+  window.pp2OpenTiers = function(){ window.pwOpenTiers(); };
+
   var _pwPrevRMP = (typeof renderMyProfile==='function') ? renderMyProfile : null;
   if(_pwPrevRMP){
-    renderMyProfile = function(){ var r=_pwPrevRMP.apply(this,arguments); try{ pwDecorateTiles(); }catch(e){} return r; };
+    renderMyProfile = function(){
+      var r = _pwPrevRMP.apply(this, arguments);
+      try{ pwDecorateTiles(); }catch(e){}
+      try{ pwCompactProfilePlans(); }catch(e){}
+      /* обновить текст компакт-строки, если она уже есть */
+      try{
+        var band = document.getElementById('pwProfBand');
+        if(band){
+          var cur = pwCurTier();
+          var isOwner_ = (typeof isOwner==='function' && isOwner());
+          var tx = band.querySelector('.pw-prof-tx');
+          if(tx){
+            tx.querySelector('b').textContent = 'Твой тариф · '+pwLabel(cur)+(isOwner_?' · владелец':'');
+            tx.querySelector('small').textContent = PW_TAG[cur]||'Открой больше возможностей OKO';
+          }
+        }
+      }catch(e){}
+      return r;
+    };
   }
 
   var _pwPrevShowTab = (typeof showTab==='function') ? showTab : null;
