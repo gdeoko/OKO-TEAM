@@ -10501,7 +10501,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.90</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.91</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -11073,7 +11073,7 @@ function applyTheme(t){
   document.documentElement.dataset.theme = t;
   const ico = t==='light' ? '#i-moon' : '#i-sun';
   document.querySelectorAll('#themeIcoM use,#themeIcoP use').forEach(u=>u.setAttribute('href', ico));
-  document.getElementById('themeSwitch').classList.toggle('on', t==='light');
+  { const _sw=document.getElementById('themeSwitch'); if(_sw) _sw.classList.toggle('on', t==='light'); }
   try{ localStorage.setItem('oko-theme', t); }catch(e){}
 }
 function toggleTheme(){
@@ -11172,12 +11172,18 @@ function showTab(t){
   /* закрываем всплывающие оверлеи, чтобы контекст-меню поста/сообщения не «залипало»
      при переходе между вкладками (правка по аудиту) */
   try{ const mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open')) closeMsgMenu(); }catch(e){}
+  const sc = document.getElementById('screen-'+t);
+  if(!sc){
+    // экран не зарегистрирован — это mini-app; открываем через openMa (если функция есть)
+    if(typeof openMa==='function'){ try{ openMa(t); return; }catch(e){} }
+    return;
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+t).classList.add('active');
+  sc.classList.add('active');
   document.querySelectorAll('#tabs>button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
-  document.getElementById('screenTitle').textContent = TITLES[t];
-  if(t==='profile') renderMyProfile();
-  if(t==='partner') renderPartnerChart(chartDays);
+  const _st=document.getElementById('screenTitle'); if(_st && TITLES[t]) _st.textContent = TITLES[t];
+  if(t==='profile' && typeof renderMyProfile==='function') renderMyProfile();
+  if(t==='partner' && typeof renderPartnerChart==='function') renderPartnerChart(chartDays);
 }
 /* ===== Партнёрка: график динамики дохода ===== */
 let chartDays = 7;
