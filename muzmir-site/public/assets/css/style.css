@@ -1268,6 +1268,54 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
 .cab-legend-num{color:var(--muted);font-weight:700;font-size:.86rem;white-space:nowrap}
 .cab-legend-num small{color:var(--muted);opacity:.7;font-weight:400}
 
+/* ══ Воронка — всплывающая карточка ══ */
+.mz-fun{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;
+  padding:20px;padding-bottom:calc(100px + env(safe-area-inset-bottom));
+  background:rgba(20,16,6,.45);backdrop-filter:blur(6px);opacity:0;transition:opacity .28s ease;pointer-events:none}
+.mz-fun.on{opacity:1;pointer-events:auto}
+@media(min-width:640px){.mz-fun{align-items:center;padding-bottom:20px}}
+.mz-fun-card{position:relative;background:var(--panel-solid);border:1px solid var(--glass-brd);border-radius:22px;
+  max-width:440px;width:100%;padding:26px 24px 22px;text-align:center;
+  box-shadow:0 20px 60px rgba(20,16,6,.4);transform:translateY(30px) scale(.96);
+  transition:transform .38s cubic-bezier(.2,.85,.25,1)}
+.mz-fun.on .mz-fun-card{transform:none}
+.mz-fun-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;
+  background:var(--gold-soft);color:var(--gold-ink);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.mz-fun-x svg{width:16px;height:16px}
+.mz-fun-ic{width:60px;height:60px;border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 10px 24px rgba(201,168,76,.32)}
+.mz-fun-ic svg{width:32px;height:32px}
+.mz-fun-card h3{font-family:var(--ff-display);font-size:1.35rem;margin:0 0 10px;line-height:1.2}
+.mz-fun-card p{color:var(--muted);font-size:.94rem;line-height:1.45;margin:0 0 18px}
+.mz-fun-actions{display:flex;flex-direction:column;gap:8px}
+@media(prefers-reduced-motion:reduce){.mz-fun,.mz-fun-card{transition:none}}
+
+/* Category picker в профиле — плитки-таблетки */
+.cat-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:6px}
+.cat-opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:12px 8px;border-radius:14px;background:var(--panel);border:2px solid var(--glass-brd);
+  cursor:pointer;font:inherit;font-weight:600;font-size:.8rem;color:var(--text);text-align:center;line-height:1.1;
+  transition:border-color .2s,transform .18s cubic-bezier(.2,.8,.2,1),background .2s,box-shadow .2s}
+.cat-opt input{position:absolute;opacity:0;pointer-events:none}
+.cat-opt svg{width:22px;height:22px;color:var(--gold-2)}
+.cat-opt.is-on{border-color:var(--gold);background:color-mix(in srgb,var(--gold-soft) 55%,transparent);
+  box-shadow:0 8px 20px rgba(201,168,76,.24)}
+.cat-opt.is-on svg{color:var(--gold-ink)}
+.cat-opt:active{transform:scale(.97)}
+[data-theme="dark"] .cat-opt.is-on{background:color-mix(in srgb,var(--gold-soft) 25%,transparent)}
+
+/* Список привязанных методов входа */
+.link-list{display:flex;flex-direction:column;gap:8px}
+.link-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-brd)}
+.link-row.is-on{border-color:var(--gold);box-shadow:0 4px 12px rgba(201,168,76,.18)}
+.link-ic{flex:none;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);color:var(--gold-ink)}
+.link-row.is-on .link-ic{background:var(--grad-gold);color:var(--gold-fg)}
+.link-ic svg{width:20px;height:20px}
+.link-body{flex:1;min-width:0}
+.link-body b{display:block;font-size:.94rem;font-weight:700}
+.link-body span{display:block;color:var(--muted);font-size:.78rem}
+.link-ok{padding:5px 12px;border-radius:999px;background:var(--gold-soft);color:var(--gold-ink);font-weight:700;font-size:.76rem}
+
 /* Достижения (OKO-app стиль) */
 .cab-level{background:linear-gradient(135deg,rgba(232,194,90,.12),rgba(139,111,31,.06)),var(--panel);
   border-radius:20px;padding:20px !important;box-shadow:0 10px 26px rgba(139,111,31,.12) !important}

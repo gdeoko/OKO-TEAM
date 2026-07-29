@@ -13,8 +13,13 @@
   const $ = (s, r) => (r || document).querySelector(s);
 
   let audio, gain, ctx, source, playlist = null, mode = 'stream', idx = 0, tries = 0, ready = false;
-  // Без кнопки — фоновая музыка всегда ВКЛ. Пользователь не отключает вручную.
+  // Фоновая музыка ВКЛ по умолчанию (даже без регистрации). Выключить можно из настроек профиля.
+  // Приоритет: window.MZ_MUSIC_OFF (стамп из PHP при user.music_off=1) > localStorage флаг
   let userWantsOn = true;
+  try {
+    if (window.MZ_MUSIC_OFF === true) userWantsOn = false;
+    if (localStorage.getItem('mz-music-off') === '1') userWantsOn = false;
+  } catch (e) {}
   function updateBtn() { /* no-op — плеер без UI */ }
 
   async function loadPlaylist() {

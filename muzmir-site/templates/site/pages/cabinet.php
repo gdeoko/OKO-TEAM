@@ -21,14 +21,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fio = input('full_name');
         $phone = input('phone');
         $avatar = trim(input('avatar'));
+        $nickname = trim(input('nickname'));
+        $category = trim(input('category'));
         if (function_exists('v_fio') && $fio !== '') $fio = v_fio($fio);
-        $upd = ['full_name' => $fio, 'phone' => $phone];
-        // Фото профиля: принимаем только http(s)-ссылку (подтягивается из соц-входа ВК/MAX либо задаётся вручную).
-        if ($avatar === '' || preg_match('~^https?://~i', $avatar)) $upd['avatar'] = $avatar;
+        $upd = ['full_name' => $fio, 'phone' => $phone, 'nickname' => $nickname];
+        $allowedCats = ['participant','teacher','parent','director','other'];
+        if (in_array($category, $allowedCats, true)) $upd['category'] = $category;
+        if ($avatar === '' || preg_match('~^https?://~i', $avatar) || str_starts_with($avatar, 'data:image/')) $upd['avatar'] = $avatar;
+        // Категория «Педагог» — если пользователь ещё не teacher/jury/moderator, поднимаем роль до teacher
+        if ($category === 'teacher' && !in_array((string)($user['role'] ?? ''), ['teacher','jury','moderator','admin','owner'], true)) {
+            $upd['role'] = 'teacher';
+        }
         update('users', $upd, 'id=:id', ['id' => $uid]);
         audit('profile_update', 'user', $uid);
         flash('Профиль обновлён.', 'success');
-        redirect('/cabinet');
+        redirect('/cabinet#settings');
+    } elseif ($action === 'music_toggle') {
+        $off = (int) !empty($_POST['music_off']);
+        update('users', ['music_off' => $off], 'id=:id', ['id' => $uid]);
+        flash($off ? 'Фоновая музыка выключена.' : 'Фоновая музыка включена.', 'success');
+        redirect('/cabinet#settings');
+    } elseif ($action === 'unlink') {
+        $prov = input('provider');
+        $col = ['vk'=>'vk_id','max'=>'max_id','tg'=>'tg_id','phone'=>'phone'][$prov] ?? '';
+        if ($col) {
+            update('users', [$col => ''], 'id=:id', ['id' => $uid]);
+            if ($prov === 'phone') update('users', ['phone_verified' => 0], 'id=:id', ['id' => $uid]);
+            flash('Метод входа отвязан.', 'success');
+        }
+        redirect('/cabinet#settings');
     } elseif ($action === 'password') {
         $cur = (string)($_POST['current_password'] ?? '');
         $new = (string)($_POST['new_password'] ?? '');
@@ -607,22 +628,54 @@ ob_start(); ?>
 
           <div class="cab-card">
             <h3 style="margin-top:0;font-family:var(--ff-serif)">Профиль</h3>
-            <form method="post" action="<?= url('/cabinet') ?>">
+            <form method="post" action="<?= url('/cabinet') ?>" enctype="multipart/form-data" id="profileForm">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="profile">
+              <input type="hidden" id="p_ava_hidden" name="avatar" value="<?= h($avatar) ?>">
               <div class="cab-avaedit">
-                <div class="cab-ava">
+                <div class="cab-ava" id="cabAvaPreview">
                   <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Текущее фото профиля" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
                 </div>
-                <div class="field" style="flex:1;margin:0;min-width:0">
-                  <label for="p_ava">Фото профиля</label>
-                  <input type="url" id="p_ava" name="avatar" value="<?= h($avatar) ?>" placeholder="Подтягивается из входа ВК / MAX">
-                  <div class="hint">Фото берётся из социального входа. Можно указать свою ссылку.</div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+                  <label class="btn btn--ghost btn--sm" for="p_ava_file" style="cursor:pointer;text-align:center">Загрузить фото</label>
+                  <input type="file" id="p_ava_file" accept="image/*" hidden>
+                  <button type="button" class="btn btn--ghost btn--sm" id="p_ava_clear" style="min-height:36px;font-size:.82rem">Удалить фото</button>
+                  <div class="hint" style="font-size:.72rem;margin:0">JPG/PNG до 3 МБ. Сохранится в профиль.</div>
                 </div>
               </div>
+
               <div class="field">
-                <label for="p_fio">Фамилия и имя</label>
-                <input type="text" id="p_fio" name="full_name" value="<?= h($user['full_name']) ?>" placeholder="Иванова Мария">
+                <label>Категория</label>
+                <div class="cat-picker">
+                  <?php
+                    $curCat = (string)($user['category'] ?? '');
+                    if ($curCat === '') $curCat = $isTeacher ? 'teacher' : 'participant';
+                    $cats = [
+                      'participant' => ['Участник', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
+                      'teacher'     => ['Педагог',  '<path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v6a6 6 0 0 0 12 0v-6"/>'],
+                      'parent'      => ['Родитель', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 21a7 7 0 0 1 14 0M13 21a5 5 0 0 1 9 0"/>'],
+                      'director'    => ['Директор', '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>'],
+                      'other'       => ['Другое',   '<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2.5-3 4M12 17h.01"/>'],
+                    ];
+                    foreach ($cats as $key => [$lbl, $svg]):
+                  ?>
+                    <label class="cat-opt <?= $curCat===$key?'is-on':'' ?>">
+                      <input type="radio" name="category" value="<?= h($key) ?>" <?= $curCat===$key?'checked':'' ?>>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg>
+                      <span><?= h($lbl) ?></span>
+                    </label>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="p_fio">Фамилия, имя, отчество</label>
+                <input type="text" id="p_fio" name="full_name" value="<?= h($user['full_name']) ?>" placeholder="Иванова Мария Петровна">
+              </div>
+              <div class="field">
+                <label for="p_nick">Никнейм</label>
+                <input type="text" id="p_nick" name="nickname" value="<?= h($user['nickname'] ?? '') ?>" placeholder="как обращаться" maxlength="30">
+                <div class="hint">Короткое имя для приветствия. Не отображается в дипломе.</div>
               </div>
               <div class="field">
                 <label for="p_phone">Телефон</label>
@@ -634,6 +687,68 @@ ob_start(); ?>
                 <div class="hint">Почта используется для входа и наградных документов.</div>
               </div>
               <button class="btn btn--primary" type="submit">Сохранить профиль</button>
+            </form>
+          </div>
+
+          <!-- Привязанные способы входа -->
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Способы входа</h3>
+            <p class="hint" style="margin:0 0 14px">Привяжите несколько способов — заходите как удобно.</p>
+            <?php
+              $linked = [
+                'email' => (bool)($user['email'] ?? ''),
+                'vk'    => !empty($user['vk_id']),
+                'max'   => !empty($user['max_id']),
+                'tg'    => !empty($user['tg_id']),
+                'phone' => !empty($user['phone']) && !empty($user['phone_verified']),
+              ];
+              $methods = [
+                'email' => ['Почта',    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', url('/login')],
+                'vk'    => ['ВКонтакте','<path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/>', url('/api/v1/oauth_vk?bind=1')],
+                'max'   => ['MAX',      '<path d="M4 19V6l8 6 8-6v13"/>', url('/api/v1/oauth_max?bind=1')],
+                'tg'    => ['Telegram', '<path d="M22 4L2 12l6 2 2 6 4-4 6 4z"/>', 'https://t.me/kc_muz_mir_bot?start=link_'.$uid],
+                'phone' => ['Телефон',  '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>', '#'],
+              ];
+            ?>
+            <div class="link-list">
+              <?php foreach ($methods as $k => [$lbl, $svg, $bindUrl]): $on = $linked[$k]; ?>
+                <div class="link-row <?= $on ? 'is-on' : '' ?>">
+                  <span class="link-ic"><svg viewBox="0 0 24 24" fill="<?= $k==='vk'?'currentColor':'none' ?>" stroke="<?= $k==='vk'?'none':'currentColor' ?>" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg></span>
+                  <div class="link-body">
+                    <b><?= h($lbl) ?></b>
+                    <span><?= $on ? 'Привязан' : 'Не привязан' ?></span>
+                  </div>
+                  <?php if ($on): ?>
+                    <?php if ($k !== 'email'): // email — основной, нельзя отвязать ?>
+                      <form method="post" action="<?= url('/cabinet') ?>" style="margin:0">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="unlink">
+                        <input type="hidden" name="provider" value="<?= h($k) ?>">
+                        <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
+                      </form>
+                    <?php else: ?>
+                      <span class="link-ok">Основной</span>
+                    <?php endif; ?>
+                  <?php else: ?>
+                    <a class="btn btn--primary btn--sm" href="<?= h($bindUrl) ?>" style="min-height:34px">Привязать</a>
+                  <?php endif; ?>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <!-- Тумблер фоновой музыки -->
+          <div class="cab-card">
+            <h3 style="margin-top:0;font-family:var(--ff-serif)">Фоновая музыка</h3>
+            <form method="post" action="<?= url('/cabinet') ?>">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="music_toggle">
+              <label class="switch">
+                <span class="switch-txt"><strong>Классическая музыка в приложении</strong><span>Автоматически играет фоном (Вивальди, Моцарт, Бах, Шопен). Можно отключить.</span></span>
+                <input type="checkbox" name="music_off" value="1" <?= !empty($user['music_off']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                <span class="switch-ui" aria-hidden="true"></span>
+              </label>
+              <div style="text-align:right;margin-top:8px"><small style="color:var(--muted)">Настройка сохраняется автоматически</small></div>
             </form>
           </div>
 
@@ -776,6 +891,46 @@ ob_start(); ?>
       if(navigator.clipboard)navigator.clipboard.writeText(code);
       if(window.toast)window.toast('Промокод скопирован','success');
     });
+  });
+  // Category picker — визуальный тумблер (aria-pressed)
+  document.querySelectorAll('.cat-opt input[type=radio]').forEach(function(inp){
+    inp.addEventListener('change', function(){
+      document.querySelectorAll('.cat-opt').forEach(function(l){ l.classList.remove('is-on'); });
+      inp.closest('.cat-opt').classList.add('is-on');
+    });
+  });
+  // Аватар: загрузка файла → base64 → hidden input + предпросмотр
+  var avaFile = document.getElementById('p_ava_file');
+  var avaHidden = document.getElementById('p_ava_hidden');
+  var avaPrev = document.getElementById('cabAvaPreview');
+  var avaClear = document.getElementById('p_ava_clear');
+  if (avaFile) avaFile.addEventListener('change', function(){
+    var f = avaFile.files && avaFile.files[0]; if (!f) return;
+    if (f.size > 3*1024*1024) { alert('Файл слишком большой (макс 3 МБ)'); return; }
+    var fr = new FileReader();
+    fr.onload = function(){
+      // Сожмём через canvas до 512×512 max
+      var img = new Image();
+      img.onload = function(){
+        var c = document.createElement('canvas');
+        var s = Math.min(512, Math.max(img.width, img.height));
+        var scale = s / Math.max(img.width, img.height);
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var b64 = c.toDataURL('image/jpeg', .85);
+        avaHidden.value = b64;
+        avaPrev.innerHTML = '<img src="' + b64 + '" alt="Новое фото" loading="lazy">';
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+  if (avaClear) avaClear.addEventListener('click', function(){
+    if (!confirm('Удалить фото профиля?')) return;
+    avaHidden.value = '';
+    var initials = (document.getElementById('p_fio').value || '').split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase() || '?';
+    avaPrev.innerHTML = initials;
   });
   // Theme-picker: тумблер темы в настройках профиля
   function applyTheme(t){

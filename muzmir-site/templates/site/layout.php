@@ -18,7 +18,7 @@ $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 ?><!doctype html>
 <html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
 <head>
-<script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}</script>
+<script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}<?php if (!empty($u['music_off'])): ?>window.MZ_MUSIC_OFF=true;<?php endif; ?></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <?php
@@ -355,6 +355,7 @@ if('serviceWorker' in navigator){
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <script src="<?= asset('js/music.js') ?>" defer></script>
 <script src="<?= asset('js/spa.js') ?>" defer></script>
+<script src="<?= asset('js/funnel.js') ?>" defer></script>
 <?php if ($inTg): ?>
 <!-- Telegram Mini App: тот же сайт открывается нативно в боте (автологин, тема, expand, back). -->
 <script>

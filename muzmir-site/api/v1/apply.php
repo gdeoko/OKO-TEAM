@@ -140,6 +140,34 @@ if ($errors) {
 
 // --- Создаём заявку(и) по каждому выбранному конкурсу ---
 $uid = current_user()['id'] ?? null;
+
+// Гость подаёт заявку — авто-создаём профиль (без пароля), логиним, отправляем письмо с
+// одноразовой ссылкой для установки пароля. Учаcтник сразу попадёт в кабинет.
+if (!$uid && $email !== '') {
+    $existing = one("SELECT * FROM users WHERE email=?", [$email]);
+    if ($existing) {
+        $uid = (int) $existing['id'];
+    } else {
+        $uid = (int) insert('users', [
+            'email'         => $email,
+            'password_hash' => '',
+            'full_name'     => $full_name,
+            'phone'         => $phone,
+            'role'          => 'user',
+            'email_verified'=> 0,
+            'category'      => 'participant',
+        ]);
+        if (function_exists('login_user')) login_user($uid);
+        if (function_exists('mail_queue')) {
+            $link = rtrim((string) cfgv('base_url'), '/') . '/cabinet#settings';
+            $html = '<p>Здравствуйте, ' . h($full_name) . '.</p>'
+                  . '<p>Мы создали для Вас личный кабинет — там Ваши заявки, статусы, дипломы.</p>'
+                  . '<p>Установите пароль для входа: <a href="' . h($link) . '">' . h($link) . '</a></p>';
+            mail_queue($email, $full_name, 'Ваш кабинет создан — КЦ «Музыкальный Мир»', $html);
+        }
+        audit('auto_register_on_apply', 'user', $uid, ['email' => $email]);
+    }
+}
 $numbers = [];
 $appIds  = [];
 $appMap  = []; // number -> comp_name
