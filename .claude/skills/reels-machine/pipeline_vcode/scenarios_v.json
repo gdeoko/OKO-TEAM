@@ -1,0 +1,100 @@
+{
+  "v1": {
+    "title": "Кофейня: год листовок или один ролик",
+    "grade": "warm_cine",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Кофейня раздала десять тысяч листовок и получила ноль клиентов. Сняла один ролик — и очередь с самого утра.",
+    "segments": [
+      {"id":"s1","text":"Кофейня раздала десять тысяч листовок. Клиентов ноль.","q":["coffee shop flyers","barista pour latte"],"ov":"badge"},
+      {"id":"s2","text":"Десять тысяч бумажек. Три недели работы. Деньги на ветер.","q":["crumpled paper trash","empty cafe interior"],"ov":"counter"},
+      {"id":"s3","text":"Потом сняли один ролик. Живой, с ароматом кофе в кадре.","q":["barista making coffee closeup","coffee beans pouring"],"ov":"stamp"},
+      {"id":"s4","text":"Один ролик. Двое суток. Очередь с самого утра.","q":["queue line people waiting","cafe crowd morning"],"ov":"bars"},
+      {"id":"s5","text":"Видео работает там, где бумага молчит. Всегда.","q":["smartphone instagram video","videographer filming cafe"],"ov":"callout"},
+      {"id":"s6","text":"Хотите так же? Напишите СЪЁМКА в директ. V CODE.","q":["cinema camera studio","operator shooting video"],"ov":"cta"}
+    ]
+  },
+  "v2": {
+    "title": "Барбершоп: один ролик — запись на неделю",
+    "grade": "moody_dark",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Барбершоп выложил один ролик и закрыл запись на неделю вперёд.",
+    "segments": [
+      {"id":"s1","text":"Барбершоп выложил один ролик. Запись закрылась на неделю.","q":["barber cutting hair","barbershop interior dark"],"ov":"badge"},
+      {"id":"s2","text":"Раньше — пустые кресла и тишина в будни.","q":["empty barber chair","lonely barbershop"],"ov":"stamp"},
+      {"id":"s3","text":"Сняли работу мастера крупным планом. Ножницы, свет, характер.","q":["barber scissors closeup","haircut detail hands"],"ov":"counter"},
+      {"id":"s4","text":"Ролик собрал охваты за ночь. Утром — телефон разрывается.","q":["phone notifications buzzing","instagram analytics growth"],"ov":"bars"},
+      {"id":"s5","text":"Запись на семь дней вперёд. С одного видео.","q":["calendar booking full","busy barbershop clients"],"ov":"callout"},
+      {"id":"s6","text":"Снимем и вам. Напишите СЪЁМКА в директ. V CODE.","q":["videographer barbershop filming","cinema camera rig"],"ov":"cta"}
+    ]
+  },
+  "v3": {
+    "title": "Стоматология: миллион на рекламу или один ролик",
+    "grade": "clean_ad",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Стоматология потратила миллион на рекламу. А поток клиентов пришёл от одного живого ролика.",
+    "segments": [
+      {"id":"s1","text":"Стоматология потратила миллион рублей на рекламу.","q":["dental clinic modern","money cash counting"],"ov":"badge"},
+      {"id":"s2","text":"Баннеры, контекст, таргет. Клиенты приходили редко.","q":["billboard advertising city","laptop ads dashboard"],"ov":"counter"},
+      {"id":"s3","text":"Потом сняли один честный ролик. Врач, кабинет, живые эмоции.","q":["dentist working patient","medical office bright"],"ov":"stamp"},
+      {"id":"s4","text":"Один ролик. Ноль рублей на продвижение. Поток заявок.","q":["smartphone messages incoming","happy patient smiling"],"ov":"compare"},
+      {"id":"s5","text":"Доверие рождается в кадре, а не в баннере.","q":["video testimonial person","camera filming interview"],"ov":"callout"},
+      {"id":"s6","text":"Снимем такой и вам. Напишите СЪЁМКА в директ. V CODE.","q":["professional video production","studio lighting setup"],"ov":"cta"}
+    ]
+  },
+  "v4": {
+    "title": "Фитнес-тренер снимал год — заработал на квартиру",
+    "grade": "teal_orange",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Фитнес-тренер снимал себя целый год. Через год заработал на квартиру.",
+    "segments": [
+      {"id":"s1","text":"Фитнес-тренер снимал себя каждый день целый год.","q":["fitness trainer filming phone","gym workout man"],"ov":"badge"},
+      {"id":"s2","text":"Первые ролики — двести просмотров. Никто не верил.","q":["empty gym early morning","disappointed athlete"],"ov":"counter"},
+      {"id":"s3","text":"Он не бросил. Снимал тренировки, эмоции, результат клиентов.","q":["personal trainer coaching","intense workout session"],"ov":"stamp"},
+      {"id":"s4","text":"Через год — сотни тысяч подписчиков и запись на месяц.","q":["social media followers growth","crowded fitness class"],"ov":"bars"},
+      {"id":"s5","text":"Заработал на квартиру. С телефона и упорства.","q":["keys new apartment","success celebration"],"ov":"callout"},
+      {"id":"s6","text":"Начните снимать правильно. Напишите СЪЁМКА в директ. V CODE.","q":["videographer gym filming","cinema camera fitness"],"ov":"cta"}
+    ]
+  },
+  "v5": {
+    "title": "Йога в комнате 3 на 3 — сто тысяч подписчиков",
+    "grade": "flower_soft",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Тренер по йоге набрала сто тысяч подписчиков, снимая в комнате три на три метра.",
+    "segments": [
+      {"id":"s1","text":"Тренер по йоге снимала в комнате три на три метра.","q":["yoga home practice","small room minimalist"],"ov":"badge"},
+      {"id":"s2","text":"Ни студии, ни бюджета. Только коврик и телефон.","q":["yoga mat sunlight","phone on tripod home"],"ov":"stamp"},
+      {"id":"s3","text":"Она поняла главное. Важен не размер комнаты, а свет и кадр.","q":["soft window light yoga","calm meditation pose"],"ov":"counter"},
+      {"id":"s4","text":"Правильный свет. Чистый звук. Спокойный ритм монтажа.","q":["natural light interior","peaceful yoga flow"],"ov":"bars"},
+      {"id":"s5","text":"Сто тысяч подписчиков из маленькой комнаты.","q":["social media success phone","yoga community class"],"ov":"callout"},
+      {"id":"s6","text":"Размер не важен. Важен кадр. Напишите СЪЁМКА в директ. V CODE.","q":["videographer filming yoga","camera soft light studio"],"ov":"cta"}
+    ]
+  },
+  "v6": {
+    "title": "Самый дорогой ролик — 59 миллионов за минуту",
+    "grade": "noir_bw",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Самый дорогой рекламный ролик в истории стоил пятьдесят девять миллионов долларов за одну минуту.",
+    "segments": [
+      {"id":"s1","text":"Самый дорогой ролик в истории стоил пятьдесят девять миллионов долларов.","q":["luxury perfume bottle","cinematic gold light"],"ov":"badge"},
+      {"id":"s2","text":"Пятьдесят девять миллионов. За одну минуту видео.","q":["expensive diamond closeup","slow motion elegance"],"ov":"counter"},
+      {"id":"s3","text":"Почему так дорого? Каждый кадр там продаёт эмоцию.","q":["film set professional crew","cinema camera crane"],"ov":"stamp"},
+      {"id":"s4","text":"Свет, ритм, деталь. Ничего случайного в кадре.","q":["lighting rig film set","director monitor watching"],"ov":"bars"},
+      {"id":"s5","text":"Вам не нужны миллионы. Нужен тот же подход к кадру.","q":["videographer cinematic shot","color grading monitor"],"ov":"callout"},
+      {"id":"s6","text":"Снимем с таким подходом. Напишите СЪЁМКА в директ. V CODE.","q":["professional video studio","operator shooting cinematic"],"ov":"cta"}
+    ]
+  },
+  "v7": {
+    "title": "Три секунды решают: миллион или двести просмотров",
+    "grade": "warm_cine",
+    "cta": "СЪЁМКА",
+    "desc_topic": "Три секунды решают всё. Один ролик набирает миллион, другой двести просмотров.",
+    "segments": [
+      {"id":"s1","text":"Три секунды решают судьбу ролика. Всё зависит от них.","q":["stopwatch timer closeup","fast phone scrolling"],"ov":"badge"},
+      {"id":"s2","text":"Один ролик набирает миллион. Другой двести. Разница в начале.","q":["viral video millions views","analytics graph spike"],"ov":"compare"},
+      {"id":"s3","text":"Первый кадр должен цеплять. Вопрос, шок, движение.","q":["surprised face closeup","dynamic action shot"],"ov":"stamp"},
+      {"id":"s4","text":"Скучное начало — палец листает дальше. Мгновенно.","q":["thumb swiping phone","bored person scrolling"],"ov":"counter"},
+      {"id":"s5","text":"Зацепите за три секунды и алгоритм понесёт вас вверх.","q":["rocket growth chart","social media engagement"],"ov":"bars"},
+      {"id":"s6","text":"Сделаем цепляющий хук. Напишите СЪЁМКА в директ. V CODE.","q":["videographer creative shot","cinema camera closeup"],"ov":"cta"}
+    ]
+  }
+}

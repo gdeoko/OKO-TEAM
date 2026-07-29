@@ -2,6 +2,23 @@
 
 Владелец: Даниэль (@ktodaniel, okoteam.top@gmail.com). Общение — на русском.
 
+## V.CODE рилс-завод — КРИТИЧНО (читать перед любой сборкой роликов)
+- **Telegram Даниэля (владелец, слать СЮДА): chat_id `1966985736`** (@ktodaniel).
+  Владимир @Vladimir_12609 = `353975080` — это НЕ Даниэль, ему НЕ слать по умолчанию.
+- Бот доставки готовых роликов: **@vcodemedia_bot**, токен в env `TELEGRAM_BOT_TOKEN`
+  (или в secrets.env.b64). Слать через **sendVideo** (не sendDocument), width=1080 height=1920.
+- Голос озвучки: `ru-RU-DmitryNeural`, **rate `+50%` (1.5x), pitch `+12Hz`** — энергично,
+  НЕ мягко (жёсткое требование Даниэля). boundary="WordBoundary".
+- Субтитры (бренд-константа, НЕ нарушать): **Союз Гротеск (soyuz.ttf, имя «Soyuz Grotesk»),
+  строчные**, активное слово оранж `&H002059EA&` (#EA5920), прошлые белые, мягкая тень +
+  \\blur, **БЕЗ чёрной обводки** (Outline=0). Montserrat для субтитров — брак.
+- Пайплайн сборки 7 роликов лежит в `.claude/skills/reels-machine/pipeline_vcode/`
+  (scenarios_v.json, tts_v.py, fetch_v.py, fetch_music.py, build_v.py, finish_subs.py,
+  descriptions.json). Каждый ролик: uniq-кадры Pexels, zoompan, xfade на КАЖДОЙ склейке,
+  грейд, PIL-инфографика синхронно с озвучкой, караоке, музыка Freesound (дакинг), обложка.
+- Сценарии — строго по проверенным виральным заходам из `vcode/VCODE_CONTEXT.txt`
+  («бизнес снял ОДИН ролик → результат» = 69К/15.8К просмотров; шок-факт + контраст).
+
 ## Два проекта в этом репозитории
 - Корень — сайт DUCK'S GAME SPACE (клиентский, не трогать без запроса).
 - `oko-app/` — приложение OKO. Вся работа по OKO — на ветке `claude/new-session-w2ptqy`.
