@@ -50,6 +50,17 @@ ob_start(); ?>
         </a>
       <?php endforeach; ?>
     </div>
+
+    <div class="menu-actions">
+      <button type="button" class="btn btn--primary btn--block btn--lg" data-share data-share-title="КЦ «Музыкальный Мир» — конкурсы культуры и искусства" data-share-url="<?= h(url('/')) ?>">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:8px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        Поделиться приложением
+      </button>
+      <a class="btn btn--ghost btn--block" href="https://t.me/kc_muz_mir_bot" target="_blank" rel="noopener" style="margin-top:10px">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:8px"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        Написать в Telegram-бот
+      </a>
+    </div>
   </div>
 </section>
 <?php

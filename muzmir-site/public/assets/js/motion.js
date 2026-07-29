@@ -129,6 +129,20 @@
   bindCountdown(document);
   document.addEventListener('mz-spa-navigate', function(){ bindCountdown(document); });
 
+  /* ---------- Image skeleton: маркируем img[data-loaded] когда картинка готова ---------- */
+  function markLoaded(img){
+    if (img.complete && img.naturalWidth > 0) img.setAttribute('data-loaded','1');
+    else img.addEventListener('load', function(){ img.setAttribute('data-loaded','1'); }, {once:true});
+  }
+  function bindImgs(root){
+    (root||document).querySelectorAll('img[loading="lazy"]:not([data-loaded])').forEach(markLoaded);
+  }
+  bindImgs(document);
+  document.addEventListener('mz-spa-navigate', function(){ bindImgs(document); });
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){ m.addedNodes && m.addedNodes.forEach(function(n){ if (n.nodeType===1) bindImgs(n); }); });
+  }).observe(document.body, {childList:true, subtree:true});
+
   /* ---------- PWA install prompt (Chrome/Edge/Samsung) ---------- */
   (function(){
     var deferred = null;

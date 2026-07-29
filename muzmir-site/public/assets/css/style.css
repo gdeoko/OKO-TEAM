@@ -1209,6 +1209,18 @@ main{transition:opacity .22s ease}
 input.is-invalid,textarea.is-invalid{border-color:#e63946 !important;box-shadow:0 0 0 3px rgba(230,57,70,.14) !important}
 input.is-invalid:focus,textarea.is-invalid:focus{border-color:#e63946 !important;box-shadow:0 0 0 3px rgba(230,57,70,.22) !important}
 
+/* ══ Кнопки действий на /menu (Share + Telegram) ══ */
+.menu-actions{margin-top:26px;max-width:400px;margin-left:auto;margin-right:auto}
+.menu-actions .btn{display:inline-flex;align-items:center;justify-content:center}
+
+/* ══ Image skeleton loader — до загрузки изображения ══ */
+img[loading="lazy"]:not([data-loaded]){background:linear-gradient(90deg,var(--gold-soft) 0%,color-mix(in srgb,var(--gold-soft) 60%,transparent) 50%,var(--gold-soft) 100%);
+  background-size:200% 100%;animation:imgShimmer 1.4s ease-in-out infinite;color:transparent}
+img[data-loaded]{animation:imgFadeIn .35s ease-out}
+@keyframes imgShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes imgFadeIn{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){img[loading="lazy"]{animation:none;background:var(--gold-soft)}img[data-loaded]{animation:none}}
+
 /* ══ Клавиатура не поднимает нижнее меню — визуально прячем при фокусе на input ══ */
 body.mz-kbd-open .appnav{transform:translateY(140%)!important;transition:transform .18s ease!important;pointer-events:none!important}
 body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
