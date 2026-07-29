@@ -1,0 +1,235 @@
+{
+ "id": "gtape_033",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "warm optimistic guitar",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "DIY PROJECT",
+  "top": "CUT ONCE",
+  "big": "MEASURE\nWITH AR",
+  "q": [
+   "curtains window measuring home"
+  ],
+  "ai": "work/gtape_033/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Every DIY starts with an honest measurement."
+  },
+  {
+   "id": "b2",
+   "text": "Skip the bent metal tape and the helper."
+  },
+  {
+   "id": "b3",
+   "text": "Point, tap, and read length off the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Get width, height and area in one shot."
+  },
+  {
+   "id": "b5",
+   "text": "Export the numbers straight to a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure right, build once."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.121,
+   "dur": 2.02,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.13,
+   "dur": 2.21,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.259,
+   "dur": 2.19,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.448,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.488,
+   "dur": 1.72,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.564,
+   "dur": 2.35,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  },
+  {
+   "at": 0.87,
+   "dur": 2.17,
+   "type": "lowerthird",
+   "title": "DROP A FRAME",
+   "sub": "test it before the nail"
+  },
+  {
+   "at": 0.903,
+   "dur": 1.66,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Every DIY starts with an honest measurement. Skip the bent tape — point, tap, read length off the floor, export to PDF. Measure right, build once. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #like #without #looking #plan",
+ "yt_title": "How to Get the Most Out #shorts",
+ "trend_keys": [
+  "like",
+  "without",
+  "looking",
+  "plan",
+  "tape",
+  "read",
+  "tricks",
+  "measure"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Get the Most Out of Your Laser Measure | magicplan",
+  "views": 170046,
+  "channel": "magicplan"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-170k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Every DIY starts with an honest measurement."
+ }
+}
