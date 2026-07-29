@@ -8895,6 +8895,289 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .mp-streak-ch{flex-shrink:0;color:var(--dim);display:inline-flex}
 .mp-streak-ch svg.i{width:16px;height:16px}
 
+/* ============================================================================
+   МОИ СОЦСЕТИ (ps-soc-): fullscreen-хаб — LinkedIn + Beacons.ai + Linktree
+   Точка входа — карточка .ps-soc-entry на своём профиле; открывает #psSocView.
+   Всё считается детерминированно (без сети/API), персист — oko-ps-socials.
+   ============================================================================ */
+
+/* ---------- точка входа: карточка на профиле ---------- */
+.ps-soc-entry-wrap{margin:12px 0 10px}
+.ps-soc-entry{display:block;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;text-align:left;cursor:pointer;transition:border-color .2s,transform .12s;position:relative;overflow:hidden}
+.ps-soc-entry:hover{border-color:var(--accent);transform:translateY(-1px)}
+.ps-soc-entry:active{transform:scale(.99)}
+.ps-soc-entry::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(154,255,0,.08),transparent 55%);opacity:0;transition:opacity .2s;pointer-events:none}
+.ps-soc-entry:hover::before{opacity:1}
+.ps-soc-entry-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ps-soc-entry-h-ic{width:32px;height:32px;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.ps-soc-entry-h-ic svg.i{width:16px;height:16px}
+.ps-soc-entry-h b{font-family:var(--font-display);font-size:16px;letter-spacing:.05em;flex:1;min-width:0}
+.ps-soc-entry-h .ps-soc-entry-open{font-size:11px;color:var(--dim);display:inline-flex;align-items:center;gap:3px;font-weight:600}
+.ps-soc-entry-h .ps-soc-entry-open svg.i{width:11px;height:11px}
+.ps-soc-entry-row{display:flex;align-items:center;gap:8px}
+.ps-soc-entry-avas{display:flex;flex-shrink:0}
+.ps-soc-entry-ava{width:28px;height:28px;border-radius:50%;background:var(--raised);border:2px solid var(--surface);display:inline-flex;align-items:center;justify-content:center;color:var(--text);margin-left:-8px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.ps-soc-entry-ava:first-child{margin-left:0}
+.ps-soc-entry-ava svg.i{width:14px;height:14px}
+.ps-soc-entry-ava.off{opacity:.38;filter:grayscale(1)}
+.ps-soc-entry-sum{flex:1;min-width:0;font-size:12px;color:var(--dim);line-height:1.4}
+.ps-soc-entry-sum b{color:var(--text);font-weight:700}
+.ps-soc-entry-chev{color:var(--dim);flex-shrink:0}
+.ps-soc-entry-chev svg.i{width:16px;height:16px}
+
+/* бренд-цвета кружков в карточке-входе (детерминированные градиенты) */
+.ps-soc-tone-ig{background:linear-gradient(135deg,#f58529,#dd2a7b 45%,#8134af 78%,#515bd4);color:#fff}
+.ps-soc-tone-tt{background:linear-gradient(135deg,#25f4ee 0%,#111 55%,#fe2c55);color:#fff}
+.ps-soc-tone-vk{background:#0077ff;color:#fff}
+.ps-soc-tone-tg{background:linear-gradient(135deg,#2ea6de,#1e88c5);color:#fff}
+.ps-soc-tone-yt{background:#ff0033;color:#fff}
+.ps-soc-tone-th{background:linear-gradient(135deg,#101010,#333);color:#fff}
+.ps-soc-tone-ru{background:linear-gradient(135deg,#000,#282828);color:#fff}
+.ps-soc-tone-ig svg.i,.ps-soc-tone-tt svg.i,.ps-soc-tone-vk svg.i,.ps-soc-tone-tg svg.i,.ps-soc-tone-yt svg.i,.ps-soc-tone-th svg.i,.ps-soc-tone-ru svg.i{color:#fff}
+
+/* ---------- fullscreen-вьюха хаба (по образцу #psView) ---------- */
+#psSocView{position:fixed;inset:0;z-index:66;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#psSocView.open{transform:none}
+@media(prefers-reduced-motion:reduce){#psSocView{transition:none}}
+#psSocView .sv-body{max-width:680px;width:100%;margin:0 auto}
+body.ps-over-soc #sheetOverlay.open{z-index:67}
+#sheet-ps-soc-connect,#sheet-ps-soc-detail,#sheet-ps-soc-post,#sheet-ps-soc-link{z-index:68}
+
+/* ---------- секция ---------- */
+.ps-soc-sec{margin:18px 0 8px;font-family:var(--font-display);font-size:15px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:8px}
+.ps-soc-sec svg.i{width:14px;height:14px;color:var(--accent)}
+.ps-soc-sec .ps-soc-sec-hint{margin-left:auto;font-family:var(--font-body);font-size:10.5px;font-weight:600;color:var(--dim);letter-spacing:0;text-transform:none}
+
+/* ---------- совокупный дашборд (тайлы) ---------- */
+.ps-soc-dash{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 4px}
+.ps-soc-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 10px;position:relative;overflow:hidden;transition:border-color .2s}
+.ps-soc-tile:hover{border-color:var(--accent)}
+.ps-soc-tile-lb{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.ps-soc-tile-lb svg.i{width:11px;height:11px;color:var(--accent)}
+.ps-soc-tile-v{font-family:var(--font-display);font-size:22px;line-height:1;color:var(--text);letter-spacing:.02em;white-space:nowrap}
+.ps-soc-tile-v .ps-soc-tile-sub{font-family:var(--font-body);font-size:11px;color:var(--dim);margin-left:5px;font-weight:600;letter-spacing:0}
+.ps-soc-tile-d{font-size:10.5px;color:#3ddc5a;margin-top:5px;display:flex;align-items:center;gap:3px;font-weight:700}
+.ps-soc-tile-d.down{color:#ff6b6b}
+.ps-soc-tile-d svg.i{width:10px;height:10px}
+.ps-soc-tile.wide{grid-column:1/-1;padding:14px}
+.ps-soc-tile.wide .ps-soc-tile-v{font-size:26px}
+@media(max-width:420px){.ps-soc-dash{grid-template-columns:1fr 1fr}}
+
+/* ---------- карточки платформ ---------- */
+.ps-soc-plats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 4px}
+@media(min-width:520px){.ps-soc-plats{grid-template-columns:repeat(3,1fr)}}
+.ps-soc-plat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:left;cursor:pointer;transition:border-color .2s,transform .12s,background .2s;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.ps-soc-plat:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ps-soc-plat:active{transform:scale(.98)}
+.ps-soc-plat.on{border-color:rgba(154,255,0,.35);background:linear-gradient(160deg,var(--surface),rgba(154,255,0,.04))}
+:root[data-theme="light"] .ps-soc-plat.on{background:linear-gradient(160deg,var(--surface),rgba(120,200,0,.06))}
+.ps-soc-plat-h{display:flex;align-items:center;gap:9px}
+.ps-soc-plat-ic{width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.ps-soc-plat-ic svg.i{width:19px;height:19px}
+.ps-soc-plat-name{font-weight:800;font-size:14px;line-height:1.1;flex:1;min-width:0}
+.ps-soc-plat-name small{display:block;font-size:11px;color:var(--dim);font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-soc-plat-st{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:3px 7px;border-radius:99px;background:var(--raised);color:var(--dim);white-space:nowrap;flex-shrink:0}
+.ps-soc-plat-st.on{background:var(--lime-dim);color:var(--accent)}
+.ps-soc-plat-st svg.i{width:9px;height:9px}
+.ps-soc-plat-mini{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:11px;color:var(--dim);margin-top:auto}
+.ps-soc-plat-mini b{color:var(--text);font-weight:700;font-size:12.5px}
+.ps-soc-plat-mini svg.i{width:10px;height:10px;color:var(--accent);margin-right:3px;vertical-align:-1px}
+.ps-soc-plat-cta{margin-top:auto;font-size:12px;color:var(--accent);font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.ps-soc-plat-cta svg.i{width:12px;height:12px}
+.ps-soc-plat-spark{width:100%;height:22px;display:block;opacity:.9}
+
+/* ---------- панель статистики платформы (в шите) ---------- */
+.ps-soc-det-body{display:flex;flex-direction:column;gap:12px;padding-bottom:6px;max-height:min(72vh,640px);overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding-right:4px;padding-left:4px}
+.ps-soc-det-h{display:flex;align-items:center;gap:10px;padding:2px 2px 8px;border-bottom:1px solid var(--border)}
+.ps-soc-det-h .ps-soc-plat-ic{width:44px;height:44px;border-radius:12px}
+.ps-soc-det-h .ps-soc-plat-ic svg.i{width:22px;height:22px}
+.ps-soc-det-h-b{flex:1;min-width:0}
+.ps-soc-det-h-b b{display:block;font-family:var(--font-display);font-size:18px;letter-spacing:.03em}
+.ps-soc-det-h-b small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.ps-soc-det-h-actions{display:flex;gap:6px;flex-shrink:0}
+.ps-soc-det-h-actions button{width:32px;height:32px;border-radius:50%;background:var(--raised);color:var(--dim);display:inline-flex;align-items:center;justify-content:center;transition:color .2s,background .2s}
+.ps-soc-det-h-actions button:hover{background:var(--lime-dim);color:var(--accent)}
+.ps-soc-det-h-actions button svg.i{width:14px;height:14px}
+.ps-soc-det-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ps-soc-det-stats .ps-soc-tile-v{font-size:19px}
+.ps-soc-det-chart{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px}
+.ps-soc-det-chart-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.ps-soc-det-chart-h span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.ps-soc-det-chart-h b{font-family:var(--font-display);font-size:18px;color:var(--accent);letter-spacing:.02em}
+.ps-soc-det-chart-svg{width:100%;height:56px;display:block}
+
+/* последние посты платформы */
+.ps-soc-posts{display:flex;flex-direction:column;gap:8px}
+.ps-soc-post-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:border-color .2s,transform .12s}
+.ps-soc-post-row:hover{border-color:var(--accent)}
+.ps-soc-post-row:active{transform:scale(.99)}
+.ps-soc-post-thumb{width:48px;height:48px;flex-shrink:0;border-radius:var(--r-sm);background:linear-gradient(150deg,rgba(154,255,0,.30),#0a0d04);display:inline-flex;align-items:center;justify-content:center;color:var(--accent);position:relative;overflow:hidden}
+.ps-soc-post-thumb svg.i{width:20px;height:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+.ps-soc-post-thumb.g1{background:linear-gradient(150deg,rgba(154,255,0,.34),#0d1305)}
+.ps-soc-post-thumb.g2{background:linear-gradient(160deg,rgba(154,255,0,.24),#080b03)}
+.ps-soc-post-thumb.g3{background:radial-gradient(80% 90% at 20% 20%,rgba(154,255,0,.36),#070a03)}
+.ps-soc-post-thumb.g4{background:conic-gradient(from 210deg,rgba(154,255,0,.34),transparent 45%,#0e1305)}
+:root[data-theme="light"] .ps-soc-post-thumb{background:linear-gradient(150deg,rgba(120,200,0,.44),#dcefbf)}
+:root[data-theme="light"] .ps-soc-post-thumb svg.i{color:#3c6b00}
+.ps-soc-post-b{flex:1;min-width:0}
+.ps-soc-post-t{display:block;font-size:12.5px;font-weight:700;line-height:1.35;color:var(--text);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ps-soc-post-m{display:flex;gap:10px;margin-top:4px;font-size:10.5px;color:var(--dim);font-weight:600}
+.ps-soc-post-m span{display:inline-flex;align-items:center;gap:3px}
+.ps-soc-post-m svg.i{width:10px;height:10px;color:var(--accent)}
+.ps-soc-post-er{font-family:var(--font-display);font-size:15px;color:var(--accent);letter-spacing:.02em;flex-shrink:0;min-width:44px;text-align:right}
+.ps-soc-post-er small{display:block;font-family:var(--font-body);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-top:1px}
+.ps-soc-post-row.best{border-color:rgba(154,255,0,.35);background:linear-gradient(140deg,var(--surface),rgba(154,255,0,.05))}
+.ps-soc-post-row.best::before{content:"Лучший месяца";position:absolute}
+.ps-soc-best-badge{position:absolute;top:6px;right:6px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;background:var(--accent);color:#06210a;letter-spacing:.03em}
+
+.ps-soc-post-row{position:relative}
+
+/* ---------- подключение платформы (шит) ---------- */
+.ps-soc-conn-body{display:flex;flex-direction:column;gap:12px;padding-bottom:4px}
+.ps-soc-conn-h{display:flex;align-items:center;gap:12px;padding:4px 2px 10px;border-bottom:1px solid var(--border)}
+.ps-soc-conn-h .ps-soc-plat-ic{width:46px;height:46px;border-radius:12px}
+.ps-soc-conn-h .ps-soc-plat-ic svg.i{width:22px;height:22px}
+.ps-soc-conn-h b{font-family:var(--font-display);font-size:19px;letter-spacing:.03em}
+.ps-soc-conn-h small{display:block;font-size:11.5px;color:var(--dim);margin-top:3px}
+.ps-soc-conn-input{display:flex;flex-direction:column;gap:6px}
+.ps-soc-conn-input label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.ps-soc-conn-input input{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s}
+.ps-soc-conn-input input:focus{border-color:var(--accent)}
+.ps-soc-conn-help{font-size:12px;line-height:1.5;color:var(--dim)}
+.ps-soc-conn-help b{color:var(--text);font-weight:700}
+.ps-soc-conn-actions{display:flex;gap:8px;padding-top:2px}
+.ps-soc-conn-actions .btn{flex:1;padding:12px 8px;font-size:13.5px}
+
+/* ---------- тренды: подсказки под соцсети ---------- */
+.ps-soc-trends{display:flex;flex-direction:column;gap:8px}
+.ps-soc-trend{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:flex-start;gap:11px;transition:border-color .2s}
+.ps-soc-trend:hover{border-color:var(--accent)}
+.ps-soc-trend-ic{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center}
+.ps-soc-trend-ic svg.i{width:16px;height:16px}
+.ps-soc-trend-ic.warn{background:rgba(255,180,60,.16);color:#ffb340}
+.ps-soc-trend-ic.up{background:rgba(61,220,90,.16);color:#3ddc5a}
+.ps-soc-trend-b{flex:1;min-width:0}
+.ps-soc-trend-t{font-size:13px;font-weight:700;line-height:1.35;margin-bottom:3px}
+.ps-soc-trend-d{font-size:11.5px;color:var(--dim);line-height:1.45}
+.ps-soc-trend-d b{color:var(--text);font-weight:700}
+
+/* ---------- медиа-кит: превью PDF-макета ---------- */
+.ps-soc-mediakit{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;display:flex;gap:12px;align-items:center;position:relative;overflow:hidden}
+.ps-soc-mediakit::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(154,255,0,.10),transparent 55%);opacity:.6;pointer-events:none}
+.ps-soc-mk-doc{position:relative;width:66px;height:86px;flex-shrink:0;border-radius:6px;background:linear-gradient(160deg,#0f1706,#070a03);border:1px solid var(--border);display:flex;flex-direction:column;padding:8px 6px 6px;box-shadow:0 4px 14px rgba(0,0,0,.35);overflow:hidden}
+:root[data-theme="light"] .ps-soc-mk-doc{background:linear-gradient(160deg,#f7fbec,#e9f2d1);box-shadow:0 4px 12px rgba(60,90,10,.14)}
+.ps-soc-mk-doc::after{content:"";position:absolute;right:0;top:0;width:14px;height:14px;background:var(--bg);clip-path:polygon(0 0,100% 100%,100% 0)}
+.ps-soc-mk-logo{width:20px;height:20px;color:var(--accent);margin-bottom:5px}
+.ps-soc-mk-logo svg.i{width:100%;height:100%}
+.ps-soc-mk-lines{display:flex;flex-direction:column;gap:3px;flex:1}
+.ps-soc-mk-lines i{display:block;height:3px;border-radius:2px;background:rgba(154,255,0,.32)}
+.ps-soc-mk-lines i:nth-child(1){width:80%}
+.ps-soc-mk-lines i:nth-child(2){width:60%}
+.ps-soc-mk-lines i:nth-child(3){width:70%}
+.ps-soc-mk-lines i:nth-child(4){width:45%}
+.ps-soc-mk-lines i:nth-child(5){width:65%}
+.ps-soc-mk-lines i:nth-child(6){width:50%}
+.ps-soc-mk-b{flex:1;min-width:0;position:relative;z-index:1}
+.ps-soc-mk-t{font-family:var(--font-display);font-size:15px;letter-spacing:.04em;color:var(--text);margin-bottom:4px}
+.ps-soc-mk-d{font-size:11.5px;color:var(--dim);line-height:1.45;margin-bottom:10px}
+.ps-soc-mk-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:12px;font-weight:700;border-radius:99px;background:var(--accent);color:#06210a;transition:transform .12s,box-shadow .2s;cursor:pointer;border:1px solid var(--accent)}
+.ps-soc-mk-btn:hover{box-shadow:0 6px 18px rgba(154,255,0,.24)}
+.ps-soc-mk-btn:active{transform:scale(.97)}
+.ps-soc-mk-btn svg.i{width:12px;height:12px}
+:root[data-theme="light"] .ps-soc-mk-btn{color:#0a2a00}
+
+/* ---------- публичная ссылка + QR ---------- */
+.ps-soc-pub{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;display:flex;gap:14px;align-items:center}
+.ps-soc-qr{width:96px;height:96px;flex-shrink:0;border-radius:10px;background:#fff;padding:6px;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+:root[data-theme="light"] .ps-soc-qr{box-shadow:0 4px 12px rgba(60,90,10,.14);border:1px solid var(--border)}
+.ps-soc-qr svg{width:100%;height:100%;display:block}
+.ps-soc-pub-b{flex:1;min-width:0}
+.ps-soc-pub-lb{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:3px}
+.ps-soc-pub-url{display:flex;align-items:center;gap:5px;font-family:var(--font-display);font-size:14px;letter-spacing:.02em;color:var(--text);word-break:break-all;line-height:1.25;margin-bottom:9px}
+.ps-soc-pub-url svg.i{width:14px;height:14px;color:var(--accent);flex-shrink:0}
+.ps-soc-pub-actions{display:flex;gap:6px;flex-wrap:wrap}
+.ps-soc-pub-actions button{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:var(--raised);border:1px solid var(--border);border-radius:99px;font-size:11.5px;font-weight:700;color:var(--text);cursor:pointer;transition:border-color .2s,color .2s,background .2s}
+.ps-soc-pub-actions button:hover{border-color:var(--accent);color:var(--accent)}
+.ps-soc-pub-actions button svg.i{width:12px;height:12px;color:var(--accent)}
+
+/* ---------- автопостинг ---------- */
+.ps-soc-auto{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px}
+.ps-soc-auto-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ps-soc-auto-h .ps-soc-plat-ic{width:36px;height:36px;border-radius:10px;background:var(--lime-dim);color:var(--accent)}
+.ps-soc-auto-h .ps-soc-plat-ic svg.i{width:18px;height:18px}
+.ps-soc-auto-h b{font-family:var(--font-display);font-size:15px;letter-spacing:.05em;flex:1}
+.ps-soc-auto-h button{font-size:11.5px;font-weight:700;padding:7px 12px;border-radius:99px;background:var(--accent);color:#06210a;border:1px solid var(--accent);display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:transform .12s,box-shadow .2s}
+.ps-soc-auto-h button:hover{box-shadow:0 4px 14px rgba(154,255,0,.24)}
+.ps-soc-auto-h button:active{transform:scale(.96)}
+.ps-soc-auto-h button svg.i{width:11px;height:11px}
+.ps-soc-auto-list{display:flex;flex-direction:column;gap:6px}
+.ps-soc-auto-row{display:flex;align-items:center;gap:11px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--raised)}
+.ps-soc-auto-time{font-family:var(--font-display);font-size:16px;letter-spacing:.02em;color:var(--accent);width:48px;flex-shrink:0}
+.ps-soc-auto-time small{display:block;font-family:var(--font-body);font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-top:1px}
+.ps-soc-auto-b{flex:1;min-width:0}
+.ps-soc-auto-b span{display:block;font-size:12.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-soc-auto-b small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}
+.ps-soc-auto-plats{display:inline-flex;gap:4px;flex-shrink:0}
+.ps-soc-auto-plats span{width:20px;height:20px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center}
+.ps-soc-auto-plats span svg.i{width:11px;height:11px;color:#fff}
+.ps-soc-auto-del{width:26px;height:26px;border-radius:50%;color:var(--dim);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .2s,background .2s;cursor:pointer}
+.ps-soc-auto-del:hover{color:#ff6b6b;background:rgba(255,107,107,.1)}
+.ps-soc-auto-del svg.i{width:12px;height:12px}
+.ps-soc-auto-empty{padding:14px 4px;text-align:center;font-size:12px;color:var(--dim);line-height:1.5}
+.ps-soc-auto-empty svg.i{width:22px;height:22px;color:var(--accent);opacity:.6;display:block;margin:0 auto 6px}
+
+/* --- форма планирования поста --- */
+.ps-soc-post-body{display:flex;flex-direction:column;gap:14px}
+.ps-soc-post-body textarea{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font:inherit;font-size:14px;outline:none;transition:border-color .2s;resize:vertical;min-height:80px}
+.ps-soc-post-body textarea:focus{border-color:var(--accent)}
+.ps-soc-post-time-row{display:flex;gap:8px}
+.ps-soc-post-time-row input{flex:1;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font:inherit;font-size:14px;outline:none;transition:border-color .2s;color-scheme:dark}
+:root[data-theme="light"] .ps-soc-post-time-row input{color-scheme:light}
+.ps-soc-post-time-row input:focus{border-color:var(--accent)}
+.ps-soc-post-plats{display:flex;flex-wrap:wrap;gap:6px}
+.ps-soc-post-plats button{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:99px;border:1px solid var(--border);background:var(--raised);font-size:11.5px;font-weight:700;color:var(--dim);cursor:pointer;transition:border-color .2s,color .2s,background .2s}
+.ps-soc-post-plats button.on{border-color:var(--accent);color:var(--accent);background:var(--lime-dim)}
+.ps-soc-post-plats button svg.i{width:11px;height:11px}
+.ps-soc-post-plats button .ps-soc-plat-ic{width:16px;height:16px;border-radius:5px}
+.ps-soc-post-plats button .ps-soc-plat-ic svg.i{width:9px;height:9px}
+.ps-soc-post-plats button.off{opacity:.5;cursor:not-allowed}
+.ps-soc-post-actions{display:flex;gap:8px}
+.ps-soc-post-actions .btn{flex:1;padding:12px 8px;font-size:13.5px}
+
+/* ---------- ссылки-агрегатор (Linktree) ---------- */
+.ps-soc-links{display:flex;flex-direction:column;gap:6px}
+.ps-soc-link-row{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;transition:border-color .2s,transform .12s}
+.ps-soc-link-row:hover{border-color:var(--accent);transform:translateY(-1px)}
+.ps-soc-link-row:active{transform:scale(.99)}
+.ps-soc-link-ic{width:36px;height:36px;flex-shrink:0;border-radius:10px;background:var(--lime-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center}
+.ps-soc-link-ic svg.i{width:17px;height:17px}
+.ps-soc-link-b{flex:1;min-width:0}
+.ps-soc-link-b b{display:block;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-soc-link-b small{display:block;font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ps-soc-link-stat{font-size:10.5px;color:var(--dim);font-weight:700;flex-shrink:0;text-align:right}
+.ps-soc-link-stat b{color:var(--accent);font-family:var(--font-display);font-size:13px;display:block}
+.ps-soc-link-edit{width:28px;height:28px;border-radius:50%;color:var(--dim);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .2s,background .2s}
+.ps-soc-link-edit:hover{color:var(--accent);background:var(--lime-dim)}
+.ps-soc-link-edit svg.i{width:13px;height:13px}
+.ps-soc-link-add{width:100%;padding:11px;border-radius:var(--r-md);border:1px dashed var(--border);background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:border-color .2s,color .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:2px}
+.ps-soc-link-add:hover{border-color:var(--accent);color:var(--accent)}
+.ps-soc-link-add svg.i{width:14px;height:14px}
+
+.ps-soc-link-body{display:flex;flex-direction:column;gap:10px}
+.ps-soc-link-body label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:-4px}
+.ps-soc-link-body input,.ps-soc-link-body select{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;color:var(--text);font:inherit;font-size:14px;outline:none;transition:border-color .2s}
+.ps-soc-link-body input:focus,.ps-soc-link-body select:focus{border-color:var(--accent)}
+.ps-soc-link-actions{display:flex;gap:8px;padding-top:4px}
+.ps-soc-link-actions .btn{flex:1;padding:12px 8px;font-size:13.5px}
+
+/* ---------- утилиты ---------- */
+.ps-soc-hint{font-size:12px;color:var(--dim);line-height:1.5;margin:6px 2px 0}
+.ps-soc-hint b{color:var(--text)}
+.ps-soc-empty-body{padding:14px 8px;text-align:center;color:var(--dim);font-size:12.5px;line-height:1.6}
+.ps-soc-empty-body svg.i{width:34px;height:34px;color:var(--accent);opacity:.55;display:block;margin:0 auto 8px}
+.ps-soc-inline-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;vertical-align:-4px;margin-right:2px}
+.ps-soc-inline-ic svg.i{width:11px;height:11px;color:#fff}
+
 /* ===== module: stories-plus ===== */
 /* ===== STORIES-PLUS (sp-): редактор сторис, просмотры, реакции, мультисторис ===== */
 
@@ -35526,7 +35809,13 @@ function adsPickGoal(k){
 /* --- формат --- */
 function adsRenderFmts(){
   const box = document.getElementById('adsFmtGrid'); if(!box) return;
-  box.innerHTML = Object.entries(ADS_FORMATS).map(([k,f])=>`
+  const compact = box.classList.contains('compact');
+  box.innerHTML = Object.entries(ADS_FORMATS).map(([k,f])=>compact ? `
+    <button class="ads-fmt cmp ${adsDraft.fmt===k?'on':''}" data-v="${k}" onclick="adsPickFmt('${k}')">
+      <span class="ads-fmt-ic">${I(f.ico)}</span>
+      <span class="ads-fmt-l">${esc(f.l)}</span>
+      <span class="ads-fmt-price">${f.model} · от ${f.model==='CPC'?f.cpc:f.cpm} ₽</span>
+    </button>` : `
     <button class="ads-fmt ${adsDraft.fmt===k?'on':''}" data-v="${k}" onclick="adsPickFmt('${k}')">
       <span class="ads-fmt-ic">${I(f.ico)}</span>
       <span class="ads-fmt-l">${esc(f.l)}</span>
@@ -35536,7 +35825,7 @@ function adsRenderFmts(){
   const tw = document.getElementById('adsFmtTarget');
   if(tw){
     const f = ADS_FORMATS[adsDraft.fmt];
-    tw.innerHTML = `<div class="ads-fmt-note">${I('bolt')}<span>Модель по умолчанию — <b>${f.model}</b> (${ADS_MODELS[f.model].unit}). Ставку и бюджет зададите на последнем шаге.</span></div>`;
+    tw.innerHTML = `<div class="ads-fmt-note">${I('bolt')}<span>Модель по умолчанию — <b>${f.model}</b> (${ADS_MODELS[f.model].unit}). Ставку и график зададите на шаге 4.</span></div>`;
   }
 }
 function adsPickFmt(k){
@@ -35589,7 +35878,14 @@ function adsPickGeo(btn){
   btn.classList.add('on'); adsDraft.geo = btn.dataset.v; adsDraft.cities = [];
   adsRenderCities(); adsCalcReach();
 }
-function adsToggleMulti(btn){ btn.classList.toggle('on'); adsCalcReach(); }
+function adsToggleMulti(btn){
+  btn.classList.toggle('on');
+  /* синхронизируем adsDraft.interests для интересов (шаг 2), т.к. они рендерятся динамически */
+  if(btn.closest('#adsIntChips')){
+    adsDraft.interests = adsPicked('adsIntChips');
+  }
+  adsCalcReach();
+}
 function adsToggleAb(){
   adsDraft.ab = !adsDraft.ab;
   const chip = document.getElementById('adsAbChip'); if(chip) chip.classList.toggle('on', adsDraft.ab);
@@ -35598,6 +35894,165 @@ function adsToggleAb(){
 }
 function adsPicked(boxId){
   return [...document.querySelectorAll('#'+boxId+' .ads-chip.on')].map(b=>b.dataset.v);
+}
+
+/* --- интересы (расширенный набор чипов) --- */
+function adsRenderInterests(){
+  const box = document.getElementById('adsIntChips'); if(!box) return;
+  const active = new Set(Array.isArray(adsDraft.interests) ? adsDraft.interests : []);
+  box.innerHTML = ADS_INTERESTS.map(v=>`
+    <button class="ads-chip ${active.has(v)?'on':''}" data-v="${esc(v)}" onclick="adsToggleMulti(this)">${esc(v)}</button>
+  `).join('');
+}
+
+/* --- возраст: двойной ползунок 14..65+ --- */
+function adsAgeInput(quiet){
+  const a = document.getElementById('adsAgeMin'), b = document.getElementById('adsAgeMax');
+  if(!a || !b) return;
+  let mn = parseInt(a.value,10), mx = parseInt(b.value,10);
+  if(mn>mx-2){
+    /* какой ползунок трогали — того и подчиняем; проще всего: минимум не превышает максимум-2 */
+    if(mn>65-2) mn = 63;
+    mx = Math.min(65, Math.max(mn+2, mx));
+    a.value = mn; b.value = mx;
+  }
+  adsDraft.ageMin = mn; adsDraft.ageMax = mx;
+  const fill = document.getElementById('adsAgeFill');
+  if(fill){
+    const l = (mn-14)/(65-14)*100, r = (mx-14)/(65-14)*100;
+    fill.style.left = l+'%'; fill.style.width = (r-l)+'%';
+  }
+  const hint = document.getElementById('adsAgeHint');
+  if(hint) hint.textContent = mn+' – '+(mx>=65?'65+':mx);
+  if(!quiet) adsCalcReach();
+}
+
+/* --- look-alike: чипы аудиторий-источников с флагом «расширить похожими» --- */
+function adsRenderLal(){
+  const box = document.getElementById('adsLalBox'); if(!box) return;
+  const auds = ADS.auds || [];
+  const opts = auds.length ? auds.map(a=>`
+    <button class="ads-lal-chip ${adsDraft.lalFrom===a.id?'on':''}" onclick="adsLalPick(${a.id})">
+      ${I('users')}${esc(a.name)}
+    </button>`).join('') : `<span class="ads-lal-empty">Сохрани аудиторию, чтобы построить похожую</span>`;
+  box.innerHTML = `
+    <label class="ads-lal-toggle">
+      <input type="checkbox" ${adsDraft.lal?'checked':''} onchange="adsLalToggle(this.checked)">
+      <span class="ads-lal-sw"><i></i></span>
+      <span class="ads-lal-txt"><b>Расширить похожими профилями</b>
+        <small>+40% к охвату: OKO найдёт людей с похожим поведением</small></span>
+    </label>
+    <div class="ads-lal-src" ${adsDraft.lal?'':'style="opacity:.5;pointer-events:none"'}>
+      <div class="ads-lal-src-h">Источник похожести</div>
+      <div class="ads-lal-chips">${opts}</div>
+    </div>`;
+}
+function adsLalToggle(v){
+  adsDraft.lal = !!v;
+  if(v && !adsDraft.lalFrom && (ADS.auds||[]).length) adsDraft.lalFrom = ADS.auds[0].id;
+  adsRenderLal(); adsCalcReach();
+}
+function adsLalPick(id){ adsDraft.lalFrom = id; adsRenderLal(); adsCalcReach(); }
+
+/* --- дни недели --- */
+const ADS_WEEK_NAMES = [['пн',1],['вт',2],['ср',3],['чт',4],['пт',5],['сб',6],['вс',0]];
+function adsRenderWeek(){
+  const box = document.getElementById('adsWeekChips'); if(!box) return;
+  const on = new Set(Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays : [1,2,3,4,5,6,0]);
+  box.innerHTML = ADS_WEEK_NAMES.map(([l,v])=>`
+    <button class="ads-week-b ${on.has(v)?'on':''}" data-v="${v}" onclick="adsToggleWeek(${v})">${l}</button>
+  `).join('');
+}
+function adsToggleWeek(v){
+  const set = new Set(Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays : [1,2,3,4,5,6,0]);
+  if(set.has(v)) set.delete(v); else set.add(v);
+  if(set.size===0) set.add(v);   /* не даём выключить все дни */
+  adsDraft.weekdays = [...set].sort((a,b)=>a-b);
+  adsRenderWeek(); adsCalcForecast();
+}
+
+/* --- окно показа (часы) --- */
+function adsHourInput(quiet){
+  const a = document.getElementById('adsHourFrom'), b = document.getElementById('adsHourTo');
+  if(!a || !b) return;
+  let mn = parseInt(a.value,10), mx = parseInt(b.value,10);
+  if(mn>mx-1){ mx = Math.min(24, mn+1); b.value = mx; }
+  adsDraft.hourFrom = mn; adsDraft.hourTo = mx;
+  const fill = document.getElementById('adsHourFill');
+  if(fill){ const l = mn/24*100, r = mx/24*100; fill.style.left = l+'%'; fill.style.width = (r-l)+'%'; }
+  const hint = document.getElementById('adsHourHint');
+  if(hint) hint.textContent = (mn<10?'0'+mn:mn)+':00 – '+(mx<10?'0'+mx:mx)+':00';
+  if(!quiet) adsCalcForecast();
+}
+
+/* --- бюджет: слайдер + инпут двусторонний --- */
+function adsBudgetSliderInput(v){
+  const val = Math.max(500, Math.min(100000, parseInt(v,10)||500));
+  const inp = document.getElementById('adsInpBudget'); if(inp) inp.value = val;
+  document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.toggle('on', b.textContent.replace(/\s|₽/g,'')==String(val)));
+  const hint = document.getElementById('adsBudgetHint');
+  if(hint) hint.textContent = fmtN(val)+' ₽ в сутки';
+  adsCalcForecast();
+}
+function adsBudgetInputSync(){
+  const inp = document.getElementById('adsInpBudget'); if(!inp) return;
+  const v = Math.max(0, parseInt(inp.value,10)||0);
+  const sl = document.getElementById('adsBudgetSlider');
+  if(sl && v>=500) sl.value = Math.min(100000, v);
+  const hint = document.getElementById('adsBudgetHint');
+  if(hint) hint.textContent = v ? fmtN(v)+' ₽ в сутки' : '₽ в сутки';
+  adsCalcForecast();
+}
+function adsBudgetSliderSync(){
+  const inp = document.getElementById('adsInpBudget');
+  const sl = document.getElementById('adsBudgetSlider');
+  if(inp && sl){
+    const v = Math.max(500, Math.min(100000, parseInt(inp.value,10)||1000));
+    sl.value = v;
+    const hint = document.getElementById('adsBudgetHint');
+    if(hint) hint.textContent = fmtN(v)+' ₽ в сутки';
+  }
+}
+
+/* --- пикер моих постов ленты в шаге креатива --- */
+function adsMyPosts(){
+  if(typeof POSTS==='undefined' || !Array.isArray(POSTS.rec)) return [];
+  return POSTS.rec.filter(p=>!p.promoted && !p.sponsored && p.name===PROFILE.name).slice(0,10);
+}
+function adsRenderPostPicker(){
+  const box = document.getElementById('adsPostPicker'); if(!box) return;
+  const posts = adsMyPosts();
+  if(!posts.length){
+    box.innerHTML = `<div class="ads-picker-empty">${I('photo')}Своих постов в ленте пока нет — заполни поля вручную</div>`;
+    return;
+  }
+  box.innerHTML = posts.map(p=>{
+    const body = (p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    const title = body.slice(0, 44) || 'Пост из ленты';
+    const sub = body.slice(44, 140);
+    return `<button class="ads-picker-c" onclick="adsFillFromPost(${p.id})">
+      <div class="ads-picker-t">${esc(title)}</div>
+      <div class="ads-picker-s">${esc(sub||'нажми, чтобы взять текст в объявление')}</div>
+      <div class="ads-picker-m">${I('eye')}${fmtN(p.views||0)}${I('bolt')}${fmtN(p.likes||0)}</div>
+    </button>`;
+  }).join('');
+}
+function adsFillFromPost(id){
+  const p = adsMyPosts().find(x=>x.id===id); if(!p) return;
+  const body = (p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  const t = body.slice(0, 60);
+  const rest = body.slice(60, 300).trim();
+  const ti = document.getElementById('adsInpTitle'); if(ti && t){ ti.value = t; }
+  const te = document.getElementById('adsInpText');  if(te){ te.value = rest || body.slice(0,300); }
+  /* если есть медиа у поста — переносим (только src, тип уже известен) */
+  if(p.media && (p.media.src || typeof p.media==='string')){
+    adsRevokeDraftMedia();
+    const src = p.media.src || p.media;
+    adsDraft.media = {type: p.media.type || 'image', src, name:'Из ленты'};
+    adsRenderMediaZone();
+  }
+  adsRenderPreview();
+  toast('Поля заполнены из поста ленты — поправь под рекламу');
 }
 
 /* --- города --- */
@@ -40349,6 +40804,691 @@ renderAdmin = function(){
 };
 const _prevCloseAdminHq2 = closeAdmin;
 closeAdmin = function(){ hqStopFeed(); _prevCloseAdminHq2(); };
+
+/* ============================================================================
+   8. КАБИНЕТ УРОВНЯ STRIPE / AMPLITUDE / NOTION
+   - real-time KPI (тик 15 сек): MRR/ARR, DAU/MAU/WAU, retention 7/30/90, AOV/LTV/CAC/ROI
+   - donut активных подписок по тарифам
+   - cohort-таблица (недели × retention)
+   - A/B тесты с победителем
+   - live-heatmap кликов на мини-скриншоте главного экрана
+   - product analytics: наименее используемые фичи
+   - CRM партнёров (топ-10) — как новая вкладка
+   - Финансы (доходы / расходы / прогноз кассы) — как новая вкладка
+   - Роли команды (Дир / Финансы / Контент / Партнёры / Поддержка)
+   - Быстрые действия: triage / mailing PRO / бан / возврат
+   - Экспорт .csv и .pdf (через print-view)
+============================================================================ */
+
+/* ---------- 8.0 состояние: роль, seed real-time метрик ---------- */
+HQ_STATE.role = HQ_STATE.role || 'director';
+HQ_STATE.abSeen = HQ_STATE.abSeen || {};
+hqSave();
+
+const HQ_ROLES = [
+  {k:'director', n:'Директор',   ic:'crown',     see:['kpi','donut','cohort','funnel','ab','click','feat','least','risks','fin','crm','feed','heat','quick']},
+  {k:'finance',  n:'Финансы',    ic:'money',     see:['kpi','donut','fin','risks','quick']},
+  {k:'content',  n:'Контент',    ic:'edit',      see:['click','feat','least','heat','feed','ab']},
+  {k:'partners', n:'Партнёры',   ic:'briefcase', see:['crm','fin','feed','quick']},
+  {k:'support',  n:'Поддержка',  ic:'chat',      see:['risks','feed','quick']},
+];
+function hqRole(){ return HQ_ROLES.find(r=>r.k===HQ_STATE.role) || HQ_ROLES[0]; }
+function hqRoleSees(k){ return hqRole().see.indexOf(k) >= 0; }
+function hqRoleSet(k){ HQ_STATE.role = k; hqSave(); renderAdmin(); toast('Роль: '+hqRole().n+' · дашборд адаптирован'); }
+
+/* ---------- 8.1 real-time метрики (свежие числа каждые 15 сек) ---------- */
+const HQ_TIERS = [
+  {k:'BUSINESS', n:'BUSINESS', price:199, count:12, c:'#ff7a3c'},
+  {k:'PRO',      n:'PRO',      price:49,  count:78, c:'#9AFF00'},
+  {k:'START',    n:'START',    price:15,  count:214,c:'#facc15'},
+  {k:'FREE',     n:'FREE',     price:0,   count:980,c:'#4aa0ff'},
+];
+const HQ_MET = {
+  dau:412, wau:1108, mau:2984, retention:{d7:62.4, d30:38.1, d90:21.7},
+  aov:41, ltv:186, cac:52, roas:3.6, /* ROI = (LTV-CAC)/CAC */
+  errs:{srv:'12/1k', p95:'214ms'},
+  updated: Date.now(),
+};
+function hqMrr(){ return HQ_TIERS.reduce((s,t)=>s+t.price*t.count, 0); }
+function hqRoi(){ return Math.round((HQ_MET.ltv-HQ_MET.cac)/HQ_MET.cac*100); }
+function hqMetTick(){
+  /* мягкие колебания реалистичного диапазона */
+  HQ_MET.dau = Math.max(340, Math.min(520, HQ_MET.dau + Math.round((Math.random()-0.5)*10)));
+  HQ_MET.wau = Math.max(920, Math.min(1320, HQ_MET.wau + Math.round((Math.random()-0.5)*14)));
+  HQ_MET.mau = Math.max(2600,Math.min(3400, HQ_MET.mau + Math.round((Math.random()-0.5)*8)));
+  HQ_MET.retention.d7  = +(HQ_MET.retention.d7  + (Math.random()-0.5)*0.4).toFixed(1);
+  HQ_MET.retention.d30 = +(HQ_MET.retention.d30 + (Math.random()-0.5)*0.3).toFixed(1);
+  HQ_MET.retention.d90 = +(HQ_MET.retention.d90 + (Math.random()-0.5)*0.2).toFixed(1);
+  HQ_MET.aov = Math.max(28, Math.min(64, HQ_MET.aov + Math.round((Math.random()-0.5)*3)));
+  HQ_MET.ltv = Math.max(140, Math.min(240, HQ_MET.ltv + Math.round((Math.random()-0.5)*4)));
+  HQ_MET.cac = Math.max(38,  Math.min(74,  HQ_MET.cac + Math.round((Math.random()-0.5)*3)));
+  HQ_MET.updated = Date.now();
+}
+function hqMetHM(){ const d=new Date(HQ_MET.updated); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+function hqMetTile(v, l, sub, cls){
+  return `<div class="hq-met ${cls||''}"><b>${v}</b><small>${esc(l)}</small>${sub?`<em>${sub}</em>`:''}</div>`;
+}
+function hqRtBlock(){
+  const mrr = hqMrr(), arr = mrr*12, roi = hqRoi();
+  const R = HQ_MET.retention;
+  const dauPct = Math.round(HQ_MET.dau/HQ_MET.mau*100);
+  return `<div class="adm-sec-h">Real-time метрики <span class="hq-rt-live"><i class="hq-dot work"></i>тик 15 сек · <span id="hqRtStamp">${hqMetHM()}</span></span></div>
+    <div class="hq-met-grid card" id="hqMetGrid">
+      ${hqMetTile('$'+mrr.toLocaleString('ru'), 'MRR', '<i class="up">+9%</i> к неделе', 'lime')}
+      ${hqMetTile('$'+arr.toLocaleString('ru'), 'ARR', 'прогноз года', 'lime')}
+      ${hqMetTile(HQ_MET.dau.toLocaleString('ru'), 'DAU', dauPct+'% от MAU', '')}
+      ${hqMetTile(HQ_MET.wau.toLocaleString('ru'), 'WAU', '', '')}
+      ${hqMetTile(HQ_MET.mau.toLocaleString('ru'), 'MAU', '30 дней', '')}
+      ${hqMetTile(R.d7+'%',  'Retention 7d',  '', R.d7>=60?'lime':(R.d7>=45?'':'red'))}
+      ${hqMetTile(R.d30+'%', 'Retention 30d', '', R.d30>=35?'lime':(R.d30>=25?'':'red'))}
+      ${hqMetTile(R.d90+'%', 'Retention 90d', '', R.d90>=20?'lime':(R.d90>=12?'':'red'))}
+      ${hqMetTile('$'+HQ_MET.aov, 'Средний чек', 'AOV', '')}
+      ${hqMetTile('$'+HQ_MET.ltv, 'LTV', 'на клиента', 'lime')}
+      ${hqMetTile('$'+HQ_MET.cac, 'CAC', 'привлечение', 'amber')}
+      ${hqMetTile(roi+'%', 'ROI', 'LTV / CAC', roi>=150?'lime':(roi>=80?'':'red'))}
+    </div>`;
+}
+/* только те tile-ноды, которые в разметке — пересобираем внутренности без re-render всей вкладки */
+function hqMetLiveRefresh(){
+  const box = document.getElementById('hqMetGrid'); if(!box) return;
+  box.outerHTML = hqRtBlock().replace(/^[\s\S]*?<div class=\"adm-sec-h\">[\s\S]*?<\/div>\s*/, '');
+  const st = document.getElementById('hqRtStamp'); if(st) st.textContent = hqMetHM();
+}
+
+/* ---------- 8.2 donut активных подписок по тарифам ---------- */
+function hqDonutBlock(){
+  const paid = HQ_TIERS.filter(t=>t.price>0);
+  const tot = paid.reduce((s,t)=>s+t.count,0);
+  const C = 2 * Math.PI * 42; /* окружность радиуса 42 */
+  let acc = 0;
+  const segs = paid.map((t,i)=>{
+    const frac = t.count / tot;
+    const len = frac * C, gap = C - len, off = -acc * C;
+    acc += frac;
+    return `<circle cx="60" cy="60" r="42" fill="none" stroke="${t.c}" stroke-width="16"
+      stroke-dasharray="${len.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 60 60)"
+      style="animation:hqDonutIn .9s cubic-bezier(.2,.85,.3,1) ${i*.08}s both"></circle>`;
+  }).join('');
+  const legend = paid.map(t=>{
+    const pct = Math.round(t.count/tot*100);
+    return `<div class="hq-dn-l"><i style="background:${t.c}"></i>
+      <b>${esc(t.n)}</b><span>${t.count} · ${pct}%</span></div>`;
+  }).join('');
+  return `<div class="adm-sec-h">Активные подписки по тарифам</div>
+    <div class="hq-donut card">
+      <svg class="hq-dn-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--raised)" stroke-width="16"/>
+        ${segs}
+        <text x="60" y="58" text-anchor="middle" class="hq-dn-num">${tot}</text>
+        <text x="60" y="72" text-anchor="middle" class="hq-dn-sub">платных</text>
+      </svg>
+      <div class="hq-dn-legend">${legend}</div>
+    </div>`;
+}
+
+/* ---------- 8.3 cohort-таблица: недели × retention (5×5) ---------- */
+const HQ_COHORT = (function(){
+  /* 6 недель когорт × колонки W0..W5 (в % удержания) */
+  const now = new Date();
+  const rows = [];
+  for(let w=5; w>=0; w--){
+    const dt = new Date(now.getTime() - w*7*864e5);
+    const label = 'W-'+w+' · '+String(dt.getDate()).padStart(2,'0')+'.'+String(dt.getMonth()+1).padStart(2,'0');
+    const size = 60 + Math.round(Math.random()*140);
+    const arr = [100];
+    let cur = 100;
+    for(let k=1; k<=5; k++){
+      if(k > (5-w)) { arr.push(null); continue; } /* будущее — прочерк */
+      const drop = k===1 ? 26+Math.random()*14 : 6+Math.random()*8;
+      cur = Math.max(0, cur - drop);
+      arr.push(+cur.toFixed(1));
+    }
+    rows.push({label, size, arr});
+  }
+  return rows;
+})();
+function hqCohortBlock(){
+  const head = '<div class="hq-ch-row hd"><span class="hq-ch-lbl">Когорта</span><span class="hq-ch-size">N</span>'
+    + [0,1,2,3,4,5].map(k=>`<span class="hq-ch-c">W${k}</span>`).join('') + '</div>';
+  const rows = HQ_COHORT.map((r,i)=>{
+    const cells = r.arr.map(v=>{
+      if(v==null) return `<span class="hq-ch-c em">—</span>`;
+      const lv = v>=80?'lv5':v>=60?'lv4':v>=40?'lv3':v>=20?'lv2':v>=1?'lv1':'lv0';
+      return `<span class="hq-ch-c ${lv}"><em>${Math.round(v)}</em></span>`;
+    }).join('');
+    return `<div class="hq-ch-row" style="animation-delay:${i*0.04}s">
+      <span class="hq-ch-lbl">${esc(r.label)}</span>
+      <span class="hq-ch-size">${r.size}</span>${cells}</div>`;
+  }).join('');
+  return `<div class="adm-sec-h">Когорты · удержание по неделям</div>
+    <div class="hq-cohort card">
+      <div class="hq-ch-scroll">${head}${rows}</div>
+      <div class="hq-hm-foot">
+        <span class="hq-hm-peak">6 недель · когорты по неделе регистрации</span>
+        <span class="hq-hm-leg"><em>0%</em><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><i class="lv5"></i><em>100%</em></span>
+      </div>
+    </div>`;
+}
+
+/* ---------- 8.4 A/B тесты ---------- */
+const HQ_AB = [
+  {k:'ab1', n:'Заголовок тарифа PRO',  variants:['A · «Ускоряй контент»','B · «Собери завод за час»'], split:'50/50', sample:2411, winner:'B', uplift:12.4, metric:'CTR карточки тарифа', st:'run'},
+  {k:'ab2', n:'Кнопка «Начать бесплатно» vs «Попробовать 7 дней»', variants:['A','B'], split:'50/50', sample:1890, winner:'A', uplift:4.8, metric:'клик по CTA', st:'done'},
+  {k:'ab3', n:'Онбординг: 3 шага vs 5 шагов', variants:['3 шага','5 шагов'], split:'70/30', sample:940, winner:'3 шага', uplift:9.1, metric:'доход до 1-го урока', st:'run'},
+  {k:'ab4', n:'Автоплей приветствия', variants:['вкл','выкл'], split:'50/50', sample:612, winner:null, uplift:0, metric:'глубина сессии', st:'wait'},
+];
+function hqAbBlock(){
+  const rows = HQ_AB.map((t,i)=>{
+    const stCls = t.st==='run'?'wait':(t.st==='done'?'ok':'');
+    const stL = t.st==='run'?'идёт':(t.st==='done'?'завершён':'сбор данных');
+    const win = t.winner ? `<div class="hq-ab-win"><span>Победитель</span><b>${esc(t.winner)}</b><em class="up">+${t.uplift}%</em></div>` : `<div class="hq-ab-win dim"><span>Победитель</span><b>—</b><em>ждём выборку</em></div>`;
+    const vars = t.variants.map((v,vi)=>`<div class="hq-ab-v ${t.winner && (v.charAt(0)===t.winner.charAt(0) || v===t.winner)?'on':''}"><i>${String.fromCharCode(65+vi)}</i>${esc(v)}</div>`).join('');
+    return `<div class="hq-ab card" style="animation-delay:${i*0.05}s">
+      <div class="hq-ab-h">
+        <b>${esc(t.n)}</b>
+        <span class="adm-tag ${stCls}">${stL}</span>
+      </div>
+      <div class="hq-ab-vars">${vars}</div>
+      <div class="hq-ab-meta">
+        <span>метрика: <b>${esc(t.metric)}</b></span>
+        <span>сплит: <b>${esc(t.split)}</b></span>
+        <span>выборка: <b>${t.sample.toLocaleString('ru')}</b></span>
+      </div>
+      ${win}
+    </div>`;
+  }).join('');
+  return `<div class="adm-sec-h">A/B тесты · ${HQ_AB.filter(x=>x.st==='run').length} активных</div>${rows}`;
+}
+
+/* ---------- 8.5 heatmap кликов: мини-макет главного + плотность точек ---------- */
+/* координаты в системе 0..100 (в SVG viewBox 0 0 100 178 — вертикальный мокап) */
+const HQ_CLICKS = [
+  /* нижняя таб-панель — гарячий клик */
+  {x:18, y:168, w:1.0}, {x:38, y:168, w:0.9}, {x:58, y:168, w:1.0},
+  {x:78, y:168, w:0.6}, {x:82, y:168, w:0.9},
+  /* карточки ленты в центре */
+  {x:50, y:60, w:0.85}, {x:50, y:82, w:0.7}, {x:50, y:104, w:0.55},
+  /* иконки в шапке */
+  {x:12, y:14, w:0.35}, {x:88, y:14, w:0.4},
+  /* CTA сторис */
+  {x:22, y:32, w:0.5}, {x:38, y:32, w:0.35}, {x:54, y:32, w:0.3}, {x:70, y:32, w:0.25},
+  /* второй клик по «Кошельку» */
+  {x:78, y:168, w:0.6},
+];
+function hqClickBlock(){
+  /* плотность: рендерим blur-градиенты через SVG feGaussianBlur */
+  const pts = HQ_CLICKS.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${8+p.w*8}" fill="url(#hqCg)" opacity="${0.35+p.w*0.5}"/>`).join('');
+  const top = [...HQ_CLICKS].sort((a,b)=>b.w-a.w).slice(0,4).map((p,i)=>{
+    const name = p.y>150?'таб-навигация':(p.y<20?'шапка приложения':(p.y<40?'ряд сторис':'карточки ленты'));
+    return `<div class="hq-clk-l"><b>${i+1}</b><span>${name}</span><em>${Math.round(p.w*100)}%</em></div>`;
+  }).join('');
+  /* мини-макет главного экрана: шапка, сторис, лента, таб-бар */
+  return `<div class="adm-sec-h">Heatmap кликов · главный экран <span class="hq-fd-pulse"><i class="hq-dot work"></i>последние 24 часа</span></div>
+    <div class="hq-clk card">
+      <div class="hq-clk-mock">
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid meet" class="hq-clk-svg">
+          <defs>
+            <radialGradient id="hqCg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"  stop-color="#ff3838" stop-opacity=".95"/>
+              <stop offset="45%" stop-color="#ffb400" stop-opacity=".6"/>
+              <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <!-- шапка -->
+          <rect x="0" y="0" width="100" height="22" fill="var(--raised)"/>
+          <circle cx="12" cy="11" r="4" fill="var(--border)"/>
+          <rect x="30" y="7" width="34" height="8" rx="2" fill="var(--border)"/>
+          <circle cx="82" cy="11" r="4" fill="var(--border)"/>
+          <circle cx="92" cy="11" r="4" fill="var(--border)"/>
+          <!-- сторис -->
+          <g fill="var(--border)"><circle cx="12" cy="32" r="6"/><circle cx="28" cy="32" r="6"/><circle cx="44" cy="32" r="6"/><circle cx="60" cy="32" r="6"/><circle cx="76" cy="32" r="6"/><circle cx="92" cy="32" r="6"/></g>
+          <!-- лента -->
+          <rect x="6" y="46" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <rect x="6" y="78" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <rect x="6" y="110" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <!-- таб-бар -->
+          <rect x="0" y="156" width="100" height="22" fill="var(--raised)"/>
+          <g fill="var(--border)">
+            <circle cx="18" cy="167" r="3.5"/><circle cx="38" cy="167" r="3.5"/><circle cx="58" cy="167" r="3.5"/><circle cx="78" cy="167" r="3.5"/><circle cx="93" cy="167" r="3.5"/>
+          </g>
+          <!-- клики -->
+          <g style="mix-blend-mode:screen">${pts}</g>
+        </svg>
+      </div>
+      <div class="hq-clk-side">
+        <div class="hq-clk-t">Топ зон по кликам</div>
+        ${top}
+        <div class="hq-clk-note">${I('bolt')}<span>Плотность = сумма кликов пользователей. Красное — hotspot, зелёное — низкая активность.</span></div>
+      </div>
+    </div>`;
+}
+
+/* ---------- 8.6 product analytics: наименее используемые ---------- */
+const HQ_LEAST = [
+  {n:'Кабинет рекламы', ic:'megaphone', c:'#4aa0ff', n7:6,   pct:0.5,  hint:'сложный вход — обучающий тур в 1 шаг'},
+  {n:'Календарь публикаций', ic:'clock', c:'#facc15', n7:4,  pct:0.3,  hint:'спрятан в подменю Reels — вынести в главный'},
+  {n:'Экспорт статистики', ic:'file',   c:'#ff6bad',  n7:2,  pct:0.15, hint:'не нужен пока PRO — оставить только BUSINESS'},
+  {n:'Резервные копии',    ic:'shield', c:'#a855f7',  n7:1,  pct:0.08, hint:'кандидат на удаление — 0.08% MAU'},
+];
+function hqLeastBlock(){
+  const rows = HQ_LEAST.map((f,i)=>`
+    <div class="hq-feat" style="animation-delay:${i*0.045}s">
+      <span class="hq-feat-ic" style="color:${f.c};background:${f.c}1e">${I(f.ic)}</span>
+      <span class="hq-feat-b">
+        <span class="hq-feat-top"><b>${esc(f.n)}</b><span class="hq-feat-n">${f.n7}<em>откр. за 7 дн</em></span></span>
+        <span class="hq-least-hint">${esc(f.hint)}</span>
+      </span>
+      <span class="hq-feat-dl dn">${f.pct}%</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Наименее используемые · кандидаты на упрощение</div>
+    <div class="hq-feats card">${rows}</div>`;
+}
+
+/* ---------- 8.7 risks: сводная плашка с типизацией ---------- */
+function hqRisksBlock(){
+  const partWait = ADMIN.partners.filter(p=>!hqPartPaid(p));
+  const partSum = partWait.reduce((s,p)=>s+hqPartEarn(p),0);
+  const s = hqCrisisSignal();
+  const riskList = [];
+  if(partSum>0) riskList.push({sev:'md', ic:'briefcase', txt:'Партнёры просят выплату: <b>$'+partSum+'</b> ('+partWait.length+' чел.)'});
+  if(s && s.dropPct <= -5) riskList.push({sev:'hi', ic:'bolt', txt:'MRR упал <b>'+s.dropPct+'%</b> за неделю ('+fmtMoney(Math.round(s.cur))+' против '+fmtMoney(Math.round(s.prev))+')'});
+  if(HQ_MET.retention.d30 < 30) riskList.push({sev:'md', ic:'flag', txt:'Retention 30d ниже целевого 30%: <b>'+HQ_MET.retention.d30+'%</b>'});
+  const errs = 42; riskList.push({sev:'md', ic:'shield', txt:'Server errors <b>+'+errs+'%</b> за час · p95 '+HQ_MET.errs.p95});
+  const openMod = (typeof ADMIN!=='undefined' && ADMIN.moder) ? ADMIN.moder.length : 0;
+  if(openMod>0) riskList.push({sev:'lo', ic:'edit', txt:openMod+' задач в очереди модерации'});
+  if(!riskList.length) return '';
+  const rows = riskList.map(r=>`
+    <div class="hq-risk-row sev-${r.sev}">
+      <span class="hq-risk-ic">${I(r.ic)}</span>
+      <span class="hq-risk-m">${r.txt}</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Уведомления о рисках · ${riskList.length}</div>
+    <div class="hq-risks card">${rows}</div>`;
+}
+
+/* ---------- 8.8 быстрые действия: расширенный набор ---------- */
+function hqQuickPro(){
+  showPopup({ico:'megaphone', title:'Рассылка всем PRO',
+    body:`<div class="hq-mail"><textarea id="hqMailBody" rows="5" placeholder="Текст письма для 78 подписчиков PRO">Привет! Мы обновили Reels-машину и добавили инфографику. Загляни — новая вкладка «Библиотека переходов» уже доступна.</textarea><small>Пойдёт по всем ${HQ_TIERS.find(t=>t.k==='PRO').count} активным PRO. Push + e-mail + внутренняя лента.</small></div>`,
+    actions:[
+      {label:'Отправить всем PRO', onclick:()=>toast('Рассылка запущена: '+HQ_TIERS.find(t=>t.k==='PRO').count+' PRO · push + e-mail')},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickTriage(){
+  const q = (typeof ADMIN!=='undefined' && ADMIN.agents) ? ADMIN.agents.filter((a,i)=>a.esc && !HQ_STATE.escDone[i]).length : 0;
+  if(!q){ toast('Очередь triage пуста — все ответы отправлены'); return; }
+  showPopup({ico:'bolt', title:'Ответить всем на triage', body:`Сегодня в очереди <b>${q}</b> эскалаций. Отправим шаблонный ответ с приветствием и обещанием разобрать в течение часа?`,
+    actions:[
+      {label:'Ответить всем', onclick:()=>{ ADMIN.agents.forEach((a,i)=>{ if(a.esc) HQ_STATE.escDone[i]=1; }); hqSave(); renderAdmin(); toast('Ответили на '+q+' эскалаций · очередь очищена'); }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickBan(){
+  showPopup({ico:'lock', title:'Забанить пользователя',
+    body:`<div class="hq-mail"><input id="hqBanNick" placeholder="@ник или имя" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none"><small>Полный список — во вкладке «Пользователи». Здесь бан по нику одной кнопкой.</small></div>`,
+    actions:[
+      {label:'Забанить', onclick:()=>{
+        const v = (document.getElementById('hqBanNick')||{}).value || '';
+        const q = v.replace('@','').toLowerCase();
+        const idx = ADMIN.users.findIndex(u=> (u.n+' '+u.h).toLowerCase().indexOf(q)>=0);
+        if(idx<0){ toast('Пользователь «'+v+'» не найден'); return; }
+        hqUserBan(idx);
+      }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickRefund(){
+  const waits = ADMIN.pay.map((p,i)=>({p,i,st:hqPaySt(i)})).filter(x=>x.st==='ok');
+  if(!waits.length){ toast('Нет проведённых платежей для возврата'); return; }
+  const rows = waits.slice(0,6).map(x=>`<button class="adm-btn" style="margin-bottom:6px;width:100%;text-align:left;justify-content:flex-start" onclick="hqPayRefund(${x.i});closePopup()">${I('card')} ${esc(x.p.n)} · ${esc(x.p.sum)} · ${esc(x.p.plan)}</button>`).join('');
+  showPopup({ico:'card', title:'Возврат средств', body:`<div class="hq-mail">Выбери платёж для возврата:<div style="margin-top:8px">${rows}</div></div>`,
+    actions:[{label:'Закрыть', ghost:true}]});
+}
+function hqQuickBlock(){
+  return `<div class="adm-sec-h">Быстрые действия</div>
+    <div class="hq-quick hq-quick-6">
+      <button class="hq-qbtn" onclick="hqQuickTriage()"><span class="hq-qic">${I('bolt')}</span><b>Triage</b><small>ответить всем</small></button>
+      <button class="hq-qbtn" onclick="hqQuickPro()"><span class="hq-qic">${I('megaphone')}</span><b>Письмо PRO</b><small>рассылка всем</small></button>
+      <button class="hq-qbtn dng" onclick="hqQuickBan()"><span class="hq-qic">${I('lock')}</span><b>Бан юзера</b><small>по @нику</small></button>
+      <button class="hq-qbtn" onclick="hqQuickRefund()"><span class="hq-qic">${I('card')}</span><b>Возврат</b><small>выбрать платёж</small></button>
+      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тест на кошелёк</small></button>
+      <button class="hq-qbtn" onclick="hqExportMenu()"><span class="hq-qic">${I('file')}</span><b>Экспорт</b><small>CSV / PDF / TXT</small></button>
+    </div>`;
+}
+
+/* ---------- 8.9 Роль: селектор + скрытие блоков ---------- */
+function hqRoleBar(){
+  const chips = HQ_ROLES.map(r=>`<button class="hq-chip ${HQ_STATE.role===r.k?'on':''}" onclick="hqRoleSet('${r.k}')" title="${esc(r.n)}"><span class="hq-role-ic">${I(r.ic)}</span>${esc(r.n)}</button>`).join('');
+  return `<div class="adm-sec-h">Роль просмотра</div><div class="hq-chips hq-role-chips">${chips}</div>`;
+}
+
+/* ---------- 8.10 admOverview: собираем всё вместе ---------- */
+const _prevAdmOverviewHqX = admOverview;
+admOverview = function(){
+  const html = _prevAdmOverviewHqX();
+  /* убираем старую панель «Быстро · действия владельца» — заменим расширенной */
+  const legacy = html
+    .replace(/<div class="adm-sec-h">Быстро · действия владельца<\/div>[\s\S]*?<\/div>\s*/,'')
+    .replace(/<div class="adm-sec-h">Быстрые действия<\/div>[\s\S]*?<\/div>\s*/,'');
+
+  const R = hqRoleSees;
+  const parts = [hqRoleBar()];
+  if(R('risks')) parts.push(hqRisksBlock());
+  if(R('kpi'))   parts.push(hqRtBlock());
+  if(R('donut')) parts.push(hqDonutBlock());
+  if(R('cohort'))parts.push(hqCohortBlock());
+  if(R('click')) parts.push(hqClickBlock());
+  if(R('ab'))    parts.push(hqAbBlock());
+  if(R('least')) parts.push(hqLeastBlock());
+  if(R('quick')) parts.push(hqQuickBlock());
+  return legacy + parts.join('');
+};
+
+/* ---------- 8.11 real-time тикер обзора: 15 сек ---------- */
+let hqRtTimer = null;
+function hqStartRt(){ if(!hqRtTimer) hqRtTimer = setInterval(hqRtTick, 15000); }
+function hqStopRt(){ if(hqRtTimer){ clearInterval(hqRtTimer); hqRtTimer = null; } }
+function hqRtTick(){
+  const av = document.getElementById('adminView');
+  if(!av || !av.classList.contains('open') || admTab !== 'overview'){ hqStopRt(); return; }
+  hqMetTick(); hqMetLiveRefresh();
+}
+
+/* ---------- 8.12 новые вкладки: Финансы / CRM ---------- */
+ADMIN_TABS.push({k:'finance', t:'Финансы'});
+ADMIN_TABS.push({k:'crm',     t:'CRM'});
+
+/* ФИНАНСЫ ------------------------------------------------------------------ */
+const HQ_FIN_INCOME = [
+  {k:'Lava.top карта', v:184000, c:'#9AFF00'},
+  {k:'Криптовалюта',    v:56000,  c:'#4aa0ff'},
+  {k:'ЮKassa · СБП',    v:42000,  c:'#facc15'},
+  {k:'Партнёрские',     v:18000,  c:'#a855f7'},
+  {k:'Международные',   v:12000,  c:'#ff6bad'},
+];
+const HQ_FIN_EXPENSE = [
+  {k:'Реклама',      v:82000, c:'#ff7a3c'},
+  {k:'Инфраструктура',v:34000, c:'#4aa0ff'},
+  {k:'Зарплаты',     v:120000,c:'#a855f7'},
+  {k:'Сервисы (SaaS)',v:18000, c:'#22d3ee'},
+  {k:'Юр / бухгалтерия',v:14000, c:'#facc15'},
+];
+/* прогноз кассы на 6 недель */
+const HQ_FIN_CASH = (function(){
+  let bal = 780000;
+  const arr = [];
+  for(let i=0;i<6;i++){
+    const inc  = 82000 + Math.round(Math.random()*24000);
+    const exp  = 74000 + Math.round(Math.random()*22000);
+    bal += inc - exp;
+    arr.push({w:'W+'+(i+1), inc, exp, bal});
+  }
+  return arr;
+})();
+function hqPieSVG(list, size){
+  const R = 44, C = 2*Math.PI*R;
+  const tot = list.reduce((s,x)=>s+x.v,0);
+  let acc = 0;
+  const segs = list.map((x,i)=>{
+    const frac = x.v/tot, len = frac*C, gap = C-len, off = -acc*C;
+    acc += frac;
+    return `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${x.c}" stroke-width="26"
+      stroke-dasharray="${len.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 60 60)"
+      style="animation:hqDonutIn .9s cubic-bezier(.2,.85,.3,1) ${i*.06}s both"/>`;
+  }).join('');
+  return `<svg class="hq-pie-svg" viewBox="0 0 120 120" aria-hidden="true" style="width:${size||132}px;height:${size||132}px">
+    ${segs}
+    <text x="60" y="58" text-anchor="middle" class="hq-dn-num">${(tot/1000).toFixed(0)}к</text>
+    <text x="60" y="72" text-anchor="middle" class="hq-dn-sub">₽ / мес</text>
+  </svg>`;
+}
+function hqBars(list){
+  const max = Math.max(...list.map(x=>x.v));
+  return list.map((x,i)=>`
+    <div class="hq-bars-row" style="animation-delay:${i*0.05}s">
+      <span class="hq-bars-lbl"><i style="background:${x.c}"></i>${esc(x.k)}</span>
+      <span class="hq-bars-bar"><i style="width:${Math.round(x.v/max*100)}%;background:${x.c}"></i></span>
+      <span class="hq-bars-v">${(x.v/1000).toFixed(0)}к</span>
+    </div>`).join('');
+}
+function hqFinanceView(){
+  const inc = HQ_FIN_INCOME.reduce((s,x)=>s+x.v,0);
+  const exp = HQ_FIN_EXPENSE.reduce((s,x)=>s+x.v,0);
+  const net = inc - exp;
+  const lastBal = HQ_FIN_CASH[HQ_FIN_CASH.length-1].bal;
+  const gapWeek = HQ_FIN_CASH.find(w=>w.bal<0);
+  const legendInc = HQ_FIN_INCOME.map(x=>{
+    const pct = Math.round(x.v/inc*100);
+    return `<div class="hq-dn-l"><i style="background:${x.c}"></i><b>${esc(x.k)}</b><span>${(x.v/1000).toFixed(0)}к · ${pct}%</span></div>`;
+  }).join('');
+  /* cash-flow бары: доход зелёный, расход красный, баланс — линия */
+  const cashMax = Math.max(...HQ_FIN_CASH.map(w=>Math.max(w.inc,w.exp)));
+  const cashRows = HQ_FIN_CASH.map((w,i)=>`
+    <div class="hq-cf-week" style="animation-delay:${i*0.06}s">
+      <span class="hq-cf-lbl">${w.w}</span>
+      <span class="hq-cf-bars">
+        <i class="up"   style="height:${Math.round(w.inc/cashMax*100)}%"><em>+${(w.inc/1000).toFixed(0)}к</em></i>
+        <i class="dn"   style="height:${Math.round(w.exp/cashMax*100)}%"><em>−${(w.exp/1000).toFixed(0)}к</em></i>
+      </span>
+      <span class="hq-cf-bal ${w.bal<0?'neg':''}">${(w.bal/1000).toFixed(0)}к</span>
+    </div>`).join('');
+  return `
+    ${hqRoleBar()}
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${(inc/1000).toFixed(0)}к ₽</b><small>Доходы · мес</small></div>
+      <div class="hq-part-s"><b>${(exp/1000).toFixed(0)}к ₽</b><small>Расходы · мес</small></div>
+      <div class="hq-part-s"><b class="${net<0?'warn':''}">${net>=0?'+':''}${(net/1000).toFixed(0)}к ₽</b><small>Чистая прибыль</small></div>
+    </div>
+    <div class="adm-sec-h">Структура доходов · pie</div>
+    <div class="hq-donut card">${hqPieSVG(HQ_FIN_INCOME, 140)}<div class="hq-dn-legend">${legendInc}</div></div>
+    <div class="adm-sec-h">Расходы · распределение</div>
+    <div class="hq-bars card">${hqBars(HQ_FIN_EXPENSE)}</div>
+    <div class="adm-sec-h">Прогноз кассы · 6 недель</div>
+    <div class="hq-cf card">
+      <div class="hq-cf-grid">${cashRows}</div>
+      <div class="hq-cf-foot ${lastBal<0?'neg':''}">
+        <span>Прогноз баланса через 6 недель: <b>${(lastBal/1000).toFixed(0)}к ₽</b></span>
+        ${gapWeek ? `<span class="hq-cf-warn">${I('bolt')} Кассовый разрыв на ${gapWeek.w}: ${(gapWeek.bal/1000).toFixed(0)}к ₽</span>` : `<span class="hq-cf-ok">${I('check2')} Разрывов не прогнозируется</span>`}
+      </div>
+    </div>
+    <div class="adm-acts" style="margin-top:12px">
+      <button class="adm-btn pri" onclick="hqExportMenu()">${I('file')} Экспорт .csv / .pdf</button>
+      <button class="adm-btn" onclick="hqExportReport()">${I('file')} Сводка .txt</button>
+    </div>`;
+}
+
+/* CRM ПАРТНЁРОВ (топ-10) --------------------------------------------------- */
+const HQ_CRM = [
+  {n:'Марина К.',      h:'@marina_smm',        turn: 412000, refs:34, tier:'GOLD',  st:'ok',   last:'сегодня'},
+  {n:'Дмитрий О.',     h:'@dmitrymarketing',   turn: 228000, refs:19, tier:'GOLD',  st:'wait', last:'вчера'},
+  {n:'Алина Р.',       h:'@alina.grow',        turn: 196000, refs:22, tier:'GOLD',  st:'ok',   last:'2 дня назад'},
+  {n:'Игорь В.',       h:'@igorvideo',         turn: 148000, refs:11, tier:'SILVER',st:'ok',   last:'3 дня назад'},
+  {n:'Пётр С.',        h:'@stomat_pro',        turn: 96000,  refs:8,  tier:'SILVER',st:'wait', last:'сегодня'},
+  {n:'Анна Л.',        h:'@beauty_msk',        turn: 74000,  refs:6,  tier:'SILVER',st:'ok',   last:'вчера'},
+  {n:'Никита Ш.',      h:'@editor_pro',        turn: 62000,  refs:7,  tier:'SILVER',st:'ok',   last:'сегодня'},
+  {n:'Роман Т.',       h:'@fitmax',            turn: 48000,  refs:5,  tier:'BRONZE',st:'wait', last:'4 дня назад'},
+  {n:'Ольга М.',       h:'@target_alena',      turn: 34000,  refs:4,  tier:'BRONZE',st:'ok',   last:'5 дней назад'},
+  {n:'Елена Д.',       h:'@denta_clinic',      turn: 22000,  refs:3,  tier:'BRONZE',st:'wait', last:'вчера'},
+];
+const HQ_CRM_TIER = {GOLD:{c:'#facc15',bg:'rgba(250,204,21,.14)'}, SILVER:{c:'#8892a0',bg:'rgba(136,146,160,.14)'}, BRONZE:{c:'#ff7a3c',bg:'rgba(255,122,60,.14)'}};
+function hqCrmView(){
+  const tot = HQ_CRM.reduce((s,x)=>s+x.turn,0);
+  const waits = HQ_CRM.filter(x=>x.st==='wait');
+  const oks   = HQ_CRM.filter(x=>x.st==='ok');
+  const rows = HQ_CRM.map((p,i)=>{
+    const t = HQ_CRM_TIER[p.tier] || {c:'#8892a0',bg:'transparent'};
+    return `<div class="hq-crm-row" style="animation-delay:${i*0.04}s">
+      <span class="hq-crm-rank">#${i+1}</span>
+      <span class="adm-ava" style="background:${t.bg};color:${t.c};border:1px solid ${t.c}44">${esc(p.n[0])}</span>
+      <span class="adm-main"><b>${esc(p.n)}</b><small>${esc(p.h)} · ${p.refs} рефералов · ${esc(p.last)}</small></span>
+      <span class="hq-crm-tier" style="color:${t.c};background:${t.bg}">${p.tier}</span>
+      <span class="hq-crm-turn">${(p.turn/1000).toFixed(0)}к ₽</span>
+      <span class="adm-tag ${p.st==='ok'?'ok':'wait'}">${p.st==='ok'?'выплачено':'к выплате'}</span>
+    </div>`;
+  }).join('');
+  return `
+    ${hqRoleBar()}
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${HQ_CRM.length}</b><small>партнёров · топ</small></div>
+      <div class="hq-part-s"><b>${(tot/1000).toFixed(0)}к ₽</b><small>суммарный оборот</small></div>
+      <div class="hq-part-s"><b class="${waits.length?'warn':''}">${waits.length}</b><small>ждут выплаты</small></div>
+    </div>
+    <div class="adm-sec-h">Топ-10 партнёров · CRM</div>
+    <div class="hq-crm card">${rows}</div>
+    <div class="adm-acts" style="margin-top:12px">
+      <button class="adm-btn pri" onclick="toast('Партнёрам ${waits.length} отправлены выплаты · $${Math.round(waits.reduce((s,x)=>s+x.turn*0.1,0)).toLocaleString('ru')}')">${I('card')} Выплатить всем ждущим (${waits.length})</button>
+      <button class="adm-btn" onclick="hqExportMenu()">${I('file')} Экспорт CRM</button>
+    </div>`;
+}
+
+/* ---------- 8.13 расширение renderAdmin для finance/crm ---------- */
+const _prevRenderAdminHq3 = renderAdmin;
+renderAdmin = function(){
+  if(admTab === 'finance' || admTab === 'crm'){
+    document.getElementById('admTabs').innerHTML = ADMIN_TABS.map(t=>
+      `<button class="adm-tab ${admTab===t.k?'on':''}" onclick="admGo('${t.k}')">${t.t}</button>`).join('');
+    document.getElementById('admBody').innerHTML = admTab==='finance' ? hqFinanceView() : hqCrmView();
+    hqStopRt(); hqStopFeed();
+    return;
+  }
+  _prevRenderAdminHq3();
+  if(admTab === 'overview') hqStartRt(); else hqStopRt();
+};
+const _prevCloseAdminHq3 = closeAdmin;
+closeAdmin = function(){ hqStopRt(); _prevCloseAdminHq3(); };
+
+/* ---------- 8.14 ЭКСПОРТ: CSV / PDF (print) / TXT ---------- */
+function hqExportMenu(){
+  showPopup({ico:'file', title:'Экспорт отчёта за месяц', body:`
+    <div class="hq-mail" style="text-align:left">
+      Выбери формат — данные включают: MRR, DAU, тарифы, доходы/расходы, платежи, партнёры, CRM.
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="adm-btn pri" style="flex:1;min-width:120px" onclick="hqExportCsv();closePopup()">${I('file')} CSV</button>
+        <button class="adm-btn" style="flex:1;min-width:120px" onclick="hqExportPdf();closePopup()">${I('file')} PDF (печать)</button>
+        <button class="adm-btn" style="flex:1;min-width:120px" onclick="hqExportReport();closePopup()">${I('file')} TXT</button>
+      </div>
+    </div>`, actions:[{label:'Закрыть', ghost:true}]});
+}
+function hqCsvEscape(v){ const s = String(v==null?'':v); return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function hqExportCsv(){
+  const rows = [];
+  rows.push(['section','key','value','sub']);
+  const now = new Date();
+  rows.push(['meta','date', now.toISOString(), 'OKO monthly export']);
+  /* KPI */
+  const mrr = hqMrr();
+  rows.push(['kpi','MRR', mrr, 'USD']);
+  rows.push(['kpi','ARR', mrr*12, 'USD']);
+  rows.push(['kpi','DAU', HQ_MET.dau, '']);
+  rows.push(['kpi','WAU', HQ_MET.wau, '']);
+  rows.push(['kpi','MAU', HQ_MET.mau, '']);
+  rows.push(['kpi','Retention 7d', HQ_MET.retention.d7, '%']);
+  rows.push(['kpi','Retention 30d', HQ_MET.retention.d30, '%']);
+  rows.push(['kpi','Retention 90d', HQ_MET.retention.d90, '%']);
+  rows.push(['kpi','AOV', HQ_MET.aov, 'USD']);
+  rows.push(['kpi','LTV', HQ_MET.ltv, 'USD']);
+  rows.push(['kpi','CAC', HQ_MET.cac, 'USD']);
+  rows.push(['kpi','ROI', hqRoi(), '%']);
+  /* Тарифы */
+  HQ_TIERS.forEach(t=> rows.push(['tier', t.k, t.count, 'active']));
+  /* Доходы / Расходы */
+  HQ_FIN_INCOME.forEach(x=> rows.push(['income', x.k, x.v, 'RUB/month']));
+  HQ_FIN_EXPENSE.forEach(x=> rows.push(['expense', x.k, x.v, 'RUB/month']));
+  /* Cash-flow */
+  HQ_FIN_CASH.forEach(x=> rows.push(['cashflow', x.w, x.bal, 'income='+x.inc+' expense='+x.exp]));
+  /* CRM */
+  HQ_CRM.forEach((p,i)=> rows.push(['partner', p.n+' '+p.h, p.turn, p.tier+' · refs='+p.refs+' · '+p.st]));
+  /* Платежи */
+  ADMIN.pay.forEach((p,i)=> rows.push(['payment', p.n+' · '+p.plan, hqPayNum(p.sum), hqPaySt(i)]));
+  /* AB */
+  HQ_AB.forEach(t=> rows.push(['ab', t.n, t.winner||'', t.st+' · uplift='+t.uplift+'%']));
+  const csv = rows.map(r=>r.map(hqCsvEscape).join(',')).join('\n');
+  const stamp = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const url = URL.createObjectURL(new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = 'oko-report-'+stamp+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('CSV выгружен · '+rows.length+' строк');
+}
+function hqExportPdf(){
+  const now = new Date();
+  const stamp = String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+now.getFullYear();
+  const mrr = hqMrr(), arr = mrr*12, roi = hqRoi();
+  const inc = HQ_FIN_INCOME.reduce((s,x)=>s+x.v,0), exp = HQ_FIN_EXPENSE.reduce((s,x)=>s+x.v,0);
+  const rowsKpi = [
+    ['MRR', '$'+mrr.toLocaleString('en')], ['ARR', '$'+arr.toLocaleString('en')],
+    ['DAU', HQ_MET.dau], ['WAU', HQ_MET.wau], ['MAU', HQ_MET.mau],
+    ['Retention 7d', HQ_MET.retention.d7+'%'], ['Retention 30d', HQ_MET.retention.d30+'%'], ['Retention 90d', HQ_MET.retention.d90+'%'],
+    ['AOV', '$'+HQ_MET.aov], ['LTV', '$'+HQ_MET.ltv], ['CAC', '$'+HQ_MET.cac], ['ROI', roi+'%'],
+  ].map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join('');
+  const tiersR = HQ_TIERS.map(t=>`<tr><td>${t.k}</td><td><b>${t.count}</b></td><td>$${t.price}/мес</td></tr>`).join('');
+  const incR = HQ_FIN_INCOME.map(x=>`<tr><td>${x.k}</td><td><b>${(x.v/1000).toFixed(0)}к ₽</b></td></tr>`).join('');
+  const expR = HQ_FIN_EXPENSE.map(x=>`<tr><td>${x.k}</td><td><b>${(x.v/1000).toFixed(0)}к ₽</b></td></tr>`).join('');
+  const crmR = HQ_CRM.map((p,i)=>`<tr><td>#${i+1}</td><td>${p.n} ${p.h}</td><td>${p.tier}</td><td><b>${(p.turn/1000).toFixed(0)}к ₽</b></td><td>${p.st==='ok'?'выплачено':'к выплате'}</td></tr>`).join('');
+  const abR = HQ_AB.map(t=>`<tr><td>${t.n}</td><td>${t.winner||'—'}</td><td>${t.st}</td><td>${t.uplift?'+'+t.uplift+'%':''}</td></tr>`).join('');
+  const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>OKO · отчёт ${stamp}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#0d1a05;background:#fff;padding:32px;max-width:900px;margin:0 auto;line-height:1.5}
+      h1{font-size:26px;letter-spacing:.02em;margin:0 0 6px;color:#0d1a05}
+      h2{font-size:17px;margin:28px 0 10px;color:#5cae00;border-bottom:2px solid #9AFF00;padding-bottom:5px}
+      .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #9AFF00;padding-bottom:14px;margin-bottom:18px}
+      .logo{width:52px;height:52px;border-radius:14px;background:#0d1a05;color:#9AFF00;display:grid;place-items:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:.05em}
+      .meta{color:#5b6a4a;font-size:13px;margin-top:3px}
+      table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+      th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e8efe0}
+      th{background:#f6faed;font-weight:700;font-size:12px;color:#5cae00;text-transform:uppercase;letter-spacing:.05em}
+      td b{color:#0d1a05;font-weight:700}
+      .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+      .k{background:#f6faed;border-left:3px solid #9AFF00;padding:11px 14px;border-radius:6px}
+      .k b{display:block;font-size:22px;color:#0d1a05;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.03em}
+      .k small{color:#5b6a4a;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+      .foot{margin-top:32px;padding-top:16px;border-top:1px solid #e8efe0;color:#5b6a4a;font-size:12px;text-align:center}
+      @media print{body{padding:20px}}
+    </style></head><body>
+    <div class="head">
+      <div class="logo">OKO</div>
+      <div><h1>Сводный отчёт владельца OKO</h1><div class="meta">Дата формирования: ${stamp} · период: последние 30 дней</div></div>
+    </div>
+
+    <div class="kpi">
+      <div class="k"><b>$${mrr.toLocaleString('en')}</b><small>MRR</small></div>
+      <div class="k"><b>$${arr.toLocaleString('en')}</b><small>ARR</small></div>
+      <div class="k"><b>${HQ_MET.dau}</b><small>DAU</small></div>
+      <div class="k"><b>${roi}%</b><small>ROI</small></div>
+    </div>
+
+    <h2>Ключевые метрики</h2>
+    <table>${rowsKpi}</table>
+
+    <h2>Активные подписки по тарифам</h2>
+    <table><thead><tr><th>Тариф</th><th>Активных</th><th>Цена</th></tr></thead><tbody>${tiersR}</tbody></table>
+
+    <h2>Доходы (за месяц)</h2>
+    <table><thead><tr><th>Канал</th><th>Сумма</th></tr></thead><tbody>${incR}
+      <tr><td><b>Итого</b></td><td><b>${(inc/1000).toFixed(0)}к ₽</b></td></tr></tbody></table>
+
+    <h2>Расходы (за месяц)</h2>
+    <table><thead><tr><th>Категория</th><th>Сумма</th></tr></thead><tbody>${expR}
+      <tr><td><b>Итого</b></td><td><b>${(exp/1000).toFixed(0)}к ₽</b></td></tr>
+      <tr><td><b>Чистая прибыль</b></td><td><b>${((inc-exp)/1000).toFixed(0)}к ₽</b></td></tr></tbody></table>
+
+    <h2>Партнёры · CRM топ-10</h2>
+    <table><thead><tr><th>Ранг</th><th>Партнёр</th><th>Уровень</th><th>Оборот</th><th>Статус</th></tr></thead><tbody>${crmR}</tbody></table>
+
+    <h2>A/B тесты</h2>
+    <table><thead><tr><th>Эксперимент</th><th>Победитель</th><th>Статус</th><th>Uplift</th></tr></thead><tbody>${abR}</tbody></table>
+
+    <div class="foot">OKO · штаб владельца · документ сформирован автоматически.
+      Для сохранения в PDF: в диалоге печати выбери «Сохранить как PDF».</div>
+    <script>window.addEventListener('load',()=>setTimeout(()=>window.print(),500));</script>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ toast('Разреши всплывающие окна для экспорта PDF'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  toast('PDF-отчёт открыт · нажми «Сохранить как PDF»');
+}
 
 /* ==================== самоинициализация ==================== */
 (function hqInit(){
@@ -49622,33 +50762,80 @@ function spOpenFromURL(){
    Всё персистится в localStorage 'oko-settings2'. */
 
 /* ---------- состояние + персист ---------- */
+const ST2_NOTIF_DEF = () => ({snd:true, vibro:true, badge:true, prev:true});
+const ST2_CH = [
+  {k:'msg',      title:'Сообщения',      sub:'Чаты, реплаи, упоминания',       ico:'chat'},
+  {k:'likes',    title:'Лайки и реакции',sub:'Отклик на посты и сторис',       ico:'heart'},
+  {k:'comments', title:'Комментарии',    sub:'Ответы под твоими постами',      ico:'comment'},
+  {k:'partners', title:'Партнёрка',      sub:'Начисления и выплаты',           ico:'briefcase'},
+  {k:'games',    title:'Игры',           sub:'Ставки, выигрыши, лимиты',       ico:'st2-controller'},
+  {k:'academy',  title:'Академия',       sub:'Новые уроки и сертификаты',      ico:'star'},
+  {k:'market',   title:'Биржа',          sub:'Заказы, отклики, диспуты',       ico:'briefcase'},
+  {k:'marketing',title:'Новости OKO',    sub:'Обновления и предложения',       ico:'megaphone'},
+];
 const ST2 = {
   nick: null,                       /* override ника (синк с PROFILE) */
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
-  notif: {msg:true, feed:true, market:true, academy:true, marketing:false, quiet:{on:false, from:'23:00', to:'08:00'}},
+  tg:    null,                      /* привязка Telegram: '@nick' */
+  notif: {
+    msg:true, feed:true, market:true, academy:true, marketing:false,
+    likes:true, comments:true, partners:true, games:false,
+    quiet:{on:false, from:'23:00', to:'08:00'},
+    preview:true, sound:true, vibro:true,
+    perCh:{},                       /* per-channel {msg:{snd,vibro,badge,prev}, ...} */
+  },
   /* приватность: write (all|following|nobody), phone/photo/status (all|contacts|nobody), online/read — тумблеры */
-  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all'},
+  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all',
+          calls:'contacts', posts:'all', stories:'all'},
   sec:   {twofa:false, passcode:false, pin:null, secret:null, autolock:'5m'},
-  theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
+  theme: null,                      /* 'dark'|'light'|'system' */
+  themeAuto: {on:false, dark:'22:00', light:'07:00'},
+  data:  {
+    cacheLimit: 500,                /* МБ, 100..2000 */
+    autodl: {
+      wifi:   {photos:true,  videos:true,  files:true},
+      mobile: {photos:true,  videos:false, files:false},
+    },
+    docsPolicy: 'ask',              /* 'always' | 'ask' | 'never' */
+  },
+  a11y:  {reduceMotion:false, highContrast:false, bigTaps:false, reduceOpacity:false, fontScale:100 /* 85..135 */},
+  loc:   {dateFmt:'auto', hour24:true, weekStart:'auto' /* auto|mon|sun */},
   accounts: [],                     /* [{id,name,nick,tier,role,bio,status,avatar,cover}] */
   activeAcc: null,                  /* id активного аккаунта */
   killed: [],                       /* id завершённых мок-сессий */
   blocked: [],                      /* [имя] — чёрный список (реальный персист) */
   lastClear: 0,                     /* ts последней очистки кэша */
+  delAt: 0,                         /* ts запланированного удаления аккаунта */
 };
 (function st2Load(){
   try{
     const s = JSON.parse(localStorage.getItem('oko-settings2') || 'null');
     if(!s) return;
-    if(s.notif) Object.assign(ST2.notif, s.notif);
+    if(s.notif){
+      Object.assign(ST2.notif, s.notif);
+      if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
+      if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
+    }
     if(s.priv)  Object.assign(ST2.priv,  s.priv);
     if(s.sec)   Object.assign(ST2.sec,   s.sec);
-    ['nick','email','phone','lastClear','theme','activeAcc'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
+    if(s.data){
+      Object.assign(ST2.data, s.data);
+      if(s.data.autodl){
+        if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
+        if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+      }
+    }
+    if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
+    if(s.loc)       Object.assign(ST2.loc,       s.loc);
+    if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
+    ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
     if(Array.isArray(s.killed))   ST2.killed   = s.killed;
     if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
     if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
+  /* нормализуем перечёт-каналы */
+  ST2_CH.forEach(c => { if(!ST2.notif.perCh[c.k]) ST2.notif.perCh[c.k] = ST2_NOTIF_DEF(); });
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }
 

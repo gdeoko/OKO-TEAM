@@ -1338,7 +1338,13 @@ function adsPickGoal(k){
 /* --- формат --- */
 function adsRenderFmts(){
   const box = document.getElementById('adsFmtGrid'); if(!box) return;
-  box.innerHTML = Object.entries(ADS_FORMATS).map(([k,f])=>`
+  const compact = box.classList.contains('compact');
+  box.innerHTML = Object.entries(ADS_FORMATS).map(([k,f])=>compact ? `
+    <button class="ads-fmt cmp ${adsDraft.fmt===k?'on':''}" data-v="${k}" onclick="adsPickFmt('${k}')">
+      <span class="ads-fmt-ic">${I(f.ico)}</span>
+      <span class="ads-fmt-l">${esc(f.l)}</span>
+      <span class="ads-fmt-price">${f.model} · от ${f.model==='CPC'?f.cpc:f.cpm} ₽</span>
+    </button>` : `
     <button class="ads-fmt ${adsDraft.fmt===k?'on':''}" data-v="${k}" onclick="adsPickFmt('${k}')">
       <span class="ads-fmt-ic">${I(f.ico)}</span>
       <span class="ads-fmt-l">${esc(f.l)}</span>
@@ -1348,7 +1354,7 @@ function adsRenderFmts(){
   const tw = document.getElementById('adsFmtTarget');
   if(tw){
     const f = ADS_FORMATS[adsDraft.fmt];
-    tw.innerHTML = `<div class="ads-fmt-note">${I('bolt')}<span>Модель по умолчанию — <b>${f.model}</b> (${ADS_MODELS[f.model].unit}). Ставку и бюджет зададите на последнем шаге.</span></div>`;
+    tw.innerHTML = `<div class="ads-fmt-note">${I('bolt')}<span>Модель по умолчанию — <b>${f.model}</b> (${ADS_MODELS[f.model].unit}). Ставку и график зададите на шаге 4.</span></div>`;
   }
 }
 function adsPickFmt(k){
@@ -1401,7 +1407,14 @@ function adsPickGeo(btn){
   btn.classList.add('on'); adsDraft.geo = btn.dataset.v; adsDraft.cities = [];
   adsRenderCities(); adsCalcReach();
 }
-function adsToggleMulti(btn){ btn.classList.toggle('on'); adsCalcReach(); }
+function adsToggleMulti(btn){
+  btn.classList.toggle('on');
+  /* синхронизируем adsDraft.interests для интересов (шаг 2), т.к. они рендерятся динамически */
+  if(btn.closest('#adsIntChips')){
+    adsDraft.interests = adsPicked('adsIntChips');
+  }
+  adsCalcReach();
+}
 function adsToggleAb(){
   adsDraft.ab = !adsDraft.ab;
   const chip = document.getElementById('adsAbChip'); if(chip) chip.classList.toggle('on', adsDraft.ab);
@@ -1410,6 +1423,165 @@ function adsToggleAb(){
 }
 function adsPicked(boxId){
   return [...document.querySelectorAll('#'+boxId+' .ads-chip.on')].map(b=>b.dataset.v);
+}
+
+/* --- интересы (расширенный набор чипов) --- */
+function adsRenderInterests(){
+  const box = document.getElementById('adsIntChips'); if(!box) return;
+  const active = new Set(Array.isArray(adsDraft.interests) ? adsDraft.interests : []);
+  box.innerHTML = ADS_INTERESTS.map(v=>`
+    <button class="ads-chip ${active.has(v)?'on':''}" data-v="${esc(v)}" onclick="adsToggleMulti(this)">${esc(v)}</button>
+  `).join('');
+}
+
+/* --- возраст: двойной ползунок 14..65+ --- */
+function adsAgeInput(quiet){
+  const a = document.getElementById('adsAgeMin'), b = document.getElementById('adsAgeMax');
+  if(!a || !b) return;
+  let mn = parseInt(a.value,10), mx = parseInt(b.value,10);
+  if(mn>mx-2){
+    /* какой ползунок трогали — того и подчиняем; проще всего: минимум не превышает максимум-2 */
+    if(mn>65-2) mn = 63;
+    mx = Math.min(65, Math.max(mn+2, mx));
+    a.value = mn; b.value = mx;
+  }
+  adsDraft.ageMin = mn; adsDraft.ageMax = mx;
+  const fill = document.getElementById('adsAgeFill');
+  if(fill){
+    const l = (mn-14)/(65-14)*100, r = (mx-14)/(65-14)*100;
+    fill.style.left = l+'%'; fill.style.width = (r-l)+'%';
+  }
+  const hint = document.getElementById('adsAgeHint');
+  if(hint) hint.textContent = mn+' – '+(mx>=65?'65+':mx);
+  if(!quiet) adsCalcReach();
+}
+
+/* --- look-alike: чипы аудиторий-источников с флагом «расширить похожими» --- */
+function adsRenderLal(){
+  const box = document.getElementById('adsLalBox'); if(!box) return;
+  const auds = ADS.auds || [];
+  const opts = auds.length ? auds.map(a=>`
+    <button class="ads-lal-chip ${adsDraft.lalFrom===a.id?'on':''}" onclick="adsLalPick(${a.id})">
+      ${I('users')}${esc(a.name)}
+    </button>`).join('') : `<span class="ads-lal-empty">Сохрани аудиторию, чтобы построить похожую</span>`;
+  box.innerHTML = `
+    <label class="ads-lal-toggle">
+      <input type="checkbox" ${adsDraft.lal?'checked':''} onchange="adsLalToggle(this.checked)">
+      <span class="ads-lal-sw"><i></i></span>
+      <span class="ads-lal-txt"><b>Расширить похожими профилями</b>
+        <small>+40% к охвату: OKO найдёт людей с похожим поведением</small></span>
+    </label>
+    <div class="ads-lal-src" ${adsDraft.lal?'':'style="opacity:.5;pointer-events:none"'}>
+      <div class="ads-lal-src-h">Источник похожести</div>
+      <div class="ads-lal-chips">${opts}</div>
+    </div>`;
+}
+function adsLalToggle(v){
+  adsDraft.lal = !!v;
+  if(v && !adsDraft.lalFrom && (ADS.auds||[]).length) adsDraft.lalFrom = ADS.auds[0].id;
+  adsRenderLal(); adsCalcReach();
+}
+function adsLalPick(id){ adsDraft.lalFrom = id; adsRenderLal(); adsCalcReach(); }
+
+/* --- дни недели --- */
+const ADS_WEEK_NAMES = [['пн',1],['вт',2],['ср',3],['чт',4],['пт',5],['сб',6],['вс',0]];
+function adsRenderWeek(){
+  const box = document.getElementById('adsWeekChips'); if(!box) return;
+  const on = new Set(Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays : [1,2,3,4,5,6,0]);
+  box.innerHTML = ADS_WEEK_NAMES.map(([l,v])=>`
+    <button class="ads-week-b ${on.has(v)?'on':''}" data-v="${v}" onclick="adsToggleWeek(${v})">${l}</button>
+  `).join('');
+}
+function adsToggleWeek(v){
+  const set = new Set(Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays : [1,2,3,4,5,6,0]);
+  if(set.has(v)) set.delete(v); else set.add(v);
+  if(set.size===0) set.add(v);   /* не даём выключить все дни */
+  adsDraft.weekdays = [...set].sort((a,b)=>a-b);
+  adsRenderWeek(); adsCalcForecast();
+}
+
+/* --- окно показа (часы) --- */
+function adsHourInput(quiet){
+  const a = document.getElementById('adsHourFrom'), b = document.getElementById('adsHourTo');
+  if(!a || !b) return;
+  let mn = parseInt(a.value,10), mx = parseInt(b.value,10);
+  if(mn>mx-1){ mx = Math.min(24, mn+1); b.value = mx; }
+  adsDraft.hourFrom = mn; adsDraft.hourTo = mx;
+  const fill = document.getElementById('adsHourFill');
+  if(fill){ const l = mn/24*100, r = mx/24*100; fill.style.left = l+'%'; fill.style.width = (r-l)+'%'; }
+  const hint = document.getElementById('adsHourHint');
+  if(hint) hint.textContent = (mn<10?'0'+mn:mn)+':00 – '+(mx<10?'0'+mx:mx)+':00';
+  if(!quiet) adsCalcForecast();
+}
+
+/* --- бюджет: слайдер + инпут двусторонний --- */
+function adsBudgetSliderInput(v){
+  const val = Math.max(500, Math.min(100000, parseInt(v,10)||500));
+  const inp = document.getElementById('adsInpBudget'); if(inp) inp.value = val;
+  document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.toggle('on', b.textContent.replace(/\s|₽/g,'')==String(val)));
+  const hint = document.getElementById('adsBudgetHint');
+  if(hint) hint.textContent = fmtN(val)+' ₽ в сутки';
+  adsCalcForecast();
+}
+function adsBudgetInputSync(){
+  const inp = document.getElementById('adsInpBudget'); if(!inp) return;
+  const v = Math.max(0, parseInt(inp.value,10)||0);
+  const sl = document.getElementById('adsBudgetSlider');
+  if(sl && v>=500) sl.value = Math.min(100000, v);
+  const hint = document.getElementById('adsBudgetHint');
+  if(hint) hint.textContent = v ? fmtN(v)+' ₽ в сутки' : '₽ в сутки';
+  adsCalcForecast();
+}
+function adsBudgetSliderSync(){
+  const inp = document.getElementById('adsInpBudget');
+  const sl = document.getElementById('adsBudgetSlider');
+  if(inp && sl){
+    const v = Math.max(500, Math.min(100000, parseInt(inp.value,10)||1000));
+    sl.value = v;
+    const hint = document.getElementById('adsBudgetHint');
+    if(hint) hint.textContent = fmtN(v)+' ₽ в сутки';
+  }
+}
+
+/* --- пикер моих постов ленты в шаге креатива --- */
+function adsMyPosts(){
+  if(typeof POSTS==='undefined' || !Array.isArray(POSTS.rec)) return [];
+  return POSTS.rec.filter(p=>!p.promoted && !p.sponsored && p.name===PROFILE.name).slice(0,10);
+}
+function adsRenderPostPicker(){
+  const box = document.getElementById('adsPostPicker'); if(!box) return;
+  const posts = adsMyPosts();
+  if(!posts.length){
+    box.innerHTML = `<div class="ads-picker-empty">${I('photo')}Своих постов в ленте пока нет — заполни поля вручную</div>`;
+    return;
+  }
+  box.innerHTML = posts.map(p=>{
+    const body = (p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    const title = body.slice(0, 44) || 'Пост из ленты';
+    const sub = body.slice(44, 140);
+    return `<button class="ads-picker-c" onclick="adsFillFromPost(${p.id})">
+      <div class="ads-picker-t">${esc(title)}</div>
+      <div class="ads-picker-s">${esc(sub||'нажми, чтобы взять текст в объявление')}</div>
+      <div class="ads-picker-m">${I('eye')}${fmtN(p.views||0)}${I('bolt')}${fmtN(p.likes||0)}</div>
+    </button>`;
+  }).join('');
+}
+function adsFillFromPost(id){
+  const p = adsMyPosts().find(x=>x.id===id); if(!p) return;
+  const body = (p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  const t = body.slice(0, 60);
+  const rest = body.slice(60, 300).trim();
+  const ti = document.getElementById('adsInpTitle'); if(ti && t){ ti.value = t; }
+  const te = document.getElementById('adsInpText');  if(te){ te.value = rest || body.slice(0,300); }
+  /* если есть медиа у поста — переносим (только src, тип уже известен) */
+  if(p.media && (p.media.src || typeof p.media==='string')){
+    adsRevokeDraftMedia();
+    const src = p.media.src || p.media;
+    adsDraft.media = {type: p.media.type || 'image', src, name:'Из ленты'};
+    adsRenderMediaZone();
+  }
+  adsRenderPreview();
+  toast('Поля заполнены из поста ленты — поправь под рекламу');
 }
 
 /* --- города --- */

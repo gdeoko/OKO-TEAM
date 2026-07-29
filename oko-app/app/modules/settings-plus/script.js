@@ -5,33 +5,80 @@
    Всё персистится в localStorage 'oko-settings2'. */
 
 /* ---------- состояние + персист ---------- */
+const ST2_NOTIF_DEF = () => ({snd:true, vibro:true, badge:true, prev:true});
+const ST2_CH = [
+  {k:'msg',      title:'Сообщения',      sub:'Чаты, реплаи, упоминания',       ico:'chat'},
+  {k:'likes',    title:'Лайки и реакции',sub:'Отклик на посты и сторис',       ico:'heart'},
+  {k:'comments', title:'Комментарии',    sub:'Ответы под твоими постами',      ico:'comment'},
+  {k:'partners', title:'Партнёрка',      sub:'Начисления и выплаты',           ico:'briefcase'},
+  {k:'games',    title:'Игры',           sub:'Ставки, выигрыши, лимиты',       ico:'st2-controller'},
+  {k:'academy',  title:'Академия',       sub:'Новые уроки и сертификаты',      ico:'star'},
+  {k:'market',   title:'Биржа',          sub:'Заказы, отклики, диспуты',       ico:'briefcase'},
+  {k:'marketing',title:'Новости OKO',    sub:'Обновления и предложения',       ico:'megaphone'},
+];
 const ST2 = {
   nick: null,                       /* override ника (синк с PROFILE) */
   email: 'okoteam.top@gmail.com',
   phone: '+7 999 123-45-67',
-  notif: {msg:true, feed:true, market:true, academy:true, marketing:false, quiet:{on:false, from:'23:00', to:'08:00'}},
+  tg:    null,                      /* привязка Telegram: '@nick' */
+  notif: {
+    msg:true, feed:true, market:true, academy:true, marketing:false,
+    likes:true, comments:true, partners:true, games:false,
+    quiet:{on:false, from:'23:00', to:'08:00'},
+    preview:true, sound:true, vibro:true,
+    perCh:{},                       /* per-channel {msg:{snd,vibro,badge,prev}, ...} */
+  },
   /* приватность: write (all|following|nobody), phone/photo/status (all|contacts|nobody), online/read — тумблеры */
-  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all'},
+  priv:  {write:'all', online:true, read:true, phone:'contacts', photo:'all', status:'all',
+          calls:'contacts', posts:'all', stories:'all'},
   sec:   {twofa:false, passcode:false, pin:null, secret:null, autolock:'5m'},
-  theme: null,                      /* 'dark'|'light'|'system' (null -> подстроится под текущую) */
+  theme: null,                      /* 'dark'|'light'|'system' */
+  themeAuto: {on:false, dark:'22:00', light:'07:00'},
+  data:  {
+    cacheLimit: 500,                /* МБ, 100..2000 */
+    autodl: {
+      wifi:   {photos:true,  videos:true,  files:true},
+      mobile: {photos:true,  videos:false, files:false},
+    },
+    docsPolicy: 'ask',              /* 'always' | 'ask' | 'never' */
+  },
+  a11y:  {reduceMotion:false, highContrast:false, bigTaps:false, reduceOpacity:false, fontScale:100 /* 85..135 */},
+  loc:   {dateFmt:'auto', hour24:true, weekStart:'auto' /* auto|mon|sun */},
   accounts: [],                     /* [{id,name,nick,tier,role,bio,status,avatar,cover}] */
   activeAcc: null,                  /* id активного аккаунта */
   killed: [],                       /* id завершённых мок-сессий */
   blocked: [],                      /* [имя] — чёрный список (реальный персист) */
   lastClear: 0,                     /* ts последней очистки кэша */
+  delAt: 0,                         /* ts запланированного удаления аккаунта */
 };
 (function st2Load(){
   try{
     const s = JSON.parse(localStorage.getItem('oko-settings2') || 'null');
     if(!s) return;
-    if(s.notif) Object.assign(ST2.notif, s.notif);
+    if(s.notif){
+      Object.assign(ST2.notif, s.notif);
+      if(s.notif.perCh) ST2.notif.perCh = s.notif.perCh;
+      if(s.notif.quiet) Object.assign(ST2.notif.quiet, s.notif.quiet);
+    }
     if(s.priv)  Object.assign(ST2.priv,  s.priv);
     if(s.sec)   Object.assign(ST2.sec,   s.sec);
-    ['nick','email','phone','lastClear','theme','activeAcc'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
+    if(s.data){
+      Object.assign(ST2.data, s.data);
+      if(s.data.autodl){
+        if(s.data.autodl.wifi)   Object.assign(ST2.data.autodl.wifi,   s.data.autodl.wifi);
+        if(s.data.autodl.mobile) Object.assign(ST2.data.autodl.mobile, s.data.autodl.mobile);
+      }
+    }
+    if(s.a11y)      Object.assign(ST2.a11y,      s.a11y);
+    if(s.loc)       Object.assign(ST2.loc,       s.loc);
+    if(s.themeAuto) Object.assign(ST2.themeAuto, s.themeAuto);
+    ['nick','email','phone','tg','lastClear','theme','activeAcc','delAt'].forEach(k=>{ if(s[k] !== undefined) ST2[k] = s[k]; });
     if(Array.isArray(s.killed))   ST2.killed   = s.killed;
     if(Array.isArray(s.accounts)) ST2.accounts = s.accounts;
     if(Array.isArray(s.blocked))  ST2.blocked  = s.blocked;
   }catch(e){}
+  /* нормализуем перечёт-каналы */
+  ST2_CH.forEach(c => { if(!ST2.notif.perCh[c.k]) ST2.notif.perCh[c.k] = ST2_NOTIF_DEF(); });
 })();
 function st2Save(){ try{ localStorage.setItem('oko-settings2', JSON.stringify(ST2)); }catch(e){} }
 

@@ -1325,6 +1325,691 @@ renderAdmin = function(){
 const _prevCloseAdminHq2 = closeAdmin;
 closeAdmin = function(){ hqStopFeed(); _prevCloseAdminHq2(); };
 
+/* ============================================================================
+   8. КАБИНЕТ УРОВНЯ STRIPE / AMPLITUDE / NOTION
+   - real-time KPI (тик 15 сек): MRR/ARR, DAU/MAU/WAU, retention 7/30/90, AOV/LTV/CAC/ROI
+   - donut активных подписок по тарифам
+   - cohort-таблица (недели × retention)
+   - A/B тесты с победителем
+   - live-heatmap кликов на мини-скриншоте главного экрана
+   - product analytics: наименее используемые фичи
+   - CRM партнёров (топ-10) — как новая вкладка
+   - Финансы (доходы / расходы / прогноз кассы) — как новая вкладка
+   - Роли команды (Дир / Финансы / Контент / Партнёры / Поддержка)
+   - Быстрые действия: triage / mailing PRO / бан / возврат
+   - Экспорт .csv и .pdf (через print-view)
+============================================================================ */
+
+/* ---------- 8.0 состояние: роль, seed real-time метрик ---------- */
+HQ_STATE.role = HQ_STATE.role || 'director';
+HQ_STATE.abSeen = HQ_STATE.abSeen || {};
+hqSave();
+
+const HQ_ROLES = [
+  {k:'director', n:'Директор',   ic:'crown',     see:['kpi','donut','cohort','funnel','ab','click','feat','least','risks','fin','crm','feed','heat','quick']},
+  {k:'finance',  n:'Финансы',    ic:'money',     see:['kpi','donut','fin','risks','quick']},
+  {k:'content',  n:'Контент',    ic:'edit',      see:['click','feat','least','heat','feed','ab']},
+  {k:'partners', n:'Партнёры',   ic:'briefcase', see:['crm','fin','feed','quick']},
+  {k:'support',  n:'Поддержка',  ic:'chat',      see:['risks','feed','quick']},
+];
+function hqRole(){ return HQ_ROLES.find(r=>r.k===HQ_STATE.role) || HQ_ROLES[0]; }
+function hqRoleSees(k){ return hqRole().see.indexOf(k) >= 0; }
+function hqRoleSet(k){ HQ_STATE.role = k; hqSave(); renderAdmin(); toast('Роль: '+hqRole().n+' · дашборд адаптирован'); }
+
+/* ---------- 8.1 real-time метрики (свежие числа каждые 15 сек) ---------- */
+const HQ_TIERS = [
+  {k:'BUSINESS', n:'BUSINESS', price:199, count:12, c:'#ff7a3c'},
+  {k:'PRO',      n:'PRO',      price:49,  count:78, c:'#9AFF00'},
+  {k:'START',    n:'START',    price:15,  count:214,c:'#facc15'},
+  {k:'FREE',     n:'FREE',     price:0,   count:980,c:'#4aa0ff'},
+];
+const HQ_MET = {
+  dau:412, wau:1108, mau:2984, retention:{d7:62.4, d30:38.1, d90:21.7},
+  aov:41, ltv:186, cac:52, roas:3.6, /* ROI = (LTV-CAC)/CAC */
+  errs:{srv:'12/1k', p95:'214ms'},
+  updated: Date.now(),
+};
+function hqMrr(){ return HQ_TIERS.reduce((s,t)=>s+t.price*t.count, 0); }
+function hqRoi(){ return Math.round((HQ_MET.ltv-HQ_MET.cac)/HQ_MET.cac*100); }
+function hqMetTick(){
+  /* мягкие колебания реалистичного диапазона */
+  HQ_MET.dau = Math.max(340, Math.min(520, HQ_MET.dau + Math.round((Math.random()-0.5)*10)));
+  HQ_MET.wau = Math.max(920, Math.min(1320, HQ_MET.wau + Math.round((Math.random()-0.5)*14)));
+  HQ_MET.mau = Math.max(2600,Math.min(3400, HQ_MET.mau + Math.round((Math.random()-0.5)*8)));
+  HQ_MET.retention.d7  = +(HQ_MET.retention.d7  + (Math.random()-0.5)*0.4).toFixed(1);
+  HQ_MET.retention.d30 = +(HQ_MET.retention.d30 + (Math.random()-0.5)*0.3).toFixed(1);
+  HQ_MET.retention.d90 = +(HQ_MET.retention.d90 + (Math.random()-0.5)*0.2).toFixed(1);
+  HQ_MET.aov = Math.max(28, Math.min(64, HQ_MET.aov + Math.round((Math.random()-0.5)*3)));
+  HQ_MET.ltv = Math.max(140, Math.min(240, HQ_MET.ltv + Math.round((Math.random()-0.5)*4)));
+  HQ_MET.cac = Math.max(38,  Math.min(74,  HQ_MET.cac + Math.round((Math.random()-0.5)*3)));
+  HQ_MET.updated = Date.now();
+}
+function hqMetHM(){ const d=new Date(HQ_MET.updated); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0'); }
+function hqMetTile(v, l, sub, cls){
+  return `<div class="hq-met ${cls||''}"><b>${v}</b><small>${esc(l)}</small>${sub?`<em>${sub}</em>`:''}</div>`;
+}
+function hqRtBlock(){
+  const mrr = hqMrr(), arr = mrr*12, roi = hqRoi();
+  const R = HQ_MET.retention;
+  const dauPct = Math.round(HQ_MET.dau/HQ_MET.mau*100);
+  return `<div class="adm-sec-h">Real-time метрики <span class="hq-rt-live"><i class="hq-dot work"></i>тик 15 сек · <span id="hqRtStamp">${hqMetHM()}</span></span></div>
+    <div class="hq-met-grid card" id="hqMetGrid">
+      ${hqMetTile('$'+mrr.toLocaleString('ru'), 'MRR', '<i class="up">+9%</i> к неделе', 'lime')}
+      ${hqMetTile('$'+arr.toLocaleString('ru'), 'ARR', 'прогноз года', 'lime')}
+      ${hqMetTile(HQ_MET.dau.toLocaleString('ru'), 'DAU', dauPct+'% от MAU', '')}
+      ${hqMetTile(HQ_MET.wau.toLocaleString('ru'), 'WAU', '', '')}
+      ${hqMetTile(HQ_MET.mau.toLocaleString('ru'), 'MAU', '30 дней', '')}
+      ${hqMetTile(R.d7+'%',  'Retention 7d',  '', R.d7>=60?'lime':(R.d7>=45?'':'red'))}
+      ${hqMetTile(R.d30+'%', 'Retention 30d', '', R.d30>=35?'lime':(R.d30>=25?'':'red'))}
+      ${hqMetTile(R.d90+'%', 'Retention 90d', '', R.d90>=20?'lime':(R.d90>=12?'':'red'))}
+      ${hqMetTile('$'+HQ_MET.aov, 'Средний чек', 'AOV', '')}
+      ${hqMetTile('$'+HQ_MET.ltv, 'LTV', 'на клиента', 'lime')}
+      ${hqMetTile('$'+HQ_MET.cac, 'CAC', 'привлечение', 'amber')}
+      ${hqMetTile(roi+'%', 'ROI', 'LTV / CAC', roi>=150?'lime':(roi>=80?'':'red'))}
+    </div>`;
+}
+/* только те tile-ноды, которые в разметке — пересобираем внутренности без re-render всей вкладки */
+function hqMetLiveRefresh(){
+  const box = document.getElementById('hqMetGrid'); if(!box) return;
+  box.outerHTML = hqRtBlock().replace(/^[\s\S]*?<div class=\"adm-sec-h\">[\s\S]*?<\/div>\s*/, '');
+  const st = document.getElementById('hqRtStamp'); if(st) st.textContent = hqMetHM();
+}
+
+/* ---------- 8.2 donut активных подписок по тарифам ---------- */
+function hqDonutBlock(){
+  const paid = HQ_TIERS.filter(t=>t.price>0);
+  const tot = paid.reduce((s,t)=>s+t.count,0);
+  const C = 2 * Math.PI * 42; /* окружность радиуса 42 */
+  let acc = 0;
+  const segs = paid.map((t,i)=>{
+    const frac = t.count / tot;
+    const len = frac * C, gap = C - len, off = -acc * C;
+    acc += frac;
+    return `<circle cx="60" cy="60" r="42" fill="none" stroke="${t.c}" stroke-width="16"
+      stroke-dasharray="${len.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 60 60)"
+      style="animation:hqDonutIn .9s cubic-bezier(.2,.85,.3,1) ${i*.08}s both"></circle>`;
+  }).join('');
+  const legend = paid.map(t=>{
+    const pct = Math.round(t.count/tot*100);
+    return `<div class="hq-dn-l"><i style="background:${t.c}"></i>
+      <b>${esc(t.n)}</b><span>${t.count} · ${pct}%</span></div>`;
+  }).join('');
+  return `<div class="adm-sec-h">Активные подписки по тарифам</div>
+    <div class="hq-donut card">
+      <svg class="hq-dn-svg" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--raised)" stroke-width="16"/>
+        ${segs}
+        <text x="60" y="58" text-anchor="middle" class="hq-dn-num">${tot}</text>
+        <text x="60" y="72" text-anchor="middle" class="hq-dn-sub">платных</text>
+      </svg>
+      <div class="hq-dn-legend">${legend}</div>
+    </div>`;
+}
+
+/* ---------- 8.3 cohort-таблица: недели × retention (5×5) ---------- */
+const HQ_COHORT = (function(){
+  /* 6 недель когорт × колонки W0..W5 (в % удержания) */
+  const now = new Date();
+  const rows = [];
+  for(let w=5; w>=0; w--){
+    const dt = new Date(now.getTime() - w*7*864e5);
+    const label = 'W-'+w+' · '+String(dt.getDate()).padStart(2,'0')+'.'+String(dt.getMonth()+1).padStart(2,'0');
+    const size = 60 + Math.round(Math.random()*140);
+    const arr = [100];
+    let cur = 100;
+    for(let k=1; k<=5; k++){
+      if(k > (5-w)) { arr.push(null); continue; } /* будущее — прочерк */
+      const drop = k===1 ? 26+Math.random()*14 : 6+Math.random()*8;
+      cur = Math.max(0, cur - drop);
+      arr.push(+cur.toFixed(1));
+    }
+    rows.push({label, size, arr});
+  }
+  return rows;
+})();
+function hqCohortBlock(){
+  const head = '<div class="hq-ch-row hd"><span class="hq-ch-lbl">Когорта</span><span class="hq-ch-size">N</span>'
+    + [0,1,2,3,4,5].map(k=>`<span class="hq-ch-c">W${k}</span>`).join('') + '</div>';
+  const rows = HQ_COHORT.map((r,i)=>{
+    const cells = r.arr.map(v=>{
+      if(v==null) return `<span class="hq-ch-c em">—</span>`;
+      const lv = v>=80?'lv5':v>=60?'lv4':v>=40?'lv3':v>=20?'lv2':v>=1?'lv1':'lv0';
+      return `<span class="hq-ch-c ${lv}"><em>${Math.round(v)}</em></span>`;
+    }).join('');
+    return `<div class="hq-ch-row" style="animation-delay:${i*0.04}s">
+      <span class="hq-ch-lbl">${esc(r.label)}</span>
+      <span class="hq-ch-size">${r.size}</span>${cells}</div>`;
+  }).join('');
+  return `<div class="adm-sec-h">Когорты · удержание по неделям</div>
+    <div class="hq-cohort card">
+      <div class="hq-ch-scroll">${head}${rows}</div>
+      <div class="hq-hm-foot">
+        <span class="hq-hm-peak">6 недель · когорты по неделе регистрации</span>
+        <span class="hq-hm-leg"><em>0%</em><i class="lv0"></i><i class="lv1"></i><i class="lv2"></i><i class="lv3"></i><i class="lv4"></i><i class="lv5"></i><em>100%</em></span>
+      </div>
+    </div>`;
+}
+
+/* ---------- 8.4 A/B тесты ---------- */
+const HQ_AB = [
+  {k:'ab1', n:'Заголовок тарифа PRO',  variants:['A · «Ускоряй контент»','B · «Собери завод за час»'], split:'50/50', sample:2411, winner:'B', uplift:12.4, metric:'CTR карточки тарифа', st:'run'},
+  {k:'ab2', n:'Кнопка «Начать бесплатно» vs «Попробовать 7 дней»', variants:['A','B'], split:'50/50', sample:1890, winner:'A', uplift:4.8, metric:'клик по CTA', st:'done'},
+  {k:'ab3', n:'Онбординг: 3 шага vs 5 шагов', variants:['3 шага','5 шагов'], split:'70/30', sample:940, winner:'3 шага', uplift:9.1, metric:'доход до 1-го урока', st:'run'},
+  {k:'ab4', n:'Автоплей приветствия', variants:['вкл','выкл'], split:'50/50', sample:612, winner:null, uplift:0, metric:'глубина сессии', st:'wait'},
+];
+function hqAbBlock(){
+  const rows = HQ_AB.map((t,i)=>{
+    const stCls = t.st==='run'?'wait':(t.st==='done'?'ok':'');
+    const stL = t.st==='run'?'идёт':(t.st==='done'?'завершён':'сбор данных');
+    const win = t.winner ? `<div class="hq-ab-win"><span>Победитель</span><b>${esc(t.winner)}</b><em class="up">+${t.uplift}%</em></div>` : `<div class="hq-ab-win dim"><span>Победитель</span><b>—</b><em>ждём выборку</em></div>`;
+    const vars = t.variants.map((v,vi)=>`<div class="hq-ab-v ${t.winner && (v.charAt(0)===t.winner.charAt(0) || v===t.winner)?'on':''}"><i>${String.fromCharCode(65+vi)}</i>${esc(v)}</div>`).join('');
+    return `<div class="hq-ab card" style="animation-delay:${i*0.05}s">
+      <div class="hq-ab-h">
+        <b>${esc(t.n)}</b>
+        <span class="adm-tag ${stCls}">${stL}</span>
+      </div>
+      <div class="hq-ab-vars">${vars}</div>
+      <div class="hq-ab-meta">
+        <span>метрика: <b>${esc(t.metric)}</b></span>
+        <span>сплит: <b>${esc(t.split)}</b></span>
+        <span>выборка: <b>${t.sample.toLocaleString('ru')}</b></span>
+      </div>
+      ${win}
+    </div>`;
+  }).join('');
+  return `<div class="adm-sec-h">A/B тесты · ${HQ_AB.filter(x=>x.st==='run').length} активных</div>${rows}`;
+}
+
+/* ---------- 8.5 heatmap кликов: мини-макет главного + плотность точек ---------- */
+/* координаты в системе 0..100 (в SVG viewBox 0 0 100 178 — вертикальный мокап) */
+const HQ_CLICKS = [
+  /* нижняя таб-панель — гарячий клик */
+  {x:18, y:168, w:1.0}, {x:38, y:168, w:0.9}, {x:58, y:168, w:1.0},
+  {x:78, y:168, w:0.6}, {x:82, y:168, w:0.9},
+  /* карточки ленты в центре */
+  {x:50, y:60, w:0.85}, {x:50, y:82, w:0.7}, {x:50, y:104, w:0.55},
+  /* иконки в шапке */
+  {x:12, y:14, w:0.35}, {x:88, y:14, w:0.4},
+  /* CTA сторис */
+  {x:22, y:32, w:0.5}, {x:38, y:32, w:0.35}, {x:54, y:32, w:0.3}, {x:70, y:32, w:0.25},
+  /* второй клик по «Кошельку» */
+  {x:78, y:168, w:0.6},
+];
+function hqClickBlock(){
+  /* плотность: рендерим blur-градиенты через SVG feGaussianBlur */
+  const pts = HQ_CLICKS.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="${8+p.w*8}" fill="url(#hqCg)" opacity="${0.35+p.w*0.5}"/>`).join('');
+  const top = [...HQ_CLICKS].sort((a,b)=>b.w-a.w).slice(0,4).map((p,i)=>{
+    const name = p.y>150?'таб-навигация':(p.y<20?'шапка приложения':(p.y<40?'ряд сторис':'карточки ленты'));
+    return `<div class="hq-clk-l"><b>${i+1}</b><span>${name}</span><em>${Math.round(p.w*100)}%</em></div>`;
+  }).join('');
+  /* мини-макет главного экрана: шапка, сторис, лента, таб-бар */
+  return `<div class="adm-sec-h">Heatmap кликов · главный экран <span class="hq-fd-pulse"><i class="hq-dot work"></i>последние 24 часа</span></div>
+    <div class="hq-clk card">
+      <div class="hq-clk-mock">
+        <svg viewBox="0 0 100 178" preserveAspectRatio="xMidYMid meet" class="hq-clk-svg">
+          <defs>
+            <radialGradient id="hqCg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"  stop-color="#ff3838" stop-opacity=".95"/>
+              <stop offset="45%" stop-color="#ffb400" stop-opacity=".6"/>
+              <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <!-- шапка -->
+          <rect x="0" y="0" width="100" height="22" fill="var(--raised)"/>
+          <circle cx="12" cy="11" r="4" fill="var(--border)"/>
+          <rect x="30" y="7" width="34" height="8" rx="2" fill="var(--border)"/>
+          <circle cx="82" cy="11" r="4" fill="var(--border)"/>
+          <circle cx="92" cy="11" r="4" fill="var(--border)"/>
+          <!-- сторис -->
+          <g fill="var(--border)"><circle cx="12" cy="32" r="6"/><circle cx="28" cy="32" r="6"/><circle cx="44" cy="32" r="6"/><circle cx="60" cy="32" r="6"/><circle cx="76" cy="32" r="6"/><circle cx="92" cy="32" r="6"/></g>
+          <!-- лента -->
+          <rect x="6" y="46" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <rect x="6" y="78" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <rect x="6" y="110" width="88" height="28" rx="3" fill="var(--raised)"/>
+          <!-- таб-бар -->
+          <rect x="0" y="156" width="100" height="22" fill="var(--raised)"/>
+          <g fill="var(--border)">
+            <circle cx="18" cy="167" r="3.5"/><circle cx="38" cy="167" r="3.5"/><circle cx="58" cy="167" r="3.5"/><circle cx="78" cy="167" r="3.5"/><circle cx="93" cy="167" r="3.5"/>
+          </g>
+          <!-- клики -->
+          <g style="mix-blend-mode:screen">${pts}</g>
+        </svg>
+      </div>
+      <div class="hq-clk-side">
+        <div class="hq-clk-t">Топ зон по кликам</div>
+        ${top}
+        <div class="hq-clk-note">${I('bolt')}<span>Плотность = сумма кликов пользователей. Красное — hotspot, зелёное — низкая активность.</span></div>
+      </div>
+    </div>`;
+}
+
+/* ---------- 8.6 product analytics: наименее используемые ---------- */
+const HQ_LEAST = [
+  {n:'Кабинет рекламы', ic:'megaphone', c:'#4aa0ff', n7:6,   pct:0.5,  hint:'сложный вход — обучающий тур в 1 шаг'},
+  {n:'Календарь публикаций', ic:'clock', c:'#facc15', n7:4,  pct:0.3,  hint:'спрятан в подменю Reels — вынести в главный'},
+  {n:'Экспорт статистики', ic:'file',   c:'#ff6bad',  n7:2,  pct:0.15, hint:'не нужен пока PRO — оставить только BUSINESS'},
+  {n:'Резервные копии',    ic:'shield', c:'#a855f7',  n7:1,  pct:0.08, hint:'кандидат на удаление — 0.08% MAU'},
+];
+function hqLeastBlock(){
+  const rows = HQ_LEAST.map((f,i)=>`
+    <div class="hq-feat" style="animation-delay:${i*0.045}s">
+      <span class="hq-feat-ic" style="color:${f.c};background:${f.c}1e">${I(f.ic)}</span>
+      <span class="hq-feat-b">
+        <span class="hq-feat-top"><b>${esc(f.n)}</b><span class="hq-feat-n">${f.n7}<em>откр. за 7 дн</em></span></span>
+        <span class="hq-least-hint">${esc(f.hint)}</span>
+      </span>
+      <span class="hq-feat-dl dn">${f.pct}%</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Наименее используемые · кандидаты на упрощение</div>
+    <div class="hq-feats card">${rows}</div>`;
+}
+
+/* ---------- 8.7 risks: сводная плашка с типизацией ---------- */
+function hqRisksBlock(){
+  const partWait = ADMIN.partners.filter(p=>!hqPartPaid(p));
+  const partSum = partWait.reduce((s,p)=>s+hqPartEarn(p),0);
+  const s = hqCrisisSignal();
+  const riskList = [];
+  if(partSum>0) riskList.push({sev:'md', ic:'briefcase', txt:'Партнёры просят выплату: <b>$'+partSum+'</b> ('+partWait.length+' чел.)'});
+  if(s && s.dropPct <= -5) riskList.push({sev:'hi', ic:'bolt', txt:'MRR упал <b>'+s.dropPct+'%</b> за неделю ('+fmtMoney(Math.round(s.cur))+' против '+fmtMoney(Math.round(s.prev))+')'});
+  if(HQ_MET.retention.d30 < 30) riskList.push({sev:'md', ic:'flag', txt:'Retention 30d ниже целевого 30%: <b>'+HQ_MET.retention.d30+'%</b>'});
+  const errs = 42; riskList.push({sev:'md', ic:'shield', txt:'Server errors <b>+'+errs+'%</b> за час · p95 '+HQ_MET.errs.p95});
+  const openMod = (typeof ADMIN!=='undefined' && ADMIN.moder) ? ADMIN.moder.length : 0;
+  if(openMod>0) riskList.push({sev:'lo', ic:'edit', txt:openMod+' задач в очереди модерации'});
+  if(!riskList.length) return '';
+  const rows = riskList.map(r=>`
+    <div class="hq-risk-row sev-${r.sev}">
+      <span class="hq-risk-ic">${I(r.ic)}</span>
+      <span class="hq-risk-m">${r.txt}</span>
+    </div>`).join('');
+  return `<div class="adm-sec-h">Уведомления о рисках · ${riskList.length}</div>
+    <div class="hq-risks card">${rows}</div>`;
+}
+
+/* ---------- 8.8 быстрые действия: расширенный набор ---------- */
+function hqQuickPro(){
+  showPopup({ico:'megaphone', title:'Рассылка всем PRO',
+    body:`<div class="hq-mail"><textarea id="hqMailBody" rows="5" placeholder="Текст письма для 78 подписчиков PRO">Привет! Мы обновили Reels-машину и добавили инфографику. Загляни — новая вкладка «Библиотека переходов» уже доступна.</textarea><small>Пойдёт по всем ${HQ_TIERS.find(t=>t.k==='PRO').count} активным PRO. Push + e-mail + внутренняя лента.</small></div>`,
+    actions:[
+      {label:'Отправить всем PRO', onclick:()=>toast('Рассылка запущена: '+HQ_TIERS.find(t=>t.k==='PRO').count+' PRO · push + e-mail')},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickTriage(){
+  const q = (typeof ADMIN!=='undefined' && ADMIN.agents) ? ADMIN.agents.filter((a,i)=>a.esc && !HQ_STATE.escDone[i]).length : 0;
+  if(!q){ toast('Очередь triage пуста — все ответы отправлены'); return; }
+  showPopup({ico:'bolt', title:'Ответить всем на triage', body:`Сегодня в очереди <b>${q}</b> эскалаций. Отправим шаблонный ответ с приветствием и обещанием разобрать в течение часа?`,
+    actions:[
+      {label:'Ответить всем', onclick:()=>{ ADMIN.agents.forEach((a,i)=>{ if(a.esc) HQ_STATE.escDone[i]=1; }); hqSave(); renderAdmin(); toast('Ответили на '+q+' эскалаций · очередь очищена'); }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickBan(){
+  showPopup({ico:'lock', title:'Забанить пользователя',
+    body:`<div class="hq-mail"><input id="hqBanNick" placeholder="@ник или имя" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none"><small>Полный список — во вкладке «Пользователи». Здесь бан по нику одной кнопкой.</small></div>`,
+    actions:[
+      {label:'Забанить', onclick:()=>{
+        const v = (document.getElementById('hqBanNick')||{}).value || '';
+        const q = v.replace('@','').toLowerCase();
+        const idx = ADMIN.users.findIndex(u=> (u.n+' '+u.h).toLowerCase().indexOf(q)>=0);
+        if(idx<0){ toast('Пользователь «'+v+'» не найден'); return; }
+        hqUserBan(idx);
+      }},
+      {label:'Отмена', ghost:true}
+    ]});
+}
+function hqQuickRefund(){
+  const waits = ADMIN.pay.map((p,i)=>({p,i,st:hqPaySt(i)})).filter(x=>x.st==='ok');
+  if(!waits.length){ toast('Нет проведённых платежей для возврата'); return; }
+  const rows = waits.slice(0,6).map(x=>`<button class="adm-btn" style="margin-bottom:6px;width:100%;text-align:left;justify-content:flex-start" onclick="hqPayRefund(${x.i});closePopup()">${I('card')} ${esc(x.p.n)} · ${esc(x.p.sum)} · ${esc(x.p.plan)}</button>`).join('');
+  showPopup({ico:'card', title:'Возврат средств', body:`<div class="hq-mail">Выбери платёж для возврата:<div style="margin-top:8px">${rows}</div></div>`,
+    actions:[{label:'Закрыть', ghost:true}]});
+}
+function hqQuickBlock(){
+  return `<div class="adm-sec-h">Быстрые действия</div>
+    <div class="hq-quick hq-quick-6">
+      <button class="hq-qbtn" onclick="hqQuickTriage()"><span class="hq-qic">${I('bolt')}</span><b>Triage</b><small>ответить всем</small></button>
+      <button class="hq-qbtn" onclick="hqQuickPro()"><span class="hq-qic">${I('megaphone')}</span><b>Письмо PRO</b><small>рассылка всем</small></button>
+      <button class="hq-qbtn dng" onclick="hqQuickBan()"><span class="hq-qic">${I('lock')}</span><b>Бан юзера</b><small>по @нику</small></button>
+      <button class="hq-qbtn" onclick="hqQuickRefund()"><span class="hq-qic">${I('card')}</span><b>Возврат</b><small>выбрать платёж</small></button>
+      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тест на кошелёк</small></button>
+      <button class="hq-qbtn" onclick="hqExportMenu()"><span class="hq-qic">${I('file')}</span><b>Экспорт</b><small>CSV / PDF / TXT</small></button>
+    </div>`;
+}
+
+/* ---------- 8.9 Роль: селектор + скрытие блоков ---------- */
+function hqRoleBar(){
+  const chips = HQ_ROLES.map(r=>`<button class="hq-chip ${HQ_STATE.role===r.k?'on':''}" onclick="hqRoleSet('${r.k}')" title="${esc(r.n)}"><span class="hq-role-ic">${I(r.ic)}</span>${esc(r.n)}</button>`).join('');
+  return `<div class="adm-sec-h">Роль просмотра</div><div class="hq-chips hq-role-chips">${chips}</div>`;
+}
+
+/* ---------- 8.10 admOverview: собираем всё вместе ---------- */
+const _prevAdmOverviewHqX = admOverview;
+admOverview = function(){
+  const html = _prevAdmOverviewHqX();
+  /* убираем старую панель «Быстро · действия владельца» — заменим расширенной */
+  const legacy = html
+    .replace(/<div class="adm-sec-h">Быстро · действия владельца<\/div>[\s\S]*?<\/div>\s*/,'')
+    .replace(/<div class="adm-sec-h">Быстрые действия<\/div>[\s\S]*?<\/div>\s*/,'');
+
+  const R = hqRoleSees;
+  const parts = [hqRoleBar()];
+  if(R('risks')) parts.push(hqRisksBlock());
+  if(R('kpi'))   parts.push(hqRtBlock());
+  if(R('donut')) parts.push(hqDonutBlock());
+  if(R('cohort'))parts.push(hqCohortBlock());
+  if(R('click')) parts.push(hqClickBlock());
+  if(R('ab'))    parts.push(hqAbBlock());
+  if(R('least')) parts.push(hqLeastBlock());
+  if(R('quick')) parts.push(hqQuickBlock());
+  return legacy + parts.join('');
+};
+
+/* ---------- 8.11 real-time тикер обзора: 15 сек ---------- */
+let hqRtTimer = null;
+function hqStartRt(){ if(!hqRtTimer) hqRtTimer = setInterval(hqRtTick, 15000); }
+function hqStopRt(){ if(hqRtTimer){ clearInterval(hqRtTimer); hqRtTimer = null; } }
+function hqRtTick(){
+  const av = document.getElementById('adminView');
+  if(!av || !av.classList.contains('open') || admTab !== 'overview'){ hqStopRt(); return; }
+  hqMetTick(); hqMetLiveRefresh();
+}
+
+/* ---------- 8.12 новые вкладки: Финансы / CRM ---------- */
+ADMIN_TABS.push({k:'finance', t:'Финансы'});
+ADMIN_TABS.push({k:'crm',     t:'CRM'});
+
+/* ФИНАНСЫ ------------------------------------------------------------------ */
+const HQ_FIN_INCOME = [
+  {k:'Lava.top карта', v:184000, c:'#9AFF00'},
+  {k:'Криптовалюта',    v:56000,  c:'#4aa0ff'},
+  {k:'ЮKassa · СБП',    v:42000,  c:'#facc15'},
+  {k:'Партнёрские',     v:18000,  c:'#a855f7'},
+  {k:'Международные',   v:12000,  c:'#ff6bad'},
+];
+const HQ_FIN_EXPENSE = [
+  {k:'Реклама',      v:82000, c:'#ff7a3c'},
+  {k:'Инфраструктура',v:34000, c:'#4aa0ff'},
+  {k:'Зарплаты',     v:120000,c:'#a855f7'},
+  {k:'Сервисы (SaaS)',v:18000, c:'#22d3ee'},
+  {k:'Юр / бухгалтерия',v:14000, c:'#facc15'},
+];
+/* прогноз кассы на 6 недель */
+const HQ_FIN_CASH = (function(){
+  let bal = 780000;
+  const arr = [];
+  for(let i=0;i<6;i++){
+    const inc  = 82000 + Math.round(Math.random()*24000);
+    const exp  = 74000 + Math.round(Math.random()*22000);
+    bal += inc - exp;
+    arr.push({w:'W+'+(i+1), inc, exp, bal});
+  }
+  return arr;
+})();
+function hqPieSVG(list, size){
+  const R = 44, C = 2*Math.PI*R;
+  const tot = list.reduce((s,x)=>s+x.v,0);
+  let acc = 0;
+  const segs = list.map((x,i)=>{
+    const frac = x.v/tot, len = frac*C, gap = C-len, off = -acc*C;
+    acc += frac;
+    return `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${x.c}" stroke-width="26"
+      stroke-dasharray="${len.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 60 60)"
+      style="animation:hqDonutIn .9s cubic-bezier(.2,.85,.3,1) ${i*.06}s both"/>`;
+  }).join('');
+  return `<svg class="hq-pie-svg" viewBox="0 0 120 120" aria-hidden="true" style="width:${size||132}px;height:${size||132}px">
+    ${segs}
+    <text x="60" y="58" text-anchor="middle" class="hq-dn-num">${(tot/1000).toFixed(0)}к</text>
+    <text x="60" y="72" text-anchor="middle" class="hq-dn-sub">₽ / мес</text>
+  </svg>`;
+}
+function hqBars(list){
+  const max = Math.max(...list.map(x=>x.v));
+  return list.map((x,i)=>`
+    <div class="hq-bars-row" style="animation-delay:${i*0.05}s">
+      <span class="hq-bars-lbl"><i style="background:${x.c}"></i>${esc(x.k)}</span>
+      <span class="hq-bars-bar"><i style="width:${Math.round(x.v/max*100)}%;background:${x.c}"></i></span>
+      <span class="hq-bars-v">${(x.v/1000).toFixed(0)}к</span>
+    </div>`).join('');
+}
+function hqFinanceView(){
+  const inc = HQ_FIN_INCOME.reduce((s,x)=>s+x.v,0);
+  const exp = HQ_FIN_EXPENSE.reduce((s,x)=>s+x.v,0);
+  const net = inc - exp;
+  const lastBal = HQ_FIN_CASH[HQ_FIN_CASH.length-1].bal;
+  const gapWeek = HQ_FIN_CASH.find(w=>w.bal<0);
+  const legendInc = HQ_FIN_INCOME.map(x=>{
+    const pct = Math.round(x.v/inc*100);
+    return `<div class="hq-dn-l"><i style="background:${x.c}"></i><b>${esc(x.k)}</b><span>${(x.v/1000).toFixed(0)}к · ${pct}%</span></div>`;
+  }).join('');
+  /* cash-flow бары: доход зелёный, расход красный, баланс — линия */
+  const cashMax = Math.max(...HQ_FIN_CASH.map(w=>Math.max(w.inc,w.exp)));
+  const cashRows = HQ_FIN_CASH.map((w,i)=>`
+    <div class="hq-cf-week" style="animation-delay:${i*0.06}s">
+      <span class="hq-cf-lbl">${w.w}</span>
+      <span class="hq-cf-bars">
+        <i class="up"   style="height:${Math.round(w.inc/cashMax*100)}%"><em>+${(w.inc/1000).toFixed(0)}к</em></i>
+        <i class="dn"   style="height:${Math.round(w.exp/cashMax*100)}%"><em>−${(w.exp/1000).toFixed(0)}к</em></i>
+      </span>
+      <span class="hq-cf-bal ${w.bal<0?'neg':''}">${(w.bal/1000).toFixed(0)}к</span>
+    </div>`).join('');
+  return `
+    ${hqRoleBar()}
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${(inc/1000).toFixed(0)}к ₽</b><small>Доходы · мес</small></div>
+      <div class="hq-part-s"><b>${(exp/1000).toFixed(0)}к ₽</b><small>Расходы · мес</small></div>
+      <div class="hq-part-s"><b class="${net<0?'warn':''}">${net>=0?'+':''}${(net/1000).toFixed(0)}к ₽</b><small>Чистая прибыль</small></div>
+    </div>
+    <div class="adm-sec-h">Структура доходов · pie</div>
+    <div class="hq-donut card">${hqPieSVG(HQ_FIN_INCOME, 140)}<div class="hq-dn-legend">${legendInc}</div></div>
+    <div class="adm-sec-h">Расходы · распределение</div>
+    <div class="hq-bars card">${hqBars(HQ_FIN_EXPENSE)}</div>
+    <div class="adm-sec-h">Прогноз кассы · 6 недель</div>
+    <div class="hq-cf card">
+      <div class="hq-cf-grid">${cashRows}</div>
+      <div class="hq-cf-foot ${lastBal<0?'neg':''}">
+        <span>Прогноз баланса через 6 недель: <b>${(lastBal/1000).toFixed(0)}к ₽</b></span>
+        ${gapWeek ? `<span class="hq-cf-warn">${I('bolt')} Кассовый разрыв на ${gapWeek.w}: ${(gapWeek.bal/1000).toFixed(0)}к ₽</span>` : `<span class="hq-cf-ok">${I('check2')} Разрывов не прогнозируется</span>`}
+      </div>
+    </div>
+    <div class="adm-acts" style="margin-top:12px">
+      <button class="adm-btn pri" onclick="hqExportMenu()">${I('file')} Экспорт .csv / .pdf</button>
+      <button class="adm-btn" onclick="hqExportReport()">${I('file')} Сводка .txt</button>
+    </div>`;
+}
+
+/* CRM ПАРТНЁРОВ (топ-10) --------------------------------------------------- */
+const HQ_CRM = [
+  {n:'Марина К.',      h:'@marina_smm',        turn: 412000, refs:34, tier:'GOLD',  st:'ok',   last:'сегодня'},
+  {n:'Дмитрий О.',     h:'@dmitrymarketing',   turn: 228000, refs:19, tier:'GOLD',  st:'wait', last:'вчера'},
+  {n:'Алина Р.',       h:'@alina.grow',        turn: 196000, refs:22, tier:'GOLD',  st:'ok',   last:'2 дня назад'},
+  {n:'Игорь В.',       h:'@igorvideo',         turn: 148000, refs:11, tier:'SILVER',st:'ok',   last:'3 дня назад'},
+  {n:'Пётр С.',        h:'@stomat_pro',        turn: 96000,  refs:8,  tier:'SILVER',st:'wait', last:'сегодня'},
+  {n:'Анна Л.',        h:'@beauty_msk',        turn: 74000,  refs:6,  tier:'SILVER',st:'ok',   last:'вчера'},
+  {n:'Никита Ш.',      h:'@editor_pro',        turn: 62000,  refs:7,  tier:'SILVER',st:'ok',   last:'сегодня'},
+  {n:'Роман Т.',       h:'@fitmax',            turn: 48000,  refs:5,  tier:'BRONZE',st:'wait', last:'4 дня назад'},
+  {n:'Ольга М.',       h:'@target_alena',      turn: 34000,  refs:4,  tier:'BRONZE',st:'ok',   last:'5 дней назад'},
+  {n:'Елена Д.',       h:'@denta_clinic',      turn: 22000,  refs:3,  tier:'BRONZE',st:'wait', last:'вчера'},
+];
+const HQ_CRM_TIER = {GOLD:{c:'#facc15',bg:'rgba(250,204,21,.14)'}, SILVER:{c:'#8892a0',bg:'rgba(136,146,160,.14)'}, BRONZE:{c:'#ff7a3c',bg:'rgba(255,122,60,.14)'}};
+function hqCrmView(){
+  const tot = HQ_CRM.reduce((s,x)=>s+x.turn,0);
+  const waits = HQ_CRM.filter(x=>x.st==='wait');
+  const oks   = HQ_CRM.filter(x=>x.st==='ok');
+  const rows = HQ_CRM.map((p,i)=>{
+    const t = HQ_CRM_TIER[p.tier] || {c:'#8892a0',bg:'transparent'};
+    return `<div class="hq-crm-row" style="animation-delay:${i*0.04}s">
+      <span class="hq-crm-rank">#${i+1}</span>
+      <span class="adm-ava" style="background:${t.bg};color:${t.c};border:1px solid ${t.c}44">${esc(p.n[0])}</span>
+      <span class="adm-main"><b>${esc(p.n)}</b><small>${esc(p.h)} · ${p.refs} рефералов · ${esc(p.last)}</small></span>
+      <span class="hq-crm-tier" style="color:${t.c};background:${t.bg}">${p.tier}</span>
+      <span class="hq-crm-turn">${(p.turn/1000).toFixed(0)}к ₽</span>
+      <span class="adm-tag ${p.st==='ok'?'ok':'wait'}">${p.st==='ok'?'выплачено':'к выплате'}</span>
+    </div>`;
+  }).join('');
+  return `
+    ${hqRoleBar()}
+    <div class="hq-part-sum card">
+      <div class="hq-part-s"><b>${HQ_CRM.length}</b><small>партнёров · топ</small></div>
+      <div class="hq-part-s"><b>${(tot/1000).toFixed(0)}к ₽</b><small>суммарный оборот</small></div>
+      <div class="hq-part-s"><b class="${waits.length?'warn':''}">${waits.length}</b><small>ждут выплаты</small></div>
+    </div>
+    <div class="adm-sec-h">Топ-10 партнёров · CRM</div>
+    <div class="hq-crm card">${rows}</div>
+    <div class="adm-acts" style="margin-top:12px">
+      <button class="adm-btn pri" onclick="toast('Партнёрам ${waits.length} отправлены выплаты · $${Math.round(waits.reduce((s,x)=>s+x.turn*0.1,0)).toLocaleString('ru')}')">${I('card')} Выплатить всем ждущим (${waits.length})</button>
+      <button class="adm-btn" onclick="hqExportMenu()">${I('file')} Экспорт CRM</button>
+    </div>`;
+}
+
+/* ---------- 8.13 расширение renderAdmin для finance/crm ---------- */
+const _prevRenderAdminHq3 = renderAdmin;
+renderAdmin = function(){
+  if(admTab === 'finance' || admTab === 'crm'){
+    document.getElementById('admTabs').innerHTML = ADMIN_TABS.map(t=>
+      `<button class="adm-tab ${admTab===t.k?'on':''}" onclick="admGo('${t.k}')">${t.t}</button>`).join('');
+    document.getElementById('admBody').innerHTML = admTab==='finance' ? hqFinanceView() : hqCrmView();
+    hqStopRt(); hqStopFeed();
+    return;
+  }
+  _prevRenderAdminHq3();
+  if(admTab === 'overview') hqStartRt(); else hqStopRt();
+};
+const _prevCloseAdminHq3 = closeAdmin;
+closeAdmin = function(){ hqStopRt(); _prevCloseAdminHq3(); };
+
+/* ---------- 8.14 ЭКСПОРТ: CSV / PDF (print) / TXT ---------- */
+function hqExportMenu(){
+  showPopup({ico:'file', title:'Экспорт отчёта за месяц', body:`
+    <div class="hq-mail" style="text-align:left">
+      Выбери формат — данные включают: MRR, DAU, тарифы, доходы/расходы, платежи, партнёры, CRM.
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="adm-btn pri" style="flex:1;min-width:120px" onclick="hqExportCsv();closePopup()">${I('file')} CSV</button>
+        <button class="adm-btn" style="flex:1;min-width:120px" onclick="hqExportPdf();closePopup()">${I('file')} PDF (печать)</button>
+        <button class="adm-btn" style="flex:1;min-width:120px" onclick="hqExportReport();closePopup()">${I('file')} TXT</button>
+      </div>
+    </div>`, actions:[{label:'Закрыть', ghost:true}]});
+}
+function hqCsvEscape(v){ const s = String(v==null?'':v); return /[",\n;]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+function hqExportCsv(){
+  const rows = [];
+  rows.push(['section','key','value','sub']);
+  const now = new Date();
+  rows.push(['meta','date', now.toISOString(), 'OKO monthly export']);
+  /* KPI */
+  const mrr = hqMrr();
+  rows.push(['kpi','MRR', mrr, 'USD']);
+  rows.push(['kpi','ARR', mrr*12, 'USD']);
+  rows.push(['kpi','DAU', HQ_MET.dau, '']);
+  rows.push(['kpi','WAU', HQ_MET.wau, '']);
+  rows.push(['kpi','MAU', HQ_MET.mau, '']);
+  rows.push(['kpi','Retention 7d', HQ_MET.retention.d7, '%']);
+  rows.push(['kpi','Retention 30d', HQ_MET.retention.d30, '%']);
+  rows.push(['kpi','Retention 90d', HQ_MET.retention.d90, '%']);
+  rows.push(['kpi','AOV', HQ_MET.aov, 'USD']);
+  rows.push(['kpi','LTV', HQ_MET.ltv, 'USD']);
+  rows.push(['kpi','CAC', HQ_MET.cac, 'USD']);
+  rows.push(['kpi','ROI', hqRoi(), '%']);
+  /* Тарифы */
+  HQ_TIERS.forEach(t=> rows.push(['tier', t.k, t.count, 'active']));
+  /* Доходы / Расходы */
+  HQ_FIN_INCOME.forEach(x=> rows.push(['income', x.k, x.v, 'RUB/month']));
+  HQ_FIN_EXPENSE.forEach(x=> rows.push(['expense', x.k, x.v, 'RUB/month']));
+  /* Cash-flow */
+  HQ_FIN_CASH.forEach(x=> rows.push(['cashflow', x.w, x.bal, 'income='+x.inc+' expense='+x.exp]));
+  /* CRM */
+  HQ_CRM.forEach((p,i)=> rows.push(['partner', p.n+' '+p.h, p.turn, p.tier+' · refs='+p.refs+' · '+p.st]));
+  /* Платежи */
+  ADMIN.pay.forEach((p,i)=> rows.push(['payment', p.n+' · '+p.plan, hqPayNum(p.sum), hqPaySt(i)]));
+  /* AB */
+  HQ_AB.forEach(t=> rows.push(['ab', t.n, t.winner||'', t.st+' · uplift='+t.uplift+'%']));
+  const csv = rows.map(r=>r.map(hqCsvEscape).join(',')).join('\n');
+  const stamp = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const url = URL.createObjectURL(new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = 'oko-report-'+stamp+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('CSV выгружен · '+rows.length+' строк');
+}
+function hqExportPdf(){
+  const now = new Date();
+  const stamp = String(now.getDate()).padStart(2,'0')+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+now.getFullYear();
+  const mrr = hqMrr(), arr = mrr*12, roi = hqRoi();
+  const inc = HQ_FIN_INCOME.reduce((s,x)=>s+x.v,0), exp = HQ_FIN_EXPENSE.reduce((s,x)=>s+x.v,0);
+  const rowsKpi = [
+    ['MRR', '$'+mrr.toLocaleString('en')], ['ARR', '$'+arr.toLocaleString('en')],
+    ['DAU', HQ_MET.dau], ['WAU', HQ_MET.wau], ['MAU', HQ_MET.mau],
+    ['Retention 7d', HQ_MET.retention.d7+'%'], ['Retention 30d', HQ_MET.retention.d30+'%'], ['Retention 90d', HQ_MET.retention.d90+'%'],
+    ['AOV', '$'+HQ_MET.aov], ['LTV', '$'+HQ_MET.ltv], ['CAC', '$'+HQ_MET.cac], ['ROI', roi+'%'],
+  ].map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join('');
+  const tiersR = HQ_TIERS.map(t=>`<tr><td>${t.k}</td><td><b>${t.count}</b></td><td>$${t.price}/мес</td></tr>`).join('');
+  const incR = HQ_FIN_INCOME.map(x=>`<tr><td>${x.k}</td><td><b>${(x.v/1000).toFixed(0)}к ₽</b></td></tr>`).join('');
+  const expR = HQ_FIN_EXPENSE.map(x=>`<tr><td>${x.k}</td><td><b>${(x.v/1000).toFixed(0)}к ₽</b></td></tr>`).join('');
+  const crmR = HQ_CRM.map((p,i)=>`<tr><td>#${i+1}</td><td>${p.n} ${p.h}</td><td>${p.tier}</td><td><b>${(p.turn/1000).toFixed(0)}к ₽</b></td><td>${p.st==='ok'?'выплачено':'к выплате'}</td></tr>`).join('');
+  const abR = HQ_AB.map(t=>`<tr><td>${t.n}</td><td>${t.winner||'—'}</td><td>${t.st}</td><td>${t.uplift?'+'+t.uplift+'%':''}</td></tr>`).join('');
+  const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>OKO · отчёт ${stamp}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#0d1a05;background:#fff;padding:32px;max-width:900px;margin:0 auto;line-height:1.5}
+      h1{font-size:26px;letter-spacing:.02em;margin:0 0 6px;color:#0d1a05}
+      h2{font-size:17px;margin:28px 0 10px;color:#5cae00;border-bottom:2px solid #9AFF00;padding-bottom:5px}
+      .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #9AFF00;padding-bottom:14px;margin-bottom:18px}
+      .logo{width:52px;height:52px;border-radius:14px;background:#0d1a05;color:#9AFF00;display:grid;place-items:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:.05em}
+      .meta{color:#5b6a4a;font-size:13px;margin-top:3px}
+      table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
+      th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e8efe0}
+      th{background:#f6faed;font-weight:700;font-size:12px;color:#5cae00;text-transform:uppercase;letter-spacing:.05em}
+      td b{color:#0d1a05;font-weight:700}
+      .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+      .k{background:#f6faed;border-left:3px solid #9AFF00;padding:11px 14px;border-radius:6px}
+      .k b{display:block;font-size:22px;color:#0d1a05;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.03em}
+      .k small{color:#5b6a4a;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+      .foot{margin-top:32px;padding-top:16px;border-top:1px solid #e8efe0;color:#5b6a4a;font-size:12px;text-align:center}
+      @media print{body{padding:20px}}
+    </style></head><body>
+    <div class="head">
+      <div class="logo">OKO</div>
+      <div><h1>Сводный отчёт владельца OKO</h1><div class="meta">Дата формирования: ${stamp} · период: последние 30 дней</div></div>
+    </div>
+
+    <div class="kpi">
+      <div class="k"><b>$${mrr.toLocaleString('en')}</b><small>MRR</small></div>
+      <div class="k"><b>$${arr.toLocaleString('en')}</b><small>ARR</small></div>
+      <div class="k"><b>${HQ_MET.dau}</b><small>DAU</small></div>
+      <div class="k"><b>${roi}%</b><small>ROI</small></div>
+    </div>
+
+    <h2>Ключевые метрики</h2>
+    <table>${rowsKpi}</table>
+
+    <h2>Активные подписки по тарифам</h2>
+    <table><thead><tr><th>Тариф</th><th>Активных</th><th>Цена</th></tr></thead><tbody>${tiersR}</tbody></table>
+
+    <h2>Доходы (за месяц)</h2>
+    <table><thead><tr><th>Канал</th><th>Сумма</th></tr></thead><tbody>${incR}
+      <tr><td><b>Итого</b></td><td><b>${(inc/1000).toFixed(0)}к ₽</b></td></tr></tbody></table>
+
+    <h2>Расходы (за месяц)</h2>
+    <table><thead><tr><th>Категория</th><th>Сумма</th></tr></thead><tbody>${expR}
+      <tr><td><b>Итого</b></td><td><b>${(exp/1000).toFixed(0)}к ₽</b></td></tr>
+      <tr><td><b>Чистая прибыль</b></td><td><b>${((inc-exp)/1000).toFixed(0)}к ₽</b></td></tr></tbody></table>
+
+    <h2>Партнёры · CRM топ-10</h2>
+    <table><thead><tr><th>Ранг</th><th>Партнёр</th><th>Уровень</th><th>Оборот</th><th>Статус</th></tr></thead><tbody>${crmR}</tbody></table>
+
+    <h2>A/B тесты</h2>
+    <table><thead><tr><th>Эксперимент</th><th>Победитель</th><th>Статус</th><th>Uplift</th></tr></thead><tbody>${abR}</tbody></table>
+
+    <div class="foot">OKO · штаб владельца · документ сформирован автоматически.
+      Для сохранения в PDF: в диалоге печати выбери «Сохранить как PDF».</div>
+    <script>window.addEventListener('load',()=>setTimeout(()=>window.print(),500));</script>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ toast('Разреши всплывающие окна для экспорта PDF'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  toast('PDF-отчёт открыт · нажми «Сохранить как PDF»');
+}
+
 /* ==================== самоинициализация ==================== */
 (function hqInit(){
   hqDecorateProfile();
