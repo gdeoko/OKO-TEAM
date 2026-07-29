@@ -73,24 +73,34 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
     if (!$firstTime) return false;
 
     $meta    = $obj['metadata'] ?? [];
+    // Пакетная оплата: metadata.application_ids = "12,15,18" — помечаем ВСЕ как paid.
+    $batchIds = [];
+    if (!empty($meta['application_ids'])) {
+        $batchIds = array_values(array_unique(array_filter(array_map('intval', explode(',', (string) $meta['application_ids'])))));
+    }
     $appId   = ($pay['application_id'] ?? null) ?: ($meta['application_id'] ?? null);
+    if (!$batchIds && $appId) $batchIds = [(int) $appId];
     $orderId = ($pay['order_id'] ?? null) ?: ($meta['order_id'] ?? null);
 
     $email = ''; $name = '';
-    if ($appId) {
-        update('applications', ['is_paid' => 1, 'status' => 'paid'], 'id=:id', ['id' => (int) $appId]);
-        $app = one("SELECT * FROM applications WHERE id=?", [(int) $appId]);
+    if ($batchIds) {
+        foreach ($batchIds as $aid) {
+            update('applications', ['is_paid' => 1, 'status' => 'paid'], 'id=:id', ['id' => (int) $aid]);
+        }
+        // Первая заявка — источник email/имени для письма
+        $app = one("SELECT * FROM applications WHERE id=?", [(int) $batchIds[0]]);
         if ($app) { $email = (string) ($app['email'] ?? ''); $name = (string) ($app['full_name'] ?? ''); }
+        // Синхронизируем локальную переменную для обратной совместимости
+        $appId = (int) $batchIds[0];
 
-        // Реф-бонус педагогу подтверждаем ТОЛЬКО сейчас (при оплате): переводим pending→paid
-        // и инкрементируем uses. loyalty.php может быть ещё не подключён (напр. в вебхуке).
+        // Реф-бонус педагогу — по первой заявке (единый чек)
         if (!function_exists('referral_confirm_payment') && is_file(__DIR__ . '/loyalty.php')) {
             require_once __DIR__ . '/loyalty.php';
         }
         if (function_exists('referral_confirm_payment')) {
             $refReward = referral_confirm_payment((int) $appId);
             if ($refReward > 0 && function_exists('audit')) {
-                audit('referral_paid', 'applications', (int) $appId, ['reward' => $refReward, 'payment_id' => $paymentId]);
+                audit('referral_paid', 'applications', (int) $appId, ['reward' => $refReward, 'payment_id' => $paymentId, 'batch' => count($batchIds)]);
             }
         }
     }

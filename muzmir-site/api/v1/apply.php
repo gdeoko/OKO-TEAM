@@ -21,18 +21,33 @@ if (!rate_ok('apply:' . $ip, 10, 3600)) {
     json_out(['ok' => false, 'error' => 'Слишком много заявок с одного адреса, попробуйте позже'], 429);
 }
 
-// --- конкурс: по slug / id / коду ---
-$compRef = input('competition_id');
-if ($compRef === '') $compRef = input('competition');
-if ($compRef === '') $compRef = input('slug');
-$comp = one(
-    "SELECT * FROM competitions WHERE slug=? OR code=? OR id=?",
-    [$compRef, $compRef, ctype_digit($compRef) ? (int) $compRef : 0]
-);
-if (!$comp) json_out(['ok' => false, 'error' => 'Конкурс не найден'], 404);
-if (!in_array($comp['status'], ['open', 'judging'], true)) {
-    json_out(['ok' => false, 'error' => 'Приём заявок на этот конкурс закрыт'], 409);
+// --- конкурсы: массив competition_ids[] ИЛИ одиночный competition_id (backward-compat) ---
+$compIds = $_POST['competition_ids'] ?? [];
+if (!is_array($compIds)) $compIds = [$compIds];
+$compIds = array_values(array_unique(array_filter(array_map('intval', $compIds))));
+if (!$compIds) {
+    $singleRef = input('competition_id');
+    if ($singleRef === '') $singleRef = input('competition');
+    if ($singleRef === '') $singleRef = input('slug');
+    if ($singleRef !== '') {
+        $c1 = one("SELECT id FROM competitions WHERE slug=? OR code=? OR id=?",
+                  [$singleRef, $singleRef, ctype_digit($singleRef) ? (int)$singleRef : 0]);
+        if ($c1) $compIds = [(int)$c1['id']];
+    }
 }
+if (!$compIds) json_out(['ok' => false, 'error' => 'Конкурс не выбран'], 400);
+
+// Все конкурсы должны существовать и быть открыты
+$placeholders = implode(',', array_fill(0, count($compIds), '?'));
+$comps = all("SELECT * FROM competitions WHERE id IN ($placeholders)", $compIds);
+if (count($comps) !== count($compIds)) json_out(['ok' => false, 'error' => 'Один или несколько конкурсов не найдены'], 404);
+foreach ($comps as $c) {
+    if (!in_array($c['status'], ['open', 'judging'], true)) {
+        json_out(['ok' => false, 'error' => 'Приём заявок закрыт для конкурса «'.$c['name'].'»'], 409);
+    }
+}
+// Для сохранения совместимости с проверками ниже — $comp = первый выбранный
+$comp = $comps[0];
 
 $errors = [];
 
@@ -123,48 +138,61 @@ if ($errors) {
     json_out(['ok' => false, 'error' => 'Проверьте заполнение формы', 'fields' => $errors], 422);
 }
 
-// --- номер и запись ---
-$number = gen_application_number($comp);
+// --- Создаём заявку(и) по каждому выбранному конкурсу ---
 $uid = current_user()['id'] ?? null;
+$numbers = [];
+$appIds  = [];
+$appMap  = []; // number -> comp_name
 
-$appId = insert('applications', [
-    'number'         => $number,
-    'competition_id' => (int) $comp['id'],
-    'user_id'        => $uid,
-    'full_name'      => $full_name,
-    'is_group'       => input('is_group') ? 1 : 0,
-    'group_name'     => input('group_name'),
-    'birth_date'     => input('birth_date'),
-    'age_category'   => input('age_category'),
-    'nomination'     => $nomination,
-    'subgroup'       => input('subgroup'),
-    'formation'      => input('formation'),
-    'work_title'     => input('work_title'),
-    'teacher'        => input('teacher'),
-    'institution'    => input('institution'),
-    'city'           => input('city'),
-    'email'          => $email,
-    'phone'          => $phone,
-    'video_url'      => $video,
-    'video_platform' => $platform,
-    'address'        => input('address'),
-    'postal_index'   => input('postal_index'),
-    'is_paid'        => (int) $comp['is_paid'] ? 0 : 1,
-    'status'         => 'new',
-]);
-audit('apply', 'applications', $appId, ['number' => $number, 'competition' => $comp['slug']]);
+foreach ($comps as $ci) {
+    $num = gen_application_number($ci);
+    $aid = insert('applications', [
+        'number'         => $num,
+        'competition_id' => (int) $ci['id'],
+        'user_id'        => $uid,
+        'full_name'      => $full_name,
+        'is_group'       => input('is_group') ? 1 : 0,
+        'group_name'     => input('group_name'),
+        'birth_date'     => input('birth_date'),
+        'age_category'   => input('age_category'),
+        'nomination'     => $nomination,
+        'subgroup'       => input('subgroup'),
+        'formation'      => input('formation'),
+        'work_title'     => input('work_title'),
+        'teacher'        => input('teacher'),
+        'institution'    => input('institution'),
+        'city'           => input('city'),
+        'email'          => $email,
+        'phone'          => $phone,
+        'video_url'      => $video,
+        'video_platform' => $platform,
+        'address'        => input('address'),
+        'postal_index'   => input('postal_index'),
+        'is_paid'        => (int) $ci['is_paid'] ? 0 : 1,
+        'status'         => 'new',
+    ]);
+    $numbers[] = $num;
+    $appIds[]  = $aid;
+    $appMap[$num] = $ci['name'];
+    audit('apply', 'applications', $aid, ['number' => $num, 'competition' => $ci['slug']]);
+}
+// Совместимость: если одна заявка — сохраняем прежние переменные
+$number = $numbers[0];
+$appId  = $appIds[0];
 
-// --- оплата оргвзноса (для платного конкурса) ---
+// --- Одна оплата за все платные заявки (сумма 500₽ × количество платных) ---
 $payment = null;
 $confirmationUrl = null;
 $priceInfo = null;
-if ((int) $comp['is_paid']) {
-    $basePrice = (int) $comp['price'];
 
-    // Скидка лояльности за число состоявшихся участий.
+$paidComps  = array_values(array_filter($comps, fn($c)=> (int)$c['is_paid']));
+$freeCount  = count($comps) - count($paidComps);
+
+if ($paidComps) {
+    $basePriceSum = array_sum(array_map(fn($c)=>(int)$c['price'], $paidComps));
+
+    // Скидки применяются ко ВСЕЙ сумме одинаково.
     $loyaltyPct = loyalty_discount($uid, $email);
-
-    // Скидка члена Клуба постоянных участников (годовая подписка).
     $clubPct = 0;
     if ($uid && is_file(BASE_PATH . '/core/club.php')) {
         require_once BASE_PATH . '/core/club.php';
@@ -172,46 +200,53 @@ if ((int) $comp['is_paid']) {
             $clubPct = club_discount_percent((int) $uid);
         }
     }
-
-    // Промокод педагога: доп. скидка участнику + метка реферала.
     $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper(input('promo_code'))));
     $ref = $promoCode !== '' ? referral_lookup($promoCode) : null;
-    // Свой код применять нельзя.
     if ($ref && $uid && (int) $ref['teacher_user_id'] === (int) $uid) $ref = null;
     $refPct = $ref ? (int) $ref['percent'] : 0;
-
-    // Итоговая скидка: лучшая из «лояльность/клуб» + промокод педагога, но не более 40%.
     $totalPct = min(40, max($loyaltyPct, $clubPct) + $refPct);
-    $amount = loyalty_apply($basePrice, $totalPct);
+    $amount = loyalty_apply($basePriceSum, $totalPct);
 
     $priceInfo = [
-        'base_price'     => $basePrice,
-        'loyalty_pct'    => $loyaltyPct,
-        'referral_pct'   => $refPct,
-        'promo_applied'  => (bool) $ref,
-        'discount_pct'   => $totalPct,
-        'amount'         => $amount,
+        'base_price'    => $basePriceSum,
+        'paid_count'    => count($paidComps),
+        'free_count'    => $freeCount,
+        'loyalty_pct'   => $loyaltyPct,
+        'referral_pct'  => $refPct,
+        'promo_applied' => (bool) $ref,
+        'discount_pct'  => $totalPct,
+        'amount'        => $amount,
     ];
 
     if ($amount > 0) {
+        $descNames = implode(', ', array_map(fn($c)=>$c['name'], $paidComps));
+        if (mb_strlen($descNames) > 120) $descNames = mb_substr($descNames, 0, 117).'...';
         $payment = yukassa_create_payment(
             $amount,
-            'Оргвзнос за участие - ' . $comp['name'] . ' (' . $number . ')',
-            ['application_id' => $appId, 'number' => $number, 'email' => $email, 'promo' => $ref['code'] ?? '']
+            'Оргвзнос за участие в конкурсах: ' . $descNames,
+            [
+                'application_ids' => implode(',', $appIds),
+                'application_id'  => (int)$appId, // для обратной совместимости
+                'numbers'         => implode(',', $numbers),
+                'number'          => $number,
+                'email'           => $email,
+                'promo'           => $ref['code'] ?? '',
+            ]
         );
         if ($payment && !empty($payment['id']) && tbl_exists('payments')) {
+            // Одна запись в payments — привязана к первой заявке, но покрывает все.
             insert('payments', [
                 'application_id' => $appId,
                 'amount'         => $amount,
                 'method'         => 'yukassa',
                 'status'         => $payment['status'] ?? 'pending',
                 'yukassa_id'     => $payment['id'],
-                'purpose'        => 'application',
+                'purpose'        => count($appIds) > 1 ? 'application_batch' : 'application',
             ]);
         }
         $confirmationUrl = $payment['confirmation_url'] ?? null;
 
-        // Начисление вознаграждения педагогу по его коду.
+        // Реферальное вознаграждение — на суммарный чек (учтётся при webhook confirmed)
         if ($ref) {
             $reward = referral_record_use($ref, $appId, $uid, $email, $amount);
             audit('referral_use', 'applications', $appId, ['code' => $ref['code'], 'reward' => $reward, 'amount' => $amount]);
@@ -219,14 +254,15 @@ if ((int) $comp['is_paid']) {
     }
 }
 
-// --- письмо-подтверждение в очередь ---
-$subject = 'Заявка ' . $number . ' принята - ' . $comp['name'];
-$html = function_exists('mail_template')
-    ? mail_template('application_confirm', [
-        'number' => $number, 'full_name' => $full_name, 'competition' => $comp['name'], 'nomination' => $nomination,
-    ])
-    : '<p>Здравствуйте, ' . h($full_name) . '!</p>'
-      . '<p>Ваша заявка <b>' . h($number) . '</b> на конкурс «' . h($comp['name']) . '» принята.</p>'
+// --- Письмо-подтверждение ---
+$compsList = implode(', ', array_map(fn($c)=>$c['name'], $comps));
+$numsList  = implode(', ', $numbers);
+$subject = count($numbers) > 1
+    ? 'Заявки приняты: ' . count($numbers) . ' конкурса'
+    : 'Заявка ' . $number . ' принята - ' . $comp['name'];
+$html = '<p>Здравствуйте, ' . h($full_name) . '!</p>'
+      . '<p>' . (count($numbers) > 1 ? 'Ваши заявки' : 'Ваша заявка') . ' <b>' . h($numsList) . '</b> на '
+      . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . h($compsList) . '» принят'.(count($comps)>1?'ы':'а').'.</p>'
       . '<p>Мы сообщим о результатах на этот адрес.</p>';
 
 if (function_exists('mail_queue')) {
@@ -237,10 +273,13 @@ if (function_exists('mail_queue')) {
 
 // --- уведомление админу ---
 if (function_exists('tg_notify_admin')) {
-    tg_notify_admin("Новая заявка {$number}\n{$comp['name']}\n{$full_name}\n{$nomination}");
+    tg_notify_admin(
+        (count($numbers) > 1 ? "Новые заявки (".count($numbers)."):\n" : "Новая заявка {$number}\n")
+        . "{$compsList}\n{$full_name}\n{$nomination}"
+    );
 }
 
-$resp = ['ok' => true, 'number' => $number];
+$resp = ['ok' => true, 'number' => $number, 'numbers' => $numbers, 'batch' => count($numbers) > 1];
 if ($priceInfo !== null) $resp['price'] = $priceInfo;
 if ($payment !== null) {
     $resp['payment'] = [

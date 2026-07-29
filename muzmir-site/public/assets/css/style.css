@@ -1228,6 +1228,17 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
   .topbar{display:none !important}  /* топ-бар с реквизитами скрываем на моб — экономим место */
 }
 
+/* ══ Форма заявки: мульти-выбор конкурсов, тулбар с суммой ══ */
+.comp-list--multi .comp-opt .co-mark{border-radius:6px !important}
+.comp-list--multi .comp-opt .co-mark::after{border-radius:2px !important}
+.comp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:14px 0 6px;padding:12px 14px;border-radius:14px;
+  background:color-mix(in srgb,var(--gold-soft) 60%,transparent);
+  border:1px solid var(--glass-brd)}
+.comp-toolbar .btn--sm{padding:8px 14px;min-height:36px !important;font-size:.86rem !important;border-radius:10px !important}
+.comp-total{font-size:.94rem;font-weight:600;color:var(--text)}
+.comp-total b{font-weight:800;color:var(--gold-ink);font-size:1rem}
+
 /* ══ Кабинет: KPI-плитки и мини-графики (OKO-стиль) ══ */
 .cab-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:18px}
 @media(min-width:640px){.cab-kpis{grid-template-columns:repeat(4,1fr)}}

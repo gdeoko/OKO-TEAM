@@ -242,17 +242,17 @@ ob_start(); ?>
           <label>Не заполняйте это поле<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         </div>
 
-        <!-- ШАГ 1. Выбор конкурса -->
+        <!-- ШАГ 1. Выбор конкурса (можно выбрать НЕСКОЛЬКО — одна оплата за всех) -->
         <section class="astep active" data-step="comp">
           <div class="astep-head">
             <p class="eyebrow">Шаг 1</p>
             <h2>Выберите конкурс</h2>
-            <p style="color:var(--muted);font-size:.88rem;margin:6px 0 0">Подать на несколько конкурсов? Выберите первый, оформите заявку, затем со страницы успеха — быстро на следующий (данные предзаполнятся).</p>
+            <p style="color:var(--muted);font-size:.88rem;margin:6px 0 0">Отметьте один или несколько — оплатите одним чеком. Каждое участие — 500 ₽, включая электронные основной и дополнительные дипломы.</p>
           </div>
-          <div class="comp-list">
+          <div class="comp-list comp-list--multi">
             <?php foreach ($comps as $c): ?>
               <label class="comp-opt">
-                <input type="radio" name="competition_id" value="<?= (int)$c['id'] ?>"
+                <input type="checkbox" name="competition_ids[]" value="<?= (int)$c['id'] ?>"
                   data-slug="<?= h($c['slug']) ?>" data-name="<?= h($c['name']) ?>"
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
                   data-reg="<?= url('/competition/'.$c['slug']) ?>" data-code="<?= h($c['code']) ?>"
@@ -269,6 +269,10 @@ ob_start(); ?>
                 </span>
               </label>
             <?php endforeach; ?>
+          </div>
+          <div class="comp-toolbar">
+            <button type="button" class="btn btn--ghost btn--sm" id="mzApplySelectAll">Выбрать все</button>
+            <div class="comp-total" id="mzApplyTotal">Выбрано: <b>0</b> · <b>0 ₽</b></div>
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--primary" data-next>Продолжить</button>

@@ -288,8 +288,8 @@
   function validateStep(step) {
     var ok = true;
     if (step === 'comp') {
-      var chosen = $('input[name="competition_id"]:checked');
-      if (!chosen) { flashFormError('Выберите конкурс, чтобы продолжить.'); return false; }
+      var chosen = $$('input[name="competition_ids[]"]:checked');
+      if (!chosen.length) { flashFormError('Выберите хотя бы один конкурс, чтобы продолжить.'); return false; }
       return true;
     }
     if (step === 'user') {
@@ -338,10 +338,11 @@
   function buildSummary() {
     var box = document.getElementById('applySummary');
     if (!box) return;
-    var comp = $('input[name="competition_id"]:checked');
+    var chosen = $$('input[name="competition_ids[]"]:checked');
+    var names = chosen.map(function(c){return c.getAttribute('data-name');}).join(', ');
     var group = $('input[name="is_group"]:checked').value === '1';
     var rows = [
-      ['Конкурс', comp ? comp.getAttribute('data-name') : '-'],
+      [chosen.length > 1 ? ('Конкурсы (' + chosen.length + ')') : 'Конкурс', names || '-'],
       [group ? 'Коллектив' : 'Участник', group ? $('#group_name').value : $('#full_name').value],
       ['Возрастная категория', $('#age_category').value],
       ['Номинация', $('#nomination').value + ($('#subgroup').value ? ' · ' + $('#subgroup').value : '')],
@@ -360,16 +361,33 @@
     });
   }
   function fillPayAmount() {
-    var comp = $('input[name="competition_id"]:checked');
-    var price = comp ? parseInt(comp.getAttribute('data-price'), 10) || 0 : 0;
+    var chosen = $$('input[name="competition_ids[]"]:checked');
+    var total = 0, paidCount = 0, freeCount = 0;
+    chosen.forEach(function(c){
+      var p = parseInt(c.getAttribute('data-price'), 10) || 0;
+      if (c.getAttribute('data-paid') === '1') { total += p; paidCount++; } else { freeCount++; }
+    });
     var el = $('[data-pay-amount]');
-    if (el) el.textContent = price ? price.toLocaleString('ru-RU') + ' ₽' : 'по положению';
+    if (el) {
+      if (total > 0) {
+        var txt = total.toLocaleString('ru-RU') + ' ₽';
+        if (paidCount > 1) txt += ' <small style="color:var(--muted);font-weight:400">за ' + paidCount + ' участия</small>';
+        if (freeCount > 0) txt += ' <small style="color:var(--muted);font-weight:400"> + ' + freeCount + ' бесплатн.</small>';
+        el.innerHTML = txt;
+      } else {
+        el.textContent = 'по положению';
+      }
+    }
+    // Обновляем счётчик в шапке шага 1
+    var totBox = document.getElementById('mzApplyTotal');
+    if (totBox) totBox.innerHTML = 'Выбрано: <b>' + chosen.length + '</b> · <b>' + (total>0? total.toLocaleString('ru-RU')+' ₽' : (freeCount>0?'бесплатно':'0 ₽')) + '</b>';
   }
 
   /* ---------- Согласие: положение + таймер 15 сек ---------- */
   var timerStarted = false;
   function setupConsent() {
-    var comp = $('input[name="competition_id"]:checked');
+    var chosen = $$('input[name="competition_ids[]"]:checked');
+    var comp = chosen[0];
     var link = document.getElementById('regLink');
     if (link && comp) link.href = comp.getAttribute('data-reg') || CFG.agreement || '#';
     if (link) link.addEventListener('click', startConsentTimer);
@@ -535,15 +553,28 @@
     $$('[data-back]').forEach(function (b) { b.addEventListener('click', goBack); });
     form.addEventListener('submit', submit);
 
-    // Выбор конкурса → платность
-    $$('input[name="competition_id"]').forEach(function (r) {
-      r.addEventListener('change', function () {
-        isPaid = r.getAttribute('data-paid') === '1';
-        var link = document.getElementById('regLink');
-        if (link) link.href = r.getAttribute('data-reg') || '#';
-        renderProgress();
-        saveDraft();
-      });
+    // Выбор конкурсов → платность (isPaid = true если ЛЮБОЙ выбран платный)
+    function recomputePaid(){
+      var checked = $$('input[name="competition_ids[]"]:checked');
+      isPaid = checked.some(function(c){return c.getAttribute('data-paid')==='1';});
+      var first = checked[0];
+      var link = document.getElementById('regLink');
+      if (link && first) link.href = first.getAttribute('data-reg') || '#';
+      renderProgress();
+      fillPayAmount();
+      saveDraft();
+    }
+    $$('input[name="competition_ids[]"]').forEach(function (r) {
+      r.addEventListener('change', recomputePaid);
+    });
+    // Кнопка «Выбрать все»
+    var selAll = document.getElementById('mzApplySelectAll');
+    if (selAll) selAll.addEventListener('click', function(){
+      var boxes = $$('input[name="competition_ids[]"]');
+      var allChecked = boxes.every(function(b){return b.checked;});
+      boxes.forEach(function(b){ b.checked = !allChecked; });
+      selAll.textContent = allChecked ? 'Выбрать все' : 'Снять выбор';
+      recomputePaid();
     });
 
     // Тип участника
@@ -615,9 +646,10 @@
   setupConsent();
   applyFormType();
   fillSubgroups();
-  // платность по восстановленному/предвыбранному конкурсу
-  var pre = $('input[name="competition_id"]:checked');
-  if (pre) isPaid = pre.getAttribute('data-paid') === '1';
+  // Платность по восстановленным/предвыбранным конкурсам (ЛЮБОЙ платный → isPaid=true)
+  var preAll = $$('input[name="competition_ids[]"]:checked');
+  isPaid = preAll.some(function(c){return c.getAttribute('data-paid')==='1';});
+  fillPayAmount();
   refreshConsentBtn();
   renderProgress();
 })();
