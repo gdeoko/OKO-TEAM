@@ -504,11 +504,12 @@ main{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 @media(prefers-reduced-motion:reduce){.bg-fx::before,.bg-fx::after{animation:none}}
 .bg-fx canvas,.bg-fx .bg-layer{position:absolute;inset:0;width:100%;height:100%}
 .bg-fx .bg-grid{background-image:repeating-linear-gradient(180deg,var(--line) 0 1px,transparent 1px 26px);opacity:.35;mask-image:radial-gradient(120% 80% at 50% 0%,#000,transparent 75%)}
-body>.header,body>main,body>.footer,body>.topbar,body>.appnav{position:relative;z-index:1}
+body>.header,body>main,body>.footer,body>.topbar{position:relative;z-index:1}
+/* .appnav НЕ включаем — оно должно оставаться position:fixed (иначе съезжает в конец страницы) */
 
 /* ══════════════════════════════ REVEAL / КАСКАД ══════════════════════════════ */
-.js .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
-.js .reveal.in{opacity:1;transform:none;transition-delay:calc(var(--i,0)*70ms)}
+.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .35s ease-out,transform .35s ease-out}
+.js .reveal.in{opacity:1;transform:none;transition-delay:calc(var(--i,0)*40ms)}
 .cascade>*{animation:cascade .6s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0)*70ms)}
 
 /* ══════════════════════════════ ЧАТ ══════════════════════════════ */
@@ -847,3 +848,26 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .in-tg .topbar{display:none}              /* Telegram даёт свою верхнюю панель */
 .in-tg .header{position:sticky;top:0}
 .in-tg .chat-fab{display:none}            /* поддержка — через раздел, не дублируем FAB в боте */
+
+/* ══ Performance на мобиле: снимаем тяжёлые backdrop-filter blur и анимированный фон ══
+   Причина лагов — cascade blur (14-26px) на десятках карточек и .bg-fx с 2 keyframe-анимациями. */
+@media (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .header, .header.scrolled, .card, .stat, .toast, .flash, .acc-item,
+  .btn--ghost, .theme-toggle, input, select, textarea, .pay-method,
+  .award-box, .modal, .sm-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .header, .header.scrolled { background: var(--bg) !important; }
+  .bg-fx::before, .bg-fx::after { animation: none !important; opacity: .4 !important; }
+  /* .appnav оставляем прозрачным с blur — но лёгким */
+  .appnav { backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; }
+}
+/* На совсем маленьких — вообще без анимированного фона */
+@media (max-width: 640px) {
+  .bg-fx::before, .bg-fx::after { display: none !important; }
+}
+/* На мобиле контент показываем сразу без reveal-скачков — как в приложении */
+@media (max-width: 640px) {
+  .js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
